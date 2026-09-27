@@ -2987,7 +2987,16 @@ export class Hud {
    * fotograma a otro se ve falso. Ver `cuantaLuz`.
    */
   private ponerLuzDeFuera(hora: number): void {
-    this.root.style.setProperty("--luz-de-fuera", cuantaLuz(hora).toFixed(3));
+    const luz = cuantaLuz(hora);
+    this.root.style.setProperty("--luz-de-fuera", luz.toFixed(3));
+    /*
+     * **Y el halo de las cifras, solo cuando hay halo.** Es un filtro por
+     * cada texto del cuadro —trescientos— y de día valía cero píxeles, pero
+     * seguía siendo un filtro: el navegador aislaba cada cifra en su capa para
+     * aplicarle nada. En el teléfono con el cuadro abierto eso era un
+     * milisegundo por imagen. Ver `.hud--cuadro-encendido` en la hoja.
+     */
+    this.root.classList.toggle("hud--cuadro-encendido", luz < 1);
   }
 
   /** Quién se entera de que han cambiado las nubes. */

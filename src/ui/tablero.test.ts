@@ -11,6 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 import { huecosDeAviso, Tablero } from "./tablero";
+import { hayQueMoverElTrozo, marcasDeAltitud, POR_PIE } from "./cristal";
 import { LUCES } from "../flight/avisos-de-cabina";
 import { AIRCRAFT, aircraftById } from "../flight/aircraft";
 import {
@@ -183,5 +184,40 @@ describe("el indicador de combustible", () => {
       const esferas = marcado.match(/data-dial="fuel"/g)?.length ?? 0;
       expect(reglas + esferas).toBe(1);
     }
+  });
+});
+
+describe("la cinta de altitud, grabada a trozos", () => {
+  /*
+   * Se graba el trozo que rodea la altitud y no la cinta entera; lo que no
+   * puede pasar es que asome su borde. Se sube de cero a cuarenta y cinco mil
+   * pies de diez en diez, cambiando de trozo con la misma regla que el
+   * tablero, y en cada paso la ventana tiene que caer entera dentro de las
+   * marcas grabadas.
+   */
+  const ALTO = 380;
+  const valores = (html: string) =>
+    [...html.matchAll(/y1="(-?[\d.]+)"/g)].map((m) => -Number(m[1]) / POR_PIE);
+
+  it("nunca enseña el borde del trozo", () => {
+    let base = 0;
+    let marcas = valores(marcasDeAltitud(base, ALTO));
+    const medio = ALTO / 2 / POR_PIE;
+    for (let pies = -900; pies <= 45000; pies += 10) {
+      if (hayQueMoverElTrozo(pies, base, ALTO)) {
+        base = Math.round(pies / 100) * 100;
+        marcas = valores(marcasDeAltitud(base, ALTO));
+      }
+      expect(Math.min(...marcas)).toBeLessThanOrEqual(
+        Math.max(-1000, pies - medio),
+      );
+      expect(Math.max(...marcas)).toBeGreaterThanOrEqual(pies + medio);
+    }
+  });
+
+  it("y es un trozo: unas decenas de marcas y no quinientas", () => {
+    expect(marcasDeAltitud(20000, ALTO).match(/<line/g)!.length).toBeLessThan(
+      40,
+    );
   });
 });

@@ -3160,9 +3160,14 @@ button.motor__tecla::after {
  * **emite**, y lo que se ve de noche a diez metros de un avión es justo eso,
  * las cifras flotando. Se le pone al texto y a las agujas, que es lo que lleva
  * luz detrás en un panel de verdad; el mueble no se ilumina solo.
+ *
+ * **Y solo cuando falta luz fuera.** De día el halo mide cero píxeles, pero
+ * un filtro de cero sigue siendo un filtro: el navegador aislaba cada una de
+ * las trescientas cifras para aplicarle nada, y en el teléfono con el cuadro
+ * abierto eso se notaba en cada imagen. Ver `ponerLuzDeFuera` en `hud.ts`.
  */
-.tablero text,
-.tablero__aguja {
+.hud--cuadro-encendido .tablero text,
+.hud--cuadro-encendido .tablero__aguja {
   filter: drop-shadow(0 0 calc(3px * var(--cuadro-encendido, 0)) currentColor);
 }
 
