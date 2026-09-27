@@ -76,6 +76,17 @@ import {
   RESPUESTA_MAXIMA,
 } from "../flight/radio";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
+import {
+  desfaseDe,
+  LucesDeUnAvion,
+  lucesDelTrafico,
+  materialDeLuces,
+  sitiosDeGeometria,
+  sitiosDeLuz,
+  sitiosPorMedidas,
+  type FaseDeLuces,
+  type SitiosDeLuz,
+} from "./luces-del-trafico";
 
 /** Un sitio del mundo, con su altura. */
 export interface Sitio {
@@ -761,7 +772,17 @@ interface Volando {
   conPermiso: boolean;
   /** Segundos que lleva sin avanzar mientras ocupa la pista. Ver `QUIETO`. */
   quieto: number;
+  /** Si en el último paso avanzó: parado en la doble raya, no. Ver `faseDeLuces`. */
+  avanza: boolean;
+  /** Sus luces, colgadas de su grupo. Ver `luces-del-trafico.ts`. */
+  luces: LucesDeUnAvion;
 }
+
+/**
+ * Los sitios de las luces sacados de cada cuerpo bueno, una vez por página:
+ * son de la geometría, que es la misma en todos los campos. Ver `sitiosDeLuz`.
+ */
+const sitiosDelCuerpo = new WeakMap<CuerpoHorneado, SitiosDeLuz | null>();
 
 export interface Trafico {
   readonly grupo: Group;
@@ -932,6 +953,19 @@ export function crearTrafico(
     void cuerpoDelTrafico(modelo, tipo.envergadura, EN_TIERRA).then((hecho) => {
       if (!hecho || desmontado) return;
       cuerposListos.set(tipo.id, hecho);
+      /*
+       * **Y las luces, a las puntas del cuerpo bueno.** Las de la fábrica
+       * tienen la envergadura de su tipo pero no su ala: el ala alta de la
+       * avioneta o la flecha del reactor dejaban la luz flotando un palmo
+       * fuera de la punta, que de cerca es lo que se ve.
+       */
+      if (!sitiosDelCuerpo.has(hecho))
+        sitiosDelCuerpo.set(
+          hecho,
+          sitiosDeLuz(vestirCuerpo(hecho, libreaDe(tipo.id))),
+        );
+      const sitios = sitiosDelCuerpo.get(hecho);
+      if (sitios) sitiosPorTipo.set(tipo.id, sitios);
       for (const [matricula, quien] of aviones) {
         if (quien.tipo.id !== tipo.id) continue;
         quien.grupo.clear();
@@ -941,6 +975,10 @@ export function crearTrafico(
             deFabrica(tipo, matricula),
           ),
         );
+        quien.luces.dispose();
+        quien.luces = lucesDe(tipo, matricula);
+        quien.grupo.add(quien.luces.puntos);
+        alumbrar(quien);
       }
     });
   };
@@ -985,6 +1023,23 @@ export function crearTrafico(
     return new Mesh(g, materialDeFabrica);
   };
   const materialDeFabrica = new MeshLambertMaterial({ vertexColors: true });
+
+  /** Un material para las luces de todo el tráfico de este campo. */
+  const materialDeLasLuces = materialDeLuces();
+  /** Dónde van las luces de cada tipo: de la fábrica, y del bueno al llegar. */
+  const sitiosPorTipo = new Map<string, SitiosDeLuz>();
+  /** El reloj de los destellos, s. */
+  let reloj = 0;
+  const lucesDe = (tipo: TipoDeTrafico, matricula: string): LucesDeUnAvion => {
+    let sitios = sitiosPorTipo.get(tipo.id);
+    if (!sitios) {
+      sitios =
+        sitiosDeGeometria(deFabrica(tipo, matricula).geometry) ??
+        sitiosPorMedidas(tipo.envergadura);
+      sitiosPorTipo.set(tipo.id, sitios);
+    }
+    return new LucesDeUnAvion(sitios, materialDeLasLuces, desfaseDe(matricula));
+  };
 
   /**
    * **El bueno de cerca y el de la fábrica de lejos.** El modelo de la flota
@@ -1121,8 +1176,47 @@ export function crearTrafico(
     return false;
   };
 
+  /**
+   * **En qué anda, para sus luces.** Sale del camino que recorre y de por
+   * dónde va en él, que es lo mismo que decide su velocidad: con calles, el
+   * que llega toca, corre y rueda a su puesto; el que sale rueda, espera en
+   * la doble raya, entra, se alinea y corre. Ver `lucesDelTrafico`.
+   */
+  const faseDeLuces = (quien: Volando): FaseDeLuces => {
+    const c = quien.caminos;
+    if (!c) return "volando";
+    const r = quien.recorrido;
+    const camino = quien.marca.camino;
+    if (camino === c.llegada) {
+      if (r < c.toca) return "volando";
+      if (r < c.fuera) return "carrera";
+      return r >= largoDe(camino) - 0.5 ? "aparcado" : "rodando";
+    }
+    if (camino === c.salida) {
+      // Sin calles no hay eje apuntado en los tramos de tierra: es el tope de
+      // «line up and wait», y de ahí el camino ya sube.
+      const eje =
+        c.enTierra?.eje || c.marcas["torre.lineUpWait"]?.tope || c.espera;
+      const despega = c.enTierra?.despega || eje;
+      if (r < c.espera - 0.5) return "rodando";
+      if (r < eje - 0.5) return quien.avanza ? "entrando" : "esperando";
+      // En el eje y parado, esperando el permiso: ahí manda el tope.
+      if (!quien.avanza && r < eje + 0.5) return "alineado";
+      if (r < despega) return "carrera";
+    }
+    return "volando";
+  };
+
+  /** Enciende lo que toca en este instante. */
+  const alumbrar = (quien: Volando): void =>
+    quien.luces.paso(
+      reloj,
+      lucesDelTrafico(faseDeLuces(quien), quien.grupo.position.y),
+    );
+
   const quitar = (matricula: string, quien: Volando): void => {
     grupo.remove(quien.grupo);
+    quien.luces.dispose();
     aviones.delete(matricula);
   };
 
@@ -1177,6 +1271,8 @@ export function crearTrafico(
         const g = new Group();
         g.name = "trafico-avion";
         g.add(cuerpo(tipo, matricula));
+        const luces = lucesDe(tipo, matricula);
+        g.add(luces.puntos);
         grupo.add(g);
         quien = {
           grupo: g,
@@ -1187,6 +1283,8 @@ export function crearTrafico(
           olvidado: 0,
           conPermiso: puedeAterrizar,
           quieto: 0,
+          avanza: true,
+          luces,
         };
         aviones.set(matricula, quien);
       }
@@ -1199,10 +1297,14 @@ export function crearTrafico(
       quien.recorrido = esta.metros;
       quien.olvidado = 0;
       quien.quieto = 0;
+      // Puesto en otra marca, se mueve: si le toca esperar, lo dirá el paso.
+      quien.avanza = true;
       colocar(quien);
+      alumbrar(quien);
     },
     paso(dt) {
       let seFueron: string[] | null = null;
+      reloj += dt;
       for (const [matricula, quien] of aviones) {
         const c = quien.caminos;
         const antes = quien.recorrido;
@@ -1237,6 +1339,7 @@ export function crearTrafico(
         if (aterrizando(quien) && dt > 0 && quien.recorrido - antes < 1e-4)
           quien.quieto += dt;
         else quien.quieto = 0;
+        if (dt > 0) quien.avanza = quien.recorrido - antes > 1e-4;
         if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO) {
           quitar(matricula, quien);
           continue;
@@ -1249,6 +1352,7 @@ export function crearTrafico(
         )
           (seFueron ??= []).push(matricula);
         colocar(quien);
+        alumbrar(quien);
       }
       // Casi siempre nadie: sin lista nueva en cada fotograma.
       return seFueron ?? NADIE;
@@ -1306,8 +1410,12 @@ export function crearTrafico(
     },
     dispose() {
       desmontado = true;
-      for (const quien of aviones.values()) grupo.remove(quien.grupo);
+      for (const quien of aviones.values()) {
+        grupo.remove(quien.grupo);
+        quien.luces.dispose();
+      }
       aviones.clear();
+      materialDeLasLuces.dispose();
       // Los cuerpos buenos no: son de la página, y el tráfico del campo
       // siguiente los vuelve a usar. Ver `horneados`.
       for (const g of geometrias.values()) g.dispose();

@@ -89,6 +89,7 @@ import {
   type AvisoDeTrafico,
   type Intruso,
 } from "./flight/tcas";
+import { ponerLaLuzDelDia } from "./world/luces-del-trafico";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
@@ -1146,6 +1147,9 @@ export class Game {
    */
   private vigilarElTrafico(dt: number): void {
     const s = this.flight.state;
+    // El sol de ahora para las luces de todos los demás: de día se las come.
+    // Ver `ponerLaLuzDelDia`.
+    ponerLaLuzDelDia(this.sky.sunDirection.y);
     const intrusos: Intruso[] = [];
     const llegando = new Set<string>();
     for (const q of this.trafico?.quienes() ?? []) {
@@ -6575,7 +6579,8 @@ export class Game {
     );
     if (this.islenos) {
       this.islenos.paso(dt, this.yoParaLasIslas());
-      this.avionesDeLasIslas?.poner(this.islenos.quienes());
+      // Con el reloj del vuelo, que es el de los destellos de sus luces.
+      this.avionesDeLasIslas?.poner(this.islenos.quienes(), this.relojDeRuta);
     }
     // Y el TCAS, con todos ya en su sitio y también antes de la puerta: un
     // transpondedor no deja de contestar porque el campo no tenga torre.

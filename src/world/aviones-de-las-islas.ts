@@ -38,6 +38,13 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { superficie, tubo } from "./fabrica-de-aeronaves";
 import { giroDelModelo } from "./rumbo";
 import { LIBREAS, type Isleno } from "../flight/trafico-de-las-islas";
+import {
+  LucesDeUnAvion,
+  lucesDelTrafico,
+  materialDeLuces,
+  sitiosDeGeometria,
+  sitiosPorMedidas,
+} from "./luces-del-trafico";
 
 /** Los colores de una librea. */
 interface Librea {
@@ -202,8 +209,12 @@ export function fabricarTurbohelice(librea: Librea): BufferGeometry {
 
 export interface AvionesDeLasIslas {
   readonly grupo: Group;
-  /** Pone cada uno donde diga el tráfico, y apaga los que no están. */
-  poner(quienes: readonly Isleno[]): void;
+  /**
+   * Pone cada uno donde diga el tráfico, y apaga los que no están.
+   * `segundos` es el reloj del vuelo, del que salen los destellos de sus
+   * luces. Ver `luces-del-trafico.ts`.
+   */
+  poner(quienes: readonly Isleno[], segundos?: number): void;
   dispose(): void;
 }
 
@@ -218,28 +229,46 @@ export function crearAvionesDeLasIslas(): AvionesDeLasIslas {
   const grupo = new Group();
   grupo.name = "aviones-de-las-islas";
   const material = new MeshLambertMaterial({ vertexColors: true });
+  /*
+   * **Y con sus luces**, que de día son lo que lo delata a lo lejos —el
+   * destello de las puntas— y de noche lo único que se ve de él. Siempre
+   * volando: estos no pisan ningún campo. Ver `luces-del-trafico.ts`.
+   */
+  const materialDeLasLuces = materialDeLuces();
+  const luces: LucesDeUnAvion[] = [];
   const mallas = LIBREAS_DE_LAS_ISLAS.slice(0, LIBREAS).map((l, i) => {
     const m = new Mesh(fabricarTurbohelice(l), material);
     m.name = `turbohelice-${i}`;
     m.visible = false;
+    const suyas = new LucesDeUnAvion(
+      sitiosDeGeometria(m.geometry) ?? sitiosPorMedidas(27),
+      materialDeLasLuces,
+      i * 0.37,
+    );
+    m.add(suyas.puntos);
+    luces.push(suyas);
     grupo.add(m);
     return m;
   });
   return {
     grupo,
-    poner(quienes) {
+    poner(quienes, segundos = 0) {
       for (const m of mallas) m.visible = false;
       for (const q of quienes) {
-        const m = mallas[q.librea % mallas.length];
+        const i = q.librea % mallas.length;
+        const m = mallas[i];
         if (!m) continue;
         m.visible = true;
         m.position.set(q.x, q.y, q.z);
         m.rotation.y = (giroDelModelo(q.rumbo) * Math.PI) / 180;
+        luces[i]?.paso(segundos, lucesDelTrafico("volando", q.y));
       }
     },
     dispose() {
       for (const m of mallas) m.geometry.dispose();
+      for (const l of luces) l.dispose();
       material.dispose();
+      materialDeLasLuces.dispose();
       grupo.clear();
     },
   };
