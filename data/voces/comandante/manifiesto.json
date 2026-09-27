@@ -3,11 +3,17 @@
   "voz": "comandante",
   "idioma": "es-PY",
   "piezas": {
+    "comandante.bienvenida.concepcion": {
+      "ms": 5607
+    },
     "comandante.bienvenida.el-hierro": {
       "ms": 6607
     },
     "comandante.bienvenida.encarnacion": {
       "ms": 6407
+    },
+    "comandante.bienvenida.estigarribia": {
+      "ms": 6207
     },
     "comandante.bienvenida.fuerteventura": {
       "ms": 5507
@@ -32,6 +38,9 @@
     },
     "comandante.bienvenida": {
       "ms": 4107
+    },
+    "comandante.bienvenida.pedro-juan": {
+      "ms": 5907
     },
     "comandante.bienvenida.pettirossi": {
       "ms": 6407
@@ -71,6 +80,21 @@
     },
     "comandante.llegada.chaco~5": {
       "ms": 7807
+    },
+    "comandante.llegada.concepcion": {
+      "ms": 9207
+    },
+    "comandante.llegada.concepcion~2": {
+      "ms": 6907
+    },
+    "comandante.llegada.concepcion~3": {
+      "ms": 10407
+    },
+    "comandante.llegada.concepcion~4": {
+      "ms": 8807
+    },
+    "comandante.llegada.concepcion~5": {
+      "ms": 7907
     },
     "comandante.llegada.cuatro-vientos": {
       "ms": 9107
@@ -314,11 +338,17 @@
     }
   },
   "recetas": {
+    "comandante.bienvenida.concepcion": [
+      "comandante.bienvenida.concepcion"
+    ],
     "comandante.bienvenida.el-hierro": [
       "comandante.bienvenida.el-hierro"
     ],
     "comandante.bienvenida.encarnacion": [
       "comandante.bienvenida.encarnacion"
+    ],
+    "comandante.bienvenida.estigarribia": [
+      "comandante.bienvenida.estigarribia"
     ],
     "comandante.bienvenida.fuerteventura": [
       "comandante.bienvenida.fuerteventura"
@@ -343,6 +373,9 @@
     ],
     "comandante.bienvenida": [
       "comandante.bienvenida"
+    ],
+    "comandante.bienvenida.pedro-juan": [
+      "comandante.bienvenida.pedro-juan"
     ],
     "comandante.bienvenida.pettirossi": [
       "comandante.bienvenida.pettirossi"
@@ -382,6 +415,21 @@
     ],
     "comandante.llegada.chaco~5": [
       "comandante.llegada.chaco~5"
+    ],
+    "comandante.llegada.concepcion": [
+      "comandante.llegada.concepcion"
+    ],
+    "comandante.llegada.concepcion~2": [
+      "comandante.llegada.concepcion~2"
+    ],
+    "comandante.llegada.concepcion~3": [
+      "comandante.llegada.concepcion~3"
+    ],
+    "comandante.llegada.concepcion~4": [
+      "comandante.llegada.concepcion~4"
+    ],
+    "comandante.llegada.concepcion~5": [
+      "comandante.llegada.concepcion~5"
     ],
     "comandante.llegada.cuatro-vientos": [
       "comandante.llegada.cuatro-vientos"

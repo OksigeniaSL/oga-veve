@@ -1,4 +1,5 @@
 voz	fichero	idioma	texto	dónde suena
+instructor	instructor/vuelo.solo-vuelta.ogg	es-PY	Desde acá, vuelta al campo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.estacionado.ogg	es-PY	Arrancá el motor	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.arrancando.ogg	es-PY	Soltá el freno y andá despacito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca hacer ahora, en vuelo y en tierra
@@ -147,6 +148,9 @@ comandante	comandante/comandante.bienvenida.local.ogg	es-PY	Señores pasajeros, 
 comandante	comandante/comandante.bienvenida.pettirossi.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.guarani.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.encarnacion.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.concepcion.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.pedro-juan.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.estigarribia.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.yvytu-rape.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.tenerife-norte.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.tenerife-sur.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.	la megafonía de cabina, para el pasaje
@@ -181,6 +185,11 @@ comandante	comandante/comandante.llegada.pedro-juan~2.ogg	es-PY	Bienvenidos a Pe
 comandante	comandante/comandante.llegada.pedro-juan~3.ogg	es-PY	Señores pasajeros, estamos en Amambay. Acá los cerros se levantan de golpe en medio del campo, como si los hubieran puesto a mano. Gracias por venir.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.pedro-juan~4.ogg	es-PY	Bienvenidos a Pedro Juan Caballero. Cerro Corá queda acá cerca, y en ese parque se acabó la Guerra Grande. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.pedro-juan~5.ogg	es-PY	Señores pasajeros, Pedro Juan Caballero. Dos países, una calle y un solo aeropuerto: éste. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.concepcion.ogg	es-PY	Señores pasajeros, bienvenidos a Concepción. Del otro lado del río Paraguay empieza el Chaco, y de acá para el norte el río es el camino. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.llegada.concepcion~2.ogg	es-PY	Bienvenidos a Concepción. Por este río bajaban los barcos a Asunción cuando no había otro camino al norte. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.concepcion~3.ogg	es-PY	Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.concepcion~4.ogg	es-PY	Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.concepcion~5.ogg	es-PY	Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.yvytu-rape.ogg	es-PY	Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.llegada.yvytu-rape~2.ogg	es-PY	Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.yvytu-rape~3.ogg	es-PY	Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
@@ -361,6 +370,9 @@ torre	torre/destino.pettirossi.ogg	es	Asunción	el destino, en la autorización 
 torre	torre/destino.guarani.ogg	es	Guaraní	el destino, en la autorización de la torre
 torre	torre/destino.encarnacion.ogg	es	Encarnación	el destino, en la autorización de la torre
 torre	torre/destino.yvytu-rape.ogg	es	Yvytu Rape	el destino, en la autorización de la torre
+torre	torre/destino.concepcion.ogg	es	Concepción	el destino, en la autorización de la torre
+torre	torre/destino.pedro-juan.ogg	es	Pedro Juan Caballero	el destino, en la autorización de la torre
+torre	torre/destino.estigarribia.ogg	es	Mariscal Estigarribia	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/destino.tenerife-norte.ogg	es	Tenerife Norte	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/destino.tenerife-sur.ogg	es	Tenerife Sur	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/destino.gran-canaria.ogg	es	Gran Canaria	el destino, en la autorización de la torre

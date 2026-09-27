@@ -297,6 +297,9 @@ export const ES_PY = {
   "lugar.guarani": "Guaraní",
   "lugar.encarnacion": "Encarnación",
   "lugar.yvytu-rape": "Yvytu Rape",
+  "lugar.concepcion": "Concepción",
+  "lugar.pedro-juan": "Pedro Juan Caballero",
+  "lugar.estigarribia": "Mariscal Estigarribia",
   "lugar.tenerife-norte": "Tenerife Norte",
   "lugar.tenerife-sur": "Tenerife Sur",
   "lugar.gran-canaria": "Gran Canaria",
@@ -351,6 +354,12 @@ export const ES_PY = {
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.",
   "comandante.bienvenida.encarnacion":
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.",
+  "comandante.bienvenida.concepcion":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.",
+  "comandante.bienvenida.pedro-juan":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.",
+  "comandante.bienvenida.estigarribia":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.",
   "comandante.bienvenida.yvytu-rape":
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.",
   "comandante.bienvenida.tenerife-norte":

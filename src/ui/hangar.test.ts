@@ -121,11 +121,24 @@ describe("las tres fichas de la portada", () => {
 describe("los destinos que no caben", () => {
   const jaz = (id: string) => AIRCRAFT.find((a) => a.id === id)!;
 
-  it("con el JAZ 120 en Pettirossi salen los dos, con su porqué", () => {
+  it("con el JAZ 120 en Pettirossi salen los que le quedan cortos, con su porqué", () => {
+    /*
+     * Desde que de Asunción sale todo el país, el reactor grande llega a los
+     * dos campos de más de tres kilómetros —Ciudad del Este y Mariscal
+     * Estigarribia— y a ninguno más. Los otros cuatro se ven apagados.
+     */
     const grande = jaz("jaz-120");
-    expect(destinosPosibles(PETTIROSSI, grande)).toHaveLength(0);
+    expect(destinosPosibles(PETTIROSSI, grande).map((d) => d.id).sort()).toEqual([
+      "estigarribia",
+      "guarani",
+    ]);
     const fuera = destinosQueNoCaben(PETTIROSSI, grande);
-    expect(fuera.map((f) => f.destino.id).sort()).toEqual(["encarnacion", "yvytu-rape"]);
+    expect(fuera.map((f) => f.destino.id).sort()).toEqual([
+      "concepcion",
+      "encarnacion",
+      "pedro-juan",
+      "yvytu-rape",
+    ]);
     for (const f of fuera) {
       expect(f.veredicto.cabe).toBe(false);
       expect(f.veredicto.porQueNo).not.toBeNull();

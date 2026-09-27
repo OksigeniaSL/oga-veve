@@ -58,8 +58,8 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
 rueda; `lejos`, dieciocho a ocho, que es donde se vuela el circuito; `medio`,
 cincuenta y cuatro a diecisiete; y `horizonte`, el mapa lejano entero —de
-ochenta y cuatro a trescientos veinticuatro kilómetros según el escenario— a
-entre setenta y ciento treinta y cuatro metros por píxel. El horizonte entró
+ochenta y cuatro a setecientos cuarenta y ocho kilómetros según el escenario—
+a entre setenta y doscientos setenta y siete metros por píxel. El horizonte entró
 el 19 de septiembre de 2026 porque sin él, donde acababa la foto de dieciocho
 kilómetros empezaba una llanura de color plano: «el paisaje es de estilo
 Minecraft, no se extiende el mapa realista en todo el trayecto».

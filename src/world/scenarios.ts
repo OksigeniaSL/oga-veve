@@ -676,26 +676,33 @@ export const PETTIROSSI: Scenario = {
   /**
    * **Y de Asunción se sale a algún sitio, que es lo que faltaba.**
    *
-   * Este juego es paraguayo y hasta hoy **volar de una pista a otra solo se
-   * podía en Canarias**: las ocho islas tenían su red y los siete campos
+   * Este juego es paraguayo y durante meses **volar de una pista a otra solo
+   * se podía en Canarias**: las ocho islas tenían su red y los campos
    * paraguayos, ninguno. Contado jugando: «yo no sé la de veces que he
    * querido despegar de una pista y llegar a otra y todavía en Paraguay no he
    * encontrado el modo». Y no lo encontraba porque no existía.
    *
-   * De los veintiún pares posibles entre campos paraguayos, solo dos caben en
-   * un mundo razonable. Medido con la misma cuenta que usa `destinos.test.ts`
-   * —el eje más largo, más los nueve kilómetros de sitio para aproximar—:
+   * Al principio solo cabían dos rutas —la granja y Encarnación—, porque se
+   * daba por hecho que ensanchar el mundo más allá de trescientos kilómetros
+   * costaba demasiado. **Se midió, y no era el ancho lo que costaba**: con las
+   * mismas muestras de relieve, un mundo de 748 km dibuja los mismos
+   * triángulos que uno de 462. Lo que pesa es cada aeropuerto vecino que se
+   * monta, y eso tiene su propio tope. Ver el ADR 0010.
+   *
+   * Así que de Asunción sale ya todo lo que sale de verdad. Medido con la
+   * misma cuenta que usa `destinos.test.ts` —el eje más largo, más los nueve
+   * kilómetros de sitio para aproximar—:
    *
    *     a Yvytu Rape     146 km  ·  eje 138  ·  veces ≥ 13,4
+   *     a Concepción     200 km  ·  eje 200  ·  veces ≥ 19,0
    *     a Encarnación    277 km  ·  eje 221  ·  veces ≥ 20,9
+   *     a Guaraní        270 km  ·  eje 269  ·  veces ≥ 25,3
    *     a Pedro Juan     336 km  ·  eje 289  ·  veces ≥ 27,1
    *     a Estigarribia   475 km  ·  eje 355  ·  veces ≥ 33,1
-   *     a Guaraní        270 km  ·  eje 269  ·  veces ≥ 25,3
    *
-   * Con catorce el mundo mide trescientos ocho kilómetros, que es el mismo
-   * que ya vuela Gran Canaria. De ahí para arriba se entra en mundos de
-   * cuatrocientos y pico con la foto del horizonte cayendo otro nivel, y eso
-   * es otra decisión.
+   * Treinta y cuatro veces son 748 km de mundo: el Chaco central por el
+   * oeste y el Paraná por el este, y la foto del horizonte sigue en el mismo
+   * nivel de zoom que ya tenía.
    *
    * **Y que sea Yvytu Rape no es solo porque quepa.** Es la pista de la
    * granja: de la terminal internacional a casa. Un chico de Asunción que
@@ -705,12 +712,24 @@ export const PETTIROSSI: Scenario = {
    * este juego quiere enseñar.
    */
   /*
-   * Y Encarnación, desde que dejó de ser un campo suelto: 277 km, la ruta que
-   * el país tiene de verdad hacia el sur. Pide un mundo mayor que el de la
-   * granja —eje 221 km—, y eso es lo que sube el múltiplo.
+   * Y el resto son las rutas que el país vuela o ha volado de verdad:
+   * Encarnación, Ciudad del Este y Pedro Juan Caballero las tuvo Sol del
+   * Paraguay —la de Ciudad del Este, además, Paranair con reactores—;
+   * Concepción la vuela el transporte aéreo militar con un CASA 212; y
+   * Mariscal Estigarribia es la del Chaco que anunció en 2024 el gobernador de
+   * Boquerón. Ver el ADR 0010.
+   *
+   * Son seis y no se montan las seis a la vez: ver `vecinosQueSeMontan`.
    */
-  destino: ["yvytu-rape", "encarnacion"],
-  vecesLejos: 21,
+  destino: [
+    "yvytu-rape",
+    "encarnacion",
+    "guarani",
+    "concepcion",
+    "pedro-juan",
+    "estigarribia",
+  ],
+  vecesLejos: 34,
 };
 
 /**
@@ -980,13 +999,13 @@ export const YVYTU_RAPE: Scenario = {
   magneticVariation: 13,
   aerodrome: YVYTU as unknown as Aerodrome,
   /**
-   * **Y la granja es el centro de la red paraguaya, no un rincón.**
+   * **Y la granja está en medio de la red paraguaya, no en un rincón.**
    *
-   * Los dos únicos pares de campos paraguayos que caben en un mundo razonable
-   * pasan los dos por aquí —a Asunción, 146 km; a Ciudad del Este, 149—, así
-   * que esta pista de hierba resulta ser el sitio mejor comunicado del país
-   * dentro del juego. No estaba buscado: sale de la geometría, porque Yvytu
-   * Rape cae entre los dos.
+   * Cae entre Asunción y Ciudad del Este —146 km a una, 149 a la otra—, y
+   * mientras se creyó que un mundo de más de trescientos kilómetros era caro,
+   * fueron las dos únicas rutas paraguayas que cabían y pasaban las dos por
+   * aquí. Desde el ADR 0010 las dos ciudades se unen directo, y la granja
+   * sigue siendo la escala natural de quien hace ese vuelo en avioneta.
    *
    * Y se aguanta solo como lección: **las dos son la misma distancia y no son
    * el mismo vuelo**. A Asunción se llega a una pista de asfalto con torre,
@@ -997,8 +1016,8 @@ export const YVYTU_RAPE: Scenario = {
    *
    * Veinticinco veces porque el lado de este escenario es de doce kilómetros
    * —es un aeródromo chico y su mundo cercano no necesita más—, así que hace
-   * falta un número más alto para llegar al mismo mundo de trescientos que
-   * los otros dos. Lo que manda es el mundo, no el múltiplo:
+   * falta un número más alto para llegar a un mundo de trescientos. Lo que
+   * manda es el mundo, no el múltiplo:
    *
    *     a Pettirossi   eje 138 km  ·  veces ≥ 24,5
    *     a Guaraní      eje 132 km  ·  veces ≥ 23,4
@@ -1741,26 +1760,25 @@ export const GUARANI: Scenario = {
   magneticVariation: 9,
   aerodrome: SGES as unknown as Aerodrome,
   /**
-   * **Y de Ciudad del Este también se vuela a la granja.**
+   * **Y de Ciudad del Este se vuela a la granja, al sur, a la capital y al
+   * norte.**
    *
-   * Es el otro de los dos pares paraguayos que caben: 149 km, eje 132, o sea
-   * veces ≥ 14,1. Con quince el mundo mide trescientos kilómetros, el mismo
-   * que ya vuela Gran Canaria.
+   * A la granja, 149 km; a Encarnación, 221 río abajo, cruzando la cuenca del
+   * Paraná.
    *
-   * A Asunción no se puede ir directo, y la cuenta lo dice sin discusión: 270
-   * km de distancia pero **269 de eje**, porque los dos campos están casi en
-   * el mismo paralelo. El mundo es un cuadrado, así que lo que manda es el
-   * eje más largo y no la línea recta — pediría veces ≥ 25,3, un mundo de más
-   * de quinientos kilómetros. La ruta existe de verdad y es la más transitada
-   * del país; aquí se hace en dos tramos, que además es lo que hace de Yvytu
-   * Rape una escala y no un destino suelto.
+   * **Y a Asunción directo, que es la ruta más transitada del país** y la que
+   * vuelan los reactores de Paranair. Estuvo fuera por el tamaño del mundo:
+   * 270 km de distancia pero **269 de eje**, porque los dos campos están casi
+   * en el mismo paralelo, y el mundo es un cuadrado. Se hacía en dos tramos,
+   * con escala en la granja. Medido, ensanchar no costaba cuadro —ver el
+   * ADR 0010—, así que ahora se va directo.
+   *
+   * Y a Pedro Juan Caballero, que era la otra ruta de Sol del Paraguay desde
+   * aquí: 329 km, eje 313. Es la que fija el ancho: treinta y tres veces, 660
+   * kilómetros.
    */
-  /*
-   * Y Encarnación: 221 km río abajo, cruzando la cuenca del Paraná. Con ella
-   * Ciudad del Este deja de ser una punta y pasa a ser un cruce.
-   */
-  destino: ["yvytu-rape", "encarnacion"],
-  vecesLejos: 21,
+  destino: ["yvytu-rape", "encarnacion", "pettirossi", "pedro-juan"],
+  vecesLejos: 33,
 };
 
 /**
@@ -1850,6 +1868,14 @@ export const ESTIGARRIBIA: Scenario = {
   // Doce grados: la 19 corre a 177,8° verdaderos y la cabecera pone 19.
   magneticVariation: 12,
   aerodrome: SGME as unknown as Aerodrome,
+  /*
+   * **Y del Chaco a la capital**: 475 km, eje 355 —en diagonal, y por eso
+   * tanto—. Es la ruta que anunció en 2024 el gobernador de Boquerón para
+   * unir el Chaco central con Asunción, y la más larga del juego: casi tres
+   * horas en avioneta, una en turbohélice. Treinta y siete veces, 740 km.
+   */
+  destino: ["pettirossi"],
+  vecesLejos: 37,
 };
 
 /**
@@ -1918,6 +1944,13 @@ export const PEDRO_JUAN: Scenario = {
   // verdaderos y la cabecera pone 03.
   magneticVariation: 16,
   aerodrome: SGPJ as unknown as Aerodrome,
+  /*
+   * **Y las dos rutas que tuvo de verdad**, las de Sol del Paraguay: a
+   * Asunción, 336 km, y a Ciudad del Este, 329. Esta segunda es la que fija
+   * el ancho —eje 313—: treinta y seis veces, 648 km.
+   */
+  destino: ["pettirossi", "guarani"],
+  vecesLejos: 36,
 };
 
 /**
@@ -2002,8 +2035,8 @@ export const ENCARNACION: Scenario = {
    *     a Guaraní      221 km  ·  eje 197 km
    *
    * El eje manda y no la distancia: el mundo es un cuadrado. Con los dos, el
-   * mundo pasa del de un campo suelto al más grande de Paraguay, y eso se
-   * midió antes de dejarlo — ver el commit que lo metió.
+   * mundo pasó del de un campo suelto al más grande que Paraguay tenía
+   * entonces; hoy los hay de setecientos kilómetros. Ver el ADR 0010.
    */
   destino: ["pettirossi", "guarani"],
   vecesLejos: 23,

@@ -8,21 +8,111 @@
   },
   "hitos": [
     {
-      "nombre": "Ilhas Taquaras",
+      "nombre": "Morro Chato",
+      "clase": "montana",
+      "lat": -26.61654,
+      "lon": -51.56613,
+      "x": 328647,
+      "z": 128915,
+      "ele": 1367
+    },
+    {
+      "nombre": "Morro do Vigia",
+      "clase": "montana",
+      "lat": -26.59053,
+      "lon": -51.73992,
+      "x": 311198,
+      "z": 126022,
+      "ele": 1313
+    },
+    {
+      "nombre": "Morro das Pederneiras",
+      "clase": "montana",
+      "lat": -26.58247,
+      "lon": -51.88385,
+      "x": 296748,
+      "z": 125125,
+      "ele": 1270
+    },
+    {
+      "nombre": "Morro Divisor dos Ventos",
+      "clase": "montana",
+      "lat": -26.34695,
+      "lon": -52.72692,
+      "x": 212105,
+      "z": 98938,
+      "ele": 1093
+    },
+    {
+      "nombre": "Isla San Martin",
       "clase": "isla",
-      "lat": -25.60161,
-      "lon": -54.36014,
-      "x": 48131,
-      "z": 16059,
+      "lat": -27.56299,
+      "lon": -56.69651,
+      "x": -186437,
+      "z": 234155,
       "ele": null
     },
     {
-      "nombre": "Isla Paranambú",
+      "nombre": "Ilha do Óleo Cru",
       "clase": "isla",
-      "lat": -25.97749,
-      "lon": -54.63497,
-      "x": 20539,
-      "z": 57855,
+      "lat": -22.66398,
+      "lon": -53.12507,
+      "x": 172131,
+      "z": -310590,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Ypecuá",
+      "clase": "isla",
+      "lat": -25.00793,
+      "lon": -57.32978,
+      "x": -250017,
+      "z": -49955,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Grande",
+      "clase": "isla",
+      "lat": -28.29096,
+      "lon": -55.73326,
+      "x": -89728,
+      "z": 315101,
+      "ele": null
+    },
+    {
+      "nombre": "Asunción",
+      "clase": "ciudad",
+      "lat": -25.28005,
+      "lon": -57.63438,
+      "x": -280598,
+      "z": -19697,
+      "ele": 89
+    },
+    {
+      "nombre": "San Lorenzo",
+      "clase": "ciudad",
+      "lat": -25.34252,
+      "lon": -57.5094,
+      "x": -268050,
+      "z": -12750,
+      "ele": null
+    },
+    {
+      "nombre": "Maringá",
+      "clase": "ciudad",
+      "lat": -23.42527,
+      "lon": -51.93821,
+      "x": 291290,
+      "z": -225939,
+      "ele": null
+    },
+    {
+      "nombre": "Cascavel",
+      "clase": "ciudad",
+      "lat": -24.9555,
+      "lon": -53.45605,
+      "x": 138900,
+      "z": -55785,
       "ele": null
     },
     {
@@ -32,42 +122,6 @@
       "lon": -54.61686,
       "x": 22357,
       "z": 6640,
-      "ele": null
-    },
-    {
-      "nombre": "Hernandarias",
-      "clase": "ciudad",
-      "lat": -25.40418,
-      "lon": -54.63204,
-      "x": 20833,
-      "z": -5894,
-      "ele": 243
-    },
-    {
-      "nombre": "Puerto Iguazú",
-      "clase": "ciudad",
-      "lat": -25.61075,
-      "lon": -54.57642,
-      "x": 26417,
-      "z": 17076,
-      "ele": null
-    },
-    {
-      "nombre": "Santa Rita",
-      "clase": "ciudad",
-      "lat": -25.80049,
-      "lon": -55.09345,
-      "x": -25491,
-      "z": 38173,
-      "ele": null
-    },
-    {
-      "nombre": "Santa Terezinha de Itaipu",
-      "clase": "ciudad",
-      "lat": -25.43908,
-      "lon": -54.40199,
-      "x": 43930,
-      "z": -2013,
       "ele": null
     }
   ]
