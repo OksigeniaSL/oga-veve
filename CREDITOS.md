@@ -52,7 +52,8 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
 | [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los siete escenarios paraguayos, en cuatro encuadres                                                                        | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
-| [Natural Earth](https://www.naturalearthdata.com) 1:10m, países                                                                                                               | La silueta del Paraguay y de las islas Canarias en el mapa del hangar                                                                  | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
+| [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; y en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
+| [AIP España](https://aip.enaire.es/AIP/) — ENAIRE, AIRAC AMDT 08/26 (en vigor desde el 03-SEP-2026)                                                                           | Los puntos del plan de vuelo en Canarias: salidas (SID), aproximaciones RNP y rutas de salida de La Gomera de los ocho aeropuertos de las islas, con sus nombres y coordenadas publicados. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 
 **Cuatro encuadres de la misma fuente**, y cada uno existe por un motivo
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
@@ -77,6 +78,31 @@ Pesos medidos: el horizonte anda por los cien kilobytes y `medio` va de
 doscientos veinticinco —El Hierro, que es casi todo mar— a dos megas y pico
 —Cuatro Vientos, que es Madrid entero—. Solo se baja la del escenario que se
 abre, y se guarda.
+
+### El plan de vuelo: AIP España
+
+Los puntos por los que va el plan de vuelo entre dos campos de Canarias —las
+salidas, las aproximaciones y sus nombres, CANDE, BUNIX, XO69E— son los que
+publica ENAIRE en el AIP de España: la parte AD 2 de GCXO, GCTS, GCLP, GCFV,
+GCRR, GCLA, GCHI y GCGM (cartas IAC, SID y ARR/DEP, con su tabla codificada y
+su lista de puntos) y las listas ENR 4.1 (radioayudas) y ENR 4.4 (puntos
+significativos), leídas el 27 de septiembre de 2026. Cada procedimiento lleva
+en `src/world/procedimientos-canarias.ts` el nombre de la carta de la que
+sale.
+
+Lo que se toma son **hechos**: dónde está un punto con nombre y por qué puntos
+pasa un procedimiento. Son las normas con las que se vuela en el espacio aéreo
+español, publicadas por el Estado para que se conozcan, y los textos oficiales
+no son objeto de propiedad intelectual (art. 13 de la Ley de Propiedad
+Intelectual). No se copia ni se redibuja ninguna carta. Las coordenadas se
+comprobaron contra las distancias que imprime cada carta, y las erratas
+que salieron van contadas en el mismo fichero.
+
+El Paraguay queda pendiente de las cartas de la DINAC: hasta entonces sus
+campos llevan la aproximación calculada sobre el eje de la pista, con las
+distancias de diseño de la OACI (PANS-OPS, Doc 8168) y los puntos rotulados
+como los rotula un ordenador de vuelo cuando no tienen nombre —CF y FF con el
+número de la pista—.
 
 ### Sentinel-2 cloudless: CC BY-NC-SA 4.0, uso no comercial
 
@@ -285,6 +311,22 @@ velocidades salen de los tiempos de travesía que publican las navieras. Son
 hechos, no obra de nadie, y el porqué de cada número está escrito junto a él:
 ver `src/world/rutas-de-barcos.ts` y `src/flight/trafico-de-las-islas.ts`.
 
+### La granja de Yvytu Rape
+
+La casa con su corredor, el galpón con el tractor, el hangar, el tanque de
+agua, el corral, el alambrado, el camino, el tajamar, los árboles y el ganado
+que rodean la pista de Granja Óga **se montan por código**, en
+`src/world/granja.ts`: cajas, conos y poliedros con el color en cada vértice.
+No hay fichero de modelo ni textura, así que no hay licencia de terceros: son
+de Oksigenia SL, bajo Apache-2.0.
+
+La granja es inventada, como el aeródromo, pero lo que tiene es lo de una
+granja de San Pedro y en su sitio: mangos, naranjos, pindós, karanday, timbós
+y lapachos, que florecen en rosa de julio a septiembre y el resto del año
+son verdes; ganado nelore casi todo blanco; el camino de tierra colorada; y
+el tajamar en el punto más bajo del potrero según el relieve medido, que es
+donde se junta el agua.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:
@@ -303,10 +345,18 @@ disponible para descargar" no es una licencia.
 
 ## Las voces
 
-Las trescientas cincuenta y ocho frases del juego —instructor, comandante,
-cantos de cabina, las dos torres y el otro avión de la radio— están
-**generadas con ElevenLabs** en la cuenta de Oksigenia SL, a partir de los
-guiones de `docs/voces/`, que los escribe el propio juego.
+Las seiscientas veintisiete frases del juego —instructor, comandante,
+tripulación de cabina, cantos de cabina, las dos torres y el otro avión de la
+radio— están **generadas con ElevenLabs** en la cuenta de Oksigenia SL, a
+partir de los guiones de `docs/voces/`, que los escribe el propio juego.
+
+Las voces **no son de nadie**: cada una se diseñó en la cuenta a partir de una
+descripción escrita —edad, habla del sitio, oficio—, sin clonar a ninguna
+persona. La última tanda, del 27 de septiembre de 2026, es la de la vida de la
+cabina con pasaje (#160): dos voces nuevas de tripulación de cabina, **Derlis**
+—hombre paraguayo, para los vuelos de Paraguay— e **Idaira** —mujer canaria,
+para los de las islas—, y los trozos con número de la comandante para el plan
+de vuelo y el descenso. Los identificadores están en `docs/voces/voces.json`.
 
 Qué hay en el repositorio y por qué:
 

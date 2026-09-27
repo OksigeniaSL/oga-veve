@@ -52,8 +52,10 @@ import {
   MARCA_CON_SU_APARATO,
   MARCA_ROTULO,
 } from "./familia";
-import { CUANTOS_OTROS } from "./cristal";
+import { CUANTOS_FIJOS, CUANTOS_OTROS } from "./cristal";
 import { dibujarLaCarta, type Mapa } from "./carta";
+import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
+import { decima as n1, escribir, poner } from "./si-cambia";
 
 /** Un punto de la carta, en píxeles desde el centro de la rosa. */
 type Punto2 = { dx: number; dy: number };
@@ -62,6 +64,8 @@ import {
   POR_NUDO,
   columnaDeMotor,
   franjaDeMotor,
+  hayQueMoverElTrozo,
+  marcasDeAltitud,
   lucesDeTren,
   pantallaDeActitud,
   pantallaDeMotores,
@@ -70,6 +74,7 @@ import {
 } from "./cristal";
 import { luzDeTren } from "../flight/tren";
 import { bienPuesta } from "../flight/altimetro";
+import { matriculaDe } from "../flight/matricula";
 import { anillosDe } from "../flight/tormentas";
 import { t, type TranslationKey } from "../i18n";
 import {
@@ -219,6 +224,36 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   combustible: "combustible",
 };
 
+/**
+ * **La placa de la matrícula**, atornillada al cuadro como en los aviones de
+ * verdad.
+ *
+ * Todo avión lleva su matrícula en una placa del panel, delante de quien
+ * vuela: es lo que se lee para decirla por radio sin tener que acordarse. Y
+ * aquí faltaba justo eso. La matrícula solo iba pintada fuera, en el fuselaje,
+ * y la torre llamaba «Zulu Echo Juliett Juliett» sin que hubiera en la cabina
+ * nada con qué compararlo: «¿cómo sé que soy yo?».
+ *
+ * Abajo a la izquierda, en la franja que queda libre debajo de los
+ * instrumentos en las tres familias, y **en los cuatro peldaños**: no es un
+ * rótulo que se lea, es una forma que se reconoce —la misma que va pintada
+ * en el avión, en la lámpara de la torre y en la tira de la radio—. Chapa
+ * clara y letra negra grabada, distinta de la placa oscura del OACI del
+ * destino. Ver `.placa-matricula` en la hoja.
+ */
+export function placaDeMatricula(matricula: string): string {
+  const ancho = 30 + matricula.length * 14;
+  return `
+      <g class="tablero__matricula" data-hud="placa-matricula"
+         transform="translate(14 ${ALTO_DEL_CUADRO - 32})">
+        <rect width="${ancho}" height="27" rx="3" class="tablero__matricula-chapa" />
+        <circle cx="6" cy="13.5" r="2" class="tablero__matricula-tornillo" />
+        <circle cx="${ancho - 6}" cy="13.5" r="2" class="tablero__matricula-tornillo" />
+        <text x="${ancho / 2}" y="20.5" text-anchor="middle"
+              class="tablero__matricula-letras">${matricula}</text>
+      </g>`;
+}
+
 export class Tablero {
   private raiz: SVGElement | null = null;
   private familia: Familia = "esferas";
@@ -259,6 +294,26 @@ export class Tablero {
   /** La línea que lee un lector de pantalla, y cuándo se dijo la última vez. */
   private lectura: HTMLElement | null = null;
   private desdeLaLectura = 0;
+
+  /**
+   * **Las piezas que se mueven, buscadas una vez por dibujo y no en cada
+   * imagen.**
+   *
+   * Cada fotograma se buscaban cuarenta piezas por selector en un árbol de
+   * setecientos elementos, y las que este avión no lleva —la carta en una
+   * avioneta, el depósito de barra en un reloj— recorrían el árbol entero para
+   * no encontrar nada. Con la CPU de un teléfono barato era un milisegundo por
+   * imagen en buscar lo que no cambia de sitio. Se vacía en `bind`, que es
+   * cuando el dibujo es otro.
+   */
+  private readonly piezas = new Map<string, Element | null>();
+  private readonly listas = new Map<string, readonly Element[]>();
+  /**
+   * Cuánto hace que se escribieron las cifras de apoyo. Ver `CIFRAS_POR_SEGUNDO`.
+   */
+  private desdeLasCifras = Infinity;
+  /** Lo que lleva dibujado el radar, para no rehacerlo si no cambia. */
+  private ecos = "";
 
   /**
    * El dibujo entero. Se llama al montar el HUD y al cambiar de aeronave.
@@ -337,6 +392,7 @@ export class Tablero {
       ${this.panelDeAvisos()}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
+      ${placaDeMatricula(matriculaDe(a.id).matricula)}
     `;
   }
 
@@ -437,12 +493,13 @@ export class Tablero {
       huecosDeAviso(encendidas(estado).map((l) => l.id)).map((h) => [h.id, h]),
     );
     for (const l of LUCES) {
-      const g = raiz.querySelector(`[data-luz="${l.id}"]`);
+      const sel = `[data-luz="${l.id}"]`;
+      const g = raiz === this.raiz ? this.pieza(sel) : raiz.querySelector(sel);
       if (!g) continue;
       const hueco = donde.get(l.id);
-      g.setAttribute("visibility", hueco ? "visible" : "hidden");
+      poner(g, "visibility", hueco ? "visible" : "hidden");
       if (!hueco) continue;
-      g.setAttribute("transform", `translate(${hueco.x} ${hueco.y})`);
+      poner(g, "transform", `translate(${hueco.x} ${hueco.y})`);
     }
   }
 
@@ -485,19 +542,25 @@ export class Tablero {
       </g>
       <g transform="translate(${placa.x} ${BANDA.y})">
         <!--
-          El hueco de la placa aparece **con lo que lleva dentro**.
+          **La placa lleva el avión en los cuatro peldaños.**
 
           La chapa con el nombre es letra, así que empieza en el tercer
-          peldaño; el recuadro empezaba en el primero. En los dos peldaños de
-          los pequeños quedaba un rectángulo negro con su filete y nada
-          escrito: un tercio del cuadro de mandos pareciendo un instrumento
-          roto, que es peor que un hueco. Visto en el JAZ 20, el 25 y el 40.
+          peldaño, y en los dos de los pequeños el tercio izquierdo del cuadro
+          se quedaba vacío: primero enmarcado y sin nada escrito, que parecía
+          un instrumento roto, y después sin marco, que dejaba las esferas y el
+          motor corridos a la derecha de un cuadro medio negro. Dicho con una
+          captura de Guyrami: «textos descentrados». No eran los textos: era
+          el hueco.
 
-          Que no haya nada ahí abajo es correcto —el cuadro no se recoloca
-          entre peldaños, crece— pero un sitio vacío se deja vacío, no se
-          enmarca.
+          Así que la placa lleva el retrato del avión que se vuela, que es un
+          dibujo y no una letra, en el mismo sitio en los cuatro peldaños y en
+          medio del alto, a la altura de la raya entre las dos filas de
+          esferas. Desde el tercero se le suma encima el nombre —el cuadro no
+          se recoloca entre peldaños: crece— y el marco va siempre, porque ya
+          nunca enmarca un sitio vacío.
         -->
-        <rect data-fondo="placa" ${MARCA_ROTULO} width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
+        <rect data-fondo="placa" width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
+        ${this.retrato(a, placa.ancho)}
         ${this.chapa(a, placa.ancho)}
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
               ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
@@ -527,8 +590,29 @@ export class Tablero {
       <text x="${ancho / 2}" y="46" ${MARCA_ROTULO} class="tablero__chapa" text-anchor="middle">${arriba}</text>
       <text x="${ancho / 2}" y="76" ${MARCA_ROTULO} class="tablero__chapa tablero__chapa--nombre"
             text-anchor="middle">${abajo}</text>
-      <line x1="${ancho * 0.2}" y1="94" x2="${ancho * 0.8}" y2="94" class="tablero__filete" />
+      <line x1="${ancho * 0.2}" y1="94" x2="${ancho * 0.8}" y2="94" ${MARCA_ROTULO} class="tablero__filete" />
     `;
+  }
+
+  /**
+   * El retrato del avión, en la placa: el mismo del hangar.
+   *
+   * Es el avión que se vuela, fotografiado por el propio juego con su pintura
+   * —ver `retratos.ts`—, así que quien lo eligió en el hangar lo reconoce en
+   * el cuadro sin leer su nombre. Va entre el filete de la chapa y la
+   * velocidad sobre el suelo, centrado en el alto de la banda, y no se mueve
+   * nunca: se pinta una vez y no le cuesta nada a ningún fotograma.
+   *
+   * Si la imagen no llega, la placa se queda con su marco, que es lo que
+   * había.
+   */
+  private retrato(a: AircraftConfig, ancho: number): string {
+    const lado = 4;
+    const w = ancho - lado * 2;
+    const h = (w * TAMANO_DE_RETRATO.alto) / TAMANO_DE_RETRATO.ancho;
+    return `<image href="${retratoDe(a.id)}" x="${lado}" y="${BANDA.alto / 2 - h / 2}"
+      width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"
+      class="tablero__retrato" />`;
   }
 
   /** Familia de cristal: horizonte a la izquierda, mapa con motor a la derecha. */
@@ -577,7 +661,37 @@ export class Tablero {
     this.agujas = Array.from({ length: a.motores }, () => 0);
     this.carta = { desviacion: 0, velocidad: 0 };
     this.cartaPuesta = false;
+    this.piezas.clear();
+    this.listas.clear();
+    this.desdeLasCifras = Infinity;
+    this.ecos = "";
     if (this.familia === "esferas") this.seisPack.bind(raiz);
+  }
+
+  /**
+   * La primera pieza del dibujo con ese selector, o `null` si no la lleva.
+   *
+   * El «no la lleva» también se guarda, que es lo que más ahorra: buscar lo
+   * que no está es recorrer el árbol entero. Y si la guardada ya no está en la
+   * página —un repintado que no pasó por `bind`—, se vuelve a buscar.
+   */
+  private pieza<T extends Element = SVGElement>(sel: string): T | null {
+    let el = this.piezas.get(sel);
+    if (el === undefined || (el !== null && !el.isConnected)) {
+      el = this.raiz?.querySelector(sel) ?? null;
+      this.piezas.set(sel, el);
+    }
+    return el as T | null;
+  }
+
+  /** Todas las piezas con ese selector, con la misma regla que `pieza`. */
+  private todas<T extends Element = SVGElement>(sel: string): readonly T[] {
+    let lista = this.listas.get(sel);
+    if (!lista || lista.some((el) => !el.isConnected)) {
+      lista = this.raiz ? [...this.raiz.querySelectorAll(sel)] : [];
+      this.listas.set(sel, lista);
+    }
+    return lista as readonly T[];
   }
 
   get presente(): boolean {
@@ -599,6 +713,9 @@ export class Tablero {
       this.cantar(d, dt);
       return;
     }
+    this.desdeLasCifras += dt;
+    const cifras = this.desdeLasCifras >= 1 / CIFRAS_POR_SEGUNDO;
+    if (cifras) this.desdeLasCifras = 0;
 
     if (this.familia === "esferas" && this.seisPack.present) {
       this.seisPack.update(
@@ -612,14 +729,14 @@ export class Tablero {
         d.declinacion ?? 0,
       );
     } else {
-      this.cintas(raiz, d, dt);
+      this.cintas(d, dt, cifras);
     }
-    this.motores(raiz, c, d, dt);
-    this.mandos(raiz, d);
+    this.motores(c, d, dt, cifras);
+    this.mandos(d, cifras);
     // Los avisos, en las tres familias: la avioneta también se cae.
     this.avisos(raiz, d, dt);
-    this.texto(raiz, "gs", `GS ${Math.round(d.sobreElSuelo)}`);
-    if (this.familia === "linea" && this.avion) {
+    if (cifras) this.texto("gs", `GS ${Math.round(d.sobreElSuelo)}`);
+    if (cifras && this.familia === "linea" && this.avion) {
       /*
        * Las mismas dos cuentas que el EICAS de la cabina, de los mismos sitios:
        * la temperatura de la atmósfera tipo y la altura de la cabina de
@@ -627,29 +744,33 @@ export class Tablero {
        */
       const metros = d.pies / PIES;
       const oat = Math.round(temperaturaExterior(metros));
-      this.texto(raiz, "oat", `${oat > 0 ? "+" : ""}${oat}°C`);
-      this.texto(
-        raiz,
-        "cabina",
+      this.texto("oat", `${oat > 0 ? "+" : ""}${oat}°C`);
+      this.texto("cabina",
         String(
           Math.round(altitudDeCabina(metros, this.avion) / 0.3048 / 50) * 50,
         ),
       );
     }
-    this.presion(raiz, d.presion);
+    // La presión, en cada imagen: la cambia una rueda que se gira a mano, y
+    // la ventanilla tiene que contestar al dedo. Casi nunca cambia, así que
+    // casi nunca se escribe.
+    this.presion(d.presion);
     this.cantar(d, dt);
   }
 
   // ── Lo que se mueve ─────────────────────────────────────────────────
 
-  private cintas(raiz: SVGElement, d: DatosDelTablero, dt: number): void {
+  private cintas(d: DatosDelTablero,
+    dt: number,
+    cifras: boolean,
+  ): void {
     // En magnéticos, que es lo que marca una brújula y lo que va pintado en
     // la cabecera. Ver `declinacion`.
     const decl = d.declinacion ?? 0;
     const rumbo = (((d.estado.heading * GRADOS + decl) % 360) + 360) % 360;
 
-    this.tira(raiz, "ias", d.nudos);
-    this.tira(raiz, "alt", d.pies);
+    this.tira("ias", d.nudos);
+    this.tira("alt", d.pies);
 
     /*
      * La carta de rumbo se pasa un par de grados al salir de un viraje, como
@@ -671,95 +792,89 @@ export class Tablero {
       dt,
     );
     const cartaDeg = ((this.carta.desviacion % 360) + 360) % 360;
-    this.tira(raiz, "hdg", cartaDeg);
+    this.tira("hdg", cartaDeg);
     /*
      * **Todas las rosas, no la primera.** El de cristal lleva dos —la de
      * dentro del horizonte y la del mapa— y girando solo la primera, la del
      * mapa se quedaba con el norte arriba mientras la de la cabina giraba con
      * el avión: el mismo instrumento, quieto en una vista y vivo en la otra.
      */
-    for (const rosa of raiz.querySelectorAll<SVGElement>(
-      '[data-cristal="rosa"]',
-    ))
-      rosa.setAttribute("transform", `rotate(${-cartaDeg})`);
+    for (const rosa of this.todas('[data-cristal="rosa"]'))
+      poner(rosa, "transform", `rotate(${n1(-cartaDeg)})`);
 
     // El horizonte, en cambio, va sin retardo: es el instrumento más directo
     // de la cabina y meterle inercia sería enseñar mal.
-    const disco = raiz.querySelector<SVGElement>('[data-cristal="disco"]');
+    const disco = this.pieza('[data-cristal="disco"]');
     if (disco) {
       const cx = Number(disco.dataset.cx);
       const cy = Number(disco.dataset.cy);
       const porGrado = Number(disco.dataset.porgrado);
-      disco.setAttribute(
+      poner(
+        disco,
         "transform",
-        `rotate(${-d.alabeo * GRADOS} ${cx} ${cy}) translate(0 ${cy + d.cabeceo * GRADOS * porGrado})`,
+        `rotate(${n1(-d.alabeo * GRADOS)} ${cx} ${cy}) translate(0 ${n1(cy + d.cabeceo * GRADOS * porGrado)})`,
       );
     }
-    const resbala = raiz.querySelector<SVGElement>(
-      '[data-cristal="deslizamiento"]',
-    );
+    const resbala = this.pieza('[data-cristal="deslizamiento"]');
     if (resbala) {
       const ampl = Number(resbala.dataset.ampl) || 20;
       const cuanto = Math.max(-1, Math.min(1, d.estado.beta * 6)) * ampl * 0.4;
-      resbala.setAttribute("transform", `translate(${cuanto} 0)`);
+      poner(resbala, "transform", `translate(${n1(cuanto)} 0)`);
     }
 
-    this.texto(raiz, "ias", String(Math.round(d.nudos)));
-    this.altitud(raiz, d.pies, d.fpm);
-    this.texto(raiz, "hdg", pad3(Math.round(rumbo) % 360));
-    this.texto(raiz, "nd-rumbo", pad3(Math.round(rumbo) % 360));
-    if (d.mach !== null && d.mach >= 0.4) {
-      this.texto(raiz, "mach", `M ${d.mach.toFixed(2).slice(1)}`);
-    } else {
-      this.texto(raiz, "mach", "");
+    this.texto("ias", String(Math.round(d.nudos)));
+    this.altitud(d.pies, d.fpm);
+    this.texto("hdg", pad3(Math.round(rumbo) % 360));
+    this.texto("nd-rumbo", pad3(Math.round(rumbo) % 360));
+    // Las de apoyo, a su ritmo: ver `CIFRAS_POR_SEGUNDO`.
+    if (cifras) {
+      if (d.mach !== null && d.mach >= 0.4) {
+        this.texto("mach", `M ${d.mach.toFixed(2).slice(1)}`);
+      } else {
+        this.texto("mach", "");
+      }
+      this.texto("viento",
+        d.viento
+          ? `${pad3(Math.round(d.viento.desde))}/${Math.round(d.viento.nudos)}`
+          : "",
+      );
+      this.texto("distancia",
+        d.objetivo ? `${(d.objetivo.distancia / 1852).toFixed(1)} NM` : "",
+      );
     }
-    this.texto(
-      raiz,
-      "viento",
-      d.viento
-        ? `${pad3(Math.round(d.viento.desde))}/${Math.round(d.viento.nudos)}`
-        : "",
-    );
-    this.texto(
-      raiz,
-      "distancia",
-      d.objetivo ? `${(d.objetivo.distancia / 1852).toFixed(1)} NM` : "",
-    );
 
     /*
      * El radioaltímetro, que aparece por debajo de dos mil quinientos pies y
      * desaparece por encima: mientras sobra altura no dice nada, y en cuanto
      * empieza a faltar es el único número que se mira.
      */
-    const radio = raiz.querySelector<SVGElement>('[data-cristal="radio"]');
+    const radio = this.pieza('[data-cristal="radio"]');
     if (radio) {
       const cerca = d.sobreElTerreno < DESDE_EL_RADIO;
-      radio.setAttribute("visibility", cerca ? "visible" : "hidden");
+      poner(radio, "visibility", cerca ? "visible" : "hidden");
       radio.classList.toggle("cr--bajito", d.sobreElTerreno < YA_ES_BAJO);
-      const cifra = radio.querySelector("text");
-      if (cifra && cerca) {
-        cifra.textContent = String(Math.max(0, Math.round(d.sobreElTerreno)));
-      }
+      const cifra = this.pieza('[data-cristal="radio"] text');
+      if (cifra && cerca)
+        escribir(cifra, String(Math.max(0, Math.round(d.sobreElTerreno))));
     }
 
-    this.vsi(raiz, d.fpm);
-    this.tendencias(raiz, d);
-    this.bugs(raiz, d, dt, rumbo);
+    this.vsi(d.fpm);
+    this.tendencias(d);
+    this.bugs(d, dt, rumbo);
 
     // La ruta, en magenta, desde el avión hacia donde se va.
-    const ruta = raiz.querySelector<SVGPathElement>(
-      '[data-cristal="ruta"] path',
-    );
+    const ruta = this.pieza('[data-cristal="ruta"] path');
     if (ruta) {
-      if (!d.objetivo) ruta.setAttribute("d", "M0 0");
+      if (!d.objetivo) poner(ruta, "d", "M0 0");
       else {
         // El objetivo viene en verdaderos: se pasa a magnéticos para
         // restarlo del rumbo, que ya lo está.
         const rel =
           ((d.objetivo.rumbo * GRADOS + decl - rumbo) * Math.PI) / 180;
-        ruta.setAttribute(
+        poner(
+          ruta,
           "d",
-          `M0 0 L${Math.sin(rel) * 160} ${-Math.cos(rel) * 160}`,
+          `M0 0 L${n1(Math.sin(rel) * 160)} ${n1(-Math.cos(rel) * 160)}`,
         );
       }
     }
@@ -786,8 +901,8 @@ export class Tablero {
     const enciende = (que: string, activo: boolean) =>
       activo && (quieto || parpadeo(this.edad(que, activo, dt)));
 
-    const marco = raiz.querySelector<SVGElement>('[data-cristal="perdida"]');
-    marco?.setAttribute(
+    poner(
+      this.pieza('[data-cristal="perdida"]'),
       "visibility",
       enciende("perdida", d.perdida) ? "visible" : "hidden",
     );
@@ -798,7 +913,7 @@ export class Tablero {
      * la esfera, y sale del mismo sitio para que no puedan discrepar.
      */
     const c = this.cuadro;
-    const caja = raiz.querySelector<SVGElement>('[data-alerta="ias"]');
+    const caja = this.pieza('[data-alerta="ias"]');
     if (!c || !caja) return;
     // Y el tope de lo que se lleve sacado, si es más bajo: con los flaps de
     // aterrizaje fuera, la cifra se enciende en su placa y no en la Vne.
@@ -821,15 +936,26 @@ export class Tablero {
   }
 
   /** Desplaza una tira para que el valor de ahora caiga en la línea de fe. */
-  private tira(raiz: SVGElement, que: string, valor: number): void {
-    const g = raiz.querySelector<SVGElement>(`[data-tira="${que}"]`);
+  private tira(que: string, valor: number): void {
+    const g = this.pieza(`[data-tira="${que}"]`);
     if (!g) return;
     const medio = Number(g.dataset.medio);
     const porUnidad = Number(g.dataset.porunidad);
     if (que === "hdg") {
-      g.setAttribute("transform", `translate(${medio - valor * porUnidad} 0)`);
+      poner(g, "transform", `translate(${n1(medio - valor * porUnidad)} 0)`);
     } else {
-      g.setAttribute("transform", `translate(0 ${medio + valor * porUnidad})`);
+      poner(g, "transform", `translate(0 ${n1(medio + valor * porUnidad)})`);
+    }
+    /*
+     * Y la de altitud va grabada a trozos: si el avión se acerca al borde del
+     * que hay, se graba otro centrado en él. Pasa cada muchos cientos de pies,
+     * no en cada imagen. Ver `TROZO_DE_CINTA`.
+     */
+    const trozo = que === "alt" ? this.pieza('[data-trozo="alt"]') : null;
+    if (trozo && hayQueMoverElTrozo(valor, Number(trozo.dataset.base), medio * 2)) {
+      const base = Math.round(valor / 100) * 100;
+      trozo.dataset.base = String(base);
+      trozo.innerHTML = marcasDeAltitud(base, medio * 2);
     }
   }
 
@@ -837,19 +963,17 @@ export class Tablero {
    * La altitud: la caja con lo de delante y el tambor con los dos últimos
    * dígitos rodando. Que es como se lee un altímetro de verdad de un vistazo.
    */
-  private altitud(raiz: SVGElement, pies: number, fpm: number): void {
-    this.texto(raiz, "alt", String(Math.floor(pies / 100)));
-    const tambor = raiz.querySelector<SVGElement>('[data-tambor="alt"]');
+  private altitud(pies: number, fpm: number): void {
+    this.texto("alt", String(Math.floor(pies / 100)));
+    const tambor = this.pieza('[data-tambor="alt"]');
     if (!tambor) return;
     const paso = Number(tambor.dataset.paso) || 26;
     const { centro, fraccion } = tamborDeAltitud(pies, fpm);
-    tambor.setAttribute("transform", `translate(0 ${fraccion * paso})`);
-    for (const t of tambor.querySelectorAll<SVGTextElement>(
-      "[data-tambor-cifra]",
-    )) {
+    poner(tambor, "transform", `translate(0 ${n1(fraccion * paso)})`);
+    for (const t of this.todas('[data-tambor="alt"] [data-tambor-cifra]')) {
       const k = Number(t.dataset.tamborCifra) - 1; // -1 arriba, +1 abajo
       const valor = centro - k * 20;
-      t.textContent = String(((valor % 100) + 100) % 100).padStart(2, "0");
+      escribir(t, String(((valor % 100) + 100) % 100).padStart(2, "0"));
     }
   }
 
@@ -861,27 +985,25 @@ export class Tablero {
    * mintiendo, y eso es exactamente lo que hay que aprender. En este juego
    * las normas se muestran, no se imponen. Ver `flight/altimetro.ts`.
    */
-  private presion(
-    raiz: SVGElement,
-    p: DatosDelTablero["presion"],
+  private presion(p: DatosDelTablero["presion"],
   ): void {
-    const t = raiz.querySelector<SVGTextElement>('[data-cristal="qnh"]');
+    const t = this.pieza('[data-cristal="qnh"]');
     if (!t) return;
     if (!p) {
-      t.textContent = "";
+      escribir(t, "");
       return;
     }
-    t.textContent = `QNH ${Math.round(p.puesta)}`;
+    escribir(t, `QNH ${Math.round(p.puesta)}`);
     t.classList.toggle("cr__qnh--mal", !bienPuesta(p.puesta, p.delSitio));
   }
 
-  private vsi(raiz: SVGElement, fpm: number): void {
-    const g = raiz.querySelector<SVGElement>('[data-cristal="vsi"]');
+  private vsi(fpm: number): void {
+    const g = this.pieza('[data-cristal="vsi"]');
     if (!g) return;
     const ampl = Number(g.dataset.ampl);
     const max = Number(g.dataset.max);
     const f = Math.max(-1, Math.min(1, fpm / max));
-    g.setAttribute("transform", `translate(0 ${-f * ampl})`);
+    poner(g, "transform", `translate(0 ${n1(-f * ampl)})`);
   }
 
   /**
@@ -889,43 +1011,41 @@ export class Tablero {
    * tocas nada. Es la animación más valiosa del cuadro, porque lo que enseña
    * es anticipación — que es casi todo lo que es pilotar.
    */
-  private tendencias(raiz: SVGElement, d: DatosDelTablero): void {
+  private tendencias(d: DatosDelTablero): void {
     const v = tendencia(this.aceleracion, QUIETA_LA_VELOCIDAD);
     const a = tendencia(d.fpm / 60, QUIETA_LA_ALTITUD / 60);
-    this.barra(raiz, "ias", v);
-    this.barra(raiz, "alt", a);
+    this.barra("ias", v);
+    this.barra("alt", a);
   }
 
-  private barra(raiz: SVGElement, que: string, salto: number | null): void {
-    const r = raiz.querySelector<SVGRectElement>(`[data-tendencia="${que}"]`);
+  private barra(que: string, salto: number | null): void {
+    const r = this.pieza(`[data-tendencia="${que}"]`);
     if (!r) return;
     if (salto === null) {
-      r.setAttribute("height", "0");
+      poner(r, "height", "0");
       return;
     }
     const medio = Number(r.dataset.medio);
     const porUnidad = Number(r.dataset.porunidad);
     const largo = Math.min(Math.abs(salto) * porUnidad, medio - 6);
-    r.setAttribute("y", String(salto > 0 ? medio - largo : medio));
-    r.setAttribute("height", String(largo));
+    poner(r, "y", n1(salto > 0 ? medio - largo : medio));
+    poner(r, "height", n1(largo));
   }
 
   /** Lo que se persigue: los bugs viajan a su sitio, no aparecen en él. */
-  private bugs(
-    raiz: SVGElement,
-    d: DatosDelTablero,
+  private bugs(d: DatosDelTablero,
     dt: number,
     rumbo: number,
   ): void {
     const ponV = (que: string, kt: number) => {
-      const g = raiz.querySelector<SVGElement>(`[data-bug="${que}"]`);
+      const g = this.pieza(`[data-bug="${que}"]`);
       if (!g) return;
       if (!Number.isFinite(kt) || kt <= 0) {
-        g.setAttribute("visibility", "hidden");
+        poner(g, "visibility", "hidden");
         return;
       }
-      g.setAttribute("visibility", "visible");
-      g.setAttribute("transform", `translate(0 ${-kt * POR_NUDO})`);
+      poner(g, "visibility", "visible");
+      poner(g, "transform", `translate(0 ${n1(-kt * POR_NUDO)})`);
     };
     ponV("v1", d.v1);
     ponV("vr", d.vr);
@@ -938,13 +1058,13 @@ export class Tablero {
      * recogerlos. Mirándola se sabe cuánto se puede acelerar ahora mismo sin
      * haber leído la placa. Con nada fuera, se queda en la de siempre.
      */
-    const tope = raiz.querySelector<SVGElement>('[data-tope="ias"]');
+    const tope = this.pieza('[data-tope="ias"]');
     const c = this.cuadro;
     if (tope && c) {
       const vne = c.velocidades.vne;
       const kt = Math.min(vne, d.topeKt ?? Infinity);
-      tope.setAttribute("transform", `translate(0 ${-kt * POR_NUDO})`);
-      tope.setAttribute("visibility", kt < vne ? "visible" : "hidden");
+      poner(tope, "transform", `translate(0 ${n1(-kt * POR_NUDO)})`);
+      poner(tope, "visibility", kt < vne ? "visible" : "hidden");
     }
 
     const quiero = d.objetivo
@@ -954,19 +1074,22 @@ export class Tablero {
     const corto = ((quiero - this.bugDeRumbo + 540) % 360) - 180;
     this.bugDeRumbo = deslizaBug(this.bugDeRumbo, this.bugDeRumbo + corto, dt);
     const bugDeg = ((this.bugDeRumbo % 360) + 360) % 360;
-    const enCinta = raiz.querySelector<SVGElement>('[data-bug="hdg"]');
-    enCinta?.setAttribute("transform", `translate(${bugDeg * POR_GRADO} 0)`);
-    for (const enRosa of raiz.querySelectorAll<SVGElement>('[data-bug="rosa"]'))
-      enRosa.setAttribute("transform", `rotate(${bugDeg})`);
-    const mcp = raiz.querySelector<SVGTextElement>('[data-mcp="hdg"]');
-    if (mcp) mcp.textContent = pad3(Math.round(bugDeg) % 360);
-    const mcpSpd = raiz.querySelector<SVGTextElement>('[data-mcp="spd"]');
-    if (mcpSpd)
-      mcpSpd.textContent = Number.isFinite(d.vref)
-        ? String(Math.round(d.vref))
-        : "---";
-    const mcpAlt = raiz.querySelector<SVGTextElement>('[data-mcp="alt"]');
-    if (mcpAlt) mcpAlt.textContent = String(Math.round(d.pies / 100) * 100);
+    poner(
+      this.pieza('[data-bug="hdg"]'),
+      "transform",
+      `translate(${n1(bugDeg * POR_GRADO)} 0)`,
+    );
+    for (const enRosa of this.todas('[data-bug="rosa"]'))
+      poner(enRosa, "transform", `rotate(${n1(bugDeg)})`);
+    escribir(this.pieza('[data-mcp="hdg"]'), pad3(Math.round(bugDeg) % 360));
+    escribir(
+      this.pieza('[data-mcp="spd"]'),
+      Number.isFinite(d.vref) ? String(Math.round(d.vref)) : "---",
+    );
+    escribir(
+      this.pieza('[data-mcp="alt"]'),
+      String(Math.round(d.pies / 100) * 100),
+    );
   }
 
   // ── Los motores y los mandos ────────────────────────────────────────
@@ -979,11 +1102,10 @@ export class Tablero {
    * vuele con paciencia, adelantándose. Que la aguja tarde no es un defecto
    * del dibujo: **es la lección**.
    */
-  private motores(
-    raiz: SVGElement,
-    c: Cuadro,
+  private motores(c: Cuadro,
     d: DatosDelTablero,
     dt: number,
+    cifras: boolean,
   ): void {
     const tau = TARDA_EL_MOTOR[c.queMarca];
     for (let i = 0; i < this.agujas.length; i++) {
@@ -997,45 +1119,40 @@ export class Tablero {
        */
       const giro = (r: number) =>
         anguloEn(c.motor.barrido, enLaEscala(c.motor, valorDeMotor(c, r)));
-      const aguja = raiz.querySelector<SVGElement>(`[data-motor-aguja="${i}"]`);
-      aguja?.setAttribute("transform", `rotate(${giro(f)})`);
-      const barra = raiz.querySelector<SVGRectElement>(
-        `[data-motor-barra="${i}"]`,
+      poner(
+        this.pieza(`[data-motor-aguja="${i}"]`),
+        "transform",
+        `rotate(${n1(giro(f))})`,
       );
+      const barra = this.pieza(`[data-motor-barra="${i}"]`);
       if (barra) {
         const alto = Number(barra.dataset.alto);
         const suelo = Number(barra.dataset.suelo);
-        barra.setAttribute("y", String(suelo - f * alto));
-        barra.setAttribute("height", String(f * alto));
+        poner(barra, "y", n1(suelo - f * alto));
+        poner(barra, "height", n1(f * alto));
         barra.classList.toggle("cr__barra--tope", f > 0.95);
       }
-      const cifra = raiz.querySelector<SVGTextElement>(
-        `[data-motor-cifra="${i}"]`,
-      );
-      if (cifra) cifra.textContent = cifraDeMotor(c, f);
+      if (cifras)
+        escribir(this.pieza(`[data-motor-cifra="${i}"]`), cifraDeMotor(c, f));
       /*
        * Y lo que se le ha **pedido**, que no es lo mismo: el bug y la barra van
        * al mando, la aguja y la cifra van a lo que está dando. Verlos separarse
        * en cada empujón de gas es toda la lección de un reactor.
        */
       const pedido = Math.max(0, Math.min(1, objetivo));
-      const bug = raiz.querySelector<SVGElement>(`[data-motor-bug="${i}"]`);
-      bug?.setAttribute("transform", `rotate(${giro(pedido)})`);
-      const mando = raiz.querySelector<SVGRectElement>(
-        `[data-mando-motor="${i}"]`,
+      poner(
+        this.pieza(`[data-motor-bug="${i}"]`),
+        "transform",
+        `rotate(${n1(giro(pedido))})`,
       );
-      if (mando) {
-        mando.setAttribute(
-          "width",
-          String(pedido * Number(mando.dataset.ancho)),
-        );
-      }
-      const g = raiz.querySelector<SVGElement>(`[data-motor="${i}"]`);
-      g?.classList.toggle("cr--tope", f > 0.95);
+      const mando = this.pieza(`[data-mando-motor="${i}"]`);
+      if (mando)
+        poner(mando, "width", n1(pedido * Number(mando.dataset.ancho)));
+      this.pieza(`[data-motor="${i}"]`)?.classList.toggle("cr--tope", f > 0.95);
     }
   }
 
-  private mandos(raiz: SVGElement, d: DatosDelTablero): void {
+  private mandos(d: DatosDelTablero, cifras: boolean): void {
     /*
      * Los flaps, **en grados y donde caen en la escala**: la regla y el reloj
      * llevan las muescas en proporción a sus grados, y el puntero va a los
@@ -1044,11 +1161,12 @@ export class Tablero {
     const c = this.cuadro;
     const grados = c ? enLaMuesca(c.flaps, d.flaps) : 0;
     const enLaRegla = c ? flapsEnLaEscala(c, grados) : 0;
-    const flaps = raiz.querySelector<SVGElement>('[data-cristal="flaps"]');
+    const flaps = this.pieza('[data-cristal="flaps"]');
     if (flaps) {
       const largo = Number(flaps.dataset.largo);
-      const cuanto = enLaRegla * largo;
-      flaps.setAttribute(
+      const cuanto = n1(enLaRegla * largo);
+      poner(
+        flaps,
         "transform",
         flaps.dataset.tumbada === "1"
           ? `translate(${cuanto} 0)`
@@ -1056,18 +1174,19 @@ export class Tablero {
       );
     }
     if (c?.escalaDeFlaps) {
-      raiz
-        .querySelector<SVGElement>("[data-flaps-aguja]")
-        ?.setAttribute(
-          "transform",
-          `rotate(${anguloEn(c.escalaDeFlaps.barrido, enLaRegla)})`,
-        );
-      const cifra = raiz.querySelector("[data-flaps-cifra]");
-      if (cifra) cifra.textContent = `${Math.round(grados)}°`;
+      poner(
+        this.pieza("[data-flaps-aguja]"),
+        "transform",
+        `rotate(${n1(anguloEn(c.escalaDeFlaps.barrido, enLaRegla))})`,
+      );
+      escribir(this.pieza("[data-flaps-cifra]"), `${Math.round(grados)}°`);
     }
-    this.deposito(raiz, d);
-    const rev = raiz.querySelector<SVGElement>('[data-cristal="reversa"]');
-    rev?.setAttribute("visibility", d.reversa ? "visible" : "hidden");
+    this.deposito(d, cifras);
+    poner(
+      this.pieza('[data-cristal="reversa"]'),
+      "visibility",
+      d.reversa ? "visible" : "hidden",
+    );
 
     /*
      * Y las luces del tren, con sus tres estados. Verde solo cuando está fuera
@@ -1075,8 +1194,8 @@ export class Tablero {
      * decir «esperá», y esa espera de diez segundos es media lección del
      * mando. Ver `flight/tren.ts`.
      */
-    this.laCarta(raiz, d);
-    const tren = raiz.querySelector<SVGElement>('[data-cristal="tren"]');
+    this.laCarta(d, cifras);
+    const tren = this.pieza('[data-cristal="tren"]');
     if (tren) {
       const luz = luzDeTren(d.tren);
       tren.classList.toggle("cr--moviendose", luz === "moviendose");
@@ -1098,15 +1217,15 @@ export class Tablero {
    * minutos, y el aviso saltaba en todos los despegues. Ver
    * `comoVaElDeposito`.
    */
-  private deposito(raiz: SVGElement, d: DatosDelTablero): void {
-    this.relojDeCombustible(raiz, d);
-    const g = raiz.querySelector<SVGElement>('[data-cristal="combustible"]');
+  private deposito(d: DatosDelTablero, cifras: boolean): void {
+    this.relojDeCombustible(d, cifras);
+    const g = this.pieza('[data-cristal="combustible"]');
     if (!g) return;
     if (!d.combustible) {
-      g.setAttribute("visibility", "hidden");
+      poner(g, "visibility", "hidden");
       return;
     }
-    g.setAttribute("visibility", "visible");
+    poner(g, "visibility", "visible");
     const { kilos, cabe, reserva, estado } = d.combustible;
     g.classList.toggle("cr--reserva", estado === "reserva");
     g.classList.toggle("cr--poco", estado === "poco");
@@ -1114,35 +1233,36 @@ export class Tablero {
     const largo = Number(g.dataset.largo) || 1;
     const tumbada = g.dataset.tumbada === "1";
     const parte = (k: number) => Math.max(0, Math.min(1, k / Math.max(1, cabe)));
-    const poner = (sel: string, k: number): void => {
-      const r = g.querySelector<SVGElement>(sel);
+    const dentro = (que: string) =>
+      this.pieza(`[data-cristal="combustible"] [data-combustible="${que}"]`);
+    const llenar = (que: string, k: number): void => {
+      const r = dentro(que);
       if (!r) return;
       const cuanto = parte(k) * largo;
-      if (tumbada) r.setAttribute("width", String(cuanto));
+      if (tumbada) poner(r, "width", n1(cuanto));
       else {
         // De pie se vacía por arriba: el suelo del rectángulo no se mueve.
-        r.setAttribute("y", String(largo - cuanto));
-        r.setAttribute("height", String(cuanto));
+        poner(r, "y", n1(largo - cuanto));
+        poner(r, "height", n1(cuanto));
       }
     };
-    poner('[data-combustible="barra"]', kilos);
-    poner('[data-combustible="reserva"]', reserva);
+    llenar("barra", kilos);
+    llenar("reserva", reserva);
 
     // Y la raya, que no se estira: se coloca. Ver `reglaDeCombustible`.
-    const raya = g.querySelector<SVGElement>('[data-combustible="raya"]');
+    const raya = dentro("raya");
     if (raya) {
       const donde = parte(reserva) * largo;
       if (tumbada) {
-        raya.setAttribute("x1", String(donde));
-        raya.setAttribute("x2", String(donde));
+        poner(raya, "x1", n1(donde));
+        poner(raya, "x2", n1(donde));
       } else {
-        raya.setAttribute("y1", String(largo - donde));
-        raya.setAttribute("y2", String(largo - donde));
+        poner(raya, "y1", n1(largo - donde));
+        poner(raya, "y2", n1(largo - donde));
       }
     }
 
-    const cifra = g.querySelector('[data-combustible="cifra"]');
-    if (cifra) cifra.textContent = String(Math.round(kilos));
+    if (cifras) escribir(dentro("cifra"), String(Math.round(kilos)));
   }
 
   /**
@@ -1151,18 +1271,23 @@ export class Tablero {
    * Sin vuelo del que decirlo no hay señal, y un instrumento sin señal no
    * marca cero: la aguja descansa en la E y la cifra se queda en blanco.
    */
-  private relojDeCombustible(raiz: SVGElement, d: DatosDelTablero): void {
+  private relojDeCombustible(d: DatosDelTablero,
+    cifras: boolean,
+  ): void {
     const c = this.cuadro;
-    const aguja = raiz.querySelector<SVGElement>("[data-fuel-aguja]");
+    const aguja = this.pieza("[data-fuel-aguja]");
     if (!c || !aguja) return;
     const kilos = d.combustible?.kilos ?? 0;
-    aguja.setAttribute(
+    poner(
+      aguja,
       "transform",
-      `rotate(${anguloEn(c.combustible.barrido, enLaEscala(c.combustible, kilos))})`,
+      `rotate(${n1(anguloEn(c.combustible.barrido, enLaEscala(c.combustible, kilos)))})`,
     );
-    const cifra = raiz.querySelector<SVGElement>("[data-fuel-cifra]");
+    const cifra = this.pieza("[data-fuel-cifra]");
     if (!cifra) return;
-    cifra.textContent = d.combustible ? String(Math.round(kilos)) : "";
+    // Sin vuelo se borra en el acto, sin esperar al turno de las cifras.
+    if (cifras || !d.combustible)
+      escribir(cifra, d.combustible ? String(Math.round(kilos)) : "");
     cifra.classList.toggle("cr--reserva", d.combustible?.estado === "reserva");
     cifra.classList.toggle("cr--poco", d.combustible?.estado === "poco");
   }
@@ -1178,8 +1303,8 @@ export class Tablero {
    * de la cabina. El dibujo puede ser distinto —aquí SVG, allí lienzo— pero
    * **dónde va cada cosa, no**: de eso se trataba.
    */
-  private laCarta(raiz: SVGElement, d: DatosDelTablero): void {
-    const grupo = raiz.querySelector('[data-carta="grupo"]');
+  private laCarta(d: DatosDelTablero, cifras: boolean): void {
+    const grupo = this.pieza('[data-carta="grupo"]');
     if (!grupo) return;
     // El radio de **su** rosa, la del mapa: la primera de la página es la del
     // horizonte en el de cristal, y con ella la carta salía a otra escala.
@@ -1194,25 +1319,25 @@ export class Tablero {
       (d.estado.heading * 180) / Math.PI,
       radio,
     );
-    const poner = (sel: string, a: Punto2 | null, b: Punto2 | null): void => {
-      const el = grupo.querySelector(sel);
+    const raya = (sel: string, a: Punto2 | null, b: Punto2 | null): void => {
+      const el = this.pieza(sel);
       if (!el) return;
       if (!a || !b) {
-        el.setAttribute("visibility", "hidden");
+        poner(el, "visibility", "hidden");
         return;
       }
-      el.setAttribute("visibility", "visible");
-      el.setAttribute("x1", String(a.dx));
-      el.setAttribute("y1", String(a.dy));
-      el.setAttribute("x2", String(b.dx));
-      el.setAttribute("y2", String(b.dy));
+      poner(el, "visibility", "visible");
+      poner(el, "x1", n1(a.dx));
+      poner(el, "y1", n1(a.dy));
+      poner(el, "x2", n1(b.dx));
+      poner(el, "y2", n1(b.dy));
     };
-    poner(
+    raya(
       '[data-carta="eje"]',
       dibujo.eje?.desde ?? null,
       dibujo.eje?.hasta ?? null,
     );
-    poner(
+    raya(
       '[data-carta="pista"]',
       dibujo.pista?.[0] ?? null,
       dibujo.pista?.[1] ?? null,
@@ -1234,57 +1359,62 @@ export class Tablero {
      */
     const caben = dibujo.otros.slice(0, CUANTOS_OTROS);
     for (let i = 0; i < CUANTOS_OTROS; i++) {
-      const pieza = grupo.querySelector(`[data-carta="otro-${i}"]`);
+      const otro = `[data-carta="otro-${i}"]`;
+      const pieza = this.pieza(otro);
       if (!pieza) continue;
       const o = caben[caben.length - 1 - i];
       if (!o) {
-        pieza.setAttribute("visibility", "hidden");
+        poner(pieza, "visibility", "hidden");
         continue;
       }
-      pieza.setAttribute("visibility", "visible");
-      pieza.setAttribute("transform", `translate(${o.dx} ${o.dy})`);
-      pieza.setAttribute("class", `cr__trafico cr__trafico--${o.clase}`);
+      poner(pieza, "visibility", "visible");
+      poner(pieza, "transform", `translate(${n1(o.dx)} ${n1(o.dy)})`);
+      poner(pieza, "class", `cr__trafico cr__trafico--${o.clase}`);
       const aviso = o.clase === "aviso";
-      pieza
-        .querySelector('[data-tcas="rombo"]')
-        ?.setAttribute("visibility", aviso ? "hidden" : "inherit");
-      pieza
-        .querySelector('[data-tcas="circulo"]')
-        ?.setAttribute("visibility", aviso ? "inherit" : "hidden");
-      const altura = pieza.querySelector('[data-tcas="altura"]');
+      poner(
+        this.pieza(`${otro} [data-tcas="rombo"]`),
+        "visibility",
+        aviso ? "hidden" : "inherit",
+      );
+      poner(
+        this.pieza(`${otro} [data-tcas="circulo"]`),
+        "visibility",
+        aviso ? "inherit" : "hidden",
+      );
+      const altura = this.pieza(`${otro} [data-tcas="altura"]`);
       if (altura) {
-        if (altura.textContent !== (o.etiqueta ?? ""))
-          altura.textContent = o.etiqueta ?? "";
+        escribir(altura, o.etiqueta ?? "");
         // Encima si está más alto, debajo si está más bajo: la etiqueta dice
         // por dónde anda antes de leer el número.
-        altura.setAttribute("y", o.encima ? "-10" : "18");
+        poner(altura, "y", o.encima ? "-10" : "18");
       }
-      const flecha = pieza.querySelector('[data-tcas="flecha"]');
+      const flecha = this.pieza(`${otro} [data-tcas="flecha"]`);
       if (flecha) {
         const hay = o.tendencia !== 0 && !o.alBorde;
-        flecha.setAttribute("visibility", hay ? "inherit" : "hidden");
+        poner(flecha, "visibility", hay ? "inherit" : "hidden");
         if (hay)
-          flecha.setAttribute(
-            "transform",
-            o.tendencia > 0 ? "" : "rotate(180 10 0)",
-          );
+          poner(flecha, "transform", o.tendencia > 0 ? "" : "rotate(180 10 0)");
       }
     }
     // Fuera del grupo recortado: es un rótulo de la pantalla, como el rango.
-    raiz
-      .querySelector('[data-carta="solo-ta"]')
-      ?.setAttribute("visibility", dibujo.soloTa ? "visible" : "hidden");
+    poner(
+      this.pieza('[data-carta="solo-ta"]'),
+      "visibility",
+      dibujo.soloTa ? "visible" : "hidden",
+    );
     /*
      * **Y el radar meteorológico.**
      *
-     * Éste sí se rehace entero cada vez, y es la excepción del fichero: las
-     * células son cuatro como mucho y cambian de sitio con el avión, así que
-     * mantener piezas puestas costaría más de lo que ahorra. Todo lo demás de
-     * aquí mueve atributos de piezas que ya existen.
+     * Éste sí se rehace entero, y es la excepción del fichero: las células
+     * son cuatro como mucho y cambian de sitio con el avión, así que mantener
+     * piezas puestas costaría más de lo que ahorra. Todo lo demás de aquí
+     * mueve atributos de piezas que ya existen. **Pero solo si ha cambiado**:
+     * sin nubes se vaciaba un grupo vacío sesenta veces por segundo, y cada
+     * vaciado es un repintado.
      */
-    const radar = grupo.querySelector('[data-carta="radar"]');
+    const radar = this.pieza('[data-carta="radar"]');
     if (radar) {
-      radar.innerHTML = dibujo.celdas
+      const ecos = dibujo.celdas
         .flatMap((c) =>
           anillosDe(c.fuerza).map(
             ({ parte, color }) =>
@@ -1292,6 +1422,10 @@ export class Tablero {
           ),
         )
         .join("");
+      if (ecos !== this.ecos) {
+        this.ecos = ecos;
+        radar.innerHTML = ecos;
+      }
     }
 
     /*
@@ -1301,50 +1435,109 @@ export class Tablero {
      * superficies que enseñan lo mismo se tocan las dos o no se toca ninguna.
      * Las cuentas son las mismas para las dos — ver `ui/carta.ts`.
      */
-    const destino = grupo.querySelector('[data-carta="destino"]');
+    const destino = this.pieza('[data-carta="destino"]');
     if (destino) {
       const d2 = dibujo.destino;
-      destino.setAttribute("visibility", d2 ? "visible" : "hidden");
+      poner(destino, "visibility", d2 ? "visible" : "hidden");
       if (d2) {
-        destino.setAttribute("transform", `translate(${d2.dx} ${d2.dy})`);
-        const punta = destino.querySelector('[data-carta="destino-punta"]');
+        poner(destino, "transform", `translate(${n1(d2.dx)} ${n1(d2.dy)})`);
+        const punta = this.pieza('[data-carta="destino-punta"]');
         // La punta solo cuando está pegado al borde: dentro de la carta el
         // símbolo ya dice dónde está y una flecha encima sobra.
-        punta?.setAttribute("visibility", d2.dentro ? "hidden" : "visible");
+        poner(punta, "visibility", d2.dentro ? "hidden" : "visible");
         // Y apuntando hacia fuera, que es hacia donde queda el aeropuerto.
         if (!d2.dentro)
-          punta?.setAttribute(
+          poner(
+            punta,
             "transform",
-            `rotate(${(Math.atan2(d2.dx, -d2.dy) * 180) / Math.PI})`,
+            `rotate(${n1((Math.atan2(d2.dx, -d2.dy) * 180) / Math.PI)})`,
           );
-        const oaci = destino.querySelector('[data-carta="destino-oaci"]');
-        if (oaci && oaci.textContent !== (d2.oaci ?? ""))
-          oaci.textContent = d2.oaci ?? "";
+        escribir(this.pieza('[data-carta="destino-oaci"]'), d2.oaci ?? "");
       }
     }
     // Y el alternativo, igual pero sin punta: pegado al borde, el símbolo
     // ya dice por dónde cae, y una segunda flecha competiría con la del
     // destino, que es la que se sigue.
-    const alterno = grupo.querySelector('[data-carta="alterno"]');
+    const alterno = this.pieza('[data-carta="alterno"]');
     if (alterno) {
       const a2 = dibujo.alterno;
-      alterno.setAttribute("visibility", a2 ? "visible" : "hidden");
+      poner(alterno, "visibility", a2 ? "visible" : "hidden");
       if (a2) {
-        alterno.setAttribute("transform", `translate(${a2.dx} ${a2.dy})`);
-        const oaci = alterno.querySelector('[data-carta="alterno-oaci"]');
-        if (oaci && oaci.textContent !== (a2.oaci ?? ""))
-          oaci.textContent = a2.oaci ?? "";
+        poner(alterno, "transform", `translate(${n1(a2.dx)} ${n1(a2.dy)})`);
+        escribir(this.pieza('[data-carta="alterno-oaci"]'), a2.oaci ?? "");
       }
     }
-    this.texto(
-      raiz,
-      "millas-destino",
+    if (!cifras) return;
+    this.texto("millas-destino",
       // Con el indicativo delante: a qué sitio son esas millas.
       dibujo.destino
         ? `${dibujo.destino.oaci ? `${dibujo.destino.oaci} ` : ""}${dibujo.destino.millas.toFixed(1)} NM`
         : "",
     );
-    this.texto(raiz, "rango", `${dibujo.rango} NM`);
+    this.texto("rango", `${dibujo.rango} NM`);
+    this.elPlan(d, dibujo);
+  }
+
+  /**
+   * **El plan de vuelo en la carta**: la línea magenta por sus puntos, las
+   * estrellas con su nombre, el círculo del descenso y, arriba a la derecha,
+   * el punto al que se va con sus millas y —en el peldaño de cabina— su hora.
+   * Las cuentas son las de `ui/carta.ts`, las mismas que la cabina. Se escribe
+   * solo lo que cambia, como el resto del cuadro: ver `si-cambia.ts`.
+   */
+  private elPlan(
+    d: DatosDelTablero,
+    dibujo: ReturnType<typeof dibujarLaCarta>,
+  ): void {
+    const plan = dibujo.ruta;
+    const linea = this.pieza('[data-carta="plan"]');
+    if (linea) {
+      poner(linea, "visibility", plan ? "visible" : "hidden");
+      if (plan)
+        poner(
+          linea,
+          "d",
+          plan.linea
+            .map((p, i) => `${i ? "L" : "M"}${n1(p.dx)} ${n1(p.dy)}`)
+            .join(" "),
+        );
+    }
+    for (let i = 0; i < CUANTOS_FIJOS; i++) {
+      const pieza = this.pieza(`[data-carta="fijo-${i}"]`);
+      if (!pieza) continue;
+      const f = plan?.fijos[i];
+      if (!f) {
+        poner(pieza, "visibility", "hidden");
+        continue;
+      }
+      poner(pieza, "visibility", "visible");
+      poner(pieza, "transform", `translate(${n1(f.dx)} ${n1(f.dy)})`);
+      pieza.classList.toggle("cr__fijo--activo", f.activo);
+      escribir(pieza.querySelector('[data-carta="fijo-nombre"]'), f.nombre);
+    }
+    const td = this.pieza('[data-carta="td"]');
+    if (td) {
+      poner(td, "visibility", plan?.descenso ? "visible" : "hidden");
+      if (plan?.descenso)
+        poner(
+          td,
+          "transform",
+          `translate(${n1(plan.descenso.dx)} ${n1(plan.descenso.dy)})`,
+        );
+    }
+    /*
+     * Arriba a la derecha, el punto al que se va y a cuántas millas: es lo
+     * primero que se lee en una pantalla de navegación de verdad. Con misión
+     * en curso manda la misión, que es a donde señala la aguja.
+     */
+    if (!d.objetivo)
+      this.texto(
+        "distancia",
+        plan?.siguiente
+          ? `${plan.siguiente.nombre} ${plan.siguiente.millas.toFixed(1)} NM`
+          : "",
+      );
+    this.texto("eta", !d.objetivo && plan?.hora ? plan.hora : "");
   }
 
   /**
@@ -1397,15 +1590,27 @@ export class Tablero {
       `rumbo ${rumbo}`;
   }
 
-  private texto(raiz: SVGElement, que: string, valor: string): void {
+  private texto(que: string, valor: string): void {
     if (!que) return;
-    const t = raiz.querySelector<SVGTextElement>(`[data-cristal="${que}"]`);
-    if (t) t.textContent = valor;
+    escribir(this.pieza(`[data-cristal="${que}"]`), valor);
   }
 }
 
 /** Cada cuánto se relee el cuadro en voz alta, en segundos. */
 const ENTRE_LECTURAS = 5;
+
+/**
+ * **Cuántas veces por segundo se reescriben las cifras de apoyo**: la
+ * velocidad sobre el suelo, los kilos, el régimen, el viento, las millas.
+ *
+ * Escritas en cada imagen, una cifra que baila entre 104 y 105 obligaba a
+ * volver a maquetar y pintar su texto sesenta veces por segundo, y en el
+ * cuadro abierto del teléfono eso se notaba en el fotograma. Ocho veces por
+ * segundo es más de lo que se lee —una pantalla de verdad refresca sus
+ * cifras a ese ritmo, justo para que se puedan leer— y la aguja de al lado
+ * sigue moviéndose en cada imagen, que es lo que enseña la tendencia.
+ */
+const CIFRAS_POR_SEGUNDO = 8;
 
 /** Cuántos nudos antes de la de nunca pasar se enciende el ámbar. */
 const AVISA_CINCO_ANTES = 5;

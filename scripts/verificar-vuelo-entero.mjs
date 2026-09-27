@@ -131,6 +131,21 @@ if (!/^jaz-\d+$/.test(AVION)) {
  * aterriza, sale de la pista, sigue la raya hasta el puesto y apaga — **allí**.
  */
 const DESTINO = process.argv[6] ?? null;
+/**
+ * **Y un crucero antes de cruzar, si se pide**: `OGA_CRUCERO=segundos`.
+ *
+ * El trayecto entre islas no se vuela —ver arriba— y con él se saltaba todo
+ * lo que pasa en crucero: el cartel que se apaga, el servicio a bordo, el
+ * anuncio del descenso, los cinturones y la orden a la tripulación de
+ * prepararse para aterrizar. El guion de la cabina se quedaba en el
+ * despegue y la despedida, y lo de en medio no lo medía nadie.
+ *
+ * Con esto el avión sube a setecientos cincuenta metros sobre el campo,
+ * vuela nivelado esos segundos de juego, baja a trescientos como baja
+ * cualquiera hacia su destino y **entonces** cruza a la final del otro
+ * campo. Sin la variable el banco vuela como siempre.
+ */
+const CRUCERO_PEDIDO = Number(process.env.OGA_CRUCERO ?? 0) || 0;
 if (DESTINO !== null && !/^[a-z-]+$/.test(DESTINO)) {
   console.log(`\n  ✗ «${DESTINO}» no es un campo.\n`);
   process.exit(2);
@@ -512,7 +527,7 @@ const fotos = (async () => {
   }
 })();
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -524,6 +539,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    * se mide es que un vuelo entero se pueda completar.
    */
   o.mandarFrustrar("nunca");
+  // Si el campo de salida tiene torre: en una pista particular no la hay, y
+  // lo que se comprueba de ella es que calle. Ver la comprobación de la torre.
+  const saleConTorre = o.conFrecuencia?.() ?? true;
   // La raíz de la escena, para poder mirar el coche del sígame.
   let raiz = o.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
@@ -1368,6 +1386,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
   // otra cosa. El banco tarda lo que tarda un vuelo, y hay que poder correrlo.
   const CRUCERO = 200;
   const SENDA = Math.tan((3 * Math.PI) / 180);
+  /*
+   * Las del crucero de `OGA_CRUCERO`, m sobre el campo: por encima de los
+   * cuatrocientos en los que la comandante apaga el cartel, y abajo por debajo
+   * de los mil de la aproximación y por encima de la final.
+   */
+  const ALTO_DE_CRUCERO = 750;
+  const ALTO_DE_BAJADA = 320;
+  /** Cuándo se llegó arriba en ese crucero, s de juego. */
+  let cruceroDesde = null;
 
   /*
    * **Las fases en las que el juego promete una raya que seguir.**
@@ -1472,6 +1499,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    */
   let lejosDondeCoche = "";
   let cercaDelCoche = Infinity;
+  /*
+   * **Y cuánto rato guía la bici**, en un campo particular: visible, en la
+   * raya y por delante del avión, con el avión ya fuera de la pista.
+   *
+   * Existe porque dejó de salir y nadie lo vio. Desde #157 esperaba al lado de
+   * la salida, y esperar al lado contaba como haberse apartado para siempre:
+   * iba por la hierba, a once metros de la raya, y todas las comprobaciones
+   * del coche la daban por buena porque ninguna preguntaba si guiaba.
+   */
+  let biciGuiando = 0;
+  let biciVista = 0;
   /*
    * **Y si el coche llegó a pisar la pista con el avión encima de ella.**
    *
@@ -2117,7 +2155,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
         if (!m) continue;
         const mia = !!misLetrasEnLaTorre && m[3].startsWith(misLetrasEnLaTorre);
         if (mia && m[1] === "torre" && /^(aterrizar|clearedLand)$/.test(m[2]))
-          tusAutorizaciones.push({ t: Math.round(t), fase, dice: m[2], alli: !!enElDestino });
+          tusAutorizaciones.push({
+            t: Math.round(t),
+            fase,
+            dice: m[2],
+            alli: !!enElDestino,
+            // Y a qué altura sonó: con la pista ocupada hasta la decisión, la
+            // torre manda al aire, no autoriza a once metros del suelo.
+            alto: Math.round(alto(s)),
+          });
         // A quién va, por sus letras: las cinco del alfabeto, sin la pista.
         const quien = m[3]
           .split("-")
@@ -2430,6 +2476,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
      * lejos es lo correcto: no se le está siguiendo, se va a su encuentro.
      */
     const coche = globalThis.__raiz?.getObjectByName("sigueme");
+    if (o.enBici?.() && coche?.visible && s.onGround && !s.onRunway) {
+      biciVista += paso;
+      const raya = o.ruta?.() ?? [];
+      let alaRaya = Infinity;
+      for (let k = 1; k < raya.length; k++) {
+        const [ax, az] = raya[k - 1];
+        const [bx, bz] = raya[k];
+        const dx = bx - ax;
+        const dz = bz - az;
+        const l2 = dx * dx + dz * dz || 1;
+        const u = Math.max(
+          0,
+          Math.min(
+            1,
+            ((coche.position.x - ax) * dx + (coche.position.z - az) * dz) / l2,
+          ),
+        );
+        alaRaya = Math.min(
+          alaRaya,
+          Math.hypot(coche.position.x - (ax + dx * u), coche.position.z - (az + dz * u)),
+        );
+      }
+      const delante =
+        Math.sin(s.heading) * (coche.position.x - s.position.x) -
+          Math.cos(s.heading) * (coche.position.z - s.position.z) >
+        0;
+      if (!o.cocheApartado?.() && alaRaya < 3 && delante) biciGuiando += paso;
+    }
     /*
      * **Y solo mientras el coche esté guiando.**
      *
@@ -2828,6 +2902,58 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
       }
     } else if (
       etapa === "subir" &&
+      destino &&
+      !enElDestino &&
+      cruceroPedido > 0 &&
+      alto(s) > 150 &&
+      t - despego > 25
+    ) {
+      // Ver `OGA_CRUCERO`: antes de cruzar, un crucero y una bajada.
+      etapa = "crucero";
+      cruceroDesde = null;
+    } else if (etapa === "crucero") {
+      /*
+       * **Subir, cruzar nivelado y bajar**, recto por el rumbo de salida.
+       *
+       * El gas y la palanca, con el mismo reparto que el circuito: subiendo,
+       * la palanca lleva la velocidad y el gas lo que haga falta; nivelado,
+       * el gas la velocidad y la palanca la altura. Bajando, poco gas y la
+       * palanca a la altura de abajo, con su bajada limitada.
+       */
+      if (cruceroDesde === null && alto(s) >= ALTO_DE_CRUCERO - 30)
+        cruceroDesde = t;
+      const yaBaja = cruceroDesde !== null && t - cruceroDesde >= cruceroPedido;
+      const altoQueToca = yaBaja ? ALTO_DE_BAJADA : ALTO_DE_CRUCERO;
+      const subiendo = !yaBaja && alto(s) < altoQueToca - 15;
+      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
+      const gasSubiendo =
+        NECESITA_TECNICA && peldano !== "guyrami"
+          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
+          : 1;
+      const aSuVelocidad = Math.min(
+        1,
+        (yaBaja ? 0.45 : 0.55) + (DE_CIRCUITO - s.airspeed) * 0.04,
+      );
+      c.throttle = subiendo ? gasSubiendo : Math.max(yaBaja ? 0.2 : 0.3, aSuVelocidad);
+      configurar(s, c, 1);
+      c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
+      c.aileron = alRumbo(s, rumboDeSalida);
+      /*
+       * Y se cruza cuando la cabina ya dijo lo de la bajada —o cuando se ve
+       * que no lo va a decir—: abajo, y con la orden a la tripulación dicha
+       * o con minuto y medio de espera, que es más de lo que tarda.
+       */
+      const dicha = (o.megafonia?.() ?? []).some((h) =>
+        h.includes("comandante.aproximacion"),
+      );
+      if (
+        yaBaja &&
+        alto(s) < ALTO_DE_BAJADA + 40 &&
+        (dicha || t - cruceroDesde - cruceroPedido > 150)
+      )
+        etapa = "cruzar";
+    } else if (
+      (etapa === "cruzar" || (etapa === "subir" && !cruceroPedido)) &&
       destino &&
       !enElDestino &&
       alto(s) > 150 &&
@@ -3445,6 +3571,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
      */
     maquina: o.maquina?.() ?? [],
     cuentaOida: o.cuentaOida?.() ?? [],
+    // Y lo que sonó por la megafonía, en orden: el guion de la cabina.
+    megafonia: o.megafonia?.() ?? [],
     pistaDeOtros,
     pistaDeOtrosDonde,
     dadaAOtroTrasLaTuya,
@@ -3516,6 +3644,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
       : null,
     lejosDondeCoche,
     enBici: o.enBici?.() ?? false,
+    biciGuiando: +biciGuiando.toFixed(1),
+    biciVista: +biciVista.toFixed(1),
+    saleConTorre,
     ladoAlEstarCerca: Number.isFinite(ladoAlEstarCerca)
       ? Math.round(ladoAlEstarCerca)
       : -1,
@@ -3609,7 +3740,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO]);
 fotografiando = false;
 await fotos;
 /*
@@ -3629,6 +3760,7 @@ if (process.env.OGA_VOCES) {
         todo: vuelo.todoLoDicho,
         maquina: vuelo.maquina,
         cuenta: vuelo.cuentaOida,
+        megafonia: vuelo.megafonia,
       },
       null,
       1,
@@ -3895,7 +4027,19 @@ const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
     );
   return !!m && (m[1] === "yo" || (!!vuelo.misLetras && m[1] === vuelo.misLetras));
 });
-comprobar(
+/*
+ * **Y saliendo de una pista particular, la torre calla.** No hay torre: ni
+ * lámpara que se ponga roja o verde ni voz que diga «esperá acá». Allí se
+ * para y se mira. Ver `guionSinTorre`.
+ */
+if (vuelo.saleConTorre === false)
+  comprobar(
+    "y en la pista de casa no enciende la luz ninguna torre",
+    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
+    `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
+    "en la pista de hierba de la granja hablaba una torre que no existe",
+  );
+else comprobar(
   conFraseologia
     ? "la torre dice la fraseología del vuelo"
     : "la torre manda, y en este peldaño sin el inglés",
@@ -4021,6 +4165,29 @@ comprobar(
             ? `${falta}: ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`
             : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`,
       "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista; y en Guyrami, la torre muda: el permiso iba solo por radio y en inglés",
+    );
+}
+
+/*
+ * **Y tu permiso llega antes de la altura de decisión.** En Los Rodeos, de
+ * número dos detrás de otro, el de delante soltó la pista por debajo de los
+ * sesenta metros, su «pista libre» esperó turno y tu permiso sonó a once
+ * metros del suelo. Lo de verdad es lo otro: si la pista no es tuya a la
+ * altura de decisión, la torre te manda al aire. Se mide con la voz, que es
+ * cuando se entera quien vuela; la boca puede retrasarla unos segundos detrás
+ * de otra frase, y por eso el margen es de veinte metros y no de cero.
+ */
+{
+  const tuyas = vuelo.tusAutorizaciones ?? [];
+  const bajas = tuyas.filter((a) => typeof a.alto === "number" && a.alto < 40);
+  if (tuyas.length)
+    comprobar(
+      "y tu permiso llega antes de la altura de decisión",
+      bajas.length === 0,
+      bajas.length
+        ? bajas.map((a) => `${a.t} s ${a.dice} a ${a.alto} m`).join(" · ")
+        : tuyas.map((a) => `${a.dice} a ${a.alto ?? "?"} m`).join(" · "),
+      "«cleared to land» a once metros del suelo, de número dos hasta el final, en Los Rodeos",
     );
 }
 
@@ -4370,6 +4537,24 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
  * metros del avión y encima de la raya, y tenía que haberse echado once a un
  * lado. Ver #157.
  */
+/*
+ * **Y en un campo particular, sale alguien a buscarte en bici, y te guía.**
+ *
+ * Jazlyn, con su banderín naranja: espera al lado de la salida y, en cuanto
+ * dejás la pista, se pone delante y te lleva a casa. Se mide el rato que va
+ * delante y en la raya, que es lo que es guiar; que esté «visible» no basta,
+ * porque así estuvo semanas, pedaleando por la hierba a once metros de la
+ * raya sin guiar a nadie. Cuatro segundos, que en la granja son la mitad de
+ * lo que hay entre la salida y el puesto.
+ */
+if (vuelo.enBici)
+  comprobar(
+    "y en un campo particular sale alguien en bici a buscarte, y te guía",
+    vuelo.biciGuiando >= 4,
+    `${vuelo.biciGuiando} s delante y en la raya, de ${vuelo.biciVista} s a la vista fuera de la pista`,
+    "«ya no sale ni Jazlyn a buscarme con la bici»",
+  );
+
 comprobar(
   "y no se le atropella",
   vuelo.enBici || vuelo.cercaDelCoche < 0 || vuelo.cercaDelCoche > 8,

@@ -325,3 +325,145 @@ export function deFrente(rumboPista: number, meteo: Meteo): number {
     (((meteo.vientoDe - rumboPista + 540) % 360) - 180) * (Math.PI / 180);
   return meteo.vientoKt * Math.cos(angulo);
 }
+
+/** Un campo del vuelo con su tiempo, puesto donde está en el mundo. */
+export interface CampoConTiempo {
+  readonly x: number;
+  readonly z: number;
+  readonly meteo: Meteo;
+}
+
+/**
+ * Hasta dónde se nota un campo solo, m. Dentro de este radio de su pista, su
+ * parte manda casi entero; más lejos se reparte con los demás.
+ */
+const RADIO_DEL_CAMPO = 3000;
+
+/**
+ * **El tiempo que hace en un punto del vuelo**, cuando cada campo tiene su
+ * parte.
+ *
+ * Había un solo viento para todo el mundo: el METAR del campo de salida, que
+ * mandaba también a doscientos kilómetros, en el de llegada. Llegando a El
+ * Hierro desde La Palma se aterrizaba con el 150/3 del parte de salida. Ahora
+ * cada campo trae el suyo, y entre medias el aire pasa de uno a otro **sin
+ * saltos**: el peso de cada parte cae con el cuadrado de la distancia a su
+ * pista, así que encima de un campo sopla su viento —a un par de kilómetros,
+ * más del noventa y nueve por ciento— y en mitad del canal, una mezcla de los
+ * dos.
+ *
+ * Se mezclan los vectores y no los rumbos, que es lo que hace el aire: dos
+ * vientos encontrados se frenan entre sí, y promediar «350» con «010» daría
+ * un viento del sur. La presión se promedia con los mismos pesos, que es la
+ * que el altímetro de verdad encuentra al cruzar de un campo a otro.
+ */
+export function tiempoEntreCampos(
+  campos: readonly CampoConTiempo[],
+  x: number,
+  z: number,
+): {
+  /** A dónde va el aire, m/s: lo que necesita el motor de vuelo. */
+  readonly aire: { readonly x: number; readonly z: number };
+  /** De dónde viene, en grados verdaderos, o `null` en calma. */
+  readonly vientoDe: number | null;
+  /** Con qué fuerza, nudos. */
+  readonly vientoKt: number;
+  /** La presión al nivel del mar aquí, hPa. */
+  readonly qnh: number;
+} {
+  let pesos = 0;
+  let ax = 0;
+  let az = 0;
+  let qnh = 0;
+  for (const c of campos) {
+    const d2 = (c.x - x) ** 2 + (c.z - z) ** 2;
+    const w = 1 / (d2 + RADIO_DEL_CAMPO ** 2);
+    const v = vientoComoVector(c.meteo);
+    ax += v.x * w;
+    az += v.z * w;
+    qnh += c.meteo.qnh * w;
+    pesos += w;
+  }
+  if (pesos <= 0)
+    return {
+      aire: { x: 0, z: 0 },
+      vientoDe: null,
+      vientoKt: 0,
+      qnh: TIEMPO_DE_CASA.qnh,
+    };
+  ax /= pesos;
+  az /= pesos;
+  const kt = Math.hypot(ax, az) / 0.514444;
+  // De dónde viene es lo contrario de a dónde va: norte es −Z, este +X.
+  const de = ((Math.atan2(-ax, az) * 180) / Math.PI + 360) % 360;
+  return {
+    aire: { x: ax, z: az },
+    vientoDe: kt < 0.5 ? null : de,
+    vientoKt: kt,
+    qnh: qnh / pesos,
+  };
+}
+
+/**
+ * **El ATIS de un campo, escrito como se imprime en cabina.**
+ *
+ * Es lo que un piloto lleva leído antes de empezar a bajar: pista en uso,
+ * viento, visibilidad, nubes, temperatura y QNH. Con las abreviaturas de
+ * verdad —WIND, VIS, NSC, QNH— y sin traducir, que es como se lo va a
+ * encontrar el día que vuele: la regla 3 de la casa.
+ *
+ * El viento va en **magnéticos**, como lo da una torre y como van las pistas:
+ * el METAR lo trae en verdaderos, y un ATIS que dijera 020 con la pista 34
+ * delante enseñaría a restar mal. Ver `vientoEnPiezas`.
+ *
+ * Las nubes: la capa que hace techo, con su base en pies sobre el campo, o
+ * NSC —«no significant cloud»— si el parte no trae ninguna que tape.
+ */
+export function atisEnTexto(
+  oaci: string,
+  pista: string | null,
+  meteo: Meteo,
+  declinacion = 0,
+): string {
+  const magnetico = (d: number): string =>
+    String(Math.round((((d - declinacion) % 360) + 360) % 360) || 360).padStart(
+      3,
+      "0",
+    );
+  const viento =
+    meteo.vientoKt <= 0
+      ? "WIND CALM"
+      : meteo.vientoDe === null
+        ? `WIND VRB/${Math.round(meteo.vientoKt)}KT`
+        : `WIND ${magnetico(meteo.vientoDe)}/${Math.round(meteo.vientoKt)}KT`;
+  const vis =
+    meteo.visibilidadM >= 10000
+      ? "VIS 10KM"
+      : meteo.visibilidadM >= 5000
+        ? `VIS ${Math.floor(meteo.visibilidadM / 1000)}KM`
+        : `VIS ${Math.round(meteo.visibilidadM / 100) * 100}M`;
+  const nubes =
+    meteo.techoM === null
+      ? "NSC"
+      : `${(meteo.tapadura ?? 0.75) >= 1 ? "OVC" : "BKN"} ${
+          Math.round(meteo.techoM / 0.3048 / 100) * 100
+        }FT`;
+  const intensidad =
+    meteo.fuerzaDeLluvia < 0.5 ? "-" : meteo.fuerzaDeLluvia >= 1 ? "+" : "";
+  const agua =
+    meteo.lluvia === "nada"
+      ? null
+      : meteo.lluvia === "tormenta"
+        ? "TS"
+        : `${intensidad}${meteo.lluvia === "llovizna" ? "DZ" : "RA"}`;
+  return [
+    `${oaci} ATIS`,
+    ...(pista ? [`RWY ${pista}`] : []),
+    viento,
+    vis,
+    ...(agua ? [agua] : []),
+    nubes,
+    `T${Math.round(meteo.temp)}`,
+    `QNH ${Math.round(meteo.qnh)}`,
+  ].join(" · ");
+}

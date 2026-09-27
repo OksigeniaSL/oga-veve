@@ -80,6 +80,11 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    * siempre: la que pida quien no tiene motor. Ver `flight/sin-motor.ts`.
    */
   "roger MAYDAY": "torre.mayday",
+  /*
+   * Y a quien se pasó la salida: abandone por la próxima disponible. Ver
+   * `decirSalPorLaSiguiente` en `game.ts`.
+   */
+  "vacate next available": "torre.vacateNext",
 };
 
 /**

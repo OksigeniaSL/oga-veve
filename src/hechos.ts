@@ -102,6 +102,24 @@ export interface Hechos {
    */
   ganasteLasGafas: Record<string, never>;
   /**
+   * Se ha llegado al punto de descenso del plan de vuelo: a partir de aquí
+   * toca bajar. Ver `flight/ruta.ts`.
+   *
+   * Una vez por plan, y solo si de verdad había que bajar: quien ya empezó
+   * por su cuenta no pasa por aquí. Lo escuchan el aviso de cabina, la
+   * instructora y el piloto automático, y quien quiera anunciarlo por la
+   * megafonía; ver `Game.alEmpezarElDescenso`.
+   */
+  puntoDeDescenso: {
+    /** El campo al que se va, por su identificador. */
+    readonly destino: string;
+    readonly oaci: string | null;
+    /** Lo que faltaba por la ruta al llegar al punto, m. */
+    readonly restante: number;
+    /** La altitud de la que se empieza a bajar, m. */
+    readonly desde: number;
+  };
+  /**
    * El PAPI ha cambiado de lectura: `blancas` luces de cuatro.
    *
    * Tres o cuatro es venir alto, una o ninguna es venir bajo, dos es la senda.

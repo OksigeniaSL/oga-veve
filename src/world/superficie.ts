@@ -62,7 +62,7 @@ export const TRAQUETEO: Record<Superficie, number> = {
 };
 
 /** ¿Está pavimentada esta superficie, según lo que dice el fichero? */
-function esDura(surface: string | null | undefined): boolean {
+export function esDura(surface: string | null | undefined): boolean {
   if (!surface) return true;
   const s = surface.toLowerCase();
   return !(

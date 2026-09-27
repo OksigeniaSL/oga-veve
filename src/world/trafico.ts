@@ -359,13 +359,21 @@ const OPERAN: Readonly<Record<string, readonly TipoDeTrafico["id"][]>> = {
   LECU: ["avioneta", "avioneta", "bimotor"],
 };
 
-/** Los tipos que operan en un campo, ya filtrados por lo que da su pista. */
+/**
+ * Los tipos que operan en un campo, ya filtrados por lo que da su pista.
+ *
+ * **Y en una pista particular, ninguno**, salvo que el campo diga otra cosa
+ * en `OPERAN`. Aquí ponía que la hierba lleva avionetas, que es verdad de un
+ * aeroclub y mentira de la pista de una granja: ahí vuela el avión de la
+ * casa, y el de la casa es el tuyo. «Una cosa es soñar y otra creer que en
+ * casa vamos a tener varios aviones como el que tiene varios coches.»
+ */
 export function tiposDelCampo(
   oaci: string | null | undefined,
   largoDePista: number,
   privado = false,
 ): readonly TipoDeTrafico[] {
-  if (privado) return [TIPOS.avioneta];
+  if (privado && !(oaci && OPERAN[oaci])) return [];
   const lista = (oaci && OPERAN[oaci]) || [
     "reactor",
     "turbohelice",

@@ -9,7 +9,15 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { SE_QUEDAN, Vuelo, type Fase, type Situacion } from "./vuelo";
+import {
+  GUION,
+  SE_QUEDAN,
+  Vuelo,
+  guionSinTorre,
+  type Fase,
+  type Situacion,
+} from "./vuelo";
+import { ES_PY } from "../i18n/es-PY";
 
 const EN_TIERRA: Situacion = {
   /*
@@ -1065,6 +1073,40 @@ describe("las órdenes que se quedan puestas", () => {
     for (const f of ["en-vuelo", "final"] as Fase[]) {
       expect(SE_QUEDAN.has(f)).toBe(false);
     }
+  });
+});
+
+describe("el guion en la pista de casa", () => {
+  const dichos = ES_PY as Record<string, string>;
+
+  /*
+   * En una pista particular no hay torre que encienda una lámpara ni nadie
+   * detrás que meta prisa. Se mira el texto de verdad, el que se oye y se lee:
+   * si una frase del guion de allí habla de luces, de torres o de «otro», el
+   * juego vuelve a enseñar lo que no es.
+   */
+  it("no habla de lámparas, de torres ni de nadie que venga detrás", () => {
+    for (const fase of Object.keys(GUION) as Fase[])
+      for (const conBici of [true, false]) {
+        const { clave } = guionSinTorre(fase, conBici);
+        const texto = dichos[clave];
+        expect(texto, clave).toBeTruthy();
+        expect(texto, clave).not.toMatch(/\bluz\b|torre|viene otro|otro avión/i);
+      }
+  });
+
+  it("antes de entrar se para y se mira: la manga, los animales y la pista", () => {
+    const g = guionSinTorre("esperando", false);
+    expect(g.icono).toBe("manga");
+    for (const cosa of ["manga", "animales", "pista"])
+      expect(dichos[g.clave]).toContain(cosa);
+  });
+
+  it("y a quien sale a buscarte en bici se la nombra solo si sale", () => {
+    expect(dichos[guionSinTorre("abandonando", true).clave]).toContain("Jazlyn");
+    expect(dichos[guionSinTorre("abandonando", false).clave]).not.toContain(
+      "Jazlyn",
+    );
   });
 });
 

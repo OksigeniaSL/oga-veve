@@ -2,7 +2,31 @@ Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.
 Tripulación, armar toboganes y verificación cruzada.
 Tripulación, sentados para el despegue.
 Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.
-Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.
+Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ciudad del Este.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Encarnación.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Gran Canaria.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Lanzarote.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Fuerteventura.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.
+Allá el cielo está despejado.
+Allá hay algunas nubes.
+Allá está nublado.
+Allá está lloviendo.
+Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.
+Allá hay niebla.
+Tripulación, prepararse para el aterrizaje.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.
@@ -109,3 +133,111 @@ Bienvenidos a Cuatro Vientos. Acá se vuela desde mil novecientos once, y todav�
 Señores pasajeros, estamos en Cuatro Vientos. Al lado hay un museo lleno de aviones que ya no vuelan y merecen que se los mire. Gracias por venir.
 Bienvenidos a Cuatro Vientos. De este campo salió el avión que cruzó el Atlántico y le puso el nombre al sitio. Gracias por acompañarnos.
 Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.
+Vamos a aterrizar en unos dos minutos.
+Vamos a aterrizar en unos tres minutos.
+Vamos a aterrizar en unos cuatro minutos.
+Vamos a aterrizar en unos cinco minutos.
+Vamos a aterrizar en unos diez minutos.
+Vamos a aterrizar en unos quince minutos.
+Vamos a aterrizar en unos veinte minutos.
+Vamos a aterrizar en unos veinticinco minutos.
+Vamos a aterrizar en unos treinta minutos.
+Vamos a aterrizar en unos treinta y cinco minutos.
+Vamos a aterrizar en unos cuarenta minutos.
+Vamos a aterrizar en unos cuarenta y cinco minutos.
+Vamos a aterrizar en unos cincuenta minutos.
+Vamos a aterrizar en unos cincuenta y cinco minutos.
+Vamos a aterrizar en unos sesenta minutos.
+Vamos a aterrizar en unos cero minutos.
+El vuelo va a durar unos dos minutos.
+El vuelo va a durar unos tres minutos.
+El vuelo va a durar unos cuatro minutos.
+El vuelo va a durar unos cinco minutos.
+El vuelo va a durar unos diez minutos.
+El vuelo va a durar unos quince minutos.
+El vuelo va a durar unos veinte minutos.
+El vuelo va a durar unos veinticinco minutos.
+El vuelo va a durar unos treinta minutos.
+El vuelo va a durar unos treinta y cinco minutos.
+El vuelo va a durar unos cuarenta minutos.
+El vuelo va a durar unos cuarenta y cinco minutos.
+El vuelo va a durar unos cincuenta minutos.
+El vuelo va a durar unos cincuenta y cinco minutos.
+El vuelo va a durar unos sesenta minutos.
+El vuelo va a durar unos cero minutos.
+Vamos a volar a cinco mil pies.
+Vamos a volar a seis mil pies.
+Vamos a volar a siete mil pies.
+Vamos a volar a ocho mil pies.
+Vamos a volar a nueve mil pies.
+Vamos a volar a diez mil pies.
+Vamos a volar a once mil pies.
+Vamos a volar a doce mil pies.
+Vamos a volar a trece mil pies.
+Vamos a volar a catorce mil pies.
+Vamos a volar a quince mil pies.
+Vamos a volar a dieciséis mil pies.
+Vamos a volar a diecisiete mil pies.
+Vamos a volar a dieciocho mil pies.
+Vamos a volar a diecinueve mil pies.
+Vamos a volar a veinte mil pies.
+Vamos a volar a veintiún mil pies.
+Vamos a volar a veintidós mil pies.
+Vamos a volar a veintitrés mil pies.
+Vamos a volar a veinticuatro mil pies.
+Vamos a volar a veinticinco mil pies.
+Vamos a volar a veintiséis mil pies.
+Vamos a volar a veintisiete mil pies.
+Vamos a volar a veintiocho mil pies.
+Vamos a volar a veintinueve mil pies.
+La temperatura es de cero grados.
+La temperatura es de un grado.
+La temperatura es de dos grados.
+La temperatura es de tres grados.
+La temperatura es de cuatro grados.
+La temperatura es de cinco grados.
+La temperatura es de seis grados.
+La temperatura es de siete grados.
+La temperatura es de ocho grados.
+La temperatura es de nueve grados.
+La temperatura es de diez grados.
+La temperatura es de once grados.
+La temperatura es de doce grados.
+La temperatura es de trece grados.
+La temperatura es de catorce grados.
+La temperatura es de quince grados.
+La temperatura es de dieciséis grados.
+La temperatura es de diecisiete grados.
+La temperatura es de dieciocho grados.
+La temperatura es de diecinueve grados.
+La temperatura es de veinte grados.
+La temperatura es de veintiún grados.
+La temperatura es de veintidós grados.
+La temperatura es de veintitrés grados.
+La temperatura es de veinticuatro grados.
+La temperatura es de veinticinco grados.
+La temperatura es de veintiséis grados.
+La temperatura es de veintisiete grados.
+La temperatura es de veintiocho grados.
+La temperatura es de veintinueve grados.
+La temperatura es de treinta grados.
+La temperatura es de treinta y un grado.
+La temperatura es de treinta y dos grados.
+La temperatura es de treinta y tres grados.
+La temperatura es de treinta y cuatro grados.
+La temperatura es de treinta y cinco grados.
+La temperatura es de treinta y seis grados.
+La temperatura es de treinta y siete grados.
+La temperatura es de treinta y ocho grados.
+La temperatura es de treinta y nueve grados.
+La temperatura es de cuarenta grados.
+La temperatura es de cuarenta y un grado.
+La temperatura es de cuarenta y dos grados.
+La temperatura es de cuarenta y tres grados.
+La temperatura es de cuarenta y cuatro grados.
+La temperatura es de cuarenta y cinco grados.
+La temperatura es de un grado bajo cero.
+La temperatura es de dos grados bajo cero.
+La temperatura es de tres grados bajo cero.
+La temperatura es de cuatro grados bajo cero.
+La temperatura es de cinco grados bajo cero.

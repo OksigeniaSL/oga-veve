@@ -27,6 +27,13 @@ import { baseDe } from "./servidor.mjs";
 const PUERTO = 5292;
 
 /** Qué frase le toca a quién, y de qué pack tiene que salir. */
+/** Una información de tráfico cualquiera: a las dos, tres millas, mil pies arriba. */
+const TRAFICO_DE_PRUEBA = {
+  hora: "trafico.hora.2",
+  millas: "trafico.millas.3",
+  altura: "trafico.pies.10 trafico.above",
+};
+
 const REPARTO = [
   ["torre", "torre.verde", "torre"],
   ["torre", "torre.roja", "torre"],
@@ -70,6 +77,72 @@ const REPARTO = [
   ["comandante", "comandante.bienvenida.local", "comandante"],
   ["comandante", "comandante.bienvenida.tenerife-sur", "comandante"],
   /*
+   * **Y el guion de la cabina, montado.** La bienvenida con el plan y el
+   * descenso con su tiempo se arman con trozos —ver
+   * `audio/partes-de-la-comandante.ts`—, y una receta con un trozo que falta
+   * se cae entera a la voz del navegador. El cuarto elemento es el relleno.
+   */
+  [
+    "comandante",
+    "comandante.bienvenidaConPlan",
+    "comandante",
+    {
+      bienvenida: "comandante.bienvenida.tenerife-norte",
+      vuelo: "comandante.previsto.vuelo.15",
+      nivel: "comandante.previsto.nivel.11",
+    },
+  ],
+  [
+    "comandante",
+    "comandante.descenso",
+    "comandante",
+    {
+      hacia: "comandante.descenso.hacia.guarani",
+      minutos: "comandante.minutos.10",
+      cielo: "comandante.cielo.tormenta",
+      temperatura: "comandante.temperatura.21",
+    },
+  ],
+  [
+    "comandante",
+    "comandante.descenso",
+    "comandante",
+    {
+      hacia: "comandante.descenso.vuelta",
+      cielo: "comandante.cielo.niebla",
+      temperatura: "comandante.temperatura.menos3",
+    },
+  ],
+  ["comandante", "comandante.aproximacion", "comandante"],
+  /*
+   * **Y los baches, contados con calma**: la comandante con pasaje y la
+   * instructora sin él. Ver `hablarDeLosBaches` en `game.ts`.
+   */
+  ["comandante", "comandante.turbulencia", "comandante"],
+  ["instructor", "vuelo.baches", "instructor"],
+  /*
+   * **Y la tripulación de cabina, cada una con su habla**: la de casa y la
+   * de Canarias, que son otra persona. Y el servicio montado con lo de hoy y
+   * el café de los vuelos largos.
+   */
+  ["tripulacion", "tripulacion.cinturones", "tripulacion"],
+  ["tripulacion", "tripulacion.canario.cinturones", "tripulacion-canarias"],
+  [
+    "tripulacion",
+    "tripulacion.servicio",
+    "tripulacion",
+    {
+      producto: "tripulacion.servicio.mbeju",
+      largo: "tripulacion.servicio.largo",
+    },
+  ],
+  [
+    "tripulacion",
+    "tripulacion.canario.servicio",
+    "tripulacion-canarias",
+    { producto: "tripulacion.canario.servicio.banana.paraguay" },
+  ],
+  /*
    * Y la orden de irse al aire **con su motivo**, que es la receta que junta
    * las dos piezas. Sin ella la voz decía qué hacer y no por qué, que a los
    * cuatro años es una orden sin lección.
@@ -109,6 +182,19 @@ const REPARTO = [
   ["instructor", "cabina.twentyFiveHundred", "cabina"],
   ["instructor", "cabina.oneThousand", "cabina"],
   ["instructor", "vuelo.quitaElGas", "instructor"],
+  /*
+   * **Y las de esta tanda**: la información de tráfico de las dos torres,
+   * «vacate next available» a quien se pasó la salida, y la instructora
+   * presentando nuestra matrícula al empezar. El cuarto elemento es el
+   * relleno que les falta aparte del indicativo: la hora, las millas y la
+   * altura del tráfico. Ver `informacionEnPiezas`.
+   */
+  ["torre", "torre.trafico", "torre", TRAFICO_DE_PRUEBA],
+  ["torre", "torre.canario.trafico", "torre-canarias", TRAFICO_DE_PRUEBA],
+  ["torre", "torre.vacateNext", "torre"],
+  ["torre", "torre.canario.vacateNext", "torre-canarias"],
+  ["instructor", "vuelo.nuestroAvion", "instructor", {}],
+  ["instructor", "vuelo.salidaSiguiente", "instructor"],
 ];
 
 const server = await createServer({
@@ -155,6 +241,8 @@ await page
       if (!yo) return false;
       return (
         !!o.quienDice("comandante.crucero").comandante &&
+        !!o.quienDice("tripulacion.cinturones").tripulacion &&
+        !!o.quienDice("tripulacion.canario.cinturones").tripulacion &&
         !!o.quienDice(`torre.verde${yo.sufijo}`, yo.deTorre).torre &&
         !!o.quienDice("torre.canario.verde", yo.deTorre).torre &&
         !!o.quienDice("otro.enCola", yo.relleno).otro
@@ -290,7 +378,17 @@ comprobar(
   "ZP- es Paraguay, y en Canarias sonaba igual: era siempre el mismo avión",
 );
 
-for (const [quien, clave, pack] of REPARTO) {
+for (const [quien, clave, pack, cuarto] of REPARTO) {
+  /*
+   * El cuarto elemento es de dos clases. En la torre y en «nuestro avión» es
+   * lo que falta **además** del indicativo (la hora, las millas y la altura
+   * del tráfico), y se junta con él; en la comandante y la tripulación es el
+   * relleno entero de su receta.
+   */
+  const conIndicativo =
+    clave.startsWith("torre.") || clave === "vuelo.nuestroAvion";
+  const extra = conIndicativo ? cuarto : undefined;
+  const suRelleno = conIndicativo ? undefined : cuarto;
   if (pack === null) {
     comprobar(
       `«${clave}» la dice la voz del sistema, no el pack`,
@@ -306,13 +404,15 @@ for (const [quien, clave, pack] of REPARTO) {
       clave.startsWith("torre.") && !clave.startsWith("torre.canario")
         ? `${clave}${indicativo.sufijo}`
         : clave,
-      clave.startsWith("otro.")
+      suRelleno
+        ? suRelleno
+        : clave.startsWith("otro.")
         ? indicativo.relleno
-        : clave.startsWith("torre.")
+        : clave.startsWith("torre.") || extra
           ? // La lámpara también lleva hueco desde que te llama por tu
             // matrícula, y `deTorre` trae el indicativo y la pista: sobra lo de
-            // la pista y falta nada.
-            indicativo.deTorre
+            // la pista y falta nada. Y lo que traiga de más, detrás.
+            { ...indicativo.deTorre, ...(extra ?? {}) }
           : undefined,
     ],
   );

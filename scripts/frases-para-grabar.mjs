@@ -84,6 +84,18 @@ const HABLADOS = [
    * quien decide qué campos hablan así —todo lo que empieza por `GC`—.
    */
   ["comandante", "comandante", "la megafonía de cabina, para el pasaje"],
+  /*
+   * **Y la tripulación de cabina**, con el habla del sitio como la torre: la
+   * de Canarias va primero por lo mismo que allí, porque sus claves empiezan
+   * también por `tripulacion.` y gana el primero que reclame una. Ver
+   * `audio/servicio-a-bordo.ts`.
+   */
+  [
+    "tripulacion.canario",
+    "tripulacion-canarias",
+    "la tripulación de cabina de Canarias, por megafonía",
+  ],
+  ["tripulacion", "tripulacion", "la tripulación de cabina, por megafonía"],
   ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
   ["otro", "otro", "el otro avión de la frecuencia"],
@@ -341,6 +353,16 @@ const TORRE_SOLO = [
   ],
   ["torre.solo.holdShort", "hold short of the runway", "pará en la doble raya"],
   /*
+   * **Y a quien se pasó la salida**: abandone por la próxima disponible. La
+   * raya ya se rehacía sola por la siguiente; faltaba que la torre lo dijera
+   * como se dice. Ver `decirSalPorLaSiguiente` en `src/game.ts`.
+   */
+  [
+    "torre.solo.vacateNext",
+    "vacate next available",
+    "te pasaste la salida: dejá la pista por la próxima",
+  ],
+  /*
    * **Y el porqué de la espera**, detrás de la orden: la información de
    * tráfico que da una torre de verdad a quien deja en el punto de espera.
    * Ver `porQueEsperas` en `src/flight/turno-de-pista.ts`.
@@ -396,6 +418,74 @@ const piezaFonetica = (letra) =>
  * toquen y después el mensaje. Y «buenos días» lleva el indicativo detrás, que
  * es como se saluda por radio.
  */
+/**
+ * **La información de tráfico, en piezas**, para las dos torres.
+ *
+ * «Traffic, two o'clock, three miles, one thousand feet above»: se decía con
+ * el texto montado y sin receta, así que la decía la voz del navegador —y en
+ * Brave para Linux, nadie—. Aquí van las piezas que la montan: la palabra, las
+ * doce horas del reloj, las millas de una a seis —hasta donde mira el TCAS— y
+ * los pies de trescientos a mil doscientos, que es la banda en la que se
+ * avisa. Ver `informacionEnPiezas` en `src/flight/informacion-de-trafico.ts`.
+ *
+ * Sin el habla en el nombre, como el viento: cada torre tiene su pack y las
+ * dos graban `trafico.*` con el mismo nombre. Y las horas enteras, «two
+ * o'clock», y no la cifra suelta: una hora del reloj no se dice cifra a
+ * cifra. Los pies sí van como una altitud, con «niner».
+ */
+const HORAS = [
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+];
+const MILLAS = ["one mile", "two miles", "three miles", "four miles", "five miles", "six miles"];
+const CIENTOS = [
+  [3, "three hundred feet"],
+  [4, "four hundred feet"],
+  [5, "five hundred feet"],
+  [6, "six hundred feet"],
+  [7, "seven hundred feet"],
+  [8, "eight hundred feet"],
+  [9, "niner hundred feet"],
+  [10, "one thousand feet"],
+  [11, "one thousand one hundred feet"],
+  [12, "one thousand two hundred feet"],
+];
+const TRAFICO = [
+  ["trafico.traffic", "traffic", "información de tráfico: empieza así"],
+  ...HORAS.map((h, i) => [
+    `trafico.hora.${i + 1}`,
+    `${h} o'clock`,
+    "dónde está el otro, en la hora del reloj",
+  ]),
+  ...MILLAS.map((m, i) => [`trafico.millas.${i + 1}`, m, "a qué distancia"]),
+  ...CIENTOS.map(([n, pies]) => [`trafico.pies.${n}`, pies, "cuánto más alto o más bajo"]),
+  ["trafico.above", "above", "va por encima"],
+  ["trafico.below", "below", "va por debajo"],
+  ["trafico.sameLevel", "same level", "va a tu misma altura"],
+];
+
+/**
+ * **Y la instructora presenta nuestra matrícula al empezar**: «Nuestro avión
+ * es Zulu Papa Alfa Romeo India. Así nos llama la torre». Se monta con las
+ * letras del alfabeto en su voz —las de la torre están en inglés y por radio,
+ * y esto lo dice ella sentada al lado— y dos trozos alrededor. Ver
+ * `presentarLaMatricula` en `src/game.ts`.
+ */
+const INSTRUCTOR_SOLO = [
+  ["matricula.nuestroAvion", "Nuestro avión es", "al empezar, antes de las letras de la matrícula"],
+  ["matricula.asiNosLlama", "Así nos llama la torre.", "y detrás de las letras"],
+];
+
 const OTRO_SOLO = [
   ["otro.solo.buenosDias", "Buenos días,", "el saludo, antes del indicativo"],
   ["otro.solo.rodando", "rodando a la cabecera", "sale del puesto"],
@@ -520,6 +610,20 @@ for (const letra of FONETICO) {
   });
   total += letra.length;
 }
+for (const [id, texto, para] of INSTRUCTOR_SOLO) {
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+for (const letra of FONETICO) {
+  filas.push({
+    id: piezaFonetica(letra),
+    voz: "instructor",
+    idioma: "es-PY",
+    texto: letra,
+    para: "una letra de nuestra matrícula, dicha al empezar",
+  });
+  total += letra.length;
+}
 for (const [id, texto, para] of OTRO_SOLO) {
   filas.push({ id, voz: "otro", idioma: "es", texto, para });
   total += texto.length;
@@ -550,7 +654,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO]) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
@@ -646,7 +750,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO]) {
   filas.push({
     // Las claves llevan el habla en medio para no pisarse con las de casa.
     // Ver `comoSeDiceAqui` en `i18n/habla.ts`.
@@ -657,6 +761,101 @@ for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
     para: `${para}, en Canarias`,
   });
   total += texto.length;
+}
+
+/*
+ * **Y los trozos con número de la comandante**: cuánto dura el vuelo, a qué
+ * altura se va, cuánto falta y cuántos grados hay allí.
+ *
+ * Cambian con cada vuelo, así que se montan —ver
+ * `src/audio/partes-de-la-comandante.ts`—; pero cada trozo es **una frase
+ * entera con su número dentro**, y no el número suelto, porque un «diez»
+ * pegado en mitad de una frase de megafonía se nota al instante. La plantilla
+ * sale del diccionario —`comandante.minutos`: «Vamos a aterrizar en unos {n}
+ * minutos.»— y aquí se rellena con el número **en letras**, que es como se
+ * lee sin tropezar. Los números que existen salen del propio juego, así que
+ * no hay una segunda lista que se quede vieja.
+ */
+const partes = readFileSync("src/audio/partes-de-la-comandante.ts", "utf8");
+const niveles = readFileSync("src/flight/nivel-de-crucero.ts", "utf8");
+const numeroDe = (fuente, nombre) => {
+  const m = new RegExp(`export const ${nombre}\\s*=\\s*(-?\\d+)`).exec(fuente);
+  if (!m) throw new Error(`no encuentro ${nombre}`);
+  return Number(m[1]);
+};
+const MINUTOS = (() => {
+  const m = /MINUTOS_QUE_SE_DICEN\s*=\s*\[([^\]]*)\]/.exec(partes);
+  if (!m) throw new Error("no encuentro MINUTOS_QUE_SE_DICEN");
+  return m[1].split(",").map((x) => Number(x.trim())).filter(Number.isFinite);
+})();
+const PRIMER_NIVEL = numeroDe(partes, "PRIMER_NIVEL");
+const ULTIMO_NIVEL = numeroDe(niveles, "HASTA") / 1000;
+const MAS_FRIO = numeroDe(partes, "MAS_FRIO");
+const MAS_CALOR = numeroDe(partes, "MAS_CALOR");
+
+/**
+ * Un número en letras, delante de un nombre masculino —minutos, grados, mil
+ * pies—: «un grado», «veintiún minutos», «treinta y un mil». Hasta noventa y
+ * nueve, que es lo que hace falta.
+ */
+const UNIDADES = [
+  "cero", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho",
+  "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "dieciséis",
+  "diecisiete", "dieciocho", "diecinueve", "veinte", "veintiún", "veintidós",
+  "veintitrés", "veinticuatro", "veinticinco", "veintiséis", "veintisiete",
+  "veintiocho", "veintinueve",
+];
+const DECENAS = { 3: "treinta", 4: "cuarenta", 5: "cincuenta", 6: "sesenta",
+  7: "setenta", 8: "ochenta", 9: "noventa" };
+function enLetras(n) {
+  if (n < 30) return UNIDADES[n];
+  const d = DECENAS[Math.floor(n / 10)];
+  const u = n % 10;
+  return u === 0 ? d : `${d} y ${UNIDADES[u]}`;
+}
+
+/** La plantilla con el número puesto, y el singular arreglado. */
+const conNumero = (plantilla, n) =>
+  plantilla.replace("{n}", enLetras(n)).replace(/\bun grados\b/, "un grado");
+
+const CON_NUMERO = [
+  ["comandante.minutos", "comandante.minutos", MINUTOS, "cuánto falta para aterrizar, al empezar a bajar"],
+  ["comandante.previsto.vuelo", "comandante.previsto.vuelo", MINUTOS, "cuánto dura el vuelo, detrás de la bienvenida"],
+  [
+    "comandante.previsto.nivel",
+    "comandante.previsto.nivel",
+    Array.from({ length: ULTIMO_NIVEL - PRIMER_NIVEL + 1 }, (_, i) => PRIMER_NIVEL + i),
+    "a qué altura se va, detrás de la bienvenida",
+  ],
+  [
+    "comandante.temperatura",
+    "comandante.temperatura",
+    Array.from({ length: MAS_CALOR + 1 }, (_, i) => i),
+    "la temperatura del destino, al empezar a bajar",
+  ],
+  [
+    "comandante.temperaturaBajoCero",
+    "comandante.temperatura.menos",
+    Array.from({ length: -MAS_FRIO }, (_, i) => i + 1),
+    "la temperatura del destino, bajo cero",
+  ],
+];
+for (const [plantilla, prefijo, numeros, para] of CON_NUMERO) {
+  const texto = es.get(plantilla);
+  if (!texto) throw new Error(`falta la plantilla ${plantilla} en es-PY`);
+  for (const n of numeros) {
+    const conSuNumero = conNumero(texto, n);
+    filas.push({
+      // Las de bajo cero van pegadas a su número —`menos3`— y las demás con
+      // un punto delante, que es como las pide el juego. Ver `piezaDeGrados`.
+      id: prefijo.endsWith(".menos") ? `${prefijo}${n}` : `${prefijo}.${n}`,
+      voz: "comandante",
+      idioma: "es-PY",
+      texto: conSuNumero,
+      para,
+    });
+    total += conSuNumero.length;
+  }
 }
 
 /*

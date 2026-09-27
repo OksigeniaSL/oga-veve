@@ -11,6 +11,8 @@ import {
   ENTRE_DOS,
   InformacionDeTrafico,
   alturaDelOtro,
+  cifrasDelTrafico,
+  informacionEnPiezas,
   informacionEnRadio,
   ladoDeLaHora,
   type QuienEscucha,
@@ -125,7 +127,40 @@ describe("cómo se dice", () => {
     ).toBe("Echo, traffic, 11 o'clock, 1 mile, 500 feet below");
     expect(
       informacionEnRadio("Echo", { hora: 12, distancia: 4000, relativa: 30 }),
-    ).toBe("Echo, traffic, 12 o'clock, 2 miles, same altitude");
+    ).toBe("Echo, traffic, 12 o'clock, 2 miles, same level");
+  });
+
+  it("y en piezas grabadas, con los mismos números que la frase escrita", () => {
+    expect(
+      informacionEnPiezas({ hora: 2, distancia: 3 * MILLA, relativa: 1000 * PIE }),
+    ).toEqual({
+      hora: "trafico.hora.2",
+      millas: "trafico.millas.3",
+      altura: "trafico.pies.10 trafico.above",
+    });
+    expect(
+      informacionEnPiezas({ hora: 11, distancia: 800, relativa: -500 * PIE }),
+    ).toEqual({
+      hora: "trafico.hora.11",
+      millas: "trafico.millas.1",
+      altura: "trafico.pies.5 trafico.below",
+    });
+    expect(
+      informacionEnPiezas({ hora: 12, distancia: 4000, relativa: 30 }).altura,
+    ).toBe("trafico.sameLevel");
+  });
+
+  it("y ninguna cifra se sale de lo grabado", () => {
+    for (let m = 0; m <= 7 * MILLA; m += 97)
+      for (let pies = -1300; pies <= 1300; pies += 37) {
+        const c = cifrasDelTrafico({ hora: 3, distancia: m, relativa: pies * PIE });
+        expect(c.millas).toBeGreaterThanOrEqual(1);
+        expect(c.millas).toBeLessThanOrEqual(6);
+        if (c.cientos !== null) {
+          expect(c.cientos).toBeGreaterThanOrEqual(3);
+          expect(c.cientos).toBeLessThanOrEqual(12);
+        }
+      }
   });
 
   it("y en casa, por el lado y la altura", () => {

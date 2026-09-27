@@ -6,6 +6,8 @@ Pará del todo y esperá la luz
 Esperamos: viene un avión a aterrizar
 Esperamos: primero sale el avión que está en la pista
 ¡Luz verde! Entrá a la pista
+Pará y mirá: la manga, los animales y la pista
+Todo libre: entrá a la pista
 Andá hasta el fondo y dá la vuelta
 Ponete derechito en el eje
 Mirá la pista: ¿la ves?
@@ -45,12 +47,15 @@ Bajás muy de golpe: levantá un poco la nariz
 Estás muy inclinado: enderezá las alas
 Se soltó el piloto automático
 El piloto automático se conecta en el aire
+Empezamos a bajar: despacito, hasta la pista
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
 La torre te deja volver a intentarlo
 La pista quedó libre: podés volver a bajar
+La pista ya está libre: volvé a intentarlo
 La torre te deja aterrizar
+Ahora sí: podés aterrizar
 ¡Bien hecho! Te fuiste al aire. Probá de nuevo
 Muy bien: irse al aire también es volar bien
 Eso estuvo bien. Damos otra vuelta y volvemos
@@ -73,6 +78,8 @@ Dos rojas y dos blancas: vas bien
 Por ahí no se pasa: hay un edificio
 Frená
 Salí de la pista, que viene otro
+Sin apuro: salí de la pista y volvé a casa
+Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
 ¡Pista libre! Bien hecho
 Volvé a tu lugar
 Llegaste. Apagá el motor
@@ -93,12 +100,14 @@ Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el tra
 Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
 Metélo, el tren te frena
 Hay una tormenta delante: rodeála, no la cruces
+Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
 Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
 Se acabó el combustible: planeá hasta la pista
 No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
 Vamos lentos: bajá un poco la nariz
 Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
 Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
+Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
 Por esa punta no: andate al aire y volvé por la otra
 Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
 Sacá el tren
@@ -167,3 +176,31 @@ Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá 
 Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
 Cuidado: un poco más de ángulo y el aire se suelta.
 El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+Nuestro avión es
+Así nos llama la torre.
+Alfa
+Bravo
+Charlie
+Delta
+Echo
+Foxtrot
+Golf
+Hotel
+India
+Juliett
+Kilo
+Lima
+Mike
+November
+Oscar
+Papa
+Quebec
+Romeo
+Sierra
+Tango
+Uniform
+Victor
+Whiskey
+X-ray
+Yankee
+Zulu

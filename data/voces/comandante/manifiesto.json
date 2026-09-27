@@ -3,6 +3,9 @@
   "voz": "comandante",
   "idioma": "es-PY",
   "piezas": {
+    "comandante.aproximacion": {
+      "ms": 2165
+    },
     "comandante.bienvenida.concepcion": {
       "ms": 5607
     },
@@ -54,14 +57,80 @@
     "comandante.bienvenida.yvytu-rape": {
       "ms": 7307
     },
+    "comandante.cielo.despejado": {
+      "ms": 1507
+    },
+    "comandante.cielo.lluvia": {
+      "ms": 1150
+    },
+    "comandante.cielo.niebla": {
+      "ms": 988
+    },
+    "comandante.cielo.nubes": {
+      "ms": 1069
+    },
+    "comandante.cielo.nublado": {
+      "ms": 922
+    },
+    "comandante.cielo.tormenta": {
+      "ms": 4907
+    },
     "comandante.crosscheck": {
       "ms": 3207
     },
     "comandante.crucero": {
       "ms": 4507
     },
-    "comandante.descenso": {
-      "ms": 3807
+    "comandante.descenso.hacia.concepcion": {
+      "ms": 4407
+    },
+    "comandante.descenso.hacia.el-hierro": {
+      "ms": 4807
+    },
+    "comandante.descenso.hacia.encarnacion": {
+      "ms": 5407
+    },
+    "comandante.descenso.hacia.estigarribia": {
+      "ms": 5707
+    },
+    "comandante.descenso.hacia.fuerteventura": {
+      "ms": 5107
+    },
+    "comandante.descenso.hacia.gran-canaria": {
+      "ms": 4907
+    },
+    "comandante.descenso.hacia.guarani": {
+      "ms": 5007
+    },
+    "comandante.descenso.hacia.la-gomera": {
+      "ms": 5107
+    },
+    "comandante.descenso.hacia.la-palma": {
+      "ms": 4407
+    },
+    "comandante.descenso.hacia.lanzarote": {
+      "ms": 4607
+    },
+    "comandante.descenso.hacia": {
+      "ms": 4007
+    },
+    "comandante.descenso.hacia.pedro-juan": {
+      "ms": 5207
+    },
+    "comandante.descenso.hacia.pettirossi": {
+      "ms": 5207
+    },
+    "comandante.descenso.hacia.tenerife-norte": {
+      "ms": 5107
+    },
+    "comandante.descenso.hacia.tenerife-sur": {
+      "ms": 4707
+    },
+    "comandante.descenso.hacia.yvytu-rape": {
+      "ms": 6607
+    },
+    "comandante.descenso.vuelta": {
+      "ms": 6207
     },
     "comandante.despegue": {
       "ms": 2015
@@ -335,9 +404,342 @@
     },
     "comandante.llegada.yvytu-rape~5": {
       "ms": 8107
+    },
+    "comandante.minutos.0": {
+      "ms": 1907
+    },
+    "comandante.minutos.10": {
+      "ms": 1856
+    },
+    "comandante.minutos.15": {
+      "ms": 1800
+    },
+    "comandante.minutos.2": {
+      "ms": 1961
+    },
+    "comandante.minutos.20": {
+      "ms": 1750
+    },
+    "comandante.minutos.25": {
+      "ms": 2294
+    },
+    "comandante.minutos.3": {
+      "ms": 1805
+    },
+    "comandante.minutos.30": {
+      "ms": 1901
+    },
+    "comandante.minutos.35": {
+      "ms": 2520
+    },
+    "comandante.minutos.4": {
+      "ms": 1863
+    },
+    "comandante.minutos.40": {
+      "ms": 1894
+    },
+    "comandante.minutos.45": {
+      "ms": 2419
+    },
+    "comandante.minutos.5": {
+      "ms": 1963
+    },
+    "comandante.minutos.50": {
+      "ms": 2127
+    },
+    "comandante.minutos.55": {
+      "ms": 2656
+    },
+    "comandante.minutos.60": {
+      "ms": 1979
+    },
+    "comandante.previsto.nivel.10": {
+      "ms": 1301
+    },
+    "comandante.previsto.nivel.11": {
+      "ms": 1531
+    },
+    "comandante.previsto.nivel.12": {
+      "ms": 1330
+    },
+    "comandante.previsto.nivel.13": {
+      "ms": 1457
+    },
+    "comandante.previsto.nivel.14": {
+      "ms": 1875
+    },
+    "comandante.previsto.nivel.15": {
+      "ms": 1595
+    },
+    "comandante.previsto.nivel.16": {
+      "ms": 1647
+    },
+    "comandante.previsto.nivel.17": {
+      "ms": 1763
+    },
+    "comandante.previsto.nivel.18": {
+      "ms": 1611
+    },
+    "comandante.previsto.nivel.19": {
+      "ms": 1772
+    },
+    "comandante.previsto.nivel.20": {
+      "ms": 1391
+    },
+    "comandante.previsto.nivel.21": {
+      "ms": 1558
+    },
+    "comandante.previsto.nivel.22": {
+      "ms": 1724
+    },
+    "comandante.previsto.nivel.23": {
+      "ms": 1697
+    },
+    "comandante.previsto.nivel.24": {
+      "ms": 1817
+    },
+    "comandante.previsto.nivel.25": {
+      "ms": 1585
+    },
+    "comandante.previsto.nivel.26": {
+      "ms": 1512
+    },
+    "comandante.previsto.nivel.27": {
+      "ms": 1773
+    },
+    "comandante.previsto.nivel.28": {
+      "ms": 1650
+    },
+    "comandante.previsto.nivel.29": {
+      "ms": 1793
+    },
+    "comandante.previsto.nivel.5": {
+      "ms": 1323
+    },
+    "comandante.previsto.nivel.6": {
+      "ms": 1401
+    },
+    "comandante.previsto.nivel.7": {
+      "ms": 1394
+    },
+    "comandante.previsto.nivel.8": {
+      "ms": 1461
+    },
+    "comandante.previsto.nivel.9": {
+      "ms": 1818
+    },
+    "comandante.previsto.vuelo.0": {
+      "ms": 1912
+    },
+    "comandante.previsto.vuelo.10": {
+      "ms": 1624
+    },
+    "comandante.previsto.vuelo.15": {
+      "ms": 1787
+    },
+    "comandante.previsto.vuelo.2": {
+      "ms": 1844
+    },
+    "comandante.previsto.vuelo.20": {
+      "ms": 1702
+    },
+    "comandante.previsto.vuelo.25": {
+      "ms": 2164
+    },
+    "comandante.previsto.vuelo.3": {
+      "ms": 1615
+    },
+    "comandante.previsto.vuelo.30": {
+      "ms": 1951
+    },
+    "comandante.previsto.vuelo.35": {
+      "ms": 2246
+    },
+    "comandante.previsto.vuelo.4": {
+      "ms": 1667
+    },
+    "comandante.previsto.vuelo.40": {
+      "ms": 2101
+    },
+    "comandante.previsto.vuelo.45": {
+      "ms": 2155
+    },
+    "comandante.previsto.vuelo.5": {
+      "ms": 1822
+    },
+    "comandante.previsto.vuelo.50": {
+      "ms": 1983
+    },
+    "comandante.previsto.vuelo.55": {
+      "ms": 2456
+    },
+    "comandante.previsto.vuelo.60": {
+      "ms": 1865
+    },
+    "comandante.temperatura.0": {
+      "ms": 1509
+    },
+    "comandante.temperatura.1": {
+      "ms": 1340
+    },
+    "comandante.temperatura.10": {
+      "ms": 1422
+    },
+    "comandante.temperatura.11": {
+      "ms": 1708
+    },
+    "comandante.temperatura.12": {
+      "ms": 1522
+    },
+    "comandante.temperatura.13": {
+      "ms": 1754
+    },
+    "comandante.temperatura.14": {
+      "ms": 1874
+    },
+    "comandante.temperatura.15": {
+      "ms": 1640
+    },
+    "comandante.temperatura.16": {
+      "ms": 1541
+    },
+    "comandante.temperatura.17": {
+      "ms": 1766
+    },
+    "comandante.temperatura.18": {
+      "ms": 1714
+    },
+    "comandante.temperatura.19": {
+      "ms": 2086
+    },
+    "comandante.temperatura.2": {
+      "ms": 1469
+    },
+    "comandante.temperatura.20": {
+      "ms": 1487
+    },
+    "comandante.temperatura.21": {
+      "ms": 1724
+    },
+    "comandante.temperatura.22": {
+      "ms": 1647
+    },
+    "comandante.temperatura.23": {
+      "ms": 1732
+    },
+    "comandante.temperatura.24": {
+      "ms": 1838
+    },
+    "comandante.temperatura.25": {
+      "ms": 1758
+    },
+    "comandante.temperatura.26": {
+      "ms": 1713
+    },
+    "comandante.temperatura.27": {
+      "ms": 1644
+    },
+    "comandante.temperatura.28": {
+      "ms": 1730
+    },
+    "comandante.temperatura.29": {
+      "ms": 1774
+    },
+    "comandante.temperatura.3": {
+      "ms": 1568
+    },
+    "comandante.temperatura.30": {
+      "ms": 1642
+    },
+    "comandante.temperatura.31": {
+      "ms": 1746
+    },
+    "comandante.temperatura.32": {
+      "ms": 1964
+    },
+    "comandante.temperatura.33": {
+      "ms": 1732
+    },
+    "comandante.temperatura.34": {
+      "ms": 2079
+    },
+    "comandante.temperatura.35": {
+      "ms": 2088
+    },
+    "comandante.temperatura.36": {
+      "ms": 1962
+    },
+    "comandante.temperatura.37": {
+      "ms": 1947
+    },
+    "comandante.temperatura.38": {
+      "ms": 1945
+    },
+    "comandante.temperatura.39": {
+      "ms": 1926
+    },
+    "comandante.temperatura.4": {
+      "ms": 1651
+    },
+    "comandante.temperatura.40": {
+      "ms": 1642
+    },
+    "comandante.temperatura.41": {
+      "ms": 1739
+    },
+    "comandante.temperatura.42": {
+      "ms": 2013
+    },
+    "comandante.temperatura.43": {
+      "ms": 2037
+    },
+    "comandante.temperatura.44": {
+      "ms": 2282
+    },
+    "comandante.temperatura.45": {
+      "ms": 2214
+    },
+    "comandante.temperatura.5": {
+      "ms": 1556
+    },
+    "comandante.temperatura.6": {
+      "ms": 1600
+    },
+    "comandante.temperatura.7": {
+      "ms": 1574
+    },
+    "comandante.temperatura.8": {
+      "ms": 1438
+    },
+    "comandante.temperatura.9": {
+      "ms": 1549
+    },
+    "comandante.temperatura.menos1": {
+      "ms": 1935
+    },
+    "comandante.temperatura.menos2": {
+      "ms": 1816
+    },
+    "comandante.temperatura.menos3": {
+      "ms": 2079
+    },
+    "comandante.temperatura.menos4": {
+      "ms": 2283
+    },
+    "comandante.temperatura.menos5": {
+      "ms": 2119
+    },
+    "comandante.turbulencia": {
+      "ms": 9607
     }
   },
   "recetas": {
+    "comandante.aproximacion": [
+      "comandante.aproximacion"
+    ],
+    "comandante.bienvenida": [
+      "comandante.bienvenida"
+    ],
     "comandante.bienvenida.concepcion": [
       "comandante.bienvenida.concepcion"
     ],
@@ -371,9 +773,6 @@
     "comandante.bienvenida.local": [
       "comandante.bienvenida.local"
     ],
-    "comandante.bienvenida": [
-      "comandante.bienvenida"
-    ],
     "comandante.bienvenida.pedro-juan": [
       "comandante.bienvenida.pedro-juan"
     ],
@@ -389,14 +788,80 @@
     "comandante.bienvenida.yvytu-rape": [
       "comandante.bienvenida.yvytu-rape"
     ],
+    "comandante.cielo.despejado": [
+      "comandante.cielo.despejado"
+    ],
+    "comandante.cielo.lluvia": [
+      "comandante.cielo.lluvia"
+    ],
+    "comandante.cielo.niebla": [
+      "comandante.cielo.niebla"
+    ],
+    "comandante.cielo.nubes": [
+      "comandante.cielo.nubes"
+    ],
+    "comandante.cielo.nublado": [
+      "comandante.cielo.nublado"
+    ],
+    "comandante.cielo.tormenta": [
+      "comandante.cielo.tormenta"
+    ],
     "comandante.crosscheck": [
       "comandante.crosscheck"
     ],
     "comandante.crucero": [
       "comandante.crucero"
     ],
-    "comandante.descenso": [
-      "comandante.descenso"
+    "comandante.descenso.hacia": [
+      "comandante.descenso.hacia"
+    ],
+    "comandante.descenso.hacia.concepcion": [
+      "comandante.descenso.hacia.concepcion"
+    ],
+    "comandante.descenso.hacia.el-hierro": [
+      "comandante.descenso.hacia.el-hierro"
+    ],
+    "comandante.descenso.hacia.encarnacion": [
+      "comandante.descenso.hacia.encarnacion"
+    ],
+    "comandante.descenso.hacia.estigarribia": [
+      "comandante.descenso.hacia.estigarribia"
+    ],
+    "comandante.descenso.hacia.fuerteventura": [
+      "comandante.descenso.hacia.fuerteventura"
+    ],
+    "comandante.descenso.hacia.gran-canaria": [
+      "comandante.descenso.hacia.gran-canaria"
+    ],
+    "comandante.descenso.hacia.guarani": [
+      "comandante.descenso.hacia.guarani"
+    ],
+    "comandante.descenso.hacia.la-gomera": [
+      "comandante.descenso.hacia.la-gomera"
+    ],
+    "comandante.descenso.hacia.la-palma": [
+      "comandante.descenso.hacia.la-palma"
+    ],
+    "comandante.descenso.hacia.lanzarote": [
+      "comandante.descenso.hacia.lanzarote"
+    ],
+    "comandante.descenso.hacia.pedro-juan": [
+      "comandante.descenso.hacia.pedro-juan"
+    ],
+    "comandante.descenso.hacia.pettirossi": [
+      "comandante.descenso.hacia.pettirossi"
+    ],
+    "comandante.descenso.hacia.tenerife-norte": [
+      "comandante.descenso.hacia.tenerife-norte"
+    ],
+    "comandante.descenso.hacia.tenerife-sur": [
+      "comandante.descenso.hacia.tenerife-sur"
+    ],
+    "comandante.descenso.hacia.yvytu-rape": [
+      "comandante.descenso.hacia.yvytu-rape"
+    ],
+    "comandante.descenso.vuelta": [
+      "comandante.descenso.vuelta"
     ],
     "comandante.despegue": [
       "comandante.despegue"
@@ -670,6 +1135,344 @@
     ],
     "comandante.llegada.yvytu-rape~5": [
       "comandante.llegada.yvytu-rape~5"
+    ],
+    "comandante.minutos.0": [
+      "comandante.minutos.0"
+    ],
+    "comandante.minutos.10": [
+      "comandante.minutos.10"
+    ],
+    "comandante.minutos.15": [
+      "comandante.minutos.15"
+    ],
+    "comandante.minutos.2": [
+      "comandante.minutos.2"
+    ],
+    "comandante.minutos.20": [
+      "comandante.minutos.20"
+    ],
+    "comandante.minutos.25": [
+      "comandante.minutos.25"
+    ],
+    "comandante.minutos.3": [
+      "comandante.minutos.3"
+    ],
+    "comandante.minutos.30": [
+      "comandante.minutos.30"
+    ],
+    "comandante.minutos.35": [
+      "comandante.minutos.35"
+    ],
+    "comandante.minutos.4": [
+      "comandante.minutos.4"
+    ],
+    "comandante.minutos.40": [
+      "comandante.minutos.40"
+    ],
+    "comandante.minutos.45": [
+      "comandante.minutos.45"
+    ],
+    "comandante.minutos.5": [
+      "comandante.minutos.5"
+    ],
+    "comandante.minutos.50": [
+      "comandante.minutos.50"
+    ],
+    "comandante.minutos.55": [
+      "comandante.minutos.55"
+    ],
+    "comandante.minutos.60": [
+      "comandante.minutos.60"
+    ],
+    "comandante.previsto.nivel.10": [
+      "comandante.previsto.nivel.10"
+    ],
+    "comandante.previsto.nivel.11": [
+      "comandante.previsto.nivel.11"
+    ],
+    "comandante.previsto.nivel.12": [
+      "comandante.previsto.nivel.12"
+    ],
+    "comandante.previsto.nivel.13": [
+      "comandante.previsto.nivel.13"
+    ],
+    "comandante.previsto.nivel.14": [
+      "comandante.previsto.nivel.14"
+    ],
+    "comandante.previsto.nivel.15": [
+      "comandante.previsto.nivel.15"
+    ],
+    "comandante.previsto.nivel.16": [
+      "comandante.previsto.nivel.16"
+    ],
+    "comandante.previsto.nivel.17": [
+      "comandante.previsto.nivel.17"
+    ],
+    "comandante.previsto.nivel.18": [
+      "comandante.previsto.nivel.18"
+    ],
+    "comandante.previsto.nivel.19": [
+      "comandante.previsto.nivel.19"
+    ],
+    "comandante.previsto.nivel.20": [
+      "comandante.previsto.nivel.20"
+    ],
+    "comandante.previsto.nivel.21": [
+      "comandante.previsto.nivel.21"
+    ],
+    "comandante.previsto.nivel.22": [
+      "comandante.previsto.nivel.22"
+    ],
+    "comandante.previsto.nivel.23": [
+      "comandante.previsto.nivel.23"
+    ],
+    "comandante.previsto.nivel.24": [
+      "comandante.previsto.nivel.24"
+    ],
+    "comandante.previsto.nivel.25": [
+      "comandante.previsto.nivel.25"
+    ],
+    "comandante.previsto.nivel.26": [
+      "comandante.previsto.nivel.26"
+    ],
+    "comandante.previsto.nivel.27": [
+      "comandante.previsto.nivel.27"
+    ],
+    "comandante.previsto.nivel.28": [
+      "comandante.previsto.nivel.28"
+    ],
+    "comandante.previsto.nivel.29": [
+      "comandante.previsto.nivel.29"
+    ],
+    "comandante.previsto.nivel.5": [
+      "comandante.previsto.nivel.5"
+    ],
+    "comandante.previsto.nivel.6": [
+      "comandante.previsto.nivel.6"
+    ],
+    "comandante.previsto.nivel.7": [
+      "comandante.previsto.nivel.7"
+    ],
+    "comandante.previsto.nivel.8": [
+      "comandante.previsto.nivel.8"
+    ],
+    "comandante.previsto.nivel.9": [
+      "comandante.previsto.nivel.9"
+    ],
+    "comandante.previsto.vuelo.0": [
+      "comandante.previsto.vuelo.0"
+    ],
+    "comandante.previsto.vuelo.10": [
+      "comandante.previsto.vuelo.10"
+    ],
+    "comandante.previsto.vuelo.15": [
+      "comandante.previsto.vuelo.15"
+    ],
+    "comandante.previsto.vuelo.2": [
+      "comandante.previsto.vuelo.2"
+    ],
+    "comandante.previsto.vuelo.20": [
+      "comandante.previsto.vuelo.20"
+    ],
+    "comandante.previsto.vuelo.25": [
+      "comandante.previsto.vuelo.25"
+    ],
+    "comandante.previsto.vuelo.3": [
+      "comandante.previsto.vuelo.3"
+    ],
+    "comandante.previsto.vuelo.30": [
+      "comandante.previsto.vuelo.30"
+    ],
+    "comandante.previsto.vuelo.35": [
+      "comandante.previsto.vuelo.35"
+    ],
+    "comandante.previsto.vuelo.4": [
+      "comandante.previsto.vuelo.4"
+    ],
+    "comandante.previsto.vuelo.40": [
+      "comandante.previsto.vuelo.40"
+    ],
+    "comandante.previsto.vuelo.45": [
+      "comandante.previsto.vuelo.45"
+    ],
+    "comandante.previsto.vuelo.5": [
+      "comandante.previsto.vuelo.5"
+    ],
+    "comandante.previsto.vuelo.50": [
+      "comandante.previsto.vuelo.50"
+    ],
+    "comandante.previsto.vuelo.55": [
+      "comandante.previsto.vuelo.55"
+    ],
+    "comandante.previsto.vuelo.60": [
+      "comandante.previsto.vuelo.60"
+    ],
+    "comandante.temperatura.0": [
+      "comandante.temperatura.0"
+    ],
+    "comandante.temperatura.1": [
+      "comandante.temperatura.1"
+    ],
+    "comandante.temperatura.10": [
+      "comandante.temperatura.10"
+    ],
+    "comandante.temperatura.11": [
+      "comandante.temperatura.11"
+    ],
+    "comandante.temperatura.12": [
+      "comandante.temperatura.12"
+    ],
+    "comandante.temperatura.13": [
+      "comandante.temperatura.13"
+    ],
+    "comandante.temperatura.14": [
+      "comandante.temperatura.14"
+    ],
+    "comandante.temperatura.15": [
+      "comandante.temperatura.15"
+    ],
+    "comandante.temperatura.16": [
+      "comandante.temperatura.16"
+    ],
+    "comandante.temperatura.17": [
+      "comandante.temperatura.17"
+    ],
+    "comandante.temperatura.18": [
+      "comandante.temperatura.18"
+    ],
+    "comandante.temperatura.19": [
+      "comandante.temperatura.19"
+    ],
+    "comandante.temperatura.2": [
+      "comandante.temperatura.2"
+    ],
+    "comandante.temperatura.20": [
+      "comandante.temperatura.20"
+    ],
+    "comandante.temperatura.21": [
+      "comandante.temperatura.21"
+    ],
+    "comandante.temperatura.22": [
+      "comandante.temperatura.22"
+    ],
+    "comandante.temperatura.23": [
+      "comandante.temperatura.23"
+    ],
+    "comandante.temperatura.24": [
+      "comandante.temperatura.24"
+    ],
+    "comandante.temperatura.25": [
+      "comandante.temperatura.25"
+    ],
+    "comandante.temperatura.26": [
+      "comandante.temperatura.26"
+    ],
+    "comandante.temperatura.27": [
+      "comandante.temperatura.27"
+    ],
+    "comandante.temperatura.28": [
+      "comandante.temperatura.28"
+    ],
+    "comandante.temperatura.29": [
+      "comandante.temperatura.29"
+    ],
+    "comandante.temperatura.3": [
+      "comandante.temperatura.3"
+    ],
+    "comandante.temperatura.30": [
+      "comandante.temperatura.30"
+    ],
+    "comandante.temperatura.31": [
+      "comandante.temperatura.31"
+    ],
+    "comandante.temperatura.32": [
+      "comandante.temperatura.32"
+    ],
+    "comandante.temperatura.33": [
+      "comandante.temperatura.33"
+    ],
+    "comandante.temperatura.34": [
+      "comandante.temperatura.34"
+    ],
+    "comandante.temperatura.35": [
+      "comandante.temperatura.35"
+    ],
+    "comandante.temperatura.36": [
+      "comandante.temperatura.36"
+    ],
+    "comandante.temperatura.37": [
+      "comandante.temperatura.37"
+    ],
+    "comandante.temperatura.38": [
+      "comandante.temperatura.38"
+    ],
+    "comandante.temperatura.39": [
+      "comandante.temperatura.39"
+    ],
+    "comandante.temperatura.4": [
+      "comandante.temperatura.4"
+    ],
+    "comandante.temperatura.40": [
+      "comandante.temperatura.40"
+    ],
+    "comandante.temperatura.41": [
+      "comandante.temperatura.41"
+    ],
+    "comandante.temperatura.42": [
+      "comandante.temperatura.42"
+    ],
+    "comandante.temperatura.43": [
+      "comandante.temperatura.43"
+    ],
+    "comandante.temperatura.44": [
+      "comandante.temperatura.44"
+    ],
+    "comandante.temperatura.45": [
+      "comandante.temperatura.45"
+    ],
+    "comandante.temperatura.5": [
+      "comandante.temperatura.5"
+    ],
+    "comandante.temperatura.6": [
+      "comandante.temperatura.6"
+    ],
+    "comandante.temperatura.7": [
+      "comandante.temperatura.7"
+    ],
+    "comandante.temperatura.8": [
+      "comandante.temperatura.8"
+    ],
+    "comandante.temperatura.9": [
+      "comandante.temperatura.9"
+    ],
+    "comandante.temperatura.menos1": [
+      "comandante.temperatura.menos1"
+    ],
+    "comandante.temperatura.menos2": [
+      "comandante.temperatura.menos2"
+    ],
+    "comandante.temperatura.menos3": [
+      "comandante.temperatura.menos3"
+    ],
+    "comandante.temperatura.menos4": [
+      "comandante.temperatura.menos4"
+    ],
+    "comandante.temperatura.menos5": [
+      "comandante.temperatura.menos5"
+    ],
+    "comandante.bienvenidaConPlan": [
+      "{bienvenida}",
+      "{vuelo}",
+      "{nivel}"
+    ],
+    "comandante.descenso": [
+      "{hacia}",
+      "{minutos?}",
+      "{cielo}",
+      "{temperatura}"
+    ],
+    "comandante.turbulencia": [
+      "comandante.turbulencia"
     ]
   }
 }

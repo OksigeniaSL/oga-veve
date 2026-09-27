@@ -307,6 +307,23 @@ const SENDA = icono(`
 `);
 
 /**
+ * El punto de descenso: **el crucero que se acaba y la bajada que empieza**.
+ *
+ * Una raya a nivel, un círculo donde se dobla —el mismo del «T/D» de la
+ * carta, que es el que se aprende— y la bajada con su punta, hasta un suelo
+ * con su pista. Se entiende sin leer: aquí se empieza a bajar, poco a poco y
+ * hasta allá. Ver `flight/ruta.ts`.
+ */
+const DESCENSO = icono(`
+  <path d="M2 21.5 h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.45" />
+  <path d="M15.5 21.5 h6" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M2 6 H8.6 L18.4 16.4" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <circle cx="8.6" cy="6" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M20.6 18.8 L14.8 17.6 L19.2 13.4 Z" />
+`);
+
+/**
  * Lo corregiste: **la senda, y un visto**.
  *
  * Es la de la senda con la línea entera en vez de a trazos y una marca de
@@ -821,6 +838,40 @@ const COMBUSTIBLE = icono(`
 `);
 
 /**
+ * **El servicio a bordo**: una botella de agua y un vaso, en su bandeja.
+ *
+ * Es el dibujo de cuando la tripulación anuncia que pasa por el pasillo, y en
+ * Guyrami es lo único que se ve de ese anuncio: a los cuatro años no se lee
+ * «agua y fruta de la granja», pero una botella en una bandeja dice «ahora
+ * viene algo para tomar» sin una palabra. La botella y no un producto, porque
+ * el agua es lo único que va en todos los vuelos. Ver
+ * `audio/servicio-a-bordo.ts`.
+ */
+const SERVICIO = icono(`
+  <path d="M1.6 19 h20.8 v1.4 a1.2 1.2 0 0 1 -1.2 1.2 H2.8 a1.2 1.2 0 0 1 -1.2 -1.2 Z" />
+  <rect x="7.6" y="2.2" width="3.6" height="1.8" rx="0.5" />
+  <path d="M7.8 4.6 h3.2 v1.6 q2 1 2 3.2 V18 H5.8 V9.4 q0-2.2 2-3.2 Z" />
+  <rect class="senal__hueco" x="6.9" y="11" width="5" height="3.4" rx="0.6" />
+  <path d="M14.8 11.6 h5.6 l-0.8 6.4 h-4 Z" />
+`);
+
+/**
+ * Mirar antes de entrar en una pista sin torre: **la manga**.
+ *
+ * En la pista de hierba de casa no hay lámpara que esperar. Lo que se hace es
+ * mirar: de dónde viene el viento, que no haya animales y que la pista esté
+ * libre. La manga es lo primero y lo que más se ve desde la cabecera, y es el
+ * mismo cono a rayas que hay plantado junto a la pista: quien no lee ve la
+ * tarjeta, levanta la vista y lo encuentra.
+ */
+const MANGA = icono(`
+  <rect x="3" y="2.5" width="2.2" height="19" rx="1.1" />
+  <path d="M5.2 4.2 L21 7 V11.4 L5.2 14.2 Z" />
+  <path class="senal__hueco" d="M9.6 5 L12.4 5.5 V13 L9.6 13.4 Z" />
+  <path class="senal__hueco" d="M15.4 6 L18 6.5 V11.9 L15.4 12.4 Z" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -834,6 +885,7 @@ export const DIBUJOS = {
   reactor: REACTOR,
   amarillo: RAYA,
   mano: MANO,
+  manga: MANGA,
   nopara: NO_PARAR,
   verde: VERDE,
   "media-vuelta": MEDIA_VUELTA,
@@ -841,6 +893,7 @@ export const DIBUJOS = {
   motor: MOTOR,
   ala: ALA,
   senda: SENDA,
+  descenso: DESCENSO,
   corregido: CORREGIDO,
   gafas: GAFAS,
   flaps: FLAPS,
@@ -850,6 +903,7 @@ export const DIBUJOS = {
   sobrevelocidad: SOBREVELOCIDAD,
   freno: FRENO,
   combustible: COMBUSTIBLE,
+  servicio: SERVICIO,
   salida: SALIDA,
   sinVoz: SIN_VOZ,
   toma: TOMA,

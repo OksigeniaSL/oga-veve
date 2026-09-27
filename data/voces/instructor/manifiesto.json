@@ -45,6 +45,84 @@
     "fin.redondo": {
       "ms": 2355
     },
+    "fonetico.alfa": {
+      "ms": 567
+    },
+    "fonetico.bravo": {
+      "ms": 583
+    },
+    "fonetico.charlie": {
+      "ms": 586
+    },
+    "fonetico.delta": {
+      "ms": 821
+    },
+    "fonetico.echo": {
+      "ms": 688
+    },
+    "fonetico.foxtrot": {
+      "ms": 839
+    },
+    "fonetico.golf": {
+      "ms": 848
+    },
+    "fonetico.hotel": {
+      "ms": 508
+    },
+    "fonetico.india": {
+      "ms": 643
+    },
+    "fonetico.juliett": {
+      "ms": 783
+    },
+    "fonetico.kilo": {
+      "ms": 841
+    },
+    "fonetico.lima": {
+      "ms": 514
+    },
+    "fonetico.mike": {
+      "ms": 373
+    },
+    "fonetico.november": {
+      "ms": 644
+    },
+    "fonetico.oscar": {
+      "ms": 641
+    },
+    "fonetico.papa": {
+      "ms": 488
+    },
+    "fonetico.quebec": {
+      "ms": 914
+    },
+    "fonetico.romeo": {
+      "ms": 846
+    },
+    "fonetico.sierra": {
+      "ms": 647
+    },
+    "fonetico.tango": {
+      "ms": 734
+    },
+    "fonetico.uniform": {
+      "ms": 640
+    },
+    "fonetico.victor": {
+      "ms": 689
+    },
+    "fonetico.whiskey": {
+      "ms": 535
+    },
+    "fonetico.xray": {
+      "ms": 608
+    },
+    "fonetico.yankee": {
+      "ms": 758
+    },
+    "fonetico.zulu": {
+      "ms": 689
+    },
     "galon.aproximacion": {
       "ms": 1416
     },
@@ -77,6 +155,12 @@
     },
     "grado.piloto": {
       "ms": 694
+    },
+    "matricula.asiNosLlama": {
+      "ms": 1136
+    },
+    "matricula.nuestroAvion": {
+      "ms": 1035
     },
     "mission.anaga.name": {
       "ms": 616
@@ -186,6 +270,12 @@
     "vuelo.abandonando": {
       "ms": 1788
     },
+    "vuelo.abandonandoConLaBici": {
+      "ms": 4507
+    },
+    "vuelo.abandonandoSinPrisa": {
+      "ms": 2530
+    },
     "vuelo.alAireOtraPunta": {
       "ms": 2603
     },
@@ -240,6 +330,12 @@
     "vuelo.autorizado": {
       "ms": 1591
     },
+    "vuelo.autorizadoSinTorre": {
+      "ms": 1785
+    },
+    "vuelo.baches": {
+      "ms": 6507
+    },
     "vuelo.backTaxi": {
       "ms": 1795
     },
@@ -273,6 +369,9 @@
     "vuelo.despuesDelAterrizaje": {
       "ms": 6207
     },
+    "vuelo.empezamosABajar": {
+      "ms": 2918
+    },
     "vuelo.enPuesto": {
       "ms": 1643
     },
@@ -293,6 +392,9 @@
     },
     "vuelo.esperando": {
       "ms": 1569
+    },
+    "vuelo.esperandoMirando": {
+      "ms": 2797
     },
     "vuelo.estacionado": {
       "ms": 991
@@ -426,8 +528,14 @@
     "vuelo.puedeAterrizar": {
       "ms": 1223
     },
+    "vuelo.puedeAterrizarSinTorre": {
+      "ms": 1658
+    },
     "vuelo.puedeVolver": {
       "ms": 1848
+    },
+    "vuelo.puedeVolverSinTorre": {
+      "ms": 2010
     },
     "vuelo.puedeVolver~2": {
       "ms": 2097
@@ -452,6 +560,9 @@
     },
     "vuelo.sacaElTren": {
       "ms": 855
+    },
+    "vuelo.salidaSiguiente": {
+      "ms": 3907
     },
     "vuelo.sinCombustible": {
       "ms": 2625
@@ -1096,6 +1207,120 @@
     ],
     "vuelo.puedeAterrizar": [
       "vuelo.puedeAterrizar"
+    ],
+    "vuelo.salidaSiguiente": [
+      "vuelo.salidaSiguiente"
+    ],
+    "fonetico.alfa": [
+      "fonetico.alfa"
+    ],
+    "fonetico.bravo": [
+      "fonetico.bravo"
+    ],
+    "fonetico.charlie": [
+      "fonetico.charlie"
+    ],
+    "fonetico.delta": [
+      "fonetico.delta"
+    ],
+    "fonetico.echo": [
+      "fonetico.echo"
+    ],
+    "fonetico.foxtrot": [
+      "fonetico.foxtrot"
+    ],
+    "fonetico.golf": [
+      "fonetico.golf"
+    ],
+    "fonetico.hotel": [
+      "fonetico.hotel"
+    ],
+    "fonetico.india": [
+      "fonetico.india"
+    ],
+    "fonetico.juliett": [
+      "fonetico.juliett"
+    ],
+    "fonetico.kilo": [
+      "fonetico.kilo"
+    ],
+    "fonetico.lima": [
+      "fonetico.lima"
+    ],
+    "fonetico.mike": [
+      "fonetico.mike"
+    ],
+    "fonetico.november": [
+      "fonetico.november"
+    ],
+    "fonetico.oscar": [
+      "fonetico.oscar"
+    ],
+    "fonetico.papa": [
+      "fonetico.papa"
+    ],
+    "fonetico.quebec": [
+      "fonetico.quebec"
+    ],
+    "fonetico.romeo": [
+      "fonetico.romeo"
+    ],
+    "fonetico.sierra": [
+      "fonetico.sierra"
+    ],
+    "fonetico.tango": [
+      "fonetico.tango"
+    ],
+    "fonetico.uniform": [
+      "fonetico.uniform"
+    ],
+    "fonetico.victor": [
+      "fonetico.victor"
+    ],
+    "fonetico.whiskey": [
+      "fonetico.whiskey"
+    ],
+    "fonetico.xray": [
+      "fonetico.xray"
+    ],
+    "fonetico.yankee": [
+      "fonetico.yankee"
+    ],
+    "fonetico.zulu": [
+      "fonetico.zulu"
+    ],
+    "vuelo.nuestroAvion": [
+      "matricula.nuestroAvion",
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "matricula.asiNosLlama"
+    ],
+    "vuelo.abandonandoConLaBici": [
+      "vuelo.abandonandoConLaBici"
+    ],
+    "vuelo.abandonandoSinPrisa": [
+      "vuelo.abandonandoSinPrisa"
+    ],
+    "vuelo.autorizadoSinTorre": [
+      "vuelo.autorizadoSinTorre"
+    ],
+    "vuelo.esperandoMirando": [
+      "vuelo.esperandoMirando"
+    ],
+    "vuelo.puedeAterrizarSinTorre": [
+      "vuelo.puedeAterrizarSinTorre"
+    ],
+    "vuelo.puedeVolverSinTorre": [
+      "vuelo.puedeVolverSinTorre"
+    ],
+    "vuelo.empezamosABajar": [
+      "vuelo.empezamosABajar"
+    ],
+    "vuelo.baches": [
+      "vuelo.baches"
     ]
   }
 }

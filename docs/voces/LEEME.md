@@ -1,6 +1,6 @@
 # Las voces del juego
 
-Seis voces, ciento dieciséis frases y dos mil doscientos setenta y un
+Ocho voces, seiscientas veintisiete frases y unos treinta y dos mil
 caracteres. Esto dice **qué se graba, con qué voz, cómo vuelve y qué se le
 hace después**.
 
@@ -19,7 +19,7 @@ Escribe en esta carpeta:
 | `guion-<voz>.txt` | **solo el texto**, una frase por línea: es lo que se pega en el estudio |
 | `guion-<voz>.tsv` | el mismo guion numerado, para casar los audios que vuelven              |
 
-## Las seis voces
+## Las ocho voces
 
 | voz                | idioma                                  | frases | cómo suena                                                      | por qué                                                                                                                                                                                                                                                                                                |
 | ------------------ | --------------------------------------- | ------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -27,8 +27,10 @@ Escribe en esta carpeta:
 | **cabina**         | inglés aeronáutico                      | 21     | seca, plana, **sin emoción**                                    | Son los cantos del avión: _terrain, pull up_, _one hundred_, _V1_. En un avión de verdad los dice una máquina, y por eso una voz con intención suena mal aquí.                                                                                                                                         |
 | **torre**          | inglés aeronáutico y castellano         | 7      | neutra, profesional, con prisa                                  | Va con efecto de radio, y por eso se graba **limpia**: el filtro se pone después.                                                                                                                                                                                                                      |
 | **torre-canarias** | castellano canario e inglés aeronáutico | 2      | **Yeray**: hombre, grave y sin prisa, con el habla de las islas | La torre de los campos canarios. No es solo acento: son otras palabras —«puedes entrar», no «podés»—, porque una torre de Tenerife que vosea suena tan rara como una de Asunción que no lo haga. Quién habla así lo dice el indicativo OACI: todo lo que empieza por `GC`. Ver `src/i18n/habla.ts`.    |
-| **comandante** | castellano paraguayo | 6 | **Jazlyn**: mujer joven, clara y con chispa, hablando por el altavoz del techo | La megafonía de cabina. Es la única voz del juego que **no** es cercana —le habla a cien personas— y por eso se reconoce sin saber quién es. Solo suena en los aviones que llevan pasaje: del turbohélice para arriba. Sin efecto de radio: la torre suena por una radio y esto por un altavoz, que es otra cosa. Ver `src/audio/megafonia.ts`. |
+| **comandante** | castellano paraguayo | 242 | **Jazlyn**: mujer joven, clara y con chispa, hablando por el altavoz del techo | La megafonía de cabina. Es la única voz del juego que **no** es cercana —le habla a cien personas— y por eso se reconoce sin saber quién es. Solo suena en los aviones que llevan pasaje: del turbohélice para arriba. Sin efecto de radio: la torre suena por una radio y esto por un altavoz, que es otra cosa. Ver `src/audio/megafonia.ts`. |
 | **otro**           | castellano paraguayo                    | 5      | otra persona, otro timbre                                       | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
+| **tripulacion** | castellano paraguayo | 8 | **Derlis**: hombre joven, cálido y atento, por el altavoz del techo | La tripulación de cabina de los vuelos de Paraguay: el servicio a bordo con lo de la granja —fruta deshidratada, maní, chipa, mbejú— y los cinturones al empezar a bajar. Solo en los aviones que llevan auxiliares: del JAZ 90 para arriba. Le habla al pasaje de usted, como cualquier tripulación. Ver `src/audio/servicio-a-bordo.ts`. |
+| **tripulacion-canarias** | castellano canario | 10 | **Idaira**: mujer canaria, serena y amable, por el altavoz del techo | Lo mismo en los vuelos entre islas, con el habla de allí: «plátano» y «manises», y a veces «un sabor de Paraguay». Claves `tripulacion.canario.*`, que no se pisan con las de casa. |
 
 Tres cosas que no cambian:
 
@@ -138,6 +140,22 @@ ir un `recetas.json` que diga qué piezas monta cada frase del diccionario:
 ```
 
 `{letra}` es un hueco: lo rellena el juego con la pieza de la calle que toque.
+
+**Y los números de la comandante, en frases enteras.** El plan de vuelo y el
+descenso —«el vuelo va a durar unos quince minutos», «vamos a aterrizar en unos
+diez; allá está nublado; la temperatura es de dieciocho grados»— cambian con
+cada vuelo, así que se montan. Pero cada trozo es una **frase entera con su
+número dentro**, no el número suelto: un «diez» grabado aparte y pegado en
+mitad de una frase de megafonía se nota al instante. Las plantillas están en el
+diccionario (`comandante.minutos`, `comandante.temperatura`…) y
+`frases-para-grabar.mjs` las rellena con el número en letras para cada valor
+que el juego puede pedir, que saca de `src/audio/partes-de-la-comandante.ts`.
+Una prueba abre el manifiesto horneado y comprueba que están todos: ver
+`src/audio/guion-grabado.test.ts`.
+
+Las recetas montadas de la megafonía son cuatro, y viven en el `recetas.json` de
+su voz: `comandante.bienvenidaConPlan`, `comandante.descenso` y el servicio de
+cada tripulación, `tripulacion.servicio` y `tripulacion.canario.servicio`.
 Veintiséis piezas de una sílaba cubren así todas las calles de rodaje de todos
 los aeropuertos del juego. Ver #126 y `src/audio/banco-de-voz.ts`.
 

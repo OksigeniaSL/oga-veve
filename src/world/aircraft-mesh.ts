@@ -79,6 +79,8 @@ export interface AircraftMesh {
   relojes?: import("./relojes-cabina").Relojes | null;
   /** Y los mandos que se pueden pulsar. Ver `botones-cabina.ts`. */
   botones?: import("./botones-cabina").BotonesDeCabina | null;
+  /** Y la placa con la matrícula en el panel. Ver `placa-de-cabina.ts`. */
+  placa?: import("./placa-de-cabina").PlacaDeCabina | null;
   /**
    * Y la luz de dentro: la que rebota de día y la roja del panel de noche.
    * Ver `luz-de-cabina.ts`.

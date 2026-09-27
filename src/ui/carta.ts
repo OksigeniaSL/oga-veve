@@ -219,6 +219,44 @@ export interface Mapa {
     readonly radio: number;
     readonly fuerza: number;
   }[];
+
+  /**
+   * **El plan de vuelo**, si se va a otro campo: sus puntos, a cuál se va y
+   * dónde se empieza a bajar. Ver `flight/ruta.ts`.
+   *
+   * Es la línea magenta de una pantalla de navegación de verdad, que no es
+   * una recta al destino: va de punto en punto, con sus giros, y acaba en el
+   * eje de la pista. «El mapa pone una línea recta, pero para tomar la pista
+   * recto y estable tengo que abrirme, para eso existen los planes de vuelo.»
+   */
+  readonly ruta?: RutaDeLaCarta | null;
+}
+
+/** El plan de vuelo como lo necesita la carta. Ver `Mapa.ruta`. */
+export interface RutaDeLaCarta {
+  readonly fijos: readonly {
+    readonly x: number;
+    readonly z: number;
+    readonly nombre: string;
+    readonly papel: string;
+  }[];
+  /** El índice del punto al que se va. */
+  readonly activo: number;
+  /** Dónde se empieza a bajar, si cae por delante. */
+  readonly descenso: Punto | null;
+  /** Lo que falta por la ruta hasta el umbral, m. */
+  readonly restante: number;
+  /**
+   * La hora de llegada al punto siguiente como la escribe una pantalla de
+   * navegación, «1432.5z», o `null` si no se sabe (parado).
+   */
+  readonly hora: string | null;
+  /**
+   * Si la carta abre el rango hasta el punto siguiente. Volando por la ruta,
+   * sí: lo que hay que ver es a dónde se va. En tierra, no: ahí se mira la
+   * pista. Ver `dibujarLaCarta`.
+   */
+  readonly abreElRango: boolean;
 }
 
 /** Un tráfico, con lo que el TCAS dice de él. */
@@ -347,6 +385,27 @@ export interface Dibujo {
     radio: number;
     fuerza: number;
   }[];
+
+  /**
+   * El plan en píxeles: la línea magenta del punto de donde se viene al que
+   * se va y de ahí hasta el umbral, cada punto con su nombre, y el círculo
+   * del punto de descenso. Se dan todos, también los de fuera del disco: la
+   * línea tiene que salir por el borde hacia donde sigue, y el recorte lo
+   * pone cada superficie.
+   */
+  readonly ruta: {
+    readonly linea: readonly { dx: number; dy: number }[];
+    readonly fijos: readonly {
+      dx: number;
+      dy: number;
+      nombre: string;
+      activo: boolean;
+    }[];
+    readonly descenso: { dx: number; dy: number } | null;
+    /** El punto al que se va, con sus millas: lo de arriba a la derecha. */
+    readonly siguiente: { nombre: string; millas: number } | null;
+    readonly hora: string | null;
+  } | null;
 }
 
 /** Un aeródromo puesto en la carta: dentro del disco o pegado a su borde. */
@@ -375,6 +434,13 @@ export function dibujarLaCarta(
   r: number,
 ): Dibujo {
   let lejos = m?.pista ? millasHasta(m.pista, m) : RANGOS[1]!;
+  /*
+   * **Y volando por el plan, hasta el punto siguiente**, que es lo que mira
+   * un piloto al elegir el rango: a dónde va ahora. La pista de la que se
+   * acaba de salir se queda atrás y no hay que verla.
+   */
+  const siguiente = m?.ruta?.fijos[m.ruta.activo];
+  if (m?.ruta?.abreElRango && siguiente) lejos = millasHasta(siguiente, m);
   // Y lo que el piloto abriría el rango para ver. Ver `Otro.abreElRango`.
   for (const o of m?.otros ?? [])
     if (o.abreElRango) lejos = Math.max(lejos, millasHasta(o, m!));
@@ -390,6 +456,7 @@ export function dibujarLaCarta(
       destino: null,
       alterno: null,
       celdas: [],
+      ruta: null,
     };
   const aqui = (p: Punto) => enLaCarta(p, m, rumbo, por);
   let pista: Dibujo["pista"] = null;
@@ -454,7 +521,16 @@ export function dibujarLaCarta(
       oaci: sitio.oaci ?? null,
     };
   };
-  const destino = alBorde(m.destino);
+  const destinoSuelto = alBorde(m.destino);
+  /*
+   * Con plan, las millas del destino son **las que quedan por la ruta**, no
+   * las de la recta: es lo que escribe un ordenador de vuelo, y lo que de
+   * verdad hay que volar.
+   */
+  const destino =
+    destinoSuelto && m.ruta
+      ? { ...destinoSuelto, millas: m.ruta.restante / MILLA }
+      : destinoSuelto;
   const alterno = alBorde(m.alterno);
   const celdas = (m.celdas ?? []).map((c) => {
     const p = aqui(c);
@@ -469,6 +545,33 @@ export function dibujarLaCarta(
     destino,
     alterno,
     celdas,
+    ruta: m.ruta ? rutaEnLaCarta(m.ruta, m, aqui) : null,
+  };
+}
+
+/**
+ * El plan, en píxeles. La línea empieza en el punto **de donde se viene**, no
+ * en el avión: así es como la pinta una pantalla de navegación, y es lo que
+ * enseña si uno va por el tramo o se ha ido a un lado.
+ */
+function rutaEnLaCarta(
+  ruta: RutaDeLaCarta,
+  yo: Punto,
+  aqui: (p: Punto) => { dx: number; dy: number },
+): NonNullable<Dibujo["ruta"]> {
+  const desde = Math.max(0, ruta.activo - 1);
+  const linea = ruta.fijos.slice(desde).map(aqui);
+  const fijos = ruta.fijos
+    .map((f, i) => ({ f, i }))
+    .filter(({ f, i }) => i >= ruta.activo && f.papel !== "despegue" && f.papel !== "aqui")
+    .map(({ f, i }) => ({ ...aqui(f), nombre: f.nombre, activo: i === ruta.activo }));
+  const sig = ruta.fijos[ruta.activo];
+  return {
+    linea,
+    fijos,
+    descenso: ruta.descenso ? aqui(ruta.descenso) : null,
+    siguiente: sig ? { nombre: sig.nombre, millas: millasHasta(sig, yo) } : null,
+    hora: ruta.hora,
   };
 }
 

@@ -76,6 +76,7 @@ export interface Altavoz {
     piezas: readonly AudioBuffer[],
     alAcabar: () => void,
     porRadio?: boolean,
+    porAltavoz?: boolean,
   ): (() => void) | null;
 }
 
@@ -172,6 +173,12 @@ export class InstructorGrabado implements Instructor {
      * sentada a tu lado y la otra habla por los altavoces del pasaje.
      */
     private readonly porRadio = false,
+    /**
+     * Y si llega **por el altavoz del techo**: la comandante y la tripulación
+     * de cabina. Ni radio ni al lado: la megafonía del pasaje, con su propio
+     * sonido. Ver `entradaDeAltavoz` en `audio.ts`.
+     */
+    private readonly porAltavoz = false,
   ) {
     this.altavoz = altavoz;
     this.suplente = suplente;
@@ -337,6 +344,7 @@ export class InstructorGrabado implements Instructor {
             listo();
           },
           this.porRadio,
+          this.porAltavoz,
         );
         if (this.cortar) {
           /*
@@ -608,6 +616,10 @@ export class InstructorGrabado implements Instructor {
       // Y la megafonía de cabina, que solo suena en los aviones con pasaje.
       // Ver `audio/megafonia.ts`.
       "comandante",
+      // Y la tripulación de cabina, con el habla de cada sitio como la torre:
+      // `tripulacion.canario.*` no se pisa con la de casa.
+      "tripulacion",
+      "tripulacion-canarias",
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,

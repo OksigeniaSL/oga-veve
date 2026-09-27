@@ -14,6 +14,7 @@
 import { t } from "../i18n";
 import { Panel } from "./panel";
 import { armarPanel, CERRAR } from "./concha";
+import { lineaDeAnadirAInicio } from "./anadir-a-inicio";
 import {
   CABECEOS,
   CONTRASTES,
@@ -125,7 +126,7 @@ export class PantallaDeAjustes {
                 .join("")}
             </div>
           </div>`;
-      }).join(""),
+      }).join("") + lineaDeAnadirAInicio(),
     });
   }
 }

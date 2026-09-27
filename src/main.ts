@@ -83,6 +83,7 @@ import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
+import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 
 /** La sesión de la pestaña, si el navegador la da. Ver `leerRearranque`. */
 function sesionDeLaPestana(): Storage | null {
@@ -241,6 +242,13 @@ let destino: string | undefined = rearranque
  * Con la dirección puesta —`?escenario=`— no se pregunta: eso es un banco de
  * pruebas o un enlace directo, y ahí interrumpir sería estorbar.
  */
+/*
+ * **Y en el iPhone, cómo se juega a pantalla completa**, en la primera
+ * pantalla y una sola vez: allí no se puede pedir, se consigue abriendo el
+ * juego desde su ícono. Se queda hasta que se cierra o hasta que se vuela.
+ * Ver `ui/anadir-a-inicio.ts`.
+ */
+const quitarLoDeInicio = escenario ? () => {} : ensenarAnadirAInicio();
 if (!escenario) {
   const pilotosRoot = document.querySelector<HTMLElement>("#pilotos");
   if (pilotosRoot) await elegirPiloto(pilotosRoot);
@@ -480,6 +488,7 @@ try {
 
 miga("antes del juego");
 // Y la ortofoto al terreno, si la hay. Ver `Terrain.ponerOrtofoto`.
+quitarLoDeInicio();
 const game = new Game({
   canvas,
   hudRoot,
@@ -550,6 +559,39 @@ destinosDeHoy.forEach((d, i) => {
  */
 game.ponerTiempo(meteo);
 game.start();
+
+/*
+ * **Y el parte de cada campo del vuelo, sin esperar a nadie.**
+ *
+ * Se pedía solo el del campo de salida, y ese mandaba en todo el vuelo:
+ * llegando a El Hierro desde La Palma se aterrizaba con el viento de La
+ * Palma. Ahora se pide el de cada campo al que se puede ir hoy —el destino,
+ * su alternativo y los que se montan— por el mismo proxy, con el juego ya en
+ * marcha: cada uno se pone en cuanto llega, y el que no llega se queda con el
+ * tiempo típico de su sitio, que es con el que se montó. Volar no espera a la
+ * red. Ver `Game.ponerTiempoDe`.
+ *
+ * Con el tiempo puesto a mano no se pide nada: lo que se ensaya manda en
+ * todos los campos.
+ */
+if (meteo.fuente !== "mano") {
+  const q = new URLSearchParams(location.search);
+  const proxy = q.get("meteo") ?? import.meta.env.VITE_METEO ?? null;
+  for (const d of destinosDeHoy) {
+    const icao = d.aerodrome?.id;
+    if (!icao || !proxy) continue;
+    void pedirMetar(icao, proxy, vientoDeCasa(d.vientoDominante)).then((suyo) => {
+      /*
+       * Y se dice en la consola si llegó o no. Si cae al tiempo típico sin
+       * decirlo, desde fuera parece que el tiempo de verdad no existe.
+       */
+      console.info(
+        `Óga Veve · METAR ${icao}: ${suyo.fuente === "metar" ? "de verdad" : "no llegó, se vuela con el típico del sitio"}`,
+      );
+      if (suyo.fuente === "metar") game.ponerTiempoDe(d.id, suyo);
+    });
+  }
+}
 
 /*
  * **Se para cuando nadie mira, y «nadie mira» son dos cosas distintas.**

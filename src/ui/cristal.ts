@@ -51,14 +51,22 @@ export const POR_PIE = 0.5;
 /** Píxeles por grado en la de rumbo. */
 export const POR_GRADO = 3;
 /**
- * Hasta dónde llega la cinta de altitud, en pies.
+ * **La cinta de altitud se graba a trozos**: cuántas ventanas de alto mide
+ * cada trozo.
  *
- * Cincuenta mil, que está por encima de donde llega el avión más alto de la
- * flota con sitio de sobra. Si la cinta se acabara, lo que pasaría es que las
- * marcas dejarían de dibujarse y la ventana se quedaría en negro sin que nada
- * fallara — la peor clase de tope.
+ * Se grababa entera, de −1000 a 50 000 pies, para que no se acabara nunca:
+ * quinientas rayas y doscientos cincuenta números en un grupo que se desplaza
+ * en cada imagen, cuando por la ventana se ven ochocientos pies. Era la mitad
+ * de las piezas del cuadro de cristal, y en el teléfono con el cuadro abierto
+ * repintarlas se comía el fotograma.
+ *
+ * Ahora se graba el trozo que rodea la altitud, y cuando el avión se acerca a
+ * su borde se graba otro centrado donde está —ver `hayQueMoverElTrozo`—. Las
+ * marcas siguen en su sitio de siempre dentro de la cinta, así que la cinta se
+ * desplaza igual que antes y tampoco se acaba nunca: lo único que cambia es
+ * cuánta hay grabada.
  */
-export const TECHO_DE_CINTA = 50000;
+export const TROZO_DE_CINTA = 3;
 /** De cuánto en cuánto está grabado el tambor de la altitud. */
 export const PASO_DE_TAMBOR = 20;
 
@@ -379,26 +387,6 @@ function cintaDeAltitud(
   h: number,
   yo: string,
 ): string {
-  const marcas = marcasDeCinta({
-    valor: TECHO_DE_CINTA / 2,
-    paso: 100,
-    rotulaCada: 2,
-    porUnidad: POR_PIE,
-    alto: TECHO_DE_CINTA * POR_PIE * 2,
-    minimo: -1000,
-  });
-  const tira = marcas
-    .map((m) => {
-      const yy = -m.valor * POR_PIE;
-      const largo = m.rotula ? 12 : 7;
-      return (
-        `<line x1="0" y1="${yy}" x2="${largo}" y2="${yy}" class="cr__marca" />` +
-        (m.rotula
-          ? `<text x="${largo + 4}" y="${yy + 5}" ${MARCA_CIFRA} class="cr__cifra">${m.valor}</text>`
-          : "")
-      );
-    })
-    .join("");
   const tambor = [-1, 0, 1]
     .map(
       (k) =>
@@ -413,7 +401,7 @@ function cintaDeAltitud(
       <g clip-path="url(#${yo}-alt)">
         <g data-tira="alt" data-medio="${h / 2}" data-porunidad="${POR_PIE}"
              transform="translate(0 ${h / 2})">
-          ${tira}
+          <g data-trozo="alt" data-base="0">${marcasDeAltitud(0, h)}</g>
           <!-- La pista vive en el cero: quien juegue sin leer descubrirá que
                el suelo **está** en el cero antes de saber leer la altitud. -->
           <path class="cr__pista" d="M2 -1 l${w - 20} 0 l0 2 l${-(w - 20)} 0 Z" />
@@ -442,6 +430,49 @@ function cintaDeAltitud(
             class="cr__qnh" text-anchor="middle"></text>
     </g>
   `;
+}
+
+/**
+ * Las marcas del trozo de cinta de altitud centrado en `centro`, para una
+ * ventana de `alto`. Ver `TROZO_DE_CINTA`.
+ */
+export function marcasDeAltitud(centro: number, alto: number): string {
+  return marcasDeCinta({
+    valor: centro,
+    paso: 100,
+    rotulaCada: 2,
+    porUnidad: POR_PIE,
+    alto: alto * TROZO_DE_CINTA,
+    minimo: -1000,
+  })
+    .map((m) => {
+      const yy = -m.valor * POR_PIE;
+      const largo = m.rotula ? 12 : 7;
+      return (
+        `<line x1="0" y1="${yy}" x2="${largo}" y2="${yy}" class="cr__marca" />` +
+        (m.rotula
+          ? `<text x="${largo + 4}" y="${yy + 5}" ${MARCA_CIFRA} class="cr__cifra">${m.valor}</text>`
+          : "")
+      );
+    })
+    .join("");
+}
+
+/**
+ * Si el trozo grabado alrededor de `base` ya no llega para enseñar `valor`
+ * en una ventana de `alto`.
+ *
+ * El trozo cubre una ventana y media por cada lado de su centro, y la
+ * ventana, media por cada lado del valor: se cambia de trozo **con un cuarto
+ * de ventana de margen**, antes de que asome el borde.
+ */
+export function hayQueMoverElTrozo(
+  valor: number,
+  base: number,
+  alto: number,
+): boolean {
+  const margen = (alto * (TROZO_DE_CINTA - 1)) / 2 - alto / 4;
+  return Math.abs(valor - base) * POR_PIE > margen;
 }
 
 /** El variómetro: una franja al borde de la cinta de altitud. */
@@ -552,6 +583,15 @@ function carta(cx: number, cy: number, r: number): string {
               d="M10 5 L10 -4 M7 -1 L10 -5 L13 -1" />
       </g>`,
   ).join("");
+  const fijos = Array.from(
+    { length: CUANTOS_FIJOS },
+    (_, i) => `
+      <g data-carta="fijo-${i}" class="cr__fijo" visibility="hidden">
+        <path d="M0 -6 L1.9 -1.9 L6 0 L1.9 1.9 L0 6 L-1.9 1.9 L-6 0 L-1.9 -1.9 Z" />
+        <text data-carta="fijo-nombre" x="8" y="13" ${MARCA_ROTULO}
+              class="cr__fijo-nombre"></text>
+      </g>`,
+  ).join("");
   return `
     <!--
       **El recorte, en el sitio del grupo y no en el de la pantalla.**
@@ -574,6 +614,20 @@ function carta(cx: number, cy: number, r: number): string {
       <g data-carta="radar"></g>
       <line data-carta="eje" class="cr__eje" visibility="hidden" />
       <line data-carta="pista" class="cr__pista" visibility="hidden" />
+      <!--
+        **El plan de vuelo**: la línea magenta de punto en punto, cada punto
+        con la estrella de cuatro puntas de las cartas y su nombre, y el
+        círculo del punto de descenso con su «T/D». Debajo de los tráficos,
+        que son los que avisan. Las piezas están quietas; las coloca
+        Tablero.laCarta con las cuentas de ui/carta.ts.
+      -->
+      <path data-carta="plan" class="cr__plan" visibility="hidden" d="M0 0" />
+      <g data-carta="td" class="cr__td" visibility="hidden">
+        <circle r="6" />
+        <path d="M-3.5 -2 h3 l4 4" />
+        <text x="9" y="-7" ${MARCA_ROTULO} class="cr__td-rotulo">T/D</text>
+      </g>
+      ${fijos}
       ${rombos}
       <!--
         **El aeropuerto de destino.**
@@ -654,6 +708,15 @@ function carta(cx: number, cy: number, r: number): string {
 export const CUANTOS_OTROS = 8;
 
 /**
+ * Cuántos puntos del plan caben en la carta.
+ *
+ * Diez: una salida de dos, una aproximación de cuatro y el umbral son siete,
+ * y lo que no quepa es lo más lejano, que a esa distancia está fuera del
+ * disco. Ver `Dibujo.ruta`.
+ */
+export const CUANTOS_FIJOS = 10;
+
+/**
  * La rosa de rumbo. Gira la carta, no el avión: lo que se mueve es el mundo.
  *
  * @param conAvion si lleva el avioncito fijo en el centro (la del horizonte) o
@@ -727,6 +790,12 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     <text x="${cx}" y="36" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">HDG</text>
     <text data-cristal="viento" x="12" y="22" ${MARCA_CIFRA} class="cr__aux"></text>
     <text data-cristal="distancia" x="${ancho - 12}" y="22" ${MARCA_ROTULO} class="cr__aux" text-anchor="end"></text>
+    <!--
+      Y debajo, **la hora de llegada al punto**, como la escribe una pantalla
+      de navegación de línea: «1432.5z», en tiempo universal. Solo en el
+      peldaño de cabina, que es donde se vuela con la cabina de verdad.
+    -->
+    <text data-cristal="eta" x="${ancho - 12}" y="38" data-desde="4" class="cr__aux cr__eta" text-anchor="end"></text>
   `;
 }
 

@@ -302,6 +302,10 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         oaci.hidden = false;
         oaci.textContent = "SGES";
       }
+      // Y la barra del trayecto, que sale con plan de vuelo: es lo último
+      // que se le añadió a la tarjeta y lo que la hace más alta.
+      const trayecto = casa.querySelector('[data-hud="trayecto"]');
+      if (trayecto) trayecto.hidden = false;
     };
   });
 

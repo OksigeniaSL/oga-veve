@@ -2879,7 +2879,26 @@ export class PlanDeVuelo {
     if (!ruta) return;
     if (vuelta?.ruta) this.ponerLaVuelta(vuelta);
     else this.ponerRuta(ruta);
+    /*
+     * **Y se apunta que la raya ya va por la siguiente**, para que la torre
+     * lo diga como se dice: «vacate next available». La raya nueva salía sola
+     * y en silencio, y quien se había pasado la salida no sabía si seguir,
+     * frenar o volver. Ver `salidasPasadas`.
+     */
+    if (pasada && vuelta?.salida) this.pasadas++;
   }
+
+  /**
+   * **Cuántas veces se ha pasado la salida en este vuelo** y la raya se ha
+   * rehecho por la siguiente. Lo mira el juego para que la torre diga
+   * «vacate next available» una vez por salida pasada; un contador y no un
+   * aviso porque el plan no habla, solo cuenta.
+   */
+  get salidasPasadas(): number {
+    return this.pasadas;
+  }
+
+  private pasadas = 0;
 
   /**
    * El back-taxi: rodar por la propia pista hasta la cabecera y dar la vuelta.

@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from "vitest";
 import { DIBUJOS } from "./senal";
-import { GUION } from "../flight/vuelo";
+import { GUION, guionSinTorre, type Fase } from "../flight/vuelo";
 
 describe("los dibujos de la señal", () => {
   it.each(Object.keys(DIBUJOS))("«%s» es un svg entero", (nombre) => {
@@ -39,5 +39,13 @@ describe("los dibujos de la señal", () => {
     // `DIBUJOS[nombre] ?? ""`. Ver `mostrar`.
     for (const [fase, guion] of Object.entries(GUION))
       expect(Object.keys(DIBUJOS), fase).toContain(guion.icono);
+  });
+
+  it("y también en la pista de casa, con bici y sin ella", () => {
+    for (const fase of Object.keys(GUION) as Fase[])
+      for (const conBici of [true, false])
+        expect(Object.keys(DIBUJOS), fase).toContain(
+          guionSinTorre(fase, conBici).icono,
+        );
   });
 });

@@ -519,5 +519,120 @@
     "{r1}",
     "{r2}",
     "lado.center"
+  ],
+  "trafico.traffic": [
+    "trafico.traffic"
+  ],
+  "trafico.hora.1": [
+    "trafico.hora.1"
+  ],
+  "trafico.hora.2": [
+    "trafico.hora.2"
+  ],
+  "trafico.hora.3": [
+    "trafico.hora.3"
+  ],
+  "trafico.hora.4": [
+    "trafico.hora.4"
+  ],
+  "trafico.hora.5": [
+    "trafico.hora.5"
+  ],
+  "trafico.hora.6": [
+    "trafico.hora.6"
+  ],
+  "trafico.hora.7": [
+    "trafico.hora.7"
+  ],
+  "trafico.hora.8": [
+    "trafico.hora.8"
+  ],
+  "trafico.hora.9": [
+    "trafico.hora.9"
+  ],
+  "trafico.hora.10": [
+    "trafico.hora.10"
+  ],
+  "trafico.hora.11": [
+    "trafico.hora.11"
+  ],
+  "trafico.hora.12": [
+    "trafico.hora.12"
+  ],
+  "trafico.millas.1": [
+    "trafico.millas.1"
+  ],
+  "trafico.millas.2": [
+    "trafico.millas.2"
+  ],
+  "trafico.millas.3": [
+    "trafico.millas.3"
+  ],
+  "trafico.millas.4": [
+    "trafico.millas.4"
+  ],
+  "trafico.millas.5": [
+    "trafico.millas.5"
+  ],
+  "trafico.millas.6": [
+    "trafico.millas.6"
+  ],
+  "trafico.pies.3": [
+    "trafico.pies.3"
+  ],
+  "trafico.pies.4": [
+    "trafico.pies.4"
+  ],
+  "trafico.pies.5": [
+    "trafico.pies.5"
+  ],
+  "trafico.pies.6": [
+    "trafico.pies.6"
+  ],
+  "trafico.pies.7": [
+    "trafico.pies.7"
+  ],
+  "trafico.pies.8": [
+    "trafico.pies.8"
+  ],
+  "trafico.pies.9": [
+    "trafico.pies.9"
+  ],
+  "trafico.pies.10": [
+    "trafico.pies.10"
+  ],
+  "trafico.pies.11": [
+    "trafico.pies.11"
+  ],
+  "trafico.pies.12": [
+    "trafico.pies.12"
+  ],
+  "trafico.above": [
+    "trafico.above"
+  ],
+  "trafico.below": [
+    "trafico.below"
+  ],
+  "trafico.sameLevel": [
+    "trafico.sameLevel"
+  ],
+  "torre.canario.vacateNext": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.vacateNext"
+  ],
+  "torre.canario.trafico": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "trafico.traffic",
+    "{hora}",
+    "{millas}",
+    "{altura}"
   ]
 }

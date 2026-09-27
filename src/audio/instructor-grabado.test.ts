@@ -426,6 +426,9 @@ describe("todas las voces", () => {
       "torre-canarias",
       "otro",
       "comandante",
+      // Y la tripulación de cabina, con el habla de cada sitio.
+      "tripulacion",
+      "tripulacion-canarias",
     ]);
   });
 

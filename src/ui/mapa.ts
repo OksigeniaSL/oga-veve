@@ -39,6 +39,7 @@ import type { Aerodrome } from "../world/aerodrome";
 import type { Ciudad } from "../world/ciudad";
 import { puntoDePista } from "../world/rumbo";
 import { esAguaDeCasa } from "../world/agua-de-casa";
+import { fondoPara, type FondoDelMapa } from "./fondo-del-mapa";
 import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 import {
@@ -129,6 +130,21 @@ export class Mapa {
     heading: number;
     length: number;
   }[] = [];
+
+  /** El plan de vuelo de ahora, si se va a otro campo. Ver `ponerRuta`. */
+  private ruta: RutaEnElMapa | null = null;
+
+  /**
+   * El plan de vuelo, para pintarlo por sus puntos. Se llama cada fotograma
+   * —cambia el punto activo— y no pinta el fondo: la ruta va en el lienzo de
+   * encima, con la flecha.
+   */
+  ponerRuta(ruta: RutaEnElMapa | null): void {
+    const otra = ruta?.fijos !== this.ruta?.fijos;
+    this.ruta = ruta;
+    // Un plan nuevo puede asomar por fuera del encuadre ancho. Ver `losCampos`.
+    if (otra) this.repintar();
+  }
 
   /** Las pistas de los destinos, en coordenadas de este mundo. */
   ponerOtrasPistas(
@@ -474,12 +490,18 @@ export class Mapa {
     const puesto = { cx: hecho.cx, cz: hecho.cz, escala: LADO / hecho.lado };
 
     /*
-     * **La ruta, de casa al destino.** Fina y azul, que es el color de ruta de
-     * todo el juego, y debajo de todo lo demás: es el plan, no dónde se está.
-     * Con ella se ve de un vistazo si uno va por donde tocaba o se ha
-     * desviado, que es media lección de navegar.
+     * **La ruta, de casa al destino.** Azul, que es el color de ruta de todo
+     * el juego, y debajo de todo lo demás: es el plan, no dónde se está. Con
+     * ella se ve de un vistazo si uno va por donde tocaba o se ha desviado,
+     * que es media lección de navegar.
+     *
+     * **Y por sus puntos, con sus giros**, que es lo que se pidió: «el mapa
+     * pone una línea recta, pero para tomar la pista recto y estable tengo
+     * que abrirme, para eso existen los planes de vuelo». Ver `flight/ruta.ts`.
+     * Sin plan —un campo sin procedimientos— queda la recta de antes.
      */
-    if (esRuta && this.destino && this.escenario) {
+    if (esRuta && this.ruta) this.pintarLaRuta(g, this.ruta, puesto);
+    else if (esRuta && this.destino && this.escenario) {
       const casa = this.escenario.runway;
       const a = this.enElPapel(casa, puesto);
       const b = this.enElPapel(this.destino, puesto);
@@ -568,13 +590,22 @@ export class Mapa {
     if (this.destino) {
       const dx = LADO / 2 + (this.destino.x - puesto.cx) * escala;
       const dz = LADO / 2 + (this.destino.z - puesto.cz) * escala;
+      /*
+       * Con plan, la raya va **al punto siguiente**, que es a donde señala la
+       * flecha del cuadro: dos rayas que dicen dos cosas distintas enseñan a
+       * no creerse ninguna.
+       */
+      const siguiente = esRuta ? this.ruta?.fijos[this.ruta.activo] : undefined;
+      const [rx, rz] = siguiente
+        ? this.enElPapel(siguiente, puesto)
+        : [dx, dz];
       g.save();
       g.strokeStyle = "#ffd27a";
       g.lineWidth = 2.2;
       g.setLineDash([7, 5]);
       g.beginPath();
       g.moveTo(cx, cy);
-      g.lineTo(dx, dz);
+      g.lineTo(rx, rz);
       g.stroke();
       g.setLineDash([]);
       // Y el sitio, con un aro. Si cae fuera del recuadro no se dibuja: ya lo
@@ -629,7 +660,13 @@ export class Mapa {
    */
   private losCampos(): Punto[] {
     const casa = this.escenario?.runway ?? { x: 0, z: 0 };
-    return [{ x: casa.x, z: casa.z }, ...this.otrasPistas];
+    /*
+     * **Y los puntos del plan**: el inicio de una aproximación puede caer a
+     * veinticinco millas del aeropuerto, por el otro lado, y un plano que lo
+     * deja fuera enseña una ruta que se sale del papel justo donde gira.
+     */
+    const plan = (this.ruta?.fijos ?? []).map((f) => ({ x: f.x, z: f.z }));
+    return [{ x: casa.x, z: casa.z }, ...this.otrasPistas, ...plan];
   }
 
   /** Lo menos que enseña el plano ancho: el escenario de casa entero. */
@@ -702,6 +739,14 @@ export class Mapa {
     if (!r) return;
     const img = r.createImageData(MUESTRAS, MUESTRAS);
     const agua = rgbDe(esc.water);
+    /*
+     * **Y debajo, la costa y los ríos**, para que el plano no se acabe donde
+     * se acaba el relieve cargado. Ver `fondo-del-mapa.ts`. Donde lo hay, las
+     * muestras sin cota se dejan transparentes y se ve este dibujo; donde no
+     * —un escenario sin siluetas—, las rayas de siempre.
+     */
+    const fondo = esc.aerodrome ? fondoPara(esc.pais, esc.aerodrome.origin) : null;
+    if (fondo) this.pintarLaCosta(g, fondo, esc, cx, cz, escala);
     for (let fila = 0; fila < MUESTRAS; fila++) {
       for (let col = 0; col < MUESTRAS; col++) {
         const x = cx - lado / 2 + (col + 0.5) * paso;
@@ -730,7 +775,7 @@ export class Mapa {
         img.data[i] = c[0];
         img.data[i + 1] = c[1];
         img.data[i + 2] = c[2];
-        img.data[i + 3] = 255;
+        img.data[i + 3] = h === null && fondo ? 0 : 255;
       }
     }
     r.putImageData(img, 0, 0);
@@ -912,6 +957,176 @@ export class Mapa {
     }
   }
 
+  /**
+   * El plan, tramo a tramo: lo volado, tenue; lo que queda, entero; cada
+   * punto con su estrella de cuatro puntas —el símbolo de punto de paso de
+   * las cartas— y su nombre en los peldaños que leen; y el punto de descenso,
+   * el círculo con «T/D» de cualquier pantalla de navegación.
+   */
+  private pintarLaRuta(
+    g: CanvasRenderingContext2D,
+    ruta: RutaEnElMapa,
+    puesto: { readonly cx: number; readonly cz: number; readonly escala: number },
+  ): void {
+    const pts = ruta.fijos.map((f) => this.enElPapel(f, puesto));
+    if (pts.length < 2) return;
+    g.save();
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    // Lo volado: fino y a trazos, hasta el punto de donde se viene.
+    const desde = Math.max(0, ruta.activo - 1);
+    g.strokeStyle = "rgba(111, 179, 224, 0.55)";
+    g.lineWidth = 2;
+    g.setLineDash([2, 6]);
+    g.beginPath();
+    for (let i = 0; i <= desde && i < pts.length; i++) {
+      const [x, y] = pts[i]!;
+      if (i) g.lineTo(x, y);
+      else g.moveTo(x, y);
+    }
+    g.stroke();
+    // Lo que queda, con el tramo que se está volando: entero. Empieza en el
+    // punto de donde se viene, como en la carta, para que se vea si uno va
+    // por el tramo o se ha ido a un lado.
+    g.setLineDash([]);
+    g.strokeStyle = "rgba(20, 60, 90, 0.55)";
+    g.lineWidth = 5;
+    g.beginPath();
+    for (let i = desde; i < pts.length; i++) {
+      const [x, y] = pts[i]!;
+      if (i === desde) g.moveTo(x, y);
+      else g.lineTo(x, y);
+    }
+    g.stroke();
+    g.strokeStyle = "rgb(111, 179, 224)";
+    g.lineWidth = 3;
+    g.stroke();
+    // Los puntos, del primero al último. La cabecera de salida y el umbral
+    // ya los dibuja la pista.
+    g.font = "600 10px system-ui, sans-serif";
+    g.textBaseline = "middle";
+    ruta.fijos.forEach((f, i) => {
+      if (f.papel === "despegue" || f.papel === "umbral" || f.papel === "aqui") return;
+      const [x, y] = pts[i]!;
+      if (x < -20 || x > LADO + 20 || y < -20 || y > LADO + 20) return;
+      const activo = i === ruta.activo;
+      estrella(g, x, y, activo ? 7 : 5.5);
+      g.fillStyle = activo ? "#ffd27a" : i < ruta.activo ? "#9ab3c4" : "#f4efe6";
+      g.strokeStyle = "#1d1b19";
+      g.lineWidth = 1.4;
+      g.fill();
+      g.stroke();
+      /*
+       * **Y el nombre, cuando cabe.** En el plano ancho —cientos de
+       * kilómetros— los cinco puntos de una aproximación caen en un palmo y
+       * sus nombres se montan unos sobre otros y sobre el del aeropuerto: solo
+       * va el del punto al que se va. Acercando la lupa salen todos.
+       */
+      if (!ruta.conNombres) return;
+      if (!activo && puesto.escala * 1852 < 4) return;
+      const ancho = g.measureText(f.nombre).width;
+      const izquierda = x + 8 + ancho > LADO - 2;
+      g.textAlign = izquierda ? "right" : "left";
+      const tx = izquierda ? x - 8 : x + 8;
+      g.lineWidth = 3;
+      g.strokeStyle = "#f4efe6";
+      g.strokeText(f.nombre, tx, y + 8);
+      g.fillStyle = "#1d1b19";
+      g.fillText(f.nombre, tx, y + 8);
+    });
+    if (ruta.descenso) {
+      const [x, y] = this.enElPapel(ruta.descenso, puesto);
+      if (x > 0 && x < LADO && y > 0 && y < LADO) {
+        /*
+         * Un círculo sobre la ruta con una rampa que baja: dónde se empieza a
+         * bajar se entiende sin leer, y «T/D» —*top of descent*— es como lo
+         * rotula cualquier pantalla de navegación, sin traducir.
+         */
+        g.fillStyle = "#f4efe6";
+        g.strokeStyle = "#2f8f5b";
+        g.lineWidth = 2.4;
+        g.beginPath();
+        g.arc(x, y, 6.5, 0, Math.PI * 2);
+        g.fill();
+        g.stroke();
+        g.beginPath();
+        g.moveTo(x - 3.5, y - 2.5);
+        g.lineTo(x - 0.5, y - 2.5);
+        g.lineTo(x + 3.5, y + 2.5);
+        g.stroke();
+        if (ruta.conNombres) {
+          g.textAlign = "left";
+          g.lineWidth = 3;
+          g.strokeStyle = "#f4efe6";
+          g.strokeText("T/D", x + 9, y - 8);
+          g.fillStyle = "#1f6b43";
+          g.fillText("T/D", x + 9, y - 8);
+        }
+      }
+    }
+    g.restore();
+  }
+
+  /**
+   * El dibujo plano de fuera del relieve: el mar o la tierra de alrededor, las
+   * islas o el país, su frontera y sus ríos. Ver `fondo-del-mapa.ts`.
+   *
+   * La tierra de fuera del relieve va con el color de las tierras bajas, que
+   * es el primero de la paleta del terreno: no se sabe su cota, y pintarla de
+   * monte sería inventársela. Y la de los países de al lado, un poco más
+   * apagada, que es como las cartas distinguen lo de dentro de lo de fuera.
+   */
+  private pintarLaCosta(
+    g: CanvasRenderingContext2D,
+    fondo: FondoDelMapa,
+    esc: Scenario,
+    cx: number,
+    cz: number,
+    escala: number,
+  ): void {
+    const enPapel = (p: { x: number; z: number }): readonly [number, number] => [
+      LADO / 2 + (p.x - cx) * escala,
+      LADO / 2 + (p.z - cz) * escala,
+    ];
+    const tierra = hex(esc.fill);
+    g.fillStyle = fondo.fuera === "mar" ? hex(esc.water) : apagado(esc.fill);
+    g.fillRect(0, 0, LADO, LADO);
+    g.beginPath();
+    for (const anillo of fondo.tierras) {
+      anillo.forEach((p, i) => {
+        const [x, y] = enPapel(p);
+        if (i) g.lineTo(x, y);
+        else g.moveTo(x, y);
+      });
+      g.closePath();
+    }
+    g.fillStyle = tierra;
+    g.fill();
+    if (fondo.frontera) {
+      g.save();
+      g.strokeStyle = "rgba(40, 36, 32, 0.7)";
+      g.lineWidth = 1.6;
+      g.setLineDash([6, 4]);
+      g.stroke();
+      g.restore();
+    }
+    g.save();
+    g.strokeStyle = hex(esc.water);
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    g.lineWidth = 2.2;
+    for (const rio of fondo.rios) {
+      g.beginPath();
+      rio.forEach((p, i) => {
+        const [x, y] = enPapel(p);
+        if (i) g.lineTo(x, y);
+        else g.moveTo(x, y);
+      });
+      g.stroke();
+    }
+    g.restore();
+  }
+
   /** Cumbres y pueblos: el dibujo siempre, el nombre si ya se oyó. */
   private pintarHitos(
     g: CanvasRenderingContext2D,
@@ -992,4 +1207,50 @@ function colorDeCota(esc: Scenario, h: number): number {
   let color = esc.fill;
   for (const banda of esc.bands) if (h >= banda.from) color = banda.colour;
   return color;
+}
+
+/** Un color de los escenarios, como lo quiere un lienzo. */
+const hex = (n: number): string => `#${n.toString(16).padStart(6, "0")}`;
+
+/** El mismo color, apagado hacia el gris: la tierra de al lado. */
+function apagado(n: number): string {
+  const [r, g, b] = rgbDe(n);
+  const gris = (r + g + b) / 3;
+  const mezcla = (c: number) => Math.round(c * 0.55 + gris * 0.45);
+  return `rgb(${mezcla(r)}, ${mezcla(g)}, ${mezcla(b)})`;
+}
+
+/**
+ * La estrella de cuatro puntas del punto de paso, con su trazo abierto para
+ * rellenar y perfilar: el símbolo de las cartas y de las pantallas de
+ * navegación, que se aprende aquí y se reconoce allí.
+ */
+function estrella(g: CanvasRenderingContext2D, x: number, y: number, r: number): void {
+  const e = r * 0.32;
+  g.beginPath();
+  g.moveTo(x, y - r);
+  g.lineTo(x + e, y - e);
+  g.lineTo(x + r, y);
+  g.lineTo(x + e, y + e);
+  g.lineTo(x, y + r);
+  g.lineTo(x - e, y + e);
+  g.lineTo(x - r, y);
+  g.lineTo(x - e, y - e);
+  g.closePath();
+}
+
+/** El plan de vuelo como lo necesita el plano. Ver `Mapa.ponerRuta`. */
+export interface RutaEnElMapa {
+  readonly fijos: readonly {
+    readonly x: number;
+    readonly z: number;
+    readonly nombre: string;
+    readonly papel: string;
+  }[];
+  /** El índice del punto al que se va. */
+  readonly activo: number;
+  /** Dónde se empieza a bajar, si cae por delante. */
+  readonly descenso: { readonly x: number; readonly z: number } | null;
+  /** Si se rotulan los puntos: desde el peldaño que lee. */
+  readonly conNombres: boolean;
 }

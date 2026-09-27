@@ -54,6 +54,12 @@ import type { Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
+import {
+  bandasInfladas,
+  bocaRespectoAlMorro,
+  mangaDeViento,
+} from "./manga-de-viento";
+import { matriculaDe } from "../flight/matricula";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
 import {
@@ -70,6 +76,18 @@ import {
 import { avisaLaPerdida } from "../flight/avisos-de-actitud";
 
 /**
+ * **Tu avión, dibujado**: la silueta que marca en la tira de la radio y en la
+ * lámpara de la torre lo que te dicen **a vos**. Es la misma silueta que ya
+ * señala otros aviones en la ventanilla —ver `hito-avion` en `ui/senal.ts`—,
+ * pero llena y en el ocre de lo tuyo, con el morro hacia arriba como en el
+ * cuadro. Quien no lee no distingue su matrícula de otra por las letras, pero
+ * sí distingue «esta es la mía» por el dibujo y por la placa de al lado.
+ */
+const TU_AVION = `<svg class="tu-avion" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 2.5 13.5 9.5 22 11.4v2l-8.4-1.2L13 19l2.6 1.6v1.2L12 21l-3.6.8v-1.2L11 19l-.6-6.8L2 13.4v-2l8.5-1.9Z" />
+</svg>`;
+
+/**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
  * cualquier cabina del mundo, y aprenderlos es parte de lo que el juego
  * enseña sin proponérselo.
@@ -82,6 +100,28 @@ import { avisaLaPerdida } from "../flight/avisos-de-actitud";
  * uno del otro— salgan uno después del otro y no encima.
  */
 const DURA_EL_DESTELLO = 1.6;
+
+/** Una milla náutica, m: la del plan de vuelo. Ver `ponerTrayecto`. */
+const MILLA_HUD = 1852;
+
+/**
+ * Lo que queda del plan, en cifras: «64/100 NM · 14 min», o con la hora de
+ * llegada en el peldaño de cabina, «64/100 NM · ETA 2226.6z».
+ */
+function cuentaDe(
+  t: { readonly restante: number; readonly total: number; readonly segundos: number; readonly hora: string | null },
+  peldano: Peldano,
+): string {
+  const millas = (m: number) => Math.round(m / MILLA_HUD);
+  const cuanto = `${millas(t.restante)}/${millas(t.total)} NM`;
+  const cuando =
+    peldano === "cabina" && t.hora
+      ? `ETA ${t.hora}`
+      : Number.isFinite(t.segundos)
+        ? `${Math.max(1, Math.round(t.segundos / 60))} min`
+        : "";
+  return cuando ? `${cuanto} · ${cuando}` : cuanto;
+}
 
 /**
  * Cuánto se estira la vía del compensador: media unidad a cada punta. Ver
@@ -477,6 +517,25 @@ export class Hud {
   private homeDistance: HTMLElement | null = null;
   private homeGloss: HTMLElement | null = null;
   private homeOaci: HTMLElement | null = null;
+  private trayecto: HTMLElement | null = null;
+  private trayectoLleno: HTMLElement | null = null;
+  private trayectoAvion: HTMLElement | null = null;
+  /**
+   * Lo que queda del plan en cifras, para la línea de debajo del punto. Ver
+   * `ponerTrayecto` y `setHome`.
+   */
+  private cuentaDelTrayecto: string | null = null;
+  /**
+   * **La matrícula de tu avión**, la que va en la placa del cuadro y en la
+   * tira de la radio. Sale de la ficha, como en el juego: ver `miIndicativo`.
+   */
+  private get miMatricula(): string {
+    return matriculaDe(this.ficha.id).matricula;
+  }
+
+  /** La manga del HUD y lo último que se pintó en ella. Ver `ponerLaManga`. */
+  private mangaCaja: HTMLElement | null = null;
+  private mangaPuesta = "";
   /**
    * El destino que está puesto en la tarjeta, para notar cuándo cambia. Ver
    * `setHome`.
@@ -907,6 +966,15 @@ export class Hud {
         -->
         <div class="torre" data-hud="torre" hidden role="status">
           <span class="torre__luz" data-hud="torre-luz"></span>
+          <!--
+            **Y a quién va la luz: a vos.** La lámpara solo se enciende para
+            tu avión, pero la tarjeta no lo decía y la radio le habla a todos:
+            «¿cómo sé que soy yo?». Tu avión dibujado y tu matrícula en su
+            placa —la misma que va en el cuadro— dicen que esto es tuyo, en
+            los cuatro peldaños: la placa es una forma que se reconoce antes
+            de saber leerla, como el OACI del destino.
+          -->
+          <span class="torre__quien">${TU_AVION}<span class="placa-matricula">${this.miMatricula}</span></span>
           <span class="torre__texto" data-hud="torre-texto"></span>
         </div>
         <!--
@@ -1235,9 +1303,31 @@ export class Hud {
                  un nombre largo, esa línea echaba la tarjeta fuera de la
                  pantalla en una tablet táctil. Lo midió verificar-carteles. -->
             <span class="casa__oaci${gauges ? "" : " casa__oaci--placa"}" data-hud="home-oaci" hidden></span>
+            <!--
+              **Y el viento, dibujado.** La manga vista desde arriba con el
+              morro hacia arriba: la boca mira de donde viene y cuánto se
+              infla dice la fuerza. En los cuatro peldaños, porque es un
+              dibujo; la cifra sigue en la pantalla de navegación. Ver
+              ui/manga-de-viento.ts.
+            -->
+            <span class="casa__viento" data-hud="viento" aria-hidden="true"></span>
           </span>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
+          <!--
+            **El trayecto: cuánto se ha volado y cuánto queda.**
+
+            Pedido jugando: «tampoco veo la distancia del vuelo», «cuando estoy
+            volando no tengo manera de saber el tiempo estimado de llegada».
+            Para quien no lee, una barra que se llena con el avioncito
+            avanzando de la salida al destino, que se entiende a los cuatro
+            años sin una cifra; y desde el peldaño que lee números, lo que
+            falta en millas y en minutos, y arriba la hora de llegada como la
+            da una cabina, en la línea de debajo del punto. Ver ponerTrayecto.
+          -->
+          <span class="casa__trayecto" data-hud="trayecto" hidden aria-hidden="true">
+            <span class="casa__barra"><span class="casa__lleno" data-hud="trayecto-lleno"></span><span class="casa__avioncito" data-hud="trayecto-avion"></span></span>
+          </span>
         </button>
       </div>
       <!--
@@ -1481,6 +1571,11 @@ export class Hud {
     this.homeDistance = optional(this.root, "home-distance");
     this.homeGloss = optional(this.root, "home-gloss");
     this.homeOaci = optional(this.root, "home-oaci");
+    this.mangaCaja = optional(this.root, "viento");
+    this.mangaPuesta = "";
+    this.trayecto = optional(this.root, "trayecto");
+    this.trayectoLleno = optional(this.root, "trayecto-lleno");
+    this.trayectoAvion = optional(this.root, "trayecto-avion");
     // La tarjeta es nueva, así que lo puesto en ella también.
     this.destinoPuesto = null;
     this.warning = pick(this.root, "warning");
@@ -1773,6 +1868,11 @@ export class Hud {
       readonly oaci: string | null;
       readonly escenario: Scenario;
     },
+    /**
+     * El punto del plan de vuelo al que señala la aguja, si señala a uno: su
+     * nombre publicado. Ver `flight/ruta.ts`.
+     */
+    punto: string | null = null,
   ): void {
     const nombre = destino?.nombre;
     const toObjective = modo === "objetivo";
@@ -1783,8 +1883,22 @@ export class Hud {
     const degrees = (relativeBearing * 180) / Math.PI - 90;
     this.homeArrow.style.transform = `rotate(${degrees}deg)`;
     if (this.homeDistance) {
-      this.homeDistance.textContent =
-        metres >= 1000
+      /*
+       * **Con plan de vuelo, el punto y sus millas**: la aguja señala el
+       * siguiente punto de la ruta, y lo que se escribe es a cuál y a cuánto,
+       * como en la esquina de una pantalla de navegación. En millas, que es
+       * como se mide una ruta en el aire; y desde el peldaño que lee, que un
+       * nombre de cinco letras es lectura.
+       */
+      const conNombre =
+        modo === "destino" &&
+        punto &&
+        (this.escalera === "cifra" || this.escalera === "cabina")
+          ? punto
+          : null;
+      this.homeDistance.textContent = conNombre
+        ? `${conNombre} ${(metres / MILLA_HUD).toFixed(metres < 10 * MILLA_HUD ? 1 : 0)} NM`
+        : metres >= 1000
           ? `${(metres / 1000).toFixed(1)} km`
           : `${Math.round(metres)} m`;
     }
@@ -1809,10 +1923,19 @@ export class Hud {
        * en una tablet táctil; el aeropuerto se llama Guaraní, y la ciudad ya
        * la dice el aviso al cambiar de destino.
        */
+      /*
+       * **Y con plan de vuelo y cifras, lo que queda**: millas y minutos, o la
+       * hora de llegada en el peldaño de cabina. Va en esta línea y no en una
+       * más porque la tarjeta no puede crecer: en una tablet táctil ya roza
+       * el borde, lo mide `verificar-carteles`. El destino sigue dicho en su
+       * placa, arriba.
+       */
       this.homeGloss.textContent =
-        modo === "destino" && nombre
-          ? (nombre.split(" · ")[0] ?? nombre)
-          : t(toObjective ? "hud.objective" : "hud.home");
+        modo === "destino" && this.cuentaDelTrayecto
+          ? this.cuentaDelTrayecto
+          : modo === "destino" && nombre
+            ? (nombre.split(" · ")[0] ?? nombre)
+            : t(toObjective ? "hud.objective" : "hud.home");
     }
     /*
      * **Y el código del destino se ve siempre, no solo volando.** La flecha
@@ -1822,6 +1945,37 @@ export class Hud {
      * «esto no funciona ahora».
      */
     this.ponerDestino(destino ?? null);
+  }
+
+  /**
+   * **El trayecto del plan de vuelo**, o `null` sin plan.
+   *
+   * La barra va en los cuatro peldaños —es el dibujo, el canal que siempre
+   * está—; las cifras, desde el que lee números: lo que queda de lo que hay,
+   * en millas, y el tiempo. En el de cabina, en vez de los minutos, **la hora
+   * de llegada** en tiempo universal, que es como la da un ordenador de vuelo
+   * y como la dice la radio.
+   */
+  ponerTrayecto(
+    trayecto: {
+      readonly restante: number;
+      readonly total: number;
+      readonly segundos: number;
+      readonly hora: string | null;
+    } | null,
+  ): void {
+    const numeros = this.escalera === "cifra" || this.escalera === "cabina";
+    this.cuentaDelTrayecto = trayecto && numeros ? cuentaDe(trayecto, this.escalera) : null;
+    if (!this.trayecto) return;
+    this.trayecto.hidden = !trayecto;
+    if (!trayecto) return;
+    const hecho =
+      trayecto.total > 0
+        ? Math.max(0, Math.min(1, 1 - trayecto.restante / trayecto.total))
+        : 0;
+    const pc = `${(hecho * 100).toFixed(1)}%`;
+    if (this.trayectoLleno) this.trayectoLleno.style.width = pc;
+    if (this.trayectoAvion) this.trayectoAvion.style.left = pc;
   }
 
   /**
@@ -1866,6 +2020,49 @@ export class Hud {
         destino.oaci ? `${destino.nombre} · ${destino.oaci}` : destino.nombre,
         4,
       );
+  }
+
+  /**
+   * **La placa de la matrícula se enciende** mientras la instructora la dice
+   * al empezar: lo que se oye y lo que se ve son lo mismo, y a la primera se
+   * sabe dónde mirar la próxima vez que la torre llame. Ver
+   * `presentarLaMatricula` en `game.ts`.
+   */
+  destacarMatricula(segundos = 6): void {
+    const placas = this.root.querySelectorAll('[data-hud="placa-matricula"]');
+    for (const p of placas) p.classList.add("tablero__matricula--destacada");
+    window.clearTimeout(this.matriculaReloj);
+    this.matriculaReloj = window.setTimeout(() => {
+      for (const p of this.root.querySelectorAll('[data-hud="placa-matricula"]'))
+        p.classList.remove("tablero__matricula--destacada");
+    }, segundos * 1000);
+  }
+
+  private matriculaReloj = 0;
+
+  /**
+   * **La manga del HUD**, con el viento que sopla donde está el avión y
+   * respecto a su morro. Ver `ui/manga-de-viento.ts`.
+   *
+   * Se repinta solo cuando cambia lo que se ve —la boca de cinco en cinco
+   * grados y las bandas llenas—: rehacer un SVG sesenta veces por segundo
+   * para dibujar lo mismo no lo hace nadie.
+   */
+  private ponerLaManga(
+    viento: { readonly desde: number; readonly nudos: number } | null,
+    rumbo: number,
+  ): void {
+    const caja = this.mangaCaja;
+    if (!caja) return;
+    const boca =
+      viento && viento.nudos >= 1
+        ? Math.round(bocaRespectoAlMorro(viento.desde, rumbo) / 5) * 5
+        : null;
+    const nudos = viento?.nudos ?? 0;
+    const clave = `${boca ?? "calma"}|${bandasInfladas(nudos)}`;
+    if (clave === this.mangaPuesta) return;
+    this.mangaPuesta = clave;
+    caja.innerHTML = mangaDeViento(boca, nudos);
   }
 
   /**
@@ -2291,6 +2488,7 @@ export class Hud {
     // teniendo dos definiciones del mismo signo.
     const bank = bankAngleOf(state.orientation);
     const pitch = pitchAngleOf(state.orientation);
+    this.ponerLaManga(mandos?.viento ?? null, (state.heading * 180) / Math.PI);
 
     if (this.tablero.presente) {
       /*
@@ -2987,7 +3185,16 @@ export class Hud {
    * fotograma a otro se ve falso. Ver `cuantaLuz`.
    */
   private ponerLuzDeFuera(hora: number): void {
-    this.root.style.setProperty("--luz-de-fuera", cuantaLuz(hora).toFixed(3));
+    const luz = cuantaLuz(hora);
+    this.root.style.setProperty("--luz-de-fuera", luz.toFixed(3));
+    /*
+     * **Y el halo de las cifras, solo cuando hay halo.** Es un filtro por
+     * cada texto del cuadro —trescientos— y de día valía cero píxeles, pero
+     * seguía siendo un filtro: el navegador aislaba cada cifra en su capa para
+     * aplicarle nada. En el teléfono con el cuadro abierto eso era un
+     * milisegundo por imagen. Ver `.hud--cuadro-encendido` en la hoja.
+     */
+    this.root.classList.toggle("hud--cuadro-encendido", luz < 1);
   }
 
   /** Quién se entera de que han cambiado las nubes. */
@@ -3357,9 +3564,23 @@ export class Hud {
     caja.hidden = texto === "";
   }
 
-  radio(texto: string, segundos = 6): void {
+  radio(
+    texto: string,
+    segundos = 6,
+    /**
+     * **Si es para vos.** La torre le habla a todos por la misma frecuencia,
+     * y la tira enseñaba igual lo tuyo y lo de los demás: se oía «Zulu Echo
+     * Juliett Juliett, cleared for take-off» y no había forma de saber si
+     * era uno mismo. «¿Cómo sé que soy yo?». Lo tuyo lleva tu avión dibujado
+     * y tu matrícula en su placa, la misma que va en el cuadro; lo de otros,
+     * nada de eso y en gris. `null` es de nadie: la megafonía, la bienvenida.
+     */
+    paraTi: boolean | null = null,
+  ): void {
     const caja = this.radioCaja;
     if (!caja) return;
+    caja.classList.toggle("radio--tuya", paraTi === true);
+    caja.classList.toggle("radio--otro", paraTi === false);
     /*
      * **Primero se enseña y después se escribe.**
      *
@@ -3370,7 +3591,17 @@ export class Hud {
      * Quien depende del lector se perdía entera la radio.
      */
     caja.hidden = false;
-    caja.textContent = texto;
+    if (paraTi === true) {
+      caja.replaceChildren();
+      caja.insertAdjacentHTML("beforeend", TU_AVION);
+      const placa = document.createElement("span");
+      placa.className = "placa-matricula radio__placa";
+      placa.textContent = this.miMatricula;
+      const dice = document.createElement("span");
+      dice.className = "radio__texto";
+      dice.textContent = texto;
+      caja.append(placa, dice);
+    } else caja.textContent = texto;
     window.clearTimeout(this.radioReloj);
     this.radioReloj = window.setTimeout(() => {
       caja.hidden = true;

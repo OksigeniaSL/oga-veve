@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "voz": "tripulacion-canarias",
+  "idioma": "es-PY",
+  "piezas": {
+    "tripulacion.canario.cinturones": {
+      "ms": 9407
+    },
+    "tripulacion.canario.servicio.banana": {
+      "ms": 9307
+    },
+    "tripulacion.canario.servicio.banana.paraguay": {
+      "ms": 9407
+    },
+    "tripulacion.canario.servicio.largo": {
+      "ms": 2674
+    },
+    "tripulacion.canario.servicio.mango": {
+      "ms": 9007
+    },
+    "tripulacion.canario.servicio.mango.paraguay": {
+      "ms": 10807
+    },
+    "tripulacion.canario.servicio.mani": {
+      "ms": 9907
+    },
+    "tripulacion.canario.servicio.mani.paraguay": {
+      "ms": 9607
+    },
+    "tripulacion.canario.servicio.pina": {
+      "ms": 10507
+    },
+    "tripulacion.canario.servicio.pina.paraguay": {
+      "ms": 10307
+    }
+  },
+  "recetas": {
+    "tripulacion.canario.cinturones": [
+      "tripulacion.canario.cinturones"
+    ],
+    "tripulacion.canario.servicio.banana": [
+      "tripulacion.canario.servicio.banana"
+    ],
+    "tripulacion.canario.servicio.banana.paraguay": [
+      "tripulacion.canario.servicio.banana.paraguay"
+    ],
+    "tripulacion.canario.servicio.largo": [
+      "tripulacion.canario.servicio.largo"
+    ],
+    "tripulacion.canario.servicio.mango": [
+      "tripulacion.canario.servicio.mango"
+    ],
+    "tripulacion.canario.servicio.mango.paraguay": [
+      "tripulacion.canario.servicio.mango.paraguay"
+    ],
+    "tripulacion.canario.servicio.mani": [
+      "tripulacion.canario.servicio.mani"
+    ],
+    "tripulacion.canario.servicio.mani.paraguay": [
+      "tripulacion.canario.servicio.mani.paraguay"
+    ],
+    "tripulacion.canario.servicio.pina": [
+      "tripulacion.canario.servicio.pina"
+    ],
+    "tripulacion.canario.servicio.pina.paraguay": [
+      "tripulacion.canario.servicio.pina.paraguay"
+    ],
+    "tripulacion.canario.servicio": [
+      "{producto}",
+      "{largo?}"
+    ]
+  }
+}

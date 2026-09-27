@@ -580,5 +580,119 @@
   ],
   "vuelo.puedeAterrizar": [
     "vuelo.puedeAterrizar"
+  ],
+  "vuelo.salidaSiguiente": [
+    "vuelo.salidaSiguiente"
+  ],
+  "fonetico.alfa": [
+    "fonetico.alfa"
+  ],
+  "fonetico.bravo": [
+    "fonetico.bravo"
+  ],
+  "fonetico.charlie": [
+    "fonetico.charlie"
+  ],
+  "fonetico.delta": [
+    "fonetico.delta"
+  ],
+  "fonetico.echo": [
+    "fonetico.echo"
+  ],
+  "fonetico.foxtrot": [
+    "fonetico.foxtrot"
+  ],
+  "fonetico.golf": [
+    "fonetico.golf"
+  ],
+  "fonetico.hotel": [
+    "fonetico.hotel"
+  ],
+  "fonetico.india": [
+    "fonetico.india"
+  ],
+  "fonetico.juliett": [
+    "fonetico.juliett"
+  ],
+  "fonetico.kilo": [
+    "fonetico.kilo"
+  ],
+  "fonetico.lima": [
+    "fonetico.lima"
+  ],
+  "fonetico.mike": [
+    "fonetico.mike"
+  ],
+  "fonetico.november": [
+    "fonetico.november"
+  ],
+  "fonetico.oscar": [
+    "fonetico.oscar"
+  ],
+  "fonetico.papa": [
+    "fonetico.papa"
+  ],
+  "fonetico.quebec": [
+    "fonetico.quebec"
+  ],
+  "fonetico.romeo": [
+    "fonetico.romeo"
+  ],
+  "fonetico.sierra": [
+    "fonetico.sierra"
+  ],
+  "fonetico.tango": [
+    "fonetico.tango"
+  ],
+  "fonetico.uniform": [
+    "fonetico.uniform"
+  ],
+  "fonetico.victor": [
+    "fonetico.victor"
+  ],
+  "fonetico.whiskey": [
+    "fonetico.whiskey"
+  ],
+  "fonetico.xray": [
+    "fonetico.xray"
+  ],
+  "fonetico.yankee": [
+    "fonetico.yankee"
+  ],
+  "fonetico.zulu": [
+    "fonetico.zulu"
+  ],
+  "vuelo.nuestroAvion": [
+    "matricula.nuestroAvion",
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "matricula.asiNosLlama"
+  ],
+  "vuelo.abandonandoConLaBici": [
+    "vuelo.abandonandoConLaBici"
+  ],
+  "vuelo.abandonandoSinPrisa": [
+    "vuelo.abandonandoSinPrisa"
+  ],
+  "vuelo.autorizadoSinTorre": [
+    "vuelo.autorizadoSinTorre"
+  ],
+  "vuelo.esperandoMirando": [
+    "vuelo.esperandoMirando"
+  ],
+  "vuelo.puedeAterrizarSinTorre": [
+    "vuelo.puedeAterrizarSinTorre"
+  ],
+  "vuelo.puedeVolverSinTorre": [
+    "vuelo.puedeVolverSinTorre"
+  ],
+  "vuelo.empezamosABajar": [
+    "vuelo.empezamosABajar"
+  ],
+  "vuelo.baches": [
+    "vuelo.baches"
   ]
 }

@@ -1884,6 +1884,88 @@ button.motor__tecla::after {
 }
 
 /*
+ * **La manga de viento**, al lado del destino. Treinta y cuatro píxeles: se lee como
+ * un dibujo y no empuja la tarjeta hacia abajo, que en una tablet ya llega
+ * al borde. Los colores son los de una manga de verdad —naranja y blanco—,
+ * que es la que se ve al lado de la pista. Ver ui/manga-de-viento.ts.
+ */
+.casa__viento {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.casa__viento:empty {
+  display: none;
+}
+
+.manga-viento {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.manga-viento__fondo {
+  fill: rgba(255, 255, 255, 0.07);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1;
+}
+
+.manga-viento__banda--naranja {
+  fill: #f0782a;
+}
+
+.manga-viento__banda--blanca {
+  fill: #f4f1ea;
+}
+
+.manga-viento__floja {
+  fill: #9aa39d;
+}
+
+.manga-viento__mastil {
+  fill: #2b302d;
+  stroke: #d8dcd8;
+  stroke-width: 1;
+}
+
+/*
+ * **La placa de la matrícula**, la misma en la radio, en la lámpara de la
+ * torre y en el cuadro. Chapa clara con letras negras grabadas, como la
+ * placa que llevan los aviones de verdad en el panel, y a propósito
+ * distinta de la placa oscura del OACI del destino: una dice quién sos y la
+ * otra a dónde vas, y no se pueden confundir.
+ */
+.placa-matricula {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: linear-gradient(#e4e6e1, #c9ccc6);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #141816;
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  font-size: 0.8em;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+/* Tu avión dibujado: lleno y en el ocre de lo tuyo. */
+.tu-avion {
+  width: 1.4em;
+  height: 1.4em;
+  flex: none;
+  fill: var(--ocre);
+}
+
+/*
  * El destello al cambiar de destino: un aro azul de ruta que se abre y se
  * apaga. Uno y corto — es un «mirá, cambió», no una alarma.
  */
@@ -1966,6 +2048,56 @@ button.motor__tecla::after {
   font-size: 19px;
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * **El trayecto**: una barra que se llena de la salida al destino, con el
+ * avioncito donde va. Azul de ruta, como la aguja cuando apunta a otro campo y
+ * como la raya del plano: es el mismo viaje en tres sitios. Ver
+ * `Hud.ponerTrayecto`.
+ */
+.casa__trayecto {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.casa__trayecto[hidden] {
+  display: none;
+}
+
+.casa__barra {
+  position: relative;
+  width: 96px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(111, 179, 224, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(111, 179, 224, 0.55);
+}
+
+.casa__lleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: 4px;
+  background: #6fb3e0;
+}
+
+/* El avioncito: un rombo claro con reborde, que se ve sobre lo lleno y sobre
+   lo vacío. Centrado en el punto de la barra al que se ha llegado. */
+.casa__avioncito {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--tinta);
+  box-shadow: 0 0 0 2px #1b4d6e;
+  transform: translate(-50%, -50%);
+}
+
 
 .casa--cerca .casa__aguja {
   color: #8fd07a;
@@ -3160,9 +3292,14 @@ button.motor__tecla::after {
  * **emite**, y lo que se ve de noche a diez metros de un avión es justo eso,
  * las cifras flotando. Se le pone al texto y a las agujas, que es lo que lleva
  * luz detrás en un panel de verdad; el mueble no se ilumina solo.
+ *
+ * **Y solo cuando falta luz fuera.** De día el halo mide cero píxeles, pero
+ * un filtro de cero sigue siendo un filtro: el navegador aislaba cada una de
+ * las trescientas cifras para aplicarle nada, y en el teléfono con el cuadro
+ * abierto eso se notaba en cada imagen. Ver `ponerLuzDeFuera` en `hud.ts`.
  */
-.tablero text,
-.tablero__aguja {
+.hud--cuadro-encendido .tablero text,
+.hud--cuadro-encendido .tablero__aguja {
   filter: drop-shadow(0 0 calc(3px * var(--cuadro-encendido, 0)) currentColor);
 }
 
@@ -3231,6 +3368,56 @@ button.motor__tecla::after {
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.22em;
+}
+
+/*
+ * La placa de la matrícula en el cuadro: chapa clara, dos tornillos y la
+ * letra negra grabada. La misma pinta que `.placa-matricula` del HUD, que es
+ * lo que hace que se reconozca de un sitio a otro. Ver `placaDeMatricula`.
+ */
+.tablero__matricula-chapa {
+  fill: #d6d9d3;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 1;
+}
+
+.tablero__matricula-tornillo {
+  fill: #8d928c;
+}
+
+/*
+ * Y encendida mientras la instructora la dice al empezar: un filo ocre que
+ * late, el color de lo tuyo. Sin movimiento, el filo quieto.
+ */
+.tablero__matricula--destacada .tablero__matricula-chapa {
+  stroke: var(--ocre);
+  stroke-width: 4;
+  animation: matricula-late 1.2s ease-in-out infinite;
+}
+
+@keyframes matricula-late {
+  50% {
+    stroke-width: 7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tablero__matricula--destacada .tablero__matricula-chapa {
+    animation: none;
+  }
+}
+
+.sin-movimiento .tablero__matricula--destacada .tablero__matricula-chapa {
+  animation: none;
+}
+
+.tablero__matricula-letras {
+  fill: #141816;
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 /*
@@ -4089,6 +4276,58 @@ button.motor__tecla::after {
 
 .cr__oaci--alterno {
   fill: var(--cabina-auxiliar);
+}
+
+/*
+ * El plan de vuelo en la carta: magenta, como en cualquier pantalla de
+ * navegación, con el punto al que se va en magenta y los demás en blanco.
+ * Ver `carta` en ui/cristal.ts.
+ */
+.cr__plan {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.cr__fijo path {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.4;
+}
+
+.cr__fijo-nombre {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cr__fijo--activo path {
+  stroke: var(--cabina-objetivo);
+}
+
+.cr__fijo--activo .cr__fijo-nombre {
+  fill: var(--cabina-objetivo);
+}
+
+.cr__td circle,
+.cr__td path {
+  fill: none;
+  stroke: var(--cabina-normal);
+  stroke-width: 1.6;
+}
+
+.cr__td-rotulo {
+  fill: var(--cabina-normal);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cr__eta {
+  font-size: 12px;
 }
 
 .cr__puntero {
@@ -6343,6 +6582,18 @@ button.motor__tecla::after {
   display: none;
 }
 
+/*
+ * A quién va la luz: tu avión y tu placa. En los cuatro peldaños, también
+ * en el de los pequeños: la placa es una forma, no una frase.
+ */
+.torre__quien {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: 0.8em;
+}
+
 .hud--sin-letras .torre {
   padding-right: 14px;
 }
@@ -7266,6 +7517,30 @@ button.motor__tecla::after {
   font-size: 13px;
   line-height: 1.35;
   font-style: italic;
+}
+
+/*
+ * **Lo que la torre te dice a vos**, distinto de lo que les dice a los
+ * demás: tu avión dibujado y tu placa delante, la letra derecha y clara, y el
+ * borde en el ocre de lo tuyo. Lo de los demás se queda como estaba, en
+ * cursiva y gris, que es charla de la frecuencia. Ver `radio` en hud.ts.
+ */
+.radio--tuya {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-color: var(--ocre);
+  color: var(--tinta);
+  font-style: normal;
+}
+
+.radio--tuya .tu-avion {
+  width: 18px;
+  height: 18px;
+}
+
+.radio--otro {
+  opacity: 0.85;
 }
 
 /*
@@ -9093,6 +9368,114 @@ button.motor__tecla::after {
 .pantalla-completa[aria-pressed="true"] .pantalla-completa__entrar,
 .pantalla-completa:not([aria-pressed="true"]) .pantalla-completa__salir {
   display: none;
+}
+
+/*
+ * ── **En el iPhone, cómo se pone el juego a pantalla completa** ──
+ *
+ * Una tira abajo y en medio: los dos botones que hay que tocar, dibujados
+ * como los dibuja el iPhone, el ícono que va a aparecer y una línea para
+ * quien lee. **Abajo y baja**, encima del pie: puesta arriba tapaba los
+ * idiomas y el «¿Quién vuela?», y en un teléfono tumbado no sobra ni una
+ * línea de la pantalla de pilotos. Por encima de ella y del hangar, y se
+ * cierra al tocarla. Ver `ui/anadir-a-inicio.ts`.
+ */
+.a-inicio {
+  position: fixed;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  width: min(680px, calc(100vw - 24px));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 48px 8px 14px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 14px;
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.a-inicio__pasos {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.a-inicio__dibujo {
+  width: 38px;
+  height: 38px;
+  /* El azul de los botones de Safari: es el color con el que se buscan. */
+  color: #4aa3ff;
+}
+
+.a-inicio__luego {
+  width: 20px;
+  height: 20px;
+  color: var(--tinta-suave);
+}
+
+.a-inicio__icono {
+  width: 38px;
+  height: 38px;
+  /* La esquina de un ícono del iPhone, que es como va a salir en su pantalla. */
+  border-radius: 9px;
+}
+
+.a-inicio__texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--tinta-suave);
+  text-wrap: balance;
+}
+
+.a-inicio__cerrar {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--tinta-suave);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* En un teléfono de pie no cabe en una fila: la línea, debajo. */
+@media (max-width: 520px) {
+  .a-inicio {
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 44px 10px;
+    text-align: center;
+  }
+}
+
+/* Y la línea de los ajustes, con el mismo botón dibujado delante. */
+.ajustes__inicio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 0;
+  font-size: var(--voz-glosa);
+  line-height: 1.35;
+  color: var(--tinta-suave);
+}
+
+.ajustes__inicio .a-inicio__dibujo {
+  flex: none;
+  width: 30px;
+  height: 30px;
 }
 
 /*

@@ -337,15 +337,150 @@ export const ES_PY = {
   "comandante.despegue": "Tripulación, sentados para el despegue.",
   "comandante.crucero":
     "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
-  "comandante.descenso":
-    "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
   /*
    * Y la de los baches, que acompaña al cartel del cinturón cuando lo enciende
    * el aire. Tranquila y verdadera: el peligro de una turbulencia no es para
-   * el avión, es para quien va suelto, y por eso se pide el cinturón.
+   * el avión, es para quien va suelto, y por eso se pide el cinturón. Ver
+   * `hablarDeLosBaches` en `game.ts`.
    */
   "comandante.turbulencia":
     "Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.",
+
+  /*
+   * ── **Y el plan, detrás de la bienvenida** ──────────────────────────────
+   *
+   * Lo que dice cualquier comandante antes de salir: cuánto dura el vuelo y a
+   * qué altura se va. Van en trozos aparte porque cambian con cada ruta, y
+   * cada trozo es una frase entera con su número dentro: `{n}` lo rellena
+   * `scripts/frases-para-grabar.mjs` con el número en letras para grabarlo,
+   * y el juego con cifras para leerlo. Ver `audio/partes-de-la-comandante.ts`.
+   */
+  "comandante.previsto.vuelo": "El vuelo va a durar unos {n} minutos.",
+  "comandante.previsto.nivel": "Vamos a volar a {n} mil pies.",
+
+  /*
+   * ── **El descenso, en su sitio y con lo que se cuenta** ─────────────────
+   *
+   * «Empezamos a bajar» sonaba al entrar en final, que es donde no lo dice
+   * nadie. Va donde lo pone cualquier vuelo de línea —al empezar a bajar— y
+   * con lo que dice cualquier comandante: hacia dónde, cuánto falta, qué
+   * cielo y qué temperatura hay allí. Se monta con cuatro trozos: el de hacia
+   * dónde, uno por destino como la bienvenida; los minutos; el cielo y los
+   * grados, que salen del parte del destino. Ver `descensoPara`.
+   */
+  "comandante.descenso.hacia":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.",
+  "comandante.descenso.vuelta":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.",
+  "comandante.descenso.hacia.pettirossi":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.",
+  "comandante.descenso.hacia.guarani":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ciudad del Este.",
+  "comandante.descenso.hacia.encarnacion":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Encarnación.",
+  "comandante.descenso.hacia.concepcion":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.",
+  "comandante.descenso.hacia.pedro-juan":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.",
+  "comandante.descenso.hacia.estigarribia":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.",
+  "comandante.descenso.hacia.yvytu-rape":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.",
+  "comandante.descenso.hacia.tenerife-norte":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.",
+  "comandante.descenso.hacia.tenerife-sur":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.",
+  "comandante.descenso.hacia.gran-canaria":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Gran Canaria.",
+  "comandante.descenso.hacia.lanzarote":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Lanzarote.",
+  "comandante.descenso.hacia.fuerteventura":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Fuerteventura.",
+  "comandante.descenso.hacia.la-palma":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.",
+  "comandante.descenso.hacia.el-hierro":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.",
+  "comandante.descenso.hacia.la-gomera":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.",
+  "comandante.minutos": "Vamos a aterrizar en unos {n} minutos.",
+  "comandante.cielo.despejado": "Allá el cielo está despejado.",
+  "comandante.cielo.nubes": "Allá hay algunas nubes.",
+  "comandante.cielo.nublado": "Allá está nublado.",
+  "comandante.cielo.lluvia": "Allá está lloviendo.",
+  /*
+   * La tormenta se dice, porque es verdad y porque quien va sentado atrás
+   * prefiere saberlo antes que descubrirlo con el primer bache. Y se dice
+   * como se dice en una cabina: con lo que hay que hacer y sin drama. Las
+   * voces avisan, no asustan.
+   */
+  "comandante.cielo.tormenta":
+    "Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.",
+  "comandante.cielo.niebla": "Allá hay niebla.",
+  "comandante.temperatura": "La temperatura es de {n} grados.",
+  "comandante.temperaturaBajoCero": "La temperatura es de {n} grados bajo cero.",
+  /*
+   * Y ya en la aproximación, la orden a la tripulación de cabina: sentarse y
+   * preparar la cabina. Por encima de la final, que en la final la palabra es
+   * de la instructora. Ver `EN_APROXIMACION`.
+   */
+  "comandante.aproximacion": "Tripulación, prepararse para el aterrizaje.",
+
+  /*
+   * ── **La tripulación de cabina** ────────────────────────────────────────
+   *
+   * Solo en los aviones que la llevan: del JAZ 90 para arriba. El JAZ 60, de
+   * diecinueve plazas, vuela sin auxiliar, que es lo que dice la ley. Ver
+   * `conTripulacion`.
+   *
+   * Le habla al pasaje de usted —«abróchense», «pongan»—, como cualquier
+   * tripulación. Y con el acento del sitio, como la torre: en Paraguay dice
+   * «derechito» y ofrece chipa; en Canarias, `tripulacion.canario.*`, dice
+   * «recto» y llama plátano al plátano. Ver `audio/servicio-a-bordo.ts`.
+   *
+   * El servicio es **una plantilla y varios productos**, grabados enteros
+   * con la misma voz: lo que cambia de un vuelo a otro es lo que se ofrece, y
+   * nunca se repite seguido. Lo que se ofrece es de la granja e inventado; ni
+   * una marca ajena.
+   */
+  "tripulacion.servicio.mango":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de mango de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.servicio.pina":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de piña de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.servicio.banana":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de banana de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.servicio.mani":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y maní tostado de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.servicio.chipa":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y chipa de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.servicio.mbeju":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y mbejú de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.servicio.largo":
+    "Y como el viaje es largo, también tenemos café y té calentitos.",
+  "tripulacion.cinturones":
+    "Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.",
+  "tripulacion.canario.servicio.mango":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.pina":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y piña deshidratada de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.banana":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y plátano deshidratado de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.mani":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.mango.paraguay":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.pina.paraguay":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y piña deshidratada; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.banana.paraguay":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y plátano deshidratado; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.mani.paraguay":
+    "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+  "tripulacion.canario.servicio.largo":
+    "Y como el viaje es largo, también tenemos café y té.",
+  "tripulacion.canario.cinturones":
+    "Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.",
+  // Y lo que pone la tarjeta del servicio debajo de la botella, desde el
+  // peldaño que lee. En Guyrami va solo el dibujo.
+  "servicio.rotulo": "Servicio a bordo",
 
   /*
    * ── **Y la bienvenida dice a dónde se va** ──────────────────────────────
@@ -639,6 +774,12 @@ export const ES_PY = {
   "vuelo.esperaQueAterrice": "Esperamos: viene un avión a aterrizar",
   "vuelo.esperaQueDespegue": "Esperamos: primero sale el avión que está en la pista",
   "vuelo.autorizado": "¡Luz verde! Entrá a la pista",
+  /*
+   * **Y en la pista de casa, sin torre ni lámpara**: se para y se mira antes
+   * de entrar, y el permiso te lo das vos. Ver `guionSinTorre`.
+   */
+  "vuelo.esperandoMirando": "Pará y mirá: la manga, los animales y la pista",
+  "vuelo.autorizadoSinTorre": "Todo libre: entrá a la pista",
   "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
@@ -740,16 +881,27 @@ export const ES_PY = {
    * `sePuedeConectar`.
    */
   "vuelo.pilotoEnTierra": "El piloto automático se conecta en el aire",
+  /*
+   * Al pasar por el punto de descenso del plan de vuelo. Con calma: no es un
+   * aviso de que algo va mal, es la parte del viaje que toca ahora. En cabina
+   * lo canta la tripulación en inglés, *top of descent*. Ver
+   * `flight/ruta.ts`.
+   */
+  "vuelo.empezamosABajar": "Empezamos a bajar: despacito, hasta la pista",
+  "palabra.aBajar": "A bajar",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
+  // Y en la pista de casa, donde no hay torre que deje nada: se ve.
+  "vuelo.puedeVolverSinTorre": "La pista ya está libre: volvé a intentarlo",
   /*
    * Y tu permiso para aterrizar, en la tarjeta verde. No lo dice la
    * instructora: lo dice la torre, «podés aterrizar», y esto es lo que se lee
    * mientras tanto. Ver `autorizarElAterrizaje` en `game.ts`.
    */
   "vuelo.puedeAterrizar": "La torre te deja aterrizar",
+  "vuelo.puedeAterrizarSinTorre": "Ahora sí: podés aterrizar",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   /*
    * **Y estos tres hablan como habla una persona.**
@@ -830,6 +982,17 @@ export const ES_PY = {
   "hud.menu": "Más botones",
   "hud.pantallaCompleta": "Pantalla completa",
   "hud.salirPantallaCompleta": "Salir de pantalla completa",
+  /*
+   * En el iPhone la pantalla completa no se pide: se consigue abriendo el
+   * juego desde su ícono. «Agregar a inicio» es como lo dice el iPhone en
+   * español de Latinoamérica, que es lo que va a leer quien lo busque. Ver
+   * `ui/anadir-a-inicio.ts`.
+   */
+  "inicio.pasos":
+    "Para jugar a pantalla completa: tocá Compartir y después «Agregar a inicio».",
+  "inicio.cerrar": "Cerrar",
+  "ajustes.inicio":
+    "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
   "gafas.puestas": "Gafas puestas",
   "gafas.quitadas": "Gafas quitadas",
@@ -841,6 +1004,13 @@ export const ES_PY = {
   "fin.redondo": "¡Vuelo redondo! No se puede hacer mejor",
   "vuelo.aterrizado": "Frená",
   "vuelo.abandonando": "Salí de la pista, que viene otro",
+  /*
+   * Y en la pista de casa, sin apuro: ahí no viene nadie detrás. Con quien
+   * te sale a buscar, si sale. Ver `guionSinTorre`.
+   */
+  "vuelo.abandonandoSinPrisa": "Sin apuro: salí de la pista y volvé a casa",
+  "vuelo.abandonandoConLaBici":
+    "Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici",
   "vuelo.pistaLibre": "¡Pista libre! Bien hecho",
   "vuelo.aPlataforma": "Volvé a tu lugar",
   "vuelo.enPuesto": "Llegaste. Apagá el motor",
@@ -934,6 +1104,18 @@ export const ES_PY = {
   "vuelo.laOtraPunta":
     "Esa no es la pista en uso: hoy el viento manda entrar por la otra punta",
   "palabra.otraPunta": "La otra punta",
+  /*
+   * Pasarse la salida y seguir hasta la próxima: lo que dice la torre como
+   * «vacate next available», contado en casa. Ver `decirSalPorLaSiguiente`.
+   */
+  "vuelo.salidaSiguiente":
+    "Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima",
+  "palabra.salidaSiguiente": "La próxima",
+  /*
+   * La matrícula, presentada al empezar: la torre te llama así. Se monta con
+   * las piezas del alfabeto; ver `presentarLaMatricula` en `game.ts`.
+   */
+  "vuelo.nuestroAvion": "Nuestro avión es {indicativo}. Así nos llama la torre",
   "vuelo.alAireOtraPunta": "Por esa punta no: andate al aire y volvé por la otra",
   "vuelo.alAireVientoDeCola":
     "Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta",

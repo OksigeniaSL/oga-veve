@@ -244,6 +244,12 @@ export function createVegetation(
     x: number,
     z: number,
   ) => { r: number; g: number; b: number } | null,
+  /**
+   * Y donde ya hay algo plantado a propósito: el casco de una granja, su
+   * camino, su tajamar. Ver `world/granja.ts`. Un monte de ruido encima de
+   * una casa es un monte con una casa dentro.
+   */
+  fuera?: (x: number, z: number) => boolean,
 ): Group {
   const group = new Group();
   group.name = "vegetacion";
@@ -336,6 +342,7 @@ export function createVegetation(
      * en los aeropuertos. Y ni macetas con rosales». Ver `recintoDelAerodromo`.
      */
     if (recinto && dentroDelPoligono(recinto, x, z)) continue;
+    if (fuera?.(x, z)) continue;
     if (hayCiudad(x, z) && random() > 0.125) continue;
     /*
      * Y sobre la fotografía, solo donde la fotografía es verde. Un tejado

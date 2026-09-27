@@ -10,7 +10,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { huecosDeAviso, Tablero } from "./tablero";
+import { huecosDeAviso, placaDeMatricula, Tablero } from "./tablero";
+import { matriculaDe } from "../flight/matricula";
+import { hayQueMoverElTrozo, marcasDeAltitud, POR_PIE } from "./cristal";
 import { LUCES } from "../flight/avisos-de-cabina";
 import { AIRCRAFT, aircraftById } from "../flight/aircraft";
 import {
@@ -183,5 +185,86 @@ describe("el indicador de combustible", () => {
       const esferas = marcado.match(/data-dial="fuel"/g)?.length ?? 0;
       expect(reglas + esferas).toBe(1);
     }
+  });
+});
+
+/*
+ * **La placa de la matrícula, en el cuadro de los seis**, como la llevan los
+ * aviones de verdad delante de quien vuela. Y en los cuatro peldaños: no es un
+ * rótulo que se lea, es la forma que la torre dice y que va pintada fuera.
+ * «¿Cómo sé que soy yo?».
+ */
+describe("la placa de la matrícula", () => {
+  it("va en el cuadro de cada avión, con la suya", () => {
+    for (const a of AIRCRAFT) {
+      const marcado = new Tablero().markup(a, 1);
+      expect(marcado, a.id).toContain('data-hud="placa-matricula"');
+      expect(marcado, a.id).toContain(matriculaDe(a.id).matricula);
+    }
+  });
+
+  it("y no espera a ningún peldaño: se ve desde el primero", () => {
+    expect(placaDeMatricula("ZP-ARS")).not.toContain("data-desde");
+  });
+
+  it("y cabe abajo a la izquierda, dentro del cuadro", () => {
+    const m = /translate\((\d+) (\d+)\)/.exec(placaDeMatricula("ZP-ARS"))!;
+    const ancho = Number(/width="(\d+)"/.exec(placaDeMatricula("ZP-ARS"))![1]);
+    expect(Number(m[1]) + ancho).toBeLessThan(ANCHO_DEL_CUADRO / 2);
+    expect(Number(m[2]) + 27).toBeLessThanOrEqual(ALTO_DEL_CUADRO);
+  });
+});
+
+describe("la placa de las avionetas", () => {
+  /*
+   * En los dos peldaños de los pequeños la chapa no lleva letras, y el tercio
+   * izquierdo del cuadro se quedaba vacío: las esferas se veían corridas a la
+   * derecha. Lo que llena el hueco es el retrato del avión, que no es letra y
+   * va en los cuatro peldaños, con su marco.
+   */
+  it("lleva el retrato de su avión, sin esperar a ningún peldaño", () => {
+    for (const a of AIRCRAFT.filter((x) => familiaDe(x) === "esferas")) {
+      const marcado = new Tablero().markup(a, 1);
+      const retrato = marcado.match(/<image [^>]*>/)?.[0] ?? "";
+      expect(retrato).toContain(`${a.id}.webp`);
+      expect(retrato).not.toContain("data-desde");
+      const marco = marcado.match(/<rect data-fondo="placa"[^>]*>/)?.[0] ?? "";
+      expect(marco).not.toContain("data-desde");
+    }
+  });
+});
+
+describe("la cinta de altitud, grabada a trozos", () => {
+  /*
+   * Se graba el trozo que rodea la altitud y no la cinta entera; lo que no
+   * puede pasar es que asome su borde. Se sube de cero a cuarenta y cinco mil
+   * pies de diez en diez, cambiando de trozo con la misma regla que el
+   * tablero, y en cada paso la ventana tiene que caer entera dentro de las
+   * marcas grabadas.
+   */
+  const ALTO = 380;
+  const valores = (html: string) =>
+    [...html.matchAll(/y1="(-?[\d.]+)"/g)].map((m) => -Number(m[1]) / POR_PIE);
+
+  it("nunca enseña el borde del trozo", () => {
+    let base = 0;
+    let marcas = valores(marcasDeAltitud(base, ALTO));
+    const medio = ALTO / 2 / POR_PIE;
+    for (let pies = -900; pies <= 45000; pies += 10) {
+      if (hayQueMoverElTrozo(pies, base, ALTO)) {
+        base = Math.round(pies / 100) * 100;
+        marcas = valores(marcasDeAltitud(base, ALTO));
+      }
+      expect(Math.min(...marcas)).toBeLessThanOrEqual(
+        Math.max(-1000, pies - medio),
+      );
+      expect(Math.max(...marcas)).toBeGreaterThanOrEqual(pies + medio);
+    }
+  });
+
+  it("y es un trozo: unas decenas de marcas y no quinientas", () => {
+    expect(marcasDeAltitud(20000, ALTO).match(/<line/g)!.length).toBeLessThan(
+      40,
+    );
   });
 });

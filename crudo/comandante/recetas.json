@@ -1,0 +1,742 @@
+{
+  "comandante.aproximacion": [
+    "comandante.aproximacion"
+  ],
+  "comandante.bienvenida": [
+    "comandante.bienvenida"
+  ],
+  "comandante.bienvenida.concepcion": [
+    "comandante.bienvenida.concepcion"
+  ],
+  "comandante.bienvenida.el-hierro": [
+    "comandante.bienvenida.el-hierro"
+  ],
+  "comandante.bienvenida.encarnacion": [
+    "comandante.bienvenida.encarnacion"
+  ],
+  "comandante.bienvenida.estigarribia": [
+    "comandante.bienvenida.estigarribia"
+  ],
+  "comandante.bienvenida.fuerteventura": [
+    "comandante.bienvenida.fuerteventura"
+  ],
+  "comandante.bienvenida.gran-canaria": [
+    "comandante.bienvenida.gran-canaria"
+  ],
+  "comandante.bienvenida.guarani": [
+    "comandante.bienvenida.guarani"
+  ],
+  "comandante.bienvenida.la-gomera": [
+    "comandante.bienvenida.la-gomera"
+  ],
+  "comandante.bienvenida.la-palma": [
+    "comandante.bienvenida.la-palma"
+  ],
+  "comandante.bienvenida.lanzarote": [
+    "comandante.bienvenida.lanzarote"
+  ],
+  "comandante.bienvenida.local": [
+    "comandante.bienvenida.local"
+  ],
+  "comandante.bienvenida.pedro-juan": [
+    "comandante.bienvenida.pedro-juan"
+  ],
+  "comandante.bienvenida.pettirossi": [
+    "comandante.bienvenida.pettirossi"
+  ],
+  "comandante.bienvenida.tenerife-norte": [
+    "comandante.bienvenida.tenerife-norte"
+  ],
+  "comandante.bienvenida.tenerife-sur": [
+    "comandante.bienvenida.tenerife-sur"
+  ],
+  "comandante.bienvenida.yvytu-rape": [
+    "comandante.bienvenida.yvytu-rape"
+  ],
+  "comandante.cielo.despejado": [
+    "comandante.cielo.despejado"
+  ],
+  "comandante.cielo.lluvia": [
+    "comandante.cielo.lluvia"
+  ],
+  "comandante.cielo.niebla": [
+    "comandante.cielo.niebla"
+  ],
+  "comandante.cielo.nubes": [
+    "comandante.cielo.nubes"
+  ],
+  "comandante.cielo.nublado": [
+    "comandante.cielo.nublado"
+  ],
+  "comandante.cielo.tormenta": [
+    "comandante.cielo.tormenta"
+  ],
+  "comandante.crosscheck": [
+    "comandante.crosscheck"
+  ],
+  "comandante.crucero": [
+    "comandante.crucero"
+  ],
+  "comandante.descenso.hacia": [
+    "comandante.descenso.hacia"
+  ],
+  "comandante.descenso.hacia.concepcion": [
+    "comandante.descenso.hacia.concepcion"
+  ],
+  "comandante.descenso.hacia.el-hierro": [
+    "comandante.descenso.hacia.el-hierro"
+  ],
+  "comandante.descenso.hacia.encarnacion": [
+    "comandante.descenso.hacia.encarnacion"
+  ],
+  "comandante.descenso.hacia.estigarribia": [
+    "comandante.descenso.hacia.estigarribia"
+  ],
+  "comandante.descenso.hacia.fuerteventura": [
+    "comandante.descenso.hacia.fuerteventura"
+  ],
+  "comandante.descenso.hacia.gran-canaria": [
+    "comandante.descenso.hacia.gran-canaria"
+  ],
+  "comandante.descenso.hacia.guarani": [
+    "comandante.descenso.hacia.guarani"
+  ],
+  "comandante.descenso.hacia.la-gomera": [
+    "comandante.descenso.hacia.la-gomera"
+  ],
+  "comandante.descenso.hacia.la-palma": [
+    "comandante.descenso.hacia.la-palma"
+  ],
+  "comandante.descenso.hacia.lanzarote": [
+    "comandante.descenso.hacia.lanzarote"
+  ],
+  "comandante.descenso.hacia.pedro-juan": [
+    "comandante.descenso.hacia.pedro-juan"
+  ],
+  "comandante.descenso.hacia.pettirossi": [
+    "comandante.descenso.hacia.pettirossi"
+  ],
+  "comandante.descenso.hacia.tenerife-norte": [
+    "comandante.descenso.hacia.tenerife-norte"
+  ],
+  "comandante.descenso.hacia.tenerife-sur": [
+    "comandante.descenso.hacia.tenerife-sur"
+  ],
+  "comandante.descenso.hacia.yvytu-rape": [
+    "comandante.descenso.hacia.yvytu-rape"
+  ],
+  "comandante.descenso.vuelta": [
+    "comandante.descenso.vuelta"
+  ],
+  "comandante.despegue": [
+    "comandante.despegue"
+  ],
+  "comandante.llegada.chaco": [
+    "comandante.llegada.chaco"
+  ],
+  "comandante.llegada.chaco~2": [
+    "comandante.llegada.chaco~2"
+  ],
+  "comandante.llegada.chaco~3": [
+    "comandante.llegada.chaco~3"
+  ],
+  "comandante.llegada.chaco~4": [
+    "comandante.llegada.chaco~4"
+  ],
+  "comandante.llegada.chaco~5": [
+    "comandante.llegada.chaco~5"
+  ],
+  "comandante.llegada.concepcion": [
+    "comandante.llegada.concepcion"
+  ],
+  "comandante.llegada.concepcion~2": [
+    "comandante.llegada.concepcion~2"
+  ],
+  "comandante.llegada.concepcion~3": [
+    "comandante.llegada.concepcion~3"
+  ],
+  "comandante.llegada.concepcion~4": [
+    "comandante.llegada.concepcion~4"
+  ],
+  "comandante.llegada.concepcion~5": [
+    "comandante.llegada.concepcion~5"
+  ],
+  "comandante.llegada.cuatro-vientos": [
+    "comandante.llegada.cuatro-vientos"
+  ],
+  "comandante.llegada.cuatro-vientos~2": [
+    "comandante.llegada.cuatro-vientos~2"
+  ],
+  "comandante.llegada.cuatro-vientos~3": [
+    "comandante.llegada.cuatro-vientos~3"
+  ],
+  "comandante.llegada.cuatro-vientos~4": [
+    "comandante.llegada.cuatro-vientos~4"
+  ],
+  "comandante.llegada.cuatro-vientos~5": [
+    "comandante.llegada.cuatro-vientos~5"
+  ],
+  "comandante.llegada.el-hierro": [
+    "comandante.llegada.el-hierro"
+  ],
+  "comandante.llegada.el-hierro~2": [
+    "comandante.llegada.el-hierro~2"
+  ],
+  "comandante.llegada.el-hierro~3": [
+    "comandante.llegada.el-hierro~3"
+  ],
+  "comandante.llegada.el-hierro~4": [
+    "comandante.llegada.el-hierro~4"
+  ],
+  "comandante.llegada.el-hierro~5": [
+    "comandante.llegada.el-hierro~5"
+  ],
+  "comandante.llegada.encarnacion": [
+    "comandante.llegada.encarnacion"
+  ],
+  "comandante.llegada.encarnacion~2": [
+    "comandante.llegada.encarnacion~2"
+  ],
+  "comandante.llegada.encarnacion~3": [
+    "comandante.llegada.encarnacion~3"
+  ],
+  "comandante.llegada.encarnacion~4": [
+    "comandante.llegada.encarnacion~4"
+  ],
+  "comandante.llegada.encarnacion~5": [
+    "comandante.llegada.encarnacion~5"
+  ],
+  "comandante.llegada.estigarribia": [
+    "comandante.llegada.estigarribia"
+  ],
+  "comandante.llegada.estigarribia~2": [
+    "comandante.llegada.estigarribia~2"
+  ],
+  "comandante.llegada.estigarribia~3": [
+    "comandante.llegada.estigarribia~3"
+  ],
+  "comandante.llegada.estigarribia~4": [
+    "comandante.llegada.estigarribia~4"
+  ],
+  "comandante.llegada.estigarribia~5": [
+    "comandante.llegada.estigarribia~5"
+  ],
+  "comandante.llegada.fuerteventura": [
+    "comandante.llegada.fuerteventura"
+  ],
+  "comandante.llegada.fuerteventura~2": [
+    "comandante.llegada.fuerteventura~2"
+  ],
+  "comandante.llegada.fuerteventura~3": [
+    "comandante.llegada.fuerteventura~3"
+  ],
+  "comandante.llegada.fuerteventura~4": [
+    "comandante.llegada.fuerteventura~4"
+  ],
+  "comandante.llegada.fuerteventura~5": [
+    "comandante.llegada.fuerteventura~5"
+  ],
+  "comandante.llegada.gran-canaria": [
+    "comandante.llegada.gran-canaria"
+  ],
+  "comandante.llegada.gran-canaria~2": [
+    "comandante.llegada.gran-canaria~2"
+  ],
+  "comandante.llegada.gran-canaria~3": [
+    "comandante.llegada.gran-canaria~3"
+  ],
+  "comandante.llegada.gran-canaria~4": [
+    "comandante.llegada.gran-canaria~4"
+  ],
+  "comandante.llegada.gran-canaria~5": [
+    "comandante.llegada.gran-canaria~5"
+  ],
+  "comandante.llegada.guarani": [
+    "comandante.llegada.guarani"
+  ],
+  "comandante.llegada.guarani~2": [
+    "comandante.llegada.guarani~2"
+  ],
+  "comandante.llegada.guarani~3": [
+    "comandante.llegada.guarani~3"
+  ],
+  "comandante.llegada.guarani~4": [
+    "comandante.llegada.guarani~4"
+  ],
+  "comandante.llegada.guarani~5": [
+    "comandante.llegada.guarani~5"
+  ],
+  "comandante.llegada.la-gomera": [
+    "comandante.llegada.la-gomera"
+  ],
+  "comandante.llegada.la-gomera~2": [
+    "comandante.llegada.la-gomera~2"
+  ],
+  "comandante.llegada.la-gomera~3": [
+    "comandante.llegada.la-gomera~3"
+  ],
+  "comandante.llegada.la-gomera~4": [
+    "comandante.llegada.la-gomera~4"
+  ],
+  "comandante.llegada.la-gomera~5": [
+    "comandante.llegada.la-gomera~5"
+  ],
+  "comandante.llegada.la-palma": [
+    "comandante.llegada.la-palma"
+  ],
+  "comandante.llegada.la-palma~2": [
+    "comandante.llegada.la-palma~2"
+  ],
+  "comandante.llegada.la-palma~3": [
+    "comandante.llegada.la-palma~3"
+  ],
+  "comandante.llegada.la-palma~4": [
+    "comandante.llegada.la-palma~4"
+  ],
+  "comandante.llegada.la-palma~5": [
+    "comandante.llegada.la-palma~5"
+  ],
+  "comandante.llegada.lanzarote": [
+    "comandante.llegada.lanzarote"
+  ],
+  "comandante.llegada.lanzarote~2": [
+    "comandante.llegada.lanzarote~2"
+  ],
+  "comandante.llegada.lanzarote~3": [
+    "comandante.llegada.lanzarote~3"
+  ],
+  "comandante.llegada.lanzarote~4": [
+    "comandante.llegada.lanzarote~4"
+  ],
+  "comandante.llegada.lanzarote~5": [
+    "comandante.llegada.lanzarote~5"
+  ],
+  "comandante.llegada.pedro-juan": [
+    "comandante.llegada.pedro-juan"
+  ],
+  "comandante.llegada.pedro-juan~2": [
+    "comandante.llegada.pedro-juan~2"
+  ],
+  "comandante.llegada.pedro-juan~3": [
+    "comandante.llegada.pedro-juan~3"
+  ],
+  "comandante.llegada.pedro-juan~4": [
+    "comandante.llegada.pedro-juan~4"
+  ],
+  "comandante.llegada.pedro-juan~5": [
+    "comandante.llegada.pedro-juan~5"
+  ],
+  "comandante.llegada.pettirossi": [
+    "comandante.llegada.pettirossi"
+  ],
+  "comandante.llegada.pettirossi~2": [
+    "comandante.llegada.pettirossi~2"
+  ],
+  "comandante.llegada.pettirossi~3": [
+    "comandante.llegada.pettirossi~3"
+  ],
+  "comandante.llegada.pettirossi~4": [
+    "comandante.llegada.pettirossi~4"
+  ],
+  "comandante.llegada.pettirossi~5": [
+    "comandante.llegada.pettirossi~5"
+  ],
+  "comandante.llegada.tenerife-norte": [
+    "comandante.llegada.tenerife-norte"
+  ],
+  "comandante.llegada.tenerife-norte~2": [
+    "comandante.llegada.tenerife-norte~2"
+  ],
+  "comandante.llegada.tenerife-norte~3": [
+    "comandante.llegada.tenerife-norte~3"
+  ],
+  "comandante.llegada.tenerife-norte~4": [
+    "comandante.llegada.tenerife-norte~4"
+  ],
+  "comandante.llegada.tenerife-norte~5": [
+    "comandante.llegada.tenerife-norte~5"
+  ],
+  "comandante.llegada.tenerife-sur": [
+    "comandante.llegada.tenerife-sur"
+  ],
+  "comandante.llegada.tenerife-sur~2": [
+    "comandante.llegada.tenerife-sur~2"
+  ],
+  "comandante.llegada.tenerife-sur~3": [
+    "comandante.llegada.tenerife-sur~3"
+  ],
+  "comandante.llegada.tenerife-sur~4": [
+    "comandante.llegada.tenerife-sur~4"
+  ],
+  "comandante.llegada.tenerife-sur~5": [
+    "comandante.llegada.tenerife-sur~5"
+  ],
+  "comandante.llegada.valle-cordillera": [
+    "comandante.llegada.valle-cordillera"
+  ],
+  "comandante.llegada.valle-cordillera~2": [
+    "comandante.llegada.valle-cordillera~2"
+  ],
+  "comandante.llegada.valle-cordillera~3": [
+    "comandante.llegada.valle-cordillera~3"
+  ],
+  "comandante.llegada.valle-cordillera~4": [
+    "comandante.llegada.valle-cordillera~4"
+  ],
+  "comandante.llegada.valle-cordillera~5": [
+    "comandante.llegada.valle-cordillera~5"
+  ],
+  "comandante.llegada.yvytu-rape": [
+    "comandante.llegada.yvytu-rape"
+  ],
+  "comandante.llegada.yvytu-rape~2": [
+    "comandante.llegada.yvytu-rape~2"
+  ],
+  "comandante.llegada.yvytu-rape~3": [
+    "comandante.llegada.yvytu-rape~3"
+  ],
+  "comandante.llegada.yvytu-rape~4": [
+    "comandante.llegada.yvytu-rape~4"
+  ],
+  "comandante.llegada.yvytu-rape~5": [
+    "comandante.llegada.yvytu-rape~5"
+  ],
+  "comandante.minutos.0": [
+    "comandante.minutos.0"
+  ],
+  "comandante.minutos.10": [
+    "comandante.minutos.10"
+  ],
+  "comandante.minutos.15": [
+    "comandante.minutos.15"
+  ],
+  "comandante.minutos.2": [
+    "comandante.minutos.2"
+  ],
+  "comandante.minutos.20": [
+    "comandante.minutos.20"
+  ],
+  "comandante.minutos.25": [
+    "comandante.minutos.25"
+  ],
+  "comandante.minutos.3": [
+    "comandante.minutos.3"
+  ],
+  "comandante.minutos.30": [
+    "comandante.minutos.30"
+  ],
+  "comandante.minutos.35": [
+    "comandante.minutos.35"
+  ],
+  "comandante.minutos.4": [
+    "comandante.minutos.4"
+  ],
+  "comandante.minutos.40": [
+    "comandante.minutos.40"
+  ],
+  "comandante.minutos.45": [
+    "comandante.minutos.45"
+  ],
+  "comandante.minutos.5": [
+    "comandante.minutos.5"
+  ],
+  "comandante.minutos.50": [
+    "comandante.minutos.50"
+  ],
+  "comandante.minutos.55": [
+    "comandante.minutos.55"
+  ],
+  "comandante.minutos.60": [
+    "comandante.minutos.60"
+  ],
+  "comandante.previsto.nivel.10": [
+    "comandante.previsto.nivel.10"
+  ],
+  "comandante.previsto.nivel.11": [
+    "comandante.previsto.nivel.11"
+  ],
+  "comandante.previsto.nivel.12": [
+    "comandante.previsto.nivel.12"
+  ],
+  "comandante.previsto.nivel.13": [
+    "comandante.previsto.nivel.13"
+  ],
+  "comandante.previsto.nivel.14": [
+    "comandante.previsto.nivel.14"
+  ],
+  "comandante.previsto.nivel.15": [
+    "comandante.previsto.nivel.15"
+  ],
+  "comandante.previsto.nivel.16": [
+    "comandante.previsto.nivel.16"
+  ],
+  "comandante.previsto.nivel.17": [
+    "comandante.previsto.nivel.17"
+  ],
+  "comandante.previsto.nivel.18": [
+    "comandante.previsto.nivel.18"
+  ],
+  "comandante.previsto.nivel.19": [
+    "comandante.previsto.nivel.19"
+  ],
+  "comandante.previsto.nivel.20": [
+    "comandante.previsto.nivel.20"
+  ],
+  "comandante.previsto.nivel.21": [
+    "comandante.previsto.nivel.21"
+  ],
+  "comandante.previsto.nivel.22": [
+    "comandante.previsto.nivel.22"
+  ],
+  "comandante.previsto.nivel.23": [
+    "comandante.previsto.nivel.23"
+  ],
+  "comandante.previsto.nivel.24": [
+    "comandante.previsto.nivel.24"
+  ],
+  "comandante.previsto.nivel.25": [
+    "comandante.previsto.nivel.25"
+  ],
+  "comandante.previsto.nivel.26": [
+    "comandante.previsto.nivel.26"
+  ],
+  "comandante.previsto.nivel.27": [
+    "comandante.previsto.nivel.27"
+  ],
+  "comandante.previsto.nivel.28": [
+    "comandante.previsto.nivel.28"
+  ],
+  "comandante.previsto.nivel.29": [
+    "comandante.previsto.nivel.29"
+  ],
+  "comandante.previsto.nivel.5": [
+    "comandante.previsto.nivel.5"
+  ],
+  "comandante.previsto.nivel.6": [
+    "comandante.previsto.nivel.6"
+  ],
+  "comandante.previsto.nivel.7": [
+    "comandante.previsto.nivel.7"
+  ],
+  "comandante.previsto.nivel.8": [
+    "comandante.previsto.nivel.8"
+  ],
+  "comandante.previsto.nivel.9": [
+    "comandante.previsto.nivel.9"
+  ],
+  "comandante.previsto.vuelo.0": [
+    "comandante.previsto.vuelo.0"
+  ],
+  "comandante.previsto.vuelo.10": [
+    "comandante.previsto.vuelo.10"
+  ],
+  "comandante.previsto.vuelo.15": [
+    "comandante.previsto.vuelo.15"
+  ],
+  "comandante.previsto.vuelo.2": [
+    "comandante.previsto.vuelo.2"
+  ],
+  "comandante.previsto.vuelo.20": [
+    "comandante.previsto.vuelo.20"
+  ],
+  "comandante.previsto.vuelo.25": [
+    "comandante.previsto.vuelo.25"
+  ],
+  "comandante.previsto.vuelo.3": [
+    "comandante.previsto.vuelo.3"
+  ],
+  "comandante.previsto.vuelo.30": [
+    "comandante.previsto.vuelo.30"
+  ],
+  "comandante.previsto.vuelo.35": [
+    "comandante.previsto.vuelo.35"
+  ],
+  "comandante.previsto.vuelo.4": [
+    "comandante.previsto.vuelo.4"
+  ],
+  "comandante.previsto.vuelo.40": [
+    "comandante.previsto.vuelo.40"
+  ],
+  "comandante.previsto.vuelo.45": [
+    "comandante.previsto.vuelo.45"
+  ],
+  "comandante.previsto.vuelo.5": [
+    "comandante.previsto.vuelo.5"
+  ],
+  "comandante.previsto.vuelo.50": [
+    "comandante.previsto.vuelo.50"
+  ],
+  "comandante.previsto.vuelo.55": [
+    "comandante.previsto.vuelo.55"
+  ],
+  "comandante.previsto.vuelo.60": [
+    "comandante.previsto.vuelo.60"
+  ],
+  "comandante.temperatura.0": [
+    "comandante.temperatura.0"
+  ],
+  "comandante.temperatura.1": [
+    "comandante.temperatura.1"
+  ],
+  "comandante.temperatura.10": [
+    "comandante.temperatura.10"
+  ],
+  "comandante.temperatura.11": [
+    "comandante.temperatura.11"
+  ],
+  "comandante.temperatura.12": [
+    "comandante.temperatura.12"
+  ],
+  "comandante.temperatura.13": [
+    "comandante.temperatura.13"
+  ],
+  "comandante.temperatura.14": [
+    "comandante.temperatura.14"
+  ],
+  "comandante.temperatura.15": [
+    "comandante.temperatura.15"
+  ],
+  "comandante.temperatura.16": [
+    "comandante.temperatura.16"
+  ],
+  "comandante.temperatura.17": [
+    "comandante.temperatura.17"
+  ],
+  "comandante.temperatura.18": [
+    "comandante.temperatura.18"
+  ],
+  "comandante.temperatura.19": [
+    "comandante.temperatura.19"
+  ],
+  "comandante.temperatura.2": [
+    "comandante.temperatura.2"
+  ],
+  "comandante.temperatura.20": [
+    "comandante.temperatura.20"
+  ],
+  "comandante.temperatura.21": [
+    "comandante.temperatura.21"
+  ],
+  "comandante.temperatura.22": [
+    "comandante.temperatura.22"
+  ],
+  "comandante.temperatura.23": [
+    "comandante.temperatura.23"
+  ],
+  "comandante.temperatura.24": [
+    "comandante.temperatura.24"
+  ],
+  "comandante.temperatura.25": [
+    "comandante.temperatura.25"
+  ],
+  "comandante.temperatura.26": [
+    "comandante.temperatura.26"
+  ],
+  "comandante.temperatura.27": [
+    "comandante.temperatura.27"
+  ],
+  "comandante.temperatura.28": [
+    "comandante.temperatura.28"
+  ],
+  "comandante.temperatura.29": [
+    "comandante.temperatura.29"
+  ],
+  "comandante.temperatura.3": [
+    "comandante.temperatura.3"
+  ],
+  "comandante.temperatura.30": [
+    "comandante.temperatura.30"
+  ],
+  "comandante.temperatura.31": [
+    "comandante.temperatura.31"
+  ],
+  "comandante.temperatura.32": [
+    "comandante.temperatura.32"
+  ],
+  "comandante.temperatura.33": [
+    "comandante.temperatura.33"
+  ],
+  "comandante.temperatura.34": [
+    "comandante.temperatura.34"
+  ],
+  "comandante.temperatura.35": [
+    "comandante.temperatura.35"
+  ],
+  "comandante.temperatura.36": [
+    "comandante.temperatura.36"
+  ],
+  "comandante.temperatura.37": [
+    "comandante.temperatura.37"
+  ],
+  "comandante.temperatura.38": [
+    "comandante.temperatura.38"
+  ],
+  "comandante.temperatura.39": [
+    "comandante.temperatura.39"
+  ],
+  "comandante.temperatura.4": [
+    "comandante.temperatura.4"
+  ],
+  "comandante.temperatura.40": [
+    "comandante.temperatura.40"
+  ],
+  "comandante.temperatura.41": [
+    "comandante.temperatura.41"
+  ],
+  "comandante.temperatura.42": [
+    "comandante.temperatura.42"
+  ],
+  "comandante.temperatura.43": [
+    "comandante.temperatura.43"
+  ],
+  "comandante.temperatura.44": [
+    "comandante.temperatura.44"
+  ],
+  "comandante.temperatura.45": [
+    "comandante.temperatura.45"
+  ],
+  "comandante.temperatura.5": [
+    "comandante.temperatura.5"
+  ],
+  "comandante.temperatura.6": [
+    "comandante.temperatura.6"
+  ],
+  "comandante.temperatura.7": [
+    "comandante.temperatura.7"
+  ],
+  "comandante.temperatura.8": [
+    "comandante.temperatura.8"
+  ],
+  "comandante.temperatura.9": [
+    "comandante.temperatura.9"
+  ],
+  "comandante.temperatura.menos1": [
+    "comandante.temperatura.menos1"
+  ],
+  "comandante.temperatura.menos2": [
+    "comandante.temperatura.menos2"
+  ],
+  "comandante.temperatura.menos3": [
+    "comandante.temperatura.menos3"
+  ],
+  "comandante.temperatura.menos4": [
+    "comandante.temperatura.menos4"
+  ],
+  "comandante.temperatura.menos5": [
+    "comandante.temperatura.menos5"
+  ],
+  "comandante.bienvenidaConPlan": [
+    "{bienvenida}",
+    "{vuelo}",
+    "{nivel}"
+  ],
+  "comandante.descenso": [
+    "{hacia}",
+    "{minutos?}",
+    "{cielo}",
+    "{temperatura}"
+  ],
+  "comandante.turbulencia": [
+    "comandante.turbulencia"
+  ]
+}
