@@ -1,0 +1,426 @@
+{
+  "id": "SGCO",
+  "name": "Lieutenant Colonel Carmelo Peralta National Airport",
+  "source": {
+    "osm": "overpass",
+    "extracted": "2026-09-26",
+    "ourairports": "6090",
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma, a lo largo de su eje y apartados del arranque de la calle de rodaje: OpenStreetMap no trae ninguno para este aeródromo y sin puestos no hay de dónde salir ni a dónde volver. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
+  },
+  "origin": {
+    "lat": -23.441609,
+    "lon": -57.427039
+  },
+  "elevationM": 77.1,
+  "runways": [
+    {
+      "ref": "03/21",
+      "widthM": 45,
+      "surface": "asphalt",
+      "lit": true,
+      "centerline": [
+        [
+          -258.8,
+          -909.4
+        ],
+        [
+          247,
+          862.5
+        ]
+      ],
+      "thresholds": {
+        "21": {
+          "xy": [
+            249,
+            879.4
+          ],
+          "elevM": 75.9,
+          "headingTrue": 196,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        },
+        "03": {
+          "xy": [
+            -261.2,
+            -910.9
+          ],
+          "elevM": 75.9,
+          "headingTrue": 16,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        }
+      },
+      "markings": null,
+      "magneticVariation": 14
+    },
+    {
+      "ref": "",
+      "widthM": 45.1,
+      "surface": "unpaved",
+      "lit": true,
+      "centerline": [
+        [
+          -296.1,
+          -472.6
+        ],
+        [
+          -119.7,
+          135.5
+        ],
+        [
+          56.3,
+          748.3
+        ]
+      ],
+      "thresholds": {},
+      "markings": null,
+      "magneticVariation": null
+    }
+  ],
+  "taxiways": [
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          -226.2,
+          163.6
+        ],
+        [
+          -220.2,
+          171.5
+        ],
+        [
+          -213.3,
+          175.5
+        ],
+        [
+          -207.6,
+          176
+        ],
+        [
+          -117,
+          144.9
+        ],
+        [
+          6.5,
+          109.8
+        ],
+        [
+          30.1,
+          102.3
+        ]
+      ]
+    },
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          -199.9,
+          173.4
+        ],
+        [
+          -208.8,
+          178.1
+        ],
+        [
+          -213.5,
+          183.8
+        ],
+        [
+          -216.3,
+          191.7
+        ],
+        [
+          -214.9,
+          199.8
+        ]
+      ]
+    }
+  ],
+  "aprons": [
+    {
+      "surface": null,
+      "polygon": [
+        [
+          -231.4,
+          296.2
+        ],
+        [
+          -171.9,
+          279.2
+        ],
+        [
+          -237.8,
+          49.5
+        ],
+        [
+          -295.7,
+          66.1
+        ],
+        [
+          -273.8,
+          142.6
+        ],
+        [
+          -299.5,
+          150
+        ],
+        [
+          -288.3,
+          189
+        ],
+        [
+          -264.1,
+          182.1
+        ],
+        [
+          -231.4,
+          296.2
+        ]
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "kind": "hangar",
+      "heightM": 4.7,
+      "polygon": [
+        [
+          -269.5,
+          260.9
+        ],
+        [
+          -262.6,
+          284.4
+        ],
+        [
+          -238.5,
+          277.3
+        ],
+        [
+          -260,
+          203.9
+        ],
+        [
+          -284.2,
+          210.9
+        ],
+        [
+          -269.5,
+          260.9
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": 4.7,
+      "polygon": [
+        [
+          -318.1,
+          132.7
+        ],
+        [
+          -303.8,
+          129.1
+        ],
+        [
+          -306.5,
+          118.3
+        ],
+        [
+          -320.8,
+          121.9
+        ],
+        [
+          -318.1,
+          132.7
+        ]
+      ]
+    },
+    {
+      "kind": "tower",
+      "heightM": 4.7,
+      "polygon": [
+        [
+          -296.8,
+          132.5
+        ],
+        [
+          -285.9,
+          129.7
+        ],
+        [
+          -289.4,
+          116
+        ],
+        [
+          -300.2,
+          118.8
+        ],
+        [
+          -296.8,
+          132.5
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": 4.7,
+      "polygon": [
+        [
+          -201.8,
+          299.3
+        ],
+        [
+          -196.3,
+          297.8
+        ],
+        [
+          -198.6,
+          289.6
+        ],
+        [
+          -204.1,
+          291.2
+        ],
+        [
+          -201.8,
+          299.3
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          -343.9,
+          52.5
+        ],
+        [
+          -341.1,
+          52.5
+        ],
+        [
+          -341.1,
+          47.7
+        ],
+        [
+          -343.9,
+          47.7
+        ],
+        [
+          -343.9,
+          52.5
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": 4.7,
+      "polygon": [
+        [
+          -295.1,
+          157.4
+        ],
+        [
+          -292.5,
+          168.4
+        ],
+        [
+          -287.7,
+          167.3
+        ],
+        [
+          -290.3,
+          156.3
+        ],
+        [
+          -295.1,
+          157.4
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": 4.7,
+      "polygon": [
+        [
+          -329,
+          129.8
+        ],
+        [
+          -325.2,
+          128.6
+        ],
+        [
+          -326.6,
+          124
+        ],
+        [
+          -330.4,
+          125.2
+        ],
+        [
+          -329,
+          129.8
+        ]
+      ]
+    }
+  ],
+  "helipads": [],
+  "parkingPositions": [
+    {
+      "ref": "1",
+      "xy": [
+        -262,
+        119
+      ],
+      "manual": true
+    },
+    {
+      "ref": "2",
+      "xy": [
+        -246,
+        176
+      ],
+      "manual": true
+    },
+    {
+      "ref": "3",
+      "xy": [
+        -229,
+        234
+      ],
+      "manual": true
+    }
+  ],
+  "holdingPositions": [
+    {
+      "xy": [
+        -56.4,
+        127.7
+      ],
+      "ref": null,
+      "runway": "03/21",
+      "source": "derivado"
+    },
+    {
+      "xy": [
+        -202.2,
+        174.2
+      ],
+      "ref": null,
+      "runway": null,
+      "source": "derivado"
+    }
+  ],
+  "windsocks": [],
+  "visualAids": []
+}

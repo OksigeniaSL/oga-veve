@@ -34,6 +34,5 @@ export interface Proximamente {
  * el escenario se llama `estigarribia`.
  */
 export const PROXIMAMENTE: readonly Proximamente[] = [
-  { id: "concepcion", ciudad: "Concepción", pais: "py" },
   { id: "pilar", ciudad: "Pilar", pais: "py" },
 ];

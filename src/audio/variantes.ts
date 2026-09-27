@@ -163,6 +163,12 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
     "Bienvenidos a Pedro Juan Caballero. Cerro Corá queda acá cerca, y en ese parque se acabó la Guerra Grande. Gracias por acompañarnos.",
     "Señores pasajeros, Pedro Juan Caballero. Dos países, una calle y un solo aeropuerto: éste. Gracias por volar con nosotros.",
   ],
+  "comandante.llegada.concepcion": [
+    "Bienvenidos a Concepción. Por este río bajaban los barcos a Asunción cuando no había otro camino al norte. Gracias por acompañarnos.",
+    "Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.",
+    "Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.",
+    "Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.",
+  ],
   "comandante.llegada.yvytu-rape": [
     "Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.",
     "Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.",

@@ -28,6 +28,7 @@ import SGES from "../../data/aerodromes/sges.aero.json";
 import SGME from "../../data/aerodromes/sgme.aero.json";
 import SGPJ from "../../data/aerodromes/sgpj.aero.json";
 import SGEN from "../../data/aerodromes/sgen.aero.json";
+import SGCO from "../../data/aerodromes/sgco.aero.json";
 import type { Ciudad } from "./ciudad";
 import type { Mano } from "./circuito";
 import { deFrente, type Meteo } from "./meteo";
@@ -2008,6 +2009,80 @@ export const ENCARNACION: Scenario = {
   vecesLejos: 23,
 };
 
+/**
+ * **Concepción: la puerta del norte, y la ruta que el país vuela de verdad.**
+ *
+ * La ciudad está en la orilla este del río Paraguay, a medio camino entre
+ * Asunción y la frontera con Brasil, y del otro lado del río empieza el Chaco.
+ * El aeródromo queda al nordeste del casco, en la loma, con una pista de
+ * asfalto de mil ochocientos cincuenta metros —la 03/21— y una plataforma
+ * pequeña al oeste.
+ *
+ * Y la ruta no es un capricho del juego: el Servicio de Transporte Aéreo
+ * Militar la vuela con un CASA 212 —Asunción, Concepción, Vallemí, Fuerte
+ * Olimpo, Bahía Negra—, que es lo que une por aire el norte del país con la
+ * capital. El turbohélice de ala alta, a doscientos kilómetros de Asunción.
+ */
+export const CONCEPCION: Scenario = {
+  id: "concepcion",
+  // El norte del Paraguay, como Asunción: norte y nordeste casi todo el año.
+  vientoDominante: { vientoDe: 20, vientoKt: 8, techoM: 1500, temp: 29 },
+  nameKey: "scenario.concepcion.name",
+  pais: "py",
+  seed: 19310301,
+  size: 20000,
+  segments: 384,
+  // La red por si falta el relieve medido: el llano del río, sin sierras.
+  reliefHeight: 180,
+  reliefScale: 4.6,
+  ridgeMix: 0.08,
+  /*
+   * **Sesenta y siete metros: la lámina del río Paraguay, medida.**
+   *
+   * En los veinte kilómetros de alrededor el relieve de Copernicus va de 65 a
+   * 151 metros. Por debajo de sesenta y siete aparece una cinta continua que
+   * baja del noroeste al sur a dos kilómetros al oeste de la pista, que es el
+   * río; con sesenta y seis se corta en charcos, y con sesenta y ocho ya se
+   * inunda el bañado del Chaco entero. La misma cuenta que dio los cincuenta y
+   * seis de Asunción.
+   */
+  waterLevel: 67,
+  /*
+   * Y la pista a diez metros por encima, que es lo que hay: el campo está en
+   * la loma del casco, pero la loma aquí es baja y el río está al lado. El
+   * guardarraíl de veinte metros es para pistas mal colocadas, no para un
+   * aeródromo ribereño de verdad. Ver `orilla`.
+   */
+  orilla: 8,
+  riverWidth: 0,
+  // Los colores sobre lo medido: del río, a 65, a la loma, a 151.
+  bands: [
+    { from: 60, colour: 0x3d6b44 },
+    { from: 70, colour: 0x55854c },
+    { from: 78, colour: 0x6f9a55 },
+    { from: 90, colour: 0x8fa961 },
+    { from: 110, colour: 0xb5a878 },
+    { from: 135, colour: 0xa89688 },
+  ],
+  water: 0x5b7f6a,
+  fill: 0x4f7048,
+  sky: { horizon: 0xe9eef1, zenith: 0x5397d8 },
+  fog: { colour: 0xd8e3ea, density: 0.000045 },
+  sun: { azimuth: 140, elevation: 55 },
+  runway: pistaDe(SGCO as unknown as Aerodrome, "03"),
+  // Catorce grados, deducidos de los propios datos: la 03 corre a 16°
+  // verdaderos y la cabecera pone 03.
+  magneticVariation: 14,
+  aerodrome: SGCO as unknown as Aerodrome,
+  /*
+   * A Asunción y de vuelta: 200 km, eje 200 —los dos campos están casi en el
+   * mismo meridiano, así que aquí manda el norte-sur—. Con veintiuna veces el
+   * mundo mide cuatrocientos veinte kilómetros.
+   */
+  destino: ["pettirossi"],
+  vecesLejos: 21,
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   VALLE_CORDILLERA,
   CHACO,
@@ -2015,6 +2090,7 @@ export const SCENARIOS: readonly Scenario[] = [
   PETTIROSSI,
   GUARANI,
   ENCARNACION,
+  CONCEPCION,
   /*
    * **Los dos que faltaban entraron el día que el rodaje supo parar a mitad de
    * calle.**

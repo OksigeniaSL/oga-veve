@@ -1,0 +1,92 @@
+{
+  "id": "concepcion",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": -23.441609,
+    "lon": -57.427039
+  },
+  "hitos": [
+    {
+      "nombre": "Isla Ypecuá",
+      "clase": "isla",
+      "lat": -25.00793,
+      "lon": -57.32978,
+      "x": 9922,
+      "z": 174167,
+      "ele": null
+    },
+    {
+      "nombre": "Paso Pinasco",
+      "clase": "isla",
+      "lat": -22.65717,
+      "lon": -57.80413,
+      "x": -38469,
+      "z": -87225,
+      "ele": null
+    },
+    {
+      "nombre": "Paso San José",
+      "clase": "isla",
+      "lat": -22.39503,
+      "lon": -57.85045,
+      "x": -43196,
+      "z": -116374,
+      "ele": null
+    },
+    {
+      "nombre": "Isla San Alberto (Paraguay)",
+      "clase": "isla",
+      "lat": -21.88447,
+      "lon": -57.92099,
+      "x": -50391,
+      "z": -173146,
+      "ele": null
+    },
+    {
+      "nombre": "Asunción",
+      "clase": "ciudad",
+      "lat": -25.28005,
+      "lon": -57.63438,
+      "x": -21153,
+      "z": 204425,
+      "ele": 89
+    },
+    {
+      "nombre": "Fernando de la Mora",
+      "clase": "ciudad",
+      "lat": -25.32817,
+      "lon": -57.55215,
+      "x": -12763,
+      "z": 209776,
+      "ele": null
+    },
+    {
+      "nombre": "Luque",
+      "clase": "ciudad",
+      "lat": -25.26654,
+      "lon": -57.49269,
+      "x": -6698,
+      "z": 202923,
+      "ele": null
+    },
+    {
+      "nombre": "Pedro Juan Caballero",
+      "clase": "ciudad",
+      "lat": -22.54978,
+      "lon": -55.73843,
+      "x": 172268,
+      "z": -99167,
+      "ele": 670
+    },
+    {
+      "nombre": "Concepción",
+      "clase": "ciudad",
+      "lat": -23.40682,
+      "lon": -57.44278,
+      "x": -1605,
+      "z": -3869,
+      "ele": null
+    }
+  ]
+}

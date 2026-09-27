@@ -1,0 +1,13 @@
+{
+  "id": "concepcion",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": -23.441609,
+    "lon": -57.427039
+  },
+  "tamanoM": 20000,
+  "resolucion": 385,
+  "minM": 65,
+  "maxM": 151
+}

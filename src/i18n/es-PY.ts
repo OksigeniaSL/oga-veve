@@ -128,6 +128,7 @@ export const ES_PY = {
   "scenario.estigarribia.name": "Mariscal Estigarribia · el Chaco",
   "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",
   "scenario.encarnacion.name": "Encarnación · el Paraná",
+  "scenario.concepcion.name": "Concepción · el norte",
   "scenario.valle.name": "Valle de la Cordillera",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
@@ -470,6 +471,8 @@ export const ES_PY = {
     "Bienvenidos a Mariscal Estigarribia, en pleno Chaco. Acá la pista es larguísima y el horizonte también. Gracias por volar con nosotros.",
   "comandante.llegada.pedro-juan":
     "Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.",
+  "comandante.llegada.concepcion":
+    "Señores pasajeros, bienvenidos a Concepción. Del otro lado del río Paraguay empieza el Chaco, y de acá para el norte el río es el camino. Gracias por volar con nosotros.",
   "comandante.llegada.yvytu-rape":
     "Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.",
   "comandante.llegada.valle-cordillera":
