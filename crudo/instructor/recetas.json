@@ -688,5 +688,8 @@
   ],
   "vuelo.puedeVolverSinTorre": [
     "vuelo.puedeVolverSinTorre"
+  ],
+  "vuelo.empezamosABajar": [
+    "vuelo.empezamosABajar"
   ]
 }

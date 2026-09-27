@@ -375,6 +375,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.empezamosABajar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Empezamos a bajar: despacito, hasta la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.mandanFrustrar",
     "voz": "instructor",
     "idioma": "es-PY",

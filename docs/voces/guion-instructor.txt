@@ -47,6 +47,7 @@ Bajás muy de golpe: levantá un poco la nariz
 Estás muy inclinado: enderezá las alas
 Se soltó el piloto automático
 El piloto automático se conecta en el aire
+Empezamos a bajar: despacito, hasta la pista
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir

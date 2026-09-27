@@ -366,6 +366,9 @@
     "vuelo.despuesDelAterrizaje": {
       "ms": 6207
     },
+    "vuelo.empezamosABajar": {
+      "ms": 2918
+    },
     "vuelo.enPuesto": {
       "ms": 1643
     },
@@ -1309,6 +1312,9 @@
     ],
     "vuelo.puedeVolverSinTorre": [
       "vuelo.puedeVolverSinTorre"
+    ],
+    "vuelo.empezamosABajar": [
+      "vuelo.empezamosABajar"
     ]
   }
 }
