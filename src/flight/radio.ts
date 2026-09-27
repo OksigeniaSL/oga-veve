@@ -149,6 +149,29 @@ export const CUALES = Object.keys(GUIONES) as Guion[];
 export const CON_SALUDO = "otro.buenosDias";
 const SE_SALUDA_EN = "otro.rodando";
 
+/**
+ * **La llamada con la que uno sale de su puesto a rodar.** Con la calle
+ * ocupada no se dice —ver `Momento.calleOcupada`—: quien iba a decirla espera
+ * en su puesto sin perder el turno, igual que quien espera la pista.
+ */
+export const EMPIEZA_A_RODAR = SE_SALUDA_EN;
+
+/**
+ * Si un avión **está en la calle**: salió de su puesto a rodar —su «rodando»
+ * ya se dijo— y todavía no ha entrado en la pista. Es el que espera en la
+ * doble raya, o va hacia ella.
+ */
+export function enLaCalle(guion: Guion, paso: number): boolean {
+  const pasos = GUIONES[guion];
+  for (let i = Math.min(paso, pasos.length) - 1; i >= 0; i--) {
+    const clave = pasos[i]!.clave;
+    if (clave === "torre.lineUpWait" || clave === "torre.clearedTakeoff")
+      return false;
+    if (clave === EMPIEZA_A_RODAR) return true;
+  }
+  return false;
+}
+
 /** Lo que la frecuencia mira del vuelo para saber si puede hablar. */
 export interface Momento {
   /** La fase del juego. En final y en la toma, la radio calla. */
@@ -168,6 +191,21 @@ export interface Momento {
    * mandándolo al aire para dártela a vos. Ver `ocupanLaPista`.
    */
   readonly esperandoLaPista?: boolean;
+  /**
+   * Si **la única calle del campo es tuya ahora**, y en qué sentido: saliendo
+   * —rodás por ella hacia la pista o esperás en su doble raya— o volviendo
+   * —llegás a la pista por la que la vas a dejar, o ya la estás dejando—.
+   *
+   * En un campo de una sola calle —Encarnación, La Gomera, Pedro Juan
+   * Caballero— la raya verde no puede rodear a nadie: todo lo que va de la
+   * plataforma a la pista pasa por el mismo sitio. Lo que hace una torre ahí
+   * es no mover dos aviones a la vez por la calle: el que va a salir espera en
+   * su puesto hasta que la dejes, y saliendo vos, el que llega no se mete en
+   * final —detrás vendría rodando de frente por la misma calle—. Ver
+   * `EMPIEZA_A_RODAR`, `enLaCalle` y `USAN_LA_CALLE` en
+   * `flight/turno-de-pista.ts`.
+   */
+  readonly calleOcupada?: "saliendo" | "volviendo" | null;
 }
 
 /** Lo que se oye: quién, qué, y de quién es la matrícula que se nombra. */
@@ -501,6 +539,11 @@ export class Frecuencia {
     return this.aviones.some((a) => laPistaQueOcupa(a.guion, a.paso) !== null);
   }
 
+  /** Si alguien de la frecuencia está en la calle. Ver `enLaCalle`. */
+  get alguienEnLaCalle(): boolean {
+    return this.aviones.some((a) => enLaCalle(a.guion, a.paso));
+  }
+
   /**
    * La matrícula del que **va delante en final con su permiso**, o `null`.
    *
@@ -579,19 +622,35 @@ export class Frecuencia {
    * `respetar` es la matrícula del que va delante en final con su permiso,
    * si lo hay: a ése no se le quita, aterriza él primero. Ver `vaDelante`.
    */
-  despejarLaPista(respetar: string | null = null): Transmision[] {
+  despejarLaPista(
+    respetar: string | null = null,
+    /**
+     * **Y la calle, si es la única.** El que espera en su doble raya está en
+     * el sitio por el que vas a dejar la pista, y en un campo de una sola
+     * calle no hay por dónde rodearle. La torre hace lo que se hace con una
+     * salida y una llegada: despega él antes de que llegues. Ver
+     * `Momento.calleOcupada`.
+     */
+    laCalle = false,
+  ): Transmision[] {
     const dichas: Transmision[] = [];
     for (const a of this.aviones) {
       if (a.indicativo.matricula === respetar) continue;
       const ocupa = laPistaQueOcupa(a.guion, a.paso);
-      const clave = ocupa ? PARA_QUITARSELA[ocupa] : undefined;
+      const enCalle = !ocupa && laCalle && enLaCalle(a.guion, a.paso);
+      const clave = ocupa
+        ? PARA_QUITARSELA[ocupa]
+        : enCalle
+          ? "torre.clearedTakeoff"
+          : undefined;
       if (!clave) continue;
       dichas.push({
         voz: "torre",
         clave,
         de: a.indicativo,
         respuesta: false,
-        quitaPermiso: ocupa !== "otro.final",
+        // Al de la calle no se le anula nada: se le da la salida.
+        quitaPermiso: !!ocupa && ocupa !== "otro.final",
       });
       a.estrena = false;
       if (clave === "torre.clearedTakeoff") {
@@ -729,8 +788,18 @@ export class Frecuencia {
     const pistaTuya = PISTA_TUYA.has(m.fase);
     let quien: EnLaFrecuencia | null = null;
     for (const a of this.aviones) {
-      if (a.falta > 0) continue;
       const toca = GUIONES[a.guion][a.paso]!.clave;
+      /*
+       * **Y con la única calle, el que está en ella sale sin hacerse
+       * esperar.** Saliendo vos por la misma calle, su doble raya es la tuya:
+       * la torre le da la pista en cuanto el canal está libre, sin el minuto
+       * de espera de cualquier otra llamada, para que cuando llegues ya se
+       * haya ido. Sigue sin dársela si la tiene otro. Ver `enLaCalle`.
+       */
+      const deLaCalle = !!m.calleOcupada && enLaCalle(a.guion, a.paso);
+      const apura =
+        deLaCalle && m.calleOcupada === "saliendo" && DAN_LA_PISTA.has(toca);
+      if (a.falta > 0 && !apura) continue;
       /*
        * **Y en el punto de espera, también el que va a cantar final.** Con el
        * permiso dado en final —ver `GUIONES.llega`— la pista la ocupa quien
@@ -743,8 +812,33 @@ export class Frecuencia {
         m.fase === "esperando" &&
         toca === "otro.final" &&
         vieneAAterrizar(a.guion, a.paso);
-      if (soloLosDeLaPista && !laPistaQueOcupa(a.guion, a.paso) && !cantaFinal)
+      /*
+       * **Y saliendo vos por la única calle, habla también el que está en
+       * ella**, que es por quien esperás en la doble raya: el que llegó antes
+       * a la calle sale antes. Ver `pistaDeOtros` en
+       * `flight/turno-de-pista.ts`. Volviendo, en final, se le da la salida al
+       * darte la pista: ver `despejarLaPista`.
+       */
+      if (
+        soloLosDeLaPista &&
+        !laPistaQueOcupa(a.guion, a.paso) &&
+        !cantaFinal &&
+        !(deLaCalle && m.calleOcupada === "saliendo")
+      )
         continue;
+      /*
+       * **Ni sale nadie a rodar por una calle que usás vos.** Espera en su
+       * puesto sin perder el turno, y rueda en cuanto la dejes. Ver
+       * `Momento.calleOcupada`.
+       */
+      if (m.calleOcupada && toca === EMPIEZA_A_RODAR) continue;
+      /*
+       * **Y saliendo vos, nadie canta final.** El que aterriza deja la pista
+       * por la única calle y rueda por ella hasta su puesto, o sea de frente
+       * contra vos. Sigue su circuito y, sin permiso, se va al aire en la
+       * decisión y da otra vuelta; aterriza cuando hayas entrado en la pista.
+       */
+      if (m.calleOcupada === "saliendo" && toca === "otro.final") continue;
       // «Pista libre» fuera de la pista, y «en final» en final. Ver `todaviaNo`.
       if (this.todaviaNo(a.indicativo.matricula, toca)) continue;
       if (

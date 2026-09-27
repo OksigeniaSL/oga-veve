@@ -77,6 +77,19 @@ export interface SueloDelTrafico {
     readonly espera: number;
     readonly eje: number;
   } | null;
+  /**
+   * **Si entre la plataforma y la pista no hay más que una calle**: todo lo
+   * que va de un puesto a la pista pasa por la doble raya del que sale, y no
+   * hay por dónde rodearle.
+   *
+   * Es Encarnación, La Gomera y Pedro Juan Caballero, y no se pone a mano: se
+   * mide con el mismo buscador que traza la raya verde. Se pone al que sale
+   * esperando en su doble raya y se busca ruta de cada salida de pista a cada
+   * puesto rodeándole; si ninguna puede, la calle es una. Ahí la raya verde
+   * no puede rodear a nadie, y lo que hace la torre es no mover dos aviones a
+   * la vez por ella. Ver `Momento.calleOcupada` en `flight/radio.ts`.
+   */
+  unaSolaCalle(): boolean;
 }
 
 /**
@@ -257,7 +270,8 @@ export function sueloDelTrafico(
     return mejor?.puntos ?? null;
   };
 
-  return {
+  let unaSola: boolean | undefined;
+  const suelo: SueloDelTrafico = {
     llegada(desdeElUmbral, evitar) {
       /*
        * **La salida que antes deja la pista libre**, no la primera que hay.
@@ -358,7 +372,47 @@ export function sueloDelTrafico(
       }
       return deReserva;
     },
+
+    unaSolaCalle() {
+      if (unaSola !== undefined) return unaSola;
+      unaSola = false;
+      const sale = suelo.salida();
+      if (!sale) return unaSola;
+      const raya = aLosMetros(sale.camino, sale.espera);
+      const parado: Punto = [raya.x, -raya.z];
+      const ocupados = { puntos: [parado], radio: PASA_A_TU_LADO };
+      let alguna = false;
+      for (const boca of bocas)
+        for (const xy of puestos) {
+          // Un puesto al lado de la doble raya no dice nada de la calle.
+          if (Math.hypot(xy[0] - parado[0], xy[1] - parado[1]) < PASA_A_TU_LADO)
+            continue;
+          const ruta = rodajeEntre(grafo, grafo.nudos[boca.nudo]!, xy, 400, ocupados);
+          if (!ruta) continue;
+          alguna = true;
+          if (!ruta.ocupada) return unaSola;
+        }
+      unaSola = alguna;
+      return unaSola;
+    },
   };
+  return suelo;
+}
+
+/** El punto de un camino a tantos metros de su principio. */
+function aLosMetros(camino: readonly EnElPlano[], metros: number): EnElPlano {
+  let recorrido = 0;
+  for (let i = 1; i < camino.length; i++) {
+    const a = camino[i - 1]!;
+    const b = camino[i]!;
+    const d = dist(a, b);
+    if (recorrido + d >= metros) {
+      const t = d > 0 ? (metros - recorrido) / d : 0;
+      return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+    }
+    recorrido += d;
+  }
+  return camino[camino.length - 1]!;
 }
 
 /**

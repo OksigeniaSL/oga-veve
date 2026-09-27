@@ -2587,6 +2587,7 @@ export class Game {
     trafico: () => this.trafico,
     torre: () => this.leccion.torre,
     privado: () => !!this.elCampoMontado().escenario.aerodrome?.privado,
+    calleUnica: () => this.calleUnicaDelCampo(),
     alUmbral: () => {
       const p = this.flight.state.position;
       return distanciaAlUmbral(this.elCampo(), p.x, p.z);
@@ -6696,6 +6697,7 @@ export class Game {
     }
     // El del campo en el que se está, y solo si allí hay con quién compartir
     // la frecuencia. Ver `montarElCampo`.
+    this.calleUnicaDelCampo = () => false;
     const campo = this.elCampoMontado();
     const aero = campo.escenario.aerodrome;
     if (!aero || aero.privado) return;
@@ -6754,6 +6756,14 @@ export class Game {
         })
         .sort((p, q) => p.d - q.d)[0]?.r.widthM ?? 45;
     let sueloDelCampo: SueloDelTrafico | null | undefined;
+    // Y si entre la plataforma y la pista hay una sola calle, con la misma
+    // cuenta de calles que rueda el tráfico. Ver `unaSolaCalle`.
+    this.calleUnicaDelCampo = () => {
+      if (!aerodromo) return false;
+      if (sueloDelCampo === undefined)
+        sueloDelCampo = sueloDelTrafico(aerodromo, pista, ancho);
+      return sueloDelCampo?.unaSolaCalle() ?? false;
+    };
     this.trafico = crearTrafico(
       pista,
       cota,
@@ -6802,6 +6812,14 @@ export class Game {
     );
     this.scene.add(this.trafico.grupo);
   }
+
+  /**
+   * **Si el campo de ahora no tiene más que una calle** entre la plataforma y
+   * la pista en uso: la torre no mueve dos aviones a la vez por ella. La pone
+   * `ponerTrafico`, que es quien sabe las calles del campo; ver `USAN_LA_CALLE`
+   * en `flight/turno-de-pista.ts`.
+   */
+  private calleUnicaDelCampo: () => boolean = () => false;
 
   /**
    * Dónde hay aviones del tráfico parados, o a punto de parar, en las calles
