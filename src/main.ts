@@ -211,9 +211,14 @@ let avion: AircraftConfig =
  * cercano. Ver `Game.destinoDeSalida`.
  */
 let destino: string | undefined = rearranque
-  ? // El destino de antes era del avión de antes: el juego propone uno que
-    // valga para éste. Ver `Game.destinoDeSalida`.
-    undefined
+  ? /*
+     * El de antes, si lo había. Se descartaba con el argumento de que era del
+     * avión de antes, y el arranque ya sabe descartar lo que no vale para
+     * éste —ver `vecinosQueSeMontan` y `Game.destinoDeSalida`—: tirarlo
+     * siempre hacía que cambiar de avión devolviera el vecino más cercano y
+     * su depósito, se hubiera elegido lo que se hubiera elegido.
+     */
+    rearranque.destino
   : (params.get("destino") ?? undefined);
 
 /*

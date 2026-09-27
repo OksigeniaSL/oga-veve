@@ -77,6 +77,12 @@ instructor	instructor/vuelo.meteElTren.ogg	es-PY	Metélo, el tren te frena	lo qu
 instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay una tormenta delante: rodeála, no la cruces	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.reserva.ogg	es-PY	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinCombustible.ogg	es-PY	Se acabó el combustible: planeá hasta la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sinMotor.ogg	es-PY	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.planeoLento.ogg	es-PY	Vamos lentos: bajá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.planeoRapido.ogg	es-PY	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.laOtraPunta.ogg	es-PY	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alAireOtraPunta.ogg	es-PY	Por esa punta no: andate al aire y volvé por la otra	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alAireVientoDeCola.ogg	es-PY	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sacaElTren.ogg	es-PY	Sacá el tren	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trenEnElSuelo.ogg	es-PY	Con el avión en el suelo, el tren no se mete	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
@@ -378,6 +384,9 @@ torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno vien
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
+torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
+torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
+torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
 torre	torre/viento.wind.ogg	en	wind	el viento, antes de la dirección
 torre	torre/viento.degrees.ogg	en	degrees	detrás de la dirección del viento
 torre	torre/viento.knots.ogg	en	knots	detrás de la fuerza del viento
@@ -450,6 +459,9 @@ torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing t
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
 torre-canarias	torre-canarias/viento.wind.ogg	en	wind	el viento, antes de la dirección, en Canarias
 torre-canarias	torre-canarias/viento.degrees.ogg	en	degrees	detrás de la dirección del viento, en Canarias
 torre-canarias	torre-canarias/viento.knots.ogg	en	knots	detrás de la fuerza del viento, en Canarias

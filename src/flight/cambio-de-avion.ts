@@ -62,6 +62,12 @@ export interface Rearranque {
   readonly escenario: string;
   /** El avión con el que se empieza. */
   readonly avion: string;
+  /**
+   * Y a dónde iba el vuelo, si iba a algún sitio. Sin él, el arranque proponía
+   * el vecino más cercano y cambiar de avión borraba la elección. Lo que no
+   * valga para el avión nuevo lo descarta el arranque, igual que en el hangar.
+   */
+  readonly destino?: string;
 }
 
 const CLAVE = "oga-veve:rearranque";
@@ -94,9 +100,11 @@ export function leerRearranque(
     if (crudo === null) return null;
     almacen?.removeItem(CLAVE);
     const r = JSON.parse(crudo) as Partial<Rearranque>;
-    return typeof r.escenario === "string" && typeof r.avion === "string"
-      ? { escenario: r.escenario, avion: r.avion }
-      : null;
+    if (typeof r.escenario !== "string" || typeof r.avion !== "string")
+      return null;
+    return typeof r.destino === "string"
+      ? { escenario: r.escenario, avion: r.avion, destino: r.destino }
+      : { escenario: r.escenario, avion: r.avion };
   } catch {
     return null;
   }

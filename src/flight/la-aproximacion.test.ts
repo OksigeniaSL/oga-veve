@@ -97,7 +97,7 @@ function montar(campo: () => CampoDeLaAproximacion): {
   return { aproximacion, dicho };
 }
 
-function paso(a: LaAproximacion, s: FlightState): void {
+function paso(a: LaAproximacion, s: FlightState, sinMotor = false): void {
   a.paso({
     estado: s,
     acercandose: true,
@@ -106,6 +106,7 @@ function paso(a: LaAproximacion, s: FlightState): void {
     techoDeNubes: null,
     terrenoDicho: null,
     vueloTerminado: false,
+    sinMotor,
   });
 }
 
@@ -299,6 +300,74 @@ describe("la torre te manda al aire porque el de delante no ha dejado la pista",
     expect(aproximacion.mandanFrustrar).toBe(true);
     // Sale: ahora sí se levanta.
     ocupada = false;
+    paso(aproximacion, s);
+    expect(aproximacion.mandanFrustrar).toBe(false);
+  });
+});
+
+/*
+ * **Sin motor no hay frustrada.** Un avión que no puede subir no recibe la
+ * orden de subir: ni el sorteo, ni los mínimos que mandan irse, ni la pista
+ * ocupada. Ver `sin-motor.ts`.
+ */
+describe("sin motor", () => {
+  it("la torre no manda irse al aire, ni forzada", () => {
+    const s = enFinal(LOS_RODEOS, 2000, 110);
+    const { aproximacion, dicho } = montar(() => visto(LOS_RODEOS, s));
+    aproximacion.ordenes = "siempre";
+    paso(aproximacion, s, true);
+    expect(dicho).not.toContain("frustrar:pistaOcupada");
+    expect(aproximacion.mandanFrustrar).toBe(false);
+  });
+
+  it("ni por el que va delante en la pista", () => {
+    const s = enFinal(LOS_RODEOS, 1000, 50);
+    const { aproximacion } = montar(() => visto(LOS_RODEOS, s));
+    aproximacion.ordenes = "nunca";
+    paso(aproximacion, s, true);
+    aproximacion.mandarIrsePorLaPistaOcupada(50, () => true);
+    expect(aproximacion.mandanFrustrar).toBe(false);
+  });
+
+  it("y los mínimos no deciden nada: se aterriza", () => {
+    let s = enFinal(LOS_RODEOS, 1500, 80, -12);
+    const { aproximacion, dicho } = montar(() => visto(LOS_RODEOS, s));
+    aproximacion.ordenes = "nunca";
+    paso(aproximacion, s, true);
+    s = enFinal(LOS_RODEOS, 1100, 59, -12);
+    paso(aproximacion, s, true);
+    expect(dicho.filter((d) => d.startsWith("frustrar"))).toEqual([]);
+  });
+
+  it("y una orden que ya estaba puesta se retira", () => {
+    const s = enFinal(LOS_RODEOS, 2000, 110);
+    const { aproximacion } = montar(() => visto(LOS_RODEOS, s));
+    aproximacion.ordenes = "siempre";
+    paso(aproximacion, s);
+    expect(aproximacion.mandanFrustrar).toBe(true);
+    paso(aproximacion, s, true);
+    expect(aproximacion.mandanFrustrar).toBe(false);
+  });
+});
+
+describe("por la otra punta", () => {
+  it("la orden sale por la misma puerta, con su porqué", () => {
+    const s = enFinal(LOS_RODEOS, 2000, 110);
+    const { aproximacion, dicho } = montar(() => visto(LOS_RODEOS, s));
+    aproximacion.ordenes = "nunca";
+    paso(aproximacion, s);
+    aproximacion.mandarIrsePorLaOtraCabecera(110, "vientoDeCola");
+    expect(dicho).toContain("frustrar:otraCabecera");
+    expect(aproximacion.porqueMandaron).toBe("otraCabecera");
+  });
+
+  it("y se levanta subiendo, como las demás", () => {
+    let s = enFinal(LOS_RODEOS, 2000, 110);
+    const { aproximacion } = montar(() => visto(LOS_RODEOS, s));
+    aproximacion.ordenes = "nunca";
+    paso(aproximacion, s);
+    aproximacion.mandarIrsePorLaOtraCabecera(110, "otraPunta");
+    s = enFinal(LOS_RODEOS, 1800, 200, 5);
     paso(aproximacion, s);
     expect(aproximacion.mandanFrustrar).toBe(false);
   });

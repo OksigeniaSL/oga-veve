@@ -43,7 +43,19 @@ import {
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
-import { claveDeTorre, DICE_LA_TORRE, NOMBRA_LA_PISTA } from "./audio/torre";
+import {
+  claveDeTorre,
+  DICE_LA_TORRE,
+  NOMBRA_LA_PISTA,
+  PISTA_DETRAS,
+} from "./audio/torre";
+import {
+  bandaSinMotor,
+  pistaDelPlaneo,
+  planeoDe,
+  queSeDiceSinMotor,
+} from "./flight/sin-motor";
+import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -54,7 +66,7 @@ import {
   type Indicativo,
 } from "./flight/matricula";
 import type { FlightModel, FlightState } from "./flight/model";
-import { Terrain, cabeceraEnUso } from "./world/terrain";
+import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
@@ -99,6 +111,7 @@ import {
   type Leccion,
 } from "./flight/lecciones";
 import {
+  deFrente,
   pedirMetar,
   TIEMPO_DE_CASA,
   vientoComoVector,
@@ -418,6 +431,7 @@ import {
   loQueCabe,
   quemaPorSegundo,
   reservaEnKilos,
+  seCargaAlCambiarDeDestino,
 } from "./flight/combustible";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
@@ -1369,6 +1383,43 @@ export class Game {
   private avisadoDeLaReserva = false;
 
   /**
+   * **Si se vuela sin motor**: se acabó el combustible en el aire.
+   *
+   * Es otro vuelo, con otras reglas —ver `flight/sin-motor.ts`—: se pide la
+   * velocidad de mejor planeo y no la de aproximación, la flecha va a la pista
+   * a la que se llega, nadie manda al aire a quien no puede subir y la torre
+   * da prioridad. Se acaba al pararse en el suelo o al empezar otro vuelo.
+   */
+  private sinMotor = false;
+
+  /** Si se vuela sin motor, para los bancos. */
+  get sinMotorParaBanco(): boolean {
+    return this.sinMotor;
+  }
+
+  /**
+   * Quien viene por la otra cabecera: qué se le dijo ya. Ver
+   * `flight/la-otra-cabecera.ts`.
+   */
+  private readonly laOtraCabecera = new LaOtraCabecera();
+
+  /**
+   * Por qué cabecera se viene en final ahora mismo, metros a su umbral. Se
+   * mira una vez por paso, antes que la velocidad: sin motor, estar en final
+   * por cualquiera de las dos es lo que cambia la velocidad que se pide.
+   */
+  private enFinalPor: { enUso: number | null; otra: number | null } = {
+    enUso: null,
+    otra: null,
+  };
+
+  /**
+   * La cabecera que la torre nombra **en lugar de la de uso**, solo mientras
+   * la nombra: la que eligió quien vuela sin motor. Ver `autorizarSinMotor`.
+   */
+  private cabeceraParaLaTorre: string | null = null;
+
+  /**
    * Las células de tormenta de hoy, si el tiempo las trae.
    *
    * Salen del parte meteorológico del sitio y de la semilla del escenario, así
@@ -1667,8 +1718,37 @@ export class Game {
     );
     this.destinoId = campos[(ahora + 1) % campos.length]!.id;
     this.desvioId = null;
+    /*
+     * **Y en tierra, el depósito con él.** La tarjeta cambiaba la flecha y el
+     * combustible seguía siendo el del destino de antes: desde Ciudad del Este,
+     * 4629 kilos para ir a cualquier parte. Elegir en tierra es lo mismo que
+     * elegir en el hangar, y el hangar enseña una barra por destino. Y se
+     * recuerda para este campo, que si no, apagar y volver a arrancar
+     * devolvía el destino del hangar. Ver `seCargaAlCambiarDeDestino`.
+     */
+    const s = this.flight.state;
+    if (
+      seCargaAlCambiarDeDestino({
+        enUnCampo: s.onGround && this.campoEnCuyoSueloEsta() !== null,
+        velocidad: s.groundSpeed,
+      })
+    ) {
+      this.destinoElegidoEnTierra = {
+        salida: this.salidaId,
+        destino: this.destinoId,
+      };
+      this.llenarSiHaceFalta(this.salidaId, this.destinoId);
+    }
     this.avisar("success");
   }
+
+  /**
+   * El destino que se eligió con la tarjeta **estando en tierra**, y desde qué
+   * campo. Manda sobre el del hangar al empezar un tramo desde ese campo. Ver
+   * `destinoDelTramoDesde`.
+   */
+  private destinoElegidoEnTierra: { salida: string; destino: string } | null =
+    null;
 
   /**
    * Si el avión acaba de tocar tierra en otro campo, empieza el tramo nuevo.
@@ -1725,6 +1805,9 @@ export class Game {
    * depósito, que la necesitan los dos. Ver `tramoDelRepostaje`.
    */
   private destinoDelTramoDesde(salida: string): string {
+    const elegido = this.destinoElegidoEnTierra;
+    if (elegido?.salida === salida && this.campoPorId(elegido.destino))
+      return elegido.destino;
     return salida === this.scenario.id ? this.destinoDeSalida() : this.scenario.id;
   }
 
@@ -1767,6 +1850,9 @@ export class Game {
     if (this.campoEnCuyoSueloEsta())
       this.llenarSiHaceFalta(this.salidaId, this.destinoId);
     this.percance = null;
+    // Otro tramo, con motor: lo de la otra punta y el planeo eran del de antes.
+    this.sinMotor = false;
+    this.laOtraCabecera.reiniciar();
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
     this.laTorreMandaEnLaLuz = false;
@@ -4890,10 +4976,19 @@ export class Game {
         blancas >= 3
           ? this.rotulo("vuelo.papiAlto", "palabra.baja")
           : blancas <= 1
-            ? this.bajoPorqueVaLento
-              ? // Bajo **por ir lento**: lo que falta es gas, no cabeceo.
-                this.rotulo("vuelo.lentoYBajo", "palabra.gas")
-              : this.rotulo("vuelo.papiBajo", "palabra.subi")
+            ? this.sinMotor
+              ? /*
+                 * **Sin motor, bajo no se arregla subiendo**: tirar sin gas
+                 * solo gasta velocidad y acorta el planeo. Lento, la nariz
+                 * abajo; si no, las luces y nada más, que dicen lo que hay.
+                 */
+                this.bajoPorqueVaLento
+                ? this.rotulo("vuelo.planeoLento", "palabra.baja")
+                : ""
+              : this.bajoPorqueVaLento
+                ? // Bajo **por ir lento**: lo que falta es gas, no cabeceo.
+                  this.rotulo("vuelo.lentoYBajo", "palabra.gas")
+                : this.rotulo("vuelo.papiBajo", "palabra.subi")
             : this.rotulo("vuelo.papiBien", "palabra.bien"),
         null,
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
@@ -5052,6 +5147,41 @@ export class Game {
      * estabilizada no enciende nada, solo dice cuál de los cinco motivos es.
      */
     this.hechos.on("mandaronIrseAlAire", ({ porque, motivo }) => {
+      /*
+       * **Por la otra punta.** La torre enciende la roja del aire y dice por
+       * qué en fraseología —«go around, runway in use zero three»—; la
+       * tarjeta y la instructora lo cuentan con el porqué de verdad, que es el
+       * viento: si por esa punta pasa del límite del avión, eso es lo que se
+       * dice, porque es lo que lo hace peligroso. Con el tono de atención y no
+       * el de peligro: irse al aire es la maniobra buena, y se va a celebrar.
+       * Ver `flight/la-otra-cabecera.ts`.
+       */
+      if (porque === "otraCabecera") {
+        if (this.hayTorreQueHable()) {
+          this.luzDeTorre("roja", "alAire", "enUso");
+          this.laTorreMandaEnLaLuz = true;
+        }
+        const dicho = this.avisoCon(
+          motivo === "vientoDeCola"
+            ? "vuelo.alAireVientoDeCola"
+            : "vuelo.alAireOtraPunta",
+          "palabra.alAire",
+        );
+        this.hud.senal.mostrar("frustrada", dicho.rotulo, null, {
+          segundos: Infinity,
+          prioridad: URGENTE,
+        });
+        this.avisar("attention");
+        /*
+         * En el peldaño de cabina la orden ya la dice la torre en inglés, y el
+         * canto de cabina de «go around» es el de haberlo hecho bien. Y en
+         * `mando`, que es una orden con su porqué: en `normal`, detrás de la
+         * lámpara, el banco la vio caerse de la cola una vez de cada dos.
+         */
+        if (!canalesDe(this.tier.avisos).cabina)
+          this.instructor.decir(dicho.texto, dicho.id, "mando");
+        return;
+      }
       if (porque === "pistaOcupada") {
         /*
          * Vaca o lámpara según el campo **al que se viene**, y la vaca en su
@@ -5155,6 +5285,16 @@ export class Game {
        * desobedecida, tampoco: la verde en tierra es «podés entrar». Ver
        * `alLevantarLaOrden`.
        */
+      /*
+       * **Y sin motor, en silencio.** Una orden que se levanta porque el avión
+       * ya no puede subir no es «la torre te deja volver»: es que ya no hay
+       * vuelta. La pista la da `autorizarSinMotor` al alinearse.
+       */
+      if (this.sinMotor) {
+        this.laTorreMandaEnLaLuz = false;
+        this.luzDeTorre(null);
+        return;
+      }
       const queDice = alLevantarLaOrden(
         porque,
         this.faseDeAhora,
@@ -5231,13 +5371,18 @@ export class Game {
     dice: string,
     urgencia: Urgencia = "mando",
     destino?: DestinoEnRadio,
+    /**
+     * Si se escribe también en la tira de la radio. La autorización de la
+     * ruta ya lo hacía; la pista en uso también, que es un número que se lee.
+     */
+    conTira = false,
   ): void {
     const base = claveDeTorre(dice);
     if (!base) return;
     const montada = this.deTorre(base, this.miIndicativo, destino);
     if (montada) {
       this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
-      if (destino && this.tier.instruments !== "none")
+      if ((destino || conTira) && this.tier.instruments !== "none")
         this.hud.radio(montada.texto);
     }
   }
@@ -5302,8 +5447,14 @@ export class Game {
      */
     const campo = this.elCampo();
     let clave = comoSeDiceAqui(base, hablaDe(campo.escenario.aerodrome?.id));
+    /*
+     * La de uso, salvo que alguien sin motor haya elegido la otra: entonces la
+     * que se tiene delante. Ver `autorizarSinMotor`.
+     */
     const pista = NOMBRA_LA_PISTA.has(base)
-      ? pistaEnPiezas(cabeceraEnUso(campo.escenario))
+      ? pistaEnPiezas(
+          this.cabeceraParaLaTorre ?? cabeceraEnUso(campo.escenario),
+        )
       : null;
     /*
      * **Y el viento, al dar la pista para despegar o aterrizar.**
@@ -5344,9 +5495,13 @@ export class Game {
      * cosas que hacen que un fallo de audio parezca un fallo del juego.
      */
     const antes = viento ? `${quien.dicho}, ${viento.dicho}` : quien.dicho;
-    const texto = pista
-      ? `${antes}, runway ${pista.dicho}, ${dice}`
-      : `${antes}, ${dice}`;
+    // Y la pista en uso se nombra detrás, que es como se informa. Ver
+    // `PISTA_DETRAS`.
+    const texto = !pista
+      ? `${antes}, ${dice}`
+      : PISTA_DETRAS.has(base)
+        ? `${antes}, ${dice} ${pista.dicho}`
+        : `${antes}, runway ${pista.dicho}, ${dice}`;
     return { clave, relleno, texto };
   }
 
@@ -5475,6 +5630,11 @@ export class Game {
   private luzDeTorre(
     luz: "verde" | "roja" | null,
     rojaDice: "esperar" | "alAire" = "esperar",
+    /**
+     * Y por qué al aire, para la fraseología: la pista ocupada, o que se viene
+     * por la cabecera que no está en uso. Ver `flight/la-otra-cabecera.ts`.
+     */
+    alAirePor: "ocupada" | "enUso" = "ocupada",
   ): void {
     /*
      * **Y la verde no dice lo mismo en el aire que en tierra.** En las señales
@@ -5613,7 +5773,9 @@ export class Game {
           ? "cleared to land"
           : "cleared for take-off"
         : rojaDice === "alAire"
-          ? "go around, runway occupied"
+          ? alAirePor === "enUso"
+            ? "go around, runway in use"
+            : "go around, runway occupied"
           : porQue
             ? HOLD_SHORT_POR[porQue]
             : "hold short of the runway";
@@ -5897,6 +6059,9 @@ export class Game {
         : this.scenario.id;
     const campo = this.elCampo(salida);
     this.percance = null;
+    // Y con el depósito lleno, otra vez con motor. Ver `quedarseSinMotor`.
+    this.sinMotor = false;
+    this.laOtraCabecera.reiniciar();
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por este método.
     this.laAproximacion.reiniciar();
@@ -7739,6 +7904,7 @@ export class Game {
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
+    this.mirarLaCabecera();
     this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
 
@@ -7841,7 +8007,7 @@ export class Game {
      */
     const enElAsfalto =
       this.flight.state.onGround && this.flight.state.onRunway;
-    const banda = bandaDeAhora(
+    let banda = bandaDeAhora(
       {
         sobreElSuelo: this.flight.state.heightAboveGround,
         enElSuelo: this.flight.state.onGround,
@@ -7864,6 +8030,25 @@ export class Game {
         ? this.aircraft.velocidadDeCircuito
         : null,
     );
+    /*
+     * **Y sin motor, la de mejor planeo hasta estar en final.** La de
+     * aproximación mira la altura y si se baja, y sin motor se baja siempre:
+     * a diez kilómetros de la pista juzgaba el planeo con la vara de posarse.
+     * Ver `bandaSinMotor`.
+     */
+    let sinMotorDe: "planeo" | "aproximacion" | null = null;
+    if (this.sinMotor) {
+      const s = this.flight.state;
+      const b = bandaSinMotor({
+        enElSuelo: s.onGround,
+        enFinal: this.enFinalPor.enUso !== null || this.enFinalPor.otra !== null,
+        deSiempre: banda,
+        indicada: indicatedAirspeed(s.airspeed, s.position.y),
+        planeo: planeoDe(this.aircraft),
+      });
+      banda = b.banda;
+      sinMotorDe = b.de;
+    }
     this.bandaDeAhora = banda;
     this.hud.setBandaDeVelocidad(banda);
     this.hud.mostrarFps(dt, {
@@ -7895,6 +8080,22 @@ export class Game {
       if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {
         this.dichoDeBanda = banda;
         /*
+         * **Sin motor, la velocidad sale de la nariz.** «Venís lento: metéle
+         * gas» a un avión sin motor era el consejo de un vuelo que ya no
+         * existe: «¿cómo es que la instructora me dice que acelere, que voy
+         * despacito?». Lento es bajar la nariz, en los dos tramos; rápido
+         * lejos de la pista es levantarla, que así se llega más lejos. Rápido
+         * ya en final sigue por abajo, con los flaps, como siempre. Lo dice la
+         * instructora en los cuatro peldaños: no hay canto de cabina que diga
+         * esto, y es la voz de la calma. Ver `queSeDiceSinMotor`.
+         */
+        const sinMotorDice = sinMotorDe
+          ? queSeDiceSinMotor(
+              { banda, de: sinMotorDe },
+              this.flight.state.onGround,
+            )
+          : null;
+        /*
          * Rodando no se dice «airspeed», que es palabra de vuelo: se dice lo
          * que diría cualquiera en una calle de rodaje. Y en el aire,
          * «airspeed» es lo que dice una cabina de verdad — dice las dos cosas
@@ -7925,7 +8126,8 @@ export class Game {
           this.aircraft.llevaFlaps &&
           !this.flight.state.onGround &&
           banda === "rapido" &&
-          this.input.controls.throttle < 0.25 &&
+          // Sin motor no hay gas que quitar, esté donde esté la palanca.
+          (this.input.controls.throttle < 0.25 || this.sinMotor) &&
           // Lo pedido y no dónde están: si ya bajaste la palanca, los flaps
           // están saliendo y pedírtelos otra vez sería avisar de lo hecho.
           this.input.palancaDeFlaps < 0.5 &&
@@ -7938,7 +8140,20 @@ export class Game {
            * que se dice es la velocidad a secas: primero gas y paciencia.
            */
           this.flight.state.airspeed * NUDOS < this.aircraft.vfeKt;
-        if (sinGasQueQuitar) {
+        if (sinMotorDice) {
+          this.hud.senal.mostrar(
+            "senda",
+            this.rotulo(
+              sinMotorDice,
+              sinMotorDice === "vuelo.planeoLento"
+                ? "palabra.baja"
+                : "palabra.subi",
+            ),
+            null,
+            { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+          );
+          this.instructor.decir(t(sinMotorDice), sinMotorDice);
+        } else if (sinGasQueQuitar) {
           this.hud.senal.mostrar(
             "flaps",
             this.rotulo("vuelo.pediFlaps", "palabra.flaps"),
@@ -7952,6 +8167,8 @@ export class Game {
           this.cantar("flaps", t("vuelo.pediFlaps"), "vuelo.pediFlaps");
         } else if (
           queSeDice(banda, this.flight.state.onGround) === "vuelo.lentoYBajo" &&
+          // Sin motor no se pide gas: lo lento ya lo dijo la rama de arriba.
+          !this.sinMotor &&
           /*
            * **Y no a un palmo del suelo.** En la recogida se va despacio a
            * propósito —se está posando—, y con un rebote las ruedas quedan un
@@ -8067,7 +8284,14 @@ export class Game {
             this.flight.state.position.x,
             this.flight.state.position.z,
             this.flight.state.heading,
-          ) !== null) &&
+          ) !== null ||
+          /*
+           * **Y por la otra punta también es venir a aterrizar.** Sin esto el
+           * aviso de terreno cantaba «too low» a quien se alinea con la
+           * cabecera contraria, y la frustrada que la torre le manda hacer no
+           * se reconocía. Ver `flight/la-otra-cabecera.ts`.
+           */
+          this.enFinalPor.otra !== null) &&
         !fueraDeLaSenda(
           this.distanceToRunway(),
           this.flight.state.position.y - this.cotaDeLaPistaAqui(),
@@ -8444,7 +8668,9 @@ export class Game {
        * Y la regla de la casa es que nada juzgue por un canal que quien juega
        * no tiene delante.
        */
-      if (donde === "bajo" && this.bajoPorqueVaLento) {
+      // Y sin motor, «subí» es tirar sin gas: el planeo se acorta. Ver
+      // `flight/sin-motor.ts`.
+      if (donde === "bajo" && (this.bajoPorqueVaLento || this.sinMotor)) {
         // Se calla la senda: lo que hay que hacer es meter gas, y de eso
         // habla la banda de velocidad. Ver `bajoPorqueVaLento`.
       } else if ((donde === "alto" || donde === "bajo") && this.seVenLosAros) {
@@ -8477,6 +8703,7 @@ export class Game {
       terrenoDicho: this.terrenoDicho,
       vueloTerminado: this.vueloTerminado,
       haciaOtroCampo: this.haciaOtroCampo(),
+      sinMotor: this.sinMotor,
     });
     /*
      * **El aire, que no está quieto.**
@@ -9326,6 +9553,11 @@ export class Game {
      */
     if (this.combustible <= 0) this.input.controls.engineOn = false;
     if (antes > 0 && this.combustible <= 0) {
+      // En el aire es otro vuelo, y se dice de otra manera. Ver `quedarseSinMotor`.
+      if (!this.flight.state.onGround) {
+        this.quedarseSinMotor();
+        return;
+      }
       const dicho = this.avisoCon(
         "vuelo.sinCombustible",
         "palabra.sinCombustible",
@@ -9333,6 +9565,182 @@ export class Game {
       this.hud.senal.mostrar("combustible", dicho.rotulo, null, { segundos: 8 });
       this.instructor.decir(dicho.texto, dicho.id);
     }
+  }
+
+  /**
+   * **Se paró el motor en el aire: empieza otro vuelo.** Ver
+   * `flight/sin-motor.ts`.
+   *
+   * Tres cosas, y en el orden en que las hace una tripulación de verdad:
+   *
+   * 1. **A dónde**: la pista más cercana a la que se llega planeando, que no
+   *    tiene por qué ser la del plan. La flecha se va allí y la tarjeta del
+   *    destino destella con su nombre, como con la reserva.
+   * 2. **Cómo**: la instructora lo dice con calma y en plural —«no tenemos
+   *    motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa
+   *    pista»—, en los cuatro peldaños, que la voz es el canal de quien no
+   *    lee. El dibujo del combustible en los cuatro, una palabra en el
+   *    segundo y la frase con la velocidad de mejor planeo desde el tercero.
+   * 3. **Quién más se entera**: la torre. De Taguató para arriba se ve la
+   *    llamada de socorro en la tira de la radio y se oye la respuesta,
+   *    «roger MAYDAY»; abajo, la prioridad se ve en la lámpara al alinearse.
+   *
+   * Ni pantalla roja, ni pitido, ni música: un fallo de motor se entrena
+   * para que sea una maniobra y no un susto, y quien se acelera decide peor.
+   */
+  private quedarseSinMotor(): void {
+    this.sinMotor = true;
+    this.laOtraCabecera.reiniciar();
+    const s = this.flight.state;
+    const planeo = planeoDe(this.aircraft);
+    const campos = this.camposDelVuelo().map((c) => ({
+      ...c,
+      cota: this.cotaDelCampo(this.elCampo(c.id)),
+    }));
+    const alli = pistaDelPlaneo(s.position.x, s.position.z, s.position.y, campos, planeo);
+    // Al destino, sin desvío que nombrar; a otro campo, con él.
+    if (alli && this.vecinos.length > 0)
+      this.desvioId = alli.campo.id === this.destinoId ? null : alli.campo.id;
+
+    const dicho = this.avisoCon("vuelo.sinMotor", "palabra.planea");
+    const unidades = UNIT_SYSTEMS[this.tier.units];
+    const rotulo =
+      canalesDe(this.tier.avisos).cifra && dicho.rotulo
+        ? `${dicho.rotulo} · ${Math.round(unidades.speed(planeo.velocidad))} ${unidades.speedLabel()}`
+        : dicho.rotulo;
+    this.hud.senal.mostrar("combustible", rotulo, null, {
+      segundos: 10,
+      prioridad: IMPORTANTE,
+    });
+    /*
+     * **Y corta lo que se estuviera diciendo**, que es de las pocas cosas que
+     * pueden: lo de antes —la reserva, un «más despacio»— ya no describe este
+     * vuelo. Medido en el banco: en `mando`, detrás de la reserva que todavía
+     * sonaba, la frase caducaba esperando y el planeo empezaba sin que nadie
+     * dijera qué hacer. Cortar no es alarmar: la voz sigue siendo la de la
+     * calma, y lo que dice es qué hacer. Ver `audio/boca.ts`.
+     */
+    this.instructor.decir(dicho.texto, dicho.id, "urgente");
+    this.declararMayday();
+  }
+
+  /**
+   * **La llamada de socorro y su respuesta**, de Taguató para arriba.
+   *
+   * MAYDAY y no PAN-PAN: PAN-PAN es urgencia —algo va mal y hay tiempo—, y un
+   * avión sin motor está en peligro grave e inminente, que es la definición de
+   * socorro. La llamada la hace quien vuela y en este juego nadie habla por
+   * quien vuela, así que se ve escrita en la tira de la radio; la respuesta de
+   * la torre se oye, con su voz y la matrícula de siempre.
+   */
+  private declararMayday(): void {
+    if (!this.hayTorreQueHable()) return;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras) return;
+    const yo = this.miIndicativo;
+    const montada = this.deTorre("torre.mayday", yo);
+    if (!montada) return;
+    this.hud.radio(
+      `MAYDAY MAYDAY MAYDAY, ${yo.dicho}, fuel exhaustion — ${montada.texto}`,
+      9,
+    );
+    this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+  }
+
+  /** Si en el campo de ahora hay una torre que conteste: con lección de torre y sin ser privado. */
+  private hayTorreQueHable(): boolean {
+    return this.leccion.torre && !this.elCampo().escenario.aerodrome?.privado;
+  }
+
+  /**
+   * **Por qué cabecera se viene, y qué se dice por ello.** Ver
+   * `flight/la-otra-cabecera.ts`.
+   *
+   * Corre cada paso antes de la velocidad, que sin motor depende de estar en
+   * final por cualquiera de las dos puntas. Y aquí se acaba el vuelo sin
+   * motor: parado en el suelo ya no es un planeo, es un avión en tierra.
+   */
+  private mirarLaCabecera(): void {
+    const s = this.flight.state;
+    if (this.sinMotor && s.onGround && s.groundSpeed < 1) this.sinMotor = false;
+    if (s.onGround) {
+      this.enFinalPor = { enUso: null, otra: null };
+      return;
+    }
+    const campo = this.elCampo();
+    const por = porQueCabecera(
+      campo.pista,
+      s.position.x,
+      s.position.z,
+      s.heading,
+    );
+    this.enFinalPor = { enUso: por.enUso, otra: por.otra };
+    // Sin pista con dos cabeceras de verdad no hay otra punta que decir.
+    if (!campo.escenario.aerodrome || !cabeceraContraria(campo.escenario)) return;
+    const meteo = campo.escenario.meteo;
+    const alto = s.position.y - this.cotaDelCampo(campo);
+    const pasa = this.laOtraCabecera.paso({
+      ...por,
+      alto,
+      // El viento de cara en la de uso es el de cola en la otra.
+      deColaEnLaOtra: meteo ? deFrente(campo.pista.heading, meteo) : 0,
+      sinMotor: this.sinMotor,
+    });
+    if (!pasa) return;
+    if (pasa.que === "autorizada")
+      this.autorizarSinMotor(
+        pasa.cabecera === "otra"
+          ? cabeceraContraria(campo.escenario)
+          : cabeceraEnUso(campo.escenario),
+      );
+    else if (pasa.que === "pistaEnUso") this.decirLaPistaEnUso();
+    else this.laAproximacion.mandarIrsePorLaOtraCabecera(alto, pasa.porque);
+  }
+
+  /**
+   * **La pista en uso, a quien viene por la otra punta**, todavía lejos.
+   *
+   * Es información, no una orden: da tiempo a dar la vuelta sin que sea una
+   * maniobra. De Taguató para arriba la dice la torre en fraseología
+   * —«runway in use zero three»—; abajo, la instructora con el porqué, que es
+   * el viento. El dibujo de dar la vuelta, en los cuatro peldaños.
+   */
+  private decirLaPistaEnUso(): void {
+    const dicho = this.avisoCon("vuelo.laOtraPunta", "palabra.otraPunta");
+    this.hud.senal.mostrar("media-vuelta", dicho.rotulo, null, {
+      segundos: SE_QUEDA_EL_ARO,
+      prioridad: IMPORTANTE,
+    });
+    this.avisar("attention");
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras && this.hayTorreQueHable())
+      this.porRadio("runway in use", "mando", undefined, true);
+    else this.instructor.decir(dicho.texto, dicho.id, "mando");
+  }
+
+  /**
+   * **Sin motor, la pista que se elija**, con prioridad.
+   *
+   * Al alinearse con cualquiera de las dos cabeceras la torre le quita la
+   * pista a quien la tuviera —también al que va delante en final: con un
+   * MAYDAY en la frecuencia, se aparta— y da la verde con el número de la que
+   * se tiene delante. «Podés aterrizar» en los cuatro peldaños y, de Taguató
+   * para arriba, «runway two one, cleared to land».
+   */
+  private autorizarSinMotor(cabecera: string | null): void {
+    if (!this.hayTorreQueHable()) return;
+    this.turno.alSerTuya("");
+    this.cabeceraParaLaTorre = cabecera;
+    this.laTorreMandaEnLaLuz = true;
+    this.luzDeTorre("verde");
+    this.cabeceraParaLaTorre = null;
+    this.agenda.luego(SE_QUEDA_EL_ARO, () => {
+      if (this.laAproximacion.mandanFrustrar) return;
+      this.luzDeTorre(null);
+      this.laTorreMandaEnLaLuz = false;
+    });
   }
 
   /**
@@ -10378,8 +10786,10 @@ export class Game {
          */
         // Y en un campo sin torre no autoriza nadie: en la pista de hierba
         // de la granja no hay a quién oír.
+        // Sin motor la pista la da `autorizarSinMotor`, por la punta que sea.
         if (
           vista.fase === "final" &&
+          !this.sinMotor &&
           !this.elCampo().escenario.aerodrome?.privado
         )
           this.turno.pedirAterrizaje();
@@ -11378,15 +11788,24 @@ export class Game {
             flaps: 0,
           })
         : forzando;
+    /*
+     * **Y sin motor, «bajá el motor» no dice nada.** Pasado del tope del avión
+     * sin motor, lo que queda es la nariz: levantarla un poco, que además es
+     * volver a la velocidad que más lejos lleva. Los de los flaps y el tren
+     * se quedan como están: recoger lo que se está forzando sigue siendo lo
+     * que hay que hacer, con motor o sin él. Ver `flight/sin-motor.ts`.
+     */
     const clave =
       queSeDice === "flaps"
         ? "vuelo.flapsPasados"
         : queSeDice === "tren"
           ? "vuelo.trenPasado"
-          : // Con los flaps subiendo, el tope es el suyo y no el del aire.
-            !forzando && this.flight.quienLimita() === "aire"
-            ? "vuelo.sobrevelocidadAire"
-            : "vuelo.sobrevelocidad";
+          : this.sinMotor
+            ? "vuelo.planeoRapido"
+            : // Con los flaps subiendo, el tope es el suyo y no el del aire.
+              !forzando && this.flight.quienLimita() === "aire"
+              ? "vuelo.sobrevelocidadAire"
+              : "vuelo.sobrevelocidad";
     if (this.sobrandoVelocidad < 2 || this.dichoDeSobrevelocidad === clave)
       return;
     this.dichoDeSobrevelocidad = clave;
@@ -11878,7 +12297,18 @@ export class Game {
     ponerTexto("aeronave", next.id);
     ponerTexto("escenario", aqui.id);
     escribirYa();
-    pedirRearranque(sesionDeLaPestana(), { escenario: aqui.id, avion: next.id });
+    /*
+     * **Y el destino, que se perdía.** Al volver a arrancar se proponía el
+     * vecino más cercano, fuera cual fuera el elegido: cambiar de avión
+     * devolvía siempre el mismo destino y el mismo depósito. Se deja dicho; si
+     * el avión nuevo no llega allí, el arranque lo descarta solo, como descarta
+     * los del hangar. Ver `destinoDeSalida`.
+     */
+    pedirRearranque(sesionDeLaPestana(), {
+      escenario: aqui.id,
+      avion: next.id,
+      destino: this.destinoId,
+    });
     location.reload();
   }
 

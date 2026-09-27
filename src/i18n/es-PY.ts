@@ -837,6 +837,28 @@ export const ES_PY = {
   "palabra.reserva": "Combustible",
   "vuelo.sinCombustible": "Se acabó el combustible: planeá hasta la pista",
   "palabra.sinCombustible": "Sin combustible",
+  /*
+   * Sin motor en el aire es otro vuelo, y lo dice con calma: la frase que se
+   * dice en un fallo de motor de verdad, en primera persona del plural porque
+   * es de las que se hacen juntos. Ver `flight/sin-motor.ts`.
+   */
+  "vuelo.sinMotor":
+    "No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista",
+  "palabra.planea": "Planeá",
+  // Y la velocidad sin motor sale de la nariz, nunca del gas: no hay gas.
+  "vuelo.planeoLento": "Vamos lentos: bajá un poco la nariz",
+  "vuelo.planeoRapido":
+    "Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos",
+  /*
+   * La otra cabecera: primero la pista en uso, con el porqué, y si se sigue,
+   * la orden. Ver `flight/la-otra-cabecera.ts`.
+   */
+  "vuelo.laOtraPunta":
+    "Esa no es la pista en uso: hoy el viento manda entrar por la otra punta",
+  "palabra.otraPunta": "La otra punta",
+  "vuelo.alAireOtraPunta": "Por esa punta no: andate al aire y volvé por la otra",
+  "vuelo.alAireVientoDeCola":
+    "Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta",
   "vuelo.sacaElTren": "Sacá el tren",
   "vuelo.trenEnElSuelo": "Con el avión en el suelo, el tren no se mete",
   "palabra.tren": "Tren",

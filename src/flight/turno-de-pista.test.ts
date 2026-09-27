@@ -250,6 +250,12 @@ describe("al levantarte la orden de irte al aire", () => {
     expect(alLevantarLaOrden("noEstabilizada", "final", false)).toBe("aterrizar");
   });
 
+  it("y a quien venía por la otra punta, a volver por la buena", () => {
+    // Levantada en final sería autorizar la toma por la punta equivocada.
+    expect(alLevantarLaOrden("otraCabecera", "final", false)).toBe("volver");
+    expect(alLevantarLaOrden("otraCabecera", "en-vuelo", false)).toBe("volver");
+  });
+
   it("y en tierra no hay verde que dar", () => {
     expect(alLevantarLaOrden("pistaOcupada", "aterrizado", true)).toBe("nada");
     expect(alLevantarLaOrden("noEstabilizada", "aterrizado", true)).toBe("nada");

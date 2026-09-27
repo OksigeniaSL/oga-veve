@@ -165,7 +165,11 @@ export class Minimos {
 }
 
 /** Por qué se mandó irse al aire. */
-export type PorQueMandaron = "pistaOcupada" | "noEstabilizada" | null;
+export type PorQueMandaron =
+  | "pistaOcupada"
+  | "noEstabilizada"
+  | "otraCabecera"
+  | null;
 
 /**
  * Si una orden de irse al aire ya no describe nada y hay que retirarla.

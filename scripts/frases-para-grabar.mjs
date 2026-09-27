@@ -344,6 +344,17 @@ const TORRE_SOLO = [
    * porque cambia con cada ruta. Ver `DESTINOS_EN_RADIO` más abajo.
    */
   ["torre.solo.clearedTo", "cleared to", "la autorización, antes del destino"],
+  /*
+   * **Y las de la otra punta y el socorro.** «Runway in use» va delante del
+   * número de la pista en uso; «go around» a secas, delante de él, para
+   * mandar al aire a quien viene por la otra cabecera —la pista no está
+   * ocupada, así que «runway occupied» sería mentir—; y «roger, Mayday» es la
+   * torre contestando a quien se quedó sin motor. Ver
+   * `src/flight/la-otra-cabecera.ts` y `src/flight/sin-motor.ts`.
+   */
+  ["torre.solo.runwayInUse", "runway in use", "la pista en uso, antes de su número"],
+  ["torre.solo.goAroundSolo", "go around", "al aire, sin más: el porqué va detrás"],
+  ["torre.solo.rogerMayday", "roger, Mayday", "la torre oyó la llamada de socorro"],
 ];
 
 /**

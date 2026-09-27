@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import manifiesto from "../../data/voces/torre/manifiesto.json";
-import { CLAVE_DE_TORRE, claveDeTorre } from "./torre";
+import { CLAVE_DE_TORRE, claveDeTorre, PISTA_DETRAS } from "./torre";
 
 describe("lo que dice la torre", () => {
   const grabadas = Object.keys(
@@ -71,11 +71,32 @@ describe("lo que dice la torre", () => {
    * navegador, que suena a otra cosa y nadie se entera de por qué.
    */
   it("y las que nombran la pista tienen su versión de cada lado", () => {
-    for (const cual of ["clearedTakeoff", "clearedLand", "lineUpWait"]) {
+    for (const cual of [
+      "clearedTakeoff",
+      "clearedLand",
+      "lineUpWait",
+      // Y las de quien viene por la otra punta. Ver `la-otra-cabecera.ts`.
+      "pistaEnUso",
+      "goAroundEnUso",
+    ]) {
       for (const lado of ["L", "C", "R"]) {
         expect(grabadas).toContain(`torre.${cual}.${lado}`);
       }
     }
+  });
+
+  /*
+   * La otra punta y el socorro: la pista en uso no es «runway occupied», y la
+   * respuesta a un MAYDAY se pide tal cual se escribe en la tira de la radio.
+   */
+  it("la pista en uso, irse por ella y el MAYDAY tienen su grabación", () => {
+    expect(claveDeTorre("runway in use")).toBe("torre.pistaEnUso");
+    expect(claveDeTorre("go around, runway in use")).toBe("torre.goAroundEnUso");
+    expect(claveDeTorre("roger MAYDAY")).toBe("torre.mayday");
+    expect(grabadas).toContain("torre.mayday");
+    // Y la pista en uso se dice detrás, que es como se informa.
+    expect(PISTA_DETRAS.has("torre.pistaEnUso")).toBe(true);
+    expect(PISTA_DETRAS.has("torre.clearedLand")).toBe(false);
   });
 
   it("reconoce la llamada tal y como la pide el juego", () => {

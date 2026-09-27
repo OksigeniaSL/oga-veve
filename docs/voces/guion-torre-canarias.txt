@@ -56,6 +56,9 @@ landing traffic
 departing traffic
 line up and wait
 cleared to
+runway in use
+go around
+roger, Mayday
 wind
 degrees
 knots

@@ -219,6 +219,12 @@
     "vuelo.abandonando": {
       "ms": 1788
     },
+    "vuelo.alAireOtraPunta": {
+      "ms": 2603
+    },
+    "vuelo.alAireVientoDeCola": {
+      "ms": 4307
+    },
     "vuelo.alineando": {
       "ms": 1216
     },
@@ -333,6 +339,9 @@
     "vuelo.fuera": {
       "ms": 1358
     },
+    "vuelo.laOtraPunta": {
+      "ms": 4107
+    },
     "vuelo.lentoYBajo": {
       "ms": 1367
     },
@@ -387,6 +396,12 @@
     "vuelo.pistaLibre": {
       "ms": 1594
     },
+    "vuelo.planeoLento": {
+      "ms": 1962
+    },
+    "vuelo.planeoRapido": {
+      "ms": 3507
+    },
     "vuelo.puedeVolver": {
       "ms": 1848
     },
@@ -413,6 +428,9 @@
     },
     "vuelo.sinCombustible": {
       "ms": 2625
+    },
+    "vuelo.sinMotor": {
+      "ms": 5107
     },
     "vuelo.sinPermiso": {
       "ms": 2826
@@ -1006,6 +1024,24 @@
     ],
     "cuenta.cinco": [
       "cuenta.cinco"
+    ],
+    "vuelo.sinMotor": [
+      "vuelo.sinMotor"
+    ],
+    "vuelo.planeoLento": [
+      "vuelo.planeoLento"
+    ],
+    "vuelo.planeoRapido": [
+      "vuelo.planeoRapido"
+    ],
+    "vuelo.laOtraPunta": [
+      "vuelo.laOtraPunta"
+    ],
+    "vuelo.alAireOtraPunta": [
+      "vuelo.alAireOtraPunta"
+    ],
+    "vuelo.alAireVientoDeCola": [
+      "vuelo.alAireVientoDeCola"
     ]
   }
 }

@@ -46,17 +46,20 @@
 046	torre.solo.departingTraffic	departing traffic
 047	torre.solo.lineUpWait	line up and wait
 048	torre.solo.clearedTo	cleared to
-049	viento.wind	wind
-050	viento.degrees	degrees
-051	viento.knots	knots
-052	viento.calm	calm
-053	viento.variable	variable
-054	torre.solo.aterrizar	podés aterrizar
-055	torre.solo.destino	podés volar a
-056	destino.pettirossi	Asunción
-057	destino.guarani	Guaraní
-058	destino.encarnacion	Encarnación
-059	destino.yvytu-rape	Yvytu Rape
-060	destino.concepcion	Concepción
-061	destino.pedro-juan	Pedro Juan Caballero
-062	destino.estigarribia	Mariscal Estigarribia
+049	torre.solo.runwayInUse	runway in use
+050	torre.solo.goAroundSolo	go around
+051	torre.solo.rogerMayday	roger, Mayday
+052	viento.wind	wind
+053	viento.degrees	degrees
+054	viento.knots	knots
+055	viento.calm	calm
+056	viento.variable	variable
+057	torre.solo.aterrizar	podés aterrizar
+058	torre.solo.destino	podés volar a
+059	destino.pettirossi	Asunción
+060	destino.guarani	Guaraní
+061	destino.encarnacion	Encarnación
+062	destino.yvytu-rape	Yvytu Rape
+063	destino.concepcion	Concepción
+064	destino.pedro-juan	Pedro Juan Caballero
+065	destino.estigarribia	Mariscal Estigarribia

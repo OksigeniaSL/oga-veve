@@ -131,9 +131,36 @@ export const CADUCA_LA_ORDEN = 12000;
  * puede aplicar igual en los tres sitios que hablan.
  */
 export function cuantoAguanta(clave: string | undefined): number {
-  return clave?.startsWith("torre.") || explicaLaEspera(clave)
+  return clave?.startsWith("torre.") ||
+    explicaLaEspera(clave) ||
+    explicaLaOtraPunta(clave)
     ? CADUCA_LA_ORDEN
     : CADUCA;
+}
+
+/**
+ * **La instructora contando por qué no se entra por esa punta**, que también
+ * aguanta lo que la orden a la que acompaña.
+ *
+ * Es el mismo caso que `explicaLaEspera`: se pide justo detrás de la orden de
+ * la torre —la lámpara y, de Taguató para arriba, «go around, runway in use»,
+ * que es una receta de ocho piezas—, y con los cuatro segundos de un aviso
+ * caducaba siempre esperando. Medido en el banco de la otra cabecera: en
+ * Taguató la orden sonaba y el porqué, el viento, no se oía nunca. Ver
+ * `flight/la-otra-cabecera.ts`.
+ *
+ * **Y la felicitación de irse al aire, que llega justo detrás.** Se sube
+ * cuarenta metros en unos segundos, y para entonces la orden y su porqué
+ * todavía están sonando: con el reloj corto caducaba, y la frustrada se
+ * obedecía en silencio. Renunciar es ganar, y se dice.
+ */
+export function explicaLaOtraPunta(clave: string | undefined): boolean {
+  return (
+    !!clave &&
+    /^vuelo\.(?:laOtraPunta|alAireOtraPunta|alAireVientoDeCola|frustrada)(?:~\d+)?$/.test(
+      clave,
+    )
+  );
 }
 
 /**

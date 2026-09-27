@@ -64,7 +64,36 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   // Y la de llegada.
   "cleared to land": "torre.clearedLand",
   "go around, runway occupied": "torre.goAround",
+  /*
+   * **Y las de quien viene por la otra punta.** Primero la pista en uso, con
+   * su número detrás —«runway in use zero three», como se dice en un ATIS—,
+   * y si se sigue, la orden de irse al aire con el mismo porqué. No es «runway
+   * occupied»: la pista está libre, lo que está mal es el sentido. Ver
+   * `flight/la-otra-cabecera.ts`.
+   */
+  "runway in use": "torre.pistaEnUso",
+  "go around, runway in use": "torre.goAroundEnUso",
+  /*
+   * **Y la respuesta a un MAYDAY**: el indicativo y «roger MAYDAY», que es
+   * como una torre dice que ha oído la llamada de socorro y que desde ahí
+   * manda ella en la frecuencia. La pista, después, en la autorización de
+   * siempre: la que pida quien no tiene motor. Ver `flight/sin-motor.ts`.
+   */
+  "roger MAYDAY": "torre.mayday",
 };
+
+/**
+ * Las que llevan el número de pista **detrás** de la orden, y no delante.
+ *
+ * «Runway zero three, cleared to land» nombra la pista para dar un permiso;
+ * «runway in use zero three» la nombra para informar, y en la radio eso se
+ * dice al revés. Solo cambia el texto de respaldo: el orden de verdad lo
+ * lleva cada receta. Ver `deTorre` en `game.ts`.
+ */
+export const PISTA_DETRAS: ReadonlySet<string> = new Set([
+  "torre.pistaEnUso",
+  "torre.goAroundEnUso",
+]);
 
 /**
  * Cuáles de esas órdenes **nombran la pista**, y por tanto llevan su lado.
@@ -83,6 +112,7 @@ export const NOMBRA_LA_PISTA: ReadonlySet<string> = new Set([
   "torre.clearedTakeoff",
   "torre.clearedLand",
   "torre.lineUpWait",
+  ...PISTA_DETRAS,
 ]);
 
 /**
@@ -148,7 +178,7 @@ export function esDeLaLampara(
 }
 
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround)(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso)?)(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión**, todavía en la
