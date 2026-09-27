@@ -503,39 +503,6 @@
   "vuelo.pilotoEnTierra": [
     "vuelo.pilotoEnTierra"
   ],
-  "cuenta.quinientos": [
-    "cuenta.quinientos"
-  ],
-  "cuenta.cuatrocientos": [
-    "cuenta.cuatrocientos"
-  ],
-  "cuenta.trescientos": [
-    "cuenta.trescientos"
-  ],
-  "cuenta.doscientos": [
-    "cuenta.doscientos"
-  ],
-  "cuenta.cien": [
-    "cuenta.cien"
-  ],
-  "cuenta.cincuenta": [
-    "cuenta.cincuenta"
-  ],
-  "cuenta.cuarenta": [
-    "cuenta.cuarenta"
-  ],
-  "cuenta.treinta": [
-    "cuenta.treinta"
-  ],
-  "cuenta.veinte": [
-    "cuenta.veinte"
-  ],
-  "cuenta.diez": [
-    "cuenta.diez"
-  ],
-  "cuenta.cinco": [
-    "cuenta.cinco"
-  ],
   "vuelo.sinMotor": [
     "vuelo.sinMotor"
   ],
@@ -571,5 +538,47 @@
   ],
   "vuelo.alPuestoConFlaps": [
     "vuelo.alPuestoConFlaps"
+  ],
+  "vuelo.quitaElGas": [
+    "vuelo.quitaElGas"
+  ],
+  "vuelo.otroAvion.delante.abajo": [
+    "vuelo.otroAvion.delante.abajo"
+  ],
+  "vuelo.otroAvion.delante.arriba": [
+    "vuelo.otroAvion.delante.arriba"
+  ],
+  "vuelo.otroAvion.delante.nivel": [
+    "vuelo.otroAvion.delante.nivel"
+  ],
+  "vuelo.otroAvion.derecha.abajo": [
+    "vuelo.otroAvion.derecha.abajo"
+  ],
+  "vuelo.otroAvion.derecha.arriba": [
+    "vuelo.otroAvion.derecha.arriba"
+  ],
+  "vuelo.otroAvion.derecha.nivel": [
+    "vuelo.otroAvion.derecha.nivel"
+  ],
+  "vuelo.otroAvion.detras.abajo": [
+    "vuelo.otroAvion.detras.abajo"
+  ],
+  "vuelo.otroAvion.detras.arriba": [
+    "vuelo.otroAvion.detras.arriba"
+  ],
+  "vuelo.otroAvion.detras.nivel": [
+    "vuelo.otroAvion.detras.nivel"
+  ],
+  "vuelo.otroAvion.izquierda.abajo": [
+    "vuelo.otroAvion.izquierda.abajo"
+  ],
+  "vuelo.otroAvion.izquierda.arriba": [
+    "vuelo.otroAvion.izquierda.arriba"
+  ],
+  "vuelo.otroAvion.izquierda.nivel": [
+    "vuelo.otroAvion.izquierda.nivel"
+  ],
+  "vuelo.puedeAterrizar": [
+    "vuelo.puedeAterrizar"
   ]
 }

@@ -241,6 +241,27 @@ export class InstructorGrabado implements Instructor {
   }
 
   /**
+   * **Las piezas ya cargadas de esta frase**, listas para tocar, o `null` si
+   * falta alguna.
+   *
+   * Lo usa la voz de la máquina, que no habla por ninguna boca: la cuenta y
+   * los avisos de las cajas suenan en cuanto pasa lo que avisan, sin turno.
+   * Comparte la bolsa de grabaciones con las bocas porque son el mismo pack.
+   * Ver `audio/maquina.ts`.
+   */
+  piezasDe(clave: string): AudioBuffer[] | null {
+    const suena = this.quienLaDice(clave);
+    if (!suena) return null;
+    const cadena: AudioBuffer[] = [];
+    for (const pieza of suena.piezas) {
+      const buffer = this.banco.piezas.get(`${suena.voz}/${pieza}`);
+      if (!buffer) return null;
+      cadena.push(buffer);
+    }
+    return cadena.length ? cadena : null;
+  }
+
+  /**
    * Las voces con las que ha hablado esta boca: la carpeta de la grabación
    * —«instructor», «torre», «otro»…— o «navegador» si la dijo el sintetizador. Las cuatro bocas comparten una bolsa de
    * grabaciones y la voz la pone la frase, así que es lo único que dice desde

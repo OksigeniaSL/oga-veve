@@ -3438,6 +3438,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
       .join("-"),
     // Todo lo que dijo cada boca, para poder contarlo al final del parte.
     todoLoDicho: o.dichoTodo?.() ?? {},
+    /*
+     * **Y la voz de la máquina, que no pasa por ninguna boca**: la cuenta y
+     * los avisos de las cajas. Con la cuenta, cada número con lo que marcaba
+     * el radioaltímetro al pedirlo. Ver `audio/maquina.ts`.
+     */
+    maquina: o.maquina?.() ?? [],
+    cuentaOida: o.cuentaOida?.() ?? [],
     pistaDeOtros,
     pistaDeOtrosDonde,
     dadaAOtroTrasLaTuya,
@@ -3616,7 +3623,13 @@ if (process.env.OGA_VOCES) {
   await writeFile(
     process.env.OGA_VOCES,
     JSON.stringify(
-      { habladas: vuelo.habladas, descartes: vuelo.descartes, todo: vuelo.todoLoDicho },
+      {
+        habladas: vuelo.habladas,
+        descartes: vuelo.descartes,
+        todo: vuelo.todoLoDicho,
+        maquina: vuelo.maquina,
+        cuenta: vuelo.cuentaOida,
+      },
       null,
       1,
     ),
@@ -4581,6 +4594,188 @@ comprobarSiVolo(
             : "")
       : `${cuenta.size} frases distintas, ninguna más de ${MAS_DE_LA_CUENTA} veces`,
     "«me dice que meta el tren, luego que lo saque, luego que lo vuelva a meter, joder»",
+  );
+}
+
+/*
+ * **La cuenta de la toma dice la verdad**, que era la queja entera:
+ *
+ * > «Lee 400-300-200 todo seguido cuando estoy lejos. Un buen rato después me
+ * > dice 100 sin que cuadre con lo que realmente estoy haciendo… Y cuando estoy
+ * > ya en tierra rodando y frenando me dice 5. ¿Cinco, qué?»
+ *
+ * Cuatro cosas, y las cuatro se miran con lo que marcaba el radioaltímetro en
+ * el instante de cada número:
+ *
+ * - que cada número suene a su altura, con un quince por ciento o diez pies
+ *   de margen —el mismo que se aplica la propia cuenta, `holguraDe`—;
+ * - que ninguno suene con peso en las ruedas;
+ * - que la cuenta no pase por la cola de ninguna boca, que es donde esperaba;
+ * - y que una avioneta, que no lleva radioaltímetro que cante, no cante nada.
+ */
+const PIES_DE_LA_CUENTA = {
+  "twenty five hundred": 2500,
+  "one thousand": 1000,
+  "five hundred": 500,
+  "four hundred": 400,
+  "three hundred": 300,
+  "two hundred": 200,
+  "one hundred": 100,
+  fifty: 50,
+  forty: 40,
+  thirty: 30,
+  twenty: 20,
+  ten: 10,
+};
+const NUMERO_EN_UNA_BOCA =
+  /\b(?:cuenta\.[a-z]+|cabina\.(?:twentyFiveHundred|oneThousand|fiveHundred|fourHundred|threeHundred|twoHundred|oneHundred|fifty|forty|thirty|twenty|ten|five))\b/;
+{
+  const oidas = vuelo.cuentaOida ?? [];
+  const sonaron = oidas.filter((c) => c.como === "suena");
+  const fuera = (c) => {
+    const n = PIES_DE_LA_CUENTA[c.dice];
+    return (
+      n === undefined ||
+      c.pies === null ||
+      Math.abs(c.pies - n) > Math.max(0.15 * n, 10)
+    );
+  };
+  const lista = oidas
+    .map(
+      (c) =>
+        `${c.t}s ${c.dice} a ${c.pies ?? "—"} ft${c.enTierra ? " EN TIERRA" : ""}` +
+        (c.como === "suena" ? "" : ` (${c.como})`),
+    )
+    .join(" · ");
+  const conCaja = !!vuelo.avion?.avisosHablados;
+  const enLaBoca = [
+    ...(vuelo.habladas ?? []),
+    ...Object.values(vuelo.todoLoDicho ?? {}).flat(),
+  ].filter((h) => NUMERO_EN_UNA_BOCA.test(String(h)));
+  if (!conCaja) {
+    const deLaMaquina = (vuelo.maquina ?? []).filter((m) =>
+      NUMERO_EN_UNA_BOCA.test(String(m)),
+    );
+    comprobar(
+      "una avioneta no canta la cuenta",
+      oidas.length === 0 && enLaBoca.length === 0 && deLaMaquina.length === 0,
+      oidas.length || enLaBoca.length || deLaMaquina.length
+        ? `sonó: ${[lista, ...enLaBoca, ...deLaMaquina].filter(Boolean).slice(0, 12).join(" · ")}`
+        : `${vuelo.avion?.id ?? "?"} no lleva radioaltímetro que cante, y no se oyó ningún número`,
+      "«el 400-300-200-100 lo dice la instructora de vuelo y me lo tiene que decir una voz de robot»",
+    );
+  } else {
+    comprobarSiVolo(
+      "cada número de la cuenta suena a su altura",
+      sonaron.length > 0 && !sonaron.some(fuera),
+      sonaron.length
+        ? `${sonaron.filter(fuera).length} fuera de su altura de ${sonaron.length}: ${lista}`
+        : `no sonó ningún número${lista ? `: ${lista}` : ""}`,
+      "«un buen rato después me dice 100 sin que cuadre con lo que realmente estoy haciendo»",
+    );
+    comprobarSiVolo(
+      "y ningún número con peso en las ruedas",
+      !sonaron.some((c) => c.enTierra),
+      sonaron.some((c) => c.enTierra)
+        ? sonaron
+            .filter((c) => c.enTierra)
+            .map((c) => `${c.t}s ${c.dice}`)
+            .join(" · ")
+        : `${sonaron.length} números, todos en el aire`,
+      "«cuando estoy ya en tierra rodando y frenando me dice 5. ¿Cinco, qué?»",
+    );
+  }
+  comprobar(
+    "y la cuenta no espera en la cola de ninguna boca",
+    enLaBoca.length === 0,
+    enLaBoca.length
+      ? enLaBoca.slice(0, 8).join(" · ")
+      : "ningún número pasó por la instructora, la torre ni el otro avión",
+    "«lee 400-300-200 todo seguido cuando estoy lejos»",
+  );
+}
+
+/*
+ * **Y en la final, lento y rápido no se dicen seguidos.**
+ *
+ * «Cuando voy al mínimo de velocidad bajando "bajás muy lento, metele gas", le
+ * meto gas y "bajás muy rápido", pero si estoy tomando tierra ¿qué se supone
+ * que tengo que hacer?» Un aviso de ir lento y uno de ir rápido —o de bajar de
+ * golpe, que se oía igual— a menos de diez segundos son dos órdenes que se
+ * contradicen, y quien las oye se queda sin saber qué tocar. Se mira en lo que
+ * sonó de verdad, por las dos vías: la boca y la máquina.
+ *
+ * El *sink rate* de la caja no cuenta como «rápido»: lento y bajando de golpe
+ * es un avión de verdad avisando de dos cosas ciertas a la vez, y detrás la
+ * instructora explica la que se arregla con gas. Lo que no puede salir es su
+ * «bajás muy de golpe: levantá la nariz» justo después de «metéle gas».
+ */
+{
+  const LENTO = /^(?:vuelo\.lentoYBajo|cabina\.airspeedLow)\b/;
+  const RAPIDO =
+    /^(?:vuelo\.rapido|vuelo\.pediFlaps|vuelo\.bajasRapido|cabina\.airspeed)$/;
+  const SEGUIDOS = 10;
+  const oido = [];
+  for (const h of vuelo.habladas ?? []) {
+    const m = /^(-?[\d.]+)s (\S+)/.exec(String(h));
+    if (m) oido.push({ t: +m[1], clave: m[2].split("@")[0].split("~")[0] });
+  }
+  for (const h of vuelo.maquina ?? []) {
+    const m = /^(-?[\d.]+)s (\S+): sonó$/.exec(String(h));
+    if (m) oido.push({ t: +m[1], clave: m[2] });
+  }
+  const lentos = oido.filter((x) => LENTO.test(x.clave));
+  const rapidos = oido.filter((x) => RAPIDO.test(x.clave));
+  const seguidos = [];
+  for (const l of lentos)
+    for (const r of rapidos)
+      if (Math.abs(l.t - r.t) < SEGUIDOS)
+        seguidos.push(`${l.t}s ${l.clave} y ${r.t}s ${r.clave}`);
+  comprobar(
+    "y en la final no se dice «lento» y «rápido» seguidos",
+    seguidos.length === 0,
+    seguidos.length
+      ? seguidos.slice(0, 6).join(" · ")
+      : `${lentos.length} de ir lento y ${rapidos.length} de ir rápido o bajar de golpe, ninguno a menos de ${SEGUIDOS} s del otro`,
+    "«le meto gas y “bajás muy rápido”, pero si estoy tomando tierra ¿qué se supone que tengo que hacer?»",
+  );
+}
+
+/*
+ * **Y cada cosa en su sitio: el aire en el aire y el suelo en el suelo.**
+ *
+ * Medido con este mismo volcado en Los Rodeos, con el JAZ 90: «thirty»,
+ * **«frená»**, «twenty», «ten» —el «frená» a treinta pies, porque la máquina de
+ * fases da el avión por aterrizado a doce metros del suelo— y después, ya
+ * rodando, «quitá el gas», que había esperado en la cola detrás del «frená».
+ * Pedir frenar en el aire y hablar del aire rodando es la misma avería que el
+ * «cinco» ya en tierra de la queja.
+ */
+{
+  const DEL_AIRE = /^vuelo\.(?:quitaElGas|yaPodesTocar)$/;
+  const oido = [];
+  for (const h of vuelo.habladas ?? []) {
+    const m = /^(-?[\d.]+)s (\S+)/.exec(String(h));
+    if (m) oido.push({ t: +m[1], clave: m[2].split("@")[0].split("~")[0] });
+  }
+  const frenas = oido.filter((x) => x.clave === "vuelo.aterrizado");
+  const tarde = [];
+  for (const f of frenas)
+    for (const x of oido)
+      if (DEL_AIRE.test(x.clave) && x.t > f.t && x.t - f.t < 15)
+        tarde.push(`${f.t}s frená y ${x.t}s ${x.clave}`);
+  const enElAire = [];
+  for (const f of frenas)
+    for (const c of vuelo.cuentaOida ?? [])
+      if (c.como === "suena" && c.t > f.t && c.t - f.t < 10)
+        enElAire.push(`${f.t}s frená y ${c.t}s ${c.dice} a ${c.pies} ft`);
+  comprobar(
+    "y «frená» suena en el suelo, y lo del aire no suena rodando",
+    tarde.length === 0 && enElAire.length === 0,
+    tarde.length || enElAire.length
+      ? [...enElAire, ...tarde].slice(0, 6).join(" · ")
+      : `${frenas.length} «frená», ninguno antes del último número ni antes de «quitá el gas» o «ya podés tocar»`,
+    "«cuando estoy ya en tierra rodando y frenando me dice 5. ¿Cinco, qué?»",
   );
 }
 

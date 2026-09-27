@@ -22,6 +22,7 @@ import {
   DEMASIADO_ALTO,
   RECOGIDA,
   ritmoQueSobra,
+  SE_QUITA,
 } from "./avisos-de-actitud";
 
 /** Un avión volando, al que se le cambia lo que haga falta. */
@@ -67,6 +68,23 @@ describe("sink rate", () => {
     expect(avisoDeActitud(volando({ altura: 30, vertical: -3 }))).toBe(null);
   });
 
+  /*
+   * **Y un reactor bien volado, tampoco.** A su velocidad de aproximación un
+   * JAZ 90 baja por una senda de tres grados a unos tres metros y ochenta por
+   * segundo, y la recta de antes, prolongada por debajo de doscientos pies,
+   * pedía menos: la final buena soltaba *sink rate* cerca del suelo, justo
+   * detrás de un «metéle gas». Abajo la caja se queda en mil pies por minuto.
+   */
+  it("ni la de un reactor a su velocidad, cerca del suelo", () => {
+    const senda = 68 * Math.tan((3 * Math.PI) / 180);
+    for (const altura of [20, 30, 45, 60])
+      expect(
+        avisoDeActitud(volando({ altura, vertical: -senda })),
+        `${altura} m`,
+      ).toBe(null);
+    expect(ritmoQueSobra(20)).toBeCloseTo(5.0, 5);
+  });
+
   it("y sí cuando se baja de más para lo bajo que se está", () => {
     expect(avisoDeActitud(volando({ altura: 60, vertical: -8 }))).toBe(
       "sink rate",
@@ -99,6 +117,37 @@ describe("sink rate", () => {
 
   it("y subiendo, jamás", () => {
     expect(avisoDeActitud(volando({ altura: 60, vertical: 9 }))).toBe(null);
+  });
+});
+
+/*
+ * **Un aviso puesto se quita por dentro, no por su borde.** Con un solo
+ * umbral, bajar rondándolo ponía y quitaba el *sink rate* a cada momento, y
+ * cada vez era un canto nuevo: tres en cinco segundos en Los Rodeos.
+ */
+describe("y los dos avisos no tiemblan en su borde", () => {
+  const umbral = ritmoQueSobra(90);
+  it("el sink rate puesto sigue puesto rondando su umbral", () => {
+    const rozando = volando({ altura: 90, vertical: -(umbral * 0.95) });
+    expect(avisoDeActitud(rozando)).toBe(null);
+    expect(avisoDeActitud(rozando, "sink rate")).toBe("sink rate");
+  });
+
+  it("y se quita al bajar de verdad más despacio", () => {
+    const corregido = volando({
+      altura: 90,
+      vertical: -(umbral * SE_QUITA * 0.95),
+    });
+    expect(avisoDeActitud(corregido, "sink rate")).toBe(null);
+  });
+
+  it("y el alabeo, igual", () => {
+    const casi = volando({ alabeo: ALABEO_QUE_SOBRA * 0.95 });
+    expect(avisoDeActitud(casi)).toBe(null);
+    expect(avisoDeActitud(casi, "bank angle")).toBe("bank angle");
+    expect(
+      avisoDeActitud(volando({ alabeo: ALABEO_QUE_SOBRA * 0.7 }), "bank angle"),
+    ).toBe(null);
   });
 });
 

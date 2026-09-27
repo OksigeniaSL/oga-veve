@@ -416,6 +416,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        */
       tren: juego.aircraft.gearHeight,
       /*
+       * Y si lleva las cajas que hablan —el radioaltímetro con su cuenta, el
+       * avisador de terreno—: sin ellas, una sola palabra de la cuenta es un
+       * fallo. Ver `laCuentaDe`.
+       */
+      avisosHablados: juego.aircraft.avisosHablados,
+      /*
        * **Y sus límites de configuración**, que el piloto del banco necesita
        * para aterrizar un reactor.
        *
@@ -606,6 +612,28 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `habladas`. Con esto se sabe cuáles de las últimas son nuevas.
      */
     habladasTotal: () => BOCA.cuantasHabladas,
+    /**
+     * **Lo que dijo la voz de la máquina**, con la misma hora que `habladas`:
+     * la cuenta y los avisos de las cajas no pasan por la boca, y sin esto
+     * el volcado de voces no los veía. Ver `audio/maquina.ts`.
+     */
+    maquina: () => {
+      const cero = BOCA.habladas[0]?.t ?? juego.maquina.oidas[0]?.t ?? 0;
+      return juego.maquina.oidas.map(
+        (o) => `${((o.t - cero) / 1000).toFixed(1)}s ${o.clave}: ${o.que}`,
+      );
+    },
+    /**
+     * Y cada número de la cuenta con lo que marcaba el radioaltímetro al
+     * pedirlo, en pies. Ver `cuentaOida` en `game.ts`.
+     */
+    cuentaOida: () => {
+      const cero = BOCA.habladas[0]?.t ?? juego.cuentaOida[0]?.t ?? 0;
+      return juego.cuentaOida.map((c) => ({
+        ...c,
+        t: +((c.t - cero) / 1000).toFixed(1),
+      }));
+    },
     /** Las voces grabadas con las que ha hablado cada boca. */
     vocesDeCadaBoca: () =>
       Object.fromEntries(

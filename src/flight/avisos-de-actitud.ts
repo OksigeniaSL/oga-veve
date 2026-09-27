@@ -34,18 +34,30 @@
  *
  * Que da una pendiente de 0,0316 por metro y una ordenada de 3,1. No es una
  * aproximación cómoda: es la de las cartas, pasada a unidades del modelo.
+ *
+ * **Y por debajo de doscientos pies no baja de mil pies por minuto.** La recta
+ * seguía hacia abajo y a cincuenta pies pedía menos de setecientos: menos de
+ * lo que baja un reactor por una senda de tres grados a su velocidad de
+ * aproximación. Así que la final bien volada de un JAZ 90 soltaba *sink rate*
+ * cerca del suelo, justo detrás de un «metéle gas». La caja de verdad no hace
+ * eso: su envolvente se queda en torno a los mil pies por minuto abajo, que es
+ * además el tope de una aproximación estabilizada.
  */
+export const RITMO_MINIMO_QUE_SOBRA = 5.0;
+
 export function ritmoQueSobra(alturaM: number): number {
-  return 3.1 + 0.0316 * alturaM;
+  return Math.max(RITMO_MINIMO_QUE_SOBRA, 3.1 + 0.0316 * alturaM);
 }
 
 /**
  * Por debajo de esto no se avisa: es la recogida, m.
  *
- * Quince metros. Ahí ya se está posando el avión a propósito y el aviso no
- * avisa de nada — solo tapa lo que sí importa. Un GPWS de verdad hace lo mismo
- * por el mismo motivo, y encaja con la regla de la casa: aterrizar no se
- * dramatiza.
+ * Quince metros —cincuenta pies— **de radioaltímetro**: las ruedas sobre el
+ * suelo. Ahí ya se está posando el avión a propósito y el aviso no avisa de
+ * nada — solo tapa lo que sí importa, que en el avión que la lleva es la
+ * cuenta. Un GPWS de verdad hace lo mismo por el mismo motivo, y encaja con
+ * la regla de la casa: aterrizar no se dramatiza. Es también donde se calla
+ * la banda de velocidad: ver `bandaDeVelocidad`.
  */
 export const RECOGIDA = 15;
 
@@ -81,22 +93,27 @@ export type AvisoDeActitud = "sink rate" | "bank angle" | null;
  * pisándose, y quien va demasiado inclinado bajando deprisa tiene un problema
  * solo. Manda el ritmo de bajada, que es el que tiene suelo debajo.
  */
-export function avisoDeActitud(e: {
-  readonly enSuelo: boolean;
-  /** Metros sobre el terreno. */
-  readonly altura: number;
-  /** Velocidad vertical, m/s. Negativa es bajar. */
-  readonly vertical: number;
-  /** Alabeo, rad. El signo da igual: inclinarse es inclinarse. */
-  readonly alabeo: number;
-}): AvisoDeActitud {
+export function avisoDeActitud(
+  e: {
+    readonly enSuelo: boolean;
+    /** Metros sobre el terreno. */
+    readonly altura: number;
+    /** Velocidad vertical, m/s. Negativa es bajar. */
+    readonly vertical: number;
+    /** Alabeo, rad. El signo da igual: inclinarse es inclinarse. */
+    readonly alabeo: number;
+  },
+  /**
+   * El aviso de antes, para que se quite por un umbral más adentro del que
+   * lo puso. Ver `SE_QUITA`.
+   */
+  antes: AvisoDeActitud = null,
+): AvisoDeActitud {
   if (e.enSuelo) return null;
   const bajando = -e.vertical;
-  if (
-    e.altura > RECOGIDA &&
-    e.altura < DEMASIADO_ALTO &&
-    bajando > ritmoQueSobra(e.altura)
-  ) {
+  const sobra =
+    ritmoQueSobra(e.altura) * (antes === "sink rate" ? SE_QUITA : 1);
+  if (e.altura > RECOGIDA && e.altura < DEMASIADO_ALTO && bajando > sobra) {
     return "sink rate";
   }
   /*
@@ -104,9 +121,23 @@ export function avisoDeActitud(e: {
    * mal viraje como a cien. Lo que cambia es lo que hay debajo, y de eso ya
    * avisa el otro.
    */
-  if (Math.abs(e.alabeo) > ALABEO_QUE_SOBRA) return "bank angle";
+  const inclinado = ALABEO_QUE_SOBRA * (antes === "bank angle" ? SE_QUITA : 1);
+  if (Math.abs(e.alabeo) > inclinado) return "bank angle";
   return null;
 }
+
+/**
+ * **Por dónde se quita un aviso que ya está puesto**, en veces su umbral.
+ *
+ * Un ochenta y cinco por ciento. Con el mismo umbral para ponerse y para
+ * quitarse, un avión que baja rondando el borde entra y sale del aviso a cada
+ * momento, y cada entrada es un canto nuevo: medido en Los Rodeos con el JAZ
+ * 90 en Taguató, tres *sink rate* en cinco segundos, y el último se llevó por
+ * delante el «one hundred» de la cuenta. Rearmar con un número que tiembla es
+ * rearmar con un reloj con otro nombre; con dos umbrales, el aviso vuelve
+ * cuando de verdad se salió y se volvió a entrar.
+ */
+export const SE_QUITA = 0.85;
 
 /**
  * Si hay que avisar de pérdida: **en pérdida y en el aire**.

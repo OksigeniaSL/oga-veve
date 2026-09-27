@@ -104,6 +104,7 @@ import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   enElEmbudoDeFinal,
+  enLaZonaDeAproximacion,
   vieneEnFinal,
   ENTRADA_EN_FINAL,
   GLIDE_SLOPE,
@@ -424,7 +425,8 @@ import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
 import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
-import { claveDeCabina, loDiceElAvion } from "./audio/cabina";
+import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
+import { VozDeLaMaquina } from "./audio/maquina";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import {
@@ -475,14 +477,20 @@ import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
-import { AvisosDeAltura, laCuentaDe } from "./flight/avisos-de-altura";
+import {
+  AvisosDeAltura,
+  laCuentaDe,
+  radioaltimetro,
+  type Aviso,
+  type Lectura,
+} from "./flight/avisos-de-altura";
 import {
   canalesDe,
   cantaLaCabina,
   claveDelAviso,
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
-  type Canto,
+  laInstructoraLoExplica,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
@@ -550,6 +558,7 @@ import {
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
+  yaLoEstaCorrigiendo,
   queSeDice,
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
@@ -858,6 +867,22 @@ const FINAL_DE_PISTA = 40;
  * el que se deja de volar y se empieza a aterrizar.
  */
 const ALTURA_DE_TOMA = 18;
+
+/**
+ * Cuánto gas es «llegar con gas» a la recogida, de 0 a 1.
+ *
+ * Un quince por ciento: por encima del ralentí con holgura para que un dedo
+ * que no ha soltado del todo la palanca no lo dispare, y por debajo de
+ * cualquier gas de aproximación de la flota. Ver `acompanarLaRecogida`.
+ */
+const GAS_EN_LA_RECOGIDA = 0.15;
+
+/**
+ * Lo que la instructora dice de la final y de la recogida: al tocar tierra ya
+ * no describe nada. Ver `alTocarTierra`.
+ */
+const DEL_AIRE =
+  /^vuelo\.(?:quitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube)(?:[~@].*)?$/;
 
 /**
  * Cuánto antes de la pista se deja de avisar del terreno, m.
@@ -1965,6 +1990,8 @@ export class Game {
     this.avisadoDeLaPasada = false;
     this.avisosDeAltura.reiniciar();
     this.alturaEnGrande.reiniciar();
+    this.laRecogida.reiniciar();
+    this.maquina.callar();
     this.antesAlUmbral = Infinity;
     this.terrenoDicho = null;
     this.dichoDelTren = null;
@@ -2189,24 +2216,61 @@ export class Game {
   /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
   private missionIndex = -1;
   /**
-   * La cuenta atrás de la toma: *one hundred… fifty, thirty, twenty, ten*.
+   * La cuenta de la toma: la del radioaltímetro, *twenty five hundred… ten*.
    *
    * Vive en el juego y no en el HUD porque no es un adorno de pantalla: es lo
-   * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
-   *
-   * No es `readonly` porque cambia con el peldaño: sus escalones son los del
-   * instrumento, y subir a Taguato Ruvicha pasa la cabina a pies. Ver
-   * `laCuentaDeHoy`.
+   * que enseña el ritmo de la recogida. La dice la máquina, en el avión que la
+   * lleva; en los demás no existe. Ver `flight/avisos-de-altura.ts`.
    */
   private avisosDeAltura: AvisosDeAltura;
-  /** Si el avión viene a posarse: embudo de final o sobre la pista. */
-  private esUnaToma = false;
+  /**
+   * **La voz de la máquina**: la cuenta y los avisos de las cajas del avión,
+   * por su propia vía y sin esperar turno. Ver `audio/maquina.ts`.
+   *
+   * Toca las mismas grabaciones de cabina que el resto del pack, sacadas de la
+   * bolsa de la instructora, por el bus de voz: el altavoz de la cabina.
+   */
+  readonly maquina = new VozDeLaMaquina({
+    ahora: () => Date.now(),
+    tocar: (clave, alAcabar) => {
+      const piezas = this.instructor.piezasDe(clave);
+      return piezas ? this.audio.encadenarVoz(piezas, alAcabar) : null;
+    },
+  });
+  /**
+   * **Cada número de la cuenta, con lo que marcaba el radar al pedirlo.** Para
+   * el banco: es lo que dice si un «one hundred» sonó a cien pies o a
+   * sesenta, que es la queja entera. Ver `cantarLaCuenta`.
+   */
+  readonly cuentaOida: {
+    t: number;
+    dice: string;
+    pies: number | null;
+    enTierra: boolean;
+    como: string;
+  }[] = [];
+  /**
+   * El momento de la recogida, para la instructora: veinte pies. Ver
+   * `acompanarLaRecogida`.
+   */
+  private laRecogida = new AvisosDeAltura([{ metros: 20 * 0.3048, dice: "ahora" }]);
+  /** Lo que marcaba el radioaltímetro en el último fotograma, m. */
+  private radioAltura: number | null = null;
+  /**
+   * Si en esta toma las ruedas ya han tocado. Empieza en el suelo, que es
+   * donde empieza el vuelo. Ver dónde se apunta.
+   */
+  private yaTocoTierra = true;
   /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
   private alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
   private dichoDeBanda: "lento" | "rapido" | null = null;
+  /** La indicada del fotograma anterior, m/s. Ver `tendenciaDeVelocidad`. */
+  private velocidadAntes = 0;
+  /** Hacia dónde va la aguja, m/s², filtrada. Ver `yaLoEstaCorrigiendo`. */
+  private tendenciaDeVelocidad = 0;
   /**
    * En qué banda va la velocidad **ahora mismo**. Ver `bandaDeVelocidad`.
    *
@@ -2829,18 +2893,17 @@ export class Game {
       ? mapaDePavimento(this.scenario.aerodrome)
       : null;
     /*
-     * Los escalones de la cuenta dependen del avión y del peldaño: los del
-     * radioaltímetro en el que lo lleva, los del instrumento en los demás. Y
-     * del avión que viene en las opciones, que `this.aircraft` se pone más
-     * abajo. Ver `laCuentaDeHoy`.
+     * La cuenta depende del avión: la del radioaltímetro en el que lo lleva,
+     * ninguna en los demás. Y del avión que viene en las opciones, que
+     * `this.aircraft` se pone más abajo. Ver `laCuentaDeHoy`.
      */
     this.avisosDeAltura = this.laCuentaDeHoy(options.aircraft ?? PYKASU);
     /*
      * Y el segundo contador: el de la altura **en grande**, que es otro canal
-     * y por eso es otro contador. La cuenta atrás de arriba es la voz —cien,
-     * cincuenta, treinta, veinte, diez— y tiene el ritmo apretado que enseña
-     * a recoger; esta son tres números sueltos y grandes para empezar a leer
-     * una altura. Solo sale de Taguato en adelante. Ver `flight/escalera.ts`.
+     * y por eso es otro contador. La cuenta de arriba es la voz de la máquina
+     * y tiene el ritmo apretado que enseña a recoger; esta son tres números
+     * sueltos y grandes para empezar a leer una altura. Solo sale de Taguato
+     * en adelante. Ver `flight/escalera.ts`.
      */
     this.alturaEnGrande = new AvisosDeAltura(
       this.tier.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
@@ -4360,17 +4423,19 @@ export class Game {
   }
 
   /**
-   * Un aviso de vuelo, dicho como toca en este peldaño.
+   * Un aviso de vuelo, dicho por quien lo diría de verdad y como toca en este
+   * peldaño.
    *
-   * **Los avisos crecen con el peldaño**, y hasta hoy no lo hacía ninguno: una
-   * niña de cuatro años oía «terrain, pull up» y «one hundred… fifty» en
-   * inglés aeronáutico, que son cantos de radioaltímetro de un avión de línea.
-   * Lo que se aprende aquí no puede haber que desaprenderlo, y para eso lo
-   * primero es entenderlo.
+   * Hay dos clases de canto y no se reparten igual. Ver la cabecera de
+   * `flight/escalera.ts`:
    *
-   * - En Guyrami y Tukã habla el instructor, en casa y en una palabra.
-   * - De Taguato en adelante, el canto de cabina en inglés, que es donde ya
-   *   sirve: a los diez años eso es algo que se reconocerá toda la vida.
+   * - **Los de una caja del avión** —terreno, *sink rate*, pérdida, tráfico,
+   *   mínimos— los dice la máquina, en inglés y en los cuatro peldaños, en el
+   *   avión que la lleva. En los peldaños de abajo, detrás y con calma, la
+   *   instructora explica qué ha sonado y qué se hace. En el avión que no la
+   *   lleva no suena ninguna caja: lo dice ella, en casa.
+   * - **Los de la tripulación** —*V one*, *rotate*, *gear up*— suben por la
+   *   escalera: la instructora en casa abajo, el canto en inglés arriba.
    *
    * **La voz es siempre el tercer canal**: el dibujo y el tono salen igual, y
    * quien juega en silencio no se pierde nada. Por eso esto solo elige quién
@@ -4386,43 +4451,69 @@ export class Game {
      * Normal casi siempre. Urgente son tres: el terreno, la pista ocupada y la
      * frustrada — lo que no puede esperar a que termine una frase. Y baja, los
      * elogios: que te digan «bien» no puede pisar a nadie.
+     *
+     * Es la urgencia de la instructora: la máquina no pide turno, y lo suyo
+     * se ordena por lo que manda cada caja. Ver `audio/maquina.ts`.
      */
     urgencia: Urgencia = "normal",
-    /**
-     * Y si esto es un aviso o **la cuenta de la toma**, que no sube por la
-     * escalera: en el avión que la lleva la canta la máquina en los cuatro
-     * peldaños. Ver `cantaLaCabina` en `flight/escalera.ts`.
-     */
-    canto: Canto = "aviso",
   ): void {
     const deCabina = claveDeCabina(ingles);
     /*
-     * **Y la cabina canta lo que este avión tiene con qué cantar.**
+     * **Una caja del avión: la máquina, si el avión la lleva.**
      *
-     * El peldaño decide si ya se canta en inglés; el avión decide **si hay
-     * quién lo cante**. La cuenta de la toma, el «terrain» o el «stall, stall»
-     * los dice una caja que lleva el avión de transporte y no lleva la
-     * avioneta de escuela: en el JAZ 20 del peldaño de arriba sonaba «five
-     * hundred… fifty… ten» con la voz de un radioaltímetro que ese avión no
-     * tiene. Ahí lo dice la instructora, en casa y grabada, que es quien lo
-     * diría sentada al lado. Ver `DE_LOS_AVISADORES` en `audio/cabina.ts`.
+     * En los cuatro peldaños, porque es lo que suena en ese avión: «es que ni
+     * el "traffic" ni el "terrain" ni nada de eso, y yo sé que la cabina
+     * habla». Y en el que no la lleva no suena, que un aviso sonoro solo se
+     * pone en un avión que lo llevaría: en el JAZ 20 del peldaño de arriba
+     * sonaba «terrain» con la voz de una caja que ese avión no tiene. Ahí lo
+     * dice la instructora, en casa, que es quien lo diría sentada al lado.
      */
-    const hayQuienLoCante =
-      !deCabina || loDiceElAvion(deCabina, this.aircraft);
-    if (cantaLaCabina(this.tier.avisos, canto) && hayQuienLoCante) {
+    if (deCabina && esDeUnaCaja(deCabina)) {
+      if (loDiceElAvion(deCabina, this.aircraft)) {
+        /*
+         * **Y la explicación pesa como una orden**, sin cortar a nadie. Es la
+         * otra mitad del aviso, no un comentario: con el peso normal, un
+         * «girá a la base» o un saludo de la radio la echaban de la cola llena
+         * y el *traffic, traffic* se quedaba sin su «mirá adelante». Medido en
+         * Guyrami con el JAZ 90: «vuelo.trafico.delante: no cabía en la
+         * cola». Lo urgente sigue siendo urgente.
+         */
+        const pesa: Urgencia = urgencia === "urgente" ? "urgente" : "mando";
+        const explica =
+          laInstructoraLoExplica(this.tier.avisos) && encasa && clave
+            ? () => {
+                this.apuntarCanto(`${ingles}: lo explica ${clave}`);
+                this.instructor.decir(encasa, clave, pesa);
+              }
+            : undefined;
+        const como = this.maquina.decir(deCabina, explica);
+        this.apuntarCanto(`${ingles}→máquina(${deCabina}): ${como}`);
+        if (como !== "no") return;
+        /*
+         * **Y si la máquina no puede sonar, un aviso no se queda mudo.** Pasa
+         * sin el pack de voz o con el audio dormido: lo dice la instructora,
+         * que es lo que había antes de que la caja tuviera voz propia.
+         */
+      }
+      this.apuntarCanto(
+        `${ingles}→${encasa ? (clave ?? "sin clave") : "NADA"} (lo dice la instructora)`,
+      );
+      if (encasa) this.instructor.decir(encasa, clave, urgencia);
+      return;
+    }
+    if (cantaLaCabina(this.tier.avisos, "tripulacion")) {
       /*
        * **Y con la grabación de cabina si la hay.**
        *
        * Esto mandaba el inglés al sintetizador del navegador sin más, y por eso
-       * las veintiuna frases de cabina grabadas —«V one», «rotate», «five
-       * hundred», «terrain, pull up»— se bajaban a cada tablet con el resto del
-       * pack **para no sonar nunca**. Se preguntó jugando: «¿y qué hay de esas
-       * voces robóticas? "Minimals", "five hundred"… o "Terrain!"».
+       * las frases de cabina grabadas —«V one», «rotate»— se bajaban a cada
+       * tablet con el resto del pack **para no sonar nunca**. Se preguntó
+       * jugando: «¿y qué hay de esas voces robóticas? "Minimals", "five
+       * hundred"… o "Terrain!"».
        *
-       * La cabina habla por la boca de la instructora a propósito: es el mismo
-       * altavoz de dentro del avión, no una radio. Ver `audio/cabina.ts`, que
-       * es lo que une lo que pide el código con lo que hay grabado, y tiene su
-       * prueba para que no vuelva a sobrar ninguna grabación.
+       * Lo de la tripulación habla por la boca de la instructora a propósito:
+       * lo dice quien va sentado a tu lado, y espera su turno como cualquier
+       * persona. Ver `audio/cabina.ts`.
        */
       if (deCabina && this.instructor.vozDe(deCabina)) {
         this.apuntarCanto(`${ingles}→${deCabina}`);
@@ -4449,11 +4540,81 @@ export class Game {
     // Y con la clave cuando la hay: el instructor grabado busca por clave.
     // Las frases que se componen en caliente no la tienen y las dice la voz
     // del navegador, que es lo que hay hasta que existan las grabaciones.
-    this.apuntarCanto(
-      `${ingles}→${encasa ? (clave ?? "sin clave") : "NADA"}` +
-        (hayQuienLoCante ? "" : " (este avión no lo canta)"),
-    );
+    this.apuntarCanto(`${ingles}→${encasa ? (clave ?? "sin clave") : "NADA"}`);
     if (encasa) this.instructor.decir(encasa, clave, urgencia);
+  }
+
+  /**
+   * **Un número de la cuenta**, por la voz de la máquina y en este instante.
+   *
+   * No pasa por `cantar` porque no tiene nada que repartir: la cuenta no sube
+   * por la escalera, no la explica nadie y no tiene a quién pasársela si no
+   * puede sonar —un número dicho tarde, o por otra boca, es una mentira—. Si
+   * la máquina está diciendo un aviso, el número se pierde, y está bien.
+   */
+  private cantarLaCuenta(aviso: Aviso): void {
+    const clave = claveDeCabina(aviso.dice);
+    const como =
+      clave && loDiceElAvion(clave, this.aircraft)
+        ? this.maquina.decir(clave)
+        : "no";
+    this.apuntarCanto(`${aviso.dice}→máquina: ${como}`);
+    if (!import.meta.env.DEV) return;
+    this.cuentaOida.push({
+      t: Date.now(),
+      dice: aviso.dice,
+      pies:
+        this.radioAltura === null
+          ? null
+          : Math.round(this.radioAltura / 0.3048),
+      enTierra: this.flight.state.onGround,
+      como,
+    });
+    if (this.cuentaOida.length > 400) this.cuentaOida.shift();
+  }
+
+  /**
+   * **Al tocar tierra, lo que hablaba del aire se retira de la cola.**
+   *
+   * Un «quitá el gas» o un «venís lento» que todavía esperan turno cuando las
+   * ruedas tocan ya no describen nada, y dichos rodando son mentira: es la
+   * misma regla que tira un número de la cuenta que no puede sonar a su
+   * altura. Lo que ya está sonando se deja acabar. Ver `retirar` en
+   * `audio/boca.ts`.
+   */
+  private alTocarTierra(): void {
+    BOCA.retirar((clave) => !!clave && DEL_AIRE.test(clave));
+  }
+
+  /**
+   * **La recogida, acompañada: «quitá el gas», y nada más.**
+   *
+   * En los últimos veinte pies ya no hay velocidad que corregir ni senda que
+   * seguir: se deja de volar y se posa. Lo único que se puede hacer mal es
+   * llegar con gas, que hace flotar el avión por encima de la pista y se la
+   * come. Es la altura a la que los reactores que lo llevan cantan *retard*.
+   *
+   * Y es **lo único** que se dice ahí abajo, y eso es lo que arregla: con el
+   * mínimo de velocidad bajando, la instructora pedía «metéle gas», se metía
+   * gas y enseguida sonaba «bajás muy rápido». «Si estoy tomando tierra, ¿qué
+   * se supone que tengo que hacer?» Ver `bandaDeVelocidad`, que se calla por
+   * debajo de la recogida, y `RECOGIDA` en `flight/avisos-de-actitud.ts`.
+   *
+   * Una vez por aproximación, con la misma máquina que la cuenta: al cruzar
+   * los veinte pies bajando, en la zona de la pista.
+   */
+  private acompanarLaRecogida(l: Lectura): void {
+    if (!this.laRecogida.paso(l)) return;
+    const c = this.input.controls;
+    if (!c.engineOn || c.throttle <= GAS_EN_LA_RECOGIDA || this.sinMotor)
+      return;
+    this.hud.senal.mostrar(
+      "toma",
+      this.rotulo("vuelo.quitaElGas", "palabra.sinGas"),
+      null,
+      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+    );
+    this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas");
   }
 
   /**
@@ -6258,6 +6419,8 @@ export class Game {
     // Una cuenta atrás a medias de un vuelo que ya no existe.
     this.avisosDeAltura.reiniciar();
     this.alturaEnGrande.reiniciar();
+    this.laRecogida.reiniciar();
+    this.maquina.callar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
     // frecuencia del campo del que se sale.
@@ -8112,58 +8275,59 @@ export class Game {
     this.avisarDeLosBultos(dt);
 
     /*
-     * Los avisos de la toma. Se dicen **y** se enseñan, siempre: hay quien
-     * juega en silencio, hay quien tiene la pestaña muteada y hay quien no
-     * oye. La voz acompaña; el número manda.
+     * **La cuenta de la toma, con lo que marca el radioaltímetro.**
      *
-     * **Y solo si esto es una toma.** Viniendo por el embudo de final o ya
-     * sobre la pista — el mismo embudo que usan los mínimos, la orden de
-     * frustrar y el aviso del tren, y por la misma razón escrita allí: «cerca
-     * del suelo» no distingue una aproximación de un vuelo bajo.
+     * Se dice **y** se enseña: hay quien juega en silencio, hay quien tiene la
+     * pestaña muteada y hay quien no oye. La voz acompaña; el número manda.
      *
-     * Sin esto, sobre un sitio de barrancos la cuenta atrás se dispara con
-     * cada pliegue del terreno, porque el rearme mira la altura sobre el
-     * suelo. Medido en el barrido, en La Palma: **«cien» seiscientas siete
-     * veces** en un vuelo. Ver `aterrizando` en `avisos-de-altura.ts`.
+     * Lo que se le da a la cuenta es lo que mediría un radar de verdad —las
+     * ruedas sobre el suelo que hay debajo, hasta dos mil quinientos pies— y
+     * si esto es una aproximación: la zona de llegada de la pista en uso o
+     * encima de ella. Lo demás —solo bajando, una vez por aproximación, nunca
+     * con peso en las ruedas— lo decide ella. Ver `flight/avisos-de-altura.ts`.
      */
-    this.esUnaToma =
-      enElEmbudoDeFinal(
-        this.laPistaDeAhora(),
-        this.flight.state.position.x,
-        this.flight.state.position.z,
-      ) !== null || this.sobreLaPista();
-    const aviso = this.avisosDeAltura.paso(
-      this.flight.state.heightAboveGround,
-      !this.flight.state.onGround,
-      /*
-       * **Y solo si esto es una toma.** Viniendo por el embudo de final o ya
-       * sobre la pista — el mismo embudo que usan los mínimos, la orden de
-       * frustrar y el aviso del tren, y por la misma razón escrita allí:
-       * «cerca del suelo» no distingue una aproximación de un vuelo bajo.
-       *
-       * Sin esto, sobre un sitio de barrancos la cuenta atrás se dispara con
-       * cada pliegue del terreno. Medido en La Palma: «cien» seiscientas siete
-       * veces en un vuelo. Ver `aterrizando` en `avisos-de-altura.ts`.
-       */
-      this.esUnaToma,
-      this.flight.state.verticalSpeed < 0,
+    const ya = this.flight.state;
+    this.radioAltura = radioaltimetro(
+      ya.heightAboveGround,
+      this.aircraft.gearHeight,
     );
-    // Con su clave, que sin ella la cifra en casa no tenía grabación que
-    // buscar. Ver `escalon` en `flight/avisos-de-altura.ts`.
+    const lectura: Lectura = {
+      radioAltura: this.radioAltura,
+      enTierra: ya.onGround,
+      enAproximacion:
+        enLaZonaDeAproximacion(
+          this.laPistaDeAhora(),
+          ya.position.x,
+          ya.position.z,
+          ya.heading,
+        ) || this.sobreLaPista(),
+      vertical: ya.verticalSpeed,
+      altitud: ya.position.y,
+    };
+    const aviso = this.avisosDeAltura.paso(lectura);
+    if (aviso) this.cantarLaCuenta(aviso);
+    this.acompanarLaRecogida(lectura);
     /*
-     * **Y es la cuenta, no un aviso.** En el avión que lleva radioaltímetro
-     * que canta la dice la máquina en los cuatro peldaños, en inglés y en
-     * pies, y la instructora no cuenta por encima: un suceso, una voz. En los
-     * demás la sigue diciendo ella, en casa. Ver `cantaLaCabina`.
+     * **Y si en esta toma ya se ha tocado tierra, con las ruedas.**
+     *
+     * La máquina de fases da el avión por «aterrizado» a doce metros del
+     * suelo —es lo que la protege de un bote—, y de ahí colgaban el «frená» y
+     * el «ya podés tocar». Medido con el volcado de voces del JAZ 90 en Los
+     * Rodeos, con el radioaltímetro al lado: «thirty», **«frená»**, «twenty»,
+     * «ten»… y después, ya rodando, «quitá el gas», que había esperado en la
+     * cola detrás del «frená». Pedirle frenar a quien todavía vuela y decirle
+     * lo del aire a quien ya rueda son la misma avería que el «cinco» de la
+     * queja.
+     *
+     * Así que se apunta el contacto de verdad, y se queda apuntado hasta
+     * volver a subir de verdad —treinta metros—, que un bote no es un vuelo.
      */
-    if (aviso)
-      this.cantar(
-        aviso.dice,
-        aviso.clave ? t(aviso.clave as TranslationKey) : aviso.encasa,
-        aviso.clave,
-        "normal",
-        "cuenta",
-      );
+    if (ya.onGround) {
+      if (!this.yaTocoTierra) this.alTocarTierra();
+      this.yaTocoTierra = true;
+    } else if (ya.heightAboveGround - this.aircraft.gearHeight > 30) {
+      this.yaTocoTierra = false;
+    }
 
     /*
      * **Y el número en grande, que es otro peldaño.**
@@ -8174,15 +8338,11 @@ export class Game {
      * números son el peldaño de Taguato —150, 100 y 50 sobre la pista, tres
      * veces y grandes— y ahí sí enseñan a leer una altura. Ver
      * `flight/escalera.ts`.
+     *
+     * Con la misma lectura que la cuenta: el número en grande usa la misma
+     * máquina, y con otras guardas parpadeaba tantas veces como se cantaba.
      */
-    const grande = this.alturaEnGrande.paso(
-      this.flight.state.heightAboveGround,
-      !this.flight.state.onGround,
-      // Y con las mismas guardas: el número en grande usa la misma máquina,
-      // así que parpadeaba tantas veces como se cantaba. Ver arriba.
-      this.esUnaToma,
-      this.flight.state.verticalSpeed < 0,
-    );
+    const grande = this.alturaEnGrande.paso(lectura);
     if (grande && canalesDe(this.tier.avisos).cifra) {
       this.hud.flash(
         `${grande.dice} ${UNIT_SYSTEMS[this.tier.units].altitudeLabel()}`,
@@ -8220,7 +8380,12 @@ export class Game {
       this.flight.state.onGround && this.flight.state.onRunway;
     let banda = bandaDeAhora(
       {
-        sobreElSuelo: this.flight.state.heightAboveGround,
+        // Las ruedas sobre el suelo, que es lo que separa la recogida del
+        // resto de la final. Ver `bandaDeVelocidad`.
+        sobreElSuelo: Math.max(
+          0,
+          this.flight.state.heightAboveGround - this.aircraft.gearHeight,
+        ),
         enElSuelo: this.flight.state.onGround,
         enLaPista: this.flight.state.onRunway,
         vertical: this.flight.state.verticalSpeed,
@@ -8240,7 +8405,20 @@ export class Game {
       this.laAproximacion.enElCircuito
         ? this.aircraft.velocidadDeCircuito
         : null,
+      // Y la de antes, para que salir de la banda no sea rozar su borde.
+      this.bandaDeAhora,
     );
+    /*
+     * **Y hacia dónde va la aguja**, filtrada en un segundo: el aviso de
+     * velocidad miraba dónde estaba y no hacia dónde iba. Ver
+     * `yaLoEstaCorrigiendo`.
+     */
+    if (dt > 0) {
+      const acel = (this.flight.state.airspeed - this.velocidadAntes) / dt;
+      const k = Math.min(1, dt / 1);
+      this.tendenciaDeVelocidad += (acel - this.tendenciaDeVelocidad) * k;
+    }
+    this.velocidadAntes = this.flight.state.airspeed;
     /*
      * **Y sin motor, la de mejor planeo hasta estar en final.** La de
      * aproximación mira la altura y si se baja, y sin motor se baja siempre:
@@ -8288,7 +8466,11 @@ export class Game {
     }
     if (!enElAsfalto && (banda === "lento" || banda === "rapido")) {
       this.fueraDeBanda += dt;
-      if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {
+      if (
+        this.fueraDeBanda > 3 &&
+        this.dichoDeBanda !== banda &&
+        !yaLoEstaCorrigiendo(banda, this.tendenciaDeVelocidad)
+      ) {
         this.dichoDeBanda = banda;
         /*
          * **Sin motor, la velocidad sale de la nariz.** «Venís lento: metéle
@@ -8452,7 +8634,20 @@ export class Game {
       }
     } else {
       this.fueraDeBanda = 0;
-      this.dichoDeBanda = null;
+      /*
+       * **Y lo dicho se olvida cuando cambia algo, no cuando se roza.** Vuelve
+       * a poder decirse al volver a la banda de verdad —por el umbral de
+       * dentro—, al tocar el suelo o al dejar de aproximar. Se olvidaba con
+       * cualquier fotograma fuera de «lento» o «rápido», y un avión que
+       * nivelaba un instante —la banda se calla si no se baja— volvía a oír
+       * el mismo aviso tres segundos después.
+       */
+      if (
+        banda === "bien" ||
+        this.flight.state.onGround ||
+        this.flight.state.heightAboveGround > 400
+      )
+        this.dichoDeBanda = null;
     }
 
     this.atenderAlTren();
@@ -8614,6 +8809,9 @@ export class Game {
      */
     const puedeTocar =
       !this.flight.state.onGround &&
+      // Y no en el bote de después de tocar: ahí ya se dijo «frená», y «ya
+      // podés tocar» detrás es contar el pasado. Ver `yaTocoTierra`.
+      !this.yaTocoTierra &&
       /*
        * **Y no despegando, que es la tarjeta contraria.**
        *
@@ -8654,7 +8852,14 @@ export class Game {
          */
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
       );
-      this.instructor.decir(t("vuelo.yaPodesTocar"), "vuelo.yaPodesTocar");
+      /*
+       * **Y en el avión que lleva la cuenta, lo dice ella.** A esa altura la
+       * máquina está diciendo *fifty, forty, thirty*, y la instructora encima
+       * serían dos voces para el mismo momento. La tarjeta se queda, que es
+       * el dibujo; la voz es la de la caja.
+       */
+      if (!laCuentaDe(this.aircraft).length)
+        this.instructor.decir(t("vuelo.yaPodesTocar"), "vuelo.yaPodesTocar");
     } else if (
       this.dichoDeLaToma &&
       /*
@@ -11300,6 +11505,9 @@ export class Game {
      * sabe. Es el mismo fallo que ya tuvo el aviso de terreno en la pista.
      */
     const corriendo =
+      // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
+      // `yaTocoTierra`.
+      this.yaTocoTierra &&
       (vista.fase === "aterrizado" || vista.fase === "abandonando") &&
       this.flight.state.airspeed > RODAJE_DE_VERDAD;
     if (corriendo !== this.pidiendoFreno) {
@@ -12321,18 +12529,43 @@ export class Game {
    */
   private cantarLaActitud(): void {
     const s = this.flight.state;
-    const ahora = avisoDeActitud({
-      enSuelo: s.onGround,
-      altura: s.heightAboveGround,
-      vertical: s.velocity.y,
-      alabeo: bankAngleOf(s.orientation),
-    });
+    const ahora = avisoDeActitud(
+      {
+        enSuelo: s.onGround,
+        /*
+         * **Con lo que marca el radioaltímetro**, las ruedas sobre el suelo:
+         * es lo que mira la caja de verdad, y es lo que hace que la recogida
+         * sea la misma para todos. Con la altura del centro del avión, al de
+         * seis metros de tren le sonaba *sink rate* a treinta pies, en plena
+         * recogida y tapando la cuenta: medido en Los Rodeos con el JAZ 90,
+         * «fifty», *sink rate*, y «forty, thirty, twenty» perdidos detrás.
+         */
+        altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+        vertical: s.velocity.y,
+        alabeo: bankAngleOf(s.orientation),
+      },
+      this.actitudDicha,
+    );
     if (ahora === this.actitudDicha) return;
     this.actitudDicha = ahora;
     if (!ahora) return;
     this.avisar("attention");
+    /*
+     * **Y bajando de golpe por ir lento, lo que se explica es ir lento.**
+     *
+     * Las dos cosas se arreglan distinto: con velocidad de sobra, el ritmo de
+     * bajada se corta levantando un poco la nariz; sin ella, levantar la nariz
+     * es el camino a la pérdida, y lo que corta la bajada es el gas. La caja
+     * dice *sink rate* igual en los dos casos —mide la bajada, no el porqué—;
+     * quien explica lo que hay que hacer es la instructora, y tiene que
+     * explicar lo que sirve. Ver `bandaDeAhora`.
+     */
     const clave =
-      ahora === "sink rate" ? "vuelo.bajasRapido" : "vuelo.muyInclinado";
+      ahora === "sink rate"
+        ? this.bandaDeAhora === "lento"
+          ? "vuelo.lentoYBajo"
+          : "vuelo.bajasRapido"
+        : "vuelo.muyInclinado";
     this.cantar(ahora, t(clave), clave, "normal");
   }
 
@@ -12792,16 +13025,16 @@ export class Game {
   }
 
   /**
-   * **La cuenta de la toma de este avión en este peldaño**: la de la máquina
-   * si la lleva, o la de la instructora en las unidades del instrumento. Ver
-   * `laCuentaDe`.
+   * **La cuenta de la toma de este avión**: la del radioaltímetro si lo
+   * lleva, ninguna si no. Ver `laCuentaDe`.
    *
-   * Y se rehace al cambiar de peldaño, que no se hacía: se fijaba al arrancar,
-   * y quien subía de Taguato a Taguato Ruvicha seguía oyendo la cuenta en
-   * metros con la cabina ya en pies. Lo mismo la altura en grande.
+   * Ya no depende del peldaño —el radioaltímetro canta en pies en cualquier
+   * cabina—, pero se rehace igual al cambiar de peldaño: es un contador, y un
+   * peldaño nuevo es un vuelo nuevo. Lo mismo la altura en grande, que sí va
+   * en las unidades del instrumento.
    */
   private laCuentaDeHoy(avion: AircraftConfig): AvisosDeAltura {
-    return new AvisosDeAltura(laCuentaDe(avion, this.tier.units));
+    return new AvisosDeAltura(laCuentaDe(avion));
   }
 
   /**

@@ -613,24 +613,6 @@ export const ES_PY = {
   "tcas.arriba": "Tráfico {donde}, {cuanto} por encima",
   "tcas.abajo": "Tráfico {donde}, {cuanto} por debajo",
   "tcas.nivel": "Tráfico {donde}, a tu misma altura",
-  /*
-   * **La cuenta de la toma, dicha en casa.** Es lo que canta el
-   * radioaltímetro en inglés en el peldaño de cabina, y aquí lo dice la
-   * instructora: en los peldaños que todavía no cantan en inglés y en los
-   * aviones que no llevan radioaltímetro que cante. Ver `escalon` en
-   * `flight/avisos-de-altura.ts`.
-   */
-  "cuenta.quinientos": "Quinientos",
-  "cuenta.cuatrocientos": "Cuatrocientos",
-  "cuenta.trescientos": "Trescientos",
-  "cuenta.doscientos": "Doscientos",
-  "cuenta.cien": "Cien",
-  "cuenta.cincuenta": "Cincuenta",
-  "cuenta.cuarenta": "Cuarenta",
-  "cuenta.treinta": "Treinta",
-  "cuenta.veinte": "Veinte",
-  "cuenta.diez": "Diez",
-  "cuenta.cinco": "Cinco",
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
@@ -680,8 +662,15 @@ export const ES_PY = {
   "vuelo.enVueloAterrizando": "Andá a la pista",
   "vuelo.enVueloDestino": "Seguí la flecha: vamos al otro aeropuerto",
   "vuelo.final": "Bajá suavecito",
-  "vuelo.terrenoBajo": "Vas muy bajo",
-  "vuelo.terrenoSube": "Terreno. Subí",
+  /*
+   * **Los avisos de las cajas del avión, explicados.** En el avión que las
+   * lleva, la máquina canta *terrain* o *too low* en inglés y, en los peldaños
+   * de abajo, la instructora dice esto justo detrás: qué pasa y qué se hace,
+   * con calma. Por eso llevan las dos mitades —«vas muy bajo» a secas deja a
+   * quien lo oye sin saber qué tocar—. Ver `flight/escalera.ts`.
+   */
+  "vuelo.terrenoBajo": "Vas muy bajo: subí un poco",
+  "vuelo.terrenoSube": "El suelo está cerca: subí",
   "vuelo.perdida": "Pérdida. Bajá el morro",
   /*
    * **El aviso de tráfico del TCAS, dicho en casa.** Es lo que en el peldaño
@@ -728,8 +717,15 @@ export const ES_PY = {
   "vuelo.otroAvion.detras.arriba": "Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada",
   "vuelo.otroAvion.detras.nivel": "Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada",
   "vuelo.otroAvion.detras.abajo": "Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada",
-  "vuelo.bajasRapido": "Bajás muy rápido",
-  "vuelo.muyInclinado": "Estás muy inclinado",
+  /**
+   * **«De golpe» y no «rápido».** Decía «bajás muy rápido», y justo después de
+   * «venís lento: metéle gas» eso se oye como lo contrario: «le meto gas y
+   * "bajás muy rápido"… ¿qué se supone que tengo que hacer?». Es el ritmo de
+   * bajada, no la velocidad, y la frase lo dice. Yendo lento, lo que explica
+   * el *sink rate* es la de ir lento: ver `cantarLaActitud`.
+   */
+  "vuelo.bajasRapido": "Bajás muy de golpe: levantá un poco la nariz",
+  "vuelo.muyInclinado": "Estás muy inclinado: enderezá las alas",
   "vuelo.pilotoSuelto": "Se soltó el piloto automático",
   /*
    * Al apretar el botón en tierra. No es un error de quien juega: un piloto
@@ -935,6 +931,13 @@ export const ES_PY = {
   "vuelo.alto": "Pará acá",
   "vuelo.teLoPasaste": "Te pasaste. Frená y volvé",
   "vuelo.yaPodesTocar": "Ya podés tocar",
+  /*
+   * Lo único que se dice en los últimos veinte pies: ahí ya no hay velocidad
+   * que corregir, y llegar con gas hace flotar el avión y se come la pista.
+   * Ver `acompanarLaRecogida`.
+   */
+  "vuelo.quitaElGas": "Quitá el gas",
+  "palabra.sinGas": "Sin gas",
   "percance.coche": "Le pasaste por encima al coche",
   "percance.edificio": "Chocaste con un edificio",
   "percance.fuera": "Tocaste tierra fuera de la pista",

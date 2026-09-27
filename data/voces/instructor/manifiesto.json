@@ -27,39 +27,6 @@
     "circuito.subida": {
       "ms": 1269
     },
-    "cuenta.cien": {
-      "ms": 621
-    },
-    "cuenta.cinco": {
-      "ms": 835
-    },
-    "cuenta.cincuenta": {
-      "ms": 632
-    },
-    "cuenta.cuarenta": {
-      "ms": 495
-    },
-    "cuenta.cuatrocientos": {
-      "ms": 967
-    },
-    "cuenta.diez": {
-      "ms": 710
-    },
-    "cuenta.doscientos": {
-      "ms": 748
-    },
-    "cuenta.quinientos": {
-      "ms": 786
-    },
-    "cuenta.treinta": {
-      "ms": 635
-    },
-    "cuenta.trescientos": {
-      "ms": 847
-    },
-    "cuenta.veinte": {
-      "ms": 838
-    },
     "fin.bien": {
       "ms": 925
     },
@@ -277,7 +244,7 @@
       "ms": 1795
     },
     "vuelo.bajasRapido": {
-      "ms": 1443
+      "ms": 2840
     },
     "vuelo.bulto": {
       "ms": 1792
@@ -379,7 +346,7 @@
       "ms": 1243
     },
     "vuelo.muyInclinado": {
-      "ms": 1302
+      "ms": 2231
     },
     "vuelo.noEstabilizada": {
       "ms": 2930
@@ -389,6 +356,42 @@
     },
     "vuelo.noEstabilizada~3": {
       "ms": 3307
+    },
+    "vuelo.otroAvion.delante.abajo": {
+      "ms": 2429
+    },
+    "vuelo.otroAvion.delante.arriba": {
+      "ms": 2274
+    },
+    "vuelo.otroAvion.delante.nivel": {
+      "ms": 3207
+    },
+    "vuelo.otroAvion.derecha.abajo": {
+      "ms": 2149
+    },
+    "vuelo.otroAvion.derecha.arriba": {
+      "ms": 2181
+    },
+    "vuelo.otroAvion.derecha.nivel": {
+      "ms": 3407
+    },
+    "vuelo.otroAvion.detras.abajo": {
+      "ms": 4307
+    },
+    "vuelo.otroAvion.detras.arriba": {
+      "ms": 4107
+    },
+    "vuelo.otroAvion.detras.nivel": {
+      "ms": 4207
+    },
+    "vuelo.otroAvion.izquierda.abajo": {
+      "ms": 2268
+    },
+    "vuelo.otroAvion.izquierda.arriba": {
+      "ms": 2279
+    },
+    "vuelo.otroAvion.izquierda.nivel": {
+      "ms": 2808
     },
     "vuelo.papiAlto": {
       "ms": 1787
@@ -420,11 +423,17 @@
     "vuelo.planeoRapido": {
       "ms": 3507
     },
+    "vuelo.puedeAterrizar": {
+      "ms": 1223
+    },
     "vuelo.puedeVolver": {
       "ms": 1848
     },
     "vuelo.puedeVolver~2": {
       "ms": 2097
+    },
+    "vuelo.quitaElGas": {
+      "ms": 779
     },
     "vuelo.rapido": {
       "ms": 1068
@@ -466,10 +475,10 @@
       "ms": 1464
     },
     "vuelo.terrenoBajo": {
-      "ms": 929
+      "ms": 1398
     },
     "vuelo.terrenoSube": {
-      "ms": 832
+      "ms": 1651
     },
     "vuelo.tormenta": {
       "ms": 2612
@@ -1010,39 +1019,6 @@
     "vuelo.pilotoEnTierra": [
       "vuelo.pilotoEnTierra"
     ],
-    "cuenta.quinientos": [
-      "cuenta.quinientos"
-    ],
-    "cuenta.cuatrocientos": [
-      "cuenta.cuatrocientos"
-    ],
-    "cuenta.trescientos": [
-      "cuenta.trescientos"
-    ],
-    "cuenta.doscientos": [
-      "cuenta.doscientos"
-    ],
-    "cuenta.cien": [
-      "cuenta.cien"
-    ],
-    "cuenta.cincuenta": [
-      "cuenta.cincuenta"
-    ],
-    "cuenta.cuarenta": [
-      "cuenta.cuarenta"
-    ],
-    "cuenta.treinta": [
-      "cuenta.treinta"
-    ],
-    "cuenta.veinte": [
-      "cuenta.veinte"
-    ],
-    "cuenta.diez": [
-      "cuenta.diez"
-    ],
-    "cuenta.cinco": [
-      "cuenta.cinco"
-    ],
     "vuelo.sinMotor": [
       "vuelo.sinMotor"
     ],
@@ -1078,6 +1054,48 @@
     ],
     "vuelo.alPuestoConFlaps": [
       "vuelo.alPuestoConFlaps"
+    ],
+    "vuelo.quitaElGas": [
+      "vuelo.quitaElGas"
+    ],
+    "vuelo.otroAvion.delante.abajo": [
+      "vuelo.otroAvion.delante.abajo"
+    ],
+    "vuelo.otroAvion.delante.arriba": [
+      "vuelo.otroAvion.delante.arriba"
+    ],
+    "vuelo.otroAvion.delante.nivel": [
+      "vuelo.otroAvion.delante.nivel"
+    ],
+    "vuelo.otroAvion.derecha.abajo": [
+      "vuelo.otroAvion.derecha.abajo"
+    ],
+    "vuelo.otroAvion.derecha.arriba": [
+      "vuelo.otroAvion.derecha.arriba"
+    ],
+    "vuelo.otroAvion.derecha.nivel": [
+      "vuelo.otroAvion.derecha.nivel"
+    ],
+    "vuelo.otroAvion.detras.abajo": [
+      "vuelo.otroAvion.detras.abajo"
+    ],
+    "vuelo.otroAvion.detras.arriba": [
+      "vuelo.otroAvion.detras.arriba"
+    ],
+    "vuelo.otroAvion.detras.nivel": [
+      "vuelo.otroAvion.detras.nivel"
+    ],
+    "vuelo.otroAvion.izquierda.abajo": [
+      "vuelo.otroAvion.izquierda.abajo"
+    ],
+    "vuelo.otroAvion.izquierda.arriba": [
+      "vuelo.otroAvion.izquierda.arriba"
+    ],
+    "vuelo.otroAvion.izquierda.nivel": [
+      "vuelo.otroAvion.izquierda.nivel"
+    ],
+    "vuelo.puedeAterrizar": [
+      "vuelo.puedeAterrizar"
     ]
   }
 }

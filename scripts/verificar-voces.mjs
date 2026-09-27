@@ -94,15 +94,21 @@ const REPARTO = [
   ["instructor", "cabina.vr", "cabina"],
   /*
    * **Y lo que el juego pedía y no tenía toma**, que se oía por el
-   * sintetizador o no se oía: la cuenta de la toma en casa —«four hundred→sin
-   * clave» en el registro de cantos—, la orden de frustrar y el «airspeed
-   * low» de cabina, y la explicación de qué es un rombo del TCAS.
+   * sintetizador o no se oía: la orden de frustrar y el «airspeed low» de
+   * cabina, y la explicación de qué es un rombo del TCAS.
    */
-  ["instructor", "cuenta.cincuenta", "instructor"],
-  ["instructor", "cuenta.quinientos", "instructor"],
   ["instructor", "vuelo.traficoArriba", "instructor"],
   ["instructor", "cabina.goAroundOrder", "cabina"],
   ["instructor", "cabina.airspeedLow", "cabina"],
+  /*
+   * **La cuenta del radioaltímetro, entera, y la recogida.** Los dos números
+   * de arriba se grabaron cuando la cuenta pasó a ser de la caja; y la cuenta
+   * en casa de la instructora, que era la de «cuatrocientos… cinco» ya
+   * rodando, se quitó. Lo que dice ella en la recogida es «quitá el gas».
+   */
+  ["instructor", "cabina.twentyFiveHundred", "cabina"],
+  ["instructor", "cabina.oneThousand", "cabina"],
+  ["instructor", "vuelo.quitaElGas", "instructor"],
 ];
 
 const server = await createServer({

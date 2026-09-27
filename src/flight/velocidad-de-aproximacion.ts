@@ -1,4 +1,5 @@
 import { MARGENES } from "./minimos";
+import { RECOGIDA } from "./avisos-de-actitud";
 
 /**
  * La velocidad de la aproximación: rápido, bien o lento.
@@ -26,8 +27,17 @@ import { MARGENES } from "./minimos";
 /** A partir de esta altura sobre el suelo ya no es una aproximación, m. */
 const TECHO = 400;
 
-/** Y por debajo de esta ya estás posando: la velocidad la manda la recogida. */
-const SUELO = 4;
+/*
+ * **Y por debajo de la recogida no hay banda.** Estaba en cuatro metros, y
+ * entre cuatro y quince la banda seguía juzgando una velocidad que en la
+ * recogida se pierde a propósito: con el mínimo de velocidad bajando se oía
+ * «venís lento: metéle gas», se metía gas y la siguiente frase era de ir
+ * rápido. «Si estoy tomando tierra, ¿qué se supone que tengo que hacer?» Ahí
+ * abajo lo único que se dice es «quitá el gas»: ver `acompanarLaRecogida` en
+ * `game.ts`. Y la altura es la de las ruedas, que es la que mide el
+ * radioaltímetro: con la del centro del avión, al de seis metros de tren le
+ * quedaba la mitad de la recogida por juzgar.
+ */
 
 /** Bajando de verdad, m/s. Volar bajo y nivelado no es aproximar. */
 const DESCENSO = -0.6;
@@ -56,6 +66,47 @@ const MARGEN_LENTO = 0.04;
  */
 const MARGEN_RAPIDO = MARGENES.rapido - 1 - 0.1;
 
+/*
+ * ## Y los dos umbrales tienen dos caras
+ *
+ * Con un solo umbral por lado, una aguja que ronda el borde entra y sale de la
+ * banda a cada momento, y cada salida es un aviso nuevo. Así que se entra por
+ * un sitio y se sale por otro, más adentro: lo que un avión de verdad llama
+ * volar Vref más un margen, con una tolerancia que no tiembla.
+ */
+
+/** Se deja de ir lento al volver a un uno por ciento de Vref. */
+const SALE_DE_LENTO = 0.01;
+
+/** Y de ir rápido, cinco puntos por debajo de donde se entró. */
+const SALE_DE_RAPIDO = MARGEN_RAPIDO - 0.05;
+
+/**
+ * **Lo que ya se está corrigiendo no se avisa**, m/s².
+ *
+ * Tres décimas de metro por segundo cada segundo —algo más de medio nudo por
+ * segundo— es una aguja que se mueve de verdad, no un bache. Si va lento y
+ * ya acelera, alguien ya metió gas: decírselo es regañar por lo que acaba de
+ * hacer bien. Ver `yaLoEstaCorrigiendo`.
+ */
+export const CORRIGIENDO = 0.3;
+
+/**
+ * Si la velocidad ya va hacia dentro de la banda, y con ganas.
+ *
+ * Es la tendencia que faltaba: el aviso miraba dónde estaba la aguja y no
+ * hacia dónde iba, y con el gas recién metido el avión todavía va lento un
+ * par de segundos. `tendencia` en m/s², positiva acelerando.
+ */
+export function yaLoEstaCorrigiendo(
+  banda: BandaDeVelocidad,
+  tendencia: number,
+): boolean {
+  if (banda === "lento") return tendencia > CORRIGIENDO;
+  if (banda === "rapido") return tendencia < -CORRIGIENDO;
+  return false;
+}
+
 export type BandaDeVelocidad = "lento" | "bien" | "rapido" | null;
 
 export interface Aproximando {
@@ -75,12 +126,16 @@ export interface Aproximando {
 export function bandaDeVelocidad(
   s: Aproximando,
   vref: number,
+  /** La banda de antes, para salir por el otro umbral. Ver `SALE_DE_LENTO`. */
+  antes: BandaDeVelocidad = null,
 ): BandaDeVelocidad {
   if (s.enElSuelo) return null;
-  if (s.sobreElSuelo > TECHO || s.sobreElSuelo < SUELO) return null;
+  if (s.sobreElSuelo > TECHO || s.sobreElSuelo < RECOGIDA) return null;
   if (s.vertical > DESCENSO) return null;
-  if (s.velocidad < vref * (1 - MARGEN_LENTO)) return "lento";
-  if (s.velocidad > vref * (1 + MARGEN_RAPIDO)) return "rapido";
+  const lento = antes === "lento" ? SALE_DE_LENTO : MARGEN_LENTO;
+  if (s.velocidad < vref * (1 - lento)) return "lento";
+  const rapido = antes === "rapido" ? SALE_DE_RAPIDO : MARGEN_RAPIDO;
+  if (s.velocidad > vref * (1 + rapido)) return "rapido";
   return "bien";
 }
 
@@ -250,11 +305,13 @@ export function bandaDeAhora(
    * más estrecha y es la que decide la toma. Ver `bandaDeCircuito`.
    */
   circuito: number | null = null,
+  /** La banda del fotograma anterior. Ver `bandaDeVelocidad`. */
+  antes: BandaDeVelocidad = null,
 ): BandaDeVelocidad {
   if (s.enElSuelo && s.enLaPista) return null;
   return (
     bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo) ??
-    bandaDeVelocidad(s, vref) ??
+    bandaDeVelocidad(s, vref, antes) ??
     (circuito === null ? null : bandaDeCircuito(s, vref, circuito))
   );
 }

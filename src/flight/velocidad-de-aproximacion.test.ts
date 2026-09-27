@@ -10,10 +10,13 @@ import { MARGENES } from "./minimos";
 import {
   bandaDeAhora,
   bandaDeRodaje,
+  CORRIGIENDO,
   queSeDice,
   bandaDeVelocidad,
+  yaLoEstaCorrigiendo,
   type Aproximando,
 } from "./velocidad-de-aproximacion";
+import { RECOGIDA } from "./avisos-de-actitud";
 
 const VREF = 33;
 const bajando = (cambios: Partial<Aproximando> = {}): Aproximando => ({
@@ -87,11 +90,86 @@ describe("la banda de velocidad", () => {
     expect(bandaDeVelocidad(bajando({ sobreElSuelo: 2 }), VREF)).toBeNull();
   });
 
+  /*
+   * **Y la recogida entera, no sus últimos cuatro metros.** Entre cuatro y
+   * quince metros la banda seguía juzgando una velocidad que ahí se pierde a
+   * propósito: «le meto gas y "bajás muy rápido", pero si estoy tomando
+   * tierra ¿qué se supone que tengo que hacer?». Ahí abajo lo único que se
+   * dice es «quitá el gas», y eso no sale de esta banda.
+   */
+  it("en la recogida no hay ni lento ni rápido", () => {
+    for (const velocidad of [VREF * 0.7, VREF, VREF * 1.6])
+      expect(
+        bandaDeVelocidad(bajando({ sobreElSuelo: RECOGIDA - 0.5, velocidad }), VREF),
+      ).toBeNull();
+  });
+
   it("cada avión con la suya: lo que es bien para uno es rápido para otro", () => {
     // Treinta y tres es su velocidad para uno y un treinta y siete por ciento
     // de más para otro que se aproxima a veinticuatro.
     expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 33)).toBe("bien");
     expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 24)).toBe("rapido");
+  });
+});
+
+/*
+ * **Los dos umbrales tienen dos caras.** Con uno solo por lado, la aguja que
+ * ronda el borde entraba y salía, y cada salida era un aviso nuevo. Se entra
+ * por fuera y se sale por dentro: Vref más un margen, con una tolerancia que
+ * no tiembla.
+ */
+describe("la banda no tiembla en su borde", () => {
+  it("una vez lento, sigue lento hasta volver cerca de Vref", () => {
+    const rozando = bajando({ velocidad: VREF * 0.97 });
+    expect(bandaDeVelocidad(rozando, VREF)).toBe("bien");
+    expect(bandaDeVelocidad(rozando, VREF, "lento")).toBe("lento");
+    expect(bandaDeVelocidad(bajando({ velocidad: VREF }), VREF, "lento")).toBe(
+      "bien",
+    );
+  });
+
+  it("y una vez rápido, igual por arriba", () => {
+    const rozando = bajando({ velocidad: VREF * 1.22 });
+    expect(bandaDeVelocidad(rozando, VREF)).toBe("bien");
+    expect(bandaDeVelocidad(rozando, VREF, "rapido")).toBe("rapido");
+  });
+
+  it("y la cara de dentro sigue lejos de la otra punta", () => {
+    // Pasar de lento a rápido sigue siendo cruzar la banda entera: casi
+    // treinta puntos de velocidad, que un avión no cruza en un suspiro.
+    const lentoHasta = VREF * 0.99;
+    const rapidoDesde = VREF * 1.2;
+    expect(rapidoDesde - lentoHasta).toBeGreaterThan(VREF * 0.2);
+  });
+
+  it("y bandaDeAhora pasa la de antes", () => {
+    const s = { ...bajando({ velocidad: VREF * 0.97 }), enLaPista: false };
+    expect(bandaDeAhora(s, VREF, false, null, "lento")).toBe("lento");
+  });
+});
+
+/*
+ * **Y lo que ya se está corrigiendo no se avisa.** El aviso miraba dónde
+ * estaba la aguja y no hacia dónde iba: con el gas recién metido el avión
+ * todavía va lento un par de segundos, y decirle «metéle gas» a quien acaba de
+ * meterlo es regañarle por hacerlo bien.
+ */
+describe("la tendencia", () => {
+  it("lento y acelerando de verdad: ya lo corrige", () => {
+    expect(yaLoEstaCorrigiendo("lento", CORRIGIENDO + 0.1)).toBe(true);
+    expect(yaLoEstaCorrigiendo("lento", 0)).toBe(false);
+    // Y frenando, peor: eso sí se avisa.
+    expect(yaLoEstaCorrigiendo("lento", -1)).toBe(false);
+  });
+
+  it("rápido y frenando de verdad, igual", () => {
+    expect(yaLoEstaCorrigiendo("rapido", -CORRIGIENDO - 0.1)).toBe(true);
+    expect(yaLoEstaCorrigiendo("rapido", 1)).toBe(false);
+  });
+
+  it("y un bache no es una tendencia", () => {
+    expect(yaLoEstaCorrigiendo("lento", CORRIGIENDO / 2)).toBe(false);
+    expect(yaLoEstaCorrigiendo("bien", 5)).toBe(false);
   });
 });
 

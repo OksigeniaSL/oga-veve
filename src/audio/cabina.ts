@@ -27,10 +27,16 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   // La carrera de despegue.
   "V one": "cabina.v1",
   rotate: "cabina.vr",
-  // La aproximación, en pies, que es como los canta un radioaltímetro.
+  /*
+   * La cuenta del radioaltímetro, en pies, que es como la canta. Los dos de
+   * arriba del todo entraron cuando la cuenta pasó a ser de la caja: antes se
+   * recortaba por no tener toma. Ver `LA_CUENTA` en `flight/avisos-de-altura.ts`.
+   */
+  "twenty five hundred": "cabina.twentyFiveHundred",
+  "one thousand": "cabina.oneThousand",
   "five hundred": "cabina.fiveHundred",
   // Los tres de en medio, que faltaban: una cuenta a la que le saltan tres
-  // números no es una cuenta. Ver `ESCALONES` en `flight/avisos-de-altura.ts`.
+  // números no es una cuenta.
   "four hundred": "cabina.fourHundred",
   "three hundred": "cabina.threeHundred",
   "two hundred": "cabina.twoHundred",
@@ -40,7 +46,6 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   thirty: "cabina.thirty",
   twenty: "cabina.twenty",
   ten: "cabina.ten",
-  five: "cabina.five",
   // Los avisos que no se pueden desoír.
   "terrain, pull up": "cabina.terrainPullUp",
   "too low": "cabina.tooLow",
@@ -115,6 +120,30 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
 };
 
 /**
+ * **La cuenta del radioaltímetro**, número a número: lo único de la cabina
+ * que es una cuenta y no un suceso. La usa la voz de la máquina para saber que
+ * un número se pisa con el siguiente y no espera a nadie. Ver
+ * `audio/maquina.ts`.
+ *
+ * Aquí estaba también «five», el cinco de la cuenta en metros. Esa cuenta ya
+ * no existe —ningún radioaltímetro canta metros— y su toma se quitó del pack.
+ */
+export const DE_LA_CUENTA: ReadonlySet<string> = new Set([
+  "cabina.twentyFiveHundred",
+  "cabina.oneThousand",
+  "cabina.fiveHundred",
+  "cabina.fourHundred",
+  "cabina.threeHundred",
+  "cabina.twoHundred",
+  "cabina.oneHundred",
+  "cabina.fifty",
+  "cabina.forty",
+  "cabina.thirty",
+  "cabina.twenty",
+  "cabina.ten",
+]);
+
+/**
  * **Los cantos que dice el avión, y no quien va sentado en él.**
  *
  * Una cabina oye dos clases de voces y no se parecen. Unas son de la
@@ -128,33 +157,15 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  * pasaje o más (14 CFR 135.154; en Europa, CS-25 y la parte CAT)—, y una
  * avioneta de escuela no lleva ninguna.
  *
- * Así que estos cantos, en inglés y con la voz de cabina, solo suenan en el
- * avión que tiene con qué decirlos. En los demás los dice la instructora, en
- * casa, que es lo que pasa en una avioneta: quien canta la altura en la toma
- * es la persona de al lado. Ver `Game.cantar` y `avisosHablados` en
+ * Así que estos cantos, en inglés y con la voz de la máquina, solo suenan en
+ * el avión que tiene con qué decirlos —y en ése, en los cuatro peldaños—. En
+ * los demás los avisos los dice la instructora, en casa, que es lo que pasa en
+ * una avioneta; y la cuenta de la toma no la dice nadie, porque ahí no hay
+ * radioaltímetro que la cante. Ver `Game.cantar` y `avisosHablados` en
  * `flight/aircraft.ts`.
  *
  * El TCAS va aparte porque tiene su propio equipo —ver `tcas` en la ficha—.
  */
-/**
- * **La cuenta del radioaltímetro**, número a número: lo único de la cabina
- * que es una cuenta y no un suceso. Ver `MISMA_CUENTA` en `audio/boca.ts` y la
- * excepción de `flight/escalera.ts`.
- */
-export const DE_LA_CUENTA: ReadonlySet<string> = new Set([
-  "cabina.fiveHundred",
-  "cabina.fourHundred",
-  "cabina.threeHundred",
-  "cabina.twoHundred",
-  "cabina.oneHundred",
-  "cabina.fifty",
-  "cabina.forty",
-  "cabina.thirty",
-  "cabina.twenty",
-  "cabina.ten",
-  "cabina.five",
-]);
-
 export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   // El radioaltímetro, en la toma: su cuenta y la altura de decisión.
   ...DE_LA_CUENTA,
@@ -174,6 +185,16 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
 export interface EquipoDeCabina {
   readonly avisosHablados: boolean;
   readonly tcas: string | null;
+}
+
+/**
+ * Si este canto lo dice **una caja del avión** y no quien va sentado en él: los
+ * avisadores y el TCAS. Es lo que decide que suene con la voz de la máquina en
+ * los cuatro peldaños, en vez de subir por la escalera. Ver `Canto` en
+ * `flight/escalera.ts`.
+ */
+export function esDeUnaCaja(clave: string): boolean {
+  return DE_LOS_AVISADORES.has(clave) || clave === "cabina.traffic";
 }
 
 /**

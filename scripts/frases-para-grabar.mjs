@@ -58,13 +58,11 @@ const HABLADOS = [
   ["motivo", "instructor", "por qué no se puede bajar así"],
   ["mission", "instructor", "las misiones"],
   /*
-   * **La cuenta de la toma, en casa.** «Cuatrocientos… cincuenta… diez»: lo
-   * que canta el radioaltímetro en inglés, dicho por la instructora en los
-   * peldaños que todavía no cantan en inglés y en los aviones sin
-   * radioaltímetro que cante. Se pedía sin clave y la decía el sintetizador,
-   * o nadie donde no hay voces instaladas.
+   * Aquí estaba «la cuenta de la toma, en casa»: la instructora contando en
+   * metros en los aviones sin radioaltímetro. Esa cuenta no existe en ninguna
+   * cabina y se quitó con sus tomas; la cuenta es de la caja, en pies. Ver
+   * `flight/avisos-de-altura.ts`.
    */
-  ["cuenta", "instructor", "la cuenta de la toma, en casa"],
   /*
    * **Y lo que explican los paneles.**
    *
@@ -209,14 +207,25 @@ const CABINA = [
   ["cabina.goAroundOrder", "go around", "la orden de irse al aire"],
   // Y el aviso de velocidad baja, que el juego pedía sin toma.
   ["cabina.airspeedLow", "airspeed low", "vas lento para la configuración"],
-  ["cabina.fiveHundred", "five hundred", "altura de la toma, en pies"],
-  ["cabina.oneHundred", "one hundred", "altura de la toma"],
-  ["cabina.fifty", "fifty", "altura de la toma"],
-  ["cabina.forty", "forty", "altura de la toma, en pies"],
-  ["cabina.thirty", "thirty", "altura de la toma"],
-  ["cabina.twenty", "twenty", "altura de la toma"],
-  ["cabina.ten", "ten", "altura de la toma"],
-  ["cabina.five", "five", "altura de la toma, en metros"],
+  /*
+   * **La cuenta del radioaltímetro, entera.** Los dos de arriba —el radar que
+   * empieza a ver el suelo y los mil— se tomaron cuando la cuenta pasó a ser
+   * de la caja y dejó de tener sentido recortarla. Y se fue «five», el cinco
+   * de la cuenta en metros, que ningún radioaltímetro canta.
+   */
+  [
+    "cabina.twentyFiveHundred",
+    "twenty five hundred",
+    "cuenta de la toma: el radar empieza a ver el suelo",
+  ],
+  ["cabina.oneThousand", "one thousand", "cuenta de la toma, en pies"],
+  ["cabina.fiveHundred", "five hundred", "cuenta de la toma, en pies"],
+  ["cabina.oneHundred", "one hundred", "cuenta de la toma, en pies"],
+  ["cabina.fifty", "fifty", "cuenta de la toma, en pies"],
+  ["cabina.forty", "forty", "cuenta de la toma, en pies"],
+  ["cabina.thirty", "thirty", "cuenta de la toma, en pies"],
+  ["cabina.twenty", "twenty", "cuenta de la toma, en pies"],
+  ["cabina.ten", "ten", "cuenta de la toma, en pies"],
 ];
 
 /**
@@ -692,8 +701,19 @@ const AJUSTES_EN_CALMA = {
   use_speaker_boost: false,
   speed: 0.95,
 };
+/*
+ * **Y las explicaciones de los avisos de las cajas, también.** Suenan justo
+ * detrás de la máquina —*terrain*, *sink rate*— y son la otra mitad de la
+ * lección: la primera alarma de avión que se oye, y detrás alguien que no se
+ * asusta. Leídas como alarma, enseñarían lo contrario. Ver
+ * `flight/escalera.ts`.
+ */
 const EN_CALMA = {
-  "vuelo.terrenoSube": "Terreno, subí.",
+  "vuelo.terrenoSube": "El suelo está cerca: subí.",
+  "vuelo.terrenoBajo": "Vas muy bajo: subí un poco.",
+  "vuelo.bajasRapido": "Bajás muy de golpe: levantá un poco la nariz.",
+  "vuelo.muyInclinado": "Estás muy inclinado: enderezá las alas.",
+  "vuelo.quitaElGas": "Quitá el gas.",
   "vuelo.sacaElTren": "Sacá el tren.",
 };
 for (const f of filas) {

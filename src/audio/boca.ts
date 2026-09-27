@@ -69,8 +69,6 @@
  * existe `SpeechSynthesisUtterance`.
  */
 
-import { DE_LA_CUENTA } from "./cabina";
-
 /**
  * Cuánto manda lo que se va a decir.
  *
@@ -239,39 +237,14 @@ export function explicaLaEspera(clave: string | undefined): boolean {
  */
 const PLAZAS_DE_ESPERA = 4;
 
-/**
- * Las frases que **se sustituyen entre sí** en vez de hacer cola.
- *
- * Una cuenta atrás no es una conversación: si todavía suena «twenty» cuando
- * toca «ten», lo que hay que oír es **ten**, no las dos. Decirlas seguidas es
- * contar el pasado, y encima tarde.
- *
- * Y eso es justo lo contrario de lo que necesitan V1 y Vr, que son **dos
- * sucesos distintos** del mismo medio minuto: perder uno es perder la mitad de
- * la lección. Con una sola plaza de espera no se podía tener las dos cosas —la
- * última ganaba siempre— y lo que se perdía era el canto. Con la cola y esta
- * lista se tienen: lo que es una cuenta se pisa, lo que es un suceso espera.
- *
- * **Y la cuenta es la cuenta, no todo lo que empieza por `cabina.`**, que era
- * como se reconocía. Con eso un aviso de cabina y un número de la cuenta se
- * pisaban entre sí como si fueran el mismo: medido en Gran Canaria con el JAZ
- * 90 en el peldaño de arriba, «sink rate» se cayó cuatro veces porque llegaba
- * un número o un «airspeed low» detrás, y de la cuenta, de quinientos a
- * treinta, no sonó ni un número. Un aviso de peligro tirado por un número es
- * justo lo contrario de la regla de las tres eses. Ahora la cuenta son sus
- * números —los del radioaltímetro y los de la instructora en casa, que son la
- * misma cuenta dicha por otra boca— y lo demás de la cabina son sucesos, que
- * esperan.
+/*
+ * **Aquí vivía la cuenta de la toma, y ya no.** Había una regla para que sus
+ * números se sustituyeran en la cola en vez de esperar, y no bastaba: aun
+ * sustituyéndose, el número esperaba detrás de la torre y salía tarde —«un
+ * buen rato después me dice 100 sin que cuadre»—. La cuenta es de una caja
+ * del avión y no pide turno: tiene su propia vía en `audio/maquina.ts`, y a
+ * esta boca solo llegan personas.
  */
-const MISMA_CUENTA = "cuenta";
-
-/** A qué cuenta pertenece esta clave, si pertenece a alguna. */
-function laCuentaDe(clave: string | undefined): string | null {
-  if (!clave) return null;
-  return DE_LA_CUENTA.has(clave) || clave.startsWith("cuenta.")
-    ? MISMA_CUENTA
-    : null;
-}
 
 /**
  * El silencio entre una frase y la siguiente, ms.
@@ -379,6 +352,18 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   // venías bajo ya no describe nada.
   ["vuelo.mandanFrustrar", "vuelo.papiBajo"],
   ["vuelo.mandanFrustrar", "vuelo.aroBajo"],
+  /*
+   * **Y en la final, lento y rápido no van seguidos.** Entre los dos umbrales
+   * hay casi treinta puntos de velocidad y un avión no los cruza en diez
+   * segundos; si alguna vez sale uno detrás del otro es que algo mide mal, y
+   * quien lo oye se queda sin saber qué hacer: «le meto gas y "bajás muy
+   * rápido"». Manda el que se dijo primero. Ver `bandaDeVelocidad`.
+   */
+  ["vuelo.lentoYBajo", "vuelo.rapido"],
+  ["vuelo.lentoYBajo", "vuelo.pediFlaps"],
+  // Y bajar de golpe después de «metéle gas»: el gas ya es lo que lo corta, y
+  // «levantá la nariz» encima es otra orden para lo mismo.
+  ["vuelo.lentoYBajo", "vuelo.bajasRapido"],
 ];
 
 /** Con quién riñe esta clave, si riñe con alguien. */
@@ -564,10 +549,9 @@ export class Boca {
    *
    * Se caía la más vieja, con este argumento: «la que más cerca está de dejar
    * de describir lo que pasa». El argumento es bueno y ya lo cumple otro:
-   * `CADUCA` tira a los cuatro segundos lo que dejó de ser verdad, y
-   * `MISMA_CUENTA` hace que una cuenta atrás se sustituya en vez de hacer
-   * cola. Con esos dos puestos, tirar además la más vieja es tirar dos veces
-   * por el mismo motivo — y lo que se tira es siempre lo primero que pasó.
+   * `CADUCA` tira a los cuatro segundos lo que dejó de ser verdad. Con eso
+   * puesto, tirar además la más vieja es tirar dos veces por el mismo motivo
+   * — y lo que se tira es siempre lo primero que pasó.
    *
    * Y lo primero que pasa, al final de un vuelo, es la torre. Medido en el
    * barrido, cinco escenarios fallando la misma prueba y siempre por lo
@@ -580,19 +564,6 @@ export class Boca {
    * quien llega tarde espera, y si ya no viene a cuento, no lo dice.
    */
   private encolar(esta: (typeof this.cola)[number]): void {
-    /*
-     * Y lo que es la misma cuenta no hace cola: la sustituye. Ver
-     * `MISMA_CUENTA`.
-     */
-    const cuenta = laCuentaDe(esta.clave);
-    if (cuenta) {
-      for (let i = this.cola.length - 1; i >= 0; i--) {
-        if (laCuentaDe(this.cola[i]!.clave) === cuenta) {
-          this.apuntarDescarte(this.cola[i]!.clave, "la pisó una más nueva");
-          this.cola.splice(i, 1);
-        }
-      }
-    }
     this.cola.push(esta);
     if (this.cola.length <= PLAZAS_DE_ESPERA) return;
     /*

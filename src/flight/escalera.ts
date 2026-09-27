@@ -17,26 +17,35 @@
  * - **Taguato Ruvicha (14+): la voz de cabina.** Los cantos de verdad, en
  *   inglés aeronáutico: *V1, rotate*, *minimums*, *terrain, pull up*.
  *
- * ## Y una excepción, que es la cuenta de la toma
+ * ## Y lo que dice el avión no sube por la escalera
  *
- * *Five hundred, four hundred… fifty, forty, thirty, twenty, ten.* En el avión
- * que la lleva —los que tienen `avisosHablados` en la ficha: el turbohélice de
- * diecinueve plazas y los dos reactores— **la dice la máquina en los cuatro
- * peldaños**, en inglés, en pies y con la voz de cabina. Se decidió oyéndola
- * jugar —«va marcando la distancia hasta one hundred y luego va de 10 en
- * 10»—: es parte del vuelo, sí o sí, y no una lección de un peldaño.
+ * Una cabina oye dos clases de voces. Unas son de la tripulación —*V one*,
+ * *rotate*, *gear up*— y ésas sí suben: abajo las dice la instructora en casa,
+ * arriba se cantan en inglés. Las otras las dice **una caja del avión**: el
+ * radioaltímetro con su cuenta, el avisador de proximidad al terreno con su
+ * *terrain* y su *sink rate*, el de pérdida, el TCAS con su *traffic,
+ * traffic*. Esas no se traducen ni se retiran: **en el avión que las lleva
+ * suenan con su voz de máquina en los cuatro peldaños**, porque es lo que
+ * suena en ese avión, y es lo que se va a oír tal cual el día que se suba a
+ * uno de verdad.
  *
- * No rompe la regla de la calma, y por eso es la única: la cuenta **no es un
- * aviso**. Es una voz de máquina neutra que dice un número, siempre igual,
- * siempre en el mismo sitio de la toma, pase lo que pase. No pide nada, no
- * dice que algo vaya mal y no se aprende a temer: se aprende su ritmo, que es
- * lo que enseña a recoger. Y es la que se va a oír tal cual el día que se
- * suba a uno de verdad — traducida o en metros, habría que desaprenderla.
+ * Se decidió en dos veces, oyéndolo jugar. Primero con la cuenta: «va
+ * marcando la distancia hasta one hundred y luego va de 10 en 10», y «me lo
+ * tiene que decir una voz de robot», no la instructora. Después con los
+ * avisos: «es que ni el "traffic" ni el "terrain" ni nada de eso, y yo sé que
+ * la cabina habla».
  *
- * Lo que sí es aviso sigue subiendo por la escalera: *terrain*, *sink rate*,
- * *pull up* son calma y castellano abajo y la voz de verdad arriba. Y en ese
- * avión la instructora ya no cuenta por encima: un suceso, una voz. Ver
- * `cantaLaCabina` y `laCuentaDe` en `avisos-de-altura.ts`.
+ * **Lo que crece con el peldaño es la explicación, no el sonido.** En los tres
+ * de abajo, justo detrás de la máquina —detrás, no a la vez: un suceso, una
+ * voz—, la instructora cuenta con calma qué es eso y qué se hace: «mirá a tu
+ * derecha: hay otro avión cerca», «el suelo está cerca: subí». En el de
+ * cabina ya no hace falta. Así se enseña la calma con el sonido de verdad: la
+ * primera vez que alguien oiga una alarma de avión tiene que oír, justo
+ * detrás, a alguien que no se asusta.
+ *
+ * En la avioneta, que no lleva ninguna de esas cajas, no suena ninguna: lo
+ * dice la instructora, que es quien lo diría sentada al lado. Ver
+ * `loDiceElAvion` en `audio/cabina.ts` y `Game.cantar`.
  *
  * ## Dos reglas que no se rompen
  *
@@ -51,7 +60,7 @@
  * canta**, no si se habla. Ver `Game.cantar` y `audio/instructor.ts`.
  *
  * Este módulo no dibuja, no habla y no sabe qué tramo se está jugando: son
- * cuatro tablas y dos funciones puras.
+ * cuatro tablas y tres funciones puras.
  */
 
 import type { Escalon } from "./avisos-de-altura";
@@ -116,23 +125,36 @@ export function canalesDe(peldano: Peldano): Canales {
 }
 
 /**
- * Qué canta la voz de cabina: un **aviso** o la **cuenta** de la toma.
+ * De quién es un canto de cabina: de **la tripulación** o de **una caja** del
+ * avión —el radioaltímetro, el avisador de terreno, el de pérdida, el TCAS—.
  *
- * Son dos clases de canto y no suben igual. Ver la excepción en la cabecera
- * de este fichero.
+ * Son dos clases y no suben igual por la escalera. Ver la cabecera de este
+ * fichero; qué clave es de qué clase lo dice `esDeUnaCaja` en
+ * `audio/cabina.ts`.
  */
-export type Canto = "aviso" | "cuenta";
+export type Canto = "tripulacion" | "maquina";
 
 /**
- * Si la voz de cabina canta esto en este peldaño.
+ * Si el canto suena en inglés, con la voz de cabina, en este peldaño.
  *
- * Los avisos, solo en el de cabina; la cuenta, en los cuatro. **Si el avión
- * tiene con qué cantarla** es otra pregunta, y no es de este fichero: la
- * contesta `loDiceElAvion` en `audio/cabina.ts`. En la avioneta, que no lleva
- * radioaltímetro que cante, la cuenta la sigue diciendo la instructora.
+ * Los de la tripulación, solo en el de cabina; los de una caja, en los cuatro.
+ * **Si el avión lleva esa caja** es otra pregunta, y no es de este fichero: la
+ * contesta `loDiceElAvion` en `audio/cabina.ts`.
  */
 export function cantaLaCabina(peldano: Peldano, canto: Canto): boolean {
-  return canto === "cuenta" || CANALES[peldano].cabina;
+  return canto === "maquina" || CANALES[peldano].cabina;
+}
+
+/**
+ * Si detrás de la máquina la instructora explica lo que acaba de sonar.
+ *
+ * En los tres peldaños de abajo, sí: la caja dice *sink rate* y ella cuenta
+ * qué quiere decir y qué se hace. En el de cabina, no: ahí ya se vuela con la
+ * cabina de verdad, y lo que crece con el peldaño es justo esto — la
+ * explicación, no el sonido.
+ */
+export function laInstructoraLoExplica(peldano: Peldano): boolean {
+  return !CANALES[peldano].cabina;
 }
 
 /**
@@ -158,18 +180,19 @@ export function claveDelAviso(
  *
  * Ciento cincuenta, cien y cincuenta metros sobre la pista: las tres que
  * importan en una aproximación, y no la cuenta atrás entera. La cuenta atrás
- * —cien, cincuenta, treinta, veinte, diez— es el canal de la voz y tiene su
- * propio ritmo; ver `avisos-de-altura.ts`. Esto es lo otro: un número grande,
+ * es del radioaltímetro, va en pies y tiene su propio ritmo; ver
+ * `avisos-de-altura.ts`. Esto es lo otro: un número grande,
  * tres veces, para empezar a leer una altura en vez de mirar un dibujo.
  *
- * `dice` y `encasa` llevan la propia cifra porque estos escalones no se
- * cantan: se enseñan. Comparten el tipo para poder reusar `AvisosDeAltura`,
- * que es quien sabe cruzar un escalón hacia abajo una sola vez.
+ * `dice` lleva la propia cifra porque estos escalones no se cantan: se
+ * enseñan. Comparten el tipo para poder reusar `AvisosDeAltura`, que es quien
+ * sabe cruzar un escalón hacia abajo una sola vez; y por eso, igual que la
+ * cuenta, salen con lo que marca el radioaltímetro, en el instante del cruce.
  */
 export const EN_GRANDE: readonly Escalon[] = [
-  { metros: 150, dice: "150", encasa: "150" },
-  { metros: 100, dice: "100", encasa: "100" },
-  { metros: 50, dice: "50", encasa: "50" },
+  { metros: 150, dice: "150" },
+  { metros: 100, dice: "100" },
+  { metros: 50, dice: "50" },
 ];
 
 /**
@@ -181,7 +204,7 @@ export const EN_GRANDE: readonly Escalon[] = [
  * marca pies.
  */
 export const EN_GRANDE_EN_PIES: readonly Escalon[] = [
-  { metros: 152.4, dice: "500", encasa: "500" },
-  { metros: 30.48, dice: "100", encasa: "100" },
-  { metros: 15.24, dice: "50", encasa: "50" },
+  { metros: 152.4, dice: "500" },
+  { metros: 30.48, dice: "100" },
+  { metros: 15.24, dice: "50" },
 ];
