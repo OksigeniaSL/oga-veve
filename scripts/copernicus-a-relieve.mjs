@@ -44,16 +44,33 @@ const R = 6371008;
 
 // ── Descarga por rangos ───────────────────────────────────────────────────
 
-/** Un trozo de un fichero remoto, por rango de bytes. */
+/**
+ * Un trozo de un fichero remoto, por rango de bytes.
+ *
+ * **Con reintentos**, que un mapa de quinientos kilómetros son seiscientas
+ * teselas y veinte minutos de descarga. La primera tirada del mundo de
+ * Asunción a Ciudad del Este murió al setenta por ciento porque S3 cerró una
+ * conexión —«other side closed»—, y con ella se perdía todo lo bajado: el
+ * fichero se escribe al final. Un corte suelto no es un error del dato, así
+ * que se espera y se vuelve a pedir; cinco seguidos sí lo son, y entonces se
+ * para.
+ */
 async function trozo(url, desde, hasta) {
-  const res = await fetch(url, {
-    headers: {
-      Range: `bytes=${desde}-${hasta}`,
-      'User-Agent': 'oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)',
-    },
-  });
-  if (!res.ok && res.status !== 206) throw new Error(`${url} respondió ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  for (let intento = 1; ; intento++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          Range: `bytes=${desde}-${hasta}`,
+          'User-Agent': 'oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)',
+        },
+      });
+      if (!res.ok && res.status !== 206) throw new Error(`${url} respondió ${res.status}`);
+      return Buffer.from(await res.arrayBuffer());
+    } catch (e) {
+      if (intento >= 5) throw e;
+      await new Promise((listo) => setTimeout(listo, 2000 * intento));
+    }
+  }
 }
 
 /** El nombre de la tesela de un grado, como los nombra Copernicus. */
