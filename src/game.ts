@@ -526,7 +526,26 @@ import {
   laVelocidadEsDelJuego,
   limitarElRodaje,
 } from "./flight/tope-de-rodaje";
-import { leerTexto, ponerTexto } from "./datos/guardado";
+import { escribirYa, leerTexto, ponerTexto } from "./datos/guardado";
+import {
+  pedirRearranque,
+  sePuedeCambiarDeAvion,
+} from "./flight/cambio-de-avion";
+
+/**
+ * La sesión de la pestaña, o nada si el navegador no la da.
+ *
+ * Acceder a ella puede lanzar —almacenamiento bloqueado, ventana privada de
+ * algunos navegadores— y sin ella el cambio de avión sigue funcionando: solo
+ * que el arranque pasará por el hangar, con el avión nuevo ya elegido.
+ */
+function sesionDeLaPestana(): Storage | null {
+  try {
+    return globalThis.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
 import {
   aDondeConLaReserva,
   elAlterno,
@@ -11484,13 +11503,37 @@ export class Game {
   }
 
   /**
-   * Cambia de aeronave.
+   * Cambia de aeronave: **empieza un vuelo nuevo con la siguiente**.
    *
-   * Hasta ahora la flota existía en el código y no había forma de llegar a
-   * ella: se volaba siempre la misma avioneta. Se cambia en tierra o en el
-   * aire, y el avión nuevo aparece donde estaba el anterior.
+   * Montaba el avión nuevo donde estaba el anterior y seguía volando, y eso
+   * dejaba el vuelo a medias: los destinos y el combustible se deciden al
+   * arrancar y para el avión de ese arranque. Se cambió del cuatrimotor a la
+   * avioneta en Pettirossi y la avioneta se quedó sin destinos —«no me deja
+   * elegir otro aeropuerto»— y con veinte mil ochocientos cuarenta y dos kilos
+   * en el depósito. Ahora hace lo que hace el hangar: guarda el avión y vuelve
+   * a arrancar, por el mismo camino. Ver `flight/cambio-de-avion.ts`.
+   *
+   * Se cambia con la tecla del avión —la P, de fábrica—, que es el único
+   * sitio: la placa del nombre de arriba no es un botón.
    */
   private cycleAircraft(): void {
+    /*
+     * **Y solo en tierra y parado.** En el aire no se cambia de avión, y
+     * enseñarlo sería enseñar algo que no es. Se dice con el freno, que es lo
+     * que hay que hacer, y con palabras para quien lee.
+     */
+    const s = this.flight.state;
+    if (
+      !sePuedeCambiarDeAvion({
+        enTierra: s.onGround,
+        velocidad: Math.hypot(s.velocity.x, s.velocity.z),
+      })
+    ) {
+      this.hud.senal.mostrar("freno", t("avion.cambiarParado"), null, {
+        segundos: 4,
+      });
+      return;
+    }
     /*
      * **Y solo entre los que caben en esta pista.**
      *
@@ -11503,15 +11546,11 @@ export class Game {
      * Contado jugando, y las tres quejas eran la misma: «¿por qué con Tukã se
      * me va a la derecha?», «le doy a la flecha como un desesperado», «y ahora
      * es un barco».
-     *
-     * La regla ya estaba escrita y ya estaba en su módulo para poder usarse
-     * desde cualquier sitio. Lo que faltaba era usarla aquí. Es la misma
-     * lección de siempre en este proyecto: se arregla donde se mira y no donde
-     * también se mira.
      */
     // La pista que se tiene debajo, no la de casa: en El Hierro, llegando de
     // La Palma, se podía pasar al JAZ 90, que ahí no cabe.
-    const campo = campoDe(this.elCampo().escenario);
+    const aqui = this.elCampo().escenario;
+    const campo = campoDe(aqui);
     const quepan = AIRCRAFT.filter(
       (a) => a === this.aircraft || cabeEn(a, campo).cabe,
     );
@@ -11528,86 +11567,17 @@ export class Game {
       });
       return;
     }
-    const { position, heading, airspeed } = this.flight.state;
-    const carried = { position: position.clone(), heading, airspeed };
-
     /*
-     * **Y si estabas en el suelo, el avión nuevo nace en el suelo.**
-     *
-     * El origen de una aeronave no está en sus ruedas: está a la altura de su
-     * tren por encima de ellas. Conservar la posición tal cual al cambiar de
-     * avión daba por bueno el tren del que se iba, así que pasar del de
-     * fuselaje ancho —cinco metros y veinte de tren— a la avioneta —uno y
-     * cuarenta— dejaba a la avioneta **flotando cuatro metros**. Y desde ahí se
-     * caía, y el juego hacía lo que hace cuando un avión se cae: «se rompió,
-     * volvemos a empezar».
-     *
-     * Quien lo jugó lo contó exactamente así: «la avioneta nace en el aire
-     * porque el juego parte de un avión enorme y es como si se cayera, cuando
-     * en realidad estoy cambiando de aparato».
-     *
-     * Cambiar de avión no es un percance, así que se le baja —o se le sube— lo
-     * que cambia el tren, y aterriza en el sitio donde estaba el anterior.
+     * La preferencia, como la guarda el hangar, y el recado para que el
+     * arranque no vuelva a preguntar quién vuela ni dónde. En el campo donde
+     * se está: si se acaba de llegar a otro aeropuerto, el vuelo nuevo sale
+     * de allí.
      */
-    if (this.flight.state.onGround) {
-      carried.position.y += next.gearHeight - this.aircraft.gearHeight;
-    }
-
-    this.aircraft = next;
-    this.audio.setEngine(next.sound);
-    // Y si este avión mete las patas o no, que es lo que decide si hay palanca,
-    // y lo que tardan sus flaps.
-    this.input.ponerAeronave(
-      next.trenRetractil,
-      next.tardanLosFlaps,
-      next.llevaFlaps,
-    );
-
-    this.scene.remove(this.aircraftMesh.group);
-    this.aircraftMesh = createAircraftMesh(next);
-    /*
-     * Y se vuelve a buscar el modelo, que si no se pierde para siempre.
-     *
-     * Cargarlo solo al arrancar la partida dejaba un agujero: cambiar de
-     * aeronave montaba las cajas y ya no volvía a mirar, así que quien tocara
-     * la tecla se quedaba con los cubos hasta recargar. Se encontró sin
-     * buscarlo — «sin querer pulsé una tecla y me aparecieron las avionetas de
-     * cubos, pero ya solo podía elegir entre esas dos».
-     */
-    void this.ponerModeloSiLoHay();
-    this.scene.add(this.aircraftMesh.group);
-
-    this.flight = this.buildFlightModel(this.tier);
-    this.flight.reset(carried);
-
-    this.updateBadge();
-    /*
-     * Y el esquema del ala, que se quedaba con el avión de antes.
-     *
-     * `montarElAla` solo se llamaba al arrancar y al cambiar de idioma, así que
-     * después de cambiar de aeronave el panel seguía enseñando el ala y la masa
-     * de la anterior — un panel que explica **este** avión enseñando otro.
-     */
-    this.montarElAla();
-    /*
-     * **Y el circuito, que es del avión y no del aeropuerto.**
-     *
-     * `escalaDeCircuito` estira la figura con la velocidad de aproximación —el
-     * de fuselaje ancho vuela un circuito de casi seis kilómetros de tramo de
-     * subida donde la avioneta vuela cuatro y pico— y eso estaba bien montado
-     * desde el primer día. Lo que no estaba es **volver a montarlo al cambiar
-     * de avión**: el circuito solo se construía al preparar el aeródromo, así
-     * que quien pulsaba la tecla se llevaba volando un reactor por el circuito
-     * de la avioneta, con el giro cantado donde le tocaba a ella.
-     *
-     * Dicho jugando: «si voy con un cuatrimotor o un bimotor a reacción, que no
-     * me diga que dé el giro cuando todavía no llevo ni dos segundos en el
-     * aire, porque ese tipo de avión necesita más giro». Y era verdad: la
-     * cuenta existía y no se estaba usando.
-     */
-    this.ponerCircuito();
-    this.ponerTrafico();
-    this.hud.flash(`${next.name} — ${t(next.descriptionKey as never)}`, 3.5);
+    ponerTexto("aeronave", next.id);
+    ponerTexto("escenario", aqui.id);
+    escribirYa();
+    pedirRearranque(sesionDeLaPestana(), { escenario: aqui.id, avion: next.id });
+    location.reload();
   }
 
   /**

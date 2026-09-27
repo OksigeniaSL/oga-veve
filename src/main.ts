@@ -80,6 +80,16 @@ import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
+import { leerRearranque } from "./flight/cambio-de-avion";
+
+/** La sesión de la pestaña, si el navegador la da. Ver `leerRearranque`. */
+function sesionDeLaPestana(): Storage | null {
+  try {
+    return globalThis.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /*
  * **Y el juego avisa de que ha empezado**, para el vigilante de `index.html`:
@@ -137,7 +147,17 @@ if (!canvas || !hudRoot || !creditsRoot || !touchRoot) {
  * aeródromo nuevo sin dar dos clics cada vez.
  */
 const params = new URLSearchParams(location.search);
-const pedido = params.get("escenario");
+/*
+ * **Y si el vuelo anterior dejó dicho con qué avión seguir, se sigue.**
+ *
+ * Es cambiar de avión desde el vuelo: se guarda el avión, se recarga y aquí se
+ * arranca en el campo donde se estaba, sin volver a preguntar quién vuela ni
+ * dónde. Manda sobre la dirección —un enlace con `?avion=` no puede deshacer
+ * lo que se acaba de elegir— y se lee una sola vez. Ver
+ * `flight/cambio-de-avion.ts`.
+ */
+const rearranque = leerRearranque(sesionDeLaPestana());
+const pedido = rearranque?.escenario ?? params.get("escenario");
 const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
 
 let escenario = directo;
@@ -181,14 +201,19 @@ if (misionPedida) {
  * los bancos no pueden dar clics en el hangar cuando entran directos.
  */
 let avion: AircraftConfig =
-  AIRCRAFT.find((a) => a.id === params.get("avion")) ?? AIRCRAFT[0]!;
+  AIRCRAFT.find((a) => a.id === (rearranque?.avion ?? params.get("avion"))) ??
+  AIRCRAFT[0]!;
 /*
  * **A dónde se va**, elegido en el hangar. `?destino=tenerife-sur` lo fija
  * desde la dirección, como el resto: sin eso ningún banco podría volar una
  * ruta concreta sin dar clics. Sin nada, el juego propone el vecino más
  * cercano. Ver `Game.destinoDeSalida`.
  */
-let destino: string | undefined = params.get("destino") ?? undefined;
+let destino: string | undefined = rearranque
+  ? // El destino de antes era del avión de antes: el juego propone uno que
+    // valga para éste. Ver `Game.destinoDeSalida`.
+    undefined
+  : (params.get("destino") ?? undefined);
 
 /*
  * **Primero quién vuela, y después dónde.**

@@ -1,23 +1,23 @@
 /**
- * Cambiar de avión en pista no puede romper nada.
+ * Cambiar de avión es empezar otro vuelo, y solo en tierra y parado.
  *
- * Se vio jugando, y la explicación de quien lo vio es exacta:
+ * Este banco nació por otra queja —«la avioneta nace en el aire porque el
+ * juego parte de un avión enorme y es como si se cayera»— cuando la tecla
+ * montaba el avión nuevo donde estaba el anterior. Arreglado eso, quedaba lo
+ * gordo: **los destinos y el combustible se deciden al arrancar, para el avión
+ * de ese arranque**, y cambiar de avión por encima los dejaba con el de antes.
+ * Contado jugando en Pettirossi: del cuatrimotor, que allí no tiene destino, a
+ * la avioneta, que se quedó sin destinos —«no me deja elegir otro
+ * aeropuerto»— y con 20 842 kg en el depósito.
  *
- * > «Si estoy en la pista con la avioneta y pulso P para cambiar de avión, lo
- * > que ocurre cuando paso del cuatrimotor al siguiente es que ésta aparece
- * > ahora en el aire y cae. Entonces la instructora dice “se rompió, volvemos a
- * > empezar”. La avioneta nace en el aire porque el juego parte de un avión
- * > enorme y es como si se cayera, cuando en realidad estoy cambiando de
- * > aparato.»
+ * Ahora la tecla guarda el avión y vuelve a arrancar por el camino del hangar.
+ * Lo que se mide aquí es eso, con el arranque de verdad:
  *
- * **El origen de una aeronave no está en sus ruedas**: está a la altura de su
- * tren por encima de ellas. Conservar la posición tal cual al cambiar de avión
- * daba por bueno el tren del que se iba, así que pasar del de fuselaje ancho
- * —5,20 m de tren— a la avioneta —1,40— la dejaba flotando cuatro metros. Y
- * desde ahí se caía, y el juego hacía lo que hace cuando un avión se cae.
- *
- * Esto no se puede cazar con una prueba unitaria: hace falta el mundo montado,
- * con su terreno y su pista, y la tecla de verdad.
+ * - en el aire la tecla no cambia nada, y se dice;
+ * - en tierra y parado, la página vuelve a arrancar con el avión siguiente;
+ * - el vuelo nuevo tiene **los destinos y el combustible de ese avión**, está
+ *   apoyado sobre sus ruedas y sin percance;
+ * - y el recado es de un solo uso: la recarga siguiente vuelve a lo de siempre.
  *
  * Uso: `node scripts/verificar-cambio-de-avion.mjs [escenario] [tramo]`
  */
@@ -26,8 +26,8 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5293;
-const ESCENARIO = process.argv[2] ?? "tenerife-norte";
-const TRAMO = process.argv[3] ?? "taguato";
+const ESCENARIO = process.argv[2] ?? "pettirossi";
+const TRAMO = process.argv[3] ?? "taguato-ruvicha";
 
 const server = await createServer({
   root: process.cwd(),
@@ -45,176 +45,138 @@ const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
-const page = await navegador.newPage({ viewport: { width: 900, height: 560 } });
-const errores = [];
-page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
-await page.addInitScript(() => {
-  localStorage.setItem("oga-veve:teclas-vistas", "1");
-});
-
-/*
- * **Se empieza por el más grande**, que es el caso que se rompía: del tren más
- * alto de la flota al más bajo. Al revés el avión aparecía enterrado, que el
- * juego perdona porque lo sube al suelo, y no se habría visto nunca.
- */
-await page.goto(
-  `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=jaz-120`,
-);
-await page
-  .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })
-  .catch(() => {});
-await page.waitForTimeout(2000);
-
-const mirar = () =>
-  page.evaluate(() => {
-    const o = globalThis.__oga;
-    const s = o.estado();
-    const a = o.avion();
-    /*
-     * **Y el circuito que tiene puesto**, que es del avión y no del campo.
-     *
-     * `escalaDeCircuito` lo estira con la velocidad de aproximación, pero el
-     * circuito solo se montaba al preparar el aeródromo: cambiar de avión con
-     * la tecla te dejaba volando un reactor por el circuito de la avioneta.
-     * Dicho jugando: «que no me diga que dé el giro cuando todavía no llevo ni
-     * dos segundos en el aire, porque ese tipo de avión necesita más giro».
-     */
-    const v = o.circuito();
-    const subida =
-      v.length > 1 ? Math.hypot(v[1].x - v[0].x, v[1].z - v[0].z) : 0;
-    const sobre = s.position.y - o.suelo(s.position.x, s.position.z);
-    return {
-      avion: a.id,
-      enElSuelo: s.onGround,
-      sobreElSuelo: +sobre.toFixed(2),
-      /*
-       * Lo que sobra por encima de **su** tren. Es el número que dice si este
-       * avión ha nacido apoyado: cero es apoyado, sea el tren de la avioneta o
-       * el del de fuselaje ancho.
-       */
-      flotando: +(sobre - a.tren).toFixed(2),
-      percance: !!o.percance?.(),
-      subida: Math.round(subida),
-      alturaDeCircuito: v.length > 1 ? Math.round(v[1].y - v[0].y) : 0,
-    };
+try {
+  const page = await navegador.newPage({ viewport: { width: 900, height: 560 } });
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
+  await page.addInitScript(() => {
+    localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
 
-/*
- * **Se mira en el fotograma siguiente, no cuando se haya posado todo.**
- *
- * Este banco esperaba segundo y medio después de cada tecla, y con segundo y
- * medio un avión que nace flotando cuatro metros ya se ha caído, ha tocado el
- * suelo y descansa sobre sus ruedas: la foto sale idéntica con el fallo y sin
- * él. Se comprobó a propósito, rompiendo el arreglo a mano — y el banco seguía
- * diciendo que todo estaba bien, que es la peor cosa que puede hacer un banco.
- *
- * Cuatro metros de caída son casi un segundo. Al sexto de segundo de haber
- * pulsado la tecla, el avión que nace apoyado sigue apoyado y el que nace en el
- * aire todavía está cayendo, que es exactamente la pregunta.
- */
-const AL_INSTANTE = 160;
-const YA_POSADO = 1500;
+  const arrancado = () =>
+    page
+      .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 90000 })
+      .then(() => page.waitForTimeout(2000))
+      .then(() => true)
+      .catch(() => false);
 
-const vistos = [await mirar()];
-// Una vuelta entera a la flota, que es lo que hace quien pulsa la tecla.
-const despues = [];
-for (let i = 0; i < 6; i++) {
+  const mirar = () =>
+    page.evaluate(() => {
+      const o = globalThis.__oga;
+      const s = o.estado();
+      const a = o.avion();
+      const sobre = s.position.y - o.suelo(s.position.x, s.position.z);
+      const d = o.combustible();
+      return {
+        avion: a.id,
+        enElSuelo: s.onGround,
+        flotando: +(sobre - a.tren).toFixed(2),
+        percance: !!o.percance?.(),
+        destinos: (o.pistasDeLosVecinos?.() ?? []).length,
+        kilos: Math.round(d.kilos),
+        cabe: Math.round(d.cabe),
+        url: location.search,
+      };
+    });
+
+  // ── En el aire, la tecla no cambia de avión ─────────────────────────────
+  await page.goto(
+    `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=${TRAMO}&avion=jaz-120`,
+  );
+  await arrancado();
+  const enElAire = await mirar();
+  await page.evaluate(() => {
+    globalThis.__recargas = (globalThis.__recargas ?? 0) + 1;
+  });
   await page.keyboard.press("KeyP");
-  await page.waitForTimeout(AL_INSTANTE);
-  vistos.push(await mirar());
-  await page.waitForTimeout(YA_POSADO);
-  despues.push(await mirar());
-}
-
-console.log("\n  la vuelta entera a la flota:\n");
-for (const v of vistos)
-  console.log(
-    `  · ${v.avion.padEnd(8)} ${v.enElSuelo ? "en el suelo" : "EN EL AIRE "} ` +
-      `· ${String(v.sobreElSuelo).padStart(5)} m sobre el terreno` +
-      `${v.flotando > 0.3 ? `  · ${v.flotando} m EN EL AIRE` : ""}` +
-      `${v.percance ? "  · PERCANCE" : ""}`,
+  await page.waitForTimeout(1500);
+  const trasLaTecla = await page
+    .evaluate(() => ({
+      misma: globalThis.__recargas === 1,
+      avion: globalThis.__oga.avion().id,
+      tarjeta: globalThis.__oga.tarjeta?.() ?? null,
+    }))
+    .catch(() => ({ misma: false, avion: "?", tarjeta: null }));
+  comprobar(
+    "en el aire la tecla no cambia de avión",
+    !enElAire.enElSuelo && trasLaTecla.misma && trasLaTecla.avion === enElAire.avion,
+    `${enElAire.enElSuelo ? "estaba en tierra: no mide nada" : "en el aire"} · ${trasLaTecla.avion} · ${trasLaTecla.misma ? "sin recargar" : "RECARGÓ"}`,
+    "en el aire no se cambia de avión: no es real",
+  );
+  /*
+   * Con el freno, salvo que haya puesta una tarjeta que importe más —la senda,
+   * un aviso—: esa no se tapa por contestar a una tecla, y es lo correcto.
+   */
+  const t = trasLaTecla.tarjeta;
+  comprobar(
+    "y lo dice con el freno",
+    t?.dibujo === "freno" || (t?.prioridad ?? 0) > 0,
+    `tarjeta: ${t ? `${t.dibujo} (prioridad ${t.prioridad})` : "ninguna"}`,
+    "una tecla que no hace nada se aprieta más fuerte",
   );
 
-comprobar(
-  "se recorre la flota entera",
-  new Set(vistos.map((v) => v.avion)).size >= 6,
-  `${new Set(vistos.map((v) => v.avion)).size} aviones distintos`,
-  "si la tecla no cambia de avión, esto no está midiendo nada",
-);
+  // ── En tierra y parado, empieza otro vuelo ──────────────────────────────
+  await page.goto(
+    `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=jaz-120`,
+  );
+  await arrancado();
+  const antes = await mirar();
+  console.log(`\n  antes: ${JSON.stringify(antes)}`);
+  const recargada = page.waitForEvent("load", { timeout: 30000 }).catch(() => null);
+  await page.keyboard.press("KeyP");
+  await recargada;
+  const volvio = await arrancado();
+  const despues = volvio ? await mirar() : null;
+  console.log(`  después: ${JSON.stringify(despues)}\n`);
 
-comprobar(
-  "ninguno nace en el aire",
-  vistos.every((v) => v.enElSuelo),
-  vistos
-    .filter((v) => !v.enElSuelo)
-    .map((v) => v.avion)
-    .join(", ") || "todos con las ruedas en el suelo",
-  "el origen de un avión está a la altura de su tren, y cada tren mide lo suyo",
-);
+  comprobar(
+    "en tierra y parado, la tecla empieza un vuelo con otro avión",
+    volvio && despues && despues.avion !== antes.avion,
+    despues ? `${antes.avion} → ${despues.avion}` : "no volvió a arrancar",
+    "cambiar de avión es arrancar otra vez, por el camino del hangar",
+  );
+  if (despues) {
+    comprobar(
+      "y el avión nuevo tiene los destinos que le tocan",
+      antes.avion !== "jaz-120" || ESCENARIO !== "pettirossi" || despues.destinos > 0,
+      `${antes.destinos} destinos con ${antes.avion} → ${despues.destinos} con ${despues.avion}`,
+      "los destinos se filtran al arrancar por lo que cabe en cada pista",
+    );
+    comprobar(
+      "y el combustible de su depósito, no el del de antes",
+      despues.kilos <= despues.cabe && despues.kilos > 0,
+      `${despues.kilos} kg de ${despues.cabe} que caben (antes ${antes.kilos} kg)`,
+      "veinte mil kilos en una avioneta no caben ni diez veces en su ala",
+    );
+    comprobar(
+      "y nace apoyado sobre sus ruedas, sin percance",
+      despues.enElSuelo && Math.abs(despues.flotando) <= 0.3 && !despues.percance,
+      `${despues.enElSuelo ? "en el suelo" : "EN EL AIRE"} · ${despues.flotando} m sobre su tren${despues.percance ? " · PERCANCE" : ""}`,
+      "cambiar de avión no es un percance",
+    );
 
-comprobar(
-  "y ninguno nace flotando sobre sus ruedas",
-  vistos.every((v) => Math.abs(v.flotando) <= 0.3),
-  vistos
-    .filter((v) => Math.abs(v.flotando) > 0.3)
-    .map((v) => `${v.avion} a ${v.flotando} m`)
-    .join(", ") || "todos a ras de sus ruedas",
-  "el origen de un avión está a la altura de su tren, y cada tren mide lo suyo",
-);
+    // ── Y el recado era de un solo uso ─────────────────────────────────────
+    await page.reload();
+    await arrancado();
+    const otraVez = await mirar();
+    comprobar(
+      "y la recarga siguiente ya no lo lleva: el recado era de un solo uso",
+      otraVez.avion === "jaz-120",
+      `tras recargar: ${otraVez.avion} (la dirección pide jaz-120)`,
+      "si se quedara, cada recarga se saltaría el hangar para siempre",
+    );
+  }
 
-comprobar(
-  "ninguno se rompe al aparecer",
-  [...vistos, ...despues].every((v) => !v.percance),
-  [...vistos, ...despues]
-    .filter((v) => v.percance)
-    .map((v) => v.avion)
-    .join(", ") || "ninguno",
-  "cambiar de avión no es un percance, y el juego lo contaba como tal",
-);
-
-/*
- * Y que cada uno esté a **su** altura, no a la del anterior: es lo que separa
- * «se ha arreglado» de «se ha tapado». Si alguien volviera a arrastrar la
- * posición tal cual, todos saldrían a la misma altura y esto lo diría.
- */
-// Esta sí se mira ya posado: lo que dice es que seis trenes distintos dejan al
-// avión a seis alturas distintas, y para eso hay que dejarlo quieto.
-comprobar(
-  "y cada uno se apoya a la altura de su propio tren",
-  new Set(despues.map((v) => v.sobreElSuelo)).size >= 5,
-  despues
-    .map((v) => `${v.avion.replace("jaz-", "")}:${v.sobreElSuelo}`)
-    .join(" "),
-  "seis aviones con seis trenes distintos no pueden apoyarse todos igual",
-);
-
-/*
- * **Y cada avión con su circuito.**
- *
- * La vuelta al aeropuerto de un avión de fuselaje ancho es casi seis kilómetros
- * de tramo de subida; la de la avioneta, cuatro y pico. No es adorno: es dónde
- * se canta el giro, y cantárselo a un reactor donde le toca a una avioneta es
- * pedirle que vire con dos segundos de vuelo. Dos de los seis comparten figura
- * a propósito —el biplano se aproxima más despacio que el entrenador y el
- * circuito nunca se encoge—, así que se piden cinco de seis.
- */
-comprobar(
-  "y cada uno vuela el circuito de su avión",
-  new Set(despues.map((v) => v.subida)).size >= 5,
-  despues.map((v) => `${v.avion.replace("jaz-", "")}:${v.subida}m`).join(" "),
-  "el circuito se monta con la velocidad de aproximación, y al cambiar de avión no se rehacía",
-);
-
-comprobar("sin errores", !errores.length, errores[0] ?? "limpio", "");
-
-console.log("");
-for (const r of resultados) {
-  console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
-  if (!r.ok && r.porque) console.log(`      ${r.porque}`);
+  comprobar("sin errores", !errores.length, errores[0] ?? "limpio", "");
+} finally {
+  console.log("");
+  for (const r of resultados) {
+    console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
+    if (!r.ok && r.porque) console.log(`      ${r.porque}`);
+  }
+  const bien = resultados.filter((r) => r.ok).length;
+  console.log(`\n  ${bien} de ${resultados.length} comprobaciones\n`);
+  await navegador.close();
+  await server.close();
+  process.exit(bien === resultados.length && resultados.length ? 0 : 1);
 }
-const bien = resultados.filter((r) => r.ok).length;
-console.log(`\n  ${bien} de ${resultados.length} comprobaciones\n`);
-
-await navegador.close();
-await server.close();
-process.exit(bien === resultados.length ? 0 : 1);

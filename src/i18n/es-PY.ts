@@ -733,6 +733,11 @@ export const ES_PY = {
    * contesta es la lección: manda la pista. Ver `cycleAircraft`.
    */
   "avion.noCabeAqui": "En esta pista no cabe otro avión",
+  /*
+   * Cambiar de avión es empezar un vuelo con otro, y eso se hace en tierra y
+   * parado, como en cualquier aeropuerto. Ver `cycleAircraft`.
+   */
+  "avion.cambiarParado": "Para cambiar de avión, pará en tierra",
   "hud.mandarCinturon": "Cartel del cinturón",
   "hud.subirCuadro": "Subir el tablero",
   "gafas.ganadas": "¡Tus gafas de sol!",
