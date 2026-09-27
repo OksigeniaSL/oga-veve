@@ -352,6 +352,7 @@ import {
 } from "./flight/turno-de-pista";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
+import { conElVueloRecto } from "./flight/vuelo-recto";
 import { indicatedAirspeed } from "./flight/atmosphere";
 import {
   delante,
@@ -3757,19 +3758,36 @@ export class Game {
    * Va sobre los mandos y no sobre el estado —nada de mover el avión a mano—
    * porque es lo que hace el resto del juego: quien pilota escribe mandos.
    */
-  private mantenerElVueloRecto(): void {
+  private mantenerElVueloRecto(mandos: ControlInputs): ControlInputs {
     const s = this.flight.state;
-    if (s.onGround) return;
+    if (s.onGround) return mandos;
+    /*
+     * **Y solo en los ejes que nadie mueve.** Era en todos, y con el mapa
+     * abierto las flechas no hacían nada: «no me deja girar, ni subir o bajar
+     * cuando tengo el mapa». Ahora manda quien se mueve, eje por eje, que es
+     * la regla de `mandaQuienSeMueve`. Ver `flight/vuelo-recto.ts`.
+     *
+     * El piloto de pruebas escribe en los mandos sin pasar por el teclado,
+     * así que para él «moverse» es tener el eje fuera del centro: si no, un
+     * banco que vuela con el plano abierto volaría contra la mano invisible.
+     */
     const c = this.input.controls;
-    const tope = (v: number, t: number) => Math.max(-t, Math.min(t, v));
-    // Alas al horizonte: se manda **inclinación**, no velocidad de alabeo, o
-    // el avión seguiría girando sobre su eje. Es la misma lección que el
-    // piloto del banco aprendió cayendo en espiral.
-    c.aileron = tope(-bankAngleOf(s.orientation) * 1.6, 0.35);
-    // Y sin subir ni bajar, amortiguado con la velocidad vertical.
-    c.elevator = tope(-s.verticalSpeed * 0.08, 0.3);
-    c.rudder = 0;
+    const m = this.input.mueve;
+    const banco = this.pilotoDePruebas !== null;
+    return conElVueloRecto(
+      mandos,
+      {
+        cabeceo: m.cabeceo || (banco && c.elevator !== 0),
+        alabeo: m.alabeo || (banco && c.aileron !== 0),
+        timon: m.timon || (banco && c.rudder !== 0),
+      },
+      { alabeo: bankAngleOf(s.orientation), vertical: s.verticalSpeed },
+      this.mandosConVueloRecto,
+    );
   }
+
+  /** La copia que lleva la mano invisible, para no escribir en la persona. */
+  private readonly mandosConVueloRecto: ControlInputs = neutralControls();
 
   private quedarQuieto(): void {
     const debe = this.pausadoAdrede || this.hayPanelAbierto;
@@ -7471,10 +7489,19 @@ export class Game {
       this.sufrirPercance("golpe");
     } else {
       this.antesDelPaso.copy(this.flight.state.position);
-      // Con un instrumento abierto —el plano, el tiempo— el avión se
-      // mantiene solo. Ver `mantenerElVueloRecto`.
-      if (this.hayInstrumentoAbierto) this.mantenerElVueloRecto();
-      this.flight.step(dt, this.conElPilotoAutomatico(dt));
+      /*
+       * Con un instrumento abierto —el plano, el tiempo— el avión se mantiene
+       * recto **mientras nadie lo pilote**. Ver `mantenerElVueloRecto`.
+       *
+       * Y va **después** del piloto automático y solo si no está puesto: el
+       * automático ya lleva el avión, y lo lleva mejor. Iba antes y escribiendo
+       * en los mandos de la persona, y el automático los leía como si alguien
+       * hubiera tocado la palanca: abrir el mapa lo soltaba, con su alarma.
+       */
+      let mandos = this.conElPilotoAutomatico(dt);
+      if (this.hayInstrumentoAbierto && !this.pilotoPuesto)
+        mandos = this.mantenerElVueloRecto(mandos);
+      this.flight.step(dt, mandos);
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
