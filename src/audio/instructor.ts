@@ -544,3 +544,20 @@ export function elegirComandante(...cogidas: Instructor[]): Instructor {
     cogidas: () => cogidas.map(suVoz),
   });
 }
+
+/**
+ * Y la de la tripulación de cabina, que habla por el mismo altavoz que la
+ * comandante y tiene que distinguirse de ella de oído.
+ *
+ * Un poco más grave y sin la pausa de quien manda: es quien pasa con el agua,
+ * no quien lleva el avión. Solo suena así si no hay grabación. Ver
+ * `audio/megafonia.ts`.
+ */
+export function elegirTripulacion(...cogidas: Instructor[]): Instructor {
+  if (typeof speechSynthesis === "undefined") return MUDO;
+  return new VozDelNavegador({
+    rate: 1.0,
+    pitch: 0.94,
+    cogidas: () => cogidas.map(suVoz),
+  });
+}

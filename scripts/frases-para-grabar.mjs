@@ -84,6 +84,18 @@ const HABLADOS = [
    * quien decide qué campos hablan así —todo lo que empieza por `GC`—.
    */
   ["comandante", "comandante", "la megafonía de cabina, para el pasaje"],
+  /*
+   * **Y la tripulación de cabina**, con el habla del sitio como la torre: la
+   * de Canarias va primero por lo mismo que allí, porque sus claves empiezan
+   * también por `tripulacion.` y gana el primero que reclame una. Ver
+   * `audio/servicio-a-bordo.ts`.
+   */
+  [
+    "tripulacion.canario",
+    "tripulacion-canarias",
+    "la tripulación de cabina de Canarias, por megafonía",
+  ],
+  ["tripulacion", "tripulacion", "la tripulación de cabina, por megafonía"],
   ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
   ["otro", "otro", "el otro avión de la frecuencia"],
@@ -657,6 +669,101 @@ for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
     para: `${para}, en Canarias`,
   });
   total += texto.length;
+}
+
+/*
+ * **Y los trozos con número de la comandante**: cuánto dura el vuelo, a qué
+ * altura se va, cuánto falta y cuántos grados hay allí.
+ *
+ * Cambian con cada vuelo, así que se montan —ver
+ * `src/audio/partes-de-la-comandante.ts`—; pero cada trozo es **una frase
+ * entera con su número dentro**, y no el número suelto, porque un «diez»
+ * pegado en mitad de una frase de megafonía se nota al instante. La plantilla
+ * sale del diccionario —`comandante.minutos`: «Vamos a aterrizar en unos {n}
+ * minutos.»— y aquí se rellena con el número **en letras**, que es como se
+ * lee sin tropezar. Los números que existen salen del propio juego, así que
+ * no hay una segunda lista que se quede vieja.
+ */
+const partes = readFileSync("src/audio/partes-de-la-comandante.ts", "utf8");
+const niveles = readFileSync("src/flight/nivel-de-crucero.ts", "utf8");
+const numeroDe = (fuente, nombre) => {
+  const m = new RegExp(`export const ${nombre}\\s*=\\s*(-?\\d+)`).exec(fuente);
+  if (!m) throw new Error(`no encuentro ${nombre}`);
+  return Number(m[1]);
+};
+const MINUTOS = (() => {
+  const m = /MINUTOS_QUE_SE_DICEN\s*=\s*\[([^\]]*)\]/.exec(partes);
+  if (!m) throw new Error("no encuentro MINUTOS_QUE_SE_DICEN");
+  return m[1].split(",").map((x) => Number(x.trim())).filter(Number.isFinite);
+})();
+const PRIMER_NIVEL = numeroDe(partes, "PRIMER_NIVEL");
+const ULTIMO_NIVEL = numeroDe(niveles, "HASTA") / 1000;
+const MAS_FRIO = numeroDe(partes, "MAS_FRIO");
+const MAS_CALOR = numeroDe(partes, "MAS_CALOR");
+
+/**
+ * Un número en letras, delante de un nombre masculino —minutos, grados, mil
+ * pies—: «un grado», «veintiún minutos», «treinta y un mil». Hasta noventa y
+ * nueve, que es lo que hace falta.
+ */
+const UNIDADES = [
+  "cero", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho",
+  "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "dieciséis",
+  "diecisiete", "dieciocho", "diecinueve", "veinte", "veintiún", "veintidós",
+  "veintitrés", "veinticuatro", "veinticinco", "veintiséis", "veintisiete",
+  "veintiocho", "veintinueve",
+];
+const DECENAS = { 3: "treinta", 4: "cuarenta", 5: "cincuenta", 6: "sesenta",
+  7: "setenta", 8: "ochenta", 9: "noventa" };
+function enLetras(n) {
+  if (n < 30) return UNIDADES[n];
+  const d = DECENAS[Math.floor(n / 10)];
+  const u = n % 10;
+  return u === 0 ? d : `${d} y ${UNIDADES[u]}`;
+}
+
+/** La plantilla con el número puesto, y el singular arreglado. */
+const conNumero = (plantilla, n) =>
+  plantilla.replace("{n}", enLetras(n)).replace(/\bun grados\b/, "un grado");
+
+const CON_NUMERO = [
+  ["comandante.minutos", "comandante.minutos", MINUTOS, "cuánto falta para aterrizar, al empezar a bajar"],
+  ["comandante.previsto.vuelo", "comandante.previsto.vuelo", MINUTOS, "cuánto dura el vuelo, detrás de la bienvenida"],
+  [
+    "comandante.previsto.nivel",
+    "comandante.previsto.nivel",
+    Array.from({ length: ULTIMO_NIVEL - PRIMER_NIVEL + 1 }, (_, i) => PRIMER_NIVEL + i),
+    "a qué altura se va, detrás de la bienvenida",
+  ],
+  [
+    "comandante.temperatura",
+    "comandante.temperatura",
+    Array.from({ length: MAS_CALOR + 1 }, (_, i) => i),
+    "la temperatura del destino, al empezar a bajar",
+  ],
+  [
+    "comandante.temperaturaBajoCero",
+    "comandante.temperatura.menos",
+    Array.from({ length: -MAS_FRIO }, (_, i) => i + 1),
+    "la temperatura del destino, bajo cero",
+  ],
+];
+for (const [plantilla, prefijo, numeros, para] of CON_NUMERO) {
+  const texto = es.get(plantilla);
+  if (!texto) throw new Error(`falta la plantilla ${plantilla} en es-PY`);
+  for (const n of numeros) {
+    const conSuNumero = conNumero(texto, n);
+    filas.push({
+      // Las de bajo cero van pegadas a su número —`menos3`— y las demás con
+      // un punto delante, que es como las pide el juego. Ver `piezaDeGrados`.
+      id: prefijo.endsWith(".menos") ? `${prefijo}${n}` : `${prefijo}.${n}`,
+      voz: "comandante",
+      idioma: "es-PY",
+      texto: conSuNumero,
+      para,
+    });
+    total += conSuNumero.length;
+  }
 }
 
 /*

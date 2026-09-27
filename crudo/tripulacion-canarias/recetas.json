@@ -1,0 +1,36 @@
+{
+  "tripulacion.canario.cinturones": [
+    "tripulacion.canario.cinturones"
+  ],
+  "tripulacion.canario.servicio.banana": [
+    "tripulacion.canario.servicio.banana"
+  ],
+  "tripulacion.canario.servicio.banana.paraguay": [
+    "tripulacion.canario.servicio.banana.paraguay"
+  ],
+  "tripulacion.canario.servicio.largo": [
+    "tripulacion.canario.servicio.largo"
+  ],
+  "tripulacion.canario.servicio.mango": [
+    "tripulacion.canario.servicio.mango"
+  ],
+  "tripulacion.canario.servicio.mango.paraguay": [
+    "tripulacion.canario.servicio.mango.paraguay"
+  ],
+  "tripulacion.canario.servicio.mani": [
+    "tripulacion.canario.servicio.mani"
+  ],
+  "tripulacion.canario.servicio.mani.paraguay": [
+    "tripulacion.canario.servicio.mani.paraguay"
+  ],
+  "tripulacion.canario.servicio.pina": [
+    "tripulacion.canario.servicio.pina"
+  ],
+  "tripulacion.canario.servicio.pina.paraguay": [
+    "tripulacion.canario.servicio.pina.paraguay"
+  ],
+  "tripulacion.canario.servicio": [
+    "{producto}",
+    "{largo?}"
+  ]
+}

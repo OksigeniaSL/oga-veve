@@ -370,6 +370,11 @@ export class Audio {
    * radio se conecta aquí y el bus queda al final. Ver dónde se arma.
    */
   private entradaDeRadio: BiquadFilterNode | null = null;
+  /**
+   * Y por dónde entra lo que suena por el altavoz del techo: la megafonía de
+   * cabina. Ver dónde se arma, justo después de la radio.
+   */
+  private entradaDeAltavoz: BiquadFilterNode | null = null;
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
   /**
@@ -832,6 +837,42 @@ export class Audio {
     agudo.connect(grave).connect(filo).connect(this.buses.radio);
     this.entradaDeRadio = agudo;
 
+    /*
+     * ── Y la megafonía suena a megafonía ──────────────────────────────
+     *
+     * Que es otra cosa que la radio, y por eso otra cadena. La radio es
+     * **estrecha**; la megafonía de una cabina de pasaje es ancha pero sin
+     * cuerpo —un altavoz pequeño en el techo no da graves— y se oye con el
+     * rebote de los demás altavoces del pasillo, que llegan unas centésimas
+     * más tarde. Eso es lo que se reconoce en cualquier avión antes de
+     * entender una palabra: «señores pasajeros» dicho desde el techo.
+     *
+     * Sin esto la comandante sonaba sentada al lado, igual que la instructora,
+     * y con la tripulación de cabina hablando también por ahí hacía falta que
+     * las dos vías se distinguieran de oído. Va al bus de voz y no al de radio:
+     * se agacha y se levanta como la voz, porque es voz de dentro del avión.
+     */
+    const sinGraves = ctx.createBiquadFilter();
+    sinGraves.type = "highpass";
+    sinGraves.frequency.value = 220;
+    sinGraves.Q.value = 0.7;
+    const sinAgudos = ctx.createBiquadFilter();
+    sinAgudos.type = "lowpass";
+    sinAgudos.frequency.value = 5500;
+    sinAgudos.Q.value = 0.7;
+    const bocina = ctx.createBiquadFilter();
+    bocina.type = "peaking";
+    bocina.frequency.value = 2800;
+    bocina.Q.value = 1;
+    bocina.gain.value = 3;
+    const pasillo = ctx.createDelay(0.1);
+    pasillo.delayTime.value = 0.028;
+    const rebote = ctx.createGain();
+    rebote.gain.value = 0.22;
+    sinGraves.connect(sinAgudos).connect(bocina).connect(this.buses.voz);
+    bocina.connect(pasillo).connect(rebote).connect(this.buses.voz);
+    this.entradaDeAltavoz = sinGraves;
+
     const noise = this.noiseBuffer();
 
     // ── Motor: dos tonos y una capa de ruido de hélice ──────────────────
@@ -1139,6 +1180,11 @@ export class Audio {
      * por el bus de voz. Ver dónde se arma la cadena.
      */
     porRadio = false,
+    /**
+     * Si suena por el altavoz del techo: la megafonía de cabina. Ver dónde se
+     * arma su cadena.
+     */
+    porAltavoz = false,
   ): (() => void) | null {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running" || piezas.length === 0) return null;
@@ -1150,7 +1196,9 @@ export class Audio {
       fuente.connect(
         porRadio && this.entradaDeRadio
           ? this.entradaDeRadio
-          : this.bus("voz"),
+          : porAltavoz && this.entradaDeAltavoz
+            ? this.entradaDeAltavoz
+            : this.bus("voz"),
       );
       fuente.start(cuando);
       cuando += pieza.duration;

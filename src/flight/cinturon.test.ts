@@ -10,7 +10,11 @@ import { Cinturon, SACUDE, YA_NO_SACUDE } from "./cinturon";
 
 const momento = (
   fase: string,
-  extra: Partial<{ movimiento: number; loDijoLaComandante: boolean }> = {},
+  extra: Partial<{
+    movimiento: number;
+    loDijoLaComandante: boolean;
+    loEncendioLaComandante: boolean;
+  }> = {},
 ) => ({
   fase: fase as never,
   conPasaje: true,
@@ -50,6 +54,35 @@ describe("el cartel del cinturón", () => {
     );
     // Y se queda apagado, que es lo que pasa después de ese anuncio.
     expect(c.paso(momento("en-vuelo"))).toBe(false);
+  });
+
+  it("y vuelve a ponerse al empezar a bajar, con el anuncio de la comandante", () => {
+    /*
+     * En cualquier vuelo de línea el cartel se enciende al empezar el
+     * descenso, con el anuncio, y detrás la tripulación pide cinturones,
+     * respaldos y mesitas. Esperar a la final era tarde.
+     */
+    const c = new Cinturon();
+    hastaElCrucero(c);
+    expect(c.paso(momento("en-vuelo"))).toBe(false);
+    expect(c.paso(momento("en-vuelo", { loEncendioLaComandante: true }))).toBe(
+      true,
+    );
+    // Y se queda: ya no hay crucero que valga, aunque el aire esté quieto.
+    for (let i = 0; i < 200; i++)
+      expect(c.paso(momento("en-vuelo"))).toBe(true);
+  });
+
+  it("y un cartel quitado a mano vuelve con ese anuncio", () => {
+    // La tripulación dice por megafonía que se encendió: debajo no puede
+    // estar apagado.
+    const c = new Cinturon();
+    hastaElCrucero(c);
+    c.ponerMando("quitado");
+    expect(c.paso(momento("en-vuelo"))).toBe(false);
+    expect(c.paso(momento("en-vuelo", { loEncendioLaComandante: true }))).toBe(
+      true,
+    );
   });
 
   it("y vuelve a ponerse al empezar la aproximación", () => {

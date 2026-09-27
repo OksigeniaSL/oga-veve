@@ -22,8 +22,9 @@
  *   Esa es la frase que ya existía —«ya estamos arriba, pueden soltarse el
  *   cinturón»— y ahora el cartel se apaga **con ella**, no por su cuenta. Los
  *   dos cuentan lo mismo porque son lo mismo.
- * - Vuelve a encenderse al empezar la aproximación, que es cuando se enciende
- *   en cualquier vuelo del mundo.
+ * - Vuelve a encenderse al empezar el descenso, **con el anuncio de la
+ *   comandante**, que es cuando se enciende en cualquier vuelo del mundo. Y
+ *   en la final pase lo que pase, para quien baja sin haber oído anuncio.
  * - Y con turbulencia de verdad, venga cuando venga.
  * - **Y lo puede mandar quien vuela.** Pedido tal cual: «es una decisión del
  *   piloto mandar a ponerlo (turbulencia, inicio de aproximación, etc.)». Un
@@ -60,6 +61,16 @@ export interface Momento {
    * dice. Ver `megafonia.ts`.
    */
   readonly loDijoLaComandante: boolean;
+  /**
+   * Y si acaba de anunciar que se empieza a bajar, que es cuando **lo
+   * vuelve a encender**. También un suceso de un fotograma.
+   *
+   * Esperaba a la final, y en una ruta eso es tarde: en cualquier vuelo de
+   * línea el cartel se enciende al empezar el descenso, con el anuncio de la
+   * comandante, y detrás la tripulación pide cinturones, respaldos y
+   * mesitas. Ver `comandante.descenso` en `audio/megafonia.ts`.
+   */
+  readonly loEncendioLaComandante?: boolean;
 }
 
 /** Lo que el piloto ha decidido, si ha decidido algo. */
@@ -147,6 +158,16 @@ export class Cinturon {
     // Lo que diga la comandante se apunta siempre, aunque ahora mande otra
     // cosa: el anuncio pasa una vez y no vuelve.
     if (m.loDijoLaComandante) this.soltado = true;
+    /*
+     * **Y al empezar a bajar se vuelve a poner, y ya no se quita.** Un
+     * «quitado» a mano se olvida aquí igual que al alinearse: la tripulación
+     * está diciendo por megafonía que el cartel se encendió, y un cartel
+     * apagado debajo de esa frase contaría otra cosa.
+     */
+    if (m.loEncendioLaComandante) {
+      this.soltado = false;
+      if (this.mando === "quitado") this.mando = "auto";
+    }
     if (this.mando === "puesto") return true;
     if (this.mando === "quitado") return false;
 

@@ -70,6 +70,66 @@ const REPARTO = [
   ["comandante", "comandante.bienvenida.local", "comandante"],
   ["comandante", "comandante.bienvenida.tenerife-sur", "comandante"],
   /*
+   * **Y el guion de la cabina, montado.** La bienvenida con el plan y el
+   * descenso con su tiempo se arman con trozos —ver
+   * `audio/partes-de-la-comandante.ts`—, y una receta con un trozo que falta
+   * se cae entera a la voz del navegador. El cuarto elemento es el relleno.
+   */
+  [
+    "comandante",
+    "comandante.bienvenidaConPlan",
+    "comandante",
+    {
+      bienvenida: "comandante.bienvenida.tenerife-norte",
+      vuelo: "comandante.previsto.vuelo.15",
+      nivel: "comandante.previsto.nivel.11",
+    },
+  ],
+  [
+    "comandante",
+    "comandante.descenso",
+    "comandante",
+    {
+      hacia: "comandante.descenso.hacia.guarani",
+      minutos: "comandante.minutos.10",
+      cielo: "comandante.cielo.tormenta",
+      temperatura: "comandante.temperatura.21",
+    },
+  ],
+  [
+    "comandante",
+    "comandante.descenso",
+    "comandante",
+    {
+      hacia: "comandante.descenso.vuelta",
+      cielo: "comandante.cielo.niebla",
+      temperatura: "comandante.temperatura.menos3",
+    },
+  ],
+  ["comandante", "comandante.aproximacion", "comandante"],
+  /*
+   * **Y la tripulación de cabina, cada una con su habla**: la de casa y la
+   * de Canarias, que son otra persona. Y el servicio montado con lo de hoy y
+   * el café de los vuelos largos.
+   */
+  ["tripulacion", "tripulacion.cinturones", "tripulacion"],
+  ["tripulacion", "tripulacion.canario.cinturones", "tripulacion-canarias"],
+  [
+    "tripulacion",
+    "tripulacion.servicio",
+    "tripulacion",
+    {
+      producto: "tripulacion.servicio.mbeju",
+      largo: "tripulacion.servicio.largo",
+    },
+  ],
+  [
+    "tripulacion",
+    "tripulacion.canario.servicio",
+    "tripulacion-canarias",
+    { producto: "tripulacion.canario.servicio.banana.paraguay" },
+  ],
+  /*
    * Y la orden de irse al aire **con su motivo**, que es la receta que junta
    * las dos piezas. Sin ella la voz decía qué hacer y no por qué, que a los
    * cuatro años es una orden sin lección.
@@ -155,6 +215,8 @@ await page
       if (!yo) return false;
       return (
         !!o.quienDice("comandante.crucero").comandante &&
+        !!o.quienDice("tripulacion.cinturones").tripulacion &&
+        !!o.quienDice("tripulacion.canario.cinturones").tripulacion &&
         !!o.quienDice(`torre.verde${yo.sufijo}`, yo.deTorre).torre &&
         !!o.quienDice("torre.canario.verde", yo.deTorre).torre &&
         !!o.quienDice("otro.enCola", yo.relleno).otro
@@ -290,7 +352,7 @@ comprobar(
   "ZP- es Paraguay, y en Canarias sonaba igual: era siempre el mismo avión",
 );
 
-for (const [quien, clave, pack] of REPARTO) {
+for (const [quien, clave, pack, suRelleno] of REPARTO) {
   if (pack === null) {
     comprobar(
       `«${clave}» la dice la voz del sistema, no el pack`,
@@ -306,7 +368,9 @@ for (const [quien, clave, pack] of REPARTO) {
       clave.startsWith("torre.") && !clave.startsWith("torre.canario")
         ? `${clave}${indicativo.sufijo}`
         : clave,
-      clave.startsWith("otro.")
+      suRelleno
+        ? suRelleno
+        : clave.startsWith("otro.")
         ? indicativo.relleno
         : clave.startsWith("torre.")
           ? // La lámpara también lleva hueco desde que te llama por tu

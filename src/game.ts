@@ -378,6 +378,7 @@ import {
   elegirComandante,
   elegirOtroAvion,
   elegirTorre,
+  elegirTripulacion,
   type Instructor,
 } from "./audio/instructor";
 import { Frecuencia, PISTA_TUYA, type Transmision } from "./flight/radio";
@@ -423,7 +424,7 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
-import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
+import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
@@ -460,7 +461,20 @@ import {
 } from "./flight/combustible";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
-import { Megafonia, conPasaje } from "./audio/megafonia";
+import {
+  Megafonia,
+  conPasaje,
+  conTripulacion,
+  type Anuncio,
+} from "./audio/megafonia";
+import {
+  bienvenidaConPlan,
+  descensoPara,
+  nivelPrevisto,
+  segundosDeVuelo,
+  segundosHastaTocar,
+} from "./audio/partes-de-la-comandante";
+import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
 import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
 import { altitudDeCabina } from "./flight/cabina-presurizada";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
@@ -2722,6 +2736,31 @@ export class Game {
      */
     MEGAFONIA,
     this.grabaciones,
+    false,
+    // Y por el altavoz del techo, que es como suena una megafonía.
+    true,
+  );
+  /**
+   * **Y la tripulación de cabina**, que habla por el mismo altavoz.
+   *
+   * Solo existe en los aviones que la llevan —del JAZ 90 para arriba, ver
+   * `conTripulacion`— y con el habla del sitio, como la torre: la voz la pone
+   * la clave, `tripulacion.*` o `tripulacion.canario.*`. Es otra persona y
+   * otra boca, pero la **misma vía** que la comandante: por la megafonía no
+   * hablan dos a la vez, y eso lo cuida la boca `MEGAFONIA`.
+   */
+  private readonly tripulacion: Instructor = new InstructorGrabado(
+    this.audio,
+    elegirTripulacion(
+      this.vozDelSistema,
+      this.torre,
+      this.otroAvion,
+      this.comandante,
+    ),
+    MEGAFONIA,
+    this.grabaciones,
+    false,
+    true,
   );
   /**
    * Las cuatro bocas del juego, para poder preguntarles desde fuera.
@@ -2738,6 +2777,7 @@ export class Game {
       torre: this.torre,
       otro: this.otroAvion,
       comandante: this.comandante,
+      tripulacion: this.tripulacion,
     };
   }
 
@@ -6753,6 +6793,240 @@ export class Game {
   }
 
   /**
+   * **Lo que se dice por la megafonía, ya montado**, y quién lo dice.
+   *
+   * La megafonía decide **cuándo** —ver `audio/megafonia.ts`— y aquí se
+   * decide **qué**: con el nombre del campo, con el plan del vuelo, con el
+   * tiempo que hace en el destino o con el producto de la granja de hoy. Y
+   * por qué boca: la comandante o la tripulación de cabina, que es otra
+   * persona con el habla del sitio.
+   */
+  private decirPorMegafonia(anuncio: Anuncio): void {
+    /*
+     * Los dos sucesos del cartel: se apaga con el anuncio de crucero y se
+     * vuelve a encender con el del descenso. El cartel y la frase cuentan lo
+     * mismo porque son lo mismo. Ver `flight/cinturon.ts`.
+     */
+    if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
+    if (anuncio === "comandante.descenso") this.pidioAbrocharse = true;
+
+    const dicho = this.loQueDiceLaMegafonia(anuncio);
+    const boca = anuncio.startsWith("tripulacion.")
+      ? this.tripulacion
+      : this.comandante;
+    boca.decir(dicho.texto, dicho.clave, "baja", dicho.relleno);
+    if (this.tier.instruments !== "none") this.hud.radio(dicho.texto);
+
+    /*
+     * **Y el servicio se ve**, en los cuatro peldaños: una botella de agua en
+     * su bandeja. En Guyrami es lo único que llega de este anuncio a quien
+     * no lo oye —la pestaña muda, un niño que no oye bien—, y con eso basta
+     * para entender que ahora viene algo para tomar. La palabra, desde el
+     * peldaño que lee. Prioridad cero: cualquier aviso lo tapa, y hace bien.
+     */
+    if (anuncio === "tripulacion.servicio") {
+      const canales = canalesDe(this.tier.avisos);
+      this.hud.senal.mostrar(
+        "servicio",
+        canales.texto ? t("servicio.rotulo") : "",
+        null,
+        { segundos: 8, prioridad: 0 },
+      );
+    }
+  }
+
+  /**
+   * El texto, la receta y su relleno de cada anuncio de la megafonía.
+   *
+   * Lo que no lleva nada que montar se dice tal cual, con `unaForma` para que
+   * no suene siempre igual.
+   */
+  private loQueDiceLaMegafonia(anuncio: Anuncio): {
+    texto: string;
+    clave: string;
+    relleno?: Readonly<Record<string, string>>;
+  } {
+    /*
+     * **Y la llegada, la de este campo si la tiene.**
+     *
+     * Cada aeródromo tiene la suya y cuenta algo verdadero del sitio — el
+     * silbo de La Gomera, la tierra negra de Lanzarote, el piloto que le da
+     * nombre a Asunción. La genérica con el hueco del nombre queda de
+     * reserva, para un campo nuevo que todavía no tenga la suya: sirve y no
+     * dice nada de él, que era justo la pega — «dirá cosas distintas en cada
+     * aeropuerto y no una frase siempre igual con un hueco».
+     *
+     * Se pregunta por el diccionario y no por una lista: si la clave no
+     * está, `hayTexto` dice que no y sale la de reserva. Añadir un campo es
+     * escribir su frase, y nada más.
+     */
+    /*
+     * **Y la llegada nombra el campo donde se aterrizó, no el de salida.**
+     *
+     * Contado jugando, tras volar de Tenerife Sur a Tenerife Norte: «¿bien-
+     * venidos al Tenerife Sur? Aterricé en Tenerife Norte Los Rodeos». El
+     * anuncio salía del escenario que se abrió, que hasta que hubo rutas era
+     * lo mismo que el sitio donde se acaba — y desde que se puede ir a otro
+     * aeropuerto, no.
+     *
+     * De quién es la pista que se tiene debajo ya lo sabe el juego: es la
+     * misma cuenta que decide si una toma es un aterrizaje o un percance.
+     * Ver `world/pistas-del-vuelo.ts`.
+     */
+    const donde = this.elCampoDeAhora();
+    switch (anuncio) {
+      case "comandante.descenso": {
+        /*
+         * **Hacia dónde, cuánto falta y qué tiempo hace allí.** El tiempo es
+         * el del destino si se sabe, y si no el que haya: lo que le importa a
+         * quien va a bajarse es el de donde se baja. Y cuánto falta, a la
+         * velocidad que se lleva y desde donde se está, que es la cuenta que
+         * hace cualquier comandante mirando su pantalla.
+         */
+        const destino = this.elDestino();
+        const s = this.flight.state;
+        const alla = destino ?? this.campoPorId(this.salidaId);
+        const segundos = alla
+          ? segundosHastaTocar(
+              Math.hypot(alla.x - s.position.x, alla.z - s.position.z),
+              s.groundSpeed,
+            )
+          : null;
+        const meteo =
+          destino?.escenario.meteo ?? this.scenario.meteo ?? TIEMPO_DE_CASA;
+        const campo =
+          destino && destino.id !== this.salidaId ? destino.id : null;
+        return descensoPara(campo, segundos, meteo);
+      }
+      case "tripulacion.servicio": {
+        const habla = this.hablaDeLaTripulacion();
+        /*
+         * **Y lo de hoy, que no es lo de ayer.** Se recuerda lo último que se
+         * ofreció —entre vuelos y entre sesiones, que un niño juega un vuelo
+         * al día— y se elige entre lo demás. Es una preferencia del juego y
+         * no un dato de nadie: no sale del navegador.
+         */
+        let ultimo: string | null = null;
+        try {
+          ultimo = leerTexto("servicio.ultimo");
+        } catch {
+          // Sin almacenamiento se sirve igual: puede repetir, y ya está.
+        }
+        const producto = elegirProducto(habla, ultimo);
+        try {
+          ponerTexto("servicio.ultimo", producto);
+        } catch {
+          // Lo mismo.
+        }
+        const plan = this.planDelTramo();
+        const s = servicioPara(habla, producto, (plan?.segundos ?? 0) / 60);
+        return {
+          clave: s.clave,
+          relleno: s.relleno,
+          texto: s.piezas.map((p) => t(p as TranslationKey)).join(" "),
+        };
+      }
+      case "tripulacion.cinturones": {
+        const clave = comoSeDiceAqui(
+          "tripulacion.cinturones",
+          this.hablaDeLaTripulacion(),
+        ) as TranslationKey;
+        return { clave, texto: t(clave) };
+      }
+      default:
+        break;
+    }
+    const suya = `${anuncio}.${donde.id}`;
+    /*
+     * **Y la bienvenida dice a dónde se va**, o que se vuelve aquí. Con el
+     * destino de este tramo, que es el que se eligió en el hangar o el que
+     * toca al volver a casa. Ver `audio/destino-dicho.ts`.
+     */
+    const cual: TranslationKey =
+      anuncio === "comandante.bienvenida"
+        ? bienvenidaPara(
+            this.salidaId,
+            this.vecinos.length > 0 ? this.destinoId : null,
+          )
+        : anuncio === "comandante.llegada" && hayTexto(suya)
+          ? suya
+          : (anuncio as TranslationKey);
+    /*
+     * **Y con el nombre del campo de hoy, y en una de sus formas.**
+     *
+     * La llegada lleva `{campo}` —«bienvenidos a Lanzarote»— porque una
+     * llegada que no nombra el sitio no es una llegada: en un avión de
+     * verdad es lo primero que se dice al parar, y es de las pocas frases
+     * del vuelo que quien viaja escucha entera. Los demás anuncios no
+     * llevan huecos y el relleno no les hace nada.
+     *
+     * Y por `unaForma`, que es lo que hace que aterrizar once veces no
+     * suene once veces igual. Ver `audio/variantes.ts`.
+     */
+    const forma = unaForma(cual, Math.random, {
+      /*
+       * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
+       * medio que en pantalla separa el aeropuerto de su ciudad —«Guaraní ·
+       * Ciudad del Este»— y que en voz alta no es nada: se lee como un
+       * tropiezo o no se lee. En coma es una frase: «bienvenidos a Guaraní,
+       * Ciudad del Este», que además es como lo diría cualquiera.
+       */
+      campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
+    });
+    if (anuncio !== "comandante.bienvenida")
+      return { clave: forma.id, texto: forma.texto };
+    /*
+     * **Y detrás de la bienvenida, el plan**: cuánto dura y a qué altura se
+     * va, que es lo que dice cualquier comandante antes de salir. En una
+     * vuelta al campo no hay plan que contar. Ver `bienvenidaConPlan`.
+     */
+    const plan = this.planDelTramo();
+    return bienvenidaConPlan(
+      forma,
+      plan?.segundos ?? null,
+      plan?.nivel ?? null,
+    );
+  }
+
+  /**
+   * El plan de este tramo tal como lo cuenta la comandante: cuánto dura y a
+   * qué nivel se cruza, o `null` si es una vuelta al campo.
+   *
+   * De la distancia entre los dos campos y el rumbo de uno a otro, con el
+   * crucero y el techo de este avión. Ver `audio/partes-de-la-comandante.ts`.
+   */
+  private planDelTramo(): { segundos: number; nivel: number } | null {
+    const destino = this.elDestino();
+    const salida = this.campoPorId(this.salidaId);
+    if (!destino || !salida || destino.id === salida.id) return null;
+    const dx = destino.x - salida.x;
+    const dz = destino.z - salida.z;
+    const metros = Math.hypot(dx, dz);
+    // El norte es −z, como en el resto del mundo del juego; y la regla
+    // semicircular va en magnéticos: magnético = verdadero + declinación.
+    const verdadero = MathUtils.radToDeg(Math.atan2(dx, -dz));
+    const magnetico = verdadero + (salida.escenario.magneticVariation ?? 0);
+    return {
+      segundos: segundosDeVuelo(metros, this.aircraft.cruiseSpeed),
+      nivel: nivelPrevisto(magnetico, metros, this.aircraft.alturaDeCrucero),
+    };
+  }
+
+  /**
+   * Cómo habla la tripulación de este vuelo: como se habla donde sale.
+   *
+   * Es la tripulación de una base, y la base es el campo de salida: en un
+   * salto entre Gran Canaria y Tenerife habla canario, y entre Asunción y
+   * Ciudad del Este, paraguayo. Ver `i18n/habla.ts`.
+   */
+  private hablaDeLaTripulacion(): Habla {
+    return hablaDe(
+      this.campoPorId(this.salidaId)?.escenario.aerodrome?.id ??
+        this.scenario.aerodrome?.id,
+    );
+  }
+
+  /**
    * La radio: si el otro avión tiene algo que decir, se oye y se lee.
    *
    * Todo lo que decide está en `flight/radio.ts`. Aquí solo se le pasa el
@@ -6794,7 +7068,18 @@ export class Game {
     const anuncio = this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
+      conTripulacion: conTripulacion(this.aircraft.mass),
       instructorHablando: this.instructor.hablando,
+      /*
+       * **Y callada mientras hable cualquiera**, no solo la instructora: la
+       * torre, el otro avión y la voz de la máquina. La megafonía va por otra
+       * vía, pero taparlos en el despegue o en la final es lo que no hace
+       * nadie en una cabina de verdad. Ver `audio/megafonia.ts`.
+       */
+      otrosHablando:
+        this.torre.hablando || this.otroAvion.hablando || this.maquina.ocupada,
+      megafoniaHablando: this.comandante.hablando || this.tripulacion.hablando,
+      cartelPuesto: this.cinturonPuesto,
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La
@@ -6814,77 +7099,7 @@ export class Game {
         this.loMasAltoDelVuelo - this.flight.state.position.y,
       ),
     });
-    if (anuncio) {
-      /*
-       * **Y con el nombre del campo de hoy, y en una de sus formas.**
-       *
-       * La llegada lleva `{campo}` —«bienvenidos a Lanzarote»— porque una
-       * llegada que no nombra el sitio no es una llegada: en un avión de
-       * verdad es lo primero que se dice al parar, y es de las pocas frases
-       * del vuelo que quien viaja escucha entera. Los demás anuncios no
-       * llevan huecos y el relleno no les hace nada.
-       *
-       * Y por `unaForma`, que es lo que hace que aterrizar once veces no
-       * suene once veces igual. Ver `audio/variantes.ts`.
-       */
-      /*
-       * **Y la llegada, la de este campo si la tiene.**
-       *
-       * Cada aeródromo tiene la suya y cuenta algo verdadero del sitio — el
-       * silbo de La Gomera, la tierra negra de Lanzarote, el piloto que le da
-       * nombre a Asunción. La genérica con el hueco del nombre queda de
-       * reserva, para un campo nuevo que todavía no tenga la suya: sirve y no
-       * dice nada de él, que era justo la pega — «dirá cosas distintas en cada
-       * aeropuerto y no una frase siempre igual con un hueco».
-       *
-       * Se pregunta por el diccionario y no por una lista: si la clave no
-       * está, `hayTexto` dice que no y sale la de reserva. Añadir un campo es
-       * escribir su frase, y nada más.
-       */
-      if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
-      /*
-       * **Y la llegada nombra el campo donde se aterrizó, no el de salida.**
-       *
-       * Contado jugando, tras volar de Tenerife Sur a Tenerife Norte: «¿bien-
-       * venidos al Tenerife Sur? Aterricé en Tenerife Norte Los Rodeos». El
-       * anuncio salía del escenario que se abrió, que hasta que hubo rutas era
-       * lo mismo que el sitio donde se acaba — y desde que se puede ir a otro
-       * aeropuerto, no.
-       *
-       * De quién es la pista que se tiene debajo ya lo sabe el juego: es la
-       * misma cuenta que decide si una toma es un aterrizaje o un percance.
-       * Ver `world/pistas-del-vuelo.ts`.
-       */
-      const donde = this.elCampoDeAhora();
-      const suya = `${anuncio}.${donde.id}` as TranslationKey;
-      /*
-       * **Y la bienvenida dice a dónde se va**, o que se vuelve aquí. Con el
-       * destino de este tramo, que es el que se eligió en el hangar o el que
-       * toca al volver a casa. Ver `audio/destino-dicho.ts`.
-       */
-      const cual =
-        anuncio === "comandante.bienvenida"
-          ? bienvenidaPara(
-              this.salidaId,
-              this.vecinos.length > 0 ? this.destinoId : null,
-            )
-          : anuncio === "comandante.llegada" && hayTexto(suya)
-            ? suya
-            : anuncio;
-      const forma = unaForma(cual, Math.random, {
-        /*
-         * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
-         * medio que en pantalla separa el aeropuerto de su ciudad —«Guaraní ·
-         * Ciudad del Este»— y que en voz alta no es nada: se lee como un
-         * tropiezo o no se lee. En coma es una frase: «bienvenidos a Guaraní,
-         * Ciudad del Este», que además es como lo diría cualquiera.
-         */
-        campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
-      });
-      const texto = forma.texto;
-      this.comandante.decir(texto, forma.id, "baja");
-      if (this.tier.instruments !== "none") this.hud.radio(texto);
-    }
+    if (anuncio) this.decirPorMegafonia(anuncio);
 
     this.mirarPorLaVentanilla(dt);
 
@@ -9154,6 +9369,8 @@ export class Game {
      */
     const loDijo = this.dijoSoltarse;
     this.dijoSoltarse = false;
+    const loEncendio = this.pidioAbrocharse;
+    this.pidioAbrocharse = false;
     /*
      * **Y lo que sacude es lo que el radar pinta.**
      *
@@ -9169,6 +9386,7 @@ export class Game {
     this.atenderAlCinturon(
       Math.max(cuantoSeMueve(aire), enLaTormenta),
       loDijo,
+      loEncendio,
     );
     this.atenderALaSobrevelocidad(dt);
 
@@ -11032,6 +11250,7 @@ export class Game {
       alguienHabla:
         this.instructor.hablando ||
         this.comandante.hablando ||
+        this.tripulacion.hablando ||
         this.torre.hablando ||
         this.otroAvion.hablando,
     }, () => this.loQueSeMueve());
@@ -11927,6 +12146,13 @@ export class Game {
   private dijoSoltarse = false;
 
   /**
+   * Y si acaba de anunciar que se empieza a bajar, que es cuando el cartel
+   * se vuelve a encender. El mismo suceso de un fotograma, en el otro
+   * sentido.
+   */
+  private pidioAbrocharse = false;
+
+  /**
    * Cuántos segundos lleva encendida la luz de piloto automático suelto.
    *
    * Un piloto automático que se desengancha es un suceso, no un estado, así
@@ -12815,12 +13041,17 @@ export class Game {
     }
   }
 
-  private atenderAlCinturon(movimiento: number, loDijo: boolean): void {
+  private atenderAlCinturon(
+    movimiento: number,
+    loDijo: boolean,
+    loEncendio: boolean,
+  ): void {
     const toca = this.cinturon.paso({
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       movimiento,
       loDijoLaComandante: loDijo,
+      loEncendioLaComandante: loEncendio,
     });
     if (toca === this.cinturonPuesto) return;
     this.cinturonPuesto = toca;

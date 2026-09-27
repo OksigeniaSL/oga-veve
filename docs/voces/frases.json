@@ -1259,10 +1259,171 @@
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
-    "id": "comandante.descenso",
+    "id": "comandante.descenso.hacia",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.vuelta",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.pettirossi",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.guarani",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ciudad del Este.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.encarnacion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Encarnación.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.concepcion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.pedro-juan",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.estigarribia",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.yvytu-rape",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.tenerife-norte",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.tenerife-sur",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.gran-canaria",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Gran Canaria.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.lanzarote",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Lanzarote.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.fuerteventura",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Fuerteventura.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.la-palma",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.el-hierro",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.la-gomera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.cielo.despejado",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá el cielo está despejado.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.cielo.nubes",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá hay algunas nubes.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.cielo.nublado",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá está nublado.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.cielo.lluvia",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá está lloviendo.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.cielo.tormenta",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.cielo.niebla",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá hay niebla.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.aproximacion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Tripulación, prepararse para el aterrizaje.",
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
@@ -2006,6 +2167,132 @@
     "idioma": "es-PY",
     "texto": "Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.",
     "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "tripulacion.canario.servicio.mango",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.pina",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y piña deshidratada de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.banana",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y plátano deshidratado de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.mani",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.mango.paraguay",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.pina.paraguay",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y piña deshidratada; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.banana.paraguay",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y plátano deshidratado; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.mani.paraguay",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.largo",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y como el viaje es largo, también tenemos café y té.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.cinturones",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.mango",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de mango de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.pina",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de piña de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.banana",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de banana de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.mani",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y maní tostado de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.chipa",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y chipa de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.mbeju",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y mbejú de la Granja Óga. ¡Que lo disfruten!",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.largo",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Y como el viaje es largo, también tenemos café y té calentitos.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.cinturones",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.",
+    "para": "la tripulación de cabina, por megafonía"
   },
   {
     "id": "cabina.v1",
@@ -3392,5 +3679,761 @@
     "idioma": "en",
     "texto": "variable",
     "para": "viento sin dirección fija, en Canarias"
+  },
+  {
+    "id": "comandante.minutos.2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos dos minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos tres minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cuatro minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cinco minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.10",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos diez minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.15",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos quince minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.20",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos veinte minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.25",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos veinticinco minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.30",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos treinta minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.35",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos treinta y cinco minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.40",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cuarenta minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.45",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cuarenta y cinco minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.50",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cincuenta minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.55",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cincuenta y cinco minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.60",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos sesenta minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.minutos.0",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en unos cero minutos.",
+    "para": "cuánto falta para aterrizar, al empezar a bajar"
+  },
+  {
+    "id": "comandante.previsto.vuelo.2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos dos minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos tres minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cuatro minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cinco minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.10",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos diez minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.15",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos quince minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.20",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos veinte minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.25",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos veinticinco minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.30",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos treinta minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.35",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos treinta y cinco minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.40",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cuarenta minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.45",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cuarenta y cinco minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.50",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cincuenta minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.55",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cincuenta y cinco minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.60",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos sesenta minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.vuelo.0",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar unos cero minutos.",
+    "para": "cuánto dura el vuelo, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a cinco mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.6",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a seis mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.7",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a siete mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.8",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a ocho mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.9",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a nueve mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.10",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a diez mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.11",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a once mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.12",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a doce mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.13",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a trece mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.14",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a catorce mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.15",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a quince mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.16",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a dieciséis mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.17",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a diecisiete mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.18",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a dieciocho mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.19",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a diecinueve mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.20",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veinte mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.21",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintiún mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.22",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintidós mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.23",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintitrés mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.24",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veinticuatro mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.25",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veinticinco mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.26",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintiséis mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.27",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintisiete mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.28",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintiocho mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.previsto.nivel.29",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a veintinueve mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida"
+  },
+  {
+    "id": "comandante.temperatura.0",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cero grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.1",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de un grado.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de dos grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de tres grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuatro grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cinco grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.6",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de seis grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.7",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de siete grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.8",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de ocho grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.9",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de nueve grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.10",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de diez grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.11",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de once grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.12",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de doce grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.13",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de trece grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.14",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de catorce grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.15",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de quince grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.16",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de dieciséis grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.17",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de diecisiete grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.18",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de dieciocho grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.19",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de diecinueve grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.20",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veinte grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.21",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintiún grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.22",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintidós grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.23",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintitrés grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.24",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veinticuatro grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.25",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veinticinco grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.26",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintiséis grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.27",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintisiete grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.28",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintiocho grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.29",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de veintinueve grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.30",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.31",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y un grado.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.32",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y dos grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.33",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y tres grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.34",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y cuatro grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.35",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y cinco grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.36",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y seis grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.37",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y siete grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.38",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y ocho grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.39",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de treinta y nueve grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.40",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuarenta grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.41",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuarenta y un grado.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.42",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuarenta y dos grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.43",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuarenta y tres grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.44",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuarenta y cuatro grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.45",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuarenta y cinco grados.",
+    "para": "la temperatura del destino, al empezar a bajar"
+  },
+  {
+    "id": "comandante.temperatura.menos1",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de un grado bajo cero.",
+    "para": "la temperatura del destino, bajo cero"
+  },
+  {
+    "id": "comandante.temperatura.menos2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de dos grados bajo cero.",
+    "para": "la temperatura del destino, bajo cero"
+  },
+  {
+    "id": "comandante.temperatura.menos3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de tres grados bajo cero.",
+    "para": "la temperatura del destino, bajo cero"
+  },
+  {
+    "id": "comandante.temperatura.menos4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cuatro grados bajo cero.",
+    "para": "la temperatura del destino, bajo cero"
+  },
+  {
+    "id": "comandante.temperatura.menos5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La temperatura es de cinco grados bajo cero.",
+    "para": "la temperatura del destino, bajo cero"
   }
 ]

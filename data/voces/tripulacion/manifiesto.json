@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "voz": "tripulacion",
+  "idioma": "es-PY",
+  "piezas": {
+    "tripulacion.cinturones": {
+      "ms": 11007
+    },
+    "tripulacion.servicio.banana": {
+      "ms": 10207
+    },
+    "tripulacion.servicio.chipa": {
+      "ms": 10307
+    },
+    "tripulacion.servicio.largo": {
+      "ms": 3707
+    },
+    "tripulacion.servicio.mango": {
+      "ms": 11607
+    },
+    "tripulacion.servicio.mani": {
+      "ms": 10107
+    },
+    "tripulacion.servicio.mbeju": {
+      "ms": 9407
+    },
+    "tripulacion.servicio.pina": {
+      "ms": 10507
+    }
+  },
+  "recetas": {
+    "tripulacion.cinturones": [
+      "tripulacion.cinturones"
+    ],
+    "tripulacion.servicio.banana": [
+      "tripulacion.servicio.banana"
+    ],
+    "tripulacion.servicio.chipa": [
+      "tripulacion.servicio.chipa"
+    ],
+    "tripulacion.servicio.largo": [
+      "tripulacion.servicio.largo"
+    ],
+    "tripulacion.servicio.mango": [
+      "tripulacion.servicio.mango"
+    ],
+    "tripulacion.servicio.mani": [
+      "tripulacion.servicio.mani"
+    ],
+    "tripulacion.servicio.mbeju": [
+      "tripulacion.servicio.mbeju"
+    ],
+    "tripulacion.servicio.pina": [
+      "tripulacion.servicio.pina"
+    ],
+    "tripulacion.servicio": [
+      "{producto}",
+      "{largo?}"
+    ]
+  }
+}

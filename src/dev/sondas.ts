@@ -52,7 +52,7 @@ import {
 } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
-import { BOCA } from "../audio/boca";
+import { BOCA, MEGAFONIA } from "../audio/boca";
 import { planeoDe } from "../flight/sin-motor";
 import { vfeDeAterrizaje } from "../flight/limites";
 
@@ -612,6 +612,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `habladas`. Con esto se sabe cuáles de las últimas son nuevas.
      */
     habladasTotal: () => BOCA.cuantasHabladas,
+    /**
+     * **Y lo que sonó por la megafonía**, con la misma hora que `habladas`.
+     *
+     * La comandante y la tripulación hablan por su propia boca —ver
+     * `MEGAFONIA` en `boca.ts`— y el volcado de voces no las veía: el guion
+     * de la cabina, del puesto a la despedida, no se podía leer en orden.
+     */
+    megafonia: () => {
+      const cero = BOCA.habladas[0]?.t ?? MEGAFONIA.habladas[0]?.t ?? 0;
+      return MEGAFONIA.habladas.map(
+        (h) => `${((h.t - cero) / 1000).toFixed(1)}s ${h.clave}`,
+      );
+    },
     /**
      * **Lo que dijo la voz de la máquina**, con la misma hora que `habladas`:
      * la cuenta y los avisos de las cajas no pasan por la boca, y sin esto

@@ -172,7 +172,30 @@ comandante	comandante/comandante.bienvenida.ogg	es-PY	Señores pasajeros, buenas
 comandante	comandante/comandante.crosscheck.ogg	es-PY	Tripulación, armar toboganes y verificación cruzada.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.despegue.ogg	es-PY	Tripulación, sentados para el despegue.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.crucero.ogg	es-PY	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.	la megafonía de cabina, para el pasaje
-comandante	comandante/comandante.descenso.ogg	es-PY	Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.vuelta.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.pettirossi.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.guarani.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ciudad del Este.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.encarnacion.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Encarnación.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.concepcion.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.pedro-juan.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.estigarribia.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.yvytu-rape.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.tenerife-norte.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.tenerife-sur.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.gran-canaria.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Gran Canaria.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.lanzarote.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Lanzarote.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.fuerteventura.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Fuerteventura.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.la-palma.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.el-hierro.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.la-gomera.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cielo.despejado.ogg	es-PY	Allá el cielo está despejado.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cielo.nubes.ogg	es-PY	Allá hay algunas nubes.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cielo.nublado.ogg	es-PY	Allá está nublado.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cielo.lluvia.ogg	es-PY	Allá está lloviendo.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cielo.tormenta.ogg	es-PY	Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cielo.niebla.ogg	es-PY	Allá hay niebla.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.aproximacion.ogg	es-PY	Tripulación, prepararse para el aterrizaje.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.local.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.pettirossi.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.guarani.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.	la megafonía de cabina, para el pasaje
@@ -279,6 +302,24 @@ comandante	comandante/comandante.llegada.cuatro-vientos~2.ogg	es-PY	Bienvenidos 
 comandante	comandante/comandante.llegada.cuatro-vientos~3.ogg	es-PY	Señores pasajeros, estamos en Cuatro Vientos. Al lado hay un museo lleno de aviones que ya no vuelan y merecen que se los mire. Gracias por venir.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.cuatro-vientos~4.ogg	es-PY	Bienvenidos a Cuatro Vientos. De este campo salió el avión que cruzó el Atlántico y le puso el nombre al sitio. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.cuatro-vientos~5.ogg	es-PY	Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.mango.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.pina.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y piña deshidratada de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.banana.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y plátano deshidratado de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.mani.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.mango.paraguay.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.pina.paraguay.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y piña deshidratada; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.banana.paraguay.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y plátano deshidratado; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.mani.paraguay.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.largo.ogg	es-PY	Y como el viaje es largo, también tenemos café y té.	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.cinturones.ogg	es-PY	Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.	la tripulación de cabina de Canarias, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.mango.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de mango de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.pina.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de piña de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.banana.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de banana de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.mani.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y maní tostado de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.chipa.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y chipa de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.mbeju.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y mbejú de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.largo.ogg	es-PY	Y como el viaje es largo, también tenemos café y té calentitos.	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.cinturones.ogg	es-PY	Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.	la tripulación de cabina, por megafonía
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
@@ -477,3 +518,111 @@ torre-canarias	torre-canarias/viento.degrees.ogg	en	degrees	detrás de la direcc
 torre-canarias	torre-canarias/viento.knots.ogg	en	knots	detrás de la fuerza del viento, en Canarias
 torre-canarias	torre-canarias/viento.calm.ogg	en	calm	sin viento: «wind calm», en Canarias
 torre-canarias	torre-canarias/viento.variable.ogg	en	variable	viento sin dirección fija, en Canarias
+comandante	comandante/comandante.minutos.2.ogg	es-PY	Vamos a aterrizar en unos dos minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.3.ogg	es-PY	Vamos a aterrizar en unos tres minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.4.ogg	es-PY	Vamos a aterrizar en unos cuatro minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.5.ogg	es-PY	Vamos a aterrizar en unos cinco minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.10.ogg	es-PY	Vamos a aterrizar en unos diez minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.15.ogg	es-PY	Vamos a aterrizar en unos quince minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.20.ogg	es-PY	Vamos a aterrizar en unos veinte minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.25.ogg	es-PY	Vamos a aterrizar en unos veinticinco minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.30.ogg	es-PY	Vamos a aterrizar en unos treinta minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.35.ogg	es-PY	Vamos a aterrizar en unos treinta y cinco minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.40.ogg	es-PY	Vamos a aterrizar en unos cuarenta minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.45.ogg	es-PY	Vamos a aterrizar en unos cuarenta y cinco minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.50.ogg	es-PY	Vamos a aterrizar en unos cincuenta minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.55.ogg	es-PY	Vamos a aterrizar en unos cincuenta y cinco minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.60.ogg	es-PY	Vamos a aterrizar en unos sesenta minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.minutos.0.ogg	es-PY	Vamos a aterrizar en unos cero minutos.	cuánto falta para aterrizar, al empezar a bajar
+comandante	comandante/comandante.previsto.vuelo.2.ogg	es-PY	El vuelo va a durar unos dos minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.3.ogg	es-PY	El vuelo va a durar unos tres minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.4.ogg	es-PY	El vuelo va a durar unos cuatro minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.5.ogg	es-PY	El vuelo va a durar unos cinco minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.10.ogg	es-PY	El vuelo va a durar unos diez minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.15.ogg	es-PY	El vuelo va a durar unos quince minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.20.ogg	es-PY	El vuelo va a durar unos veinte minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.25.ogg	es-PY	El vuelo va a durar unos veinticinco minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.30.ogg	es-PY	El vuelo va a durar unos treinta minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.35.ogg	es-PY	El vuelo va a durar unos treinta y cinco minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.40.ogg	es-PY	El vuelo va a durar unos cuarenta minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.45.ogg	es-PY	El vuelo va a durar unos cuarenta y cinco minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.50.ogg	es-PY	El vuelo va a durar unos cincuenta minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.55.ogg	es-PY	El vuelo va a durar unos cincuenta y cinco minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.60.ogg	es-PY	El vuelo va a durar unos sesenta minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.vuelo.0.ogg	es-PY	El vuelo va a durar unos cero minutos.	cuánto dura el vuelo, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.5.ogg	es-PY	Vamos a volar a cinco mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.6.ogg	es-PY	Vamos a volar a seis mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.7.ogg	es-PY	Vamos a volar a siete mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.8.ogg	es-PY	Vamos a volar a ocho mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.9.ogg	es-PY	Vamos a volar a nueve mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.10.ogg	es-PY	Vamos a volar a diez mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.11.ogg	es-PY	Vamos a volar a once mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.12.ogg	es-PY	Vamos a volar a doce mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.13.ogg	es-PY	Vamos a volar a trece mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.14.ogg	es-PY	Vamos a volar a catorce mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.15.ogg	es-PY	Vamos a volar a quince mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.16.ogg	es-PY	Vamos a volar a dieciséis mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.17.ogg	es-PY	Vamos a volar a diecisiete mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.18.ogg	es-PY	Vamos a volar a dieciocho mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.19.ogg	es-PY	Vamos a volar a diecinueve mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.20.ogg	es-PY	Vamos a volar a veinte mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.21.ogg	es-PY	Vamos a volar a veintiún mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.22.ogg	es-PY	Vamos a volar a veintidós mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.23.ogg	es-PY	Vamos a volar a veintitrés mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.24.ogg	es-PY	Vamos a volar a veinticuatro mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.25.ogg	es-PY	Vamos a volar a veinticinco mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.26.ogg	es-PY	Vamos a volar a veintiséis mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.27.ogg	es-PY	Vamos a volar a veintisiete mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.28.ogg	es-PY	Vamos a volar a veintiocho mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.previsto.nivel.29.ogg	es-PY	Vamos a volar a veintinueve mil pies.	a qué altura se va, detrás de la bienvenida
+comandante	comandante/comandante.temperatura.0.ogg	es-PY	La temperatura es de cero grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.1.ogg	es-PY	La temperatura es de un grado.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.2.ogg	es-PY	La temperatura es de dos grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.3.ogg	es-PY	La temperatura es de tres grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.4.ogg	es-PY	La temperatura es de cuatro grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.5.ogg	es-PY	La temperatura es de cinco grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.6.ogg	es-PY	La temperatura es de seis grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.7.ogg	es-PY	La temperatura es de siete grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.8.ogg	es-PY	La temperatura es de ocho grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.9.ogg	es-PY	La temperatura es de nueve grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.10.ogg	es-PY	La temperatura es de diez grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.11.ogg	es-PY	La temperatura es de once grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.12.ogg	es-PY	La temperatura es de doce grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.13.ogg	es-PY	La temperatura es de trece grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.14.ogg	es-PY	La temperatura es de catorce grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.15.ogg	es-PY	La temperatura es de quince grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.16.ogg	es-PY	La temperatura es de dieciséis grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.17.ogg	es-PY	La temperatura es de diecisiete grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.18.ogg	es-PY	La temperatura es de dieciocho grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.19.ogg	es-PY	La temperatura es de diecinueve grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.20.ogg	es-PY	La temperatura es de veinte grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.21.ogg	es-PY	La temperatura es de veintiún grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.22.ogg	es-PY	La temperatura es de veintidós grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.23.ogg	es-PY	La temperatura es de veintitrés grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.24.ogg	es-PY	La temperatura es de veinticuatro grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.25.ogg	es-PY	La temperatura es de veinticinco grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.26.ogg	es-PY	La temperatura es de veintiséis grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.27.ogg	es-PY	La temperatura es de veintisiete grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.28.ogg	es-PY	La temperatura es de veintiocho grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.29.ogg	es-PY	La temperatura es de veintinueve grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.30.ogg	es-PY	La temperatura es de treinta grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.31.ogg	es-PY	La temperatura es de treinta y un grado.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.32.ogg	es-PY	La temperatura es de treinta y dos grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.33.ogg	es-PY	La temperatura es de treinta y tres grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.34.ogg	es-PY	La temperatura es de treinta y cuatro grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.35.ogg	es-PY	La temperatura es de treinta y cinco grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.36.ogg	es-PY	La temperatura es de treinta y seis grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.37.ogg	es-PY	La temperatura es de treinta y siete grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.38.ogg	es-PY	La temperatura es de treinta y ocho grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.39.ogg	es-PY	La temperatura es de treinta y nueve grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.40.ogg	es-PY	La temperatura es de cuarenta grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.41.ogg	es-PY	La temperatura es de cuarenta y un grado.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.42.ogg	es-PY	La temperatura es de cuarenta y dos grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.43.ogg	es-PY	La temperatura es de cuarenta y tres grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.44.ogg	es-PY	La temperatura es de cuarenta y cuatro grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.45.ogg	es-PY	La temperatura es de cuarenta y cinco grados.	la temperatura del destino, al empezar a bajar
+comandante	comandante/comandante.temperatura.menos1.ogg	es-PY	La temperatura es de un grado bajo cero.	la temperatura del destino, bajo cero
+comandante	comandante/comandante.temperatura.menos2.ogg	es-PY	La temperatura es de dos grados bajo cero.	la temperatura del destino, bajo cero
+comandante	comandante/comandante.temperatura.menos3.ogg	es-PY	La temperatura es de tres grados bajo cero.	la temperatura del destino, bajo cero
+comandante	comandante/comandante.temperatura.menos4.ogg	es-PY	La temperatura es de cuatro grados bajo cero.	la temperatura del destino, bajo cero
+comandante	comandante/comandante.temperatura.menos5.ogg	es-PY	La temperatura es de cinco grados bajo cero.	la temperatura del destino, bajo cero

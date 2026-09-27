@@ -303,10 +303,18 @@ disponible para descargar" no es una licencia.
 
 ## Las voces
 
-Las trescientas cincuenta y ocho frases del juego —instructor, comandante,
-cantos de cabina, las dos torres y el otro avión de la radio— están
-**generadas con ElevenLabs** en la cuenta de Oksigenia SL, a partir de los
-guiones de `docs/voces/`, que los escribe el propio juego.
+Las seiscientas veintisiete frases del juego —instructor, comandante,
+tripulación de cabina, cantos de cabina, las dos torres y el otro avión de la
+radio— están **generadas con ElevenLabs** en la cuenta de Oksigenia SL, a
+partir de los guiones de `docs/voces/`, que los escribe el propio juego.
+
+Las voces **no son de nadie**: cada una se diseñó en la cuenta a partir de una
+descripción escrita —edad, habla del sitio, oficio—, sin clonar a ninguna
+persona. La última tanda, del 27 de septiembre de 2026, es la de la vida de la
+cabina con pasaje (#160): dos voces nuevas de tripulación de cabina, **Derlis**
+—hombre paraguayo, para los vuelos de Paraguay— e **Idaira** —mujer canaria,
+para los de las islas—, y los trozos con número de la comandante para el plan
+de vuelo y el descenso. Los identificadores están en `docs/voces/voces.json`.
 
 Qué hay en el repositorio y por qué:
 

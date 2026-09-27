@@ -532,4 +532,94 @@ export const EN: Dictionary = {
   "hito.unBarco": "a ship",
   "hito.otroAvion": "another aeroplane",
   "hito.avion.vos": "Look, on your {lado}: another aeroplane.",
+
+  /*
+   * El guion de la cabina: el plan y el descenso de la comandante, y la
+   * tripulación. La voz está grabada en castellano, como el resto de la
+   * megafonía; esto es lo que se lee en la tira. Ver `audio/megafonia.ts`.
+   */
+  "comandante.previsto.vuelo": "The flight will take about {n} minutes.",
+  "comandante.previsto.nivel": "We'll be flying at {n} thousand feet.",
+  "comandante.descenso.hacia":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent.",
+  "comandante.descenso.vuelta":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent back to the airport.",
+  "comandante.descenso.hacia.pettirossi":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Asunción.",
+  "comandante.descenso.hacia.guarani":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Ciudad del Este.",
+  "comandante.descenso.hacia.encarnacion":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Encarnación.",
+  "comandante.descenso.hacia.concepcion":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Concepción.",
+  "comandante.descenso.hacia.pedro-juan":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Pedro Juan Caballero.",
+  "comandante.descenso.hacia.estigarribia":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Mariscal Estigarribia.",
+  "comandante.descenso.hacia.yvytu-rape":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Yvytu Rape, the Granja Óga airstrip.",
+  "comandante.descenso.hacia.tenerife-norte":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Tenerife North.",
+  "comandante.descenso.hacia.tenerife-sur":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Tenerife South.",
+  "comandante.descenso.hacia.gran-canaria":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Gran Canaria.",
+  "comandante.descenso.hacia.lanzarote":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Lanzarote.",
+  "comandante.descenso.hacia.fuerteventura":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Fuerteventura.",
+  "comandante.descenso.hacia.la-palma":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into La Palma.",
+  "comandante.descenso.hacia.el-hierro":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into El Hierro.",
+  "comandante.descenso.hacia.la-gomera":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into La Gomera.",
+  "comandante.minutos": "We'll be landing in about {n} minutes.",
+  "comandante.cielo.despejado": "The sky there is clear.",
+  "comandante.cielo.nubes": "There are a few clouds there.",
+  "comandante.cielo.nublado": "It's cloudy there.",
+  "comandante.cielo.lluvia": "It's raining there.",
+  "comandante.cielo.tormenta":
+    "There's a storm there, so it may get a little bumpy: keep your seatbelt fastened and relax.",
+  "comandante.cielo.niebla": "It's foggy there.",
+  "comandante.temperatura": "The temperature is {n} degrees.",
+  "comandante.temperaturaBajoCero": "The temperature is {n} degrees below zero.",
+  "comandante.aproximacion": "Cabin crew, prepare for landing.",
+  "tripulacion.servicio.mango":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and dried mango from Granja Óga. Enjoy!",
+  "tripulacion.servicio.pina":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and dried pineapple from Granja Óga. Enjoy!",
+  "tripulacion.servicio.banana":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and dried banana from Granja Óga. Enjoy!",
+  "tripulacion.servicio.mani":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and roasted peanuts from Granja Óga. Enjoy!",
+  "tripulacion.servicio.chipa":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and chipa from Granja Óga. Enjoy!",
+  "tripulacion.servicio.mbeju":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and mbejú from Granja Óga. Enjoy!",
+  "tripulacion.servicio.largo":
+    "And as it's a long flight, we also have hot coffee and tea.",
+  "tripulacion.cinturones":
+    "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
+  "tripulacion.canario.servicio.mango":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried mango from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.pina":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried pineapple from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.banana":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried banana from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.mani":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and roasted peanuts from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.mango.paraguay":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried mango; a taste of Paraguay, from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.pina.paraguay":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried pineapple; a taste of Paraguay, from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.banana.paraguay":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried banana; a taste of Paraguay, from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.mani.paraguay":
+    "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and roasted peanuts; a taste of Paraguay, from Granja Óga. Enjoy!",
+  "tripulacion.canario.servicio.largo":
+    "And as it's a long flight, we also have coffee and tea.",
+  "tripulacion.canario.cinturones":
+    "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
+  "servicio.rotulo": "In-flight service",
 };

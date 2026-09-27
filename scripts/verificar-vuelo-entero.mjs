@@ -131,6 +131,21 @@ if (!/^jaz-\d+$/.test(AVION)) {
  * aterriza, sale de la pista, sigue la raya hasta el puesto y apaga — **allí**.
  */
 const DESTINO = process.argv[6] ?? null;
+/**
+ * **Y un crucero antes de cruzar, si se pide**: `OGA_CRUCERO=segundos`.
+ *
+ * El trayecto entre islas no se vuela —ver arriba— y con él se saltaba todo
+ * lo que pasa en crucero: el cartel que se apaga, el servicio a bordo, el
+ * anuncio del descenso, los cinturones y la orden a la tripulación de
+ * prepararse para aterrizar. El guion de la cabina se quedaba en el
+ * despegue y la despedida, y lo de en medio no lo medía nadie.
+ *
+ * Con esto el avión sube a setecientos cincuenta metros sobre el campo,
+ * vuela nivelado esos segundos de juego, baja a trescientos como baja
+ * cualquiera hacia su destino y **entonces** cruza a la final del otro
+ * campo. Sin la variable el banco vuela como siempre.
+ */
+const CRUCERO_PEDIDO = Number(process.env.OGA_CRUCERO ?? 0) || 0;
 if (DESTINO !== null && !/^[a-z-]+$/.test(DESTINO)) {
   console.log(`\n  ✗ «${DESTINO}» no es un campo.\n`);
   process.exit(2);
@@ -512,7 +527,7 @@ const fotos = (async () => {
   }
 })();
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -1368,6 +1383,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
   // otra cosa. El banco tarda lo que tarda un vuelo, y hay que poder correrlo.
   const CRUCERO = 200;
   const SENDA = Math.tan((3 * Math.PI) / 180);
+  /*
+   * Las del crucero de `OGA_CRUCERO`, m sobre el campo: por encima de los
+   * cuatrocientos en los que la comandante apaga el cartel, y abajo por debajo
+   * de los mil de la aproximación y por encima de la final.
+   */
+  const ALTO_DE_CRUCERO = 750;
+  const ALTO_DE_BAJADA = 320;
+  /** Cuándo se llegó arriba en ese crucero, s de juego. */
+  let cruceroDesde = null;
 
   /*
    * **Las fases en las que el juego promete una raya que seguir.**
@@ -2830,6 +2854,58 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
       etapa === "subir" &&
       destino &&
       !enElDestino &&
+      cruceroPedido > 0 &&
+      alto(s) > 150 &&
+      t - despego > 25
+    ) {
+      // Ver `OGA_CRUCERO`: antes de cruzar, un crucero y una bajada.
+      etapa = "crucero";
+      cruceroDesde = null;
+    } else if (etapa === "crucero") {
+      /*
+       * **Subir, cruzar nivelado y bajar**, recto por el rumbo de salida.
+       *
+       * El gas y la palanca, con el mismo reparto que el circuito: subiendo,
+       * la palanca lleva la velocidad y el gas lo que haga falta; nivelado,
+       * el gas la velocidad y la palanca la altura. Bajando, poco gas y la
+       * palanca a la altura de abajo, con su bajada limitada.
+       */
+      if (cruceroDesde === null && alto(s) >= ALTO_DE_CRUCERO - 30)
+        cruceroDesde = t;
+      const yaBaja = cruceroDesde !== null && t - cruceroDesde >= cruceroPedido;
+      const altoQueToca = yaBaja ? ALTO_DE_BAJADA : ALTO_DE_CRUCERO;
+      const subiendo = !yaBaja && alto(s) < altoQueToca - 15;
+      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
+      const gasSubiendo =
+        NECESITA_TECNICA && peldano !== "guyrami"
+          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
+          : 1;
+      const aSuVelocidad = Math.min(
+        1,
+        (yaBaja ? 0.45 : 0.55) + (DE_CIRCUITO - s.airspeed) * 0.04,
+      );
+      c.throttle = subiendo ? gasSubiendo : Math.max(yaBaja ? 0.2 : 0.3, aSuVelocidad);
+      configurar(s, c, 1);
+      c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
+      c.aileron = alRumbo(s, rumboDeSalida);
+      /*
+       * Y se cruza cuando la cabina ya dijo lo de la bajada —o cuando se ve
+       * que no lo va a decir—: abajo, y con la orden a la tripulación dicha
+       * o con minuto y medio de espera, que es más de lo que tarda.
+       */
+      const dicha = (o.megafonia?.() ?? []).some((h) =>
+        h.includes("comandante.aproximacion"),
+      );
+      if (
+        yaBaja &&
+        alto(s) < ALTO_DE_BAJADA + 40 &&
+        (dicha || t - cruceroDesde - cruceroPedido > 150)
+      )
+        etapa = "cruzar";
+    } else if (
+      (etapa === "cruzar" || (etapa === "subir" && !cruceroPedido)) &&
+      destino &&
+      !enElDestino &&
       alto(s) > 150 &&
       t - despego > 25
     ) {
@@ -3445,6 +3521,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
      */
     maquina: o.maquina?.() ?? [],
     cuentaOida: o.cuentaOida?.() ?? [],
+    // Y lo que sonó por la megafonía, en orden: el guion de la cabina.
+    megafonia: o.megafonia?.() ?? [],
     pistaDeOtros,
     pistaDeOtrosDonde,
     dadaAOtroTrasLaTuya,
@@ -3609,7 +3687,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO]);
 fotografiando = false;
 await fotos;
 /*
@@ -3629,6 +3707,7 @@ if (process.env.OGA_VOCES) {
         todo: vuelo.todoLoDicho,
         maquina: vuelo.maquina,
         cuenta: vuelo.cuentaOida,
+        megafonia: vuelo.megafonia,
       },
       null,
       1,

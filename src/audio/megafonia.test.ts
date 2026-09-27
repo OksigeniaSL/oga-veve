@@ -6,7 +6,7 @@
  * pasa por «rodando», no suena a vuelo: suena a máquina.
  */
 import { describe, expect, it } from "vitest";
-import { Megafonia, conPasaje } from "./megafonia";
+import { Megafonia, conPasaje, conTripulacion } from "./megafonia";
 import type { Fase } from "../flight/vuelo";
 
 /*
@@ -64,22 +64,27 @@ describe("la megafonía de cabina", () => {
 
   it("dice lo suyo en cada fase del vuelo, y en orden", () => {
     const m = new Megafonia();
+    const conAuxiliares = { conTripulacion: true };
     const todo = [
       // En el puesto, con las puertas cerradas: los toboganes.
-      ...correr(m, "estacionado", 10),
-      ...correr(m, "rodando", 10),
-      ...correr(m, "autorizado", 10),
-      ...correr(m, "alineando", 10),
-      ...correr(m, "en-vuelo", 10),
-      ...correr(m, "final", 10),
-      ...correr(m, "abandonando", 10),
+      ...correr(m, "estacionado", 10, conAuxiliares),
+      ...correr(m, "rodando", 10, conAuxiliares),
+      ...correr(m, "autorizado", 10, conAuxiliares),
+      ...correr(m, "alineando", 10, conAuxiliares),
+      ...correr(m, "en-vuelo", 10, conAuxiliares),
+      ...correr(m, "final", 10, conAuxiliares),
+      ...correr(m, "abandonando", 10, conAuxiliares),
     ];
+    /*
+     * **Y ya no hay «empezamos a bajar» en la final**: el descenso va en su
+     * sitio, al empezar a bajar, y aquí el avión no baja nunca. Ver el guion
+     * entero más abajo.
+     */
     expect(todo).toEqual([
       "comandante.crosscheck",
       "comandante.bienvenida",
       "comandante.despegue",
       "comandante.crucero",
-      "comandante.descenso",
       "comandante.llegada",
     ]);
   });
@@ -103,7 +108,9 @@ describe("la megafonía de cabina", () => {
     expect(rodando).not.toContain("comandante.crosscheck");
   });
 
-  it("y en un vuelo entero habla seis veces y ni una más", () => {
+  it("y en un vuelo sin bajar habla seis veces y ni una más", () => {
+    // Con auxiliares: toboganes, bienvenida, despegue, crucero, servicio y
+    // llegada. Sin descenso, porque aquí el avión no baja nunca.
     const m = new Megafonia();
     let veces = 0;
     for (const fase of [
@@ -122,7 +129,7 @@ describe("la megafonía de cabina", () => {
       "a-plataforma",
       "en-puesto",
     ] as Fase[]) {
-      veces += correr(m, fase, 30).length;
+      veces += correr(m, fase, 30, { conTripulacion: true }).length;
     }
     expect(veces).toBe(6);
   });
@@ -136,6 +143,14 @@ describe("la megafonía de cabina", () => {
 });
 
 describe("quién lleva megafonía", () => {
+  it("y quién lleva además tripulación de cabina: de veinte plazas arriba", () => {
+    // El JAZ 60, diecinueve plazas y cinco toneladas y media: sin auxiliar.
+    expect(conTripulacion(5600)).toBe(false);
+    // El JAZ 90 y el JAZ 120, sí.
+    expect(conTripulacion(30000)).toBe(true);
+    expect(conTripulacion(255826)).toBe(true);
+  });
+
   it("los que llevan pasaje", () => {
     // Turbohélice, reactor regional y de fuselaje ancho.
     expect(conPasaje(7200)).toBe(true);
@@ -316,5 +331,205 @@ describe("y el anuncio de crucero es del final de la subida", () => {
     expect(correrlo(new Megafonia(), { desdeLoMasAlto: 100 }, 20)).toContain(
       "comandante.crucero",
     );
+  });
+});
+
+describe("el guion de un vuelo de línea, entero y en orden", () => {
+  /*
+   * Pedido porque «forma parte de la vida de volar»: el mismo guion en todos
+   * los vuelos de pasaje del mundo. Lo que se comprueba es **el orden** y que
+   * cada cosa salga en su momento y no en otro — el servicio con el cartel
+   * apagado, la bajada al bajar, la aproximación antes de la final.
+   */
+  type Tramo = {
+    fase: Fase;
+    segundos: number;
+    vertical?: number;
+    extra?: object;
+  };
+
+  /**
+   * Vuela un perfil: en tierra, sube a tres mil metros, cruza, baja y aterriza.
+   * La altura y lo bajado desde lo más alto se llevan como las lleva el juego.
+   */
+  function volar(
+    m: Megafonia,
+    tramos: readonly Tramo[],
+    comun: object = {},
+    alDecir?: (a: string, alto: number) => void,
+  ) {
+    const dichos: string[] = [];
+    let alto = 0;
+    let techo = 0;
+    const dt = 0.25;
+    for (const tr of tramos) {
+      for (let t = 0; t < tr.segundos; t += dt) {
+        alto = Math.max(0, alto + (tr.vertical ?? 0) * dt);
+        techo = Math.max(techo, alto);
+        const dice = m.paso(dt, {
+          fase: tr.fase,
+          conPasaje: true,
+          conTripulacion: true,
+          instructorHablando: false,
+          sobreElCampo: alto,
+          vertical: tr.vertical ?? 0,
+          desdeLoMasAlto: techo - alto,
+          ...comun,
+          ...(tr.extra ?? {}),
+        });
+        if (dice) {
+          dichos.push(dice);
+          alDecir?.(dice, alto);
+        }
+      }
+    }
+    return dichos;
+  }
+
+  const DE_LINEA: readonly Tramo[] = [
+    { fase: "estacionado", segundos: 15 },
+    { fase: "rodando", segundos: 30 },
+    { fase: "autorizado", segundos: 10 },
+    { fase: "alineando", segundos: 10 },
+    { fase: "despegando", segundos: 20 },
+    // Subida a tres mil metros, a diez por segundo.
+    { fase: "en-vuelo", segundos: 300, vertical: 10 },
+    // Crucero: cuatro minutos nivelados.
+    { fase: "en-vuelo", segundos: 240 },
+    // Bajada hasta la final, a ocho por segundo.
+    { fase: "en-vuelo", segundos: 337, vertical: -8 },
+    { fase: "final", segundos: 60, vertical: -4 },
+    { fase: "aterrizado", segundos: 20 },
+    { fase: "abandonando", segundos: 30 },
+  ];
+
+  it("dice los nueve anuncios, cada uno una vez y en el orden de la realidad", () => {
+    expect(volar(new Megafonia(), DE_LINEA)).toEqual([
+      "comandante.crosscheck",
+      "comandante.bienvenida",
+      "comandante.despegue",
+      "comandante.crucero",
+      "tripulacion.servicio",
+      "comandante.descenso",
+      "tripulacion.cinturones",
+      "comandante.aproximacion",
+      "comandante.llegada",
+    ]);
+  });
+
+  it("y lo de la bajada, bajando y por encima de la final", () => {
+    const donde = new Map<string, number>();
+    volar(new Megafonia(), DE_LINEA, {}, (a, alto) => donde.set(a, alto));
+    // El descenso, ya bajando de verdad desde el crucero: ni arriba del todo
+    // ni en la aproximación.
+    expect(donde.get("comandante.descenso")).toBeLessThan(3000 - 150);
+    expect(donde.get("comandante.descenso")).toBeGreaterThan(2000);
+    // Y la aproximación por debajo de mil metros y por encima de la final.
+    expect(donde.get("comandante.aproximacion")).toBeLessThan(1000);
+    expect(donde.get("comandante.aproximacion")).toBeGreaterThan(300);
+  });
+
+  it("sin auxiliares, la comandante habla y nadie pasa con el agua", () => {
+    // El JAZ 60: pasaje sí, tripulación de cabina no.
+    expect(volar(new Megafonia(), DE_LINEA, { conTripulacion: false })).toEqual(
+      [
+        "comandante.bienvenida",
+        "comandante.crucero",
+        "comandante.descenso",
+        "comandante.llegada",
+      ],
+    );
+  });
+
+  it("con el cartel puesto por turbulencia no se anuncia el servicio", () => {
+    const dichos = volar(new Megafonia(), DE_LINEA, { cartelPuesto: true });
+    expect(dichos).not.toContain("tripulacion.servicio");
+    // Y el resto del guion sigue igual.
+    expect(dichos).toContain("comandante.descenso");
+  });
+
+  it("no habla nunca por encima de la torre, el otro avión o la máquina", () => {
+    const dichos = volar(new Megafonia(), DE_LINEA, { otrosHablando: true });
+    expect(dichos).toEqual([]);
+  });
+
+  it("y un anuncio no empieza encima de otro de la megafonía", () => {
+    // La comandante habla sin parar durante el crucero: el servicio no entra.
+    const tramos = DE_LINEA.map((tr, i) =>
+      i === 6 ? { ...tr, extra: { megafoniaHablando: true } } : tr,
+    );
+    expect(volar(new Megafonia(), tramos)).not.toContain(
+      "tripulacion.servicio",
+    );
+  });
+
+  it("el vaivén del crucero no es un descenso", () => {
+    const m = new Megafonia();
+    const dichos: string[] = [];
+    const arriba = {
+      fase: "en-vuelo" as Fase,
+      conPasaje: true,
+      conTripulacion: true,
+      instructorHablando: false,
+      sobreElCampo: 3000,
+      vertical: 0,
+      desdeLoMasAlto: 0,
+    };
+    for (let t = 0; t < 30; t += 0.25) {
+      const d = m.paso(0.25, arriba);
+      if (d) dichos.push(d);
+    }
+    // Diez minutos subiendo y bajando cien metros, a dos por segundo.
+    for (let t = 0; t < 600; t += 0.25) {
+      const sentido = Math.floor(t / 50) % 2 === 0 ? -1 : 1;
+      const d = m.paso(0.25, {
+        ...arriba,
+        vertical: 2 * sentido,
+        desdeLoMasAlto: 100,
+      });
+      if (d) dichos.push(d);
+    }
+    expect(dichos).not.toContain("comandante.descenso");
+    expect(m.bajandoAlDestino).toBe(false);
+  });
+
+  it("y con el punto de descenso del plan, se anuncia a su hora aunque aún no se baje", () => {
+    /*
+     * El T/D lo calcula el plan de vuelo —ver `empezarElDescenso`—, y una
+     * comandante de verdad hace el anuncio ahí, no cuando ya lleva un minuto
+     * bajando.
+     */
+    const m = new Megafonia();
+    const nivelado = {
+      fase: "en-vuelo" as Fase,
+      conPasaje: true,
+      conTripulacion: true,
+      instructorHablando: false,
+      sobreElCampo: 3000,
+      vertical: 0,
+      desdeLoMasAlto: 0,
+    };
+    for (let t = 0; t < 60; t += 0.25) m.paso(0.25, nivelado);
+    m.empezarElDescenso();
+    const dichos: string[] = [];
+    for (let t = 0; t < 30; t += 0.25) {
+      const d = m.paso(0.25, nivelado);
+      if (d) dichos.push(d);
+    }
+    expect(dichos[0]).toBe("comandante.descenso");
+    expect(dichos).toContain("tripulacion.cinturones");
+  });
+
+  it("si se entra en final antes de tiempo, la aproximación ya no se dice", () => {
+    // Bajada en picado desde el crucero directa a la final: no da tiempo, y
+    // en la final la palabra es de la instructora.
+    const tramos: Tramo[] = [
+      ...DE_LINEA.slice(0, 7),
+      { fase: "en-vuelo", segundos: 30, vertical: -30 },
+      { fase: "final", segundos: 120, vertical: -8 },
+    ];
+    const dichos = volar(new Megafonia(), tramos);
+    expect(dichos).toContain("comandante.descenso");
+    expect(dichos).not.toContain("comandante.aproximacion");
   });
 });

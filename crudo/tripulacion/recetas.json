@@ -1,0 +1,30 @@
+{
+  "tripulacion.cinturones": [
+    "tripulacion.cinturones"
+  ],
+  "tripulacion.servicio.banana": [
+    "tripulacion.servicio.banana"
+  ],
+  "tripulacion.servicio.chipa": [
+    "tripulacion.servicio.chipa"
+  ],
+  "tripulacion.servicio.largo": [
+    "tripulacion.servicio.largo"
+  ],
+  "tripulacion.servicio.mango": [
+    "tripulacion.servicio.mango"
+  ],
+  "tripulacion.servicio.mani": [
+    "tripulacion.servicio.mani"
+  ],
+  "tripulacion.servicio.mbeju": [
+    "tripulacion.servicio.mbeju"
+  ],
+  "tripulacion.servicio.pina": [
+    "tripulacion.servicio.pina"
+  ],
+  "tripulacion.servicio": [
+    "{producto}",
+    "{largo?}"
+  ]
+}

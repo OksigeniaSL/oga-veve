@@ -821,6 +821,24 @@ const COMBUSTIBLE = icono(`
 `);
 
 /**
+ * **El servicio a bordo**: una botella de agua y un vaso, en su bandeja.
+ *
+ * Es el dibujo de cuando la tripulación anuncia que pasa por el pasillo, y en
+ * Guyrami es lo único que se ve de ese anuncio: a los cuatro años no se lee
+ * «agua y fruta de la granja», pero una botella en una bandeja dice «ahora
+ * viene algo para tomar» sin una palabra. La botella y no un producto, porque
+ * el agua es lo único que va en todos los vuelos. Ver
+ * `audio/servicio-a-bordo.ts`.
+ */
+const SERVICIO = icono(`
+  <path d="M1.6 19 h20.8 v1.4 a1.2 1.2 0 0 1 -1.2 1.2 H2.8 a1.2 1.2 0 0 1 -1.2 -1.2 Z" />
+  <rect x="7.6" y="2.2" width="3.6" height="1.8" rx="0.5" />
+  <path d="M7.8 4.6 h3.2 v1.6 q2 1 2 3.2 V18 H5.8 V9.4 q0-2.2 2-3.2 Z" />
+  <rect class="senal__hueco" x="6.9" y="11" width="5" height="3.4" rx="0.6" />
+  <path d="M14.8 11.6 h5.6 l-0.8 6.4 h-4 Z" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -850,6 +868,7 @@ export const DIBUJOS = {
   sobrevelocidad: SOBREVELOCIDAD,
   freno: FRENO,
   combustible: COMBUSTIBLE,
+  servicio: SERVICIO,
   salida: SALIDA,
   sinVoz: SIN_VOZ,
   toma: TOMA,
