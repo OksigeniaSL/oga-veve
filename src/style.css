@@ -9101,6 +9101,114 @@ button.motor__tecla::after {
 }
 
 /*
+ * ── **En el iPhone, cómo se pone el juego a pantalla completa** ──
+ *
+ * Una tira abajo y en medio: los dos botones que hay que tocar, dibujados
+ * como los dibuja el iPhone, el ícono que va a aparecer y una línea para
+ * quien lee. **Abajo y baja**, encima del pie: puesta arriba tapaba los
+ * idiomas y el «¿Quién vuela?», y en un teléfono tumbado no sobra ni una
+ * línea de la pantalla de pilotos. Por encima de ella y del hangar, y se
+ * cierra al tocarla. Ver `ui/anadir-a-inicio.ts`.
+ */
+.a-inicio {
+  position: fixed;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  width: min(680px, calc(100vw - 24px));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 48px 8px 14px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 14px;
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.a-inicio__pasos {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.a-inicio__dibujo {
+  width: 38px;
+  height: 38px;
+  /* El azul de los botones de Safari: es el color con el que se buscan. */
+  color: #4aa3ff;
+}
+
+.a-inicio__luego {
+  width: 20px;
+  height: 20px;
+  color: var(--tinta-suave);
+}
+
+.a-inicio__icono {
+  width: 38px;
+  height: 38px;
+  /* La esquina de un ícono del iPhone, que es como va a salir en su pantalla. */
+  border-radius: 9px;
+}
+
+.a-inicio__texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--tinta-suave);
+  text-wrap: balance;
+}
+
+.a-inicio__cerrar {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--tinta-suave);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* En un teléfono de pie no cabe en una fila: la línea, debajo. */
+@media (max-width: 520px) {
+  .a-inicio {
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 44px 10px;
+    text-align: center;
+  }
+}
+
+/* Y la línea de los ajustes, con el mismo botón dibujado delante. */
+.ajustes__inicio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 0;
+  font-size: var(--voz-glosa);
+  line-height: 1.35;
+  color: var(--tinta-suave);
+}
+
+.ajustes__inicio .a-inicio__dibujo {
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
+/*
  * ── **El teléfono apaisado, que es la pantalla del juego** ──
  *
  * Todo lo de arriba se pensó para la tablet del aula, y el teléfono heredó el
