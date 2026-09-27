@@ -426,7 +426,7 @@ import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
-import { SE_QUEDAN, type Fase } from "./flight/vuelo";
+import { SE_QUEDAN, guionSinTorre, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import {
   alturaDeEdificio,
@@ -5626,7 +5626,12 @@ export class Game {
        * cuenta la instructora, en los cuatro peldaños: la voz es el canal, y
        * la frase no es fraseología sino lo que quiere decir.
        */
-      const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");
+      const libre = this.avisoCon(
+        this.elCampo().escenario.aerodrome?.privado
+          ? "vuelo.puedeVolverSinTorre"
+          : "vuelo.puedeVolver",
+        "palabra.volve",
+      );
       this.hud.senal.mostrar("verde", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
@@ -5659,6 +5664,24 @@ export class Game {
    * por la que se tenga delante. Ver `autorizarSinMotor`.
    */
   private autorizarElAterrizaje(cabecera: string | null = null): void {
+    /*
+     * **Y en una pista sin torre no autoriza nadie**: se ve que está libre, y
+     * lo dice la instructora. Encendía la lámpara de una torre que no existe
+     * y la tarjeta decía «la torre te deja aterrizar» en la pista de casa.
+     */
+    if (this.elCampo().escenario.aerodrome?.privado) {
+      const libre = this.avisoCon(
+        "vuelo.puedeAterrizarSinTorre",
+        "palabra.aterriza",
+      );
+      this.hud.senal.mostrar("verde", libre.rotulo, null, {
+        segundos: SE_QUEDA_EL_PERMISO,
+        prioridad: IMPORTANTE,
+      });
+      this.avisar("success");
+      this.instructor.decir(libre.texto, libre.id);
+      return;
+    }
     this.cabeceraParaLaTorre = cabecera;
     this.laTorreMandaEnLaLuz = true;
     this.luzDeTorre("verde");
@@ -7044,7 +7067,13 @@ export class Game {
     this.calleUnicaDelCampo = () => false;
     const campo = this.elCampoMontado();
     const aero = campo.escenario.aerodrome;
-    if (!aero || aero.privado) return;
+    if (!aero) return;
+    /*
+     * **Y quién vuela aquí lo dice el campo**, no si tiene torre: en una
+     * pista particular, nadie más que vos. Ver `tiposDelCampo`.
+     */
+    const tipos = tiposDelCampo(aero.id, campo.pista.length, !!aero.privado);
+    if (tipos.length === 0) return;
     /*
      * **Y no tiene tu silueta.** Ver tu propio avión pasando por el viento en
      * cola es un espejo, no un vecino: lo primero que se aprende mirando al
@@ -7116,7 +7145,7 @@ export class Game {
       escala,
       deTu.altura,
       {
-        tipos: tiposDelCampo(aero.id, pista.length, !!aero.privado),
+        tipos,
         forma,
         cuerposDeVerdad: true,
         tierra: () => {
@@ -11147,8 +11176,10 @@ export class Game {
     // Y en tierra de verdad: una avioneta ligera se despega del suelo todavía
     // «alineando», y la verde en el aire es la de «podés aterrizar» — la
     // torre la decía nada más rotar.
+    // Y donde hay torre: en la pista de casa no hay lámpara, se mira. Ver
+    // `guionSinTorre`.
     const enTierraEsperando =
-      this.leccion.torre &&
+      this.hayTorreQueHable() &&
       this.flight.state.onGround &&
       (vista.fase === "esperando" ||
         vista.fase === "autorizado" ||
@@ -11340,12 +11371,20 @@ export class Game {
        * **Y yendo a otro aeropuerto, tampoco se da una vuelta**: se sigue la
        * flecha hasta allí. Ver `haciaOtroCampo`.
        */
+      /*
+       * **Y en una pista particular, su guion**: sin lámpara que esperar y sin
+       * nadie detrás que meta prisa. Ver `guionSinTorre`. Con la bici, si hoy
+       * sale: es la misma condición que la saca a ella.
+       */
+      const guion = this.elCampo().escenario.aerodrome?.privado
+        ? guionSinTorre(vista.fase, this.tier.sigueme)
+        : vista;
       const clave =
         this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
           ? "vuelo.enVueloAterrizando"
           : vista.fase === "en-vuelo" && this.haciaOtroCampo()
             ? "vuelo.enVueloDestino"
-            : vista.clave;
+            : guion.clave;
       const frase = t(clave as never);
 
       // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
@@ -11395,7 +11434,7 @@ export class Game {
        */
       const seQueda = SE_QUEDAN.has(vista.fase);
       this.hud.senal.mostrar(
-        comoDibujo(vista.icono),
+        comoDibujo(guion.icono),
         conLetras ? frase : "",
         letra,
         {

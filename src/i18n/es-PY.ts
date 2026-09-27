@@ -632,6 +632,12 @@ export const ES_PY = {
   "vuelo.esperaQueAterrice": "Esperamos: viene un avión a aterrizar",
   "vuelo.esperaQueDespegue": "Esperamos: primero sale el avión que está en la pista",
   "vuelo.autorizado": "¡Luz verde! Entrá a la pista",
+  /*
+   * **Y en la pista de casa, sin torre ni lámpara**: se para y se mira antes
+   * de entrar, y el permiso te lo das vos. Ver `guionSinTorre`.
+   */
+  "vuelo.esperandoMirando": "Pará y mirá: la manga, los animales y la pista",
+  "vuelo.autorizadoSinTorre": "Todo libre: entrá a la pista",
   "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
@@ -737,12 +743,15 @@ export const ES_PY = {
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
+  // Y en la pista de casa, donde no hay torre que deje nada: se ve.
+  "vuelo.puedeVolverSinTorre": "La pista ya está libre: volvé a intentarlo",
   /*
    * Y tu permiso para aterrizar, en la tarjeta verde. No lo dice la
    * instructora: lo dice la torre, «podés aterrizar», y esto es lo que se lee
    * mientras tanto. Ver `autorizarElAterrizaje` en `game.ts`.
    */
   "vuelo.puedeAterrizar": "La torre te deja aterrizar",
+  "vuelo.puedeAterrizarSinTorre": "Ahora sí: podés aterrizar",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   /*
    * **Y estos tres hablan como habla una persona.**
@@ -834,6 +843,13 @@ export const ES_PY = {
   "fin.redondo": "¡Vuelo redondo! No se puede hacer mejor",
   "vuelo.aterrizado": "Frená",
   "vuelo.abandonando": "Salí de la pista, que viene otro",
+  /*
+   * Y en la pista de casa, sin apuro: ahí no viene nadie detrás. Con quien
+   * te sale a buscar, si sale. Ver `guionSinTorre`.
+   */
+  "vuelo.abandonandoSinPrisa": "Sin apuro: salí de la pista y volvé a casa",
+  "vuelo.abandonandoConLaBici":
+    "Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici",
   "vuelo.pistaLibre": "¡Pista libre! Bien hecho",
   "vuelo.aPlataforma": "Volvé a tu lugar",
   "vuelo.enPuesto": "Llegaste. Apagá el motor",

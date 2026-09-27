@@ -524,6 +524,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    * se mide es que un vuelo entero se pueda completar.
    */
   o.mandarFrustrar("nunca");
+  // Si el campo de salida tiene torre: en una pista particular no la hay, y
+  // lo que se comprueba de ella es que calle. Ver la comprobación de la torre.
+  const saleConTorre = o.conFrecuencia?.() ?? true;
   // La raíz de la escena, para poder mirar el coche del sígame.
   let raiz = o.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
@@ -3557,6 +3560,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     enBici: o.enBici?.() ?? false,
     biciGuiando: +biciGuiando.toFixed(1),
     biciVista: +biciVista.toFixed(1),
+    saleConTorre,
     ladoAlEstarCerca: Number.isFinite(ladoAlEstarCerca)
       ? Math.round(ladoAlEstarCerca)
       : -1,
@@ -3936,7 +3940,19 @@ const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
     );
   return !!m && (m[1] === "yo" || (!!vuelo.misLetras && m[1] === vuelo.misLetras));
 });
-comprobar(
+/*
+ * **Y saliendo de una pista particular, la torre calla.** No hay torre: ni
+ * lámpara que se ponga roja o verde ni voz que diga «esperá acá». Allí se
+ * para y se mira. Ver `guionSinTorre`.
+ */
+if (vuelo.saleConTorre === false)
+  comprobar(
+    "y en la pista de casa no enciende la luz ninguna torre",
+    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
+    `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
+    "en la pista de hierba de la granja hablaba una torre que no existe",
+  );
+else comprobar(
   conFraseologia
     ? "la torre dice la fraseología del vuelo"
     : "la torre manda, y en este peldaño sin el inglés",

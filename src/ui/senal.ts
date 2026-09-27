@@ -821,6 +821,22 @@ const COMBUSTIBLE = icono(`
 `);
 
 /**
+ * Mirar antes de entrar en una pista sin torre: **la manga**.
+ *
+ * En la pista de hierba de casa no hay lámpara que esperar. Lo que se hace es
+ * mirar: de dónde viene el viento, que no haya animales y que la pista esté
+ * libre. La manga es lo primero y lo que más se ve desde la cabecera, y es el
+ * mismo cono a rayas que hay plantado junto a la pista: quien no lee ve la
+ * tarjeta, levanta la vista y lo encuentra.
+ */
+const MANGA = icono(`
+  <rect x="3" y="2.5" width="2.2" height="19" rx="1.1" />
+  <path d="M5.2 4.2 L21 7 V11.4 L5.2 14.2 Z" />
+  <path class="senal__hueco" d="M9.6 5 L12.4 5.5 V13 L9.6 13.4 Z" />
+  <path class="senal__hueco" d="M15.4 6 L18 6.5 V11.9 L15.4 12.4 Z" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -834,6 +850,7 @@ export const DIBUJOS = {
   reactor: REACTOR,
   amarillo: RAYA,
   mano: MANO,
+  manga: MANGA,
   nopara: NO_PARAR,
   verde: VERDE,
   "media-vuelta": MEDIA_VUELTA,

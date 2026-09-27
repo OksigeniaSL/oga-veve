@@ -997,3 +997,40 @@ export const GUION: Record<
   "en-puesto": { clave: "vuelo.enPuesto", icono: "llave" },
   apagado: { clave: "vuelo.apagado", icono: "llave" },
 };
+
+/**
+ * **El guion en una pista particular**, sin torre y sin más tráfico que el
+ * tuyo: lo que cambia del de siempre, que son tres frases.
+ *
+ * El de siempre está escrito para un aeropuerto, y en la pista de hierba de
+ * casa dos de sus frases eran mentira y la tercera metía prisa sin motivo.
+ * «Esperá la luz» con una lámpara que no tiene nadie que la encienda, «luz
+ * verde» con la misma lámpara, y «salí de la pista, que viene otro» donde no
+ * viene nadie: «una cosa es soñar y otra creer que en casa vamos a tener
+ * varios aviones como el que tiene varios coches».
+ *
+ * Y lo que se enseña en su lugar es lo que se hace de verdad en una pista
+ * así antes de entrar: **pararse y mirar**. La manga, que dice el viento; los
+ * animales, que en un campo sin valla son lo que se cruza; y la pista, que
+ * esté libre. Nadie te da permiso: te lo das vos, mirando. Y al salir, sin
+ * apuro — dejar la pista sigue siendo lo que se hace, pero no porque nadie
+ * espere detrás. Donde sale alguien a buscarte en bici, se dice quién es.
+ */
+export function guionSinTorre(
+  fase: Fase,
+  conBici: boolean,
+): { readonly clave: string; readonly icono: string } {
+  switch (fase) {
+    case "esperando":
+      return { clave: "vuelo.esperandoMirando", icono: "manga" };
+    case "autorizado":
+      return { clave: "vuelo.autorizadoSinTorre", icono: "verde" };
+    case "abandonando":
+      return {
+        clave: conBici ? "vuelo.abandonandoConLaBici" : "vuelo.abandonandoSinPrisa",
+        icono: "salida",
+      };
+    default:
+      return GUION[fase];
+  }
+}
