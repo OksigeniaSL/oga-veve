@@ -58,6 +58,20 @@ describe("el recado entre el vuelo que acaba y el que empieza", () => {
     expect(leerRearranque(s)).toBeNull();
   });
 
+  it("y lleva el destino, para que cambiar de avión no lo borre", () => {
+    const s = sesion();
+    pedirRearranque(s, {
+      escenario: "guarani",
+      avion: "jaz-90",
+      destino: "pettirossi",
+    });
+    expect(leerRearranque(s)).toEqual({
+      escenario: "guarani",
+      avion: "jaz-90",
+      destino: "pettirossi",
+    });
+  });
+
   it("sin almacén, o con algo raro dentro, no hay recado", () => {
     expect(leerRearranque(null)).toBeNull();
     const s = sesion();

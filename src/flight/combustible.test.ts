@@ -17,9 +17,14 @@ import {
   loQueQueda,
   quemaPorSegundo,
   reservaEnKilos,
+  seCargaAlCambiarDeDestino,
+  cargaParaElPlan,
   RESERVA_SEGUNDOS,
 } from "./combustible";
 import { aircraftById, AIRCRAFT } from "./aircraft";
+import { camposDeLaRuta, tramosDelPlan } from "./alterno";
+import { destinosParaEsteAvion } from "./cabe";
+import { destinosDe, SCENARIOS } from "../world/scenarios";
 
 const PYKASU = aircraftById("jaz-20");
 const YVAGA = aircraftById("jaz-120");
@@ -180,5 +185,44 @@ describe("cuándo se llena el depósito", () => {
   it("pero lleno para ese tramo no se toca", () => {
     expect(hayQueLlenar({ tramo: ida, kilos: 411 }, ida, 411)).toBe(false);
     expect(hayQueLlenar({ tramo: ida, kilos: 450 }, ida, 411)).toBe(false);
+  });
+});
+
+describe("elegir otro destino en tierra carga para él", () => {
+  /*
+   * «No importa el destino que elija, que el combustible siempre es el
+   * mismo»: la tarjeta del destino cambiaba la flecha y no el depósito.
+   */
+  it("parado en el suelo de un campo, sí", () => {
+    expect(seCargaAlCambiarDeDestino({ enUnCampo: true, velocidad: 0 })).toBe(true);
+    expect(seCargaAlCambiarDeDestino({ enUnCampo: true, velocidad: 0.4 })).toBe(true);
+  });
+
+  it("rodando, fuera de un campo o volando, no", () => {
+    expect(seCargaAlCambiarDeDestino({ enUnCampo: true, velocidad: 5 })).toBe(false);
+    // En el aire no hay campo en cuyo suelo estar: se decide con lo que se lleva.
+    expect(seCargaAlCambiarDeDestino({ enUnCampo: false, velocidad: 0 })).toBe(false);
+  });
+
+  it("y cada destino de Paraguay pide lo suyo, no lo mismo", () => {
+    const jaz90 = aircraftById("jaz-90");
+    for (const e of SCENARIOS) {
+      const salida = SCENARIOS.find((s) => s.id === e.id)!;
+      const destinos = destinosParaEsteAvion(
+        jaz90,
+        destinosDe(salida)
+          .map((id) => SCENARIOS.find((s) => s.id === id))
+          .filter((s): s is NonNullable<typeof s> => !!s),
+      );
+      if (destinos.length < 2) continue;
+      const campos = camposDeLaRuta(salida, destinos);
+      const cargas = new Set(
+        campos.map((c) =>
+          Math.round(cargaParaElPlan(jaz90, tramosDelPlan(campos[0]!, c, campos))),
+        ),
+      );
+      // Uno por destino y otro para la vuelta al campo.
+      expect(cargas.size, salida.id).toBe(campos.length);
+    }
   });
 });

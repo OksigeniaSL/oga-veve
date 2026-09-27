@@ -52,6 +52,7 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
+import { PARADO } from "./cambio-de-avion";
 
 /**
  * Consumo específico de cada clase de motor, kg por newton y por hora.
@@ -220,6 +221,39 @@ export function hayQueLlenar(
   carga: number,
 ): boolean {
   return deposito.tramo !== tramo || deposito.kilos < carga;
+}
+
+/**
+ * Si elegir otro destino **vuelve a cargar el depósito** para él.
+ *
+ * Con el avión en el suelo de un campo y parado, sí; en cualquier otro sitio,
+ * no. Existe porque el destino se podía cambiar de dos maneras —en el hangar y
+ * con la tarjeta del destino, en el juego— y solo la primera cargaba: la
+ * tarjeta cambiaba la flecha y el depósito seguía con lo del destino de antes.
+ * «No importa el destino que elija, que el combustible siempre es el mismo»,
+ * con el JAZ 90 en Ciudad del Este y 4629 kilos para ir a cualquier sitio.
+ * El hangar prometía una barra por destino y el avión llevaba siempre la del
+ * primero.
+ *
+ * **Y con el motor en marcha también.** De verdad el camión no se acerca a un
+ * motor encendido, y el juego ya lo respeta al apagar —ver `toggleEngine`—;
+ * pero lo que se enseña aquí es la cuenta —ir más lejos pide más, y la cuenta
+ * se hace en tierra, antes de salir—, no la logística de la plataforma. Pedir
+ * que se apague y se vuelva a arrancar para ver cambiar un número es poner la
+ * lección detrás de un trámite que a los cuatro años no se entiende. Se
+ * simplifica el camión, no la cuenta.
+ *
+ * En el aire no: cambiar de destino volando es decidir con lo que se lleva, y
+ * esa es justo la decisión que el combustible enseña. Ver `hayQueLlenar`.
+ */
+export function seCargaAlCambiarDeDestino(avion: {
+  /** Si está en el suelo de un campo del vuelo, y no en mitad de la nada. */
+  readonly enUnCampo: boolean;
+  /** Velocidad sobre el suelo, m/s. */
+  readonly velocidad: number;
+}): boolean {
+  // Parado es lo mismo que para cambiar de avión: frenado en la plataforma.
+  return avion.enUnCampo && avion.velocidad <= PARADO;
 }
 
 /**

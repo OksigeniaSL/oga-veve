@@ -416,6 +416,7 @@ import {
   loQueCabe,
   quemaPorSegundo,
   reservaEnKilos,
+  seCargaAlCambiarDeDestino,
 } from "./flight/combustible";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
@@ -1606,8 +1607,37 @@ export class Game {
     );
     this.destinoId = campos[(ahora + 1) % campos.length]!.id;
     this.desvioId = null;
+    /*
+     * **Y en tierra, el depósito con él.** La tarjeta cambiaba la flecha y el
+     * combustible seguía siendo el del destino de antes: desde Ciudad del Este,
+     * 4629 kilos para ir a cualquier parte. Elegir en tierra es lo mismo que
+     * elegir en el hangar, y el hangar enseña una barra por destino. Y se
+     * recuerda para este campo, que si no, apagar y volver a arrancar
+     * devolvía el destino del hangar. Ver `seCargaAlCambiarDeDestino`.
+     */
+    const s = this.flight.state;
+    if (
+      seCargaAlCambiarDeDestino({
+        enUnCampo: s.onGround && this.campoEnCuyoSueloEsta() !== null,
+        velocidad: s.groundSpeed,
+      })
+    ) {
+      this.destinoElegidoEnTierra = {
+        salida: this.salidaId,
+        destino: this.destinoId,
+      };
+      this.llenarSiHaceFalta(this.salidaId, this.destinoId);
+    }
     this.avisar("success");
   }
+
+  /**
+   * El destino que se eligió con la tarjeta **estando en tierra**, y desde qué
+   * campo. Manda sobre el del hangar al empezar un tramo desde ese campo. Ver
+   * `destinoDelTramoDesde`.
+   */
+  private destinoElegidoEnTierra: { salida: string; destino: string } | null =
+    null;
 
   /**
    * Si el avión acaba de tocar tierra en otro campo, empieza el tramo nuevo.
@@ -1664,6 +1694,9 @@ export class Game {
    * depósito, que la necesitan los dos. Ver `tramoDelRepostaje`.
    */
   private destinoDelTramoDesde(salida: string): string {
+    const elegido = this.destinoElegidoEnTierra;
+    if (elegido?.salida === salida && this.campoPorId(elegido.destino))
+      return elegido.destino;
     return salida === this.scenario.id ? this.destinoDeSalida() : this.scenario.id;
   }
 
@@ -11593,7 +11626,18 @@ export class Game {
     ponerTexto("aeronave", next.id);
     ponerTexto("escenario", aqui.id);
     escribirYa();
-    pedirRearranque(sesionDeLaPestana(), { escenario: aqui.id, avion: next.id });
+    /*
+     * **Y el destino, que se perdía.** Al volver a arrancar se proponía el
+     * vecino más cercano, fuera cual fuera el elegido: cambiar de avión
+     * devolvía siempre el mismo destino y el mismo depósito. Se deja dicho; si
+     * el avión nuevo no llega allí, el arranque lo descarta solo, como descarta
+     * los del hangar. Ver `destinoDeSalida`.
+     */
+    pedirRearranque(sesionDeLaPestana(), {
+      escenario: aqui.id,
+      avion: next.id,
+      destino: this.destinoId,
+    });
     location.reload();
   }
 
