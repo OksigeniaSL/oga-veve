@@ -179,3 +179,57 @@ describe("el coche, en la ruta y a su distancia", () => {
     expect(otro.donde!.z).toBeCloseTo(-100, 1);
   });
 });
+
+describe("la bici, que sale a buscarte y te lleva a casa", () => {
+  const cota = (): number => 0;
+  /** Una recta de cuatrocientos metros al norte. */
+  const recta: [number, number][] = [
+    [0, 0],
+    [0, -400],
+  ];
+
+  it("espera al lado de la salida, y al dejar la pista vuelve a la raya", () => {
+    const bici = new Sigueme(true);
+    bici.ponerRuta(recta);
+    const boca = { x: 0, z: -100 };
+    // El avión todavía en la pista, lejos: ella al lado de la boca.
+    for (let i = 0; i < 60; i++)
+      bici.paso(0.1, { x: 0, z: 150 }, true, false, cota, boca);
+    expect(Math.abs(bici.donde!.x)).toBeGreaterThan(10);
+    // Deja la pista y rueda despacio hacia ella: vuelve a ponerse delante.
+    let z = 0;
+    for (let i = 0; i < 40; i++) {
+      bici.paso(0.1, { x: 0, z }, true, false, cota, null);
+      z -= 0.3;
+    }
+    expect(Math.abs(bici.donde!.x)).toBeLessThan(0.5);
+    expect(bici.yaSeAparto).toBe(false);
+    expect(bici.donde!.z).toBeLessThan(z - 30);
+  });
+
+  it("y guía por delante: no se aparta por ir detrás de ella a su paso", () => {
+    const bici = new Sigueme(true);
+    bici.ponerRuta(recta);
+    // El avión la sigue a seis metros por segundo, más despacio que ella.
+    let z = 0;
+    for (let i = 0; i < 200; i++) {
+      bici.paso(0.05, { x: 0, z }, true, false, cota);
+      z -= 6 * 0.05;
+    }
+    expect(bici.yaSeAparto).toBe(false);
+    expect(Math.abs(bici.donde!.x)).toBeLessThan(0.5);
+  });
+
+  it("y si se le viene encima, se aparta y le deja pasar", () => {
+    const bici = new Sigueme(true);
+    bici.ponerRuta(recta);
+    // A trece por segundo, que es rodar deprisa: la alcanza.
+    let z = 0;
+    for (let i = 0; i < 200; i++) {
+      bici.paso(0.05, { x: 0, z }, true, false, cota);
+      z -= 13 * 0.05;
+    }
+    expect(bici.yaSeAparto).toBe(true);
+    expect(Math.abs(bici.donde!.x)).toBeGreaterThan(10);
+  });
+});

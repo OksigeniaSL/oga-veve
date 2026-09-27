@@ -403,7 +403,6 @@ import { comoDibujo } from "./ui/senal";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
 import {
-  SITIO_PARA_LA_BICI,
   Sigueme,
   adelantoDelSigueme,
 } from "./world/sigueme";
@@ -10561,21 +10560,21 @@ export class Game {
       const enLaPistaAun = s.onGround && s.onRunway;
       const espera =
         fase === "aterrizado" || enLaPistaAun ? this.bocaDeLaSalida() : null;
-      const donde = this.sigueme.donde;
-      const aQue = donde
-        ? Math.hypot(donde.x - s.position.x, donde.z - s.position.z)
-        : Infinity;
       /*
        * **Y a la bici se le deja sitio siempre.**
        *
        * El coche se deja atropellar porque es un chiste y porque enseña algo:
        * en una plataforma no se adelanta. Una persona en bicicleta, no. Así
-       * que en cuanto la tenés a tiro —lo que tarda en echarse a un lado,
-       * contado en metros: ver `SITIO_PARA_LA_BICI`— se aparta y te deja
-       * pasar, y el percance de más abajo no se le aplica. Lo que aprende quien juega sigue siendo lo mismo: detrás de
-       * quien te guía, no encima.
+       * que en cuanto la tenés encima se aparta y te deja pasar, y el
+       * percance de más abajo no se le aplica. Lo que aprende quien juega
+       * sigue siendo lo mismo: detrás de quien te guía, no encima.
+       *
+       * Cuándo es «encima» lo decide ella, que sabe lo deprisa que se le
+       * acerca el avión: ver `sitioParaLaBici`. Aquí se decía con una
+       * distancia fija, y la distancia fija la dejaba apartada desde el
+       * primer metro. Lo que queda aquí es el señalero, que es de los dos.
        */
-      const cede = gesto !== null || (enBici && aQue < SITIO_PARA_LA_BICI);
+      const cede = gesto !== null;
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z, adelanto: this.adelantoDelSigueme },

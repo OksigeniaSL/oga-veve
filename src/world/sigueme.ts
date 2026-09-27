@@ -161,6 +161,20 @@ const VELOCIDAD = CRUCERO;
  */
 const EN_BICI = 7;
 
+/**
+ * Lo menos que va la bici por delante del avión, m.
+ *
+ * Más que el coche, y es por la velocidad: el coche va a la de rodaje y la
+ * bici a siete, así que el avión se le acerca siempre. Con treinta, el avión
+ * que sale de la pista a diez metros por segundo ya la tenía «encima» antes
+ * de que arrancara a pedalear —ver `sitioParaLaBici`— y se apartaba sin
+ * llegar a guiar. Con cuarenta arranca a tiempo y lleva al avión un rato.
+ */
+const DELANTE_EN_BICI = 40;
+
+/** Lo más deprisa que un avión en el suelo se le puede venir encima, m/s. */
+const SE_ACERCA_COMO_MUCHO = 35;
+
 /** Cuánto se queda corto del final de la ruta, m. Ver la cabecera. */
 const NO_LLEGA = 30;
 
@@ -171,25 +185,26 @@ const A_UN_LADO = 11;
 const TARDA_EN_APARTARSE = 2.5;
 
 /**
- * A qué distancia hay que empezar a dejarle sitio a la bici, m.
+ * A qué distancia hay que empezar a dejarle sitio a la bici, m, según lo
+ * deprisa que se le viene encima el avión.
  *
- * No es un número: es **el tiempo que tarda en apartarse, convertido en
- * metros** a la velocidad a la que se rueda, más el ancho del propio
- * encontronazo. Treinta y seis metros con los números de hoy.
+ * Es **el tiempo que tarda en apartarse, convertido en metros** a esa
+ * velocidad, más el ancho del propio encontronazo. De frente y a velocidad
+ * de rodaje, treinta y seis metros; por detrás, con ella pedaleando, quince.
  *
- * Estaban puestos veinte —dos veces y media el atropello—, y veinte metros
- * son margen de sobra cuando la alcanzás **por detrás**, que es el caso para
- * el que se escribió: ahí la diferencia de velocidad es un metro por segundo
- * y hay veinte segundos para apartarse. De frente no: el avión sale de la
- * pista hacia ella a once metros por segundo y los veinte metros se comen en
- * menos de dos segundos, o sea antes de que haya terminado de echarse a un
- * lado.
- *
- * Medido en Yvytu Rape antes de esto: la bici acababa **a dos metros del
- * avión y encima de la raya**, cuando tenía que haberse echado once a un
- * lado. Ver #157.
+ * Fue un número fijo, y los dos números que tuvo estaban mal por lados
+ * distintos. Veinte eran margen de sobra **por detrás**, pero de frente —el
+ * avión saliendo de la pista hacia ella— se comían en menos de dos segundos:
+ * la bici acababa a dos metros del avión y encima de la raya (#157). Y
+ * treinta y seis, que es el caso de frente, dejaban la bici **apartada para
+ * siempre**: ella va treinta metros por delante del morro, o sea dentro de
+ * esos treinta y seis desde el primer metro, así que se echaba a un lado
+ * nada más empezar y ya no guiaba nunca. Lo que decide cuánto sitio hace
+ * falta no es la distancia: es lo deprisa que se cierra.
  */
-export const SITIO_PARA_LA_BICI = 8 + CRUCERO * TARDA_EN_APARTARSE;
+export function sitioParaLaBici(seAcerca: number): number {
+  return 8 + Math.max(0, seAcerca) * TARDA_EN_APARTARSE;
+}
 
 
 /** Destellos por segundo de la baliza. */
@@ -394,6 +409,26 @@ export class Sigueme {
   get yaSeAparto(): boolean {
     return this.aparte > 0.9;
   }
+  /**
+   * Cuánto está a un lado **de momento**, de 0 a 1: la bici esperándote junto
+   * a la boca de la salida.
+   *
+   * Va aparte de `aparte` a propósito, porque son dos cosas que se parecen y
+   * no son la misma. `aparte` es haber terminado —te dejó en tu sitio, o te
+   * dejó pasar— y no se olvida (#154). Esto es esperar al lado mientras sigas
+   * en la pista, y **sí se olvida**: en cuanto la dejás, vuelve a la raya a
+   * llevarte a casa.
+   *
+   * Cuando las dos eran la misma, la bici que esperaba al lado de la salida
+   * ya estaba «apartada para siempre» antes de empezar: iba por la hierba,
+   * once metros fuera de la raya y fuera de la vista, y en la granja dejó de
+   * salir nadie a buscarte. Así estuvo desde #157.
+   */
+  private alLado = 0;
+  /** A cuánto estaba el avión en el fotograma anterior, m; o nada. */
+  private antes: number | null = null;
+  /** Lo deprisa que se le viene encima el avión, m/s, suavizado. */
+  private seAcerca = 0;
   private t = 0;
 
   /** Si quien sale a buscarte va en bici. Ver `construirBici`. */
@@ -429,6 +464,8 @@ export class Sigueme {
     // vuelta —que empieza donde tocaste tierra— aparecía trescientos metros a
     // la espalda y ya no lo alcanzabas nunca.
     this.s = -1;
+    // Y se planta de un salto, que no es acercarse: ver `seAcerca`.
+    this.antes = null;
     /*
      * **Y lo que no se olvida es haberse apartado.**
      *
@@ -484,12 +521,19 @@ export class Sigueme {
   ): void {
     if (!activo || this.ruta.length < 2 || this.largo < ADELANTO) {
       this.grupo.visible = false;
+      // Sin estar, no se mide lo deprisa que se acerca nadie.
+      this.antes = null;
+      this.seAcerca = 0;
       return;
     }
     this.grupo.visible = true;
     this.t += dt;
 
-    const adelanto = Math.max(ADELANTO, avion.adelanto ?? 0);
+    const pideElAvion = Math.max(ADELANTO, avion.adelanto ?? 0);
+    // La bici, algo más lejos que el coche: ver `DELANTE_EN_BICI`.
+    const adelanto = this.enBici
+      ? Math.max(pideElAvion, DELANTE_EN_BICI)
+      : pideElAvion;
     const alLlegar = avanceDelAvion ?? this.enLaRuta(avion);
     /*
      * **El tope, cuando lo hay: la boca de la calle de salida.**
@@ -517,7 +561,10 @@ export class Sigueme {
          * girar hacia él. Lo que ese avión necesita por encima del coche de
          * siempre, lo necesita también aquí.
          */
-        Math.min(this.enLaRuta(esperaEn) + adelanto - ADELANTO, hastaDondeLlega)
+        Math.min(
+          this.enLaRuta(esperaEn) + pideElAvion - ADELANTO,
+          hastaDondeLlega,
+        )
       : Math.min(alLlegar + adelanto, hastaDondeLlega);
     // Primer fotograma con esta ruta: se planta donde toca en vez de correr
     // hasta allí desde el kilómetro cero.
@@ -526,6 +573,52 @@ export class Sigueme {
     const paso = (this.enBici ? EN_BICI : VELOCIDAD) * dt;
     this.s = Math.max(this.s, Math.min(objetivo, this.s + paso));
 
+    /*
+     * **Y a la bici se le deja sitio**, que el coche no lo necesita: un coche
+     * que se lleva un golpe es un chiste y enseña que no se adelanta; una
+     * persona en bici, no. En cuanto el avión se le viene encima —lo que
+     * tarda en apartarse, contado a lo deprisa que se cierra: ver
+     * `sitioParaLaBici`— se echa a un lado y te deja pasar.
+     */
+    const alAvion = Math.hypot(
+      this.grupo.position.x - avion.x,
+      this.grupo.position.z - avion.z,
+    );
+    if (this.antes !== null && dt > 0) {
+      /*
+       * Con tope: lo más deprisa que se le puede venir encima un avión en el
+       * suelo es acabando la carrera de aterrizaje. Un salto —el avión
+       * recolocado, ella plantada en su sitio de una ruta nueva— no es nadie
+       * acercándose, y sin tope la apartaba para siempre.
+       */
+      const ahora = Math.max(
+        -SE_ACERCA_COMO_MUCHO,
+        Math.min(SE_ACERCA_COMO_MUCHO, (this.antes - alAvion) / dt),
+      );
+      this.seAcerca += (ahora - this.seAcerca) * Math.min(1, dt * 4);
+    }
+    this.antes = alAvion;
+    const esperandoAlLado = !!esperaEn && this.enBici;
+    const teTieneEncima =
+      this.enBici &&
+      !esperandoAlLado &&
+      alAvion < sitioParaLaBici(this.seAcerca);
+    /*
+     * **Y la bici, esperando en la salida, espera al lado.**
+     *
+     * Al que llega por la boca de la salida no está rodando: **está acabando
+     * la carrera de aterrizaje**, y a treinta metros por segundo no hay sitio
+     * que dejar a tiempo. La respuesta no es ceder antes, es **no estar ahí**:
+     * quien sale a esperarte en bicicleta a la boca de una salida se pone al
+     * lado, no en medio. Marca la salida igual de bien y no obliga a nadie a
+     * esquivarla. Ver #157.
+     *
+     * Y es un rato, no para siempre: ver `alLado`. El coche no lo hace — un
+     * coche de sígame espera en la calle, como uno de verdad.
+     */
+    this.alLado = esperandoAlLado
+      ? Math.min(1, this.alLado + dt / TARDA_EN_APARTARSE)
+      : Math.max(0, this.alLado - dt / TARDA_EN_APARTARSE);
     /*
      * **Y esperando en la salida también se aparta.**
      *
@@ -542,28 +635,7 @@ export class Sigueme {
      */
     const deja =
       cediendo ||
-      /*
-       * **Y la bici, esperando en la salida, espera al lado.**
-       *
-       * Con `cediendo` a secas no llegaba, y no por la distancia: por el
-       * tiempo. Se cede a treinta y seis metros —lo que tarda en apartarse,
-       * contado a velocidad de rodaje—, pero al que llega por la boca de la
-       * salida no está rodando: **está acabando la carrera de aterrizaje**, y
-       * a treinta metros por segundo esos treinta y seis metros se recorren en
-       * poco más de un segundo. Medido en Yvytu Rape: el avión se le plantaba
-       * a dos metros con ella todavía encima de la raya.
-       *
-       * Y la respuesta no es ceder antes, es **no estar ahí**. Quien sale a
-       * esperarte en bicicleta a la boca de una salida se pone al lado, no en
-       * medio; que esté al lado marca la salida igual de bien y además no
-       * obliga a nadie a esquivarla. Ver #157.
-       *
-       * El coche no: el coche espera en la calle, como un sígame de verdad, y
-       * además apartarse es de ida y vuelta —`aparte` no baja—, así que un
-       * coche que se aparta esperando te llevaría después a casa por fuera del
-       * asfalto.
-       */
-      (esperaEn !== null && this.enBici) ||
+      teTieneEncima ||
       /*
        * **Y al final de la ruta se aparta solo.**
        *
@@ -587,7 +659,7 @@ export class Sigueme {
     const rumbo = this.rumboEn(this.s);
     // Apartarse es irse a la derecha de su propia marcha, que es de donde no
     // viene el avión.
-    const lado = this.aparte * A_UN_LADO;
+    const lado = Math.max(this.aparte, this.alLado) * A_UN_LADO;
     this.grupo.position.x = donde[0] - rumbo[1] * lado;
     this.grupo.position.z = donde[1] + rumbo[0] * lado;
     this.grupo.position.y = cota(this.grupo.position.x, this.grupo.position.z);
@@ -602,6 +674,9 @@ export class Sigueme {
     this.acumulado = [];
     this.s = 0;
     this.aparte = 0;
+    this.alLado = 0;
+    this.antes = null;
+    this.seAcerca = 0;
     this.grupo.visible = false;
   }
 
