@@ -285,6 +285,22 @@ velocidades salen de los tiempos de travesía que publican las navieras. Son
 hechos, no obra de nadie, y el porqué de cada número está escrito junto a él:
 ver `src/world/rutas-de-barcos.ts` y `src/flight/trafico-de-las-islas.ts`.
 
+### La granja de Yvytu Rape
+
+La casa con su corredor, el galpón con el tractor, el hangar, el tanque de
+agua, el corral, el alambrado, el camino, el tajamar, los árboles y el ganado
+que rodean la pista de Granja Óga **se montan por código**, en
+`src/world/granja.ts`: cajas, conos y poliedros con el color en cada vértice.
+No hay fichero de modelo ni textura, así que no hay licencia de terceros: son
+de Oksigenia SL, bajo Apache-2.0.
+
+La granja es inventada, como el aeródromo, pero lo que tiene es lo de una
+granja de San Pedro y en su sitio: mangos, naranjos, pindós, karanday, timbós
+y lapachos, que florecen en rosa de julio a septiembre y el resto del año
+son verdes; ganado nelore casi todo blanco; el camino de tierra colorada; y
+el tajamar en el punto más bajo del potrero según el relieve medido, que es
+donde se junta el agua.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

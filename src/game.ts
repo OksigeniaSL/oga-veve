@@ -113,6 +113,7 @@ import {
   type PasoDeAro,
 } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
+import { crearGranja, type Granja } from "./world/granja";
 import {
   arrancarAbreOtroTramo,
   LECCION_POR_DEFECTO,
@@ -1093,6 +1094,8 @@ export class Game {
     rodadura: LucesDeRodadura | null;
     /** Si ya se montaron, aunque no haya ninguna. Ver `ponerLucesDelVecino`. */
     lucesPuestas: boolean;
+    /** Su granja, si la tiene: la de casa cuando se vuelve a ella. */
+    granja: Granja | null;
   }[] = [];
 
   /**
@@ -2203,6 +2206,12 @@ export class Game {
   readonly audio = new Audio();
   private readonly missions = new MissionRunner();
   vegetacion: Group | null = null;
+  /**
+   * La granja alrededor de la pista de casa, si la tiene: la casa, los
+   * potreros, el ganado. Ver `world/granja.ts`. La de un campo de llegada va
+   * con su vecino.
+   */
+  granja: Granja | null = null;
   private readonly missionMarker = new MissionMarker();
   /**
    * La senda de aros, que **se rehace si el viento cambia la cabecera**.
@@ -3043,7 +3052,23 @@ export class Game {
         aproximacion: null,
         rodadura: null,
         lucesPuestas: false,
+        /*
+         * **Y su granja, si la tiene.** Llegando a casa desde Asunción, la
+         * casa, el galpón y el hangar ya no los dibuja el aeródromo —los
+         * dibuja ella—, así que sin esto se llegaba a una pista sin nada.
+         * Cuelga del vecino, en sus coordenadas, y se apaga con él.
+         */
+        granja: quien.aerodrome
+          ? crearGranja(
+              quien.aerodrome,
+              (x, z) => mundo.terreno.sampleHeight(x, z),
+              new Date(),
+              quien.seed,
+            )
+          : null,
       });
+      const suGranja = this.vecinos[this.vecinos.length - 1]?.granja;
+      if (suGranja) mundo.colgarDeCerca(suGranja.grupo);
       this.scene.add(mundo.grupo);
     }
 
@@ -3433,6 +3458,20 @@ export class Game {
     for (const v of this.vecinos)
       if (v.aerodromo) this.apuntarLosEdificios(v.aerodromo);
 
+    /*
+     * **Y la granja, si el campo la tiene**, antes que el monte: el monte
+     * pregunta dónde está para no plantarle un árbol en el camino.
+     */
+    if (aero) {
+      this.granja = crearGranja(
+        aero,
+        (x, z) => this.terrain.sampleHeight(x, z),
+        new Date(),
+        this.scenario.seed,
+      );
+      if (this.granja) this.scene.add(this.granja.grupo);
+    }
+    const granja = this.granja;
     this.vegetacion = createVegetation(
       this.scenario,
       (x, z) => this.terrain.sampleHeight(x, z),
@@ -3442,6 +3481,7 @@ export class Game {
         ? (x, z) =>
             options.ortofotoFina?.color(x, z) ?? options.ortofoto!.color(x, z)
         : undefined,
+      granja ? (x, z) => granja.ocupa(x, z) : undefined,
     );
     this.scene.add(this.vegetacion);
 
@@ -9011,6 +9051,16 @@ export class Game {
       z: this.flight.state.position.z,
     });
     this.runwayGuide.update(dt, this.flight.state.position);
+    // El ganado de la granja pasta a su aire. Ver `world/granja.ts`.
+    {
+      const p = this.flight.state.position;
+      this.granja?.paso(dt, p);
+      for (const v of this.vecinos)
+        v.granja?.paso(dt, {
+          x: p.x - v.mundo.desplazamiento.x,
+          z: p.z - v.mundo.desplazamiento.z,
+        });
+    }
     /*
      * Cruzar un aro se celebra: destello, salto de escala y una nota. Y
      * **fallarlo también dice algo**, que era lo que faltaba: hasta ahora
