@@ -48,6 +48,12 @@ export interface Hito {
    * nada.
    */
   readonly alcance?: number;
+  /**
+   * Quién es, si se mueve: el mismo nombre con el que lo sigue el TCAS. Es lo
+   * que evita que otro avión se señale por la ventanilla y se cuente otra vez
+   * por radio. Ver `informacion-de-trafico.ts`.
+   */
+  readonly id?: string;
 }
 
 /** Lo que el extractor deja escrito al lado de cada lista. */

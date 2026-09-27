@@ -698,6 +698,26 @@ export const ES_PY = {
     "Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta",
   "vuelo.traficoNivel":
     "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
+  /*
+   * **La información de tráfico, dicha en casa.** Es lo que en los peldaños
+   * de arriba dice la torre —«traffic, two o'clock, one thousand feet
+   * above»— y aquí lo cuenta la instructora: dónde mirar y una pregunta, que
+   * es lo que enseña a buscar a otro avión con los ojos. Sin «cuidado»: no es
+   * un aviso, es un vecino. Y detrás no se pregunta si se ve, que desde la
+   * cabina no se ve. Ver `flight/informacion-de-trafico.ts`.
+   */
+  "vuelo.otroAvion.delante.arriba": "Adelante y más arriba va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.delante.nivel": "Adelante, a nuestra altura, va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.delante.abajo": "Adelante y más abajo va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.derecha.arriba": "Arriba a la derecha va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.derecha.nivel": "A la derecha, a nuestra altura, va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.derecha.abajo": "Abajo a la derecha va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.izquierda.arriba": "Arriba a la izquierda va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.izquierda.nivel": "A la izquierda, a nuestra altura, va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.izquierda.abajo": "Abajo a la izquierda va otro avión. ¿Lo ves?",
+  "vuelo.otroAvion.detras.arriba": "Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada",
+  "vuelo.otroAvion.detras.nivel": "Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada",
+  "vuelo.otroAvion.detras.abajo": "Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada",
   "vuelo.bajasRapido": "Bajás muy rápido",
   "vuelo.muyInclinado": "Estás muy inclinado",
   "vuelo.pilotoSuelto": "Se soltó el piloto automático",

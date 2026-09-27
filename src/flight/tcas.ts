@@ -168,9 +168,13 @@ export const CALLADO_POR_DEBAJO = 500;
 /** Por debajo de esto se da por posado, ft de radioaltímetro. */
 const POSADO = 50;
 
-/** Tráfico cercano: dentro de seis millas y de mil doscientos pies. */
-const CERCA_MILLAS = 6;
-const CERCA_PIES = 1200;
+/**
+ * Tráfico cercano: dentro de seis millas y de mil doscientos pies. Es el
+ * *proximate traffic* del TCAS, el rombo relleno, y también lo que la torre
+ * o el control te cuentan por radio. Ver `informacion-de-trafico.ts`.
+ */
+export const CERCA_MILLAS = 6;
+export const CERCA_PIES = 1200;
 
 /**
  * La banda de altura que se pinta, ft a cada lado.

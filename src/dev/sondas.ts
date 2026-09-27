@@ -1387,6 +1387,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     tcas: () => juego.tcasParaBanco,
     /**
+     * A quién le ha dado ya la radio información de tráfico en esta pasada.
+     * Ver `flight/informacion-de-trafico.ts`.
+     */
+    informacionDeTrafico: () => juego.informacionDeTraficoParaBanco,
+    /**
      * Pone a uno del circuito donde dice una llamada —«otro.enCola»,
      * «otro.final»—, para mirar el TCAS sin esperar a que le toque hablar.
      * Solo mueve el dibujo: la frecuencia no se entera. Ver `Trafico.anuncia`.
