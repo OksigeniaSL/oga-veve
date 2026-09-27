@@ -405,6 +405,8 @@ export const EN: Dictionary = {
   "vuelo.meteElTren": "Gear up — it is slowing you down",
   "vuelo.tormenta": "Storm ahead: go around it, don't fly through",
   "palabra.tormenta": "Storm",
+  "vuelo.baches":
+    "It's getting bumpy: that's the air, like waves on water. The plane is built for this. Keep flying, calmly.",
   "vuelo.reserva":
     "Into reserve fuel. Stay calm: we are going to the nearest airport, follow the arrow",
   "palabra.reserva": "Fuel",

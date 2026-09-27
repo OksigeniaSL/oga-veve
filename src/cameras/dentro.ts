@@ -4,7 +4,9 @@
  * Son la misma cámara con el avión visible o no. **Desde dentro no hay
  * suavizado ninguno**: la cámara es la cabeza del piloto y va rígidamente
  * unida al avión, así que copia su posición y su orientación sin filtrar
- * nada. Cualquier retardo aquí se lee como que la cabeza va suelta.
+ * nada. Cualquier retardo aquí se lee como que la cabeza va suelta. Lo único
+ * que se mueve son los centímetros que da el cuello en un bache: ver
+ * `CUELLO_HZ`.
  */
 
 import { Vector3, type PerspectiveCamera } from "three";
@@ -88,9 +90,37 @@ export function encuadreDeCabina(
   return salida;
 }
 
+/**
+ * **La cabeza en un bache**: lo que se mueve respecto al asiento.
+ *
+ * La cámara va unida al avión, y así tiene que ser: la cabeza del piloto no va
+ * suelta. Pero un bache se siente precisamente en el cuerpo —el asiento sube de
+ * golpe y la cabeza se queda un instante atrás—, y sin eso la turbulencia solo
+ * se veía desde fuera, en el avión moviéndose. Desde dentro, el horizonte
+ * cabeceaba y nada más.
+ *
+ * Es un muelle con amortiguador —el cuello—: responde al **cambio** de carga
+ * vertical y no a la carga, así que un viraje sostenido o una subida no bajan
+ * la vista, y un bache la mueve unos centímetros y la devuelve. Con tope de
+ * cuatro centímetros y un hercio y medio: se nota y no marea. Y nada con el
+ * movimiento reducido del sistema, como el traqueteo.
+ */
+const CUELLO_HZ = 1.5;
+const CUELLO_AMORTIGUA = 0.55;
+const CABEZA_HASTA = 0.04;
+/** Lo que tarda el cuerpo en hacerse a una carga que dura, s. */
+const SE_HACE_A_LA_CARGA = 1.2;
+
 export class CamaraDeDentro implements CameraRig {
   readonly muestraElAvion: boolean;
   private readonly offset = new Vector3();
+  /** Dónde está la cabeza respecto al asiento, m, y a qué velocidad va. */
+  private cabeza = 0;
+  private cabezaVa = 0;
+  /** La subida del fotograma anterior, para sacar la aceleración vertical. */
+  private subidaAntes: number | null = null;
+  /** La aceleración a la que el cuerpo ya se ha hecho, m/s². */
+  private hecho = 0;
   /** Si esta vista cierra el ángulo como una cabina o lo abre con la velocidad. */
   private readonly comoCabina: boolean;
   /** El último encuadre, para que el ángulo pedido sea el mismo que se usó. */
@@ -104,9 +134,10 @@ export class CamaraDeDentro implements CameraRig {
   update(
     camera: PerspectiveCamera,
     state: FlightState,
-    _dt: number,
+    dt: number,
     ctx: Contexto,
   ): void {
+    this.moverLaCabeza(state, dt, ctx);
     /*
      * Si la aeronave es un modelo de verdad, el sitio lo dice él: su asiento
      * delantero. La fórmula sobre la cuerda del ala es para las cajas, donde
@@ -116,6 +147,7 @@ export class CamaraDeDentro implements CameraRig {
     if (ojo) this.offset.set(ojo.x, ojo.y, ojo.z);
     else
       this.offset.set(0, ctx.aircraft.chord * 0.55, -ctx.aircraft.chord * 0.4);
+    this.offset.y += this.cabeza;
     this.offset.applyQuaternion(state.orientation);
     camera.position.copy(state.position).add(this.offset);
     camera.quaternion.copy(state.orientation);
@@ -135,6 +167,34 @@ export class CamaraDeDentro implements CameraRig {
       this.encuadre = encuadreDeCabina(ojo?.encuadre, camera.aspect);
       camera.rotateX(-this.encuadre.inclinacion);
     }
+  }
+
+  /** El cuello, un paso. Ver `CUELLO_HZ`. */
+  private moverLaCabeza(state: FlightState, dt: number, ctx: Contexto): void {
+    const antes = this.subidaAntes;
+    this.subidaAntes = state.verticalSpeed;
+    if (!this.comoCabina || ctx.movimientoReducido || !(dt > 0) || antes === null) {
+      this.cabeza = 0;
+      this.cabezaVa = 0;
+      this.hecho = 0;
+      return;
+    }
+    // Un fotograma larguísimo no es un bache: es la pestaña que vuelve.
+    const paso = Math.min(dt, 0.05);
+    const acelera = Math.max(
+      -15,
+      Math.min(15, (state.verticalSpeed - antes) / Math.max(dt, 1e-3)),
+    );
+    this.hecho += (acelera - this.hecho) * Math.min(1, paso / SE_HACE_A_LA_CARGA);
+    const w = 2 * Math.PI * CUELLO_HZ;
+    const empuje = acelera - this.hecho;
+    this.cabezaVa +=
+      (-w * w * this.cabeza - 2 * CUELLO_AMORTIGUA * w * this.cabezaVa - empuje) *
+      paso;
+    this.cabeza = Math.max(
+      -CABEZA_HASTA,
+      Math.min(CABEZA_HASTA, this.cabeza + this.cabezaVa * paso),
+    );
   }
 
   /**

@@ -466,7 +466,16 @@ import { altitudDeCabina } from "./flight/cabina-presurizada";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
 import { hitosDe, sinRepetidos, type Hito } from "./world/hitos";
 import { focoEncendido } from "./world/luces-de-posicion";
-import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
+import {
+  calorDelSuelo,
+  cuantoSeMueve,
+  CAMPO_ABIERTO,
+  rachaEn,
+  rugosidadDe,
+  type Aire,
+} from "./flight/turbulencia";
+import { esAguaDeCasa } from "./world/agua-de-casa";
+import { DE_CLASE, Estelas, type QuienVuela } from "./flight/estela";
 import {
   InstructorGrabado,
   nuevoBancoDeVoces,
@@ -548,7 +557,7 @@ import {
   type Celda,
 } from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
-import { Cinturon } from "./flight/cinturon";
+import { Cinturon, SACUDE, YA_NO_SACUDE } from "./flight/cinturon";
 import {
   loSolto,
   mandosPara,
@@ -1231,6 +1240,7 @@ export class Game {
     for (const q of this.islenos?.quienes() ?? [])
       intrusos.push({ id: `islas:${q.id}`, x: q.x, y: q.y, z: q.z });
     this.llegandoAhora = llegando;
+    this.apuntarLasEstelas();
 
     const avisos = this.tcas.paso(
       dt,
@@ -1996,6 +2006,7 @@ export class Game {
     this.terrenoDicho = null;
     this.dichoDelTren = null;
     this.tormentasDichas.clear();
+    this.estelas.vaciar();
     this.tcas.reiniciar();
     this.informacionDeTrafico.reiniciar();
     this.faseAnunciada = "";
@@ -3293,7 +3304,8 @@ export class Game {
      * largas, ladera al sol y ladera en sombra. El mediodía es la única hora
      * del día en la que un paisaje no tiene forma, y era la que estaba fijada.
      */
-    this.sky.ponerHora(this.horaPedida());
+    this.horaDelVuelo = this.horaPedida();
+    this.sky.ponerHora(this.horaDelVuelo);
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
     // El agua con el mar del cielo: refleja el atardecer y casa con el que
@@ -6464,6 +6476,7 @@ export class Game {
     this.terrenoDicho = null;
     this.dichoDelTren = null;
     this.tormentasDichas.clear();
+    this.estelas.vaciar();
     this.tcas.reiniciar();
     this.informacionDeTrafico.reiniciar();
     this.avisandoDelBulto = 0;
@@ -7570,6 +7583,7 @@ export class Game {
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
+    this.horaDelVuelo = hora;
     this.sky.ponerHora(hora);
     // Y con ella se enciende o se apaga el balizamiento. `sunDirection.y` es
     // el seno de la altura del sol, que el cielo acaba de recalcular.
@@ -9136,24 +9150,6 @@ export class Game {
      * dos cosas distintas —el dato del día y lo que pasa ahora— y por eso entran
      * por puertas distintas. Ver `flight/turbulencia.ts`.
      */
-    const aire = {
-      sobreElSuelo: this.flight.state.heightAboveGround,
-      vientoKt: this.scenario.meteo?.vientoKt ?? 0,
-      baseDeNubes:
-        this.techoDeNubes === null
-          ? null
-          : this.terrain.runwayElevation + this.techoDeNubes,
-      altura: this.flight.state.position.y,
-    };
-    const racha = rachaEn(this.clock.elapsedTime, aire);
-    this.flight.ponerRacha?.(racha.x, racha.y, racha.z);
-    /*
-     * Y el cartel del cinturón, que se apaga **con** el anuncio de la
-     * comandante y no por su cuenta. La bandera se consume aquí: es un suceso
-     * de un fotograma. Ver `flight/cinturon.ts`.
-     */
-    const loDijo = this.dijoSoltarse;
-    this.dijoSoltarse = false;
     /*
      * **Y lo que sacude es lo que el radar pinta.**
      *
@@ -9162,14 +9158,79 @@ export class Game {
      * sensación salgan del mismo sitio es lo que hace que se aprenda a creerle
      * al instrumento — si no coincidieran, lo que se aprendería es lo
      * contrario. Ver `flight/tormentas.ts`.
+     *
+     * **Y ahora sacude de verdad.** Este número solo encendía el cartel: la
+     * ráfaga no lo miraba, y cruzar una célula roja no movía el avión.
      */
     const s0 = this.flight.state.position;
     const enLaTormenta = cuantoSacude(this.celdas, s0.x, s0.z);
-    this.avisarDeLaTormenta();
-    this.atenderAlCinturon(
-      Math.max(cuantoSeMueve(aire), enLaTormenta),
-      loDijo,
+    const meteo = this.scenario.meteo;
+    this.mirarElBarlovento(dt);
+    const aire: Aire = {
+      sobreElSuelo: this.flight.state.heightAboveGround,
+      vientoKt: meteo?.vientoKt ?? 0,
+      baseDeNubes:
+        this.techoDeNubes === null
+          ? null
+          : this.terrain.runwayElevation + this.techoDeNubes,
+      altura: s0.y,
+      rugosidad: this.rugosidadAqui,
+      /*
+       * El suelo de debajo, con el sol y el calor del parte: la térmica de la
+       * tarde. Sin parte, un día templado. Ver `calorDelSuelo`.
+       */
+      calor: calorDelSuelo(
+        this.horaDelVuelo,
+        meteo?.temp ?? 20,
+        meteo?.tapadura ?? (this.techoDeNubes === null ? 0 : 0.5),
+        esAguaDeCasa(
+          this.terrain.sampleHeight(s0.x, s0.z),
+          this.scenario.waterLevel,
+        ),
+      ),
+      tormenta: enLaTormenta,
+    };
+    const viento = vientoComoVector(meteo ?? TIEMPO_DE_CASA);
+    const racha = rachaEn(aire, {
+      x: s0.x,
+      y: s0.y,
+      z: s0.z,
+      t: this.clock.elapsedTime,
+      vientoX: viento.x,
+      vientoZ: viento.z,
+      envergadura: this.aircraft.wingSpan,
+    });
+    /*
+     * **Y la estela del de delante**, que no es del aire sino de otro avión, y
+     * se suma a lo que traiga el aire. Ver `flight/estela.ts`.
+     */
+    const estela = this.estelas.aqui(
+      this.clock.elapsedTime,
+      s0.x,
+      s0.y,
+      s0.z,
+      this.aircraft.wingSpan,
+      this.flight.state.heading,
+      viento.x,
+      viento.z,
     );
+    this.flight.ponerRacha?.(
+      racha.x,
+      racha.y + estela.vertical,
+      racha.z,
+      racha.alabeo + estela.alabeo,
+    );
+    /*
+     * Y el cartel del cinturón, que se apaga **con** el anuncio de la
+     * comandante y no por su cuenta. La bandera se consume aquí: es un suceso
+     * de un fotograma. Ver `flight/cinturon.ts`.
+     */
+    const loDijo = this.dijoSoltarse;
+    this.dijoSoltarse = false;
+    this.avisarDeLaTormenta();
+    const movimiento = cuantoSeMueve(aire);
+    this.atenderAlCinturon(movimiento, loDijo);
+    this.hablarDeLosBaches(movimiento);
     this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
@@ -10262,6 +10323,33 @@ export class Game {
     const salida = this.campoPorId(salidaId) ?? this.camposDelVuelo()[0]!;
     const destino = this.campoPorId(destinoId) ?? salida;
     return { salida, destino, clave: `${salida.id}>${destino.id}` };
+  }
+
+  /** Las estelas de los demás. Ver `flight/estela.ts`. */
+  private readonly estelas = new Estelas();
+
+  /**
+   * **Por dónde pasan los que dejan estela**, con su peso y su ala.
+   *
+   * Los tres tráficos, cada uno con la clase que es: la del circuito dice su
+   * tipo, la de la ruta su silueta, y el de las islas es siempre el turbohélice
+   * regional. Ver `DE_CLASE` en `flight/estela.ts`.
+   */
+  private apuntarLasEstelas(): void {
+    const suelo = (x: number, z: number) => this.terrain.sampleHeight(x, z);
+    const quienes: QuienVuela[] = [];
+    const uno = (id: string, x: number, y: number, z: number, clase: string) => {
+      const c = DE_CLASE[clase];
+      if (!c) return;
+      quienes.push({ id, x, y, z, ...c, sobreElSuelo: y - suelo(x, z) });
+    };
+    for (const q of this.trafico?.quienes() ?? [])
+      uno(`circuito:${q.matricula}`, q.x, q.y, q.z, q.tipo);
+    for (const q of this.avionesDeRuta?.quienes() ?? [])
+      uno(`ruta:${q.id}`, q.x, q.y, q.z, q.silueta);
+    for (const q of this.islenos?.quienes() ?? [])
+      uno(`islas:${q.id}`, q.x, q.y, q.z, "turbohelice");
+    this.estelas.anotar(this.clock.elapsedTime, quienes, suelo);
   }
 
   /**
@@ -12812,6 +12900,94 @@ export class Game {
         "vuelo.meteElTren",
         "mando",
       );
+    }
+  }
+
+  /** La hora solar del vuelo, para la térmica. Ver `calorDelSuelo`. */
+  private horaDelVuelo = HORA_BUENA;
+  /** La rugosidad del terreno de barlovento. Ver `mirarElBarlovento`. */
+  private rugosidadAqui = CAMPO_ABIERTO;
+  /** Segundos desde que se miró el barlovento. */
+  private relojDelBarlovento = Infinity;
+
+  /**
+   * **Por dónde viene el viento**: cómo de rugoso es el terreno de los dos
+   * kilómetros y medio de antes de llegar aquí. Ver `rugosidadDe`.
+   *
+   * Es lo que hace que la mecánica sea la de ese sitio: con el alisio entrando
+   * por el mar, Gando se mueve poco; con el mismo viento pasando por encima de
+   * las lomas de La Esperanza, Los Rodeos se mueve bastante. Se mira cada dos
+   * segundos —doce muestras del terreno—, que es mucho más de lo que tarda el
+   * relieve en cambiar debajo de un avión.
+   */
+  private mirarElBarlovento(dt: number): void {
+    this.relojDelBarlovento += dt;
+    if (this.relojDelBarlovento < 2) return;
+    this.relojDelBarlovento = 0;
+    const viento = vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
+    const fuerza = Math.hypot(viento.x, viento.z);
+    if (!(fuerza > 0)) {
+      this.rugosidadAqui = CAMPO_ABIERTO;
+      return;
+    }
+    const p = this.flight.state.position;
+    // De donde viene: al revés de hacia donde va.
+    const de = Math.atan2(-viento.x, -viento.z);
+    const alturas: number[] = [];
+    let mar = 0;
+    for (const lejos of [300, 800, 1500, 2500])
+      for (const abierto of [-0.44, 0, 0.44]) {
+        const a = de + abierto;
+        const h = this.terrain.sampleHeight(
+          p.x + Math.sin(a) * lejos,
+          p.z + Math.cos(a) * lejos,
+        );
+        alturas.push(h);
+        if (esAguaDeCasa(h, this.scenario.waterLevel)) mar++;
+      }
+    this.rugosidadAqui = rugosidadDe(alturas, mar);
+  }
+
+  /** Si ya se habló de esta racha de baches. Ver `hablarDeLosBaches`. */
+  private bachesDichos = false;
+
+  /**
+   * **Y los baches se explican, con calma.**
+   *
+   * Para muchos niños esta será la primera turbulencia que sientan, y lo que
+   * aprendan a sentir aquí se lo llevan puesto. Así que lo que se dice es lo
+   * verdadero y lo tranquilo: es el aire, el avión está hecho para esto, y por
+   * eso va el cinturón. Nada de alarma: no es una emergencia.
+   *
+   * - **Con pasaje**, lo dice la comandante por megafonía, que es lo que se
+   *   oye en cualquier avión de línea: se enciende el cartel, suena el *ding*
+   *   y ella lo cuenta.
+   * - **Sin pasaje**, la instructora, porque no hay nadie más a bordo.
+   *
+   * Una vez por racha, y en crucero: en la subida y la aproximación el cartel
+   * ya va puesto y la cabina tiene otras cosas que hacer. Vuelve a decirse
+   * cuando el aire se calma y se vuelve a mover, no porque pase el rato —
+   * con la misma banda muerta del cartel. Ver `SACUDE` en `cinturon.ts`.
+   */
+  private hablarDeLosBaches(movimiento: number): void {
+    if (movimiento < YA_NO_SACUDE) this.bachesDichos = false;
+    const s = this.flight.state;
+    if (
+      this.bachesDichos ||
+      movimiento < SACUDE ||
+      s.onGround ||
+      this.faseDeAhora !== "en-vuelo" ||
+      s.heightAboveGround < 300
+    )
+      return;
+    this.bachesDichos = true;
+    if (conPasaje(this.aircraft.mass)) {
+      const forma = unaForma("comandante.turbulencia");
+      this.comandante.decir(forma.texto, forma.id, "baja");
+      if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
+    } else {
+      const forma = unaForma("vuelo.baches");
+      this.instructor.decir(forma.texto, forma.id);
     }
   }
 

@@ -39,9 +39,16 @@ import type { Fase } from "./vuelo";
 /**
  * Cuánto movimiento del aire cuenta como turbulencia de encender el cartel.
  *
- * De 0 a 1. Nueve décimas: sacude de verdad. Y con banda muerta para apagarlo
- * —seis décimas— porque si el mismo número enciende y apaga, una racha justo
- * en el umbral lo hace parpadear, que es de donde venía la queja.
+ * Es el σ_w de `cuantoSeMueve`, la desviación típica de la ráfaga vertical, en
+ * m/s. Nueve décimas: un poco por encima de la turbulencia ligera de
+ * MIL-F-8785C —0,8—, o sea la que ya mueve el café. Y con banda muerta para
+ * apagarlo —seis décimas— porque si el mismo número enciende y apaga, una
+ * racha justo en el umbral lo hace parpadear, que es de donde venía la queja.
+ *
+ * **Y ya no mezcla dos escalas.** Llegaba el mayor entre la ráfaga, en metros
+ * por segundo, y el eco de la tormenta, de cero a uno: dos números de cosas
+ * distintas comparados con el mismo umbral. Ahora la tormenta entra en la
+ * ráfaga —ver `causasDe` en `turbulencia.ts`— y lo que llega aquí es uno solo.
  */
 export const SACUDE = 0.9;
 export const YA_NO_SACUDE = 0.6;
@@ -51,7 +58,7 @@ export interface Momento {
   readonly fase: Fase;
   /** Si este avión lleva pasaje: una avioneta de escuela no tiene a quién avisar. */
   readonly conPasaje: boolean;
-  /** Cuánto se mueve el aire, de 0 a 1. */
+  /** Cuánto se mueve el aire: el σ_w, en m/s. Ver `SACUDE`. */
   readonly movimiento: number;
   /**
    * Si la comandante acaba de decir que ya se pueden soltar.

@@ -339,6 +339,13 @@ export const ES_PY = {
     "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
   "comandante.descenso":
     "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+  /*
+   * Y la de los baches, que acompaña al cartel del cinturón cuando lo enciende
+   * el aire. Tranquila y verdadera: el peligro de una turbulencia no es para
+   * el avión, es para quien va suelto, y por eso se pide el cinturón.
+   */
+  "comandante.turbulencia":
+    "Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.",
 
   /*
    * ── **Y la bienvenida dice a dónde se va** ──────────────────────────────
@@ -886,6 +893,14 @@ export const ES_PY = {
    */
   "vuelo.tormenta": "Hay una tormenta delante: rodeála, no la cruces",
   "palabra.tormenta": "Tormenta",
+  /*
+   * Los baches del aire, sin avión de pasaje: lo dice la instructora. Lo que
+   * se dice es lo verdadero y lo tranquilo —es el aire, el avión está hecho
+   * para esto— porque para muchos será la primera turbulencia que sientan.
+   * Ver `hablarDeLosBaches` en `game.ts`.
+   */
+  "vuelo.baches":
+    "Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.",
   /*
    * El combustible, en sus dos escalones. El primero no es una emergencia y
    * no se escribe como tal: entrar en la reserva es el momento de decidir, y
