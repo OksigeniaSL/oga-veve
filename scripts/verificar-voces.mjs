@@ -180,7 +180,8 @@ const comprobar = (nombre, ok, detalle, porque) =>
     let hayHuecos = false;
     for (const receta of Object.values(m.recetas)) {
       for (const trozo of receta) {
-        if (/^\{\w+\}$/.test(trozo)) hayHuecos = true;
+        // Con interrogante, `{viento?}`, es un hueco que puede ir vacío.
+        if (/^\{\w+\??\}$/.test(trozo)) hayHuecos = true;
         else usadas.add(trozo);
       }
     }

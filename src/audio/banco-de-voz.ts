@@ -127,8 +127,11 @@ export function ficheroDe(
  * de la B o de la que toque. Es exactamente lo que hace un GPS con el nombre
  * de la calle, y es lo que permite que veintiséis piezas de una sílaba cubran
  * todas las calles de rodaje de todos los aeropuertos del juego.
+ *
+ * **Y con interrogante, `{viento?}`, es un hueco que puede ir vacío.** Ver
+ * `recetaDe`.
  */
-const HUECO = /^\{(\w+)\}$/;
+const HUECO = /^\{(\w+)(\?)?\}$/;
 
 /**
  * Qué piezas hay que tocar para decir esta clave, o `null` si no hay receta.
@@ -155,7 +158,23 @@ export function recetaDe(
       continue;
     }
     const puesto = relleno[hueco[1]!];
-    if (!puesto) return null;
+    /*
+     * **El viento de la torre es de los que pueden ir vacíos.** La torre lo
+     * da al autorizarte a ti, y a los demás de la frecuencia se les dice la
+     * autorización sin él —ver `deTorre` en `game.ts`—: es lo que se oye de
+     * fondo, y con el viento cada una duraba cuatro segundos más. Pero el
+     * hueco era obligatorio, así que su «cleared for take-off» y su «cleared
+     * to land» no tenían grabación nunca: se los decía la voz del navegador
+     * y, donde no la hay —una tablet sin voz en inglés, o el banco—, no sonaba
+     * nada. Se oía el «line up and wait» de otro y nunca su despegue, y
+     * detrás tu «cleared to land» con él, para quien escuchaba, en el eje.
+     * Los huecos del indicativo y de la pista no llevan interrogante: sin
+     * ellos la frase no dice a quién ni por dónde.
+     */
+    if (!puesto) {
+      if (hueco[2]) continue;
+      return null;
+    }
     /*
      * **Y un hueco puede llevar varias piezas**, separadas por espacios.
      *
