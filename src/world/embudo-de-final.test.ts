@@ -14,7 +14,9 @@
 import { describe, expect, it } from "vitest";
 import {
   enElEmbudoDeFinal,
+  enLaZonaDeAproximacion,
   ENTRADA_EN_FINAL,
+  HASTA_DONDE_SE_APROXIMA,
   vieneEnFinal,
 } from "./runway-guide";
 import { verticesDelCircuito } from "./circuito";
@@ -139,5 +141,61 @@ describe("venir en final es venir hacia la pista", () => {
 
   it("ni alejándose de la pista por el mismo eje", () => {
     expect(vieneEnFinal(pista, x, z, h + Math.PI)).toBeNull();
+  });
+});
+
+/*
+ * **La zona de aproximación, que es donde canta la cuenta.** Más larga que el
+ * embudo —los dos primeros números de la cuenta se cruzan a catorce y a seis
+ * kilómetros del umbral— y solo yendo hacia la pista. Ver
+ * `flight/avisos-de-altura.ts`.
+ */
+describe("la zona de aproximación", () => {
+  const rumbo = (pista.heading * Math.PI) / 180;
+  const [fx, fz] = [Math.sin(rumbo), -Math.cos(rumbo)];
+  const fuera = (d: number): [number, number] => [
+    pista.x - fx * (pista.length / 2 + d),
+    pista.z - fz * (pista.length / 2 + d),
+  ];
+
+  it("a catorce kilómetros por el eje, viniendo, ya se aproxima", () => {
+    const [x, z] = fuera(14000);
+    expect(enElEmbudoDeFinal(pista, x, z)).toBeNull();
+    expect(enLaZonaDeAproximacion(pista, x, z, rumbo)).toBe(true);
+  });
+
+  it("pero alejándose por el mismo eje, no", () => {
+    const [x, z] = fuera(12000);
+    expect(enLaZonaDeAproximacion(pista, x, z, rumbo + Math.PI)).toBe(false);
+  });
+
+  it("y una base, de través y hacia el eje, sí", () => {
+    const [x, z] = fuera(4000);
+    // Un kilómetro al costado, girando hacia la pista.
+    const bx = x + -fz * 1000;
+    const bz = z + fx * 1000;
+    expect(enLaZonaDeAproximacion(pista, bx, bz, rumbo + Math.PI / 2)).toBe(
+      true,
+    );
+  });
+
+  it("y el viento en cola, que vuela al revés, no", () => {
+    for (let t = 0; t <= 1; t += 0.1) {
+      const [x, z] = entre(2, 3, t);
+      expect(
+        enLaZonaDeAproximacion(pista, x, z, rumbo + Math.PI),
+        `t=${t.toFixed(1)}`,
+      ).toBe(false);
+    }
+  });
+
+  it("ni más allá de su alcance, ni por el lado de la salida", () => {
+    const [x, z] = fuera(HASTA_DONDE_SE_APROXIMA + 500);
+    expect(enLaZonaDeAproximacion(pista, x, z, rumbo)).toBe(false);
+    const [sx, sz] = [
+      pista.x + fx * (pista.length / 2 + 2000),
+      pista.z + fz * (pista.length / 2 + 2000),
+    ];
+    expect(enLaZonaDeAproximacion(pista, sx, sz, rumbo)).toBe(false);
   });
 });

@@ -272,6 +272,13 @@ export const HASTA_DONDE_SE_APROXIMA = 20000;
 export const ABIERTA_LA_APROXIMACION = (30 * Math.PI) / 180;
 
 /**
+ * Lo más torcido respecto a la pista que se puede ir y seguir aproximando,
+ * grados. Ciento veinte: una base va a noventa, y el viraje de base a final
+ * empieza algo más allá; el viento en cola y la salida van a ciento ochenta.
+ */
+export const DE_VUELTA = 120;
+
+/**
  * ¿Está el avión en la zona de aproximación de esta pista?
  *
  * **Es lo que separa una toma de un crucero bajo.** La cuenta de la toma solo
@@ -280,8 +287,12 @@ export const ABIERTA_LA_APROXIMACION = (30 * Math.PI) / 180;
  * que empieza a tres kilómetros y medio: a esa distancia ya se va por debajo
  * de mil pies, y los dos primeros números de la cuenta no se oirían nunca.
  *
- * Mira solo dónde está el avión, no hacia dónde va: una base que cruza mil
- * pies por dentro del cono es una aproximación, y la caja de verdad la canta.
+ * **Y yendo hacia la pista, no alejándose de ella.** Una base que cruza mil
+ * pies por dentro del cono es una aproximación, y va de través; volar hacia
+ * fuera por el eje prolongado, o el tramo del viento en cola, no lo es. Se
+ * midió con el banco: el JAZ 90 volando a doce kilómetros del umbral **y
+ * alejándose** cantaba «five hundred». Por eso cabe todo lo que no vaya más
+ * torcido que `DE_VUELTA` respecto a la pista.
  */
 export function enLaZonaDeAproximacion(
   runway: {
@@ -293,7 +304,12 @@ export function enLaZonaDeAproximacion(
   },
   x: number,
   z: number,
+  /** El rumbo del avión, rad, como el del estado del vuelo. */
+  rumbo: number,
 ): boolean {
+  let torcido = (((rumbo * 180) / Math.PI - runway.heading) % 360 + 540) % 360;
+  torcido -= 180;
+  if (Math.abs(torcido) > DE_VUELTA) return false;
   const { along, across } = enEjesDePista(
     x,
     z,

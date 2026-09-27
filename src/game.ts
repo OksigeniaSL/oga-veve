@@ -8138,6 +8138,7 @@ export class Game {
           this.laPistaDeAhora(),
           ya.position.x,
           ya.position.z,
+          ya.heading,
         ) || this.sobreLaPista(),
       vertical: ya.verticalSpeed,
       altitud: ya.position.y,
