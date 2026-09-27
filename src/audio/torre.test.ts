@@ -10,6 +10,8 @@
 
 import { describe, expect, it } from "vitest";
 import manifiesto from "../../data/voces/torre/manifiesto.json";
+import canarias from "../../data/voces/torre-canarias/manifiesto.json";
+import { recetaDe, type Manifiesto } from "./banco-de-voz";
 import { CLAVE_DE_TORRE, claveDeTorre, PISTA_DETRAS } from "./torre";
 
 describe("lo que dice la torre", () => {
@@ -111,5 +113,34 @@ describe("lo que dice la torre", () => {
   it("lo que no está grabado se queda sin clave", () => {
     expect(claveDeTorre("cleared for the approach")).toBe(null);
     expect(claveDeTorre("")).toBe(null);
+  });
+  /*
+   * **Y lo que la torre les da a los demás también está grabado**, que se
+   * dice sin el viento: el viento te lo da a ti. Con el hueco del viento
+   * obligatorio, sus «cleared for take-off» y «cleared to land» no se
+   * montaban nunca: los decía la voz del navegador y, donde no la hay, no
+   * sonaban. Se oía el «line up and wait» de otro, nunca su despegue, y
+   * detrás tu «cleared to land» con él, para quien escucha, todavía en el eje.
+   */
+  it("las autorizaciones a los demás se montan sin viento, en las dos voces", () => {
+    const aOtro = {
+      c1: "fonetico.echo",
+      c2: "fonetico.charlie",
+      c3: "fonetico.kilo",
+      c4: "fonetico.lima",
+      c5: "fonetico.mike",
+      r1: "cifra.1",
+      r2: "cifra.2",
+    };
+    for (const [m, habla] of [
+      [manifiesto, ""],
+      [canarias, "canario."],
+    ] as const)
+      for (const orden of ["clearedTakeoff", "clearedLand", "lineUpWait"])
+        for (const lado of ["", ".L"])
+          expect(
+            recetaDe(m as Manifiesto, `torre.${habla}${orden}${lado}`, aOtro),
+            `${habla}${orden}${lado}`,
+          ).not.toBeNull();
   });
 });

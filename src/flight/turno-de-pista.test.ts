@@ -133,6 +133,43 @@ describe("al darte la pista", () => {
     expect(boca.espera(aOtro)).toBe(false);
   });
 
+  /*
+   * **Pero el despegue del que estaba alineado, sí.** Se había oído su «line
+   * up and wait»; su «cleared for take-off» esperaba turno detrás de la
+   * instructora cuando entraste en final, y se retiraba con lo de arriba: no
+   * se oía nunca, y detrás sonaba tu «cleared to land» con él en el eje para
+   * quien escuchaba. Es lo que daba «la pista que es tuya la tiene otro» en el
+   * banco del vuelo entero, en las tiradas con frustrada.
+   */
+  it("y el despegue del que estaba alineado no se retira: suena antes que lo tuyo", () => {
+    const radio = conAlguienEnLaPista("torre.lineUpWait");
+    const quien = radio.ocupanLaPista.find((o) => o.orden === "torre.lineUpWait")!
+      .matricula;
+    const { turno, boca, pasos } = montar(radio);
+    // La instructora habla, y mientras tanto al alineado le toca despegar.
+    let acabar = () => {};
+    boca.pedir("normal", (listo) => (acabar = listo), "vuelo.final");
+    let despegue: string | null = null;
+    for (let t = 0; t < 400 && !despegue; t += 0.5) {
+      const d = radio.update(0.5, NORMAL);
+      if (d?.clave !== "torre.clearedTakeoff" || d.de.matricula !== quien) continue;
+      const clave = `${d.clave}@${quien}`;
+      despegue = clave;
+      // Como la dice el juego: la frecuencia, en baja.
+      boca.pedir("baja", () => void pasos.push(clave), clave);
+    }
+    expect(despegue).not.toBeNull();
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(boca.espera(despegue!)).toBe(true);
+    expect(pasos).toEqual([]);
+    // Calla la instructora: suena su despegue, y después lo tuyo.
+    acabar();
+    turno.paso("final");
+    expect(pasos).toEqual([despegue, "cleared to land"]);
+  });
+
   it("y a quien la ocupaba se le quita de viva voz, antes que tu autorización", () => {
     const radio = conAlguienEnLaPista("torre.clearedLand");
     // Sin dibujo, va delante quien el guion pone delante: aquí, nadie.
@@ -217,6 +254,58 @@ describe("lo que se retira de la boca", () => {
     expect(boca.espera(deAlli)).toBe(false);
     expect(radio.ocupanLaPista).toEqual([]);
     expect(radio.matriculas.every((m) => m.startsWith("ZP-"))).toBe(true);
+  });
+});
+
+describe("con una sola calle", () => {
+  /*
+   * La raya verde no puede rodear al que espera en la doble raya de la única
+   * calle: es la tuya. Así que la torre no deja a dos en ella. Ver
+   * `USAN_LA_CALLE` y `Momento.calleOcupada` en `flight/radio.ts`.
+   */
+  const RUEDAN = /^otro\.(rodando|buenosDias)$/;
+  /** Una frecuencia con alguien que ya salió a rodar y espera en la calle. */
+  function conUnoEnLaCalle(): Frecuencia {
+    for (let semilla = 1; semilla < 400; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "SGEN");
+      let rueda = false;
+      for (let t = 0; t < 20; t += 0.5)
+        rueda = RUEDAN.test(radio.update(0.5, NORMAL)?.clave ?? "") || rueda;
+      if (rueda && radio.alguienEnLaCalle && !radio.pistaOcupada) return radio;
+    }
+    throw new Error("nadie salió a rodar");
+  }
+
+  it("en la doble raya se espera al que ya está en la calle, y se dice por qué", () => {
+    const radio = conUnoEnLaCalle();
+    const una = montar(radio, { calleUnica: () => true }).turno;
+    expect(una.pistaDeOtros).toBe(true);
+    expect(una.porQueEsperas).toBe("despega");
+    // Con más calles, se le rodea: no hay que esperarle.
+    const varias = montar(radio, { calleUnica: () => false }).turno;
+    expect(varias.pistaDeOtros).toBe(false);
+    expect(varias.porQueEsperas).toBeNull();
+  });
+
+  it("y rodando vos, nadie sale de su puesto: la frecuencia lo sabe por el turno", () => {
+    for (let semilla = 1; semilla <= 60; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "SGEN");
+      const { turno } = montar(radio, { calleUnica: () => true });
+      for (let t = 0; t < 600; t += 0.5) {
+        const dice = turno.oir(0.5, { fase: "rodando", deDia: true, instructorHablando: false });
+        expect(RUEDAN.test(dice?.clave ?? ""), `semilla ${semilla}, ${t} s`).toBe(false);
+      }
+    }
+  });
+
+  it("y llegando vos, al que espera en la calle se le da la salida antes que tu permiso", () => {
+    const radio = conUnoEnLaCalle();
+    const { turno, aOtros, pasos } = montar(radio, { calleUnica: () => true });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    expect(aOtros.map((d) => d.clave)).toEqual(["torre.clearedTakeoff"]);
+    turno.paso("final");
+    expect(pasos).toEqual([`torre.clearedTakeoff@${aOtros[0]!.de.matricula}`, "cleared to land"]);
   });
 });
 

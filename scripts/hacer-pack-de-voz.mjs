@@ -192,7 +192,8 @@ const recetas = existsSync(dondeRecetas)
 const huecos = [];
 for (const [clave, receta] of Object.entries(recetas)) {
   for (const trozo of receta) {
-    if (/^\{\w+\}$/.test(trozo)) continue;
+    // Un hueco, también el que puede ir vacío: `{viento?}`.
+    if (/^\{\w+\??\}$/.test(trozo)) continue;
     if (!piezas[trozo]) huecos.push(`${clave} → ${trozo}`);
   }
 }

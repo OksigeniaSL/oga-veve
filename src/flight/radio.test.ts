@@ -624,3 +624,89 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     expect(radio.despejarLaPista()).toEqual([]);
   });
 });
+
+describe("con una sola calle, la torre no mueve dos aviones a la vez por ella", () => {
+  /*
+   * En Encarnación, La Gomera o Pedro Juan Caballero todo lo que va de la
+   * plataforma a la pista pasa por la misma calle, y la raya verde no puede
+   * rodear a nadie. El otro avión salía a rodar por ella mientras rodabas vos
+   * y esperaba en tu misma doble raya. La torre, de verdad, lo retiene en su
+   * puesto hasta que dejes la calle.
+   */
+  const RUEDAN = /^otro\.(rodando|buenosDias)$/;
+
+  /** Una frecuencia cuyo primer avión va a salir a rodar. */
+  function conUnoPorSalir(): Frecuencia {
+    for (let semilla = 1; semilla < 400; semilla++) {
+      const prueba = new Frecuencia(dados(semilla), "SGEN");
+      const primero = escuchar(prueba, 40)[0];
+      if (primero && RUEDAN.test(primero.clave))
+        return new Frecuencia(dados(semilla), "SGEN");
+    }
+    throw new Error("ninguna frecuencia empezaba con alguien saliendo");
+  }
+
+  for (const sentido of ["saliendo", "volviendo"] as const) {
+    it(`${sentido} vos, nadie sale de su puesto; y en cuanto la dejás, sale sin perder el turno`, () => {
+      const radio = conUnoPorSalir();
+      const fase = sentido === "saliendo" ? "rodando" : "a-plataforma";
+      const mientras = escuchar(radio, 300, { ...TRANQUILO, fase, calleOcupada: sentido });
+      expect(mientras.filter((d) => RUEDAN.test(d.clave))).toEqual([]);
+      expect(radio.alguienEnLaCalle).toBe(false);
+      // Dejás la calle: en el puesto, parado.
+      const despues = escuchar(radio, 10, { ...TRANQUILO, fase: "en-puesto" });
+      expect(despues.some((d) => RUEDAN.test(d.clave))).toBe(true);
+      expect(radio.alguienEnLaCalle).toBe(true);
+    });
+  }
+
+  it("y sin la calle ocupada, sale a rodar como siempre", () => {
+    const radio = conUnoPorSalir();
+    const oido = escuchar(radio, 60);
+    expect(oido.some((d) => RUEDAN.test(d.clave))).toBe(true);
+  });
+
+  it("saliendo vos, nadie canta final: detrás vendría de frente por tu calle", () => {
+    const finales = (sentido: "saliendo" | "volviendo"): number => {
+      let cuantos = 0;
+      for (let semilla = 1; semilla <= 40; semilla++) {
+        const radio = new Frecuencia(dados(semilla), "SGEN");
+        const oido = escuchar(radio, 900, { ...TRANQUILO, calleOcupada: sentido });
+        cuantos += oido.filter((d) => d.clave === "otro.final").length;
+      }
+      return cuantos;
+    };
+    expect(finales("saliendo")).toBe(0);
+    // Volviendo, sí: el que llega detrás de vos no se cruza con nadie.
+    expect(finales("volviendo")).toBeGreaterThan(0);
+  });
+
+  it("y el que ya estaba en ella sale sin hacerse esperar, si la pista es de nadie", () => {
+    const radio = conUnoPorSalir();
+    // Sale a rodar él, y la torre le para en la doble raya, antes de que arranques.
+    escuchar(radio, 20);
+    expect(radio.alguienEnLaCalle).toBe(true);
+    // Arrancás: su salida llega en segundos, no en el minuto de siempre.
+    const oido = escuchar(radio, 30, {
+      ...TRANQUILO,
+      fase: "arrancando",
+      calleOcupada: "saliendo",
+    });
+    const suya = oido.find((d) => /^torre\.(lineUpWait|clearedTakeoff)$/.test(d.clave));
+    expect(suya, oido.map((d) => d.clave).join(" · ")).toBeDefined();
+    expect(suya!.cuando).toBeLessThan(ESPERA_MINIMA / 2);
+  });
+
+  it("y al darte la pista para aterrizar, al que espera en la calle se le da la salida", () => {
+    const radio = conUnoPorSalir();
+    escuchar(radio, 20);
+    expect(radio.alguienEnLaCalle).toBe(true);
+    // Sin la calle, no se le dice nada: no tiene la pista.
+    expect(radio.despejarLaPista(null, false)).toEqual([]);
+    const dichas = radio.despejarLaPista(null, true);
+    expect(dichas.map((d) => d.clave)).toEqual(["torre.clearedTakeoff"]);
+    // Y no anula nada que se oyera: se la da.
+    expect(dichas[0]!.quitaPermiso).toBe(false);
+    expect(radio.alguienEnLaCalle).toBe(false);
+  });
+});

@@ -2050,6 +2050,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
        * sentido contrario, no es de frente: es un circuito.
        */
       if (!s.onGround && /despegando|comprometido|en-vuelo|final/.test(fase)) {
+        /*
+         * **Y la velocidad se saca de dos muestras seguidas, no de la última
+         * vez que se le vio.** El que se retiraba y volvía a aparecer con la
+         * misma matrícula traía su último sitio de hacía un minuto, y de ahí
+         * salía una velocidad de avión hacia donde reaparecía. Ese salto era
+         * de verdad un fallo del tráfico —ver `otraVuelta` en
+         * `world/trafico.ts`—, pero lo que mide esto es quién vuela de frente,
+         * y un salto no vuela. Los saltos los mide `pista-compartida.test.ts`.
+         */
+        const vistos = new Set((o.trafico?.() ?? []).map((a) => a.matricula));
+        for (const m of [...traficoAntes.keys()])
+          if (!vistos.has(m)) traficoAntes.delete(m);
         for (const a of o.trafico?.() ?? []) {
           const antes = traficoAntes.get(a.matricula);
           traficoAntes.set(a.matricula, { x: a.x, z: a.z, t });

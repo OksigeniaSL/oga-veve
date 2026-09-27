@@ -130,6 +130,34 @@ describe("montar la frase, como los GPS", () => {
   });
 
   /*
+   * **Y con interrogante, el hueco puede ir vacío.** Es el viento de la
+   * torre: a ti te lo da, a los demás de la frecuencia no. Con el hueco
+   * obligatorio, sus autorizaciones no tenían grabación nunca y, sin voz del
+   * navegador, no sonaban: se oía el «line up and wait» de otro y nunca su
+   * «cleared for take-off».
+   */
+  it("un hueco con interrogante se salta si no hay relleno, y se rellena si lo hay", () => {
+    const conViento: Manifiesto = {
+      ...PACK,
+      recetas: { "vuelo.calle": ["segui", "{viento?}", "la-calle", "{letra}"] },
+    };
+    expect(recetaDe(conViento, "vuelo.calle", { letra: "hueco.a" })).toEqual([
+      "segui",
+      "la-calle",
+      "hueco.a",
+    ]);
+    expect(
+      recetaDe(conViento, "vuelo.calle", { letra: "hueco.a", viento: "hueco.b" }),
+    ).toEqual(["segui", "hueco.b", "la-calle", "hueco.a"]);
+    // Y el que no lleva interrogante sigue siendo obligatorio.
+    expect(recetaDe(conViento, "vuelo.calle", { viento: "hueco.b" })).toBeNull();
+    // Y lo que se pone tiene que existir, como en cualquier hueco.
+    expect(
+      recetaDe(conViento, "vuelo.calle", { letra: "hueco.a", viento: "hueco.z" }),
+    ).toBeNull();
+  });
+
+  /*
    * **Media frase es peor que ninguna.** Una receta que nombra una pieza que
    * el pack no trae diría «seguí…» y se callaría a la mitad, que a los cuatro
    * años es peor que no decir nada: se cae entera al navegador.

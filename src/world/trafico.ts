@@ -483,11 +483,22 @@ export function trazar(
     y: entrada.y + (aterriza.y - entrada.y) * hastaDecidir,
     z: entrada.z + (aterriza.z - entrada.z) * hastaDecidir,
   };
-  const sinPermiso = [lejos, esquina, entrada, decision, arriba, lejos, esquina];
+  /*
+   * **Y acaba donde empieza la vuelta siguiente**, en `lejos`, que es el
+   * primer punto de `llegada`: ahí se engancha otra vuelta al circuito, con
+   * permiso o sin él. Acababa en la esquina de la base y se retiraba en el
+   * aire; al cantar otra vez viento en cola reaparecía en su marca, y para
+   * quien volaba ese mismo viento en cola eso era un avión viniendo de
+   * frente por su línea. Ver `otraVuelta`.
+   */
+  const sinPermiso = [lejos, esquina, entrada, decision, arriba, lejos];
   const decide = largoDelCamino([lejos, esquina, entrada, decision]);
   /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
   let salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
-  /** **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. */
+  /**
+   * **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. Acaba
+   * en `lejos`, donde empieza la vuelta siguiente: ver `otraVuelta`.
+   */
   const alAire = [umbral, arriba, lejos];
 
   /*
@@ -1214,6 +1225,74 @@ export function crearTrafico(
       lucesDelTrafico(faseDeLuces(quien), quien.grupo.position.y),
     );
 
+  /**
+   * Si va **dando la vuelta**: subiendo de una frustrada —la orden de la torre
+   * o la decisión sin permiso— camino de `lejos`, donde empieza la vuelta
+   * siguiente. Ver `otraVuelta`.
+   */
+  const dandoLaVuelta = (quien: Volando): boolean => {
+    const c = quien.caminos;
+    if (!c) return false;
+    const camino = quien.marca.camino;
+    if (camino === c.sinPermiso) return quien.recorrido >= c.decide;
+    return camino !== c.llegada && camino !== c.salida;
+  };
+
+  /**
+   * **Y al acabar la frustrada, otra vuelta al circuito**, desde `lejos`, que
+   * es donde acaban los caminos de irse al aire y donde empieza `llegada`: no
+   * se mueve ni un metro.
+   *
+   * Se le retiraba ahí, en el aire, y la frecuencia —que en el guion de la
+   * frustrada le hace cantar viento en cola otra vez— lo volvía a poner en su
+   * marca, un kilómetro o dos más atrás por el mismo viento en cola. Quien
+   * volaba ese tramo lo veía desaparecer y aparecer de frente: era una de las
+   * dos veces que el banco del vuelo entero daba «un tráfico viene de frente».
+   * Un avión que se va al aire vuelve al circuito y aterriza, que es lo que
+   * cuenta la radio.
+   */
+  const otraVuelta = (quien: Volando): void => {
+    const c = quien.caminos!;
+    quien.marca = {
+      camino: quien.conPermiso ? c.llegada : c.sinPermiso,
+      metros: 0,
+      velocidad: c.marcas["otro.enCola"]?.velocidad ?? quien.marca.velocidad,
+    };
+    quien.recorrido = 0;
+    // Hace lo que le mandaron: no es uno al que se ha dejado de nombrar.
+    quien.olvidado = 0;
+  };
+
+  /**
+   * **Lo que dice quien ya se ve, dicho sin moverle de sitio**, o `null` si
+   * su marca está en otro camino y no hay más remedio.
+   *
+   * Cada llamada ponía al avión en su marca, y eso a quien no se veía le
+   * viene bien —está donde dice— pero a quien ya se ve le hace dar un salto:
+   * cien metros del punto de espera al eje con «cleared for take-off», y hasta
+   * dos kilómetros hacia atrás por el viento en cola al cantarlo después de
+   * una frustrada. Un avión no salta. Si ya va por el camino de la llamada,
+   * sigue donde está; si viene dando la vuelta, termina de darla y la llamada
+   * espera —ver `todaviaNo`—; y en la vuelta, antes de la decisión, el camino
+   * con permiso y el de sin él son el mismo.
+   */
+  const sinSaltar = (quien: Volando, marca: Marca): Marca | null => {
+    const c = quien.caminos;
+    if (dandoLaVuelta(quien)) return { ...quien.marca, metros: quien.recorrido };
+    if (marca.camino === quien.marca.camino)
+      return { ...marca, metros: quien.recorrido };
+    const enVuelta = (camino: Sitio[]): boolean =>
+      !!c && (camino === c.llegada || camino === c.sinPermiso);
+    if (
+      c &&
+      enVuelta(marca.camino) &&
+      enVuelta(quien.marca.camino) &&
+      quien.recorrido < c.decide
+    )
+      return porSuCamino(c, { ...marca, metros: quien.recorrido }, quien.conPermiso);
+    return null;
+  };
+
   const quitar = (matricula: string, quien: Volando): void => {
     grupo.remove(quien.grupo);
     quien.luces.dispose();
@@ -1266,6 +1345,21 @@ export function crearTrafico(
         if (quien.recorrido < (quien.caminos?.decide ?? 0))
           quien.marca = porSuCamino(quien.caminos, quien.marca, quien.conPermiso);
         return;
+      }
+      /*
+       * **Y a quien ya se ve, ni la orden de irse al aire le mueve si ya se
+       * está yendo**, ni lo demás le hace saltar. Ver `sinSaltar`.
+       */
+      if (quien && (clave !== "torre.goAround" || dandoLaVuelta(quien))) {
+        const suyo = sinSaltar(quien, marca);
+        if (suyo) {
+          quien.marca = suyo;
+          quien.recorrido = suyo.metros;
+          quien.olvidado = 0;
+          quien.quieto = 0;
+          colocar(quien);
+          return;
+        }
       }
       if (!quien) {
         const g = new Group();
@@ -1322,16 +1416,35 @@ export function crearTrafico(
          */
         if (aterrizando(quien) || (porTierra(quien) && !alFinal))
           quien.olvidado = 0;
-        else if (esperando && !alFinal)
+        /*
+         * Y el que viene volando a aterrizar, o dando la vuelta tras una
+         * frustrada, se olvida despacio, como el que espera una orden: su
+         * vuelo sigue abierto en la frecuencia, y lo que le toca decir espera
+         * a que esté donde lo dice —ver `todaviaNo`— y a que la frecuencia
+         * pueda hablar, que contigo en final no puede. Con el olvido de
+         * siempre se esfumaba en el aire y reaparecía en su marca, un par de
+         * kilómetros más atrás: visto desde su mismo viento en cola, un avión
+         * de frente.
+         */
+        else if (
+          (esperando && !alFinal) ||
+          dandoLaVuelta(quien) ||
+          (llegando(quien) && !!c && quien.recorrido < c.toca)
+        )
           quien.olvidado += dt * OLVIDO_ESPERANDO;
         else quien.olvidado += dt;
         /*
-         * **Y el que se fue al aire y acabó su camino, se retira ya.** Un
-         * avión colgado en el cielo en la esquina del circuito esperando a que
-         * lo nombren no es un avión: es un adorno roto.
+         * **Y el que acabó su camino en el aire, se retira ya** —el que salió,
+         * al perderse de vista—. Un avión colgado en el cielo en la esquina del
+         * circuito esperando a que lo nombren no es un avión: es un adorno
+         * roto. Menos el que se fue al aire, que da otra vuelta: ver
+         * `otraVuelta`.
          */
         const enElAire = !!c && quien.grupo.position.y > cota + 60;
-        if (alFinal && enElAire && !porTierra(quien)) quien.olvidado = Infinity;
+        if (alFinal && enElAire && !porTierra(quien)) {
+          if (dandoLaVuelta(quien)) otraVuelta(quien);
+          else quien.olvidado = Infinity;
+        }
         /*
          * **La red de la roja eterna**: uno que ocupa la pista y ha dejado de
          * avanzar se retira, y con él lo que bloqueaba. Ver `QUIETO`.
@@ -1364,6 +1477,25 @@ export function crearTrafico(
     todaviaNo(matricula, clave) {
       const quien = aviones.get(matricula);
       if (!quien) return false;
+      // Viento en cola y final, cuando haya vuelto al circuito. Ver `sinSaltar`.
+      if ((clave === "otro.enCola" || clave === "otro.final") && dandoLaVuelta(quien))
+        return true;
+      /*
+       * **Y el viento en cola, a la altura de la cabecera**, que es donde se
+       * canta. Al que vuelve a dar la vuelta tras una frustrada se le oía
+       * nada más empezar el viento en cola, dos kilómetros antes: con eso la
+       * final le llegaba tarde y se esfumaba esperándola. Ver `sinSaltar`.
+       */
+      const c = quien.caminos;
+      const marca = c?.marcas["otro.enCola"];
+      if (
+        clave === "otro.enCola" &&
+        c &&
+        marca &&
+        (quien.marca.camino === c.llegada || quien.marca.camino === c.sinPermiso) &&
+        quien.recorrido < marca.metros
+      )
+        return true;
       if (clave === "otro.pistaLibre") return aterrizando(quien);
       if (clave === "otro.final") return enLaBase(quien);
       return false;
