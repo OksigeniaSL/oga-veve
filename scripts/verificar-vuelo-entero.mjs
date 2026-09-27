@@ -4609,7 +4609,27 @@ if (DESTINO) {
    * no hay nada que nombrar y se dice.
    */
   const autorizacionesAlli = (a.clearedLand ?? []).length;
-  if (a.conFrecuencia === false)
+  /*
+   * **Y en los peldaños sin fraseología, tu permiso no nombra pista.** Va en
+   * castellano, «podés aterrizar», como la verde del despegue: el «cleared to
+   * land» con su pista es de Taguató para arriba. Así que abajo la tuya no
+   * cuenta aquí, y si nadie más fue autorizado mientras llegabas no hay pista
+   * nombrada que mirar: se dice, sin aprobarlo ni suspenderlo. Que la torre
+   * de allí te autorizó lo mide la comprobación de después.
+   */
+  const soloEnCasa =
+    !conFraseologia &&
+    autorizacionesAlli === 0 &&
+    (vuelo.tusAutorizaciones ?? []).some((x) => x.alli && x.dice === "aterrizar");
+  if (soloEnCasa)
+    resultados.push({
+      nombre: "y la torre de allí nombra su pista",
+      ok: true,
+      sinMedir: true,
+      detalle: `pista ${a.cabecera} · tu permiso fue en castellano, que no nombra pista, y no se oyó autorizar a nadie más allí`,
+      porque: "«runway zero three left, cleared to land» llegando por la 12 de Los Rodeos",
+    });
+  else if (a.conFrecuencia === false)
     resultados.push({
       nombre: "y la torre de allí nombra su pista",
       ok: autorizacionesAlli === 0,
