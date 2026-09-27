@@ -71,19 +71,16 @@ const REPARTO = [
   // grabada se cae a la voz del navegador y suena a otra persona.
   ["instructor", "vuelo.meteElTren", "instructor"],
   /*
-   * **Y ésta ya no sale del pack, a propósito.**
+   * **Y ésta vuelve a salir del pack**, rehecha en calma.
    *
-   * Se grabó a voces, y el tono vive en el fichero de audio y no en el texto:
-   * cambiar la frase cambia lo que lee la voz del navegador, no lo que se
-   * grabó. Pedido por su nombre: «el tren si hay que quitarlo, se dice y ya
-   * está, no hace falta pegar un grito». Hasta que se vuelva a grabar en tono
-   * de aviso la dice la voz del sistema. Ver `A_VOCES` en
-   * `audio/instructor-grabado.ts`.
-   *
-   * Se deja escrita aquí y no se borra: el día que se rehaga, esta línea
-   * vuelve a `"instructor"` y el banco vuelve a exigir la grabación.
+   * Se grabó a voces y estuvo fuera, diciéndola la voz del sistema: el tono
+   * vive en el fichero de audio y no en el texto. Pedido por su nombre: «el
+   * tren si hay que quitarlo, se dice y ya está, no hace falta pegar un
+   * grito». Ya está rehecha —ver `EN_CALMA` en `frases-para-grabar.mjs`— y el
+   * banco vuelve a exigir la grabación, igual que la de terreno.
    */
-  ["instructor", "vuelo.sacaElTren", null],
+  ["instructor", "vuelo.sacaElTren", "instructor"],
+  ["instructor", "vuelo.terrenoSube", "instructor"],
 
   ["instructor", "vuelo.noEstabilizada+descolocado", "instructor"],
   ["instructor", "cabina.v1", "cabina"],
