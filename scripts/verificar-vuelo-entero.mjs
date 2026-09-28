@@ -2547,7 +2547,43 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       Math.sin(s.heading) * (coche.position.x - s.position.x) -
         Math.cos(s.heading) * (coche.position.z - s.position.z) >
         0;
-    const cuentaLejos = !s.onRunway || !haciaElCoche;
+    /*
+     * **Salvo que la raya también se aleje del coche: volver por la pista.**
+     *
+     * En un campo de una sola calle que queda detrás —Ayolas y Pilar, por la
+     * 02— lo que se hace es seguir por la pista, dar la vuelta y volver: la
+     * raya se aleja primero de la salida, y el coche espera en ella. Alejarse
+     * de él siguiendo la raya no es dejarlo atrás, es ir a dar la vuelta; ver
+     * `vueltaPorLaPista` en `plan-de-vuelo.ts`. Lo que se sigue midiendo es lo
+     * de Los Rodeos: alejarse del coche cuando la raya no lo pide.
+     */
+    /*
+     * Se reconoce por la media vuelta: en los próximos cuatrocientos metros de
+     * raya hay un tramo que va contra el rumbo del avión. Con «un punto de la
+     * raya treinta metros más allá, más lejos del coche» no bastaba: en cuanto
+     * ese punto caía en la segunda mitad de la media vuelta la cuenta decía
+     * que no, y se apuntaban los 1.351 m de Ayolas a mitad del giro.
+     */
+    const rayaSeAleja = (() => {
+      const raya = o.ruta?.() ?? [];
+      const avance = o.avanceEnLaRuta?.() ?? 0;
+      if (raya.length < 2) return false;
+      const fx = Math.sin(s.heading);
+      const fz = -Math.cos(s.heading);
+      let andado = 0;
+      for (let k = 1; k < raya.length; k++) {
+        const dx = raya[k][0] - raya[k - 1][0];
+        const dz = raya[k][1] - raya[k - 1][1];
+        const l = Math.hypot(dx, dz);
+        andado += l;
+        if (andado < avance) continue;
+        if (andado > avance + 400) break;
+        if (l > 0.5 && (dx * fx + dz * fz) / l < -0.85) return true;
+      }
+      return false;
+    })();
+    const cuentaLejos =
+      (!s.onRunway || !haciaElCoche) && !(s.onRunway && rayaSeAleja);
     if (
       guiandoAhora &&
       s.onGround &&
@@ -2560,7 +2596,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       );
       if (cuentaLejos && alCoche > lejosDelCoche) {
         lejosDelCoche = alCoche;
-        lejosDondeCoche = `en «${fase}» a los ${Math.round(t)} s, a ${Math.round(s.airspeed)} m/s`;
+        lejosDondeCoche =
+          `en «${fase}» a los ${Math.round(t)} s, a ${Math.round(s.airspeed)} m/s` +
+          (s.onRunway ? " · en pista" : " · fuera de la pista") +
+          (s.onRunway ? (haciaElCoche ? " · hacia el coche" : " · de espaldas al coche") : "");
       }
       /*
        * **Y lo cerca que se le llega a poner**, que es la otra mitad.

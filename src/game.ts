@@ -5307,16 +5307,62 @@ export class Game {
    */
   private bocaDeLaSalida(): { x: number; z: number } | null {
     const ruta = this.plan?.rutaVisible() ?? [];
-    const r = this.laPistaDeAhora();
+    /*
+     * **Y la de después de la pista, si la ruta empieza fuera de ella.**
+     *
+     * Con el avión metido en el pasto —una media vuelta ancha en una pista
+     * estrecha— la ruta se rehace desde ahí, y su primer punto ya estaba
+     * «fuera»: el coche esperaba en el sitio del avión. Si por delante vuelve
+     * a pisar pista, la boca es la de después. Ver `quedaPistaPorDelante`.
+     */
+    const pisa = ruta.some(([x, z]) => this.puntoEnLaPista(x, z, 0));
+    let yaPiso = !pisa;
     for (const [x, z] of ruta) {
-      const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
-      if (
-        Math.abs(ejes.across) > r.width / 2 + BIEN_FUERA_DE_LA_PISTA ||
-        Math.abs(ejes.along) > r.length / 2 + BIEN_FUERA_DE_LA_PISTA
-      )
+      if (this.puntoEnLaPista(x, z, 0)) yaPiso = true;
+      if (yaPiso && !this.puntoEnLaPista(x, z, BIEN_FUERA_DE_LA_PISTA))
         return { x, z };
     }
+    // Sin punto fuera: la ruta no deja la pista.
     return null;
+  }
+
+  /** Si un punto del mundo cae en la pista de ahora, con un margen, m. */
+  private puntoEnLaPista(x: number, z: number, margen: number): boolean {
+    const r = this.laPistaDeAhora();
+    const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
+    return (
+      Math.abs(ejes.across) <= r.width / 2 + margen &&
+      Math.abs(ejes.along) <= r.length / 2 + margen
+    );
+  }
+
+  /**
+   * **Si a la ruta de vuelta todavía le queda pista por delante**, en los
+   * próximos trescientos metros de lo que falta por rodar.
+   *
+   * Es la otra mitad de «por una pista en uso no circula nadie». El coche del
+   * sígame espera en la boca de la salida mientras el avión pisa pista, y lo
+   * de pisar lo decían las ruedas; en una pista de dieciocho metros una media
+   * vuelta se sale al pasto un momento, las ruedas dejaban de pisar, el coche
+   * se ponía a guiar —plantado treinta metros por delante, **en la pista**— y
+   * al volver a ella el avión se lo llevaba por delante. Medido en Pilar con
+   * el banco del vuelo entero.
+   */
+  private quedaPistaPorDelante(): boolean {
+    const ruta = this.plan?.rutaVisible() ?? [];
+    const desde = this.plan?.avanceEnLaRuta ?? 0;
+    let recorrido = 0;
+    for (let i = 0; i < ruta.length; i++) {
+      if (i > 0)
+        recorrido += Math.hypot(
+          ruta[i]![0] - ruta[i - 1]![0],
+          ruta[i]![1] - ruta[i - 1]![1],
+        );
+      if (recorrido < desde) continue;
+      if (recorrido > desde + 300) break;
+      if (this.puntoEnLaPista(ruta[i]![0], ruta[i]![1], 0)) return true;
+    }
+    return false;
   }
 
   /**
@@ -7424,8 +7470,9 @@ export class Game {
     const aero = campo.escenario.aerodrome;
     if (!aero) return;
     /*
-     * **Y quién vuela aquí lo dice el campo**, no si tiene torre: en una
-     * pista particular, nadie más que vos. Ver `tiposDelCampo`.
+     * **Y quién vuela aquí lo dice el campo**: en una pista particular o en
+     * una sin torre, nadie más que vos, salvo que el campo diga otra cosa.
+     * Ver `tiposDelCampo`.
      */
     const tipos = tiposDelCampo(aero.id, campo.pista.length, sinTorre(aero));
     if (tipos.length === 0) return;
@@ -11242,7 +11289,15 @@ export class Game {
        * fase cree el plan que va el vuelo: mientras el avión pise pista, el
        * coche espera en la boca de la salida.
        */
-      const enLaPistaAun = s.onGround && s.onRunway;
+      /*
+       * **Y mientras le quede pista por delante, aunque las ruedas se hayan
+       * salido un momento.** Solo abandonándola: rodando hacia la pista para
+       * despegar, el coche ya para en el punto de espera. Ver
+       * `quedaPistaPorDelante`.
+       */
+      const enLaPistaAun =
+        s.onGround &&
+        (s.onRunway || (fase === "abandonando" && this.quedaPistaPorDelante()));
       const espera =
         fase === "aterrizado" || enLaPistaAun ? this.bocaDeLaSalida() : null;
       /*
