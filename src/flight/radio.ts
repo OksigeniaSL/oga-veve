@@ -545,6 +545,18 @@ export class Frecuencia {
   }
 
   /**
+   * Si alguien de la frecuencia **viene a aterrizar**: cantó viento en cola o
+   * final y todavía no soltó la pista. Es el tráfico que un AFIS da a quien
+   * espera para salir aunque todavía no ocupe la pista —el del viento en cola
+   * también cuenta—, y sin él diría «sin tráfico conocido» con uno en el
+   * circuito. Ver `vieneAAterrizar` y `traficoConocido` en
+   * `flight/turno-de-pista.ts`.
+   */
+  get alguienViene(): boolean {
+    return this.aviones.some((a) => vieneAAterrizar(a.guion, a.paso));
+  }
+
+  /**
    * La matrícula del que **va delante en final con su permiso**, o `null`.
    *
    * El permiso lo sabe la frecuencia, que es quien lo dio; **dónde está lo

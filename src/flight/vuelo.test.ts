@@ -13,6 +13,7 @@ import {
   GUION,
   SE_QUEDAN,
   Vuelo,
+  guionAfis,
   guionSinTorre,
   type Fase,
   type Situacion,
@@ -1225,3 +1226,27 @@ describe("el guion en la pista de casa", () => {
   });
 });
 
+describe("el guion donde contesta un AFIS", () => {
+  const dichos = ES_PY as Record<string, string>;
+
+  /*
+   * Un AFIS no enciende lámparas ni da permiso: informa, y quien vuela decide.
+   * Si la frase del punto de espera o la de entrar hablan de una luz o de un
+   * permiso, el juego enseña una torre donde no la hay.
+   */
+  it("en el punto de espera no hay luz que esperar ni permiso que pedir", () => {
+    for (const fase of ["esperando", "autorizado"] as Fase[]) {
+      const { clave } = guionAfis(fase);
+      expect(clave, fase).not.toBe(GUION[fase].clave);
+      expect(dichos[clave], clave).toBeTruthy();
+      expect(dichos[clave], clave).not.toMatch(/\bluz\b|torre|autoriz/i);
+    }
+    expect(dichos[guionAfis("esperando").clave]).toMatch(/decidís vos/);
+  });
+
+  it("y lo demás es lo de siempre: en un AFIS hay tráfico, y viene otro", () => {
+    for (const fase of Object.keys(GUION) as Fase[])
+      if (fase !== "esperando" && fase !== "autorizado")
+        expect(guionAfis(fase), fase).toBe(GUION[fase]);
+  });
+});

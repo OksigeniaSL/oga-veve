@@ -542,6 +542,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   // Si el campo de salida tiene torre: en una pista particular no la hay, y
   // lo que se comprueba de ella es que calle. Ver la comprobación de la torre.
   const saleConTorre = o.conFrecuencia?.() ?? true;
+  /*
+   * Y si el de salida o el de llegada es un AFIS, que informa y no autoriza:
+   * allí lo que se oye es «pista libre», no «cleared». Ver `Aerodrome.afis`.
+   */
+  const saleConAfis = o.conAfis?.() ?? false;
+  const aterrizaConAfis = !!destino && (o.conAfis?.(destino) ?? false);
   // La raíz de la escena, para poder mirar el coche del sígame.
   let raiz = o.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
@@ -1684,8 +1690,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let deFrenteDonde = null;
   /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
   const frecuenciaOidaAlli = [];
-  /** Los «cleared to land» oídos allí, a quien fueran. */
+  /**
+   * Los «cleared to land» oídos allí, a quien fueran. Y donde contesta un
+   * AFIS, lo que dice él nombrando la pista —«runway zero two free»—, que es
+   * lo que allí se oye en su lugar.
+   */
   const clearedLandAlli = [];
+  /**
+   * **Y lo que un AFIS no dice.** Las órdenes y los permisos oídos en un campo
+   * AFIS, a quien fueran, y las muestras con la lámpara encendida allí: un
+   * AFIS no autoriza, y una lámpara verde o roja es una autorización.
+   */
+  const ordenesEnUnAfis = [];
+  let lamparaEnUnAfis = 0;
   /**
    * **Y nadie baja a tu pista mientras es tuya.** El avión dibujado volaba el
    * circuito entero y se posaba, con permiso o sin él: el que esperaba su
@@ -2115,6 +2132,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       if (total < habladasVistas) habladasVistas = 0;
       const nuevas = h.slice(Math.max(0, h.length - (total - habladasVistas)));
       habladasVistas = total;
+      if (enElDestino && aterrizaConAfis && o.lamparaEncendida?.()) lamparaEnUnAfis++;
       if (fase === "esperando") {
         rojaDesde ??= t;
         if (t - rojaDesde > rojaMasLarga) {
@@ -2189,7 +2207,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         )
           porQueSeDijo ??= `${t.toFixed(0)} s en «${fase}»: ${x.replace(/^[\d.]+s /, "").replace(/@.*$/, "")}`;
         if (enElDestino) {
-          if (/torre\..*clearedLand/.test(x)) clearedLandAlli.push(x.replace(/^[\d.]+s /, ""));
+          if (
+            aterrizaConAfis
+              ? /torre\.(?:[a-z]+\.)?afis(?:Free|FreeTakeoff|Occupied|NoTraffic|InUseLanding|InUseDeparting)(?:\.[LCR])?@/.test(x)
+              : /torre\..*clearedLand/.test(x)
+          )
+            clearedLandAlli.push(x.replace(/^[\d.]+s /, ""));
+          if (
+            aterrizaConAfis &&
+            /torre\.(?:[a-z]+\.)?(?:verde|roja|aterrizar|clearedLand|clearedTakeoff|lineUpWait|holdShort\w*|goAround\w*|vacateNext|clearedTo)(?:\.[LCR])?@/.test(x)
+          )
+            ordenesEnUnAfis.push(x.replace(/^[\d.]+s /, ""));
           const f = /^[\d.]+s (otro|torre)\.[^@]*@(.*)$/.exec(x);
           if (f && !(misLetrasEnLaTorre && f[2].startsWith(misLetrasEnLaTorre)))
             frecuenciaOidaAlli.push(x);
@@ -2197,7 +2225,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const m = /^[\d.]+s (torre|otro)\.(?:[a-z]+\.)?([A-Za-z]+)(?:\.[LCR])?@(.*)$/.exec(x);
         if (!m) continue;
         const mia = !!misLetrasEnLaTorre && m[3].startsWith(misLetrasEnLaTorre);
-        if (mia && m[1] === "torre" && /^(aterrizar|clearedLand)$/.test(m[2]))
+        /*
+         * Y en un AFIS, su «pista libre» en el aire, que es lo que allí se oye
+         * en lugar del permiso: en castellano de la lámpara y en fraseología.
+         * El «runway free» en tierra es el de entrar a la pista, no este.
+         */
+        if (
+          mia &&
+          m[1] === "torre" &&
+          (/^(aterrizar|clearedLand|afisLibreEnFinal)$/.test(m[2]) ||
+            (m[2] === "afisFree" && !s.onGround))
+        )
           tusAutorizaciones.push({
             t: Math.round(t),
             fase,
@@ -2212,16 +2250,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           .split("-")
           .filter((l) => l.startsWith("fonetico."))
           .join("-");
-        if (!mia && m[1] === "torre" && /^(lineUpWait|clearedLand)$/.test(m[2]))
+        /*
+         * En un AFIS, lo mismo con lo que dice él: «runway free» a otro es
+         * la pista que tiene, y se le acaba al despegar o al estar ocupada.
+         */
+        if (!mia && m[1] === "torre" && /^(lineUpWait|clearedLand|afisFree)$/.test(m[2]))
           conPermisoOido.set(quien, x);
         if (
           !mia &&
-          ((m[1] === "torre" && /^(clearedTakeoff|goAround)$/.test(m[2])) ||
+          ((m[1] === "torre" &&
+            /^(clearedTakeoff|goAround|afisFreeTakeoff|afisOccupied)$/.test(m[2])) ||
             (m[1] === "otro" && m[2] === "pistaLibre"))
         )
           conPermisoOido.delete(quien);
         if (!tuya) continue;
-        if (mia && m[1] === "torre" && /^(verde|aterrizar|clearedTakeoff|clearedLand)$/.test(m[2])) {
+        if (
+          mia &&
+          m[1] === "torre" &&
+          /^(verde|aterrizar|clearedTakeoff|clearedLand|afisLibre|afisLibreEnFinal|afisFree|afisFreeTakeoff)$/.test(m[2])
+        ) {
           yaTeLaDieron = true;
           if (conPermisoOido.size)
             sinAnularAlDartela.push(
@@ -2231,7 +2278,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           !mia &&
           m[1] === "torre" &&
           yaTeLaDieron &&
-          /^(lineUpWait|clearedTakeoff|clearedLand)$/.test(m[2])
+          /^(lineUpWait|clearedTakeoff|clearedLand|afisFree|afisFreeTakeoff)$/.test(m[2])
         )
           dadaAOtroTrasLaTuya.push(`${t.toFixed(0)} s en «${fase}»: ${x}`);
       }
@@ -3607,6 +3654,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     porQueSeDijo,
     // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
     aterrizaConTorre: o.conFrecuencia?.(destino ?? undefined) ?? true,
+    saleConAfis,
+    aterrizaConAfis,
+    ordenesEnUnAfis,
+    lamparaEnUnAfis,
     // Dónde se cruzó y dónde se acabó, si el vuelo iba a otro campo.
     destino: destino
       ? { pedido: destino, llego: enElDestino, acabo: o.campoDeAhora?.() ?? null }
@@ -4088,6 +4139,26 @@ const DE_UN_VUELO = [
   "torre.clearedTakeoff",
   "torre.clearedLand",
 ];
+/*
+ * **Y donde contesta un AFIS, lo que dice un AFIS.** No da permisos: informa
+ * de la pista y del tráfico, y quien vuela decide. Así que en su campo no se
+ * pide la orden sino lo que se oye en su lugar —«runway in use zero two, no
+ * reported traffic» en el punto de espera, «runway zero two free» para salir
+ * o para bajar—, y en el de salida o en el de llegada según de cuál sea cada
+ * cosa. Ver `EN_UN_AFIS` en `audio/torre.ts`.
+ */
+const LO_DICE_UN_AFIS = {
+  "torre.holdShort": /^torre\.afis(?:NoTraffic|InUseLanding|InUseDeparting)$/,
+  "torre.clearedTakeoff": /^torre\.afisFreeTakeoff$/,
+  "torre.clearedLand": /^torre\.afisFree$/,
+};
+const conAfis = {
+  "torre.holdShort": !!vuelo.saleConAfis,
+  "torre.clearedTakeoff": !!vuelo.saleConAfis,
+  "torre.clearedLand": vuelo.destino ? !!vuelo.aterrizaConAfis : !!vuelo.saleConAfis,
+};
+/** La clave sin el lado de la pista ni el habla del campo. */
+const sinLadoNiHabla = (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".");
 
 /*
  * **Y la fraseología tiene edad.**
@@ -4114,8 +4185,10 @@ const laPropia =
   (!!vuelo.misLetras &&
     (vuelo.habladas ?? []).some(
       (h) =>
-        /torre\.(?:[a-z]+\.)?clearedTakeoff/.test(h) &&
-        h.includes(`@${vuelo.misLetras}`),
+        (vuelo.saleConAfis
+          ? /torre\.(?:[a-z]+\.)?afisFreeTakeoff/
+          : /torre\.(?:[a-z]+\.)?clearedTakeoff/
+        ).test(h) && h.includes(`@${vuelo.misLetras}`),
     ));
 /*
  * **Y un «hold short» retirado con razón no es una torre muda.**
@@ -4131,7 +4204,7 @@ const laPropia =
  */
 const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
   const m =
-    /\btorre\.(?:[a-z]+\.)?holdShort(?:Landing|Departing)?(?:\.[LCR])?@([^:]+): ya no es verdad$/.exec(
+    /\btorre\.(?:[a-z]+\.)?(?:holdShort(?:Landing|Departing)?|afis(?:NoTraffic|InUseLanding|InUseDeparting))(?:\.[LCR])?@([^:]+): ya no es verdad$/.exec(
       d,
     );
   return !!m && (m[1] === "yo" || (!!vuelo.misLetras && m[1] === vuelo.misLetras));
@@ -4161,12 +4234,21 @@ else comprobar(
        */
       DE_UN_VUELO.every(
         (c) =>
-          (vuelo.torreDijo ?? []).some(
-            (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".") === c,
+          (vuelo.torreDijo ?? []).some((d) =>
+            conAfis[c] ? LO_DICE_UN_AFIS[c].test(sinLadoNiHabla(d)) : sinLadoNiHabla(d) === c,
           ) ||
           (c === "torre.holdShort" && holdShortRetirado),
       ) && laPropia
-    : (vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
+    : /*
+       * Y abajo, la lámpara dicha en castellano; donde contesta un AFIS, lo
+       * que informa en su lugar: la pista libre o el tráfico que hay.
+       */
+      (vuelo.torreDijo ?? []).some((d) =>
+        (vuelo.saleConAfis
+          ? /(afisLibre|afisSinTrafico|afisTraficoAterriza|afisTraficoDespega)$/
+          : /(verde|roja)$/
+        ).test(d),
+      ),
   (conFraseologia && !laPropia
     ? "tu «cleared for take-off» no llegó a oírse · "
     : "") +
@@ -4250,19 +4332,27 @@ comprobar(
 {
   const tuyas = vuelo.tusAutorizaciones ?? [];
   const fueraDeFinal = tuyas.filter((a) => a.fase !== "final");
-  const enCasa = tuyas.filter((a) => a.dice === "aterrizar");
-  const enRadio = tuyas.filter((a) => a.dice === "clearedLand");
+  /*
+   * Y en un AFIS, lo que allí se oye en su lugar: «pista libre» en castellano
+   * y «runway free» en fraseología. Ver `LO_DICE_UN_AFIS`.
+   */
+  const afis = conAfis["torre.clearedLand"];
+  const enCasa = tuyas.filter((a) => a.dice === (afis ? "afisLibreEnFinal" : "aterrizar"));
+  const enRadio = tuyas.filter((a) => a.dice === (afis ? "afisFree" : "clearedLand"));
+  const [permiso, deRadio] = afis
+    ? ["«pista libre»", "«runway free»"]
+    : ["«podés aterrizar»", "«cleared to land»"];
   const conTorre = vuelo.aterrizaConTorre !== false;
   const falta = !enCasa.length
-    ? "no sonó «podés aterrizar»"
+    ? `no sonó ${permiso}`
     : conFraseologia && !enRadio.length
-      ? "sonó «podés aterrizar» y no el «cleared to land» de detrás"
+      ? `sonó ${permiso} y no el ${deRadio} de detrás`
       : !conFraseologia && enRadio.length
-        ? "sonó el «cleared to land» en inglés en un peldaño sin fraseología"
+        ? `sonó el ${deRadio} en inglés en un peldaño sin fraseología`
         : null;
   if (conTorre)
     comprobar(
-      "y tu «cleared to land» suena, y en final",
+      afis ? "y tu «pista libre» suena, y en final" : "y tu «cleared to land» suena, y en final",
       tuyas.length > 0 && fueraDeFinal.length === 0 && !falta,
       !tuyas.length
         ? (vuelo.toco ?? 0) > 0
@@ -5172,7 +5262,9 @@ if (DESTINO) {
   const soloEnCasa =
     !conFraseologia &&
     autorizacionesAlli === 0 &&
-    (vuelo.tusAutorizaciones ?? []).some((x) => x.alli && x.dice === "aterrizar");
+    (vuelo.tusAutorizaciones ?? []).some(
+      (x) => x.alli && (x.dice === "aterrizar" || x.dice === "afisLibreEnFinal"),
+    );
   if (soloEnCasa)
     resultados.push({
       nombre: "y la torre de allí nombra su pista",
@@ -5198,7 +5290,9 @@ if (DESTINO) {
       !cifras
         ? "no se supo la cabecera de allí"
         : !autorizacionesAlli
-          ? `pista ${a.cabecera} · no se oyó allí ningún «cleared to land», ni el tuyo`
+          ? vuelo.aterrizaConAfis
+            ? `pista ${a.cabecera} · AFIS, y no se oyó allí ningún «runway free» ni «runway in use», ni el tuyo`
+            : `pista ${a.cabecera} · no se oyó allí ningún «cleared to land», ni el tuyo`
           : conOtraPista.length
             ? `pista ${a.cabecera}, y dijo: ${conOtraPista.slice(0, 3).join(" · ")}`
             : `pista ${a.cabecera} · ${autorizacionesAlli} autorizaciones, todas con ella`,
@@ -5207,7 +5301,7 @@ if (DESTINO) {
   /*
    * **Y la tuya entre ellas.** Allí se aterriza con permiso de allí.
    */
-  if (a.conFrecuencia !== false) {
+  if (a.conFrecuencia !== false && !vuelo.aterrizaConAfis) {
     const tuyasAlli = (vuelo.tusAutorizaciones ?? []).filter((x) => x.alli);
     comprobar(
       "y allí te autoriza a ti a aterrizar",
@@ -5216,6 +5310,30 @@ if (DESTINO) {
         ? tuyasAlli.map((x) => `${x.t} s en «${x.fase}» ${x.dice}`).join(" · ")
         : "no sonó tu «cleared to land» en el campo de llegada",
       "se aterrizaba en el campo de llegada sin que nada comprobara que la torre de allí te autorizaba",
+    );
+  } else if (vuelo.aterrizaConAfis) {
+    /*
+     * **Y un AFIS no autoriza: informa.** Allí lo que tiene que sonar es que
+     * la pista está libre, a vos y en final; y lo que no puede sonar ni verse
+     * es una autorización: ni un «cleared», ni un «hold short», ni una
+     * lámpara verde o roja, a nadie. Pilar no tiene torre, tiene «PILAR AFIS».
+     */
+    const tuyasAlli = (vuelo.tusAutorizaciones ?? []).filter((x) => x.alli);
+    comprobar(
+      "y allí el AFIS te dice que la pista está libre",
+      tuyasAlli.length > 0,
+      tuyasAlli.length
+        ? tuyasAlli.map((x) => `${x.t} s en «${x.fase}» ${x.dice}`).join(" · ")
+        : "no sonó tu «pista libre» en el campo de llegada",
+      "en Pilar, que es un AFIS, «cleared to land» y lámpara verde, como si hubiera torre",
+    );
+    comprobar(
+      "y un AFIS no da permisos ni enciende la lámpara",
+      (vuelo.ordenesEnUnAfis ?? []).length === 0 && (vuelo.lamparaEnUnAfis ?? 0) === 0,
+      (vuelo.ordenesEnUnAfis ?? []).length || vuelo.lamparaEnUnAfis
+        ? `se oyó: ${(vuelo.ordenesEnUnAfis ?? []).slice(0, 4).join(" · ") || "nada"} · lámpara encendida ${vuelo.lamparaEnUnAfis ?? 0} muestras`
+        : "ni órdenes ni lámpara: informa y decidís vos",
+      "en Pilar, que es un AFIS, «cleared to land» y lámpara verde, como si hubiera torre",
     );
   }
   const metros = a.aguja?.metros ?? NaN;

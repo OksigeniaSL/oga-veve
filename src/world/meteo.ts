@@ -449,6 +449,12 @@ export function atisEnTexto(
   pista: string | null,
   meteo: Meteo,
   declinacion = 0,
+  /*
+   * Y quién lo da. Un campo con AFIS no tiene ATIS: lo mismo te lo da el AFIS
+   * al primer contacto —pista en uso, viento, QNH—, y se escribe con su
+   * nombre. Ver `Aerodrome.afis`.
+   */
+  quien: "ATIS" | "AFIS" = "ATIS",
 ): string {
   const magnetico = (d: number): string =>
     String(Math.round((((d - declinacion) % 360) + 360) % 360) || 360).padStart(
@@ -482,7 +488,7 @@ export function atisEnTexto(
         ? "TS"
         : `${intensidad}${meteo.lluvia === "llovizna" ? "DZ" : "RA"}`;
   return [
-    `${oaci} ATIS`,
+    `${oaci} ${quien}`,
     ...(pista ? [`RWY ${pista}`] : []),
     viento,
     vis,

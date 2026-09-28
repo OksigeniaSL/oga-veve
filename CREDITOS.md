@@ -55,6 +55,7 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; y en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
 | [AIP España](https://aip.enaire.es/AIP/) — ENAIRE, AIRAC AMDT 08/26 (en vigor desde el 03-SEP-2026)                                                                           | Los puntos del plan de vuelo en Canarias: salidas (SID), aproximaciones RNP y rutas de salida de La Gomera de los ocho aeropuertos de las islas, con sus nombres y coordenadas publicados. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 | [AIP Paraguay](https://www.dinac.gov.py/v3/index.php/ais/aip-paraguay) — DINAC, AMDT AIRAC 01/2026 | Los puntos del plan de vuelo en Paraguay: aproximaciones RNP de Asunción, Guaraní, Encarnación, Mariscal Estigarribia y Pedro Juan Caballero, y salidas de Asunción y Guaraní; y las cotas y la pista de Pilar, la plataforma de Ayolas y el servicio de radio de cada campo. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
+| [IFISA, *AFIS phraseology*](https://ifisa.info/wp-content/uploads/2016/06/IFISA-AFIS-phraseology.docx) (2016) y [AIC 05/10 de España](https://aip.enaire.es/aip/contenido_AIC/I/Le_Circ_2010_I_05_en.pdf) | Lo que dice por radio un AFIS, que informa y no autoriza: «runway in use», «no reported traffic», «runway free». Ver abajo | **Expresiones de uso y hechos**: se toman las frases estándar, no se copia el documento |
 
 **Cuatro encuadres de la misma fuente**, y cada uno existe por un motivo
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
@@ -129,6 +130,28 @@ Encarnación—, el campo lleva la aproximación calculada sobre el eje de la
 pista, con las distancias de diseño de la OACI (PANS-OPS, Doc 8168) y los
 puntos rotulados como los rotula un ordenador de vuelo cuando no tienen nombre
 —CF y FF con el número de la pista—.
+
+### Quién contesta en la radio: torre o AFIS
+
+Qué campo tiene torre y cuál tiene AFIS sale del AIP de cada país, de las
+tablas de servicios de tránsito aéreo (AD 2.17) y de comunicaciones (AD 2.18)
+de cada campo. En Paraguay son AFIS Pilar («PILAR AFIS», 122,0 MHz), Pedro
+Juan Caballero («PEDRO JUAN AFIS», 120,5 MHz), Mariscal Estigarribia
+(«MARISCAL RADIO», 118,8 MHz) y Concepción («CONCEPCIÓN AFIS», 118,4 MHz); en
+Canarias, La Gomera («La Gomera Información», 118,375 MHz, AMDT 408/26). El
+Hierro tiene torre de lunes a viernes y AFIS los fines de semana (AIRAC AMDT
+05/26), y el juego, que no sabe de días de la semana, lo deja con torre. Va
+anotado en el fichero de cada aeródromo.
+
+Un AFIS no da autorizaciones: informa de la pista en uso, del viento y del
+tráfico que conoce, y quien vuela decide. Lo explica la circular AIC 05/10 con
+la que Aena, hoy ENAIRE, implantó el servicio en España, y lo que dice por
+radio —«runway in use», «no reported traffic», «runway free», «runway
+occupied»— es la fraseología que recoge la International Flight Information
+Service Association (IFISA) sobre el Doc 4444 de la OACI, en el documento
+base de su seminario de 2016, consultado el 28 de septiembre de 2026. Se toman
+hechos y las frases de uso, que son las que se oyen en la radio de verdad; no
+se copia ningún texto.
 
 ### Sentinel-2 cloudless: CC BY-NC-SA 4.0, uso no comercial
 

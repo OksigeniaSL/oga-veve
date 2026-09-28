@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from "vitest";
 import { DIBUJOS } from "./senal";
-import { GUION, guionSinTorre, type Fase } from "../flight/vuelo";
+import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 describe("los dibujos de la señal", () => {
   it.each(Object.keys(DIBUJOS))("«%s» es un svg entero", (nombre) => {
@@ -47,5 +47,10 @@ describe("los dibujos de la señal", () => {
         expect(Object.keys(DIBUJOS), fase).toContain(
           guionSinTorre(fase, conBici).icono,
         );
+  });
+
+  it("y donde contesta un AFIS", () => {
+    for (const fase of Object.keys(GUION) as Fase[])
+      expect(Object.keys(DIBUJOS), fase).toContain(guionAfis(fase).icono);
   });
 });

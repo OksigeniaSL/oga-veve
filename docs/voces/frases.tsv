@@ -9,6 +9,8 @@ instructor	instructor/vuelo.esperaQueDespegue.ogg	es-PY	Esperamos: primero sale 
 instructor	instructor/vuelo.autorizado.ogg	es-PY	¡Luz verde! Entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperandoMirando.ogg	es-PY	Pará y mirá: la manga, los animales y la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.autorizadoSinTorre.ogg	es-PY	Todo libre: entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.esperandoAfis.ogg	es-PY	Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.autorizadoAfis.ogg	es-PY	La pista está libre: entrá cuando estés listo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.backTaxi.ogg	es-PY	Andá hasta el fondo y dá la vuelta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.minimos.ogg	es-PY	Mirá la pista: ¿la ves?	lo que toca hacer ahora, en vuelo y en tierra
@@ -57,6 +59,7 @@ instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podé
 instructor	instructor/vuelo.puedeVolverSinTorre.ogg	es-PY	La pista ya está libre: volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeAterrizar.ogg	es-PY	La torre te deja aterrizar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeAterrizarSinTorre.ogg	es-PY	Ahora sí: podés aterrizar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.puedeAterrizarAfis.ogg	es-PY	La pista está libre: si venís bien, aterrizá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.frustrada~2.ogg	es-PY	Muy bien: irse al aire también es volar bien	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.frustrada~3.ogg	es-PY	Eso estuvo bien. Damos otra vuelta y volvemos	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
@@ -493,6 +496,9 @@ torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del d
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
+torre	torre/torre.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número
+torre	torre/torre.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número
+torre	torre/torre.solo.noReportedTraffic.ogg	en	no reported traffic	un AFIS: sin tráfico conocido, detrás de la pista en uso
 torre	torre/viento.wind.ogg	en	wind	el viento, antes de la dirección
 torre	torre/viento.degrees.ogg	en	degrees	detrás de la dirección del viento
 torre	torre/viento.knots.ogg	en	knots	detrás de la fuerza del viento
@@ -534,6 +540,16 @@ torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con e
 torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre	torre/torre.solo.destino.ogg	es	podés volar a	a dónde se va, antes de rodar; el campo va detrás
 torre-canarias	torre-canarias/torre.canario.solo.destino.ogg	es	puedes volar a	a dónde se va, antes de rodar; el campo va detrás
+torre	torre/torre.solo.afisLibre.ogg	es	pista libre	un AFIS: la pista está libre, y decidís vos
+torre-canarias	torre-canarias/torre.canario.solo.afisLibre.ogg	es	pista libre	un AFIS: la pista está libre, y decidís vos
+torre	torre/torre.solo.afisOcupada.ogg	es	pista ocupada	un AFIS: hay alguien en la pista
+torre-canarias	torre-canarias/torre.canario.solo.afisOcupada.ogg	es	pista ocupada	un AFIS: hay alguien en la pista
+torre	torre/torre.solo.afisSinTrafico.ogg	es	sin tráfico conocido	un AFIS: no sabe de nadie más
+torre-canarias	torre-canarias/torre.canario.solo.afisSinTrafico.ogg	es	sin tráfico conocido	un AFIS: no sabe de nadie más
+torre	torre/torre.solo.afisTraficoAterriza.ogg	es	tráfico aterrizando	un AFIS: viene uno a aterrizar
+torre-canarias	torre-canarias/torre.canario.solo.afisTraficoAterriza.ogg	es	tráfico aterrizando	un AFIS: viene uno a aterrizar
+torre	torre/torre.solo.afisTraficoDespega.ogg	es	tráfico despegando	un AFIS: sale uno antes
+torre-canarias	torre-canarias/torre.canario.solo.afisTraficoDespega.ogg	es	tráfico despegando	un AFIS: sale uno antes
 torre	torre/destino.pettirossi.ogg	es	Asunción	el destino, en la autorización de la torre
 torre	torre/destino.guarani.ogg	es	Guaraní	el destino, en la autorización de la torre
 torre	torre/destino.encarnacion.ogg	es	Encarnación	el destino, en la autorización de la torre
@@ -603,6 +619,9 @@ torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la 
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.noReportedTraffic.ogg	en	no reported traffic	un AFIS: sin tráfico conocido, detrás de la pista en uso, en Canarias
 torre-canarias	torre-canarias/viento.wind.ogg	en	wind	el viento, antes de la dirección, en Canarias
 torre-canarias	torre-canarias/viento.degrees.ogg	en	degrees	detrás de la dirección del viento, en Canarias
 torre-canarias	torre-canarias/viento.knots.ogg	en	knots	detrás de la fuerza del viento, en Canarias

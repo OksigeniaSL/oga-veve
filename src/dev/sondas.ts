@@ -35,7 +35,7 @@ import { enEjesDePista } from "../world/rumbo";
 import { cifrasDeLaCabina, rotulosDeLaCabina } from "../world/pantallas-cabina";
 import { familiaDe } from "../ui/familia";
 import type { Lluvia } from "../world/meteo";
-import { alturaDeEdificio, enElPavimento, sinTorre } from "../world/aerodrome";
+import { alturaDeEdificio, enElPavimento, esAfis, sinTorre } from "../world/aerodrome";
 import {
   escalaDeCircuito,
   formaDelCircuito,
@@ -1565,6 +1565,21 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     conFrecuencia: (id?: string) => {
       const campo = juego.campoParaBanco(id);
       return !!campo?.escenario.aerodrome && !sinTorre(campo.escenario.aerodrome);
+    },
+    /**
+     * Si en ese campo contesta un AFIS, que informa y no autoriza: allí no hay
+     * lámpara ni «cleared to land» que esperar, sino «pista libre». Ver
+     * `Aerodrome.afis`.
+     */
+    conAfis: (id?: string) => esAfis(juego.campoParaBanco(id)?.escenario.aerodrome),
+    /**
+     * Si la lámpara de la torre se ve en pantalla. La luz se lleva por dentro
+     * también en un AFIS —es la cuenta de cuándo la pista está libre—, así
+     * que lo que se mira es lo que se ve. Ver `setLuzDeTorre` en `ui/hud.ts`.
+     */
+    lamparaEncendida: () => {
+      const caja = document.querySelector<HTMLElement>('[data-hud="torre"]');
+      return !!caja && !caja.hidden;
     },
     /** Los aeródromos que el cuaderno da por visitados. */
     aerodromosVisitados: () => juego.aerodromosVisitadosParaBanco,

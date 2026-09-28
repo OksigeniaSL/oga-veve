@@ -386,6 +386,18 @@ const TORRE_SOLO = [
   ["torre.solo.runwayInUse", "runway in use", "la pista en uso, antes de su número"],
   ["torre.solo.goAroundSolo", "go around", "al aire, sin más: el porqué va detrás"],
   ["torre.solo.rogerMayday", "roger, Mayday", "la torre oyó la llamada de socorro"],
+  /*
+   * **Y lo que dice un AFIS**, que informa y no autoriza: la pista libre u
+   * ocupada detrás de su número, y «no reported traffic» detrás de la pista
+   * en uso. Ver `DICE_UN_AFIS` en `src/audio/torre.ts`.
+   */
+  ["torre.solo.free", "free", "un AFIS: la pista, libre; detrás de su número"],
+  ["torre.solo.occupied", "occupied", "un AFIS: la pista, ocupada; detrás de su número"],
+  [
+    "torre.solo.noReportedTraffic",
+    "no reported traffic",
+    "un AFIS: sin tráfico conocido, detrás de la pista en uso",
+  ],
 ];
 
 /**
@@ -671,11 +683,27 @@ const EN_EL_AIRE =
  * de casa, con el campo en un hueco. Ver `autorizarLaRuta` en `src/game.ts`.
  */
 const A_DONDE = "a dónde se va, antes de rodar; el campo va detrás";
+/*
+ * Y lo que dice un AFIS en castellano, en los cuatro peldaños y en las dos
+ * voces: no autoriza, informa. Sin voseo que cambiar, así que las mismas
+ * palabras en las dos. Ver `luzDeTorre` en `src/game.ts`.
+ */
+const DE_UN_AFIS = [
+  ["afisLibre", "pista libre", "un AFIS: la pista está libre, y decidís vos"],
+  ["afisOcupada", "pista ocupada", "un AFIS: hay alguien en la pista"],
+  ["afisSinTrafico", "sin tráfico conocido", "un AFIS: no sabe de nadie más"],
+  ["afisTraficoAterriza", "tráfico aterrizando", "un AFIS: viene uno a aterrizar"],
+  ["afisTraficoDespega", "tráfico despegando", "un AFIS: sale uno antes"],
+];
 const LAMPARA_SOLO = [
   ["torre", "torre.solo.aterrizar", "podés aterrizar", EN_EL_AIRE],
   ["torre-canarias", "torre.canario.solo.aterrizar", "puedes aterrizar", EN_EL_AIRE],
   ["torre", "torre.solo.destino", "podés volar a", A_DONDE],
   ["torre-canarias", "torre.canario.solo.destino", "puedes volar a", A_DONDE],
+  ...DE_UN_AFIS.flatMap(([id, texto, para]) => [
+    ["torre", `torre.solo.${id}`, texto, para],
+    ["torre-canarias", `torre.canario.solo.${id}`, texto, para],
+  ]),
 ];
 for (const [voz, id, texto, para] of LAMPARA_SOLO) {
   filas.push({ id, voz, idioma: "es", texto, para });

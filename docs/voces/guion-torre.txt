@@ -50,6 +50,9 @@ cleared to
 runway in use
 go around
 roger, Mayday
+free
+occupied
+no reported traffic
 wind
 degrees
 knots
@@ -89,6 +92,11 @@ below
 same level
 podés aterrizar
 podés volar a
+pista libre
+pista ocupada
+sin tráfico conocido
+tráfico aterrizando
+tráfico despegando
 Asunción
 Guaraní
 Encarnación

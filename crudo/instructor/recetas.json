@@ -700,5 +700,14 @@
   ],
   "vuelo.abandonandoSinTorre": [
     "vuelo.abandonandoSinTorre"
+  ],
+  "vuelo.esperandoAfis": [
+    "vuelo.esperandoAfis"
+  ],
+  "vuelo.autorizadoAfis": [
+    "vuelo.autorizadoAfis"
+  ],
+  "vuelo.puedeAterrizarAfis": [
+    "vuelo.puedeAterrizarAfis"
   ]
 }

@@ -127,6 +127,20 @@ export interface Aerodrome {
    */
   readonly sinTorre?: boolean;
   /**
+   * Si quien contesta en la radio es un **AFIS** y no una torre: el servicio
+   * de información de vuelo de aeródromo.
+   *
+   * Un AFIS **no autoriza**. No hay «cleared for take-off» ni «cleared to
+   * land», ni lámpara verde o roja: da la pista en uso, el viento y el tráfico
+   * que conoce —«pista libre», «sin tráfico conocido»—, y quien vuela decide.
+   * Es lo que hay en Pilar, Pedro Juan Caballero, Mariscal Estigarribia y
+   * Concepción según el AIP de la DINAC (AD 2, «Instalaciones de
+   * comunicaciones ATS»), y en La Gomera según el de España. El Hierro es
+   * torre entre semana y AFIS el fin de semana, y va con torre: ver su nota.
+   * Ver `esAfis` y `EN_UN_AFIS` en `audio/torre.ts`.
+   */
+  readonly afis?: boolean;
+  /**
    * Si alrededor de la pista hay una granja: la casa, los potreros, el
    * ganado. Entonces la casa, el galpón y el hangar del fichero los dibuja
    * ella, con su tejado y su corredor, y no como prismas de aeropuerto. Ver
@@ -234,6 +248,18 @@ export function sinTorre(
   aero: Pick<Aerodrome, "privado" | "sinTorre"> | null | undefined,
 ): boolean {
   return !!aero && (aero.privado === true || aero.sinTorre === true);
+}
+
+/**
+ * Si en este campo contesta un AFIS y no una torre. Ver `Aerodrome.afis`.
+ *
+ * Un campo sin nadie en la radio no es AFIS aunque lo diga el fichero: lo que
+ * no hay no puede informar.
+ */
+export function esAfis(
+  aero: Pick<Aerodrome, "privado" | "sinTorre" | "afis"> | null | undefined,
+): boolean {
+  return !!aero && aero.afis === true && !sinTorre(aero);
 }
 
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */

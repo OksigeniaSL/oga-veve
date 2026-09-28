@@ -1,11 +1,12 @@
 {
   "id": "SGME",
   "name": "Dr. Luis María Argaña International Airport",
+  "afis": true,
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "6093",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma del sur, que es la que toca la calle de rodaje: OpenStreetMap no trae ninguno. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma del sur, que es la que toca la calle de rodaje: OpenStreetMap no trae ninguno. Van marcados «manual» para que la próxima extracción no se los lleve por delante. · AFIS, no torre: «MARISCAL RADIO», AFIS en 118.8 MHz (AIP Paraguay, AD 2.3-17 y 2.3-18)."
   },
   "origin": {
     "lat": -22.046499,

@@ -1178,7 +1178,7 @@ for (const icao of icaos) {
    * fichero de arriba, no objetos con `manual`, y sin esto se caían en la
    * primera extracción. Ver `Aerodrome.sinTorre`.
    */
-  for (const clave of ["privado", "granja", "sinTorre"])
+  for (const clave of ["privado", "granja", "sinTorre", "afis"])
     if (previo && clave in previo) salida[clave] = previo[clave];
   /*
    * Y la nota escrita a mano se queda.

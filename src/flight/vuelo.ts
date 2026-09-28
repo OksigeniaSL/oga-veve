@@ -1043,6 +1043,31 @@ export const GUION: Record<
 };
 
 /**
+ * **El guion donde contesta un AFIS**: nadie da permiso, pero hay quien
+ * informa. Ver `Aerodrome.afis`.
+ *
+ * Lo que cambia son las dos frases de la lámpara, que aquí no existe. En el
+ * punto de espera no se espera una luz: se para, se escucha lo que dice la
+ * radio —el viento y si viene alguien— y se mira. Y cuando la pista está
+ * libre, entrar lo decide quien vuela. Es la lección entera de un AFIS dicha
+ * en una línea, en los peldaños que no leen fraseología; en los de arriba la
+ * dice la radio. El resto del guion es el de siempre: en un AFIS hay tráfico,
+ * y «salí de la pista, que viene otro» es verdad.
+ */
+export function guionAfis(
+  fase: Fase,
+): { readonly clave: string; readonly icono: string } {
+  switch (fase) {
+    case "esperando":
+      return { clave: "vuelo.esperandoAfis", icono: "manga" };
+    case "autorizado":
+      return { clave: "vuelo.autorizadoAfis", icono: "verde" };
+    default:
+      return GUION[fase];
+  }
+}
+
+/**
  * **El guion en una pista particular**, sin torre y sin más tráfico que el
  * tuyo: lo que cambia del de siempre, que son tres frases.
  *

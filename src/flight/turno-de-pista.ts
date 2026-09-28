@@ -271,6 +271,25 @@ export class TurnoDePista {
   }
 
   /**
+   * **El tráfico que conoce quien informa**, para un AFIS: el porqué de la
+   * espera si lo hay, y si no, uno que viene a aterrizar aunque todavía vaya
+   * por el viento en cola, o uno que rueda hacia la pista. `null` es «sin
+   * tráfico conocido», que un AFIS solo dice cuando es verdad.
+   *
+   * Una torre no lo necesita: te deja en la roja o te da la verde, y el
+   * porqué va con la roja. Un AFIS no te para, así que lo que te da es esto,
+   * y con esto decidís vos. Ver `DICE_UN_AFIS` en `audio/torre.ts`.
+   */
+  get traficoConocido(): PorQueEsperas | null {
+    if (this.de.privado()) return null;
+    const porQue = this.porQueEsperas;
+    if (porQue) return porQue;
+    if (this.de.radio.alguienViene) return "aterriza";
+    if (this.de.radio.alguienEnLaCalle) return "despega";
+    return null;
+  }
+
+  /**
    * Si estás **esperando a que te den la pista**: en el punto de espera con
    * la lámpara de la torre, o de número dos en final. Ver
    * `Momento.esperandoLaPista`.

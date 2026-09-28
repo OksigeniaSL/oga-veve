@@ -46,8 +46,12 @@ import { InputManager } from "./flight/input";
 import {
   claveDeTorre,
   DICE_LA_TORRE,
+  DICE_UN_AFIS,
+  enUnAfis,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
+  PISTA_EN_MEDIO,
+  PISTA_EN_USO_DELANTE,
 } from "./audio/torre";
 import {
   bandaSinMotor,
@@ -459,6 +463,7 @@ import { VozDeLaMaquina } from "./audio/maquina";
 import {
   SE_QUEDAN,
   YA_ES_RODAJE,
+  guionAfis,
   guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
@@ -567,7 +572,12 @@ import {
   flapsTrasLaToma,
   type LoDicho,
 } from "./flight/despues-de-aterrizar";
-import { puntoMasCercanoDe, sinTorre, type Aerodrome } from "./world/aerodrome";
+import {
+  esAfis,
+  puntoMasCercanoDe,
+  sinTorre,
+  type Aerodrome,
+} from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
 import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
@@ -5849,8 +5859,10 @@ export class Game {
        * cuenta la instructora, en los cuatro peldaños: la voz es el canal, y
        * la frase no es fraseología sino lo que quiere decir.
        */
+      // Donde no hay torre que deje nada —sin nadie en la radio, o un AFIS
+      // que informa—, se ve que está libre.
       const libre = this.avisoCon(
-        sinTorre(this.elCampo().escenario.aerodrome)
+        sinTorre(this.elCampo().escenario.aerodrome) || this.esAfisAqui()
           ? "vuelo.puedeVolverSinTorre"
           : "vuelo.puedeVolver",
         "palabra.volve",
@@ -5911,7 +5923,11 @@ export class Game {
     this.cabeceraParaLaTorre = null;
     this.hud.senal.mostrar(
       "verde",
-      this.rotulo("vuelo.puedeAterrizar", "palabra.aterriza"),
+      // Y en un AFIS no te deja nadie: te dicen que está libre y bajás vos.
+      this.rotulo(
+        this.esAfisAqui() ? "vuelo.puedeAterrizarAfis" : "vuelo.puedeAterrizar",
+        "palabra.aterriza",
+      ),
       null,
       { segundos: SE_QUEDA_EL_PERMISO, prioridad: IMPORTANTE },
     );
@@ -5962,6 +5978,20 @@ export class Game {
   ): void {
     const base = claveDeTorre(dice);
     if (!base) return;
+    this.porRadioClave(base, urgencia, destino, conTira);
+  }
+
+  /**
+   * Lo mismo, **por la clave**: lo que dice un AFIS no se pide por su texto,
+   * porque sus dos «runway free» se dicen igual y son dos claves. Ver
+   * `DICE_UN_AFIS`.
+   */
+  private porRadioClave(
+    base: string,
+    urgencia: Urgencia = "mando",
+    destino?: DestinoEnRadio,
+    conTira = false,
+  ): void {
     const montada = this.deTorre(base, this.miIndicativo, destino);
     if (montada) {
       this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
@@ -5969,6 +5999,18 @@ export class Game {
         this.hud.radio(montada.texto, undefined, true);
     }
   }
+
+  /** Si en el campo de ahora contesta un AFIS. Ver `Aerodrome.afis`. */
+  private esAfisAqui(): boolean {
+    return esAfis(this.elCampo().escenario.aerodrome);
+  }
+
+  /**
+   * Lo último que un AFIS le dijo a cada matrícula. Ver `enUnAfis`: a quien
+   * ya se le dijo «runway free» para entrar al eje, su despegue no se anuncia.
+   * Se vacía con la frecuencia, que es cuando las matrículas cambian.
+   */
+  private readonly loUltimoDelAfis = new Map<string, string>();
 
   /**
    * **Lo que le quita la pista a otro, dicho por la torre**: el que despegue o
@@ -6008,10 +6050,24 @@ export class Game {
    * dijera la pista y la otra no.
    */
   private deTorre(
-    base: string,
+    pedida: string,
     quien: Indicativo,
     destino?: DestinoEnRadio,
   ): { clave: string; relleno: Record<string, string>; texto: string } | null {
+    /*
+     * **Y donde contesta un AFIS, lo que diría un AFIS.** La frecuencia pide
+     * órdenes de torre —es como lleva la cuenta de quién tiene la pista— y un
+     * AFIS no da órdenes: informa. Se traduce aquí, al decirlo, que es el
+     * único sitio por el que pasa todo lo que dice la radio del campo, a vos
+     * y a los demás. Ver `EN_UN_AFIS`.
+     */
+    let base = pedida;
+    if (this.esAfisAqui() && !(pedida in DICE_UN_AFIS)) {
+      const suya = enUnAfis(pedida, this.loUltimoDelAfis.get(quien.matricula));
+      if (!suya) return null;
+      base = suya;
+    }
+    if (this.esAfisAqui()) this.loUltimoDelAfis.set(quien.matricula, base);
     const orden = DICE_LA_TORRE[base];
     if (!orden) return null;
     // El límite de la autorización va detrás de la orden, como se dice.
@@ -6058,7 +6114,13 @@ export class Game {
      * esperando»—. Se simplifica lo que se oye de fondo, no lo que te dicen.
      */
     const conViento =
-      (base === "torre.clearedTakeoff" || base === "torre.clearedLand") &&
+      (base === "torre.clearedTakeoff" ||
+        base === "torre.clearedLand" ||
+        // Y lo que te dice un AFIS para salir o para bajar: el viento es la
+        // mitad de lo que informa. Ver `DICE_UN_AFIS`.
+        base === "torre.afisFree" ||
+        base === "torre.afisFreeTakeoff" ||
+        base === "torre.afisNoTraffic") &&
       quien.matricula === this.miIndicativo.matricula;
     const viento = conViento ? this.vientoDeLaTorre(campo) : null;
     /*
@@ -6080,11 +6142,17 @@ export class Game {
     const antes = viento ? `${quien.dicho}, ${viento.dicho}` : quien.dicho;
     // Y la pista en uso se nombra detrás, que es como se informa. Ver
     // `PISTA_DETRAS`.
+    // Y las de un AFIS, con la pista donde la pone quien informa: «runway
+    // zero two free», «runway in use zero two, no reported traffic».
     const texto = !pista
       ? `${antes}, ${dice}`
       : PISTA_DETRAS.has(base)
         ? `${antes}, ${dice} ${pista.dicho}`
-        : `${antes}, runway ${pista.dicho}, ${dice}`;
+        : PISTA_EN_MEDIO.has(base)
+          ? `${antes}, runway ${pista.dicho} ${dice}`
+          : PISTA_EN_USO_DELANTE.has(base)
+            ? `${antes}, runway in use ${pista.dicho}, ${dice}`
+            : `${antes}, runway ${pista.dicho}, ${dice}`;
     return { clave, relleno, texto };
   }
 
@@ -6136,7 +6204,13 @@ export class Game {
     if (ruta === this.rutaAutorizada) return;
     this.rutaAutorizada = ruta;
     if (this.vecinos.length === 0 || this.destinoId === this.salidaId) return;
-    if (sinTorre(this.campoPorId(this.salidaId)?.escenario.aerodrome)) return;
+    /*
+     * Ni en un AFIS: no autoriza, y «podés volar a» es una autorización. La
+     * de un vuelo instrumental la retransmite de un control, y eso aquí no se
+     * vuela. Ver `Aerodrome.afis`.
+     */
+    const deSalida = this.campoPorId(this.salidaId)?.escenario.aerodrome;
+    if (sinTorre(deSalida) || esAfis(deSalida)) return;
     const destino = destinoEnRadio(this.destinoId);
     if (!destino) return;
     const yo = this.miIndicativo;
@@ -6227,7 +6301,20 @@ export class Game {
      * entrar» y, por radio, **«cleared for take-off»** con el avión en final.
      */
     const enElAire = !this.flight.state.onGround;
-    this.hud.setLuzDeTorre(luz, rojaDice, this.miIndicativo.dicho, enElAire);
+    /*
+     * **Y un AFIS no tiene lámpara.** Lo que tiene es la radio: informa de la
+     * pista y del tráfico, y quien vuela decide. La luz se sigue llevando por
+     * dentro —es la cuenta de cuándo la pista está libre para vos—, pero no
+     * se pinta, y lo que se dice es lo que diría quien informa. Ver
+     * `Aerodrome.afis`.
+     */
+    const afis = this.esAfisAqui();
+    this.hud.setLuzDeTorre(
+      afis ? null : luz,
+      rojaDice,
+      this.miIndicativo.dicho,
+      enElAire,
+    );
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
     if (cual === this.ultimaLuzDeTorre) {
       if (luz === "roja" && rojaDice === "esperar")
@@ -6262,18 +6349,44 @@ export class Game {
      * con otra voz. La clave cambia con el habla porque el pack de voz busca
      * por clave — ver `i18n/habla.ts`.
      */
-    const base =
-      luz === "verde"
+    /*
+     * En un AFIS, lo mismo dicho como información: la pista libre para salir
+     * o para bajar, ocupada para quien viene, y en el punto de espera el
+     * tráfico que se conoce —o que no se conoce ninguno—. Quien viene por la
+     * otra punta no oye nada en castellano: se lo cuenta la instructora, y la
+     * pista en uso va por radio.
+     */
+    const trafico =
+      afis && luz === "roja" && rojaDice === "esperar"
+        ? this.turno.traficoConocido
+        : null;
+    const base: string | null = afis
+      ? luz === "verde"
+        ? enElAire
+          ? "torre.afisLibreEnFinal"
+          : "torre.afisLibre"
+        : rojaDice === "alAire"
+          ? alAirePor === "enUso"
+            ? null
+            : "torre.afisOcupada"
+          : trafico === "aterriza"
+            ? "torre.afisTraficoAterriza"
+            : trafico === "despega"
+              ? "torre.afisTraficoDespega"
+              : "torre.afisSinTrafico"
+      : luz === "verde"
         ? enElAire
           ? "torre.aterrizar"
           : "torre.verde"
         : rojaDice === "alAire"
           ? "palabra.alAire"
           : "torre.roja";
-    const clave = comoSeDiceAqui(
-      base,
-      hablaDe(this.elCampo().escenario.aerodrome?.id),
-    ) as TranslationKey;
+    const clave = base
+      ? (comoSeDiceAqui(
+          base,
+          hablaDe(this.elCampo().escenario.aerodrome?.id),
+        ) as TranslationKey)
+      : null;
     /*
      * La orden de irse al aire **corta lo que haya**: es la única de las tres
      * que no puede esperar a que termine una frase. Las otras dos son normales
@@ -6302,12 +6415,13 @@ export class Game {
      * qué idioma va la frase de después. Ver `flight/matricula.ts`.
      */
     const yo = this.miIndicativo;
-    this.torre.decir(
-      t(clave, { indicativo: yo.dicho }),
-      clave,
-      urgencia,
-      rellenoDe(yo),
-    );
+    if (clave)
+      this.torre.decir(
+        t(clave, { indicativo: yo.dicho }),
+        clave,
+        urgencia,
+        rellenoDe(yo),
+      );
     /*
      * **Y si se espera por alguien, por quién.** La roja podía durar tres
      * minutos con un «esperá acá» y nada más, que a los cuatro años es un
@@ -6376,7 +6490,29 @@ export class Game {
      * cómo se llama eso en una radio de verdad, que es lo que servirá a los
      * diez. La escalera de peldaños es exactamente para esto.
      */
-    if (conCifras) this.porRadio(enRadio, urgencia);
+    /*
+     * Y en un AFIS, su fraseología: «runway zero two free», «runway zero two
+     * occupied», «runway in use zero two, no reported traffic» o con el
+     * tráfico que haya. Ver `DICE_UN_AFIS`.
+     */
+    if (conCifras && afis)
+      this.porRadioClave(
+        luz === "verde"
+          ? enElAire
+            ? "torre.afisFree"
+            : "torre.afisFreeTakeoff"
+          : rojaDice === "alAire"
+            ? alAirePor === "enUso"
+              ? "torre.pistaEnUso"
+              : "torre.afisOccupied"
+            : trafico === "aterriza"
+              ? "torre.afisInUseLanding"
+              : trafico === "despega"
+                ? "torre.afisInUseDeparting"
+                : "torre.afisNoTraffic",
+        urgencia,
+      );
+    else if (conCifras) this.porRadio(enRadio, urgencia);
   }
 
   /**
@@ -6400,7 +6536,14 @@ export class Game {
     this.porQueExplicado = porQue;
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
-    if (conCifras) this.porRadio(HOLD_SHORT_POR[porQue]);
+    // Un AFIS no te para: te dice qué tráfico hay. Ver `luzDeTorre`.
+    if (conCifras && this.esAfisAqui())
+      this.porRadioClave(
+        porQue === "aterriza"
+          ? "torre.afisInUseLanding"
+          : "torre.afisInUseDeparting",
+      );
+    else if (conCifras) this.porRadio(HOLD_SHORT_POR[porQue]);
     else {
       const explica = EXPLICA_LA_ESPERA[porQue];
       this.instructor.decir(t(explica), explica);
@@ -6679,6 +6822,7 @@ export class Game {
      * junto al punto de espera con la roja encendida. Ver `Trafico.vaciar`.
      */
     this.turno.reiniciar(campo.escenario.aerodrome?.id);
+    this.loUltimoDelAfis.clear();
     this.trafico?.vaciar();
     callar();
     /*
@@ -8320,12 +8464,19 @@ export class Game {
     if (falta > Math.min(60000, ruta * 0.6)) return;
     this.atisDado = clave;
     const esc = destino.escenario;
+    /*
+     * **Y donde no hay nadie en la radio, no hay parte que oír**: en Ayolas o
+     * en la pista de casa el viento lo dice la manga. Y donde contesta un
+     * AFIS, te lo da él, con su nombre. Ver `atisEnTexto`.
+     */
+    if (sinTorre(esc.aerodrome)) return;
     this.hud.radio(
       atisEnTexto(
         destino.oaci ?? esc.aerodrome?.id ?? destino.id,
         cabeceraEnUso(esc),
         esc.meteo ?? TIEMPO_DE_CASA,
         esc.magneticVariation ?? 0,
+        esAfis(esc.aerodrome) ? "AFIS" : "ATIS",
       ),
       14,
       null,
@@ -8354,7 +8505,8 @@ export class Game {
     this.hud.senal.mostrar("salida", dicho.rotulo, null, { segundos: 4 });
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
-    if (conCifras && this.hayTorreQueHable())
+    // Un AFIS no te manda salir por ninguna: lo cuenta la instructora.
+    if (conCifras && this.hayTorreQueHable() && !this.esAfisAqui())
       this.porRadio("vacate next available", "mando", undefined, true);
     else this.instructor.decir(dicho.texto, dicho.id, "normal");
   }
@@ -10686,6 +10838,7 @@ export class Game {
      * su pista al decirse la llamada y no al sonar. Ver `esDeLaFrecuencia`.
      */
     this.turno.cambiarDeCampo(campo.escenario.aerodrome?.id);
+    this.loUltimoDelAfis.clear();
     this.cambiarDeSigueme(campo);
     this.hud.setMagneticVariation(campo.escenario.magneticVariation);
     this.updateBadge();
@@ -12297,7 +12450,9 @@ export class Game {
             this.tier.sigueme && aqui?.privado === true,
             aqui?.privado === true,
           )
-        : vista;
+        : esAfis(aqui)
+          ? guionAfis(vista.fase)
+          : vista;
       const clave =
         this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
           ? "vuelo.enVueloAterrizando"
