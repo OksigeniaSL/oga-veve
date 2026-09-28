@@ -607,6 +607,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Lo que la boca tiró y por qué. Ver `descartadas` en `boca.ts`. */
     descartadas: () => [...BOCA.descartadas],
     /**
+     * Quién tiene la palabra y qué espera turno, ahora mismo. Para las trazas
+     * del banco: con `habladas` se sabe qué sonó; con esto, qué esperaba
+     * mientras tanto y en qué orden.
+     */
+    bocaAhora: () => ({
+      ocupada: BOCA.ocupada,
+      espera: (
+        BOCA as unknown as { cola: { clave?: string }[] }
+      ).cola.map((c) => c.clave ?? "?"),
+      ultima: BOCA.habladas[BOCA.habladas.length - 1]?.clave ?? "",
+    }),
+    /**
      * Y la conversación en orden: qué sonó y cuándo, en segundos desde la
      * primera frase. Con esto y `descartadas` se lee un amontonamiento de
      * voces desde fuera. Ver `habladas` en `boca.ts`.

@@ -20,6 +20,9 @@
  * - y en todo el rato, **la tarjeta del señalero no sale sin él en el
  *   cuadro**.
  *
+ * En un campo particular —la granja— no hay señalero: lo que se mira allí es
+ * que no esté y que quien recibe sea la bici, junto al puesto.
+ *
  * El vuelo no se vuela: se pone el avión en el aire un rato —para que el plan
  * sepa que ha volado—, se posa en la pista y se frena; después se lleva a la
  * boca del puesto por su propia raya. Lo que se mide es lo que se ve al
@@ -306,7 +309,35 @@ try {
           enCuadro = true;
         if (s.gestoDeAhora) gestos.add(s.gestoDeAhora);
       }
-      return { visto, enCuadro, gestos: [...gestos], fase: o.fase() };
+      /*
+       * **Y quien te recibe en la granja**, que no es el señalero: la bici
+       * que salió a buscarte, a un lado del puesto. Ver `campoParticular` en
+       * `Game`.
+       */
+      const bici = o.sigueme?.();
+      const bg = bici?.enBici ? bici.grupo : null;
+      /*
+       * Y se le da tiempo a llegar: aquí el avión se planta de un salto en la
+       * boca del puesto, y ella viene pedaleando desde la salida de la pista.
+       * Lo que se mira es que llegue y se quede, no que se teletransporte.
+       */
+      for (let k = 0; bg && k < 40; k++) {
+        const p = o.estado().position;
+        if (bg.visible && Math.hypot(bg.position.x - p.x, bg.position.z - p.z) < 30)
+          break;
+        await espera(500);
+      }
+      const aqui = o.estado().position;
+      return {
+        visto,
+        enCuadro,
+        gestos: [...gestos],
+        fase: o.fase(),
+        biciEnEscena: !!bg && bg.visible && m.enEscena(bg),
+        biciA: bg
+          ? Math.round(Math.hypot(bg.position.x - aqui.x, bg.position.z - aqui.z))
+          : null,
+      };
     });
     await foto("2-en-el-puesto");
 
@@ -328,9 +359,25 @@ try {
         enPista.cocheEnEscena,
         `coche en la escena${enPista.cocheA !== null ? ` a ${enPista.cocheA} m` : ""}${enPista.cocheEnCuadro ? " y en el cuadro" : ""}`,
       );
-    mira(!llegada.sinRuta && llegada.visto, "señalero en la escena");
-    mira(!llegada.sinRuta && llegada.enCuadro, "señalero en el cuadro");
-    mira((llegada.gestos?.length ?? 0) > 0, `gestos: ${llegada.gestos?.join(", ") || "ninguno"}`);
+    /*
+     * **Y en un campo particular, ni señalero ni bastones**: allí recibe
+     * quien salió en bici, junto al puesto. Un señor con chaleco en el potrero
+     * de la granja enseñaba un aeropuerto donde no lo hay.
+     */
+    if (enPista.enBici) {
+      mira(
+        !llegada.sinRuta && !llegada.visto && !(llegada.gestos?.length ?? 0),
+        llegada.visto ? `señalero en la granja: ${llegada.gestos?.join(", ") || "sin gestos"}` : "sin señalero en la granja",
+      );
+      mira(
+        !llegada.sinRuta && llegada.biciEnEscena && (llegada.biciA ?? Infinity) < 40,
+        llegada.biciEnEscena ? `la bici junto al puesto, a ${llegada.biciA} m` : "la bici no está en el puesto",
+      );
+    } else {
+      mira(!llegada.sinRuta && llegada.visto, "señalero en la escena");
+      mira(!llegada.sinRuta && llegada.enCuadro, "señalero en el cuadro");
+      mira((llegada.gestos?.length ?? 0) > 0, `gestos: ${llegada.gestos?.join(", ") || "ninguno"}`);
+    }
     mira(fantasmas.length === 0, fantasmas.length ? `tarjeta sin señalero: ${fantasmas.join(" | ")}` : "ninguna tarjeta sin señalero");
     const ok = mal.length === 0 && !pista.percance;
     if (!ok) fallos++;

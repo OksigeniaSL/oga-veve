@@ -478,6 +478,27 @@ export class Boca {
         this.reloj.esperar(falta, () => this.soltarLoQueEspera());
         return;
       }
+      /*
+       * **Y si alguien esperaba turno, no se le cuela quien acaba de llegar.**
+       *
+       * Con la boca libre y el silencio cumplido, esto arrancaba lo recién
+       * pedido sin mirar la cola. Y la cola puede tener algo: lo que esperaba a
+       * que acabara la frase anterior se suelta con un temporizador, y con el
+       * juego cargado ese temporizador puede llegar detrás del fotograma que
+       * pide la frase nueva. Pasó aterrizando en Los Rodeos, en el volcado de
+       * voces del banco: «frená», pedida al tocar tierra detrás de «quitá el
+       * gas», caducó esperando mientras sonaba «salí por la siguiente», que se
+       * había pedido después. Con la cola en orden, ese es el único camino
+       * por el que una frase posterior del mismo peso adelanta a una anterior.
+       *
+       * Se mete en la cola con los demás y habla quien toque: el de más peso,
+       * y entre iguales el que llegó antes.
+       */
+      if (!urgente && this.cola.length) {
+        this.encolar({ hacer, urgencia, desde: ahora, clave });
+        this.soltarLoQueEspera();
+        return;
+      }
       this.arrancar(urgencia, hacer, clave);
       return;
     }

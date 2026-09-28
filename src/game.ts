@@ -434,6 +434,7 @@ import type { Gesto } from "./flight/senalero";
 import {
   Sigueme,
   adelantoDelSigueme,
+  salidaDeLaRuta,
 } from "./world/sigueme";
 import { Vaca } from "./world/vaca";
 import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
@@ -455,7 +456,12 @@ import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
-import { SE_QUEDAN, guionSinTorre, type Fase } from "./flight/vuelo";
+import {
+  SE_QUEDAN,
+  YA_ES_RODAJE,
+  guionSinTorre,
+  type Fase,
+} from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import {
   alturaDeEdificio,
@@ -3186,7 +3192,10 @@ export class Game {
           : null,
       });
       const suGranja = this.vecinos[this.vecinos.length - 1]?.granja;
-      if (suGranja) mundo.colgarDeCerca(suGranja.grupo);
+      if (suGranja) {
+        mundo.colgarDeCerca(suGranja.grupo);
+        mundo.terreno.pintarEncima(suGranja.pintura);
+      }
       this.scene.add(mundo.grupo);
     }
 
@@ -3588,7 +3597,11 @@ export class Game {
         new Date(),
         this.scenario.seed,
       );
-      if (this.granja) this.scene.add(this.granja.grupo);
+      if (this.granja) {
+        this.scene.add(this.granja.grupo);
+        // Y sus potreros, en el suelo: ver `potrerosDe`.
+        this.terrain.pintarEncima(this.granja.pintura);
+      }
     }
     const granja = this.granja;
     this.vegetacion = createVegetation(
@@ -5329,25 +5342,26 @@ export class Game {
   }
 
   /**
-   * Por dónde se sale de la pista, en coordenadas del mundo.
+   * Por dónde se sale de la pista, en coordenadas del mundo, y a cuántos
+   * metros de ruta está.
    *
-   * Es el primer punto de la ruta de vuelta que ya no pisa asfalto de pista.
-   * Sirve para plantar ahí el coche del «sígame» mientras se frena: enseña por
-   * dónde hay que abandonar sin decir una palabra, que es exactamente para lo
-   * que sirve un sígame.
+   * Es el punto de la ruta de vuelta donde ya no se pisa la pista **para no
+   * volver a ella**. Sirve para plantar ahí el coche del «sígame» hasta que
+   * llegue el avión: enseña por dónde hay que abandonar sin decir una
+   * palabra, que es exactamente para lo que sirve un sígame.
+   *
+   * Cuenta como pista su rectángulo y `BIEN_FUERA_DE_LA_PISTA` alrededor. Ver
+   * `salidaDeLaRuta`.
    */
-  private bocaDeLaSalida(): { x: number; z: number } | null {
-    const ruta = this.plan?.rutaVisible() ?? [];
+  private bocaDeLaSalida(): { x: number; z: number; s: number } | null {
     const r = this.laPistaDeAhora();
-    for (const [x, z] of ruta) {
+    return salidaDeLaRuta(this.plan?.rutaVisible() ?? [], (x, z) => {
       const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
-      if (
-        Math.abs(ejes.across) > r.width / 2 + BIEN_FUERA_DE_LA_PISTA ||
-        Math.abs(ejes.along) > r.length / 2 + BIEN_FUERA_DE_LA_PISTA
-      )
-        return { x, z };
-    }
-    return null;
+      return (
+        Math.abs(ejes.across) <= r.width / 2 + BIEN_FUERA_DE_LA_PISTA &&
+        Math.abs(ejes.along) <= r.length / 2 + BIEN_FUERA_DE_LA_PISTA
+      );
+    });
   }
 
   /**
@@ -11143,6 +11157,14 @@ export class Game {
     return this.senaleroEnCuadro;
   }
 
+  /**
+   * Si el campo en el que se está es particular: sin señalero ni coche de
+   * sígame, que son servicios de un aeropuerto. Ver `Aerodrome.privado`.
+   */
+  private get campoParticular(): boolean {
+    return this.elCampoMontado().escenario.aerodrome?.privado === true;
+  }
+
   /** Si el señalero estaba en el cuadro el fotograma anterior. */
   private senaleroEnCuadro = false;
   private readonly puntoDelSenalero = new Vector3();
@@ -11174,18 +11196,31 @@ export class Game {
      *
      * Comprobarlo cuesta una resta por fotograma y solo mientras se vuelve.
      */
-    if (volviendo) this.senaleroAlPuestoDeLlegada();
+    /*
+     * **Y en un campo particular no hay señalero.**
+     *
+     * El señor de los bastones es un servicio de plataforma de aeropuerto,
+     * igual que el coche del sígame, y en la granja seguía esperando en el
+     * puesto con su chaleco. Allí quien recibe es quien salió a buscarte en
+     * la bici: te lleva hasta el hueco y se queda a un lado. Ver
+     * `Aerodrome.privado` y `construirBici`.
+     */
+    const hayQuienSenale = !this.campoParticular;
+    if (!hayQuienSenale && this.senalero.grupo.visible) this.senalero.reiniciar();
+    if (volviendo && hayQuienSenale) this.senaleroAlPuestoDeLlegada();
     const s = this.flight.state;
-    const gesto = this.senalero.paso(
-      dt,
-      {
-        x: s.position.x,
-        z: s.position.z,
-        velocidad: s.airspeed,
-        enElSuelo: s.onGround,
-      },
-      volviendo,
-    );
+    const gesto = hayQuienSenale
+      ? this.senalero.paso(
+          dt,
+          {
+            x: s.position.x,
+            z: s.position.z,
+            velocidad: s.airspeed,
+            enElSuelo: s.onGround,
+          },
+          volviendo,
+        )
+      : null;
 
     /*
      * **Y pasarse del puesto tiene que doler un poco.**
@@ -11303,7 +11338,22 @@ export class Game {
      * un campo que se ve entero desde el puesto no necesita guía.
      */
     if (this.plan && this.tier.sigueme) {
-      this.sigueme.ponerRuta(this.plan.rutaVisible());
+      /*
+       * **Y con el avión ya en el puesto, la bici sigue con la raya que tenía.**
+       *
+       * Al llegar el plan quita la raya, y quien te había salido a buscar se
+       * quedaba plantada donde la pillara: si el avión la había adelantado
+       * —ella se aparta para dejarlo pasar, ver `sitioParaLaBici`—, a noventa
+       * metros del puesto y sin forma de llegar. Quien recibe tiene que
+       * acabar junto al avión aparcado: sigue pedaleando por la raya de antes
+       * hasta el hueco, y el avión se busca en ella por dónde está, que la
+       * cuenta del plan ya se fue con su raya.
+       */
+      const enBiciEnElPuesto =
+        this.sigueme.enBici &&
+        this.sigueme.grupo.visible &&
+        (fase === "en-puesto" || fase === "apagado");
+      if (!enBiciEnElPuesto) this.sigueme.ponerRuta(this.plan.rutaVisible());
       /*
        * **Está antes de arrancar, y eso importa.**
        *
@@ -11317,7 +11367,15 @@ export class Game {
         ? // La bici, solo de vuelta. Ver arriba.
           fase === "aterrizado" ||
           fase === "abandonando" ||
-          fase === "a-plataforma"
+          fase === "a-plataforma" ||
+          /*
+           * **Y en el puesto se queda**: es quien te recibe, que en la granja
+           * no hay señalero. Si ya había salido, se queda a un lado del hueco
+           * mientras parás y apagás, en vez de esfumarse en el momento en
+           * que llegás. Ver `NO_LLEGA_EN_BICI`.
+           */
+          ((fase === "en-puesto" || fase === "apagado") &&
+            this.sigueme.grupo.visible)
         : fase === "estacionado" ||
           fase === "arrancando" ||
           fase === "rodando" ||
@@ -11369,9 +11427,33 @@ export class Game {
        * fase cree el plan que va el vuelo: mientras el avión pise pista, el
        * coche espera en la boca de la salida.
        */
+      /*
+       * **Y hasta que el avión llega a la salida, no solo mientras pisa pista.**
+       *
+       * Mirar las ruedas era mirar un fotograma, y el avión que da la vuelta
+       * en la pista —porque se pasó la salida o porque la única está atrás,
+       * como en El Hierro— pisa la hierba un segundo al girar. En ese segundo
+       * se apagaba la espera y el coche, que guía desde el morro, salía de la
+       * calle a ponerse delante **sobre la pista**; al volver el avión al
+       * asfalto la espera volvía y el coche bajaba la pista hacia la salida
+       * con el avión detrás. Medido en Guaraní con el JAZ 90, treinta metros.
+       *
+       * Lo que decide si el coche tiene que esperar no es dónde están las
+       * ruedas ahora: es **si el avión ha llegado ya a la salida**, contado
+       * sobre la misma ruta.
+       */
       const enLaPistaAun = s.onGround && s.onRunway;
+      const trasLaToma =
+        fase === "aterrizado" ||
+        fase === "abandonando" ||
+        fase === "a-plataforma";
+      const boca = trasLaToma ? this.bocaDeLaSalida() : null;
+      const antesDeLaSalida =
+        boca !== null && (this.plan?.avanceEnLaRuta ?? 0) < boca.s;
       const espera =
-        fase === "aterrizado" || enLaPistaAun ? this.bocaDeLaSalida() : null;
+        boca && (fase === "aterrizado" || enLaPistaAun || antesDeLaSalida)
+          ? boca
+          : null;
       /*
        * **Y a la bici se le deja sitio siempre.**
        *
@@ -11389,7 +11471,12 @@ export class Game {
       const cede = gesto !== null;
       this.sigueme.paso(
         dt,
-        { x: s.position.x, z: s.position.z, adelanto: this.adelantoDelSigueme },
+        {
+          x: s.position.x,
+          z: s.position.z,
+          adelanto: this.adelantoDelSigueme,
+          enPista: enLaPistaAun,
+        },
         // Y si está en la pista y no hay salida que esperar, no sale: lo
         // contrario es ponerlo a correr por una pista en uso. Ver `espera`.
         rodando &&
@@ -11399,7 +11486,7 @@ export class Game {
         // Por el asfalto, como el avión: ver `Terrain.resalteEn`.
         (x, z) => this.terrain.sampleSurface(x, z),
         espera,
-        this.plan?.avanceEnLaRuta,
+        enBiciEnElPuesto ? undefined : this.plan?.avanceEnLaRuta,
       );
 
       /*
@@ -12362,17 +12449,29 @@ export class Game {
      * Se puso `onGround` de más y con eso la tarjeta no salía: en la toma, el
      * contacto parpadea —las ruedas botan, el suelo se pierde por veinte
      * centímetros— y el aviso se caía justo en los segundos en los que hace
-     * falta. La máquina de fases ya resolvió eso midiendo la altura sobre el
-     * terreno, y «aterrizado» y «abandonando» **significan** estar en el suelo
-     * después de haber volado. Preguntarlo dos veces era discutirle a quien
-     * sabe. Es el mismo fallo que ya tuvo el aviso de terreno en la pista.
+     * falta. La máquina de fases ya resuelve eso: baja al suelo al tocar y no
+     * vuelve al aire por un bote —ver `pisa` en `vuelo.ts`—, y «aterrizado» y
+     * «abandonando» **significan** estar en el suelo después de haber volado.
+     * Preguntarlo dos veces era discutirle a quien sabe.
      */
+    /*
+     * **Y frenar es por el suelo, y hasta velocidad de rodaje.**
+     *
+     * Miraba el anemómetro contra doce metros por segundo, en las dos fases.
+     * Y el rodaje del juego va a trece: en El Hierro, rodando pista atrás
+     * hasta la única salida a la velocidad que pone el propio juego y con
+     * viento de cara, la tarjeta de «frená» estuvo puesta cuarenta segundos
+     * seguidos. Lo que se frena es lo que se avanza —la del suelo—, y en
+     * «abandonando» ya se rueda: ahí solo hace falta frenar si se va a
+     * velocidad de carrera, que es lo que dice `YA_ES_RODAJE`.
+     */
+    const porElSuelo = this.flight.state.groundSpeed;
     const corriendo =
       // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
       // `yaTocoTierra`.
       this.yaTocoTierra &&
-      (vista.fase === "aterrizado" || vista.fase === "abandonando") &&
-      this.flight.state.airspeed > RODAJE_DE_VERDAD;
+      ((vista.fase === "aterrizado" && porElSuelo > RODAJE_DE_VERDAD) ||
+        (vista.fase === "abandonando" && porElSuelo > YA_ES_RODAJE));
     if (corriendo !== this.pidiendoFreno) {
       this.pidiendoFreno = corriendo;
       if (corriendo) {

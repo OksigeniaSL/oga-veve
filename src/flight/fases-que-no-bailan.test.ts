@@ -38,10 +38,19 @@ const BASE: Situacion = {
   desalineado: 0,
 };
 
+/*
+ * **Y las ruedas tocan cuando se está en el suelo**, salvo que la prueba diga
+ * otra cosa: la máquina de fases baja al suelo por el contacto y no por la
+ * altura. Ver `pisa` en `vuelo.ts`.
+ */
 const con = (cambios: Partial<Situacion>): Situacion => ({
   ...BASE,
   ...cambios,
-  estado: { ...BASE.estado, ...(cambios.estado ?? {}) },
+  estado: {
+    ...BASE.estado,
+    onGround: (cambios.sobreElSuelo ?? BASE.sobreElSuelo) < 3,
+    ...(cambios.estado ?? {}),
+  },
 });
 
 /** Las fases por las que se pasa, a veinte fotogramas por segundo. */

@@ -147,13 +147,19 @@ describe("y la fase no lo da por llegado", () => {
     perdida: velocidadDePerdida(JAZ90),
   };
 
-  const con = (velocidad: number, sobreElSuelo: number): Situacion => ({
+  const con = (
+    velocidad: number,
+    sobreElSuelo: number,
+    // Con las ruedas tocando, que es lo que baja al suelo la máquina de fases.
+    tocando = true,
+  ): Situacion => ({
     ...BASE,
     sobreElSuelo,
     estado: {
       ...BASE.estado,
       airspeed: velocidad,
       groundSpeed: velocidad,
+      onGround: tocando && sobreElSuelo <= 12,
     } as Situacion["estado"],
   });
 
@@ -174,6 +180,15 @@ describe("y la fase no lo da por llegado", () => {
   it("rozando una ladera con la velocidad de vuelo entera se sigue volando", () => {
     const v = enElAire();
     expect(durante(v, con(116, 3), 2)).toBe("en-vuelo");
+  });
+
+  it("y pasando a tres metros sin tocarla, también: sin contacto no hay suelo", () => {
+    const v = enElAire();
+    expect(durante(v, con(116, 3, false), 2)).toBe("en-vuelo");
+    // Ni siquiera despacio: lo que baja al suelo es tocarlo.
+    expect(durante(v, con(velocidadDePerdida(JAZ90) * 0.6, 3, false), 2)).toBe(
+      "en-vuelo",
+    );
   });
 
   it("y por debajo de la de pérdida, fuera de la pista, a la plataforma como siempre", () => {

@@ -23,6 +23,7 @@
  */
 
 import { encogerConLaDistancia, lucesDeDosCaras } from "./material-de-luces";
+import { queSeVeaDeLejos, segarLaPista } from "./pista-de-hierba";
 import {
   BufferAttribute,
   BufferGeometry,
@@ -305,7 +306,17 @@ const COLORES: Record<string, ColorRepresentation> = {
   rodadura: 0x5d6063,
   concrete: 0x646669,
   gravel: 0x5a5348,
-  grass: 0x4d6136,
+  /*
+   * **La hierba de la pista, segada: más clara que el pasto de alrededor.**
+   *
+   * Era un verde oscuro, más que el de la foto, y bastaba mientras alrededor
+   * estaba la foto de Sentinel-2, más oscura todavía. Con los potreros de la
+   * granja pintados alrededor, la pista pasó a ser una raya más oscura dentro
+   * de un potrero del mismo tono. Y en una estancia es al revés: la franja se
+   * ve de lejos **porque está segada**, más corta y más clara que el pasto.
+   * Ver `HIERBA` en `granja.ts`, que es con lo que tiene que contrastar.
+   */
+  grass: 0x8a8f58,
   /** Las calles y la plataforma de un campo de hierba. Ver `createAerodrome`. */
   "hierba-segada": 0x717c46,
 };
@@ -852,6 +863,13 @@ export function createAerodrome(
       new MeshLambertMaterial({ color: color(superficie) }),
     );
     malla.name = `pavimento:${superficie}`;
+    /*
+     * **Y la pista de hierba, segada**: con las pasadas de la segadora a lo
+     * largo, que es lo que la distingue del pasto de alrededor además del
+     * tono. Ver `world/pista-de-hierba.ts`.
+     */
+    if (superficie === "grass" && principal)
+      segarLaPista(malla.material, principal.centerline);
     // El pavimento no proyecta sombra sobre sí mismo y no la recibe de nada
     // que importe: apagarlo es rendimiento gratis.
     malla.castShadow = false;
@@ -1321,6 +1339,19 @@ function encoger(poli: readonly Punto[], radio: number): Punto[] {
 function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   const grupo = new Group();
   grupo.name = "rodadura";
+  /*
+   * **Y sobre la hierba no se pinta nada.**
+   *
+   * Es la misma regla que ya tiene la pista —ver `marcas`—, que en un campo
+   * de hierba lleva balizas y no pintura: el césped no se puede pintar. Las
+   * calles de Yvytu Rape seguían con su raya amarilla, su doble raya del
+   * punto de espera y su «A» de dos metros, o sea con la señalización de
+   * Pettirossi puesta en un potrero. Quien aprenda aquí que una granja tiene
+   * una calle «A» se lo tiene que desaprender. Lo que marca por dónde se va
+   * y dónde se para es la raya verde del juego, que es del juego y no del
+   * campo.
+   */
+  if (!esDura(aero.runways[0]?.surface)) return grupo;
   const piezas: BufferGeometry[] = [];
 
   // El amarillo **se corta al llegar a la pista**. Una calle de rodaje cruza
@@ -2375,6 +2406,9 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
     total,
   );
   malla.name = "balizas";
+  // Y que se vean desde la final: ver `queSeVeaDeLejos`. La caja va de −0,7 a
+  // 0,7 en su eje, así que el pie está en −0,7.
+  queSeVeaDeLejos(malla, 1, -0.7);
   const m = new Matrix4();
   let k = 0;
   for (let i = 0; i <= cuantas; i++) {
@@ -2449,6 +2483,13 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
     4,
   );
   mira.name = "puntos-de-mira";
+  /*
+   * **Y las dos, a la vista desde la final.** La puerta naranja es lo que dice
+   * dónde empieza la pista, y a dos kilómetros sus tablillas de metro y medio
+   * no llegaban a un píxel: se veía la pista y no por dónde se entraba.
+   */
+  queSeVeaDeLejos(puerta, 1.6, -0.8);
+  queSeVeaDeLejos(mira, 1.1, -0.8);
 
   const plantar = (
     malla: InstancedMesh,
