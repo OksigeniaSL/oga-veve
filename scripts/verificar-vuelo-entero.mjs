@@ -527,7 +527,7 @@ const fotos = (async () => {
   }
 })();
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -1527,6 +1527,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let cocheEnPista = Infinity;
   let cocheEnPistaDonde = "";
   /**
+   * **Y el coche fotograma a fotograma, si se pide.** `OGA_TRAZA_COCHE=fichero`.
+   *
+   * «Lo más lejos, 677 m» y «15 m con los dos en pista» dicen que pasó y no
+   * por qué: sin ver dónde iba el coche en su ruta, dónde iba el avión en la
+   * suya y cuándo cambió la ruta, el porqué se adivina. Todo lo que se rueda,
+   * de ida y de vuelta, cada tres muestras.
+   */
+  const trazaCoche = [];
+  /**
    * **Y cómo estaban las ruedas cuando el juego dijo «aterrizado».**
    *
    * La máquina de fases daba el avión por aterrizado a doce metros del suelo,
@@ -1537,6 +1546,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * del suelo iban las ruedas.
    */
   let ruedasAlAterrizar = null;
+  /** Lo más lejos que estuvo el coche **esperando** en la salida, m. */
+  let lejosEsperando = 0;
+  /**
+   * **Y si el coche pisa la pista después de tocar, esté donde esté el avión.**
+   *
+   * La de «con los dos en pista» solo miraba con el avión rodando despacio y
+   * encima del asfalto, y el coche se colaba por los huecos: en Guaraní
+   * bajaba la pista delante del avión justo cuando éste la pisaba medio
+   * segundo después de dar la vuelta. Un sígame no entra en la pista en la
+   * que se acaba de aterrizar, nunca.
+   */
+  let cochePisaLaPista = null;
   /** Y lo cerca que estuvo con solo el avión en pista, para el parte. */
   let cocheCercaEnPista = Infinity;
   /*
@@ -2493,6 +2514,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * lejos es lo correcto: no se le está siguiendo, se va a su encuentro.
      */
     const coche = globalThis.__raiz?.getObjectByName("sigueme");
+    if (trazarCoche && s.onGround && i % 3 === 0) {
+      const sg = o.sigueme?.();
+      const ac = sg?.acumulado ?? [];
+      trazaCoche.push(
+        `${t.toFixed(1)}s ${fase || "—"} · avión ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} rumbo ${((s.heading * 180) / Math.PI).toFixed(0)} ${s.groundSpeed.toFixed(1)} m/s ${s.onGround ? "" : "AIRE "}${s.onRunway ? "PISTA" : "fuera"} avance ${(o.avanceEnLaRuta?.() ?? 0).toFixed(0)} · coche ${coche?.visible ? "" : "oculto "}${coche ? `${coche.position.x.toFixed(0)},${coche.position.z.toFixed(0)}` : "—"} s ${sg?.s?.toFixed?.(0) ?? "?"} de ${(ac[ac.length - 1] ?? 0).toFixed(0)} aparte ${(sg?.aparte ?? 0).toFixed(2)}${sg?.esperando ? " ESPERA" : ""} · a ${coche ? Math.hypot(coche.position.x - s.position.x, coche.position.z - s.position.z).toFixed(0) : "—"} m · rutas ${o.rodajeAsi?.()?.vecesQueSePuso ?? "?"}`,
+      );
+    }
     if (o.enBici?.() && coche?.visible && s.onGround && !s.onRunway) {
       biciVista += paso;
       const raya = o.ruta?.() ?? [];
@@ -2537,6 +2565,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * La otra mitad de esta misma comprobación —que no se le atropelle— ya
      * miraba `cocheApartado`. Faltaba aquí.
      */
+    if (coche?.visible && toco && s.onGround && cochePisaLaPista === null) {
+      const rp = pistaAhora();
+      const hp = (rp.heading * Math.PI) / 180;
+      const alEje = Math.abs(
+        (coche.position.x - rp.x) * Math.cos(hp) +
+          (coche.position.z - rp.z) * Math.sin(hp),
+      );
+      const alLargo = Math.abs(
+        (coche.position.x - rp.x) * Math.sin(hp) -
+          (coche.position.z - rp.z) * Math.cos(hp),
+      );
+      if (alEje < (rp.width ?? 45) / 2 && alLargo < rp.length / 2)
+        cochePisaLaPista = `a los ${t.toFixed(0)} s, en «${fase}», a ${alEje.toFixed(0)} m del eje y a ${Math.round(Math.hypot(coche.position.x - s.position.x, coche.position.z - s.position.z))} m del avión`;
+    }
     const guiandoAhora = coche?.visible && !o.cocheApartado?.();
     if (coche?.visible) {
       const sobre =
@@ -2564,7 +2606,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       Math.sin(s.heading) * (coche.position.x - s.position.x) -
         Math.cos(s.heading) * (coche.position.z - s.position.z) >
         0;
-    const cuentaLejos = !s.onRunway || !haciaElCoche;
+    /*
+     * **Y esperando en la salida, lo lejos no cuenta.** Un sígame que espera
+     * en la calle de salida a que llegue el avión está donde tiene que estar
+     * aunque le quede lejos: en El Hierro la única salida está pista atrás y
+     * el avión la rueda entera, setecientos metros, hasta ella. Lo que no
+     * puede es alejarse guiando. Ver `esperando` en `world/sigueme.ts`.
+     */
+    const esperandoEnLaSalida = o.sigueme?.()?.esperando === true;
+    const cuentaLejos =
+      !esperandoEnLaSalida && (!s.onRunway || !haciaElCoche);
     if (
       guiandoAhora &&
       s.onGround &&
@@ -2575,6 +2626,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         coche.position.x - s.position.x,
         coche.position.z - s.position.z,
       );
+      if (esperandoEnLaSalida) lejosEsperando = Math.max(lejosEsperando, alCoche);
       if (cuentaLejos && alCoche > lejosDelCoche) {
         lejosDelCoche = alCoche;
         lejosDondeCoche = `en «${fase}» a los ${Math.round(t)} s, a ${Math.round(s.airspeed)} m/s`;
@@ -3573,6 +3625,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * `audio/boca.ts`.
      */
     habladas: o.habladas?.() ?? [],
+    trazaCoche,
     // Con qué letras te nombra la torre, para distinguir lo tuyo de lo de
     // los demás en `habladas`.
     misLetras: Object.entries(o.indicativo?.()?.deTorre ?? {})
@@ -3650,6 +3703,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     // El tiempo que hizo: lo único que cambia entre pasadas. Ver el informe.
     meteo: o.meteo?.() ?? null,
     lejosDelCoche: Math.round(lejosDelCoche),
+    lejosEsperando: Math.round(lejosEsperando),
+    cochePisaLaPista,
     ruedasAlAterrizar,
     cocheEnElAire: +cocheEnElAire.toFixed(2),
     cocheEnElAireDonde,
@@ -3758,7 +3813,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE]);
 fotografiando = false;
 await fotos;
 /*
@@ -3784,6 +3839,11 @@ if (process.env.OGA_VOCES) {
       1,
     ),
   );
+}
+
+if (process.env.OGA_TRAZA_COCHE) {
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(process.env.OGA_TRAZA_COCHE, (vuelo.trazaCoche ?? []).join("\n") + "\n");
 }
 
 /**
@@ -4523,9 +4583,15 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
     "llegando a Asunción se le vio a treinta y cinco metros sobre la pista",
   );
   comprobar(
+    "y después de tocar, el sígame no pisa la pista",
+    vuelo.cochePisaLaPista === null,
+    vuelo.cochePisaLaPista ?? "nunca, ni esperando ni guiando",
+    "«el coche se puso delante en la pista, y lo tenía encima»",
+  );
+  comprobar(
     "al coche del sígame se le puede seguir",
     vuelo.lejosDelCoche < 150,
-    `lo más lejos que llegó a estar: ${vuelo.lejosDelCoche} m${vuelo.lejosDondeCoche ? ` · ${vuelo.lejosDondeCoche}` : ""}`,
+    `lo más lejos que llegó a estar guiando: ${vuelo.lejosDelCoche} m${vuelo.lejosDondeCoche ? ` · ${vuelo.lejosDondeCoche}` : ""}${vuelo.lejosEsperando ? ` · esperando en la salida, hasta ${vuelo.lejosEsperando} m` : ""}`,
     "«el avión frena sin que el usuario pueda acelerar y el coche casi que se escapa»",
   );
 }

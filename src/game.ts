@@ -428,6 +428,7 @@ import type { Gesto } from "./flight/senalero";
 import {
   Sigueme,
   adelantoDelSigueme,
+  salidaDeLaRuta,
 } from "./world/sigueme";
 import { Vaca } from "./world/vaca";
 import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
@@ -5303,25 +5304,26 @@ export class Game {
   }
 
   /**
-   * Por dónde se sale de la pista, en coordenadas del mundo.
+   * Por dónde se sale de la pista, en coordenadas del mundo, y a cuántos
+   * metros de ruta está.
    *
-   * Es el primer punto de la ruta de vuelta que ya no pisa asfalto de pista.
-   * Sirve para plantar ahí el coche del «sígame» mientras se frena: enseña por
-   * dónde hay que abandonar sin decir una palabra, que es exactamente para lo
-   * que sirve un sígame.
+   * Es el punto de la ruta de vuelta donde ya no se pisa la pista **para no
+   * volver a ella**. Sirve para plantar ahí el coche del «sígame» hasta que
+   * llegue el avión: enseña por dónde hay que abandonar sin decir una
+   * palabra, que es exactamente para lo que sirve un sígame.
+   *
+   * Cuenta como pista su rectángulo y `BIEN_FUERA_DE_LA_PISTA` alrededor. Ver
+   * `salidaDeLaRuta`.
    */
-  private bocaDeLaSalida(): { x: number; z: number } | null {
-    const ruta = this.plan?.rutaVisible() ?? [];
+  private bocaDeLaSalida(): { x: number; z: number; s: number } | null {
     const r = this.laPistaDeAhora();
-    for (const [x, z] of ruta) {
+    return salidaDeLaRuta(this.plan?.rutaVisible() ?? [], (x, z) => {
       const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
-      if (
-        Math.abs(ejes.across) > r.width / 2 + BIEN_FUERA_DE_LA_PISTA ||
-        Math.abs(ejes.along) > r.length / 2 + BIEN_FUERA_DE_LA_PISTA
-      )
-        return { x, z };
-    }
-    return null;
+      return (
+        Math.abs(ejes.across) <= r.width / 2 + BIEN_FUERA_DE_LA_PISTA &&
+        Math.abs(ejes.along) <= r.length / 2 + BIEN_FUERA_DE_LA_PISTA
+      );
+    });
   }
 
   /**
@@ -11247,9 +11249,33 @@ export class Game {
        * fase cree el plan que va el vuelo: mientras el avión pise pista, el
        * coche espera en la boca de la salida.
        */
+      /*
+       * **Y hasta que el avión llega a la salida, no solo mientras pisa pista.**
+       *
+       * Mirar las ruedas era mirar un fotograma, y el avión que da la vuelta
+       * en la pista —porque se pasó la salida o porque la única está atrás,
+       * como en El Hierro— pisa la hierba un segundo al girar. En ese segundo
+       * se apagaba la espera y el coche, que guía desde el morro, salía de la
+       * calle a ponerse delante **sobre la pista**; al volver el avión al
+       * asfalto la espera volvía y el coche bajaba la pista hacia la salida
+       * con el avión detrás. Medido en Guaraní con el JAZ 90, treinta metros.
+       *
+       * Lo que decide si el coche tiene que esperar no es dónde están las
+       * ruedas ahora: es **si el avión ha llegado ya a la salida**, contado
+       * sobre la misma ruta.
+       */
       const enLaPistaAun = s.onGround && s.onRunway;
+      const trasLaToma =
+        fase === "aterrizado" ||
+        fase === "abandonando" ||
+        fase === "a-plataforma";
+      const boca = trasLaToma ? this.bocaDeLaSalida() : null;
+      const antesDeLaSalida =
+        boca !== null && (this.plan?.avanceEnLaRuta ?? 0) < boca.s;
       const espera =
-        fase === "aterrizado" || enLaPistaAun ? this.bocaDeLaSalida() : null;
+        boca && (fase === "aterrizado" || enLaPistaAun || antesDeLaSalida)
+          ? boca
+          : null;
       /*
        * **Y a la bici se le deja sitio siempre.**
        *
@@ -11267,7 +11293,12 @@ export class Game {
       const cede = gesto !== null;
       this.sigueme.paso(
         dt,
-        { x: s.position.x, z: s.position.z, adelanto: this.adelantoDelSigueme },
+        {
+          x: s.position.x,
+          z: s.position.z,
+          adelanto: this.adelantoDelSigueme,
+          enPista: enLaPistaAun,
+        },
         // Y si está en la pista y no hay salida que esperar, no sale: lo
         // contrario es ponerlo a correr por una pista en uso. Ver `espera`.
         rodando &&

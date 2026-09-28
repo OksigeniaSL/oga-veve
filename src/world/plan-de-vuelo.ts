@@ -2456,12 +2456,28 @@ export class PlanDeVuelo {
     const p: Paso = this.vuelo.paso(s, dt);
     const sugerida = this.velocidadAqui();
 
+    const puestas = this.vecesQueSePusoLaRuta;
     if (p.cambio || this.acabaDeMudarse) {
       // Mudarse de aeropuerto es, para la ruta, lo mismo que cambiar de fase:
       // lo que había ya no vale y hay que trazar desde donde se está.
       this.acabaDeMudarse = false;
       this.alCambiarDeFase(p.fase);
     } else this.rehacerSiHaceFalta(p.fase, dt);
+    /*
+     * **Y con ruta nueva, el avance se mide sobre ella ya, no en el fotograma
+     * siguiente.**
+     *
+     * Poner una ruta deja el avance en cero hasta que la situación del paso
+     * siguiente lo vuelva a medir, y en ese fotograma quien pregunta por él
+     * —el coche del sígame— oía «el avión está al principio de la ruta». Y la
+     * ruta de vuelta empieza donde se tocó tierra, que en El Hierro quedaba
+     * ciento cincuenta metros detrás del avión: un coche que se planta con
+     * ese número se planta **detrás**, y en el fotograma siguiente tiene que
+     * pasar por el avión para ponerse delante. Un fotograma con el número de
+     * otra ruta es un número falso.
+     */
+    if (this.vecesQueSePusoLaRuta !== puestas && this.rutaMundo.length > 1)
+      this.restanteHasta([estado.position.x, estado.position.z]);
     this.encender();
 
     return {

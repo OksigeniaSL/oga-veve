@@ -153,6 +153,16 @@ export function adelantoDelSigueme(avion: {
 const VELOCIDAD = CRUCERO;
 
 /**
+ * Cuánto más deprisa que el crucero va el coche cuando el avión se le echa
+ * encima, en fracción del crucero: hasta la mitad más.
+ *
+ * El tope de rodaje deja al avión un quince por ciento por encima del
+ * crucero; con la mitad, el coche siempre puede más que el avión y la
+ * distancia no se come nunca. Ver dónde se usa.
+ */
+const ACELERA_SI_TE_ALCANZA = 0.5;
+
+/**
  * Y en bici, lo que pedalea alguien con ganas: siete metros por segundo.
  *
  * Veinticinco por hora. Menos que el avión, así que en la plataforma se le
@@ -206,6 +216,37 @@ export function sitioParaLaBici(seAcerca: number): number {
   return 8 + Math.max(0, seAcerca) * TARDA_EN_APARTARSE;
 }
 
+
+/**
+ * **Dónde deja la ruta la pista para no volver a ella**: el primer punto
+ * después del último que la pisa, con los metros de ruta que hay hasta él.
+ * `null` si la ruta no pisa la pista o no sale de ella.
+ *
+ * Es donde espera el sígame mientras el avión termina la carrera y rueda
+ * hasta allí. Era el primer punto fuera, y una ruta puede salir y volver a
+ * entrar: la que traza el plan cuando el avión da la vuelta en la pista y
+ * pisa la hierba empieza fuera y vuelve al asfalto, y la que sigue hasta la
+ * cabecera para dar la vuelta puede asomar por el apartadero del final. En
+ * las dos, el primero fuera dejaba al coche esperando donde después se vuelve
+ * a la pista, y guiando desde ahí bajaba por ella.
+ */
+export function salidaDeLaRuta(
+  ruta: readonly (readonly [number, number])[],
+  enLaPista: (x: number, z: number) => boolean,
+): { x: number; z: number; s: number } | null {
+  let ultimaDentro = -1;
+  for (let i = 0; i < ruta.length; i++)
+    if (enLaPista(ruta[i]![0], ruta[i]![1])) ultimaDentro = i;
+  const i = ultimaDentro + 1;
+  if (ultimaDentro < 0 || i >= ruta.length) return null;
+  let metros = 0;
+  for (let k = 1; k <= i; k++)
+    metros += Math.hypot(
+      ruta[k]![0] - ruta[k - 1]![0],
+      ruta[k]![1] - ruta[k - 1]![1],
+    );
+  return { x: ruta[i]![0], z: ruta[i]![1], s: metros };
+}
 
 /** Destellos por segundo de la baliza. */
 const DESTELLOS = 1.6;
@@ -425,6 +466,20 @@ export class Sigueme {
    * salir nadie a buscarte. Así estuvo desde #157.
    */
   private alLado = 0;
+  /** Si está parado en la salida esperando a que llegue el avión. */
+  private esperandoEnLaSalida = false;
+
+  /**
+   * **Si está esperando en la salida a que llegue el avión**, y no guiando.
+   *
+   * Lo pregunta el banco: un coche esperando en la calle de salida está donde
+   * tiene que estar aunque el avión le quede a setecientos metros —en El
+   * Hierro, rodando pista atrás hasta la única salida—, y eso no es un coche
+   * que se escapa. Lo que no puede es escaparse guiando.
+   */
+  get esperando(): boolean {
+    return this.grupo.visible && this.esperandoEnLaSalida;
+  }
   /** A cuánto estaba el avión en el fotograma anterior, m; o nada. */
   private antes: number | null = null;
   /** Lo deprisa que se le viene encima el avión, m/s, suavizado. */
@@ -493,16 +548,23 @@ export class Sigueme {
    * `cediendo` es que el señalero ya está señalando, que es cuando el coche se
    * aparta.
    *
-   * `esperaEn` es hasta dónde puede llegar, si hay un tope. Se usa en la
-   * carrera de aterrizaje: **un sígame no se mete en una pista activa**, te
-   * espera en la salida. Ver `paso` en `game.ts`.
+   * `esperaEn` es la salida donde espera, si la hay: **un sígame no se mete
+   * en una pista activa**, te espera en la calle. Se lo pasa el juego desde
+   * que se toca tierra hasta que el avión llega a esa salida. Ver `paso` en
+   * `game.ts`.
    *
    * `avion.adelanto` es a cuánto tiene que ir por delante de ese avión. Ver
    * `adelantoDelSigueme`; sin él, lo menos.
    */
   paso(
     dt: number,
-    avion: { x: number; z: number; adelanto?: number },
+    avion: {
+      x: number;
+      z: number;
+      adelanto?: number;
+      /** Si pisa todavía la pista. Solo lo mira la bici: ver `alLado`. */
+      enPista?: boolean;
+    },
     activo: boolean,
     cediendo: boolean,
     cota: (x: number, z: number) => number,
@@ -535,43 +597,69 @@ export class Sigueme {
       ? Math.max(pideElAvion, DELANTE_EN_BICI)
       : pideElAvion;
     const alLlegar = avanceDelAvion ?? this.enLaRuta(avion);
-    /*
-     * **El tope, cuando lo hay: la boca de la calle de salida.**
-     *
-     * «El vehículo Followme se ve bien, pero desaparece en la pista de
-     * aterrizaje.» Desaparecía porque en la carrera de aterrizaje no estaba
-     * activo, y ponerlo a correr delante del avión por la pista habría sido
-     * peor: por una pista en uso no circula nadie. Lo que hace uno de verdad
-     * es **esperarte en la salida**, con la baliza encendida, que además es la
-     * forma de enseñar por dónde hay que abandonar.
-     */
     const hastaDondeLlega = Math.max(0, this.largo - NO_LLEGA);
-    const objetivo = esperaEn
-      ? // Esperando: se planta **en la salida**, no treinta metros por delante
-        // del morro. Puesto por delante sin más, el coche baja la pista
-        // corriendo delante de un avión que aterriza, que es peor que no
-        // estar: por una pista en uso no circula nadie.
-        /*
-         * **Y metido en la calle lo que este avión pida de más.**
-         *
-         * La boca de la salida se eligió para el coche de treinta metros: está
-         * cuarenta más allá del borde de la pista, así que cuando el avión la
-         * deja el coche ya le va por delante lo de siempre. Al JAZ 120 eso le
-         * deja el coche a nueve metros del radomo, debajo del morro justo al
-         * girar hacia él. Lo que ese avión necesita por encima del coche de
-         * siempre, lo necesita también aquí.
-         */
-        Math.min(
-          this.enLaRuta(esperaEn) + pideElAvion - ADELANTO,
-          hastaDondeLlega,
-        )
-      : Math.min(alLlegar + adelanto, hastaDondeLlega);
+    /*
+     * **Dónde tiene que estar: por delante del avión, o esperándolo en la
+     * salida, lo que quede más allá.**
+     *
+     * Eran dos objetivos que se turnaban: con tope, la boca de la salida y
+     * nada más; sin tope, treinta metros por delante del morro. Y quien decidía
+     * el turno era el juego mirando **si el avión pisaba pista en ese
+     * fotograma**. Medido en Guaraní con el JAZ 90: el avión daba la vuelta
+     * en la pista, las ruedas pisaban la hierba un segundo, el tope se
+     * apagaba, el plan rehacía la raya y el coche se plantaba a cuarenta
+     * metros del morro **sobre la pista**; al volver el avión al asfalto el
+     * tope se encendía otra vez y el coche bajaba la pista por delante de él,
+     * a treinta metros, hacia la salida. «El sígame no baja a la pista
+     * contigo encima», en rojo.
+     *
+     * Ahora son uno: el más lejano de los dos. Mientras el avión no ha llegado
+     * a la salida, el coche está en la salida; cuando llega, el coche ya le va
+     * por delante sin saltos, porque es la misma cuenta. Y como nunca va hacia
+     * atrás, una vez fuera de la pista no vuelve a ella.
+     */
+    const guiando = alLlegar + adelanto;
+    /*
+     * **Y esperando en la salida, metido en la calle lo que este avión pida de
+     * más.**
+     *
+     * La boca de la salida se eligió para el coche de treinta metros: está
+     * cuarenta más allá del borde de la pista, así que cuando el avión la
+     * deja el coche ya le va por delante lo de siempre. Al JAZ 120 eso le deja
+     * el coche a nueve metros del radomo, debajo del morro justo al girar
+     * hacia él. Lo que ese avión necesita por encima del coche de siempre, lo
+     * necesita también aquí.
+     */
+    const enLaSalida = esperaEn
+      ? this.enLaRuta(esperaEn) + pideElAvion - ADELANTO
+      : -Infinity;
+    const objetivo = Math.min(Math.max(guiando, enLaSalida), hastaDondeLlega);
+    this.esperandoEnLaSalida = enLaSalida > guiando;
     // Primer fotograma con esta ruta: se planta donde toca en vez de correr
     // hasta allí desde el kilómetro cero.
     if (this.s < 0) this.s = objetivo;
+    /*
+     * **Y el coche no se deja alcanzar.**
+     *
+     * Iba a velocidad de crucero de rodaje y ni un metro más, y el tope de
+     * rodaje deja al avión un quince por ciento por encima: en una recta
+     * larga, dos metros por segundo de diferencia se comen los treinta de
+     * distancia en un cuarto de minuto. Es el percance «coche» que salía de
+     * vez en cuando llegando a El Hierro. El conductor de un sígame mira por
+     * el retrovisor: si se le echa encima el avión, acelera. Cuanto más se le
+     * ha comido la distancia, más, hasta la mitad por encima del crucero, que
+     * ningún avión rodando alcanza. Y si no se le echa encima, va a lo de
+     * siempre: marca el paso bueno.
+     *
+     * La bici no: pedalea lo que pedalea, y por eso se aparta. Ver
+     * `sitioParaLaBici`.
+     */
+    const comido = Math.max(0, objetivo - this.s) / adelanto;
+    const velocidad = this.enBici
+      ? EN_BICI
+      : VELOCIDAD * (1 + ACELERA_SI_TE_ALCANZA * Math.min(1, comido));
     // Hacia delante y nada más: un sígame no da marcha atrás. Ver la cabecera.
-    const paso = (this.enBici ? EN_BICI : VELOCIDAD) * dt;
-    this.s = Math.max(this.s, Math.min(objetivo, this.s + paso));
+    this.s = Math.max(this.s, Math.min(objetivo, this.s + velocidad * dt));
 
     /*
      * **Y a la bici se le deja sitio**, que el coche no lo necesita: un coche
@@ -598,13 +686,9 @@ export class Sigueme {
       this.seAcerca += (ahora - this.seAcerca) * Math.min(1, dt * 4);
     }
     this.antes = alAvion;
-    const esperandoAlLado = !!esperaEn && this.enBici;
-    const teTieneEncima =
-      this.enBici &&
-      !esperandoAlLado &&
-      alAvion < sitioParaLaBici(this.seAcerca);
     /*
-     * **Y la bici, esperando en la salida, espera al lado.**
+     * **Y la bici, esperando en la salida mientras sigas en la pista, espera
+     * al lado.**
      *
      * Al que llega por la boca de la salida no está rodando: **está acabando
      * la carrera de aterrizaje**, y a treinta metros por segundo no hay sitio
@@ -613,9 +697,17 @@ export class Sigueme {
      * lado, no en medio. Marca la salida igual de bien y no obliga a nadie a
      * esquivarla. Ver #157.
      *
-     * Y es un rato, no para siempre: ver `alLado`. El coche no lo hace — un
-     * coche de sígame espera en la calle, como uno de verdad.
+     * Y es un rato, no para siempre: ver `alLado`. En cuanto el avión deja la
+     * pista, vuelve a la raya a llevarlo a casa aunque siga esperándolo en la
+     * boca. El coche no lo hace — un coche de sígame espera en la calle, como
+     * uno de verdad.
      */
+    const esperandoAlLado =
+      this.enBici && this.esperandoEnLaSalida && avion.enPista !== false;
+    const teTieneEncima =
+      this.enBici &&
+      !esperandoAlLado &&
+      alAvion < sitioParaLaBici(this.seAcerca);
     this.alLado = esperandoAlLado
       ? Math.min(1, this.alLado + dt / TARDA_EN_APARTARSE)
       : Math.max(0, this.alLado - dt / TARDA_EN_APARTARSE);
@@ -628,10 +720,6 @@ export class Sigueme {
      * avión terminaba la carrera de aterrizaje, rodaba hasta ella y **solo
      * entonces** —al cambiar la fase y apagarse la espera— empezaba a
      * apartarse, desde cero y con el avión a dos metros.
-     *
-     * Lo de esperar sin moverse sigue valiendo para lo que se escribió, que
-     * es no perder el mojón antes de tiempo: lo que ya no puede es ganarle a
-     * alguien que te tiene encima.
      */
     const deja =
       cediendo ||
@@ -644,13 +732,17 @@ export class Sigueme {
        * sigue llega hasta él y se le mete dentro. Un sígame de verdad tampoco
        * se queda en medio: te deja en el sitio y se va.
        *
-       * Y se aparta **en cuanto deja de poder ir por delante**, que es lo que
-       * eran los sesenta metros que había aquí: los treinta del final más los
-       * treinta del adelanto. Con un adelanto que ya no es siempre treinta,
-       * sesenta fijos dejaban al coche del JAZ 120 esperando quieto en medio
-       * de la calle hasta que el morro se le echaba encima.
+       * Y se aparta **en cuanto deja de poder ir por delante**: los treinta
+       * del final más el adelanto de este avión.
+       *
+       * **También esperando en la salida.** Esto solo valía sin tope, y en El
+       * Hierro la salida y el puesto son casi el mismo sitio: la plataforma
+       * está pegada a la pista, así que el coche esperaba en la boca **que era
+       * ya el final de la ruta** y no se apartaba hasta que el avión dejaba el
+       * asfalto, con él a treinta metros y rodando hacia el puesto. Donde no
+       * se puede ir por delante, se espera a un lado.
        */
-      (!esperaEn && this.largo - alLlegar < NO_LLEGA + adelanto);
+      this.largo - alLlegar < NO_LLEGA + adelanto;
     this.aparte = deja
       ? Math.min(1, this.aparte + dt / TARDA_EN_APARTARSE)
       : this.aparte;
@@ -675,6 +767,7 @@ export class Sigueme {
     this.s = 0;
     this.aparte = 0;
     this.alLado = 0;
+    this.esperandoEnLaSalida = false;
     this.antes = null;
     this.seAcerca = 0;
     this.grupo.visible = false;
