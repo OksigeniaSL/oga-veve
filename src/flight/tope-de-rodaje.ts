@@ -361,12 +361,36 @@ export function limitarElRodaje(
    * Suave y proporcional al exceso, con un tope propio: esto es la mano de
    * quien te lleva, no un ancla.
    */
+  /*
+   * **Y la mano tiene que poder seguir lo que pide el plan.** El perfil de
+   * velocidad del plan llega a cada curva frenando a 1,6 m/s², y con el freno
+   * igual al exceso —y solo pasado un diez por ciento— el tope no ponía su
+   * freno entero hasta ir un sesenta por ciento por encima: iba siempre
+   * detrás.
+   * No se notaba rodando con el gas de rodaje, que casi no pasa del tope. Con
+   * el gas a fondo, en Guyrami y con la verde, sí: en el back-taxi de
+   * Estigarribia y de Encarnación el avión llegaba a la media vuelta del
+   * final a nueve metros por segundo en vez de a tres y medio, la vuelta no
+   * se podía dar y se salía de la pista. Medido con
+   * `verificar-verde-sin-volante`.
+   *
+   * Así que empieza antes y aprieta el triple: a un veinte por ciento por
+   * encima ya frena con todo lo que le deja `FRENO_QUE_AYUDA`, que es lo que
+   * hace falta para bajar al ritmo del perfil. Sigue sin ser un ancla: el
+   * tope de lo que frena es el mismo.
+   */
   const exceso = (porElSuelo - tope.velocidad) / Math.max(1, tope.velocidad);
-  if (exceso > 0.1) {
+  if (exceso > EMPIEZA_A_FRENAR) {
     controles.brakes = Math.max(
       controles.brakes,
-      Math.min(FRENO_QUE_AYUDA, exceso),
+      Math.min(FRENO_QUE_AYUDA, exceso * APRIETA),
     );
   }
   return techo;
 }
+
+/** Por encima de cuánto del tope empieza a frenar la mano que conduce. */
+const EMPIEZA_A_FRENAR = 0.05;
+
+/** Y cuánto freno pone por cada parte de exceso. Ver `limitarElRodaje`. */
+const APRIETA = 3;

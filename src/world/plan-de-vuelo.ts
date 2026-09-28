@@ -629,10 +629,14 @@ const MIRADAS_EN_LA_VUELTA = [10, 6, 3] as const;
 /**
  * Cuánto se puede estar de la raya para que su media vuelta se tome, m.
  *
- * La holgura de la ayuda —medio ancho de calle— y un poco más: fuera de eso
- * el avión no va por la raya, y lo que tenga detrás no es una vuelta suya.
+ * Veinte, media pista y algo. Una media vuelta se da a lo ancho de la pista,
+ * y quien llega a ella algo rápido se abre: medido en Estigarribia, con el
+ * gas a fondo y la verde, el JAZ 20 entraba en la vuelta del back-taxi y a
+ * los nueve metros de la raya —con ocho de límite— la ayuda soltaba y el
+ * avión se iba recto por la hierba. Más lejos que esto ya no se va por la
+ * raya, y lo que haya detrás no es una vuelta suya.
  */
-const EN_LA_RAYA_PARA_VOLVER = 8;
+const EN_LA_RAYA_PARA_VOLVER = 20;
 
 /**
  * El error de rumbo para ir de un sitio a otro, en radianes y entre ±π.
