@@ -446,8 +446,22 @@ export class Senalero {
      * paralela— contaba como llegado y en cuanto lo dejaba atrás salía «te
      * pasaste, frená y volvé». No había pasado por ningún sitio: iba por
      * donde tenía que ir.
+     *
+     * **Y es estar delante, no detrás.** `restante` negativo es estar al otro
+     * lado del puesto, y eso contaba como haber llegado. En La Gomera la
+     * plataforma está a cuarenta metros del eje y el puesto se entra hacia el
+     * oeste: aterrizando por la 09, el avión rodaba por la pista setecientos
+     * metros antes de llegar a su altura y ya «se había pasado», así que
+     * sonaba «te pasaste, frená y volvé» nada más tocar, en esta rama y en
+     * main. Pasarse es cruzar el puesto viniendo hacia él, así que para
+     * haber llegado hay que haberlo tenido por delante.
      */
-    if (volviendo && restante < ALCANCE && Math.abs(lateral) < ALCANCE)
+    if (
+      volviendo &&
+      restante >= 0 &&
+      restante < ALCANCE &&
+      Math.abs(lateral) < ALCANCE
+    )
       this.llegoAsuAlcance = true;
 
     this.gesto = gestoDeSenalero(
