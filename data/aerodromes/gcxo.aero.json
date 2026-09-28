@@ -1,6 +1,7 @@
 {
   "id": "GCXO",
   "name": "Tenerife Norte-Ciudad de La Laguna Airport",
+  "salidasPorInterseccion": {"permitidas": true, "soloDesde": ["E-2", "E-4"], "fuente": "AIP España AD 2-GCXO, 2.20 (AMDT 410/26, 03-SEP-26): «TWY E-2 and E-4 can be used for take-off from the intersection.» / «Las TWY E-2 y E-4 pueden emplearse para despegue desde intersección.» Y para la letra de clave E: «Code Letter E aircraft shall enter and vacate the runway via TWY E-1 or TWY E-5, depending on the runway in use.»"},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

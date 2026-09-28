@@ -65,13 +65,14 @@ describe("cuánta pista queda entrando por donde hay calle", () => {
   });
 });
 
-describe("y en qué pistas cabe la maniobra", () => {
+describe("y en qué pistas cabe la vuelta apartada", () => {
   const ancho = (aero: unknown): number =>
     como(aero).runways[0]!.widthM ?? Infinity;
 
-  it("la hierba de Yvytu Rape es demasiado estrecha", () => {
+  it("la hierba de Yvytu Rape es demasiado estrecha para ella", () => {
     // Dieciocho metros: la raya de ida quedaría a cinco del eje, y ahí no hay
-    // dos rayas sino una gorda que va en los dos sentidos.
+    // dos rayas sino una gorda que va en los dos sentidos. Allí la media
+    // vuelta es la centrada: ver `vueltaDelBackTaxi`.
     expect(ancho(yvytu)).toBeLessThan(ANCHO_PARA_LA_VUELTA);
   });
 
@@ -86,9 +87,11 @@ describe("y en qué pistas cabe la maniobra", () => {
     }
   });
 
-  it("y Pedro Juan Caballero se queda corto de ancho, pero no lo necesita", () => {
-    // Treinta metros: por debajo del listón. Da igual, porque entrando por
-    // donde muere su calle le quedan novecientos y pico metros por delante.
+  it("y Pedro Juan Caballero se queda corto de ancho, y la avioneta no lo necesita", () => {
+    // Treinta metros: por debajo del listón. A la avioneta le da igual, porque
+    // entrando por donde muere su calle le quedan novecientos y pico metros
+    // por delante; el reactor, que necesita más, remonta con la vuelta
+    // centrada.
     expect(ancho(sgpj)).toBeLessThan(ANCHO_PARA_LA_VUELTA);
     for (const cabecera of ["03", "21"])
       expect(pistaTrasLaCalle(como(sgpj), cabecera)).toBeGreaterThan(

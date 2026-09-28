@@ -1219,11 +1219,12 @@ for (const icao of icaos) {
   const salida = conservarManual(ficha, previo);
   /*
    * Y lo que el campo **es**, que OpenStreetMap no dice: si es particular, si
-   * tiene granja alrededor, si no tiene a nadie en la radio. Son marcas del
+   * tiene granja alrededor, si no tiene a nadie en la radio, si su AIP deja
+   * despegar desde una intersección. Son marcas del
    * fichero de arriba, no objetos con `manual`, y sin esto se caían en la
    * primera extracción. Ver `Aerodrome.sinTorre`.
    */
-  for (const clave of ["privado", "granja", "sinTorre", "afis"])
+  for (const clave of ["privado", "granja", "sinTorre", "afis", "salidasPorInterseccion"])
     if (previo && clave in previo) salida[clave] = previo[clave];
   /*
    * Y la nota escrita a mano se queda.

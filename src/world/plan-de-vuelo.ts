@@ -316,6 +316,34 @@ const GIRO_MAXIMO_DE_UNA_SALIDA = 100;
 const PRIMER_TRAMO_DE_CALLE = 40;
 
 /**
+ * Hasta dónde del final de la pista se busca el apartadero de viraje, m. Ver
+ * `raquetaDeLaCabecera`.
+ */
+const RAQUETA = 200;
+
+/**
+ * Lo cerca que tiene que estar una entrada de una boca permitida para ser
+ * esa boca, m: las calles llegan a la pista en ramales, y cada ramal es un
+ * nudo. Ver `sePuedeSalirDesde`.
+ */
+const MISMA_BOCA = 60;
+
+/** Y lo que se aparta de la pista, m: más allá está la paralela. */
+const RAQUETA_DE_LADO = 60;
+
+/** Cómo se da la media vuelta del back-taxi. Ver `vueltaDelBackTaxi`. */
+interface VueltaDelBackTaxi {
+  readonly forma: "apartada" | "centrada" | "raqueta";
+  /** Dónde se gira, a lo largo del eje, m: donde se deja de remontar. */
+  readonly giro: number;
+  /** Lo apartada del eje que va la raya de ida, m. */
+  readonly lado: number;
+  readonly radio: number;
+  /** El apartadero, de la boca por la que se entra a la que devuelve a la pista. */
+  readonly camino: readonly Punto[];
+}
+
+/**
  * Lo lejos del final de la pista que puede llegar una calle y ser todavía la
  * de la cabecera, m: la que entra ahí da la pista entera, o casi, y no es una
  * salida por intersección. Ver `esperasPorInterseccion`.
@@ -397,9 +425,10 @@ export function saleHaciaDelante(
 }
 
 /**
- * Lo estrecha que puede ser una pista y aun así admitir un back-taxi, m.
+ * Lo estrecha que puede ser una pista y aun así admitir la media vuelta
+ * **apartada** del back-taxi, m.
  *
- * Treinta y seis. La maniobra se rueda por una raya apartada del eje y se
+ * Treinta y seis. Esa maniobra se rueda por una raya apartada del eje y se
  * vuelve **por el eje**, así que lo que separa la ida de la vuelta es esa
  * apartada: medio ancho menos cuatro metros de borde. Con treinta y seis
  * salen catorce, más que la envergadura de el Pykasu, y por debajo de eso
@@ -408,9 +437,14 @@ export function saleHaciaDelante(
  * Lo puso Yvytu Rape, que son dieciocho metros de hierba: ahí quedaban a
  * cinco, y medido con el banco el avión entraba, se enganchaba a la raya de
  * vuelta antes de haberse ido, daba media vuelta sobre sí mismo y se
- * plantaba. En campos así se hace lo de siempre —se entra donde muere la
- * calle y se despega con lo que queda—, que es menos elegante y es lo que se
- * puede enseñar sin mentir. Ver #151.
+ * plantaba. Ver #151.
+ *
+ * Y aquí ponía que en campos así «se entra donde muere la calle y se despega
+ * con lo que queda», y eso era enseñar algo falso y peligroso: en La Gomera,
+ * el JAZ 60 con cuatrocientos metros por delante. Por debajo de este ancho el
+ * back-taxi se hace igual, con la media vuelta **centrada** —las dos rayas a
+ * los dos lados del eje— o por el apartadero de la cabecera. Ver
+ * `vueltaDelBackTaxi`.
  */
 export const ANCHO_PARA_LA_VUELTA = 36;
 
@@ -1483,6 +1517,8 @@ export class PlanDeVuelo {
     this.remontasPorEspera.clear();
     this.vueltasPorEspera.clear();
     this.alEjePorEspera.clear();
+    this.raquetaGuardada = undefined;
+    this.bocasPermitidasGuardadas = null;
     this.candidatosGuardados = null;
     this.puestoElegido = null;
     this.puerta.olvidar();
@@ -2039,7 +2075,7 @@ export class PlanDeVuelo {
      * holgura, que la saturación de abajo sigue repartiendo— y de esos, los
      * de menos vueltas.
      */
-    const quiere0 = pistaQueHaceFalta(this.avion);
+    const quiere0 = this.pistaQueSeQuiere();
     const conPista = (p: ParDeSalida) => Math.min(quiere0, p.porDelante + p.remonta);
     const mejorPista = Math.max(...sinRemontar0.map(conPista));
     const despegan = sinRemontar0.filter((p) => conPista(p) >= mejorPista - 300);
@@ -2104,7 +2140,7 @@ export class PlanDeVuelo {
      *   por la intersección de al lado de su puesto y el reactor se va a la
      *   cabecera, que es lo que hace cada uno de verdad.
      */
-    const quiere = pistaQueHaceFalta(this.avion);
+    const quiere = this.pistaQueSeQuiere();
     const bastante = (p: ParDeSalida): number => Math.min(quiere, p.porDelante);
     return [...entre].sort((a, b) => {
       const d = bastante(b) - bastante(a);
@@ -2363,6 +2399,87 @@ export class PlanDeVuelo {
     return sitios;
   }
 
+  /**
+   * **Si en este campo se puede despegar desde una intersección**, que es lo
+   * que dice su AIP. Donde no, se despega siempre desde la cabecera, con la
+   * pista entera: en Lanzarote, «Take-offs from runway intersections are not
+   * permitted», y el JAZ 20 salía desde la E3. Lo real no se consulta: si el
+   * AIP de un campo lo prohíbe, el juego no lo hace. Ver
+   * `Aerodrome.salidasPorInterseccion`.
+   */
+  private salidasPorInterseccion(): boolean {
+    return this.aero.salidasPorInterseccion?.permitidas !== false;
+  }
+
+  /**
+   * **Y si desde esta boca en concreto**, a `along` metros del centro de la
+   * pista. Hay AIP que las permiten solo desde algunas calles: en Los Rodeos
+   * desde la E-2 y la E-4, en La Gomera desde la A. Ver `bocasPermitidas`.
+   */
+  private sePuedeSalirDesde(along: number): boolean {
+    const regla = this.aero.salidasPorInterseccion;
+    if (!regla) return true;
+    if (!regla.permitidas) return false;
+    if (!regla.soloDesde?.length) return true;
+    return this.bocasPermitidas().some((a) => Math.abs(a - along) < MISMA_BOCA);
+  }
+
+  /**
+   * Dónde están, a lo largo del eje, las bocas de las calles desde las que el
+   * AIP deja salir por intersección. La calle de una boca es la primera con
+   * nombre que se encuentra saliendo de ella: en La Gomera los dos ramales
+   * que llegan a la pista no lo llevan, y la A empieza unos metros más allá.
+   */
+  private bocasPermitidas(): number[] {
+    if (this.bocasPermitidasGuardadas) return this.bocasPermitidasGuardadas;
+    const nombre = (ref: string | null | undefined) =>
+      (ref ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const permitidas = new Set(
+      (this.aero.salidasPorInterseccion?.soloDesde ?? []).map(nombre),
+    );
+    const bocas: number[] = [];
+    this.grafo.nudos.forEach((nudo, i) => {
+      const tramos = (this.grafo.desde[i] ?? []).map((k) => this.grafo.tramos[k]!);
+      if (!tramos.some((t) => t.pista) || !tramos.some((t) => !t.pista)) return;
+      if (!this.enLaPista(nudo)) return;
+      // La calle con nombre más cercana, por calles y sin irse lejos.
+      const vistos = new Set([i]);
+      let frente = [i];
+      let calle = "";
+      for (let paso = 0; paso < 4 && !calle && frente.length; paso++) {
+        const siguiente: number[] = [];
+        for (const n of frente)
+          for (const k of this.grafo.desde[n] ?? []) {
+            const t = this.grafo.tramos[k]!;
+            if (t.pista) continue;
+            if (!calle && nombre(t.ref)) calle = nombre(t.ref);
+            const otro = t.a === n ? t.b : t.a;
+            if (!vistos.has(otro)) vistos.add(otro), siguiente.push(otro);
+          }
+        frente = siguiente;
+      }
+      if (!permitidas.has(calle)) return;
+      bocas.push(
+        enEjesDePista(nudo[0], -nudo[1], this.pista.x, this.pista.z, this.pista.heading)
+          .along,
+      );
+    });
+    this.bocasPermitidasGuardadas = bocas;
+    return bocas;
+  }
+
+  /** Ver `bocasPermitidas`. Se tira al mudarse de campo. */
+  private bocasPermitidasGuardadas: number[] | null = null;
+
+  /**
+   * La pista que se quiere por delante al elegir por dónde se entra, m: la de
+   * `pistaQueHaceFalta`, o la pista entera donde el AIP no deja salir por
+   * intersección.
+   */
+  private pistaQueSeQuiere(): number {
+    return this.salidasPorInterseccion() ? pistaQueHaceFalta(this.avion) : Infinity;
+  }
+
   /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
   private alGrafo(p: Punto): number {
     let mejor = Infinity;
@@ -2528,8 +2645,18 @@ export class PlanDeVuelo {
        * intersecciones.
        */
       const queda = this.pistaQueQueda(nudo);
-      if (queda < pistaQueHaceFalta(this.avion) && queda < this.pista.length - EN_LA_CABECERA)
-        return;
+      if (queda < this.pista.length - EN_LA_CABECERA) {
+        if (queda < this.pistaQueSeQuiere()) return;
+        // Y la intersección, solo si el AIP deja salir desde ella.
+        const { along } = enEjesDePista(
+          nudo[0],
+          -nudo[1],
+          this.pista.x,
+          this.pista.z,
+          this.pista.heading,
+        );
+        if (!this.sePuedeSalirDesde(along)) return;
+      }
       const punto = this.atrasPorLaCalle(calles[0]!, nudo);
       if (punto) sitios.push(punto);
     });
@@ -3578,36 +3705,59 @@ export class PlanDeVuelo {
 
   /**
    * **Dónde se da la media vuelta del back-taxi** entrando en la pista por
-   * `along`, y con qué apartado y radio; `null` si desde ahí no hay
-   * back-taxi. Sin trazar nada, porque lo pregunta también quien elige por
-   * dónde salir: ver `pistaParaRemontar`. Las dos preguntas tienen que tener
-   * la misma respuesta, y por eso es una cuenta y no dos.
+   * `along`, y cómo; `null` si desde ahí no hay back-taxi. Sin trazar nada,
+   * porque lo pregunta también quien elige por dónde salir: ver
+   * `pistaParaRemontar`. Las dos preguntas tienen que tener la misma
+   * respuesta, y por eso es una cuenta y no dos.
+   *
+   * **Y el back-taxi no se salta nunca por falta de sitio para dibujarlo.**
+   * Aquí había dos salidas que decían «sin back-taxi»: en una pista de menos
+   * de treinta y seis metros, porque las dos rayas se confundían, y con un
+   * avión cuyas alas no caben dando la vuelta. Y «sin back-taxi» quería decir
+   * entrar por donde se pueda y despegar con lo que quede: en La Gomera, el
+   * JAZ 60 salía de la intersección de la A con cuatrocientos metros por
+   * delante, cuando necesita mil cien. Eso es enseñar algo falso y peligroso:
+   * ningún avión sale con menos pista de la que necesita. Las dos cosas son
+   * de **cómo se dibuja** la vuelta, no de si se da, y ahora deciden la forma:
+   *
+   * - **`raqueta`**: el apartadero de viraje de la cabecera, si lo hay en los
+   *   datos y hace falta la pista entera. Es lo que se hace de verdad en La
+   *   Gomera, en El Hierro y en La Palma —«back-track at the end of the
+   *   runway by following the taxiing guidance markings», AIP AD 2-GCLA—.
+   * - **`apartada`**: la de siempre, por una raya a un lado del eje y
+   *   acabando sobre él, si la pista es ancha y las alas caben dentro.
+   * - **`centrada`**: la media vuelta con el centro en el eje, a lo ancho de
+   *   toda la pista con las ruedas dentro, para las pistas estrechas y los
+   *   aviones de ala grande. Acaba a un lado del eje y se endereza al
+   *   alinearse. Cabe siempre que el avión quepa en el campo: `cabeEn` ya
+   *   pide sitio para dar la vuelta con las ruedas.
    */
-  private vueltaDelBackTaxi(
-    along: number,
-  ): { giro: number; lado: number; radio: number } | null {
+  private vueltaDelBackTaxi(along: number): VueltaDelBackTaxi | null {
     const mitad = this.largoDePista / 2;
+    const soloLaCabecera = !this.sePuedeSalirDesde(along);
     // Si desde aquí ya queda pista de sobra, esto no es un back-taxi: es
     // entrar y despegar, que es lo que pasa en casi todos los aeródromos.
-    if (mitad - along >= paraEntrarYDespegar(this.avion)) return null;
-    // Y en una pista estrecha tampoco, porque las dos rayas se confunden.
-    // Ver `ANCHO_PARA_LA_VUELTA`.
-    if (this.pista.width < ANCHO_PARA_LA_VUELTA) return null;
+    // Salvo donde el AIP no deja salir por intersección: ver
+    // `salidasPorInterseccion`.
+    if (!soloLaCabecera && mitad - along >= paraEntrarYDespegar(this.avion)) return null;
+    const umbral = -mitad + HUECO_PARA_GIRAR;
     /*
-     * **Ni si este avión no cabe dando la vuelta.**
-     *
-     * Una media vuelta en pista necesita dos radios de giro **más la
-     * envergadura**: el ala de fuera barre por fuera del camino que hacen las
-     * ruedas. Un 747 pide setenta y ocho metros y una pista de línea tiene
-     * cuarenta y cinco — por eso en la vida real esos aviones no dan la vuelta
-     * en la pista, se les hace una raqueta al final o entran por la cabecera.
-     *
-     * Dibujarle la maniobra igualmente es dibujar algo que no puede hacer: la
-     * raya se le iría por la hierba y él detrás. Si no cabe, no hay back-taxi y
-     * se entra por donde se pueda.
+     * **Y donde el AIP limita las intersecciones, a la cabecera y no a medio
+     * camino.** Un back-taxi que se para donde ya queda pista bastante deja
+     * al avión despegando desde un punto de la pista que no es ninguna boca:
+     * en Los Rodeos, que solo las permite desde la E-2 y la E-4, el JAZ 20
+     * remontaba desde la E-2 hasta dejar mil doscientos metros por delante.
+     * Eso es una salida por intersección, y no por una de las permitidas.
      */
-    if (2 * radioDeGiro(this.avion) + this.avion.wingSpan > this.pista.width)
-      return null;
+    const hastaLaCabecera =
+      soloLaCabecera || !!this.aero.salidasPorInterseccion?.soloDesde?.length;
+    const quiere = hastaLaCabecera ? Infinity : pistaQueHaceFalta(this.avion);
+    const aLaCabecera = mitad - quiere <= umbral + RADIO_CURVA;
+
+    // Con apartadero en la cabecera y la pista entera por delante, por él.
+    const raqueta = aLaCabecera ? this.raquetaDeLaCabecera() : null;
+    if (raqueta && along - raqueta.giro >= HUECO_PARA_GIRAR)
+      return { forma: "raqueta", giro: raqueta.giro, lado: 0, radio: 0, camino: raqueta.camino };
 
     /*
      * **La media vuelta acaba en el eje, no al lado.**
@@ -3623,38 +3773,44 @@ export class PlanDeVuelo {
      * acercándose. Y ese tramo se hacía **acelerando**: el avión cruzaba el
      * listón de los doce metros ya lanzado, la fase saltaba de «despegando» a
      * «alineando» a media carrera y el destello de Vr se perdía por el camino.
-     * Medido en el banco tres veces, con tres resultados distintos, que es lo
-     * que pasa cuando algo depende de por dónde te pille una convergencia.
+     * Por eso la centrada se endereza antes de dar gas: ver `backTaxiDesde`.
      *
-     * `L` es también lo que separa la raya de ida de la de vuelta, y por eso
-     * se le deja cuatro metros de borde: en una pista de cuarenta metros son
-     * dieciséis, más que la envergadura de el Pykasu.
-     */
-    /*
      * **Y lo que cabe lo dicen las alas de este avión, no el ancho a secas.**
-     *
-     * Esto se apartaba `ancho/2 − 4` del eje, o sea cuatro metros del borde,
-     * sin mirar qué avión iba a rodar por ahí. En una pista de cuarenta y cinco
-     * metros eso son dieciocho y medio del eje: con el reactor —veintiséis de
-     * envergadura— el ala quedaba **nueve metros fuera del asfalto**. Se vio
-     * jugando: «esta pista, ¿es normal este dibujo que me hace ir por el
-     * borde?». No lo era.
-     *
-     * Ahora el ala se queda dentro con dos metros de margen. Y el apartado no
-     * puede bajar de dos radios de giro de **este** avión, porque de él sale la
-     * media vuelta del final: una raya más estrecha que eso dibuja un giro que
-     * el avión no puede dar. Cuando las dos condiciones se pelean es que ese
-     * avión no puede dar la vuelta en esta pista, y eso lo dice `cabeEn` antes
-     * de dejarlo entrar. Ver `radioDeGiro`.
+     * En una pista de cuarenta y cinco metros la raya a dieciocho y medio del
+     * eje dejaba el ala del reactor nueve metros fuera del asfalto: «esta
+     * pista, ¿es normal este dibujo que me hace ir por el borde?». Así que la
+     * apartada se aparta lo que deja el ala dentro con dos metros de margen,
+     * y nunca menos de dos radios de giro; y donde ni eso cabe, la centrada,
+     * que lleva dentro las ruedas.
      */
+    const minimo = radioDeGiro(this.avion);
     const alaDentro = this.pista.width / 2 - this.avion.wingSpan / 2 - 2;
-    const lado = Math.max(
-      2 * radioDeGiro(this.avion),
-      Math.min(2 * RADIO_CURVA, alaDentro),
-    );
-    const radio = lado / 2;
-    const umbral = -mitad + HUECO_PARA_GIRAR + radio;
-    const giro = Math.max(umbral, mitad - pistaQueHaceFalta(this.avion));
+    /*
+     * Dos radios de giro **más la envergadura**: el ala de fuera barre por
+     * fuera del camino que hacen las ruedas. Un 747 pide setenta y ocho metros
+     * y una pista de línea tiene cuarenta y cinco: ése, y cualquiera en una
+     * pista estrecha, da la vuelta centrada.
+     */
+    const apartada =
+      this.pista.width >= ANCHO_PARA_LA_VUELTA &&
+      2 * minimo + this.avion.wingSpan <= this.pista.width;
+    let forma: "apartada" | "centrada";
+    let lado: number;
+    let radio: number;
+    if (apartada) {
+      forma = "apartada";
+      lado = Math.max(2 * minimo, Math.min(2 * RADIO_CURVA, alaDentro));
+      radio = lado / 2;
+    } else {
+      forma = "centrada";
+      // Las ruedas de fuera, con dos metros de borde: la vía del tren principal
+      // es más o menos la sexta parte del ala en toda la flota.
+      const ruedasDentro = this.pista.width / 2 - this.avion.wingSpan / 12 - 2;
+      radio = Math.min(RADIO_CURVA, ruedasDentro);
+      lado = radio;
+      if (radio < minimo) return raqueta ? this.porLaRaqueta(along, raqueta) : null;
+    }
+    const giro = Math.max(umbral + radio, mitad - quiere);
     /*
      * **Y si ya se entra en la cabecera, no hay nada que remontar.** En Ayolas
      * la calle llega a la pista a veinte metros del umbral de la 02; el JAZ 90
@@ -3665,7 +3821,126 @@ export class PlanDeVuelo {
      * con la pista que hay.
      */
     if (along - giro < HUECO_PARA_GIRAR + lado) return null;
-    return { giro, lado, radio };
+    return { forma, giro, lado, radio, camino: [] };
+  }
+
+  /** La vuelta por el apartadero, si se llega a él. Ver `vueltaDelBackTaxi`. */
+  private porLaRaqueta(
+    along: number,
+    raqueta: { giro: number; camino: Punto[] },
+  ): VueltaDelBackTaxi | null {
+    if (along - raqueta.giro < HUECO_PARA_GIRAR) return null;
+    return { forma: "raqueta", giro: raqueta.giro, lado: 0, radio: 0, camino: raqueta.camino };
+  }
+
+  /**
+   * **El apartadero de viraje de la cabecera de salida**, si los datos lo
+   * traen: una calle que sale de la pista y vuelve a ella cerca del final,
+   * sin ir a ninguna otra parte. En OpenStreetMap La Gomera, El Hierro, La
+   * Palma y Guaraní los tienen en las dos cabeceras.
+   *
+   * `giro` es dónde se deja la pista para entrar en él —el nudo más lejano
+   * del final, a lo largo del eje—, y `camino`, el apartadero de ese nudo al
+   * otro, por donde se vuelve a la pista ya mirando hacia donde se despega.
+   */
+  private raquetaDeLaCabecera(): { giro: number; camino: Punto[] } | null {
+    if (this.raquetaGuardada !== undefined) return this.raquetaGuardada;
+    const mitad = this.largoDePista / 2;
+    const ejes = (q: Punto) =>
+      enEjesDePista(q[0], -q[1], this.pista.x, this.pista.z, this.pista.heading);
+    // El final de la cabecera de salida, y pegado a la pista: lo que se va
+    // más lejos de eso es la paralela o la plataforma, no un apartadero.
+    const enElFinal = (q: Punto) => {
+      const e = ejes(q);
+      return (
+        e.along < -mitad + RAQUETA &&
+        e.along > -mitad - RAQUETA &&
+        Math.abs(e.across) < this.pista.width / 2 + RAQUETA_DE_LADO
+      );
+    };
+    const bocas: number[] = [];
+    this.grafo.nudos.forEach((nudo, i) => {
+      const tramos = (this.grafo.desde[i] ?? []).map((k) => this.grafo.tramos[k]!);
+      if (!tramos.some((t) => t.pista) || !tramos.some((t) => !t.pista)) return;
+      if (!this.enLaPista(nudo) || !enElFinal(nudo)) return;
+      bocas.push(i);
+    });
+    /*
+     * **Y que sea una vuelta de verdad**: se entra rodando hacia el final —o
+     * de lado— y se sale mirando hacia donde se despega, sin media vuelta
+     * por el camino. OpenStreetMap dibuja algunos apartaderos como el
+     * contorno del ensanche, y seguirlo es ir y volver: en El Hierro, el de la
+     * 34 sale de la pista hacia delante y vuelve a ella hacia el final. Un
+     * dibujo así no se sigue, y la vuelta se da en la pista.
+     */
+    const haciaDelante = (a: Punto, b: Punto) => {
+      const ea = ejes(a);
+      const eb = ejes(b);
+      const l = Math.hypot(eb.along - ea.along, eb.across - ea.across);
+      return l < 1e-6 ? 0 : (eb.along - ea.along) / l;
+    };
+    let mejor: { giro: number; camino: Punto[] } | null = null;
+    for (const desde of bocas) {
+      const otras = new Set(bocas.filter((b) => b !== desde));
+      if (!otras.size) continue;
+      const camino = this.porCallesDelFinal(desde, otras, enElFinal);
+      if (!camino || camino.length < 3) continue;
+      const n = camino.length;
+      if (haciaDelante(camino[0]!, camino[1]!) > 0.5) continue;
+      if (haciaDelante(camino[n - 2]!, camino[n - 1]!) < 0.5) continue;
+      if (mediasVueltas(camino) > 0) continue;
+      const giro = ejes(this.grafo.nudos[desde]!).along;
+      // La que menos pista remonta: la que se coge más lejos del final.
+      if (!mejor || giro > mejor.giro) mejor = { giro, camino };
+    }
+    this.raquetaGuardada = mejor;
+    return mejor;
+  }
+
+  /** Ver `raquetaDeLaCabecera`. Se tira al mudarse de campo. */
+  private raquetaGuardada: { giro: number; camino: Punto[] } | null | undefined = undefined;
+
+  /**
+   * El camino más corto de un nudo a cualquiera de `metas` por calles que no
+   * son pista y sin salir de la zona `dentro`, en puntos del fichero.
+   */
+  private porCallesDelFinal(
+    desde: number,
+    metas: ReadonlySet<number>,
+    dentro: (q: Punto) => boolean,
+  ): Punto[] | null {
+    const dist = new Map<number, number>([[desde, 0]]);
+    const previo = new Map<number, { nudo: number; tramo: number }>();
+    const abiertos = new Set<number>([desde]);
+    while (abiertos.size) {
+      let n = -1;
+      let d = Infinity;
+      for (const a of abiertos) if (dist.get(a)! < d) (d = dist.get(a)!), (n = a);
+      abiertos.delete(n);
+      if (metas.has(n) && n !== desde) {
+        const puntos: Punto[] = [];
+        for (let k = n; k !== desde; ) {
+          const p = previo.get(k)!;
+          const t = this.grafo.tramos[p.tramo]!;
+          const trozo = t.a === p.nudo ? [...t.puntos] : [...t.puntos].reverse();
+          puntos.unshift(...(puntos.length ? trozo.slice(0, -1) : trozo));
+          k = p.nudo;
+        }
+        return puntos;
+      }
+      for (const k of this.grafo.desde[n] ?? []) {
+        const t = this.grafo.tramos[k]!;
+        if (t.pista || !t.puntos.every(dentro)) continue;
+        const otro = t.a === n ? t.b : t.a;
+        const nd = d + t.largo;
+        if (nd < (dist.get(otro) ?? Infinity)) {
+          dist.set(otro, nd);
+          previo.set(otro, { nudo: n, tramo: k });
+          abiertos.add(otro);
+        }
+      }
+    }
+    return null;
   }
 
   /** Ver `vueltaDelBackTaxi`. */
@@ -3703,7 +3978,8 @@ export class PlanDeVuelo {
    * ayuda de rodaje se planta, que para eso está `VUELTA_EN_U`—, así que la
    * vuelta va como lo que es: media circunferencia de puntos, con el avión
    * rodando por un lado del eje a la ida y por el otro a la vuelta, que es
-   * exactamente como se hace.
+   * exactamente como se hace. O por el apartadero de viraje, si lo hay: ver
+   * `vueltaDelBackTaxi`.
    */
   private backTaxiDesde(
     along: number,
@@ -3712,7 +3988,7 @@ export class PlanDeVuelo {
      * de hacia donde se va a rodar. Ver «Y si se llega de frente» abajo.
      */
     llegaDeFrente = false,
-  ): { puntos: Punto[]; arco: number } | null {
+  ): { puntos: Punto[]; arco: number | null } | null {
     this.giroDelBackTaxi = null;
     const vuelta = this.vueltaDelBackTaxi(along);
     if (!vuelta) return null;
@@ -3728,34 +4004,64 @@ export class PlanDeVuelo {
       -(this.pista.z + fz * a + tz * lado),
     ];
 
-
     /*
      * **Y si se llega de frente, primero se da la vuelta.**
      *
      * Entrando por una calle que llega a la pista en diagonal, mirando hacia
      * donde se despega —una salida rápida tomada al revés—, el back-taxi empieza
      * rodando hacia el otro lado: media vuelta sobre la pista antes de nada.
-     * Se dibuja como la del final, media circunferencia de radio la mitad del
-     * apartado, que deja el avión justo en la raya de ida y mirando hacia la
-     * cabecera. Sin ella la raya pasaba del eje a la raya de ida por un codo
-     * de ciento setenta grados, y un codo así no se sigue: quien iba por la
-     * raya se quedaba clavado en él.
+     * Se dibuja como la del final, media circunferencia, que deja el avión
+     * justo en la raya de ida y mirando hacia la cabecera. Sin ella la raya
+     * pasaba del eje a la raya de ida por un codo de ciento setenta grados, y
+     * un codo así no se sigue: quien iba por la raya se quedaba clavado en él.
      */
+    const r0 = vuelta.forma === "raqueta" ? Math.max(radioDeGiro(this.avion), 6) : lado / 2;
     const antes: Punto[] = [];
     if (llegaDeFrente)
       for (let g = -75; g <= 90; g += 15) {
         const rad = (g * Math.PI) / 180;
-        antes.push(enLaPista(along + radio * Math.cos(rad), radio + radio * Math.sin(rad)));
+        antes.push(enLaPista(along + r0 * Math.cos(rad), r0 + r0 * Math.sin(rad)));
       }
+
+    /*
+     * **Por el apartadero**: pista abajo por el eje hasta su boca, la vuelta
+     * por él, y a la pista otra vez ya mirando hacia donde se despega, junto
+     * al final.
+     */
+    if (vuelta.forma === "raqueta") {
+      const vuelve = vuelta.camino[vuelta.camino.length - 1]!;
+      const { along: aLaVuelta } = enEjesDePista(
+        vuelve[0],
+        -vuelve[1],
+        this.pista.x,
+        this.pista.z,
+        this.pista.heading,
+      );
+      const puntos: Punto[] = [
+        ...antes,
+        ...vuelta.camino,
+        enLaPista(aLaVuelta + 40, 0),
+        enLaPista(Math.min(mitad - 60, aLaVuelta + 620), 0),
+      ];
+      return { puntos, arco: null };
+    }
+
+    /*
+     * La apartada rueda la ida por una raya a `lado` del eje y gira con el
+     * centro a medio camino; la centrada rueda la ida a `radio` de un lado y
+     * gira con el centro en el eje, y acaba a `radio` del otro.
+     */
+    const centro = vuelta.forma === "apartada" ? radio : 0;
+    const ida = vuelta.forma === "apartada" ? lado : radio;
     const puntos: Punto[] = [
       ...antes,
       // Del eje al lado por el que se va: entrar y apartarse, sin cruzarse.
-      ...(llegaDeFrente ? [] : [enLaPista(Math.min(along, mitad - 40) - 60, lado)]),
-      enLaPista(giro + radio, lado),
+      ...(llegaDeFrente ? [] : [enLaPista(Math.min(along, mitad - 40) - 60, ida)]),
+      enLaPista(giro + radio, ida),
     ];
     /*
-     * Media circunferencia con el centro a medio camino del eje, un punto cada
-     * quince grados: se entra por la raya de ida y se sale sobre el eje.
+     * Media circunferencia, un punto cada quince grados: se entra por la raya
+     * de ida y se sale sobre el eje, o al otro lado de él en la centrada.
      *
      * **Y llega entera al suelo, que no llegaba.** La ruta pasa por el
      * quitatemblores y por el redondeo de codos, que están para las calles
@@ -3769,10 +4075,9 @@ export class PlanDeVuelo {
      * `Ruta.exactaDesde`— y su radio sale de él. Ver `alisarRuta`.
      *
      * Es la maniobra de verdad en los campos sin paralela hasta la cabecera
-     * —Encarnación, Concepción, La Palma—: rodar por la pista hasta el final
-     * y dar la vuelta allí. El apartadero de viraje no siempre viene en los
-     * datos de OpenStreetMap, así que la vuelta se da dentro del ancho de la
-     * pista, que para el avión que cabe da de sobra: ver `cabeEn`.
+     * —Encarnación, Concepción, Mariscal Estigarribia—: rodar por la pista
+     * hasta el final y dar la vuelta allí, dentro del ancho de la pista cuando
+     * los datos no traen apartadero.
      *
      * Aquí se ponía de ejemplo la 03 de Lanzarote, «desde la espera de la E4
      * y remontando», y era una lectura torcida del AIP: la espera de la 03
@@ -3783,9 +4088,15 @@ export class PlanDeVuelo {
     for (let g = 90; g <= 270; g += 15) {
       const rad = (g * Math.PI) / 180;
       puntos.push(
-        enLaPista(giro + radio * Math.cos(rad), radio + radio * Math.sin(rad)),
+        enLaPista(giro + radio * Math.cos(rad), centro + radio * Math.sin(rad)),
       );
     }
+    /*
+     * Y la centrada, enderezándose al eje antes de dar gas: acaba a `radio`
+     * del eje, y ahí no se despega —ver «La media vuelta acaba en el eje» en
+     * `vueltaDelBackTaxi`—.
+     */
+    if (vuelta.forma === "centrada") puntos.push(enLaPista(giro + 4 * radio + 20, 0));
     // Y eje abajo, que es lo que dice hacia dónde se despega.
     puntos.push(enLaPista(Math.min(mitad - 60, giro + 620), 0));
     return { puntos, arco };
@@ -3832,7 +4143,9 @@ export class PlanDeVuelo {
       // Trazada a mano sobre la pista: no hay puntas que enganchar al grafo.
       enganche: 0,
       // Y la media vuelta, tal cual: ver `backTaxiDesde`.
-      ...(vuelta ? { exactaDesde: hastaElEje.length + vuelta.arco } : {}),
+      ...(vuelta && vuelta.arco !== null
+        ? { exactaDesde: hastaElEje.length + vuelta.arco }
+        : {}),
     };
   }
 

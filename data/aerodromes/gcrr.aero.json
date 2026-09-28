@@ -1,6 +1,7 @@
 {
   "id": "GCRR",
   "name": "César Manrique-Lanzarote Airport",
+  "salidasPorInterseccion": {"permitidas": false, "fuente": "AIP España AD 2-GCRR, 2.20, «Pistas preferentes» (AIRAC AMDT 08/26, WEF 03-SEP-26): «Take-offs from runway intersections are not permitted.» / «No están autorizados despegues desde intersecciones de pista.» Y: «The access to runway-holding position for RWY 03 is located on TWY E4 while the runway-holding position for RWY 21 is located on TWY E1.»"},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

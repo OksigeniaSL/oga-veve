@@ -1,6 +1,7 @@
 {
   "id": "GCFV",
   "name": "Fuerteventura Airport",
+  "salidasPorInterseccion": {"permitidas": false, "fuente": "AIP España AD 2-GCFV, 2.20, «Runway entry operations» (AMDT 408/26, 09-JUL-26): «Aircraft are not authorized to access runway via TWY E3, E4 nor E6 to E8. Aircraft, except helicopters with prior ATC authorization, are not authorized to access runway via TWY E5.» Se entra solo por los apartaderos de las cabeceras: E1 y E2 para la 19, E9 y E10 para la 01. Y: «Back track manoeuvres in runway are not authorized for any type of aricraft.» [sic]"},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

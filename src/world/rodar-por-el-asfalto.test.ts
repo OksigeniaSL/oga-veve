@@ -29,6 +29,11 @@
  *   lo que pasa cuando el avión se aparta o la cola se mueve.
  * - **Y la cola de salida no se esquiva**: el de delante va a la misma pista,
  *   y detrás de él se espera por la misma calle.
+ * - **(e) Ningún avión despega con menos pista de la que necesita**, con su
+ *   margen —`paraEntrarYDespegar` en `flight/carrera.ts`—, y donde el AIP no
+ *   deja salir por intersección, desde la cabecera. En toda la flota: cada
+ *   avión que cabe en el campo, desde cada punto de espera que el plan
+ *   considera.
  *
  * Con `OGA_TABLA=1` imprime la tabla de los dieciocho campos.
  */
@@ -38,7 +43,8 @@ import { aLaPolilinea, ANCHO_RODADURA, type Aerodrome, type Punto } from "./aero
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { cabeEn, campoDe } from "../flight/cabe";
-import { construirGrafo, LEJOS_DE_LA_PARED } from "./rodaje";
+import { paraEntrarYDespegar } from "../flight/carrera";
+import { construirGrafo, LEJOS_DE_LA_PARED, type Grafo } from "./rodaje";
 import { enEjesDePista } from "./rumbo";
 import { SCENARIOS, conViento, type Scenario } from "./scenarios";
 import { sueloDelTrafico } from "./suelo-del-trafico";
@@ -312,7 +318,7 @@ function medidorDe(aero: Aerodrome, pista: Scenario["runway"]) {
   );
   const sePuedeAparcar = (q: Punto) => pavimentado(q) && !pegadoAUnaPared(q);
   const enElGrafo = porCasillas(grafo.tramos.map((t) => ({ linea: t.puntos, hasta: 3 })));
-  return { pavimentado, sePuedeAparcar, enPlataforma, enUnaPista, enElGrafo };
+  return { grafo, pavimentado, sePuedeAparcar, enPlataforma, enUnaPista, enElGrafo };
 }
 
 /**
@@ -325,11 +331,17 @@ function medidorDe(aero: Aerodrome, pista: Scenario["runway"]) {
  * no son pista. Es geometría del campo, no la cuenta del plan: con esto se
  * decide qué campos se pueden listar.
  */
-function bocasDe(aero: Aerodrome, pista: Scenario["runway"]): number[] {
-  const grafo = construirGrafo(aero);
+function bocasDe(
+  aero: Aerodrome,
+  pista: Scenario["runway"],
+  /** Desde qué puestos; sin ellos, desde todos. */
+  desde?: readonly Punto[],
+  grafo: Grafo = construirGrafo(aero),
+): number[] {
   const llega = new Set<number>();
   const pendientes: number[] = [];
-  for (const puesto of aero.parkingPositions ?? []) {
+  for (const xy of desde ?? (aero.parkingPositions ?? []).map((p) => p.xy)) {
+    const puesto = { xy };
     let mejor: number | null = null;
     let d = Infinity;
     grafo.tramos.forEach((t, k) => {
@@ -344,11 +356,36 @@ function bocasDe(aero: Aerodrome, pista: Scenario["runway"]): number[] {
     const t = grafo.tramos[mejor]!;
     for (const n of [t.a, t.b]) if (!llega.has(n)) llega.add(n), pendientes.push(n);
   }
+  /*
+   * **Y una calle dibujada encima de la pista es pista.** En El Hierro hay
+   * trozos de calle que corren por el asfalto de la pista, a dos metros del
+   * eje, uniendo las bocas de las dos mitades de la plataforma: ir por ellos
+   * es rodar por la pista, y el plan lo sabe —lo cuenta como cruzarla—. Una
+   * calle que solo entra en la pista por su boca, o una salida rápida que la
+   * deja en diagonal, la cruza de través; ésta va a lo largo de ella.
+   */
+  const porEncima = (t: Grafo["tramos"][number]) => {
+    // Lo que corre dentro de la pista: largo a lo largo del eje y estrecho de
+    // través. Una boca o una salida rápida la atraviesan de través.
+    let a0 = Infinity;
+    let a1 = -Infinity;
+    let t0 = Infinity;
+    let t1 = -Infinity;
+    for (const q of t.puntos) {
+      const e = enEjesDePista(q[0], -q[1], pista.x, pista.z, pista.heading);
+      if (Math.abs(e.across) >= pista.width / 2 || Math.abs(e.along) >= pista.length / 2) continue;
+      a0 = Math.min(a0, e.along);
+      a1 = Math.max(a1, e.along);
+      t0 = Math.min(t0, e.across);
+      t1 = Math.max(t1, e.across);
+    }
+    return a1 - a0 > 15 && t1 - t0 < 6;
+  };
   while (pendientes.length) {
     const n = pendientes.pop()!;
     for (const k of grafo.desde[n] ?? []) {
       const t = grafo.tramos[k]!;
-      if (t.pista) continue;
+      if (t.pista || porEncima(t)) continue;
       const otro = t.a === n ? t.b : t.a;
       if (!llega.has(otro)) llega.add(otro), pendientes.push(otro);
     }
@@ -696,12 +733,131 @@ function mirar(
     const e = medir(m, entrada, pista, 1);
     if (e.hierba > PASO) mal("(a) entrada", donde(`desde ${k}`), e);
     if (e.inventado > 0) mal("(b) entrada", donde(`desde ${k}`), e);
-    if (e.remonta > toca.alSalir) mal("(c) entrada", donde(`desde ${k}`), e);
+    /*
+     * Y lo que se remonta, desde la boca más cercana a la cabecera **a la que
+     * se llega desde este puesto**: en El Hierro la plataforma son dos trozos,
+     * y del de la punta a las bocas del otro solo se va por la pista.
+     */
+    const propias = bocasDe(aero, pista, [puesto.xy], m.grafo);
+    const alSalir = propias.length ? Math.max(0, propias[0]!) + ALINEARSE : toca.alSalir;
+    if (e.remonta > alSalir) mal("(c) entrada", donde(`desde ${k}`), e);
   }
 
   // Y la vuelta: aterrizar, frenar y seguir la raya al puesto.
   mirarLaVuelta(esc, avion, r, m, suelo, llegadas, toca);
   for (const f of OTRAS_PARADAS) mirarLaVuelta(esc, avion, r, m, suelo, llegadas, toca, f);
+}
+
+/**
+ * Lo que puede quedar sin usar de la pista despegando desde la cabecera, m:
+ * lo que va del final al sitio donde se da la vuelta, o a la boca del
+ * apartadero por donde se vuelve a la pista. En La Palma por la 18 son 75.
+ */
+const DESDE_LA_CABECERA = 100;
+
+/**
+ * La pista que queda por delante al empezar a correr, m: desde donde la raya
+ * de entrar echa a andar pista abajo para ya no volver —el final de la media
+ * vuelta, la salida del apartadero, la boca por la que se entra de frente—
+ * hasta el final de la pista.
+ */
+function pistaPorDelante(entrada: readonly Punto[], pista: Scenario["runway"]): number {
+  const ejes = entrada.map((q) => enEjesDePista(q[0], -q[1], pista.x, pista.z, pista.heading));
+  // La última tirada pista abajo, contada desde el final.
+  let i = ejes.length - 1;
+  while (i > 0 && ejes[i - 1]!.along <= ejes[i]!.along + 0.5) i--;
+  for (let k = i; k < ejes.length; k++) {
+    const e = ejes[k]!;
+    if (Math.abs(e.across) <= pista.width / 2 + 5 && Math.abs(e.along) <= pista.length / 2 + 60)
+      return pista.length / 2 - e.along;
+  }
+  return 0;
+}
+
+/**
+ * Las bocas de las calles que se llaman como alguna de `nombres`: los nudos
+ * de la pista de los que salen. La calle de una boca es la primera con
+ * nombre saliendo de ella por calles: en La Gomera los ramales que llegan a
+ * la pista no lo llevan, y la A empieza unos metros más allá.
+ */
+function bocasDeLasCalles(
+  aero: Aerodrome,
+  nombres: readonly string[],
+): Punto[] {
+  const limpio = (n: string | null | undefined) => (n ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const quiero = new Set(nombres.map(limpio));
+  const grafo = construirGrafo(aero);
+  const bocas: Punto[] = [];
+  grafo.nudos.forEach((nudo, i) => {
+    const tramos = (grafo.desde[i] ?? []).map((k) => grafo.tramos[k]!);
+    if (!tramos.some((t) => t.pista) || !tramos.some((t) => !t.pista)) return;
+    let frente = [i];
+    const vistos = new Set([i]);
+    let calle = "";
+    for (let paso = 0; paso < 4 && !calle; paso++) {
+      const siguiente: number[] = [];
+      for (const n of frente)
+        for (const k of grafo.desde[n] ?? []) {
+          const t = grafo.tramos[k]!;
+          if (t.pista) continue;
+          if (!calle && limpio(t.ref)) calle = limpio(t.ref);
+          const otro = t.a === n ? t.b : t.a;
+          if (!vistos.has(otro)) vistos.add(otro), siguiente.push(otro);
+        }
+      frente = siguiente;
+    }
+    if (!quiero.has(calle)) return;
+    bocas.push(nudo);
+  });
+  return bocas;
+}
+
+/**
+ * **(e) La pista de despegue**, con cada avión de la flota que cabe en el
+ * campo y desde cada punto de espera que el plan considera. Ver «Y el
+ * back-taxi no se salta nunca» en `plan-de-vuelo.ts`.
+ */
+function mirarLaPistaDeDespegue(esc: Scenario, r: Resultado): void {
+  const pista = esc.runway;
+  const aero = esc.aerodrome!;
+  const regla = aero.salidasPorInterseccion;
+  const soloLaCabecera = regla?.permitidas === false;
+  const permitidas = regla?.soloDesde ? bocasDeLasCalles(aero, regla.soloDesde) : null;
+  for (const avion of AIRCRAFT) {
+    if (!cabeEn(avion, campoDe(esc)).cabe) continue;
+    const plan = new PlanDeVuelo(aero, pista, () => 0, avion);
+    plan.reiniciar();
+    const hace = soloLaCabecera
+      ? pista.length - DESDE_LA_CABECERA
+      : Math.min(paraEntrarYDespegar(avion), pista.length - DESDE_LA_CABECERA);
+    const vistas = new Set<string>();
+    for (const espera of plan.esperasVistas) {
+      const k = `${espera[0].toFixed(0)},${espera[1].toFixed(0)}`;
+      if (vistas.has(k)) continue;
+      vistas.add(k);
+      const entrada = plan.entradaDesde(espera);
+      if (!entrada) continue;
+      const hay = pistaPorDelante(entrada, pista);
+      // Y por una intersección, solo por las que el AIP permite: la raya
+      // tiene que entrar en la pista por una de sus bocas.
+      if (
+        permitidas &&
+        hay < pista.length - DESDE_LA_CABECERA &&
+        !permitidas.some((b) => aLaPolilinea(b, entrada) < 15)
+      )
+        r.fallos.push({
+          que: "(e) sale por una intersección que el AIP no permite",
+          donde: `${esc.id} ${Math.round(pista.heading)}° ${avion.id} desde ${k}`,
+          medida: `a ${(pista.length - hay).toFixed(0)} m del umbral`,
+        });
+      if (hay < hace)
+        r.fallos.push({
+          que: "(e) despega con poca pista",
+          donde: `${esc.id} ${Math.round(pista.heading)}° ${avion.id} desde ${k}`,
+          medida: `${hay.toFixed(0)} m por delante, necesita ${hace.toFixed(0)}`,
+        });
+    }
+  }
 }
 
 function mirarLaVuelta(
@@ -824,13 +980,15 @@ describe("por el asfalto y no por la pista, en los dieciocho campos", () => {
             medida: "",
           });
         for (const avion of avionesDe(esc)) mirar(esc, avion, r, toca);
+        // (e) Y toda la flota, desde cada punto de espera que el plan considera.
+        mirarLaPistaDeDespegue(esc, r);
       }
       const cuenta = (que: string) => r.fallos.filter((f) => f.que.startsWith(que)).length;
       tabla.push(
         `${esc0.id.padEnd(15)} ${String(r.casos).padStart(4)} salidas · ${r.sinPavimento} puestos fuera · ` +
-          `a ${cuenta("(a)")} · b ${cuenta("(b)")} · c ${cuenta("(c)")} · d ${cuenta("(d)")} · ` +
+          `a ${cuenta("(a)")} · b ${cuenta("(b)")} · c ${cuenta("(c)")} · d ${cuenta("(d)")} · e ${cuenta("(e)")} · ` +
           `lista ${cuenta("lista")} · ` +
-          `otros ${r.fallos.length - ["(a)", "(b)", "(c)", "(d)", "lista"].reduce((s, q) => s + cuenta(q), 0)}`,
+          `otros ${r.fallos.length - ["(a)", "(b)", "(c)", "(d)", "(e)", "lista"].reduce((s, q) => s + cuenta(q), 0)}`,
       );
       expect(
         r.fallos.slice(0, 12).map((f) => `${f.que} · ${f.donde} · ${JSON.stringify(f.medida)}`),
@@ -838,6 +996,21 @@ describe("por el asfalto y no por la pista, en los dieciocho campos", () => {
       ).toEqual([]);
     });
   }
+
+  it("lo que dice el AIP de salir por intersección va con su cita", () => {
+    const conDato = CAMPOS.filter((e) => e.aerodrome!.salidasPorInterseccion);
+    // Lanzarote, Fuerteventura y La Palma no las permiten; Los Rodeos y La
+    // Gomera, solo desde algunas calles. Ver `Aerodrome.salidasPorInterseccion`.
+    expect(conDato.map((e) => e.id).sort()).toEqual(
+      ["fuerteventura", "la-gomera", "la-palma", "lanzarote", "tenerife-norte"],
+    );
+    for (const e of conDato) {
+      const regla = e.aerodrome!.salidasPorInterseccion!;
+      expect(regla.fuente, e.id).toMatch(/^AIP España AD 2-/);
+      expect(regla.fuente, e.id).toMatch(/«.+»/);
+    }
+    expect(SCENARIOS.find((e) => e.id === "lanzarote")!.aerodrome!.salidasPorInterseccion!.permitidas).toBe(false);
+  });
 
   it.runIf(ENTORNO.OGA_TABLA)("la tabla", () => {
     console.log(`\n${tabla.join("\n")}\n`);
