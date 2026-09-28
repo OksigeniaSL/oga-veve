@@ -46,6 +46,7 @@
     "tren": "node scripts/verificar-tren.mjs",
     "flaps": "node scripts/verificar-flaps.mjs",
     "licencias": "node scripts/verificar-licencias.mjs",
+    "dedo": "node scripts/verificar-dedo.mjs",
     "actualizar": "node scripts/verificar-actualizar.mjs"
   },
   "dependencies": {

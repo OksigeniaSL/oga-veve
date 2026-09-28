@@ -633,6 +633,7 @@ import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
 import {
   laVelocidadEsDelJuego,
   limitarElRodaje,
+  RODAJE,
 } from "./flight/tope-de-rodaje";
 import { escribirYa, leerTexto, ponerTexto } from "./datos/guardado";
 import {
@@ -6531,7 +6532,9 @@ export class Game {
      * hace nada es peor que moverle un mando y contárselo.
      */
     if (s.onGround && s.groundSpeed <= 2 && c.throttle > 0.05) {
-      c.throttle = 0;
+      // Y la palanca de la pantalla también, que si no lo vuelve a abrir en
+      // el fotograma siguiente. Ver `cerrarGas`.
+      this.input.cerrarGas();
       this.hud.flash(t("hud.engineBusy"));
       return;
     }
@@ -14439,6 +14442,14 @@ export class Game {
       '[data-touch="throttle"] .pad__dibujo',
     );
     if (gas) gas.innerHTML = dibujoDelGasTactil(chorro);
+    /*
+     * Y las marcas de la palanca, que también son de este avión y de este
+     * modelo de vuelo: el gas de rodaje de un reactor no es el de una
+     * avioneta, ni el del modelo sencillo el del completo. La misma cuenta que
+     * usa el tope de rodaje, para que la marca y el tope digan lo mismo. Ver
+     * `flight/palanca-de-gas.ts`.
+     */
+    this.input.ponerMarcasDeGas(this.flight.gasParaRodar(RODAJE));
   }
 
   private onResize = (): void => {

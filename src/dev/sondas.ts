@@ -143,6 +143,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Los mandos, para poder mirarlos desde una comprobación. */
     controles: () => juego.input.controls,
     /**
+     * **Y la palanca de gases de la pantalla**, que no es el gas: el tope de
+     * rodaje recorta el gas y la palanca se queda donde la dejó el dedo. Un
+     * banco que pilota con el dedo mide lo que movió el dedo aquí, no en
+     * `controles`. Ver `flight/palanca-de-gas.ts`.
+     */
+    palancaDeGas: () => ({
+      gas: juego.input.palancaDeGas,
+      marcas: [...juego.input.marcasDeLaPalanca],
+    }),
+    /**
      * **Y la palanca del tren**, que no es un mando como los otros.
      *
      * El tren no se pone: **se pide**, y tarda diez segundos en llegar. Por eso
