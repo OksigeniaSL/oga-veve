@@ -45,6 +45,7 @@ import {
   pistaQueNecesita,
 } from "../flight/carrera";
 import { radioDeGiro } from "../flight/cabe";
+import { DE_LADO_RODANDO } from "../flight/fdm";
 import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
 import {
@@ -288,19 +289,24 @@ const HUECO_PARA_GIRAR = 25;
 const FRENADA_PARA_SALIR = 1.5;
 
 /**
- * Y lo que se frena para no pasarse una salida ya elegida, m/s²: firme, lo
- * que da el freno de un avión en la carrera sin apurarlo —el modelo de vuelo
- * frena a 0,28 g con el freno a fondo—. Con esto se decide si la elegida
- * todavía se toma. Ver `daParaTomarla`.
+ * Y lo que se frena para no pasarse una salida ya elegida, m/s²: a fondo, lo
+ * que da el freno del modelo de vuelo —0,28 g—. Con esto se decide si la
+ * elegida todavía se puede tomar, que es otra pregunta que si es cómoda. Ver
+ * `daParaTomarla`.
  */
-const FRENADA_PARA_NO_PASARSE = 2.5;
+const FRENADA_PARA_NO_PASARSE = 2.75;
 
 /**
- * A qué distancia de la raya va quien la sigue por una salida, m: media calle.
- * Más lejos, y pasada la boca, es que siguió pista abajo. Ver
- * `seHaPasadoLaSalida`.
+ * A qué distancia de la raya va, como mucho, quien la sigue por una salida,
+ * m: media calle, y mirando hacia donde ella va. Ver `vaPorLaRaya`.
  */
 const TOMANDO_LA_SALIDA = ANCHO_RODADURA / 2;
+
+/** Y a qué distancia se va encima de ella, m, mire hacia donde mire. */
+const ENCIMA_DE_LA_RAYA = 5;
+
+/** Lo que se aparta el morro de la raya en quien la sigue, rad: diez grados. */
+const MIRANDO_A_LA_RAYA = (10 * Math.PI) / 180;
 const A_LA_SALIDA = 8;
 
 /**
@@ -3626,30 +3632,65 @@ export class PlanDeVuelo {
     const adelante = (boca.along - aqui.along) * sentido;
     if (adelante < 0) {
       // Pasada la boca: solo si no va por la raya, que es por la salida.
-      const enLaRaya =
-        this.rutaMundo.length > 1 &&
-        aLaPolilinea(
-          [this.ultimaPos[0], this.ultimaPos[1]],
-          this.rutaMundo.map((q) => [q[0], -q[1]] as Punto),
-        ) < TOMANDO_LA_SALIDA;
-      return !enLaRaya;
+      return !this.vaPorLaRaya();
     }
     // Delante: solo si ya no da para frenar hasta girar en ella.
     return !this.daParaTomarla(salida, adelante);
   }
 
   /**
-   * Si con `adelante` metros hasta la boca todavía se frena a la velocidad
-   * con la que la raya la toma, frenando firme —`FRENADA_PARA_NO_PASARSE`— y
-   * no con la frenada cómoda con la que se elige. Quien va a la velocidad que
-   * pide la raya siempre llega: el perfil frena más suave que esto. Una
-   * salida elegida no se cambia mientras se pueda tomar.
+   * **Si todavía se puede girar en ella**: si con `adelante` metros hasta la
+   * boca se frena, a fondo, hasta la velocidad más alta a la que el avión
+   * dobla esa curva —no la cómoda que pide la raya: ésa va con dos metros y
+   * medio por segundo al cuadrado de lateral, y el avión aguanta seis, ver
+   * `DE_LADO_RODANDO`—. Es la cuenta de lo imposible, no de lo cómodo: quien
+   * llega a la salida a trece metros por segundo gira en ella, y darla por
+   * perdida ahí era el «te pasaste» de nuevo, con la misma vuelta de salida en
+   * salida hasta el final de la pista. Visto en el banco en Los Rodeos por la
+   * 30. Una salida elegida no se cambia mientras se pueda tomar.
    */
   private daParaTomarla(boca: Punto, adelante: number): boolean {
     if (adelante <= 0) return true;
     const v = this.ultimaVelocidad;
-    const enLaBoca = Math.max(A_LA_SALIDA, this.velocidadDeLaRutaEn(boca));
-    return v * v <= enLaBoca * enLaBoca + 2 * FRENADA_PARA_NO_PASARSE * adelante;
+    const comoda = Math.max(A_LA_SALIDA, this.velocidadDeLaRutaEn(boca));
+    const aTope = comoda * Math.sqrt(DE_LADO_RODANDO / LATERAL);
+    return v * v <= aTope * aTope + 2 * FRENADA_PARA_NO_PASARSE * adelante;
+  }
+
+  /**
+   * **Si el avión va por la raya**: encima de ella, o cerca y mirando hacia
+   * donde va. La distancia sola no basta: una salida rápida se aparta del eje
+   * tan despacio que quien sigue recto pista abajo pasa a diez metros de ella
+   * durante cincuenta, y quien la toma de verdad va donde ella va. Ver
+   * `seHaPasadoLaSalida`.
+   */
+  private vaPorLaRaya(): boolean {
+    const ruta = this.rutaMundo;
+    if (ruta.length < 2) return false;
+    // En los ejes del mundo, que son los de la raya: la z es la y cambiada.
+    const x = this.ultimaPos[0];
+    const z = -this.ultimaPos[1];
+    let cerca = Infinity;
+    let hacia = 0;
+    for (let i = 0; i < ruta.length - 1; i++) {
+      const [ax, az] = ruta[i]!;
+      const [bx, bz] = ruta[i + 1]!;
+      const dx = bx - ax;
+      const dz = bz - az;
+      const l2 = dx * dx + dz * dz;
+      if (l2 < 1e-6) continue;
+      const u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+      const d = Math.hypot(x - (ax + dx * u), z - (az + dz * u));
+      if (d < cerca) {
+        cerca = d;
+        hacia = Math.atan2(dx, -dz);
+      }
+    }
+    if (cerca < ENCIMA_DE_LA_RAYA) return true;
+    let desvio = this.ultimoRumbo - hacia;
+    while (desvio > Math.PI) desvio -= 2 * Math.PI;
+    while (desvio < -Math.PI) desvio += 2 * Math.PI;
+    return cerca < TOMANDO_LA_SALIDA && Math.abs(desvio) < MIRANDO_A_LA_RAYA;
   }
 
   /** La velocidad que pide la raya en su punto más cercano a `q`, m/s. */
