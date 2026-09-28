@@ -62,6 +62,7 @@ import {
   MODELO_DEL_TIPO,
   vestirCuerpo,
   type CuerpoHorneado,
+  type LibreaDelTrafico,
 } from "./cuerpos-del-trafico";
 import {
   escalaDeCircuito,
@@ -987,10 +988,20 @@ export function crearTrafico(
   const cuerposListos = new Map<string, CuerpoHorneado>();
   const cuerposPedidos = new Set<string>();
   let desmontado = false;
-  const libreaDe = (matricula: string) =>
-    LIBREAS_DEL_TRAFICO[
-      matricula.charCodeAt(matricula.length - 1) % LIBREAS_DEL_TRAFICO.length
-    ]!;
+  /*
+   * **Y el turbohélice, con los colores de las islas** de cerca y de lejos:
+   * de lejos va el de `aviones-de-las-islas.ts`, con su librea, y cambiarle la
+   * cola de color al acercarse sería enseñar que son dos aviones.
+   */
+  const libreaDe = (matricula: string, tipo?: TipoDeTrafico): LibreaDelTrafico => {
+    const cual = matricula.charCodeAt(matricula.length - 1);
+    if (tipo?.id === "turbohelice")
+      return {
+        casco: LIBREAS_DEL_TRAFICO[0]!.casco,
+        color: LIBREAS_DE_LAS_ISLAS[cual % LIBREAS_DE_LAS_ISLAS.length]!.cola,
+      };
+    return LIBREAS_DEL_TRAFICO[cual % LIBREAS_DEL_TRAFICO.length]!;
+  };
   const pedirCuerpo = (tipo: TipoDeTrafico, modelo: string): void => {
     if (cuerposPedidos.has(tipo.id)) return;
     cuerposPedidos.add(tipo.id);
@@ -1015,7 +1026,7 @@ export function crearTrafico(
         quien.grupo.clear();
         quien.grupo.add(
           conDistancia(
-            vestirCuerpo(hecho, libreaDe(matricula)),
+            vestirCuerpo(hecho, libreaDe(matricula, tipo)),
             deFabrica(tipo, matricula),
           ),
         );
@@ -1107,7 +1118,7 @@ export function crearTrafico(
       const hecho = cuerposListos.get(tipo.id);
       if (hecho)
         return conDistancia(
-          vestirCuerpo(hecho, libreaDe(matricula)),
+          vestirCuerpo(hecho, libreaDe(matricula, tipo)),
           deFabrica(tipo, matricula),
         );
       pedirCuerpo(tipo, modelo);

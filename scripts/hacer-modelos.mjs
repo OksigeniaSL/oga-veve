@@ -29,7 +29,7 @@ import { join } from "node:path";
 
 const CARPETA = "modelos";
 const guiones = readdirSync(CARPETA)
-  .filter((f) => f.startsWith("jaz-") && f.endsWith(".py"))
+  .filter((f) => (f.startsWith("jaz-") || f.startsWith("trafico-")) && f.endsWith(".py"))
   .sort();
 
 if (!guiones.length) {
