@@ -31,7 +31,7 @@ import {
 import { laRedonda } from "./luces-de-posicion";
 import { jalonar } from "./luces-de-rodadura";
 import type { Aerodrome, Punto } from "./aerodrome";
-import { aLaPolilinea } from "./aerodrome";
+import { aLaPolilinea, ANCHO_RODADURA } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
 import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
@@ -286,6 +286,21 @@ const HUECO_PARA_GIRAR = 25;
  * los aeropuertos ponen sus salidas rápidas.
  */
 const FRENADA_PARA_SALIR = 1.5;
+
+/**
+ * Y lo que se frena para no pasarse una salida ya elegida, m/s²: firme, lo
+ * que da el freno de un avión en la carrera sin apurarlo —el modelo de vuelo
+ * frena a 0,28 g con el freno a fondo—. Con esto se decide si la elegida
+ * todavía se toma. Ver `daParaTomarla`.
+ */
+const FRENADA_PARA_NO_PASARSE = 2.5;
+
+/**
+ * A qué distancia de la raya va quien la sigue por una salida, m: media calle.
+ * Más lejos, y pasada la boca, es que siguió pista abajo. Ver
+ * `seHaPasadoLaSalida`.
+ */
+const TOMANDO_LA_SALIDA = ANCHO_RODADURA / 2;
 const A_LA_SALIDA = 8;
 
 /**
@@ -524,6 +539,12 @@ const YA_NO_SE_LE_ESPERA = 10;
  * que meterse por esa, y solo se coge si no hay otra.
  */
 const SALIDA_OCUPADA = 1000;
+
+/**
+ * Y lo que cuesta de más una salida desde la que se vuelve por la pista, m:
+ * más que una ocupada. Ver la pasada de «todas» en `salidaPorDelanteQue`.
+ */
+const VOLVER_POR_LA_PISTA = 2 * SALIDA_OCUPADA;
 
 /**
  * A partir de cuántos metros de la raya se considera que ya no vas por ella, m.
@@ -3492,9 +3513,29 @@ export class PlanDeVuelo {
      * pista solo si por delante no queda nada. Ver `pasarse la salida` en
      * `salidas-a-un-puesto.test.ts`.
      */
+    /*
+     * **Y la elegida no se cambia mientras se pueda tomar.** Esto se volvía a
+     * decidir en cada trazado con la velocidad de ese momento, y frenando
+     * hacia la salida la cuenta podía dar otra. Ver `seHaPasadoLaSalida`.
+     */
+    const elegida = this.salidaDeLaRuta;
+    const primera = this.salidaPorDelanteQue(true, meta);
+    if (elegida && this.rodandoPorLaPista() && !this.seHaPasadoLaSalida()) {
+      /*
+       * Salvo por una **anterior** que ahora sí se toma: quien frena más de lo
+       * que se contaba al tocar tierra sale por la primera que tenga delante,
+       * no por la raqueta del final que le tocaba a la velocidad de la toma.
+       * Cambiar hacia delante nunca; hacia atrás, a una que no se ha pasado.
+       */
+      const antes =
+        primera && this.adelanteHasta(primera) < this.adelanteHasta(elegida)
+          ? porLaSalida(primera)
+          : null;
+      const sigue = antes ?? porLaSalida(elegida);
+      if (sigue) return sigue;
+    }
     const delante =
-      porLaSalida(this.salidaPorDelanteQue(true, meta)) ??
-      porLaSalida(this.salidaPorDelanteQue(false, meta));
+      porLaSalida(primera) ?? porLaSalida(this.salidaPorDelanteQue(false, meta));
     if (delante) return delante;
     /*
      * **Y si no queda ninguna por delante, se vuelve por la pista.** Ver
@@ -3518,6 +3559,15 @@ export class PlanDeVuelo {
     };
   }
 
+  /** Lo que queda hasta una boca, a lo largo de la pista y hacia donde se rueda, m. */
+  private adelanteHasta(boca: Punto): number {
+    const { x, z, heading } = this.pista;
+    const aqui = enEjesDePista(this.ultimaPos[0], -this.ultimaPos[1], x, z, heading);
+    const alEje = Math.cos(this.ultimoRumbo - (heading * Math.PI) / 180);
+    const sentido = alEje >= 0 ? 1 : -1;
+    return (enEjesDePista(boca[0], -boca[1], x, z, heading).along - aqui.along) * sentido;
+  }
+
   /** Pone una ruta de vuelta y se acuerda de su salida de pista. */
   private ponerLaVuelta(vuelta: {
     ruta: Ruta | null;
@@ -3534,17 +3584,6 @@ export class PlanDeVuelo {
   private salidaDeLaRuta: Punto | null = null;
 
   /**
-   * Cuánto hay que haber dejado atrás la boca de la salida para darla por
-   * pasada, m.
-   *
-   * Treinta: más que lo que se come un avión grande al girar hacia la calle
-   * —la raya dobla con dieciocho metros de radio y el reactor abre algo
-   * más—, así que tomarla no cuenta como pasársela. Y a paso de rodaje son
-   * dos segundos y medio: la raya nueva sale antes de que haga falta.
-   */
-  private static readonly PASADA = 30;
-
-  /**
    * **Si el avión se ha pasado la salida por la que iba su ruta**: sigue en
    * la pista, rodando a lo largo de ella, y la boca ha quedado atrás.
    *
@@ -3558,6 +3597,20 @@ export class PlanDeVuelo {
    * segundo: la salida seguía siendo la de atrás durante trescientos metros,
    * y la siguiente, también, hasta pasar la otra.
    */
+  /*
+   * **Y «te pasaste» solo cuando es verdad.** Aterrizando en Tenerife Sur:
+   * «cada vez que voy a tomar una salida me dice que me la había pasado, no
+   * siendo cierto, y me da otra salida más adelante; no me deja salir por la
+   * que tenía y me obliga a ir a la siguiente, donde me vuelve a hacer lo
+   * mismo. Es decir, que no pude salir.» Las salidas rápidas dejan la pista
+   * en ángulo de treinta grados o menos, así que quien la toma sigue un buen
+   * trecho dentro del asfalto y mirando casi a lo largo de la pista, más allá
+   * de la boca: para esta cuenta —treinta metros pasada la boca—, eso era
+   * pasársela. Se la pasa quien sigue
+   * pista abajo y se aparta de la raya, no quien va por ella; y quien ya no
+   * puede frenar para girar allí, aunque la tenga delante. Ver
+   * `salir-a-la-primera.test.ts`.
+   */
   private seHaPasadoLaSalida(): boolean {
     const salida = this.salidaDeLaRuta;
     if (!salida) return false;
@@ -3570,7 +3623,49 @@ export class PlanDeVuelo {
     if (Math.abs(alEje) < Math.cos(Math.PI / 6)) return false;
     const sentido = alEje >= 0 ? 1 : -1;
     const boca = enEjesDePista(salida[0], -salida[1], x, z, heading);
-    return (aqui.along - boca.along) * sentido > PlanDeVuelo.PASADA;
+    const adelante = (boca.along - aqui.along) * sentido;
+    if (adelante < 0) {
+      // Pasada la boca: solo si no va por la raya, que es por la salida.
+      const enLaRaya =
+        this.rutaMundo.length > 1 &&
+        aLaPolilinea(
+          [this.ultimaPos[0], this.ultimaPos[1]],
+          this.rutaMundo.map((q) => [q[0], -q[1]] as Punto),
+        ) < TOMANDO_LA_SALIDA;
+      return !enLaRaya;
+    }
+    // Delante: solo si ya no da para frenar hasta girar en ella.
+    return !this.daParaTomarla(salida, adelante);
+  }
+
+  /**
+   * Si con `adelante` metros hasta la boca todavía se frena a la velocidad
+   * con la que la raya la toma, frenando firme —`FRENADA_PARA_NO_PASARSE`— y
+   * no con la frenada cómoda con la que se elige. Quien va a la velocidad que
+   * pide la raya siempre llega: el perfil frena más suave que esto. Una
+   * salida elegida no se cambia mientras se pueda tomar.
+   */
+  private daParaTomarla(boca: Punto, adelante: number): boolean {
+    if (adelante <= 0) return true;
+    const v = this.ultimaVelocidad;
+    const enLaBoca = Math.max(A_LA_SALIDA, this.velocidadDeLaRutaEn(boca));
+    return v * v <= enLaBoca * enLaBoca + 2 * FRENADA_PARA_NO_PASARSE * adelante;
+  }
+
+  /** La velocidad que pide la raya en su punto más cercano a `q`, m/s. */
+  private velocidadDeLaRutaEn(q: Punto): number {
+    const ruta = this.rutaMundo;
+    if (ruta.length < 2 || this.velocidades.length !== ruta.length) return A_LA_SALIDA;
+    let mejor = 0;
+    let d = Infinity;
+    for (let i = 0; i < ruta.length; i++) {
+      const e = Math.hypot(ruta[i]![0] - q[0], ruta[i]![1] + q[1]);
+      if (e < d) {
+        d = e;
+        mejor = i;
+      }
+    }
+    return this.velocidades[mejor]!;
   }
 
   /**
@@ -4605,7 +4700,20 @@ export class PlanDeVuelo {
        * que espera en su doble raya para entrar en la pista, casi siempre en
        * esa misma calle— cuesta como si fuera larga: se coge otra si la hay.
        */
-      const coste = adelante + (hasta?.ocupada ? SALIDA_OCUPADA : 0);
+      /*
+       * Y en la pasada de «todas», la que vuelve por la pista cuesta más que
+       * una ocupada: pasar junto a un avión parado se hace rodeándolo, y
+       * volver por la pista es tenerla ocupada el doble. En El Hierro, con
+       * el tráfico aparcado en la plataforma, se elegía la raqueta del final
+       * —medio kilómetro más allá— y se volvía por la pista hasta la calle
+       * que se había dejado atrás.
+       */
+      const vuelve =
+        !soloHaciaDelante && hasta && this.vuelvePorLaPista(hasta, along, sentido);
+      const coste =
+        adelante +
+        (hasta?.ocupada ? SALIDA_OCUPADA : 0) +
+        (vuelve ? VOLVER_POR_LA_PISTA : 0);
       if (coste < cerca) {
         cerca = coste;
         mejor = nudo;

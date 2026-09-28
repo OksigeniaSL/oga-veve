@@ -96,9 +96,16 @@ describe("aterrizar pasada la única salida: de vuelta por la pista", () => {
             miradas++;
             const donde = `${esc.id} ${avion.id} por la ${Math.round(pista.heading)}° a ${Math.round(a)} m`;
 
-            // Primero hacia delante: la raya se ve.
+            /*
+             * Primero hacia delante: la raya se ve. **Veinte metros y no
+             * cuarenta**: a doce metros por segundo la salida se da por perdida
+             * antes de llegar a ella —ya no da para girar allí, ver
+             * `seHaPasadoLaSalida`—, y la media vuelta se pone desde ahí, con
+             * lo que se tarda en frenar. Treinta y cinco metros pasada la boca,
+             * este avión, que no frena, la tiene a treinta y pocos.
+             */
             const masAdelante = Math.max(...ruta.map((q) => ejes(q).along));
-            expect(masAdelante - a, `${donde}: la raya no va por delante`).toBeGreaterThan(40);
+            expect(masAdelante - a, `${donde}: la raya no va por delante`).toBeGreaterThan(20);
 
             /*
              * Y hasta volver a la altura de la boca, todo por el asfalto: la
