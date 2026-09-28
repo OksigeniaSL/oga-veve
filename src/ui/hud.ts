@@ -720,6 +720,35 @@ export class Hud {
       if (e.key === "Escape" && this.root.classList.contains("hud--menu"))
         this.abrirMenu(false);
     });
+    /*
+     * **El «soltar» del freno, en la ventana y del mismo dedo que lo pisó.**
+     *
+     * En la ventana, porque al despegar el botón se oculta con el dedo todavía
+     * encima, y un elemento oculto ya no recibe el `pointerup`: el freno se
+     * quedaba puesto para siempre, y al aterrizar el avión no había forma de
+     * moverlo hasta que algo lo soltaba — y entonces salía disparado con el gas
+     * que hubiera puesto.
+     *
+     * **Y del mismo dedo**, que es lo que faltaba: soltaba cualquier dedo. Con
+     * el teléfono en las dos manos, el pulgar derecho pisando el freno y el
+     * izquierdo en la palanca, levantar el izquierdo soltaba el freno — y el
+     * avión se iba justo mientras se esperaba en el punto de espera. Frenar
+     * no puede depender de lo que haga la otra mano.
+     *
+     * Vivía dentro de `render`, que rehace el marcado: cada repintado añadía
+     * otra escucha. Aquí va una vez. Y lo mismo para los botones del motor,
+     * que al mantenerlos empujan: si el repintado se lleva el botón con el dedo
+     * encima, el `pointerup` no llega al botón y el motor seguiría subiendo.
+     */
+    for (const evento of ["pointerup", "pointercancel"] as const) {
+      window.addEventListener(evento, (e) => {
+        if (e.pointerId === this.dedoDelFreno) {
+          this.dedoDelFreno = null;
+          this.setBraking(false);
+        }
+        if (e.pointerId === this.dedoDelMotor) this.soltarElMotor();
+      });
+    }
     alCambiarPantallaCompleta(() => this.pintarPantallaCompleta());
     this.render();
   }
@@ -1528,9 +1557,10 @@ export class Hud {
     this.brakes = pick(this.root, "brakes");
     this.brakeKey = pick(this.root, "brake-key");
     this.brakesTouch = pick(this.root, "brakes-touch");
-    this.brakesTouch.addEventListener("pointerdown", () =>
-      this.setBraking(true),
-    );
+    this.brakesTouch.addEventListener("pointerdown", (e) => {
+      this.dedoDelFreno = e.pointerId;
+      this.setBraking(true);
+    });
     /*
      * El tren y los flaps van **al soltar**, no al apretar, que es como
      * funciona cualquier botón: apretando se puede rectificar arrastrando el
@@ -1546,14 +1576,8 @@ export class Hud {
     ] as const) {
       boton.addEventListener("click", () => this.alTocarMando?.(cual));
     }
-    // El «soltar» se escucha en la ventana y no en el botón: al despegar, el
-    // botón se oculta con el dedo todavía encima, y un elemento oculto ya no
-    // recibe el `pointerup`. El freno se quedaba puesto para siempre, y al
-    // aterrizar el avión no había forma de moverlo hasta que algo lo
-    // soltaba — y entonces salía disparado con el gas que hubiera puesto.
-    for (const evento of ["pointerup", "pointercancel"] as const) {
-      window.addEventListener(evento, () => this.setBraking(false));
-    }
+    // El «soltar» del freno y de los botones del motor se escucha en la
+    // ventana: ver el constructor.
 
     this.throttleDown = pick(this.root, "throttle-down");
     this.throttleUp = pick(this.root, "throttle-up");
@@ -1561,9 +1585,13 @@ export class Hud {
       [this.throttleDown, -1],
       [this.throttleUp, 1],
     ] as const) {
-      boton.addEventListener("pointerdown", () => this.throttleHandler?.(paso));
-      boton.addEventListener("pointerup", () => this.throttleHandler?.(0));
-      boton.addEventListener("pointerleave", () => this.throttleHandler?.(0));
+      boton.addEventListener("pointerdown", (e) => {
+        this.dedoDelMotor = e.pointerId;
+        this.throttleHandler?.(paso);
+      });
+      boton.addEventListener("pointerleave", (e) => {
+        if (e.pointerId === this.dedoDelMotor) this.soltarElMotor();
+      });
     }
     this.horizon = optional(this.root, "horizon");
     this.home = pick(this.root, "home");
@@ -2437,7 +2465,10 @@ export class Hud {
     }
 
     // Al ocultarlo se suelta, por si se ocultó con el dedo encima.
-    if (escondeBoton && !this.brakesTouch.hidden) this.setBraking(false);
+    if (escondeBoton && !this.brakesTouch.hidden) {
+      this.dedoDelFreno = null;
+      this.setBraking(false);
+    }
     // Mientras dura la despedida sigue en pantalla, aunque ya no frene.
     this.brakesTouch.hidden = escondeBoton && this.brakeExit <= 0;
     const pisado = braking > 0.05;
@@ -2817,6 +2848,16 @@ export class Hud {
 
   private setBraking(pressed: boolean): void {
     this.brakeHandler?.(pressed);
+  }
+
+  /** El dedo que pisa el freno, para soltarlo solo cuando se levanta ése. */
+  private dedoDelFreno: number | null = null;
+  /** Y el que aprieta un botón del motor. */
+  private dedoDelMotor: number | null = null;
+
+  private soltarElMotor(): void {
+    this.dedoDelMotor = null;
+    this.throttleHandler?.(0);
   }
 
   /** De dónde sale el nombre de la tecla que se enseña para cada mando. */

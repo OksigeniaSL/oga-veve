@@ -757,11 +757,14 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
  * `estrenar` en `scripts/plantilla-sw.js`.
  */
 function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
-  const enseñar = (esperando: ServiceWorker): void => {
+  const enseñar = (): void => {
     if (document.querySelector(".version-nueva")) return;
     const boton = document.createElement("button");
     boton.type = "button";
     boton.className = "version-nueva";
+    // Con nombre también cuando la frase no se ve: en el teléfono va solo la
+    // flecha. Ver `.version-nueva` en la hoja.
+    boton.setAttribute("aria-label", t("version.nueva"));
     boton.innerHTML =
       `<svg viewBox="0 0 24 24" aria-hidden="true">` +
       `<path d="M20 12a8 8 0 1 1-2.3-5.6" fill="none" stroke="currentColor"` +
@@ -769,26 +772,12 @@ function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
       `<path d="M20 3.5V9h-5.5" fill="none" stroke="currentColor"` +
       ` stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>` +
       `</svg><span>${t("version.nueva")}</span>`;
-    boton.addEventListener("click", () => {
-      /*
-       * Primero se le dice que se estrene y **después se recarga**, cuando el
-       * navegador avisa de que hay otro al mando. Recargar antes vuelve a
-       * pedirle las piezas al de siempre, o sea a la versión vieja otra vez,
-       * que es la forma más fácil de que esto parezca que no hace nada.
-       */
-      navigator.serviceWorker.addEventListener(
-        "controllerchange",
-        () => location.reload(),
-        { once: true },
-      );
-      esperando.postMessage("estrenar");
-    });
+    boton.addEventListener("click", () => estrenar(registro, boton));
     document.body.appendChild(boton);
   };
 
   // El que ya estaba esperando cuando se abrió la página.
-  if (registro.waiting && navigator.serviceWorker.controller)
-    enseñar(registro.waiting);
+  if (registro.waiting && navigator.serviceWorker.controller) enseñar();
 
   /*
    * **Y se pregunta cada tanto, que si no nadie pregunta.**
@@ -815,7 +804,75 @@ function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
     if (!nuevo) return;
     nuevo.addEventListener("statechange", () => {
       if (nuevo.state === "installed" && navigator.serviceWorker.controller)
-        enseñar(nuevo);
+        enseñar();
     });
   });
+}
+
+/**
+ * Cuánto se espera a que el trabajador nuevo tome el mando antes de recargar
+ * igual, ms. Ver `estrenar`.
+ */
+const ESPERA_AL_NUEVO = 4000;
+
+/**
+ * **Estrenar la versión que espera ahora, no la que esperaba al salir el
+ * botón.**
+ *
+ * «Al pulsar sobre el botón de actualizar no respondía», en el teléfono. No
+ * era el dedo: el botón guardaba el trabajador que estaba esperando **cuando
+ * se encendió**, y si mientras tanto se publica otra versión —que es lo que
+ * pasa cuando se prueba con la pestaña abierta: se publica, se vuelve a
+ * publicar—, esa segunda llega, se instala y **deja al primero jubilado**. El
+ * botón seguía encendido, porque ya había uno, y al tocarlo le mandaba
+ * `estrenar` a un trabajador que ya no existía para nadie: ni se estrenaba
+ * nada ni se recargaba nada. Reproducido con el banco: con una versión nueva
+ * recarga en un segundo; con dos seguidas, veinte segundos tocado y nada.
+ * Ver `scripts/verificar-actualizar.mjs`.
+ *
+ * Así que el que se estrena se busca **al tocar**, que es cuando importa.
+ *
+ * Y dos redes, porque esto cruza dos sistemas —la página y el trabajador— y
+ * un candado entre dos sistemas sin salida es una espera eterna:
+ *
+ * - si al tocar ya no espera nadie —lo estrenó otra pestaña—, se recarga y
+ *   ya: lo nuevo está al mando;
+ * - si el nuevo no toma el mando en unos segundos —el navegador lo retrasa
+ *   mientras el viejo termina lo que estaba bajando—, se recarga igual. La
+ *   página se pide primero a la red —ver `plantilla-sw.js`— y las piezas del
+ *   armazón nuevo ya están en su caché, así que lo que abre es lo nuevo.
+ *
+ * Y el botón **dice que lo ha oído** en cuanto se toca: la flecha gira. Sin
+ * eso, un segundo de espera hasta la recarga se lee igual que un botón que
+ * no hace nada.
+ */
+function estrenar(
+  registro: ServiceWorkerRegistration,
+  boton: HTMLButtonElement,
+): void {
+  if (boton.classList.contains("version-nueva--yendo")) return;
+  boton.classList.add("version-nueva--yendo");
+  boton.setAttribute("aria-busy", "true");
+  let recargando = false;
+  const recargar = (): void => {
+    if (recargando) return;
+    recargando = true;
+    location.reload();
+  };
+  /*
+   * Primero se le dice que se estrene y **después se recarga**, cuando el
+   * navegador avisa de que hay otro al mando. Recargar antes vuelve a pedirle
+   * las piezas al de siempre, que es la forma más fácil de que esto parezca
+   * que no hace nada.
+   */
+  navigator.serviceWorker.addEventListener("controllerchange", recargar, {
+    once: true,
+  });
+  const esperando = registro.waiting;
+  if (!esperando) {
+    recargar();
+    return;
+  }
+  esperando.postMessage("estrenar");
+  window.setTimeout(recargar, ESPERA_AL_NUEVO);
 }

@@ -47,22 +47,18 @@ describe("ejes de teclado", () => {
 
 describe("el motor no se queda agarrado", () => {
   it("el teclado le quita el mando a la palanca táctil", () => {
-    expect(releasesTouchThrottle(1, 0)).toBe(true);
-    expect(releasesTouchThrottle(-1, 0)).toBe(true);
-  });
-
-  it("los botones de pantalla también", () => {
-    expect(releasesTouchThrottle(0, 1)).toBe(true);
-    expect(releasesTouchThrottle(0, -1)).toBe(true);
+    expect(releasesTouchThrottle(1)).toBe(true);
+    expect(releasesTouchThrottle(-1)).toBe(true);
   });
 
   /**
    * Y sin tocar nada, la palanca se queda donde la dejaste. Es lo que la
    * hace una palanca de gases y no un botón, y es la razón por la que no
-   * basta con soltarla siempre.
+   * basta con soltarla siempre. Los botones de la pantalla ya no la sueltan:
+   * la mueven, y eso lo prueba `palanca-de-gas.test.ts`.
    */
-  it("sin tocar nada, la palanca sigue mandando", () => {
-    expect(releasesTouchThrottle(0, 0)).toBe(false);
+  it("sin tocar el teclado, la palanca sigue mandando", () => {
+    expect(releasesTouchThrottle(0)).toBe(false);
   });
 });
 

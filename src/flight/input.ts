@@ -24,6 +24,14 @@ import {
   ToquesDeCabeceo,
   palancaEnLaDuda,
 } from "./palanca-de-teclado";
+import {
+  MANTENER,
+  alIman,
+  cruzaMarca,
+  gasALaAltura,
+  marcasDeGas,
+  siguientePaso,
+} from "./palanca-de-gas";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
 const KEY_RAMP = 2.6;
@@ -31,6 +39,11 @@ const KEY_RAMP = 2.6;
 const KEY_CENTRE = 3.4;
 /** Zona muerta de los sticks del mando. */
 const DEADZONE = 0.12;
+/**
+ * Lo que sube o baja el gas por segundo con una tecla o un botón mantenido:
+ * de ralentí a despegue en un segundo y dos tercios.
+ */
+const RITMO_DEL_GAS = 0.6;
 
 /**
  * Teclas por eje, declaradas por intención y no por posición.
@@ -141,7 +154,26 @@ export class InputManager {
   private touchPitch = 0;
   private touchRoll = 0;
   private touchRudder = 0;
+  /**
+   * La palanca de gases de la pantalla, si se ha tocado: se queda donde se
+   * deja, como una de verdad. `null` mientras mandan el teclado o el mando.
+   */
   private touchThrottle: number | null = null;
+  /**
+   * Sus marcas —ralentí, rodaje y despegue de este avión— y el elemento en
+   * el que se pinta. Ver `flight/palanca-de-gas.ts` y `ponerMarcasDeGas`.
+   */
+  private marcasDeGas: readonly number[] = marcasDeGas(0.3);
+  private palancaEl: HTMLElement | null = null;
+  /** Lo último pintado en la palanca, para no tocar el estilo por nada. */
+  private gasPintado = -1;
+  /**
+   * Si en este aparato se juega con la palanca de la pantalla: con el dedo,
+   * que es cuando la hoja de estilos la enseña.
+   */
+  private conPalanca = false;
+  /** Cuánto lleva apretado un botón de motor, s. Ver `MANTENER`. */
+  private botonMantenido = 0;
   /** −1 si el cabeceo va invertido. Lo pone el juego desde los ajustes. */
   private signoDeCabeceo = 1;
 
@@ -412,6 +444,7 @@ export class InputManager {
   releaseAll(): void {
     this.touchThrottle = null;
     this.buttonThrottle = 0;
+    this.botonMantenido = 0;
     this.touchBrakes = false;
     this.controls.throttle = 0;
     /*
@@ -423,9 +456,76 @@ export class InputManager {
     this.controls.trim = 0;
   }
 
+  /**
+   * **Un toque es un paso, y mantenido empuja.**
+   *
+   * Los botones empujaban a razón del sesenta por ciento por segundo mientras
+   * se apretaban, y nada más: un toque de dedo —un octavo de segundo— movía
+   * siete centésimas que no se veían en la palanca ni se oían en el motor, y
+   * parecía que el botón no iba. Ahora el toque mueve una décima —o hasta la
+   * marca de rodaje, si cae antes— y, pasado `MANTENER`, sigue empujando como
+   * antes. Ver `siguientePaso` en `flight/palanca-de-gas.ts`.
+   *
+   * **Y mueven la palanca de la pantalla, no la sueltan.** Antes tocar un botón
+   * soltaba la palanca y seguía desde el gas que hubiera: la palanca se
+   * quedaba dibujada en un sitio y el motor iba por otro. Con el dedo, los
+   * botones y la palanca son el mismo mando y se ve dónde está.
+   */
   setButtonThrottle(direction: number): void {
+    if (direction !== 0 && direction !== this.buttonThrottle) {
+      this.botonMantenido = 0;
+      this.moverPalanca(
+        siguientePaso(this.palancaDeGas, direction, this.marcasDeGas),
+      );
+    }
     this.buttonThrottle = direction;
-    if (direction !== 0) this.touchThrottle = null;
+  }
+
+  /**
+   * Dónde está el gas pedido: la palanca de la pantalla si se ha tocado, y si
+   * no, el gas que hay. Es lo que se pinta en la palanca.
+   */
+  get palancaDeGas(): number {
+    return this.touchThrottle ?? this.controls.throttle;
+  }
+
+  /** Lleva el gas pedido a un sitio, por el camino de quien manda ahora. */
+  private moverPalanca(valor: number): void {
+    const v = clamp(valor, 0, 1);
+    if (this.touchThrottle !== null || this.conPalanca) this.touchThrottle = v;
+    else this.controls.throttle = v;
+  }
+
+  /**
+   * **El gas a ralentí, palanca incluida.**
+   *
+   * Lo pide la llave: no se arranca con gas, y si lo hay, lo cierra ella —ver
+   * `toggleEngine` en `game.ts`—. Cerraba solo el gas del modelo, y la palanca
+   * de la pantalla lo volvía a abrir en el fotograma siguiente: con el dedo, un
+   * gas del cuatro por ciento puesto sin querer dejaba la llave sin responder
+   * nunca, que es justo el callejón que esa regla quería quitar.
+   */
+  cerrarGas(): void {
+    this.controls.throttle = 0;
+    if (this.touchThrottle !== null) this.touchThrottle = 0;
+  }
+
+  /**
+   * Las marcas de la palanca de este avión: el gas que sostiene la velocidad
+   * de rodaje, que cambia con el avión y con el modelo de vuelo. Lo pone el
+   * juego al cambiar de una cosa o de otra.
+   */
+  ponerMarcasDeGas(gasDeRodaje: number): void {
+    this.marcasDeGas = marcasDeGas(gasDeRodaje);
+    this.palancaEl?.style.setProperty(
+      "--marca-rodaje",
+      this.marcasDeGas[1]!.toFixed(3),
+    );
+  }
+
+  /** Las marcas de ahora, para quien las necesite medir. */
+  get marcasDeLaPalanca(): readonly number[] {
+    return this.marcasDeGas;
   }
   /** Solo se avisa del primer gesto una vez. */
   private gestured = false;
@@ -537,21 +637,34 @@ export class InputManager {
     // `pointerup`—, el teclado quedaba anulado del todo y el motor clavado
     // donde estuviera. Con el gas a tope eso es un avión que no se para.
     const teclado = this.axis("throttleUp", "throttleDown");
-    if (releasesTouchThrottle(teclado, this.buttonThrottle))
-      this.touchThrottle = null;
+    if (releasesTouchThrottle(teclado)) this.touchThrottle = null;
 
+    // El botón mantenido empuja; el toque ya dio su paso al apretarse. Ver
+    // `setButtonThrottle`.
+    let empuje = 0;
+    if (this.buttonThrottle !== 0) {
+      this.botonMantenido += dt;
+      if (this.botonMantenido >= MANTENER) empuje = this.buttonThrottle;
+    }
     if (this.touchThrottle !== null) {
+      if (empuje !== 0)
+        this.touchThrottle = clamp(
+          this.touchThrottle + empuje * dt * RITMO_DEL_GAS,
+          0,
+          1,
+        );
       this.controls.throttle = this.touchThrottle;
     } else if (gamepad?.throttle !== undefined) {
       this.controls.throttle = gamepad.throttle;
     } else {
-      const delta = clamp(teclado + this.buttonThrottle, -1, 1);
+      const delta = clamp(teclado + empuje, -1, 1);
       this.controls.throttle = clamp(
-        this.controls.throttle + delta * dt * 0.6,
+        this.controls.throttle + delta * dt * RITMO_DEL_GAS,
         0,
         1,
       );
     }
+    this.pintarPalanca();
 
     const braking =
       this.touchBrakes || this.held("brakes") || (gamepad?.brakes ?? false);
@@ -835,14 +948,136 @@ export class InputManager {
       // comportamiento de la palanca de mando, que vuelve al centro al
       // soltarla, y eso dejaba el motor clavado al 50 % cada vez que
       // levantabas el dedo. En una tablet era imposible aterrizar.
-      bindPad(
+      this.palancaEl = throttle;
+      this.conPalanca =
+        typeof matchMedia === "function" &&
+        matchMedia("(pointer: coarse)").matches;
+      throttle.style.setProperty(
+        "--marca-rodaje",
+        this.marcasDeGas[1]!.toFixed(3),
+      );
+      bindPalanca(
         throttle,
-        (_x, y) => {
-          this.touchThrottle = clamp((1 - y) / 2, 0, 1);
+        () => this.palancaDeGas,
+        (gas) => {
+          this.touchThrottle = gas;
+          this.pintarPalanca();
         },
-        { springLoaded: false },
+        () => this.marcasDeGas,
       );
     }
+  }
+
+  /** Pinta la palanca donde está el gas pedido, si ha cambiado. */
+  private pintarPalanca(): void {
+    if (!this.palancaEl) return;
+    const gas = this.palancaDeGas;
+    if (Math.abs(gas - this.gasPintado) < 0.002) return;
+    this.gasPintado = gas;
+    this.palancaEl.style.setProperty("--gas", gas.toFixed(3));
+  }
+}
+
+/**
+ * La geometría de la palanca de gases, que tiene que decir lo mismo que la
+ * hoja de estilos: el punto mide `PUNTO` y se queda a `BORDE` de cada punta.
+ * Ver `.pad--throttle` en `style.css`.
+ */
+const PUNTO = 34;
+const BORDE = 10;
+/**
+ * Hasta dónde del centro del punto cuenta como agarrarlo: su radio y un
+ * margen de yema.
+ *
+ * Era el punto entero —treinta y cuatro— y era demasiado: en un iPhone la
+ * marca de rodaje queda a cuarenta y un píxeles del ralentí, así que tocarla
+ * desde abajo con el dedo un poco corto caía «encima del punto» y no movía
+ * nada. Y al revés, lo mismo: bajar a ralentí desde el rodaje tocando cerca
+ * del fondo dejaba el gas en rodaje, y al soltar el freno el avión se iba.
+ * Lo midió `verificar-dedo.mjs`.
+ */
+const AGARRE = PUNTO / 2 + 4;
+
+/**
+ * **La palanca de gases con el pulgar**: se agarra el punto o se toca el
+ * sitio, y en las marcas se pega.
+ *
+ * Era la cuenta de la palanca de mando —el dedo en tal altura, el gas en
+ * tal proporción— con el punto dibujado a un tercio de su propio tamaño del
+ * centro. Lo que se ha cambiado, y por qué:
+ *
+ * - **Agarrar el punto no lo mueve.** Si el dedo cae encima del punto, lo que
+ *   cuenta es cuánto se desliza, no dónde cayó: tocar la palanca para bajarla
+ *   un poco no puede darle un tirón de un cuarto de recorrido porque la yema
+ *   cayó un poco más arriba que el centro del punto.
+ * - **Tocar en otro sitio de la palanca la lleva ahí**, como cualquier
+ *   deslizador: tocar arriba es despegue y tocar abajo es ralentí, que es lo
+ *   que entiende quien tiene cuatro años.
+ * - **Las marcas tiran del dedo.** Ralentí, rodaje y despegue se cogen sin
+ *   puntería; ver `alIman`. Y al pasar por una, un golpecito en la mano, que
+ *   es como se nota una muesca sin mirarla.
+ */
+function bindPalanca(
+  element: HTMLElement,
+  leer: () => number,
+  poner: (gas: number) => void,
+  marcas: () => readonly number[],
+): void {
+  let pointerId: number | null = null;
+  let agarre = 0;
+  let ultimo = 0;
+
+  const medidas = (): { fondo: number; recorrido: number } => {
+    const caja = element.getBoundingClientRect();
+    const filo = element.clientTop;
+    return {
+      fondo: caja.bottom - filo - BORDE - PUNTO / 2,
+      recorrido: caja.height - 2 * filo - 2 * BORDE - PUNTO,
+    };
+  };
+
+  const mover = (event: PointerEvent): void => {
+    const { fondo, recorrido } = medidas();
+    const gas = alIman(
+      gasALaAltura(fondo - (event.clientY - agarre), recorrido),
+      marcas(),
+    );
+    if (gas === ultimo) return;
+    if (cruzaMarca(ultimo, gas, marcas())) notarLaMuesca();
+    ultimo = gas;
+    poner(gas);
+  };
+
+  element.addEventListener("pointerdown", (event) => {
+    if (pointerId !== null) return;
+    pointerId = event.pointerId;
+    element.setPointerCapture(event.pointerId);
+    const { fondo, recorrido } = medidas();
+    ultimo = leer();
+    const punto = fondo - ultimo * recorrido;
+    agarre =
+      Math.abs(event.clientY - punto) <= AGARRE ? event.clientY - punto : 0;
+    mover(event);
+  });
+  element.addEventListener("pointermove", (event) => {
+    if (event.pointerId === pointerId) mover(event);
+  });
+  const soltar = (event: PointerEvent): void => {
+    if (event.pointerId === pointerId) pointerId = null;
+  };
+  element.addEventListener("pointerup", soltar);
+  element.addEventListener("pointercancel", soltar);
+}
+
+/**
+ * El golpecito de la muesca, donde el aparato lo da. En el iPhone no hay
+ * vibración para las páginas, y ahí se queda en el imán y en lo que se ve.
+ */
+function notarLaMuesca(): void {
+  try {
+    navigator.vibrate?.(8);
+  } catch {
+    // Sin permiso o sin motor de vibración: la marca se ve igual.
   }
 }
 
@@ -883,12 +1118,14 @@ export function mandaQuienSeMueve(
  * el motor clavado al cincuenta por ciento, y la segunda al cien, con un
  * avión que no había forma de parar. La regla es simple y no admite matices:
  * **si alguien toca el teclado o los botones, mandan ellos.**
+ *
+ * **Los botones ya no la sueltan: la mueven**, que es otra forma de mandar y
+ * la que se ve. La palanca atascada no puede volver por ahí —cada toque de
+ * botón escribe en ella—, así que lo que queda que soltar es el teclado, que
+ * lleva su propia cuenta. Ver `setButtonThrottle`.
  */
-export function releasesTouchThrottle(
-  keyboard: number,
-  button: number,
-): boolean {
-  return keyboard !== 0 || button !== 0;
+export function releasesTouchThrottle(keyboard: number): boolean {
+  return keyboard !== 0;
 }
 
 /**

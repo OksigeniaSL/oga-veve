@@ -45,7 +45,9 @@
     "frecuencia": "node scripts/verificar-frecuencia.mjs",
     "tren": "node scripts/verificar-tren.mjs",
     "flaps": "node scripts/verificar-flaps.mjs",
-    "licencias": "node scripts/verificar-licencias.mjs"
+    "licencias": "node scripts/verificar-licencias.mjs",
+    "dedo": "node scripts/verificar-dedo.mjs",
+    "actualizar": "node scripts/verificar-actualizar.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",

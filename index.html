@@ -305,6 +305,16 @@
           <ellipse cx="8.4" cy="48.5" rx="3.4" ry="1.3" />
           <ellipse cx="15.6" cy="48.5" rx="3.4" ry="1.3" />
         </svg>
+        <!--
+          Y la palanca enseña dónde está: el punto recorre la palanca entera
+          —antes se movía once píxeles en ciento noventa—, el color llena
+          desde el ralentí hasta él, y tres muescas marcan ralentí, rodaje y
+          despegue. Ver src/flight/palanca-de-gas.ts.
+        -->
+        <span class="gas__relleno" aria-hidden="true"></span>
+        <span class="gas__marca gas__marca--despegue" aria-hidden="true"></span>
+        <span class="gas__marca gas__marca--rodaje" aria-hidden="true"></span>
+        <span class="gas__marca gas__marca--ralenti" aria-hidden="true"></span>
         <span class="pad__punto"></span>
       </div>
     </div>

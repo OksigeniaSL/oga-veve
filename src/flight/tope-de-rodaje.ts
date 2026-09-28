@@ -49,7 +49,7 @@ import { CONDUCE_EL_JUEGO, topeDeRodaje } from "./gobernador";
  * Nueve. Es el mismo número que usan la banda de velocidad y el plan, y por
  * eso está escrito con su nombre y no suelto: es **el** número.
  */
-const RODAJE = 9;
+export const RODAJE = 9;
 
 /**
  * Lo más que frena por su cuenta el tope de rodaje, de 0 a 1.
