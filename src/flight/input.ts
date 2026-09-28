@@ -11,6 +11,7 @@
 
 import { neutralControls, type ControlInputs } from "./model";
 import { mueveElTren, sePuedeMeter } from "./tren";
+import { mandoDelDedo } from "./palanca-de-mando";
 import {
   DETENTES,
   TARDAN_LOS_FLAPS,
@@ -933,15 +934,23 @@ export class InputManager {
     });
 
     if (stick) {
-      bindPad(stick, (x, y) => {
-        this.touchRoll = x;
-        this.touchPitch = -y;
-      });
+      bindPad(
+        stick,
+        (x, y) => {
+          this.touchRoll = x;
+          this.touchPitch = -y;
+        },
+        { redondo: true },
+      );
     }
     if (rudder)
-      bindPad(rudder, (x) => {
-        this.touchRudder = x;
-      });
+      bindPad(
+        rudder,
+        (x) => {
+          this.touchRudder = x;
+        },
+        { redondo: false },
+      );
     if (throttle) {
       // Con memoria: la palanca se queda donde la dejas al levantar el dedo,
       // como una palanca de gases de verdad. Antes compartía el
@@ -1129,25 +1138,40 @@ export function releasesTouchThrottle(keyboard: number): boolean {
 }
 
 /**
- * Convierte un elemento en un pad analógico. Devuelve coordenadas
- * normalizadas -1..1 respecto al centro del elemento, y las pone a cero al
- * levantar el dedo.
+ * Convierte un elemento en un pad analógico: la palanca de mando o el timón.
+ * Da el mando de −1 a 1 y pinta el punto **debajo del dedo**, con la cuenta
+ * de `mandoDelDedo`; al levantar el dedo, los dos vuelven al centro.
  */
 function bindPad(
   element: HTMLElement,
   onMove: (x: number, y: number) => void,
-  options: { springLoaded?: boolean } = {},
+  options: { springLoaded?: boolean; redondo: boolean },
 ): void {
   const springLoaded = options.springLoaded ?? true;
   let pointerId: number | null = null;
 
+  const pintar = (dx: number, dy: number): void => {
+    element.style.setProperty("--dx", `${dx.toFixed(1)}px`);
+    element.style.setProperty("--dy", `${dy.toFixed(1)}px`);
+  };
+
   const emit = (event: PointerEvent): void => {
     const rect = element.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
-    onMove(clamp(x, -1, 1), clamp(y, -1, 1));
-    element.style.setProperty("--x", String(clamp(x, -1, 1)));
-    element.style.setProperty("--y", String(clamp(y, -1, 1)));
+    /*
+     * En píxeles del mando y no de la pantalla: si algo por encima lo
+     * escalara, el punto se pintaría con otra regla que la del dedo. Ver
+     * `aPxDelHud` en `ui/escala.ts`, que resuelve lo mismo para el HUD.
+     */
+    const escala = element.offsetWidth > 0 ? rect.width / element.offsetWidth : 1;
+    const d = mandoDelDedo(
+      (event.clientX - (rect.left + rect.width / 2)) / escala,
+      (event.clientY - (rect.top + rect.height / 2)) / escala,
+      element.clientWidth,
+      element.clientHeight,
+      options.redondo,
+    );
+    onMove(d.x, d.y);
+    pintar(d.dx, d.dy);
   };
 
   element.addEventListener("pointerdown", (event) => {
@@ -1165,8 +1189,7 @@ function bindPad(
     // El acelerador no: se queda donde estaba.
     if (!springLoaded) return;
     onMove(0, 0);
-    element.style.setProperty("--x", "0");
-    element.style.setProperty("--y", "0");
+    pintar(0, 0);
   };
   element.addEventListener("pointerup", release);
   element.addEventListener("pointercancel", release);

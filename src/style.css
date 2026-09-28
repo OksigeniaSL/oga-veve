@@ -2504,7 +2504,14 @@ button.motor__tecla::after {
   border-radius: 50%;
   background: var(--ocre);
   opacity: 0.9;
-  transform: translate(calc(var(--x, 0) * 34%), calc(var(--y, 0) * 34%));
+  /*
+   * **Debajo del dedo**, en píxeles que calcula `mandoDelDedo` en
+   * `flight/palanca-de-mando.ts`. Aquí ponía un tercio del tamaño del propio
+   * punto —el porcentaje de un `translate` es del elemento, no del mando—, y
+   * el punto se movía once píxeles con la palanca a fondo: el mismo defecto
+   * que tuvo la palanca de gases.
+   */
+  transform: translate(var(--dx, 0px), var(--dy, 0px));
 }
 
 .pad--stick {

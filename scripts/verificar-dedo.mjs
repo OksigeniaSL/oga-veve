@@ -394,13 +394,67 @@ async function unTelefono(quien) {
     }, modo);
 
   const mando = await caja(".pad--stick");
+  /*
+   * **Lo que recorre el punto del mando desde el centro, px**: el mando
+   * llega a fondo justo donde se para el punto, y eso es su borde menos el
+   * filo, el margen y el radio del punto. Las cuentas de `mandoDelDedo` en
+   * `flight/palanca-de-mando.ts`: dos de filo, cuatro de margen y un punto
+   * de treinta y cuatro.
+   */
+  const RECORRIDO_DEL_MANDO = mando.w / 2 - 2 - 4 - 17;
+  const centroDelMando = { x: mando.x + mando.w / 2, y: mando.y + mando.h / 2 };
   /** El pulgar izquierdo en la palanca de mando: alabeo y cabeceo, −1 a 1. */
   const volantear = async (alabeo, cabeceo = 0) => {
-    const x = mando.x + ((alabeo + 1) / 2) * mando.w;
+    const x = centroDelMando.x + alabeo * RECORRIDO_DEL_MANDO;
     // Arriba es morro arriba en este juego: ver el cabeceo en `input.ts`.
-    const y = mando.y + ((1 - cabeceo) / 2) * mando.h;
+    const y = centroDelMando.y - cabeceo * RECORRIDO_DEL_MANDO;
     if (puestos.has(DEDO_PALANCA)) await mover(DEDO_PALANCA, x, y);
     else await bajar(DEDO_PALANCA, x, y);
+  };
+  /*
+   * **Y el punto del mando, debajo del dedo.** Se movía once píxeles con la
+   * palanca a fondo —el tercio del propio punto—, el mismo defecto que tuvo
+   * la de gases. Se mide con el dedo puesto: a media palanca en diagonal y a
+   * fondo hacia arriba, el centro del punto tiene que estar donde el dedo, y
+   * el mando tiene que decir lo que el dedo pide.
+   */
+  let puntoDelMando = null;
+  const medirElPuntoDelMando = async () => {
+    const resultados = [];
+    for (const [alabeo, cabeceo] of [
+      [0.5, -0.5],
+      [0, 1],
+      [-1, 0],
+    ]) {
+      await volantear(alabeo, cabeceo);
+      await pausa(120);
+      const p = await caja(".pad--stick .pad__punto");
+      const dedo = puestos.get(DEDO_PALANCA);
+      const pide = await page.evaluate(() => ({
+        alabeo: globalThis.__oga.controles().aileron,
+      }));
+      resultados.push({
+        lejos: Math.hypot(p.x + p.w / 2 - dedo.x, p.y + p.h / 2 - dedo.y),
+        aparta: Math.hypot(
+          p.x + p.w / 2 - centroDelMando.x,
+          p.y + p.h / 2 - centroDelMando.y,
+        ),
+        alabeo,
+        pide: pide.alabeo,
+      });
+    }
+    await soltarVolante();
+    await pausa(120);
+    const suelto = await caja(".pad--stick .pad__punto");
+    return {
+      peor: Math.max(...resultados.map((r) => r.lejos)),
+      aFondo: resultados[2].aparta,
+      soltado: Math.hypot(
+        suelto.x + suelto.w / 2 - centroDelMando.x,
+        suelto.y + suelto.h / 2 - centroDelMando.y,
+      ),
+      resultados,
+    };
   };
   const soltarVolante = async () => {
     if (puestos.has(DEDO_PALANCA)) await subir(DEDO_PALANCA);
@@ -411,6 +465,9 @@ async function unTelefono(quien) {
   await pausa(1500);
   let s = await leer();
   comprobar(et("la llave se toca en su tarjeta y arranca"), s.motor, `motor ${s.motor}`);
+
+  // Con el avión parado y el freno puesto, antes de rodar: el punto del mando.
+  puntoDelMando = await medirElPuntoDelMando();
 
   gestos = 0;
   await ponerGas(rodaje);
@@ -532,6 +589,20 @@ async function unTelefono(quien) {
   for (const id of [...puestos.keys()]) await subir(id);
   s = await leer();
 
+  comprobar(
+    et("palanca de mando: el punto va debajo del dedo en todo su recorrido"),
+    puntoDelMando !== null &&
+      puntoDelMando.peor <= 2 &&
+      puntoDelMando.aFondo >= RECORRIDO_DEL_MANDO - 2 &&
+      puntoDelMando.soltado <= 1,
+    puntoDelMando === null
+      ? "no se midió"
+      : `el punto a ${puntoDelMando.peor.toFixed(1)} px del dedo en lo peor · ` +
+          `a fondo se aparta ${puntoDelMando.aFondo.toFixed(0)} px de ${RECORRIDO_DEL_MANDO.toFixed(0)} · ` +
+          `soltado, a ${puntoDelMando.soltado.toFixed(1)} px del centro · alabeo pedido ${puntoDelMando.resultados
+            .map((r) => `${r.alabeo}→${r.pide.toFixed(2)}`)
+            .join(" ")}`,
+  );
   comprobar(
     et("rodar: la palanca en la marca de rodaje, de un toque"),
     gestosParaRodar === 1 && rodandoMax > 3,
