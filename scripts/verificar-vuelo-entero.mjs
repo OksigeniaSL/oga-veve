@@ -678,10 +678,86 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       e: +mandos.elevator.toFixed(3),
       g: +mandos.throttle.toFixed(2),
       vy: +s.velocity.y.toFixed(1),
+      // Y la senda que vuela el automático, si la hay: lo que pide y lo que
+      // lleva pedido. Ver `volarLaSenda`.
+      sr: senda ? +senda.ritmo.toFixed(2) : null,
+      mr: memoriaDeSenda ? +memoriaDeSenda.ritmo.toFixed(2) : null,
     });
+  };
+  /*
+   * **Y la senda de un reactor, con el morro del piloto automático del
+   * juego**, fotograma a fotograma.
+   *
+   * La ley de altura de este banco manda palanca en proporción al ritmo de
+   * bajada que falta, y se afinó con avionetas. Volando la final de un
+   * reactor a su Vref de verdad —ver `quiere` en la final— se descubrió lo
+   * que tapaba ir despacio: el morro del JAZ 90 responde en un período de
+   * cinco segundos y apenas amortiguado, y esa ley lo lleva de −0,3 a +0,15
+   * de palanca cada cuatro segundos, con el ángulo de ataque de −9° a +11° y
+   * la carga de 0,4 a 1,7 g. Medido con la traza del ala. Antes no se veía
+   * porque a 0,91 de la Vref el suelo de velocidad le prohibía tirar casi
+   * siempre, y eso hacía de amortiguador — a costa de ir al borde del
+   * avisador.
+   *
+   * Un piloto de reactor no vuela así la final: la vuela con el automático
+   * enganchado hasta los mínimos, o a mano con cambios de actitud de un
+   * grado. El juego tiene uno con los topes de uno de verdad —carga, giro del
+   * morro y alabeo; ver `flight/piloto-automatico.ts`— y se usa aquí tal
+   * cual, en el gancho de cada fotograma: a diez veces por segundo su lazo de
+   * cabeceo oscila con el reactor, y a sesenta va suave. El gas sigue siendo
+   * el de este banco.
+   */
+  const { mandosPara, memoriaNueva } = await import(
+    "/src/flight/piloto-automatico.ts"
+  );
+  /** La senda que vuela el automático: altitud, su ritmo y desde cuándo. */
+  let senda = null;
+  let memoriaDeSenda = null;
+  let relojDeSenda = null;
+  const volarLaSenda = (mandos) => {
+    const s = o.estado();
+    if (!senda || s.onGround) {
+      memoriaDeSenda = null;
+      relojDeSenda = null;
+      return;
+    }
+    const ahora = o.reloj();
+    const dt =
+      relojDeSenda === null
+        ? 1 / 60
+        : Math.max(1 / 240, Math.min(0.1, ahora - relojDeSenda));
+    relojDeSenda = ahora;
+    const engancha = memoriaDeSenda === null;
+    if (engancha) memoriaDeSenda = memoriaNueva();
+    const actitud = o.actitud();
+    const r = mandosPara(
+      {
+        heading: s.heading,
+        alabeo: actitud.alabeo,
+        cabeceo: actitud.cabeceo,
+        altitud: s.position.y,
+        vertical: s.velocity.y,
+        velocidad: (o.velocidadDeCabina?.() ?? 0) / 1.94384,
+        gas: mandos.throttle,
+        verdadera: s.airspeed,
+        ritmoDeCabeceo: s.pitchRate,
+        // Lo que lleva la palanca al engancharlo, para no dar un tirón.
+        timon: engancha ? mandos.elevator : undefined,
+      },
+      {
+        rumbo: null,
+        altitud: senda.altitud + senda.ritmo * (ahora - senda.desde),
+        ritmo: senda.ritmo,
+        velocidad: null,
+      },
+      dt,
+      memoriaDeSenda,
+    );
+    mandos.elevator = r.elevator;
   };
   o.pilotar((mandos) => {
     Object.assign(mandos, c);
+    volarLaSenda(mandos);
     limitarElAngulo(mandos);
     apuntarElAla(mandos);
   });
@@ -930,6 +1006,48 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const NECESITA_TECNICA = (suyas.crucero ?? 0) > AJUSTADO_HASTA;
   const ganancia = (s) =>
     Math.min(1, (AJUSTADO_HASTA / Math.max(1, s.airspeed)) ** 2);
+
+  /**
+   * **La verdadera que toca para volar una indicada, aquí y ahora**, m/s.
+   *
+   * El piloto del banco pilota con `airspeed`, que es la verdadera, y la
+   * Vref de la ficha es **indicada**: es la que marca el anemómetro y la que
+   * dice dónde está la pérdida. A nivel del mar son lo mismo; en Los Rodeos,
+   * a seiscientos metros y con calor, la misma indicada es un cuatro por
+   * ciento más de verdadera. Volando la Vref como verdadera, el JAZ 90 iba
+   * allí por debajo de su Vref sin saberlo. La proporción se le pregunta al
+   * propio anemómetro del juego.
+   */
+  const enVerdadera = (s, indicada) => {
+    const nudos = o.velocidadDeCabina?.() ?? 0;
+    return nudos > 20 ? (indicada * s.airspeed) / (nudos / 1.94384) : indicada;
+  };
+  /**
+   * **Lo que se suma a la Vref para volar la final**, m/s: cinco nudos.
+   *
+   * La velocidad de aproximación de un reactor es la Vref más un margen —el
+   * mínimo de cinco nudos, más con viento racheado— y se cruza el umbral a
+   * la Vref. Es el colchón que hace que una racha no deje al avión debajo de
+   * su Vref, que ya está a un treinta por ciento de la pérdida.
+   */
+  const ADITIVO_DE_FINAL = 5 * 0.514444;
+  /**
+   * **A cuántos metros de ruedas se quita el gas en un reactor**: quince,
+   * unos cincuenta pies.
+   *
+   * Es el *retard*: lo que deja al avión tocar a su Vref y no a la de la
+   * final, cinco nudos más. Sin él, el JAZ 90 tocaba a 76 m/s con los flaps
+   * de aterrizaje, el ala lo volvía a subir cinco metros y un tercio de la
+   * frenada iba por el aire. Medido con la traza del ala.
+   *
+   * Y no hay recogida más allá de eso: se probó a pedirle al automático que
+   * bajara cada vez más despacio en los últimos metros, y gira la trayectoria
+   * a su ritmo de comodidad —una décima de g, con un morro que tarda cinco
+   * segundos—, así que en los tres segundos que quedan no cambiaba nada. Toca
+   * bajando a menos de cuatro metros por segundo, que ya es la mitad de lo que
+   * bajaba con la ley de antes.
+   */
+  const SIN_GAS_A = 15;
 
   const palancaPorVelocidad = (s, objetivo, extra = 0) =>
     ganancia(s) *
@@ -2103,6 +2221,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
+    // La senda del automático solo vale en la final de un reactor, y se
+    // vuelve a poner en cada vuelta mientras dure. Ver `volarLaSenda`.
+    senda = null;
     if (fase === "aterrizado" && ruedasAlAterrizar === null)
       ruedasAlAterrizar = {
         t: +t.toFixed(1),
@@ -3108,7 +3229,42 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       if (!f || !u) return { etapa: "sin destino", destino };
       const alli = u.suelo;
       const aproximacion = o.avion().aproximacion;
-      o.colocar(f.x, alli + (4000 + 250) * SENDA, f.z, aproximacion + 3, f.h);
+      const enLaSenda = alli + (4000 + 250) * SENDA;
+      o.colocar(f.x, enLaSenda, f.z, aproximacion + 3, f.h);
+      /*
+       * **Y un reactor llega a los cuatro kilómetros estabilizado, como uno de
+       * verdad**: tren fuera, flaps de aterrizaje y a su velocidad de
+       * aproximación en indicada.
+       *
+       * Se colocaba limpio —tren dentro y flaps arriba, como venía de la
+       * subida— y a la Vref más tres metros por segundo en verdadera. Limpio,
+       * el JAZ 90 entra en pérdida a su Vref —esa Vref es la de los flaps
+       * fuera—, y en Los Rodeos, con el aire del día, 71 m/s de verdadera eran
+       * justo su pérdida limpia: aparecía ya con el avisador sonando, se tiraba
+       * abajo para coger velocidad y los flaps tardaban dieciocho segundos en
+       * salir. Cinco «stall, stall» antes de tener flaps, medidos con la traza
+       * del ala. Ningún avión de línea llega así a tres millas: a mil pies ya
+       * va configurado y a su velocidad, o se va al aire.
+       *
+       * Configurar de golpe es tan teletransporte como la posición y la
+       * velocidad, y por el mismo motivo: el trayecto entre islas no se vuela.
+       * Los flaps y el tren se ponen donde tienen que estar —su palanca y su
+       * posición—; desde aquí se mueven solos como siempre.
+       */
+      if (NECESITA_TECNICA) {
+        o.colocar(
+          f.x,
+          enLaSenda,
+          f.z,
+          enVerdadera(o.estado(), aproximacion + ADITIVO_DE_FINAL),
+          f.h,
+        );
+        o.pedirTren?.(true);
+        o.pedirFlaps?.(1);
+        const mandos = o.controles();
+        mandos.tren = 1;
+        mandos.flaps = 1;
+      }
       await new Promise((r) => setTimeout(r, 500));
       enElDestino = o.campoDeAhora();
       // La frecuencia de allí empieza de cero: lo que se dio aquí, aquí se queda.
@@ -3318,8 +3474,32 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * como proporción, la avioneta vuela exactamente como volaba y el de
        * fuselaje ancho cruza a sesenta y ocho en vez de a treinta.
        */
+      /*
+       * **Y un reactor, a su Vref de verdad: en indicada y con su margen.**
+       *
+       * El 0,91 de arriba está afinado con avionetas que vuelan la final sin
+       * flaps, y a ellas les deja un diecinueve por ciento sobre su pérdida
+       * limpia. A un reactor con los flaps de aterrizaje le dejaba un trece
+       * —y en Los Rodeos, en verdadera, un once—: medido con la traza del
+       * ala, el JAZ 90 volaba la final entre 1,11 y 1,20 veces su pérdida con
+       * todo fuera, y cada tirón de la ley de altura de 1,2 g lo metía en el
+       * avisador, que va al 1,07. Catorce «stall, stall» en una final que un
+       * avión de verdad vuela a la Vref más cinco nudos, a 1,3 veces su
+       * pérdida y sin que el avisador diga nada. El avisador tenía razón; el
+       * que volaba mal era este piloto.
+       *
+       * La recogida se queda como estaba: por debajo de treinta metros el
+       * avisador ya no canta, y ahí se deja de volar para posarse.
+       */
       const deAproximacion = suyas.aproximacion ?? 33;
-      const quiere = falta < 60 ? deAproximacion * 0.73 : deAproximacion * 0.91;
+      const quiere = NECESITA_TECNICA
+        ? enVerdadera(
+            s,
+            falta < 60 ? deAproximacion * 0.73 : deAproximacion + ADITIVO_DE_FINAL,
+          )
+        : falta < 60
+          ? deAproximacion * 0.73
+          : deAproximacion * 0.91;
       /*
        * **Y el gas también vuela la senda, no solo la velocidad.**
        *
@@ -3406,6 +3586,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * perdonan llegar bajo, y el avión acababa dentro igual.
        */
       c.elevator = aLaAltura(s, objetivo, quiere);
+      /*
+       * Y un reactor, con el morro del automático por la misma senda: la
+       * altura que pide, y el ritmo al que baja por el suelo. Ver
+       * `volarLaSenda`. Y a cincuenta pies, gas fuera: ver `SIN_GAS_A`.
+       */
+      const ruedas = alto(s) - (suyas.tren ?? 0);
+      if (NECESITA_TECNICA && ruedas <= SIN_GAS_A) c.throttle = 0;
+      if (NECESITA_TECNICA)
+        senda = {
+          altitud: s.position.y + (objetivo - alto(s)),
+          ritmo: objetivo > 0 ? -porElSuelo(s) * SENDA : 0,
+          desde: o.reloj(),
+        };
       // Y en final, ya configurado del todo: tren fuera y flaps. Ver
       // `configurar`, que en el tramo 4 pide las dos cosas.
       configurar(s, c, 4);
@@ -3508,7 +3701,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       antesDeFrenar = { x: s.position.x, z: s.position.z };
       c.throttle = 0;
-      c.elevator = 0;
+      /*
+       * **Y un reactor, con el morro abajo.** Tocando a su Vref con los flaps
+       * de aterrizaje, el ala todavía sostiene el avión entero: con la
+       * palanca en el centro, el JAZ 90 volvía a volar cinco metros y un
+       * tercio de la frenada iba por el aire. Uno de verdad saca los
+       * aerofrenos del suelo y baja la rueda de morro en cuanto toca; aquí no
+       * hay aerofrenos, y bajar el morro es lo que queda.
+       */
+      c.elevator = NECESITA_TECNICA ? -0.3 : 0;
       c.brakes = 1;
       c.aileron = alRumbo(s, rumboPista);
       /*
@@ -5127,6 +5328,31 @@ const NUMERO_EN_UNA_BOCA =
       ? seguidos.slice(0, 6).join(" · ")
       : `${lentos.length} de ir lento y ${rapidos.length} de ir rápido o bajar de golpe, ninguno a menos de ${SEGUIDOS} s del otro`,
     "«le meto gas y “bajás muy rápido”, pero si estoy tomando tierra ¿qué se supone que tengo que hacer?»",
+  );
+}
+
+/*
+ * **Y en un vuelo normal no suena el avisador de pérdida.**
+ *
+ * El JAZ 90 cantaba «stall, stall» catorce veces en la final de Los Rodeos y
+ * el banco lo daba por bueno, porque nada lo contaba. El avisador estaba bien
+ * —sonaba al siete por ciento de la pérdida de los flaps que llevaba, como
+ * uno de verdad—; lo que estaba mal era el piloto del banco, que llegaba a la
+ * final limpio y la volaba por debajo de la Vref. Un piloto que vuela como
+ * se vuela no lo oye nunca: si suena, algo de los dos se ha torcido, y cada
+ * canto lleva al lado el ángulo, la carga y los flaps para saber cuál.
+ */
+{
+  const cantos = (vuelo.cantados ?? []).filter((c) =>
+    /^stall, stall→/.test(String(c)),
+  );
+  comprobar(
+    "y en un vuelo normal no suena el avisador de pérdida",
+    cantos.length === 0,
+    cantos.length
+      ? `${cantos.length}: ${cantos.slice(0, 4).join(" · ")}`
+      : `ni una vez${TRAMO === "guyrami" ? " (en Guyrami no hay pérdida)" : ""}`,
+    "«suena “stall, stall” entre 18 y 21 veces en la final»",
   );
 }
 
