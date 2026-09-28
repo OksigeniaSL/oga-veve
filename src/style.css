@@ -377,6 +377,79 @@ body {
 }
 
 /*
+ * Tocado, la flecha gira hasta que la página se recarga: entre el toque y la
+ * recarga pasa un segundo, y un segundo sin respuesta se lee como un botón
+ * que no va. Ver `estrenar` en `main.ts`.
+ */
+.version-nueva--yendo {
+  border-color: var(--precaucion, #ffb454);
+  cursor: progress;
+}
+
+.version-nueva--yendo svg {
+  animation: version-nueva-gira 0.9s linear infinite;
+}
+
+@keyframes version-nueva-gira {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .version-nueva--yendo svg {
+    animation: none;
+  }
+}
+
+/*
+ * **Con el dedo, arriba en el centro y no en la esquina de abajo.**
+ *
+ * La esquina de abajo a la derecha es la del pulgar derecho: ahí vive la
+ * palanca de gases. El botón caía encima de su tercio de abajo —el ralentí—,
+ * así que tapaba justo la posición a la que se va para parar, y quien bajaba
+ * el gas a fondo con prisa podía recargar la página en mitad del rodaje.
+ * Arriba en el centro, a la altura de la fila de botones, no hay ningún mando
+ * de pulgar.
+ */
+@media (pointer: coarse) {
+  .version-nueva {
+    top: max(8px, env(safe-area-inset-top));
+    bottom: auto;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    min-height: 44px;
+  }
+}
+
+/*
+ * Y en el teléfono apaisado, solo la flecha: la fila de arriba va llena —la
+ * orden y los pictogramas a la izquierda, lo que enciende el vuelo a la
+ * derecha— y con la frase entera el botón se montaba encima del último
+ * pictograma. La flecha que vuelve sobre sí misma es el dibujo de «recargar»
+ * de cualquier teléfono; la frase queda como nombre del botón para quien no
+ * ve la pantalla. Ver `avisarDeLaVersionNueva` en `main.ts`.
+ */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .version-nueva {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .version-nueva span {
+    display: none;
+  }
+
+  .version-nueva svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/*
  * ── El compensador ──
  *
  * Una vía vertical con su centro marcado y una aguja. Sale **solo cuando está
