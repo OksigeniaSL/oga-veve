@@ -14,18 +14,21 @@ import {
   CircleGeometry,
   Clock,
   DoubleSide,
+  Euler,
   Group,
   MathUtils,
   Mesh,
   MeshBasicMaterial,
   Object3D,
   PerspectiveCamera,
+  Quaternion,
   Scene,
   SRGBColorSpace,
   Vector3,
   WebGLRenderer,
 } from "three";
 import { CoefficientFlightModel } from "./flight/fdm";
+import { pendienteBajoElTren } from "./world/pendiente-bajo-el-tren";
 import { ArcadeFlightModel, MOTOR_QUE_SOSTIENE } from "./flight/arcade";
 import {
   GUYRAMI,
@@ -13114,6 +13117,7 @@ export class Game {
     const state = this.flight.state;
     this.aircraftMesh.group.position.copy(state.position);
     this.aircraftMesh.group.quaternion.copy(state.orientation);
+    this.inclinarConElSuelo(state, dt);
 
     // La hélice gira con el motor. No se intenta reproducir las rpm reales:
     // se busca que se vea girar y que el ritmo suba al acelerar.
@@ -13141,6 +13145,42 @@ export class Game {
     }
 
     this.updateBlobShadow(state);
+  }
+
+  /** La inclinación del suelo que lleva ahora el dibujo, rad. */
+  private readonly conElSuelo = { cabeceo: 0, alabeo: 0 };
+  private readonly giroConElSuelo = new Quaternion();
+  private readonly eulerConElSuelo = new Euler();
+
+  /**
+   * **En tierra, el avión dibujado se inclina con el suelo**, que si no
+   * apoya una pata y mete las otras en el hormigón: ver
+   * `pendiente-bajo-el-tren.ts`. Con un poco de retardo, que el relieve va por
+   * casillas y a paso de rodaje cada una sería un respingo; y al despegar se
+   * suelta igual de suave.
+   */
+  private inclinarConElSuelo(state: FlightState, dt: number): void {
+    const quiere = state.onGround
+      ? pendienteBajoElTren(
+          (x, z) => this.terrain.sampleSurface(x, z),
+          state.position.x,
+          state.position.z,
+          state.heading,
+          this.aircraft.batalla,
+          // La vía del tren principal, más o menos la sexta parte del ala en
+          // toda la flota: la inclinación de lado es la parte pequeña.
+          this.aircraft.wingSpan / 6,
+        )
+      : { cabeceo: 0, alabeo: 0 };
+    // Recién puesto en el suelo, sin retardo: el primer dibujo ya apoya.
+    const k = dt > 0 && dt < 1 ? 1 - Math.exp(-dt * 8) : 1;
+    this.conElSuelo.cabeceo += (quiere.cabeceo - this.conElSuelo.cabeceo) * k;
+    this.conElSuelo.alabeo += (quiere.alabeo - this.conElSuelo.alabeo) * k;
+    if (!this.conElSuelo.cabeceo && !this.conElSuelo.alabeo) return;
+    // El morro está en la z negativa: cabeceo sobre la x, alabeo sobre la z.
+    this.eulerConElSuelo.set(this.conElSuelo.cabeceo, 0, this.conElSuelo.alabeo);
+    this.giroConElSuelo.setFromEuler(this.eulerConElSuelo);
+    this.aircraftMesh.group.quaternion.multiply(this.giroConElSuelo);
   }
 
   /**
