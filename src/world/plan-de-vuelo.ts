@@ -607,6 +607,24 @@ const TOPE_DE_ACERCAMIENTO = 2;
 export const VUELTA_EN_U = (120 * Math.PI) / 180;
 
 /**
+ * **A qué distancia se mira dentro de una media vuelta de la raya**, m, de la
+ * más larga a la más corta. Ver `asistencia`.
+ *
+ * Diez, seis y tres: una media vuelta de radio de giro de avioneta —de cuatro
+ * a nueve metros— tiene medio perímetro de trece a veintiocho, así que la
+ * primera que cae por delante está dentro de la curva y no pasada.
+ */
+const MIRADAS_EN_LA_VUELTA = [10, 6, 3] as const;
+
+/**
+ * Cuánto se puede estar de la raya para que su media vuelta se tome, m.
+ *
+ * La holgura de la ayuda —medio ancho de calle— y un poco más: fuera de eso
+ * el avión no va por la raya, y lo que tenga detrás no es una vuelta suya.
+ */
+const EN_LA_RAYA_PARA_VOLVER = 8;
+
+/**
  * El error de rumbo para ir de un sitio a otro, en radianes y entre ±π.
  *
  * Suelto y exportado porque es la cuenta con la que la ayuda de rodaje decide
@@ -908,15 +926,21 @@ function redondear(
   radio: number,
   /** Con qué radio se dibuja una media vuelta. Ver `MEDIA_VUELTA`. */
   radioDeVuelta = radio,
-): { puntos: Punto[]; radios: number[] } {
+): { puntos: Punto[]; radios: number[]; vueltas: boolean[] } {
   if (pts.length < 3)
     return {
       puntos: pts.map((p) => [...p] as Punto),
       radios: pts.map(() => Infinity),
+      vueltas: pts.map(() => false),
     };
 
   const puntos: Punto[] = [[...pts[0]!] as Punto];
   const radios: number[] = [Infinity];
+  /*
+   * Y qué puntos son de una media vuelta, que el perfil de velocidad trata
+   * aparte: ver `alisarRuta` y `calcularVelocidades`.
+   */
+  const vueltas: boolean[] = [false];
 
   for (let i = 1; i < pts.length - 1; i++) {
     const a = pts[i - 1]!;
@@ -936,6 +960,7 @@ function redondear(
     if (giro < 0.05) {
       puntos.push([...b] as Punto);
       radios.push(Infinity);
+      vueltas.push(false);
       continue;
     }
 
@@ -970,6 +995,7 @@ function redondear(
           c[1] + u1[1] * r * Math.cos(th) + n[1] * r * Math.sin(th),
         ] as Punto);
         radios.push(r);
+        vueltas.push(true);
       }
       continue;
     }
@@ -990,12 +1016,14 @@ function redondear(
         m * p1[1] + 2 * (1 - t) * t * b[1] + t * t * p2[1],
       ] as Punto);
       radios.push(r);
+      vueltas.push(false);
     }
   }
 
   puntos.push([...pts[pts.length - 1]!] as Punto);
   radios.push(Infinity);
-  return trocear(puntos, radios);
+  vueltas.push(false);
+  return trocear(puntos, radios, vueltas);
 }
 
 /**
@@ -1036,13 +1064,22 @@ export function alisarRuta(
   /** El radio de giro del avión, para las medias vueltas. Ver `redondear`. */
   radioDeVuelta = RADIO_CURVA,
 ): { puntos: Punto[]; radios: number[]; exactos: boolean[] } {
+  /*
+   * **Y una media vuelta que dibuja el redondeo es tan media vuelta como la
+   * del back-taxi**: la raya que entra en la pista por una calle que llega al
+   * revés —en Silvio Pettirossi, la del punto de espera— da la vuelta en
+   * cuatro metros y medio de radio, y con el suelo de seis metros por segundo
+   * de las curvas el perfil pedía tomarla a una velocidad a la que ningún
+   * avión la da. Se marca como exacta, que es lo que el perfil de velocidad
+   * sabe tomar a paso de persona. Ver `calcularVelocidades`.
+   */
   if (
     exactaDesde === undefined ||
     exactaDesde <= 0 ||
     exactaDesde >= crudos.length - 1
   ) {
     const r = redondear(sinTemblor(crudos), RADIO_CURVA, radioDeVuelta);
-    return { ...r, exactos: r.puntos.map(() => false) };
+    return { puntos: r.puntos, radios: r.radios, exactos: r.vueltas };
   }
   // Lo de antes, alisado como siempre, y acabando justo donde empieza el arco:
   // los extremos no los mueve ni el quitatemblores ni el redondeo.
@@ -1062,7 +1099,7 @@ export function alisarRuta(
   return {
     puntos: [...antes.puntos, ...sigue],
     radios: [...antes.radios, ...exacta.radios.slice(1)],
-    exactos: [...antes.puntos.map(() => false), ...sigue.map(() => true)],
+    exactos: [...antes.vueltas, ...sigue.map(() => true)],
   };
 }
 
@@ -1076,10 +1113,13 @@ export function alisarRuta(
 function trocear(
   puntos: readonly Punto[],
   radios: readonly number[],
-): { puntos: Punto[]; radios: number[] } {
-  if (!puntos.length) return { puntos: [], radios: [] };
+  /** Qué puntos son de una media vuelta; los que se meten, no. */
+  vueltas: readonly boolean[] = [],
+): { puntos: Punto[]; radios: number[]; vueltas: boolean[] } {
+  if (!puntos.length) return { puntos: [], radios: [], vueltas: [] };
   const densos: Punto[] = [puntos[0]!];
   const densosRadios: number[] = [radios[0]!];
+  const densasVueltas: boolean[] = [vueltas[0] ?? false];
   for (let i = 1; i < puntos.length; i++) {
     const a = puntos[i - 1]!;
     const b = puntos[i]!;
@@ -1092,11 +1132,13 @@ function trocear(
         a[1] + (b[1] - a[1]) * t,
       ] as Punto);
       densosRadios.push(Infinity);
+      densasVueltas.push(false);
     }
     densos.push(b);
     densosRadios.push(radios[i]!);
+    densasVueltas.push(vueltas[i] ?? false);
   }
-  return { puntos: densos, radios: densosRadios };
+  return { puntos: densos, radios: densosRadios, vueltas: densasVueltas };
 }
 
 export class PlanDeVuelo {
@@ -2362,14 +2404,56 @@ export class PlanDeVuelo {
      * el final de la ruta, que queda a la espalda, y ahí la ayuda sigue
      * callándose como tiene que hacer.
      */
-    const adelante = this.puntoDeLaRutaTrasMi(
+    let adelante = this.puntoDeLaRutaTrasMi(
       p,
       Math.max(15, estado.airspeed * 2),
     );
-    const haciaDondeToca = adelante
+    let haciaDondeToca = adelante
       ? errorDeRumbo(p, estado.heading, adelante)
       : contra;
-    if (Math.abs(haciaDondeToca) > VUELTA_EN_U) return 0;
+    /*
+     * **Y donde el juego conduce del todo, la media vuelta de la propia raya
+     * se toma.**
+     *
+     * El guardia de arriba está para cuando el sitio que toca ha quedado a la
+     * espalda porque **el avión** se pasó —la boca de una salida—, y ahí dar
+     * la vuelta es cosa de quien pilota. Pero hay otra forma de tener el punto
+     * detrás: que **la raya** dé la vuelta, porque la calle llega a la pista
+     * al revés del despegue. Es el punto de espera de Silvio Pettirossi: la
+     * calle entra en diagonal hacia el sur, el despegue es hacia el norte y
+     * la raya dibuja una media vuelta de cuatro metros y medio. Mirando quince
+     * metros por delante, el punto caía pasada la vuelta, a la espalda, y la
+     * ayuda se callaba justo en ella: con la verde y sin tocar el volante, el
+     * JAZ 20 seguía recto por la pista y fuera. Medido con
+     * `verificar-verde-sin-volante`.
+     *
+     * En Guyrami eso no puede quedar en manos de quien tiene cuatro años. Si
+     * el avión va sobre la raya, se mira más cerca —dentro de la vuelta—
+     * hasta encontrar un punto por delante, y se toma. Con el avión fuera de
+     * la raya, o en los peldaños donde la curva es de quien juega, el guardia
+     * sigue mandando.
+     */
+    let tomaLaVuelta = false;
+    if (
+      Math.abs(haciaDondeToca) > VUELTA_EN_U &&
+      anticipa >= 1 &&
+      mejor < EN_LA_RAYA_PARA_VOLVER
+    ) {
+      for (const cerca of MIRADAS_EN_LA_VUELTA) {
+        const q = this.puntoDeLaRutaTrasMi(p, cerca);
+        if (!q) break;
+        adelante = q;
+        haciaDondeToca = errorDeRumbo(p, estado.heading, q);
+        if (Math.abs(haciaDondeToca) <= VUELTA_EN_U) break;
+      }
+      /*
+       * Y si ni a tres metros queda por delante —el avión llegó a la vuelta
+       * con el morro todavía como venía la calle—, se gira hacia ese punto
+       * igual: la raya da la vuelta aquí mismo y el avión va encima de ella.
+       */
+      tomaLaVuelta = true;
+    }
+    if (!tomaLaVuelta && Math.abs(haciaDondeToca) > VUELTA_EN_U) return 0;
 
     /*
      * Seis metros de holgura: medio ancho de calle. Dentro de eso no se toca

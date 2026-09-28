@@ -41,7 +41,11 @@ import type { ControlInputs, FlightState } from "./model";
 import type { Tier } from "./tiers";
 import type { Fase } from "./vuelo";
 import type { Vista } from "../world/plan-de-vuelo";
-import { CONDUCE_EL_JUEGO, topeDeRodaje } from "./gobernador";
+import {
+  anticipacionDeRodaje,
+  CONDUCE_EL_JUEGO,
+  topeDeRodaje,
+} from "./gobernador";
 
 /**
  * La velocidad de rodaje, m/s, para cuando el plan no sugiere ninguna.
@@ -104,6 +108,7 @@ export function laVelocidadEsDelJuego(
   if (tier.assists.taxiAssist < CONDUCE_EL_JUEGO) return false;
   if (!estado.onGround) return false;
   if (vista?.fase === "back-taxi") return true;
+  if (entraConElJuego(tier, vista)) return true;
   if (estado.onRunway) return false;
   if (!vista || vista.luzVerde) return false;
   return RODANDO_DE_VERDAD.has(vista.fase);
@@ -126,6 +131,37 @@ export function laVelocidadEsDelJuego(
  */
 function esBackTaxi(vista: Vista | null): boolean {
   return vista?.fase === "back-taxi";
+}
+
+/**
+ * **Y en Guyrami, de la luz verde a estar alineado también se rueda.**
+ *
+ * La verde devuelve el gas a quien juega —«autorizado, mandás vos»— y en los
+ * peldaños de arriba está bien: de ahí a la pista se va como uno quiera. En
+ * el de los de cuatro años no, porque ahí **el juego conduce**, y el trecho
+ * de la doble raya a la pista es el más retorcido del rodaje: en Silvio
+ * Pettirossi la calle llega a la pista en diagonal hacia el sur y el
+ * despegue es hacia el norte, así que la raya da media vuelta al entrar.
+ * Medido con `verificar-verde-sin-volante`: con la verde y sin tocar el
+ * volante, el JAZ 20 cogía la curva hacia el sur, no podía con la media
+ * vuelta a siete metros por segundo y seguía recto por la pista y fuera; con
+ * el gas a fondo, a treinta metros por segundo por la calle y contra un
+ * edificio. Un niño de cuatro años no gira eso solo, y ese peldaño promete
+ * llevarle.
+ *
+ * Así que ahí el tope sigue puesto hasta estar **alineado en el eje**: en
+ * «autorizado», camino de la pista, y en «alineando», ya en ella. En cuanto
+ * el avión está derecho la fase pasa a «despegando» y el gas vuelve a ser de
+ * quien juega, que es lo que hace un piloto de verdad: se alinea rodando y
+ * entonces mete motor. Por eso el portero es la fase de alinearse y no la
+ * pista: la carrera no empieza en la calle, empieza en el eje.
+ *
+ * Solo donde el juego conduce del todo —ver `anticipacionDeRodaje`—: en Tukã
+ * la curva ya es de quien juega, y el gas con ella.
+ */
+function entraConElJuego(tier: Tier, vista: Vista | null): boolean {
+  if (anticipacionDeRodaje(tier.assists.taxiAssist) < 1) return false;
+  return vista?.fase === "autorizado" || vista?.fase === "alineando";
 }
 
 export function limitarElRodaje(
@@ -188,7 +224,13 @@ export function limitarElRodaje(
    * de echar más leña.
    */
   const enLaCarrera = vista?.fase === "aterrizado";
-  if (s.onRunway && !enLaCarrera && !esBackTaxi(vista)) return techo;
+  if (
+    s.onRunway &&
+    !enLaCarrera &&
+    !esBackTaxi(vista) &&
+    !entraConElJuego(tier, vista)
+  )
+    return techo;
 
   /*
    * **En la carrera de aterrizaje el tope es un trinquete, no un tijeretazo.**
@@ -236,7 +278,11 @@ export function limitarElRodaje(
    * está el coche del sígame al que se le podía pasar por encima.
    */
 
-  if (!vista || (vista.luzVerde && !esBackTaxi(vista))) return techo;
+  if (
+    !vista ||
+    (vista.luzVerde && !esBackTaxi(vista) && !entraConElJuego(tier, vista))
+  )
+    return techo;
   /*
    * Rodando, la pregunta es la de `laVelocidadEsDelJuego`, y se le hace a
    * ella y no se copia: es la misma que se hacen los avisos antes de reñir.
