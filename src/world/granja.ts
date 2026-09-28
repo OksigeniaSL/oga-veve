@@ -55,6 +55,8 @@
 import {
   BoxGeometry,
   BufferGeometry,
+  CanvasTexture,
+  ClampToEdgeWrapping,
   Color,
   ConeGeometry,
   CylinderGeometry,
@@ -72,11 +74,13 @@ import {
   MeshPhongMaterial,
   OctahedronGeometry,
   Quaternion,
+  SRGBColorSpace,
   Vector3,
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Aerodrome, Punto } from "./aerodrome";
 import { mulberry32 } from "./noise";
+import type { PinturaEncima } from "./grano";
 
 /** Cota del terreno en coordenadas de mundo del campo. */
 export type Cota = (x: number, z: number) => number;
@@ -94,6 +98,11 @@ export interface Granja {
    * tajamar. Para que el monte de alrededor no plante un árbol en la cocina.
    */
   ocupa(x: number, z: number): boolean;
+  /**
+   * Los potreros pintados, para ponerlos en el sombreador del terreno sobre
+   * el que va la granja. `null` sin navegador. Ver `potrerosDe`.
+   */
+  readonly pintura: PinturaEncima | null;
   dispose(): void;
 }
 
@@ -1279,6 +1288,8 @@ export function crearGranja(
   /* ── El alambrado ── */
   const postes: [number, number][] = [];
   const hilos: number[] = [];
+  /** De poste a poste, para pintar la raya del alambrado en el suelo. */
+  const tramosDeAlambrado: [number, number, number, number][] = [];
   const cruzaElCamino = (x: number, z: number): boolean => alCamino(x, z) < 6;
   const alambrado = (desde: [number, number], hasta: [number, number]): void => {
     const [x0, z0] = marco.mundo(desde[0], desde[1]);
@@ -1299,6 +1310,7 @@ export function crearGranja(
       if (antes) {
         for (const h of [0.55, 0.9, 1.25])
           hilos.push(antes[0], antes[1] + h, antes[2], x, y + h, z);
+        tramosDeAlambrado.push([antes[0], antes[2], x, z]);
       }
       antes = [x, y, z];
     }
@@ -1422,6 +1434,9 @@ export function crearGranja(
   for (let a = pa0 + 40; a < pa1; a += 70 + azar() * 60)
     plantar(azar() < 0.5 ? "pindo" : "timbo", a, pc0 - 6, 0.7 + azar() * 0.3);
 
+  /* ── Los potreros, con su color, para el sombreador del terreno ── */
+  const pintura = pinturaDeLosPotreros(aero, semilla, tramosDeAlambrado);
+
   /* ── Lo que hay en el suelo: agua, sombras e hilos ── */
   const grupo = new Group();
   grupo.name = "granja";
@@ -1484,7 +1499,9 @@ export function crearGranja(
       ganado.paso(dt);
     },
     ocupa: (x, z) => enElCasco(x, z) || ocupado(x, z),
+    pintura,
     dispose() {
+      pintura?.textura.dispose();
       grupo.traverse((o) => {
         if (o instanceof Mesh || o instanceof LineSegments || o instanceof InstancedMesh) {
           o.geometry.dispose();
@@ -1652,4 +1669,318 @@ function charco(obra: Obra, t: Tajamar, cota: Cota): Mesh {
   );
   malla.name = "granja:tajamar";
   return malla;
+}
+
+/* ── Los potreros, pintados en el suelo ───────────────────────────────── */
+
+/**
+ * **Los potreros, con su color: lo que dice «granja» desde el aire.**
+ *
+ * Desde arriba no se veía granja ninguna. La foto de satélite de San Pedro es
+ * la de Sentinel-2, que en la granja llega a diecisiete metros por píxel —la
+ * capa fina no cubre Paraguay—, y a esa escala un casco con su hangar y su
+ * galpón es una mancha oscura y borrosa sobre la que se apoyan cuatro
+ * prismas. Los potreros estaban —con su alambrado, sus timbós y
+ * su ganado— y no se veían, porque el alambrado se apaga con la distancia a
+ * propósito y **desde el aire un potrero se reconoce por el color de la
+ * hierba**, que era el de la foto. La foto tapaba los potreros dibujados.
+ *
+ * Ahora cada potrero del plano lleva su color —el del bajo, más verde; los de
+ * arriba, más secos al final del invierno—, con manchas de pastoreo, y el
+ * casco su patio de tierra colorada. Se pinta **en el propio sombreador del
+ * terreno**, encima de la foto, y no como una malla aparte: una lámina de
+ * kilómetro y medio a treinta centímetros del suelo parpadea contra él en
+ * cuanto se mira de lejos —a dos kilómetros la profundidad ya no distingue
+ * treinta centímetros—, y el camino, el tajamar y las sombras, que van
+ * encima, parpadearían contra ella. Ver `GLSL_DE_LA_PINTURA` en `grano.ts`.
+ *
+ * Y se funde con la foto hacia fuera: el último alambrado no es un borde de
+ * pegatina, es donde empieza el campo del vecino.
+ */
+export interface PinturaDelSuelo {
+  /** Lo que cubre, en coordenadas del campo: de `x0,z0` a `x1,z1`. */
+  readonly x0: number;
+  readonly z0: number;
+  readonly x1: number;
+  readonly z1: number;
+  /** Los potreros y el casco, en coordenadas del campo, con su color. */
+  readonly piezas: readonly {
+    readonly nombre: string;
+    readonly poligono: readonly (readonly [number, number])[];
+    readonly color: number;
+  }[];
+  /** El contorno de fuera, que es donde se funde con la foto. */
+  readonly contorno: readonly (readonly [number, number])[];
+  /** El patio de tierra de la casa: centro y radio, m. */
+  readonly patio: {
+    readonly x: number;
+    readonly z: number;
+    readonly r: number;
+  } | null;
+}
+
+/**
+ * Los colores de la hierba, **sacados de la propia foto**: los de los potreros
+ * que Sentinel-2 ve alrededor de la granja, en los diez kilómetros que la
+ * rodean. La mediana de lo verde es (51, 64, 29); el percentil setenta,
+ * (64, 75, 38); el noventa y cinco, (89, 96, 57); y los rozados de tierra
+ * colorada, (103, 72, 37). Los potreros van de lo más claro de lo verde a lo
+ * seco —campo abierto, no monte—, y así casan con los del vecino: la granja
+ * no se lee como una pegatina más clara que el resto del país, sino como
+ * potreros entre potreros.
+ *
+ * El casco cae justo en una mancha oscura de la foto, que es monte, y por eso
+ * no se veía: lo que lo hace visible es que ahora está en campo abierto, como
+ * está de verdad, y no más brillo. Distintos entre sí lo justo para que el
+ * alambrado se lea por el cambio de tono; y todos más apagados que la franja
+ * de la pista, que va segada y se ve como una cinta.
+ */
+const HIERBA = {
+  /** El de la pista: pastado corto. */
+  pista: 0x5a6334,
+  /** El bajo, con el tajamar: más húmedo, más verde. */
+  bajo: 0x44582a,
+  /** El del otro lado del bajo. */
+  bajoEste: 0x58602f,
+  /** Los de detrás del casco: uno recién pastado, seco, y dos más enteros. */
+  seco: 0x6e6a42,
+  seco2: 0x4f5c2e,
+  seco3: 0x646a3a,
+  /** El callejón del camino, pisado. */
+  callejon: 0x6f6444,
+  /** El casco, pisado y a la sombra de los árboles. */
+  casco: 0x5d6a36,
+} as const;
+
+/**
+ * La raya del alambrado, vista desde arriba: no el alambre, que no se ve,
+ * sino la maleza que crece debajo, donde no llega el ganado. Es lo que dibuja
+ * los potreros en cualquier foto aérea del campo, y va exactamente donde van
+ * los postes: ver `tramosDeAlambrado`.
+ */
+const ORILLA_DEL_ALAMBRADO = 0x2f3a1c;
+
+/** Lo ancha que se ve esa orilla, m. */
+const ANCHO_DE_LA_ORILLA = 3;
+
+/** El patio de tierra colorada, alrededor de la casa: el de los rozados de la foto. */
+const PATIO = 0x8a5a36;
+
+/** Cuánto se funde hacia fuera el último alambrado, m. */
+const FUNDIDO = 70;
+
+/**
+ * Dónde van los potreros y de qué color, sin pintar nada: lo que se puede
+ * comprobar sin navegador. `null` si el campo no tiene granja.
+ */
+export function potrerosDe(aero: Aerodrome): PinturaDelSuelo | null {
+  if (!aero.granja) return null;
+  const marco = marcoDe(aero);
+  if (!marco) return null;
+  const rect = (a0: number, a1: number, c0: number, c1: number) =>
+    [
+      marco.mundo(a0, c0),
+      marco.mundo(a1, c0),
+      marco.mundo(a1, c1),
+      marco.mundo(a0, c1),
+    ] as [number, number][];
+  const [pa0, pa1] = PLANO.potreroDeLaPista.a;
+  const [pc0, pc1] = PLANO.potreroDeLaPista.c;
+  const [nc0, nc1] = PLANO.norte.c;
+  const [sc0, sc1] = PLANO.sur.c;
+  const [ka0, ka1] = PLANO.casco.a;
+  const [kc0, kc1] = PLANO.casco.c;
+  const div = PLANO.norte.divisorias[0];
+  const divSur = PLANO.sur.divisorias[0];
+  const [ca0, ca1] = PLANO.callejon;
+  const piezas = [
+    { nombre: "pista", poligono: rect(pa0, pa1, pc0, pc1), color: HIERBA.pista },
+    { nombre: "norte-oeste", poligono: rect(pa0, div, nc0, nc1), color: HIERBA.seco },
+    { nombre: "norte-medio", poligono: rect(div, ca0, nc0, nc1), color: HIERBA.seco3 },
+    { nombre: "callejon", poligono: rect(ca0, ca1, nc0, nc1), color: HIERBA.callejon },
+    { nombre: "norte-este", poligono: rect(ca1, pa1, nc0, nc1), color: HIERBA.seco2 },
+    { nombre: "sur-oeste", poligono: rect(pa0, divSur, sc0, sc1), color: HIERBA.bajo },
+    { nombre: "sur-este", poligono: rect(divSur, pa1, sc0, sc1), color: HIERBA.bajoEste },
+    // El casco va el último: está dentro del potrero de la pista.
+    { nombre: "casco", poligono: rect(ka0, ka1, kc0, kc1), color: HIERBA.casco },
+  ];
+  const contorno = rect(pa0, pa1, sc0, nc1);
+  let patio: PinturaDelSuelo["patio"] = null;
+  for (const e of aero.buildings)
+    if (e.kind === "farm") {
+      const [x, z] = centroDelMundo(e.polygon);
+      patio = { x, z, r: 45 };
+    }
+  let x0 = Infinity;
+  let z0 = Infinity;
+  let x1 = -Infinity;
+  let z1 = -Infinity;
+  for (const [x, z] of contorno) {
+    x0 = Math.min(x0, x - FUNDIDO * 1.5);
+    z0 = Math.min(z0, z - FUNDIDO * 1.5);
+    x1 = Math.max(x1, x + FUNDIDO * 1.5);
+    z1 = Math.max(z1, z + FUNDIDO * 1.5);
+  }
+  return { x0, z0, x1, z1, piezas, contorno, patio };
+}
+
+/**
+ * Los potreros ya pintados, como textura para el terreno. `null` si el campo
+ * no tiene granja o si no hay navegador donde pintar.
+ *
+ * En sRGB, como todo lienzo de color de esta casa: sin decírselo, three lo
+ * toma por lineal y los verdes salen lavados. Con mipmaps, que desde el
+ * circuito un alambrado de un píxel sin ellos centellea.
+ */
+function pinturaDeLosPotreros(
+  aero: Aerodrome,
+  semilla: number,
+  alambrados: readonly (readonly [number, number, number, number])[],
+): PinturaEncima | null {
+  if (typeof document === "undefined") return null;
+  const potreros = potrerosDe(aero);
+  if (!potreros) return null;
+  const textura = new CanvasTexture(
+    lienzoDeLosPotreros(
+      potreros,
+      () => document.createElement("canvas"),
+      semilla,
+      alambrados,
+    ),
+  );
+  textura.colorSpace = SRGBColorSpace;
+  textura.wrapS = ClampToEdgeWrapping;
+  textura.wrapT = ClampToEdgeWrapping;
+  textura.anisotropy = 4;
+  // Sin darle la vuelta: la fila de arriba del lienzo es la `z0` del campo,
+  // igual que la `v` cero del sombreador.
+  textura.flipY = false;
+  textura.needsUpdate = true;
+  return {
+    textura,
+    x0: potreros.x0,
+    z0: potreros.z0,
+    x1: potreros.x1,
+    z1: potreros.z1,
+  };
+}
+
+/** Un color de tres bytes en `rgba(…)`, con la luz cambiada en `k`. */
+function css(color: number, k = 1, alfa = 1): string {
+  const c = new Color(color);
+  // `Color` guarda en lineal; el lienzo pinta en sRGB, que es lo que lleva
+  // la textura. Ver `lienzos-en-srgb`.
+  const s = c.getRGB({ r: 0, g: 0, b: 0 }, SRGBColorSpace);
+  const r = Math.round(Math.min(1, s.r * k) * 255);
+  const g = Math.round(Math.min(1, s.g * k) * 255);
+  const b = Math.round(Math.min(1, s.b * k) * 255);
+  return `rgba(${r},${g},${b},${alfa})`;
+}
+
+/**
+ * Pinta los potreros en un lienzo de `lado` píxeles que cubre el rectángulo
+ * de `potrerosDe`. El alfa es la cobertura: uno dentro del último alambrado,
+ * cero lejos de él.
+ *
+ * Mil veinticuatro de lado sobre kilómetro y ochocientos son un metro y tres
+ * cuartos por píxel: diez veces más fino que la foto y de sobra para un
+ * alambrado visto desde el circuito.
+ */
+export function lienzoDeLosPotreros(
+  pintura: PinturaDelSuelo,
+  hacerLienzo: () => HTMLCanvasElement,
+  semilla: number,
+  /** De poste a poste, en coordenadas del campo: `[x0, z0, x1, z1]`. */
+  alambrados: readonly (readonly [number, number, number, number])[] = [],
+  lado = 1024,
+): HTMLCanvasElement {
+  const lienzo = hacerLienzo();
+  lienzo.width = lado;
+  lienzo.height = lado;
+  const ctx = lienzo.getContext("2d");
+  if (!ctx) return lienzo;
+  const azar = mulberry32(semilla ^ 0x9071);
+  const ex = lado / (pintura.x1 - pintura.x0);
+  const ez = lado / (pintura.z1 - pintura.z0);
+  const px = (x: number) => (x - pintura.x0) * ex;
+  const pz = (z: number) => (z - pintura.z0) * ez;
+  const trazar = (poligono: readonly (readonly [number, number])[]) => {
+    ctx.beginPath();
+    poligono.forEach(([x, z], i) =>
+      i ? ctx.lineTo(px(x), pz(z)) : ctx.moveTo(px(x), pz(z)),
+    );
+    ctx.closePath();
+  };
+
+  // El fundido de fuera: el contorno, emborronado, en el tono de la pista.
+  ctx.save();
+  ctx.filter = `blur(${Math.round((FUNDIDO / 2.2) * ex)}px)`;
+  ctx.fillStyle = css(HIERBA.pista, 0.97);
+  trazar(pintura.contorno);
+  ctx.fill();
+  ctx.restore();
+
+  for (const pieza of pintura.piezas) {
+    ctx.save();
+    trazar(pieza.poligono);
+    ctx.fillStyle = css(pieza.color);
+    ctx.fill();
+    ctx.clip();
+    /*
+     * Y las manchas del pastoreo: donde el ganado come más y donde menos, que
+     * es lo que hace que un potrero de verdad no sea un color plano. Grandes y
+     * suaves —de veinticinco a ochenta metros—, porque lo fino ya lo pone el grano.
+     */
+    const n = pieza.poligono.length;
+    let cx = 0;
+    let cz = 0;
+    for (const [x, z] of pieza.poligono) {
+      cx += x / n;
+      cz += z / n;
+    }
+    let radio = 0;
+    for (const [x, z] of pieza.poligono)
+      radio = Math.max(radio, Math.hypot(x - cx, z - cz));
+    const manchas = Math.round(radio / 12);
+    for (let i = 0; i < manchas; i++) {
+      const ang = azar() * Math.PI * 2;
+      const d = Math.sqrt(azar()) * radio;
+      const x = px(cx + Math.cos(ang) * d);
+      const z = pz(cz + Math.sin(ang) * d);
+      const r = (25 + azar() * 60) * ex;
+      const k = azar() < 0.5 ? 0.8 + azar() * 0.08 : 1.1 + azar() * 0.1;
+      const mancha = ctx.createRadialGradient(x, z, 0, x, z, r);
+      mancha.addColorStop(0, css(pieza.color, k, 0.7));
+      mancha.addColorStop(1, css(pieza.color, k, 0));
+      ctx.fillStyle = mancha;
+      ctx.fillRect(x - r, z - r, r * 2, r * 2);
+    }
+    ctx.restore();
+  }
+
+  // Las orillas del alambrado, por encima de los potreros y por debajo del
+  // patio, que es tierra barrida hasta el poste.
+  ctx.save();
+  ctx.strokeStyle = css(ORILLA_DEL_ALAMBRADO, 1, 0.75);
+  ctx.lineWidth = Math.max(1, ANCHO_DE_LA_ORILLA * ex);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  for (const [ax, az, bx, bz] of alambrados) {
+    ctx.moveTo(px(ax), pz(az));
+    ctx.lineTo(px(bx), pz(bz));
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // El patio de la casa: tierra colorada, barrida, que se va en hierba.
+  if (pintura.patio) {
+    const { x, z, r } = pintura.patio;
+    const patio = ctx.createRadialGradient(px(x), pz(z), 0, px(x), pz(z), r * ex);
+    patio.addColorStop(0, css(PATIO, 1, 0.9));
+    patio.addColorStop(0.6, css(PATIO, 1, 0.55));
+    patio.addColorStop(1, css(PATIO, 1, 0));
+    ctx.fillStyle = patio;
+    ctx.fillRect(px(x) - r * ex, pz(z) - r * ex, r * ex * 2, r * ex * 2);
+  }
+  return lienzo;
 }

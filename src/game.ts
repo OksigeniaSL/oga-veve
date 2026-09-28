@@ -3170,7 +3170,10 @@ export class Game {
           : null,
       });
       const suGranja = this.vecinos[this.vecinos.length - 1]?.granja;
-      if (suGranja) mundo.colgarDeCerca(suGranja.grupo);
+      if (suGranja) {
+        mundo.colgarDeCerca(suGranja.grupo);
+        mundo.terreno.pintarEncima(suGranja.pintura);
+      }
       this.scene.add(mundo.grupo);
     }
 
@@ -3572,7 +3575,11 @@ export class Game {
         new Date(),
         this.scenario.seed,
       );
-      if (this.granja) this.scene.add(this.granja.grupo);
+      if (this.granja) {
+        this.scene.add(this.granja.grupo);
+        // Y sus potreros, en el suelo: ver `potrerosDe`.
+        this.terrain.pintarEncima(this.granja.pintura);
+      }
     }
     const granja = this.granja;
     this.vegetacion = createVegetation(

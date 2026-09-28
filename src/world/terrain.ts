@@ -33,7 +33,7 @@ import {
   ShaderMaterial,
   Vector4,
 } from "three";
-import { ponerGrano, texturaDeGrano } from "./grano";
+import { ponerGrano, texturaDeGrano, type PinturaEncima } from "./grano";
 import { ValueNoise2D } from "./noise";
 import { createRunwayMarkings } from "./runway-markings";
 import {
@@ -1045,8 +1045,27 @@ export class Terrain {
      * esta casa: arreglar en la superficie que se estaba mirando. Ver
      * `world/grano.ts`.
      */
-    ponerGrano(mat, this.grano());
+    ponerGrano(mat, this.grano(), this.pintura);
     mat.needsUpdate = true;
+  }
+
+  /** Lo pintado encima de la foto, si lo hay. Ver `pintarEncima`. */
+  private pintura: PinturaEncima | null = null;
+
+  /**
+   * Pinta algo encima de la foto: hoy, los potreros de la granja.
+   *
+   * Va en el sombreador del terreno y no en una malla aparte, que parpadearía
+   * contra el suelo en cuanto se mirara de lejos. Ver `potrerosDe` en
+   * `granja.ts`. Si la foto todavía no ha llegado, se guarda y la pone
+   * `ponerOrtofoto`; sin foto no hay nada que tapar.
+   */
+  pintarEncima(pintura: PinturaEncima | null): void {
+    this.pintura = pintura;
+    const malla = this.group.getObjectByName("terreno") as Mesh | undefined;
+    const mat = malla?.material as MeshLambertMaterial | undefined;
+    if (!mat?.map) return;
+    ponerGrano(mat, this.grano(), pintura);
   }
 
   /**

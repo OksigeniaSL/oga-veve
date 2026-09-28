@@ -23,6 +23,8 @@
 import { describe, expect, it } from "vitest";
 import {
   GLSL_DEL_GRANO,
+  GLSL_DE_LA_PINTURA,
+  FUERZA_DE_LA_PINTURA,
   HASTA_DONDE,
   lienzoDeGrano,
   METROS_POR_REPETICION,
@@ -176,5 +178,34 @@ describe("y las dos medidas que lo gobiernan", () => {
     // aproximación entra desde unos mil. Por debajo de eso el grano no
     // llegaría a la parte del vuelo en la que se mira el suelo.
     expect(HASTA_DONDE).toBeGreaterThanOrEqual(1000);
+  });
+});
+
+/*
+ * **Y lo pintado encima de la foto**, que hoy son los potreros de la granja.
+ * Como con el grano, las averías de un sombreador aquí han sido de texto.
+ */
+describe("lo pintado encima de la foto", () => {
+  it("sustituye a la foto donde se pinta, no la tiñe", () => {
+    // Multiplicar el verde de un potrero por la foto oscura de Sentinel-2 es
+    // volver a tener la foto oscura: se mezcla hacia el color pintado.
+    expect(GLSL_DE_LA_PINTURA.cuerpo).toContain("diffuseColor.rgb = mix(");
+    expect(FUERZA_DE_LA_PINTURA).toBeGreaterThan(0.7);
+    expect(FUERZA_DE_LA_PINTURA).toBeLessThanOrEqual(1);
+  });
+
+  it("y solo lee la textura dentro de su rectángulo", () => {
+    expect(GLSL_DE_LA_PINTURA.cuerpo).toMatch(/if \(uvPintura\.x > 0\.0/);
+  });
+
+  it("en las coordenadas del campo, que la isla del vecino va corrida", () => {
+    // Con las del mundo, los potreros de la granja vista desde Asunción
+    // caerían a la distancia entre los dos campos de su sitio.
+    expect(GLSL_DE_LA_PINTURA.vertice).toContain("position.xz");
+    expect(GLSL_DE_LA_PINTURA.vertice).not.toContain("modelMatrix");
+    for (const nombre of ["vSitioDelCampo"]) {
+      expect(GLSL_DE_LA_PINTURA.cabeceraDelVertice).toContain(nombre);
+      expect(GLSL_DE_LA_PINTURA.cabecera).toContain(nombre);
+    }
   });
 });
