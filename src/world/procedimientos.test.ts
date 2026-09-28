@@ -3,8 +3,8 @@
  * juego.
  *
  * Lo que se comprueba es lo que se pidió, en aritmética: que cada ruta entre
- * dos campos de Canarias **acabe alineada con la pista en uso a ocho millas
- * o más**, y no en el centro del aeropuerto; que vaya por puntos publicados; y
+ * dos campos de Canarias o de Paraguay **acabe alineada con la pista en uso a
+ * ocho millas o más**, y no en el centro del aeropuerto; que vaya por puntos publicados; y
  * que no dé rodeos absurdos. Se hace con las cabeceras de verdad del
  * aeródromo del juego —las de `data/aerodromes`—, no con las de la carta: si
  * la carta y el aeródromo no casaran, el tramo final saldría torcido, y eso
@@ -161,5 +161,90 @@ describe("las rutas de Canarias, por lo publicado", () => {
     expect(nombres.slice(0, 2)).toEqual(["RW03L", "ECKOS"]);
     expect(nombres).toContain("CANDE");
     expect(nombres.slice(-3)).toEqual(["BUNIX", "XO69E", "RW30"]);
+  });
+});
+
+/**
+ * **Y Paraguay, con lo que publica la DINAC.**
+ *
+ * La misma aritmética, con una diferencia: aquí no todos los campos tienen
+ * procedimientos. Las rutas que llegan a Concepción, a Pilar, a Ayolas o a la
+ * 02 de Encarnación acaban en la aproximación calculada sobre el eje, y
+ * también tienen que acabar alineadas: es la misma promesa por otro camino.
+ */
+const paraguay = SCENARIOS.filter((e) => e.pais === "py" && e.aerodrome);
+const conCartas = paraguay.filter((e) => procedimientosDe(oaciDe(e)));
+
+describe("las rutas de Paraguay, por lo publicado", () => {
+  it("tienen procedimientos los cinco campos que los publican, y ninguno más", () => {
+    expect(conCartas.map((e) => oaciDe(e)).sort()).toEqual([
+      "SGAS",
+      "SGEN",
+      "SGES",
+      "SGME",
+      "SGPJ",
+    ]);
+  });
+
+  it("cada cabecera con aproximación publicada tiene la del aeródromo del juego", () => {
+    for (const e of conCartas) {
+      const nombres = cabeceras(e, e.aerodrome!.origin).map((c) => c.nombre);
+      for (const cab of Object.keys(procedimientosDe(oaciDe(e))!.aproximaciones))
+        expect(nombres, `${oaciDe(e)} ${cab}`).toContain(cab);
+      for (const cab of Object.keys(procedimientosDe(oaciDe(e))!.salidas))
+        expect(nombres, `${oaciDe(e)} ${cab}`).toContain(cab);
+    }
+  });
+
+  it("y el último tramo publicado va por el eje de la pista del juego", () => {
+    /*
+     * Del punto de final al umbral, con el umbral **del juego**: si el
+     * aeródromo de OpenStreetMap y el de la carta no casaran, aquí saldría el
+     * ángulo. Dos grados es lo que separa una final de una final torcida.
+     */
+    for (const e of conCartas) {
+      const origen = e.aerodrome!.origin;
+      for (const c of cabeceras(e, origen)) {
+        for (const rama of ramasDe(oaciDe(e), c.nombre)) {
+          const faf = rama.map(aMundo(origen)).find((f) => f.papel === "faf")!;
+          expect(faf, `${oaciDe(e)} ${c.nombre}`).toBeDefined();
+          expect(
+            difer(rumboDe(faf, c), c.rumbo),
+            `${oaciDe(e)} ${c.nombre}: ${faf.nombre}`,
+          ).toBeLessThan(2);
+        }
+      }
+    }
+  });
+
+  for (const salida of paraguay)
+    for (const id of destinosDe(salida)) {
+      const llegada = por(id);
+      if (!llegada?.aerodrome) continue;
+      const origen = salida.aerodrome!.origin;
+      for (const cs of cabeceras(salida, origen))
+        for (const cl of cabeceras(llegada, origen)) {
+          const nombre = `${oaciDe(salida)} ${cs.nombre} → ${oaciDe(llegada)} ${cl.nombre}`;
+          it(`${nombre}: acaba alineada a ocho millas o más, sin rodeos`, () => {
+            const r = plan(salida, cs, llegada, cl);
+            const ultimo = r.fijos[r.fijos.length - 1]!;
+            expect(ultimo.nombre).toBe(`RW${cl.nombre}`);
+            const recto = alineadas(r, cl.rumbo);
+            expect(recto, `${recto.toFixed(1)} NM alineadas: ${r.fijos.map((f) => f.nombre).join(" ")}`).toBeGreaterThanOrEqual(8);
+            const directo = Math.hypot(ultimo.x - cs.x, ultimo.z - cs.z);
+            expect(r.total / directo, r.fijos.map((f) => f.nombre).join(" ")).toBeLessThan(3);
+          });
+        }
+    }
+
+  it("de Asunción a Ciudad del Este por la 23: sale por la 02 y entra por MOLMA", () => {
+    const asu = por("pettirossi")!;
+    const cde = por("guarani")!;
+    const origen = asu.aerodrome!.origin;
+    const cs = cabeceras(asu, origen).find((c) => c.nombre === "02")!;
+    const cl = cabeceras(cde, origen).find((c) => c.nombre === "23")!;
+    const nombres = plan(asu, cs, cde, cl).fijos.map((f) => f.nombre);
+    expect(nombres[0]).toBe("RW02");
+    expect(nombres.slice(-3)).toEqual(["ROGER", "MOLMA", "RW23"]);
   });
 });
