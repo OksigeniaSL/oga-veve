@@ -888,7 +888,8 @@ def torno(nombre, perfil_, en=(0, 0, 0), lados=32, eje="z", material_="capo"):
     return liso(_malla_en_escena(nombre, bm, mats), angulo=40)
 
 
-def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True):
+def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True,
+             anillo=None):
     """
     Un turbofán de verdad: labio, fan, tobera de derivación, núcleo y cono.
 
@@ -906,9 +907,25 @@ def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True):
 
     Todo de un solo perfil, recorrido con la materia a la derecha. Ver
     `torno`.
+
+    `anillo`, si se da, es `(desde, hasta, material)`: una vuelta de otro
+    color en la cubierta, en fracciones del largo desde la boca. Es librea,
+    como la franja, y va donde la cubierta es cilíndrica: el tramo recto de
+    delante, que es el que asoma por delante del ala. Desde 0,05 es la
+    cubierta de la toma entera, pegada al labio.
     """
     L, R = largo, diametro / 2
     f = -L / 2
+    delante = cubierta
+    cubierta_recta = [(f + 0.30 * L, 1.0 * R)]
+    if anillo:
+        desde, hasta, color = anillo
+        tramo = [(f + hasta * L, 1.0 * R, cubierta)]
+        if desde <= 0.05:
+            delante = color
+        else:
+            tramo.insert(0, (f + desde * L, 1.0 * R, color))
+        cubierta_recta = tramo + cubierta_recta
     perfil_ = [
         (f + 0.20 * L, 0.0, "oscuro"),          # punta del cono del fan
         (f + 0.27 * L, 0.24 * R),
@@ -918,8 +935,8 @@ def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True):
         (f + 0.02 * L, 0.87 * R, "aluminio"),  # el labio
         (f + 0.000 * L, 0.92 * R),
         (f + 0.012 * L, 0.975 * R),
-        (f + 0.05 * L, 1.0 * R, cubierta),     # la cubierta
-        (f + 0.30 * L, 1.0 * R),
+        (f + 0.05 * L, 1.0 * R, delante),      # la cubierta
+        *cubierta_recta,
         (f + 0.52 * L, 0.95 * R),
         (f + 0.66 * L, 0.84 * R),               # la tobera fría
         (f + 0.655 * L, 0.80 * R, "oscuro"),

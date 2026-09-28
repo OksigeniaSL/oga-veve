@@ -235,6 +235,11 @@ describe("los flaps de cada modelo", () => {
  *
  * Las cifras son las del foco con los modelos de antes de que los flaps se
  * movieran, medidas con el mismo `crearLucesDePosicion` que usa el juego.
+ *
+ * Menos la z del JAZ 120, que se corrió cuatro centímetros sin que el ala se
+ * moviera: el foco sale un dedo por delante del vértice, y el dedo es el uno
+ * por ciento del lado mayor del avión —ver `puntasDe`—, que era el largo y
+ * pasó de 68 a 64 m. El vértice es el mismo.
  */
 describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
   const ANTES: Record<string, readonly [number, number, number]> = {
@@ -243,7 +248,7 @@ describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
     "jaz-40": [1.4268, 0.0754, -0.7475],
     "jaz-60": [3.1, -0.1968, -1.0479],
     "jaz-90": [3.9753, -0.7022, -1.7613],
-    "jaz-120": [9.3855, -0.9135, -7.1082],
+    "jaz-120": [9.3855, -0.9135, -7.0682],
   };
   for (const a of AIRCRAFT) {
     const antes = ANTES[a.id];
