@@ -50,7 +50,7 @@ traduce nunca: reconocerlo es parte de lo que se aprende.
 
 ## Enlaces
 
-- Jugar: https://oksigeniasl.github.io/oga-veve/
+- Jugar: https://granjaoga.com/oga-veve/
 - Código y backlog: https://github.com/OksigeniaSL/oga-veve
 - Oksigenia SL: https://oksigenia.com
 

@@ -5,4 +5,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://oksigeniasl.github.io/oga-veve/sitemap.xml
+Sitemap: https://granjaoga.com/oga-veve/sitemap.xml
