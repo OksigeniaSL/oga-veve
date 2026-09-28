@@ -10,10 +10,10 @@ import {
   cruceroPorLaDistancia,
   distanciaDeDescenso,
   libra,
+  minimaEnCrucero,
   minimaEnRuta,
   porElMar,
   puntoAFaltando,
-  relieveEnCrucero,
   restante,
   rutaDe,
   segundosHastaElFinal,
@@ -122,9 +122,9 @@ describe("trazar: y sin mandar a nadie contra un monte", () => {
     expect(libra([f("RW", 10, 0, "despegue"), ...calculada, f("U", 40, 0, "umbral")], monte, 0)).toBe(false);
   });
 
-  it("el crucero no queda por debajo del relieve de la ruta", () => {
+  it("el crucero no queda por debajo de la mínima en ruta", () => {
     const r = rutaDe([desde, f("X", 20, 0), umbral], 0);
-    expect(relieveEnCrucero(r, monte.cota)).toBe(3000);
+    expect(minimaEnCrucero(r, monte.cota)).toBe(3000 + MARGEN_EN_MONTANA);
   });
 });
 

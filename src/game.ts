@@ -75,22 +75,10 @@ import {
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
 import {
-  PIE,
   Seguimiento,
-  cruceroPorLaDistancia,
-  relieveEnCrucero,
-  trazar,
-  type Fijo,
   type Lectura as LecturaDeRuta,
   type Ruta,
 } from "./flight/ruta";
-import {
-  aproximacionCalculada,
-  ramasDe,
-  salidasDe,
-  type Publicado,
-} from "./world/procedimientos";
-import { nivelPara } from "./flight/nivel-de-crucero";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
@@ -511,7 +499,7 @@ import {
 import {
   bienvenidaConPlan,
   descensoPara,
-  nivelPrevisto,
+  nivelDicho,
   segundosDeVuelo,
   segundosHastaTocar,
 } from "./audio/partes-de-la-comandante";
@@ -600,6 +588,7 @@ import {
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { enCanarias } from "./world/canarias";
 import { dondeCae } from "./world/entre-aerodromos";
+import { cruceroDelTramo, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
 import { crearBarcos, luzDeLaEstela, type Barcos } from "./world/barcos";
 import {
   TraficoDeLasIslas,
@@ -7350,23 +7339,31 @@ export class Game {
    * El plan de este tramo tal como lo cuenta la comandante: cuánto dura y a
    * qué nivel se cruza, o `null` si es una vuelta al campo.
    *
-   * De la distancia entre los dos campos y el rumbo de uno a otro, con el
-   * crucero y el techo de este avión. Ver `audio/partes-de-la-comandante.ts`.
+   * **Es el plan que se vuela, no otro**: la ruta y el crucero con los que
+   * `seguirLaRuta` pone el punto de descenso. Se contaba aparte, con la recta
+   * entre los dos campos y una cuenta de nivel propia, y de Los Rodeos a
+   * Tenerife Sur se anunciaban diez mil pies para un plan de doce mil. Si
+   * el plan todavía no está puesto, se traza aquí con las mismas funciones.
+   * Ver `cruceroDelPlan` en `flight/ruta.ts` y `nivelDicho`.
    */
-  private planDelTramo(): { segundos: number; nivel: number } | null {
+  private planDelTramo(): { segundos: number; nivel: number | null } | null {
     const destino = this.elDestino();
-    const salida = this.campoPorId(this.salidaId);
-    if (!destino || !salida || destino.id === salida.id) return null;
-    const dx = destino.x - salida.x;
-    const dz = destino.z - salida.z;
-    const metros = Math.hypot(dx, dz);
-    // El norte es −z, como en el resto del mundo del juego; y la regla
-    // semicircular va en magnéticos: magnético = verdadero + declinación.
-    const verdadero = MathUtils.radToDeg(Math.atan2(dx, -dz));
-    const magnetico = verdadero + (salida.escenario.magneticVariation ?? 0);
+    if (!destino || destino.id === this.salidaId) return null;
+    const salida = this.elCampo(this.salidaId);
+    const llegada = this.elCampo(destino.id);
+    const cabSalida = cabeceraEnUso(salida.escenario);
+    const cabLlegada = cabeceraEnUso(llegada.escenario);
+    const puesto =
+      this.navegacion.plan !== null &&
+      this.claveDeLaRuta === `${salida.id}:${cabSalida}>${llegada.id}:${cabLlegada}`;
+    const ruta = puesto
+      ? this.navegacion.plan
+      : this.trazarLaRuta(salida, llegada);
+    if (!ruta) return null;
+    const crucero = puesto ? this.navegacion.cruceroPlaneado : this.cruceroDe(ruta, salida);
     return {
-      segundos: segundosDeVuelo(metros, this.aircraft.cruiseSpeed),
-      nivel: nivelPrevisto(magnetico, metros, this.aircraft.alturaDeCrucero),
+      segundos: segundosDeVuelo(ruta.total, this.aircraft.cruiseSpeed),
+      nivel: nivelDicho(crucero),
     };
   }
 
@@ -12890,7 +12887,7 @@ export class Game {
     const clave = `${salida.id}:${cabSalida}>${llegada.id}:${cabLlegada}`;
     if (clave !== this.claveDeLaRuta) {
       this.claveDeLaRuta = clave;
-      const ruta = this.trazarLaRuta(salida, cabSalida, llegada, cabLlegada);
+      const ruta = this.trazarLaRuta(salida, llegada);
       this.navegacion.poner(ruta, ruta ? this.cruceroDe(ruta, salida) : 0);
     }
     const lectura = this.lecturaDeRuta();
@@ -12960,116 +12957,43 @@ export class Game {
   }
 
   /**
-   * El plan, con lo publicado de los dos campos puesto en este mundo.
-   *
-   * Los puntos se colocan con la misma proyección que los aeródromos vecinos
-   * —`dondeCae` desde el origen del mundo—: un BUNIX corrido respecto a la
-   * pista de Los Rodeos dejaría el tramo final torcido. El umbral no es el de
-   * la carta sino el del aeródromo del juego, que es donde se toca.
+   * Lo que el plan de vuelo necesita saber del juego: el origen del mundo,
+   * si se va en el aire, la cota del asfalto de cada campo y el relieve del
+   * mundo entero —el fino, el de los destinos y el del horizonte—. Ver
+   * `world/ruta-del-tramo.ts`, que es donde se traza para el juego y para
+   * las pruebas.
    */
-  private trazarLaRuta(
-    salida: CampoEnElMundo,
-    cabSalida: string | null,
-    llegada: CampoEnElMundo,
-    cabLlegada: string | null,
-  ): Ruta | null {
+  private delJuego(): DelJuego | null {
     const origen = this.scenario.aerodrome?.origin;
     if (!origen) return null;
     const s = this.flight.state;
-    const aMundo = (p: Publicado): Fijo => ({
-      ...dondeCae(origen, p),
-      nombre: p.nombre,
-      papel: p.papel,
-      minima: p.minimaPies === null ? null : p.minimaPies * PIE,
-    });
-    const [ux, uz] = umbralEnUso(llegada);
-    const umbral: Fijo = {
-      x: ux,
-      z: uz,
-      nombre: `RW${cabLlegada ?? ""}`,
-      papel: "umbral",
-      minima: null,
+    return {
+      origen,
+      enElAire: s.onGround
+        ? null
+        : { x: s.position.x, z: s.position.z, altitud: s.position.y },
+      cotaDePista: (campo, x, z) => this.cotaDePistaEn(campo, x, z),
+      cota: (x, z) => this.terrain.cotaConocida(x, z),
+      techo: this.aircraft.alturaDeCrucero,
     };
-    const publicadas = ramasDe(oaciDe(llegada.escenario), cabLlegada).map((r) =>
-      r.map(aMundo),
-    );
-    const ramas =
-      publicadas.length > 0
-        ? publicadas
-        : cabLlegada
-          ? [
-              aproximacionCalculada(cabLlegada, umbral, llegada.pista.heading).map(
-                (f): Fijo => ({ ...f, minima: null, calculado: true }),
-              ),
-            ]
-          : [];
-    /*
-     * En tierra y en otro campo, desde la cabecera y por la salida. En el
-     * aire —un desvío, otra pista en uso a mitad de camino—, desde aquí.
-     */
-    const desdeLaCabecera = s.onGround && salida.id !== llegada.id;
-    let desde: Fijo;
-    if (desdeLaCabecera) {
-      const [x, z] = enLaPistaDe(salida, salida.pista.length / 2);
-      desde = { x, z, nombre: `RW${cabSalida ?? ""}`, papel: "despegue", minima: null };
-    } else {
-      desde = {
-        x: s.position.x,
-        z: s.position.z,
-        nombre: "PPOS",
-        papel: "aqui",
-        minima: null,
-      };
-    }
-    const salidas = desdeLaCabecera
-      ? salidasDe(oaciDe(salida.escenario), cabSalida).map((r) => r.map(aMundo))
-      : [];
-    return trazar({
-      desde,
-      salidas,
-      ramas,
-      umbral,
-      cotaDelUmbral: this.cotaDePistaEn(llegada, ux, uz),
-      /*
-       * Con el relieve del mundo entero —el fino, el de los destinos y el del
-       * horizonte—: la ruta más corta de Los Rodeos a La Gomera pasa a una
-       * milla del Teide. Ver `libra` en `flight/ruta.ts`.
-       */
-      terreno: {
-        cota: (x, z) => this.terrain.cotaConocida(x, z),
-        techo: this.aircraft.alturaDeCrucero,
-        cotaDeSalida: desdeLaCabecera
-          ? this.cotaDePistaEn(salida, desde.x, desde.z)
-          : s.position.y,
-      },
-    });
+  }
+
+  /** El plan de este tramo. Ver `rutaDelTramo`. */
+  private trazarLaRuta(salida: CampoEnElMundo, llegada: CampoEnElMundo): Ruta | null {
+    const juego = this.delJuego();
+    return juego ? rutaDelTramo(salida, llegada, juego) : null;
   }
 
   /**
-   * El crucero que se planea para esta ruta, m: lo que pide la distancia, en
-   * el nivel que le toca por el rumbo y sin pasar del techo del avión. Ver
-   * `cruceroPorLaDistancia` y `flight/nivel-de-crucero.ts`.
+   * El crucero que se planea para esta ruta, m: el mismo que anuncia la
+   * comandante. Ver `cruceroDelTramo`.
    */
   private cruceroDe(ruta: Ruta, salida: CampoEnElMundo): number {
-    const a = ruta.fijos[0]!;
-    const b = ruta.fijos[ruta.fijos.length - 1]!;
-    const verdadero = (Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI;
-    const magnetico = verdadero + (salida.escenario.magneticVariation ?? 0);
-    const techo = this.aircraft.alturaDeCrucero;
-    const cota = this.cotaDePistaEn(salida, a.x, a.z);
-    /*
-     * Y nunca por debajo del relieve de la ruta con mil pies de margen, que
-     * es lo que lleva cualquier altitud mínima en ruta de una carta.
-     */
-    const relieve = relieveEnCrucero(ruta, (x, z) => this.terrain.cotaConocida(x, z));
-    const minimo = relieve === null ? 0 : relieve + 1000 * PIE;
-    const pedido = Math.max(cruceroPorLaDistancia(ruta, techo, cota), minimo);
-    let nivel = nivelPara(magnetico, pedido / PIE);
-    // Y el nivel legal más cercano puede caer por debajo de lo que hace falta
-    // —se sube uno en su sentido— o por encima del techo —se baja uno—.
-    while (nivel * PIE < minimo - 1 && nivel * PIE < techo) nivel += 2000;
-    while (nivel * PIE > Math.max(techo, minimo) + 1 && nivel > 3000) nivel -= 2000;
-    return nivel * PIE;
+    return cruceroDelTramo(ruta, salida, {
+      cotaDePista: (campo, x, z) => this.cotaDePistaEn(campo, x, z),
+      cota: (x, z) => this.terrain.cotaConocida(x, z),
+      techo: this.aircraft.alturaDeCrucero,
+    });
   }
 
   /**

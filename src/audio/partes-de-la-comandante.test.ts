@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { hayTexto } from "../i18n";
 import { TIEMPO_DE_CASA, type Meteo } from "../world/meteo";
+import { MILLA, PIE, cruceroDelPlan, rutaDe, type Fijo } from "../flight/ruta";
 import {
   MAS_CALOR,
   MAS_FRIO,
@@ -14,7 +15,7 @@ import {
   descensoPara,
   gradosDichos,
   minutosDichos,
-  nivelPrevisto,
+  nivelDicho,
   piezaDeGrados,
   segundosHastaTocar,
 } from "./partes-de-la-comandante";
@@ -43,21 +44,45 @@ describe("los minutos, como se dicen", () => {
 });
 
 describe("el nivel de crucero que se anuncia", () => {
+  /** El que se anuncia de una ruta recta de tantos km hacia ese rumbo verdadero. */
+  const anunciado = (rumbo: number, km: number, techo: number): number | null => {
+    const r = (rumbo * Math.PI) / 180;
+    const punto = (m: number, papel: Fijo["papel"]): Fijo => ({
+      nombre: papel,
+      x: Math.sin(r) * m,
+      z: -Math.cos(r) * m,
+      papel,
+      minima: null,
+    });
+    const ruta = rutaDe([punto(0, "despegue"), punto(km * 1000, "umbral")], 0);
+    return nivelDicho(cruceroDelPlan(ruta, { techo, cotaDeSalida: 0, declinacion: 0 }, null));
+  };
+
   it("impar hacia el este y par hacia el oeste, como manda la regla", () => {
-    // Noventa kilómetros, un salto entre islas.
-    expect(nivelPrevisto(120, 90000, 11000) % 2).toBe(1);
-    expect(nivelPrevisto(300, 90000, 11000) % 2).toBe(0);
+    // Ciento cincuenta kilómetros, un salto largo entre islas.
+    expect(anunciado(120, 150, 11000)! % 2).toBe(1);
+    expect(anunciado(300, 150, 11000)! % 2).toBe(0);
   });
 
   it("más alto en las rutas largas que en los saltos cortos", () => {
-    expect(nivelPrevisto(90, 400000, 11000)).toBeGreaterThan(
-      nivelPrevisto(90, 60000, 11000),
-    );
+    expect(anunciado(90, 400, 11000)!).toBeGreaterThan(anunciado(90, 120, 11000)!);
   });
 
   it("y nunca por encima de lo que da el avión", () => {
     // Un avión con techo en cinco mil metros: dieciséis mil pies y pico.
-    expect(nivelPrevisto(90, 900000, 5000)).toBeLessThanOrEqual(16);
+    expect(anunciado(90, 900, 5000)!).toBeLessThanOrEqual(16);
+  });
+
+  it("es el crucero del plan tal cual, en miles de pies", () => {
+    expect(nivelDicho(11000 * PIE)).toBe(11);
+    expect(nivelDicho(24000 * PIE)).toBe(24);
+  });
+
+  it("y un nivel que no está grabado no se redondea a otro: no se dice", () => {
+    // Un salto de veinte millas en avioneta se planea a tres mil pies, y
+    // anunciar los cinco mil de la primera grabación sería mentir.
+    expect(nivelDicho(3000 * PIE)).toBeNull();
+    expect(anunciado(90, 20 * (MILLA / 1000), 3000)).toBeNull();
   });
 });
 

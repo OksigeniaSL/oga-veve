@@ -31,6 +31,8 @@
  *   cada mil pies que haya que perder. Ver `distanciaDeDescenso`.
  */
 
+import { nivelPara } from "./nivel-de-crucero";
+
 /** Una milla náutica, en metros. La misma que la de la carta. */
 export const MILLA = 1852;
 
@@ -997,9 +999,8 @@ export function alturaDeLaSenda(
  * - **La carta**: nunca por debajo de la mínima más alta que se publique en la
  *   ruta, que es la que libra el terreno.
  *
- * Y del resultado, el nivel legal más cercano por el rumbo: ver
- * `nivel-de-crucero.ts`. Eso lo pone quien llama, que es quien sabe la
- * declinación.
+ * Y del resultado, el nivel legal más cercano por el rumbo, con el relieve:
+ * eso lo pone `cruceroDelPlan`, que es el crucero que se vuela y se anuncia.
  */
 export function cruceroPorLaDistancia(r: Ruta, techo: number, cotaDeSalida: number): number {
   const millas = r.total / MILLA;
@@ -1046,17 +1047,18 @@ export interface Progreso {
 const POR_DELANTE = 90;
 
 /**
- * **Lo más alto que hay debajo de la ruta en crucero**, m, o `null` si no se
- * sabe: el relieve a una milla a cada lado, sin contar las ocho primeras ni
- * las ocho últimas, que se vuelan subiendo o bajando por su carta.
+ * **La mínima en ruta del crucero**, m, o `null` si no se sabe nada del
+ * suelo: la más alta que pide la regla del aire a lo largo de la ruta —ver
+ * `minimaEnRuta`—, sin contar las ocho primeras millas ni las ocho últimas,
+ * que se vuelan subiendo o bajando por su carta.
  *
  * Sirve para que el crucero planeado no quede por debajo de un monte: ni el
  * Teide en medio de una ruta corta puede decidir el crucero la distancia sola.
+ * Era lo más alto a una milla con mil pies encima; es lo mismo que se le pide
+ * a cada tramo de la ruta, para que el plan y el crucero no midan el monte
+ * con dos reglas distintas.
  */
-export function relieveEnCrucero(
-  r: Ruta,
-  cota: (x: number, z: number) => number | null,
-): number | null {
+export function minimaEnCrucero(r: Ruta, cota: Terreno["cota"]): number | null {
   let alto: number | null = null;
   const orilla = 8 * MILLA;
   for (let i = 1; i < r.fijos.length; i++) {
@@ -1064,20 +1066,51 @@ export function relieveEnCrucero(
     const b = r.fijos[i]!;
     const l = entre(a, b);
     if (l < 1) continue;
-    const ux = (b.x - a.x) / l;
-    const uz = (b.z - a.z) / l;
-    const pasos = Math.ceil(l / (0.5 * MILLA));
+    const pasos = Math.ceil(l / PASO_EN_RUTA);
     for (let k = 0; k <= pasos; k++) {
-      const t = (k / pasos) * l;
-      const hecho = r.acumulado[i - 1]! + t;
+      const t = k / pasos;
+      const hecho = r.acumulado[i - 1]! + t * l;
       if (hecho < orilla || r.total - hecho < orilla) continue;
-      for (const lado of [-1, 0, 1]) {
-        const c = cota(a.x + ux * t - uz * lado * MILLA, a.z + uz * t + ux * lado * MILLA);
-        if (c !== null && (alto === null || c > alto)) alto = c;
-      }
+      const m = minimaEnRuta(cota, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
+      if (m !== null && (alto === null || m > alto)) alto = m;
     }
   }
   return alto;
+}
+
+/**
+ * **El crucero del plan**, m: el nivel al que se va. Uno solo, y lo usan los
+ * dos que lo cuentan: el plan, que pone con él el punto de descenso, y la
+ * comandante, que lo anuncia en la bienvenida. Eran dos cuentas distintas —
+ * esta y otra por kilómetros en línea recta— y de Los Rodeos a Tenerife Sur la
+ * comandante anunciaba diez mil pies para un plan de doce mil. Ver
+ * `nivelDicho` en `audio/partes-de-la-comandante.ts`.
+ *
+ * Lo que pide la distancia —ver `cruceroPorLaDistancia`—, nunca por debajo de
+ * la mínima en ruta —ver `minimaEnCrucero`—, y de ahí el nivel legal más
+ * cercano por el rumbo magnético de la salida a la llegada: ver
+ * `nivel-de-crucero.ts`. Si ese nivel cae por debajo de lo que hace falta se
+ * sube uno en su sentido; si se pasa del techo del avión, se baja uno.
+ *
+ * `declinacion` es la del campo de salida, en grados, con el signo del
+ * escenario: magnético = verdadero + declinación.
+ */
+export function cruceroDelPlan(
+  r: Ruta,
+  avion: { readonly techo: number; readonly cotaDeSalida: number; readonly declinacion: number },
+  minima: number | null,
+): number {
+  const a = r.fijos[0];
+  const b = r.fijos[r.fijos.length - 1];
+  if (!a || !b) return 0;
+  const verdadero = (Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI;
+  const magnetico = verdadero + avion.declinacion;
+  const minimo = minima ?? 0;
+  const pedido = Math.max(cruceroPorLaDistancia(r, avion.techo, avion.cotaDeSalida), minimo);
+  let nivel = nivelPara(magnetico, pedido / PIE);
+  while (nivel * PIE < minimo - 1 && nivel * PIE < avion.techo) nivel += 2000;
+  while (nivel * PIE > Math.max(avion.techo, minimo) + 1 && nivel > 3000) nivel -= 2000;
+  return nivel * PIE;
 }
 
 /** Lo que el seguimiento necesita saber del avión cada vez. */
@@ -1133,6 +1166,11 @@ export class Seguimiento {
 
   get plan(): Ruta | null {
     return this.ruta;
+  }
+
+  /** El crucero con el que se puso el plan, m. Ver `cruceroDelPlan`. */
+  get cruceroPlaneado(): number {
+    return this.crucero;
   }
 
   /** El índice del punto al que se va. */
