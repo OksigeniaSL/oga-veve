@@ -1526,6 +1526,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let cocheEnPista = Infinity;
   let cocheEnPistaDonde = "";
+  /**
+   * **Y cómo estaban las ruedas cuando el juego dijo «aterrizado».**
+   *
+   * La máquina de fases daba el avión por aterrizado a doce metros del suelo,
+   * y de ahí colgaba el «frená»: en El Hierro sonaba antes que «thirty»,
+   * «twenty» y «ten». La comprobación de las voces lo veía de refilón —por el
+   * orden de lo que sonó— y según qué boca estuviera ocupada pasaba o no.
+   * Esto mira el hecho: la primera vez que la fase es «aterrizado», a cuánto
+   * del suelo iban las ruedas.
+   */
+  let ruedasAlAterrizar = null;
   /** Y lo cerca que estuvo con solo el avión en pista, para el parte. */
   let cocheCercaEnPista = Infinity;
   /*
@@ -2025,6 +2036,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
+    if (fase === "aterrizado" && ruedasAlAterrizar === null)
+      ruedasAlAterrizar = {
+        t: +t.toFixed(1),
+        tocando: s.onGround,
+        ruedas: +(s.heightAboveGround - (o.avion?.()?.tren ?? 0)).toFixed(1),
+      };
     /*
      * La traza se toma en dos ventanas: la subida —los primeros cuarenta y
      * cinco— y la aproximación, que es donde falla ahora el reactor. Con una
@@ -3633,6 +3650,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     // El tiempo que hizo: lo único que cambia entre pasadas. Ver el informe.
     meteo: o.meteo?.() ?? null,
     lejosDelCoche: Math.round(lejosDelCoche),
+    ruedasAlAterrizar,
     cocheEnElAire: +cocheEnElAire.toFixed(2),
     cocheEnElAireDonde,
     cocheEnPista: Number.isFinite(cocheEnPista)
@@ -4672,6 +4690,21 @@ comprobarSiVolo(
     ? "dijo «llegaste» con el avión todavía sobre el asfalto"
     : "esperó a que dejara la pista",
   "«apago el motor en mitad de la pista y vuelo terminado, y gano hasta galones»",
+);
+
+/*
+ * **Y aterrizado es con las ruedas en el suelo.** Ver `ruedasAlAterrizar`.
+ * Medio metro de margen por el muestreo: el banco lee cada décima, y un
+ * rebote justo en esa lectura no es volar.
+ */
+comprobarSiVolo(
+  "y la fase de tierra empieza al tocar, no antes",
+  vuelo.ruedasAlAterrizar !== null &&
+    (vuelo.ruedasAlAterrizar.tocando || vuelo.ruedasAlAterrizar.ruedas < 0.5),
+  vuelo.ruedasAlAterrizar === null
+    ? "no llegó a «aterrizado»"
+    : `a los ${vuelo.ruedasAlAterrizar.t} s, ${vuelo.ruedasAlAterrizar.tocando ? "con peso en las ruedas" : `con las ruedas a ${vuelo.ruedasAlAterrizar.ruedas} m del suelo`}`,
+  "«me dice frená y todavía estoy volando: thirty, twenty, ten»",
 );
 
 comprobarSiVolo(

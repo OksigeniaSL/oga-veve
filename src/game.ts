@@ -449,7 +449,12 @@ import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
-import { SE_QUEDAN, guionSinTorre, type Fase } from "./flight/vuelo";
+import {
+  SE_QUEDAN,
+  YA_ES_RODAJE,
+  guionSinTorre,
+  type Fase,
+} from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import {
   alturaDeEdificio,
@@ -12219,17 +12224,29 @@ export class Game {
      * Se puso `onGround` de más y con eso la tarjeta no salía: en la toma, el
      * contacto parpadea —las ruedas botan, el suelo se pierde por veinte
      * centímetros— y el aviso se caía justo en los segundos en los que hace
-     * falta. La máquina de fases ya resolvió eso midiendo la altura sobre el
-     * terreno, y «aterrizado» y «abandonando» **significan** estar en el suelo
-     * después de haber volado. Preguntarlo dos veces era discutirle a quien
-     * sabe. Es el mismo fallo que ya tuvo el aviso de terreno en la pista.
+     * falta. La máquina de fases ya resuelve eso: baja al suelo al tocar y no
+     * vuelve al aire por un bote —ver `pisa` en `vuelo.ts`—, y «aterrizado» y
+     * «abandonando» **significan** estar en el suelo después de haber volado.
+     * Preguntarlo dos veces era discutirle a quien sabe.
      */
+    /*
+     * **Y frenar es por el suelo, y hasta velocidad de rodaje.**
+     *
+     * Miraba el anemómetro contra doce metros por segundo, en las dos fases.
+     * Y el rodaje del juego va a trece: en El Hierro, rodando pista atrás
+     * hasta la única salida a la velocidad que pone el propio juego y con
+     * viento de cara, la tarjeta de «frená» estuvo puesta cuarenta segundos
+     * seguidos. Lo que se frena es lo que se avanza —la del suelo—, y en
+     * «abandonando» ya se rueda: ahí solo hace falta frenar si se va a
+     * velocidad de carrera, que es lo que dice `YA_ES_RODAJE`.
+     */
+    const porElSuelo = this.flight.state.groundSpeed;
     const corriendo =
       // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
       // `yaTocoTierra`.
       this.yaTocoTierra &&
-      (vista.fase === "aterrizado" || vista.fase === "abandonando") &&
-      this.flight.state.airspeed > RODAJE_DE_VERDAD;
+      ((vista.fase === "aterrizado" && porElSuelo > RODAJE_DE_VERDAD) ||
+        (vista.fase === "abandonando" && porElSuelo > YA_ES_RODAJE));
     if (corriendo !== this.pidiendoFreno) {
       this.pidiendoFreno = corriendo;
       if (corriendo) {

@@ -45,10 +45,19 @@ const EN_TIERRA: Situacion = {
   desalineado: 0,
 };
 
+/*
+ * **Y las ruedas tocan cuando se está en el suelo**, salvo que la prueba diga
+ * otra cosa: la máquina de fases baja al suelo por el contacto y no por la
+ * altura. Ver `pisa` en `vuelo.ts`.
+ */
 const con = (cambios: Partial<Situacion>): Situacion => ({
   ...EN_TIERRA,
   ...cambios,
-  estado: { ...EN_TIERRA.estado, ...(cambios.estado ?? {}) },
+  estado: {
+    ...EN_TIERRA.estado,
+    onGround: (cambios.sobreElSuelo ?? EN_TIERRA.sobreElSuelo) < 3,
+    ...(cambios.estado ?? {}),
+  },
 });
 
 /**
@@ -382,6 +391,112 @@ describe("las trampas", () => {
     expect(v.actual).toBe("final");
     const fase = durante(v, con({ motor: true, sobreElSuelo: 600 }), 0.5);
     expect(fase).toBe("en-vuelo");
+  });
+});
+
+/*
+ * **Aterrizado es con las ruedas en el suelo, no a doce metros de él.**
+ *
+ * La máquina bajaba al suelo por altura, y en la recogida eso era pedir
+ * «frená» a un avión que seguía volando: antes que «thirty», «twenty» y
+ * «ten». En El Hierro, con la pista en lo alto de la costa, en todos los
+ * vuelos. Ver `pisa` en `vuelo.ts`.
+ */
+describe("se aterriza al tocar", () => {
+  /** Un vuelo que ya voló y viene en final, alineado y bajando. */
+  function enFinal(): Vuelo {
+    const v = new Vuelo();
+    v.reiniciar(true);
+    durante(v, con({ motor: true, enPista: true, sobreElSuelo: 400 }), 20);
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 120,
+        alEjeDePista: 3,
+        estado: { airspeed: 40, groundSpeed: 40, verticalSpeed: -3 } as never,
+      }),
+      1.5,
+    );
+    expect(v.actual).toBe("final");
+    return v;
+  }
+
+  /** En la recogida, sobre la pista y todavía sin tocar. */
+  const recogida = (alto: number, alLargo = -500) =>
+    con({
+      motor: true,
+      enPista: true,
+      alEjeDePista: 2,
+      alLargoDePista: alLargo,
+      sobreElSuelo: alto,
+      estado: {
+        airspeed: 38,
+        groundSpeed: 38,
+        verticalSpeed: -1,
+        onGround: false,
+      } as never,
+    });
+
+  /** Ya rodando la carrera, con las ruedas en el asfalto. */
+  const carrera = con({
+    motor: true,
+    enPista: true,
+    alEjeDePista: 2,
+    alLargoDePista: -300,
+    sobreElSuelo: 1,
+    estado: { airspeed: 36, groundSpeed: 36, verticalSpeed: 0 } as never,
+  });
+
+  it("a diez metros sobre la pista, sin tocar, todavía no es aterrizado", () => {
+    const v = enFinal();
+    for (const alto of [11, 9, 6, 3, 1.5])
+      expect(durante(v, recogida(alto), 0.5)).toBe("final");
+  });
+
+  it("y en cuanto las ruedas tocan, sí", () => {
+    const v = enFinal();
+    durante(v, recogida(4), 1);
+    // Inmediata, sin esperar a la histéresis: frenar se pide al tocar.
+    expect(v.paso(carrera, 0.05).fase).toBe("aterrizado");
+  });
+
+  it("un bote después de tocar no devuelve al aire", () => {
+    const v = enFinal();
+    durante(v, carrera, 1);
+    expect(v.actual).toBe("aterrizado");
+    // Las ruedas se separan dos metros y medio: sigue siendo la carrera.
+    expect(durante(v, recogida(3.5, -250), 1)).toBe("aterrizado");
+    expect(durante(v, carrera, 1)).toBe("aterrizado");
+  });
+
+  it("y flotando pasado el centro de la pista no se manda a dar una vuelta", () => {
+    // El banco en El Hierro tocó a novecientos metros de una pista de mil
+    // doscientos: pasado el centro, todavía en el aire, esto era «andá a dar
+    // una vuelta» a tres metros del asfalto.
+    const v = enFinal();
+    durante(v, recogida(8), 1);
+    expect(durante(v, recogida(3, 150), 1)).toBe("final");
+    expect(v.paso(carrera, 0.05).fase).toBe("aterrizado");
+  });
+
+  it("pero subiendo de verdad sobre la pista es una frustrada, como siempre", () => {
+    const v = enFinal();
+    durante(v, recogida(5, 150), 1);
+    const subiendo = con({
+      motor: true,
+      enPista: true,
+      alEjeDePista: 2,
+      alLargoDePista: 300,
+      sobreElSuelo: 40,
+      estado: {
+        airspeed: 40,
+        groundSpeed: 40,
+        verticalSpeed: 6,
+        onGround: false,
+      } as never,
+    });
+    expect(durante(v, subiendo, 6)).toBe("en-vuelo");
   });
 });
 

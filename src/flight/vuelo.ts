@@ -200,7 +200,12 @@ export const PARADO = 0.6;
 /** Velocidad a la que se considera que ya rueda y no está parado, m/s. */
 const RODANDO_YA = 2;
 
-/** Altura a la que se da por despegado, m. */
+/**
+ * Altura a la que se da por despegado, m.
+ *
+ * **Solo para subir.** Para bajar no hay altura que valga: se está en el
+ * suelo cuando las ruedas tocan. Ver `pisa`.
+ */
 const EN_EL_AIRE = 12;
 
 /** Altura que hay que alcanzar antes de poder volver a aterrizar, m. */
@@ -398,6 +403,28 @@ export class Vuelo {
   /** Si ya se paró en la doble raya con la lección de rodar. Ver `Paso`. */
   private rodajeHecho = false;
 
+  /**
+   * **Si el avión pisa el suelo: peso en las ruedas, no una altura.**
+   *
+   * Esto era `sobreElSuelo <= EN_EL_AIRE`, y con eso el avión se daba por
+   * aterrizado **a doce metros del suelo**, en plena recogida: «frená» sonaba
+   * antes que «thirty», «twenty» y «ten». Donde más se notaba era en El
+   * Hierro, cuya pista está en lo alto de la costa: el radioaltímetro mide
+   * sobre lo que haya debajo, y a nueve o diez metros de él el juego ya pedía
+   * frenar a un avión que seguía volando.
+   *
+   * Un avión de verdad sabe que ha tocado por el interruptor del tren —el
+   * «weight on wheels»—, que es de donde cuelgan los frenos automáticos, los
+   * spoilers y la reversa. Aquí igual: **se baja al suelo tocándolo**.
+   *
+   * **Y se sube a él con altura, que un bote no es un despegue.** Las ruedas
+   * que se separan medio metro en un rebote siguen en la carrera de
+   * aterrizaje; para dejar el suelo hay que pasar los doce metros de siempre.
+   * Es una histéresis con dos bordes que miden cosas distintas a propósito:
+   * el de abajo, el contacto; el de arriba, la altura.
+   */
+  private pisa = true;
+
   /** Empieza un vuelo. `desdePista` arranca ya alineado, para el modo de siempre. */
   reiniciar(desdePista = false): void {
     this.fase = desdePista ? "despegando" : "estacionado";
@@ -417,6 +444,9 @@ export class Vuelo {
     // la pista no cuente como haber entrado. Ver `vigilarLaLuz`.
     this.estabaEnPista = null;
     this.uso = desdePista;
+    // Se empieza en el suelo —en el puesto o en la cabecera— o, en la lección
+    // de aterrizar, alto: el primer paso lo corrige.
+    this.pisa = true;
   }
 
   get actual(): Fase {
@@ -456,6 +486,9 @@ export class Vuelo {
 
   paso(s: Situacion, dt: number): Paso {
     this.desde += dt;
+    // El contacto manda; y sin él, solo la altura saca del suelo. Ver `pisa`.
+    if (s.estado.onGround) this.pisa = true;
+    else if (s.sobreElSuelo > EN_EL_AIRE) this.pisa = false;
     if (s.sobreElSuelo > EN_EL_AIRE) {
       this.despego = true;
       this.enElAire += dt;
@@ -522,16 +555,28 @@ export class Vuelo {
    */
   private deducir(s: Situacion): Fase {
     const parado = s.estado.groundSpeed < PARADO;
-    const enTierra = s.sobreElSuelo <= EN_EL_AIRE;
+    const enTierra = this.pisa;
 
     // ── En el aire ───────────────────────────────────────────────────────
     if (!enTierra) {
       // **Un salto de rana no es un vuelo.** Ver `vuelve`.
+      /*
+       * **Y encima de la pista, viniendo de final, se sigue en final.**
+       *
+       * Hasta que se da por aterrizado al tocar —ver `pisa`—, quien flota en
+       * la recogida puede pasar el centro de la pista todavía en el aire, y
+       * con la regla de abajo sola eso era «estás volando: andá a dar una
+       * vuelta» a tres metros del asfalto. Medido en El Hierro, cuya pista
+       * mide mil doscientos: el banco tocó a novecientos del umbral. Quien
+       * está sobre la pista, alineado y sin subir, está aterrizando; si sube
+       * de verdad, sale de final por arriba como siempre.
+       */
+      const posandose = this.fase === "final" && s.enPista;
       const enFinal =
         this.haVolado &&
         // Antes del centro de la pista: quien la ha pasado ya no está
         // entrando, está yéndose.
-        s.alLargoDePista < 0 &&
+        (s.alLargoDePista < 0 || posandose) &&
         s.sobreElSuelo < 300 &&
         // Se entra bajando y se sale subiendo de verdad, no al nivelarse.
         (this.fase === "final"
@@ -837,8 +882,7 @@ export class Vuelo {
     // hecho bien. Parar encima el mismo rato que la torre pide para mirarte
     // es terminar la lección.
     if (this.haVolado || this.verde) return;
-    const enLaRaya =
-      s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
+    const enLaRaya = s.restante < LLEGADA && !s.enPista && this.pisa;
     if (!enLaRaya) {
       this.quieto = 0;
       this.mirando = 0;
@@ -894,7 +938,7 @@ export class Vuelo {
     this.estabaEnPista = s.enPista;
     if (this.haVolado || this.verde || this.uso || this.avisadoDeLaLuz)
       return false;
-    if (!entra || s.sobreElSuelo > EN_EL_AIRE) return false;
+    if (!entra || !this.pisa) return false;
     this.avisadoDeLaLuz = true;
     return true;
   }
