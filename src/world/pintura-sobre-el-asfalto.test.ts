@@ -22,6 +22,7 @@ import { BufferGeometry, Mesh, Raycaster, Vector3, type Object3D } from "three";
 import { describe, expect, it } from "vitest";
 import { SCENARIOS, type Scenario } from "./scenarios";
 import { Terrain } from "./terrain";
+import { esDura } from "./superficie";
 
 const fs = (
   globalThis as unknown as {
@@ -68,6 +69,15 @@ describe("la pintura va sobre el asfalto, ni dentro ni flotando", () => {
         if (o.name.startsWith("pavimento:")) pavimento.push(o);
         if (PINTURA.includes(o.name)) pintura.push(o);
       });
+      /*
+       * **Y en un campo de hierba no hay pintura que mirar**: ni en la pista,
+       * que lleva balizas, ni en las calles. Que no la haya es lo que se
+       * comprueba ahí. Ver `rodadura` en `aerodrome.ts`.
+       */
+      if (!esDura(esc.aerodrome!.runways[0]?.surface)) {
+        expect(pintura.map((m) => m.name), "pintura sobre la hierba").toEqual([]);
+        return;
+      }
       // Y que esté: si las piezas no se pueden fundir, la malla no sale, y una
       // prueba que no encuentra pintura pasaría sin mirar nada.
       if (esc.aerodrome!.taxiways.length)

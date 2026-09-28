@@ -1321,6 +1321,19 @@ function encoger(poli: readonly Punto[], radio: number): Punto[] {
 function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   const grupo = new Group();
   grupo.name = "rodadura";
+  /*
+   * **Y sobre la hierba no se pinta nada.**
+   *
+   * Es la misma regla que ya tiene la pista —ver `marcas`—, que en un campo
+   * de hierba lleva balizas y no pintura: el césped no se puede pintar. Las
+   * calles de Yvytu Rape seguían con su raya amarilla, su doble raya del
+   * punto de espera y su «A» de dos metros, o sea con la señalización de
+   * Pettirossi puesta en un potrero. Quien aprenda aquí que una granja tiene
+   * una calle «A» se lo tiene que desaprender. Lo que marca por dónde se va
+   * y dónde se para es la raya verde del juego, que es del juego y no del
+   * campo.
+   */
+  if (!esDura(aero.runways[0]?.surface)) return grupo;
   const piezas: BufferGeometry[] = [];
 
   // El amarillo **se corta al llegar a la pista**. Una calle de rodaje cruza

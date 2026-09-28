@@ -1558,6 +1558,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * que se acaba de aterrizar, nunca.
    */
   let cochePisaLaPista = null;
+  /**
+   * **Y quién está en el puesto cuando se llega**: la bici, si es un campo
+   * particular. Se mira la primera vez que la fase dice «en el puesto».
+   */
+  let quienRecibe = null;
   /** Y lo cerca que estuvo con solo el avión en pista, para el parte. */
   let cocheCercaEnPista = Infinity;
   /*
@@ -2514,6 +2519,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * lejos es lo correcto: no se le está siguiendo, se va a su encuentro.
      */
     const coche = globalThis.__raiz?.getObjectByName("sigueme");
+    if (quienRecibe === null && fase === "en-puesto" && toco) {
+      const bici = o.enBici?.() ? coche : null;
+      quienRecibe = {
+        enBici: !!o.enBici?.(),
+        biciALaVista: !!bici?.visible,
+        biciA: bici
+          ? Math.round(
+              Math.hypot(
+                bici.position.x - s.position.x,
+                bici.position.z - s.position.z,
+              ),
+            )
+          : null,
+      };
+    }
     if (trazarCoche && s.onGround && i % 3 === 0) {
       const sg = o.sigueme?.();
       const ac = sg?.acumulado ?? [];
@@ -3705,6 +3725,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     lejosDelCoche: Math.round(lejosDelCoche),
     lejosEsperando: Math.round(lejosEsperando),
     cochePisaLaPista,
+    quienRecibe,
     ruedasAlAterrizar,
     cocheEnElAire: +cocheEnElAire.toFixed(2),
     cocheEnElAireDonde,
@@ -4392,22 +4413,45 @@ comprobar(
  * al menos un gesto. Dónde se planta y con qué lateralidad ya lo comprueba
  * `senalero.test.ts` sin navegador.
  */
-comprobar(
-  "y en el puesto hay alguien esperando, con sus bastones",
-  !!vuelo.senalero?.visto && (vuelo.senalero?.gestos?.length ?? 0) > 0,
-  `visto: ${vuelo.senalero?.visto ? "sí" : "no"} · gestos: ${
-    vuelo.senalero?.gestos?.join(", ") || "ninguno"
-  } · su puesto: ${vuelo.senalero?.donde} · lo más cerca que se estuvo: ${vuelo.senalero?.masCerca} m${
-    vuelo.senalero?.visto
-      ? ""
-      : // Los últimos, que son los de la llegada: la lista entera se llena
-        // de la salida, donde es correcto que no se le vea.
-        ` · y no se le vio porque: ${
-          vuelo.senalero?.porQueNo?.slice(-8).join(" | ") || "ni idea"
-        }`
-  }`,
-  "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
-);
+/*
+ * **Y en la granja, quien espera es ella.** Un campo particular no tiene
+ * servicios de plataforma: ni coche de sígame ni señalero. El señor de los
+ * bastones seguía plantado en el puesto de Yvytu Rape; allí quien recibe es
+ * Jazlyn, que salió en bici a buscarte y se queda a un lado del hueco.
+ */
+if (vuelo.enBici) {
+  comprobar(
+    "y en la granja te recibe quien salió en bici, sin bastones",
+    !vuelo.senalero?.visto &&
+      !!vuelo.quienRecibe?.biciALaVista &&
+      (vuelo.quienRecibe?.biciA ?? Infinity) < 30,
+    `señalero: ${vuelo.senalero?.visto ? `visto, con ${vuelo.senalero?.gestos?.join(", ") || "ningún gesto"}` : "ninguno"} · la bici al llegar al puesto: ${
+      vuelo.quienRecibe === null
+        ? "no se llegó al puesto"
+        : vuelo.quienRecibe.biciALaVista
+          ? `a ${vuelo.quienRecibe.biciA} m del avión`
+          : "no estaba"
+    }`,
+    "«en una granja el señalero no pinta nada: allí quien recibe es Jazlyn, en bici»",
+  );
+} else {
+  comprobar(
+    "y en el puesto hay alguien esperando, con sus bastones",
+    !!vuelo.senalero?.visto && (vuelo.senalero?.gestos?.length ?? 0) > 0,
+    `visto: ${vuelo.senalero?.visto ? "sí" : "no"} · gestos: ${
+      vuelo.senalero?.gestos?.join(", ") || "ninguno"
+    } · su puesto: ${vuelo.senalero?.donde} · lo más cerca que se estuvo: ${vuelo.senalero?.masCerca} m${
+      vuelo.senalero?.visto
+        ? ""
+        : // Los últimos, que son los de la llegada: la lista entera se llena
+          // de la salida, donde es correcto que no se le vea.
+          ` · y no se le vio porque: ${
+            vuelo.senalero?.porQueNo?.slice(-8).join(" | ") || "ni idea"
+          }`
+    }`,
+    "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
+  );
+}
 
 /*
  * **El tope de la ida sale de la calle, no de un número redondo.**

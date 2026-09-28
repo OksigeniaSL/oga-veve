@@ -11023,6 +11023,14 @@ export class Game {
     return this.senaleroEnCuadro;
   }
 
+  /**
+   * Si el campo en el que se está es particular: sin señalero ni coche de
+   * sígame, que son servicios de un aeropuerto. Ver `Aerodrome.privado`.
+   */
+  private get campoParticular(): boolean {
+    return this.elCampoMontado().escenario.aerodrome?.privado === true;
+  }
+
   /** Si el señalero estaba en el cuadro el fotograma anterior. */
   private senaleroEnCuadro = false;
   private readonly puntoDelSenalero = new Vector3();
@@ -11054,18 +11062,31 @@ export class Game {
      *
      * Comprobarlo cuesta una resta por fotograma y solo mientras se vuelve.
      */
-    if (volviendo) this.senaleroAlPuestoDeLlegada();
+    /*
+     * **Y en un campo particular no hay señalero.**
+     *
+     * El señor de los bastones es un servicio de plataforma de aeropuerto,
+     * igual que el coche del sígame, y en la granja seguía esperando en el
+     * puesto con su chaleco. Allí quien recibe es quien salió a buscarte en
+     * la bici: te lleva hasta el hueco y se queda a un lado. Ver
+     * `Aerodrome.privado` y `construirBici`.
+     */
+    const hayQuienSenale = !this.campoParticular;
+    if (!hayQuienSenale && this.senalero.grupo.visible) this.senalero.reiniciar();
+    if (volviendo && hayQuienSenale) this.senaleroAlPuestoDeLlegada();
     const s = this.flight.state;
-    const gesto = this.senalero.paso(
-      dt,
-      {
-        x: s.position.x,
-        z: s.position.z,
-        velocidad: s.airspeed,
-        enElSuelo: s.onGround,
-      },
-      volviendo,
-    );
+    const gesto = hayQuienSenale
+      ? this.senalero.paso(
+          dt,
+          {
+            x: s.position.x,
+            z: s.position.z,
+            velocidad: s.airspeed,
+            enElSuelo: s.onGround,
+          },
+          volviendo,
+        )
+      : null;
 
     /*
      * **Y pasarse del puesto tiene que doler un poco.**
@@ -11183,7 +11204,22 @@ export class Game {
      * un campo que se ve entero desde el puesto no necesita guía.
      */
     if (this.plan && this.tier.sigueme) {
-      this.sigueme.ponerRuta(this.plan.rutaVisible());
+      /*
+       * **Y con el avión ya en el puesto, la bici sigue con la raya que tenía.**
+       *
+       * Al llegar el plan quita la raya, y quien te había salido a buscar se
+       * quedaba plantada donde la pillara: si el avión la había adelantado
+       * —ella se aparta para dejarlo pasar, ver `sitioParaLaBici`—, a noventa
+       * metros del puesto y sin forma de llegar. Quien recibe tiene que
+       * acabar junto al avión aparcado: sigue pedaleando por la raya de antes
+       * hasta el hueco, y el avión se busca en ella por dónde está, que la
+       * cuenta del plan ya se fue con su raya.
+       */
+      const enBiciEnElPuesto =
+        this.sigueme.enBici &&
+        this.sigueme.grupo.visible &&
+        (fase === "en-puesto" || fase === "apagado");
+      if (!enBiciEnElPuesto) this.sigueme.ponerRuta(this.plan.rutaVisible());
       /*
        * **Está antes de arrancar, y eso importa.**
        *
@@ -11197,7 +11233,15 @@ export class Game {
         ? // La bici, solo de vuelta. Ver arriba.
           fase === "aterrizado" ||
           fase === "abandonando" ||
-          fase === "a-plataforma"
+          fase === "a-plataforma" ||
+          /*
+           * **Y en el puesto se queda**: es quien te recibe, que en la granja
+           * no hay señalero. Si ya había salido, se queda a un lado del hueco
+           * mientras parás y apagás, en vez de esfumarse en el momento en
+           * que llegás. Ver `NO_LLEGA_EN_BICI`.
+           */
+          ((fase === "en-puesto" || fase === "apagado") &&
+            this.sigueme.grupo.visible)
         : fase === "estacionado" ||
           fase === "arrancando" ||
           fase === "rodando" ||
@@ -11308,7 +11352,7 @@ export class Game {
         // Por el asfalto, como el avión: ver `Terrain.resalteEn`.
         (x, z) => this.terrain.sampleSurface(x, z),
         espera,
-        this.plan?.avanceEnLaRuta,
+        enBiciEnElPuesto ? undefined : this.plan?.avanceEnLaRuta,
       );
 
       /*

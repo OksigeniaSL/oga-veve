@@ -25,6 +25,7 @@ import {
   paraUnAvion,
 } from "./aerodrome";
 import gcts from "../../data/aerodromes/gcts.aero.json";
+import yvytu from "../../data/aerodromes/yvytu.aero.json";
 
 const AERODROMOS = [sgas as unknown as Aerodrome, gcxo as unknown as Aerodrome];
 
@@ -283,5 +284,29 @@ describe("el radar y las antenas", () => {
     // Un cuarto de vuelta en un cuarto del periodo.
     expect(angulo(1250) - angulo(0)).toBeCloseTo(Math.PI / 2);
     reloj.mockRestore();
+  });
+});
+
+/*
+ * **Sobre la hierba no se pinta.** La pista de hierba ya llevaba balizas en
+ * vez de pintura; sus calles seguían con la raya amarilla, la doble raya del
+ * punto de espera y la «A», que en un potrero no existen.
+ */
+describe("la rodadura de un campo de hierba", () => {
+  /*
+   * Lo que cuelga del grupo de la rodadura: la raya amarilla con la doble
+   * raya del punto de espera, y las letras. Las letras necesitan un lienzo y
+   * aquí no lo hay, así que se mira el grupo entero: vacío es que no se
+   * pintó nada, tampoco lo que en un navegador serían las letras.
+   */
+  const pintado = (aero: Aerodrome) =>
+    createAerodrome(aero).getObjectByName("rodadura")?.children.length ?? -1;
+
+  it("en Yvytu Rape no lleva ni raya amarilla, ni doble raya, ni letras", () => {
+    expect(pintado(yvytu as unknown as Aerodrome)).toBe(0);
+  });
+
+  it("y en un aeropuerto de asfalto sí, que ahí es lo que se sigue", () => {
+    expect(pintado(sgas as unknown as Aerodrome)).toBeGreaterThan(0);
   });
 });

@@ -188,8 +188,31 @@ const SE_ACERCA_COMO_MUCHO = 35;
 /** Cuánto se queda corto del final de la ruta, m. Ver la cabecera. */
 const NO_LLEGA = 30;
 
+/**
+ * Y la bici, cuánto se queda corta: nada, m.
+ *
+ * El coche deja al avión treinta metros antes del puesto y se va, que es lo
+ * que hace un sígame en una plataforma donde después manda el señalero. En la
+ * granja no hay señalero: **quien te recibe es ella**. Así que pedalea hasta
+ * el hueco mismo y se pone al lado, donde se queda mientras aparcás y
+ * apagás.
+ *
+ * Hasta el final y no ocho metros antes, que fue lo primero: ocho metros por
+ * detrás del sitio donde para el avión es a la altura del ala, y desde la
+ * cámara de detrás —que es desde donde se juega— se quedaba justo fuera del
+ * cuadro. Quien te recibe tiene que verse al llegar.
+ */
+const NO_LLEGA_EN_BICI = 0;
+
 /** Cuánto se aparta al ceder el sitio, m. */
 const A_UN_LADO = 11;
+
+/**
+ * Y la bici, un poco más: se queda **al lado del avión parado**, no de un
+ * avión que pasa, así que el sitio que deja es el de la punta del ala de los
+ * que caben en la granja, con margen. Ver `NO_LLEGA_EN_BICI`.
+ */
+const A_UN_LADO_EN_BICI = 13;
 
 /** Y cuánto tarda en apartarse, s. */
 const TARDA_EN_APARTARSE = 2.5;
@@ -597,7 +620,8 @@ export class Sigueme {
       ? Math.max(pideElAvion, DELANTE_EN_BICI)
       : pideElAvion;
     const alLlegar = avanceDelAvion ?? this.enLaRuta(avion);
-    const hastaDondeLlega = Math.max(0, this.largo - NO_LLEGA);
+    const noLlega = this.enBici ? NO_LLEGA_EN_BICI : NO_LLEGA;
+    const hastaDondeLlega = Math.max(0, this.largo - noLlega);
     /*
      * **Dónde tiene que estar: por delante del avión, o esperándolo en la
      * salida, lo que quede más allá.**
@@ -742,7 +766,7 @@ export class Sigueme {
        * asfalto, con él a treinta metros y rodando hacia el puesto. Donde no
        * se puede ir por delante, se espera a un lado.
        */
-      this.largo - alLlegar < NO_LLEGA + adelanto;
+      this.largo - alLlegar < noLlega + adelanto;
     this.aparte = deja
       ? Math.min(1, this.aparte + dt / TARDA_EN_APARTARSE)
       : this.aparte;
@@ -751,7 +775,9 @@ export class Sigueme {
     const rumbo = this.rumboEn(this.s);
     // Apartarse es irse a la derecha de su propia marcha, que es de donde no
     // viene el avión.
-    const lado = Math.max(this.aparte, this.alLado) * A_UN_LADO;
+    const lado =
+      Math.max(this.aparte, this.alLado) *
+      (this.enBici ? A_UN_LADO_EN_BICI : A_UN_LADO);
     this.grupo.position.x = donde[0] - rumbo[1] * lado;
     this.grupo.position.z = donde[1] + rumbo[0] * lado;
     this.grupo.position.y = cota(this.grupo.position.x, this.grupo.position.z);

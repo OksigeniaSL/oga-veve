@@ -59,7 +59,7 @@
   ],
   "taxiways": [
     {
-      "ref": "A",
+      "ref": null,
       "kind": "taxiway",
       "widthM": 12,
       "path": [
@@ -78,7 +78,7 @@
       ]
     },
     {
-      "ref": "A",
+      "ref": null,
       "kind": "taxiway",
       "widthM": 12,
       "path": [
@@ -238,7 +238,7 @@
         1045.5,
         -254.1
       ],
-      "ref": "A",
+      "ref": null,
       "source": "dibujado"
     }
   ],

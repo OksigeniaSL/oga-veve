@@ -20,6 +20,8 @@ import { sitioDeLaCola } from "../cameras/fuera";
 import { colocarModelo, ojoDelModelo } from "./aeronave-modelo";
 import { Sigueme, adelantoDelSigueme, salidaDeLaRuta } from "./sigueme";
 import { CRUCERO } from "./plan-de-vuelo";
+import { cabeEn, campoDe } from "../flight/cabe";
+import { SCENARIOS } from "./scenarios";
 import { medirVistaAlFrente, type VistaAlFrente } from "./vista-al-frente";
 
 /* El `fs` de Node pedido en marcha. Ver `flaps-del-modelo.test.ts`. */
@@ -346,6 +348,60 @@ describe("la bici, que sale a buscarte y te lleva a casa", () => {
       bici.paso(0.1, { x: 0, z: 0, enPista: false }, true, false, cota, boca);
     expect(Math.abs(bici.donde!.x)).toBeLessThan(0.5);
     expect(bici.yaSeAparto).toBe(false);
+  });
+
+  it("y en el puesto te recibe: se queda al lado del hueco, lejos de la punta del ala", () => {
+    // En la granja no hay señalero: quien está en el puesto cuando llegás es
+    // ella. Y a un lado, con sitio de sobra para el ala de cualquiera de los
+    // aviones que caben en esa pista.
+    const bici = new Sigueme(true);
+    bici.ponerRuta([
+      [0, 0],
+      [0, -300],
+    ]);
+    for (let z = 0; z >= -300; z -= 0.3)
+      bici.paso(0.05, { x: 0, z }, true, false, cota, null, -z);
+    for (let i = 0; i < 80; i++)
+      bici.paso(0.05, { x: 0, z: -300 }, true, false, cota, null, 300);
+    const d = bici.donde!;
+    expect(Math.hypot(d.x, d.z + 300), "junto al puesto").toBeLessThan(15);
+    expect(bici.yaSeAparto).toBe(true);
+    // Y ya parado el avión, sin la cuenta del plan, se queda donde está.
+    for (let i = 0; i < 20; i++)
+      bici.paso(0.05, { x: 0, z: -300 }, true, false, cota);
+    expect(bici.donde, "se queda en el puesto").toEqual(d);
+    const granja = campoDe(SCENARIOS.find((e) => e.id === "yvytu-rape")!);
+    const caben = AIRCRAFT.filter((a) => cabeEn(a, granja).cabe);
+    expect(caben.length).toBeGreaterThan(0);
+    for (const a of caben) {
+      const punta = a.wingSpan / 2;
+      const libre = Math.min(
+        Math.hypot(d.x - punta, d.z + 300),
+        Math.hypot(d.x + punta, d.z + 300),
+      );
+      expect(libre, a.id).toBeGreaterThan(5);
+    }
+  });
+
+  it("y aunque el avión la haya adelantado, acaba junto al puesto", () => {
+    // Se apartó para dejar pasar al avión, que llegó antes al hueco. Ella
+    // sigue pedaleando por su raya hasta él: quien recibe es ella.
+    const bici = new Sigueme(true);
+    bici.ponerRuta([
+      [0, 0],
+      [0, -300],
+    ]);
+    let z = 0;
+    for (let i = 0; i < 400 && z > -300; i++) {
+      bici.paso(0.05, { x: 0, z }, true, false, cota, null, -z);
+      z = Math.max(-300, z - 14 * 0.05);
+    }
+    expect(bici.yaSeAparto, "se apartó para dejarlo pasar").toBe(true);
+    // El avión, parado en el puesto; el plan ya no lleva cuenta.
+    for (let i = 0; i < 1200; i++)
+      bici.paso(0.05, { x: 0, z: -300 }, true, false, cota);
+    const d = bici.donde!;
+    expect(Math.hypot(d.x, d.z + 300), "junto al puesto").toBeLessThan(15);
   });
 
   it("y guía por delante: no se aparta por ir detrás de ella a su paso", () => {
