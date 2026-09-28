@@ -56,7 +56,10 @@ export interface AlrededorDelTurno {
   trafico(): DibujoDelTurno | null;
   /** Si la lección tiene torre. */
   torre(): boolean;
-  /** Si el campo montado es privado: ni torre ni frecuencia. */
+  /**
+   * Si el campo montado no tiene torre —el particular, o uno público sin
+   * servicio—: ni torre ni frecuencia. Ver `sinTorre` en `world/aerodrome.ts`.
+   */
   privado(): boolean;
   /**
    * Si en el campo de ahora, con la pista en uso, **no hay más que una calle**
@@ -264,6 +267,25 @@ export class TurnoDePista {
       return "aterriza";
     if (ocupan.some((o) => o.orden === "torre.lineUpWait")) return "despega";
     if (this.conCalleUnica && this.de.radio.alguienEnLaCalle) return "despega";
+    return null;
+  }
+
+  /**
+   * **El tráfico que conoce quien informa**, para un AFIS: el porqué de la
+   * espera si lo hay, y si no, uno que viene a aterrizar aunque todavía vaya
+   * por el viento en cola, o uno que rueda hacia la pista. `null` es «sin
+   * tráfico conocido», que un AFIS solo dice cuando es verdad.
+   *
+   * Una torre no lo necesita: te deja en la roja o te da la verde, y el
+   * porqué va con la roja. Un AFIS no te para, así que lo que te da es esto,
+   * y con esto decidís vos. Ver `DICE_UN_AFIS` en `audio/torre.ts`.
+   */
+  get traficoConocido(): PorQueEsperas | null {
+    if (this.de.privado()) return null;
+    const porQue = this.porQueEsperas;
+    if (porQue) return porQue;
+    if (this.de.radio.alguienViene) return "aterriza";
+    if (this.de.radio.alguienEnLaCalle) return "despega";
     return null;
   }
 

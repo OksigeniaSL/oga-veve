@@ -254,6 +254,8 @@ const ESCENARIOS = {
   guarani: { aero: 'sges', proveedor: 'sentinel', lado: 22000 },
   encarnacion: { aero: 'sgen', proveedor: 'sentinel', lado: 22000 },
   concepcion: { aero: 'sgco', proveedor: 'sentinel', lado: 22000 },
+  ayolas: { aero: 'sgay', proveedor: 'sentinel', lado: 22000 },
+  pilar: { aero: 'sgpi', proveedor: 'sentinel', lado: 22000 },
   estigarribia: { aero: 'sgme', proveedor: 'sentinel', lado: 22000 },
   'pedro-juan': { aero: 'sgpj', proveedor: 'sentinel', lado: 22000 },
   'yvytu-rape': { aero: 'yvytu', proveedor: 'sentinel', lado: 22000 },

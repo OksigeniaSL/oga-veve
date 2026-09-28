@@ -144,6 +144,21 @@
     "lado.right": {
       "ms": 404
     },
+    "torre.canario.solo.afisLibre": {
+      "ms": 711
+    },
+    "torre.canario.solo.afisOcupada": {
+      "ms": 1103
+    },
+    "torre.canario.solo.afisSinTrafico": {
+      "ms": 1585
+    },
+    "torre.canario.solo.afisTraficoAterriza": {
+      "ms": 1153
+    },
+    "torre.canario.solo.afisTraficoDespega": {
+      "ms": 1101
+    },
     "torre.canario.solo.aterrizar": {
       "ms": 1063
     },
@@ -162,6 +177,9 @@
     "torre.canario.solo.destino": {
       "ms": 1033
     },
+    "torre.canario.solo.free": {
+      "ms": 657
+    },
     "torre.canario.solo.goAround": {
       "ms": 1421
     },
@@ -176,6 +194,12 @@
     },
     "torre.canario.solo.lineUpWait": {
       "ms": 951
+    },
+    "torre.canario.solo.noReportedTraffic": {
+      "ms": 1097
+    },
+    "torre.canario.solo.occupied": {
+      "ms": 686
     },
     "torre.canario.solo.rogerMayday": {
       "ms": 949
@@ -943,6 +967,147 @@
       "{hora}",
       "{millas}",
       "{altura}"
+    ],
+    "torre.canario.solo.free": [
+      "torre.canario.solo.free"
+    ],
+    "torre.canario.solo.occupied": [
+      "torre.canario.solo.occupied"
+    ],
+    "torre.canario.solo.noReportedTraffic": [
+      "torre.canario.solo.noReportedTraffic"
+    ],
+    "torre.canario.solo.afisLibre": [
+      "torre.canario.solo.afisLibre"
+    ],
+    "torre.canario.solo.afisOcupada": [
+      "torre.canario.solo.afisOcupada"
+    ],
+    "torre.canario.solo.afisSinTrafico": [
+      "torre.canario.solo.afisSinTrafico"
+    ],
+    "torre.canario.solo.afisTraficoAterriza": [
+      "torre.canario.solo.afisTraficoAterriza"
+    ],
+    "torre.canario.solo.afisTraficoDespega": [
+      "torre.canario.solo.afisTraficoDespega"
+    ],
+    "torre.canario.afisLibre": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.afisLibre"
+    ],
+    "torre.canario.afisLibreEnFinal": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.afisLibre"
+    ],
+    "torre.canario.afisOcupada": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.afisOcupada"
+    ],
+    "torre.canario.afisSinTrafico": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.afisSinTrafico"
+    ],
+    "torre.canario.afisTraficoAterriza": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.afisTraficoAterriza"
+    ],
+    "torre.canario.afisTraficoDespega": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.afisTraficoDespega"
+    ],
+    "torre.canario.afisFree": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "{viento?}",
+      "torre.canario.solo.runway",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.free"
+    ],
+    "torre.canario.afisFreeTakeoff": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "{viento?}",
+      "torre.canario.solo.runway",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.free"
+    ],
+    "torre.canario.afisOccupied": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runway",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.occupied"
+    ],
+    "torre.canario.afisNoTraffic": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "{viento?}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.noReportedTraffic"
+    ],
+    "torre.canario.afisInUseLanding": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.landingTraffic"
+    ],
+    "torre.canario.afisInUseDeparting": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.departingTraffic"
     ]
   }
 }

@@ -17,10 +17,15 @@
  * y en `CREDITOS.md`. Son hechos —dónde está un punto, por dónde pasa una
  * aproximación— y se citan como se cita un hecho.
  *
- * El Paraguay está pendiente de las cartas de la DINAC. Mientras, sus campos
- * no tienen nada publicado aquí y el plan hace lo único honesto: calcular la
- * aproximación sobre el eje de la pista con las distancias de manual. Ver
- * `aproximacionCalculada`.
+ * Paraguay, del AIP que publica la DINAC: la ficha AD 2 de cada aeródromo
+ * con sus tablas de codificación, y las listas de radioayudas (ENR 4.1) y de
+ * puntos significativos (ENR 4.3). La enmienda va en
+ * `procedimientos-paraguay.ts`, con lo que entra y lo que no.
+ *
+ * Donde no hay nada publicado —los campos de vuelo visual, o una cabecera
+ * cuya aproximación no acaba alineada con la pista— el plan hace lo único
+ * honesto: calcular la aproximación sobre el eje de la pista con las
+ * distancias de manual. Ver `aproximacionCalculada`.
  *
  * ## Lo que se simplifica, que es la presentación
  *
@@ -37,6 +42,7 @@
 
 import type { Papel } from "../flight/ruta";
 import { CANARIAS } from "./procedimientos-canarias";
+import { PARAGUAY } from "./procedimientos-paraguay";
 
 /** Un punto publicado, en coordenadas geográficas. */
 export interface Publicado {
@@ -71,7 +77,8 @@ export interface Procedimientos {
 /** Lo que hay publicado de un aeropuerto, por su indicativo OACI. */
 export function procedimientosDe(oaci: string | null): Procedimientos | null {
   if (!oaci) return null;
-  return CANARIAS[oaci.toUpperCase()] ?? null;
+  const clave = oaci.toUpperCase();
+  return CANARIAS[clave] ?? PARAGUAY[clave] ?? null;
 }
 
 /** Las ramas de la aproximación publicada a esa cabecera, o ninguna. */

@@ -125,7 +125,8 @@ describe("los destinos que no caben", () => {
     /*
      * Desde que de Asunción sale todo el país, el reactor grande llega a los
      * dos campos de más de tres kilómetros —Ciudad del Este y Mariscal
-     * Estigarribia— y a ninguno más. Los otros cuatro se ven apagados.
+     * Estigarribia— y a ninguno más. Los otros seis se ven apagados, Pilar y
+     * Ayolas incluidos.
      */
     const grande = jaz("jaz-120");
     expect(destinosPosibles(PETTIROSSI, grande).map((d) => d.id).sort()).toEqual([
@@ -134,9 +135,11 @@ describe("los destinos que no caben", () => {
     ]);
     const fuera = destinosQueNoCaben(PETTIROSSI, grande);
     expect(fuera.map((f) => f.destino.id).sort()).toEqual([
+      "ayolas",
       "concepcion",
       "encarnacion",
       "pedro-juan",
+      "pilar",
       "yvytu-rape",
     ]);
     for (const f of fuera) {

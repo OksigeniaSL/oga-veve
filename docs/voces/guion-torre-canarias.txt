@@ -1,5 +1,10 @@
 puedes aterrizar
 puedes volar a
+pista libre
+pista ocupada
+sin tráfico conocido
+tráfico aterrizando
+tráfico despegando
 Tenerife Norte
 Tenerife Sur
 Gran Canaria
@@ -60,6 +65,9 @@ cleared to
 runway in use
 go around
 roger, Mayday
+free
+occupied
+no reported traffic
 wind
 degrees
 knots

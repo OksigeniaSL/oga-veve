@@ -50,49 +50,59 @@
 050	torre.solo.runwayInUse	runway in use
 051	torre.solo.goAroundSolo	go around
 052	torre.solo.rogerMayday	roger, Mayday
-053	viento.wind	wind
-054	viento.degrees	degrees
-055	viento.knots	knots
-056	viento.calm	calm
-057	viento.variable	variable
-058	trafico.traffic	traffic
-059	trafico.hora.1	one o'clock
-060	trafico.hora.2	two o'clock
-061	trafico.hora.3	three o'clock
-062	trafico.hora.4	four o'clock
-063	trafico.hora.5	five o'clock
-064	trafico.hora.6	six o'clock
-065	trafico.hora.7	seven o'clock
-066	trafico.hora.8	eight o'clock
-067	trafico.hora.9	nine o'clock
-068	trafico.hora.10	ten o'clock
-069	trafico.hora.11	eleven o'clock
-070	trafico.hora.12	twelve o'clock
-071	trafico.millas.1	one mile
-072	trafico.millas.2	two miles
-073	trafico.millas.3	three miles
-074	trafico.millas.4	four miles
-075	trafico.millas.5	five miles
-076	trafico.millas.6	six miles
-077	trafico.pies.3	three hundred feet
-078	trafico.pies.4	four hundred feet
-079	trafico.pies.5	five hundred feet
-080	trafico.pies.6	six hundred feet
-081	trafico.pies.7	seven hundred feet
-082	trafico.pies.8	eight hundred feet
-083	trafico.pies.9	niner hundred feet
-084	trafico.pies.10	one thousand feet
-085	trafico.pies.11	one thousand one hundred feet
-086	trafico.pies.12	one thousand two hundred feet
-087	trafico.above	above
-088	trafico.below	below
-089	trafico.sameLevel	same level
-090	torre.solo.aterrizar	podés aterrizar
-091	torre.solo.destino	podés volar a
-092	destino.pettirossi	Asunción
-093	destino.guarani	Guaraní
-094	destino.encarnacion	Encarnación
-095	destino.yvytu-rape	Yvytu Rape
-096	destino.concepcion	Concepción
-097	destino.pedro-juan	Pedro Juan Caballero
-098	destino.estigarribia	Mariscal Estigarribia
+053	torre.solo.free	free
+054	torre.solo.occupied	occupied
+055	torre.solo.noReportedTraffic	no reported traffic
+056	viento.wind	wind
+057	viento.degrees	degrees
+058	viento.knots	knots
+059	viento.calm	calm
+060	viento.variable	variable
+061	trafico.traffic	traffic
+062	trafico.hora.1	one o'clock
+063	trafico.hora.2	two o'clock
+064	trafico.hora.3	three o'clock
+065	trafico.hora.4	four o'clock
+066	trafico.hora.5	five o'clock
+067	trafico.hora.6	six o'clock
+068	trafico.hora.7	seven o'clock
+069	trafico.hora.8	eight o'clock
+070	trafico.hora.9	nine o'clock
+071	trafico.hora.10	ten o'clock
+072	trafico.hora.11	eleven o'clock
+073	trafico.hora.12	twelve o'clock
+074	trafico.millas.1	one mile
+075	trafico.millas.2	two miles
+076	trafico.millas.3	three miles
+077	trafico.millas.4	four miles
+078	trafico.millas.5	five miles
+079	trafico.millas.6	six miles
+080	trafico.pies.3	three hundred feet
+081	trafico.pies.4	four hundred feet
+082	trafico.pies.5	five hundred feet
+083	trafico.pies.6	six hundred feet
+084	trafico.pies.7	seven hundred feet
+085	trafico.pies.8	eight hundred feet
+086	trafico.pies.9	niner hundred feet
+087	trafico.pies.10	one thousand feet
+088	trafico.pies.11	one thousand one hundred feet
+089	trafico.pies.12	one thousand two hundred feet
+090	trafico.above	above
+091	trafico.below	below
+092	trafico.sameLevel	same level
+093	torre.solo.aterrizar	podés aterrizar
+094	torre.solo.destino	podés volar a
+095	torre.solo.afisLibre	pista libre
+096	torre.solo.afisOcupada	pista ocupada
+097	torre.solo.afisSinTrafico	sin tráfico conocido
+098	torre.solo.afisTraficoAterriza	tráfico aterrizando
+099	torre.solo.afisTraficoDespega	tráfico despegando
+100	destino.pettirossi	Asunción
+101	destino.guarani	Guaraní
+102	destino.encarnacion	Encarnación
+103	destino.yvytu-rape	Yvytu Rape
+104	destino.concepcion	Concepción
+105	destino.pedro-juan	Pedro Juan Caballero
+106	destino.estigarribia	Mariscal Estigarribia
+107	destino.ayolas	Ayolas
+108	destino.pilar	Pilar

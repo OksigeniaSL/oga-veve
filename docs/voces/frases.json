@@ -70,6 +70,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.esperandoAfis",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.autorizadoAfis",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La pista está libre: entrá cuando estés listo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.backTaxi",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -438,6 +452,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.puedeAterrizarAfis",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La pista está libre: si venís bien, aterrizá",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.frustrada",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -603,6 +624,13 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.abandonandoSinTorre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sin apuro: salí de la pista y andá a la plataforma",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1392,6 +1420,20 @@
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
+    "id": "comandante.descenso.hacia.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
     "id": "comandante.descenso.hacia.yvytu-rape",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -1550,6 +1592,20 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.",
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
@@ -1823,6 +1879,76 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.llegada.ayolas~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas~3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas~4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas~5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.llegada.pilar~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar~3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar~4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar~5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.",
     "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
   },
   {
@@ -3401,6 +3527,27 @@
     "para": "la torre oyó la llamada de socorro"
   },
   {
+    "id": "torre.solo.free",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "free",
+    "para": "un AFIS: la pista, libre; detrás de su número"
+  },
+  {
+    "id": "torre.solo.occupied",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "occupied",
+    "para": "un AFIS: la pista, ocupada; detrás de su número"
+  },
+  {
+    "id": "torre.solo.noReportedTraffic",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "no reported traffic",
+    "para": "un AFIS: sin tráfico conocido, detrás de la pista en uso"
+  },
+  {
     "id": "viento.wind",
     "voz": "torre",
     "idioma": "en",
@@ -3688,6 +3835,76 @@
     "para": "a dónde se va, antes de rodar; el campo va detrás"
   },
   {
+    "id": "torre.solo.afisLibre",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "pista libre",
+    "para": "un AFIS: la pista está libre, y decidís vos"
+  },
+  {
+    "id": "torre.canario.solo.afisLibre",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "pista libre",
+    "para": "un AFIS: la pista está libre, y decidís vos"
+  },
+  {
+    "id": "torre.solo.afisOcupada",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "pista ocupada",
+    "para": "un AFIS: hay alguien en la pista"
+  },
+  {
+    "id": "torre.canario.solo.afisOcupada",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "pista ocupada",
+    "para": "un AFIS: hay alguien en la pista"
+  },
+  {
+    "id": "torre.solo.afisSinTrafico",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "sin tráfico conocido",
+    "para": "un AFIS: no sabe de nadie más"
+  },
+  {
+    "id": "torre.canario.solo.afisSinTrafico",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "sin tráfico conocido",
+    "para": "un AFIS: no sabe de nadie más"
+  },
+  {
+    "id": "torre.solo.afisTraficoAterriza",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "tráfico aterrizando",
+    "para": "un AFIS: viene uno a aterrizar"
+  },
+  {
+    "id": "torre.canario.solo.afisTraficoAterriza",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "tráfico aterrizando",
+    "para": "un AFIS: viene uno a aterrizar"
+  },
+  {
+    "id": "torre.solo.afisTraficoDespega",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "tráfico despegando",
+    "para": "un AFIS: sale uno antes"
+  },
+  {
+    "id": "torre.canario.solo.afisTraficoDespega",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "tráfico despegando",
+    "para": "un AFIS: sale uno antes"
+  },
+  {
     "id": "destino.pettirossi",
     "voz": "torre",
     "idioma": "es",
@@ -3734,6 +3951,20 @@
     "voz": "torre",
     "idioma": "es",
     "texto": "Mariscal Estigarribia",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.ayolas",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Ayolas",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.pilar",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Pilar",
     "para": "el destino, en la autorización de la torre"
   },
   {
@@ -4155,6 +4386,27 @@
     "idioma": "en",
     "texto": "roger, Mayday",
     "para": "la torre oyó la llamada de socorro, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.free",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "free",
+    "para": "un AFIS: la pista, libre; detrás de su número, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.occupied",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "occupied",
+    "para": "un AFIS: la pista, ocupada; detrás de su número, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.noReportedTraffic",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "no reported traffic",
+    "para": "un AFIS: sin tráfico conocido, detrás de la pista en uso, en Canarias"
   },
   {
     "id": "viento.wind",

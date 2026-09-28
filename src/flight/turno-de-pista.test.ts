@@ -112,6 +112,28 @@ describe("la lámpara del punto de espera mira la frecuencia", () => {
     expect(montar(new Frecuencia(dados(3), "GCXO")).turno.porQueEsperas).toBeNull();
   });
 
+  /*
+   * Lo que informa un AFIS en el punto de espera: no la pista de nadie, que
+   * eso es de torre, sino el tráfico que conoce. Quien ya está en la pista, y
+   * si no, quien viene a aterrizar o sale a la calle.
+   */
+  it("y un AFIS dice el tráfico que conoce: el de la pista antes que el que viene", () => {
+    expect(montar(conAlguienEnLaPista("torre.clearedLand")).turno.traficoConocido).toBe(
+      "aterriza",
+    );
+    expect(montar(conAlguienEnLaPista("torre.lineUpWait")).turno.traficoConocido).toBe(
+      "despega",
+    );
+    const radio = conAlguienEnLaPista();
+    expect(montar(radio, { privado: () => true }).turno.traficoConocido).toBeNull();
+  });
+
+  it("y sin nadie en la frecuencia, «sin tráfico conocido»", () => {
+    const radio = new Frecuencia(dados(3), "GCXO");
+    expect(radio.alguienViene || radio.alguienEnLaCalle).toBe(false);
+    expect(montar(radio).turno.traficoConocido).toBeNull();
+  });
+
   it("y lo que dice está grabado: la torre en fraseología, la instructora en castellano", () => {
     for (const porque of ["aterriza", "despega"] as const) {
       expect(claveDeTorre(HOLD_SHORT_POR[porque]), porque).not.toBeNull();

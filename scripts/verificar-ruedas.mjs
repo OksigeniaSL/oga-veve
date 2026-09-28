@@ -45,7 +45,7 @@ if (!CAMPOS.length)
   CAMPOS.push(
     "valle-cordillera", "chaco", "pettirossi", "guarani", "yvytu-rape",
     "encarnacion", "estigarribia", "pedro-juan",
-    "concepcion", "tenerife-norte", "tenerife-sur", "la-palma",
+    "concepcion", "ayolas", "pilar", "tenerife-norte", "tenerife-sur", "la-palma",
     "gran-canaria", "el-hierro", "la-gomera", "lanzarote", "fuerteventura",
     "cuatro-vientos",
   );

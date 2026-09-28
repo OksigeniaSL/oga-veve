@@ -1043,6 +1043,31 @@ export const GUION: Record<
 };
 
 /**
+ * **El guion donde contesta un AFIS**: nadie da permiso, pero hay quien
+ * informa. Ver `Aerodrome.afis`.
+ *
+ * Lo que cambia son las dos frases de la lámpara, que aquí no existe. En el
+ * punto de espera no se espera una luz: se para, se escucha lo que dice la
+ * radio —el viento y si viene alguien— y se mira. Y cuando la pista está
+ * libre, entrar lo decide quien vuela. Es la lección entera de un AFIS dicha
+ * en una línea, en los peldaños que no leen fraseología; en los de arriba la
+ * dice la radio. El resto del guion es el de siempre: en un AFIS hay tráfico,
+ * y «salí de la pista, que viene otro» es verdad.
+ */
+export function guionAfis(
+  fase: Fase,
+): { readonly clave: string; readonly icono: string } {
+  switch (fase) {
+    case "esperando":
+      return { clave: "vuelo.esperandoAfis", icono: "manga" };
+    case "autorizado":
+      return { clave: "vuelo.autorizadoAfis", icono: "verde" };
+    default:
+      return GUION[fase];
+  }
+}
+
+/**
  * **El guion en una pista particular**, sin torre y sin más tráfico que el
  * tuyo: lo que cambia del de siempre, que son tres frases.
  *
@@ -1059,10 +1084,15 @@ export const GUION: Record<
  * esté libre. Nadie te da permiso: te lo das vos, mirando. Y al salir, sin
  * apuro — dejar la pista sigue siendo lo que se hace, pero no porque nadie
  * espere detrás. Donde sale alguien a buscarte en bici, se dice quién es.
+ *
+ * **Y no todas las pistas sin torre son la de casa.** Ayolas es pública y no
+ * tiene a nadie en la radio, así que vale todo lo de arriba menos el final:
+ * allí no se vuelve a casa, se va a la plataforma. `enCasa` lo distingue.
  */
 export function guionSinTorre(
   fase: Fase,
   conBici: boolean,
+  enCasa = true,
 ): { readonly clave: string; readonly icono: string } {
   switch (fase) {
     case "esperando":
@@ -1071,7 +1101,11 @@ export function guionSinTorre(
       return { clave: "vuelo.autorizadoSinTorre", icono: "verde" };
     case "abandonando":
       return {
-        clave: conBici ? "vuelo.abandonandoConLaBici" : "vuelo.abandonandoSinPrisa",
+        clave: conBici
+          ? "vuelo.abandonandoConLaBici"
+          : enCasa
+            ? "vuelo.abandonandoSinPrisa"
+            : "vuelo.abandonandoSinTorre",
         icono: "salida",
       };
     default:

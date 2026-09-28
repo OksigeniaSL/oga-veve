@@ -738,5 +738,47 @@
   ],
   "comandante.turbulencia": [
     "comandante.turbulencia"
+  ],
+  "comandante.bienvenida.ayolas": [
+    "comandante.bienvenida.ayolas"
+  ],
+  "comandante.bienvenida.pilar": [
+    "comandante.bienvenida.pilar"
+  ],
+  "comandante.descenso.hacia.ayolas": [
+    "comandante.descenso.hacia.ayolas"
+  ],
+  "comandante.descenso.hacia.pilar": [
+    "comandante.descenso.hacia.pilar"
+  ],
+  "comandante.llegada.ayolas": [
+    "comandante.llegada.ayolas"
+  ],
+  "comandante.llegada.ayolas~2": [
+    "comandante.llegada.ayolas~2"
+  ],
+  "comandante.llegada.ayolas~3": [
+    "comandante.llegada.ayolas~3"
+  ],
+  "comandante.llegada.ayolas~4": [
+    "comandante.llegada.ayolas~4"
+  ],
+  "comandante.llegada.ayolas~5": [
+    "comandante.llegada.ayolas~5"
+  ],
+  "comandante.llegada.pilar": [
+    "comandante.llegada.pilar"
+  ],
+  "comandante.llegada.pilar~2": [
+    "comandante.llegada.pilar~2"
+  ],
+  "comandante.llegada.pilar~3": [
+    "comandante.llegada.pilar~3"
+  ],
+  "comandante.llegada.pilar~4": [
+    "comandante.llegada.pilar~4"
+  ],
+  "comandante.llegada.pilar~5": [
+    "comandante.llegada.pilar~5"
   ]
 }

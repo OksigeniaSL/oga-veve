@@ -1,11 +1,12 @@
 {
   "id": "SGCO",
   "name": "Lieutenant Colonel Carmelo Peralta National Airport",
+  "afis": true,
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-26",
     "ourairports": "6090",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma, a lo largo de su eje y apartados del arranque de la calle de rodaje: OpenStreetMap no trae ninguno para este aeródromo y sin puestos no hay de dónde salir ni a dónde volver. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma, a lo largo de su eje y apartados del arranque de la calle de rodaje: OpenStreetMap no trae ninguno para este aeródromo y sin puestos no hay de dónde salir ni a dónde volver. Van marcados «manual» para que la próxima extracción no se los lleve por delante. · AFIS, no torre: «CONCEPCIÓN AFIS», 118.4 MHz, H24; el servicio ATS de la ficha es AFIS (AIP Paraguay, AD 2.6-3 y 2.6-18), aunque la tabla de comunicaciones lo encabece «TWR»."
   },
   "origin": {
     "lat": -23.441609,

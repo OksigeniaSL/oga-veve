@@ -631,5 +631,152 @@
     "{hora}",
     "{millas}",
     "{altura}"
+  ],
+  "destino.ayolas": [
+    "destino.ayolas"
+  ],
+  "destino.pilar": [
+    "destino.pilar"
+  ],
+  "torre.solo.free": [
+    "torre.solo.free"
+  ],
+  "torre.solo.occupied": [
+    "torre.solo.occupied"
+  ],
+  "torre.solo.noReportedTraffic": [
+    "torre.solo.noReportedTraffic"
+  ],
+  "torre.solo.afisLibre": [
+    "torre.solo.afisLibre"
+  ],
+  "torre.solo.afisOcupada": [
+    "torre.solo.afisOcupada"
+  ],
+  "torre.solo.afisSinTrafico": [
+    "torre.solo.afisSinTrafico"
+  ],
+  "torre.solo.afisTraficoAterriza": [
+    "torre.solo.afisTraficoAterriza"
+  ],
+  "torre.solo.afisTraficoDespega": [
+    "torre.solo.afisTraficoDespega"
+  ],
+  "torre.afisLibre": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.afisLibre"
+  ],
+  "torre.afisLibreEnFinal": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.afisLibre"
+  ],
+  "torre.afisOcupada": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.afisOcupada"
+  ],
+  "torre.afisSinTrafico": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.afisSinTrafico"
+  ],
+  "torre.afisTraficoAterriza": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.afisTraficoAterriza"
+  ],
+  "torre.afisTraficoDespega": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.afisTraficoDespega"
+  ],
+  "torre.afisFree": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "{viento?}",
+    "torre.solo.runway",
+    "{r1}",
+    "{r2}",
+    "torre.solo.free"
+  ],
+  "torre.afisFreeTakeoff": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "{viento?}",
+    "torre.solo.runway",
+    "{r1}",
+    "{r2}",
+    "torre.solo.free"
+  ],
+  "torre.afisOccupied": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.runway",
+    "{r1}",
+    "{r2}",
+    "torre.solo.occupied"
+  ],
+  "torre.afisNoTraffic": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "{viento?}",
+    "torre.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "torre.solo.noReportedTraffic"
+  ],
+  "torre.afisInUseLanding": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "torre.solo.landingTraffic"
+  ],
+  "torre.afisInUseDeparting": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "torre.solo.departingTraffic"
   ]
 }

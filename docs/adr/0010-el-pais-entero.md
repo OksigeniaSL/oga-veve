@@ -99,6 +99,19 @@ PNOA. Es la vara con la que se mide qué es caro.
    Fuentes: InfoNegocios, «¿Cuáles son los vuelos nacionales de pasajeros en
    Paraguay?» (noviembre de 2019); la ficha de Sol del Paraguay; Agencia IP,
    23 de abril de 2024.
+
+   Y desde el 28 de septiembre de 2026, dos que no son de línea —los dos
+   campos no la tienen— pero sí se vuelan:
+
+   | ruta | quién | km |
+   |---|---|---:|
+   | Asunción ↔ Pilar | vuelos a requerimiento: un bimotor de negocios hizo Posadas–Pilar–Asunción | 199 |
+   | Asunción ↔ Ayolas | los aviones de Yacyretá y las autoridades nacionales | 247 |
+
+   Fuentes: ABC Color, «Aeropuerto de Pilar ya opera vuelos internacionales a
+   requerimiento», 17 de marzo de 2026; Entidad Binacional Yacyretá,
+   Resolución 525 del 29 de abril de 2024, protocolo de uso del aeródromo
+   Juan de Ayolas; AIP Paraguay, AD 3.
 4. **Concepción entra como campo nuevo**, con los mismos guiones que los
    demás. Ayolas (SGAY) y Pilar (SGPI) quedan extraídos del aeródromo y nada
    más: ver el plan.
@@ -134,6 +147,22 @@ PNOA. Es la vara con la que se mide qué es caro.
    no le mapea plataforma), Pilar (1.500 m de hormigón, sin cotas de umbral en
    OurAirports), y el norte del transporte militar —Vallemí, Fuerte Olimpo,
    Bahía Negra—, que es la ruta que sigue a Concepción.
+
+   **Ayolas y Pilar, hechos el 28 de septiembre de 2026**, con el AIP de la
+   DINAC para lo que faltaba. De Ayolas, la plataforma: el AD 3 le da 90 × 70
+   m y el lazo de calles de OpenStreetMap encierra 70 × 50, que con media
+   calle por fuera son los 90 × 70. De Pilar, los umbrales: el AD 2.8 publica
+   una pista de **1.200** m entre dos umbrales con su cota —54,41 y 57,77 m—,
+   y los 1.500 m de hormigón que dibuja OpenStreetMap siguen al sur del umbral
+   02 sin ser pista. Y un dato del AIP que no se usa: la cota de Ayolas del
+   AD 3, 68 m, que Copernicus y SRTM ponen siete metros más arriba en la
+   pista misma, mientras las mismas dos fuentes casan al metro con las cotas
+   del AIP en Pilar y Encarnación. Va la medida. Ayolas es además el primer
+   campo público sin nadie en la radio: ver `Aerodrome.sinTorre`.
+
+   Mundos de 500 km (Ayolas, 25 veces) y 400 km (Pilar, 20), dentro de lo
+   medido aquí; y Asunción ya no se ensancha, porque los dos caen dentro de
+   sus 748 km.
 
 ## Consecuencias
 

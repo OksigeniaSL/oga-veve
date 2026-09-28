@@ -289,6 +289,16 @@ const TRAS_TOMAR_TIERRA = 1000;
 const HUECO_PARA_GIRAR = 25;
 
 /**
+ * Volviendo por la pista después de aterrizar: con qué se frena hasta el paso
+ * de la media vuelta, m/s²; lo que se deja entre la vuelta y el final de la
+ * pista, y lo que se deja entre las ruedas y el borde del asfalto. Ver
+ * `vueltaPorLaPista`.
+ */
+const FRENADA_DE_RODAJE = 1;
+const FIN_PARA_LA_VUELTA = 10;
+const BORDE_DE_LA_VUELTA = 2;
+
+/**
  * Lo más que puede volverse una salida contra el sentido del aterrizaje, en
  * grados.
  *
@@ -927,12 +937,19 @@ function redondear(
   /** Con qué radio se dibuja una media vuelta. Ver `MEDIA_VUELTA`. */
   radioDeVuelta = radio,
 ): { puntos: Punto[]; radios: number[]; vueltas: boolean[] } {
+  /*
+   * **Y una recta sola también se trocea.** Sin codo que redondear se
+   * devolvía tal cual, sin pasar por `trocear`, y una recta de ciento
+   * cincuenta metros —la ida por la pista hasta la media vuelta, ver
+   * `vueltaPorLaPista`— se quedaba en dos puntos: ni luces por el camino ni
+   * nada que el banco de llegadas pudiera ver delante del morro.
+   */
   if (pts.length < 3)
-    return {
-      puntos: pts.map((p) => [...p] as Punto),
-      radios: pts.map(() => Infinity),
-      vueltas: pts.map(() => false),
-    };
+    return trocear(
+      pts.map((p) => [...p] as Punto),
+      pts.map(() => Infinity),
+      pts.map(() => false),
+    );
 
   const puntos: Punto[] = [[...pts[0]!] as Punto];
   const radios: number[] = [Infinity];
@@ -1063,6 +1080,8 @@ export function alisarRuta(
   exactaDesde?: number,
   /** El radio de giro del avión, para las medias vueltas. Ver `redondear`. */
   radioDeVuelta = RADIO_CURVA,
+  /** Hasta dónde llega lo exacto, si no llega al final. Ver `Ruta.exactaHasta`. */
+  exactaHasta?: number,
 ): { puntos: Punto[]; radios: number[]; exactos: boolean[] } {
   /*
    * **Y una media vuelta que dibuja el redondeo es tan media vuelta como la
@@ -1088,7 +1107,13 @@ export function alisarRuta(
     RADIO_CURVA,
     radioDeVuelta,
   );
-  const cola = crudos.slice(exactaDesde);
+  const hasta =
+    exactaHasta !== undefined &&
+    exactaHasta > exactaDesde &&
+    exactaHasta < crudos.length - 1
+      ? exactaHasta
+      : crudos.length - 1;
+  const cola = crudos.slice(exactaDesde, hasta + 1);
   const radiosCola = cola.map((p, i) => {
     const a = cola[i - 1];
     const c = cola[i + 1];
@@ -1096,11 +1121,22 @@ export function alisarRuta(
   });
   const exacta = trocear(cola, radiosCola);
   const sigue = exacta.puntos.slice(1);
-  return {
-    puntos: [...antes.puntos, ...sigue],
-    radios: [...antes.radios, ...exacta.radios.slice(1)],
-    exactos: [...antes.vueltas, ...sigue.map(() => true)],
-  };
+  const puntos = [...antes.puntos, ...sigue];
+  const radios = [...antes.radios, ...exacta.radios.slice(1)];
+  const exactos = [...antes.vueltas, ...sigue.map(() => true)];
+  // Y lo de después, alisado como lo de antes, empezando donde acaba el arco.
+  if (hasta < crudos.length - 1) {
+    const despues = redondear(
+      sinTemblor(crudos.slice(hasta)),
+      RADIO_CURVA,
+      radioDeVuelta,
+    );
+    const mas = despues.puntos.slice(1);
+    puntos.push(...mas);
+    radios.push(...despues.radios.slice(1));
+    exactos.push(...despues.vueltas.slice(1));
+  }
+  return { puntos, radios, exactos };
 }
 
 /**
@@ -2842,6 +2878,14 @@ export class PlanDeVuelo {
           salida,
         };
     }
+    /*
+     * **Y si no queda ninguna por delante, se vuelve por la pista.** Ver
+     * `vueltaPorLaPista`. Sin salida de pista que recordar: la boca queda
+     * detrás del avión hasta que se da la vuelta, y `seHaPasadoLaSalida` la
+     * daría por pasada en cada fotograma.
+     */
+    const porLaPista = this.vueltaPorLaPista(meta);
+    if (porLaPista) return { ruta: porLaPista, salida: null };
     return {
       ruta: rodajeEntre(
         this.grafo,
@@ -3499,6 +3543,145 @@ export class PlanDeVuelo {
   }
 
   /**
+   * **Volver por la pista**: la ruta de vuelta cuando ya no queda ninguna
+   * salida por delante, que en un campo de una sola calle es casi siempre.
+   *
+   * Es el «backtrack» de la radio, y en Ayolas y en Pilar es la manera de
+   * operar: Ayolas tiene su única calle en la punta sur, al lado del umbral
+   * 02, así que quien aterriza por la 02 la deja atrás antes de tocar; Pilar
+   * la tiene a 390 m del umbral 02 y el turbohélice se para más lejos. Se
+   * sigue por el eje, se da media vuelta **en la pista**, se vuelve por ella
+   * hasta la calle y de ahí al puesto.
+   *
+   * Antes de esto la ruta se trazaba desde el avión por el camino más corto,
+   * que empieza **detrás** del morro: la raya nacía a la espalda y fuera de la
+   * pantalla —el banco de llegadas lo midió, cero de cinco fotogramas con la
+   * raya a la vista en Ayolas—, y quien daba la vuelta a su aire la daba
+   * ancha: en la pista de dieciocho metros de Pilar, el banco del vuelo entero
+   * se salió al pasto, volvió a la pista y se llevó por delante el coche del
+   * sígame.
+   *
+   * **La media vuelta, con las ruedas en el asfalto.** Un semicírculo hacia el
+   * lado contrario de la plataforma —así la vuelta llega a la calle cruzando
+   * la pista, no dándose otra media vuelta—, con el radio de giro de este
+   * avión o el de la raya de un avión chico, lo que sea más, y nunca más
+   * ancho que media pista menos dos metros de borde. Si ni así cabe, no se
+   * dibuja y queda lo de antes. Va marcada como geometría exacta, igual que
+   * la del back-taxi: ver `alisarRuta`.
+   *
+   * **Dónde se da.** Donde se pueda frenar hasta el paso de una media vuelta
+   * con una frenada de rodaje tranquila, más el hueco para girar: parado,
+   * veinticinco metros y el radio; a quince metros por segundo, unos ciento
+   * cuarenta; recién tocado, al final de la pista. Y nunca más allá. La ruta
+   * se traza al tocar y se rehace una vez al abandonar —ver `trazadaAlTocar`—,
+   * así que es la segunda la que manda; la primera solo tiene que no quedarse
+   * por detrás del avión mientras frena, que es lo que pasaba con un tope de
+   * ciento cincuenta metros: el avión se pasaba la media vuelta y la raya lo
+   * mandaba a volver antes de tiempo.
+   */
+  private vueltaPorLaPista(meta: Punto): Ruta | null {
+    const { x: cx, z: cz, heading, width } = this.pista;
+    const aqui = enEjesDePista(
+      this.ultimaPos[0],
+      -this.ultimaPos[1],
+      cx,
+      cz,
+      heading,
+    );
+    if (Math.abs(aqui.across) > width / 2) return null;
+    const radioDelAvion = radioDeGiro(this.avion);
+    const radio = Math.min(
+      Math.max(radioDelAvion, RADIO_CURVA / 2),
+      (width / 2 - BORDE_DE_LA_VUELTA) / 2,
+    );
+    if (radio < radioDelAvion) return null;
+
+    // Hacia dónde rueda el avión, a lo largo del eje. Ver `salidaPorDelanteQue`.
+    const sentido =
+      Math.cos(this.ultimoRumbo - (heading * Math.PI) / 180) >= 0 ? 1 : -1;
+    const va = aqui.along * sentido;
+    const tope = this.largoDePista / 2 - radio - FIN_PARA_LA_VUELTA;
+    const frenar =
+      (this.ultimaVelocidad * this.ultimaVelocidad) / (2 * FRENADA_DE_RODAJE);
+    const adelante = HUECO_PARA_GIRAR + radio + frenar;
+    const giro = Math.min(va + adelante, tope);
+    if (giro < va) return null;
+
+    // La salida: la que deje más corto el camino a casa, por detrás del giro.
+    let salida: Punto | null = null;
+    let hasta: Ruta | null = null;
+    let mejor = Infinity;
+    this.grafo.nudos.forEach((nudo, i) => {
+      const e = enEjesDePista(nudo[0], -nudo[1], cx, cz, heading);
+      if (Math.abs(e.across) > width / 2) return;
+      const calles = (this.grafo.desde[i] ?? []).filter(
+        (t) => !this.grafo.tramos[t]!.pista,
+      );
+      if (!calles.length) return;
+      const atras = giro - e.along * sentido;
+      if (atras < HUECO_PARA_GIRAR) return;
+      const ruta = rodajeEntre(this.grafo, nudo, meta, 600, this.ocupadosAhora());
+      if (!ruta) return;
+      const coste = atras + ruta.largo + (ruta.ocupada ? SALIDA_OCUPADA : 0);
+      if (coste < mejor) {
+        mejor = coste;
+        salida = nudo;
+        hasta = ruta;
+      }
+    });
+    if (!salida || !hasta) return null;
+    const boca: Punto = salida;
+    const desdeLaBoca: Ruta = hasta;
+
+    /*
+     * Hacia el lado contrario de la plataforma: lo dice el puesto, que está en
+     * ella. Y en coordenadas de la pista —a lo largo y de través, como las da
+     * `enEjesDePista`— pasadas a las del fichero.
+     */
+    const casa = enEjesDePista(meta[0], -meta[1], cx, cz, heading);
+    const lado = casa.across >= 0 ? -1 : 1;
+    const [fx, fz] = delante(heading);
+    const [tx, tz] = traves(heading);
+    const enLaPista = (along: number, across: number): Punto => [
+      cx + fx * along + tx * across,
+      -(cz + fz * along + tz * across),
+    ];
+    const bocaEnEjes = enEjesDePista(boca[0], -boca[1], cx, cz, heading);
+
+    const puntos: Punto[] = [this.ultimaPos, enLaPista(aqui.along, 0)];
+    const exactaDesde = puntos.length;
+    for (let g = -90; g <= 90; g += 15) {
+      const f = (g * Math.PI) / 180;
+      puntos.push(
+        enLaPista(
+          sentido * (giro + radio * Math.cos(f)),
+          lado * radio * (1 + Math.sin(f)),
+        ),
+      );
+    }
+    const exactaHasta = puntos.length - 1;
+    puntos.push(enLaPista(bocaEnEjes.along, 2 * lado * radio), boca);
+    puntos.push(...desdeLaBoca.puntos);
+
+    let largo = 0;
+    for (let i = 1; i < puntos.length; i++) {
+      largo += Math.hypot(
+        puntos[i]![0] - puntos[i - 1]![0],
+        puntos[i]![1] - puntos[i - 1]![1],
+      );
+    }
+    return {
+      ...desdeLaBoca,
+      tramos: [{ ref: null, puntos: puntos.slice(0, exactaHasta + 3) }, ...desdeLaBoca.tramos],
+      puntos,
+      largo,
+      coste: largo,
+      exactaDesde,
+      exactaHasta,
+    };
+  }
+
+  /**
    * El tramo que va del avión a la salida, **por la pista y a mano**.
    *
    * Es la misma decisión que ya se tomó para entrar en pista, y por el mismo
@@ -3655,6 +3838,8 @@ export class PlanDeVuelo {
    * dice qué queda «por delante» al salir de la pista. Ver `salidaPorDelanteQue`.
    */
   private ultimoRumbo = 0;
+  /** Y su velocidad sobre el suelo, m/s. Ver `vueltaPorLaPista`. */
+  private ultimaVelocidad = 0;
 
   private situacion(
     estado: FlightState,
@@ -3665,6 +3850,7 @@ export class PlanDeVuelo {
     const z = estado.position.z;
     this.ultimaPos = [x, -z];
     this.ultimoRumbo = estado.heading;
+    this.ultimaVelocidad = estado.groundSpeed ?? 0;
 
     const { along, across } = enEjesDePista(
       x,
@@ -3999,6 +4185,7 @@ export class PlanDeVuelo {
       // Nunca más cerrada que la curva de calle: la raya de un avión chico
       // también tiene que leerse como una vuelta y no como un punto.
       Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)),
+      ruta?.exactaHasta,
     );
     this.rutaMundo = puntos;
     this.radios = radios;

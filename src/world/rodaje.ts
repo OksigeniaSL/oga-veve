@@ -512,6 +512,16 @@ export interface Ruta {
    * `plan-de-vuelo.ts`.
    */
   readonly exactaDesde?: number;
+  /**
+   * Y hasta qué punto, si lo exacto no llega al final de la ruta.
+   *
+   * La media vuelta del back-taxi acaba la ruta —de ahí se despega—, pero la
+   * de volver por la pista después de aterrizar no: detrás vienen la salida y
+   * las calles hasta el puesto, y esas se alisan como siempre. Sin esto el
+   * arco se quedaba sin marcar o las calles salían con codos de ángulo recto.
+   * Ver `vueltaPorLaPista` en `plan-de-vuelo.ts`.
+   */
+  readonly exactaHasta?: number;
 }
 
 /**

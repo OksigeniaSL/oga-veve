@@ -88,6 +88,95 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
 };
 
 /**
+ * **Lo que dice un AFIS**, que no es una torre. Ver `Aerodrome.afis`.
+ *
+ * Un AFIS da información y quien vuela decide: la pista en uso, el viento y el
+ * tráfico que conoce. Ni «cleared for take-off», ni «cleared to land», ni «go
+ * around» —no manda—. La fraseología es la de la IFISA (la asociación
+ * internacional de los AFIS, su guía de 2016): «RUNWAY IN USE», «NO REPORTED
+ * TRAFFIC», «RUNWAY (number) FREE» y «RUNWAY (number) OCCUPIED», que es lo
+ * que se dice a quien está listo para salir o va en final.
+ *
+ * Por qué hay **dos «free»** que suenan igual: la frecuencia distingue por la
+ * clave lo que le da la pista a otro y se la deja —el que va a aterrizar, el
+ * que entra al eje— de lo que se la da y se la quita en el mismo instante —el
+ * que despega—, y la boca retira lo primero cuando la pista pasa a ser tuya.
+ * Ver `DA_LA_PISTA`. Lo que se graba es una pieza; lo que cambia es el nombre.
+ */
+export const DICE_UN_AFIS: Readonly<Record<string, string>> = {
+  "torre.afisFree": "free",
+  "torre.afisFreeTakeoff": "free",
+  "torre.afisOccupied": "occupied",
+  "torre.afisNoTraffic": "no reported traffic",
+  "torre.afisInUseLanding": "landing traffic",
+  "torre.afisInUseDeparting": "departing traffic",
+};
+
+/**
+ * **Y lo que diría un AFIS donde la frecuencia pide una orden de torre.**
+ *
+ * La frecuencia —los demás aviones, quién tiene la pista, a quién se le
+ * quita— sigue pensando en órdenes de torre, porque es lo que hace que la
+ * pista sea de uno por vez; en un AFIS esa misma cuenta la hacen los pilotos
+ * con lo que oyen. Lo que cambia es **lo que se dice**, y se traduce al
+ * decirlo:
+ *
+ * - «hold short» es «runway in use», con el tráfico si lo hay;
+ * - «line up and wait», «cleared for take-off» y «cleared to land» son
+ *   «runway free»;
+ * - «go around, runway occupied» es «runway occupied»: se informa y el
+ *   piloto se va;
+ * - y lo que un AFIS no dice —la autorización de ruta de una torre, el
+ *   «vacate next available»— no se dice: `null`.
+ *
+ * Lo que no está aquí se dice igual: la pista en uso, el tráfico, el MAYDAY.
+ */
+export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
+  "torre.holdShort": "torre.pistaEnUso",
+  "torre.holdShortLanding": "torre.afisInUseLanding",
+  "torre.holdShortDeparting": "torre.afisInUseDeparting",
+  "torre.lineUpWait": "torre.afisFree",
+  "torre.clearedLand": "torre.afisFree",
+  "torre.clearedTakeoff": "torre.afisFreeTakeoff",
+  "torre.goAround": "torre.afisOccupied",
+  "torre.goAroundEnUso": "torre.pistaEnUso",
+  "torre.vacateNext": null,
+  "torre.clearedTo": null,
+};
+
+/**
+ * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice
+ * nada.
+ *
+ * `anterior` es lo último que el AFIS le dijo a ese mismo avión: a quien ya se
+ * le dijo «runway free» para entrar al eje, su «cleared for take-off» no le
+ * añade nada —en un AFIS nadie autoriza el despegue—, y se calla.
+ */
+export function enUnAfis(base: string, anterior?: string | null): string | null {
+  const suya = base in EN_UN_AFIS ? EN_UN_AFIS[base]! : base;
+  if (suya === "torre.afisFreeTakeoff" && anterior === "torre.afisFree")
+    return null;
+  return suya;
+}
+
+/**
+ * Cómo se coloca la pista en lo que dice un AFIS: detrás de «runway» y antes
+ * de lo que se dice —«runway zero two free»—, o detrás de «runway in use» y
+ * con lo que se dice al final —«runway in use zero two, no reported
+ * traffic»—. Ver `deTorre` en `game.ts`.
+ */
+export const PISTA_EN_MEDIO: ReadonlySet<string> = new Set([
+  "torre.afisFree",
+  "torre.afisFreeTakeoff",
+  "torre.afisOccupied",
+]);
+export const PISTA_EN_USO_DELANTE: ReadonlySet<string> = new Set([
+  "torre.afisNoTraffic",
+  "torre.afisInUseLanding",
+  "torre.afisInUseDeparting",
+]);
+
+/**
  * Las que llevan el número de pista **detrás** de la orden, y no delante.
  *
  * «Runway zero three, cleared to land» nombra la pista para dar un permiso;
@@ -118,6 +207,14 @@ export const NOMBRA_LA_PISTA: ReadonlySet<string> = new Set([
   "torre.clearedLand",
   "torre.lineUpWait",
   ...PISTA_DETRAS,
+  /*
+   * Y las de un AFIS, que nombran la pista para informar. **Sin lado**: los
+   * AFIS de este juego tienen una sola pista, y una frase con lado que no
+   * tiene receta no se monta. Si algún día hay un AFIS con paralelas, van sus
+   * `.L` y `.R` como las de arriba.
+   */
+  ...PISTA_EN_MEDIO,
+  ...PISTA_EN_USO_DELANTE,
 ]);
 
 /**
@@ -148,10 +245,12 @@ export function claveDeTorre(dice: string): string | null {
  * Se deriva de la tabla de arriba en vez de escribirse a mano, que es la
  * diferencia entre una tabla y dos tablas que un día dejan de coincidir.
  */
-export const DICE_LA_TORRE: Readonly<Record<string, string>> =
-  Object.fromEntries(
+export const DICE_LA_TORRE: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(
     Object.entries(CLAVE_DE_TORRE).map(([dice, clave]) => [clave, dice]),
-  );
+  ),
+  ...DICE_UN_AFIS,
+};
 
 /**
  * Si esta frase, pedida a la boca, es **la lámpara hablándote a vos**: la luz
@@ -182,8 +281,13 @@ export function esDeLaLampara(
   return DE_LA_LAMPARA.test(clave);
 }
 
+/*
+ * Y lo que dice un AFIS en su lugar, en castellano —`afisLibre`,
+ * `afisSinTrafico`…— y en fraseología —`afisFree`, `afisNoTraffic`…—: es lo
+ * mismo que la lámpara, dicho como lo dice quien informa. Ver `DICE_UN_AFIS`.
+ */
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso)?)(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión para que se quede
@@ -234,11 +338,15 @@ export function esTuPermisoDeAterrizar(
   return !!clave && urgencia !== "baja" && PERMISO_DE_ATERRIZAR.test(clave);
 }
 
+/*
+ * En un AFIS no hay permiso, pero lo que ocupa su sitio se retira igual: el
+ * «pista libre» dicho en final no vale para una final que ya no existe.
+ */
 const PERMISO_DE_ATERRIZAR =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:clearedLand|aterrizar)(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:clearedLand|aterrizar|afisLibreEnFinal|afisFree)(?:\.[LCR])?(?:@|$)/;
 
 const DA_LA_PISTA =
-  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedLand)(?:\.[LCR])?(?:@|$)/;
+  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedLand|afisFree)(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la frecuencia de un campo**: la torre hablándoles a los
