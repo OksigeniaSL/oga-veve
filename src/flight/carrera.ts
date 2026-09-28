@@ -26,7 +26,7 @@
  * pruebas, y ahí no la podía usar el juego.
  */
 
-import { esDeChorro, type AircraftConfig } from "./aircraft";
+import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 
@@ -49,6 +49,17 @@ const G = 9.81;
 export function carreraHastaVr(
   a: AircraftConfig,
   superficie: Superficie = "asfalto",
+  /**
+   * La densidad del aire en la pista, kg/m³. Sin ella, la del nivel del mar en
+   * un día estándar, que es con la que se decide si un avión cabe en una
+   * pista.
+   *
+   * **Con menos aire, la carrera se alarga por dos lados**: la Vr es
+   * indicada, así que en verdadera hay que correr más para llegar a ella, y el
+   * motor da menos. Es la lección de «caliente y alto». Ver `atmosphere.ts` y
+   * `loQueDaElMotor`.
+   */
+  densidad: number = RHO,
 ): number {
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
   const peso = a.mass * G;
@@ -60,13 +71,17 @@ export function carreraHastaVr(
     resistenciaDelTren(a, 1) +
     (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
   const mu = ROZAMIENTO[superficie];
+  const sigma = Math.max(0.05, densidad / RHO);
+  const motor = loQueDaElMotor(a, sigma);
+  const vr = a.rotationSpeed / Math.sqrt(sigma);
   const pasos = 400;
-  const dv = a.rotationSpeed / pasos;
+  const dv = vr / pasos;
   let s = 0;
   for (let i = 0; i < pasos; i++) {
     const v = (i + 0.5) * dv;
-    const q = 0.5 * RHO * v * v * a.wingArea;
-    const empuje = a.maxThrust * Math.max(0.2, 1 - v / (2.4 * a.cruiseSpeed));
+    const q = 0.5 * densidad * v * v * a.wingArea;
+    const empuje =
+      a.maxThrust * motor * Math.max(0.2, 1 - v / (2.4 * a.cruiseSpeed));
     const acc = (empuje - q * cd - mu * Math.max(0, peso - q * cl)) / a.mass;
     if (acc <= 0) return Infinity;
     s += (v / acc) * dv;

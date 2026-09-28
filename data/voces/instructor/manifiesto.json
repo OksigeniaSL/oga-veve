@@ -345,6 +345,9 @@
     "vuelo.bulto": {
       "ms": 1792
     },
+    "vuelo.calor": {
+      "ms": 3307
+    },
     "vuelo.comprometido": {
       "ms": 2567
     },
@@ -1210,6 +1213,9 @@
     ],
     "vuelo.salidaSiguiente": [
       "vuelo.salidaSiguiente"
+    ],
+    "vuelo.calor": [
+      "vuelo.calor"
     ],
     "fonetico.alfa": [
       "fonetico.alfa"

@@ -31,14 +31,25 @@ import { Quaternion, Vector3 } from "three";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
-import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
+import {
+  AIRE_ESTANDAR,
+  type Aire,
+  GRAVITY,
+  SEA_LEVEL_DENSITY,
+  airDensity,
+} from "./atmosphere";
 import {
   topeDeVelocidad,
   type QuienManda,
   machDe,
   resistenciaDeOnda,
 } from "./limites";
-import { esDeChorro, tieneReversa, type AircraftConfig } from "./aircraft";
+import {
+  esDeChorro,
+  loQueDaElMotor,
+  tieneReversa,
+  type AircraftConfig,
+} from "./aircraft";
 import { REVERSA_HASTA } from "./arcade";
 
 /**
@@ -408,6 +419,20 @@ export class CoefficientFlightModel implements FlightModel {
   /** Velocidad respecto al aire. Se reusa para no crear un vector por paso. */
   private readonly relativa = new Vector3();
 
+  /**
+   * El aire del día: la temperatura y la presión del parte, que mueven la
+   * densidad y con ella todo. Ver `atmosphere.ts` y `ponerAire` en `model.ts`.
+   */
+  private aire: Aire = AIRE_ESTANDAR;
+
+  ponerAire(aire: Aire): void {
+    this.aire = aire;
+  }
+
+  aireDelDia(): Aire {
+    return this.aire;
+  }
+
   ponerViento(x: number, z: number): void {
     this.vientoDelParte.x = x;
     this.vientoDelParte.z = z;
@@ -518,12 +543,14 @@ export class CoefficientFlightModel implements FlightModel {
    * #159.
    */
   limiteDeVelocidad(): number {
-    return topeDeVelocidad(this.aircraft, this.state.position.y).verdadera;
+    return topeDeVelocidad(this.aircraft, this.state.position.y, this.aire)
+      .verdadera;
   }
 
   /** Y quién lo pone aquí: la estructura o el aire. Para poder decirlo. */
   quienLimita(): QuienManda {
-    return topeDeVelocidad(this.aircraft, this.state.position.y).manda;
+    return topeDeVelocidad(this.aircraft, this.state.position.y, this.aire)
+      .manda;
   }
 
   /** El mismo con el que se rompe de verdad. Ver `crashLimits`. */
@@ -592,7 +619,9 @@ export class CoefficientFlightModel implements FlightModel {
      */
     const { u, v, w, speed } = this.respectoAlAire();
 
-    const density = airDensity(s.position.y);
+    // La del día, no la de las tablas: con calor el aire pesa menos, y
+    // sustenta, frena y empuja menos. Ver `atmosphere.ts`.
+    const density = airDensity(s.position.y, this.aire);
 
     if (speed > MIN_AIRSPEED) {
       s.alpha = anguloDeAtaque(u, w);
@@ -666,7 +695,11 @@ export class CoefficientFlightModel implements FlightModel {
        * Ver `resistenciaDeOnda` en `flight/limites.ts`, donde está la curva y
        * el porqué de cada número.
        */
-      resistenciaDeOnda(machDe(speed, this.state.position.y), ac.mmo, a.cd0);
+      resistenciaDeOnda(
+        machDe(speed, this.state.position.y, this.aire),
+        ac.mmo,
+        a.cd0,
+      );
     const cy = a.cyBeta * s.beta;
 
     // ── Pérdida, con histéresis y con paciencia ──────────────────────────
@@ -736,7 +769,7 @@ export class CoefficientFlightModel implements FlightModel {
     const thrust =
       (controls.engineOn ? assisted.throttle : 0) *
       ac.maxThrust *
-      Math.pow(densityRatio, 0.7) *
+      loQueDaElMotor(ac, densityRatio) *
       speedFactor;
     // Se guarda para el combustible, que gasta por el empuje que se da y no
     // por el gas que se pide. Ver `empujeAhora` en `model.ts`.

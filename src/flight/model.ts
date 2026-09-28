@@ -15,6 +15,7 @@
  */
 
 import type { Quaternion, Vector3 } from "three";
+import type { Aire } from "./atmosphere";
 
 /** Posición de los mandos, en intención de piloto, no en deflexión física. */
 export interface ControlInputs {
@@ -315,6 +316,19 @@ export interface FlightModel {
    * modelo no hace.
    */
   ponerViento(x: number, z: number): void;
+  /**
+   * **El aire del día**: la temperatura y la presión del parte donde está el
+   * avión, que mueven la densidad y con ella la sustentación, la resistencia,
+   * el empuje, la indicada y el Mach. Lo pone el juego con el mismo reparto
+   * entre campos que el viento. Ver `atmosphere.ts` y `tiempoEntreCampos`.
+   *
+   * El modelo sencillo lo guarda para lo que pregunta el juego —el empuje del
+   * combustible, el tope de velocidad—, pero no le cambia la física: allí el
+   * gas es la velocidad, como con el viento.
+   */
+  ponerAire(aire: Aire): void;
+  /** Y el aire que tiene puesto, para que los relojes digan lo mismo que él. */
+  aireDelDia(): Aire;
   /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *
