@@ -253,11 +253,14 @@ export interface PinturaEncima {
 /**
  * Cuánto tapa lo pintado a la foto donde su alfa es uno.
  *
- * Casi todo. Lo que queda de foto no es forma —la foto no sabe dónde están
- * nuestros alambrados— sino un poco de su variación, que es lo que evita que
- * un potrero parezca un tablero.
+ * **Toda.** Fueron nueve décimas, para dejar algo de la variación de la foto,
+ * y eso servía mientras lo pintado estaba solo en el suelo. Pero la
+ * plataforma y las calles de hierba son mallas encima del suelo que se pintan
+ * con esto mismo —ver `pintarEncima` en `terrain.ts`—, y con una décima de foto
+ * en el suelo y ninguna en la malla, el borde de la plataforma se veía. La
+ * variación la ponen las manchas del pastoreo y el grano.
  */
-export const FUERZA_DE_LA_PINTURA = 0.9;
+export const FUERZA_DE_LA_PINTURA = 1;
 
 /**
  * El sombreador de lo pintado. Va **antes** del grano: así la trama fina cae

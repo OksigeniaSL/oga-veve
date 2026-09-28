@@ -1717,6 +1717,23 @@ export interface PinturaDelSuelo {
     readonly z: number;
     readonly r: number;
   } | null;
+  /**
+   * **La franja de la pista, segada**: el rectángulo alrededor de la pista
+   * donde no se pinta potrero. Ver `HIERBA.franja`.
+   */
+  readonly franja: readonly (readonly [number, number])[];
+  /**
+   * Y lo pisado: la plataforma y las calles, que son hierba gastada por las
+   * ruedas y no losas. Con sus puestos, que es donde más se gasta.
+   */
+  readonly pisado: {
+    readonly plataformas: readonly (readonly (readonly [number, number])[])[];
+    readonly calles: readonly {
+      readonly camino: readonly (readonly [number, number])[];
+      readonly ancho: number;
+    }[];
+    readonly puestos: readonly (readonly [number, number])[];
+  };
 }
 
 /**
@@ -1750,7 +1767,25 @@ const HIERBA = {
   callejon: 0x6f6444,
   /** El casco, pisado y a la sombra de los árboles. */
   casco: 0x5d6a36,
+  /**
+   * **La franja de la pista, segada**: más clara que cualquier potrero y más
+   * oscura que la pista, que se siega más a menudo y más corto. Así, desde la
+   * final, se ve una banda clara en medio del campo y dentro de ella la pista,
+   * que es como se encuentra una pista de estancia. Ver `grass` en
+   * `aerodrome.ts`.
+   */
+  franja: 0x70773f,
 } as const;
+
+/**
+ * La hierba pisada de la plataforma y de las calles: más gastada, más amarilla
+ * y con la tierra asomando. Una plataforma de hierba **no es una losa**: es
+ * el trozo del potrero por el que más se rueda.
+ */
+const PISADO = 0x6f6c41;
+
+/** Y la tierra que asoma donde más se gira: la colorada de San Pedro. */
+const TIERRA_PISADA = 0x87593a;
 
 /**
  * La raya del alambrado, vista desde arriba: no el alambre, que no se ve,
@@ -1768,6 +1803,12 @@ const PATIO = 0x8a5a36;
 
 /** Cuánto se funde hacia fuera el último alambrado, m. */
 const FUNDIDO = 70;
+
+/** Lo ancha que es la franja segada a cada lado del eje, m. Ver `potrerosDe`. */
+const FRANJA_DE_LADO = 40;
+
+/** Y cuánto sigue más allá de cada cabecera, m. */
+const FRANJA_MAS_ALLA = 60;
 
 /**
  * Dónde van los potreros y de qué color, sin pintar nada: lo que se puede
@@ -1805,6 +1846,29 @@ export function potrerosDe(aero: Aerodrome): PinturaDelSuelo | null {
     { nombre: "casco", poligono: rect(ka0, ka1, kc0, kc1), color: HIERBA.casco },
   ];
   const contorno = rect(pa0, pa1, sc0, nc1);
+  /*
+   * La franja: la pista y su margen, cuarenta metros a cada lado del eje y
+   * sesenta más allá de cada cabecera, que es la franja de una pista chica y
+   * donde ya no se planta ni un árbol ni un poste. Ver `techoDeUnaPistaChica`.
+   */
+  const franja = rect(
+    -marco.semilargo - FRANJA_MAS_ALLA,
+    marco.semilargo + FRANJA_MAS_ALLA,
+    -FRANJA_DE_LADO,
+    FRANJA_DE_LADO,
+  );
+  const deLaFicha = (p: readonly [number, number]): [number, number] => [
+    p[0],
+    -p[1],
+  ];
+  const pisado: PinturaDelSuelo["pisado"] = {
+    plataformas: aero.aprons.map((pl) => pl.polygon.map(deLaFicha)),
+    calles: aero.taxiways.map((c) => ({
+      camino: c.path.map(deLaFicha),
+      ancho: c.widthM ?? 12,
+    })),
+    puestos: (aero.parkingPositions ?? []).map((p) => deLaFicha(p.xy)),
+  };
   let patio: PinturaDelSuelo["patio"] = null;
   for (const e of aero.buildings)
     if (e.kind === "farm") {
@@ -1821,7 +1885,7 @@ export function potrerosDe(aero: Aerodrome): PinturaDelSuelo | null {
     x1 = Math.max(x1, x + FUNDIDO * 1.5);
     z1 = Math.max(z1, z + FUNDIDO * 1.5);
   }
-  return { x0, z0, x1, z1, piezas, contorno, patio };
+  return { x0, z0, x1, z1, piezas, contorno, patio, franja, pisado };
 }
 
 /**
@@ -1958,6 +2022,18 @@ export function lienzoDeLosPotreros(
     ctx.restore();
   }
 
+  /*
+   * **La franja segada, encima de los potreros**: la pista está en el suyo,
+   * pero lo que la rodea no se pinta de potrero. Con el borde un poco suave,
+   * que la segadora no corta a regla.
+   */
+  ctx.save();
+  ctx.filter = `blur(${Math.max(1, Math.round(3 * ex))}px)`;
+  trazar(pintura.franja);
+  ctx.fillStyle = css(HIERBA.franja);
+  ctx.fill();
+  ctx.restore();
+
   // Las orillas del alambrado, por encima de los potreros y por debajo del
   // patio, que es tierra barrida hasta el poste.
   ctx.save();
@@ -1971,6 +2047,53 @@ export function lienzoDeLosPotreros(
   }
   ctx.stroke();
   ctx.restore();
+
+  /*
+   * **Y lo pisado: la plataforma y las calles.** Hierba gastada, con el borde
+   * suave —nadie rueda justo hasta la raya de un polígono—, la huella de las
+   * ruedas por el medio de cada calle y la tierra asomando en los puestos,
+   * donde se gira. Es lo que va debajo de las mallas de la plataforma y de las
+   * calles, que se pintan con esto mismo: ver `pintarEncima` en `terrain.ts`.
+   */
+  const pisado = pintura.pisado;
+  ctx.save();
+  ctx.filter = `blur(${Math.max(1, Math.round(2.5 * ex))}px)`;
+  ctx.fillStyle = css(PISADO);
+  ctx.strokeStyle = css(PISADO);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  for (const pl of pisado.plataformas) {
+    trazar(pl);
+    ctx.fill();
+  }
+  for (const c of pisado.calles) {
+    ctx.lineWidth = c.ancho * ex;
+    ctx.beginPath();
+    c.camino.forEach(([x, z], i) =>
+      i ? ctx.lineTo(px(x), pz(z)) : ctx.moveTo(px(x), pz(z)),
+    );
+    ctx.stroke();
+  }
+  // La huella de las ruedas, por el medio de la calle.
+  ctx.strokeStyle = css(TIERRA_PISADA, 1, 0.35);
+  for (const c of pisado.calles) {
+    ctx.lineWidth = Math.max(1, (c.ancho / 3) * ex);
+    ctx.beginPath();
+    c.camino.forEach(([x, z], i) =>
+      i ? ctx.lineTo(px(x), pz(z)) : ctx.moveTo(px(x), pz(z)),
+    );
+    ctx.stroke();
+  }
+  ctx.restore();
+  // Y la tierra en los puestos, donde se gira, y alguna calva suelta.
+  for (const [x, z] of pisado.puestos) {
+    const r = 14 * ex;
+    const calva = ctx.createRadialGradient(px(x), pz(z), 0, px(x), pz(z), r);
+    calva.addColorStop(0, css(TIERRA_PISADA, 1, 0.6));
+    calva.addColorStop(1, css(TIERRA_PISADA, 1, 0));
+    ctx.fillStyle = calva;
+    ctx.fillRect(px(x) - r, pz(z) - r, r * 2, r * 2);
+  }
 
   // El patio de la casa: tierra colorada, barrida, que se va en hierba.
   if (pintura.patio) {

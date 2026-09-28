@@ -633,6 +633,8 @@ export class Terrain {
         (p) => this.sampleHeight(p[0], -p[1]),
       ),
     );
+    // Y su hierba pisada, pintada como el suelo. Ver `pintarLoPisado`.
+    this.pintarLoPisado();
   }
 
   /**
@@ -1062,10 +1064,29 @@ export class Terrain {
    */
   pintarEncima(pintura: PinturaEncima | null): void {
     this.pintura = pintura;
+    this.pintarLoPisado();
     const malla = this.group.getObjectByName("terreno") as Mesh | undefined;
     const mat = malla?.material as MeshLambertMaterial | undefined;
     if (!mat?.map) return;
     ponerGrano(mat, this.grano(), pintura);
+  }
+
+  /**
+   * **Y la plataforma y las calles de hierba, con lo mismo que el suelo.**
+   *
+   * Son mallas por encima del suelo —las ruedas se apoyan en ellas— y se
+   * pintaban de un verde liso: desde el aire, una losa de hierba con los
+   * bordes a regla. Pintadas con lo mismo que el suelo que las rodea, en el
+   * mismo sitio del mismo lienzo, son el trozo gastado del potrero que son, y
+   * el borde deja de verse. Se rehace cada vez que se rehace el aeródromo.
+   */
+  private pintarLoPisado(): void {
+    const pintura = this.pintura;
+    if (!pintura) return;
+    this.group.traverse((o) => {
+      if (o instanceof Mesh && o.name === "pavimento:hierba-segada")
+        ponerGrano(o.material as MeshLambertMaterial, this.grano(), pintura);
+    });
   }
 
   /**
