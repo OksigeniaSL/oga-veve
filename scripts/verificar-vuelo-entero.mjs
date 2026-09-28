@@ -527,6 +527,12 @@ const fotos = (async () => {
   }
 })();
 
+// Ver `apuntarElAla`: la traza del ala se enciende antes de volar.
+if (process.env.OGA_TRAZA_ALA)
+  await page.evaluate(() => {
+    globalThis.__trazaAla = [];
+  });
+
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche]) => {
   const o = globalThis.__oga;
   /*
@@ -640,9 +646,44 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       s.stallWarning ? 0 : Math.max(0, tope),
     );
   };
+  /*
+   * **El ala en el aire, cuatro veces por segundo de juego, si se pide.**
+   * `OGA_TRAZA_ALA=fichero`.
+   *
+   * El registro de cantos dice el ángulo en el instante del «stall, stall»,
+   * y con eso no se sabe si el avión iba al borde de la pérdida o si el aviso
+   * saltó en una final normal: hace falta lo de antes y lo de después, y el
+   * umbral al que sonaba el avisador **con los flaps que llevaba**. Se apunta
+   * desde el mismo gancho por el que pilota el banco, así que lo que se lee
+   * es lo que vio el modelo en ese fotograma.
+   */
+  const apuntarElAla = (mandos) => {
+    const traza = globalThis.__trazaAla;
+    if (!traza) return;
+    const s = o.estado();
+    if (s.onGround) return;
+    const ahora = o.reloj();
+    const ultima = traza[traza.length - 1];
+    if (ultima && ahora - ultima.t < 0.25) return;
+    traza.push({
+      t: +ahora.toFixed(2),
+      h: Math.round(s.heightAboveGround),
+      v: +s.airspeed.toFixed(1),
+      a: +s.alpha.toFixed(4),
+      aw: +s.stallWarningAlpha.toFixed(4),
+      w: s.stallWarning,
+      st: s.stalled,
+      n: +s.loadFactor.toFixed(2),
+      f: +mandos.flaps.toFixed(2),
+      e: +mandos.elevator.toFixed(3),
+      g: +mandos.throttle.toFixed(2),
+      vy: +s.velocity.y.toFixed(1),
+    });
+  };
   o.pilotar((mandos) => {
     Object.assign(mandos, c);
     limitarElAngulo(mandos);
+    apuntarElAla(mandos);
   });
   /*
    * **La pista es la del campo en el que se está**, no siempre la de casa.
@@ -3866,6 +3907,19 @@ if (process.env.OGA_VOCES) {
       null,
       1,
     ),
+  );
+}
+
+if (process.env.OGA_TRAZA_ALA) {
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(
+    process.env.OGA_TRAZA_ALA,
+    JSON.stringify({
+      avion: vuelo.avion ?? null,
+      cantados: (vuelo.cantados ?? []).filter((c) => /stall/.test(c)),
+      maquina: (vuelo.maquina ?? []).filter((m) => /stall/.test(m)),
+      traza: await page.evaluate(() => globalThis.__trazaAla ?? []),
+    }),
   );
 }
 
