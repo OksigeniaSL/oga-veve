@@ -104,6 +104,11 @@ export interface Grafo {
    * de la pista**. Ver `porPavimento`.
    */
   readonly enPista?: (p: Punto) => boolean;
+  /**
+   * La pista con un margen, para saber si quien busca camino **está** en
+   * ella: ver «Y "en ella" es con el borde» en `buscarEnganches`.
+   */
+  readonly alBordeDeLaPista?: (p: Punto) => boolean;
   /** Y si es de una plataforma, que se cruza en recta. Ver `A_CAMPO_ABIERTO`. */
   readonly enPlataforma?: (p: Punto) => boolean;
 }
@@ -451,6 +456,7 @@ export function construirGrafo(
     desde,
     rodable: pavimentoGuardado(aero, "todo", MARGEN_DEL_PAVIMENTO),
     enPista: pavimentoGuardado(aero, "pista", 0),
+    alBordeDeLaPista: pavimentoGuardado(aero, "pista", AL_BORDE_DE_LA_PISTA),
     enPlataforma: pavimentoGuardado(aero, "plataforma", MARGEN_DEL_PAVIMENTO),
   };
 }
@@ -474,6 +480,13 @@ export function construirGrafo(
  * campos dice qué es pisar hierba: ver `rodar-por-el-asfalto.test.ts`.
  */
 export const MARGEN_DEL_PAVIMENTO = ANCHO_RODADURA / 2;
+
+/**
+ * Lo que puede quedar fuera del borde de la pista quien todavía está en
+ * ella, m: lo que se apartan el eje de los datos y el del juego, que en El
+ * Hierro son dos metros y pico, con margen. Ver `buscarEnganches`.
+ */
+const AL_BORDE_DE_LA_PISTA = 5;
 
 /** El nudo más cercano a un punto, y a cuánto está. */
 export function nudoCercano(
@@ -845,7 +858,14 @@ function buscarEnganches(
    * diagonal de cuarenta y tres metros por encima del borde de la pista, y la
    * calle de entrada, que es por donde se entra, se quedaba sin usar.
    */
-  const desdeLaPista = !!grafo.enPista?.(p);
+  /*
+   * **Y «en ella» es con el borde**, que el eje de OpenStreetMap y el del
+   * juego no coinciden. En El Hierro van a dos metros y pico, y la media
+   * vuelta del juego —pegada a dos metros del borde de la pista que él
+   * dibuja— caía treinta centímetros fuera de la de los datos: desde ahí no
+   * había recta a ninguna parte, y al recalcular la vuelta no salía raya.
+   */
+  const desdeLaPista = !!(grafo.alBordeDeLaPista ?? grafo.enPista)?.(p);
   for (const e of todos) {
     if (buenos.length >= ENGANCHES) break;
     if (porPavimento(grafo, p, e.punto, desdeFuera, desdeLaPista)) buenos.push(e);
@@ -1503,7 +1523,16 @@ function pavimentoGuardado(
             : que === "plataforma"
               ? { ...aero, runways: [], taxiways: [] }
               : aero;
-        hecho = pavimentoDe(solo, margen);
+        const base = pavimentoDe(solo, margen);
+        /*
+         * **Y un edificio no es pavimento**, aunque la plataforma lo rodee.
+         * En Silvio Pettirossi un hangar largo y estrecho está metido en la
+         * plataforma de aviación general, con puestos delante de su puerta, y
+         * la recta del puesto a la calle lo atravesaba: el avión chocaba con
+         * él a los ocho segundos de rodar. La pista no lleva edificios.
+         */
+        const edificio = que === "pista" ? null : edificiosDe(aero);
+        hecho = edificio ? (q) => base(q) && !edificio(q) : base;
         delCampo.set(clave, hecho);
       }
     }
@@ -1512,6 +1541,47 @@ function pavimentoGuardado(
 }
 
 const PAVIMENTOS = new WeakMap<Aerodrome, Map<string, (p: Punto) => boolean>>();
+
+/**
+ * Lo que se aparta la raya de la pared de un edificio, m. Es el eje del
+ * avión, no su ala: el ala la cuida `aprieta` al trazar por las calles.
+ */
+export const LEJOS_DE_LA_PARED = 3;
+
+/**
+ * **Si un punto cae dentro de un edificio**, o a menos de
+ * `LEJOS_DE_LA_PARED` de su pared. Con su rejilla, como el pavimento.
+ */
+function edificiosDe(aero: Aerodrome): (p: Punto) => boolean {
+  const CASILLA = 32;
+  const casillas = new Map<number, (readonly Punto[])[]>();
+  const claveDe = (i: number, j: number) => i * 100003 + j;
+  for (const e of aero.buildings ?? []) {
+    const poligono = e.polygon;
+    if (poligono.length < 3) continue;
+    const xs = poligono.map((q) => q[0]);
+    const ys = poligono.map((q) => q[1]);
+    const m = LEJOS_DE_LA_PARED;
+    for (let i = Math.floor((Math.min(...xs) - m) / CASILLA); i <= Math.floor((Math.max(...xs) + m) / CASILLA); i++)
+      for (let j = Math.floor((Math.min(...ys) - m) / CASILLA); j <= Math.floor((Math.max(...ys) + m) / CASILLA); j++) {
+        const k = claveDe(i, j);
+        let lista = casillas.get(k);
+        if (!lista) casillas.set(k, (lista = []));
+        lista.push(poligono);
+      }
+  }
+  return (p) => {
+    const lista = casillas.get(claveDe(Math.floor(p[0] / CASILLA), Math.floor(p[1] / CASILLA)));
+    if (!lista) return false;
+    for (const poligono of lista) {
+      if (dentroDe(p, poligono)) return true;
+      for (let i = 0; i < poligono.length; i++)
+        if (alSegmento(p, poligono[i]!, poligono[(i + 1) % poligono.length]!) < LEJOS_DE_LA_PARED)
+          return true;
+    }
+    return false;
+  };
+}
 
 function pavimentoDe(aero: Aerodrome, margen: number): (p: Punto) => boolean {
   /*

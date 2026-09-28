@@ -13,9 +13,10 @@
  * cualquier punto del camino, y la vuelta después de aterrizar. Lo que se
  * pide es lo de verdad:
  *
- * - **(a) Ningún punto de la raya pisa hierba**: todo va por pavimento de
- *   calle, plataforma o pista, con margen de media calle. Ver
- *   `MARGEN_DEL_PAVIMENTO` en `rodaje.ts`.
+ * - **(a) Ningún punto de la raya pisa hierba ni un edificio**: todo va por
+ *   pavimento de calle, plataforma o pista, con margen de media calle —ver
+ *   `MARGEN_DEL_PAVIMENTO` en `rodaje.ts`—, y nada atraviesa un hangar que
+ *   la plataforma rodee.
  * - **(b) Ninguna recta inventada**: lo que no va por una calle del grafo va
  *   por una plataforma o por la pista.
  * - **(c) La pista, solo para alinearse**: del puesto a la doble raya no se
@@ -37,7 +38,7 @@ import { aLaPolilinea, ANCHO_RODADURA, type Aerodrome, type Punto } from "./aero
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { cabeEn, campoDe } from "../flight/cabe";
-import { construirGrafo } from "./rodaje";
+import { construirGrafo, LEJOS_DE_LA_PARED } from "./rodaje";
 import { enEjesDePista } from "./rumbo";
 import { SCENARIOS, conViento, type Scenario } from "./scenarios";
 import { sueloDelTrafico } from "./suelo-del-trafico";
@@ -245,6 +246,27 @@ function porCasillas(lineas: { linea: readonly Punto[]; hasta: number }[]) {
     );
 }
 
+/** Polígonos repartidos en casillas, para preguntar «¿está dentro de alguno?». */
+function porDentro(poligonos: readonly (readonly Punto[])[]) {
+  const LADO = 50;
+  const casillas = new Map<string, (readonly Punto[])[]>();
+  for (const poligono of poligonos) {
+    if (poligono.length < 3) continue;
+    const xs = poligono.map((q) => q[0]);
+    const ys = poligono.map((q) => q[1]);
+    for (let x = Math.floor(Math.min(...xs) / LADO); x <= Math.floor(Math.max(...xs) / LADO); x++)
+      for (let y = Math.floor(Math.min(...ys) / LADO); y <= Math.floor(Math.max(...ys) / LADO); y++) {
+        const k = `${x},${y}`;
+        if (!casillas.has(k)) casillas.set(k, []);
+        casillas.get(k)!.push(poligono);
+      }
+  }
+  return (q: Punto) =>
+    (casillas.get(`${Math.floor(q[0] / LADO)},${Math.floor(q[1] / LADO)}`) ?? []).some((p) =>
+      dentro(q, p),
+    );
+}
+
 /** Lo que hace falta para medir en un campo, hecho una vez. */
 function medidorDe(aero: Aerodrome, pista: Scenario["runway"]) {
   const grafo = construirGrafo(aero);
@@ -275,9 +297,22 @@ function medidorDe(aero: Aerodrome, pista: Scenario["runway"]) {
       hasta: (c.widthM ?? ANCHO_RODADURA) / 2 + MEDIO_ANCHO,
     })),
   ]);
-  const pavimentado = (q: Punto) => calleOPista(q) || enPlataforma(q) || enLaDelJuego(q);
+  const enUnEdificio = porDentro(aero.buildings.map((e) => e.polygon));
+  const pavimentado = (q: Punto) =>
+    (calleOPista(q) || enPlataforma(q) || enLaDelJuego(q)) && !enUnEdificio(q);
+  /*
+   * Un puesto pegado a una pared tampoco es sitio de aparcar: el plan no
+   * saca de ahí a nadie —ver `LEJOS_DE_LA_PARED` en `rodaje.ts`—, y en
+   * Cuatro Vientos hay uno dibujado a metro y medio de un edificio.
+   */
+  const pegadoAUnaPared = porCasillas(
+    aero.buildings
+      .filter((e) => e.polygon.length >= 3)
+      .map((e) => ({ linea: [...e.polygon, e.polygon[0]!], hasta: LEJOS_DE_LA_PARED })),
+  );
+  const sePuedeAparcar = (q: Punto) => pavimentado(q) && !pegadoAUnaPared(q);
   const enElGrafo = porCasillas(grafo.tramos.map((t) => ({ linea: t.puntos, hasta: 3 })));
-  return { pavimentado, enPlataforma, enUnaPista, enElGrafo };
+  return { pavimentado, sePuedeAparcar, enPlataforma, enUnaPista, enElGrafo };
 }
 
 /**
@@ -332,6 +367,49 @@ function bocasDe(aero: Aerodrome, pista: Scenario["runway"]): number[] {
 /** Donde para el avión en la prueba de la vuelta, m desde el umbral. */
 const paraEn = (pista: Scenario["runway"]) => Math.min(pista.length * 0.55, 1100);
 
+/**
+ * **Y más sitios donde parar**, en fracción de pista: la vuelta se mira
+ * también parando antes y después, que es donde aparecen la media vuelta y
+ * la raqueta del final. La prueba de siempre para en un sitio, y con uno
+ * solo no se ve lo que pasa si se frena antes o se pasa la última salida.
+ */
+const OTRAS_PARADAS = [0.3, 0.45, 0.65, 0.8] as const;
+
+/**
+ * Lo que se pasa de largo antes de dar la media vuelta en la pista, m: el
+ * hueco para girar, el radio y lo que se tarda en frenar a ocho metros por
+ * segundo. Ver `vueltaPorLaPista` en el plan.
+ */
+const GIRO_EN_LA_PISTA = 120;
+
+/**
+ * Dos bocas a menos de esto son las dos ramas de una misma salida, o dos
+ * seguidas, m: dando la media vuelta se puede volver a cualquiera de ellas.
+ */
+const MISMA_SALIDA = 150;
+
+/**
+ * Lo que se puede remontar volviendo, parando en `para`: con salida por
+ * delante, lo de alinearse, o la media vuelta hasta la boca de atrás si sale
+ * más a cuenta; sin ella, hasta el final y de vuelta, que es lo que manda el
+ * AIP de La Palma —«back-track at the end of the runway»— y lo que dice la
+ * torre en un campo sin paralela.
+ */
+function alVolverDesde(
+  pista: Scenario["runway"],
+  bocas: readonly number[],
+  para: number,
+): number {
+  const detras = bocas.filter((b) => b <= para + PARA_TOMAR_UNA_SALIDA);
+  const cerca = detras[detras.length - 1];
+  if (cerca === undefined) return ALINEARSE;
+  const boca = Math.min(...detras.filter((b) => b >= cerca - MISMA_SALIDA));
+  const girando = Math.max(ALINEARSE, para + GIRO_EN_LA_PISTA - boca);
+  const hayDelante = detras.length < bocas.length;
+  if (hayDelante) return girando;
+  return Math.max(girando, pista.length - cerca + ALINEARSE);
+}
+
 /** Qué dice la geometría de una cabecera: si va en cada lista, y cuánto se puede remontar. */
 function loQueTocaEn(pista: Scenario["runway"], bocas: readonly number[]) {
   const primera = bocas[0] ?? Infinity;
@@ -347,6 +425,7 @@ function loQueTocaEn(pista: Scenario["runway"], bocas: readonly number[]) {
     alVolver: sinSalidaDelante
       ? pista.length - (detras[detras.length - 1] ?? 0) + ALINEARSE
       : ALINEARSE,
+    bocas,
   };
 }
 
@@ -556,7 +635,7 @@ function mirar(
     plan.enCola = () => [];
     plan.ocupados = () => [];
     // Un puesto dibujado fuera de todo pavimento no es sitio de aparcar.
-    if (!m.pavimentado(puesto.xy)) {
+    if (!m.sePuedeAparcar(puesto.xy)) {
       r.sinPavimento++;
       if (plan.reiniciarDesde(puesto.xy))
         mal("puesto fuera del pavimento, y se sale de él", donde(`puesto ${puesto.ref}`), "");
@@ -622,6 +701,7 @@ function mirar(
 
   // Y la vuelta: aterrizar, frenar y seguir la raya al puesto.
   mirarLaVuelta(esc, avion, r, m, suelo, llegadas, toca);
+  for (const f of OTRAS_PARADAS) mirarLaVuelta(esc, avion, r, m, suelo, llegadas, toca, f);
 }
 
 function mirarLaVuelta(
@@ -632,9 +712,14 @@ function mirarLaVuelta(
   suelo: ReturnType<typeof sueloDelTrafico>,
   llegadas: Punto[],
   toca: ReturnType<typeof loQueTocaEn>,
+  /** Dónde se para, en fracción de pista; sin ella, donde para la prueba. */
+  fraccion?: number,
 ): void {
   const aero = esc.aerodrome!;
   const pista = esc.runway;
+  const para = fraccion === undefined ? paraEn(pista) : pista.length * fraccion;
+  const hasta =
+    fraccion === undefined ? toca.alVolver : alVolverDesde(pista, toca.bocas, para);
   const donde = (que: string) => `${esc.id} ${Math.round(pista.heading)}° ${avion.id} ${que}`;
   const mal = (que: string, dondeEs: string, medida: Medida | string) =>
     r.fallos.push({ que, donde: dondeEs, medida });
@@ -666,9 +751,9 @@ function mirarLaVuelta(
   const umbral = -pista.length / 2;
   pasar(enElEje(-9000, 400, 60), 400, 25);
   pasar(enElEje(umbral + 300, 0, 45, -1), 0, 0.5);
-  pasar(enElEje(umbral + paraEn(pista), 0, 8), 0, 3);
+  pasar(enElEje(umbral + para, 0, 8), 0, 3);
   const vuelta = [...plan.rutaCruda()];
-  const dv = donde("vuelta");
+  const dv = donde(`vuelta parando a ${para.toFixed(0)} m`);
   if (vuelta.length < 2) {
     mal("vuelta sin raya", dv, "");
     return;
@@ -676,7 +761,9 @@ function mirarLaVuelta(
   const v = medir(m, vuelta, pista, 1);
   if (v.hierba > PASO) mal("(a) vuelta", dv, v);
   if (v.inventado > 0) mal("(b) vuelta", dv, v);
-  if (v.remonta > toca.alVolver) mal("(c) vuelta", dv, v);
+  if (v.remonta > hasta) mal("(c) vuelta", dv, v);
+  // Recalculando, solo desde la parada de siempre: las otras miran la salida.
+  if (fraccion !== undefined) return;
   const L = largo(vuelta);
   for (let s = 10; s < L - 30; s += CADA) {
     const p = aLosMetros(vuelta, s);

@@ -1825,11 +1825,18 @@ export class PlanDeVuelo {
     if (this.candidatosGuardados) return this.candidatosGuardados;
     const puestos = this.puestosEnElAsfalto();
     if (!puestos.length) return [];
+    /*
+     * **A la pared, no a la esquina.** Se medía a los vértices, y un hangar
+     * largo y estrecho tiene las esquinas lejos de su puerta: en Silvio
+     * Pettirossi los puestos de delante de uno de noventa metros quedaban a
+     * doce de la pared y a cincuenta de la esquina más cercana, o sea «lejos
+     * de todo edificio». Y el JAZ 90 salía de ahí, pegado al hangar.
+     */
     const cerca = (p: Punto): number => {
       let d = Infinity;
       for (const e of this.aero.buildings ?? []) {
-        for (const q of e.polygon)
-          d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
+        if (e.polygon.length < 2) continue;
+        d = Math.min(d, aLaPolilinea(p, [...e.polygon, e.polygon[0]!]));
       }
       return d;
     };
@@ -3327,8 +3334,8 @@ export class PlanDeVuelo {
    * `seHaPasadoLaSalida`.
    */
   private rutaDeVuelta(meta: Punto): { ruta: Ruta | null; salida: Punto | null } {
-    const salida = this.salidaPorDelante(meta);
-    if (salida) {
+    const porLaSalida = (salida: Punto | null) => {
+      if (!salida) return null;
       const hastaLaSalida = this.porLaPistaHasta(salida);
       const desdeLaSalida = rodajeEntre(
         this.grafo,
@@ -3338,17 +3345,30 @@ export class PlanDeVuelo {
         this.ocupadosAhora(false),
         { desdeLaCalle: true },
       );
-      if (desdeLaSalida)
-        return {
-          ruta: {
-            ...desdeLaSalida,
-            puntos: [...hastaLaSalida.puntos, ...desdeLaSalida.puntos],
-            largo: hastaLaSalida.largo + desdeLaSalida.largo,
-            letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
-          },
-          salida,
-        };
-    }
+      if (!desdeLaSalida) return null;
+      return {
+        ruta: {
+          ...desdeLaSalida,
+          puntos: [...hastaLaSalida.puntos, ...desdeLaSalida.puntos],
+          largo: hastaLaSalida.largo + desdeLaSalida.largo,
+          letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
+        },
+        salida,
+      };
+    };
+    /*
+     * Primero, solo entre las que salen hacia delante. Si no queda ninguna
+     * —un campo pequeño con una única salida hacia atrás—, entre todas: la
+     * raqueta del final o la rápida tomada al revés, que es lo que dice la
+     * torre, «vacate next available», y lo que manda el AIP de La Palma,
+     * «back-track at the end of the runway». La media vuelta en mitad de la
+     * pista solo si por delante no queda nada. Ver `pasarse la salida` en
+     * `salidas-a-un-puesto.test.ts`.
+     */
+    const delante =
+      porLaSalida(this.salidaPorDelanteQue(true, meta)) ??
+      porLaSalida(this.salidaPorDelanteQue(false, meta));
+    if (delante) return delante;
     /*
      * **Y si no queda ninguna por delante, se vuelve por la pista.** Ver
      * `vueltaPorLaPista`. Sin salida de pista que recordar: la boca queda
@@ -3501,7 +3521,7 @@ export class PlanDeVuelo {
      * **Y volviendo desde la pista, por una salida que quede delante**, la
      * primera: es la misma cuenta que al tocar tierra, con lo que dice la
      * torre a quien se pasó la suya. Desde fuera de la pista no hay «por
-     * delante» —`salidaPorDelante` no da ninguna— y queda lo de siempre, el
+     * delante» —`salidaPorDelanteQue` no da ninguna— y queda lo de siempre, el
      * camino más corto desde donde se esté.
      */
     const vuelta =
@@ -4080,18 +4100,11 @@ export class PlanDeVuelo {
    * Si no hay ninguna por delante —se ha aterrizado muy largo, o fuera de la
    * pista— devuelve `null` y la ruta sale del sitio donde esté el avión, que es
    * lo que hacía antes.
+   *
+   * Con `soloHaciaDelante`, solo las que salen hacia delante; sin él, todas,
+   * también la raqueta del final y la rápida tomada al revés. En qué orden se
+   * pregunta lo decide `rutaDeVuelta`.
    */
-  private salidaPorDelante(meta?: Punto): Punto | null {
-    /*
-     * Primero, solo entre las que salen hacia delante. Si no queda ninguna
-     * —un campo pequeño con una única salida hacia atrás—, entre todas: es
-     * mejor dar la vuelta que quedarse sin raya.
-     */
-    return (
-      this.salidaPorDelanteQue(true, meta) ?? this.salidaPorDelanteQue(false, meta)
-    );
-  }
-
   private salidaPorDelanteQue(
     soloHaciaDelante: boolean,
     /** A dónde se va de verdad; sin ella, al puesto de salida. */
