@@ -631,5 +631,11 @@
     "{hora}",
     "{millas}",
     "{altura}"
+  ],
+  "destino.ayolas": [
+    "destino.ayolas"
+  ],
+  "destino.pilar": [
+    "destino.pilar"
   ]
 }

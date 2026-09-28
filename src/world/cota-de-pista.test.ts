@@ -46,7 +46,7 @@ const fs = (
 /**
  * Lo que se le perdona al dato frente al relieve, m.
  *
- * Veinticinco. Lo medido hoy en los dieciséis campos queda dentro de diez —el
+ * Veinticinco. Lo medido hoy en los dieciocho campos queda dentro de diez —el
  * peor es Pedro Juan Caballero, con la pista explanada ocho y diez metros por
  * encima del terreno natural que ve el satélite—, y el fallo que esto vigila
  * era de cien. La rejilla del relieve es de cuarenta a cincuenta metros, así

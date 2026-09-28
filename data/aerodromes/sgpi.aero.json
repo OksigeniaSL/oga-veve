@@ -5,13 +5,13 @@
     "osm": "overpass",
     "extracted": "2026-09-26",
     "ourairports": "6094",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. La pista, su cota y el punto de espera están puestos a mano con el AIP Paraguay de la DINAC (AD 2.8 SGPI, AMDT NR 02 del 30-OCT-2025, y el plano de aeródromo AD 2.8-9 del 16-MAY-2024): la 02/20 publicada mide 1.200 × 18 m de hormigón entre los dos umbrales, el 02 en S26°53′08,26″ W058°19′06,54″ a 179 ft (54,41 m) y el 20 en S26°52′28,76″ W058°19′02,82″ a 190 ft (57,77 m), con 1.200 m en las cuatro distancias declaradas. OpenStreetMap dibuja 1.500 m de hormigón porque el pavimento sigue unos 280 m al sur del umbral 02 —se ve en la foto—, pero eso no es pista: no está en ninguna distancia declarada y el plano la corta en el umbral. La cota del campo es la del plano: 194 ft (59 m). OurAirports no trae ninguna de las cotas de umbral. El punto de espera va a 30 m del eje, que es lo del Anexo 14 (tabla 3-2) para una pista de vuelo visual de número de clave 1 o 2 —el derivado caía en la puerta del hangar, porque la calle mide sesenta metros—, y el puesto de estacionamiento, sobre la plataforma: OpenStreetMap no trae ninguno y sin puesto no hay de dónde salir ni a dónde volver. Todo va marcado «manual» para que la próxima extracción no se lo lleve por delante."
   },
   "origin": {
     "lat": -26.881981,
     "lon": -58.319067
   },
-  "elevationM": 75.9,
+  "elevationM": 59.1,
   "runways": [
     {
       "ref": "02/20",
@@ -20,40 +20,41 @@
       "lit": false,
       "centerline": [
         [
-          161.4,
-          808.3
+          160.4,
+          814.6
         ],
         [
-          36.4,
-          -683.5
+          57.9,
+          -405.5
         ]
       ],
       "thresholds": {
         "20": {
           "xy": [
-            165.1,
-            809.6
+            160.4,
+            814.6
           ],
-          "elevM": null,
-          "headingTrue": 185,
+          "elevM": 57.77,
+          "headingTrue": 184.8,
           "displacedM": 0,
           "papi": null,
           "approachLights": null
         },
         "02": {
           "xy": [
-            36.5,
-            -691.6
+            57.9,
+            -405.5
           ],
-          "elevM": null,
-          "headingTrue": 5,
+          "elevM": 54.41,
+          "headingTrue": 4.8,
           "displacedM": 0,
           "papi": null,
           "approachLights": null
         }
       },
       "markings": null,
-      "magneticVariation": 15
+      "magneticVariation": 14,
+      "manual": true
     }
   ],
   "taxiways": [
@@ -202,16 +203,26 @@
     }
   ],
   "helipads": [],
-  "parkingPositions": [],
+  "parkingPositions": [
+    {
+      "ref": "1",
+      "xy": [
+        38,
+        0
+      ],
+      "manual": true
+    }
+  ],
   "holdingPositions": [
     {
       "xy": [
-        28.5,
-        -4.7
+        61.3,
+        -7.7
       ],
       "ref": null,
       "runway": "02/20",
-      "source": "derivado"
+      "source": "manual",
+      "manual": true
     }
   ],
   "windsocks": [],

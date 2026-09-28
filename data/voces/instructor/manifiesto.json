@@ -276,6 +276,9 @@
     "vuelo.abandonandoSinPrisa": {
       "ms": 2530
     },
+    "vuelo.abandonandoSinTorre": {
+      "ms": 2759
+    },
     "vuelo.alAireOtraPunta": {
       "ms": 2603
     },
@@ -1321,6 +1324,9 @@
     ],
     "vuelo.baches": [
       "vuelo.baches"
+    ],
+    "vuelo.abandonandoSinTorre": [
+      "vuelo.abandonandoSinTorre"
     ]
   }
 }

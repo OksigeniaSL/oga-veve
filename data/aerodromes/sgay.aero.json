@@ -1,17 +1,18 @@
 {
   "id": "SGAY",
   "name": "Aeropuerto Nacional Juan de Ayolas",
+  "sinTorre": true,
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-26",
     "ourairports": "6089",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. La plataforma, los dos puestos y el punto de espera están puestos a mano: OpenStreetMap no le mapea plataforma a este aeródromo, solo las calles de rodaje que la rodean. El AIP Paraguay de la DINAC (AD 3, lista de aeródromos para vuelo de cabotaje, AMDT AIRAC 01/2026) da para SGAY «dimensiones de calle de rodaje 90 × 70 m», que es la plataforma, y el lazo de calles de OpenStreetMap encierra 70 × 50 m: con diez metros de margen por fuera —media calle— salen justo los 90 × 70 del AIP, alineados con la pista. En la foto de Sentinel-2 el asfalto oscuro está ahí, junto al edificio de la terminal. Los puestos van por dentro de las calles, a lo largo del eje de la plataforma y a 35 m uno de otro; el punto de espera, a 75 m del eje de pista por la calle que llega a ella, que es lo del Anexo 14 (tabla 3-2) para una pista de vuelo visual de 45 m de ancho —el derivado, a 90 m, caía dentro de la plataforma—. Todo va marcado «manual» para que la próxima extracción no se lo lleve por delante. · Sin torre: el AIP no le da ninguna dependencia de tránsito aéreo (AD 3), así que va marcado «sinTorre». · Y la cota medida, no la del AD 3. Aquella dice 68 m para el aeródromo, y no casa con el suelo: bajo el eje Copernicus GLO-30 mide de 77 m en el umbral 02 a 75 en el 20, y las teselas Terrarium de AWS —SRTM, otro satélite y otro año— dan de 74 a 73. En Pilar y Encarnación esas mismas dos fuentes casan al metro con las cotas de umbral del AIP, así que el que se aparta aquí es el dato de la lista, no el relieve. Van las de Copernicus, que es el relieve del juego, y la pista entera va marcada «manual» para que la próxima extracción no se las lleve."
   },
   "origin": {
     "lat": -27.378379,
     "lon": -56.856791
   },
-  "elevationM": 68,
+  "elevationM": 77,
   "runways": [
     {
       "ref": "02/20",
@@ -34,7 +35,7 @@
             443.6,
             1776.8
           ],
-          "elevM": 68,
+          "elevM": 75,
           "headingTrue": 190.2,
           "displacedM": 0,
           "papi": null,
@@ -45,7 +46,7 @@
             117.8,
             -58
           ],
-          "elevM": 68,
+          "elevM": 77,
           "headingTrue": 10.2,
           "displacedM": 0,
           "papi": null,
@@ -53,7 +54,8 @@
         }
       },
       "markings": null,
-      "magneticVariation": 9.8
+      "magneticVariation": 9.8,
+      "manual": true
     }
   ],
   "taxiways": [
@@ -112,7 +114,34 @@
       ]
     }
   ],
-  "aprons": [],
+  "aprons": [
+    {
+      "surface": "asphalt",
+      "polygon": [
+        [
+          -42.9,
+          -18.1
+        ],
+        [
+          -27.0,
+          70.5
+        ],
+        [
+          41.8,
+          58.2
+        ],
+        [
+          25.9,
+          -30.4
+        ],
+        [
+          -42.9,
+          -18.1
+        ]
+      ],
+      "manual": true
+    }
+  ],
   "buildings": [
     {
       "kind": "terminal",
@@ -142,16 +171,34 @@
     }
   ],
   "helipads": [],
-  "parkingPositions": [],
+  "parkingPositions": [
+    {
+      "ref": "1",
+      "xy": [
+        -9.0,
+        6.7
+      ],
+      "manual": true
+    },
+    {
+      "ref": "2",
+      "xy": [
+        -2.9,
+        41.1
+      ],
+      "manual": true
+    }
+  ],
   "holdingPositions": [
     {
       "xy": [
-        20.8,
-        -19.3
+        35.5,
+        -22.2
       ],
       "ref": null,
       "runway": "02/20",
-      "source": "derivado"
+      "source": "manual",
+      "manual": true
     }
   ],
   "windsocks": [],

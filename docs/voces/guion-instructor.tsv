@@ -80,127 +80,128 @@
 080	vuelo.abandonando	Salí de la pista, que viene otro
 081	vuelo.abandonandoSinPrisa	Sin apuro: salí de la pista y volvé a casa
 082	vuelo.abandonandoConLaBici	Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
-083	vuelo.pistaLibre	¡Pista libre! Bien hecho
-084	vuelo.aPlataforma	Volvé a tu lugar
-085	vuelo.enPuesto	Llegaste. Apagá el motor
-086	vuelo.apagado	¡Vuelo terminado!
-087	vuelo.fuera	Volvé a la raya verde
-088	vuelo.roto	Se rompió. Volvemos a empezar
-089	vuelo.rapido	Vas muy rápido
-090	vuelo.sobrevelocidad	Muy rápido: bajá el motor
-091	vuelo.sobrevelocidadAire	Muy rápido para esta altura
-092	vuelo.trenPasado	Muy rápido con el tren fuera: metélo
-093	vuelo.flapsPasados	Muy rápido con los flaps: recogélos
-094	vuelo.pediFlaps	Bajá los flaps para frenar
-095	vuelo.alivioDeFlaps	Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.
-096	vuelo.flapsTocados	Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.
-097	vuelo.flapsEnLaCarrera	Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.
-098	vuelo.flapsArribaAlSalir	Ya salimos de la pista: ahora sí, subí los flaps.
-099	vuelo.despuesDelAterrizaje	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
-100	vuelo.alPuestoConFlaps	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
-101	vuelo.meteElTren	Metélo, el tren te frena
-102	vuelo.tormenta	Hay una tormenta delante: rodeála, no la cruces
-103	vuelo.baches	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
-104	vuelo.reserva	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
-105	vuelo.sinCombustible	Se acabó el combustible: planeá hasta la pista
-106	vuelo.sinMotor	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
-107	vuelo.planeoLento	Vamos lentos: bajá un poco la nariz
-108	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
-109	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
-110	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
-111	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
-112	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
-113	vuelo.sacaElTren	Sacá el tren
-114	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
-115	vuelo.despacio	Más despacio
-116	vuelo.alto	Pará acá
-117	vuelo.teLoPasaste	Te pasaste. Frená y volvé
-118	vuelo.yaPodesTocar	Ya podés tocar
-119	vuelo.quitaElGas	Quitá el gas
-120	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
-121	circuito.subida	Subí derecho por el eje
-122	circuito.cruzado	Girá a la izquierda: volvemos a la pista
-123	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
-124	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
-125	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
-126	percance.coche	Le pasaste por encima al coche
-127	percance.edificio	Chocaste con un edificio
-128	percance.fuera	Tocaste tierra fuera de la pista
-129	percance.golpe	Llegaste dando un golpe
-130	percance.pasada	Te pasaste del final de la pista
-131	percance.sinpermiso	Entraste en la pista sin la luz verde
-132	percance.sintren	Tocaste tierra sin sacar el tren
-133	fin.horas	Lo que llevás volado
-134	fin.llegaste	¡Llegaste! Ya estás en casa
-135	fin.bien	¡Buen vuelo!
-136	fin.muyBien	¡Gran vuelo!
-137	fin.otra	Otro vuelo
-138	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
-139	grado.aprendiz	Aprendiz
-140	grado.piloto	Piloto
-141	grado.comandante	Comandante
-142	grado.instructora	Instructora
-143	galon.manga	Los galones de este vuelo
-144	galon.aproximacion	Galón de la aproximación
-145	galon.toma	Galón del aterrizaje
-146	galon.aros	Galón de los aros
-147	galon.velocidad	Galón de la velocidad
-148	galon.rodaje	Galón del rodaje
-149	galon.frustrada	Galón de la frustrada
-150	tutor.throttle	Dale motor
-151	tutor.speed	Esperá a que corra
-152	tutor.pull	Tirá para arriba
-153	tutor.flying	¡Estás volando!
-154	tutor.frenar	Frená
-155	tutor.salir	Seguí la raya y salí de la pista
-156	tutor.slow	Bajá el motor
-157	motivo.sinPista	No se ve la pista
-158	motivo.lento	Vas muy despacio
-159	motivo.cayendo	Estás cayendo muy rápido
-160	motivo.rapido	Vas muy rápido
-161	motivo.torcido	Estás torcido
-162	motivo.descolocado	Estás fuera del eje
-163	mission.rio.name	Ver el río
-164	mission.rioabajo.name	Seguir el río
-165	mission.mar.name	Salir al mar
-166	mission.anaga.name	A Anaga
-167	mission.cumbre.name	A la cumbre
-168	mission.lomas.name	A las lomas
-169	mission.first.name	Tu primer vuelo
-170	mission.valley.name	La vuelta al valle
-171	mission.transfer.name	El traslado
-172	mission.step	¡Bien! Seguí
-173	mission.done	¡Misión cumplida!
-174	mission.none	Vuelo libre
-175	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-176	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-177	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-178	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
-179	matricula.nuestroAvion	Nuestro avión es
-180	matricula.asiNosLlama	Así nos llama la torre.
-181	fonetico.alfa	Alfa
-182	fonetico.bravo	Bravo
-183	fonetico.charlie	Charlie
-184	fonetico.delta	Delta
-185	fonetico.echo	Echo
-186	fonetico.foxtrot	Foxtrot
-187	fonetico.golf	Golf
-188	fonetico.hotel	Hotel
-189	fonetico.india	India
-190	fonetico.juliett	Juliett
-191	fonetico.kilo	Kilo
-192	fonetico.lima	Lima
-193	fonetico.mike	Mike
-194	fonetico.november	November
-195	fonetico.oscar	Oscar
-196	fonetico.papa	Papa
-197	fonetico.quebec	Quebec
-198	fonetico.romeo	Romeo
-199	fonetico.sierra	Sierra
-200	fonetico.tango	Tango
-201	fonetico.uniform	Uniform
-202	fonetico.victor	Victor
-203	fonetico.whiskey	Whiskey
-204	fonetico.xray	X-ray
-205	fonetico.yankee	Yankee
-206	fonetico.zulu	Zulu
+083	vuelo.abandonandoSinTorre	Sin apuro: salí de la pista y andá a la plataforma
+084	vuelo.pistaLibre	¡Pista libre! Bien hecho
+085	vuelo.aPlataforma	Volvé a tu lugar
+086	vuelo.enPuesto	Llegaste. Apagá el motor
+087	vuelo.apagado	¡Vuelo terminado!
+088	vuelo.fuera	Volvé a la raya verde
+089	vuelo.roto	Se rompió. Volvemos a empezar
+090	vuelo.rapido	Vas muy rápido
+091	vuelo.sobrevelocidad	Muy rápido: bajá el motor
+092	vuelo.sobrevelocidadAire	Muy rápido para esta altura
+093	vuelo.trenPasado	Muy rápido con el tren fuera: metélo
+094	vuelo.flapsPasados	Muy rápido con los flaps: recogélos
+095	vuelo.pediFlaps	Bajá los flaps para frenar
+096	vuelo.alivioDeFlaps	Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.
+097	vuelo.flapsTocados	Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.
+098	vuelo.flapsEnLaCarrera	Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.
+099	vuelo.flapsArribaAlSalir	Ya salimos de la pista: ahora sí, subí los flaps.
+100	vuelo.despuesDelAterrizaje	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
+101	vuelo.alPuestoConFlaps	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
+102	vuelo.meteElTren	Metélo, el tren te frena
+103	vuelo.tormenta	Hay una tormenta delante: rodeála, no la cruces
+104	vuelo.baches	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
+105	vuelo.reserva	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
+106	vuelo.sinCombustible	Se acabó el combustible: planeá hasta la pista
+107	vuelo.sinMotor	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
+108	vuelo.planeoLento	Vamos lentos: bajá un poco la nariz
+109	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
+110	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
+111	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
+112	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
+113	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
+114	vuelo.sacaElTren	Sacá el tren
+115	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
+116	vuelo.despacio	Más despacio
+117	vuelo.alto	Pará acá
+118	vuelo.teLoPasaste	Te pasaste. Frená y volvé
+119	vuelo.yaPodesTocar	Ya podés tocar
+120	vuelo.quitaElGas	Quitá el gas
+121	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
+122	circuito.subida	Subí derecho por el eje
+123	circuito.cruzado	Girá a la izquierda: volvemos a la pista
+124	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
+125	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
+126	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
+127	percance.coche	Le pasaste por encima al coche
+128	percance.edificio	Chocaste con un edificio
+129	percance.fuera	Tocaste tierra fuera de la pista
+130	percance.golpe	Llegaste dando un golpe
+131	percance.pasada	Te pasaste del final de la pista
+132	percance.sinpermiso	Entraste en la pista sin la luz verde
+133	percance.sintren	Tocaste tierra sin sacar el tren
+134	fin.horas	Lo que llevás volado
+135	fin.llegaste	¡Llegaste! Ya estás en casa
+136	fin.bien	¡Buen vuelo!
+137	fin.muyBien	¡Gran vuelo!
+138	fin.otra	Otro vuelo
+139	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
+140	grado.aprendiz	Aprendiz
+141	grado.piloto	Piloto
+142	grado.comandante	Comandante
+143	grado.instructora	Instructora
+144	galon.manga	Los galones de este vuelo
+145	galon.aproximacion	Galón de la aproximación
+146	galon.toma	Galón del aterrizaje
+147	galon.aros	Galón de los aros
+148	galon.velocidad	Galón de la velocidad
+149	galon.rodaje	Galón del rodaje
+150	galon.frustrada	Galón de la frustrada
+151	tutor.throttle	Dale motor
+152	tutor.speed	Esperá a que corra
+153	tutor.pull	Tirá para arriba
+154	tutor.flying	¡Estás volando!
+155	tutor.frenar	Frená
+156	tutor.salir	Seguí la raya y salí de la pista
+157	tutor.slow	Bajá el motor
+158	motivo.sinPista	No se ve la pista
+159	motivo.lento	Vas muy despacio
+160	motivo.cayendo	Estás cayendo muy rápido
+161	motivo.rapido	Vas muy rápido
+162	motivo.torcido	Estás torcido
+163	motivo.descolocado	Estás fuera del eje
+164	mission.rio.name	Ver el río
+165	mission.rioabajo.name	Seguir el río
+166	mission.mar.name	Salir al mar
+167	mission.anaga.name	A Anaga
+168	mission.cumbre.name	A la cumbre
+169	mission.lomas.name	A las lomas
+170	mission.first.name	Tu primer vuelo
+171	mission.valley.name	La vuelta al valle
+172	mission.transfer.name	El traslado
+173	mission.step	¡Bien! Seguí
+174	mission.done	¡Misión cumplida!
+175	mission.none	Vuelo libre
+176	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+177	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+178	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+179	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+180	matricula.nuestroAvion	Nuestro avión es
+181	matricula.asiNosLlama	Así nos llama la torre.
+182	fonetico.alfa	Alfa
+183	fonetico.bravo	Bravo
+184	fonetico.charlie	Charlie
+185	fonetico.delta	Delta
+186	fonetico.echo	Echo
+187	fonetico.foxtrot	Foxtrot
+188	fonetico.golf	Golf
+189	fonetico.hotel	Hotel
+190	fonetico.india	India
+191	fonetico.juliett	Juliett
+192	fonetico.kilo	Kilo
+193	fonetico.lima	Lima
+194	fonetico.mike	Mike
+195	fonetico.november	November
+196	fonetico.oscar	Oscar
+197	fonetico.papa	Papa
+198	fonetico.quebec	Quebec
+199	fonetico.romeo	Romeo
+200	fonetico.sierra	Sierra
+201	fonetico.tango	Tango
+202	fonetico.uniform	Uniform
+203	fonetico.victor	Victor
+204	fonetico.whiskey	Whiskey
+205	fonetico.xray	X-ray
+206	fonetico.yankee	Yankee
+207	fonetico.zulu	Zulu

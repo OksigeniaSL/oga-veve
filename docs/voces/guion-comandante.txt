@@ -11,6 +11,8 @@ Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia 
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.
+Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.
@@ -34,6 +36,8 @@ Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo 
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.
+Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.
+Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.
@@ -73,6 +77,16 @@ Bienvenidos a Concepción. Por este río bajaban los barcos a Asunción cuando n
 Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.
 Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.
 Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.
+Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.
+Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.
+Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.
+Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.
+Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.
+Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.
+Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.
+Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.
+Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.
+Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.
 Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.
 Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.
 Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.

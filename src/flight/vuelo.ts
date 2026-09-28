@@ -1015,10 +1015,15 @@ export const GUION: Record<
  * esté libre. Nadie te da permiso: te lo das vos, mirando. Y al salir, sin
  * apuro — dejar la pista sigue siendo lo que se hace, pero no porque nadie
  * espere detrás. Donde sale alguien a buscarte en bici, se dice quién es.
+ *
+ * **Y no todas las pistas sin torre son la de casa.** Ayolas es pública y no
+ * tiene a nadie en la radio, así que vale todo lo de arriba menos el final:
+ * allí no se vuelve a casa, se va a la plataforma. `enCasa` lo distingue.
  */
 export function guionSinTorre(
   fase: Fase,
   conBici: boolean,
+  enCasa = true,
 ): { readonly clave: string; readonly icono: string } {
   switch (fase) {
     case "esperando":
@@ -1027,7 +1032,11 @@ export function guionSinTorre(
       return { clave: "vuelo.autorizadoSinTorre", icono: "verde" };
     case "abandonando":
       return {
-        clave: conBici ? "vuelo.abandonandoConLaBici" : "vuelo.abandonandoSinPrisa",
+        clave: conBici
+          ? "vuelo.abandonandoConLaBici"
+          : enCasa
+            ? "vuelo.abandonandoSinPrisa"
+            : "vuelo.abandonandoSinTorre",
         icono: "salida",
       };
     default:

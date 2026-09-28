@@ -6,7 +6,7 @@
  * hasta un puesto, no hay ninguno de los tres. Se contó llegando a Guaraní con
  * el JAZ 120 —«ni coche, ni señalero, ni raya»— y aterrizando en Los Rodeos, y
  * de Guaraní se sospechaba de los cuatro puestos, que están puestos a mano
- * porque OpenStreetMap no trae ninguno. Aquí se mira en los dieciséis campos,
+ * porque OpenStreetMap no trae ninguno. Aquí se mira en los dieciocho campos,
  * los tres del norte incluidos —Concepción, Pedro Juan y Mariscal
  * Estigarribia—, por las dos cabeceras y por cada salida: se aterriza, se deja
  * la pista por esa salida y la ruta tiene que acabar en un puesto y pasar por

@@ -1,0 +1,92 @@
+{
+  "id": "ayolas",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": -27.378379,
+    "lon": -56.856791
+  },
+  "hitos": [
+    {
+      "nombre": "Isla Tres Bocas",
+      "clase": "isla",
+      "lat": -29.07915,
+      "lon": -56.60821,
+      "x": 24545,
+      "z": 189118,
+      "ele": null
+    },
+    {
+      "nombre": "Isla San Martin",
+      "clase": "isla",
+      "lat": -27.56299,
+      "lon": -56.69651,
+      "x": 15826,
+      "z": 20528,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Meza",
+      "clase": "isla",
+      "lat": -27.41466,
+      "lon": -58.76659,
+      "x": -188573,
+      "z": 4034,
+      "ele": null
+    },
+    {
+      "nombre": "Isla San Mateo",
+      "clase": "isla",
+      "lat": -28.48656,
+      "lon": -55.9396,
+      "x": 90563,
+      "z": 123224,
+      "ele": null
+    },
+    {
+      "nombre": "Asunción",
+      "clase": "ciudad",
+      "lat": -25.28005,
+      "lon": -57.63438,
+      "x": -76779,
+      "z": -233324,
+      "ele": 89
+    },
+    {
+      "nombre": "San Lorenzo",
+      "clase": "ciudad",
+      "lat": -25.34252,
+      "lon": -57.5094,
+      "x": -64438,
+      "z": -226377,
+      "ele": null
+    },
+    {
+      "nombre": "Corrientes",
+      "clase": "ciudad",
+      "lat": -27.4687,
+      "lon": -58.8312,
+      "x": -194953,
+      "z": 10043,
+      "ele": null
+    },
+    {
+      "nombre": "Resistencia",
+      "clase": "ciudad",
+      "lat": -27.45111,
+      "lon": -58.98652,
+      "x": -210289,
+      "z": 8087,
+      "ele": null
+    },
+    {
+      "nombre": "Ciudad del Este",
+      "clase": "ciudad",
+      "lat": -25.5169,
+      "lon": -54.61686,
+      "x": 221170,
+      "z": -206987,
+      "ele": null
+    }
+  ]
+}

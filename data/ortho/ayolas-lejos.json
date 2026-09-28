@@ -1,0 +1,24 @@
+{
+  "id": "ayolas",
+  "encuadre": "lejos",
+  "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
+  "licencia": "CC BY-NC-SA 4.0 · EOX s2cloudless, uso no comercial —juego gratuito, de código abierto y sin fines de lucro—. Consultado 2026-09-12 en cloudless.eox.at/documentation/license",
+  "servicio": "https://tiles.maps.eox.at/wmts",
+  "capa": "s2cloudless-2025_3857",
+  "esquina": {
+    "col": 5599,
+    "fila": 9483
+  },
+  "origen": {
+    "lat": -27.378379,
+    "lon": -56.856791
+  },
+  "tamanoM": 22000,
+  "zoom": 14,
+  "metrosPorPixel": 8.484,
+  "pixeles": {
+    "ancho": 2816,
+    "alto": 2816
+  },
+  "huecos": 0
+}

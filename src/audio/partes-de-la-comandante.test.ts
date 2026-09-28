@@ -124,6 +124,8 @@ describe("el anuncio del descenso", () => {
       "concepcion",
       "pedro-juan",
       "estigarribia",
+      "ayolas",
+      "pilar",
       "yvytu-rape",
       "tenerife-norte",
       "tenerife-sur",

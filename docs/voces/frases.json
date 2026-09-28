@@ -606,6 +606,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.abandonandoSinTorre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sin apuro: salí de la pista y andá a la plataforma",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.pistaLibre",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1385,6 +1392,20 @@
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
+    "id": "comandante.descenso.hacia.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.descenso.hacia.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
     "id": "comandante.descenso.hacia.yvytu-rape",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -1543,6 +1564,20 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.",
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
@@ -1816,6 +1851,76 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.llegada.ayolas~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas~3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas~4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.ayolas~5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.llegada.pilar~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar~3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar~4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.pilar~5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.",
     "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
   },
   {
@@ -3727,6 +3832,20 @@
     "voz": "torre",
     "idioma": "es",
     "texto": "Mariscal Estigarribia",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.ayolas",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Ayolas",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.pilar",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Pilar",
     "para": "el destino, en la autorización de la torre"
   },
   {

@@ -56,7 +56,10 @@ export interface AlrededorDelTurno {
   trafico(): DibujoDelTurno | null;
   /** Si la lección tiene torre. */
   torre(): boolean;
-  /** Si el campo montado es privado: ni torre ni frecuencia. */
+  /**
+   * Si el campo montado no tiene torre —el particular, o uno público sin
+   * servicio—: ni torre ni frecuencia. Ver `sinTorre` en `world/aerodrome.ts`.
+   */
   privado(): boolean;
   /**
    * Si en el campo de ahora, con la pista en uso, **no hay más que una calle**

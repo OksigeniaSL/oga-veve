@@ -555,7 +555,7 @@ import {
   flapsTrasLaToma,
   type LoDicho,
 } from "./flight/despues-de-aterrizar";
-import { puntoMasCercanoDe, type Aerodrome } from "./world/aerodrome";
+import { puntoMasCercanoDe, sinTorre, type Aerodrome } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
 import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
@@ -2864,7 +2864,7 @@ export class Game {
     boca: BOCA,
     trafico: () => this.trafico,
     torre: () => this.leccion.torre,
-    privado: () => !!this.elCampoMontado().escenario.aerodrome?.privado,
+    privado: () => sinTorre(this.elCampoMontado().escenario.aerodrome),
     calleUnica: () => this.calleUnicaDelCampo(),
     alUmbral: () => {
       const p = this.flight.state.position;
@@ -5077,7 +5077,7 @@ export class Game {
           tipo,
           // La pista la ocupa una vaca donde hay vacas, y otro avión donde hay
           // torre: el dibujo tiene que contar lo que pasó de verdad.
-          tipo === "ocupada" && !this.elCampo().escenario.aerodrome?.privado
+          tipo === "ocupada" && !sinTorre(this.elCampo().escenario.aerodrome)
             ? "-avion"
             : "",
         ),
@@ -5673,7 +5673,7 @@ export class Game {
          * cuarenta kilómetros.
          */
         const campo = this.elCampo();
-        if (campo.escenario.aerodrome?.privado) {
+        if (sinTorre(campo.escenario.aerodrome)) {
           // En la zona de toma: pasado el umbral de aterrizar, que es donde
           // estorba. Ver `umbral-desplazado.ts`.
           const [x, z] = this.enLaPista(
@@ -5805,7 +5805,7 @@ export class Game {
        * la frase no es fraseología sino lo que quiere decir.
        */
       const libre = this.avisoCon(
-        this.elCampo().escenario.aerodrome?.privado
+        sinTorre(this.elCampo().escenario.aerodrome)
           ? "vuelo.puedeVolverSinTorre"
           : "vuelo.puedeVolver",
         "palabra.volve",
@@ -5847,7 +5847,7 @@ export class Game {
      * lo dice la instructora. Encendía la lámpara de una torre que no existe
      * y la tarjeta decía «la torre te deja aterrizar» en la pista de casa.
      */
-    if (this.elCampo().escenario.aerodrome?.privado) {
+    if (sinTorre(this.elCampo().escenario.aerodrome)) {
       const libre = this.avisoCon(
         "vuelo.puedeAterrizarSinTorre",
         "palabra.aterriza",
@@ -6091,7 +6091,7 @@ export class Game {
     if (ruta === this.rutaAutorizada) return;
     this.rutaAutorizada = ruta;
     if (this.vecinos.length === 0 || this.destinoId === this.salidaId) return;
-    if (this.campoPorId(this.salidaId)?.escenario.aerodrome?.privado) return;
+    if (sinTorre(this.campoPorId(this.salidaId)?.escenario.aerodrome)) return;
     const destino = destinoEnRadio(this.destinoId);
     if (!destino) return;
     const yo = this.miIndicativo;
@@ -7304,8 +7304,8 @@ export class Game {
     // transpondedor no deja de contestar porque el campo no tenga torre.
     this.vigilarElTrafico(dt);
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
-    // `montarElCampo`.
-    if (this.elCampoMontado().escenario.aerodrome?.privado) return;
+    // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír.
+    if (sinTorre(this.elCampoMontado().escenario.aerodrome)) return;
     /*
      * Pasa el tiempo en la frecuencia y en su dibujo, y quien habla ya está
      * donde dice. Ver `oir` en `flight/turno-de-pista.ts`.
@@ -7427,7 +7427,7 @@ export class Game {
      * **Y quién vuela aquí lo dice el campo**, no si tiene torre: en una
      * pista particular, nadie más que vos. Ver `tiposDelCampo`.
      */
-    const tipos = tiposDelCampo(aero.id, campo.pista.length, !!aero.privado);
+    const tipos = tiposDelCampo(aero.id, campo.pista.length, sinTorre(aero));
     if (tipos.length === 0) return;
     /*
      * **Y no tiene tu silueta.** Ver tu propio avión pasando por el viento en
@@ -10752,9 +10752,9 @@ export class Game {
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
   }
 
-  /** Si en el campo de ahora hay una torre que conteste: con lección de torre y sin ser privado. */
+  /** Si en el campo de ahora hay una torre que conteste: con lección de torre y con torre. */
   private hayTorreQueHable(): boolean {
-    return this.leccion.torre && !this.elCampo().escenario.aerodrome?.privado;
+    return this.leccion.torre && !sinTorre(this.elCampo().escenario.aerodrome);
   }
 
   /**
@@ -11994,7 +11994,7 @@ export class Game {
         if (
           vista.fase === "final" &&
           !this.sinMotor &&
-          !this.elCampo().escenario.aerodrome?.privado
+          !sinTorre(this.elCampo().escenario.aerodrome)
         )
           this.turno.pedirAterrizaje();
         if (vista.fase === "arrancando" || vista.fase === "rodando")
@@ -12054,12 +12054,18 @@ export class Game {
        * flecha hasta allí. Ver `haciaOtroCampo`.
        */
       /*
-       * **Y en una pista particular, su guion**: sin lámpara que esperar y sin
+       * **Y en una pista sin torre, su guion**: sin lámpara que esperar y sin
        * nadie detrás que meta prisa. Ver `guionSinTorre`. Con la bici, si hoy
-       * sale: es la misma condición que la saca a ella.
+       * sale: es la misma condición que la saca a ella, y solo en la pista
+       * particular, que es donde hay quien pedalee. En Ayolas no es casa.
        */
-      const guion = this.elCampo().escenario.aerodrome?.privado
-        ? guionSinTorre(vista.fase, this.tier.sigueme)
+      const aqui = this.elCampo().escenario.aerodrome;
+      const guion = sinTorre(aqui)
+        ? guionSinTorre(
+            vista.fase,
+            this.tier.sigueme && aqui?.privado === true,
+            aqui?.privado === true,
+          )
         : vista;
       const clave =
         this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"

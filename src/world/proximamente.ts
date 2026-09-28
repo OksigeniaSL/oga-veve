@@ -33,6 +33,13 @@ export interface Proximamente {
  * identificador, porque eran distintos: aquí ponía `mariscal-estigarribia` y
  * el escenario se llama `estigarribia`.
  */
+/*
+ * Pilar salió de aquí el día que se construyó, con Ayolas. Lo que viene es lo
+ * que dice el plan del ADR 0010: el norte del transporte aéreo militar, la
+ * ruta que sigue a Concepción río arriba.
+ */
 export const PROXIMAMENTE: readonly Proximamente[] = [
-  { id: "pilar", ciudad: "Pilar", pais: "py" },
+  { id: "vallemi", ciudad: "Vallemí", pais: "py" },
+  { id: "fuerte-olimpo", ciudad: "Fuerte Olimpo", pais: "py" },
+  { id: "bahia-negra", ciudad: "Bahía Negra", pais: "py" },
 ];

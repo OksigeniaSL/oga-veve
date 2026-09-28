@@ -694,5 +694,8 @@
   ],
   "vuelo.baches": [
     "vuelo.baches"
+  ],
+  "vuelo.abandonandoSinTorre": [
+    "vuelo.abandonandoSinTorre"
   ]
 }

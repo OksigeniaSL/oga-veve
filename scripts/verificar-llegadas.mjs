@@ -26,7 +26,7 @@
  * llegar, no cómo se llega.
  *
  * Uso: `node scripts/verificar-llegadas.mjs [lección] [campo…]`. Por defecto
- * «vuelta», que es la que fallaba, y los dieciséis campos. `OGA_GPU=1` y
+ * «vuelta», que es la que fallaba, y los dieciocho campos. `OGA_GPU=1` y
  * `OGA_FOTOS=carpeta` para mirar las capturas con la tarjeta de verdad;
  * `OGA_AVION=jaz-90` para otro avión (si no cabe en un campo, el juego pone el
  * mayor que quepa).
@@ -36,13 +36,15 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const LECCION = process.argv[2] ?? "vuelta";
-// Los dieciséis que tienen aeródromo: el valle y el Chaco no tienen dónde llegar.
+// Los dieciocho que tienen aeródromo: el valle y el Chaco no tienen dónde llegar.
 const TODOS = [
   "yvytu-rape",
   "pettirossi",
   "guarani",
   "encarnacion",
   "concepcion",
+  "ayolas",
+  "pilar",
   "estigarribia",
   "pedro-juan",
   "tenerife-norte",

@@ -80,6 +80,7 @@ Frená
 Salí de la pista, que viene otro
 Sin apuro: salí de la pista y volvé a casa
 Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
+Sin apuro: salí de la pista y andá a la plataforma
 ¡Pista libre! Bien hecho
 Volvé a tu lugar
 Llegaste. Apagá el motor

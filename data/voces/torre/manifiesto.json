@@ -33,6 +33,9 @@
     "cifra.9": {
       "ms": 649
     },
+    "destino.ayolas": {
+      "ms": 748
+    },
     "destino.concepcion": {
       "ms": 820
     },
@@ -50,6 +53,9 @@
     },
     "destino.pettirossi": {
       "ms": 922
+    },
+    "destino.pilar": {
+      "ms": 677
     },
     "destino.yvytu-rape": {
       "ms": 987
@@ -937,6 +943,12 @@
       "{hora}",
       "{millas}",
       "{altura}"
+    ],
+    "destino.ayolas": [
+      "destino.ayolas"
+    ],
+    "destino.pilar": [
+      "destino.pilar"
     ]
   }
 }

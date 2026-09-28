@@ -81,6 +81,7 @@ instructor	instructor/vuelo.aterrizado.ogg	es-PY	Frená	lo que toca hacer ahora,
 instructor	instructor/vuelo.abandonando.ogg	es-PY	Salí de la pista, que viene otro	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.abandonandoSinPrisa.ogg	es-PY	Sin apuro: salí de la pista y volvé a casa	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.abandonandoConLaBici.ogg	es-PY	Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.abandonandoSinTorre.ogg	es-PY	Sin apuro: salí de la pista y andá a la plataforma	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pistaLibre.ogg	es-PY	¡Pista libre! Bien hecho	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.aPlataforma.ogg	es-PY	Volvé a tu lugar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enPuesto.ogg	es-PY	Llegaste. Apagá el motor	lo que toca hacer ahora, en vuelo y en tierra
@@ -190,6 +191,8 @@ comandante	comandante/comandante.descenso.hacia.encarnacion.ogg	es-PY	Señores p
 comandante	comandante/comandante.descenso.hacia.concepcion.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.pedro-juan.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.estigarribia.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.ayolas.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descenso.hacia.pilar.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.yvytu-rape.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.tenerife-norte.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.tenerife-sur.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.	la megafonía de cabina, para el pasaje
@@ -213,6 +216,8 @@ comandante	comandante/comandante.bienvenida.encarnacion.ogg	es-PY	Señores pasaj
 comandante	comandante/comandante.bienvenida.concepcion.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.pedro-juan.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.estigarribia.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.ayolas.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.pilar.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.yvytu-rape.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.tenerife-norte.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.tenerife-sur.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.	la megafonía de cabina, para el pasaje
@@ -252,6 +257,16 @@ comandante	comandante/comandante.llegada.concepcion~2.ogg	es-PY	Bienvenidos a Co
 comandante	comandante/comandante.llegada.concepcion~3.ogg	es-PY	Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.concepcion~4.ogg	es-PY	Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.concepcion~5.ogg	es-PY	Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.ayolas.ogg	es-PY	Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.llegada.ayolas~2.ogg	es-PY	Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.ayolas~3.ogg	es-PY	Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.ayolas~4.ogg	es-PY	Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.ayolas~5.ogg	es-PY	Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.pilar.ogg	es-PY	Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.llegada.pilar~2.ogg	es-PY	Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.pilar~3.ogg	es-PY	Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.pilar~4.ogg	es-PY	Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.llegada.pilar~5.ogg	es-PY	Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.yvytu-rape.ogg	es-PY	Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.llegada.yvytu-rape~2.ogg	es-PY	Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.yvytu-rape~3.ogg	es-PY	Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
@@ -525,6 +540,8 @@ torre	torre/destino.yvytu-rape.ogg	es	Yvytu Rape	el destino, en la autorización
 torre	torre/destino.concepcion.ogg	es	Concepción	el destino, en la autorización de la torre
 torre	torre/destino.pedro-juan.ogg	es	Pedro Juan Caballero	el destino, en la autorización de la torre
 torre	torre/destino.estigarribia.ogg	es	Mariscal Estigarribia	el destino, en la autorización de la torre
+torre	torre/destino.ayolas.ogg	es	Ayolas	el destino, en la autorización de la torre
+torre	torre/destino.pilar.ogg	es	Pilar	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/destino.tenerife-norte.ogg	es	Tenerife Norte	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/destino.tenerife-sur.ogg	es	Tenerife Sur	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/destino.gran-canaria.ogg	es	Gran Canaria	el destino, en la autorización de la torre

@@ -117,6 +117,41 @@ const COTAS_OFICIALES = {
       "(ficha de SkyVector; Wikipedia da los mismos 199 m). Casan al metro con " +
       "Copernicus GLO-30 bajo el eje: 187 m en la punta sur y 198 en la norte.",
   },
+  /*
+   * Pilar: OurAirports no trae ninguna cota de umbral, y la de su ficha
+   * —249 ft, 75,9 m— queda diecisiete metros por encima de la que publica la
+   * DINAC. El AIP sí las publica todas, y la pista entera va además marcada a
+   * mano con sus umbrales de allí: ver la nota de `sgpi.aero.json`.
+   */
+  SGPI: {
+    campoFt: 194,
+    umbralesFt: { "02": 179, "20": 190 },
+    fuente:
+      "AIP Paraguay (DINAC), AD 2.8 SGPI, AMDT NR 02 del 30-OCT-2025: 179 ft (54,41 m) en el " +
+      "umbral 02 y 190 ft (57,77 m) en el 20; plano de aeródromo AD 2.8-9, 194 ft (59 m) de campo.",
+  },
+};
+
+/**
+ * **Y las cotas medidas**, en metros, donde la oficial no casa con el suelo.
+ *
+ * Existen por Ayolas. El AIP le da 68 m en la lista de aeródromos de cabotaje
+ * (AD 3), OurAirports copia lo mismo, y los dos relieves que hay a mano lo
+ * ponen siete metros más arriba en la pista misma: Copernicus GLO-30, de 77 m
+ * en el umbral 02 a 75 en el 20, y SRTM, de 74 a 73. En Pilar y en Encarnación
+ * esos mismos dos relieves casan al metro con las cotas de umbral del AIP, así
+ * que lo que se aparta es el dato de la lista y no el satélite. Manda lo
+ * medido, con su porqué, y esta tabla es para que la próxima extracción no
+ * vuelva a los 68.
+ */
+const COTAS_MEDIDAS = {
+  SGAY: {
+    campoM: 77,
+    umbralesM: { "02": 77, "20": 75 },
+    fuente:
+      "SGAY, medida: Copernicus GLO-30 bajo el eje, 77 m en el umbral 02 y 75 en el 20 " +
+      "(SRTM da 74 y 73). El AIP (AD 3) y OurAirports dicen 68, siete metros por debajo de la pista.",
+  },
 };
 
 /**
@@ -716,6 +751,8 @@ async function construir(icao, pistas, aeropuertos) {
    *
    * Así que ya no se adivina. Por orden:
    *
+   * 0. **La medida, si está escrita** en `COTAS_MEDIDAS`: solo donde la
+   *    oficial no casa con el suelo, y con el porqué al lado.
    * 1. **La cota oficial, si está escrita** en `COTAS_OFICIALES`, con su
    *    fuente. Manda sobre OurAirports siempre, se contradiga o no.
    * 2. Si OurAirports se contradice y **hay relieve medido** del escenario
@@ -738,7 +775,16 @@ async function construir(icao, pistas, aeropuertos) {
     : null;
   let elev = deLaFicha;
   const oficial = COTAS_OFICIALES[icao];
-  if (oficial) {
+  const medida = COTAS_MEDIDAS[icao];
+  if (medida) {
+    elev = medida.campoM / 0.3048;
+    for (const r of runways)
+      for (const [d, u] of Object.entries(r.thresholds ?? {})) {
+        const m = medida.umbralesM[d];
+        if (u && m !== undefined) u.elevM = m;
+      }
+    process.stdout.write(`  cota medida: ${medida.fuente}\n`);
+  } else if (oficial) {
     elev = oficial.campoFt;
     for (const r of runways)
       for (const [d, u] of Object.entries(r.thresholds ?? {})) {
@@ -1126,6 +1172,14 @@ for (const icao of icaos) {
     ? JSON.parse(await readFile(destino, "utf8"))
     : null;
   const salida = conservarManual(ficha, previo);
+  /*
+   * Y lo que el campo **es**, que OpenStreetMap no dice: si es particular, si
+   * tiene granja alrededor, si no tiene a nadie en la radio. Son marcas del
+   * fichero de arriba, no objetos con `manual`, y sin esto se caían en la
+   * primera extracción. Ver `Aerodrome.sinTorre`.
+   */
+  for (const clave of ["privado", "granja", "sinTorre"])
+    if (previo && clave in previo) salida[clave] = previo[clave];
   /*
    * Y la nota escrita a mano se queda.
    *

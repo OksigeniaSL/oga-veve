@@ -35,7 +35,7 @@ import { enEjesDePista } from "../world/rumbo";
 import { cifrasDeLaCabina, rotulosDeLaCabina } from "../world/pantallas-cabina";
 import { familiaDe } from "../ui/familia";
 import type { Lluvia } from "../world/meteo";
-import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
+import { alturaDeEdificio, enElPavimento, sinTorre } from "../world/aerodrome";
 import {
   escalaDeCircuito,
   formaDelCircuito,
@@ -1535,12 +1535,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** El OACI del aeródromo que se tiene debajo. */
     aerodromoDeAhora: () => juego.campoParaBanco()?.aerodromo?.id ?? null,
     /**
-     * Si ese campo tiene frecuencia: uno privado no tiene torre, ni tráfico
-     * que se oiga, ni a nadie volando su circuito. Ver `ponerTrafico`.
+     * Si ese campo tiene frecuencia: uno sin torre —el privado, o Ayolas— no
+     * tiene quien conteste, ni tráfico que se oiga, ni a nadie volando su
+     * circuito. Ver `ponerTrafico` y `sinTorre`.
      */
     conFrecuencia: (id?: string) => {
       const campo = juego.campoParaBanco(id);
-      return !!campo?.escenario.aerodrome && !campo.escenario.aerodrome.privado;
+      return !!campo?.escenario.aerodrome && !sinTorre(campo.escenario.aerodrome);
     },
     /** Los aeródromos que el cuaderno da por visitados. */
     aerodromosVisitados: () => juego.aerodromosVisitadosParaBanco,
