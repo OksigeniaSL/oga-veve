@@ -134,6 +134,8 @@ export const EN: Dictionary = {
   "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",
   "scenario.encarnacion.name": "Encarnación · the Paraná",
   "scenario.concepcion.name": "Concepción · the north",
+  "scenario.ayolas.name": "Ayolas · Yacyretá",
+  "scenario.pilar.name": "Pilar · Ñeembucú",
   "scenario.valle.name": "Cordillera Valley",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
@@ -230,6 +232,18 @@ export const EN: Dictionary = {
   "torre.roja": "{indicativo}, hold here",
   // La torre canaria dice lo mismo en inglés: lo que cambia entre las dos es
   // el castellano y la voz. Ver `i18n/habla.ts`.
+  "torre.afisLibre": "{indicativo}, runway free",
+  "torre.afisLibreEnFinal": "{indicativo}, runway free",
+  "torre.afisOcupada": "{indicativo}, runway occupied",
+  "torre.afisSinTrafico": "{indicativo}, no reported traffic",
+  "torre.afisTraficoAterriza": "{indicativo}, landing traffic",
+  "torre.afisTraficoDespega": "{indicativo}, departing traffic",
+  "torre.canario.afisLibre": "{indicativo}, runway free",
+  "torre.canario.afisLibreEnFinal": "{indicativo}, runway free",
+  "torre.canario.afisOcupada": "{indicativo}, runway occupied",
+  "torre.canario.afisSinTrafico": "{indicativo}, no reported traffic",
+  "torre.canario.afisTraficoAterriza": "{indicativo}, landing traffic",
+  "torre.canario.afisTraficoDespega": "{indicativo}, departing traffic",
   "torre.canario.verde": "{indicativo}, cleared to enter",
   "torre.canario.roja": "{indicativo}, hold here",
   "torre.aterrizar": "{indicativo}, cleared to land",
@@ -286,6 +300,9 @@ export const EN: Dictionary = {
   "vuelo.autorizado": "Green light! Enter the runway",
   "vuelo.esperandoMirando": "Stop and look: the windsock, the animals and the runway",
   "vuelo.autorizadoSinTorre": "All clear: enter the runway",
+  "vuelo.esperandoAfis":
+    "Stop and listen: nobody clears you here. The radio tells you who is around, and you decide",
+  "vuelo.autorizadoAfis": "The runway is free: enter when you are ready",
   "vuelo.backTaxi": "Backtrack to the far end, then turn around",
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
@@ -340,6 +357,7 @@ export const EN: Dictionary = {
   "vuelo.puedeAterrizar": "The tower clears you to land",
   "vuelo.puedeVolverSinTorre": "The runway is clear again: try again",
   "vuelo.puedeAterrizarSinTorre": "Now it's fine: you can land",
+  "vuelo.puedeAterrizarAfis": "The runway is free: if you're set up, land",
   "vuelo.frustrada": "Well done! You went around. Try again",
   "vuelo.aroAlto": "You are high for the runway. Come down a little",
   "vuelo.aroBajo": "You are low for the runway. Climb a little",
@@ -391,6 +409,7 @@ export const EN: Dictionary = {
   "vuelo.abandonandoSinPrisa": "No rush: vacate the runway and head home",
   "vuelo.abandonandoConLaBici":
     "No rush: vacate the runway and follow Jazlyn, who came to meet you on her bike",
+  "vuelo.abandonandoSinTorre": "No rush: vacate the runway and taxi to the apron",
   "vuelo.pistaLibre": "Runway clear! Well done",
   "vuelo.aPlataforma": "Head back to your stand",
   "vuelo.enPuesto": "You made it. Shut the engine down",
@@ -579,6 +598,10 @@ export const EN: Dictionary = {
     "Ladies and gentlemen, this is your captain again. We're starting our descent into Pedro Juan Caballero.",
   "comandante.descenso.hacia.estigarribia":
     "Ladies and gentlemen, this is your captain again. We're starting our descent into Mariscal Estigarribia.",
+  "comandante.descenso.hacia.ayolas":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Ayolas.",
+  "comandante.descenso.hacia.pilar":
+    "Ladies and gentlemen, this is your captain again. We're starting our descent into Pilar.",
   "comandante.descenso.hacia.yvytu-rape":
     "Ladies and gentlemen, this is your captain again. We're starting our descent into Yvytu Rape, the Granja Óga airstrip.",
   "comandante.descenso.hacia.tenerife-norte":

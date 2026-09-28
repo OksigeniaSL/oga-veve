@@ -169,6 +169,18 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
     "Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.",
     "Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.",
   ],
+  "comandante.llegada.ayolas": [
+    "Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.",
+    "Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.",
+    "Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.",
+    "Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.",
+  ],
+  "comandante.llegada.pilar": [
+    "Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.",
+    "Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.",
+    "Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.",
+    "Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.",
+  ],
   "comandante.llegada.yvytu-rape": [
     "Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.",
     "Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.",

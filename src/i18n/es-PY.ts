@@ -129,6 +129,8 @@ export const ES_PY = {
   "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",
   "scenario.encarnacion.name": "Encarnación · el Paraná",
   "scenario.concepcion.name": "Concepción · el norte",
+  "scenario.ayolas.name": "Ayolas · Yacyretá",
+  "scenario.pilar.name": "Pilar · Ñeembucú",
   "scenario.valle.name": "Valle de la Cordillera",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
@@ -288,6 +290,28 @@ export const ES_PY = {
    * Son claves aparte porque el pack de voz busca por clave: con la misma
    * clave, las dos torres sonarían con la voz que se hubiera cargado antes.
    */
+  /*
+   * ── **Lo que dice un AFIS**, que informa y no autoriza ──────────────────
+   *
+   * Donde contesta un AFIS —Pilar, Pedro Juan Caballero, Mariscal
+   * Estigarribia, Concepción, La Gomera— no hay lámpara ni permiso: se dice
+   * cómo está la pista y quién anda, y quien vuela decide. Van troceadas como
+   * las de la lámpara, con la matrícula delante. Las dos «pista libre» se
+   * dicen igual: la de final lleva otro nombre porque es la que se retira al
+   * dejar la final. Ver `DICE_UN_AFIS` en `audio/torre.ts`.
+   */
+  "torre.afisLibre": "{indicativo}, pista libre",
+  "torre.afisLibreEnFinal": "{indicativo}, pista libre",
+  "torre.afisOcupada": "{indicativo}, pista ocupada",
+  "torre.afisSinTrafico": "{indicativo}, sin tráfico conocido",
+  "torre.afisTraficoAterriza": "{indicativo}, tráfico aterrizando",
+  "torre.afisTraficoDespega": "{indicativo}, tráfico despegando",
+  "torre.canario.afisLibre": "{indicativo}, pista libre",
+  "torre.canario.afisLibreEnFinal": "{indicativo}, pista libre",
+  "torre.canario.afisOcupada": "{indicativo}, pista ocupada",
+  "torre.canario.afisSinTrafico": "{indicativo}, sin tráfico conocido",
+  "torre.canario.afisTraficoAterriza": "{indicativo}, tráfico aterrizando",
+  "torre.canario.afisTraficoDespega": "{indicativo}, tráfico despegando",
   "torre.canario.verde": "{indicativo}, puedes entrar",
   "torre.canario.roja": "{indicativo}, espera ahí",
   "torre.canario.aterrizar": "{indicativo}, puedes aterrizar",
@@ -308,6 +332,8 @@ export const ES_PY = {
   "lugar.concepcion": "Concepción",
   "lugar.pedro-juan": "Pedro Juan Caballero",
   "lugar.estigarribia": "Mariscal Estigarribia",
+  "lugar.ayolas": "Ayolas",
+  "lugar.pilar": "Pilar",
   "lugar.tenerife-norte": "Tenerife Norte",
   "lugar.tenerife-sur": "Tenerife Sur",
   "lugar.gran-canaria": "Gran Canaria",
@@ -384,6 +410,10 @@ export const ES_PY = {
     "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.",
   "comandante.descenso.hacia.estigarribia":
     "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.",
+  "comandante.descenso.hacia.ayolas":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.",
+  "comandante.descenso.hacia.pilar":
+    "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.",
   "comandante.descenso.hacia.yvytu-rape":
     "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.",
   "comandante.descenso.hacia.tenerife-norte":
@@ -510,6 +540,10 @@ export const ES_PY = {
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.",
   "comandante.bienvenida.estigarribia":
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.",
+  "comandante.bienvenida.ayolas":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.",
+  "comandante.bienvenida.pilar":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.",
   "comandante.bienvenida.yvytu-rape":
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.",
   "comandante.bienvenida.tenerife-norte":
@@ -632,6 +666,10 @@ export const ES_PY = {
     "Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.",
   "comandante.llegada.concepcion":
     "Señores pasajeros, bienvenidos a Concepción. Del otro lado del río Paraguay empieza el Chaco, y de acá para el norte el río es el camino. Gracias por volar con nosotros.",
+  "comandante.llegada.ayolas":
+    "Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.",
+  "comandante.llegada.pilar":
+    "Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.",
   "comandante.llegada.yvytu-rape":
     "Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.",
   "comandante.llegada.valle-cordillera":
@@ -780,6 +818,13 @@ export const ES_PY = {
    */
   "vuelo.esperandoMirando": "Pará y mirá: la manga, los animales y la pista",
   "vuelo.autorizadoSinTorre": "Todo libre: entrá a la pista",
+  /*
+   * **Y donde contesta un AFIS**, que informa y no da permiso: se escucha, se
+   * mira y se decide. Ver `guionAfis`.
+   */
+  "vuelo.esperandoAfis":
+    "Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos",
+  "vuelo.autorizadoAfis": "La pista está libre: entrá cuando estés listo",
   "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
@@ -902,6 +947,8 @@ export const ES_PY = {
    */
   "vuelo.puedeAterrizar": "La torre te deja aterrizar",
   "vuelo.puedeAterrizarSinTorre": "Ahora sí: podés aterrizar",
+  // Y donde un AFIS te dice que la pista está libre: nadie te autoriza.
+  "vuelo.puedeAterrizarAfis": "La pista está libre: si venís bien, aterrizá",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   /*
    * **Y estos tres hablan como habla una persona.**
@@ -1011,6 +1058,8 @@ export const ES_PY = {
   "vuelo.abandonandoSinPrisa": "Sin apuro: salí de la pista y volvé a casa",
   "vuelo.abandonandoConLaBici":
     "Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici",
+  // Y en una pista pública sin torre, que no es casa: Ayolas.
+  "vuelo.abandonandoSinTorre": "Sin apuro: salí de la pista y andá a la plataforma",
   "vuelo.pistaLibre": "¡Pista libre! Bien hecho",
   "vuelo.aPlataforma": "Volvé a tu lugar",
   "vuelo.enPuesto": "Llegaste. Apagá el motor",

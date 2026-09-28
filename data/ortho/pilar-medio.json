@@ -1,0 +1,25 @@
+{
+  "id": "pilar",
+  "encuadre": "medio",
+  "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
+  "licencia": "CC BY-NC-SA 4.0 · EOX s2cloudless, uso no comercial —juego gratuito, de código abierto y sin fines de lucro—. Consultado 2026-09-12 en cloudless.eox.at/documentation/license",
+  "servicio": "https://tiles.maps.eox.at/wmts",
+  "capa": "s2cloudless-2025_3857",
+  "esquina": {
+    "col": 2762,
+    "fila": 4725
+  },
+  "origen": {
+    "lat": -26.881981,
+    "lon": -58.319067
+  },
+  "tamanoM": 54000,
+  "zoom": 13,
+  "metrosPorPixel": 17.044,
+  "pixeles": {
+    "ancho": 3584,
+    "alto": 3328
+  },
+  "huecos": 0,
+  "exposicion": 0.985
+}

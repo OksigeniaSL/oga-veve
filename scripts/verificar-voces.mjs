@@ -71,6 +71,19 @@ const REPARTO = [
   ["torre", "torre.canario.clearedTakeoff", "torre-canarias"],
   ["torre", "torre.canario.holdShort", "torre-canarias"],
   ["torre", "torre.canario.goAround", "torre-canarias"],
+  /*
+   * **Y lo que dice un AFIS**, que informa y no autoriza: la lámpara dicha
+   * como información, en castellano, y su fraseología. En las dos voces: en
+   * Paraguay lo dice la de casa y en La Gomera la de Canarias. Y lo que
+   * explica la instructora en el punto de espera, que allí no hay luz.
+   */
+  ["torre", "torre.afisLibreEnFinal", "torre"],
+  ["torre", "torre.afisSinTrafico", "torre"],
+  ["torre", "torre.afisFree", "torre"],
+  ["torre", "torre.afisNoTraffic", "torre"],
+  ["torre", "torre.canario.afisLibre", "torre-canarias"],
+  ["torre", "torre.canario.afisFree", "torre-canarias"],
+  ["instructor", "vuelo.esperandoAfis", "instructor"],
   ["comandante", "comandante.bienvenida", "comandante"],
   ["comandante", "comandante.crucero", "comandante"],
   // Y la bienvenida con el destino, que es una grabación por sitio.

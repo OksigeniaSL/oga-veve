@@ -333,7 +333,9 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
  * Mirado campo a campo: en Asunción salen reactores de pasaje a diario y hay
  * aeroclub; en Ciudad del Este, reactores y aviación general; en Encarnación,
  * Mariscal Estigarribia y Pedro Juan Caballero casi solo aviación general; en
- * Concepción, el turbohélice del transporte aéreo militar y avionetas. En
+ * Concepción, el turbohélice del transporte aéreo militar y avionetas; en
+ * Pilar, avionetas y algún bimotor de negocios; en Ayolas, nadie a la vez que
+ * vos. En
  * Canarias el regional de ala alta une todas las islas, y en las pistas
  * largas entran además los reactores; El Hierro y La Gomera, con mil
  * doscientos y mil quinientos metros, son solo del turbohélice. Cuatro
@@ -348,6 +350,16 @@ const OPERAN: Readonly<Record<string, readonly TipoDeTrafico["id"][]>> = {
   // El CASA 212 del transporte militar, que es la línea que llega, y el
   // aeroclub de la ciudad.
   SGCO: ["turbohelice", "avioneta", "avioneta"],
+  /*
+   * Pilar: avionetas, y el bimotor de negocios de los vuelos a requerimiento
+   * —un King Air, el de marzo de 2026—. Sin la lista le tocaba también el
+   * turbohélice regional, porque la pista mide justo lo que pide; pero ese
+   * avión tiene veintisiete metros de envergadura y la pista, dieciocho de
+   * ancho.
+   *
+   * Y Ayolas no está, a propósito: no tiene torre, y ver `tiposDelCampo`.
+   */
+  SGPI: ["avioneta", "avioneta", "bimotor"],
   GCLP: ["reactor", "turbohelice", "turbohelice", "avioneta"],
   GCXO: ["turbohelice", "turbohelice", "reactor", "avioneta"],
   GCTS: ["reactor", "reactor", "turbohelice"],
@@ -367,13 +379,20 @@ const OPERAN: Readonly<Record<string, readonly TipoDeTrafico["id"][]>> = {
  * aeroclub y mentira de la pista de una granja: ahí vuela el avión de la
  * casa, y el de la casa es el tuyo. «Una cosa es soñar y otra creer que en
  * casa vamos a tener varios aviones como el que tiene varios coches.»
+ *
+ * **Y en una sin torre, tampoco.** El tráfico de este juego es un circuito
+ * con la torre repartiendo turnos, y donde no hay torre no hay quien los
+ * reparta. En Ayolas, además, es lo que pasa: cada vuelo pide permiso por
+ * escrito a Yacyretá con cuarenta y ocho horas, de día y sin quedarse a
+ * dormir, así que quien aterriza allí tiene la pista para él. Ver
+ * `Aerodrome.sinTorre`.
  */
 export function tiposDelCampo(
   oaci: string | null | undefined,
   largoDePista: number,
-  privado = false,
+  sinTorre = false,
 ): readonly TipoDeTrafico[] {
-  if (privado && !(oaci && OPERAN[oaci])) return [];
+  if (sinTorre && !(oaci && OPERAN[oaci])) return [];
   const lista = (oaci && OPERAN[oaci]) || [
     "reactor",
     "turbohelice",

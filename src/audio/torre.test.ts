@@ -12,7 +12,15 @@ import { describe, expect, it } from "vitest";
 import manifiesto from "../../data/voces/torre/manifiesto.json";
 import canarias from "../../data/voces/torre-canarias/manifiesto.json";
 import { recetaDe, type Manifiesto } from "./banco-de-voz";
-import { CLAVE_DE_TORRE, claveDeTorre, PISTA_DETRAS } from "./torre";
+import {
+  CLAVE_DE_TORRE,
+  claveDeTorre,
+  DICE_UN_AFIS,
+  EN_UN_AFIS,
+  enUnAfis,
+  NOMBRA_LA_PISTA,
+  PISTA_DETRAS,
+} from "./torre";
 import { informacionEnPiezas } from "../flight/informacion-de-trafico";
 
 describe("lo que dice la torre", () => {
@@ -37,6 +45,16 @@ describe("lo que dice la torre", () => {
      * altura en sus huecos. Ver `informacionEnPiezas`.
      */
     "torre.trafico",
+    /*
+     * Y lo que dice un AFIS en castellano, que es la lámpara dicha por quien
+     * informa: lo pide `luzDeTorre` por su clave. Ver `Aerodrome.afis`.
+     */
+    "torre.afisLibre",
+    "torre.afisLibreEnFinal",
+    "torre.afisOcupada",
+    "torre.afisSinTrafico",
+    "torre.afisTraficoAterriza",
+    "torre.afisTraficoDespega",
   ]);
 
   /*
@@ -58,7 +76,11 @@ describe("lo que dice la torre", () => {
   const sinLado = (c: string) => c.replace(/\.[LCR]$/, "");
 
   it("cada grabación de torre la pide alguien", () => {
-    const apuntadas = new Set(Object.values(CLAVE_DE_TORRE));
+    const apuntadas = new Set([
+      ...Object.values(CLAVE_DE_TORRE),
+      // Y lo de un AFIS en fraseología, que se pide por su clave.
+      ...Object.keys(DICE_UN_AFIS),
+    ]);
     expect(
       grabadas.filter(
         (c) =>
@@ -198,5 +220,77 @@ describe("lo que dice la torre", () => {
     expect(
       recetaDe(canarias as Manifiesto, "torre.canario.vacateNext", yo),
     ).not.toBeNull();
+  });
+});
+
+/**
+ * **Un AFIS no autoriza: informa.** Donde contesta uno, lo que la frecuencia
+ * pide como orden de torre se dice como lo diría quien informa, y lo que un
+ * AFIS no dice no se dice. Ver `EN_UN_AFIS`.
+ */
+describe("lo que dice un AFIS", () => {
+  const recetas = (manifiesto as { recetas: Record<string, string[]> }).recetas;
+  const deCanarias = (canarias as { recetas: Record<string, string[]> }).recetas;
+  const aOtro = {
+    c1: "fonetico.echo",
+    c2: "fonetico.charlie",
+    c3: "fonetico.kilo",
+    c4: "fonetico.lima",
+    c5: "fonetico.mike",
+    r1: "cifra.0",
+    r2: "cifra.2",
+  };
+
+  it("ninguna orden se queda en autorización", () => {
+    for (const orden of [
+      "torre.clearedTakeoff",
+      "torre.clearedLand",
+      "torre.lineUpWait",
+      "torre.holdShort",
+      "torre.goAround",
+    ]) {
+      const dice = enUnAfis(orden);
+      expect(dice, orden).not.toBeNull();
+      expect(dice, orden).not.toMatch(/cleared|holdShort|lineUp|goAround/);
+    }
+  });
+
+  it("y lo que no dice, no lo dice", () => {
+    expect(enUnAfis("torre.vacateNext")).toBeNull();
+    expect(enUnAfis("torre.clearedTo")).toBeNull();
+    // Lo que es información se dice igual.
+    expect(enUnAfis("torre.pistaEnUso")).toBe("torre.pistaEnUso");
+    expect(enUnAfis("torre.mayday")).toBe("torre.mayday");
+  });
+
+  it("a quien ya se le dijo «runway free» para entrar, su despegue no se repite", () => {
+    expect(enUnAfis("torre.clearedTakeoff", "torre.afisFree")).toBeNull();
+    expect(enUnAfis("torre.clearedTakeoff", "torre.pistaEnUso")).toBe(
+      "torre.afisFreeTakeoff",
+    );
+  });
+
+  it("todo lo que dice está grabado, en las dos voces y con su pista", () => {
+    const dice = new Set([
+      ...Object.keys(DICE_UN_AFIS),
+      ...Object.values(EN_UN_AFIS).filter((c): c is string => !!c),
+    ]);
+    for (const c of dice) {
+      expect(NOMBRA_LA_PISTA.has(c), `${c} nombra la pista`).toBe(true);
+      expect(recetaDe(manifiesto as Manifiesto, c, aOtro), c).not.toBeNull();
+      const suya = c.replace("torre.", "torre.canario.");
+      expect(recetaDe(canarias as Manifiesto, suya, aOtro), suya).not.toBeNull();
+    }
+    for (const c of [
+      "torre.afisLibre",
+      "torre.afisLibreEnFinal",
+      "torre.afisOcupada",
+      "torre.afisSinTrafico",
+      "torre.afisTraficoAterriza",
+      "torre.afisTraficoDespega",
+    ]) {
+      expect(recetas[c], c).toBeDefined();
+      expect(deCanarias[c.replace("torre.", "torre.canario.")], c).toBeDefined();
+    }
   });
 });

@@ -276,6 +276,9 @@
     "vuelo.abandonandoSinPrisa": {
       "ms": 2530
     },
+    "vuelo.abandonandoSinTorre": {
+      "ms": 2759
+    },
     "vuelo.alAireOtraPunta": {
       "ms": 2603
     },
@@ -329,6 +332,9 @@
     },
     "vuelo.autorizado": {
       "ms": 1591
+    },
+    "vuelo.autorizadoAfis": {
+      "ms": 2281
     },
     "vuelo.autorizadoSinTorre": {
       "ms": 1785
@@ -395,6 +401,9 @@
     },
     "vuelo.esperando": {
       "ms": 1569
+    },
+    "vuelo.esperandoAfis": {
+      "ms": 5307
     },
     "vuelo.esperandoMirando": {
       "ms": 2797
@@ -530,6 +539,9 @@
     },
     "vuelo.puedeAterrizar": {
       "ms": 1223
+    },
+    "vuelo.puedeAterrizarAfis": {
+      "ms": 2438
     },
     "vuelo.puedeAterrizarSinTorre": {
       "ms": 1658
@@ -1327,6 +1339,18 @@
     ],
     "vuelo.baches": [
       "vuelo.baches"
+    ],
+    "vuelo.abandonandoSinTorre": [
+      "vuelo.abandonandoSinTorre"
+    ],
+    "vuelo.esperandoAfis": [
+      "vuelo.esperandoAfis"
+    ],
+    "vuelo.autorizadoAfis": [
+      "vuelo.autorizadoAfis"
+    ],
+    "vuelo.puedeAterrizarAfis": [
+      "vuelo.puedeAterrizarAfis"
     ]
   }
 }

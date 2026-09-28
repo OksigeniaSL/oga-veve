@@ -46,14 +46,16 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 
 | Fuente                                                                                                                                                                       | Uso                                                                                                                                    | Licencia                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Concepción, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
+| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Concepción, Ayolas, Pilar, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
 | [OpenStreetMap](https://www.openstreetmap.org)                                                                                                                               | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades, y los hitos del paisaje —cumbres, islas y pueblos— que la comandante señala en ruta | **ODbL**                                                                |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data)                                                                                                            | Coordenadas, pistas y elevación de aeropuertos                                                                                         | **Unlicense** (dominio público)                                         |
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
-| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los siete escenarios paraguayos, en cuatro encuadres                                                                        | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los nueve escenarios paraguayos, en cuatro encuadres                                                                        | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
 | [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; y en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
 | [AIP España](https://aip.enaire.es/AIP/) — ENAIRE, AIRAC AMDT 08/26 (en vigor desde el 03-SEP-2026)                                                                           | Los puntos del plan de vuelo en Canarias: salidas (SID), aproximaciones RNP y rutas de salida de La Gomera de los ocho aeropuertos de las islas, con sus nombres y coordenadas publicados. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
+| [AIP Paraguay](https://www.dinac.gov.py/v3/index.php/ais/aip-paraguay) — DINAC, AMDT AIRAC 01/2026 | Los puntos del plan de vuelo en Paraguay: aproximaciones RNP de Asunción, Guaraní, Encarnación, Mariscal Estigarribia y Pedro Juan Caballero, y salidas de Asunción y Guaraní; y las cotas y la pista de Pilar, la plataforma de Ayolas y el servicio de radio de cada campo. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
+| [IFISA, *AFIS phraseology*](https://ifisa.info/wp-content/uploads/2016/06/IFISA-AFIS-phraseology.docx) (2016) y [AIC 05/10 de España](https://aip.enaire.es/aip/contenido_AIC/I/Le_Circ_2010_I_05_en.pdf) | Lo que dice por radio un AFIS, que informa y no autoriza: «runway in use», «no reported traffic», «runway free». Ver abajo | **Expresiones de uso y hechos**: se toman las frases estándar, no se copia el documento |
 
 **Cuatro encuadres de la misma fuente**, y cada uno existe por un motivo
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
@@ -98,15 +100,62 @@ Intelectual). No se copia ni se redibuja ninguna carta. Las coordenadas se
 comprobaron contra las distancias que imprime cada carta, y las erratas
 que salieron van contadas en el mismo fichero.
 
-El Paraguay queda pendiente de las cartas de la DINAC: hasta entonces sus
-campos llevan la aproximación calculada sobre el eje de la pista, con las
-distancias de diseño de la OACI (PANS-OPS, Doc 8168) y los puntos rotulados
-como los rotula un ordenador de vuelo cuando no tienen nombre —CF y FF con el
-número de la pista—.
+### El plan de vuelo y los datos de los campos: AIP Paraguay
+
+Los de Paraguay salen del AIP que publica la Dirección Nacional de Aeronáutica
+Civil en su web —«AIS · AIP PARAGUAY», un fichero con la enmienda AMDT AIRAC
+01/2026 entera—, bajado y leído el 28 de septiembre de 2026: la parte AD 2 de
+SGAS, SGES, SGME, SGPJ, SGEN, SGCO y SGPI, con sus cartas y sus tablas de
+codificación; la lista de aeródromos de cabotaje (AD 3), donde está Ayolas; y
+las listas ENR 4.1 (radioayudas) y ENR 4.3 (puntos significativos). Cada
+procedimiento lleva en `src/world/procedimientos-paraguay.ts` la carta de la
+que sale, y ahí está también lo que no entra y por qué.
+
+Además de los procedimientos, del AIP salen la pista de Pilar —sus dos
+umbrales, su cota y sus 1.200 × 18 m, que es la pista publicada aunque el
+hormigón siga al sur—, las dimensiones de la plataforma de Ayolas y el
+servicio de radio de cada campo. Van marcados «manual» en sus ficheros de
+aeródromo, con la cita.
+
+Es el mismo caso que el AIP de España: **hechos** de una publicación oficial,
+que la ley paraguaya excluye de la protección del derecho de autor —«los
+textos oficiales de carácter legislativo, administrativo o judicial», Ley
+1.328/98, art. 8, inc. 2— con la obligación de citar la fuente, que es lo que
+se hace aquí. No se copia ni se redibuja ninguna carta. Las coordenadas se
+comprobaron contra las distancias impresas y contra los radiales y distancias
+DME de las cartas convencionales, y lo que no cuadra va contado en el fichero.
+
+Donde el AIP no publica procedimiento —Concepción, Pilar, Ayolas y la 02 de
+Encarnación—, el campo lleva la aproximación calculada sobre el eje de la
+pista, con las distancias de diseño de la OACI (PANS-OPS, Doc 8168) y los
+puntos rotulados como los rotula un ordenador de vuelo cuando no tienen nombre
+—CF y FF con el número de la pista—.
+
+### Quién contesta en la radio: torre o AFIS
+
+Qué campo tiene torre y cuál tiene AFIS sale del AIP de cada país, de las
+tablas de servicios de tránsito aéreo (AD 2.17) y de comunicaciones (AD 2.18)
+de cada campo. En Paraguay son AFIS Pilar («PILAR AFIS», 122,0 MHz), Pedro
+Juan Caballero («PEDRO JUAN AFIS», 120,5 MHz), Mariscal Estigarribia
+(«MARISCAL RADIO», 118,8 MHz) y Concepción («CONCEPCIÓN AFIS», 118,4 MHz); en
+Canarias, La Gomera («La Gomera Información», 118,375 MHz, AMDT 408/26). El
+Hierro tiene torre de lunes a viernes y AFIS los fines de semana (AIRAC AMDT
+05/26), y el juego, que no sabe de días de la semana, lo deja con torre. Va
+anotado en el fichero de cada aeródromo.
+
+Un AFIS no da autorizaciones: informa de la pista en uso, del viento y del
+tráfico que conoce, y quien vuela decide. Lo explica la circular AIC 05/10 con
+la que Aena, hoy ENAIRE, implantó el servicio en España, y lo que dice por
+radio —«runway in use», «no reported traffic», «runway free», «runway
+occupied»— es la fraseología que recoge la International Flight Information
+Service Association (IFISA) sobre el Doc 4444 de la OACI, en el documento
+base de su seminario de 2016, consultado el 28 de septiembre de 2026. Se toman
+hechos y las frases de uso, que son las que se oyen en la radio de verdad; no
+se copia ningún texto.
 
 ### Sentinel-2 cloudless: CC BY-NC-SA 4.0, uso no comercial
 
-Las ortofotos de los siete campos paraguayos salen de la capa Sentinel-2
+Las ortofotos de los nueve campos paraguayos salen de la capa Sentinel-2
 cloudless de EOX IT Services. Su documentación de licencia
 —`cloudless.eox.at/documentation/license`, consultada el 12 de septiembre de
 2026— la da bajo **Creative Commons Attribution-NonCommercial-ShareAlike 4.0**

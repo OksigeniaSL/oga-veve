@@ -29,6 +29,8 @@ import SGME from "../../data/aerodromes/sgme.aero.json";
 import SGPJ from "../../data/aerodromes/sgpj.aero.json";
 import SGEN from "../../data/aerodromes/sgen.aero.json";
 import SGCO from "../../data/aerodromes/sgco.aero.json";
+import SGAY from "../../data/aerodromes/sgay.aero.json";
+import SGPI from "../../data/aerodromes/sgpi.aero.json";
 import type { Ciudad } from "./ciudad";
 import type { Mano } from "./circuito";
 import { deFrente, type Meteo } from "./meteo";
@@ -719,7 +721,11 @@ export const PETTIROSSI: Scenario = {
    * Mariscal Estigarribia es la del Chaco que anunció en 2024 el gobernador de
    * Boquerón. Ver el ADR 0010.
    *
-   * Son seis y no se montan las seis a la vez: ver `vecinosQueSeMontan`.
+   * Y los dos del sur que no tienen línea y sí vuelos: Pilar, 199 km, el de
+   * los vuelos a requerimiento, y Ayolas, 247, el de los aviones de
+   * Yacyretá. Los dos caben de sobra en este mundo.
+   *
+   * Son ocho y no se montan las ocho a la vez: ver `vecinosQueSeMontan`.
    */
   destino: [
     "yvytu-rape",
@@ -728,6 +734,8 @@ export const PETTIROSSI: Scenario = {
     "concepcion",
     "pedro-juan",
     "estigarribia",
+    "pilar",
+    "ayolas",
   ],
   vecesLejos: 34,
 };
@@ -2116,6 +2124,174 @@ export const CONCEPCION: Scenario = {
   vecesLejos: 21,
 };
 
+/**
+ * **Ayolas: la pista de la represa.**
+ *
+ * Mil ochocientos cincuenta metros de asfalto y cuarenta y cinco de ancho —la
+ * 02/20— para una ciudad de veinte mil habitantes: la pista no es de la
+ * ciudad, es de Yacyretá. La represa está a veinte kilómetros, y el
+ * aeródromo lo administra la Entidad Binacional para sus aviones y los de las
+ * autoridades nacionales. Ningún vuelo comercial sin su permiso, ninguno de
+ * noche y ningún avión que se quede a dormir: es lo que dicen el AIP (AD 3) y
+ * el protocolo de la EBY de abril de 2024.
+ *
+ * Y es el primer campo del juego **sin nadie en la radio**. No tiene torre ni
+ * servicio de información de vuelo: se mira la manga, se mira la pista y se
+ * decide. Ver `Aerodrome.sinTorre`.
+ *
+ * La cota es la medida, 77 m, y no los 68 de la lista del AIP: los dos
+ * relieves que hay ponen la pista siete metros más arriba, y en Pilar y
+ * Encarnación esos mismos relieves casan al metro con el AIP. Ver
+ * `COTAS_MEDIDAS` en `scripts/osm-a-aerodromo.mjs`.
+ */
+export const AYOLAS: Scenario = {
+  id: "ayolas",
+  // El sur, sobre el Paraná, como Encarnación: norte y nordeste.
+  vientoDominante: { vientoDe: 20, vientoKt: 8, techoM: 1500, temp: 28 },
+  nameKey: "scenario.ayolas.name",
+  pais: "py",
+  seed: 19731203,
+  size: 20000,
+  segments: 384,
+  // La red por si falta el relieve medido: el llano del Paraná, sin sierras.
+  reliefHeight: 160,
+  reliefScale: 4.6,
+  ridgeMix: 0.08,
+  /*
+   * **Cincuenta y ocho metros: el Paraná aguas abajo de la represa, medido.**
+   *
+   * En los veinte kilómetros de alrededor el relieve de Copernicus va de 54 a
+   * 107 metros, y la mitad sur es río. Con cincuenta y ocho sale una cinta
+   * continua que entra por el oeste y baja al sudeste, a cuatro kilómetros al
+   * sur de la pista; con cincuenta y siete se parte en dos, y con sesenta se
+   * llenan los bañados del este. El embalse de Yacyretá, aguas arriba, está a
+   * ochenta y tres, pero no cae en estos veinte kilómetros: la represa está a
+   * veinte de la pista, y lo que se ve desde Ayolas es el río de abajo.
+   */
+  waterLevel: 58,
+  /*
+   * Y la pista a diecisiete metros por encima: el aeródromo está en el llano
+   * de la ribera, no en una loma. Ver `orilla`.
+   */
+  orilla: 15,
+  riverWidth: 0,
+  // Los colores sobre lo medido: del río, a 54, al llano, a 72, y las lomas.
+  bands: [
+    { from: 56, colour: 0x3d6b44 },
+    { from: 62, colour: 0x55854c },
+    { from: 70, colour: 0x6f9a55 },
+    { from: 76, colour: 0x8fa961 },
+    { from: 86, colour: 0xb5a878 },
+    { from: 98, colour: 0xa89688 },
+  ],
+  water: 0x55738a,
+  fill: 0x55854c,
+  sky: { horizon: 0xe6ecf2, zenith: 0x4d92d6 },
+  fog: { colour: 0xd8e3ec, density: 0.000055 },
+  sun: { azimuth: 135, elevation: 50 },
+  /*
+   * La 02 de casa: la plataforma está en la punta sur, al lado del umbral 02,
+   * y con el viento del norte de casi todo el año se sale por ahí sin rodar
+   * la pista entera.
+   */
+  runway: pistaDe(SGAY as unknown as Aerodrome, "02"),
+  /*
+   * **Diez grados, los que hacen que el número pintado y la brújula digan lo
+   * mismo**: la 02 corre a 10° verdaderos y la cabecera pone 02. Es la
+   * convención de Tenerife Norte y de Silvio Pettirossi —ver la de Los
+   * Rodeos—, y aquí se nota más que en ningún sitio: la declinación de hoy,
+   * la del modelo magnético mundial (WMM2025), es de 15,3° W, y el número de
+   * esta pista es de cuando se construyó, con el norte magnético cinco grados
+   * más al este. Con la de verdad, el HDG marcaría veinticinco alineado en la
+   * 02, y la lección de mirar el rumbo y ver el número del suelo se perdería.
+   */
+  magneticVariation: 10,
+  aerodrome: SGAY as unknown as Aerodrome,
+  /*
+   * **Y a Asunción, que es de donde vienen los aviones que aterrizan aquí.**
+   *
+   * El protocolo de la EBY es para sus aviones y las delegaciones que
+   * autoriza su departamento administrativo, que está en Asunción, y para las
+   * autoridades nacionales. No es una línea regular —aquí no la hay—: es el
+   * vuelo que se hace de verdad. 247 km, eje 238: veinticinco veces, 500 km.
+   */
+  destino: ["pettirossi"],
+  vecesLejos: 25,
+};
+
+/**
+ * **Pilar: la ciudad del Ñeembucú, y una pista de avioneta.**
+ *
+ * Mil doscientos metros de hormigón y dieciocho de ancho, que es lo que
+ * publica el AIP entre sus dos umbrales —OpenStreetMap dibuja mil quinientos
+ * porque el pavimento sigue más al sur, y eso no es pista—. Caben los cuatro
+ * pequeños —la avioneta, el biplano, el bimotor y el turbohélice de
+ * diecinueve plazas— y ninguno de los dos reactores: al de pasaje le faltan
+ * cuatrocientos metros.
+ *
+ * Tiene quien conteste en la radio: Pilar AFIS en 122.0, de día. Y desde
+ * 2023 puede recibir vuelos internacionales a requerimiento.
+ */
+export const PILAR: Scenario = {
+  id: "pilar",
+  // El sudoeste del país, en el llano del río Paraguay: norte y nordeste.
+  vientoDominante: { vientoDe: 20, vientoKt: 8, techoM: 1500, temp: 28 },
+  nameKey: "scenario.pilar.name",
+  pais: "py",
+  seed: 17791012,
+  size: 20000,
+  segments: 384,
+  reliefHeight: 140,
+  reliefScale: 4.6,
+  ridgeMix: 0.06,
+  /*
+   * **Cincuenta y un metros: el río Paraguay, medido.**
+   *
+   * El relieve de alrededor va de 49 a 76 metros y casi todo está entre 52 y
+   * 58: esteros. Con cincuenta y uno sale el río como una cinta que baja del
+   * norte, pasa a menos de un kilómetro al oeste de la pista y se va al
+   * sudoeste; con cincuenta se corta en trozos, y con cincuenta y tres se
+   * inundan los esteros del Ñeembucú enteros.
+   */
+  waterLevel: 51,
+  /*
+   * Y la pista a tres metros y medio por encima del agua en el umbral 02,
+   * que es lo que publica el AIP: 54,41. Pilar es ciudad de ribera, y el
+   * aeródromo está en el barrio del puerto. Ver `orilla`.
+   */
+  orilla: 3,
+  riverWidth: 0,
+  // Los colores sobre lo medido, que se mueve poco: del río al albardón.
+  bands: [
+    { from: 48, colour: 0x3d6b44 },
+    { from: 52, colour: 0x55854c },
+    { from: 55, colour: 0x6f9a55 },
+    { from: 58, colour: 0x8fa961 },
+    { from: 62, colour: 0xb5a878 },
+    { from: 67, colour: 0xa89688 },
+  ],
+  water: 0x5b7f6a,
+  fill: 0x4f7048,
+  sky: { horizon: 0xe9eef1, zenith: 0x5397d8 },
+  fog: { colour: 0xd8e3ea, density: 0.000045 },
+  sun: { azimuth: 140, elevation: 52 },
+  runway: pistaDe(SGPI as unknown as Aerodrome, "02"),
+  // Catorce grados, los del AIP (AD 2.8-2, 14° W de 2024): la 02 corre a
+  // 4,8° verdaderos, el HDG marca diecinueve alineado en ella y el número del
+  // suelo dice 02, que es lo mismo. Aquí la convención de Los Rodeos y la
+  // declinación de verdad coinciden.
+  magneticVariation: 14,
+  aerodrome: SGPI as unknown as Aerodrome,
+  /*
+   * **A Asunción y de vuelta**, que es lo que vuela de verdad este campo: en
+   * marzo de 2026 un bimotor de negocios hizo Posadas–Pilar–Asunción con la
+   * habilitación internacional a requerimiento (ABC Color, 17 de marzo de
+   * 2026). 199 km, eje 183: veinte veces, 400 km.
+   */
+  destino: ["pettirossi"],
+  vecesLejos: 20,
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   VALLE_CORDILLERA,
   CHACO,
@@ -2124,6 +2300,8 @@ export const SCENARIOS: readonly Scenario[] = [
   GUARANI,
   ENCARNACION,
   CONCEPCION,
+  AYOLAS,
+  PILAR,
   /*
    * **Los dos que faltaban entraron el día que el rodaje supo parar a mitad de
    * calle.**

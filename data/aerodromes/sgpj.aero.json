@@ -1,11 +1,12 @@
 {
   "id": "SGPJ",
   "name": "Aeropuerto Nacional Dr. Augusto Roberto Fuster",
+  "afis": true,
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "6095",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los puestos de estacionamiento están puestos a mano sobre la plataforma: OpenStreetMap no trae ninguno y sin puestos no hay de dónde salir ni a dónde volver."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los puestos de estacionamiento están puestos a mano sobre la plataforma: OpenStreetMap no trae ninguno y sin puestos no hay de dónde salir ni a dónde volver. · AFIS, no torre: «PEDRO JUAN AFIS», 120.5 MHz, H24 (AIP Paraguay, AD 2.4-18)."
   },
   "origin": {
     "lat": -22.641427,

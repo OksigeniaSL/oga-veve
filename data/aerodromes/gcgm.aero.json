@@ -1,11 +1,12 @@
 {
   "id": "GCGM",
   "name": "La Gomera Airport",
+  "afis": true,
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "3078",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. · AFIS, no torre: «La Gomera Información», 118.375 MHz, en horas del aeródromo (AIP España, AD 2-GCGM 2.17 y 2.18, AMDT 408/26); fue el primer AFIS de España, en 2010."
   },
   "origin": {
     "lat": 28.0296,

@@ -8,6 +8,8 @@ Esperamos: primero sale el avión que está en la pista
 ¡Luz verde! Entrá a la pista
 Pará y mirá: la manga, los animales y la pista
 Todo libre: entrá a la pista
+Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos
+La pista está libre: entrá cuando estés listo
 Andá hasta el fondo y dá la vuelta
 Ponete derechito en el eje
 Mirá la pista: ¿la ves?
@@ -56,6 +58,7 @@ La pista quedó libre: podés volver a bajar
 La pista ya está libre: volvé a intentarlo
 La torre te deja aterrizar
 Ahora sí: podés aterrizar
+La pista está libre: si venís bien, aterrizá
 ¡Bien hecho! Te fuiste al aire. Probá de nuevo
 Muy bien: irse al aire también es volar bien
 Eso estuvo bien. Damos otra vuelta y volvemos
@@ -80,6 +83,7 @@ Frená
 Salí de la pista, que viene otro
 Sin apuro: salí de la pista y volvé a casa
 Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
+Sin apuro: salí de la pista y andá a la plataforma
 ¡Pista libre! Bien hecho
 Volvé a tu lugar
 Llegaste. Apagá el motor

@@ -29,7 +29,7 @@
  * llegar, no cómo se llega.
  *
  * Uso: `node scripts/verificar-llegadas.mjs [lección] [campo…]`. Por defecto
- * «vuelta», que es la que fallaba, y los dieciséis campos. `OGA_GPU=1` y
+ * «vuelta», que es la que fallaba, y los dieciocho campos. `OGA_GPU=1` y
  * `OGA_FOTOS=carpeta` para mirar las capturas con la tarjeta de verdad;
  * `OGA_AVION=jaz-90` para otro avión (si no cabe en un campo, el juego pone el
  * mayor que quepa).
@@ -39,13 +39,15 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const LECCION = process.argv[2] ?? "vuelta";
-// Los dieciséis que tienen aeródromo: el valle y el Chaco no tienen dónde llegar.
+// Los dieciocho que tienen aeródromo: el valle y el Chaco no tienen dónde llegar.
 const TODOS = [
   "yvytu-rape",
   "pettirossi",
   "guarani",
   "encarnacion",
   "concepcion",
+  "ayolas",
+  "pilar",
   "estigarribia",
   "pedro-juan",
   "tenerife-norte",
@@ -210,7 +212,22 @@ try {
         o.colocar(f.x, f.suelo + 250, f.z, o.avion().aproximacion ?? 50, f.h);
         await espera(2000);
       }
-      const t = o.puntoDeFinal(-350);
+      /*
+       * **Y se toca donde toca uno de verdad**: en el punto de visada, que la
+       * OACI pinta según la distancia de aterrizaje —150, 250, 300 o 400 m del
+       * umbral por debajo de 800, 1.200 y 2.400 m y por encima (Anexo 14,
+       * vol. I, 5.2.5)—. Eran trescientos cincuenta metros en todas, y en
+       * Pilar, con 1.200 m y su única calle a 390 m del umbral 02, el avión se
+       * paraba justo en la boca: la raya giraba noventa grados delante del
+       * morro y se salía del cuadro, 6 de 15. Tocando en la visada, a 300 m,
+       * se para antes de la boca y rueda hasta ella por la pista, que es como
+       * llega a esa calle quien aterriza allí: 10 de 10.
+       */
+      const r = o.pistaDeAhora?.() ?? o.pista();
+      const disponible = r.length - (r.desplazado ?? 0);
+      const visada =
+        disponible < 800 ? 150 : disponible < 1200 ? 250 : disponible < 2400 ? 300 : 400;
+      const t = o.puntoDeFinal(-visada);
       o.pedirTren?.(true);
       o.colocar(t.x, o.sueloDeVuelo(t.x, t.z) + tren + 0.05, t.z, 14, t.h);
       for (let i = 0; i < 60; i++) {
