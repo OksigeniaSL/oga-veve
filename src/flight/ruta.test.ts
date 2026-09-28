@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  MARGEN_EN_LLANO,
+  MARGEN_EN_MONTANA,
   MILLA,
   PIE,
   Seguimiento,
@@ -8,6 +10,8 @@ import {
   cruceroPorLaDistancia,
   distanciaDeDescenso,
   libra,
+  minimaEnRuta,
+  porElMar,
   puntoAFaltando,
   relieveEnCrucero,
   restante,
@@ -84,10 +88,10 @@ describe("trazar: y sin mandar a nadie contra un monte", () => {
     cotaDeSalida: 0,
   };
   const desde = f("RW09", 0, 0, "despegue");
-  const umbral = f("RW09B", 40, 0, "umbral");
-  const rama = [f("IF", 30, 0, "if")];
+  const umbral = f("RW09B", 50, 0, "umbral");
+  const rama = [f("IF", 40, 0, "if")];
   // Una salida que sube al norte antes de ir al este: la de verdad, que rodea.
-  const salida = [f("S1", 4, 0, "salida"), f("S2", 6, 10, "salida"), f("S3", 20, 10, "salida")];
+  const salida = [f("S1", 4, 0, "salida"), f("S2", 6, 10, "salida"), f("S3", 20, 12, "salida")];
 
   it("sin relieve, suelta la salida en cuanto deja de acercar", () => {
     const r = trazar({ desde, salidas: [salida], ramas: [rama], umbral, cotaDelUmbral: 0 });
@@ -103,7 +107,8 @@ describe("trazar: y sin mandar a nadie contra un monte", () => {
       cotaDelUmbral: 0,
       terreno: monte,
     });
-    // De S2 al IF todavía se pasa a menos de una milla de la ladera: hasta S3.
+    // De S2 al IF todavía se pasa a menos de ocho kilómetros de la ladera,
+    // que es donde la regla del aire pide dos mil pies sobre ella: hasta S3.
     expect(r.fijos.map((x) => x.nombre)).toEqual(["RW09", "S1", "S2", "S3", "IF", "RW09B"]);
     expect(libra(r.fijos, monte, 0)).toBe(true);
   });
@@ -114,12 +119,104 @@ describe("trazar: y sin mandar a nadie contra un monte", () => {
     expect(libra([desde, ...publicada], monte, 0)).toBe(true);
     // Y una aproximación calculada sí: esa no la hizo nadie.
     const calculada = [{ ...f("CF", 30, 0, "if"), calculado: true }];
-    expect(libra([f("RW", 10, 0, "despegue"), ...calculada, umbral], monte, 0)).toBe(false);
+    expect(libra([f("RW", 10, 0, "despegue"), ...calculada, f("U", 40, 0, "umbral")], monte, 0)).toBe(false);
   });
 
   it("el crucero no queda por debajo del relieve de la ruta", () => {
     const r = rutaDe([desde, f("X", 20, 0), umbral], 0);
     expect(relieveEnCrucero(r, monte.cota)).toBe(3000);
+  });
+});
+
+describe("la mínima en ruta, con la regla del aire", () => {
+  // Una loma de quinientos metros y un monte de dos mil, los dos de tres
+  // millas de radio y con el llano a cero alrededor.
+  const loma = (x: number, z: number) => (Math.hypot(x, z) < 3 * MILLA ? 500 : 0);
+  const monte = (x: number, z: number) => (Math.hypot(x, z) < 3 * MILLA ? 2000 : 0);
+
+  it("mil pies sobre lo más alto a ocho kilómetros en el llano", () => {
+    expect(minimaEnRuta(loma, 0, 0)).toBe(500 + MARGEN_EN_LLANO);
+    expect(MARGEN_EN_LLANO).toBe(300);
+  });
+
+  it("dos mil en la montaña: novecientos metros de desnivel a diez millas", () => {
+    expect(minimaEnRuta(monte, 0, 0)).toBe(2000 + MARGEN_EN_MONTANA);
+    expect(MARGEN_EN_MONTANA).toBe(600);
+  });
+
+  it("a ocho kilómetros de la ladera todavía cuenta; a diez ya no", () => {
+    const ladera = 3 * MILLA;
+    expect(minimaEnRuta(monte, ladera + 7500, 0)).toBe(2000 + MARGEN_EN_MONTANA);
+    // Más allá del radio queda el llano, pero sigue siendo montaña: el monte
+    // está a menos de diez millas.
+    expect(minimaEnRuta(monte, ladera + 10000, 0)).toBe(0 + MARGEN_EN_MONTANA);
+  });
+});
+
+describe("trazar: por el mar, y entrando por su lado", () => {
+  // Una isla de montaña entre la salida y el destino: mil metros desde el
+  // agua, diez millas de ancho y veinticuatro de norte a sur.
+  const isla = (x: number, z: number) =>
+    x > 20 * MILLA && x < 30 * MILLA && Math.abs(z) < 12 * MILLA ? 1000 : 0;
+  const terreno = { cota: isla, techo: 11000, cotaDeSalida: 0 };
+  const desde = f("RW09", 0, 0, "despegue");
+  const umbral = f("RW09B", 60, 0, "umbral");
+  const aprox = (iaf: Fijo) => [iaf, f("IF", 50, 0, "if"), f("FAF", 55, 0, "faf")];
+
+  it("rodea por el mar una isla de montaña antes que cruzarla alto", () => {
+    // Por encima se libra el monte —se llega alto—, pero hay mar al sur.
+    const porEncima = [f("S1", 5, 0, "salida")];
+    const porElSur = [f("S1", 5, 0, "salida"), f("S2", 25, -16, "salida")];
+    const ramas = [aprox(f("IAF", 40, -5, "iaf"))];
+    const encima = [desde, ...porEncima, ...ramas[0]!, umbral];
+    expect(libra(encima, terreno, 0)).toBe(true);
+    expect(porElMar(encima, isla)).toBe(false);
+    const r = trazar({ desde, salidas: [porEncima, porElSur], ramas, umbral, cotaDelUmbral: 0, terreno });
+    expect(r.fijos.map((x) => x.nombre)).toContain("S2");
+    expect(porElMar(r.fijos, isla)).toBe(true);
+  });
+
+  it("directo al punto intermedio si el giro allí no pasa de cuarenta y cinco grados", () => {
+    // El inicio queda al sur, más allá del intermedio: ir a buscarlo es una
+    // vuelta de treinta millas.
+    const r = trazar({
+      desde: f("RW", 0, 5, "despegue"),
+      salidas: [],
+      ramas: [[f("LEJOS", 50, -25, "iaf"), f("IF", 50, 0, "if"), f("FAF", 55, 0, "faf")]],
+      umbral,
+      cotaDelUmbral: 0,
+    });
+    expect(r.fijos.map((x) => x.nombre)).toEqual(["RW", "IF", "FAF", "RW09B"]);
+  });
+
+  it("pero no si el giro es mayor: entonces por su punto de inicio", () => {
+    const r = trazar({
+      desde: f("RW", 50, 30, "despegue"),
+      salidas: [],
+      ramas: [[f("OESTE", 40, 3, "iaf"), f("IF", 50, 0, "if"), f("FAF", 55, 0, "faf")]],
+      umbral,
+      cotaDelUmbral: 0,
+    });
+    expect(r.fijos.map((x) => x.nombre)).toEqual(["RW", "OESTE", "IF", "FAF", "RW09B"]);
+  });
+
+  it("y entra por la rama de su lado, aunque la del otro lado mida algo menos", () => {
+    // Se aterriza al este y se llega desde el este, desde más allá del campo:
+    // la rama de detrás de la final queda al otro lado.
+    const desdeElEste = f("RW", 90, 2, "despegue");
+    const detras = [f("OESTE", 38, 0, "iaf"), f("IF", 50, 0, "if"), f("FAF", 55, 0, "faf")];
+    const delante = [f("SUR", 62, -20, "iaf"), f("S2", 45, -8), f("IF", 50, 0, "if"), f("FAF", 55, 0, "faf")];
+    const r = trazar({
+      desde: desdeElEste,
+      salidas: [],
+      ramas: [detras, delante],
+      umbral,
+      cotaDelUmbral: 0,
+    });
+    expect(r.fijos.map((x) => x.nombre)[1]).toBe("SUR");
+    // Y sin esa rama, por la de detrás: el lado se prefiere, no se impone.
+    const sola = trazar({ desde: desdeElEste, salidas: [], ramas: [detras], umbral, cotaDelUmbral: 0 });
+    expect(sola.fijos.map((x) => x.nombre)[1]).toBe("OESTE");
   });
 });
 

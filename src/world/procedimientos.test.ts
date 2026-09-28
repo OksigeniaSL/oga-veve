@@ -151,7 +151,13 @@ describe("las rutas de Canarias, por lo publicado", () => {
         }
     }
 
-  it("de Gran Canaria a Los Rodeos por la 30: sale por la TFN4A y entra por CANDE y BUNIX", () => {
+  it("de Gran Canaria a Los Rodeos por la 30: sale por la TFN4A y entra directo a BUNIX", () => {
+    /*
+     * BUNIX es el punto intermedio de la RNP a la 30, y viniendo de Gran
+     * Canaria cae de camino: el giro en él es de pocos grados. Ir antes a
+     * CANDE, el punto de inicio, es lo que se hacía; el «directo a BUNIX» es
+     * lo que da el controlador. Ver `trazar`.
+     */
     const gc = por("gran-canaria")!;
     const tfn = por("tenerife-norte")!;
     const origen = gc.aerodrome!.origin;
@@ -159,7 +165,7 @@ describe("las rutas de Canarias, por lo publicado", () => {
     const cl = cabeceras(tfn, origen).find((c) => c.nombre === "30")!;
     const nombres = plan(gc, cs, tfn, cl).fijos.map((f) => f.nombre);
     expect(nombres.slice(0, 2)).toEqual(["RW03L", "ECKOS"]);
-    expect(nombres).toContain("CANDE");
+    expect(nombres).not.toContain("BASUX");
     expect(nombres.slice(-3)).toEqual(["BUNIX", "XO69E", "RW30"]);
   });
 });

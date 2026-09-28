@@ -86,6 +86,13 @@ export interface Fijo extends Punto {
    * sobre el eje, a falta de una publicada. Ver `aproximacionCalculada`.
    */
   readonly calculado?: boolean;
+  /**
+   * Si el punto es también el último que se vuela de la salida: un VOR que
+   * sirve para salir de un campo y para empezar la aproximación a otro. El
+   * tramo que llega a él es de la salida, y el que sale de él, de la
+   * aproximación. Ver `sinRepetidos`.
+   */
+  readonly deSalida?: boolean;
 }
 
 /** Un plan de vuelo hecho: sus puntos y lo que mide. */
@@ -126,23 +133,58 @@ export function rutaDe(fijos: readonly Fijo[], cotaDelUmbral: number): Ruta {
  *
  * Recibe todo lo publicado —las salidas de la cabecera de despegue y las ramas
  * de la aproximación a la cabecera en uso del destino, cada una empezando en
- * su punto de inicio— y elige la combinación que **menos vuela**, que es lo
- * que hace un despachador y lo que pediría cualquier tripulación.
+ * su punto de inicio— y elige la combinación que **menos vuela entre las que
+ * volaría un avión de verdad**, que es lo que hace un despachador y lo que
+ * autoriza un controlador.
  *
- * **Y la salida se recorta**, que es la parte simplificada: una salida
- * publicada puede llevar cuarenta millas hacia la Península antes de dejar
- * que el avión se desvíe, y entre dos islas la torre te suelta mucho antes.
- * Se sigue cada salida **mientras cada tramo vaya hacia el inicio de la
- * aproximación**, y se deja en el primero que ya no va: los puntos que quedan
- * son los de verdad, por donde se sale de verdad, y la salida se abandona
- * donde deja de ir hacia donde se va. Ver `acerca`.
+ * ## Las piezas
  *
- * Por eso no se elige a secas la combinación más corta: la más corta es
- * siempre ir directo —la recta es lo más corto que hay—, y eso es justo lo
- * que no se vuela. El primer punto de la salida se coge siempre que haya
- * salida publicada; entre las salidas, la que deja la ruta más corta. Y solo
- * si todas obligan a un rodeo de más de la mitad del camino se sale directo,
- * que es lo que haría una torre con una salida que se va al otro lado.
+ * Las publicadas, y entre ellas se va directo:
+ *
+ * - **La salida se sigue mientras vaya hacia donde se va**, y se suelta en el
+ *   primer tramo que ya no va: una salida publicada puede llevar cuarenta
+ *   millas hacia la Península antes de dejar que el avión se desvíe, y entre
+ *   dos islas la torre te suelta mucho antes. Ver `acerca`. Y si soltarla ahí
+ *   no libra el relieve o cruza una isla, se sigue un punto más, que es para
+ *   lo que existe: se sale por la carta hasta donde se puede dejar.
+ * - **A la aproximación se entra por el punto de inicio de una de sus ramas,
+ *   o directo a su punto intermedio** si el giro allí no pasa de cuarenta y
+ *   cinco grados, que es el «directo al IF» que un controlador da a diario y
+ *   que la OACI admite con ese tope en una RNP (Manual PBN, Doc 9613, vol. II,
+ *   parte C, cap. 5; y en Europa la AMC 20-27 de EASA). Es lo que quita la
+ *   vuelta de ir a buscar un punto de inicio que queda más allá del
+ *   intermedio: de Los Rodeos a la 25 de Tenerife Sur eran veinticinco millas
+ *   de más.
+ *
+ * ## Cuál de todas
+ *
+ * La más corta de las que cumplen, por este orden, lo que se pueda cumplir:
+ *
+ * 1. **Que libre el relieve con el margen de la regla del aire.** Ver `libra`.
+ * 2. **Que lo que no es de ninguna carta no cruce una isla de montaña**
+ *    teniendo mar. Ver `porElMar`. Lo pidió quien lo voló, y con razón: de
+ *    Los Rodeos a Tenerife Sur el plan cruzaba la cordillera Dorsal por
+ *    encima del Teide. Las cartas de las islas están hechas sobre el mar —las
+ *    salidas rodean la isla por la costa, las aproximaciones entran desde el
+ *    agua— y lo que se une entre ellas va también por el agua.
+ * 3. **Que entre por el lado de la aproximación que mira a donde viene el
+ *    avión.** Ver `alOtroLado`. Es lo que hace un controlador con las ramas de
+ *    una aproximación: la de cada lado es para quien llega por ese lado, y a
+ *    nadie se le manda a la del otro lado del campo si tiene una en el suyo.
+ *    Era la otra mitad de la queja: para la 07 de Tenerife Sur, el plan que
+ *    salía de Los Rodeos iba a entrar por XANOS, frente a La Gomera, teniendo
+ *    KUTUR por el lado del que venía.
+ *
+ * Si ninguna combinación cumple las tres, se renuncia primero al lado, luego
+ * al mar y nunca antes al relieve. Y si ninguna libra el relieve, la más
+ * corta, que es lo que hace el juego donde no sabe qué hay debajo.
+ *
+ * No se elige a secas la combinación más corta: la más corta es siempre ir
+ * directo —la recta es lo más corto que hay—, y eso es justo lo que no se
+ * vuela. El primer punto de la salida se coge siempre que haya salida
+ * publicada; y solo si todas obligan a un rodeo de más de la mitad del camino
+ * se sale directo, que es lo que haría una torre con una salida que se va al
+ * otro lado.
  *
  * `desde` es la cabecera de despegue o, rehaciendo el plan en el aire, la
  * posición del avión: en ese caso no se ofrecen salidas, que ya se salió.
@@ -154,53 +196,171 @@ export function trazar(entrada: {
   readonly umbral: Fijo;
   readonly cotaDelUmbral: number;
   /**
-   * El relieve, para no mandar a nadie contra un monte. Ver `libra`. Sin él
-   * —en las pruebas de geometría— no se mira.
+   * El relieve, para no mandar a nadie contra un monte ni por encima de una
+   * isla. Ver `libra` y `porElMar`. Sin él —en las pruebas de geometría— no
+   * se mira.
    */
   readonly terreno?: Terreno;
 }): Ruta {
-  const { desde, umbral } = entrada;
-  // Sin ramas publicadas, al umbral directo: no se inventa una aproximación.
-  const ramas = entrada.ramas.length > 0 ? entrada.ramas : [[]];
-  const pasa = (todo: readonly Fijo[]): boolean =>
-    !entrada.terreno || libra(todo, entrada.terreno, entrada.cotaDelUmbral);
-  const candidatas: { todo: readonly Fijo[]; conSalida: boolean }[] = [];
-  for (const rama of ramas) {
-    const inicio = rama[0] ?? umbral;
-    candidatas.push({ todo: [desde, ...rama, umbral], conSalida: false });
+  const { desde, umbral, terreno } = entrada;
+  const candidatas: Candidata[] = [];
+  const poner = (todo: readonly Fijo[], conSalida: boolean, e: Entrada) => {
+    const limpia = sinRepetidos(todo);
+    candidatas.push({ todo: limpia, conSalida, l: largo(limpia), entrada: e });
+  };
+  const entradas = entradasDe(entrada.ramas);
+  for (const e of entradas) {
+    const inicio = e.fijos[0] ?? umbral;
+    const tras = e.fijos[1] ?? umbral;
+    // Directo al intermedio, solo si el giro en él cabe en el tope.
+    const cabe = (antes: Punto) => !e.alIF || giroEn(antes, inicio, tras) <= GIRO_EN_EL_IF;
+    if (cabe(desde)) poner([desde, ...e.fijos, umbral], false, e);
     for (const salida of entrada.salidas) {
       if (salida.length === 0) continue;
       let k = 1;
       while (k < salida.length && acerca(salida[k - 1]!, salida[k]!, inicio)) k++;
-      /*
-       * **Y si por ahí se va contra el relieve, se sigue la salida un punto
-       * más**, que es para lo que existe: las salidas de Los Rodeos rodean el
-       * Teide por la costa, y soltarlas antes de tiempo para ir derecho a La
-       * Gomera es cruzarlo a ocho mil pies.
-       */
-      while (k < salida.length && !pasa([desde, ...salida.slice(0, k), ...rama, umbral])) k++;
-      candidatas.push({
-        todo: [desde, ...salida.slice(0, k), ...rama, umbral],
-        conSalida: true,
-      });
+      for (; k <= salida.length; k++)
+        if (cabe(salida[k - 1]!))
+          poner([desde, ...salida.slice(0, k), ...e.fijos, umbral], true, e);
     }
   }
-  const buenas = candidatas.filter((c) => pasa(c.todo));
-  const pool = buenas.length > 0 ? buenas : candidatas;
-  const corta = (conSalida: boolean) =>
-    pool
-      .filter((c) => c.conSalida === conSalida)
-      .reduce<{ todo: readonly Fijo[]; l: number } | null>((m, c) => {
-        const l = largo(c.todo);
-        return !m || l < m.l ? { todo: c.todo, l } : m;
-      }, null);
-  const directa = corta(false);
-  const conSalida = corta(true);
-  const mejor =
-    conSalida && (!directa || conSalida.l <= directa.l * 1.5)
-      ? conSalida.todo
-      : (directa?.todo ?? [desde, umbral]);
-  return rutaDe(sinRepetidos(mejor), entrada.cotaDelUmbral);
+  candidatas.sort((a, b) => a.l - b.l);
+
+  /*
+   * Las cuentas del relieve son caras —cien catas por cada milla de ruta— y
+   * los tramos se repiten entre candidatas, así que se guardan por tramo y
+   * solo se hacen para las que llegan a mirarse: en orden de largo, la
+   * primera que vale corta la búsqueda.
+   */
+  const memoria: Memoria = new Map();
+  const recordar = (f: (c: Candidata) => boolean) => {
+    const hechas = new Map<Candidata, boolean>();
+    return (c: Candidata): boolean => {
+      let v = hechas.get(c);
+      if (v === undefined) hechas.set(c, (v = f(c)));
+      return v;
+    };
+  };
+  const libre = recordar(
+    (c) => !terreno || libra(c.todo, terreno, entrada.cotaDelUmbral, memoria, true),
+  );
+  const seca = recordar((c) => !terreno || porElMar(c.todo, terreno.cota, memoria));
+  const deSuLado = recordar((c) => !alOtroLado(c.entrada, desde, umbral));
+  // Lo barato primero: el lado es una cuenta, el mar una cata por punto y el
+  // relieve cien.
+  const exigencias: ((c: Candidata) => boolean)[] = [
+    (c) => deSuLado(c) && seca(c) && libre(c),
+    (c) => seca(c) && libre(c),
+    libre,
+    () => true,
+  ];
+  for (const vale of exigencias) {
+    const conSalida = candidatas.find((c) => c.conSalida && vale(c));
+    const directa = candidatas.find((c) => !c.conSalida && vale(c));
+    if (!conSalida && !directa) continue;
+    const mejor =
+      conSalida && (!directa || conSalida.l <= directa.l * 1.5) ? conSalida : directa!;
+    return rutaDe(mejor.todo, entrada.cotaDelUmbral);
+  }
+  return rutaDe([desde, umbral], entrada.cotaDelUmbral);
+}
+
+/** Una combinación posible de salida, entrada y aproximación. */
+interface Candidata {
+  readonly todo: readonly Fijo[];
+  readonly conSalida: boolean;
+  /** Lo que mide, m. */
+  readonly l: number;
+  readonly entrada: Entrada;
+}
+
+/** Por dónde se entra a una aproximación: una rama entera, o desde su IF. */
+interface Entrada {
+  readonly fijos: readonly Fijo[];
+  /** Si se entra directo al punto intermedio, saltándose el de inicio. */
+  readonly alIF: boolean;
+}
+
+/**
+ * Lo más que puede girar un avión en el punto intermedio si se le manda allí
+ * directo, en grados. Ver `trazar`.
+ */
+export const GIRO_EN_EL_IF = 45;
+
+/**
+ * Las entradas a la aproximación: cada rama desde su punto de inicio y, una
+ * vez por cada punto intermedio distinto, desde él. Sin ramas publicadas, al
+ * umbral directo: no se inventa una aproximación.
+ */
+function entradasDe(ramas: readonly (readonly Fijo[])[]): Entrada[] {
+  if (ramas.length === 0) return [{ fijos: [], alIF: false }];
+  const entradas: Entrada[] = [];
+  const vistas = new Set<string>();
+  for (const rama of ramas) {
+    entradas.push({ fijos: rama, alIF: false });
+    const i = rama.findIndex((f) => f.papel === "if");
+    if (i <= 0) continue;
+    const resto = rama.slice(i);
+    const clave = resto.map((f) => f.nombre).join(" ");
+    if (vistas.has(clave)) continue;
+    vistas.add(clave);
+    entradas.push({ fijos: resto, alIF: true });
+  }
+  return entradas;
+}
+
+/** Lo que se gira en `b` yendo de `a` a `c`, en grados, por el lado corto. */
+function giroEn(a: Punto, b: Punto, c: Punto): number {
+  return Math.abs(diferencia(rumbo(a, b), rumbo(b, c)));
+}
+
+/**
+ * A cuánto de la perpendicular por el umbral tiene que quedar un punto de
+ * entrada para estar a un lado del campo y no de través, m: cinco millas, la
+ * mitad de lo que hay del umbral al punto intermedio de manual
+ * (`INTERMEDIO_SIN_CARTA` en `world/procedimientos.ts`).
+ *
+ * Con eso los puntos de inicio que las cartas ponen de través del campo
+ * —KUTUR en Tenerife Sur, a una milla de la perpendicular; el VOR de Los
+ * Rodeos, a menos de cuatro— sirven para llegar por los dos lados, que es para
+ * lo que están, y los que están a un lado —XANOS, a dieciséis; BASUX, a
+ * veintitrés— son de quien llega por ese lado.
+ */
+const DE_TRAVES = 5 * MILLA;
+
+/**
+ * **Si una entrada a la aproximación queda al otro lado del campo** respecto
+ * de donde viene el avión.
+ *
+ * Los lados se cuentan a lo largo del eje de la pista, que es como están
+ * puestas las ramas de una aproximación: la de detrás de la final para quien
+ * llega por detrás, y las de delante del campo para quien llega por delante y
+ * tiene que rodearlo. Cada cosa se mide a su escala:
+ *
+ * - **El punto de entrada**, que está junto al campo, por lo que queda por
+ *   delante o por detrás de la perpendicular al eje por el umbral. De través,
+ *   a menos de `DE_TRAVES`, no está a ningún lado.
+ * - **El avión**, que puede venir de cien millas, por la dirección de la que
+ *   viene: la vuelta entera en tres tercios iguales, por delante del campo si
+ *   llega a menos de sesenta grados del sentido de aterrizaje, por detrás si
+ *   llega a menos de sesenta del contrario y de costado entre medias. Quien
+ *   llega de costado no tiene lado: le vale cualquier rama.
+ */
+function alOtroLado(e: Entrada, desde: Punto, umbral: Punto): boolean {
+  const inicio = e.fijos[0];
+  const final = e.fijos[e.fijos.length - 1];
+  if (!inicio || !final) return false;
+  const l = entre(final, umbral);
+  const lejos = entre(desde, umbral);
+  if (l < 1 || lejos < 1) return false;
+  const ux = (umbral.x - final.x) / l;
+  const uz = (umbral.z - final.z) / l;
+  const delante = (p: Punto) => (p.x - umbral.x) * ux + (p.z - umbral.z) * uz;
+  const cos = delante(desde) / lejos;
+  const viene = cos > 0.5 ? 1 : cos < -0.5 ? -1 : 0;
+  const s = delante(inicio);
+  const esta = Math.abs(s) < DE_TRAVES ? 0 : Math.sign(s);
+  return viene * esta < 0;
 }
 
 /**
@@ -229,57 +389,235 @@ export interface Terreno {
   readonly cotaDeSalida: number;
 }
 
-/** Lo que se deja por encima del relieve en ruta, m: mil pies. */
-const MARGEN_EN_RUTA = 1000 * PIE;
+/**
+ * **El margen sobre el relieve en ruta**, m, y a qué distancia se mira: la
+ * regla del aire, no una costumbre.
+ *
+ * Es el anexo 2 de la OACI (5.1.2), que en Europa es SERA.5015 b) y que el
+ * AIP de España recoge tal cual en ENR 1.3, apartado 3, «Niveles mínimos»:
+ * salvo para despegar o aterrizar, un vuelo por instrumentos va **por lo menos
+ * 600 m (2000 ft) por encima del obstáculo más alto que haya en un radio de
+ * 8 km** de su posición estimada sobre terreno elevado o en áreas montañosas,
+ * y **300 m (1000 ft)** en cualquier otra parte. Es también la cuenta con la
+ * que el mismo AIP define la altitud mínima de área (ENR 1.3, apartado 4).
+ *
+ * Aquí había mil pies a una milla a cada lado para todo. Mil pies es el margen
+ * del llano; en Canarias, que es montaña desde el agua, la regla pide el doble
+ * y a ocho kilómetros, y con mil pies a una milla el plan de Los Rodeos a
+ * Tenerife Sur pasaba por encima del Teide.
+ */
+export const MARGEN_EN_LLANO = 300;
+export const MARGEN_EN_MONTANA = 600;
+export const RADIO_DE_OBSTACULOS = 8000;
+
+/**
+ * **Qué es montaña**, con la definición de la OACI y no a ojo: «área de perfil
+ * cambiante donde los cambios de elevación del terreno exceden de 900 m
+ * (3000 ft) dentro de una distancia de 18,5 km (10 NM)» (PANS-OPS, Doc 8168,
+ * vol. II, parte I, definiciones). Se mide con el mismo relieve que se vuela:
+ * lo más alto y lo más bajo a 18,5 km del avión.
+ *
+ * Con eso las cinco islas del oeste son montaña por todos lados —del agua al
+ * Teide hay 3715 m en menos de veinte kilómetros— y Lanzarote y Fuerteventura,
+ * que no pasan de 671 y 807 m, no lo son: ahí vale el margen del llano.
+ */
+export const DESNIVEL_DE_MONTANA = 900;
+export const DISTANCIA_DE_MONTANA = 18500;
+
+/** Los rumbos de las catas alrededor de un punto: dieciséis, cada 22,5°. */
+const ALREDEDOR = Array.from({ length: 16 }, (_, i) => {
+  const a = (i / 16) * 2 * Math.PI;
+  return [Math.sin(a), Math.cos(a)] as const;
+});
+/** Los anillos de catas: los de los obstáculos, y los de saber si es montaña. */
+const ANILLOS_CERCA = [2000, 4000, 6000, RADIO_DE_OBSTACULOS];
+const ANILLOS_LEJOS = [12500, DISTANCIA_DE_MONTANA];
+
+/** Lo que dice el relieve de un punto de la ruta. */
+interface Cata {
+  /** La altitud mínima en ruta allí, m. */
+  readonly minima: number;
+  /** Si es montaña. Ver `DESNIVEL_DE_MONTANA`. */
+  readonly montana: boolean;
+}
+
+/**
+ * Lo más alto a ocho kilómetros y si es montaña, catado en anillos cada dos
+ * kilómetros y dieciséis rumbos: con el Teide, que es un cono de kilómetros de
+ * ancho, la cata más cercana a la cumbre se queda a unas decenas de metros de
+ * ella. `null` si no se sabe nada del suelo alrededor.
+ */
+function catar(cota: Terreno["cota"], x: number, z: number): Cata | null {
+  let alto = cota(x, z);
+  let bajo = alto;
+  let techo = alto;
+  const ver = (c: number | null, cerca: boolean) => {
+    if (c === null) return;
+    if (cerca) alto = alto === null ? c : Math.max(alto, c);
+    bajo = bajo === null ? c : Math.min(bajo, c);
+    techo = techo === null ? c : Math.max(techo, c);
+  };
+  for (const r of ANILLOS_CERCA)
+    for (const [sx, sz] of ALREDEDOR) ver(cota(x + sx * r, z + sz * r), true);
+  if (alto === null) return null;
+  for (const r of ANILLOS_LEJOS)
+    for (const [sx, sz] of ALREDEDOR) ver(cota(x + sx * r, z + sz * r), false);
+  const montana = techo! - bajo! > DESNIVEL_DE_MONTANA;
+  return { minima: alto + (montana ? MARGEN_EN_MONTANA : MARGEN_EN_LLANO), montana };
+}
+
+/**
+ * **La altitud mínima en ruta en un punto**, m: lo más alto que haya a ocho
+ * kilómetros, más el margen de la montaña o el del llano según lo que haya a
+ * diez millas. `null` si no se sabe nada del suelo alrededor.
+ */
+export function minimaEnRuta(cota: Terreno["cota"], x: number, z: number): number | null {
+  return catar(cota, x, z)?.minima ?? null;
+}
+
+/**
+ * Lo que ya se calculó de cada tramo, para no repetirlo entre candidatas.
+ * Ver `catasDelTramo`.
+ */
+type Memoria = Map<string, readonly (Cata | null)[]>;
+
+/** Cada cuánto se cata la mínima en ruta a lo largo de un tramo, m. */
+const PASO_EN_RUTA = MILLA;
+
+/** Las catas a lo largo de un tramo, una cada `PASO_EN_RUTA` o menos. */
+function catasDelTramo(
+  a: Punto,
+  b: Punto,
+  cota: Terreno["cota"],
+  memoria: Memoria,
+): readonly (Cata | null)[] {
+  const clave = `${Math.round(a.x)},${Math.round(a.z)}>${Math.round(b.x)},${Math.round(b.z)}`;
+  const hecho = memoria.get(clave);
+  if (hecho) return hecho;
+  const pasos = Math.max(1, Math.ceil(entre(a, b) / PASO_EN_RUTA));
+  const catas: (Cata | null)[] = [];
+  for (let k = 0; k <= pasos; k++) {
+    const t = k / pasos;
+    catas.push(catar(cota, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t));
+  }
+  memoria.set(clave, catas);
+  return catas;
+}
+
+/**
+ * Qué es un tramo para el relieve:
+ *
+ * - `carta`: de una salida o de una aproximación publicadas. Ya libra su
+ *   terreno a las altitudes que manda su carta, y esa cuenta la hizo quien la
+ *   publicó, con las áreas de protección de su diseño.
+ * - `final`: de una aproximación calculada, o directo al umbral. Es una
+ *   aproximación, no ruta, y se mira como tal. Ver `libra`.
+ * - `ruta`: lo que no es de nadie, lo que une la salida con la llegada. Ahí
+ *   manda la regla del aire.
+ */
+export function queTramo(a: Fijo, b: Fijo): "carta" | "final" | "ruta" {
+  if (a.calculado === true) return "final";
+  if (b.calculado !== true && mismoProcedimiento(a, b)) return "carta";
+  if (b.papel === "umbral") return "final";
+  return "ruta";
+}
 
 /**
  * **Si un plan libra el relieve** volado como se vuela: subiendo a un ritmo
  * de avión de línea desde la salida, sin pasar del techo del avión, y bajando
- * por la senda de tres grados hacia el umbral — con mil pies por encima de lo
- * que haya a una milla a cada lado, que es el margen en ruta de las cartas.
+ * por la senda de tres grados hacia el umbral.
  *
- * Solo se miran **los tramos que no son de nadie**: los que unen la salida con
- * la aproximación, y los de una aproximación calculada. Los de una salida o
- * una aproximación publicadas ya libran su terreno a las altitudes que manda
- * su carta, y esa cuenta la hizo quien la publicó. Es lo que se pidió con
- * otras palabras: la regla de las tres eses, antes que la ruta corta.
+ * Solo se miran **los tramos que no son de nadie**. Los de una salida o una
+ * aproximación publicadas ya libran su terreno a las altitudes que manda su
+ * carta, y esa cuenta la hizo quien la publicó. Es lo que se pidió con otras
+ * palabras: la regla de las tres eses, antes que la ruta corta. Y cada tramo
+ * con su regla:
+ *
+ * - **En ruta**, la del aire: 600 m por encima de lo más alto a 8 km en la
+ *   montaña, 300 m en el llano. Ver `MARGEN_EN_MONTANA` y `minimaEnRuta`.
+ * - **Despegando sin carta** —una cabecera sin salida publicada—, la regla
+ *   del aire exceptúa el despegue, y lo que protege esa subida es lo de una
+ *   salida omnidireccional de PANS-OPS (Doc 8168, vol. II, parte I, sección
+ *   3): un área que sale de la pista con ciento cincuenta metros a cada lado y
+ *   se abre quince grados, y un margen del 0,8 % de lo recorrido sobre lo que
+ *   haya en ella. Hasta que el avión llega a la mínima en ruta; de ahí en
+ *   adelante, la regla del aire.
+ * - **En una aproximación calculada**, mil pies a una milla a cada lado,
+ *   repartidos cerca del umbral: a tres millas no quedan mil pies de senda, y
+ *   la mitad de lo que haya es lo que protege una final. La última milla es
+ *   del aeródromo.
+ *
+ * `soloEnRuta` deja fuera la aproximación calculada, que es la misma para
+ * cualquier ruta a esa cabecera: es lo que mira `trazar` para elegir.
  */
 export function libra(
   fijos: readonly Fijo[],
   terreno: Terreno,
   cotaDelUmbral: number,
+  memoria: Memoria = new Map(),
+  soloEnRuta = false,
 ): boolean {
   const total = largo(fijos);
   let recorrido = 0;
+  let despegando = fijos[0]?.papel === "despegue";
+  const puede = (hecho: number): number => {
+    const falta = total - hecho;
+    const senda = cotaDelUmbral + (falta / (MILLAS_POR_MIL_PIES * MILLA)) * 1000 * PIE;
+    const subida = terreno.cotaDeSalida + (hecho / (2 * MILLA)) * 1000 * PIE;
+    return Math.min(terreno.techo, senda, Math.max(subida, cotaDelUmbral));
+  };
   for (let i = 1; i < fijos.length; i++) {
     const a = fijos[i - 1]!;
     const b = fijos[i]!;
     const l = entre(a, b);
-    const deNadie =
-      a.calculado === true ||
-      b.calculado === true ||
-      !mismoProcedimiento(a, b);
-    if (deNadie && l > 1) {
+    const tipo = queTramo(a, b);
+    // Por una carta se sale del despegue: la subida es cosa de su diseño.
+    if (tipo === "carta") despegando = false;
+    if (tipo === "carta" || l <= 1 || (tipo === "final" && soloEnRuta)) {
+      recorrido += l;
+      continue;
+    }
+    const ux = (b.x - a.x) / l;
+    const uz = (b.z - a.z) / l;
+    if (tipo === "ruta") {
+      const catas = catasDelTramo(a, b, terreno.cota, memoria);
+      const pasos = catas.length - 1;
+      for (let k = 0; k <= pasos; k++) {
+        const t = (k / pasos) * l;
+        const hecho = recorrido + t;
+        const altura = puede(hecho);
+        const minima = catas[k]?.minima ?? null;
+        if (despegando) {
+          if (minima === null || altura >= minima) {
+            despegando = false;
+            continue;
+          }
+          const ancho = Math.min(RADIO_DE_OBSTACULOS, 150 + hecho * Math.tan(Math.PI / 12));
+          const x = a.x + ux * t;
+          const z = a.z + uz * t;
+          for (const lado of [-1, -0.5, 0, 0.5, 1]) {
+            const c = terreno.cota(x - uz * lado * ancho, z + ux * lado * ancho);
+            if (c !== null && c + 0.008 * hecho > altura) return false;
+          }
+          continue;
+        }
+        if (minima !== null && minima > altura) return false;
+      }
+    } else {
       const pasos = Math.max(1, Math.ceil(l / (0.5 * MILLA)));
-      const ux = (b.x - a.x) / l;
-      const uz = (b.z - a.z) / l;
       for (let k = 0; k <= pasos; k++) {
         const t = (k / pasos) * l;
         const hecho = recorrido + t;
         const falta = total - hecho;
-        // La última milla es del aeródromo, no de la ruta.
         if (falta < MILLA) continue;
         const senda = cotaDelUmbral + (falta / (MILLAS_POR_MIL_PIES * MILLA)) * 1000 * PIE;
-        const subida = terreno.cotaDeSalida + (hecho / (2 * MILLA)) * 1000 * PIE;
-        const puede = Math.min(terreno.techo, senda, Math.max(subida, cotaDelUmbral));
-        // Cerca del umbral el margen se reparte: a tres millas no quedan mil
-        // pies de senda, y la mitad de lo que haya es lo que protege una final.
-        const margen = Math.min(MARGEN_EN_RUTA, (senda - cotaDelUmbral) * 0.5);
+        const margen = Math.min(1000 * PIE, (senda - cotaDelUmbral) * 0.5);
+        const altura = puede(hecho);
         const x = a.x + ux * t;
         const z = a.z + uz * t;
         for (const lado of [-1, 0, 1]) {
           const c = terreno.cota(x - uz * lado * MILLA, z + ux * lado * MILLA);
-          if (c !== null && c + margen > puede) return false;
+          if (c !== null && c + margen > altura) return false;
         }
       }
     }
@@ -289,12 +627,100 @@ export function libra(
 }
 
 /**
+ * Lo que se tolera de montaña bajo un tramo de ruta antes de decir que cruza
+ * una isla, m: media milla. Es la punta de un cabo, o la raya de la costa en
+ * un relieve de treinta metros por muestra; una isla cruzada son millas.
+ */
+export const MONTANA_QUE_NO_CRUZA = 0.5 * MILLA;
+
+/**
+ * Lo que no cuenta de un tramo de ruta junto a cada punta, m: tres millas.
+ *
+ * Hay puntos publicados tierra adentro —el VOR de Los Rodeos está a dos
+ * millas de la costa norte— y la pista de la que se despega sin carta está en
+ * tierra por fuerza. Llegar a ellos desde el mar o salir de ellos hacia el mar
+ * no es cruzar la isla: es la tierra de ese punto. Tres millas dan para eso y
+ * no para más: de ese VOR a la costa de Santa Cruz, cruzando La Laguna, hay
+ * seis.
+ */
+export const ORILLA_DE_UN_PUNTO = 3 * MILLA;
+
+/** Desde qué cota se cuenta como tierra, m: el mar del relieve es el cero. */
+const TIERRA = 1;
+
+/**
+ * Lo que vuela un tramo **sobre tierra de montaña**, m, sin contar las
+ * `orilla` primeras ni las últimas: catado cada décima de milla por su raya,
+ * y con la montaña de la cata de ruta más cercana. Ver `DESNIVEL_DE_MONTANA`.
+ * El suelo que no se sabe no cuenta.
+ */
+export function sobreLaMontana(
+  a: Punto,
+  b: Punto,
+  cota: Terreno["cota"],
+  memoria: Memoria = new Map(),
+  orilla = 0,
+): number {
+  const l = entre(a, b);
+  if (l <= 2 * orilla) return 0;
+  const pasos = Math.max(1, Math.ceil(l / (0.1 * MILLA)));
+  // Primero la tierra, que es una cata por punto; la montaña, que son cien,
+  // solo si hay tierra: casi todos los tramos entre islas son mar entero.
+  const enTierra: number[] = [];
+  for (let k = 0; k < pasos; k++) {
+    const t = (k + 0.5) / pasos;
+    if (t * l < orilla || (1 - t) * l < orilla) continue;
+    const c = cota(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
+    if (c !== null && c > TIERRA) enTierra.push(t);
+  }
+  if (enTierra.length === 0) return 0;
+  const catas = catasDelTramo(a, b, cota, memoria);
+  let montana = 0;
+  for (const t of enTierra)
+    if (catas[Math.round(t * (catas.length - 1))]?.montana) montana += l / pasos;
+  return montana;
+}
+
+/**
+ * **Si lo que no es de ninguna carta va por el mar** y no por encima de una
+ * isla de montaña: si ningún tramo de ruta —ver `queTramo`— vuela más de
+ * `MONTANA_QUE_NO_CRUZA` sobre ella, sin contar la tierra de sus puntas. Ver
+ * `ORILLA_DE_UN_PUNTO`.
+ *
+ * De montaña, porque es lo que se pidió y lo que se hace: por encima de
+ * Lanzarote o de Fuerteventura, que no llegan a novecientos metros, pasa a
+ * diario el tráfico entre las dos, y rodearlas por el mar era doblar la ruta
+ * sin ganar nada. Por encima de la Dorsal de Tenerife teniendo mar a los dos
+ * lados no pasa nadie.
+ *
+ * No se mira lo publicado, que va por donde lo diseñaron —una salida de Los
+ * Rodeos pasa por encima de La Laguna porque la pista está ahí—, ni la
+ * aproximación, que acaba en tierra porque la pista está en tierra. Lo que
+ * se mira es lo que se une entre las dos, que es lo único que decide quien
+ * planea.
+ */
+export function porElMar(
+  fijos: readonly Fijo[],
+  cota: Terreno["cota"],
+  memoria: Memoria = new Map(),
+): boolean {
+  for (let i = 1; i < fijos.length; i++) {
+    const a = fijos[i - 1]!;
+    const b = fijos[i]!;
+    if (queTramo(a, b) !== "ruta") continue;
+    if (sobreLaMontana(a, b, cota, memoria, ORILLA_DE_UN_PUNTO) > MONTANA_QUE_NO_CRUZA)
+      return false;
+  }
+  return true;
+}
+
+/**
  * Si dos puntos seguidos son un tramo de una misma carta: de salida los dos,
  * de la cabecera a la salida, o de una aproximación hasta su umbral.
  */
 function mismoProcedimiento(a: Fijo, b: Fijo): boolean {
-  if (a.papel === "despegue" && b.papel === "salida") return true;
-  if (a.papel === "salida" && b.papel === "salida") return true;
+  const deLaSalida = (f: Fijo) => f.papel === "salida" || f.deSalida === true;
+  if ((a.papel === "despegue" || a.papel === "salida") && deLaSalida(b)) return true;
   const deAproximacion = (f: Fijo) =>
     f.papel === "iaf" || f.papel === "if" || f.papel === "faf" || f.papel === "ruta";
   if (deAproximacion(a) && (deAproximacion(b) || b.papel === "umbral") && b.papel !== "iaf")
@@ -308,12 +734,22 @@ function mismoProcedimiento(a: Fijo, b: Fijo): boolean {
  * Pasa cuando la salida acaba en el mismo punto donde empieza la
  * aproximación —en Canarias, un VOR que sirve para las dos cosas—, y un tramo
  * de cero metros no tiene rumbo: la flecha se volvería loca en él.
+ *
+ * **Y se queda el de la aproximación, sabiendo que también es de la salida.**
+ * Se quedaba el de la salida, y el tramo que sale de él hacia la aproximación
+ * —el primero de la carta de llegada— pasaba por no ser de nadie: se le pedía
+ * la mínima en ruta a un tramo publicado, y se descartaba la entrada por el
+ * VOR de Los Rodeos, que es la de quien llega por el este a la 12.
  */
 function sinRepetidos(fijos: readonly Fijo[]): Fijo[] {
   const quedan: Fijo[] = [];
   for (const f of fijos) {
     const antes = quedan[quedan.length - 1];
-    if (antes && antes.nombre === f.nombre && entre(antes, f) < 50) continue;
+    if (antes && antes.nombre === f.nombre && entre(antes, f) < 50) {
+      if (antes.papel === "salida" && f.papel !== "salida")
+        quedan[quedan.length - 1] = { ...f, deSalida: true };
+      continue;
+    }
     quedan.push(f);
   }
   return quedan;
