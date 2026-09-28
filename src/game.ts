@@ -596,6 +596,7 @@ import { Cinturon, SACUDE, YA_NO_SACUDE } from "./flight/cinturon";
 import {
   loSolto,
   mandosPara,
+  memoriaNueva,
   sePuedeConectar,
   type Objetivos,
 } from "./flight/piloto-automatico";
@@ -13001,6 +13002,13 @@ export class Game {
    */
   private timonDelAutomatico = 0;
 
+  /**
+   * Lo que el automático recuerda de un fotograma al siguiente: sus topes de
+   * ritmo lo necesitan. Se hace nueva cada vez que se engancha, para que coja
+   * el avión como está. Ver `Memoria` en `flight/piloto-automatico.ts`.
+   */
+  private memoriaDelAutomatico = memoriaNueva();
+
   /** Si el piloto automático está gobernando algo ahora mismo. */
   get pilotoPuesto(): boolean {
     return this.objetivos.rumbo !== null || this.objetivos.altitud !== null;
@@ -13065,6 +13073,7 @@ export class Game {
       );
     }
     const s = this.flight.state;
+    if (puesto) this.memoriaDelAutomatico = memoriaNueva();
     this.objetivos = puesto
       ? {
           rumbo: s.heading,
@@ -13115,9 +13124,25 @@ export class Game {
      * bajo, se respeta. Ver `Seguimiento.alturaParaElAutomatico`.
      */
     if (this.objetivos.altitud !== null && this.navegacion.bajando) {
-      const senda = this.navegacion.alturaParaElAutomatico(this.lecturaDeRuta());
-      if (senda !== null && senda < this.objetivos.altitud - 1)
+      const lectura = this.lecturaDeRuta();
+      const senda = this.navegacion.alturaParaElAutomatico(lectura);
+      let sostiene = this.objetivos.altitud;
+      if (senda !== null && senda < sostiene - 1) {
+        sostiene = senda;
         this.objetivos = { ...this.objetivos, altitud: senda };
+      }
+      /*
+       * **Y el ritmo de la senda**, mientras lo que se sostiene sea ella: con
+       * la altitud sola, el automático iba siempre por detrás de una senda que
+       * no para de bajar. Si quien vuela lo puso más bajo, la altitud ya no es
+       * la de la senda y no se mueve: ritmo cero. Ver `Objetivos.ritmo`.
+       */
+      const ritmo =
+        senda !== null && senda <= sostiene + 1
+          ? (this.navegacion.ritmoParaElAutomatico(lectura) ?? 0)
+          : 0;
+      if (ritmo !== this.objetivos.ritmo)
+        this.objetivos = { ...this.objetivos, ritmo };
     }
     const m = mandosPara(
       {
@@ -13128,9 +13153,15 @@ export class Game {
         vertical: s.velocity.y,
         velocidad: indicatedAirspeed(s.airspeed, s.position.y),
         gas: c.throttle,
+        verdadera: s.airspeed,
+        ritmoDeCabeceo: s.pitchRate,
+        // Solo cuenta al engancharse: coger el avión con el timón que lo
+        // sostenía, ayuda incluida. Ver `timonAhora` en `model.ts`.
+        timon: this.flight.timonAhora(),
       },
       this.objetivos,
       dt,
+      this.memoriaDelAutomatico,
     );
     /*
      * **Y el piloto automático NO escribe en los mandos del piloto.**
@@ -13155,6 +13186,9 @@ export class Game {
     Object.assign(this.mandosConAutomatico, c);
     this.mandosConAutomatico.aileron = m.aileron;
     this.mandosConAutomatico.elevator = m.elevator;
+    // Y el modelo sabe que los lleva él, para que las ayudas que imitan a
+    // quien suelta la palanca no se turnen con él. Ver `ControlInputs.automatico`.
+    this.mandosConAutomatico.automatico = true;
     /*
      * **Y el automático toma el trim; no pelea contra él.**
      *

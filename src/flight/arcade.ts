@@ -343,6 +343,11 @@ export class ArcadeFlightModel implements FlightModel {
     return this.ultimoGas * this.aircraft.maxThrust * Math.pow(densidad, 0.7);
   }
 
+  /** Aquí el cabeceo no es un timón. Ver `timonAhora` en `model.ts`. */
+  timonAhora(): number {
+    return 0;
+  }
+
   /** El gas del último paso, para `empujeAhora`. */
   private ultimoGas = 0;
 

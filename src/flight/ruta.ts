@@ -534,10 +534,13 @@ export function alturaDeLaSenda(
    * misma que puso ese punto donde está. Ver `distanciaDeDescenso`.
    */
   aireSobreSuelo = 1,
+  /** Si se respeta lo publicado para el siguiente punto. Ver `ritmoParaElAutomatico`. */
+  conLaCarta = true,
 ): number {
   const senda =
     r.cotaDelUmbral +
     (falta / (MILLAS_POR_MIL_PIES * MILLA)) * 1000 * PIE * aireSobreSuelo;
+  if (!conLaCarta) return senda;
   const siguiente = r.fijos[Math.max(1, Math.min(r.fijos.length - 1, activo))];
   return Math.max(senda, siguiente?.minima ?? -Infinity);
 }
@@ -815,5 +818,36 @@ export class Seguimiento {
      * que al ritmo del automático son unos mil doscientos pies por minuto.
      */
     return Math.max(senda, l.altitud - POR_DELANTE);
+  }
+
+  /**
+   * **Y a qué ritmo baja esa altitud**, m/s —negativo, bajando—, o `null` si
+   * todavía no toca bajar.
+   *
+   * Es lo que hace un ordenador de vuelo de verdad al bajar por su senda: le
+   * dice al automático la altitud **y el ritmo** al que se mueve. Con la
+   * altitud sola, el automático va siempre por detrás de una altitud que no
+   * para de bajar: tanto más cuanto más deprisa baja, y en un reactor eran
+   * más de seiscientos pies por encima de la senda a quince millas del
+   * umbral. Con el ritmo, la sigue.
+   *
+   * Es el de la senda de tres grados sobre el aire: lo que se recorre por el
+   * aire por los trescientos pies de cada milla. Cero donde la senda no baja
+   * —en el punto de final, o sujeta por lo publicado para el siguiente
+   * punto— y cero también mientras la altitud pedida va por delante del
+   * avión, que es cuando se baja al ritmo propio hasta encontrarla. Ver
+   * `alturaParaElAutomatico`.
+   */
+  ritmoParaElAutomatico(l: Lectura): number | null {
+    const r = this.ruta;
+    if (!r || !this.yaBajando) return null;
+    const falta = restante(r, this.activo, l.x, l.z);
+    const faf = r.fijos.findIndex((f) => f.papel === "faf");
+    const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
+    if (falta <= suelo) return 0;
+    const senda = alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo);
+    const libre = alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, false);
+    if (senda > libre || senda < l.altitud - POR_DELANTE) return 0;
+    return -Math.max(0, l.aire) * ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA));
   }
 }

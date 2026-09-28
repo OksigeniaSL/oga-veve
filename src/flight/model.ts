@@ -100,6 +100,18 @@ export interface ControlInputs {
    * no existe.
    */
   reversa: number;
+  /**
+   * **Si quien lleva el cabeceo y el alabeo es el piloto automático.**
+   *
+   * El modelo de vuelo tiene dos ayudas que imitan a quien suelta la palanca
+   * —el compensador que sostiene la subida y el nivelado de alas— y las
+   * enciende al ver el mando cerca del centro. Con el automático puesto el
+   * mando lo mueve él, y en vuelo recto lo lleva precisamente cerca del
+   * centro, así que sin esto las dos manos se turnaban a los mandos. Lo pone
+   * `conElPilotoAutomatico` en `game.ts`, y solo en la copia que va al
+   * modelo. Sin poner, es que vuela una persona.
+   */
+  automatico?: boolean;
 }
 
 export function neutralControls(): ControlInputs {
@@ -253,6 +265,23 @@ export interface FlightModel {
    * Ver `flight/combustible.ts`.
    */
   empujeAhora(): number;
+  /**
+   * **El timón que está sosteniendo el avión ahora mismo**, en unidades de
+   * mando: el de quien vuela más el compensador, y más lo que empuje la ayuda
+   * que sostiene la subida en los peldaños que la llevan, contado como el
+   * timón que haría lo mismo.
+   *
+   * Lo pregunta el piloto automático al engancharse, para coger el avión
+   * **como está**. Tomaba el mando y el compensador, y en los peldaños con
+   * ayudas eso no es todo lo que lo sostiene: al engancharse, la ayuda se
+   * aparta —ver `ControlInputs.automatico`— y lo que ella empujaba
+   * desaparecía de golpe. El JAZ 120, enganchado subiendo en el peldaño de
+   * todas las ayudas, pasaba de 1,6 g a cero en un par de segundos.
+   *
+   * El modelo sencillo no tiene timón que contar: devuelve cero, y allí no hay
+   * piloto automático.
+   */
+  timonAhora(): number;
   /**
    * Rompe el avión. Lo llama el juego cuando se ha metido en un edificio.
    *
