@@ -24,15 +24,38 @@ import { defineConfig, type Plugin } from "vitest/config";
  * Así que se copian tal cual, con la ruta que el juego espera.
  */
 function elPackDeVoz(): Plugin {
+  let raiz = process.cwd();
+  let salida = resolve("dist");
   return {
     name: "pack-de-voz",
     apply: "build",
+    configResolved(config) {
+      raiz = config.root;
+      salida = carpetaDeSalida(config);
+    },
     async closeBundle() {
-      const desde = resolve("data/voces");
+      const desde = resolve(raiz, "data/voces");
       if (!existsSync(desde)) return;
-      await cp(desde, resolve("dist/data/voces"), { recursive: true });
+      await cp(desde, resolve(salida, "data/voces"), { recursive: true });
     },
   };
+}
+
+/**
+ * **La carpeta donde escribe esta compilación**, la que diga Vite.
+ *
+ * Los dos complementos que escriben fuera del paquete —el pack de voz y el
+ * trabajador de servicio— llevaban `dist/` escrito a mano, así que con
+ * `vite build --outDir otra` el juego salía en `otra/` y las voces y el
+ * `sw.js`, en `dist/`: un despliegue sin voces grabadas y con el trabajador
+ * de servicio de otra compilación, que es el fallo que el de abajo existe
+ * para impedir. La carpeta la sabe Vite; se le pregunta a él.
+ */
+function carpetaDeSalida(config: {
+  readonly root: string;
+  readonly build: { readonly outDir: string };
+}): string {
+  return resolve(config.root, config.build.outDir);
 }
 
 /**
@@ -82,9 +105,15 @@ function relievesComprimidos(): Plugin {
  * `package.json` se queda porque no molesta y es idempotente.
  */
 function elTrabajadorDeServicio(): Plugin {
+  let raiz = process.cwd();
+  let salida = resolve("dist");
   return {
     name: "hacer-sw",
     apply: "build",
+    configResolved(config) {
+      raiz = config.root;
+      salida = carpetaDeSalida(config);
+    },
     /*
      * **Y de verdad después del pack de voz, no «después» a secas.**
      *
@@ -99,7 +128,8 @@ function elTrabajadorDeServicio(): Plugin {
       sequential: true,
       async handler() {
         const { execFileSync } = await import("node:child_process");
-        execFileSync(process.execPath, ["scripts/hacer-sw.mjs"], {
+        execFileSync(process.execPath, ["scripts/hacer-sw.mjs", salida], {
+          cwd: raiz,
           stdio: "inherit",
         });
       },

@@ -145,7 +145,7 @@ const enElBulto = existsSync(join(RAIZ, "data/voces"))
 if (enElRepo > 0 && enElBulto < enElRepo) {
   process.stderr.write(
     `\n  ✗ El pack de voz no ha llegado al despliegue: ${enElBulto} de ` +
-      `${enElRepo} ficheros en dist/data/voces.\n` +
+      `${enElRepo} ficheros en ${join(RAIZ, "data/voces")}.\n` +
       `    El juego los pide por fetch a esa ruta y sin ellos habla el\n` +
       `    navegador. Ver el complemento \`pack-de-voz\` en vite.config.ts.\n\n`,
   );

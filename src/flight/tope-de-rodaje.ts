@@ -41,7 +41,11 @@ import type { ControlInputs, FlightState } from "./model";
 import type { Tier } from "./tiers";
 import type { Fase } from "./vuelo";
 import type { Vista } from "../world/plan-de-vuelo";
-import { CONDUCE_EL_JUEGO, topeDeRodaje } from "./gobernador";
+import {
+  anticipacionDeRodaje,
+  CONDUCE_EL_JUEGO,
+  topeDeRodaje,
+} from "./gobernador";
 
 /**
  * La velocidad de rodaje, m/s, para cuando el plan no sugiere ninguna.
@@ -104,6 +108,7 @@ export function laVelocidadEsDelJuego(
   if (tier.assists.taxiAssist < CONDUCE_EL_JUEGO) return false;
   if (!estado.onGround) return false;
   if (vista?.fase === "back-taxi") return true;
+  if (entraConElJuego(tier, vista)) return true;
   if (estado.onRunway) return false;
   if (!vista || vista.luzVerde) return false;
   return RODANDO_DE_VERDAD.has(vista.fase);
@@ -128,10 +133,51 @@ function esBackTaxi(vista: Vista | null): boolean {
   return vista?.fase === "back-taxi";
 }
 
+/**
+ * **Y en Guyrami, de la luz verde a estar alineado también se rueda.**
+ *
+ * La verde devuelve el gas a quien juega —«autorizado, mandás vos»— y en los
+ * peldaños de arriba está bien: de ahí a la pista se va como uno quiera. En
+ * el de los de cuatro años no, porque ahí **el juego conduce**, y el trecho
+ * de la doble raya a la pista es el más retorcido del rodaje: en Silvio
+ * Pettirossi la calle llega a la pista en diagonal hacia el sur y el
+ * despegue es hacia el norte, así que la raya da media vuelta al entrar.
+ * Medido con `verificar-verde-sin-volante`: con la verde y sin tocar el
+ * volante, el JAZ 20 cogía la curva hacia el sur, no podía con la media
+ * vuelta a siete metros por segundo y seguía recto por la pista y fuera; con
+ * el gas a fondo, a treinta metros por segundo por la calle y contra un
+ * edificio. Un niño de cuatro años no gira eso solo, y ese peldaño promete
+ * llevarle.
+ *
+ * Así que ahí el tope sigue puesto hasta que el avión **mira hacia donde se
+ * despega**: en «autorizado», camino de la pista, y en «alineando» mientras
+ * todavía está girando hacia ella. Encarado a ocho grados —ver
+ * `MIRANDO_LA_PISTA`—, el gas vuelve a ser de quien juega, que es lo que hace
+ * un piloto de verdad: entra rodando, gira, y entonces mete motor. Por eso el
+ * portero es el morro y no la pista: la carrera no empieza en la calle,
+ * empieza mirando la pista.
+ *
+ * **Y no el eje.** Se probó a soltarlo solo con la fase de despegar, que
+ * pide ocho grados y doce metros del eje, y el JAZ 120 en Los Rodeos, que no
+ * llegaba a darse por alineado, rodó a nueve metros por segundo dos
+ * kilómetros y medio de pista y la acabó sin sitio para despegar. Lo que hay que
+ * impedir es seguir recto mientras la raya gira; lo de ponerse en el eje ya
+ * lo hace la ayuda de rodaje con el avión corriendo.
+ *
+ * Solo donde el juego conduce del todo —ver `anticipacionDeRodaje`—: en Tukã
+ * la curva ya es de quien juega, y el gas con ella.
+ */
+function entraConElJuego(tier: Tier, vista: Vista | null): boolean {
+  if (anticipacionDeRodaje(tier.assists.taxiAssist) < 1) return false;
+  if (vista?.fase === "autorizado") return true;
+  return vista?.fase === "alineando" && !vista.mirandoLaPista;
+}
+
 export function limitarElRodaje(
   estado: FlightState,
   controles: ControlInputs,
-  gasParaRodar: (velocidad: number) => number,
+  /** Ver `gasParaRodar` en `model.ts`: con `desde`, el de llegar. */
+  gasParaRodar: (velocidad: number, desde?: number) => number,
   tier: Tier,
   vista: Vista | null,
   techo: number,
@@ -187,7 +233,13 @@ export function limitarElRodaje(
    * de echar más leña.
    */
   const enLaCarrera = vista?.fase === "aterrizado";
-  if (s.onRunway && !enLaCarrera && !esBackTaxi(vista)) return techo;
+  if (
+    s.onRunway &&
+    !enLaCarrera &&
+    !esBackTaxi(vista) &&
+    !entraConElJuego(tier, vista)
+  )
+    return techo;
 
   /*
    * **En la carrera de aterrizaje el tope es un trinquete, no un tijeretazo.**
@@ -235,7 +287,11 @@ export function limitarElRodaje(
    * está el coche del sígame al que se le podía pasar por encima.
    */
 
-  if (!vista || (vista.luzVerde && !esBackTaxi(vista))) return techo;
+  if (
+    !vista ||
+    (vista.luzVerde && !esBackTaxi(vista) && !entraConElJuego(tier, vista))
+  )
+    return techo;
   /*
    * Rodando, la pregunta es la de `laVelocidadEsDelJuego`, y se le hace a
    * ella y no se copia: es la misma que se hacen los avisos antes de reñir.
@@ -278,9 +334,17 @@ export function limitarElRodaje(
    * en cero mientras la pantalla seguía pidiendo freno: «es una
    * exageración». La velocidad sí significa lo mismo en los dos.
    */
+  /*
+   * **Y el gas de llegar, no el de sostener.** Lo que frena rodando casi no
+   * cambia con la velocidad, así que el gas que sostiene la de rodaje apenas
+   * mueve a un avión parado: con la cuenta del modelo completo hecha bien,
+   * el tope dejaba al avión arrastrándose un minuto en el puesto. Se le
+   * pregunta al modelo por el gas que lleva de lo que se va a lo que toca,
+   * que es el de sostenerla en cuanto se llega.
+   */
   controles.throttle = Math.min(
     controles.throttle,
-    gasParaRodar(tope.velocidad),
+    gasParaRodar(tope.velocidad, porElSuelo),
   );
   /*
    * **Y rodando, si el gas cerrado no basta, se frena.**
@@ -306,12 +370,36 @@ export function limitarElRodaje(
    * Suave y proporcional al exceso, con un tope propio: esto es la mano de
    * quien te lleva, no un ancla.
    */
+  /*
+   * **Y la mano tiene que poder seguir lo que pide el plan.** El perfil de
+   * velocidad del plan llega a cada curva frenando a 1,6 m/s², y con el freno
+   * igual al exceso —y solo pasado un diez por ciento— el tope no ponía su
+   * freno entero hasta ir un sesenta por ciento por encima: iba siempre
+   * detrás.
+   * No se notaba rodando con el gas de rodaje, que casi no pasa del tope. Con
+   * el gas a fondo, en Guyrami y con la verde, sí: en el back-taxi de
+   * Estigarribia y de Encarnación el avión llegaba a la media vuelta del
+   * final a nueve metros por segundo en vez de a tres y medio, la vuelta no
+   * se podía dar y se salía de la pista. Medido con
+   * `verificar-verde-sin-volante`.
+   *
+   * Así que empieza antes y aprieta el triple: a un veinte por ciento por
+   * encima ya frena con todo lo que le deja `FRENO_QUE_AYUDA`, que es lo que
+   * hace falta para bajar al ritmo del perfil. Sigue sin ser un ancla: el
+   * tope de lo que frena es el mismo.
+   */
   const exceso = (porElSuelo - tope.velocidad) / Math.max(1, tope.velocidad);
-  if (exceso > 0.1) {
+  if (exceso > EMPIEZA_A_FRENAR) {
     controles.brakes = Math.max(
       controles.brakes,
-      Math.min(FRENO_QUE_AYUDA, exceso),
+      Math.min(FRENO_QUE_AYUDA, exceso * APRIETA),
     );
   }
   return techo;
 }
+
+/** Por encima de cuánto del tope empieza a frenar la mano que conduce. */
+const EMPIEZA_A_FRENAR = 0.05;
+
+/** Y cuánto freno pone por cada parte de exceso. Ver `limitarElRodaje`. */
+const APRIETA = 3;

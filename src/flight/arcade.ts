@@ -585,6 +585,9 @@ export class ArcadeFlightModel implements FlightModel {
    * gas no arranca en la mínima de vuelo —ahí no hay mínima de vuelo, hay
    * cero—, así que el gas es la fracción del crucero y ya está. Es la misma
    * recta que usa `step` cuando `onGround`.
+   *
+   * Y sin `desde`: aquí el gas **es** la velocidad, y el modelo ya la
+   * alcanza a su paso. Ver `gasParaRodar` en `model.ts`.
    */
   gasParaRodar(velocidad: number): number {
     // En el suelo no hay altura que valga: la punta es la de abajo.

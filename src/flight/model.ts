@@ -363,8 +363,15 @@ export interface FlightModel {
    *
    * En tierra la pregunta es otra —cuánto empuje sostiene esta velocidad de
    * rodaje— y cada modelo la contesta a su manera, igual que la de arriba.
+   *
+   * **Y con `desde`, cuánto hace falta para llegar a ella** yendo ahora a
+   * esa otra velocidad, sin tirones. Rodando, el gas que sostiene nueve metros
+   * por segundo apenas mueve un avión parado —lo que frena en el suelo es casi
+   * lo mismo a cualquier velocidad—, así que quien conduce por quien juega
+   * pide algo más mientras falta y lo va soltando al llegar. Sin `desde`, el
+   * de sostenerla.
    */
-  gasParaRodar(velocidad: number): number;
+  gasParaRodar(velocidad: number, desde?: number): number;
   /**
    * A qué velocidad se entra en final, en metros por segundo.
    *

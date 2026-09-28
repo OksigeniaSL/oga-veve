@@ -35,8 +35,9 @@ function estado(
   } as never;
 }
 
-function vista(fase: Fase, luzVerde = false): never {
+function vista(fase: Fase, luzVerde = false, mirandoLaPista = false): never {
   return {
+    mirandoLaPista,
     fase,
     clave: "",
     icono: "",
@@ -108,6 +109,37 @@ describe("de quién es la velocidad por el suelo", () => {
     expect(elTopeTocaAlgo(TAGUATO, e, vista("back-taxi", true))).toBe(false);
   });
 
+  /*
+   * **Y en Guyrami, de la luz verde a estar alineado.** El trecho de la doble
+   * raya a la pista es el más retorcido del rodaje —en Pettirossi la raya da
+   * media vuelta al entrar— y ahí la verde devolvía el gas a quien tiene
+   * cuatro años: con el gas a fondo, a treinta por segundo contra un
+   * edificio. Ver `entraConElJuego` en `tope-de-rodaje.ts`.
+   */
+  it("en Guyrami, con la verde y hasta alinearse, la velocidad sigue siendo del juego", () => {
+    const enCalle = estado(13);
+    const enPista = estado(13, { enPista: true });
+    expect(laVelocidadEsDelJuego(enCalle, GUYRAMI, vista("autorizado", true))).toBe(true);
+    expect(elTopeTocaAlgo(GUYRAMI, enCalle, vista("autorizado", true))).toBe(true);
+    expect(laVelocidadEsDelJuego(enPista, GUYRAMI, vista("alineando", true))).toBe(true);
+    expect(elTopeTocaAlgo(GUYRAMI, enPista, vista("alineando", true))).toBe(true);
+    // Encarado a la pista, aunque todavía no en el eje, el gas es de quien
+    // juega: la vuelta ya está dada y lo que queda es correr por ella.
+    expect(laVelocidadEsDelJuego(enPista, GUYRAMI, vista("alineando", true, true))).toBe(false);
+    expect(elTopeTocaAlgo(GUYRAMI, enPista, vista("alineando", true, true))).toBe(false);
+    // Y alineado, es despegar.
+    expect(laVelocidadEsDelJuego(enPista, GUYRAMI, vista("despegando", true))).toBe(false);
+    expect(elTopeTocaAlgo(GUYRAMI, enPista, vista("despegando", true))).toBe(false);
+  });
+
+  it("y en Tukã la entrada en pista ya es de quien juega, como la curva", () => {
+    const enPista = estado(13, { enPista: true });
+    expect(laVelocidadEsDelJuego(estado(13), TUKA, vista("autorizado", true))).toBe(false);
+    expect(elTopeTocaAlgo(TUKA, estado(13), vista("autorizado", true))).toBe(false);
+    expect(laVelocidadEsDelJuego(enPista, TUKA, vista("alineando", true))).toBe(false);
+    expect(elTopeTocaAlgo(TUKA, enPista, vista("alineando", true))).toBe(false);
+  });
+
   it("y en la carrera de aterrizaje también: frenar ahí es la lección", () => {
     expect(
       laVelocidadEsDelJuego(estado(30, { enPista: true }), GUYRAMI, vista("aterrizado")),
@@ -127,6 +159,7 @@ describe("de quién es la velocidad por el suelo", () => {
       "rodando",
       "esperando",
       "autorizado",
+      "alineando",
       "back-taxi",
       "abandonando",
       "a-plataforma",

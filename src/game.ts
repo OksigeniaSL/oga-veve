@@ -11948,7 +11948,7 @@ export class Game {
     this.techoDeLaCarrera = limitarElRodaje(
       this.flight.state,
       this.input.controls,
-      (v) => this.flight.gasParaRodar(v),
+      (v, desde) => this.flight.gasParaRodar(v, desde),
       this.tier,
       this.vistaActual,
       this.techoDeLaCarrera,
