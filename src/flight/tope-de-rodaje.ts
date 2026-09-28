@@ -131,7 +131,8 @@ function esBackTaxi(vista: Vista | null): boolean {
 export function limitarElRodaje(
   estado: FlightState,
   controles: ControlInputs,
-  gasParaRodar: (velocidad: number) => number,
+  /** Ver `gasParaRodar` en `model.ts`: con `desde`, el de llegar. */
+  gasParaRodar: (velocidad: number, desde?: number) => number,
   tier: Tier,
   vista: Vista | null,
   techo: number,
@@ -278,9 +279,17 @@ export function limitarElRodaje(
    * en cero mientras la pantalla seguía pidiendo freno: «es una
    * exageración». La velocidad sí significa lo mismo en los dos.
    */
+  /*
+   * **Y el gas de llegar, no el de sostener.** Lo que frena rodando casi no
+   * cambia con la velocidad, así que el gas que sostiene la de rodaje apenas
+   * mueve a un avión parado: con la cuenta del modelo completo hecha bien,
+   * el tope dejaba al avión arrastrándose un minuto en el puesto. Se le
+   * pregunta al modelo por el gas que lleva de lo que se va a lo que toca,
+   * que es el de sostenerla en cuanto se llega.
+   */
   controles.throttle = Math.min(
     controles.throttle,
-    gasParaRodar(tope.velocidad),
+    gasParaRodar(tope.velocidad, porElSuelo),
   );
   /*
    * **Y rodando, si el gas cerrado no basta, se frena.**

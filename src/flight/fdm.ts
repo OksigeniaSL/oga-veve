@@ -62,6 +62,25 @@ import { REVERSA_HASTA } from "./arcade";
  * que es lo que hace que no se pueda usar de marcha atrás.
  */
 const REVERSA_DA = 0.4;
+
+/**
+ * **Cuánto acelera, como mucho, quien conduce el avión rodando**, m/s².
+ *
+ * Seis décimas: lo que acelera un avión que sale del puesto con algo de gas,
+ * y lo que ya daba el tope de rodaje con la cuenta de antes —entre 0,45 y
+ * 0,65 según el avión—. Más es un tirón en la plataforma; menos, un avión que
+ * tarda un minuto en ponerse a rodar. Ver `gasParaRodar`.
+ */
+const ACELERA_RODANDO = 0.6;
+
+/**
+ * **Y en cuánto tiempo se quiere cerrar lo que falta**, s.
+ *
+ * Cuatro segundos: cerca de la velocidad pedida la aceleración se va
+ * soltando en proporción a lo que falta, y así se llega sin pasarse. Es la
+ * misma forma de pisar el acelerador de cualquiera que conduce.
+ */
+const EN_LLEGAR_RODANDO = 4;
 import { type AssistLayers, uniformAssists } from "./assists";
 import type {
   ControlInputs,
@@ -570,16 +589,65 @@ export class CoefficientFlightModel implements FlightModel {
   }
 
   /**
-   * Aquí el gas es empuje, no velocidad, así que no hay cuenta exacta: rodar a
-   * nueve metros por segundo se sostiene con muy poco empuje —lo único que hay
-   * que vencer es la rodadura— y lo que importa de este número es que **deje
-   * salir del puesto** y no dé para una carrera. Un quinto de gas por cada
-   * treinta metros por segundo, con suelo para arrancar parado.
+   * **El gas que sostiene una velocidad rodando**, sacado de las mismas
+   * fuerzas que mueven el avión: el que iguala el empuje a esa velocidad con
+   * lo que frena en el suelo, que es la rodadura de este suelo y el aire.
+   *
+   * Aquí había una recta a ojo —un quinto de gas por cada treinta metros por
+   * segundo, con un suelo de dos décimas «para arrancar parado»— y la
+   * justificación era que en este modelo el gas es empuje y «no hay cuenta
+   * exacta». La hay, y la recta no se parecía: al JAZ 20 le daba 0,30 para
+   * nueve metros por segundo, y con 0,30 el JAZ 20 rueda a **14,6**. Con esa
+   * cuenta van la marca de rodaje de la palanca táctil y el tope de rodaje de
+   * Tukã, así que la marca prometía rodar y llevaba a correr, y el tope solo
+   * sujetaba el avión a base de freno.
+   *
+   * Lo que frena rodando es poco y se sabe: la rodadura es un coeficiente por
+   * el peso —ver `ROZAMIENTO`, que es el mismo que aplica `integrate`—, y el
+   * aire, su resistencia parásita con el tren fuera y la inducida del ala
+   * apoyada, que a paso de rodaje casi no cuenta. El empuje cae con la
+   * velocidad y con la altura como en vuelo —ver `empujeLleno`—, y en el
+   * mismo sitio, para que esta cuenta y el motor no puedan decir cosas
+   * distintas.
+   *
+   * **Y sostener no es llegar.** Como lo que frena en el suelo casi no
+   * cambia con la velocidad, el gas que sostiene nueve metros por segundo
+   * mueve a un avión parado con una décima de lo que tiene: al JAZ 20 le
+   * costaría minutos llegar. Con `desde` —lo que se lleva ahora— se pide
+   * además lo que acelera hacia la velocidad pedida, como hace quien conduce
+   * un coche: mucho mientras falta y nada al llegar. Ver `ACELERA_RODANDO`.
    */
-  gasParaRodar(velocidad: number): number {
+  gasParaRodar(velocidad: number, desde = velocidad): number {
+    const ac = this.aircraft;
+    const quiero = Math.max(0, velocidad);
+    const densidad = airDensity(this.state.position.y, this.aire);
+    /*
+     * Lo que frena a una velocidad: la rodadura de este suelo, que es la
+     * misma que aplica `resolveGround`, y el aire con el ala apoyada y el
+     * tren fuera, que a paso de rodaje casi no cuenta.
+     */
+    const alargamiento = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
+    const cd =
+      ac.aero.cd0 +
+      (ac.aero.cl0 * ac.aero.cl0) / (Math.PI * alargamiento * ac.aero.oswald) +
+      resistenciaDelTren(ac, 1, 0);
+    const frenaA = (v: number): number =>
+      ROZAMIENTO[this.superficie] * ac.mass * GRAVITY +
+      0.5 * densidad * v * v * ac.wingArea * cd;
+    /*
+     * Sobrando velocidad, el de sostener la pedida: con él el avión va
+     * perdiendo lo que le sobra, y frenar de verdad es cosa del freno.
+     */
+    const ahora = Math.max(0, Math.min(desde, quiero));
+    const acelera = Math.min(
+      ACELERA_RODANDO,
+      (quiero - ahora) / EN_LLEGAR_RODANDO,
+    );
+    const lleno = empujeLleno(ac, densidad, ahora);
+    if (!(lleno > 0)) return 1;
     return Math.max(
-      0.2,
-      Math.min(1, velocidad / (this.aircraft.cruiseSpeed * 0.5)),
+      0,
+      Math.min(1, (frenaA(ahora) + ac.mass * acelera) / lleno),
     );
   }
 
@@ -762,15 +830,9 @@ export class CoefficientFlightModel implements FlightModel {
      * los libros: un 747 despega en unos 1.800 m al nivel del mar y un
      * regional de treinta toneladas en unos 1.600.
      */
-    const densityRatio = density / SEA_LEVEL_DENSITY;
-    const speedFactor = esDeChorro(ac)
-      ? Math.max(0.5, 1 - (0.3 * speed) / ac.cruiseSpeed)
-      : Math.max(0.2, 1 - speed / (2.4 * ac.cruiseSpeed));
     const thrust =
       (controls.engineOn ? assisted.throttle : 0) *
-      ac.maxThrust *
-      loQueDaElMotor(ac, densityRatio) *
-      speedFactor;
+      empujeLleno(ac, density, speed);
     // Se guarda para el combustible, que gasta por el empuje que se da y no
     // por el gas que se pide. Ver `empujeAhora` en `model.ts`.
     this.ultimoEmpuje = thrust;
@@ -1659,6 +1721,35 @@ export function postStallDrag(alpha: number, stallAngle: number): number {
 function levelling(bank: number): number {
   const s = Math.sin(bank);
   return WING_LEVELLER * s * (0.3 + 0.7 * Math.abs(s));
+}
+
+/**
+ * **El empuje con el gas a fondo**, N, a esta densidad y a esta velocidad
+ * respecto al aire.
+ *
+ * Cae con la densidad —ver `loQueDaElMotor`— y con la velocidad **según qué
+ * empuje el aire**: una hélice que ya va rápida muerde menos aire y pierde
+ * empuje deprisa; un turbofán casi no lo pierde, porque lo que acelera es el
+ * aire que él mismo traga. Ninguna de las dos es un modelo de propulsión de
+ * verdad, pero la diferencia entre ellas sí lo es. Ver el comentario del
+ * empuje en `integrate`.
+ *
+ * Vive fuera y exportado porque lo preguntan dos: el motor, en cada paso, y
+ * `gasParaRodar`, que busca el gas que sostiene una velocidad. Si cada uno
+ * llevara su curva, la marca de rodaje prometería una velocidad y el motor
+ * daría otra — que es exactamente lo que pasaba.
+ */
+export function empujeLleno(
+  ac: AircraftConfig,
+  densidad: number,
+  velocidad: number,
+): number {
+  const factor = esDeChorro(ac)
+    ? Math.max(0.5, 1 - (0.3 * velocidad) / ac.cruiseSpeed)
+    : Math.max(0.2, 1 - velocidad / (2.4 * ac.cruiseSpeed));
+  return (
+    ac.maxThrust * loQueDaElMotor(ac, densidad / SEA_LEVEL_DENSITY) * factor
+  );
 }
 
 /**
