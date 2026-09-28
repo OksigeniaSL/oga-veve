@@ -44,25 +44,47 @@ const resultados = [];
 const comprobar = (nombre, ok, detalle) =>
   resultados.push({ nombre, ok: !!ok, detalle });
 
-try {
-  for (const escenario of ESCENARIOS)
-    for (const gas of GASES) {
-      const page = await navegador.newPage({
-        viewport: { width: 1000, height: 620 },
-      });
-      const errores = [];
-      page.on("pageerror", (e) => errores.push(e.message));
-      await page.addInitScript(() => {
-        localStorage.setItem("oga-veve:teclas-vistas", "1");
-      });
+/**
+ * Abre una partida y espera a que haya raya, **con un reintento**: con la
+ * máquina cargada —otro banco volando al lado— un escenario gordo puede
+ * tardar más de dos minutos en pintar la primera vez, y un banco que revienta
+ * por eso a mitad de dieciocho campos no dice nada del juego. Es lo mismo que
+ * hace `partida` en `verificar-asistencia`.
+ */
+async function abrir(escenario, errores) {
+  for (let intento = 0; ; intento++) {
+    const page = await navegador.newPage({
+      viewport: { width: 1000, height: 620 },
+    });
+    page.on("pageerror", (e) => errores.push(e.message));
+    await page.addInitScript(() => {
+      localStorage.setItem("oga-veve:teclas-vistas", "1");
+    });
+    try {
       await page.goto(
         `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue` +
           `&tramo=guyrami&avion=${AVION}&meteo=`,
       );
-      await page.waitForFunction(() => globalThis.__oga?.ruta().length > 1, null, {
-        timeout: 120000,
-      });
+      await page.waitForFunction(
+        () => globalThis.__oga?.ruta().length > 1,
+        null,
+        { timeout: 120000 },
+      );
       await page.waitForTimeout(1500);
+      return page;
+    } catch (e) {
+      await page.close();
+      if (intento >= 1) throw e;
+      console.log(`  (${escenario}: la partida no llegó a pintar; se repite)`);
+    }
+  }
+}
+
+try {
+  for (const escenario of ESCENARIOS)
+    for (const gas of GASES) {
+      const errores = [];
+      const page = await abrir(escenario, errores);
 
       const r = await page.evaluate(
         async ([gas, RELOJ]) => {

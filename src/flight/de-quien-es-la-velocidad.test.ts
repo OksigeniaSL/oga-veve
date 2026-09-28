@@ -35,8 +35,9 @@ function estado(
   } as never;
 }
 
-function vista(fase: Fase, luzVerde = false): never {
+function vista(fase: Fase, luzVerde = false, mirandoLaPista = false): never {
   return {
+    mirandoLaPista,
     fase,
     clave: "",
     icono: "",
@@ -122,7 +123,11 @@ describe("de quién es la velocidad por el suelo", () => {
     expect(elTopeTocaAlgo(GUYRAMI, enCalle, vista("autorizado", true))).toBe(true);
     expect(laVelocidadEsDelJuego(enPista, GUYRAMI, vista("alineando", true))).toBe(true);
     expect(elTopeTocaAlgo(GUYRAMI, enPista, vista("alineando", true))).toBe(true);
-    // Alineado, es despegar: el gas vuelve a ser de quien juega.
+    // Encarado a la pista, aunque todavía no en el eje, el gas es de quien
+    // juega: la vuelta ya está dada y lo que queda es correr por ella.
+    expect(laVelocidadEsDelJuego(enPista, GUYRAMI, vista("alineando", true, true))).toBe(false);
+    expect(elTopeTocaAlgo(GUYRAMI, enPista, vista("alineando", true, true))).toBe(false);
+    // Y alineado, es despegar.
     expect(laVelocidadEsDelJuego(enPista, GUYRAMI, vista("despegando", true))).toBe(false);
     expect(elTopeTocaAlgo(GUYRAMI, enPista, vista("despegando", true))).toBe(false);
   });

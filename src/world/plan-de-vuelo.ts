@@ -684,7 +684,23 @@ export interface Vista {
   readonly saltoLaLuz: boolean;
   /** La lección de rodar, terminada: parado en la doble raya. */
   readonly leccionHecha: boolean;
+  /**
+   * En la pista y con el morro hacia donde se despega, a menos de
+   * `MIRANDO_LA_PISTA`: la vuelta de entrar ya está dada. Lo mira el tope de
+   * rodaje de Guyrami. Ver `entraConElJuego` en `flight/tope-de-rodaje.ts`.
+   */
+  readonly mirandoLaPista: boolean;
 }
+
+/**
+ * **Cuánto puede apartarse el morro del rumbo de la pista para darla por
+ * encarada**, en grados.
+ *
+ * Treinta. No es alinearse —eso es la fase, con ocho grados y doce metros—:
+ * es haber acabado de girar hacia ella. Desde ahí, con el gas que sea, el
+ * avión corre por la pista y no contra lo que haya al lado.
+ */
+export const MIRANDO_LA_PISTA = 30;
 
 /**
  * Las fases en las que se rueda por una calle y tiene sentido pedir despacio.
@@ -2679,6 +2695,7 @@ export class PlanDeVuelo {
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
       saltoLaLuz: p.saltoLaLuz,
       leccionHecha: p.leccionHecha,
+      mirandoLaPista: s.enPista && Math.abs(s.desalineado) < MIRANDO_LA_PISTA,
       fuera:
         (p.fase === "rodando" || p.fase === "a-plataforma") &&
         this.rutaMundo.length > 1 &&
