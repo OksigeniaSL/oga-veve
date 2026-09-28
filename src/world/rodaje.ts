@@ -28,7 +28,7 @@
  * partir por vértices compartidos y soldar por cercanía.
  */
 
-import type { Aerodrome, Punto } from "./aerodrome";
+import { ANCHO_RODADURA, type Aerodrome, type Punto } from "./aerodrome";
 
 /** A cuánto se consideran el mismo sitio dos puntas de calle, m. */
 const SOLDADURA = 12;
@@ -87,6 +87,25 @@ export interface Grafo {
   readonly tramos: readonly Tramo[];
   /** Tramos que salen de cada nudo, por índice de nudo. */
   readonly desde: readonly (readonly number[])[];
+  /**
+   * Si en ese punto hay pavimento por el que rodar: pista, calle o plataforma.
+   *
+   * Lo pregunta el buscador antes de tirar la recta que une un punto suelto
+   * —el puesto, la doble raya, el avión— con la calle más cercana. Ver
+   * `enganches`. Sin ella, cualquier recta vale, que es lo que hacía esto
+   * antes y lo que siguen usando los grafos hechos a mano de las pruebas.
+   */
+  readonly rodable?: (p: Punto) => boolean;
+  /**
+   * Y si ese pavimento es **de una pista**. La recta del enganche no la
+   * cuenta el buscador como pista, así que no puede ir por ella de gorra:
+   * en Pedro Juan Caballero, a falta de calle, la raya del puesto a la
+   * salida se enganchaba con doscientos treinta metros de recta **por encima
+   * de la pista**. Ver `porPavimento`.
+   */
+  readonly enPista?: (p: Punto) => boolean;
+  /** Y si es de una plataforma, que se cruza en recta. Ver `A_CAMPO_ABIERTO`. */
+  readonly enPlataforma?: (p: Punto) => boolean;
 }
 
 /**
@@ -426,8 +445,35 @@ export function construirGrafo(
     desde[t.b]!.push(i);
   });
 
-  return { nudos, tramos, desde };
+  return {
+    nudos,
+    tramos,
+    desde,
+    rodable: pavimentoGuardado(aero, "todo", MARGEN_DEL_PAVIMENTO),
+    enPista: pavimentoGuardado(aero, "pista", 0),
+    enPlataforma: pavimentoGuardado(aero, "plataforma", MARGEN_DEL_PAVIMENTO),
+  };
 }
+
+/**
+ * Lo que se le perdona a un punto por caer fuera del pavimento dibujado, m:
+ * **media calle de rodaje**.
+ *
+ * OpenStreetMap da las calles como un eje y un ancho, y las plataformas como
+ * un polígono, y donde se juntan el dibujo no siempre se toca. En Los Rodeos,
+ * entre la plataforma y la paralela quedan de siete a dieciséis metros sin
+ * dibujar; en Tenerife Sur, las plataformas son islas con quince metros de
+ * nada hasta la calle que las rodea. Y en la foto aérea que el juego pone
+ * debajo, esas franjas son **hormigón**: es el dibujo el que está corto, no el
+ * aeropuerto. Con un metro de holgura, la mitad de los puestos de Tenerife
+ * Sur se quedaban sin salida.
+ *
+ * Media calle cose esas rendijas y no cose nada más: la hierba de verdad, la
+ * que separa una paralela de su pista, son decenas de metros —ochenta y seis
+ * en Los Rodeos—. Es la misma cuenta con la que la prueba de los dieciocho
+ * campos dice qué es pisar hierba: ver `rodar-por-el-asfalto.test.ts`.
+ */
+export const MARGEN_DEL_PAVIMENTO = ANCHO_RODADURA / 2;
 
 /** El nudo más cercano a un punto, y a cuánto está. */
 export function nudoCercano(
@@ -525,12 +571,6 @@ export interface Ruta {
 }
 
 /**
- * El camino más corto entre dos nudos, con Dijkstra.
- *
- * Dijkstra y no A*: un aeropuerto tiene decenas de nudos, no millones, y aquí
- * la sencillez vale más que los microsegundos que ahorraría la heurística.
- */
-/**
  * **Dónde hay un avión parado en las calles**, y cuánto ocupa.
  *
  * Existe por Los Rodeos: aterrizando, la raya verde y el coche del sígame
@@ -540,34 +580,57 @@ export interface Ruta {
  *
  * `radio` es lo que tienen que separarse los dos ejes para que las alas no se
  * toquen: las dos semialas y el margen de ala. Un tramo que pasa más cerca
- * de un punto ocupado se encarece —ver `CUESTA_OCUPADO`—, así que se elige
+ * de un punto ocupado se encarece —ver `POR_UN_OCUPADO`—, así que se elige
  * otro camino **si lo hay**.
+ *
+ * **Y son los de otras calles, no los de tu cola.** Quien va a la misma pista
+ * que vos, por delante, no es un estorbo que rodear: es el de delante, y
+ * detrás de él se espera. Eso lo decide quien llama, que es quien sabe a dónde
+ * va cada uno; ver `ocupadosAhora` en `plan-de-vuelo.ts`.
  */
 export interface Ocupados {
   readonly puntos: readonly Punto[];
   readonly radio: number;
 }
 
-/**
- * Lo que cuesta de más, en metros, un tramo con un avión parado en medio.
+/*
+ * ── Lo que se paga por cada cosa, y en qué orden ──────────────────────────
  *
- * **Penalización y no prohibición**, como el callejón por el que no cabe el
- * ala: donde no hay más camino —un campo de una sola calle— se pasa igual, y
- * entonces lo que tiene que pasar es que el otro no espere ahí; ver
- * `PASA_A_TU_LADO` en `suelo-del-trafico.ts`.
+ * **La pista no es una calle, y eso no se compra con metros.** Antes todo iba
+ * en un solo número: la pista a seis veces lo que mide y la calle con un avión
+ * parado a veinte kilómetros de más. Y dos precios en la misma moneda se
+ * cambian el uno por el otro: con un avión parado en la paralela de Los
+ * Rodeos, mil quinientos metros de pista costaban nueve mil y la paralela
+ * veinte mil, así que la raya mandaba por la pista. Es justo lo que no se
+ * hace: en Los Rodeos la paralela existe precisamente para que la pista no
+ * sea una calle.
  *
- * **Y sumada, no multiplicada.** Multiplicar por cuarenta, como con el
- * callejón, deja barato el tramo corto: diez metros de calle con un avión
- * encima costaban cuatrocientos, y se prefería pasarle por encima antes que
- * rodar un kilómetro por otra calle. Medido en Asunción y en Guaraní. Un
- * avión parado corta la calle igual si el tramo es largo que si es corto.
+ * Así que el buscador lleva la cuenta en dos estados, y en cada uno la pista
+ * vale otra cosa:
  *
- * Veinte kilómetros: más que volver por la pista entera, que se cobra a seis
- * —ver `PENALIZACION_PISTA`—. Una torre te manda a remontar la pista antes que
- * a pasarle por encima a nadie, y en Los Rodeos, con tres mil, la raya seguía
- * eligiendo al que esperaba quince veces de cada dieciséis.
+ * - **Todavía en la pista**, que es quien acaba de aterrizar y rueda hacia
+ *   una salida. Ahí la pista es por donde se está, y seguir por ella hasta la
+ *   salida siguiente es lo normal si la de delante tiene a alguien esperando:
+ *   se paga a seis, como siempre, y un avión parado pesa más que eso. Es lo
+ *   que dice una torre: «siga hasta la próxima».
+ * - **Ya fuera de ella**, que es todo lo demás: del puesto a la doble raya,
+ *   de la salida al puesto, el avión que se salió de la raya a media calle.
+ *   Ahí volver a meterse en una pista pesa más que cualquier otra cosa junta
+ *   —ver `POR_METRO_DE_PISTA`—: se rueda por pista solo si no hay otro
+ *   camino, y entonces lo menos posible, que es cruzarla o entrar en ella
+ *   para despegar. Y un avión parado en otra calle se rodea si hay por dónde,
+ *   pero **nunca por la pista**.
+ *
+ * Van sumados con escalas que no se pisan —ningún rodeo de calle llega a lo
+ * que pesa un avión parado, ni cien aviones a lo que pesa un metro de pista—,
+ * que es la forma de comparar por orden sin dejar de usar Dijkstra.
  */
-const CUESTA_OCUPADO = 20000;
+
+/** Lo que pesa un metro de pista para quien ya la ha dejado. */
+const POR_METRO_DE_PISTA = 1e10;
+
+/** Lo que pesa un tramo con un avión parado. Ver `Ocupados`. */
+const POR_UN_OCUPADO = 1e7;
 
 /** Lo que dista un punto de una polilínea, m. */
 function aLaLinea(p: Punto, linea: readonly Punto[]): number {
@@ -584,20 +647,567 @@ function aLaLinea(p: Punto, linea: readonly Punto[]): number {
   return mejor;
 }
 
+/** Si por esta línea pasa cerca algún avión parado. Ver `Ocupados`. */
+function pasaPorUnOcupado(
+  linea: readonly Punto[],
+  ocupados: Ocupados | undefined,
+): boolean {
+  if (!ocupados?.puntos.length || linea.length < 2) return false;
+  return ocupados.puntos.some((p) => aLaLinea(p, linea) < ocupados.radio);
+}
+
 /** Los tramos por los que pasa cerca algún avión parado. Ver `Ocupados`. */
 function tramosOcupados(grafo: Grafo, ocupados: Ocupados | undefined): Set<number> {
   const ocupadosAqui = new Set<number>();
   if (!ocupados?.puntos.length) return ocupadosAqui;
   grafo.tramos.forEach((t, i) => {
-    for (const p of ocupados.puntos)
-      if (aLaLinea(p, t.puntos) < ocupados.radio) {
-        ocupadosAqui.add(i);
-        return;
-      }
+    if (pasaPorUnOcupado(t.puntos, ocupados)) ocupadosAqui.add(i);
   });
   return ocupadosAqui;
 }
 
+/**
+ * Lo que cuesta una recta de enganche en la cuenta del buscador: sus metros y,
+ * si va por encima de una pista y ya se ha dejado la pista, lo que pesan esos
+ * metros de pista. Una recta **no es gratis por no ser un tramo**: desde la
+ * doble raya de la 02 de Silvio Pettirossi, llegar al eje por la calle y
+ * rodar treinta y cuatro metros de pista perdía contra saltar cuarenta y
+ * cuatro por encima de ella en recta, que la cuenta no veía como pista.
+ */
+function laRecta(grafo: Grafo, a: Punto, b: Punto, fuera: boolean): number {
+  const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const enPista = grafo.enPista;
+  if (!fuera || !enPista || d < 1e-6) return d * POR_METRO_DE_RECTA;
+  const n = Math.max(1, Math.ceil(d / MUESTRA));
+  let dentro = 0;
+  for (let k = 0; k < n; k++) {
+    const s = (k + 0.5) / n;
+    if (enPista([a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s])) dentro++;
+  }
+  return d * POR_METRO_DE_RECTA + (dentro / n) * d * POR_METRO_DE_PISTA;
+}
+
+/**
+ * **Y una recta cuesta el doble que la calle que va al mismo sitio.** Las
+ * rectas del enganche son para juntarse con la calle, no para sustituirla: en
+ * Los Rodeos, recalculando en la paralela a cuarenta metros de la calle de la
+ * doble raya, dos rectas de cuarenta —por la paralela hasta la esquina y de
+ * la esquina a la doble raya— empataban con las dos calles que hacen lo
+ * mismo, y la raya salía como un codo sin calle. Al doble, la calle gana
+ * siempre que exista; y donde no hay más remedio —cruzar una plataforma hasta
+ * su calle—, la recta sigue saliendo.
+ */
+const POR_METRO_DE_RECTA = 2;
+
+/**
+ * Lo que cuesta recorrer tantos metros de un tramo: la clave con la que
+ * compara el buscador y el coste en metros equivalentes, que es lo que se
+ * cuenta hacia fuera. `fuera` es si ya se ha dejado la pista. Ver arriba.
+ */
+function precio(
+  t: Tramo,
+  metros: number,
+  ocupado: boolean,
+  fuera: boolean,
+): { clave: number; coste: number } {
+  const porMetro = t.largo > 0 ? (t.coste ?? t.largo) / t.largo : 1;
+  const coste = metros * porMetro;
+  return {
+    clave:
+      (t.pista && fuera ? metros * POR_METRO_DE_PISTA : 0) +
+      (ocupado ? POR_UN_OCUPADO : 0) +
+      coste,
+    coste,
+  };
+}
+
+/**
+ * **Dónde se engancha un punto suelto a las calles**: el punto de un tramo
+ * más cercano, no el nudo más cercano.
+ *
+ * ## El fallo que arregla, que salía por cinco sitios
+ *
+ * El buscador enganchaba cada punta de la ruta al **nudo** más cercano y tiraba
+ * una recta hasta él. Y los nudos solo están donde se cruzan dos calles, así
+ * que el más cercano puede quedar a cien metros y al otro lado de un césped:
+ *
+ * - En Los Rodeos, saliendo por la 30, la doble raya está sobre la paralela a
+ *   mitad de campo, y el nudo más cercano era la punta de una salida rápida,
+ *   pegada a la pista. La ruta iba hasta allí y volvía a la doble raya
+ *   cruzando la hierba en diagonal: «me haces salir a la pista para volver a
+ *   entrar atravesando el jardín».
+ * - En Tenerife Sur, del puesto al primer nudo había ciento nueve metros, y
+ *   treinta y ocho de ellos eran campo.
+ * - Y al recalcular a mitad de camino, con el avión y la doble raya enganchados
+ *   **al mismo nudo**, la ruta era una recta de noventa metros de un sitio a
+ *   otro, por donde cayera. Medido en Guaraní.
+ *
+ * Todos los remiendos que tuvo esto —el recorte al destino, el no pasarse de
+ * largo, la recta de emergencia— eran maneras de tapar ese salto. La causa era
+ * enganchar en el nudo.
+ *
+ * ## Lo que se hace
+ *
+ * Se proyecta el punto sobre **cada tramo** y se engancha donde cae, partiendo
+ * el tramo en dos: si el avión está a mitad de la paralela, la ruta sale de
+ * ahí mismo, hacia un lado o hacia el otro. Y la recta que va del punto a la
+ * calle **se mira**: tiene que ir por pavimento de punta a punta. Si no va,
+ * ese tramo no vale y se prueba el siguiente. Si ninguno vale, no hay ruta:
+ * que no haya camino es una respuesta, inventarlo no.
+ *
+ * `desdeFuera` es para el avión que ya está en la hierba —se salió—: su recta
+ * puede empezar fuera, pero una vez en el asfalto no puede volver a salirse.
+ * Volver al pavimento no es un atajo; cruzar un césped para ahorrarse una
+ * curva, sí.
+ */
+interface Enganche {
+  readonly tramo: number;
+  /** El punto del tramo donde se engancha. */
+  readonly punto: Punto;
+  /** Metros de tramo desde su principio hasta el punto. */
+  readonly desdeA: number;
+  /** Metros en línea recta del punto suelto al tramo. */
+  readonly salto: number;
+}
+
+/** Cuántos enganches se prueban por punta, de los más cercanos. */
+const ENGANCHES = 6;
+
+/** Cada cuánto se mira que la recta del enganche vaya por pavimento, m. */
+const MUESTRA = 2;
+
+function enganches(
+  grafo: Grafo,
+  p: Punto,
+  maxSalto: number,
+  desdeFuera: boolean,
+): Enganche[] {
+  /*
+   * Los puestos, los puntos de espera y los nudos se preguntan una y otra vez
+   * —elegir el par de salida son cientos de rutas entre los mismos puntos—,
+   * y buscar por dónde sale un puesto de una plataforma mal cosida cuesta.
+   * Se guarda por grafo, y se vacía si crece: el avión pregunta cada vez
+   * desde un sitio distinto.
+   */
+  let guardados = ENGANCHES_GUARDADOS.get(grafo);
+  if (!guardados) ENGANCHES_GUARDADOS.set(grafo, (guardados = new Map()));
+  const clave = `${p[0].toFixed(2)},${p[1].toFixed(2)},${maxSalto},${desdeFuera}`;
+  const ya = guardados.get(clave);
+  if (ya) return ya;
+  if (guardados.size > 4000) guardados.clear();
+  const hechos = buscarEnganches(grafo, p, maxSalto, desdeFuera);
+  guardados.set(clave, hechos);
+  return hechos;
+}
+
+const ENGANCHES_GUARDADOS = new WeakMap<Grafo, Map<string, Enganche[]>>();
+
+function buscarEnganches(
+  grafo: Grafo,
+  p: Punto,
+  maxSalto: number,
+  desdeFuera: boolean,
+): Enganche[] {
+  const todos: Enganche[] = [];
+  grafo.tramos.forEach((t, k) => {
+    // Un tramo que sus nudos ya no nombran no es parte de la red: quien quita
+    // una calle del grafo la quita de `desde`, y ahí no se engancha nadie.
+    if (!grafo.desde[t.a]?.includes(k)) return;
+    const pts = t.puntos;
+    let mejor: Enganche | null = null;
+    let recorrido = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i]!;
+      const b = pts[i + 1]!;
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const l2 = dx * dx + dy * dy;
+      const l = Math.sqrt(l2);
+      const u =
+        l2 < 1e-9
+          ? 0
+          : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+      const q: Punto = [a[0] + dx * u, a[1] + dy * u];
+      const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+      if (!mejor || d < mejor.salto)
+        mejor = { tramo: k, punto: q, desdeA: recorrido + u * l, salto: d };
+      recorrido += l;
+    }
+    if (mejor && mejor.salto <= maxSalto) todos.push(mejor);
+  });
+  todos.sort((x, y) => x.salto - y.salto);
+  const buenos: Enganche[] = [];
+  /*
+   * Por la pista solo va la recta de quien ya está en ella —el avión que
+   * rueda por ella, o el punto del eje al que se va para despegar—. Ver
+   * `Grafo.enPista`. **Y no la de quien va a ella desde fuera**: desde la
+   * doble raya de la 02 de Silvio Pettirossi la recta más corta al eje es una
+   * diagonal de cuarenta y tres metros por encima del borde de la pista, y la
+   * calle de entrada, que es por donde se entra, se quedaba sin usar.
+   */
+  const desdeLaPista = !!grafo.enPista?.(p);
+  for (const e of todos) {
+    if (buenos.length >= ENGANCHES) break;
+    if (porPavimento(grafo, p, e.punto, desdeFuera, desdeLaPista)) buenos.push(e);
+  }
+  /*
+   * **Y si la perpendicular cruza hierba, se busca por dónde no.**
+   *
+   * En Los Rodeos, entre la plataforma y la paralela hay en el dibujo una
+   * franja de hierba de diez a quince metros, y las bocas que la cruzan no
+   * llegan a tocar la plataforma: la perpendicular desde cualquier puesto cae
+   * en la franja. La plataforma solo sale a la red por la calle que se mete
+   * en ella en diagonal, y esa queda lejos en línea recta. Así que, si faltan
+   * enganches, se prueba también a lo largo de los tramos más cercanos, de la
+   * proyección hacia fuera, hasta dar con una recta limpia: es salir de la
+   * plataforma por donde la plataforma sale.
+   */
+  for (const e of todos.slice(0, TRAMOS_QUE_SE_MIRAN)) {
+    if (buenos.length >= ENGANCHES) break;
+    if (buenos.some((b) => b.tramo === e.tramo)) continue;
+    const otra = porOtroSitio(grafo, p, e, maxSalto, desdeFuera, desdeLaPista);
+    if (otra) buenos.push(otra);
+  }
+  return buenos;
+}
+
+/** Cuántos tramos, de los más cercanos, se miran para enganchar. */
+const TRAMOS_QUE_SE_MIRAN = 40;
+
+/** Cada cuánto se prueba a lo largo de un tramo, m. Ver `porOtroSitio`. */
+const PASO_POR_EL_TRAMO = 8;
+
+/**
+ * El punto del tramo de `e` más cercano a `p` al que se llega en recta por
+ * pavimento, probando desde la proyección hacia las dos puntas. Ver
+ * `enganches`.
+ */
+function porOtroSitio(
+  grafo: Grafo,
+  p: Punto,
+  e: Enganche,
+  maxSalto: number,
+  desdeFuera: boolean,
+  porLaPista: boolean,
+): Enganche | null {
+  const t = grafo.tramos[e.tramo]!;
+  const candidatos: Enganche[] = [];
+  for (let s = 0; s <= t.largo; s += PASO_POR_EL_TRAMO) {
+    const q = puntoDelTramo(t, s);
+    const salto = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (salto <= maxSalto) candidatos.push({ tramo: e.tramo, punto: q, desdeA: s, salto });
+  }
+  candidatos.sort((x, y) => x.salto - y.salto);
+  for (const c of candidatos.slice(0, 40))
+    if (porPavimento(grafo, p, c.punto, desdeFuera, porLaPista)) return c;
+  return null;
+}
+
+/** El punto de un tramo a tantos metros de su principio. */
+function puntoDelTramo(t: Tramo, s: number): Punto {
+  const pts = t.puntos;
+  let recorrido = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i]!;
+    const b = pts[i + 1]!;
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (recorrido + l >= s) {
+      const u = l > 0 ? (s - recorrido) / l : 0;
+      return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+    }
+    recorrido += l;
+  }
+  return pts[pts.length - 1]!;
+}
+
+/**
+ * Si la recta de `p` a `q` va por pavimento, y por pista solo si se puede.
+ * Ver `enganches` y `Grafo.enPista`.
+ */
+function porPavimento(
+  grafo: Grafo,
+  p: Punto,
+  q: Punto,
+  desdeFuera: boolean,
+  porLaPista: boolean,
+): boolean {
+  const rodable = grafo.rodable;
+  if (!rodable) return true;
+  const pista = porLaPista ? null : grafo.enPista;
+  const plataforma = grafo.enPlataforma;
+  const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+  const n = Math.ceil(d / MUESTRA);
+  let yaDentro = !desdeFuera;
+  for (let k = 0; k <= n; k++) {
+    const t = n > 0 ? k / n : 1;
+    const x: Punto = [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    const dentro = rodable(x);
+    if (dentro) yaDentro = true;
+    else if (yaDentro) return false;
+    if (pista?.(x)) return false;
+    /*
+     * Lejos de las dos puntas, solo por la plataforma —o por la pista, si se
+     * puede ir por ella—: ver `A_CAMPO_ABIERTO`.
+     */
+    if (
+      plataforma &&
+      yaDentro &&
+      Math.min(t, 1 - t) * d > A_CAMPO_ABIERTO &&
+      !plataforma(x) &&
+      !(porLaPista && grafo.enPista?.(x))
+    )
+      return false;
+  }
+  return yaDentro;
+}
+
+/**
+ * Cuánto de la recta de un enganche puede ir por fuera de una plataforma, m,
+ * contado desde cada punta.
+ *
+ * Una plataforma es asfalto para ir por donde se quiera: se cruza en recta del
+ * puesto a la calle, que es lo que se hace. Una calle no: es un eje, y se va
+ * por él. Sin este límite, la recta del enganche se escapaba por encima de
+ * las calles —asfalto al fin y al cabo— para ahorrarse sus curvas, y de paso
+ * se saltaba al avión que esperaba en ellas, que el buscador solo mira en los
+ * tramos. Veinticinco metros son una calle entera y algo: lo que mide
+ * juntarse con el eje desde un lado, cruzando además la rendija que el dibujo
+ * deja entre la calle y la plataforma. Ver `MARGEN_DEL_PAVIMENTO`.
+ */
+const A_CAMPO_ABIERTO = 25;
+
+/** El trozo de un tramo entre dos distancias desde su principio, orientado. */
+function trozo(t: Tramo, desde: number, hasta: number): Punto[] {
+  const pts = t.puntos;
+  const del = Math.min(desde, hasta);
+  const al = Math.max(desde, hasta);
+  const salida: Punto[] = [];
+  let recorrido = 0;
+  const poner = (q: Punto) => {
+    const ultimo = salida[salida.length - 1];
+    if (!ultimo || Math.hypot(ultimo[0] - q[0], ultimo[1] - q[1]) > 0.01)
+      salida.push(q);
+  };
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i]!;
+    const b = pts[i + 1]!;
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const en = (s: number): Punto => {
+      const u = l > 0 ? Math.max(0, Math.min(1, (s - recorrido) / l)) : 0;
+      return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+    };
+    if (recorrido + l >= del && recorrido <= al) {
+      poner(en(Math.max(del, recorrido)));
+      poner(en(Math.min(al, recorrido + l)));
+    }
+    recorrido += l;
+  }
+  if (!salida.length) salida.push(desde <= 0 ? pts[0]! : pts[pts.length - 1]!);
+  return desde <= hasta ? salida : salida.reverse();
+}
+
+/** Un montón binario de estados por su clave: lo justo para Dijkstra. */
+class Monton {
+  private readonly estados: number[] = [];
+  private readonly claves: number[] = [];
+  get vacio(): boolean {
+    return this.estados.length === 0;
+  }
+  meter(estado: number, clave: number): void {
+    this.estados.push(estado);
+    this.claves.push(clave);
+    let i = this.estados.length - 1;
+    while (i > 0) {
+      const padre = (i - 1) >> 1;
+      if (this.claves[padre]! <= clave) break;
+      this.cambiar(i, padre);
+      i = padre;
+    }
+  }
+  sacar(): { estado: number; clave: number } {
+    const estado = this.estados[0]!;
+    const clave = this.claves[0]!;
+    const ultimoEstado = this.estados.pop()!;
+    const ultimaClave = this.claves.pop()!;
+    if (this.estados.length) {
+      this.estados[0] = ultimoEstado;
+      this.claves[0] = ultimaClave;
+      let i = 0;
+      for (;;) {
+        const iz = 2 * i + 1;
+        const de = iz + 1;
+        let menor = i;
+        if (iz < this.estados.length && this.claves[iz]! < this.claves[menor]!) menor = iz;
+        if (de < this.estados.length && this.claves[de]! < this.claves[menor]!) menor = de;
+        if (menor === i) break;
+        this.cambiar(i, menor);
+        i = menor;
+      }
+    }
+    return { estado, clave };
+  }
+  private cambiar(i: number, j: number): void {
+    [this.estados[i], this.estados[j]] = [this.estados[j]!, this.estados[i]!];
+    [this.claves[i], this.claves[j]] = [this.claves[j]!, this.claves[i]!];
+  }
+}
+
+/*
+ * El buscador anda por **estados** y no por nudos: cada nudo dos veces,
+ * según se haya dejado la pista o no. Ver «Lo que se paga». El estado de un
+ * nudo es `2 · nudo + fuera`.
+ */
+const estadoDe = (nudo: number, fuera: boolean): number => nudo * 2 + (fuera ? 1 : 0);
+
+/** Cómo se entra en la red: a qué estado, por qué trozo y cuánto cuesta. */
+interface Semilla {
+  readonly estado: number;
+  readonly clave: number;
+  readonly coste: number;
+  readonly metros: number;
+  readonly ocupado: boolean;
+  /** El enganche del que sale, si sale de uno. */
+  readonly enganche: Enganche | null;
+  /** El trozo de calle del punto suelto al nudo, ya orientado. */
+  readonly trozo: { readonly ref: string | null; readonly puntos: Punto[] } | null;
+}
+
+/**
+ * Dijkstra desde las semillas. Devuelve lo que cuesta llegar a cada estado y
+ * por dónde se llegó: por un tramo desde otro estado, o desde una semilla.
+ *
+ * Dijkstra y no A*: un aeropuerto tiene decenas de nudos, no millones, y aquí
+ * la sencillez vale más que los microsegundos que ahorraría la heurística.
+ */
+function dijkstra(
+  grafo: Grafo,
+  semillas: readonly Semilla[],
+  ocupadosAqui: ReadonlySet<number>,
+): {
+  clave: Float64Array;
+  porTramo: Int32Array;
+  anterior: Int32Array;
+  semilla: Int32Array;
+} {
+  const n = grafo.nudos.length * 2;
+  const clave = new Float64Array(n).fill(Infinity);
+  const porTramo = new Int32Array(n).fill(-1);
+  const anterior = new Int32Array(n).fill(-1);
+  const semilla = new Int32Array(n).fill(-1);
+  const cerrado = new Uint8Array(n);
+  const monton = new Monton();
+  semillas.forEach((s, i) => {
+    if (s.clave < clave[s.estado]!) {
+      clave[s.estado] = s.clave;
+      semilla[s.estado] = i;
+      porTramo[s.estado] = -1;
+      monton.meter(s.estado, s.clave);
+    }
+  });
+  while (!monton.vacio) {
+    const { estado: actual, clave: c } = monton.sacar();
+    if (cerrado[actual] || c > clave[actual]!) continue;
+    cerrado[actual] = 1;
+    const nudo = actual >> 1;
+    const fuera = (actual & 1) === 1;
+    for (const iTramo of grafo.desde[nudo]!) {
+      const t = grafo.tramos[iTramo]!;
+      const otro = estadoDe(t.a === nudo ? t.b : t.a, fuera || !t.pista);
+      if (cerrado[otro]) continue;
+      const nuevo = c + precio(t, t.largo, ocupadosAqui.has(iTramo), fuera).clave;
+      if (nuevo < clave[otro]!) {
+        clave[otro] = nuevo;
+        porTramo[otro] = iTramo;
+        anterior[otro] = actual;
+        semilla[otro] = -1;
+        monton.meter(otro, nuevo);
+      }
+    }
+  }
+  return { clave, porTramo, anterior, semilla };
+}
+
+/**
+ * Deshace el camino hasta un estado, con los tramos orientados en el sentido
+ * en que se recorren: la geometría de OSM va en el sentido que le vino bien a
+ * quien la dibujó, y una ruta que salta de un lado a otro no se puede pintar.
+ */
+function camino(
+  grafo: Grafo,
+  semillas: readonly Semilla[],
+  hecho: ReturnType<typeof dijkstra>,
+  ocupadosAqui: ReadonlySet<number>,
+  estado: number,
+): {
+  pasos: { ref: string | null; puntos: Punto[] }[];
+  metros: number;
+  coste: number;
+  ocupada: boolean;
+  enganche: Enganche | null;
+} | null {
+  const pasos: { ref: string | null; puntos: Punto[] }[] = [];
+  let metros = 0;
+  let coste = 0;
+  let ocupada = false;
+  let aqui = estado;
+  for (let vueltas = 0; vueltas <= hecho.clave.length; vueltas++) {
+    const s = hecho.semilla[aqui]!;
+    if (s >= 0) {
+      const sem = semillas[s]!;
+      if (sem.trozo) pasos.push(sem.trozo);
+      metros += sem.metros;
+      coste += sem.coste;
+      ocupada ||= sem.ocupado;
+      pasos.reverse();
+      return { pasos, metros, coste, ocupada, enganche: sem.enganche };
+    }
+    const iTramo = hecho.porTramo[aqui]!;
+    const antes = hecho.anterior[aqui]!;
+    if (iTramo < 0 || antes < 0) return null;
+    const t = grafo.tramos[iTramo]!;
+    const nudo = aqui >> 1;
+    pasos.push({
+      ref: t.ref,
+      puntos: t.b === nudo ? [...t.puntos] : [...t.puntos].reverse(),
+    });
+    metros += t.largo;
+    coste += t.coste ?? t.largo;
+    if (ocupadosAqui.has(iTramo)) ocupada = true;
+    aqui = antes;
+  }
+  return null;
+}
+
+/** Cose los pasos en una polilínea, sin puntos repetidos en las costuras. */
+function coser(
+  pasos: readonly { readonly puntos: readonly Punto[] }[],
+  inicio: readonly Punto[] = [],
+  fin: readonly Punto[] = [],
+): Punto[] {
+  const puntos: Punto[] = [];
+  const poner = (p: Punto) => {
+    const ultimo = puntos[puntos.length - 1];
+    if (ultimo && Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) < 0.5) return;
+    puntos.push(p);
+  };
+  for (const p of inicio) poner(p);
+  for (const paso of pasos) for (const p of paso.puntos) poner(p);
+  for (const p of fin) poner(p);
+  return puntos;
+}
+
+function letrasDe(pasos: readonly { readonly ref: string | null }[]): string[] {
+  const letras: string[] = [];
+  for (const paso of pasos) {
+    if (paso.ref && paso.ref !== letras[letras.length - 1]) letras.push(paso.ref);
+  }
+  return letras;
+}
+
+/**
+ * El camino más corto entre dos nudos. Ver `dijkstra`. Se sale de un nudo
+ * como quien sale de una calle: sin haber estado en la pista.
+ */
 export function rutaEntre(
   grafo: Grafo,
   desdeNudo: number,
@@ -614,392 +1224,403 @@ export function rutaEntre(
       letras: [],
       enganche: 0,
     };
-
-  const coste = new Array<number>(grafo.nudos.length).fill(Infinity);
-  const porTramo = new Array<number>(grafo.nudos.length).fill(-1);
-  const cerrado = new Array<boolean>(grafo.nudos.length).fill(false);
   const ocupadosAqui = tramosOcupados(grafo, ocupados);
-  coste[desdeNudo] = 0;
-
-  for (;;) {
-    let actual = -1;
-    let mejor = Infinity;
-    for (let i = 0; i < coste.length; i++) {
-      if (!cerrado[i] && coste[i]! < mejor) {
-        mejor = coste[i]!;
-        actual = i;
-      }
-    }
-    if (actual === -1) break;
-    if (actual === hastaNudo) break;
-    cerrado[actual] = true;
-
-    for (const iTramo of grafo.desde[actual]!) {
-      const t = grafo.tramos[iTramo]!;
-      const otro = t.a === actual ? t.b : t.a;
-      const nuevo =
-        mejor +
-        (t.coste ?? t.largo) +
-        (ocupadosAqui.has(iTramo) ? CUESTA_OCUPADO : 0);
-      if (nuevo < coste[otro]!) {
-        coste[otro] = nuevo;
-        porTramo[otro] = iTramo;
-      }
-    }
-  }
-
-  if (coste[hastaNudo] === Infinity) return null;
-
-  // Se deshace el camino desde el final, orientando cada tramo en el sentido
-  // en que se recorre: la geometría de OSM va en el sentido que le vino bien a
-  // quien la dibujó, y una ruta que salta de un lado a otro no se puede pintar.
-  const pasos: { ref: string | null; puntos: Punto[] }[] = [];
-  // Los metros de verdad, sumando lo que mide cada tramo del camino elegido.
-  let metros = 0;
-  let ocupada = false;
-  let nodo = hastaNudo;
-  while (nodo !== desdeNudo) {
-    const iTramo = porTramo[nodo]!;
-    if (iTramo < 0) return null;
-    if (ocupadosAqui.has(iTramo)) ocupada = true;
-    const t = grafo.tramos[iTramo]!;
-    const anterior = t.a === nodo ? t.b : t.a;
-    const puntos = t.b === nodo ? [...t.puntos] : [...t.puntos].reverse();
-    pasos.push({ ref: t.ref, puntos });
-    metros += t.largo;
-    nodo = anterior;
-  }
-  pasos.reverse();
-
-  const puntos: Punto[] = [];
-  for (const paso of pasos) {
-    for (const p of paso.puntos) {
-      const ultimo = puntos[puntos.length - 1];
-      if (ultimo && Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) < 0.5)
-        continue;
-      puntos.push(p);
-    }
-  }
-
-  const letras: string[] = [];
-  for (const paso of pasos) {
-    if (paso.ref && paso.ref !== letras[letras.length - 1])
-      letras.push(paso.ref);
-  }
-
+  const semillas: Semilla[] = [
+    {
+      estado: estadoDe(desdeNudo, true),
+      clave: 0,
+      coste: 0,
+      metros: 0,
+      ocupado: false,
+      enganche: null,
+      trozo: null,
+    },
+  ];
+  const hecho = dijkstra(grafo, semillas, ocupadosAqui);
+  const llegada = estadoDe(hastaNudo, true);
+  if (hecho.clave[llegada] === Infinity) return null;
+  const c = camino(grafo, semillas, hecho, ocupadosAqui, llegada);
+  if (!c) return null;
   return {
-    tramos: pasos,
-    puntos,
-    largo: metros,
-    coste: coste[hastaNudo]!,
-    ocupada,
-    letras,
+    tramos: c.pasos,
+    puntos: coser(c.pasos),
+    largo: c.metros,
+    coste: c.coste,
+    ocupada: c.ocupada,
+    letras: letrasDe(c.pasos),
     enganche: 0,
   };
 }
 
 /**
- * La ruta se corta donde más se acerca al destino, no donde acaba la calle.
+ * Las rutas de rodaje desde un punto cualquiera del aeropuerto a otros.
  *
- * El buscador de arriba solo sabe enganchar en los **nudos** del grafo, y un
- * punto de espera no tiene por qué caer en un nudo: el de Mariscal
- * Estigarribia está a mitad de la única calle del campo. Sin este recorte la
- * ruta se iba hasta el final de la calle y **volvía por el mismo sitio** para
- * llegar al punto de espera, que ya se había pisado noventa metros antes.
+ * Empiezan en `origen` y acaban en cada destino, enganchando cada uno a la calle
+ * más cercana **por donde cae** y no por el nudo más próximo. Ver `enganches`.
  *
- * Medido con el banco de despegue: ruta de 319 m para un rodaje de 228, el
- * avión parado a un metro del último punto y el juego diciendo, con razón, que
- * quedaban 92. La cuenta del plan no estaba mal; lo que estaba mal era la
- * ruta. Ver #151.
- *
- * El recorte nunca empeora el remate en línea recta que hace quien llama: el
- * punto por el que se corta es, por construcción, el más cercano al destino de
- * toda la polilínea. Pero sí puede quitar maniobra, así que solo se aplica
- * cuando el remate que había era largo de verdad. Ver `EL_TROCITO_QUE_FALTA`.
+ * Devuelve `null` si alguno de los dos no llega al pavimento por pavimento, o
+ * si no hay camino. Que no haya camino es un resultado legítimo y frecuente
+ * con datos reales —hay aeropuertos con la plataforma mapeada y las calles
+ * no—, y el juego tiene que saber apañárselas sin ruta, no reventar ni
+ * inventarse una recta.
  */
-function recortarAlDestino(
-  pasos: { ref: string | null; puntos: Punto[] }[],
-  destino: Punto,
-): {
-  pasos: { ref: string | null; puntos: Punto[] }[];
-  quitado: number;
-  cerca: number;
-} {
-  let mejor = { d: Infinity, paso: 0, i: 0, punto: destino, hasta: 0 };
-  let acumulado = 0;
-  for (let iPaso = 0; iPaso < pasos.length; iPaso++) {
-    const puntos = pasos[iPaso]!.puntos;
-    for (let i = 0; i < puntos.length - 1; i++) {
-      const a = puntos[i]!;
-      const b = puntos[i + 1]!;
-      const dx = b[0] - a[0];
-      const dy = b[1] - a[1];
-      const l2 = dx * dx + dy * dy;
-      const largo = Math.sqrt(l2);
-      const t =
-        l2 < 1e-9
-          ? 0
-          : Math.max(
-              0,
-              Math.min(
-                1,
-                ((destino[0] - a[0]) * dx + (destino[1] - a[1]) * dy) / l2,
-              ),
-            );
-      const sobre: Punto = [a[0] + t * dx, a[1] + t * dy];
-      const d = Math.hypot(destino[0] - sobre[0], destino[1] - sobre[1]);
-      if (d < mejor.d) {
+export function rodajesDesde(
+  grafo: Grafo,
+  origen: Punto,
+  destinos: readonly Punto[],
+  maxSalto = 220,
+  /** Los aviones parados que hay que rodear si se puede. Ver `Ocupados`. */
+  ocupados?: Ocupados,
+  opciones: {
+    /**
+     * Si el origen es el avión, que puede estar ya fuera del asfalto: se le
+     * deja volver a él por lo más corto. Ver `enganches`.
+     */
+    readonly desdeFuera?: boolean;
+    /**
+     * Si el destino es un punto del eje de la pista y hay que llegar a él
+     * **por la pista**. Las calles se cosen hasta el eje —ver «Coser las
+     * calles a la pista»—, así que el último trozo de cada una va por encima
+     * del asfalto de la pista, y un punto del eje puede caer al lado de él.
+     * Llegando por ahí, la raya de entrada acababa a medio girar, sin la
+     * media vuelta que pide una calle que llega a la pista al revés —la de
+     * la 02 de Silvio Pettirossi—. Ver `entradaEnPista` en `plan-de-vuelo.ts`.
+     */
+    readonly alEje?: boolean;
+    /**
+     * Si el origen es la boca de una salida de pista y de ahí **se sale por
+     * la calle**. Sin esto, desde la boca el buscador podía seguir por la
+     * pista —quien aún está en ella la paga a seis— y lo hacía para rodear a
+     * un avión que esperaba en esa calle: en Los Rodeos, por la 12, la raya
+     * de vuelta tomaba la salida de mitad de campo y remontaba mil metros de
+     * pista hasta la siguiente. Una salida ocupada se cambia por otra antes de
+     * tomarla —ver `SALIDA_OCUPADA` en `plan-de-vuelo.ts`—, no rodando hacia
+     * atrás por la pista.
+     */
+    readonly desdeLaCalle?: boolean;
+  } = {},
+): (Ruta | null)[] {
+  const salidas = enganches(grafo, origen, maxSalto, !!opciones.desdeFuera).filter(
+    (e) => !opciones.desdeLaCalle || !grafo.tramos[e.tramo]!.pista,
+  );
+  if (!salidas.length) return destinos.map(() => null);
+  const ocupadosAqui = tramosOcupados(grafo, ocupados);
+
+  /*
+   * Cada enganche del origen entra en la red por los dos nudos de su tramo,
+   * con el trozo de tramo que hay hasta cada uno: un avión a mitad de calle
+   * puede tirar hacia cualquiera de las dos puntas. Y quien se engancha a la
+   * pista está todavía en ella: ver «Lo que se paga».
+   */
+  const semillas: Semilla[] = [];
+  for (const e of salidas) {
+    const t = grafo.tramos[e.tramo]!;
+    const fuera = !t.pista;
+    for (const [nudo, hasta] of [
+      [t.a, 0],
+      [t.b, t.largo],
+    ] as const) {
+      const puntos = trozo(t, e.desdeA, hasta);
+      const metros = Math.abs(hasta - e.desdeA);
+      // Y la recta del enganche también pasa por donde pasa.
+      const ocupado =
+        pasaPorUnOcupado(puntos, ocupados) ||
+        pasaPorUnOcupado([origen, e.punto], ocupados);
+      const p = precio(t, metros, ocupado, fuera);
+      semillas.push({
+        estado: estadoDe(nudo, fuera),
+        clave: laRecta(grafo, origen, e.punto, fuera) + p.clave,
+        coste: e.salto + p.coste,
+        metros: e.salto + metros,
+        ocupado,
+        enganche: e,
+        trozo: { ref: t.ref, puntos },
+      });
+    }
+  }
+  const hecho = dijkstra(grafo, semillas, ocupadosAqui);
+
+  /*
+   * Y desde ahí, a cada destino: el buscador corre una vez por origen, y lo
+   * que cambia de un destino a otro es solo el último trozo. Elegir el par de
+   * salida son cientos de rutas desde unos pocos puestos, y así cuestan lo que
+   * cuestan unos pocos Dijkstra.
+   */
+  const alDestino = (destino: Punto): Ruta | null => {
+    const llegadas = enganches(grafo, destino, maxSalto, false).filter(
+      (e) => !opciones.alEje || grafo.tramos[e.tramo]!.pista,
+    );
+    if (!llegadas.length) return null;
+    interface Hecha {
+      pasos: { ref: string | null; puntos: Punto[] }[];
+      metros: number;
+      coste: number;
+      ocupada: boolean;
+      desde: Enganche;
+      hasta: Enganche;
+    }
+    let mejor: { clave: number; armar: () => Hecha | null } | null = null;
+
+    for (const f of llegadas) {
+      const u = grafo.tramos[f.tramo]!;
+      // Desde cada punta del tramo donde cae el destino, y en los dos estados.
+      for (const [nudo, desde] of [
+        [u.a, 0],
+        [u.b, u.largo],
+      ] as const)
+        for (const fuera of [false, true]) {
+          const estado = estadoDe(nudo, fuera);
+          const base = hecho.clave[estado]!;
+          if (base === Infinity) continue;
+          const puntos = trozo(u, desde, f.desdeA);
+          const metros = Math.abs(f.desdeA - desde);
+          const ocupado =
+            pasaPorUnOcupado(puntos, ocupados) ||
+            pasaPorUnOcupado([f.punto, destino], ocupados);
+          const p = precio(u, metros, ocupado, fuera);
+          const clave = base + p.clave + laRecta(grafo, f.punto, destino, fuera);
+          if (mejor && clave >= mejor.clave) continue;
+          mejor = {
+            clave,
+            armar: () => {
+              const c = camino(grafo, semillas, hecho, ocupadosAqui, estado);
+              if (!c?.enganche) return null;
+              return {
+                pasos: [...c.pasos, { ref: u.ref, puntos }],
+                metros: c.metros + metros + f.salto,
+                coste: c.coste + p.coste + f.salto,
+                ocupada: c.ocupada || ocupado,
+                desde: c.enganche,
+                hasta: f,
+              };
+            },
+          };
+        }
+      /*
+       * Y si origen y destino caen en el mismo tramo, **por el tramo**, sin
+       * pasar por ningún nudo. Es el caso de la doble raya a mitad de la única
+       * calle de Mariscal Estigarribia, y el de recalcular a mitad de la
+       * paralela con la doble raya más adelante en ella.
+       */
+      for (const e of salidas) {
+        if (e.tramo !== f.tramo) continue;
+        const puntos = trozo(u, e.desdeA, f.desdeA);
+        const metros = Math.abs(f.desdeA - e.desdeA);
+        const ocupado =
+          pasaPorUnOcupado(puntos, ocupados) ||
+          pasaPorUnOcupado([origen, e.punto], ocupados) ||
+          pasaPorUnOcupado([f.punto, destino], ocupados);
+        const p = precio(u, metros, ocupado, !u.pista);
+        const clave =
+          laRecta(grafo, origen, e.punto, !u.pista) +
+          p.clave +
+          laRecta(grafo, f.punto, destino, !u.pista);
+        if (mejor && clave >= mejor.clave) continue;
         mejor = {
-          d,
-          paso: iPaso,
-          i,
-          punto: sobre,
-          hasta: acumulado + t * largo,
+          clave,
+          armar: () => ({
+            pasos: [{ ref: u.ref, puntos }],
+            metros: e.salto + metros + f.salto,
+            coste: e.salto + p.coste + f.salto,
+            ocupada: ocupado,
+            desde: e,
+            hasta: f,
+          }),
         };
       }
-      acumulado += largo;
     }
-  }
-  // Sin tramos no hay nada que recortar, y con el punto más cercano al final
-  // tampoco: el recorte se queda en un no-op y la ruta sale entera.
-  if (mejor.d === Infinity) return { pasos, quitado: 0, cerca: Infinity };
-
-  const cortados = pasos.slice(0, mejor.paso + 1).map((paso, iPaso) => {
-    if (iPaso < mejor.paso) return paso;
-    const puntos = paso.puntos.slice(0, mejor.i + 1);
-    const ultimo = puntos[puntos.length - 1]!;
-    if (
-      Math.hypot(ultimo[0] - mejor.punto[0], ultimo[1] - mejor.punto[1]) > 0.5
-    )
-      puntos.push(mejor.punto);
-    return { ref: paso.ref, puntos };
-  });
-  // Y un paso que se queda en un solo punto no es un tramo por el que se pase:
-  // es el final de la ruta, y su letra no se canta.
-  const limpios = cortados.filter(
-    (paso, i) => paso.puntos.length > 1 || i < cortados.length - 1,
-  );
-  return { pasos: limpios, quitado: acumulado - mejor.hasta, cerca: mejor.d };
-}
-
-/**
- * Cuánto puede quedar el destino del final de la ruta sin que eso sea un
- * rodeo, m.
- *
- * Cuarenta es el mismo número que `SALTO_A_LA_ESPERA` en el plan de vuelo, y
- * por el mismo motivo: es el ancho de la boca de una calle donde se une a la
- * pista. Un punto de espera que queda a menos de eso del final de la ruta está
- * **en esa boca**, y el trozo de calle que lleva hasta él es la curva de
- * entrada; recortarla sería quitarle al avión la maniobra.
- *
- * Los dos casos, medidos: en Tenerife Norte el buscador acaba a 15,2 m del
- * punto de espera y los quince metros que sobran son el bulbo de giro —cortar
- * ahí dejó al avión dando vueltas trescientos cincuenta segundos a veintidós
- * metros de la doble raya—. En Mariscal Estigarribia acaba a 59,5 m, y esos
- * cincuenta y nueve son calle recorrida en el sentido contrario.
- */
-const EL_TROCITO_QUE_FALTA = 40;
-
-/** La misma ruta, cortada en su punto más cercano al destino. */
-function recortada(ruta: Ruta, destino: Punto): Ruta {
-  const fin = ruta.puntos[ruta.puntos.length - 1];
-  if (
-    !fin ||
-    Math.hypot(fin[0] - destino[0], fin[1] - destino[1]) <= EL_TROCITO_QUE_FALTA
-  )
-    return ruta;
-
-  const pasos = ruta.tramos.map((t) => ({
-    ref: t.ref,
-    puntos: [...t.puntos] as Punto[],
-  }));
-  const { pasos: cortados, quitado, cerca } = recortarAlDestino(pasos, destino);
-  /*
-   * **Y solo si la ruta llega de verdad hasta el destino.**
-   *
-   * Costó otra medida. Si el punto más cercano de toda la polilínea sigue
-   * quedando lejos, el destino no está sobre esta ruta: está a campo través, y
-   * cortar por ahí abarata un camino que no existe. En Mariscal Estigarribia
-   * eso puso el juego en «autorizado» nada más cargar, con el motor en marcha
-   * y sin haber rodado un metro: un punto de espera cualquiera salía a
-   * doscientos metros de hierba y ganaba a la doble raya de verdad.
-   */
-  if (quitado < 0.5 || cerca > EL_TROCITO_QUE_FALTA) return ruta;
-
-  const puntos: Punto[] = [];
-  for (const paso of cortados) {
-    for (const p of paso.puntos) {
-      const ultimo = puntos[puntos.length - 1];
-      if (ultimo && Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) < 0.5)
-        continue;
-      puntos.push(p);
-    }
-  }
-  const letras: string[] = [];
-  for (const paso of cortados) {
-    if (paso.ref && paso.ref !== letras[letras.length - 1])
-      letras.push(paso.ref);
-  }
-  /*
-   * Al largo se le quitan los metros que se han quitado, y al coste lo mismo.
-   *
-   * El coste va por lo alto a propósito: si el trozo recortado era pista,
-   * cruzarla se paga a seis y aquí se descuenta a uno, así que el camino
-   * recortado nunca parece más barato de lo que es. Del largo no hace falta
-   * prudencia ninguna: son metros y se restan metros.
-   */
-  return {
-    tramos: cortados,
-    puntos,
-    largo: Math.max(0, ruta.largo - quitado),
-    coste: Math.max(0, ruta.coste - quitado),
-    ocupada: ruta.ocupada,
-    letras,
-    enganche: ruta.enganche,
+    const hecha = mejor?.armar();
+    if (!hecha) return null;
+    const pasos = hecha.pasos.filter((paso) => paso.puntos.length > 1);
+    return {
+      tramos: pasos,
+      // La ruta empieza en las ruedas y acaba en el destino, no en la calle: un
+      // puesto puede estar a cien metros de ella, cruzando la plataforma.
+      puntos: coser(pasos, [origen], [destino]),
+      largo: hecha.metros,
+      coste: hecha.coste,
+      ocupada: hecha.ocupada,
+      letras: letrasDe(pasos),
+      enganche: Math.max(hecha.desde.salto, hecha.hasta.salto),
+    };
   };
+  return destinos.map(alDestino);
 }
 
-/**
- * La ruta de rodaje entre dos puntos cualesquiera del aeropuerto.
- *
- * Devuelve `null` si alguno de los dos queda lejos de cualquier calle o si no
- * hay camino. Que no haya camino es un resultado legítimo y frecuente con
- * datos reales —hay aeropuertos con la plataforma mapeada y las calles no—, y
- * el juego tiene que saber apañárselas sin ruta, no reventar.
- */
-/**
- * Cuánto se le perdona al destino estar al lado de la ruta y no al final, m.
- *
- * Veinticinco: media calle de rodaje y un margen. Más lejos que eso, el destino
- * no está *sobre* esta ruta y acercarse a él es una maniobra de verdad, no un
- * remate.
- */
-const AL_LADO = 25;
-
-/**
- * Acaba la ruta **donde está el destino**, no más allá.
- *
- * ## El fallo que arregla
- *
- * La ruta se cose en tres trozos: las ruedas, el camino del grafo y el destino.
- * Cuando el camino **pasa de largo** por delante del destino —quince metros en
- * Tenerife Norte— el último trozo va hacia atrás, y lo que se pinta en el
- * asfalto es una horquilla: el avión sale, se pasa, y vuelve. Con los codos
- * redondeados encima sale un bucle de radio un metro alrededor de la línea
- * amarilla. «No entiendo estas curvas en rodadura para salir en TFN.»
- *
- * Medido allí: la ruta en crudo iba 35 m al oeste, 9 de vuelta, 33 al oeste y
- * 15 de vuelta, con giros de 104 y 164 grados.
- *
- * ## Y por qué no se recorta la ruta entera
- *
- * Porque el trozo que sobra **no es un trozo de ruta, es el pasarse**. Cortar
- * la ruta en su punto más cercano al destino ya se probó y se llevaba por
- * delante el bulbo de giro —ver `EL_TROCITO_QUE_FALTA`—, que es una curva de
- * verdad y hace falta. Lo que se hace aquí es mover **el último punto** a donde
- * el destino cae sobre el último tramo: la curva se queda entera y el avión
- * deja de irse de largo.
- */
-function sinPasarseDelDestino(
-  puntos: readonly Punto[],
-  destino: Punto,
-  desdeElFinal = true,
-): Punto[] {
-  const salida = puntos.map((p) => [...p] as Punto);
-  if (salida.length < 3) return salida;
-  if (!desdeElFinal) {
-    // El mismo remate por la otra punta: la ruta empieza en las ruedas, y si el
-    // avión ya ha pasado el nudo donde el buscador engancha, el primer tramo va
-    // hacia atrás. Se resuelve dándole la vuelta a la lista.
-    return sinPasarseDelDestino([...salida].reverse(), destino).reverse();
-  }
-  /*
-   * Se mira el último tramo de ruta y se pregunta **dónde cae el destino sobre
-   * él**:
-   *
-   * - Dentro: la ruta acaba ahí, en la proyección, y el remate es el pasito que
-   *   queda. Es el caso de Tenerife Norte.
-   * - Antes de empezar: ese tramo entero sobra —se va y se vuelve por la misma
-   *   línea— y se quita. Es el caso de La Palma, donde la ruta iba diez metros
-   *   de más y volvía **al punto del que acababa de salir**. Y se vuelve a
-   *   mirar, porque debajo puede haber otro.
-   * - Más allá del final: la ruta se queda corta y el remate es legítimo. No se
-   *   toca.
-   */
-  while (salida.length >= 3) {
-    const a = salida[salida.length - 3]!;
-    const b = salida[salida.length - 2]!;
-    const dx = b[0] - a[0];
-    const dy = b[1] - a[1];
-    const l2 = dx * dx + dy * dy;
-    if (l2 < 1) return salida;
-    const t = ((destino[0] - a[0]) * dx + (destino[1] - a[1]) * dy) / l2;
-    if (t >= 0.95) return salida;
-    const px = a[0] + dx * t;
-    const py = a[1] + dy * t;
-    // Y solo si el destino está **al lado** de este tramo: si está lejos, esto
-    // no es pasarse, es que el destino cae en otro sitio.
-    const dentro = Math.max(0, Math.min(1, t));
-    const cerca = Math.hypot(
-      destino[0] - (a[0] + dx * dentro),
-      destino[1] - (a[1] + dy * dentro),
-    );
-    if (cerca > AL_LADO) return salida;
-    if (t > 0.05) {
-      salida[salida.length - 2] = [px, py];
-      return salida;
-    }
-    salida.splice(salida.length - 2, 1);
-  }
-  return salida;
-}
-
+/** La ruta entre dos puntos. Ver `rodajesDesde`, que es quien la busca. */
 export function rodajeEntre(
   grafo: Grafo,
   origen: Punto,
   destino: Punto,
   maxSalto = 220,
-  /** Los aviones parados que hay que rodear si se puede. Ver `Ocupados`. */
   ocupados?: Ocupados,
+  opciones: Parameters<typeof rodajesDesde>[5] = {},
 ): Ruta | null {
-  const a = nudoCercano(grafo, origen);
-  const b = nudoCercano(grafo, destino);
-  if (a.nudo < 0 || b.nudo < 0) return null;
-  if (a.distancia > maxSalto || b.distancia > maxSalto) return null;
-  const entera = rutaEntre(grafo, a.nudo, b.nudo, ocupados);
-  if (!entera) return null;
-  const ruta = recortada(entera, destino);
+  return rodajesDesde(grafo, origen, [destino], maxSalto, ocupados, opciones)[0] ?? null;
+}
 
-  // **La ruta empieza en las ruedas y acaba en el destino**, no en el nudo más
-  // cercano a cada uno. Un puesto de estacionamiento puede estar a cien metros
-  // de la calle más próxima, y sin estos dos remates la raya verde nacía lejos
-  // del avión: al empezar la partida el juego decía «volvé a la raya verde»
-  // antes de que nadie se hubiera movido.
-  const puntos = sinPasarseDelDestino(
-    [origen, ...ruta.puntos, destino].filter((p, i, todos) => {
-      const anterior = todos[i - 1];
-      return (
-        !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5
-      );
-    }),
-    destino,
-  );
-  // Y lo mismo por la punta de las ruedas, que también se pasa de largo.
-  const conLasDos = sinPasarseDelDestino(puntos, origen, false);
-  // Y el remate se mide desde donde acaba la ruta de verdad, que con el
-  // recorte ya no es el nudo del final: cobrarle al camino los noventa metros
-  // que se le acaban de quitar lo haría perder contra uno peor.
-  const fin = ruta.puntos[ruta.puntos.length - 1];
-  const remate = fin
-    ? Math.hypot(fin[0] - destino[0], fin[1] - destino[1])
-    : b.distancia;
-  return {
-    ...ruta,
-    puntos: conLasDos,
-    largo: ruta.largo + a.distancia + remate,
-    coste: ruta.coste + a.distancia + remate,
-    enganche: Math.max(a.distancia, remate),
+/**
+ * Si una recta entre dos puntos va por pavimento de punta a punta, pista
+ * incluida. Es la regla de las rectas de enganche para quien traza a mano
+ * sobre la pista: ver `entradaEnPista` en `plan-de-vuelo.ts`.
+ */
+export function rectaPorPavimento(grafo: Grafo, a: Punto, b: Punto): boolean {
+  return porPavimento(grafo, a, b, false, true);
+}
+
+/**
+ * **Si en un punto hay pavimento**, con la cuenta de `enElPavimento` —y el
+ * margen también alrededor de las plataformas, ver `MARGEN_DEL_PAVIMENTO`—
+ * pero sin recorrer el aeropuerto entero cada vez.
+ *
+ * El buscador lo pregunta cada dos metros de cada recta de enganche, y un
+ * aeropuerto grande son ochenta calles y catorce plataformas: preguntándolo a
+ * lo bruto, las pruebas de rodaje pasaron de segundos a minutos. Así que las
+ * piezas se reparten una vez en una rejilla y cada pregunta mira solo las de
+ * su casilla.
+ */
+/**
+ * `pavimentoDe`, hecho la primera vez que se pregunta y guardado por
+ * aeródromo: un campo tiene su grafo para quien juega y otro por cada tipo
+ * del tráfico, y el pavimento es el mismo para todos.
+ */
+function pavimentoGuardado(
+  aero: Aerodrome,
+  que: "todo" | "pista" | "plataforma",
+  margen: number,
+): (p: Punto) => boolean {
+  let hecho: ((p: Punto) => boolean) | null = null;
+  return (p) => {
+    if (!hecho) {
+      let delCampo = PAVIMENTOS.get(aero);
+      if (!delCampo) PAVIMENTOS.set(aero, (delCampo = new Map()));
+      const clave = `${que}:${margen}`;
+      hecho = delCampo.get(clave) ?? null;
+      if (!hecho) {
+        const solo =
+          que === "pista"
+            ? { ...aero, taxiways: [], aprons: [] }
+            : que === "plataforma"
+              ? { ...aero, runways: [], taxiways: [] }
+              : aero;
+        hecho = pavimentoDe(solo, margen);
+        delCampo.set(clave, hecho);
+      }
+    }
+    return hecho(p);
   };
+}
+
+const PAVIMENTOS = new WeakMap<Aerodrome, Map<string, (p: Punto) => boolean>>();
+
+function pavimentoDe(aero: Aerodrome, margen: number): (p: Punto) => boolean {
+  /*
+   * Casillas de dieciséis metros: de sesenta y cuatro, una casilla de Gran
+   * Canaria llevaba dentro media plataforma y una docena de calles, y la
+   * cuenta se comía casi medio segundo al elegir la salida. Y las casillas
+   * que caen enteras dentro de una plataforma se apuntan aparte: ahí la
+   * respuesta es «sí» sin mirar nada.
+   */
+  const CASILLA = 16;
+  type Pieza =
+    | { readonly a: Punto; readonly b: Punto; readonly media: number }
+    | { readonly poligono: readonly Punto[] };
+  const casillas = new Map<number, Pieza[]>();
+  const llenas = new Set<number>();
+  const claveDe = (i: number, j: number) => i * 100003 + j;
+  const poner = (pieza: Pieza, minX: number, minY: number, maxX: number, maxY: number) => {
+    for (let i = Math.floor(minX / CASILLA); i <= Math.floor(maxX / CASILLA); i++)
+      for (let j = Math.floor(minY / CASILLA); j <= Math.floor(maxY / CASILLA); j++) {
+        const k = claveDe(i, j);
+        let lista = casillas.get(k);
+        if (!lista) casillas.set(k, (lista = []));
+        lista.push(pieza);
+      }
+  };
+  const linea = (eje: readonly Punto[], media: number, cerrada = false) => {
+    const n = cerrada ? eje.length : eje.length - 1;
+    for (let i = 0; i < n; i++) {
+      const a = eje[i]!;
+      const b = eje[(i + 1) % eje.length]!;
+      poner(
+        { a, b, media },
+        Math.min(a[0], b[0]) - media,
+        Math.min(a[1], b[1]) - media,
+        Math.max(a[0], b[0]) + media,
+        Math.max(a[1], b[1]) + media,
+      );
+    }
+  };
+  for (const pista of aero.runways) linea(pista.centerline, (pista.widthM ?? 45) / 2 + margen);
+  for (const calle of aero.taxiways)
+    linea(calle.path, (calle.widthM ?? ANCHO_RODADURA) / 2 + margen);
+  for (const plataforma of aero.aprons) {
+    const poligono = plataforma.polygon;
+    if (poligono.length < 3) continue;
+    // El margen alrededor de la plataforma es el de su borde, como una calle.
+    if (margen > 0) linea(poligono, margen, true);
+    const xs = poligono.map((q) => q[0]);
+    const ys = poligono.map((q) => q[1]);
+    const [minX, minY] = [Math.min(...xs), Math.min(...ys)];
+    const [maxX, maxY] = [Math.max(...xs), Math.max(...ys)];
+    const pieza: Pieza = { poligono };
+    // Las casillas que pisa el borde, andándolo a medio paso de casilla.
+    const borde = new Set<number>();
+    for (let v = 0; v < poligono.length; v++) {
+      const a = poligono[v]!;
+      const b = poligono[(v + 1) % poligono.length]!;
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const n = Math.max(1, Math.ceil(l / (CASILLA / 2)));
+      for (let s = 0; s <= n; s++) {
+        const x = a[0] + ((b[0] - a[0]) * s) / n;
+        const y = a[1] + ((b[1] - a[1]) * s) / n;
+        for (const dx of [-1, 0, 1])
+          for (const dy of [-1, 0, 1])
+            borde.add(claveDe(Math.floor(x / CASILLA) + dx, Math.floor(y / CASILLA) + dy));
+      }
+    }
+    for (let i = Math.floor(minX / CASILLA); i <= Math.floor(maxX / CASILLA); i++)
+      for (let j = Math.floor(minY / CASILLA); j <= Math.floor(maxY / CASILLA); j++) {
+        const k = claveDe(i, j);
+        if (llenas.has(k)) continue;
+        if (!borde.has(k)) {
+          // Sin borde dentro, la casilla está entera dentro o entera fuera.
+          if (dentroDe([(i + 0.5) * CASILLA, (j + 0.5) * CASILLA], poligono)) llenas.add(k);
+          continue;
+        }
+        let lista = casillas.get(k);
+        if (!lista) casillas.set(k, (lista = []));
+        lista.push(pieza);
+      }
+  }
+  return (p) => {
+    const k = claveDe(Math.floor(p[0] / CASILLA), Math.floor(p[1] / CASILLA));
+    if (llenas.has(k)) return true;
+    const lista = casillas.get(k);
+    if (!lista) return false;
+    for (const pieza of lista) {
+      if ("poligono" in pieza) {
+        if (dentroDe(p, pieza.poligono)) return true;
+      } else if (alSegmento(p, pieza.a, pieza.b) < pieza.media) return true;
+    }
+    return false;
+  };
+}
+
+
+/** Punto dentro de un polígono, por el número de cruces. */
+function dentroDe(p: Punto, poligono: readonly Punto[]): boolean {
+  let dentro = false;
+  for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+    const a = poligono[i]!;
+    const b = poligono[j]!;
+    if (
+      a[1] > p[1] !== b[1] > p[1] &&
+      p[0] < ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1]) + a[0]
+    )
+      dentro = !dentro;
+  }
+  return dentro;
 }
 
 /** Si el ala de este avión no pasa por este tramo sin rozar un edificio. */

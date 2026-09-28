@@ -135,7 +135,14 @@ describe("la raya verde rodea los aviones parados", () => {
           for (const boca of bocas)
             for (const puesto of (aero.parkingPositions ?? []).slice(0, 10)) {
               const antes = rodajeEntre(grafo, boca, puesto.xy, 600);
-              if (!antes || !cerca(antes.puntos, parado, RADIO / 2)) continue;
+              /*
+               * Por la línea entera, no por sus vértices: la ruta cruza la
+               * plataforma en recta desde la calle hasta el puesto, y esa
+               * recta puede pasar a dos metros del parado sin que ninguna de
+               * sus dos puntas le quede cerca. Mirando solo los vértices, en
+               * Los Rodeos no se medía ni un caso.
+               */
+              if (!antes || !cerca(densa(antes.puntos), parado, RADIO / 2)) continue;
               // El puesto de llegada puede ser justo donde está el parado:
               // ahí no hay rodeo que valga, y no es lo que se mide.
               if (Math.hypot(puesto.xy[0] - parado[0], puesto.xy[1] - parado[1]) < RADIO)
@@ -147,9 +154,16 @@ describe("la raya verde rodea los aviones parados", () => {
                * **Si hay otra calle, la coge.** «Hay otra» se mira quitando
                * del grafo los tramos que pasan junto al parado y buscando
                * otra vez: si así también se llega, había por dónde.
+               *
+               * **Y se llega sin pasarle cerca**, que no es lo mismo. La ruta
+               * acaba cruzando la plataforma en recta hasta el puesto, y esa
+               * recta no es un tramo del grafo: quitar tramos no la quita. En
+               * Los Rodeos el «otro camino» acababa con ciento noventa metros
+               * de plataforma a veinticinco del parado.
                */
               const sinEsos = sinTramosCerca(grafo, parado, RADIO);
-              if (rodajeEntre(sinEsos, boca, puesto.xy, 600))
+              const otra = rodajeEntre(sinEsos, boca, puesto.xy, 600, ocupados);
+              if (otra && !otra.ocupada)
                 expect(
                   ahora!.ocupada,
                   `${esc.id}: había otra calle de ${boca.map(Math.round)} a ${puesto.xy.map(Math.round)}`,
@@ -160,7 +174,7 @@ describe("la raya verde rodea los aviones parados", () => {
                */
               if (!ahora!.ocupada) {
                 expect(
-                  cerca(ahora!.puntos, parado, RADIO / 2),
+                  cerca(densa(ahora!.puntos), parado, RADIO / 2),
                   `${esc.id}: de ${boca.map(Math.round)} a ${puesto.xy.map(Math.round)}`,
                 ).toBe(false);
                 rodean++;
@@ -191,7 +205,7 @@ describe("la raya verde rodea los aviones parados", () => {
             continue;
           const salida = aero.runways[0]!.centerline[1] ?? aero.runways[0]!.centerline[0]!;
           const antes = rodajeEntre(grafo, salida, puesto.xy, 600);
-          if (!antes || !cerca(antes.puntos, parado, RADIO / 2)) continue;
+          if (!antes || !cerca(densa(antes.puntos), parado, RADIO / 2)) continue;
           pasaban++;
           const ahora = rodajeEntre(grafo, salida, puesto.xy, 600, {
             puntos: [parado],

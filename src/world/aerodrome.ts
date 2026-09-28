@@ -60,6 +60,7 @@ import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 import { laRedonda } from "./luces-de-posicion";
 import { laDibujaLaGranja } from "./granja";
 import { esDura } from "./superficie";
+import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -262,8 +263,12 @@ export function esAfis(
   return !!aero && aero.afis === true && !sinTorre(aero);
 }
 
-/** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
-export const ANCHO_RODADURA = 23;
+/*
+ * La anchura por defecto de una calle de rodaje vive en su propio fichero, sin
+ * dependencias: la usan también los escenarios **al cargarse**, y este fichero
+ * y el de los escenarios se importan en círculo. Ver `ancho-de-rodadura.ts`.
+ */
+export { ANCHO_RODADURA };
 
 /**
  * ¿Pisa asfalto el avión, o está en la hierba?

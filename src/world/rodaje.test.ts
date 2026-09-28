@@ -15,7 +15,7 @@ import gcxo from "../../data/aerodromes/gcxo.aero.json";
 import sgme from "../../data/aerodromes/sgme.aero.json";
 import gcgm from "../../data/aerodromes/gcgm.aero.json";
 import { construirGrafo, nudoCercano, rodajeEntre, rutaEntre } from "./rodaje";
-import type { Aerodrome, Punto } from "./aerodrome";
+import { aLaPolilinea, type Aerodrome, type Punto } from "./aerodrome";
 
 const AERODROMOS = [
   ["Silvio Pettirossi", sgas as unknown as Aerodrome],
@@ -137,15 +137,39 @@ describe("salir de la pista", () => {
   const aero = gcxo as unknown as Aerodrome;
   const grafo = construirGrafo(aero);
   const pista = aero.runways[0]!;
-  /** Un punto a mitad de la pista, que es donde se acaba una toma. */
-  const mitad = pista.centerline[Math.floor(pista.centerline.length / 2)]!;
+  /**
+   * Un punto a mitad de la pista, que es donde se acaba una toma.
+   *
+   * **A mitad de verdad.** Era el vértice central del eje, y el eje de Los
+   * Rodeos tiene dos vértices: el «central» era la punta de la 30, al lado de
+   * la raqueta de la E5. Mientras la ruta se enganchaba al nudo más cercano
+   * daba igual; enganchándose a la calle más cercana, desde ahí se sale por
+   * la raqueta, que es lo correcto y no es lo que esta prueba pregunta.
+   */
+  const mitad: Punto = (() => {
+    const a = pista.centerline[0]!;
+    const b = pista.centerline[pista.centerline.length - 1]!;
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  })();
 
-  it("desde el asfalto de la pista, la ruta empieza por la pista", () => {
+  it("desde el asfalto de la pista, la ruta sale de ahí mismo, sin saltos", () => {
     const puesto = aero.parkingPositions![0]!.xy;
     const ruta = rodajeEntre(grafo, mitad, puesto);
     expect(ruta).not.toBeNull();
-    // El primer tramo tiene que ser el de la pista, no un salto a una calle.
-    expect(ruta!.letras[0]).toBe(pista.ref);
+    /*
+     * Lo que no puede haber es un salto a una calle. Se pedía que el primer
+     * tramo fuera la pista, y eso era la forma de decirlo cuando la ruta se
+     * enganchaba al nudo más cercano; ahora se engancha donde cae, y desde la
+     * mitad de Los Rodeos lo que cae al lado es la boca de la E3: se sale por
+     * ella sin rodar un metro de pista, que es mejor todavía. Así que se mira
+     * lo que importaba: que el primer trozo vaya por dentro de la pista.
+     */
+    const [a, b] = [ruta!.puntos[0]!, ruta!.puntos[1]!];
+    const eje = pista.centerline as unknown as Punto[];
+    for (let t = 0; t <= 1; t += 0.05) {
+      const q: Punto = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      expect(aLaPolilinea(q, eje)).toBeLessThan((pista.widthM ?? 45) / 2);
+    }
   });
 
   it("la ruta entera va por asfalto, sin cruzar el campo", () => {

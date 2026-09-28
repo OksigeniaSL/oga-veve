@@ -13,6 +13,12 @@
  */
 
 import type { Aerodrome } from "./aerodrome";
+/*
+ * Y cada aeródromo, con sus plataformas sueltas cosidas a su calle. Ver
+ * `plataformas-cosidas.ts`: sin esto, noventa y un puestos de Tenerife Sur no
+ * tenían por dónde salir.
+ */
+import { conPlataformasCosidas } from "./plataformas-cosidas";
 import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
@@ -674,7 +680,7 @@ export const PETTIROSSI: Scenario = {
   runway: pistaDe(SGAS as unknown as Aerodrome),
   // Deducida de los propios datos: el umbral 02 apunta a 10° verdaderos.
   magneticVariation: 10,
-  aerodrome: SGAS as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGAS as unknown as Aerodrome),
   /**
    * **Y de Asunción se sale a algún sitio, que es lo que faltaba.**
    *
@@ -897,7 +903,7 @@ export const TENERIFE_NORTE: Scenario = {
    * ver el número del suelo. Si no coinciden, no hay lección.
    */
   magneticVariation: 9,
-  aerodrome: GCXO as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCXO as unknown as Aerodrome),
   /*
    * Sin circuito publicado a propósito: Los Rodeos publica **dos**, el norte y
    * el sur (AIP España, AD 2-GCXO, 22.4), así que el lado lo decide el terreno
@@ -1005,7 +1011,7 @@ export const YVYTU_RAPE: Scenario = {
    * y dos.
    */
   magneticVariation: 13,
-  aerodrome: YVYTU as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(YVYTU as unknown as Aerodrome),
   /**
    * **Y la granja está en medio de la red paraguaya, no en un rincón.**
    *
@@ -1098,7 +1104,7 @@ export const LA_PALMA: Scenario = {
    * el fichero del aeródromo, que sale de OpenStreetMap.
    */
   magneticVariation: 1,
-  aerodrome: GCLA as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCLA as unknown as Aerodrome),
   // Por el este, sobre el mar (AIP España, AD 2-GCLA, 22.4).
   circuitoPublicado: { "36": "derecha", "18": "izquierda" },
   /*
@@ -1191,7 +1197,7 @@ export const TENERIFE_SUR: Scenario = {
   runway: pistaDe(GCTS as unknown as Aerodrome, "07"),
   // El asfalto corre a 68,6° verdaderos y la cabecera pone 07.
   magneticVariation: 1.4,
-  aerodrome: GCTS as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCTS as unknown as Aerodrome),
   // Por el sur, sobre el mar (AIP España, AD 2-GCTS, 22.6).
   circuitoPublicado: { "07": "derecha", "25": "izquierda" },
 };
@@ -1251,7 +1257,7 @@ export const GRAN_CANARIA: Scenario = {
   runway: pistaDe(GCLP as unknown as Aerodrome, "03L"),
   // El asfalto corre a 22° verdaderos y la cabecera pone 03.
   magneticVariation: 8,
-  aerodrome: GCLP as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCLP as unknown as Aerodrome),
   // Por el este, sobre el mar (AIP España, AD 2-GCLP, 22.7).
   circuitoPublicado: { "03L": "derecha", "21R": "izquierda" },
   /*
@@ -1385,7 +1391,7 @@ export const LANZAROTE: Scenario = {
   runway: pistaDe(GCRR as unknown as Aerodrome, "03"),
   // El asfalto corre a 27° verdaderos y la cabecera pone 03.
   magneticVariation: 3,
-  aerodrome: GCRR as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCRR as unknown as Aerodrome),
   /*
    * Dos circuitos (AIP España, AD 2-GCRR, 22.7): el del tránsito regular por
    * el este, sobre el mar, y otro por el oeste de uso exclusivo del tráfico
@@ -1476,7 +1482,7 @@ export const FUERTEVENTURA: Scenario = {
   // El asfalto corre a 1,6° verdaderos y la cabecera pone 01: seis grados de
   // declinación al oeste, que es la de Canarias.
   magneticVariation: 6,
-  aerodrome: GCFV as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCFV as unknown as Aerodrome),
   // Por el este, sobre el mar, por las dos cabeceras (AIP España, AD
   // 2-GCFV, 22.6).
   circuitoPublicado: { "01": "derecha", "19": "izquierda" },
@@ -1550,7 +1556,7 @@ export const EL_HIERRO: Scenario = {
   runway: pistaDe(GCHI as unknown as Aerodrome, "34"),
   // El asfalto corre a 332,6° verdaderos y la cabecera pone 34.
   magneticVariation: 7.4,
-  aerodrome: GCHI as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCHI as unknown as Aerodrome),
   // Por el este, sobre el mar (AIP España, AD 2-GCHI, 22.4).
   circuitoPublicado: { "34": "derecha", "16": "izquierda" },
 };
@@ -1619,7 +1625,7 @@ export const LA_GOMERA: Scenario = {
   sun: { azimuth: 155, elevation: 52 },
   runway: pistaDe(GCGM as unknown as Aerodrome, "09"),
   magneticVariation: 8.8,
-  aerodrome: GCGM as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(GCGM as unknown as Aerodrome),
   // Por el sur, sobre el mar (AIP España, AD 2-GCGM, 22.2).
   circuitoPublicado: { "09": "derecha", "27": "izquierda" },
 };
@@ -1685,7 +1691,7 @@ export const CUATRO_VIENTOS: Scenario = {
    * regalada de este juego.
    */
   magneticVariation: 1,
-  aerodrome: LECU as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(LECU as unknown as Aerodrome),
 };
 
 /**
@@ -1766,7 +1772,7 @@ export const GUARANI: Scenario = {
    * cuando estás alineado.
    */
   magneticVariation: 9,
-  aerodrome: SGES as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGES as unknown as Aerodrome),
   /**
    * **Y de Ciudad del Este se vuela a la granja, al sur, a la capital y al
    * norte.**
@@ -1875,7 +1881,7 @@ export const ESTIGARRIBIA: Scenario = {
   runway: pistaDe(SGME as unknown as Aerodrome, "19"),
   // Doce grados: la 19 corre a 177,8° verdaderos y la cabecera pone 19.
   magneticVariation: 12,
-  aerodrome: SGME as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGME as unknown as Aerodrome),
   /*
    * **Y del Chaco a la capital**: 475 km, eje 355 —en diagonal, y por eso
    * tanto—. Es la ruta que anunció en 2024 el gobernador de Boquerón para
@@ -1951,7 +1957,7 @@ export const PEDRO_JUAN: Scenario = {
   // Dieciséis grados, deducidos de los propios datos: la 03 corre a 14°
   // verdaderos y la cabecera pone 03.
   magneticVariation: 16,
-  aerodrome: SGPJ as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGPJ as unknown as Aerodrome),
   /*
    * **Y las dos rutas que tuvo de verdad**, las de Sol del Paraguay: a
    * Asunción, 336 km, y a Ciudad del Este, 329. Esta segunda es la que fija
@@ -2030,7 +2036,7 @@ export const ENCARNACION: Scenario = {
   // Ocho grados, deducidos del eje de OpenStreetMap: la 02 corre a 12°
   // verdaderos y la cabecera pone 02.
   magneticVariation: 8,
-  aerodrome: SGEN as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGEN as unknown as Aerodrome),
   /**
    * **Y Encarnación deja de ser un campo suelto.**
    *
@@ -2114,7 +2120,7 @@ export const CONCEPCION: Scenario = {
   // Catorce grados, deducidos de los propios datos: la 03 corre a 16°
   // verdaderos y la cabecera pone 03.
   magneticVariation: 14,
-  aerodrome: SGCO as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGCO as unknown as Aerodrome),
   /*
    * A Asunción y de vuelta: 200 km, eje 200 —los dos campos están casi en el
    * mismo meridiano, así que aquí manda el norte-sur—. Con veintiuna veces el
@@ -2206,7 +2212,7 @@ export const AYOLAS: Scenario = {
    * 02, y la lección de mirar el rumbo y ver el número del suelo se perdería.
    */
   magneticVariation: 10,
-  aerodrome: SGAY as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGAY as unknown as Aerodrome),
   /*
    * **Y a Asunción, que es de donde vienen los aviones que aterrizan aquí.**
    *
@@ -2281,7 +2287,7 @@ export const PILAR: Scenario = {
   // suelo dice 02, que es lo mismo. Aquí la convención de Los Rodeos y la
   // declinación de verdad coinciden.
   magneticVariation: 14,
-  aerodrome: SGPI as unknown as Aerodrome,
+  aerodrome: conPlataformasCosidas(SGPI as unknown as Aerodrome),
   /*
    * **A Asunción y de vuelta**, que es lo que vuela de verdad este campo: en
    * marzo de 2026 un bimotor de negocios hizo Posadas–Pilar–Asunción con la

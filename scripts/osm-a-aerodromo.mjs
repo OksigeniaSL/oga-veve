@@ -393,6 +393,49 @@ const camino = (elemento, proj) =>
   simplificar((elemento.geometry ?? []).map((p) => proj(p.lat, p.lon)));
 
 /**
+ * **Los anillos de una superficie**: uno si es un `way` cerrado, y los
+ * exteriores si es una relación `multipolygon`.
+ *
+ * Esto leía `geometry` y nada más, que es lo que trae un `way`; una relación
+ * lo trae repartido en sus miembros, así que salía vacía. En Tenerife Sur la
+ * plataforma de los puestos H37 a H43 es una relación de dos anillos, y el
+ * fichero la guardaba como un polígono sin un solo punto: esos puestos
+ * quedaban dibujados en mitad del campo. Se cosen los tramos exteriores punta
+ * con punta hasta cerrar cada anillo; los interiores —los agujeros— se dejan,
+ * que una plataforma con un parterre dentro sigue siendo plataforma.
+ */
+function anillos(elemento, proj) {
+  if (elemento.type !== "relation") {
+    const uno = camino(elemento, proj);
+    return uno.length >= 3 ? [uno] : [];
+  }
+  const tramos = (elemento.members ?? [])
+    .filter((m) => m.role === "outer" && m.geometry?.length > 1)
+    .map((m) => m.geometry);
+  const igual = (a, b) => a.lat === b.lat && a.lon === b.lon;
+  const salida = [];
+  while (tramos.length) {
+    const anillo = [...tramos.shift()];
+    for (let seguir = true; seguir && !igual(anillo[0], anillo[anillo.length - 1]); ) {
+      seguir = false;
+      for (let i = 0; i < tramos.length; i++) {
+        const t = tramos[i];
+        const ultimo = anillo[anillo.length - 1];
+        if (igual(t[0], ultimo)) anillo.push(...t.slice(1));
+        else if (igual(t[t.length - 1], ultimo)) anillo.push(...[...t].reverse().slice(1));
+        else continue;
+        tramos.splice(i, 1);
+        seguir = true;
+        break;
+      }
+    }
+    const puntos = simplificar(anillo.map((p) => proj(p.lat, p.lon)));
+    if (puntos.length >= 3) salida.push(puntos);
+  }
+  return salida;
+}
+
+/**
  * La clase de un edificio o aparato, por orden de lo más concreto a lo más
  * vago.
  *
@@ -850,10 +893,12 @@ async function construir(icao, pistas, aeropuertos) {
       widthM: w.tags.width ? Number(w.tags.width) : null,
       path: camino(w, proj),
     })),
-    aprons: de("apron").map((w) => ({
-      surface: w.tags.surface ?? null,
-      polygon: camino(w, proj),
-    })),
+    aprons: de("apron").flatMap((w) =>
+      anillos(w, proj).map((polygon) => ({
+        surface: w.tags.surface ?? null,
+        polygon,
+      })),
+    ),
     /*
      * **Los edificios del campo, no solo la terminal.**
      *

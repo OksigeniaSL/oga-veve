@@ -3406,7 +3406,9 @@ export class Game {
         this.aircraft,
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
-      this.plan.ocupados = () => this.paradosEnLasCalles();
+      this.plan.ocupados = () => this.paradosEnLasCalles(false);
+      this.plan.enCola = () => this.paradosEnLasCalles(true);
+      this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
     }
     /*
      * **Y el dibujo va con el plan, no con la lección.**
@@ -7744,11 +7746,14 @@ export class Game {
   /**
    * Dónde hay aviones del tráfico parados, o a punto de parar, en las calles
    * del campo en el que se está, en los ejes del fichero. Ver `dondeParan`.
+   * `sale`: los que van a despegar, que son la cola de quien también va; ver
+   * `enCola` en `plan-de-vuelo.ts`. `soloLosQueHay`: sin la doble raya de
+   * cada tipo cuando no hay nadie esperando en ella; ver `colaQueHay`.
    */
-  private paradosEnLasCalles(): Punto[] {
-    return (this.trafico?.dondeParan() ?? []).map(
-      (p) => [p.x, -p.z] as Punto,
-    );
+  private paradosEnLasCalles(sale: boolean, soloLosQueHay = false): Punto[] {
+    return (this.trafico?.dondeParan() ?? [])
+      .filter((p) => p.sale === sale && (p.hay || !soloLosQueHay))
+      .map((p) => [p.x, -p.z] as Punto);
   }
 
   /**
@@ -8039,7 +8044,9 @@ export class Game {
       this.aircraft,
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
-    this.plan.ocupados = () => this.paradosEnLasCalles();
+    this.plan.ocupados = () => this.paradosEnLasCalles(false);
+    this.plan.enCola = () => this.paradosEnLasCalles(true);
+    this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
     // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
     this.scene.add(this.plan.grupo);
     this.colocarSenalero();

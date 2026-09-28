@@ -868,8 +868,14 @@ export interface Trafico {
    * uno que rueda ahora. Es lo que rodea la raya verde de quien juega: ver
    * `Ocupados` en `rodaje.ts`. Solo con calles; sin ellas el tráfico se
    * aparta por el costado y no estorba a nadie.
+   *
+   * `sale` es si va a despegar —rodando hacia la pista o esperando en su
+   * doble raya—, que para quien también va a despegar es **su cola** y no un
+   * estorbo: ver `enCola` en `plan-de-vuelo.ts`. Y `hay`, si hay un avión
+   * ahí ahora: la doble raya de cada tipo se da siempre, esté o no esperando
+   * en ella, y detrás de un sitio vacío no se para nadie.
    */
-  dondeParan(): { x: number; z: number }[];
+  dondeParan(): { x: number; z: number; sale: boolean; hay: boolean }[];
   /** Cuántos se ven, y dónde. Para el banco y para la carta. */
   quienes(): {
     matricula: string;
@@ -1535,21 +1541,26 @@ export function crearTrafico(
       return Math.max(0, c.toca - quien.recorrido);
     },
     dondeParan() {
-      const puntos: { x: number; z: number }[] = [];
+      const puntos: { x: number; z: number; sale: boolean; hay: boolean }[] = [];
       for (const c of caminosPorTipo.values()) {
         if (!c?.enTierra) continue;
         const raya = porElCamino(c.salida, c.espera);
-        if (raya) puntos.push({ x: raya.sitio.x, z: raya.sitio.z });
+        if (raya) puntos.push({ x: raya.sitio.x, z: raya.sitio.z, sale: true, hay: false });
       }
       for (const quien of aviones.values()) {
         const c = quien.caminos;
         if (!c?.enTierra) continue;
-        const rueda =
-          (quien.marca.camino === c.salida &&
-            quien.recorrido < c.enTierra.despega) ||
-          (quien.marca.camino === c.llegada && quien.recorrido >= c.toca);
-        if (rueda)
-          puntos.push({ x: quien.grupo.position.x, z: quien.grupo.position.z });
+        const sale =
+          quien.marca.camino === c.salida && quien.recorrido < c.enTierra.despega;
+        const llega =
+          quien.marca.camino === c.llegada && quien.recorrido >= c.toca;
+        if (sale || llega)
+          puntos.push({
+            x: quien.grupo.position.x,
+            z: quien.grupo.position.z,
+            sale,
+            hay: true,
+          });
       }
       return puntos;
     },
