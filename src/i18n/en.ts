@@ -433,6 +433,10 @@ export const EN: Dictionary = {
   "vuelo.laOtraPunta":
     "That is not the runway in use: today the wind says land from the other end",
   "palabra.otraPunta": "Other end",
+  "vuelo.calor": "It's hot: we'll need more runway to take off",
+  "calor.tarjeta": "It's hot, {grados} °C: taking off needs {mas} % more runway",
+  "calor.tarjetaCabina":
+    "{grados} °C, density altitude {pies} ft: {mas} % longer takeoff run",
   "vuelo.salidaSiguiente":
     "You missed the exit. No problem: keep rolling to the next one",
   "palabra.salidaSiguiente": "Next one",

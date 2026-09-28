@@ -41,7 +41,7 @@ import {
 import { PALETA } from "../ui/paleta";
 import { anillosDe, type Eco } from "../flight/tormentas";
 import { bienPuesta } from "../flight/altimetro";
-import { temperaturaExterior } from "../flight/atmosphere";
+import { temperaturaExterior, type Aire } from "../flight/atmosphere";
 
 /**
  * De cada escalón del radar a su color.
@@ -224,6 +224,12 @@ export interface DatosDeCabina {
    * de menos dentro.
    */
   readonly mach?: number | null;
+  /**
+   * El aire del día, para la temperatura de fuera: la del parte abajo, y
+   * bajando hasta la estándar en la tropopausa. Sin él, la estándar. Ver
+   * `atmosphere.ts`.
+   */
+  readonly aire?: Aire;
   /**
    * Lo más rápido que se puede ir con lo que se lleva sacado, en nudos, o
    * `Infinity` si no se lleva nada: lo que baja la banda roja de la cinta. De
@@ -1740,7 +1746,7 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * como están escritos en el avión que van a ver algún día.
    */
   const yAire = yMando + 34;
-  const oat = Math.round(temperaturaExterior(d.altura));
+  const oat = Math.round(temperaturaExterior(d.altura, d.aire));
   escribir(g, "OAT", ANCHO * 0.28, yAire, "500 11px " + FUENTE, TENUE, "right");
   escribir(
     g,

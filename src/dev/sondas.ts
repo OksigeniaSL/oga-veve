@@ -1538,6 +1538,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         indicatedAirspeed(
           juego.flight.state.airspeed,
           juego.flight.state.position.y,
+          juego.flight.aireDelDia(),
         ) * 1.94384,
       ),
     /** En qué campo está el avión ahora: el de salida o el de destino. */

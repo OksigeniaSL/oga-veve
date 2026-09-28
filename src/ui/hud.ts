@@ -26,7 +26,11 @@
 
 import type { FlightState } from "../flight/model";
 import type { AudioLevel } from "../audio/audio";
-import { indicatedAirspeed, velocidadDelSonido } from "../flight/atmosphere";
+import {
+  type Aire,
+  indicatedAirspeed,
+  velocidadDelSonido,
+} from "../flight/atmosphere";
 import { topeDeLoSacado } from "../flight/limites";
 import { t, type TranslationKey } from "../i18n";
 import { leerTexto, ponerTexto } from "../datos/guardado";
@@ -2202,11 +2206,21 @@ export class Hud {
         readonly puesta: number;
         readonly delSitio: number;
       } | null;
+      /**
+       * El aire del día, el mismo que vuela el modelo: la indicada, el Mach y
+       * la temperatura de fuera tienen que salir de él, o el avión y los
+       * relojes dirían cosas distintas. Ver `atmosphere.ts`.
+       */
+      readonly aire?: Aire;
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
-    const ias = indicatedAirspeed(state.airspeed, state.position.y);
+    const ias = indicatedAirspeed(
+      state.airspeed,
+      state.position.y,
+      mandos?.aire,
+    );
 
     if (this.pictos.present) {
       // Fracciones, no unidades: aquí no hay nudos ni pies que valgan.
@@ -2544,8 +2558,10 @@ export class Hud {
           sobreElSuelo:
             Math.hypot(state.velocity.x, state.velocity.z) * 1.94384,
           mach: esDeChorro(this.ficha)
-            ? state.airspeed / velocidadDelSonido(state.position.y)
+            ? state.airspeed /
+              velocidadDelSonido(state.position.y, mandos?.aire)
             : null,
+          aire: mandos?.aire,
           motores: Array.from({ length: this.ficha.motores }, () =>
             regimen(this.ficha, throttle, engineOn),
           ),

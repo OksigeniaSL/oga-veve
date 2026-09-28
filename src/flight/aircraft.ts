@@ -271,6 +271,32 @@ export function tieneReversa(a: AircraftConfig): boolean {
 }
 
 /**
+ * **Lo que da el motor con este aire**, como fracción de lo que da al nivel
+ * del mar en un día estándar: la densidad a la 0,7, la ley de los libros de
+ * proyecto para el empuje de una turbina y, en primera aproximación, para la
+ * potencia de un motor de pistón. Ver el ADR 0011.
+ *
+ * **Y con el aire del día**, que es lo que faltaba: el motor no sabe a qué
+ * altura está, solo cuánto aire le entra, y en una tarde de calor le entra
+ * menos. Ver `atmosphere.ts`.
+ *
+ * Vive en un solo sitio porque la preguntan tres: el modelo de vuelo, el
+ * combustible del modelo sencillo y la cuenta de la carrera de despegue. Si
+ * cada uno llevara la suya, la carrera que se anuncia y la que se vuela
+ * dirían cosas distintas.
+ *
+ * El de pistón sin compresor pierde, de verdad, algo más deprisa —la ley de
+ * Gagg y Farrar, `σ − (1 − σ)/7,55`, le deja el 71 % a tres mil metros donde
+ * esta le deja el 81 %—. No se usa aquí porque el JAZ 40 tiene su crucero a
+ * 5.500 m, que es el de un bimotor con turbocompresor, y con la ley del
+ * atmosférico casi no llegaría: primero hay que decidir qué motor lleva. Ver
+ * el ADR 0012.
+ */
+export function loQueDaElMotor(_ac: AircraftConfig, sigma: number): number {
+  return Math.pow(Math.max(0, sigma), 0.7);
+}
+
+/**
  * **La velocidad de pérdida con todo fuera**, m/s: por encima, el ala lleva
  * el avión; por debajo, lo llevan las ruedas.
  *

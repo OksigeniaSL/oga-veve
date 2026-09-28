@@ -414,7 +414,13 @@ import {
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
 import { conElVueloRecto } from "./flight/vuelo-recto";
-import { indicatedAirspeed, velocidadDelSonido } from "./flight/atmosphere";
+import {
+  aireDelParte,
+  type Aire as AireDelDia,
+  indicatedAirspeed,
+  trueFromIndicated,
+  velocidadDelSonido,
+} from "./flight/atmosphere";
 import {
   delante,
   enEjesDePista,
@@ -593,9 +599,11 @@ import {
 } from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon, SACUDE, YA_NO_SACUDE } from "./flight/cinturon";
+import { calorQuePesa } from "./flight/caliente-y-alto";
 import {
   loSolto,
   mandosPara,
+  memoriaNueva,
   sePuedeConectar,
   type Objetivos,
 } from "./flight/piloto-automatico";
@@ -704,6 +712,19 @@ function recordarVista(vista: CameraMode): void {
  * Todo lo demás en el suelo es rodar, y rodando hay una velocidad correcta.
  */
 const CORRIENDO = new Set(["despegando", "comprometido", "aterrizado"]);
+
+/**
+ * Las fases en las que se tiene la pista para despegar, **la primera que
+ * llegue**: con torre se pasa por «autorizado», en Pettirossi por el
+ * back-taxi, y en la pista de hierba de casa se va directo a correr. Ver
+ * `decirElCalor`.
+ */
+const ANTES_DE_CORRER: ReadonlySet<Fase> = new Set<Fase>([
+  "autorizado",
+  "back-taxi",
+  "alineando",
+  "despegando",
+]);
 
 /*
  * **Aquí vivía la velocidad de entrada en final, y ahora la dice el modelo.**
@@ -4385,7 +4406,16 @@ export class Game {
         superficie: this.superficie,
         velocidad: s.airspeed,
         caida: s.touchdownSinkRate,
-        perdida: velocidadDePerdida(this.aircraft),
+        /*
+         * **En verdadera**, como `velocidad`: la pérdida es de indicada, y en
+         * un campo alto o con calor la misma indicada es más velocidad real.
+         * Ver `atmosphere.ts`.
+         */
+        perdida: trueFromIndicated(
+          velocidadDePerdida(this.aircraft),
+          s.position.y,
+          this.flight.aireDelDia(),
+        ),
         rompe: this.flight.limiteDeCaida(),
       });
       if (percance) {
@@ -8187,17 +8217,29 @@ export class Game {
         x: this.scenario.runway.x,
         z: this.scenario.runway.z,
         meteo: this.scenario.meteo ?? TIEMPO_DE_CASA,
+        cota: this.terrain.cotaDeLaPista(
+          this.scenario.runway.x,
+          this.scenario.runway.z,
+        ),
       },
       ...this.vecinos.map((v) => ({
         x: v.campo.pista.x,
         z: v.campo.pista.z,
         meteo: v.campo.escenario.meteo ?? TIEMPO_DE_CASA,
+        cota: this.cotaDePistaEn(v.campo, v.campo.pista.x, v.campo.pista.z),
       })),
     ];
     const p = this.flight.state.position;
     const aqui = tiempoEntreCampos(campos, p.x, p.z);
     this.vientoAqui = aqui;
     this.flight.ponerViento(aqui.aire.x, aqui.aire.z);
+    /*
+     * **Y el aire del día, con el mismo reparto que el viento.** La
+     * temperatura del parte venía en cada campo y no la usaba nadie más que
+     * la comandante para decirla: la densidad era siempre la de un día
+     * estándar. Ver `atmosphere.ts`.
+     */
+    this.flight.ponerAire(aqui.delDia);
     this.qnhDelSitio = aqui.qnh;
     /*
      * **Y en los peldaños que no leen cifras, la rueda la gira la
@@ -8209,6 +8251,22 @@ export class Game {
     if (this.tier.instruments === "none" || this.tier.instruments === "pictorial")
       this.qnhPuesta = Math.round(aqui.qnh);
     this.darElAtis();
+  }
+
+  /**
+   * El aire del día en el campo de casa, con su parte: lo que hay antes de
+   * que `seguirElViento` lo reparta entre campos.
+   *
+   * La primera vez se pregunta antes de que haya terreno, y entonces se da el
+   * campo por puesto al nivel del mar: dura hasta el primer repaso, medio
+   * segundo después.
+   */
+  private aireDeCasa(): AireDelDia {
+    const meteo = this.scenario.meteo ?? TIEMPO_DE_CASA;
+    const r = this.scenario.runway;
+    const terreno = this.terrain as Terrain | undefined;
+    const cota = terreno ? terreno.cotaDeLaPista(r.x, r.z) : 0;
+    return aireDelParte(meteo.temp, cota, meteo.qnh);
   }
 
   /** Lo que se lleva sin recalcular el viento, s. Ver `seguirElViento`. */
@@ -8285,6 +8343,60 @@ export class Game {
       this.porRadio("vacate next available", "mando", undefined, true);
     else this.instructor.decir(dicho.texto, dicho.id, "normal");
   }
+
+  /**
+   * **«Hace calor: vamos a necesitar más pista»**, antes de despegar, cuando
+   * pesa. Ver `flight/caliente-y-alto.ts`, que es quien decide si pesa.
+   *
+   * Solo en los peldaños que leen cifras: la instructora lo dice y la tarjeta
+   * lo pone con los números —la temperatura y cuánta más carrera hace falta,
+   * y la altitud de densidad en la cabina que vuela en pies—. Abajo el calor
+   * también alarga la carrera, y se vuela igual, sin contarlo: todavía no hay
+   * número que leer.
+   *
+   * Una vez por despegue: se rearma al estar en el aire. Un aviso vuelve
+   * cuando pasa otra vez lo que avisa, no cuando pasa un rato.
+   */
+  private decirElCalor(): void {
+    if (this.calorDicho) return;
+    this.calorDicho = true;
+    if (!canalesDe(this.tier.avisos).cifra) return;
+    const campo = this.elCampo();
+    const calor = calorQuePesa(
+      this.aircraft,
+      campo.escenario.meteo ?? TIEMPO_DE_CASA,
+      this.cotaDelCampo(campo),
+      this.superficie,
+    );
+    if (!calor) return;
+    const idioma = getLocale() === "gug" ? "es-PY" : getLocale();
+    const cifras = {
+      grados: String(Math.round(calor.grados)),
+      mas: String(Math.round(calor.masLarga * 100)),
+      pies: (Math.round(calor.alturaDeDensidad / 0.3048 / 100) * 100).toLocaleString(
+        idioma,
+      ),
+    };
+    const rotulo =
+      this.tier.units === "aeronautical"
+        ? t("calor.tarjetaCabina", cifras)
+        : t("calor.tarjeta", cifras);
+    this.hud.senal.mostrar("calor", rotulo, null, { segundos: 6 });
+    this.instructor.decir(t("vuelo.calor"), "vuelo.calor", "normal");
+  }
+
+  /** Si ya se dijo el calor en este despegue. Ver `decirElCalor`. */
+  private calorDicho = false;
+
+  /**
+   * **Y si toca decirlo en cuanto quede sitio.** La fase que da la pista pone
+   * su propia tarjeta en ese mismo fotograma —«alineá», «acelerá»—, y lo del
+   * calor, puesto a la vez, se borraba antes de verse. Un suceso, una voz, y
+   * una tarjeta: primero lo que hay que hacer, y en cuanto se ha visto, el
+   * porqué de que hoy la carrera sea más larga. Si el avión se va al aire
+   * antes, ya no se dice: ya no hay carrera que alargar.
+   */
+  private calorPorDecir = false;
 
   /** Con qué plan y cuántas salidas pasadas se llevan dichas. */
   private salidasDichas: {
@@ -9024,7 +9136,11 @@ export class Game {
         enElSuelo: s.onGround,
         enFinal: this.enFinalPor.enUso !== null || this.enFinalPor.otra !== null,
         deSiempre: banda,
-        indicada: indicatedAirspeed(s.airspeed, s.position.y),
+        indicada: indicatedAirspeed(
+          s.airspeed,
+          s.position.y,
+          this.flight.aireDelDia(),
+        ),
         planeo: planeoDe(this.aircraft),
       });
       banda = b.banda;
@@ -10057,6 +10173,7 @@ export class Game {
         velocidad: indicatedAirspeed(
           this.flight.state.airspeed,
           this.flight.state.position.y,
+          this.flight.aireDelDia(),
         ),
         // Y a cuál hay que ir para aterrizar, que es lo que la cinta no decía.
         vref: this.aircraft.approachSpeed,
@@ -10124,8 +10241,13 @@ export class Game {
         // El Mach, de la misma cuenta que el cuadro plano. Ver `DatosDeCabina`.
         mach: esDeChorro(this.aircraft)
           ? this.flight.state.airspeed /
-            velocidadDelSonido(this.flight.state.position.y)
+            velocidadDelSonido(
+              this.flight.state.position.y,
+              this.flight.aireDelDia(),
+            )
           : null,
+        // Y el aire del día, para la temperatura de fuera. Ver `atmosphere.ts`.
+        aire: this.flight.aireDelDia(),
         viento: this.vientoDeHoy,
         // Y el depósito, el mismo que ve el cuadro plano. Ver `elDeposito`.
         combustible: this.elDeposito(),
@@ -10210,6 +10332,7 @@ export class Game {
           indicatedAirspeed(
             this.flight.state.airspeed,
             this.flight.state.position.y,
+            this.flight.aireDelDia(),
           ) * NUDOS,
         pies: this.flight.state.position.y * PIES,
         fpm: this.flight.state.verticalSpeed * PIES_POR_MINUTO,
@@ -10276,6 +10399,7 @@ export class Game {
         tren: this.input.controls.tren,
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
+        aire: this.flight.aireDelDia(),
         // Y el mismo mundo que reciben las pantallas de la cabina: una sola
         // cuenta, dos dibujos. Ver `elMapa`.
         mapa: this.elMapa(),
@@ -11794,6 +11918,7 @@ export class Game {
      * en `flight/turno-de-pista.ts`.
      */
     this.plan.pistaDeOtros = this.turno.pistaDeOtros;
+    this.plan.aire = this.flight.aireDelDia();
     const vista = this.plan.paso(
       this.flight.state,
       suelo,
@@ -11825,7 +11950,14 @@ export class Game {
       if (!this.salidasDichas.dicha) this.decirSalPorLaSiguiente();
       this.salidasDichas.dicha = true;
     }
-    if (!this.flight.state.onGround) this.salidasDichas.dicha = false;
+    if (!this.flight.state.onGround) {
+      this.salidasDichas.dicha = false;
+      this.calorDicho = false;
+      this.calorPorDecir = false;
+    } else if (this.calorPorDecir && !this.hud.senal.puesto.dibujo) {
+      this.calorPorDecir = false;
+      this.decirElCalor();
+    }
     this.presentarLaMatricula();
     /*
      * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
@@ -11945,6 +12077,14 @@ export class Game {
        * dieciséis metros del eje y se va acercando mientras acelera: cruzaba
        * el listón de los doce metros ya lanzado. Ver #151.
        */
+      /*
+       * **Y si hace calor, se dice antes de correr**: al tener la pista, por
+       * la fase que llegue primero, que no en todos los campos son las
+       * mismas. Se apunta aquí y se dice en cuanto la tarjeta de la fase haya
+       * hecho su trabajo: ver `calorPorDecir`.
+       */
+      if (!repuesta && ANTES_DE_CORRER.has(vista.fase) && !this.calorDicho)
+        this.calorPorDecir = true;
       if (
         vista.fase === "alineando" &&
         this.flight.state.airspeed < ALINEANDO_DE_VERDAD
@@ -13004,6 +13144,13 @@ export class Game {
    */
   private timonDelAutomatico = 0;
 
+  /**
+   * Lo que el automático recuerda de un fotograma al siguiente: sus topes de
+   * ritmo lo necesitan. Se hace nueva cada vez que se engancha, para que coja
+   * el avión como está. Ver `Memoria` en `flight/piloto-automatico.ts`.
+   */
+  private memoriaDelAutomatico = memoriaNueva();
+
   /** Si el piloto automático está gobernando algo ahora mismo. */
   get pilotoPuesto(): boolean {
     return this.objetivos.rumbo !== null || this.objetivos.altitud !== null;
@@ -13068,6 +13215,7 @@ export class Game {
       );
     }
     const s = this.flight.state;
+    if (puesto) this.memoriaDelAutomatico = memoriaNueva();
     this.objetivos = puesto
       ? {
           rumbo: s.heading,
@@ -13081,7 +13229,11 @@ export class Game {
            * «Me sube a la estratosfera y ahora me baja, hice un bucle y todo.»
            * Ver `Objetivos.velocidad`.
            */
-          velocidad: indicatedAirspeed(s.airspeed, s.position.y),
+          velocidad: indicatedAirspeed(
+            s.airspeed,
+            s.position.y,
+            this.flight.aireDelDia(),
+          ),
         }
       : { rumbo: null, altitud: null, velocidad: null };
     this.hud.ponerPilotoAutomatico(puesto);
@@ -13118,9 +13270,25 @@ export class Game {
      * bajo, se respeta. Ver `Seguimiento.alturaParaElAutomatico`.
      */
     if (this.objetivos.altitud !== null && this.navegacion.bajando) {
-      const senda = this.navegacion.alturaParaElAutomatico(this.lecturaDeRuta());
-      if (senda !== null && senda < this.objetivos.altitud - 1)
+      const lectura = this.lecturaDeRuta();
+      const senda = this.navegacion.alturaParaElAutomatico(lectura);
+      let sostiene = this.objetivos.altitud;
+      if (senda !== null && senda < sostiene - 1) {
+        sostiene = senda;
         this.objetivos = { ...this.objetivos, altitud: senda };
+      }
+      /*
+       * **Y el ritmo de la senda**, mientras lo que se sostiene sea ella: con
+       * la altitud sola, el automático iba siempre por detrás de una senda que
+       * no para de bajar. Si quien vuela lo puso más bajo, la altitud ya no es
+       * la de la senda y no se mueve: ritmo cero. Ver `Objetivos.ritmo`.
+       */
+      const ritmo =
+        senda !== null && senda <= sostiene + 1
+          ? (this.navegacion.ritmoParaElAutomatico(lectura) ?? 0)
+          : 0;
+      if (ritmo !== this.objetivos.ritmo)
+        this.objetivos = { ...this.objetivos, ritmo };
     }
     const m = mandosPara(
       {
@@ -13129,11 +13297,21 @@ export class Game {
         cabeceo: pitchAngleOf(s.orientation),
         altitud: s.position.y,
         vertical: s.velocity.y,
-        velocidad: indicatedAirspeed(s.airspeed, s.position.y),
+        velocidad: indicatedAirspeed(
+          s.airspeed,
+          s.position.y,
+          this.flight.aireDelDia(),
+        ),
         gas: c.throttle,
+        verdadera: s.airspeed,
+        ritmoDeCabeceo: s.pitchRate,
+        // Solo cuenta al engancharse: coger el avión con el timón que lo
+        // sostenía, ayuda incluida. Ver `timonAhora` en `model.ts`.
+        timon: this.flight.timonAhora(),
       },
       this.objetivos,
       dt,
+      this.memoriaDelAutomatico,
     );
     /*
      * **Y el piloto automático NO escribe en los mandos del piloto.**
@@ -13158,6 +13336,9 @@ export class Game {
     Object.assign(this.mandosConAutomatico, c);
     this.mandosConAutomatico.aileron = m.aileron;
     this.mandosConAutomatico.elevator = m.elevator;
+    // Y el modelo sabe que los lleva él, para que las ayudas que imitan a
+    // quien suelta la palanca no se turnen con él. Ver `ControlInputs.automatico`.
+    this.mandosConAutomatico.automatico = true;
     /*
      * **Y el automático toma el trim; no pelea contra él.**
      *
@@ -14053,6 +14234,9 @@ export class Game {
       this.vientoAqui?.aire ??
       vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
     modelo.ponerViento(aire.x, aire.z);
+    // Y el aire del día, por lo mismo: el modelo nuevo nacería en un día
+    // estándar hasta el siguiente repaso del tiempo.
+    modelo.ponerAire(this.vientoAqui?.delDia ?? this.aireDeCasa());
     return modelo;
   }
 

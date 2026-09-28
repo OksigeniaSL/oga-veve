@@ -38,7 +38,7 @@ import {
   type Cuadro,
 } from "./cuadro";
 import { enLaMuesca } from "../flight/flaps";
-import { temperaturaExterior } from "../flight/atmosphere";
+import { temperaturaExterior, type Aire } from "../flight/atmosphere";
 import { altitudDeCabina } from "../flight/cabina-presurizada";
 import {
   ALTO_DEL_CUADRO,
@@ -111,6 +111,8 @@ export interface DatosDelTablero {
   readonly sobreElSuelo: number;
   /** Número de Mach, o `null` si este avión no lo enseña. */
   readonly mach: number | null;
+  /** El aire del día, para la temperatura de fuera. Sin él, la estándar. */
+  readonly aire?: Aire;
   /** A cuánto va cada motor, de 0 a 1, en su orden. */
   readonly motores: readonly number[];
   readonly flaps: number;
@@ -743,7 +745,7 @@ export class Tablero {
        * `cabina-presurizada.ts`. Ver `aireYCabina` en `cristal.ts`.
        */
       const metros = d.pies / PIES;
-      const oat = Math.round(temperaturaExterior(metros));
+      const oat = Math.round(temperaturaExterior(metros, d.aire));
       this.texto("oat", `${oat > 0 ? "+" : ""}${oat}°C`);
       this.texto("cabina",
         String(

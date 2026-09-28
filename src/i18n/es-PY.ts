@@ -1112,6 +1112,17 @@ export const ES_PY = {
     "Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima",
   "palabra.salidaSiguiente": "La próxima",
   /*
+   * «Caliente y alto», antes de despegar y solo cuando pesa: la voz lo dice
+   * sin números y la tarjeta los pone. Dice **pista para despegar** y no
+   * que la pista se alargue, que es lo que se entendería: lo que se alarga
+   * es la carrera. Ver `flight/caliente-y-alto.ts`.
+   */
+  "vuelo.calor": "Hace calor: vamos a necesitar más pista para despegar",
+  "calor.tarjeta":
+    "Hace calor, {grados} °C: para despegar hace falta un {mas} % más de pista",
+  "calor.tarjetaCabina":
+    "{grados} °C, altitud de densidad {pies} ft: un {mas} % más de carrera",
+  /*
    * La matrícula, presentada al empezar: la torre te llama así. Se monta con
    * las piezas del alfabeto; ver `presentarLaMatricula` en `game.ts`.
    */

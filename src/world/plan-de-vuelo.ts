@@ -35,6 +35,11 @@ import { aLaPolilinea } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
 import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
+  AIRE_ESTANDAR,
+  type Aire,
+  trueFromIndicated,
+} from "../flight/atmosphere";
+import {
   paraEntrarYDespegar,
   pistaQueHaceFalta,
   pistaQueNecesita,
@@ -1257,6 +1262,12 @@ export class PlanDeVuelo {
   set pistaDeOtros(si: boolean) {
     this.vuelo.pistaDeOtros = si;
   }
+
+  /**
+   * **El aire del día**, para pasar la pérdida a velocidad verdadera. Lo pone
+   * el juego antes de cada paso, como `pistaDeOtros`. Ver `perdida` abajo.
+   */
+  aire: Aire = AIRE_ESTANDAR;
 
   /**
    * El puesto que se está usando de verdad, si no es el que tocaba por cercanía.
@@ -3635,9 +3646,20 @@ export class PlanDeVuelo {
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
       pistaQueNecesita: pistaQueNecesita(this.avion),
-      // Por encima de esto el avión vuela, esté a la altura que esté. Ver
-      // «Rozar el monte no es llegar» en `vuelo.ts`.
-      perdida: velocidadDePerdida(this.avion),
+      /*
+       * Por encima de esto el avión vuela, esté a la altura que esté. Ver
+       * «Rozar el monte no es llegar» en `vuelo.ts`.
+       *
+       * **En verdadera**, que es la que se le compara: la pérdida es de
+       * indicada, y en un campo alto o en una tarde de calor la misma
+       * indicada es más velocidad real. Comparando la verdadera con la
+       * indicada, el avión seguía «volando» un rato después de tocar.
+       */
+      perdida: trueFromIndicated(
+        velocidadDePerdida(this.avion),
+        estado.position.y,
+        this.aire,
+      ),
       sobreElSuelo,
       motor,
       desalineado,
