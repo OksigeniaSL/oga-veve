@@ -2534,11 +2534,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           : null,
       };
     }
-    if (trazarCoche && s.onGround && i % 3 === 0) {
+    if (
+      trazarCoche &&
+      (s.onGround || s.heightAboveGround < 40) &&
+      (i % 3 === 0 || !s.onGround)
+    ) {
       const sg = o.sigueme?.();
       const ac = sg?.acumulado ?? [];
       trazaCoche.push(
-        `${t.toFixed(1)}s ${fase || "—"} · avión ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} rumbo ${((s.heading * 180) / Math.PI).toFixed(0)} ${s.groundSpeed.toFixed(1)} m/s ${s.onGround ? "" : "AIRE "}${s.onRunway ? "PISTA" : "fuera"} avance ${(o.avanceEnLaRuta?.() ?? 0).toFixed(0)} · coche ${coche?.visible ? "" : "oculto "}${coche ? `${coche.position.x.toFixed(0)},${coche.position.z.toFixed(0)}` : "—"} s ${sg?.s?.toFixed?.(0) ?? "?"} de ${(ac[ac.length - 1] ?? 0).toFixed(0)} aparte ${(sg?.aparte ?? 0).toFixed(2)}${sg?.esperando ? " ESPERA" : ""} · a ${coche ? Math.hypot(coche.position.x - s.position.x, coche.position.z - s.position.z).toFixed(0) : "—"} m · rutas ${o.rodajeAsi?.()?.vecesQueSePuso ?? "?"}`,
+        `${t.toFixed(1)}s ${fase || "—"} · avión ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} rumbo ${((s.heading * 180) / Math.PI).toFixed(0)} ${s.groundSpeed.toFixed(1)} m/s ${s.onGround ? "" : "AIRE "}${s.onRunway ? "PISTA" : "fuera"} avance ${(o.avanceEnLaRuta?.() ?? 0).toFixed(0)} · coche ${coche?.visible ? "" : "oculto "}${coche ? `${coche.position.x.toFixed(0)},${coche.position.z.toFixed(0)}` : "—"} s ${sg?.s?.toFixed?.(0) ?? "?"} de ${(ac[ac.length - 1] ?? 0).toFixed(0)} aparte ${(sg?.aparte ?? 0).toFixed(2)}${sg?.esperando ? " ESPERA" : ""} · a ${coche ? Math.hypot(coche.position.x - s.position.x, coche.position.z - s.position.z).toFixed(0) : "—"} m · rutas ${o.rodajeAsi?.()?.vecesQueSePuso ?? "?"} · voz ${(() => {
+          const b = o.bocaAhora?.();
+          return b ? `${b.ocupada ? "hablando" : "callada"} «${b.ultima}» espera [${b.espera.join(", ")}]` : "?";
+        })()} · ${o.tarjeta?.()?.dibujo ?? ""}`,
       );
     }
     if (o.enBici?.() && coche?.visible && s.onGround && !s.onRunway) {
