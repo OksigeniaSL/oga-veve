@@ -12212,8 +12212,20 @@ export class Game {
        */
       const loDiceElV1 =
         vista.fase === "comprometido" && canalesDe(this.tier.avisos).cabina;
+      /*
+       * **Y «frená» se dice con las ruedas en el suelo, no a doce metros.**
+       *
+       * La máquina de fases da el avión por «aterrizado» a doce metros —es lo
+       * que la protege de un bote—, y el anuncio de la fase decía ahí mismo
+       * «frená». Donde la torre o la instructora estaban hablando se quedaba en
+       * la cola y salía tarde, que lo tapaba; en Ayolas, que no tiene torre, la
+       * boca estaba libre y el «frená» sonaba con el radioaltímetro cantando
+       * «thirty». Lo de frenar ya lo dice quien sabe si se tocó de verdad: ver
+       * `corriendo` y `yaTocoTierra`.
+       */
+      const frenarEnElAire = vista.fase === "aterrizado" && !this.yaTocoTierra;
       if (!repuesta) {
-        if (!loDiceElV1) this.instructor.decir(frase, clave);
+        if (!loDiceElV1 && !frenarEnElAire) this.instructor.decir(frase, clave);
         if (conLetras) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }
