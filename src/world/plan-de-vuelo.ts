@@ -696,11 +696,14 @@ export interface Vista {
  * **Cuánto puede apartarse el morro del rumbo de la pista para darla por
  * encarada**, en grados.
  *
- * Treinta. No es alinearse —eso es la fase, con ocho grados y doce metros—:
- * es haber acabado de girar hacia ella. Desde ahí, con el gas que sea, el
- * avión corre por la pista y no contra lo que haya al lado.
+ * Ocho, los mismos que pide la fase de despegar, pero sin sus doce metros de
+ * eje: es haber acabado de girar hacia la pista, esté el avión donde esté de
+ * lo ancho. Se probó con treinta y era pronto: con el gas a fondo, el avión
+ * que acababa de encarar la pista salía disparado con el giro a medias, a la
+ * ayuda de rodaje no le daba tiempo y se iba de la pista en nueve campos de
+ * dieciocho. Medido con `verificar-verde-sin-volante`.
  */
-export const MIRANDO_LA_PISTA = 30;
+export const MIRANDO_LA_PISTA = 8;
 
 /**
  * Las fases en las que se rueda por una calle y tiene sentido pedir despacio.

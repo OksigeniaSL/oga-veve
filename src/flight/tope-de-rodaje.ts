@@ -151,10 +151,11 @@ function esBackTaxi(vista: Vista | null): boolean {
  *
  * Así que ahí el tope sigue puesto hasta que el avión **mira hacia donde se
  * despega**: en «autorizado», camino de la pista, y en «alineando» mientras
- * todavía está girando hacia ella. Encarado —ver `MIRANDO_LA_PISTA`—, el gas
- * vuelve a ser de quien juega, que es lo que hace un piloto de verdad: entra
- * rodando, gira, y entonces mete motor. Por eso el portero es el morro y no
- * la pista: la carrera no empieza en la calle, empieza mirando la pista.
+ * todavía está girando hacia ella. Encarado a ocho grados —ver
+ * `MIRANDO_LA_PISTA`—, el gas vuelve a ser de quien juega, que es lo que hace
+ * un piloto de verdad: entra rodando, gira, y entonces mete motor. Por eso el
+ * portero es el morro y no la pista: la carrera no empieza en la calle,
+ * empieza mirando la pista.
  *
  * **Y no el eje.** Se probó a soltarlo solo con la fase de despegar, que
  * pide ocho grados y doce metros del eje, y el JAZ 120 en Los Rodeos, que no

@@ -1010,6 +1010,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * medida delante — no uno que se cuela con este.
    */
   const NECESITA_TECNICA = (suyas.crucero ?? 0) > AJUSTADO_HASTA;
+  /**
+   * **Y lo que se aprendió de la pérdida, solo en el modelo completo.**
+   *
+   * Llegar a la final configurado y a la Vref en indicada, llevar la senda y
+   * la altura del circuito con el automático, quitar el gas a cincuenta pies
+   * y bajar el morro al tocar: todo eso sale de volar un reactor con sus
+   * coeficientes, donde está la pérdida y donde el morro tarda. El modelo
+   * sencillo de Guyrami no tiene ni lo uno ni lo otro —el gas es la
+   * velocidad—, y el automático del juego, pensado para el completo, lo
+   * llevaba bajo y rápido a la final de Los Rodeos: el JAZ 120 tocaba antes
+   * del umbral y se salía (43 de 43 en main, 35 de 43 con esto puesto
+   * también ahí). En Guyrami el piloto del banco vuela como volaba.
+   */
+  const REACTOR_COMPLETO = NECESITA_TECNICA && peldano !== "guyrami";
   const ganancia = (s) =>
     Math.min(1, (AJUSTADO_HASTA / Math.max(1, s.airspeed)) ** 2);
 
@@ -1588,7 +1602,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * altura la lleva el automático del juego.
    */
   const sostenerLaAltura = (s, subiendo, altoQueToca) => {
-    if (!NECESITA_TECNICA || subiendo) return;
+    if (!REACTOR_COMPLETO || subiendo) return;
     senda = {
       altitud: s.position.y + (altoQueToca - alto(s)),
       ritmo: 0,
@@ -3352,7 +3366,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * Los flaps y el tren se ponen donde tienen que estar —su palanca y su
        * posición—; desde aquí se mueven solos como siempre.
        */
-      if (NECESITA_TECNICA) {
+      if (REACTOR_COMPLETO) {
         o.colocar(
           f.x,
           enLaSenda,
@@ -3594,7 +3608,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * avisador ya no canta, y ahí se deja de volar para posarse.
        */
       const deAproximacion = suyas.aproximacion ?? 33;
-      const quiere = NECESITA_TECNICA
+      const quiere = REACTOR_COMPLETO
         ? enVerdadera(
             s,
             falta < 60 ? deAproximacion * 0.73 : deAproximacion + ADITIVO_DE_FINAL,
@@ -3694,8 +3708,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * `volarLaSenda`. Y a cincuenta pies, gas fuera: ver `SIN_GAS_A`.
        */
       const ruedas = alto(s) - (suyas.tren ?? 0);
-      if (NECESITA_TECNICA && ruedas <= SIN_GAS_A) c.throttle = 0;
-      if (NECESITA_TECNICA)
+      if (REACTOR_COMPLETO && ruedas <= SIN_GAS_A) c.throttle = 0;
+      if (REACTOR_COMPLETO)
         senda = {
           altitud: s.position.y + (objetivo - alto(s)),
           ritmo: objetivo > 0 ? -porElSuelo(s) * SENDA : 0,
@@ -3811,7 +3825,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * aerofrenos del suelo y baja la rueda de morro en cuanto toca; aquí no
        * hay aerofrenos, y bajar el morro es lo que queda.
        */
-      c.elevator = NECESITA_TECNICA ? -0.3 : 0;
+      c.elevator = REACTOR_COMPLETO ? -0.3 : 0;
       c.brakes = 1;
       c.aileron = alRumbo(s, rumboPista);
       /*
