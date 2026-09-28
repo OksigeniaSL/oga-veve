@@ -1,6 +1,7 @@
 {
   "id": "GCGM",
   "name": "La Gomera Airport",
+  "salidasPorInterseccion": {"permitidas": true, "soloDesde": ["A"], "fuente": "AIP España AD 2-GCGM, 2.20, «Despegues desde intersección» (AMDT 408/26, 09-JUL-26): «Take-off operations are allowed from RWY 09/27 intersection with TWY A. (See distances at item 13).» 2.13: «09 INT A» TORA 400; «27 INT A» TORA 1100. Y 2.14, en las dos cabeceras: «Guided centre line lights on turn pad.»"},
   "afis": true,
   "source": {
     "osm": "overpass",

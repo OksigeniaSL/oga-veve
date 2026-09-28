@@ -62,6 +62,7 @@ import {
   MODELO_DEL_TIPO,
   vestirCuerpo,
   type CuerpoHorneado,
+  type LibreaDelTrafico,
 } from "./cuerpos-del-trafico";
 import {
   escalaDeCircuito,
@@ -868,8 +869,14 @@ export interface Trafico {
    * uno que rueda ahora. Es lo que rodea la raya verde de quien juega: ver
    * `Ocupados` en `rodaje.ts`. Solo con calles; sin ellas el tráfico se
    * aparta por el costado y no estorba a nadie.
+   *
+   * `sale` es si va a despegar —rodando hacia la pista o esperando en su
+   * doble raya—, que para quien también va a despegar es **su cola** y no un
+   * estorbo: ver `enCola` en `plan-de-vuelo.ts`. Y `hay`, si hay un avión
+   * ahí ahora: la doble raya de cada tipo se da siempre, esté o no esperando
+   * en ella, y detrás de un sitio vacío no se para nadie.
    */
-  dondeParan(): { x: number; z: number }[];
+  dondeParan(): { x: number; z: number; sale: boolean; hay: boolean }[];
   /** Cuántos se ven, y dónde. Para el banco y para la carta. */
   quienes(): {
     matricula: string;
@@ -981,10 +988,20 @@ export function crearTrafico(
   const cuerposListos = new Map<string, CuerpoHorneado>();
   const cuerposPedidos = new Set<string>();
   let desmontado = false;
-  const libreaDe = (matricula: string) =>
-    LIBREAS_DEL_TRAFICO[
-      matricula.charCodeAt(matricula.length - 1) % LIBREAS_DEL_TRAFICO.length
-    ]!;
+  /*
+   * **Y el turbohélice, con los colores de las islas** de cerca y de lejos:
+   * de lejos va el de `aviones-de-las-islas.ts`, con su librea, y cambiarle la
+   * cola de color al acercarse sería enseñar que son dos aviones.
+   */
+  const libreaDe = (matricula: string, tipo?: TipoDeTrafico): LibreaDelTrafico => {
+    const cual = matricula.charCodeAt(matricula.length - 1);
+    if (tipo?.id === "turbohelice")
+      return {
+        casco: LIBREAS_DEL_TRAFICO[0]!.casco,
+        color: LIBREAS_DE_LAS_ISLAS[cual % LIBREAS_DE_LAS_ISLAS.length]!.cola,
+      };
+    return LIBREAS_DEL_TRAFICO[cual % LIBREAS_DEL_TRAFICO.length]!;
+  };
   const pedirCuerpo = (tipo: TipoDeTrafico, modelo: string): void => {
     if (cuerposPedidos.has(tipo.id)) return;
     cuerposPedidos.add(tipo.id);
@@ -1009,7 +1026,7 @@ export function crearTrafico(
         quien.grupo.clear();
         quien.grupo.add(
           conDistancia(
-            vestirCuerpo(hecho, libreaDe(matricula)),
+            vestirCuerpo(hecho, libreaDe(matricula, tipo)),
             deFabrica(tipo, matricula),
           ),
         );
@@ -1101,7 +1118,7 @@ export function crearTrafico(
       const hecho = cuerposListos.get(tipo.id);
       if (hecho)
         return conDistancia(
-          vestirCuerpo(hecho, libreaDe(matricula)),
+          vestirCuerpo(hecho, libreaDe(matricula, tipo)),
           deFabrica(tipo, matricula),
         );
       pedirCuerpo(tipo, modelo);
@@ -1535,21 +1552,26 @@ export function crearTrafico(
       return Math.max(0, c.toca - quien.recorrido);
     },
     dondeParan() {
-      const puntos: { x: number; z: number }[] = [];
+      const puntos: { x: number; z: number; sale: boolean; hay: boolean }[] = [];
       for (const c of caminosPorTipo.values()) {
         if (!c?.enTierra) continue;
         const raya = porElCamino(c.salida, c.espera);
-        if (raya) puntos.push({ x: raya.sitio.x, z: raya.sitio.z });
+        if (raya) puntos.push({ x: raya.sitio.x, z: raya.sitio.z, sale: true, hay: false });
       }
       for (const quien of aviones.values()) {
         const c = quien.caminos;
         if (!c?.enTierra) continue;
-        const rueda =
-          (quien.marca.camino === c.salida &&
-            quien.recorrido < c.enTierra.despega) ||
-          (quien.marca.camino === c.llegada && quien.recorrido >= c.toca);
-        if (rueda)
-          puntos.push({ x: quien.grupo.position.x, z: quien.grupo.position.z });
+        const sale =
+          quien.marca.camino === c.salida && quien.recorrido < c.enTierra.despega;
+        const llega =
+          quien.marca.camino === c.llegada && quien.recorrido >= c.toca;
+        if (sale || llega)
+          puntos.push({
+            x: quien.grupo.position.x,
+            z: quien.grupo.position.z,
+            sale,
+            hay: true,
+          });
       }
       return puntos;
     },

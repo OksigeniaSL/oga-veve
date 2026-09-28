@@ -60,6 +60,7 @@ import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 import { laRedonda } from "./luces-de-posicion";
 import { laDibujaLaGranja } from "./granja";
 import { esDura } from "./superficie";
+import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -147,6 +148,26 @@ export interface Aerodrome {
    * `world/granja.ts`.
    */
   readonly granja?: boolean;
+  /**
+   * **Lo que dice su AIP de despegar desde una intersección**, con la cita.
+   *
+   * No es de OpenStreetMap: es de la publicación de información aeronáutica
+   * del campo, y va escrito a mano en su fichero con la frase tal cual y de
+   * dónde sale. Donde `permitidas` es `false` se despega siempre desde la
+   * cabecera, con la pista entera. Sin el dato, se permiten, que es lo que
+   * dicen casi todos los AIP callando. Ver `salidasPorInterseccion` en
+   * `plan-de-vuelo.ts`.
+   */
+  readonly salidasPorInterseccion?: {
+    readonly permitidas: boolean;
+    /**
+     * Si solo desde algunas calles, cuáles, por su nombre. En Los Rodeos, la
+     * E-2 y la E-4; en La Gomera, la A.
+     */
+    readonly soloDesde?: readonly string[];
+    /** La frase del AIP, tal cual, y de dónde. */
+    readonly fuente: string;
+  };
   readonly origin: { readonly lat: number; readonly lon: number };
   readonly elevationM: number | null;
   readonly runways: readonly Pista[];
@@ -262,8 +283,12 @@ export function esAfis(
   return !!aero && aero.afis === true && !sinTorre(aero);
 }
 
-/** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
-export const ANCHO_RODADURA = 23;
+/*
+ * La anchura por defecto de una calle de rodaje vive en su propio fichero, sin
+ * dependencias: la usan también los escenarios **al cargarse**, y este fichero
+ * y el de los escenarios se importan en círculo. Ver `ancho-de-rodadura.ts`.
+ */
+export { ANCHO_RODADURA };
 
 /**
  * ¿Pisa asfalto el avión, o está en la hierba?

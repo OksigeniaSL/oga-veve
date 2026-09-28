@@ -264,7 +264,7 @@ import { ROZAMIENTO, type Superficie } from "../world/superficie";
  * aviones pequeños —o sea que ruedan como rodaban— y la geometría es quien
  * manda en los grandes, que es donde estaba el fallo.
  */
-const DE_LADO_RODANDO = 6;
+export const DE_LADO_RODANDO = 6;
 /**
  * Lo que llega a girar la rueda de morro, en radianes.
  *

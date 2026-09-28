@@ -25,8 +25,11 @@ import { carreraHastaVr } from "../flight/carrera";
 import { delante } from "./rumbo";
 import type { Aerodrome } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
+import { conPlataformasCosidas } from "./plataformas-cosidas";
 
-const SUR = gcts as unknown as Aerodrome;
+// Como lo monta el juego: con sus plataformas sueltas cosidas a su calle.
+// Ver `plataformas-cosidas.ts`.
+const SUR = conPlataformasCosidas(gcts as unknown as Aerodrome);
 const GOMERA = gcgm as unknown as Aerodrome;
 
 /** Lo que hay de Tenerife Sur a La Gomera, redondeado. */

@@ -37,6 +37,16 @@
  * bimotor, 17.468 y 483 KB en 28 ms; el reactor, 30.258 y 895 KB en 26 ms.
  * Una vez por tipo y por página, y solo si ese tipo llega a salir.
  *
+ * ## El turbohélice, que no es de la flota
+ *
+ * El que une las islas es de ala alta con las góndolas colgadas, y en la
+ * flota no hay ninguno así: el JAZ 60 es de ala baja. Se dibujaba siempre con
+ * el de las islas —ver `aviones-de-las-islas.ts`—, cuatrocientos triángulos
+ * que de lejos valen y de cerca, esperando delante de ti en la paralela, son
+ * un tubo con dos tablas: «esos aviones se ven feos». Ahora tiene su modelo,
+ * hecho como los de la flota —`modelos/trafico-turbohelice.py`— y horneado
+ * como ellos; el de las islas queda para lejos.
+ *
  * El exterior de un avión de la flota no baja de ahí —el casco del JAZ 90
  * solo ya son once mil—, así que de cerca va el bueno y **de lejos el de la
  * fábrica**, de unos cientos: ver `DE_CERCA` en `trafico.ts`. Cada avión son
@@ -82,12 +92,13 @@ export const LIBREAS: readonly LibreaDelTrafico[] = [
 ];
 
 /**
- * Qué avión de la flota hace de cada tipo del tráfico. El turbohélice no está
- * porque ya tiene el suyo, el de las islas: ver `aviones-de-las-islas.ts`.
+ * Qué modelo hace de cada tipo del tráfico: uno de la flota, o el turbohélice
+ * de ala alta, que no está en ella. Ver «El turbohélice».
  */
 export const MODELO_DEL_TIPO: Readonly<Record<string, string>> = {
   avioneta: "jaz-20",
   bimotor: "jaz-40",
+  turbohelice: "trafico-turbohelice",
   reactor: "jaz-90",
 };
 

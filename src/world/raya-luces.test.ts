@@ -14,8 +14,11 @@ import { PlanDeVuelo } from "./plan-de-vuelo";
 import { PYKASU } from "../flight/aircraft";
 import type { Aerodrome } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
+import { conPlataformasCosidas } from "./plataformas-cosidas";
 
-const SUR = gcts as unknown as Aerodrome;
+// Como lo monta el juego: con sus plataformas sueltas cosidas a su calle.
+// Ver `plataformas-cosidas.ts`.
+const SUR = conPlataformasCosidas(gcts as unknown as Aerodrome);
 
 function pistaDe(
   aero: Aerodrome,

@@ -25,7 +25,44 @@ import { enEjesDePista } from "./rumbo";
 import { PETTIROSSI, conViento } from "./scenarios";
 import { vientoDeCasa } from "./meteo";
 
-const AERO = sgas as unknown as Aerodrome;
+/*
+ * **Con el ramal que llega al revés, y solo con él.**
+ *
+ * La calle de esa doble raya es una herradura: baja a la pista por los dos
+ * lados, un ramal hacia el norte y otro hacia el sur. Desde que la entrada
+ * va por la boca que mira hacia donde se despega —ver `bocaDeEntrada` en
+ * `plan-de-vuelo.ts`— y la salida se elige sin medias vueltas si las hay —ver
+ * `elegirSalida`—, por la 02 ya no se entra por ahí dando la vuelta. Pero se
+ * da en cualquier calle que llegue a la pista al revés sin tener otra, y la
+ * ayuda tiene que saberla tomar.
+ *
+ * Así que el campo de esta prueba es un trozo del de verdad: la pista, la
+ * calle C desde su punta hasta la doble raya y el ramal de la herradura que
+ * llega hacia el sur. Un puesto en la punta de la C y un punto de espera en
+ * la herradura. No hay otra forma de salir, que es el caso.
+ */
+const HERRADURA: Punto = [-14.5, -272.2];
+const REAL = sgas as unknown as Aerodrome;
+const cerca = (q: Punto, p: Punto) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 2;
+const CALLE_C = REAL.taxiways.find(
+  (c) => c.ref === "C" && c.path.some((q) => cerca(q as Punto, HERRADURA)),
+)!;
+const RAMAL_SUR = (() => {
+  const calle = REAL.taxiways.find(
+    (c) => c.path.length > 8 && c.path.some((q) => cerca(q as Punto, HERRADURA)),
+  )!;
+  const i = calle.path.findIndex((q) => cerca(q as Punto, HERRADURA));
+  return { ...calle, path: calle.path.slice(0, i + 1) };
+})();
+const PUNTA_DE_LA_C = CALLE_C.path.find((q) => !cerca(q as Punto, HERRADURA))!;
+const AERO = {
+  ...REAL,
+  taxiways: [CALLE_C, RAMAL_SUR],
+  aprons: [],
+  buildings: [],
+  parkingPositions: [{ ref: "C", xy: PUNTA_DE_LA_C }],
+  holdingPositions: [{ xy: HERRADURA }],
+} as unknown as Aerodrome;
 const PISTA = conViento(PETTIROSSI, vientoDeCasa(PETTIROSSI.vientoDominante))
   .runway;
 

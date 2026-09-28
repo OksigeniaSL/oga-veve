@@ -2,10 +2,13 @@
  * **La media vuelta del back-taxi se puede dar**, con el avión que la da.
  *
  * `back-taxi.test.ts` mira cuándo hace falta; esto mira la maniobra, que es
- * donde fallaba. En Lanzarote, con el viento de siempre, la 03 se toma desde
- * media pista y se rueda por ella hasta la cabecera —AIP España, AD 2-GCRR:
- * punto de espera en la E4 y sin despegues desde intersección—. Con el JAZ 90
- * el banco se quedaba en 16 de 30:
+ * donde fallaba. Se miraba en la 03 de Lanzarote, leyendo en el AIP que se
+ * tomaba desde media pista remontando, y no es así: la espera de la 03 está
+ * en la E4, que es la cabecera, y se llega a ella por la paralela. Así que se
+ * mira donde el back-taxi es de verdad la única forma: en Encarnación, con el
+ * viento del norte, la única calle llega a la pista a mil seiscientos metros
+ * de la cabecera 12 y hasta ella se va remontando. Con el JAZ 90 el banco se
+ * quedaba en 16 de 30:
  *
  * - la raya de la vuelta llegaba al suelo como un codo de 2,66 m de radio,
  *   más cerrado de lo que ese avión puede girar, y pedido a 6 m/s;
@@ -20,17 +23,16 @@
  */
 
 import { describe, expect, it } from "vitest";
-import gcrr from "../../data/aerodromes/gcrr.aero.json";
-import type { Aerodrome, Punto } from "./aerodrome";
+import type { Punto } from "./aerodrome";
 import { PlanDeVuelo, radioPorTres } from "./plan-de-vuelo";
 import { ARAI, PYKASU, type AircraftConfig } from "../flight/aircraft";
 import { radioDeGiro } from "../flight/cabe";
 import { enEjesDePista } from "./rumbo";
-import { LANZAROTE, conViento } from "./scenarios";
-import { vientoDeCasa } from "./meteo";
+import { ENCARNACION, conViento } from "./scenarios";
+import { TIEMPO_DE_CASA } from "./meteo";
 
-const AERO = gcrr as unknown as Aerodrome;
-const PISTA = conViento(LANZAROTE, vientoDeCasa(LANZAROTE.vientoDominante))
+const AERO = ENCARNACION.aerodrome!;
+const PISTA = conViento(ENCARNACION, { ...TIEMPO_DE_CASA, vientoDe: 10, vientoKt: 15 })
   .runway;
 
 /** Lo lateral que aguanta el avión rodando, m/s². Ver `DE_LADO_RODANDO`. */
@@ -139,7 +141,11 @@ function rodar(avion: AircraftConfig, porElEje = false): Muestra[] {
   return muestras;
 }
 
-describe("en Lanzarote por la 03, el JAZ 90 hace el back-taxi y da la vuelta", () => {
+describe("en Encarnación por la 12, el JAZ 90 hace el back-taxi y da la vuelta", () => {
+  it("es la 12, la que no tiene calle hasta la cabecera", () => {
+    expect(Math.round(PISTA.heading)).toBe(12);
+  });
+
   const muestras = rodar(ARAI);
   const enBackTaxi = muestras.filter((m) => m.fase === "back-taxi");
 
@@ -172,7 +178,7 @@ describe("en Lanzarote por la 03, el JAZ 90 hace el back-taxi y da la vuelta", (
     const r = radioDeGiro(ARAI);
     const puede = Math.sqrt(DE_LADO_RODANDO * r);
     // Girando en la cabecera: ni todavía de punta hacia ella ni ya derecho.
-    // La entrada en pista, a media pista, es otra curva y va con las demás.
+    // La entrada en pista, lejos de la cabecera, es otra curva y va con las demás.
     const enLaVuelta = enBackTaxi.filter(
       (m) =>
         m.along < -PISTA.length / 2 + 100 &&
@@ -204,11 +210,14 @@ describe("rodando la ida por el eje, la cuenta no salta al tramo de vuelta", () 
 describe("y con la avioneta, que gira en nada, la vuelta sigue siendo de paso de persona", () => {
   it("el Pykasu tampoco la toma a seis", () => {
     const muestras = rodar(PYKASU);
-    const vuelta = muestras.filter(
-      (m) => m.fase === "back-taxi" && Math.abs(m.rumbo) < 150,
+    // La del final del back-taxi: la curva de entrar en la pista, cientos de
+    // metros antes, es otra y va a su paso.
+    const enBackTaxi = muestras.filter((m) => m.fase === "back-taxi");
+    const entra = Math.max(...enBackTaxi.map((m) => m.along));
+    const vuelta = enBackTaxi.filter(
+      (m) => Math.abs(m.rumbo) < 150 && m.along < entra - 100,
     );
-    // Si en este campo la avioneta no pide back-taxi, no hay nada que mirar.
-    if (!vuelta.length) return;
+    expect(vuelta.length).toBeGreaterThan(0);
     for (const m of vuelta) expect(m.sugerida).toBeLessThan(6);
   });
 });

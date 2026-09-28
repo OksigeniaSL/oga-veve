@@ -1,6 +1,7 @@
 {
   "id": "GCLA",
   "name": "La Palma Airport",
+  "salidasPorInterseccion": {"permitidas": false, "fuente": "AIP España AD 2-GCLA (AMDT 408/26, 09-JUL-26), 2.13: las distancias desde intersección «18 INT A», «18 INT C», «36 INT A» y «36 INT C» llevan la nota «(5) Only for helicopters»; para aviones no se publica ninguna. Y 2.20: «All aircraft, except AT72, CN35, C295 and those whose wingspan is less than 27.05 m, must accomplish back-track at the end of the runway by following the taxiing guidance markings.»"},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

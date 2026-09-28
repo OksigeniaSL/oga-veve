@@ -318,6 +318,13 @@ que llevan —el motivo de la cola y la firma de Granja Óga— tampoco vienen e
 el `.glb`: las pinta el juego en un lienzo al cargar el avión, con los colores
 de la ficha. Ver `src/world/librea.ts` y el apartado del logotipo.
 
+**Y uno más que no es de la flota**: el turbohélice regional de ala alta del
+tráfico, el que hace cola contigo en Los Rodeos, se modela igual desde
+`modelos/trafico-turbohelice.py` y escribe
+`public/assets/aeronaves/trafico-turbohelice.glb`. Es la forma de su clase —ala
+alta con las góndolas colgadas, carenados del tren en la panza y cola en T—, sin
+el nombre ni la librea de nadie. Ver `src/world/cuerpos-del-trafico.ts`.
+
 Son obra de Oksigenia SL y van bajo la licencia del proyecto, Apache-2.0. Los
 únicos nombres que no son libres dentro de los guiones son del juego:
 `asiento`, del que sale el sitio de los ojos, y `g1000_display`, que es el

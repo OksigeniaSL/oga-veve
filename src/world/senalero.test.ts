@@ -192,4 +192,22 @@ describe("pasarse del puesto", () => {
     rato(s, { x: -300, z: 235, velocidad: 12 }, 0.5);
     expect(s.pasado).toBe(0);
   });
+
+  it("y rodar hacia él por detrás, por la pista pegada a la plataforma, tampoco", () => {
+    /*
+     * La Gomera: la pista a cuarenta metros del puesto, que se entra hacia el
+     * oeste. Aterrizando por la 09 el avión viene del oeste, lo tiene a la
+     * espalda de su entrada todo el rato y lo deja a un lado camino de la
+     * cabecera, donde da la vuelta. En ningún momento se ha pasado de nada.
+     */
+    const s = puesto();
+    for (let x = -700; x <= 300; x += 10) {
+      rato(s, { x, z: 40, velocidad: 14 }, 0.05);
+      expect(s.pasado).toBe(0);
+    }
+    // Y cuando vuelve y entra por su lado y se pasa, eso sí se cuenta.
+    rato(s, { x: 60, z: 0, velocidad: 5 }, 0.5);
+    rato(s, { x: -40, z: 0, velocidad: 5 }, 0.5);
+    expect(s.pasado).toBeGreaterThan(10);
+  });
 });

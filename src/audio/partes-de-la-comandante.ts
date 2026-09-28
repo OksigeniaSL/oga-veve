@@ -31,7 +31,7 @@
 
 import { hayTexto, t, type TranslationKey } from "../i18n";
 import type { Meteo } from "../world/meteo";
-import { HASTA, nivelPara } from "../flight/nivel-de-crucero";
+import { HASTA } from "../flight/nivel-de-crucero";
 
 /** Los minutos que se dicen: los pocos de una bajada corta y de cinco en cinco. */
 export const MINUTOS_QUE_SE_DICEN = [
@@ -76,26 +76,24 @@ export const PRIMER_NIVEL = 5;
 export const ULTIMO_NIVEL = HASTA / 1000;
 
 /**
- * A qué altura se va a cruzar, en miles de pies: **el nivel que le toca por
- * el rumbo**, con la regla semicircular. Ver `flight/nivel-de-crucero.ts`.
+ * A qué altura se va a cruzar, en miles de pies: **el crucero del plan**,
+ * dicho como se dice. O `null` si ese nivel no está entre los que hay
+ * grabados.
  *
- * Lo que se pide es lo que pediría un plan de vuelo regional: nueve mil pies
- * y treinta más por kilómetro de ruta, que deja los saltos entre islas en once
- * o trece mil y las rutas largas de Paraguay cerca de los veinte mil — que es
- * donde vuelan de verdad. Y nunca por encima de lo que da el avión.
+ * No hay aquí una cuenta propia, y es a propósito. Había una —nueve mil pies y
+ * treinta más por kilómetro en línea recta— y el plan tenía otra, y de Los
+ * Rodeos a Tenerife Sur la comandante anunciaba diez mil pies para un plan de
+ * doce mil. Lo que se dice es lo que se vuela: el nivel lo pone
+ * `cruceroDelPlan` en `flight/ruta.ts`, con la regla semicircular y el relieve,
+ * y aquí solo se pasa a miles de pies.
+ *
+ * Y fuera de lo grabado, **no se dice**: redondear un plan de tres mil pies a
+ * los cinco mil de la primera grabación sería anunciar una altura que no es.
+ * Un número que no puede sonar a su altura no se dice.
  */
-export function nivelPrevisto(
-  rumboGrados: number,
-  metros: number,
-  techoDelAvionM: number,
-): number {
-  const techoPies = Math.floor(techoDelAvionM / 0.3048 / 1000) * 1000;
-  const pedido = Math.min(9000 + (metros / 1000) * 30, techoPies);
-  const pies = nivelPara(rumboGrados, pedido);
-  // Si el nivel que toca se pasa del techo del avión, uno por debajo en su
-  // mismo sentido: dos mil pies menos.
-  const cabe = pies > techoPies ? pies - 2000 : pies;
-  return Math.max(PRIMER_NIVEL, Math.min(ULTIMO_NIVEL, Math.round(cabe / 1000)));
+export function nivelDicho(cruceroM: number): number | null {
+  const miles = Math.round(cruceroM / 0.3048 / 1000);
+  return miles >= PRIMER_NIVEL && miles <= ULTIMO_NIVEL ? miles : null;
 }
 
 /** Las temperaturas que se dicen, en grados. */

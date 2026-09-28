@@ -86,3 +86,13 @@ Dos cosas que el guion comprueba y no perdona, porque las dos se han colado ya:
 - **Que nada herede la transformación de su padre dos veces.** Colgar las palas
   del buje sin la inversa del padre las mandaba a cuatro metros y medio de
   altura.
+
+## Y uno que no es de la flota
+
+`trafico-turbohelice.glb` no es un avión que se pueda volar: es el turbohélice
+regional de ala alta del **tráfico**, el que une las islas y hace cola contigo
+en Los Rodeos. Sale de `modelos/trafico-turbohelice.py`, con los mismos
+ayudantes que los de la flota, y lo carga `src/world/cuerpos-del-trafico.ts`
+por el nombre de su tipo —ver `MODELO_DEL_TIPO`—, no por el de ninguna ficha.
+Por eso su nombre empieza por `trafico-` y no por `jaz-`: ninguna ficha de
+`aircraft.ts` lo reclama, y `npm run modelos` lo rehace con los demás.
