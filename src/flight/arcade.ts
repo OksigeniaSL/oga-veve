@@ -29,7 +29,7 @@
  */
 
 import { Euler, Quaternion, Vector3 } from "three";
-import { airDensity } from "./atmosphere";
+import { AIRE_ESTANDAR, type Aire, airDensity } from "./atmosphere";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { MAX_PASO } from "./fdm";
@@ -40,7 +40,7 @@ import type {
   GroundSampler,
   InitialConditions,
 } from "./model";
-import { tieneReversa, type AircraftConfig } from "./aircraft";
+import { loQueDaElMotor, tieneReversa, type AircraftConfig } from "./aircraft";
 
 /**
  * Velocidad de crucero cómoda **a nivel del mar**, como fracción de la ficha.
@@ -339,8 +339,16 @@ export class ArcadeFlightModel implements FlightModel {
    */
   empujeAhora(): number {
     if (!this.ultimoGas) return 0;
-    const densidad = airDensity(this.state.position.y) / airDensity(0);
-    return this.ultimoGas * this.aircraft.maxThrust * Math.pow(densidad, 0.7);
+    const densidad =
+      airDensity(this.state.position.y, this.aire) / airDensity(0);
+    return (
+      this.ultimoGas * this.aircraft.maxThrust * loQueDaElMotor(this.aircraft, densidad)
+    );
+  }
+
+  /** Aquí el cabeceo no es un timón. Ver `timonAhora` en `model.ts`. */
+  timonAhora(): number {
+    return 0;
   }
 
   /** El gas del último paso, para `empujeAhora`. */
@@ -369,6 +377,17 @@ export class ArcadeFlightModel implements FlightModel {
    * cabecera con él y el panel lo cuenta. Lo que no hace es empujar el avión.
    */
   ponerViento(): void {}
+
+  /** El aire del día. Ver `ponerAire` en `model.ts`: aquí no mueve la física. */
+  private aire: Aire = AIRE_ESTANDAR;
+
+  ponerAire(aire: Aire): void {
+    this.aire = aire;
+  }
+
+  aireDelDia(): Aire {
+    return this.aire;
+  }
 
   /**
    * La ráfaga, en el peldaño que no tiene fuerzas.
@@ -463,11 +482,13 @@ export class ArcadeFlightModel implements FlightModel {
    * está. Ver `flight/limites.ts`.
    */
   limiteDeVelocidad(): number {
-    return topeDeVelocidad(this.aircraft, this.state.position.y).verdadera;
+    return topeDeVelocidad(this.aircraft, this.state.position.y, this.aire)
+      .verdadera;
   }
 
   quienLimita(): QuienManda {
-    return topeDeVelocidad(this.aircraft, this.state.position.y).manda;
+    return topeDeVelocidad(this.aircraft, this.state.position.y, this.aire)
+      .manda;
   }
 
   velocidadMaxima(): number {

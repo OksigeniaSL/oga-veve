@@ -47,6 +47,7 @@
 import {
   CanvasTexture,
   RepeatWrapping,
+  Vector4,
   type Material,
   type Texture,
 } from "three";
@@ -234,6 +235,65 @@ varying float vLejosDelOjo;
 } as const;
 
 /**
+ * **Lo pintado encima de la foto**: una lámina de color con su alfa, puesta
+ * sobre un rectángulo del campo. Hoy son los potreros de la granja —ver
+ * `potrerosDe` en `granja.ts`—, que la foto de Sentinel-2 tapaba.
+ *
+ * Las coordenadas son **las del campo** —las de la malla— y no las del
+ * mundo: la isla del vecino se dibuja corrida y su granja va con ella.
+ */
+export interface PinturaEncima {
+  readonly textura: Texture;
+  readonly x0: number;
+  readonly z0: number;
+  readonly x1: number;
+  readonly z1: number;
+}
+
+/**
+ * Cuánto tapa lo pintado a la foto donde su alfa es uno.
+ *
+ * **Toda.** Fueron nueve décimas, para dejar algo de la variación de la foto,
+ * y eso servía mientras lo pintado estaba solo en el suelo. Pero la
+ * plataforma y las calles de hierba son mallas encima del suelo que se pintan
+ * con esto mismo —ver `pintarEncima` en `terrain.ts`—, y con una décima de foto
+ * en el suelo y ninguna en la malla, el borde de la plataforma se veía. La
+ * variación la ponen las manchas del pastoreo y el grano.
+ */
+export const FUERZA_DE_LA_PINTURA = 1;
+
+/**
+ * El sombreador de lo pintado. Va **antes** del grano: así la trama fina cae
+ * también sobre los potreros, que sin ella serían planos como una lámina.
+ *
+ * Solo se lee la textura dentro de su rectángulo: fuera, que es casi todo el
+ * terreno, cuesta una comparación.
+ */
+export const GLSL_DE_LA_PINTURA = {
+  cabecera: /* glsl */ `
+uniform sampler2D pinturaEncima;
+uniform vec4 marcoDeLaPintura;
+uniform float fuerzaDeLaPintura;
+varying vec2 vSitioDelCampo;
+`,
+  cuerpo: /* glsl */ `
+  {
+    vec2 uvPintura = (vSitioDelCampo - marcoDeLaPintura.xy) * marcoDeLaPintura.zw;
+    if (uvPintura.x > 0.0 && uvPintura.x < 1.0 && uvPintura.y > 0.0 && uvPintura.y < 1.0) {
+      vec4 pintado = texture2D(pinturaEncima, uvPintura);
+      diffuseColor.rgb = mix(diffuseColor.rgb, pintado.rgb, pintado.a * fuerzaDeLaPintura);
+    }
+  }
+`,
+  vertice: /* glsl */ `
+  vSitioDelCampo = position.xz;
+`,
+  cabeceraDelVertice: /* glsl */ `
+varying vec2 vSitioDelCampo;
+`,
+} as const;
+
+/**
  * Le pone el grano a un material de terreno.
  *
  * Se hace con `onBeforeCompile` y no con un `ShaderMaterial` propio a
@@ -242,7 +302,12 @@ varying float vLejosDelOjo;
  * material que mantener en paralelo. Lo que esta casa hace mal cuando
  * duplica —dos superficies, dos cuentas— está escrito en medio repositorio.
  */
-export function ponerGrano(material: Material, grano: Texture): void {
+export function ponerGrano(
+  material: Material,
+  grano: Texture,
+  /** Y lo pintado encima de la foto, si lo hay. Ver `PinturaEncima`. */
+  pintura: PinturaEncima | null = null,
+): void {
   material.onBeforeCompile = (shader) => {
     // Deja rastro de que esto llegó a correr: sin él, «no se ve» no distingue
     // «el efecto es flojo» de «el gancho no se ejecutó». Ver `grano.test.ts`.
@@ -251,22 +316,45 @@ export function ponerGrano(material: Material, grano: Texture): void {
     shader.uniforms.metrosPorRepeticion = { value: METROS_POR_REPETICION };
     shader.uniforms.hastaDonde = { value: HASTA_DONDE };
     shader.uniforms.fuerzaDelGrano = { value: FUERZA };
+    if (pintura) {
+      shader.uniforms.pinturaEncima = { value: pintura.textura };
+      shader.uniforms.marcoDeLaPintura = {
+        value: new Vector4(
+          pintura.x0,
+          pintura.z0,
+          1 / (pintura.x1 - pintura.x0),
+          1 / (pintura.z1 - pintura.z0),
+        ),
+      };
+      shader.uniforms.fuerzaDeLaPintura = { value: FUERZA_DE_LA_PINTURA };
+    }
+    const conPintura = (a: string, b: string) => (pintura ? a + b : a);
 
     shader.vertexShader = shader.vertexShader
       .replace(
         "void main() {",
-        GLSL_DEL_GRANO.cabeceraDelVertice + "\nvoid main() {",
+        conPintura(
+          GLSL_DEL_GRANO.cabeceraDelVertice,
+          GLSL_DE_LA_PINTURA.cabeceraDelVertice,
+        ) + "\nvoid main() {",
       )
       .replace(
         "#include <begin_vertex>",
-        "#include <begin_vertex>" + GLSL_DEL_GRANO.vertice,
+        "#include <begin_vertex>" +
+          conPintura(GLSL_DEL_GRANO.vertice, GLSL_DE_LA_PINTURA.vertice),
       );
 
     shader.fragmentShader = shader.fragmentShader
-      .replace("void main() {", GLSL_DEL_GRANO.cabecera + "\nvoid main() {")
+      .replace(
+        "void main() {",
+        conPintura(GLSL_DEL_GRANO.cabecera, GLSL_DE_LA_PINTURA.cabecera) +
+          "\nvoid main() {",
+      )
       .replace(
         "#include <map_fragment>",
-        "#include <map_fragment>" + GLSL_DEL_GRANO.cuerpo,
+        "#include <map_fragment>" +
+          (pintura ? GLSL_DE_LA_PINTURA.cuerpo : "") +
+          GLSL_DEL_GRANO.cuerpo,
       );
   };
   /*
@@ -283,6 +371,9 @@ export function ponerGrano(material: Material, grano: Texture): void {
    * Un efecto que no cambia nada cuando se multiplica por seis no está flojo,
    * no está. Ver el apunte de la casa sobre el número que no llega a cero.
    */
-  material.customProgramCacheKey = () => "grano-del-suelo";
+  // Y con lo pintado es otro programa: si compartieran llave, el primero
+  // que compilara se quedaría para los dos.
+  material.customProgramCacheKey = () =>
+    pintura ? "grano-del-suelo+pintura" : "grano-del-suelo";
   material.needsUpdate = true;
 }

@@ -109,99 +109,100 @@
 109	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
 110	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
 111	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
-112	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
-113	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
-114	vuelo.sacaElTren	Sacá el tren
-115	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
-116	vuelo.despacio	Más despacio
-117	vuelo.alto	Pará acá
-118	vuelo.teLoPasaste	Te pasaste. Frená y volvé
-119	vuelo.yaPodesTocar	Ya podés tocar
-120	vuelo.quitaElGas	Quitá el gas
-121	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
-122	circuito.subida	Subí derecho por el eje
-123	circuito.cruzado	Girá a la izquierda: volvemos a la pista
-124	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
-125	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
-126	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
-127	percance.coche	Le pasaste por encima al coche
-128	percance.edificio	Chocaste con un edificio
-129	percance.fuera	Tocaste tierra fuera de la pista
-130	percance.golpe	Llegaste dando un golpe
-131	percance.pasada	Te pasaste del final de la pista
-132	percance.sinpermiso	Entraste en la pista sin la luz verde
-133	percance.sintren	Tocaste tierra sin sacar el tren
-134	fin.horas	Lo que llevás volado
-135	fin.llegaste	¡Llegaste! Ya estás en casa
-136	fin.bien	¡Buen vuelo!
-137	fin.muyBien	¡Gran vuelo!
-138	fin.otra	Otro vuelo
-139	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
-140	grado.aprendiz	Aprendiz
-141	grado.piloto	Piloto
-142	grado.comandante	Comandante
-143	grado.instructora	Instructora
-144	galon.manga	Los galones de este vuelo
-145	galon.aproximacion	Galón de la aproximación
-146	galon.toma	Galón del aterrizaje
-147	galon.aros	Galón de los aros
-148	galon.velocidad	Galón de la velocidad
-149	galon.rodaje	Galón del rodaje
-150	galon.frustrada	Galón de la frustrada
-151	tutor.throttle	Dale motor
-152	tutor.speed	Esperá a que corra
-153	tutor.pull	Tirá para arriba
-154	tutor.flying	¡Estás volando!
-155	tutor.frenar	Frená
-156	tutor.salir	Seguí la raya y salí de la pista
-157	tutor.slow	Bajá el motor
-158	motivo.sinPista	No se ve la pista
-159	motivo.lento	Vas muy despacio
-160	motivo.cayendo	Estás cayendo muy rápido
-161	motivo.rapido	Vas muy rápido
-162	motivo.torcido	Estás torcido
-163	motivo.descolocado	Estás fuera del eje
-164	mission.rio.name	Ver el río
-165	mission.rioabajo.name	Seguir el río
-166	mission.mar.name	Salir al mar
-167	mission.anaga.name	A Anaga
-168	mission.cumbre.name	A la cumbre
-169	mission.lomas.name	A las lomas
-170	mission.first.name	Tu primer vuelo
-171	mission.valley.name	La vuelta al valle
-172	mission.transfer.name	El traslado
-173	mission.step	¡Bien! Seguí
-174	mission.done	¡Misión cumplida!
-175	mission.none	Vuelo libre
-176	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-177	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-178	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-179	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
-180	matricula.nuestroAvion	Nuestro avión es
-181	matricula.asiNosLlama	Así nos llama la torre.
-182	fonetico.alfa	Alfa
-183	fonetico.bravo	Bravo
-184	fonetico.charlie	Charlie
-185	fonetico.delta	Delta
-186	fonetico.echo	Echo
-187	fonetico.foxtrot	Foxtrot
-188	fonetico.golf	Golf
-189	fonetico.hotel	Hotel
-190	fonetico.india	India
-191	fonetico.juliett	Juliett
-192	fonetico.kilo	Kilo
-193	fonetico.lima	Lima
-194	fonetico.mike	Mike
-195	fonetico.november	November
-196	fonetico.oscar	Oscar
-197	fonetico.papa	Papa
-198	fonetico.quebec	Quebec
-199	fonetico.romeo	Romeo
-200	fonetico.sierra	Sierra
-201	fonetico.tango	Tango
-202	fonetico.uniform	Uniform
-203	fonetico.victor	Victor
-204	fonetico.whiskey	Whiskey
-205	fonetico.xray	X-ray
-206	fonetico.yankee	Yankee
-207	fonetico.zulu	Zulu
+112	vuelo.calor	Hace calor: vamos a necesitar más pista para despegar
+113	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
+114	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
+115	vuelo.sacaElTren	Sacá el tren
+116	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
+117	vuelo.despacio	Más despacio
+118	vuelo.alto	Pará acá
+119	vuelo.teLoPasaste	Te pasaste. Frená y volvé
+120	vuelo.yaPodesTocar	Ya podés tocar
+121	vuelo.quitaElGas	Quitá el gas
+122	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
+123	circuito.subida	Subí derecho por el eje
+124	circuito.cruzado	Girá a la izquierda: volvemos a la pista
+125	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
+126	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
+127	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
+128	percance.coche	Le pasaste por encima al coche
+129	percance.edificio	Chocaste con un edificio
+130	percance.fuera	Tocaste tierra fuera de la pista
+131	percance.golpe	Llegaste dando un golpe
+132	percance.pasada	Te pasaste del final de la pista
+133	percance.sinpermiso	Entraste en la pista sin la luz verde
+134	percance.sintren	Tocaste tierra sin sacar el tren
+135	fin.horas	Lo que llevás volado
+136	fin.llegaste	¡Llegaste! Ya estás en casa
+137	fin.bien	¡Buen vuelo!
+138	fin.muyBien	¡Gran vuelo!
+139	fin.otra	Otro vuelo
+140	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
+141	grado.aprendiz	Aprendiz
+142	grado.piloto	Piloto
+143	grado.comandante	Comandante
+144	grado.instructora	Instructora
+145	galon.manga	Los galones de este vuelo
+146	galon.aproximacion	Galón de la aproximación
+147	galon.toma	Galón del aterrizaje
+148	galon.aros	Galón de los aros
+149	galon.velocidad	Galón de la velocidad
+150	galon.rodaje	Galón del rodaje
+151	galon.frustrada	Galón de la frustrada
+152	tutor.throttle	Dale motor
+153	tutor.speed	Esperá a que corra
+154	tutor.pull	Tirá para arriba
+155	tutor.flying	¡Estás volando!
+156	tutor.frenar	Frená
+157	tutor.salir	Seguí la raya y salí de la pista
+158	tutor.slow	Bajá el motor
+159	motivo.sinPista	No se ve la pista
+160	motivo.lento	Vas muy despacio
+161	motivo.cayendo	Estás cayendo muy rápido
+162	motivo.rapido	Vas muy rápido
+163	motivo.torcido	Estás torcido
+164	motivo.descolocado	Estás fuera del eje
+165	mission.rio.name	Ver el río
+166	mission.rioabajo.name	Seguir el río
+167	mission.mar.name	Salir al mar
+168	mission.anaga.name	A Anaga
+169	mission.cumbre.name	A la cumbre
+170	mission.lomas.name	A las lomas
+171	mission.first.name	Tu primer vuelo
+172	mission.valley.name	La vuelta al valle
+173	mission.transfer.name	El traslado
+174	mission.step	¡Bien! Seguí
+175	mission.done	¡Misión cumplida!
+176	mission.none	Vuelo libre
+177	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+178	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+179	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+180	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+181	matricula.nuestroAvion	Nuestro avión es
+182	matricula.asiNosLlama	Así nos llama la torre.
+183	fonetico.alfa	Alfa
+184	fonetico.bravo	Bravo
+185	fonetico.charlie	Charlie
+186	fonetico.delta	Delta
+187	fonetico.echo	Echo
+188	fonetico.foxtrot	Foxtrot
+189	fonetico.golf	Golf
+190	fonetico.hotel	Hotel
+191	fonetico.india	India
+192	fonetico.juliett	Juliett
+193	fonetico.kilo	Kilo
+194	fonetico.lima	Lima
+195	fonetico.mike	Mike
+196	fonetico.november	November
+197	fonetico.oscar	Oscar
+198	fonetico.papa	Papa
+199	fonetico.quebec	Quebec
+200	fonetico.romeo	Romeo
+201	fonetico.sierra	Sierra
+202	fonetico.tango	Tango
+203	fonetico.uniform	Uniform
+204	fonetico.victor	Victor
+205	fonetico.whiskey	Whiskey
+206	fonetico.xray	X-ray
+207	fonetico.yankee	Yankee
+208	fonetico.zulu	Zulu

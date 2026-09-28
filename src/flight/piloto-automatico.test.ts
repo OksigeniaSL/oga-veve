@@ -14,25 +14,31 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  type Estado,
   type Objetivos,
   ALABEO_MAXIMO,
+  ALABEO_POR_SEGUNDO,
+  CARGA_QUE_PIDE,
   loSolto,
   mandosPara,
+  memoriaNueva,
   porElLadoCorto,
   RITMO_MAXIMO,
-  CABECEO_MAXIMO,
   sePuedeConectar,
 } from "./piloto-automatico";
 import { CoefficientFlightModel } from "./fdm";
-import { AIRCRAFT } from "./aircraft";
+import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
-import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
+import { airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
+import { NO_ASSISTS, type AssistLayers } from "./assists";
+import { TAGUATO, TUKA } from "./tiers";
+import { Vector3 } from "three";
 
 const grados = (g: number): number => (g * Math.PI) / 180;
 const enGrados = (r: number): number => (r * 180) / Math.PI;
 
-const quieto = {
+const quieto: Estado = {
   heading: 0,
   alabeo: 0,
   cabeceo: 0,
@@ -41,7 +47,21 @@ const quieto = {
   // El canal de gas quiere saber a qué va y con cuánto motor. Ver `Estado`.
   velocidad: 120,
   gas: 0.6,
+  verdadera: 120,
+  ritmoDeCabeceo: 0,
 };
+
+/**
+ * Lo que la memoria del automático va pidiendo con el avión quieto, fotograma
+ * a fotograma: sirve para ver sus topes de ritmo sin el avión de por medio.
+ */
+function pedirDurante(o: Objetivos, segundos: number) {
+  const m = memoriaNueva();
+  let ultimo = mandosPara(quieto, o, 1 / 60, m);
+  for (let t = 1 / 60; t < segundos; t += 1 / 60)
+    ultimo = mandosPara(quieto, o, 1 / 60, m);
+  return { memoria: m, mandos: ultimo };
+}
 
 describe("el lado corto de un rumbo", () => {
   it("de 350 a 10 son veinte grados a la derecha, no trescientos cuarenta", () => {
@@ -81,23 +101,40 @@ describe("las leyes de mando", () => {
   it("y no pide poner el avión de canto por un error grande", () => {
     /*
      * El tope es lo que separa un piloto automático de un tirón. Con el rumbo
-     * a ciento ochenta grados, el alabeo pedido tiene que ser el máximo y ni
-     * un grado más — y el máximo son veinticinco, no noventa.
+     * a ciento setenta grados, el alabeo pedido tiene que llegar al máximo y
+     * ni un grado más — y el máximo son veinticinco, no noventa.
      */
-    const m = mandosPara(quieto, { rumbo: grados(179), altitud: null, velocidad: null });
-    // Con el ala a nivel, el alerón pedido es proporcional al alabeo que falta.
-    expect(m.aileron).toBeCloseTo(Math.min(1, ALABEO_MAXIMO * 2.2), 3);
+    const { memoria } = pedirDurante(
+      { rumbo: grados(170), altitud: null, velocidad: null },
+      20,
+    );
+    expect(enGrados(memoria.alabeo)).toBeCloseTo(25, 3);
     expect(enGrados(ALABEO_MAXIMO)).toBeCloseTo(25, 6);
+  });
+
+  it("y entra en el viraje a cinco grados por segundo, no de golpe", () => {
+    // Lo primero que nota el pasaje es el ala que se va. Ver `ALABEO_POR_SEGUNDO`.
+    const { memoria } = pedirDurante(
+      { rumbo: grados(170), altitud: null, velocidad: null },
+      2,
+    );
+    expect(enGrados(memoria.alabeo)).toBeCloseTo(10, 0);
+    expect(enGrados(ALABEO_POR_SEGUNDO)).toBeCloseTo(5, 6);
   });
 
   it("y ya inclinado lo que toca, deja de pedir alerón", () => {
     // Es lo que hace que entre en el viraje y se quede, en vez de seguir
     // metiendo alabeo hasta darse la vuelta.
-    const m = mandosPara(
-      { ...quieto, alabeo: ALABEO_MAXIMO },
-      { rumbo: grados(179), altitud: null, velocidad: null },
+    const m = memoriaNueva();
+    const inclinado = { ...quieto, alabeo: ALABEO_MAXIMO };
+    mandosPara(inclinado, { rumbo: grados(170), altitud: null, velocidad: null }, 1 / 60, m);
+    const r = mandosPara(
+      inclinado,
+      { rumbo: grados(170), altitud: null, velocidad: null },
+      1 / 60,
+      m,
     );
-    expect(Math.abs(m.aileron)).toBeLessThan(0.01);
+    expect(Math.abs(r.aileron)).toBeLessThan(0.01);
   });
 
   it("con la altura por encima, tira; por debajo, empuja", () => {
@@ -110,12 +147,19 @@ describe("las leyes de mando", () => {
   });
 
   it("y no pide subir más deprisa de lo cómodo", () => {
-    // Con la altura muy por encima, el morro pedido es el tope y ni un grado
-    // más; el timón sale de perseguir ese morro.
-    const m = mandosPara(quieto, { rumbo: null, altitud: 100000, velocidad: null });
-    expect(m.elevator).toBeCloseTo(Math.min(1, CABECEO_MAXIMO * 3), 3);
-    expect((CABECEO_MAXIMO * 180) / Math.PI).toBeCloseTo(12, 6);
+    // Con la altura muy por encima, el ritmo pedido llega al tope y ni un
+    // metro por segundo más.
+    const { memoria } = pedirDurante({ rumbo: null, altitud: 100000, velocidad: null }, 30);
+    expect(memoria.ritmo).toBeCloseTo(RITMO_MAXIMO, 6);
     expect(RITMO_MAXIMO).toBe(7.5);
+  });
+
+  it("y llega a ese ritmo con una décima de g, no de un tirón", () => {
+    // En un segundo, el ritmo pedido sube lo que da una décima de g: casi un
+    // metro por segundo. Ver `CARGA_QUE_PIDE`.
+    const { memoria } = pedirDurante({ rumbo: null, altitud: 100000, velocidad: null }, 1);
+    expect(memoria.ritmo).toBeCloseTo(CARGA_QUE_PIDE * GRAVITY, 1);
+    expect(CARGA_QUE_PIDE).toBe(0.1);
   });
 
   it("y el eje que no gobierna lo deja quieto", () => {
@@ -207,6 +251,7 @@ describe("y pilotando de verdad, llega y se queda", () => {
     // El gas también lo lleva el automático cuando hay velocidad pedida; si
     // no, se queda donde estaba, como el de quien vuela.
     let gas = 0.7;
+    const memoria = memoriaNueva();
     for (let t = 0; t < segundos; t += dt) {
       const ias =
         s.airspeed * Math.sqrt(airDensity(s.position.y) / SEA_LEVEL_DENSITY);
@@ -219,8 +264,12 @@ describe("y pilotando de verdad, llega y se queda", () => {
           vertical: s.velocity.y,
           velocidad: ias,
           gas,
+          verdadera: s.airspeed,
+          ritmoDeCabeceo: s.pitchRate,
         },
         objetivos,
+        dt,
+        memoria,
       );
       if (m.throttle !== null) gas = m.throttle;
       modelo.step(dt, {
@@ -228,6 +277,7 @@ describe("y pilotando de verdad, llega y se queda", () => {
         throttle: gas,
         aileron: m.aileron,
         elevator: m.elevator,
+        automatico: true,
       });
       peorAlabeo = Math.max(peorAlabeo, Math.abs(bankAngleOf(s.orientation)));
       if (objetivos.altitud !== null)
@@ -336,17 +386,25 @@ describe("y pilotando de verdad, llega y se queda", () => {
  * estratosfera el avión?».
  *
  * El trim **se suma** al timón —`fdm.ts`: `clamp(assisted.elevator + trim)`—
- * y el automático, en el juego, copia los mandos de quien vuela con el trim
- * dentro y sólo pisa `elevator`. O sea que no toma el avión: **pelea contra
- * él**. Y quien engancha un piloto automático acaba de subir, así que lleva
- * el trim con morro arriba, que es justo el sesgo que lo manda a la
+ * y el automático, en el juego, copiaba los mandos de quien vuela con el trim
+ * dentro y sólo pisaba `elevator`. O sea que no tomaba el avión: **peleaba
+ * contra él**. Y quien engancha un piloto automático acaba de subir, así que
+ * lleva el trim con morro arriba, que es justo el sesgo que lo manda a la
  * estratosfera.
  *
  * Un piloto automático de verdad no pelea con el trim: lo lleva él. Es la
  * misma lección que ya tiene este módulo escrita dos veces —«coge el avión
- * como está»— aplicada al tercer mando.
+ * como está»— aplicada al tercer mando. Y desde que el automático mueve el
+ * timón con un servo, lo coge **donde estaba**: el timón con el que el avión
+ * venía volando, compensador incluido. Ver `timonAhora` en `model.ts`.
  */
 describe("y con el avión trimado, que es como se engancha de verdad", () => {
+  /**
+   * Vuela con el automático enganchado a un avión que venía nivelado y
+   * compensado, con el compensador de quien vuela en `trim` y la palanca
+   * sosteniendo lo que falte. Lo que el automático coge al engancharse es el
+   * timón con el que venía volando, que es lo que coge el juego.
+   */
   function volarConTrim(
     id: string,
     objetivos: Objetivos,
@@ -365,18 +423,24 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
       assist: 0,
     });
     const s = modelo.state;
+    const alto = objetivos.altitud ?? 2000;
+    const tas =
+      (objetivos.velocidad ?? aircraft.approachSpeed * 1.5) /
+      Math.sqrt(airDensity(alto) / SEA_LEVEL_DENSITY);
+    // Nivelado y compensado: el ángulo que sostiene el peso y su timón.
+    const q = 0.5 * airDensity(alto) * tas * tas;
+    const a = aircraft.aero;
+    const alfa =
+      ((aircraft.mass * GRAVITY) / (q * aircraft.wingArea) - a.cl0) / a.clAlpha;
+    const venia = -(a.cm0 + a.cmAlpha * alfa) / a.cmElevator;
     s.onGround = false;
-    s.position.set(0, 2000, 0);
-    const tasPedida =
-      objetivos.velocidad === null
-        ? aircraft.cruiseSpeed
-        : objetivos.velocidad /
-          Math.sqrt(airDensity(objetivos.altitud ?? 2000) / SEA_LEVEL_DENSITY);
-    s.velocity.set(0, 0, -tasPedida);
-    s.heading = 0;
+    s.position.set(0, alto, 0);
+    s.velocity.set(0, 0, -tas);
+    s.orientation.setFromAxisAngle(new Vector3(1, 0, 0), alfa);
     const dt = 1 / 60;
     let gas = 0.7;
     let masAlto = s.position.y;
+    const memoria = memoriaNueva();
     for (let t = 0; t < segundos; t += dt) {
       const ias =
         s.airspeed * Math.sqrt(airDensity(s.position.y) / SEA_LEVEL_DENSITY);
@@ -389,8 +453,13 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
           vertical: s.velocity.y,
           velocidad: ias,
           gas,
+          verdadera: s.airspeed,
+          ritmoDeCabeceo: s.pitchRate,
+          timon: venia,
         },
         objetivos,
+        dt,
+        memoria,
       );
       if (m.throttle !== null) gas = m.throttle;
       // Lo que hace `game.ts`: los mandos de quien vuela —trim incluido— con
@@ -402,10 +471,11 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
         throttle: gas,
         aileron: m.aileron,
         elevator: m.elevator,
+        automatico: true,
       });
       masAlto = Math.max(masAlto, s.position.y);
     }
-    return { estado: s, masAlto, subio: masAlto - 2000 };
+    return { estado: s, masAlto, subio: masAlto - alto };
   }
 
   it("sin trim mantiene la altura, que es lo que ya se sabía", () => {
@@ -453,6 +523,11 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
    * —como estaba antes— el avión **sí** se va, y por eso las otras significan
    * algo. Si algún día ésta deja de pasar, lo primero que hay que mirar no es
    * el piloto automático: es si el trim sigue llegando al modelo de vuelo.
+   *
+   * Se va menos que antes, y es por el servo: el automático busca el timón
+   * que sostiene el avión, y con el trim sumado lo busca más abajo. Mientras
+   * cabe en el recorrido del timón, lo encuentra; con el trim a tope ya no
+   * cabe —el timón no baja de −1—, y el avión se le escapa hacia arriba.
    */
   it("y sin tomar el trim se iba de verdad: la prueba podía fallar", () => {
     const { subio } = volarConTrim(
@@ -462,7 +537,7 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
       1,
       false,
     );
-    expect(subio).toBeGreaterThan(5000);
+    expect(subio).toBeGreaterThan(1000);
   });
 
   it("y el avión más pesado tampoco se va, que es donde más se notaba", () => {
@@ -474,5 +549,227 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
       true,
     );
     expect(subio).toBeLessThan(200);
+  });
+});
+
+/**
+ * **Y sin sacudir a nadie: los topes de un automático de verdad, en toda la
+ * flota.**
+ *
+ * Un piloto automático de verdad se limita en lo que se nota desde el asiento:
+ * la carga, unas tres décimas de g arriba o abajo como mucho, y lo deprisa que
+ * gira el morro, unos pocos grados por segundo. El de antes no: el JAZ 90, ya
+ * nivelado y sin hacer nada más que sostener dos mil metros, cabeceaba entre
+ * −2,2 g y 3,6 g con el morro girando a sesenta grados por segundo.
+ *
+ * Aquí se mide en cada avión de la flota, con las ayudas de cada peldaño que
+ * lleva automático, abajo y en su crucero, y en todo lo que hace: sostener,
+ * subir y bajar a otra altura, cambiar de rumbo, y soltarlo para volar a mano
+ * y volver a cogerlo. Bajar por el plan está en `bajar-por-el-plan.test.ts`.
+ *
+ * Se arranca **compensado**, que es como se engancha un automático: con el
+ * ángulo y el timón con los que el avión vuela nivelado. Arrancando con el
+ * ala a cero grados, lo que se mediría es la caída del primer segundo.
+ */
+describe("y sin sacudir a nadie: los topes de un automático de verdad", () => {
+  /** La carga que no se pasa, g arriba o abajo de uno. */
+  const CARGA = 0.3;
+  /** Lo más deprisa que gira el morro, °/s. */
+  const GIRO = 3;
+
+  const PELDANOS: readonly (readonly [string, AssistLayers])[] = [
+    ["sin ayudas", NO_ASSISTS],
+    ["Taguato", TAGUATO.assists],
+    ["Tukã", TUKA.assists],
+  ];
+
+  interface Medida {
+    cargaMin: number;
+    cargaMax: number;
+    giroMax: number;
+    altura: number;
+  }
+
+  /** Un avión nivelado y compensado: con el ángulo y el timón con los que vuela así. */
+  function compensado(
+    a: AircraftConfig,
+    capas: AssistLayers,
+    alto: number,
+    ias: number,
+  ): { modelo: CoefficientFlightModel; timon: number } {
+    const modelo = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: capas });
+    const s = modelo.state;
+    const tas = ias / Math.sqrt(airDensity(alto) / SEA_LEVEL_DENSITY);
+    const q = 0.5 * airDensity(alto) * tas * tas;
+    const alfa = ((a.mass * GRAVITY) / (q * a.wingArea) - a.aero.cl0) / a.aero.clAlpha;
+    s.onGround = false;
+    s.position.set(0, alto, 0);
+    s.velocity.set(0, 0, -tas);
+    s.orientation.setFromAxisAngle(new Vector3(1, 0, 0), alfa);
+    return { modelo, timon: -(a.aero.cm0 + a.aero.cmAlpha * alfa) / a.aero.cmElevator };
+  }
+
+  /**
+   * Vuela una maniobra y mide la carga y el giro del morro **mientras manda
+   * el automático**. `pide(t)` dice qué se le pide en cada momento, o `null`
+   * si en ese momento vuela una persona: entonces tira un poco de la palanca
+   * y la suelta, y al volver a engancharlo, el automático coge el avión como
+   * lo encuentre.
+   */
+  function maniobra(
+    a: AircraftConfig,
+    capas: AssistLayers,
+    alto: number,
+    ias: number,
+    pide: (t: number, altura: number) => Objetivos | null,
+    segundos: number,
+  ): Medida {
+    const { modelo, timon } = compensado(a, capas, alto, ias);
+    const s = modelo.state;
+    const dt = 1 / 60;
+    let gas = 0.6;
+    let trim = 0;
+    let memoria = memoriaNueva();
+    let puesto = false;
+    let antes = pitchAngleOf(s.orientation);
+    let aMano = 0;
+    const m: Medida = { cargaMin: 9, cargaMax: -9, giroMax: 0, altura: alto };
+    for (let t = 0; t < segundos; t += dt) {
+      const o = pide(t, s.position.y);
+      let aileron = 0;
+      let elevator = 0;
+      if (o) {
+        if (!puesto) memoria = memoriaNueva();
+        const r = mandosPara(
+          {
+            heading: s.heading,
+            alabeo: bankAngleOf(s.orientation),
+            cabeceo: pitchAngleOf(s.orientation),
+            altitud: s.position.y,
+            vertical: s.velocity.y,
+            velocidad: s.airspeed * Math.sqrt(airDensity(s.position.y) / SEA_LEVEL_DENSITY),
+            gas,
+            verdadera: s.airspeed,
+            ritmoDeCabeceo: s.pitchRate,
+            // Lo que hace el juego al engancharlo. Ver `conElPilotoAutomatico`.
+            timon: t === 0 ? timon : modelo.timonAhora(),
+          },
+          o,
+          dt,
+          memoria,
+        );
+        if (r.throttle !== null) gas = r.throttle;
+        aileron = r.aileron;
+        elevator = r.elevator;
+        // Y al soltarlo, su timón se queda en el compensador, como en el juego.
+        trim = elevator;
+        aMano = 0;
+      } else {
+        // A mano: un tirón suave de tres segundos, y soltar.
+        elevator = aMano < 3 ? 0.08 : 0;
+        aMano += dt;
+      }
+      puesto = o !== null;
+      modelo.step(dt, {
+        ...neutralControls(),
+        throttle: gas,
+        aileron,
+        elevator,
+        trim: puesto ? 0 : trim,
+        automatico: puesto,
+      });
+      const ahora = pitchAngleOf(s.orientation);
+      if (puesto && t > 0) {
+        m.cargaMin = Math.min(m.cargaMin, s.loadFactor);
+        m.cargaMax = Math.max(m.cargaMax, s.loadFactor);
+        m.giroMax = Math.max(m.giroMax, Math.abs(ahora - antes) / dt);
+      }
+      antes = ahora;
+    }
+    m.altura = s.position.y;
+    return m;
+  }
+
+  const enTopes = (m: Medida, que: string): void => {
+    const detalle = `${que}: de ${m.cargaMin.toFixed(2)} a ${m.cargaMax.toFixed(2)} g, morro a ${enGrados(m.giroMax).toFixed(1)}°/s`;
+    expect(m.cargaMax, detalle).toBeLessThan(1 + CARGA);
+    expect(m.cargaMin, detalle).toBeGreaterThan(1 - CARGA);
+    expect(enGrados(m.giroMax), detalle).toBeLessThan(GIRO);
+  };
+
+  for (const a of AIRCRAFT) {
+    // Abajo, a vez y media la de aproximación —la de un circuito o una
+    // espera— y arriba, a su crucero.
+    const donde: readonly (readonly [string, number, number])[] = [
+      ["a dos mil metros", 2000, a.approachSpeed * 1.5],
+      [
+        "en su crucero",
+        a.alturaDeCrucero,
+        a.cruiseSpeed * Math.sqrt(airDensity(a.alturaDeCrucero) / SEA_LEVEL_DENSITY),
+      ],
+    ];
+    for (const [nombre, capas] of PELDANOS)
+      for (const [dondeVa, alto, ias] of donde)
+        it(`${a.id}, ${nombre}, ${dondeVa}`, () => {
+          const va = (o: Partial<Objetivos>) => (): Objetivos => ({
+            rumbo: 0,
+            altitud: alto,
+            velocidad: ias,
+            ...o,
+          });
+          enTopes(maniobra(a, capas, alto, ias, va({}), 60), "sosteniendo");
+          /*
+           * Tres minutos para subir trescientos metros: de sobra en un
+           * reactor, y lo justo en una avioneta en su crucero, donde lo que
+           * sube es lo poco que le sobra al motor.
+           */
+          const sube = maniobra(a, capas, alto, ias, va({ altitud: alto + 300 }), 180);
+          enTopes(sube, "subiendo trescientos metros");
+          expect(Math.abs(sube.altura - (alto + 300))).toBeLessThan(15);
+          const baja = maniobra(a, capas, alto, ias, va({ altitud: alto - 300 }), 120);
+          enTopes(baja, "bajando trescientos metros");
+          expect(Math.abs(baja.altura - (alto - 300))).toBeLessThan(15);
+          enTopes(maniobra(a, capas, alto, ias, va({ rumbo: grados(90) }), 150), "virando a la derecha");
+          enTopes(maniobra(a, capas, alto, ias, va({ rumbo: grados(-150) }), 150), "virando a la izquierda");
+          // Soltarlo a los veinte segundos, volar a mano diez, y volver a
+          // cogerlo con la altura que haya: la que coge el juego.
+          let cogida: number | null = null;
+          const vuelve = maniobra(
+            a,
+            capas,
+            alto,
+            ias,
+            (t, altura) => {
+              if (t >= 20 && t < 30) return null;
+              if (t >= 30 && cogida === null) cogida = altura;
+              return { rumbo: 0, altitud: cogida ?? alto, velocidad: ias };
+            },
+            120,
+          );
+          enTopes(vuelve, "soltado y vuelto a coger");
+          expect(Math.abs(vuelve.altura - (cogida ?? alto))).toBeLessThan(15);
+        });
+  }
+
+  /*
+   * **Y la prueba de que la medida ve la carga.** Un «no se pasa» solo vale
+   * si el aparejo es capaz de ver que se pasa: el mismo JAZ 90, compensado
+   * igual, con una mano que tira de la palanca un segundo, pasa de las tres
+   * décimas de largo.
+   */
+  it("y un tirón a mano sí se pasa: la medida ve la carga", () => {
+    const a = AIRCRAFT.find((x) => x.id === "jaz-90")!;
+    const { modelo, timon } = compensado(a, NO_ASSISTS, 2000, a.approachSpeed * 1.5);
+    let peor = 1;
+    for (let t = 0; t < 3; t += 1 / 60) {
+      modelo.step(1 / 60, {
+        ...neutralControls(),
+        throttle: 0.6,
+        trim: timon,
+        elevator: t < 1 ? 0.3 : 0,
+      });
+      peor = Math.max(peor, modelo.state.loadFactor);
+    }
+    expect(peor).toBeGreaterThan(1 + CARGA);
   });
 });

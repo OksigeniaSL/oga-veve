@@ -649,7 +649,7 @@ export function colocarModelo(raiz: Object3D, aircraft: AircraftConfig): Group {
    *
    * **Y es mentira otra vez en cuanto el avión es grande.** El JAZ 90 mide
    * veintiséis metros de ala y treinta y uno y medio de morro a cola; el JAZ
-   * 120, sesenta de ala y sesenta y ocho de largo. Los dos son más largos que
+   * 120, sesenta de ala y sesenta y cuatro de largo. Los dos son más largos que
    * anchos, como el caza, así que esta regla los habría metido cruzados en la
    * calle de rodaje **y además escalados por el largo**: un reactor de
    * veintiséis metros de punta a punta de fuselaje. Los dos aciertos de esta

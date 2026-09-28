@@ -109,6 +109,7 @@ Vamos lentos: bajá un poco la nariz
 Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
 Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
 Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
+Hace calor: vamos a necesitar más pista para despegar
 Por esa punta no: andate al aire y volvé por la otra
 Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
 Sacá el tren

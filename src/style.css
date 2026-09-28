@@ -377,6 +377,79 @@ body {
 }
 
 /*
+ * Tocado, la flecha gira hasta que la página se recarga: entre el toque y la
+ * recarga pasa un segundo, y un segundo sin respuesta se lee como un botón
+ * que no va. Ver `estrenar` en `main.ts`.
+ */
+.version-nueva--yendo {
+  border-color: var(--precaucion, #ffb454);
+  cursor: progress;
+}
+
+.version-nueva--yendo svg {
+  animation: version-nueva-gira 0.9s linear infinite;
+}
+
+@keyframes version-nueva-gira {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .version-nueva--yendo svg {
+    animation: none;
+  }
+}
+
+/*
+ * **Con el dedo, arriba en el centro y no en la esquina de abajo.**
+ *
+ * La esquina de abajo a la derecha es la del pulgar derecho: ahí vive la
+ * palanca de gases. El botón caía encima de su tercio de abajo —el ralentí—,
+ * así que tapaba justo la posición a la que se va para parar, y quien bajaba
+ * el gas a fondo con prisa podía recargar la página en mitad del rodaje.
+ * Arriba en el centro, a la altura de la fila de botones, no hay ningún mando
+ * de pulgar.
+ */
+@media (pointer: coarse) {
+  .version-nueva {
+    top: max(8px, env(safe-area-inset-top));
+    bottom: auto;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    min-height: 44px;
+  }
+}
+
+/*
+ * Y en el teléfono apaisado, solo la flecha: la fila de arriba va llena —la
+ * orden y los pictogramas a la izquierda, lo que enciende el vuelo a la
+ * derecha— y con la frase entera el botón se montaba encima del último
+ * pictograma. La flecha que vuelve sobre sí misma es el dibujo de «recargar»
+ * de cualquier teléfono; la frase queda como nombre del botón para quien no
+ * ve la pantalla. Ver `avisarDeLaVersionNueva` en `main.ts`.
+ */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .version-nueva {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .version-nueva span {
+    display: none;
+  }
+
+  .version-nueva svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/*
  * ── El compensador ──
  *
  * Una vía vertical con su centro marcado y una aguja. Sale **solo cuando está
@@ -2447,6 +2520,64 @@ button.motor__tecla::after {
   width: 74px;
   height: 190px;
   border-radius: 40px;
+}
+
+/*
+ * **La palanca de gases enseña dónde está.**
+ *
+ * El punto se movía un tercio de su propio tamaño —once píxeles en una
+ * palanca de ciento noventa—, así que a ralentí y a tope se veía igual: en
+ * medio. Ahora recorre la palanca entera, con `--gas` de 0 a 1, y deja un
+ * relleno debajo, que es lo que se lee de reojo sin buscar el punto.
+ *
+ * **Las cuentas tienen que ser las de `bindPalanca`** en `flight/input.ts`:
+ * el punto mide 34 y se queda a 10 de cada punta. Si se separan, el punto va
+ * por un sitio y el dedo por otro.
+ */
+.pad--throttle .pad__punto {
+  top: auto;
+  bottom: calc(10px + var(--gas, 0) * (100% - 54px));
+  margin: 0 0 0 -17px;
+  transform: none;
+}
+
+.gas__relleno {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 14px;
+  margin-left: -7px;
+  height: calc(17px + var(--gas, 0) * (100% - 54px));
+  border-radius: 7px;
+  background: var(--ocre);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/*
+ * Las tres muescas —ralentí, rodaje y despegue—, más anchas que el punto para
+ * que se vean asomar por los lados cuando está encima: así se sabe sin mirar
+ * de cerca que está **en** la marca. La de rodaje la pone el juego con
+ * `--marca-rodaje`, porque es de cada avión. Ver `flight/palanca-de-gas.ts`.
+ */
+.gas__marca {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  height: 4px;
+  margin-bottom: -2px;
+  border-radius: 2px;
+  background: rgba(228, 226, 218, 0.6);
+  bottom: calc(27px + var(--marca, 0) * (100% - 54px));
+  pointer-events: none;
+}
+
+.gas__marca--rodaje {
+  --marca: var(--marca-rodaje, 0.3);
+}
+
+.gas__marca--despegue {
+  --marca: 1;
 }
 
 .pad--rudder {
@@ -9882,5 +10013,103 @@ button.motor__tecla::after {
 
   .hud .aviso-hud {
     font-size: calc(17px / var(--escala, 1));
+  }
+}
+
+/*
+ * ── **El gas y el freno, bajo el pulgar derecho** ──
+ *
+ * «El avión es difícil de frenar», en el teléfono. Mirado en la pantalla: el
+ * freno era un botón rojo de veintinueve píxeles arriba a la derecha, en la
+ * columna de mandos, a doscientos píxeles de la palanca de gases, que es
+ * donde está el pulgar derecho mientras se rueda. Para parar había que soltar
+ * la palanca, subir el pulgar hasta un botón más pequeño que la yema y
+ * acertarle — con el avión andando hacia la raya del punto de espera.
+ *
+ * Así que con el dedo el freno vive **al lado de la palanca, abajo**, a la
+ * altura del ralentí: bajar el gas a fondo y pisar el freno es un solo
+ * movimiento del pulgar hacia la izquierda, que es lo que se hace de verdad
+ * para parar —gas cerrado y freno— y en el orden en que se hace. Grande:
+ * sesenta y cuatro píxeles de pantalla, divididos por la escala del HUD porque
+ * vive dentro de él. Sale y se va cuando salía y se iba: ver `Hud.update`.
+ *
+ * Al final de la hoja y con `.hud` delante, para ganarle a la columna del
+ * teléfono, que lo ponía en fila con los otros botones.
+ */
+@media (pointer: coarse) {
+  .hud .hud__derecha > .freno--boton {
+    position: fixed;
+    right: calc(
+      (max(20px, env(safe-area-inset-right)) + 74px + 14px) / var(--escala, 1)
+    );
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) / var(--escala, 1));
+    width: calc(64px / var(--escala, 1));
+    margin: 0;
+  }
+
+  /*
+   * **Y la palanca, con recorrido.** Ciento noventa píxeles dejaban un
+   * recorrido de ciento treinta y dos para el punto: una décima de gas en
+   * trece píxeles, menos que una yema. Por encima tiene libre la franja de la
+   * derecha —la columna de mandos queda a su izquierda—, así que crece hasta
+   * doscientos sesenta, dejando arriba sitio para el botón del menú del
+   * teléfono.
+   */
+  .pad--throttle {
+    height: clamp(190px, calc(100vh - 110px), 260px);
+    /* Con la barra del navegador puesta, lo que se ve de verdad. */
+    height: clamp(190px, calc(100dvh - 110px), 260px);
+  }
+
+  /*
+   * Y con el menú de los cuatro puntos abierto, la palanca se aparta: crecida
+   * hasta arriba se ponía encima de la última fila del menú —los créditos y el
+   * cuaderno—, porque la capa de los pulgares va por delante del HUD. Con el
+   * menú abierto no se pilota: el primer toque fuera de él lo cierra, y con él
+   * vuelve la palanca. Lo vigila `verificar-carteles`.
+   */
+  body:has(.hud--menu) .pad--throttle {
+    visibility: hidden;
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  /*
+   * Y los botones de más y menos gas, a tamaño de dedo. Dentro del HUD
+   * reducido medían veintinueve píxeles de pantalla, el objetivo más pequeño
+   * del juego en el aparato donde más grande tenía que ser.
+   */
+  .hud .motor__fila .motor__tecla,
+  .hud .motor__fila .motor__tecla:has(svg) {
+    width: calc(38px / var(--escala, 1));
+    height: calc(36px / var(--escala, 1));
+    min-width: 0;
+    min-height: 0;
+    /* El «−» y el «+» de los peldaños con cifras, del tamaño del botón. */
+    font-size: calc(22px / var(--escala, 1));
+  }
+
+  /* Y lo que responde al dedo, un poco más que lo que se ve: cuarenta y
+     cuatro de pantalla, sin llegar a pisarse entre los dos. */
+  .hud button.motor__tecla::after {
+    width: calc(44px / var(--escala, 1));
+    height: calc(44px / var(--escala, 1));
+  }
+
+  .hud .motor__fila {
+    gap: calc(6px / var(--escala, 1));
+  }
+
+  /*
+   * Y la tarjeta, a la medida de los dos botones y no más ancha que la del
+   * destino: el ancho de la columna sale de lo que mide ella, y de ese ancho
+   * sale lo que puede abrirse el cuadro. Una tarjeta del motor más ancha le
+   * quitaba al cuadro abierto setenta píxeles. Ver `medirLaBarra` en
+   * `ui/hud.ts`.
+   */
+  .hud .tarjeta.motor {
+    width: auto;
+    min-width: 0;
+    padding-inline: calc(8px / var(--escala, 1));
   }
 }

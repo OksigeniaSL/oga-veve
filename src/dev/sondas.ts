@@ -143,6 +143,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Los mandos, para poder mirarlos desde una comprobación. */
     controles: () => juego.input.controls,
     /**
+     * **Y la palanca de gases de la pantalla**, que no es el gas: el tope de
+     * rodaje recorta el gas y la palanca se queda donde la dejó el dedo. Un
+     * banco que pilota con el dedo mide lo que movió el dedo aquí, no en
+     * `controles`. Ver `flight/palanca-de-gas.ts`.
+     */
+    palancaDeGas: () => ({
+      gas: juego.input.palancaDeGas,
+      marcas: [...juego.input.marcasDeLaPalanca],
+    }),
+    /**
      * **Y la palanca del tren**, que no es un mando como los otros.
      *
      * El tren no se pone: **se pide**, y tarda diez segundos en llegar. Por eso
@@ -596,6 +606,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     cantados: () => [...juego.cantados],
     /** Lo que la boca tiró y por qué. Ver `descartadas` en `boca.ts`. */
     descartadas: () => [...BOCA.descartadas],
+    /**
+     * Quién tiene la palabra y qué espera turno, ahora mismo. Para las trazas
+     * del banco: con `habladas` se sabe qué sonó; con esto, qué esperaba
+     * mientras tanto y en qué orden.
+     */
+    bocaAhora: () => ({
+      ocupada: BOCA.ocupada,
+      espera: (
+        BOCA as unknown as { cola: { clave?: string }[] }
+      ).cola.map((c) => c.clave ?? "?"),
+      ultima: BOCA.habladas[BOCA.habladas.length - 1]?.clave ?? "",
+    }),
     /**
      * Y la conversación en orden: qué sonó y cuándo, en segundos desde la
      * primera frase. Con esto y `descartadas` se lee un amontonamiento de
@@ -1528,6 +1550,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         indicatedAirspeed(
           juego.flight.state.airspeed,
           juego.flight.state.position.y,
+          juego.flight.aireDelDia(),
         ) * 1.94384,
       ),
     /** En qué campo está el avión ahora: el de salida o el de destino. */

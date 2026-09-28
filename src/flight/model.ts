@@ -15,6 +15,7 @@
  */
 
 import type { Quaternion, Vector3 } from "three";
+import type { Aire } from "./atmosphere";
 
 /** Posición de los mandos, en intención de piloto, no en deflexión física. */
 export interface ControlInputs {
@@ -100,6 +101,18 @@ export interface ControlInputs {
    * no existe.
    */
   reversa: number;
+  /**
+   * **Si quien lleva el cabeceo y el alabeo es el piloto automático.**
+   *
+   * El modelo de vuelo tiene dos ayudas que imitan a quien suelta la palanca
+   * —el compensador que sostiene la subida y el nivelado de alas— y las
+   * enciende al ver el mando cerca del centro. Con el automático puesto el
+   * mando lo mueve él, y en vuelo recto lo lleva precisamente cerca del
+   * centro, así que sin esto las dos manos se turnaban a los mandos. Lo pone
+   * `conElPilotoAutomatico` en `game.ts`, y solo en la copia que va al
+   * modelo. Sin poner, es que vuela una persona.
+   */
+  automatico?: boolean;
 }
 
 export function neutralControls(): ControlInputs {
@@ -254,6 +267,23 @@ export interface FlightModel {
    */
   empujeAhora(): number;
   /**
+   * **El timón que está sosteniendo el avión ahora mismo**, en unidades de
+   * mando: el de quien vuela más el compensador, y más lo que empuje la ayuda
+   * que sostiene la subida en los peldaños que la llevan, contado como el
+   * timón que haría lo mismo.
+   *
+   * Lo pregunta el piloto automático al engancharse, para coger el avión
+   * **como está**. Tomaba el mando y el compensador, y en los peldaños con
+   * ayudas eso no es todo lo que lo sostiene: al engancharse, la ayuda se
+   * aparta —ver `ControlInputs.automatico`— y lo que ella empujaba
+   * desaparecía de golpe. El JAZ 120, enganchado subiendo en el peldaño de
+   * todas las ayudas, pasaba de 1,6 g a cero en un par de segundos.
+   *
+   * El modelo sencillo no tiene timón que contar: devuelve cero, y allí no hay
+   * piloto automático.
+   */
+  timonAhora(): number;
+  /**
    * Rompe el avión. Lo llama el juego cuando se ha metido en un edificio.
    *
    * Va aquí y por el mismo motivo que `setOnRunway`: `state` es de solo
@@ -286,6 +316,19 @@ export interface FlightModel {
    * modelo no hace.
    */
   ponerViento(x: number, z: number): void;
+  /**
+   * **El aire del día**: la temperatura y la presión del parte donde está el
+   * avión, que mueven la densidad y con ella la sustentación, la resistencia,
+   * el empuje, la indicada y el Mach. Lo pone el juego con el mismo reparto
+   * entre campos que el viento. Ver `atmosphere.ts` y `tiempoEntreCampos`.
+   *
+   * El modelo sencillo lo guarda para lo que pregunta el juego —el empuje del
+   * combustible, el tope de velocidad—, pero no le cambia la física: allí el
+   * gas es la velocidad, como con el viento.
+   */
+  ponerAire(aire: Aire): void;
+  /** Y el aire que tiene puesto, para que los relojes digan lo mismo que él. */
+  aireDelDia(): Aire;
   /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *

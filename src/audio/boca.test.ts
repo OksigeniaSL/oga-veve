@@ -215,6 +215,48 @@ describe("la cadencia", () => {
     return { boca, correr };
   }
 
+  it("y lo que esperaba turno no se lo quita quien llega en el hueco", () => {
+    // Aterrizando en Los Rodeos: «frená» esperaba detrás de «quitá el gas»;
+    // el temporizador que la suelta llegó tarde y, en el hueco, «salí por la
+    // siguiente» se coló. «Frená» caducó esperando.
+    let ahora = 0;
+    const boca = new Boca({
+      ahora: () => ahora,
+      cancelar: () => {},
+      // Un temporizador que no llega nunca: el peor caso del de verdad.
+      esperar: () => {},
+    });
+    const dichas: string[] = [];
+    let acabar = () => {};
+    const decir = (clave: string) =>
+      boca.pedir(
+        "normal",
+        (listo) => {
+          dichas.push(clave);
+          acabar = listo;
+        },
+        clave,
+      );
+    decir("vuelo.quitaElGas");
+    ahora = 600;
+    decir("vuelo.aterrizado");
+    ahora = 1600;
+    acabar();
+    ahora = 1600 + SILENCIO + 200;
+    decir("vuelo.salidaSiguiente");
+    expect(dichas).toEqual(["vuelo.quitaElGas", "vuelo.aterrizado"]);
+    // Y la que llegó en el hueco espera su turno, no se pierde.
+    ahora += 1500;
+    acabar();
+    ahora += SILENCIO + 1;
+    decir("vuelo.otroDeRelleno");
+    expect(dichas).toEqual([
+      "vuelo.quitaElGas",
+      "vuelo.aterrizado",
+      "vuelo.salidaSiguiente",
+    ]);
+  });
+
   it("la misma frase no se repite antes de tiempo", () => {
     const { boca, correr } = conReloj();
     const dichas: string[] = [];

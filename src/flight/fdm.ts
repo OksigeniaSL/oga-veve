@@ -31,14 +31,25 @@ import { Quaternion, Vector3 } from "three";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
-import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
+import {
+  AIRE_ESTANDAR,
+  type Aire,
+  GRAVITY,
+  SEA_LEVEL_DENSITY,
+  airDensity,
+} from "./atmosphere";
 import {
   topeDeVelocidad,
   type QuienManda,
   machDe,
   resistenciaDeOnda,
 } from "./limites";
-import { esDeChorro, tieneReversa, type AircraftConfig } from "./aircraft";
+import {
+  esDeChorro,
+  loQueDaElMotor,
+  tieneReversa,
+  type AircraftConfig,
+} from "./aircraft";
 import { REVERSA_HASTA } from "./arcade";
 
 /**
@@ -120,6 +131,13 @@ const WING_LEVELLER = 2.0;
  * Lo que hacía falta —que una llegada regular se note— ya lo da el sonido:
  * el toque de ruedas suena distinto por encima de 2,5 m/s de descenso.
  */
+/**
+ * Hasta qué velocidad sostiene la subida el compensador automático con su
+ * ganancia de siempre, en m/s. Por encima, la ganancia baja con la velocidad
+ * para mandar sobre el ángulo de la trayectoria. Ver `climbLaw` en `step`.
+ */
+const VELOCIDAD_DE_LA_AYUDA = 60;
+
 /** Cuánto tarda el compensador automático en fijar la actitud, en segundos. */
 const TRIM_SETTLE = 1.1;
 
@@ -371,6 +389,13 @@ export class CoefficientFlightModel implements FlightModel {
     this.superficie = superficie;
   }
 
+  /** El timón que sostiene el avión ahora mismo. Ver `timonAhora`. */
+  private timonQueSostiene = 0;
+
+  timonAhora(): number {
+    return this.timonQueSostiene;
+  }
+
   /** El último empuje calculado, para el combustible. Ver `empujeAhora`. */
   private ultimoEmpuje = 0;
 
@@ -393,6 +418,20 @@ export class CoefficientFlightModel implements FlightModel {
   private readonly viento = new Vector3();
   /** Velocidad respecto al aire. Se reusa para no crear un vector por paso. */
   private readonly relativa = new Vector3();
+
+  /**
+   * El aire del día: la temperatura y la presión del parte, que mueven la
+   * densidad y con ella todo. Ver `atmosphere.ts` y `ponerAire` en `model.ts`.
+   */
+  private aire: Aire = AIRE_ESTANDAR;
+
+  ponerAire(aire: Aire): void {
+    this.aire = aire;
+  }
+
+  aireDelDia(): Aire {
+    return this.aire;
+  }
 
   ponerViento(x: number, z: number): void {
     this.vientoDelParte.x = x;
@@ -504,12 +543,14 @@ export class CoefficientFlightModel implements FlightModel {
    * #159.
    */
   limiteDeVelocidad(): number {
-    return topeDeVelocidad(this.aircraft, this.state.position.y).verdadera;
+    return topeDeVelocidad(this.aircraft, this.state.position.y, this.aire)
+      .verdadera;
   }
 
   /** Y quién lo pone aquí: la estructura o el aire. Para poder decirlo. */
   quienLimita(): QuienManda {
-    return topeDeVelocidad(this.aircraft, this.state.position.y).manda;
+    return topeDeVelocidad(this.aircraft, this.state.position.y, this.aire)
+      .manda;
   }
 
   /** El mismo con el que se rompe de verdad. Ver `crashLimits`. */
@@ -578,7 +619,9 @@ export class CoefficientFlightModel implements FlightModel {
      */
     const { u, v, w, speed } = this.respectoAlAire();
 
-    const density = airDensity(s.position.y);
+    // La del día, no la de las tablas: con calor el aire pesa menos, y
+    // sustenta, frena y empuja menos. Ver `atmosphere.ts`.
+    const density = airDensity(s.position.y, this.aire);
 
     if (speed > MIN_AIRSPEED) {
       s.alpha = anguloDeAtaque(u, w);
@@ -652,7 +695,11 @@ export class CoefficientFlightModel implements FlightModel {
        * Ver `resistenciaDeOnda` en `flight/limites.ts`, donde está la curva y
        * el porqué de cada número.
        */
-      resistenciaDeOnda(machDe(speed, this.state.position.y), ac.mmo, a.cd0);
+      resistenciaDeOnda(
+        machDe(speed, this.state.position.y, this.aire),
+        ac.mmo,
+        a.cd0,
+      );
     const cy = a.cyBeta * s.beta;
 
     // ── Pérdida, con histéresis y con paciencia ──────────────────────────
@@ -722,7 +769,7 @@ export class CoefficientFlightModel implements FlightModel {
     const thrust =
       (controls.engineOn ? assisted.throttle : 0) *
       ac.maxThrust *
-      Math.pow(densityRatio, 0.7) *
+      loQueDaElMotor(ac, densityRatio) *
       speedFactor;
     // Se guarda para el combustible, que gasta por el empuje que se da y no
     // por el gas que se pide. Ver `empujeAhora` en `model.ts`.
@@ -756,6 +803,7 @@ export class CoefficientFlightModel implements FlightModel {
      * recorrido, tirar más no da más.
      */
     const timon = clamp(assisted.elevator + controls.trim, -1, 1);
+    let timonDeAhora = timon;
     const cmMoment =
       a.cm0 +
       a.cmAlpha * anguloQueEstabiliza(s.alpha, a.alphaStall) +
@@ -788,6 +836,26 @@ export class CoefficientFlightModel implements FlightModel {
     }
 
     {
+      /*
+       * **Y con el piloto automático puesto, estas dos manos se apartan.**
+       *
+       * El compensador y el nivelado de abajo imitan a quien suelta la
+       * palanca en un avión bien compensado, y saben que la ha soltado porque
+       * el mando está cerca del centro. Con el automático puesto el mando lo
+       * mueve él, y en vuelo recto lo lleva **justo ahí**, cerca del centro:
+       * cada vez que su timón bajaba de ocho centésimas, entraba la otra mano
+       * con su propia ley, y al subir se iba. Dos pilotos a los mandos a la
+       * vez, turnándose sesenta veces por segundo. Medido con el automático
+       * sosteniendo dos mil metros en el peldaño de todas las ayudas: el JAZ
+       * 120 iba de 0,2 g a 1,9 g, y el JAZ 25 alabeaba a trece grados por
+       * segundo en un viraje que sin ayudas lleva a cinco.
+       *
+       * En un avión de verdad no hay dos: quien lleva los mandos es el
+       * automático, y la mano que imita a un piloto no tiene nada que hacer.
+       * Las ayudas que amortiguan —las que un avión de verdad lleva como
+       * amortiguador de guiñada— se quedan. Ver `ControlInputs.automatico`.
+       */
+      const manoDelAutomatico = controls.automatico === true;
       // Compensador automático: mantiene **la actitud que dejaste**.
       //
       // La primera versión llevaba el morro al horizonte, y eso está mal por
@@ -806,7 +874,8 @@ export class CoefficientFlightModel implements FlightModel {
       if (
         this.layers.climbHold > 0 &&
         Math.abs(controls.elevator) < 0.08 &&
-        !s.onGround
+        !s.onGround &&
+        !manoDelAutomatico
       ) {
         // Se sostiene **la subida**, no la actitud del morro.
         //
@@ -902,7 +971,31 @@ export class CoefficientFlightModel implements FlightModel {
         const shortfall = safe - speed;
         const blend = clamp(shortfall / (safe - floor), 0, 1);
 
-        const climbLaw = (this.trimClimb - s.verticalSpeed) * 0.12;
+        /*
+         * **Y la subida se sostiene por su ángulo, no por los metros por
+         * segundo.**
+         *
+         * Las doce centésimas por metro por segundo se afinaron con los de
+         * hélice, que vuelan por debajo de sesenta metros por segundo. Un
+         * metro por segundo de subida a sesenta es casi un grado de
+         * trayectoria; a ciento cuarenta, menos de medio. Con la misma
+         * ganancia, el reactor corregía cada metro por segundo como si fuera
+         * el doble o el triple de ángulo, y un reactor tarda más que una
+         * avioneta en cambiar de trayectoria cuando cambia el morro: la
+         * corrección llegaba tarde y de más, y la siguiente, más tarde y más
+         * de más. Medido soltando la palanca con el avión compensado y
+         * nivelado a dos mil metros, en el peldaño de todas las ayudas: el
+         * JAZ 90 iba solo de −1,6 g a 3,4 g, y el JAZ 120 igual.
+         *
+         * Por encima de `VELOCIDAD_DE_LA_AYUDA` la ganancia baja con la
+         * velocidad, que es lo mismo que mandar sobre el ángulo de la
+         * trayectoria: la misma firmeza en todos. Por debajo no cambia nada,
+         * así que lo afinado en los de hélice sigue igual.
+         */
+        const climbLaw =
+          (this.trimClimb - s.verticalSpeed) *
+          0.12 *
+          Math.min(1, VELOCIDAD_DE_LA_AYUDA / Math.max(1, speed));
         const speedLaw = -shortfall * 0.1;
         /*
          * **Y el compensador no tira hasta el avisador.**
@@ -945,6 +1038,10 @@ export class CoefficientFlightModel implements FlightModel {
         const authority =
           this.layers.climbHold * qS * a.cmElevator * ac.chord * schedule;
         pitchMoment += authority * (law - s.pitchRate * 0.75);
+        // Lo que empuja esta mano, contado en timón. Ver `timonAhora`.
+        timonDeAhora +=
+          (this.layers.climbHold * schedule * (law - s.pitchRate * 0.75) * qS) /
+          Math.max(1, qSSimetria);
       } else {
         // Con el mando en la mano, no hay compensador que valga.
         this.trimClimb = null;
@@ -960,7 +1057,8 @@ export class CoefficientFlightModel implements FlightModel {
       if (
         this.layers.wingLeveller > 0 &&
         Math.abs(controls.aileron) < 0.08 &&
-        !s.onGround
+        !s.onGround &&
+        !manoDelAutomatico
       ) {
         rollMoment -=
           this.layers.wingLeveller *
@@ -970,6 +1068,16 @@ export class CoefficientFlightModel implements FlightModel {
           levelling(this.bankAngle());
       }
     }
+
+    /*
+     * El timón que sostiene el avión, **promediado**: el de quien vuela, el
+     * compensador y lo que empuje la ayuda, pasado por un filtro de dos
+     * segundos. Promediado porque lo que tiene que coger el automático es el
+     * timón con el que el avión vuela, no el de un instante: con el avión
+     * cabeceando, el de un instante es la cresta o el valle. Ver `timonAhora`.
+     */
+    this.timonQueSostiene +=
+      (timonDeAhora - this.timonQueSostiene) * Math.min(1, dt / 2);
 
     // ── Traslación ─────────────────────────────────────────────────────
     this.force

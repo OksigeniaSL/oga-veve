@@ -15,7 +15,7 @@ import {
 } from "three";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
 import type { Aerodrome } from "./aerodrome";
-import { crearGranja, lapachoEnFlor } from "./granja";
+import { crearGranja, lapachoEnFlor, potrerosDe } from "./granja";
 
 const aero = YVYTU as unknown as Aerodrome;
 
@@ -97,3 +97,66 @@ function enEjes(x: number, z: number): [number, number] {
 function enMundo(a: number, c: number): [number, number] {
   return [MEDIO[0] + a * U[0] + c * N[0], MEDIO[1] + a * U[1] + c * N[1]];
 }
+
+/*
+ * **Los potreros, con su color.** Desde el aire la granja no se veía: la foto
+ * de Sentinel-2 tapaba los potreros dibujados. Lo que se pinta encima tiene
+ * que caer donde están el alambrado y el casco, y en ningún otro sitio.
+ */
+describe("los potreros pintados", () => {
+  const potreros = potrerosDe(aero)!;
+
+  /** Si el punto cae dentro del polígono, en coordenadas del campo. */
+  const dentroDe = (
+    poligono: readonly (readonly [number, number])[],
+    x: number,
+    z: number,
+  ): boolean => {
+    let si = false;
+    for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+      const [ax, az] = poligono[i]!;
+      const [bx, bz] = poligono[j]!;
+      if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax)
+        si = !si;
+    }
+    return si;
+  };
+
+  it("hay potreros donde está el alambrado, y el casco con su patio", () => {
+    expect(potreros).not.toBeNull();
+    const nombres = potreros.piezas.map((p) => p.nombre);
+    expect(nombres).toContain("pista");
+    expect(nombres).toContain("casco");
+    expect(potreros.piezas.length).toBeGreaterThanOrEqual(6);
+    // La casa, dentro del casco; y el patio, en la casa.
+    const casa = aero.buildings.find((e) => e.kind === "farm")!;
+    const [cx, cy] = casa.polygon[0]!;
+    const casco = potreros.piezas.find((p) => p.nombre === "casco")!;
+    expect(dentroDe(casco.poligono, cx, -cy)).toBe(true);
+    expect(Math.hypot(potreros.patio!.x - cx, potreros.patio!.z + cy)).toBeLessThan(30);
+  });
+
+  it("y la pista cae en su potrero, que es el de la pista", () => {
+    const pista = potreros.piezas.find((p) => p.nombre === "pista")!;
+    for (const [x, y] of aero.runways[0]!.centerline)
+      expect(dentroDe(pista.poligono, x, -y)).toBe(true);
+  });
+
+  it("todo cabe en el lienzo, que no es más grande de lo que hace falta", () => {
+    for (const p of potreros.piezas)
+      for (const [x, z] of p.poligono) {
+        expect(x).toBeGreaterThan(potreros.x0);
+        expect(x).toBeLessThan(potreros.x1);
+        expect(z).toBeGreaterThan(potreros.z0);
+        expect(z).toBeLessThan(potreros.z1);
+      }
+    // Dos kilómetros y poco de lado: a mil veinticuatro píxeles, menos de dos
+    // metros y medio por píxel, que es más fino que la foto.
+    expect(potreros.x1 - potreros.x0).toBeLessThan(2400);
+    expect(potreros.z1 - potreros.z0).toBeLessThan(2400);
+  });
+
+  it("y solo en los campos que tienen granja", () => {
+    expect(potrerosDe({ ...aero, granja: false })).toBeNull();
+  });
+});

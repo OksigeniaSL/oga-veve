@@ -872,6 +872,25 @@ const MANGA = icono(`
 `);
 
 /**
+ * **El calor que alarga la carrera**: un termómetro casi lleno y, al lado,
+ * la pista con una flecha que se estira.
+ *
+ * Termómetro porque es el dibujo del calor en cualquier parte del mundo, y la
+ * flecha sobre la raya del suelo porque lo que se alarga es el trozo de pista
+ * que el avión se come antes de irse al aire. Ver `decirElCalor` en `game.ts`.
+ */
+const CALOR = icono(`
+  <path d="M4.6 4.2 a2.2 2.2 0 0 1 4.4 0 V12.6 a3.9 3.9 0 1 1 -4.4 0 Z" />
+  <path class="senal__hueco" d="M6.1 3.4 h1.4 v2.8 h-1.4 Z" />
+  <path d="M12.2 11.4 h8.2" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" />
+  <path d="M18.2 8.6 L21.4 11.4 L18.2 14.2" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M12.2 20.4 h9.2" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -901,6 +920,7 @@ export const DIBUJOS = {
   "tren-en-el-suelo": TREN_EN_EL_SUELO,
   tormenta: TORMENTA,
   sobrevelocidad: SOBREVELOCIDAD,
+  calor: CALOR,
   freno: FRENO,
   combustible: COMBUSTIBLE,
   servicio: SERVICIO,

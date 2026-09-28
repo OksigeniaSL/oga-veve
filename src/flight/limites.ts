@@ -27,36 +27,45 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
+import {
+  AIRE_ESTANDAR,
+  type Aire,
+  trueFromIndicated,
+  velocidadDelSonido,
+} from "./atmosphere";
 
 /** Un nudo en metros por segundo. */
 export const NUDO = 0.514444;
 
-/**
- * La velocidad del sonido a esa altura, m/s.
- *
- * Baja con la temperatura, no con la presión: a once kilómetros el aire está a
- * cincuenta y seis bajo cero y el sonido va a 295 m/s contra los 340 de abajo.
- * Es exactamente por eso por lo que el Mach manda arriba — el mismo avión a la
- * misma velocidad real está más cerca de Mach uno cuanto más alto va.
+/*
+ * La velocidad del sonido vivía también aquí, con su propia cuenta de la
+ * temperatura: el mismo número en dos sitios, y el día que la temperatura
+ * dejó de ser la estándar, uno de los dos se habría quedado atrás. Ahora es
+ * la de `atmosphere.ts`, con el aire del día.
  */
-export function velocidadDelSonido(alturaM: number): number {
-  // Troposfera ISA: 15 °C abajo y seis grados y medio menos por kilómetro.
-  const tempK = 288.15 - 0.0065 * Math.max(0, Math.min(alturaM, 11000));
-  return 20.0468 * Math.sqrt(tempK);
-}
+export { velocidadDelSonido };
 
-/** La velocidad real que corresponde a esa indicada a esa altura, m/s. */
+/**
+ * La velocidad real que corresponde a esa indicada a esa altura, m/s.
+ *
+ * **Con el aire del día**: con calor, la misma indicada es más velocidad real,
+ * y por eso la Vmo, que es indicada, se vuela más deprisa sobre el suelo.
+ */
 export function verdaderaDesdeIndicada(
   indicada: number,
   alturaM: number,
+  aire: Aire = AIRE_ESTANDAR,
 ): number {
-  return indicada / Math.sqrt(airDensity(alturaM) / SEA_LEVEL_DENSITY);
+  return trueFromIndicated(indicada, alturaM, aire);
 }
 
 /** A qué Mach va un avión que lleva esa velocidad real a esa altura. */
-export function machDe(verdadera: number, alturaM: number): number {
-  return verdadera / velocidadDelSonido(alturaM);
+export function machDe(
+  verdadera: number,
+  alturaM: number,
+  aire: Aire = AIRE_ESTANDAR,
+): number {
+  return verdadera / velocidadDelSonido(alturaM, aire);
 }
 
 /** Cuál de los dos topes manda a esa altura. */
@@ -74,9 +83,11 @@ export type QuienManda = "estructura" | "aire";
 export function topeDeVelocidad(
   a: AircraftConfig,
   alturaM: number,
+  /** El aire del día: la Vmo y el Mmo en real se mueven con él. */
+  aire: Aire = AIRE_ESTANDAR,
 ): { verdadera: number; manda: QuienManda } {
-  const porEstructura = verdaderaDesdeIndicada(a.vmoKt * NUDO, alturaM);
-  const porElAire = a.mmo * velocidadDelSonido(alturaM);
+  const porEstructura = verdaderaDesdeIndicada(a.vmoKt * NUDO, alturaM, aire);
+  const porElAire = a.mmo * velocidadDelSonido(alturaM, aire);
   return porEstructura <= porElAire
     ? { verdadera: porEstructura, manda: "estructura" }
     : { verdadera: porElAire, manda: "aire" };

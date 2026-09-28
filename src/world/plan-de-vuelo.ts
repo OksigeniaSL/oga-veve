@@ -35,6 +35,11 @@ import { aLaPolilinea } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
 import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
+  AIRE_ESTANDAR,
+  type Aire,
+  trueFromIndicated,
+} from "../flight/atmosphere";
+import {
   paraEntrarYDespegar,
   pistaQueHaceFalta,
   pistaQueNecesita,
@@ -1295,6 +1300,12 @@ export class PlanDeVuelo {
   }
 
   /**
+   * **El aire del día**, para pasar la pérdida a velocidad verdadera. Lo pone
+   * el juego antes de cada paso, como `pistaDeOtros`. Ver `perdida` abajo.
+   */
+  aire: Aire = AIRE_ESTANDAR;
+
+  /**
    * El puesto que se está usando de verdad, si no es el que tocaba por cercanía.
    *
    * Lo pone `reiniciarDesde` cuando el juego encuentra que el mejor puesto tiene
@@ -2492,12 +2503,28 @@ export class PlanDeVuelo {
     const p: Paso = this.vuelo.paso(s, dt);
     const sugerida = this.velocidadAqui();
 
+    const puestas = this.vecesQueSePusoLaRuta;
     if (p.cambio || this.acabaDeMudarse) {
       // Mudarse de aeropuerto es, para la ruta, lo mismo que cambiar de fase:
       // lo que había ya no vale y hay que trazar desde donde se está.
       this.acabaDeMudarse = false;
       this.alCambiarDeFase(p.fase);
     } else this.rehacerSiHaceFalta(p.fase, dt);
+    /*
+     * **Y con ruta nueva, el avance se mide sobre ella ya, no en el fotograma
+     * siguiente.**
+     *
+     * Poner una ruta deja el avance en cero hasta que la situación del paso
+     * siguiente lo vuelva a medir, y en ese fotograma quien pregunta por él
+     * —el coche del sígame— oía «el avión está al principio de la ruta». Y la
+     * ruta de vuelta empieza donde se tocó tierra, que en El Hierro quedaba
+     * ciento cincuenta metros detrás del avión: un coche que se planta con
+     * ese número se planta **detrás**, y en el fotograma siguiente tiene que
+     * pasar por el avión para ponerse delante. Un fotograma con el número de
+     * otra ruta es un número falso.
+     */
+    if (this.vecesQueSePusoLaRuta !== puestas && this.rutaMundo.length > 1)
+      this.restanteHasta([estado.position.x, estado.position.z]);
     this.encender();
 
     return {
@@ -3821,9 +3848,20 @@ export class PlanDeVuelo {
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
       pistaQueNecesita: pistaQueNecesita(this.avion),
-      // Por encima de esto el avión vuela, esté a la altura que esté. Ver
-      // «Rozar el monte no es llegar» en `vuelo.ts`.
-      perdida: velocidadDePerdida(this.avion),
+      /*
+       * Por encima de esto el avión vuela, esté a la altura que esté. Ver
+       * «Rozar el monte no es llegar» en `vuelo.ts`.
+       *
+       * **En verdadera**, que es la que se le compara: la pérdida es de
+       * indicada, y en un campo alto o en una tarde de calor la misma
+       * indicada es más velocidad real. Comparando la verdadera con la
+       * indicada, el avión seguía «volando» un rato después de tocar.
+       */
+      perdida: trueFromIndicated(
+        velocidadDePerdida(this.avion),
+        estado.position.y,
+        this.aire,
+      ),
       sobreElSuelo,
       motor,
       desalineado,

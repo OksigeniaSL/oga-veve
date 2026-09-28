@@ -32,6 +32,8 @@
  * de nada. Volar no puede depender de que haya red.
  */
 
+import { AIRE_ESTANDAR, aireDelParte, type Aire } from "../flight/atmosphere";
+
 /** El tiempo, reducido a lo que cambia el vuelo. */
 export interface Meteo {
   /** De dónde viene el viento, grados verdaderos. `null` si es variable o calma. */
@@ -331,6 +333,12 @@ export interface CampoConTiempo {
   readonly x: number;
   readonly z: number;
   readonly meteo: Meteo;
+  /**
+   * A qué altura está su pista, m. Hace falta para la temperatura: 21 °C en
+   * Los Rodeos, a seiscientos treinta metros, no es el mismo día que 21 °C en
+   * Gando, al nivel del mar. Ver `aireDelParte`. Sin ella, al nivel del mar.
+   */
+  readonly cota?: number;
 }
 
 /**
@@ -370,11 +378,18 @@ export function tiempoEntreCampos(
   readonly vientoKt: number;
   /** La presión al nivel del mar aquí, hPa. */
   readonly qnh: number;
+  /**
+   * **Y el aire del día**: cuánto más caliente que el estándar está, con la
+   * presión de aquí. Es lo que mueve la densidad y con ella todo el vuelo.
+   * Ver `Aire` en `flight/atmosphere.ts`.
+   */
+  readonly delDia: Aire;
 } {
   let pesos = 0;
   let ax = 0;
   let az = 0;
   let qnh = 0;
+  let desviacion = 0;
   for (const c of campos) {
     const d2 = (c.x - x) ** 2 + (c.z - z) ** 2;
     const w = 1 / (d2 + RADIO_DEL_CAMPO ** 2);
@@ -382,6 +397,14 @@ export function tiempoEntreCampos(
     ax += v.x * w;
     az += v.z * w;
     qnh += c.meteo.qnh * w;
+    /*
+     * La temperatura se mezcla como **desviación al nivel del mar**, no en
+     * grados tal cual: entre un campo en la costa y otro en la montaña, la
+     * mitad de sus dos temperaturas no es la de ningún sitio. Ver
+     * `aireDelParte`.
+     */
+    desviacion +=
+      aireDelParte(c.meteo.temp, c.cota ?? 0, c.meteo.qnh).desviacion * w;
     pesos += w;
   }
   if (pesos <= 0)
@@ -390,6 +413,7 @@ export function tiempoEntreCampos(
       vientoDe: null,
       vientoKt: 0,
       qnh: TIEMPO_DE_CASA.qnh,
+      delDia: AIRE_ESTANDAR,
     };
   ax /= pesos;
   az /= pesos;
@@ -401,6 +425,7 @@ export function tiempoEntreCampos(
     vientoDe: kt < 0.5 ? null : de,
     vientoKt: kt,
     qnh: qnh / pesos,
+    delDia: { desviacion: desviacion / pesos, qnh: qnh / pesos },
   };
 }
 
