@@ -1590,19 +1590,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       cotaDePista);
 
   /*
-   * **Y nivelado, un reactor sostiene la altura con el automático**, por lo
-   * mismo que la senda de la final: ver `volarLaSenda`.
+   * **Y en el circuito, un reactor lleva la altura con el automático**, por
+   * lo mismo que la senda de la final: ver `volarLaSenda`.
    *
    * La ley de altura del banco también oscilaba en el circuito. Medido con
    * la traza del ala en Los Rodeos, con el JAZ 90 a ciento ochenta y cinco
    * nudos: la palanca de −0,27 a +0,20 cada once segundos, la altura de 224
    * a 620 m y la carga de −0,4 a 1,5 g, y en cada cresta el ala en el
-   * avisador: cinco «stall, stall» limpios en el circuito. Subiendo manda la
-   * ley de subida, que es otra; nivelado o bajando al vértice siguiente, la
-   * altura la lleva el automático del juego.
+   * avisador: cinco «stall, stall» limpios en el circuito.
+   *
+   * **Y subiendo también.** Se dejó primero la ley de subida, y dio un
+   * «stall, stall» a 182 nudos y 1,39 g: esa ley pide la velocidad de subida
+   * de la ficha —la de rotar más un quince por ciento— tirando de la palanca,
+   * y el reactor ya iba más rápido, así que tiraba. El automático sube a su
+   * ritmo, con sus topes de carga, y el gas de subida sigue llevando la
+   * velocidad. Los primeros ciento veinte metros siguen por actitud, como en
+   * `subirDeVerdad`: eso es asentar la subida, no circuito.
    */
   const sostenerLaAltura = (s, subiendo, altoQueToca) => {
-    if (!REACTOR_COMPLETO || subiendo) return;
+    if (!REACTOR_COMPLETO) return;
+    if (subiendo && s.heightAboveGround < ASENTAR_LA_SUBIDA) return;
     senda = {
       altitud: s.position.y + (altoQueToca - alto(s)),
       ritmo: 0,
