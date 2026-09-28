@@ -212,7 +212,22 @@ try {
         o.colocar(f.x, f.suelo + 250, f.z, o.avion().aproximacion ?? 50, f.h);
         await espera(2000);
       }
-      const t = o.puntoDeFinal(-350);
+      /*
+       * **Y se toca donde toca uno de verdad**: en el punto de visada, que la
+       * OACI pinta según la distancia de aterrizaje —150, 250, 300 o 400 m del
+       * umbral por debajo de 800, 1.200 y 2.400 m y por encima (Anexo 14,
+       * vol. I, 5.2.5)—. Eran trescientos cincuenta metros en todas, y en
+       * Pilar, con 1.200 m y su única calle a 390 m del umbral 02, el avión se
+       * paraba justo en la boca: la raya giraba noventa grados delante del
+       * morro y se salía del cuadro, 6 de 15. Tocando en la visada, a 300 m,
+       * se para antes de la boca y rueda hasta ella por la pista, que es como
+       * llega a esa calle quien aterriza allí: 10 de 10.
+       */
+      const r = o.pistaDeAhora?.() ?? o.pista();
+      const disponible = r.length - (r.desplazado ?? 0);
+      const visada =
+        disponible < 800 ? 150 : disponible < 1200 ? 250 : disponible < 2400 ? 300 : 400;
+      const t = o.puntoDeFinal(-visada);
       o.pedirTren?.(true);
       o.colocar(t.x, o.sueloDeVuelo(t.x, t.z) + tren + 0.05, t.z, 14, t.h);
       for (let i = 0; i < 60; i++) {

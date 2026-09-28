@@ -1302,63 +1302,92 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * cabecera. Quien sigue una raya pintada la sigue en orden; no salta a la
    * que va al lado en sentido contrario.
    *
-   * Así que se busca cerca de donde se iba —un poco hacia atrás y sesenta
+   * Así que se busca cerca de donde se iba —un poco hacia atrás y treinta
    * metros de raya hacia delante— y solo si de ahí no queda nada a mano, en
-   * toda la ruta, que es lo que pasa con una ruta nueva.
+   * toda la ruta.
+   *
+   * **Y por los metros de raya, no por sus puntos.** Se buscaba el punto
+   * pintado más cercano y se apuntaba al primero que quedara más lejos que la
+   * mirada, y la raya se trocea cada veinticinco metros: en la ida por la pista
+   * hasta la media vuelta, el punto más cercano podía ser uno de la vuelta, a
+   * siete metros de través, antes que uno de la ida a doce por delante. Y con
+   * una ruta nueva se buscaba en toda ella. En Pilar, recién trazada la vuelta
+   * por la pista, el piloto tomó la raya de vuelta por la suya y apuntó pista
+   * atrás: media vuelta a diez metros por segundo y al pasto, a veintiocho
+   * metros del eje, con la media vuelta dibujada cuarenta metros más allá.
+   *
+   * Es lo que hace el piloto perfecto de `vuelta-por-la-pista.test.ts`, que la
+   * da entera sobre el asfalto: llevar la cuenta de por dónde va **a lo largo
+   * de la raya**. Aquí, proyectando sobre cada tramo y no sobre sus puntos, una
+   * ruta nueva se empieza por su principio —sale de donde está el avión—, y
+   * se mira un punto de la raya los metros de la mirada **por delante en la
+   * raya**, no a esa distancia en línea recta: la vuelta queda a siete metros
+   * del avión y a veinte de raya.
    */
   let firmaDelTimon = "";
-  let indiceDelTimon = -1;
+  let avanceDelTimon = 0;
+  let largosDelTimon = [0];
   const timon = (s, ruta) => {
     if (ruta.length < 2) return 0;
     const ultimo = ruta[ruta.length - 1];
     const firma = `${ruta.length}:${ruta[0][0].toFixed(1)},${ruta[0][1].toFixed(1)}:${ultimo[0].toFixed(1)},${ultimo[1].toFixed(1)}`;
     if (firma !== firmaDelTimon) {
       firmaDelTimon = firma;
-      indiceDelTimon = -1;
+      largosDelTimon = [0];
+      for (let i = 1; i < ruta.length; i++)
+        largosDelTimon.push(
+          largosDelTimon[i - 1] +
+            Math.hypot(ruta[i][0] - ruta[i - 1][0], ruta[i][1] - ruta[i - 1][1]),
+        );
+      avanceDelTimon = 0;
     }
+    const total = largosDelTimon[largosDelTimon.length - 1];
+    /** El punto de la raya a tantos metros de su principio. */
+    const aLos = (avance) => {
+      for (let i = 0; i < ruta.length - 1; i++) {
+        if (largosDelTimon[i + 1] < avance) continue;
+        const l = largosDelTimon[i + 1] - largosDelTimon[i];
+        const t = l > 0 ? Math.max(0, (avance - largosDelTimon[i]) / l) : 0;
+        return [
+          ruta[i][0] + (ruta[i + 1][0] - ruta[i][0]) * t,
+          ruta[i][1] + (ruta[i + 1][1] - ruta[i][1]) * t,
+        ];
+      }
+      return ultimo;
+    };
+    /** Lo más cerca que queda la raya entre dos avances, y en cuál. */
     const buscar = (desde, hasta) => {
-      let cerca = -1;
       let mejor = Infinity;
-      for (let i = desde; i <= hasta; i++) {
+      let avance = Math.max(0, desde);
+      for (let i = 0; i < ruta.length - 1; i++) {
+        const a0 = largosDelTimon[i];
+        const a1 = largosDelTimon[i + 1];
+        if (a1 < desde || a0 > hasta) continue;
+        const l = a1 - a0;
+        const [ax, az] = ruta[i];
+        const [bx, bz] = ruta[i + 1];
+        const u =
+          l > 0
+            ? ((s.position.x - ax) * (bx - ax) + (s.position.z - az) * (bz - az)) /
+              (l * l)
+            : 0;
+        const aqui = Math.max(desde, Math.min(hasta, a0 + Math.max(0, Math.min(1, u)) * l));
+        const t = l > 0 ? (aqui - a0) / l : 0;
         const d = Math.hypot(
-          ruta[i][0] - s.position.x,
-          ruta[i][1] - s.position.z,
+          ax + (bx - ax) * t - s.position.x,
+          az + (bz - az) * t - s.position.z,
         );
         if (d < mejor) {
           mejor = d;
-          cerca = i;
+          avance = aqui;
         }
       }
-      return { cerca, mejor };
+      return { mejor, avance };
     };
-    let hallado = { cerca: -1, mejor: Infinity };
-    if (indiceDelTimon >= 0) {
-      let hasta = indiceDelTimon;
-      let andado = 0;
-      while (hasta < ruta.length - 1 && andado < 60) {
-        andado += Math.hypot(
-          ruta[hasta + 1][0] - ruta[hasta][0],
-          ruta[hasta + 1][1] - ruta[hasta][1],
-        );
-        hasta++;
-      }
-      hallado = buscar(Math.max(0, indiceDelTimon - 3), hasta);
-    }
-    if (hallado.mejor > 25) hallado = buscar(0, ruta.length - 1);
-    const cerca = hallado.cerca;
-    const mejor = hallado.mejor;
-    indiceDelTimon = cerca;
-    let mira = ruta[ruta.length - 1];
-    for (let i = cerca; i < ruta.length; i++) {
-      const d = Math.hypot(
-        ruta[i][0] - s.position.x,
-        ruta[i][1] - s.position.z,
-      );
-      if (d > miraDe(s, mejor)) {
-        mira = ruta[i];
-        break;
-      }
-    }
+    let hallado = buscar(avanceDelTimon - 5, avanceDelTimon + 30);
+    if (hallado.mejor > 25) hallado = buscar(0, total);
+    avanceDelTimon = hallado.avance;
+    const mira = aLos(Math.min(total, avanceDelTimon + miraDe(s, hallado.mejor)));
     return alPunto(s, mira[0], mira[1]);
   };
 
