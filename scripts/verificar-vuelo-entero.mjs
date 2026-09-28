@@ -1575,6 +1575,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     ((o.cotaDePistaDeAhora ?? o.cotaDePista)?.(s.position.x, s.position.z) ??
       cotaDePista);
 
+  /*
+   * **Y nivelado, un reactor sostiene la altura con el automático**, por lo
+   * mismo que la senda de la final: ver `volarLaSenda`.
+   *
+   * La ley de altura del banco también oscilaba en el circuito. Medido con
+   * la traza del ala en Los Rodeos, con el JAZ 90 a ciento ochenta y cinco
+   * nudos: la palanca de −0,27 a +0,20 cada once segundos, la altura de 224
+   * a 620 m y la carga de −0,4 a 1,5 g, y en cada cresta el ala en el
+   * avisador: cinco «stall, stall» limpios en el circuito. Subiendo manda la
+   * ley de subida, que es otra; nivelado o bajando al vértice siguiente, la
+   * altura la lleva el automático del juego.
+   */
+  const sostenerLaAltura = (s, subiendo, altoQueToca) => {
+    if (!NECESITA_TECNICA || subiendo) return;
+    senda = {
+      altitud: s.position.y + (altoQueToca - alto(s)),
+      ritmo: 0,
+      desde: o.reloj(),
+    };
+  };
+
   // Doscientos metros y la entrada en final a dos kilómetros y medio: es un
   // circuito de verdad y es lo más corto que se puede volar sin que parezca
   // otra cosa. El banco tarda lo que tarda un vuelo, y hay que poder correrlo.
@@ -3274,6 +3295,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       c.throttle = subiendo ? gasSubiendo : Math.max(yaBaja ? 0.2 : 0.3, aSuVelocidad);
       configurar(s, c, 1);
       c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
+      sostenerLaAltura(s, subiendo, altoQueToca);
       c.aileron = alRumbo(s, rumboDeSalida);
       /*
        * Y se cruza cuando la cabina ya dijo lo de la bajada —o cuando se ve
@@ -3435,6 +3457,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * a esa velocidad. Ver el mismo comentario en la etapa de despegar.
        */
       c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
+      sostenerLaAltura(s, subiendo, altoQueToca);
 
       /*
        * **Y no se gira hasta estar alto.** El primer tramo es recto por el eje
