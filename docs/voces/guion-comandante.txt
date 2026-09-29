@@ -37,6 +37,8 @@ Tripulación, armar toboganes y verificación cruzada.
 Tripulación, sentados para el despegue.
 Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.
 Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.
+Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.
+Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.

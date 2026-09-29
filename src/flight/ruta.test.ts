@@ -349,6 +349,69 @@ describe("Seguimiento", () => {
     expect(s.progreso!.descenso! / MILLA).toBeCloseTo(27, 3);
   });
 
+  /*
+   * **Y si se sube por encima del plan, la altura de verdad.** «Si la
+   * comandante dice que vamos a ir a diez mil pies y yo subo hasta doce mil,
+   * bajar me costó.» Subiendo vale el plan; nivelado más alto, la de ahora; y
+   * subiendo hacia una ventanilla más alta que el plan, la ventanilla, que es
+   * a donde se va.
+   */
+  it("nivelado por encima del plan, cuenta con la altura de verdad", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    s.paso(lectura(5, 11000, 0));
+    expect(s.progreso!.descenso! / MILLA).toBeCloseTo(33, 3);
+  });
+
+  it("subiendo hacia una ventanilla más alta que el plan, cuenta con ella", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    s.paso({ ...lectura(5, 9500, 8), ventanilla: 12000 * PIE });
+    expect(s.progreso!.descenso! / MILLA).toBeCloseTo(36, 3);
+  });
+
+  it("pero con la ventanilla en un escalón por debajo del plan, cuenta el plan", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    s.paso({ ...lectura(5, 3000, 8), ventanilla: 6000 * PIE });
+    expect(s.progreso!.descenso! / MILLA).toBeCloseTo(27, 3);
+  });
+
+  it("y el aviso llega antes cuanto más alto se va", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    // A doce mil pies el descenso cae a treinta y seis millas del final:
+    // en la milla veinticuatro, nueve antes que la del plan.
+    expect(s.paso(lectura(23.5, 12000)).descenso).toBe(false);
+    expect(s.paso(lectura(24.5, 12000)).descenso).toBe(true);
+  });
+
+  it("el T/C cae donde se acaba de subir, a dos millas por cada mil pies", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    s.paso(lectura(5, 3000, 8));
+    // Seis mil pies por subir son doce millas: en la milla diecisiete.
+    expect(s.progreso!.puntoDeSubida!.x / MILLA).toBeCloseTo(17, 3);
+  });
+
+  it("y no está ya en el crucero, ni detrás del punto de descenso", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    s.paso(lectura(10, 8900, 0));
+    expect(s.progreso!.puntoDeSubida).toBeNull();
+    s.poner(r, 9000 * PIE);
+    // A cuarenta millas y a mil pies, subir no acabaría antes de bajar.
+    s.paso(lectura(40, 1000, 5));
+    expect(s.progreso!.puntoDeSubida).toBeNull();
+  });
+
+  it("la bajada del plan se acaba en la altura del punto de final", () => {
+    const s = new Seguimiento();
+    s.poner(r, 9000 * PIE);
+    // Cinco millas del umbral: mil seiscientos sesenta y siete pies.
+    expect(s.alturaDelFinal! / PIE).toBeCloseTo(5 * (1000 / 3), 0);
+  });
+
   it("quien ya bajó por su cuenta no necesita el aviso", () => {
     const s = new Seguimiento();
     s.poner(r, 9000 * PIE);

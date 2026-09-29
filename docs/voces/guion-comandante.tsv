@@ -37,255 +37,257 @@
 037	comandante.despegue	Tripulación, sentados para el despegue.
 038	comandante.crucero	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.
 039	comandante.turbulencia	Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.
-040	comandante.descenso.hacia	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.
-041	comandante.descenso.vuelta	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.
-042	comandante.descenso.hacia.pettirossi	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.
-043	comandante.descenso.hacia.guarani	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ciudad del Este.
-044	comandante.descenso.hacia.encarnacion	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Encarnación.
-045	comandante.descenso.hacia.concepcion	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.
-046	comandante.descenso.hacia.pedro-juan	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.
-047	comandante.descenso.hacia.estigarribia	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.
-048	comandante.descenso.hacia.ayolas	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.
-049	comandante.descenso.hacia.pilar	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.
-050	comandante.descenso.hacia.yvytu-rape	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.
-051	comandante.descenso.hacia.tenerife-norte	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.
-052	comandante.descenso.hacia.tenerife-sur	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.
-053	comandante.descenso.hacia.gran-canaria	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Gran Canaria.
-054	comandante.descenso.hacia.lanzarote	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Lanzarote.
-055	comandante.descenso.hacia.fuerteventura	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Fuerteventura.
-056	comandante.descenso.hacia.la-palma	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.
-057	comandante.descenso.hacia.el-hierro	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.
-058	comandante.descenso.hacia.la-gomera	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.
-059	comandante.cielo.despejado	Allá el cielo está despejado.
-060	comandante.cielo.nubes	Allá hay algunas nubes.
-061	comandante.cielo.nublado	Allá está nublado.
-062	comandante.cielo.lluvia	Allá está lloviendo.
-063	comandante.cielo.tormenta	Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.
-064	comandante.cielo.niebla	Allá hay niebla.
-065	comandante.aproximacion	Tripulación, prepararse para el aterrizaje.
-066	comandante.bienvenida.local	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.
-067	comandante.bienvenida.pettirossi	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.
-068	comandante.bienvenida.guarani	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.
-069	comandante.bienvenida.encarnacion	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.
-070	comandante.bienvenida.concepcion	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.
-071	comandante.bienvenida.pedro-juan	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.
-072	comandante.bienvenida.estigarribia	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.
-073	comandante.bienvenida.ayolas	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.
-074	comandante.bienvenida.pilar	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.
-075	comandante.bienvenida.yvytu-rape	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.
-076	comandante.bienvenida.tenerife-norte	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.
-077	comandante.bienvenida.tenerife-sur	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.
-078	comandante.bienvenida.gran-canaria	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Gran Canaria.
-079	comandante.bienvenida.lanzarote	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Lanzarote.
-080	comandante.bienvenida.fuerteventura	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Fuerteventura.
-081	comandante.bienvenida.la-palma	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Palma.
-082	comandante.bienvenida.el-hierro	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a El Hierro.
-083	comandante.bienvenida.la-gomera	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Gomera.
-084	comandante.llegada.pettirossi	Señores pasajeros, bienvenidos a Asunción. Este aeropuerto lleva el nombre de Silvio Pettirossi, que fue el primer paraguayo en volar — así que están en buen sitio para aterrizar. Gracias por acompañarnos.
-085	comandante.llegada.pettirossi~2	Bienvenidos a Asunción. Este campo está en Luque, así que técnicamente todavía no llegaron a la capital: les falta un puente. Gracias por volar con nosotros.
-086	comandante.llegada.pettirossi~3	Señores pasajeros, estamos en Asunción. Si van para el centro, el río Paraguay les va a quedar a la derecha todo el camino. Gracias por acompañarnos.
-087	comandante.llegada.pettirossi~4	Bienvenidos a Asunción. Silvio Pettirossi hacía acrobacias cuando volar era todavía cosa de valientes; nosotros hoy lo hicimos tranquilo. Gracias por venir.
-088	comandante.llegada.pettirossi~5	Señores pasajeros, Asunción. Acá al lado está el Ñu Guasú, que de arriba se ve verde y de abajo también. Gracias por volar con nosotros.
-089	comandante.llegada.guarani	Bienvenidos a Ciudad del Este. Si miran hacia el sur, por ahí andan las cataratas y tres países que se tocan en la misma esquina. Gracias por volar con nosotros.
-090	comandante.llegada.guarani~2	Señores pasajeros, bienvenidos a Ciudad del Este. Acá cerca el Paraná mueve una de las represas más grandes del mundo. Gracias por acompañarnos.
-091	comandante.llegada.guarani~3	Bienvenidos a Ciudad del Este. Desde este campo, cruzando el Puente de la Amistad, se está en Brasil en diez minutos. Gracias por volar con nosotros.
-092	comandante.llegada.guarani~4	Señores pasajeros, estamos en Ciudad del Este. Si oyen un ruido de fondo que no es el motor, son las cataratas. Gracias por venir.
-093	comandante.llegada.guarani~5	Bienvenidos a Ciudad del Este, en Alto Paraná. Tres países se tocan acá al lado, y cada uno con su bandera en la punta. Gracias por acompañarnos.
-094	comandante.llegada.encarnacion	Señores pasajeros, estamos en Encarnación, a la orilla del Paraná. Gracias por venir — y si se quedan para el carnaval, abríguense poco.
-095	comandante.llegada.encarnacion~2	Bienvenidos a Encarnación. Enfrente, al otro lado del Paraná, ya es Argentina: el puente se ve desde la ventanilla. Gracias por volar con nosotros.
-096	comandante.llegada.encarnacion~3	Señores pasajeros, estamos en Encarnación. A media hora de acá están las ruinas de Trinidad, que llevan ahí desde antes que existiera el avión. Gracias por venir.
-097	comandante.llegada.encarnacion~4	Bienvenidos a Encarnación, la perla del sur. Acá la playa es de río, y no por eso es menos playa. Gracias por acompañarnos.
-098	comandante.llegada.encarnacion~5	Señores pasajeros, Encarnación. Bajen despacio la escalera, que después del carnaval las piernas no siempre responden. Gracias por volar con nosotros.
-099	comandante.llegada.estigarribia	Bienvenidos a Mariscal Estigarribia, en pleno Chaco. Acá la pista es larguísima y el horizonte también. Gracias por volar con nosotros.
-100	comandante.llegada.estigarribia~2	Señores pasajeros, bienvenidos a Mariscal Estigarribia. Esta pista mide más de tres kilómetros: sobra avión para lo que sobra asfalto. Gracias por acompañarnos.
-101	comandante.llegada.estigarribia~3	Bienvenidos a Mariscal Estigarribia. Acá en el Chaco el aire se mueve poco y calienta mucho; tomen agua. Gracias por volar con nosotros.
-102	comandante.llegada.estigarribia~4	Señores pasajeros, estamos en el Chaco Boreal. Desde acá hasta la próxima esquina hay más kilómetros que casas. Gracias por venir.
-103	comandante.llegada.estigarribia~5	Bienvenidos a Mariscal Estigarribia. Al norte están las colonias, al sur el camino, y en medio esto: sitio. Gracias por acompañarnos.
-104	comandante.llegada.pedro-juan	Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.
-105	comandante.llegada.pedro-juan~2	Bienvenidos a Pedro Juan Caballero. Si cruzan la avenida, ya están en Ponta Porã y en otro país, sin mostrar nada. Gracias por volar con nosotros.
-106	comandante.llegada.pedro-juan~3	Señores pasajeros, estamos en Amambay. Acá los cerros se levantan de golpe en medio del campo, como si los hubieran puesto a mano. Gracias por venir.
-107	comandante.llegada.pedro-juan~4	Bienvenidos a Pedro Juan Caballero. Cerro Corá queda acá cerca, y en ese parque se acabó la Guerra Grande. Gracias por acompañarnos.
-108	comandante.llegada.pedro-juan~5	Señores pasajeros, Pedro Juan Caballero. Dos países, una calle y un solo aeropuerto: éste. Gracias por volar con nosotros.
-109	comandante.llegada.concepcion	Señores pasajeros, bienvenidos a Concepción. Del otro lado del río Paraguay empieza el Chaco, y de acá para el norte el río es el camino. Gracias por volar con nosotros.
-110	comandante.llegada.concepcion~2	Bienvenidos a Concepción. Por este río bajaban los barcos a Asunción cuando no había otro camino al norte. Gracias por acompañarnos.
-111	comandante.llegada.concepcion~3	Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.
-112	comandante.llegada.concepcion~4	Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.
-113	comandante.llegada.concepcion~5	Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.
-114	comandante.llegada.ayolas	Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.
-115	comandante.llegada.ayolas~2	Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.
-116	comandante.llegada.ayolas~3	Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.
-117	comandante.llegada.ayolas~4	Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.
-118	comandante.llegada.ayolas~5	Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.
-119	comandante.llegada.pilar	Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.
-120	comandante.llegada.pilar~2	Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.
-121	comandante.llegada.pilar~3	Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.
-122	comandante.llegada.pilar~4	Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.
-123	comandante.llegada.pilar~5	Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.
-124	comandante.llegada.yvytu-rape	Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.
-125	comandante.llegada.yvytu-rape~2	Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.
-126	comandante.llegada.yvytu-rape~3	Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.
-127	comandante.llegada.yvytu-rape~4	Señores pasajeros, Yvytu Rape. Esto no tiene terminal, ni falta que hace: la casa está a cien metros. Gracias por venir.
-128	comandante.llegada.yvytu-rape~5	Bienvenidos a Yvytu Rape. Si ven animales cerca de la pista, no se preocupen: viven acá y nosotros somos las visitas. Gracias por acompañarnos.
-129	comandante.llegada.valle-cordillera	Señores pasajeros, bienvenidos al Valle de la Cordillera. Miren por la ventanilla antes de bajar, que esto de verde no se cansa. Gracias por venir.
-130	comandante.llegada.valle-cordillera~2	Bienvenidos al Valle de la Cordillera. Estas lomas no son montañas, pero desde el aire disimulan muy bien. Gracias por volar con nosotros.
-131	comandante.llegada.valle-cordillera~3	Señores pasajeros, estamos en el valle. Abajo hay río, y el río va para donde quiere. Gracias por venir.
-132	comandante.llegada.valle-cordillera~4	Bienvenidos al Valle de la Cordillera. Acá el verde tiene como seis colores distintos y todos se llaman verde. Gracias por acompañarnos.
-133	comandante.llegada.valle-cordillera~5	Señores pasajeros, el Valle de la Cordillera. Se aterriza mirando al campo, que es la mejor manera de aterrizar. Gracias por volar con nosotros.
-134	comandante.llegada.chaco	Bienvenidos a la Llanura del Chaco. Acá el cielo empieza en el suelo y no se acaba nunca. Gracias por volar con nosotros.
-135	comandante.llegada.chaco~2	Señores pasajeros, bienvenidos a la Llanura del Chaco. Acá no hay cuesta ninguna: se mire donde se mire, es recto. Gracias por acompañarnos.
-136	comandante.llegada.chaco~3	Bienvenidos al Chaco. Si buscan una referencia en el horizonte, la referencia es el horizonte. Gracias por volar con nosotros.
-137	comandante.llegada.chaco~4	Señores pasajeros, estamos en la llanura. De noche acá se ven estrellas que en la ciudad no existen. Gracias por venir.
-138	comandante.llegada.chaco~5	Bienvenidos a la Llanura del Chaco. Poca gente, mucho bicho y un cielo enorme: eso es todo, y es bastante. Gracias por acompañarnos.
-139	comandante.llegada.tenerife-norte	Señores pasajeros, bienvenidos a Tenerife Norte. Si al salir les recibe una nube, no se asusten: acá el mar de nubes llega hasta la puerta. Gracias por acompañarnos.
-140	comandante.llegada.tenerife-norte~2	Bienvenidos a Tenerife Norte. Estamos a más de seiscientos metros sobre el mar, así que acá arriba abriga un poco más. Gracias por volar con nosotros.
-141	comandante.llegada.tenerife-norte~3	Señores pasajeros, estamos en Los Rodeos. La Laguna queda acá al lado, y su casco viejo es Patrimonio de la Humanidad. Gracias por venir.
-142	comandante.llegada.tenerife-norte~4	Bienvenidos a Tenerife Norte. Durante medio siglo éste fue el único aeropuerto de la isla; el del sur es el hermano pequeño. Gracias por acompañarnos.
-143	comandante.llegada.tenerife-norte~5	Señores pasajeros, Tenerife Norte. Si el Teide se dejó ver en el camino, hoy tuvieron suerte. Gracias por volar con nosotros.
-144	comandante.llegada.tenerife-sur	Bienvenidos a Tenerife Sur. Acá abajo casi siempre hace sol y casi siempre sopla — las dos cosas a la vez. Gracias por volar con nosotros.
-145	comandante.llegada.tenerife-sur~2	Señores pasajeros, bienvenidos a Tenerife Sur. Este aeropuerto se abrió porque el del norte se llenaba de nubes; acá casi nunca. Gracias por acompañarnos.
-146	comandante.llegada.tenerife-sur~3	Bienvenidos a Tenerife Sur, en Granadilla. Acá al lado, en El Médano, el viento se usa para navegar encima de una tabla. Gracias por volar con nosotros.
-147	comandante.llegada.tenerife-sur~4	Señores pasajeros, estamos en el sur de Tenerife. Esa montaña colorada que se ve desde la pista es justo eso: colorada. Gracias por venir.
-148	comandante.llegada.tenerife-sur~5	Bienvenidos a Tenerife Sur. Misma isla que el norte y otro clima: eso también es Canarias. Gracias por acompañarnos.
-149	comandante.llegada.gran-canaria	Señores pasajeros, bienvenidos a Gran Canaria. Dicen que esta isla tiene todos los climas del mundo en una tarde; ya nos contarán. Gracias por venir.
-150	comandante.llegada.gran-canaria~2	Bienvenidos a Gran Canaria. Este campo lo comparte la aviación civil con una base aérea, así que no se extrañen de los vecinos. Gracias por volar con nosotros.
-151	comandante.llegada.gran-canaria~3	Señores pasajeros, estamos en Gando. Al sur están las dunas de Maspalomas, que son arena de verdad y no de mentira. Gracias por venir.
-152	comandante.llegada.gran-canaria~4	Bienvenidos a Gran Canaria. A esta isla la llaman un continente en miniatura, y en una hora de coche se entiende por qué. Gracias por acompañarnos.
-153	comandante.llegada.gran-canaria~5	Señores pasajeros, Gran Canaria. Si se van al centro de la isla, lleven algo de abrigo: allá arriba no es playa. Gracias por volar con nosotros.
-154	comandante.llegada.lanzarote	Bienvenidos a Lanzarote. Esa tierra negra que ven no es sombra: es lava, y es más joven que casi todo lo demás. Gracias por volar con nosotros.
-155	comandante.llegada.lanzarote~2	Señores pasajeros, bienvenidos a Lanzarote. Este aeropuerto lleva el nombre de César Manrique, que se pasó la vida peleando para que la isla siguiera pareciéndose a sí misma. Gracias por acompañarnos.
-156	comandante.llegada.lanzarote~3	Bienvenidos a Lanzarote. En Timanfaya el suelo todavía está caliente a unos metros de profundidad. Gracias por volar con nosotros.
-157	comandante.llegada.lanzarote~4	Señores pasajeros, estamos en Lanzarote. Acá las viñas crecen en hoyos cavados en la ceniza, una por hoyo. Gracias por venir.
-158	comandante.llegada.lanzarote~5	Bienvenidos a Lanzarote. Los volcanes que ven estuvieron seis años seguidos en erupción, y de eso hace nada: el siglo dieciocho. Gracias por acompañarnos.
-159	comandante.llegada.fuerteventura	Señores pasajeros, bienvenidos a Fuerteventura. Acá el viento es el que manda, y por eso la arena cambia de sitio. Gracias por acompañarnos.
-160	comandante.llegada.fuerteventura~2	Bienvenidos a Fuerteventura. Ésta es la isla más vieja del archipiélago: lleva millones de años dejándose gastar por el viento. Gracias por volar con nosotros.
-161	comandante.llegada.fuerteventura~3	Señores pasajeros, estamos en Fuerteventura. Al norte, en Corralejo, hay un desierto de arena que se mueve solo. Gracias por venir.
-162	comandante.llegada.fuerteventura~4	Bienvenidos a Fuerteventura. Acá hay más cabras que gente, y el queso lo demuestra. Gracias por acompañarnos.
-163	comandante.llegada.fuerteventura~5	Señores pasajeros, Fuerteventura. Las playas de esta isla se miden en kilómetros, no en metros. Gracias por volar con nosotros.
-164	comandante.llegada.la-palma	Bienvenidos a La Palma. Acá arriba hay telescopios mirando el cielo, así que esta noche no miren la pantalla: miren para arriba. Gracias por volar con nosotros.
-165	comandante.llegada.la-palma~2	Señores pasajeros, bienvenidos a La Palma. A esta isla la llaman la isla bonita, y desde el aire no hay mucho que discutir. Gracias por acompañarnos.
-166	comandante.llegada.la-palma~3	Bienvenidos a La Palma. En el centro tiene una caldera enorme, y dentro caben barrancos, bosque y niebla. Gracias por volar con nosotros.
-167	comandante.llegada.la-palma~4	Señores pasajeros, estamos en La Palma. Hace poco un volcán cambió el mapa de esta isla; lo que ven es más nuevo que ustedes. Gracias por venir.
-168	comandante.llegada.la-palma~5	Bienvenidos a La Palma. Acá el cielo de noche está protegido por ley, para que se siga viendo. Gracias por acompañarnos.
-169	comandante.llegada.el-hierro	Señores pasajeros, bienvenidos a El Hierro. Durante siglos esta isla fue el final del mapa: desde acá, ya no había nada dibujado. Gracias por venir.
-170	comandante.llegada.el-hierro~2	Bienvenidos a El Hierro. Es la más pequeña y la más lejana, y llegar acá siempre tiene algo de hazaña. Gracias por volar con nosotros.
-171	comandante.llegada.el-hierro~3	Señores pasajeros, estamos en El Hierro. Durante siglos los mapas empezaban a contar los grados desde esta isla. Gracias por venir.
-172	comandante.llegada.el-hierro~4	Bienvenidos a El Hierro. Acá el viento y el agua le dan luz a la isla entera: se lo inventaron ellos. Gracias por acompañarnos.
-173	comandante.llegada.el-hierro~5	Señores pasajeros, El Hierro. Hay sabinas retorcidas por el viento que llevan así cientos de años y no se quejan. Gracias por volar con nosotros.
-174	comandante.llegada.la-gomera	Bienvenidos a La Gomera. Acá la gente se habla de un barranco a otro silbando, y se entiende todo. Gracias por volar con nosotros.
-175	comandante.llegada.la-gomera~2	Señores pasajeros, bienvenidos a La Gomera. El silbo con el que se hablan acá está reconocido por la Unesco, y no es un juego: es un idioma. Gracias por acompañarnos.
-176	comandante.llegada.la-gomera~3	Bienvenidos a La Gomera. Arriba, en Garajonay, hay un bosque de niebla que ya existía cuando Europa era otra cosa. Gracias por volar con nosotros.
-177	comandante.llegada.la-gomera~4	Señores pasajeros, estamos en La Gomera. De San Sebastián salió Colón para el último viaje antes de América. Gracias por venir.
-178	comandante.llegada.la-gomera~5	Bienvenidos a La Gomera. Esta isla es casi toda cuesta, así que lo llano que pisan ahora es raro. Gracias por acompañarnos.
-179	comandante.llegada.cuatro-vientos	Señores pasajeros, bienvenidos a Cuatro Vientos. Este es el aeródromo más antiguo de España y todavía trabaja: no se jubila nadie acá. Gracias por acompañarnos.
-180	comandante.llegada.cuatro-vientos~2	Bienvenidos a Cuatro Vientos. Acá se vuela desde mil novecientos once, y todavía no se han cansado. Gracias por volar con nosotros.
-181	comandante.llegada.cuatro-vientos~3	Señores pasajeros, estamos en Cuatro Vientos. Al lado hay un museo lleno de aviones que ya no vuelan y merecen que se los mire. Gracias por venir.
-182	comandante.llegada.cuatro-vientos~4	Bienvenidos a Cuatro Vientos. De este campo salió el avión que cruzó el Atlántico y le puso el nombre al sitio. Gracias por acompañarnos.
-183	comandante.llegada.cuatro-vientos~5	Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.
-184	comandante.minutos.2	Vamos a aterrizar en unos dos minutos.
-185	comandante.minutos.3	Vamos a aterrizar en unos tres minutos.
-186	comandante.minutos.4	Vamos a aterrizar en unos cuatro minutos.
-187	comandante.minutos.5	Vamos a aterrizar en unos cinco minutos.
-188	comandante.minutos.10	Vamos a aterrizar en unos diez minutos.
-189	comandante.minutos.15	Vamos a aterrizar en unos quince minutos.
-190	comandante.minutos.20	Vamos a aterrizar en unos veinte minutos.
-191	comandante.minutos.25	Vamos a aterrizar en unos veinticinco minutos.
-192	comandante.minutos.30	Vamos a aterrizar en unos treinta minutos.
-193	comandante.minutos.35	Vamos a aterrizar en unos treinta y cinco minutos.
-194	comandante.minutos.40	Vamos a aterrizar en unos cuarenta minutos.
-195	comandante.minutos.45	Vamos a aterrizar en unos cuarenta y cinco minutos.
-196	comandante.minutos.50	Vamos a aterrizar en unos cincuenta minutos.
-197	comandante.minutos.55	Vamos a aterrizar en unos cincuenta y cinco minutos.
-198	comandante.minutos.60	Vamos a aterrizar en unos sesenta minutos.
-199	comandante.minutos.0	Vamos a aterrizar en unos cero minutos.
-200	comandante.previsto.vuelo.2	El vuelo va a durar unos dos minutos.
-201	comandante.previsto.vuelo.3	El vuelo va a durar unos tres minutos.
-202	comandante.previsto.vuelo.4	El vuelo va a durar unos cuatro minutos.
-203	comandante.previsto.vuelo.5	El vuelo va a durar unos cinco minutos.
-204	comandante.previsto.vuelo.10	El vuelo va a durar unos diez minutos.
-205	comandante.previsto.vuelo.15	El vuelo va a durar unos quince minutos.
-206	comandante.previsto.vuelo.20	El vuelo va a durar unos veinte minutos.
-207	comandante.previsto.vuelo.25	El vuelo va a durar unos veinticinco minutos.
-208	comandante.previsto.vuelo.30	El vuelo va a durar unos treinta minutos.
-209	comandante.previsto.vuelo.35	El vuelo va a durar unos treinta y cinco minutos.
-210	comandante.previsto.vuelo.40	El vuelo va a durar unos cuarenta minutos.
-211	comandante.previsto.vuelo.45	El vuelo va a durar unos cuarenta y cinco minutos.
-212	comandante.previsto.vuelo.50	El vuelo va a durar unos cincuenta minutos.
-213	comandante.previsto.vuelo.55	El vuelo va a durar unos cincuenta y cinco minutos.
-214	comandante.previsto.vuelo.60	El vuelo va a durar unos sesenta minutos.
-215	comandante.previsto.vuelo.0	El vuelo va a durar unos cero minutos.
-216	comandante.previsto.nivel.5	Vamos a volar a cinco mil pies.
-217	comandante.previsto.nivel.6	Vamos a volar a seis mil pies.
-218	comandante.previsto.nivel.7	Vamos a volar a siete mil pies.
-219	comandante.previsto.nivel.8	Vamos a volar a ocho mil pies.
-220	comandante.previsto.nivel.9	Vamos a volar a nueve mil pies.
-221	comandante.previsto.nivel.10	Vamos a volar a diez mil pies.
-222	comandante.previsto.nivel.11	Vamos a volar a once mil pies.
-223	comandante.previsto.nivel.12	Vamos a volar a doce mil pies.
-224	comandante.previsto.nivel.13	Vamos a volar a trece mil pies.
-225	comandante.previsto.nivel.14	Vamos a volar a catorce mil pies.
-226	comandante.previsto.nivel.15	Vamos a volar a quince mil pies.
-227	comandante.previsto.nivel.16	Vamos a volar a dieciséis mil pies.
-228	comandante.previsto.nivel.17	Vamos a volar a diecisiete mil pies.
-229	comandante.previsto.nivel.18	Vamos a volar a dieciocho mil pies.
-230	comandante.previsto.nivel.19	Vamos a volar a diecinueve mil pies.
-231	comandante.previsto.nivel.20	Vamos a volar a veinte mil pies.
-232	comandante.previsto.nivel.21	Vamos a volar a veintiún mil pies.
-233	comandante.previsto.nivel.22	Vamos a volar a veintidós mil pies.
-234	comandante.previsto.nivel.23	Vamos a volar a veintitrés mil pies.
-235	comandante.previsto.nivel.24	Vamos a volar a veinticuatro mil pies.
-236	comandante.previsto.nivel.25	Vamos a volar a veinticinco mil pies.
-237	comandante.previsto.nivel.26	Vamos a volar a veintiséis mil pies.
-238	comandante.previsto.nivel.27	Vamos a volar a veintisiete mil pies.
-239	comandante.previsto.nivel.28	Vamos a volar a veintiocho mil pies.
-240	comandante.previsto.nivel.29	Vamos a volar a veintinueve mil pies.
-241	comandante.temperatura.0	La temperatura es de cero grados.
-242	comandante.temperatura.1	La temperatura es de un grado.
-243	comandante.temperatura.2	La temperatura es de dos grados.
-244	comandante.temperatura.3	La temperatura es de tres grados.
-245	comandante.temperatura.4	La temperatura es de cuatro grados.
-246	comandante.temperatura.5	La temperatura es de cinco grados.
-247	comandante.temperatura.6	La temperatura es de seis grados.
-248	comandante.temperatura.7	La temperatura es de siete grados.
-249	comandante.temperatura.8	La temperatura es de ocho grados.
-250	comandante.temperatura.9	La temperatura es de nueve grados.
-251	comandante.temperatura.10	La temperatura es de diez grados.
-252	comandante.temperatura.11	La temperatura es de once grados.
-253	comandante.temperatura.12	La temperatura es de doce grados.
-254	comandante.temperatura.13	La temperatura es de trece grados.
-255	comandante.temperatura.14	La temperatura es de catorce grados.
-256	comandante.temperatura.15	La temperatura es de quince grados.
-257	comandante.temperatura.16	La temperatura es de dieciséis grados.
-258	comandante.temperatura.17	La temperatura es de diecisiete grados.
-259	comandante.temperatura.18	La temperatura es de dieciocho grados.
-260	comandante.temperatura.19	La temperatura es de diecinueve grados.
-261	comandante.temperatura.20	La temperatura es de veinte grados.
-262	comandante.temperatura.21	La temperatura es de veintiún grados.
-263	comandante.temperatura.22	La temperatura es de veintidós grados.
-264	comandante.temperatura.23	La temperatura es de veintitrés grados.
-265	comandante.temperatura.24	La temperatura es de veinticuatro grados.
-266	comandante.temperatura.25	La temperatura es de veinticinco grados.
-267	comandante.temperatura.26	La temperatura es de veintiséis grados.
-268	comandante.temperatura.27	La temperatura es de veintisiete grados.
-269	comandante.temperatura.28	La temperatura es de veintiocho grados.
-270	comandante.temperatura.29	La temperatura es de veintinueve grados.
-271	comandante.temperatura.30	La temperatura es de treinta grados.
-272	comandante.temperatura.31	La temperatura es de treinta y un grado.
-273	comandante.temperatura.32	La temperatura es de treinta y dos grados.
-274	comandante.temperatura.33	La temperatura es de treinta y tres grados.
-275	comandante.temperatura.34	La temperatura es de treinta y cuatro grados.
-276	comandante.temperatura.35	La temperatura es de treinta y cinco grados.
-277	comandante.temperatura.36	La temperatura es de treinta y seis grados.
-278	comandante.temperatura.37	La temperatura es de treinta y siete grados.
-279	comandante.temperatura.38	La temperatura es de treinta y ocho grados.
-280	comandante.temperatura.39	La temperatura es de treinta y nueve grados.
-281	comandante.temperatura.40	La temperatura es de cuarenta grados.
-282	comandante.temperatura.41	La temperatura es de cuarenta y un grado.
-283	comandante.temperatura.42	La temperatura es de cuarenta y dos grados.
-284	comandante.temperatura.43	La temperatura es de cuarenta y tres grados.
-285	comandante.temperatura.44	La temperatura es de cuarenta y cuatro grados.
-286	comandante.temperatura.45	La temperatura es de cuarenta y cinco grados.
-287	comandante.temperatura.menos1	La temperatura es de un grado bajo cero.
-288	comandante.temperatura.menos2	La temperatura es de dos grados bajo cero.
-289	comandante.temperatura.menos3	La temperatura es de tres grados bajo cero.
-290	comandante.temperatura.menos4	La temperatura es de cuatro grados bajo cero.
-291	comandante.temperatura.menos5	La temperatura es de cinco grados bajo cero.
+040	comandante.nivelMasTranquilo	Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.
+041	comandante.bachesEnTodos	Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.
+042	comandante.descenso.hacia	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.
+043	comandante.descenso.vuelta	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.
+044	comandante.descenso.hacia.pettirossi	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.
+045	comandante.descenso.hacia.guarani	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ciudad del Este.
+046	comandante.descenso.hacia.encarnacion	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Encarnación.
+047	comandante.descenso.hacia.concepcion	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Concepción.
+048	comandante.descenso.hacia.pedro-juan	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pedro Juan Caballero.
+049	comandante.descenso.hacia.estigarribia	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Mariscal Estigarribia.
+050	comandante.descenso.hacia.ayolas	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Ayolas.
+051	comandante.descenso.hacia.pilar	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Pilar.
+052	comandante.descenso.hacia.yvytu-rape	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Yvytu Rape, la pista de la Granja Óga.
+053	comandante.descenso.hacia.tenerife-norte	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Norte.
+054	comandante.descenso.hacia.tenerife-sur	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Tenerife Sur.
+055	comandante.descenso.hacia.gran-canaria	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Gran Canaria.
+056	comandante.descenso.hacia.lanzarote	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Lanzarote.
+057	comandante.descenso.hacia.fuerteventura	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Fuerteventura.
+058	comandante.descenso.hacia.la-palma	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.
+059	comandante.descenso.hacia.el-hierro	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.
+060	comandante.descenso.hacia.la-gomera	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.
+061	comandante.cielo.despejado	Allá el cielo está despejado.
+062	comandante.cielo.nubes	Allá hay algunas nubes.
+063	comandante.cielo.nublado	Allá está nublado.
+064	comandante.cielo.lluvia	Allá está lloviendo.
+065	comandante.cielo.tormenta	Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.
+066	comandante.cielo.niebla	Allá hay niebla.
+067	comandante.aproximacion	Tripulación, prepararse para el aterrizaje.
+068	comandante.bienvenida.local	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.
+069	comandante.bienvenida.pettirossi	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.
+070	comandante.bienvenida.guarani	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.
+071	comandante.bienvenida.encarnacion	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.
+072	comandante.bienvenida.concepcion	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.
+073	comandante.bienvenida.pedro-juan	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.
+074	comandante.bienvenida.estigarribia	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.
+075	comandante.bienvenida.ayolas	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ayolas.
+076	comandante.bienvenida.pilar	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pilar.
+077	comandante.bienvenida.yvytu-rape	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.
+078	comandante.bienvenida.tenerife-norte	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.
+079	comandante.bienvenida.tenerife-sur	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.
+080	comandante.bienvenida.gran-canaria	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Gran Canaria.
+081	comandante.bienvenida.lanzarote	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Lanzarote.
+082	comandante.bienvenida.fuerteventura	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Fuerteventura.
+083	comandante.bienvenida.la-palma	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Palma.
+084	comandante.bienvenida.el-hierro	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a El Hierro.
+085	comandante.bienvenida.la-gomera	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Gomera.
+086	comandante.llegada.pettirossi	Señores pasajeros, bienvenidos a Asunción. Este aeropuerto lleva el nombre de Silvio Pettirossi, que fue el primer paraguayo en volar — así que están en buen sitio para aterrizar. Gracias por acompañarnos.
+087	comandante.llegada.pettirossi~2	Bienvenidos a Asunción. Este campo está en Luque, así que técnicamente todavía no llegaron a la capital: les falta un puente. Gracias por volar con nosotros.
+088	comandante.llegada.pettirossi~3	Señores pasajeros, estamos en Asunción. Si van para el centro, el río Paraguay les va a quedar a la derecha todo el camino. Gracias por acompañarnos.
+089	comandante.llegada.pettirossi~4	Bienvenidos a Asunción. Silvio Pettirossi hacía acrobacias cuando volar era todavía cosa de valientes; nosotros hoy lo hicimos tranquilo. Gracias por venir.
+090	comandante.llegada.pettirossi~5	Señores pasajeros, Asunción. Acá al lado está el Ñu Guasú, que de arriba se ve verde y de abajo también. Gracias por volar con nosotros.
+091	comandante.llegada.guarani	Bienvenidos a Ciudad del Este. Si miran hacia el sur, por ahí andan las cataratas y tres países que se tocan en la misma esquina. Gracias por volar con nosotros.
+092	comandante.llegada.guarani~2	Señores pasajeros, bienvenidos a Ciudad del Este. Acá cerca el Paraná mueve una de las represas más grandes del mundo. Gracias por acompañarnos.
+093	comandante.llegada.guarani~3	Bienvenidos a Ciudad del Este. Desde este campo, cruzando el Puente de la Amistad, se está en Brasil en diez minutos. Gracias por volar con nosotros.
+094	comandante.llegada.guarani~4	Señores pasajeros, estamos en Ciudad del Este. Si oyen un ruido de fondo que no es el motor, son las cataratas. Gracias por venir.
+095	comandante.llegada.guarani~5	Bienvenidos a Ciudad del Este, en Alto Paraná. Tres países se tocan acá al lado, y cada uno con su bandera en la punta. Gracias por acompañarnos.
+096	comandante.llegada.encarnacion	Señores pasajeros, estamos en Encarnación, a la orilla del Paraná. Gracias por venir — y si se quedan para el carnaval, abríguense poco.
+097	comandante.llegada.encarnacion~2	Bienvenidos a Encarnación. Enfrente, al otro lado del Paraná, ya es Argentina: el puente se ve desde la ventanilla. Gracias por volar con nosotros.
+098	comandante.llegada.encarnacion~3	Señores pasajeros, estamos en Encarnación. A media hora de acá están las ruinas de Trinidad, que llevan ahí desde antes que existiera el avión. Gracias por venir.
+099	comandante.llegada.encarnacion~4	Bienvenidos a Encarnación, la perla del sur. Acá la playa es de río, y no por eso es menos playa. Gracias por acompañarnos.
+100	comandante.llegada.encarnacion~5	Señores pasajeros, Encarnación. Bajen despacio la escalera, que después del carnaval las piernas no siempre responden. Gracias por volar con nosotros.
+101	comandante.llegada.estigarribia	Bienvenidos a Mariscal Estigarribia, en pleno Chaco. Acá la pista es larguísima y el horizonte también. Gracias por volar con nosotros.
+102	comandante.llegada.estigarribia~2	Señores pasajeros, bienvenidos a Mariscal Estigarribia. Esta pista mide más de tres kilómetros: sobra avión para lo que sobra asfalto. Gracias por acompañarnos.
+103	comandante.llegada.estigarribia~3	Bienvenidos a Mariscal Estigarribia. Acá en el Chaco el aire se mueve poco y calienta mucho; tomen agua. Gracias por volar con nosotros.
+104	comandante.llegada.estigarribia~4	Señores pasajeros, estamos en el Chaco Boreal. Desde acá hasta la próxima esquina hay más kilómetros que casas. Gracias por venir.
+105	comandante.llegada.estigarribia~5	Bienvenidos a Mariscal Estigarribia. Al norte están las colonias, al sur el camino, y en medio esto: sitio. Gracias por acompañarnos.
+106	comandante.llegada.pedro-juan	Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.
+107	comandante.llegada.pedro-juan~2	Bienvenidos a Pedro Juan Caballero. Si cruzan la avenida, ya están en Ponta Porã y en otro país, sin mostrar nada. Gracias por volar con nosotros.
+108	comandante.llegada.pedro-juan~3	Señores pasajeros, estamos en Amambay. Acá los cerros se levantan de golpe en medio del campo, como si los hubieran puesto a mano. Gracias por venir.
+109	comandante.llegada.pedro-juan~4	Bienvenidos a Pedro Juan Caballero. Cerro Corá queda acá cerca, y en ese parque se acabó la Guerra Grande. Gracias por acompañarnos.
+110	comandante.llegada.pedro-juan~5	Señores pasajeros, Pedro Juan Caballero. Dos países, una calle y un solo aeropuerto: éste. Gracias por volar con nosotros.
+111	comandante.llegada.concepcion	Señores pasajeros, bienvenidos a Concepción. Del otro lado del río Paraguay empieza el Chaco, y de acá para el norte el río es el camino. Gracias por volar con nosotros.
+112	comandante.llegada.concepcion~2	Bienvenidos a Concepción. Por este río bajaban los barcos a Asunción cuando no había otro camino al norte. Gracias por acompañarnos.
+113	comandante.llegada.concepcion~3	Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.
+114	comandante.llegada.concepcion~4	Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.
+115	comandante.llegada.concepcion~5	Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.
+116	comandante.llegada.ayolas	Señores pasajeros, bienvenidos a Ayolas. A veinte kilómetros está Yacyretá, la represa que el Paraguay comparte con la Argentina sobre el Paraná. Gracias por volar con nosotros.
+117	comandante.llegada.ayolas~2	Bienvenidos a Ayolas. Esta pista se hizo para la represa, y la cuida la Entidad Binacional Yacyretá. Gracias por acompañarnos.
+118	comandante.llegada.ayolas~3	Señores pasajeros, estamos en Ayolas, en Misiones. Del otro lado del Paraná ya es la Argentina: Ituzaingó, en Corrientes. Gracias por venir.
+119	comandante.llegada.ayolas~4	Bienvenidos a Ayolas. El pueblo lleva el nombre de Juan de Ayolas, uno de los primeros españoles que remontaron el Paraná y el Paraguay. Gracias por volar con nosotros.
+120	comandante.llegada.ayolas~5	Señores pasajeros, Ayolas. Acá nadie nos habló por la radio: esta pista no tiene torre, y se aterriza mirando. Gracias por acompañarnos.
+121	comandante.llegada.pilar	Señores pasajeros, bienvenidos a Pilar, la capital del Ñeembucú, a orillas del río Paraguay. Gracias por volar con nosotros.
+122	comandante.llegada.pilar~2	Bienvenidos a Pilar. Río abajo está Humaitá, la fortaleza de la Guerra Grande que cerraba el paso a los barcos. Gracias por acompañarnos.
+123	comandante.llegada.pilar~3	Señores pasajeros, estamos en el Ñeembucú: esteros, lagunas y cielo grande. Desde el aire se ve cuánta agua tiene esta tierra. Gracias por venir.
+124	comandante.llegada.pilar~4	Bienvenidos a Pilar. Esta pista mide mil doscientos metros y dieciocho de ancho: por eso hoy vinimos en un avión chico. Gracias por volar con nosotros.
+125	comandante.llegada.pilar~5	Señores pasajeros, Pilar. Del otro lado del río Paraguay ya es la Argentina. Gracias por acompañarnos.
+126	comandante.llegada.yvytu-rape	Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.
+127	comandante.llegada.yvytu-rape~2	Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.
+128	comandante.llegada.yvytu-rape~3	Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.
+129	comandante.llegada.yvytu-rape~4	Señores pasajeros, Yvytu Rape. Esto no tiene terminal, ni falta que hace: la casa está a cien metros. Gracias por venir.
+130	comandante.llegada.yvytu-rape~5	Bienvenidos a Yvytu Rape. Si ven animales cerca de la pista, no se preocupen: viven acá y nosotros somos las visitas. Gracias por acompañarnos.
+131	comandante.llegada.valle-cordillera	Señores pasajeros, bienvenidos al Valle de la Cordillera. Miren por la ventanilla antes de bajar, que esto de verde no se cansa. Gracias por venir.
+132	comandante.llegada.valle-cordillera~2	Bienvenidos al Valle de la Cordillera. Estas lomas no son montañas, pero desde el aire disimulan muy bien. Gracias por volar con nosotros.
+133	comandante.llegada.valle-cordillera~3	Señores pasajeros, estamos en el valle. Abajo hay río, y el río va para donde quiere. Gracias por venir.
+134	comandante.llegada.valle-cordillera~4	Bienvenidos al Valle de la Cordillera. Acá el verde tiene como seis colores distintos y todos se llaman verde. Gracias por acompañarnos.
+135	comandante.llegada.valle-cordillera~5	Señores pasajeros, el Valle de la Cordillera. Se aterriza mirando al campo, que es la mejor manera de aterrizar. Gracias por volar con nosotros.
+136	comandante.llegada.chaco	Bienvenidos a la Llanura del Chaco. Acá el cielo empieza en el suelo y no se acaba nunca. Gracias por volar con nosotros.
+137	comandante.llegada.chaco~2	Señores pasajeros, bienvenidos a la Llanura del Chaco. Acá no hay cuesta ninguna: se mire donde se mire, es recto. Gracias por acompañarnos.
+138	comandante.llegada.chaco~3	Bienvenidos al Chaco. Si buscan una referencia en el horizonte, la referencia es el horizonte. Gracias por volar con nosotros.
+139	comandante.llegada.chaco~4	Señores pasajeros, estamos en la llanura. De noche acá se ven estrellas que en la ciudad no existen. Gracias por venir.
+140	comandante.llegada.chaco~5	Bienvenidos a la Llanura del Chaco. Poca gente, mucho bicho y un cielo enorme: eso es todo, y es bastante. Gracias por acompañarnos.
+141	comandante.llegada.tenerife-norte	Señores pasajeros, bienvenidos a Tenerife Norte. Si al salir les recibe una nube, no se asusten: acá el mar de nubes llega hasta la puerta. Gracias por acompañarnos.
+142	comandante.llegada.tenerife-norte~2	Bienvenidos a Tenerife Norte. Estamos a más de seiscientos metros sobre el mar, así que acá arriba abriga un poco más. Gracias por volar con nosotros.
+143	comandante.llegada.tenerife-norte~3	Señores pasajeros, estamos en Los Rodeos. La Laguna queda acá al lado, y su casco viejo es Patrimonio de la Humanidad. Gracias por venir.
+144	comandante.llegada.tenerife-norte~4	Bienvenidos a Tenerife Norte. Durante medio siglo éste fue el único aeropuerto de la isla; el del sur es el hermano pequeño. Gracias por acompañarnos.
+145	comandante.llegada.tenerife-norte~5	Señores pasajeros, Tenerife Norte. Si el Teide se dejó ver en el camino, hoy tuvieron suerte. Gracias por volar con nosotros.
+146	comandante.llegada.tenerife-sur	Bienvenidos a Tenerife Sur. Acá abajo casi siempre hace sol y casi siempre sopla — las dos cosas a la vez. Gracias por volar con nosotros.
+147	comandante.llegada.tenerife-sur~2	Señores pasajeros, bienvenidos a Tenerife Sur. Este aeropuerto se abrió porque el del norte se llenaba de nubes; acá casi nunca. Gracias por acompañarnos.
+148	comandante.llegada.tenerife-sur~3	Bienvenidos a Tenerife Sur, en Granadilla. Acá al lado, en El Médano, el viento se usa para navegar encima de una tabla. Gracias por volar con nosotros.
+149	comandante.llegada.tenerife-sur~4	Señores pasajeros, estamos en el sur de Tenerife. Esa montaña colorada que se ve desde la pista es justo eso: colorada. Gracias por venir.
+150	comandante.llegada.tenerife-sur~5	Bienvenidos a Tenerife Sur. Misma isla que el norte y otro clima: eso también es Canarias. Gracias por acompañarnos.
+151	comandante.llegada.gran-canaria	Señores pasajeros, bienvenidos a Gran Canaria. Dicen que esta isla tiene todos los climas del mundo en una tarde; ya nos contarán. Gracias por venir.
+152	comandante.llegada.gran-canaria~2	Bienvenidos a Gran Canaria. Este campo lo comparte la aviación civil con una base aérea, así que no se extrañen de los vecinos. Gracias por volar con nosotros.
+153	comandante.llegada.gran-canaria~3	Señores pasajeros, estamos en Gando. Al sur están las dunas de Maspalomas, que son arena de verdad y no de mentira. Gracias por venir.
+154	comandante.llegada.gran-canaria~4	Bienvenidos a Gran Canaria. A esta isla la llaman un continente en miniatura, y en una hora de coche se entiende por qué. Gracias por acompañarnos.
+155	comandante.llegada.gran-canaria~5	Señores pasajeros, Gran Canaria. Si se van al centro de la isla, lleven algo de abrigo: allá arriba no es playa. Gracias por volar con nosotros.
+156	comandante.llegada.lanzarote	Bienvenidos a Lanzarote. Esa tierra negra que ven no es sombra: es lava, y es más joven que casi todo lo demás. Gracias por volar con nosotros.
+157	comandante.llegada.lanzarote~2	Señores pasajeros, bienvenidos a Lanzarote. Este aeropuerto lleva el nombre de César Manrique, que se pasó la vida peleando para que la isla siguiera pareciéndose a sí misma. Gracias por acompañarnos.
+158	comandante.llegada.lanzarote~3	Bienvenidos a Lanzarote. En Timanfaya el suelo todavía está caliente a unos metros de profundidad. Gracias por volar con nosotros.
+159	comandante.llegada.lanzarote~4	Señores pasajeros, estamos en Lanzarote. Acá las viñas crecen en hoyos cavados en la ceniza, una por hoyo. Gracias por venir.
+160	comandante.llegada.lanzarote~5	Bienvenidos a Lanzarote. Los volcanes que ven estuvieron seis años seguidos en erupción, y de eso hace nada: el siglo dieciocho. Gracias por acompañarnos.
+161	comandante.llegada.fuerteventura	Señores pasajeros, bienvenidos a Fuerteventura. Acá el viento es el que manda, y por eso la arena cambia de sitio. Gracias por acompañarnos.
+162	comandante.llegada.fuerteventura~2	Bienvenidos a Fuerteventura. Ésta es la isla más vieja del archipiélago: lleva millones de años dejándose gastar por el viento. Gracias por volar con nosotros.
+163	comandante.llegada.fuerteventura~3	Señores pasajeros, estamos en Fuerteventura. Al norte, en Corralejo, hay un desierto de arena que se mueve solo. Gracias por venir.
+164	comandante.llegada.fuerteventura~4	Bienvenidos a Fuerteventura. Acá hay más cabras que gente, y el queso lo demuestra. Gracias por acompañarnos.
+165	comandante.llegada.fuerteventura~5	Señores pasajeros, Fuerteventura. Las playas de esta isla se miden en kilómetros, no en metros. Gracias por volar con nosotros.
+166	comandante.llegada.la-palma	Bienvenidos a La Palma. Acá arriba hay telescopios mirando el cielo, así que esta noche no miren la pantalla: miren para arriba. Gracias por volar con nosotros.
+167	comandante.llegada.la-palma~2	Señores pasajeros, bienvenidos a La Palma. A esta isla la llaman la isla bonita, y desde el aire no hay mucho que discutir. Gracias por acompañarnos.
+168	comandante.llegada.la-palma~3	Bienvenidos a La Palma. En el centro tiene una caldera enorme, y dentro caben barrancos, bosque y niebla. Gracias por volar con nosotros.
+169	comandante.llegada.la-palma~4	Señores pasajeros, estamos en La Palma. Hace poco un volcán cambió el mapa de esta isla; lo que ven es más nuevo que ustedes. Gracias por venir.
+170	comandante.llegada.la-palma~5	Bienvenidos a La Palma. Acá el cielo de noche está protegido por ley, para que se siga viendo. Gracias por acompañarnos.
+171	comandante.llegada.el-hierro	Señores pasajeros, bienvenidos a El Hierro. Durante siglos esta isla fue el final del mapa: desde acá, ya no había nada dibujado. Gracias por venir.
+172	comandante.llegada.el-hierro~2	Bienvenidos a El Hierro. Es la más pequeña y la más lejana, y llegar acá siempre tiene algo de hazaña. Gracias por volar con nosotros.
+173	comandante.llegada.el-hierro~3	Señores pasajeros, estamos en El Hierro. Durante siglos los mapas empezaban a contar los grados desde esta isla. Gracias por venir.
+174	comandante.llegada.el-hierro~4	Bienvenidos a El Hierro. Acá el viento y el agua le dan luz a la isla entera: se lo inventaron ellos. Gracias por acompañarnos.
+175	comandante.llegada.el-hierro~5	Señores pasajeros, El Hierro. Hay sabinas retorcidas por el viento que llevan así cientos de años y no se quejan. Gracias por volar con nosotros.
+176	comandante.llegada.la-gomera	Bienvenidos a La Gomera. Acá la gente se habla de un barranco a otro silbando, y se entiende todo. Gracias por volar con nosotros.
+177	comandante.llegada.la-gomera~2	Señores pasajeros, bienvenidos a La Gomera. El silbo con el que se hablan acá está reconocido por la Unesco, y no es un juego: es un idioma. Gracias por acompañarnos.
+178	comandante.llegada.la-gomera~3	Bienvenidos a La Gomera. Arriba, en Garajonay, hay un bosque de niebla que ya existía cuando Europa era otra cosa. Gracias por volar con nosotros.
+179	comandante.llegada.la-gomera~4	Señores pasajeros, estamos en La Gomera. De San Sebastián salió Colón para el último viaje antes de América. Gracias por venir.
+180	comandante.llegada.la-gomera~5	Bienvenidos a La Gomera. Esta isla es casi toda cuesta, así que lo llano que pisan ahora es raro. Gracias por acompañarnos.
+181	comandante.llegada.cuatro-vientos	Señores pasajeros, bienvenidos a Cuatro Vientos. Este es el aeródromo más antiguo de España y todavía trabaja: no se jubila nadie acá. Gracias por acompañarnos.
+182	comandante.llegada.cuatro-vientos~2	Bienvenidos a Cuatro Vientos. Acá se vuela desde mil novecientos once, y todavía no se han cansado. Gracias por volar con nosotros.
+183	comandante.llegada.cuatro-vientos~3	Señores pasajeros, estamos en Cuatro Vientos. Al lado hay un museo lleno de aviones que ya no vuelan y merecen que se los mire. Gracias por venir.
+184	comandante.llegada.cuatro-vientos~4	Bienvenidos a Cuatro Vientos. De este campo salió el avión que cruzó el Atlántico y le puso el nombre al sitio. Gracias por acompañarnos.
+185	comandante.llegada.cuatro-vientos~5	Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.
+186	comandante.minutos.2	Vamos a aterrizar en unos dos minutos.
+187	comandante.minutos.3	Vamos a aterrizar en unos tres minutos.
+188	comandante.minutos.4	Vamos a aterrizar en unos cuatro minutos.
+189	comandante.minutos.5	Vamos a aterrizar en unos cinco minutos.
+190	comandante.minutos.10	Vamos a aterrizar en unos diez minutos.
+191	comandante.minutos.15	Vamos a aterrizar en unos quince minutos.
+192	comandante.minutos.20	Vamos a aterrizar en unos veinte minutos.
+193	comandante.minutos.25	Vamos a aterrizar en unos veinticinco minutos.
+194	comandante.minutos.30	Vamos a aterrizar en unos treinta minutos.
+195	comandante.minutos.35	Vamos a aterrizar en unos treinta y cinco minutos.
+196	comandante.minutos.40	Vamos a aterrizar en unos cuarenta minutos.
+197	comandante.minutos.45	Vamos a aterrizar en unos cuarenta y cinco minutos.
+198	comandante.minutos.50	Vamos a aterrizar en unos cincuenta minutos.
+199	comandante.minutos.55	Vamos a aterrizar en unos cincuenta y cinco minutos.
+200	comandante.minutos.60	Vamos a aterrizar en unos sesenta minutos.
+201	comandante.minutos.0	Vamos a aterrizar en unos cero minutos.
+202	comandante.previsto.vuelo.2	El vuelo va a durar unos dos minutos.
+203	comandante.previsto.vuelo.3	El vuelo va a durar unos tres minutos.
+204	comandante.previsto.vuelo.4	El vuelo va a durar unos cuatro minutos.
+205	comandante.previsto.vuelo.5	El vuelo va a durar unos cinco minutos.
+206	comandante.previsto.vuelo.10	El vuelo va a durar unos diez minutos.
+207	comandante.previsto.vuelo.15	El vuelo va a durar unos quince minutos.
+208	comandante.previsto.vuelo.20	El vuelo va a durar unos veinte minutos.
+209	comandante.previsto.vuelo.25	El vuelo va a durar unos veinticinco minutos.
+210	comandante.previsto.vuelo.30	El vuelo va a durar unos treinta minutos.
+211	comandante.previsto.vuelo.35	El vuelo va a durar unos treinta y cinco minutos.
+212	comandante.previsto.vuelo.40	El vuelo va a durar unos cuarenta minutos.
+213	comandante.previsto.vuelo.45	El vuelo va a durar unos cuarenta y cinco minutos.
+214	comandante.previsto.vuelo.50	El vuelo va a durar unos cincuenta minutos.
+215	comandante.previsto.vuelo.55	El vuelo va a durar unos cincuenta y cinco minutos.
+216	comandante.previsto.vuelo.60	El vuelo va a durar unos sesenta minutos.
+217	comandante.previsto.vuelo.0	El vuelo va a durar unos cero minutos.
+218	comandante.previsto.nivel.5	Vamos a volar a cinco mil pies.
+219	comandante.previsto.nivel.6	Vamos a volar a seis mil pies.
+220	comandante.previsto.nivel.7	Vamos a volar a siete mil pies.
+221	comandante.previsto.nivel.8	Vamos a volar a ocho mil pies.
+222	comandante.previsto.nivel.9	Vamos a volar a nueve mil pies.
+223	comandante.previsto.nivel.10	Vamos a volar a diez mil pies.
+224	comandante.previsto.nivel.11	Vamos a volar a once mil pies.
+225	comandante.previsto.nivel.12	Vamos a volar a doce mil pies.
+226	comandante.previsto.nivel.13	Vamos a volar a trece mil pies.
+227	comandante.previsto.nivel.14	Vamos a volar a catorce mil pies.
+228	comandante.previsto.nivel.15	Vamos a volar a quince mil pies.
+229	comandante.previsto.nivel.16	Vamos a volar a dieciséis mil pies.
+230	comandante.previsto.nivel.17	Vamos a volar a diecisiete mil pies.
+231	comandante.previsto.nivel.18	Vamos a volar a dieciocho mil pies.
+232	comandante.previsto.nivel.19	Vamos a volar a diecinueve mil pies.
+233	comandante.previsto.nivel.20	Vamos a volar a veinte mil pies.
+234	comandante.previsto.nivel.21	Vamos a volar a veintiún mil pies.
+235	comandante.previsto.nivel.22	Vamos a volar a veintidós mil pies.
+236	comandante.previsto.nivel.23	Vamos a volar a veintitrés mil pies.
+237	comandante.previsto.nivel.24	Vamos a volar a veinticuatro mil pies.
+238	comandante.previsto.nivel.25	Vamos a volar a veinticinco mil pies.
+239	comandante.previsto.nivel.26	Vamos a volar a veintiséis mil pies.
+240	comandante.previsto.nivel.27	Vamos a volar a veintisiete mil pies.
+241	comandante.previsto.nivel.28	Vamos a volar a veintiocho mil pies.
+242	comandante.previsto.nivel.29	Vamos a volar a veintinueve mil pies.
+243	comandante.temperatura.0	La temperatura es de cero grados.
+244	comandante.temperatura.1	La temperatura es de un grado.
+245	comandante.temperatura.2	La temperatura es de dos grados.
+246	comandante.temperatura.3	La temperatura es de tres grados.
+247	comandante.temperatura.4	La temperatura es de cuatro grados.
+248	comandante.temperatura.5	La temperatura es de cinco grados.
+249	comandante.temperatura.6	La temperatura es de seis grados.
+250	comandante.temperatura.7	La temperatura es de siete grados.
+251	comandante.temperatura.8	La temperatura es de ocho grados.
+252	comandante.temperatura.9	La temperatura es de nueve grados.
+253	comandante.temperatura.10	La temperatura es de diez grados.
+254	comandante.temperatura.11	La temperatura es de once grados.
+255	comandante.temperatura.12	La temperatura es de doce grados.
+256	comandante.temperatura.13	La temperatura es de trece grados.
+257	comandante.temperatura.14	La temperatura es de catorce grados.
+258	comandante.temperatura.15	La temperatura es de quince grados.
+259	comandante.temperatura.16	La temperatura es de dieciséis grados.
+260	comandante.temperatura.17	La temperatura es de diecisiete grados.
+261	comandante.temperatura.18	La temperatura es de dieciocho grados.
+262	comandante.temperatura.19	La temperatura es de diecinueve grados.
+263	comandante.temperatura.20	La temperatura es de veinte grados.
+264	comandante.temperatura.21	La temperatura es de veintiún grados.
+265	comandante.temperatura.22	La temperatura es de veintidós grados.
+266	comandante.temperatura.23	La temperatura es de veintitrés grados.
+267	comandante.temperatura.24	La temperatura es de veinticuatro grados.
+268	comandante.temperatura.25	La temperatura es de veinticinco grados.
+269	comandante.temperatura.26	La temperatura es de veintiséis grados.
+270	comandante.temperatura.27	La temperatura es de veintisiete grados.
+271	comandante.temperatura.28	La temperatura es de veintiocho grados.
+272	comandante.temperatura.29	La temperatura es de veintinueve grados.
+273	comandante.temperatura.30	La temperatura es de treinta grados.
+274	comandante.temperatura.31	La temperatura es de treinta y un grado.
+275	comandante.temperatura.32	La temperatura es de treinta y dos grados.
+276	comandante.temperatura.33	La temperatura es de treinta y tres grados.
+277	comandante.temperatura.34	La temperatura es de treinta y cuatro grados.
+278	comandante.temperatura.35	La temperatura es de treinta y cinco grados.
+279	comandante.temperatura.36	La temperatura es de treinta y seis grados.
+280	comandante.temperatura.37	La temperatura es de treinta y siete grados.
+281	comandante.temperatura.38	La temperatura es de treinta y ocho grados.
+282	comandante.temperatura.39	La temperatura es de treinta y nueve grados.
+283	comandante.temperatura.40	La temperatura es de cuarenta grados.
+284	comandante.temperatura.41	La temperatura es de cuarenta y un grado.
+285	comandante.temperatura.42	La temperatura es de cuarenta y dos grados.
+286	comandante.temperatura.43	La temperatura es de cuarenta y tres grados.
+287	comandante.temperatura.44	La temperatura es de cuarenta y cuatro grados.
+288	comandante.temperatura.45	La temperatura es de cuarenta y cinco grados.
+289	comandante.temperatura.menos1	La temperatura es de un grado bajo cero.
+290	comandante.temperatura.menos2	La temperatura es de dos grados bajo cero.
+291	comandante.temperatura.menos3	La temperatura es de tres grados bajo cero.
+292	comandante.temperatura.menos4	La temperatura es de cuatro grados bajo cero.
+293	comandante.temperatura.menos5	La temperatura es de cinco grados bajo cero.

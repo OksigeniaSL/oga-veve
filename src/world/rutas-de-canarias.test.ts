@@ -444,3 +444,69 @@ describe("el crucero que se anuncia es el que se vuela", () => {
     expect(fuenteDelJuego).not.toMatch(/\bnivelPrevisto\(/);
   });
 });
+
+/**
+ * **Y las dos avionetas, por la costa y a la altura que da el avión.**
+ *
+ * El techo de la avioneta de escuela y el del fumigador —tres mil y dos mil
+ * quinientos metros— quedan por debajo de lo que pide la regla de los vuelos
+ * por instrumentos cerca de las islas del oeste. Con esa regla, las rutas de
+ * Los Rodeos y de El Hierro a la 18 de La Palma no libraban el relieve y caían
+ * a la más corta, y el crucero del fumigador salía a nueve mil pies,
+ * ochocientos por encima de lo que da. Lo que hace de verdad un avión así es
+ * volar con reglas visuales: por el mar, a la altura que se pueda y con el
+ * margen de un vuelo visual. Ver `MARGEN_VISUAL` en `flight/ruta.ts`.
+ */
+describe("las avionetas, con reglas visuales", () => {
+  const avionetas = AIRCRAFT.filter((a) => a.reglasDeVuelo === "visual");
+  /*
+   * La de siempre: desde la 34 de El Hierro no hay salida publicada, y el
+   * punto intermedio calculado de la 18 de La Palma está contra su costa
+   * este. Ni por el mar ni con el margen: ver `NO_PUEDE_IR_POR_EL_MAR` y
+   * `NI_LA_RUTA` arriba, que le pasa igual al reactor.
+   */
+  const NI_ASI = "GCHI 34 → GCLA 18";
+  const NI_POR_EL_MAR = new Set(["GCHI 16 → GCLA 18", NI_ASI]);
+
+  it("son la de escuela y el fumigador, y ninguna más", () => {
+    expect(avionetas.map((a) => a.id).sort()).toEqual(["jaz-20", "jaz-25"]);
+  });
+
+  for (const avion of avionetas)
+    it(`${avion.id}: libran el relieve por el mar y cruzan a la altura que da el avión`, () => {
+      for (const t of TRAMOS) {
+        const juego = { ...t.juego, techo: avion.alturaDeCrucero, visual: true };
+        const ruta = rutaDelTramo(t.salida, t.llegada, juego);
+        const terreno = {
+          cota: juego.cota!,
+          techo: juego.techo,
+          cotaDeSalida: juego.cotaDePista(t.salida, 0, 0),
+          visual: true,
+        };
+        const dicho = `${avion.id} ${t.nombre}: ${nombres(ruta)}`;
+        expect(
+          libra(ruta.fijos, terreno, juego.cotaDePista(t.llegada, 0, 0), new Map(), true),
+          dicho,
+        ).toBe(t.nombre !== NI_ASI);
+        if (!NI_POR_EL_MAR.has(t.nombre))
+          expect(porElMar(ruta.fijos, juego.cota!), dicho).toBe(true);
+        const crucero = cruceroDelTramo(ruta, t.salida, juego);
+        expect(crucero, dicho).toBeLessThanOrEqual(avion.alturaDeCrucero + 1);
+        // Y al medio nivel de los vuelos visuales: 4500, 6500…
+        expect(Math.round(crucero / 0.3048) % 1000, dicho).toBe(500);
+      }
+    });
+
+  it("y con la regla de los instrumentos no les cabía: la de antes", () => {
+    const fumigador = avionetas.find((a) => a.id === "jaz-25")!;
+    const t = TRAMOS.find((x) => x.nombre === "GCXO 12 → GCLA 18")!;
+    const juego = { ...t.juego, techo: fumigador.alturaDeCrucero };
+    const ruta = rutaDelTramo(t.salida, t.llegada, juego);
+    const terreno = {
+      cota: juego.cota!,
+      techo: juego.techo,
+      cotaDeSalida: juego.cotaDePista(t.salida, 0, 0),
+    };
+    expect(libra(ruta.fijos, terreno, juego.cotaDePista(t.llegada, 0, 0), new Map(), true)).toBe(false);
+  });
+});

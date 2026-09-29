@@ -55,6 +55,13 @@ describe("lo que dice la torre", () => {
     "torre.afisSinTrafico",
     "torre.afisTraficoAterriza",
     "torre.afisTraficoDespega",
+    /*
+     * Y la autorización de altitud, en casa y en fraseología: la pide
+     * `autorizarAltura` por su clave, con la altura en su hueco. Ver
+     * `flight/autorizacion-de-altitud.ts`.
+     */
+    "torre.subir",
+    "torre.climbTo",
   ]);
 
   /*

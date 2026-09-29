@@ -112,6 +112,11 @@ export interface InputActions {
   cycleDestino: () => void;
   /** Girar la rueda del altímetro un hectopascal. Ver `flight/altimetro.ts`. */
   girarAltimetro: (pasos: number) => void;
+  /**
+   * Girar la rueda de la ventanilla ALT, de millar en millar. Ver
+   * `flight/altitud-seleccionada.ts`. Opcional: sin ella la tecla no hace nada.
+   */
+  girarVentanillaAlt?: (pasos: number) => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -799,6 +804,12 @@ export class InputManager {
         break;
       case "qnhDown":
         this.actions.girarAltimetro(-1);
+        break;
+      case "altUp":
+        this.actions.girarVentanillaAlt?.(1);
+        break;
+      case "altDown":
+        this.actions.girarVentanillaAlt?.(-1);
         break;
       case "credits":
         event.preventDefault();

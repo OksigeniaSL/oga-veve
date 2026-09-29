@@ -887,5 +887,11 @@
     "{saludo?}",
     "{lado}",
     "{que}"
+  ],
+  "comandante.nivelMasTranquilo": [
+    "comandante.nivelMasTranquilo"
+  ],
+  "comandante.bachesEnTodos": [
+    "comandante.bachesEnTodos"
   ]
 }

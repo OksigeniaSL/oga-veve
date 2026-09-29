@@ -40,7 +40,7 @@ import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
 import { peldanoDe } from "./familia";
 import type { Mapa as MapaDeLaCarta } from "./carta";
-import { Tablero } from "./tablero";
+import { Tablero, type DatosDelTablero } from "./tablero";
 import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
@@ -78,6 +78,12 @@ import {
   seOfrecePantallaCompleta,
 } from "./pantalla-completa";
 import { avisaLaPerdida } from "../flight/avisos-de-actitud";
+/**
+ * Cuánto hay que arrastrar el dedo por la rueda de la ventanilla ALT para un
+ * millar, en píxeles de pantalla: dieciocho, lo que se mueve un pulgar sin
+ * pensarlo. Ver `onVentanillaAlt`.
+ */
+const TRECHO_DE_LA_RUEDA = 18;
 
 /**
  * **Tu avión, dibujado**: la silueta que marca en la tira de la radio y en la
@@ -691,6 +697,52 @@ export class Hud {
       this.ponerCuadroBajado(!bajadoAhora);
       ponerTexto("cuadro-bajado", this.cuadroBajado ? "1" : "0");
     });
+    /*
+     * **La rueda de la ventanilla ALT**, por delegación y con `pointerdown`,
+     * por lo mismo que el tirador: el cuadro se repinta entero y un dedo que
+     * resbala un píxel no hace `click`. Cada toque, un millar. Y la rueda del
+     * ratón encima de la ventanilla, que es lo que se espera de una rueda.
+     * Ver `flight/altitud-seleccionada.ts`.
+     */
+    this.root.addEventListener("pointerdown", (e) => {
+      const zona = (e.target as Element | null)?.closest?.("[data-mcp-rueda], [data-mcp-alt]");
+      if (!(zona instanceof SVGElement || zona instanceof HTMLElement)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const paso = Number(zona.dataset.mcpRueda) || 0;
+      if (paso) this.ventanillaHandler?.(paso);
+      this.arrastreDeLaRueda = { dedo: e.pointerId, y: e.clientY };
+    });
+    /*
+     * Y arrastrando, un millar por cada trecho: hacia arriba sube. En la
+     * ventana y no en el elemento, porque el dedo se sale de la tecla en
+     * cuanto se mueve, y es del mismo dedo que la tocó.
+     */
+    window.addEventListener("pointermove", (e) => {
+      const a = this.arrastreDeLaRueda;
+      if (!a || e.pointerId !== a.dedo) return;
+      const pasos = Math.trunc((a.y - e.clientY) / TRECHO_DE_LA_RUEDA);
+      if (!pasos) return;
+      a.y -= pasos * TRECHO_DE_LA_RUEDA;
+      this.ventanillaHandler?.(pasos);
+    });
+    const soltar = (e: PointerEvent) => {
+      if (this.arrastreDeLaRueda?.dedo === e.pointerId) this.arrastreDeLaRueda = null;
+    };
+    window.addEventListener("pointerup", soltar);
+    window.addEventListener("pointercancel", soltar);
+    this.root.addEventListener(
+      "wheel",
+      (e) => {
+        const donde = (e.target as Element | null)?.closest?.(
+          "[data-mcp-alt], [data-mcp-rueda]",
+        );
+        if (!donde || e.deltaY === 0) return;
+        e.preventDefault();
+        this.ventanillaHandler?.(e.deltaY < 0 ? 1 : -1);
+      },
+      { passive: false },
+    );
     /*
      * **El menú del teléfono**, por delegación como el tirador y por lo
      * mismo: `render` rehace los botones y la escucha tiene que sobrevivirle.
@@ -2212,6 +2264,8 @@ export class Hud {
        * relojes dirían cosas distintas. Ver `atmosphere.ts`.
        */
       readonly aire?: Aire;
+      /** La ventanilla ALT del automático. Ver `DatosDelTablero.ventanilla`. */
+      readonly ventanilla?: DatosDelTablero["ventanilla"];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2591,6 +2645,7 @@ export class Hud {
           mapa: mandos?.mapa ?? null,
           combustible: mandos?.combustible ?? null,
           presion: mandos?.presion ?? null,
+          ventanilla: mandos?.ventanilla ?? null,
         },
         dt,
         /*
@@ -3502,6 +3557,15 @@ export class Hud {
 
   onPilotoAutomatico(fn: () => void): void {
     this.pilotoAutoHandler = fn;
+  }
+
+  /** Quién se entera de que se ha girado la rueda de la ventanilla ALT. */
+  private ventanillaHandler: ((pasos: number) => void) | null = null;
+  /** El dedo que está girando la rueda, y dónde contó el último paso. */
+  private arrastreDeLaRueda: { dedo: number; y: number } | null = null;
+
+  onVentanillaAlt(fn: (pasos: number) => void): void {
+    this.ventanillaHandler = fn;
   }
 
   /** Quién se entera de que han tocado el interruptor del cinturón. */

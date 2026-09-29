@@ -353,6 +353,22 @@ export interface AircraftConfig {
    */
   alturaDeCrucero: number;
   /**
+   * **Con qué reglas vuela**: mirando por la ventana o por instrumentos.
+   *
+   * No es una preferencia, es lo que el avión puede hacer. La avioneta de
+   * escuela y el fumigador vuelan con reglas visuales —ni llevan con qué
+   * volar dentro de una nube ni una licencia de escuela ni una de
+   * fumigación lo piden—, y su techo queda por debajo de lo que la regla de
+   * los vuelos por instrumentos pide entre las islas del oeste: el Teide más
+   * seiscientos metros. Lo que hacen de verdad es ir por la costa, a la
+   * altura que se pueda. El bimotor, el turbohélice y los reactores vuelan
+   * por instrumentos, que es como vuela todo el que lleva pasaje.
+   *
+   * Cambia el plan: el margen sobre el relieve y el medio nivel del crucero.
+   * Ver `MARGEN_VISUAL` en `ruta.ts` y `MEDIO_NIVEL` en `nivel-de-crucero.ts`.
+   */
+  reglasDeVuelo: "visual" | "instrumentos";
+  /**
    * Si la cabina va soplada a presión.
    *
    * No es un detalle de ficha: **es lo que decide a qué altura puede ir la
@@ -732,6 +748,7 @@ export const PYKASU: AircraftConfig = {
    * queda sin aire.
    */
   alturaDeCrucero: 3000,
+  reglasDeVuelo: "visual",
   presurizada: false,
   tcas: null,
   avisosHablados: false,
@@ -832,6 +849,7 @@ export const MAINUMBY: AircraftConfig = {
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
   // lo que sube es para ir de un campo a otro.
   alturaDeCrucero: 2500,
+  reglasDeVuelo: "visual",
   presurizada: false,
   tcas: null,
   avisosHablados: false,
@@ -971,6 +989,7 @@ export const PANAMBI: AircraftConfig = {
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
+  reglasDeVuelo: "instrumentos",
   presurizada: false,
   tcas: null,
   avisosHablados: false,
@@ -1088,6 +1107,7 @@ export const ARASUNU: AircraftConfig = {
   // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
   // un turbohélice regional presurizado.
   alturaDeCrucero: 7600,
+  reglasDeVuelo: "instrumentos",
   presurizada: true,
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
@@ -1229,6 +1249,7 @@ export const ARAI: AircraftConfig = {
   cruiseSpeed: 220,
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
+  reglasDeVuelo: "instrumentos",
   presurizada: true,
   tcas: "TCAS II",
   avisosHablados: true,
@@ -1441,6 +1462,7 @@ export const YVAGA: AircraftConfig = {
    * servicio está más alto —trece mil setecientos— pero ahí ya no se cruza.
    */
   alturaDeCrucero: 10700,
+  reglasDeVuelo: "instrumentos",
   presurizada: true,
   tcas: "TCAS II",
   avisosHablados: true,

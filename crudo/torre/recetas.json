@@ -778,5 +778,121 @@
     "{r1}",
     "{r2}",
     "torre.solo.departingTraffic"
+  ],
+  "torre.subir": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "{subir}"
+  ],
+  "torre.climbTo": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.climbTo",
+    "{altura}"
+  ],
+  "torre.solo.subir.3": [
+    "torre.solo.subir.3"
+  ],
+  "torre.solo.subir.4": [
+    "torre.solo.subir.4"
+  ],
+  "torre.solo.subir.5": [
+    "torre.solo.subir.5"
+  ],
+  "torre.solo.subir.6": [
+    "torre.solo.subir.6"
+  ],
+  "torre.solo.subir.7": [
+    "torre.solo.subir.7"
+  ],
+  "torre.solo.subir.8": [
+    "torre.solo.subir.8"
+  ],
+  "torre.solo.subir.9": [
+    "torre.solo.subir.9"
+  ],
+  "torre.solo.subir.10": [
+    "torre.solo.subir.10"
+  ],
+  "torre.solo.subir.11": [
+    "torre.solo.subir.11"
+  ],
+  "torre.solo.subir.12": [
+    "torre.solo.subir.12"
+  ],
+  "torre.solo.subir.13": [
+    "torre.solo.subir.13"
+  ],
+  "torre.solo.subir.14": [
+    "torre.solo.subir.14"
+  ],
+  "torre.solo.subir.15": [
+    "torre.solo.subir.15"
+  ],
+  "torre.solo.subir.16": [
+    "torre.solo.subir.16"
+  ],
+  "torre.solo.subir.17": [
+    "torre.solo.subir.17"
+  ],
+  "torre.solo.subir.18": [
+    "torre.solo.subir.18"
+  ],
+  "torre.solo.subir.19": [
+    "torre.solo.subir.19"
+  ],
+  "torre.solo.subir.20": [
+    "torre.solo.subir.20"
+  ],
+  "torre.solo.subir.21": [
+    "torre.solo.subir.21"
+  ],
+  "torre.solo.subir.22": [
+    "torre.solo.subir.22"
+  ],
+  "torre.solo.subir.23": [
+    "torre.solo.subir.23"
+  ],
+  "torre.solo.subir.24": [
+    "torre.solo.subir.24"
+  ],
+  "torre.solo.subir.25": [
+    "torre.solo.subir.25"
+  ],
+  "torre.solo.subir.26": [
+    "torre.solo.subir.26"
+  ],
+  "torre.solo.subir.27": [
+    "torre.solo.subir.27"
+  ],
+  "torre.solo.subir.28": [
+    "torre.solo.subir.28"
+  ],
+  "torre.solo.subir.29": [
+    "torre.solo.subir.29"
+  ],
+  "altura.nivel": [
+    "altura.nivel"
+  ],
+  "altura.pies.2": [
+    "altura.pies.2"
+  ],
+  "altura.pies.3": [
+    "altura.pies.3"
+  ],
+  "altura.pies.4": [
+    "altura.pies.4"
+  ],
+  "altura.pies.5": [
+    "altura.pies.5"
+  ],
+  "altura.pies.6": [
+    "altura.pies.6"
   ]
 }

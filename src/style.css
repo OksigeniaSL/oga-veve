@@ -3569,6 +3569,60 @@ button.motor__tecla::after {
   stroke-width: 1;
 }
 
+/*
+ * **La rueda de la ventanilla de altitud**: dos teclas que sí se tocan, en un
+ * cuadro que no recoge clics. El cuadro entero deja pasar el dedo al mundo
+ * —ver `.cuadro`—, y por eso aquí se devuelve a propósito, solo en esto.
+ */
+.tablero__rueda {
+  pointer-events: all;
+  cursor: pointer;
+  /* Y el dedo que arrastra gira la rueda, no mueve la página. */
+  touch-action: none;
+}
+
+/* La zona del dedo: invisible, más grande que la tecla pintada. */
+.tablero__rueda rect.tablero__rueda-dedo {
+  fill: transparent;
+  stroke: none;
+}
+
+.tablero__rueda rect {
+  fill: var(--cabina-bisel);
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+.tablero__rueda path {
+  fill: var(--cabina-valor);
+}
+
+.tablero__rueda:hover rect,
+.tablero__rueda:active rect {
+  stroke: var(--cabina-valor);
+}
+
+.tablero__mcp[data-mcp-alt] {
+  pointer-events: all;
+  touch-action: none;
+}
+
+/*
+ * Y el avisador de altitud en la ventanilla: blanca al acercarse y ámbar al
+ * irse. Cambia el marco, nunca la cifra. Ver `flight/altitud-seleccionada.ts`.
+ */
+.tablero__mcp.cr__sel--cerca rect,
+.cr__sel--cerca .cr__sel-caja {
+  stroke: var(--cabina-valor);
+  stroke-width: 2.4;
+}
+
+.tablero__mcp.cr__sel--fuera rect,
+.cr__sel--fuera .cr__sel-caja {
+  stroke: var(--cabina-precaucion);
+  stroke-width: 2.6;
+}
+
 /* ── Las esferas ── */
 
 .esfera__caja {
@@ -3970,6 +4024,37 @@ button.motor__tecla::after {
 
 .cr__bug {
   fill: var(--cabina-objetivo);
+}
+
+/* La altura de la ventanilla ALT encima de la cinta, en su caja. */
+.cr__sel-caja {
+  fill: #05070a;
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+.cr__sel-cifra {
+  fill: var(--cabina-objetivo);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Y la raya de «hasta aquí» del primer peldaño, de lado a lado de la cinta. */
+.cr__raya-sel {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 3;
+}
+
+/* El nivel del plan en la carta: magenta, que es lo que se quiere. */
+.cr__crz {
+  fill: var(--cabina-objetivo);
+  font-family: var(--cabina-fuente);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Lo que se le ha pedido al motor. Magenta, porque magenta es «lo que quiero». */

@@ -6,6 +6,9 @@
     "comandante.aproximacion": {
       "ms": 2165
     },
+    "comandante.bachesEnTodos": {
+      "ms": 8807
+    },
     "comandante.bienvenida.ayolas": {
       "ms": 5707
     },
@@ -494,6 +497,9 @@
     },
     "comandante.minutos.60": {
       "ms": 1979
+    },
+    "comandante.nivelMasTranquilo": {
+      "ms": 7207
     },
     "comandante.previsto.nivel.10": {
       "ms": 1301
@@ -1766,6 +1772,12 @@
       "{saludo?}",
       "{lado}",
       "{que}"
+    ],
+    "comandante.nivelMasTranquilo": [
+      "comandante.nivelMasTranquilo"
+    ],
+    "comandante.bachesEnTodos": [
+      "comandante.bachesEnTodos"
     ]
   }
 }

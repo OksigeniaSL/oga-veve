@@ -235,6 +235,29 @@ const REPARTO = [
     "instructor",
     { lado: "ventanilla.vos.lado.derecha", que: "ventanilla.vos.ypacarai" },
   ],
+  /*
+   * **Y la altura, por escalones**: el control autoriza «subí a…» en casa y
+   * «climb to…» en fraseología, en las dos torres; la instructora cuenta la
+   * ventanilla y el tono del avisador; y la comandante, el nivel de los
+   * baches. Ver `flight/autorizacion-de-altitud.ts`.
+   */
+  ["torre", "torre.subir", "torre", { subir: "torre.solo.subir.7" }],
+  ["torre", "torre.canario.subir", "torre-canarias", { subir: "torre.canario.solo.subir.11" }],
+  ["torre", "torre.climbTo", "torre", { altura: "altura.pies.3" }],
+  [
+    "torre",
+    "torre.canario.climbTo",
+    "torre-canarias",
+    { altura: "altura.nivel cifra.1 cifra.1 cifra.0" },
+  ],
+  ["instructor", "vuelo.alturaDeLaTorre", "instructor"],
+  ["instructor", "vuelo.alturaDeLaTorreRaya", "instructor"],
+  ["instructor", "vuelo.otraAlturaDeLaTorre", "instructor"],
+  ["instructor", "vuelo.tonoDeAltitudCerca", "instructor"],
+  ["instructor", "vuelo.tonoDeAltitudFuera", "instructor"],
+  ["instructor", "vuelo.masAltoQueElPlan", "instructor"],
+  ["comandante", "comandante.nivelMasTranquilo", "comandante"],
+  ["comandante", "comandante.bachesEnTodos", "comandante"],
 ];
 
 const server = await createServer({

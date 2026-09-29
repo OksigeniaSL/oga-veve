@@ -198,6 +198,8 @@ export const EN: Dictionary = {
     "With this aeroplane it's a local flight. To fly to {sitios}, pick a smaller one in the hangar",
   "tecla.qnhUp": "Altimeter setting up",
   "tecla.qnhDown": "Altimeter setting down",
+  "tecla.altUp": "ALT window up",
+  "tecla.altDown": "ALT window down",
   "tecla.sound": "Sound",
   "tecla.language": "Language",
   "tecla.credits": "Credits",
@@ -251,6 +253,8 @@ export const EN: Dictionary = {
   // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
   "torre.destino": "{indicativo}, cleared to {destino}",
   "torre.canario.destino": "{indicativo}, cleared to {destino}",
+  "torre.subir": "{indicativo}, climb to {pies} feet",
+  "torre.canario.subir": "{indicativo}, climb to {pies} feet",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",
@@ -350,6 +354,20 @@ export const EN: Dictionary = {
   "vuelo.pilotoSuelto": "Autopilot disconnected",
   "vuelo.pilotoEnTierra": "The autopilot engages in the air",
   "vuelo.empezamosABajar": "Top of descent: we start down now, nice and easy",
+  "comandante.nivelMasTranquilo":
+    "Ladies and gentlemen, this is your captain. Because of the bumps we asked air traffic control for another level, and we've climbed for a smoother ride.",
+  "comandante.bachesEnTodos":
+    "Ladies and gentlemen, this is your captain. We checked other levels with air traffic control, but it's bumpy at all of them. That's normal: please keep your seat belts fastened.",
+  "vuelo.alturaDeLaTorre":
+    "The tower gave us how high to climb. I set it in the altitude window, in magenta: we climb up to there and stay.",
+  "vuelo.alturaDeLaTorreRaya": "The tower tells us how high to climb: up to the line on the tape.",
+  "vuelo.otraAlturaDeLaTorre": "The tower lets us climb a bit more. The new altitude is already set.",
+  "vuelo.tonoDeAltitudCerca":
+    "That tone means we're nearly at the ALT window altitude. That's where we level off.",
+  "vuelo.tonoDeAltitudFuera":
+    "That tone means we've drifted off the ALT window altitude. Ease back to it, gently.",
+  "vuelo.masAltoQueElPlan":
+    "We're higher than the plan: there's more to come down, so we'll start down earlier.",
   "palabra.aBajar": "Descend",
   "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
   "percance.ocupada": "The runway was occupied and you were told to go around",

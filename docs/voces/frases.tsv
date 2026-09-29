@@ -51,6 +51,12 @@ instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado: enderez
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoEnTierra.ogg	es-PY	El piloto automático se conecta en el aire	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.empezamosABajar.ogg	es-PY	Empezamos a bajar: despacito, hasta la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alturaDeLaTorre.ogg	es-PY	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alturaDeLaTorreRaya.ogg	es-PY	La torre nos dice hasta dónde subir: hasta la raya de la cinta.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.otraAlturaDeLaTorre.ogg	es-PY	La torre nos deja subir otro poco. Ya puse la altura nueva.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.tonoDeAltitudCerca.ogg	es-PY	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.tonoDeAltitudFuera.ogg	es-PY	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.masAltoQueElPlan.ogg	es-PY	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
@@ -255,6 +261,8 @@ comandante	comandante/comandante.crosscheck.ogg	es-PY	Tripulación, armar toboga
 comandante	comandante/comandante.despegue.ogg	es-PY	Tripulación, sentados para el despegue.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.crucero.ogg	es-PY	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.turbulencia.ogg	es-PY	Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.nivelMasTranquilo.ogg	es-PY	Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bachesEnTodos.ogg	es-PY	Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.vuelta.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.pettirossi.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.	la megafonía de cabina, para el pasaje
@@ -561,6 +569,7 @@ torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno vien
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
+torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
@@ -604,6 +613,12 @@ torre	torre/trafico.pies.12.ogg	en	one thousand two hundred feet	cuánto más al
 torre	torre/trafico.above.ogg	en	above	va por encima
 torre	torre/trafico.below.ogg	en	below	va por debajo
 torre	torre/trafico.sameLevel.ogg	en	same level	va a tu misma altura
+torre	torre/altura.nivel.ogg	en	flight level	delante de las tres cifras de un nivel
+torre	torre/altura.pies.2.ogg	en	two thousand feet	una altitud por debajo de la transición
+torre	torre/altura.pies.3.ogg	en	three thousand feet	una altitud por debajo de la transición
+torre	torre/altura.pies.4.ogg	en	four thousand feet	una altitud por debajo de la transición
+torre	torre/altura.pies.5.ogg	en	five thousand feet	una altitud por debajo de la transición
+torre	torre/altura.pies.6.ogg	en	six thousand feet	una altitud por debajo de la transición
 torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre	torre/torre.solo.destino.ogg	es	podés volar a	a dónde se va, antes de rodar; el campo va detrás
@@ -684,6 +699,7 @@ torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing t
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
@@ -727,6 +743,12 @@ torre-canarias	torre-canarias/trafico.pies.12.ogg	en	one thousand two hundred fe
 torre-canarias	torre-canarias/trafico.above.ogg	en	above	va por encima, en Canarias
 torre-canarias	torre-canarias/trafico.below.ogg	en	below	va por debajo, en Canarias
 torre-canarias	torre-canarias/trafico.sameLevel.ogg	en	same level	va a tu misma altura, en Canarias
+torre-canarias	torre-canarias/altura.nivel.ogg	en	flight level	delante de las tres cifras de un nivel, en Canarias
+torre-canarias	torre-canarias/altura.pies.2.ogg	en	two thousand feet	una altitud por debajo de la transición, en Canarias
+torre-canarias	torre-canarias/altura.pies.3.ogg	en	three thousand feet	una altitud por debajo de la transición, en Canarias
+torre-canarias	torre-canarias/altura.pies.4.ogg	en	four thousand feet	una altitud por debajo de la transición, en Canarias
+torre-canarias	torre-canarias/altura.pies.5.ogg	en	five thousand feet	una altitud por debajo de la transición, en Canarias
+torre-canarias	torre-canarias/altura.pies.6.ogg	en	six thousand feet	una altitud por debajo de la transición, en Canarias
 comandante	comandante/comandante.minutos.2.ogg	es-PY	Vamos a aterrizar en unos dos minutos.	cuánto falta para aterrizar, al empezar a bajar
 comandante	comandante/comandante.minutos.3.ogg	es-PY	Vamos a aterrizar en unos tres minutos.	cuánto falta para aterrizar, al empezar a bajar
 comandante	comandante/comandante.minutos.4.ogg	es-PY	Vamos a aterrizar en unos cuatro minutos.	cuánto falta para aterrizar, al empezar a bajar
@@ -835,3 +857,57 @@ comandante	comandante/comandante.temperatura.menos2.ogg	es-PY	La temperatura es 
 comandante	comandante/comandante.temperatura.menos3.ogg	es-PY	La temperatura es de tres grados bajo cero.	la temperatura del destino, bajo cero
 comandante	comandante/comandante.temperatura.menos4.ogg	es-PY	La temperatura es de cuatro grados bajo cero.	la temperatura del destino, bajo cero
 comandante	comandante/comandante.temperatura.menos5.ogg	es-PY	La temperatura es de cinco grados bajo cero.	la temperatura del destino, bajo cero
+torre	torre/torre.solo.subir.3.ogg	es	subí a tres mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.4.ogg	es	subí a cuatro mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.5.ogg	es	subí a cinco mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.6.ogg	es	subí a seis mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.7.ogg	es	subí a siete mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.8.ogg	es	subí a ocho mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.9.ogg	es	subí a nueve mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.10.ogg	es	subí a diez mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.11.ogg	es	subí a once mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.12.ogg	es	subí a doce mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.13.ogg	es	subí a trece mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.14.ogg	es	subí a catorce mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.15.ogg	es	subí a quince mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.16.ogg	es	subí a dieciséis mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.17.ogg	es	subí a diecisiete mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.18.ogg	es	subí a dieciocho mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.19.ogg	es	subí a diecinueve mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.20.ogg	es	subí a veinte mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.21.ogg	es	subí a veintiún mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.22.ogg	es	subí a veintidós mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.23.ogg	es	subí a veintitrés mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.24.ogg	es	subí a veinticuatro mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.25.ogg	es	subí a veinticinco mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.26.ogg	es	subí a veintiséis mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.27.ogg	es	subí a veintisiete mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.28.ogg	es	subí a veintiocho mil pies	la altura que autoriza el control, dicha en casa
+torre	torre/torre.solo.subir.29.ogg	es	subí a veintinueve mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.3.ogg	es	sube a tres mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.4.ogg	es	sube a cuatro mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.5.ogg	es	sube a cinco mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.6.ogg	es	sube a seis mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.7.ogg	es	sube a siete mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.8.ogg	es	sube a ocho mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.9.ogg	es	sube a nueve mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.10.ogg	es	sube a diez mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.11.ogg	es	sube a once mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.12.ogg	es	sube a doce mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.13.ogg	es	sube a trece mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.14.ogg	es	sube a catorce mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.15.ogg	es	sube a quince mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.16.ogg	es	sube a dieciséis mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.17.ogg	es	sube a diecisiete mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.18.ogg	es	sube a dieciocho mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.19.ogg	es	sube a diecinueve mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.20.ogg	es	sube a veinte mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.21.ogg	es	sube a veintiún mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.22.ogg	es	sube a veintidós mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.23.ogg	es	sube a veintitrés mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.24.ogg	es	sube a veinticuatro mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.25.ogg	es	sube a veinticinco mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.26.ogg	es	sube a veintiséis mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.27.ogg	es	sube a veintisiete mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.28.ogg	es	sube a veintiocho mil pies	la altura que autoriza el control, dicha en casa
+torre-canarias	torre-canarias/torre.canario.solo.subir.29.ogg	es	sube a veintinueve mil pies	la altura que autoriza el control, dicha en casa
