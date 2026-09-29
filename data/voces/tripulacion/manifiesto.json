@@ -7,6 +7,10 @@
       "ms": 11007,
       "h": "7b97ca60db"
     },
+    "tripulacion.mascaras": {
+      "ms": 14707,
+      "h": "9dc9f34840"
+    },
     "tripulacion.servicio.banana": {
       "ms": 10207,
       "h": "c7264a7a01"
@@ -64,6 +68,9 @@
     "tripulacion.servicio": [
       "{producto}",
       "{largo?}"
+    ],
+    "tripulacion.mascaras": [
+      "tripulacion.mascaras"
     ]
   }
 }

@@ -153,10 +153,30 @@ export function cuantoAguanta(
   if (noSePierde(clave, urgencia) || anunciaLaFase(clave)) return Infinity;
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
-    explicaLaOtraPunta(clave)
+    explicaLaOtraPunta(clave) ||
+    esDelDescenso(clave)
     ? CADUCA_LA_ORDEN
     : CADUCA;
 }
+
+/**
+ * **El descenso de emergencia, que es un procedimiento y no un comentario**:
+ * qué se hace, por qué la máscara primero, la megafonía y el «ya se respira».
+ * Aguanta lo que una orden de la torre.
+ *
+ * Con los cuatro segundos de un aviso se caía en los aeropuertos con la
+ * frecuencia llena: medido en Pettirossi con el JAZ 90, el «ya se respira» de
+ * la llegada caducaba detrás de la torre y de un aviso de tráfico, y el
+ * ejercicio acababa sin que nadie dijera que había acabado. Lo que se dice
+ * sigue siendo verdad un rato —se sigue abajo, se sigue sin aire arriba—, y
+ * las frases van de una en una: ver `decirLoQueQueda` en `game.ts`.
+ */
+export function esDelDescenso(clave: string | undefined): boolean {
+  return !!clave && DEL_DESCENSO.test(clave);
+}
+
+const DEL_DESCENSO =
+  /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
 
 /**
  * **La instructora contando la fase en la que se entra**: «estás en final,

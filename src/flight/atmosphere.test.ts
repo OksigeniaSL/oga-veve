@@ -7,7 +7,9 @@ import { describe, expect, it } from "vitest";
 import {
   SEA_LEVEL_DENSITY,
   airDensity,
+  alturaDePresion,
   indicatedAirspeed,
+  presionEstandar,
   velocidadDelSonido,
 } from "./atmosphere";
 
@@ -59,5 +61,20 @@ describe("la velocidad del sonido", () => {
     // es exactamente donde cruza un avión de línea. Si esta cuenta se tuerce,
     // el único decimal del juego dice una mentira.
     expect(230 / velocidadDelSonido(10000)).toBeCloseTo(0.77, 2);
+  });
+});
+
+describe("la presión de la estándar, que es la que mide la cabina", () => {
+  it("da los números de las tablas", () => {
+    // OACI, Doc 7488: 1013,25 hPa abajo, 752,6 a 2438 m (8000 ft) y 226,3 a
+    // once kilómetros.
+    expect(presionEstandar(0)).toBeCloseTo(101325, 0);
+    expect(presionEstandar(2438.4) / 100).toBeCloseTo(752.6, 0);
+    expect(presionEstandar(11000) / 100).toBeCloseTo(226.3, 0);
+  });
+
+  it("y la altura de una presión es la cuenta al revés, abajo y arriba", () => {
+    for (const h of [0, 700, 2438.4, 7600, 11000, 12500, 13700])
+      expect(alturaDePresion(presionEstandar(h))).toBeCloseTo(h, 3);
   });
 });

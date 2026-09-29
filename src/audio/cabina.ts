@@ -117,6 +117,13 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "traffic, traffic": "cabina.traffic",
   "autopilot disconnect": "cabina.autopilotDisconnect",
   minimums: "cabina.minimums",
+  /*
+   * **Y el aviso de altitud de cabina**, en el avión que lo dice con voz: la
+   * familia de Embraer dice «cabin» con la cabina por encima de diez mil pies.
+   * Ver `Presurizacion.avisoHablado` en `flight/aircraft.ts` y
+   * `flight/despresurizacion.ts`.
+   */
+  cabin: "cabina.cabin",
 };
 
 /**
@@ -181,10 +188,19 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   "cabina.autopilotDisconnect",
 ]);
 
+/**
+ * **El aviso de altitud de cabina**, que va aparte de los demás avisadores:
+ * no lo lleva todo avión con voz en sus avisos. Boeing lo da con una bocina y
+ * Embraer con voz, así que lo decide la presurización de cada tipo. Ver
+ * `Presurizacion.avisoHablado`.
+ */
+export const DE_LA_PRESURIZACION: ReadonlySet<string> = new Set(["cabina.cabin"]);
+
 /** Lo que hace falta saber de un avión para saber qué cantos lleva. */
 export interface EquipoDeCabina {
   readonly avisosHablados: boolean;
   readonly tcas: string | null;
+  readonly presurizacion?: { readonly avisoHablado: boolean } | null;
 }
 
 /**
@@ -194,7 +210,11 @@ export interface EquipoDeCabina {
  * `flight/escalera.ts`.
  */
 export function esDeUnaCaja(clave: string): boolean {
-  return DE_LOS_AVISADORES.has(clave) || clave === "cabina.traffic";
+  return (
+    DE_LOS_AVISADORES.has(clave) ||
+    DE_LA_PRESURIZACION.has(clave) ||
+    clave === "cabina.traffic"
+  );
 }
 
 /**
@@ -205,6 +225,7 @@ export function esDeUnaCaja(clave: string): boolean {
  */
 export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
   if (clave === "cabina.traffic") return avion.tcas !== null;
+  if (DE_LA_PRESURIZACION.has(clave)) return avion.presurizacion?.avisoHablado === true;
   if (DE_LOS_AVISADORES.has(clave)) return avion.avisosHablados;
   return true;
 }

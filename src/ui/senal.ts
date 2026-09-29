@@ -904,6 +904,51 @@ const CALOR = icono(`
 `);
 
 /**
+ * **La máscara de oxígeno**, colgando de su tubo: la copa, la goma y el tubo
+ * que sube al techo, que es como se ve cuando cae.
+ *
+ * Es el dibujo de la cabina sin aire, en la tarjeta y en la luz del panel.
+ * Una máscara que cae se reconoce sin haber leído nunca el cartel de
+ * seguridad, porque es el dibujo de ese cartel. Ver
+ * `flight/despresurizacion.ts`.
+ */
+const MASCARA = icono(`
+  <path d="M6.6 11.2 h10.8 l-1.7 7.2 a3.2 3.2 0 0 1 -3.1 2.5 h-1.2 a3.2 3.2 0 0 1 -3.1 -2.5 Z" />
+  <path d="M6.4 12.8 q-3.6 -0.6 -3.6 -4.2 M17.6 12.8 q3.6 -0.6 3.6 -4.2" fill="none"
+        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  <path d="M12 11 V6.2 q0 -3 3 -3.2 h4.6" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" />
+`);
+
+/**
+ * **El frío**: el termómetro casi vacío y un copo al lado.
+ *
+ * El mismo termómetro que el del calor, para que se lean como las dos caras
+ * de lo mismo, con la columna abajo del todo. Ver `flight/lecciones-del-aire.ts`.
+ */
+const FRIO = icono(`
+  <path d="M4.6 4.2 a2.2 2.2 0 0 1 4.4 0 V12.6 a3.9 3.9 0 1 1 -4.4 0 Z" />
+  <path class="senal__hueco" d="M6.1 3.4 h1.4 v9.4 h-1.4 Z" />
+  <path d="M17.2 5.4 v11.2 M12.4 8.2 l9.6 5.6 M12.4 13.8 l9.6 -5.6" fill="none"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+`);
+
+/**
+ * **Los aerofrenos**: el ala con el panel levantado encima.
+ *
+ * Es lo que se ve por la ventanilla de un reactor al abrirlos: una tabla que
+ * se pone de pie sobre el ala y frena el aire. El ala es la misma que la de
+ * los flaps, para que se lean como la misma pieza con otra cosa puesta.
+ */
+const AEROFRENOS = icono(`
+  <path d="M2.2 15.2 q6.4 -3.8 12.6 -3.1 l7 2.3 q-8.4 2 -19.6 0.8 Z" />
+  <path d="M10.4 12.2 L14.8 5.2" fill="none" stroke="currentColor"
+        stroke-width="2.8" stroke-linecap="round" />
+  <path d="M17 6.4 q2.4 0.6 3.2 2.8" fill="none" stroke="currentColor"
+        stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -934,6 +979,9 @@ export const DIBUJOS = {
   tormenta: TORMENTA,
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
+  frio: FRIO,
+  mascara: MASCARA,
+  aerofrenos: AEROFRENOS,
   freno: FRENO,
   combustible: COMBUSTIBLE,
   servicio: SERVICIO,

@@ -19,6 +19,7 @@ const nada: Estado = {
   frustrada: false,
   pilotoSuelto: false,
   frenoPuesto: false,
+  cabinaAlta: false,
 };
 
 describe("el panel de avisos", () => {
@@ -51,6 +52,7 @@ describe("el panel de avisos", () => {
       frustrada: true,
       pilotoSuelto: true,
       frenoPuesto: true,
+      cabinaAlta: true,
     });
     expect(todas.map((l) => l.id)).toEqual(LUCES.map((l) => l.id));
     // Y ningún aviso por detrás de una precaución.
@@ -101,6 +103,7 @@ describe("el panel de avisos", () => {
       frustrada: true,
       pilotoSuelto: true,
       frenoPuesto: true,
+      cabinaAlta: true,
     });
     expect(todas).toHaveLength(LUCES.length);
   });

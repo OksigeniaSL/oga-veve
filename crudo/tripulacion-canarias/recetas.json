@@ -32,5 +32,8 @@
   "tripulacion.canario.servicio": [
     "{producto}",
     "{largo?}"
+  ],
+  "tripulacion.canario.mascaras": [
+    "tripulacion.canario.mascaras"
   ]
 }

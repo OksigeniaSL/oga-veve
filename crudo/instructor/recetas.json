@@ -839,5 +839,38 @@
   ],
   "gafas.ganadas": [
     "gafas.ganadas"
+  ],
+  "vuelo.aire.frio": [
+    "vuelo.aire.frio"
+  ],
+  "vuelo.aire.crucero": [
+    "vuelo.aire.crucero"
+  ],
+  "vuelo.aire.cruceroConCifras": [
+    "vuelo.aire.cruceroConCifras"
+  ],
+  "vuelo.aire.bolsa": [
+    "vuelo.aire.bolsa"
+  ],
+  "vuelo.aire.oidos": [
+    "vuelo.aire.oidos"
+  ],
+  "vuelo.cabinaSinPresion": [
+    "vuelo.cabinaSinPresion"
+  ],
+  "vuelo.cabinaSinPresionConTren": [
+    "vuelo.cabinaSinPresionConTren"
+  ],
+  "vuelo.primeroLaTuya.segundos": [
+    "vuelo.primeroLaTuya.segundos"
+  ],
+  "vuelo.primeroLaTuya.minuto": [
+    "vuelo.primeroLaTuya.minuto"
+  ],
+  "vuelo.primeroLaTuya.minutos": [
+    "vuelo.primeroLaTuya.minutos"
+  ],
+  "vuelo.yaSeRespira": [
+    "vuelo.yaSeRespira"
   ]
 }

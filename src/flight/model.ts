@@ -113,6 +113,13 @@ export interface ControlInputs {
    * modelo. Sin poner, es que vuela una persona.
    */
   automatico?: boolean;
+  /**
+   * **Los aerofrenos**, de 0 cerrados a 1 abiertos del todo. Es la posición y
+   * no la palanca, como los flaps: los paneles tardan un momento en subir.
+   * Solo frenan en el avión que los lleva. Ver `aerofrenos` en la ficha y
+   * `alternarAerofrenos` en `flight/input.ts`. Sin poner, cerrados.
+   */
+  aerofrenos?: number;
 }
 
 export function neutralControls(): ControlInputs {
@@ -128,6 +135,7 @@ export function neutralControls(): ControlInputs {
     // que no lo meten. Ver `flight/tren.ts`.
     tren: 1,
     reversa: 0,
+    aerofrenos: 0,
     engineOn: true,
   };
 }

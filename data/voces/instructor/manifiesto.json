@@ -515,6 +515,26 @@
       "ms": 2759,
       "h": "715547ac60"
     },
+    "vuelo.aire.bolsa": {
+      "ms": 9707,
+      "h": "d2171bcbeb"
+    },
+    "vuelo.aire.crucero": {
+      "ms": 7307,
+      "h": "9f2b93c429"
+    },
+    "vuelo.aire.cruceroConCifras": {
+      "ms": 10707,
+      "h": "b05d227ee2"
+    },
+    "vuelo.aire.frio": {
+      "ms": 7307,
+      "h": "2332c0bdd4"
+    },
+    "vuelo.aire.oidos": {
+      "ms": 10507,
+      "h": "2cb6f43a90"
+    },
     "vuelo.alAireOtraPunta": {
       "ms": 2603,
       "h": "9473a8f7da"
@@ -618,6 +638,14 @@
     "vuelo.bulto": {
       "ms": 1792,
       "h": "5a7cd385f1"
+    },
+    "vuelo.cabinaSinPresion": {
+      "ms": 8407,
+      "h": "23737691cc"
+    },
+    "vuelo.cabinaSinPresionConTren": {
+      "ms": 7907,
+      "h": "aa3f909ded"
     },
     "vuelo.calor": {
       "ms": 3307,
@@ -875,6 +903,18 @@
       "ms": 3507,
       "h": "415786e66c"
     },
+    "vuelo.primeroLaTuya.minuto": {
+      "ms": 9807,
+      "h": "92ea3803f1"
+    },
+    "vuelo.primeroLaTuya.minutos": {
+      "ms": 10007,
+      "h": "23e5e0c528"
+    },
+    "vuelo.primeroLaTuya.segundos": {
+      "ms": 10907,
+      "h": "6d927695c4"
+    },
     "vuelo.puedeAterrizar": {
       "ms": 1223,
       "h": "22305fb12c"
@@ -1018,6 +1058,10 @@
     "vuelo.yaPodesTocar": {
       "ms": 933,
       "h": "b70da4915a"
+    },
+    "vuelo.yaSeRespira": {
+      "ms": 7107,
+      "h": "c8de708b29"
     }
   },
   "recetas": {
@@ -1861,6 +1905,39 @@
     ],
     "gafas.ganadas": [
       "gafas.ganadas"
+    ],
+    "vuelo.aire.frio": [
+      "vuelo.aire.frio"
+    ],
+    "vuelo.aire.crucero": [
+      "vuelo.aire.crucero"
+    ],
+    "vuelo.aire.cruceroConCifras": [
+      "vuelo.aire.cruceroConCifras"
+    ],
+    "vuelo.aire.bolsa": [
+      "vuelo.aire.bolsa"
+    ],
+    "vuelo.aire.oidos": [
+      "vuelo.aire.oidos"
+    ],
+    "vuelo.cabinaSinPresion": [
+      "vuelo.cabinaSinPresion"
+    ],
+    "vuelo.cabinaSinPresionConTren": [
+      "vuelo.cabinaSinPresionConTren"
+    ],
+    "vuelo.primeroLaTuya.segundos": [
+      "vuelo.primeroLaTuya.segundos"
+    ],
+    "vuelo.primeroLaTuya.minuto": [
+      "vuelo.primeroLaTuya.minuto"
+    ],
+    "vuelo.primeroLaTuya.minutos": [
+      "vuelo.primeroLaTuya.minutos"
+    ],
+    "vuelo.yaSeRespira": [
+      "vuelo.yaSeRespira"
     ]
   }
 }

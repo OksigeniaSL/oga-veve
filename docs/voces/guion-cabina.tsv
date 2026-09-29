@@ -17,20 +17,21 @@
 017	cabina.traffic	traffic, traffic
 018	cabina.autopilotDisconnect	autopilot disconnect
 019	cabina.minimums	minimums
-020	cabina.slowDown	slow down
-021	cabina.tooHighComeDown	too high, come down
-022	cabina.tooLowClimb	too low, climb
-023	cabina.obstacleAhead	obstacle ahead
-024	cabina.goAround	going around. good decision
-025	cabina.weHaveAProblem	we have a problem
-026	cabina.goAroundOrder	go around
-027	cabina.airspeedLow	airspeed low
-028	cabina.twentyFiveHundred	twenty five hundred
-029	cabina.oneThousand	one thousand
-030	cabina.fiveHundred	five hundred
-031	cabina.oneHundred	one hundred
-032	cabina.fifty	fifty
-033	cabina.forty	forty
-034	cabina.thirty	thirty
-035	cabina.twenty	twenty
-036	cabina.ten	ten
+020	cabina.cabin	cabin
+021	cabina.slowDown	slow down
+022	cabina.tooHighComeDown	too high, come down
+023	cabina.tooLowClimb	too low, climb
+024	cabina.obstacleAhead	obstacle ahead
+025	cabina.goAround	going around. good decision
+026	cabina.weHaveAProblem	we have a problem
+027	cabina.goAroundOrder	go around
+028	cabina.airspeedLow	airspeed low
+029	cabina.twentyFiveHundred	twenty five hundred
+030	cabina.oneThousand	one thousand
+031	cabina.fiveHundred	five hundred
+032	cabina.oneHundred	one hundred
+033	cabina.fifty	fifty
+034	cabina.forty	forty
+035	cabina.thirty	thirty
+036	cabina.twenty	twenty
+037	cabina.ten	ten

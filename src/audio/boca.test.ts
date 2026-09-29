@@ -859,6 +859,23 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
     expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
     expect(explicaLaOtraPunta("vuelo.alAireOtraPuntaX")).toBe(false);
   });
+
+  it("y el descenso de emergencia, que es un procedimiento, también", () => {
+    // Ver `esDelDescenso`: en Pettirossi el «ya se respira» caducaba esperando.
+    for (const clave of [
+      "vuelo.cabinaSinPresion",
+      "vuelo.cabinaSinPresionConTren",
+      "vuelo.primeroLaTuya.segundos",
+      "vuelo.yaSeRespira",
+      "comandante.descensoDeEmergencia",
+      "comandante.yaSeRespira",
+      "tripulacion.mascaras",
+      "tripulacion.canario.mascaras",
+    ])
+      expect(cuantoAguanta(clave), clave).toBe(CADUCA_LA_ORDEN);
+    // Y lo que el aire enseña por el camino, no: es un comentario.
+    expect(cuantoAguanta("vuelo.aire.bolsa")).toBe(CADUCA);
+  });
 });
 
 /**

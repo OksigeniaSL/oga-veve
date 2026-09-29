@@ -26,5 +26,8 @@
   "tripulacion.servicio": [
     "{producto}",
     "{largo?}"
+  ],
+  "tripulacion.mascaras": [
+    "tripulacion.mascaras"
   ]
 }

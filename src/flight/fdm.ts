@@ -734,6 +734,11 @@ export class CoefficientFlightModel implements FlightModel {
       // `resistenciaDeLosFlaps`.
       resistenciaDeLosFlaps(ac, assisted.flaps) +
       /*
+       * **Y los aerofrenos, en el avión que los lleva**: lo que suman abiertos
+       * del todo, por lo abiertos que estén. Ver `aerofrenos` en la ficha.
+       */
+      (ac.aerofrenos ?? 0) * Math.max(0, Math.min(1, controls.aerofrenos ?? 0)) +
+      /*
        * **Y el tren, que fuera frena.**
        *
        * Es la lección que hay detrás de medio oficio: una cosa que te hace

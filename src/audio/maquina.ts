@@ -53,6 +53,8 @@ import { DE_LA_CUENTA } from "./cabina";
 export const PRIORIDAD: Readonly<Record<string, number>> = {
   "cabina.stall": 90,
   "cabina.terrainPullUp": 80,
+  // La cabina sin aire, justo detrás del terreno: los dos son de ahora mismo.
+  "cabina.cabin": 75,
   "cabina.tooLow": 70,
   "cabina.minimums": 60,
   "cabina.sinkRate": 50,

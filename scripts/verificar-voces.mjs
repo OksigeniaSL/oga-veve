@@ -143,6 +143,30 @@ const REPARTO = [
   ["comandante", "comandante.turbulencia", "comandante"],
   ["instructor", "vuelo.baches", "instructor"],
   /*
+   * **Y la cabina sin aire, de punta a punta**: la caja, la instructora
+   * detrás, el porqué de la máscara, la megafonía de las dos tripulaciones y
+   * la comandante, y el final. Y lo que el aire enseña por el camino. Ver
+   * `flight/despresurizacion.ts` y `flight/lecciones-del-aire.ts`.
+   */
+  ["instructor", "cabina.cabin", "cabina"],
+  ["instructor", "vuelo.cabinaSinPresion", "instructor"],
+  ["instructor", "vuelo.cabinaSinPresionConTren", "instructor"],
+  ["instructor", "vuelo.primeroLaTuya.segundos", "instructor"],
+  ["instructor", "vuelo.primeroLaTuya.minuto", "instructor"],
+  ["instructor", "vuelo.primeroLaTuya.minutos", "instructor"],
+  ["instructor", "vuelo.yaSeRespira", "instructor"],
+  ["comandante", "comandante.descensoDeEmergencia", "comandante"],
+  ["comandante", "comandante.mascaras", "comandante"],
+  ["comandante", "comandante.alturaSegura", "comandante"],
+  ["comandante", "comandante.yaSeRespira", "comandante"],
+  ["tripulacion", "tripulacion.mascaras", "tripulacion"],
+  ["tripulacion", "tripulacion.canario.mascaras", "tripulacion-canarias"],
+  ["instructor", "vuelo.aire.frio", "instructor"],
+  ["instructor", "vuelo.aire.crucero", "instructor"],
+  ["instructor", "vuelo.aire.cruceroConCifras", "instructor"],
+  ["instructor", "vuelo.aire.bolsa", "instructor"],
+  ["instructor", "vuelo.aire.oidos", "instructor"],
+  /*
    * **Y la tripulación de cabina, cada una con su habla**: la de casa y la
    * de Canarias, que son otra persona. Y el servicio montado con lo de hoy y
    * el café de los vuelos largos.

@@ -7,6 +7,10 @@
       "ms": 9407,
       "h": "5ba2b508a9"
     },
+    "tripulacion.canario.mascaras": {
+      "ms": 16407,
+      "h": "9ddcb5ffec"
+    },
     "tripulacion.canario.servicio.banana": {
       "ms": 9307,
       "h": "33e5659ebf"
@@ -78,6 +82,9 @@
     "tripulacion.canario.servicio": [
       "{producto}",
       "{largo?}"
+    ],
+    "tripulacion.canario.mascaras": [
+      "tripulacion.canario.mascaras"
     ]
   }
 }

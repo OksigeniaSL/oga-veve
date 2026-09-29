@@ -3951,6 +3951,12 @@ button.motor__tecla::after {
   font-weight: 600;
 }
 
+/* Y la cabina por encima de diez mil pies, en rojo como en el EICAS de
+   verdad: ver flight/despresurizacion.ts. */
+.cr__aire--limite {
+  fill: var(--cabina-limite);
+}
+
 .cr__banda--blanco {
   fill: var(--cabina-valor);
 }

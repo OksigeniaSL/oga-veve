@@ -46,6 +46,14 @@ const DEADZONE = 0.12;
  */
 const RITMO_DEL_GAS = 0.6;
 
+/** Lo que tardan los aerofrenos en abrirse del todo, s. */
+const TARDAN_LOS_AEROFRENOS = 2;
+/**
+ * Por encima de este gas los aerofrenos se cierran solos. Ver `update`: la
+ * mitad del recorrido, como los cincuenta grados de palanca de Embraer.
+ */
+export const GAS_QUE_CIERRA_LOS_AEROFRENOS = 0.5;
+
 /**
  * Teclas por eje, declaradas por intención y no por posición.
  *
@@ -354,7 +362,11 @@ export class InputManager {
     trenRetractil: boolean,
     tardanLosFlaps: number = TARDAN_LOS_FLAPS,
     llevaFlaps = true,
+    /** Y si lleva aerofrenos. Ver `aerofrenos` en la ficha. */
+    llevaAerofrenos = false,
   ): void {
+    this.aerofrenosQueHay = llevaAerofrenos;
+    this.recogerAerofrenos();
     this.tardanLosFlaps = tardanLosFlaps;
     this.flapsQueSeMueven = llevaFlaps;
     if (!llevaFlaps) {
@@ -364,6 +376,38 @@ export class InputManager {
     this.trenQueSeMete = trenRetractil;
     if (!trenRetractil) this.ponerElTrenFuera();
   }
+
+  /**
+   * **Los aerofrenos: se abren o se cierran.** Devuelve si la orden se
+   * aceptó; en el avión que no los lleva no hay palanca que mover.
+   *
+   * Como el tren, se guarda la orden y los paneles tardan un momento en
+   * llegar: un par de segundos en subir del todo. Ver `update`.
+   */
+  alternarAerofrenos(): boolean {
+    if (!this.aerofrenosQueHay) return false;
+    this.aerofrenosPedidos = !this.aerofrenosPedidos;
+    return true;
+  }
+
+  /** Si este avión lleva aerofrenos. Lo mira el HUD. */
+  get hayAerofrenos(): boolean {
+    return this.aerofrenosQueHay;
+  }
+
+  /** Si se han pedido abiertos. */
+  get aerofrenosAbiertos(): boolean {
+    return this.aerofrenosPedidos;
+  }
+
+  /** Cerrados y con la palanca arriba, de golpe: un vuelo nuevo o otro avión. */
+  recogerAerofrenos(): void {
+    this.aerofrenosPedidos = false;
+    this.controls.aerofrenos = 0;
+  }
+
+  private aerofrenosPedidos = false;
+  private aerofrenosQueHay = false;
 
   /** Si este avión tiene palanca de tren. Lo miran el HUD y la cabina. */
   get hayPalancaDeTren(): boolean {
@@ -681,6 +725,22 @@ export class InputManager {
      * aprieta y no pasa nada, que es exactamente lo que le pasaría de verdad.
      */
     this.controls.reversa = this.held("reversa") ? 1 : 0;
+    /*
+     * **Los aerofrenos, a su paso, y cerrados si se mete gas.**
+     *
+     * Suben en un par de segundos, que es lo que tarda el hidráulico. Y se
+     * cierran solos con el gas por encima de la mitad, como en la familia de
+     * Embraer —solo se abren con las palancas por debajo de cincuenta grados—:
+     * volar con gas y frenando a la vez es quemar combustible para nada, y el
+     * avión no deja.
+     */
+    if (this.aerofrenosPedidos && this.controls.throttle > GAS_QUE_CIERRA_LOS_AEROFRENOS)
+      this.aerofrenosPedidos = false;
+    const aerofrenos = this.controls.aerofrenos ?? 0;
+    const meta = this.aerofrenosPedidos ? 1 : 0;
+    const paso = dt / TARDAN_LOS_AEROFRENOS;
+    this.controls.aerofrenos =
+      Math.abs(meta - aerofrenos) <= paso ? meta : aerofrenos + Math.sign(meta - aerofrenos) * paso;
     this.controls.brakes = approach(
       this.controls.brakes,
       braking ? 1 : 0,
@@ -838,6 +898,9 @@ export class InputManager {
         break;
       case "tren":
         this.alternarTren();
+        break;
+      case "aerofrenos":
+        this.alternarAerofrenos();
         break;
       /*
        * **Y las flechas de cabeceo, que ahora también tienen toque.** Se

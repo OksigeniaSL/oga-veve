@@ -59,6 +59,8 @@ export const ES_PY = {
   "luz.frustrada": "AL AIRE",
   "luz.piloto": "SIN PILOTO",
   "luz.freno": "FRENO",
+  // La cabina sin aire: ver `flight/despresurizacion.ts`.
+  "luz.cabina": "CABINA",
   "hud.altitude": "Altura",
   "hud.heading": "Rumbo",
   "hud.throttleDown": "Menos motor",
@@ -196,6 +198,7 @@ export const ES_PY = {
   "tecla.reversa": "Reversa",
   "tecla.flaps": "Flaps",
   "tecla.tren": "Tren",
+  "tecla.aerofrenos": "Aerofrenos",
   "tecla.camera": "Cambiar cámara",
   "tecla.assist": "Nivel de dificultad",
   "tecla.reset": "Volver a empezar",
@@ -528,6 +531,20 @@ export const ES_PY = {
    * de la instructora. Ver `EN_APROXIMACION`.
    */
   "comandante.aproximacion": "Tripulación, prepararse para el aterrizaje.",
+  /*
+   * **Y la cabina sin aire**, con la frase de los procedimientos de verdad: la
+   * comandante avisa a la tripulación de cabina —«atención, tripulación,
+   * descenso de emergencia»— para que se siente y se ponga la máscara, y al
+   * llegar abajo le dice que ya están a una altura segura. Al pasaje le habla
+   * al llegar; las máscaras las cuenta la tripulación, y en el avión que no la
+   * lleva, ella. Ver `flight/despresurizacion.ts`.
+   */
+  "comandante.descensoDeEmergencia": "Tripulación, descenso de emergencia.",
+  "comandante.alturaSegura": "Tripulación, ya estamos a una altura segura.",
+  "comandante.mascaras":
+    "Señores pasajeros, les habla la comandante. Pónganse la máscara de oxígeno sobre la nariz y la boca: primero la suya, y después ayuden a los demás. Vamos a bajar rápido a una altura donde se respira bien.",
+  "comandante.yaSeRespira":
+    "Señores pasajeros, les habla la comandante. Ya estamos a una altura donde se respira bien: pueden quitarse la máscara. Vamos al aeropuerto más cercano. Gracias por la calma.",
 
   /*
    * ── **La tripulación de cabina** ────────────────────────────────────────
@@ -582,6 +599,15 @@ export const ES_PY = {
     "Y como el viaje es largo, también tenemos café y té.",
   "tripulacion.canario.cinturones":
     "Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.",
+  /*
+   * **Las máscaras**, que caen solas: lo que dice cualquier tripulación, con
+   * «primero la suya» dentro. Al pasaje, de usted. En Canarias, «mascarilla»,
+   * que es como se llama allí.
+   */
+  "tripulacion.mascaras":
+    "Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.",
+  "tripulacion.canario.mascaras":
+    "Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.",
   // Y lo que pone la tarjeta del servicio debajo de la botella, desde el
   // peldaño que lee. En Guyrami va solo el dibujo.
   "servicio.rotulo": "Servicio a bordo",
@@ -1399,6 +1425,45 @@ export const ES_PY = {
   "vuelo.planeoLento": "Vamos lentos: bajá un poco la nariz",
   "vuelo.planeoRapido":
     "Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos",
+  /*
+   * **Lo que el aire enseña por el camino** (#89), en el momento en que se ve y
+   * una vez: el frío al pasar por cero grados, el aire fino al llegar al
+   * crucero, y en los presurizados la cabina que sube y baja. Cortas, con
+   * gracia y sin sermón. Ver `flight/lecciones-del-aire.ts`.
+   */
+  "vuelo.aire.frio":
+    "Afuera ya hace cero grados. Cada mil metros que subimos, unos seis grados y medio menos: allá arriba hace como cincuenta bajo cero.",
+  "palabra.frio": "Frío",
+  "vuelo.aire.crucero":
+    "Ya estamos en crucero. Acá arriba el aire es finito: el avión frena menos y gasta menos combustible. Por eso los aviones vuelan tan alto.",
+  "vuelo.aire.cruceroConCifras":
+    "Mirá la velocidad: el reloj marca menos de lo que vamos de verdad, porque acá arriba el aire es finito. Y con menos aire se frena menos y se gasta menos: por eso los aviones vuelan tan alto.",
+  "vuelo.aire.bolsa":
+    "La cabina también sube, pero despacito: ahora va como a mil quinientos metros, aunque el avión esté mucho más alto. Por eso una bolsa de papitas cerrada abajo, acá arriba se infla.",
+  "vuelo.aire.oidos":
+    "Empezamos a bajar, y la cabina también baja. Si se te tapan los oídos, tragá saliva o bostezá, que se destapan. Y una botella cerrada allá arriba, abajo llega aplastada.",
+  /*
+   * **La cabina sin aire, y el descenso de emergencia**, como procedimiento y
+   * sin drama: qué pasó, qué se hace y por qué la máscara primero, con el
+   * número de la tabla. Ver `flight/despresurizacion.ts`.
+   */
+  "vuelo.cabinaSinPresion":
+    "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.",
+  "vuelo.cabinaSinPresionConTren":
+    "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.",
+  "palabra.mascara": "Máscara",
+  "palabra.descensoDeEmergencia": "Descenso de emergencia",
+  "vuelo.primeroLaTuya.segundos":
+    "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.",
+  "vuelo.primeroLaTuya.minuto":
+    "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.",
+  "vuelo.primeroLaTuya.minutos":
+    "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.",
+  "vuelo.yaSeRespira":
+    "Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con calma. Así lo practican los pilotos de verdad.",
+  "palabra.yaSeRespira": "Ya se respira",
+  // El nombre del ejercicio, para el selector de ejercicios.
+  "ejercicio.despresurizacion": "Despresurización",
   /*
    * La otra cabecera: primero la pista en uso, con el porqué, y si se sigue,
    * la orden. Ver `flight/la-otra-cabecera.ts`.

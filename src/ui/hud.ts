@@ -495,8 +495,9 @@ export class Hud {
   /** El botón del tren y el de los flaps, que solo existen desde fuera. */
   private trenTouch!: HTMLElement;
   private flapsTouch!: HTMLElement;
+  private aerofrenosTouch!: HTMLElement;
   /** A quién se le cuenta que se han pulsado. Ver `onMandoDeCabina`. */
-  private alTocarMando: ((cual: "tren" | "flaps") => void) | null = null;
+  private alTocarMando: ((cual: "tren" | "flaps" | "aerofrenos") => void) | null = null;
 
   /**
    * Si este avión tiene tren que meter.
@@ -513,6 +514,11 @@ export class Hud {
   /** Y si lleva flaps, por lo mismo. Ver `llevaFlaps` en `aircraft.ts`. */
   private get hayFlaps(): boolean {
     return this.ficha.llevaFlaps;
+  }
+
+  /** Y aerofrenos, que solo los llevan los reactores. Ver `aerofrenos`. */
+  private get hayAerofrenos(): boolean {
+    return this.ficha.aerofrenos !== null;
   }
 
   private brakeHandler: ((pressed: boolean) => void) | null = null;
@@ -1368,6 +1374,13 @@ export class Hud {
                 aria-label="${t("tecla.tren")}">${DIBUJOS.tren}</button>
         <button class="mando mando--flaps" type="button" data-hud="flaps-touch" hidden
                 aria-label="${t("tecla.flaps")}">${DIBUJOS.flaps}</button>
+        <!--
+          Y los aerofrenos, en los reactores y en el aire: con el mismo dibujo
+          que la tarjeta que los pide en el descenso de emergencia. Ver
+          flight/despresurizacion.ts.
+        -->
+        <button class="mando mando--aerofrenos" type="button" data-hud="aerofrenos-touch" hidden
+                aria-label="${t("tecla.aerofrenos")}">${DIBUJOS.aerofrenos}</button>
         ${
           numbers
             ? `<div class="tarjeta horizonte">
@@ -1657,9 +1670,11 @@ export class Hud {
      */
     this.trenTouch = pick(this.root, "tren-touch");
     this.flapsTouch = pick(this.root, "flaps-touch");
+    this.aerofrenosTouch = pick(this.root, "aerofrenos-touch");
     for (const [boton, cual] of [
       [this.trenTouch, "tren"],
       [this.flapsTouch, "flaps"],
+      [this.aerofrenosTouch, "aerofrenos"],
     ] as const) {
       boton.addEventListener("click", () => this.alTocarMando?.(cual));
     }
@@ -2313,6 +2328,13 @@ export class Hud {
       readonly aire?: Aire;
       /** La ventanilla ALT del automático. Ver `DatosDelTablero.ventanilla`. */
       readonly ventanilla?: DatosDelTablero["ventanilla"];
+      /** La altitud de cabina, m. Ver `DatosDelTablero.cabina`. */
+      readonly cabina?: number;
+      /**
+       * Los aerofrenos: dónde están, de 0 a 1, y si se han pedido. Ver
+       * `alternarAerofrenos` en `flight/input.ts`.
+       */
+      readonly aerofrenos?: { readonly donde: number; readonly pedidos: boolean };
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2606,6 +2628,20 @@ export class Hud {
     this.trenTouch.hidden = !this.hayTren;
     this.flapsTouch.hidden = !this.hayFlaps;
     /*
+     * **Y el de los aerofrenos, solo en el aire y solo donde los hay.** En el
+     * suelo no frenan nada que no frene ya el freno, y así en el teléfono
+     * siguen cabiendo tres botones en fila: en tierra el freno, en el aire
+     * este. Encendido, abiertos; parpadeando, subiendo o bajando: los mismos
+     * estados que el tren y los flaps.
+     */
+    this.aerofrenosTouch.hidden = !this.hayAerofrenos || state.onGround;
+    const aerofrenos = mandos?.aerofrenos;
+    const abiertos = (aerofrenos?.donde ?? 0) > 0.98;
+    const moviendose =
+      !!aerofrenos && !abiertos && (aerofrenos.pedidos || aerofrenos.donde > 0.02);
+    this.aerofrenosTouch.classList.toggle("mando--fuera", abiertos);
+    this.aerofrenosTouch.classList.toggle("mando--moviendose", moviendose);
+    /*
      * Y los tres estados del tren, que son la pregunta que se hizo jugando:
      * «¿en qué parte del panel veo que se está poniendo o quitando?». Dentro,
      * apagado; moviéndose, en ámbar; fuera y trabado, en verde. Los mismos
@@ -2663,6 +2699,7 @@ export class Hud {
               velocidadDelSonido(state.position.y, mandos?.aire)
             : null,
           aire: mandos?.aire,
+          cabina: mandos?.cabina,
           motores: Array.from({ length: this.ficha.motores }, () =>
             regimen(this.ficha, throttle, engineOn),
           ),
@@ -3486,7 +3523,7 @@ export class Hud {
     window.setTimeout(() => b.classList.remove("mando--trabado"), 600);
   }
 
-  onMandoDeCabina(handler: (cual: "tren" | "flaps") => void): void {
+  onMandoDeCabina(handler: (cual: "tren" | "flaps" | "aerofrenos") => void): void {
     this.alTocarMando = handler;
   }
 

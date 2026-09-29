@@ -19,6 +19,10 @@
       "ms": 670,
       "h": "72a619fff5"
     },
+    "cabina.cabin": {
+      "ms": 780,
+      "h": "c04fd0079d"
+    },
     "cabina.fifty": {
       "ms": 657,
       "h": "63d5319beb"
@@ -161,6 +165,9 @@
     "cabina.bankAngle": [
       "cabina.bankAngle"
     ],
+    "cabina.cabin": [
+      "cabina.cabin"
+    ],
     "cabina.fifty": [
       "cabina.fifty"
     ],
@@ -196,6 +203,9 @@
     ],
     "cabina.oneHundred": [
       "cabina.oneHundred"
+    ],
+    "cabina.oneThousand": [
+      "cabina.oneThousand"
     ],
     "cabina.positiveRate": [
       "cabina.positiveRate"
@@ -239,6 +249,9 @@
     "cabina.twenty": [
       "cabina.twenty"
     ],
+    "cabina.twentyFiveHundred": [
+      "cabina.twentyFiveHundred"
+    ],
     "cabina.twoHundred": [
       "cabina.twoHundred"
     ],
@@ -250,12 +263,6 @@
     ],
     "cabina.weHaveAProblem": [
       "cabina.weHaveAProblem"
-    ],
-    "cabina.oneThousand": [
-      "cabina.oneThousand"
-    ],
-    "cabina.twentyFiveHundred": [
-      "cabina.twentyFiveHundred"
     ]
   }
 }

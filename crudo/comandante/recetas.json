@@ -893,5 +893,17 @@
   ],
   "comandante.bachesEnTodos": [
     "comandante.bachesEnTodos"
+  ],
+  "comandante.descensoDeEmergencia": [
+    "comandante.descensoDeEmergencia"
+  ],
+  "comandante.alturaSegura": [
+    "comandante.alturaSegura"
+  ],
+  "comandante.mascaras": [
+    "comandante.mascaras"
+  ],
+  "comandante.yaSeRespira": [
+    "comandante.yaSeRespira"
   ]
 }
