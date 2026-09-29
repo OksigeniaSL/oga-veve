@@ -472,6 +472,30 @@ export function alturaDelCircuito(escala = 1): number {
   );
 }
 
+/** Lo que se vuela de más en la base sobre la Vref, m/s: quince nudos. */
+const EXTRA_EN_LA_BASE = 15 * 0.514444;
+
+/**
+ * Cuánto se aparta el viento en cola del eje, m.
+ *
+ * **Lo que dice la escala, pero nunca menos de lo que piden los dos virajes.**
+ * La escala crece con la velocidad de aproximación y el radio de viraje con su
+ * cuadrado, así que en un reactor la cuenta lineal se quedaba corta: con el JAZ
+ * 90 salían dos kilómetros y pico de separación y los dos virajes de la base,
+ * a veinticinco grados y a la velocidad de base, se comían casi tres. El avión
+ * llegaba a los quinientos pies todavía alineándose, que es justo lo que no es
+ * una final estabilizada. Lo midió el piloto del banco en el circuito de Los
+ * Rodeos. Un reactor de verdad vuela el circuito más abierto que una avioneta
+ * por eso mismo.
+ *
+ * Dos radios y un diez por ciento para un trozo de base recta. En las
+ * avionetas manda la escala y su circuito no se mueve.
+ */
+export function separacionDelCircuito(escala = 1): number {
+  const base = APROXIMACION_DEL_ENTRENADOR * escala + EXTRA_EN_LA_BASE;
+  return Math.max(SEPARACION * escala, 2.2 * radioDeViraje(base));
+}
+
 export function verticesDelCircuito(
   runway: Pista,
   cotaDePista: number,
@@ -498,7 +522,7 @@ export function verticesDelCircuito(
   });
 
   const recto = RECTO_TRAS_LA_PISTA * escala;
-  const separacion = SEPARACION * escala;
+  const separacion = separacionDelCircuito(escala);
   const entrada = BASE_A_FINAL * escala;
   const circuito = altura;
   /*

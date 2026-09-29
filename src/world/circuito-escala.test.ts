@@ -15,7 +15,7 @@
 
 import { describe, it, expect } from "vitest";
 import { aircraftById } from "../flight/aircraft";
-import { escalaDeCircuito, verticesDelCircuito } from "./circuito";
+import { escalaDeCircuito, radioDeViraje, verticesDelCircuito } from "./circuito";
 
 const PISTA = { x: 0, z: 0, heading: 0, width: 45, length: 2200 };
 const vertices = (aproximacion: number) =>
@@ -54,10 +54,20 @@ describe("la escala del circuito", () => {
      * se estira. Lo que tiene que crecer es la **figura**.
      */
     const separacion = (v: ReturnType<typeof vertices>) => Math.abs(v[2]!.x);
-    expect(separacion(vertices(98)) / separacion(vertices(33))).toBeCloseTo(
-      98 / 33,
-      2,
+    /*
+     * **Al menos en proporción, y más si los virajes lo piden.** El radio va
+     * con el cuadrado de la velocidad, así que en un reactor la proporción se
+     * queda corta: la base tiene que dejar sitio para los dos virajes a la
+     * velocidad de base. Ver `separacionDelCircuito`.
+     */
+    expect(separacion(vertices(98)) / separacion(vertices(33))).toBeGreaterThanOrEqual(
+      98 / 33 - 0.01,
     );
+    expect(separacion(vertices(72))).toBeGreaterThanOrEqual(
+      2 * radioDeViraje(72 + 15 * 0.514444),
+    );
+    // Y el de la avioneta no se mueve: ahí manda la escala.
+    expect(separacion(vertices(33))).toBeCloseTo(1000, 0);
     // Y el circuito entero es más largo, con la pista dentro y todo.
     expect(largo(vertices(98))).toBeGreaterThan(largo(vertices(33)) * 2);
   });
