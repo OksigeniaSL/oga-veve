@@ -117,6 +117,13 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "traffic, traffic": "cabina.traffic",
   "autopilot disconnect": "cabina.autopilotDisconnect",
   minimums: "cabina.minimums",
+  /*
+   * **Y los dos de un motor que falla en el despegue** —*engine failure* y,
+   * antes de V1, *stop*— entran aquí con su toma: esta tabla no apunta a
+   * grabaciones que no existen. Están pedidos en `frases-para-grabar.mjs`
+   * (`cabina.engineFailure` y `cabina.stop`) y, hasta tenerlos, los dice la
+   * voz del navegador. Ver `fallaElMotor` en `game.ts`.
+   */
 };
 
 /**

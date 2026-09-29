@@ -171,6 +171,28 @@ Estás cayendo muy rápido
 Vas muy rápido
 Estás torcido
 Estás fuera del eje
+Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista
+Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar
+Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar
+Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos
+Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses
+Falló un motor antes de V1: gas atrás y frenos, paramos
+Falló un motor, y ya pasamos V1: seguimos volando
+Se paró un motor. El avión sigue volando con el otro
+Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho
+Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo
+Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube
+Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos
+La hélice del motor parado ya se puso sola en bandera. Le corto el combustible
+Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado
+Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad
+¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal
+Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal
+Ejercicio hecho: volaste el procedimiento como en un simulador de verdad
+Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar
+Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos
+Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos
+El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez
 Ver el río
 Seguir el río
 Salir al mar

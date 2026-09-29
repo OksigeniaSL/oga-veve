@@ -143,6 +143,11 @@ export type Cue =
    * viene después es volar.
    */
   | "mision"
+  /**
+   * La campanada de precaución de una cabina de pantallas: un motor parado.
+   * Solo en los aviones que la llevan. Ver `Game.fallaUnMotor`.
+   */
+  | "precaucion"
   /*
    * ## Y los cuatro de la concha, que son de otra naturaleza
    *
@@ -289,6 +294,14 @@ export const MOTIVOS: Record<Cue, Motivo> = {
     manda: true,
   },
   mision: { notas: [523.25, 659.25, 880], paso: 0.14, dura: 0.35 },
+  /*
+   * **La campanada de precaución**: una nota sola, que es lo que suena en
+   * una cabina de pantallas cuando algo pide atención sin prisa —un motor
+   * parado es eso—. No son las tres rápidas de la pérdida ni la escalera del
+   * peligro: una, y larga, y el mensaje escrito al lado. La máquina avisa y
+   * no se repite; lo demás lo cuenta quien va sentado al lado.
+   */
+  precaucion: { notas: [987.77], paso: 0.1, dura: 0.7, manda: true },
 
   // ── La concha ────────────────────────────────────────────────────────
   abrir: {
@@ -587,6 +600,15 @@ export class Audio {
      * tipo. Ver `world/superficie.ts`.
      */
     traqueteo = 1,
+    /**
+     * **Qué parte de los motores está en marcha**, de 0 a 1.
+     *
+     * Con uno parado en un bimotor, el que queda suena igual —mismas vueltas,
+     * mismo gas— y el parado no suena: se oye la mitad de motor. Es la primera
+     * pista de qué ha pasado, antes que cualquier aguja, y en un bimotor de
+     * pistón es casi la única. Ver `flight/motores.ts`.
+     */
+    enMarcha = 1,
   ): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running") return;
@@ -674,13 +696,16 @@ export class Audio {
      * despacio por sí solos, así que no pierden nada, y el gas gana lo que
      * llevaba perdido.
      */
+    // La parte que suena: con uno de dos parado, la mitad. Ver `enMarcha`.
+    const parte = clamp(enMarcha, 0, 1);
     this.engineGain?.gain.setTargetAtTime(
-      (controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03 + carga * 0.02,
+      ((controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03 + carga * 0.02) *
+        parte,
       now,
       0.1,
     );
     this.propGain?.gain.setTargetAtTime(
-      (controls.engineOn ? 0.03 : 0) + gas * 0.075,
+      ((controls.engineOn ? 0.03 : 0) + gas * 0.075) * parte,
       now,
       1.4,
     );

@@ -1624,6 +1624,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Si se vuela sin motor. Ver `flight/sin-motor.ts`. */
     sinMotor: () => juego.sinMotorParaBanco,
     /**
+     * El ejercicio de emergencia en marcha: qué falla, cómo va y cómo acabó,
+     * con los motores uno a uno. Ver `flight/practica.ts`.
+     */
+    ejercicio: () => juego.ejercicioParaBanco,
+    /**
      * El planeo de este avión —velocidad indicada, m/s, y fineza— con las dos
      * que el piloto del banco necesita para posarse: la de aproximación y el
      * tope de los flaps.

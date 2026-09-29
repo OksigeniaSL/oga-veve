@@ -169,6 +169,14 @@ export interface AhoraMismo {
    * `flight/sin-motor.ts`.
    */
   readonly sinMotor?: boolean;
+  /**
+   * **Si hay una emergencia declarada** con motor todavía: un motor parado en
+   * un bimotor. La torre da prioridad —ni sorteo de frustrada ni pista
+   * ocupada: al otro se le aparta—, pero los mínimos siguen mandando, porque
+   * con un motor se puede ir al aire y a veces hay que hacerlo. Ver
+   * `flight/practica.ts`.
+   */
+  readonly conPrioridad?: boolean;
 }
 
 export class LaAproximacion {
@@ -375,7 +383,7 @@ export class LaAproximacion {
      * **Sin motor, ninguna orden, y la que hubiera se retira.** Ver
      * `AhoraMismo.sinMotor`.
      */
-    if (this.ahora.sinMotor) {
+    if (this.ahora.sinMotor || this.ahora.conPrioridad) {
       if (this.mandanFrustrar) this.levantarLaOrden();
       return;
     }
@@ -518,8 +526,10 @@ export class LaAproximacion {
    * un motivo, y aquí el motivo está en la pista, se ve y se oyó.
    */
   mandarIrsePorLaPistaOcupada(alto: number, sigueOcupada: () => boolean): void {
-    // Sin motor la pista es de quien no puede irse: se aparta el otro.
-    if (this.mandanFrustrar || this.ahora?.sinMotor) return;
+    // Sin motor la pista es de quien no puede irse: se aparta el otro. Y con
+    // una emergencia declarada, lo mismo: tiene prioridad.
+    if (this.mandanFrustrar || this.ahora?.sinMotor || this.ahora?.conPrioridad)
+      return;
     this.laPistaSigueOcupada = sigueOcupada;
     this.yaLoMandaron = true;
     this.mandanFrustrar = true;

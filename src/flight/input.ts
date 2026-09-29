@@ -390,6 +390,18 @@ export class InputManager {
   }
 
   /**
+   * **Y el tren dentro, de golpe**: un vuelo que empieza en el aire y limpio,
+   * como el ejercicio que se coloca lejos y alto antes de parar un motor. Igual
+   * que `ponerElTrenFuera`, no es un mando: es cómo está el avión al empezar.
+   * Solo en los que lo meten; en los demás, el tren está donde está siempre.
+   */
+  ponerElTrenDentro(): void {
+    if (!this.trenQueSeMete) return;
+    this.trenPedido = false;
+    this.controls.tren = 0;
+  }
+
+  /**
    * Y un toque de freno desde la cabina.
    *
    * Medio segundo, que es lo que dura pisar y soltar: el mando de la cabina es

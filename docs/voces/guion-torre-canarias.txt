@@ -84,6 +84,7 @@ climb to
 runway in use
 go around
 roger, Mayday
+roger, Pan Pan
 free
 occupied
 no reported traffic

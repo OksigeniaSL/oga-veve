@@ -17,6 +17,7 @@ import {
   recordarLeccion,
   type Leccion,
 } from "./flight/lecciones";
+import { ejercicioPorId, type Ejercicio } from "./flight/ejercicios";
 import { conRelieve } from "./world/relieve";
 import { cargarOrtofoto } from "./world/ortofoto";
 import { mundoElegido } from "./ui/mundo";
@@ -200,6 +201,15 @@ const misionPedida = params.get("mision");
 if (misionPedida) {
   mision = MISSIONS.find((m) => m.id === misionPedida) ?? null;
 }
+/*
+ * **El ejercicio de emergencia, si se eligió uno.** Como la misión, no se
+ * recuerda de una partida a otra: una emergencia se elige cada vez —«hoy
+ * practicamos motor parado»—, y encontrársela puesta al volver sería justo la
+ * sorpresa que el marco no admite. `?ejercicio=despues-de-v1` lo pone sin
+ * pasar por el hangar, para los bancos. Ver `flight/ejercicios.ts`.
+ */
+let ejercicio: Ejercicio | null = ejercicioPorId(params.get("ejercicio"));
+if (ejercicio) leccion = leccionPorId(ejercicio.leccion);
 /**
  * Con qué avión se vuela, y se recuerda entre partidas.
  *
@@ -293,6 +303,7 @@ if (!escenario) {
   tramo = elegido.tier;
   leccion = elegido.leccion;
   mision = elegido.mision;
+  ejercicio = elegido.ejercicio;
   avion = elegido.aircraft;
   // Y se recuerda en el propio hangar, al tocarlo: guardar aquí también lo
   // propuesto lo congelaría como si alguien lo hubiera elegido.
@@ -301,6 +312,14 @@ if (!escenario) {
   ponerTexto("aeronave", avion.id);
   recordarLeccion(leccion);
 }
+
+/*
+ * **Y un ejercicio se practica en casa**: la vuelta al campo, sin destino que
+ * cargar ni ruta que seguir. Sin esto, con `?ejercicio=` y sin `?destino=`, el
+ * juego proponía el vecino más cercano y el motor parado llegaba camino de
+ * otra isla.
+ */
+if (ejercicio && escenario) destino = escenario.id;
 
 /*
  * **Y que el avión quepa en el campo, se haya pasado por el hangar o no.**
@@ -497,6 +516,7 @@ const game = new Game({
   scenario: escenario,
   leccion,
   mision,
+  ejercicio,
   aircraft: avion,
   ortofoto,
   ortofotoFina,

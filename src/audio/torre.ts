@@ -81,6 +81,13 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    */
   "roger MAYDAY": "torre.mayday",
   /*
+   * **Y la de una urgencia**, «roger PAN PAN» —el cuatrimotor que pierde un
+   * motor: le quedan tres, algo va mal y hay tiempo—, entra aquí como
+   * `torre.panpan` con su toma, que está pedida en `frases-para-grabar.mjs`.
+   * Hasta entonces la respuesta se lee en la tira de la radio. Ver
+   * `declararLaEmergencia` en `game.ts`.
+   */
+  /*
    * Y a quien se pasó la salida: abandone por la próxima disponible. Ver
    * `decirSalPorLaSiguiente` en `game.ts`.
    */

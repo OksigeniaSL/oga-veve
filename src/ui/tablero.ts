@@ -24,7 +24,7 @@
  * y ese parecido es el hallazgo que se lleva quien aprende aquí.
  */
 
-import type { AircraftConfig } from "../flight/aircraft";
+import { esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import type { FlightState } from "../flight/model";
 import { SixPack } from "./six-pack";
 import {
@@ -231,7 +231,17 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   piloto: "piloto-fuera",
   freno: "freno",
   combustible: "combustible",
+  motor: "motor-parado",
 };
+
+/**
+ * El dibujo de una luz en este avión: el motor dormido de un reactor es su
+ * fan quieto, no una hélice. Ver `REACTOR_PARADO` en `senal.ts`.
+ */
+function dibujoDeLuz(id: string, chorro: boolean): DibujoDeSenal {
+  const dibujo = DIBUJO_DE_LUZ[id] ?? "fuera";
+  return chorro && dibujo === "motor-parado" ? "reactor-parado" : dibujo;
+}
 
 /**
  * **La placa de la matrícula**, atornillada al cuadro como en los aviones de
@@ -398,7 +408,7 @@ export class Tablero {
       <rect y="${VISERA}" width="${ANCHO_DEL_CUADRO}" height="24" class="tablero__sombra" />
       <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
-      ${this.panelDeAvisos()}
+      ${this.panelDeAvisos(esDeChorro(a))}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
       ${placaDeMatricula(matriculaDe(a.id).matricula)}
@@ -434,7 +444,7 @@ export class Tablero {
    * la tarjeta grande, y que sean los mismos es media lección — quien
    * aprendió el dibujo en la tarjeta lo reconoce en la luz.
    */
-  private panelDeAvisos(): string {
+  private panelDeAvisos(chorro = false): string {
     const ancho = ANCHO_DE_LUZ;
     const alto = ALTO_DE_LUZ;
     return LUCES.map((l) => {
@@ -464,8 +474,8 @@ export class Tablero {
             medio, porque es lo único que hay; desde el segundo se corre a la
             izquierda y le deja el sitio a la palabra.
           -->
-          <g data-hasta="1">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", ancho / 2 - 7, 3, 14)}</g>
-          <g data-desde="2">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", 3, 3, 14)}</g>
+          <g data-hasta="1">${dibujoEn(dibujoDeLuz(l.id, chorro), ancho / 2 - 7, 3, 14)}</g>
+          <g data-desde="2">${dibujoEn(dibujoDeLuz(l.id, chorro), 3, 3, 14)}</g>
           <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="4"
                 class="aviso-luz__palabra" text-anchor="middle">${l.cabina}</text>
           <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="2" data-hasta="3"

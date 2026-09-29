@@ -59,6 +59,7 @@ export const ES_PY = {
   "luz.frustrada": "AL AIRE",
   "luz.piloto": "SIN PILOTO",
   "luz.freno": "FRENO",
+  "luz.motor": "MOTOR",
   "hud.altitude": "Altura",
   "hud.heading": "Rumbo",
   "hud.throttleDown": "Menos motor",
@@ -1541,6 +1542,84 @@ export const ES_PY = {
   "leccion.rodaje": "Rodar",
   "leccion.despegue": "Despegar",
   "leccion.aterrizaje": "Aterrizar",
+
+  /*
+   * ── **Practicar emergencias** ───────────────────────────────────────────
+   *
+   * Son procedimientos, no espectáculo: lo que hace un piloto de línea cada
+   * seis meses en un simulador. Se eligen en el hangar y la instructora los
+   * presenta antes con calma —qué va a pasar y qué se hace—, y los comenta
+   * después. Nadie se hace daño: si sale mal, sale mal el ejercicio y se
+   * repite. Ver `flight/ejercicios.ts` y el ADR 0014.
+   *
+   * Todo en plural, como `vuelo.sinMotor`: son cosas que se hacen juntos.
+   */
+  "hangar.emergencias": "Practicar emergencias",
+  "hangar.ejercicio.planeo": "Planear sin motor",
+  "hangar.ejercicio.antes-de-v1": "Motor antes de V1",
+  "hangar.ejercicio.despues-de-v1": "Motor después de V1",
+  "hangar.ejercicio.un-motor": "Volar con un motor",
+  "hangar.ejercicio.simulador": "Sesión de simulador",
+  "ejercicio.planeo.antes":
+    "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
+  "ejercicio.antes-de-v1.antes":
+    "Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar",
+  "ejercicio.despues-de-v1.antes":
+    "Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar",
+  "ejercicio.un-motor.antes":
+    "Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos",
+  "ejercicio.simulador.antes":
+    "Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses",
+  "palabra.practica": "Práctica",
+  // Antes de V1: se para. La palabra corta es la de siempre, «¡Frená!».
+  "ejercicio.paramos": "Falló un motor antes de V1: gas atrás y frenos, paramos",
+  "ejercicio.seguimos": "Falló un motor, y ya pasamos V1: seguimos volando",
+  "ejercicio.enVuelo": "Se paró un motor. El avión sigue volando con el otro",
+  /*
+   * **El pie del lado del motor bueno.** El avión tira hacia el parado, y se
+   * sujeta pisando el otro pedal: «pie muerto, motor muerto», dicen los
+   * manuales en inglés, porque el pie que no hace nada está del lado del
+   * motor que no va.
+   */
+  "ejercicio.pieDerecho":
+    "Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho",
+  "ejercicio.pieIzquierdo":
+    "Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo",
+  "palabra.pieDerecho": "Pie derecho",
+  "palabra.pieIzquierdo": "Pie izquierdo",
+  "ejercicio.velocidad":
+    "Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube",
+  /*
+   * **Y lo que hace la compañera con el motor parado**, según el avión: en el
+   * bimotor de pistón la hélice se pone en bandera a mano y enseguida, que
+   * con ella en molinete no sube; en el turbohélice ya se puso sola; en el
+   * reactor no hay bandera y se le corta el combustible a los cuatrocientos
+   * pies.
+   */
+  "ejercicio.bandera":
+    "Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos",
+  "ejercicio.banderaSola":
+    "La hélice del motor parado ya se puso sola en bandera. Le corto el combustible",
+  "ejercicio.cortar":
+    "Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado",
+  "ejercicio.declarar":
+    "Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad",
+  "ejercicio.bomberos":
+    "¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal",
+  "ejercicio.bomberosFrenos":
+    "Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal",
+  // Y el cierre, que nunca es un reproche.
+  "ejercicio.bien":
+    "Ejercicio hecho: volaste el procedimiento como en un simulador de verdad",
+  "ejercicio.bienParado":
+    "Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar",
+  "ejercicio.paradoTrasV1":
+    "Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos",
+  "ejercicio.seguidoAntesDeV1":
+    "Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos",
+  "ejercicio.otraVez":
+    "El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez",
+  "palabra.otraVez": "Otra vez",
 
   /*
    * Los galones. Solo los ve quien usa lector de pantalla: en la pantalla un

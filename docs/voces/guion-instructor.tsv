@@ -171,83 +171,105 @@
 171	motivo.rapido	Vas muy rápido
 172	motivo.torcido	Estás torcido
 173	motivo.descolocado	Estás fuera del eje
-174	mission.rio.name	Ver el río
-175	mission.rioabajo.name	Seguir el río
-176	mission.mar.name	Salir al mar
-177	mission.anaga.name	A Anaga
-178	mission.cumbre.name	A la cumbre
-179	mission.lomas.name	A las lomas
-180	mission.first.name	Tu primer vuelo
-181	mission.valley.name	La vuelta al valle
-182	mission.transfer.name	El traslado
-183	mission.step	¡Bien! Seguí
-184	mission.done	¡Misión cumplida!
-185	mission.none	Vuelo libre
-186	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-187	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-188	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-189	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
-190	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
-191	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
-192	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
-193	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
-194	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
-195	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
-196	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
-197	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
-198	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
-199	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
-200	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
-201	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
-202	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
-203	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
-204	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
-205	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
-206	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
-207	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
-208	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
-209	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
-210	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
-211	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
-212	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
-213	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
-214	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
-215	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
-216	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
-217	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
-218	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
-219	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
-220	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
-221	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
-222	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
-223	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
-224	matricula.nuestroAvion	Nuestro avión es
-225	matricula.asiNosLlama	Así nos llama la torre.
-226	fonetico.alfa	Alfa
-227	fonetico.bravo	Bravo
-228	fonetico.charlie	Charlie
-229	fonetico.delta	Delta
-230	fonetico.echo	Echo
-231	fonetico.foxtrot	Foxtrot
-232	fonetico.golf	Golf
-233	fonetico.hotel	Hotel
-234	fonetico.india	India
-235	fonetico.juliett	Juliett
-236	fonetico.kilo	Kilo
-237	fonetico.lima	Lima
-238	fonetico.mike	Mike
-239	fonetico.november	November
-240	fonetico.oscar	Oscar
-241	fonetico.papa	Papa
-242	fonetico.quebec	Quebec
-243	fonetico.romeo	Romeo
-244	fonetico.sierra	Sierra
-245	fonetico.tango	Tango
-246	fonetico.uniform	Uniform
-247	fonetico.victor	Victor
-248	fonetico.whiskey	Whiskey
-249	fonetico.xray	X-ray
-250	fonetico.yankee	Yankee
-251	fonetico.zulu	Zulu
-252	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-253	gafas.ganadas	¡Tus gafas de sol!
+174	ejercicio.planeo.antes	Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista
+175	ejercicio.antes-de-v1.antes	Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar
+176	ejercicio.despues-de-v1.antes	Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar
+177	ejercicio.un-motor.antes	Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos
+178	ejercicio.simulador.antes	Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses
+179	ejercicio.paramos	Falló un motor antes de V1: gas atrás y frenos, paramos
+180	ejercicio.seguimos	Falló un motor, y ya pasamos V1: seguimos volando
+181	ejercicio.enVuelo	Se paró un motor. El avión sigue volando con el otro
+182	ejercicio.pieDerecho	Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho
+183	ejercicio.pieIzquierdo	Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo
+184	ejercicio.velocidad	Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube
+185	ejercicio.bandera	Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos
+186	ejercicio.banderaSola	La hélice del motor parado ya se puso sola en bandera. Le corto el combustible
+187	ejercicio.cortar	Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado
+188	ejercicio.declarar	Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad
+189	ejercicio.bomberos	¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal
+190	ejercicio.bomberosFrenos	Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal
+191	ejercicio.bien	Ejercicio hecho: volaste el procedimiento como en un simulador de verdad
+192	ejercicio.bienParado	Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar
+193	ejercicio.paradoTrasV1	Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos
+194	ejercicio.seguidoAntesDeV1	Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos
+195	ejercicio.otraVez	El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez
+196	mission.rio.name	Ver el río
+197	mission.rioabajo.name	Seguir el río
+198	mission.mar.name	Salir al mar
+199	mission.anaga.name	A Anaga
+200	mission.cumbre.name	A la cumbre
+201	mission.lomas.name	A las lomas
+202	mission.first.name	Tu primer vuelo
+203	mission.valley.name	La vuelta al valle
+204	mission.transfer.name	El traslado
+205	mission.step	¡Bien! Seguí
+206	mission.done	¡Misión cumplida!
+207	mission.none	Vuelo libre
+208	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+209	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+210	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+211	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+212	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
+213	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
+214	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
+215	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
+216	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
+217	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
+218	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
+219	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
+220	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
+221	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
+222	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
+223	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
+224	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
+225	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
+226	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
+227	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
+228	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
+229	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
+230	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
+231	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
+232	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
+233	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
+234	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
+235	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
+236	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
+237	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
+238	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
+239	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
+240	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
+241	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
+242	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
+243	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
+244	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
+245	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+246	matricula.nuestroAvion	Nuestro avión es
+247	matricula.asiNosLlama	Así nos llama la torre.
+248	fonetico.alfa	Alfa
+249	fonetico.bravo	Bravo
+250	fonetico.charlie	Charlie
+251	fonetico.delta	Delta
+252	fonetico.echo	Echo
+253	fonetico.foxtrot	Foxtrot
+254	fonetico.golf	Golf
+255	fonetico.hotel	Hotel
+256	fonetico.india	India
+257	fonetico.juliett	Juliett
+258	fonetico.kilo	Kilo
+259	fonetico.lima	Lima
+260	fonetico.mike	Mike
+261	fonetico.november	November
+262	fonetico.oscar	Oscar
+263	fonetico.papa	Papa
+264	fonetico.quebec	Quebec
+265	fonetico.romeo	Romeo
+266	fonetico.sierra	Sierra
+267	fonetico.tango	Tango
+268	fonetico.uniform	Uniform
+269	fonetico.victor	Victor
+270	fonetico.whiskey	Whiskey
+271	fonetico.xray	X-ray
+272	fonetico.yankee	Yankee
+273	fonetico.zulu	Zulu
+274	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+275	gafas.ganadas	¡Tus gafas de sol!

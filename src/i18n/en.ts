@@ -66,6 +66,7 @@ export const EN: Dictionary = {
   "luz.frustrada": "GO AROUND",
   "luz.piloto": "A/P OFF",
   "luz.freno": "PARK BRK",
+  "luz.motor": "ENG FAIL",
   "hud.altitude": "Altitude",
   "hud.heading": "Heading",
   "hud.throttleDown": "Less power",
@@ -567,6 +568,58 @@ export const EN: Dictionary = {
   "leccion.rodaje": "Taxi",
   "leccion.despegue": "Take off",
   "leccion.aterrizaje": "Land",
+
+  "hangar.emergencias": "Emergency practice",
+  "hangar.ejercicio.planeo": "Glide with no engine",
+  "hangar.ejercicio.antes-de-v1": "Engine before V1",
+  "hangar.ejercicio.despues-de-v1": "Engine after V1",
+  "hangar.ejercicio.un-motor": "Fly on one engine",
+  "hangar.ejercicio.simulador": "Simulator session",
+  "ejercicio.planeo.antes":
+    "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
+  "ejercicio.antes-de-v1.antes":
+    "Today we practise a take-off that stops. Before V1 an engine will fail: throttles back, brakes, and we stop on the runway. Stopping in time is winning too",
+  "ejercicio.despues-de-v1.antes":
+    "Today we practise an engine failing after V1. There is no runway left to stop: we keep flying on the other engine and come back to land",
+  "ejercicio.un-motor.antes":
+    "Today we practise flying on one engine. In a while we will shut one down, and the plane keeps flying on the other: we push the pedal on the good side, hold the speed and land",
+  "ejercicio.simulador.antes":
+    "Simulator session: something will fail, and I won't tell you what or when. Fly the plane and run the procedure, like airline pilots every six months",
+  "palabra.practica": "Practice",
+  "ejercicio.paramos": "Engine failure before V1: throttles back and brakes, we stop",
+  "ejercicio.seguimos": "Engine failure, and we are past V1: we keep flying",
+  "ejercicio.enVuelo": "An engine has stopped. The plane keeps flying on the other one",
+  "ejercicio.pieDerecho":
+    "The left one stopped and the plane pulls left: push the right pedal",
+  "ejercicio.pieIzquierdo":
+    "The right one stopped and the plane pulls right: push the left pedal",
+  "palabra.pieDerecho": "Right foot",
+  "palabra.pieIzquierdo": "Left foot",
+  "ejercicio.velocidad":
+    "Use the nose to hold this speed. On one engine it climbs slowly, but it climbs",
+  "ejercicio.bandera":
+    "I'm feathering the propeller of the dead engine: edge-on to the air, it drags much less",
+  "ejercicio.banderaSola":
+    "The dead engine's propeller has feathered itself. I'm cutting its fuel",
+  "ejercicio.cortar":
+    "We have height now. I'm cutting the fuel to the dead engine: it is secured",
+  "ejercicio.declarar":
+    "We tell the tower with the emergency word and set seven seven zero zero on the transponder. Everyone knows we are coming back, and we get priority",
+  "ejercicio.bomberos":
+    "See the trucks by the runway? That's the airport fire service. They always wait when a plane comes back with an emergency: it's normal",
+  "ejercicio.bomberosFrenos":
+    "The fire service is coming to check the brakes: braking that hard makes them very hot. It's normal",
+  "ejercicio.bien":
+    "Exercise done: you flew the procedure like in a real simulator",
+  "ejercicio.bienParado":
+    "You stopped in time and on the runway: that is doing it right. Giving up in time is winning too",
+  "ejercicio.paradoTrasV1":
+    "You stopped, and it fitted on the runway. After V1 the safe thing is to keep flying: the plane flies on one engine. Next time, we go",
+  "ejercicio.seguidoAntesDeV1":
+    "Good return. Before V1 there is still runway left, and the safe thing is to stop. Next time, we stop",
+  "ejercicio.otraVez":
+    "The exercise didn't work out this time. In the simulator you repeat it as often as you need: let's go again",
+  "palabra.otraVez": "Again",
 
   "tactil.palanca": "Stick",
   "tactil.timon": "Rudder",
