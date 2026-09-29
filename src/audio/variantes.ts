@@ -274,6 +274,17 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
     "Eso. Ahora entrás derechito",
     "Perfecto, quedate así",
   ],
+
+  /*
+   * **Y por qué lado mirar, que va delante de lo que se ve.** En un vuelo se
+   * dice tres o cuatro veces, y dos seguidas con las mismas palabras delatan
+   * la grabación. Aquí la forma no se sortea: va rotando, así que dos
+   * seguidas del mismo lado nunca suenan igual. Ver `audio/ventanilla.ts`.
+   */
+  "ventanilla.lado.izquierda": ["Asómense a las ventanillas de la izquierda."],
+  "ventanilla.lado.derecha": ["Asómense a las ventanillas de la derecha."],
+  "ventanilla.vos.lado.izquierda": ["Fijate por tu ventanilla, a la izquierda."],
+  "ventanilla.vos.lado.derecha": ["Fijate por tu ventanilla, a la derecha."],
 };
 
 /**

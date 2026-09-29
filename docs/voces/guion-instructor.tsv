@@ -181,31 +181,65 @@
 181	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
 182	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
 183	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
-184	matricula.nuestroAvion	Nuestro avión es
-185	matricula.asiNosLlama	Así nos llama la torre.
-186	fonetico.alfa	Alfa
-187	fonetico.bravo	Bravo
-188	fonetico.charlie	Charlie
-189	fonetico.delta	Delta
-190	fonetico.echo	Echo
-191	fonetico.foxtrot	Foxtrot
-192	fonetico.golf	Golf
-193	fonetico.hotel	Hotel
-194	fonetico.india	India
-195	fonetico.juliett	Juliett
-196	fonetico.kilo	Kilo
-197	fonetico.lima	Lima
-198	fonetico.mike	Mike
-199	fonetico.november	November
-200	fonetico.oscar	Oscar
-201	fonetico.papa	Papa
-202	fonetico.quebec	Quebec
-203	fonetico.romeo	Romeo
-204	fonetico.sierra	Sierra
-205	fonetico.tango	Tango
-206	fonetico.uniform	Uniform
-207	fonetico.victor	Victor
-208	fonetico.whiskey	Whiskey
-209	fonetico.xray	X-ray
-210	fonetico.yankee	Yankee
-211	fonetico.zulu	Zulu
+184	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
+185	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
+186	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
+187	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
+188	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
+189	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
+190	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
+191	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
+192	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
+193	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
+194	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
+195	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
+196	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
+197	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
+198	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
+199	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
+200	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
+201	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
+202	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
+203	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
+204	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
+205	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
+206	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
+207	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
+208	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
+209	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
+210	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
+211	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
+212	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
+213	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
+214	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
+215	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
+216	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
+217	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+218	matricula.nuestroAvion	Nuestro avión es
+219	matricula.asiNosLlama	Así nos llama la torre.
+220	fonetico.alfa	Alfa
+221	fonetico.bravo	Bravo
+222	fonetico.charlie	Charlie
+223	fonetico.delta	Delta
+224	fonetico.echo	Echo
+225	fonetico.foxtrot	Foxtrot
+226	fonetico.golf	Golf
+227	fonetico.hotel	Hotel
+228	fonetico.india	India
+229	fonetico.juliett	Juliett
+230	fonetico.kilo	Kilo
+231	fonetico.lima	Lima
+232	fonetico.mike	Mike
+233	fonetico.november	November
+234	fonetico.oscar	Oscar
+235	fonetico.papa	Papa
+236	fonetico.quebec	Quebec
+237	fonetico.romeo	Romeo
+238	fonetico.sierra	Sierra
+239	fonetico.tango	Tango
+240	fonetico.uniform	Uniform
+241	fonetico.victor	Victor
+242	fonetico.whiskey	Whiskey
+243	fonetico.xray	X-ray
+244	fonetico.yankee	Yankee
+245	fonetico.zulu	Zulu

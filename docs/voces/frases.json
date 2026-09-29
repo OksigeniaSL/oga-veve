@@ -1329,6 +1329,958 @@
     "para": "lo que explica el esquema del ala"
   },
   {
+    "id": "ventanilla.vos.lado.izquierda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá por la ventanilla, a tu izquierda.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.lado.izquierda~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Fijate por tu ventanilla, a la izquierda.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.lado.derecha",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá por la ventanilla, a tu derecha.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.lado.derecha~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Fijate por tu ventanilla, a la derecha.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.teide",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.canadas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.anaga",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.orotava",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.gigantes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.garajonay",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.taburiente",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.tajogaite",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.hierro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.nieves",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.las-palmas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.maspalomas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.fuerteventura",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.lobos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.timanfaya",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.barco",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.avion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.rio-paraguay",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.asuncion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.ypacarai",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese lago es el Ypacaraí, el de la canción. ¿La conocés?",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.ypoa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.rio-parana",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.yacyreta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.itaipu",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.iguazu",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.triple-frontera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.cerro-cora",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.chaco",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.encarnacion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.trinidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.saludo",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Hola de nuevo, les habla la comandante.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.lado.izquierda",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Los que van del lado izquierdo, miren por la ventanilla.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.lado.izquierda~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Asómense a las ventanillas de la izquierda.",
+    "para": "lo que se ve por la ventanilla, por la megafonía · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.lado.derecha",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Los que van del lado derecho, miren por la ventanilla.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.lado.derecha~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Asómense a las ventanillas de la derecha.",
+    "para": "lo que se ve por la ventanilla, por la megafonía · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.teide",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ese gigante es el Teide: tres mil setecientos quince metros, la montaña más alta de España. Y es un volcán: en invierno, hasta se pone un gorro de nieve.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.canadas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "A los pies del Teide está Las Cañadas: un cráter gigante, de más de diez kilómetros. Y esas rocas con formas raras son los Roques de García, talladas por el viento, la lluvia y el hielo.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.anaga",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Aquellas montañas verdes y arrugadas son Anaga, de lo más antiguo de Tenerife. Ahí se guarda la laurisilva, un bosque que hace millones de años cubría el sur de Europa.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.orotava",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ese valle tan ancho que baja hasta el mar es el Valle de La Orotava. Se formó cuando un pedazo enorme de la isla se deslizó al océano, hace cientos de miles de años.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.gigantes",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa pared de roca que cae al mar son los Acantilados de Los Gigantes: cientos de metros cortados a pico sobre el agua. Por algo les pusieron ese nombre.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.garajonay",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa isla redondita es La Gomera, y lo verde de arriba es el Garajonay: un bosque tan húmedo que bebe agua de las nubes. Es Patrimonio de la Humanidad.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.taburiente",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Aquella es La Palma, la isla bonita. Arriba, en el borde de la Caldera de Taburiente, está el Roque de los Muchachos, lleno de telescopios para mirar las estrellas.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.tajogaite",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa montaña oscura es el Tajogaite, el volcán más joven de Canarias: nació en dos mil veintiuno y estuvo casi tres meses echando lava.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.hierro",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Aquella es El Hierro, la más pequeña de las siete islas grandes. Durante siglos, por ahí pasaba el meridiano cero: desde ahí se medía el mundo.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.nieves",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En lo alto de Gran Canaria está el Pico de las Nieves, casi dos mil metros. Hace siglos guardaban ahí la nieve del invierno en pozos, para tener hielo en verano.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.las-palmas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa ciudad junto al mar es Las Palmas de Gran Canaria, la más grande de Canarias. Tiene una playa en plena ciudad, Las Canteras, con una barrera de roca que la protege de las olas.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.maspalomas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Eso dorado junto al mar son las Dunas de Maspalomas: un pequeño desierto de arena que el viento va moviendo, poco a poco.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.fuerteventura",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa isla tan larga es Fuerteventura, la más antigua de Canarias: unos veinte millones de años. Tanto tiempo de viento y lluvia la dejaron así de llana, con playas enormes.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.lobos",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ese islote es Lobos: se llama así por los lobos marinos, unas focas que vivían ahí. Y enfrente, las dunas blancas de Corralejo, en Fuerteventura.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.timanfaya",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esas montañas rojas y negras son Timanfaya, en Lanzarote. Hace unos trescientos años, sus volcanes estuvieron seis años seguidos echando fuego, y el suelo todavía está calentito.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.barco",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá abajo va un barco, de una isla a otra: fíjense en la estela blanca que deja en el mar.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.rio-paraguay",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ese río ancho que brilla allá abajo es el río Paraguay, el que le da nombre al país. Lo parte en dos: de un lado la Región Oriental, y del otro, el Chaco.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.asuncion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa ciudad grande a la orilla del río es Asunción, nuestra capital. La fundaron en mil quinientos treinta y siete, y le dicen Madre de Ciudades, porque de ahí salieron los que fundaron muchas otras.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.ypacarai",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ese lago es el Ypacaraí, el de la canción Recuerdos de Ypacaraí, que se canta en muchísimos países del mundo.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.ypoa",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Aquella agua grande es el lago Ypoá, el más grande del Paraguay, rodeado de esteros llenos de aves.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.rio-parana",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ese río enorme es el Paraná, el segundo más largo de Sudamérica: solamente el Amazonas le gana.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.yacyreta",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Aquella raya larga sobre el Paraná es la represa de Yacyretá, que compartimos con Argentina: con la fuerza del río hace luz para millones de casas.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.itaipu",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá está Itaipú, la represa que compartimos con Brasil: una de las que más energía producen en el mundo entero.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.iguazu",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allá, entre Argentina y Brasil, están las Cataratas del Iguazú: casi trescientos saltos de agua. Con suerte se ve la nube de agua que levantan.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.triple-frontera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ahí, donde el Iguazú se junta con el Paraná, se tocan tres países: Paraguay, Argentina y Brasil. Le dicen la Triple Frontera.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.cerro-cora",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esos cerros son Cerro Corá, un parque nacional. Ahí terminó, en mil ochocientos setenta, la guerra más grande de nuestra historia.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.chaco",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Eso de abajo es el Chaco: más de la mitad del país, pero con muy poca gente. Un monte inmenso donde viven yaguaretés, tatús y osos hormigueros.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.encarnacion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esa es Encarnación, la Perla del Sur, a orillas del Paraná. En verano tiene playas de río y el carnaval más famoso del país.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.trinidad",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Ahí están las ruinas de Trinidad, una misión jesuítica del siglo dieciocho. Es Patrimonio de la Humanidad, junto con la de Jesús, que está cerquita.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "comandante.bienvenida",
     "voz": "comandante",
     "idioma": "es-PY",

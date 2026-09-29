@@ -83,6 +83,24 @@ const HABLADOS = [
    * Importa: gana el primero que reclame una clave. Ver `i18n/habla.ts`, que es
    * quien decide qué campos hablan así —todo lo que empieza por `GC`—.
    */
+  /*
+   * **Y lo que se ve por la ventanilla**, que antes no se grababa: era una
+   * plantilla con el nombre en un hueco y la decía la voz del navegador —«muy
+   * robótica, sin emoción»—. Ahora es una frase por sitio, escrita a mano. La
+   * de la instructora va primero por lo mismo que la torre canaria: sus claves
+   * empiezan también por `ventanilla.` y gana el primero que reclame una. Ver
+   * `src/audio/ventanilla.ts`.
+   */
+  [
+    "ventanilla.vos",
+    "instructor",
+    "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+  ],
+  [
+    "ventanilla",
+    "comandante",
+    "lo que se ve por la ventanilla, por la megafonía",
+  ],
   ["comandante", "comandante", "la megafonía de cabina, para el pasaje"],
   /*
    * **Y la tripulación de cabina**, con el habla del sitio como la torre: la
@@ -948,6 +966,42 @@ for (const f of filas) {
   if (!dicho) continue;
   f.dicho = dicho;
   f.ajustes = AJUSTES_EN_CALMA;
+}
+
+/*
+ * **Y las de la ventanilla, al revés: con chispa.**
+ *
+ * Es lo contrario de un aviso. La comandante está contando algo bonito, con
+ * desparpajo, y la referencia es el servicio a bordo con el maní de la granja,
+ * no la señal de cinturones. Con los ajustes de la voz, que son los de una
+ * megafonía seria, salía plano: «una azafata que no ha dormido bien».
+ *
+ * Menos estabilidad es más entonación —la voz sube y baja como quien cuenta
+ * algo—, y el estilo es lo que ElevenLabs llama exagerar el de la voz: a
+ * cuarenta y cinco sale con gracia sin pasarse a locutora de feria. El
+ * refuerzo del hablante mantiene que siga siendo Jazlyn. Las de la
+ * instructora igual: lo que cuenta es lo mismo y se cuenta con las mismas
+ * ganas.
+ */
+const AJUSTES_CON_CHISPA = {
+  stability: 0.35,
+  similarity_boost: 0.8,
+  style: 0.45,
+  use_speaker_boost: true,
+  speed: 1,
+};
+/*
+ * **Y ninguna muy corta.** «Mirá a tu izquierda», veinte letras, volvió con
+ * nueve segundos de voz; y grabada con la voz quieta, con cinco: con tan poco
+ * texto el modelo sigue hablando por su cuenta. No era cosa de los ajustes
+ * sino del texto, así que se alargó —«Mirá por la ventanilla, a tu
+ * izquierda»— y aquí se avisa de la próxima que baje de treinta letras.
+ */
+for (const f of filas) {
+  if (!f.id.startsWith("ventanilla.")) continue;
+  f.ajustes = AJUSTES_CON_CHISPA;
+  if (f.texto.length < 30)
+    console.log(`\n  ¡Ojo! ${f.id} es muy corta para grabarla suelta: «${f.texto}»`);
 }
 
 const tsv = [

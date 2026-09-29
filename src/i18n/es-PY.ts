@@ -571,11 +571,11 @@ export const ES_PY = {
    * pasar cosas, entretener a la niña que vuela mucho rato»— y de paso enseña
    * geografía sin proponérselo, que es como se aprende.
    *
-   * `{nombre}` y `{altura}` son **datos**: salen de OpenStreetMap con
-   * `scripts/osm-a-hitos.mjs`, no de una lista escrita aquí. Por eso las
-   * frases no llevan artículo delante del nombre: «el Teide» se puede, pero
-   * «el Montaña de Chío» no, y el nombre viene tal cual lo tiene mapeado
-   * quien vive allí.
+   * **Estas plantillas ya no se dicen**: eran para los nombres que traía
+   * OpenStreetMap de cada escenario, y se quitaron con ellos. Lo que se dice
+   * ahora está más abajo, en `ventanilla.*`, escrito a mano. `hito.unBarco` y
+   * `hito.otroAvion` sí siguen: son el rótulo de la tarjeta de lo que se
+   * mueve.
    *
    * Y el lado va en palabra y en flecha. La flecha es la que entiende quien
    * todavía no lee, y es la que va primero. Ver `hito()` en `ui/senal.ts`.
@@ -616,6 +616,162 @@ export const ES_PY = {
   "hito.unBarco": "un barco",
   "hito.otroAvion": "otro avión",
   "hito.avion.vos": "Mirá, a la {lado}: otro avión.",
+  /*
+   * ── **Lo que se ve por la ventanilla, contado a mano** ──────────────────
+   *
+   * Las plantillas de arriba —«Ahí abajo, a la {lado}, {nombre}»— ya no se
+   * dicen: se oyeron como lo que eran, «muy robótica, sin emoción», y con
+   * pueblos que ni se veían. Se quedan en el diccionario porque `gug.ts` las
+   * tiene traducidas, y ese diccionario no se toca desde aquí.
+   *
+   * Lo que se dice ahora es esto: **una frase por sitio, escrita a mano**,
+   * con algo que contar que se pueda recordar a los cuatro años, y grabada
+   * entera con la voz de Jazlyn y con chispa. Delante va el lado, en frase
+   * aparte y con dos formas, y la primera vez del vuelo, el saludo. Ver
+   * `audio/ventanilla.ts` y `data/hitos/destacados.json`.
+   *
+   * **Todo lo que se cuenta es verdad**, y está comprobado: la cota del Teide,
+   * los seis años de Timanfaya, el meridiano de El Hierro, la guerra que
+   * terminó en Cerro Corá. Nada de «dicen que». Y cada una en su registro:
+   * las de Canarias sin voseo ni paraguayismos, que la comandante habla allí
+   * como se habla allí; las de Paraguay, en paraguayo. La comandante le habla
+   * al pasaje de usted, así que en las suyas no hay voseo en ningún sitio.
+   */
+  "ventanilla.saludo": "Hola de nuevo, les habla la comandante.",
+  "ventanilla.lado.izquierda": "Los que van del lado izquierdo, miren por la ventanilla.",
+  "ventanilla.lado.derecha": "Los que van del lado derecho, miren por la ventanilla.",
+  // Canarias.
+  "ventanilla.teide":
+    "Ese gigante es el Teide: tres mil setecientos quince metros, la montaña más alta de España. Y es un volcán: en invierno, hasta se pone un gorro de nieve.",
+  "ventanilla.canadas":
+    "A los pies del Teide está Las Cañadas: un cráter gigante, de más de diez kilómetros. Y esas rocas con formas raras son los Roques de García, talladas por el viento, la lluvia y el hielo.",
+  "ventanilla.anaga":
+    "Aquellas montañas verdes y arrugadas son Anaga, de lo más antiguo de Tenerife. Ahí se guarda la laurisilva, un bosque que hace millones de años cubría el sur de Europa.",
+  "ventanilla.orotava":
+    "Ese valle tan ancho que baja hasta el mar es el Valle de La Orotava. Se formó cuando un pedazo enorme de la isla se deslizó al océano, hace cientos de miles de años.",
+  "ventanilla.gigantes":
+    "Esa pared de roca que cae al mar son los Acantilados de Los Gigantes: cientos de metros cortados a pico sobre el agua. Por algo les pusieron ese nombre.",
+  "ventanilla.garajonay":
+    "Esa isla redondita es La Gomera, y lo verde de arriba es el Garajonay: un bosque tan húmedo que bebe agua de las nubes. Es Patrimonio de la Humanidad.",
+  "ventanilla.taburiente":
+    "Aquella es La Palma, la isla bonita. Arriba, en el borde de la Caldera de Taburiente, está el Roque de los Muchachos, lleno de telescopios para mirar las estrellas.",
+  "ventanilla.tajogaite":
+    "Esa montaña oscura es el Tajogaite, el volcán más joven de Canarias: nació en dos mil veintiuno y estuvo casi tres meses echando lava.",
+  "ventanilla.hierro":
+    "Aquella es El Hierro, la más pequeña de las siete islas grandes. Durante siglos, por ahí pasaba el meridiano cero: desde ahí se medía el mundo.",
+  "ventanilla.nieves":
+    "En lo alto de Gran Canaria está el Pico de las Nieves, casi dos mil metros. Hace siglos guardaban ahí la nieve del invierno en pozos, para tener hielo en verano.",
+  "ventanilla.las-palmas":
+    "Esa ciudad junto al mar es Las Palmas de Gran Canaria, la más grande de Canarias. Tiene una playa en plena ciudad, Las Canteras, con una barrera de roca que la protege de las olas.",
+  "ventanilla.maspalomas":
+    "Eso dorado junto al mar son las Dunas de Maspalomas: un pequeño desierto de arena que el viento va moviendo, poco a poco.",
+  "ventanilla.fuerteventura":
+    "Esa isla tan larga es Fuerteventura, la más antigua de Canarias: unos veinte millones de años. Tanto tiempo de viento y lluvia la dejaron así de llana, con playas enormes.",
+  "ventanilla.lobos":
+    "Ese islote es Lobos: se llama así por los lobos marinos, unas focas que vivían ahí. Y enfrente, las dunas blancas de Corralejo, en Fuerteventura.",
+  "ventanilla.timanfaya":
+    "Esas montañas rojas y negras son Timanfaya, en Lanzarote. Hace unos trescientos años, sus volcanes estuvieron seis años seguidos echando fuego, y el suelo todavía está calentito.",
+  "ventanilla.barco":
+    "Allá abajo va un barco, de una isla a otra: fíjense en la estela blanca que deja en el mar.",
+  // Paraguay.
+  "ventanilla.rio-paraguay":
+    "Ese río ancho que brilla allá abajo es el río Paraguay, el que le da nombre al país. Lo parte en dos: de un lado la Región Oriental, y del otro, el Chaco.",
+  "ventanilla.asuncion":
+    "Esa ciudad grande a la orilla del río es Asunción, nuestra capital. La fundaron en mil quinientos treinta y siete, y le dicen Madre de Ciudades, porque de ahí salieron los que fundaron muchas otras.",
+  "ventanilla.ypacarai":
+    "Ese lago es el Ypacaraí, el de la canción Recuerdos de Ypacaraí, que se canta en muchísimos países del mundo.",
+  "ventanilla.ypoa":
+    "Aquella agua grande es el lago Ypoá, el más grande del Paraguay, rodeado de esteros llenos de aves.",
+  "ventanilla.rio-parana":
+    "Ese río enorme es el Paraná, el segundo más largo de Sudamérica: solamente el Amazonas le gana.",
+  "ventanilla.yacyreta":
+    "Aquella raya larga sobre el Paraná es la represa de Yacyretá, que compartimos con Argentina: con la fuerza del río hace luz para millones de casas.",
+  "ventanilla.itaipu":
+    "Allá está Itaipú, la represa que compartimos con Brasil: una de las que más energía producen en el mundo entero.",
+  "ventanilla.iguazu":
+    "Allá, entre Argentina y Brasil, están las Cataratas del Iguazú: casi trescientos saltos de agua. Con suerte se ve la nube de agua que levantan.",
+  "ventanilla.triple-frontera":
+    "Ahí, donde el Iguazú se junta con el Paraná, se tocan tres países: Paraguay, Argentina y Brasil. Le dicen la Triple Frontera.",
+  "ventanilla.cerro-cora":
+    "Esos cerros son Cerro Corá, un parque nacional. Ahí terminó, en mil ochocientos setenta, la guerra más grande de nuestra historia.",
+  "ventanilla.chaco":
+    "Eso de abajo es el Chaco: más de la mitad del país, pero con muy poca gente. Un monte inmenso donde viven yaguaretés, tatús y osos hormigueros.",
+  "ventanilla.encarnacion":
+    "Esa es Encarnación, la Perla del Sur, a orillas del Paraná. En verano tiene playas de río y el carnaval más famoso del país.",
+  "ventanilla.trinidad":
+    "Ahí están las ruinas de Trinidad, una misión jesuítica del siglo dieciocho. Es Patrimonio de la Humanidad, junto con la de Jesús, que está cerquita.",
+
+  /*
+   * **Y lo mismo, dicho por la instructora en la avioneta**: de vos, más
+   * corto y a quien tiene al lado. Es la misma información en otro registro,
+   * como las plantillas de arriba, y con su propia grabación en su voz.
+   */
+  "ventanilla.vos.lado.izquierda": "Mirá por la ventanilla, a tu izquierda.",
+  "ventanilla.vos.lado.derecha": "Mirá por la ventanilla, a tu derecha.",
+  "ventanilla.vos.teide":
+    "¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!",
+  "ventanilla.vos.canadas":
+    "Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.",
+  "ventanilla.vos.anaga":
+    "Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.",
+  "ventanilla.vos.orotava":
+    "Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.",
+  "ventanilla.vos.gigantes":
+    "Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.",
+  "ventanilla.vos.garajonay":
+    "Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.",
+  "ventanilla.vos.taburiente":
+    "Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.",
+  "ventanilla.vos.tajogaite":
+    "¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!",
+  "ventanilla.vos.hierro":
+    "Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.",
+  "ventanilla.vos.nieves":
+    "Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.",
+  "ventanilla.vos.las-palmas":
+    "Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!",
+  "ventanilla.vos.maspalomas":
+    "¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.",
+  "ventanilla.vos.fuerteventura":
+    "Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!",
+  "ventanilla.vos.lobos":
+    "Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.",
+  "ventanilla.vos.timanfaya":
+    "Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!",
+  "ventanilla.vos.barco":
+    "Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.",
+  /*
+   * Y otro avión, que solo lo señala la instructora: mirar afuera es la
+   * primera regla para no chocar con nadie. Ver `hito.avion.vos`, arriba.
+   */
+  "ventanilla.vos.avion":
+    "Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.",
+  "ventanilla.vos.rio-paraguay":
+    "Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.",
+  "ventanilla.vos.asuncion":
+    "Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.",
+  "ventanilla.vos.ypacarai":
+    "Ese lago es el Ypacaraí, el de la canción. ¿La conocés?",
+  "ventanilla.vos.ypoa":
+    "Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.",
+  "ventanilla.vos.rio-parana":
+    "Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.",
+  "ventanilla.vos.yacyreta":
+    "Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.",
+  "ventanilla.vos.itaipu":
+    "Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.",
+  "ventanilla.vos.iguazu":
+    "Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!",
+  "ventanilla.vos.triple-frontera":
+    "Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.",
+  "ventanilla.vos.cerro-cora":
+    "Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.",
+  "ventanilla.vos.chaco":
+    "Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.",
+  "ventanilla.vos.encarnacion":
+    "Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.",
+  "ventanilla.vos.trinidad":
+    "Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.",
   /*
    * **Y la llegada dice dónde has llegado.**
    *
