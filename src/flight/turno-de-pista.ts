@@ -93,6 +93,13 @@ export interface AlrededorDelTurno {
    * más, y la roja ya lo dice.
    */
   avisarteOcupada?(): void;
+  /**
+   * **Tu permiso para aterrizar se retiró sin haberse oído**: se dejó la
+   * final con él todavía esperando turno en la boca. Sin «cleared to land»
+   * oído no hay permiso, así que tampoco luz verde: se apaga, y en la final
+   * siguiente se da otra vez, con su voz. Ver `paso`.
+   */
+  retirarteElPermiso?(): void;
   /** La torre te manda al aire; `sigue` dice si la pista sigue ocupada. */
   mandarteAlAire(alto: number, sigue: () => boolean): void;
   /**
@@ -484,7 +491,19 @@ export class TurnoDePista {
        * Tenerife Norte sonó «cleared to land» con el avión ya rodando por la
        * pista.
        */
-      if (this.enFinal) this.de.boca.retirar(esTuPermisoDeAterrizar);
+      /*
+       * **Y si se retira sin haber sonado, no se dio.** La luz se había
+       * puesto verde al darlo, y la voz esperaba turno; retirada la voz, la
+       * luz seguía verde, y al volver a final —la fase puede ir y volver en
+       * un segundo en el borde de la final— el permiso nuevo no sonaba,
+       * porque la lámpara solo habla cuando cambia. Llegando a Los Rodeos:
+       * «torre.canario.aterrizar: ya no es verdad» y se aterrizó sin oír
+       * ningún permiso. Ver `retirarteElPermiso`.
+       */
+      if (this.enFinal && this.de.boca.esperaAlguna(esTuPermisoDeAterrizar)) {
+        this.de.boca.retirar(esTuPermisoDeAterrizar);
+        this.de.retirarteElPermiso?.();
+      }
       this.enFinal = false;
       this.aterrizajeSinAutorizar = false;
       this.numeroDos = null;

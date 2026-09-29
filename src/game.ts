@@ -2952,6 +2952,7 @@ export class Game {
       this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
     avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
+    retirarteElPermiso: () => this.retirarElPermisoSinOir(),
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -7837,6 +7838,19 @@ export class Game {
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
     };
+  }
+
+  /**
+   * **El permiso que no llegó a oírse no se dio**: se apaga la verde y su
+   * tarjeta, y en la final siguiente la torre lo da otra vez, con su voz. Si
+   * mientras tanto hay una orden de irse al aire, la luz es suya y no se
+   * toca. Ver `retirarteElPermiso` en `flight/turno-de-pista.ts`.
+   */
+  private retirarElPermisoSinOir(): void {
+    if (this.laAproximacion.mandanFrustrar || !this.laTorreMandaEnLaLuz) return;
+    this.hud.senal.caducar("verde");
+    this.luzDeTorre(null);
+    this.laTorreMandaEnLaLuz = false;
   }
 
   /**

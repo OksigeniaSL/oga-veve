@@ -573,3 +573,56 @@ describe("la pista que se ve, además de la que se oye", () => {
     expect(turno.porQueEsperas).toBe("despega");
   });
 });
+
+/**
+ * **Sin «cleared to land» oído no hay permiso.** Se dejó la final con el
+ * permiso todavía esperando turno —la fase puede ir y volver en un segundo en
+ * el borde de la final—: se retiró sin sonar, la luz siguió verde, y al volver
+ * a final el permiso nuevo no sonó, porque la lámpara solo habla cuando
+ * cambia. Llegando a Los Rodeos se aterrizó sin oír ninguno.
+ */
+describe("el permiso que no llegó a oírse no se dio", () => {
+  it("al dejar la final con él esperando, se retira y se avisa; al volver, se da otra vez", () => {
+    let retirados = 0;
+    const boca = new Boca({ ahora: () => 0, cancelar: () => {} });
+    // La boca está hablando: el permiso espera turno, como en el juego.
+    boca.pedir("normal", () => {}, "circuito.base");
+    const pedirlo = () =>
+      boca.pedir("mando", () => {}, "torre.canario.aterrizar@yo");
+    const turno = new TurnoDePista({
+      radio: new Frecuencia(dados(3), "GCXO"),
+      boca,
+      trafico: () => null,
+      torre: () => true,
+      privado: () => false,
+      alUmbral: () => 1800,
+      alto: () => 90,
+      decirAOtro: () => null,
+      autorizarte: pedirlo,
+      mandarteAlAire: () => {},
+      retirarteElPermiso: () => void retirados++,
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(boca.espera("torre.canario.aterrizar@yo")).toBe(true);
+    // La fase baila: sale de final y vuelve.
+    turno.paso("en-vuelo");
+    expect(boca.espera("torre.canario.aterrizar@yo")).toBe(false);
+    expect(retirados).toBe(1);
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(boca.espera("torre.canario.aterrizar@yo")).toBe(true);
+  });
+
+  it("y si ya se oyó, dejar la final no retira nada: el permiso se dio", () => {
+    let retirados = 0;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      retirarteElPermiso: () => void retirados++,
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    turno.paso("aterrizado");
+    expect(retirados).toBe(0);
+  });
+});
