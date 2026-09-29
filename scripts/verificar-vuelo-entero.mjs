@@ -4874,6 +4874,8 @@ if (process.env.OGA_VOCES) {
         descartes: vuelo.descartes,
         todo: vuelo.todoLoDicho,
         maquina: vuelo.maquina,
+        // Y lo que pasó con las aves de la final. Ver `vigilarLasAves`.
+        aves: (vuelo.cantados ?? []).filter((c) => c.startsWith("aves:")),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
       },

@@ -91,9 +91,15 @@ export function sitioEnLaFinal(
   alUmbral: number,
   /** La velocidad del avión, m/s. */
   velocidad = 35,
+  /**
+   * Lo más lejos del umbral, m. Tres kilómetros en una final; kilómetro y
+   * medio si todavía no se está en ella, que es lo que mide la final de un
+   * circuito: más lejos quedarían por fuera del viraje a final.
+   */
+  tope = 3200,
 ): { distancia: number; altura: number } | null {
   const margen = Math.min(3000, Math.max(1000, velocidad * MEDIO_MINUTO));
-  const distancia = Math.min(3200, alUmbral - margen);
+  const distancia = Math.min(tope, alUmbral - margen);
   if (distancia < 600) return null;
   return {
     distancia,
@@ -164,6 +170,14 @@ export function avisoDeLaTorre(
   };
 }
 
+/**
+ * **Cuándo se viene a aterrizar**, para `llegando`: a menos de siete
+ * kilómetros del umbral y a menos de cuatrocientos cincuenta metros sobre el
+ * campo —mil quinientos pies, la altura de un circuito de reactores—, y
+ * acercándose a más de cinco metros por segundo.
+ */
+export const LLEGANDO = { alUmbral: 7000, sobreElCampo: 450, acercandose: 5 };
+
 /** Lo que toca hacer ahora con las aves de la final. */
 export type AvisoDeAves =
   | { readonly que: "poner"; readonly distancia: number; readonly altura: number }
@@ -176,6 +190,15 @@ export interface MomentoDeAves {
   readonly campo: string;
   /** Si en el campo hay torre o AFIS que hable. */
   readonly hayTorre: boolean;
+  /**
+   * **Si viene a aterrizar**: en final, o ya cerca, bajo y acercándose a la
+   * pista —en el circuito, desde el tramo del viento en cola—. Es cuando la
+   * torre avisa, y no en la final: ahí se junta con la autorización y la fase,
+   * y en la final corta de una avioneta no llegaba a decirse antes de que el
+   * avión se echara encima de las aves. Ver `LLEGANDO`.
+   */
+  readonly llegando: boolean;
+  /** Y si ya está en final: la final larga admite las aves más lejos. */
   readonly enFinal: boolean;
   readonly enElSuelo: boolean;
   /** Metros hasta el umbral en uso. */
@@ -214,13 +237,13 @@ export class AvesEnLaFinal {
 
   paso(m: MomentoDeAves): AvisoDeAves | null {
     if (!hayAvesEnLaFinal(m.tramo) || !m.hayTorre || m.enElSuelo) return null;
-    if (m.enFinal && !this.tirados.has(m.campo)) {
+    if (m.llegando && !this.tirados.has(m.campo)) {
       this.tirados.add(m.campo);
-      const sitio = sitioEnLaFinal(m.alUmbral, m.velocidad);
+      const sitio = sitioEnLaFinal(m.alUmbral, m.velocidad, m.enFinal ? 3200 : 1500);
       if (sitio && m.dado < 1 / EN_UNA_DE_CADA) return { que: "poner", ...sitio };
     }
     for (const b of m.bandadas) {
-      if (m.enFinal && !this.avisadas.has(b.id)) {
+      if (m.llegando && !this.avisadas.has(b.id)) {
         this.avisadas.add(b.id);
         return { que: "torre", bandada: b.id };
       }

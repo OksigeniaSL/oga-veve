@@ -20,6 +20,7 @@ function momento(cambios: Partial<MomentoDeAves> = {}): MomentoDeAves {
     tramo: "taguato",
     campo: "tenerife-norte",
     hayTorre: true,
+    llegando: true,
     enFinal: true,
     enElSuelo: false,
     alUmbral: 8000,

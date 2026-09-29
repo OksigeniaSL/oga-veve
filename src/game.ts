@@ -627,7 +627,11 @@ import {
   FaunaDelAeropuerto,
   sitioDelServicio,
 } from "./world/fauna-del-aeropuerto";
-import { AvesEnLaFinal, avisoDeLaTorre } from "./flight/aviso-de-aves";
+import {
+  AvesEnLaFinal,
+  LLEGANDO,
+  avisoDeLaTorre,
+} from "./flight/aviso-de-aves";
 import { dondeCae } from "./world/entre-aerodromos";
 import { cruceroDelTramo, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
 import { crearBarcos, luzDeLaEstela, type Barcos } from "./world/barcos";
@@ -1368,6 +1372,8 @@ export class Game {
   private uveExplicada = false;
   /** Para el banco: que la próxima final traiga aves seguro. */
   avesEnLaFinalSeguro = false;
+  /** Si en el paso anterior había aves de la final por delante. Para el banco. */
+  private avesDelanteAntes = false;
 
   /** El reloj con el que vuelan las aves, s. Para el banco. */
   get relojDeLasAves(): number {
@@ -1471,22 +1477,42 @@ export class Game {
   }
 
   /** Lo que hace falta para mover las aves y el rotativo, un paso. */
-  private moverLasAves(): void {
+  private moverLasAves(dt: number): void {
     this.bandadas.paso(this.relojDeRuta, this.flight.state.position);
     for (const f of this.faunaDeLosCampos) f.paso(this.relojDeRuta);
-    this.vigilarLasAves();
+    this.vigilarLasAves(dt);
     this.mirarLasUves();
   }
+
+  /** A cuánto del umbral estaba el avión en el paso anterior, m. */
+  private alUmbralAntes = Infinity;
 
   /**
    * **Las aves en la final**, un paso: ponerlas si esta final las trae, el
    * aviso de la torre, la explicación detrás y la tarjeta de «subí» cuando
    * están de frente. Ver `flight/aviso-de-aves.ts`.
    */
-  private vigilarLasAves(): void {
+  private vigilarLasAves(dt: number): void {
     const s = this.flight.state;
     const campo = this.elCampo();
     const alUmbral = distanciaAlUmbral(campo, s.position.x, s.position.z);
+    /*
+     * **Si viene a aterrizar**: en final, o cerca, bajo y acercándose. En el
+     * circuito eso empieza en el viento en cola, que es un momento tranquilo:
+     * la torre avisa ahí y la instructora lo explica antes de la final, que es
+     * donde se juntan la autorización, la fase y la cuenta. Ver `LLEGANDO`.
+     */
+    const [ux, uz] = umbralEnUso(campo);
+    const acercandose =
+      dt > 0 && (this.alUmbralAntes - alUmbral) / dt > LLEGANDO.acercandose;
+    this.alUmbralAntes = alUmbral;
+    const llegando =
+      !s.onGround &&
+      (this.faseDeAhora === "final" ||
+        (this.faseDeAhora === "en-vuelo" &&
+          acercandose &&
+          alUmbral < LLEGANDO.alUmbral &&
+          s.position.y - this.cotaDePistaEn(campo, ux, uz) < LLEGANDO.sobreElCampo));
     const dado = this.avesEnLaFinalSeguro ? 0 : Math.random();
     const deLaFinal = this.bandadas.lista.filter(
       (b) => b.enFinal && b.campo === campo.id,
@@ -1495,6 +1521,7 @@ export class Game {
       tramo: this.tier.id,
       campo: campo.id,
       hayTorre: this.hayTorreQueHable(),
+      llegando,
       enFinal: this.faseDeAhora === "final",
       enElSuelo: s.onGround,
       alUmbral,
@@ -1511,8 +1538,15 @@ export class Game {
         rumbo: s.heading,
       },
     });
-    if (suceso?.que === "poner") this.ponerAvesEnLaFinal(campo, suceso);
-    else if (suceso?.que === "torre") this.avisarDeLasAves(campo, suceso.bandada);
+    if (suceso?.que === "poner") {
+      this.apuntarCanto(
+        `aves: a ${Math.round(suceso.distancia)} m del umbral, el avión a ${Math.round(alUmbral)} · t ${this.relojDeRuta.toFixed(1)}`,
+      );
+      this.ponerAvesEnLaFinal(campo, suceso);
+    } else if (suceso?.que === "torre") {
+      this.apuntarCanto(`aves: avisa la torre · t ${this.relojDeRuta.toFixed(1)}`);
+      this.avisarDeLasAves(campo, suceso.bandada);
+    }
     else if (suceso?.que === "deFrente") {
       const clave = claveDelAviso(this.tier.avisos, "aves.deFrente", "palabra.subi");
       this.hud.senal.mostrar(
@@ -1530,15 +1564,25 @@ export class Game {
      * embudo, ni el campo de ahora, que cambia de uno a otro en la ruta.
      */
     const [fx, fz] = delante(MathUtils.radToDeg(s.heading));
+    let porQueNo = s.onGround ? "en el suelo" : "no hay";
     const siguenDelante =
       !s.onGround &&
       this.bandadas.lista.some((b) => {
-        if (!b.enFinal || this.bandadas.sustoDe(b.id) !== null) return false;
+        if (!b.enFinal) return false;
         const d = this.bandadas.dondeEsta(b, this.relojDeRuta);
         const dx = d.x - s.position.x;
         const dz = d.z - s.position.z;
-        return Math.hypot(dx, dz) < 8000 && dx * fx + dz * fz > 0;
+        const lejos = Math.round(Math.hypot(dx, dz));
+        if (this.bandadas.sustoDe(b.id) !== null) porQueNo = `espantadas a ${lejos} m`;
+        else if (lejos >= 8000) porQueNo = `a ${lejos} m`;
+        else if (dx * fx + dz * fz <= 0) porQueNo = `detrás, a ${lejos} m`;
+        else return true;
+        return false;
       });
+    // Para el banco: cuándo dejan de estar delante, y por qué. Ver `apuntarCanto`.
+    if (this.avesDelanteAntes && !siguenDelante)
+      this.apuntarCanto(`aves: ya no están delante (${porQueNo}) · t ${this.relojDeRuta.toFixed(1)}`);
+    this.avesDelanteAntes = siguenDelante;
     /*
      * **Detrás de la torre, no a la vez.** La explicación espera a que el
      * canal quede libre, y se cae si ya no es verdad: una explicación de unas
@@ -1584,6 +1628,12 @@ export class Game {
     const altura = this.cotaDePistaEn(campo, ux, uz) + sitio.altura - suelo;
     // Con el terreno subiendo en la final ya no caben: se deja.
     if (altura < 25) return;
+    /*
+     * Y lejos del avión: viniendo del viento en cola la final queda de lado, y
+     * a menos de novecientos metros una bandada se vería aparecer de la nada.
+     */
+    const p = this.flight.state.position;
+    if (Math.hypot(x - p.x, z - p.z) < 900) return;
     const especie = especieDeLaFinal(region);
     this.bandadas.poner([
       {
@@ -7991,7 +8041,7 @@ export class Game {
      * Lo que pide torre —el aviso de la final— lo mira el aviso. Ver
      * `vigilarLasAves`.
      */
-    this.moverLasAves();
+    this.moverLasAves(dt);
     // Y el TCAS, con todos ya en su sitio y también antes de la puerta: un
     // transpondedor no deja de contestar porque el campo no tenga torre.
     this.vigilarElTrafico(dt);
