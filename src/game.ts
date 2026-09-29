@@ -1522,12 +1522,29 @@ export class Game {
       );
     }
     /*
+     * **Si las aves de la final siguen ahí delante**: sin espantar, por
+     * delante del morro y a menos de ocho kilómetros. Es lo que decide si lo
+     * que dijo la torre y lo que va a explicar la instructora siguen siendo
+     * verdad — y no la fase, que en una final con viento entra y sale del
+     * embudo, ni el campo de ahora, que cambia de uno a otro en la ruta.
+     */
+    const [fx, fz] = delante(MathUtils.radToDeg(s.heading));
+    const siguenDelante =
+      !s.onGround &&
+      this.bandadas.lista.some((b) => {
+        if (!b.enFinal || this.bandadas.sustoDe(b.id) !== null) return false;
+        const d = this.bandadas.dondeEsta(b, this.relojDeRuta);
+        const dx = d.x - s.position.x;
+        const dz = d.z - s.position.z;
+        return Math.hypot(dx, dz) < 8000 && dx * fx + dz * fz > 0;
+      });
+    /*
      * **Detrás de la torre, no a la vez.** La explicación espera a que el
-     * canal quede libre, y se cae si ya no es verdad —se dejó la final o se
-     * tocó tierra—: una explicación de algo que ya pasó no enseña nada.
+     * canal quede libre, y se cae si ya no es verdad: una explicación de unas
+     * aves que ya se pasaron no enseña nada.
      */
     if (this.explicarLasAvesDespues) {
-      if (s.onGround || this.faseDeAhora !== "final") {
+      if (!siguenDelante) {
         this.explicarLasAvesDespues = false;
       } else if (BOCA.libre && !this.torre.hablando) {
         this.explicarLasAvesDespues = false;
@@ -1536,16 +1553,16 @@ export class Game {
       }
     }
     /*
-     * **Y lo que dijo la torre se retira cuando ya no es verdad**: fuera de
-     * la final, en el suelo o con la bandada ya espantada detrás. Lo que ya
-     * está sonando se deja acabar. Ver `esElAvisoDeAves` en `audio/torre.ts`.
+     * **Y lo que dijo la torre se retira cuando ya no es verdad**: con la
+     * bandada espantada o detrás, o en el suelo. Lo que ya está sonando se
+     * deja acabar. Ver `esElAvisoDeAves` en `audio/torre.ts`.
      */
-    const siguenDelante = deLaFinal.some((b) => this.bandadas.sustoDe(b.id) === null);
-    if (s.onGround || this.faseDeAhora !== "final" || !siguenDelante)
-      BOCA.retirar((c) => esElAvisoDeAves(c));
-    // Las de la final que ya se espantaron se van: a la vuelta, otra final.
+    if (!siguenDelante) BOCA.retirar((c) => esElAvisoDeAves(c));
+    // Las de la final que ya se espantaron se van, y en el suelo también: a
+    // la vuelta, otra final.
     this.bandadas.quitar((b) => {
       if (!b.enFinal) return false;
+      if (s.onGround) return true;
       const desde = this.bandadas.sustoDe(b.id);
       return desde !== null && this.relojDeRuta - desde > 40;
     });

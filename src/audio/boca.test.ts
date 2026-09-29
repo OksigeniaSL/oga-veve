@@ -859,6 +859,19 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
     expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
     expect(explicaLaOtraPunta("vuelo.alAireOtraPuntaX")).toBe(false);
   });
+
+  /*
+   * El aviso de aves de la torre se daba al entrar en final, detrás de la
+   * autorización y de la fase, y con los doce segundos de una orden caducaba
+   * esperando. Espera lo que haga falta; lo retira el juego cuando las aves
+   * ya no están delante. Ver `esElAvisoDeAves` en `torre.ts`.
+   */
+  it("el aviso de aves en la final no caduca con el reloj, en las dos torres", () => {
+    const relleno = "@fonetico.zulu-fonetico.papa-trafico.pies.4";
+    expect(cuantoAguanta(`torre.aves${relleno}`, "mando")).toBe(Infinity);
+    expect(cuantoAguanta(`torre.canario.aves${relleno}`, "mando")).toBe(Infinity);
+    expect(cuantoAguanta("torre.avesX", "mando")).toBe(CADUCA_LA_ORDEN);
+  });
 });
 
 /**

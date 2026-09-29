@@ -49,11 +49,11 @@ describe("las aves en la final", () => {
    * mil pies. Y por delante del avión lo bastante para verlas venir.
    */
   it("se ponen cerca del umbral, bajo los mil pies y por delante del avión", () => {
-    for (const alUmbral of [3400, 5000, 9000, 20000]) {
+    for (const alUmbral of [2000, 3400, 5000, 9000, 20000]) {
       const sitio = sitioEnLaFinal(alUmbral)!;
       expect(sitio).not.toBeNull();
       expect(sitio.distancia).toBeLessThanOrEqual(3200);
-      expect(alUmbral - sitio.distancia).toBeGreaterThanOrEqual(1800);
+      expect(alUmbral - sitio.distancia).toBeGreaterThanOrEqual(1200);
       expect(sitio.altura).toBeLessThan(1000 * PIE);
       // Un poco por debajo de la senda de 3°: subiendo, se pasa por encima.
       const senda = sitio.distancia * Math.tan((3 * Math.PI) / 180) + 15;
@@ -61,7 +61,7 @@ describe("las aves en la final", () => {
       expect(sitio.altura).toBeGreaterThan(senda - 30);
     }
     // Ya muy cerca no hay sitio: no se sacan de la manga delante del morro.
-    expect(sitioEnLaFinal(3000)).toBeNull();
+    expect(sitioEnLaFinal(1700)).toBeNull();
   });
 
   it("el dado se tira una vez por campo, al entrar en final", () => {

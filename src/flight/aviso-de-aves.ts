@@ -75,17 +75,22 @@ const SOBRE_EL_UMBRAL = 15;
  * **Dónde se pone la bandada de la final**: a cuántos metros del umbral y a
  * qué altura sobre él, o `null` si ya no hay sitio.
  *
- * Por delante del avión lo bastante para que la vea venir —kilómetro y medio
- * largo, que es más de lo que se ve una gaviota— y a unos tres kilómetros del
- * umbral como mucho, que es donde se juntan de verdad: por debajo de mil pies.
+ * Donde se juntan de verdad: cerca del umbral y por debajo de mil pies, a
+ * tres kilómetros como mucho. Y por delante del avión lo bastante para verlas
+ * venir y tener tiempo de subir: casi la mitad de lo que le queda, y nunca
+ * menos de un kilómetro largo. En la final larga de un reactor quedan a tres
+ * kilómetros del umbral; en la corta de una avioneta que viene del circuito,
+ * a ochocientos metros, sobre las luces de aproximación.
+ *
  * Diez metros por debajo de la senda, que es donde un avión que sube un poco
  * pasa por encima y uno que baja se las encuentra.
  */
 export function sitioEnLaFinal(
   alUmbral: number,
 ): { distancia: number; altura: number } | null {
-  const distancia = Math.min(3200, alUmbral - 1800);
-  if (distancia < 1500) return null;
+  const margen = Math.min(1800, Math.max(1200, alUmbral * 0.45));
+  const distancia = Math.min(3200, alUmbral - margen);
+  if (distancia < 600) return null;
   return {
     distancia,
     altura: distancia * Math.tan(SENDA) + SOBRE_EL_UMBRAL - 10,
