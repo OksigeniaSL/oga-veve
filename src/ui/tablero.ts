@@ -525,7 +525,7 @@ export class Tablero {
    * La de altitud es **la de verdad**: lo que se le ha pedido al automático,
    * no la altura de ahora redondeada, que es lo que enseñaba antes y no es lo
    * que dice ninguna ventanilla de ningún avión. Y se gira: con la rueda de
-   * al lado —los dos botones, arriba y abajo—, con la rueda del ratón encima
+   * al lado —los dos botones, bajar y subir—, con la rueda del ratón encima
    * y con la T y la Y. Ver `flight/altitud-seleccionada.ts`.
    */
   private mcp(rotulos: readonly string[]): string {
@@ -552,21 +552,30 @@ export class Tablero {
   }
 
   /**
-   * **La rueda de la ventanilla de altitud**: dos teclas, arriba y abajo, al
-   * lado de la ventanilla. Cada toque, un millar. Con el alto entero de la
-   * visera para el dedo, que es lo más que cabe sin tapar nada.
+   * **La rueda de la ventanilla de altitud**: dos teclas, bajar y subir, al
+   * lado de la ventanilla. Cada toque, un millar; y arrastrando el dedo hacia
+   * arriba o hacia abajo, uno por cada trecho, que es como se gira una rueda.
+   *
+   * El sitio del dedo es **más grande que la tecla**: todo el alto de la
+   * visera y la sombra de debajo, que no tapan nada. En un teléfono el cuadro
+   * va a un tercio de su tamaño, y una tecla de veinte píxeles pintada es una
+   * de siete en la pantalla; el dedo necesita la zona entera.
    */
   private ruedaDeAltitud(x: number): string {
     const tecla = (sube: boolean) => {
-      const y = sube ? 4 : 34;
-      const punta = sube ? `M${x + 22} ${y + 7} l7 12 l-14 0 Z` : `M${x + 22} ${y + 19} l7 -12 l-14 0 Z`;
+      // Una al lado de la otra, bajar y subir: en la visera cabe más ancho
+      // que alto, y el dedo necesita sitio más que el ojo.
+      const x0 = sube ? x + 122 : x;
+      const cx = x0 + 60;
+      const punta = sube ? `M${cx} 22 l9 14 l-18 0 Z` : `M${cx} 42 l9 -14 l-18 0 Z`;
       return `
         <g class="tablero__rueda" data-mcp-rueda="${sube ? 1 : -1}">
-          <rect x="${x}" y="${y}" width="44" height="26" rx="4" />
+          <rect class="tablero__rueda-dedo" x="${x0}" y="0" width="120" height="${BANDA.y}" />
+          <rect x="${x0 + 8}" y="12" width="104" height="40" rx="4" />
           <path d="${punta}" />
         </g>`;
     };
-    return `<g ${MARCA_CON_SU_APARATO}>${tecla(true)}${tecla(false)}</g>`;
+    return `<g ${MARCA_CON_SU_APARATO}>${tecla(false)}${tecla(true)}</g>`;
   }
 
   /** Familia de esferas: seis relojes, columna de motor y placa a la izquierda. */

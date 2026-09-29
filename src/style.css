@@ -3577,6 +3577,14 @@ button.motor__tecla::after {
 .tablero__rueda {
   pointer-events: all;
   cursor: pointer;
+  /* Y el dedo que arrastra gira la rueda, no mueve la página. */
+  touch-action: none;
+}
+
+/* La zona del dedo: invisible, más grande que la tecla pintada. */
+.tablero__rueda rect.tablero__rueda-dedo {
+  fill: transparent;
+  stroke: none;
 }
 
 .tablero__rueda rect {
@@ -3596,6 +3604,7 @@ button.motor__tecla::after {
 
 .tablero__mcp[data-mcp-alt] {
   pointer-events: all;
+  touch-action: none;
 }
 
 /*
