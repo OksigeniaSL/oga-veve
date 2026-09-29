@@ -35,7 +35,11 @@
 
 /** La altitud de transición de Canarias, pies. AIP España, ENR 1.7. */
 export const TRANSICION_CANARIAS = 6000;
-/** Y la de Paraguay, pies: la de la FIR de Asunción. */
+/**
+ * Y la de Paraguay, pies. La publica cada aeródromo en su AD 2.17 del AIP de
+ * la DINAC (AMDT AIRAC 01/2026), y es la misma en todos los que la dan: 3000
+ * ft MSL en SGAS, SGES y SGPI, entre otros.
+ */
 export const TRANSICION_PARAGUAY = 3000;
 
 /** La altitud de transición del campo con este indicativo OACI, pies. */
