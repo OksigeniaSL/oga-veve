@@ -134,16 +134,14 @@ for (const escenario of ESCENARIOS) {
     () => typeof globalThis.__oga.mirarLaBandada === "function",
   );
   for (const sitio of ["puesto", "aire", ...(hayBandadas ? ["bandada"] : [])]) {
-    if (sitio === "bandada") {
-      /*
-       * **El peor caso de las aves**: plantado a trescientos metros de la
-       * bandada más cercana y mirándola, a su altura. Si ahí no se nota, no
-       * se nota en ningún sitio.
-       */
-      const vista = await page.evaluate(() => globalThis.__oga.mirarLaBandada(300));
-      if (!vista) continue;
-      await page.waitForTimeout(1500);
-    }
+    /*
+     * **El peor caso de las aves**: la bandada que más aves lleva, de frente
+     * y a su altura. Se vuelve a plantar el avión antes de cada medida,
+     * porque vuela: a los cinco segundos ya la habría pasado.
+     */
+    const aLaBandada = () =>
+      page.evaluate(() => globalThis.__oga.mirarLaBandada(700, "mayor"));
+    if (sitio === "bandada" && !(await aLaBandada())) continue;
     if (sitio === "aire") {
       // Sobre el aeródromo y a la altura del circuito, que es donde se ve
       // todo a la vez: el aeropuerto, el pueblo y el monte.
@@ -155,6 +153,7 @@ for (const escenario of ESCENARIOS) {
       await page.waitForTimeout(1500);
     }
     for (const { veces, nombre } of APRIETES) {
+      if (sitio === "bandada") await aLaBandada();
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: veces });
       // Un respiro para que se estabilice antes de contar.
       await page.waitForTimeout(1200);
@@ -243,6 +242,7 @@ for (const f of filas) {
       `mediana ${f.mediana.toFixed(1)} ms · p95 ${f.p95.toFixed(1)} ms · ` +
       `${f.llamadas} dibujos · ${(f.triangulos / 1000).toFixed(0)}k △` +
       (f.gpu !== null && f.gpu !== undefined ? ` · GPU ${f.gpu.toFixed(2)} ms` : "") +
+      (f.aves ? ` · aves ${f.aves.cerca}+${f.aves.lejos}` : "") +
       (exige ? `  ← ${f.nombre}` : ""),
   );
 }

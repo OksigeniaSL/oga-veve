@@ -1743,18 +1743,25 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       }),
     /**
      * **Planta el avión a `metros` de una bandada y mirándola**, a su altura:
-     * la más cercana, o la primera de esa especie o de esa forma. Para medir
-     * lo que cuestan y para fotografiarlas. Devuelve cuál, o `null`.
+     * la más cercana, la primera de esa especie o de esa forma, o con
+     * `"mayor"` la que más aves lleva de las de este campo —el peor caso de lo
+     * que cuestan—. Para medirlas y para fotografiarlas. Devuelve cuál, o
+     * `null`.
      */
     mirarLaBandada: (metros = 300, cual?: string) => {
       const t = juego.relojDeLasAves;
       const p = juego.flight.state.position;
       let mejor: { b: (typeof juego.bandadas.lista)[number]; d: number } | null = null;
       for (const b of juego.bandadas.lista) {
-        if (cual && b.especie.id !== cual && b.especie.forma !== cual && b.id !== cual)
-          continue;
         const w = juego.bandadas.dondeEsta(b, t);
         const d = Math.hypot(w.x - p.x, w.z - p.z);
+        if (cual === "mayor") {
+          if (d > 10_000 || b.especie.forma === "termica") continue;
+          if (!mejor || b.cuantas > mejor.b.cuantas) mejor = { b, d };
+          continue;
+        }
+        if (cual && b.especie.id !== cual && b.especie.forma !== cual && b.id !== cual)
+          continue;
         if (!mejor || d < mejor.d) mejor = { b, d };
       }
       if (!mejor) return null;
