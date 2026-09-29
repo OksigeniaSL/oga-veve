@@ -581,11 +581,21 @@ export class Hud {
   private vmax = Infinity;
   private galonesState: readonly Galon[] = [];
   private progressState: { done: number; total: number } | null = null;
-  private soundState: { nivel: AudioLevel["id"]; label: string } = {
+  private soundState: {
+    nivel: AudioLevel["id"];
+    label: string;
+    /** Dónde está el deslizador, de 0 a 1. */
+    mando: number;
+  } = {
     nivel: "normal",
     label: "",
+    mando: 0.92,
   };
   private soundHandler: (() => void) | null = null;
+  private volumen: HTMLInputElement | null = null;
+  private volumenHandler:
+    | ((posicion: number, soltado: boolean) => void)
+    | null = null;
   private keysHandler: (() => void) | null = null;
   private camaraHandler: (() => void) | null = null;
   private gafasHandler: (() => void) | null = null;
@@ -1109,7 +1119,28 @@ export class Hud {
           la tecla V silenciaba sin dejar rastro en pantalla, y un estado
           invisible no es un estado: es un fallo esperando.
         -->
-        <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
+        <!--
+          **Y al lado, el volumen fino, a mano.** «Un control de volumen en
+          el juego, abajo, porque tengo música de fondo y a la vez el juego.»
+          El altavoz sigue siendo el gesto de los pequeños —un toque calla,
+          otro devuelve—, y el deslizador es para dejar el juego por debajo
+          de la música sin perderlo. Van juntos porque son dos mandos sobre
+          una cosa: ver audio/volumen.ts.
+
+          Abajo a la izquierda en el portátil y en la tablet; en el teléfono
+          apaisado, dentro del menú de los cuatro puntos, donde ya vivía el
+          altavoz: abajo están los pulgares. Ver .volumen en la hoja.
+        -->
+        <div class="volumen">
+          <div class="volumen__capsula" data-hud="volumen-caja">
+            <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
+            <span class="volumen__carril">
+              <input class="volumen__mando" type="range" min="0" max="1" step="0.01"
+                     value="0.92" data-hud="volumen"
+                     aria-label="${t("hud.volumen")}" />
+            </span>
+          </div>
+        </div>
         <!--
           Y la fila de paneles: mandos, plano, tiempo, ala, créditos y
           cuaderno. No están escritos aquí uno a uno a propósito — salen de
@@ -1619,6 +1650,22 @@ export class Hud {
     this.progress = pick(this.root, "progress");
     this.sound = pick(this.root, "sound");
     this.sound.addEventListener("click", () => this.soundHandler?.());
+    /*
+     * El deslizador: mientras se arrastra, suena; al soltar, se guarda. Y sin
+     * que el vuelo se entere de las flechas cuando tiene el foco: las mismas
+     * teclas pilotan, y bajar el volumen no puede alabear el avión.
+     */
+    this.volumen = pick(this.root, "volumen") as HTMLInputElement;
+    const alMover = (soltado: boolean) => () =>
+      this.volumenHandler?.(Number(this.volumen!.value), soltado);
+    this.volumen.addEventListener("input", alMover(false));
+    this.volumen.addEventListener("change", alMover(true));
+    this.volumen.addEventListener("keydown", (e) => e.stopPropagation());
+    /*
+     * Y soltado con el ratón o el dedo, suelta también el foco: si no, las
+     * flechas del vuelo siguientes moverían el volumen y no el avión.
+     */
+    this.volumen.addEventListener("pointerup", () => this.volumen?.blur());
     pick(this.root, "camara").addEventListener("click", () =>
       this.camaraHandler?.(),
     );
@@ -2839,10 +2886,22 @@ export class Hud {
     return !!this.fin && !this.fin.hidden;
   }
 
-  /** Estado del sonido: el nivel y su etiqueta accesible. */
-  setSoundLevel(nivel: AudioLevel["id"], label: string): void {
-    this.soundState = { nivel, label };
+  /**
+   * Estado del sonido: el nivel, su etiqueta accesible y dónde va el
+   * deslizador. Si no se dice, el deslizador se queda donde estaba.
+   */
+  setSoundLevel(
+    nivel: AudioLevel["id"],
+    label: string,
+    mando = this.soundState.mando,
+  ): void {
+    this.soundState = { nivel, label, mando };
     this.paintSound();
+  }
+
+  /** Quién mueve el volumen cuando se arrastra el deslizador. */
+  onVolumen(handler: (posicion: number, soltado: boolean) => void): void {
+    this.volumenHandler = handler;
   }
 
   /** Quién vuelve a empezar cuando se toca el botón del final. */
@@ -3382,6 +3441,16 @@ export class Hud {
       "aria-pressed",
       String(this.soundState.nivel === "mudo"),
     );
+    if (this.volumen) {
+      const mando = this.soundState.mando;
+      this.volumen.value = String(mando);
+      // El relleno de la pista, que es lo que se lee de reojo. Ver la hoja.
+      this.volumen.style.setProperty("--volumen", mando.toFixed(3));
+      this.volumen.setAttribute(
+        "aria-valuetext",
+        `${Math.round(mando * 100)} %`,
+      );
+    }
   }
 
   /**

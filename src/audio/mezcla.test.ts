@@ -15,9 +15,11 @@ import {
   Agachado,
   BUSES,
   MANDAN,
+  MINIMO_DE_AVISOS,
   NIVEL,
   ganancia,
   nivelesAhora,
+  refuerzoDeAvisos,
 } from "./mezcla";
 
 describe("la prioridad", () => {
@@ -148,5 +150,43 @@ describe("quién está hablando", () => {
     expect(a.activo).toBe(false);
     // Y vaciar lo ya vacío no dice que haya cambiado nada.
     expect(a.vaciar()).toBe(false);
+  });
+});
+
+describe("el volumen no se lleva por delante un aviso", () => {
+  /*
+   * «Con música de fondo y a la vez el juego» se baja el deslizador, y con él
+   * todo lo que suena. Todo menos lo que avisa: en una cabina de verdad el
+   * mínimo de los avisos se oye siempre (AC 25.1322-1). Ver `MINIMO_DE_AVISOS`.
+   */
+  it("con el maestro bajo, el aviso se queda en el mínimo", () => {
+    for (const maestro of [0.01, 0.05, 0.1, 0.2, 0.29]) {
+      const n = nivelesAhora(false, maestro);
+      expect(n.avisos * maestro).toBeCloseTo(
+        ganancia(NIVEL.avisos) * MINIMO_DE_AVISOS,
+        6,
+      );
+      // Y lo demás sigue al deslizador sin refuerzo ninguno.
+      expect(n.voz).toBeCloseTo(ganancia(NIVEL.voz), 6);
+      expect(n.motor).toBeCloseTo(ganancia(NIVEL.motor), 6);
+    }
+  });
+
+  it("por encima del mínimo, el aviso sigue al deslizador como todo", () => {
+    for (const maestro of [0.3, 0.5, 0.85, 1]) {
+      expect(refuerzoDeAvisos(maestro)).toBe(1);
+      expect(nivelesAhora(false, maestro).avisos).toBeCloseTo(
+        ganancia(NIVEL.avisos),
+        6,
+      );
+    }
+  });
+
+  it("y en silencio no se refuerza nada: el mudo calla", () => {
+    expect(refuerzoDeAvisos(0)).toBe(1);
+  });
+
+  it("y el mínimo se oye: es el paso bajo de antes, no un susurro", () => {
+    expect(MINIMO_DE_AVISOS).toBeGreaterThanOrEqual(0.3);
   });
 });

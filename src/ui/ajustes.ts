@@ -21,14 +21,15 @@
  *   ajustes, y ahí no estaba. Es el mismo estado, no otro — ver `audio.ts`.
  * - **El contraste**, que es el que faltaba de #36.
  *
- * ## Por qué el sonido son tres pasos y no un deslizador
+ * ## Por qué aquí el sonido son tres pasos, si abajo hay un deslizador
  *
- * Porque ya se decidió, y está escrito en `audio.ts`: un deslizador exige
- * precisión con el dedo y no dice de un vistazo dónde está. Tres estados
- * —normal, bajo, mudo— se recorren pulsando y se leen en el icono. El aula
- * necesita el paso «bajo» tanto como el mudo: veinte tablets a medio volumen
- * son un aula; a volumen normal, un aviario. Traer un deslizador aquí sería
- * deshacer esa decisión en la pantalla de al lado.
+ * Porque aquí se viene a **elegir**, no a afinar: normal, bajito o sin
+ * sonido, que se leen de un vistazo y se tocan sin puntería. El aula necesita
+ * el paso «bajo» tanto como el mudo: veinte tablets a medio volumen son un
+ * aula; a volumen normal, un aviario. El volumen fino —el que deja oír la
+ * música de fondo— vive en el deslizador del vuelo, al lado del altavoz, y
+ * los tres pasos de esta fila son tres posiciones de ese mismo deslizador.
+ * Es un solo estado con tres mandos: ver `audio/volumen.ts`.
  *
  * **Y de la música no hay deslizador porque no hay música.** El bus existe en
  * la mezcla y no suena nada por él. Un mando que no manda sobre nada es peor

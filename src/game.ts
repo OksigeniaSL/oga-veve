@@ -475,7 +475,7 @@ import {
   type TranslationKey,
 } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
-import { Audio, type Cue } from "./audio/audio";
+import { Audio, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, luzRojaDelTren, seVuelveADecir } from "./flight/tren";
@@ -2340,7 +2340,11 @@ export class Game {
     ahora: () => Date.now(),
     tocar: (clave, alAcabar) => {
       const piezas = this.instructor.piezasDe(clave);
-      return piezas ? this.audio.encadenarVoz(piezas, alAcabar) : null;
+      // Por el bus de avisos: una caja no baja del mínimo audible cuando se
+      // baja el volumen. Ver `MINIMO_DE_AVISOS`.
+      return piezas
+        ? this.audio.encadenarVoz(piezas, alAcabar, false, false, true)
+        : null;
     },
   });
   /**
@@ -3815,18 +3819,13 @@ export class Game {
     conectarLaRadio(this.audio);
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
-    this.hud.setSoundLevel(
-      this.audio.level.id,
-      t(`sound.${this.audio.level.id}` as never),
-    );
     /*
      * Y el volumen que quedó guardado también manda sobre la voz, **desde el
      * arranque**: se guarda entre partidas, así que quien dejó el juego en
      * «bajo» lo encuentra en «bajo» — y hasta hoy se lo encontraba con el
      * instructor a tope hasta que tocara el botón. Ver `ponerVolumenDeVoz`.
      */
-    permitirVoz(this.audio.level.id !== "mudo");
-    ponerVolumenDeVoz(this.audio.level.gain);
+    this.alCambiarElVolumen(this.audio.level, false);
     // La pantalla de teclas se monta si existe su hueco. Es opcional a
     // propósito: el juego tiene que arrancar aunque falte.
     const teclasRoot = document.getElementById("teclas");
@@ -4072,6 +4071,9 @@ export class Game {
     }
 
     this.hud.onSoundClick(() => this.toggleSound());
+    this.hud.onVolumen((posicion, soltado) =>
+      this.moverElVolumen(posicion, soltado),
+    );
     /*
      * Y el tren y los flaps desde fuera, por el mismo camino que los botones
      * de dentro de la cabina: un mando que se toca en dos sitios tiene que
@@ -8111,8 +8113,7 @@ export class Game {
      * tiene que mover el audio de verdad, y además dejar el glifo de la
      * esquina diciendo la verdad, que si no se contradicen a la vista.
      */
-    const nivel = this.audio.ponerNivel(ajustes.volumen);
-    this.hud.setSoundLevel(nivel.id, t(`sound.${nivel.id}` as never));
+    this.alCambiarElVolumen(this.audio.ponerNivel(ajustes.volumen), false);
   }
 
   /**
@@ -14761,17 +14762,40 @@ export class Game {
     );
   }
 
+  /**
+   * El toque del altavoz —o la tecla V—: callar, o devolver lo que había.
+   * Ver `Audio.alternarSilencio`.
+   */
   private toggleSound(): void {
-    const level = this.audio.cycleLevel();
+    this.alCambiarElVolumen(this.audio.alternarSilencio(), true);
+  }
+
+  /**
+   * El deslizador de volumen. `soltado` cuando se deja: mientras se arrastra
+   * suena, y al soltar se guarda. Sin cartel: el relleno del propio
+   * deslizador ya dice dónde quedó, y un aviso cada vez que se toca la música
+   * de fondo sería ruido.
+   */
+  private moverElVolumen(posicion: number, soltado: boolean): void {
+    this.alCambiarElVolumen(this.audio.ponerPosicion(posicion, soltado), false);
+  }
+
+  /**
+   * Lo que va detrás de cualquier cambio de volumen, venga del altavoz, del
+   * deslizador o de la fila de los ajustes: son tres mandos sobre una cosa, y
+   * los tres tienen que dejar lo mismo.
+   */
+  private alCambiarElVolumen(level: AudioLevel, avisar: boolean): void {
     // La voz obedece al mismo botón que el resto del sonido. Quien pone el
     // juego en mudo lo pone en mudo entero, y una voz que sigue hablando con
     // el altavoz tachado es exactamente lo que nadie espera.
     permitirVoz(level.id !== "mudo");
     /*
-     * Y **el peldaño «bajo» también baja la voz**. La voz del navegador no
-     * pasa por la mezcla, así que el volumen maestro no la alcanza: hasta hoy
-     * el botón solo la callaba del todo o la dejaba a tope. Veinte tablets en
-     * un aula a medio volumen con el instructor gritando en las veinte.
+     * Y **el volumen también mueve la voz**. La voz del navegador no pasa por
+     * la mezcla, así que el volumen maestro no la alcanza: hasta que se le
+     * pasó, el botón solo la callaba del todo o la dejaba a tope. Veinte
+     * tablets en un aula a medio volumen con el instructor gritando en las
+     * veinte.
      */
     ponerVolumenDeVoz(level.gain);
     // En mudo no queda nadie hablando, así que la mezcla se levanta: si no,
@@ -14779,8 +14803,12 @@ export class Game {
     if (level.id === "mudo") this.audio.callarLasVoces();
     // Y al instructor se le calla ahora mismo, no en la frase siguiente.
     if (level.id === "mudo") this.instructor.callar();
-    this.hud.setSoundLevel(level.id, t(`sound.${level.id}` as never));
-    this.hud.flash(t(`sound.${level.id}` as never));
+    this.hud.setSoundLevel(
+      level.id,
+      t(`sound.${level.id}` as never),
+      this.audio.enElMando,
+    );
+    if (avisar) this.hud.flash(t(`sound.${level.id}` as never));
   }
 
   /**

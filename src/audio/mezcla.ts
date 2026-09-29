@@ -95,17 +95,58 @@ export const MANDAN: readonly Bus[] = ["voz", "avisos", "radio"];
 export const ganancia = (db: number): number => Math.pow(10, db / 20);
 
 /**
+ * **Lo menos que suena un aviso de cabina con el juego sin silenciar**, en
+ * ganancia del maestro.
+ *
+ * En un avión de verdad el volumen de los avisos no se puede bajar hasta no
+ * oírlos. La norma de alertas de cabina lo dice tal cual: «el volumen mínimo
+ * al que pueda llevarse con cualquier ajuste, manual o automático, debe
+ * bastar para que la tripulación lo oiga aunque el ruido de cabina suba
+ * después» (FAA AC 25.1322-1, apéndice 2, 2.b(2)). Es la razón de que el
+ * mando de volumen de una cabina no llegue a cero para el *terrain* ni para
+ * el *stall*.
+ *
+ * Aquí el mínimo es el paso «bajo» de antes, tres décimas: es el volumen que
+ * ya se había elegido para un aula entera de tablets, o sea el más bajo que
+ * se sabe que se oye. Por encima, el aviso sigue al deslizador como todo lo
+ * demás; por debajo, se queda ahí.
+ *
+ * **Y el silencio sí lo calla**, que en la cabina no pasa. El mudo es una
+ * decisión del aparato —el aula, la noche, la tablet de todos— y el juego no
+ * puede ganarle al botón de silencio del propio teléfono de todas formas. Lo
+ * que no deja es que un deslizador bajado para oír la música de fondo se
+ * lleve por delante un aviso: eso sería justo el accidente que la norma
+ * quiere evitar. Y callado o no, cada aviso tiene su gemelo en pantalla.
+ */
+export const MINIMO_DE_AVISOS = 0.3;
+
+/**
+ * Cuánto se sube el bus de avisos para que, con este maestro, no baje del
+ * mínimo. Uno si ya está por encima, o si no suena nada.
+ */
+export function refuerzoDeAvisos(maestro: number): number {
+  if (!(maestro > 0)) return 1;
+  return Math.max(1, MINIMO_DE_AVISOS / maestro);
+}
+
+/**
  * A cuánto tiene que estar cada bus ahora mismo.
  *
  * Es toda la mezcla en una función pura: el nivel del bus, y diez decibelios
- * menos si hay alguien hablando y este no es de los que hablan.
+ * menos si hay alguien hablando y este no es de los que hablan. Y el de
+ * avisos, reforzado lo que haga falta para no bajar del mínimo con el
+ * maestro que haya puesto. Ver `MINIMO_DE_AVISOS`.
  */
-export function nivelesAhora(agachado: boolean): Record<Bus, number> {
+export function nivelesAhora(
+  agachado: boolean,
+  maestro = 1,
+): Record<Bus, number> {
   const salida = {} as Record<Bus, number>;
   for (const bus of BUSES) {
     const baja = agachado && !MANDAN.includes(bus);
     salida[bus] = ganancia(NIVEL[bus] + (baja ? AGACHADO_DB : 0));
   }
+  salida.avisos *= refuerzoDeAvisos(maestro);
   return salida;
 }
 

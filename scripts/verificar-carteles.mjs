@@ -613,7 +613,102 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       .filter(Boolean);
   });
 
+  /*
+   * **Y el volumen, abajo, sin pisar nada y a mano.** «Un control de volumen
+   * en el juego, abajo, porque tengo música de fondo.» Abajo es donde viven
+   * el cuadro y, con el dedo, los pulgares: se mira que la cápsula no caiga
+   * encima de ninguno, que quepa, y que el altavoz y el deslizador reciban el
+   * toque. En el teléfono apaisado vive en el menú de los cuatro puntos, y
+   * ahí se abre el menú para preguntarlo igual.
+   */
+  const volumen = await page.evaluate(async () => {
+    const caja = document.querySelector('[data-hud="volumen-caja"]');
+    if (!caja) return { falta: true };
+    const boton = document.querySelector('[data-hud="menu"]');
+    const enMenu =
+      !!boton &&
+      getComputedStyle(boton).display !== "none" &&
+      !!caja.closest('[data-hud="menu-caja"]');
+    if (enMenu) {
+      boton.click();
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    const pisa = (a, b) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+    const c = caja.getBoundingClientRect();
+    const fuera =
+      c.width < 8 ||
+      c.left < 0 ||
+      c.top < 0 ||
+      c.right > innerWidth ||
+      c.bottom > innerHeight;
+    const sordos = ['[data-hud="sound"]', '[data-hud="volumen"]']
+      .map((q) => {
+        const el = document.querySelector(q);
+        const r = el.getBoundingClientRect();
+        const p = document.elementFromPoint(
+          r.left + r.width / 2,
+          r.top + r.height / 2,
+        );
+        return p && (p === el || el.contains(p))
+          ? null
+          : `${el.dataset.hud} → ${p ? p.dataset?.hud || String(p.className).slice(0, 30) : "nada"}`;
+      })
+      .filter(Boolean);
+    const tutor = document.querySelector('[data-hud="tutor"]');
+    const tutorEstaba = tutor?.hidden;
+    if (tutor) tutor.hidden = false;
+    const vecinos = enMenu
+      ? []
+      : [
+          '[data-hud="tablero"]',
+          ".pad--stick",
+          ".pad--rudder",
+          ".pad--throttle",
+          '[data-hud="pictos"]',
+          '[data-hud="senal"]',
+          '[data-hud="tutor"]',
+          ".hud__derecha > *",
+          ".hud__arriba > *",
+          ".hud__vistas > *",
+        ]
+          .flatMap((q) => [...document.querySelectorAll(q)])
+          .filter(
+            (o) =>
+              o !== caja &&
+              !caja.contains(o) &&
+              !o.contains(caja) &&
+              !o.closest("[hidden]") &&
+              getComputedStyle(o).display !== "none" &&
+              getComputedStyle(o).visibility !== "hidden" &&
+              o.getBoundingClientRect().width > 2 &&
+              pisa(c, o.getBoundingClientRect()),
+          )
+          .map((o) => o.dataset.hud ?? String(o.className).slice(0, 24));
+    if (tutor) tutor.hidden = tutorEstaba;
+    if (enMenu) {
+      boton.click();
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    return { enMenu, fuera, sordos, vecinos: [...new Set(vecinos)] };
+  });
   const donde = `${juego.tramo} ${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  comprobar(
+    `${donde}: el volumen cabe, no pisa nada y se toca${volumen.enMenu ? " (en el menú)" : ""}`,
+    !volumen.falta &&
+      !volumen.fuera &&
+      volumen.sordos.length === 0 &&
+      volumen.vecinos.length === 0,
+    volumen.falta
+      ? "no hay mando de volumen"
+      : volumen.fuera
+        ? "se sale de la pantalla"
+        : [...volumen.sordos, ...volumen.vecinos.map((v) => `pisa ${v}`)]
+            .slice(0, 4)
+            .join(" · ") || "libre",
+    "«un control de volumen en el juego, abajo, porque tengo música de fondo»",
+  );
   comprobar(
     `${donde}: todos los botones reciben el toque`,
     sordos.length === 0,
