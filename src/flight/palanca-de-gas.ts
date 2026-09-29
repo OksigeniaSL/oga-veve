@@ -71,14 +71,46 @@ export const PASO = 0.1;
 export const MANTENER = 0.4;
 
 /**
+ * **Lo más cerca del ralentí que se pinta la marca de rodaje**: un imán.
+ *
+ * Estaba en doce centésimas, dos imanes, «para no confundirla con el
+ * ralentí». Y el precio no se veía: en el modelo completo, el gas que sostiene
+ * nueve metros por segundo es **de cinco a diez centésimas** en toda la flota
+ * —0,049 el JAZ 90, 0,063 el 120, 0,076 el 25, 0,088 el 60, 0,090 el 40 y
+ * 0,100 el 20—, así que la marca quedaba siempre en el suelo y nunca donde el
+ * avión rueda. Medido, un minuto con el dedo en ella desde nueve metros por
+ * segundo: el JAZ 20 acababa a 11, el 60 a 13, el 120 a 19 y **el JAZ 90 a
+ * 25**. La marca que promete rodar llevaba a correr, que es justo lo que ya se
+ * había arreglado una vez en `gasParaRodar`.
+ *
+ * **Y lo real es eso: el gas de rodaje está pegado al ralentí.** Un reactor
+ * rueda con los motores en ralentí o casi, y una avioneta con unas pocas
+ * revoluciones por encima; se sale con un empujón y se sigue con el freno. En
+ * la cabina no hay marca —ver arriba—, así que la de aquí solo puede ser una
+ * ayuda de presentación, y una ayuda que señala otro sitio enseña algo falso.
+ *
+ * Lo que sí hace falta es que se distingan las dos, y eso ya no lo hace el
+ * suelo: **el imán se queda con la marca más cercana** —ver `alIman`—, así
+ * que con dos marcas a seis centésimas el dedo cae en una o en otra según de
+ * cuál esté más cerca, nunca en las dos. Lo que queda es la vista: una
+ * centésima son 1,4 píxeles en una palanca de ciento noventa, las marcas
+ * miden cuatro, y a seis centésimas sus centros quedan a ocho píxeles —el
+ * grosor de una marca de hueco entre las dos—. Por debajo de eso se pintarían
+ * encima una de otra. Solo el JAZ 90 cae por debajo, y por una centésima:
+ * con 0,06 en vez de 0,049 va ganando unas décimas por minuto, no quince.
+ */
+export const RODAJE_MINIMO = IMAN;
+
+/**
  * Las marcas de la palanca para un avión: ralentí, rodaje y despegue.
  *
- * El rodaje se acota para que las tres se distingan siempre: pegado al
- * ralentí sería la misma marca, y pegado al despegue, lo mismo por arriba.
+ * El rodaje es el de este avión y se acota solo lo justo para que las tres se
+ * vean: pegado al ralentí sería la misma raya, y pegado al despegue, lo mismo
+ * por arriba. Ver `RODAJE_MINIMO`.
  */
 export function marcasDeGas(gasDeRodaje: number): readonly number[] {
   const rodaje = Number.isFinite(gasDeRodaje)
-    ? Math.min(0.6, Math.max(0.12, gasDeRodaje))
+    ? Math.min(0.6, Math.max(RODAJE_MINIMO, gasDeRodaje))
     : 0.3;
   return [RALENTI, rodaje, DESPEGUE];
 }
