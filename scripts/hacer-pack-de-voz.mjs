@@ -35,6 +35,7 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -172,7 +173,21 @@ for (const toma of tomas) {
     aac,
   ]);
 
-  piezas[nombre] = { ms: duracion(opus) };
+  /*
+   * **Y la huella de la toma**, de la grabación cruda y no de lo horneado.
+   *
+   * El juego pide cada pieza con algo que cambie cuando cambia la toma, porque
+   * los ficheros se llaman igual de una tanda a otra y la caché los sirve por
+   * nombre. Era la duración, y no basta: el Opus va por tramas y las
+   * duraciones salen redondeadas, así que dos tomas distintas pueden medir lo
+   * mismo al milisegundo. Pasó al regrabar a la comandante entera: catorce de
+   * doscientas cincuenta y nueve medían igual que la vieja, y esas catorce se
+   * habrían seguido oyendo planas para siempre en toda tablet que ya las
+   * tuviera. De la cruda y no del Opus porque rehornear sin regrabar vuelve a
+   * codificar con otros bytes, y eso no es una toma nueva.
+   */
+  const huella = createHash("sha1").update(readFileSync(entrada)).digest("hex").slice(0, 10);
+  piezas[nombre] = { ms: duracion(opus), h: huella };
   bytes += statSync(opus).size + statSync(aac).size;
 }
 

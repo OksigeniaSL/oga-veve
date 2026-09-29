@@ -4,409 +4,544 @@
   "idioma": "en",
   "piezas": {
     "altura.nivel": {
-      "ms": 955
+      "ms": 955,
+      "h": "5170d1face"
     },
     "altura.pies.2": {
-      "ms": 1060
+      "ms": 1060,
+      "h": "6c7ace003a"
     },
     "altura.pies.3": {
-      "ms": 1039
+      "ms": 1039,
+      "h": "687bab257c"
     },
     "altura.pies.4": {
-      "ms": 1084
+      "ms": 1084,
+      "h": "910870fc8b"
     },
     "altura.pies.5": {
-      "ms": 1177
+      "ms": 1177,
+      "h": "b782371b1c"
     },
     "altura.pies.6": {
-      "ms": 1208
+      "ms": 1208,
+      "h": "54dc84e599"
     },
     "cifra.0": {
-      "ms": 575
+      "ms": 575,
+      "h": "b40917077d"
     },
     "cifra.1": {
-      "ms": 418
+      "ms": 418,
+      "h": "b310d1fd65"
     },
     "cifra.2": {
-      "ms": 599
+      "ms": 599,
+      "h": "6c820c2686"
     },
     "cifra.3": {
-      "ms": 455
+      "ms": 455,
+      "h": "d9a206633e"
     },
     "cifra.4": {
-      "ms": 568
+      "ms": 568,
+      "h": "08ae29bbe0"
     },
     "cifra.5": {
-      "ms": 608
+      "ms": 608,
+      "h": "17bc4961ad"
     },
     "cifra.6": {
-      "ms": 611
+      "ms": 611,
+      "h": "4c485ad2e8"
     },
     "cifra.7": {
-      "ms": 619
+      "ms": 619,
+      "h": "e464b2fd43"
     },
     "cifra.8": {
-      "ms": 458
+      "ms": 458,
+      "h": "0439ec5dad"
     },
     "cifra.9": {
-      "ms": 649
+      "ms": 649,
+      "h": "cf5de6db38"
     },
     "cifra.es.0": {
-      "ms": 744
+      "ms": 744,
+      "h": "5f4f82fe98"
     },
     "cifra.es.1": {
-      "ms": 562
+      "ms": 562,
+      "h": "d5cca8f8a8"
     },
     "cifra.es.2": {
-      "ms": 547
+      "ms": 547,
+      "h": "e6c24b378b"
     },
     "cifra.es.3": {
-      "ms": 552
+      "ms": 552,
+      "h": "c256804257"
     },
     "cifra.es.4": {
-      "ms": 737
+      "ms": 737,
+      "h": "924b8e79b1"
     },
     "cifra.es.5": {
-      "ms": 666
+      "ms": 666,
+      "h": "a1d6892a00"
     },
     "cifra.es.6": {
-      "ms": 696
+      "ms": 696,
+      "h": "6b7a6486b4"
     },
     "cifra.es.7": {
-      "ms": 714
+      "ms": 714,
+      "h": "f1996757ba"
     },
     "cifra.es.8": {
-      "ms": 577
+      "ms": 577,
+      "h": "d0b04ed944"
     },
     "cifra.es.9": {
-      "ms": 639
+      "ms": 639,
+      "h": "ca47914b4b"
     },
     "destino.ayolas": {
-      "ms": 748
+      "ms": 748,
+      "h": "704d1c860d"
     },
     "destino.concepcion": {
-      "ms": 820
+      "ms": 820,
+      "h": "34388891b4"
     },
     "destino.encarnacion": {
-      "ms": 844
+      "ms": 844,
+      "h": "fc01ee14fc"
     },
     "destino.estigarribia": {
-      "ms": 1359
+      "ms": 1359,
+      "h": "57daf267fd"
     },
     "destino.guarani": {
-      "ms": 741
+      "ms": 741,
+      "h": "e887931352"
     },
     "destino.pedro-juan": {
-      "ms": 1313
+      "ms": 1313,
+      "h": "dd09561bb7"
     },
     "destino.pettirossi": {
-      "ms": 922
+      "ms": 922,
+      "h": "5006daaa82"
     },
     "destino.pilar": {
-      "ms": 677
+      "ms": 677,
+      "h": "7793b66c50"
     },
     "destino.yvytu-rape": {
-      "ms": 987
+      "ms": 987,
+      "h": "b66e2ef6d2"
     },
     "fonetico.alfa": {
-      "ms": 599
+      "ms": 599,
+      "h": "3e7995e46f"
     },
     "fonetico.bravo": {
-      "ms": 616
+      "ms": 616,
+      "h": "826b466438"
     },
     "fonetico.charlie": {
-      "ms": 620
+      "ms": 620,
+      "h": "3c558e7729"
     },
     "fonetico.delta": {
-      "ms": 526
+      "ms": 526,
+      "h": "85bb8e6e7d"
     },
     "fonetico.echo": {
-      "ms": 528
+      "ms": 528,
+      "h": "6ac602a021"
     },
     "fonetico.foxtrot": {
-      "ms": 717
+      "ms": 717,
+      "h": "4fb501e728"
     },
     "fonetico.golf": {
-      "ms": 585
+      "ms": 585,
+      "h": "1a00e29caa"
     },
     "fonetico.hotel": {
-      "ms": 579
+      "ms": 579,
+      "h": "a052fd2120"
     },
     "fonetico.india": {
-      "ms": 670
+      "ms": 670,
+      "h": "85f509a959"
     },
     "fonetico.juliett": {
-      "ms": 787
+      "ms": 787,
+      "h": "81a9f811ef"
     },
     "fonetico.kilo": {
-      "ms": 549
+      "ms": 549,
+      "h": "2ef5de0a87"
     },
     "fonetico.lima": {
-      "ms": 650
+      "ms": 650,
+      "h": "39c787df8c"
     },
     "fonetico.mike": {
-      "ms": 568
+      "ms": 568,
+      "h": "598e980bf3"
     },
     "fonetico.november": {
-      "ms": 739
+      "ms": 739,
+      "h": "364d366831"
     },
     "fonetico.oscar": {
-      "ms": 696
+      "ms": 696,
+      "h": "ab635adbd9"
     },
     "fonetico.papa": {
-      "ms": 586
+      "ms": 586,
+      "h": "b1e0552238"
     },
     "fonetico.quebec": {
-      "ms": 569
+      "ms": 569,
+      "h": "621655f62d"
     },
     "fonetico.romeo": {
-      "ms": 761
+      "ms": 761,
+      "h": "8e3883bc19"
     },
     "fonetico.sierra": {
-      "ms": 681
+      "ms": 681,
+      "h": "7127e39452"
     },
     "fonetico.tango": {
-      "ms": 556
+      "ms": 556,
+      "h": "e467485623"
     },
     "fonetico.uniform": {
-      "ms": 820
+      "ms": 820,
+      "h": "f710195a10"
     },
     "fonetico.victor": {
-      "ms": 707
+      "ms": 707,
+      "h": "5c0ade1cb2"
     },
     "fonetico.whiskey": {
-      "ms": 601
+      "ms": 601,
+      "h": "0aef0ff3ee"
     },
     "fonetico.xray": {
-      "ms": 604
+      "ms": 604,
+      "h": "d3588e77fb"
     },
     "fonetico.yankee": {
-      "ms": 618
+      "ms": 618,
+      "h": "ca377c2d1f"
     },
     "fonetico.zulu": {
-      "ms": 681
+      "ms": 681,
+      "h": "8871a726d8"
     },
     "lado.center": {
-      "ms": 699
+      "ms": 699,
+      "h": "ed0d4d9e51"
     },
     "lado.es.central": {
-      "ms": 708
+      "ms": 708,
+      "h": "0604960e55"
     },
     "lado.es.derecha": {
-      "ms": 701
+      "ms": 701,
+      "h": "73d4320210"
     },
     "lado.es.izquierda": {
-      "ms": 812
+      "ms": 812,
+      "h": "18ace2787c"
     },
     "lado.left": {
-      "ms": 521
+      "ms": 521,
+      "h": "a51129c670"
     },
     "lado.right": {
-      "ms": 540
+      "ms": 540,
+      "h": "80b549e984"
     },
     "torre.solo.afisLibre": {
-      "ms": 725
+      "ms": 725,
+      "h": "e48b0bf03f"
     },
     "torre.solo.afisOcupada": {
-      "ms": 1089
+      "ms": 1089,
+      "h": "284c72e538"
     },
     "torre.solo.afisSinTrafico": {
-      "ms": 1491
+      "ms": 1491,
+      "h": "cc3585bed0"
     },
     "torre.solo.afisTraficoAterriza": {
-      "ms": 1230
+      "ms": 1230,
+      "h": "ad9ec4297d"
     },
     "torre.solo.afisTraficoDespega": {
-      "ms": 1160
+      "ms": 1160,
+      "h": "034e58cd9e"
     },
     "torre.solo.autorizadoA": {
-      "ms": 991
+      "ms": 991,
+      "h": "b36a4b9910"
     },
     "torre.solo.autorizadoDespegar": {
-      "ms": 1492
+      "ms": 1492,
+      "h": "2fb3a27ae4"
     },
     "torre.solo.autorizadoParaAterrizar": {
-      "ms": 1571
+      "ms": 1571,
+      "h": "070716f611"
     },
     "torre.solo.clearedLand": {
-      "ms": 1015
+      "ms": 1015,
+      "h": "3a680a779f"
     },
     "torre.solo.clearedTakeoff": {
-      "ms": 1095
+      "ms": 1095,
+      "h": "8b2ea8cf83"
     },
     "torre.solo.clearedTo": {
-      "ms": 851
+      "ms": 851,
+      "h": "80ffba95cf"
     },
     "torre.solo.climbTo": {
-      "ms": 688
+      "ms": 688,
+      "h": "a3202382c7"
     },
     "torre.solo.departingTraffic": {
-      "ms": 1184
+      "ms": 1184,
+      "h": "8e116ae613"
     },
     "torre.solo.free": {
-      "ms": 539
+      "ms": 539,
+      "h": "61192bab44"
     },
     "torre.solo.goAround": {
-      "ms": 1787
+      "ms": 1787,
+      "h": "4c7eb1da6b"
     },
     "torre.solo.goAroundSolo": {
-      "ms": 799
+      "ms": 799,
+      "h": "622d8d3807"
     },
     "torre.solo.holdShort": {
-      "ms": 1366
+      "ms": 1366,
+      "h": "78a4fc5afe"
     },
     "torre.solo.idaAlAire": {
-      "ms": 902
+      "ms": 902,
+      "h": "e06d9655f7"
     },
     "torre.solo.landingTraffic": {
-      "ms": 1013
+      "ms": 1013,
+      "h": "b8ca7c2110"
     },
     "torre.solo.lineUpWait": {
-      "ms": 1195
+      "ms": 1195,
+      "h": "258c8bb92f"
     },
     "torre.solo.mantengaFuera": {
-      "ms": 1441
+      "ms": 1441,
+      "h": "3f84060139"
     },
     "torre.solo.noReportedTraffic": {
-      "ms": 1298
+      "ms": 1298,
+      "h": "36171b6ec0"
     },
     "torre.solo.occupied": {
-      "ms": 769
+      "ms": 769,
+      "h": "dbfa6db571"
     },
     "torre.solo.pista": {
-      "ms": 526
+      "ms": 526,
+      "h": "ef9b4093f2"
     },
     "torre.solo.rogerMayday": {
-      "ms": 1086
+      "ms": 1086,
+      "h": "0524247a69"
     },
     "torre.solo.runway": {
-      "ms": 556
+      "ms": 556,
+      "h": "4b1d621937"
     },
     "torre.solo.runwayInUse": {
-      "ms": 1086
+      "ms": 1086,
+      "h": "3040616f90"
     },
     "torre.solo.subir.2": {
-      "ms": 1323
+      "ms": 1323,
+      "h": "bec94cf8d7"
     },
     "torre.solo.subir.3": {
-      "ms": 1360
+      "ms": 1360,
+      "h": "f422a84712"
     },
     "torre.solo.subirNivel": {
-      "ms": 1445
+      "ms": 1445,
+      "h": "9ecba19149"
     },
     "torre.solo.vacateNext": {
-      "ms": 1388
+      "ms": 1388,
+      "h": "632d1bad94"
     },
     "trafico.above": {
-      "ms": 553
+      "ms": 553,
+      "h": "e38aeb5895"
     },
     "trafico.below": {
-      "ms": 603
+      "ms": 603,
+      "h": "7e5ce61255"
     },
     "trafico.hora.1": {
-      "ms": 696
+      "ms": 696,
+      "h": "c805a701d8"
     },
     "trafico.hora.10": {
-      "ms": 723
+      "ms": 723,
+      "h": "2e5d93fdc3"
     },
     "trafico.hora.11": {
-      "ms": 861
+      "ms": 861,
+      "h": "2eccefdf3a"
     },
     "trafico.hora.12": {
-      "ms": 874
+      "ms": 874,
+      "h": "ce03712990"
     },
     "trafico.hora.2": {
-      "ms": 806
+      "ms": 806,
+      "h": "7c9a8c0748"
     },
     "trafico.hora.3": {
-      "ms": 926
+      "ms": 926,
+      "h": "7eb004be25"
     },
     "trafico.hora.4": {
-      "ms": 851
+      "ms": 851,
+      "h": "4ffb8e9d05"
     },
     "trafico.hora.5": {
-      "ms": 835
+      "ms": 835,
+      "h": "517fd58aa4"
     },
     "trafico.hora.6": {
-      "ms": 806
+      "ms": 806,
+      "h": "47ed186f95"
     },
     "trafico.hora.7": {
-      "ms": 914
+      "ms": 914,
+      "h": "3195b4fa03"
     },
     "trafico.hora.8": {
-      "ms": 720
+      "ms": 720,
+      "h": "1c945bc8cb"
     },
     "trafico.hora.9": {
-      "ms": 833
+      "ms": 833,
+      "h": "dfc5c1433f"
     },
     "trafico.millas.1": {
-      "ms": 750
+      "ms": 750,
+      "h": "55dc4ba78d"
     },
     "trafico.millas.2": {
-      "ms": 864
+      "ms": 864,
+      "h": "70eccb90eb"
     },
     "trafico.millas.3": {
-      "ms": 766
+      "ms": 766,
+      "h": "9b10beca67"
     },
     "trafico.millas.4": {
-      "ms": 777
+      "ms": 777,
+      "h": "c8bcb35667"
     },
     "trafico.millas.5": {
-      "ms": 1019
+      "ms": 1019,
+      "h": "24d85e4a4f"
     },
     "trafico.millas.6": {
-      "ms": 855
+      "ms": 855,
+      "h": "f46cce920b"
     },
     "trafico.pies.10": {
-      "ms": 1079
+      "ms": 1079,
+      "h": "5f7c793acb"
     },
     "trafico.pies.11": {
-      "ms": 1677
+      "ms": 1677,
+      "h": "0df9641a21"
     },
     "trafico.pies.12": {
-      "ms": 1504
+      "ms": 1504,
+      "h": "81fd011215"
     },
     "trafico.pies.3": {
-      "ms": 1247
+      "ms": 1247,
+      "h": "7a0f28a6fd"
     },
     "trafico.pies.4": {
-      "ms": 946
+      "ms": 946,
+      "h": "617e2b9215"
     },
     "trafico.pies.5": {
-      "ms": 1092
+      "ms": 1092,
+      "h": "82e64d8dcc"
     },
     "trafico.pies.6": {
-      "ms": 1067
+      "ms": 1067,
+      "h": "9557488e56"
     },
     "trafico.pies.7": {
-      "ms": 1123
+      "ms": 1123,
+      "h": "1c47160964"
     },
     "trafico.pies.8": {
-      "ms": 1109
+      "ms": 1109,
+      "h": "29c53234df"
     },
     "trafico.pies.9": {
-      "ms": 1214
+      "ms": 1214,
+      "h": "c68b480487"
     },
     "trafico.sameLevel": {
-      "ms": 924
+      "ms": 924,
+      "h": "da7c7dc62c"
     },
     "trafico.traffic": {
-      "ms": 685
+      "ms": 685,
+      "h": "5e443d60f9"
     },
     "viento.calm": {
-      "ms": 636
+      "ms": 636,
+      "h": "def175c619"
     },
     "viento.degrees": {
-      "ms": 695
+      "ms": 695,
+      "h": "95dca0fc1f"
     },
     "viento.knots": {
-      "ms": 611
+      "ms": 611,
+      "h": "3e32fb3b00"
     },
     "viento.variable": {
-      "ms": 719
+      "ms": 719,
+      "h": "83d4427672"
     },
     "viento.wind": {
-      "ms": 538
+      "ms": 538,
+      "h": "4710b29230"
     }
   },
   "recetas": {

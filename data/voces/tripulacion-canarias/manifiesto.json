@@ -4,34 +4,44 @@
   "idioma": "es-PY",
   "piezas": {
     "tripulacion.canario.cinturones": {
-      "ms": 9407
+      "ms": 9407,
+      "h": "5ba2b508a9"
     },
     "tripulacion.canario.servicio.banana": {
-      "ms": 9307
+      "ms": 9307,
+      "h": "33e5659ebf"
     },
     "tripulacion.canario.servicio.banana.paraguay": {
-      "ms": 9407
+      "ms": 9407,
+      "h": "ab4b19a688"
     },
     "tripulacion.canario.servicio.largo": {
-      "ms": 2674
+      "ms": 2674,
+      "h": "efa04f0998"
     },
     "tripulacion.canario.servicio.mango": {
-      "ms": 9007
+      "ms": 9007,
+      "h": "1d2ec1aed2"
     },
     "tripulacion.canario.servicio.mango.paraguay": {
-      "ms": 10807
+      "ms": 10807,
+      "h": "39e3b5b1b4"
     },
     "tripulacion.canario.servicio.mani": {
-      "ms": 9907
+      "ms": 9907,
+      "h": "9c6c3c39ae"
     },
     "tripulacion.canario.servicio.mani.paraguay": {
-      "ms": 9607
+      "ms": 9607,
+      "h": "4dad1d72d0"
     },
     "tripulacion.canario.servicio.pina": {
-      "ms": 10507
+      "ms": 10507,
+      "h": "2894da5a22"
     },
     "tripulacion.canario.servicio.pina.paraguay": {
-      "ms": 10307
+      "ms": 10307,
+      "h": "4701971fd6"
     }
   },
   "recetas": {

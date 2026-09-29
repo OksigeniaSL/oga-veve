@@ -670,9 +670,14 @@ export class InstructorGrabado implements Instructor {
          * nunca dura lo mismo que la vieja, y la duración viene en el
          * manifiesto, que se pide siempre de la red.
          */
-        const ms = manifiesto.piezas[pieza]?.ms ?? 0;
+        /*
+         * Y con la huella de la toma si la trae, que la duración sola no
+         * basta: sale redondeada a la trama del Opus y dos tomas distintas
+         * pueden medir lo mismo. Ver `Pieza.h`.
+         */
+        const { ms = 0, h } = manifiesto.piezas[pieza] ?? {};
         const bytes = await traer(
-          `${ficheroDe(pieza, formato, manifiesto.voz, base)}?ms=${ms}`,
+          `${ficheroDe(pieza, formato, manifiesto.voz, base)}?ms=${ms}${h ? `&h=${h}` : ""}`,
         );
         if (!bytes) return;
         const buffer = await this.altavoz.decodificar(bytes);

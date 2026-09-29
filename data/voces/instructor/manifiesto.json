@@ -4,766 +4,1020 @@
   "idioma": "es-PY",
   "piezas": {
     "ala.dice.arrastra": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "0c034c0f04"
     },
     "ala.dice.arriba": {
-      "ms": 6907
+      "ms": 6907,
+      "h": "8aa56eb44d"
     },
     "ala.dice.cerca": {
-      "ms": 2642
+      "ms": 2642,
+      "h": "c0e25aa25e"
     },
     "ala.dice.perdida": {
-      "ms": 8107
+      "ms": 8107,
+      "h": "9f860f52b5"
     },
     "circuito.base": {
-      "ms": 2873
+      "ms": 2873,
+      "h": "013c255422"
     },
     "circuito.cruzado": {
-      "ms": 2021
+      "ms": 2021,
+      "h": "2ff1426860"
     },
     "circuito.encola": {
-      "ms": 2748
+      "ms": 2748,
+      "h": "aa229c84d5"
     },
     "circuito.subida": {
-      "ms": 1269
+      "ms": 1269,
+      "h": "b5f75ca278"
     },
     "fin.bien": {
-      "ms": 925
+      "ms": 925,
+      "h": "b90de81670"
     },
     "fin.horas": {
-      "ms": 1087
+      "ms": 1087,
+      "h": "96453effa8"
     },
     "fin.llegaste": {
-      "ms": 1335
+      "ms": 1335,
+      "h": "f16db1c54a"
     },
     "fin.muyBien": {
-      "ms": 984
+      "ms": 984,
+      "h": "6584341b34"
     },
     "fin.otra": {
-      "ms": 889
+      "ms": 889,
+      "h": "c08451236a"
     },
     "fin.redondo": {
-      "ms": 2355
+      "ms": 2355,
+      "h": "e7982cb1ad"
     },
     "fonetico.alfa": {
-      "ms": 567
+      "ms": 567,
+      "h": "224843d8b4"
     },
     "fonetico.bravo": {
-      "ms": 583
+      "ms": 583,
+      "h": "cc4ad7ea1d"
     },
     "fonetico.charlie": {
-      "ms": 586
+      "ms": 586,
+      "h": "0ccabe2cc1"
     },
     "fonetico.delta": {
-      "ms": 821
+      "ms": 821,
+      "h": "33fd4e3925"
     },
     "fonetico.echo": {
-      "ms": 688
+      "ms": 688,
+      "h": "3843c5e250"
     },
     "fonetico.foxtrot": {
-      "ms": 839
+      "ms": 839,
+      "h": "9f62915a0d"
     },
     "fonetico.golf": {
-      "ms": 848
+      "ms": 848,
+      "h": "8898258f5c"
     },
     "fonetico.hotel": {
-      "ms": 508
+      "ms": 508,
+      "h": "61bf3b0576"
     },
     "fonetico.india": {
-      "ms": 643
+      "ms": 643,
+      "h": "4836b31d3a"
     },
     "fonetico.juliett": {
-      "ms": 783
+      "ms": 783,
+      "h": "4a6a60ebed"
     },
     "fonetico.kilo": {
-      "ms": 841
+      "ms": 841,
+      "h": "be169bbb89"
     },
     "fonetico.lima": {
-      "ms": 514
+      "ms": 514,
+      "h": "5914960250"
     },
     "fonetico.mike": {
-      "ms": 373
+      "ms": 373,
+      "h": "8f3df53e66"
     },
     "fonetico.november": {
-      "ms": 644
+      "ms": 644,
+      "h": "089b84faf3"
     },
     "fonetico.oscar": {
-      "ms": 641
+      "ms": 641,
+      "h": "6b15124f65"
     },
     "fonetico.papa": {
-      "ms": 488
+      "ms": 488,
+      "h": "e1b2605081"
     },
     "fonetico.quebec": {
-      "ms": 914
+      "ms": 914,
+      "h": "ecce67d5e6"
     },
     "fonetico.romeo": {
-      "ms": 846
+      "ms": 846,
+      "h": "860224cf67"
     },
     "fonetico.sierra": {
-      "ms": 647
+      "ms": 647,
+      "h": "0b1654d1fa"
     },
     "fonetico.tango": {
-      "ms": 734
+      "ms": 734,
+      "h": "a6c4159c22"
     },
     "fonetico.uniform": {
-      "ms": 640
+      "ms": 640,
+      "h": "6d06a0ffc3"
     },
     "fonetico.victor": {
-      "ms": 689
+      "ms": 689,
+      "h": "fc051d8f74"
     },
     "fonetico.whiskey": {
-      "ms": 535
+      "ms": 535,
+      "h": "df12bf72f5"
     },
     "fonetico.xray": {
-      "ms": 608
+      "ms": 608,
+      "h": "62ff018f50"
     },
     "fonetico.yankee": {
-      "ms": 758
+      "ms": 758,
+      "h": "043c920ac1"
     },
     "fonetico.zulu": {
-      "ms": 689
+      "ms": 689,
+      "h": "df53bff8bc"
     },
     "gafas.ganadas": {
-      "ms": 984
+      "ms": 984,
+      "h": "582fe199ae"
     },
     "galon.aproximacion": {
-      "ms": 1416
+      "ms": 1416,
+      "h": "92da0e1245"
     },
     "galon.aros": {
-      "ms": 938
+      "ms": 938,
+      "h": "70e330ab33"
     },
     "galon.frustrada": {
-      "ms": 1139
+      "ms": 1139,
+      "h": "f0fba6cc90"
     },
     "galon.manga": {
-      "ms": 1371
+      "ms": 1371,
+      "h": "dc2a1e8ded"
     },
     "galon.rodaje": {
-      "ms": 1190
+      "ms": 1190,
+      "h": "be477a700d"
     },
     "galon.toma": {
-      "ms": 1275
+      "ms": 1275,
+      "h": "ab2a35fe14"
     },
     "galon.velocidad": {
-      "ms": 966
+      "ms": 966,
+      "h": "f2c4ec5330"
     },
     "grado.aprendiz": {
-      "ms": 830
+      "ms": 830,
+      "h": "94f9943562"
     },
     "grado.comandante": {
-      "ms": 864
+      "ms": 864,
+      "h": "7f24a85a6c"
     },
     "grado.instructora": {
-      "ms": 863
+      "ms": 863,
+      "h": "3b6ca506b1"
     },
     "grado.piloto": {
-      "ms": 694
+      "ms": 694,
+      "h": "334181771e"
     },
     "hud.landedShort": {
-      "ms": 3907
+      "ms": 3907,
+      "h": "e6f212da61"
     },
     "matricula.asiNosLlama": {
-      "ms": 1136
+      "ms": 1136,
+      "h": "bf00f187c3"
     },
     "matricula.nuestroAvion": {
-      "ms": 1035
+      "ms": 1035,
+      "h": "a45434ee07"
     },
     "mission.anaga.name": {
-      "ms": 616
+      "ms": 616,
+      "h": "84a4f65390"
     },
     "mission.cumbre.name": {
-      "ms": 935
+      "ms": 935,
+      "h": "2c006fb79a"
     },
     "mission.done": {
-      "ms": 914
+      "ms": 914,
+      "h": "0771773cb8"
     },
     "mission.first.name": {
-      "ms": 924
+      "ms": 924,
+      "h": "c0b912d07a"
     },
     "mission.lomas.name": {
-      "ms": 842
+      "ms": 842,
+      "h": "97c0d210f7"
     },
     "mission.mar.name": {
-      "ms": 866
+      "ms": 866,
+      "h": "2c466a15fe"
     },
     "mission.none": {
-      "ms": 716
+      "ms": 716,
+      "h": "d86622c57f"
     },
     "mission.rio.name": {
-      "ms": 819
+      "ms": 819,
+      "h": "373f8a0585"
     },
     "mission.rioabajo.name": {
-      "ms": 871
+      "ms": 871,
+      "h": "3f40b37a7f"
     },
     "mission.started": {
-      "ms": 506
+      "ms": 506,
+      "h": "bd57d9f3e4"
     },
     "mission.step": {
-      "ms": 785
+      "ms": 785,
+      "h": "8c3a7c3051"
     },
     "mission.transfer.name": {
-      "ms": 844
+      "ms": 844,
+      "h": "241db35e40"
     },
     "mission.valley.name": {
-      "ms": 1057
+      "ms": 1057,
+      "h": "8cba38644b"
     },
     "motivo.cayendo": {
-      "ms": 1239
+      "ms": 1239,
+      "h": "758fd10e42"
     },
     "motivo.descolocado": {
-      "ms": 1032
+      "ms": 1032,
+      "h": "f71e103a86"
     },
     "motivo.lento": {
-      "ms": 1076
+      "ms": 1076,
+      "h": "f66325e5c3"
     },
     "motivo.rapido": {
-      "ms": 1097
+      "ms": 1097,
+      "h": "ff900598c7"
     },
     "motivo.sinPista": {
-      "ms": 917
+      "ms": 917,
+      "h": "6c7ad79e3a"
     },
     "motivo.torcido": {
-      "ms": 1072
+      "ms": 1072,
+      "h": "ab6dba7022"
     },
     "percance.coche": {
-      "ms": 1705
+      "ms": 1705,
+      "h": "f4b28df340"
     },
     "percance.edificio": {
-      "ms": 1189
+      "ms": 1189,
+      "h": "bc9dfc1068"
     },
     "percance.fuera": {
-      "ms": 1631
+      "ms": 1631,
+      "h": "9b91fb5aad"
     },
     "percance.golpe": {
-      "ms": 1184
+      "ms": 1184,
+      "h": "98a191cad8"
     },
     "percance.ocupada": {
-      "ms": 2717
+      "ms": 2717,
+      "h": "b99e55b96d"
     },
     "percance.pasada": {
-      "ms": 1557
+      "ms": 1557,
+      "h": "e06c44f2ad"
     },
     "percance.sinpermiso": {
-      "ms": 1830
+      "ms": 1830,
+      "h": "60c0e5047a"
     },
     "percance.sintren": {
-      "ms": 1836
+      "ms": 1836,
+      "h": "e1588edaf3"
     },
     "tutor.flying": {
-      "ms": 1158
+      "ms": 1158,
+      "h": "37368f8f33"
     },
     "tutor.frenar": {
-      "ms": 980
+      "ms": 980,
+      "h": "de32cbfee6"
     },
     "tutor.pull": {
-      "ms": 1058
+      "ms": 1058,
+      "h": "ee4441f790"
     },
     "tutor.salir": {
-      "ms": 1592
+      "ms": 1592,
+      "h": "9c33cda424"
     },
     "tutor.slow": {
-      "ms": 986
+      "ms": 986,
+      "h": "67a702ba81"
     },
     "tutor.speed": {
-      "ms": 1055
+      "ms": 1055,
+      "h": "627468e5dc"
     },
     "tutor.throttle": {
-      "ms": 910
+      "ms": 910,
+      "h": "9f22809346"
     },
     "ventanilla.vos.anaga": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "960ebdf451"
     },
     "ventanilla.vos.asuncion": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "f068dd73bd"
     },
     "ventanilla.vos.avion": {
-      "ms": 4707
+      "ms": 4707,
+      "h": "d180d0e80b"
     },
     "ventanilla.vos.barco": {
-      "ms": 4107
+      "ms": 4107,
+      "h": "a91273222f"
     },
     "ventanilla.vos.canadas": {
-      "ms": 7007
+      "ms": 7007,
+      "h": "2af6a9d2c8"
     },
     "ventanilla.vos.cerro-cora": {
-      "ms": 5807
+      "ms": 5807,
+      "h": "de4166faba"
     },
     "ventanilla.vos.chaco": {
-      "ms": 5207
+      "ms": 5207,
+      "h": "a15c5e6066"
     },
     "ventanilla.vos.encarnacion": {
-      "ms": 4907
+      "ms": 4907,
+      "h": "0aeb04d72c"
     },
     "ventanilla.vos.fuerteventura": {
-      "ms": 6207
+      "ms": 6207,
+      "h": "f02d6e8d55"
     },
     "ventanilla.vos.garajonay": {
-      "ms": 5407
+      "ms": 5407,
+      "h": "ebfc12dc9c"
     },
     "ventanilla.vos.gigantes": {
-      "ms": 4907
+      "ms": 4907,
+      "h": "85acf79e2e"
     },
     "ventanilla.vos.hierro": {
-      "ms": 5707
+      "ms": 5707,
+      "h": "28fb0a57df"
     },
     "ventanilla.vos.iguazu": {
-      "ms": 4507
+      "ms": 4507,
+      "h": "2585da377f"
     },
     "ventanilla.vos.itaipu": {
-      "ms": 4507
+      "ms": 4507,
+      "h": "69b3c9bbdc"
     },
     "ventanilla.vos.lado.derecha": {
-      "ms": 1803
+      "ms": 1803,
+      "h": "20f56ec4c4"
     },
     "ventanilla.vos.lado.derecha~2": {
-      "ms": 2110
+      "ms": 2110,
+      "h": "631729ae55"
     },
     "ventanilla.vos.lado.izquierda": {
-      "ms": 2141
+      "ms": 2141,
+      "h": "814e3d206b"
     },
     "ventanilla.vos.lado.izquierda~2": {
-      "ms": 2103
+      "ms": 2103,
+      "h": "2a3bc3905c"
     },
     "ventanilla.vos.las-palmas": {
-      "ms": 5907
+      "ms": 5907,
+      "h": "070845803e"
     },
     "ventanilla.vos.lobos": {
-      "ms": 4907
+      "ms": 4907,
+      "h": "412c767127"
     },
     "ventanilla.vos.maspalomas": {
-      "ms": 5007
+      "ms": 5007,
+      "h": "075661b4eb"
     },
     "ventanilla.vos.nieves": {
-      "ms": 6407
+      "ms": 6407,
+      "h": "7ea2b10595"
     },
     "ventanilla.vos.orotava": {
-      "ms": 5707
+      "ms": 5707,
+      "h": "e3b6897702"
     },
     "ventanilla.vos.rio-paraguay": {
-      "ms": 5007
+      "ms": 5007,
+      "h": "f6540e5e24"
     },
     "ventanilla.vos.rio-parana": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "1f24a969e8"
     },
     "ventanilla.vos.taburiente": {
-      "ms": 6607
+      "ms": 6607,
+      "h": "d3dfe5f586"
     },
     "ventanilla.vos.tajogaite": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "9514734c8b"
     },
     "ventanilla.vos.teide": {
-      "ms": 5007
+      "ms": 5007,
+      "h": "3bdba591a0"
     },
     "ventanilla.vos.timanfaya": {
-      "ms": 7207
+      "ms": 7207,
+      "h": "a14ae2a78a"
     },
     "ventanilla.vos.trinidad": {
-      "ms": 5407
+      "ms": 5407,
+      "h": "222ffa4641"
     },
     "ventanilla.vos.triple-frontera": {
-      "ms": 4107
+      "ms": 4107,
+      "h": "01978ae464"
     },
     "ventanilla.vos.yacyreta": {
-      "ms": 5307
+      "ms": 5307,
+      "h": "e74b7316bd"
     },
     "ventanilla.vos.ypacarai": {
-      "ms": 3507
+      "ms": 3507,
+      "h": "3ccaee4ee6"
     },
     "ventanilla.vos.ypoa": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "94b7a17287"
     },
     "vuelo.aPlataforma": {
-      "ms": 961
+      "ms": 961,
+      "h": "c363968ae0"
     },
     "vuelo.abandonando": {
-      "ms": 1788
+      "ms": 1788,
+      "h": "ef1889695c"
     },
     "vuelo.abandonandoConLaBici": {
-      "ms": 4507
+      "ms": 4507,
+      "h": "775c55b80d"
     },
     "vuelo.abandonandoSinPrisa": {
-      "ms": 2530
+      "ms": 2530,
+      "h": "c83ca37f2e"
     },
     "vuelo.abandonandoSinTorre": {
-      "ms": 2759
+      "ms": 2759,
+      "h": "715547ac60"
     },
     "vuelo.alAireOtraPunta": {
-      "ms": 2603
+      "ms": 2603,
+      "h": "9473a8f7da"
     },
     "vuelo.alAireVientoDeCola": {
-      "ms": 4307
+      "ms": 4307,
+      "h": "fb76606a92"
     },
     "vuelo.alPuestoConFlaps": {
-      "ms": 5307
+      "ms": 5307,
+      "h": "a0bc1bdccc"
     },
     "vuelo.alineando": {
-      "ms": 1216
+      "ms": 1216,
+      "h": "850302eb9b"
     },
     "vuelo.alivioDeFlaps": {
-      "ms": 5707
+      "ms": 5707,
+      "h": "e0f24ea6b4"
     },
     "vuelo.alto": {
-      "ms": 1036
+      "ms": 1036,
+      "h": "f8578207de"
     },
     "vuelo.alturaDeLaTorre": {
-      "ms": 6707
+      "ms": 6707,
+      "h": "8ac049826b"
     },
     "vuelo.alturaDeLaTorreRaya": {
-      "ms": 3207
+      "ms": 3207,
+      "h": "9c384d7927"
     },
     "vuelo.apagado": {
-      "ms": 971
+      "ms": 971,
+      "h": "0a765f34bf"
     },
     "vuelo.aroAlto": {
-      "ms": 2039
+      "ms": 2039,
+      "h": "e92fa63143"
     },
     "vuelo.aroAlto~2": {
-      "ms": 2530
+      "ms": 2530,
+      "h": "f864abf56f"
     },
     "vuelo.aroAlto~3": {
-      "ms": 3407
+      "ms": 3407,
+      "h": "962486a553"
     },
     "vuelo.aroAlto~4": {
-      "ms": 2310
+      "ms": 2310,
+      "h": "d6a682321b"
     },
     "vuelo.aroBajo": {
-      "ms": 2074
+      "ms": 2074,
+      "h": "a39a8d95ad"
     },
     "vuelo.aroBajo~2": {
-      "ms": 2043
+      "ms": 2043,
+      "h": "d037a58c5c"
     },
     "vuelo.aroBajo~3": {
-      "ms": 2655
+      "ms": 2655,
+      "h": "199b9a332d"
     },
     "vuelo.aroBajo~4": {
-      "ms": 2574
+      "ms": 2574,
+      "h": "43f6ee6d1f"
     },
     "vuelo.arrancando": {
-      "ms": 1635
+      "ms": 1635,
+      "h": "99e8ccf100"
     },
     "vuelo.aterrizado": {
-      "ms": 733
+      "ms": 733,
+      "h": "4f08f7302e"
     },
     "vuelo.autorizado": {
-      "ms": 1591
+      "ms": 1591,
+      "h": "a1ecdf1f92"
     },
     "vuelo.autorizadoAfis": {
-      "ms": 2281
+      "ms": 2281,
+      "h": "6ad5309c37"
     },
     "vuelo.autorizadoSinTorre": {
-      "ms": 1785
+      "ms": 1785,
+      "h": "d29ba331a4"
     },
     "vuelo.baches": {
-      "ms": 6507
+      "ms": 6507,
+      "h": "b9b40716c2"
     },
     "vuelo.backTaxi": {
-      "ms": 1795
+      "ms": 1795,
+      "h": "9bf3877fb3"
     },
     "vuelo.bajasRapido": {
-      "ms": 2840
+      "ms": 2840,
+      "h": "683ce97ae6"
     },
     "vuelo.bulto": {
-      "ms": 1792
+      "ms": 1792,
+      "h": "5a7cd385f1"
     },
     "vuelo.calor": {
-      "ms": 3307
+      "ms": 3307,
+      "h": "78b853ba38"
     },
     "vuelo.comprometido": {
-      "ms": 2567
+      "ms": 2567,
+      "h": "73a81c4900"
     },
     "vuelo.corregido": {
-      "ms": 2641
+      "ms": 2641,
+      "h": "7639bd6e47"
     },
     "vuelo.corregido~2": {
-      "ms": 1661
+      "ms": 1661,
+      "h": "f750e71791"
     },
     "vuelo.corregido~3": {
-      "ms": 1678
+      "ms": 1678,
+      "h": "493420a104"
     },
     "vuelo.corregido~4": {
-      "ms": 1189
+      "ms": 1189,
+      "h": "6e25df24d6"
     },
     "vuelo.despacio": {
-      "ms": 885
+      "ms": 885,
+      "h": "c34546c72b"
     },
     "vuelo.despegando": {
-      "ms": 932
+      "ms": 932,
+      "h": "0a31beeb28"
     },
     "vuelo.despuesDelAterrizaje": {
-      "ms": 6207
+      "ms": 6207,
+      "h": "0159710de7"
     },
     "vuelo.empezamosABajar": {
-      "ms": 2918
+      "ms": 2918,
+      "h": "0c0dbc28fb"
     },
     "vuelo.enPuesto": {
-      "ms": 1643
+      "ms": 1643,
+      "h": "45bcaf0035"
     },
     "vuelo.enVuelo": {
-      "ms": 1194
+      "ms": 1194,
+      "h": "2f9e7b03da"
     },
     "vuelo.enVueloAterrizando": {
-      "ms": 884
+      "ms": 884,
+      "h": "677da2fb35"
     },
     "vuelo.enVueloDestino": {
-      "ms": 2561
+      "ms": 2561,
+      "h": "574a0f12dc"
     },
     "vuelo.esperaQueAterrice": {
-      "ms": 2266
+      "ms": 2266,
+      "h": "020664015a"
     },
     "vuelo.esperaQueDespegue": {
-      "ms": 2555
+      "ms": 2555,
+      "h": "10d21dcc2d"
     },
     "vuelo.esperando": {
-      "ms": 1569
+      "ms": 1569,
+      "h": "b403968dac"
     },
     "vuelo.esperandoAfis": {
-      "ms": 5307
+      "ms": 5307,
+      "h": "52729254a1"
     },
     "vuelo.esperandoMirando": {
-      "ms": 2797
+      "ms": 2797,
+      "h": "49aa502f1a"
     },
     "vuelo.estacionado": {
-      "ms": 991
+      "ms": 991,
+      "h": "7def453cfa"
     },
     "vuelo.final": {
-      "ms": 1213
+      "ms": 1213,
+      "h": "1123d73b17"
     },
     "vuelo.flapsArribaAlSalir": {
-      "ms": 2954
+      "ms": 2954,
+      "h": "47d729eeca"
     },
     "vuelo.flapsEnLaCarrera": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "89bfaa59a4"
     },
     "vuelo.flapsPasados": {
-      "ms": 2001
+      "ms": 2001,
+      "h": "a51242b28d"
     },
     "vuelo.flapsTocados": {
-      "ms": 7007
+      "ms": 7007,
+      "h": "49c01a8762"
     },
     "vuelo.frustrada": {
-      "ms": 2133
+      "ms": 2133,
+      "h": "3ff59cc55f"
     },
     "vuelo.frustrada~2": {
-      "ms": 2411
+      "ms": 2411,
+      "h": "fb0a449a56"
     },
     "vuelo.frustrada~3": {
-      "ms": 2310
+      "ms": 2310,
+      "h": "5f9495c40f"
     },
     "vuelo.fuera": {
-      "ms": 1358
+      "ms": 1358,
+      "h": "7ef8d126a8"
     },
     "vuelo.laOtraPunta": {
-      "ms": 4107
+      "ms": 4107,
+      "h": "147e5229e1"
     },
     "vuelo.lentoYBajo": {
-      "ms": 1367
+      "ms": 1367,
+      "h": "661b991207"
     },
     "vuelo.mandanFrustrar": {
-      "ms": 2492
+      "ms": 2492,
+      "h": "a815283e2d"
     },
     "vuelo.mandanFrustrar~2": {
-      "ms": 3707
+      "ms": 3707,
+      "h": "bd2b918f57"
     },
     "vuelo.mandanFrustrar~3": {
-      "ms": 2158
+      "ms": 2158,
+      "h": "025393b55b"
     },
     "vuelo.masAltoQueElPlan": {
-      "ms": 4707
+      "ms": 4707,
+      "h": "703f4cb597"
     },
     "vuelo.meteElTren": {
-      "ms": 1161
+      "ms": 1161,
+      "h": "67a9433bb6"
     },
     "vuelo.minimos": {
-      "ms": 1243
+      "ms": 1243,
+      "h": "f079bb7005"
     },
     "vuelo.muyInclinado": {
-      "ms": 2231
+      "ms": 2231,
+      "h": "930ab20260"
     },
     "vuelo.noEstabilizada": {
-      "ms": 2930
+      "ms": 2930,
+      "h": "161e875215"
     },
     "vuelo.noEstabilizada~2": {
-      "ms": 2605
+      "ms": 2605,
+      "h": "7acac1b5bd"
     },
     "vuelo.noEstabilizada~3": {
-      "ms": 3307
+      "ms": 3307,
+      "h": "e1e099122a"
     },
     "vuelo.otraAlturaDeLaTorre": {
-      "ms": 3107
+      "ms": 3107,
+      "h": "76a98148bb"
     },
     "vuelo.otroAvion.delante.abajo": {
-      "ms": 2429
+      "ms": 2429,
+      "h": "70d7ca2f9d"
     },
     "vuelo.otroAvion.delante.arriba": {
-      "ms": 2274
+      "ms": 2274,
+      "h": "c8276b6c93"
     },
     "vuelo.otroAvion.delante.nivel": {
-      "ms": 3207
+      "ms": 3207,
+      "h": "e0536e6237"
     },
     "vuelo.otroAvion.derecha.abajo": {
-      "ms": 2149
+      "ms": 2149,
+      "h": "82d31af381"
     },
     "vuelo.otroAvion.derecha.arriba": {
-      "ms": 2181
+      "ms": 2181,
+      "h": "61d053d85e"
     },
     "vuelo.otroAvion.derecha.nivel": {
-      "ms": 3407
+      "ms": 3407,
+      "h": "38d54f8cad"
     },
     "vuelo.otroAvion.detras.abajo": {
-      "ms": 4307
+      "ms": 4307,
+      "h": "7683555bde"
     },
     "vuelo.otroAvion.detras.arriba": {
-      "ms": 4107
+      "ms": 4107,
+      "h": "02c750a2eb"
     },
     "vuelo.otroAvion.detras.nivel": {
-      "ms": 4207
+      "ms": 4207,
+      "h": "e43a28e8a7"
     },
     "vuelo.otroAvion.izquierda.abajo": {
-      "ms": 2268
+      "ms": 2268,
+      "h": "004ad4000f"
     },
     "vuelo.otroAvion.izquierda.arriba": {
-      "ms": 2279
+      "ms": 2279,
+      "h": "df53f42f2b"
     },
     "vuelo.otroAvion.izquierda.nivel": {
-      "ms": 2808
+      "ms": 2808,
+      "h": "6b6c368e05"
     },
     "vuelo.papiAlto": {
-      "ms": 1787
+      "ms": 1787,
+      "h": "7f448664f2"
     },
     "vuelo.papiBajo": {
-      "ms": 1713
+      "ms": 1713,
+      "h": "fd4bcbb439"
     },
     "vuelo.papiBien": {
-      "ms": 2080
+      "ms": 2080,
+      "h": "4823b7a72b"
     },
     "vuelo.pediFlaps": {
-      "ms": 1614
+      "ms": 1614,
+      "h": "7a2a7f0d9c"
     },
     "vuelo.perdida": {
-      "ms": 1432
+      "ms": 1432,
+      "h": "fca62359e9"
     },
     "vuelo.pilotoEnTierra": {
-      "ms": 2276
+      "ms": 2276,
+      "h": "4610dbcbb0"
     },
     "vuelo.pilotoSuelto": {
-      "ms": 1639
+      "ms": 1639,
+      "h": "9db2bcec00"
     },
     "vuelo.pistaLibre": {
-      "ms": 1594
+      "ms": 1594,
+      "h": "133caf5cd4"
     },
     "vuelo.planeoLento": {
-      "ms": 1962
+      "ms": 1962,
+      "h": "c07e0b1490"
     },
     "vuelo.planeoRapido": {
-      "ms": 3507
+      "ms": 3507,
+      "h": "415786e66c"
     },
     "vuelo.puedeAterrizar": {
-      "ms": 1223
+      "ms": 1223,
+      "h": "22305fb12c"
     },
     "vuelo.puedeAterrizarAfis": {
-      "ms": 2438
+      "ms": 2438,
+      "h": "4e7ff36abd"
     },
     "vuelo.puedeAterrizarSinTorre": {
-      "ms": 1658
+      "ms": 1658,
+      "h": "ab49086dc0"
     },
     "vuelo.puedeVolver": {
-      "ms": 1848
+      "ms": 1848,
+      "h": "5646072ead"
     },
     "vuelo.puedeVolverSinTorre": {
-      "ms": 2010
+      "ms": 2010,
+      "h": "0ce62d658f"
     },
     "vuelo.puedeVolver~2": {
-      "ms": 2097
+      "ms": 2097,
+      "h": "4c1e2b025d"
     },
     "vuelo.quitaElGas": {
-      "ms": 779
+      "ms": 779,
+      "h": "638ce24d9d"
     },
     "vuelo.rapido": {
-      "ms": 1068
+      "ms": 1068,
+      "h": "236cd05800"
     },
     "vuelo.reserva": {
-      "ms": 4407
+      "ms": 4407,
+      "h": "681d9e005b"
     },
     "vuelo.rodando": {
-      "ms": 1125
+      "ms": 1125,
+      "h": "e11ddd0f16"
     },
     "vuelo.rotar": {
-      "ms": 928
+      "ms": 928,
+      "h": "03c88e4e7d"
     },
     "vuelo.roto": {
-      "ms": 1425
+      "ms": 1425,
+      "h": "f8c637dcfa"
     },
     "vuelo.sacaElTren": {
-      "ms": 855
+      "ms": 855,
+      "h": "4ead317d42"
     },
     "vuelo.salidaSiguiente": {
-      "ms": 3907
+      "ms": 3907,
+      "h": "60eb7ff7d2"
     },
     "vuelo.sinCombustible": {
-      "ms": 2625
+      "ms": 2625,
+      "h": "7b7fd78cbf"
     },
     "vuelo.sinMotor": {
-      "ms": 5107
+      "ms": 5107,
+      "h": "a9e7b5ccc1"
     },
     "vuelo.sinPermiso": {
-      "ms": 2826
+      "ms": 2826,
+      "h": "da397bcb3b"
     },
     "vuelo.sobrevelocidad": {
-      "ms": 1354
+      "ms": 1354,
+      "h": "79cc0de92a"
     },
     "vuelo.sobrevelocidadAire": {
-      "ms": 1442
+      "ms": 1442,
+      "h": "35594c2e26"
     },
     "vuelo.solo-vuelta": {
-      "ms": 1573
+      "ms": 1573,
+      "h": "666429c27f"
     },
     "vuelo.teLoPasaste": {
-      "ms": 1464
+      "ms": 1464,
+      "h": "b4f3ec2aae"
     },
     "vuelo.terrenoBajo": {
-      "ms": 1398
+      "ms": 1398,
+      "h": "6fe8db60ac"
     },
     "vuelo.terrenoSube": {
-      "ms": 1651
+      "ms": 1651,
+      "h": "615532abce"
     },
     "vuelo.tonoDeAltitudCerca": {
-      "ms": 4207
+      "ms": 4207,
+      "h": "a9c385adf5"
     },
     "vuelo.tonoDeAltitudFuera": {
-      "ms": 4107
+      "ms": 4107,
+      "h": "a86dbcb881"
     },
     "vuelo.tormenta": {
-      "ms": 2612
+      "ms": 2612,
+      "h": "b579ffc679"
     },
     "vuelo.trafico.delante": {
-      "ms": 2157
+      "ms": 2157,
+      "h": "fa2b7c573c"
     },
     "vuelo.trafico.derecha": {
-      "ms": 1913
+      "ms": 1913,
+      "h": "ff95fd88f4"
     },
     "vuelo.trafico.detras": {
-      "ms": 2022
+      "ms": 2022,
+      "h": "4d566684aa"
     },
     "vuelo.trafico.izquierda": {
-      "ms": 2041
+      "ms": 2041,
+      "h": "ab5f4a6619"
     },
     "vuelo.traficoAbajo": {
-      "ms": 4107
+      "ms": 4107,
+      "h": "c1eca5c8f9"
     },
     "vuelo.traficoArriba": {
-      "ms": 4207
+      "ms": 4207,
+      "h": "3273d2235b"
     },
     "vuelo.traficoNivel": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "4d9d99b2b6"
     },
     "vuelo.trenEnElSuelo": {
-      "ms": 2564
+      "ms": 2564,
+      "h": "f1998fe94f"
     },
     "vuelo.trenPasado": {
-      "ms": 2193
+      "ms": 2193,
+      "h": "6561a0a19f"
     },
     "vuelo.yaPodesTocar": {
-      "ms": 933
+      "ms": 933,
+      "h": "b70da4915a"
     }
   },
   "recetas": {

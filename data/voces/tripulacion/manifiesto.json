@@ -4,28 +4,36 @@
   "idioma": "es-PY",
   "piezas": {
     "tripulacion.cinturones": {
-      "ms": 11007
+      "ms": 11007,
+      "h": "7b97ca60db"
     },
     "tripulacion.servicio.banana": {
-      "ms": 10207
+      "ms": 10207,
+      "h": "c7264a7a01"
     },
     "tripulacion.servicio.chipa": {
-      "ms": 10307
+      "ms": 10307,
+      "h": "a0463c7aaa"
     },
     "tripulacion.servicio.largo": {
-      "ms": 3707
+      "ms": 3707,
+      "h": "b1d2d198dc"
     },
     "tripulacion.servicio.mango": {
-      "ms": 11607
+      "ms": 11607,
+      "h": "b05ca8f2a7"
     },
     "tripulacion.servicio.mani": {
-      "ms": 10107
+      "ms": 10107,
+      "h": "09eb9c6f62"
     },
     "tripulacion.servicio.mbeju": {
-      "ms": 9407
+      "ms": 9407,
+      "h": "f238fcc2ad"
     },
     "tripulacion.servicio.pina": {
-      "ms": 10507
+      "ms": 10507,
+      "h": "8718edc821"
     }
   },
   "recetas": {

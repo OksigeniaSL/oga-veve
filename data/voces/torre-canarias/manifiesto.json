@@ -4,415 +4,552 @@
   "idioma": "es-PY",
   "piezas": {
     "altura.nivel": {
-      "ms": 771
+      "ms": 771,
+      "h": "211a5b2e46"
     },
     "altura.pies.2": {
-      "ms": 961
+      "ms": 961,
+      "h": "7c2a687c72"
     },
     "altura.pies.3": {
-      "ms": 1288
+      "ms": 1288,
+      "h": "ea1c0fca5f"
     },
     "altura.pies.4": {
-      "ms": 972
+      "ms": 972,
+      "h": "5f3b4a43d5"
     },
     "altura.pies.5": {
-      "ms": 886
+      "ms": 886,
+      "h": "d10fec1262"
     },
     "altura.pies.6": {
-      "ms": 978
+      "ms": 978,
+      "h": "48b2b5f677"
     },
     "cifra.0": {
-      "ms": 649
+      "ms": 649,
+      "h": "5d9996c4e8"
     },
     "cifra.1": {
-      "ms": 487
+      "ms": 487,
+      "h": "c89b2c0ef4"
     },
     "cifra.2": {
-      "ms": 376
+      "ms": 376,
+      "h": "40264dae83"
     },
     "cifra.3": {
-      "ms": 455
+      "ms": 455,
+      "h": "f870a3ad3b"
     },
     "cifra.4": {
-      "ms": 397
+      "ms": 397,
+      "h": "122cbc1d1d"
     },
     "cifra.5": {
-      "ms": 621
+      "ms": 621,
+      "h": "f54abd6853"
     },
     "cifra.6": {
-      "ms": 1303
+      "ms": 1303,
+      "h": "78f64a4044"
     },
     "cifra.7": {
-      "ms": 565
+      "ms": 565,
+      "h": "320cce94ac"
     },
     "cifra.8": {
-      "ms": 405
+      "ms": 405,
+      "h": "dacd4b4b3d"
     },
     "cifra.9": {
-      "ms": 599
+      "ms": 599,
+      "h": "e61c6616ef"
     },
     "cifra.es.0": {
-      "ms": 571
+      "ms": 571,
+      "h": "900cc5e4b0"
     },
     "cifra.es.1": {
-      "ms": 634
+      "ms": 634,
+      "h": "c2d3ea0e58"
     },
     "cifra.es.2": {
-      "ms": 576
+      "ms": 576,
+      "h": "663cca7d80"
     },
     "cifra.es.3": {
-      "ms": 462
+      "ms": 462,
+      "h": "c3e2d1a761"
     },
     "cifra.es.4": {
-      "ms": 527
+      "ms": 527,
+      "h": "d6f002cb22"
     },
     "cifra.es.5": {
-      "ms": 632
+      "ms": 632,
+      "h": "3ced32118b"
     },
     "cifra.es.6": {
-      "ms": 970
+      "ms": 970,
+      "h": "9f8ea6f29d"
     },
     "cifra.es.7": {
-      "ms": 753
+      "ms": 753,
+      "h": "e8b99a5b75"
     },
     "cifra.es.8": {
-      "ms": 486
+      "ms": 486,
+      "h": "849d399ee5"
     },
     "cifra.es.9": {
-      "ms": 736
+      "ms": 736,
+      "h": "a130b64bf4"
     },
     "destino.el-hierro": {
-      "ms": 747
+      "ms": 747,
+      "h": "0b747b5290"
     },
     "destino.fuerteventura": {
-      "ms": 799
+      "ms": 799,
+      "h": "98d1c013de"
     },
     "destino.gran-canaria": {
-      "ms": 988
+      "ms": 988,
+      "h": "f2141408ef"
     },
     "destino.la-gomera": {
-      "ms": 867
+      "ms": 867,
+      "h": "5941635192"
     },
     "destino.la-palma": {
-      "ms": 679
+      "ms": 679,
+      "h": "6feb0995de"
     },
     "destino.lanzarote": {
-      "ms": 666
+      "ms": 666,
+      "h": "1f217640ba"
     },
     "destino.tenerife-norte": {
-      "ms": 970
+      "ms": 970,
+      "h": "ab8b5d75ff"
     },
     "destino.tenerife-sur": {
-      "ms": 1075
+      "ms": 1075,
+      "h": "e9458c7269"
     },
     "fonetico.alfa": {
-      "ms": 528
+      "ms": 528,
+      "h": "13cee91f01"
     },
     "fonetico.bravo": {
-      "ms": 768
+      "ms": 768,
+      "h": "7a3e3290e8"
     },
     "fonetico.charlie": {
-      "ms": 921
+      "ms": 921,
+      "h": "7744b7d57a"
     },
     "fonetico.delta": {
-      "ms": 554
+      "ms": 554,
+      "h": "e8fea09b5a"
     },
     "fonetico.echo": {
-      "ms": 573
+      "ms": 573,
+      "h": "3cafa48949"
     },
     "fonetico.foxtrot": {
-      "ms": 778
+      "ms": 778,
+      "h": "fd5164fe1e"
     },
     "fonetico.golf": {
-      "ms": 732
+      "ms": 732,
+      "h": "4293bcb90a"
     },
     "fonetico.hotel": {
-      "ms": 719
+      "ms": 719,
+      "h": "40efdfa4f9"
     },
     "fonetico.india": {
-      "ms": 479
+      "ms": 479,
+      "h": "5dec6ab6d6"
     },
     "fonetico.juliett": {
-      "ms": 1214
+      "ms": 1214,
+      "h": "46fa1ca7fb"
     },
     "fonetico.kilo": {
-      "ms": 565
+      "ms": 565,
+      "h": "54abf56cf1"
     },
     "fonetico.lima": {
-      "ms": 562
+      "ms": 562,
+      "h": "05fd8a052c"
     },
     "fonetico.mike": {
-      "ms": 386
+      "ms": 386,
+      "h": "8ab9fa2df7"
     },
     "fonetico.november": {
-      "ms": 690
+      "ms": 690,
+      "h": "1d1bb6f9dd"
     },
     "fonetico.oscar": {
-      "ms": 621
+      "ms": 621,
+      "h": "c3c9296238"
     },
     "fonetico.papa": {
-      "ms": 521
+      "ms": 521,
+      "h": "b75f3ca53e"
     },
     "fonetico.quebec": {
-      "ms": 765
+      "ms": 765,
+      "h": "43e2e30829"
     },
     "fonetico.romeo": {
-      "ms": 721
+      "ms": 721,
+      "h": "8057ebc0cf"
     },
     "fonetico.sierra": {
-      "ms": 594
+      "ms": 594,
+      "h": "24218f2a8e"
     },
     "fonetico.tango": {
-      "ms": 535
+      "ms": 535,
+      "h": "d53e567ac1"
     },
     "fonetico.uniform": {
-      "ms": 645
+      "ms": 645,
+      "h": "28042bf1c4"
     },
     "fonetico.victor": {
-      "ms": 492
+      "ms": 492,
+      "h": "4f19e14cc7"
     },
     "fonetico.whiskey": {
-      "ms": 555
+      "ms": 555,
+      "h": "19a0016580"
     },
     "fonetico.xray": {
-      "ms": 511
+      "ms": 511,
+      "h": "27ccb4014a"
     },
     "fonetico.yankee": {
-      "ms": 752
+      "ms": 752,
+      "h": "5187005bf2"
     },
     "fonetico.zulu": {
-      "ms": 651
+      "ms": 651,
+      "h": "88b7ba7d8a"
     },
     "lado.center": {
-      "ms": 870
+      "ms": 870,
+      "h": "5ca1d8333b"
     },
     "lado.es.central": {
-      "ms": 764
+      "ms": 764,
+      "h": "ca138944d0"
     },
     "lado.es.derecha": {
-      "ms": 599
+      "ms": 599,
+      "h": "07558ae937"
     },
     "lado.es.izquierda": {
-      "ms": 865
+      "ms": 865,
+      "h": "09aa9f867b"
     },
     "lado.left": {
-      "ms": 723
+      "ms": 723,
+      "h": "75ff01886c"
     },
     "lado.right": {
-      "ms": 404
+      "ms": 404,
+      "h": "e208ebd716"
     },
     "torre.canario.solo.afisLibre": {
-      "ms": 711
+      "ms": 711,
+      "h": "68bb38bdac"
     },
     "torre.canario.solo.afisOcupada": {
-      "ms": 1103
+      "ms": 1103,
+      "h": "0d871ef7df"
     },
     "torre.canario.solo.afisSinTrafico": {
-      "ms": 1585
+      "ms": 1585,
+      "h": "8b4d9c6d0a"
     },
     "torre.canario.solo.afisTraficoAterriza": {
-      "ms": 1153
+      "ms": 1153,
+      "h": "1992229a0d"
     },
     "torre.canario.solo.afisTraficoDespega": {
-      "ms": 1101
+      "ms": 1101,
+      "h": "ec77ac4589"
     },
     "torre.canario.solo.autorizadoA": {
-      "ms": 961
+      "ms": 961,
+      "h": "e92f809c28"
     },
     "torre.canario.solo.autorizadoDespegar": {
-      "ms": 1134
+      "ms": 1134,
+      "h": "d5a55ca4d3"
     },
     "torre.canario.solo.autorizadoParaAterrizar": {
-      "ms": 1394
+      "ms": 1394,
+      "h": "fffd41be7d"
     },
     "torre.canario.solo.clearedLand": {
-      "ms": 899
+      "ms": 899,
+      "h": "0896ad4325"
     },
     "torre.canario.solo.clearedTakeoff": {
-      "ms": 1037
+      "ms": 1037,
+      "h": "bbdd069cc5"
     },
     "torre.canario.solo.clearedTo": {
-      "ms": 930
+      "ms": 930,
+      "h": "46a7aec569"
     },
     "torre.canario.solo.climbTo": {
-      "ms": 720
+      "ms": 720,
+      "h": "29848ea220"
     },
     "torre.canario.solo.departingTraffic": {
-      "ms": 992
+      "ms": 992,
+      "h": "5a3cad9c43"
     },
     "torre.canario.solo.free": {
-      "ms": 657
+      "ms": 657,
+      "h": "907b764253"
     },
     "torre.canario.solo.goAround": {
-      "ms": 1421
+      "ms": 1421,
+      "h": "d88fc00073"
     },
     "torre.canario.solo.goAroundSolo": {
-      "ms": 807
+      "ms": 807,
+      "h": "8fb096530a"
     },
     "torre.canario.solo.holdShort": {
-      "ms": 1006
+      "ms": 1006,
+      "h": "d12108b901"
     },
     "torre.canario.solo.landingTraffic": {
-      "ms": 913
+      "ms": 913,
+      "h": "3631031d0e"
     },
     "torre.canario.solo.lineUpWait": {
-      "ms": 951
+      "ms": 951,
+      "h": "4601f81674"
     },
     "torre.canario.solo.mantengaFuera": {
-      "ms": 1091
+      "ms": 1091,
+      "h": "86738fffff"
     },
     "torre.canario.solo.motorYAlAire": {
-      "ms": 939
+      "ms": 939,
+      "h": "cb3c53d5a5"
     },
     "torre.canario.solo.noReportedTraffic": {
-      "ms": 1097
+      "ms": 1097,
+      "h": "cef65d7136"
     },
     "torre.canario.solo.occupied": {
-      "ms": 686
+      "ms": 686,
+      "h": "80129b7743"
     },
     "torre.canario.solo.pista": {
-      "ms": 935
+      "ms": 935,
+      "h": "165905901e"
     },
     "torre.canario.solo.rogerMayday": {
-      "ms": 949
+      "ms": 949,
+      "h": "f35cab6522"
     },
     "torre.canario.solo.runway": {
-      "ms": 1121
+      "ms": 1121,
+      "h": "6c689719b1"
     },
     "torre.canario.solo.runwayInUse": {
-      "ms": 956
+      "ms": 956,
+      "h": "dc696c8a1d"
     },
     "torre.canario.solo.subir.2": {
-      "ms": 1040
+      "ms": 1040,
+      "h": "becf15b5cf"
     },
     "torre.canario.solo.subir.3": {
-      "ms": 1104
+      "ms": 1104,
+      "h": "5c0a715ff8"
     },
     "torre.canario.solo.subir.4": {
-      "ms": 1270
+      "ms": 1270,
+      "h": "54e8523be0"
     },
     "torre.canario.solo.subir.5": {
-      "ms": 1254
+      "ms": 1254,
+      "h": "5183517b4d"
     },
     "torre.canario.solo.subir.6": {
-      "ms": 1356
+      "ms": 1356,
+      "h": "87d4a94698"
     },
     "torre.canario.solo.subirNivel": {
-      "ms": 1048
+      "ms": 1048,
+      "h": "59606c759f"
     },
     "torre.canario.solo.vacateNext": {
-      "ms": 1241
+      "ms": 1241,
+      "h": "9a1f0f8acd"
     },
     "trafico.above": {
-      "ms": 750
+      "ms": 750,
+      "h": "e965f8fca5"
     },
     "trafico.below": {
-      "ms": 446
+      "ms": 446,
+      "h": "dc2ea12ad0"
     },
     "trafico.hora.1": {
-      "ms": 710
+      "ms": 710,
+      "h": "943972551d"
     },
     "trafico.hora.10": {
-      "ms": 624
+      "ms": 624,
+      "h": "70f15d1736"
     },
     "trafico.hora.11": {
-      "ms": 830
+      "ms": 830,
+      "h": "7319a0b1cf"
     },
     "trafico.hora.12": {
-      "ms": 762
+      "ms": 762,
+      "h": "0855302a5c"
     },
     "trafico.hora.2": {
-      "ms": 610
+      "ms": 610,
+      "h": "c222cb8d1a"
     },
     "trafico.hora.3": {
-      "ms": 700
+      "ms": 700,
+      "h": "bd4ade866b"
     },
     "trafico.hora.4": {
-      "ms": 721
+      "ms": 721,
+      "h": "6819dade48"
     },
     "trafico.hora.5": {
-      "ms": 633
+      "ms": 633,
+      "h": "8671cdfb32"
     },
     "trafico.hora.6": {
-      "ms": 702
+      "ms": 702,
+      "h": "e110b930d2"
     },
     "trafico.hora.7": {
-      "ms": 850
+      "ms": 850,
+      "h": "ccf20b41b6"
     },
     "trafico.hora.8": {
-      "ms": 706
+      "ms": 706,
+      "h": "de6143bbfb"
     },
     "trafico.hora.9": {
-      "ms": 678
+      "ms": 678,
+      "h": "70b8b90a46"
     },
     "trafico.millas.1": {
-      "ms": 999
+      "ms": 999,
+      "h": "5235ec1b29"
     },
     "trafico.millas.2": {
-      "ms": 591
+      "ms": 591,
+      "h": "7d462d077e"
     },
     "trafico.millas.3": {
-      "ms": 811
+      "ms": 811,
+      "h": "e9dd95466a"
     },
     "trafico.millas.4": {
-      "ms": 805
+      "ms": 805,
+      "h": "bbac7513fc"
     },
     "trafico.millas.5": {
-      "ms": 752
+      "ms": 752,
+      "h": "50aa997f25"
     },
     "trafico.millas.6": {
-      "ms": 788
+      "ms": 788,
+      "h": "3d706d9f53"
     },
     "trafico.pies.10": {
-      "ms": 1312
+      "ms": 1312,
+      "h": "96d982e365"
     },
     "trafico.pies.11": {
-      "ms": 1362
+      "ms": 1362,
+      "h": "d7aa9d7246"
     },
     "trafico.pies.12": {
-      "ms": 1468
+      "ms": 1468,
+      "h": "972f53c495"
     },
     "trafico.pies.3": {
-      "ms": 937
+      "ms": 937,
+      "h": "07f137ec98"
     },
     "trafico.pies.4": {
-      "ms": 1090
+      "ms": 1090,
+      "h": "5db1e4955c"
     },
     "trafico.pies.5": {
-      "ms": 952
+      "ms": 952,
+      "h": "298ed38193"
     },
     "trafico.pies.6": {
-      "ms": 1127
+      "ms": 1127,
+      "h": "e28748662f"
     },
     "trafico.pies.7": {
-      "ms": 1400
+      "ms": 1400,
+      "h": "cef3506d75"
     },
     "trafico.pies.8": {
-      "ms": 935
+      "ms": 935,
+      "h": "be0a4e37c4"
     },
     "trafico.pies.9": {
-      "ms": 987
+      "ms": 987,
+      "h": "ceab32d5a1"
     },
     "trafico.sameLevel": {
-      "ms": 982
+      "ms": 982,
+      "h": "81e86e5800"
     },
     "trafico.traffic": {
-      "ms": 958
+      "ms": 958,
+      "h": "857aeea783"
     },
     "viento.calm": {
-      "ms": 666
+      "ms": 666,
+      "h": "b474a74883"
     },
     "viento.degrees": {
-      "ms": 830
+      "ms": 830,
+      "h": "bd749006ce"
     },
     "viento.knots": {
-      "ms": 551
+      "ms": 551,
+      "h": "36f74eec28"
     },
     "viento.variable": {
-      "ms": 801
+      "ms": 801,
+      "h": "0d3999dfae"
     },
     "viento.wind": {
-      "ms": 428
+      "ms": 428,
+      "h": "06e853b0a9"
     }
   },
   "recetas": {

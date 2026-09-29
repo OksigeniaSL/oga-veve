@@ -4,97 +4,128 @@
   "idioma": "es-PY",
   "piezas": {
     "fonetico.alfa": {
-      "ms": 647
+      "ms": 647,
+      "h": "4ebebd43ca"
     },
     "fonetico.bravo": {
-      "ms": 872
+      "ms": 872,
+      "h": "24c2249446"
     },
     "fonetico.charlie": {
-      "ms": 472
+      "ms": 472,
+      "h": "e1cceb8579"
     },
     "fonetico.delta": {
-      "ms": 874
+      "ms": 874,
+      "h": "f7a7a11987"
     },
     "fonetico.echo": {
-      "ms": 544
+      "ms": 544,
+      "h": "9685ee62c7"
     },
     "fonetico.foxtrot": {
-      "ms": 1072
+      "ms": 1072,
+      "h": "f4cbd65639"
     },
     "fonetico.golf": {
-      "ms": 648
+      "ms": 648,
+      "h": "9adf9cb07b"
     },
     "fonetico.hotel": {
-      "ms": 935
+      "ms": 935,
+      "h": "4c04bbf0a2"
     },
     "fonetico.india": {
-      "ms": 863
+      "ms": 863,
+      "h": "68911121c4"
     },
     "fonetico.juliett": {
-      "ms": 846
+      "ms": 846,
+      "h": "289ea1508b"
     },
     "fonetico.kilo": {
-      "ms": 707
+      "ms": 707,
+      "h": "390d3c2c16"
     },
     "fonetico.lima": {
-      "ms": 612
+      "ms": 612,
+      "h": "586136c734"
     },
     "fonetico.mike": {
-      "ms": 1028
+      "ms": 1028,
+      "h": "120e53c0b9"
     },
     "fonetico.november": {
-      "ms": 696
+      "ms": 696,
+      "h": "8c5a15f837"
     },
     "fonetico.oscar": {
-      "ms": 666
+      "ms": 666,
+      "h": "94fefaae98"
     },
     "fonetico.papa": {
-      "ms": 830
+      "ms": 830,
+      "h": "55861584ca"
     },
     "fonetico.quebec": {
-      "ms": 953
+      "ms": 953,
+      "h": "bcdce8c877"
     },
     "fonetico.romeo": {
-      "ms": 874
+      "ms": 874,
+      "h": "0f7bc23372"
     },
     "fonetico.sierra": {
-      "ms": 982
+      "ms": 982,
+      "h": "2bc7b36d2d"
     },
     "fonetico.tango": {
-      "ms": 549
+      "ms": 549,
+      "h": "90ba7b2bd8"
     },
     "fonetico.uniform": {
-      "ms": 763
+      "ms": 763,
+      "h": "1b67f204a8"
     },
     "fonetico.victor": {
-      "ms": 731
+      "ms": 731,
+      "h": "2ae41d94f3"
     },
     "fonetico.whiskey": {
-      "ms": 646
+      "ms": 646,
+      "h": "f48d03e03a"
     },
     "fonetico.xray": {
-      "ms": 735
+      "ms": 735,
+      "h": "0c2891aa9c"
     },
     "fonetico.yankee": {
-      "ms": 829
+      "ms": 829,
+      "h": "80b76f3de2"
     },
     "fonetico.zulu": {
-      "ms": 921
+      "ms": 921,
+      "h": "8a2e67398f"
     },
     "otro.solo.buenosDias": {
-      "ms": 1256
+      "ms": 1256,
+      "h": "3b9ffddb50"
     },
     "otro.solo.enCola": {
-      "ms": 1100
+      "ms": 1100,
+      "h": "078aed7510"
     },
     "otro.solo.final": {
-      "ms": 816
+      "ms": 816,
+      "h": "42c505e094"
     },
     "otro.solo.pistaLibre": {
-      "ms": 986
+      "ms": 986,
+      "h": "8237dfa371"
     },
     "otro.solo.rodando": {
-      "ms": 1256
+      "ms": 1256,
+      "h": "4c57000c3e"
     }
   },
   "recetas": {

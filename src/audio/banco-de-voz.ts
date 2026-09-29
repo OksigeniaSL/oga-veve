@@ -77,6 +77,12 @@ export function elegirFormato(puede: (mime: string) => string): Formato | null {
 export interface Pieza {
   /** Cuánto dura, en milisegundos. Sirve para saber cuándo acaba la frase. */
   readonly ms: number;
+  /**
+   * La huella de la toma, si el pack la trae: cambia cuando se regraba, y es
+   * lo que va en la dirección para que la caché no sirva la vieja. Ver
+   * `hacer-pack-de-voz.mjs`.
+   */
+  readonly h?: string;
 }
 
 /**

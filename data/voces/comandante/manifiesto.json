@@ -4,883 +4,1176 @@
   "idioma": "es-PY",
   "piezas": {
     "comandante.aproximacion": {
-      "ms": 2223
+      "ms": 2223,
+      "h": "fc08f6defb"
     },
     "comandante.bachesEnTodos": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "659b291cb5"
     },
     "comandante.bienvenida.ayolas": {
-      "ms": 5507
+      "ms": 5507,
+      "h": "679f0d6090"
     },
     "comandante.bienvenida.concepcion": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "8936659d56"
     },
     "comandante.bienvenida.el-hierro": {
-      "ms": 6007
+      "ms": 6007,
+      "h": "c824c5adf0"
     },
     "comandante.bienvenida.encarnacion": {
-      "ms": 6007
+      "ms": 6007,
+      "h": "fbb894e50f"
     },
     "comandante.bienvenida.estigarribia": {
-      "ms": 6207
+      "ms": 6207,
+      "h": "448ecbb63e"
     },
     "comandante.bienvenida.fuerteventura": {
-      "ms": 5507
+      "ms": 5507,
+      "h": "2b5353a369"
     },
     "comandante.bienvenida.gran-canaria": {
-      "ms": 5207
+      "ms": 5207,
+      "h": "bca941b044"
     },
     "comandante.bienvenida.guarani": {
-      "ms": 6007
+      "ms": 6007,
+      "h": "05388a358c"
     },
     "comandante.bienvenida.la-gomera": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "4729c22546"
     },
     "comandante.bienvenida.la-palma": {
-      "ms": 5807
+      "ms": 5807,
+      "h": "519db9b7a1"
     },
     "comandante.bienvenida.lanzarote": {
-      "ms": 5407
+      "ms": 5407,
+      "h": "e2031440e3"
     },
     "comandante.bienvenida.local": {
-      "ms": 7807
+      "ms": 7807,
+      "h": "8a8e55f2ff"
     },
     "comandante.bienvenida": {
-      "ms": 4507
+      "ms": 4507,
+      "h": "c942a3a733"
     },
     "comandante.bienvenida.pedro-juan": {
-      "ms": 6107
+      "ms": 6107,
+      "h": "5b29ea3eda"
     },
     "comandante.bienvenida.pettirossi": {
-      "ms": 5807
+      "ms": 5807,
+      "h": "635fcf55fd"
     },
     "comandante.bienvenida.pilar": {
-      "ms": 5707
+      "ms": 5707,
+      "h": "8a2c7af304"
     },
     "comandante.bienvenida.tenerife-norte": {
-      "ms": 5707
+      "ms": 5707,
+      "h": "8809db33d0"
     },
     "comandante.bienvenida.tenerife-sur": {
-      "ms": 6207
+      "ms": 6207,
+      "h": "d15520ee0d"
     },
     "comandante.bienvenida.yvytu-rape": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "84f0266a5e"
     },
     "comandante.cielo.despejado": {
-      "ms": 1327
+      "ms": 1327,
+      "h": "d2e12c0929"
     },
     "comandante.cielo.lluvia": {
-      "ms": 1195
+      "ms": 1195,
+      "h": "9cf7935533"
     },
     "comandante.cielo.niebla": {
-      "ms": 1052
+      "ms": 1052,
+      "h": "1cd63ea20f"
     },
     "comandante.cielo.nubes": {
-      "ms": 1120
+      "ms": 1120,
+      "h": "a35340ad76"
     },
     "comandante.cielo.nublado": {
-      "ms": 1090
+      "ms": 1090,
+      "h": "93a30593f9"
     },
     "comandante.cielo.tormenta": {
-      "ms": 5507
+      "ms": 5507,
+      "h": "94090e127e"
     },
     "comandante.crosscheck": {
-      "ms": 2865
+      "ms": 2865,
+      "h": "e2eddbd702"
     },
     "comandante.crucero": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "a02acf2272"
     },
     "comandante.descenso.hacia.ayolas": {
-      "ms": 4407
+      "ms": 4407,
+      "h": "21cb1a13f7"
     },
     "comandante.descenso.hacia.concepcion": {
-      "ms": 5007
+      "ms": 5007,
+      "h": "6f035ecf7c"
     },
     "comandante.descenso.hacia.el-hierro": {
-      "ms": 4707
+      "ms": 4707,
+      "h": "2cafeab314"
     },
     "comandante.descenso.hacia.encarnacion": {
-      "ms": 4607
+      "ms": 4607,
+      "h": "20fc557afd"
     },
     "comandante.descenso.hacia.estigarribia": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "dbb122d72d"
     },
     "comandante.descenso.hacia.fuerteventura": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "b536999bde"
     },
     "comandante.descenso.hacia.gran-canaria": {
-      "ms": 5407
+      "ms": 5407,
+      "h": "41cffc7f6e"
     },
     "comandante.descenso.hacia.guarani": {
-      "ms": 5107
+      "ms": 5107,
+      "h": "bd8cb18b02"
     },
     "comandante.descenso.hacia.la-gomera": {
-      "ms": 4507
+      "ms": 4507,
+      "h": "1d2f5d1dfa"
     },
     "comandante.descenso.hacia.la-palma": {
-      "ms": 4807
+      "ms": 4807,
+      "h": "feeac03d2e"
     },
     "comandante.descenso.hacia.lanzarote": {
-      "ms": 5107
+      "ms": 5107,
+      "h": "a1ac70a7d9"
     },
     "comandante.descenso.hacia": {
-      "ms": 4207
+      "ms": 4207,
+      "h": "1de99f9230"
     },
     "comandante.descenso.hacia.pedro-juan": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "d98c24b027"
     },
     "comandante.descenso.hacia.pettirossi": {
-      "ms": 5407
+      "ms": 5407,
+      "h": "d469aeb392"
     },
     "comandante.descenso.hacia.pilar": {
-      "ms": 4507
+      "ms": 4507,
+      "h": "c10ba5ed52"
     },
     "comandante.descenso.hacia.tenerife-norte": {
-      "ms": 5107
+      "ms": 5107,
+      "h": "f9a8c16752"
     },
     "comandante.descenso.hacia.tenerife-sur": {
-      "ms": 5207
+      "ms": 5207,
+      "h": "a4df34dd2c"
     },
     "comandante.descenso.hacia.yvytu-rape": {
-      "ms": 6407
+      "ms": 6407,
+      "h": "008ec6699d"
     },
     "comandante.descenso.vuelta": {
-      "ms": 5107
+      "ms": 5107,
+      "h": "4fe219d39c"
     },
     "comandante.despegue": {
-      "ms": 1830
+      "ms": 1830,
+      "h": "3bf549be45"
     },
     "comandante.llegada.ayolas": {
-      "ms": 9507
+      "ms": 9507,
+      "h": "286d20c253"
     },
     "comandante.llegada.ayolas~2": {
-      "ms": 7407
+      "ms": 7407,
+      "h": "d1d8b990e0"
     },
     "comandante.llegada.ayolas~3": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "669d6c62b3"
     },
     "comandante.llegada.ayolas~4": {
-      "ms": 9307
+      "ms": 9307,
+      "h": "3be4a6d5dd"
     },
     "comandante.llegada.ayolas~5": {
-      "ms": 8207
+      "ms": 8207,
+      "h": "cb2dc76d4f"
     },
     "comandante.llegada.chaco": {
-      "ms": 6007
+      "ms": 6007,
+      "h": "78e30bd3af"
     },
     "comandante.llegada.chaco~2": {
-      "ms": 8007
+      "ms": 8007,
+      "h": "4ce9bf0734"
     },
     "comandante.llegada.chaco~3": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "e814623b91"
     },
     "comandante.llegada.chaco~4": {
-      "ms": 6407
+      "ms": 6407,
+      "h": "0952ac2d5f"
     },
     "comandante.llegada.chaco~5": {
-      "ms": 7407
+      "ms": 7407,
+      "h": "79530aaf82"
     },
     "comandante.llegada.concepcion": {
-      "ms": 9107
+      "ms": 9107,
+      "h": "9d8bf890bd"
     },
     "comandante.llegada.concepcion~2": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "aed3964e54"
     },
     "comandante.llegada.concepcion~3": {
-      "ms": 10307
+      "ms": 10307,
+      "h": "26d434cfa5"
     },
     "comandante.llegada.concepcion~4": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "1cba92107f"
     },
     "comandante.llegada.concepcion~5": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "cc49829609"
     },
     "comandante.llegada.cuatro-vientos": {
-      "ms": 8807
+      "ms": 8807,
+      "h": "6e2999f1e8"
     },
     "comandante.llegada.cuatro-vientos~2": {
-      "ms": 6507
+      "ms": 6507,
+      "h": "bbe5f9acdc"
     },
     "comandante.llegada.cuatro-vientos~3": {
-      "ms": 7207
+      "ms": 7207,
+      "h": "a138adc947"
     },
     "comandante.llegada.cuatro-vientos~4": {
-      "ms": 6907
+      "ms": 6907,
+      "h": "ee67ea0aa2"
     },
     "comandante.llegada.cuatro-vientos~5": {
-      "ms": 9007
+      "ms": 9007,
+      "h": "124294acaf"
     },
     "comandante.llegada.el-hierro": {
-      "ms": 7607
+      "ms": 7607,
+      "h": "6e06ab9a50"
     },
     "comandante.llegada.el-hierro~2": {
-      "ms": 6907
+      "ms": 6907,
+      "h": "9d60092324"
     },
     "comandante.llegada.el-hierro~3": {
-      "ms": 7207
+      "ms": 7207,
+      "h": "abd62d1507"
     },
     "comandante.llegada.el-hierro~4": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "05d709b864"
     },
     "comandante.llegada.el-hierro~5": {
-      "ms": 7707
+      "ms": 7707,
+      "h": "128bb795fb"
     },
     "comandante.llegada.encarnacion": {
-      "ms": 7207
+      "ms": 7207,
+      "h": "a87c3e2626"
     },
     "comandante.llegada.encarnacion~2": {
-      "ms": 8907
+      "ms": 8907,
+      "h": "8bec9b4d96"
     },
     "comandante.llegada.encarnacion~3": {
-      "ms": 8507
+      "ms": 8507,
+      "h": "8202861471"
     },
     "comandante.llegada.encarnacion~4": {
-      "ms": 6307
+      "ms": 6307,
+      "h": "7287fcd811"
     },
     "comandante.llegada.encarnacion~5": {
-      "ms": 8207
+      "ms": 8207,
+      "h": "08ed91c278"
     },
     "comandante.llegada.estigarribia": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "80ea24d0a9"
     },
     "comandante.llegada.estigarribia~2": {
-      "ms": 8607
+      "ms": 8607,
+      "h": "db35b60ebf"
     },
     "comandante.llegada.estigarribia~3": {
-      "ms": 8007
+      "ms": 8007,
+      "h": "7986f92476"
     },
     "comandante.llegada.estigarribia~4": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "a98330bcf1"
     },
     "comandante.llegada.estigarribia~5": {
-      "ms": 7807
+      "ms": 7807,
+      "h": "3dc91ae6bb"
     },
     "comandante.llegada.fuerteventura": {
-      "ms": 7507
+      "ms": 7507,
+      "h": "989de427be"
     },
     "comandante.llegada.fuerteventura~2": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "7aaae544c7"
     },
     "comandante.llegada.fuerteventura~3": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "1da62b1d23"
     },
     "comandante.llegada.fuerteventura~4": {
-      "ms": 6407
+      "ms": 6407,
+      "h": "b7b1ee78b4"
     },
     "comandante.llegada.fuerteventura~5": {
-      "ms": 7207
+      "ms": 7207,
+      "h": "257bfa92d5"
     },
     "comandante.llegada.gran-canaria": {
-      "ms": 7907
+      "ms": 7907,
+      "h": "84b9255809"
     },
     "comandante.llegada.gran-canaria~2": {
-      "ms": 8707
+      "ms": 8707,
+      "h": "707ce282fa"
     },
     "comandante.llegada.gran-canaria~3": {
-      "ms": 7507
+      "ms": 7507,
+      "h": "f2ece66a49"
     },
     "comandante.llegada.gran-canaria~4": {
-      "ms": 7507
+      "ms": 7507,
+      "h": "b3d6ed9788"
     },
     "comandante.llegada.gran-canaria~5": {
-      "ms": 8707
+      "ms": 8707,
+      "h": "54460b0d44"
     },
     "comandante.llegada.guarani": {
-      "ms": 8407
+      "ms": 8407,
+      "h": "017d9a494e"
     },
     "comandante.llegada.guarani~2": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "2848003253"
     },
     "comandante.llegada.guarani~3": {
-      "ms": 8407
+      "ms": 8407,
+      "h": "3e4f1ca0e2"
     },
     "comandante.llegada.guarani~4": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "b1ead032e6"
     },
     "comandante.llegada.guarani~5": {
-      "ms": 7807
+      "ms": 7807,
+      "h": "ce1b5dfb0f"
     },
     "comandante.llegada.la-gomera": {
-      "ms": 6807
+      "ms": 6807,
+      "h": "222aee0863"
     },
     "comandante.llegada.la-gomera~2": {
-      "ms": 9707
+      "ms": 9707,
+      "h": "e21a6ecb5a"
     },
     "comandante.llegada.la-gomera~3": {
-      "ms": 8807
+      "ms": 8807,
+      "h": "aa73a74cfb"
     },
     "comandante.llegada.la-gomera~4": {
-      "ms": 6807
+      "ms": 6807,
+      "h": "b163cac449"
     },
     "comandante.llegada.la-gomera~5": {
-      "ms": 6607
+      "ms": 6607,
+      "h": "86ca4c1899"
     },
     "comandante.llegada.la-palma": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "5c82ab895a"
     },
     "comandante.llegada.la-palma~2": {
-      "ms": 7407
+      "ms": 7407,
+      "h": "6412635ed1"
     },
     "comandante.llegada.la-palma~3": {
-      "ms": 7507
+      "ms": 7507,
+      "h": "a466375440"
     },
     "comandante.llegada.la-palma~4": {
-      "ms": 7507
+      "ms": 7507,
+      "h": "3196162cd0"
     },
     "comandante.llegada.la-palma~5": {
-      "ms": 6107
+      "ms": 6107,
+      "h": "b3f7c7518a"
     },
     "comandante.llegada.lanzarote": {
-      "ms": 7907
+      "ms": 7907,
+      "h": "db81ecf066"
     },
     "comandante.llegada.lanzarote~2": {
-      "ms": 10107
+      "ms": 10107,
+      "h": "06dd9c90eb"
     },
     "comandante.llegada.lanzarote~3": {
-      "ms": 7007
+      "ms": 7007,
+      "h": "9e33edeaa0"
     },
     "comandante.llegada.lanzarote~4": {
-      "ms": 6907
+      "ms": 6907,
+      "h": "05203a0bf4"
     },
     "comandante.llegada.lanzarote~5": {
-      "ms": 8607
+      "ms": 8607,
+      "h": "848bf65861"
     },
     "comandante.llegada.pedro-juan": {
-      "ms": 8607
+      "ms": 8607,
+      "h": "b4eb021f58"
     },
     "comandante.llegada.pedro-juan~2": {
-      "ms": 7607
+      "ms": 7607,
+      "h": "c449d5bd6b"
     },
     "comandante.llegada.pedro-juan~3": {
-      "ms": 8107
+      "ms": 8107,
+      "h": "f764c6b004"
     },
     "comandante.llegada.pedro-juan~4": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "90ae0c008e"
     },
     "comandante.llegada.pedro-juan~5": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "fd1db2dd66"
     },
     "comandante.llegada.pettirossi": {
-      "ms": 10707
+      "ms": 10707,
+      "h": "9ab25e1986"
     },
     "comandante.llegada.pettirossi~2": {
-      "ms": 8507
+      "ms": 8507,
+      "h": "d7dcc1079d"
     },
     "comandante.llegada.pettirossi~3": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "2b2e22bbba"
     },
     "comandante.llegada.pettirossi~4": {
-      "ms": 8807
+      "ms": 8807,
+      "h": "b795147c48"
     },
     "comandante.llegada.pettirossi~5": {
-      "ms": 8107
+      "ms": 8107,
+      "h": "a736145a8a"
     },
     "comandante.llegada.pilar": {
-      "ms": 6707
+      "ms": 6707,
+      "h": "73ada49e5d"
     },
     "comandante.llegada.pilar~2": {
-      "ms": 7607
+      "ms": 7607,
+      "h": "1341de92fb"
     },
     "comandante.llegada.pilar~3": {
-      "ms": 8507
+      "ms": 8507,
+      "h": "ab7c4f4c11"
     },
     "comandante.llegada.pilar~4": {
-      "ms": 8907
+      "ms": 8907,
+      "h": "5b64b1430b"
     },
     "comandante.llegada.pilar~5": {
-      "ms": 5507
+      "ms": 5507,
+      "h": "6cd0557a5c"
     },
     "comandante.llegada.tenerife-norte": {
-      "ms": 8907
+      "ms": 8907,
+      "h": "d94910c2ce"
     },
     "comandante.llegada.tenerife-norte~2": {
-      "ms": 8207
+      "ms": 8207,
+      "h": "86eea4bbf7"
     },
     "comandante.llegada.tenerife-norte~3": {
-      "ms": 6707
+      "ms": 6707,
+      "h": "246ab9b5f4"
     },
     "comandante.llegada.tenerife-norte~4": {
-      "ms": 8107
+      "ms": 8107,
+      "h": "b80e5eaf80"
     },
     "comandante.llegada.tenerife-norte~5": {
-      "ms": 6807
+      "ms": 6807,
+      "h": "1fdd64167b"
     },
     "comandante.llegada.tenerife-sur": {
-      "ms": 9207
+      "ms": 9207,
+      "h": "a2068eaa26"
     },
     "comandante.llegada.tenerife-sur~2": {
-      "ms": 9307
+      "ms": 9307,
+      "h": "cd2580d037"
     },
     "comandante.llegada.tenerife-sur~3": {
-      "ms": 9007
+      "ms": 9007,
+      "h": "c1b5207a1e"
     },
     "comandante.llegada.tenerife-sur~4": {
-      "ms": 7607
+      "ms": 7607,
+      "h": "c79087cdef"
     },
     "comandante.llegada.tenerife-sur~5": {
-      "ms": 7007
+      "ms": 7007,
+      "h": "6d624310c4"
     },
     "comandante.llegada.valle-cordillera": {
-      "ms": 7607
+      "ms": 7607,
+      "h": "9d64e3e461"
     },
     "comandante.llegada.valle-cordillera~2": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "a56cfbe3c0"
     },
     "comandante.llegada.valle-cordillera~3": {
-      "ms": 5707
+      "ms": 5707,
+      "h": "57a9c4e0e0"
     },
     "comandante.llegada.valle-cordillera~4": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "f662ac0eeb"
     },
     "comandante.llegada.valle-cordillera~5": {
-      "ms": 7707
+      "ms": 7707,
+      "h": "ca8cceabed"
     },
     "comandante.llegada.yvytu-rape": {
-      "ms": 9707
+      "ms": 9707,
+      "h": "fd8a9c6d4c"
     },
     "comandante.llegada.yvytu-rape~2": {
-      "ms": 8507
+      "ms": 8507,
+      "h": "b38cdef53c"
     },
     "comandante.llegada.yvytu-rape~3": {
-      "ms": 6507
+      "ms": 6507,
+      "h": "cbf1f8fbea"
     },
     "comandante.llegada.yvytu-rape~4": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "f95460efb3"
     },
     "comandante.llegada.yvytu-rape~5": {
-      "ms": 8307
+      "ms": 8307,
+      "h": "46dc37ba03"
     },
     "comandante.minutos.0": {
-      "ms": 1972
+      "ms": 1972,
+      "h": "bb2aa404a6"
     },
     "comandante.minutos.10": {
-      "ms": 1979
+      "ms": 1979,
+      "h": "c88e136519"
     },
     "comandante.minutos.15": {
-      "ms": 2003
+      "ms": 2003,
+      "h": "05bb575934"
     },
     "comandante.minutos.2": {
-      "ms": 1863
+      "ms": 1863,
+      "h": "e3d9872a09"
     },
     "comandante.minutos.20": {
-      "ms": 1942
+      "ms": 1942,
+      "h": "83ab2c1f93"
     },
     "comandante.minutos.25": {
-      "ms": 2216
+      "ms": 2216,
+      "h": "087c3ebf71"
     },
     "comandante.minutos.3": {
-      "ms": 1784
+      "ms": 1784,
+      "h": "8403058bcc"
     },
     "comandante.minutos.30": {
-      "ms": 2001
+      "ms": 2001,
+      "h": "b7fac13506"
     },
     "comandante.minutos.35": {
-      "ms": 2576
+      "ms": 2576,
+      "h": "181dbe39a7"
     },
     "comandante.minutos.4": {
-      "ms": 2091
+      "ms": 2091,
+      "h": "e58117fbe5"
     },
     "comandante.minutos.40": {
-      "ms": 1947
+      "ms": 1947,
+      "h": "9164af53e7"
     },
     "comandante.minutos.45": {
-      "ms": 2451
+      "ms": 2451,
+      "h": "41f0775988"
     },
     "comandante.minutos.5": {
-      "ms": 1897
+      "ms": 1897,
+      "h": "97ce6a0254"
     },
     "comandante.minutos.50": {
-      "ms": 2244
+      "ms": 2244,
+      "h": "9341915f71"
     },
     "comandante.minutos.55": {
-      "ms": 2912
+      "ms": 2912,
+      "h": "6b328b343b"
     },
     "comandante.minutos.60": {
-      "ms": 2113
+      "ms": 2113,
+      "h": "8a75fa03cd"
     },
     "comandante.nivelMasTranquilo": {
-      "ms": 7107
+      "ms": 7107,
+      "h": "9dccd7cb4c"
     },
     "comandante.previsto.nivel.10": {
-      "ms": 1290
+      "ms": 1290,
+      "h": "c141f882bb"
     },
     "comandante.previsto.nivel.11": {
-      "ms": 1282
+      "ms": 1282,
+      "h": "fc52f4def1"
     },
     "comandante.previsto.nivel.12": {
-      "ms": 1404
+      "ms": 1404,
+      "h": "682701f0ca"
     },
     "comandante.previsto.nivel.13": {
-      "ms": 1453
+      "ms": 1453,
+      "h": "209da09daf"
     },
     "comandante.previsto.nivel.14": {
-      "ms": 1607
+      "ms": 1607,
+      "h": "979fb701ff"
     },
     "comandante.previsto.nivel.15": {
-      "ms": 1321
+      "ms": 1321,
+      "h": "fdc2b42442"
     },
     "comandante.previsto.nivel.16": {
-      "ms": 1722
+      "ms": 1722,
+      "h": "a7587c695c"
     },
     "comandante.previsto.nivel.17": {
-      "ms": 1682
+      "ms": 1682,
+      "h": "06cb68ff05"
     },
     "comandante.previsto.nivel.18": {
-      "ms": 1590
+      "ms": 1590,
+      "h": "f04dc49a78"
     },
     "comandante.previsto.nivel.19": {
-      "ms": 1803
+      "ms": 1803,
+      "h": "b0d4a59aa8"
     },
     "comandante.previsto.nivel.20": {
-      "ms": 1730
+      "ms": 1730,
+      "h": "1f9b11bdd8"
     },
     "comandante.previsto.nivel.21": {
-      "ms": 1656
+      "ms": 1656,
+      "h": "66d18a8fee"
     },
     "comandante.previsto.nivel.22": {
-      "ms": 1657
+      "ms": 1657,
+      "h": "2d238071b2"
     },
     "comandante.previsto.nivel.23": {
-      "ms": 1957
+      "ms": 1957,
+      "h": "9325f02cc9"
     },
     "comandante.previsto.nivel.24": {
-      "ms": 1658
+      "ms": 1658,
+      "h": "533b19489e"
     },
     "comandante.previsto.nivel.25": {
-      "ms": 1769
+      "ms": 1769,
+      "h": "2fef81b8a7"
     },
     "comandante.previsto.nivel.26": {
-      "ms": 1568
+      "ms": 1568,
+      "h": "2c4fa316fa"
     },
     "comandante.previsto.nivel.27": {
-      "ms": 1628
+      "ms": 1628,
+      "h": "8ac08e89e5"
     },
     "comandante.previsto.nivel.28": {
-      "ms": 1535
+      "ms": 1535,
+      "h": "093cbbfdd6"
     },
     "comandante.previsto.nivel.29": {
-      "ms": 1703
+      "ms": 1703,
+      "h": "f809d308f3"
     },
     "comandante.previsto.nivel.5": {
-      "ms": 1374
+      "ms": 1374,
+      "h": "927623c33e"
     },
     "comandante.previsto.nivel.6": {
-      "ms": 1341
+      "ms": 1341,
+      "h": "3f151387ff"
     },
     "comandante.previsto.nivel.7": {
-      "ms": 1585
+      "ms": 1585,
+      "h": "2a285845e1"
     },
     "comandante.previsto.nivel.8": {
-      "ms": 1513
+      "ms": 1513,
+      "h": "16a282adff"
     },
     "comandante.previsto.nivel.9": {
-      "ms": 1401
+      "ms": 1401,
+      "h": "ba2cb8ebbb"
     },
     "comandante.previsto.vuelo.0": {
-      "ms": 1987
+      "ms": 1987,
+      "h": "174504ef36"
     },
     "comandante.previsto.vuelo.10": {
-      "ms": 1685
+      "ms": 1685,
+      "h": "e59dd8b676"
     },
     "comandante.previsto.vuelo.15": {
-      "ms": 1890
+      "ms": 1890,
+      "h": "8d7a328b7c"
     },
     "comandante.previsto.vuelo.2": {
-      "ms": 1711
+      "ms": 1711,
+      "h": "a6b0732d4a"
     },
     "comandante.previsto.vuelo.20": {
-      "ms": 1826
+      "ms": 1826,
+      "h": "0f0927667a"
     },
     "comandante.previsto.vuelo.25": {
-      "ms": 2111
+      "ms": 2111,
+      "h": "6b78ca023b"
     },
     "comandante.previsto.vuelo.3": {
-      "ms": 1835
+      "ms": 1835,
+      "h": "18cef76042"
     },
     "comandante.previsto.vuelo.30": {
-      "ms": 1819
+      "ms": 1819,
+      "h": "064909790d"
     },
     "comandante.previsto.vuelo.35": {
-      "ms": 2389
+      "ms": 2389,
+      "h": "fd72982d5c"
     },
     "comandante.previsto.vuelo.4": {
-      "ms": 1821
+      "ms": 1821,
+      "h": "777e77a9e0"
     },
     "comandante.previsto.vuelo.40": {
-      "ms": 1982
+      "ms": 1982,
+      "h": "0105131835"
     },
     "comandante.previsto.vuelo.45": {
-      "ms": 2566
+      "ms": 2566,
+      "h": "b6179c1e03"
     },
     "comandante.previsto.vuelo.5": {
-      "ms": 1855
+      "ms": 1855,
+      "h": "9b7264a7f3"
     },
     "comandante.previsto.vuelo.50": {
-      "ms": 2084
+      "ms": 2084,
+      "h": "57cd09f601"
     },
     "comandante.previsto.vuelo.55": {
-      "ms": 2730
+      "ms": 2730,
+      "h": "7fbc042c5f"
     },
     "comandante.previsto.vuelo.60": {
-      "ms": 2089
+      "ms": 2089,
+      "h": "7f3cf7ebc0"
     },
     "comandante.temperatura.0": {
-      "ms": 1801
+      "ms": 1801,
+      "h": "c49c691a05"
     },
     "comandante.temperatura.1": {
-      "ms": 1513
+      "ms": 1513,
+      "h": "c02a7bbd93"
     },
     "comandante.temperatura.10": {
-      "ms": 1457
+      "ms": 1457,
+      "h": "5176fe5c05"
     },
     "comandante.temperatura.11": {
-      "ms": 1646
+      "ms": 1646,
+      "h": "c1d59b3394"
     },
     "comandante.temperatura.12": {
-      "ms": 1803
+      "ms": 1803,
+      "h": "e989ad4e80"
     },
     "comandante.temperatura.13": {
-      "ms": 1731
+      "ms": 1731,
+      "h": "e7436e60e7"
     },
     "comandante.temperatura.14": {
-      "ms": 1733
+      "ms": 1733,
+      "h": "217916f0a3"
     },
     "comandante.temperatura.15": {
-      "ms": 1816
+      "ms": 1816,
+      "h": "1a1b84c2a2"
     },
     "comandante.temperatura.16": {
-      "ms": 2067
+      "ms": 2067,
+      "h": "cb55e259e5"
     },
     "comandante.temperatura.17": {
-      "ms": 1931
+      "ms": 1931,
+      "h": "57099b8b68"
     },
     "comandante.temperatura.18": {
-      "ms": 1850
+      "ms": 1850,
+      "h": "15346a7136"
     },
     "comandante.temperatura.19": {
-      "ms": 1831
+      "ms": 1831,
+      "h": "8b8d0eef23"
     },
     "comandante.temperatura.2": {
-      "ms": 1924
+      "ms": 1924,
+      "h": "4c0c7f146e"
     },
     "comandante.temperatura.20": {
-      "ms": 1627
+      "ms": 1627,
+      "h": "de1c9747d8"
     },
     "comandante.temperatura.21": {
-      "ms": 1976
+      "ms": 1976,
+      "h": "32e54e7653"
     },
     "comandante.temperatura.22": {
-      "ms": 1973
+      "ms": 1973,
+      "h": "8861c888d1"
     },
     "comandante.temperatura.23": {
-      "ms": 1913
+      "ms": 1913,
+      "h": "0591e96daf"
     },
     "comandante.temperatura.24": {
-      "ms": 1822
+      "ms": 1822,
+      "h": "c697679c91"
     },
     "comandante.temperatura.25": {
-      "ms": 1910
+      "ms": 1910,
+      "h": "c48065d32c"
     },
     "comandante.temperatura.26": {
-      "ms": 1789
+      "ms": 1789,
+      "h": "5aeb994f03"
     },
     "comandante.temperatura.27": {
-      "ms": 2163
+      "ms": 2163,
+      "h": "f2bc041d40"
     },
     "comandante.temperatura.28": {
-      "ms": 1849
+      "ms": 1849,
+      "h": "c8a557117d"
     },
     "comandante.temperatura.29": {
-      "ms": 1896
+      "ms": 1896,
+      "h": "b178e97b7d"
     },
     "comandante.temperatura.3": {
-      "ms": 1643
+      "ms": 1643,
+      "h": "15594eedfd"
     },
     "comandante.temperatura.30": {
-      "ms": 1700
+      "ms": 1700,
+      "h": "4138d1be32"
     },
     "comandante.temperatura.31": {
-      "ms": 1797
+      "ms": 1797,
+      "h": "50cfd24346"
     },
     "comandante.temperatura.32": {
-      "ms": 1876
+      "ms": 1876,
+      "h": "b8cb75f45a"
     },
     "comandante.temperatura.33": {
-      "ms": 2096
+      "ms": 2096,
+      "h": "11d27d563b"
     },
     "comandante.temperatura.34": {
-      "ms": 2112
+      "ms": 2112,
+      "h": "c28dc4e151"
     },
     "comandante.temperatura.35": {
-      "ms": 2117
+      "ms": 2117,
+      "h": "6601430889"
     },
     "comandante.temperatura.36": {
-      "ms": 1950
+      "ms": 1950,
+      "h": "6f9403f3f0"
     },
     "comandante.temperatura.37": {
-      "ms": 2125
+      "ms": 2125,
+      "h": "158772ad8a"
     },
     "comandante.temperatura.38": {
-      "ms": 1917
+      "ms": 1917,
+      "h": "f7a044bff5"
     },
     "comandante.temperatura.39": {
-      "ms": 2061
+      "ms": 2061,
+      "h": "79f33cacf3"
     },
     "comandante.temperatura.4": {
-      "ms": 1768
+      "ms": 1768,
+      "h": "07c204dc30"
     },
     "comandante.temperatura.40": {
-      "ms": 1711
+      "ms": 1711,
+      "h": "3e96f0988a"
     },
     "comandante.temperatura.41": {
-      "ms": 2045
+      "ms": 2045,
+      "h": "5d8bf899bc"
     },
     "comandante.temperatura.42": {
-      "ms": 1909
+      "ms": 1909,
+      "h": "ff030b4f99"
     },
     "comandante.temperatura.43": {
-      "ms": 2002
+      "ms": 2002,
+      "h": "bb674bbc5d"
     },
     "comandante.temperatura.44": {
-      "ms": 2288
+      "ms": 2288,
+      "h": "22e842dfb2"
     },
     "comandante.temperatura.45": {
-      "ms": 2654
+      "ms": 2654,
+      "h": "4d18d8a09e"
     },
     "comandante.temperatura.5": {
-      "ms": 1869
+      "ms": 1869,
+      "h": "9d48b37e9d"
     },
     "comandante.temperatura.6": {
-      "ms": 1768
+      "ms": 1768,
+      "h": "942f9a8c65"
     },
     "comandante.temperatura.7": {
-      "ms": 1645
+      "ms": 1645,
+      "h": "668713f619"
     },
     "comandante.temperatura.8": {
-      "ms": 1699
+      "ms": 1699,
+      "h": "e1c4686947"
     },
     "comandante.temperatura.9": {
-      "ms": 1681
+      "ms": 1681,
+      "h": "e2d6bb279f"
     },
     "comandante.temperatura.menos1": {
-      "ms": 1799
+      "ms": 1799,
+      "h": "dec6cd3e46"
     },
     "comandante.temperatura.menos2": {
-      "ms": 2077
+      "ms": 2077,
+      "h": "324c2943cb"
     },
     "comandante.temperatura.menos3": {
-      "ms": 2195
+      "ms": 2195,
+      "h": "9f55784697"
     },
     "comandante.temperatura.menos4": {
-      "ms": 2240
+      "ms": 2240,
+      "h": "abdefd9d6e"
     },
     "comandante.temperatura.menos5": {
-      "ms": 2483
+      "ms": 2483,
+      "h": "4d2d7288d2"
     },
     "comandante.turbulencia": {
-      "ms": 9107
+      "ms": 9107,
+      "h": "9c5d448d16"
     },
     "ventanilla.anaga": {
-      "ms": 9907
+      "ms": 9907,
+      "h": "e799e61c7b"
     },
     "ventanilla.asuncion": {
-      "ms": 10207
+      "ms": 10207,
+      "h": "5b8dcbbd18"
     },
     "ventanilla.barco": {
-      "ms": 5107
+      "ms": 5107,
+      "h": "03e077bca4"
     },
     "ventanilla.canadas": {
-      "ms": 10507
+      "ms": 10507,
+      "h": "7482c65ef7"
     },
     "ventanilla.cerro-cora": {
-      "ms": 7307
+      "ms": 7307,
+      "h": "b9c0126c03"
     },
     "ventanilla.chaco": {
-      "ms": 8407
+      "ms": 8407,
+      "h": "ac95e2c102"
     },
     "ventanilla.encarnacion": {
-      "ms": 6807
+      "ms": 6807,
+      "h": "f1964fb58e"
     },
     "ventanilla.fuerteventura": {
-      "ms": 9707
+      "ms": 9707,
+      "h": "d5e0e5a456"
     },
     "ventanilla.garajonay": {
-      "ms": 8407
+      "ms": 8407,
+      "h": "bdc9ce804c"
     },
     "ventanilla.gigantes": {
-      "ms": 8607
+      "ms": 8607,
+      "h": "3fac5f438a"
     },
     "ventanilla.hierro": {
-      "ms": 8407
+      "ms": 8407,
+      "h": "6db2c7f008"
     },
     "ventanilla.iguazu": {
-      "ms": 8107
+      "ms": 8107,
+      "h": "8880ac8c8a"
     },
     "ventanilla.itaipu": {
-      "ms": 6007
+      "ms": 6007,
+      "h": "223b8f730e"
     },
     "ventanilla.lado.derecha": {
-      "ms": 2831
+      "ms": 2831,
+      "h": "b8e6d4de7e"
     },
     "ventanilla.lado.derecha~2": {
-      "ms": 1923
+      "ms": 1923,
+      "h": "3e89f7af75"
     },
     "ventanilla.lado.izquierda": {
-      "ms": 2566
+      "ms": 2566,
+      "h": "6337b8566b"
     },
     "ventanilla.lado.izquierda~2": {
-      "ms": 1863
+      "ms": 1863,
+      "h": "5d01f7a490"
     },
     "ventanilla.las-palmas": {
-      "ms": 8807
+      "ms": 8807,
+      "h": "a87e1c631d"
     },
     "ventanilla.lobos": {
-      "ms": 8107
+      "ms": 8107,
+      "h": "a5303aad65"
     },
     "ventanilla.maspalomas": {
-      "ms": 6607
+      "ms": 6607,
+      "h": "673fd121f9"
     },
     "ventanilla.nieves": {
-      "ms": 8907
+      "ms": 8907,
+      "h": "d27d674dd4"
     },
     "ventanilla.orotava": {
-      "ms": 9307
+      "ms": 9307,
+      "h": "82c92908f7"
     },
     "ventanilla.rio-paraguay": {
-      "ms": 8707
+      "ms": 8707,
+      "h": "4da203e605"
     },
     "ventanilla.rio-parana": {
-      "ms": 5607
+      "ms": 5607,
+      "h": "6262fa4e9f"
     },
     "ventanilla.saludo": {
-      "ms": 2060
+      "ms": 2060,
+      "h": "548c3d727d"
     },
     "ventanilla.taburiente": {
-      "ms": 8807
+      "ms": 8807,
+      "h": "a0c128a1ae"
     },
     "ventanilla.tajogaite": {
-      "ms": 7407
+      "ms": 7407,
+      "h": "f05c40a1ce"
     },
     "ventanilla.teide": {
-      "ms": 9607
+      "ms": 9607,
+      "h": "c0eff60cb6"
     },
     "ventanilla.timanfaya": {
-      "ms": 10107
+      "ms": 10107,
+      "h": "1240f2fa64"
     },
     "ventanilla.trinidad": {
-      "ms": 7507
+      "ms": 7507,
+      "h": "8ecdf586ce"
     },
     "ventanilla.triple-frontera": {
-      "ms": 8007
+      "ms": 8007,
+      "h": "d4d4d4eadd"
     },
     "ventanilla.yacyreta": {
-      "ms": 8207
+      "ms": 8207,
+      "h": "65d8e37d89"
     },
     "ventanilla.ypacarai": {
-      "ms": 6107
+      "ms": 6107,
+      "h": "4cfb36319b"
     },
     "ventanilla.ypoa": {
-      "ms": 5207
+      "ms": 5207,
+      "h": "740a310f6c"
     }
   },
   "recetas": {
