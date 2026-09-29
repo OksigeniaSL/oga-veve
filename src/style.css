@@ -958,6 +958,182 @@ body {
   transform: scale(0.93);
 }
 
+/*
+ * ── El volumen: el altavoz y su deslizador ──
+ *
+ * «Un control de volumen en el juego, abajo, porque tengo música de fondo y a
+ * la vez el juego.» Abajo a la izquierda, que en el portátil es el único
+ * rincón de abajo que no es de nadie: el centro es del cuadro y la derecha,
+ * de la tarjeta del destino.
+ *
+ * **Tumbado al lado del cuadro si cabe, y de pie si no.** El cuadro crece con
+ * el alto de la pantalla —ver `.cuadro`—, así que el hueco que deja a su
+ * izquierda es de doscientos y pico píxeles en un portátil apaisado y de cien
+ * en uno de cuatro tercios. Se probó a subirlo encima del cuadro cuando no
+ * cabía al lado, y encima del cuadro, a la izquierda, es donde se sienta el
+ * tutor: se pisaban. De pie, la cápsula mide lo que el altavoz de ancho y
+ * cabe en cualquier hueco, como la palanca del motor, que también sube para
+ * dar más.
+ *
+ * Por eso hay dos cajas: `.volumen` es el hueco —lo que mide el lado del
+ * cuadro, con la misma cuenta que el cuadro— y `.volumen__capsula` es lo que
+ * se ve, que pregunta a su hueco cuánto cabe. Con el HUD reducido la cuenta
+ * se hace en sus píxeles: el ancho de la pantalla, dividido por la escala.
+ */
+.volumen {
+  --volumen-cuadro: min(calc(100vw - 16px), 1400px, calc(44vh * 2.37));
+  --volumen-hueco: calc(
+    (100vw / var(--escala, 1) - var(--volumen-cuadro)) / 2
+  );
+  position: fixed;
+  z-index: 6;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: 16px;
+  width: max(60px, calc(var(--volumen-hueco) - 26px));
+  container-type: inline-size;
+  pointer-events: none;
+}
+
+/*
+ * Sin cuadro a la vista —recogido, o en la cabina, donde el panel es el del
+ * avión—, el hueco es la pantalla entera.
+ */
+.hud:has(.cuadro--bajado) .volumen,
+.hud--cabina .volumen {
+  --volumen-cuadro: 0px;
+}
+
+.volumen__capsula {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 14px;
+  border-radius: calc(var(--tacto) / 2 + 1px);
+  border: 1px solid var(--linea);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--filo), var(--poso);
+  pointer-events: auto;
+}
+
+/* El altavoz es la punta de la cápsula: sin su propio borde, que ya lo pone ella. */
+.volumen__capsula > .sonido {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.volumen__carril {
+  position: relative;
+  display: block;
+  width: 112px;
+  height: var(--tacto);
+}
+
+/*
+ * **El deslizador, dibujado a mano**, y no por pereza: el de cada sistema es
+ * una raya de dos píxeles con una bolita, y en una tablet de aula no se
+ * acierta. Pista gruesa con el relleno ocre hasta donde suena —lo que se lee
+ * de reojo, como el relleno de la palanca del motor— y un botón del tamaño de
+ * una yema. El alto entero es de tacto, aunque la pista sea fina.
+ */
+.volumen__mando {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 112px;
+  height: var(--tacto);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+
+/*
+ * De pie: el carril gira un cuarto de vuelta y el deslizador con él, así que
+ * arriba es más, como en la palanca del motor. Girado y no con
+ * `writing-mode`, que un deslizador vertical así no lo pintan los navegadores
+ * de las tablets de aula que se quedaron sin actualizar.
+ */
+@container (max-width: 190px) {
+  .volumen__capsula {
+    flex-direction: column;
+    padding: 0 0 12px;
+  }
+
+  .volumen__carril {
+    width: var(--tacto);
+    height: 112px;
+  }
+
+  .volumen__mando {
+    left: calc((var(--tacto) - 112px) / 2);
+    top: calc((112px - var(--tacto)) / 2);
+    transform: rotate(-90deg);
+  }
+}
+
+.volumen__mando::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    var(--ocre) calc(var(--volumen, 0.92) * 100%),
+    rgba(228, 226, 218, 0.22) 0
+  );
+}
+
+.volumen__mando::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    var(--ocre) calc(var(--volumen, 0.92) * 100%),
+    rgba(228, 226, 218, 0.22) 0
+  );
+}
+
+.volumen__mando::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -8px;
+  border-radius: 50%;
+  border: 3px solid var(--ocre);
+  background: var(--tinta);
+}
+
+.volumen__mando::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid var(--ocre);
+  background: var(--tinta);
+}
+
+.volumen__mando:focus-visible {
+  outline: 2px solid var(--ocre);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/*
+ * **Con el dedo, encima de la palanca de mando**, que es la que vive abajo a
+ * la izquierda, y tumbado: ahí el hueco es el de encima del pulgar, no el de
+ * al lado del cuadro. Donde los pulgares mandan no se pone nada más.
+ */
+@media (pointer: coarse) {
+  .hud .volumen {
+    width: 220px;
+    left: calc(max(20px, env(safe-area-inset-left)) / var(--escala, 1));
+    bottom: calc(
+      (max(20px, env(safe-area-inset-bottom)) + 150px + 16px) /
+        var(--escala, 1)
+    );
+  }
+}
+
 .sonido:hover {
   border-color: var(--ocre);
 }
@@ -9843,6 +10019,44 @@ button.motor__tecla::after {
 
   .hud.hud--menu .pantalla-completa {
     display: grid;
+  }
+
+  /*
+   * **Y el volumen, dentro del menú y a lo ancho.** Abajo, en un teléfono
+   * apaisado, están los dos pulgares: la palanca, el timón y el motor ocupan
+   * el borde entero y no queda un dedo libre. El altavoz ya vivía en este
+   * menú, y el deslizador va con él, en una fila propia de lado a lado: es el
+   * único mando del menú que se arrastra, y cuanto más largo, más fino.
+   */
+  .hud.hud--menu .hud__menu > .volumen {
+    position: static;
+    grid-column: 1 / -1;
+    width: auto;
+  }
+
+  .hud.hud--menu .hud__menu .volumen__capsula {
+    display: flex;
+    padding-right: 18px;
+  }
+
+  .hud.hud--menu .hud__menu .volumen__capsula > .sonido {
+    width: calc(var(--tacto) * 1.25);
+    height: calc(var(--tacto) * 1.25);
+  }
+
+  .hud.hud--menu .hud__menu .volumen__capsula > .sonido svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .hud.hud--menu .hud__menu .volumen__carril {
+    flex: 1;
+    height: calc(var(--tacto) * 1.25);
+  }
+
+  .hud.hud--menu .hud__menu .volumen__mando {
+    width: 100%;
+    height: 100%;
   }
 
   .hud.hud--menu .hud__menu-boton {

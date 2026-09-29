@@ -24,7 +24,19 @@
 
 import type { ControlInputs, FlightState } from "../flight/model";
 import type { AircraftSound } from "../flight/aircraft";
-import { guardarAjuste, leerAjustes, type Volumen } from "../ui/ajustes";
+import type { Volumen as Paso } from "../ui/ajustes";
+import {
+  DE_FABRICA,
+  alternar,
+  conPaso,
+  conPosicion,
+  enElMando,
+  gananciaDe,
+  guardarVolumen,
+  leerVolumen,
+  pasoDe,
+  type Volumen,
+} from "./volumen";
 import {
   Agachado,
   BUSES,
@@ -321,44 +333,15 @@ export interface AudioLevel {
 /*
  * El dibujo de cada nivel lo pone el HUD —ver `ALTAVOZ` en ui/hud.ts—: eran
  * emoji, y un emoji lo pinta cada sistema a su manera.
+ *
+ * **Y el nivel ya no es un paso de tres, es un deslizador y un silencio.** Los
+ * tres pasos siguen existiendo como lectura —el dibujo del altavoz y la fila
+ * de los ajustes—, pero lo que suena sale de la posición fina. Ver
+ * `audio/volumen.ts`.
  */
-const LEVELS: readonly AudioLevel[] = [
-  { id: "normal", gain: 0.85 },
-  { id: "bajo", gain: 0.3 },
-  { id: "mudo", gain: 0 },
-];
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
-}
-
-/*
- * **El volumen es un ajuste, y vive con los ajustes.**
- *
- * Tenía su propia clave y su propia lectura aquí, y eso estaba bien mientras
- * el único sitio donde se tocaba era el botón del HUD. Desde que también hay
- * una fila en la pantalla de ajustes son dos mandos sobre una cosa, y dos
- * mandos sobre una cosa con dos copias del estado acaban discrepando: se baja
- * el volumen desde el menú, se cierra, y el glifo de la esquina sigue diciendo
- * que suena. La clave guardada es la misma de siempre —`volumen`— para no
- * borrarle el ajuste a quien ya lo tenía puesto. Ver `ui/ajustes.ts`.
- */
-function restoreLevel(): number {
-  try {
-    const i = LEVELS.findIndex((level) => level.id === leerAjustes().volumen);
-    if (i >= 0) return i;
-  } catch {
-    // Sin almacenamiento se arranca con el volumen normal.
-  }
-  return 0;
-}
-
-function persistLevel(index: number): void {
-  try {
-    guardarAjuste("volumen", LEVELS[index]!.id as Volumen);
-  } catch {
-    // No poder recordarlo no puede romper nada.
-  }
 }
 
 export class Audio {
@@ -398,14 +381,14 @@ export class Audio {
    */
   private mundoCallado = false;
   /**
-   * Volumen en tres pasos, no un deslizador.
+   * El volumen: dónde está el deslizador y si está callado.
    *
-   * Un deslizador exige precisión con el dedo y no dice de un vistazo dónde
-   * está. Tres estados —normal, bajo, mudo— se recorren pulsando y se leen
-   * en el icono. El aula necesita el paso «bajo» tanto como el mudo: veinte
-   * tablets a medio volumen son un aula; a volumen normal, un aviario.
+   * Eran tres pasos y no un deslizador, porque un deslizador exige precisión
+   * con el dedo y no dice de un vistazo dónde está. Eso sigue valiendo para
+   * callar, y callar sigue siendo un toque en el altavoz. Lo que no valía era
+   * para convivir con música de fondo: ver `audio/volumen.ts`.
    */
-  private levelIndex = 0;
+  private volumen: Volumen = DE_FABRICA;
   /** Ficha sonora de la aeronave que se está volando. */
   private engineSpec: AircraftSound = DEFAULT_ENGINE;
 
@@ -452,7 +435,12 @@ export class Audio {
   }
 
   get level(): AudioLevel {
-    return LEVELS[this.levelIndex]!;
+    return { id: pasoDe(this.volumen), gain: gananciaDe(this.volumen) };
+  }
+
+  /** Lo que enseña el deslizador, de 0 a 1: callado, abajo del todo. */
+  get enElMando(): number {
+    return enElMando(this.volumen);
   }
 
   /**
@@ -461,6 +449,8 @@ export class Audio {
    */
   prepare(): void {
     if (this.context) return;
+    // El volumen guardado, aunque no haya audio: el deslizador lo enseña igual.
+    this.volumen = leerVolumen();
     try {
       this.context = new AudioContext();
     } catch {
@@ -529,27 +519,41 @@ export class Audio {
     void this.context?.resume().catch(() => undefined);
   }
 
-  /** Pasa al siguiente paso de volumen y devuelve el que ha quedado. */
-  cycleLevel(): AudioLevel {
-    this.levelIndex = (this.levelIndex + 1) % LEVELS.length;
-    this.applyMasterGain();
-    persistLevel(this.levelIndex);
-    return this.level;
+  /**
+   * **El toque del altavoz**: calla, o devuelve lo que había.
+   *
+   * Recorría los tres pasos —normal, bajo, mudo— y ahora el bajo lo da el
+   * deslizador. Al altavoz le queda lo que un niño de cuatro años necesita de
+   * él: un toque, silencio; otro toque, vuelve.
+   */
+  alternarSilencio(): AudioLevel {
+    return this.ponerVolumen(alternar(this.volumen), true);
   }
 
   /**
    * Pone un paso concreto. Lo usa la fila de sonido de los ajustes.
    *
-   * No guarda: quien lo llama ya viene de guardar el ajuste. Guardar aquí
-   * también sería escribir dos veces lo mismo y, el día que las claves no
-   * coincidan, escribir dos cosas distintas.
+   * Callar desde la fila no pierde la posición del deslizador, igual que
+   * callar desde el altavoz. Y guarda las dos claves: la fila ya guardó el
+   * paso, pero la posición fina tiene que ir con él o al volver discreparían.
    */
-  ponerNivel(id: AudioLevel["id"]): AudioLevel {
-    const i = LEVELS.findIndex((level) => level.id === id);
-    if (i >= 0) {
-      this.levelIndex = i;
-      this.applyMasterGain();
-    }
+  ponerNivel(id: Paso): AudioLevel {
+    if (pasoDe(this.volumen) === id) return this.level;
+    return this.ponerVolumen(conPaso(id, this.volumen), true);
+  }
+
+  /**
+   * El deslizador, de 0 a 1. `guardar` al soltarlo: mientras se arrastra se
+   * oye, y se recuerda cuando se deja.
+   */
+  ponerPosicion(posicion: number, guardar: boolean): AudioLevel {
+    return this.ponerVolumen(conPosicion(posicion), guardar);
+  }
+
+  private ponerVolumen(v: Volumen, guardar: boolean): AudioLevel {
+    this.volumen = v;
+    this.applyMasterGain();
+    if (guardar) guardarVolumen(v);
     return this.level;
   }
 
@@ -772,8 +776,7 @@ export class Audio {
     compressor.knee.value = 12;
 
     this.master = ctx.createGain();
-    this.levelIndex = restoreLevel();
-    this.applyMasterGain();
+    this.master.gain.value = this.level.gain;
     this.master.connect(compressor);
     /*
      * **Y un limitador detrás del compresor, que no son lo mismo.**
@@ -793,7 +796,7 @@ export class Audio {
     limitador.connect(ctx.destination);
 
     // Los seis buses, cada uno a su nivel. Ver `audio/mezcla.ts`.
-    const niveles = nivelesAhora(false);
+    const niveles = nivelesAhora(false, this.level.gain);
     this.buses = Object.fromEntries(
       BUSES.map((nombre) => {
         const bus = ctx.createGain();
@@ -1195,6 +1198,12 @@ export class Audio {
      * arma su cadena.
      */
     porAltavoz = false,
+    /**
+     * Si la dice una caja del avión —la cuenta, el *terrain*, el *stall*—:
+     * va por el bus de avisos, que es el que no baja del mínimo audible
+     * cuando se baja el volumen. Ver `MINIMO_DE_AVISOS` en `audio/mezcla.ts`.
+     */
+    porLaCaja = false,
   ): (() => void) | null {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running" || piezas.length === 0) return null;
@@ -1208,7 +1217,7 @@ export class Audio {
           ? this.entradaDeRadio
           : porAltavoz && this.entradaDeAltavoz
             ? this.entradaDeAltavoz
-            : this.bus("voz"),
+            : this.bus(porLaCaja ? "avisos" : "voz"),
       );
       fuente.start(cuando);
       cuando += pieza.duration;
@@ -1300,7 +1309,9 @@ export class Audio {
   private ponerNiveles(): void {
     if (!this.buses || !this.context) return;
     const agachado = this.hablando.activo;
-    const niveles = nivelesAhora(agachado);
+    // Con el maestro de ahora: el bus de avisos no baja del mínimo audible.
+    // Ver `MINIMO_DE_AVISOS`.
+    const niveles = nivelesAhora(agachado, this.level.gain);
     const ahora = this.context.currentTime;
     // `setTargetAtTime` va a un tercio de la constante por cada tramo, así
     // que la constante es el tiempo pedido entre tres.
@@ -1319,6 +1330,8 @@ export class Audio {
 
   private applyMasterGain(): void {
     if (!this.master || !this.context) return;
+    // Los buses primero: el refuerzo de los avisos va con el maestro.
+    this.ponerNiveles();
     this.master.gain.setTargetAtTime(
       this.level.gain,
       this.context.currentTime,

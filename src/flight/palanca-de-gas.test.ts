@@ -16,6 +16,7 @@ import {
   MANTENER,
   PASO,
   RALENTI,
+  RODAJE_MINIMO,
   alIman,
   cruzaMarca,
   gasALaAltura,
@@ -32,9 +33,28 @@ describe("las marcas de la palanca", () => {
   });
 
   it("el rodaje nunca se pega a una punta, que serían dos marcas en una", () => {
-    expect(marcasDeGas(0.01)[1]).toBeGreaterThanOrEqual(0.12);
+    expect(marcasDeGas(0.01)[1]).toBeGreaterThanOrEqual(RODAJE_MINIMO);
     expect(marcasDeGas(0.95)[1]).toBeLessThanOrEqual(0.6);
     expect(marcasDeGas(Number.NaN)[1]).toBe(0.3);
+  });
+
+  /*
+   * **Y fuera de eso, donde el avión rueda de verdad.** El suelo estaba en
+   * doce centésimas y el gas de rodaje del modelo completo va de cinco a diez:
+   * la marca quedaba siempre por encima y llevaba al JAZ 90 a veinticinco
+   * metros por segundo en un minuto. Ver `RODAJE_MINIMO`.
+   */
+  it("el rodaje de siete u ocho centésimas se pinta donde está", () => {
+    for (const g of [0.063, 0.076, 0.088, 0.09, 0.1])
+      expect(marcasDeGas(g)[1]).toBe(g);
+  });
+
+  it("y pegada al ralentí, el dedo cae en la más cercana, nunca en las dos", () => {
+    const juntas = marcasDeGas(0.049);
+    const rodaje = juntas[1]!;
+    expect(alIman(rodaje * 0.4, juntas)).toBe(RALENTI);
+    expect(alIman(rodaje * 0.6, juntas)).toBe(rodaje);
+    expect(alIman(rodaje + IMAN * 0.9, juntas)).toBe(rodaje);
   });
 
   /**

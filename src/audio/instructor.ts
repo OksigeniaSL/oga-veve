@@ -41,7 +41,7 @@
  */
 
 import { getLocale } from "../i18n";
-import { seguirLaVoz, vozPermitida } from "./voz";
+import { seguirLaVoz, volumenDeVoz, vozPermitida } from "./voz";
 import { chasquidoDeRadio } from "./radio";
 import { BOCA, type Urgencia } from "./boca";
 
@@ -375,7 +375,13 @@ export class VozDelNavegador implements Instructor {
          * este volumen. La torre y el otro avión suenan de fondo; la instructora
          * y la comandante te hablan a vos.
          */
-        if (this.timbre.radio) frase.volume = 0.55;
+        /*
+         * **Y las dos, con el volumen del juego.** El sintetizador habla por
+         * su cuenta, así que el maestro no lo alcanza: sin esto, bajar el
+         * deslizador para oír la música de fondo bajaba el motor y dejaba a
+         * la instructora gritando. Ver `volumenDeVoz`.
+         */
+        frase.volume = volumenDeVoz(this.timbre.radio ? 0.55 : 1);
         /*
          * Y si esta voz viene por radio, el pulsador.
          *

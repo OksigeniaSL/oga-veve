@@ -411,6 +411,7 @@ export const EN: Dictionary = {
   "avion.cambiarParado": "Stop on the ground to change aircraft",
   "hud.mandarCinturon": "Seatbelt sign",
   "hud.subirCuadro": "Raise the panel",
+  "hud.volumen": "Volume",
   "hud.menu": "More buttons",
   "hud.pantallaCompleta": "Full screen",
   "hud.salirPantallaCompleta": "Exit full screen",

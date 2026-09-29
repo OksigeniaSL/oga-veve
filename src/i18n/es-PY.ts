@@ -1278,6 +1278,7 @@ export const ES_PY = {
    * de la pantalla completa que va dentro. Solo los lee un lector de
    * pantalla: en la pantalla son dibujos. Ver `ui/pantalla-completa.ts`.
    */
+  "hud.volumen": "Volumen",
   "hud.menu": "Más botones",
   "hud.pantallaCompleta": "Pantalla completa",
   "hud.salirPantallaCompleta": "Salir de pantalla completa",

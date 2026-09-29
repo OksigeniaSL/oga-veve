@@ -21,6 +21,7 @@
 
 /** Los avisos son de cabina, y una cabina habla en inglés aeronáutico. */
 import { BOCA, type Urgencia } from "./boca";
+import { MINIMO_DE_AVISOS } from "./mezcla";
 
 const IDIOMA = "en-US";
 
@@ -39,12 +40,35 @@ let permitido = true;
  * secos y a los cuatro años una voz baja se pierde.
  */
 let volumen = 0.9;
+/**
+ * Y cuánto se mueve la voz con el volumen del juego, con el normal en uno.
+ *
+ * Lo usa también el instructor, que habla por el mismo sintetizador y **no
+ * lo miraba**: el deslizador bajaba el motor y la instructora seguía a tope.
+ */
+let proporcion = 1;
 
-/** Lo pone el botón del altavoz, con la ganancia del peldaño que toque. */
+/** Lo pone el volumen del juego, con la ganancia del maestro que toque. */
 export function ponerVolumenDeVoz(deLaMezcla: number): void {
   // La ganancia normal de la mezcla es 0,85; se traduce a la escala de la voz
   // para que «normal» siga sonando como sonaba.
-  volumen = Math.max(0, Math.min(1, (deLaMezcla / 0.85) * 0.9));
+  proporcion = Math.max(0, deLaMezcla / 0.85);
+  /*
+   * **Y esta voz es la de las cajas del avión**, así que no baja del mínimo
+   * que tienen los avisos con el juego sin silenciar: en una cabina de verdad
+   * un aviso no se puede bajar hasta no oírlo. Ver `MINIMO_DE_AVISOS`.
+   */
+  const deCabina =
+    deLaMezcla > 0 ? Math.max(deLaMezcla, MINIMO_DE_AVISOS) : 0;
+  volumen = Math.max(0, Math.min(1, (deCabina / 0.85) * 0.9));
+}
+
+/**
+ * Lo alto que tiene que hablar una voz del sintetizador que en «normal»
+ * habla a `normal`, con el volumen de ahora. De 0 a 1.
+ */
+export function volumenDeVoz(normal: number): number {
+  return Math.max(0, Math.min(1, normal * proporcion));
 }
 
 /**
