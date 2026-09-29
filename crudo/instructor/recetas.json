@@ -833,5 +833,11 @@
   ],
   "vuelo.masAltoQueElPlan": [
     "vuelo.masAltoQueElPlan"
+  ],
+  "hud.landedShort": [
+    "hud.landedShort"
+  ],
+  "gafas.ganadas": [
+    "gafas.ganadas"
   ]
 }

@@ -30,15 +30,18 @@ describe("lo que dice la torre", () => {
   );
 
   /*
-   * Las dos de la lámpara —«Podés entrar» y «Esperá acá»— no van en esta
-   * tabla: las pide `luzDeTorre` por su clave del diccionario, porque son
-   * castellano del sitio y no fraseología. Ver `i18n/habla.ts`.
+   * Las de la lámpara —«autorizado a despegar», «mantenga fuera de pista»—
+   * no van en esta tabla: las pide `luzDeTorre` por su clave del
+   * diccionario, porque son la fraseología en castellano y no la inglesa de
+   * la tabla. Ver `i18n/habla.ts`.
    */
   const DE_LA_LAMPARA = new Set([
     "torre.verde",
     "torre.roja",
     "torre.aterrizar",
-    // Y a dónde se va, en palabras de casa. Ver `autorizarLaRuta`.
+    // Y la roja en el aire, la orden de irse al aire. Ver `luzDeTorre`.
+    "torre.alAire",
+    // Y a dónde se va, con su límite. Ver `autorizarLaRuta`.
     "torre.destino",
     /*
      * Y la información de tráfico, que tampoco es una orden de la tabla: la
@@ -357,9 +360,26 @@ describe("la verde nombra la pista, en castellano", () => {
           const texto = piezas!.join(" ");
           expect(texto, clave).toContain(`solo.pista ${pista.relleno.p1} ${pista.relleno.p2}`);
           expect(texto, clave).toMatch(
-            orden === "verde" ? /autorizadoDespegar$/ : /autorizadoAterrizar$/,
+            orden === "verde" ? /autorizadoDespegar$/ : /autorizadoParaAterrizar$/,
           );
         }
+    }
+  });
+
+  it("y la roja también, detrás de la orden: «mantenga fuera de pista dos cero»", () => {
+    for (const cabecera of ["20", "03L", "21R", "12C"]) {
+      const pista = pistaEnCastellano(cabecera)!;
+      for (const [m, habla] of [
+        [manifiesto, ""],
+        [canarias, "canario."],
+      ] as const) {
+        const clave = `torre.${habla}roja${pista.sufijo}`;
+        const piezas = recetaDe(m as Manifiesto, clave, { ...yo, ...pista.relleno });
+        expect(piezas, clave).not.toBeNull();
+        expect(piezas!.join(" "), clave).toContain(
+          `solo.mantengaFuera ${pista.relleno.p1} ${pista.relleno.p2}`,
+        );
+      }
     }
   });
 });

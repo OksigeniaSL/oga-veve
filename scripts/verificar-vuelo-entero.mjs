@@ -4597,8 +4597,8 @@ const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
 });
 /*
  * **Y saliendo de una pista particular, la torre calla.** No hay torre: ni
- * lámpara que se ponga roja o verde ni voz que diga «esperá acá». Allí se
- * para y se mira. Ver `guionSinTorre`.
+ * lámpara que se ponga roja o verde ni voz que diga «mantenga fuera de
+ * pista». Allí se para y se mira. Ver `guionSinTorre`.
  */
 if (vuelo.saleConTorre === false)
   comprobar(
@@ -4730,8 +4730,8 @@ comprobar(
  * mirar, y eso es un fallo del banco, no un aprobado.
  *
  * **Y la de cada peldaño.** El permiso va por la verde en vuelo, como el de
- * despegar: «podés aterrizar» —`torre.aterrizar`— en los cuatro, y detrás el
- * «cleared to land» en fraseología de Taguató para arriba. Así que abajo se
+ * despegar: «autorizado para aterrizar» —`torre.aterrizar`— en los cuatro, y
+ * detrás el «cleared to land» en fraseología de Taguató para arriba. Así que abajo se
  * exige el castellano y que no se cuele el inglés, y arriba los dos. Lo que no
  * se acepta nunca es una torre muda: iba solo por radio y en inglés, y en
  * Guyrami no sonaba nada. Ver `autorizarElAterrizaje` en `game.ts`.

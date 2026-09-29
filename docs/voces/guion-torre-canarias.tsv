@@ -1,156 +1,137 @@
-001	torre.canario.solo.pista	pista
-002	torre.canario.solo.autorizadoDespegar	autorizado a despegar
-003	torre.canario.solo.autorizadoAterrizar	autorizado a aterrizar
-004	cifra.es.0	cero
-005	cifra.es.1	uno
-006	cifra.es.2	dos
-007	cifra.es.3	tres
-008	cifra.es.4	cuatro
-009	cifra.es.5	cinco
-010	cifra.es.6	seis
-011	cifra.es.7	siete
-012	cifra.es.8	ocho
-013	cifra.es.9	nueve
-014	lado.es.izquierda	izquierda
-015	lado.es.derecha	derecha
-016	lado.es.central	central
-017	torre.canario.solo.destino	puedes volar a
-018	torre.canario.solo.afisLibre	pista libre
-019	torre.canario.solo.afisOcupada	pista ocupada
-020	torre.canario.solo.afisSinTrafico	sin tráfico conocido
-021	torre.canario.solo.afisTraficoAterriza	tráfico aterrizando
-022	torre.canario.solo.afisTraficoDespega	tráfico despegando
-023	destino.tenerife-norte	Tenerife Norte
-024	destino.tenerife-sur	Tenerife Sur
-025	destino.gran-canaria	Gran Canaria
-026	destino.lanzarote	Lanzarote
-027	destino.fuerteventura	Fuerteventura
-028	destino.la-palma	La Palma
-029	destino.el-hierro	El Hierro
-030	destino.la-gomera	La Gomera
-031	fonetico.alfa	Alfa
-032	fonetico.bravo	Bravo
-033	fonetico.charlie	Charlie
-034	fonetico.delta	Delta
-035	fonetico.echo	Echo
-036	fonetico.foxtrot	Foxtrot
-037	fonetico.golf	Golf
-038	fonetico.hotel	Hotel
-039	fonetico.india	India
-040	fonetico.juliett	Juliett
-041	fonetico.kilo	Kilo
-042	fonetico.lima	Lima
-043	fonetico.mike	Mike
-044	fonetico.november	November
-045	fonetico.oscar	Oscar
-046	fonetico.papa	Papa
-047	fonetico.quebec	Quebec
-048	fonetico.romeo	Romeo
-049	fonetico.sierra	Sierra
-050	fonetico.tango	Tango
-051	fonetico.uniform	Uniform
-052	fonetico.victor	Victor
-053	fonetico.whiskey	Whiskey
-054	fonetico.xray	X-ray
-055	fonetico.yankee	Yankee
-056	fonetico.zulu	Zulu
-057	cifra.0	zero
-058	cifra.1	one
-059	cifra.2	two
-060	cifra.3	three
-061	cifra.4	four
-062	cifra.5	five
-063	cifra.6	six
-064	cifra.7	seven
-065	cifra.8	eight
-066	cifra.9	niner
-067	torre.canario.solo.runway	runway
-068	lado.left	left
-069	lado.right	right
-070	lado.center	center
-071	torre.canario.solo.clearedTakeoff	cleared for take-off
-072	torre.canario.solo.clearedLand	cleared to land
-073	torre.canario.solo.goAround	go around, runway occupied
-074	torre.canario.solo.holdShort	hold short of the runway
-075	torre.canario.solo.vacateNext	vacate next available
-076	torre.canario.solo.landingTraffic	landing traffic
-077	torre.canario.solo.departingTraffic	departing traffic
-078	torre.canario.solo.lineUpWait	line up and wait
-079	torre.canario.solo.clearedTo	cleared to
-080	torre.canario.solo.climbTo	climb to
-081	torre.canario.solo.runwayInUse	runway in use
-082	torre.canario.solo.goAroundSolo	go around
-083	torre.canario.solo.rogerMayday	roger, Mayday
-084	torre.canario.solo.free	free
-085	torre.canario.solo.occupied	occupied
-086	torre.canario.solo.noReportedTraffic	no reported traffic
-087	viento.wind	wind
-088	viento.degrees	degrees
-089	viento.knots	knots
-090	viento.calm	calm
-091	viento.variable	variable
-092	trafico.traffic	traffic
-093	trafico.hora.1	one o'clock
-094	trafico.hora.2	two o'clock
-095	trafico.hora.3	three o'clock
-096	trafico.hora.4	four o'clock
-097	trafico.hora.5	five o'clock
-098	trafico.hora.6	six o'clock
-099	trafico.hora.7	seven o'clock
-100	trafico.hora.8	eight o'clock
-101	trafico.hora.9	nine o'clock
-102	trafico.hora.10	ten o'clock
-103	trafico.hora.11	eleven o'clock
-104	trafico.hora.12	twelve o'clock
-105	trafico.millas.1	one mile
-106	trafico.millas.2	two miles
-107	trafico.millas.3	three miles
-108	trafico.millas.4	four miles
-109	trafico.millas.5	five miles
-110	trafico.millas.6	six miles
-111	trafico.pies.3	three hundred feet
-112	trafico.pies.4	four hundred feet
-113	trafico.pies.5	five hundred feet
-114	trafico.pies.6	six hundred feet
-115	trafico.pies.7	seven hundred feet
-116	trafico.pies.8	eight hundred feet
-117	trafico.pies.9	niner hundred feet
-118	trafico.pies.10	one thousand feet
-119	trafico.pies.11	one thousand one hundred feet
-120	trafico.pies.12	one thousand two hundred feet
-121	trafico.above	above
-122	trafico.below	below
-123	trafico.sameLevel	same level
-124	altura.nivel	flight level
-125	altura.pies.2	two thousand feet
-126	altura.pies.3	three thousand feet
-127	altura.pies.4	four thousand feet
-128	altura.pies.5	five thousand feet
-129	altura.pies.6	six thousand feet
-130	torre.canario.solo.subir.3	sube a tres mil pies
-131	torre.canario.solo.subir.4	sube a cuatro mil pies
-132	torre.canario.solo.subir.5	sube a cinco mil pies
-133	torre.canario.solo.subir.6	sube a seis mil pies
-134	torre.canario.solo.subir.7	sube a siete mil pies
-135	torre.canario.solo.subir.8	sube a ocho mil pies
-136	torre.canario.solo.subir.9	sube a nueve mil pies
-137	torre.canario.solo.subir.10	sube a diez mil pies
-138	torre.canario.solo.subir.11	sube a once mil pies
-139	torre.canario.solo.subir.12	sube a doce mil pies
-140	torre.canario.solo.subir.13	sube a trece mil pies
-141	torre.canario.solo.subir.14	sube a catorce mil pies
-142	torre.canario.solo.subir.15	sube a quince mil pies
-143	torre.canario.solo.subir.16	sube a dieciséis mil pies
-144	torre.canario.solo.subir.17	sube a diecisiete mil pies
-145	torre.canario.solo.subir.18	sube a dieciocho mil pies
-146	torre.canario.solo.subir.19	sube a diecinueve mil pies
-147	torre.canario.solo.subir.20	sube a veinte mil pies
-148	torre.canario.solo.subir.21	sube a veintiún mil pies
-149	torre.canario.solo.subir.22	sube a veintidós mil pies
-150	torre.canario.solo.subir.23	sube a veintitrés mil pies
-151	torre.canario.solo.subir.24	sube a veinticuatro mil pies
-152	torre.canario.solo.subir.25	sube a veinticinco mil pies
-153	torre.canario.solo.subir.26	sube a veintiséis mil pies
-154	torre.canario.solo.subir.27	sube a veintisiete mil pies
-155	torre.canario.solo.subir.28	sube a veintiocho mil pies
-156	torre.canario.solo.subir.29	sube a veintinueve mil pies
+001	torre.canario.solo.subirNivel	suba a nivel de vuelo
+002	torre.canario.solo.pista	pista
+003	torre.canario.solo.autorizadoDespegar	autorizado a despegar
+004	torre.canario.solo.autorizadoParaAterrizar	autorizado para aterrizar
+005	torre.canario.solo.mantengaFuera	mantenga fuera de pista
+006	torre.canario.solo.autorizadoA	autorizado a
+007	torre.canario.solo.motorYAlAire	motor y al aire
+008	cifra.es.0	cero
+009	cifra.es.1	uno
+010	cifra.es.2	dos
+011	cifra.es.3	tres
+012	cifra.es.4	cuatro
+013	cifra.es.5	cinco
+014	cifra.es.6	seis
+015	cifra.es.7	siete
+016	cifra.es.8	ocho
+017	cifra.es.9	nueve
+018	lado.es.izquierda	izquierda
+019	lado.es.derecha	derecha
+020	lado.es.central	central
+021	torre.canario.solo.afisLibre	pista libre
+022	torre.canario.solo.afisOcupada	pista ocupada
+023	torre.canario.solo.afisSinTrafico	sin tráfico conocido
+024	torre.canario.solo.afisTraficoAterriza	tráfico aterrizando
+025	torre.canario.solo.afisTraficoDespega	tráfico despegando
+026	destino.tenerife-norte	Tenerife Norte
+027	destino.tenerife-sur	Tenerife Sur
+028	destino.gran-canaria	Gran Canaria
+029	destino.lanzarote	Lanzarote
+030	destino.fuerteventura	Fuerteventura
+031	destino.la-palma	La Palma
+032	destino.el-hierro	El Hierro
+033	destino.la-gomera	La Gomera
+034	fonetico.alfa	Alfa
+035	fonetico.bravo	Bravo
+036	fonetico.charlie	Charlie
+037	fonetico.delta	Delta
+038	fonetico.echo	Echo
+039	fonetico.foxtrot	Foxtrot
+040	fonetico.golf	Golf
+041	fonetico.hotel	Hotel
+042	fonetico.india	India
+043	fonetico.juliett	Juliett
+044	fonetico.kilo	Kilo
+045	fonetico.lima	Lima
+046	fonetico.mike	Mike
+047	fonetico.november	November
+048	fonetico.oscar	Oscar
+049	fonetico.papa	Papa
+050	fonetico.quebec	Quebec
+051	fonetico.romeo	Romeo
+052	fonetico.sierra	Sierra
+053	fonetico.tango	Tango
+054	fonetico.uniform	Uniform
+055	fonetico.victor	Victor
+056	fonetico.whiskey	Whiskey
+057	fonetico.xray	X-ray
+058	fonetico.yankee	Yankee
+059	fonetico.zulu	Zulu
+060	cifra.0	zero
+061	cifra.1	one
+062	cifra.2	two
+063	cifra.3	three
+064	cifra.4	four
+065	cifra.5	five
+066	cifra.6	six
+067	cifra.7	seven
+068	cifra.8	eight
+069	cifra.9	niner
+070	torre.canario.solo.runway	runway
+071	lado.left	left
+072	lado.right	right
+073	lado.center	center
+074	torre.canario.solo.clearedTakeoff	cleared for take-off
+075	torre.canario.solo.clearedLand	cleared to land
+076	torre.canario.solo.goAround	go around, runway occupied
+077	torre.canario.solo.holdShort	hold short of the runway
+078	torre.canario.solo.vacateNext	vacate next available
+079	torre.canario.solo.landingTraffic	landing traffic
+080	torre.canario.solo.departingTraffic	departing traffic
+081	torre.canario.solo.lineUpWait	line up and wait
+082	torre.canario.solo.clearedTo	cleared to
+083	torre.canario.solo.climbTo	climb to
+084	torre.canario.solo.runwayInUse	runway in use
+085	torre.canario.solo.goAroundSolo	go around
+086	torre.canario.solo.rogerMayday	roger, Mayday
+087	torre.canario.solo.free	free
+088	torre.canario.solo.occupied	occupied
+089	torre.canario.solo.noReportedTraffic	no reported traffic
+090	viento.wind	wind
+091	viento.degrees	degrees
+092	viento.knots	knots
+093	viento.calm	calm
+094	viento.variable	variable
+095	trafico.traffic	traffic
+096	trafico.hora.1	one o'clock
+097	trafico.hora.2	two o'clock
+098	trafico.hora.3	three o'clock
+099	trafico.hora.4	four o'clock
+100	trafico.hora.5	five o'clock
+101	trafico.hora.6	six o'clock
+102	trafico.hora.7	seven o'clock
+103	trafico.hora.8	eight o'clock
+104	trafico.hora.9	nine o'clock
+105	trafico.hora.10	ten o'clock
+106	trafico.hora.11	eleven o'clock
+107	trafico.hora.12	twelve o'clock
+108	trafico.millas.1	one mile
+109	trafico.millas.2	two miles
+110	trafico.millas.3	three miles
+111	trafico.millas.4	four miles
+112	trafico.millas.5	five miles
+113	trafico.millas.6	six miles
+114	trafico.pies.3	three hundred feet
+115	trafico.pies.4	four hundred feet
+116	trafico.pies.5	five hundred feet
+117	trafico.pies.6	six hundred feet
+118	trafico.pies.7	seven hundred feet
+119	trafico.pies.8	eight hundred feet
+120	trafico.pies.9	niner hundred feet
+121	trafico.pies.10	one thousand feet
+122	trafico.pies.11	one thousand one hundred feet
+123	trafico.pies.12	one thousand two hundred feet
+124	trafico.above	above
+125	trafico.below	below
+126	trafico.sameLevel	same level
+127	altura.nivel	flight level
+128	altura.pies.2	two thousand feet
+129	altura.pies.3	three thousand feet
+130	altura.pies.4	four thousand feet
+131	altura.pies.5	five thousand feet
+132	altura.pies.6	six thousand feet
+133	torre.canario.solo.subir.2	suba a dos mil pies
+134	torre.canario.solo.subir.3	suba a tres mil pies
+135	torre.canario.solo.subir.4	suba a cuatro mil pies
+136	torre.canario.solo.subir.5	suba a cinco mil pies
+137	torre.canario.solo.subir.6	suba a seis mil pies

@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   AutorizacionDeSubida,
-  MILES_EN_CASA,
   TRANSICION_CANARIAS,
   TRANSICION_PARAGUAY,
+  alturaEnCastellano,
   alturaEnRadio,
   altitudDeTransicion,
   escalonesDeSubida,
-  piezaDeSubirEnCasa,
 } from "./autorizacion-de-altitud";
 import { HASTA } from "./nivel-de-crucero";
 import casa from "../../data/voces/torre/manifiesto.json";
@@ -28,18 +27,19 @@ describe("y suena con la voz de su torre", () => {
     c5: "fonetico.charlie",
   };
   const packs = [
-    ["torre", casa as unknown as Manifiesto, "", 3000],
-    ["torre-canarias", islas as unknown as Manifiesto, "canario.", 6000],
+    ["torre", casa as unknown as Manifiesto, "", TRANSICION_PARAGUAY],
+    ["torre-canarias", islas as unknown as Manifiesto, "canario.", TRANSICION_CANARIAS],
   ] as const;
 
   for (const [voz, pack, habla, transicion] of packs)
-    it(`${voz}: cada millar, en casa y en fraseología`, () => {
-      for (let miles = 3; miles <= HASTA / 1000; miles++) {
+    it(`${voz}: cada millar, en castellano y en inglés`, () => {
+      for (let miles = 2; miles <= HASTA / 1000; miles++) {
         const pies = miles * 1000;
-        const subir = piezaDeSubirEnCasa(pies)!.replace("torre.", `torre.${habla}`);
+        const enCastellano = alturaEnCastellano(pies, transicion, `torre.${habla}solo`);
+        expect(enCastellano, `${voz} ${pies}`).not.toBeNull();
         expect(
-          recetaDe(pack, `torre.${habla}subir`, { ...letras, subir }),
-          `${voz} ${pies}`,
+          recetaDe(pack, `torre.${habla}subir`, { ...letras, subir: enCastellano!.piezas }),
+          `${voz} ${enCastellano!.dicho}`,
         ).not.toBeNull();
         const enRadio = alturaEnRadio(pies, transicion);
         expect(enRadio, `${voz} ${pies}`).not.toBeNull();
@@ -96,11 +96,23 @@ describe("cómo se dice por radio", () => {
     expect(alturaEnRadio(4500, 6000)).toBeNull();
   });
 
-  it("en casa, todos los niveles que puede dar el plan están grabados", () => {
-    expect(MILES_EN_CASA.hasta).toBe(HASTA / 1000);
-    for (let miles = 3; miles <= HASTA / 1000; miles++)
-      expect(piezaDeSubirEnCasa(miles * 1000)).toBe(`torre.solo.subir.${miles}`);
-    expect(piezaDeSubirEnCasa(4500)).toBeNull();
+  it("y en castellano, igual: nivel cifra a cifra por encima, pies por debajo", () => {
+    // DINAC R 10, vol. II, 5.2.1.4.1: «FL 180, nivel de vuelo uno ocho cero».
+    expect(alturaEnCastellano(11000, 3000)).toEqual({
+      dicho: "nivel de vuelo uno uno cero",
+      piezas: "torre.solo.subirNivel cifra.es.1 cifra.es.1 cifra.es.0",
+    });
+    expect(alturaEnCastellano(4000, 3000)!.dicho).toBe("nivel de vuelo cero cuatro cero");
+    // Y en pies, el millar y la palabra MIL: «tres mil pies».
+    expect(alturaEnCastellano(3000, 3000)).toEqual({
+      dicho: "tres mil pies",
+      piezas: "torre.solo.subir.3",
+    });
+    expect(alturaEnCastellano(6000, 6000, "torre.canario.solo")).toEqual({
+      dicho: "seis mil pies",
+      piezas: "torre.canario.solo.subir.6",
+    });
+    expect(alturaEnCastellano(4500, 6000)).toBeNull();
   });
 });
 

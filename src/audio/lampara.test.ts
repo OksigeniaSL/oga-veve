@@ -24,8 +24,8 @@ describe("la lámpara de la torre", () => {
       "torre.canario.clearedTakeoff.L@fonetico.zulu-cifra.0-cifra.3",
       "torre.clearedLand@fonetico.zulu-cifra.1-cifra.2",
       "torre.canario.goAround@fonetico.zulu",
-      "palabra.alAire@fonetico.zulu",
-      "palabra.canario.alAire",
+      "torre.alAire@fonetico.zulu",
+      "torre.canario.alAire",
     ])
       expect(esDeLaLampara(clave, "mando"), clave).toBe(true);
   });

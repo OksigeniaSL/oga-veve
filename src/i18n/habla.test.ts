@@ -44,8 +44,8 @@ describe("la clave de cada frase", () => {
     expect(comoSeDiceAqui("torre.verde", "canario")).toBe(
       "torre.canario.verde",
     );
-    expect(comoSeDiceAqui("palabra.alAire", "canario")).toBe(
-      "palabra.canario.alAire",
+    expect(comoSeDiceAqui("torre.alAire", "canario")).toBe(
+      "torre.canario.alAire",
     );
   });
 
@@ -54,7 +54,7 @@ describe("la clave de cada frase", () => {
       "torre.verde",
       "torre.aterrizar",
       "torre.roja",
-      "palabra.alAire",
+      "torre.alAire",
     ]) {
       const clave = comoSeDiceAqui(base, "canario");
       expect(Object.keys(ES_PY)).toContain(clave);
@@ -78,15 +78,24 @@ describe("lo que dice la torre canaria", () => {
     }
   });
 
-  it("y dice lo mismo que la de casa, con otras palabras", () => {
-    expect(dicc["torre.canario.roja"]).toBe("{indicativo}, espera ahí");
+  it("y dice lo mismo que la de casa, en la fraseología de las dos", () => {
     /*
-     * Y la verde, con las de la fraseología, que son las mismas a los dos
-     * lados del Atlántico: «pista dos cero, autorizado a despegar». La pista
-     * va con la matrícula. Ver `torre.verde` en `es-PY.ts`.
+     * Las órdenes de la lámpara salen del Doc 4444 en español, que la DINAC y
+     * España publican con las mismas palabras: «mantenga fuera de pista dos
+     * cero», «pista dos cero, autorizado a despegar». Ver `torre.roja` en
+     * `es-PY.ts`.
      */
+    expect(dicc["torre.canario.roja"]).toBe("{indicativo}, mantenga fuera de pista");
+    expect(dicc["torre.canario.roja"]).toBe(dicc["torre.roja"]);
     expect(dicc["torre.canario.verde"]).toBe("{indicativo}, autorizado a despegar");
     expect(dicc["torre.canario.aterrizar"]).toBe(dicc["torre.aterrizar"]);
+    expect(dicc["torre.canario.destino"]).toBe(dicc["torre.destino"]);
+  });
+
+  it("y sube con la palabra de su reglamento", () => {
+    // «Ascienda» en la DINAC, «suba» en el RD 1180/2018.
+    expect(dicc["torre.subir"]).toBe("{indicativo}, ascienda a {altura}");
+    expect(dicc["torre.canario.subir"]).toBe("{indicativo}, suba a {altura}");
   });
 
   it("y las dos llaman al avión por su matrícula", () => {
@@ -125,7 +134,7 @@ describe("lo que se lee en la tarjeta de la torre", () => {
           "torre.verde",
           "torre.aterrizar",
           "torre.roja",
-          "palabra.alAire",
+          "torre.alAire",
         ]) {
           const clave = comoSeDiceAqui(base, habla) as TranslationKey;
           const dicho = t(clave, { indicativo: "Zulu Papa Alfa" });

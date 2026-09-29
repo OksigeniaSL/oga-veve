@@ -99,9 +99,10 @@ describe("la torre dice a dónde se va", () => {
     expect(EN["torre.destino"]).toBe("{indicativo}, cleared to {destino}");
   });
 
-  it("y se dice como se habla en cada sitio", () => {
-    expect(ES_PY["torre.destino"]).toMatch(/podés volar a/);
-    expect(ES_PY["torre.canario.destino"]).toMatch(/puedes volar a/);
+  it("y en castellano, con la fraseología de verdad: «autorizado a»", () => {
+    // DINAC R 4444, 12.3.2.1 b; RD 1180/2018, anexo V, 1.2.1 b.
+    expect(ES_PY["torre.destino"]).toBe("{indicativo}, autorizado a {destino}");
+    expect(ES_PY["torre.canario.destino"]).toBe("{indicativo}, autorizado a {destino}");
   });
 
   it("la fraseología en inglés está en la tabla de la torre", () => {
@@ -121,11 +122,11 @@ describe("la torre dice a dónde se va", () => {
     const d = destinoEnRadio("encarnacion")!;
     expect(
       t("torre.destino", { indicativo: yo.dicho, destino: d.dicho }),
-    ).toBe(`${yo.dicho}, podés volar a Encarnación`);
+    ).toBe(`${yo.dicho}, autorizado a Encarnación`);
     const c = destinoEnRadio("tenerife-norte")!;
     expect(
       t("torre.canario.destino", { indicativo: yo.dicho, destino: c.dicho }),
-    ).toBe(`${yo.dicho}, puedes volar a Tenerife Norte`);
+    ).toBe(`${yo.dicho}, autorizado a Tenerife Norte`);
   });
 
   /*

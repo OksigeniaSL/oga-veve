@@ -231,7 +231,9 @@ export const EN: Dictionary = {
   "credits.close": "Close",
 
   "torre.verde": "{indicativo}, cleared for take-off",
-  "torre.roja": "{indicativo}, hold here",
+  // La roja es la del punto de espera: «hold short of runway (number)», Doc
+  // 4444, 12.3.4.7. Ver `torre.roja` en `es-PY.ts`.
+  "torre.roja": "{indicativo}, hold short of runway",
   // La torre canaria dice lo mismo en inglés: lo que cambia entre las dos es
   // el castellano y la voz. Ver `i18n/habla.ts`.
   "torre.afisLibre": "{indicativo}, runway free",
@@ -247,14 +249,18 @@ export const EN: Dictionary = {
   "torre.canario.afisTraficoAterriza": "{indicativo}, landing traffic",
   "torre.canario.afisTraficoDespega": "{indicativo}, departing traffic",
   "torre.canario.verde": "{indicativo}, cleared for take-off",
-  "torre.canario.roja": "{indicativo}, hold here",
+  "torre.canario.roja": "{indicativo}, hold short of runway",
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
+  "torre.alAire": "{indicativo}, go around",
+  "torre.canario.alAire": "{indicativo}, go around",
   // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
   "torre.destino": "{indicativo}, cleared to {destino}",
   "torre.canario.destino": "{indicativo}, cleared to {destino}",
-  "torre.subir": "{indicativo}, climb to {pies} feet",
-  "torre.canario.subir": "{indicativo}, climb to {pies} feet",
+  // La altura va ya dicha: «three thousand feet», «flight level one one zero».
+  // Ver `alturaEnRadio` en `flight/autorizacion-de-altitud.ts`.
+  "torre.subir": "{indicativo}, climb to {altura}",
+  "torre.canario.subir": "{indicativo}, climb to {altura}",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",
@@ -282,7 +288,6 @@ export const EN: Dictionary = {
   "palabra.volve": "Try again!",
   "palabra.aterriza": "Land!",
   "palabra.alAire": "Go around!",
-  "palabra.canario.alAire": "Go around!",
   "palabra.laPista": "Runway?",
   "palabra.cuidado": "Careful!",
   "palabra.mira": "Look!",

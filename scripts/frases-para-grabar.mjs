@@ -27,8 +27,9 @@
  * Uso: `node scripts/frases-para-grabar.mjs [carpeta]`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const SALIDA = process.argv[2] ?? "docs/voces";
 
@@ -720,16 +721,24 @@ for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA
 /*
  * **Y la lámpara verde nombra la pista, como la fraseología de verdad**:
  * «pista dos cero, autorizado a despegar» en tierra, y en el aire, que en las
- * señales de luz de verdad es otra cosa, «autorizado a aterrizar». Decía
+ * señales de luz de verdad es otra cosa, «autorizado para aterrizar». Decía
  * «podés entrar» y «podés aterrizar» sin decir por dónde. Va troceada como
  * las demás de la lámpara —la matrícula y la pista las pone la receta—, en
  * las dos voces de torre, con sus cifras en castellano: las de la radio en
  * inglés son otras. Ver `pistaEnCastellano` en `src/flight/matricula.ts`.
+ *
+ * **Y la roja, también en fraseología**: «mantenga fuera de pista» y sus
+ * cifras detrás. Decía «esperá acá». Las palabras son las mismas en las dos
+ * torres: salen del Doc 4444 en español, que publican igual la DINAC y
+ * España. Ver `torre.roja` en `src/i18n/es-PY.ts`.
  */
 const EN_EL_AIRE =
-  "la lámpara verde con el avión en el aire: autorizado a aterrizar";
+  "la lámpara verde con el avión en el aire: autorizado para aterrizar";
 const EN_TIERRA = "la lámpara verde en el punto de espera: autorizado a despegar";
 const DE_LA_PISTA = "la pista que nombra la verde, antes de su número";
+const EN_ESPERA =
+  "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista";
+const AL_AIRE = "la lámpara roja en el aire: la orden de irse al aire";
 const CIFRAS_EN_CASTELLANO = [
   "cero",
   "uno",
@@ -744,8 +753,9 @@ const CIFRAS_EN_CASTELLANO = [
 ];
 const LADOS_EN_CASTELLANO = ["izquierda", "derecha", "central"];
 /*
- * Y la de a dónde se va, antes de rodar: la autorización dicha en palabras
- * de casa, con el campo en un hueco. Ver `autorizarLaRuta` en `src/game.ts`.
+ * Y la de a dónde se va, antes de rodar: la autorización con su límite,
+ * «autorizado a» y el campo en un hueco. Ver `autorizarLaRuta` en
+ * `src/game.ts`.
  */
 const A_DONDE = "a dónde se va, antes de rodar; el campo va detrás";
 /*
@@ -766,7 +776,14 @@ const LAMPARA_SOLO = [
     return [
       [voz, `${solo}.pista`, "pista", DE_LA_PISTA],
       [voz, `${solo}.autorizadoDespegar`, "autorizado a despegar", EN_TIERRA],
-      [voz, `${solo}.autorizadoAterrizar`, "autorizado a aterrizar", EN_EL_AIRE],
+      [voz, `${solo}.autorizadoParaAterrizar`, "autorizado para aterrizar", EN_EL_AIRE],
+      [voz, `${solo}.mantengaFuera`, "mantenga fuera de pista", EN_ESPERA],
+      [voz, `${solo}.autorizadoA`, "autorizado a", A_DONDE],
+      // Y la orden de irse al aire, que cambia de palabras con el reglamento:
+      // «ida al aire» en Paraguay, «motor y al aire» en España.
+      voz === "torre"
+        ? [voz, `${solo}.idaAlAire`, "ida al aire", AL_AIRE]
+        : [voz, `${solo}.motorYAlAire`, "motor y al aire", AL_AIRE],
       ...CIFRAS_EN_CASTELLANO.map((c, n) => [
         voz,
         `cifra.es.${n}`,
@@ -781,8 +798,6 @@ const LAMPARA_SOLO = [
       ]),
     ];
   }),
-  ["torre", "torre.solo.destino", "podés volar a", A_DONDE],
-  ["torre-canarias", "torre.canario.solo.destino", "puedes volar a", A_DONDE],
   ...DE_UN_AFIS.flatMap(([id, texto, para]) => [
     ["torre", `torre.solo.${id}`, texto, para],
     ["torre-canarias", `torre.canario.solo.${id}`, texto, para],
@@ -970,34 +985,140 @@ for (const [plantilla, prefijo, numeros, para] of CON_NUMERO) {
 }
 
 /*
- * **Y la autorización de altitud dicha en casa**: «subí a once mil pies»,
- * «sube a…» en Canarias. Una frase entera por millar, como los niveles de la
- * comandante, y en la voz de cada torre. Los millares salen del propio juego:
- * ver `MILES_EN_CASA` en `src/flight/autorizacion-de-altitud.ts`.
+ * **Y la autorización de altitud en castellano**: «ascienda a tres mil pies»,
+ * «suba a…» en Canarias. Una frase entera por millar, como los niveles de la
+ * comandante, y en la voz de cada torre; pero solo **hasta la transición de
+ * esa torre**, que por encima ya no se dice en pies sino en nivel —y el
+ * principio del nivel, «ascienda a nivel de vuelo», se graba solo, por venir
+ * del diccionario sin hueco—. Los millares y las transiciones salen del
+ * propio juego: ver `alturaEnCastellano` en
+ * `src/flight/autorizacion-de-altitud.ts`.
  */
-const MILES_EN_CASA = (() => {
-  const m = /MILES_EN_CASA\s*=\s*\{\s*desde:\s*(\d+),\s*hasta:\s*(\d+)\s*\}/.exec(autorizacion);
-  if (!m) throw new Error("no encuentro MILES_EN_CASA");
-  return { desde: Number(m[1]), hasta: Number(m[2]) };
-})();
-for (const [voz, plantilla] of [
-  ["torre", "torre.solo.subir"],
-  ["torre-canarias", "torre.canario.solo.subir"],
+for (const [voz, plantilla, transicion] of [
+  ["torre", "torre.solo.subir", numeroDe(autorizacion, "TRANSICION_PARAGUAY")],
+  ["torre-canarias", "torre.canario.solo.subir", numeroDe(autorizacion, "TRANSICION_CANARIAS")],
 ]) {
   const texto = es.get(plantilla);
   if (!texto) throw new Error(`falta la plantilla ${plantilla} en es-PY`);
-  for (let n = MILES_EN_CASA.desde; n <= MILES_EN_CASA.hasta; n++) {
+  for (const n of MILES_EN_PIES.filter((m) => m * 1000 <= transicion)) {
     const conSuNumero = conNumero(texto, n);
     filas.push({
       id: `${plantilla}.${n}`,
       voz,
       idioma: "es",
       texto: conSuNumero,
-      para: "la altura que autoriza el control, dicha en casa",
+      para: "la altura que autoriza el control, en pies por debajo de la transición",
     });
     total += conSuNumero.length;
   }
 }
+
+/*
+ * **Y lo que el juego dice sin estar en ningún grupo.**
+ *
+ * La lista se hacía solo por familias —`vuelo.*` la instructora, `torre.*` la
+ * torre— y por tablas escritas aquí, así que una clave de otra familia que
+ * acababa en una boca no la grababa nadie: la lámpara decía «¡Al aire!» con
+ * la palabra de la tarjeta, `palabra.alAire`, y donde el navegador no tiene
+ * voz la orden de irse al aire no sonaba. Y nada lo decía.
+ *
+ * Así que se mira el propio juego: cada `.decir(` del código, las claves que
+ * lleva escritas y las de las variables que le llegan —la declaración más
+ * cercana, tres saltos como mucho—. Lo que llega así y no está en la lista se
+ * añade con la voz de quien lo dice; lo que lleva hueco tiene que tener
+ * receta, y si no, se avisa. Las `palabra.*` que se pasan a `avisoCon` o a
+ * `rotulo` son el rótulo corto de la tarjeta, no algo que se diga.
+ */
+const QUIEN_DICE = { instructor: "instructor", torre: "torre", otroAvion: "otro" };
+/*
+ * Las que se montan de otras piezas. Una receta que es ella misma
+ * —`gafas.ganadas` → `gafas.ganadas`— es una grabación, y esa sí va en la
+ * lista.
+ */
+const montadas = new Set(
+  readdirSync("crudo").flatMap((v) => {
+    const donde = join("crudo", v, "recetas.json");
+    if (!existsSync(donde)) return [];
+    return Object.entries(JSON.parse(readFileSync(donde, "utf8")))
+      .filter(([clave, piezas]) => piezas.length !== 1 || piezas[0] !== clave)
+      .map(([clave]) => clave);
+  }),
+);
+const fuentes = [];
+(function recorrer(dir) {
+  for (const n of readdirSync(dir)) {
+    const p = join(dir, n);
+    if (statSync(p).isDirectory()) {
+      if (!["i18n", "dev"].includes(n)) recorrer(p);
+    } else if (p.endsWith(".ts") && !p.endsWith(".test.ts")) fuentes.push(p);
+  }
+})("src");
+/** Dónde se cierra lo que se abre en `desde`, contando paréntesis. */
+const cierre = (s, desde) => {
+  let i = desde;
+  for (let prof = 1; i < s.length && prof > 0; i++) {
+    if ("([{".includes(s[i])) prof++;
+    else if (")]}".includes(s[i])) prof--;
+  }
+  return i;
+};
+/** Las claves del diccionario escritas en un trozo, sin los rótulos cortos. */
+const clavesEn = (trozo) => {
+  let limpio = trozo;
+  for (const m of trozo.matchAll(/\b(?:avisoCon|rotuloCompuesto|rotulo)\(/g)) {
+    const dentro = trozo.slice(m.index, cierre(trozo, m.index + m[0].length));
+    limpio = limpio.replace(dentro, dentro.replace(/"palabra\.[\w.-]+"/g, '""'));
+  }
+  return [...limpio.matchAll(/"([\w.-]+)"/g)].map((m) => m[1]).filter((k) => es.has(k));
+};
+const dichas = new Map();
+for (const f of fuentes) {
+  const s = readFileSync(f, "utf8");
+  for (const m of s.matchAll(/(\w+)\.decir\(/g)) {
+    const voz = QUIEN_DICE[m[1]] ?? null;
+    const cola = [[s.slice(m.index, cierre(s, m.index + m[0].length)), m.index, 0]];
+    const vistas = new Set();
+    while (cola.length) {
+      const [trozo, pos, salto] = cola.shift();
+      for (const k of clavesEn(trozo)) if (!dichas.has(k)) dichas.set(k, { voz, f });
+      if (salto >= 3) continue;
+      for (const [, id] of trozo.matchAll(/(?<![\w."'`])([a-zA-Z_]\w*)(?![\w"'`(])/g)) {
+        if (vistas.has(id)) continue;
+        vistas.add(id);
+        const desde = Math.max(0, pos - 20000);
+        const decl = [
+          ...s.slice(desde, pos).matchAll(new RegExp(`(?:const|let)\\s+${id}(?:\\s*:[^=;]+)?\\s*=`, "g")),
+        ].at(-1);
+        if (!decl) continue;
+        const ini = desde + decl.index + decl[0].length;
+        let fin = ini;
+        for (let prof = 0; fin < s.length; fin++) {
+          if ("([{".includes(s[fin])) prof++;
+          else if (")]}".includes(s[fin])) prof--;
+          else if (s[fin] === ";" && prof <= 0) break;
+        }
+        cola.push([s.slice(ini, fin), ini, salto + 1]);
+      }
+    }
+  }
+}
+const yaEnLista = new Set(filas.map((f) => f.id));
+const sinGrupo = [];
+for (const [clave, { voz, f }] of dichas) {
+  if (yaEnLista.has(clave) || montadas.has(clave)) continue;
+  const texto = es.get(clave);
+  if (texto.includes("{") || !voz) {
+    console.log(`\n  ¡Ojo! ${clave} se dice (${f}) y no tiene ${voz ? "receta" : "voz conocida"}.`);
+    continue;
+  }
+  // La torre de Canarias tiene su voz. Ver `comoSeDiceAqui`.
+  const suya = voz === "torre" && clave.includes(".canario.") ? "torre-canarias" : voz;
+  filas.push({ id: clave, voz: suya, idioma: "es-PY", texto, para: `se dice en ${f}` });
+  total += texto.length;
+  sinGrupo.push(clave);
+}
+if (sinGrupo.length)
+  console.log(`\n  ${sinGrupo.length} se dicen sin estar en ningún grupo: ${sinGrupo.join(", ")}`);
 
 /*
  * **Y fuera lo que no se graba: lo que se monta.**
