@@ -258,6 +258,18 @@ const PARADO_DE_VERDAD = 1;
 const SE_QUEDA_EL_VEREDICTO = 5;
 
 const IMPORTANTE = 1;
+
+/** Lo más que espera una frase del descenso a que su boca se libere, ms. */
+const ESPERA_DEL_DESCENSO = 3000;
+
+/**
+ * Lo que se calcula que tarda en decirse un texto, ms: unos catorce
+ * caracteres por segundo, que es lo que llevan las grabaciones de la
+ * instructora y de la megafonía, y medio segundo de aire.
+ */
+function loQueTardaEnDecirse(texto: string): number {
+  return 500 + (texto.length / 14) * 1000;
+}
 const URGENTE = 2;
 
 /**
@@ -435,6 +447,7 @@ import {
   aireDelParte,
   type Aire as AireDelDia,
   indicatedAirspeed,
+  temperaturaExterior,
   trueFromIndicated,
   velocidadDelSonido,
 } from "./flight/atmosphere";
@@ -527,7 +540,17 @@ import {
 } from "./audio/partes-de-la-comandante";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
 import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
-import { altitudDeCabina } from "./flight/cabina-presurizada";
+import { CabinaPresurizada } from "./flight/cabina-presurizada";
+import {
+  AVISO_DE_CABINA,
+  DescensoDeEmergencia,
+  EJERCICIO_DE_DESPRESURIZACION,
+  alturaSegura,
+  comoSeDiceLaConciencia,
+  concienciaUtil,
+  velocidadDelDescenso,
+} from "./flight/despresurizacion";
+import { LeccionesDelAire, type LeccionDelAire } from "./flight/lecciones-del-aire";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
 import type { Hito } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
@@ -1684,6 +1707,49 @@ export class Game {
   get sinMotorParaBanco(): boolean {
     return this.sinMotor;
   }
+
+  /**
+   * **La cabina de este avión**: a qué altura está y si tiene aire. Es la que
+   * marcan los relojes de CAB ALT y la que decide la despresurización. Ver
+   * `flight/cabina-presurizada.ts`.
+   */
+  readonly cabinaDelAvion = new CabinaPresurizada({ presurizacion: null });
+  /** De qué avión es la cabina de ahora: otro avión, otra cabina. */
+  private cabinaDe: AircraftConfig | null = null;
+  /** Si hay que poner la cabina en su sitio en el paso siguiente: vuelo nuevo. */
+  private cabinaPorPoner = true;
+  /** La altura del paso anterior, para ver si al avión lo han cambiado de sitio. */
+  private alturaDeAntes: number | null = null;
+  /** El reloj de la cabina y del ejercicio, s: lo que se ha volado. */
+  private relojDeCabina = 0;
+  /** Lo que el aire enseña por el camino. Ver `flight/lecciones-del-aire.ts`. */
+  private readonly leccionesDelAire = new LeccionesDelAire();
+  /**
+   * **El descenso de emergencia en curso**, o `null`. Lo empieza
+   * `despresurizar` y se acaba al pararse en el suelo o al empezar otro
+   * vuelo. Ver `flight/despresurizacion.ts`.
+   */
+  descensoDeEmergencia: DescensoDeEmergencia | null = null;
+  /** Si ya salió la tarjeta de qué hacer, que va detrás de la de la máscara. */
+  private tarjetaDelDescenso = false;
+  /**
+   * **Lo que queda por decir del descenso, en su orden**: cada frase espera a
+   * que su boca esté libre y no caduca, porque es el procedimiento y no un
+   * comentario. La cola de cada boca tiene una plaza y cuatro segundos —ver
+   * `audio/boca.ts`—, y dos anuncios seguidos de la comandante se pisaban: el
+   * segundo echaba al primero y caducaba detrás de otra frase larga.
+   */
+  private porDecirDelDescenso: {
+    readonly por: "instructor" | "megafonia";
+    readonly clave: TranslationKey;
+    /** Cuándo se pidió, en el reloj de pared: la voz va en tiempo real. */
+    readonly desde: number;
+  }[] = [];
+  /**
+   * Hasta cuándo se calcula que suena lo último que se dijo del descenso por
+   * cada boca, ms del reloj de pared. Ver `decirLoQueQueda`.
+   */
+  private hastaDelDescenso = { instructor: 0, megafonia: 0 };
 
   /**
    * Quien viene por la otra cabecera: qué se le dijo ya. Ver
@@ -4134,7 +4200,11 @@ export class Game {
      * de dentro de la cabina: un mando que se toca en dos sitios tiene que
      * hacer una sola cosa. Ver `pulsarMandoDeCabina`.
      */
-    this.hud.onMandoDeCabina((cual) => this.pulsarMandoDeCabina(cual));
+    this.hud.onMandoDeCabina((cual) => {
+      // Los aerofrenos no están en la cabina 3D, solo en el HUD y en la tecla.
+      if (cual === "aerofrenos") this.input.alternarAerofrenos();
+      else this.pulsarMandoDeCabina(cual);
+    });
     // `?fps=1` enciende el contador de fotogramas. Ver `Hud.mostrarFps`.
     if (new URLSearchParams(location.search).get("fps")) this.hud.pedirFps();
     // Y el botón del final: otro vuelo, que es lo que uno quiere hacer ahí.
@@ -6988,6 +7058,9 @@ export class Game {
      * Ver `ponerElTrenFuera`.
      */
     this.input.ponerElTrenFuera();
+    // Y los aerofrenos cerrados, y la cabina con su aire. Ver `olvidarLaCabina`.
+    this.input.recogerAerofrenos();
+    this.olvidarLaCabina();
     /*
      * Y lo de arriba va **antes** de la bifurcación, que es la otra mitad del
      * mismo problema: hay dos caminos de reinicio —éste y `reiniciarEnFinal`,
@@ -7574,7 +7647,15 @@ export class Game {
         this.loMasAltoDelVuelo - this.flight.state.position.y,
       ),
     });
-    if (anuncio) this.decirPorMegafonia(anuncio);
+    /*
+     * **Y en un descenso de emergencia, el guion de siempre se calla**: su
+     * momento pasa y no se dice después. «Empezamos a bajar hacia…» en mitad
+     * de un descenso de emergencia no lo dice nadie; lo que se dice lo dice
+     * `seguirElDescenso`.
+     */
+    const enEmergencia =
+      this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado;
+    if (anuncio && !enEmergencia) this.decirPorMegafonia(anuncio);
 
     this.mirarPorLaVentanilla(dt);
 
@@ -8273,6 +8354,7 @@ export class Game {
       this.aircraft.trenRetractil,
       this.aircraft.tardanLosFlaps,
       this.aircraft.llevaFlaps,
+      this.aircraft.aerofrenos !== null,
     );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
@@ -9331,6 +9413,7 @@ export class Game {
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
+    this.atenderALaCabina(dt);
     this.seguirElViento(dt);
     this.mirarLaCabecera();
     this.mirarSiCambiaDeCampo();
@@ -9873,6 +9956,10 @@ export class Game {
       frenoPuesto:
         this.input.controls.brakes > 0.5 &&
         this.input.controls.throttle > 0.25,
+      // Y la cabina sin aire, en los presurizados. Ver `despresurizacion.ts`.
+      cabinaAlta:
+        this.aircraft.presurizacion !== null &&
+        this.cabinaDelAvion.altitud > AVISO_DE_CABINA,
     });
 
     /*
@@ -10576,7 +10663,7 @@ export class Game {
          * `flight/cabina-presurizada.ts`, y la pregunta que lo trajo: «¿qué
          * pasa si tengo una despresurización a mucha altitud?».
          */
-        cabina: altitudDeCabina(this.flight.state.position.y, this.aircraft),
+        cabina: this.cabinaDelAvion.altitud,
         flaps: this.input.controls.flaps,
         /*
          * Y las escalas de **este** avión, que es lo que hace que la cinta de
@@ -10787,6 +10874,12 @@ export class Game {
          */
         presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
         ventanilla: this.ventanillaParaElCuadro(),
+        // Y la cabina de verdad, la misma que la de las pantallas de dentro.
+        cabina: this.cabinaDelAvion.altitud,
+        aerofrenos: {
+          donde: this.input.controls.aerofrenos ?? 0,
+          pedidos: this.input.aerofrenosAbiertos,
+        },
       },
     );
     const toma = this.checkLanding(dt);
@@ -11239,7 +11332,7 @@ export class Game {
    * quien vuela, así que se ve escrita en la tira de la radio; la respuesta de
    * la torre se oye, con su voz y la matrícula de siempre.
    */
-  private declararMayday(): void {
+  private declararMayday(motivo = "fuel exhaustion"): void {
     if (!this.hayTorreQueHable()) return;
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
@@ -11248,11 +11341,374 @@ export class Game {
     const montada = this.deTorre("torre.mayday", yo);
     if (!montada) return;
     this.hud.radio(
-      `MAYDAY MAYDAY MAYDAY, ${yo.dicho}, fuel exhaustion — ${montada.texto}`,
+      `MAYDAY MAYDAY MAYDAY, ${yo.dicho}, ${motivo} — ${montada.texto}`,
       9,
       true,
     );
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+  }
+
+  // ── La cabina: el aire que se enseña y el que se pierde ─────────────
+
+  /**
+   * **Un paso de la cabina**: dónde está, qué enseña el aire y cómo va el
+   * descenso de emergencia si hay uno. Ver `flight/cabina-presurizada.ts`.
+   */
+  private atenderALaCabina(dt: number): void {
+    const s = this.flight.state;
+    this.relojDeCabina += dt;
+    /*
+     * Un vuelo nuevo, otro avión, o el avión puesto en otro sitio de golpe
+     * —un banco, una lección que empieza en final—: la cabina se pone donde
+     * estaría, y lo que se estaba contando se olvida.
+     */
+    const salto =
+      this.alturaDeAntes !== null && Math.abs(s.position.y - this.alturaDeAntes) > 300;
+    this.alturaDeAntes = s.position.y;
+    if (this.cabinaPorPoner || salto || this.cabinaDe !== this.aircraft) {
+      this.cabinaPorPoner = false;
+      this.cabinaDe = this.aircraft;
+      this.descensoDeEmergencia = null;
+      this.porDecirDelDescenso = [];
+      this.leccionesDelAire.olvidarElVuelo();
+      this.cabinaDelAvion.reiniciar(s.position.y, s.onGround, this.aircraft);
+    }
+    this.cabinaDelAvion.paso(dt, {
+      altura: s.position.y,
+      enTierra: s.onGround,
+      campo: this.cotaDelCampo(this.elCampo()),
+    });
+    this.contarElAire(dt);
+    this.seguirElDescenso();
+  }
+
+  /** Vuelo nuevo: la cabina con su aire, y sin ejercicio a medias. */
+  private olvidarLaCabina(): void {
+    this.cabinaPorPoner = true;
+    this.descensoDeEmergencia = null;
+    this.tarjetaDelDescenso = false;
+    this.porDecirDelDescenso = [];
+    this.hastaDelDescenso = { instructor: 0, megafonia: 0 };
+  }
+
+  /** Pide una frase del descenso, detrás de las que ya esperan en su boca. */
+  private encolarDelDescenso(por: "instructor" | "megafonia", clave: TranslationKey): void {
+    this.porDecirDelDescenso.push({ por, clave, desde: Date.now() });
+  }
+
+  /**
+   * **Dice lo siguiente del descenso**, una por boca y en su orden: cuando
+   * se calcula que ya acabó lo anterior que se dijo del descenso por esa
+   * boca, y cuando la boca está libre —la instructora, sin ella ni la caja
+   * hablando; la megafonía, sin nadie en el altavoz—.
+   *
+   * **Y si la boca no se libera, a los tres segundos se pide igual**, con peso
+   * de orden: espera en su cola, que ya no la pisa ninguna frase del descenso
+   * porque van de una en una. Esperar a que esté libre sin tope dejaba la
+   * frase sin decir en un aeropuerto con la frecuencia llena.
+   */
+  private decirLoQueQueda(): void {
+    const ahora = Date.now();
+    const libre = {
+      instructor: !this.instructor.hablando && !this.maquina.ocupada,
+      megafonia: !this.comandante.hablando && !this.tripulacion.hablando,
+    };
+    for (const por of ["instructor", "megafonia"] as const) {
+      const i = this.porDecirDelDescenso.findIndex((f) => f.por === por);
+      const f = this.porDecirDelDescenso[i];
+      const hasta = this.hastaDelDescenso[por];
+      if (!f || ahora < hasta) continue;
+      if (!libre[por] && ahora - Math.max(f.desde, hasta) < ESPERA_DEL_DESCENSO) continue;
+      this.porDecirDelDescenso.splice(i, 1);
+      this.hastaDelDescenso[por] = ahora + loQueTardaEnDecirse(t(f.clave));
+      if (por === "instructor") this.instructor.decir(t(f.clave), f.clave, "mando");
+      else
+        this.porMegafoniaYa(
+          f.clave.startsWith("tripulacion.") ? this.tripulacion : this.comandante,
+          f.clave,
+        );
+    }
+  }
+
+  /**
+   * **Lo que el aire enseña por el camino**, en el momento en que se ve. Ver
+   * `flight/lecciones-del-aire.ts`.
+   *
+   * Lo cuenta la instructora en los tres peldaños de abajo, con el peso de un
+   * elogio —«bien» no pisa a nadie, y esto tampoco—, y nunca en mitad de una
+   * emergencia ni sin motor: ahí la palabra es de lo que hay que hacer.
+   */
+  private contarElAire(dt: number): void {
+    const s = this.flight.state;
+    const aire = this.flight.aireDelDia();
+    const oat = temperaturaExterior(s.position.y, aire);
+    const leccion = this.leccionesDelAire.paso({
+      dt,
+      enTierra: s.onGround,
+      altura: s.position.y,
+      vertical: s.verticalSpeed,
+      oat,
+      cabina: this.cabinaDelAvion.altitud,
+      ritmoDeCabina: this.cabinaDelAvion.ritmo,
+      presurizada:
+        this.aircraft.presurizacion !== null && !this.cabinaDelAvion.despresurizada,
+      crucero: this.navegacion.plan ? this.navegacion.cruceroPlaneado : null,
+      bajando: this.navegacion.bajando,
+    });
+    if (
+      !leccion ||
+      !laInstructoraLoExplica(this.tier.avisos) ||
+      this.descensoDeEmergencia !== null ||
+      this.sinMotor
+    )
+      return;
+    this.contarLaLeccion(leccion, oat);
+  }
+
+  private contarLaLeccion(leccion: LeccionDelAire, oat: number): void {
+    const canales = canalesDe(this.tier.avisos);
+    let clave: TranslationKey;
+    switch (leccion) {
+      case "frio": {
+        /*
+         * Y el termómetro, que es lo que se ve: en el peldaño de las cifras con
+         * su rótulo de cabina, OAT, que no se traduce.
+         */
+        const grados = Math.round(oat);
+        const rotulo = !canales.texto
+          ? ""
+          : canales.corto
+            ? t("palabra.frio")
+            : `OAT ${grados > 0 ? "+" : ""}${grados} °C`;
+        this.hud.senal.mostrar("frio", rotulo, null, { segundos: 6 });
+        clave = "vuelo.aire.frio";
+        break;
+      }
+      case "crucero":
+        clave = canales.cifra ? "vuelo.aire.cruceroConCifras" : "vuelo.aire.crucero";
+        break;
+      case "bolsa":
+        clave = "vuelo.aire.bolsa";
+        break;
+      case "oidos":
+        clave = "vuelo.aire.oidos";
+        break;
+    }
+    this.instructor.decir(t(clave), clave, "baja");
+  }
+
+  /**
+   * **Se va el aire de la cabina: empieza el descenso de emergencia.** Ver
+   * `flight/despresurizacion.ts`.
+   *
+   * Es el ejercicio, y se dispara desde fuera: el selector de ejercicios de
+   * emergencia —ver `EJERCICIO_DE_DESPRESURIZACION`— o un banco. Nunca por
+   * sorpresa. Devuelve si pudo: en un avión sin presurizar no hay aire que
+   * perder, en tierra no hay nada que ensayar y un ejercicio no se pisa con
+   * otro.
+   *
+   * Lo que pasa después lo lleva `seguirElDescenso`, paso a paso.
+   */
+  despresurizar(): boolean {
+    const s = this.flight.state;
+    if (
+      this.descensoDeEmergencia !== null ||
+      s.onGround ||
+      !EJERCICIO_DE_DESPRESURIZACION.sirveEn(this.aircraft)
+    )
+      return false;
+    if (!this.cabinaDelAvion.despresurizar()) return false;
+    this.tarjetaDelDescenso = false;
+    this.descensoDeEmergencia = new DescensoDeEmergencia({
+      t: this.relojDeCabina,
+      altura: s.position.y,
+      objetivo: alturaSegura(this.minimaDelSector()),
+    });
+    return true;
+  }
+
+  /**
+   * **La mínima del sector**, m: la altitud mínima en ruta más alta de lo que
+   * se tiene delante en los próximos minutos de descenso, o `null` si no se
+   * sabe nada del suelo. Un descenso de emergencia avanza cincuenta
+   * kilómetros; con el Teide delante no se baja a diez mil pies. Ver
+   * `minimaEnRuta` en `ruta.ts`.
+   */
+  private minimaDelSector(): number | null {
+    const s = this.flight.state;
+    const cota = (x: number, z: number): number | null => this.terrain.cotaConocida(x, z);
+    const dx = Math.sin(s.heading);
+    const dz = -Math.cos(s.heading);
+    let alto: number | null = null;
+    for (let d = 0; d <= 50000; d += 10000) {
+      const m = minimaEnRuta(cota, s.position.x + dx * d, s.position.z + dz * d);
+      if (m !== null && (alto === null || m > alto)) alto = m;
+    }
+    return alto;
+  }
+
+  /**
+   * **El descenso de emergencia, paso a paso**: lo que suena, lo que se ve y
+   * quién habla, en el orden de un avión de verdad. Ver
+   * `flight/despresurizacion.ts`.
+   *
+   * Ni pantalla roja ni música: la luz roja del panel es la de cualquier
+   * cabina, y lo que se oye es la caja —en el avión que la lleva—, la
+   * megafonía y la instructora con calma. Es un procedimiento.
+   */
+  private seguirElDescenso(): void {
+    const d = this.descensoDeEmergencia;
+    if (!d) return;
+    const s = this.flight.state;
+    const suceso = d.paso({
+      t: this.relojDeCabina,
+      cabina: this.cabinaDelAvion.altitud,
+      altura: s.position.y,
+    });
+    if (suceso === "aviso") this.avisarDeLaCabina(d);
+    else if (suceso === "mascaras") this.caenLasMascaras(d);
+    else if (suceso === "abajo") this.llegarDondeSeRespira(d);
+    this.decirLoQueQueda();
+    /*
+     * Y detrás de la máscara, la tarjeta de qué hacer y hasta dónde, que se
+     * queda mientras se baja: es lo que se mira de reojo con las manos
+     * ocupadas.
+     */
+    if (
+      !this.tarjetaDelDescenso &&
+      d.avisoEn !== null &&
+      !d.terminado &&
+      this.relojDeCabina - d.avisoEn > 5
+    ) {
+      this.tarjetaDelDescenso = true;
+      this.hud.senal.mostrar(
+        this.aircraft.aerofrenos !== null ? "aerofrenos" : "descenso",
+        this.rotuloDelDescenso(d),
+        null,
+        { segundos: 25, prioridad: IMPORTANTE },
+      );
+    }
+    // Parado en el suelo, el ejercicio se acabó: lo demás es otro vuelo.
+    if (d.terminado && s.onGround && s.groundSpeed < 1) {
+      this.descensoDeEmergencia = null;
+      this.porDecirDelDescenso = [];
+    }
+  }
+
+  /**
+   * Lo que pone la tarjeta del descenso: en el peldaño de las cifras, hasta
+   * dónde y a qué velocidad, en las unidades del cuadro.
+   */
+  private rotuloDelDescenso(d: DescensoDeEmergencia): string {
+    const canales = canalesDe(this.tier.avisos);
+    if (!canales.texto) return "";
+    if (canales.corto) return t("palabra.aBajar");
+    const u = UNIT_SYSTEMS[this.tier.units];
+    const paso = this.tier.units === "aeronautical" ? 100 : 10;
+    const altura = Math.round(u.altitude(d.objetivo) / paso) * paso;
+    const velocidad = Math.round(
+      u.speed(velocidadDelDescenso(this.aircraft, d.objetivo, this.flight.aireDelDia())),
+    );
+    return `${t("palabra.descensoDeEmergencia")} · ${altura} ${u.altitudeLabel()} · ${velocidad} ${u.speedLabel()}`;
+  }
+
+  /**
+   * **La cabina pasa de diez mil pies**: la luz roja, la voz de la caja en el
+   * avión que la lleva, la instructora detrás en los peldaños de abajo —o en
+   * todos, en el que no la lleva—, la llamada de socorro y la comandante a su
+   * tripulación. Ver `cantar`.
+   */
+  private avisarDeLaCabina(d: DescensoDeEmergencia): void {
+    const clave: TranslationKey =
+      this.aircraft.aerofrenos !== null
+        ? "vuelo.cabinaSinPresion"
+        : "vuelo.cabinaSinPresionConTren";
+    const dicho = this.avisoCon(clave, "palabra.mascara");
+    const canales = canalesDe(this.tier.avisos);
+    const tuc = concienciaUtil(d.alturaAlEmpezar);
+    const rotulo = canales.cifra
+      ? `${t("palabra.mascara")} · ${Math.round(tuc.min)}–${Math.round(tuc.max)} s`
+      : dicho.rotulo;
+    this.hud.senal.mostrar("mascara", rotulo, null, { segundos: 5, prioridad: IMPORTANTE });
+    this.cantar("cabin", dicho.texto, dicho.id, "urgente");
+    // Lo siguiente de la instructora va detrás de esto, que va detrás de la caja.
+    this.hastaDelDescenso.instructor = Date.now() + 1000 + loQueTardaEnDecirse(dicho.texto);
+    /*
+     * **Y se declara la emergencia**, que cambia lo que hace todo el mundo en
+     * tierra: MAYDAY, porque sin aire el peligro es grave e inminente. Con la
+     * misma respuesta de la torre que sin motor.
+     */
+    this.declararMayday("emergency descent");
+    /*
+     * La ventanilla, abajo: en los peldaños que explican la pone la
+     * instructora, como pone la que autoriza la torre; en el de cabina, quien
+     * vuela, que es lo primero que hace una tripulación de verdad.
+     */
+    if (this.llevaVentanillaAlt && laInstructoraLoExplica(this.tier.avisos))
+      this.ventanillaAlt = Math.ceil(d.objetivo / PIE_EN_METROS / 100 - 1e-9) * 100;
+    if (conTripulacion(this.aircraft.mass))
+      this.encolarDelDescenso("megafonia", "comandante.descensoDeEmergencia");
+  }
+
+  /**
+   * **Caen las máscaras**: la tripulación lo cuenta al pasaje —o la
+   * comandante, donde no hay tripulación— y la instructora cuenta por qué
+   * primero la tuya, con el número de la tabla.
+   */
+  private caenLasMascaras(d: DescensoDeEmergencia): void {
+    /*
+     * Y el cartel del cinturón, que se enciende solo con las máscaras, como en
+     * la familia de Embraer: con su *ding*. Lo apaga quien vuela, que es quien
+     * lo apagaría. Ver `atenderAlCinturon`.
+     */
+    if (conPasaje(this.aircraft.mass)) this.cinturon.ponerMando("puesto");
+    if (conTripulacion(this.aircraft.mass)) {
+      const clave = comoSeDiceAqui(
+        "tripulacion.mascaras",
+        this.hablaDeLaTripulacion(),
+      ) as TranslationKey;
+      this.encolarDelDescenso("megafonia", clave);
+    } else if (conPasaje(this.aircraft.mass)) {
+      this.encolarDelDescenso("megafonia", "comandante.mascaras");
+    }
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    const clave: TranslationKey = `vuelo.primeroLaTuya.${comoSeDiceLaConciencia(d.alturaAlEmpezar)}`;
+    this.encolarDelDescenso("instructor", clave);
+  }
+
+  /**
+   * **Ya se respira**: se llegó a la altura segura. La instructora lo dice en
+   * los cuatro peldaños —es el cierre del ejercicio y es un elogio—, la
+   * comandante avisa a la tripulación y al pasaje, y la flecha se va al
+   * aeropuerto más cercano, que es lo que viene después de verdad.
+   */
+  private llegarDondeSeRespira(d: DescensoDeEmergencia): void {
+    const canales = canalesDe(this.tier.avisos);
+    const segundos = Math.round(d.segundos ?? 0);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.corto
+        ? t("palabra.yaSeRespira")
+        : `${t("palabra.yaSeRespira")} · ${Math.floor(segundos / 60)} min ${segundos % 60} s`;
+    this.hud.senal.mostrar("corregido", rotulo, null, { segundos: 8, prioridad: IMPORTANTE });
+    // Lo que no se llegó a decir bajando ya no toca: se está abajo.
+    this.porDecirDelDescenso = this.porDecirDelDescenso.filter((f) => f.por === "megafonia");
+    this.encolarDelDescenso("instructor", "vuelo.yaSeRespira");
+    if (conTripulacion(this.aircraft.mass))
+      this.encolarDelDescenso("megafonia", "comandante.alturaSegura");
+    if (conPasaje(this.aircraft.mass))
+      this.encolarDelDescenso("megafonia", "comandante.yaSeRespira");
+    if (!this.flight.state.onGround) this.desviarConLaReserva();
+  }
+
+  /**
+   * Un anuncio de la megafonía **que no puede esperar a un momento
+   * tranquilo**: los de la emergencia. Con peso de orden y con su texto en la
+   * tira. Ver `porMegafonia`, que es el de los anuncios sueltos de siempre.
+   */
+  private porMegafoniaYa(boca: Instructor, clave: TranslationKey): void {
+    boca.decir(t(clave), clave, "mando");
+    if (this.tier.instruments !== "none") this.hud.radio(t(clave));
   }
 
   /** Si en el campo de ahora hay una torre que conteste: con lección de torre y con torre. */
@@ -12306,6 +12762,8 @@ export class Game {
        * paisaje sí. Un suceso, una voz.
        */
       alguienHabla:
+        // Y en un descenso de emergencia no se mira el paisaje: se baja.
+        (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) ||
         this.instructor.hablando ||
         this.comandante.hablando ||
         this.tripulacion.hablando ||

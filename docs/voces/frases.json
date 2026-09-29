@@ -874,6 +874,158 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.aire.frio",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Afuera ya hace cero grados. Cada mil metros que subimos, unos seis grados y medio menos: allá arriba hace como cincuenta bajo cero.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelo.aire.crucero",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en crucero. Acá arriba el aire es finito: el avión frena menos y gasta menos combustible. Por eso los aviones vuelan tan alto.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelo.aire.cruceroConCifras",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá la velocidad: el reloj marca menos de lo que vamos de verdad, porque acá arriba el aire es finito. Y con menos aire se frena menos y se gasta menos: por eso los aviones vuelan tan alto.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelo.aire.bolsa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La cabina también sube, pero despacito: ahora va como a mil quinientos metros, aunque el avión esté mucho más alto. Por eso una bolsa de papitas cerrada abajo, acá arriba se infla.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelo.aire.oidos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Empezamos a bajar, y la cabina también baja. Si se te tapan los oídos, tragá saliva o bostezá, que se destapan. Y una botella cerrada allá arriba, abajo llega aplastada.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelo.cabinaSinPresion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.cabinaSinPresionConTren",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.primeroLaTuya.segundos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.primeroLaTuya.minuto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.primeroLaTuya.minutos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.yaSeRespira",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con calma. Así lo practican los pilotos de verdad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.laOtraPunta",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2570,6 +2722,50 @@
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
+    "id": "comandante.descensoDeEmergencia",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Tripulación, descenso de emergencia.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "dicho": "Tripulación, descenso de emergencia.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "comandante.alturaSegura",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Tripulación, ya estamos a una altura segura.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.mascaras",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Pónganse la máscara de oxígeno sobre la nariz y la boca: primero la suya, y después ayuden a los demás. Vamos a bajar rápido a una altura donde se respira bien.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "dicho": "Señores pasajeros, les habla la comandante. Pónganse la máscara de oxígeno sobre la nariz y la boca: primero la suya, y después ayuden a los demás. Vamos a bajar rápido a una altura donde se respira bien.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "comandante.yaSeRespira",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Ya estamos a una altura donde se respira bien: pueden quitarse la máscara. Vamos al aeropuerto más cercano. Gracias por la calma.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
     "id": "comandante.bienvenida.local",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -3466,6 +3662,21 @@
     "para": "la tripulación de cabina de Canarias, por megafonía"
   },
   {
+    "id": "tripulacion.canario.mascaras",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.",
+    "para": "la tripulación de cabina de Canarias, por megafonía",
+    "dicho": "Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "tripulacion.servicio.mango",
     "voz": "tripulacion",
     "idioma": "es-PY",
@@ -3520,6 +3731,21 @@
     "idioma": "es-PY",
     "texto": "Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.",
     "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.mascaras",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.",
+    "para": "la tripulación de cabina, por megafonía",
+    "dicho": "Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "torre.canario.solo.subirNivel",
@@ -3667,6 +3893,13 @@
     "idioma": "en",
     "texto": "minimums",
     "para": "la altura de decisión: o la ves, o te vas"
+  },
+  {
+    "id": "cabina.cabin",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "cabin",
+    "para": "la cabina pasó de diez mil pies: se fue el aire"
   },
   {
     "id": "cabina.slowDown",

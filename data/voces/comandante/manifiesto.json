@@ -3,6 +3,9 @@
   "voz": "comandante",
   "idioma": "es-PY",
   "piezas": {
+    "comandante.alturaSegura": {
+      "ms": 2373
+    },
     "comandante.aproximacion": {
       "ms": 2165
     },
@@ -146,6 +149,9 @@
     },
     "comandante.descenso.vuelta": {
       "ms": 6207
+    },
+    "comandante.descensoDeEmergencia": {
+      "ms": 1895
     },
     "comandante.despegue": {
       "ms": 2015
@@ -449,6 +455,9 @@
     },
     "comandante.llegada.yvytu-rape~5": {
       "ms": 8107
+    },
+    "comandante.mascaras": {
+      "ms": 13007
     },
     "comandante.minutos.0": {
       "ms": 1907
@@ -779,6 +788,9 @@
     },
     "comandante.turbulencia": {
       "ms": 9607
+    },
+    "comandante.yaSeRespira": {
+      "ms": 9507
     },
     "ventanilla.anaga": {
       "ms": 9907
@@ -1778,6 +1790,18 @@
     ],
     "comandante.bachesEnTodos": [
       "comandante.bachesEnTodos"
+    ],
+    "comandante.descensoDeEmergencia": [
+      "comandante.descensoDeEmergencia"
+    ],
+    "comandante.alturaSegura": [
+      "comandante.alturaSegura"
+    ],
+    "comandante.mascaras": [
+      "comandante.mascaras"
+    ],
+    "comandante.yaSeRespira": [
+      "comandante.yaSeRespira"
     ]
   }
 }

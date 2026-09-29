@@ -39,6 +39,7 @@ export type Accion =
   | "brakes"
   | "flaps"
   | "tren"
+  | "aerofrenos"
   | "reversa"
   | "camera"
   | "assist"
@@ -159,6 +160,16 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    * puesta, y quien no venga de ningún sitio se la va a aprender igual.
    */
   tren: { label: "tecla.tren", defecto: ["KeyG"], held: false },
+  /*
+   * **Los aerofrenos, en la barra**, que es donde los lleva cualquier
+   * simulador de escritorio. Por el carácter y no por la tecla: en un teclado
+   * español la barra es mayúsculas y siete, y la tecla que en el americano es
+   * la barra allí escribe el menos, que es del gas. Las letras ya están todas.
+   *
+   * Se pulsa y se queda, como la palanca de verdad: abiertos hasta que se
+   * cierran, o hasta que se mete gas. Solo en el avión que los lleva.
+   */
+  aerofrenos: { label: "tecla.aerofrenos", defecto: ["/"], held: false },
   camera: { label: "tecla.camera", defecto: ["KeyC"], held: false },
   assist: { label: "tecla.assist", defecto: ["KeyM"], held: false },
   reset: { label: "tecla.reset", defecto: ["KeyR"], held: false },

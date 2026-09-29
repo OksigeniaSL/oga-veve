@@ -54,6 +54,7 @@ import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnCastellano, pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA, MEGAFONIA } from "../audio/boca";
 import { planeoDe } from "../flight/sin-motor";
+import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { vfeDeAterrizaje } from "../flight/limites";
 
 /**
@@ -1551,6 +1552,87 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     pistaDelVecino: () => juego.pistaDelVecino,
     /** Las pistas de todos los destinos, en coordenadas de este mundo. */
     pistasDeLosVecinos: () => juego.pistasDeLosVecinos,
+    /**
+     * **La despresurización, desde fuera**: el ejercicio de la cabina sin
+     * aire. Devuelve si pudo. Ver `Game.despresurizar` y
+     * `flight/despresurizacion.ts`.
+     */
+    despresurizar: () => juego.despresurizar(),
+    /**
+     * Y cómo va: la altitud de cabina y su ritmo, en metros, si se perdió el
+     * aire, los aerofrenos y el ejercicio con sus tiempos, si hay uno.
+     */
+    presurizacion: () => {
+      const d = juego.descensoDeEmergencia;
+      return {
+        cabina: juego.cabinaDelAvion.altitud,
+        ritmo: juego.cabinaDelAvion.ritmo,
+        despresurizada: juego.cabinaDelAvion.despresurizada,
+        aerofrenos: juego.input.controls.aerofrenos ?? 0,
+        descenso: d
+          ? {
+              desde: d.desde,
+              alturaAlEmpezar: d.alturaAlEmpezar,
+              objetivo: d.objetivo,
+              avisoEn: d.avisoEn,
+              mascarasEn: d.mascarasEn,
+              abajoEn: d.abajoEn,
+              segundos: d.segundos,
+            }
+          : null,
+      };
+    },
+    /** Los aerofrenos, pedidos como se piden: con su palanca. */
+    pedirAerofrenos: (abiertos: boolean) => {
+      if (juego.input.aerofrenosAbiertos !== abiertos) juego.input.alternarAerofrenos();
+    },
+    /**
+     * **Y un piloto que vuela el descenso de emergencia** como una
+     * tripulación: gas al ralentí, aerofrenos —o el tren, en el que no los
+     * lleva— y la velocidad máxima con el morro. Con `false`, lo suelta. Ver
+     * `PilotoDelDescenso`.
+     */
+    volarElDescenso: (si = true) => {
+      if (!si) {
+        juego.pilotoDePruebas = null;
+        return;
+      }
+      const avion = juego.aircraft;
+      const piloto = new PilotoDelDescenso(avion);
+      const rumbo = juego.flight.state.heading;
+      let antes = juego.relojDelJuego;
+      juego.pilotoDePruebas = (c) => {
+        const s = juego.flight.state;
+        const dt = Math.max(1 / 240, juego.relojDelJuego - antes);
+        antes = juego.relojDelJuego;
+        const aire = juego.flight.aireDelDia();
+        const r = piloto.mandos(
+          {
+            heading: s.heading,
+            alabeo: bankAngleOf(s.orientation),
+            cabeceo: pitchAngleOf(s.orientation),
+            altitud: s.position.y,
+            vertical: s.velocity.y,
+            velocidad: indicatedAirspeed(s.airspeed, s.position.y, aire),
+            gas: 0,
+            verdadera: s.airspeed,
+            ritmoDeCabeceo: s.pitchRate,
+            timon: juego.flight.timonAhora(),
+          },
+          rumbo,
+          dt,
+          aire,
+        );
+        c.throttle = 0;
+        c.elevator = r.elevator;
+        c.aileron = r.aileron;
+        c.trim = 0;
+        if (avion.aerofrenos !== null && !juego.input.aerofrenosAbiertos)
+          juego.input.alternarAerofrenos();
+        if (avion.aerofrenos === null && avion.trenRetractil && !juego.input.trenQueSePide)
+          juego.input.alternarTren();
+      };
+    },
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(

@@ -65,6 +65,10 @@ Allá está lloviendo.
 Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.
 Allá hay niebla.
 Tripulación, prepararse para el aterrizaje.
+Tripulación, descenso de emergencia.
+Tripulación, ya estamos a una altura segura.
+Señores pasajeros, les habla la comandante. Pónganse la máscara de oxígeno sobre la nariz y la boca: primero la suya, y después ayuden a los demás. Vamos a bajar rápido a una altura donde se respira bien.
+Señores pasajeros, les habla la comandante. Ya estamos a una altura donde se respira bien: pueden quitarse la máscara. Vamos al aeropuerto más cercano. Gracias por la calma.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.

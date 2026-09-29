@@ -15,6 +15,9 @@
     "cabina.bankAngle": {
       "ms": 670
     },
+    "cabina.cabin": {
+      "ms": 780
+    },
     "cabina.fifty": {
       "ms": 657
     },
@@ -125,6 +128,9 @@
     "cabina.bankAngle": [
       "cabina.bankAngle"
     ],
+    "cabina.cabin": [
+      "cabina.cabin"
+    ],
     "cabina.fifty": [
       "cabina.fifty"
     ],
@@ -160,6 +166,9 @@
     ],
     "cabina.oneHundred": [
       "cabina.oneHundred"
+    ],
+    "cabina.oneThousand": [
+      "cabina.oneThousand"
     ],
     "cabina.positiveRate": [
       "cabina.positiveRate"
@@ -203,6 +212,9 @@
     "cabina.twenty": [
       "cabina.twenty"
     ],
+    "cabina.twentyFiveHundred": [
+      "cabina.twentyFiveHundred"
+    ],
     "cabina.twoHundred": [
       "cabina.twoHundred"
     ],
@@ -214,12 +226,6 @@
     ],
     "cabina.weHaveAProblem": [
       "cabina.weHaveAProblem"
-    ],
-    "cabina.oneThousand": [
-      "cabina.oneThousand"
-    ],
-    "cabina.twentyFiveHundred": [
-      "cabina.twentyFiveHundred"
     ]
   }
 }

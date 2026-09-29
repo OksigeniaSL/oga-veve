@@ -40,6 +40,7 @@ import {
 import { enLaMuesca } from "../flight/flaps";
 import { temperaturaExterior, type Aire } from "../flight/atmosphere";
 import { altitudDeCabina } from "../flight/cabina-presurizada";
+import { AVISO_DE_CABINA } from "../flight/despresurizacion";
 import {
   ALTO_DEL_CUADRO,
   ANCHO_DEL_CUADRO,
@@ -114,6 +115,12 @@ export interface DatosDelTablero {
   readonly mach: number | null;
   /** El aire del día, para la temperatura de fuera. Sin él, la estándar. */
   readonly aire?: Aire;
+  /**
+   * **La altitud de cabina, m**, la de verdad: la del control de presión con
+   * su ritmo, o la del avión si se fue el aire. Sin ella, la del programa.
+   * Ver `flight/cabina-presurizada.ts`.
+   */
+  readonly cabina?: number;
   /** A cuánto va cada motor, de 0 a 1, en su orden. */
   readonly motores: readonly number[];
   readonly flaps: number;
@@ -231,6 +238,7 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   piloto: "piloto-fuera",
   freno: "freno",
   combustible: "combustible",
+  cabina: "mascara",
 };
 
 /**
@@ -792,10 +800,12 @@ export class Tablero {
       const metros = d.pies / PIES;
       const oat = Math.round(temperaturaExterior(metros, d.aire));
       this.texto("oat", `${oat > 0 ? "+" : ""}${oat}°C`);
-      this.texto("cabina",
-        String(
-          Math.round(altitudDeCabina(metros, this.avion) / 0.3048 / 50) * 50,
-        ),
+      const cabina = d.cabina ?? altitudDeCabina(metros, this.avion);
+      this.texto("cabina", String(Math.round(cabina / 0.3048 / 50) * 50));
+      // En rojo por encima de diez mil pies, como el EICAS de verdad.
+      this.pieza('[data-cristal="cabina"]')?.classList.toggle(
+        "cr__aire--limite",
+        cabina > AVISO_DE_CABINA,
       );
     }
     // La presión, en cada imagen: la cambia una rueda que se gira a mano, y

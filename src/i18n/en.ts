@@ -66,6 +66,7 @@ export const EN: Dictionary = {
   "luz.frustrada": "GO AROUND",
   "luz.piloto": "A/P OFF",
   "luz.freno": "PARK BRK",
+  "luz.cabina": "CABIN ALT",
   "hud.altitude": "Altitude",
   "hud.heading": "Heading",
   "hud.throttleDown": "Less power",
@@ -187,6 +188,7 @@ export const EN: Dictionary = {
   "tecla.reversa": "Reverse thrust",
   "tecla.flaps": "Flaps",
   "tecla.tren": "Gear",
+  "tecla.aerofrenos": "Speed brakes",
   "tecla.camera": "Change view",
   "tecla.assist": "Difficulty tier",
   "tecla.reset": "Start again",
@@ -473,6 +475,33 @@ export const EN: Dictionary = {
   "palabra.planea": "Glide",
   "vuelo.planeoLento": "We are slow: lower the nose a little",
   "vuelo.planeoRapido": "We are fast: raise the nose a little, it takes us further",
+  "vuelo.aire.frio":
+    "It is zero degrees outside now. Every thousand metres we climb, about six and a half degrees colder: up high it is around fifty below zero.",
+  "palabra.frio": "Cold",
+  "vuelo.aire.crucero":
+    "We are at cruise now. Up here the air is thin: the plane has less drag and burns less fuel. That is why planes fly so high.",
+  "vuelo.aire.cruceroConCifras":
+    "Look at the speed: the gauge shows less than we are really doing, because up here the air is thin. And thinner air means less drag and less fuel: that is why planes fly so high.",
+  "vuelo.aire.bolsa":
+    "The cabin climbs too, but slowly: it is now at about one thousand five hundred metres, even though the plane is much higher. That is why a bag of chips sealed on the ground puffs up here.",
+  "vuelo.aire.oidos":
+    "We are starting down, and the cabin comes down too. If your ears feel blocked, swallow or yawn and they will pop. And a bottle closed up high arrives squashed on the ground.",
+  "vuelo.cabinaSinPresion":
+    "The cabin has lost pressure. Calmly: mask first, and we go down quickly to where we can breathe. Throttle to idle, speed brakes out and nose down.",
+  "vuelo.cabinaSinPresionConTren":
+    "The cabin has lost pressure. Calmly: mask first, and we go down quickly to where we can breathe. Throttle to idle, gear down and nose down.",
+  "palabra.mascara": "Mask",
+  "palabra.descensoDeEmergencia": "Emergency descent",
+  "vuelo.primeroLaTuya.segundos":
+    "The masks have dropped. Yours first, because at this altitude, without oxygen, you have only seconds to think clearly: half a minute or less. With yours on, you can help others.",
+  "vuelo.primeroLaTuya.minuto":
+    "The masks have dropped. Yours first, because at this altitude, without oxygen, you have about a minute to think clearly. With yours on, you can help others.",
+  "vuelo.primeroLaTuya.minutos":
+    "The masks have dropped. Yours first, because at this altitude, without oxygen, you have only a few minutes to think clearly. With yours on, you can help others.",
+  "vuelo.yaSeRespira":
+    "Well done: we can breathe here. We level off and head to the nearest airport, calmly. That is how real pilots practise it.",
+  "palabra.yaSeRespira": "Breathable",
+  "ejercicio.despresurizacion": "Cabin depressurization",
   "vuelo.laOtraPunta":
     "That is not the runway in use: today the wind says land from the other end",
   "palabra.otraPunta": "Other end",
@@ -784,6 +813,12 @@ export const EN: Dictionary = {
   "comandante.temperatura": "The temperature is {n} degrees.",
   "comandante.temperaturaBajoCero": "The temperature is {n} degrees below zero.",
   "comandante.aproximacion": "Cabin crew, prepare for landing.",
+  "comandante.descensoDeEmergencia": "Cabin crew, emergency descent.",
+  "comandante.alturaSegura": "Cabin crew, we have reached a safe altitude.",
+  "comandante.mascaras":
+    "Ladies and gentlemen, this is your captain speaking. Put on your oxygen mask over your nose and mouth: yours first, then help others. We are descending quickly to an altitude where the air is breathable.",
+  "comandante.yaSeRespira":
+    "Ladies and gentlemen, this is your captain speaking. We are now at an altitude where the air is breathable: you may remove your mask. We are heading to the nearest airport. Thank you for staying calm.",
   "tripulacion.servicio.mango":
     "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: fresh water, and dried mango from Granja Óga. Enjoy!",
   "tripulacion.servicio.pina":
@@ -800,6 +835,10 @@ export const EN: Dictionary = {
     "And as it's a long flight, we also have hot coffee and tea.",
   "tripulacion.cinturones":
     "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
+  "tripulacion.mascaras":
+    "Ladies and gentlemen: pull the mask towards you, place it over your nose and mouth and breathe normally. Put on your own first, then help others. We are descending to an altitude where the air is breathable.",
+  "tripulacion.canario.mascaras":
+    "Ladies and gentlemen: pull the mask towards you, place it over your nose and mouth and breathe normally. Put on your own first, then help others. We are descending to an altitude where the air is breathable.",
   "tripulacion.canario.servicio.mango":
     "Ladies and gentlemen, in a few minutes we'll come through the cabin with our service: water, and dried mango from Granja Óga. Enjoy!",
   "tripulacion.canario.servicio.pina":

@@ -6,6 +6,9 @@
     "tripulacion.canario.cinturones": {
       "ms": 9407
     },
+    "tripulacion.canario.mascaras": {
+      "ms": 16407
+    },
     "tripulacion.canario.servicio.banana": {
       "ms": 9307
     },
@@ -68,6 +71,9 @@
     "tripulacion.canario.servicio": [
       "{producto}",
       "{largo?}"
+    ],
+    "tripulacion.canario.mascaras": [
+      "tripulacion.canario.mascaras"
     ]
   }
 }

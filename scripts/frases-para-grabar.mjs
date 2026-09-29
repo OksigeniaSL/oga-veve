@@ -215,6 +215,12 @@ const CABINA = [
     "el piloto automático se soltó y los mandos son tuyos otra vez",
   ],
   ["cabina.minimums", "minimums", "la altura de decisión: o la ves, o te vas"],
+  /*
+   * **El aviso de altitud de cabina**, con la palabra de la caja de Embraer:
+   * «cabin», con la cabina por encima de diez mil pies. Solo en el avión que
+   * lo dice con voz. Ver `src/flight/despresurizacion.ts`.
+   */
+  ["cabina.cabin", "cabin", "la cabina pasó de diez mil pies: se fue el aire"],
   ["cabina.slowDown", "slow down", "vas rápido en el suelo"],
   [
     "cabina.tooHighComeDown",
@@ -1181,6 +1187,29 @@ const EN_CALMA = {
     "Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.",
   "vuelo.tonoDeAltitudFuera":
     "Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.",
+  /*
+   * **Y la cabina sin aire, entera**: la explicación detrás de la caja, el
+   * porqué de la máscara, la megafonía y el final. Es la emergencia que más
+   * miedo da en las películas, y lo que se oye aquí tiene que ser gente que
+   * sabe lo que hace y no se acelera. Ver `src/flight/despresurizacion.ts`.
+   */
+  "vuelo.cabinaSinPresion":
+    "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.",
+  "vuelo.cabinaSinPresionConTren":
+    "Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.",
+  "vuelo.primeroLaTuya.segundos":
+    "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.",
+  "vuelo.primeroLaTuya.minuto":
+    "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.",
+  "vuelo.primeroLaTuya.minutos":
+    "Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.",
+  "comandante.descensoDeEmergencia": "Tripulación, descenso de emergencia.",
+  "comandante.mascaras":
+    "Señores pasajeros, les habla la comandante. Pónganse la máscara de oxígeno sobre la nariz y la boca: primero la suya, y después ayuden a los demás. Vamos a bajar rápido a una altura donde se respira bien.",
+  "tripulacion.mascaras":
+    "Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.",
+  "tripulacion.canario.mascaras":
+    "Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.",
 };
 for (const f of filas) {
   const dicho = EN_CALMA[f.id];
@@ -1218,8 +1247,15 @@ const AJUSTES_CON_CHISPA = {
  * sino del texto, así que se alargó —«Mirá por la ventanilla, a tu
  * izquierda»— y aquí se avisa de la próxima que baje de treinta letras.
  */
+/*
+ * Y lo que el aire enseña por el camino, que también se cuenta con ganas: la
+ * bolsa de papitas y la botella aplastada son cosas que hacen gracia, y una
+ * lección dicha con voz de aviso es un sermón. Ver
+ * `src/flight/lecciones-del-aire.ts`.
+ */
+const CON_CHISPA = (id) => id.startsWith("ventanilla.") || id.startsWith("vuelo.aire.");
 for (const f of filas) {
-  if (!f.id.startsWith("ventanilla.")) continue;
+  if (!CON_CHISPA(f.id)) continue;
   f.ajustes = AJUSTES_CON_CHISPA;
   if (f.texto.length < 30)
     console.log(`\n  ¡Ojo! ${f.id} es muy corta para grabarla suelta: «${f.texto}»`);

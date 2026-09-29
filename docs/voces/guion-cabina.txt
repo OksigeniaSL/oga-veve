@@ -17,6 +17,7 @@ stall, stall
 traffic, traffic
 autopilot disconnect
 minimums
+cabin
 slow down
 too high, come down
 too low, climb

@@ -117,6 +117,17 @@ instructor	instructor/vuelo.sinCombustible.ogg	es-PY	Se acabó el combustible: p
 instructor	instructor/vuelo.sinMotor.ogg	es-PY	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.planeoLento.ogg	es-PY	Vamos lentos: bajá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.planeoRapido.ogg	es-PY	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aire.frio.ogg	es-PY	Afuera ya hace cero grados. Cada mil metros que subimos, unos seis grados y medio menos: allá arriba hace como cincuenta bajo cero.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aire.crucero.ogg	es-PY	Ya estamos en crucero. Acá arriba el aire es finito: el avión frena menos y gasta menos combustible. Por eso los aviones vuelan tan alto.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aire.cruceroConCifras.ogg	es-PY	Mirá la velocidad: el reloj marca menos de lo que vamos de verdad, porque acá arriba el aire es finito. Y con menos aire se frena menos y se gasta menos: por eso los aviones vuelan tan alto.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aire.bolsa.ogg	es-PY	La cabina también sube, pero despacito: ahora va como a mil quinientos metros, aunque el avión esté mucho más alto. Por eso una bolsa de papitas cerrada abajo, acá arriba se infla.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aire.oidos.ogg	es-PY	Empezamos a bajar, y la cabina también baja. Si se te tapan los oídos, tragá saliva o bostezá, que se destapan. Y una botella cerrada allá arriba, abajo llega aplastada.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.cabinaSinPresion.ogg	es-PY	Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.cabinaSinPresionConTren.ogg	es-PY	Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.primeroLaTuya.segundos.ogg	es-PY	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.primeroLaTuya.minuto.ogg	es-PY	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.primeroLaTuya.minutos.ogg	es-PY	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.yaSeRespira.ogg	es-PY	Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con calma. Así lo practican los pilotos de verdad.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.laOtraPunta.ogg	es-PY	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.salidaSiguiente.ogg	es-PY	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.calor.ogg	es-PY	Hace calor: vamos a necesitar más pista para despegar	lo que toca hacer ahora, en vuelo y en tierra
@@ -289,6 +300,10 @@ comandante	comandante/comandante.cielo.lluvia.ogg	es-PY	Allá está lloviendo.	l
 comandante	comandante/comandante.cielo.tormenta.ogg	es-PY	Allá hay tormenta, así que el avión se puede mover un poco: con el cinturón bien puesto, tranquilos.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.cielo.niebla.ogg	es-PY	Allá hay niebla.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.aproximacion.ogg	es-PY	Tripulación, prepararse para el aterrizaje.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.descensoDeEmergencia.ogg	es-PY	Tripulación, descenso de emergencia.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.alturaSegura.ogg	es-PY	Tripulación, ya estamos a una altura segura.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.mascaras.ogg	es-PY	Señores pasajeros, les habla la comandante. Pónganse la máscara de oxígeno sobre la nariz y la boca: primero la suya, y después ayuden a los demás. Vamos a bajar rápido a una altura donde se respira bien.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.yaSeRespira.ogg	es-PY	Señores pasajeros, les habla la comandante. Ya estamos a una altura donde se respira bien: pueden quitarse la máscara. Vamos al aeropuerto más cercano. Gracias por la calma.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.local.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.pettirossi.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bienvenida.guarani.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.	la megafonía de cabina, para el pasaje
@@ -417,6 +432,7 @@ tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.banana.pa
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.mani.paraguay.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.largo.ogg	es-PY	Y como el viaje es largo, también tenemos café y té.	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.cinturones.ogg	es-PY	Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.mascaras.ogg	es-PY	Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.	la tripulación de cabina de Canarias, por megafonía
 tripulacion	tripulacion/tripulacion.servicio.mango.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de mango de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.servicio.pina.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de piña de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.servicio.banana.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y fruta deshidratada de banana de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
@@ -425,6 +441,7 @@ tripulacion	tripulacion/tripulacion.servicio.chipa.ogg	es-PY	Señoras y señores
 tripulacion	tripulacion/tripulacion.servicio.mbeju.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y mbejú de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.servicio.largo.ogg	es-PY	Y como el viaje es largo, también tenemos café y té calentitos.	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.cinturones.ogg	es-PY	Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.mascaras.ogg	es-PY	Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.	la tripulación de cabina, por megafonía
 torre-canarias	torre-canarias/torre.canario.solo.subirNivel.ogg	es-PY	suba a nivel de vuelo	la torre de Canarias, que no vosea
 torre	torre/torre.solo.subirNivel.ogg	es-PY	ascienda a nivel de vuelo	la lámpara de la torre, dicha en casa
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
@@ -446,6 +463,7 @@ cabina	cabina/cabina.stall.ogg	en	stall, stall	el ala dejó de sustentar
 cabina	cabina/cabina.traffic.ogg	en	traffic, traffic	otro avión cerca: mirá dónde dice la pantalla
 cabina	cabina/cabina.autopilotDisconnect.ogg	en	autopilot disconnect	el piloto automático se soltó y los mandos son tuyos otra vez
 cabina	cabina/cabina.minimums.ogg	en	minimums	la altura de decisión: o la ves, o te vas
+cabina	cabina/cabina.cabin.ogg	en	cabin	la cabina pasó de diez mil pies: se fue el aire
 cabina	cabina/cabina.slowDown.ogg	en	slow down	vas rápido en el suelo
 cabina	cabina/cabina.tooHighComeDown.ogg	en	too high, come down	te pasaste el aro por arriba
 cabina	cabina/cabina.tooLowClimb.ogg	en	too low, climb	te pasaste el aro por abajo

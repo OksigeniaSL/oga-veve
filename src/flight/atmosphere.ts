@@ -140,6 +140,38 @@ function presionPa(altura: number, aire: Aire): number {
 }
 
 /**
+ * **La presión de la atmósfera estándar a esa altura**, Pa.
+ *
+ * Es la que define una **altitud de presión**, que es lo que mide todo lo que
+ * en un avión va por presión: el altímetro puesto en 1013 y la altitud de
+ * cabina. La cabina de un presurizado no está a ninguna altura del mapa: está
+ * a la presión de una altura, y esa es la que se lee en el reloj. Ver
+ * `cabina-presurizada.ts`.
+ */
+export function presionEstandar(altura: number): number {
+  return presionPa(altura, AIRE_ESTANDAR);
+}
+
+/**
+ * **Y al revés: a qué altura de la estándar corresponde esta presión**, m.
+ *
+ * La cuenta de `presionPa` despejada, en sus dos capas: la troposfera, con su
+ * gradiente, y la estratosfera, quieta, por encima de la tropopausa.
+ */
+export function alturaDePresion(presion: number): number {
+  const p0 = QNH_DE_TABLAS * 100;
+  const p = acotar(presion, 1, p0 * 1.2);
+  const enLaTropopausa = presionEstandar(TROPOPAUSA);
+  if (p >= enLaTropopausa) {
+    const n = (R_AIRE * GRADIENTE) / GRAVITY;
+    return (T_MAR / GRADIENTE) * (1 - Math.pow(p / p0, n));
+  }
+  return (
+    TROPOPAUSA - ((R_AIRE * T_TROPOPAUSA) / GRAVITY) * Math.log(p / enLaTropopausa)
+  );
+}
+
+/**
  * La densidad del aire a esa altura, kg/m³: la de la estándar si no se dice
  * qué aire hace, y la del día si se dice.
  *

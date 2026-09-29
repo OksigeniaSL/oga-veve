@@ -311,6 +311,39 @@ export function velocidadDePerdida(a: {
   return a.approachSpeed / 1.3;
 }
 
+/**
+ * **La presurización de un tipo**: lo que aguanta su fuselaje y si lo avisa
+ * con voz.
+ *
+ * La cabina no se lleva a presión de suelo: el fuselaje es un globo, y cuanta
+ * más diferencia entre dentro y fuera, más pesa la estructura que la aguanta.
+ * Cada tipo se diseña con **un diferencial máximo**, y con él y la regla de
+ * los ocho mil pies sale todo lo demás. Ver `flight/cabina-presurizada.ts`.
+ */
+export interface Presurizacion {
+  /**
+   * La diferencia de presión máxima entre la cabina y fuera, Pa. Es el número
+   * de la placa del tipo, en psi en los manuales: 1 psi son 6894,76 Pa.
+   */
+  readonly diferencialMaximo: number;
+  /**
+   * **Si el aviso de altitud de cabina habla**: la voz de una caja que dice
+   * *cabin* cuando la cabina pasa de diez mil pies.
+   *
+   * No lo lleva todo avión con voz en sus avisos, y por eso va aparte de
+   * `avisosHablados`: la familia de Embraer lo dice con voz —«CABIN» con la
+   * cabina por encima de diez mil pies, en el AOM del EMB-145—, y Boeing, en
+   * el 737 y en el 747, con una bocina intermitente. Un turbohélice de
+   * diecinueve plazas lleva la luz roja y nada más. Donde no habla, lo dice
+   * la instructora, que es quien lo diría sentada al lado. Ver `loDiceElAvion`
+   * en `audio/cabina.ts`.
+   */
+  readonly avisoHablado: boolean;
+}
+
+/** Un psi, en pascales: los manuales de presurización van en psi. */
+export const PSI = 6894.757;
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -369,18 +402,39 @@ export interface AircraftConfig {
    */
   reglasDeVuelo: "visual" | "instrumentos";
   /**
-   * Si la cabina va soplada a presión.
+   * **Cómo va soplada la cabina**, o `null` si no va.
    *
    * No es un detalle de ficha: **es lo que decide a qué altura puede ir la
-   * gente de dentro**. Un avión sin presurizar no sube por encima de unos
-   * tres mil metros porque allí el aire ya no da, y uno presurizado cruza a
-   * diez mil con la cabina a dos mil cuatrocientos. Es la misma razón por la
-   * que sus `alturaDeCrucero` son las que son.
+   * gente de dentro**. Por encima de unos tres mil metros el aire ya no da
+   * para ir mucho rato sin oxígeno, y un avión sin presurizar que sube más
+   * lo lleva en botellas; uno presurizado cruza a once mil con la cabina por
+   * debajo de dos mil quinientos. Es la misma razón por la que sus
+   * `alturaDeCrucero` son las que son.
    *
-   * Ver `flight/cabina-presurizada.ts`, que es donde se convierte en un
-   * número que se puede leer en el cuadro.
+   * Ver `flight/cabina-presurizada.ts`, que es donde se convierte en la
+   * altitud de cabina que se lee en el cuadro, y `Presurizacion`.
    */
-  presurizada: boolean;
+  presurizacion: Presurizacion | null;
+  /**
+   * **Lo que frenan los aerofrenos abiertos del todo**: lo que suman al
+   * coeficiente de resistencia. `null` en el que no los lleva.
+   *
+   * Son los paneles que se levantan encima del ala para frenar en el aire, y
+   * los llevan los reactores: un ala limpia de avión de línea planea
+   * diecisiete a uno, y sin algo que frene no hay forma de bajar deprisa sin
+   * pasarse de velocidad. Es la mitad de la maniobra del descenso de
+   * emergencia —ver `flight/despresurizacion.ts`— y la otra mitad es el gas al
+   * ralentí.
+   *
+   * Los de hélice de esta flota no los llevan, y es verdad de su clase: ni un
+   * turbohélice de diecinueve plazas ni una avioneta. Ellos frenan con la
+   * hélice al ralentí, que ya frena mucho, y con el tren.
+   *
+   * **Levantan resistencia y nada más.** En el avión de verdad también quitan
+   * algo de sustentación, y el ala la recupera con un poco más de ángulo; eso
+   * aquí no está, y lo que se nota —cuánto más deprisa se baja— sale igual.
+   */
+  aerofrenos: number | null;
   /**
    * **Qué TCAS lleva, si lleva alguno.** `null` si ninguno.
    *
@@ -749,7 +803,8 @@ export const PYKASU: AircraftConfig = {
    */
   alturaDeCrucero: 3000,
   reglasDeVuelo: "visual",
-  presurizada: false,
+  presurizacion: null,
+  aerofrenos: null,
   tcas: null,
   avisosHablados: false,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
@@ -850,7 +905,8 @@ export const MAINUMBY: AircraftConfig = {
   // lo que sube es para ir de un campo a otro.
   alturaDeCrucero: 2500,
   reglasDeVuelo: "visual",
-  presurizada: false,
+  presurizacion: null,
+  aerofrenos: null,
   tcas: null,
   avisosHablados: false,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
@@ -990,7 +1046,10 @@ export const PANAMBI: AircraftConfig = {
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
   reglasDeVuelo: "instrumentos",
-  presurizada: false,
+  // Sin presurizar, como los bimotores de pistón de su clase: por encima de
+  // los tres mil ochocientos metros se vuela con la máscara de oxígeno puesta.
+  presurizacion: null,
+  aerofrenos: null,
   tcas: null,
   avisosHablados: false,
   // Y los límites, tomados de un bimotor ligero de esta clase.
@@ -1108,7 +1167,16 @@ export const ARASUNU: AircraftConfig = {
   // un turbohélice regional presurizado.
   alturaDeCrucero: 7600,
   reglasDeVuelo: "instrumentos",
-  presurizada: true,
+  /*
+   * **Cinco psi, los del Beech 1900D**, cuya placa de flaps lleva: un
+   * turbohélice de diecinueve plazas se certifica como avión de cercanías y no
+   * como avión de transporte, y su regla no le pide los ocho mil pies a su
+   * techo. A veinticinco mil pies lleva la cabina a unos nueve mil, y por eso
+   * su aviso no es el de los reactores. Sin aerofrenos: frena con las hélices
+   * al ralentí y con el tren.
+   */
+  presurizacion: { diferencialMaximo: 5.0 * PSI, avisoHablado: false },
+  aerofrenos: null,
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
   avisosHablados: true,
@@ -1250,7 +1318,21 @@ export const ARAI: AircraftConfig = {
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
   reglasDeVuelo: "instrumentos",
-  presurizada: true,
+  /*
+   * **Ocho coma cuatro psi, los de la familia de Embraer**: es el tope del
+   * control de presión del ERJ (resumen del AOM del EMB-145, C. Regli), y con
+   * él la cabina queda en ocho mil pies a cuarenta y un mil, el techo del
+   * E-170. Y su aviso habla: la caja dice *cabin* con la cabina por encima
+   * de diez mil pies, que es la voz de ese aviso en la familia de Embraer.
+   *
+   * Los aerofrenos, calibrados con lo que hace su clase en un descenso de
+   * emergencia: gas al ralentí, aerofrenos fuera y a su velocidad máxima, un
+   * birreactor de pasillo único baja de 35 000 a 10 000 pies a una media de
+   * seis o siete mil pies por minuto, unos cuatro minutos. Ver
+   * `despresurizacion.test.ts`.
+   */
+  presurizacion: { diferencialMaximo: 8.4 * PSI, avisoHablado: true },
+  aerofrenos: 0.025,
   tcas: "TCAS II",
   avisosHablados: true,
   // Reactor regional.
@@ -1463,7 +1545,16 @@ export const YVAGA: AircraftConfig = {
    */
   alturaDeCrucero: 10700,
   reglasDeVuelo: "instrumentos",
-  presurizada: true,
+  /*
+   * **Ocho coma nueve psi, los del 747**: con ellos la cabina queda por
+   * debajo de ocho mil pies hasta su techo de cuarenta y cinco mil. Su aviso
+   * de altitud de cabina **no habla**: en el 747 es una bocina intermitente,
+   * como en el 737, y en un cuatrimotor de Airbus, un timbre. La luz roja sí,
+   * y lo cuenta la instructora. Los aerofrenos de vuelo, con la misma
+   * calibración que el JAZ 90: ver `despresurizacion.test.ts`.
+   */
+  presurizacion: { diferencialMaximo: 8.9 * PSI, avisoHablado: false },
+  aerofrenos: 0.02,
   tcas: "TCAS II",
   avisosHablados: true,
   /*

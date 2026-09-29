@@ -39,6 +39,7 @@ import {
   type Mesh,
 } from "three";
 import { PALETA } from "../ui/paleta";
+import { AVISO_DE_CABINA } from "../flight/despresurizacion";
 import { anillosDe, type Eco } from "../flight/tormentas";
 import { bienPuesta } from "../flight/altimetro";
 import { temperaturaExterior, type Aire } from "../flight/atmosphere";
@@ -1819,7 +1820,8 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     ANCHO * 0.75,
     yAire,
     "600 15px " + FUENTE,
-    TINTA,
+    // En rojo por encima de diez mil pies, como el EICAS de verdad.
+    d.cabina > AVISO_DE_CABINA ? PALETA.limite : TINTA,
     "left",
   );
 

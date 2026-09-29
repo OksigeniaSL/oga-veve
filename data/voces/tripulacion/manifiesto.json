@@ -6,6 +6,9 @@
     "tripulacion.cinturones": {
       "ms": 11007
     },
+    "tripulacion.mascaras": {
+      "ms": 14707
+    },
     "tripulacion.servicio.banana": {
       "ms": 10207
     },
@@ -56,6 +59,9 @@
     "tripulacion.servicio": [
       "{producto}",
       "{largo?}"
+    ],
+    "tripulacion.mascaras": [
+      "tripulacion.mascaras"
     ]
   }
 }

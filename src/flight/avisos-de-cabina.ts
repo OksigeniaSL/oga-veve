@@ -78,6 +78,17 @@ export const LUCES: readonly Luz[] = [
     cabina: "STALL",
     clave: "luz.perdida",
   },
+  /*
+   * **La cabina sin aire**, en rojo como en cualquier avión: por encima de diez
+   * mil pies de cabina se respira mal, y eso es de ahora. Solo se enciende en
+   * los presurizados. Ver `flight/despresurizacion.ts`.
+   */
+  {
+    id: "cabina",
+    grado: "aviso",
+    cabina: "CABIN ALT",
+    clave: "luz.cabina",
+  },
   {
     id: "rapido",
     grado: "aviso",
@@ -142,6 +153,12 @@ export interface Estado {
   readonly pilotoSuelto: boolean;
   /** El freno de estacionamiento, puesto con el avión queriendo moverse. */
   readonly frenoPuesto: boolean;
+  /**
+   * La altitud de cabina por encima de diez mil pies, en un presurizado: un
+   * avión sin presurizar no tiene esta luz que encender. Ver
+   * `AVISO_DE_CABINA` en `despresurizacion.ts`.
+   */
+  readonly cabinaAlta: boolean;
 }
 
 /**
@@ -161,6 +178,7 @@ export function encendidas(e: Estado): readonly Luz[] {
     frustrada: e.frustrada,
     piloto: e.pilotoSuelto,
     freno: e.frenoPuesto,
+    cabina: e.cabinaAlta,
   };
   return LUCES.filter((l) => puesto[l.id]);
 }
