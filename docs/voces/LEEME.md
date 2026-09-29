@@ -113,6 +113,23 @@ Y una nota sobre el modelo: `eleven_multilingual_v2` es el que aguanta el
 voseo —«arrancá», «seguí», «andá»—, que es la mitad de lo que hace que el
 instructor suene de Paraguay y no de un doblaje.
 
+### Y cada frase con su tono
+
+Una frase puede traer sus propios ajustes de voz en `frases.json`, y entonces
+se graba con ellos y no con los de la cuenta. Hay dos juegos, y son opuestos:
+
+- **En calma** (`EN_CALMA`): los avisos que explican una alarma. Voz estable y
+  sin estilo, que un aviso leído como alarma enseña a asustarse.
+- **Con chispa** (`AJUSTES_CON_CHISPA`): lo que se ve por la ventanilla. Menos
+  estabilidad y algo de estilo, que es contar algo bonito con ganas. Medido con
+  el tono de cada toma, se mueven unos cuatro semitonos arriba y abajo, contra
+  dos y medio o tres de la megafonía de siempre.
+
+Y una advertencia que costó cuatro tomas: **con chispa, una frase muy corta se
+inventa lo que falta**. «Mirá a tu izquierda», veinte letras, volvió con nueve
+segundos de voz. Por debajo de treinta letras el guion avisa; se alarga la
+frase y se graba entera.
+
 ## El horneado: un comando, y ya
 
 ```bash

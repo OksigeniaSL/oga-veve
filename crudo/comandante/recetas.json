@@ -780,5 +780,112 @@
   ],
   "comandante.llegada.pilar~5": [
     "comandante.llegada.pilar~5"
+  ],
+  "ventanilla.saludo": [
+    "ventanilla.saludo"
+  ],
+  "ventanilla.lado.izquierda": [
+    "ventanilla.lado.izquierda"
+  ],
+  "ventanilla.lado.izquierda~2": [
+    "ventanilla.lado.izquierda~2"
+  ],
+  "ventanilla.lado.derecha": [
+    "ventanilla.lado.derecha"
+  ],
+  "ventanilla.lado.derecha~2": [
+    "ventanilla.lado.derecha~2"
+  ],
+  "ventanilla.teide": [
+    "ventanilla.teide"
+  ],
+  "ventanilla.canadas": [
+    "ventanilla.canadas"
+  ],
+  "ventanilla.anaga": [
+    "ventanilla.anaga"
+  ],
+  "ventanilla.orotava": [
+    "ventanilla.orotava"
+  ],
+  "ventanilla.gigantes": [
+    "ventanilla.gigantes"
+  ],
+  "ventanilla.garajonay": [
+    "ventanilla.garajonay"
+  ],
+  "ventanilla.taburiente": [
+    "ventanilla.taburiente"
+  ],
+  "ventanilla.tajogaite": [
+    "ventanilla.tajogaite"
+  ],
+  "ventanilla.hierro": [
+    "ventanilla.hierro"
+  ],
+  "ventanilla.nieves": [
+    "ventanilla.nieves"
+  ],
+  "ventanilla.las-palmas": [
+    "ventanilla.las-palmas"
+  ],
+  "ventanilla.maspalomas": [
+    "ventanilla.maspalomas"
+  ],
+  "ventanilla.fuerteventura": [
+    "ventanilla.fuerteventura"
+  ],
+  "ventanilla.lobos": [
+    "ventanilla.lobos"
+  ],
+  "ventanilla.timanfaya": [
+    "ventanilla.timanfaya"
+  ],
+  "ventanilla.barco": [
+    "ventanilla.barco"
+  ],
+  "ventanilla.rio-paraguay": [
+    "ventanilla.rio-paraguay"
+  ],
+  "ventanilla.asuncion": [
+    "ventanilla.asuncion"
+  ],
+  "ventanilla.ypacarai": [
+    "ventanilla.ypacarai"
+  ],
+  "ventanilla.ypoa": [
+    "ventanilla.ypoa"
+  ],
+  "ventanilla.rio-parana": [
+    "ventanilla.rio-parana"
+  ],
+  "ventanilla.yacyreta": [
+    "ventanilla.yacyreta"
+  ],
+  "ventanilla.itaipu": [
+    "ventanilla.itaipu"
+  ],
+  "ventanilla.iguazu": [
+    "ventanilla.iguazu"
+  ],
+  "ventanilla.triple-frontera": [
+    "ventanilla.triple-frontera"
+  ],
+  "ventanilla.cerro-cora": [
+    "ventanilla.cerro-cora"
+  ],
+  "ventanilla.chaco": [
+    "ventanilla.chaco"
+  ],
+  "ventanilla.encarnacion": [
+    "ventanilla.encarnacion"
+  ],
+  "ventanilla.trinidad": [
+    "ventanilla.trinidad"
+  ],
+  "ventanilla": [
+    "{saludo?}",
+    "{lado}",
+    "{que}"
   ]
 }

@@ -208,6 +208,33 @@ const REPARTO = [
   ["torre", "torre.canario.vacateNext", "torre-canarias"],
   ["instructor", "vuelo.nuestroAvion", "instructor", {}],
   ["instructor", "vuelo.salidaSiguiente", "instructor"],
+  /*
+   * **Y lo que se ve por la ventanilla**, que la decía la voz del navegador:
+   * la comandante con el saludo, el lado y el sitio, y la instructora de vos.
+   * Ver `audio/ventanilla.ts`.
+   */
+  [
+    "comandante",
+    "ventanilla",
+    "comandante",
+    {
+      saludo: "ventanilla.saludo",
+      lado: "ventanilla.lado.izquierda",
+      que: "ventanilla.teide",
+    },
+  ],
+  [
+    "comandante",
+    "ventanilla",
+    "comandante",
+    { lado: "ventanilla.lado.derecha~2", que: "ventanilla.rio-paraguay" },
+  ],
+  [
+    "instructor",
+    "ventanilla.vos",
+    "instructor",
+    { lado: "ventanilla.vos.lado.derecha", que: "ventanilla.vos.ypacarai" },
+  ],
 ];
 
 const server = await createServer({
