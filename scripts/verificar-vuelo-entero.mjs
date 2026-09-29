@@ -688,6 +688,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       // lleva pedido. Ver `volarLaSenda`.
       sr: senda ? +senda.ritmo.toFixed(2) : null,
       mr: memoriaDeSenda ? +memoriaDeSenda.ritmo.toFixed(2) : null,
+      // Y dónde: cuánto falta para el umbral, del eje, y si se recoge.
+      ...(() => {
+        try {
+          return {
+            u: Math.round(alUmbral(s)),
+            x: Math.round(desvio(s)),
+            et: etapa,
+            rc: recogida ? 1 : 0,
+          };
+        } catch {
+          return {};
+        }
+      })(),
     });
   };
   /*
@@ -761,9 +774,155 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     );
     mandos.elevator = r.elevator;
   };
+  /*
+   * **La recogida, fotograma a fotograma**, en el mismo gancho que el
+   * automático y por lo mismo: a diez veces por segundo un lazo de cabeceo
+   * de reactor oscila, y la recogida dura tres o cuatro segundos. Ver
+   * `RITMO_AL_TOCAR`.
+   *
+   * Se manda el ritmo de bajada que toca a esta altura con la palanca, desde
+   * la que llevaba al empezar —que es la de la senda, con su compensación y
+   * sus flaps—, con un término proporcional y uno que acumula. En el modelo
+   * completo las ganancias van en ángulo de ataque y se pasan a palanca con
+   * el propio cabeceo del avión, `−cmα/cmδ`: la misma recogida pide lo mismo
+   * al ala de la avioneta que a la del JAZ 120. El tope de ángulo de
+   * `limitarElAngulo` sigue mandando después.
+   */
+  let recogida = null;
+  /**
+   * Lo último que bajaba en el aire, m/s: por si el juego no dice a qué se
+   * tocó. Aquí y no con los demás porque lo escribe el gancho, que empieza a
+   * correr en cuanto se engancha.
+   */
+  let ultimaCaida = 0;
+  const recoger = (mandos) => {
+    if (!recogida) return;
+    const s = o.estado();
+    if (s.onGround) return;
+    const ahora = o.reloj();
+    const dt = Math.max(1 / 240, Math.min(0.1, ahora - recogida.ultimo));
+    recogida.ultimo = ahora;
+    const ruedas = alto(s) - (suyas.tren ?? 0);
+    const queda = Math.max(0, Math.min(1, ruedas / recogida.altura));
+    const pide = -(RITMO_AL_TOCAR + (recogida.caida - RITMO_AL_TOCAR) * queda);
+    /*
+     * Y en el último metro y medio no se empuja: si baja menos de lo pedido,
+     * se deja que se pose. Empujando ahí, el JAZ 60 pasó de bajar a 0,6 a
+     * tocar a 2,3 — lo que se ganó recogiendo se perdió en el último palmo.
+     */
+    const falta =
+      ruedas < 1.5
+        ? Math.max(0, pide - s.verticalSpeed)
+        : pide - s.verticalSpeed;
+    /*
+     * **Y lo que acumula, solo hacia arriba.** Con el gas fuera la velocidad
+     * cae, y a menos velocidad hace falta más ángulo para la misma
+     * sustentación: eso es lo que cubre el acumulado, y va siempre en el
+     * mismo sentido. Dejándolo bajar, en cuanto la recogida se pasaba un poco
+     * —el ala responde con medio segundo de retraso— acumulaba empujar, y el
+     * JAZ 90 pasó de bajar a 1,2 a tocar a 5,3 empujando la palanca.
+     */
+    recogida.acumulado = Math.max(
+      0,
+      Math.min(2, recogida.acumulado + falta * dt),
+    );
+    /*
+     * En el modelo completo, tres centésimas y media de radián de ángulo —dos
+     * grados— por cada metro por segundo que falte y dos que acumulan,
+     * pasadas a palanca con el cabeceo del avión y amortiguadas con el giro
+     * del morro. Con dos, el JAZ 90 tardaba casi dos segundos en cambiar de
+     * ritmo y tocaba sin haber recogido; con cuatro sin amortiguar y la ayuda
+     * del compensador metida por medio —ver `mandos.automatico`—, se pasaba;
+     * con cuatro y media, el JAZ 60 volvía a tocar a 2,4 donde con tres y
+     * media tocaba a 1,1.
+     */
+    /*
+     * Y en Guyrami, más: ahí la palanca no mueve un ala sino el ritmo de
+     * subida, a través de medio segundo de retraso y a medias con el gas. Con
+     * las ocho centésimas del principio el JAZ 90 pasaba de −4,3 a −2,3 y
+     * tocaba así.
+     */
+    const kp = recogida.porAngulo ? recogida.porAngulo * 0.035 : 0.2;
+    const ki = recogida.porAngulo ? recogida.porAngulo * 0.02 : 0.1;
+    /*
+     * **Y lo que pide la velocidad que se pierde**, por delante y no por
+     * error. Con el gas fuera el avión frena, y la misma sustentación a menos
+     * velocidad pide más ángulo. Sin esto, el JAZ 60 recogía de 3,3 a 2,2 y se
+     * quedaba ahí, frenando de 55 a 47 m/s mientras el lazo corría detrás;
+     * con la cuenta entera —un cuarto de radián por cada vez que el cuadrado
+     * de la velocidad se queda en la mitad— se nivelaba a cuatro metros y
+     * flotaba seiscientos. Una décima: la mitad del ángulo lo pone esto y la
+     * otra mitad el lazo, que es quien sabe cuánto falta.
+     */
+    const porLoQueFrena = recogida.porAngulo
+      ? recogida.porAngulo *
+        0.1 *
+        Math.min(
+          0.6,
+          Math.max(0, (recogida.velocidad / Math.max(1, s.airspeed)) ** 2 - 1),
+        )
+      : 0;
+    /*
+     * **Y amortiguado con el giro del morro**, que es lo que hace una mano:
+     * el ala tarda casi un segundo en dar lo que se le pide, y sin esto el
+     * lazo tiraba, se pasaba y empujaba —medido con el JAZ 60: de −4,8 a −0,2
+     * y de vuelta a −2,5 en dos segundos—. Cuatro décimas de segundo de giro
+     * del morro, pasadas a palanca como lo demás.
+     */
+    const kq = recogida.porAngulo ? recogida.porAngulo * 0.4 : 0;
+    mandos.elevator = Math.max(
+      -0.6,
+      Math.min(
+        0.8,
+        recogida.palanca +
+          porLoQueFrena +
+          kp * falta +
+          ki * recogida.acumulado -
+          kq * (s.pitchRate ?? 0),
+      ),
+    );
+    if (!SENCILLO) mandos.throttle = 0;
+  };
+  /**
+   * La palanca media de los últimos segundos de la final, que es la que
+   * sostiene la senda: al empezar la recogida el morro puede ir en mitad de
+   * una corrección, y partir de la palanca de ese instante es partir de un
+   * tirón. Ver `recoger`.
+   */
+  let palancaMedia = null;
+  let relojDeLaMedia = null;
   o.pilotar((mandos) => {
     Object.assign(mandos, c);
     volarLaSenda(mandos);
+    recoger(mandos);
+    /*
+     * **Y con la senda o la recogida, las manos en los mandos.** Las ayudas
+     * del peldaño que imitan a un piloto —el compensador que sostiene la
+     * subida, el nivelador de alas— entran cuando la palanca pasa cerca del
+     * centro, que es como el juego sabe que se ha soltado. Este piloto la
+     * lleva ahí a menudo sin soltarla, y cada vez que cruzaba las ocho
+     * centésimas entraba la otra mano con su ley: en Tukã, con el compensador
+     * entero, el JAZ 60 oscilaba entre 0,2 y 2 g en la final y no llegaba a
+     * bajar; en Taguató, la recogida del JAZ 90 subía el morro seis grados con
+     * tres centésimas de palanca, se pasaba y tocaba a cuatro metros por
+     * segundo. Es lo mismo que ya le pasó al automático del juego, y se arregla
+     * igual: diciendo quién lleva los mandos. Ver `ControlInputs.automatico`.
+     */
+    mandos.automatico = senda !== null || recogida !== null;
+    if (!recogida && senda !== null) {
+      const ahora = o.reloj();
+      const dt =
+        relojDeLaMedia === null ? 0 : Math.max(0, Math.min(0.1, ahora - relojDeLaMedia));
+      relojDeLaMedia = ahora;
+      palancaMedia =
+        palancaMedia === null
+          ? mandos.elevator
+          : palancaMedia + (mandos.elevator - palancaMedia) * Math.min(1, dt / 2);
+    }
+    {
+      const e = o.estado();
+      if (!e.onGround) ultimaCaida = -e.verticalSpeed;
+    }
     limitarElAngulo(mandos);
     apuntarElAla(mandos);
   });
@@ -801,6 +960,46 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * que el circuito salga rectangular y no en forma de estrella.
    */
   const MARGEN_DE_VIRAJE = 300;
+  /**
+   * **Y lo que mide el arco a esta velocidad**, si es más: el radio de un
+   * viraje de veinticinco grados, `v²/(g·tan 25°)`.
+   *
+   * Los trescientos metros son el arco de la avioneta. A noventa y cinco
+   * metros por segundo el radio es de dos kilómetros: el JAZ 90 empezaba a
+   * virar de la base a la final trescientos metros antes del eje y se abría
+   * **mil ochocientos metros** al otro lado, en Los Rodeos, alineando a dos
+   * kilómetros y medio del umbral. Anticipar el viraje lo que mide el arco es
+   * lo que hace que se salga de él sobre el eje.
+   *
+   * Solo en los dos virajes que llevan a la final, con los treinta grados de
+   * ahí: aplicado a todos, el del JAZ 90 se comía la base entera y entraba
+   * en final desde el viento en cola.
+   */
+  const margenDeViraje = (s, tramo) =>
+    tramo >= 3
+      ? Math.max(
+          MARGEN_DE_VIRAJE,
+          (s.airspeed * s.airspeed) /
+            (9.81 * Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE)),
+        )
+      : MARGEN_DE_VIRAJE;
+  /**
+   * Lo que queda de camino por el circuito hasta el punto de toma, m: hasta
+   * el vértice al que se va, los tramos que faltan y la final entera.
+   */
+  const queQuedaHastaTocar = (s, v, desde) => {
+    let d = Math.hypot(v[desde].x - s.position.x, v[desde].z - s.position.z);
+    for (let k = desde; k < v.length - 1; k++)
+      d += Math.hypot(v[k + 1].x - v[k].x, v[k + 1].z - v[k].z);
+    const u = finalAhora(0);
+    const r = pistaAhora();
+    const entrada = v[v.length - 1];
+    if (u && entrada)
+      d +=
+        Math.hypot(entrada.x - u.x, entrada.z - u.z) +
+        Math.min(250, (r.length - (r.desplazado ?? 0)) * 0.2);
+    return d;
+  };
 
   /**
    * Los vértices del circuito que dibuja el juego, en coordenadas de mundo.
@@ -811,9 +1010,55 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let vertices;
   const circuito = () => {
-    if (vertices === undefined) vertices = o.circuito?.() ?? null;
+    if (vertices === undefined) vertices = alargarElVientoEnCola(o.circuito?.() ?? null);
     return vertices;
   };
+  /**
+   * **Y el viento en cola, alargado lo que haga falta para llegar a la
+   * puerta ya alineado**, como alarga cualquier piloto que va justo.
+   *
+   * La entrada en final del circuito que dibuja el juego está en la senda,
+   * a mil ochocientos metros del umbral en la avioneta —noventa y cuatro de
+   * altura— y a tres kilómetros y medio en el JAZ 90. En la avioneta eso es
+   * salir del viraje a trescientos pies, por debajo de la puerta de los
+   * quinientos —ver `PUERTA_BAJA`—, y en el JAZ 60 salir a los quinientos
+   * justos: ni uno ni otro pueden llegar a ella estabilizados, porque llegan
+   * virando. Un piloto de verdad no baja a la puerta virando: se abre en el
+   * viento en cola hasta tener una final en la que quepan unos segundos
+   * derecho antes de la puerta.
+   *
+   * Diez segundos a la de la base más el viraje, y como mucho un kilómetro
+   * más: el circuito del juego se sigue viendo y se sigue volando, solo más
+   * largo por detrás, que es lo que dice el controlador cuando pide «alargue
+   * el viento en cola».
+   */
+  function alargarElVientoEnCola(v) {
+    if (!v || v.length < 5) return v;
+    const [a, b] = v;
+    const largo = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    const fx = (b.x - a.x) / largo;
+    const fz = (b.z - a.z) / largo;
+    const u = finalAhora(0);
+    const r = pistaAhora();
+    if (!u) return v;
+    const entrada = Math.hypot(v[4].x - u.x, v[4].z - u.z);
+    const toma = Math.min(250, (r.length - (r.desplazado ?? 0)) * 0.2);
+    const hastaLaPuerta = PUERTA_BAJA / SENDA - toma;
+    // Y el viraje a final entero: se sale de él un radio más cerca.
+    const radio =
+      (DE_BASE * DE_BASE) / (9.81 * Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE));
+    const hace = hastaLaPuerta + 10 * DE_BASE + radio - entrada;
+    const mas = Math.max(0, Math.min(1000, hace));
+    if (mas <= 0) return v;
+    const atras = (p) => ({ ...p, x: p.x - fx * mas, z: p.z - fz * mas });
+    return [
+      v[0],
+      v[1],
+      v[2],
+      atras(v[3]),
+      { ...atras(v[4]), y: v[4].y + mas * SENDA },
+    ];
+  }
 
   /**
    * A qué velocidad se sube y a cuál se navega, m/s.
@@ -942,9 +1187,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * Los límites salen de la ficha de cada avión, así que el mismo piloto vale
    * para los seis. Sacar el tren por encima de su velocidad es romperlo, y
    * eso es justo lo que el juego castiga.
+   *
+   * **Y en los seis, no solo en los reactores.** Esto era solo para los
+   * rápidos, porque con flaps la avioneta y el turbohélice «se quedaban
+   * flotando en final hasta agotar el tiempo». No era por los flaps: era la
+   * ley de altura, que pedía llegar al suelo en una exponencial y no llegaba
+   * nunca —ver `RITMO_AL_TOCAR`—. Sin flaps, el JAZ 60 volaba la final de
+   * Los Rodeos a nueve décimas de su Vref con el ala limpia, o sea a un palmo
+   * de su pérdida limpia, y el avisador sonaba en la final. Ningún piloto de
+   * turbohélice aterriza sin flaps porque sí.
    */
-  const configurar = (s, c, tramo) => {
-    if (s.onGround || !NECESITA_TECNICA) return;
+  const configurar = (s, c, tramo, enFinal = false) => {
+    if (s.onGround || LIMPIO) return;
     const kt = s.airspeed * 1.94384;
     if (suyas.trenRetractil) {
       if (tramo >= 2 && kt < (suyas.vleKt ?? 999)) o.pedirTren?.(true);
@@ -958,7 +1212,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * su avión. Pidiéndolos por la palanca, este banco vuela el avión que
      * vuela quien juega. Ver `flight/flaps.ts`.
      */
-    o.pedirFlaps?.(tramo >= 3 && kt < (suyas.vfeKt ?? 999) ? 1 : 0);
+    /*
+     * **Y por muescas, como en cualquier avión**: la primera en el viento en
+     * cola y la base, y las de aterrizaje en final. Todo abajo desde el viento
+     * en cola era la resistencia del aterrizaje volando el circuito: el JAZ 60
+     * no llegaba a su velocidad de circuito ni con nueve décimas de gas, y en
+     * el aire que sube de Los Rodeos se quedaba subiendo con la palanca
+     * adelante.
+     */
+    const primera = suyas.vfePorMuesca?.[0] ?? suyas.vfeKt ?? 999;
+    o.pedirFlaps?.(
+      (enFinal || tramo >= 4) && kt < (suyas.vfeKt ?? 999)
+        ? 1
+        : tramo >= 3 && kt < primera
+          ? 1 / 3
+          : 0,
+    );
   };
 
   /**
@@ -982,15 +1251,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * circuito, a la de circuito de su ficha, que es la de maniobra con los
    * flaps del viento en cola. Ver `velocidadDeCircuito` en `aircraft.ts`.
    *
-   * Solo en los de la técnica de los rápidos, como el resto de ella: las
-   * avionetas vuelan su vuelta por debajo de cualquier radio que importe, y
-   * su piloto está afinado así. Ver `NECESITA_TECNICA`.
+   * **Y las hélices, desde el viento en cola.** Lo de los reactores iba
+   * solo para ellos, y las hélices volaban el circuito entero a su crucero:
+   * el JAZ 60 a noventa metros por segundo, ciento setenta y cinco nudos, con
+   * una Vref de cuarenta y ocho. Con ese radio la base se le quedaba corta y
+   * entraba en final cruzando el eje: en Los Rodeos, con Tukã, alineaba tarde
+   * y tocaba a catorce metros del eje. En el viento en cola se frena, como
+   * en cualquier avión, y la subida y el primer tramo siguen como estaban.
+   *
+   * **Y se frena a la de la base, no a la de circuito**: la Vref más quince
+   * nudos, o la de circuito si es menos. Es lo que cabe en los virajes que
+   * quedan —ver `TOPE_DE_INCLINACION_EN_LA_BASE`— y es la de base de
+   * cualquier manual: primera muesca de flaps, y en final las de aterrizar.
    */
   const DE_CIRCUITO = suyas.circuito ?? (suyas.aproximacion ?? 40) * 1.3;
-  const velocidadDelTramo = () =>
-    NECESITA_TECNICA
-      ? Math.min(VELOCIDAD_DE_CRUCERO, DE_CIRCUITO)
-      : VELOCIDAD_DE_CRUCERO;
+  const DE_BASE = Math.min(
+    DE_CIRCUITO,
+    (suyas.aproximacion ?? 33) + 15 * 0.514444,
+  );
+  const velocidadDelTramo = (tramo = 1) =>
+    tramo >= 3
+      ? Math.min(VELOCIDAD_DE_CRUCERO, DE_BASE)
+      : NECESITA_TECNICA
+        ? Math.min(VELOCIDAD_DE_CRUCERO, DE_CIRCUITO)
+        : VELOCIDAD_DE_CRUCERO;
 
   const AJUSTADO_HASTA = 90;
   /**
@@ -1052,22 +1336,97 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const ADITIVO_DE_FINAL = 5 * 0.514444;
   /**
-   * **A cuántos metros de ruedas se quita el gas en un reactor**: quince,
-   * unos cincuenta pies.
+   * **La recogida**, que este piloto no hacía: el último tramo de la toma, de
+   * la senda al suelo.
    *
-   * Es el *retard*: lo que deja al avión tocar a su Vref y no a la de la
-   * final, cinco nudos más. Sin él, el JAZ 90 tocaba a 76 m/s con los flaps
-   * de aterrizaje, el ala lo volvía a subir cinco metros y un tercio de la
-   * frenada iba por el aire. Medido con la traza del ala.
+   * Lo que había eran dos formas de no hacerla. En los reactores del modelo
+   * completo, gas fuera a quince metros —el *retard*— y ni un grado de
+   * morro: se tocaba bajando a unos **cuatro metros por segundo**, la senda
+   * entera hasta el asfalto. Se había probado a pedirle al automático que
+   * bajara cada vez más despacio y no llegaba: gira la trayectoria a una
+   * décima de g, con un morro que tarda cinco segundos. En los demás, la ley
+   * de altura pedía llegar a cero sobre la pista con un ritmo proporcional a
+   * lo que faltaba, y eso es una exponencial: **no llega nunca**. El avión se
+   * quedaba a un metro flotando y tocaba cuando se le acababa la velocidad.
+   * Medido: unos ochocientos metros pasado el umbral en Pilar y Ayolas, y dos
+   * mil en Guaraní con el JAZ 90.
    *
-   * Y no hay recogida más allá de eso: se probó a pedirle al automático que
-   * bajara cada vez más despacio en los últimos metros, y gira la trayectoria
-   * a su ritmo de comodidad —una décima de g, con un morro que tarda cinco
-   * segundos—, así que en los tres segundos que quedan no cambiaba nada. Toca
-   * bajando a menos de cuatro metros por segundo, que ya es la mitad de lo que
-   * bajaba con la ley de antes.
+   * Un piloto de verdad hace otra cosa, y es lo que hace esto: a una altura
+   * que depende de lo deprisa que baja —tres segundos de senda, que en la
+   * avioneta son seis metros y en el JAZ 90 trece—, quita el gas y
+   * va levantando el morro para que **el ritmo de bajada se reparta en la
+   * altura que queda**: la senda arriba y metro y pico por segundo al tocar.
+   * Pedido así —el ritmo en proporción a la altura, más un resto que no se
+   * acaba— el suelo llega en un tiempo contado, no en una exponencial.
    */
-  const SIN_GAS_A = 15;
+  const RITMO_AL_TOCAR = 1.2;
+  /** Cuántos segundos de senda antes del suelo empieza la recogida. */
+  const SEGUNDOS_DE_RECOGIDA = 3.2;
+  /**
+   * **El modelo sencillo va aparte**, porque ahí el gas es la velocidad y no
+   * hay ala que pierda: quitar el gas en la recogida es tirarse al suelo a la
+   * caída sin motor. En Guyrami la recogida es solo de morro, con el gas
+   * llevando la velocidad como toda la final.
+   */
+  const SENCILLO = peldano === "guyrami";
+  /**
+   * **Y la senda, con el morro del automático en todo el modelo completo**,
+   * no solo en los reactores.
+   *
+   * La ley de altura de este banco manda palanca en proporción al ritmo que
+   * falta, sin amortiguar, y con las hélices se aguantaba porque volaban la
+   * final limpias y a nueve décimas de la Vref, con el suelo de velocidad
+   * prohibiéndoles tirar casi siempre. Configuradas y a la Vref más cinco,
+   * esa ley hace lo mismo que hacía con el JAZ 90: medido con la traza del
+   * ala, el JAZ 60 en Los Rodeos iba de −8° a +10° de ángulo cada ocho
+   * segundos. Del viento en cola en adelante vuela la altura y la senda el
+   * automático del juego, con sus topes, como en los reactores; subiendo y
+   * en el primer tramo, lo de siempre. En Guyrami no: ver `REACTOR_COMPLETO`.
+   */
+  const CON_EL_AUTOMATICO = !SENCILLO;
+  /**
+   * **Y en Guyrami, las hélices aterrizan limpias**, a nueve décimas de su
+   * Vref, como volaban.
+   *
+   * El modelo sencillo no tiene ala: el gas es la velocidad, y los flaps y
+   * el tren la recortan —ver `FRENAN_LOS_FLAPS` en `arcade.ts`—. Con los de
+   * aterrizaje y el tren fuera, el JAZ 60 no pasaba de 35 m/s **con el gas a
+   * fondo**, trece por debajo de su Vref, y a fondo el modelo sube solo:
+   * voló la final de Pilar entera a nivel, cruzó la pista a doscientos treinta
+   * metros y se fue al aire. En ese modelo no hay pérdida que guardar, y lo
+   * que baja a la senda es el gas por debajo de la mitad: la velocidad de la
+   * final la pone el modelo, no la tarjeta. Los reactores sí se configuran,
+   * que con su margen de crucero les cabe.
+   */
+  const LIMPIO = SENCILLO && !NECESITA_TECNICA;
+  /**
+   * **Y en Guyrami, la senda con el morro y sin tope de ala.**
+   *
+   * En el modelo sencillo el gas es la velocidad: por encima de la mitad
+   * larga sube solo y por debajo baja, y el morro suma o resta a eso. A la Vref
+   * más cinco con flaps, el gas que la sostiene está justo en el punto en el
+   * que el avión ni sube ni baja, así que la senda la tiene que llevar entera
+   * el morro. La ley de altura de arriba no llega: su palanca va acotada a
+   * tres décimas por la pérdida —que aquí no hay— y es proporcional, así que
+   * se planta con un error. Medido en Guaraní con el JAZ 90: bajando a metro
+   * y medio por segundo donde la senda pide cuatro, cruzó el umbral a
+   * doscientos cuarenta metros y se fue al aire.
+   *
+   * Aquí se pide el ritmo de la senda más lo que falta de altura, y la
+   * palanca lo busca con un término proporcional y uno que acumula.
+   */
+  let sendaSencilla = 0;
+  const porLaSendaSencilla = (s, objetivo, dt) => {
+    const quiere = Math.max(
+      -CAIDA_MAXIMA,
+      Math.min(3, -porElSuelo(s) * SENDA + (objetivo - alto(s)) * 0.15),
+    );
+    const falta = quiere - s.verticalSpeed;
+    // Con sitio para llegar a toda la palanca: con ocho, el acumulado se
+    // plantaba en −0,36 y el JAZ 90 bajaba a tres donde la senda pide cuatro.
+    sendaSencilla = Math.max(-25, Math.min(25, sendaSencilla + falta * dt));
+    return Math.max(-0.8, Math.min(0.8, falta * 0.06 + sendaSencilla * 0.03));
+  };
 
   const palancaPorVelocidad = (s, objetivo, extra = 0) =>
     ganancia(s) *
@@ -1331,6 +1690,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * falta, que son dos cosas distintas y solo la primera se puede sostener.
    */
   const TOPE_DE_INCLINACION = (25 * Math.PI) / 180;
+  /**
+   * **Y treinta en los virajes de la base y la final**, que es el tope de un
+   * circuito de línea.
+   *
+   * El circuito del juego se estira con la velocidad de aproximación —el
+   * doble en el JAZ 90—, pero el radio de un viraje crece con su cuadrado:
+   * a ochenta y siete metros por segundo y veinticinco grados son mil
+   * seiscientos ochenta metros, y los dos virajes del viento en cola a la
+   * final piden el doble que eso de separación, donde el circuito del JAZ 90
+   * tiene dos kilómetros. Se salía de la final un kilómetro y ochocientos
+   * metros por el otro lado. Con la base a la Vref más quince nudos —ver
+   * `velocidadDelTramo`— y treinta grados, los dos virajes caben.
+   */
+  const TOPE_DE_INCLINACION_EN_LA_BASE = (30 * Math.PI) / 180;
+  let topeDeInclinacion = TOPE_DE_INCLINACION;
   const alRumbo = (s, rumbo) => {
     const e = error(rumbo, s.heading);
     /*
@@ -1340,8 +1714,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     if (s.onGround) return Math.max(-1, Math.min(1, e * 1.2));
     const quiere = Math.max(
-      -TOPE_DE_INCLINACION,
-      Math.min(TOPE_DE_INCLINACION, e * 1.5),
+      -topeDeInclinacion,
+      Math.min(topeDeInclinacion, e * 1.5),
     );
     const alabeo = o.actitud?.().alabeo ?? 0;
     return Math.max(
@@ -1607,12 +1981,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * velocidad. Los primeros ciento veinte metros siguen por actitud, como en
    * `subirDeVerdad`: eso es asentar la subida, no circuito.
    */
-  const sostenerLaAltura = (s, subiendo, altoQueToca) => {
-    if (!REACTOR_COMPLETO) return;
+  const sostenerLaAltura = (s, subiendo, altoQueToca, ritmo = 0, aMano = false) => {
+    if (!REACTOR_COMPLETO && !aMano) return;
     if (subiendo && s.heightAboveGround < ASENTAR_LA_SUBIDA) return;
     senda = {
       altitud: s.position.y + (altoQueToca - alto(s)),
-      ritmo: 0,
+      // Bajando por la senda que queda, al ritmo de la senda. Ver `porLaSenda`.
+      ritmo,
       desde: o.reloj(),
     };
   };
@@ -1953,6 +2328,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let tiempoDeRodajeVuelta = 0;
   let despego = 0;
   let toco = 0;
+  /**
+   * **La puerta de la final estabilizada**, en ruedas sobre la pista.
+   *
+   * Es el criterio de aproximación estabilizada de la Flight Safety
+   * Foundation, el que llevan las compañías en sus manuales: a **mil pies** en
+   * instrumental y a **quinientos** en visual, el avión va configurado, a su
+   * velocidad —de la Vref a la Vref más veinte nudos—, en la senda y en el
+   * eje, bajando a no más de mil pies por minuto. Si no, al aire. Aquí se usa
+   * la de mil cuando la final pasa por ellos —la de un destino, que empieza a
+   * diez kilómetros— y la de quinientos cuando no: un circuito de tráfico se
+   * vuela entero por debajo de los mil pies, en visual.
+   */
+  const PUERTA_ALTA = 1000 * 0.3048;
+  const PUERTA_BAJA = 500 * 0.3048;
+  /** Lo más alto que se ha estado en esta final, m de ruedas. */
+  let masAltoEnFinal = 0;
+  /** Lo que se bajaba en los últimos segundos de final. Ver `enLaPuerta`. */
+  const bajadaReciente = [];
+  /** Cómo se pasó por la puerta, o `null` si no se ha pasado. */
+  let enLaPuerta = null;
+  /** Dónde empezó la recogida y a qué se bajaba entonces. Ver `recoger`. */
+  let empezoLaRecogida = null;
+  /** A qué ritmo se tocó, m/s: lo que apunta el propio juego al tocar. */
+  let caidaAlTocar = null;
+  /** Lo más deprisa que se rodó de vuelta fuera de la pista, m/s. */
+  let rodajeMasRapido = 0;
+  /** Cuánta pista hay para aterrizar en la que se tocó, m. */
+  let pistaParaTocar = 0;
   /** Dónde y cómo se tocó: del eje, pasado el umbral y a qué velocidad. */
   let tocoDesviado = 0;
   let tocoPasadoElUmbral = 0;
@@ -3117,6 +3520,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         etapa = "subir";
       }
     }
+    /*
+     * **Y una final que se deja es una final que no cuenta.** Al irse al aire
+     * se olvidan la recogida y la puerta: lo que se mide es la final que
+     * acabó tocando.
+     */
+    if (etapa !== "final" && etapa !== "frenar" && recogida) recogida = null;
+    topeDeInclinacion =
+      etapa === "final" || (etapa === "subir" && aDonde >= 3)
+        ? TOPE_DE_INCLINACION_EN_LA_BASE
+        : TOPE_DE_INCLINACION;
+    if (etapa === "subir" && (enLaPuerta || masAltoEnFinal > 0)) {
+      enLaPuerta = null;
+      masAltoEnFinal = 0;
+      empezoLaRecogida = null;
+      sendaSencilla = 0;
+      bajadaReciente.length = 0;
+    }
     if (etapa === "arrancar") {
       c.engineOn = true;
       c.brakes = 0;
@@ -3346,12 +3766,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * umbral del otro campo, en su eje y en su senda de tres grados. A
        * partir de aquí la pista, el umbral y la cota son los de allí.
        */
-      const f = o.puntoDeFinalDe(4000, destino);
+      /*
+       * **Y a diez kilómetros, no a cuatro**: a cuatro se llegaba a
+       * doscientos veinte metros, por debajo de los mil pies en los que una
+       * final tiene que estar ya estabilizada. Desde diez la final pasa por
+       * los mil pies —ver `PUERTA_ALTA`— un minuto después de aparecer en
+       * ella, que es lo que tarda el automático en asentarse en la senda
+       * viniendo de subir: desde siete llegaba a la puerta todavía cogiéndola,
+       * bajando a diez metros por segundo.
+       */
+      const DESDE = 10000;
+      const f = o.puntoDeFinalDe(DESDE, destino);
       const u = o.puntoDeFinalDe(0, destino);
       if (!f || !u) return { etapa: "sin destino", destino };
       const alli = u.suelo;
       const aproximacion = o.avion().aproximacion;
-      const enLaSenda = alli + (4000 + 250) * SENDA;
+      const enLaSenda = alli + (DESDE + 250) * SENDA + (suyas.tren ?? 0);
       o.colocar(f.x, enLaSenda, f.z, aproximacion + 3, f.h);
       /*
        * **Y un reactor llega a los cuatro kilómetros estabilizado, como uno de
@@ -3373,7 +3803,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * Los flaps y el tren se ponen donde tienen que estar —su palanca y su
        * posición—; desde aquí se mueven solos como siempre.
        */
-      if (REACTOR_COMPLETO) {
+      /*
+       * **Y los demás también**, que ahora vuelan la final como los reactores:
+       * configurados y a la Vref más cinco nudos. Ver `configurar`.
+       */
+      {
         o.colocar(
           f.x,
           enLaSenda,
@@ -3382,10 +3816,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           f.h,
         );
         o.pedirTren?.(true);
-        o.pedirFlaps?.(1);
+        const conFlaps = suyas.llevaFlaps && !LIMPIO;
+        if (conFlaps) o.pedirFlaps?.(1);
         const mandos = o.controles();
         mandos.tren = 1;
-        mandos.flaps = 1;
+        if (conFlaps) mandos.flaps = 1;
       }
       await new Promise((r) => setTimeout(r, 500));
       enElDestino = o.campoDeAhora();
@@ -3432,7 +3867,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * con el primero arriba daba un fugoide que crecía hasta el suelo:
        * medido en Guaraní, 185 → 219 → 147 → 236 → 99 → 34 metros.
        */
-      const altoQueToca = meta ? meta.y - cotaDePista : CRUCERO;
+      /*
+       * **Y del viento en cola en adelante, la altura la da la senda que queda
+       * por delante**, no la del vértice.
+       *
+       * Se iba a la altura de cada vértice, y la de la entrada en final está
+       * en la senda pero la de la base no: la base se volaba a la altura del
+       * circuito y se bajaba lo que se pudiera en el último tramo. Con la
+       * avioneta sobra tiempo; con el JAZ 90 en Los Rodeos, no: entraba en
+       * final doscientos metros por encima de la senda, se tiraba a ocho
+       * metros por segundo para cogerla y a doscientos cincuenta pies le
+       * cantaba el «sink rate». Un piloto de reactor planifica la bajada: a
+       * tres grados desde el punto de toma por el camino que le queda —la
+       * regla de las tres millas por cada mil pies—, y empieza a bajar en el
+       * viento en cola cuando ese camino se acaba.
+       */
+      const porLaSenda =
+        meta && v && aDonde >= 3 ? queQuedaHastaTocar(s, v, aDonde) * SENDA : Infinity;
+      const altoQueToca = meta
+        ? Math.min(meta.y - cotaDePista, porLaSenda + (suyas.tren ?? 0))
+        : CRUCERO;
       ultimoAltoQueToca = altoQueToca;
       const subiendo = alto(s) < altoQueToca - 15;
       const quiereIr = velocidadDelTramo(aDonde);
@@ -3478,7 +3932,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * a esa velocidad. Ver el mismo comentario en la etapa de despegar.
        */
       c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
-      sostenerLaAltura(s, subiendo, altoQueToca);
+      sostenerLaAltura(
+        s,
+        subiendo,
+        altoQueToca,
+        porLaSenda + (suyas.tren ?? 0) < (meta?.y ?? Infinity) - cotaDePista
+          ? -porElSuelo(s) * SENDA
+          : 0,
+        // Y las hélices del modelo completo, del viento en cola en adelante:
+        // ver `CON_EL_AUTOMATICO`.
+        CON_EL_AUTOMATICO && aDonde >= 3 && !subiendo,
+      );
 
       /*
        * **Y no se gira hasta estar alto.** El primer tramo es recto por el eje
@@ -3510,7 +3974,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const cuanto =
           ((s.position.x - desde.x) * dx + (s.position.z - desde.z) * dz) /
           largo;
-        if (cuanto > largo - MARGEN_DE_VIRAJE) {
+        if (cuanto > largo - margenDeViraje(s, aDonde)) {
           if (aDonde >= 4) etapa = "final";
           else aDonde++;
         }
@@ -3568,98 +4032,57 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * ochenta.
        */
       const puntoDeToma = Math.min(250, (r.length - (r.desplazado ?? 0)) * 0.2);
-      const objetivo = Math.max(0, (falta + puntoDeToma) * SENDA);
-      // Sobre la pista se corta el gas: eso es aterrizar. Y antes, la
-      // velocidad de aproximación a mano, que el gas no significa lo mismo en
-      // los dos modelos de vuelo.
       /*
-       * **La velocidad de aproximación es la de este avión, no la de treinta.**
-       *
-       * Estaba clavada en treinta metros por segundo, y treinta es la
-       * aproximación de la avioneta —ni siquiera: la suya son treinta y tres—.
-       * El de fuselaje ancho entra a setenta y cinco. Un piloto de banco que
-       * le pide treinta a un avión que vuela a setenta y cinco no está
-       * aterrizando: está cayéndose despacio. Es la misma constante parroquial
-       * de siempre, ahora en el banco.
+       * **Y lo que va por la senda son las ruedas, no el centro del avión.**
+       * La altura que se pedía era la del origen del modelo, que en el JAZ 120
+       * va seis metros por encima de sus ruedas: las ruedas llegaban a la
+       * senda por debajo, y más cuanto más grande el avión.
        */
+      const tren = suyas.tren ?? 0;
+      const ruedas = alto(s) - tren;
+      const objetivo = Math.max(0, (falta + puntoDeToma) * SENDA) + tren;
       /*
-       * **Y en proporción a la suya, no la suya a secas.** Se probó a volar el
-       * final justo a la velocidad de aproximación de la tarjeta —treinta y
-       * tres en la avioneta— y el barrido se cayó por el otro lado: Yvytu
-       * Rape, Encarnación y Cuatro Vientos pasaron a «pasada», con el avión
-       * flotando a un metro del asfalto sin llegar a tocar, y el rodaje de
-       * vuelta de Silvio Pettirossi se fue a 318 segundos porque se tocaba
-       * mucho más allá. Tres metros por segundo de más al cruzar el umbral son
-       * un avión que no se posa.
+       * **La velocidad de la final: la Vref más cinco nudos, en indicada y en
+       * los seis aviones.**
        *
-       * Las dos cifras que había —treinta al final y veinticuatro en la
-       * recogida— son 0,91 y 0,73 de la aproximación de la avioneta. Puestas
-       * como proporción, la avioneta vuela exactamente como volaba y el de
-       * fuselaje ancho cruza a sesenta y ocho en vez de a treinta.
-       */
-      /*
-       * **Y un reactor, a su Vref de verdad: en indicada y con su margen.**
+       * Estaba en dos leyes. Las hélices volaban a nueve décimas de su Vref y
+       * sin flaps —afinado así porque a la Vref de la tarjeta «flotaban» y no
+       * tocaban nunca—, y los reactores a la Vref más cinco. Lo de flotar no era
+       * la velocidad: era que no había recogida, y la ley de altura se acercaba
+       * al suelo sin llegar —ver `RITMO_AL_TOCAR`—. Nueve décimas de la Vref
+       * sin flaps es volar la final al lado de la pérdida limpia, y el JAZ 60
+       * la volaba en Los Rodeos con el avisador sonando.
        *
-       * El 0,91 de arriba está afinado con avionetas que vuelan la final sin
-       * flaps, y a ellas les deja un diecinueve por ciento sobre su pérdida
-       * limpia. A un reactor con los flaps de aterrizaje le dejaba un trece
-       * —y en Los Rodeos, en verdadera, un once—: medido con la traza del
-       * ala, el JAZ 90 volaba la final entre 1,11 y 1,20 veces su pérdida con
-       * todo fuera, y cada tirón de la ley de altura de 1,2 g lo metía en el
-       * avisador, que va al 1,07. Catorce «stall, stall» en una final que un
-       * avión de verdad vuela a la Vref más cinco nudos, a 1,3 veces su
-       * pérdida y sin que el avisador diga nada. El avisador tenía razón; el
-       * que volaba mal era este piloto.
-       *
-       * La recogida se queda como estaba: por debajo de treinta metros el
-       * avisador ya no canta, y ahí se deja de volar para posarse.
+       * Un piloto de verdad vuela la final configurado y a la Vref más un
+       * margen —cinco nudos, más con racha— y cruza el umbral a la Vref: el
+       * margen se lo come la recogida con el gas fuera. Y por debajo de la Vref
+       * no se tira de la palanca para sostener la senda: eso es lo que se
+       * entrena para no hacer. Ver `aLaAltura`.
        */
       const deAproximacion = suyas.aproximacion ?? 33;
-      const quiere = REACTOR_COMPLETO
-        ? enVerdadera(
-            s,
-            falta < 60 ? deAproximacion * 0.73 : deAproximacion + ADITIVO_DE_FINAL,
-          )
-        : falta < 60
-          ? deAproximacion * 0.73
-          : deAproximacion * 0.91;
+      const vref = enVerdadera(s, deAproximacion);
+      const quiere = LIMPIO
+        ? deAproximacion * 0.91
+        : enVerdadera(s, deAproximacion + ADITIVO_DE_FINAL);
       /*
-       * **Y el gas también vuela la senda, no solo la velocidad.**
+       * **Y el gas lleva la velocidad, y también la senda por debajo.**
        *
        * Con el gas atado únicamente a la velocidad, el final entero se volaba
-       * al ralentí: el avión iba justo a la velocidad pedida, así que el gas
-       * bajaba a cero, y al ralentí ningún avión baja tres grados — baja
-       * cuatro y pico. Como además el mando de altura tiene prohibido tirar
-       * por debajo de la velocidad pedida, el piloto no tenía con qué
-       * sostenerse y llegaba siempre por debajo de la senda. Medido en La
-       * Palma con el Tukã: en los últimos diez segundos pasó de tres metros
-       * por debajo a tocar **ciento cincuenta y tres metros antes del
-       * umbral**, en el mar.
+       * al ralentí: al ralentí ningún avión baja tres grados — baja cuatro y
+       * pico, y se llegaba por debajo de la senda. Medido en La Palma con el
+       * Tukã: tocar **ciento cincuenta y tres metros antes del umbral**, en el
+       * mar. Así que por debajo de la senda se mete gas. Con banda muerta, que
+       * un gas de dos estados se le nota al avión: en La Palma, con el de dos
+       * estados se tocaba a 22,6 m del eje y con tres metros por segundo de
+       * banda, a 0,3.
        *
-       * Lo que se hace de verdad es lo de siempre: **la velocidad con la
-       * palanca y la senda con el gas**. Aquí se deja la palanca como estaba
-       * —que mueve todos los escenarios— y se le suma al gas lo que pide la
-       * senda cuando se va por debajo. Manda el que más pide, así que por
-       * encima de la senda no cambia nada, y pasado el umbral se apaga: sobre
-       * el asfalto el gas se corta, que es lo que es aterrizar.
-       */
-      /*
-       * **Con banda muerta, y no es adorno.** Este lazo era de dos estados
-       * —o sube o baja—, así que en final el gas oscilaba entre cero y medio
-       * a cada fotograma, y esa oscilación se le nota al avión: medido en La
-       * Palma, con el gas de dos estados se tocaba a **22,6 m del eje** y con
-       * tres metros por segundo de banda muerta, a 0,3. Un avión al que le
-       * mueven el gas veinte veces por minuto no va recto.
+       * **Y con velocidad de sobra no se mete gas, vaya donde vaya la senda.**
+       * Era solo de los reactores —al JAZ 90 en Asunción la senda le metía gas
+       * con 116 m/s y lo llevaba a 160— y es la regla de todos: si se va rápido
+       * y bajo, morro arriba y el gas quieto.
        */
       const porVelocidad =
         s.airspeed < quiere ? 0.05 : s.airspeed > quiere + 3 ? -0.05 : 0;
-      /*
-       * Y la senda pide lo suyo: **por debajo, gas, aunque sobre velocidad**,
-       * que es lo único que sostiene a un avión en el aire. Manda el que más
-       * pide, así que por encima de la senda no cambia nada. Pasado el umbral
-       * el término se apaga: sobre el asfalto el gas se corta, que es lo que
-       * es aterrizar.
-       */
       const bajoLaSenda = objetivo - alto(s);
       const porSenda =
         falta <= 0
@@ -3670,61 +4093,158 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               ? -0.04
               : -0.05;
       /*
-       * **Con velocidad de sobra no se mete gas, vaya donde vaya la senda.**
-       *
-       * Esto sumaba `Math.max(porVelocidad, porSenda)`: cuando el avión iba
-       * rápido pero un poco bajo, ganaba el de la senda y **se le metía gas**
-       * — cada fotograma, a un avión que ya iba sobrado. A la avioneta no le
-       * pasaba nada, porque tiene poco empuje y mucha resistencia. Al reactor
-       * lo disparaba: medido en Asunción, entraba en final a 116 m/s y subía a
-       * **160**, y a noventa metros del suelo aún iba a 138 — el doble de su
-       * velocidad de aproximación, y por encima de la de sacar tren y flaps.
-       *
-       * Es la regla que no se rompe en ningún avión: el gas lleva la
-       * velocidad y la palanca la senda. Si se va rápido y bajo, se levanta el
-       * morro y el gas se queda quieto; si se va rápido y alto, se reduce. Lo
-       * que no se hace nunca es arreglar una senda baja con gas cuando sobra
-       * velocidad.
+       * **Y en la velocidad buena, el gas lleva la senda en los dos
+       * sentidos.** Con `max(velocidad, senda)`, ir en la banda de velocidad
+       * daba un cero que se comía el «quitá gas» de ir alto, y cada vez que la
+       * velocidad rozaba por debajo se metía una décima de más: el JAZ 60 hizo
+       * la final de Los Rodeos entera con el gas a fondo, alto y con la
+       * palanca adelante. La velocidad sigue mandando cuando se sale de la
+       * banda: lento, gas; rápido, menos.
        */
       const cambio =
-        NECESITA_TECNICA && porVelocidad < 0
+        porVelocidad < 0
           ? porVelocidad
-          : Math.max(porVelocidad, porSenda);
+          : porVelocidad > 0
+            ? Math.max(porVelocidad, porSenda)
+            : porSenda;
       c.throttle = Math.max(0, Math.min(1, c.throttle + cambio));
       /*
-       * Con la misma ley de altura que arriba: bajada limitada y amortiguada.
-       * Ver `aLaAltura`, que cuenta el porqué con lo medido.
-       *
-       * **Y el suelo para tirar es la velocidad de aproximación, no la de
-       * subida.** Con la de subida —treinta y cuatro— el piloto no podía tirar
-       * en ningún momento del final, porque en final se vuela a treinta a
-       * propósito: la senda solo sabía bajar. Medido en Yvytu Rape con Tukã,
-       * los últimos veinte segundos del vuelo, la senda pedía veintiuno y el
-       * avión iba por catorce y bajando a casi tres metros por segundo, o sea
-       * cinco grados donde tocaban tres. Se posaba en la hierba **ochenta y
-       * siete metros antes del umbral**, en el eje y con el juez cantando
-       * «fuera».
-       *
-       * En Tenerife Norte no se veía: tres mil cuatrocientos metros de pista
-       * perdonan llegar bajo, y el avión acababa dentro igual.
+       * **La recogida empieza aquí.** A la altura que dan unos segundos de
+       * senda —ver `SEGUNDOS_DE_RECOGIDA`— y cerca del umbral: bajo y lejos no
+       * es recoger, es ir corto, y eso lo arregla el gas. Desde aquí manda el
+       * gancho de cada fotograma: ver `recoger`.
        */
-      c.elevator = aLaAltura(s, objetivo, quiere);
       /*
-       * Y un reactor, con el morro del automático por la misma senda: la
-       * altura que pide, y el ritmo al que baja por el suelo. Ver
-       * `volarLaSenda`. Y a cincuenta pies, gas fuera: ver `SIN_GAS_A`.
+       * Con lo que baja de verdad, si baja más que la senda: el que llega
+       * bajando de más necesita más altura para recoger, no la misma.
        */
-      const ruedas = alto(s) - (suyas.tren ?? 0);
-      if (REACTOR_COMPLETO && ruedas <= SIN_GAS_A) c.throttle = 0;
-      if (REACTOR_COMPLETO)
-        senda = {
-          altitud: s.position.y + (objetivo - alto(s)),
-          ritmo: objetivo > 0 ? -porElSuelo(s) * SENDA : 0,
-          desde: o.reloj(),
+      const caidaDeSenda = Math.max(porElSuelo(s) * SENDA, -s.verticalSpeed);
+      const alturaDeRecogida = Math.max(
+        4,
+        Math.min(15, caidaDeSenda * SEGUNDOS_DE_RECOGIDA),
+      );
+      if (
+        !recogida &&
+        !s.onGround &&
+        ruedas <= alturaDeRecogida &&
+        falta < alturaDeRecogida / SENDA + 150
+      ) {
+        const p = o.avion?.()?.cabeceo;
+        recogida = {
+          altura: alturaDeRecogida,
+          /*
+           * Desde lo que baja, o desde la senda si baja más: quien llega
+           * bajando de más —una racha, la senda cogida tarde— tiene que
+           * empezar a recoger ya, no repartir el exceso hasta el suelo. En Los
+           * Rodeos, con veinte nudos, el JAZ 90 empezaba la recogida bajando a
+           * seis y la repartía: tocaba a cuatro.
+           */
+          caida: Math.max(
+            RITMO_AL_TOCAR,
+            Math.min(6, -s.verticalSpeed, porElSuelo(s) * SENDA * 1.1),
+          ),
+          palanca:
+            CON_EL_AUTOMATICO && palancaMedia !== null
+              ? palancaMedia
+              : (o.controles().elevator ?? c.elevator),
+          porAngulo:
+            !SENCILLO && p && p.cmElevator
+              ? Math.abs(p.cmAlpha / p.cmElevator)
+              : 0,
+          acumulado: 0,
+          ultimo: o.reloj(),
+          velocidad: s.airspeed,
+          gas: c.throttle,
         };
+        empezoLaRecogida = {
+          ruedas: +ruedas.toFixed(1),
+          umbral: Math.round(-falta),
+          caida: +(-s.verticalSpeed).toFixed(1),
+          nudos: Math.round(o.velocidadDeCabina?.() ?? 0),
+        };
+      }
+      if (recogida) {
+        /*
+         * Gas fuera, que es lo que deja tocar a la Vref. En Guyrami, quieto
+         * donde estaba: ahí el gas es la velocidad y además la mitad de lo que
+         * baja, y si la ley de la final lo sigue moviendo sobre la pista —la
+         * senda ya no pide nada y lo va quitando— la palanca pierde mano a la
+         * vez que el avión se hunde. La palanca la lleva `recoger`.
+         */
+        c.throttle = SENCILLO ? recogida.gas : 0;
+      } else {
+        /*
+         * Con la misma ley de altura que arriba: bajada limitada y
+         * amortiguada. Ver `aLaAltura`. Y el suelo para tirar es la Vref: por
+         * debajo, la senda se recupera con gas y no con la palanca.
+         */
+        c.elevator = SENCILLO
+          ? porLaSendaSencilla(s, objetivo, paso)
+          : aLaAltura(s, objetivo, vref);
+        /*
+         * Y un reactor, con el morro del automático por la misma senda: la
+         * altura que pide, y el ritmo al que baja por el suelo. Ver
+         * `volarLaSenda`.
+         */
+        if (CON_EL_AUTOMATICO)
+          senda = {
+            altitud: s.position.y + (objetivo - alto(s)),
+            ritmo: objetivo > tren ? -porElSuelo(s) * SENDA : 0,
+            desde: o.reloj(),
+          };
+      }
+      /*
+       * **Y la puerta de la final estabilizada**: a mil pies si la final pasa
+       * por ellos y, si no, a quinientos. Ver `PUERTA_ALTA`.
+       */
+      masAltoEnFinal = Math.max(masAltoEnFinal, ruedas);
+      /*
+       * Lo que baja, de media en los últimos cinco segundos: el criterio es
+       * no bajar a más de mil pies por minuto de forma sostenida, y una racha
+       * de Los Rodeos pasa de cuatro a siete en un segundo y vuelve.
+       */
+      bajadaReciente.push({ t, baja: -s.verticalSpeed });
+      while (bajadaReciente.length && t - bajadaReciente[0].t > 5)
+        bajadaReciente.shift();
+      /*
+       * La de mil pies, solo en la final larga de un destino: en el circuito
+       * se entra en final más alto que eso en algunos campos, pero virando
+       * desde la base, y eso es visual — quinientos. Ver `PUERTA_ALTA`.
+       */
+      const puerta =
+        enElDestino && masAltoEnFinal >= PUERTA_ALTA ? PUERTA_ALTA : PUERTA_BAJA;
+      if (!enLaPuerta && ruedas <= puerta && falta > 0) {
+        const trayectoria = Math.atan2(s.velocity.x, -s.velocity.z);
+        const mandosAhora = o.controles();
+        enLaPuerta = {
+          pies: Math.round(puerta / 0.3048),
+          empezoPorDebajo: masAltoEnFinal < puerta + 1,
+          nudos: Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384),
+          vref: Math.round(deAproximacion * 1.94384),
+          limpio: LIMPIO,
+          flaps: +(mandosAhora.flaps ?? 0).toFixed(2),
+          tren: +(mandosAhora.tren ?? 1).toFixed(2),
+          senda: +(alto(s) - objetivo).toFixed(1),
+          tolSenda: +Math.max(
+            5,
+            (falta + puntoDeToma) * Math.tan((0.35 * Math.PI) / 180),
+          ).toFixed(1),
+          eje: +desvio(s).toFixed(1),
+          tolEje: +Math.max(
+            r.width ?? 30,
+            (falta + r.length - (r.desplazado ?? 0) + 300) *
+              Math.tan((0.5 * Math.PI) / 180),
+          ).toFixed(1),
+          rumbo: +((Math.abs(error(trayectoria, hp)) * 180) / Math.PI).toFixed(1),
+          baja: +(
+            bajadaReciente.reduce((a, b) => a + b.baja, 0) /
+            Math.max(1, bajadaReciente.length)
+          ).toFixed(1),
+        };
+      }
       // Y en final, ya configurado del todo: tren fuera y flaps. Ver
       // `configurar`, que en el tramo 4 pide las dos cosas.
-      configurar(s, c, 4);
+      configurar(s, c, 4, true);
       /*
        * Y el eje, apuntando a un punto trescientos metros por delante de donde
        * se está: eso corrige el desvío en vez de solo mantener el rumbo.
@@ -3788,10 +4308,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       /*
        * Y un avión rápido mira más lejos: la mirada está pensada para los 33
        * m/s de la avioneta, y a 65 son la mitad de segundos para corregir.
+       * **En todos**, no solo en los reactores: el JAZ 60 vuela la final a
+       * cincuenta, y con la mirada de la avioneta llegaba a la pista todavía
+       * serpenteando.
        */
-      const mirada =
+      /*
+       * **Y nunca más cerca que dos radios de viraje mientras quede
+       * final**: persiguiendo un punto más cerca de lo que el avión puede
+       * girar, se pasa del eje y vuelve —el JAZ 60 salía de la base a 585 m
+       * del eje y se iba 300 m al otro lado; el JAZ 90, 1.800—. Con la mirada
+       * más larga que el arco, la captura es una curva que se acuesta en el
+       * eje. Cerca del umbral manda la de siempre.
+       */
+      const radio =
+        (s.airspeed * s.airspeed) /
+        (9.81 * Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE));
+      const mirada = Math.max(
         Math.max(120, Math.min(300, falta * 0.4)) *
-        (NECESITA_TECNICA ? Math.max(1, s.airspeed / 33) : 1);
+          Math.max(1, s.airspeed / 33),
+        Math.min(2 * radio, falta * 0.6),
+      );
       const tx = r.x + fx * (along + mirada);
       const tz = r.z + fz * (along + mirada);
       c.aileron = alPuntoPorElSuelo(s, tx, tz);
@@ -3807,6 +4343,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         tocoDesviado = desvio(s);
         // Con signo: negativo es antes del umbral de aterrizaje.
         tocoPasadoElUmbral = -falta;
+        pistaParaTocar = r.length - (r.desplazado ?? 0);
+        /*
+         * Y a qué ritmo: lo apunta el juego en el instante de tocar, que es
+         * cuando se sabe —ver `caidaAlTocar` en `aterrizaje.ts`—. Esta muestra
+         * llega hasta una décima tarde, con el avión ya rodando.
+         */
+        const delJuego = o.caida?.();
+        caidaAlTocar =
+          typeof delJuego === "number" && delJuego > 0 ? delJuego : ultimaCaida;
+        recogida = null;
         desplazadoAlTocar = r.desplazado ?? 0;
         tocoA = s.airspeed;
         tocoSuelo = porElSuelo(s);
@@ -3865,9 +4411,29 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         );
       }
       antes = { x: s.position.x, z: s.position.z };
-      const quiere = o.rodaje() ?? 9;
-      c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
-      c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
+      /*
+       * **Y a la de rodaje, no a empujones.** Esto era gas al sesenta por
+       * ciento por debajo de la velocidad pedida y freno a fondo dos metros
+       * por segundo por encima: con una avioneta, un vaivén; con un reactor,
+       * que a seis décimas de gas empuja lo que un despegue corto, un tirón
+       * detrás de otro hasta pasarse. En el circuito de Los Rodeos con el JAZ
+       * 90, «más despacio» sonaba hasta cinco veces en la vuelta.
+       *
+       * Se rueda como se rueda: el gas justo —el que sostiene nueve metros por
+       * segundo en ese avión es de cinco a diez centésimas, ver
+       * `gasParaRodar`—, buscado poco a poco, y el freno cuando sobra. Y nunca
+       * por encima de la de rodaje, pida lo que pida la raya.
+       */
+      // Y al final de la ruta pide cero, que es pararse encima de la raya.
+      const quiere = Math.min(9, o.rodaje() ?? 9);
+      const vaA = porElSuelo(s);
+      c.throttle = Math.max(
+        0,
+        Math.min(0.4, c.throttle + Math.max(-0.03, Math.min(0.03, (quiere - vaA) * 0.01))),
+      );
+      if (vaA > quiere + 0.5) c.throttle = Math.min(c.throttle, 0.02);
+      c.brakes = vaA > quiere + 1.5 ? Math.min(1, (vaA - quiere - 1.5) * 0.5) : 0;
+      if (!s.onRunway) rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
       c.aileron = timon(s, ruta);
       /*
        * Y el largo de **la ruta que el juego trazó** para volver, que es el
@@ -4135,6 +4701,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     toco: +toco.toFixed(0),
     tocoDesviado: +tocoDesviado.toFixed(1),
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
+    pistaParaTocar: Math.round(pistaParaTocar),
+    caidaAlTocar: caidaAlTocar === null ? null : +caidaAlTocar.toFixed(2),
+    enLaPuerta,
+    empezoLaRecogida,
+    rodajeMasRapido: +rodajeMasRapido.toFixed(1),
     desplazadoAlTocar: Math.round(desplazadoAlTocar),
     tocoA: +tocoA.toFixed(0),
     rodaduraMedida: Math.round(rodaduraMedida),
@@ -5174,6 +5745,94 @@ comprobarSiVolo(
           : " · en la punta")
     : "no llegó a tocar",
   "en Fuerteventura se tocaba a ciento cincuenta metros de la punta, mil antes del umbral de la 01",
+);
+
+/*
+ * **Y la final, estabilizada en su puerta.** Ver `PUERTA_ALTA`: configurado,
+ * de la Vref a la Vref más veinte nudos, en la senda —un punto de la senda
+ * de un ILS, treinta y cinco centésimas de grado— y en el eje, derecho y
+ * bajando a menos de mil pies por minuto. Es lo que dice si el piloto llega a
+ * la pista como llega uno de verdad o como llegaba este: sin flaps, a nueve
+ * décimas de la Vref y alineando en el último kilómetro.
+ */
+{
+  const p = vuelo.enLaPuerta;
+  const a = vuelo.avion ?? {};
+  const fallos = [];
+  if (p) {
+    // En Guyrami las hélices van limpias y a nueve décimas: ver `LIMPIO`.
+    if (a.llevaFlaps && !p.limpio && p.flaps < 0.95) fallos.push(`flaps ${p.flaps}`);
+    if (a.trenRetractil && p.tren < 0.99) fallos.push("sin tren");
+    // Limpias en Guyrami, la mínima del modelo es nueve décimas de la Vref
+    // en verdadera, que en indicada, con calor, son ocho y media.
+    if (p.nudos < p.vref * (p.limpio ? 0.85 : 1) || p.nudos > p.vref + 20)
+      fallos.push(`${p.nudos} kt con Vref ${p.vref}`);
+    if (Math.abs(p.senda) > p.tolSenda)
+      fallos.push(`${p.senda} m de la senda (±${p.tolSenda})`);
+    if (Math.abs(p.eje) > p.tolEje)
+      fallos.push(`${p.eje} m del eje (±${p.tolEje})`);
+    if (p.rumbo > 5) fallos.push(`${p.rumbo}° cruzado`);
+    if (p.baja > 5.08) fallos.push(`bajando a ${p.baja} m/s de media`);
+  }
+  comprobarSiVolo(
+    "la final llega estabilizada a su puerta",
+    !!p && fallos.length === 0,
+    p
+      ? `${p.pies} ft${p.empezoPorDebajo ? " (la final empezó por debajo)" : ""} · ${p.nudos} kt (Vref ${p.vref}) · flaps ${p.flaps} · senda ${p.senda} m · eje ${p.eje} m · ${p.rumbo}° · bajando ${p.baja} m/s` +
+          (fallos.length ? ` · ✗ ${fallos.join(", ")}` : "")
+      : "no pasó por la puerta",
+    "«que vuele como un piloto de verdad: final estabilizada a mil pies»",
+  );
+}
+
+/*
+ * **Y dónde, a qué ritmo y a cuánto del eje se toca**, que es lo que dice si
+ * hubo recogida.
+ *
+ * La zona de toma de una pista son sus primeros novecientos metros, y dentro
+ * de ella se toca pasado el punto de visada: de ciento cincuenta a seiscientos
+ * metros del umbral según la pista, y en las cortas, en su primer tercio.
+ * Tocar a ochocientos metros en Pilar o a dos mil en Guaraní es flotar sin
+ * recogida; tocar a cuatro metros por segundo, lo mismo sin flotar —la senda
+ * entera hasta el asfalto—. Uno y medio, con la recogida hecha.
+ */
+{
+  const lda = vuelo.pistaParaTocar || 0;
+  const desde = Math.min(150, lda * 0.1);
+  const hasta = Math.min(600, lda / 3);
+  const d = vuelo.tocoPasadoElUmbral;
+  const r = vuelo.empezoLaRecogida;
+  comprobarSiVolo(
+    "se toca en la zona de toma",
+    vuelo.toco > 0 && d >= desde && d <= hasta,
+    vuelo.toco
+      ? `${d} m pasado el umbral · la zona, de ${Math.round(desde)} a ${Math.round(hasta)} m en ${lda} m de pista` +
+          (r ? ` · recogida a ${r.ruedas} m de ruedas, ${r.umbral} m del umbral, bajando ${r.caida} m/s a ${r.nudos} kt` : " · sin recogida")
+      : "no llegó a tocar",
+    "aterriza largo: unos 800 m del umbral en Pilar y Ayolas, y unos 2.000 en Guaraní con el JAZ 90",
+  );
+  const caida = vuelo.caidaAlTocar;
+  comprobarSiVolo(
+    "y se toca con recogida, a uno o dos metros por segundo",
+    vuelo.toco > 0 && caida !== null && caida <= 2,
+    vuelo.toco
+      ? `a ${caida ?? "?"} m/s · ${Math.abs(vuelo.tocoDesviado).toFixed(1)} m del eje · a ${vuelo.tocoA} m/s`
+      : "no llegó a tocar",
+    "los reactores tocan a unos 4 m/s de descenso, sin recogida",
+  );
+}
+
+/*
+ * **Y se vuelve a paso de rodaje.** El juego dice «más despacio» por encima
+ * de la de rodaje y un tercio —ver `bandaDeRodaje`—, así que lo que se mide
+ * es lo mismo que oye quien juega: lo más deprisa que se rodó de vuelta fuera
+ * de la pista.
+ */
+comprobarSiVolo(
+  "y se vuelve rodando a la velocidad de rodaje",
+  vuelo.toco > 0 && vuelo.rodajeMasRapido <= 9 * 1.35,
+  `lo más rápido fuera de la pista: ${vuelo.rodajeMasRapido} m/s (el aviso salta a ${(9 * 1.35).toFixed(1)})`,
+  "en el circuito de Tenerife Norte con el JAZ 90, «vuelo.despacio» sale hasta 5 veces en su rodaje de vuelta",
 );
 
 /*
