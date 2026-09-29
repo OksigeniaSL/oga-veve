@@ -1224,6 +1224,19 @@ for (const f of filas) {
   if (f.texto.length < 30)
     console.log(`\n  ¡Ojo! ${f.id} es muy corta para grabarla suelta: «${f.texto}»`);
 }
+/*
+ * **Y todo lo que dice Jazlyn, no solo la ventanilla.**
+ *
+ * La queja era de ella entera —«conversaciones más naturales, con
+ * desparpajo; NO una azafata que no ha dormido bien»— y solo se regrabó lo
+ * que cuenta del paisaje. La bienvenida, el «armar toboganes y verificación
+ * cruzada», el cinturón o la bajada seguían con la voz plana del 18 de
+ * septiembre, y al lado de lo nuevo sonaban a otra persona. Una comandante
+ * habla igual cuando saluda que cuando señala el Teide.
+ */
+for (const f of filas) {
+  if (f.voz === "comandante" && !f.ajustes) f.ajustes = AJUSTES_CON_CHISPA;
+}
 
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
