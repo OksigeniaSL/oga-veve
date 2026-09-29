@@ -1,4 +1,19 @@
-puedes aterrizar
+pista
+autorizado a despegar
+autorizado a aterrizar
+cero
+uno
+dos
+tres
+cuatro
+cinco
+seis
+siete
+ocho
+nueve
+izquierda
+derecha
+central
 puedes volar a
 pista libre
 pista ocupada

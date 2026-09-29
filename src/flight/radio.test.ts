@@ -710,3 +710,78 @@ describe("con una sola calle, la torre no mueve dos aviones a la vez por ella", 
     expect(radio.alguienEnLaCalle).toBe(false);
   });
 });
+
+/**
+ * **La radio es de uno en uno.** Con el canal ocupado —alguien hablando o
+ * esperando turno en la boca— nadie transmite, y nadie pierde su turno: la
+ * frase no se pone a la cola, donde caducaba y la frecuencia la daba por
+ * dicha. Ver `Momento.canalOcupado`.
+ */
+describe("con el canal ocupado se espera, sin perder el turno", () => {
+  it("nadie habla mientras está ocupado, y en cuanto se libra habla quien tocaba", () => {
+    const f = new Frecuencia(dados(3));
+    let dichas = 0;
+    for (let t = 0; t < 400; t += 0.5)
+      if (f.update(0.5, { ...TRANQUILO, canalOcupado: true })) dichas++;
+    expect(dichas).toBe(0);
+    let primera: Transmision | null = null;
+    for (let t = 0; t < 10 && !primera; t += 0.5)
+      primera = f.update(0.5, TRANQUILO);
+    expect(primera).not.toBeNull();
+    // Y es lo primero de su guion: no se saltó nada mientras esperaba.
+    expect(["otro.rodando", "otro.buenosDias", "otro.enCola"]).toContain(
+      primera!.clave,
+    );
+  });
+});
+
+/**
+ * **Y el que tenía el permiso y se va al aire, se le dice siempre.** Llega a
+ * la decisión con la pista ocupada —uno que todavía corre su despegue— y se
+ * va: su «cleared to land» se oyó, y lo que lo anula no puede quedarse sin
+ * decir, ni contigo en final ni con el canal ocupado. Ver `seFueAlAire`.
+ */
+describe("al que se va al aire con su permiso", () => {
+  it("la torre se lo quita de viva voz, aunque sea en final", () => {
+    let visto = 0;
+    for (let semilla = 1; semilla <= 60; semilla++) {
+      const f = new Frecuencia(dados(semilla));
+      let conPermiso: string | null = null;
+      for (let t = 0; t < 1500 && !conPermiso; t += 0.5) {
+        f.update(0.5, TRANQUILO);
+        conPermiso =
+          f.conLaPista.find((c) => c.orden === "torre.clearedLand")?.matricula ??
+          null;
+      }
+      if (!conPermiso) continue;
+      visto++;
+      const dice = f.seFueAlAire(conPermiso, {
+        ...TRANQUILO,
+        fase: "final",
+        canalOcupado: true,
+      });
+      expect(dice?.clave, `semilla ${semilla}`).toBe("torre.goAround");
+      expect(dice?.quitaPermiso, `semilla ${semilla}`).toBe(true);
+      expect(f.laTiene(conPermiso)).toBe(false);
+    }
+    expect(visto).toBeGreaterThan(20);
+  });
+
+  it("y el que no lo tenía, con el canal ocupado, se va callado", () => {
+    for (let semilla = 1; semilla <= 60; semilla++) {
+      const f = new Frecuencia(dados(semilla));
+      let viene: string | null = null;
+      for (let t = 0; t < 1500 && !viene; t += 0.5) {
+        const d = f.update(0.5, TRANQUILO);
+        if (d?.clave === "otro.enCola") viene = d.de.matricula;
+      }
+      if (!viene) continue;
+      expect(
+        f.seFueAlAire(viene, { ...TRANQUILO, canalOcupado: true }),
+        `semilla ${semilla}`,
+      ).toBeNull();
+      return;
+    }
+    throw new Error("ninguna semilla trajo a nadie en viento en cola");
+  });
+});

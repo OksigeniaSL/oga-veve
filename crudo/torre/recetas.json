@@ -323,8 +323,50 @@
     "{c5}",
     "torre.solo.goAround"
   ],
-  "torre.solo.verde": [
-    "torre.solo.verde"
+  "torre.solo.pista": [
+    "torre.solo.pista"
+  ],
+  "cifra.es.0": [
+    "cifra.es.0"
+  ],
+  "cifra.es.1": [
+    "cifra.es.1"
+  ],
+  "cifra.es.2": [
+    "cifra.es.2"
+  ],
+  "cifra.es.3": [
+    "cifra.es.3"
+  ],
+  "cifra.es.4": [
+    "cifra.es.4"
+  ],
+  "cifra.es.5": [
+    "cifra.es.5"
+  ],
+  "cifra.es.6": [
+    "cifra.es.6"
+  ],
+  "cifra.es.7": [
+    "cifra.es.7"
+  ],
+  "cifra.es.8": [
+    "cifra.es.8"
+  ],
+  "cifra.es.9": [
+    "cifra.es.9"
+  ],
+  "lado.es.izquierda": [
+    "lado.es.izquierda"
+  ],
+  "lado.es.derecha": [
+    "lado.es.derecha"
+  ],
+  "lado.es.central": [
+    "lado.es.central"
+  ],
+  "torre.solo.autorizadoDespegar": [
+    "torre.solo.autorizadoDespegar"
   ],
   "torre.verde": [
     "{c1}",
@@ -332,7 +374,46 @@
     "{c3}",
     "{c4}",
     "{c5}",
-    "torre.solo.verde"
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "torre.solo.autorizadoDespegar"
+  ],
+  "torre.verde.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.izquierda",
+    "torre.solo.autorizadoDespegar"
+  ],
+  "torre.verde.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.derecha",
+    "torre.solo.autorizadoDespegar"
+  ],
+  "torre.verde.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.central",
+    "torre.solo.autorizadoDespegar"
   ],
   "torre.solo.roja": [
     "torre.solo.roja"
@@ -345,8 +426,8 @@
     "{c5}",
     "torre.solo.roja"
   ],
-  "torre.solo.aterrizar": [
-    "torre.solo.aterrizar"
+  "torre.solo.autorizadoAterrizar": [
+    "torre.solo.autorizadoAterrizar"
   ],
   "torre.aterrizar": [
     "{c1}",
@@ -354,7 +435,46 @@
     "{c3}",
     "{c4}",
     "{c5}",
-    "torre.solo.aterrizar"
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "torre.solo.autorizadoAterrizar"
+  ],
+  "torre.aterrizar.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.izquierda",
+    "torre.solo.autorizadoAterrizar"
+  ],
+  "torre.aterrizar.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.derecha",
+    "torre.solo.autorizadoAterrizar"
+  ],
+  "torre.aterrizar.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.central",
+    "torre.solo.autorizadoAterrizar"
   ],
   "torre.destino": [
     "{c1}",

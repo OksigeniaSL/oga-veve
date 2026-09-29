@@ -97,46 +97,61 @@
 097	altura.pies.4	four thousand feet
 098	altura.pies.5	five thousand feet
 099	altura.pies.6	six thousand feet
-100	torre.solo.aterrizar	podés aterrizar
-101	torre.solo.destino	podés volar a
-102	torre.solo.afisLibre	pista libre
-103	torre.solo.afisOcupada	pista ocupada
-104	torre.solo.afisSinTrafico	sin tráfico conocido
-105	torre.solo.afisTraficoAterriza	tráfico aterrizando
-106	torre.solo.afisTraficoDespega	tráfico despegando
-107	destino.pettirossi	Asunción
-108	destino.guarani	Guaraní
-109	destino.encarnacion	Encarnación
-110	destino.yvytu-rape	Yvytu Rape
-111	destino.concepcion	Concepción
-112	destino.pedro-juan	Pedro Juan Caballero
-113	destino.estigarribia	Mariscal Estigarribia
-114	destino.ayolas	Ayolas
-115	destino.pilar	Pilar
-116	torre.solo.subir.3	subí a tres mil pies
-117	torre.solo.subir.4	subí a cuatro mil pies
-118	torre.solo.subir.5	subí a cinco mil pies
-119	torre.solo.subir.6	subí a seis mil pies
-120	torre.solo.subir.7	subí a siete mil pies
-121	torre.solo.subir.8	subí a ocho mil pies
-122	torre.solo.subir.9	subí a nueve mil pies
-123	torre.solo.subir.10	subí a diez mil pies
-124	torre.solo.subir.11	subí a once mil pies
-125	torre.solo.subir.12	subí a doce mil pies
-126	torre.solo.subir.13	subí a trece mil pies
-127	torre.solo.subir.14	subí a catorce mil pies
-128	torre.solo.subir.15	subí a quince mil pies
-129	torre.solo.subir.16	subí a dieciséis mil pies
-130	torre.solo.subir.17	subí a diecisiete mil pies
-131	torre.solo.subir.18	subí a dieciocho mil pies
-132	torre.solo.subir.19	subí a diecinueve mil pies
-133	torre.solo.subir.20	subí a veinte mil pies
-134	torre.solo.subir.21	subí a veintiún mil pies
-135	torre.solo.subir.22	subí a veintidós mil pies
-136	torre.solo.subir.23	subí a veintitrés mil pies
-137	torre.solo.subir.24	subí a veinticuatro mil pies
-138	torre.solo.subir.25	subí a veinticinco mil pies
-139	torre.solo.subir.26	subí a veintiséis mil pies
-140	torre.solo.subir.27	subí a veintisiete mil pies
-141	torre.solo.subir.28	subí a veintiocho mil pies
-142	torre.solo.subir.29	subí a veintinueve mil pies
+100	torre.solo.pista	pista
+101	torre.solo.autorizadoDespegar	autorizado a despegar
+102	torre.solo.autorizadoAterrizar	autorizado a aterrizar
+103	cifra.es.0	cero
+104	cifra.es.1	uno
+105	cifra.es.2	dos
+106	cifra.es.3	tres
+107	cifra.es.4	cuatro
+108	cifra.es.5	cinco
+109	cifra.es.6	seis
+110	cifra.es.7	siete
+111	cifra.es.8	ocho
+112	cifra.es.9	nueve
+113	lado.es.izquierda	izquierda
+114	lado.es.derecha	derecha
+115	lado.es.central	central
+116	torre.solo.destino	podés volar a
+117	torre.solo.afisLibre	pista libre
+118	torre.solo.afisOcupada	pista ocupada
+119	torre.solo.afisSinTrafico	sin tráfico conocido
+120	torre.solo.afisTraficoAterriza	tráfico aterrizando
+121	torre.solo.afisTraficoDespega	tráfico despegando
+122	destino.pettirossi	Asunción
+123	destino.guarani	Guaraní
+124	destino.encarnacion	Encarnación
+125	destino.yvytu-rape	Yvytu Rape
+126	destino.concepcion	Concepción
+127	destino.pedro-juan	Pedro Juan Caballero
+128	destino.estigarribia	Mariscal Estigarribia
+129	destino.ayolas	Ayolas
+130	destino.pilar	Pilar
+131	torre.solo.subir.3	subí a tres mil pies
+132	torre.solo.subir.4	subí a cuatro mil pies
+133	torre.solo.subir.5	subí a cinco mil pies
+134	torre.solo.subir.6	subí a seis mil pies
+135	torre.solo.subir.7	subí a siete mil pies
+136	torre.solo.subir.8	subí a ocho mil pies
+137	torre.solo.subir.9	subí a nueve mil pies
+138	torre.solo.subir.10	subí a diez mil pies
+139	torre.solo.subir.11	subí a once mil pies
+140	torre.solo.subir.12	subí a doce mil pies
+141	torre.solo.subir.13	subí a trece mil pies
+142	torre.solo.subir.14	subí a catorce mil pies
+143	torre.solo.subir.15	subí a quince mil pies
+144	torre.solo.subir.16	subí a dieciséis mil pies
+145	torre.solo.subir.17	subí a diecisiete mil pies
+146	torre.solo.subir.18	subí a dieciocho mil pies
+147	torre.solo.subir.19	subí a diecinueve mil pies
+148	torre.solo.subir.20	subí a veinte mil pies
+149	torre.solo.subir.21	subí a veintiún mil pies
+150	torre.solo.subir.22	subí a veintidós mil pies
+151	torre.solo.subir.23	subí a veintitrés mil pies
+152	torre.solo.subir.24	subí a veinticuatro mil pies
+153	torre.solo.subir.25	subí a veinticinco mil pies
+154	torre.solo.subir.26	subí a veintiséis mil pies
+155	torre.solo.subir.27	subí a veintisiete mil pies
+156	torre.solo.subir.28	subí a veintiocho mil pies
+157	torre.solo.subir.29	subí a veintinueve mil pies

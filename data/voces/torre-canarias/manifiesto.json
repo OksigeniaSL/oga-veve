@@ -51,6 +51,36 @@
     "cifra.9": {
       "ms": 599
     },
+    "cifra.es.0": {
+      "ms": 571
+    },
+    "cifra.es.1": {
+      "ms": 634
+    },
+    "cifra.es.2": {
+      "ms": 576
+    },
+    "cifra.es.3": {
+      "ms": 462
+    },
+    "cifra.es.4": {
+      "ms": 527
+    },
+    "cifra.es.5": {
+      "ms": 632
+    },
+    "cifra.es.6": {
+      "ms": 970
+    },
+    "cifra.es.7": {
+      "ms": 753
+    },
+    "cifra.es.8": {
+      "ms": 486
+    },
+    "cifra.es.9": {
+      "ms": 736
+    },
     "destino.el-hierro": {
       "ms": 747
     },
@@ -156,6 +186,15 @@
     "lado.center": {
       "ms": 870
     },
+    "lado.es.central": {
+      "ms": 764
+    },
+    "lado.es.derecha": {
+      "ms": 599
+    },
+    "lado.es.izquierda": {
+      "ms": 865
+    },
     "lado.left": {
       "ms": 723
     },
@@ -177,8 +216,11 @@
     "torre.canario.solo.afisTraficoDespega": {
       "ms": 1101
     },
-    "torre.canario.solo.aterrizar": {
-      "ms": 1063
+    "torre.canario.solo.autorizadoAterrizar": {
+      "ms": 1385
+    },
+    "torre.canario.solo.autorizadoDespegar": {
+      "ms": 1134
     },
     "torre.canario.solo.clearedLand": {
       "ms": 899
@@ -221,6 +263,9 @@
     },
     "torre.canario.solo.occupied": {
       "ms": 686
+    },
+    "torre.canario.solo.pista": {
+      "ms": 935
     },
     "torre.canario.solo.rogerMayday": {
       "ms": 949
@@ -317,9 +362,6 @@
     },
     "torre.canario.solo.vacateNext": {
       "ms": 1241
-    },
-    "torre.canario.solo.verde": {
-      "ms": 746
     },
     "trafico.above": {
       "ms": 750
@@ -758,8 +800,50 @@
       "{c5}",
       "torre.canario.solo.goAround"
     ],
-    "torre.canario.solo.verde": [
-      "torre.canario.solo.verde"
+    "torre.canario.solo.pista": [
+      "torre.canario.solo.pista"
+    ],
+    "cifra.es.0": [
+      "cifra.es.0"
+    ],
+    "cifra.es.1": [
+      "cifra.es.1"
+    ],
+    "cifra.es.2": [
+      "cifra.es.2"
+    ],
+    "cifra.es.3": [
+      "cifra.es.3"
+    ],
+    "cifra.es.4": [
+      "cifra.es.4"
+    ],
+    "cifra.es.5": [
+      "cifra.es.5"
+    ],
+    "cifra.es.6": [
+      "cifra.es.6"
+    ],
+    "cifra.es.7": [
+      "cifra.es.7"
+    ],
+    "cifra.es.8": [
+      "cifra.es.8"
+    ],
+    "cifra.es.9": [
+      "cifra.es.9"
+    ],
+    "lado.es.izquierda": [
+      "lado.es.izquierda"
+    ],
+    "lado.es.derecha": [
+      "lado.es.derecha"
+    ],
+    "lado.es.central": [
+      "lado.es.central"
+    ],
+    "torre.canario.solo.autorizadoDespegar": [
+      "torre.canario.solo.autorizadoDespegar"
     ],
     "torre.canario.verde": [
       "{c1}",
@@ -767,7 +851,46 @@
       "{c3}",
       "{c4}",
       "{c5}",
-      "torre.canario.solo.verde"
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "torre.canario.solo.autorizadoDespegar"
+    ],
+    "torre.canario.verde.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "lado.es.izquierda",
+      "torre.canario.solo.autorizadoDespegar"
+    ],
+    "torre.canario.verde.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "lado.es.derecha",
+      "torre.canario.solo.autorizadoDespegar"
+    ],
+    "torre.canario.verde.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "lado.es.central",
+      "torre.canario.solo.autorizadoDespegar"
     ],
     "torre.canario.solo.roja": [
       "torre.canario.solo.roja"
@@ -780,8 +903,8 @@
       "{c5}",
       "torre.canario.solo.roja"
     ],
-    "torre.canario.solo.aterrizar": [
-      "torre.canario.solo.aterrizar"
+    "torre.canario.solo.autorizadoAterrizar": [
+      "torre.canario.solo.autorizadoAterrizar"
     ],
     "torre.canario.aterrizar": [
       "{c1}",
@@ -789,7 +912,46 @@
       "{c3}",
       "{c4}",
       "{c5}",
-      "torre.canario.solo.aterrizar"
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "torre.canario.solo.autorizadoAterrizar"
+    ],
+    "torre.canario.aterrizar.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "lado.es.izquierda",
+      "torre.canario.solo.autorizadoAterrizar"
+    ],
+    "torre.canario.aterrizar.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "lado.es.derecha",
+      "torre.canario.solo.autorizadoAterrizar"
+    ],
+    "torre.canario.aterrizar.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pista",
+      "{p1}",
+      "{p2}",
+      "lado.es.central",
+      "torre.canario.solo.autorizadoAterrizar"
     ],
     "torre.canario.destino": [
       "{c1}",

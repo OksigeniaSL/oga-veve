@@ -718,13 +718,31 @@ for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA
   total += texto.length;
 }
 /*
- * **Y la lámpara verde a un avión en el aire**, que no dice «podés entrar»:
- * en las señales de luz de verdad, la verde fija a un avión en vuelo es
- * «autorizado a aterrizar». Va troceada como las demás de la lámpara —la
- * matrícula delante la pone la receta—, en las dos voces de torre.
+ * **Y la lámpara verde nombra la pista, como la fraseología de verdad**:
+ * «pista dos cero, autorizado a despegar» en tierra, y en el aire, que en las
+ * señales de luz de verdad es otra cosa, «autorizado a aterrizar». Decía
+ * «podés entrar» y «podés aterrizar» sin decir por dónde. Va troceada como
+ * las demás de la lámpara —la matrícula y la pista las pone la receta—, en
+ * las dos voces de torre, con sus cifras en castellano: las de la radio en
+ * inglés son otras. Ver `pistaEnCastellano` en `src/flight/matricula.ts`.
  */
 const EN_EL_AIRE =
   "la lámpara verde con el avión en el aire: autorizado a aterrizar";
+const EN_TIERRA = "la lámpara verde en el punto de espera: autorizado a despegar";
+const DE_LA_PISTA = "la pista que nombra la verde, antes de su número";
+const CIFRAS_EN_CASTELLANO = [
+  "cero",
+  "uno",
+  "dos",
+  "tres",
+  "cuatro",
+  "cinco",
+  "seis",
+  "siete",
+  "ocho",
+  "nueve",
+];
+const LADOS_EN_CASTELLANO = ["izquierda", "derecha", "central"];
 /*
  * Y la de a dónde se va, antes de rodar: la autorización dicha en palabras
  * de casa, con el campo en un hueco. Ver `autorizarLaRuta` en `src/game.ts`.
@@ -743,8 +761,26 @@ const DE_UN_AFIS = [
   ["afisTraficoDespega", "tráfico despegando", "un AFIS: sale uno antes"],
 ];
 const LAMPARA_SOLO = [
-  ["torre", "torre.solo.aterrizar", "podés aterrizar", EN_EL_AIRE],
-  ["torre-canarias", "torre.canario.solo.aterrizar", "puedes aterrizar", EN_EL_AIRE],
+  ...["torre", "torre-canarias"].flatMap((voz) => {
+    const solo = voz === "torre" ? "torre.solo" : "torre.canario.solo";
+    return [
+      [voz, `${solo}.pista`, "pista", DE_LA_PISTA],
+      [voz, `${solo}.autorizadoDespegar`, "autorizado a despegar", EN_TIERRA],
+      [voz, `${solo}.autorizadoAterrizar`, "autorizado a aterrizar", EN_EL_AIRE],
+      ...CIFRAS_EN_CASTELLANO.map((c, n) => [
+        voz,
+        `cifra.es.${n}`,
+        c,
+        "una cifra de la pista, en castellano",
+      ]),
+      ...LADOS_EN_CASTELLANO.map((l) => [
+        voz,
+        `lado.es.${l}`,
+        l,
+        "el lado de la pista, donde hay dos paralelas",
+      ]),
+    ];
+  }),
   ["torre", "torre.solo.destino", "podés volar a", A_DONDE],
   ["torre-canarias", "torre.canario.solo.destino", "puedes volar a", A_DONDE],
   ...DE_UN_AFIS.flatMap(([id, texto, para]) => [

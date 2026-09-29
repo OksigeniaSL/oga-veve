@@ -3198,7 +3198,11 @@ export class Hud {
      * salía tal cual en la tarjeta: se vio en la web, en Pettirossi.
      */
     indicativo = "",
-    /** Si el avión está en el aire: ahí la verde es «podés aterrizar». */
+    /**
+     * Si el avión está en el aire: ahí la verde es «autorizado a aterrizar».
+     * Con la verde, `indicativo` llega con la pista detrás —«Kilo Papa, pista
+     * 20»—, que la autorización dice por dónde. Ver `luzDeTorre` en `game.ts`.
+     */
     enElAire = false,
   ): void {
     const caja = this.torre;

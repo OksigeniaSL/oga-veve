@@ -619,8 +619,38 @@ torre	torre/altura.pies.3.ogg	en	three thousand feet	una altitud por debajo de l
 torre	torre/altura.pies.4.ogg	en	four thousand feet	una altitud por debajo de la transición
 torre	torre/altura.pies.5.ogg	en	five thousand feet	una altitud por debajo de la transición
 torre	torre/altura.pies.6.ogg	en	six thousand feet	una altitud por debajo de la transición
-torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
-torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
+torre	torre/torre.solo.pista.ogg	es	pista	la pista que nombra la verde, antes de su número
+torre	torre/torre.solo.autorizadoDespegar.ogg	es	autorizado a despegar	la lámpara verde en el punto de espera: autorizado a despegar
+torre	torre/torre.solo.autorizadoAterrizar.ogg	es	autorizado a aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
+torre	torre/cifra.es.0.ogg	es	cero	una cifra de la pista, en castellano
+torre	torre/cifra.es.1.ogg	es	uno	una cifra de la pista, en castellano
+torre	torre/cifra.es.2.ogg	es	dos	una cifra de la pista, en castellano
+torre	torre/cifra.es.3.ogg	es	tres	una cifra de la pista, en castellano
+torre	torre/cifra.es.4.ogg	es	cuatro	una cifra de la pista, en castellano
+torre	torre/cifra.es.5.ogg	es	cinco	una cifra de la pista, en castellano
+torre	torre/cifra.es.6.ogg	es	seis	una cifra de la pista, en castellano
+torre	torre/cifra.es.7.ogg	es	siete	una cifra de la pista, en castellano
+torre	torre/cifra.es.8.ogg	es	ocho	una cifra de la pista, en castellano
+torre	torre/cifra.es.9.ogg	es	nueve	una cifra de la pista, en castellano
+torre	torre/lado.es.izquierda.ogg	es	izquierda	el lado de la pista, donde hay dos paralelas
+torre	torre/lado.es.derecha.ogg	es	derecha	el lado de la pista, donde hay dos paralelas
+torre	torre/lado.es.central.ogg	es	central	el lado de la pista, donde hay dos paralelas
+torre-canarias	torre-canarias/torre.canario.solo.pista.ogg	es	pista	la pista que nombra la verde, antes de su número
+torre-canarias	torre-canarias/torre.canario.solo.autorizadoDespegar.ogg	es	autorizado a despegar	la lámpara verde en el punto de espera: autorizado a despegar
+torre-canarias	torre-canarias/torre.canario.solo.autorizadoAterrizar.ogg	es	autorizado a aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
+torre-canarias	torre-canarias/cifra.es.0.ogg	es	cero	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.1.ogg	es	uno	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.2.ogg	es	dos	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.3.ogg	es	tres	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.4.ogg	es	cuatro	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.5.ogg	es	cinco	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.6.ogg	es	seis	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.7.ogg	es	siete	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.8.ogg	es	ocho	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/cifra.es.9.ogg	es	nueve	una cifra de la pista, en castellano
+torre-canarias	torre-canarias/lado.es.izquierda.ogg	es	izquierda	el lado de la pista, donde hay dos paralelas
+torre-canarias	torre-canarias/lado.es.derecha.ogg	es	derecha	el lado de la pista, donde hay dos paralelas
+torre-canarias	torre-canarias/lado.es.central.ogg	es	central	el lado de la pista, donde hay dos paralelas
 torre	torre/torre.solo.destino.ogg	es	podés volar a	a dónde se va, antes de rodar; el campo va detrás
 torre-canarias	torre-canarias/torre.canario.solo.destino.ogg	es	puedes volar a	a dónde se va, antes de rodar; el campo va detrás
 torre	torre/torre.solo.afisLibre.ogg	es	pista libre	un AFIS: la pista está libre, y decidís vos

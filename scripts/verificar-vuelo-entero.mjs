@@ -1941,6 +1941,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let bajandoATuPista = 0;
   let bajandoATuPistaDonde = null;
+  /**
+   * **Y la pista es de uno por vez, y las llegadas van en fila.** Se veían
+   * dos o tres aviones entrando a la vez en la pista, uno encima del otro en
+   * la misma final. Se cuentan las muestras con dos encima de la pista —tú
+   * incluido— y las de uno del tráfico en final sin su hueco con el que cruza
+   * el umbral antes que él. Ver `SEPARACION_ENTRE_LLEGADAS` en
+   * `world/trafico.ts`.
+   */
+  let dosEnLaPista = 0;
+  let dosEnLaPistaDonde = null;
+  let sinHueco = 0;
+  let sinHuecoDonde = null;
+  /** Las fases en que estás encima de la pista. Ver `tuLlegada` en `game.ts`. */
+  const ENCIMA_DE_LA_PISTA = new Set([
+    "back-taxi",
+    "alineando",
+    "despegando",
+    "comprometido",
+    "aterrizado",
+    "abandonando",
+  ]);
   const misLetrasEnLaTorre = Object.entries(o.indicativo?.()?.deTorre ?? {})
     .filter(([k]) => /^c\d/.test(k))
     .map(([, v]) => v)
@@ -2357,6 +2378,39 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           ) {
             bajandoATuPista++;
             bajandoATuPistaDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(a.y - cota)} m, ${Math.round(along + p.length / 2)} m del umbral${a.conPermiso ? "" : ", sin permiso"}`;
+          }
+        }
+      }
+      {
+        const encima = (o.trafico?.() ?? [])
+          .filter((a) => a.enLaPista)
+          .map((a) => a.matricula);
+        if (s.onGround && ENCIMA_DE_LA_PISTA.has(fase)) encima.push("tú");
+        if (encima.length > 1) {
+          dosEnLaPista++;
+          dosEnLaPistaDonde ??= `${t.toFixed(0)} s en «${fase}»: ${encima.join(", ")}`;
+        }
+        const fila = (o.secuencia?.() ?? []).map((x) => ({ ...x, tuyo: false }));
+        if (fase === "final" && !s.onGround && pistaAhora()) {
+          const v = Math.max(15, s.groundSpeed ?? s.airspeed);
+          fila.push({
+            matricula: "tú",
+            alUmbral: Math.max(0, alUmbral(s)) / v,
+            velocidad: v,
+            enFinal: true,
+            tuyo: true,
+          });
+        }
+        fila.sort((a, b) => a.alUmbral - b.alUmbral);
+        for (let i = 1; i < fila.length; i++) {
+          const b = fila[i];
+          const a = fila[i - 1];
+          if (b.tuyo || !b.enFinal) continue;
+          const hueco = b.alUmbral - a.alUmbral;
+          const leToca = Math.max(120, (3 * 1852) / Math.max(1, b.velocidad));
+          if (hueco < leToca - 3) {
+            sinHueco++;
+            sinHuecoDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.matricula} a ${hueco.toFixed(0)} s de ${a.matricula}`;
           }
         }
       }
@@ -4047,6 +4101,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     frustradasPorElJuego,
     bajandoATuPista,
     bajandoATuPistaDonde,
+    dosEnLaPista,
+    dosEnLaPistaDonde,
+    sinHueco,
+    sinHuecoDonde,
     masRapidoEnPista: Math.round(masRapidoEnPista),
     seSalioEnPista: Math.round(seSalioEnPista),
     gasEnLaCarrera: +gasEnLaCarrera.toFixed(2),
@@ -4545,7 +4603,7 @@ const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
 if (vuelo.saleConTorre === false)
   comprobar(
     "y en la pista de casa no enciende la luz ninguna torre",
-    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
+    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)(?:\.[LCR])?$/.test(d)),
     `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
     "en la pista de hierba de la granja hablaba una torre que no existe",
   );
@@ -4574,7 +4632,7 @@ else comprobar(
       (vuelo.torreDijo ?? []).some((d) =>
         (vuelo.saleConAfis
           ? /(afisLibre|afisSinTrafico|afisTraficoAterriza|afisTraficoDespega)$/
-          : /(verde|roja)$/
+          : /(verde|roja)(?:\.[LCR])?$/
         ).test(d),
       ),
   (conFraseologia && !laPropia
@@ -4640,6 +4698,27 @@ comprobar(
     ? `${vuelo.bajandoATuPista} muestras, la primera a los ${vuelo.bajandoATuPistaDonde}`
     : "nadie que viniera a aterrizar pasó bajo sobre ella",
   "uno sin permiso, detrás de ti en final, a quinientos ochenta metros del umbral y veintitrés de altura",
+);
+
+/*
+ * **Y uno por vez en la pista, y las llegadas en fila.** Se veían en la carta
+ * dos o tres aviones entrando a la vez en la pista; en un aeropuerto de
+ * verdad las llegadas se dejan un par de minutos —tres millas como poco— y el
+ * siguiente no cruza el umbral hasta que el anterior la ha dejado. Ver
+ * `SEPARACION_ENTRE_LLEGADAS` en `world/trafico.ts`.
+ */
+comprobar(
+  "y en la pista uno por vez, y en final cada uno con su hueco",
+  (vuelo.dosEnLaPista ?? 0) === 0 && (vuelo.sinHueco ?? 0) === 0,
+  [
+    vuelo.dosEnLaPista
+      ? `dos encima de la pista ${vuelo.dosEnLaPista} muestras, la primera a los ${vuelo.dosEnLaPistaDonde}`
+      : "nunca dos encima de la pista",
+    vuelo.sinHueco
+      ? `sin su hueco en final ${vuelo.sinHueco} muestras, la primera a los ${vuelo.sinHuecoDonde}`
+      : "y en final cada uno con su hueco",
+  ].join(" · "),
+  "«se ve raro en el radar: dos o tres señales de aviones entrando en pista»",
 );
 
 /*

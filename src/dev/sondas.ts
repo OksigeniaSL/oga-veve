@@ -51,7 +51,7 @@ import {
   velocidadDeToma,
 } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
-import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
+import { pistaEnCastellano, pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA, MEGAFONIA } from "../audio/boca";
 import { planeoDe } from "../flight/sin-motor";
 import { vfeDeAterrizaje } from "../flight/limites";
@@ -717,9 +717,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;
       // La del campo de ahora, que es la que nombra la torre.
-      const pista = pistaEnPiezas(
-        cabeceraEnUso(juego.campoParaBanco()?.escenario ?? juego.scenario),
+      const cabecera = cabeceraEnUso(
+        juego.campoParaBanco()?.escenario ?? juego.scenario,
       );
+      const pista = pistaEnPiezas(cabecera);
+      // Y la misma pista en castellano, que es la que nombra la verde de la
+      // lámpara: «pista dos cero». Ver `pistaEnCastellano`.
+      const pistaEs = pistaEnCastellano(cabecera);
       return {
         // El otro avión de la frecuencia, que se sortea por vuelo.
         dicho: otro.dicho,
@@ -735,6 +739,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
           ...rellenoDe(yo),
           viento: juego.vientoDeLaTorreParaBanco.relleno,
           ...(pista?.relleno ?? {}),
+          ...(pistaEs?.relleno ?? {}),
         },
         viento: juego.vientoDeLaTorreParaBanco.dicho,
         pista: pista?.dicho ?? null,
@@ -1448,6 +1453,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     cifrasDeCabina: () => cifrasDeLaCabina(),
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
+    /** La fila de llegadas del tráfico. Ver `secuencia` en `trafico.ts`. */
+    secuencia: () => juego.trafico?.secuencia() ?? [],
     /**
      * Lo que ve el TCAS: qué equipo lleva el avión, qué pinta la carta y
      * cuántos avisos lleva dados. Ver `flight/tcas.ts`.

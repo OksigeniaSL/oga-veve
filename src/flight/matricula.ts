@@ -330,6 +330,66 @@ export function pistaEnPiezas(cabecera: string | null | undefined): {
 }
 
 /**
+ * **La pista en uso, en castellano**: «pista dos cero», para lo que la torre
+ * dice en casa. Ver `pistaEnPiezas` para la de la fraseología en inglés.
+ *
+ * La torre en castellano autorizaba sin nombrar la pista, y la fraseología de
+ * verdad la nombra: «pista dos cero, autorizado a aterrizar», y lo mismo al
+ * despegar. Es el número que está pintado delante del morro mientras se oye,
+ * y en castellano se dice con las cifras de aquí —«cero», «dos»—, no con las
+ * de la radio en inglés. Se monta por piezas, como la matrícula: diez cifras
+ * grabadas dicen cualquier pista. Los huecos son `{p1}` y `{p2}`, y el lado de
+ * las paralelas va en la clave, como en inglés.
+ *
+ * `dicho` es lo que se lee en voz alta —la voz del navegador, sin pack— y
+ * `escrito`, lo que se lee en la tarjeta: el número tal como está pintado.
+ */
+export function pistaEnCastellano(cabecera: string | null | undefined): {
+  relleno: Record<string, string>;
+  sufijo: string;
+  dicho: string;
+  escrito: string;
+} | null {
+  const m = /^(\d{1,2})([LCR])?$/.exec((cabecera ?? "").trim().toUpperCase());
+  if (!m) return null;
+  const cifras = m[1]!.padStart(2, "0");
+  const lado = (m[2] ?? "") as "" | keyof typeof LADOS_EN_CASTELLANO;
+  return {
+    relleno: { p1: `cifra.es.${cifras[0]}`, p2: `cifra.es.${cifras[1]}` },
+    sufijo: lado ? `.${lado}` : "",
+    dicho:
+      `${CIFRAS_EN_CASTELLANO[Number(cifras[0])]} ${CIFRAS_EN_CASTELLANO[Number(cifras[1])]}` +
+      (lado ? ` ${LADOS_EN_CASTELLANO[lado]}` : ""),
+    escrito: `${cifras}${lado}`,
+  };
+}
+
+/**
+ * Las cifras como se dicen por radio en castellano, del cero al nueve. Sin
+ * «nueve» de ninguna otra forma: el «niner» es del inglés, donde «nine» y
+ * «five» se confunden con ruido; en castellano no hay con qué confundirlo.
+ */
+export const CIFRAS_EN_CASTELLANO = [
+  "cero",
+  "uno",
+  "dos",
+  "tres",
+  "cuatro",
+  "cinco",
+  "seis",
+  "siete",
+  "ocho",
+  "nueve",
+] as const;
+
+/** Y los lados de las paralelas, en castellano. Ver `pistaEnCastellano`. */
+export const LADOS_EN_CASTELLANO = {
+  L: "izquierda",
+  C: "central",
+  R: "derecha",
+} as const;
+
+/**
  * El relleno de la receta grabada: `{c1}`…`{c5}` a sus piezas.
  *
  * Las piezas del alfabeto se llaman `fonetico.<letra>` y las graba cualquier

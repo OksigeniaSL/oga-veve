@@ -61,6 +61,14 @@
  * tarde es una mentira sobre dónde estás. Son dos clases de frase y tenían el
  * mismo reloj. Ver `CADUCA_LA_ORDEN`.
  *
+ * **Y la tuya no caduca nunca.** Doce segundos seguían siendo un reloj, y un
+ * permiso no deja de valer porque pase un rato: deja de valer cuando alguien
+ * lo retira. Con la boca llena, «cleared to land» caducaba esperando —en
+ * Lanzarote con el JAZ 20—, la luz ya estaba verde y nadie lo había dicho. Lo
+ * que la torre te da o te manda a ti, y lo que le quita la pista a otro para
+ * dártela, espera lo que haga falta y se dice en cuanto se pueda; lo retira
+ * solo quien sabe que ya no es verdad. Ver `noSePierde` en `audio/torre.ts`.
+ *
  * ## Esto no sabe hablar
  *
  * No construye frases ni elige voces: recibe una función que habla y la llama
@@ -68,6 +76,9 @@
  * su timbre y los cantos de cabina el suyo, sin que este fichero sepa que
  * existe `SpeechSynthesisUtterance`.
  */
+
+import { noSePierde } from "./torre";
+import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
  * Cuánto manda lo que se va a decir.
@@ -129,14 +140,60 @@ export const CADUCA_LA_ORDEN = 12000;
  * Lo decide la clave y no quien la pide, por el mismo motivo por el que la
  * escalera decide por el texto y no por quien escribe: es lo único que se
  * puede aplicar igual en los tres sitios que hablan.
+ *
+ * **Y lo que la torre te da o te manda a ti no caduca nunca.** Ver
+ * `noSePierde` en `audio/torre.ts`: una autorización que no se pudo decir se
+ * dice en cuanto se pueda, y solo deja de esperar cuando alguien que sabe que
+ * ya no vale la retira —la luz que cambia, la final que se deja—.
  */
-export function cuantoAguanta(clave: string | undefined): number {
+export function cuantoAguanta(
+  clave: string | undefined,
+  urgencia: Urgencia = "normal",
+): number {
+  if (noSePierde(clave, urgencia) || anunciaLaFase(clave)) return Infinity;
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
     explicaLaOtraPunta(clave)
     ? CADUCA_LA_ORDEN
     : CADUCA;
 }
+
+/**
+ * **La instructora contando la fase en la que se entra**: «estás en final,
+ * seguí los aros». Aguanta lo que dura la fase, no un reloj.
+ *
+ * Tenía los cuatro segundos de un aviso, y al entrar en final la torre te da
+ * la pista en ese mismo instante —la lámpara y, de Taguató para arriba, su
+ * fraseología con el viento—: la fase esperaba detrás y caducaba sin sonar.
+ * Camino de Tenerife Sur con el JAZ 90, «vuelo.final: caducó esperando». Lo
+ * que dice sigue siendo verdad mientras dure la fase, así que espera lo que
+ * haga falta y se dice cuando la torre acaba; y al cambiar de fase la retira
+ * quien la pidió, que es quien sabe que ya no vale. Ver `anunciarLaFase` en
+ * `game.ts`.
+ */
+export function anunciaLaFase(clave: string | undefined): boolean {
+  return !!clave && DE_LA_FASE.has(clave.replace(/~\d+$/, ""));
+}
+
+/**
+ * Las claves con que se cuenta cada fase, en los tres guiones —torre, AFIS y
+ * sin torre—, y las dos del vuelo que cambian según a dónde se vaya. Salen de
+ * las tablas de `flight/vuelo.ts`, no de una lista escrita aquí.
+ */
+const DE_LA_FASE: ReadonlySet<string> = (() => {
+  const claves = new Set<string>([
+    "vuelo.enVueloAterrizando",
+    "vuelo.enVueloDestino",
+  ]);
+  for (const fase of Object.keys(GUION) as Fase[]) {
+    claves.add(GUION[fase].clave);
+    claves.add(guionAfis(fase).clave);
+    for (const conBici of [true, false])
+      for (const enCasa of [true, false])
+        claves.add(guionSinTorre(fase, conBici, enCasa).clave);
+  }
+  return claves;
+})();
 
 /**
  * **La instructora contando por qué no se entra por esa punta**, que también
@@ -429,6 +486,27 @@ export class Boca {
   }
 
   /**
+   * **Si el canal está libre**: nadie hablando, nadie esperando turno y el
+   * silencio de la frase anterior ya cumplido. Lo que se pida ahora suena ya.
+   *
+   * Es lo que mira quien habla por su cuenta —la frecuencia, la torre dando
+   * tráfico, la instructora contando la fase— antes de abrir la boca. Una
+   * radio es de uno en uno: el que quiere transmitir espera a que el otro
+   * suelte el pulsador, y no se pone a la cola. Poniéndose a la cola, lo que
+   * decía el otro avión esperaba detrás de la torre, caducaba sin sonar y la
+   * frecuencia lo daba por dicho: en Los Rodeos, camino de Tenerife Sur, se
+   * cayeron así un «cleared to land» a otro, la información de tráfico y la
+   * fase de final, todas por «caducó esperando».
+   */
+  get libre(): boolean {
+    return (
+      this.hablandoAhora === null &&
+      this.cola.length === 0 &&
+      this.reloj.ahora() >= this.calladaHasta
+    );
+  }
+
+  /**
    * Si esta frase **sigue esperando turno**: pedida, sin empezar a sonar y
    * sin tirar todavía. Lo pregunta quien necesita que una frase suene antes
    * que otra sin pedirlas a la vez: ver `despejeSinDecir` en `game.ts`.
@@ -536,10 +614,13 @@ export class Boca {
        */
       // Lo urgente corta y **vacía la cola**: lo que esperaba era menos
       // importante que esto y ya no describe lo que está pasando. Menos lo
-      // que suelta la pista, que sigue siendo verdad. Ver `sueltaLaPista`.
+      // que suelta la pista, que sigue siendo verdad —ver `sueltaLaPista`—,
+      // y lo que la torre te da o te manda, que tampoco deja de serlo porque
+      // suene un aviso: ver `noSePierde` en `audio/torre.ts`.
       for (let i = this.cola.length - 1; i >= 0; i--) {
         const c = this.cola[i]!;
         if (sueltaLaPista(c.clave, c.urgencia)) continue;
+        if (noSePierde(c.clave, c.urgencia)) continue;
         this.apuntarDescarte(c.clave, "la barrió un urgente");
         this.cola.splice(i, 1);
       }
@@ -589,12 +670,14 @@ export class Boca {
     if (this.cola.length <= PLAZAS_DE_ESPERA) return;
     /*
      * Y lo que suelta la pista no se echa: si no queda otra, la cola crece
-     * una plaza. Ver `sueltaLaPista`.
+     * una plaza. Ver `sueltaLaPista`. Ni lo que la torre te da o te manda:
+     * ver `noSePierde`.
      */
     let peor = -1;
     for (let i = 0; i < this.cola.length; i++) {
       const a = this.cola[i]!;
       if (sueltaLaPista(a.clave, a.urgencia)) continue;
+      if (noSePierde(a.clave, a.urgencia)) continue;
       if (peor < 0) {
         peor = i;
         continue;
@@ -624,7 +707,7 @@ export class Boca {
     for (let i = this.cola.length - 1; i >= 0; i--) {
       const c = this.cola[i]!;
       if (sueltaLaPista(c.clave, c.urgencia)) continue;
-      if (ahora - c.desde > cuantoAguanta(c.clave)) {
+      if (ahora - c.desde > cuantoAguanta(c.clave, c.urgencia)) {
         this.apuntarDescarte(this.cola[i]!.clave, "caducó esperando");
         this.cola.splice(i, 1);
       }

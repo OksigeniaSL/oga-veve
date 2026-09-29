@@ -79,8 +79,14 @@ describe("lo que dice la torre canaria", () => {
   });
 
   it("y dice lo mismo que la de casa, con otras palabras", () => {
-    expect(dicc["torre.canario.verde"]).toBe("{indicativo}, puedes entrar");
     expect(dicc["torre.canario.roja"]).toBe("{indicativo}, espera ahí");
+    /*
+     * Y la verde, con las de la fraseología, que son las mismas a los dos
+     * lados del Atlántico: «pista dos cero, autorizado a despegar». La pista
+     * va con la matrícula. Ver `torre.verde` en `es-PY.ts`.
+     */
+    expect(dicc["torre.canario.verde"]).toBe("{indicativo}, autorizado a despegar");
+    expect(dicc["torre.canario.aterrizar"]).toBe(dicc["torre.aterrizar"]);
   });
 
   it("y las dos llaman al avión por su matrícula", () => {

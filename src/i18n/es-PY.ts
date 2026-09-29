@@ -266,11 +266,19 @@ export const ES_PY = {
   // leen de reojo y con las manos ocupadas.
   // La lámpara de la torre. El texto existe porque **un color solo no es
   // información**: quien no distinga el rojo del verde tiene que poder saberlo.
-  "torre.verde": "{indicativo}, podés entrar",
+  /*
+   * **Y la verde nombra la pista**, como la fraseología de verdad: «pista dos
+   * cero, autorizado a despegar». Decía «podés entrar» sin decir por dónde, y
+   * el número de la pista es lo que está pintado delante del morro mientras
+   * se oye. Va con la matrícula, en el mismo hueco —«Zulu Papa Alfa, pista
+   * dos cero»—: así cada idioma dice lo suyo detrás sin un hueco más que
+   * llenar. Ver `pistaEnCastellano` y `luzDeTorre` en `game.ts`.
+   */
+  "torre.verde": "{indicativo}, autorizado a despegar",
   "torre.roja": "{indicativo}, esperá acá",
   /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad
      quiere decir otra cosa: autorizado a aterrizar. Ver `luzDeTorre`. */
-  "torre.aterrizar": "{indicativo}, podés aterrizar",
+  "torre.aterrizar": "{indicativo}, autorizado a aterrizar",
   /*
    * Y a dónde se va, **antes de rodar**. En un vuelo a otro aeródromo lo
    * primero que da el control es la autorización con su límite —«cleared to
@@ -326,9 +334,9 @@ export const ES_PY = {
   "torre.canario.afisSinTrafico": "{indicativo}, sin tráfico conocido",
   "torre.canario.afisTraficoAterriza": "{indicativo}, tráfico aterrizando",
   "torre.canario.afisTraficoDespega": "{indicativo}, tráfico despegando",
-  "torre.canario.verde": "{indicativo}, puedes entrar",
+  "torre.canario.verde": "{indicativo}, autorizado a despegar",
   "torre.canario.roja": "{indicativo}, espera ahí",
-  "torre.canario.aterrizar": "{indicativo}, puedes aterrizar",
+  "torre.canario.aterrizar": "{indicativo}, autorizado a aterrizar",
   "torre.canario.destino": "{indicativo}, puedes volar a {destino}",
   "torre.canario.subir": "{indicativo}, sube a {pies} pies",
   "torre.canario.solo.subir": "sube a {n} mil pies",

@@ -17,7 +17,7 @@ import {
   ladoDeLaHora,
   type QuienEscucha,
 } from "./informacion-de-trafico";
-import type { Intruso } from "./tcas";
+import { Tcas, type Intruso } from "./tcas";
 
 const MILLA = 1852;
 const PIE = 0.3048;
@@ -171,5 +171,88 @@ describe("cómo se dice", () => {
     expect(alturaDelOtro(300)).toBe("arriba");
     expect(alturaDelOtro(-300)).toBe("abajo");
     expect(alturaDelOtro(50)).toBe("nivel");
+  });
+});
+
+/**
+ * **Y el «traffic, traffic» se explica una vez por pasada.**
+ *
+ * El TCAS rearma su aviso cada vez que el otro sale de su volumen y vuelve a
+ * entrar, y en un circuito con frustradas eso es cada vuelta: en La Gomera la
+ * instructora dijo «mirá adelante: hay otro avión cerca» cinco veces, por el
+ * mismo avión dando las mismas vueltas. La caja lo canta cada vez, que es lo
+ * que hace una de verdad; lo que se explica en casa va con la regla de la
+ * información de tráfico: se rearma cuando el otro se aleja de verdad o
+ * aterriza. Es lo que hace `vigilarElTrafico` en `game.ts`: pregunta
+ * `yaContados` antes de dar el aviso por contado.
+ */
+describe("el aviso del TCAS, explicado una vez por pasada", () => {
+  it("dos circuitos que se cruzan una y otra vez: muchos avisos, una explicación", () => {
+    const tcas = new Tcas();
+    const info = new InformacionDeTrafico();
+    const R = 2000;
+    const V = 40;
+    const ALTO = 600;
+    let avisos = 0;
+    let explicadas = 0;
+    let informadas = 0;
+    for (let t = 0; t < 1800; t += 0.5) {
+      // Vos en tu circuito, el otro en el mismo al revés: se cruzan dos veces
+      // por vuelta, de frente y a la misma altura.
+      const a = (V / R) * t;
+      const yo = { x: R * Math.cos(a), z: R * Math.sin(a) };
+      const rumbo = ((Math.atan2(-Math.sin(a), -Math.cos(a)) * 180) / Math.PI + 360) % 360;
+      const b = -a + Math.PI / 3;
+      const otro: Intruso = {
+        id: "circuito:EC-ABC",
+        x: R * Math.cos(b),
+        y: ALTO + 20,
+        z: R * Math.sin(b),
+      };
+      for (const aviso of tcas.paso(
+        0.5,
+        "TCAS II",
+        {
+          x: yo.x,
+          y: ALTO,
+          z: yo.z,
+          sobreElSuelo: ALTO,
+          rumbo,
+          pantalla: true,
+          terrenoAvisando: false,
+        },
+        [otro],
+      )) {
+        avisos++;
+        if (!info.yaContados.has(aviso.id)) explicadas++;
+        info.darPorContado(aviso.id);
+      }
+      const dada = info.paso(
+        0.5,
+        {
+          x: yo.x,
+          y: ALTO,
+          z: yo.z,
+          rumbo,
+          sobreElSuelo: ALTO,
+          enElSuelo: false,
+          callado: false,
+        },
+        [otro],
+      );
+      if (dada) informadas++;
+    }
+    // El instrumento ve el caso: el TCAS avisa muchas veces por el mismo.
+    expect(avisos).toBeGreaterThan(4);
+    // Y en casa se cuenta una vez, por la radio o con el aviso.
+    expect(explicadas + informadas).toBe(1);
+  });
+
+  it("y si se aleja de verdad y vuelve, es otra pasada y se vuelve a contar", () => {
+    const info = new InformacionDeTrafico();
+    info.darPorContado("circuito:EC-ABC");
+    expect(info.yaContados.has("circuito:EC-ABC")).toBe(true);
+    info.paso(0.5, YO, [al("circuito:EC-ABC", 10, 0)]);
+    expect(info.yaContados.has("circuito:EC-ABC")).toBe(false);
   });
 });

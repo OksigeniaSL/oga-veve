@@ -46,6 +46,11 @@ export interface DibujoDelTurno {
   paso(dt: number): string[];
   todaviaNo(matricula: string, clave: string): boolean;
   enFinal(matricula: string): number | null;
+  /**
+   * Quién de los dibujados está encima de la pista. Sin esto se da por que
+   * nadie. Ver `ocupanLaPista` en `world/trafico.ts`.
+   */
+  ocupanLaPista?(): string[];
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -81,6 +86,20 @@ export interface AlrededorDelTurno {
    * castellano y su fraseología. Ver `autorizarElAterrizaje` en `game.ts`.
    */
   autorizarte(): void;
+  /**
+   * **Y donde contesta un AFIS, que te diga que la pista está ocupada** si
+   * lo está al llegar a final. Un AFIS no te para: te dice lo que hay, y lo
+   * que hay es «pista ocupada». Opcional: una torre te deja en la roja sin
+   * más, y la roja ya lo dice.
+   */
+  avisarteOcupada?(): void;
+  /**
+   * **Tu permiso para aterrizar se retiró sin haberse oído**: se dejó la
+   * final con él todavía esperando turno en la boca. Sin «cleared to land»
+   * oído no hay permiso, así que tampoco luz verde: se apaga, y en la final
+   * siguiente se da otra vez, con su voz. Ver `paso`.
+   */
+  retirarteElPermiso?(): void;
   /** La torre te manda al aire; `sigue` dice si la pista sigue ocupada. */
   mandarteAlAire(alto: number, sigue: () => boolean): void;
   /**
@@ -200,6 +219,9 @@ export class TurnoDePista {
    */
   private despejeSinDecir: string | null = null;
 
+  /** Si en esta final ya se te dijo que la pista está ocupada. Ver `paso`. */
+  private ocupadaDicha = false;
+
   constructor(private readonly de: AlrededorDelTurno) {
     /*
      * **Y la frecuencia le pregunta al dibujo si el que va a hablar ya está
@@ -238,6 +260,12 @@ export class TurnoDePista {
       (this.de.radio.pistaOcupada ||
         this.de.boca.esperaAlguna(sueltaLaPista) ||
         /*
+         * **Y la que se ve**: el que despegó suelta la pista para la
+         * frecuencia al oír su «cleared for take-off», y sigue corriendo por
+         * ella un minuto. Con la verde entonces, entrabas detrás de él.
+         */
+        this.ocupadaEnElDibujo ||
+        /*
          * **Y en una sola calle, el que ya está en ella va primero.** Espera
          * en la misma doble raya que vos, así que hasta que no entra en la
          * pista y se va no hay sitio para otro. Ver `USAN_LA_CALLE`.
@@ -267,7 +295,14 @@ export class TurnoDePista {
       return "aterriza";
     if (ocupan.some((o) => o.orden === "torre.lineUpWait")) return "despega";
     if (this.conCalleUnica && this.de.radio.alguienEnLaCalle) return "despega";
+    // Encima sin tenerla es el que ya corre su despegue. Ver `pistaDeOtros`.
+    if (this.ocupadaEnElDibujo) return "despega";
     return null;
+  }
+
+  /** Si algún avión dibujado está encima de la pista. Ver `ocupanLaPista`. */
+  private get ocupadaEnElDibujo(): boolean {
+    return (this.de.trafico()?.ocupanLaPista?.().length ?? 0) > 0;
   }
 
   /**
@@ -334,8 +369,18 @@ export class TurnoDePista {
     };
     const trafico = this.de.trafico();
     let alAire: Transmision | null = null;
-    for (const m of trafico?.paso(dt) ?? [])
-      alAire = this.de.radio.seFueAlAire(m, momento) ?? alAire;
+    for (const m of trafico?.paso(dt) ?? []) {
+      const dice = this.de.radio.seFueAlAire(m, momento);
+      /*
+       * **Y al que tenía el permiso se le dice, siempre**: se oyó su «cleared
+       * to land», y lo que lo anula no puede quedarse sin decir. Va por donde
+       * va lo que le quita la pista a otro, en `mando`. Ver `seFueAlAire`.
+       */
+      if (dice?.quitaPermiso) {
+        trafico?.anuncia(m, dice.clave, false);
+        this.de.decirAOtro(dice);
+      } else alAire = dice ?? alAire;
+    }
     const dice = this.de.radio.update(dt, momento) ?? alAire;
     if (dice)
       trafico?.anuncia(
@@ -441,15 +486,28 @@ export class TurnoDePista {
     if (fase !== "final") {
       /*
        * **Y si ya se pidió y todavía espera turno en la boca, tampoco.** Con
-       * la boca ocupada el permiso aguanta doce segundos en la cola —ver
-       * `CADUCA_LA_ORDEN`—, y en una final corta eso es más que lo que queda
-       * hasta tocar: en Tenerife Norte sonó «cleared to land» con el avión ya
-       * rodando por la pista.
+       * la boca ocupada el permiso espera en la cola —ver `noSePierde`—, y
+       * en una final corta eso puede ser más que lo que queda hasta tocar: en
+       * Tenerife Norte sonó «cleared to land» con el avión ya rodando por la
+       * pista.
        */
-      if (this.enFinal) this.de.boca.retirar(esTuPermisoDeAterrizar);
+      /*
+       * **Y si se retira sin haber sonado, no se dio.** La luz se había
+       * puesto verde al darlo, y la voz esperaba turno; retirada la voz, la
+       * luz seguía verde, y al volver a final —la fase puede ir y volver en
+       * un segundo en el borde de la final— el permiso nuevo no sonaba,
+       * porque la lámpara solo habla cuando cambia. Llegando a Los Rodeos:
+       * «torre.canario.aterrizar: ya no es verdad» y se aterrizó sin oír
+       * ningún permiso. Ver `retirarteElPermiso`.
+       */
+      if (this.enFinal && this.de.boca.esperaAlguna(esTuPermisoDeAterrizar)) {
+        this.de.boca.retirar(esTuPermisoDeAterrizar);
+        this.de.retirarteElPermiso?.();
+      }
       this.enFinal = false;
       this.aterrizajeSinAutorizar = false;
       this.numeroDos = null;
+      this.ocupadaDicha = false;
       return;
     }
     this.enFinal = true;
@@ -471,10 +529,30 @@ export class TurnoDePista {
     }
     const alto = this.de.alto();
     if (this.numeroDos && this.de.radio.laTiene(this.numeroDos)) {
+      this.decirQueEstaOcupada();
       if (alto < ALTURA_DE_DECISION) {
         const delante = this.numeroDos;
         this.aterrizajeSinAutorizar = false;
         this.de.mandarteAlAire(alto, () => this.de.radio.laTiene(delante));
+      }
+      return;
+    }
+    /*
+     * **Y la pista que se ve, además de la que se oye.** Lo de arriba mira
+     * quién la tiene según la frecuencia, y eso no basta: uno que despegó
+     * sigue corriendo por ella, uno que dijo «pista libre» se la dijo a su
+     * hora de radio. Con alguien encima no se te da, ni «cleared to land» ni
+     * «pista libre»: en La Gomera sonó «pista libre» con el otro todavía en la
+     * pista, a mil noventa metros del umbral. Se espera, y si a la decisión
+     * sigue ocupada, al aire.
+     */
+    const ocupada = (): boolean => this.ocupadaEnElDibujo;
+    if (ocupada()) {
+      this.decirQueEstaOcupada();
+      if (alto < ALTURA_DE_DECISION) {
+        this.aterrizajeSinAutorizar = false;
+        this.despejeSinDecir = null;
+        this.de.mandarteAlAire(alto, ocupada);
       }
       return;
     }
@@ -522,6 +600,16 @@ export class TurnoDePista {
   }
 
   /**
+   * **Que la pista está ocupada, dicho una vez por final** y solo donde lo
+   * dice alguien: un AFIS, que informa. Ver `avisarteOcupada`.
+   */
+  private decirQueEstaOcupada(): void {
+    if (this.ocupadaDicha || this.de.privado()) return;
+    this.ocupadaDicha = true;
+    this.de.avisarteOcupada?.();
+  }
+
+  /**
    * **La lámpara cambió de color: lo que decía la de antes, si todavía espera
    * turno, se retira.** Solo lo que va a tu matrícula —`mia`, como va en la
    * clave—: lo que la torre le dice a otro en el mismo fotograma no es de tu
@@ -566,5 +654,6 @@ export class TurnoDePista {
     this.despejeSinDecir = null;
     this.aterrizajeSinAutorizar = false;
     this.enFinal = false;
+    this.ocupadaDicha = false;
   }
 }

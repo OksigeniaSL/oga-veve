@@ -323,8 +323,50 @@
     "{c5}",
     "torre.canario.solo.goAround"
   ],
-  "torre.canario.solo.verde": [
-    "torre.canario.solo.verde"
+  "torre.canario.solo.pista": [
+    "torre.canario.solo.pista"
+  ],
+  "cifra.es.0": [
+    "cifra.es.0"
+  ],
+  "cifra.es.1": [
+    "cifra.es.1"
+  ],
+  "cifra.es.2": [
+    "cifra.es.2"
+  ],
+  "cifra.es.3": [
+    "cifra.es.3"
+  ],
+  "cifra.es.4": [
+    "cifra.es.4"
+  ],
+  "cifra.es.5": [
+    "cifra.es.5"
+  ],
+  "cifra.es.6": [
+    "cifra.es.6"
+  ],
+  "cifra.es.7": [
+    "cifra.es.7"
+  ],
+  "cifra.es.8": [
+    "cifra.es.8"
+  ],
+  "cifra.es.9": [
+    "cifra.es.9"
+  ],
+  "lado.es.izquierda": [
+    "lado.es.izquierda"
+  ],
+  "lado.es.derecha": [
+    "lado.es.derecha"
+  ],
+  "lado.es.central": [
+    "lado.es.central"
+  ],
+  "torre.canario.solo.autorizadoDespegar": [
+    "torre.canario.solo.autorizadoDespegar"
   ],
   "torre.canario.verde": [
     "{c1}",
@@ -332,7 +374,46 @@
     "{c3}",
     "{c4}",
     "{c5}",
-    "torre.canario.solo.verde"
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "torre.canario.solo.autorizadoDespegar"
+  ],
+  "torre.canario.verde.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.izquierda",
+    "torre.canario.solo.autorizadoDespegar"
+  ],
+  "torre.canario.verde.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.derecha",
+    "torre.canario.solo.autorizadoDespegar"
+  ],
+  "torre.canario.verde.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.central",
+    "torre.canario.solo.autorizadoDespegar"
   ],
   "torre.canario.solo.roja": [
     "torre.canario.solo.roja"
@@ -345,8 +426,8 @@
     "{c5}",
     "torre.canario.solo.roja"
   ],
-  "torre.canario.solo.aterrizar": [
-    "torre.canario.solo.aterrizar"
+  "torre.canario.solo.autorizadoAterrizar": [
+    "torre.canario.solo.autorizadoAterrizar"
   ],
   "torre.canario.aterrizar": [
     "{c1}",
@@ -354,7 +435,46 @@
     "{c3}",
     "{c4}",
     "{c5}",
-    "torre.canario.solo.aterrizar"
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "torre.canario.solo.autorizadoAterrizar"
+  ],
+  "torre.canario.aterrizar.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.izquierda",
+    "torre.canario.solo.autorizadoAterrizar"
+  ],
+  "torre.canario.aterrizar.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.derecha",
+    "torre.canario.solo.autorizadoAterrizar"
+  ],
+  "torre.canario.aterrizar.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pista",
+    "{p1}",
+    "{p2}",
+    "lado.es.central",
+    "torre.canario.solo.autorizadoAterrizar"
   ],
   "torre.canario.destino": [
     "{c1}",
