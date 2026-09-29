@@ -1806,7 +1806,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * fotos de lejos con `pintor`. Ver `world/bandadas-dibujo.ts`.
      */
     pintarLasAvesCon: (camara: Parameters<Game["dibujoDeBandadas"]["pintar"]>[2]) =>
-      juego.dibujoDeBandadas.pintar(juego.bandadas, juego.relojDeLasAves, camara),
+      juego.dibujoDeBandadas.pintar(
+        juego.bandadas,
+        juego.relojDeLasAves,
+        camara,
+        juego.renderer.domElement.height,
+      ),
     /** Termina el vuelo ahora mismo, para poder mirar su pantalla. */
     acabar: () => juego.terminarElVuelo(),
     /** Y la traza de por dónde ha ido, en coordenadas del fichero. */

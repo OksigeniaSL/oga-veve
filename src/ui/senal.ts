@@ -904,26 +904,40 @@ const CALOR = icono(`
 `);
 
 /**
- * **Aves**: tres pájaros como los dibuja un niño, la «m» abierta que en
- * cualquier parte del mundo quiere decir un ave volando. Es lo que dice la
- * torre cuando avisa de una bandada en la final. Ver `flight/aviso-de-aves.ts`.
+ * Una gaviota de dibujo, rellena: las dos alas en arco que se juntan en el
+ * cuerpo. Es la «m» con la que se pinta un ave volando en cualquier parte del
+ * mundo, pero con cuerpo: hecha de trazo fino, a este tamaño se leía como
+ * olas.
+ */
+const gaviota = (cx: number, cy: number, ancho: number): string => {
+  const a = ancho / 2;
+  const alto = ancho * 0.36;
+  return `<path d="M${cx - a} ${cy + alto * 0.35}
+    Q${cx - a * 0.5} ${cy - alto} ${cx} ${cy}
+    Q${cx + a * 0.5} ${cy - alto} ${cx + a} ${cy + alto * 0.35}
+    Q${cx + a * 0.5} ${cy - alto * 0.25} ${cx} ${cy + alto * 0.55}
+    Q${cx - a * 0.5} ${cy - alto * 0.25} ${cx - a} ${cy + alto * 0.35} Z" />`;
+};
+
+/**
+ * **Aves**: tres gaviotas de distinto tamaño, que es lo que dice la torre
+ * cuando avisa de una bandada en la final. Ver `flight/aviso-de-aves.ts`.
  */
 const AVES = icono(`
-  <path d="M2.4 11.6 q2.3 -3.1 4.6 0 q2.3 -3.1 4.6 0 M12.6 6.4 q2.1 -2.8 4.2 0 q2.1 -2.8 4.2 0
-           M8.6 18.4 q2.1 -2.8 4.2 0 q2.1 -2.8 4.2 0"
-        fill="none" stroke="currentColor" stroke-width="2.1"
-        stroke-linecap="round" stroke-linejoin="round" />
+  ${gaviota(7, 12, 10)}
+  ${gaviota(17, 7.5, 8)}
+  ${gaviota(15.5, 18.5, 7)}
 `);
 
 /**
  * **Aves de frente: subí.** Las aves abajo y la flecha que sube, que es la
- * maniobra entera: el ave asustada se deja caer, así que se pasa por encima.
- * Es la misma flecha del «tirá», y a propósito: es lo mismo que se hace.
+ * maniobra entera: el ave asustada se tira hacia abajo, así que se pasa por
+ * encima. Es la misma flecha del «tirá», y a propósito: es lo mismo que se
+ * hace.
  */
 const AVES_SUBI = icono(`
-  <path d="M1.8 14.6 q2 -2.7 4 0 q2 -2.7 4 0 M5 20.6 q1.8 -2.4 3.6 0 q1.8 -2.4 3.6 0"
-        fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round" />
+  ${gaviota(6.5, 14, 9)}
+  ${gaviota(9.5, 20, 7)}
   <path d="M18.4 20.4 V3.8 M15.2 7.2 L18.4 3.4 L21.6 7.2" fill="none"
         stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
         stroke-linejoin="round" />

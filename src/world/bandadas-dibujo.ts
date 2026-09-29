@@ -45,18 +45,25 @@ import { giroDelModelo } from "./rumbo";
 import type { Bandadas, EstadoDeAve } from "./bandadas";
 
 /**
- * **A cuántas envergaduras un ave mide un píxel**, más o menos.
+ * **Hasta cuántas envergaduras se dibuja un ave**, y lo más pequeña que sale.
  *
- * Con sesenta grados de campo en una pantalla de 720 líneas, un radián son
- * unos setecientos píxeles: un ave de un metro a novecientos metros es un
- * píxel y poco. Más lejos no se dibuja — un triángulo más pequeño que un
- * píxel no se ve, parpadea—.
+ * El ojo separa un minuto de arco, tres diezmilésimas de radián: una gaviota
+ * de metro y medio se ve a más de cuatro kilómetros. Un píxel de una pantalla
+ * de 720 líneas con sesenta grados de campo son quince diezmilésimas, cinco
+ * veces más grueso. Dibujada a su tamaño, esa gaviota a un kilómetro mide
+ * medio píxel y **no sale**: la pantalla se comería lo que un piloto sí vería.
+ *
+ * Así que de lejos no se dibuja nunca más pequeña de `PIXELES_COMO_POCO`, que
+ * es lo menos que una pantalla necesita para enseñar un punto que se mueve, y
+ * se deja de dibujar a mil seiscientas envergaduras —dos kilómetros largos una
+ * gaviota—, bastante antes de donde el ojo la perdería. De cerca, a su tamaño.
  */
-const PIXEL_POR_ENVERGADURA = 900;
+const ALCANCE_POR_ENVERGADURA = 1600;
+const PIXELES_COMO_POCO = 2;
 
 /** Y nunca más cerca de esto ni más lejos de aquello, m. */
-const ALCANCE_MINIMO = 350;
-const ALCANCE_MAXIMO = 2400;
+const ALCANCE_MINIMO = 500;
+const ALCANCE_MAXIMO = 2600;
 
 /**
  * Hasta dónde se dibuja el cuerpo entero, en envergaduras. A cien un ave mide
@@ -73,7 +80,7 @@ const CABEN_LEJOS = 1536;
 export function alcanceDeUnAve(envergadura: number): number {
   return Math.min(
     ALCANCE_MAXIMO,
-    Math.max(ALCANCE_MINIMO, envergadura * PIXEL_POR_ENVERGADURA),
+    Math.max(ALCANCE_MINIMO, envergadura * ALCANCE_POR_ENVERGADURA),
   );
 }
 
@@ -259,8 +266,16 @@ export class DibujoDeBandadas {
    * haya que ir avanzando, así que con el reloj acelerado no hay que hacerla
    * ocho veces.
    */
-  pintar(bandadas: Bandadas, t: number, camara: Camera): void {
+  pintar(
+    bandadas: Bandadas,
+    t: number,
+    camara: Camera,
+    /** Alto del lienzo en píxeles, para saber cuánto mide un píxel. */
+    alto = 720,
+  ): void {
     this.reloj.value = t;
+    const campo = (camara as { fov?: number }).fov ?? 60;
+    const pixelesPorRadian = alto / (2 * Math.tan(((campo * Math.PI) / 180) / 2));
     camara.updateMatrixWorld();
     _vista.multiplyMatrices(camara.projectionMatrix, camara.matrixWorldInverse);
     _frustum.setFromProjectionMatrix(_vista);
@@ -288,10 +303,15 @@ export class DibujoDeBandadas {
         if (n >= (deCerca ? CABEN_CERCA : CABEN_LEJOS)) continue;
         _e.set(a.cabeceo, giroDelModelo(a.rumbo), -a.alabeo, "YXZ");
         _q.setFromEuler(_e);
+        // Nunca más pequeña de dos píxeles: ver `PIXELES_COMO_POCO`.
+        const escala = Math.max(
+          1,
+          (PIXELES_COMO_POCO * di) / (pixelesPorRadian * b.especie.envergadura),
+        );
         _s.set(
-          b.especie.envergadura,
-          b.especie.envergadura,
-          b.especie.largo / 0.6,
+          b.especie.envergadura * escala,
+          b.especie.envergadura * escala,
+          (b.especie.largo / 0.6) * escala,
         );
         _m.compose(_p.set(a.x, a.y, a.z), _q, _s);
         destino.malla.setMatrixAt(n, _m);

@@ -51,6 +51,7 @@ import {
   DICE_LA_TORRE,
   DICE_UN_AFIS,
   enUnAfis,
+  esElAvisoDeAves,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
@@ -1534,6 +1535,14 @@ export class Game {
         this.instructor.decir(t("vuelo.aves.porQueSubir"), "vuelo.aves.porQueSubir");
       }
     }
+    /*
+     * **Y lo que dijo la torre se retira cuando ya no es verdad**: fuera de
+     * la final, en el suelo o con la bandada ya espantada detrás. Lo que ya
+     * está sonando se deja acabar. Ver `esElAvisoDeAves` en `audio/torre.ts`.
+     */
+    const siguenDelante = deLaFinal.some((b) => this.bandadas.sustoDe(b.id) === null);
+    if (s.onGround || this.faseDeAhora !== "final" || !siguenDelante)
+      BOCA.retirar((c) => esElAvisoDeAves(c));
     // Las de la final que ya se espantaron se van: a la vuelta, otra final.
     this.bandadas.quitar((b) => {
       if (!b.enFinal) return false;
@@ -1597,7 +1606,12 @@ export class Game {
     const yo = this.miIndicativo;
     const texto = `${yo.dicho}, ${aviso.texto}`;
     const clave = comoSeDiceAqui("torre.aves", habla);
-    this.torre.decir(texto, clave, "normal", {
+    /*
+     * Con el peso de lo que la torre te dice a ti: un comentario no lo echa
+     * de la cola. Y sin reloj: espera a que se libre el canal y lo retira
+     * `vigilarLasAves` si deja de ser verdad. Ver `esElAvisoDeAves`.
+     */
+    this.torre.decir(texto, clave, "mando", {
       ...rellenoDe(yo),
       altura: aviso.altura,
     });
@@ -11199,7 +11213,12 @@ export class Game {
      * pintarlas una. Y con la cámara ya puesta, que es la que decide cuáles
      * se ven. Ver `world/bandadas-dibujo.ts`.
      */
-    this.dibujoDeBandadas.pintar(this.bandadas, this.relojDeRuta, this.camera);
+    this.dibujoDeBandadas.pintar(
+      this.bandadas,
+      this.relojDeRuta,
+      this.camera,
+      this.renderer.domElement.height,
+    );
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
   }
