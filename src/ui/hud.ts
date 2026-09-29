@@ -3186,10 +3186,10 @@ export class Hud {
      * Qué dice la luz roja cuando no es la del punto de espera.
      *
      * La roja nació en tierra, mirándola desde el punto de espera, y por eso
-     * dice «esperá acá». La orden de irse al aire la enciende **en el aire**,
-     * y ahí «esperá acá» no quiere decir nada: se leía volando sobre unos
-     * cerros, con la pista fuera de la pantalla. En el aire no se espera: se
-     * sube y se vuelve a probar.
+     * dice «mantenga fuera de pista». La orden de irse al aire la enciende
+     * **en el aire**, y ahí esa orden no quiere decir nada: se leía volando
+     * sobre unos cerros, con la pista fuera de la pantalla. En el aire no se
+     * espera: se sube y se vuelve a probar.
      */
     rojaDice: "esperar" | "alAire" = "esperar",
     /**
@@ -3199,11 +3199,18 @@ export class Hud {
      */
     indicativo = "",
     /**
-     * Si el avión está en el aire: ahí la verde es «autorizado a aterrizar».
-     * Con la verde, `indicativo` llega con la pista detrás —«Kilo Papa, pista
-     * 20»—, que la autorización dice por dónde. Ver `luzDeTorre` en `game.ts`.
+     * Si el avión está en el aire: ahí la verde es «autorizado para
+     * aterrizar». Con la verde, `indicativo` llega con la pista detrás —«Kilo
+     * Papa, pista 20»—, que la autorización dice por dónde. Ver `luzDeTorre`
+     * en `game.ts`.
      */
     enElAire = false,
+    /**
+     * Y la pista de la roja del punto de espera, como está pintada: «mantenga
+     * fuera de pista 20». Va detrás de la orden y no con la matrícula, porque
+     * en la roja se nombra ahí; vacía donde el idioma no la dice.
+     */
+    pista = "",
   ): void {
     const caja = this.torre;
     if (!caja) return;
@@ -3231,15 +3238,20 @@ export class Hud {
               ) as TranslationKey,
               { indicativo },
             )
-          : luz
-            ? t(
-                comoSeDiceAqui(
-                  rojaDice === "alAire" ? "palabra.alAire" : "torre.roja",
-                  this.habla,
-                ) as TranslationKey,
-                { indicativo },
-              )
-            : "";
+          : luz === "roja" && rojaDice === "alAire"
+            ? t(comoSeDiceAqui("palabra.alAire", this.habla) as TranslationKey, {
+                indicativo,
+              })
+            : luz
+              ? [
+                  t(comoSeDiceAqui("torre.roja", this.habla) as TranslationKey, {
+                    indicativo,
+                  }),
+                  pista,
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+              : "";
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
     // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es
     // uno de cada doce niños— tiene que enterarse igual, y quien no lea

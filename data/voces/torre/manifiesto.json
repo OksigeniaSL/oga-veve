@@ -219,11 +219,14 @@
     "torre.solo.afisTraficoDespega": {
       "ms": 1160
     },
-    "torre.solo.autorizadoAterrizar": {
-      "ms": 1570
+    "torre.solo.autorizadoA": {
+      "ms": 991
     },
     "torre.solo.autorizadoDespegar": {
       "ms": 1492
+    },
+    "torre.solo.autorizadoParaAterrizar": {
+      "ms": 1571
     },
     "torre.solo.clearedLand": {
       "ms": 1015
@@ -239,9 +242,6 @@
     },
     "torre.solo.departingTraffic": {
       "ms": 1184
-    },
-    "torre.solo.destino": {
-      "ms": 872
     },
     "torre.solo.free": {
       "ms": 539
@@ -261,6 +261,9 @@
     "torre.solo.lineUpWait": {
       "ms": 1195
     },
+    "torre.solo.mantengaFuera": {
+      "ms": 1441
+    },
     "torre.solo.noReportedTraffic": {
       "ms": 1298
     },
@@ -273,95 +276,20 @@
     "torre.solo.rogerMayday": {
       "ms": 1086
     },
-    "torre.solo.roja": {
-      "ms": 812
-    },
     "torre.solo.runway": {
       "ms": 556
     },
     "torre.solo.runwayInUse": {
       "ms": 1086
     },
-    "torre.solo.subir.10": {
-      "ms": 1387
-    },
-    "torre.solo.subir.11": {
-      "ms": 1308
-    },
-    "torre.solo.subir.12": {
-      "ms": 1274
-    },
-    "torre.solo.subir.13": {
-      "ms": 1478
-    },
-    "torre.solo.subir.14": {
-      "ms": 1482
-    },
-    "torre.solo.subir.15": {
-      "ms": 1398
-    },
-    "torre.solo.subir.16": {
-      "ms": 1617
-    },
-    "torre.solo.subir.17": {
-      "ms": 1558
-    },
-    "torre.solo.subir.18": {
-      "ms": 1818
-    },
-    "torre.solo.subir.19": {
-      "ms": 1587
-    },
-    "torre.solo.subir.20": {
-      "ms": 1317
-    },
-    "torre.solo.subir.21": {
-      "ms": 1484
-    },
-    "torre.solo.subir.22": {
-      "ms": 1539
-    },
-    "torre.solo.subir.23": {
-      "ms": 1631
-    },
-    "torre.solo.subir.24": {
-      "ms": 1711
-    },
-    "torre.solo.subir.25": {
-      "ms": 1678
-    },
-    "torre.solo.subir.26": {
-      "ms": 1694
-    },
-    "torre.solo.subir.27": {
-      "ms": 1581
-    },
-    "torre.solo.subir.28": {
-      "ms": 1436
-    },
-    "torre.solo.subir.29": {
-      "ms": 1724
+    "torre.solo.subir.2": {
+      "ms": 1323
     },
     "torre.solo.subir.3": {
-      "ms": 1377
+      "ms": 1360
     },
-    "torre.solo.subir.4": {
-      "ms": 1316
-    },
-    "torre.solo.subir.5": {
-      "ms": 1437
-    },
-    "torre.solo.subir.6": {
-      "ms": 1288
-    },
-    "torre.solo.subir.7": {
-      "ms": 1343
-    },
-    "torre.solo.subir.8": {
-      "ms": 1336
-    },
-    "torre.solo.subir.9": {
-      "ms": 1308
+    "torre.solo.subirNivel": {
+      "ms": 1445
     },
     "torre.solo.vacateNext": {
       "ms": 1388
@@ -895,19 +823,48 @@
       "lado.es.central",
       "torre.solo.autorizadoDespegar"
     ],
-    "torre.solo.roja": [
-      "torre.solo.roja"
-    ],
     "torre.roja": [
       "{c1}",
       "{c2}",
       "{c3}",
       "{c4}",
       "{c5}",
-      "torre.solo.roja"
+      "torre.solo.mantengaFuera",
+      "{p1}",
+      "{p2}"
     ],
-    "torre.solo.autorizadoAterrizar": [
-      "torre.solo.autorizadoAterrizar"
+    "torre.roja.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.mantengaFuera",
+      "{p1}",
+      "{p2}",
+      "lado.es.izquierda"
+    ],
+    "torre.roja.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.mantengaFuera",
+      "{p1}",
+      "{p2}",
+      "lado.es.derecha"
+    ],
+    "torre.roja.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.mantengaFuera",
+      "{p1}",
+      "{p2}",
+      "lado.es.central"
     ],
     "torre.aterrizar": [
       "{c1}",
@@ -918,7 +875,7 @@
       "torre.solo.pista",
       "{p1}",
       "{p2}",
-      "torre.solo.autorizadoAterrizar"
+      "torre.solo.autorizadoParaAterrizar"
     ],
     "torre.aterrizar.L": [
       "{c1}",
@@ -930,7 +887,7 @@
       "{p1}",
       "{p2}",
       "lado.es.izquierda",
-      "torre.solo.autorizadoAterrizar"
+      "torre.solo.autorizadoParaAterrizar"
     ],
     "torre.aterrizar.R": [
       "{c1}",
@@ -942,7 +899,7 @@
       "{p1}",
       "{p2}",
       "lado.es.derecha",
-      "torre.solo.autorizadoAterrizar"
+      "torre.solo.autorizadoParaAterrizar"
     ],
     "torre.aterrizar.C": [
       "{c1}",
@@ -954,7 +911,7 @@
       "{p1}",
       "{p2}",
       "lado.es.central",
-      "torre.solo.autorizadoAterrizar"
+      "torre.solo.autorizadoParaAterrizar"
     ],
     "torre.destino": [
       "{c1}",
@@ -962,7 +919,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
-      "torre.solo.destino",
+      "torre.solo.autorizadoA",
       "{destino}"
     ],
     "torre.clearedTo": [
@@ -1387,6 +1344,15 @@
       "{c5}",
       "{subir}"
     ],
+    "torre.solo.subir.2": [
+      "torre.solo.subir.2"
+    ],
+    "torre.solo.subir.3": [
+      "torre.solo.subir.3"
+    ],
+    "torre.solo.subirNivel": [
+      "torre.solo.subirNivel"
+    ],
     "torre.climbTo": [
       "{c1}",
       "{c2}",
@@ -1395,87 +1361,6 @@
       "{c5}",
       "torre.solo.climbTo",
       "{altura}"
-    ],
-    "torre.solo.subir.3": [
-      "torre.solo.subir.3"
-    ],
-    "torre.solo.subir.4": [
-      "torre.solo.subir.4"
-    ],
-    "torre.solo.subir.5": [
-      "torre.solo.subir.5"
-    ],
-    "torre.solo.subir.6": [
-      "torre.solo.subir.6"
-    ],
-    "torre.solo.subir.7": [
-      "torre.solo.subir.7"
-    ],
-    "torre.solo.subir.8": [
-      "torre.solo.subir.8"
-    ],
-    "torre.solo.subir.9": [
-      "torre.solo.subir.9"
-    ],
-    "torre.solo.subir.10": [
-      "torre.solo.subir.10"
-    ],
-    "torre.solo.subir.11": [
-      "torre.solo.subir.11"
-    ],
-    "torre.solo.subir.12": [
-      "torre.solo.subir.12"
-    ],
-    "torre.solo.subir.13": [
-      "torre.solo.subir.13"
-    ],
-    "torre.solo.subir.14": [
-      "torre.solo.subir.14"
-    ],
-    "torre.solo.subir.15": [
-      "torre.solo.subir.15"
-    ],
-    "torre.solo.subir.16": [
-      "torre.solo.subir.16"
-    ],
-    "torre.solo.subir.17": [
-      "torre.solo.subir.17"
-    ],
-    "torre.solo.subir.18": [
-      "torre.solo.subir.18"
-    ],
-    "torre.solo.subir.19": [
-      "torre.solo.subir.19"
-    ],
-    "torre.solo.subir.20": [
-      "torre.solo.subir.20"
-    ],
-    "torre.solo.subir.21": [
-      "torre.solo.subir.21"
-    ],
-    "torre.solo.subir.22": [
-      "torre.solo.subir.22"
-    ],
-    "torre.solo.subir.23": [
-      "torre.solo.subir.23"
-    ],
-    "torre.solo.subir.24": [
-      "torre.solo.subir.24"
-    ],
-    "torre.solo.subir.25": [
-      "torre.solo.subir.25"
-    ],
-    "torre.solo.subir.26": [
-      "torre.solo.subir.26"
-    ],
-    "torre.solo.subir.27": [
-      "torre.solo.subir.27"
-    ],
-    "torre.solo.subir.28": [
-      "torre.solo.subir.28"
-    ],
-    "torre.solo.subir.29": [
-      "torre.solo.subir.29"
     ],
     "altura.nivel": [
       "altura.nivel"

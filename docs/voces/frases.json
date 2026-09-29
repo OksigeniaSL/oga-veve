@@ -3522,6 +3522,20 @@
     "para": "la tripulación de cabina, por megafonía"
   },
   {
+    "id": "torre.canario.solo.subirNivel",
+    "voz": "torre-canarias",
+    "idioma": "es-PY",
+    "texto": "suba a nivel de vuelo",
+    "para": "la torre de Canarias, que no vosea"
+  },
+  {
+    "id": "torre.solo.subirNivel",
+    "voz": "torre",
+    "idioma": "es-PY",
+    "texto": "ascienda a nivel de vuelo",
+    "para": "la lámpara de la torre, dicha en casa"
+  },
+  {
     "id": "cabina.v1",
     "voz": "cabina",
     "idioma": "en",
@@ -4894,11 +4908,25 @@
     "para": "la lámpara verde en el punto de espera: autorizado a despegar"
   },
   {
-    "id": "torre.solo.autorizadoAterrizar",
+    "id": "torre.solo.autorizadoParaAterrizar",
     "voz": "torre",
     "idioma": "es",
-    "texto": "autorizado a aterrizar",
-    "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
+    "texto": "autorizado para aterrizar",
+    "para": "la lámpara verde con el avión en el aire: autorizado para aterrizar"
+  },
+  {
+    "id": "torre.solo.mantengaFuera",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "mantenga fuera de pista",
+    "para": "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista"
+  },
+  {
+    "id": "torre.solo.autorizadoA",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "autorizado a",
+    "para": "a dónde se va, antes de rodar; el campo va detrás"
   },
   {
     "id": "cifra.es.0",
@@ -5006,11 +5034,25 @@
     "para": "la lámpara verde en el punto de espera: autorizado a despegar"
   },
   {
-    "id": "torre.canario.solo.autorizadoAterrizar",
+    "id": "torre.canario.solo.autorizadoParaAterrizar",
     "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "autorizado a aterrizar",
-    "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
+    "texto": "autorizado para aterrizar",
+    "para": "la lámpara verde con el avión en el aire: autorizado para aterrizar"
+  },
+  {
+    "id": "torre.canario.solo.mantengaFuera",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "mantenga fuera de pista",
+    "para": "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista"
+  },
+  {
+    "id": "torre.canario.solo.autorizadoA",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "autorizado a",
+    "para": "a dónde se va, antes de rodar; el campo va detrás"
   },
   {
     "id": "cifra.es.0",
@@ -5102,20 +5144,6 @@
     "idioma": "es",
     "texto": "central",
     "para": "el lado de la pista, donde hay dos paralelas"
-  },
-  {
-    "id": "torre.solo.destino",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "podés volar a",
-    "para": "a dónde se va, antes de rodar; el campo va detrás"
-  },
-  {
-    "id": "torre.canario.solo.destino",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "puedes volar a",
-    "para": "a dónde se va, antes de rodar; el campo va detrás"
   },
   {
     "id": "torre.solo.afisLibre",
@@ -6756,381 +6784,52 @@
     "para": "la temperatura del destino, bajo cero"
   },
   {
+    "id": "torre.solo.subir.2",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "ascienda a dos mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
+  },
+  {
     "id": "torre.solo.subir.3",
     "voz": "torre",
     "idioma": "es",
-    "texto": "subí a tres mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
+    "texto": "ascienda a tres mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
   },
   {
-    "id": "torre.solo.subir.4",
-    "voz": "torre",
+    "id": "torre.canario.solo.subir.2",
+    "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "subí a cuatro mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.5",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a cinco mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.6",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a seis mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.7",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a siete mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.8",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a ocho mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.9",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a nueve mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.10",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a diez mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.11",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a once mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.12",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a doce mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.13",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a trece mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.14",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a catorce mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.15",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a quince mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.16",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a dieciséis mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.17",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a diecisiete mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.18",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a dieciocho mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.19",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a diecinueve mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.20",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veinte mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.21",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintiún mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.22",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintidós mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.23",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintitrés mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.24",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veinticuatro mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.25",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veinticinco mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.26",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintiséis mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.27",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintisiete mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.28",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintiocho mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.solo.subir.29",
-    "voz": "torre",
-    "idioma": "es",
-    "texto": "subí a veintinueve mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
+    "texto": "suba a dos mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
   },
   {
     "id": "torre.canario.solo.subir.3",
     "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "sube a tres mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
+    "texto": "suba a tres mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
   },
   {
     "id": "torre.canario.solo.subir.4",
     "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "sube a cuatro mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
+    "texto": "suba a cuatro mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
   },
   {
     "id": "torre.canario.solo.subir.5",
     "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "sube a cinco mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
+    "texto": "suba a cinco mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
   },
   {
     "id": "torre.canario.solo.subir.6",
     "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "sube a seis mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.7",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a siete mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.8",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a ocho mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.9",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a nueve mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.10",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a diez mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.11",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a once mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.12",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a doce mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.13",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a trece mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.14",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a catorce mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.15",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a quince mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.16",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a dieciséis mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.17",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a diecisiete mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.18",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a dieciocho mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.19",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a diecinueve mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.20",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veinte mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.21",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintiún mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.22",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintidós mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.23",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintitrés mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.24",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veinticuatro mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.25",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veinticinco mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.26",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintiséis mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.27",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintisiete mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.28",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintiocho mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
-  },
-  {
-    "id": "torre.canario.solo.subir.29",
-    "voz": "torre-canarias",
-    "idioma": "es",
-    "texto": "sube a veintinueve mil pies",
-    "para": "la altura que autoriza el control, dicha en casa"
+    "texto": "suba a seis mil pies",
+    "para": "la altura que autoriza el control, en pies por debajo de la transición"
   }
 ]

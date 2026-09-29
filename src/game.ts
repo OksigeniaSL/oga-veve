@@ -650,10 +650,10 @@ import {
 } from "./flight/altitud-seleccionada";
 import {
   AutorizacionDeSubida,
+  alturaEnCastellano,
   alturaEnRadio,
   altitudDeTransicion,
   escalonesDeSubida,
-  piezaDeSubirEnCasa,
 } from "./flight/autorizacion-de-altitud";
 import { nivelMasTranquilo, ESPERA_CON_BACHES } from "./flight/nivel-tranquilo";
 import { MARGENES } from "./flight/minimos";
@@ -5792,7 +5792,7 @@ export class Game {
             (campo.pista.heading * Math.PI) / 180,
           );
         } else {
-          // Roja, pero la del aire: «¡al aire!», no «esperá acá». Ver
+          // Roja, pero la del aire: «¡al aire!», no «mantenga fuera». Ver
           // `Hud.setLuzDeTorre`.
           this.luzDeTorre("roja", "alAire");
         }
@@ -6231,8 +6231,9 @@ export class Game {
    * se recibe de verdad, con el avión todavía en su puesto y antes de pedir
    * rodaje. Y como la lámpara, en dos capas:
    *
-   * - **En castellano del sitio, en los cuatro peldaños**: «podés volar a
-   *   Encarnación». Es lo que entiende quien tiene cuatro años.
+   * - **En castellano, en los cuatro peldaños**: «autorizado a
+   *   Encarnación», que es como lo dice una torre en castellano. Lo que no se
+   *   entienda a los cuatro años lo cuenta la instructora, no la torre.
    * - **Y detrás, en fraseología, de Taguató para arriba** y solo en los
    *   aviones de línea. «Cleared to» es la autorización de un plan
    *   instrumental, y una avioneta que va de isla en isla con la vista no la
@@ -6247,7 +6248,7 @@ export class Game {
     this.rutaAutorizada = ruta;
     if (this.vecinos.length === 0 || this.destinoId === this.salidaId) return;
     /*
-     * Ni en un AFIS: no autoriza, y «podés volar a» es una autorización. La
+     * Ni en un AFIS: no autoriza, y «autorizado a» es una autorización. La
      * de un vuelo instrumental la retransmite de un control, y eso aquí no se
      * vuela. Ver `Aerodrome.afis`.
      */
@@ -6353,13 +6354,21 @@ export class Game {
     const afis = this.esAfisAqui();
     /*
      * **Y la verde nombra la pista**, en castellano: «pista dos cero,
-     * autorizado a aterrizar», y lo mismo al despegar. La torre en casa
+     * autorizado para aterrizar», y lo mismo al despegar. La torre en casa
      * autorizaba sin decir por dónde, y la fraseología de verdad lo dice: es
      * el número pintado delante del morro. La de uso, o la que haya elegido
      * quien viene sin motor. Ver `pistaEnCastellano`.
+     *
+     * **Y la roja del punto de espera, también**, pero detrás: «mantenga
+     * fuera de pista dos cero». La verde la lleva delante de la orden y la
+     * roja detrás, como en la fraseología; por eso la verde va pegada a la
+     * matrícula y la roja se pone al final de la frase. Ni la una ni la otra
+     * son un hueco del diccionario: cada idioma la dice a su manera, y el
+     * guaraní no la dice. Ver `torre.roja` en `i18n/es-PY.ts`.
      */
+    const verde = luz === "verde";
     const pistaEs =
-      luz === "verde" && !afis
+      !afis && (verde || (luz === "roja" && rojaDice === "esperar"))
         ? pistaEnCastellano(
             this.cabeceraParaLaTorre ?? cabeceraEnUso(this.elCampo().escenario),
           )
@@ -6367,8 +6376,9 @@ export class Game {
     this.hud.setLuzDeTorre(
       afis ? null : luz,
       rojaDice,
-      this.conLaPista(this.miIndicativo.dicho, pistaEs, "escrito"),
+      this.conLaPista(this.miIndicativo.dicho, verde ? pistaEs : null, "escrito"),
       enElAire,
+      verde ? "" : this.laPista(pistaEs, "escrito"),
     );
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
     if (cual === this.ultimaLuzDeTorre) {
@@ -6476,7 +6486,14 @@ export class Game {
      */
     if (clave)
       this.torre.decir(
-        t(clave, { indicativo: this.conLaPista(yo.dicho, pistaEs, "dicho") }),
+        [
+          t(clave, {
+            indicativo: this.conLaPista(yo.dicho, verde ? pistaEs : null, "dicho"),
+          }),
+          verde ? "" : this.laPista(pistaEs, "dicho"),
+        ]
+          .filter(Boolean)
+          .join(" "),
         `${clave}${pistaEs?.sufijo ?? ""}`,
         urgencia,
         { ...rellenoDe(yo), ...(pistaEs?.relleno ?? {}) },
@@ -6588,11 +6605,25 @@ export class Game {
     if (!pista) return indicativo;
     const idioma = getLocale();
     if (idioma === "gug") return indicativo;
-    if (idioma === "en")
-      return `${indicativo}, runway ${
-        como === "escrito" ? pista.escrito : (pistaEnPiezas(pista.escrito)?.dicho ?? pista.escrito)
-      }`;
-    return `${indicativo}, pista ${como === "escrito" ? pista.escrito : pista.dicho}`;
+    const suya = this.laPista(pista, como);
+    return idioma === "en" ? `${indicativo}, runway ${suya}` : `${indicativo}, pista ${suya}`;
+  }
+
+  /**
+   * El número de la pista en el idioma del juego: como está pintado en la
+   * tarjeta —«20»— y con las cifras de cada idioma en la voz —«dos cero»,
+   * «two zero»—. Vacío si no hay pista, y en guaraní, que sus frases de la
+   * lámpara no la nombran. Ver `conLaPista`.
+   */
+  private laPista(
+    pista: ReturnType<typeof pistaEnCastellano>,
+    como: "dicho" | "escrito",
+  ): string {
+    if (!pista || getLocale() === "gug") return "";
+    if (como === "escrito") return pista.escrito;
+    return getLocale() === "en"
+      ? (pistaEnPiezas(pista.escrito)?.dicho ?? pista.escrito)
+      : pista.dicho;
   }
 
   /**
@@ -13732,13 +13763,13 @@ export class Game {
   }
 
   /**
-   * **El control autoriza una altura**: «subí a…», por radio.
+   * **El control autoriza una altura**: «ascienda a…», por radio.
    *
-   * Como la autorización de la ruta, en dos capas: en castellano del sitio en
-   * los cuatro peldaños, con la voz de su torre —«subí a once mil pies»,
-   * «sube a…» en Canarias—, y detrás, en fraseología, de Taguató para arriba:
-   * «climb to flight level one one zero». Ver `autorizarLaRuta` y
-   * `flight/autorizacion-de-altitud.ts`.
+   * Como la autorización de la ruta, en dos capas: en castellano en los
+   * cuatro peldaños, con la voz de su torre y la fraseología de su sitio
+   * —«ascienda a nivel de vuelo uno uno cero», «suba a…» en Canarias—, y
+   * detrás, en inglés, de Taguató para arriba: «climb to flight level one one
+   * zero». Ver `autorizarLaRuta` y `flight/autorizacion-de-altitud.ts`.
    *
    * Y la ventanilla: en los tres peldaños de abajo la pone la instructora y lo
    * cuenta; en el de cabina la pone quien vuela, que es quien la pondría en un
@@ -13750,15 +13781,29 @@ export class Game {
     const habla = hablaDe(campo.aerodrome?.id);
     const yo = this.miIndicativo;
     const clave = comoSeDiceAqui("torre.subir", habla) as TranslationKey;
-    const texto = t(clave, { indicativo: yo.dicho, pies: String(pies) });
-    const pieza = piezaDeSubirEnCasa(pies);
+    const transicion = altitudDeTransicion(oaciDe(campo));
+    const enCastellano = alturaEnCastellano(
+      pies,
+      transicion,
+      comoSeDiceAqui("torre.solo", habla),
+    );
+    const enRadio = alturaEnRadio(pies, transicion);
+    /*
+     * La altura, dicha en el idioma de la frase: la tarjeta y la voz del
+     * navegador leen lo mismo que suena grabado. El guaraní no tiene esta
+     * frase y cae al castellano, así que va con la castellana.
+     */
+    const altura =
+      getLocale() === "en"
+        ? (enRadio?.dicho ?? `${pies} feet`)
+        : (enCastellano?.dicho ?? `${pies} pies`);
+    const texto = t(clave, { indicativo: yo.dicho, altura });
     this.torre.decir(texto, clave, "mando", {
       ...rellenoDe(yo),
-      ...(pieza ? { subir: comoSeDiceAqui(pieza, habla) } : {}),
+      ...(enCastellano ? { subir: enCastellano.piezas } : {}),
     });
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
-    const enRadio = alturaEnRadio(pies, altitudDeTransicion(oaciDe(campo)));
     if (conCifras && enRadio) {
       const textoEn = `${yo.dicho}, climb to ${enRadio.dicho}`;
       this.torre.decir(textoEn, comoSeDiceAqui("torre.climbTo", habla), "mando", {

@@ -236,13 +236,26 @@ const REPARTO = [
     { lado: "ventanilla.vos.lado.derecha", que: "ventanilla.vos.ypacarai" },
   ],
   /*
-   * **Y la altura, por escalones**: el control autoriza «subí a…» en casa y
-   * «climb to…» en fraseología, en las dos torres; la instructora cuenta la
-   * ventanilla y el tono del avisador; y la comandante, el nivel de los
-   * baches. Ver `flight/autorizacion-de-altitud.ts`.
+   * **Y la altura, por escalones**: el control autoriza «ascienda a…» —«suba
+   * a…» en Canarias— y «climb to…», en las dos torres, en pies por debajo de
+   * la transición y en nivel por encima; la instructora cuenta la ventanilla
+   * y el tono del avisador; y la comandante, el nivel de los baches. Ver
+   * `flight/autorizacion-de-altitud.ts`.
    */
-  ["torre", "torre.subir", "torre", { subir: "torre.solo.subir.7" }],
-  ["torre", "torre.canario.subir", "torre-canarias", { subir: "torre.canario.solo.subir.11" }],
+  ["torre", "torre.subir", "torre", { subir: "torre.solo.subir.3" }],
+  [
+    "torre",
+    "torre.subir",
+    "torre",
+    { subir: "torre.solo.subirNivel cifra.es.0 cifra.es.7 cifra.es.0" },
+  ],
+  ["torre", "torre.canario.subir", "torre-canarias", { subir: "torre.canario.solo.subir.6" }],
+  [
+    "torre",
+    "torre.canario.subir",
+    "torre-canarias",
+    { subir: "torre.canario.solo.subirNivel cifra.es.1 cifra.es.1 cifra.es.0" },
+  ],
   ["torre", "torre.climbTo", "torre", { altura: "altura.pies.3" }],
   [
     "torre",

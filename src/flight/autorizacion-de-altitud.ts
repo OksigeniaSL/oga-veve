@@ -26,12 +26,14 @@
  *
  * En la radio, como manda la fraseología de la OACI: por debajo de la
  * transición en pies —«six thousand feet»— y por encima en nivel, cifra a
- * cifra —«flight level one one zero»—. Y en casa, para quien tiene cuatro
- * años, en miles de pies: «subí a once mil pies», que es el número que marca
- * la ventanilla.
+ * cifra —«flight level one one zero»—. Y en castellano, igual y con las
+ * palabras de cada sitio: «ascienda a tres mil pies», «suba a nivel de vuelo
+ * uno uno cero». Ver `torre.subir` en `i18n/es-PY.ts`.
  *
  * Sin three.js ni DOM: se comprueba sin volar.
  */
+
+import { CIFRAS_EN_CASTELLANO } from "./matricula";
 
 /** La altitud de transición de Canarias, pies. AIP España, ENR 1.7. */
 export const TRANSICION_CANARIAS = 6000;
@@ -72,7 +74,10 @@ const CIFRA = ["zero", "one", "two", "three", "four", "five", "six", "seven", "e
 /** Y los miles por debajo de la transición, en palabras. */
 const MILES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "niner"];
 
-/** Hasta qué miles de pies hay grabado «N thousand feet». */
+/**
+ * Qué miles de pies hay grabados: «N thousand feet», y en castellano «N mil
+ * pies» hasta la transición de cada torre, que por encima ya es nivel.
+ */
 export const MILES_EN_PIES = [2, 3, 4, 5, 6] as const;
 
 /** Una altura dicha por radio: el texto y las piezas grabadas que lo montan. */
@@ -105,19 +110,37 @@ export function alturaEnRadio(pies: number, transicion: number): AlturaEnRadio |
   return { dicho: `${MILES[miles]} thousand feet`, piezas: `altura.pies.${miles}` };
 }
 
-/** Los miles de pies que se dicen en casa, «subí a N mil pies». */
-export const MILES_EN_CASA = { desde: 3, hasta: 29 } as const;
-
 /**
- * La pieza de «subí a N mil pies» en la voz de la torre de casa, o `null` si
- * esa altura no está grabada. La de Canarias lleva su prefijo: ver
- * `comoSeDiceAqui` en `i18n/habla.ts`.
+ * **Una altura en fraseología castellana**, con las mismas reglas: nivel de
+ * vuelo por encima de la transición, cifra a cifra —«nivel de vuelo uno uno
+ * cero»—, y pies por debajo, con el millar y la palabra MIL —«tres mil
+ * pies»—. Así lo manda la DINAC (R 10, vol. II, 5.2.1.4.1: «FL 180, nivel de
+ * vuelo uno ocho cero») y así lo dice España (SERA.14035).
+ *
+ * `dicho` va sin el verbo, que es de cada torre —«ascienda a» en Paraguay,
+ * «suba a» en España—; `piezas` lo lleva, porque se graba con él: una frase
+ * entera por millar, y el principio del nivel seguido de sus tres cifras, las
+ * mismas que nombran la pista. `solo` es el prefijo de las piezas de la torre
+ * que lo dice. `null` si no está grabada: los mismos millares que en inglés.
  */
-export function piezaDeSubirEnCasa(pies: number): string | null {
+export function alturaEnCastellano(
+  pies: number,
+  transicion: number,
+  solo = "torre.solo",
+): AlturaEnRadio | null {
+  if (pies > transicion) {
+    const nivel = Math.round(pies / 100);
+    if (nivel < 10 || nivel > 999) return null;
+    const cifras = String(nivel).padStart(3, "0").split("").map(Number);
+    return {
+      dicho: `nivel de vuelo ${cifras.map((c) => CIFRAS_EN_CASTELLANO[c]).join(" ")}`,
+      piezas: [`${solo}.subirNivel`, ...cifras.map((c) => `cifra.es.${c}`)].join(" "),
+    };
+  }
   const miles = pies / 1000;
-  if (!Number.isInteger(miles) || miles < MILES_EN_CASA.desde || miles > MILES_EN_CASA.hasta)
+  if (!Number.isInteger(miles) || !(MILES_EN_PIES as readonly number[]).includes(miles))
     return null;
-  return `torre.solo.subir.${miles}`;
+  return { dicho: `${CIFRAS_EN_CASTELLANO[miles]} mil pies`, piezas: `${solo}.subir.${miles}` };
 }
 
 /**

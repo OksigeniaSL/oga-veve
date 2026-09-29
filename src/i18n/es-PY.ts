@@ -275,27 +275,52 @@ export const ES_PY = {
    * llenar. Ver `pistaEnCastellano` y `luzDeTorre` en `game.ts`.
    */
   "torre.verde": "{indicativo}, autorizado a despegar",
-  "torre.roja": "{indicativo}, esperá acá",
+  /*
+   * **La torre habla como una torre, también en castellano.** Decía «esperá
+   * acá», «podés volar a…» y «subí a…»: voseo de juego en boca de un
+   * controlador. Lo que se oye aquí es la fraseología de verdad, la del Doc
+   * 4444 de la OACI en español, que en Paraguay publica la DINAC (DINAC R
+   * 4444, cap. 12) y en España el anexo V del Real Decreto 1180/2018; quien
+   * cuenta en voz de casa qué ha dicho la torre es la instructora, en los
+   * peldaños de abajo.
+   *
+   * La roja se enciende en el punto de espera, antes de la pista: «mantenga
+   * fuera de pista (número)» —«hold short of runway»—, igual en las dos
+   * fuentes (DINAC R 4444, 12.3.4.7 y 12.3.4.8; RD 1180/2018, 1.4.8 y 1.4.9).
+   * El número lo pone `luzDeTorre` detrás, como pone el de la verde con la
+   * matrícula: así cada idioma dice lo suyo sin un hueco más que llenar.
+   */
+  "torre.roja": "{indicativo}, mantenga fuera de pista",
   /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad
-     quiere decir otra cosa: autorizado a aterrizar. Ver `luzDeTorre`. */
-  "torre.aterrizar": "{indicativo}, autorizado a aterrizar",
+     quiere decir otra cosa: autorizado para aterrizar. Con «para», que es
+     como lo escriben las tres fuentes (Doc 4444 y DINAC R 4444, 12.3.4.16;
+     RD 1180/2018, 1.4.17); «autorizado a» es el del despegue. Ver
+     `luzDeTorre`. */
+  "torre.aterrizar": "{indicativo}, autorizado para aterrizar",
   /*
    * Y a dónde se va, **antes de rodar**. En un vuelo a otro aeródromo lo
    * primero que da el control es la autorización con su límite —«cleared to
-   * Tenerife Norte»—, y es lo que dice que ese vuelo va a alguna parte. La
-   * lámpara lo dice en palabras de casa; en los peldaños de arriba va detrás
-   * en fraseología. `{destino}` es el nombre en radio del campo: ver
-   * `lugar.*` más abajo y `audio/destino-dicho.ts`.
+   * Tenerife Norte»—, y es lo que dice que ese vuelo va a alguna parte. En
+   * castellano, «(indicativo) autorizado a» y el lugar (DINAC R 4444,
+   * 12.3.2.1 b; RD 1180/2018, 1.2.1 b). `{destino}` es el nombre en radio del
+   * campo: ver `lugar.*` más abajo y `audio/destino-dicho.ts`.
    */
-  "torre.destino": "{indicativo}, podés volar a {destino}",
+  "torre.destino": "{indicativo}, autorizado a {destino}",
   /*
    * **La autorización de altitud, por escalones**: el control dice hasta
-   * dónde subir, en miles de pies, que es el número que marca la ventanilla.
-   * Los trozos `solo` son las plantillas de lo que se graba, una frase entera
-   * por cada millar. Ver `flight/autorizacion-de-altitud.ts`.
+   * dónde subir. «Ascienda a (nivel)» en Paraguay (DINAC R 4444, 6.3.2.4.2 y
+   * 12.3.1.2); por debajo de la altitud de transición en pies, con el millar
+   * y la palabra MIL —«tres mil pies»—, y por encima en nivel de vuelo, cifra
+   * a cifra —«nivel de vuelo uno uno cero»— (DINAC R 10, vol. II,
+   * 5.2.1.4.1). `{altura}` va ya dicha así: ver `alturaEnCastellano` en
+   * `flight/autorizacion-de-altitud.ts`.
+   *
+   * Los trozos `solo` son lo que se graba: una frase entera por millar en
+   * pies, y el principio del nivel, al que siguen sus tres cifras.
    */
-  "torre.subir": "{indicativo}, subí a {pies} pies",
-  "torre.solo.subir": "subí a {n} mil pies",
+  "torre.subir": "{indicativo}, ascienda a {altura}",
+  "torre.solo.subir": "ascienda a {n} mil pies",
+  "torre.solo.subirNivel": "ascienda a nivel de vuelo",
   /*
    * ── Y la misma torre, en Canarias ──────────────────────────────────────
    *
@@ -335,11 +360,18 @@ export const ES_PY = {
   "torre.canario.afisTraficoAterriza": "{indicativo}, tráfico aterrizando",
   "torre.canario.afisTraficoDespega": "{indicativo}, tráfico despegando",
   "torre.canario.verde": "{indicativo}, autorizado a despegar",
-  "torre.canario.roja": "{indicativo}, espera ahí",
-  "torre.canario.aterrizar": "{indicativo}, autorizado a aterrizar",
-  "torre.canario.destino": "{indicativo}, puedes volar a {destino}",
-  "torre.canario.subir": "{indicativo}, sube a {pies} pies",
-  "torre.canario.solo.subir": "sube a {n} mil pies",
+  "torre.canario.roja": "{indicativo}, mantenga fuera de pista",
+  "torre.canario.aterrizar": "{indicativo}, autorizado para aterrizar",
+  "torre.canario.destino": "{indicativo}, autorizado a {destino}",
+  /*
+   * **Y en España se sube con «suba»**, no con «ascienda»: es la palabra del
+   * anexo V del RD 1180/2018 —«SUBA A (nivel)», 1.1.2—. Lo que cambia aquí
+   * no es el acento, es el reglamento. Los niveles, cifra a cifra como en
+   * todas partes (SERA.14035, al que remite el RCA en 10.5.2.1.3).
+   */
+  "torre.canario.subir": "{indicativo}, suba a {altura}",
+  "torre.canario.solo.subir": "suba a {n} mil pies",
+  "torre.canario.solo.subirNivel": "suba a nivel de vuelo",
 
   /*
    * ── **Cómo se nombra cada campo por radio** ─────────────────────────────

@@ -1,3 +1,4 @@
+ascienda a nivel de vuelo
 Alfa
 Bravo
 Charlie
@@ -99,7 +100,9 @@ five thousand feet
 six thousand feet
 pista
 autorizado a despegar
-autorizado a aterrizar
+autorizado para aterrizar
+mantenga fuera de pista
+autorizado a
 cero
 uno
 dos
@@ -113,7 +116,6 @@ nueve
 izquierda
 derecha
 central
-podés volar a
 pista libre
 pista ocupada
 sin tráfico conocido
@@ -128,30 +130,5 @@ Pedro Juan Caballero
 Mariscal Estigarribia
 Ayolas
 Pilar
-subí a tres mil pies
-subí a cuatro mil pies
-subí a cinco mil pies
-subí a seis mil pies
-subí a siete mil pies
-subí a ocho mil pies
-subí a nueve mil pies
-subí a diez mil pies
-subí a once mil pies
-subí a doce mil pies
-subí a trece mil pies
-subí a catorce mil pies
-subí a quince mil pies
-subí a dieciséis mil pies
-subí a diecisiete mil pies
-subí a dieciocho mil pies
-subí a diecinueve mil pies
-subí a veinte mil pies
-subí a veintiún mil pies
-subí a veintidós mil pies
-subí a veintitrés mil pies
-subí a veinticuatro mil pies
-subí a veinticinco mil pies
-subí a veintiséis mil pies
-subí a veintisiete mil pies
-subí a veintiocho mil pies
-subí a veintinueve mil pies
+ascienda a dos mil pies
+ascienda a tres mil pies

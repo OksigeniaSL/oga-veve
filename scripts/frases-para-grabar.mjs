@@ -720,16 +720,23 @@ for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA
 /*
  * **Y la lámpara verde nombra la pista, como la fraseología de verdad**:
  * «pista dos cero, autorizado a despegar» en tierra, y en el aire, que en las
- * señales de luz de verdad es otra cosa, «autorizado a aterrizar». Decía
+ * señales de luz de verdad es otra cosa, «autorizado para aterrizar». Decía
  * «podés entrar» y «podés aterrizar» sin decir por dónde. Va troceada como
  * las demás de la lámpara —la matrícula y la pista las pone la receta—, en
  * las dos voces de torre, con sus cifras en castellano: las de la radio en
  * inglés son otras. Ver `pistaEnCastellano` en `src/flight/matricula.ts`.
+ *
+ * **Y la roja, también en fraseología**: «mantenga fuera de pista» y sus
+ * cifras detrás. Decía «esperá acá». Las palabras son las mismas en las dos
+ * torres: salen del Doc 4444 en español, que publican igual la DINAC y
+ * España. Ver `torre.roja` en `src/i18n/es-PY.ts`.
  */
 const EN_EL_AIRE =
-  "la lámpara verde con el avión en el aire: autorizado a aterrizar";
+  "la lámpara verde con el avión en el aire: autorizado para aterrizar";
 const EN_TIERRA = "la lámpara verde en el punto de espera: autorizado a despegar";
 const DE_LA_PISTA = "la pista que nombra la verde, antes de su número";
+const EN_ESPERA =
+  "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista";
 const CIFRAS_EN_CASTELLANO = [
   "cero",
   "uno",
@@ -744,8 +751,9 @@ const CIFRAS_EN_CASTELLANO = [
 ];
 const LADOS_EN_CASTELLANO = ["izquierda", "derecha", "central"];
 /*
- * Y la de a dónde se va, antes de rodar: la autorización dicha en palabras
- * de casa, con el campo en un hueco. Ver `autorizarLaRuta` en `src/game.ts`.
+ * Y la de a dónde se va, antes de rodar: la autorización con su límite,
+ * «autorizado a» y el campo en un hueco. Ver `autorizarLaRuta` en
+ * `src/game.ts`.
  */
 const A_DONDE = "a dónde se va, antes de rodar; el campo va detrás";
 /*
@@ -766,7 +774,9 @@ const LAMPARA_SOLO = [
     return [
       [voz, `${solo}.pista`, "pista", DE_LA_PISTA],
       [voz, `${solo}.autorizadoDespegar`, "autorizado a despegar", EN_TIERRA],
-      [voz, `${solo}.autorizadoAterrizar`, "autorizado a aterrizar", EN_EL_AIRE],
+      [voz, `${solo}.autorizadoParaAterrizar`, "autorizado para aterrizar", EN_EL_AIRE],
+      [voz, `${solo}.mantengaFuera`, "mantenga fuera de pista", EN_ESPERA],
+      [voz, `${solo}.autorizadoA`, "autorizado a", A_DONDE],
       ...CIFRAS_EN_CASTELLANO.map((c, n) => [
         voz,
         `cifra.es.${n}`,
@@ -781,8 +791,6 @@ const LAMPARA_SOLO = [
       ]),
     ];
   }),
-  ["torre", "torre.solo.destino", "podés volar a", A_DONDE],
-  ["torre-canarias", "torre.canario.solo.destino", "puedes volar a", A_DONDE],
   ...DE_UN_AFIS.flatMap(([id, texto, para]) => [
     ["torre", `torre.solo.${id}`, texto, para],
     ["torre-canarias", `torre.canario.solo.${id}`, texto, para],
@@ -970,30 +978,29 @@ for (const [plantilla, prefijo, numeros, para] of CON_NUMERO) {
 }
 
 /*
- * **Y la autorización de altitud dicha en casa**: «subí a once mil pies»,
- * «sube a…» en Canarias. Una frase entera por millar, como los niveles de la
- * comandante, y en la voz de cada torre. Los millares salen del propio juego:
- * ver `MILES_EN_CASA` en `src/flight/autorizacion-de-altitud.ts`.
+ * **Y la autorización de altitud en castellano**: «ascienda a tres mil pies»,
+ * «suba a…» en Canarias. Una frase entera por millar, como los niveles de la
+ * comandante, y en la voz de cada torre; pero solo **hasta la transición de
+ * esa torre**, que por encima ya no se dice en pies sino en nivel —y el
+ * principio del nivel, «ascienda a nivel de vuelo», se graba solo, por venir
+ * del diccionario sin hueco—. Los millares y las transiciones salen del
+ * propio juego: ver `alturaEnCastellano` en
+ * `src/flight/autorizacion-de-altitud.ts`.
  */
-const MILES_EN_CASA = (() => {
-  const m = /MILES_EN_CASA\s*=\s*\{\s*desde:\s*(\d+),\s*hasta:\s*(\d+)\s*\}/.exec(autorizacion);
-  if (!m) throw new Error("no encuentro MILES_EN_CASA");
-  return { desde: Number(m[1]), hasta: Number(m[2]) };
-})();
-for (const [voz, plantilla] of [
-  ["torre", "torre.solo.subir"],
-  ["torre-canarias", "torre.canario.solo.subir"],
+for (const [voz, plantilla, transicion] of [
+  ["torre", "torre.solo.subir", numeroDe(autorizacion, "TRANSICION_PARAGUAY")],
+  ["torre-canarias", "torre.canario.solo.subir", numeroDe(autorizacion, "TRANSICION_CANARIAS")],
 ]) {
   const texto = es.get(plantilla);
   if (!texto) throw new Error(`falta la plantilla ${plantilla} en es-PY`);
-  for (let n = MILES_EN_CASA.desde; n <= MILES_EN_CASA.hasta; n++) {
+  for (const n of MILES_EN_PIES.filter((m) => m * 1000 <= transicion)) {
     const conSuNumero = conNumero(texto, n);
     filas.push({
       id: `${plantilla}.${n}`,
       voz,
       idioma: "es",
       texto: conSuNumero,
-      para: "la altura que autoriza el control, dicha en casa",
+      para: "la altura que autoriza el control, en pies por debajo de la transición",
     });
     total += conSuNumero.length;
   }
