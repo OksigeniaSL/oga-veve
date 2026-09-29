@@ -9268,7 +9268,19 @@ export class Game {
         enElSuelo: this.flight.state.onGround,
         enLaPista: this.flight.state.onRunway,
         vertical: this.flight.state.verticalSpeed,
-        velocidad: this.flight.state.airspeed,
+        /*
+         * **Y rodando, la del suelo.** Iba la del aire en los dos casos, y
+         * rodar se mide contra el suelo —ver `groundSpeed` en `model.ts`: «lo
+         * que hace volar es el aire; lo que hace avanzar es el suelo»—. Con
+         * doce nudos de cara, rodar a nueve metros por segundo son quince de
+         * aire, y el juego decía «más despacio» a quien rodaba a paso: en el
+         * circuito de Los Rodeos con el JAZ 90, hasta cinco veces en la
+         * vuelta. En el aire las dos bandas de volar siguen con la del aire,
+         * que es la que sostiene el ala.
+         */
+        velocidad: this.flight.state.onGround
+          ? this.flight.state.groundSpeed
+          : this.flight.state.airspeed,
       },
       this.aircraft.approachSpeed,
       // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
