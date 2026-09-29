@@ -3239,7 +3239,7 @@ export class Hud {
               { indicativo },
             )
           : luz === "roja" && rojaDice === "alAire"
-            ? t(comoSeDiceAqui("palabra.alAire", this.habla) as TranslationKey, {
+            ? t(comoSeDiceAqui("torre.alAire", this.habla) as TranslationKey, {
                 indicativo,
               })
             : luz

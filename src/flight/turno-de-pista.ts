@@ -159,20 +159,20 @@ export const EXPLICA_LA_ESPERA = {
  *
  * - `aterrizar`: sigues en final. La verde a un avión en vuelo es «puede
  *   aterrizar», y se dice **por el mismo camino que el permiso de la final**:
- *   la lámpara, la tarjeta verde, «podés aterrizar» en los cuatro peldaños y
- *   el «cleared to land» con el viento de Taguató para arriba. Es el mismo
- *   permiso y no puede sonar a otra cosa. Ver `autorizarte`.
+ *   la lámpara, la tarjeta verde, «autorizado para aterrizar» en los cuatro
+ *   peldaños y el «cleared to land» con el viento de Taguató para arriba. Es
+ *   el mismo permiso y no puede sonar a otra cosa. Ver `autorizarte`.
  * - `volver`: **subiendo en la frustrada o ya en el circuito.** Una torre de
  *   verdad no autoriza a aterrizar a quien se está yendo al aire: le deja
  *   volver por el circuito, y la autorización llega en la final nueva, que es
  *   donde se da siempre. Ver `pedirAterrizaje`.
  * - `nada`: en tierra. Se aterrizó con la orden puesta; ya no describe nada, y
- *   ni «podés entrar» ni «cleared for take-off» —que es lo que dice la verde
- *   en tierra— tienen nada que ver con eso.
+ *   ni «autorizado a despegar» ni «cleared for take-off» —que es lo que dice
+ *   la verde en tierra— tienen nada que ver con eso.
  *
  * La de la pista ocupada es siempre `volver` en el aire: se levanta al subir o
  * al alejarse —ver `mirarSiMandanFrustrar`—, o sea yéndose. Se oía la torre
- * decir «podés aterrizar» y «cleared to land» en pleno ascenso de la
+ * decir «autorizado para aterrizar» y «cleared to land» en pleno ascenso de la
  * frustrada, en cuanto el de delante dejaba la pista.
  */
 export function alLevantarLaOrden(
@@ -518,10 +518,10 @@ export class TurnoDePista {
      * Quien levanta la orden sabe lo que toca decir —ver `alLevantarLaOrden`—
      * y aquí no se sabe. El permiso puede estar esperando turno —el despeje
      * del otro, el «pista libre» del de delante— cuando llega una orden por
-     * otro motivo, y en cuanto dejaba de esperar sonaba «podés aterrizar» con
-     * la orden de irse puesta: la verde encima de la roja. Si la orden se
-     * levanta en final, el permiso lo da quien la levanta; si no, se pide otra
-     * vez en la final nueva.
+     * otro motivo, y en cuanto dejaba de esperar sonaba «autorizado para
+     * aterrizar» con la orden de irse puesta: la verde encima de la roja. Si
+     * la orden se levanta en final, el permiso lo da quien la levanta; si no,
+     * se pide otra vez en la final nueva.
      */
     if (this.de.mandanFrustrar?.()) {
       this.aterrizajeSinAutorizar = false;

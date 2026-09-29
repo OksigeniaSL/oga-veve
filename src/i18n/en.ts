@@ -252,6 +252,8 @@ export const EN: Dictionary = {
   "torre.canario.roja": "{indicativo}, hold short of runway",
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
+  "torre.alAire": "{indicativo}, go around",
+  "torre.canario.alAire": "{indicativo}, go around",
   // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
   "torre.destino": "{indicativo}, cleared to {destino}",
   "torre.canario.destino": "{indicativo}, cleared to {destino}",
@@ -286,7 +288,6 @@ export const EN: Dictionary = {
   "palabra.volve": "Try again!",
   "palabra.aterriza": "Land!",
   "palabra.alAire": "Go around!",
-  "palabra.canario.alAire": "Go around!",
   "palabra.laPista": "Runway?",
   "palabra.cuidado": "Careful!",
   "palabra.mira": "Look!",

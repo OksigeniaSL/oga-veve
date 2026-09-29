@@ -255,6 +255,9 @@
     "torre.solo.holdShort": {
       "ms": 1366
     },
+    "torre.solo.idaAlAire": {
+      "ms": 902
+    },
     "torre.solo.landingTraffic": {
       "ms": 1013
     },
@@ -1379,6 +1382,14 @@
     ],
     "altura.pies.6": [
       "altura.pies.6"
+    ],
+    "torre.alAire": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.idaAlAire"
     ]
   }
 }

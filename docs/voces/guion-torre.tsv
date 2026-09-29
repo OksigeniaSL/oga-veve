@@ -103,32 +103,33 @@
 103	torre.solo.autorizadoParaAterrizar	autorizado para aterrizar
 104	torre.solo.mantengaFuera	mantenga fuera de pista
 105	torre.solo.autorizadoA	autorizado a
-106	cifra.es.0	cero
-107	cifra.es.1	uno
-108	cifra.es.2	dos
-109	cifra.es.3	tres
-110	cifra.es.4	cuatro
-111	cifra.es.5	cinco
-112	cifra.es.6	seis
-113	cifra.es.7	siete
-114	cifra.es.8	ocho
-115	cifra.es.9	nueve
-116	lado.es.izquierda	izquierda
-117	lado.es.derecha	derecha
-118	lado.es.central	central
-119	torre.solo.afisLibre	pista libre
-120	torre.solo.afisOcupada	pista ocupada
-121	torre.solo.afisSinTrafico	sin tráfico conocido
-122	torre.solo.afisTraficoAterriza	tráfico aterrizando
-123	torre.solo.afisTraficoDespega	tráfico despegando
-124	destino.pettirossi	Asunción
-125	destino.guarani	Guaraní
-126	destino.encarnacion	Encarnación
-127	destino.yvytu-rape	Yvytu Rape
-128	destino.concepcion	Concepción
-129	destino.pedro-juan	Pedro Juan Caballero
-130	destino.estigarribia	Mariscal Estigarribia
-131	destino.ayolas	Ayolas
-132	destino.pilar	Pilar
-133	torre.solo.subir.2	ascienda a dos mil pies
-134	torre.solo.subir.3	ascienda a tres mil pies
+106	torre.solo.idaAlAire	ida al aire
+107	cifra.es.0	cero
+108	cifra.es.1	uno
+109	cifra.es.2	dos
+110	cifra.es.3	tres
+111	cifra.es.4	cuatro
+112	cifra.es.5	cinco
+113	cifra.es.6	seis
+114	cifra.es.7	siete
+115	cifra.es.8	ocho
+116	cifra.es.9	nueve
+117	lado.es.izquierda	izquierda
+118	lado.es.derecha	derecha
+119	lado.es.central	central
+120	torre.solo.afisLibre	pista libre
+121	torre.solo.afisOcupada	pista ocupada
+122	torre.solo.afisSinTrafico	sin tráfico conocido
+123	torre.solo.afisTraficoAterriza	tráfico aterrizando
+124	torre.solo.afisTraficoDespega	tráfico despegando
+125	destino.pettirossi	Asunción
+126	destino.guarani	Guaraní
+127	destino.encarnacion	Encarnación
+128	destino.yvytu-rape	Yvytu Rape
+129	destino.concepcion	Concepción
+130	destino.pedro-juan	Pedro Juan Caballero
+131	destino.estigarribia	Mariscal Estigarribia
+132	destino.ayolas	Ayolas
+133	destino.pilar	Pilar
+134	torre.solo.subir.2	ascienda a dos mil pies
+135	torre.solo.subir.3	ascienda a tres mil pies

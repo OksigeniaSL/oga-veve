@@ -44,8 +44,8 @@ describe("la clave de cada frase", () => {
     expect(comoSeDiceAqui("torre.verde", "canario")).toBe(
       "torre.canario.verde",
     );
-    expect(comoSeDiceAqui("palabra.alAire", "canario")).toBe(
-      "palabra.canario.alAire",
+    expect(comoSeDiceAqui("torre.alAire", "canario")).toBe(
+      "torre.canario.alAire",
     );
   });
 
@@ -54,7 +54,7 @@ describe("la clave de cada frase", () => {
       "torre.verde",
       "torre.aterrizar",
       "torre.roja",
-      "palabra.alAire",
+      "torre.alAire",
     ]) {
       const clave = comoSeDiceAqui(base, "canario");
       expect(Object.keys(ES_PY)).toContain(clave);
@@ -134,7 +134,7 @@ describe("lo que se lee en la tarjeta de la torre", () => {
           "torre.verde",
           "torre.aterrizar",
           "torre.roja",
-          "palabra.alAire",
+          "torre.alAire",
         ]) {
           const clave = comoSeDiceAqui(base, habla) as TranslationKey;
           const dicho = t(clave, { indicativo: "Zulu Papa Alfa" });

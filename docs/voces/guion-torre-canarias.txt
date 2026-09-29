@@ -4,6 +4,7 @@ autorizado a despegar
 autorizado para aterrizar
 mantenga fuera de pista
 autorizado a
+motor y al aire
 cero
 uno
 dos

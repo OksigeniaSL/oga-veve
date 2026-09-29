@@ -39,7 +39,9 @@ describe("lo que dice la torre", () => {
     "torre.verde",
     "torre.roja",
     "torre.aterrizar",
-    // Y a dónde se va, en palabras de casa. Ver `autorizarLaRuta`.
+    // Y la roja en el aire, la orden de irse al aire. Ver `luzDeTorre`.
+    "torre.alAire",
+    // Y a dónde se va, con su límite. Ver `autorizarLaRuta`.
     "torre.destino",
     /*
      * Y la información de tráfico, que tampoco es una orden de la tabla: la

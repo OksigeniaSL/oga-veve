@@ -18,9 +18,9 @@
  * `i18n/habla.ts` ya lo tenía escrito: «lo que **no** cambia es el inglés
  * aeronáutico: `cleared for take-off` se dice igual en Tenerife, en Asunción y
  * en cualquier torre del mundo. Esa es media lección del juego». Las dos
- * frases en castellano que ya sonaban —«Podés entrar», «Esperá acá»— son la
- * **lámpara** hablando, que es la instrucción para quien tiene cuatro años y
- * no lee. Estas son la radio, que es el mundo.
+ * frases en castellano que ya sonaban —«autorizado a despegar», «mantenga
+ * fuera de pista»— son la **lámpara** hablando, que es la instrucción para
+ * quien tiene cuatro años y no lee. Estas son la radio, que es el mundo.
  *
  * La tabla va aquí y no dentro de `game.ts` para que una prueba pueda
  * comprobar lo único que importa: que no sobre ninguna grabación.

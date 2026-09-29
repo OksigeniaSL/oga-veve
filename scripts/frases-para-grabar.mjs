@@ -27,8 +27,9 @@
  * Uso: `node scripts/frases-para-grabar.mjs [carpeta]`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const SALIDA = process.argv[2] ?? "docs/voces";
 
@@ -737,6 +738,7 @@ const EN_TIERRA = "la lámpara verde en el punto de espera: autorizado a despega
 const DE_LA_PISTA = "la pista que nombra la verde, antes de su número";
 const EN_ESPERA =
   "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista";
+const AL_AIRE = "la lámpara roja en el aire: la orden de irse al aire";
 const CIFRAS_EN_CASTELLANO = [
   "cero",
   "uno",
@@ -777,6 +779,11 @@ const LAMPARA_SOLO = [
       [voz, `${solo}.autorizadoParaAterrizar`, "autorizado para aterrizar", EN_EL_AIRE],
       [voz, `${solo}.mantengaFuera`, "mantenga fuera de pista", EN_ESPERA],
       [voz, `${solo}.autorizadoA`, "autorizado a", A_DONDE],
+      // Y la orden de irse al aire, que cambia de palabras con el reglamento:
+      // «ida al aire» en Paraguay, «motor y al aire» en España.
+      voz === "torre"
+        ? [voz, `${solo}.idaAlAire`, "ida al aire", AL_AIRE]
+        : [voz, `${solo}.motorYAlAire`, "motor y al aire", AL_AIRE],
       ...CIFRAS_EN_CASTELLANO.map((c, n) => [
         voz,
         `cifra.es.${n}`,
@@ -1005,6 +1012,113 @@ for (const [voz, plantilla, transicion] of [
     total += conSuNumero.length;
   }
 }
+
+/*
+ * **Y lo que el juego dice sin estar en ningún grupo.**
+ *
+ * La lista se hacía solo por familias —`vuelo.*` la instructora, `torre.*` la
+ * torre— y por tablas escritas aquí, así que una clave de otra familia que
+ * acababa en una boca no la grababa nadie: la lámpara decía «¡Al aire!» con
+ * la palabra de la tarjeta, `palabra.alAire`, y donde el navegador no tiene
+ * voz la orden de irse al aire no sonaba. Y nada lo decía.
+ *
+ * Así que se mira el propio juego: cada `.decir(` del código, las claves que
+ * lleva escritas y las de las variables que le llegan —la declaración más
+ * cercana, tres saltos como mucho—. Lo que llega así y no está en la lista se
+ * añade con la voz de quien lo dice; lo que lleva hueco tiene que tener
+ * receta, y si no, se avisa. Las `palabra.*` que se pasan a `avisoCon` o a
+ * `rotulo` son el rótulo corto de la tarjeta, no algo que se diga.
+ */
+const QUIEN_DICE = { instructor: "instructor", torre: "torre", otroAvion: "otro" };
+/*
+ * Las que se montan de otras piezas. Una receta que es ella misma
+ * —`gafas.ganadas` → `gafas.ganadas`— es una grabación, y esa sí va en la
+ * lista.
+ */
+const montadas = new Set(
+  readdirSync("crudo").flatMap((v) => {
+    const donde = join("crudo", v, "recetas.json");
+    if (!existsSync(donde)) return [];
+    return Object.entries(JSON.parse(readFileSync(donde, "utf8")))
+      .filter(([clave, piezas]) => piezas.length !== 1 || piezas[0] !== clave)
+      .map(([clave]) => clave);
+  }),
+);
+const fuentes = [];
+(function recorrer(dir) {
+  for (const n of readdirSync(dir)) {
+    const p = join(dir, n);
+    if (statSync(p).isDirectory()) {
+      if (!["i18n", "dev"].includes(n)) recorrer(p);
+    } else if (p.endsWith(".ts") && !p.endsWith(".test.ts")) fuentes.push(p);
+  }
+})("src");
+/** Dónde se cierra lo que se abre en `desde`, contando paréntesis. */
+const cierre = (s, desde) => {
+  let i = desde;
+  for (let prof = 1; i < s.length && prof > 0; i++) {
+    if ("([{".includes(s[i])) prof++;
+    else if (")]}".includes(s[i])) prof--;
+  }
+  return i;
+};
+/** Las claves del diccionario escritas en un trozo, sin los rótulos cortos. */
+const clavesEn = (trozo) => {
+  let limpio = trozo;
+  for (const m of trozo.matchAll(/\b(?:avisoCon|rotuloCompuesto|rotulo)\(/g)) {
+    const dentro = trozo.slice(m.index, cierre(trozo, m.index + m[0].length));
+    limpio = limpio.replace(dentro, dentro.replace(/"palabra\.[\w.-]+"/g, '""'));
+  }
+  return [...limpio.matchAll(/"([\w.-]+)"/g)].map((m) => m[1]).filter((k) => es.has(k));
+};
+const dichas = new Map();
+for (const f of fuentes) {
+  const s = readFileSync(f, "utf8");
+  for (const m of s.matchAll(/(\w+)\.decir\(/g)) {
+    const voz = QUIEN_DICE[m[1]] ?? null;
+    const cola = [[s.slice(m.index, cierre(s, m.index + m[0].length)), m.index, 0]];
+    const vistas = new Set();
+    while (cola.length) {
+      const [trozo, pos, salto] = cola.shift();
+      for (const k of clavesEn(trozo)) if (!dichas.has(k)) dichas.set(k, { voz, f });
+      if (salto >= 3) continue;
+      for (const [, id] of trozo.matchAll(/(?<![\w."'`])([a-zA-Z_]\w*)(?![\w"'`(])/g)) {
+        if (vistas.has(id)) continue;
+        vistas.add(id);
+        const desde = Math.max(0, pos - 20000);
+        const decl = [
+          ...s.slice(desde, pos).matchAll(new RegExp(`(?:const|let)\\s+${id}(?:\\s*:[^=;]+)?\\s*=`, "g")),
+        ].at(-1);
+        if (!decl) continue;
+        const ini = desde + decl.index + decl[0].length;
+        let fin = ini;
+        for (let prof = 0; fin < s.length; fin++) {
+          if ("([{".includes(s[fin])) prof++;
+          else if (")]}".includes(s[fin])) prof--;
+          else if (s[fin] === ";" && prof <= 0) break;
+        }
+        cola.push([s.slice(ini, fin), ini, salto + 1]);
+      }
+    }
+  }
+}
+const yaEnLista = new Set(filas.map((f) => f.id));
+const sinGrupo = [];
+for (const [clave, { voz, f }] of dichas) {
+  if (yaEnLista.has(clave) || montadas.has(clave)) continue;
+  const texto = es.get(clave);
+  if (texto.includes("{") || !voz) {
+    console.log(`\n  ¡Ojo! ${clave} se dice (${f}) y no tiene ${voz ? "receta" : "voz conocida"}.`);
+    continue;
+  }
+  // La torre de Canarias tiene su voz. Ver `comoSeDiceAqui`.
+  const suya = voz === "torre" && clave.includes(".canario.") ? "torre-canarias" : voz;
+  filas.push({ id: clave, voz: suya, idioma: "es-PY", texto, para: `se dice en ${f}` });
+  total += texto.length;
+  sinGrupo.push(clave);
+}
+if (sinGrupo.length)
+  console.log(`\n  ${sinGrupo.length} se dicen sin estar en ningún grupo: ${sinGrupo.join(", ")}`);
 
 /*
  * **Y fuera lo que no se graba: lo que se monta.**

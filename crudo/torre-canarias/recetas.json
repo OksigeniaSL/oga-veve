@@ -977,5 +977,13 @@
   ],
   "altura.pies.6": [
     "altura.pies.6"
+  ],
+  "torre.canario.alAire": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.motorYAlAire"
   ]
 }

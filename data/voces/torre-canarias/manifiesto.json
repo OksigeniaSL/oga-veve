@@ -261,6 +261,9 @@
     "torre.canario.solo.mantengaFuera": {
       "ms": 1091
     },
+    "torre.canario.solo.motorYAlAire": {
+      "ms": 939
+    },
     "torre.canario.solo.noReportedTraffic": {
       "ms": 1097
     },
@@ -1391,6 +1394,14 @@
     ],
     "altura.pies.6": [
       "altura.pies.6"
+    ],
+    "torre.canario.alAire": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.motorYAlAire"
     ]
   }
 }

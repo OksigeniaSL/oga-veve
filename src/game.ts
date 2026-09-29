@@ -5792,7 +5792,7 @@ export class Game {
             (campo.pista.heading * Math.PI) / 180,
           );
         } else {
-          // Roja, pero la del aire: «¡al aire!», no «mantenga fuera». Ver
+          // Roja, pero la del aire: «ida al aire», no «mantenga fuera». Ver
           // `Hud.setLuzDeTorre`.
           this.luzDeTorre("roja", "alAire");
         }
@@ -5866,11 +5866,11 @@ export class Game {
        * **Y la verde en el aire solo si sigues en final.** La verde a un
        * avión en vuelo es «puede aterrizar», y se encendía también en pleno
        * ascenso de la frustrada, en cuanto el de delante dejaba la pista:
-       * «podés aterrizar» y «cleared to land» a quien se está yendo. Una
-       * torre de verdad te deja volver por el circuito y te autoriza en la
-       * final nueva —ver `pedirAterrizaje`—. En tierra, con la orden
-       * desobedecida, tampoco: la verde en tierra es «podés entrar». Ver
-       * `alLevantarLaOrden`.
+       * «autorizado para aterrizar» y «cleared to land» a quien se está
+       * yendo. Una torre de verdad te deja volver por el circuito y te
+       * autoriza en la final nueva —ver `pedirAterrizaje`—. En tierra, con la
+       * orden desobedecida, tampoco: la verde en tierra es «autorizado a
+       * despegar». Ver `alLevantarLaOrden`.
        */
       /*
        * **Y sin motor, en silencio.** Una orden que se levanta porque el avión
@@ -5937,10 +5937,11 @@ export class Game {
    * juega en silencio no se enteraba de nada.
    *
    * Ahora es **la verde en vuelo**, que en las señales de luz de verdad
-   * quiere decir justo eso: la lámpara, la tarjeta verde, «podés aterrizar»
-   * con tu matrícula en los cuatro peldaños y, de Taguató para arriba, el
-   * «cleared to land» con el viento delante. Lo dice la torre y nadie más:
-   * la instructora no lo repite, que un suceso es una voz. Ver `luzDeTorre`.
+   * quiere decir justo eso: la lámpara, la tarjeta verde, «autorizado para
+   * aterrizar» con tu matrícula en los cuatro peldaños y, de Taguató para
+   * arriba, el «cleared to land» con el viento delante. Lo dice la torre y
+   * nadie más: la instructora no lo repite, que un suceso es una voz. Ver
+   * `luzDeTorre`.
    *
    * La lámpara se apaga sola cuando pasa, porque en el aire no hay lámpara
    * que mirar; si mientras tanto llega una orden de irse, la luz es suya.
@@ -6444,7 +6445,7 @@ export class Game {
           ? "torre.aterrizar"
           : "torre.verde"
         : rojaDice === "alAire"
-          ? "palabra.alAire"
+          ? "torre.alAire"
           : "torre.roja";
     const clave = base
       ? (comoSeDiceAqui(
@@ -12435,8 +12436,8 @@ export class Game {
     // es lo que se mira desde el punto de espera. En el aire no hay lámpara que
     // mirar, y dejarla encendida decía algo que ya no era verdad.
     // Y en tierra de verdad: una avioneta ligera se despega del suelo todavía
-    // «alineando», y la verde en el aire es la de «podés aterrizar» — la
-    // torre la decía nada más rotar.
+    // «alineando», y la verde en el aire es la de «autorizado para
+    // aterrizar» — la torre la decía nada más rotar.
     // Y donde hay torre: en la pista de casa no hay lámpara, se mira. Ver
     // `guionSinTorre`.
     const enTierraEsperando =

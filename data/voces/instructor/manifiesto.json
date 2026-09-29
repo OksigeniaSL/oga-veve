@@ -123,6 +123,9 @@
     "fonetico.zulu": {
       "ms": 689
     },
+    "gafas.ganadas": {
+      "ms": 984
+    },
     "galon.aproximacion": {
       "ms": 1416
     },
@@ -155,6 +158,9 @@
     },
     "grado.piloto": {
       "ms": 694
+    },
+    "hud.landedShort": {
+      "ms": 3907
     },
     "matricula.asiNosLlama": {
       "ms": 1136
@@ -1595,6 +1601,12 @@
     ],
     "vuelo.masAltoQueElPlan": [
       "vuelo.masAltoQueElPlan"
+    ],
+    "hud.landedShort": [
+      "hud.landedShort"
+    ],
+    "gafas.ganadas": [
+      "gafas.ganadas"
     ]
   }
 }

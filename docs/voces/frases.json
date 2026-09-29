@@ -4929,6 +4929,13 @@
     "para": "a dónde se va, antes de rodar; el campo va detrás"
   },
   {
+    "id": "torre.solo.idaAlAire",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "ida al aire",
+    "para": "la lámpara roja en el aire: la orden de irse al aire"
+  },
+  {
     "id": "cifra.es.0",
     "voz": "torre",
     "idioma": "es",
@@ -5053,6 +5060,13 @@
     "idioma": "es",
     "texto": "autorizado a",
     "para": "a dónde se va, antes de rodar; el campo va detrás"
+  },
+  {
+    "id": "torre.canario.solo.motorYAlAire",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "motor y al aire",
+    "para": "la lámpara roja en el aire: la orden de irse al aire"
   },
   {
     "id": "cifra.es.0",
@@ -6831,5 +6845,19 @@
     "idioma": "es",
     "texto": "suba a seis mil pies",
     "para": "la altura que autoriza el control, en pies por debajo de la transición"
+  },
+  {
+    "id": "hud.landedShort",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Bajaste antes de la barra blanca: las flechas son para rodar y despegar",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "gafas.ganadas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Tus gafas de sol!",
+    "para": "se dice en src/game.ts"
   }
 ]

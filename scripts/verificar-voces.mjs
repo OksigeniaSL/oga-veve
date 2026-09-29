@@ -46,6 +46,15 @@ const REPARTO = [
    */
   ["torre", "torre.aterrizar", "torre"],
   ["torre", "torre.canario.aterrizar", "torre-canarias"],
+  /*
+   * Y la orden de irse al aire, que la decía la palabra de la tarjeta sin
+   * grabar: donde el navegador no tiene voz, no sonaba. Ver `torre.alAire`.
+   */
+  ["torre", "torre.alAire", "torre"],
+  ["torre", "torre.canario.alAire", "torre-canarias"],
+  // Y dos de la instructora que tampoco estaban en ningún grupo.
+  ["instructor", "hud.landedShort", "instructor"],
+  ["instructor", "gafas.ganadas", "instructor"],
   ["otro", "otro.enCola", "otro"],
   ["otro", "otro.pistaLibre", "otro"],
   /*

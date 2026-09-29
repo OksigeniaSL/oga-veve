@@ -298,6 +298,13 @@ export const ES_PY = {
      `luzDeTorre`. */
   "torre.aterrizar": "{indicativo}, autorizado para aterrizar",
   /*
+   * Y la roja **en el aire**: la orden de irse al aire. Era la palabra de la
+   * tarjeta, «¡Al aire!», dicha con la voz de la torre y sin grabar, así que
+   * donde el navegador no tiene voz la orden de seguridad no sonaba. Ahora es
+   * la de la fraseología: «ida al aire» (DINAC R 4444 y Doc 4444, 12.3.4.18).
+   */
+  "torre.alAire": "{indicativo}, ida al aire",
+  /*
    * Y a dónde se va, **antes de rodar**. En un vuelo a otro aeródromo lo
    * primero que da el control es la autorización con su límite —«cleared to
    * Tenerife Norte»—, y es lo que dice que ese vuelo va a alguna parte. En
@@ -362,6 +369,8 @@ export const ES_PY = {
   "torre.canario.verde": "{indicativo}, autorizado a despegar",
   "torre.canario.roja": "{indicativo}, mantenga fuera de pista",
   "torre.canario.aterrizar": "{indicativo}, autorizado para aterrizar",
+  // En España no es «ida al aire»: «motor y al aire» (RD 1180/2018, 1.4.19).
+  "torre.canario.alAire": "{indicativo}, motor y al aire",
   "torre.canario.destino": "{indicativo}, autorizado a {destino}",
   /*
    * **Y en España se sube con «suba»**, no con «ascienda»: es la palabra del
@@ -998,8 +1007,6 @@ export const ES_PY = {
   // La verde en vuelo: tu permiso para aterrizar. Ver `autorizarElAterrizaje`.
   "palabra.aterriza": "¡Aterrizá!",
   "palabra.alAire": "¡Al aire!",
-  // La de la torre canaria: la misma orden, sin vosear. Ver `i18n/habla.ts`.
-  "palabra.canario.alAire": "¡Al aire!",
   "palabra.laPista": "¿La pista?",
   "palabra.cuidado": "¡Cuidado!",
   "palabra.mira": "¡Mirá!",
