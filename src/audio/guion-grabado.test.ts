@@ -25,6 +25,9 @@ import {
   type Cielo,
 } from "./partes-de-la-comandante";
 import { productosDe, servicioPara } from "./servicio-a-bordo";
+import { loQueSeDice } from "./ventanilla";
+import type { Hito } from "../world/hitos";
+import { DESTACADOS } from "../world/lo-destacado";
 
 /*
  * El módulo de Node se pide al propio proceso, como en `cuadro-dos-vistas`:
@@ -124,5 +127,62 @@ describe("el guion de la cabina, horneado", () => {
       if (!m.piezas[cinturones]) faltan.push(`${voz}: ${cinturones}`);
     }
     expect(faltan).toEqual([]);
+  });
+});
+
+/*
+ * **Y lo que se ve por la ventanilla**, que era lo único de la megafonía que
+ * no estaba grabado: una plantilla con el nombre en un hueco, dicha por la voz
+ * del navegador. Ahora cada sitio tiene su frase, y aquí se comprueba que cada
+ * una se monta entera —el saludo, el lado en sus dos formas y el sitio— en la
+ * voz de quien la dice: la comandante con pasaje, la instructora en avioneta.
+ */
+describe("lo que se ve por la ventanilla, horneado", () => {
+  const sitio = (nombre: string, clase: Hito["clase"], clave?: string): Hito => ({
+    nombre,
+    clase,
+    x: 0,
+    z: 0,
+    ele: null,
+    ...(clave ? { clave } : {}),
+  });
+  const sitios: Hito[] = [
+    ...DESTACADOS.map((d) => sitio(d.nombre, d.clase, d.clave)),
+    sitio("un barco", "barco"),
+  ];
+
+  for (const [conPasaje, voz] of [
+    [true, "comandante"],
+    [false, "instructor"],
+  ] as const)
+    it(`cada sitio, en la voz de la ${voz}, con el lado y el saludo`, () => {
+      const m = manifiesto(voz);
+      const faltan: string[] = [];
+      const lista = conPasaje ? sitios : [...sitios, sitio("otro avión", "avion")];
+      for (const hito of lista)
+        for (const lado of ["izquierda", "derecha"] as const)
+          for (const orden of [0, 1, 2]) {
+            const dicho = loQueSeDice(
+              { hito, lado, distancia: 10_000, desdeElMorro: 60 },
+              conPasaje,
+              orden,
+            );
+            if (!dicho) {
+              faltan.push(`${voz}: ${hito.nombre} sin frase`);
+              continue;
+            }
+            if (!recetaDe(m, dicho.clave, dicho.relleno))
+              faltan.push(
+                `${voz}: ${hito.nombre} · ${Object.values(dicho.relleno).join(" + ")}`,
+              );
+          }
+      expect(faltan).toEqual([]);
+    });
+
+  it("y la comandante no le señala otro avión al pasaje", () => {
+    const avion = sitio("otro avión", "avion");
+    expect(
+      loQueSeDice({ hito: avion, lado: "derecha", distancia: 3000, desdeElMorro: 60 }, true, 1),
+    ).toBeNull();
   });
 });

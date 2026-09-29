@@ -574,6 +574,135 @@ export const EN: Dictionary = {
   "hito.unBarco": "a ship",
   "hito.otroAvion": "another aeroplane",
   "hito.avion.vos": "Look, on your {lado}: another aeroplane.",
+  /*
+   * What you can see out of the window, written by hand: one sentence per
+   * place, with something worth remembering. The side goes first, as a
+   * separate sentence, and the captain says hello the first time.
+   */
+  "ventanilla.saludo": "Hello again, this is your captain speaking.",
+  "ventanilla.lado.izquierda": "If you're sitting on the left, take a look out of the window.",
+  "ventanilla.lado.derecha": "If you're sitting on the right, take a look out of the window.",
+  "ventanilla.teide":
+    "That giant is Mount Teide: three thousand seven hundred and fifteen metres, the highest mountain in Spain. It's a volcano, and in winter it even wears a cap of snow.",
+  "ventanilla.canadas":
+    "At the foot of Teide lies Las Cañadas: a giant crater more than ten kilometres across. And those strangely shaped rocks are the Roques de García, carved by wind, rain and ice.",
+  "ventanilla.anaga":
+    "Those green, wrinkled mountains are Anaga, one of the oldest parts of Tenerife. They keep the laurisilva, a forest that covered southern Europe millions of years ago.",
+  "ventanilla.orotava":
+    "That wide valley running down to the sea is the Orotava Valley. It formed when a huge piece of the island slid into the ocean, hundreds of thousands of years ago.",
+  "ventanilla.gigantes":
+    "That wall of rock dropping into the sea is the Cliffs of Los Gigantes: hundreds of metres, straight down to the water. That's why they're called the Giants.",
+  "ventanilla.garajonay":
+    "That round little island is La Gomera, and the green on top is Garajonay: a forest so damp it drinks water from the clouds. It's a World Heritage Site.",
+  "ventanilla.taburiente":
+    "That's La Palma, the beautiful island. Up on the rim of the Caldera de Taburiente stands the Roque de los Muchachos, full of telescopes looking at the stars.",
+  "ventanilla.tajogaite":
+    "That dark mountain is Tajogaite, the youngest volcano in the Canary Islands: it was born in twenty twenty-one and spent almost three months pouring out lava.",
+  "ventanilla.hierro":
+    "That's El Hierro, the smallest of the seven big islands. For centuries the prime meridian ran through it: the world was measured from there.",
+  "ventanilla.nieves":
+    "High up on Gran Canaria is the Pico de las Nieves, almost two thousand metres. Centuries ago people stored the winter snow there in pits, to have ice in summer.",
+  "ventanilla.las-palmas":
+    "That city by the sea is Las Palmas de Gran Canaria, the biggest in the Canary Islands. It has a beach right in town, Las Canteras, with a rock reef that shelters it from the waves.",
+  "ventanilla.maspalomas":
+    "That golden patch by the sea is the Maspalomas Dunes: a little sand desert that the wind keeps moving, bit by bit.",
+  "ventanilla.fuerteventura":
+    "That long island is Fuerteventura, the oldest in the Canaries: about twenty million years old. All that wind and rain left it this flat, with huge beaches.",
+  "ventanilla.lobos":
+    "That islet is Lobos: it's named after the sea wolves, a kind of seal that used to live there. And opposite, the white dunes of Corralejo, on Fuerteventura.",
+  "ventanilla.timanfaya":
+    "Those red and black mountains are Timanfaya, on Lanzarote. About three hundred years ago its volcanoes erupted for six years in a row, and the ground is still warm.",
+  "ventanilla.barco":
+    "Down there a ship is sailing from one island to another: look at the white wake it leaves on the sea.",
+  "ventanilla.rio-paraguay":
+    "That wide, shining river down there is the Paraguay River, which gives the country its name. It splits it in two: the Eastern Region on one side, and the Chaco on the other.",
+  "ventanilla.asuncion":
+    "That big city on the riverbank is Asunción, our capital. It was founded in fifteen thirty-seven, and it's called the Mother of Cities, because the people who founded many others set out from there.",
+  "ventanilla.ypacarai":
+    "That lake is Ypacaraí, the one in the song Recuerdos de Ypacaraí, which is sung in a great many countries.",
+  "ventanilla.ypoa":
+    "That big stretch of water is Lake Ypoá, the largest in Paraguay, surrounded by marshes full of birds.",
+  "ventanilla.rio-parana":
+    "That enormous river is the Paraná, the second longest in South America: only the Amazon beats it.",
+  "ventanilla.yacyreta":
+    "That long line across the Paraná is the Yacyretá dam, which we share with Argentina: the river's strength makes electricity for millions of homes.",
+  "ventanilla.itaipu":
+    "Over there is Itaipú, the dam we share with Brazil: one of the biggest producers of energy in the whole world.",
+  "ventanilla.iguazu":
+    "Over there, between Argentina and Brazil, are the Iguazú Falls: almost three hundred waterfalls. With luck you can see the cloud of spray they throw up.",
+  "ventanilla.triple-frontera":
+    "Right there, where the Iguazú meets the Paraná, three countries touch: Paraguay, Argentina and Brazil. It's called the Triple Frontier.",
+  "ventanilla.cerro-cora":
+    "Those hills are Cerro Corá, a national park. That's where the biggest war in our history ended, in eighteen seventy.",
+  "ventanilla.chaco":
+    "Down below is the Chaco: more than half the country, but with very few people. A vast dry forest where jaguars, armadillos and giant anteaters live.",
+  "ventanilla.encarnacion":
+    "That's Encarnación, the Pearl of the South, on the banks of the Paraná. In summer it has river beaches and the most famous carnival in the country.",
+  "ventanilla.trinidad":
+    "Those are the ruins of Trinidad, an eighteenth-century Jesuit mission. It's a World Heritage Site, together with Jesús, just nearby.",
+  /* The same, said by the instructor sitting beside you in a light aircraft. */
+  "ventanilla.vos.lado.izquierda": "Look out of the window, to your left.",
+  "ventanilla.vos.lado.derecha": "Look out of the window, to your right.",
+  "ventanilla.vos.teide":
+    "See that huge mountain? That's Mount Teide, the highest in all of Spain. And it's a volcano!",
+  "ventanilla.vos.canadas":
+    "Look down, at the foot of Teide: that's Las Cañadas, a giant crater. And those strange rocks are the Roques de García.",
+  "ventanilla.vos.anaga":
+    "Those green, wrinkled mountains are Anaga. The laurisilva grows there, a forest that already existed millions of years ago.",
+  "ventanilla.vos.orotava":
+    "That valley running down to the sea is La Orotava. It formed when a giant piece of the island slid into the sea.",
+  "ventanilla.vos.gigantes":
+    "Look at those cliffs: they're Los Gigantes. Walls of rock dropping straight into the sea.",
+  "ventanilla.vos.garajonay":
+    "That island is La Gomera. The green on top is Garajonay, a forest that drinks water from the clouds.",
+  "ventanilla.vos.taburiente":
+    "That's La Palma. Right at the top, on the Roque de los Muchachos, there are giant telescopes for looking at the stars.",
+  "ventanilla.vos.tajogaite":
+    "See that black mountain? That's Tajogaite, a volcano born in twenty twenty-one. It poured out lava for almost three months!",
+  "ventanilla.vos.hierro":
+    "That's El Hierro, the smallest of the seven big islands. Long ago, the world was measured from there.",
+  "ventanilla.vos.nieves":
+    "On top of Gran Canaria is the Pico de las Nieves. People used to store snow there, in pits, to have ice in summer.",
+  "ventanilla.vos.las-palmas":
+    "That's Las Palmas de Gran Canaria, the biggest city in the islands. It has a beach right in the middle of town!",
+  "ventanilla.vos.maspalomas":
+    "See that golden patch? Those are the Maspalomas dunes: a tiny desert right by the sea.",
+  "ventanilla.vos.fuerteventura":
+    "That long island is Fuerteventura, the oldest of all the Canary Islands. It's about twenty million years old!",
+  "ventanilla.vos.lobos":
+    "That islet is Lobos. It's named after the seals that used to live there: the sea wolves.",
+  "ventanilla.vos.timanfaya":
+    "Those red and black mountains are Timanfaya: volcanoes that erupted for six years. The ground is still hot!",
+  "ventanilla.vos.barco":
+    "Look down there: a ship, with the white line it leaves behind in the water.",
+  "ventanilla.vos.avion":
+    "Look: another aeroplane. Looking outside is the first thing a pilot does, to see everyone else.",
+  "ventanilla.vos.rio-paraguay":
+    "That river is the Paraguay, which gives our country its name. The Chaco begins on the other side.",
+  "ventanilla.vos.asuncion":
+    "That's Asunción, the capital. It's one of the oldest cities in South America.",
+  "ventanilla.vos.ypacarai":
+    "That lake is Ypacaraí, the one in the song. Do you know it?",
+  "ventanilla.vos.ypoa":
+    "That's Lake Ypoá, the biggest in Paraguay. Lots and lots of birds live there.",
+  "ventanilla.vos.rio-parana":
+    "That enormous river is the Paraná. In all of South America, only the Amazon is longer.",
+  "ventanilla.vos.yacyreta":
+    "That long line across the river is the Yacyretá dam. It uses the water's strength to make electricity for people's homes.",
+  "ventanilla.vos.itaipu":
+    "Over there is Itaipú, a giant dam. It makes electricity for Paraguay and for Brazil.",
+  "ventanilla.vos.iguazu":
+    "Over that way are the Iguazú Falls. That's almost three hundred waterfalls!",
+  "ventanilla.vos.triple-frontera":
+    "That's where two rivers and three countries meet: Paraguay, Argentina and Brazil.",
+  "ventanilla.vos.cerro-cora":
+    "Those hills are Cerro Corá. A very big war ended there, long ago, in eighteen seventy.",
+  "ventanilla.vos.chaco":
+    "Down below is the Chaco: a huge dry forest where jaguars, armadillos and anteaters live.",
+  "ventanilla.vos.encarnacion":
+    "That's Encarnación. In summer it has beaches on the river and a very famous carnival.",
+  "ventanilla.vos.trinidad":
+    "Those are the ruins of Trinidad: a very old Jesuit mission, a World Heritage Site.",
 
   /*
    * El guion de la cabina: el plan y el descenso de la comandante, y la

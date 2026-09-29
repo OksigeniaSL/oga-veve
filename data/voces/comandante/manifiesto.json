@@ -773,6 +773,108 @@
     },
     "comandante.turbulencia": {
       "ms": 9607
+    },
+    "ventanilla.anaga": {
+      "ms": 9907
+    },
+    "ventanilla.asuncion": {
+      "ms": 10207
+    },
+    "ventanilla.barco": {
+      "ms": 5107
+    },
+    "ventanilla.canadas": {
+      "ms": 10507
+    },
+    "ventanilla.cerro-cora": {
+      "ms": 7307
+    },
+    "ventanilla.chaco": {
+      "ms": 8407
+    },
+    "ventanilla.encarnacion": {
+      "ms": 6807
+    },
+    "ventanilla.fuerteventura": {
+      "ms": 9707
+    },
+    "ventanilla.garajonay": {
+      "ms": 8407
+    },
+    "ventanilla.gigantes": {
+      "ms": 8607
+    },
+    "ventanilla.hierro": {
+      "ms": 8407
+    },
+    "ventanilla.iguazu": {
+      "ms": 8107
+    },
+    "ventanilla.itaipu": {
+      "ms": 6007
+    },
+    "ventanilla.lado.derecha": {
+      "ms": 2831
+    },
+    "ventanilla.lado.derecha~2": {
+      "ms": 1923
+    },
+    "ventanilla.lado.izquierda": {
+      "ms": 2566
+    },
+    "ventanilla.lado.izquierda~2": {
+      "ms": 1863
+    },
+    "ventanilla.las-palmas": {
+      "ms": 8807
+    },
+    "ventanilla.lobos": {
+      "ms": 8107
+    },
+    "ventanilla.maspalomas": {
+      "ms": 6607
+    },
+    "ventanilla.nieves": {
+      "ms": 8907
+    },
+    "ventanilla.orotava": {
+      "ms": 9307
+    },
+    "ventanilla.rio-paraguay": {
+      "ms": 8707
+    },
+    "ventanilla.rio-parana": {
+      "ms": 5607
+    },
+    "ventanilla.saludo": {
+      "ms": 2060
+    },
+    "ventanilla.taburiente": {
+      "ms": 8807
+    },
+    "ventanilla.tajogaite": {
+      "ms": 7407
+    },
+    "ventanilla.teide": {
+      "ms": 9607
+    },
+    "ventanilla.timanfaya": {
+      "ms": 10107
+    },
+    "ventanilla.trinidad": {
+      "ms": 7507
+    },
+    "ventanilla.triple-frontera": {
+      "ms": 8007
+    },
+    "ventanilla.yacyreta": {
+      "ms": 8207
+    },
+    "ventanilla.ypacarai": {
+      "ms": 6107
+    },
+    "ventanilla.ypoa": {
+      "ms": 5207
     }
   },
   "recetas": {
@@ -1557,6 +1659,113 @@
     ],
     "comandante.llegada.pilar~5": [
       "comandante.llegada.pilar~5"
+    ],
+    "ventanilla.saludo": [
+      "ventanilla.saludo"
+    ],
+    "ventanilla.lado.izquierda": [
+      "ventanilla.lado.izquierda"
+    ],
+    "ventanilla.lado.izquierda~2": [
+      "ventanilla.lado.izquierda~2"
+    ],
+    "ventanilla.lado.derecha": [
+      "ventanilla.lado.derecha"
+    ],
+    "ventanilla.lado.derecha~2": [
+      "ventanilla.lado.derecha~2"
+    ],
+    "ventanilla.teide": [
+      "ventanilla.teide"
+    ],
+    "ventanilla.canadas": [
+      "ventanilla.canadas"
+    ],
+    "ventanilla.anaga": [
+      "ventanilla.anaga"
+    ],
+    "ventanilla.orotava": [
+      "ventanilla.orotava"
+    ],
+    "ventanilla.gigantes": [
+      "ventanilla.gigantes"
+    ],
+    "ventanilla.garajonay": [
+      "ventanilla.garajonay"
+    ],
+    "ventanilla.taburiente": [
+      "ventanilla.taburiente"
+    ],
+    "ventanilla.tajogaite": [
+      "ventanilla.tajogaite"
+    ],
+    "ventanilla.hierro": [
+      "ventanilla.hierro"
+    ],
+    "ventanilla.nieves": [
+      "ventanilla.nieves"
+    ],
+    "ventanilla.las-palmas": [
+      "ventanilla.las-palmas"
+    ],
+    "ventanilla.maspalomas": [
+      "ventanilla.maspalomas"
+    ],
+    "ventanilla.fuerteventura": [
+      "ventanilla.fuerteventura"
+    ],
+    "ventanilla.lobos": [
+      "ventanilla.lobos"
+    ],
+    "ventanilla.timanfaya": [
+      "ventanilla.timanfaya"
+    ],
+    "ventanilla.barco": [
+      "ventanilla.barco"
+    ],
+    "ventanilla.rio-paraguay": [
+      "ventanilla.rio-paraguay"
+    ],
+    "ventanilla.asuncion": [
+      "ventanilla.asuncion"
+    ],
+    "ventanilla.ypacarai": [
+      "ventanilla.ypacarai"
+    ],
+    "ventanilla.ypoa": [
+      "ventanilla.ypoa"
+    ],
+    "ventanilla.rio-parana": [
+      "ventanilla.rio-parana"
+    ],
+    "ventanilla.yacyreta": [
+      "ventanilla.yacyreta"
+    ],
+    "ventanilla.itaipu": [
+      "ventanilla.itaipu"
+    ],
+    "ventanilla.iguazu": [
+      "ventanilla.iguazu"
+    ],
+    "ventanilla.triple-frontera": [
+      "ventanilla.triple-frontera"
+    ],
+    "ventanilla.cerro-cora": [
+      "ventanilla.cerro-cora"
+    ],
+    "ventanilla.chaco": [
+      "ventanilla.chaco"
+    ],
+    "ventanilla.encarnacion": [
+      "ventanilla.encarnacion"
+    ],
+    "ventanilla.trinidad": [
+      "ventanilla.trinidad"
+    ],
+    "ventanilla": [
+      "{saludo?}",
+      "{lado}",
+      "{que}"
     ]
   }
 }

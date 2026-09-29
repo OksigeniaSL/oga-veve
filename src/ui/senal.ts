@@ -561,6 +561,19 @@ const FIGURA: Record<string, string> = {
            <rect x="9.5" y="8" width="5" height="13" rx="0.6" />
            <rect x="16" y="11" width="5" height="10" rx="0.6" />
            <rect class="senal__hueco" x="11" y="10.4" width="2" height="2" />`,
+  /*
+   * El agua —un río, un lago, una represa—: tres olas una encima de otra,
+   * que es como se dibuja el agua en los mapas de cualquier escuela. Sin
+   * orilla: desde el avión un río es una cinta, y la cinta es la ola.
+   */
+  agua: `<path d="M2 8.5 q2.5-2.4 5 0 t5 0 t5 0 t5 0 M2 13.5 q2.5-2.4 5 0 t5 0 t5 0 t5 0 M2 18.5 q2.5-2.4 5 0 t5 0 t5 0 t5 0"
+               stroke="currentColor" stroke-width="2" fill="none"
+               stroke-linecap="round" />`,
+  // El bosque: dos árboles de copa redonda, uno delante de otro, con su tronco.
+  bosque: `<circle cx="8.5" cy="10" r="5.2" />
+           <circle cx="15.8" cy="11.6" r="4.4" />
+           <rect x="7.6" y="14" width="1.8" height="7" rx="0.5" />
+           <rect x="15" y="15" width="1.6" height="6" rx="0.5" />`,
   // El barco: casco, el bloque de pasaje con sus ventanas, la chimenea y el
   // mar debajo. Es el dibujo de barco de cualquier cuaderno.
   barco: `<path d="M2.5 15.5 H21.5 L19 20 H5.5 Z" />
@@ -970,6 +983,10 @@ export const DIBUJOS = {
   "hito-isla-derecha": hito("isla", "derecha"),
   "hito-ciudad-izquierda": hito("ciudad", "izquierda"),
   "hito-ciudad-derecha": hito("ciudad", "derecha"),
+  "hito-agua-izquierda": hito("agua", "izquierda"),
+  "hito-agua-derecha": hito("agua", "derecha"),
+  "hito-bosque-izquierda": hito("bosque", "izquierda"),
+  "hito-bosque-derecha": hito("bosque", "derecha"),
   "hito-barco-izquierda": hito("barco", "izquierda"),
   "hito-barco-derecha": hito("barco", "derecha"),
   "hito-avion-izquierda": hito("avion", "izquierda"),

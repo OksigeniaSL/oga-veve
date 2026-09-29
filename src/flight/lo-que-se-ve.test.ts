@@ -8,14 +8,21 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CADA, DESDE_ARRIBA, LO_PRIMERO, LoQueSeVe } from "./lo-que-se-ve";
+import {
+  CADA,
+  CERCA_DEL_CAMPO,
+  DESDE_ARRIBA,
+  DIEZ_MIL_PIES,
+  LO_PRIMERO,
+  LoQueSeVe,
+} from "./lo-que-se-ve";
 import type { Hito } from "../world/hitos";
 import type { Fase } from "./vuelo";
 
 const HITOS: Hito[] = [
   { nombre: "Teide", clase: "montana", x: -6000, z: -3000, ele: 3715 },
   { nombre: "La Palma", clase: "isla", x: 9000, z: -12000, ele: null },
-  { nombre: "Adeje", clase: "ciudad", x: -2000, z: -20000, ele: null },
+  { nombre: "Adeje", clase: "ciudad", x: -9000, z: -20000, ele: null },
 ];
 
 const CRUCERO = {
@@ -23,7 +30,10 @@ const CRUCERO = {
   x: 0,
   z: 0,
   rumbo: 0,
-  sobreElCampo: 2000,
+  altitud: 4000,
+  sobreElCampo: 3400,
+  alCampo: 50_000,
+  conPasaje: true,
   alguienHabla: false,
 };
 
@@ -56,6 +66,53 @@ describe("cuándo se señala lo que se ve", () => {
       const m = new LoQueSeVe(HITOS);
       expect(correr(m, 300, { fase })).toEqual([]);
     }
+  });
+
+  /*
+   * **La cabina estéril**: ni en la salida ni en la llegada, por debajo de
+   * diez mil pies y cerca del campo. Subiendo de Los Rodeos, la comandante
+   * contaba el paisaje en plena salida.
+   */
+  it("con pasaje, cerca del campo y por debajo de diez mil pies, no", () => {
+    const m = new LoQueSeVe(HITOS);
+    const saliendo = {
+      altitud: DIEZ_MIL_PIES - 100,
+      alCampo: CERCA_DEL_CAMPO.conPasaje - 1000,
+    };
+    expect(correr(m, 600, saliendo)).toEqual([]);
+  });
+
+  it("pero por encima de diez mil pies, o ya lejos del campo, sí", () => {
+    const arriba = new LoQueSeVe(HITOS);
+    expect(
+      correr(arriba, LO_PRIMERO + 2, {
+        altitud: DIEZ_MIL_PIES + 100,
+        alCampo: 5000,
+      }),
+    ).toEqual(["izquierda: Teide"]);
+    const lejos = new LoQueSeVe(HITOS);
+    expect(
+      correr(lejos, LO_PRIMERO + 2, {
+        altitud: 2000,
+        alCampo: CERCA_DEL_CAMPO.conPasaje + 1000,
+      }),
+    ).toEqual(["izquierda: Teide"]);
+  });
+
+  it("y en avioneta, la instructora habla en cuanto sale del circuito", () => {
+    // Una avioneta no sube a diez mil pies: con la regla de los grandes no
+    // diría nunca nada. Su fase de trabajo es el circuito.
+    const m = new LoQueSeVe(HITOS);
+    const avioneta = { conPasaje: false, altitud: 1200, sobreElCampo: 1000 };
+    expect(
+      correr(m, 300, { ...avioneta, alCampo: CERCA_DEL_CAMPO.enAvioneta - 500 }),
+    ).toEqual([]);
+    expect(
+      correr(m, LO_PRIMERO + 2, {
+        ...avioneta,
+        alCampo: CERCA_DEL_CAMPO.enAvioneta + 500,
+      }),
+    ).toEqual(["izquierda: Teide"]);
   });
 
   it("y el reloj no corre fuera del crucero", () => {

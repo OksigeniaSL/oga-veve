@@ -39,12 +39,18 @@ await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&leccion=vuelta`);
 await page.waitForTimeout(25000);
 
 /*
- * Diez kilómetros al norte del aeródromo, a dos mil metros y rumbo sur: por
- * delante quedan La Laguna, Santa Cruz y, más allá, el Teide. Y con velocidad
- * de crucero, que sin ella el avión cae y la fase deja de ser `en-vuelo`.
+ * Veinticinco kilómetros al norte del aeródromo, sobre el mar, a dos mil
+ * quinientos metros y rumbo sur: Anaga queda a la izquierda y el Teide a la
+ * derecha, y los dos se ven desde ahí. Y con velocidad de crucero, que sin
+ * ella el avión cae y la fase deja de ser `en-vuelo`.
+ *
+ * Estaba a diez kilómetros, y desde que no se habla en las fases de trabajo
+ * —ver `enFaseDeTrabajo`— eso es casi el circuito: en treinta segundos el
+ * avión entraba en los ocho kilómetros del campo y la instructora callaba, que
+ * es lo que tiene que hacer.
  */
 await page.evaluate(() =>
-  globalThis.__oga.colocar(0, 2000, -10000, 70, Math.PI),
+  globalThis.__oga.colocar(0, 2500, -25000, 70, Math.PI),
 );
 
 const hasta = Date.now() + 120000;

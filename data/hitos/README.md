@@ -1,49 +1,43 @@
-# Hitos del paisaje — datos derivados de OpenStreetMap
+# Lo que se ve por la ventanilla — lo destacado de cada zona
 
-Lo de esta carpeta es **base de datos derivada** de OpenStreetMap y va bajo
-**ODbL 1.0**, igual que `data/aerodromes/` y `data/cities/`. Vive separado del
-código (Apache-2.0) y del contenido propio de Óga Veve.
+`destacados.json` es la lista de lo que la comandante —o la instructora, en
+avioneta— cuenta por la ventanilla: el Teide, Anaga, la Caldera de Taburiente,
+el río Paraguay, Yacyretá… Lo que una comandante de verdad señalaría en esas
+rutas, y nada más. El porqué está en el ADR 0013.
 
-Atribución: **© colaboradores de OpenStreetMap**.
+## Qué se elige a mano y qué no
 
-Se genera con `npx tsx scripts/osm-a-hitos.mjs [escenario…]`.
+- **A mano**: qué sitios entran, cuánto merece cada uno (`peso`, de 1 a 3),
+  desde cuánto se distingue (`alcance`, en metros) y su frase, que vive en el
+  diccionario como `ventanilla.<clave>` y `ventanilla.vos.<clave>`.
+- **No a mano**: dónde está cada cosa y su cota. Salen de OpenStreetMap, con
+  el elemento anotado en `de` —`osm node/6447099369` es el Teide—, y los
+  puntos de los ríos, de la misma línea de Natural Earth que dibuja el plano
+  (`src/ui/rios.ts`).
 
-## Para qué
+## Licencia
 
-Para que la comandante pueda señalar lo que se ve por la ventanilla en un
-vuelo largo: «miren a la izquierda: Teide, 3.715 metros». Es lo que hace una
-comandante de verdad, entretiene el crucero, enseña geografía sin
-proponérselo y da una razón para mirar fuera en vez de a los relojes. El
-porqué entero está en el ADR 0008.
+Las coordenadas y las cotas son **base de datos derivada** de OpenStreetMap y
+van bajo **ODbL 1.0**, igual que `data/aerodromes/` y `data/cities/`.
+Atribución: **© colaboradores de OpenStreetMap**. Los puntos de los ríos son de
+Natural Earth, de **dominio público**. Las frases son contenido propio de Óga
+Veve y viven en el código, no aquí.
 
-## Qué hay dentro
+## Cómo es cada entrada
 
-Un fichero por escenario, con los puntos que se reconocen **desde el aire**
-dentro del cuadro del horizonte de ese escenario:
+| Campo     | Qué es                                                                  |
+| --------- | ----------------------------------------------------------------------- |
+| `clave`   | La de la frase: `ventanilla.<clave>`                                    |
+| `nombre`  | Lo que se escribe en la tarjeta y en el plano                           |
+| `clase`   | El dibujo de la tarjeta: `montana`, `isla`, `ciudad`, `agua`, `bosque` |
+| `zona`    | `canarias` o `paraguay`                                                 |
+| `peso`    | Cuánto merece contarse, de 1 a 3                                        |
+| `alcance` | Hasta dónde se señala, m                                                |
+| `ele`     | La cota a la que apunta la línea de vista; `null` si es el suelo mismo  |
+| `de`      | De dónde salen las coordenadas                                          |
+| `puntos`  | `[lat, lon]` o `[lat, lon, cota]`; más de uno si es largo, como un río  |
 
-| Clase | Qué es | Criterio |
-| --- | --- | --- |
-| `montana` | Cumbres y volcanes | `natural=peak` o `volcano`, con cota mapeada y por encima de 1.000 m |
-| `isla` | La isla de enfrente | `place=island`, también como camino o relación —la costa, no un punto— |
-| `ciudad` | El pueblo de abajo | `place=city` o `town`, de más de 5.000 habitantes |
-
-Con cupo por clase y ocho kilómetros de separación dentro de cada una, que si
-no Tenerife da catorce cumbres del mismo macizo y ni una isla. Y ordenando
-primero por **notoriedad** —quien tiene `wikidata` o `wikipedia` es un sitio
-del que se habla—, porque lo que separa un hito de una cota no es la altura:
-«Montaña Abreu, 2.406 m» no la nombraría ninguna comandante.
-
-Nada de polígonos: un río o un embalse es una geometría grande y lo que hace
-falta aquí es **un sitio al que apuntar**.
-
-## Coordenadas
-
-`lat` y `lon` tal como vienen; `x` y `z` ya proyectados al marco local del
-escenario, con la **Z hacia el sur**, que es la convención de la escena y no
-la del fichero del aeródromo. Equivocar ese signo pone el Teide al otro lado
-del avión sin romper nada, así que lo vigila `hitos-datos.test.ts`.
-
-## Y si falta un escenario
-
-No pasa nada: la comandante calla, que es lo que hacía antes de que esto
-existiera. Un escenario sin hitos extraídos vuela igual.
+Las coordenadas se ponen en el mundo del vuelo con `dondeCae` desde el campo
+de casa, la misma cuenta que coloca a los aeródromos vecinos. Y se comprueban
+en `src/world/lo-destacado.test.ts`: cada punto en su zona y cada cumbre donde
+el relieve del juego tiene una cumbre.

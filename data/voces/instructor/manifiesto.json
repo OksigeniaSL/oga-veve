@@ -264,6 +264,108 @@
     "tutor.throttle": {
       "ms": 910
     },
+    "ventanilla.vos.anaga": {
+      "ms": 7307
+    },
+    "ventanilla.vos.asuncion": {
+      "ms": 4807
+    },
+    "ventanilla.vos.avion": {
+      "ms": 4707
+    },
+    "ventanilla.vos.barco": {
+      "ms": 4107
+    },
+    "ventanilla.vos.canadas": {
+      "ms": 7007
+    },
+    "ventanilla.vos.cerro-cora": {
+      "ms": 5807
+    },
+    "ventanilla.vos.chaco": {
+      "ms": 5207
+    },
+    "ventanilla.vos.encarnacion": {
+      "ms": 4907
+    },
+    "ventanilla.vos.fuerteventura": {
+      "ms": 6207
+    },
+    "ventanilla.vos.garajonay": {
+      "ms": 5407
+    },
+    "ventanilla.vos.gigantes": {
+      "ms": 4907
+    },
+    "ventanilla.vos.hierro": {
+      "ms": 5707
+    },
+    "ventanilla.vos.iguazu": {
+      "ms": 4507
+    },
+    "ventanilla.vos.itaipu": {
+      "ms": 4507
+    },
+    "ventanilla.vos.lado.derecha": {
+      "ms": 1803
+    },
+    "ventanilla.vos.lado.derecha~2": {
+      "ms": 2110
+    },
+    "ventanilla.vos.lado.izquierda": {
+      "ms": 2141
+    },
+    "ventanilla.vos.lado.izquierda~2": {
+      "ms": 2103
+    },
+    "ventanilla.vos.las-palmas": {
+      "ms": 5907
+    },
+    "ventanilla.vos.lobos": {
+      "ms": 4907
+    },
+    "ventanilla.vos.maspalomas": {
+      "ms": 5007
+    },
+    "ventanilla.vos.nieves": {
+      "ms": 6407
+    },
+    "ventanilla.vos.orotava": {
+      "ms": 5707
+    },
+    "ventanilla.vos.rio-paraguay": {
+      "ms": 5007
+    },
+    "ventanilla.vos.rio-parana": {
+      "ms": 4807
+    },
+    "ventanilla.vos.taburiente": {
+      "ms": 6607
+    },
+    "ventanilla.vos.tajogaite": {
+      "ms": 7107
+    },
+    "ventanilla.vos.teide": {
+      "ms": 5007
+    },
+    "ventanilla.vos.timanfaya": {
+      "ms": 7207
+    },
+    "ventanilla.vos.trinidad": {
+      "ms": 5407
+    },
+    "ventanilla.vos.triple-frontera": {
+      "ms": 4107
+    },
+    "ventanilla.vos.yacyreta": {
+      "ms": 5307
+    },
+    "ventanilla.vos.ypacarai": {
+      "ms": 3507
+    },
+    "ventanilla.vos.ypoa": {
+      "ms": 4807
+    },
     "vuelo.aPlataforma": {
       "ms": 961
     },
@@ -1351,6 +1453,112 @@
     ],
     "vuelo.puedeAterrizarAfis": [
       "vuelo.puedeAterrizarAfis"
+    ],
+    "ventanilla.vos.lado.izquierda": [
+      "ventanilla.vos.lado.izquierda"
+    ],
+    "ventanilla.vos.lado.izquierda~2": [
+      "ventanilla.vos.lado.izquierda~2"
+    ],
+    "ventanilla.vos.lado.derecha": [
+      "ventanilla.vos.lado.derecha"
+    ],
+    "ventanilla.vos.lado.derecha~2": [
+      "ventanilla.vos.lado.derecha~2"
+    ],
+    "ventanilla.vos.teide": [
+      "ventanilla.vos.teide"
+    ],
+    "ventanilla.vos.canadas": [
+      "ventanilla.vos.canadas"
+    ],
+    "ventanilla.vos.anaga": [
+      "ventanilla.vos.anaga"
+    ],
+    "ventanilla.vos.orotava": [
+      "ventanilla.vos.orotava"
+    ],
+    "ventanilla.vos.gigantes": [
+      "ventanilla.vos.gigantes"
+    ],
+    "ventanilla.vos.garajonay": [
+      "ventanilla.vos.garajonay"
+    ],
+    "ventanilla.vos.taburiente": [
+      "ventanilla.vos.taburiente"
+    ],
+    "ventanilla.vos.tajogaite": [
+      "ventanilla.vos.tajogaite"
+    ],
+    "ventanilla.vos.hierro": [
+      "ventanilla.vos.hierro"
+    ],
+    "ventanilla.vos.nieves": [
+      "ventanilla.vos.nieves"
+    ],
+    "ventanilla.vos.las-palmas": [
+      "ventanilla.vos.las-palmas"
+    ],
+    "ventanilla.vos.maspalomas": [
+      "ventanilla.vos.maspalomas"
+    ],
+    "ventanilla.vos.fuerteventura": [
+      "ventanilla.vos.fuerteventura"
+    ],
+    "ventanilla.vos.lobos": [
+      "ventanilla.vos.lobos"
+    ],
+    "ventanilla.vos.timanfaya": [
+      "ventanilla.vos.timanfaya"
+    ],
+    "ventanilla.vos.barco": [
+      "ventanilla.vos.barco"
+    ],
+    "ventanilla.vos.avion": [
+      "ventanilla.vos.avion"
+    ],
+    "ventanilla.vos.rio-paraguay": [
+      "ventanilla.vos.rio-paraguay"
+    ],
+    "ventanilla.vos.asuncion": [
+      "ventanilla.vos.asuncion"
+    ],
+    "ventanilla.vos.ypacarai": [
+      "ventanilla.vos.ypacarai"
+    ],
+    "ventanilla.vos.ypoa": [
+      "ventanilla.vos.ypoa"
+    ],
+    "ventanilla.vos.rio-parana": [
+      "ventanilla.vos.rio-parana"
+    ],
+    "ventanilla.vos.yacyreta": [
+      "ventanilla.vos.yacyreta"
+    ],
+    "ventanilla.vos.itaipu": [
+      "ventanilla.vos.itaipu"
+    ],
+    "ventanilla.vos.iguazu": [
+      "ventanilla.vos.iguazu"
+    ],
+    "ventanilla.vos.triple-frontera": [
+      "ventanilla.vos.triple-frontera"
+    ],
+    "ventanilla.vos.cerro-cora": [
+      "ventanilla.vos.cerro-cora"
+    ],
+    "ventanilla.vos.chaco": [
+      "ventanilla.vos.chaco"
+    ],
+    "ventanilla.vos.encarnacion": [
+      "ventanilla.vos.encarnacion"
+    ],
+    "ventanilla.vos.trinidad": [
+      "ventanilla.vos.trinidad"
+    ],
+    "ventanilla.vos": [
+      "{lado}",
+      "{que}"
     ]
   }
 }

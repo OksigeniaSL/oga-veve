@@ -1,7 +1,7 @@
 # 0008 — Lo que se ve por la ventanilla
 
 Fecha: 2026-09-19
-Estado: aceptado
+Estado: aceptado; la lista y las palabras, sustituidas por el ADR 0013
 
 ## Contexto
 

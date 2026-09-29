@@ -507,7 +507,9 @@ import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
 import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
 import { altitudDeCabina } from "./flight/cabina-presurizada";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
-import { hitosDe, sinRepetidos, type Hito } from "./world/hitos";
+import type { Hito } from "./world/hitos";
+import { destacadosDesde } from "./world/lo-destacado";
+import { loQueSeDice } from "./audio/ventanilla";
 import { focoEncendido } from "./world/luces-de-posicion";
 import {
   calorDelSuelo,
@@ -3324,31 +3326,17 @@ export class Game {
     }
 
     /*
-     * **Y lo que se ve por la ventanilla, de los dos lados del canal.**
-     *
-     * Los del campo de salida van tal cual; los del vecino, corridos hasta
-     * donde cae su isla, que es la misma cuenta que mueve su aeródromo. Sin
-     * eso, la mitad de un vuelo entre islas se pasa mirando hitos que están
-     * detrás y la otra mitad sin nada que señalar, que es justo el rato en que
-     * se ve la isla de enfrente. Ver `world/hitos.ts`.
+     * **Y lo que se ve por la ventanilla**: lo destacado de la zona, puesto
+     * con la misma cuenta que coloca a los aeródromos vecinos, y el relieve
+     * entero —el de casa, el de los destinos y el del horizonte— para saber
+     * qué se ve de verdad. Era la lista de pueblos de cada escenario, y desde
+     * Los Rodeos se anunciaba Candelaria con la Dorsal en medio. Ver
+     * `world/lo-destacado.ts` y `seVe` en `world/hitos.ts`.
      */
-    /*
-     * **Y sin repetidos.** Los dos escenarios de una ruta se solapan —Tenerife
-     * Sur y Los Rodeos están en la misma isla— y cada uno trae el Teide en su
-     * propia lista. Medido: las dos copias caen a dos metros la una de la
-     * otra, que es lo que confirma que las proyecciones casan, y aun así son
-     * dos entradas donde hay una montaña.
-     */
-    const hitosDelVuelo = sinRepetidos([
-      ...hitosDe(this.scenario.id),
-      ...this.vecinos.flatMap((v) =>
-        hitosDe(v.base.id).map((h) => ({
-          ...h,
-          x: h.x + v.mundo.desplazamiento.x,
-          z: h.z + v.mundo.desplazamiento.z,
-        })),
-      ),
-    ]);
+    const hitosDelVuelo = this.scenario.aerodrome
+      ? destacadosDesde(this.scenario.aerodrome.origin)
+      : [];
+    this.ventanilla.ponerSuelo((x, z) => this.terrain.cotaConocida(x, z));
     this.ventanilla.ponerHitos(hitosDelVuelo);
     // Y se guardan para el plano, que todavía no existe en este punto del
     // constructor: se le dan unas líneas más abajo, al montar el HUD.
@@ -12076,53 +12064,62 @@ export class Game {
 
   private mirarPorLaVentanilla(dt: number): void {
     const s = this.flight.state;
+    const conGente = conPasaje(this.aircraft.mass);
+    /*
+     * A cuánto está el campo más cercano del vuelo —el de salida o el de
+     * llegada—, que es lo que decide si se está en la cabina estéril. Ver
+     * `enFaseDeTrabajo` en `flight/lo-que-se-ve.ts`.
+     */
+    let alCampo = Infinity;
+    for (const p of this.pistasDelVuelo())
+      alCampo = Math.min(
+        alCampo,
+        Math.hypot(p.x - s.position.x, p.z - s.position.z),
+      );
     const mirada = this.ventanilla.paso(dt, {
       fase: this.faseDeAhora as Fase,
       x: s.position.x,
       z: s.position.z,
       rumbo: MathUtils.radToDeg(s.heading),
+      altitud: s.position.y,
       // Sobre el campo que se tiene debajo: Los Rodeos está seiscientos
       // metros por encima de Gando. Ver `cotaDeLaPistaAqui`.
       sobreElCampo: s.position.y - this.cotaDeLaPistaAqui(),
+      alCampo,
+      conPasaje: conGente,
       /*
-       * Cualquiera de las cuatro bocas. Esto es lo que menos urge de todo lo
-       * que suena: una autorización no puede esperar y el paisaje sí.
+       * Cualquiera de las bocas, y también la máquina. Esto es lo que menos
+       * urge de todo lo que suena: una autorización no puede esperar y el
+       * paisaje sí. Un suceso, una voz.
        */
       alguienHabla:
         this.instructor.hablando ||
         this.comandante.hablando ||
         this.tripulacion.hablando ||
         this.torre.hablando ||
-        this.otroAvion.hablando,
+        this.otroAvion.hablando ||
+        this.maquina.ocupada,
     }, () => this.loQueSeMueve());
     if (!mirada) return;
     // Y al revés: el avión que se señaló aquí ya no lo cuenta la radio.
     if (mirada.hito.id) this.informacionDeTrafico.darPorContado(mirada.hito.id);
 
     /*
-     * **Y lo dice quien de verdad lo diría.**
+     * **Y lo dice quien de verdad lo diría, con su frase.**
      *
      * Un Pykasu no lleva megafonía ni a quién hablarle por ella: la comandante
      * solo existe donde hay pasaje. En una avioneta quien señala el paisaje es
      * la instructora, que va sentada al lado — y entonces no es «miren», es
      * «mirá». Ver `conPasaje` y los dos registros del castellano en AGENTS.md.
+     *
+     * Y la frase ya no es una plantilla con el nombre en un hueco: es la de
+     * ese sitio, escrita a mano y grabada entera. Ver `audio/ventanilla.ts`.
      */
-    const conGente = conPasaje(this.aircraft.mass);
-    const lado = t(`hito.${mirada.lado}` as TranslationKey);
-    /*
-     * El barco se dice con la frase de los pueblos —«ahí abajo, a la
-     * derecha, un barco»— y no lleva una propia. Ver `hito.unBarco`.
-     */
-    const plantilla =
-      mirada.hito.clase === "barco" ? "ciudad" : mirada.hito.clase;
-    const clave = `hito.${plantilla}${conGente ? "" : ".vos"}`;
-    const texto = t(clave as TranslationKey, {
-      lado,
-      nombre: mirada.hito.nombre,
-      altura: mirada.hito.ele ?? 0,
-    });
-    const boca = conGente ? this.comandante : this.instructor;
-    boca.decir(texto, `hito.${mirada.hito.nombre}`, "baja");
+    const dicho = loQueSeDice(mirada, conGente, this.ventanilla.cuantos - 1);
+    if (dicho) {
+      const boca = conGente ? this.comandante : this.instructor;
+      boca.decir(dicho.texto, dicho.clave, "baja", dicho.relleno);
+    }
 
     const canales = canalesDe(this.tier.avisos);
     /*
