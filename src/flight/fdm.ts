@@ -51,6 +51,15 @@ import {
   type AircraftConfig,
 } from "./aircraft";
 import { REVERSA_HASTA } from "./arcade";
+import {
+  AUTOBANDERA,
+  alPararse,
+  areaDelMotor,
+  enMarcha,
+  llevaBandera,
+  parDeLosMotores,
+  type EstadoDelMotor,
+} from "./motores";
 
 /**
  * Cuánto empuje da la reversa, como fracción del empuje máximo.
@@ -352,6 +361,7 @@ export class CoefficientFlightModel implements FlightModel {
       typeof options.assist === "number" || options.assist === undefined
         ? uniformAssists(options.assist ?? 1)
         : options.assist;
+    this.reponerLosMotores();
 
     this.state = {
       position: new Vector3(),
@@ -413,6 +423,51 @@ export class CoefficientFlightModel implements FlightModel {
 
   timonAhora(): number {
     return this.timonQueSostiene;
+  }
+
+  /**
+   * **Cómo está cada motor**, en el orden de `motoresA`: de izquierda a
+   * derecha. Todos en marcha al empezar cada vuelo. Ver `flight/motores.ts`.
+   */
+  private motores: EstadoDelMotor[] = [];
+  /** Segundos que lleva parado cada motor, para la bandera sola. */
+  private paradoDesde: number[] = [];
+
+  /** Cómo está cada motor ahora. Ver `EstadoDelMotor`. */
+  motoresAhora(): readonly EstadoDelMotor[] {
+    return this.motores;
+  }
+
+  /**
+   * **Se para un motor**, y solo ese: los demás siguen empujando.
+   *
+   * Queda en molinete, que es como queda cualquier motor al pararse; si el
+   * avión lleva la bandera automática, la hélice se pone de canto sola a los
+   * dos segundos. Ver `AUTOBANDERA`.
+   */
+  pararMotor(i: number): void {
+    if (i < 0 || i >= this.motores.length) return;
+    if (this.motores[i] !== "marcha") return;
+    this.motores[i] = alPararse();
+    this.paradoDesde[i] = 0;
+  }
+
+  /**
+   * **Se asegura un motor parado**: la hélice en bandera, si la tiene. Un fan
+   * no la tiene, y se queda en molinete aunque se le corte el combustible —el
+   * aire lo sigue moviendo—, que es lo que pasa de verdad.
+   */
+  asegurarMotor(i: number): void {
+    if (i < 0 || i >= this.motores.length) return;
+    if (this.motores[i] === "marcha") return;
+    if (llevaBandera(this.aircraft)) this.motores[i] = "bandera";
+  }
+
+  /** Todos en marcha otra vez: un vuelo nuevo. */
+  private reponerLosMotores(): void {
+    const n = Math.max(1, this.aircraft.motoresA.length);
+    this.motores = Array.from({ length: n }, () => "marcha" as const);
+    this.paradoDesde = Array.from({ length: n }, () => 0);
   }
 
   /** El último empuje calculado, para el combustible. Ver `empujeAhora`. */
@@ -504,6 +559,8 @@ export class CoefficientFlightModel implements FlightModel {
     this.trimClimb = null;
     this.trimSettle = 0;
     this.trimVisto = null;
+    // Un vuelo nuevo empieza con todos los motores en marcha.
+    this.reponerLosMotores();
     this.updateDerived();
     /*
      * **Y en el suelo solo si las ruedas tocan.**
@@ -830,16 +887,48 @@ export class CoefficientFlightModel implements FlightModel {
      * los libros: un 747 despega en unos 1.800 m al nivel del mar y un
      * regional de treinta toneladas en unos 1.600.
      */
-    const thrust =
-      (controls.engineOn ? assisted.throttle : 0) *
-      empujeLleno(ac, density, speed);
+    /*
+     * **Y motor a motor**, que con uno parado deja de dar igual.
+     *
+     * Cada motor en marcha da su parte del empuje de la ficha; uno parado no
+     * da nada y además frena, en molinete o en bandera. Con todos en marcha
+     * la suma es la de siempre y los pares se anulan: esto vuela igual que
+     * antes. Con uno parado, lo que queda empuja por un lado y lo que frena
+     * tira del otro, y el avión guiña hacia el parado. Ver `flight/motores.ts`.
+     *
+     * Con la llave quitada —sin combustible, o apagado en tierra— no hay
+     * nada que repartir: ni empuje ni par. Eso es `sin-motor.ts`, y su planeo
+     * se calcula con la polar limpia, que es la que vuela aquí.
+     */
+    const n = this.motores.length;
+    const cadaUno =
+      ((controls.engineOn ? assisted.throttle : 0) *
+        empujeLleno(ac, density, speed)) /
+      n;
+    let motoresQueFrenan = 0;
+    if (controls.engineOn && n > 1) {
+      for (let i = 0; i < n; i++) {
+        const estado = this.motores[i]!;
+        if (estado === "marcha") continue;
+        this.paradoDesde[i] = (this.paradoDesde[i] ?? 0) + dt;
+        // La bandera sola del turbohélice. Ver `AUTOBANDERA`.
+        if (
+          estado === "molinete" &&
+          ac.motorParado.autoBandera &&
+          (this.paradoDesde[i] ?? 0) >= AUTOBANDERA
+        )
+          this.motores[i] = "bandera";
+        motoresQueFrenan += qDyn * areaDelMotor(ac, this.motores[i]!);
+      }
+    }
+    const thrust = controls.engineOn ? cadaUno * enMarcha(this.motores) : 0;
     // Se guarda para el combustible, que gasta por el empuje que se da y no
     // por el gas que se pide. Ver `empujeAhora` en `model.ts`.
     this.ultimoEmpuje = thrust;
 
     const sinA = Math.sin(s.alpha);
     const cosA = Math.cos(s.alpha);
-    const forceX = thrust - drag * cosA + lift * sinA;
+    const forceX = thrust - motoresQueFrenan - drag * cosA + lift * sinA;
     const forceY = side;
     const forceZ = -drag * sinA - lift * cosA;
 
@@ -879,7 +968,15 @@ export class CoefficientFlightModel implements FlightModel {
 
     let rollMoment = qS * ac.wingSpan * clMoment;
     let pitchMoment = qSSimetria * ac.chord * cmMoment;
-    let yawMoment = qS * ac.wingSpan * cnMoment;
+    /*
+     * Y el par de los motores, que con todos en marcha es cero y con uno
+     * parado es lo que tiene que sujetar el timón. Ver `parDeLosMotores`.
+     */
+    let yawMoment =
+      qS * ac.wingSpan * cnMoment +
+      (controls.engineOn && n > 1
+        ? parDeLosMotores(ac, this.motores, cadaUno, qDyn)
+        : 0);
 
     // Con las ruedas en el suelo, lo que manda en el cabeceo es el tren. Ver
     // `momentoDelTren`.
