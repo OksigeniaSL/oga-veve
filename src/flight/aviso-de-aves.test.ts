@@ -23,6 +23,7 @@ function momento(cambios: Partial<MomentoDeAves> = {}): MomentoDeAves {
     enFinal: true,
     enElSuelo: false,
     alUmbral: 8000,
+    velocidad: 70,
     dado: 0,
     bandadas: [],
     avion: { x: 0, y: 400, z: 0, rumbo: 0 },
@@ -49,11 +50,20 @@ describe("las aves en la final", () => {
    * mil pies. Y por delante del avión lo bastante para verlas venir.
    */
   it("se ponen cerca del umbral, bajo los mil pies y por delante del avión", () => {
-    for (const alUmbral of [2000, 3400, 5000, 9000, 20000]) {
-      const sitio = sitioEnLaFinal(alUmbral)!;
+    for (const [alUmbral, velocidad] of [
+      [2000, 33],
+      [3400, 40],
+      [5000, 70],
+      [9000, 70],
+      [20000, 120],
+    ] as const) {
+      const sitio = sitioEnLaFinal(alUmbral, velocidad)!;
       expect(sitio).not.toBeNull();
       expect(sitio.distancia).toBeLessThanOrEqual(3200);
-      expect(alUmbral - sitio.distancia).toBeGreaterThanOrEqual(1200);
+      // Medio minuto de vuelo por delante, o un kilómetro como poco.
+      expect(alUmbral - sitio.distancia).toBeGreaterThanOrEqual(
+        Math.min(3000, Math.max(1000, velocidad * 30)) - 1,
+      );
       expect(sitio.altura).toBeLessThan(1000 * PIE);
       // Un poco por debajo de la senda de 3°: subiendo, se pasa por encima.
       const senda = sitio.distancia * Math.tan((3 * Math.PI) / 180) + 15;
@@ -61,7 +71,8 @@ describe("las aves en la final", () => {
       expect(sitio.altura).toBeGreaterThan(senda - 30);
     }
     // Ya muy cerca no hay sitio: no se sacan de la manga delante del morro.
-    expect(sitioEnLaFinal(1700)).toBeNull();
+    expect(sitioEnLaFinal(1500, 33)).toBeNull();
+    expect(sitioEnLaFinal(2600, 70)).toBeNull();
   });
 
   it("el dado se tira una vez por campo, al entrar en final", () => {

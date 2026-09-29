@@ -76,19 +76,23 @@ const SOBRE_EL_UMBRAL = 15;
  * qué altura sobre él, o `null` si ya no hay sitio.
  *
  * Donde se juntan de verdad: cerca del umbral y por debajo de mil pies, a
- * tres kilómetros como mucho. Y por delante del avión lo bastante para verlas
- * venir y tener tiempo de subir: casi la mitad de lo que le queda, y nunca
- * menos de un kilómetro largo. En la final larga de un reactor quedan a tres
- * kilómetros del umbral; en la corta de una avioneta que viene del circuito,
- * a ochocientos metros, sobre las luces de aproximación.
+ * tres kilómetros como mucho. Y por delante del avión **medio minuto de
+ * vuelo**, que es lo que hace falta para oír a la torre, verlas venir y subir
+ * un poco: un kilómetro y pico a la velocidad de una avioneta, dos y medio a
+ * la de un reactor. En la final larga de un reactor quedan a tres kilómetros
+ * del umbral; en la corta de una avioneta que viene del circuito, a unos
+ * cientos de metros, sobre las luces de aproximación. Si no queda sitio, esta
+ * final no trae aves.
  *
  * Diez metros por debajo de la senda, que es donde un avión que sube un poco
  * pasa por encima y uno que baja se las encuentra.
  */
 export function sitioEnLaFinal(
   alUmbral: number,
+  /** La velocidad del avión, m/s. */
+  velocidad = 35,
 ): { distancia: number; altura: number } | null {
-  const margen = Math.min(1800, Math.max(1200, alUmbral * 0.45));
+  const margen = Math.min(3000, Math.max(1000, velocidad * MEDIO_MINUTO));
   const distancia = Math.min(3200, alUmbral - margen);
   if (distancia < 600) return null;
   return {
@@ -96,6 +100,9 @@ export function sitioEnLaFinal(
     altura: distancia * Math.tan(SENDA) + SOBRE_EL_UMBRAL - 10,
   };
 }
+
+/** Lo que tarda el avión en llegar a las aves desde que se ponen, s. */
+const MEDIO_MINUTO = 30;
 
 /**
  * **Si una bandada está de frente**: por delante, en el cono de lo que se
@@ -173,6 +180,8 @@ export interface MomentoDeAves {
   readonly enElSuelo: boolean;
   /** Metros hasta el umbral en uso. */
   readonly alUmbral: number;
+  /** Velocidad del avión, m/s. */
+  readonly velocidad: number;
   /** De 0 a 1, para decidir si esta final trae aves. */
   readonly dado: number;
   /** Las bandadas de la final que hay puestas en este campo, con dónde están. */
@@ -207,7 +216,7 @@ export class AvesEnLaFinal {
     if (!hayAvesEnLaFinal(m.tramo) || !m.hayTorre || m.enElSuelo) return null;
     if (m.enFinal && !this.tirados.has(m.campo)) {
       this.tirados.add(m.campo);
-      const sitio = sitioEnLaFinal(m.alUmbral);
+      const sitio = sitioEnLaFinal(m.alUmbral, m.velocidad);
       if (sitio && m.dado < 1 / EN_UNA_DE_CADA) return { que: "poner", ...sitio };
     }
     for (const b of m.bandadas) {

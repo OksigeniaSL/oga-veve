@@ -1498,6 +1498,7 @@ export class Game {
       enFinal: this.faseDeAhora === "final",
       enElSuelo: s.onGround,
       alUmbral,
+      velocidad: s.groundSpeed,
       dado,
       bandadas: deLaFinal.map((b) => {
         const d = this.bandadas.dondeEsta(b, this.relojDeRuta);
