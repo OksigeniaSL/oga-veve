@@ -4603,7 +4603,7 @@ const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
 if (vuelo.saleConTorre === false)
   comprobar(
     "y en la pista de casa no enciende la luz ninguna torre",
-    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
+    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)(?:\.[LCR])?$/.test(d)),
     `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
     "en la pista de hierba de la granja hablaba una torre que no existe",
   );
@@ -4632,7 +4632,7 @@ else comprobar(
       (vuelo.torreDijo ?? []).some((d) =>
         (vuelo.saleConAfis
           ? /(afisLibre|afisSinTrafico|afisTraficoAterriza|afisTraficoDespega)$/
-          : /(verde|roja)$/
+          : /(verde|roja)(?:\.[LCR])?$/
         ).test(d),
       ),
   (conFraseologia && !laPropia

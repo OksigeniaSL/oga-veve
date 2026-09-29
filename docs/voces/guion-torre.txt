@@ -90,7 +90,22 @@ one thousand two hundred feet
 above
 below
 same level
-podés aterrizar
+pista
+autorizado a despegar
+autorizado a aterrizar
+cero
+uno
+dos
+tres
+cuatro
+cinco
+seis
+siete
+ocho
+nueve
+izquierda
+derecha
+central
 podés volar a
 pista libre
 pista ocupada

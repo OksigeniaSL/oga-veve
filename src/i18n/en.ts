@@ -228,7 +228,7 @@ export const EN: Dictionary = {
     "For Guillermo Ayala, of Teide National Park, who has spent forty years teaching that mountain to schoolchildren. The rule this game runs on is his: safety, safety, safety — everything after that is learning.",
   "credits.close": "Close",
 
-  "torre.verde": "{indicativo}, cleared to enter",
+  "torre.verde": "{indicativo}, cleared for take-off",
   "torre.roja": "{indicativo}, hold here",
   // La torre canaria dice lo mismo en inglés: lo que cambia entre las dos es
   // el castellano y la voz. Ver `i18n/habla.ts`.
@@ -244,7 +244,7 @@ export const EN: Dictionary = {
   "torre.canario.afisSinTrafico": "{indicativo}, no reported traffic",
   "torre.canario.afisTraficoAterriza": "{indicativo}, landing traffic",
   "torre.canario.afisTraficoDespega": "{indicativo}, departing traffic",
-  "torre.canario.verde": "{indicativo}, cleared to enter",
+  "torre.canario.verde": "{indicativo}, cleared for take-off",
   "torre.canario.roja": "{indicativo}, hold here",
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",

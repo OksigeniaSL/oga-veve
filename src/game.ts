@@ -66,6 +66,7 @@ import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
+  pistaEnCastellano,
   pistaEnPiezas,
   rellenoDe,
   vientoEnPiezas,
@@ -6339,10 +6340,23 @@ export class Game {
      * `Aerodrome.afis`.
      */
     const afis = this.esAfisAqui();
+    /*
+     * **Y la verde nombra la pista**, en castellano: «pista dos cero,
+     * autorizado a aterrizar», y lo mismo al despegar. La torre en casa
+     * autorizaba sin decir por dónde, y la fraseología de verdad lo dice: es
+     * el número pintado delante del morro. La de uso, o la que haya elegido
+     * quien viene sin motor. Ver `pistaEnCastellano`.
+     */
+    const pistaEs =
+      luz === "verde" && !afis
+        ? pistaEnCastellano(
+            this.cabeceraParaLaTorre ?? cabeceraEnUso(this.elCampo().escenario),
+          )
+        : null;
     this.hud.setLuzDeTorre(
       afis ? null : luz,
       rojaDice,
-      this.miIndicativo.dicho,
+      this.conLaPista(this.miIndicativo.dicho, pistaEs, "escrito"),
       enElAire,
     );
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
@@ -6445,12 +6459,16 @@ export class Game {
      * qué idioma va la frase de después. Ver `flight/matricula.ts`.
      */
     const yo = this.miIndicativo;
+    /*
+     * Con la pista, su lado en la clave —en las paralelas— y sus cifras en el
+     * relleno, como la fraseología en inglés. Ver `deTorre`.
+     */
     if (clave)
       this.torre.decir(
-        t(clave, { indicativo: yo.dicho }),
-        clave,
+        t(clave, { indicativo: this.conLaPista(yo.dicho, pistaEs, "dicho") }),
+        `${clave}${pistaEs?.sufijo ?? ""}`,
         urgencia,
-        rellenoDe(yo),
+        { ...rellenoDe(yo), ...(pistaEs?.relleno ?? {}) },
       );
     /*
      * **Y si se espera por alguien, por quién.** La roja podía durar tres
@@ -6543,6 +6561,27 @@ export class Game {
         urgencia,
       );
     else if (conCifras) this.porRadio(enRadio, urgencia);
+  }
+
+  /**
+   * **La matrícula con la pista detrás**, para la verde que la nombra: «Zulu
+   * Papa Alfa, pista dos cero» en la voz, «pista 20» en la tarjeta, que es
+   * como está pintada. En inglés, «runway»; en guaraní, la matrícula sola, que
+   * esa frase la dice a su manera. Ver `torre.verde` en `i18n/es-PY.ts`.
+   */
+  private conLaPista(
+    indicativo: string,
+    pista: ReturnType<typeof pistaEnCastellano>,
+    como: "dicho" | "escrito",
+  ): string {
+    if (!pista) return indicativo;
+    const idioma = getLocale();
+    if (idioma === "gug") return indicativo;
+    if (idioma === "en")
+      return `${indicativo}, runway ${
+        como === "escrito" ? pista.escrito : (pistaEnPiezas(pista.escrito)?.dicho ?? pista.escrito)
+      }`;
+    return `${indicativo}, pista ${como === "escrito" ? pista.escrito : pista.dicho}`;
   }
 
   /**

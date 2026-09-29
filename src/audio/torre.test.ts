@@ -22,6 +22,7 @@ import {
   PISTA_DETRAS,
 } from "./torre";
 import { informacionEnPiezas } from "../flight/informacion-de-trafico";
+import { pistaEnCastellano } from "../flight/matricula";
 
 describe("lo que dice la torre", () => {
   const grabadas = Object.keys(
@@ -84,7 +85,9 @@ describe("lo que dice la torre", () => {
     expect(
       grabadas.filter(
         (c) =>
-          !apuntadas.has(sinLado(c)) && !DE_LA_LAMPARA.has(c) && !esRelleno(c),
+          !apuntadas.has(sinLado(c)) &&
+          !DE_LA_LAMPARA.has(sinLado(c)) &&
+          !esRelleno(c),
       ),
     ).toEqual([]);
   });
@@ -299,3 +302,57 @@ describe("lo que dice un AFIS", () => {
   });
 });
 
+/**
+ * **La verde nombra la pista, en castellano.** La torre de casa autorizaba
+ * sin decir por dónde —«podés entrar», «podés aterrizar»— y la fraseología de
+ * verdad la nombra: «pista dos cero, autorizado a aterrizar», y lo mismo al
+ * despegar. Se monta por piezas, como la matrícula y las cifras del inglés:
+ * diez cifras en castellano dicen cualquier pista, y el lado va en la clave.
+ * Ver `pistaEnCastellano` en `flight/matricula.ts`.
+ */
+describe("la verde nombra la pista, en castellano", () => {
+  const yo = {
+    c1: "fonetico.zulu",
+    c2: "fonetico.papa",
+    c3: "fonetico.alfa",
+    c4: "fonetico.romeo",
+    c5: "fonetico.india",
+  };
+
+  it("las cifras de aquí, y el número como está pintado", () => {
+    expect(pistaEnCastellano("20")).toEqual({
+      relleno: { p1: "cifra.es.2", p2: "cifra.es.0" },
+      sufijo: "",
+      dicho: "dos cero",
+      escrito: "20",
+    });
+    expect(pistaEnCastellano("3L")).toEqual({
+      relleno: { p1: "cifra.es.0", p2: "cifra.es.3" },
+      sufijo: ".L",
+      dicho: "cero tres izquierda",
+      escrito: "03L",
+    });
+    expect(pistaEnCastellano("cualquiera")).toBeNull();
+  });
+
+  it("y se monta entera en las dos voces, para despegar y aterrizar, con cada lado", () => {
+    for (const cabecera of ["20", "03L", "21R", "12C"]) {
+      const pista = pistaEnCastellano(cabecera)!;
+      for (const [m, habla] of [
+        [manifiesto, ""],
+        [canarias, "canario."],
+      ] as const)
+        for (const orden of ["verde", "aterrizar"]) {
+          const clave = `torre.${habla}${orden}${pista.sufijo}`;
+          const piezas = recetaDe(m as Manifiesto, clave, { ...yo, ...pista.relleno });
+          expect(piezas, clave).not.toBeNull();
+          // Con la pista, sus dos cifras, y detrás la autorización.
+          const texto = piezas!.join(" ");
+          expect(texto, clave).toContain(`solo.pista ${pista.relleno.p1} ${pista.relleno.p2}`);
+          expect(texto, clave).toMatch(
+            orden === "verde" ? /autorizadoDespegar$/ : /autorizadoAterrizar$/,
+          );
+        }
+    }
+  });
+});

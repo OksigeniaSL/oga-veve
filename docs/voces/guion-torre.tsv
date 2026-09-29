@@ -90,19 +90,34 @@
 090	trafico.above	above
 091	trafico.below	below
 092	trafico.sameLevel	same level
-093	torre.solo.aterrizar	podés aterrizar
-094	torre.solo.destino	podés volar a
-095	torre.solo.afisLibre	pista libre
-096	torre.solo.afisOcupada	pista ocupada
-097	torre.solo.afisSinTrafico	sin tráfico conocido
-098	torre.solo.afisTraficoAterriza	tráfico aterrizando
-099	torre.solo.afisTraficoDespega	tráfico despegando
-100	destino.pettirossi	Asunción
-101	destino.guarani	Guaraní
-102	destino.encarnacion	Encarnación
-103	destino.yvytu-rape	Yvytu Rape
-104	destino.concepcion	Concepción
-105	destino.pedro-juan	Pedro Juan Caballero
-106	destino.estigarribia	Mariscal Estigarribia
-107	destino.ayolas	Ayolas
-108	destino.pilar	Pilar
+093	torre.solo.pista	pista
+094	torre.solo.autorizadoDespegar	autorizado a despegar
+095	torre.solo.autorizadoAterrizar	autorizado a aterrizar
+096	cifra.es.0	cero
+097	cifra.es.1	uno
+098	cifra.es.2	dos
+099	cifra.es.3	tres
+100	cifra.es.4	cuatro
+101	cifra.es.5	cinco
+102	cifra.es.6	seis
+103	cifra.es.7	siete
+104	cifra.es.8	ocho
+105	cifra.es.9	nueve
+106	lado.es.izquierda	izquierda
+107	lado.es.derecha	derecha
+108	lado.es.central	central
+109	torre.solo.destino	podés volar a
+110	torre.solo.afisLibre	pista libre
+111	torre.solo.afisOcupada	pista ocupada
+112	torre.solo.afisSinTrafico	sin tráfico conocido
+113	torre.solo.afisTraficoAterriza	tráfico aterrizando
+114	torre.solo.afisTraficoDespega	tráfico despegando
+115	destino.pettirossi	Asunción
+116	destino.guarani	Guaraní
+117	destino.encarnacion	Encarnación
+118	destino.yvytu-rape	Yvytu Rape
+119	destino.concepcion	Concepción
+120	destino.pedro-juan	Pedro Juan Caballero
+121	destino.estigarribia	Mariscal Estigarribia
+122	destino.ayolas	Ayolas
+123	destino.pilar	Pilar

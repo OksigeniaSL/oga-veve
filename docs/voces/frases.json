@@ -3807,18 +3807,228 @@
     "para": "va a tu misma altura"
   },
   {
-    "id": "torre.solo.aterrizar",
+    "id": "torre.solo.pista",
     "voz": "torre",
     "idioma": "es",
-    "texto": "podés aterrizar",
+    "texto": "pista",
+    "para": "la pista que nombra la verde, antes de su número"
+  },
+  {
+    "id": "torre.solo.autorizadoDespegar",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "autorizado a despegar",
+    "para": "la lámpara verde en el punto de espera: autorizado a despegar"
+  },
+  {
+    "id": "torre.solo.autorizadoAterrizar",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "autorizado a aterrizar",
     "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
   },
   {
-    "id": "torre.canario.solo.aterrizar",
+    "id": "cifra.es.0",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "cero",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.1",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "uno",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.2",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "dos",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.3",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "tres",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.4",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "cuatro",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.5",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "cinco",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.6",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "seis",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.7",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "siete",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.8",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "ocho",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.9",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "nueve",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "lado.es.izquierda",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "izquierda",
+    "para": "el lado de la pista, donde hay dos paralelas"
+  },
+  {
+    "id": "lado.es.derecha",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "derecha",
+    "para": "el lado de la pista, donde hay dos paralelas"
+  },
+  {
+    "id": "lado.es.central",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "central",
+    "para": "el lado de la pista, donde hay dos paralelas"
+  },
+  {
+    "id": "torre.canario.solo.pista",
     "voz": "torre-canarias",
     "idioma": "es",
-    "texto": "puedes aterrizar",
+    "texto": "pista",
+    "para": "la pista que nombra la verde, antes de su número"
+  },
+  {
+    "id": "torre.canario.solo.autorizadoDespegar",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "autorizado a despegar",
+    "para": "la lámpara verde en el punto de espera: autorizado a despegar"
+  },
+  {
+    "id": "torre.canario.solo.autorizadoAterrizar",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "autorizado a aterrizar",
     "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
+  },
+  {
+    "id": "cifra.es.0",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "cero",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.1",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "uno",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.2",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "dos",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.3",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "tres",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.4",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "cuatro",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.5",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "cinco",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.6",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "seis",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.7",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "siete",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.8",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "ocho",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "cifra.es.9",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "nueve",
+    "para": "una cifra de la pista, en castellano"
+  },
+  {
+    "id": "lado.es.izquierda",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "izquierda",
+    "para": "el lado de la pista, donde hay dos paralelas"
+  },
+  {
+    "id": "lado.es.derecha",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "derecha",
+    "para": "el lado de la pista, donde hay dos paralelas"
+  },
+  {
+    "id": "lado.es.central",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "central",
+    "para": "el lado de la pista, donde hay dos paralelas"
   },
   {
     "id": "torre.solo.destino",
