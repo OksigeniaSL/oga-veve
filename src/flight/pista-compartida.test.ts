@@ -21,7 +21,7 @@ import { describe, expect, it } from "vitest";
 import { Boca } from "../audio/boca";
 import { Frecuencia, PISTA_TUYA, type Transmision } from "./radio";
 import { TurnoDePista, type DibujoDelTurno } from "./turno-de-pista";
-import { crearTrafico, VUELA_A } from "../world/trafico";
+import { crearTrafico, tiposDelCampo, VUELA_A } from "../world/trafico";
 import { BASE_A_FINAL, type Pista } from "../world/circuito";
 import { GLIDE_SLOPE } from "../world/runway-guide";
 
@@ -499,7 +499,12 @@ describe("con la boca de verdad y vuelos con frustrada: lo que se oye cuadra y n
    */
   const FRASE = 3000;
 
-  function volar(semilla: number, frustradas: number) {
+  /**
+   * `oaci`, con sus tipos de tráfico: los reactores y turbohélices de los
+   * campos grandes vuelan circuitos más largos y más deprisa. Sin él, la
+   * avioneta de siempre, que es con la que se mide que nadie salte.
+   */
+  function volar(semilla: number, frustradas: number, oaci?: string) {
     const azar = dados(semilla * 7);
     let reloj = 0;
     const luego: { cuando: number; hacer: () => void }[] = [];
@@ -510,8 +515,16 @@ describe("con la boca de verdad y vuelos con frustrada: lo que se oye cuadra y n
     });
     const hablar = (dura: number) => (listo: () => void) =>
       void luego.push({ cuando: reloj + dura, hacer: listo });
-    const radio = new Frecuencia(dados(semilla), "GCXO");
-    const trafico = crearTrafico(PISTA, COTA, "ala-alta");
+    const radio = new Frecuencia(dados(semilla), oaci ?? "GCXO");
+    const trafico = crearTrafico(
+      PISTA,
+      COTA,
+      "ala-alta",
+      "izquierda",
+      1,
+      undefined,
+      oaci ? { tipos: tiposDelCampo(oaci, PISTA.length) } : {},
+    );
     const yo = { alUmbral: Infinity, alto: 1000 };
     let teMandanAlAire = false;
     const turno = new TurnoDePista({
@@ -554,7 +567,13 @@ describe("con la boca de verdad y vuelos con frustrada: lo que se oye cuadra y n
           hablar(2500 + azar() * 2500),
           `vuelo.cosa${Math.floor(azar() * 50)}`,
         );
-      const dice = turno.oir(PASO, { fase, deDia: true, instructorHablando: false });
+      // Y la frecuencia transmite con el canal libre, como en `oirLaRadio`.
+      const dice = turno.oir(PASO, {
+        fase,
+        deDia: true,
+        instructorHablando: false,
+        canalOcupado: !boca.libre,
+      });
       if (dice) boca.pedir("baja", hablar(FRASE), `${dice.clave}@${dice.de.matricula}`);
       if (PISTA_TUYA.has(fase) && !PISTA_TUYA.has(antes)) turno.alSerTuya(fase);
       if (fase === "final" && antes !== "final") turno.pedirAterrizaje();
@@ -637,7 +656,18 @@ describe("con la boca de verdad y vuelos con frustrada: lo que se oye cuadra y n
         trasLaTuya.push(`${(h.t / 1000).toFixed(1)} s ${orden} a ${quien}`);
     }
     trafico.dispose();
-    return { sinAnular, trasLaTuya, saltos };
+    /*
+     * Lo que se cayó de la torre y de la frecuencia sin que nadie lo
+     * retirara: caducado, sin sitio en la cola o barrido por un aviso.
+     * Retirar lo que ya no es verdad no cuenta, que es lo que tiene que pasar.
+     */
+    const perdidas = boca.descartadas.filter(
+      (d) =>
+        /\s(?:torre|otro)\./.test(` ${d}`) &&
+        /(caducó esperando|no cabía en la cola|la barrió un urgente)$/.test(d),
+    );
+    const tuyas = boca.habladas.filter((h) => h.clave.endsWith("@YO")).length;
+    return { sinAnular, trasLaTuya, saltos, perdidas, tuyas };
   }
 
   it("tu autorización nunca suena con un permiso a otro sin anular, ni se le da a otro después", () => {
@@ -658,4 +688,29 @@ describe("con la boca de verdad y vuelos con frustrada: lo que se oye cuadra y n
     }
     expect(mal.slice(0, 5)).toEqual([]);
   });
+
+  /*
+   * **Y la cola no se desborda en los campos con más tráfico.**
+   *
+   * La frecuencia pedía su frase aunque la boca estuviera llena, esperaba en
+   * la cola detrás de la torre y de la instructora, y caducaba sin sonar:
+   * camino de Tenerife Sur, el «cleared to land» de otro; en Lanzarote, el
+   * tuyo. Y lo que se caía, la frecuencia lo daba por dicho. Ahora transmite
+   * con el canal libre —ver `Momento.canalOcupado`— y lo que la torre te da,
+   * o le quita a otro para dártelo, no caduca —ver `noSePierde`—.
+   */
+  for (const oaci of ["GCXO", "SGAS", "GCTS", "GCLP"])
+    it(`y en ${oaci}, con la boca llena, nada de la torre ni de los demás se pierde, y tu permiso suena`, () => {
+      const mal: string[] = [];
+      let tuyas = 0;
+      for (let semilla = 1; semilla <= 120; semilla++) {
+        const r = volar(semilla, semilla % 3, oaci);
+        mal.push(...r.perdidas.map((x) => `semilla ${semilla}: ${x}`));
+        mal.push(...r.sinAnular.map((x) => `semilla ${semilla}, sin anular: ${x}`));
+        tuyas += r.tuyas;
+      }
+      expect(mal.slice(0, 5)).toEqual([]);
+      // Y el instrumento ve el caso: tu permiso suena, muchas veces.
+      expect(tuyas).toBeGreaterThan(60);
+    });
 });

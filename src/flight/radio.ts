@@ -181,6 +181,18 @@ export interface Momento {
   /** Si el instructor está diciendo algo ahora mismo. */
   readonly instructorHablando: boolean;
   /**
+   * **Si alguien tiene el canal**: hablando, o esperando turno para hablar.
+   *
+   * Una radio es de uno en uno, y quien quiere transmitir espera a que el
+   * otro suelte el pulsador. La frecuencia pedía su frase aunque la boca
+   * estuviera llena, la frase se ponía a la cola detrás de la torre, caducaba
+   * sin sonar —en Los Rodeos, un «cleared to land» a otro— y la frecuencia la
+   * daba por dicha: lo que se oía y lo que pasaba dejaban de ser lo mismo.
+   * Ahora se espera, sin perder el turno, a que el canal esté libre. Ver
+   * `libre` en `audio/boca.ts`.
+   */
+  readonly canalOcupado?: boolean;
+  /**
    * Si estás **esperando a que te den la pista**: parado en el punto de espera
    * con la lámpara roja, o en final detrás de uno que aterriza antes que vos.
    *
@@ -713,18 +725,39 @@ export class Frecuencia {
    */
   seFueAlAire(matricula: string, m: Momento): Transmision | null {
     const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
-    if (!a || laPistaQueTiene(a.guion, a.paso) || !vieneAAterrizar(a.guion, a.paso))
-      return null;
+    if (!a || !vieneAAterrizar(a.guion, a.paso)) return null;
+    const tenia = laPistaQueTiene(a.guion, a.paso);
+    /*
+     * **Y el que la tenía, también**: autorizado a aterrizar, y con la pista
+     * ocupada al llegar a la decisión —uno que todavía corre su despegue,
+     * otro que no la ha dejado—. Con permiso o sin él, con la pista ocupada
+     * no se toca: la torre lo manda al aire. Ver `pistaOcupadaPorOtro` en
+     * `world/trafico.ts`.
+     *
+     * Y eso se dice **siempre**, también con el canal ocupado o contigo en final:
+     * su «cleared to land» se oyó, y lo que lo anula tiene que oírse antes que
+     * cualquier permiso a otro por la misma pista. Va con `quitaPermiso`, que
+     * es lo que hace que se diga en `mando`. Ver `laQueSeDice`.
+     */
+    if (tenia && tenia !== "torre.clearedLand") return null;
     a.guion = "frustrada";
     a.paso = GUIONES.frustrada.findIndex((p) => p.clave === "torre.goAround");
     a.estrena = false;
     this.avanzar(a);
-    if (this.canal > 0 || m.instructorHablando || CALLADAS.has(m.fase)) return null;
+    if (
+      !tenia &&
+      (this.canal > 0 ||
+        m.instructorHablando ||
+        m.canalOcupado ||
+        CALLADAS.has(m.fase))
+    )
+      return null;
     const dice: Transmision = {
       voz: "torre",
       clave: "torre.goAround",
       de: a.indicativo,
       respuesta: false,
+      ...(tenia ? { quitaPermiso: true } : {}),
     };
     this.canal = HUECO_DEL_CANAL;
     this.dicho = dice;
@@ -767,7 +800,7 @@ export class Frecuencia {
     this.canal -= dt;
     for (const a of this.aviones) a.falta -= dt;
     if (this.canal > 0) return null;
-    if (m.instructorHablando) return null;
+    if (m.instructorHablando || m.canalOcupado) return null;
     /*
      * **Y esperando la pista, hablan los que la ocupan.** Solo ellos: lo que
      * se espera es lo suyo, y el resto de la frecuencia sigue callada, que la

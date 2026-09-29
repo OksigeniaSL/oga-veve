@@ -151,3 +151,55 @@ describe("los campos de una sola calle se reconocen, no se apuntan a mano", () =
       expect(unaSola(id, 180)).toBe(false);
     });
 });
+
+/**
+ * **«Pista libre» es con el avión entero fuera de ella.**
+ *
+ * Se daba por libre a ocho metros del borde del asfalto, y a esa distancia un
+ * turbohélice de veintisiete metros de envergadura todavía tiene media ala
+ * sobre la pista: en La Gomera se oyó «pista libre» con el otro a mil noventa
+ * metros del umbral, a veintitantos del eje. Ahora es al pasar la doble raya
+ * de la salida —la misma distancia que respeta quien espera para entrar—, o
+ * al acabar el camino si no llega tan lejos.
+ */
+describe("y la pista queda libre cuando el avión entero está fuera", () => {
+  /** Un punto del camino a tantos metros de su principio. */
+  const aLosMetros = (camino: readonly EnElPlano[], metros: number): EnElPlano => {
+    let hecho = 0;
+    for (let i = 1; i < camino.length; i++) {
+      const a = camino[i - 1]!;
+      const b = camino[i]!;
+      const d = Math.hypot(b.x - a.x, b.z - a.z);
+      if (hecho + d >= metros) {
+        const t = d > 0 ? (metros - hecho) / d : 0;
+        return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+      }
+      hecho += d;
+    }
+    return camino[camino.length - 1]!;
+  };
+
+  for (const esc of CON_CALLES) {
+    it(`${esc.id}: al decir «pista libre» ni la punta del ala la pisa`, () => {
+      const aero = esc.aerodrome as Aerodrome;
+      const ancho = aero.runways[0]?.widthM ?? 45;
+      const suelo = sueloDelTrafico(aero, esc.runway, ancho);
+      for (const tipo of tiposDelCampo(aero.id, esc.runway.length)) {
+        const llega = suelo?.llegada(tipo.toca + tipo.frena);
+        if (!llega) continue;
+        const libre = aLosMetros(llega.camino, llega.pista);
+        const { across } = enEjesDePista(
+          libre.x,
+          libre.z,
+          esc.runway.x,
+          esc.runway.z,
+          esc.runway.heading,
+        );
+        expect(
+          Math.abs(across) - tipo.envergadura / 2,
+          `${esc.id} ${tipo.id}: a ${across.toFixed(0)} m del eje`,
+        ).toBeGreaterThan(ancho / 2);
+      }
+    });
+  }
+});

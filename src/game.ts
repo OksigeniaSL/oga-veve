@@ -89,7 +89,12 @@ import {
 } from "./world/circuito";
 import { FLOTA, modeloPorId } from "./flight/flota";
 import { cabeEn, campoDe } from "./flight/cabe";
-import { crearTrafico, tiposDelCampo, type Trafico } from "./world/trafico";
+import {
+  crearTrafico,
+  tiposDelCampo,
+  type QuienJuega,
+  type Trafico,
+} from "./world/trafico";
 import {
   sueloDelTrafico,
   type SueloDelTrafico,
@@ -265,6 +270,21 @@ const TCAS_EN_TIERRA = new Set<Fase>([
   "despegando",
   "comprometido",
   "aterrizado",
+]);
+
+/**
+ * **Las fases en que estás encima de la pista**, con las ruedas en el suelo:
+ * del eje, alineado, a dejarla. Es lo que el tráfico mira para no cruzar el
+ * umbral contigo en ella. Ver `tuLlegada`. «Autorizado» no está: con la luz
+ * verde todavía se está en la doble raya.
+ */
+const ENCIMA_DE_LA_PISTA = new Set<string>([
+  "back-taxi",
+  "alineando",
+  "despegando",
+  "comprometido",
+  "aterrizado",
+  "abandonando",
 ]);
 
 /** Por debajo de esto, m, el tráfico va «a tu misma altura». Trescientos pies. */
@@ -448,7 +468,7 @@ import {
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
 import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
-import { BOCA, MEGAFONIA } from "./audio/boca";
+import { BOCA, MEGAFONIA, anunciaLaFase } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
@@ -1349,9 +1369,21 @@ export class Game {
       intrusos,
     );
     for (const a of avisos) {
+      /*
+       * **Y si ese avión ya se contó en esta pasada, la instructora no lo
+       * vuelve a contar.** El TCAS rearma su aviso cada vez que el otro sale
+       * y vuelve a entrar en su volumen, y en un circuito con frustradas eso
+       * es cada vuelta: en La Gomera, «mirá adelante: hay otro avión cerca»
+       * cinco veces, por el mismo avión dando las mismas vueltas. La caja lo
+       * canta cada vez, que es lo que hace una de verdad; la explicación es
+       * una por pasada, con la misma regla que la información de tráfico: se
+       * rearma cuando el otro se aleja de verdad o aterriza, no cuando pasa un
+       * rato. Ver `SE_OLVIDA_MILLAS` en `flight/informacion-de-trafico.ts`.
+       */
+      const yaContado = this.informacionDeTrafico.yaContados.has(a.id);
       // El «traffic, traffic» ya lo cuenta: la radio no lo repite después.
       this.informacionDeTrafico.darPorContado(a.id);
-      this.avisarDelTrafico(a);
+      this.avisarDelTrafico(a, yaContado);
     }
     this.explicarElTrafico();
     const info = this.informacionDeTrafico.paso(
@@ -1363,7 +1395,15 @@ export class Game {
         rumbo: MathUtils.radToDeg(s.heading),
         sobreElSuelo: s.heightAboveGround,
         enElSuelo: s.onGround,
-        callado: this.terrenoAhora !== null,
+        /*
+         * **Y con el canal ocupado, espera a que se libre.** La información
+         * de tráfico se pedía aunque la boca estuviera llena, esperaba detrás
+         * de la torre y caducaba sin sonar: camino de Tenerife Sur,
+         * «torre.canario.trafico: caducó esperando». Quien la da es la
+         * torre, y la torre no pisa a nadie: la da en cuanto el canal está
+         * libre, con el tráfico de ese momento.
+         */
+        callado: this.terrenoAhora !== null || !BOCA.libre,
       },
       intrusos,
     );
@@ -1509,10 +1549,13 @@ export class Game {
    * sirena, solo las dos palabras, y aquí tampoco. Quien lo oiga por primera
    * vez aquí tiene que aprender que eso se oye con calma.
    */
-  private avisarDelTrafico(a: AvisoDeTrafico): void {
+  private avisarDelTrafico(a: AvisoDeTrafico, yaContado = false): void {
     const lado = ladoDeLaHora(a.hora);
     const clave = `vuelo.trafico.${lado}` as TranslationKey;
-    this.cantar("traffic, traffic", t(clave), clave);
+    // Contado ya en esta pasada, suena la caja si la hay y nadie más. Ver
+    // `vigilarElTrafico`.
+    if (yaContado) this.cantar("traffic, traffic");
+    else this.cantar("traffic, traffic", t(clave), clave);
     /*
      * A la misma altura por debajo de trescientos pies: más cerca que eso la
      * cifra de la carta dice +02 o -01 y lo que hay que mirar es al frente,
@@ -2907,6 +2950,7 @@ export class Game {
     mandarteAlAire: (alto, sigue) =>
       this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
+    avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -6000,13 +6044,6 @@ export class Game {
   }
 
   /**
-   * Lo último que un AFIS le dijo a cada matrícula. Ver `enUnAfis`: a quien
-   * ya se le dijo «runway free» para entrar al eje, su despegue no se anuncia.
-   * Se vacía con la frecuencia, que es cuando las matrículas cambian.
-   */
-  private readonly loUltimoDelAfis = new Map<string, string>();
-
-  /**
    * **Lo que le quita la pista a otro, dicho por la torre**: el que despegue o
    * el que se vaya al aire antes de dártela a ti. Lo decide el turno —ver
    * `alSerTuya` en `flight/turno-de-pista.ts`—; aquí se monta con su pista y
@@ -6057,11 +6094,10 @@ export class Game {
      */
     let base = pedida;
     if (this.esAfisAqui() && !(pedida in DICE_UN_AFIS)) {
-      const suya = enUnAfis(pedida, this.loUltimoDelAfis.get(quien.matricula));
+      const suya = enUnAfis(pedida);
       if (!suya) return null;
       base = suya;
     }
-    if (this.esAfisAqui()) this.loUltimoDelAfis.set(quien.matricula, base);
     const orden = DICE_LA_TORRE[base];
     if (!orden) return null;
     // El límite de la autorización va detrás de la orden, como se dice.
@@ -6816,7 +6852,6 @@ export class Game {
      * junto al punto de espera con la roja encendida. Ver `Trafico.vaciar`.
      */
     this.turno.reiniciar(campo.escenario.aerodrome?.id);
-    this.loUltimoDelAfis.clear();
     this.trafico?.vaciar();
     callar();
     /*
@@ -7507,6 +7542,9 @@ export class Game {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
       instructorHablando: this.instructor.hablando,
+      // La radio es de uno en uno: se transmite con el canal libre, y no a la
+      // cola. Ver `Momento.canalOcupado`.
+      canalOcupado: !BOCA.libre,
     });
     if (!dice) return;
 
@@ -7697,6 +7735,13 @@ export class Game {
         tipos,
         forma,
         cuerposDeVerdad: true,
+        /*
+         * **Y tu aproximación entra en la fila**, y tu pista cuenta como
+         * ocupada: el tráfico que viene detrás de ti te deja tu hueco, y el
+         * que llega a la decisión contigo encima de la pista se va al aire.
+         * Ver `QuienJuega` en `world/trafico.ts`.
+         */
+        quienJuega: () => this.tuLlegada(),
         tierra: () => {
           if (!aerodromo) return null;
           if (sueloDelCampo === undefined)
@@ -7733,6 +7778,47 @@ export class Game {
       },
     );
     this.scene.add(this.trafico.grupo);
+  }
+
+  /**
+   * **Tu llegada, vista desde el tráfico**: cuánto te falta para el umbral si
+   * vuelas la final, y si estás encima de la pista. Ver `QuienJuega` en
+   * `world/trafico.ts`.
+   */
+  private tuLlegada(): QuienJuega {
+    const s = this.flight.state;
+    const fase = this.faseDeAhora;
+    const velocidad = Math.max(15, s.groundSpeed);
+    const alUmbral =
+      fase === "final" && !s.onGround
+        ? distanciaAlUmbral(this.elCampo(), s.position.x, s.position.z) / velocidad
+        : null;
+    return {
+      alUmbral: alUmbral !== null && alUmbral > 0 ? alUmbral : null,
+      enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
+      velocidad,
+    };
+  }
+
+  /**
+   * **Que la pista está ocupada, dicho por quien lo diría**: donde contesta
+   * un AFIS, al llegar a final con alguien encima. Un AFIS no te para ni te
+   * manda al aire; te dice lo que hay, en castellano en los cuatro peldaños
+   * y, de Taguató para arriba, en su fraseología. Donde hay torre no se dice
+   * nada: la torre te deja de número dos y la luz ya lo cuenta. Ver
+   * `avisarteOcupada` en `flight/turno-de-pista.ts`.
+   */
+  private decirQueLaPistaEstaOcupada(): void {
+    if (!this.esAfisAqui()) return;
+    const yo = this.miIndicativo;
+    const clave = comoSeDiceAqui(
+      "torre.afisOcupada",
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
+    ) as TranslationKey;
+    this.torre.decir(t(clave, { indicativo: yo.dicho }), clave, "mando", rellenoDe(yo));
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) this.porRadioClave("torre.afisOccupied");
   }
 
   /**
@@ -10845,7 +10931,6 @@ export class Game {
      * su pista al decirse la llamada y no al sonar. Ver `esDeLaFrecuencia`.
      */
     this.turno.cambiarDeCampo(campo.escenario.aerodrome?.id);
-    this.loUltimoDelAfis.clear();
     this.cambiarDeSigueme(campo);
     this.hud.setMagneticVariation(campo.escenario.magneticVariation);
     this.updateBadge();
@@ -12551,6 +12636,13 @@ export class Game {
       const loDiceElV1 =
         vista.fase === "comprometido" && canalesDe(this.tier.avisos).cabina;
       if (!repuesta) {
+        /*
+         * **Y la de la fase de antes, si todavía espera turno, ya no vale.**
+         * Lo que cuenta una fase aguanta en la cola lo que dure esa fase, no
+         * un reloj; al cambiar, se retira aquí. Ver `anunciaLaFase` en
+         * `audio/boca.ts`.
+         */
+        BOCA.retirar((c) => anunciaLaFase(c) && c !== clave);
         if (!loDiceElV1) this.instructor.decir(frase, clave);
         if (conLetras) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);

@@ -517,3 +517,59 @@ describe("tu permiso para aterrizar, solo mientras hay final", () => {
     expect(boca.espera("torre.canario.clearedLand@yo")).toBe(true);
   });
 });
+
+/**
+ * **Con alguien encima de la pista no se te da, ni «cleared to land» ni
+ * «pista libre».** La frecuencia dice quién la tiene; el dibujo, quién está
+ * encima. En La Gomera sonó «pista libre» con el otro todavía en la pista, a
+ * mil noventa metros del umbral. Ver `ocupanLaPista` en `world/trafico.ts`.
+ */
+describe("la pista que se ve, además de la que se oye", () => {
+  /** Un dibujo con quien se diga encima de la pista, y nada más. */
+  const dibujo = (encima: string[]) => ({
+    anuncia: () => {},
+    paso: () => [],
+    todaviaNo: () => false,
+    enFinal: () => null,
+    ocupanLaPista: () => encima,
+  });
+
+  it("en final, con uno encima, se espera y se dice que está ocupada una vez", () => {
+    const encima = ["EC-ABC"];
+    let ocupada = 0;
+    let alto = 90;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      trafico: () => dibujo(encima),
+      alto: () => alto,
+      avisarteOcupada: () => void ocupada++,
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    for (let i = 0; i < 20; i++) turno.paso("final");
+    expect(pasos).toEqual([]);
+    expect(ocupada).toBe(1);
+    // La deja: ahora sí.
+    encima.length = 0;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    // Y en otra final, con otro encima, se vuelve a decir.
+    turno.paso("en-vuelo");
+    encima.push("EC-XYZ");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(ocupada).toBe(2);
+    // Y si a la decisión sigue encima, al aire.
+    alto = 50;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land", "go around"]);
+  });
+
+  it("y la lámpara del punto de espera tampoco se pone verde", () => {
+    const { turno } = montar(new Frecuencia(dados(3), "GCXO"), {
+      trafico: () => dibujo(["EC-ABC"]),
+    });
+    expect(turno.pistaDeOtros).toBe(true);
+    // Encima sin tenerla es el que ya corre su despegue.
+    expect(turno.porQueEsperas).toBe("despega");
+  });
+});

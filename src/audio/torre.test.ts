@@ -245,7 +245,6 @@ describe("lo que dice un AFIS", () => {
     for (const orden of [
       "torre.clearedTakeoff",
       "torre.clearedLand",
-      "torre.lineUpWait",
       "torre.holdShort",
       "torre.goAround",
     ]) {
@@ -263,11 +262,16 @@ describe("lo que dice un AFIS", () => {
     expect(enUnAfis("torre.mayday")).toBe("torre.mayday");
   });
 
-  it("a quien ya se le dijo «runway free» para entrar, su despegue no se repite", () => {
-    expect(enUnAfis("torre.clearedTakeoff", "torre.afisFree")).toBeNull();
-    expect(enUnAfis("torre.clearedTakeoff", "torre.pistaEnUso")).toBe(
-      "torre.afisFreeTakeoff",
-    );
+  /*
+   * **Y a nadie le hace esperar en el eje.** «Line up and wait» se decía
+   * «runway free», el despegue de ese avión se callaba, y ese «runway free»
+   * se quedaba oído sin que nada lo anulara: en La Gomera sonaba después tu
+   * «pista libre», con la pista libre para dos. Entrar al eje se hace callado,
+   * y su «runway free» suena al salir, que se la da y se la quita a la vez.
+   */
+  it("entrar al eje no se dice, y el despegue sí, siempre", () => {
+    expect(enUnAfis("torre.lineUpWait")).toBeNull();
+    expect(enUnAfis("torre.clearedTakeoff")).toBe("torre.afisFreeTakeoff");
   });
 
   it("todo lo que dice está grabado, en las dos voces y con su pista", () => {
@@ -294,3 +298,4 @@ describe("lo que dice un AFIS", () => {
     }
   });
 });
+

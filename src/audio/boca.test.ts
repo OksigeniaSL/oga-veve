@@ -8,6 +8,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  anunciaLaFase,
   Boca,
   BOCA,
   CADUCA,
@@ -857,5 +858,129 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
   it("y un aviso de paso, con su reloj corto", () => {
     expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
     expect(explicaLaOtraPunta("vuelo.alAireOtraPuntaX")).toBe(false);
+  });
+});
+
+/**
+ * **Lo que la torre te da o te manda no caduca: se dice en cuanto se pueda.**
+ *
+ * «Cleared to land» caducó esperando en Lanzarote con el JAZ 20; camino de
+ * Tenerife Sur cayeron así el «cleared to land» de otro, la información de
+ * tráfico y la fase de final. La frecuencia es de uno en uno, y lo que es para
+ * ti y es una autorización no se pierde. Ver `noSePierde` en `torre.ts`.
+ */
+describe("tu autorización no se pierde esperando turno", () => {
+  const TUYA = "torre.canario.clearedLand@fonetico.echo-fonetico.charlie";
+
+  it("espera lo que haga falta, y se dice", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("larga"), "torre.canario.goAround@otro");
+    b.pedir("mando", frase("tuya"), TUYA);
+    reloj += 3 * CADUCA_LA_ORDEN;
+    acabar["larga"]!();
+    expect(dicho).toEqual(["larga", "tuya"]);
+    expect(b.descartadas).toEqual([]);
+  });
+
+  it("ni se cae de una cola llena de comentarios", () => {
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("tuya"), TUYA);
+    for (let i = 0; i < 8; i++)
+      b.pedir("mando", frase(`orden ${i}`), `torre.trafico@${i}`);
+    expect(b.espera(TUYA)).toBe(true);
+    expect(b.descartadas.some((d) => d.includes("clearedLand"))).toBe(false);
+  });
+
+  it("ni la barre un aviso urgente: sigue siendo verdad", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("tuya"), TUYA);
+    b.pedir("normal", frase("comentario"), "vuelo.rapido");
+    b.pedir("urgente", frase("terreno"), "vuelo.terrenoSube");
+    expect(b.espera(TUYA)).toBe(true);
+    expect(b.espera("vuelo.rapido")).toBe(false);
+    acabar["terreno"]!();
+    expect(dicho.at(-1)).toBe("tuya");
+  });
+
+  it("y la retira solo quien sabe que ya no vale", () => {
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("tuya"), TUYA);
+    b.retirar((c) => c === TUYA);
+    expect(b.espera(TUYA)).toBe(false);
+    expect(sinHora(b.descartadas.at(-1))).toBe(`${TUYA}: ya no es verdad`);
+  });
+
+  it("y lo de los demás, que va en voz baja, sigue con su reloj", () => {
+    expect(cuantoAguanta("torre.clearedLand@otro", "baja")).toBe(
+      CADUCA_LA_ORDEN,
+    );
+    expect(cuantoAguanta("torre.clearedLand@yo", "mando")).toBe(Infinity);
+    expect(cuantoAguanta("torre.aterrizar@yo", "mando")).toBe(Infinity);
+    expect(cuantoAguanta("torre.trafico@yo", "normal")).toBe(CADUCA_LA_ORDEN);
+  });
+});
+
+/**
+ * **El canal libre**: nadie hablando, nadie esperando y el silencio cumplido.
+ * Es lo que mira quien habla por su cuenta —la frecuencia, la torre dando
+ * tráfico— antes de abrir la boca, para no ponerse a la cola. Ver `libre`.
+ */
+describe("el canal libre", () => {
+  it("libre al principio, ocupado hablando, y otra vez libre tras el silencio", () => {
+    reloj = 0;
+    const b = new Boca({ ahora: () => reloj, cancelar: () => {} });
+    const { acabar, frase } = coro();
+    expect(b.libre).toBe(true);
+    b.pedir("baja", frase("otro avión"), "otro.final@x");
+    expect(b.libre).toBe(false);
+    acabar["otro avión"]!();
+    expect(b.libre).toBe(false);
+    reloj += SILENCIO;
+    expect(b.libre).toBe(true);
+  });
+
+  it("y con alguien esperando turno, tampoco", () => {
+    const b = boca();
+    const { acabar, frase } = coro();
+    b.pedir("normal", frase("uno"), "uno");
+    b.pedir("normal", frase("dos"), "dos");
+    b.pedir("normal", frase("tres"), "tres");
+    acabar["uno"]!();
+    reloj += SILENCIO;
+    expect(b.cuantasEsperan).toBe(1);
+    expect(b.libre).toBe(false);
+  });
+});
+
+/**
+ * **Lo que cuenta una fase aguanta lo que dura la fase.** Con el reloj de un
+ * aviso, «estás en final» caducaba detrás del permiso de la torre, que se da
+ * en ese mismo instante. Ver `anunciaLaFase`.
+ */
+describe("la fase se cuenta aunque la torre hable antes", () => {
+  it("espera detrás de la torre y se dice", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("permiso"), "torre.aterrizar@yo");
+    b.pedir("normal", frase("final"), "vuelo.final");
+    reloj += 3 * CADUCA;
+    acabar["permiso"]!();
+    expect(dicho).toEqual(["permiso", "final"]);
+  });
+
+  it("y las de los tres guiones son de fase; un aviso suelto no", () => {
+    expect(anunciaLaFase("vuelo.final")).toBe(true);
+    expect(anunciaLaFase("vuelo.esperandoAfis")).toBe(true);
+    expect(anunciaLaFase("vuelo.abandonandoSinTorre")).toBe(true);
+    expect(anunciaLaFase("vuelo.enVueloDestino")).toBe(true);
+    expect(anunciaLaFase("vuelo.rapido")).toBe(false);
+    expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
   });
 });

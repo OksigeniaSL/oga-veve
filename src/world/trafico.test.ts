@@ -464,8 +464,15 @@ describe("«en final» se dice en final, y va delante quien se ve delante", () =
     expect(t.todaviaNo("EC-ABC", "otro.final")).toBe(true);
     t.paso(3);
     expect(t.todaviaNo("EC-ABC", "otro.final")).toBe(false);
-    // Y a quien no se ve no se le espera: está donde diga.
-    expect(t.todaviaNo("EC-XYZ", "otro.final")).toBe(false);
+    /*
+     * Y a quien no se ve se le espera **solo si no cabe**: aparecería en la
+     * entrada en final, con EC-ABC bajando por ella delante. Con la final
+     * vacía, está donde diga. Ver `noCabeTodavia`.
+     */
+    expect(t.todaviaNo("EC-XYZ", "otro.final")).toBe(true);
+    const vacio = crearTrafico(PISTA, COTA, "ala-alta");
+    expect(vacio.todaviaNo("EC-XYZ", "otro.final")).toBe(false);
+    vacio.dispose();
     t.dispose();
   });
 

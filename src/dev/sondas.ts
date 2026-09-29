@@ -1448,6 +1448,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     cifrasDeCabina: () => cifrasDeLaCabina(),
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
+    /** La fila de llegadas del tráfico. Ver `secuencia` en `trafico.ts`. */
+    secuencia: () => juego.trafico?.secuencia() ?? [],
     /**
      * Lo que ve el TCAS: qué equipo lleva el avión, qué pinta la carta y
      * cuántos avisos lleva dados. Ver `flight/tcas.ts`.

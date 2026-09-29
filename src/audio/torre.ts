@@ -98,9 +98,9 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
  * que se dice a quien está listo para salir o va en final.
  *
  * Por qué hay **dos «free»** que suenan igual: la frecuencia distingue por la
- * clave lo que le da la pista a otro y se la deja —el que va a aterrizar, el
- * que entra al eje— de lo que se la da y se la quita en el mismo instante —el
- * que despega—, y la boca retira lo primero cuando la pista pasa a ser tuya.
+ * clave lo que le da la pista a otro y se la deja —el que va a aterrizar— de
+ * lo que se la da y se la quita en el mismo instante —el que despega—, y la
+ * boca retira lo primero cuando la pista pasa a ser tuya.
  * Ver `DA_LA_PISTA`. Lo que se graba es una pieza; lo que cambia es el nombre.
  */
 export const DICE_UN_AFIS: Readonly<Record<string, string>> = {
@@ -135,7 +135,17 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   "torre.holdShort": "torre.pistaEnUso",
   "torre.holdShortLanding": "torre.afisInUseLanding",
   "torre.holdShortDeparting": "torre.afisInUseDeparting",
-  "torre.lineUpWait": "torre.afisFree",
+  /*
+   * **Y «line up and wait» no se dice: un AFIS no hace esperar a nadie en el
+   * eje.** Se traducía por «runway free», y el despegue de ese mismo avión
+   * se callaba —ya le habían dicho que estaba libre—, así que en la
+   * frecuencia quedaba oído un «runway free» a otro que nadie anulaba nunca:
+   * en La Gomera sonaba después tu «pista libre», y para quien escuchaba la
+   * pista estaba libre para dos. Ahora el que entra al eje lo hace callado,
+   * y su «runway free» suena al salir, que es cuando se le da y se le quita
+   * en el mismo instante. Ver `enUnAfis`.
+   */
+  "torre.lineUpWait": null,
   "torre.clearedLand": "torre.afisFree",
   "torre.clearedTakeoff": "torre.afisFreeTakeoff",
   "torre.goAround": "torre.afisOccupied",
@@ -148,15 +158,13 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice
  * nada.
  *
- * `anterior` es lo último que el AFIS le dijo a ese mismo avión: a quien ya se
- * le dijo «runway free» para entrar al eje, su «cleared for take-off» no le
- * añade nada —en un AFIS nadie autoriza el despegue—, y se calla.
+ * Aquí se miraba también lo último que se le había dicho a ese avión: a quien
+ * ya había oído «runway free» al entrar al eje, su despegue se callaba. Era
+ * justo lo que dejaba ese «runway free» sin anular; desde que entrar al eje no
+ * se dice —ver `EN_UN_AFIS`—, cada orden se traduce sola.
  */
-export function enUnAfis(base: string, anterior?: string | null): string | null {
-  const suya = base in EN_UN_AFIS ? EN_UN_AFIS[base]! : base;
-  if (suya === "torre.afisFreeTakeoff" && anterior === "torre.afisFree")
-    return null;
-  return suya;
+export function enUnAfis(base: string): string | null {
+  return base in EN_UN_AFIS ? EN_UN_AFIS[base]! : base;
 }
 
 /**
@@ -347,6 +355,35 @@ const PERMISO_DE_ATERRIZAR =
 
 const DA_LA_PISTA =
   /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedLand|afisFree)(?:\.[LCR])?(?:@|$)/;
+
+/**
+ * **Lo que no se pierde esperando turno en la boca**: lo que la torre te da
+ * o te manda a ti —la lámpara, sus permisos y su fraseología, la ruta— y lo
+ * que le quita la pista a otro para dártela. Ni caduca, ni se cae de la cola,
+ * ni lo barre un aviso urgente. Ver `cuantoAguanta` en `audio/boca.ts`.
+ *
+ * La frecuencia es de uno en uno, y lo que es para ti y es una autorización
+ * no se pierde: si no se pudo decir, se dice en cuanto se pueda. Caducaba a
+ * los doce segundos como cualquier orden, y con la boca llena se oía la luz
+ * verde en la pantalla y ningún «cleared to land» —medido en Lanzarote con el
+ * JAZ 20—. Y lo de quitarle la pista a otro, igual: caducado, su «cleared to
+ * land» se quedaba oído y sin anular, y el tuyo sonaba detrás.
+ *
+ * Se reconoce por el peso: lo de los demás va en `baja` y esto nunca. Lo que
+ * deja de ser verdad lo retira quien lo sabe —la luz que cambia, la final que
+ * se deja—, no un reloj. Ver `alCambiarLaLuz` y `paso` en
+ * `flight/turno-de-pista.ts`.
+ */
+export function noSePierde(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  if (!clave || urgencia === "baja") return false;
+  return DE_LA_LAMPARA.test(clave) || LA_RUTA.test(clave);
+}
+
+/** La autorización de la ruta, antes de rodar. Ver `autorizarLaRuta` en `game.ts`. */
+const LA_RUTA = /^torre\.(?:[a-z]+\.)?(?:destino|clearedTo)(?:@|$)/;
 
 /**
  * Si esta frase es **la frecuencia de un campo**: la torre hablándoles a los

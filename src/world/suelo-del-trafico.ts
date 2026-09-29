@@ -45,8 +45,8 @@ export interface SueloDelTrafico {
   /**
    * Para el que aterriza: la calle por la que sale y el camino hasta su
    * puesto, empezando **sobre el eje** en la boca de la salida. `pista` son
-   * los metros de ese camino que todavía van por el asfalto de la pista: a
-   * partir de ahí ya la ha dejado libre.
+   * los metros de ese camino hasta pasar la doble raya de la salida: a partir
+   * de ahí ya la ha dejado libre. Ver `DOBLE_RAYA`.
    *
    * `desdeElUmbral` es dónde puede ya salir, contado desde el umbral de
    * aterrizar: lo que tarda su tipo en frenar hasta velocidad de rodaje.
@@ -319,8 +319,22 @@ export function sueloDelTrafico(
         );
         const coste =
           hastaLaBoca + enLaPista * VOLVER_CUESTA + (haciaDelante ? 0 : TORCER_CUESTA);
+        /*
+         * **Y la pista queda libre al pasar la doble raya de la salida**, no
+         * al asomar las ruedas fuera del asfalto. Se daba por libre a ocho
+         * metros del borde, y a esa distancia un turbohélice de veintisiete
+         * metros de envergadura todavía tiene media ala sobre la pista: en La
+         * Gomera se oía «pista libre» con el otro rodando a mil noventa metros
+         * del umbral, a veintitantos del eje. «Pista libre» es haber pasado el
+         * punto de espera de la calle, el mismo que respeta quien va a entrar;
+         * si el camino no llega tan lejos, cuando acaba. Ver `DOBLE_RAYA`.
+         */
+        const libre = Math.max(
+          enLaPista,
+          hastaSalir(camino, ejes, ancho, DOBLE_RAYA),
+        );
         if (!mejor || coste < mejor.coste)
-          mejor = { coste, boca: boca.along - umbral, camino, pista: enLaPista };
+          mejor = { coste, boca: boca.along - umbral, camino, pista: libre };
       }
       return mejor
         ? { boca: mejor.boca, camino: mejor.camino, pista: mejor.pista }
@@ -530,6 +544,8 @@ function hastaSalir(
   camino: readonly EnElPlano[],
   ejes: (p: EnElPlano) => { along: number; across: number },
   ancho: number,
+  /** Cuánto más allá del borde, m: fuera del asfalto, o pasada la doble raya. */
+  pasado = FUERA_DEL_EJE,
 ): number {
   let recorrido = 0;
   for (let i = 1; i < camino.length; i++) {
@@ -538,7 +554,7 @@ function hastaSalir(
     const d = dist(a, b);
     const da = Math.abs(ejes(a).across);
     const db = Math.abs(ejes(b).across);
-    const limite = ancho / 2 + FUERA_DEL_EJE;
+    const limite = ancho / 2 + pasado;
     if (db >= limite) {
       const t = db > da ? Math.max(0, Math.min(1, (limite - da) / (db - da))) : 1;
       return recorrido + d * t;

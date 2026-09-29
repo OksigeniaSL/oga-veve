@@ -213,6 +213,18 @@ export interface Caminos {
   /** Metros de los dos caminos hasta la altura de decisión, que comparten. */
   readonly decide: number;
   /**
+   * Metros de los dos caminos hasta **la esquina de la base**: el final del
+   * viento en cola, que es donde quien llega o gira o espera turno. Ver
+   * `SEPARACION_ENTRE_LLEGADAS`.
+   */
+  readonly base: number;
+  /**
+   * Y hacia dónde queda **fuera del circuito** desde esa esquina, en el
+   * plano: el lado contrario a la pista, que es hacia donde se da el tres
+   * sesenta de esperar turno sin meterse en la base de nadie.
+   */
+  readonly haciaFuera: { readonly x: number; readonly z: number };
+  /**
    * Metros de los dos caminos hasta la **entrada en final**: el vértice en el
    * que la base se vuelve final, que es donde gira quien vuela el circuito que
    * enseña el juego. Ver `BASE_A_FINAL` en `circuito.ts`.
@@ -715,6 +727,8 @@ export function trazar(
     llegada,
     sinPermiso,
     decide,
+    base: largoDelCamino([lejos, esquina]),
+    haciaFuera: unitario(entrada, esquina),
     entra: enFinal,
     toca: enLaToma,
     fuera,
@@ -795,6 +809,86 @@ const QUIETO = 15;
  */
 const OLVIDO_ESPERANDO = 0.25;
 
+/**
+ * **Lo que pasa, como poco, entre dos llegadas**, s: de que una cruza el
+ * umbral a que cruza la siguiente.
+ *
+ * Dos minutos. Se veía en la carta: dos o tres aviones entrando a la vez en
+ * la pista, uno encima del otro en la misma final, cuando lo que se ve en un
+ * aeropuerto de verdad es una fila con hueco entre aterrizaje y aterrizaje.
+ * En la aproximación radar el mínimo son tres millas y en la práctica se
+ * dejan de cuatro a seis, que a lo que se vuela una final son un par de
+ * minutos. Medido antes del arreglo, en Tenerife Sur con reactores y
+ * turbohélices: dos llegadas en la misma final a menos de tres millas en 69
+ * de cada 100 horas de frecuencia, y a trescientos metros la una de la otra
+ * la peor.
+ *
+ * Y es lo que hace que la pista sea de uno por vez sin que nadie se vaya al
+ * aire: cualquiera de los tipos del tráfico la deja libre mucho antes.
+ */
+export const SEPARACION_ENTRE_LLEGADAS = 120;
+
+/** Tres millas náuticas, m: el mínimo de separación radar en aproximación. */
+export const TRES_MILLAS = 3 * 1852;
+
+/**
+ * **La separación que le toca a quien viene detrás**, s: los dos minutos, y
+ * nunca menos que lo que tarda en volar tres millas.
+ *
+ * La avioneta del circuito vuela a cuarenta metros por segundo, y en dos
+ * minutos se hace dos millas y media: a esa velocidad, lo que manda son las
+ * tres millas.
+ */
+export function separacionPara(velocidad: number): number {
+  return Math.max(SEPARACION_ENTRE_LLEGADAS, TRES_MILLAS / Math.max(1, velocidad));
+}
+
+/**
+ * **Lo que se deja de más al decidir en la esquina**, s.
+ *
+ * Quien juega no vuela a velocidad fija como el tráfico: si en la esquina el
+ * hueco salía justo, un poco más despacio en su final lo dejaba por debajo y
+ * el de detrás tenía que irse al aire. Con quince segundos de colchón eso no
+ * pasa por ir un poco lento.
+ */
+const COLCHON = 15;
+
+/**
+ * **El régimen de viraje del tres sesenta**, rad/s: el estándar, tres grados
+ * por segundo, que es el que se usa para esperar turno. La vuelta entera son
+ * dos minutos, lo mismo que la separación: una vuelta, un hueco.
+ */
+const VIRAJE_ESTANDAR = (3 * Math.PI) / 180;
+
+/**
+ * **Lo que se deja por encima del relieve dando la vuelta**, m. La esquina
+ * del circuito ya va a su altura, pero el tres sesenta se abre hacia fuera y
+ * ahí puede subir la ladera: se sube lo que haga falta, en medio de la
+ * vuelta, y se baja otra vez a la esquina.
+ */
+const SOBRE_EL_RELIEVE = 250;
+
+/**
+ * **Lo que tarda el que sale en dejar la pista**, s, además de su carrera: lo
+ * que rueda desde la doble raya hasta alinearse. Ver `enLaPistaDesde`.
+ */
+const ENTRAR_Y_ALINEARSE = 20;
+
+/**
+ * **Quién juega, visto desde el tráfico**: si viene a aterrizar en esta pista
+ * y cuándo llega, y si está encima de ella. Lo pone el juego; sin él, el
+ * tráfico se turna solo entre los suyos. Ver `quienJuega` en
+ * `OpcionesDelTrafico`.
+ */
+export interface QuienJuega {
+  /** Segundos que le faltan para el umbral de aterrizar, si vuela la final. */
+  readonly alUmbral: number | null;
+  /** Si está en la pista: alineado, corriendo, o sin haberla dejado. */
+  readonly enLaPista: boolean;
+  /** A cuánto se acerca, m/s. Es lo que decide su separación. */
+  readonly velocidad?: number;
+}
+
 interface Volando {
   readonly grupo: Group;
   /** Qué avión es, y los caminos de su tipo en este aeródromo. */
@@ -815,6 +909,50 @@ interface Volando {
   avanza: boolean;
   /** Sus luces, colgadas de su grupo. Ver `luces-del-trafico.ts`. */
   luces: LucesDeUnAvion;
+  /**
+   * **El tres sesenta que da en la esquina de la base, esperando turno**, si
+   * lo está dando. Mientras tanto su camino no avanza: está en la esquina,
+   * esperando, y lo que se ve es la vuelta. Ver `SEPARACION_ENTRE_LLEGADAS`.
+   */
+  tresSesenta: TresSesenta | null;
+  /** Cuándo cruzó el umbral de aterrizar, s del reloj del tráfico. */
+  cruzo: number | null;
+}
+
+/** Un tres sesenta de espera. Ver `tresSesentaDesde`. */
+interface TresSesenta {
+  readonly cx: number;
+  readonly cz: number;
+  readonly radio: number;
+  /** El ángulo de la esquina visto desde el centro, rad. */
+  readonly desde: number;
+  /** Hacia dónde gira: 1 o −1, según el lado de fuera. */
+  readonly sentido: 1 | -1;
+  /** La altura de la esquina, y lo que sube en medio para librar el relieve. */
+  readonly y: number;
+  readonly sube: number;
+  /** Metros que lleva dados de esta vuelta. */
+  hecho: number;
+}
+
+/** Lo que mide una vuelta entera, m. */
+function largoDelTresSesenta(v: TresSesenta): number {
+  return 2 * Math.PI * v.radio;
+}
+
+/** Dónde está y hacia dónde mira quien lleva `v.hecho` metros de su vuelta. */
+function enElTresSesenta(v: TresSesenta): { sitio: Sitio; rumbo: number } {
+  const giro = v.hecho / v.radio;
+  const a = v.desde + v.sentido * giro;
+  const x = v.cx + v.radio * Math.cos(a);
+  const z = v.cz + v.radio * Math.sin(a);
+  // La tangente, en el sentido de giro: es hacia donde apunta el morro.
+  const tx = -Math.sin(a) * v.sentido;
+  const tz = Math.cos(a) * v.sentido;
+  return {
+    sitio: { x, y: v.y + v.sube * Math.sin(Math.min(Math.PI, giro / 2)), z },
+    rumbo: Math.atan2(tx, -tz),
+  };
 }
 
 /**
@@ -864,6 +1002,28 @@ export interface Trafico {
    */
   enFinal(matricula: string): number | null;
   /**
+   * **Quién está ahora encima de la pista**, de los dibujados: posado sin
+   * haberla dejado, alineado, o corriendo su despegue. Es lo que se mira
+   * antes de darle la pista a nadie —ni a ti—: la pista es de uno por vez,
+   * y «cleared to land» o «pista libre» con otro encima no lo dice nadie.
+   * Ver `paso` en `flight/turno-de-pista.ts`.
+   */
+  ocupanLaPista(): string[];
+  /**
+   * **La fila de llegadas**: cuándo cruzará el umbral cada uno de los que ya
+   * han girado a la base —o esperan turno dando la vuelta—, en segundos desde
+   * ahora, y los que lo cruzaron hace poco, con la cifra en negativo. Para el
+   * banco y las pruebas. Ver `SEPARACION_ENTRE_LLEGADAS`.
+   */
+  secuencia(): {
+    matricula: string;
+    alUmbral: number;
+    velocidad: number;
+    esperandoTurno: boolean;
+    /** Si vuela ya la final —girado de la base—, con permiso o sin él. */
+    enFinal: boolean;
+  }[];
+  /**
    * **Dónde hay o va a haber un avión parado en las calles**: la doble raya
    * en la que espera cada tipo que ya ha salido a rodar, y dónde está cada
    * uno que rueda ahora. Es lo que rodea la raya verde de quien juega: ver
@@ -889,6 +1049,10 @@ export interface Trafico {
     llegando: boolean;
     /** Qué tipo de avión es. Ver `TIPOS`. */
     tipo: TipoDeTrafico["id"];
+    /** Si está encima de la pista. Ver `ocupanLaPista`. */
+    enLaPista: boolean;
+    /** Si está dando la vuelta de espera en la esquina de la base. */
+    esperandoTurno: boolean;
   }[];
   /**
    * **Todos fuera.** Lo pide volver a empezar: la frecuencia empieza de cero
@@ -921,6 +1085,11 @@ export interface OpcionesDelTrafico {
    * se quedan con la fábrica.
    */
   readonly cuerposDeVerdad?: boolean;
+  /**
+   * **Quién juega**, para que su aproximación entre en la fila y su pista
+   * cuente como ocupada. Ver `QuienJuega`.
+   */
+  readonly quienJuega?: () => QuienJuega | null;
 }
 
 /**
@@ -1343,6 +1512,272 @@ export function crearTrafico(
     aviones.delete(matricula);
   };
 
+  /*
+   * ── **Uno detrás de otro, y uno en la pista** ─────────────────────────────
+   *
+   * Cada llamada ponía a cada avión en su marca y cada tipo volaba su propio
+   * circuito, así que dos llegadas podían coincidir en la misma final: el
+   * turbohélice entraba en la suya a trescientos metros del reactor que
+   * bajaba por la suya, y en la carta se veían dos o tres aviones entrando a
+   * la vez en la pista. Nadie los ponía en fila.
+   *
+   * Lo que hace un control de verdad es eso: separar las llegadas —un par de
+   * minutos, tres millas como poco— y no dejar que el siguiente cruce el
+   * umbral hasta que el anterior ha dejado la pista. Aquí se hace en la
+   * esquina de la base, que es donde quien llega decide si gira: si girando
+   * ya no quedaría su hueco, da un tres sesenta hacia fuera y vuelve a mirar.
+   * Y en la decisión, si la pista sigue ocupada, al aire.
+   */
+
+  /**
+   * **Si está encima de la pista**: posado sin haberla dejado, o saliendo
+   * desde que pasa su doble raya hasta que tiene las ruedas en el aire.
+   */
+  const encimaDeLaPista = (quien: Volando): boolean => {
+    const c = quien.caminos;
+    if (!c) return false;
+    const r = quien.recorrido;
+    const camino = quien.marca.camino;
+    if (camino === c.llegada) return r >= c.toca - 0.5 && r < c.fuera - 0.5;
+    if (camino === c.salida) {
+      if (r <= c.espera + 0.5) return false;
+      const despega = c.enTierra?.despega ?? 0;
+      if (despega > 0) return r < despega;
+      return quien.grupo.position.y - cota < 10;
+    }
+    return false;
+  };
+
+  /**
+   * Si hay alguien encima de la pista **que no sea `matricula`**: otro
+   * dibujado, o quien juega.
+   */
+  const pistaOcupadaPorOtro = (matricula: string | null): boolean => {
+    for (const [m, b] of aviones) if (m !== matricula && encimaDeLaPista(b)) return true;
+    return !!opciones.quienJuega?.()?.enLaPista;
+  };
+
+  /**
+   * Metros que le quedan hasta el punto de toma, si viene a aterrizar y no ha
+   * llegado —ni se está yendo al aire—. Con la vuelta de espera, lo que le
+   * falta de ella además.
+   */
+  const metrosAlUmbral = (quien: Volando): number | null => {
+    const c = quien.caminos;
+    if (!c || !llegando(quien)) return null;
+    const r = quien.recorrido;
+    if (quien.marca.camino === c.sinPermiso && r >= c.decide) return null;
+    if (r >= c.toca) return null;
+    const vuelta = quien.tresSesenta
+      ? largoDelTresSesenta(quien.tresSesenta) - quien.tresSesenta.hecho
+      : 0;
+    return c.toca - r + vuelta;
+  };
+
+  /**
+   * Cuándo cruza el umbral, s del reloj del tráfico, **si ya está en la
+   * fila**: pasada la esquina de la base o esperando en ella. O cuándo lo
+   * cruzó, si fue hace poco: el siguiente cuenta su hueco desde ahí.
+   */
+  const horaDeUmbral = (quien: Volando): number | null => {
+    const c = quien.caminos;
+    const metros = metrosAlUmbral(quien);
+    if (c && metros !== null && (quien.tresSesenta || quien.recorrido >= c.base - 0.5))
+      return reloj + metros / quien.marca.velocidad;
+    if (quien.cruzo !== null && reloj - quien.cruzo < 2 * SEPARACION_ENTRE_LLEGADAS)
+      return quien.cruzo;
+    return null;
+  };
+
+  /**
+   * La hora de umbral que se le vio por última vez a quien juega, mientras
+   * volaba la final. Posado en la pista, es cuando la cruzó. Ver `laFila`.
+   */
+  let tuHora: number | null = null;
+
+  /**
+   * **Lo que se le da a quien juega para despegar**, s: si está encima de la
+   * pista sin haber llegado volando, es que sale, y el que viene no cruza el
+   * umbral hasta este rato después.
+   */
+  const QUIEN_SALE = 60;
+
+  /**
+   * **La fila de llegadas**, sin `sin`: la hora de umbral de cada uno de los
+   * que ya están en ella y a cuánto vienen, y quien juega si viene en final
+   * o está encima de la pista. `sale` es quien la ocupa despegando, que no
+   * es una llegada y pide otra cuenta.
+   */
+  const laFila = (
+    sin: Volando | null,
+  ): { hora: number; velocidad: number; sale: boolean }[] => {
+    const fila: { hora: number; velocidad: number; sale: boolean }[] = [];
+    for (const b of aviones.values()) {
+      if (b === sin) continue;
+      const hora = horaDeUmbral(b);
+      if (hora !== null)
+        fila.push({ hora, velocidad: b.marca.velocidad, sale: false });
+    }
+    const tu = opciones.quienJuega?.();
+    const velocidad = tu?.velocidad ?? VUELA_A;
+    if (tu?.alUmbral != null)
+      fila.push({ hora: reloj + tu.alUmbral, velocidad, sale: false });
+    else if (tu?.enLaPista)
+      fila.push(
+        tuHora !== null
+          ? { hora: tuHora, velocidad, sale: false }
+          : { hora: reloj, velocidad, sale: true },
+      );
+    return fila.sort((a, b) => a.hora - b.hora);
+  };
+
+  /**
+   * **Cuánto tiene que esperar** quien cruzaría el umbral a la hora
+   * `natural` viniendo a `velocidad`, para que le quede su hueco con todos
+   * los de la fila: detrás del que va delante, y delante del que viene detrás
+   * solo si le cabe. En orden de llegada: al que ya estaba no se le cuela
+   * nadie. `colchon` es lo que se deja de más al decidirlo. Ver `COLCHON`.
+   */
+  const retrasoPara = (
+    sin: Volando | null,
+    natural: number,
+    velocidad: number,
+    colchon = COLCHON,
+  ): number => {
+    let hora = natural;
+    for (const b of laFila(sin)) {
+      const detras = b.sale ? QUIEN_SALE : separacionPara(velocidad) + colchon;
+      const delante = b.sale ? 0 : separacionPara(b.velocidad) + colchon;
+      if (hora < b.hora + detras && hora > b.hora - delante) hora = b.hora + detras;
+    }
+    return hora - natural;
+  };
+
+  /** El retraso con que giraría a la base ahora, desde la esquina. */
+  const retrasoEnLaEsquina = (quien: Volando, c: Caminos): number =>
+    retrasoPara(
+      quien,
+      reloj + (c.toca - c.base) / quien.marca.velocidad,
+      quien.marca.velocidad,
+    );
+
+  /**
+   * **Si alguien va delante demasiado cerca** de quien vuela la final sin
+   * permiso: quien juega, que ha entrado en final por delante después de que
+   * éste girara, o que va más despacio de lo que se contaba. Sin colchón: el
+   * colchón es para decidir, y esto es ya no caber.
+   */
+  const demasiadoCerca = (quien: Volando): boolean => {
+    const mia = horaDeUmbral(quien);
+    if (mia === null) return false;
+    const detras = separacionPara(quien.marca.velocidad);
+    for (const b of laFila(quien)) {
+      if (b.hora > mia) continue;
+      if (mia - b.hora < (b.sale ? QUIEN_SALE : detras)) return true;
+    }
+    return false;
+  };
+
+  /** Lo que tarda un tipo en correr su despegue, s. Ver `velocidadDe`. */
+  const tiempoDeCarrera = (tipo: TipoDeTrafico): number => {
+    const alVolar = tipo.aproximacion * 1.1;
+    return (tipo.carrera / Math.max(1, alVolar - 4)) * Math.log(alVolar / 4);
+  };
+
+  /**
+   * **Si viene alguien antes de que quien sale haya dejado la pista.** Lo
+   * que tarda en entrar, alinearse y correr su despegue; y si va a esperar
+   * alineado, lo que puede tardar la torre en darle la salida.
+   */
+  const llegaAntesDeQueSalga = (tipo: TipoDeTrafico, clave: string): boolean => {
+    const hueco =
+      ENTRAR_Y_ALINEARSE +
+      tiempoDeCarrera(tipo) +
+      (clave === "torre.lineUpWait" ? ESPERA_MAXIMA : 0);
+    return laFila(null).some(
+      (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
+    );
+  };
+
+  /** Lo que se aparta un avión que aparece de los que ya se ven, m. */
+  const APARTE = 1500;
+
+  /**
+   * **Si uno que todavía no se ve no cabe donde dice su llamada**: encima de
+   * otro que ya vuela ahí, o sin su hueco en la fila. Espera fuera, que es lo
+   * que hace el control con quien todavía no ha entrado, y llama cuando
+   * quepa. Ver `todaviaNo`.
+   */
+  const noCabeTodavia = (matricula: string, clave: string): boolean => {
+    if (clave !== "otro.enCola" && clave !== "otro.final") return false;
+    const c = caminosDe(tipoDe(matricula));
+    const marca = c?.marcas[clave];
+    if (!c || !marca) return false;
+    const donde = porElCamino(marca.camino, marca.metros)?.sitio;
+    if (donde)
+      for (const b of aviones.values()) {
+        const p = b.grupo.position;
+        if (p.y - cota > 30 && Math.hypot(p.x - donde.x, p.z - donde.z) < APARTE)
+          return true;
+      }
+    const natural = reloj + (c.toca - marca.metros) / marca.velocidad;
+    return retrasoPara(null, natural, marca.velocidad) > 0;
+  };
+
+  /**
+   * **El tres sesenta de espera**, desde la esquina de la base y hacia
+   * fuera. A régimen estándar, así que la vuelta dura dos minutos sea quien
+   * sea; y si hacia fuera sube el relieve, se sube en medio de la vuelta y se
+   * baja otra vez a la esquina. Ver `SOBRE_EL_RELIEVE`.
+   */
+  const tresSesentaDesde = (quien: Volando, c: Caminos): TresSesenta => {
+    const esquina = porElCamino(quien.marca.camino, c.base)!.sitio;
+    const antes = porElCamino(quien.marca.camino, Math.max(0, c.base - 50))!.sitio;
+    const radio = quien.marca.velocidad / VIRAJE_ESTANDAR;
+    const cx = esquina.x + c.haciaFuera.x * radio;
+    const cz = esquina.z + c.haciaFuera.z * radio;
+    const desde = Math.atan2(esquina.z - cz, esquina.x - cx);
+    // El sentido que sigue el viento en cola: la vuelta no empieza con un tirón.
+    const sigue =
+      -Math.sin(desde) * (esquina.x - antes.x) + Math.cos(desde) * (esquina.z - antes.z);
+    const sentido: 1 | -1 = sigue >= 0 ? 1 : -1;
+    let sube = 0;
+    const alto = opciones.tierra?.()?.alto;
+    if (alto)
+      for (let k = 1; k < 12; k++) {
+        const giro = (k * Math.PI) / 6;
+        const a = desde + sentido * giro;
+        const suelo = alto(cx + radio * Math.cos(a), cz + radio * Math.sin(a));
+        const falta = suelo + SOBRE_EL_RELIEVE - esquina.y;
+        if (falta > 0) sube = Math.max(sube, falta / Math.sin(giro / 2));
+      }
+    return {
+      cx,
+      cz,
+      radio,
+      desde,
+      sentido,
+      y: esquina.y,
+      sube: Math.min(sube, 2000),
+      hecho: 0,
+    };
+  };
+
+  /**
+   * **Al aire desde donde está**, sin esperar a la decisión: el que va en
+   * final sin sitio, o el que llega a ella con la pista ocupada. Sube por el
+   * mismo camino que la orden de la torre y da otra vuelta. Ver `alAireDesde`
+   * y `otraVuelta`.
+   */
+  const alAireYa = (quien: Volando, c: Caminos): void => {
+    const aqui = porElCamino(quien.marca.camino, quien.recorrido)?.sitio;
+    const orden = c.marcas["torre.goAround"];
+    if (!aqui || !orden) return;
+    quien.marca = alAireDesde(orden, aqui);
+    quien.recorrido = 0;
+    quien.conPermiso = false;
+  };
+
   return {
     grupo,
     anuncia(matricula, clave, puedeAterrizar = false) {
@@ -1423,6 +1858,8 @@ export function crearTrafico(
           quieto: 0,
           avanza: true,
           luces,
+          tresSesenta: null,
+          cruzo: null,
         };
         aviones.set(matricula, quien);
       }
@@ -1433,6 +1870,8 @@ export function crearTrafico(
           : porSuCamino(quien.caminos, marca, quien.conPermiso);
       quien.marca = esta;
       quien.recorrido = esta.metros;
+      // Puesto en otro sitio, ya no está dando la vuelta de espera.
+      quien.tresSesenta = null;
       quien.olvidado = 0;
       quien.quieto = 0;
       // Puesto en otra marca, se mueve: si le toca esperar, lo dirá el paso.
@@ -1443,11 +1882,51 @@ export function crearTrafico(
     paso(dt) {
       let seFueron: string[] | null = null;
       reloj += dt;
+      /*
+       * Y quien juega, visto por última vez en su final: posado, es cuando
+       * cruzó el umbral; ni en final ni en la pista, es que se fue al aire o
+       * ya la dejó, y no cuenta. Ver `laFila`.
+       */
+      const tu = opciones.quienJuega?.() ?? null;
+      if (tu?.alUmbral != null) tuHora = reloj + tu.alUmbral;
+      else if (!tu?.enLaPista) tuHora = null;
       for (const [matricula, quien] of aviones) {
         const c = quien.caminos;
         const antes = quien.recorrido;
         const tope = quien.marca.tope ?? Infinity;
-        quien.recorrido = Math.min(antes + velocidadDe(quien) * dt, tope);
+        if (quien.tresSesenta) {
+          /*
+           * **Dando la vuelta de espera, su camino no avanza**: está en la
+           * esquina, esperando. Al cerrar la vuelta mira otra vez si ya le
+           * cabe girar; si no, otra.
+           */
+          const vuelta = quien.tresSesenta;
+          vuelta.hecho += quien.marca.velocidad * dt;
+          const entera = largoDelTresSesenta(vuelta);
+          if (vuelta.hecho >= entera) {
+            if (c && retrasoEnLaEsquina(quien, c) > 0) vuelta.hecho -= entera;
+            else {
+              quien.recorrido = Math.min(antes + (vuelta.hecho - entera), tope);
+              quien.tresSesenta = null;
+            }
+          }
+        } else {
+          quien.recorrido = Math.min(antes + velocidadDe(quien) * dt, tope);
+          /*
+           * **Y en la esquina de la base, si girando no le queda su hueco,
+           * espera turno.** Ver `SEPARACION_ENTRE_LLEGADAS`.
+           */
+          if (
+            c &&
+            llegando(quien) &&
+            antes < c.base &&
+            quien.recorrido >= c.base &&
+            retrasoEnLaEsquina(quien, c) > 0
+          ) {
+            quien.recorrido = c.base;
+            quien.tresSesenta = tresSesentaDesde(quien, c);
+          }
+        }
         const largo = largoDe(quien.marca.camino);
         const alFinal = quien.recorrido >= largo - 0.5;
         const esperando = quien.recorrido >= tope - 0.5;
@@ -1493,14 +1972,27 @@ export function crearTrafico(
          * **La red de la roja eterna**: uno que ocupa la pista y ha dejado de
          * avanzar se retira, y con él lo que bloqueaba. Ver `QUIETO`.
          */
-        if (aterrizando(quien) && dt > 0 && quien.recorrido - antes < 1e-4)
+        // Dando la vuelta de espera no está quieto: está esperando turno.
+        if (
+          aterrizando(quien) &&
+          !quien.tresSesenta &&
+          dt > 0 &&
+          quien.recorrido - antes < 1e-4
+        )
           quien.quieto += dt;
         else quien.quieto = 0;
-        if (dt > 0) quien.avanza = quien.recorrido - antes > 1e-4;
+        if (dt > 0) quien.avanza = !!quien.tresSesenta || quien.recorrido - antes > 1e-4;
         if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO) {
           quitar(matricula, quien);
           continue;
         }
+        if (
+          c &&
+          quien.marca.camino === c.llegada &&
+          antes < c.toca &&
+          quien.recorrido >= c.toca
+        )
+          quien.cruzo = reloj;
         if (
           c &&
           quien.marca.camino === c.sinPermiso &&
@@ -1508,6 +2000,38 @@ export function crearTrafico(
           quien.recorrido >= c.decide
         )
           (seFueron ??= []).push(matricula);
+        else if (
+          /*
+           * **Con permiso, y la pista ocupada en la decisión: al aire.** No
+           * se le da permiso con nadie encima —ver `todaviaNo`—, pero la pista
+           * se puede ocupar después: quien juega entrando sin luz verde, uno
+           * que tarda en dejarla. El que tiene que cruzar el umbral no lo
+           * cruza hasta que la pista esté libre, y si no da tiempo, frustra.
+           */
+          c &&
+          quien.marca.camino === c.llegada &&
+          antes < c.decide &&
+          quien.recorrido >= c.decide &&
+          pistaOcupadaPorOtro(matricula)
+        ) {
+          alAireYa(quien, c);
+          (seFueron ??= []).push(matricula);
+        } else if (
+          /*
+           * **Y sin permiso, en final y sin su hueco: al aire ya**, sin bajar
+           * hasta la decisión detrás de quien va delante. Solo pasa si quien
+           * juega se mete en final por delante después de que éste girara.
+           */
+          c &&
+          quien.marca.camino === c.sinPermiso &&
+          !quien.tresSesenta &&
+          quien.recorrido >= c.entra &&
+          quien.recorrido < c.decide &&
+          demasiadoCerca(quien)
+        ) {
+          alAireYa(quien, c);
+          (seFueron ??= []).push(matricula);
+        }
         colocar(quien);
         alumbrar(quien);
       }
@@ -1520,7 +2044,42 @@ export function crearTrafico(
     },
     todaviaNo(matricula, clave) {
       const quien = aviones.get(matricula);
-      if (!quien) return false;
+      /*
+       * **Y la pista no se da con nadie encima**, ni para salir con alguien
+       * a punto de llegar: el que la pida espera su turno sin perderlo. La
+       * pista es de uno por vez, y el que despega la sigue pisando hasta que
+       * tiene las ruedas en el aire. Ver `encimaDeLaPista` y
+       * `llegaAntesDeQueSalga`.
+       */
+      if (
+        clave === "torre.clearedLand" ||
+        clave === "torre.lineUpWait" ||
+        clave === "torre.clearedTakeoff"
+      ) {
+        /*
+         * **Y la salida se da en el punto de espera**, no rodando hacia él.
+         * Se daba a su hora de radio, con el avión todavía a un kilómetro por
+         * las calles: minutos después llegaba a la pista y entraba sin que
+         * nadie le mirara, con otro aterrizando —medido en Pettirossi, un
+         * bimotor entrando en la pista con un reactor en su carrera—. Se
+         * espera a que esté en su doble raya, que es donde se pide.
+         */
+        const c = quien?.caminos;
+        if (
+          c &&
+          clave !== "torre.clearedLand" &&
+          quien!.marca.camino === c.salida &&
+          quien!.recorrido < c.espera - 1
+        )
+          return true;
+        if (pistaOcupadaPorOtro(matricula)) return true;
+        if (
+          clave !== "torre.clearedLand" &&
+          llegaAntesDeQueSalga(quien?.tipo ?? tipoDe(matricula), clave)
+        )
+          return true;
+      }
+      if (!quien) return noCabeTodavia(matricula, clave);
       // Viento en cola y final, cuando haya vuelto al circuito. Ver `sinSaltar`.
       if ((clave === "otro.enCola" || clave === "otro.final") && dandoLaVuelta(quien))
         return true;
@@ -1584,7 +2143,33 @@ export function crearTrafico(
         conPermiso: quien.conPermiso,
         llegando: llegando(quien),
         tipo: quien.tipo.id,
+        enLaPista: encimaDeLaPista(quien),
+        esperandoTurno: !!quien.tresSesenta,
       }));
+    },
+    ocupanLaPista() {
+      return [...aviones]
+        .filter(([, quien]) => encimaDeLaPista(quien))
+        .map(([matricula]) => matricula);
+    },
+    secuencia() {
+      const fila: ReturnType<Trafico["secuencia"]> = [];
+      for (const [matricula, quien] of aviones) {
+        const hora = horaDeUmbral(quien);
+        if (hora === null) continue;
+        fila.push({
+          matricula,
+          alUmbral: hora - reloj,
+          velocidad: quien.marca.velocidad,
+          esperandoTurno: !!quien.tresSesenta,
+          enFinal:
+            !quien.tresSesenta &&
+            !!quien.caminos &&
+            hora > reloj &&
+            quien.recorrido >= quien.caminos.entra,
+        });
+      }
+      return fila.sort((a, b) => a.alUmbral - b.alUmbral);
     },
     vaciar() {
       for (const [matricula, quien] of aviones) quitar(matricula, quien);
@@ -1607,7 +2192,9 @@ export function crearTrafico(
 }
 
 function colocar(quien: Volando): void {
-  const donde = porElCamino(quien.marca.camino, quien.recorrido);
+  const donde = quien.tresSesenta
+    ? enElTresSesenta(quien.tresSesenta)
+    : porElCamino(quien.marca.camino, quien.recorrido);
   if (!donde) return;
   quien.grupo.position.set(donde.sitio.x, donde.sitio.y, donde.sitio.z);
   /*
