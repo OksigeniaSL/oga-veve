@@ -386,6 +386,25 @@ export function noSePierde(
 const LA_RUTA = /^torre\.(?:[a-z]+\.)?(?:destino|clearedTo)(?:@|$)/;
 
 /**
+ * **El aviso de aves en la final**: la torre informando de una bandada por
+ * delante. Ver `flight/aviso-de-aves.ts`.
+ *
+ * Tampoco caduca con el reloj. Se da al entrar en final, que es justo cuando
+ * la torre da la pista y la instructora cuenta la fase, y con los doce
+ * segundos de una orden se caía esperando detrás de ellas: camino de Tenerife
+ * Norte con el JAZ 90, «torre.canario.aves: caducó esperando», y la tira de la
+ * radio lo escribía sin que nadie lo dijera. Lo que dice sigue siendo verdad
+ * mientras las aves estén por delante, así que espera; y lo retira quien sabe
+ * que ya no vale —se dejó la final, se tocó tierra o ya se pasó la bandada—.
+ * Ver `vigilarLasAves` en `game.ts`.
+ */
+export function esElAvisoDeAves(clave: string | undefined): boolean {
+  return !!clave && AVISO_DE_AVES.test(clave);
+}
+
+const AVISO_DE_AVES = /^torre\.(?:[a-z]+\.)?aves(?:@|$)/;
+
+/**
  * Si esta frase es **la frecuencia de un campo**: la torre hablándoles a los
  * demás, o los demás hablando. Todo eso va en `baja`.
  *

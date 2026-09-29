@@ -51,6 +51,7 @@ import {
   DICE_LA_TORRE,
   DICE_UN_AFIS,
   enUnAfis,
+  esElAvisoDeAves,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
@@ -456,6 +457,7 @@ import {
   enEjesDePista,
   puntoDePista,
   rumboHacia,
+  traves,
 } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { comoDibujo } from "./ui/senal";
@@ -558,6 +560,7 @@ import { loQueSeDice } from "./audio/ventanilla";
 import { focoEncendido } from "./world/luces-de-posicion";
 import {
   calorDelSuelo,
+  capaDeMezcla,
   cuantoSeMueve,
   CAMPO_ABIERTO,
   rachaEn,
@@ -611,6 +614,7 @@ import {
   type LoDicho,
 } from "./flight/despues-de-aterrizar";
 import {
+  enElPavimento,
   esAfis,
   puntoMasCercanoDe,
   sinTorre,
@@ -634,6 +638,23 @@ import {
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { enCanarias } from "./world/canarias";
+import { Bandadas, bandadasDelCampo } from "./world/bandadas";
+import { DibujoDeBandadas } from "./world/bandadas-dibujo";
+import {
+  HALCON_DEL_CETRERO,
+  SERVICIO_DE_FAUNA,
+  especieDeLaFinal,
+  regionDe,
+} from "./world/aves";
+import {
+  FaunaDelAeropuerto,
+  sitioDelServicio,
+} from "./world/fauna-del-aeropuerto";
+import {
+  AvesEnLaFinal,
+  LLEGANDO,
+  avisoDeLaTorre,
+} from "./flight/aviso-de-aves";
 import { dondeCae } from "./world/entre-aerodromos";
 import { cruceroDelTramo, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
 import { crearBarcos, luzDeLaEstela, type Barcos } from "./world/barcos";
@@ -1343,6 +1364,394 @@ export class Game {
   lanzarUnIslenoParaBanco(): boolean {
     if (!this.islenos) return false;
     return this.islenos.lanzar(this.yoParaLasIslas());
+  }
+
+  // ── Las aves ──────────────────────────────────────────────────────────
+
+  /**
+   * **Las bandadas de todos los campos del vuelo**, y su dibujo. Ver
+   * `world/bandadas.ts` y `world/aves.ts`.
+   *
+   * La cota es la de lo que se ve: el agua donde hay agua, que es por donde
+   * pasan rozando las pardelas.
+   */
+  readonly bandadas = new Bandadas((x, z) => this.terrain.sampleSurface(x, z));
+  readonly dibujoDeBandadas = new DibujoDeBandadas();
+
+  /** El servicio de fauna de cada campo que lo tiene. Ver `world/fauna-del-aeropuerto.ts`. */
+  private faunaDeLosCampos: FaunaDelAeropuerto[] = [];
+
+  /** El aviso de aves en la final. Ver `flight/aviso-de-aves.ts`. */
+  private readonly avesEnLaFinal = new AvesEnLaFinal();
+
+  /**
+   * Si la instructora ya contó por qué se sube ante un ave. Una vez por
+   * partida, como el rombo del TCAS: la segunda vez no enseña nada nuevo.
+   */
+  private avesExplicadas = false;
+  /** Y si está esperando a que la torre acabe para contarlo. */
+  private explicarLasAvesDespues = false;
+  /** Si ya contó lo de la uve. También una vez por partida. */
+  private uveExplicada = false;
+  /** Para el banco: que la próxima final traiga aves seguro. */
+  avesEnLaFinalSeguro = false;
+  /** Si en el paso anterior había aves de la final por delante. Para el banco. */
+  private avesDelanteAntes = false;
+
+  /** El reloj con el que vuelan las aves, s. Para el banco. */
+  get relojDeLasAves(): number {
+    return this.relojDeRuta;
+  }
+
+  /**
+   * **Pone las aves de cada campo del vuelo**, con la hora, el tiempo y el
+   * mes de hoy.
+   *
+   * Se rehace al cambiar la hora o el parte, porque de eso depende la
+   * térmica: sin sol no hay corro de buitres. Y de noche no vuela casi nadie
+   * —las aves de día duermen—, así que de noche no hay bandadas.
+   */
+  private poblarDeAves(): void {
+    this.bandadas.quitar((b) => !b.enFinal);
+    for (const f of this.faunaDeLosCampos) f.soltar();
+    this.faunaDeLosCampos = [];
+    if (this.sky.sunDirection.y < 0.03) return;
+    const meteo = this.scenario.meteo;
+    const calor = calorDelSuelo(
+      this.horaDelVuelo,
+      meteo?.temp ?? 20,
+      meteo?.tapadura ?? (this.techoDeNubes === null ? 0 : 0.5),
+      false,
+    );
+    const mes = new Date().getMonth() + 1;
+    const campos = [this.laCasa, ...this.vecinos.map((v) => v.campo)];
+    for (const campo of campos) {
+      const region = regionDe(campo.escenario);
+      if (!region) continue;
+      const nivel = campo.escenario.waterLevel;
+      const esAgua = (x: number, z: number): boolean =>
+        esAguaDeCasa(this.terrain.sampleHeight(x, z), nivel);
+      const aero = campo.aerodromo;
+      const suelo = (x: number, z: number): number =>
+        this.terrain.sampleSurface(x, z);
+      this.bandadas.poner(
+        bandadasDelCampo(
+          {
+            id: campo.id,
+            escenario: campo.escenario.id,
+            region,
+            x: campo.pista.x,
+            z: campo.pista.z,
+            rumbo: campo.pista.heading,
+            largo: campo.pista.length,
+          },
+          {
+            suelo,
+            esAgua,
+            ocupado: aero ? (x, z) => enElPavimento(aero, [x, z], 40) : undefined,
+            calor,
+            capa: capaDeMezcla(calor),
+            mes,
+          },
+        ),
+      );
+      /*
+       * **Y el servicio de fauna del campo**, donde lo hay y está escrito con
+       * su fuente. Ver `SERVICIO_DE_FAUNA` en `world/aves.ts`.
+       */
+      const servicio = SERVICIO_DE_FAUNA[campo.escenario.id];
+      if (!servicio) continue;
+      const sitio = sitioDelServicio(campo.pista, aero, suelo, esAgua);
+      if (!sitio) continue;
+      const fauna = new FaunaDelAeropuerto(
+        sitio,
+        this.terrain.sampleHeight(sitio.x, sitio.z),
+        servicio.cetreria,
+      );
+      this.faunaDeLosCampos.push(fauna);
+      this.scene.add(fauna.grupo);
+      if (servicio.cetreria) {
+        /*
+         * El halcón da vueltas alrededor de quien lo vuela, que está junto a
+         * la furgoneta del lado contrario a la pista.
+         */
+        const [tx, tz] = traves(sitio.rumbo);
+        const x = sitio.x - tx * sitio.ladoDeLaPista * 3.2;
+        const z = sitio.z - tz * sitio.ladoDeLaPista * 3.2;
+        this.bandadas.poner([
+          {
+            id: `${campo.id}:cetreria`,
+            campo: campo.id,
+            especie: HALCON_DEL_CETRERO,
+            cuantas: 1,
+            x,
+            z,
+            radioLargo: 38,
+            radioCorto: 38,
+            giro: 0,
+            altura: 16,
+            suelo: this.terrain.sampleHeight(x, z),
+            sentido: 1,
+            semilla: 0.3,
+          },
+        ]);
+      }
+    }
+  }
+
+  /** Lo que hace falta para mover las aves y el rotativo, un paso. */
+  private moverLasAves(dt: number): void {
+    this.bandadas.paso(this.relojDeRuta, this.flight.state.position);
+    for (const f of this.faunaDeLosCampos) f.paso(this.relojDeRuta);
+    this.vigilarLasAves(dt);
+    this.mirarLasUves();
+  }
+
+  /** A cuánto del umbral estaba el avión en el paso anterior, m. */
+  private alUmbralAntes = Infinity;
+
+  /**
+   * **Las aves en la final**, un paso: ponerlas si esta final las trae, el
+   * aviso de la torre, la explicación detrás y la tarjeta de «subí» cuando
+   * están de frente. Ver `flight/aviso-de-aves.ts`.
+   */
+  private vigilarLasAves(dt: number): void {
+    const s = this.flight.state;
+    const campo = this.elCampo();
+    const alUmbral = distanciaAlUmbral(campo, s.position.x, s.position.z);
+    /*
+     * **Si viene a aterrizar**: en final, o cerca, bajo y acercándose. En el
+     * circuito eso empieza en el viento en cola, que es un momento tranquilo:
+     * la torre avisa ahí y la instructora lo explica antes de la final, que es
+     * donde se juntan la autorización, la fase y la cuenta. Ver `LLEGANDO`.
+     */
+    const [ux, uz] = umbralEnUso(campo);
+    const acercandose =
+      dt > 0 && (this.alUmbralAntes - alUmbral) / dt > LLEGANDO.acercandose;
+    this.alUmbralAntes = alUmbral;
+    const llegando =
+      !s.onGround &&
+      (this.faseDeAhora === "final" ||
+        (this.faseDeAhora === "en-vuelo" &&
+          acercandose &&
+          alUmbral < LLEGANDO.alUmbral &&
+          s.position.y - this.cotaDePistaEn(campo, ux, uz) < LLEGANDO.sobreElCampo));
+    const dado = this.avesEnLaFinalSeguro ? 0 : Math.random();
+    const deLaFinal = this.bandadas.lista.filter(
+      (b) => b.enFinal && b.campo === campo.id,
+    );
+    const suceso = this.avesEnLaFinal.paso({
+      tramo: this.tier.id,
+      campo: campo.id,
+      hayTorre: this.hayTorreQueHable(),
+      llegando,
+      enFinal: this.faseDeAhora === "final",
+      enElSuelo: s.onGround,
+      alUmbral,
+      velocidad: s.groundSpeed,
+      dado,
+      bandadas: deLaFinal.map((b) => {
+        const d = this.bandadas.dondeEsta(b, this.relojDeRuta);
+        return { id: b.id, x: d.x, y: d.y, z: d.z };
+      }),
+      avion: {
+        x: s.position.x,
+        y: s.position.y,
+        z: s.position.z,
+        rumbo: s.heading,
+      },
+    });
+    if (suceso?.que === "poner") {
+      this.apuntarCanto(
+        `aves: a ${Math.round(suceso.distancia)} m del umbral, el avión a ${Math.round(alUmbral)} · t ${this.relojDeRuta.toFixed(1)}`,
+      );
+      this.ponerAvesEnLaFinal(campo, suceso);
+    } else if (suceso?.que === "torre") {
+      this.apuntarCanto(`aves: avisa la torre · t ${this.relojDeRuta.toFixed(1)}`);
+      this.avisarDeLasAves(campo, suceso.bandada);
+    }
+    else if (suceso?.que === "deFrente") {
+      const clave = claveDelAviso(this.tier.avisos, "aves.deFrente", "palabra.subi");
+      this.hud.senal.mostrar(
+        comoDibujo("aves-subi"),
+        clave ? t(clave as TranslationKey) : "",
+        null,
+        { segundos: 6, prioridad: IMPORTANTE },
+      );
+    }
+    /*
+     * **Si las aves de la final siguen ahí delante**: sin espantar, por
+     * delante del morro y a menos de ocho kilómetros. Es lo que decide si lo
+     * que dijo la torre y lo que va a explicar la instructora siguen siendo
+     * verdad — y no la fase, que en una final con viento entra y sale del
+     * embudo, ni el campo de ahora, que cambia de uno a otro en la ruta.
+     */
+    const [fx, fz] = delante(MathUtils.radToDeg(s.heading));
+    let porQueNo = s.onGround ? "en el suelo" : "no hay";
+    const siguenDelante =
+      !s.onGround &&
+      this.bandadas.lista.some((b) => {
+        if (!b.enFinal) return false;
+        const d = this.bandadas.dondeEsta(b, this.relojDeRuta);
+        const dx = d.x - s.position.x;
+        const dz = d.z - s.position.z;
+        const lejos = Math.round(Math.hypot(dx, dz));
+        if (this.bandadas.sustoDe(b.id) !== null) porQueNo = `espantadas a ${lejos} m`;
+        else if (lejos >= 8000) porQueNo = `a ${lejos} m`;
+        else if (dx * fx + dz * fz <= 0) porQueNo = `detrás, a ${lejos} m`;
+        else return true;
+        return false;
+      });
+    // Para el banco: cuándo dejan de estar delante, y por qué. Ver `apuntarCanto`.
+    if (this.avesDelanteAntes && !siguenDelante)
+      this.apuntarCanto(`aves: ya no están delante (${porQueNo}) · t ${this.relojDeRuta.toFixed(1)}`);
+    this.avesDelanteAntes = siguenDelante;
+    /*
+     * **Detrás de la torre, no a la vez.** La explicación espera a que el
+     * canal quede libre, y se cae si ya no es verdad: una explicación de unas
+     * aves que ya se pasaron no enseña nada.
+     */
+    if (this.explicarLasAvesDespues) {
+      if (!siguenDelante) {
+        this.explicarLasAvesDespues = false;
+      } else if (BOCA.libre && !this.torre.hablando) {
+        this.explicarLasAvesDespues = false;
+        this.avesExplicadas = true;
+        this.instructor.decir(t("vuelo.aves.porQueSubir"), "vuelo.aves.porQueSubir");
+      }
+    }
+    /*
+     * **Y lo que dijo la torre se retira cuando ya no es verdad**: con la
+     * bandada espantada o detrás, o en el suelo. Lo que ya está sonando se
+     * deja acabar. Ver `esElAvisoDeAves` en `audio/torre.ts`.
+     */
+    if (!siguenDelante) BOCA.retirar((c) => esElAvisoDeAves(c));
+    // Las de la final que ya se espantaron se van, y en el suelo también: a
+    // la vuelta, otra final.
+    this.bandadas.quitar((b) => {
+      if (!b.enFinal) return false;
+      if (s.onGround) return true;
+      const desde = this.bandadas.sustoDe(b.id);
+      return desde !== null && this.relojDeRuta - desde > 40;
+    });
+  }
+
+  /** La bandada de la final, en la senda de la pista en uso. */
+  private ponerAvesEnLaFinal(
+    campo: CampoEnElMundo,
+    sitio: { distancia: number; altura: number },
+  ): void {
+    const region = regionDe(campo.escenario);
+    if (!region) return;
+    const [ux, uz] = umbralEnUso(campo);
+    const [fx, fz] = delante(campo.pista.heading);
+    const x = ux - fx * sitio.distancia;
+    const z = uz - fz * sitio.distancia;
+    const suelo = this.terrain.sampleSurface(x, z);
+    const altura = this.cotaDePistaEn(campo, ux, uz) + sitio.altura - suelo;
+    // Con el terreno subiendo en la final ya no caben: se deja.
+    if (altura < 25) return;
+    /*
+     * Y lejos del avión: viniendo del viento en cola la final queda de lado, y
+     * a menos de novecientos metros una bandada se vería aparecer de la nada.
+     */
+    const p = this.flight.state.position;
+    if (Math.hypot(x - p.x, z - p.z) < 900) return;
+    const especie = especieDeLaFinal(region);
+    this.bandadas.poner([
+      {
+        id: `${campo.id}:final:${Math.round(this.relojDeRuta)}`,
+        campo: campo.id,
+        especie,
+        cuantas: Math.round((especie.grupo[0] + especie.grupo[1]) / 2),
+        x,
+        z,
+        radioLargo: 90,
+        radioCorto: 60,
+        giro: (campo.pista.heading + 90) % 360,
+        altura,
+        suelo,
+        sentido: 1,
+        semilla: Math.random(),
+        enFinal: true,
+      },
+    ]);
+  }
+
+  /**
+   * **La torre avisa de aves en la final**, como una de verdad: en inglés,
+   * con tu indicativo delante, dónde y a cuántos pies. Ver `avisoDeLaTorre`
+   * en `flight/aviso-de-aves.ts`. La tarjeta lo dibuja y lo escribe según el
+   * peldaño, y en el que explica, la instructora lo cuenta después.
+   */
+  private avisarDeLasAves(campo: CampoEnElMundo, id: string): void {
+    const b = this.bandadas.lista.find((x) => x.id === id);
+    if (!b) return;
+    const [ux, uz] = umbralEnUso(campo);
+    const habla = hablaDe(campo.escenario.aerodrome?.id);
+    const aviso = avisoDeLaTorre(
+      this.bandadas.dondeEsta(b, this.relojDeRuta).y -
+        this.cotaDePistaEn(campo, ux, uz),
+      habla,
+    );
+    const yo = this.miIndicativo;
+    const texto = `${yo.dicho}, ${aviso.texto}`;
+    const clave = comoSeDiceAqui("torre.aves", habla);
+    /*
+     * Con el peso de lo que la torre te dice a ti: un comentario no lo echa
+     * de la cola. Y sin reloj: espera a que se libre el canal y lo retira
+     * `vigilarLasAves` si deja de ser verdad. Ver `esElAvisoDeAves`.
+     */
+    this.torre.decir(texto, clave, "mando", {
+      ...rellenoDe(yo),
+      altura: aviso.altura,
+    });
+    this.hud.radio(texto, undefined, true);
+    const rotulo = claveDelAviso(this.tier.avisos, "aves.enLaFinal", "palabra.mira");
+    this.hud.senal.mostrar(
+      comoDibujo("aves"),
+      rotulo ? t(rotulo as TranslationKey) : "",
+      null,
+      { segundos: 6, prioridad: 0 },
+    );
+    if (laInstructoraLoExplica(this.tier.avisos) && !this.avesExplicadas)
+      this.explicarLasAvesDespues = true;
+  }
+
+  /**
+   * **Pájaros en uve**: la primera vez que se ve una de cerca, la instructora
+   * cuenta por qué van así — es la estela al revés. Una vez por partida, en
+   * vuelo tranquilo y sin nadie hablando: es paisaje, no un aviso.
+   */
+  private mirarLasUves(): void {
+    if (this.uveExplicada) return;
+    const s = this.flight.state;
+    if (s.onGround || s.heightAboveGround < 60) return;
+    if (Math.abs(s.verticalSpeed) > 4) return;
+    if (this.faseDeAhora !== "en-vuelo") return;
+    if (
+      !BOCA.libre ||
+      this.instructor.hablando ||
+      this.torre.hablando ||
+      this.comandante.hablando ||
+      this.maquina.ocupada
+    )
+      return;
+    const rumbo = s.heading;
+    for (const b of this.bandadas.lista) {
+      if (b.especie.forma !== "uve") continue;
+      const d = this.bandadas.dondeEsta(b, this.relojDeRuta);
+      const dx = d.x - s.position.x;
+      const dz = d.z - s.position.z;
+      const lejos = Math.hypot(dx, dz, d.y - s.position.y);
+      if (lejos > 900) continue;
+      let angulo = Math.atan2(dx, -dz) - rumbo;
+      angulo = Math.atan2(Math.sin(angulo), Math.cos(angulo));
+      if (Math.abs(angulo) > Math.PI / 3) continue;
+      this.uveExplicada = true;
+      this.instructor.decir(t("vuelo.aves.enUve"), "vuelo.aves.enUve", "baja");
+      return;
+    }
   }
 
   /**
@@ -2227,6 +2636,10 @@ export class Game {
     this.estelas.vaciar();
     this.tcas.reiniciar();
     this.informacionDeTrafico.reiniciar();
+    // Otro vuelo, otra final: las aves de la de antes se fueron.
+    this.avesEnLaFinal.reiniciar();
+    this.explicarLasAvesDespues = false;
+    this.bandadas.quitar((b) => !!b.enFinal);
     this.atisDado = "";
     this.faseAnunciada = "";
     this.runwayGuide.reset();
@@ -3574,6 +3987,12 @@ export class Game {
     this.horaDelVuelo = this.horaPedida();
     this.sky.ponerHora(this.horaDelVuelo);
     this.scene.add(this.sky.group);
+    /*
+     * **Y las aves**, con la hora ya puesta: de ella depende si hay térmica y
+     * si es de día. Ver `poblarDeAves`.
+     */
+    this.scene.add(this.dibujoDeBandadas.grupo);
+    this.poblarDeAves();
     this.scene.fog = this.sky.fog;
     // El agua con el mar del cielo: refleja el atardecer y casa con el que
     // la cúpula pinta más allá de su borde. Ver `materialDelAgua`.
@@ -7041,6 +7460,10 @@ export class Game {
     this.estelas.vaciar();
     this.tcas.reiniciar();
     this.informacionDeTrafico.reiniciar();
+    // Otro vuelo, otra final: las aves de la de antes se fueron.
+    this.avesEnLaFinal.reiniciar();
+    this.explicarLasAvesDespues = false;
+    this.bandadas.quitar((b) => !!b.enFinal);
     this.atisDado = "";
     this.avisandoDelBulto = 0;
     /*
@@ -7694,6 +8117,12 @@ export class Game {
       // Con el reloj del vuelo, que es el de los destellos de sus luces.
       this.avionesDeLasIslas?.poner(this.islenos.quienes(), this.relojDeRuta);
     }
+    /*
+     * Y las aves, también antes de la puerta: vuelan igual haya torre o no.
+     * Lo que pide torre —el aviso de la final— lo mira el aviso. Ver
+     * `vigilarLasAves`.
+     */
+    this.moverLasAves(dt);
     // Y el TCAS, con todos ya en su sitio y también antes de la puerta: un
     // transpondedor no deja de contestar porque el campo no tenga torre.
     this.vigilarElTrafico(dt);
@@ -8427,6 +8856,8 @@ export class Game {
       v.mundo.ponerSol(this.sky.sunDirection.y);
       v.rodadura?.ponerSol(this.sky.sunDirection.y);
     }
+    // Y las aves, que salen con el sol y suben con la térmica de la tarde.
+    this.poblarDeAves();
   }
 
   /**
@@ -8568,6 +8999,8 @@ export class Game {
      * nuevo y no te toca nada más.
      */
     this.recolocarTrasElMoldeado();
+    // Y las aves: con otro calor y otras nubes, otra térmica.
+    this.poblarDeAves();
   }
 
   /**
@@ -10935,6 +11368,18 @@ export class Game {
    */
   private pintar(): void {
     const t0 = performance.now();
+    /*
+     * Las aves se colocan aquí y no en cada paso: dónde está cada una es una
+     * cuenta con el reloj, y con el reloj acelerado se harían ocho veces para
+     * pintarlas una. Y con la cámara ya puesta, que es la que decide cuáles
+     * se ven. Ver `world/bandadas-dibujo.ts`.
+     */
+    this.dibujoDeBandadas.pintar(
+      this.bandadas,
+      this.relojDeRuta,
+      this.camera,
+      this.renderer.domElement.height,
+    );
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
   }

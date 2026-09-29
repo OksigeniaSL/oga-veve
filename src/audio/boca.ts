@@ -77,7 +77,7 @@
  * existe `SpeechSynthesisUtterance`.
  */
 
-import { noSePierde } from "./torre";
+import { esElAvisoDeAves, noSePierde } from "./torre";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
@@ -150,7 +150,8 @@ export function cuantoAguanta(
   clave: string | undefined,
   urgencia: Urgencia = "normal",
 ): number {
-  if (noSePierde(clave, urgencia) || anunciaLaFase(clave)) return Infinity;
+  if (noSePierde(clave, urgencia) || anunciaLaFase(clave) || esElAvisoDeAves(clave))
+    return Infinity;
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
     explicaLaOtraPunta(clave) ||

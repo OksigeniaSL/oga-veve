@@ -421,6 +421,17 @@ const TORRE_SOLO = [
    * ocupada detrás de su número, y «no reported traffic» detrás de la pista
    * en uso. Ver `DICE_UN_AFIS` en `src/audio/torre.ts`.
    */
+  /*
+   * **Y las aves en la final**: «caution» y el motivo, que es como da la OACI
+   * la información esencial de aeródromo, y la altura detrás, que es una
+   * pieza de la información de tráfico —`trafico.pies.*`—. Ver `avisoDeLaTorre`
+   * en `src/flight/aviso-de-aves.ts`.
+   */
+  [
+    "torre.solo.birdsOnFinal",
+    "caution, flock of birds on final",
+    "aves en la final; detrás, a cuántos pies",
+  ],
   ["torre.solo.free", "free", "un AFIS: la pista, libre; detrás de su número"],
   ["torre.solo.occupied", "occupied", "un AFIS: la pista, ocupada; detrás de su número"],
   [
@@ -882,17 +893,28 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
+/*
+ * **Lo que la torre canaria dice con otras palabras.** El aviso de aves lo da
+ * sin «flock of»: su pieza se grabó más corta el día que la cuenta de voces se
+ * quedó sin saldo, y las dos formas dan la misma información —«caution» y el
+ * motivo—. Si se regraba, se iguala aquí y en `CUIDADO_AVES_EN_FINAL`, en
+ * `src/flight/aviso-de-aves.ts`.
+ */
+const EN_CANARIAS_SE_DICE = {
+  "torre.solo.birdsOnFinal": "caution, birds on final",
+};
 for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA]) {
+  const suyo = EN_CANARIAS_SE_DICE[id] ?? texto;
   filas.push({
     // Las claves llevan el habla en medio para no pisarse con las de casa.
     // Ver `comoSeDiceAqui` en `i18n/habla.ts`.
     id: id.startsWith("torre.") ? id.replace("torre.", "torre.canario.") : id,
     voz: "torre-canarias",
     idioma: "en",
-    texto,
+    texto: suyo,
     para: `${para}, en Canarias`,
   });
-  total += texto.length;
+  total += suyo.length;
 }
 
 /*
@@ -1210,12 +1232,29 @@ const EN_CALMA = {
     "Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.",
   "tripulacion.canario.mascaras":
     "Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.",
+  // Y lo que explica detrás de la torre cuando hay aves en la final.
+  "vuelo.aves.porQueSubir":
+    "La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo.",
 };
 for (const f of filas) {
   const dicho = EN_CALMA[f.id];
   if (!dicho) continue;
   f.dicho = dicho;
   f.ajustes = AJUSTES_EN_CALMA;
+}
+
+/*
+ * **Y las que se escriben de un modo y se leen de otro.** «En V» es una letra
+ * suelta, y una letra suelta la lee cada voz a su manera —«uve» en Madrid—.
+ * En Paraguay se dice «ve», y así se le da a leer. Ver `vuelo.aves.enUve`.
+ */
+const ASI_SE_LEE = {
+  "vuelo.aves.enUve":
+    "¡Mirá, pájaros volando en ve! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos.",
+};
+for (const f of filas) {
+  const dicho = ASI_SE_LEE[f.id];
+  if (dicho) f.dicho = dicho;
 }
 
 /*

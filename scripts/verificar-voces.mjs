@@ -239,6 +239,15 @@ const REPARTO = [
   ["torre", "torre.canario.trafico", "torre-canarias", TRAFICO_DE_PRUEBA],
   ["torre", "torre.vacateNext", "torre"],
   ["torre", "torre.canario.vacateNext", "torre-canarias"],
+  /*
+   * **Y las aves en la final**: la torre con su altura, en las dos voces, y
+   * la instructora explicándolo detrás; y la uve, que es la estela al revés.
+   * Ver `flight/aviso-de-aves.ts`.
+   */
+  ["torre", "torre.aves", "torre", { altura: "trafico.pies.5" }],
+  ["torre", "torre.canario.aves", "torre-canarias", { altura: "trafico.pies.5" }],
+  ["instructor", "vuelo.aves.porQueSubir", "instructor"],
+  ["instructor", "vuelo.aves.enUve", "instructor"],
   ["instructor", "vuelo.nuestroAvion", "instructor", {}],
   ["instructor", "vuelo.salidaSiguiente", "instructor"],
   /*

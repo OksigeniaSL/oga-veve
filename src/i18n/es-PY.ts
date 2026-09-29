@@ -1164,6 +1164,32 @@ export const ES_PY = {
   "vuelo.otroAvion.detras.arriba": "Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada",
   "vuelo.otroAvion.detras.nivel": "Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada",
   "vuelo.otroAvion.detras.abajo": "Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada",
+  /*
+   * **Las aves en la final**, en los dos peldaños de arriba. La torre avisa
+   * por radio en inglés, como lo haría una de verdad, y detrás la
+   * instructora cuenta qué ha dicho y qué se hace — con calma, que no es una
+   * emergencia sino una maniobra. Lo que no parece: ante un ave de frente se
+   * sube, porque las aves asustadas se tiran hacia abajo. Ver
+   * `flight/aviso-de-aves.ts`.
+   */
+  "vuelo.aves.porQueSubir":
+    "La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo",
+  /*
+   * **Y la uve, que es la estela al revés.** Cada ave va en el aire que sube
+   * junto a la punta del ala de la de delante; los aviones, ese mismo
+   * remolino, lo esquivan. Se dice una vez, la primera que se ve una. Ver
+   * `mirarLasUves` en `game.ts` y `separacionDeTorbellinos` en
+   * `flight/estela.ts`.
+   */
+  "vuelo.aves.enUve":
+    "¡Mirá, pájaros volando en V! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos",
+  /*
+   * Y lo que pone la tarjeta: cuando avisa la torre, y cuando la bandada ya
+   * está de frente. No se dicen —la voz es la de la torre y la de la
+   * instructora—, se leen.
+   */
+  "aves.enLaFinal": "Pájaros en la final",
+  "aves.deFrente": "Pájaros de frente: subí un poco",
   /**
    * **«De golpe» y no «rápido».** Decía «bajás muy rápido», y justo después de
    * «venís lento: metéle gas» eso se oye como lo contrario: «le meto gas y

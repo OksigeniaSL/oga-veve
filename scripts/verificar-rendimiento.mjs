@@ -39,6 +39,21 @@
  *
  * Y con `OGA_AVION=jaz-120` mide con ese avión, que es como se mide lo que
  * cuesta un avión: la librea de la casa se midió así, con el más grande.
+ *
+ * ## Y con la tarjeta de verdad
+ *
+ * `OGA_GPU=1` lanza Chrome con la GPU del equipo en vez de SwiftShader, y
+ * entonces mide además **lo que tarda la tarjeta**: cada `render` va entre dos
+ * marcas de `EXT_disjoint_timer_query_webgl2`, que es el reloj de la propia
+ * GPU, y sale la mediana en milisegundos por cuadro. Sin eso, con la tarjeta
+ * de verdad el tiempo de cuadro solo dice lo que tarda la CPU en mandar el
+ * trabajo: la tarjeta lo hace en paralelo y no se ve. Se escribe también qué
+ * tarjeta contestó, porque una medida que dice «GPU» y era SwiftShader no
+ * vale para nada.
+ *
+ * Si el juego trae bandadas, se mide además un tercer sitio, **mirando a la
+ * más cercana**, que es el peor caso de lo que cuestan: con el aeródromo
+ * detrás y las aves llenando el cuadro. Ver `world/bandadas.ts`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -68,6 +83,7 @@ const server = await createServer({
 });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
+const CON_GPU = process.env.OGA_GPU === "1";
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   /*
@@ -80,15 +96,17 @@ const navegador = await chromium.launch({
    * cuadros vuelve a ser lo que cuesta hacerlos.
    */
   args: [
-    "--use-gl=angle",
-    "--use-angle=gl",
-    "--enable-unsafe-swiftshader",
+    ...(CON_GPU
+      ? ["--headless=new", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=gl"]
+      : ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"]),
     "--disable-gpu-vsync",
     "--disable-frame-rate-limit",
   ],
 });
 
 const filas = [];
+/** Qué tarjeta contestó, para saber qué se ha medido. */
+let tarjeta = "";
 
 for (const escenario of ESCENARIOS) {
   const page = await navegador.newPage({
@@ -107,7 +125,23 @@ for (const escenario of ESCENARIOS) {
   });
   await page.waitForTimeout(14000);
 
-  for (const sitio of ["puesto", "aire"]) {
+  if (!tarjeta) tarjeta = await page.evaluate(() => {
+    const gl = globalThis.__oga.pintor().getContext();
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre";
+  });
+  const hayBandadas = await page.evaluate(
+    () => typeof globalThis.__oga.mirarLaBandada === "function",
+  );
+  for (const sitio of ["puesto", "aire", ...(hayBandadas ? ["bandada"] : [])]) {
+    /*
+     * **El peor caso de las aves**: la bandada que más aves lleva, de frente
+     * y a su altura. Se vuelve a plantar el avión antes de cada medida,
+     * porque vuela: a los cinco segundos ya la habría pasado.
+     */
+    const aLaBandada = () =>
+      page.evaluate(() => globalThis.__oga.mirarLaBandada(700, "mayor"));
+    if (sitio === "bandada" && !(await aLaBandada())) continue;
     if (sitio === "aire") {
       // Sobre el aeródromo y a la altura del circuito, que es donde se ve
       // todo a la vez: el aeropuerto, el pueblo y el monte.
@@ -119,11 +153,34 @@ for (const escenario of ESCENARIOS) {
       await page.waitForTimeout(1500);
     }
     for (const { veces, nombre } of APRIETES) {
+      if (sitio === "bandada") await aLaBandada();
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: veces });
       // Un respiro para que se estabilice antes de contar.
       await page.waitForTimeout(1200);
-      const medida = await page.evaluate(async (ms) => {
+      const medida = await page.evaluate(async ({ ms, conGpu }) => {
         const tiempos = [];
+        /*
+         * El reloj de la tarjeta: cada `render` entre dos marcas. Los
+         * resultados llegan unos cuadros tarde, así que se recogen al final y
+         * se descartan los que la GPU marca como no fiables (`disjoint`).
+         */
+        const pintor = globalThis.__oga.pintor();
+        const gl = pintor.getContext();
+        const ext = conGpu ? gl.getExtension("EXT_disjoint_timer_query_webgl2") : null;
+        const consultas = [];
+        const original = pintor.render;
+        if (ext) {
+          pintor.render = function (...args) {
+            const q = gl.createQuery();
+            gl.beginQuery(ext.TIME_ELAPSED_EXT, q);
+            try {
+              return original.apply(this, args);
+            } finally {
+              gl.endQuery(ext.TIME_ELAPSED_EXT);
+              consultas.push(q);
+            }
+          };
+        }
         await new Promise((listo) => {
           let previo = performance.now();
           const fin = previo + ms;
@@ -135,15 +192,31 @@ for (const escenario of ESCENARIOS) {
           };
           requestAnimationFrame(paso);
         });
+        let gpu = null;
+        if (ext) {
+          pintor.render = original;
+          // Unos cuadros más para que lleguen los últimos resultados.
+          for (let i = 0; i < 6; i++) await new Promise((r) => requestAnimationFrame(r));
+          const ms = [];
+          const roto = gl.getParameter(ext.GPU_DISJOINT_EXT);
+          for (const q of consultas) {
+            if (!roto && gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE))
+              ms.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6);
+            gl.deleteQuery(q);
+          }
+          ms.sort((a, b) => a - b);
+          gpu = ms.length ? ms[Math.floor(ms.length / 2)] : null;
+        }
         tiempos.sort((a, b) => a - b);
         const en = (p) => tiempos[Math.floor(tiempos.length * p)] ?? 0;
         return {
           mediana: en(0.5),
           p95: en(0.95),
           cuadros: tiempos.length,
+          gpu,
           ...globalThis.__oga.coste(),
         };
-      }, MIDE);
+      }, { ms: MIDE, conGpu: CON_GPU });
       filas.push({ escenario, sitio, veces, nombre, ...medida });
     }
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
@@ -156,7 +229,7 @@ await server.close();
 
 // ── El informe ────────────────────────────────────────────────────────────
 
-console.log("\n  rendimiento · 1280×720\n");
+console.log(`\n  rendimiento · 1280×720 · ${tarjeta}\n`);
 let fallos = 0;
 for (const f of filas) {
   const fps = f.mediana > 0 ? 1000 / f.mediana : 0;
@@ -168,6 +241,8 @@ for (const f of filas) {
       `×${f.veces} ${String(Math.round(fps)).padStart(3)} fps · ` +
       `mediana ${f.mediana.toFixed(1)} ms · p95 ${f.p95.toFixed(1)} ms · ` +
       `${f.llamadas} dibujos · ${(f.triangulos / 1000).toFixed(0)}k △` +
+      (f.gpu !== null && f.gpu !== undefined ? ` · GPU ${f.gpu.toFixed(2)} ms` : "") +
+      (f.aves ? ` · aves ${f.aves.cerca}+${f.aves.lejos}` : "") +
       (exige ? `  ← ${f.nombre}` : ""),
   );
 }

@@ -299,6 +299,10 @@
       "ms": 1394,
       "h": "fffd41be7d"
     },
+    "torre.canario.solo.birdsOnFinal": {
+      "ms": 1319,
+      "h": "9c12920809"
+    },
     "torre.canario.solo.clearedLand": {
       "ms": 899,
       "h": "0896ad4325"
@@ -1539,6 +1543,15 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.motorYAlAire"
+    ],
+    "torre.canario.aves": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.birdsOnFinal",
+      "{altura}"
     ]
   }
 }

@@ -251,9 +251,11 @@ const ARRIBA = new Vector3(0, 1, 0);
  * Donde se van juntando las piezas quietas, cada una con su color.
  *
  * El color va **en el vértice** y no en el material, que es lo que permite
- * que la casa, los postes y los árboles sean una sola llamada de dibujo.
+ * que la casa, los postes y los árboles sean una sola llamada de dibujo. Lo
+ * usa también el servicio de fauna del aeropuerto: ver
+ * `fauna-del-aeropuerto.ts`.
  */
-class Obra {
+export class Obra {
   private readonly piezas: BufferGeometry[] = [];
 
   /** Una pieza de un color, colocada con `m`. La geometría no se toca. */
@@ -310,7 +312,7 @@ class Obra {
 }
 
 /** La matriz de un objeto en `(x, y, z)`, girado `giro` y a escala `e`. */
-function aqui(x: number, y: number, z: number, giro = 0, e = 1): Matrix4 {
+export function aqui(x: number, y: number, z: number, giro = 0, e = 1): Matrix4 {
   _q.setFromAxisAngle(ARRIBA, giro);
   return new Matrix4().compose(_v.set(x, y, z), _q, _e.set(e, e, e));
 }

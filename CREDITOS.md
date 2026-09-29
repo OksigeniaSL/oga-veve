@@ -383,6 +383,20 @@ son verdes; ganado nelore casi todo blanco; el camino de tierra colorada; y
 el tajamar en el punto más bajo del potrero según el relieve medido, que es
 donde se junta el agua.
 
+### Las aves y el servicio de fauna del aeropuerto
+
+Las bandadas —una malla de ave con cuerpo, cola y dos alas partidas, y una uve
+de dos triángulos para las de lejos—, la furgoneta del servicio de fauna con su
+rotativo y el cetrero **se montan por código**, en `src/world/bandadas-dibujo.ts`
+y `src/world/fauna-del-aeropuerto.ts`. No hay fichero de modelo ni textura, así
+que no hay licencia de terceros: son de Oksigenia SL, bajo Apache-2.0.
+
+Lo que sí es de verdad es **qué especie vuela en cada sitio, a qué altura y
+qué aeropuerto tiene cetrería**. Son hechos, no obra de nadie, y la fuente de
+cada uno —SEO/BirdLife, Animal Diversity Web, WCS Paraguay, el Atlas de Guyra,
+Transport Canada, la FAA, la OACI, la prensa de Canarias y de Paraguay— está
+escrita junto a su dato en `src/world/aves.ts`.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

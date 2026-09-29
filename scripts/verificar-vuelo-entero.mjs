@@ -428,6 +428,14 @@ await page.mouse.click(libre[0], libre[1]);
 if (process.env.OGA_CAMARA)
   await page.evaluate((v) => globalThis.__oga?.ponerVista?.(v), process.env.OGA_CAMARA);
 /*
+ * **Y aves en la final, seguro, si se pide.** En los peldaños de arriba una
+ * final de cada dos trae una bandada y el aviso de la torre; con
+ * `OGA_AVES_EN_FINAL=1` la trae esta, para poder mirarla. Ver
+ * `flight/aviso-de-aves.ts`.
+ */
+if (process.env.OGA_AVES_EN_FINAL === "1")
+  await page.evaluate(() => globalThis.__oga?.avesEnLaFinalSeguro?.());
+/*
  * **Y la llegada por la otra punta, si se pide.** `OGA_OTRA_PUNTA=1` con un
  * destino aterriza allí por la cabecera contraria a la del viento, que es como
  * llegó Enrique a Fuerteventura —la 01 en uso, la toma por la 19— y como se
@@ -504,6 +512,7 @@ const fotos = (async () => {
   let ultima = "";
   let ultimaT = -Infinity;
   let n = 0;
+  const fotografiadas = new Set();
   while (fotografiando) {
     await new Promise((r) => setTimeout(r, 700));
     const dato = await page
@@ -515,14 +524,21 @@ const fotos = (async () => {
           t: o.reloj(),
           alto: Math.round(s.heightAboveGround),
           vel: Math.round(s.airspeed * 1.944),
+          aves: o.avesDelante?.() ?? null,
         };
       })
       .catch(() => null);
     if (!dato) continue;
-    if (dato.fase === ultima && dato.t - ultimaT < 30) continue;
+    /*
+     * Y una cuando se pasa junto a una bandada, que en final dura segundos y
+     * entre dos fotos de fase no sale nunca. Ver `avesDelante` en `sondas.ts`.
+     */
+    const aves = dato.aves && !fotografiadas.has(dato.aves);
+    if (aves) fotografiadas.add(dato.aves);
+    if (!aves && dato.fase === ultima && dato.t - ultimaT < 30) continue;
     ultima = dato.fase;
     ultimaT = dato.t;
-    const nombre = `${String(n++).padStart(2, "0")}-${dato.t.toFixed(0)}s-${dato.fase.replace(/[^\w.-]+/g, "_")}.png`;
+    const nombre = `${String(n++).padStart(2, "0")}-${dato.t.toFixed(0)}s-${dato.fase.replace(/[^\w.-]+/g, "_")}${aves ? "-aves" : ""}.png`;
     await page.screenshot({ path: `${FOTOS}/${nombre}` }).catch(() => {});
   }
 })();
@@ -4858,6 +4874,8 @@ if (process.env.OGA_VOCES) {
         descartes: vuelo.descartes,
         todo: vuelo.todoLoDicho,
         maquina: vuelo.maquina,
+        // Y lo que pasó con las aves de la final. Ver `vigilarLasAves`.
+        aves: (vuelo.cantados ?? []).filter((c) => c.startsWith("aves:")),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
       },

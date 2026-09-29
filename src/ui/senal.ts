@@ -949,6 +949,46 @@ const AEROFRENOS = icono(`
 `);
 
 /**
+ * Una gaviota de dibujo, rellena: las dos alas en arco que se juntan en el
+ * cuerpo. Es la «m» con la que se pinta un ave volando en cualquier parte del
+ * mundo, pero con cuerpo: hecha de trazo fino, a este tamaño se leía como
+ * olas.
+ */
+const gaviota = (cx: number, cy: number, ancho: number): string => {
+  const a = ancho / 2;
+  const alto = ancho * 0.36;
+  return `<path d="M${cx - a} ${cy + alto * 0.35}
+    Q${cx - a * 0.5} ${cy - alto} ${cx} ${cy}
+    Q${cx + a * 0.5} ${cy - alto} ${cx + a} ${cy + alto * 0.35}
+    Q${cx + a * 0.5} ${cy - alto * 0.25} ${cx} ${cy + alto * 0.55}
+    Q${cx - a * 0.5} ${cy - alto * 0.25} ${cx - a} ${cy + alto * 0.35} Z" />`;
+};
+
+/**
+ * **Aves**: tres gaviotas de distinto tamaño, que es lo que dice la torre
+ * cuando avisa de una bandada en la final. Ver `flight/aviso-de-aves.ts`.
+ */
+const AVES = icono(`
+  ${gaviota(7, 12, 10)}
+  ${gaviota(17, 7.5, 8)}
+  ${gaviota(15.5, 18.5, 7)}
+`);
+
+/**
+ * **Aves de frente: subí.** Las aves abajo y la flecha que sube, que es la
+ * maniobra entera: el ave asustada se tira hacia abajo, así que se pasa por
+ * encima. Es la misma flecha del «tirá», y a propósito: es lo mismo que se
+ * hace.
+ */
+const AVES_SUBI = icono(`
+  ${gaviota(6.5, 14, 9)}
+  ${gaviota(9.5, 20, 7)}
+  <path d="M18.4 20.4 V3.8 M15.2 7.2 L18.4 3.4 L21.6 7.2" fill="none"
+        stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+        stroke-linejoin="round" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -999,6 +1039,8 @@ export const DIBUJOS = {
   "circuito-encola": circuito("encola"),
   "circuito-base": circuito("base"),
   tirar: TIRAR,
+  aves: AVES,
+  "aves-subi": AVES_SUBI,
   papi0: papi(0),
   papi1: papi(1),
   papi2: papi(2),

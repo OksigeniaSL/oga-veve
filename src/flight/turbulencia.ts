@@ -210,6 +210,19 @@ const CAPA_DE_MEZCLA_MIN = 300;
 const CAPA_DE_MEZCLA_MAX = 2000;
 
 /**
+ * **Hasta dónde llega la térmica**, m sobre el suelo, con este calor.
+ *
+ * Se exporta para las aves que suben en ella: un buitre en una térmica sube
+ * hasta donde sube el aire, y por encima de esta capa el aire está quieto. Así
+ * el techo del corro de buitres y el sitio donde el avión deja de notar el
+ * bache son el mismo número. Ver `world/bandadas.ts`.
+ */
+export function capaDeMezcla(calor: number): number {
+  const c = Math.max(0, Math.min(1, calor));
+  return CAPA_DE_MEZCLA_MIN + (CAPA_DE_MEZCLA_MAX - CAPA_DE_MEZCLA_MIN) * c;
+}
+
+/**
  * **La térmica**, σ_w en m/s.
  *
  * La velocidad convectiva de Deardorff, `w* = (g/θ · H/(ρ·cp) · zi)^⅓`, con el
@@ -222,7 +235,7 @@ function termica(aire: Aire): number {
   const calor = Math.max(0, Math.min(1, aire.calor ?? 0));
   if (!(calor > 0)) return 0;
   const flujo = FLUJO_MAXIMO * calor;
-  const zi = CAPA_DE_MEZCLA_MIN + (CAPA_DE_MEZCLA_MAX - CAPA_DE_MEZCLA_MIN) * calor;
+  const zi = capaDeMezcla(calor);
   // g/θ con treinta grados, y ρ·cp del aire de abajo.
   const wEstrella = Math.cbrt((9.81 / 303) * (flujo / (1.2 * 1005)) * zi);
   const z = Math.max(0, aire.sobreElSuelo) / zi;

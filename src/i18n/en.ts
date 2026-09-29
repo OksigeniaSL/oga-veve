@@ -356,6 +356,12 @@ export const EN: Dictionary = {
   "vuelo.otroAvion.detras.arriba": "Behind us and higher there's another plane. Nothing to do",
   "vuelo.otroAvion.detras.nivel": "Behind us, at our height, there's another plane. Nothing to do",
   "vuelo.otroAvion.detras.abajo": "Behind us and lower there's another plane. Nothing to do",
+  "vuelo.aves.porQueSubir":
+    "The tower says there are birds on final. If you see one head-on, climb a little: frightened birds dive downwards",
+  "vuelo.aves.enUve":
+    "Look, birds flying in a V! Each one rides the air rising beside the wingtip of the one ahead. Planes do the opposite: we keep clear of that swirl",
+  "aves.enLaFinal": "Birds on final",
+  "aves.deFrente": "Birds ahead: climb a little",
   "vuelo.bajasRapido": "Sink rate. Ease off",
   "vuelo.muyInclinado": "Bank angle. Level off",
   "vuelo.pilotoSuelto": "Autopilot disconnected",

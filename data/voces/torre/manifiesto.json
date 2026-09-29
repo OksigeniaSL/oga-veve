@@ -303,6 +303,10 @@
       "ms": 1571,
       "h": "070716f611"
     },
+    "torre.solo.birdsOnFinal": {
+      "ms": 1912,
+      "h": "5ba103f6d3"
+    },
     "torre.solo.clearedLand": {
       "ms": 1015,
       "h": "3a680a779f"
@@ -1525,6 +1529,15 @@
       "{c4}",
       "{c5}",
       "torre.solo.idaAlAire"
+    ],
+    "torre.aves": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.birdsOnFinal",
+      "{altura}"
     ]
   }
 }
