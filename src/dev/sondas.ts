@@ -1718,7 +1718,95 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       llamadas: juego.renderer.info.render.calls,
       triangulos: juego.renderer.info.render.triangles,
       arboles: juego.vegetacion?.children.length ?? 0,
+      aves: juego.dibujoDeBandadas.pintadas,
     }),
+    /**
+     * **Las bandadas puestas**, con dónde está cada una ahora. Ver
+     * `world/bandadas.ts`.
+     */
+    bandadas: () =>
+      juego.bandadas.lista.map((b) => {
+        const d = juego.bandadas.dondeEsta(b, juego.relojDeLasAves);
+        return {
+          id: b.id,
+          campo: b.campo,
+          especie: b.especie.id,
+          forma: b.especie.forma,
+          cuantas: b.cuantas,
+          x: d.x,
+          y: d.y,
+          z: d.z,
+          sobreElSuelo: b.altura,
+          enFinal: !!b.enFinal,
+          susto: juego.bandadas.sustoDe(b.id),
+        };
+      }),
+    /**
+     * **Planta el avión a `metros` de una bandada y mirándola**, a su altura:
+     * la más cercana, o la primera de esa especie o de esa forma. Para medir
+     * lo que cuestan y para fotografiarlas. Devuelve cuál, o `null`.
+     */
+    mirarLaBandada: (metros = 300, cual?: string) => {
+      const t = juego.relojDeLasAves;
+      const p = juego.flight.state.position;
+      let mejor: { b: (typeof juego.bandadas.lista)[number]; d: number } | null = null;
+      for (const b of juego.bandadas.lista) {
+        if (cual && b.especie.id !== cual && b.especie.forma !== cual && b.id !== cual)
+          continue;
+        const w = juego.bandadas.dondeEsta(b, t);
+        const d = Math.hypot(w.x - p.x, w.z - p.z);
+        if (!mejor || d < mejor.d) mejor = { b, d };
+      }
+      if (!mejor) return null;
+      const w = juego.bandadas.dondeEsta(mejor.b, t);
+      // Desde el sur-oeste de la bandada, con el sol de la tarde a la espalda.
+      const desde = { x: w.x - metros * 0.7, z: w.z + metros * 0.7 };
+      const rumbo = Math.atan2(w.x - desde.x, -(w.z - desde.z));
+      const suelo = juego.terrain.sampleSurface(desde.x, desde.z);
+      juego.flight.reset({
+        position: new Vector3(desde.x, Math.max(w.y, suelo + 40), desde.z),
+        heading: rumbo,
+        airspeed: juego.aircraft.approachSpeed * 1.3,
+      });
+      return { id: mejor.b.id, especie: mejor.b.especie.id, x: w.x, y: w.y, z: w.z };
+    },
+    /**
+     * **La bandada que se tiene delante**, a menos de setecientos metros y en
+     * el cono del morro, o `null`. Para que el banco del vuelo entero la
+     * fotografíe cuando pasa.
+     */
+    avesDelante: () => {
+      const s = juego.flight.state;
+      const t = juego.relojDeLasAves;
+      for (const b of juego.bandadas.lista) {
+        const d = juego.bandadas.dondeEsta(b, t);
+        const dx = d.x - s.position.x;
+        const dz = d.z - s.position.z;
+        if (Math.hypot(dx, dz, d.y - s.position.y) > 700) continue;
+        let a = Math.atan2(dx, -dz) - s.heading;
+        a = Math.atan2(Math.sin(a), Math.cos(a));
+        if (Math.abs(a) < Math.PI / 6) return b.id;
+      }
+      return null;
+    },
+    /** Dónde está cada ave de una bandada ahora mismo. Para las fotos. */
+    avesDe: (id: string) => {
+      const b = juego.bandadas.lista.find((x) => x.id === id);
+      if (!b) return [];
+      const salida: Parameters<typeof juego.bandadas.aves>[2] = [];
+      const n = juego.bandadas.aves(b, juego.relojDeLasAves, salida);
+      return salida.slice(0, n).map((a) => ({ x: a.x, y: a.y, z: a.z }));
+    },
+    /** Para el banco: que la próxima final traiga aves seguro. */
+    avesEnLaFinalSeguro: (si = true) => {
+      juego.avesEnLaFinalSeguro = si;
+    },
+    /**
+     * Coloca las aves para otra cámara, antes de pintar con ella: para las
+     * fotos de lejos con `pintor`. Ver `world/bandadas-dibujo.ts`.
+     */
+    pintarLasAvesCon: (camara: Parameters<Game["dibujoDeBandadas"]["pintar"]>[2]) =>
+      juego.dibujoDeBandadas.pintar(juego.bandadas, juego.relojDeLasAves, camara),
     /** Termina el vuelo ahora mismo, para poder mirar su pantalla. */
     acabar: () => juego.terminarElVuelo(),
     /** Y la traza de por dónde ha ido, en coordenadas del fichero. */

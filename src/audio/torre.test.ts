@@ -50,6 +50,11 @@ describe("lo que dice la torre", () => {
      */
     "torre.trafico",
     /*
+     * Y el aviso de aves en la final, igual: lo pide `avisarDeLasAves` por su
+     * clave, con la altura en su hueco. Ver `flight/aviso-de-aves.ts`.
+     */
+    "torre.aves",
+    /*
      * Y lo que dice un AFIS en castellano, que es la lámpara dicha por quien
      * informa: lo pide `luzDeTorre` por su clave. Ver `Aerodrome.afis`.
      */

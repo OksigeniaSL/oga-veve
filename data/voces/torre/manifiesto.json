@@ -228,6 +228,9 @@
     "torre.solo.autorizadoParaAterrizar": {
       "ms": 1571
     },
+    "torre.solo.birdsOnFinal": {
+      "ms": 1912
+    },
     "torre.solo.clearedLand": {
       "ms": 1015
     },
@@ -1390,6 +1393,15 @@
       "{c4}",
       "{c5}",
       "torre.solo.idaAlAire"
+    ],
+    "torre.aves": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.birdsOnFinal",
+      "{altura}"
     ]
   }
 }

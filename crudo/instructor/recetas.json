@@ -839,5 +839,11 @@
   ],
   "gafas.ganadas": [
     "gafas.ganadas"
+  ],
+  "vuelo.aves.porQueSubir": [
+    "vuelo.aves.porQueSubir"
+  ],
+  "vuelo.aves.enUve": [
+    "vuelo.aves.enUve"
   ]
 }

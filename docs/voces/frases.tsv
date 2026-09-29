@@ -46,6 +46,8 @@ instructor	instructor/vuelo.otroAvion.izquierda.abajo.ogg	es-PY	Abajo a la izqui
 instructor	instructor/vuelo.otroAvion.detras.arriba.ogg	es-PY	Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.otroAvion.detras.nivel.ogg	es-PY	Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.otroAvion.detras.abajo.ogg	es-PY	Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aves.porQueSubir.ogg	es-PY	La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aves.enUve.ogg	es-PY	¡Mirá, pájaros volando en V! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy de golpe: levantá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado: enderezá las alas	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
@@ -575,6 +577,7 @@ torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, ante
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
+torre	torre/torre.solo.birdsOnFinal.ogg	en	caution, flock of birds on final	aves en la final; detrás, a cuántos pies
 torre	torre/torre.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número
 torre	torre/torre.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número
 torre	torre/torre.solo.noReportedTraffic.ogg	en	no reported traffic	un AFIS: sin tráfico conocido, detrás de la pista en uso
@@ -739,6 +742,7 @@ torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la auto
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.birdsOnFinal.ogg	en	caution, birds on final	aves en la final; detrás, a cuántos pies, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.noReportedTraffic.ogg	en	no reported traffic	un AFIS: sin tráfico conocido, detrás de la pista en uso, en Canarias

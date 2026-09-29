@@ -904,6 +904,32 @@ const CALOR = icono(`
 `);
 
 /**
+ * **Aves**: tres pájaros como los dibuja un niño, la «m» abierta que en
+ * cualquier parte del mundo quiere decir un ave volando. Es lo que dice la
+ * torre cuando avisa de una bandada en la final. Ver `flight/aviso-de-aves.ts`.
+ */
+const AVES = icono(`
+  <path d="M2.4 11.6 q2.3 -3.1 4.6 0 q2.3 -3.1 4.6 0 M12.6 6.4 q2.1 -2.8 4.2 0 q2.1 -2.8 4.2 0
+           M8.6 18.4 q2.1 -2.8 4.2 0 q2.1 -2.8 4.2 0"
+        fill="none" stroke="currentColor" stroke-width="2.1"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
+ * **Aves de frente: subí.** Las aves abajo y la flecha que sube, que es la
+ * maniobra entera: el ave asustada se deja caer, así que se pasa por encima.
+ * Es la misma flecha del «tirá», y a propósito: es lo mismo que se hace.
+ */
+const AVES_SUBI = icono(`
+  <path d="M1.8 14.6 q2 -2.7 4 0 q2 -2.7 4 0 M5 20.6 q1.8 -2.4 3.6 0 q1.8 -2.4 3.6 0"
+        fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M18.4 20.4 V3.8 M15.2 7.2 L18.4 3.4 L21.6 7.2" fill="none"
+        stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+        stroke-linejoin="round" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -951,6 +977,8 @@ export const DIBUJOS = {
   "circuito-encola": circuito("encola"),
   "circuito-base": circuito("base"),
   tirar: TIRAR,
+  aves: AVES,
+  "aves-subi": AVES_SUBI,
   papi0: papi(0),
   papi1: papi(1),
   papi2: papi(2),

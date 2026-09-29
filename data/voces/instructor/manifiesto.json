@@ -453,6 +453,12 @@
     "vuelo.autorizadoSinTorre": {
       "ms": 1785
     },
+    "vuelo.aves.enUve": {
+      "ms": 8107
+    },
+    "vuelo.aves.porQueSubir": {
+      "ms": 7007
+    },
     "vuelo.baches": {
       "ms": 6507
     },
@@ -1607,6 +1613,12 @@
     ],
     "gafas.ganadas": [
       "gafas.ganadas"
+    ],
+    "vuelo.aves.porQueSubir": [
+      "vuelo.aves.porQueSubir"
+    ],
+    "vuelo.aves.enUve": [
+      "vuelo.aves.enUve"
     ]
   }
 }

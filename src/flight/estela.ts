@@ -47,6 +47,21 @@ const DURA_COMO_MUCHO = 180;
 const NUCLEO = 0.05;
 
 /**
+ * **La separación entre los dos torbellinos de un ala**, m: `b0 = π/4·b`, la
+ * de un ala de carga elíptica.
+ *
+ * Se exporta porque es también **la cuenta de la formación en V**. Por fuera
+ * de cada torbellino el aire sube, y el ave que va detrás se pone justo ahí:
+ * con su centro a `b0` del de la de delante, su torbellino de dentro cae
+ * encima del de fuera de la otra y su ala entera va en el aire que sube. Es la
+ * misma física que obliga a un avión a apartarse de la estela, usada al revés.
+ * Ver `world/aves.ts`.
+ */
+export function separacionDeTorbellinos(envergadura: number): number {
+  return (Math.PI / 4) * envergadura;
+}
+
+/**
  * **El peso y el ala de cada clase de avión que vuela por ahí**, para su
  * estela. Por el tipo del tráfico del circuito y por la silueta del de la ruta.
  *
@@ -166,7 +181,7 @@ export class Estelas {
       const dz = q.z - antes.z;
       const v = Math.hypot(dx, dz) / Math.max(dt, 1e-3);
       if (!(v > 15) || dt > 5) continue;
-      const b0 = (Math.PI / 4) * q.envergadura;
+      const b0 = separacionDeTorbellinos(q.envergadura);
       const lista = this.trozos.get(q.id) ?? [];
       lista.push({
         x: q.x,

@@ -45,209 +45,211 @@
 045	vuelo.otroAvion.detras.arriba	Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada
 046	vuelo.otroAvion.detras.nivel	Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada
 047	vuelo.otroAvion.detras.abajo	Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada
-048	vuelo.bajasRapido	Bajás muy de golpe: levantá un poco la nariz
-049	vuelo.muyInclinado	Estás muy inclinado: enderezá las alas
-050	vuelo.pilotoSuelto	Se soltó el piloto automático
-051	vuelo.pilotoEnTierra	El piloto automático se conecta en el aire
-052	vuelo.empezamosABajar	Empezamos a bajar: despacito, hasta la pista
-053	vuelo.alturaDeLaTorre	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
-054	vuelo.alturaDeLaTorreRaya	La torre nos dice hasta dónde subir: hasta la raya de la cinta.
-055	vuelo.otraAlturaDeLaTorre	La torre nos deja subir otro poco. Ya puse la altura nueva.
-056	vuelo.tonoDeAltitudCerca	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
-057	vuelo.tonoDeAltitudFuera	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
-058	vuelo.masAltoQueElPlan	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
-059	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
-060	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
-061	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
-062	vuelo.puedeVolver	La torre te deja volver a intentarlo
-063	vuelo.puedeVolver~2	La pista quedó libre: podés volver a bajar
-064	vuelo.puedeVolverSinTorre	La pista ya está libre: volvé a intentarlo
-065	vuelo.puedeAterrizar	La torre te deja aterrizar
-066	vuelo.puedeAterrizarSinTorre	Ahora sí: podés aterrizar
-067	vuelo.puedeAterrizarAfis	La pista está libre: si venís bien, aterrizá
-068	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
-069	vuelo.frustrada~2	Muy bien: irse al aire también es volar bien
-070	vuelo.frustrada~3	Eso estuvo bien. Damos otra vuelta y volvemos
-071	vuelo.aroAlto	Venís un poco alto. Bajá suave
-072	vuelo.aroAlto~2	Venís un poco alto. Bajá el morro despacito
-073	vuelo.aroAlto~3	Estás por encima. Soltá un poquito y vas a ir entrando
-074	vuelo.aroAlto~4	Un poco alto para la pista: bajá suave
-075	vuelo.aroBajo	Venís un poco bajo. Subí suave
-076	vuelo.aroBajo~2	Venís bajo. Tirá un poquito y un toque de motor
-077	vuelo.aroBajo~3	Estás por debajo: subí despacio, sin pasarte
-078	vuelo.aroBajo~4	Un poco bajo para la pista: levantá suave
-079	vuelo.corregido	¡Eso es! Así venís bien
-080	vuelo.corregido~2	Muy bien, así venís
-081	vuelo.corregido~3	Eso. Ahora entrás derechito
-082	vuelo.corregido~4	Perfecto, quedate así
-083	vuelo.papiAlto	Luces blancas: vas alto, bajá
-084	vuelo.lentoYBajo	Venís lento: metéle gas
-085	vuelo.papiBajo	Luces rojas: vas bajo, subí
-086	vuelo.papiBien	Dos rojas y dos blancas: vas bien
-087	vuelo.bulto	Por ahí no se pasa: hay un edificio
-088	vuelo.aterrizado	Frená
-089	vuelo.abandonando	Salí de la pista, que viene otro
-090	vuelo.abandonandoSinPrisa	Sin apuro: salí de la pista y volvé a casa
-091	vuelo.abandonandoConLaBici	Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
-092	vuelo.abandonandoSinTorre	Sin apuro: salí de la pista y andá a la plataforma
-093	vuelo.pistaLibre	¡Pista libre! Bien hecho
-094	vuelo.aPlataforma	Volvé a tu lugar
-095	vuelo.enPuesto	Llegaste. Apagá el motor
-096	vuelo.apagado	¡Vuelo terminado!
-097	vuelo.fuera	Volvé a la raya verde
-098	vuelo.roto	Se rompió. Volvemos a empezar
-099	vuelo.rapido	Vas muy rápido
-100	vuelo.sobrevelocidad	Muy rápido: bajá el motor
-101	vuelo.sobrevelocidadAire	Muy rápido para esta altura
-102	vuelo.trenPasado	Muy rápido con el tren fuera: metélo
-103	vuelo.flapsPasados	Muy rápido con los flaps: recogélos
-104	vuelo.pediFlaps	Bajá los flaps para frenar
-105	vuelo.alivioDeFlaps	Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.
-106	vuelo.flapsTocados	Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.
-107	vuelo.flapsEnLaCarrera	Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.
-108	vuelo.flapsArribaAlSalir	Ya salimos de la pista: ahora sí, subí los flaps.
-109	vuelo.despuesDelAterrizaje	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
-110	vuelo.alPuestoConFlaps	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
-111	vuelo.meteElTren	Metélo, el tren te frena
-112	vuelo.tormenta	Hay una tormenta delante: rodeála, no la cruces
-113	vuelo.baches	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
-114	vuelo.reserva	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
-115	vuelo.sinCombustible	Se acabó el combustible: planeá hasta la pista
-116	vuelo.sinMotor	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
-117	vuelo.planeoLento	Vamos lentos: bajá un poco la nariz
-118	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
-119	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
-120	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
-121	vuelo.calor	Hace calor: vamos a necesitar más pista para despegar
-122	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
-123	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
-124	vuelo.sacaElTren	Sacá el tren
-125	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
-126	vuelo.despacio	Más despacio
-127	vuelo.alto	Pará acá
-128	vuelo.teLoPasaste	Te pasaste. Frená y volvé
-129	vuelo.yaPodesTocar	Ya podés tocar
-130	vuelo.quitaElGas	Quitá el gas
-131	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
-132	circuito.subida	Subí derecho por el eje
-133	circuito.cruzado	Girá a la izquierda: volvemos a la pista
-134	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
-135	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
-136	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
-137	percance.coche	Le pasaste por encima al coche
-138	percance.edificio	Chocaste con un edificio
-139	percance.fuera	Tocaste tierra fuera de la pista
-140	percance.golpe	Llegaste dando un golpe
-141	percance.pasada	Te pasaste del final de la pista
-142	percance.sinpermiso	Entraste en la pista sin la luz verde
-143	percance.sintren	Tocaste tierra sin sacar el tren
-144	fin.horas	Lo que llevás volado
-145	fin.llegaste	¡Llegaste! Ya estás en casa
-146	fin.bien	¡Buen vuelo!
-147	fin.muyBien	¡Gran vuelo!
-148	fin.otra	Otro vuelo
-149	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
-150	grado.aprendiz	Aprendiz
-151	grado.piloto	Piloto
-152	grado.comandante	Comandante
-153	grado.instructora	Instructora
-154	galon.manga	Los galones de este vuelo
-155	galon.aproximacion	Galón de la aproximación
-156	galon.toma	Galón del aterrizaje
-157	galon.aros	Galón de los aros
-158	galon.velocidad	Galón de la velocidad
-159	galon.rodaje	Galón del rodaje
-160	galon.frustrada	Galón de la frustrada
-161	tutor.throttle	Dale motor
-162	tutor.speed	Esperá a que corra
-163	tutor.pull	Tirá para arriba
-164	tutor.flying	¡Estás volando!
-165	tutor.frenar	Frená
-166	tutor.salir	Seguí la raya y salí de la pista
-167	tutor.slow	Bajá el motor
-168	motivo.sinPista	No se ve la pista
-169	motivo.lento	Vas muy despacio
-170	motivo.cayendo	Estás cayendo muy rápido
-171	motivo.rapido	Vas muy rápido
-172	motivo.torcido	Estás torcido
-173	motivo.descolocado	Estás fuera del eje
-174	mission.rio.name	Ver el río
-175	mission.rioabajo.name	Seguir el río
-176	mission.mar.name	Salir al mar
-177	mission.anaga.name	A Anaga
-178	mission.cumbre.name	A la cumbre
-179	mission.lomas.name	A las lomas
-180	mission.first.name	Tu primer vuelo
-181	mission.valley.name	La vuelta al valle
-182	mission.transfer.name	El traslado
-183	mission.step	¡Bien! Seguí
-184	mission.done	¡Misión cumplida!
-185	mission.none	Vuelo libre
-186	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-187	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-188	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-189	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
-190	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
-191	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
-192	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
-193	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
-194	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
-195	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
-196	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
-197	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
-198	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
-199	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
-200	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
-201	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
-202	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
-203	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
-204	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
-205	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
-206	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
-207	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
-208	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
-209	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
-210	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
-211	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
-212	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
-213	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
-214	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
-215	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
-216	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
-217	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
-218	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
-219	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
-220	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
-221	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
-222	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
-223	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
-224	matricula.nuestroAvion	Nuestro avión es
-225	matricula.asiNosLlama	Así nos llama la torre.
-226	fonetico.alfa	Alfa
-227	fonetico.bravo	Bravo
-228	fonetico.charlie	Charlie
-229	fonetico.delta	Delta
-230	fonetico.echo	Echo
-231	fonetico.foxtrot	Foxtrot
-232	fonetico.golf	Golf
-233	fonetico.hotel	Hotel
-234	fonetico.india	India
-235	fonetico.juliett	Juliett
-236	fonetico.kilo	Kilo
-237	fonetico.lima	Lima
-238	fonetico.mike	Mike
-239	fonetico.november	November
-240	fonetico.oscar	Oscar
-241	fonetico.papa	Papa
-242	fonetico.quebec	Quebec
-243	fonetico.romeo	Romeo
-244	fonetico.sierra	Sierra
-245	fonetico.tango	Tango
-246	fonetico.uniform	Uniform
-247	fonetico.victor	Victor
-248	fonetico.whiskey	Whiskey
-249	fonetico.xray	X-ray
-250	fonetico.yankee	Yankee
-251	fonetico.zulu	Zulu
-252	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-253	gafas.ganadas	¡Tus gafas de sol!
+048	vuelo.aves.porQueSubir	La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo
+049	vuelo.aves.enUve	¡Mirá, pájaros volando en V! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos
+050	vuelo.bajasRapido	Bajás muy de golpe: levantá un poco la nariz
+051	vuelo.muyInclinado	Estás muy inclinado: enderezá las alas
+052	vuelo.pilotoSuelto	Se soltó el piloto automático
+053	vuelo.pilotoEnTierra	El piloto automático se conecta en el aire
+054	vuelo.empezamosABajar	Empezamos a bajar: despacito, hasta la pista
+055	vuelo.alturaDeLaTorre	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
+056	vuelo.alturaDeLaTorreRaya	La torre nos dice hasta dónde subir: hasta la raya de la cinta.
+057	vuelo.otraAlturaDeLaTorre	La torre nos deja subir otro poco. Ya puse la altura nueva.
+058	vuelo.tonoDeAltitudCerca	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
+059	vuelo.tonoDeAltitudFuera	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
+060	vuelo.masAltoQueElPlan	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
+061	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
+062	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
+063	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
+064	vuelo.puedeVolver	La torre te deja volver a intentarlo
+065	vuelo.puedeVolver~2	La pista quedó libre: podés volver a bajar
+066	vuelo.puedeVolverSinTorre	La pista ya está libre: volvé a intentarlo
+067	vuelo.puedeAterrizar	La torre te deja aterrizar
+068	vuelo.puedeAterrizarSinTorre	Ahora sí: podés aterrizar
+069	vuelo.puedeAterrizarAfis	La pista está libre: si venís bien, aterrizá
+070	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
+071	vuelo.frustrada~2	Muy bien: irse al aire también es volar bien
+072	vuelo.frustrada~3	Eso estuvo bien. Damos otra vuelta y volvemos
+073	vuelo.aroAlto	Venís un poco alto. Bajá suave
+074	vuelo.aroAlto~2	Venís un poco alto. Bajá el morro despacito
+075	vuelo.aroAlto~3	Estás por encima. Soltá un poquito y vas a ir entrando
+076	vuelo.aroAlto~4	Un poco alto para la pista: bajá suave
+077	vuelo.aroBajo	Venís un poco bajo. Subí suave
+078	vuelo.aroBajo~2	Venís bajo. Tirá un poquito y un toque de motor
+079	vuelo.aroBajo~3	Estás por debajo: subí despacio, sin pasarte
+080	vuelo.aroBajo~4	Un poco bajo para la pista: levantá suave
+081	vuelo.corregido	¡Eso es! Así venís bien
+082	vuelo.corregido~2	Muy bien, así venís
+083	vuelo.corregido~3	Eso. Ahora entrás derechito
+084	vuelo.corregido~4	Perfecto, quedate así
+085	vuelo.papiAlto	Luces blancas: vas alto, bajá
+086	vuelo.lentoYBajo	Venís lento: metéle gas
+087	vuelo.papiBajo	Luces rojas: vas bajo, subí
+088	vuelo.papiBien	Dos rojas y dos blancas: vas bien
+089	vuelo.bulto	Por ahí no se pasa: hay un edificio
+090	vuelo.aterrizado	Frená
+091	vuelo.abandonando	Salí de la pista, que viene otro
+092	vuelo.abandonandoSinPrisa	Sin apuro: salí de la pista y volvé a casa
+093	vuelo.abandonandoConLaBici	Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
+094	vuelo.abandonandoSinTorre	Sin apuro: salí de la pista y andá a la plataforma
+095	vuelo.pistaLibre	¡Pista libre! Bien hecho
+096	vuelo.aPlataforma	Volvé a tu lugar
+097	vuelo.enPuesto	Llegaste. Apagá el motor
+098	vuelo.apagado	¡Vuelo terminado!
+099	vuelo.fuera	Volvé a la raya verde
+100	vuelo.roto	Se rompió. Volvemos a empezar
+101	vuelo.rapido	Vas muy rápido
+102	vuelo.sobrevelocidad	Muy rápido: bajá el motor
+103	vuelo.sobrevelocidadAire	Muy rápido para esta altura
+104	vuelo.trenPasado	Muy rápido con el tren fuera: metélo
+105	vuelo.flapsPasados	Muy rápido con los flaps: recogélos
+106	vuelo.pediFlaps	Bajá los flaps para frenar
+107	vuelo.alivioDeFlaps	Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.
+108	vuelo.flapsTocados	Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.
+109	vuelo.flapsEnLaCarrera	Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.
+110	vuelo.flapsArribaAlSalir	Ya salimos de la pista: ahora sí, subí los flaps.
+111	vuelo.despuesDelAterrizaje	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
+112	vuelo.alPuestoConFlaps	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
+113	vuelo.meteElTren	Metélo, el tren te frena
+114	vuelo.tormenta	Hay una tormenta delante: rodeála, no la cruces
+115	vuelo.baches	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
+116	vuelo.reserva	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
+117	vuelo.sinCombustible	Se acabó el combustible: planeá hasta la pista
+118	vuelo.sinMotor	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
+119	vuelo.planeoLento	Vamos lentos: bajá un poco la nariz
+120	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
+121	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
+122	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
+123	vuelo.calor	Hace calor: vamos a necesitar más pista para despegar
+124	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
+125	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
+126	vuelo.sacaElTren	Sacá el tren
+127	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
+128	vuelo.despacio	Más despacio
+129	vuelo.alto	Pará acá
+130	vuelo.teLoPasaste	Te pasaste. Frená y volvé
+131	vuelo.yaPodesTocar	Ya podés tocar
+132	vuelo.quitaElGas	Quitá el gas
+133	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
+134	circuito.subida	Subí derecho por el eje
+135	circuito.cruzado	Girá a la izquierda: volvemos a la pista
+136	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
+137	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
+138	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
+139	percance.coche	Le pasaste por encima al coche
+140	percance.edificio	Chocaste con un edificio
+141	percance.fuera	Tocaste tierra fuera de la pista
+142	percance.golpe	Llegaste dando un golpe
+143	percance.pasada	Te pasaste del final de la pista
+144	percance.sinpermiso	Entraste en la pista sin la luz verde
+145	percance.sintren	Tocaste tierra sin sacar el tren
+146	fin.horas	Lo que llevás volado
+147	fin.llegaste	¡Llegaste! Ya estás en casa
+148	fin.bien	¡Buen vuelo!
+149	fin.muyBien	¡Gran vuelo!
+150	fin.otra	Otro vuelo
+151	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
+152	grado.aprendiz	Aprendiz
+153	grado.piloto	Piloto
+154	grado.comandante	Comandante
+155	grado.instructora	Instructora
+156	galon.manga	Los galones de este vuelo
+157	galon.aproximacion	Galón de la aproximación
+158	galon.toma	Galón del aterrizaje
+159	galon.aros	Galón de los aros
+160	galon.velocidad	Galón de la velocidad
+161	galon.rodaje	Galón del rodaje
+162	galon.frustrada	Galón de la frustrada
+163	tutor.throttle	Dale motor
+164	tutor.speed	Esperá a que corra
+165	tutor.pull	Tirá para arriba
+166	tutor.flying	¡Estás volando!
+167	tutor.frenar	Frená
+168	tutor.salir	Seguí la raya y salí de la pista
+169	tutor.slow	Bajá el motor
+170	motivo.sinPista	No se ve la pista
+171	motivo.lento	Vas muy despacio
+172	motivo.cayendo	Estás cayendo muy rápido
+173	motivo.rapido	Vas muy rápido
+174	motivo.torcido	Estás torcido
+175	motivo.descolocado	Estás fuera del eje
+176	mission.rio.name	Ver el río
+177	mission.rioabajo.name	Seguir el río
+178	mission.mar.name	Salir al mar
+179	mission.anaga.name	A Anaga
+180	mission.cumbre.name	A la cumbre
+181	mission.lomas.name	A las lomas
+182	mission.first.name	Tu primer vuelo
+183	mission.valley.name	La vuelta al valle
+184	mission.transfer.name	El traslado
+185	mission.step	¡Bien! Seguí
+186	mission.done	¡Misión cumplida!
+187	mission.none	Vuelo libre
+188	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+189	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+190	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+191	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+192	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
+193	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
+194	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
+195	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
+196	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
+197	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
+198	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
+199	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
+200	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
+201	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
+202	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
+203	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
+204	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
+205	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
+206	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
+207	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
+208	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
+209	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
+210	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
+211	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
+212	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
+213	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
+214	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
+215	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
+216	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
+217	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
+218	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
+219	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
+220	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
+221	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
+222	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
+223	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
+224	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
+225	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+226	matricula.nuestroAvion	Nuestro avión es
+227	matricula.asiNosLlama	Así nos llama la torre.
+228	fonetico.alfa	Alfa
+229	fonetico.bravo	Bravo
+230	fonetico.charlie	Charlie
+231	fonetico.delta	Delta
+232	fonetico.echo	Echo
+233	fonetico.foxtrot	Foxtrot
+234	fonetico.golf	Golf
+235	fonetico.hotel	Hotel
+236	fonetico.india	India
+237	fonetico.juliett	Juliett
+238	fonetico.kilo	Kilo
+239	fonetico.lima	Lima
+240	fonetico.mike	Mike
+241	fonetico.november	November
+242	fonetico.oscar	Oscar
+243	fonetico.papa	Papa
+244	fonetico.quebec	Quebec
+245	fonetico.romeo	Romeo
+246	fonetico.sierra	Sierra
+247	fonetico.tango	Tango
+248	fonetico.uniform	Uniform
+249	fonetico.victor	Victor
+250	fonetico.whiskey	Whiskey
+251	fonetico.xray	X-ray
+252	fonetico.yankee	Yankee
+253	fonetico.zulu	Zulu
+254	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+255	gafas.ganadas	¡Tus gafas de sol!

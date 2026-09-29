@@ -985,5 +985,14 @@
     "{c4}",
     "{c5}",
     "torre.canario.solo.motorYAlAire"
+  ],
+  "torre.canario.aves": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.birdsOnFinal",
+    "{altura}"
   ]
 }

@@ -345,6 +345,29 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.aves.porQueSubir",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.aves.enUve",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Mirá, pájaros volando en V! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "¡Mirá, pájaros volando en ve! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos."
+  },
+  {
     "id": "vuelo.bajasRapido",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -4572,6 +4595,13 @@
     "para": "la torre oyó la llamada de socorro"
   },
   {
+    "id": "torre.solo.birdsOnFinal",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "caution, flock of birds on final",
+    "para": "aves en la final; detrás, a cuántos pies"
+  },
+  {
     "id": "torre.solo.free",
     "voz": "torre",
     "idioma": "en",
@@ -5718,6 +5748,13 @@
     "idioma": "en",
     "texto": "roger, Mayday",
     "para": "la torre oyó la llamada de socorro, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.birdsOnFinal",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "caution, birds on final",
+    "para": "aves en la final; detrás, a cuántos pies, en Canarias"
   },
   {
     "id": "torre.canario.solo.free",
