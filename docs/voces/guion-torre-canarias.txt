@@ -62,6 +62,7 @@ landing traffic
 departing traffic
 line up and wait
 cleared to
+climb to
 runway in use
 go around
 roger, Mayday
@@ -105,3 +106,36 @@ one thousand two hundred feet
 above
 below
 same level
+flight level
+two thousand feet
+three thousand feet
+four thousand feet
+five thousand feet
+six thousand feet
+sube a tres mil pies
+sube a cuatro mil pies
+sube a cinco mil pies
+sube a seis mil pies
+sube a siete mil pies
+sube a ocho mil pies
+sube a nueve mil pies
+sube a diez mil pies
+sube a once mil pies
+sube a doce mil pies
+sube a trece mil pies
+sube a catorce mil pies
+sube a quince mil pies
+sube a dieciséis mil pies
+sube a diecisiete mil pies
+sube a dieciocho mil pies
+sube a diecinueve mil pies
+sube a veinte mil pies
+sube a veintiún mil pies
+sube a veintidós mil pies
+sube a veintitrés mil pies
+sube a veinticuatro mil pies
+sube a veinticinco mil pies
+sube a veintiséis mil pies
+sube a veintisiete mil pies
+sube a veintiocho mil pies
+sube a veintinueve mil pies

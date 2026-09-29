@@ -775,5 +775,121 @@
     "{r1}",
     "{r2}",
     "torre.canario.solo.departingTraffic"
+  ],
+  "torre.canario.subir": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "{subir}"
+  ],
+  "torre.canario.climbTo": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.climbTo",
+    "{altura}"
+  ],
+  "torre.canario.solo.subir.3": [
+    "torre.canario.solo.subir.3"
+  ],
+  "torre.canario.solo.subir.4": [
+    "torre.canario.solo.subir.4"
+  ],
+  "torre.canario.solo.subir.5": [
+    "torre.canario.solo.subir.5"
+  ],
+  "torre.canario.solo.subir.6": [
+    "torre.canario.solo.subir.6"
+  ],
+  "torre.canario.solo.subir.7": [
+    "torre.canario.solo.subir.7"
+  ],
+  "torre.canario.solo.subir.8": [
+    "torre.canario.solo.subir.8"
+  ],
+  "torre.canario.solo.subir.9": [
+    "torre.canario.solo.subir.9"
+  ],
+  "torre.canario.solo.subir.10": [
+    "torre.canario.solo.subir.10"
+  ],
+  "torre.canario.solo.subir.11": [
+    "torre.canario.solo.subir.11"
+  ],
+  "torre.canario.solo.subir.12": [
+    "torre.canario.solo.subir.12"
+  ],
+  "torre.canario.solo.subir.13": [
+    "torre.canario.solo.subir.13"
+  ],
+  "torre.canario.solo.subir.14": [
+    "torre.canario.solo.subir.14"
+  ],
+  "torre.canario.solo.subir.15": [
+    "torre.canario.solo.subir.15"
+  ],
+  "torre.canario.solo.subir.16": [
+    "torre.canario.solo.subir.16"
+  ],
+  "torre.canario.solo.subir.17": [
+    "torre.canario.solo.subir.17"
+  ],
+  "torre.canario.solo.subir.18": [
+    "torre.canario.solo.subir.18"
+  ],
+  "torre.canario.solo.subir.19": [
+    "torre.canario.solo.subir.19"
+  ],
+  "torre.canario.solo.subir.20": [
+    "torre.canario.solo.subir.20"
+  ],
+  "torre.canario.solo.subir.21": [
+    "torre.canario.solo.subir.21"
+  ],
+  "torre.canario.solo.subir.22": [
+    "torre.canario.solo.subir.22"
+  ],
+  "torre.canario.solo.subir.23": [
+    "torre.canario.solo.subir.23"
+  ],
+  "torre.canario.solo.subir.24": [
+    "torre.canario.solo.subir.24"
+  ],
+  "torre.canario.solo.subir.25": [
+    "torre.canario.solo.subir.25"
+  ],
+  "torre.canario.solo.subir.26": [
+    "torre.canario.solo.subir.26"
+  ],
+  "torre.canario.solo.subir.27": [
+    "torre.canario.solo.subir.27"
+  ],
+  "torre.canario.solo.subir.28": [
+    "torre.canario.solo.subir.28"
+  ],
+  "torre.canario.solo.subir.29": [
+    "torre.canario.solo.subir.29"
+  ],
+  "altura.nivel": [
+    "altura.nivel"
+  ],
+  "altura.pies.2": [
+    "altura.pies.2"
+  ],
+  "altura.pies.3": [
+    "altura.pies.3"
+  ],
+  "altura.pies.4": [
+    "altura.pies.4"
+  ],
+  "altura.pies.5": [
+    "altura.pies.5"
+  ],
+  "altura.pies.6": [
+    "altura.pies.6"
   ]
 }

@@ -47,62 +47,96 @@
 047	torre.solo.departingTraffic	departing traffic
 048	torre.solo.lineUpWait	line up and wait
 049	torre.solo.clearedTo	cleared to
-050	torre.solo.runwayInUse	runway in use
-051	torre.solo.goAroundSolo	go around
-052	torre.solo.rogerMayday	roger, Mayday
-053	torre.solo.free	free
-054	torre.solo.occupied	occupied
-055	torre.solo.noReportedTraffic	no reported traffic
-056	viento.wind	wind
-057	viento.degrees	degrees
-058	viento.knots	knots
-059	viento.calm	calm
-060	viento.variable	variable
-061	trafico.traffic	traffic
-062	trafico.hora.1	one o'clock
-063	trafico.hora.2	two o'clock
-064	trafico.hora.3	three o'clock
-065	trafico.hora.4	four o'clock
-066	trafico.hora.5	five o'clock
-067	trafico.hora.6	six o'clock
-068	trafico.hora.7	seven o'clock
-069	trafico.hora.8	eight o'clock
-070	trafico.hora.9	nine o'clock
-071	trafico.hora.10	ten o'clock
-072	trafico.hora.11	eleven o'clock
-073	trafico.hora.12	twelve o'clock
-074	trafico.millas.1	one mile
-075	trafico.millas.2	two miles
-076	trafico.millas.3	three miles
-077	trafico.millas.4	four miles
-078	trafico.millas.5	five miles
-079	trafico.millas.6	six miles
-080	trafico.pies.3	three hundred feet
-081	trafico.pies.4	four hundred feet
-082	trafico.pies.5	five hundred feet
-083	trafico.pies.6	six hundred feet
-084	trafico.pies.7	seven hundred feet
-085	trafico.pies.8	eight hundred feet
-086	trafico.pies.9	niner hundred feet
-087	trafico.pies.10	one thousand feet
-088	trafico.pies.11	one thousand one hundred feet
-089	trafico.pies.12	one thousand two hundred feet
-090	trafico.above	above
-091	trafico.below	below
-092	trafico.sameLevel	same level
-093	torre.solo.aterrizar	podés aterrizar
-094	torre.solo.destino	podés volar a
-095	torre.solo.afisLibre	pista libre
-096	torre.solo.afisOcupada	pista ocupada
-097	torre.solo.afisSinTrafico	sin tráfico conocido
-098	torre.solo.afisTraficoAterriza	tráfico aterrizando
-099	torre.solo.afisTraficoDespega	tráfico despegando
-100	destino.pettirossi	Asunción
-101	destino.guarani	Guaraní
-102	destino.encarnacion	Encarnación
-103	destino.yvytu-rape	Yvytu Rape
-104	destino.concepcion	Concepción
-105	destino.pedro-juan	Pedro Juan Caballero
-106	destino.estigarribia	Mariscal Estigarribia
-107	destino.ayolas	Ayolas
-108	destino.pilar	Pilar
+050	torre.solo.climbTo	climb to
+051	torre.solo.runwayInUse	runway in use
+052	torre.solo.goAroundSolo	go around
+053	torre.solo.rogerMayday	roger, Mayday
+054	torre.solo.free	free
+055	torre.solo.occupied	occupied
+056	torre.solo.noReportedTraffic	no reported traffic
+057	viento.wind	wind
+058	viento.degrees	degrees
+059	viento.knots	knots
+060	viento.calm	calm
+061	viento.variable	variable
+062	trafico.traffic	traffic
+063	trafico.hora.1	one o'clock
+064	trafico.hora.2	two o'clock
+065	trafico.hora.3	three o'clock
+066	trafico.hora.4	four o'clock
+067	trafico.hora.5	five o'clock
+068	trafico.hora.6	six o'clock
+069	trafico.hora.7	seven o'clock
+070	trafico.hora.8	eight o'clock
+071	trafico.hora.9	nine o'clock
+072	trafico.hora.10	ten o'clock
+073	trafico.hora.11	eleven o'clock
+074	trafico.hora.12	twelve o'clock
+075	trafico.millas.1	one mile
+076	trafico.millas.2	two miles
+077	trafico.millas.3	three miles
+078	trafico.millas.4	four miles
+079	trafico.millas.5	five miles
+080	trafico.millas.6	six miles
+081	trafico.pies.3	three hundred feet
+082	trafico.pies.4	four hundred feet
+083	trafico.pies.5	five hundred feet
+084	trafico.pies.6	six hundred feet
+085	trafico.pies.7	seven hundred feet
+086	trafico.pies.8	eight hundred feet
+087	trafico.pies.9	niner hundred feet
+088	trafico.pies.10	one thousand feet
+089	trafico.pies.11	one thousand one hundred feet
+090	trafico.pies.12	one thousand two hundred feet
+091	trafico.above	above
+092	trafico.below	below
+093	trafico.sameLevel	same level
+094	altura.nivel	flight level
+095	altura.pies.2	two thousand feet
+096	altura.pies.3	three thousand feet
+097	altura.pies.4	four thousand feet
+098	altura.pies.5	five thousand feet
+099	altura.pies.6	six thousand feet
+100	torre.solo.aterrizar	podés aterrizar
+101	torre.solo.destino	podés volar a
+102	torre.solo.afisLibre	pista libre
+103	torre.solo.afisOcupada	pista ocupada
+104	torre.solo.afisSinTrafico	sin tráfico conocido
+105	torre.solo.afisTraficoAterriza	tráfico aterrizando
+106	torre.solo.afisTraficoDespega	tráfico despegando
+107	destino.pettirossi	Asunción
+108	destino.guarani	Guaraní
+109	destino.encarnacion	Encarnación
+110	destino.yvytu-rape	Yvytu Rape
+111	destino.concepcion	Concepción
+112	destino.pedro-juan	Pedro Juan Caballero
+113	destino.estigarribia	Mariscal Estigarribia
+114	destino.ayolas	Ayolas
+115	destino.pilar	Pilar
+116	torre.solo.subir.3	subí a tres mil pies
+117	torre.solo.subir.4	subí a cuatro mil pies
+118	torre.solo.subir.5	subí a cinco mil pies
+119	torre.solo.subir.6	subí a seis mil pies
+120	torre.solo.subir.7	subí a siete mil pies
+121	torre.solo.subir.8	subí a ocho mil pies
+122	torre.solo.subir.9	subí a nueve mil pies
+123	torre.solo.subir.10	subí a diez mil pies
+124	torre.solo.subir.11	subí a once mil pies
+125	torre.solo.subir.12	subí a doce mil pies
+126	torre.solo.subir.13	subí a trece mil pies
+127	torre.solo.subir.14	subí a catorce mil pies
+128	torre.solo.subir.15	subí a quince mil pies
+129	torre.solo.subir.16	subí a dieciséis mil pies
+130	torre.solo.subir.17	subí a diecisiete mil pies
+131	torre.solo.subir.18	subí a dieciocho mil pies
+132	torre.solo.subir.19	subí a diecinueve mil pies
+133	torre.solo.subir.20	subí a veinte mil pies
+134	torre.solo.subir.21	subí a veintiún mil pies
+135	torre.solo.subir.22	subí a veintidós mil pies
+136	torre.solo.subir.23	subí a veintitrés mil pies
+137	torre.solo.subir.24	subí a veinticuatro mil pies
+138	torre.solo.subir.25	subí a veinticinco mil pies
+139	torre.solo.subir.26	subí a veintiséis mil pies
+140	torre.solo.subir.27	subí a veintisiete mil pies
+141	torre.solo.subir.28	subí a veintiocho mil pies
+142	torre.solo.subir.29	subí a veintinueve mil pies

@@ -48,6 +48,8 @@ export type Accion =
   | "destino"
   | "qnhUp"
   | "qnhDown"
+  | "altUp"
+  | "altDown"
   | "sound"
   | "language"
   | "credits"
@@ -181,6 +183,14 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    */
   qnhUp: { label: "tecla.qnhUp", defecto: ["KeyO"], held: false },
   qnhDown: { label: "tecla.qnhDown", defecto: ["KeyU"], held: false },
+  /*
+   * **La rueda de la ventanilla ALT del automático**, en la Y y la T: las dos
+   * letras que quedaban libres, y juntas, que es como se usa una rueda que
+   * gira a los dos lados. Arriba la de la derecha, como en la O y la U. Ver
+   * `flight/altitud-seleccionada.ts`.
+   */
+  altUp: { label: "tecla.altUp", defecto: ["KeyY"], held: false },
+  altDown: { label: "tecla.altDown", defecto: ["KeyT"], held: false },
   sound: { label: "tecla.sound", defecto: ["KeyV"], held: false },
   language: { label: "tecla.language", defecto: ["KeyL"], held: false },
   credits: { label: "tecla.credits", defecto: ["F1"], held: false },

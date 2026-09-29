@@ -90,7 +90,31 @@ describe("lo que lleva cada familia", () => {
 
   it("y el MCP de la visera solo en los de línea", () => {
     expect(dibujo("jaz-120")).toContain('data-mcp="spd"');
-    expect(dibujo("jaz-60")).not.toContain("data-mcp");
+    expect(dibujo("jaz-60")).not.toContain('data-mcp="spd"');
+    expect(dibujo("jaz-60")).not.toContain('data-mcp="hdg"');
+  });
+
+  /*
+   * **Y la ventanilla de altitud donde el avión la lleva**: el MCP de los
+   * reactores y el preselector del turbohélice, con su rueda. Las avionetas
+   * no llevan ninguna, y lo que el avión no lleva no se pinta.
+   */
+  it("la ventanilla ALT, con su rueda, en el turbohélice y los reactores", () => {
+    for (const id of ["jaz-60", "jaz-90", "jaz-120"]) {
+      expect(dibujo(id), id).toContain('data-mcp="alt"');
+      expect(dibujo(id), id).toContain('data-mcp-rueda="1"');
+      expect(dibujo(id), id).toContain('data-mcp-rueda="-1"');
+      expect(dibujo(id), id).toContain('data-bug="alt-sel"');
+    }
+    for (const id of ["jaz-20", "jaz-25", "jaz-40"]) {
+      expect(dibujo(id), id).not.toContain("data-mcp");
+      expect(dibujo(id), id).not.toContain('data-bug="alt-sel"');
+    }
+  });
+
+  it("y el T/C y el nivel del plan en la carta", () => {
+    expect(dibujo("jaz-90")).toContain('data-carta="tc"');
+    expect(dibujo("jaz-90")).toContain('data-cristal="crz"');
   });
 });
 

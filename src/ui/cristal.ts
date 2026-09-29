@@ -408,12 +408,36 @@ function cintaDeAltitud(
         </g>
         <rect data-tendencia="alt" data-medio="${h / 2}" data-porunidad="${POR_PIE}"
               x="0" y="${h / 2}" width="3" height="0" class="cr__tendencia" />
+        <!--
+          **La altura de la ventanilla ALT, en la cinta**: el bug magenta en el
+          borde de dentro, que viaja a su sitio y se queda aparcado en el borde
+          si la altura queda fuera de la ventana, como en cualquier pantalla de
+          vuelo. Y en el primer peldaño, en vez del bug, **una raya de lado a
+          lado**: «hasta aquí», que se entiende sin leer. La coloca el tablero;
+          ver Tablero.ventanillaAlt.
+        -->
+        <g data-bug="alt-sel" data-medio="${h / 2}" data-alto="${h}" data-porunidad="${POR_PIE}"
+           visibility="hidden" transform="translate(0 ${h / 2})">
+          <path data-desde="2" class="cr__bug" d="M0 -7 l9 0 l0 4 l-4 3 l4 3 l0 4 l-9 0 Z" />
+          <path data-hasta="1" class="cr__raya-sel" d="M0 0 L${w} 0" />
+        </g>
       </g>
       ${punteroDeCinta(w, h, false)}
       <path ${MARCA_CIFRA} class="cr__caja" d="M0 ${h / 2 - 18} l${w} 0 l0 36 l${-w} 0 Z" />
       <text data-cristal="alt" x="${w - 36}" y="${h / 2 + 9}" ${MARCA_CIFRA} class="cr__valor" text-anchor="end"></text>
       <g clip-path="url(#${yo}-tambor)"><g data-tambor="alt" data-paso="26">${tambor}</g></g>
       ${rotuloDeCinta(w, h, "ALT", "FT")}
+      <!--
+        **Y arriba, la altura de la ventanilla en cifras**, en magenta, que es
+        donde la pone una pantalla de vuelo de línea. Es la caja que avisa: se
+        resalta en blanco al acercarse y se pone ámbar al irse. Ver
+        flight/altitud-seleccionada.ts.
+      -->
+      <g data-cristal="alt-sel-caja" class="cr__sel" visibility="hidden">
+        <rect x="3" y="15" width="${w - 6}" height="19" rx="2" class="cr__sel-caja" />
+        <text data-cristal="alt-sel" x="${w - 7}" y="30" ${MARCA_CIFRA}
+              class="cr__sel-cifra" text-anchor="end"></text>
+      </g>
       <!--
         **La ventanilla de presión, debajo de la cinta.**
 
@@ -627,6 +651,16 @@ function carta(cx: number, cy: number, r: number): string {
         <path d="M-3.5 -2 h3 l4 4" />
         <text x="9" y="-7" ${MARCA_ROTULO} class="cr__td-rotulo">T/D</text>
       </g>
+      <!--
+        Y el **T/C**, donde se acaba de subir: el mismo círculo verde con la
+        raya hacia arriba. Solo lo lleva la pantalla de navegación de los
+        reactores, que es la que lo pinta de verdad. Ver puntoDeSubida en flight/ruta.ts.
+      -->
+      <g data-carta="tc" class="cr__td" visibility="hidden">
+        <circle r="6" />
+        <path d="M-3.5 2 h3 l4 -4" />
+        <text x="9" y="-7" ${MARCA_ROTULO} class="cr__td-rotulo">T/C</text>
+      </g>
       ${fijos}
       ${rombos}
       <!--
@@ -796,6 +830,13 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
       peldaño de cabina, que es donde se vuela con la cabina de verdad.
     -->
     <text data-cristal="eta" x="${ancho - 12}" y="38" data-desde="4" class="cr__aux cr__eta" text-anchor="end"></text>
+    <!--
+      **Y el nivel del plan**, que no se veía en ningún sitio: «no sé a qué
+      altitud debo volar, ¿me lo dicen los instrumentos? ¿La carta?». En
+      magenta, que es lo que se quiere, con su «CRZ» como en el ordenador de
+      vuelo. Ver cruceroDelPlan en flight/ruta.ts.
+    -->
+    <text data-cristal="crz" x="${ancho - 12}" y="54" ${MARCA_ROTULO} class="cr__crz" text-anchor="end"></text>
   `;
 }
 

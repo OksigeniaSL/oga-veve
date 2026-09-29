@@ -76,6 +76,7 @@ import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
 import {
   Seguimiento,
+  minimaEnRuta,
   type Lectura as LecturaDeRuta,
   type Ruta,
 } from "./flight/ruta";
@@ -615,6 +616,23 @@ import {
   sePuedeConectar,
   type Objetivos,
 } from "./flight/piloto-automatico";
+import {
+  AvisadorDeAltitud,
+  PIE as PIE_EN_METROS,
+  aLaVentanilla,
+  girarLaVentanilla,
+  llevaVentanillaDeAltitud,
+  topeDeLaVentanilla,
+  type Alerta,
+} from "./flight/altitud-seleccionada";
+import {
+  AutorizacionDeSubida,
+  alturaEnRadio,
+  altitudDeTransicion,
+  escalonesDeSubida,
+  piezaDeSubirEnCasa,
+} from "./flight/autorizacion-de-altitud";
+import { nivelMasTranquilo, ESPERA_CON_BACHES } from "./flight/nivel-tranquilo";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
@@ -2108,6 +2126,7 @@ export class Game {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.ventanilla.reiniciar();
+    this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
@@ -3758,6 +3777,7 @@ export class Game {
       cycleMission: () => this.cycleMission(),
       cycleDestino: () => this.siguienteDestino(),
       girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
+      girarVentanillaAlt: (pasos: number) => this.girarLaVentanillaAlt(pasos),
       trenTrabado: () => this.trenTrabado(),
       /*
        * **Un paso del compensador se oye y se ve.** El clic de la rueda y la
@@ -4014,6 +4034,7 @@ export class Game {
       this.tier.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
     );
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
+    this.hud.onVentanillaAlt((pasos) => this.girarLaVentanillaAlt(pasos));
     this.hud.onDestino(() => this.siguienteDestino());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
@@ -5461,6 +5482,7 @@ export class Game {
        * Ver `empezarElDescenso` en `audio/megafonia.ts`.
        */
       this.megafonia.empezarElDescenso();
+      this.ponerLaVentanillaParaBajar();
       const cabina = !laInstructoraLoExplica(this.tier.avisos);
       this.hud.senal.mostrar(
         "descenso",
@@ -6930,6 +6952,7 @@ export class Game {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.ventanilla.reiniciar();
+    this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
@@ -8871,6 +8894,7 @@ export class Game {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.ventanilla.reiniciar();
+    this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
@@ -10117,6 +10141,7 @@ export class Game {
     const movimiento = cuantoSeMueve(aire);
     this.atenderAlCinturon(movimiento, loDijo, loEncendio);
     this.hablarDeLosBaches(movimiento);
+    this.buscarNivelTranquilo(dt, movimiento, aire);
     this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
@@ -10322,6 +10347,8 @@ export class Game {
     );
     // El plan de vuelo, antes que todo lo que lo enseña. Ver `seguirLaRuta`.
     this.seguirLaRuta();
+    // Y la ventanilla ALT: el control, el avisador y el plan. Ver abajo.
+    this.atenderALaVentanilla();
     // Las pantallas de la cabina, si el avión las trae. Van aquí y no en el
     // HUD porque son parte del avión: se ven desde dentro y desde fuera, y se
     // apagan solas cuando se cambia a un modelo que no las tiene.
@@ -10436,6 +10463,8 @@ export class Game {
          * forma y su rumbo, y quién más anda por aquí. Ver `ui/carta.ts`.
          */
         mapa: this.elMapa(),
+        // Y la ventanilla ALT, la misma que el cuadro plano. Ver `ventanillaAlt`.
+        ventanilla: this.ventanillaParaElCuadro(),
       },
       dt,
     );
@@ -10585,6 +10614,7 @@ export class Game {
          * verdad no sabe. Ver `flight/altimetro.ts`.
          */
         presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
+        ventanilla: this.ventanillaParaElCuadro(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -12937,6 +12967,7 @@ export class Game {
       aire: s.onGround ? this.aircraft.cruiseSpeed : Math.max(s.airspeed, 1),
       enTierra: s.onGround,
       viento: v ? { desde: v.desde, fuerza: v.nudos * (MILLA / 3600) } : null,
+      ventanilla: this.ventanillaEnMetros(),
     };
   }
 
@@ -12975,6 +13006,7 @@ export class Game {
       cotaDePista: (campo, x, z) => this.cotaDePistaEn(campo, x, z),
       cota: (x, z) => this.terrain.cotaConocida(x, z),
       techo: this.aircraft.alturaDeCrucero,
+      visual: this.aircraft.reglasDeVuelo === "visual",
     };
   }
 
@@ -12993,6 +13025,7 @@ export class Game {
       cotaDePista: (campo, x, z) => this.cotaDePistaEn(campo, x, z),
       cota: (x, z) => this.terrain.cotaConocida(x, z),
       techo: this.aircraft.alturaDeCrucero,
+      visual: this.aircraft.reglasDeVuelo === "visual",
     });
   }
 
@@ -13388,6 +13421,360 @@ export class Game {
     return this.objetivos.rumbo !== null || this.objetivos.altitud !== null;
   }
 
+  // ── La ventanilla ALT ───────────────────────────────────────────────
+
+  /**
+   * **La altura de la ventanilla ALT del automático**, en pies, o `null` si
+   * no hay ninguna puesta. Ver `flight/altitud-seleccionada.ts`.
+   *
+   * Pies y no metros, que es lo que marca la ventanilla de cualquier panel del
+   * mundo; y altura **del altímetro**, con el reglaje que lleve puesto: el
+   * automático sostiene lo que marca el instrumento, no lo que sabe el modelo.
+   * Ver `ventanillaEnMetros`.
+   */
+  private ventanillaAlt: number | null = null;
+  private readonly avisadorDeAltitud = new AvisadorDeAltitud();
+  /** Lo que enseña el avisador ahora. Ver `atenderALaVentanilla`. */
+  private alertaDeAltitud: Alerta = "nada";
+  private readonly autorizacionDeSubida = new AutorizacionDeSubida();
+  /** El plan para el que ya se preparó la subida. Ver `prepararLaSubida`. */
+  private subidaPreparada: Ruta | null = null;
+  /**
+   * Lo que la instructora ya contó en este vuelo. Cada cosa, una vez: la
+   * segunda no dice nada que no dijera la primera.
+   */
+  private explicado = { altura: false, cerca: false, fuera: false, masAlto: false };
+  /** Cuánto llevan los baches en crucero, s. Ver `buscarNivelTranquilo`. */
+  private bachesEnCrucero = 0;
+  /** Si en este tramo ya se pidió otro nivel. Uno por tramo. */
+  private pidioOtroNivel = false;
+  /** A qué nivel se sube por los baches, pies, mientras se sube. */
+  private subiendoPorBaches: number | null = null;
+
+  /** Si este avión lleva ventanilla ALT. Ver `llevaVentanillaDeAltitud`. */
+  private get llevaVentanillaAlt(): boolean {
+    return llevaVentanillaDeAltitud(this.aircraft);
+  }
+
+  /** La ventanilla en pies, si este avión la lleva; nunca más allá de su tope. */
+  private ventanillaEnPies(): number | null {
+    if (!this.llevaVentanillaAlt || this.ventanillaAlt === null) return null;
+    return Math.min(this.ventanillaAlt, topeDeLaVentanilla(this.aircraft));
+  }
+
+  /**
+   * La ventanilla en metros **del modelo**: lo que marca el altímetro menos lo
+   * que le suma el reglaje. Con el reglaje bien puesto es la misma; con él
+   * mal, el automático nivela donde el altímetro dice la ventanilla, que es
+   * justo lo que hace uno de verdad. Ver `flight/altimetro.ts`.
+   */
+  private ventanillaEnMetros(): number | null {
+    const pies = this.ventanillaEnPies();
+    if (pies === null) return null;
+    return pies * PIE_EN_METROS - alturaIndicada(0, this.qnhPuesta, this.qnhDelSitio);
+  }
+
+  /** La ventanilla y el avisador, para los bancos. */
+  get ventanillaParaBanco(): {
+    pies: number | null;
+    alerta: Alerta;
+    autorizada: number | null;
+  } {
+    return {
+      pies: this.ventanillaEnPies(),
+      alerta: this.alertaDeAltitud,
+      autorizada: this.autorizacionDeSubida.autorizada,
+    };
+  }
+
+  /**
+   * **Gira la rueda de la ventanilla ALT**, de millar en millar. Lo llaman la
+   * tecla y el dedo. Con un clic, que es lo que hace una rueda con dientes.
+   */
+  girarLaVentanillaAlt(pasos: number): void {
+    if (!this.llevaVentanillaAlt || pasos === 0) return;
+    const desde = this.ventanillaAlt ?? aLaVentanilla(this.altitudIndicada());
+    this.ventanillaAlt = girarLaVentanilla(desde, pasos, topeDeLaVentanilla(this.aircraft));
+    this.avisar("compensador");
+  }
+
+  /** Lo que el cuadro y las pantallas enseñan de la ventanilla. */
+  private ventanillaParaElCuadro(): { pies: number; alerta: Alerta } | null {
+    const pies = this.ventanillaEnPies();
+    return pies === null ? null : { pies, alerta: this.alertaDeAltitud };
+  }
+
+  /** Vuelo nuevo: la ventanilla vacía y nada contado. */
+  private reiniciarLaVentanillaAlt(): void {
+    this.ventanillaAlt = null;
+    this.alertaDeAltitud = "nada";
+    this.autorizacionDeSubida.poner(null);
+    this.subidaPreparada = null;
+    this.explicado = { altura: false, cerca: false, fuera: false, masAlto: false };
+    this.bachesEnCrucero = 0;
+    this.pidioOtroNivel = false;
+    this.subiendoPorBaches = null;
+  }
+
+  /**
+   * **Un plan nuevo en tierra: la ventanilla en su crucero y los escalones
+   * del control.**
+   *
+   * La ventanilla propone el nivel del plan, que es lo que se lee en el plan y
+   * lo que dice la comandante; lo que cambia después es cosa del control y de
+   * quien vuela. Y los escalones, solo a quien vuela por instrumentos con
+   * pasaje y desde un campo con torre: un AFIS no autoriza nada, y una
+   * avioneta con reglas visuales no sube por escalones de control.
+   */
+  private prepararLaSubida(ruta: Ruta, salida: CampoEnElMundo): void {
+    this.subidaPreparada = ruta;
+    this.explicado.masAlto = false;
+    this.pidioOtroNivel = false;
+    this.subiendoPorBaches = null;
+    this.bachesEnCrucero = 0;
+    const crucero = aLaVentanilla(this.navegacion.cruceroPlaneado);
+    if (this.llevaVentanillaAlt)
+      this.ventanillaAlt = Math.min(crucero, topeDeLaVentanilla(this.aircraft));
+    const campo = salida.escenario.aerodrome;
+    const conControl =
+      this.llevaVentanillaAlt &&
+      conPasaje(this.aircraft.mass) &&
+      !sinTorre(campo) &&
+      !esAfis(campo);
+    if (!conControl) {
+      this.autorizacionDeSubida.poner(null);
+      return;
+    }
+    const a = ruta.fijos[0];
+    const minima = a
+      ? minimaEnRuta((x, z) => this.terrain.cotaConocida(x, z), a.x, a.z)
+      : null;
+    this.autorizacionDeSubida.poner(
+      escalonesDeSubida(
+        crucero,
+        altitudDeTransicion(oaciDe(salida.escenario)),
+        minima === null ? null : minima / PIE_EN_METROS,
+      ),
+    );
+  }
+
+  /**
+   * **Un paso de la ventanilla**: lo que autoriza el control, lo que dice el
+   * avisador de altitud, y si se va más alto que el plan.
+   */
+  private atenderALaVentanilla(): void {
+    const s = this.flight.state;
+    const plan = this.navegacion.plan;
+    if (s.onGround && plan && this.subidaPreparada !== plan)
+      this.prepararLaSubida(plan, this.elCampo(this.salidaId));
+    const pies = this.altitudIndicada() / PIE_EN_METROS;
+    const escalon = this.autorizacionDeSubida.paso({
+      pies,
+      sobreElSuelo: s.heightAboveGround / PIE_EN_METROS,
+      enTierra: s.onGround,
+    });
+    if (escalon !== null) this.autorizarAltura(escalon);
+    /*
+     * **Y callado con el tren fuera o en final**, como el de un avión de línea:
+     * ahí se baja a propósito por debajo de la ventanilla —la del punto de
+     * final—, y un tono de «te estás yendo» en la final enseña a no hacerle
+     * caso. Boeing lo inhibe con la senda capturada o con el tren y los flaps
+     * de aterrizar; aquí, con el tren.
+     */
+    const callado =
+      s.onGround || this.input.controls.tren > 0.5 || this.faseDeAhora === "final";
+    const paso = this.avisadorDeAltitud.paso(pies, callado ? null : this.ventanillaEnPies());
+    this.alertaDeAltitud = paso.alerta;
+    if (paso.tono) this.sonarElAvisador(paso.alerta);
+    this.avisarSiVaMasAlto(pies);
+  }
+
+  /**
+   * **El control autoriza una altura**: «subí a…», por radio.
+   *
+   * Como la autorización de la ruta, en dos capas: en castellano del sitio en
+   * los cuatro peldaños, con la voz de su torre —«subí a once mil pies»,
+   * «sube a…» en Canarias—, y detrás, en fraseología, de Taguató para arriba:
+   * «climb to flight level one one zero». Ver `autorizarLaRuta` y
+   * `flight/autorizacion-de-altitud.ts`.
+   *
+   * Y la ventanilla: en los tres peldaños de abajo la pone la instructora y lo
+   * cuenta; en el de cabina la pone quien vuela, que es quien la pondría en un
+   * avión de verdad. Si no la pone, el avión sigue yendo a donde diga la
+   * ventanilla: la norma se muestra, no se impone.
+   */
+  private autorizarAltura(pies: number): void {
+    const campo = this.campoPorId(this.salidaId)?.escenario ?? this.elCampo().escenario;
+    const habla = hablaDe(campo.aerodrome?.id);
+    const yo = this.miIndicativo;
+    const clave = comoSeDiceAqui("torre.subir", habla) as TranslationKey;
+    const texto = t(clave, { indicativo: yo.dicho, pies: String(pies) });
+    const pieza = piezaDeSubirEnCasa(pies);
+    this.torre.decir(texto, clave, "mando", {
+      ...rellenoDe(yo),
+      ...(pieza ? { subir: comoSeDiceAqui(pieza, habla) } : {}),
+    });
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    const enRadio = alturaEnRadio(pies, altitudDeTransicion(oaciDe(campo)));
+    if (conCifras && enRadio) {
+      const textoEn = `${yo.dicho}, climb to ${enRadio.dicho}`;
+      this.torre.decir(textoEn, comoSeDiceAqui("torre.climbTo", habla), "mando", {
+        ...rellenoDe(yo),
+        altura: enRadio.piezas,
+      });
+      this.hud.radio(textoEn, undefined, true);
+    } else if (this.tier.instruments !== "none") {
+      this.hud.radio(texto, undefined, true);
+    }
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    if (this.llevaVentanillaAlt)
+      this.ventanillaAlt = Math.min(pies, topeDeLaVentanilla(this.aircraft));
+    const dice: TranslationKey = this.explicado.altura
+      ? "vuelo.otraAlturaDeLaTorre"
+      : this.tier.id === "guyrami"
+        ? "vuelo.alturaDeLaTorreRaya"
+        : "vuelo.alturaDeLaTorre";
+    this.explicado.altura = true;
+    this.instructor.decir(t(dice), dice);
+  }
+
+  /**
+   * **El tono del avisador de altitud**, que es de una caja del avión y suena
+   * en los cuatro peldaños. Y detrás, en los tres de abajo y la primera vez,
+   * la instructora cuenta qué ha sonado: así se aprende a oírlo con calma.
+   * Ver `escalera.ts`.
+   */
+  private sonarElAvisador(alerta: Alerta): void {
+    this.avisar("altitud");
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    if (alerta === "cerca" && !this.explicado.cerca) {
+      this.explicado.cerca = true;
+      this.instructor.decir(t("vuelo.tonoDeAltitudCerca"), "vuelo.tonoDeAltitudCerca");
+    } else if (alerta === "fuera" && !this.explicado.fuera) {
+      this.explicado.fuera = true;
+      this.instructor.decir(t("vuelo.tonoDeAltitudFuera"), "vuelo.tonoDeAltitudFuera");
+    }
+  }
+
+  /**
+   * **Y si se va más alto que el plan, se dice a tiempo**: hay más que bajar,
+   * así que se empieza antes. El punto de descenso ya lo cuenta con la altura
+   * de verdad —ver `Seguimiento.desde`—; esto es que alguien lo diga en cuanto
+   * se nivela arriba, y no al llegar al punto, que es cuando «bajar costó».
+   * Una vez por plan.
+   */
+  private avisarSiVaMasAlto(pies: number): void {
+    const s = this.flight.state;
+    if (
+      this.explicado.masAlto ||
+      !this.navegacion.plan ||
+      s.onGround ||
+      this.navegacion.bajando ||
+      Math.abs(s.verticalSpeed) > 1.5 ||
+      pies < this.navegacion.cruceroPlaneado / PIE_EN_METROS + 1000
+    )
+      return;
+    this.explicado.masAlto = true;
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    this.instructor.decir(t("vuelo.masAltoQueElPlan"), "vuelo.masAltoQueElPlan");
+  }
+
+  /**
+   * **Al empezar a bajar, la ventanilla a la altura del punto de final.**
+   *
+   * Es lo que se hace en una cabina antes de dejar que el ordenador baje:
+   * poner abajo la altura hasta la que se autoriza bajar. Sin ella, el
+   * automático se quedaría arriba —la ventanilla es un suelo que el plan no
+   * cruza— y el avisador pitaría al irse. Se pone en los cuatro peldaños: la
+   * autorización para bajar todavía no la dice nadie por radio.
+   */
+  private ponerLaVentanillaParaBajar(): void {
+    if (!this.llevaVentanillaAlt) return;
+    const alli = this.navegacion.alturaDelFinal;
+    if (alli === null) return;
+    const indicada = alli + alturaIndicada(0, this.qnhPuesta, this.qnhDelSitio);
+    const pies = Math.ceil(indicada / PIE_EN_METROS / 100) * 100;
+    if (this.ventanillaAlt === null || pies < this.ventanillaAlt) this.ventanillaAlt = pies;
+  }
+
+  /**
+   * **Otro nivel por los baches, pedido al control.** Ver
+   * `flight/nivel-tranquilo.ts`.
+   *
+   * En crucero, con pasaje y con los baches durando: se mira si arriba el
+   * aire va más quieto —con la misma cuenta que mueve el avión— y, si va, el
+   * control lo autoriza y se sube; si no, la comandante lo cuenta: hay baches
+   * en todos los niveles. Al llegar arriba, lo cuenta también. Nunca cambia
+   * de nivel sola: primero la autorización. Uno por tramo.
+   */
+  private buscarNivelTranquilo(dt: number, movimiento: number, aire: Aire): void {
+    const s = this.flight.state;
+    const pies = this.altitudIndicada() / PIE_EN_METROS;
+    if (this.subiendoPorBaches !== null) {
+      if (Math.abs(pies - this.subiendoPorBaches) < 300 && Math.abs(s.verticalSpeed) < 1.5) {
+        this.subiendoPorBaches = null;
+        this.porMegafonia(
+          movimiento < YA_NO_SACUDE ? "comandante.nivelMasTranquilo" : "comandante.bachesEnTodos",
+        );
+      }
+      return;
+    }
+    const ventanilla = this.ventanillaEnPies();
+    const p = this.navegacion.progreso;
+    if (
+      this.pidioOtroNivel ||
+      !conPasaje(this.aircraft.mass) ||
+      ventanilla === null ||
+      p === null ||
+      this.navegacion.bajando ||
+      s.onGround ||
+      this.faseDeAhora !== "en-vuelo" ||
+      Math.abs(pies - ventanilla) >= 300 ||
+      ventanilla < this.navegacion.cruceroPlaneado / PIE_EN_METROS - 300
+    ) {
+      this.bachesEnCrucero = 0;
+      return;
+    }
+    this.bachesEnCrucero = movimiento >= YA_NO_SACUDE ? this.bachesEnCrucero + dt : 0;
+    if (this.bachesEnCrucero < ESPERA_CON_BACHES) return;
+    this.pidioOtroNivel = true;
+    /*
+     * Y con sitio para volver a bajar: el nivel nuevo adelanta el descenso
+     * tres millas por cada mil pies, y subir para tener que bajar enseguida
+     * no le sirve a nadie.
+     */
+    const cabe = (p.restante - (p.descenso ?? 0)) / MILLA > 20;
+    const nivel = cabe
+      ? nivelMasTranquilo({
+          nivel: ventanilla,
+          techo: topeDeLaVentanilla(this.aircraft),
+          sacudeA: (otro) => {
+            const mas = (otro - pies) * PIE_EN_METROS;
+            return cuantoSeMueve({
+              ...aire,
+              sobreElSuelo: aire.sobreElSuelo + mas,
+              altura: aire.altura + mas,
+            });
+          },
+        })
+      : null;
+    if (nivel === null) {
+      this.porMegafonia("comandante.bachesEnTodos");
+      return;
+    }
+    this.explicado.masAlto = true;
+    this.subiendoPorBaches = nivel;
+    this.autorizacionDeSubida.autorizar(nivel);
+    this.autorizarAltura(nivel);
+  }
+
+  /** Un anuncio suelto de la comandante, con su texto en la tira. */
+  private porMegafonia(clave: TranslationKey): void {
+    this.comandante.decir(t(clave), clave, "baja");
+    if (this.tier.instruments !== "none") this.hud.radio(t(clave));
+  }
+
   /**
    * Pone o quita el piloto automático.
    *
@@ -13448,10 +13835,22 @@ export class Game {
     }
     const s = this.flight.state;
     if (puesto) this.memoriaDelAutomatico = memoriaNueva();
+    /*
+     * **Y con ventanilla ALT, a la altura de la ventanilla.**
+     *
+     * Un automático sin preselector se queda en la altura que llevabas; uno
+     * con ventanilla va a la que dice ella, que es para lo que está. No da
+     * ningún tirón por eso: coge el ritmo de subida que llevabas y lo cambia a
+     * una décima de g, como cualquier cambio de altura. Ver `CARGA_QUE_PIDE`.
+     * Y si la ventanilla está vacía —una vuelta al campo, sin plan—, se pone
+     * en la de ahora, que es lo que hace el panel al sincronizarse.
+     */
+    if (puesto && this.llevaVentanillaAlt && this.ventanillaAlt === null)
+      this.ventanillaAlt = aLaVentanilla(this.altitudIndicada());
     this.objetivos = puesto
       ? {
           rumbo: s.heading,
-          altitud: s.position.y,
+          altitud: this.ventanillaEnMetros() ?? s.position.y,
           /*
            * **Y la velocidad que llevás**, que es la pieza que faltaba.
            *
@@ -13500,8 +13899,28 @@ export class Game {
      * sostiene pasa a ser la de la senda de tres grados, que va bajando, hasta
      * la del punto de final. Solo hacia abajo: si quien vuela lo puso más
      * bajo, se respeta. Ver `Seguimiento.alturaParaElAutomatico`.
+     *
+     * **Y con ventanilla ALT, la ventanilla manda.** Sin bajar: el avión va a
+     * la altura que dice. Bajando: por la senda, pero nunca por debajo de la
+     * ventanilla, que es lo que hace el ordenador de un avión de línea —la
+     * altura del panel es un suelo que el plan no cruza—. Al llegar al T/D se
+     * pone en la altura del punto de final: ver `ponerLaVentanillaParaBajar`.
      */
-    if (this.objetivos.altitud !== null && this.navegacion.bajando) {
+    const ventanilla = this.ventanillaEnMetros();
+    if (this.objetivos.altitud !== null && ventanilla !== null) {
+      let sostiene = ventanilla;
+      let ritmo = 0;
+      if (this.navegacion.bajando) {
+        const lectura = this.lecturaDeRuta();
+        const senda = this.navegacion.alturaParaElAutomatico(lectura);
+        if (senda !== null && senda > ventanilla + 1) {
+          sostiene = senda;
+          ritmo = this.navegacion.ritmoParaElAutomatico(lectura) ?? 0;
+        }
+      }
+      if (sostiene !== this.objetivos.altitud || ritmo !== (this.objetivos.ritmo ?? 0))
+        this.objetivos = { ...this.objetivos, altitud: sostiene, ritmo };
+    } else if (this.objetivos.altitud !== null && this.navegacion.bajando) {
       const lectura = this.lecturaDeRuta();
       const senda = this.navegacion.alturaParaElAutomatico(lectura);
       let sostiene = this.objetivos.altitud;
@@ -14984,6 +15403,11 @@ export class Game {
       fijos: plan.fijos,
       activo: this.navegacion.indice,
       descenso: p.puntoDeDescenso,
+      subida: p.puntoDeSubida,
+      crucero:
+        this.navegacion.cruceroPlaneado > 0
+          ? Math.round(this.navegacion.cruceroPlaneado / PIE_EN_METROS / 100) * 100
+          : null,
       restante: p.restante,
       hora: this.horaDeLlegada(p.alSiguiente),
       abreElRango: !this.flight.state.onGround && this.faseDeAhora !== "final",

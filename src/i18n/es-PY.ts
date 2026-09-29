@@ -211,6 +211,12 @@ export const ES_PY = {
     "Con este avión, vuelta al campo. Para ir a {sitios}, elegí uno más chico en el hangar",
   "tecla.qnhUp": "Subir el reglaje del altímetro",
   "tecla.qnhDown": "Bajar el reglaje del altímetro",
+  /*
+   * La rueda de la ventanilla ALT del automático, en la T y la Y, que están
+   * juntas como la O y la U del altímetro. Ver `flight/altitud-seleccionada.ts`.
+   */
+  "tecla.altUp": "Subir la altura de la ventanilla ALT",
+  "tecla.altDown": "Bajar la altura de la ventanilla ALT",
   "tecla.sound": "Sonido",
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",
@@ -275,6 +281,14 @@ export const ES_PY = {
    */
   "torre.destino": "{indicativo}, podés volar a {destino}",
   /*
+   * **La autorización de altitud, por escalones**: el control dice hasta
+   * dónde subir, en miles de pies, que es el número que marca la ventanilla.
+   * Los trozos `solo` son las plantillas de lo que se graba, una frase entera
+   * por cada millar. Ver `flight/autorizacion-de-altitud.ts`.
+   */
+  "torre.subir": "{indicativo}, subí a {pies} pies",
+  "torre.solo.subir": "subí a {n} mil pies",
+  /*
    * ── Y la misma torre, en Canarias ──────────────────────────────────────
    *
    * **No es el acento: son las palabras.** El castellano del juego es
@@ -316,6 +330,8 @@ export const ES_PY = {
   "torre.canario.roja": "{indicativo}, espera ahí",
   "torre.canario.aterrizar": "{indicativo}, puedes aterrizar",
   "torre.canario.destino": "{indicativo}, puedes volar a {destino}",
+  "torre.canario.subir": "{indicativo}, sube a {pies} pies",
+  "torre.canario.solo.subir": "sube a {n} mil pies",
 
   /*
    * ── **Cómo se nombra cada campo por radio** ─────────────────────────────
@@ -371,6 +387,15 @@ export const ES_PY = {
    */
   "comandante.turbulencia":
     "Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.",
+  /*
+   * **Y si los baches siguen, otro nivel**, siempre pedido al control. Ver
+   * `flight/nivel-tranquilo.ts`. Las dos cosas que pueden pasar, y las dos
+   * con calma: arriba se va mejor, o se mueve en todas partes y es normal.
+   */
+  "comandante.nivelMasTranquilo":
+    "Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.",
+  "comandante.bachesEnTodos":
+    "Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.",
 
   /*
    * ── **Y el plan, detrás de la bienvenida** ──────────────────────────────
@@ -933,6 +958,30 @@ export const ES_PY = {
    * `flight/ruta.ts`.
    */
   "vuelo.empezamosABajar": "Empezamos a bajar: despacito, hasta la pista",
+  /*
+   * **La altura de la torre, en la ventanilla.** En los peldaños de abajo la
+   * pone la instructora y lo cuenta: la primera vez entero, las siguientes en
+   * corto. En Guyrami no hay automático ni ventanilla que girar: hay la raya
+   * de la cinta. Ver `autorizarAltura` en `game.ts`.
+   */
+  "vuelo.alturaDeLaTorre":
+    "La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.",
+  "vuelo.alturaDeLaTorreRaya": "La torre nos dice hasta dónde subir: hasta la raya de la cinta.",
+  "vuelo.otraAlturaDeLaTorre": "La torre nos deja subir otro poco. Ya puse la altura nueva.",
+  /*
+   * Y el tono del avisador de altitud, contado detrás de la máquina y una sola
+   * vez: ver `sonarElAvisador` en `game.ts`.
+   */
+  "vuelo.tonoDeAltitudCerca":
+    "Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.",
+  "vuelo.tonoDeAltitudFuera":
+    "Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.",
+  /*
+   * Y a tiempo, si se sube por encima del plan: «si la comandante dice que
+   * vamos a ir a diez mil pies y yo subo hasta doce mil, bajar me costó».
+   */
+  "vuelo.masAltoQueElPlan":
+    "Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.",
   "palabra.aBajar": "A bajar",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",

@@ -376,6 +376,11 @@ const TORRE_SOLO = [
    */
   ["torre.solo.clearedTo", "cleared to", "la autorización, antes del destino"],
   /*
+   * **Y la autorización de altitud**: «climb to» y la altura detrás, que va en
+   * un hueco. Ver `ALTURA` más abajo y `src/flight/autorizacion-de-altitud.ts`.
+   */
+  ["torre.solo.climbTo", "climb to", "la autorización de altitud, antes de la altura"],
+  /*
    * **Y las de la otra punta y el socorro.** «Runway in use» va delante del
    * número de la pista en uso; «go around» a secas, delante de él, para
    * mandar al aire a quien viene por la otra cabecera —la pista no está
@@ -416,6 +421,30 @@ const VIENTO = [
   ["viento.knots", "knots", "detrás de la fuerza del viento"],
   ["viento.calm", "calm", "sin viento: «wind calm»"],
   ["viento.variable", "variable", "viento sin dirección fija"],
+];
+
+/**
+ * **Y las alturas de la autorización de altitud**, para las dos torres.
+ *
+ * Por encima de la transición, «flight level» y las tres cifras, que ya están
+ * grabadas —con «niner»—; por debajo, los millares en pies, que son pocos: de
+ * dos a seis mil, hasta la transición más alta de las dos, la de Canarias. Los
+ * millares salen del propio juego. Ver `alturaEnRadio`.
+ */
+const autorizacion = readFileSync("src/flight/autorizacion-de-altitud.ts", "utf8");
+const MILES_EN_PIES = (() => {
+  const m = /MILES_EN_PIES\s*=\s*\[([^\]]*)\]/.exec(autorizacion);
+  if (!m) throw new Error("no encuentro MILES_EN_PIES");
+  return m[1].split(",").map((x) => Number(x.trim())).filter(Number.isFinite);
+})();
+const MILES_EN_INGLES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "niner"];
+const ALTURA = [
+  ["altura.nivel", "flight level", "delante de las tres cifras de un nivel"],
+  ...MILES_EN_PIES.map((n) => [
+    `altura.pies.${n}`,
+    `${MILES_EN_INGLES[n]} thousand feet`,
+    "una altitud por debajo de la transición",
+  ]),
 ];
 
 /** Y la pieza de cada letra, que es como se llama su fichero. */
@@ -666,7 +695,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO]) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA]) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
@@ -778,7 +807,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO]) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA]) {
   filas.push({
     // Las claves llevan el habla en medio para no pisarse con las de casa.
     // Ver `comoSeDiceAqui` en `i18n/habla.ts`.
@@ -887,6 +916,36 @@ for (const [plantilla, prefijo, numeros, para] of CON_NUMERO) {
 }
 
 /*
+ * **Y la autorización de altitud dicha en casa**: «subí a once mil pies»,
+ * «sube a…» en Canarias. Una frase entera por millar, como los niveles de la
+ * comandante, y en la voz de cada torre. Los millares salen del propio juego:
+ * ver `MILES_EN_CASA` en `src/flight/autorizacion-de-altitud.ts`.
+ */
+const MILES_EN_CASA = (() => {
+  const m = /MILES_EN_CASA\s*=\s*\{\s*desde:\s*(\d+),\s*hasta:\s*(\d+)\s*\}/.exec(autorizacion);
+  if (!m) throw new Error("no encuentro MILES_EN_CASA");
+  return { desde: Number(m[1]), hasta: Number(m[2]) };
+})();
+for (const [voz, plantilla] of [
+  ["torre", "torre.solo.subir"],
+  ["torre-canarias", "torre.canario.solo.subir"],
+]) {
+  const texto = es.get(plantilla);
+  if (!texto) throw new Error(`falta la plantilla ${plantilla} en es-PY`);
+  for (let n = MILES_EN_CASA.desde; n <= MILES_EN_CASA.hasta; n++) {
+    const conSuNumero = conNumero(texto, n);
+    filas.push({
+      id: `${plantilla}.${n}`,
+      voz,
+      idioma: "es",
+      texto: conSuNumero,
+      para: "la altura que autoriza el control, dicha en casa",
+    });
+    total += conSuNumero.length;
+  }
+}
+
+/*
  * **Y fuera lo que no se graba: lo que se monta.**
  *
  * Las frases con hueco —«{indicativo}, en final»— no son frases: son recetas.
@@ -942,6 +1001,11 @@ const EN_CALMA = {
   "vuelo.muyInclinado": "Estás muy inclinado: enderezá las alas.",
   "vuelo.quitaElGas": "Quitá el gas.",
   "vuelo.sacaElTren": "Sacá el tren.",
+  // Y el tono del avisador de altitud, contado detrás de la caja.
+  "vuelo.tonoDeAltitudCerca":
+    "Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.",
+  "vuelo.tonoDeAltitudFuera":
+    "Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.",
 };
 for (const f of filas) {
   const dicho = EN_CALMA[f.id];

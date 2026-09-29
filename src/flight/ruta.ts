@@ -389,6 +389,12 @@ export interface Terreno {
   readonly techo: number;
   /** La cota de la pista de salida, m: de ahí se empieza a subir. */
   readonly cotaDeSalida: number;
+  /**
+   * Si el avión vuela **con reglas visuales**: la avioneta de escuela y el
+   * fumigador. Entonces el margen sobre el relieve es el de un vuelo visual y
+   * no el de uno por instrumentos. Ver `MARGEN_VISUAL`.
+   */
+  readonly visual?: boolean;
 }
 
 /**
@@ -413,6 +419,29 @@ export const MARGEN_EN_MONTANA = 600;
 export const RADIO_DE_OBSTACULOS = 8000;
 
 /**
+ * **Y el margen de quien vuela mirando por la ventana**, m, y a qué distancia
+ * se mira.
+ *
+ * La avioneta de escuela y el fumigador no vuelan por instrumentos, y su
+ * techo —tres mil y dos mil quinientos metros— queda por debajo de lo que la
+ * regla de arriba pide cerca de las islas del oeste: el Teide más seiscientos
+ * son cuatro mil trescientos. Con esa regla ninguna ruta entre esas islas les
+ * cabía, y el plan caía a la más corta, que era peor: la que cruzaba.
+ *
+ * Lo que hace de verdad un avión así es otra cosa: **vuelo visual por la
+ * costa, a la altura que se pueda**, con la isla a un lado y el mar debajo. Y
+ * su regla es otra, la de los vuelos visuales: SERA.5005 f), que en España
+ * recoge el AIP en ENR 1.2. Fuera de lo poblado pide ciento cincuenta metros
+ * sobre el suelo, el agua o lo más alto a ciento cincuenta metros; sobre lo
+ * poblado, **trescientos metros sobre lo más alto a seiscientos**. Aquí se
+ * planea con la segunda en todas partes, que es la más exigente de las dos:
+ * un plan no sabe dónde hay un pueblo, y quien planea un vuelo visual por una
+ * costa de acantilados no apura el mínimo.
+ */
+export const MARGEN_VISUAL = 300;
+export const RADIO_VISUAL = 600;
+
+/**
  * **Qué es montaña**, con la definición de la OACI y no a ojo: «área de perfil
  * cambiante donde los cambios de elevación del terreno exceden de 900 m
  * (3000 ft) dentro de una distancia de 18,5 km (10 NM)» (PANS-OPS, Doc 8168,
@@ -434,6 +463,8 @@ const ALREDEDOR = Array.from({ length: 16 }, (_, i) => {
 /** Los anillos de catas: los de los obstáculos, y los de saber si es montaña. */
 const ANILLOS_CERCA = [2000, 4000, 6000, RADIO_DE_OBSTACULOS];
 const ANILLOS_LEJOS = [12500, DISTANCIA_DE_MONTANA];
+/** Los de la regla visual: lo que hay a seiscientos metros. Ver `MARGEN_VISUAL`. */
+const ANILLOS_VISUALES = [150, 300, 450, RADIO_VISUAL];
 
 /** Lo que dice el relieve de un punto de la ruta. */
 interface Cata {
@@ -448,8 +479,12 @@ interface Cata {
  * kilómetros y dieciséis rumbos: con el Teide, que es un cono de kilómetros de
  * ancho, la cata más cercana a la cumbre se queda a unas decenas de metros de
  * ella. `null` si no se sabe nada del suelo alrededor.
+ *
+ * Con `visual`, lo más alto a seiscientos metros y el margen del vuelo
+ * visual. La montaña se cuenta igual en los dos: es lo que decide si se va por
+ * el mar, y eso no depende de las reglas con las que se vuele.
  */
-function catar(cota: Terreno["cota"], x: number, z: number): Cata | null {
+function catar(cota: Terreno["cota"], x: number, z: number, visual = false): Cata | null {
   let alto = cota(x, z);
   let bajo = alto;
   let techo = alto;
@@ -459,22 +494,33 @@ function catar(cota: Terreno["cota"], x: number, z: number): Cata | null {
     bajo = bajo === null ? c : Math.min(bajo, c);
     techo = techo === null ? c : Math.max(techo, c);
   };
-  for (const r of ANILLOS_CERCA)
+  for (const r of visual ? ANILLOS_VISUALES : ANILLOS_CERCA)
     for (const [sx, sz] of ALREDEDOR) ver(cota(x + sx * r, z + sz * r), true);
   if (alto === null) return null;
+  if (visual)
+    for (const r of ANILLOS_CERCA)
+      for (const [sx, sz] of ALREDEDOR) ver(cota(x + sx * r, z + sz * r), false);
   for (const r of ANILLOS_LEJOS)
     for (const [sx, sz] of ALREDEDOR) ver(cota(x + sx * r, z + sz * r), false);
   const montana = techo! - bajo! > DESNIVEL_DE_MONTANA;
-  return { minima: alto + (montana ? MARGEN_EN_MONTANA : MARGEN_EN_LLANO), montana };
+  const margen = visual ? MARGEN_VISUAL : montana ? MARGEN_EN_MONTANA : MARGEN_EN_LLANO;
+  return { minima: alto + margen, montana };
 }
 
 /**
  * **La altitud mínima en ruta en un punto**, m: lo más alto que haya a ocho
  * kilómetros, más el margen de la montaña o el del llano según lo que haya a
  * diez millas. `null` si no se sabe nada del suelo alrededor.
+ *
+ * Con `visual`, la de un vuelo visual: ver `MARGEN_VISUAL`.
  */
-export function minimaEnRuta(cota: Terreno["cota"], x: number, z: number): number | null {
-  return catar(cota, x, z)?.minima ?? null;
+export function minimaEnRuta(
+  cota: Terreno["cota"],
+  x: number,
+  z: number,
+  visual = false,
+): number | null {
+  return catar(cota, x, z, visual)?.minima ?? null;
 }
 
 /**
@@ -492,15 +538,16 @@ function catasDelTramo(
   b: Punto,
   cota: Terreno["cota"],
   memoria: Memoria,
+  visual = false,
 ): readonly (Cata | null)[] {
-  const clave = `${Math.round(a.x)},${Math.round(a.z)}>${Math.round(b.x)},${Math.round(b.z)}`;
+  const clave = `${visual ? "v" : ""}${Math.round(a.x)},${Math.round(a.z)}>${Math.round(b.x)},${Math.round(b.z)}`;
   const hecho = memoria.get(clave);
   if (hecho) return hecho;
   const pasos = Math.max(1, Math.ceil(entre(a, b) / PASO_EN_RUTA));
   const catas: (Cata | null)[] = [];
   for (let k = 0; k <= pasos; k++) {
     const t = k / pasos;
-    catas.push(catar(cota, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t));
+    catas.push(catar(cota, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, visual));
   }
   memoria.set(clave, catas);
   return catas;
@@ -582,7 +629,7 @@ export function libra(
     const ux = (b.x - a.x) / l;
     const uz = (b.z - a.z) / l;
     if (tipo === "ruta") {
-      const catas = catasDelTramo(a, b, terreno.cota, memoria);
+      const catas = catasDelTramo(a, b, terreno.cota, memoria, terreno.visual === true);
       const pasos = catas.length - 1;
       for (let k = 0; k <= pasos; k++) {
         const t = (k / pasos) * l;
@@ -1032,7 +1079,20 @@ export interface Progreso {
   readonly descenso: number | null;
   /** Dónde cae en el mundo, si cae por delante del avión. */
   readonly puntoDeDescenso: Punto | null;
+  /**
+   * **Y dónde se acaba de subir**, el «T/C» de una pantalla de navegación:
+   * el punto de la ruta en el que se llega al crucero, o `null` si ya se está
+   * en él o no cabe antes del descenso. Ver `DOS_MILLAS_POR_MIL_PIES`.
+   */
+  readonly puntoDeSubida: Punto | null;
 }
+
+/**
+ * Las millas que se recorren subiendo mil pies, la regla con la que se planea
+ * la subida: dos. Es la misma que usa el crucero —ver `cruceroPorLaDistancia`—
+ * y la que mira `libra`, así que el T/C cae donde el plan cuenta que se sube.
+ */
+export const MILLAS_POR_MIL_PIES_SUBIENDO = 2;
 
 /**
  * Cuánto por debajo de la altitud de ahora pide como mucho el automático
@@ -1058,7 +1118,12 @@ const POR_DELANTE = 90;
  * a cada tramo de la ruta, para que el plan y el crucero no midan el monte
  * con dos reglas distintas.
  */
-export function minimaEnCrucero(r: Ruta, cota: Terreno["cota"]): number | null {
+export function minimaEnCrucero(
+  r: Ruta,
+  cota: Terreno["cota"],
+  /** Con la regla del vuelo visual. Ver `MARGEN_VISUAL`. */
+  visual = false,
+): number | null {
   let alto: number | null = null;
   const orilla = 8 * MILLA;
   for (let i = 1; i < r.fijos.length; i++) {
@@ -1071,7 +1136,7 @@ export function minimaEnCrucero(r: Ruta, cota: Terreno["cota"]): number | null {
       const t = k / pasos;
       const hecho = r.acumulado[i - 1]! + t * l;
       if (hecho < orilla || r.total - hecho < orilla) continue;
-      const m = minimaEnRuta(cota, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
+      const m = minimaEnRuta(cota, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, visual);
       if (m !== null && (alto === null || m > alto)) alto = m;
     }
   }
@@ -1094,22 +1159,36 @@ export function minimaEnCrucero(r: Ruta, cota: Terreno["cota"]): number | null {
  *
  * `declinacion` es la del campo de salida, en grados, con el signo del
  * escenario: magnético = verdadero + declinación.
+ *
+ * **Y quien vuela mirando por la ventana va a su medio nivel**: 4500, 6500…
+ * con el mismo rumbo, que es lo que separa a los que van con reglas visuales
+ * de los que van por instrumentos. Ver `MEDIO_NIVEL` en `nivel-de-crucero.ts`.
+ * Y nunca por encima de lo que da el avión: un vuelo visual va **a la altura
+ * que se pueda**, y si la mínima pidiera más, es que esa ruta no es para él.
  */
 export function cruceroDelPlan(
   r: Ruta,
-  avion: { readonly techo: number; readonly cotaDeSalida: number; readonly declinacion: number },
+  avion: {
+    readonly techo: number;
+    readonly cotaDeSalida: number;
+    readonly declinacion: number;
+    readonly visual?: boolean;
+  },
   minima: number | null,
 ): number {
   const a = r.fijos[0];
   const b = r.fijos[r.fijos.length - 1];
   if (!a || !b) return 0;
+  const visual = avion.visual === true;
   const verdadero = (Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI;
   const magnetico = verdadero + avion.declinacion;
   const minimo = minima ?? 0;
   const pedido = Math.max(cruceroPorLaDistancia(r, avion.techo, avion.cotaDeSalida), minimo);
-  let nivel = nivelPara(magnetico, pedido / PIE);
+  let nivel = nivelPara(magnetico, pedido / PIE, visual);
   while (nivel * PIE < minimo - 1 && nivel * PIE < avion.techo) nivel += 2000;
-  while (nivel * PIE > Math.max(avion.techo, minimo) + 1 && nivel > 3000) nivel -= 2000;
+  const tope = visual ? avion.techo : Math.max(avion.techo, minimo);
+  const suelo = visual ? 1500 : 3000;
+  while (nivel * PIE > tope + 1 && nivel > suelo) nivel -= 2000;
   return nivel * PIE;
 }
 
@@ -1125,6 +1204,12 @@ export interface Lectura {
   readonly aire: number;
   readonly enTierra: boolean;
   readonly viento: Viento | null;
+  /**
+   * La altitud de la ventanilla del automático, m, si el avión la lleva y
+   * está puesta. Subiendo hacia ella por encima del plan, el descenso cuenta
+   * con ella: es a donde se va. Ver `Seguimiento.desde`.
+   */
+  readonly ventanilla?: number | null;
 }
 
 /**
@@ -1189,14 +1274,36 @@ export class Seguimiento {
   }
 
   /**
+   * **A qué altitud se acaba la bajada del plan**, m: la del punto de final,
+   * con lo que publique su carta. Es la que se pone en la ventanilla del
+   * automático al empezar a bajar, y hasta la que baja él. Ver
+   * `alturaParaElAutomatico`. `null` sin plan.
+   */
+  get alturaDelFinal(): number | null {
+    const r = this.ruta;
+    if (!r || r.fijos.length < 2) return null;
+    const faf = r.fijos.findIndex((f) => f.papel === "faf");
+    const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
+    return alturaDeLaSenda(r, faf > 0 ? faf : r.fijos.length - 1, suelo);
+  }
+
+  /**
    * La altura de la que hay que bajar: la de ahora si se va nivelado, y la
    * del crucero planeado si todavía se sube hacia él. Así el punto de
    * descenso no se echa encima mientras se sube, ni se queda en el crucero
    * del plan si se decidió volar más bajo.
+   *
+   * **Y si se sube por encima del plan, la de verdad.** Contado jugando: «si
+   * la comandante dice que vamos a ir a diez mil pies y yo subo hasta doce mil,
+   * bajar me costó». Nivelado más alto ya contaba la altura de ahora; subiendo
+   * hacia una ventanilla más alta que el plan, cuenta la ventanilla, que es
+   * a donde se va: el descenso se adelanta en cuanto se decide subir, no al
+   * llegar arriba.
    */
   private desde(l: Lectura): number {
+    const va = Math.max(this.crucero, l.ventanilla ?? -Infinity);
     if (l.enTierra) return Math.max(l.altitud, this.crucero);
-    return l.vertical > 1.5 ? Math.max(l.altitud, this.crucero) : l.altitud;
+    return l.vertical > 1.5 ? Math.max(l.altitud, va) : l.altitud;
   }
 
   /**
@@ -1257,8 +1364,30 @@ export class Seguimiento {
         descenso !== null && !this.yaBajando && descenso < falta
           ? puntoAFaltando(r, descenso)
           : null,
+      puntoDeSubida: this.dondeSeAcabaDeSubir(l, falta, descenso),
     };
     return { descenso: ahora, cambio: this.activo !== antes };
+  }
+
+  /**
+   * **El «T/C»**: dónde se llega al crucero, contado desde aquí con la regla
+   * de la subida. Solo mientras queda por subir y si cae antes del punto de
+   * descenso: en un salto tan corto que no llega a haber crucero, un T/C
+   * detrás del T/D sería un punto que no se vuela.
+   */
+  private dondeSeAcabaDeSubir(
+    l: Lectura,
+    falta: number,
+    descenso: number | null,
+  ): Punto | null {
+    const r = this.ruta;
+    if (!r || this.yaBajando) return null;
+    const queda = this.crucero - l.altitud;
+    if (queda < 300 * PIE) return null;
+    const subida = (queda / PIE / 1000) * MILLAS_POR_MIL_PIES_SUBIENDO * MILLA;
+    const alli = falta - subida;
+    if (alli <= (descenso ?? 0)) return null;
+    return puntoAFaltando(r, alli);
   }
 
   /**

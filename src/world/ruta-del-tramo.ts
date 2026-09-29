@@ -54,6 +54,11 @@ export interface DelJuego {
   readonly cota: Terreno["cota"] | null;
   /** Lo más alto que sube el avión, m. */
   readonly techo: number;
+  /**
+   * Si el avión vuela con reglas visuales: la avioneta de escuela y el
+   * fumigador. Ver `reglasDeVuelo` en `flight/aircraft.ts`.
+   */
+  readonly visual?: boolean;
 }
 
 /**
@@ -124,7 +129,14 @@ export function rutaDelTramo(
      * milla del Teide. Ver `libra` en `flight/ruta.ts`.
      */
     ...(juego.cota
-      ? { terreno: { cota: juego.cota, techo: juego.techo, cotaDeSalida } }
+      ? {
+          terreno: {
+            cota: juego.cota,
+            techo: juego.techo,
+            cotaDeSalida,
+            visual: juego.visual === true,
+          },
+        }
       : {}),
   });
 }
@@ -137,7 +149,7 @@ export function rutaDelTramo(
 export function cruceroDelTramo(
   ruta: Ruta,
   salida: CampoEnElMundo,
-  juego: Pick<DelJuego, "cotaDePista" | "cota" | "techo">,
+  juego: Pick<DelJuego, "cotaDePista" | "cota" | "techo" | "visual">,
 ): number {
   const a = ruta.fijos[0];
   if (!a) return 0;
@@ -147,7 +159,8 @@ export function cruceroDelTramo(
       techo: juego.techo,
       cotaDeSalida: juego.cotaDePista(salida, a.x, a.z),
       declinacion: salida.escenario.magneticVariation ?? 0,
+      visual: juego.visual === true,
     },
-    juego.cota ? minimaEnCrucero(ruta, juego.cota) : null,
+    juego.cota ? minimaEnCrucero(ruta, juego.cota, juego.visual === true) : null,
   );
 }

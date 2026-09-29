@@ -244,6 +244,16 @@ export interface RutaDeLaCarta {
   readonly activo: number;
   /** Dónde se empieza a bajar, si cae por delante. */
   readonly descenso: Punto | null;
+  /**
+   * Dónde se acaba de subir, el «T/C», si cae por delante. Ver
+   * `Progreso.puntoDeSubida` en `flight/ruta.ts`.
+   */
+  readonly subida?: Punto | null;
+  /**
+   * **El nivel del plan**, en pies: lo que dice el plan que hay que subir.
+   * `null` si no hay. Ver `cruceroDelPlan`.
+   */
+  readonly crucero?: number | null;
   /** Lo que falta por la ruta hasta el umbral, m. */
   readonly restante: number;
   /**
@@ -402,6 +412,10 @@ export interface Dibujo {
       activo: boolean;
     }[];
     readonly descenso: { dx: number; dy: number } | null;
+    /** Y el de subida, el T/C. */
+    readonly subida: { dx: number; dy: number } | null;
+    /** El nivel del plan, pies, o `null`. */
+    readonly crucero: number | null;
     /** El punto al que se va, con sus millas: lo de arriba a la derecha. */
     readonly siguiente: { nombre: string; millas: number } | null;
     readonly hora: string | null;
@@ -570,6 +584,8 @@ function rutaEnLaCarta(
     linea,
     fijos,
     descenso: ruta.descenso ? aqui(ruta.descenso) : null,
+    subida: ruta.subida ? aqui(ruta.subida) : null,
+    crucero: ruta.crucero ?? null,
     siguiente: sig ? { nombre: sig.nombre, millas: millasHasta(sig, yo) } : null,
     hora: ruta.hora,
   };

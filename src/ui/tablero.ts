@@ -83,6 +83,7 @@ import {
   type Estado as EstadoDeAvisos,
 } from "../flight/avisos-de-cabina";
 import { dibujoEn, type DibujoDeSenal } from "./senal";
+import type { Alerta } from "../flight/altitud-seleccionada";
 import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
@@ -179,6 +180,12 @@ export interface DatosDelTablero {
    * Lanzarote no veo la pista». Ver `ui/carta.ts`.
    */
   readonly mapa: Mapa | null;
+  /**
+   * **La ventanilla ALT del automático**: la altura que se le ha pedido, en
+   * pies, y lo que dice el avisador. `null` si el avión no la lleva o no hay
+   * ninguna puesta. Ver `flight/altitud-seleccionada.ts`.
+   */
+  readonly ventanilla?: { readonly pies: number; readonly alerta: Alerta } | null;
 }
 
 const GRADOS = 180 / Math.PI;
@@ -390,7 +397,7 @@ export class Tablero {
       <rect width="${ANCHO_DEL_CUADRO}" height="${ALTO_DEL_CUADRO}" class="tablero__fascia" />
       <rect y="${VISERA}" width="${ANCHO_DEL_CUADRO}" height="24" class="tablero__sombra" />
       <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />
-      ${familia === "linea" ? this.mcp() : ""}
+      ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
       ${this.panelDeAvisos()}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
@@ -510,14 +517,25 @@ export class Tablero {
    * has pedido —velocidad, rumbo y altitud—. Es la firma visual de una cabina
    * de línea, y aquí además es coherente: lo que se quiere va siempre en
    * magenta, en los seis aviones.
+   *
+   * **Y el turbohélice, su ventanilla de altitud**, en el mismo sitio: un
+   * avión de pasaje de turbina lleva preselector de altitud en la visera
+   * aunque no lleve un MCP entero. Lo que no lleva, no se le pinta.
+   *
+   * La de altitud es **la de verdad**: lo que se le ha pedido al automático,
+   * no la altura de ahora redondeada, que es lo que enseñaba antes y no es lo
+   * que dice ninguna ventanilla de ningún avión. Y se gira: con la rueda de
+   * al lado —los dos botones, arriba y abajo—, con la rueda del ratón encima
+   * y con la T y la Y. Ver `flight/altitud-seleccionada.ts`.
    */
-  private mcp(): string {
-    const rotulos = ["SPD", "HDG", "ALT"];
+  private mcp(rotulos: readonly string[]): string {
+    const primera = 690 - (rotulos.length - 1) * 100;
     return rotulos
       .map((r, i) => {
-        const x = 490 + i * 100;
+        const x = primera + i * 100;
+        const alt = r === "ALT";
         return `
-          <g class="tablero__mcp" ${MARCA_CON_SU_APARATO}>
+          <g class="tablero__mcp" ${MARCA_CON_SU_APARATO} ${alt ? 'data-mcp-alt=""' : ""}>
             <rect x="${x}" y="12" width="84" height="40" rx="3" />
             <!--
               Y el rótulo con la ventanilla, desde el mismo peldaño: tres
@@ -528,9 +546,27 @@ export class Tablero {
                   text-anchor="middle">${r}</text>
             <text data-mcp="${r.toLowerCase()}" x="${x + 42}" y="45"
                   class="cr__objetivo" text-anchor="middle">---</text>
-          </g>`;
+          </g>${alt ? this.ruedaDeAltitud(x + 92) : ""}`;
       })
       .join("");
+  }
+
+  /**
+   * **La rueda de la ventanilla de altitud**: dos teclas, arriba y abajo, al
+   * lado de la ventanilla. Cada toque, un millar. Con el alto entero de la
+   * visera para el dedo, que es lo más que cabe sin tapar nada.
+   */
+  private ruedaDeAltitud(x: number): string {
+    const tecla = (sube: boolean) => {
+      const y = sube ? 4 : 34;
+      const punta = sube ? `M${x + 22} ${y + 7} l7 12 l-14 0 Z` : `M${x + 22} ${y + 19} l7 -12 l-14 0 Z`;
+      return `
+        <g class="tablero__rueda" data-mcp-rueda="${sube ? 1 : -1}">
+          <rect x="${x}" y="${y}" width="44" height="26" rx="4" />
+          <path d="${punta}" />
+        </g>`;
+    };
+    return `<g ${MARCA_CON_SU_APARATO}>${tecla(true)}${tecla(false)}</g>`;
   }
 
   /** Familia de esferas: seis relojes, columna de motor y placa a la izquierda. */
@@ -1088,10 +1124,53 @@ export class Tablero {
       this.pieza('[data-mcp="spd"]'),
       Number.isFinite(d.vref) ? String(Math.round(d.vref)) : "---",
     );
-    escribir(
-      this.pieza('[data-mcp="alt"]'),
-      String(Math.round(d.pies / 100) * 100),
-    );
+    this.ventanillaAlt(d, dt);
+  }
+
+  /** Dónde va el bug de la ventanilla ALT en la cinta, viajando. */
+  private bugDeAltitud: number | null = null;
+
+  /**
+   * **La ventanilla ALT**: la cifra del MCP, la de encima de la cinta, el bug
+   * en el borde —o la raya de «hasta aquí» en el primer peldaño— y el
+   * avisador. Acercándose, la caja se resalta en blanco; ida, en ámbar, que
+   * parpadea al nacer y se queda fija, como toda alerta de este cuadro. Nunca
+   * parpadean los dígitos. Ver `flight/altitud-seleccionada.ts`.
+   */
+  private ventanillaAlt(d: DatosDelTablero, dt: number): void {
+    const v = d.ventanilla ?? null;
+    const bug = this.pieza('[data-bug="alt-sel"]');
+    const caja = this.pieza('[data-cristal="alt-sel-caja"]');
+    const mcp = this.pieza("[data-mcp-alt]");
+    escribir(this.pieza('[data-mcp="alt"]'), v ? String(v.pies) : "-----");
+    if (!v) {
+      this.bugDeAltitud = null;
+      poner(bug, "visibility", "hidden");
+      poner(caja, "visibility", "hidden");
+      mcp?.classList.remove("cr__sel--cerca", "cr__sel--fuera");
+      return;
+    }
+    this.bugDeAltitud =
+      this.bugDeAltitud === null ? v.pies : deslizaBug(this.bugDeAltitud, v.pies, dt);
+    if (bug) {
+      const medio = Number(bug.dataset.medio);
+      const alto = Number(bug.dataset.alto);
+      const porUnidad = Number(bug.dataset.porunidad);
+      // Aparcado en el borde si cae fuera, por debajo de la caja de la cifra.
+      const y = Math.max(40, Math.min(alto - 12, medio - (this.bugDeAltitud - d.pies) * porUnidad));
+      poner(bug, "visibility", "visible");
+      poner(bug, "transform", `translate(0 ${n1(y)})`);
+    }
+    poner(caja, "visibility", "visible");
+    escribir(this.pieza('[data-cristal="alt-sel"]'), String(v.pies));
+    const quieto = this.raiz?.closest(".sin-movimiento") !== null;
+    const fuera = v.alerta === "fuera";
+    const edad = this.edad("alt-sel", fuera, dt);
+    const ambar = fuera && (quieto || parpadeo(edad));
+    for (const g of [caja, mcp]) {
+      g?.classList.toggle("cr__sel--cerca", v.alerta === "cerca");
+      g?.classList.toggle("cr__sel--fuera", ambar);
+    }
   }
 
   // ── Los motores y los mandos ────────────────────────────────────────
@@ -1517,6 +1596,19 @@ export class Tablero {
       pieza.classList.toggle("cr__fijo--activo", f.activo);
       escribir(pieza.querySelector('[data-carta="fijo-nombre"]'), f.nombre);
     }
+    /*
+     * **El T/C, en los reactores**, igual que el T/D: el punto de la ruta en
+     * el que se llega al crucero. Es de su pantalla de navegación; el cristal
+     * del turbohélice no lo pinta. Ver `puntoDeSubida` en `flight/ruta.ts`.
+     */
+    const tc = this.pieza('[data-carta="tc"]');
+    if (tc) {
+      const subida = this.familia === "linea" ? (plan?.subida ?? null) : null;
+      poner(tc, "visibility", subida ? "visible" : "hidden");
+      if (subida) poner(tc, "transform", `translate(${n1(subida.dx)} ${n1(subida.dy)})`);
+    }
+    // Y el nivel del plan, en magenta y con su «CRZ».
+    this.texto("crz", plan?.crucero ? `CRZ ${plan.crucero}` : "");
     const td = this.pieza('[data-carta="td"]');
     if (td) {
       poner(td, "visibility", plan?.descenso ? "visible" : "hidden");

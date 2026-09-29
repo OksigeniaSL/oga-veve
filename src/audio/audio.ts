@@ -165,7 +165,16 @@ export type Cue =
    * puesto. Un clic seco y agudo, como la rueda de una cabina al girarla un
    * diente. Ver `flight/palanca-de-teclado.ts`.
    */
-  | "compensador";
+  | "compensador"
+  /**
+   * **El avisador de altitud**: el acorde de una caja del avión.
+   *
+   * Es el «C-chord» de los avisadores de altitud de Boeing —do, mi y sol casi a
+   * la vez— y suena al acercarse a la altura de la ventanilla y al irse de
+   * ella. No manda agacharse a nadie: es «mirá», no «actuá ya». Ver
+   * `flight/altitud-seleccionada.ts`.
+   */
+  | "altitud";
 
 /**
  * Un motivo: qué notas, a qué ritmo y con cuánto cuerpo.
@@ -249,6 +258,7 @@ export const MOTIVOS: Record<Cue, Motivo> = {
    * es —un timbre, no un aviso— y por eso no manda callar a nadie.
    */
   cinturon: { notas: [1046.5, 783.99], paso: 0.22, dura: 0.45 },
+  altitud: { notas: [523.25, 659.25, 783.99], paso: 0.02, dura: 0.9 },
   aroFallado: { notas: [440, 349.23], paso: 0.16, dura: 0.3 },
   /*
    * El peligro y la pérdida van más rápidos que nada: lo que distingue una

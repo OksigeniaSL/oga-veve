@@ -297,6 +297,12 @@
     "vuelo.alto": {
       "ms": 1036
     },
+    "vuelo.alturaDeLaTorre": {
+      "ms": 6707
+    },
+    "vuelo.alturaDeLaTorreRaya": {
+      "ms": 3207
+    },
     "vuelo.apagado": {
       "ms": 971
     },
@@ -453,6 +459,9 @@
     "vuelo.mandanFrustrar~3": {
       "ms": 2158
     },
+    "vuelo.masAltoQueElPlan": {
+      "ms": 4707
+    },
     "vuelo.meteElTren": {
       "ms": 1161
     },
@@ -470,6 +479,9 @@
     },
     "vuelo.noEstabilizada~3": {
       "ms": 3307
+    },
+    "vuelo.otraAlturaDeLaTorre": {
+      "ms": 3107
     },
     "vuelo.otroAvion.delante.abajo": {
       "ms": 2429
@@ -605,6 +617,12 @@
     },
     "vuelo.terrenoSube": {
       "ms": 1651
+    },
+    "vuelo.tonoDeAltitudCerca": {
+      "ms": 4207
+    },
+    "vuelo.tonoDeAltitudFuera": {
+      "ms": 4107
     },
     "vuelo.tormenta": {
       "ms": 2612
@@ -1351,6 +1369,24 @@
     ],
     "vuelo.puedeAterrizarAfis": [
       "vuelo.puedeAterrizarAfis"
+    ],
+    "vuelo.alturaDeLaTorre": [
+      "vuelo.alturaDeLaTorre"
+    ],
+    "vuelo.alturaDeLaTorreRaya": [
+      "vuelo.alturaDeLaTorreRaya"
+    ],
+    "vuelo.otraAlturaDeLaTorre": [
+      "vuelo.otraAlturaDeLaTorre"
+    ],
+    "vuelo.tonoDeAltitudCerca": [
+      "vuelo.tonoDeAltitudCerca"
+    ],
+    "vuelo.tonoDeAltitudFuera": [
+      "vuelo.tonoDeAltitudFuera"
+    ],
+    "vuelo.masAltoQueElPlan": [
+      "vuelo.masAltoQueElPlan"
     ]
   }
 }

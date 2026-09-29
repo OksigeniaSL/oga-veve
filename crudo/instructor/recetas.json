@@ -709,5 +709,23 @@
   ],
   "vuelo.puedeAterrizarAfis": [
     "vuelo.puedeAterrizarAfis"
+  ],
+  "vuelo.alturaDeLaTorre": [
+    "vuelo.alturaDeLaTorre"
+  ],
+  "vuelo.alturaDeLaTorreRaya": [
+    "vuelo.alturaDeLaTorreRaya"
+  ],
+  "vuelo.otraAlturaDeLaTorre": [
+    "vuelo.otraAlturaDeLaTorre"
+  ],
+  "vuelo.tonoDeAltitudCerca": [
+    "vuelo.tonoDeAltitudCerca"
+  ],
+  "vuelo.tonoDeAltitudFuera": [
+    "vuelo.tonoDeAltitudFuera"
+  ],
+  "vuelo.masAltoQueElPlan": [
+    "vuelo.masAltoQueElPlan"
   ]
 }

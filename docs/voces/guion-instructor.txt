@@ -50,6 +50,12 @@ Estás muy inclinado: enderezá las alas
 Se soltó el piloto automático
 El piloto automático se conecta en el aire
 Empezamos a bajar: despacito, hasta la pista
+La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
+La torre nos dice hasta dónde subir: hasta la raya de la cinta.
+La torre nos deja subir otro poco. Ya puse la altura nueva.
+Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
+Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
+Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir

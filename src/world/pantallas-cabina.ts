@@ -288,6 +288,15 @@ export interface DatosDeCabina {
    * la copia se habría quedado con los rombos de antes.
    */
   readonly mapa: Mapa | null;
+  /**
+   * **La ventanilla ALT del automático**, la misma que el cuadro plano: la
+   * altura pedida, en pies, y lo que dice el avisador. `null` si el avión no
+   * la lleva o no hay ninguna. Ver `flight/altitud-seleccionada.ts`.
+   */
+  readonly ventanilla?: {
+    readonly pies: number;
+    readonly alerta: "nada" | "cerca" | "fuera";
+  } | null;
 }
 
 /**
@@ -1158,7 +1167,50 @@ function cintaDeAltitud(
     g.fillStyle = PALETA.objetivo;
     g.fillRect(x, medio - Math.max(0, largo), 3, Math.abs(largo));
   }
+  /*
+   * **La altura de la ventanilla ALT, en la cinta**: el bug magenta en el
+   * borde de dentro, aparcado en el borde si queda fuera; y en el primer
+   * peldaño, una raya de lado a lado, «hasta aquí». Lo mismo que el cuadro
+   * plano: ver `Tablero.ventanillaAlt`.
+   */
+  const sel = d.ventanilla ?? null;
+  if (sel) {
+    const yy = Math.max(y + 40, Math.min(y + h - 12, medio - (sel.pies - pies) * POR_PIE));
+    g.fillStyle = PALETA.objetivo;
+    g.strokeStyle = PALETA.objetivo;
+    if (d.peldano <= 1) {
+      g.lineWidth = 3;
+      g.beginPath();
+      g.moveTo(x, yy);
+      g.lineTo(x + w, yy);
+      g.stroke();
+    } else {
+      g.beginPath();
+      g.moveTo(x, yy - 7);
+      g.lineTo(x + 9, yy - 7);
+      g.lineTo(x + 9, yy - 3);
+      g.lineTo(x + 5, yy);
+      g.lineTo(x + 9, yy + 3);
+      g.lineTo(x + 9, yy + 7);
+      g.lineTo(x, yy + 7);
+      g.closePath();
+      g.fill();
+    }
+  }
   g.restore();
+  if (sel) {
+    /*
+     * Y arriba, la cifra en su caja: blanca al acercarse, ámbar al irse. La
+     * caja avisa; los dígitos no parpadean nunca.
+     */
+    g.fillStyle = "#05070a";
+    g.fillRect(x + 3, y + 16, w - 6, 19);
+    g.strokeStyle =
+      sel.alerta === "fuera" ? PRECAUCION : sel.alerta === "cerca" ? TINTA : "#2c3136";
+    g.lineWidth = sel.alerta === "nada" ? 1 : 2.4;
+    g.strokeRect(x + 3, y + 16, w - 6, 19);
+    escribir(g, String(sel.pies), x + w - 7, y + 26, "600 15px " + FUENTE, PALETA.objetivo, "right");
+  }
 
   caja(g, x, medio, w, 30);
   const { centro, fraccion } = rodillo(
@@ -1509,6 +1561,9 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     );
     if (d.peldano >= 4 && d.mapa.ruta?.hora)
       escribir(g, d.mapa.ruta.hora, ANCHO - 12, 40, "500 13px " + FUENTE, TINTA, "right");
+    // Y el nivel del plan, en magenta y con su «CRZ». Ver `Tablero.elPlan`.
+    if (d.mapa.ruta?.crucero)
+      escribir(g, `CRZ ${d.mapa.ruta.crucero}`, ANCHO - 12, 57, "600 13px " + FUENTE, PALETA.objetivo, "right");
   } else if (!d.objetivo && d.mapa?.pista) {
     escribir(
       g,
@@ -2235,6 +2290,20 @@ function pintarLaCarta(
       g.lineTo(x + 3.5, y + 2);
       g.stroke();
       escribir(g, "T/D", x + 9, y - 8, "600 11px " + FUENTE, PALETA.normal, "left");
+    }
+    // Y el T/C, en la de los reactores: donde se acaba de subir.
+    if (plan.subida && d.cuadro.familia === "linea") {
+      const x = cx + plan.subida.dx;
+      const y = cy + plan.subida.dy;
+      g.strokeStyle = PALETA.normal;
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.arc(x, y, 6, 0, Math.PI * 2);
+      g.moveTo(x - 3.5, y + 2);
+      g.lineTo(x - 0.5, y + 2);
+      g.lineTo(x + 3.5, y - 2);
+      g.stroke();
+      escribir(g, "T/C", x + 9, y - 8, "600 11px " + FUENTE, PALETA.normal, "left");
     }
   }
 
