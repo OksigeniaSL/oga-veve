@@ -1,3 +1,13 @@
+    /*
+     * **Y también los de ya parado**: frenos, calzos y cortar motores.
+     *
+     * El de «frenos» no salía en la tarjeta, porque se quedaba puesto con el
+     * avión parado y tapaba la llave de «apagá el motor», que salía a la vez
+     * con su voz: «llegaste, apagá el motor» antes de que el señalero hubiera
+     * terminado. Ahora la llave la trae su seña, la de cortar motores, que es
+     * la última —ver `YA_PARADO` en `flight/senalero.ts`—, y la tarjeta va
+     * siguiendo al señalero hasta ahí.
+     */
 /**
  * Ensamblaje del juego y bucle principal.
  *
@@ -302,6 +312,13 @@ const ENCIMA_DE_LA_PISTA = new Set<string>([
   "aterrizado",
   "abandonando",
 ]);
+
+/**
+ * **Lo que se espera a quien se para antes de su sitio con el señalero
+ * llamando**, s, antes de darle la llegada por buena y sacar la llave. Una
+ * espera que depende de que alguien avance no puede ser para siempre.
+ */
+const PACIENCIA_EN_EL_PUESTO = 20;
 
 /**
  * **A partir de cuánto volante gira quien juega**, de 0 a 1: el mismo listón
@@ -6133,16 +6150,35 @@ export class Game {
       const parando =
         gesto === "alto" ||
         (gesto === "despacio" && !this.laVelocidadEsDelJuego());
+      /*
+       * **Y las de ya parado, con lo que se hace en cada una**: con «frenos»,
+       * la tecla del freno; con «calzos», nada, que eso lo hace quien está
+       * abajo; y con «cortar motores», la llave, que se puede tocar como la
+       * de la fase. Ver `YA_PARADO` en `flight/senalero.ts`.
+       */
+      const cortar = gesto === "cortar";
+      const tecla =
+        parando || gesto === "frenos"
+          ? nombreDeTecla(this.input.preferredKey("brakes"))
+          : cortar
+            ? nombreDeTecla(this.input.preferredKey("engine"))
+            : null;
       this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
         segundos: Infinity,
-        tecla: parando
-          ? nombreDeTecla(this.input.preferredKey("brakes"))
-          : null,
+        tecla,
+        accion: cortar ? () => this.toggleEngine() : null,
       });
       if (parando) {
         const cual = gesto === "alto" ? "vuelo.alto" : "vuelo.despacio";
         this.instructor.decir(t(cual), cual);
       }
+      /*
+       * **Y la voz de apagar, con la seña de cortar y no antes.** Es la frase
+       * que había, «llegaste, apagá el motor», que antes sonaba al pararse a
+       * cuarenta y cinco metros del sitio. Ver `PENDIENTE-VOCES-tierra.md`:
+       * falta grabar la de solo apagar, y el «llegaste» para después.
+       */
+      if (cortar) this.instructor.decir(t("vuelo.enPuesto"), "vuelo.enPuesto");
     });
 
     /*
@@ -12487,6 +12523,29 @@ export class Game {
     return this.elCampoMontado().escenario.aerodrome?.privado === true;
   }
 
+  /**
+   * **Si la llegada al puesto la lleva el señalero**, y entonces la fase de
+   * haber llegado no se anuncia todavía.
+   *
+   * «Llegaste, apagá el motor» y la tarjeta del final salían en cuanto el
+   * avión se paraba a cuarenta y cinco metros del puesto —ver `LLEGADA` en
+   * `flight/vuelo.ts`—, con el señalero todavía haciendo señas o sin haber
+   * cruzado los bastones. El orden de verdad lo lleva él: alto, frenos,
+   * calzos y cortar motores; la llave sale con esa última seña. Si se para
+   * antes de su sitio y no sigue, al rato se da por llegado igual: ver
+   * `PACIENCIA_EN_EL_PUESTO`.
+   */
+  private elSenaleroLlevaLaLlegada(vista: Vista): boolean {
+    return (
+      vista.fase === "en-puesto" &&
+      this.gestoEnPantalla !== null &&
+      this.paradoSinLlegar < PACIENCIA_EN_EL_PUESTO
+    );
+  }
+
+  /** Segundos parado en «en-puesto» con el señalero llamando todavía. */
+  private paradoSinLlegar = 0;
+
   /** Si el señalero estaba en el cuadro el fotograma anterior. */
   private senaleroEnCuadro = false;
   private readonly puntoDelSenalero = new Vector3();
@@ -12539,10 +12598,21 @@ export class Game {
             z: s.position.z,
             velocidad: s.airspeed,
             enElSuelo: s.onGround,
+            motor: this.input.controls.engineOn,
           },
           volviendo,
         )
       : null;
+    /*
+     * **La red de quien se para antes de su sitio**: con el señalero todavía
+     * llamando y el avión quieto, al rato se da la llegada por buena y sale la
+     * llave, como antes. Ver `elSenaleroLlevaLaLlegada`.
+     */
+    const llamando =
+      fase === "en-puesto" &&
+      s.airspeed < 0.5 &&
+      (gesto === "adelante" || gesto === "izquierda" || gesto === "derecha");
+    this.paradoSinLlegar = llamando ? this.paradoSinLlegar + dt : 0;
 
     /*
      * **Y pasarse del puesto tiene que doler un poco.**
@@ -12614,8 +12684,7 @@ export class Game {
      * el avión pasando por otra calle, lejos y de lado. Ver
      * `senaleroALaVista`.
      */
-    const enPantalla =
-      gesto === "frenos" || !this.senaleroALaVista() ? null : gesto;
+    const enPantalla = !this.senaleroALaVista() ? null : gesto;
     if (enPantalla !== this.gestoEnPantalla) {
       this.gestoEnPantalla = enPantalla;
       if (enPantalla) {
@@ -13478,7 +13547,7 @@ export class Game {
     // saber leer; el instructor de voz vendrá a llenar este hueco.
     const conLetras = this.tier.instruments !== "none";
 
-    if (vista.fase !== this.faseAnunciada) {
+    if (vista.fase !== this.faseAnunciada && !this.elSenaleroLlevaLaLlegada(vista)) {
       const antes = this.faseAnunciada;
       this.faseAnunciada = vista.fase;
       // Si esto es solo reponer la tarjeta que alguien tapó, se pone y ya: ni

@@ -2104,6 +2104,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const senalero = {
   visto: false,
+  /** La seña que hacía al girar la llave. Ver la etapa «apagar». */
+  alApagar: null,
   gestos: new Set(),
   masCerca: Infinity,
   /* Y por qué no se le vio, que es lo que faltaba. Ver `comoVa`. */
@@ -4537,16 +4539,28 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * se apaga a mano, que es lo que hacía antes.
        */
       esperandoParaApagar += paso;
+      /*
+       * **Y con la seña de cortar motores, no antes.** Quien juega apaga
+       * cuando el señalero se lo dice, después del alto, los frenos y los
+       * calzos; apagar antes era lo que salía en la tarjeta de «llegaste,
+       * apagá el motor», tapándole. Se espera a esa seña si hay señalero
+       * haciendo señas, con su red: veinte segundos.
+       */
+      const elSenalero = o.senalero?.();
+      const sena = elSenalero?.grupo?.visible ? elSenalero.gestoDeAhora : null;
+      const esperaLaSena = !!sena && sena !== "cortar" && esperandoParaApagar < 20;
       if (
         c.engineOn &&
+        !esperaLaSena &&
         porElSuelo(s) < 1 &&
         (o.controles().throttle ?? 0) <= 0.05 &&
         o.tocarMando
       ) {
+        senalero.alApagar ??= sena ?? "ninguna";
         o.tocarMando("motor");
         if (!o.controles().engineOn) c.engineOn = false;
       }
-      if (esperandoParaApagar > 5) c.engineOn = false;
+      if (esperandoParaApagar > 25) c.engineOn = false;
       /*
        * Y se le dan tres segundos al juego para contar el vuelo. La pantalla
        * de fin no sale en el mismo fotograma en que se para la hélice —tiene
@@ -4723,6 +4737,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       donde: senalero.donde,
       porQueNo: [...senalero.porQueNo],
       gestos: [...senalero.gestos],
+      alApagar: senalero.alApagar,
       masCerca: Math.round(senalero.masCerca),
     },
     verBackTaxi: (() => {
@@ -5547,6 +5562,24 @@ if (vuelo.enBici) {
     }`,
     "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
   );
+  /*
+   * **Y el motor se apaga con su seña, la última.** «Llegaste, apagá el
+   * motor» salía antes que el señalero, con la tarjeta del final tapándole.
+   * El orden de verdad, del Anexo 2 de la OACI: alto, frenos, calzos y
+   * cortar motores; y el banco, como quien juega, gira la llave con esa
+   * última. Si no llegó a hacerla, se ve aquí. Ver `YA_PARADO` en
+   * `flight/senalero.ts`.
+   */
+  if (vuelo.senalero?.alApagar && vuelo.senalero.alApagar !== "ninguna")
+    comprobar(
+      "y se apaga con la seña de cortar motores, después del alto, los frenos y los calzos",
+      vuelo.senalero.alApagar === "cortar" &&
+        ["alto", "frenos", "calzos", "cortar"].every((g) =>
+          vuelo.senalero.gestos.includes(g),
+        ),
+      `seña al apagar: ${vuelo.senalero.alApagar} · gestos: ${vuelo.senalero.gestos.join(", ")}`,
+      "«llegaste, apagá el motor» antes que el señalero (captura 128)",
+    );
 }
 
 /*

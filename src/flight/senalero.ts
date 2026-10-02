@@ -30,7 +30,29 @@
  * los gestos son adorno.
  */
 export type Gesto =
-  "adelante" | "izquierda" | "derecha" | "despacio" | "alto" | "frenos" | null;
+  | "adelante"
+  | "izquierda"
+  | "derecha"
+  | "despacio"
+  | "alto"
+  | "frenos"
+  | "calzos"
+  | "cortar"
+  | null;
+
+/**
+ * **Lo que se hace con el avión ya parado en su sitio, y en este orden**, que
+ * es el del Anexo 2 de la OACI, apéndice 1: frenos puestos, calzos puestos y
+ * cortar motores. Ver `gestoDeSenalero`.
+ */
+export const YA_PARADO: readonly Exclude<Gesto, null>[] = ["frenos", "calzos", "cortar"];
+
+/**
+ * Lo que dura cada seña con el avión parado antes de la siguiente, s: lo que
+ * tarda quien pilota en poner el freno y quien está abajo en meter los calzos.
+ * La de cortar motores se queda hasta que se apagan.
+ */
+export const DURA_LA_SENA = 2.5;
 
 /** Lo que hace falta saber para elegir el gesto. */
 export interface Llegada {
@@ -47,6 +69,13 @@ export interface Llegada {
   readonly enElSuelo: boolean;
   /** Si esto es una llegada al puesto. Lo sabe el plan de vuelo, no esto. */
   readonly volviendo: boolean;
+  /**
+   * Segundos que lleva parado en su sitio, con las señas de ya parado. Ver
+   * `YA_PARADO`. Sin esto, cero.
+   */
+  readonly parado?: number;
+  /** Si el motor sigue en marcha. Sin esto, que sí. */
+  readonly motor?: boolean;
 }
 
 /**
@@ -127,16 +156,23 @@ export function gestoDeSenalero(s: Llegada, antes: Gesto = null): Gesto {
   if (Math.abs(s.lateral) > DE_LADO) return null;
 
   /*
-   * **Parado en el sitio: frenos.**
+   * **Parado en el sitio: frenos, calzos y cortar motores, por ese orden.**
    *
-   * Es el final del vuelo y por eso tiene gesto propio. «Alto» dice «no te
-   * muevas más»; «frenos puestos» dice «ya está, llegaste». Un juego que
-   * termina sin decir que ha terminado deja a quien juega mirando la pantalla
-   * a ver si falta algo.
+   * Aquí acababa en «frenos», y lo que venía después lo decía el juego por su
+   * cuenta: «llegaste, apagá el motor» y la tarjeta del final, tapándole,
+   * antes incluso de que el señalero cruzara los bastones. En un aeropuerto
+   * de verdad nadie apaga hasta que se lo dicen: el señalero para el avión,
+   * pide el freno de estacionamiento, avisa de que ya tiene los calzos puestos
+   * y solo entonces hace la seña de cortar motores, el bastón pasando por
+   * delante del cuello. Apagados, baja los bastones: ya no hay nada que
+   * señalar, y entonces sí se acaba el vuelo. Ver `YA_PARADO`.
    */
-  const liston = antes === "frenos" ? SE_MUEVE_OTRA_VEZ : QUIETO;
+  const liston =
+    antes !== null && YA_PARADO.includes(antes) ? SE_MUEVE_OTRA_VEZ : QUIETO;
   if (s.velocidad < liston && Math.abs(s.restante) < PARADA * 2) {
-    return "frenos";
+    if (s.motor === false) return null;
+    const parado = s.parado ?? 0;
+    return YA_PARADO[Math.min(YA_PARADO.length - 1, Math.floor(parado / DURA_LA_SENA))]!;
   }
 
   if (s.restante < PARADA) return "alto";
