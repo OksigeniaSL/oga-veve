@@ -2671,14 +2671,15 @@ button.motor__tecla::after {
   pointer-events: none;
 }
 
-.pad__dibujo--ancho {
-  width: 62%;
-  height: 52%;
-}
-
 .pad__dibujo--alto {
   width: 46%;
   height: 78%;
+}
+
+/* Los pedales, de punta a punta de la barra del timón. Ver `index.html`. */
+.pad__dibujo--pedales {
+  width: 90%;
+  height: 74%;
 }
 
 .pad__punto {
@@ -10626,5 +10627,321 @@ button.motor__tecla::after {
     width: auto;
     min-width: 0;
     padding-inline: calc(8px / var(--escala, 1));
+  }
+}
+
+/*
+ * ── **El cuadro del teléfono** ──
+ *
+ * «El cuadro de mandos ocupa un montón, pero ni aún así se ve: no leo la
+ * altitud a la que debo llegar ni más detalles, es muy pequeño para un
+ * teléfono.» En el teléfono apaisado el cuadro plano se esconde y van cuatro
+ * losas grandes en una fila baja encima de los pedales: la velocidad con su
+ * marca, la altitud con la ventanilla ALT y sus teclas, el rumbo, y el tren
+ * y los flaps. Tocar una losa pone grande su pantalla del cuadro plano. Ver
+ * `ui/cuadro-telefono.ts` y `Hud.ponerGrande`.
+ *
+ * Todo en píxeles de pantalla divididos por la escala del HUD, que en el
+ * teléfono va reducido: lo que se lee y lo que se toca no encoge.
+ */
+.tel {
+  display: none;
+}
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .hud .cuadro {
+    /* Bajas, para que encima quepan el avión y el horizonte. */
+    --tel-alto: calc(min(56px, 15vh) / var(--escala, 1));
+    --tel-hueco: calc(6px / var(--escala, 1));
+    width: max-content;
+    display: flex;
+    align-items: stretch;
+    gap: var(--tel-hueco);
+  }
+
+  .hud .cuadro > .tablero {
+    display: none;
+  }
+
+  .hud .cuadro > .tel {
+    display: flex;
+    align-items: stretch;
+    gap: var(--tel-hueco);
+    /*
+     * Y nunca más ancha que el hueco entre la palanca y el freno: en un
+     * teléfono de 780 se metía debajo de los dos. Las losas encogen; las
+     * teclas no, que son de dedo.
+     */
+    max-width: calc((100vw - 2 * 178px) / var(--escala, 1) - 44px / var(--escala, 1));
+    pointer-events: auto;
+  }
+
+  /*
+   * Abierto, el asa va al final de la fila, del alto de una losa: encima
+   * le quitaba al avión una franja entera. Recogido vuelve a ser la pestaña
+   * de encima de los pedales, como estaba.
+   */
+  .hud .cuadro:not(.cuadro--bajado) > .cuadro__tirador {
+    position: static;
+    order: 2;
+    flex: none;
+    align-self: flex-end;
+    transform: none;
+    width: calc(44px / var(--escala, 1));
+    height: var(--tel-alto);
+    border: 1px solid var(--cabina-filo);
+    border-radius: calc(12px / var(--escala, 1));
+    box-shadow: none;
+  }
+
+  .hud .tel__losa,
+  .hud .tel__tecla {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: var(--tel-alto);
+    margin: 0;
+    padding: calc(3px / var(--escala, 1)) calc(8px / var(--escala, 1));
+    border: 1px solid var(--cabina-filo);
+    border-radius: calc(12px / var(--escala, 1));
+    background: var(--cabina-pantalla);
+    color: var(--cabina-valor);
+    font-family: var(--cabina-fuente);
+    cursor: pointer;
+    pointer-events: auto;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    row-gap: calc(2px / var(--escala, 1));
+  }
+
+  .hud .tel__losa:focus-visible,
+  .hud .tel__tecla:focus-visible {
+    outline: 3px solid var(--foco, #ffb454);
+    outline-offset: 2px;
+  }
+
+  /* Las teclas de la ventanilla: de dedo, cuarenta y cuatro de pantalla. */
+  .hud .tel__tecla {
+    flex: none;
+    width: calc(44px / var(--escala, 1));
+    padding: 0;
+    place-items: center;
+    fill: var(--cabina-valor);
+  }
+
+  .hud .tel__tecla svg {
+    width: calc(20px / var(--escala, 1));
+    height: calc(20px / var(--escala, 1));
+  }
+
+  .hud .tel__grupo {
+    display: flex;
+    gap: calc(4px / var(--escala, 1));
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .hud .tel__cifra {
+    font-size: calc(min(24px, 6.4vh) / var(--escala, 1));
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hud .tel__cifra--menuda {
+    font-size: calc(18px / var(--escala, 1));
+  }
+
+  .hud .tel__rotulo {
+    font-size: calc(10px / var(--escala, 1));
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    color: var(--cabina-apagado);
+  }
+
+  .hud .tel__dibujo svg {
+    display: block;
+    width: calc(16px / var(--escala, 1));
+    height: calc(16px / var(--escala, 1));
+    fill: var(--cabina-apagado);
+    color: var(--cabina-apagado);
+  }
+
+  .hud .tel__dibujo .senal__hueco {
+    fill: var(--cabina-pantalla);
+  }
+
+  /* La banda del anemómetro, con su aguja y la muesca de la que toca. */
+  .hud .tel__banda {
+    width: calc(64px / var(--escala, 1));
+    height: calc(9px / var(--escala, 1));
+    overflow: visible;
+  }
+
+  .hud .tel__fondo-banda {
+    fill: #1b1f24;
+  }
+
+  .hud .tel__aguja {
+    fill: var(--cabina-valor);
+  }
+
+  .hud .tel__marca {
+    fill: var(--cabina-objetivo);
+  }
+
+  /* La altura pedida, en magenta: lo que quiero. */
+  .hud .tel__sel {
+    font-size: calc(15px / var(--escala, 1));
+    font-weight: 700;
+    line-height: 1;
+    color: var(--cabina-objetivo);
+    padding: 0 calc(3px / var(--escala, 1));
+    border-radius: calc(4px / var(--escala, 1));
+    outline: 1px solid transparent;
+  }
+
+  .hud .tel__sel--cerca {
+    outline-color: var(--cabina-valor);
+  }
+
+  .hud .tel__sel--fuera {
+    outline-color: var(--cabina-precaucion);
+    color: var(--cabina-precaucion);
+  }
+
+  /*
+   * La altitud: el rótulo —o la montaña— a un lado, y a la derecha la cifra
+   * con la altura pedida debajo. Apiladas las tres no cabían en el alto de
+   * una losa.
+   */
+  .hud .tel__losa--alt {
+    grid-template-columns: auto auto;
+    grid-template-areas: "rot cifra" "rot sel";
+    column-gap: calc(5px / var(--escala, 1));
+    align-items: center;
+  }
+
+  .hud .tel__losa--alt > .tel__rotulo,
+  .hud .tel__losa--alt > .tel__dibujo {
+    grid-area: rot;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .hud .tel__losa--alt > .tel__dibujo {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
+  .hud .tel__losa--alt > .tel__cifra {
+    grid-area: cifra;
+  }
+
+  .hud .tel__losa--alt > .tel__sel {
+    grid-area: sel;
+  }
+
+  /* El rumbo: la rosa al lado de la cifra, que es la que se lee. */
+  .hud .tel__losa--hdg {
+    grid-template-columns: auto auto;
+    column-gap: calc(6px / var(--escala, 1));
+    align-items: center;
+  }
+
+  .hud .tel__losa--hdg .tel__rotulo {
+    grid-column: 1 / -1;
+  }
+
+  .hud .tel__dibujo--rosa svg {
+    width: calc(22px / var(--escala, 1));
+    height: calc(22px / var(--escala, 1));
+  }
+
+  .hud .tel__norte {
+    fill: var(--cabina-valor);
+  }
+
+  .hud .tel__avioncito {
+    stroke: var(--cabina-simbolo);
+  }
+
+  /* El tren: una luz por pata, apagada dentro, ámbar moviéndose, verde fuera. */
+  .hud .tel__luces {
+    display: flex;
+    gap: calc(4px / var(--escala, 1));
+  }
+
+  .hud .tel__luz {
+    width: calc(11px / var(--escala, 1));
+    height: calc(11px / var(--escala, 1));
+    border-radius: 50%;
+    border: calc(2px / var(--escala, 1)) solid var(--cabina-apagado);
+  }
+
+  .hud .tel__luz[data-luz="fuera"] {
+    background: var(--cabina-normal);
+    border-color: var(--cabina-normal);
+  }
+
+  .hud .tel__luz[data-luz="moviendose"] {
+    background: var(--cabina-precaucion);
+    border-color: var(--cabina-precaucion);
+  }
+
+  .hud .tel__flaps {
+    display: flex;
+    align-items: center;
+    gap: calc(4px / var(--escala, 1));
+  }
+
+  /* El peldaño, como en el cuadro plano: el cuadro no cambia, crece. */
+  .hud .tel[data-peldano="1"] [data-desde="2"],
+  .hud .tel[data-peldano="1"] [data-desde="3"],
+  .hud .tel[data-peldano="2"] [data-desde="3"],
+  .hud .tel[data-peldano="3"] [data-hasta="2"],
+  .hud .tel[data-peldano="4"] [data-hasta="2"] {
+    display: none;
+  }
+
+  /*
+   * **Y una pantalla puesta en grande**: el cuadro plano recortado a ella, del
+   * alto que dejan la fila de arriba y los pedales. Se toca y vuelven las
+   * losas. Ver `Hud.ponerGrande`.
+   */
+  .hud .cuadro.cuadro--grande > .tel {
+    display: none;
+  }
+
+  /*
+   * Y el subtítulo, que va debajo de la barra de arriba, baja con ella abierta
+   * al sitio de las losas: arriba tapaba el rumbo de la pantalla grande.
+   */
+  .hud:has(.cuadro--grande) .hud__abajo > [data-hud="hint"] {
+    top: auto;
+    bottom: calc((20px + 56px + 12px) / var(--escala, 1));
+  }
+
+  .hud .cuadro.cuadro--grande > .tablero {
+    display: block;
+    width: auto;
+    height: calc((100vh - 64px - 92px) / var(--escala, 1));
+    height: calc((100dvh - 64px - 92px) / var(--escala, 1));
+    pointer-events: auto;
+    cursor: zoom-out;
+  }
+
+  /*
+   * **Y el motor, fuera: lo hace la palanca.** «Los dos botones de hélice con
+   * flecha repiten lo que ya hace la palanca de gases.» En el teléfono la
+   * palanca está siempre bajo el pulgar derecho, con su relleno y sus
+   * muescas, y la tarjeta con más y menos ocupaba al lado del avión un sitio
+   * que no decía nada nuevo. Sale solo con la reversa metida, que es lo único
+   * suyo que la palanca no cuenta.
+   */
+  .hud .tarjeta.motor:not(:has(.motor__reversa:not([hidden]))) {
+    display: none;
   }
 }

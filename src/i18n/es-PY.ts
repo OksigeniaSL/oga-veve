@@ -1335,6 +1335,11 @@ export const ES_PY = {
   "avion.cambiarParado": "Para cambiar de avión, pará en tierra",
   "hud.mandarCinturon": "Cartel del cinturón",
   "hud.subirCuadro": "Subir el tablero",
+  // El cuadro del teléfono: cada losa pone grande su pantalla, y las dos
+  // teclas de la ventanilla ALT. Ver ui/cuadro-telefono.ts.
+  "hud.telGrande": "Ver la pantalla en grande",
+  "hud.altBajar": "Bajar la altura pedida",
+  "hud.altSubir": "Subir la altura pedida",
   /*
    * El botón de los cuatro puntos que recoge los demás en el teléfono, y el
    * de la pantalla completa que va dentro. Solo los lee un lector de
@@ -1648,7 +1653,7 @@ export const ES_PY = {
    * galón es un dibujo y no lleva ni una palabra, que para eso se inventó.
    */
   "tactil.palanca": "Palanca",
-  "tactil.timon": "Timón",
+  "tactil.timon": "Pedales del timón",
   "tactil.motor": "Motor",
   "galon.manga": "Los galones de este vuelo",
   "galon.aproximacion": "Galón de la aproximación",

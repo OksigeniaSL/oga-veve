@@ -434,6 +434,7 @@ import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
+import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
 import { PantallaDeMision } from "./ui/pantalla-mision";
 import {
@@ -18333,6 +18334,8 @@ export class Game {
   private relojDelEncuadre = 0;
   /** El último corrimiento puesto, para no rehacer la lente si no cambia. */
   private corrimientoPuesto = Number.NaN;
+  /** Y lo último acercado. Ver `encuadrarSobreElCuadro`. */
+  private acercarPuesto = 1;
 
   /**
    * `forzar`: rehacer la lente aunque el corrimiento no haya cambiado. Lo
@@ -18383,7 +18386,17 @@ export class Game {
      * La focal es la de la pantalla entera: el corrimiento ya no acerca nada.
      * Ver más abajo, donde se pone la lente.
      */
-    const focal = alto / 2 / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
+    /*
+     * **Y en el teléfono, un poco más cerca.** «El avión se ve pequeño.» Con
+     * el mismo ángulo de arriba abajo en una pantalla dos veces más ancha que
+     * alta, a lo ancho se abren más de cien grados y el avión queda en un
+     * cuarto de la pantalla de un aparato que ya es pequeño. Un doce por
+     * ciento lo acerca sin quitar el horizonte. Desde la cabina, nada: ahí
+     * encuadra la propia cabina.
+     */
+    const acercar = !propio && ahoraEsTelefonoApaisado() ? 1.12 : 1;
+    const focal =
+      (acercar * (alto / 2)) / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
     const sinTope = Number.POSITIVE_INFINITY;
     const ctx = this.contextoDeCamara;
     ctx.caidaMaxima = propio ? sinTope : Math.atan((franja * 0.12) / focal);
@@ -18396,15 +18409,21 @@ export class Game {
      * porque parece que va uno encajonado». Se le dice a la cámara cuánto
      * puede mirar hacia abajo como mucho: lo que deja el horizonte a un
      * quinto de la franja libre, contando desde arriba. Y como eso baja el
-     * avión, hasta dónde puede bajar él en ese caso: al ochenta y seis por
+     * avión, hasta dónde puede bajar él en ese caso: al ochenta y dos por
      * ciento de la franja, que lo deja entero encima del cuadro. Si las dos
      * cosas no caben a la vez, gana el avión. Ver `sinPerderElAvion` en
      * `cameras/fuera.ts`.
      */
     ctx.bajadaMaxima = propio ? sinTope : Math.atan((franja * 0.3) / focal);
-    ctx.caidaTope = propio ? sinTope : Math.atan((franja * 0.36) / focal);
-    if (!forzar && Math.abs(corrimiento - this.corrimientoPuesto) < 1) return;
+    ctx.caidaTope = propio ? sinTope : Math.atan((franja * 0.32) / focal);
+    if (
+      !forzar &&
+      Math.abs(corrimiento - this.corrimientoPuesto) < 1 &&
+      acercar === this.acercarPuesto
+    )
+      return;
     this.corrimientoPuesto = corrimiento;
+    this.acercarPuesto = acercar;
     if (Math.abs(corrimiento) < 1) {
       this.camera.clearViewOffset();
       /*
@@ -18413,7 +18432,7 @@ export class Game {
        * y salía estirada.
        */
       this.camera.aspect = ancho / alto;
-      this.camera.zoom = 1;
+      this.camera.zoom = acercar;
     } else {
       const extra = Math.abs(corrimiento) * 2;
       // Una imagen más alta de la que se recorta la ventana: recortando por
@@ -18435,7 +18454,7 @@ export class Game {
        * se quería desde el principio, un objetivo descentrable: la misma
        * lente, corrida hacia arriba.
        */
-      this.camera.zoom = alto / (alto + extra);
+      this.camera.zoom = (acercar * alto) / (alto + extra);
     }
     this.camera.updateProjectionMatrix();
   }
