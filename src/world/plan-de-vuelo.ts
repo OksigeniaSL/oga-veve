@@ -117,6 +117,13 @@ const ENCENDIDO_POR_DELANTE = 300;
 /** Lo que brillan las del fondo, de uno. Se ven, pero no llaman. */
 const TENUES = 0.3;
 
+/**
+ * **Lo que se deja ver de la vuelta del back-taxi antes de darla**, m de ruta
+ * pasada la media vuelta: un trozo, que diga «y de ahí, hacia allá». Ver
+ * `hastaDondeSePinta`.
+ */
+const VER_DESPUES_DE_LA_VUELTA = 30;
+
 /** Lo que mide cada luz en pantalla, en píxeles: su brillo, visto de lejos. */
 const LUZ_EN_PANTALLA = 7;
 
@@ -828,6 +835,9 @@ export interface Vista {
    * En la pista y con el morro hacia donde se despega, a menos de
    * `MIRANDO_LA_PISTA`: la vuelta de entrar ya está dada. Lo mira el tope de
    * rodaje de Guyrami. Ver `entraConElJuego` en `flight/tope-de-rodaje.ts`.
+   *
+   * **Y una vez dada, dada**: deja de valer solo con otra vuelta de verdad,
+   * más de `YA_DIO_LA_VUELTA`. Ver `yaMiraLaPista`.
    */
   readonly mirandoLaPista: boolean;
 }
@@ -3354,7 +3364,7 @@ export class PlanDeVuelo {
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
       saltoLaLuz: p.saltoLaLuz,
       leccionHecha: p.leccionHecha,
-      mirandoLaPista: s.enPista && Math.abs(s.desalineado) < MIRANDO_LA_PISTA,
+      mirandoLaPista: this.miraLaPista(s.enPista, s.desalineado),
       fuera:
         (p.fase === "rodando" || p.fase === "a-plataforma") &&
         this.rutaMundo.length > 1 &&
@@ -5785,14 +5795,20 @@ export class PlanDeVuelo {
     const luces = this.luces;
     if (!luces) return;
     const avance = this.avance;
-    if (Math.abs(avance - this.encendidasHasta) < 0.5) return;
+    const hasta = this.hastaDondeSePinta();
+    if (
+      Math.abs(avance - this.encendidasHasta) < 0.5 &&
+      hasta === this.pintadaHasta
+    )
+      return;
     this.encendidasHasta = avance;
+    this.pintadaHasta = hasta;
     const { s, bombillas, brillos } = luces;
     const porLuz = bombillas.count / s.length;
     for (let k = 0; k < s.length; k++) {
       const d = s[k]! - avance;
       const alfa =
-        d < -3
+        d < -3 || s[k]! > hasta
           ? 0
           : d <= ENCENDIDO_POR_DELANTE
             ? 1
@@ -5807,7 +5823,90 @@ export class PlanDeVuelo {
     let i = 0;
     const { acumulado, raya } = luces;
     while (i < acumulado.length - 2 && acumulado[i + 1]! < avance - 3) i++;
-    raya.setDrawRange(i * 6, Infinity);
+    // Y hasta el último punto del tramo que toca, si no se pinta entera: las
+    // luces llegan justo hasta ahí, la raya hasta su último vértice.
+    let j = i;
+    while (j < acumulado.length - 1 && acumulado[j + 1]! <= hasta) j++;
+    raya.setDrawRange(i * 6, hasta === Infinity ? Infinity : Math.max(0, j - i) * 6);
+    // La diana es el final de la raya: con la raya a medias, no se pone.
+    const diana = this.grupo.getObjectByName("diana");
+    if (diana) diana.visible = hasta === Infinity;
+  }
+
+  /**
+   * **Si el morro ya mira a la pista**, con memoria.
+   *
+   * Sin memoria, el tope de rodaje de Guyrami se soltaba y se volvía a poner
+   * mientras el avión se ponía en el eje: con el morro a siete grados se
+   * soltaba, la ayuda de rodaje lo llevaba hacia el eje torciéndolo diez, y
+   * se volvía a cerrar el gas. Medido en Mariscal Estigarribia con el JAZ
+   * 120 y el gas a fondo, acabada la media vuelta del back-taxi: gas uno, gas
+   * ocho centésimas, gas una décima, y así hasta estar en el eje. «Hay que
+   * rodar un poco antes de que los motores respondan, eso es desaprovechar
+   * pista» (captura 131). Lo que el tope impide es seguir recto mientras la
+   * raya gira, no corregir el eje con el avión ya mirando pista abajo: eso lo
+   * hace la ayuda con el avión corriendo.
+   */
+  private miraLaPista(enPista: boolean, desalineado: number): boolean {
+    const mira =
+      enPista &&
+      (Math.abs(desalineado) < MIRANDO_LA_PISTA ||
+        (this.yaMiraLaPista && Math.abs(desalineado) < YA_DIO_LA_VUELTA));
+    this.yaMiraLaPista = mira;
+    return mira;
+  }
+
+  /** Si en el paso anterior el morro ya miraba a la pista. Ver `miraLaPista`. */
+  private yaMiraLaPista = false;
+
+  /** Hasta dónde se pintó la raya la última vez, m de ruta. Ver `encender`. */
+  private pintadaHasta = Infinity;
+
+  /**
+   * **Hasta dónde se pinta la raya**, m de ruta: entera, salvo en el
+   * back-taxi.
+   *
+   * La raya del back-taxi es una sola ruta que va y vuelve —pista abajo hasta
+   * el sitio de dar la vuelta, la media vuelta y pista arriba otra vez hasta
+   * donde se despega— y se pintaba entera desde el principio. Vista al entrar
+   * en la pista, eran dos rayas: la de ida curvándose hacia un lado y la de
+   * vuelta, por el eje, hacia el otro y con la diana al final. «Esto es un lío
+   * de líneas», en Mariscal Estigarribia con el JAZ 120 (captura 130). Se
+   * pinta lo que toca ahora, que es un tramo: hasta acabar la media vuelta y
+   * un trozo de lo que viene, para saber hacia dónde; dada la vuelta, el resto.
+   */
+  private hastaDondeSePinta(): number {
+    if (this.giroDelBackTaxi === null) return Infinity;
+    return this.finDeLaMediaVuelta + VER_DESPUES_DE_LA_VUELTA;
+  }
+
+  /**
+   * Dónde acaba la media vuelta de la raya de ahora, m de ruta, si la tiene:
+   * el primer tramo que mira hacia donde se despega después de haber ido al
+   * revés. `Infinity` si no da ninguna. Se mide al pintar.
+   */
+  private finDeLaMediaVuelta = Infinity;
+
+  private medirLaMediaVuelta(): void {
+    this.finDeLaMediaVuelta = Infinity;
+    const ruta = this.rutaMundo;
+    const [fx, fz] = delante(this.pista.heading);
+    let alReves = false;
+    let recorrido = 0;
+    for (let i = 0; i < ruta.length - 1; i++) {
+      const dx = ruta[i + 1]![0] - ruta[i]![0];
+      const dz = ruta[i + 1]![1] - ruta[i]![1];
+      const l = Math.hypot(dx, dz);
+      if (l > 1e-6) {
+        const hacia = (dx * fx + dz * fz) / l;
+        if (hacia < -0.5) alReves = true;
+        else if (alReves && hacia > Math.cos(Math.PI / 6)) {
+          this.finDeLaMediaVuelta = recorrido;
+          return;
+        }
+      }
+      recorrido += l;
+    }
   }
 
   /** Dibuja la ruta en el suelo, y una diana donde termina. */
@@ -5940,7 +6039,7 @@ export class PlanDeVuelo {
 
     this.luces = this.ponerLuces(colorDe, geo);
     this.encendidasHasta = NaN;
-    this.encender();
+    this.medirLaMediaVuelta();
 
     /*
      * La diana del final: un aro, que se ve de lejos y no tapa nada.
@@ -5978,5 +6077,7 @@ export class PlanDeVuelo {
     aro.position.set(fin[0], this.cota(fin[0], fin[1]) + ALTURA + 0.02, fin[1]);
     aro.name = "diana";
     this.grupo.add(aro);
+    // Encendida al final, con la diana ya puesta: ver `hastaDondeSePinta`.
+    this.encender();
   }
 }

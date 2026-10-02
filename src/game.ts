@@ -314,6 +314,12 @@ const ENCIMA_DE_LA_PISTA = new Set<string>([
 ]);
 
 /**
+ * Las fases de entrar en la pista y correr, en las que «motor a fondo» ya
+ * dicho al soltar el gas sigue valiendo. Ver `decirElGasSuelto`.
+ */
+const DE_LA_CARRERA = new Set<string>(["alineando", "despegando", "comprometido"]);
+
+/**
  * **Lo que se espera a quien se para antes de su sitio con el señalero
  * llamando**, s, antes de darle la llegada por buena y sacar la llave. Una
  * espera que depende de que alguien avance no puede ser para siempre.
@@ -519,6 +525,7 @@ import { BOCA, MEGAFONIA, anunciaLaFase } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
+  GUION,
   SE_QUEDAN,
   YA_ES_RODAJE,
   guionAfis,
@@ -13214,6 +13221,37 @@ export class Game {
     );
   }
 
+  /**
+   * **«Motor a fondo», justo cuando el juego suelta el gas.**
+   *
+   * En Guyrami el juego lleva el gas hasta que el morro mira pista abajo
+   * —ver `entraConElJuego` en `flight/tope-de-rodaje.ts`— y quien tenía la
+   * palanca a fondo no sabía por qué el avión no corría: «hay que rodar un
+   * poco antes de que los motores respondan». Al soltarlo se dice, con la
+   * frase de la fase de despegar y su tarjeta; la fase, cuando llegue, ya no
+   * lo repite. Un suceso, una voz.
+   */
+  private decirElGasSuelto(vista: Vista): void {
+    const conduce = anticipacionDeRodaje(this.tier.assists.taxiAssist) >= 1;
+    if (conduce && vista.fase === "alineando" && vista.mirandoLaPista) {
+      if (this.gasSueltoDicho) return;
+      this.gasSueltoDicho = true;
+      const clave = GUION.despegando.clave as TranslationKey;
+      this.hud.senal.mostrar(
+        comoDibujo(GUION.despegando.icono),
+        this.tier.instruments !== "none" ? t(clave) : "",
+        null,
+        { segundos: 4 },
+      );
+      this.instructor.decir(t(clave), clave);
+      return;
+    }
+    if (!DE_LA_CARRERA.has(vista.fase)) this.gasSueltoDicho = false;
+  }
+
+  /** Si ya se dijo «motor a fondo» en esta entrada en pista. */
+  private gasSueltoDicho = false;
+
   private asistirRodaje(dt: number): void {
     void dt;
     const fuerza = this.tier.assists.taxiAssist;
@@ -13435,6 +13473,7 @@ export class Game {
       dt,
     );
     this.vistaActual = vista;
+    this.decirElGasSuelto(vista);
     this.flapsTrasLaToma(faseDeAntes, vista.fase);
     /*
      * **Y si te pasaste la salida, se dice.** El plan cuenta las veces que
@@ -13825,7 +13864,9 @@ export class Game {
          * `audio/boca.ts`.
          */
         BOCA.retirar((c) => anunciaLaFase(c) && c !== clave);
-        if (!loDiceElV1) this.instructor.decir(frase, clave);
+        // Y «motor a fondo» ya se dijo al soltar el gas. Ver `decirElGasSuelto`.
+        const yaDicho = vista.fase === "despegando" && this.gasSueltoDicho;
+        if (!loDiceElV1 && !yaDicho) this.instructor.decir(frase, clave);
         if (conLetras) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }
