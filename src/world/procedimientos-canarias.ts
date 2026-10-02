@@ -367,10 +367,9 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
        * la final va a 207° verdaderos hacia LA510, junto a la costa y casi a
        * dos millas al este del eje, y se termina en circuito al este de la
        * pista —al oeste está prohibido—. Se vuela hasta LA505 y desde ahí, a
-       * la vista, al eje a dos millas y media: es lo más lejos del umbral que
-       * se entra en él con un giro de cuarenta y cinco grados o menos, y ahí
-       * el eje va sobre el agua. A cuatro millas el eje ya pisa la costa de
-       * Puntallana. Ver `enCircuito`.
+       * la vista, al eje a dos millas y media, cortándolo a treinta grados:
+       * el eje va sobre el agua desde media milla del umbral hasta tres y
+       * media, y a cuatro ya pisa la costa de Puntallana. Ver `enCircuito`.
        */
       "18": enCircuito(
         "AD 2-GCLA IAC 4 · RNP A (en circuito a la 18)",

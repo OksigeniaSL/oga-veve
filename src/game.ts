@@ -10492,7 +10492,9 @@ export class Game {
     this.cantarLaActitud();
 
     this.hud.ponerLucesDeAviso({
-      terreno: terreno !== null,
+      // La luz de terreno es roja: la precaución de delante va en ámbar, en
+      // la tarjeta y en el relieve de la pantalla de navegación.
+      terreno: terreno !== null && terreno !== "monte",
       perdida: avisaLaPerdida(this.flight.state),
       rapido: this.sobrandoVelocidad > 0 && !this.rapidoSinLuz,
       trenMal: this.trenFueraDeSitio(),
