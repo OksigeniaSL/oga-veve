@@ -322,6 +322,16 @@ export interface Scenario {
    * A y B— del resto: Lanzarote tiene su circuito de avionetas al otro lado.
    */
   circuitoPublicado?: Readonly<Record<string, CircuitoPublicado>>;
+  /**
+   * **Cuánta cola aguanta la pista preferente, en nudos, si el AIP lo dice.**
+   *
+   * La preferente es la cabecera escrita en `runway`, y se mantiene con poco
+   * viento de cola: cinco nudos, el número de siempre —ver
+   * `COLA_QUE_SE_AGUANTA`—. Hay campos que publican el suyo, y manda el
+   * publicado: La Palma opera por la 36 «siempre y cuando la componente de
+   * viento en cola no exceda de 10 kt» (AIP España, AD 2-GCLA, 20.3).
+   */
+  colaPreferente?: number;
 }
 
 /** Un lado publicado, para todos o separando las avionetas del resto. */
@@ -526,7 +536,7 @@ export function conViento(esc: Scenario, meteo: Meteo): Scenario {
       pistaDe(aero as unknown as Aerodrome, escrita).heading,
       meteo,
     );
-    if (cola <= COLA_QUE_SE_AGUANTA) mejor = escrita;
+    if (cola <= (esc.colaPreferente ?? COLA_QUE_SE_AGUANTA)) mejor = escrita;
   }
 
   return {
@@ -1096,7 +1106,17 @@ export const LA_PALMA: Scenario = {
   // El mismo aire atlántico que en Tenerife: bruma poca, y la cumbre se ve.
   fog: { colour: 0xdae4e8, density: 0.000018 },
   sun: { azimuth: 112, elevation: 46 },
-  runway: pistaDe(GCLA as unknown as Aerodrome, "18"),
+  /*
+   * **La 36, que es la preferente del AIP**, con sus diez nudos de cola
+   * (AD 2-GCLA, 20.3). Estaba escrita la 18, y la 18 ganaba todos los empates:
+   * con calma o con el viento de costado se llegaba por el norte —«aterrizar
+   * desde el norte es poco frecuente en La Palma», dijo quien vive allí— y
+   * por la final recta calculada sobre la ladera de Barlovento. Ahora la 18
+   * se usa cuando el viento la pide de verdad, y se llega por su RNP A, sobre
+   * el mar. Ver `procedimientos-canarias.ts`.
+   */
+  runway: pistaDe(GCLA as unknown as Aerodrome, "36"),
+  colaPreferente: 10,
   /*
    * Un grado, y aquí sí es la declinación de verdad: el asfalto corre a 179°
    * verdaderos y la cabecera pone 18. En Canarias la declinación anda por los

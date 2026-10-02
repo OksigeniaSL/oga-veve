@@ -40,7 +40,7 @@
  *   terreno y las que importan para bajar.
  */
 
-import type { Papel } from "../flight/ruta";
+import type { Fijo, Papel } from "../flight/ruta";
 import { CANARIAS } from "./procedimientos-canarias";
 import { PARAGUAY } from "./procedimientos-paraguay";
 
@@ -56,18 +56,37 @@ export interface Publicado {
   readonly minimaPies: number | null;
 }
 
+/** Una aproximación publicada a una cabecera. */
+export interface Aproximacion {
+  /** El nombre de su carta, que es por donde se comprueba. */
+  readonly carta: string;
+  /**
+   * Sus ramas: cada una empieza en su punto de inicio y acaba en el de final.
+   * El umbral no va: lo pone el aeródromo del juego, que es donde se toca.
+   */
+  readonly ramas: readonly (readonly Publicado[])[];
+  /**
+   * **Si acaba en circuito**: a cuántas millas del umbral se entra a la vista
+   * en el eje de la pista. Ver `ramasDeLlegada`.
+   *
+   * Hay cabeceras cuya única aproximación publicada **no acaba alineada** con
+   * la pista: llega a un punto de final a treinta grados del eje y se termina
+   * a ojo, dando la vuelta que haga falta por el lado protegido. Antes el
+   * juego las tiraba enteras y calculaba una final recta a diez millas por el
+   * eje; en la 18 de La Palma esa recta cruzaba la ladera de Barlovento a mil
+   * ochocientos pies. Lo que se vuela ahora es lo publicado —llegada, punto
+   * de inicio, intermedio y punto de final, todo sobre el mar— y desde el
+   * punto de final, **a la vista**, al eje.
+   */
+  readonly aLaVista?: number;
+}
+
 /** Lo publicado de un aeropuerto, por cabecera. */
 export interface Procedimientos {
   /** De dónde sale, para citarlo: la enmienda y su fecha. */
   readonly fuente: string;
-  /**
-   * Las ramas de la aproximación a cada cabecera: cada una empieza en su
-   * punto de inicio y acaba en el de final. El umbral no va: lo pone el
-   * aeródromo del juego, que es donde se toca.
-   */
-  readonly aproximaciones: Readonly<
-    Record<string, { readonly carta: string; readonly ramas: readonly (readonly Publicado[])[] }>
-  >;
+  /** La aproximación de cada cabecera que la tiene. Ver `Aproximacion`. */
+  readonly aproximaciones: Readonly<Record<string, Aproximacion>>;
   /** Las salidas de cada cabecera, con sus puntos en orden. */
   readonly salidas: Readonly<
     Record<string, readonly { readonly nombre: string; readonly carta: string; readonly fijos: readonly Publicado[] }[]>
@@ -88,6 +107,62 @@ export function ramasDe(
 ): readonly (readonly Publicado[])[] {
   if (!cabecera) return [];
   return procedimientosDe(oaci)?.aproximaciones[cabecera]?.ramas ?? [];
+}
+
+/**
+ * **Por dónde se llega a esta cabecera**, ya en el mundo: las ramas
+ * publicadas; las de una aproximación en circuito, con su final a la vista;
+ * o, sin nada publicado, la calculada sobre el eje.
+ *
+ * Es la única cuenta de esto: la usan el plan del juego —ver `rutaDelTramo`—
+ * y las pruebas, que antes llevaban cada una su copia.
+ *
+ * `umbral` y `rumbo` en el mundo: el umbral de aterrizaje en uso y su rumbo
+ * verdadero. `aMundo` pone un punto publicado en el mundo de quien pregunta.
+ */
+export function ramasDeLlegada(
+  oaci: string | null,
+  cabecera: string | null,
+  umbral: { readonly x: number; readonly z: number },
+  rumbo: number,
+  aMundo: (p: Publicado) => Fijo,
+): Fijo[][] {
+  if (!cabecera) return [];
+  const aproximacion = procedimientosDe(oaci)?.aproximaciones[cabecera];
+  if (!aproximacion || aproximacion.ramas.length === 0)
+    return [
+      aproximacionCalculada(cabecera, umbral, rumbo).map(
+        (f): Fijo => ({ ...f, minima: null, calculado: true }),
+      ),
+    ];
+  const ramas = aproximacion.ramas.map((r) => r.map(aMundo));
+  const millas = aproximacion.aLaVista;
+  if (millas === undefined) return ramas;
+  /*
+   * **Lo publicado hasta su punto de final, y de ahí a la vista al eje.**
+   *
+   * El punto de final de la carta pasa a ser uno más de la ruta, con su
+   * altitud mínima: la final de verdad del juego empieza en el eje, que es
+   * donde empieza la senda que se enseña. Ver `Aproximacion.aLaVista`.
+   *
+   * El punto del eje no es de ninguna carta y lleva el nombre que le da un
+   * ordenador de vuelo a un punto en la prolongación de la pista: «RX» y el
+   * número de la cabecera.
+   */
+  const h = (rumbo * Math.PI) / 180;
+  const enElEje: Fijo = {
+    nombre: `RX${cabecera}`,
+    x: umbral.x - Math.sin(h) * millas * MILLA,
+    z: umbral.z + Math.cos(h) * millas * MILLA,
+    papel: "faf",
+    minima: null,
+    calculado: true,
+    aLaVista: true,
+  };
+  return ramas.map((r) => [
+    ...r.map((f): Fijo => (f.papel === "faf" ? { ...f, papel: "ruta" } : f)),
+    enElEje,
+  ]);
 }
 
 /** Las salidas publicadas desde esa cabecera, o ninguna. */

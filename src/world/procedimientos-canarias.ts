@@ -25,12 +25,20 @@
  * - **Aproximaciones**, una por cabecera y solo si acaba **en línea recta con
  *   la pista**: la RNP en todas las que la tienen —Los Rodeos, Tenerife Sur,
  *   Gran Canaria, Fuerteventura, la 03 de Lanzarote y la 36 de La Palma—.
- * - **No entran las de circuito**: la RNP de la 21 de Lanzarote, la RNP A de
- *   la 18 de La Palma y las NDB de El Hierro acaban a treinta o cuarenta
- *   grados de la pista y se terminan a ojo, dando una vuelta al campo. Es una
- *   maniobra de verdad, pero no es la que se enseña aquí: en esas cabeceras el
- *   plan hace la aproximación calculada sobre el eje, y lo dice. Ver
- *   `aproximacionCalculada`.
+ * - **Las de circuito no entraban**: la RNP de la 21 de Lanzarote, la RNP A
+ *   de la 18 de La Palma y las NDB de El Hierro acaban a treinta o cuarenta
+ *   grados de la pista y se terminan a ojo, dando una vuelta al campo. En
+ *   esas cabeceras el plan hacía la aproximación calculada sobre el eje, a
+ *   diez millas. **En la 18 de La Palma eso era volar contra el monte**: el
+ *   eje al norte de la pista entra en tierra a cuatro millas y a cinco y
+ *   media pasa sobre la ladera de Barlovento a 540 m, con la senda de tres
+ *   grados cuarenta metros por encima. Lo vivió quien la voló —«es
+ *   peligroso, se puede entrar antes desde el mar»— a mil ochocientos pies,
+ *   alineado y sobre la ladera. Así que la RNP A entra: llegada a NASOL,
+ *   VENZA y LA505, todo sobre el mar, y desde LA505 a la vista al eje a dos
+ *   millas y media, por fuera de Santa Cruz. Ver `Aproximacion.aLaVista` en
+ *   `procedimientos.ts`. Las otras dos siguen con la calculada, que en ellas
+ *   libra el relieve: ver `aproximaciones-sobre-el-relieve.test.ts`.
  * - **La Gomera no tiene aproximación instrumental**. Sí tiene publicadas sus
  *   rutas de salida para los aviones pequeños (la carta ARR/DEP 1), y ésas
  *   entran como salidas de sus dos cabeceras.
@@ -71,6 +79,14 @@ const puntos = (ruta: string): Publicado[] => ruta.split(" ").map(punto);
 
 function aproximacion(carta: string, ramas: readonly string[]) {
   return { carta, ramas: ramas.map(puntos) };
+}
+
+/**
+ * Una aproximación **en circuito**: lo publicado hasta su punto de final, y
+ * de ahí a la vista al eje, a `millas` del umbral. Ver `Aproximacion.aLaVista`.
+ */
+function enCircuito(carta: string, ramas: readonly string[], millas: number) {
+  return { carta, ramas: ramas.map(puntos), aLaVista: millas };
 }
 
 function salida(nombre: string, carta: string, ruta: string) {
@@ -149,6 +165,7 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "KUTUR": [27.775222, -16.495528],
   "LA07S": [28.501694, -17.753167],
   "LA400": [28.430667, -17.603500],
+  "LA505": [28.765556, -17.662222],
   "LACOR": [27.634361, -15.150028],
   "LALTO": [27.698111, -15.003972],
   "LARYS": [28.871944, -14.834167],
@@ -176,6 +193,7 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "MATUD": [27.479194, -15.867194],
   "MOROD": [28.454722, -17.210833],
   "MOVAS": [27.726028, -16.801389],
+  "NASOL": [28.840472, -17.427194],
   "NERVO": [29.338611, -15.651944],
   "NIDES": [27.671111, -15.254778],
   "NINGU": [27.986917, -15.052944],
@@ -231,6 +249,7 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "UMOTO": [28.633889, -13.420000],
   "VANUR": [28.707944, -17.610444],
   "VASTO": [30.509444, -13.572778],
+  "VENZA": [28.839722, -17.618889],
   "VIZON": [27.682472, -16.789083],
   "W2": [28.025833, -17.283889],
   "XANOS": [27.936056, -16.865444],
@@ -322,6 +341,22 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
   GCLA: {
     fuente: FUENTE,
     aproximaciones: {
+      /*
+       * La RNP A de la carta IAC 4 (AIRAC AMDT 10/25), la única que llega a
+       * la 18: todas las llegadas de la 18 acaban en NASOL (STAR 1), y de ahí
+       * la final va a 207° verdaderos hacia LA510, junto a la costa y casi a
+       * dos millas al este del eje, y se termina en circuito al este de la
+       * pista —al oeste está prohibido—. Se vuela hasta LA505 y desde ahí, a
+       * la vista, al eje a dos millas y media: es lo más lejos del umbral que
+       * se entra en él con un giro de cuarenta y cinco grados o menos, y ahí
+       * el eje va sobre el agua. A cuatro millas el eje ya pisa la costa de
+       * Puntallana. Ver `enCircuito`.
+       */
+      "18": enCircuito(
+        "AD 2-GCLA IAC 4 · RNP A (en circuito a la 18)",
+        ["NASOL:iaf:4500 VENZA:if:4000 LA505:faf:3000"],
+        2.5,
+      ),
       "36": aproximacion("AD 2-GCLA IAC 1 · RNP Z RWY 36 (LPV ONLY)", [
         "ARACO:iaf:4500 LA400:ruta:3000 RECKA:if:2400 LA07S:faf:2400",
       ]),

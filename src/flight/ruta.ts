@@ -89,6 +89,12 @@ export interface Fijo extends Punto {
    */
   readonly calculado?: boolean;
   /**
+   * Si es el punto del eje donde acaba, **a la vista**, una aproximación en
+   * circuito: el tramo que llega a él es de la aproximación, no de la ruta.
+   * Ver `Aproximacion.aLaVista` en `world/procedimientos.ts`.
+   */
+  readonly aLaVista?: boolean;
+  /**
    * Si el punto es también el último que se vuela de la salida: un VOR que
    * sirve para salir de un campo y para empezar la aproximación a otro. El
    * tramo que llega a él es de la salida, y el que sale de él, de la
@@ -560,14 +566,16 @@ function catasDelTramo(
  *   terreno a las altitudes que manda su carta, y esa cuenta la hizo quien la
  *   publicó, con las áreas de protección de su diseño.
  * - `final`: de una aproximación calculada, o directo al umbral. Es una
- *   aproximación, no ruta, y se mira como tal. Ver `libra`.
+ *   aproximación, no ruta, y se mira como tal. Ver `libra`. También el que
+ *   va del punto de final de una aproximación en circuito al eje, a la vista:
+ *   ver `Fijo.aLaVista`.
  * - `ruta`: lo que no es de nadie, lo que une la salida con la llegada. Ahí
  *   manda la regla del aire.
  */
 export function queTramo(a: Fijo, b: Fijo): "carta" | "final" | "ruta" {
   if (a.calculado === true) return "final";
   if (b.calculado !== true && mismoProcedimiento(a, b)) return "carta";
-  if (b.papel === "umbral") return "final";
+  if (b.papel === "umbral" || b.aLaVista === true) return "final";
   return "ruta";
 }
 
