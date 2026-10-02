@@ -610,6 +610,20 @@ if (meteo.fuente !== "mano") {
 const mirando = (): boolean => !document.hidden && document.hasFocus();
 const atender = (): void => {
   /*
+   * **Y con la pestaña oculta, a la pausa de verdad, con su menú.**
+   *
+   * Contado con una captura del teléfono: se apagó la pantalla por reposo, y
+   * al volver «tengo la pantalla sin avanzar el vuelo». El juego se había
+   * parado al ocultarse, que está bien, pero al volver esperaba un `focus`
+   * que un teléfono no siempre da al encender la pantalla: un vuelo
+   * congelado sin nada que diga por qué ni cómo seguir. Oculta la pestaña —
+   * pantalla apagada, otra aplicación, otra pestaña—, el vuelo se queda en
+   * la pausa, que al volver se ve y se sigue con la flecha. Cambiar de
+   * ventana en el portátil sigue como estaba: ahí el `focus` llega siempre.
+   * Y mientras se vuela, la pantalla no se apaga: ver `PantallaDespierta`.
+   */
+  if (document.hidden && !game.pausado) game.pausar();
+  /*
    * **Y una pausa pedida no la levanta volver a la pestaña.**
    *
    * Son dos cosas distintas que hasta hoy se confundían: el juego se para
@@ -642,6 +656,19 @@ if (import.meta.env.DEV) {
 document.addEventListener("visibilitychange", atender);
 window.addEventListener("blur", atender);
 window.addEventListener("focus", atender);
+/*
+ * Y un dedo en la pantalla es alguien mirando, diga lo que diga el foco: un
+ * teléfono puede volver de bajar la cortina de avisos sin dar `focus`, y el
+ * vuelo se quedaba parado debajo del dedo. Una pausa pedida no se levanta
+ * así: `start` no arranca con algo abierto encima.
+ */
+window.addEventListener(
+  "pointerdown",
+  () => {
+    if (!document.hidden && !game.pausado) game.start();
+  },
+  true,
+);
 
 /*
  * Y lo pendiente de guardar se escribe antes de que la pestaña se vaya.

@@ -433,6 +433,7 @@ import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
+import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
 import { PantallaDeMision } from "./ui/pantalla-mision";
 import {
@@ -3364,6 +3365,11 @@ export class Game {
   /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
   private quieto = false;
   /**
+   * La pantalla del teléfono, encendida mientras se vuela y libre en cuanto
+   * no: en la pausa, en un panel y al irse. Ver `ui/pantalla-despierta.ts`.
+   */
+  private readonly despierta = new PantallaDespierta();
+  /**
    * Las luces azules de las calles de rodaje, que se encienden con el sol
    * bajo. Se montan con las de aproximación, después de moldear el terreno.
    */
@@ -5092,6 +5098,7 @@ export class Game {
      */
     if (this.quieto) return;
     this.running = true;
+    this.despierta.ponerse(true);
     this.clock.start();
     this.audio.setActive(true);
     this.renderer.setAnimationLoop(this.frame);
@@ -5125,6 +5132,7 @@ export class Game {
 
   stop(): void {
     this.running = false;
+    this.despierta.ponerse(false);
     this.renderer.setAnimationLoop(null);
     this.audio.setActive(false);
   }
@@ -5286,6 +5294,7 @@ export class Game {
       return;
     }
     this.running = false;
+    this.despierta.ponerse(false);
     this.renderer.setAnimationLoop(null);
     /*
      * Y se calla **el mundo**, no el sonido entero.
