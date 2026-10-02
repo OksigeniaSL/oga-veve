@@ -48,24 +48,33 @@ export function minutosDichos(segundos: number): number {
 }
 
 /**
- * Cuánto se tarda en volar esta distancia, en segundos, **visto desde el
- * puesto de pilotaje antes de salir**.
+ * **Los minutos que se dicen, o `null` si pasan de lo grabado.**
  *
- * La distancia al crucero del avión, más lo que se pierde subiendo y
- * aproximando: cuatro minutos, que es lo que cuesta en el juego una salida y
- * una llegada con su circuito. No es el combustible —eso lleva su reserva de
- * ley, ver `flight/combustible.ts`—: es lo que se le dice al pasaje.
+ * Lo grabado acaba en sesenta, y `minutosDichos` redondea al más cercano: un
+ * vuelo de hora y tres cuartos salía «unos sesenta minutos». Con la duración
+ * contada con su subida y su bajada —ver `segundosPorElPerfil`— eso le pasa
+ * al JAZ 60 en las rutas largas de Paraguay: a Pedro Juan, al Chaco. Un
+ * número que no puede sonar a su altura no se dice; las piezas que faltan
+ * están en `PENDIENTE-VOCES-sueltos.md`.
  */
-export function segundosDeVuelo(metros: number, cruceroMs: number): number {
-  return metros / Math.max(20, cruceroMs) + 4 * 60;
+export function minutosQueSeDicen(segundos: number): number | null {
+  const ultimo = MINUTOS_QUE_SE_DICEN[MINUTOS_QUE_SE_DICEN.length - 1]!;
+  return segundos / 60 > ultimo + 2.5 ? null : minutosDichos(segundos);
 }
 
+/*
+ * **Cuánto dura el vuelo no se cuenta aquí.** Se contaba —la ruta al crucero
+ * y cuatro minutos más— y daba quince minutos de Los Rodeos a La Palma, donde
+ * Binter pone treinta. Lo dice la hora del plan, la misma de la pantalla de
+ * navegación: ver `segundosPorElPerfil` en `flight/ruta.ts`.
+ */
+
 /**
- * Cuánto falta para tocar tierra desde aquí, en segundos.
+ * Cuánto falta para tocar tierra desde aquí, en segundos, **sin plan**: en
+ * una vuelta al campo, que no lleva hora de llegada.
  *
  * A la velocidad que se lleva y con un minuto más para la aproximación, que
- * es donde se frena. Es la cuenta que hace una comandante mirando la
- * distancia que le queda en la pantalla.
+ * es donde se frena. Con plan, lo que falta es la hora del plan.
  */
 export function segundosHastaTocar(metros: number, velocidadMs: number): number {
   return metros / Math.max(40, velocidadMs) + 60;
@@ -177,9 +186,9 @@ export function bienvenidaConPlan(
   segundosPrevistos: number | null,
   nivelMiles: number | null,
 ): AnuncioMontado {
-  if (segundosPrevistos === null || nivelMiles === null)
+  const min = segundosPrevistos === null ? null : minutosQueSeDicen(segundosPrevistos);
+  if (min === null || nivelMiles === null)
     return { clave: bienvenida.id, relleno: {}, texto: bienvenida.texto };
-  const min = minutosDichos(segundosPrevistos);
   return {
     clave: "comandante.bienvenidaConPlan",
     relleno: {
@@ -227,8 +236,8 @@ export function descensoPara(
     temperatura: piezaDeGrados(grados),
   };
   const textos = [t(hacia)];
-  if (segundos !== null) {
-    const min = minutosDichos(segundos);
+  const min = segundos === null ? null : minutosQueSeDicen(segundos);
+  if (min !== null) {
     relleno.minutos = piezaDeMinutos(min);
     textos.push(textoDe("comandante.minutos", min));
   }

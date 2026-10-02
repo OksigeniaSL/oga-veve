@@ -2,7 +2,8 @@
 
 > Simulador de vuelo para navegador, gratis y sin instalar, hecho para que
 > chicos y chicas del Paraguay aprendan a volar reconociendo su propio país
-> desde el aire. Empieza a los cuatro años, antes de saber leer.
+> desde el aire, y para volar también sobre las islas Canarias. Empieza a los
+> cuatro años, antes de saber leer.
 
 Producto de Oksigenia SL, publicado bajo la marca Granja Óga.
 Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.
@@ -11,9 +12,11 @@ Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.
 
 Un simulador de vuelo que funciona en el navegador, sin instalar y **sin
 conexión a partir de la segunda visita**. Se vuela sobre aeródromos reales
-—Silvio Pettirossi en Asunción, Guaraní en Ciudad del Este, un campo de
-estancia, y tres españoles— con el relieve medido de Copernicus y ortofotos
-públicas, no con un mapa inventado.
+de Paraguay —Silvio Pettirossi en Asunción, Guaraní en Ciudad del Este,
+Encarnación, Concepción, Pilar, Ayolas, Pedro Juan Caballero, Mariscal
+Estigarribia en el Chaco y un campo de estancia— y sobre los ocho
+aeropuertos de Canarias, de un aeropuerto a otro, con el relieve medido de
+Copernicus y del IGN y ortofotos públicas, no con un mapa inventado.
 
 No es un juego de aviones: es un simulador que enseña. La regla que lo
 gobierna es «seguridad, seguridad, seguridad — a partir de ahí, todo lo demás

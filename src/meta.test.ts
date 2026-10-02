@@ -17,19 +17,16 @@ import llms from "../public/llms.txt?raw";
 import robots from "../public/robots.txt?raw";
 
 /**
- * **Y ahora mismo no vive en ninguna parte, a propósito.**
+ * **Dónde vive: granjaoga.com/oga-veve/**, desde el 19 de septiembre de 2026.
  *
- * La demo de GitHub Pages se retiró —«esa página sólo está ocupando»— y el
- * juego se juega en local hasta que aterrice en su sitio definitivo. Así que
- * estas pruebas ya no exigen una dirección concreta: exigen que **si la hay,
- * esté completa**, que es lo que de verdad se rompe en silencio.
- *
- * Una `og:url` apuntando a un enlace muerto es peor que no tenerla: le promete
- * a quien comparte el enlace que hay algo ahí. Y el día que haya dirección, lo
- * que no puede pasar es que se escriba a medias —la página sí y la imagen no,
- * o una de las dos relativa—, y eso sí se comprueba aquí abajo.
+ * Estas pruebas exigían que, **si había dirección, estuviera completa**: la
+ * demo de GitHub Pages se había retirado y el juego no vivía en ninguna parte.
+ * Ya vive, y Google no lo encontraba —«Google no reconoce esta URL»—, así que
+ * ahora se exige entera y la misma en los cinco sitios que la dicen: la
+ * canónica, las `hreflang`, la tarjeta, su imagen y el JSON-LD.
  */
 const CASA = /property="og:url"\s+content="([^"]+)"/.exec(html)?.[1] ?? null;
+const LA_DE_VERDAD = "https://granjaoga.com/oga-veve/";
 
 describe("la tarjeta que se ve al compartir el enlace", () => {
   it("tiene título, descripción y tipo, que no dependen de dónde viva", () => {
@@ -39,7 +36,7 @@ describe("la tarjeta que se ve al compartir el enlace", () => {
     expect(html).toContain('name="twitter:card"');
   });
 
-  it("y o no tiene dirección, o la tiene entera", () => {
+  it("y tiene su dirección entera, la página y la imagen", () => {
     /*
      * Quien lee estas etiquetas es un servidor ajeno, no un navegador: una
      * ruta relativa no le sirve de nada y la tarjeta sale sin imagen, que es
@@ -49,14 +46,8 @@ describe("la tarjeta que se ve al compartir el enlace", () => {
      * peor de los tres: se comparte, se ve el recuadro y sale vacío.
      */
     const imagen = /property="og:image"\s+content="([^"]+)"/.exec(html)?.[1];
-    if (CASA === null) {
-      expect(imagen).toBeUndefined();
-      return;
-    }
-    expect(CASA.startsWith("https://")).toBe(true);
-    expect(imagen).toBeDefined();
-    expect(imagen!.startsWith("https://")).toBe(true);
-    expect(imagen).toContain("og.png");
+    expect(CASA).toBe(LA_DE_VERDAD);
+    expect(imagen).toBe(`${LA_DE_VERDAD}og.png`);
   });
 
   it("y dice de qué tamaño es, que si no hay que descargarla para saberlo", () => {
@@ -71,33 +62,102 @@ describe("la tarjeta que se ve al compartir el enlace", () => {
 describe("lo que le decimos a una máquina", () => {
   const datos = JSON.parse(
     /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)![1]!,
-  ) as Record<string, unknown>;
+  ) as { "@graph": Record<string, unknown>[] };
+  const nodos = datos["@graph"];
+  const juego = nodos.find((n) => n["@type"] === "VideoGame")!;
+  const codigo = nodos.find((n) => n["@type"] === "SoftwareSourceCode")!;
 
   it("el JSON-LD se puede leer y dice qué es esto", () => {
-    expect(datos["@type"]).toBe("VideoGame");
-    // Y la dirección, la misma que las etiquetas o ninguna en las dos: dos
-    // sitios diciendo dónde vive esto es la forma de que un día discrepen.
-    expect(datos["url"] ?? null).toBe(CASA);
+    expect(juego).toBeDefined();
+    // Y la dirección, la misma que las etiquetas: dos sitios diciendo dónde
+    // vive esto es la forma de que un día discrepen.
+    expect(juego["url"]).toBe(CASA);
+    expect(juego["image"]).toBe(`${LA_DE_VERDAD}og.png`);
+    expect(String(juego["description"])).toContain("Paraguay y de Canarias");
   });
 
   it("y dice que es gratis, que es la promesa del proyecto", () => {
     // `isAccessibleForFree` no es una etiqueta de marketing: es el compromiso
     // escrito donde una máquina lo puede leer. Ver LICENSE-CONTENIDO.md.
-    expect(datos["isAccessibleForFree"]).toBe(true);
-    expect((datos["offers"] as { price: string }).price).toBe("0");
+    expect(juego["isAccessibleForFree"]).toBe(true);
+    expect((juego["offers"] as { price: string }).price).toBe("0");
   });
 
-  it("y quién lo hace, con su código", () => {
-    expect((datos["author"] as { name: string }).name).toBe("Oksigenia SL");
-    expect(datos["codeRepository"]).toContain(
-      "github.com/OksigeniaSL/oga-veve",
-    );
+  it("y que no pide registro ni datos, que schema.org no sabe decir de otra forma", () => {
+    const lista = (juego["featureList"] as string[]).join(" · ");
+    expect(lista).toContain("Sin registro");
+    expect(lista).toContain("Sin datos personales");
+    expect(String(juego["description"])).toContain("sin registro y sin datos personales");
+  });
+
+  it("y quién lo hace, con su código y su licencia cada uno", () => {
+    expect((juego["author"] as { name: string }).name).toBe("Oksigenia SL");
+    // El código es Apache-2.0 y tiene repositorio; el juego —arte, voces,
+    // marcas— no. Ver LICENSE-CONTENIDO.md.
+    expect(codigo["codeRepository"]).toContain("github.com/OksigeniaSL/oga-veve");
+    expect(String(codigo["license"])).toContain("LICENSE-2.0");
+    expect(String(juego["license"])).toContain("LICENSE-CONTENIDO");
+    expect((codigo["targetProduct"] as { "@id": string })["@id"]).toBe(juego["@id"]);
   });
 
   it("y para quién, que aquí importa más que el género", () => {
-    expect(datos["typicalAgeRange"]).toBe("4-");
-    expect(datos["isFamilyFriendly"]).toBe(true);
-    expect(datos["inLanguage"]).toEqual(["es-PY", "en", "gn"]);
+    expect(juego["typicalAgeRange"]).toBe("4-");
+    expect(juego["isFamilyFriendly"]).toBe(true);
+    expect((juego["audience"] as { suggestedMinAge: number }).suggestedMinAge).toBe(4);
+    expect(juego["inLanguage"]).toEqual(["es-PY", "en", "gn"]);
+  });
+});
+
+/**
+ * **Lo que necesita un buscador para encontrarlo.** Search Console decía
+ * «Google no reconoce esta URL»: sin mapa del sitio que la nombre —eso va en
+ * el de granjaoga.com— ni una dirección canónica que la diga.
+ */
+describe("lo que necesita un buscador", () => {
+  it("una dirección canónica, la de la barra al final", () => {
+    expect(/<link rel="canonical" href="([^"]+)"/.exec(html)?.[1]).toBe(LA_DE_VERDAD);
+  });
+
+  it("y sin la barra se la pone, antes de cargar nada", () => {
+    // Sin ella las rutas relativas del juego resuelven contra la raíz del
+    // dominio y no carga. El 301 está en el nginx de granjaoga.com.
+    const pone = html.indexOf('location.pathname + "/"');
+    expect(pone).toBeGreaterThan(0);
+    expect(pone).toBeLessThan(html.indexOf("**El vigilante del arranque.**"));
+  });
+
+  it("y el juego de caracteres en los primeros 1024 bytes, que es donde se busca", () => {
+    const bytes = new TextEncoder().encode(html);
+    const meta = new TextEncoder().encode('<meta charset="utf-8"');
+    const enLosPrimeros = new TextDecoder().decode(bytes.slice(0, 1024));
+    expect(enLosPrimeros).toContain(new TextDecoder().decode(meta));
+  });
+
+  it("y la misma página para los tres idiomas y para quien no diga ninguno", () => {
+    const alternas = [...html.matchAll(/hreflang="([^"]+)"\s+href="([^"]+)"/g)];
+    expect(alternas.map((m) => m[1]).sort()).toEqual(["en", "es", "gn", "x-default"]);
+    for (const m of alternas) expect(m[2]).toBe(LA_DE_VERDAD);
+  });
+
+  it("y un título y una descripción que dicen las dos regiones", () => {
+    expect(/<title>([^<]+)<\/title>/.exec(html)?.[1]).toBe(
+      "Óga Veve — Volá sobre Paraguay y Canarias",
+    );
+    const descripcion = /name="description"\s+content="([^"]+)"/.exec(html)?.[1] ?? "";
+    expect(descripcion).toContain("Paraguay y de Canarias");
+    // Lo que cabe en un resultado de búsqueda sin que lo corten.
+    expect(descripcion.length).toBeLessThanOrEqual(160);
+  });
+
+  it("y qué es, escrito, para quien no ejecuta el juego", () => {
+    const sinJs = /<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? "";
+    expect(sinJs).toContain("<h1");
+    expect(sinJs).toContain("Óga Veve");
+    expect(sinJs).toContain("Paraguay");
+    expect(sinJs).toContain("Canarias");
+    expect(sinJs).toContain("JavaScript");
+    // Y en inglés también, que es el otro idioma de producto.
+    expect(sinJs).toContain('lang="en"');
   });
 });
 
@@ -121,6 +181,12 @@ describe("llms.txt", () => {
   });
 });
 
+/*
+ * Este `robots.txt` solo vale si el juego se sirve en la raíz de un dominio:
+ * un buscador no lee el de una subcarpeta. En granjaoga.com/oga-veve/ el que
+ * cuenta es el de granjaoga.com. Se deja abierto igual, por si un día vive
+ * en un subdominio propio.
+ */
 describe("robots.txt", () => {
   it("deja pasar a todo el mundo", () => {
     expect(robots).toContain("User-agent: *");

@@ -90,6 +90,7 @@ import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
 import {
   Seguimiento,
   minimaEnRuta,
+  segundosPorElPerfil,
   type Lectura as LecturaDeRuta,
   type Ruta,
 } from "./flight/ruta";
@@ -396,6 +397,7 @@ import {
 } from "./flight/altimetro";
 import { MissionRunner } from "./missions/runner";
 import { objectiveTarget, type Mission } from "./missions/types";
+import { aDondeSenala, type Por as PorDeLaAguja } from "./flight/aguja";
 import { missionsFor } from "./content/missions";
 import {
   conViento,
@@ -594,7 +596,6 @@ import {
   bienvenidaConPlan,
   descensoPara,
   nivelDicho,
-  segundosDeVuelo,
   segundosHastaTocar,
 } from "./audio/partes-de-la-comandante";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
@@ -8500,12 +8501,23 @@ export class Game {
         const destino = this.elDestino();
         const s = this.flight.state;
         const alla = destino ?? this.campoPorId(this.salidaId);
-        const segundos = alla
-          ? segundosHastaTocar(
-              Math.hypot(alla.x - s.position.x, alla.z - s.position.z),
-              s.groundSpeed,
-            )
-          : null;
+        /*
+         * **Y cuánto falta, de la hora del plan** si se va por él: la misma
+         * cuenta que dio la duración al salir, desde donde se está y a lo que
+         * se vuela. Se sacaba aparte —la recta hasta el campo a la velocidad
+         * de ese instante—, y con eso «quince minutos» al salir y «faltan
+         * diez» al empezar a bajar no tenían nada que ver entre sí. La recta
+         * queda para la vuelta al campo, que no lleva plan.
+         */
+        const delPlan = destino ? this.segundosDelPlanHasta(destino.id) : null;
+        const segundos =
+          delPlan ??
+          (alla
+            ? segundosHastaTocar(
+                Math.hypot(alla.x - s.position.x, alla.z - s.position.z),
+                s.groundSpeed,
+              )
+            : null);
         const meteo =
           destino?.escenario.meteo ?? this.scenario.meteo ?? TIEMPO_DE_CASA;
         const campo =
@@ -8628,10 +8640,38 @@ export class Game {
       : this.trazarLaRuta(salida, llegada);
     if (!ruta) return null;
     const crucero = puesto ? this.navegacion.cruceroPlaneado : this.cruceroDe(ruta, salida);
+    /*
+     * **Y lo que dura, por la misma cuenta que la hora del plan.** Era la
+     * ruta a la velocidad de crucero y cuatro minutos más, sin subida ni
+     * bajada: de Los Rodeos a La Palma salían quince minutos, y en Binter son
+     * treinta de calzos a calzos. Ahora es la hora que da el plan antes de
+     * despegar —el mismo `segundosPorElPerfil` que pone la hora en la pantalla
+     * de navegación—, desde la pista de salida y con el viento de hoy.
+     */
+    const a = ruta.fijos[0];
+    if (!a) return null;
     return {
-      segundos: segundosDeVuelo(ruta.total, this.aircraft.cruiseSpeed),
+      segundos: segundosPorElPerfil(ruta, 1, a.x, a.z, {
+        avion: this.aircraft,
+        altitud: this.cotaDelCampo(salida),
+        crucero,
+        bajando: false,
+        viento: this.vientoDeLaRuta(),
+        atmosfera: this.flight.aireDelDia(),
+        verdadera: null,
+      }),
       nivel: nivelDicho(crucero),
     };
+  }
+
+  /**
+   * Lo que falta según la hora del plan, s, si el plan que se sigue va a
+   * `id`; si no, `null`. Ver `seguirLaRuta`.
+   */
+  private segundosDelPlanHasta(id: string): number | null {
+    const p = this.navegacion.progreso;
+    if (!this.navegacion.plan || !p || !Number.isFinite(p.segundos)) return null;
+    return this.claveDeLaRuta.includes(`>${id}:`) ? p.segundos : null;
   }
 
   /**
@@ -14904,7 +14944,7 @@ export class Game {
    * de abajo la tarjeta no escribe la distancia, y lo que se quiere medir es
    * a qué apunta.
    */
-  agujaParaBanco: { metros: number; relativo: number } | null = null;
+  agujaParaBanco: { metros: number; relativo: number; por: PorDeLaAguja } | null = null;
 
   private updateHomeIndicator(): void {
     /*
@@ -14987,49 +15027,42 @@ export class Game {
      * En tierra y en final sigue mandando la pista que se tiene debajo o
      * delante, que es la que hay que encontrar.
      */
-    const volandoAlCampo =
-      aDonde === null &&
-      !this.flight.state.onGround &&
-      this.faseDeAhora !== "final";
-    const [thresholdX, thresholdZ] = umbralEnUso(
-      volandoAlCampo ? this.elCampo(this.destinoId) : campo,
-    );
-    const llegandoAlDestino = aDonde !== null && aDonde.id === campo.id;
-    const destino =
-      !this.flight.state.onGround &&
-      !target &&
-      !aLaRaya &&
-      (this.faseDeAhora !== "final" || llegandoAlDestino)
-        ? aDonde
-        : null;
-    // Y del destino que es el campo de ahora se señala el umbral en uso, que
-    // es por donde se entra: seguir la aguja deja alineado.
     /*
-     * **Y con plan de vuelo, al punto siguiente del plan**, no al aeropuerto.
-     * Es la queja que lo trajo: la aguja al campo llevaba al avión en línea
-     * recta hasta encima de la pista, y desde ahí no se entra en final; los
-     * puntos de la aproximación te dejan en el eje a diez millas. La tarjeta
-     * sigue diciendo a qué aeropuerto se va; lo que cambia es por dónde.
+     * Lo que se decide con todo eso está en `flight/aguja.ts`, sin HUD, para
+     * poder comprobarlo sin volar. Del destino que es el campo de ahora se
+     * señala el umbral en uso, que es por donde se entra: seguir la aguja deja
+     * alineado. **Y con plan de vuelo, al punto siguiente del plan**, no al
+     * aeropuerto: la aguja al campo llevaba al avión en línea recta hasta
+     * encima de la pista, y desde ahí no se entra en final; los puntos de la
+     * aproximación te dejan en el eje a diez millas.
      */
-    const punto = destino ? (this.navegacion.progreso?.siguiente ?? null) : null;
-    const alDestino = punto
-      ? punto
-      : destino && destino.id !== campo.id
-        ? destino
-        : { x: thresholdX, z: thresholdZ };
+    const [ux, uz] = umbralEnUso(campo);
+    const [tx, tz] = umbralEnUso(this.elCampo(this.destinoId));
+    const senalado = aDondeSenala({
+      enTierra: this.flight.state.onGround,
+      enFinal: this.faseDeAhora === "final",
+      objetivo: target,
+      aLaRaya: aLaRaya ? { x: aLaRaya[0], z: aLaRaya[1] } : null,
+      destino: aDonde,
+      debajo: { id: campo.id, umbral: { x: ux, z: uz } },
+      delTramo: { umbral: { x: tx, z: tz } },
+      siguiente: this.navegacion.progreso?.siguiente ?? null,
+    });
+    const destino = senalado.destino;
+    const punto = senalado.delPlan;
 
-    const dx =
-      (aLaRaya?.[0] ?? target?.x ?? alDestino.x) -
-      this.flight.state.position.x;
-    const dz =
-      (aLaRaya?.[1] ?? target?.z ?? alDestino.z) -
-      this.flight.state.position.z;
+    const dx = senalado.punto.x - this.flight.state.position.x;
+    const dz = senalado.punto.z - this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
 
     let relative = bearing - this.flight.state.heading;
     while (relative > Math.PI) relative -= Math.PI * 2;
     while (relative < -Math.PI) relative += Math.PI * 2;
-    this.agujaParaBanco = { metros: Math.hypot(dx, dz), relativo: relative };
+    this.agujaParaBanco = {
+      metros: Math.hypot(dx, dz),
+      relativo: relative,
+      por: senalado.por,
+    };
 
     /*
      * Y en la vuelta al campo, el propio campo: GCLP, SGAS. Sin esto, al pasar
@@ -15104,7 +15137,11 @@ export class Game {
     if (clave !== this.claveDeLaRuta) {
       this.claveDeLaRuta = clave;
       const ruta = this.trazarLaRuta(salida, llegada);
-      this.navegacion.poner(ruta, ruta ? this.cruceroDe(ruta, salida) : 0);
+      this.navegacion.poner(
+        ruta,
+        ruta ? this.cruceroDe(ruta, salida) : 0,
+        this.aircraft,
+      );
     }
     const lectura = this.lecturaDeRuta();
     const paso = this.navegacion.paso(lectura);
@@ -15144,7 +15181,6 @@ export class Game {
    */
   private lecturaDeRuta(): LecturaDeRuta {
     const s = this.flight.state;
-    const v = this.vientoDeHoy;
     return {
       x: s.position.x,
       z: s.position.z,
@@ -15152,9 +15188,16 @@ export class Game {
       vertical: s.velocity.y,
       aire: s.onGround ? this.aircraft.cruiseSpeed : Math.max(s.airspeed, 1),
       enTierra: s.onGround,
-      viento: v ? { desde: v.desde, fuerza: v.nudos * (MILLA / 3600) } : null,
+      viento: this.vientoDeLaRuta(),
+      atmosfera: this.flight.aireDelDia(),
       ventanilla: this.ventanillaEnMetros(),
     };
+  }
+
+  /** El viento de hoy como lo quiere el plan: de dónde y cuánto, en m/s. */
+  private vientoDeLaRuta(): { desde: number; fuerza: number } | null {
+    const v = this.vientoDeHoy;
+    return v ? { desde: v.desde, fuerza: v.nudos * (MILLA / 3600) } : null;
   }
 
   /**
