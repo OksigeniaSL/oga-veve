@@ -226,24 +226,41 @@ try {
           const o = globalThis.__oga;
           const s = o.estado();
           const carta = o.cartaDeCabina();
-          const reales = o
-            .tcas()
-            .enPantalla.filter((b) => b.id.startsWith("prueba:"))
-            .map((b) => {
-              let m = (Math.atan2(b.x - s.position.x, -(b.z - s.position.z)) * 180) / Math.PI;
-              m -= (s.heading * 180) / Math.PI;
-              return {
-                marcacion: ((m % 360) + 360) % 360,
-                distancia: Math.hypot(b.x - s.position.x, b.z - s.position.z),
-              };
-            });
-          return { otros: carta?.otros ?? [], reales };
+          const desdeElMorro = (b) => {
+            let m = (Math.atan2(b.x - s.position.x, -(b.z - s.position.z)) * 180) / Math.PI;
+            m -= (s.heading * 180) / Math.PI;
+            return {
+              marcacion: ((m % 360) + 360) % 360,
+              distancia: Math.hypot(b.x - s.position.x, b.z - s.position.z),
+            };
+          };
+          const todos = o.tcas().enPantalla;
+          const reales = todos.filter((b) => b.id.startsWith("prueba:")).map(desdeElMorro);
+          const deVerdad = todos.filter((b) => !b.id.startsWith("prueba:")).map(desdeElMorro);
+          return { otros: carta?.otros ?? [], reales, deVerdad };
         });
+        /*
+         * **El lienzo de la cabina tiene más alcance que el cuadro plano**, y
+         * con el tráfico del escenario volando cerca pinta también a esos: dos
+         * de más en Los Rodeos, con los ocho en su sitio. Se comprueba que
+         * cada uno de los ocho tiene su pieza y que cada pieza de más es un
+         * avión de verdad, no que haya exactamente ocho.
+         */
         const deCabina = cabina.otros.map((p) => marcacion(p.dx, p.dy));
-        const casanEnCabina = casanUnoAUno(cabina.otros, cabina.reales);
+        const libres = [...deCabina];
+        const casanLosOcho = cabina.reales.every((r) => {
+          const i = libres.findIndex((v) => Math.abs(diferencia(v, r.marcacion)) < 3);
+          if (i < 0) return false;
+          libres.splice(i, 1);
+          return true;
+        });
+        const sobranDeVerdad = libres.every((v) =>
+          cabina.deVerdad.some((r) => Math.abs(diferencia(v, r.marcacion)) < 3),
+        );
+        const casanEnCabina = cabina.reales.length === 8 && casanLosOcho && sobranDeVerdad;
         comprobar(
           `${avion} al ${rumbo}: los ocho, en su sitio en la pantalla de la cabina`,
-          deCabina.length === 8 && casanEnCabina,
+          casanEnCabina,
           `${deCabina.length} en el lienzo · ${deCabina.map((v) => Math.round(v)).join(" ")}`,
         );
         if (FOTOS)
