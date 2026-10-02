@@ -5285,11 +5285,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const z = u.z + (casa.z - u.z) * 0.6;
     const rumbo = (Math.atan2(casa.x - u.x, -(casa.z - u.z)) + 2 * Math.PI) % (2 * Math.PI);
     o.ponerDestino?.(destino);
-    o.colocar(x, 1500, z, o.avion().aproximacion + 20, rumbo);
+    /*
+     * **Volando de verdad: por encima del suelo que haya ahí debajo.**
+     *
+     * Iba a mil quinientos metros a secas, y de La Gomera a Los Rodeos la
+     * recta pasa por las faldas del Teide: al sesenta por ciento el suelo
+     * está a mil seiscientos veintidós. El avión quedaba dentro del monte, el
+     * modelo lo subía a la ladera y el juego, con razón, lo daba por rodando;
+     * y en tierra la aguja señala la pista que se tiene más cerca, que desde
+     * allí es Tenerife Sur, a treinta y un kilómetros. El rojo «señala a 31,6
+     * km · el umbral de la-gomera está a 59,5 km» (#104) era eso, y no la
+     * aguja: medido con el avión a seiscientos metros sobre el suelo, señala
+     * La Gomera a 59,4 con el umbral a 59,4.
+     */
+    const alto = Math.max(1500, (o.suelo?.(x, z) ?? 0) + 600);
+    o.colocar(x, alto, z, o.avion().aproximacion + 20, rumbo);
     await new Promise((r) => setTimeout(r, 800));
     lectura.aguja = o.aguja?.() ?? null;
     const ahora = o.estado().position;
     lectura.alUmbral = Math.round(Math.hypot(u.x - ahora.x, u.z - ahora.z));
+    // Y si no está volando, que se diga: la aguja en tierra mira otra cosa.
+    lectura.enElSuelo = o.estado().onGround;
     return lectura;
   })();
   return resultado;
@@ -7203,9 +7219,11 @@ if (DESTINO) {
     "y volviéndose a medio camino, la aguja señala el campo de salida",
     Number.isFinite(agujaA) &&
       Number.isFinite(alDeSalida) &&
+      v.enElSuelo === false &&
       Math.abs(agujaA - alDeSalida) < 1500,
     Number.isFinite(agujaA)
-      ? `señala a ${(agujaA / 1000).toFixed(1)} km · el umbral de ${DESTINO} está a ${(alDeSalida / 1000).toFixed(1)} km`
+      ? `señala a ${(agujaA / 1000).toFixed(1)} km (${v.aguja?.por ?? "?"}) · el umbral de ${DESTINO} está a ${(alDeSalida / 1000).toFixed(1)} km` +
+          (v.enElSuelo ? " · ¡y el avión acabó en el suelo, no volando!" : "")
       : "la aguja no dijo nada",
     "decidiendo volver al sesenta por ciento, la aguja señalaba la otra isla, a la espalda",
   );

@@ -396,6 +396,7 @@ import {
 } from "./flight/altimetro";
 import { MissionRunner } from "./missions/runner";
 import { objectiveTarget, type Mission } from "./missions/types";
+import { aDondeSenala, type Por as PorDeLaAguja } from "./flight/aguja";
 import { missionsFor } from "./content/missions";
 import {
   conViento,
@@ -14904,7 +14905,7 @@ export class Game {
    * de abajo la tarjeta no escribe la distancia, y lo que se quiere medir es
    * a qué apunta.
    */
-  agujaParaBanco: { metros: number; relativo: number } | null = null;
+  agujaParaBanco: { metros: number; relativo: number; por: PorDeLaAguja } | null = null;
 
   private updateHomeIndicator(): void {
     /*
@@ -14987,49 +14988,42 @@ export class Game {
      * En tierra y en final sigue mandando la pista que se tiene debajo o
      * delante, que es la que hay que encontrar.
      */
-    const volandoAlCampo =
-      aDonde === null &&
-      !this.flight.state.onGround &&
-      this.faseDeAhora !== "final";
-    const [thresholdX, thresholdZ] = umbralEnUso(
-      volandoAlCampo ? this.elCampo(this.destinoId) : campo,
-    );
-    const llegandoAlDestino = aDonde !== null && aDonde.id === campo.id;
-    const destino =
-      !this.flight.state.onGround &&
-      !target &&
-      !aLaRaya &&
-      (this.faseDeAhora !== "final" || llegandoAlDestino)
-        ? aDonde
-        : null;
-    // Y del destino que es el campo de ahora se señala el umbral en uso, que
-    // es por donde se entra: seguir la aguja deja alineado.
     /*
-     * **Y con plan de vuelo, al punto siguiente del plan**, no al aeropuerto.
-     * Es la queja que lo trajo: la aguja al campo llevaba al avión en línea
-     * recta hasta encima de la pista, y desde ahí no se entra en final; los
-     * puntos de la aproximación te dejan en el eje a diez millas. La tarjeta
-     * sigue diciendo a qué aeropuerto se va; lo que cambia es por dónde.
+     * Lo que se decide con todo eso está en `flight/aguja.ts`, sin HUD, para
+     * poder comprobarlo sin volar. Del destino que es el campo de ahora se
+     * señala el umbral en uso, que es por donde se entra: seguir la aguja deja
+     * alineado. **Y con plan de vuelo, al punto siguiente del plan**, no al
+     * aeropuerto: la aguja al campo llevaba al avión en línea recta hasta
+     * encima de la pista, y desde ahí no se entra en final; los puntos de la
+     * aproximación te dejan en el eje a diez millas.
      */
-    const punto = destino ? (this.navegacion.progreso?.siguiente ?? null) : null;
-    const alDestino = punto
-      ? punto
-      : destino && destino.id !== campo.id
-        ? destino
-        : { x: thresholdX, z: thresholdZ };
+    const [ux, uz] = umbralEnUso(campo);
+    const [tx, tz] = umbralEnUso(this.elCampo(this.destinoId));
+    const senalado = aDondeSenala({
+      enTierra: this.flight.state.onGround,
+      enFinal: this.faseDeAhora === "final",
+      objetivo: target,
+      aLaRaya: aLaRaya ? { x: aLaRaya[0], z: aLaRaya[1] } : null,
+      destino: aDonde,
+      debajo: { id: campo.id, umbral: { x: ux, z: uz } },
+      delTramo: { umbral: { x: tx, z: tz } },
+      siguiente: this.navegacion.progreso?.siguiente ?? null,
+    });
+    const destino = senalado.destino;
+    const punto = senalado.delPlan;
 
-    const dx =
-      (aLaRaya?.[0] ?? target?.x ?? alDestino.x) -
-      this.flight.state.position.x;
-    const dz =
-      (aLaRaya?.[1] ?? target?.z ?? alDestino.z) -
-      this.flight.state.position.z;
+    const dx = senalado.punto.x - this.flight.state.position.x;
+    const dz = senalado.punto.z - this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
 
     let relative = bearing - this.flight.state.heading;
     while (relative > Math.PI) relative -= Math.PI * 2;
     while (relative < -Math.PI) relative += Math.PI * 2;
-    this.agujaParaBanco = { metros: Math.hypot(dx, dz), relativo: relative };
+    this.agujaParaBanco = {
+      metros: Math.hypot(dx, dz),
+      relativo: relative,
+      por: senalado.por,
+    };
 
     /*
      * Y en la vuelta al campo, el propio campo: GCLP, SGAS. Sin esto, al pasar
