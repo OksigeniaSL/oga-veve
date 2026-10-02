@@ -262,6 +262,28 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
 };
 
 /**
+ * **El tren de la luz roja, en el peldaño del dibujo: tres patas abajo.**
+ *
+ * Con el cuadro recogido, de esta luz solo asoma la visera, y lo que se veía
+ * era una ficha roja con una rueda de catorce unidades en medio: «una ficha
+ * roja abajo a la izquierda que no se entiende». Sin palabra que la acompañe,
+ * la luz tiene que decir «tren» de un vistazo, y lo que dice tren es lo que
+ * se ve desde fuera: las tres patas con su rueda. Ocupan la luz entera.
+ */
+function tresPatas(ancho: number, alto: number): string {
+  const r = alto * 0.26;
+  const paso = ancho / 4;
+  let patas = "";
+  for (let k = 1; k <= 3; k++) {
+    const cx = paso * k;
+    patas +=
+      `<path d="M${cx} 2 V${alto - 2 * r - 1}" class="aviso-luz__pata" />` +
+      `<circle cx="${cx}" cy="${alto - r - 1.5}" r="${r}" class="aviso-luz__rueda" />`;
+  }
+  return patas;
+}
+
+/**
  * **La placa de la matrícula**, atornillada al cuadro como en los aviones de
  * verdad.
  *
@@ -494,7 +516,11 @@ export class Tablero {
             medio, porque es lo único que hay; desde el segundo se corre a la
             izquierda y le deja el sitio a la palabra.
           -->
-          <g data-hasta="1">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", ancho / 2 - 7, 3, 14)}</g>
+          <g data-hasta="1" class="aviso-luz__dibujo">${
+            l.id === "tren"
+              ? tresPatas(ancho, alto)
+              : dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", ancho / 2 - 9, 1, 18)
+          }</g>
           <g data-desde="2">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", 3, 3, 14)}</g>
           <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="4"
                 class="aviso-luz__palabra" text-anchor="middle">${l.cabina}</text>

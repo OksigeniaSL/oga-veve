@@ -977,7 +977,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Mover los flaps a mano, para mirarlos sin esperar a que lleguen. */
     flapsPoner: (donde: number) => juego.aircraftMesh.flaps?.poner(donde),
     /** Cuántos aerofrenos se mueven en el modelo, y cuántos suben en vuelo. */
-    aerofrenos: () => ({
+    aerofrenosDelModelo: () => ({
       cuantos: juego.aircraftMesh.aerofrenos?.cuantos ?? 0,
       deVuelo: juego.aircraftMesh.aerofrenos?.deVuelo ?? 0,
     }),

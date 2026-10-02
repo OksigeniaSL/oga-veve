@@ -4457,6 +4457,24 @@ button.motor__tecla::after {
   fill: #14161a;
 }
 
+/* Y los dibujos, con la misma tinta: oscuro sobre el rojo o el ámbar. */
+.aviso-luz__dibujo {
+  fill: #14161a;
+  color: #14161a;
+}
+
+/* Las tres patas del tren, en el peldaño del dibujo. Ver `tresPatas`. */
+.aviso-luz__pata {
+  fill: none;
+  stroke: #14161a;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.aviso-luz__rueda {
+  fill: #14161a;
+}
+
 .cr__rosa {
   fill: rgb(0 0 0 / 0.35);
 }

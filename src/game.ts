@@ -570,6 +570,7 @@ import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { rodaduraDeFrenada } from "./flight/carrera";
+import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import {
   MARGEN_DEL_PRIMER_PELDANO,
   NADA_RECORDADO,
@@ -11997,6 +11998,28 @@ export class Game {
      * `flight/flaps.ts` y `world/flaps.ts`.
      */
     this.aircraftMesh.flaps?.poner(this.input.controls.flaps);
+    /*
+     * **Y los aerofrenos, que son también los frenos de tierra**: los de vuelo
+     * hasta su tope y todos arriba al tocar, donde **están**, como los flaps.
+     * Y la palanca del pedestal en su sitio: abajo, armada, en el tope de
+     * vuelo o arriba del todo con los de tierra fuera. Ver
+     * `flight/palanca-de-aerofrenos.ts` y `world/aerofrenos.ts`.
+     */
+    const deTierra = this.input.controls.frenosDeTierra ?? 0;
+    this.aircraftMesh.aerofrenos?.poner(
+      this.input.controls.aerofrenos ?? 0,
+      deTierra,
+    );
+    const palanca = this.input.palancaDeAerofrenos.palanca;
+    this.aircraftMesh.palancaDeAerofrenos?.poner(
+      palanca === "armada"
+        ? POSICIONES_DE_LA_PALANCA.armada
+        : palanca === "fuera"
+          ? deTierra > 0
+            ? POSICIONES_DE_LA_PALANCA.arriba
+            : POSICIONES_DE_LA_PALANCA.topeDeVuelo
+          : POSICIONES_DE_LA_PALANCA.recogida,
+    );
     /*
      * Y las luces de posición: la de choque parpadea con el motor en marcha,
      * que es su regla de verdad —se enciende **antes** de arrancar y dice
