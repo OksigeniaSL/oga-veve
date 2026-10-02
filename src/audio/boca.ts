@@ -811,6 +811,17 @@ export class Boca {
       if (a.lista) continue;
       if (sueltaLaPista(a.clave, a.urgencia)) continue;
       if (noSePierde(a.clave, a.urgencia)) continue;
+      /*
+       * **Ni un anuncio de la megafonía**, por lo mismo que no lo barre un
+       * urgente: no describe un instante, y lo tira su propio reloj si espera
+       * demasiado. Con el peso más bajo de lo que se dice, era siempre el que
+       * sobraba: aterrizando en Los Rodeos con el JAZ 90, la fase de
+       * aterrizado, la de salir de la pista y los flaps llenaban la cola y
+       * «comandante.llegada: no cabía en la cola» — Jazlyn sin despedida. Va
+       * de uno en uno —ver `megafoniaHablando` en `game.ts`—, así que la cola
+       * crece como mucho en uno.
+       */
+      if (esDeLaMegafonia(a.clave)) continue;
       if (peor < 0) {
         peor = i;
         continue;

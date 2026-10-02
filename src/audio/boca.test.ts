@@ -803,6 +803,27 @@ describe("qué se cae cuando la cola se llena", () => {
     expect(sinHora(b.descartadas.at(-1))).toBe("elogio: no cabía en la cola");
     expect(b.cuantasEsperan).toBe(4);
   });
+
+  /*
+   * Aterrizando en Los Rodeos con el JAZ 90: las fases de tierra y los flaps
+   * llenaban la cola, y lo que sobraba, por pesar menos, era la despedida de
+   * Jazlyn. Lo de la megafonía no se echa: lo tira su reloj si espera de más.
+   */
+  it("y un anuncio de la megafonía no se echa de una cola llena", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("normal", frase("aterrizado"), "vuelo.aterrizado");
+    b.pedir("baja", frase("llegada"), "comandante.llegada.tenerife-norte~4");
+    b.pedir("normal", frase("abandonando"), "vuelo.abandonando");
+    b.pedir("normal", frase("flaps"), "vuelo.flapsArribaAlSalir");
+    b.pedir("normal", frase("plataforma"), "vuelo.aPlataforma");
+    // Lo que sobra es el último comentario, no la despedida.
+    expect(b.descartadas.map(sinHora)).toEqual(["vuelo.aPlataforma: no cabía en la cola"]);
+    // Y se dice, detrás de lo que pesa más.
+    while (dicho.at(-1) !== "llegada" && b.ocupada) acabar[dicho.at(-1)!]!();
+    expect(dicho).toEqual(["hablando", "aterrizado", "abandonando", "flaps", "llegada"]);
+  });
 });
 
 /*

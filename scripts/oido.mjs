@@ -201,7 +201,17 @@ export async function loOido(page) {
  * anterior. Así se reconocen: misma voz y sin hueco.
  */
 export function frasesOidas(sonidos) {
-  const orden = [...sonidos].sort((a, b) => a.t0 - b.t0);
+  /*
+   * **Y solo las piezas que llegaron a sonar.** Al cortar una frase se paran
+   * todas sus piezas, también las programadas para dentro de un rato, y ésas
+   * no suenan nunca: se apuntan con largo cero en su hora prevista. Contadas,
+   * una frase cortada seguía «sonando» a trozos de largo cero, se pegaban
+   * entre ellos por la hora en que iban a sonar y salía una frase fantasma
+   * encima de la siguiente: en Los Rodeos, el «go around» cortando el
+   * «cleared to land» de diez segundos, «dos voces a la vez» cinco veces con
+   * una sola sonando.
+   */
+  const orden = [...sonidos].filter((s) => s.t1 - s.t0 > 0.005).sort((a, b) => a.t0 - b.t0);
   const frases = [];
   /*
    * La última frase de cada voz: la máquina puede cantar en medio de una
