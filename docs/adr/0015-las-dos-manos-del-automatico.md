@@ -110,6 +110,16 @@ campo: el juego no tiene la de cada carta) y el automático baja por la senda
 (`G/S`) y al eje (`LOC`) hasta seiscientos pies, donde se suelta para aterrizar
 a mano.
 
+### El N1 de verdad
+
+El gas de este juego es la parte del empuje que puede dar el motor a esa
+altura, y el N1 se pintaba en línea recta con él: 69 % en crucero, donde un
+avión de línea va al 85–90 %. El empuje de un fan crece como el cuadrado o el
+cubo de sus vueltas, así que en los turbofanes las vueltas son ahora la raíz
+—a la 2,5— del gas, para la aguja y para el sonido a la vez
+(`vueltasDelMotor`). El crucero del JAZ 120 a FL290 marca 86 %; el ralentí,
+el de siempre.
+
 ### El combustible
 
 - **Consumo específico con el Mach y la temperatura** para los turbofanes, con
@@ -132,9 +142,6 @@ a mano.
 - **Las voces nuevas.** No había saldo para grabar; lo que pide frase nueva
   está en `PENDIENTE-VOCES-automatico.md` y el juego dice, de momento, lo que
   ya estaba grabado.
-- **El N1 de la pantalla sigue siendo la palanca**, en línea recta: un N1 de
-  verdad no es lineal con el empuje —en crucero va al 85–90 % con mucho menos
-  empuje que eso—. Es de presentación y va aparte.
 - **La altitud de la frustrada de cada carta**, que pide los datos de las
   cartas de aproximación.
 - **El peso que baja al quemar** (#91) y el viento en altura (#35), como en

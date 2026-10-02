@@ -23,7 +23,7 @@
  */
 
 import type { ControlInputs, FlightState } from "../flight/model";
-import type { AircraftSound } from "../flight/aircraft";
+import { vueltasDelMotor, type AircraftSound } from "../flight/aircraft";
 import type { Volumen as Paso } from "../ui/ajustes";
 import {
   DE_FABRICA,
@@ -601,9 +601,8 @@ export class Audio {
     // rato, cada vez más despacio, y ese sonido es el que marca el final de
     // un vuelo.
     const gas = controls.engineOn ? controls.throttle : 0;
-    const rpm = controls.engineOn
-      ? spec.idleRpm + gas * (spec.maxRpm - spec.idleRpm)
-      : 0;
+    // La misma cuenta que la aguja del cuadro: ver `vueltasDelMotor`.
+    const rpm = controls.engineOn ? vueltasDelMotor(spec, gas) : 0;
     /*
      * La nota del motor: cuántas cosas pasan por segundo.
      *

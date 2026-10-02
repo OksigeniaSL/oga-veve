@@ -167,7 +167,8 @@ function volar(
               : "IDLE"
             : "SPD"
           : null,
-        minima: a.approachSpeed * 1.2,
+        // La del juego: ninguna en el sencillo. Ver `velocidadMinimaDelAutomatico`.
+        ...(modelo instanceof ArcadeFlightModel ? {} : { minima: a.approachSpeed * 1.1 }),
       },
       DT,
       memoria,

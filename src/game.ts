@@ -15269,23 +15269,24 @@ export class Game {
       if (loc !== null) this.objetivos = { ...this.objetivos, rumbo: loc };
     } else {
       this.modoLateral = "HDG HOLD";
-
-    /*
-     * **Y pasado el punto de descenso, baja por la senda del plan.**
-     *
-     * Un piloto automático de los de mantener altura no baja solo: se le pone
-     * una altitud más baja. Aquí es lo que hace el plan al llegar al «T/D»,
-     * que es lo que hace el ordenador de un avión de línea: la altitud que se
-     * sostiene pasa a ser la de la senda de tres grados, que va bajando, hasta
-     * la del punto de final. Solo hacia abajo: si quien vuela lo puso más
-     * bajo, se respeta. Ver `Seguimiento.alturaParaElAutomatico`.
-     *
-     * **Y con ventanilla ALT, la ventanilla manda.** Sin bajar: el avión va a
-     * la altura que dice. Bajando: por la senda, pero nunca por debajo de la
-     * ventanilla, que es lo que hace el ordenador de un avión de línea —la
-     * altura del panel es un suelo que el plan no cruza—. Al llegar al T/D se
-     * pone en la altura del punto de final: ver `ponerLaVentanillaParaBajar`.
-     */
+      /*
+       * **Y pasado el punto de descenso, baja por la senda del plan.**
+       *
+       * Un piloto automático de los de mantener altura no baja solo: se le
+       * pone una altitud más baja. Aquí es lo que hace el plan al llegar al
+       * «T/D», que es lo que hace el ordenador de un avión de línea: la
+       * altitud que se sostiene pasa a ser la de la senda de tres grados, que
+       * va bajando, hasta la del punto de final. Solo hacia abajo: si quien
+       * vuela lo puso más bajo, se respeta. Ver
+       * `Seguimiento.alturaParaElAutomatico`.
+       *
+       * **Y con ventanilla ALT, la ventanilla manda.** Sin bajar: el avión va
+       * a la altura que dice. Bajando: por la senda, pero nunca por debajo de
+       * la ventanilla, que es lo que hace el ordenador de un avión de línea
+       * —la altura del panel es un suelo que el plan no cruza—. Al llegar al
+       * T/D se pone en la altura del punto de final: ver
+       * `ponerLaVentanillaParaBajar`.
+       */
       const ventanilla = this.ventanillaEnMetros();
       if (this.objetivos.altitud !== null && ventanilla !== null) {
         let sostiene = ventanilla;
@@ -15361,6 +15362,7 @@ export class Game {
         : "SPD";
     const toca = this.laVelocidadQueToca();
     if (this.gasesPuestos) this.objetivos = { ...this.objetivos, velocidad: toca.kt * NUDO };
+    const minima = this.velocidadMinimaDelAutomatico();
     const aire = this.flight.aireDelDia();
     const modelo = this.flight;
     const m = mandosPara(
@@ -15399,7 +15401,7 @@ export class Game {
         ...this.objetivos,
         modo: this.modoVertical === "FLCH SPD" ? "FLCH SPD" : "V/S",
         gases,
-        minima: this.velocidadMinimaDelAutomatico(),
+        ...(minima !== undefined ? { minima } : {}),
       },
       dt,
       this.memoriaDelAutomatico,
@@ -15553,14 +15555,20 @@ export class Game {
   private velocidadDeAhoraEn = -1;
 
   /**
-   * **La velocidad mínima del automático**, indicada, m/s: por debajo baja el
-   * morro. Una vez y cuarto la Vref limpio —la de maniobra más baja de
-   * cualquier avión sin flaps— y la Vref con los de aterrizaje fuera, que es
-   * a lo que se vuela la final. Ver `Objetivos.minima`.
+   * **La velocidad mínima del automático**, indicada, m/s, o ninguna: por
+   * debajo baja el morro. La Vref y un diez por ciento con el ala limpia —un
+   * margen de una vez y cuarto sobre la pérdida sin flaps— y algo menos que la
+   * Vref con los de aterrizaje fuera, para que la final a su velocidad no la
+   * toque. Ver `Objetivos.minima`.
+   *
+   * **En el modelo sencillo, ninguna**: allí no hay pérdida, y bajar el morro
+   * no da velocidad —la velocidad es el gas—, así que lo único que haría es
+   * bajar el avión cada vez que se quita gas.
    */
-  private velocidadMinimaDelAutomatico(): number {
+  private velocidadMinimaDelAutomatico(): number | undefined {
+    if (this.tier.model === "simple") return undefined;
     const flaps = Math.max(0, Math.min(1, this.input.controls.flaps));
-    return this.aircraft.approachSpeed * (1.25 - 0.25 * flaps);
+    return this.aircraft.approachSpeed * (1.1 - 0.15 * flaps);
   }
 
   /**
