@@ -58,6 +58,26 @@
  * con «00» tapando el símbolo, y no enseñaban nada que no se vea mejor
  * mirando por la ventana. El TCAS es para el tráfico que vuela; lo que rueda
  * se mira afuera y lo cuenta la torre.
+ *
+ * ## En espera, y diciéndolo
+ *
+ * Rodando por la plataforma el selector está en espera —se pasa a trabajar en
+ * el punto de espera, ver `Game.vigilarElTrafico`— y la pantalla lo escribe:
+ * **TCAS STBY**. Sin eso, una carta vacía con dos aviones en el cielo se leía
+ * como un radar que no ve —las capturas 107 a 109—, cuando lo que pasaba era
+ * lo de verdad: el equipo, en espera. Ver `modoEnPantalla`.
+ *
+ * Un TCAS II de verdad pasa además a **TA/RA** al entrar en la pista. Éste
+ * se queda en TA ONLY, por lo dicho del RA: el cuadrado rojo, la franja del
+ * variómetro y las voces de la maniobra —«climb, climb»— esperan a que haya
+ * con qué grabarlas. Ver `PENDIENTE-VOCES-radar.md`.
+ *
+ * ## La banda de altura
+ *
+ * Se pinta lo que vuela a menos de dos mil setecientos pies, como cualquier
+ * TCAS en su posición normal, y subiendo o bajando la banda se abre por ese
+ * lado. Lo que vuela más lejos en altura se ve por la ventanilla y no en la
+ * carta, que es lo que pasa en una cabina de verdad. Ver `BANDAS`.
  */
 
 /** Los dos TCAS que existen en la flota. Ver `tcas` en `aircraft.ts`. */
@@ -177,13 +197,84 @@ export const CERCA_MILLAS = 6;
 export const CERCA_PIES = 1200;
 
 /**
- * La banda de altura que se pinta, ft a cada lado.
+ * **La banda de altura que se pinta**, y las tres posiciones del selector.
  *
- * Es la posición normal del selector de cualquier cabina —NORM en Boeing, ALL
- * en Airbus—: dos mil setecientos pies arriba y abajo. Lo que cruza a cinco
- * mil pies por encima existe, pero no es asunto de ahora.
+ * La normal —NORM en Boeing, ALL en Airbus— son dos mil setecientos pies
+ * arriba y abajo. Lo que cruza a cinco mil pies por encima existe, pero no es
+ * asunto de ahora, y por eso en la 115 se veían por la ventanilla aviones que
+ * la pantalla no pintaba: el de la ruta de vuelta va mil pies por debajo del
+ * nivel de quien sube, y el siguiente, tres mil.
+ *
+ * Las otras dos posiciones abren la banda por un lado hasta nueve mil
+ * novecientos pies, y son las que se usan subiendo —ABV, para ver en qué se
+ * va a meter uno— y bajando —BLW—. Las tienen los dos equipos de la flota: el
+ * selector ABV/N/BLW está en el panel del TCAS II de los reactores y en el del
+ * TCAS I del turbohélice. Ver `bandaPara`.
  */
-const BANDA_PIES = 2700;
+export type Banda = "NORM" | "ABV" | "BLW";
+
+export const BANDAS: Readonly<
+  Record<Banda, { readonly arriba: number; readonly abajo: number }>
+> = {
+  NORM: { arriba: 2700, abajo: 2700 },
+  ABV: { arriba: 9900, abajo: 2700 },
+  BLW: { arriba: 2700, abajo: 9900 },
+};
+
+/**
+ * **Qué banda pondría quien vuela**, mirando la ventanilla de altitud.
+ *
+ * El selector no lo toca nadie en este juego —no hay mando que se lea a los
+ * cuatro años, igual que el del rango de la carta—, así que lo mueve el avión
+ * como lo movería el piloto: con la ventanilla mil pies o más por encima de
+ * donde se va, subiendo, ABV; mil o más por debajo, bajando, BLW; y a menos de
+ * trescientos de ella, nivelado, NORM. Entre medias se queda como estaba, y
+ * eso es lo que impide que parpadee: lo que la cambia es acercarse a la altura
+ * pedida o pedir otra, no un variómetro que tiembla.
+ *
+ * Sin ventanilla —un avión que no la lleva, o en tierra—, NORM.
+ */
+export function bandaPara(
+  ventanillaPies: number | null,
+  altitudPies: number,
+  antes: Banda = "NORM",
+): Banda {
+  if (ventanillaPies === null) return "NORM";
+  const falta = ventanillaPies - altitudPies;
+  if (falta >= 1000) return "ABV";
+  if (falta <= -1000) return "BLW";
+  if (Math.abs(falta) < 300) return "NORM";
+  return antes;
+}
+
+/**
+ * **Lo que escribe la pantalla del modo del TCAS**, abajo a la izquierda.
+ *
+ * - **TCAS STBY** con el equipo en espera: rodando por la plataforma, antes
+ *   del punto de espera y después de dejar la pista. Se escribe, porque una
+ *   pantalla vacía en tierra no dice si no hay nadie o si no se está mirando:
+ *   las capturas 107 a 109 eran eso, aviones en el cielo y la carta en blanco
+ *   con el equipo en espera, que es lo real.
+ * - **TA ONLY** con el TCAS II en marcha, que es como trabaja el de este juego.
+ *   Ver la cabecera.
+ * - Y la banda si no es la normal, detrás: **ABV** o **BLW**.
+ *
+ * El TCAS I no tiene otro modo que avisar, y en marcha no escribe nada más que
+ * la banda. `null` es que no hay nada que escribir.
+ */
+export function modoEnPantalla(
+  equipo: EquipoTcas | null,
+  enMarcha: boolean,
+  banda: Banda = "NORM",
+): string | null {
+  if (!equipo) return null;
+  if (!enMarcha) return "TCAS STBY";
+  const partes = [
+    soloAvisa(equipo) ? "TA ONLY" : "",
+    banda === "NORM" ? "" : banda,
+  ].filter(Boolean);
+  return partes.length ? partes.join(" ") : null;
+}
 
 /**
  * Hasta dónde se sigue a alguien, NM.
@@ -228,6 +319,8 @@ export interface Propio {
   readonly pantalla: boolean;
   /** Si está sonando el aviso de terreno, que manda sobre éste. */
   readonly terrenoAvisando: boolean;
+  /** La banda de altura que se pinta. NORM si no se dice. Ver `bandaPara`. */
+  readonly banda?: Banda;
 }
 
 /** Cómo se pinta un tráfico. Ver la figura 2 del folleto de la FAA. */
@@ -436,6 +529,7 @@ export class Tcas {
    */
   private pintar(yo: Propio, intrusos: readonly Intruso[]): Blanco[] {
     const lista: Blanco[] = [];
+    const banda = BANDAS[yo.banda ?? "NORM"];
     for (const i of intrusos) {
       const seguido = this.seguidos.get(i.id);
       // Posado, no se pinta. Ver la cabecera.
@@ -449,7 +543,7 @@ export class Tcas {
           ? "cerca"
           : "otro";
       // Fuera de la banda solo se pinta lo que avisa, que se pinta siempre.
-      if (clase !== "aviso" && Math.abs(a) > BANDA_PIES) continue;
+      if (clase !== "aviso" && (a > banda.arriba || a < -banda.abajo)) continue;
       const v = seguido.conRitmo ? seguido.vIntruso : 0;
       lista.push({
         id: i.id,

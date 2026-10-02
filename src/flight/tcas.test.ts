@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
   CALLADO_POR_DEBAJO,
+  bandaPara,
+  modoEnPantalla,
   Tcas,
   horaDelReloj,
   pideAviso,
@@ -315,5 +317,53 @@ describe("lo que pinta", () => {
       visto = otra.enPantalla.some((b) => b.clase === "aviso");
     }
     expect(visto).toBe(true);
+  });
+});
+
+describe("la banda de altura y lo que escribe la pantalla", () => {
+  const pinta = (intrusos: Intruso[], propio: Propio) => {
+    const tcas = new Tcas();
+    tcas.paso(1, "TCAS II", propio, intrusos);
+    tcas.paso(1, "TCAS II", propio, intrusos);
+    return tcas.enPantalla;
+  };
+  // Uno 5 000 ft por encima y otro 5 000 por debajo, a cinco millas.
+  const arribaYAbajo: Intruso[] = [
+    { id: "arriba", x: 5 * MILLA, y: 13000 * PIE, z: 0 },
+    { id: "abajo", x: -5 * MILLA, y: 3000 * PIE, z: 0 },
+  ];
+
+  it("NORM: dos mil setecientos pies a cada lado, y ninguno de los dos", () => {
+    expect(pinta(arribaYAbajo, yo(0, 8000))).toHaveLength(0);
+  });
+
+  it("ABV abre por arriba hasta 9 900 ft, y BLW por abajo", () => {
+    expect(pinta(arribaYAbajo, yo(0, 8000, { banda: "ABV" })).map((b) => b.id)).toEqual([
+      "arriba",
+    ]);
+    expect(pinta(arribaYAbajo, yo(0, 8000, { banda: "BLW" })).map((b) => b.id)).toEqual([
+      "abajo",
+    ]);
+  });
+
+  it("la banda la pone la ventanilla: subiendo a ella ABV, bajando BLW, nivelado NORM", () => {
+    expect(bandaPara(null, 8000)).toBe("NORM");
+    expect(bandaPara(14000, 8000)).toBe("ABV");
+    expect(bandaPara(4000, 8000)).toBe("BLW");
+    expect(bandaPara(8100, 8000, "ABV")).toBe("NORM");
+    // Entre trescientos y mil pies se queda como estaba: no parpadea.
+    expect(bandaPara(8600, 8000, "ABV")).toBe("ABV");
+    expect(bandaPara(8600, 8000, "NORM")).toBe("NORM");
+  });
+
+  it("TCAS STBY en espera, TA ONLY trabajando, y la banda detrás", () => {
+    expect(modoEnPantalla(null, false)).toBeNull();
+    expect(modoEnPantalla("TCAS II", false)).toBe("TCAS STBY");
+    expect(modoEnPantalla("TCAS I", false)).toBe("TCAS STBY");
+    expect(modoEnPantalla("TCAS II", true)).toBe("TA ONLY");
+    expect(modoEnPantalla("TCAS II", true, "ABV")).toBe("TA ONLY ABV");
+    // El TCAS I no tiene otro modo que avisar: no lo escribe.
+    expect(modoEnPantalla("TCAS I", true)).toBeNull();
+    expect(modoEnPantalla("TCAS I", true, "BLW")).toBe("BLW");
   });
 });

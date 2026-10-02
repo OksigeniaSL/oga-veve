@@ -983,6 +983,11 @@ export interface Trafico {
    */
   sigueEnLaPista(matricula: string): boolean;
   /**
+   * **Si el de esa matrícula está en el mundo**, dibujado. Lo que la radio
+   * nombra tiene que estar aquí: ver `retirar` en `flight/radio.ts`.
+   */
+  dibujado(matricula: string): boolean;
+  /**
    * Si el avión dibujado de esa matrícula **todavía no está donde esa llamada
    * dice que está**: «en final» sin haber girado a final, «pista libre» sin
    * haber salido de la pista. Quien no se ve, está donde diga.
@@ -2133,6 +2138,9 @@ export function crearTrafico(
           });
       }
       return puntos;
+    },
+    dibujado(matricula) {
+      return aviones.has(matricula);
     },
     quienes() {
       return [...aviones].map(([matricula, quien]) => ({

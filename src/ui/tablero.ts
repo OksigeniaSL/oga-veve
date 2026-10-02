@@ -1496,12 +1496,16 @@ export class Tablero {
           poner(flecha, "transform", o.tendencia > 0 ? "" : "rotate(180 10 0)");
       }
     }
-    // Fuera del grupo recortado: es un rótulo de la pantalla, como el rango.
-    poner(
-      this.pieza('[data-carta="solo-ta"]'),
-      "visibility",
-      dibujo.soloTa ? "visible" : "hidden",
-    );
+    /*
+     * Fuera del grupo recortado: es un rótulo de la pantalla, como el rango.
+     * **Y dice el modo que hay**, no solo el de en marcha: «TCAS STBY» en
+     * tierra hasta el punto de espera, que una carta vacía con aviones en el
+     * cielo no se entiende si no dice que el equipo está en espera. Ver
+     * `modoEnPantalla` en `flight/tcas.ts`.
+     */
+    const modo = this.pieza('[data-carta="solo-ta"]');
+    poner(modo, "visibility", dibujo.modoTcas ? "visible" : "hidden");
+    if (dibujo.modoTcas) escribir(modo, dibujo.modoTcas);
     /*
      * **Y el radar meteorológico.**
      *

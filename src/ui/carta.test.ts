@@ -432,9 +432,10 @@ describe("el tráfico del TCAS en la carta", () => {
     expect(abierta.otros[0]!.etiqueta).toBe("+05");
   });
 
-  it("y TA ONLY solo si el TCAS lo está", () => {
+  it("y el modo del TCAS, solo si hay algo que escribir", () => {
     const base = { x: 0, z: 0, pista: PISTA, otros: [] };
-    expect(dibujarLaCarta(base, 0, RADIO).soloTa).toBe(false);
-    expect(dibujarLaCarta({ ...base, soloTa: true }, 0, RADIO).soloTa).toBe(true);
+    expect(dibujarLaCarta(base, 0, RADIO).modoTcas).toBeNull();
+    expect(dibujarLaCarta({ ...base, modoTcas: "TA ONLY" }, 0, RADIO).modoTcas).toBe("TA ONLY");
+    expect(dibujarLaCarta({ ...base, modoTcas: "TCAS STBY" }, 0, RADIO).modoTcas).toBe("TCAS STBY");
   });
 });

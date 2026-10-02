@@ -27,6 +27,7 @@
  */
 
 import { t } from "../i18n";
+import type { Clase } from "../flight/tcas";
 import { armarPanel, CERRAR } from "./concha";
 
 /** Las dos lupas del plano. Alejar quita el trazo de arriba; acercar lo pone. */
@@ -52,7 +53,30 @@ import {
 } from "./encuadre-del-mapa";
 
 /** Lado del lienzo, en píxeles. */
-const LADO = 460;
+export const LADO = 460;
+
+/** Un tráfico del TCAS, como lo pinta el plano. Ver `pintarElTrafico`. */
+export interface TraficoEnElMapa {
+  readonly x: number;
+  readonly z: number;
+  readonly clase: Clase;
+}
+
+/** Qué se pinta encima cuando dos caen juntos: lo que avisa. */
+const IMPORTA: Record<Clase, number> = { otro: 0, cerca: 1, aviso: 2 };
+
+/**
+ * **Dónde cae un punto del mundo en el plano**, con el norte arriba: el este
+ * a la derecha y el norte —que en el mundo del juego es −Z— hacia arriba del
+ * papel. `e` es el encuadre pintado: su centro y cuántos píxeles mide un
+ * metro. Es la misma cuenta para la flecha, la ruta y los demás aviones.
+ */
+export function enElPapelDelMapa(
+  p: { readonly x: number; readonly z: number },
+  e: { readonly cx: number; readonly cz: number; readonly escala: number },
+): readonly [number, number] {
+  return [LADO / 2 + (p.x - e.cx) * e.escala, LADO / 2 + (p.z - e.cz) * e.escala];
+}
 
 /** Cuántas muestras de relieve se pintan por lado. */
 const MUESTRAS = 230;
@@ -450,6 +474,8 @@ export class Mapa {
      * misión: entonces es una ruta, y se pinta la raya de casa hasta él.
      */
     esRuta = false,
+    /** Los otros aviones que pinta el TCAS. Ver `pintarElTrafico`. */
+    trafico: readonly TraficoEnElMapa[] = [],
   ): void {
     this.destino = destino;
     this.alterno = alterno;
@@ -619,6 +645,9 @@ export class Mapa {
       g.restore();
     }
 
+    // Los demás, debajo de la flecha: lo primero que se mira es dónde estoy.
+    if (trafico.length) this.pintarElTrafico(g, trafico, puesto);
+
     g.save();
     g.translate(cx, cy);
     // El rumbo del avión y el norte del mapa son el mismo cero: arriba.
@@ -689,7 +718,61 @@ export class Mapa {
     p: { readonly x: number; readonly z: number },
     e: { readonly cx: number; readonly cz: number; readonly escala: number },
   ): readonly [number, number] {
-    return [LADO / 2 + (p.x - e.cx) * e.escala, LADO / 2 + (p.z - e.cz) * e.escala];
+    return enElPapelDelMapa(p, e);
+  }
+
+  /**
+   * **Los otros aviones, los mismos que pinta la carta**, con sus mismos
+   * símbolos: rombo hueco, rombo lleno el cercano y círculo ámbar el que
+   * avisa. Ver `flight/tcas.ts`.
+   *
+   * La lista es la del TCAS y no la del mundo, por lo mismo que en la carta:
+   * lo que se enseña de los demás es lo que el avión sabe de ellos, y un
+   * avión sin TCAS no los sabe. Así el plano, la pantalla de navegación y la
+   * ventanilla enseñan **los mismos aviones** —«es como si cada cosa fuera
+   * por su lado», se dijo jugando—. Con el norte arriba, como todo el plano:
+   * el que en la carta va a las dos, aquí va donde está.
+   */
+  private pintarElTrafico(
+    g: CanvasRenderingContext2D,
+    trafico: readonly TraficoEnElMapa[],
+    e: { readonly cx: number; readonly cz: number; readonly escala: number },
+  ): void {
+    // Del que menos importa al que más, para que el que avisa quede encima.
+    const orden = [...trafico].sort(
+      (a, b) => IMPORTA[a.clase] - IMPORTA[b.clase],
+    );
+    g.save();
+    for (const o of orden) {
+      const [x, y] = enElPapelDelMapa(o, e);
+      if (x < 0 || x > LADO || y < 0 || y > LADO) continue;
+      g.lineWidth = 3.4;
+      g.strokeStyle = "rgba(20, 28, 34, 0.85)";
+      if (o.clase === "aviso") {
+        g.beginPath();
+        g.arc(x, y, 6, 0, Math.PI * 2);
+        g.stroke();
+        g.fillStyle = "#f2a33a";
+        g.fill();
+        continue;
+      }
+      const lado = 6.5;
+      g.beginPath();
+      g.moveTo(x, y - lado);
+      g.lineTo(x + lado, y);
+      g.lineTo(x, y + lado);
+      g.lineTo(x - lado, y);
+      g.closePath();
+      g.stroke();
+      if (o.clase === "cerca") {
+        g.fillStyle = "#5fd3f0";
+        g.fill();
+      }
+      g.lineWidth = 1.8;
+      g.strokeStyle = "#5fd3f0";
+      g.stroke();
+    }
+    g.restore();
   }
 
   /**
