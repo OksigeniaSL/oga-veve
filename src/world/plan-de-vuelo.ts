@@ -5478,13 +5478,20 @@ export class PlanDeVuelo {
    * que acaba de aterrizar y rueda a su puesto, o uno que sale y viene de
    * frente mientras vuelves—, la raya pasaba por encima y te llevaba a
    * atravesarle a ti. La raya los rodea al trazarla si hay por dónde; si no,
-   * o si aparecen después, se para detrás, a la ida, a la vuelta y entrando en
-   * la pista. Frente a frente, el que se quita es él: ver
-   * `PACIENCIA_CON_QUIEN_JUEGA` en `trafico.ts`.
+   * o si aparecen después, se para detrás, a la ida y a la vuelta. Frente a
+   * frente, el que se quita es él: ver `PACIENCIA_CON_QUIEN_JUEGA` en
+   * `trafico.ts`.
+   *
+   * **Por las calles, no entrando en la pista.** Con la verde la pista es
+   * tuya y el tráfico te cede la entrada; mirando aquí también se paraba por
+   * los que esperaban detrás de ti —la raya de entrada da media vuelta en
+   * Pettirossi y pasa junto a ellos—, y la red de la cola que no avanza,
+   * pensada para las calles, rehacía la raya hacia la doble raya en la que
+   * ya estabas: con la verde puesta, parado para siempre.
    */
   private hastaElDeDelante(): number {
     this.detrasDe = null;
-    if (this.destino === null) return Infinity;
+    if (this.destino !== "espera" && this.destino !== "puesto") return Infinity;
     const ruta = this.rutaMundo;
     const cola = [...this.colaQueHay(), ...this.ocupados()].filter(
       (q) => !this.hartos.some((h) => Math.hypot(q[0] - h[0], q[1] - h[1]) < YA_NO_SE_LE_ESPERA),

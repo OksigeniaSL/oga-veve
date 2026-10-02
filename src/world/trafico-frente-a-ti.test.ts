@@ -90,6 +90,14 @@ interface Medida {
   rodaron: number;
   /** Los que salieron por una boca sin su pista por delante. */
   sinPista: string[];
+  /**
+   * Si con la verde se llegó a entrar en la pista. Ceder el paso no puede
+   * dejar a nadie esperando para siempre: ni a ti detrás de uno que te espera
+   * a ti, ni a él detrás de ti.
+   */
+  entro: boolean;
+  /** Dónde se quedó, si no entró. */
+  atascado: string;
 }
 
 /**
@@ -208,7 +216,7 @@ function rodarHastaLaVerde(
   const inicio = plan.rutaVisible();
   if (inicio.length < 2) {
     trafico.dispose();
-    return { seMetio: 0, peor: "", masCerca: Infinity, separacion, llego: false, rodaron: 0, sinPista: [] };
+    return { seMetio: 0, peor: "", masCerca: Infinity, separacion, llego: false, rodaron: 0, sinPista: [], entro: true, atascado: "" };
   }
   [x, z] = inicio[0]!;
   rumbo = Math.atan2(inicio[1]![0] - x, -(inicio[1]![1] - z));
@@ -221,6 +229,7 @@ function rodarHastaLaVerde(
   let peor = "";
   let masCerca = Infinity;
   let llego = false;
+  let entro = false;
   let enLaRayaDesde: number | null = null;
   const detalle =
     ENTORNO.OGA_TRAZA_CASO === `${esc.id} ${Math.round(esc.runway.heading)} ${semilla}`;
@@ -324,7 +333,10 @@ function rodarHastaLaVerde(
       }
     }
     // Hasta haber entrado en la pista: de ahí en adelante es otra pregunta.
-    if (fase === "alineando" || fase === "back-taxi" || fase === "despegando") break;
+    if (fase === "alineando" || fase === "back-taxi" || fase === "despegando") {
+      entro = true;
+      break;
+    }
     if ((fase === "esperando" || fase === "autorizado") && enLaRayaDesde === null)
       enLaRayaDesde = t;
     const enLaRaya = enLaRayaDesde !== null && t - enLaRayaDesde < quedarseEnLaRaya;
@@ -371,7 +383,15 @@ function rodarHastaLaVerde(
     if (tipo && queda < Math.min(tipo.carrera * PISTA_POR_DELANTE, loMas) - 60)
       sinPista.add(`${m} (${id}) con ${Math.round(queda)} m, cuando podía con ${Math.round(loMas)}`);
   }
+  const atascado = entro
+    ? ""
+    : `en «${fase}» a t=${t.toFixed(0)} s, ${trafico
+        .quienes()
+        .map((q) => `${q.matricula} ${q.tipo} a ${Math.hypot(q.x - x, q.z - z).toFixed(0)} m`)
+        .join(", ")}`;
   return {
+    entro,
+    atascado,
     seMetio,
     peor,
     masCerca,
@@ -408,6 +428,7 @@ describe("el tráfico que rueda no se te echa encima", () => {
             );
           if (m.seMetio > 0) mal.push(`${donde}: ${m.peor}`);
           for (const s of m.sinPista) mal.push(`${donde}: salió ${s} por delante`);
+          if (!m.entro) mal.push(`${donde}: con la verde no llegó a entrar en la pista, ${m.atascado}`);
         }
       }
       expect(mal).toEqual([]);
