@@ -331,6 +331,8 @@ export class Tablero {
   private desdeLasCifras = Infinity;
   /** Lo que lleva dibujado el radar, para no rehacerlo si no cambia. */
   private ecos = "";
+  /** Y el relieve, por lo mismo. Ver `relieveEnLaCarta`. */
+  private relieve: readonly unknown[] | null = null;
 
   /**
    * El dibujo entero. Se llama al montar el HUD y al cambiar de aeronave.
@@ -720,6 +722,7 @@ export class Tablero {
     this.listas.clear();
     this.desdeLasCifras = Infinity;
     this.ecos = "";
+    this.relieve = null;
     if (this.familia === "esferas") this.seisPack.bind(raiz);
   }
 
@@ -1502,6 +1505,26 @@ export class Tablero {
       "visibility",
       dibujo.soloTa ? "visible" : "hidden",
     );
+    /*
+     * **Y el relieve del avisador de terreno**, debajo de todo: un trazo por
+     * color con todas sus celdas. Se rehace solo cuando la cuenta es otra, que
+     * es pocas veces por segundo. Ver `relieveEnLaCarta` en `ui/carta.ts`.
+     */
+    const relieve = this.pieza('[data-carta="relieve"]');
+    if (relieve && dibujo.relieve !== this.relieve) {
+      this.relieve = dibujo.relieve;
+      const trazos = new Map<string, string>();
+      for (const c of dibujo.relieve) {
+        const l = c.lado;
+        trazos.set(
+          c.color,
+          `${trazos.get(c.color) ?? ""}M${n1(c.dx - l / 2)} ${n1(c.dy - l / 2)}h${n1(l)}v${n1(l)}h${n1(-l)}z`,
+        );
+      }
+      relieve.innerHTML = [...trazos]
+        .map(([color, d]) => `<path class="cr__relieve cr__relieve--${color}" d="${d}" />`)
+        .join("");
+    }
     /*
      * **Y el radar meteorológico.**
      *

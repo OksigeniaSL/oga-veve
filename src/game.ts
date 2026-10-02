@@ -596,6 +596,14 @@ import {
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
+  juntarAvisos,
+  mirarDelante,
+  type AvisoDelSuelo,
+  type AvisoDelante,
+  type Delante,
+  type PistaConocida,
+} from "./flight/terreno-delante";
+import {
   loQueSePasa,
   topeDeLoSacado,
   vfeDeLaMuesca,
@@ -1131,6 +1139,9 @@ const BIEN_FUERA_DE_LA_PISTA = 40;
  * media carrera. Ver donde se usa.
  */
 const ALINEANDO_DE_VERDAD = 12;
+
+/** Cada cuánto mira por delante el avisador de terreno, s. Ver `mirarElTerrenoDelante`. */
+const CADA_CUANTO_SE_MIRA_DELANTE = 0.2;
 
 /**
  * Cuánto tiene que durar la calma para que el aviso de terreno vuelva a sonar.
@@ -2933,13 +2944,20 @@ export class Game {
    */
   private bandaDeAhora: BandaDeVelocidad = null;
   /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
-  terrenoDicho: "bajo" | "sube" | null = null;
+  terrenoDicho: AvisoDelSuelo = null;
   /**
    * Y el que hay **ahora**, se diga o no. Lo mira el TCAS, que se calla
    * mientras suene el del suelo: en cualquier cabina el aviso de terreno
    * manda sobre el de tráfico. Ver `flight/tcas.ts`.
    */
-  private terrenoAhora: "bajo" | "sube" | null = null;
+  private terrenoAhora: AvisoDelSuelo = null;
+  /**
+   * **Lo que ve por delante el avisador de terreno**, en el avión que lo
+   * lleva, y cada cuánto se mira. Ver `mirarElTerrenoDelante`.
+   */
+  private delante: Delante | null = null;
+  private desdeDelante = 0;
+  private rumboDeDelante: number | null = null;
   /**
    * **El TCAS del avión de hoy**, si lo lleva: quién anda cerca y cuándo
    * mirarlo. Vive siempre y trabaja solo si la ficha dice que hay uno. Ver
@@ -5921,6 +5939,79 @@ export class Game {
    * corregir, y felicitar a quien no hizo nada convierte el elogio en ruido.
    */
   private avisadoDeLaSenda = false;
+
+  /**
+   * **Lo que ve por delante el avisador de terreno**, en el avión que lo
+   * lleva: el TAWS de los de turbina con pasaje, que son los que llevan los
+   * avisos que hablan —ver `avisosHablados` en `flight/aircraft.ts`—. En la
+   * avioneta, el fumigador y el bimotor de pistón no hay quien mire, y no se
+   * mira: un aviso solo se pone en el avión que lo llevaría.
+   *
+   * Cinco veces por segundo, que a ciento cuarenta nudos son catorce metros.
+   * El giro sale de cómo cambia el rumbo sobre el suelo entre una mirada y la
+   * siguiente, que es lo que usa el equipo de verdad para curvar su mirada.
+   */
+  private mirarElTerrenoDelante(dt: number): AvisoDelante {
+    const s = this.flight.state;
+    if (!this.aircraft.avisosHablados || s.onGround || s.crashed) {
+      this.delante = null;
+      this.rumboDeDelante = null;
+      this.desdeDelante = 0;
+      return null;
+    }
+    this.desdeDelante += dt;
+    if (this.delante && this.desdeDelante < CADA_CUANTO_SE_MIRA_DELANTE)
+      return this.delante.aviso;
+    const rumbo = Math.atan2(s.velocity.x, -s.velocity.z);
+    let giro = 0;
+    if (this.rumboDeDelante !== null && this.desdeDelante > 0) {
+      const d = ((rumbo - this.rumboDeDelante + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+      giro = d / this.desdeDelante;
+    }
+    this.rumboDeDelante = rumbo;
+    this.desdeDelante = 0;
+    this.delante = mirarDelante(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        altitud: s.position.y,
+        vx: s.velocity.x,
+        vz: s.velocity.z,
+        vertical: s.verticalSpeed,
+        giro,
+      },
+      this.cotaParaLaCarta,
+      this.pistasConocidas(),
+    );
+    return this.delante.aviso;
+  }
+
+  /** Las pistas del vuelo como las conoce el avisador: con su cota. */
+  private pistasConocidas(): readonly PistaConocida[] {
+    const pistas = this.pistasDelVuelo();
+    if (this.pistasConocidasDe !== pistas) {
+      this.pistasConocidasDe = pistas;
+      this.pistasConocidasHechas = pistas.map((p) => ({
+        x: p.x,
+        z: p.z,
+        heading: p.heading,
+        length: p.length,
+        width: p.width,
+        cota: this.terrain.sampleHeight(p.x, p.z),
+      }));
+    }
+    return this.pistasConocidasHechas;
+  }
+
+  private pistasConocidasDe: readonly Pista[] | null = null;
+  private pistasConocidasHechas: readonly PistaConocida[] = [];
+
+  /**
+   * El relieve que conoce el avisador de terreno, el que mira delante y el que
+   * pinta la carta: la misma función siempre. Ver `elMapa`.
+   */
+  private readonly cotaParaLaCarta = (x: number, z: number): number | null =>
+    this.terrain.cotaConocida(x, z);
 
   /** El aviso del bulto, con su antirrebote. Ver `SE_QUEDA_EL_BULTO`. */
   private avisarDelBulto(dibujo: string): void {
@@ -10355,11 +10446,21 @@ export class Game {
           : this.flight.state.airspeed < this.aircraft.approachSpeed * 1.2) &&
         this.flight.state.verticalSpeed > MARGENES.cayendo,
     };
-    const terreno = avisoDeTerreno(cerca);
+    /*
+     * **Y lo que viene por delante**, en el avión que lo mira. El aviso de
+     * debajo se calla en final y por encima de ciento veinte metros, y así
+     * llegando a La Palma por la final recta de la 18, a mil ochocientos pies
+     * sobre la ladera de Barlovento, no sonó nada: «que me avise, que tengo
+     * una montaña bien grande delante». Ver `flight/terreno-delante.ts`.
+     */
+    const terreno = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
     this.terrenoAhora = terreno;
-    // El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
-    // `Hud.ponerTerreno`.
-    this.hud.ponerTerreno(terreno);
+    /*
+     * El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
+     * `Hud.ponerTerreno`. **Menos la precaución de delante**, que no es un
+     * «pull up» rojo parpadeando: hay un minuto, y se dice en ámbar.
+     */
+    this.hud.ponerTerreno(terreno === "monte" ? null : terreno);
     /*
      * **Y el panel de avisos, que cuenta estados y no sucesos.**
      *
@@ -10579,13 +10680,25 @@ export class Game {
       // En inglés aeronáutico, como el resto de la voz de cabina.
       const cual =
         terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo";
-      this.cantar(
-        terreno === "sube" ? "terrain, pull up" : "too low",
-        t(cual),
-        cual,
-        // El único aviso que **interrumpe** en vez de informar. Ver `peligro`.
-        "urgente",
-      );
+      if (terreno === "monte") {
+        /*
+         * **La precaución de delante, en ámbar y con calma.** Su canto de
+         * verdad es «caution terrain», y no está grabado: hasta el 6 de
+         * octubre la caja no lo dice —«too low» es otro aviso y enseñaría
+         * otra cosa— y en los peldaños de abajo lo cuenta la instructora,
+         * que es la explicación que iría detrás. Ver `PENDIENTE-VOCES-terreno.md`.
+         */
+        const explica = laInstructoraLoExplica(this.tier.avisos);
+        this.apuntarCanto(`caution terrain→${explica ? cual : "NADA"} (sin toma de cabina)`);
+        if (explica) this.instructor.decir(t(cual), cual, "mando");
+      } else
+        this.cantar(
+          terreno === "sube" ? "terrain, pull up" : "too low",
+          t(cual),
+          cual,
+          // El único aviso que **interrumpe** en vez de informar. Ver `peligro`.
+          "urgente",
+        );
     } else if (!terreno && this.terrenoTranquiloDesde >= SE_REARMA) {
       this.terrenoDicho = null;
     }
@@ -16518,6 +16631,19 @@ export class Game {
        * estaría bien que se fuera mostrando también en el cuadro».
        */
       celdas: this.celdas,
+      /*
+       * **Y el relieve del avisador de terreno**, en el avión que lo lleva —el
+       * mismo que mira hacia delante, ver `mirarElTerrenoDelante`—: verde,
+       * ámbar y rojo por lo que queda por debajo o por encima. Ver
+       * `relieveEnLaCarta` en `ui/carta.ts`.
+       */
+      relieve: this.aircraft.avisosHablados
+        ? {
+            cota: this.cotaParaLaCarta,
+            altitud: this.flight.state.position.y,
+            trenFuera: this.input.controls.tren > 0.5,
+          }
+        : null,
       /*
        * Y el símbolo de destino marca **el otro** campo, no el que se tiene
        * debajo: llegando a Tenerife Norte, el destino que queda por delante es

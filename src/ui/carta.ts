@@ -31,6 +31,7 @@
 
 import { hastaElUmbralDeToma } from "../world/umbral-desplazado";
 import type { Clase } from "../flight/tcas";
+import { colorDelRelieve, type ColorDelRelieve } from "../flight/terreno-delante";
 
 /** Una milla náutica, en metros. La unidad de distancia del aire. */
 export const MILLA = 1852;
@@ -221,6 +222,18 @@ export interface Mapa {
   }[];
 
   /**
+   * **El relieve que pinta el avisador de terreno**, en el avión que lo lleva:
+   * verde, ámbar y rojo según lo que esté por debajo o por encima del avión.
+   * Ver `colorDelRelieve` en `flight/terreno-delante.ts` y `relieveEnLaCarta`.
+   *
+   * Llegando a La Palma por la final recta de la 18, la pantalla de
+   * navegación estaba en blanco con la ladera de Barlovento delante: en un
+   * avión de verdad esa ladera sale en ámbar y en rojo antes de verla por la
+   * ventana. En los que no llevan el equipo, nada.
+   */
+  readonly relieve?: RelieveDeLaCarta | null;
+
+  /**
    * **El plan de vuelo**, si se va a otro campo: sus puntos, a cuál se va y
    * dónde se empieza a bajar. Ver `flight/ruta.ts`.
    *
@@ -396,6 +409,9 @@ export interface Dibujo {
     fuerza: number;
   }[];
 
+  /** El relieve, en celdas cuadradas del cristal. Ver `relieveEnLaCarta`. */
+  readonly relieve: readonly CeldaDeRelieve[];
+
   /**
    * El plan en píxeles: la línea magenta del punto de donde se viene al que
    * se va y de ahí hasta el umbral, cada punto con su nombre, y el círculo
@@ -420,6 +436,122 @@ export interface Dibujo {
     readonly siguiente: { nombre: string; millas: number } | null;
     readonly hora: string | null;
   } | null;
+}
+
+/** Lo que hace falta para pintar el relieve. Ver `Mapa.relieve`. */
+export interface RelieveDeLaCarta {
+  /** La cota del relieve que conoce el juego, o `null` donde no se sabe. */
+  readonly cota: (x: number, z: number) => number | null;
+  /** La altitud del avión, m. */
+  readonly altitud: number;
+  /** Si lleva el tren fuera: el ámbar empieza más cerca. */
+  readonly trenFuera: boolean;
+}
+
+/** Una celda del relieve en el cristal: su centro, su lado y su color. */
+export interface CeldaDeRelieve {
+  readonly dx: number;
+  readonly dy: number;
+  readonly lado: number;
+  readonly color: ColorDelRelieve;
+}
+
+/**
+ * **Con qué se pinta cada color del relieve**: el color de la cabina y su
+ * opacidad. Las pantallas de verdad lo hacen con puntitos más o menos
+ * apretados; aquí es la opacidad, que dice lo mismo a la escala de una
+ * tablet. Ver `colorDelRelieve`.
+ */
+export const ASPECTO_DEL_RELIEVE: Readonly<
+  Record<ColorDelRelieve, { readonly color: "limite" | "precaucion" | "normal"; readonly opacidad: number }>
+> = {
+  rojo: { color: "limite", opacidad: 0.55 },
+  ambar: { color: "precaucion", opacidad: 0.5 },
+  "ambar-flojo": { color: "precaucion", opacidad: 0.25 },
+  verde: { color: "normal", opacidad: 0.42 },
+  "verde-flojo": { color: "normal", opacidad: 0.18 },
+};
+
+/**
+ * Cuántas celdas de relieve caben a lo ancho de la rosa.
+ *
+ * Veintiocho: con el rango en diez millas, celdas de unos 1.300 metros, que es
+ * lo que deja ver la forma de una isla y de una ladera sin pagar más de
+ * seiscientas catas; con el rango en dos, de 260.
+ */
+export const CELDAS_DEL_RELIEVE = 28;
+
+/**
+ * La última cuenta del relieve **de cada superficie**, por el radio de su
+ * rosa: las dos lo piden cada fotograma y con radios distintos, y con una sola
+ * cuenta guardada se la quitarían la una a la otra.
+ */
+const ultimoRelieve = new Map<number, { clave: string; celdas: readonly CeldaDeRelieve[] }>();
+
+/**
+ * Sin relieve, siempre la misma lista vacía: quien pinta compara la lista que
+ * le llega con la que pintó, y una vacía nueva en cada fotograma le haría
+ * borrar sesenta veces por segundo lo que ya estaba borrado.
+ */
+const SIN_RELIEVE: readonly CeldaDeRelieve[] = [];
+
+/**
+ * **El relieve en el cristal**, en celdas cuadradas con su color, o ninguna
+ * si el avión no lleva con qué pintarlo.
+ *
+ * La rejilla es la del cristal, con el morro arriba, y cada celda cata el
+ * relieve en su centro. El mar —cota cero— no se pinta, como en una pantalla
+ * de verdad, que lo deja en negro.
+ *
+ * **Y no se rehace cada fotograma.** Lo piden las dos superficies sesenta
+ * veces por segundo y el relieve no cambia tan deprisa: se guarda la última
+ * cuenta y se rehace cuando el avión se ha movido media celda, ha girado un
+ * grado, ha subido o bajado quince metros, o ha cambiado el rango.
+ */
+export function relieveEnLaCarta(
+  m: Mapa,
+  rumbo: number,
+  por: number,
+  r: number,
+): readonly CeldaDeRelieve[] {
+  const rel = m.relieve;
+  if (!rel) return SIN_RELIEVE;
+  const lado = (2 * r) / CELDAS_DEL_RELIEVE;
+  const media = lado / por / 2;
+  const clave = [
+    Math.round(m.x / media),
+    Math.round(m.z / media),
+    Math.round(rumbo),
+    Math.round(rel.altitud / 15),
+    rel.trenFuera ? 1 : 0,
+    por.toPrecision(6),
+  ].join(",");
+  const suya = Math.round(r);
+  const guardada = ultimoRelieve.get(suya);
+  if (guardada?.clave === clave) return guardada.celdas;
+  const h = (rumbo * Math.PI) / 180;
+  const cos = Math.cos(h);
+  const sen = Math.sin(h);
+  const celdas: CeldaDeRelieve[] = [];
+  const dentro = (r + lado / 2) ** 2;
+  for (let i = 0; i < CELDAS_DEL_RELIEVE; i++)
+    for (let j = 0; j < CELDAS_DEL_RELIEVE; j++) {
+      const dx = -r + (i + 0.5) * lado;
+      const dy = -r + (j + 0.5) * lado;
+      if (dx * dx + dy * dy > dentro) continue;
+      // La cuenta de `enLaCarta`, al revés: del cristal al mundo.
+      const a = dx / por;
+      const b = -dy / por;
+      const este = a * cos + b * sen;
+      const norte = b * cos - a * sen;
+      const c = rel.cota(m.x + este, m.z - norte);
+      if (c === null || c < 1) continue;
+      const color = colorDelRelieve(c - rel.altitud, rel.trenFuera);
+      if (color) celdas.push({ dx, dy, lado, color });
+    }
+  if (ultimoRelieve.size > 4) ultimoRelieve.clear();
+  ultimoRelieve.set(suya, { clave, celdas });
+  return celdas;
 }
 
 /** Un aeródromo puesto en la carta: dentro del disco o pegado a su borde. */
@@ -470,6 +602,7 @@ export function dibujarLaCarta(
       destino: null,
       alterno: null,
       celdas: [],
+      relieve: SIN_RELIEVE,
       ruta: null,
     };
   const aqui = (p: Punto) => enLaCarta(p, m, rumbo, por);
@@ -559,6 +692,7 @@ export function dibujarLaCarta(
     destino,
     alterno,
     celdas,
+    relieve: relieveEnLaCarta(m, rumbo, por, r),
     ruta: m.ruta ? rutaEnLaCarta(m.ruta, m, aqui) : null,
   };
 }

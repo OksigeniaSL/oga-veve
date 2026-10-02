@@ -438,3 +438,58 @@ describe("el tráfico del TCAS en la carta", () => {
     expect(dibujarLaCarta({ ...base, soloTa: true }, 0, RADIO).soloTa).toBe(true);
   });
 });
+
+describe("el relieve del avisador de terreno", () => {
+  const RADIO_DEL_RELIEVE = 120;
+  /**
+   * Un monte de `alto` m en el cuadrado de tres kilómetros que empieza a `a` m
+   * al norte: con el rango en diez millas, las celdas son de 1.300 metros.
+   */
+  const monte = (a: number, alto: number) => (x: number, z: number) =>
+    -z >= a && -z < a + 3000 && Math.abs(x) < 1500 ? alto : 0;
+  const conRelieve = (cota: (x: number, z: number) => number | null, altitud: number) => ({
+    x: 0,
+    z: 0,
+    pista: null,
+    otros: [],
+    relieve: { cota, altitud, trenFuera: false },
+  });
+
+  it("un monte por delante sale arriba, y en rojo si pasa de dos mil pies por encima", () => {
+    const d = dibujarLaCarta(conRelieve(monte(3000, 900), 200), 0, RADIO_DEL_RELIEVE);
+    expect(d.relieve.length).toBeGreaterThan(0);
+    for (const c of d.relieve) {
+      expect(c.dy).toBeLessThan(0);
+      expect(c.color).toBe("rojo");
+    }
+  });
+
+  it("y con el avión mirando al sur, abajo", () => {
+    const d = dibujarLaCarta(conRelieve(monte(3000, 900), 200), 180, RADIO_DEL_RELIEVE);
+    expect(d.relieve.length).toBeGreaterThan(0);
+    for (const c of d.relieve) expect(c.dy).toBeGreaterThan(0);
+  });
+
+  it("el mismo monte, visto desde arriba, en verde; y muy por debajo, nada", () => {
+    const verde = dibujarLaCarta(conRelieve(monte(3000, 300), 300 + 800 * 0.3048), 0, RADIO_DEL_RELIEVE);
+    expect(new Set(verde.relieve.map((c) => c.color))).toEqual(new Set(["verde"]));
+    const nada = dibujarLaCarta(conRelieve(monte(3000, 300), 3000), 0, RADIO_DEL_RELIEVE);
+    expect(nada.relieve).toEqual([]);
+  });
+
+  it("el mar no se pinta, y sin el equipo no hay relieve", () => {
+    expect(dibujarLaCarta(conRelieve(() => 0, 100), 0, RADIO_DEL_RELIEVE).relieve).toEqual([]);
+    const sin = dibujarLaCarta({ x: 0, z: 0, pista: null, otros: [] }, 0, RADIO_DEL_RELIEVE);
+    expect(sin.relieve).toEqual([]);
+    // Y siempre la misma lista vacía, para no repintar lo que no cambia.
+    expect(
+      dibujarLaCarta({ x: 0, z: 0, pista: null, otros: [] }, 0, RADIO_DEL_RELIEVE).relieve,
+    ).toBe(sin.relieve);
+  });
+
+  it("y la cuenta no se rehace si el avión casi no se ha movido", () => {
+    const a = dibujarLaCarta(conRelieve(monte(3000, 900), 200), 0, RADIO_DEL_RELIEVE);
+    const b = dibujarLaCarta({ ...conRelieve(monte(3000, 900), 200), x: 1 }, 0, RADIO_DEL_RELIEVE);
+    expect(b.relieve).toBe(a.relieve);
+  });
+});

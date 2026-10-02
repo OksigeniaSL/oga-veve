@@ -4596,6 +4596,39 @@ button.motor__tecla::after {
 }
 
 /*
+ * ── El relieve del avisador de terreno ──
+ *
+ * Verde, ámbar y rojo por lo que está por debajo o por encima del avión, con
+ * la opacidad haciendo de los puntitos de una pantalla de verdad. Los números
+ * son los de `ASPECTO_DEL_RELIEVE` en `ui/carta.ts`, que usa el lienzo de la
+ * cabina: las dos superficies los tienen que pintar igual.
+ */
+.cr__relieve--rojo {
+  fill: var(--cabina-limite);
+  opacity: 0.55;
+}
+
+.cr__relieve--ambar {
+  fill: var(--cabina-precaucion);
+  opacity: 0.5;
+}
+
+.cr__relieve--ambar-flojo {
+  fill: var(--cabina-precaucion);
+  opacity: 0.25;
+}
+
+.cr__relieve--verde {
+  fill: var(--cabina-normal);
+  opacity: 0.42;
+}
+
+.cr__relieve--verde-flojo {
+  fill: var(--cabina-normal);
+  opacity: 0.18;
+}
+
+/*
  * ── Los tráficos del TCAS ──
  *
  * Las formas y los colores de cualquier cabina, que no se inventan: rombo
