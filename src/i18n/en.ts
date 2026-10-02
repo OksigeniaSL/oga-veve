@@ -55,7 +55,7 @@ export const EN: Dictionary = {
   "ajustes.contraste": "Contrast",
   "ajustes.contraste.normal": "Normal",
   "ajustes.contraste.alto": "Stronger",
-  "app.tagline": "Fly over Paraguay",
+  "app.tagline": "Fly over Paraguay and the Canary Islands",
 
   "hud.speed": "Airspeed",
   "luz.terreno": "TERRAIN",

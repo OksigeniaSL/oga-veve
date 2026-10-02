@@ -88,9 +88,37 @@
     <meta name="theme-color" content="#2F5243" />
     <meta
       name="description"
-      content="Óga Veve — simulador de vuelo para navegador. Volá sobre Paraguay. Un producto de Oksigenia SL bajo la marca Granja Óga."
+      content="Simulador de vuelo gratis en el navegador, sin instalar y sin registrarte. Volá sobre aeródromos reales de Paraguay y de Canarias. Desde los 4 años."
     />
-    <title>Óga Veve — Volá sobre Paraguay</title>
+    <title>Óga Veve — Volá sobre Paraguay y Canarias</title>
+    <!--
+      **Dónde vive esto, dicho para los buscadores.**
+
+      Google no lo encontraba: «Google no reconoce esta URL», sin mapa del
+      sitio que la nombrase ni página que la enlazase. La dirección buena es
+      con barra al final —sin ella las rutas relativas del juego no
+      resuelven—, y la misma página se sirve también en juego.granjaoga.com y
+      sin la barra: la canónica dice cuál es la de verdad.
+
+      Y una sola página para los tres idiomas: el juego elige el del
+      navegador al arrancar, sin dirección propia por idioma. Las `hreflang`
+      dicen eso, que esta misma dirección sirve castellano, inglés y guaraní,
+      para que no se tome por una página solo en castellano.
+
+      El `robots.txt` y el `sitemap.xml` de esta carpeta no los lee nadie:
+      un buscador solo mira el `robots.txt` de la raíz del dominio. El mapa
+      del sitio que cuenta es el de granjaoga.com, y es allí donde se nombra
+      esta página. Ver `public/robots.txt`.
+    -->
+    <link rel="canonical" href="https://granjaoga.com/oga-veve/" />
+    <link rel="alternate" hreflang="es" href="https://granjaoga.com/oga-veve/" />
+    <link rel="alternate" hreflang="en" href="https://granjaoga.com/oga-veve/" />
+    <link rel="alternate" hreflang="gn" href="https://granjaoga.com/oga-veve/" />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://granjaoga.com/oga-veve/"
+    />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <!--
       Y el manifiesto, que es lo que convierte esto en algo instalable.
@@ -130,23 +158,22 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Óga Veve" />
     <meta property="og:locale" content="es_PY" />
-    <meta property="og:title" content="Óga Veve — Volá sobre Paraguay" />
+    <meta
+      property="og:title"
+      content="Óga Veve — Volá sobre Paraguay y Canarias"
+    />
     <meta
       property="og:description"
-      content="Simulador de vuelo gratis, en el navegador y sin instalar. Se vuela sobre aeródromos reales del Paraguay, con relieve medido. Gratis para siempre para la educación paraguaya."
+      content="Simulador de vuelo gratis, en el navegador y sin instalar. Se vuela sobre aeródromos reales de Paraguay y de Canarias, con relieve medido. Gratis para siempre para la educación paraguaya."
     />
     <!--
-      **Sin dirección todavía, y a propósito.**
-
-      Esto apuntaba a la demo de GitHub Pages, que se ha retirado: el juego
-      vive en local hasta que aterrice en su sitio definitivo. Una etiqueta
-      `og:url` que apunta a un enlace muerto es peor que no tenerla — le dice a
-      quien comparta el enlace que hay algo ahí y no lo hay.
-
-      Cuando tenga dirección, se escriben las dos aquí: la de la página y la de
-      la imagen, las dos absolutas, que es lo que piden los buscadores y las
-      redes. La imagen sigue en `public/og.png`.
+      **Y ya con dirección**, la de granjaoga.com, donde se juega desde el 19
+      de septiembre de 2026. Las dos absolutas —la página y la imagen—, que es
+      lo que piden los buscadores y las redes; una a medias es peor que
+      ninguna, y `src/meta.test.ts` lo vigila.
     -->
+    <meta property="og:url" content="https://granjaoga.com/oga-veve/" />
+    <meta property="og:image" content="https://granjaoga.com/oga-veve/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -159,37 +186,81 @@
       Y lo mismo para quien no es una persona: `llms.txt` cuenta qué es esto y
       para quién, y este JSON-LD lo dice en el vocabulario que entienden los
       buscadores. `isAccessibleForFree` no es una etiqueta de marketing: es la
-      promesa del proyecto, escrita donde una máquina la puede leer.
+      promesa del proyecto, escrita donde una máquina la puede leer. Y lo de
+      «sin registro y sin datos personales», que schema.org no tiene con qué
+      decirlo, va en la descripción y en la lista de lo que trae.
+
+      Son dos nodos porque son dos cosas con dos licencias: el juego —su arte,
+      sus voces, sus marcas— no es Apache-2.0, ver LICENSE-CONTENIDO.md; el
+      código sí, y es el que tiene repositorio. Pasado por el vocabulario de
+      schema.org entero, tipo por tipo y propiedad por propiedad.
     -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "VideoGame",
-        "name": "Óga Veve",
-        "alternateName": "Oga Veve",
-        "description": "Simulador de vuelo para navegador sobre aeródromos reales del Paraguay, con relieve medido. Cuatro peldaños, del que no sabe leer al que lee instrumentos.",
-        "inLanguage": ["es-PY", "en", "gn"],
-        "isAccessibleForFree": true,
-        "isFamilyFriendly": true,
-        "typicalAgeRange": "4-",
-        "genre": ["Simulation", "Educational"],
-        "gamePlatform": "Web browser",
-        "applicationCategory": "GameApplication",
-        "operatingSystem": "Any",
-        "author": {
-          "@type": "Organization",
-          "name": "Oksigenia SL",
-          "url": "https://oksigenia.com"
-        },
-        "publisher": { "@type": "Brand", "name": "Granja Óga" },
-        "license": "https://www.apache.org/licenses/LICENSE-2.0",
-        "codeRepository": "https://github.com/OksigeniaSL/oga-veve",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "PYG",
-          "availability": "https://schema.org/InStock"
-        }
+        "@graph": [
+          {
+            "@type": "VideoGame",
+            "@id": "https://granjaoga.com/oga-veve/#juego",
+            "name": "Óga Veve",
+            "alternateName": "Oga Veve",
+            "url": "https://granjaoga.com/oga-veve/",
+            "image": "https://granjaoga.com/oga-veve/og.png",
+            "description": "Simulador de vuelo gratis para el navegador, sobre aeródromos reales de Paraguay y de Canarias con relieve medido. Sin instalar, sin registro y sin datos personales. Cuatro peldaños, del que no sabe leer al que lee instrumentos.",
+            "inLanguage": ["es-PY", "en", "gn"],
+            "isAccessibleForFree": true,
+            "isFamilyFriendly": true,
+            "typicalAgeRange": "4-",
+            "audience": { "@type": "PeopleAudience", "suggestedMinAge": 4 },
+            "genre": ["Simulation", "Educational"],
+            "playMode": "SinglePlayer",
+            "gamePlatform": "Web browser",
+            "applicationCategory": "GameApplication",
+            "operatingSystem": "Any",
+            "featureList": [
+              "Gratis y sin instalar: se juega en el navegador",
+              "Sin registro ni cuentas: no pide nombre, correo ni contraseña",
+              "Sin datos personales ni analítica: lo que se guarda queda en el navegador",
+              "Se juega sin saber leer: dibujos, colores y voz",
+              "Funciona sin conexión a partir de la segunda visita",
+              "Aeródromos reales de Paraguay y de Canarias, con relieve medido"
+            ],
+            "spatialCoverage": [
+              { "@type": "Country", "name": "Paraguay" },
+              { "@type": "AdministrativeArea", "name": "Canarias" }
+            ],
+            "author": {
+              "@type": "Organization",
+              "name": "Oksigenia SL",
+              "url": "https://oksigenia.com"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Oksigenia SL",
+              "url": "https://oksigenia.com",
+              "brand": {
+                "@type": "Brand",
+                "name": "Granja Óga",
+                "url": "https://granjaoga.com/"
+              }
+            },
+            "license": "https://github.com/OksigeniaSL/oga-veve/blob/main/LICENSE-CONTENIDO.md",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "PYG",
+              "availability": "https://schema.org/InStock"
+            }
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "name": "Óga Veve",
+            "codeRepository": "https://github.com/OksigeniaSL/oga-veve",
+            "programmingLanguage": "TypeScript",
+            "license": "https://www.apache.org/licenses/LICENSE-2.0",
+            "targetProduct": { "@id": "https://granjaoga.com/oga-veve/#juego" }
+          }
+        ]
       }
     </script>
     <link rel="stylesheet" href="/src/style.css" />
@@ -356,8 +427,52 @@
     -->
     <div id="cuaderno" class="creditos cuaderno" hidden></div>
 
+    <!--
+      **Y qué es esto, para quien no ejecuta el juego.** Sin JavaScript no
+      arranca nada y la página era un lienzo negro con una línea: así la ven
+      los buscadores y los modelos que no ejecutan código, y quien tenga el
+      JavaScript apagado. Encima de todo y con su propio estilo, porque la
+      hoja del juego deja el cuerpo sin desplazamiento y sin selección.
+    -->
     <noscript>
-      <p class="aviso">Óga Veve necesita JavaScript para funcionar.</p>
+      <main
+        style="position:fixed;inset:0;z-index:100;overflow:auto;background:#12201a;color:#e4e2da;font:17px/1.55 system-ui,sans-serif;padding:24px 16px;user-select:text"
+      >
+        <div style="max-width:40rem;margin:0 auto">
+          <h1 style="font-size:30px;margin:0 0 4px">Óga Veve</h1>
+          <p style="margin:0 0 18px;color:#c9c5b6">
+            Volá sobre Paraguay y Canarias
+          </p>
+          <p>
+            Un simulador de vuelo para el navegador, gratis y sin instalar.
+            Volá sobre aeródromos reales de Paraguay —Silvio Pettirossi,
+            Guaraní, Encarnación, Pedro Juan Caballero, el Chaco— y sobre los
+            ocho aeropuertos de Canarias, con el relieve medido.
+          </p>
+          <p>
+            Es para chicos y chicas desde los cuatro años, antes de saber leer,
+            y para grandes que quieran volar sin leerse un manual. No pide
+            registro ni datos personales: lo que se guarda queda en tu
+            navegador.
+          </p>
+          <p><strong>Para jugar, activá JavaScript en el navegador.</strong></p>
+          <p lang="en" style="color:#c9c5b6">
+            Óga Veve is a free browser flight simulator over real airfields in
+            Paraguay and the Canary Islands, for children from age four. No
+            sign-up and no personal data. JavaScript is required to play.
+          </p>
+          <p style="font-size:15px;color:#c9c5b6">
+            Un producto de Oksigenia SL bajo la marca
+            <a href="https://granjaoga.com/" style="color:#f2b96e">Granja Óga</a>
+            ·
+            <a
+              href="https://github.com/OksigeniaSL/oga-veve"
+              style="color:#f2b96e"
+              >código abierto</a
+            >
+          </p>
+        </div>
+      </main>
     </noscript>
 
     <script type="module" src="/src/main.ts"></script>

@@ -48,7 +48,7 @@ export const ES_PY = {
   "ajustes.contraste": "Contraste",
   "ajustes.contraste.normal": "Normal",
   "ajustes.contraste.alto": "Más marcado",
-  "app.tagline": "Volá sobre Paraguay",
+  "app.tagline": "Volá sobre Paraguay y Canarias",
 
   "hud.speed": "Velocidad",
   "luz.terreno": "SUELO",

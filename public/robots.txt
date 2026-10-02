@@ -2,6 +2,11 @@
 #
 # Todo abierto: esto es un escaparate público y una promesa educativa, y
 # cuanto mejor se explique en un buscador o en un modelo, mejor. Ver llms.txt.
+#
+# Ojo: un buscador solo lee el robots.txt de la raíz del dominio. Servido en
+# granjaoga.com/oga-veve/, este no lo lee nadie, y el que cuenta —con su mapa
+# del sitio, que nombra esta página— es el de granjaoga.com. Este vale el día
+# que el juego viva en un dominio o subdominio propio.
 User-agent: *
 Allow: /
 
