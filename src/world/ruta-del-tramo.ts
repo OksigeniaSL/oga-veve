@@ -14,6 +14,7 @@
  * la carta sino el del aeródromo del juego, que es donde se toca.
  */
 
+import type { AircraftConfig } from "../flight/aircraft";
 import {
   PIE,
   cruceroDelPlan,
@@ -59,6 +60,11 @@ export interface DelJuego {
    * fumigador. Ver `reglasDeVuelo` en `flight/aircraft.ts`.
    */
   readonly visual?: boolean;
+  /**
+   * La ficha del avión, para que el crucero sea **el nivel que ahorra**. Ver
+   * `nivelQueAhorra` en `flight/nivel-que-ahorra.ts`.
+   */
+  readonly ficha?: AircraftConfig;
 }
 
 /**
@@ -149,7 +155,7 @@ export function rutaDelTramo(
 export function cruceroDelTramo(
   ruta: Ruta,
   salida: CampoEnElMundo,
-  juego: Pick<DelJuego, "cotaDePista" | "cota" | "techo" | "visual">,
+  juego: Pick<DelJuego, "cotaDePista" | "cota" | "techo" | "visual" | "ficha">,
 ): number {
   const a = ruta.fijos[0];
   if (!a) return 0;
@@ -160,6 +166,7 @@ export function cruceroDelTramo(
       cotaDeSalida: juego.cotaDePista(salida, a.x, a.z),
       declinacion: salida.escenario.magneticVariation ?? 0,
       visual: juego.visual === true,
+      ...(juego.ficha ? { ficha: juego.ficha } : {}),
     },
     juego.cota ? minimaEnCrucero(ruta, juego.cota, juego.visual === true) : null,
   );

@@ -17,10 +17,33 @@
  * ## Lo que hace, que es poco a propósito
  *
  * Dos cosas, las dos primeras que aprende cualquiera: **mantener un rumbo** y
- * **mantener una altura**. Ni navega a un punto, ni gestiona el motor, ni
- * aterriza. Un piloto automático que lo hace todo convierte el juego en un
- * vídeo; éste te quita las dos manos de la recta y te las devuelve para lo que
- * importa, que es despegar, virar y aterrizar.
+ * **mantener una altura**. Ni navega a un punto ni aterriza. Un piloto
+ * automático que lo hace todo convierte el juego en un vídeo; éste te quita
+ * las dos manos de la recta y te las devuelve para lo que importa, que es
+ * despegar, virar y aterrizar.
+ *
+ * ## Y cómo cambia de altura, que depende del avión
+ *
+ * Lo que sí hace es lo que hace el de cada avión al cambiar de nivel, y eso
+ * no es lo mismo en todos. Se ve escrito en lo alto de la pantalla de vuelo de
+ * los reactores, con las palabras de Boeing —el FMA—:
+ *
+ * - **`V/S`**, en los que no llevan gases automáticos: el morro pide un ritmo
+ *   de subida o bajada, y la velocidad es cosa de quien lleva la palanca.
+ * - **`FLCH SPD`**, en los reactores: los gases dan el empuje de la subida
+ *   —o se quedan al ralentí bajando— y **la velocidad la lleva el morro**. Es
+ *   como sube de verdad un avión de línea: si va rápido levanta el morro y
+ *   sube más, si va lento lo baja. Ver `RITMO_DE_CAMBIO`.
+ * - **`ALT`**, al llegar: se nivela y se sostiene. Y ahí, en el reactor, los
+ *   gases sostienen la velocidad. Ver `flight/gases-automaticos.ts`.
+ * - **`VNAV PTH`** y **`G/S`**: bajando por la senda del plan, y por la de la
+ *   final hasta poco antes de la pista. Esas las pone el juego, que es quien
+ *   sabe dónde está la senda.
+ *
+ * Y en todos, una red que tiene el de verdad: **por debajo de la velocidad
+ * mínima, baja el morro** antes que perder más —el «MINSPD» de los
+ * automáticos de avioneta—. Un automático que sostiene la altura mientras el
+ * avión se para es un automático que lo mete en pérdida.
  *
  * ## Cómo manda, y por qué en pisos
  *
@@ -71,6 +94,15 @@
  */
 
 import { GRAVITY } from "./atmosphere";
+import {
+  ACELERACION_MAXIMA,
+  gasDeLosAutomaticos,
+  medirLaAceleracion,
+  memoriaDeGasesNueva,
+  type MemoriaDeGases,
+  type ModoDeGases,
+  subidaPara,
+} from "./gases-automaticos";
 
 /** Hasta cuánto alabeo pide para virar, en radianes. Veinticinco grados. */
 export const ALABEO_MAXIMO = (25 * Math.PI) / 180;
@@ -217,14 +249,64 @@ const AMORTIGUA = 0.4;
 export const TOQUE = 0.1;
 
 /**
- * Cuánto **por segundo** se mueve la palanca por cada metro por segundo que
- * falte de velocidad.
+ * **Lo más deprisa que sube o baja cambiando de nivel con el morro**, m/s:
+ * unos cuatro mil pies por minuto.
  *
- * Cinco centésimas: diez nudos de error mueven la palanca un cuarto por
- * segundo, o sea que la recorre entera en cuatro. Es lo que tarda una mano, y
- * es lo que separa una corrección de un tirón.
+ * En `FLCH SPD` el ritmo no se pide: sale de lo que sobra de empuje a la
+ * velocidad pedida. Un reactor ligero a doscientos cincuenta nudos sube de
+ * verdad a tres o cuatro mil pies por minuto, y baja al ralentí a dos o tres
+ * mil; esto solo acota los extremos.
  */
-export const POR_NUDO = 0.05;
+export const RITMO_DE_CAMBIO = 20;
+
+/**
+ * En cuánto tiempo recupera el morro la velocidad que falta en `FLCH SPD`, s.
+ *
+ * Diez: un poco más deprisa que los gases en `SPD` —ver
+ * `PARA_LA_VELOCIDAD`—, porque el morro cambia la velocidad casi al momento
+ * y el motor tarda.
+ */
+const PARA_LA_VELOCIDAD_CON_EL_MORRO = 10;
+
+/** Cómo cambia de altura el automático. Ver la cabecera. */
+export type ModoVertical = "ALT" | "V/S" | "FLCH SPD" | "VNAV PTH" | "G/S";
+
+/** Y qué lleva de lado: el rumbo que tenía, o el eje de la pista. */
+export type ModoLateral = "HDG HOLD" | "LOC";
+
+/**
+ * **A cuánto de la altura pedida empieza a nivelar**, m, viniendo a ese
+ * ritmo: lo que tarda en frenar a una décima de g, lo que recorre mientras la
+ * ley de la altura afina, y treinta metros de colchón. Es el «ALT*» de la
+ * pantalla: el momento en que deja de cambiar de nivel y empieza a llegar.
+ */
+export function aCuantoCaptura(vertical: number): number {
+  const v = Math.abs(vertical);
+  return v * PARA_LA_ALTURA + (v * v) / (2 * CARGA_QUE_PIDE * GRAVITY) + 30;
+}
+
+/**
+ * **El modo vertical de este paso**, con la regla del automático de verdad:
+ * una altura nueva se va a buscar cambiando de nivel —`FLCH SPD` si hay
+ * gases automáticos, `V/S` si no— y al acercarse se captura y se sostiene. Y
+ * ya sosteniendo, un bache que lo aparte no es una altura nueva: se corrige
+ * en `ALT`. Lo que lo saca de `ALT` es que cambie la altura pedida.
+ */
+export function modoVertical(
+  antes: ModoVertical,
+  d: {
+    /** Lo que falta hasta la altura pedida, m. */
+    readonly falta: number;
+    readonly vertical: number;
+    /** Si la altura pedida acaba de cambiar. */
+    readonly nueva: boolean;
+    readonly conGases: boolean;
+  },
+): ModoVertical {
+  if (antes === "ALT" && !d.nueva && Math.abs(d.falta) < 150) return "ALT";
+  if (Math.abs(d.falta) <= aCuantoCaptura(d.vertical)) return "ALT";
+  return d.conGases ? "FLCH SPD" : "V/S";
+}
 
 export interface Estado {
   /** Rumbo verdadero, en radianes. */
@@ -259,6 +341,20 @@ export interface Estado {
    * `timonAhora` en `model.ts`. Solo se mira al coger el avión; sin él, cero.
    */
   readonly timon?: number;
+  /**
+   * **Cómo se pide un ritmo de subida en el modelo sencillo**, si es ése el
+   * que vuela: ahí la palanca no gira el morro, **es** cuánto se sube. Con
+   * esto el automático le pide al modelo directamente el ritmo que quiere, en
+   * vez de buscarlo con los pisos de giro y timón, que en ese modelo no
+   * existen. Ver `mandoParaSubir` en `arcade.ts`.
+   */
+  readonly subirCon?: (ritmo: number) => number;
+  /** El empuje con las palancas a fondo, aquí, N. Para los gases. */
+  readonly empujeAFondo?: number;
+  /** La masa del avión, kg. Para los gases. */
+  readonly masa?: number;
+  /** El gas que sostiene la velocidad pedida, si el modelo lo sabe de cierto. */
+  readonly equilibrio?: number;
 }
 
 /** A dónde se le manda ir. `null` en uno de los dos es no mandarle nada. */
@@ -295,6 +391,23 @@ export interface Objetivos {
    * que quede. Ver `Seguimiento.ritmoParaElAutomatico`.
    */
   readonly ritmo?: number;
+  /**
+   * Cómo cambia de altura. Sin él, la ley de siempre: el ritmo hacia la
+   * altura pedida, que es la de `V/S` y la de `ALT`. Con `FLCH SPD`, la
+   * velocidad la lleva el morro. Ver `ModoVertical`.
+   */
+  readonly modo?: ModoVertical;
+  /**
+   * Qué hacen los gases, si los lleva: ver `ModoDeGases`. `null` es que el
+   * gas es de quien vuela. Sin poner, `SPD` si hay velocidad pedida, que es lo
+   * que hacía el canal de gas de siempre.
+   */
+  readonly gases?: ModoDeGases | null;
+  /**
+   * **La velocidad mínima**, indicada, m/s: por debajo, el morro baja antes
+   * que perder más. Ver la cabecera.
+   */
+  readonly minima?: number;
 }
 
 /** Lo que el piloto automático pide a los mandos. */
@@ -331,11 +444,23 @@ export interface Memoria {
   timon: number;
   /** El alabeo que va pidiendo, rad. Ver `ALABEO_POR_SEGUNDO`. */
   alabeo: number;
+  /**
+   * La aceleración medida, para los gases y para llevar la velocidad con el
+   * morro: una medida para los dos. Ver `medirLaAceleracion`.
+   */
+  gases: MemoriaDeGases;
 }
 
 /** La memoria de un automático recién enganchado: aún no ha cogido nada. */
 export function memoriaNueva(): Memoria {
-  return { cogido: false, ritmo: 0, morro: 0, timon: 0, alabeo: 0 };
+  return {
+    cogido: false,
+    ritmo: 0,
+    morro: 0,
+    timon: 0,
+    alabeo: 0,
+    gases: memoriaDeGasesNueva(),
+  };
 }
 
 /**
@@ -354,6 +479,7 @@ export function porElLadoCorto(desde: number, hasta: number): number {
 
 const acotar = (v: number, tope: number): number =>
   Math.max(-tope, Math.min(tope, v));
+const entre = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
 
 /**
  * Lo que el piloto automático pide a los mandos en este fotograma.
@@ -391,6 +517,8 @@ export function mandosPara(
   let aileron = 0;
   let elevator = 0;
   let throttle: number | null = null;
+  // Una sola medida de la aceleración para el morro y para los gases.
+  medirLaAceleracion(m.gases, e.velocidad, dt);
 
   if (o.rumbo !== null) {
     /*
@@ -417,63 +545,108 @@ export function mandosPara(
      */
     const error = o.altitud - e.altitud;
     const seMueve = o.ritmo ?? 0;
-    const quiere = seMueve + acotar(error / PARA_LA_ALTURA, RITMO_MAXIMO);
+    let quiere = seMueve + acotar(error / PARA_LA_ALTURA, RITMO_MAXIMO);
+    if (o.modo === "FLCH SPD" && o.velocidad !== null) {
+      /*
+       * **Cambiando de nivel, la velocidad la lleva el morro.** La energía
+       * que entra por segundo la ponen los gases —ver el modo `THR`—, y el
+       * morro la reparte entre subir y acelerar. Si la velocidad no acelera lo que
+       * debería, lo que sobra es subida, y al revés. Es la cuenta de energía
+       * de cualquier automático de línea, y con ella no hace falta saber
+       * cuánto frena el avión: se mide.
+       */
+      const pide = acotar(
+        (o.velocidad - e.velocidad) / PARA_LA_VELOCIDAD_CON_EL_MORRO,
+        ACELERACION_MAXIMA,
+      );
+      const sube = e.vertical + (v * (m.gases.aceleracion - pide)) / GRAVITY;
+      // Hacia la altura pedida, nunca al revés.
+      quiere = error >= 0 ? entre(sube, 0, RITMO_DE_CAMBIO) : entre(sube, -RITMO_DE_CAMBIO, 0);
+    }
+    if (o.minima !== undefined && e.velocidad < o.minima) {
+      /*
+       * **Por debajo de la mínima, el morro abajo.** La misma cuenta de
+       * energía, apuntando a la mínima: si hay que bajar para no perder más
+       * velocidad, se baja, despacio. Ver la cabecera.
+       */
+      const pide = entre((o.minima - e.velocidad) / PARA_LA_VELOCIDAD_CON_EL_MORRO, 0, ACELERACION_MAXIMA);
+      const sube = e.vertical + (v * (m.gases.aceleracion - pide)) / GRAVITY;
+      quiere = Math.min(quiere, Math.max(-RITMO_MAXIMO, sube));
+    }
     m.ritmo += acotar(quiere - m.ritmo, CARGA_QUE_PIDE * GRAVITY * dt);
-    /*
-     * **El del medio: el ritmo que falta pide girar el morro.** En ángulo de
-     * trayectoria, que es lo que el morro cambia, y con el giro acotado por lo
-     * que aprieta: `q ≤ CARGA_TOPE·g/V`. Ver `CARGA_TOPE` y `GIRO_MAXIMO`.
-     */
-    const trayectoriaPedida = Math.asin(acotar(m.ritmo / v, 0.5));
-    const trayectoria = Math.asin(acotar(e.vertical / v, 1));
-    const tope = Math.min(GIRO_MAXIMO, (CARGA_TOPE * GRAVITY) / v);
-    const giro = acotar(POR_TRAYECTORIA * (trayectoriaPedida - trayectoria), tope);
-    m.morro = Math.max(
-      e.cabeceo - HOLGURA_DEL_MORRO,
-      Math.min(
-        e.cabeceo + HOLGURA_DEL_MORRO,
-        acotar(m.morro + giro * dt, CABECEO_MAXIMO),
-      ),
-    );
-    /*
-     * **Y el de dentro: el giro que falta mueve el timón**, con servo y con
-     * amortiguador. Ver `SERVO` y `AMORTIGUA`.
-     *
-     * El giro que se pide va en ejes del avión, y en un viraje eso no es lo
-     * mismo que el del horizonte: para virar nivelado el morro gira sobre el
-     * ala a `(g/V)·tan φ·sen φ` sin que el cabeceo cambie nada. Si no se
-     * contara, el automático frenaría ese giro en cada viraje y saldría de él
-     * con el morro caído.
-     */
-    const phi = acotar(e.alabeo, Math.PI / 3);
-    const delViraje =
-      (GRAVITY / v) * Math.tan(phi) * Math.sin(phi) * Math.cos(e.cabeceo);
-    const pedido =
-      giro / Math.cos(phi) + delViraje + POR_MORRO * (m.morro - e.cabeceo);
-    const falta = pedido - e.ritmoDeCabeceo;
-    m.timon = acotar(m.timon + SERVO * falta * dt, 1);
-    elevator = acotar(m.timon + AMORTIGUA * falta, 1);
+    if (e.subirCon) {
+      /*
+       * **En el modelo sencillo, el ritmo se pide tal cual.** Ahí la palanca
+       * es cuánto se sube —no hay morro que girar ni timón que buscar—, así
+       * que los dos pisos de dentro sobran: el modelo dice qué palanca da el
+       * ritmo que se quiere y se pone esa. Ver `Estado.subirCon`.
+       */
+      m.morro = e.cabeceo;
+      elevator = acotar(e.subirCon(m.ritmo), 1);
+    } else {
+      /*
+       * **El del medio: el ritmo que falta pide girar el morro.** En ángulo de
+       * trayectoria, que es lo que el morro cambia, y con el giro acotado por
+       * lo que aprieta: `q ≤ CARGA_TOPE·g/V`. Ver `CARGA_TOPE` y `GIRO_MAXIMO`.
+       */
+      const trayectoriaPedida = Math.asin(acotar(m.ritmo / v, 0.5));
+      const trayectoria = Math.asin(acotar(e.vertical / v, 1));
+      const tope = Math.min(GIRO_MAXIMO, (CARGA_TOPE * GRAVITY) / v);
+      const giro = acotar(POR_TRAYECTORIA * (trayectoriaPedida - trayectoria), tope);
+      m.morro = Math.max(
+        e.cabeceo - HOLGURA_DEL_MORRO,
+        Math.min(
+          e.cabeceo + HOLGURA_DEL_MORRO,
+          acotar(m.morro + giro * dt, CABECEO_MAXIMO),
+        ),
+      );
+      /*
+       * **Y el de dentro: el giro que falta mueve el timón**, con servo y con
+       * amortiguador. Ver `SERVO` y `AMORTIGUA`.
+       *
+       * El giro que se pide va en ejes del avión, y en un viraje eso no es lo
+       * mismo que el del horizonte: para virar nivelado el morro gira sobre el
+       * ala a `(g/V)·tan φ·sen φ` sin que el cabeceo cambie nada. Si no se
+       * contara, el automático frenaría ese giro en cada viraje y saldría de
+       * él con el morro caído.
+       */
+      const phi = acotar(e.alabeo, Math.PI / 3);
+      const delViraje =
+        (GRAVITY / v) * Math.tan(phi) * Math.sin(phi) * Math.cos(e.cabeceo);
+      const pedido =
+        giro / Math.cos(phi) + delViraje + POR_MORRO * (m.morro - e.cabeceo);
+      const falta = pedido - e.ritmoDeCabeceo;
+      m.timon = acotar(m.timon + SERVO * falta * dt, 1);
+      elevator = acotar(m.timon + AMORTIGUA * falta, 1);
+    }
   } else {
     m.ritmo = e.vertical;
     m.morro = e.cabeceo;
   }
 
-  if (o.velocidad !== null) {
-    /*
-     * **Y la otra mano, la del gas.**
-     *
-     * Una ley proporcional sobre el gas que ya se llevaba, no sobre cero: el
-     * automático coge el avión como está y lo corrige, que es lo que hace que
-     * no dé un tirón al engancharse — el mismo criterio que el resto de este
-     * módulo.
-     *
-     * `POR_NUDO` es suave a propósito. El gas de un reactor mueve mucha
-     * energía y tarda segundos en dar lo que se le pide; una ganancia viva
-     * aquí es exactamente lo que convierte una corrección en un vaivén, que es
-     * de lo que se venía.
-     */
-    const falta = o.velocidad - e.velocidad;
-    throttle = Math.max(0, Math.min(1, e.gas + falta * POR_NUDO * dt));
+  /*
+   * **Y la otra mano, la del gas**, en el avión que la lleva: ver
+   * `flight/gases-automaticos.ts`, que cuenta por qué la de antes bombeaba.
+   */
+  const gases = o.gases === undefined ? (o.velocidad !== null ? "SPD" : null) : o.gases;
+  if (gases !== null) {
+    throttle = gasDeLosAutomaticos(
+      {
+        velocidad: e.velocidad,
+        gas: e.gas,
+        ...(e.empujeAFondo !== undefined ? { empujeAFondo: e.empujeAFondo } : {}),
+        ...(e.masa !== undefined ? { masa: e.masa } : {}),
+        ...(e.equilibrio !== undefined ? { equilibrio: e.equilibrio } : {}),
+        vertical: e.vertical,
+        verdadera: e.verdadera,
+        subidaPedida: o.altitud !== null ? subidaPara(o.altitud - e.altitud) : 0,
+      },
+      gases,
+      o.velocidad ?? e.velocidad,
+      dt,
+      m.gases,
+      true,
+    );
   }
 
   return { aileron, elevator, throttle };

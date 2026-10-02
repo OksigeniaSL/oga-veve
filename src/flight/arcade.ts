@@ -354,6 +354,30 @@ export class ArcadeFlightModel implements FlightModel {
   /** El gas del último paso, para `empujeAhora`. */
   private ultimoGas = 0;
 
+  /**
+   * **Qué palanca da este ritmo de subida ahora**, de −1 a 1.
+   *
+   * Es la cuenta de `step` despejada: aquí la palanca no gira el morro, es
+   * cuánto se sube, y lo que sube además el motor —por encima del gas que
+   * sostiene el nivel— hay que restarlo. Lo pregunta el piloto automático,
+   * que en este modelo no tiene morro que buscar: pide el ritmo y ya. Ver
+   * `Estado.subirCon` en `piloto-automatico.ts`.
+   */
+  mandoParaSubir(ritmo: number): number {
+    const gas = this.ultimoGas;
+    const cruise = this.punta();
+    const bite = clamp01((this.speed - IDLE_SPEED) / (cruise * 0.55));
+    if (bite <= 0.01) return 0;
+    const sube = ascensoMaximo(this.aircraft);
+    const motor =
+      gas >= MOTOR_QUE_SOSTIENE
+        ? ((gas - MOTOR_QUE_SOSTIENE) / (1 - MOTOR_QUE_SOSTIENE)) * (sube * SUBE_SOLO)
+        : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) *
+          caidaSinMotor(this.aircraft, this.speed);
+    const porPalanca = sube * (0.4 + 0.6 * gas);
+    return clamp((ritmo / bite - motor) / Math.max(0.01, porPalanca), -1, 1);
+  }
+
   setOnRunway(enPista: boolean): void {
     this.state.onRunway = enPista;
   }

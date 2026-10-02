@@ -27,7 +27,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { CoefficientFlightModel } from "./flight/fdm";
+import { CoefficientFlightModel, empujeLleno } from "./flight/fdm";
 import { pendienteBajoElTren } from "./world/pendiente-bajo-el-tren";
 import { ArcadeFlightModel, MOTOR_QUE_SOSTIENE } from "./flight/arcade";
 import {
@@ -446,6 +446,7 @@ import { neutralControls } from "./flight/model";
 import { conElVueloRecto } from "./flight/vuelo-recto";
 import {
   aireDelParte,
+  airDensity,
   type Aire as AireDelDia,
   indicatedAirspeed,
   temperaturaExterior,
@@ -514,16 +515,19 @@ import {
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
+import type { Fma } from "./ui/tablero";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, luzRojaDelTren, seVuelveADecir } from "./flight/tren";
 import {
   cargaParaElPlan,
   comoVaElDeposito,
   hayQueLlenar,
+  llamadaDeCombustible,
   loQueCabe,
   quemaPorSegundo,
   reservaEnKilos,
   seCargaAlCambiarDeDestino,
+  type LlamadaDeCombustible,
 } from "./flight/combustible";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
@@ -677,12 +681,28 @@ import { horaSolarEn } from "./world/hora";
 import { Cinturon, SACUDE, YA_NO_SACUDE } from "./flight/cinturon";
 import { calorQuePesa } from "./flight/caliente-y-alto";
 import {
+  aCuantoCaptura,
   loSolto,
   mandosPara,
   memoriaNueva,
+  modoVertical,
   sePuedeConectar,
+  TOQUE,
+  type Memoria,
+  type ModoLateral,
+  type ModoVertical,
   type Objetivos,
 } from "./flight/piloto-automatico";
+import {
+  llevaGasesAutomaticos,
+  llevaPilotoAutomatico,
+  type ModoDeGases,
+} from "./flight/gases-automaticos";
+import {
+  NUDO,
+  velocidadQueToca,
+  type VelocidadQueToca,
+} from "./flight/escalera-de-velocidades";
 import {
   AvisadorDeAltitud,
   PIE as PIE_EN_METROS,
@@ -766,6 +786,12 @@ import { dibujarReloj, relojDe } from "./ui/reloj";
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
+
+/**
+ * **A qué altura sobre la pista se suelta el automático en la final**, m:
+ * seiscientos pies. Ver `conElPilotoAutomatico`.
+ */
+const SUELTA_PARA_ATERRIZAR = 600 * 0.3048;
 /**
  * Lo más que puede valer un fotograma, en segundos de vuelo.
  *
@@ -4538,15 +4564,16 @@ export class Game {
     this.hud.ponerHayCinturon(conPasaje(this.aircraft.mass));
     this.hud.onCinturon(() => this.mandarElCinturon());
     /*
-     * **Y el piloto automático, en los peldaños que ya vuelan de verdad.**
+     * **Y el piloto automático, en el avión que lo lleva.**
      *
-     * No en el primero: a los cuatro años lo que se aprende es que el avión va
-     * a donde tú lo llevas, y un botón que lo lleva solo enseña lo contrario.
-     * Desde el segundo sí, que es donde empiezan los vuelos largos — y ahí
-     * enseña lo que enseña de verdad: que en crucero nadie pilota a mano, y
-     * que se suelta en cuanto tocás los mandos.
+     * Era del peldaño: en Guyrami no había, y el JAZ 120 de los pequeños tenía
+     * que sostener veintinueve mil pies a flechazos —«al no tener joystick es
+     * difícil jugar con las flechas»—. El peldaño no le quita equipo al avión:
+     * el botón sale donde el avión lo lleva, en los cuatro, y enseña lo que
+     * enseña de verdad: que en crucero nadie pilota a mano, y que se suelta en
+     * cuanto tocás los mandos. Ver `llevaPilotoAutomatico`.
      */
-    this.hud.ponerHayPilotoAutomatico(this.tier.id !== "guyrami");
+    this.hud.ponerHayPilotoAutomatico(llevaPilotoAutomatico(this.aircraft));
     // Y la marca del gas de nivel, que es del modelo. Ver `ponerGasDeNivel`.
     this.hud.ponerGasDeNivel(
       this.tier.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
@@ -8384,14 +8411,28 @@ export class Game {
     const s = this.flight.state;
     const fase = this.faseDeAhora;
     const velocidad = Math.max(15, s.groundSpeed);
+    /*
+     * **Y con prioridad, a la fila desde lejos.** Quien va justo de
+     * combustible entra en la fila de llegadas en cuanto baja hacia el campo,
+     * no al llegar a la final: así los demás se apartan a tiempo, que es lo
+     * que hace un control con un MAYDAY. Ver `QuienJuega.prioridad`.
+     */
+    const p = this.navegacion.progreso;
+    // Y solo en el campo al que se va: el tráfico es el del campo montado.
+    const alli = this.elDestino()?.id === this.elCampoMontado().id;
+    const deLejos =
+      this.conPrioridad && alli && !s.onGround && this.navegacion.bajando && p !== null
+        ? p.restante / velocidad
+        : null;
     const alUmbral =
       fase === "final" && !s.onGround
         ? distanciaAlUmbral(this.elCampo(), s.position.x, s.position.z) / velocidad
-        : null;
+        : deLejos;
     return {
       alUmbral: alUmbral !== null && alUmbral > 0 ? alUmbral : null,
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
+      prioridad: this.conPrioridad,
     };
   }
 
@@ -9840,7 +9881,9 @@ export class Game {
        * hubiera tocado la palanca: abrir el mapa lo soltaba, con su alarma.
        */
       let mandos = this.conElPilotoAutomatico(dt);
-      if (this.hayInstrumentoAbierto && !this.pilotoPuesto)
+      // La nivelada de los peldaños de abajo, si no manda el automático.
+      if (!this.pilotoPuesto) mandos = this.sostenerElNivel(dt, mandos);
+      if (this.hayInstrumentoAbierto && !this.pilotoPuesto && !this.nivelada)
         mandos = this.mantenerElVueloRecto(mandos);
       this.flight.step(dt, mandos);
       this.mirarSiChocaConAlgo();
@@ -10736,6 +10779,7 @@ export class Game {
       vueloTerminado: this.vueloTerminado,
       haciaOtroCampo: this.haciaOtroCampo(),
       sinMotor: this.sinMotor,
+      conPrioridad: this.conPrioridad,
     });
     /*
      * **El aire, que no está quieto.**
@@ -11157,6 +11201,9 @@ export class Game {
         mapa: this.elMapa(),
         // Y la ventanilla ALT, la misma que el cuadro plano. Ver `ventanillaAlt`.
         ventanilla: this.ventanillaParaElCuadro(),
+        // Y la velocidad que toca y el FMA, los mismos que el cuadro plano.
+        spd: this.laSpdDelPanel(),
+        fma: this.elFma(),
       },
       dt,
     );
@@ -11313,6 +11360,9 @@ export class Game {
           donde: this.input.controls.aerofrenos ?? 0,
           pedidos: this.input.aerofrenosAbiertos,
         },
+        // La velocidad que toca y lo que hace el automático. Ver `elFma`.
+        spd: this.laSpdDelPanel(),
+        fma: this.elFma(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -11663,8 +11713,17 @@ export class Game {
     // calcula contra él. Ver `mirarSiSeLlego`.
     this.mirarSiSeLlego();
     const antes = this.combustible;
+    /*
+     * Y con el Mach y el aire de donde está: el mismo empuje cuesta más deprisa
+     * y en aire caliente, y menos arriba. Ver `consumoEspecifico`.
+     */
+    const s0 = this.flight.state;
+    const aire = this.flight.aireDelDia();
     this.quemaDeAhora = this.input.controls.engineOn
-      ? quemaPorSegundo(this.aircraft, this.flight.empujeAhora())
+      ? quemaPorSegundo(this.aircraft, this.flight.empujeAhora(), {
+          mach: s0.airspeed / velocidadDelSonido(s0.position.y, aire),
+          theta: (temperaturaExterior(s0.position.y, aire) + 273.15) / 288.15,
+        })
       : 0;
     this.combustible = Math.max(0, antes - this.quemaDeAhora * dt);
 
@@ -11683,11 +11742,29 @@ export class Game {
        * nuevo, que es lo que ve quien no lee. En tierra no hay a dónde
        * desviarse: se está donde se está.
        */
-      if (!this.flight.state.onGround) this.desviarConLaReserva();
-      const dicho = this.avisoCon("vuelo.reserva", "palabra.reserva");
+      /*
+       * **Y mirando dónde se está.** Entrando ya al destino se decía «vamos al
+       * aeropuerto más cercano, seguí la flecha», y el más cercano era ese
+       * mismo destino: «es una gilipollez si el más cercano es el de destino
+       * al que ya estaba entrando». Llegando —en la aproximación o en la
+       * final— o si el más cercano es el destino, lo que se dice es lo que
+       * toca: a la pista, que se aterriza aquí. Lejos y con otro campo más
+       * cerca, el desvío de siempre.
+       *
+       * PENDIENTE-VOCES-automatico: `vuelo.reservaAqui` en lugar de «Andá a
+       * la pista» cuando esté grabada.
+       */
+      const llegando = this.llegandoAlDestino();
+      if (!this.flight.state.onGround && !llegando) this.desviarConLaReserva();
+      const aqui = llegando || this.desvioId === null;
+      const dicho = this.avisoCon(
+        aqui ? "vuelo.enVueloAterrizando" : "vuelo.reserva",
+        "palabra.reserva",
+      );
       this.hud.senal.mostrar("combustible", dicho.rotulo, null, { segundos: 6 });
       this.instructor.decir(dicho.texto, dicho.id);
     }
+    this.vigilarElCombustible();
 
     /*
      * Y sin combustible el motor no arranca, por mucho que se pida. La llave
@@ -11766,6 +11843,64 @@ export class Game {
      */
     this.instructor.decir(dicho.texto, dicho.id, "urgente");
     this.declararMayday();
+  }
+
+  /**
+   * **Si se llega ya al destino**: bajando por el plan a menos de cuarenta
+   * millas, en el tramo final o en la final. Ahí, con la reserva, se aterriza
+   * donde se va.
+   */
+  private llegandoAlDestino(): boolean {
+    if (this.faseDeAhora === "final") return true;
+    const p = this.navegacion.progreso;
+    if (!this.navegacion.plan || !p) return false;
+    return this.navegacion.bajando && p.restante < 40 * MILLA;
+  }
+
+  /**
+   * **Lo que se le dice a la torre del combustible**: «minimum fuel» y, si
+   * ya no se llega con la reserva final, «MAYDAY FUEL». Una vez cada una, y
+   * en orden. Ver `llamadaDeCombustible` en `flight/combustible.ts`.
+   *
+   * Y con cualquiera de las dos, **prioridad**: la secuencia de llegadas lo
+   * pone primero y a ése no se le inventa una frustrada. Ver `conPrioridad`.
+   */
+  private vigilarElCombustible(): void {
+    const s = this.flight.state;
+    if (s.onGround || !this.input.controls.engineOn || this.combustible <= 0) return;
+    const p = this.navegacion.progreso;
+    const segundos =
+      this.navegacion.plan && p && Number.isFinite(p.segundos) ? p.segundos : null;
+    const llamada = llamadaDeCombustible(this.aircraft, this.combustible, segundos);
+    const grado = { nada: 0, minimo: 1, mayday: 2 } as const;
+    if (grado[llamada] <= grado[this.llamadaDicha]) return;
+    this.llamadaDicha = llamada;
+    if (llamada === "mayday") this.declararMayday("fuel");
+    else this.declararCombustibleMinimo();
+  }
+
+  /**
+   * **Con poco combustible, se tiene prioridad**: el MAYDAY de la reserva, el
+   * «minimum fuel», o sin motor.
+   */
+  private get conPrioridad(): boolean {
+    return this.sinMotor || this.llamadaDicha !== "nada";
+  }
+
+  /**
+   * **«Minimum fuel»**, escrito en la tira de la radio de Taguató para
+   * arriba, como el MAYDAY: no es una emergencia, es avisar a la torre de que
+   * no se puede esperar.
+   *
+   * PENDIENTE-VOCES-automatico: la respuesta de la torre,
+   * `torre.minimumFuel`, y `vuelo.reservaMinimo` de la instructora abajo.
+   */
+  private declararCombustibleMinimo(): void {
+    if (!this.hayTorreQueHable()) return;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras) return;
+    this.hud.radio(`${this.miIndicativo.dicho}, minimum fuel`, 9, true);
   }
 
   /**
@@ -12290,6 +12425,7 @@ export class Game {
     this.tramoDelRepostaje = this.tramoParaCargar(salidaId, destinoId).clave;
     this.quemaDeAhora = 0;
     this.avisadoDeLaReserva = false;
+    this.llamadaDicha = "nada";
   }
 
   /**
@@ -14116,6 +14252,8 @@ export class Game {
       cota: (x, z) => this.terrain.cotaConocida(x, z),
       techo: this.aircraft.alturaDeCrucero,
       visual: this.aircraft.reglasDeVuelo === "visual",
+      // Y por kilos: el nivel que ahorra. Ver `nivelQueAhorra`.
+      ficha: this.aircraft,
     });
   }
 
@@ -14500,6 +14638,35 @@ export class Game {
   private timonDelAutomatico = 0;
 
   /**
+   * **Si los gases automáticos llevan las palancas.** Se ponen con el
+   * automático en el avión que los lleva —ver `llevaGasesAutomaticos`— y se
+   * sueltan con él, o solos si quien vuela mueve el gas. Ver
+   * `flight/gases-automaticos.ts`.
+   */
+  private gasesPuestos = false;
+  /** Cómo cambia de altura el automático ahora. Ver `ModoVertical`. */
+  private modoVertical: ModoVertical = "ALT";
+  /** Y qué lleva de lado. Ver `ModoLateral`. */
+  private modoLateral: ModoLateral = "HDG HOLD";
+  /** La altura pedida del paso anterior, para saber si es nueva. */
+  private alturaPedidaAntes: number | null = null;
+  /**
+   * **La velocidad que toca ahora**, de la escalera de velocidades: la que
+   * enseñan la ventanilla SPD y la marca de la cinta, y la que sostienen los
+   * gases. Se cuenta una vez por paso. Ver `laVelocidadQueToca`.
+   */
+  private velocidadDeAhora: VelocidadQueToca | null = null;
+  /**
+   * **La nivelada de los peldaños de abajo**: lo que la sostiene mientras
+   * dura, o `null`. Ver `sostenerElNivel`.
+   */
+  private nivelada: { memoria: Memoria; nivel: number } | null = null;
+  /** Si en esta aproximación ya se puso la frustrada en la ventanilla. */
+  private frustradaEnLaVentanilla = false;
+  /** Qué se le ha dicho a la torre del combustible. Ver `vigilarElCombustible`. */
+  private llamadaDicha: LlamadaDeCombustible = "nada";
+
+  /**
    * Lo que el automático recuerda de un fotograma al siguiente: sus topes de
    * ritmo lo necesitan. Se hace nueva cada vez que se engancha, para que coja
    * el avión como está. Ver `Memoria` en `flight/piloto-automatico.ts`.
@@ -14657,6 +14824,8 @@ export class Game {
     const plan = this.navegacion.plan;
     if (s.onGround && plan && this.subidaPreparada !== plan)
       this.prepararLaSubida(plan, this.elCampo(this.salidaId));
+    const enElTramoFinal = this.navegacion.enElTramoFinal(this.lecturaDeRuta());
+    this.ponerLaFrustradaEnLaVentanilla(enElTramoFinal);
     const pies = this.altitudIndicada() / PIE_EN_METROS;
     const escalon = this.autorizacionDeSubida.paso({
       pies,
@@ -14672,7 +14841,10 @@ export class Game {
      * de aterrizar; aquí, con el tren.
      */
     const callado =
-      s.onGround || this.input.controls.tren > 0.5 || this.faseDeAhora === "final";
+      s.onGround ||
+      this.input.controls.tren > 0.5 ||
+      this.faseDeAhora === "final" ||
+      enElTramoFinal;
     const paso = this.avisadorDeAltitud.paso(pies, callado ? null : this.ventanillaEnPies());
     this.alertaDeAltitud = paso.alerta;
     if (paso.tono) this.sonarElAvisador(paso.alerta);
@@ -14803,6 +14975,41 @@ export class Game {
   }
 
   /**
+   * **En la final, la ventanilla lleva la altitud de la frustrada.**
+   *
+   * Llegando a Gran Canaria la ventanilla se quedaba en 2.100 con el avión en
+   * final —la altitud del punto de final, que se puso al empezar a bajar—, y
+   * eso parecía decir «quedate a 2.100». En una cabina de verdad, en cuanto se
+   * va por la senda se pone en la ventanilla **la altitud de la frustrada**:
+   * la bajada la manda la senda, y la ventanilla ya está lista por si hay que
+   * irse al aire. Una vez por aproximación; se rearma al dejar el tramo final.
+   *
+   * La de cada carta no la tiene el juego; se usa la del punto de final al
+   * millar de arriba, y nunca menos de mil quinientos pies sobre el campo,
+   * que es como sale en la mayoría de las cartas de estas islas y de
+   * Paraguay.
+   *
+   * PENDIENTE-VOCES-automatico: `vuelo.ventanillaFrustrada`, en los tres
+   * peldaños de abajo.
+   */
+  private ponerLaFrustradaEnLaVentanilla(enElTramoFinal: boolean): void {
+    if (!enElTramoFinal) {
+      this.frustradaEnLaVentanilla = false;
+      return;
+    }
+    if (this.frustradaEnLaVentanilla || !this.llevaVentanillaAlt) return;
+    const alli = this.navegacion.alturaDelFinal;
+    if (alli === null) return;
+    const reglaje = alturaIndicada(0, this.qnhPuesta, this.qnhDelSitio);
+    const delFinal = (alli + reglaje) / PIE_EN_METROS;
+    const campo =
+      (this.cotaDelCampo(this.elCampo()) + reglaje) / PIE_EN_METROS + 1500;
+    const pies = Math.ceil((Math.max(delFinal, campo) + 1) / 1000) * 1000;
+    this.ventanillaAlt = Math.min(pies, topeDeLaVentanilla(this.aircraft));
+    this.frustradaEnLaVentanilla = true;
+  }
+
+  /**
    * **Otro nivel por los baches, pedido al control.** Ver
    * `flight/nivel-tranquilo.ts`.
    *
@@ -14903,6 +15110,12 @@ export class Game {
       this.hud.pilotoAutomaticoNoEngancha(t("vuelo.pilotoEnTierra"));
       return;
     }
+    /*
+     * **Y en el avión que no lo lleva, tampoco**: el fumigador no tiene
+     * automático en ningún peldaño, y su botón ni se pinta. Ver
+     * `llevaPilotoAutomatico`.
+     */
+    if (puesto && !llevaPilotoAutomatico(this.aircraft)) return;
     // Al soltarse, la luz de cabina se enciende un rato. Ver `pilotoSeSolto`.
     if (!puesto && this.pilotoPuesto) this.pilotoSeSolto = 10;
     /*
@@ -14938,7 +15151,25 @@ export class Game {
       );
     }
     const s = this.flight.state;
-    if (puesto) this.memoriaDelAutomatico = memoriaNueva();
+    if (puesto) {
+      this.memoriaDelAutomatico = memoriaNueva();
+      this.modoVertical = "ALT";
+      this.modoLateral = "HDG HOLD";
+      this.alturaPedidaAntes = null;
+      // La nivelada de los peldaños de abajo se aparta: manda el automático.
+      this.nivelada = null;
+      this.hud.proponerPilotoAutomatico(false);
+    }
+    /*
+     * **Y los gases, en el avión que los lleva**: el mismo botón los pone y
+     * los quita, como el A/T de un Boeing armado de antemano. En la cabina de
+     * verdad son dos interruptores; aquí, para que se pueda volar sin leer,
+     * uno, y la pantalla de vuelo dice qué hace cada mano. Ver
+     * `flight/gases-automaticos.ts`.
+     *
+     * PENDIENTE-VOCES-automatico: `vuelo.gasesAutomaticos` al ponerlos.
+     */
+    this.gasesPuestos = puesto && llevaGasesAutomaticos(this.aircraft);
     /*
      * **Y con ventanilla ALT, a la altura de la ventanilla.**
      *
@@ -14956,19 +15187,12 @@ export class Game {
           rumbo: s.heading,
           altitud: this.ventanillaEnMetros() ?? s.position.y,
           /*
-           * **Y la velocidad que llevás**, que es la pieza que faltaba.
-           *
-           * Sin ella el automático sostenía la altura solo con el morro, y con
-           * el gas a tope eso no se puede: un reactor con empuje de sobra pica
-           * para no subir, se pasa de velocidad, corrige, y arranca el vaivén.
-           * «Me sube a la estratosfera y ahora me baja, hice un bucle y todo.»
-           * Ver `Objetivos.velocidad`.
+           * **Y la velocidad, en el avión que lleva gases**: la que toca por la
+           * escalera de velocidades, no la que llevabas al apretar el botón.
+           * Sin gases, la velocidad es de quien lleva la palanca, como en el
+           * turbohélice o la avioneta de verdad. Ver `laVelocidadQueToca`.
            */
-          velocidad: indicatedAirspeed(
-            s.airspeed,
-            s.position.y,
-            this.flight.aireDelDia(),
-          ),
+          velocidad: this.gasesPuestos ? this.laVelocidadQueToca().kt * NUDO : null,
         }
       : { rumbo: null, altitud: null, velocidad: null };
     this.hud.ponerPilotoAutomatico(puesto);
@@ -14995,6 +15219,58 @@ export class Game {
       return c;
     }
     /*
+     * **Y los gases se sueltan si quien vuela mueve el gas**, que es lo que
+     * pasa en un avión de verdad al empujar las palancas con los gases
+     * puestos: se desconectan y la velocidad pasa a ser suya. El automático
+     * sigue con la altura y el rumbo. Ni un regulador escondido peleando con
+     * la mano: «no me deja bajar gas, se va al tope».
+     */
+    if (this.gasesPuestos && this.input.mueveElGas) this.soltarLosGases();
+    const lecturaDeAhora = this.lecturaDeRuta();
+    /*
+     * **En la final manda la senda**: el `G/S` del automático baja por la de
+     * tres grados hasta poco antes de la pista, y el `LOC` lo lleva al eje.
+     * La ventanilla ya no es «hasta dónde bajar»: lleva la altitud de la
+     * frustrada. Ver `ponerLaFrustradaEnLaVentanilla`.
+     */
+    const enLaFinal =
+      this.objetivos.altitud !== null && this.navegacion.enElTramoFinal(lecturaDeAhora);
+    if (enLaFinal) {
+      const senda = this.navegacion.sendaDeLaFinal(lecturaDeAhora);
+      const sobreLaPista = s.position.y - this.cotaDelCampo(this.elCampo());
+      /*
+       * **Y a seiscientos pies se suelta para aterrizar a mano.** Un
+       * automático de los de este juego no recoge el avión: bajaría por la
+       * senda hasta el asfalto. En una aproximación de verdad sin aterrizaje
+       * automático se desconecta antes de los mínimos, y aquí se hace entre
+       * los «one thousand» y «five hundred» del radioaltímetro para que su
+       * aviso no pise ninguno.
+       *
+       * PENDIENTE-VOCES-automatico: `vuelo.automaticoParaAterrizar`.
+       */
+      if (sobreLaPista < SUELTA_PARA_ATERRIZAR) {
+        this.ponerPilotoAutomatico(false);
+        return c;
+      }
+      if (senda) {
+        /*
+         * Nunca subir hacia la senda: viniendo por debajo, se sostiene la
+         * altura hasta que la senda baja a buscarla, que es como se captura
+         * una senda de planeo de verdad.
+         */
+        const debajo = s.position.y < senda.altitud;
+        const altitud = debajo ? s.position.y : senda.altitud;
+        const ritmo = debajo ? 0 : senda.ritmo;
+        if (altitud !== this.objetivos.altitud || ritmo !== this.objetivos.ritmo)
+          this.objetivos = { ...this.objetivos, altitud, ritmo };
+      }
+      const loc = this.rumboDelLocalizador();
+      this.modoLateral = loc === null ? "HDG HOLD" : "LOC";
+      if (loc !== null) this.objetivos = { ...this.objetivos, rumbo: loc };
+    } else {
+      this.modoLateral = "HDG HOLD";
+
+    /*
      * **Y pasado el punto de descenso, baja por la senda del plan.**
      *
      * Un piloto automático de los de mantener altura no baja solo: se le pone
@@ -15010,41 +15286,83 @@ export class Game {
      * altura del panel es un suelo que el plan no cruza—. Al llegar al T/D se
      * pone en la altura del punto de final: ver `ponerLaVentanillaParaBajar`.
      */
-    const ventanilla = this.ventanillaEnMetros();
-    if (this.objetivos.altitud !== null && ventanilla !== null) {
-      let sostiene = ventanilla;
-      let ritmo = 0;
-      if (this.navegacion.bajando) {
+      const ventanilla = this.ventanillaEnMetros();
+      if (this.objetivos.altitud !== null && ventanilla !== null) {
+        let sostiene = ventanilla;
+        let ritmo = 0;
+        if (this.navegacion.bajando) {
+          const lectura = this.lecturaDeRuta();
+          const senda = this.navegacion.alturaParaElAutomatico(lectura);
+          if (senda !== null && senda > ventanilla + 1) {
+            sostiene = senda;
+            ritmo = this.navegacion.ritmoParaElAutomatico(lectura) ?? 0;
+          }
+        }
+        if (sostiene !== this.objetivos.altitud || ritmo !== (this.objetivos.ritmo ?? 0))
+          this.objetivos = { ...this.objetivos, altitud: sostiene, ritmo };
+      } else if (this.objetivos.altitud !== null && this.navegacion.bajando) {
         const lectura = this.lecturaDeRuta();
         const senda = this.navegacion.alturaParaElAutomatico(lectura);
-        if (senda !== null && senda > ventanilla + 1) {
+        let sostiene = this.objetivos.altitud;
+        if (senda !== null && senda < sostiene - 1) {
           sostiene = senda;
-          ritmo = this.navegacion.ritmoParaElAutomatico(lectura) ?? 0;
+          this.objetivos = { ...this.objetivos, altitud: senda };
         }
+        /*
+         * **Y el ritmo de la senda**, mientras lo que se sostiene sea ella: con
+         * la altitud sola, el automático iba siempre por detrás de una senda que
+         * no para de bajar. Si quien vuela lo puso más bajo, la altitud ya no es
+         * la de la senda y no se mueve: ritmo cero. Ver `Objetivos.ritmo`.
+         */
+        const ritmo =
+          senda !== null && senda <= sostiene + 1
+            ? (this.navegacion.ritmoParaElAutomatico(lectura) ?? 0)
+            : 0;
+        if (ritmo !== this.objetivos.ritmo)
+          this.objetivos = { ...this.objetivos, ritmo };
       }
-      if (sostiene !== this.objetivos.altitud || ritmo !== (this.objetivos.ritmo ?? 0))
-        this.objetivos = { ...this.objetivos, altitud: sostiene, ritmo };
-    } else if (this.objetivos.altitud !== null && this.navegacion.bajando) {
-      const lectura = this.lecturaDeRuta();
-      const senda = this.navegacion.alturaParaElAutomatico(lectura);
-      let sostiene = this.objetivos.altitud;
-      if (senda !== null && senda < sostiene - 1) {
-        sostiene = senda;
-        this.objetivos = { ...this.objetivos, altitud: senda };
-      }
-      /*
-       * **Y el ritmo de la senda**, mientras lo que se sostiene sea ella: con
-       * la altitud sola, el automático iba siempre por detrás de una senda que
-       * no para de bajar. Si quien vuela lo puso más bajo, la altitud ya no es
-       * la de la senda y no se mueve: ritmo cero. Ver `Objetivos.ritmo`.
-       */
-      const ritmo =
-        senda !== null && senda <= sostiene + 1
-          ? (this.navegacion.ritmoParaElAutomatico(lectura) ?? 0)
-          : 0;
-      if (ritmo !== this.objetivos.ritmo)
-        this.objetivos = { ...this.objetivos, ritmo };
     }
+    /*
+     * **El modo vertical**, el que se escribe arriba de la pantalla de vuelo:
+     * bajando por la senda de la final, `G/S`; por la del plan, `VNAV PTH`;
+     * y si no, cambiar de nivel hasta capturar y sostener. Ver `modoVertical`.
+     */
+    const pedida = this.objetivos.altitud ?? s.position.y;
+    const porLaSenda = !enLaFinal && (this.objetivos.ritmo ?? 0) < 0;
+    const sencillo = this.tier.model === "simple";
+    this.modoVertical = enLaFinal
+      ? "G/S"
+      : porLaSenda
+        ? "VNAV PTH"
+        : modoVertical(
+            this.modoVertical === "G/S" || this.modoVertical === "VNAV PTH"
+              ? "V/S"
+              : this.modoVertical,
+            {
+              falta: pedida - s.position.y,
+              vertical: s.velocity.y,
+              nueva:
+                this.alturaPedidaAntes !== null &&
+                Math.abs(pedida - this.alturaPedidaAntes) > 30,
+              conGases: this.gasesPuestos && !sencillo,
+            },
+          );
+    this.alturaPedidaAntes = pedida;
+    /*
+     * **Y lo que hacen los gases**: en `FLCH SPD` subiendo, el empuje de la
+     * subida, y bajando, ralentí; en los demás, la velocidad de la escalera.
+     */
+    const gases: ModoDeGases | null = !this.gasesPuestos
+      ? null
+      : this.modoVertical === "FLCH SPD"
+        ? pedida > s.position.y
+          ? "THR"
+          : "IDLE"
+        : "SPD";
+    const toca = this.laVelocidadQueToca();
+    if (this.gasesPuestos) this.objetivos = { ...this.objetivos, velocidad: toca.kt * NUDO };
+    const aire = this.flight.aireDelDia();
+    const modelo = this.flight;
     const m = mandosPara(
       {
         heading: s.heading,
@@ -15052,19 +15370,37 @@ export class Game {
         cabeceo: pitchAngleOf(s.orientation),
         altitud: s.position.y,
         vertical: s.velocity.y,
-        velocidad: indicatedAirspeed(
-          s.airspeed,
-          s.position.y,
-          this.flight.aireDelDia(),
-        ),
+        velocidad: indicatedAirspeed(s.airspeed, s.position.y, aire),
         gas: c.throttle,
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
         // Solo cuenta al engancharse: coger el avión con el timón que lo
         // sostenía, ayuda incluida. Ver `timonAhora` en `model.ts`.
         timon: this.flight.timonAhora(),
+        // Lo que empuja el motor aquí y lo que pesa el avión: los gases miden
+        // con eso cuánto acelera cada trozo de palanca.
+        empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
+        masa: this.aircraft.mass,
+        /*
+         * **Y en el modelo sencillo, con sus propias cuentas**: ahí la palanca
+         * es cuánto se sube y el gas es la velocidad, y las dos cosas se le
+         * preguntan al modelo. Ver `mandoParaSubir` y `gasPara` en `arcade.ts`.
+         */
+        ...(sencillo && modelo.mandoParaSubir
+          ? {
+              subirCon: (ritmo: number) => modelo.mandoParaSubir?.(ritmo) ?? 0,
+              equilibrio: modelo.gasPara(
+                trueFromIndicated(toca.kt * NUDO, s.position.y, aire),
+              ),
+            }
+          : {}),
       },
-      this.objetivos,
+      {
+        ...this.objetivos,
+        modo: this.modoVertical === "FLCH SPD" ? "FLCH SPD" : "V/S",
+        gases,
+        minima: this.velocidadMinimaDelAutomatico(),
+      },
       dt,
       this.memoriaDelAutomatico,
     );
@@ -15094,6 +15430,7 @@ export class Game {
     // Y el modelo sabe que los lleva él, para que las ayudas que imitan a
     // quien suelta la palanca no se turnen con él. Ver `ControlInputs.automatico`.
     this.mandosConAutomatico.automatico = true;
+    this.mandosConAutomatico.sostieneLaAltura = false;
     /*
      * **Y el automático toma el trim; no pelea contra él.**
      *
@@ -15127,20 +15464,266 @@ export class Game {
       this.timonDelAutomatico = m.elevator;
     }
     /*
-     * **Y el gas sí se escribe en los mandos de quien vuela.**
-     *
-     * Es la excepción a la regla de arriba, y tiene motivo: el gas **no vuelve
-     * al centro solo** —no es un muelle, es una palanca que se queda donde se
-     * deja—, así que escribirlo no engaña a la comprobación de «me han tocado
-     * los mandos». Y hace falta escribirlo: al soltar el automático, la
-     * palanca tiene que quedarse donde él la dejó, que es lo que hace un avión
-     * de verdad. Si no, el motor daría un salto justo al desconectar.
+     * **Y el gas, en el avión que lleva gases, lo mueve su servo**: la
+     * palanca de quien vuela —la de la pantalla también— se mueve sola, que
+     * es lo que se ve en una cabina de verdad, y se queda donde la deje al
+     * soltarse. Es **la única mano que escribe el gas en el aire** además de
+     * quien vuela: medido con un espía en los mandos, ver
+     * `scripts/verificar-crucero.mjs`.
      */
     if (m.throttle !== null) {
-      c.throttle = m.throttle;
+      this.input.servoDelGas(m.throttle);
       this.mandosConAutomatico.throttle = m.throttle;
     }
     return this.mandosConAutomatico;
+  }
+
+  /**
+   * **Se sueltan los gases**, y el automático sigue con lo demás. Se ve en la
+   * pantalla de vuelo —la columna de los gases se queda en blanco— y la
+   * palanca se queda donde la dejó el servo, que es donde la encuentra quien
+   * la toca.
+   *
+   * PENDIENTE-VOCES-automatico: `vuelo.gasesSueltos`, en los peldaños de
+   * abajo, la primera vez.
+   */
+  private soltarLosGases(): void {
+    if (!this.gasesPuestos) return;
+    this.gasesPuestos = false;
+    this.objetivos = { ...this.objetivos, velocidad: null };
+    this.avisar("attention");
+  }
+
+  /**
+   * **La velocidad que toca ahora**, por la escalera de velocidades: ver
+   * `flight/escalera-de-velocidades.ts`. Una vez por paso.
+   *
+   * Y en el modelo sencillo, nunca más de lo que ese modelo da a esta
+   * altura: allí el gas es la velocidad y la punta sube con la altura sin
+   * llegar a las cifras de un reactor de verdad a media altura. Pedirle más
+   * es dejar los gases clavados al tope sin llegar nunca —el «se va al tope»
+   * de Guyrami—, así que la marca y la ventanilla enseñan lo que de verdad se
+   * va a sostener.
+   */
+  private laVelocidadQueToca(): VelocidadQueToca {
+    if (this.velocidadDeAhora && this.velocidadDeAhoraEn === this.relojDelJuego)
+      return this.velocidadDeAhora;
+    const s = this.flight.state;
+    const aire = this.flight.aireDelDia();
+    const p = this.navegacion.progreso;
+    const altitud = this.altitudIndicada();
+    const ventanilla = this.ventanillaEnMetros();
+    let v = velocidadQueToca(this.aircraft, {
+      altitud,
+      restante: this.navegacion.plan && p ? p.restante : null,
+      bajando: this.navegacion.bajando,
+      enFinal: this.faseDeAhora === "final",
+      subiendo:
+        s.velocity.y > 2 ||
+        (ventanilla !== null && ventanilla - s.position.y > 300 * 0.3048),
+      topeKt: topeDeLoSacado(this.aircraft, {
+        tren: this.input.controls.tren,
+        flaps: this.input.controls.flaps,
+      }),
+      aire,
+    });
+    if (s.onGround) {
+      /*
+       * En tierra, la de la subida inicial: la Vr y veinte nudos, que es la V2
+       * y el margen con que se sale. Es la que se lleva puesta al despegar.
+       */
+      v = { kt: Math.round(this.aircraft.rotationSpeed / NUDO + 20), mach: null, tramo: "subida" };
+    }
+    if (this.tier.model === "simple") {
+      const punta = indicatedAirspeed(this.flight.velocidadMaxima(), s.position.y, aire) / NUDO;
+      if (v.kt > punta * 0.97) v = { ...v, kt: Math.floor(punta * 0.97), mach: null };
+    }
+    this.velocidadDeAhora = v;
+    this.velocidadDeAhoraEn = this.relojDelJuego;
+    return v;
+  }
+
+  /** Cuándo se contó `velocidadDeAhora`, en el reloj del juego. */
+  private velocidadDeAhoraEn = -1;
+
+  /**
+   * **La velocidad mínima del automático**, indicada, m/s: por debajo baja el
+   * morro. Una vez y cuarto la Vref limpio —la de maniobra más baja de
+   * cualquier avión sin flaps— y la Vref con los de aterrizaje fuera, que es
+   * a lo que se vuela la final. Ver `Objetivos.minima`.
+   */
+  private velocidadMinimaDelAutomatico(): number {
+    const flaps = Math.max(0, Math.min(1, this.input.controls.flaps));
+    return this.aircraft.approachSpeed * (1.25 - 0.25 * flaps);
+  }
+
+  /**
+   * **El rumbo del localizador**: el de la pista, corregido hacia su eje, si
+   * se viene a ella de frente y cerca. `null` si no se está en su haz. Es el
+   * `LOC` del automático en la final: lo que lo lleva al eje sin que nadie
+   * gire la rueda del rumbo.
+   */
+  private rumboDelLocalizador(): number | null {
+    const destino = this.elDestino();
+    const campo = destino ? this.elCampo(destino.id) : this.elCampo();
+    const pista = campo.pista;
+    const s = this.flight.state;
+    const { along, across } = enEjesDePista(
+      s.position.x,
+      s.position.z,
+      pista.x,
+      pista.z,
+      pista.heading,
+    );
+    const alUmbral = -along - pista.length / 2;
+    if (alUmbral < 0 || alUmbral > 25000 || Math.abs(across) > 2500) return null;
+    const torcido = (((s.heading * 180) / Math.PI - pista.heading + 540) % 360) - 180;
+    if (Math.abs(torcido) > 45) return null;
+    // A kilómetro y medio por delante: una entrada en el eje de unos treinta
+    // grados como mucho, que es como captura un localizador.
+    const corrige = Math.max(-Math.PI / 6, Math.min(Math.PI / 6, -Math.atan(across / 1500)));
+    const rumbo = (pista.heading * Math.PI) / 180 + corrige;
+    return ((rumbo % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  }
+
+  /**
+   * **La nivelada de los peldaños de abajo**: al llegar a la altura de la
+   * ventanilla —o al crucero del plan, en el avión que no la lleva— con la
+   * palanca suelta, el avión se queda ahí y el gas pasa a ser velocidad. Ver
+   * `Tier.nivelada`, que cuenta de dónde sale.
+   *
+   * Usa la ley de la altura del automático —con sus topes de una décima de g
+   * y su captura, que llega frenando— y nada más: ni toca el gas ni el
+   * alabeo, y se aparta en cuanto se mueve la palanca o el compensador, o
+   * cuando el plan empieza a bajar. No es un automático escondido: es el
+   * avión compensado que se queda donde se le deja, que es lo que hace un
+   * avión bien compensado de verdad.
+   *
+   * Y al nivelar, en el avión que lleva automático, el botón se ofrece. Ver
+   * `proponerPilotoAutomatico`.
+   */
+  private sostenerElNivel(dt: number, c: ControlInputs): ControlInputs {
+    const s = this.flight.state;
+    const nivel = this.tier.nivelada ? this.nivelQueSeSostiene() : null;
+    const tocan =
+      this.input.mueve.cabeceo ||
+      Math.abs(c.elevator) > TOQUE ||
+      (this.nivelada !== null && Math.abs(c.trim - this.trimDeLaNivelada) > 1e-6);
+    if (
+      nivel === null ||
+      s.onGround ||
+      tocan ||
+      this.faseDeAhora === "final" ||
+      (this.nivelada !== null && Math.abs(this.nivelada.nivel - nivel) > 30)
+    ) {
+      this.soltarLaNivelada();
+      return c;
+    }
+    if (!this.nivelada) {
+      const falta = nivel - s.position.y;
+      // Se captura viniendo hacia ella, como la captura del automático.
+      const viene = falta * s.velocity.y > 0 || Math.abs(falta) < 30;
+      if (!viene || Math.abs(falta) > aCuantoCaptura(s.velocity.y)) return c;
+      this.nivelada = { memoria: memoriaNueva(), nivel };
+      this.trimDeLaNivelada = c.trim;
+      /*
+       * PENDIENTE-VOCES-automatico: `vuelo.niveladaAsistida` aquí, y
+       * `vuelo.automaticoArriba` si lo lleva.
+       */
+      if (llevaPilotoAutomatico(this.aircraft)) this.hud.proponerPilotoAutomatico(true);
+    }
+    const aire = this.flight.aireDelDia();
+    const modelo = this.flight;
+    const m = mandosPara(
+      {
+        heading: s.heading,
+        alabeo: bankAngleOf(s.orientation),
+        cabeceo: pitchAngleOf(s.orientation),
+        altitud: s.position.y,
+        vertical: s.velocity.y,
+        velocidad: indicatedAirspeed(s.airspeed, s.position.y, aire),
+        gas: c.throttle,
+        verdadera: s.airspeed,
+        ritmoDeCabeceo: s.pitchRate,
+        timon: this.flight.timonAhora(),
+        ...(modelo.mandoParaSubir
+          ? { subirCon: (ritmo: number) => modelo.mandoParaSubir?.(ritmo) ?? 0 }
+          : {}),
+      },
+      { rumbo: null, altitud: this.nivelada.nivel, velocidad: null, gases: null },
+      dt,
+      this.nivelada.memoria,
+    );
+    Object.assign(this.mandosConAutomatico, c);
+    this.mandosConAutomatico.elevator = m.elevator;
+    this.mandosConAutomatico.trim = 0;
+    this.mandosConAutomatico.sostieneLaAltura = true;
+    this.mandosConAutomatico.automatico = false;
+    this.timonDeLaNivelada = m.elevator;
+    return this.mandosConAutomatico;
+  }
+
+  /** El compensador al capturar, para saber si alguien lo mueve. */
+  private trimDeLaNivelada = 0;
+  /** El último timón de la nivelada: queda en el compensador al soltarla. */
+  private timonDeLaNivelada = 0;
+
+  /**
+   * Se suelta la nivelada, y como el automático, **deja el avión compensado
+   * donde lo llevaba**: su timón al compensador, para que no dé un bandazo en
+   * la mano de quien lo coge. En el modelo sencillo no hay compensador.
+   */
+  private soltarLaNivelada(): void {
+    if (!this.nivelada) return;
+    this.nivelada = null;
+    if (this.tier.model !== "simple") this.input.controls.trim = this.timonDeLaNivelada;
+    this.mandosConAutomatico.sostieneLaAltura = false;
+    if (!this.pilotoPuesto) this.hud.proponerPilotoAutomatico(false);
+  }
+
+  /**
+   * **A qué altura se nivela solo**, m, o `null` si a ninguna: la de la
+   * ventanilla, o el crucero del plan en el avión que no la lleva, mientras
+   * no se esté bajando. Bajando no: ahí quitar gas tiene que seguir siendo
+   * bajar, que es lo que se enseña en esos peldaños.
+   */
+  private nivelQueSeSostiene(): number | null {
+    if (this.navegacion.bajando) return null;
+    const ventanilla = this.ventanillaEnMetros();
+    if (ventanilla !== null) return ventanilla;
+    if (!this.navegacion.plan) return null;
+    const crucero = this.navegacion.cruceroPlaneado;
+    return crucero > 0 ? crucero : null;
+  }
+
+  /**
+   * **La velocidad de la ventanilla SPD y de la muesca de la cinta**: la que
+   * toca, en el aire y en tierra. Ver `laVelocidadQueToca`.
+   */
+  private laSpdDelPanel(): { kt: number; mach: number | null } {
+    const v = this.laVelocidadQueToca();
+    return { kt: v.kt, mach: v.mach };
+  }
+
+  /**
+   * **Lo que hace cada mano del automático**, para el FMA de los reactores,
+   * o `null` si no hay nada puesto. Ver `Fma` en `ui/tablero.ts`.
+   */
+  private elFma(): Fma | null {
+    if (!this.pilotoPuesto) return null;
+    const gases = !this.gasesPuestos
+      ? ""
+      : this.modoVertical === "FLCH SPD"
+        ? (this.objetivos.altitud ?? 0) > this.flight.state.position.y
+          ? "THR"
+          : "IDLE"
+        : "SPD";
+    return {
+      gases,
+      lateral: this.objetivos.rumbo !== null ? this.modoLateral : "",
+      vertical: this.objetivos.altitud !== null ? this.modoVertical : "",
+      piloto: true,
+    };
   }
 
   /** La copia de los mandos que se le pasa al modelo. Ver arriba. */
@@ -16107,8 +16690,18 @@ export class Game {
   private cycleTier(): void {
     const next =
       TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? GUYRAMI;
-    const { position, heading, airspeed } = this.flight.state;
-    const carried = { position: position.clone(), heading, airspeed };
+    const { position, heading, airspeed, onGround } = this.flight.state;
+    /*
+     * Volando, el modelo nuevo nace **equilibrado**: con el ala sosteniendo
+     * el peso. Sin eso nacía con el morro en el horizonte —sin sustentación—
+     * y lo primero que hacía era caerse. Ver `InitialConditions.equilibrado`.
+     */
+    const carried = {
+      position: position.clone(),
+      heading,
+      airspeed,
+      equilibrado: !onGround,
+    };
 
     this.tier = next;
     rememberTier(next);
@@ -16118,18 +16711,51 @@ export class Game {
     );
     this.flight = this.buildFlightModel(next);
     this.flight.reset(carried);
+    /*
+     * **Y nada queda mandando sin verse.**
+     *
+     * De Taguató Ruvichá con el automático puesto a Guyrami: «no me deja
+     * bajar gas, se va al tope; es como si alguien estuviera tirando del
+     * timón». Era el automático, enganchado y escondido —Guyrami no tenía
+     * botón— y con su canal de gas empujando hacia una velocidad que el modelo
+     * sencillo no da. Al tocar la flecha sonó «autopilot disconnect».
+     *
+     * Ahora, al cambiar de peldaño en vuelo:
+     *
+     * - **El automático sigue puesto y a la vista**, porque es del avión y su
+     *   botón sale en los cuatro peldaños. Y **vuelve a coger el avión** —el
+     *   modelo es otro—, como al engancharlo: sin tirón.
+     * - **Los gases**, igual: siguen, con la velocidad que ese modelo puede
+     *   sostener, y se sueltan en cuanto se toca el gas.
+     * - **La nivelada** de los peldaños de abajo se olvida: si toca, vuelve a
+     *   capturar con el modelo nuevo.
+     * - **El compensador**, en el modelo completo, se deja en el que sostiene
+     *   el avión nivelado —el sencillo no tiene—: lo que quedaba del modelo
+     *   viejo era el de otro avión, y soltar la palanca lo mandaba arriba o
+     *   abajo sin que nadie lo hubiera pedido.
+     *
+     * Lo comprueba `scripts/verificar-cambio-de-peldano.mjs`, en cada fase.
+     */
+    this.memoriaDelAutomatico = memoriaNueva();
+    this.alturaPedidaAntes = null;
+    this.nivelada = null;
+    this.mandosConAutomatico.sostieneLaAltura = false;
+    if (!onGround && next.model !== "simple")
+      this.input.controls.trim = this.flight.timonDeEquilibrio?.() ?? 0;
 
     this.hud.setUnits(next.units);
     this.hud.setEscalera(next.avisos);
     this.hud.setInstruments(next.instruments);
     /*
-     * **Y el piloto automático, que es del peldaño y no del avión.**
-     *
-     * Se encendía una sola vez al arrancar el juego, así que quien empezaba en
-     * Guyrami —que es donde abre el juego— y subía de peldaño se quedaba sin
-     * él para siempre: «yo no veo piloto automático». Ver `ponerHayPilotoAutomatico`.
+     * **Y el botón del piloto automático, a la vista si el avión lo lleva**,
+     * y en la posición en que está: se ponía una sola vez al arrancar, y quien
+     * subía de peldaño se quedaba sin él —«yo no veo piloto automático»—; y
+     * al bajar a Guyrami se escondía con el automático todavía puesto. Ver
+     * `ponerHayPilotoAutomatico`.
      */
-    this.hud.ponerHayPilotoAutomatico(next.id !== "guyrami");
+    this.hud.ponerHayPilotoAutomatico(llevaPilotoAutomatico(this.aircraft));
+    this.hud.ponerPilotoAutomatico(this.pilotoPuesto);
+    this.hud.proponerPilotoAutomatico(false);
     /*
      * Y la marca del gas que sostiene el nivel, que **solo es verdad en el
      * modelo sencillo**: allí el motor es la velocidad y hay un punto exacto

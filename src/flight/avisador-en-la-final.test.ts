@@ -30,7 +30,7 @@ import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { type AssistLayers } from "./assists";
 import { MARGEN_DEL_AVISADOR } from "./avisos-de-actitud";
-import { CoefficientFlightModel, liftCoefficient } from "./fdm";
+import { CoefficientFlightModel, empujeLleno, liftCoefficient } from "./fdm";
 import { neutralControls } from "./model";
 import { mandosPara, memoriaNueva } from "./piloto-automatico";
 import { TAGUATO, TAGUATO_RUVICHA, TUKA } from "./tiers";
@@ -134,6 +134,9 @@ describe("el avisador de pérdida en una final normal", () => {
               gas,
               verdadera: s.airspeed,
               ritmoDeCabeceo: s.pitchRate,
+              // El empuje y la masa, como se los da el juego a los gases.
+              empujeAFondo: empujeLleno(a, airDensity(s.position.y), s.airspeed),
+              masa: a.mass,
               timon: t === 0 ? timon : modelo.timonAhora(),
             },
             {

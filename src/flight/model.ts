@@ -114,6 +114,12 @@ export interface ControlInputs {
    */
   automatico?: boolean;
   /**
+   * **Si la nivelada de los peldaños de abajo lleva la altura.** Como
+   * `automatico`, pero solo para el cabeceo: aparta el compensador que
+   * sostiene la subida y deja el nivelado de alas. Ver `Tier.nivelada`.
+   */
+  sostieneLaAltura?: boolean;
+  /**
    * **Los aerofrenos**, de 0 cerrados a 1 abiertos del todo. Es la posición y
    * no la palanca, como los flaps: los paneles tardan un momento en subir.
    * Solo frenan en el avión que los lleva. Ver `aerofrenos` en la ficha y
@@ -237,6 +243,17 @@ export interface InitialConditions {
   heading: number;
   /** Velocidad inicial respecto al aire, m/s. 0 para arrancar parado. */
   airspeed: number;
+  /**
+   * **Y si se le pone volando equilibrado**: con el ángulo de ataque que
+   * sostiene su peso a esa velocidad, en vez de con el morro en el horizonte.
+   *
+   * Lo pide quien cambia de peldaño en el aire: el modelo nuevo nace donde
+   * estaba el viejo, y sin esto nacía con el ala sin ángulo —sin
+   * sustentación—, se caía un buen trozo y el compensador de quien vuela
+   * quedaba sosteniendo otro avión. Ver `cycleTier` en `game.ts` y
+   * `timonDeEquilibrio`.
+   */
+  equilibrado?: boolean;
 }
 
 /** Devuelve la cota del terreno, en metros, para unas coordenadas de mundo. */
@@ -291,6 +308,18 @@ export interface FlightModel {
    * piloto automático.
    */
   timonAhora(): number;
+  /**
+   * **El timón que sostiene el avión nivelado a la velocidad de ahora**, en
+   * unidades de mando: lo que hay que dejar puesto en el compensador para que
+   * vuele solo. Solo lo sabe el modelo de coeficientes; el sencillo no tiene
+   * timón que contar. Ver `InitialConditions.equilibrado`.
+   */
+  timonDeEquilibrio?(): number;
+  /**
+   * **Qué palanca da este ritmo de subida**, en el modelo en el que la palanca
+   * es cuánto se sube: el sencillo. Ver `mandoParaSubir` en `arcade.ts`.
+   */
+  mandoParaSubir?(ritmo: number): number;
   /**
    * Rompe el avión. Lo llama el juego cuando se ha metido en un edificio.
    *

@@ -1692,6 +1692,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego.alEmpezarElDescenso(oyente),
     /** Lo que persigue el piloto automático: rumbo, altitud y velocidad. */
     objetivosDelPiloto: () => juego.objetivosParaBanco,
+    /**
+     * **El juego entero, para las trazas.** Un banco que quiere saber quién
+     * escribe un mando tiene que poder ponerle un espía al objeto de los
+     * mandos, y eso no se hace con una pregunta cerrada. Solo en desarrollo,
+     * como todo este fichero. Ver `scripts/verificar-crucero.mjs`.
+     */
+    juegoParaTrazas: () => juego,
     /** Cambia el destino como si se tocara la tarjeta hasta llegar a él. */
     ponerDestino: (id: string) => juego.ponerDestinoParaBanco(id),
     /** Deja el depósito con estos kilos, para llegar a la reserva sin esperar. */

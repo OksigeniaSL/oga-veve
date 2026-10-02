@@ -53,6 +53,12 @@
 
 import type { AircraftConfig } from "./aircraft";
 import { PARADO } from "./cambio-de-avion";
+import {
+  airDensity,
+  GRAVITY,
+  temperaturaExterior,
+  velocidadDelSonido,
+} from "./atmosphere";
 
 /**
  * Consumo específico de cada clase de motor, kg por newton y por hora.
@@ -67,16 +73,60 @@ const POR_NEWTON_Y_HORA: Record<AircraftConfig["sound"]["engine"], number> = {
 };
 
 /**
+ * **Dónde está el motor**: a qué Mach va y qué temperatura traga, en
+ * proporción a la del día estándar al nivel del mar (θ = T/288,15 K).
+ */
+export interface DondeQuema {
+  readonly mach: number;
+  readonly theta: number;
+}
+
+/**
+ * El Mach y la θ a los que vale el consumo de la tabla para un turbofán: el
+ * crucero de un avión de línea, Mach 0,78 en la tropopausa.
+ */
+const MACH_DE_LA_TABLA = 0.78;
+const THETA_DE_LA_TABLA = 216.65 / 288.15;
+
+/**
+ * **El consumo específico de este motor aquí**, kg por newton y por hora.
+ *
+ * El de la tabla —ver `POR_NEWTON_Y_HORA`— es el de crucero, y para la
+ * hélice y el pistón se queda así: su consumo va con la potencia y la cuenta
+ * de este juego ya lo mide por el empuje. El de un turbofán, no: **cuesta más
+ * cada newton cuanto más deprisa va y cuanto más caliente es el aire que
+ * traga**. Con la ley de un turbofán de doble flujo de Mattingly (*Elements
+ * of Propulsion*, AIAA, 2006: el consumo va como `0,4 + 0,45·M` y como la
+ * raíz de θ), escalada para que en crucero dé lo de la tabla: un 25 % menos
+ * despegando, que son los 0,35 lb/lbf·h de un JT9D parado frente a sus 0,6
+ * en crucero, y algo menos arriba que abajo a igual Mach, porque arriba hace
+ * frío. El ADR 0011 lo dejó escrito como pendiente; esto es lo que faltaba
+ * para que el mismo empuje gaste menos arriba, que es media lección del
+ * crucero.
+ *
+ * Sin `donde`, el de crucero, que es con el que se planea la carga.
+ */
+export function consumoEspecifico(avion: AircraftConfig, donde?: DondeQuema): number {
+  const tabla = POR_NEWTON_Y_HORA[avion.sound.engine];
+  if (!donde || avion.sound.engine !== "turbofan") return tabla;
+  const porElMach = (0.4 + 0.45 * Math.max(0, donde.mach)) / (0.4 + 0.45 * MACH_DE_LA_TABLA);
+  const porElFrio = Math.sqrt(Math.max(0.5, donde.theta) / THETA_DE_LA_TABLA);
+  return tabla * porElMach * porElFrio;
+}
+
+/**
  * Lo que se quema ahora mismo, en kilos por segundo.
  *
  * `empuje` es el que está dando el avión **de verdad**, en newtons, no el
- * que pediría el mando a nivel del mar.
+ * que pediría el mando a nivel del mar. Y `donde`, a qué Mach y con qué aire:
+ * ver `consumoEspecifico`.
  */
 export function quemaPorSegundo(
   avion: AircraftConfig,
   empuje: number,
+  donde?: DondeQuema,
 ): number {
-  const especifico = POR_NEWTON_Y_HORA[avion.sound.engine];
+  const especifico = consumoEspecifico(avion, donde);
   return (Math.max(0, empuje) * especifico) / 3600;
 }
 
@@ -123,11 +173,13 @@ function cuantoDura(avion: AircraftConfig, metros: number): number {
 /**
  * Cuánto se carga para este viaje, en kilos.
  *
- * **Lo del viaje más la reserva**, que es como se carga un avión de verdad y
- * es la única parte de esto que enseña algo. La reserva son cuarenta y cinco
- * minutos al consumo de crucero: el número de la ley, el mismo en Europa y
- * en América, y el que evita que un desvío o una espera se conviertan en una
- * emergencia.
+ * **Lo del viaje más lo de reserva**, que es como se carga un avión de verdad
+ * y es la única parte de esto que enseña algo. Lo de reserva son cuarenta y
+ * cinco minutos al consumo de crucero —el número de la ley para los de motor
+ * de pistón, y en los de turbina lo que suman la reserva final de treinta
+ * minutos de espera, la contingencia y el combustible extra que se lleva por
+ * si hay que esperar o desviarse—: es lo que evita que un desvío o una espera
+ * se conviertan en una emergencia.
  *
  * Se calcula con el motor a un tercio, que es el empuje de crucero de
  * cualquiera de estos aviones: a fondo solo se está en el despegue y son dos
@@ -140,19 +192,62 @@ function cuantoDura(avion: AircraftConfig, metros: number): number {
 export const RESERVA_SEGUNDOS = 45 * 60;
 
 /**
- * La reserva de este avión, en kilos.
+ * **Lo que dura la reserva final**, s: treinta minutos de espera en un avión
+ * de turbina y cuarenta y cinco en uno de pistón, que es lo que pide la OACI
+ * (Anexo 6, parte I, 4.3.6.3) y en Europa EASA (CAT.OP.MPA.181): lo que tiene
+ * que quedar en los depósitos al tocar, y lo único que no se gasta nunca a
+ * propósito.
+ */
+export function duracionDeLaReservaFinal(avion: AircraftConfig): number {
+  return (avion.sound.engine === "piston" || avion.sound.engine === "radial" ? 45 : 30) * 60;
+}
+
+/** A qué altura se espera para contar la reserva final: 1500 ft sobre el campo. */
+const ALTURA_DE_ESPERA = 1500 * 0.3048;
+
+/**
+ * **Lo que se quema esperando**, kg/s: el avión nivelado a 1500 ft a la
+ * velocidad de menos resistencia, que es como se espera de verdad —un 747 da
+ * vueltas a unos 240 nudos—, por el consumo de su motor a esa velocidad.
  *
- * Los cuarenta y cinco minutos de ley al consumo de crucero, que es con lo
- * que se calculan de verdad: un plan de vuelo no dice «cuarenta y cinco
- * minutos», dice los kilos que son cuarenta y cinco minutos, y ese número se
- * decide en tierra y ya no se toca.
+ * Con la polar de la ficha la resistencia mínima sale sola: es el peso por
+ * `2·√(cd0·k)`, la que da la fineza máxima. Ver `aero` en la ficha.
+ */
+export function quemaEsperando(avion: AircraftConfig): number {
+  const peso = avion.mass * GRAVITY;
+  const ar = (avion.wingSpan * avion.wingSpan) / avion.wingArea;
+  const k = 1 / (Math.PI * ar * avion.aero.oswald);
+  const resistencia = peso * 2 * Math.sqrt(avion.aero.cd0 * k);
+  const cl = Math.sqrt(avion.aero.cd0 / k);
+  const rho = airDensity(ALTURA_DE_ESPERA);
+  const v = Math.sqrt((2 * peso) / (rho * avion.wingArea * cl));
+  const theta = (temperaturaExterior(ALTURA_DE_ESPERA) + 273.15) / 288.15;
+  return quemaPorSegundo(avion, resistencia, {
+    mach: v / velocidadDelSonido(ALTURA_DE_ESPERA),
+    theta,
+  });
+}
+
+/**
+ * **La reserva final de este avión**, en kilos: la que pinta la franja ámbar
+ * del instrumento y la que, si se empieza a gastar, convierte el vuelo en una
+ * emergencia de combustible.
  *
- * Por eso el instrumento pinta la franja ámbar aquí y no donde caiga según lo
- * que se esté gastando ahora: una raya que se mueve con el acelerador no es
- * una raya, y lo que hay que ver bajar es la barra, no la meta.
+ * Eran cuarenta y cinco minutos **al consumo de crucero con el motor a un
+ * tercio a nivel del mar**, y eso en un reactor es tres veces la reserva de
+ * verdad: el JAZ 120 entraba en reserva con 12.500 kilos —la captura de Gran
+ * Canaria, en final con 12.478 y la barra en ámbar— cuando un cuatrimotor de
+ * su clase tiene de reserva final unos cuatro o cinco mil. Ahora son los
+ * treinta minutos de espera de la ley, al consumo de esperar: unos 4.000 kilos
+ * en el JAZ 120, unos 450 en el JAZ 90. La avioneta, que espera cuarenta y
+ * cinco minutos y gastaba lo mismo de las dos maneras, se queda como estaba.
+ *
+ * Es un número de tierra, que no se mueve con el acelerador: una raya que se
+ * mueve con el gas no es una raya, y lo que hay que ver bajar es la barra, no
+ * la meta.
  */
 export function reservaEnKilos(avion: AircraftConfig): number {
-  return quemaPorSegundo(avion, avion.maxThrust / 3) * RESERVA_SEGUNDOS;
+  return quemaEsperando(avion) * duracionDeLaReservaFinal(avion);
 }
 
 export function cargaParaLaRuta(
@@ -273,8 +368,8 @@ export function loQueQueda(kilos: number, porSegundo: number): number {
  *
  * Con la reserva: no cuando se acaba, sino **cuando se está empezando a
  * gastar lo que no era para gastar**. Es el aviso que da tiempo a decidir, y
- * por eso es ámbar y no rojo — el rojo es para cuando ya no quedan ni los
- * cuarenta y cinco minutos de ley.
+ * por eso es ámbar y no rojo — el rojo es para cuando ya no queda ni un tercio
+ * de la reserva final. Ver `reservaEnKilos`.
  *
  * ## Y se mide en kilos, no en minutos
  *
@@ -287,8 +382,8 @@ export function loQueQueda(kilos: number, porSegundo: number): number {
  * en todos los vuelos a los veinte segundos de empezar.
  *
  * No era un fallo del número: era la pregunta. Un despacho de vuelo no dice
- * «cuarenta y cinco minutos», dice los kilos que son cuarenta y cinco minutos
- * al consumo de crucero, y ese número se decide en tierra y ya no se toca. Se
+ * «treinta minutos», dice los kilos que son treinta minutos esperando, y ese
+ * número se decide en tierra y ya no se toca. Se
  * compara contra eso. De paso, la barra del instrumento y la raya de la
  * reserva pasan a decir lo mismo, que es lo mínimo que se le pide a un
  * instrumento.
@@ -303,4 +398,51 @@ export function comoVaElDeposito(
   // tomar, hay que estar aterrizando.
   if (kilos > reserva / 3) return "reserva";
   return "poco";
+}
+
+/**
+ * **Lo que se le dice a la torre del combustible**: nada, «minimum fuel» o
+ * «MAYDAY FUEL».
+ *
+ * Son las dos llamadas de la OACI (Doc 4444 y Anexo 6, 4.3.7.2), y no son
+ * lo mismo que la barra ámbar: miran **lo que quedará al tocar**, no lo que
+ * queda ahora.
+ *
+ * - **«Minimum fuel»** es un aviso, no una emergencia: se llega bien, pero
+ *   cualquier espera o cualquier cambio dejaría el avión aterrizando con menos
+ *   de la reserva final. La torre lo apunta y no le mete demoras.
+ * - **«MAYDAY FUEL»** es socorro: lo que quedará al tocar en el campo más
+ *   cercano ya es menos que la reserva final. Prioridad sobre todos, y a ése
+ *   no se le manda al aire salvo que la pista esté ocupada de verdad.
+ *
+ * Lo que falta hasta tocar se cuenta al consumo de esperar, que es el de
+ * bajar y aproximar; en crucero se quema algo más, y por eso el margen del
+ * aviso es de media reserva.
+ */
+export type LlamadaDeCombustible = "nada" | "minimo" | "mayday";
+
+/** El margen sobre la reserva final que deja de ser margen: media reserva. */
+const MARGEN_DEL_MINIMO = 0.5;
+
+/** Lo que quedará al tocar, kg, si se tarda `segundos` en llegar. */
+export function kilosAlTocar(
+  avion: AircraftConfig,
+  kilos: number,
+  segundos: number | null,
+): number {
+  if (segundos === null || !Number.isFinite(segundos)) return kilos;
+  return kilos - quemaEsperando(avion) * Math.max(0, segundos);
+}
+
+export function llamadaDeCombustible(
+  avion: AircraftConfig,
+  kilos: number,
+  /** Lo que se tarda en tocar, s, o `null` si ya se está llegando. */
+  segundos: number | null,
+): LlamadaDeCombustible {
+  const final = reservaEnKilos(avion);
+  const alTocar = kilosAlTocar(avion, kilos, segundos);
+  if (alTocar < final) return "mayday";
+  if (alTocar < final * (1 + MARGEN_DEL_MINIMO)) return "minimo";
+  return "nada";
 }

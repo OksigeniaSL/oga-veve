@@ -105,7 +105,7 @@ export function pantallaDeActitud(
   ancho: number,
   alto: number,
   c: Cuadro,
-  opciones: { rosa: boolean; mach: boolean },
+  opciones: { rosa: boolean; mach: boolean; fma?: boolean },
 ): string {
   const yo = nuevoNombre();
   const act = huecoDeActitud(ancho);
@@ -139,6 +139,38 @@ export function pantallaDeActitud(
     ${opciones.mach ? `<text data-cristal="mach" x="${ANCHO_CINTA / 2}" y="${alto - 8}" data-desde="4" class="cr__aux" text-anchor="middle"></text>` : ""}
     <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
     ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30)}
+    ${opciones.fma ? fma(act.x, act.ancho) : ""}
+  `;
+}
+
+/**
+ * **El FMA**: la franja de arriba de la pantalla de vuelo de un avión de
+ * línea, que dice **qué hace cada mano del automático**. Tres columnas, con
+ * las palabras de Boeing: los gases (`SPD`, `THR`, `IDLE`), el lateral
+ * (`HDG HOLD`, `LOC`) y el vertical (`ALT`, `V/S`, `FLCH SPD`, `VNAV PTH`,
+ * `G/S`); y debajo, en medio, `A/P` si el automático está puesto.
+ *
+ * Es la respuesta a «¿quién lleva el avión?», que es la pregunta que no se
+ * podía contestar cuando el gas bombeaba solo. Son palabras de instrumento y
+ * no se traducen —como IAS o ALT—, y salen con las letras, desde el tercer
+ * peldaño: abajo no hace falta entenderlas para volar, y el botón del
+ * automático ya dice si está puesto. Las escribe el tablero; ver
+ * `Tablero.fma`.
+ */
+function fma(x: number, ancho: number): string {
+  const tercio = ancho / 3;
+  const col = (i: number) => x + tercio * i + tercio / 2;
+  return `
+    <g data-cristal="fma" ${MARCA_ROTULO}>
+      <rect x="${x}" y="0" width="${ancho}" height="34" class="cr__fma-fondo" />
+      <line x1="${x + tercio}" y1="3" x2="${x + tercio}" y2="19" class="cr__fma-raya" />
+      <line x1="${x + 2 * tercio}" y1="3" x2="${x + 2 * tercio}" y2="19" class="cr__fma-raya" />
+      <text data-fma="gases" x="${col(0)}" y="15" class="cr__fma" text-anchor="middle"></text>
+      <text data-fma="lateral" x="${col(1)}" y="15" class="cr__fma" text-anchor="middle"></text>
+      <text data-fma="vertical" x="${col(2)}" y="15" class="cr__fma" text-anchor="middle"></text>
+      <text data-fma="piloto" x="${x + ancho / 2}" y="30" class="cr__fma cr__fma--piloto"
+            text-anchor="middle"></text>
+    </g>
   `;
 }
 
@@ -296,6 +328,16 @@ function cintaDeVelocidad(
           <g data-bug="v1" data-desde="4">${bug(w)}</g>
           <g data-bug="vr" data-desde="4">${bug(w)}</g>
           <g data-bug="vref" data-desde="4">${bug(w)}</g>
+          <!--
+            **La velocidad que toca**, la de la escalera de velocidades: la
+            muesca magenta de la cinta, la misma forma que la de la altitud
+            pedida en la otra cinta, y en los cuatro peldaños —es un dibujo, y
+            dice «aquí» sin leer nada—. La coloca el tablero; ver
+            flight/escalera-de-velocidades.ts.
+          -->
+          <g data-bug="spd" visibility="hidden">
+            <path class="cr__bug" d="M${w} -7 l-9 0 l0 4 l4 3 l-4 3 l0 4 l9 0 Z" />
+          </g>
         </g>
         <rect data-tendencia="ias" data-medio="${h / 2}" data-porunidad="${POR_NUDO}"
               x="${w - 3}" y="${h / 2}" width="3" height="0" class="cr__tendencia" />
@@ -303,6 +345,16 @@ function cintaDeVelocidad(
       ${punteroDeCinta(w, h, true)}
       ${lectura(w, h, "ias")}
       ${rotuloDeCinta(w, h, "IAS", "KT")}
+      <!--
+        Y su cifra encima de la cinta, en magenta, como la altitud pedida en la
+        de al lado: los nudos, o el Mach cuando arriba manda el Mach. Ver
+        Tablero.bugs.
+      -->
+      <g data-cristal="spd-sel-caja" visibility="hidden">
+        <rect x="3" y="15" width="${w - 6}" height="19" rx="2" class="cr__sel-caja" />
+        <text data-cristal="spd-sel" x="${w - 7}" y="30" ${MARCA_CIFRA}
+              class="cr__sel-cifra" text-anchor="end"></text>
+      </g>
     </g>
   `;
 }

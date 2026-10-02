@@ -298,6 +298,18 @@ export interface DatosDeCabina {
     readonly pies: number;
     readonly alerta: "nada" | "cerca" | "fuera";
   } | null;
+  /**
+   * **La velocidad que toca y lo que hace el automático**, los mismos que el
+   * cuadro plano: la muesca de la cinta y el FMA de los de línea. Ver
+   * `DatosDelTablero.spd` y `.fma` en `ui/tablero.ts`.
+   */
+  readonly spd?: { readonly kt: number; readonly mach: number | null } | null;
+  readonly fma?: {
+    readonly gases: string;
+    readonly lateral: string;
+    readonly vertical: string;
+    readonly piloto: boolean;
+  } | null;
 }
 
 /**
@@ -706,6 +718,23 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
   }
   radioaltimetro(g, x0 + anchoAct / 2, alto - 34, d);
+  /*
+   * **El FMA de los de línea**, como en el cuadro plano: arriba del
+   * horizonte, lo que hace cada mano del automático, con las letras desde el
+   * tercer peldaño. Ver `fma` en `ui/cristal.ts`.
+   */
+  if (d.cuadro.familia === "linea" && d.fma && d.peldano >= 3) {
+    g.fillStyle = "rgba(5, 7, 10, 0.82)";
+    g.fillRect(x0, 0, anchoAct, 30);
+    const tercio = anchoAct / 3;
+    const columnas = [d.fma.gases, d.fma.lateral, d.fma.vertical];
+    columnas.forEach((texto, i) => {
+      if (texto)
+        escribir(g, texto, x0 + tercio * i + tercio / 2, 11, "600 12px " + FUENTE, PALETA.normal);
+    });
+    if (d.fma.piloto)
+      escribir(g, "A/P", x0 + anchoAct / 2, 24, "600 11px " + FUENTE, PALETA.normal);
+  }
   // El Mach, en el peldaño de arriba y a partir de 0,40, como en el cuadro
   // plano: por debajo no dice nada que no diga ya la velocidad.
   if (d.mach != null && d.mach >= 0.4 && d.peldano >= 4)
@@ -1072,6 +1101,25 @@ function cintaDeVelocidad(
     g.moveTo(x + w, yv);
     g.lineTo(x + w + 9, yv - 6);
     g.lineTo(x + w + 9, yv + 6);
+    g.closePath();
+    g.fill();
+  }
+  /*
+   * **Y la velocidad que toca**, la muesca del borde de dentro: la misma del
+   * cuadro plano, de la escalera de velocidades. Ver
+   * `flight/escalera-de-velocidades.ts`.
+   */
+  if (d.spd) {
+    const ys = medio + (kt - d.spd.kt) * POR_NUDO;
+    g.fillStyle = PALETA.objetivo;
+    g.beginPath();
+    g.moveTo(x + w, ys - 7);
+    g.lineTo(x + w - 9, ys - 7);
+    g.lineTo(x + w - 9, ys - 3);
+    g.lineTo(x + w - 5, ys);
+    g.lineTo(x + w - 9, ys + 3);
+    g.lineTo(x + w - 9, ys + 7);
+    g.lineTo(x + w, ys + 7);
     g.closePath();
     g.fill();
   }

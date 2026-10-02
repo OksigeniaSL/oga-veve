@@ -188,6 +188,12 @@ export class InputManager {
   private conPalanca = false;
   /** Cuánto lleva apretado un botón de motor, s. Ver `MANTENER`. */
   private botonMantenido = 0;
+  /** Si quien vuela movió el gas en este fotograma. Ver `mueveElGas`. */
+  private gasMovido = false;
+  /** Si el dedo o un botón lo tocaron desde el último `update`. */
+  private gasTocado = false;
+  /** Lo último que dio la palanca del mando, para saber si se movió. */
+  private gasDelMando: number | null = null;
   /** −1 si el cabeceo va invertido. Lo pone el juego desde los ajustes. */
   private signoDeCabeceo = 1;
 
@@ -522,6 +528,7 @@ export class InputManager {
    * botones y la palanca son el mismo mando y se ve dónde está.
    */
   setButtonThrottle(direction: number): void {
+    if (direction !== 0) this.gasTocado = true;
     if (direction !== 0 && direction !== this.buttonThrottle) {
       this.botonMantenido = 0;
       this.moverPalanca(
@@ -688,6 +695,15 @@ export class InputManager {
     // donde estuviera. Con el gas a tope eso es un avión que no se para.
     const teclado = this.axis("throttleUp", "throttleDown");
     if (releasesTouchThrottle(teclado)) this.touchThrottle = null;
+    /*
+     * **Y si quien vuela ha movido el gas en este fotograma**: tecla, botón,
+     * dedo o la palanca del mando. Lo mira el juego para soltar los gases
+     * automáticos, que es lo que pasa en un avión de verdad al empujar las
+     * palancas con el automático puesto. Ver `mueveElGas`.
+     */
+    this.gasMovido =
+      this.gasTocado || teclado !== 0 || this.buttonThrottle !== 0;
+    this.gasTocado = false;
 
     // El botón mantenido empuja; el toque ya dio su paso al apretarse. Ver
     // `setButtonThrottle`.
@@ -705,7 +721,21 @@ export class InputManager {
         );
       this.controls.throttle = this.touchThrottle;
     } else if (gamepad?.throttle !== undefined) {
-      this.controls.throttle = gamepad.throttle;
+      /*
+       * La palanca del mando manda **cuando se mueve**. Leída sin más en cada
+       * fotograma, los gases automáticos no podían mover un gas que la palanca
+       * física devolvía a su sitio al instante; ahora el servo lo lleva hasta
+       * que alguien la toque, que es lo que hace un simulador con palancas sin
+       * motor.
+       */
+      if (
+        this.gasDelMando === null ||
+        Math.abs(gamepad.throttle - this.gasDelMando) > 0.01
+      ) {
+        if (this.gasDelMando !== null) this.gasMovido = true;
+        this.gasDelMando = gamepad.throttle;
+        this.controls.throttle = gamepad.throttle;
+      }
     } else {
       const delta = clamp(teclado + empuje, -1, 1);
       this.controls.throttle = clamp(
@@ -1044,11 +1074,32 @@ export class InputManager {
         () => this.palancaDeGas,
         (gas) => {
           this.touchThrottle = gas;
+          this.gasTocado = true;
           this.pintarPalanca();
         },
         () => this.marcasDeGas,
       );
     }
+  }
+
+  /**
+   * **Si quien vuela movió el gas en el último `update`.** Ver arriba.
+   */
+  get mueveElGas(): boolean {
+    return this.gasMovido;
+  }
+
+  /**
+   * **El servo de los gases automáticos**: mueve la palanca como la movería
+   * el motor de las palancas de un avión de línea —el gas y, si se vuela con
+   * el dedo, la palanca de la pantalla—, sin contarlo como un toque de quien
+   * vuela. Ver `flight/gases-automaticos.ts`.
+   */
+  servoDelGas(gas: number): void {
+    const v = clamp(gas, 0, 1);
+    this.controls.throttle = v;
+    if (this.touchThrottle !== null) this.touchThrottle = v;
+    this.pintarPalanca();
   }
 
   /** Pinta la palanca donde está el gas pedido, si ha cambiado. */
