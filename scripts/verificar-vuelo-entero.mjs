@@ -1284,6 +1284,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         o.pedirTren?.(false);
     }
     /*
+     * **Y los aerofrenos armados, con el tren**, que es la lista antes de
+     * aterrizar de un reactor: al tocar salen solos los frenos de tierra. En
+     * el avión que no los lleva la palanca no existe y esto no hace nada. Ver
+     * `flight/palanca-de-aerofrenos.ts`.
+     */
+    if ((tramo >= 2 || enFinal) && o.aerofrenos?.()?.palanca === "recogida")
+      o.ponerPalancaDeAerofrenos?.("armada");
+    /*
      * **Los flaps, con la palanca y no escribiendo dónde están.** Escritos en
      * `controles()` a cada vuelta, el banco los teletransportaba: bajaban
      * del todo en un fotograma, cuando en el juego tardan lo que tardan en
@@ -4268,6 +4276,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           f.h,
         );
         o.pedirTren?.(true);
+        // Y los aerofrenos armados, como en `configurar`.
+        o.ponerPalancaDeAerofrenos?.("armada");
         const conFlaps = suyas.llevaFlaps && !LIMPIO;
         if (conFlaps) o.pedirFlaps?.(1);
         const mandos = o.controles();
@@ -4861,9 +4871,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * **Y un reactor, con el morro abajo.** Tocando a su Vref con los flaps
        * de aterrizaje, el ala todavía sostiene el avión entero: con la
        * palanca en el centro, el JAZ 90 volvía a volar cinco metros y un
-       * tercio de la frenada iba por el aire. Uno de verdad saca los
-       * aerofrenos del suelo y baja la rueda de morro en cuanto toca; aquí no
-       * hay aerofrenos, y bajar el morro es lo que queda.
+       * tercio de la frenada iba por el aire. Uno de verdad baja la rueda de
+       * morro en cuanto toca y los frenos de tierra le quitan la sustentación
+       * al ala; los frenos de tierra salen solos con la palanca armada —ver
+       * `configurar`— y bajar el morro lo hace el piloto.
        */
       c.elevator = REACTOR_COMPLETO ? -0.3 : 0;
       c.brakes = 1;

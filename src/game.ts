@@ -17437,11 +17437,21 @@ export class Game {
     const p = this.input.palancaDeAerofrenos;
     if (!p.hayPalanca && !p.hayAutofreno) return;
     const s = this.flight.state;
+    /*
+     * **En la aproximación, no en el embudo de final**: el embudo empieza a
+     * tres kilómetros y medio, por debajo de los mil pies, y la lista de
+     * aterrizaje está hecha antes. La zona de aproximación es la de la cuenta
+     * del radioaltímetro: veinte kilómetros y yendo hacia la pista.
+     */
     const enFinal =
       !s.onGround &&
-      enElEmbudoDeFinal(this.laPistaDeAhora(), s.position.x, s.position.z) !==
-        null;
-    // Una aproximación nueva, una lista nueva: al tocar o al salir de final.
+      enLaZonaDeAproximacion(
+        this.laPistaDeAhora(),
+        s.position.x,
+        s.position.z,
+        s.heading,
+      );
+    // Una aproximación nueva, una lista nueva: al tocar o al salir de ella.
     if (!enFinal) {
       this.listaDeAterrizaje = { pedida: false, hecha: false };
       return;
@@ -17458,17 +17468,35 @@ export class Game {
         p.ponerAutofreno(this.autofrenoParaLaPista());
     };
     if (!this.listaDeAterrizaje.pedida) {
-      this.listaDeAterrizaje = { ...this.listaDeAterrizaje, pedida: true };
       this.hud.senal.mostrar(
         "aerofrenos-armados",
         this.rotulo("hud.armaAerofrenos", "palabra.aerofrenos"),
         null,
         {
-          segundos: SE_QUEDA_EL_ARO,
+          /*
+           * Seis segundos, los de una tarjeta corriente: es una línea de la
+           * lista y se le da tiempo a encontrar el botón o la tecla. Los dos
+           * segundos y medio de un aro no dan para eso.
+           */
+          segundos: 6,
+          /*
+           * Por encima del PAPI y del motor, que en final salen cada vez que
+           * cambian: con la misma importancia la tapaban al fotograma
+           * siguiente y la lista se daba por pedida sin haberse visto. Por
+           * debajo de lo urgente, que es el terreno o un bulto.
+           */
+          prioridad: (IMPORTANTE + URGENTE) / 2,
           tecla: nombreDeTecla(this.input.preferredKey("aerofrenos")),
           accion: armar,
         },
       );
+      /*
+       * Dada es **cuando se ve**: con otra tarjeta más importante puesta —un
+       * aviso de terreno, la frustrada— ésta no entra, y se vuelve a ofrecer en
+       * cuanto quede sitio. No es un reloj: es la cola de las tarjetas.
+       */
+      if (this.hud.senal.puesto.dibujo === "aerofrenos-armados")
+        this.listaDeAterrizaje = { ...this.listaDeAterrizaje, pedida: true };
       return;
     }
     if (
@@ -17482,7 +17510,7 @@ export class Game {
         "aerofrenos-armados",
         this.rotulo("hud.aerofrenosArmados", "palabra.aerofrenos"),
         null,
-        { segundos: SE_QUEDA_EL_ARO },
+        { segundos: 4 },
       );
     }
   }
