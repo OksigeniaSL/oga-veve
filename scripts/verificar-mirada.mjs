@@ -486,7 +486,9 @@ async function enElTelefono() {
       for (let i = 1; i <= 20; i++) await mover(OTRO, x0 + i * 22, y0 + i);
       await pausa(300);
       const m = await page.evaluate(() => globalThis.__oga.mirada());
-      const alabeo = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().input.touchRoll);
+      // En el aire, el dedo mueve la palanca que se queda (`palancaDelDedo`);
+      // `touchRoll` es solo el volante de tierra y allí vale cero.
+      const alabeo = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().input.palancaDelDedo.x);
       comprobar(
         "teléfono: con el pulgar en la palanca, el segundo dedo mira",
         m.guinada > 0.2,
@@ -504,7 +506,7 @@ async function enElTelefono() {
       await page.screenshot({ path: `${FOTOS}/telefono-mirada-libre.png` });
       await subir(OTRO);
       await vuelveSola(page, "teléfono", "al levantar el segundo dedo", 4);
-      const sigue = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().input.touchRoll);
+      const sigue = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().input.palancaDelDedo.x);
       comprobar("teléfono: y el pulgar sigue en la palanca", sigue < -0.05, `palanca ${sigue?.toFixed?.(2)}`);
       await mover(PULGAR, px, py);
       await subir(PULGAR);
