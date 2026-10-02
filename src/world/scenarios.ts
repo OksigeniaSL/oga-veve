@@ -1110,7 +1110,7 @@ export const LA_PALMA: Scenario = {
    * **La 36, que es la preferente del AIP**, con sus diez nudos de cola
    * (AD 2-GCLA, 20.3). Estaba escrita la 18, y la 18 ganaba todos los empates:
    * con calma o con el viento de costado se llegaba por el norte —«aterrizar
-   * desde el norte es poco frecuente en La Palma», dijo quien vive allí— y
+   * desde el norte es poco frecuente en La Palma», dijo quien la voló— y
    * por la final recta calculada sobre la ladera de Barlovento. Ahora la 18
    * se usa cuando el viento la pide de verdad, y se llega por su RNP A, sobre
    * el mar. Ver `procedimientos-canarias.ts`.

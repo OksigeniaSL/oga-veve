@@ -1,7 +1,8 @@
 /**
  * **Las llegadas, las aproximaciones y las frustradas, sobre el relieve de
- * verdad**: en todos los campos de Canarias y de Paraguay, cada tramo con el
- * margen que le toca.
+ * verdad**: en todos los campos de Canarias y de Paraguay —y en Cuatro
+ * Vientos, que también tiene el suyo medido—, cada tramo con el margen que le
+ * toca.
  *
  * Lo pidió quien voló a La Palma por la 18: alineado con la pista, a mil
  * ochocientos pies y sobre la ladera de Barlovento. «Es peligroso, se puede

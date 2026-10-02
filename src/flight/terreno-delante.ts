@@ -42,8 +42,10 @@
  * suelo, su giro y su ritmo de subida o bajada— a sesenta segundos en ruta y a
  * cuarenta cerca de una pista, y se cata el relieve por el eje y a los dos
  * lados, en un pasillo que se abre con la distancia y se cierra hacia la
- * pista. El equipo de verdad hace lo mismo con su propia rejilla y sus
- * propias curvas; los números de tiempo y de margen son los suyos.
+ * pista. Los números de tiempo y de margen son los de la norma. Lo que el
+ * equipo de verdad hace con su propia rejilla y sus propias curvas —acortar
+ * la mirada según se acerca a la pista— aquí es una regla sola y nuestra:
+ * como mucho, un tercio de lo que falta hasta ella. Ver `HASTA_LA_PISTA`.
  *
  * Esto no habla ni dibuja: dice si hay que avisar, de qué y en cuánto. Quién
  * lo dice y en qué avión lo decide `Game`, con la escalera: ver
