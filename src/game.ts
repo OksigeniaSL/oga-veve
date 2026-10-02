@@ -6189,9 +6189,19 @@ export class Game {
        * como fallo lo que nunca llegó a pedirse.
        */
       if (tramo === "base") this.runwayGuide.reset(this.flight.state.position);
-      const clave = `circuito.${tramo}` as TranslationKey;
+      /*
+       * **Y por el lado del circuito que se vuela, no siempre por la
+       * izquierda.** El dibujo, la tarjeta y la voz decían «girá a la
+       * izquierda» también donde el campo lo publica por la derecha: en La
+       * Gomera, que vuela el de la 09 por el sur sobre el mar, la frustrada
+       * que manda el AFIS mandaba girar hacia la isla. Los dos tramos que
+       * nombran un lado llevan el suyo; la subida y la base no nombran ninguno.
+       */
+      const derecha = this.circuito?.forma.mano === "derecha";
+      const conLado = derecha && (tramo === "cruzado" || tramo === "encola");
+      const clave = `circuito.${tramo}${conLado ? ".derecha" : ""}` as TranslationKey;
       this.hud.senal.mostrar(
-        comoDibujo(`circuito-${tramo}`),
+        comoDibujo(`circuito-${derecha ? "derecha-" : ""}${tramo}`),
         this.tier.instruments === "none" ? "" : t(clave),
         null,
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
@@ -6205,8 +6215,13 @@ export class Game {
        * los anuncia cuando doy la vuelta para volver a tomar la pista»—,
        * porque el dibujo de un tramo de circuito es una forma abstracta y la
        * frase es la que dice qué hacer.
+       *
+       * **Y la de la derecha, solo grabada.** Sin toma saldría por la voz del
+       * navegador, que en muchas tabletas no suena: mejor callar ese tramo y
+       * que lo digan el dibujo y la raya que decir el lado contrario. Se
+       * graban el 6 de octubre; ver `PENDIENTE-VOCES-terreno.md`.
        */
-      this.instructor.decir(t(clave), clave);
+      if (!conLado || this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
     });
 
     /*

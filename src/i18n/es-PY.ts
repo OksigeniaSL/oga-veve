@@ -1269,6 +1269,16 @@ export const ES_PY = {
   "circuito.subida": "Subí derecho por el eje",
   "circuito.cruzado": "Girá a la izquierda: volvemos a la pista",
   "circuito.encola": "Volá al lado de la pista, con ella a tu izquierda",
+  /*
+   * **Y por la derecha, donde el campo lo publica así**: La Gomera por la 09,
+   * La Palma por la 36, Tenerife Sur por la 07… siempre del lado del mar.
+   * Con la frase de la izquierda, la frustrada de La Gomera mandaba girar
+   * hacia la isla. Sin grabar todavía: hasta que lo esté, la instructora
+   * calla en esos dos tramos y hablan el dibujo y la raya. Ver
+   * `PENDIENTE-VOCES-terreno.md`.
+   */
+  "circuito.cruzado.derecha": "Girá a la derecha: volvemos a la pista",
+  "circuito.encola.derecha": "Volá al lado de la pista, con ella a tu derecha",
   "circuito.base": "Girá otra vez y empezá a bajar: ya vamos a aterrizar",
   "vuelo.papiAlto": "Luces blancas: vas alto, bajá",
   "vuelo.lentoYBajo": "Venís lento: metéle gas",
