@@ -2178,6 +2178,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
     caida: () => juego.landing.caidaAlTocar,
+    /**
+     * Qué palanca da este ritmo de subida, m/s, en el modelo sencillo; `null`
+     * en el completo. Es la misma pregunta que le hace el piloto automático en
+     * Guyrami —ver `mandoParaSubir` en `arcade.ts`—, y la necesita la recogida
+     * del banco de vuelo entero: ahí la palanca es cuánto se sube, y un lazo
+     * que lo busca a tientas llega tarde al suelo.
+     */
+    mandoParaSubir: (ritmo: number) => juego.flight.mandoParaSubir?.(ritmo) ?? null,
     /** Los pares puesto + espera que se consideraron, con sus metros. */
     pares: () => juego.plan?.paresVistos ?? [],
     /**
