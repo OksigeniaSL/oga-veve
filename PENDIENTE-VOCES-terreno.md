@@ -27,9 +27,10 @@ instructora detrás de la precaución de delante, que hoy usa la toma de
 ## Lo que suena hasta entonces
 
 - **Precaución de delante** (ámbar): sin canto de caja —«too low» es otro
-  aviso (el modo 4 del GPWS) y enseñaría otra cosa—. Tono de atención, luz
-  SUELO, tarjeta de terreno, el relieve en ámbar en la pantalla de navegación
-  y, en los tres peldaños de abajo, la instructora con `vuelo.terrenoBajo`.
+  aviso (el modo 4 del GPWS) y enseñaría otra cosa—. Tono de atención,
+  tarjeta de terreno, el relieve en ámbar en la pantalla de navegación y, en
+  los tres peldaños de abajo, la instructora con `vuelo.terrenoBajo`. La luz
+  SUELO del panel, que es roja, no: esa es del aviso.
 - **Aviso de delante** (rojo): «terrain, pull up» de la caja
   (`cabina.terrainPullUp`, ya grabada) y la instructora detrás con
   `vuelo.terrenoSube` en los peldaños de abajo. La de verdad dice «terrain
