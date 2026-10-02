@@ -118,6 +118,21 @@ describe("lo que necesita un buscador", () => {
     expect(/<link rel="canonical" href="([^"]+)"/.exec(html)?.[1]).toBe(LA_DE_VERDAD);
   });
 
+  it("y sin la barra se la pone, antes de cargar nada", () => {
+    // Sin ella las rutas relativas del juego resuelven contra la raíz del
+    // dominio y no carga. El 301 está en el nginx de granjaoga.com.
+    const pone = html.indexOf('location.pathname + "/"');
+    expect(pone).toBeGreaterThan(0);
+    expect(pone).toBeLessThan(html.indexOf("**El vigilante del arranque.**"));
+  });
+
+  it("y el juego de caracteres en los primeros 1024 bytes, que es donde se busca", () => {
+    const bytes = new TextEncoder().encode(html);
+    const meta = new TextEncoder().encode('<meta charset="utf-8"');
+    const enLosPrimeros = new TextDecoder().decode(bytes.slice(0, 1024));
+    expect(enLosPrimeros).toContain(new TextDecoder().decode(meta));
+  });
+
   it("y la misma página para los tres idiomas y para quien no diga ninguno", () => {
     const alternas = [...html.matchAll(/hreflang="([^"]+)"\s+href="([^"]+)"/g)];
     expect(alternas.map((m) => m[1]).sort()).toEqual(["en", "es", "gn", "x-default"]);

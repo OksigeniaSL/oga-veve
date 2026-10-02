@@ -2,6 +2,29 @@
 <html lang="es-PY">
   <head>
     <!--
+      El juego de caracteres, lo primero: el navegador solo lo busca en los
+      primeros 1024 bytes, y el servidor de granjaoga.com no lo dice en la
+      cabecera. Estaba detrás del vigilante, a más de tres mil bytes, y el
+      navegador tenía que adivinarlo y rehacer la página al encontrarlo; un
+      buscador que adivine mal lee «Ã“ga Veve».
+    -->
+    <meta charset="utf-8" />
+    <!--
+      **Con la barra al final, o no carga.** En granjaoga.com/oga-veve —sin
+      ella— el servidor devolvía la página con un 200, y el navegador
+      resolvía las rutas relativas del juego (./assets/…) contra la raíz del
+      dominio: el módulo daba 404 y quedaba el botón de volver a cargar para
+      siempre. Se arregla con un 301 en el nginx de granjaoga.com; esto lo
+      arregla también mientras no esté, o donde no esté. Va antes que nada
+      porque no hay nada que cargar sin saber dónde se está.
+    -->
+    <script>
+      if (!/\/$|\.html$/.test(location.pathname))
+        location.replace(
+          location.pathname + "/" + location.search + location.hash,
+        );
+    </script>
+    <!--
       **El vigilante del arranque.** Si el juego no llega a empezar, la página
       se quedaba quieta para siempre y sin decir nada. Se vio en los bancos:
       Chrome corta las peticiones en curso cuando cambia la red del equipo
@@ -74,7 +97,6 @@
         setTimeout(boton, 90000);
       })();
     </script>
-    <meta charset="utf-8" />
     <!--
       Sin `user-scalable=no`: bloquear el zoom incumple el criterio 1.4.4 de
       WCAG y deja fuera a quien necesita agrandar. El juego usa `touch-action:
