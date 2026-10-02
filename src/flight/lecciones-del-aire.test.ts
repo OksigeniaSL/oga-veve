@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { ARAI, PYKASU, type AircraftConfig } from "./aircraft";
 import { temperaturaExterior } from "./atmosphere";
 import { CabinaPresurizada } from "./cabina-presurizada";
-import { LeccionesDelAire, type LeccionDelAire } from "./lecciones-del-aire";
+import { LeccionesDelAire, sigueValiendo, type LeccionDelAire } from "./lecciones-del-aire";
 
 /** Un vuelo de ida con su cabina: sube, cruza un rato y baja. */
 function volar(
@@ -91,5 +91,49 @@ describe("y lo que no se repite", () => {
   it("y sin presurizar no hay bolsa ni oídos que contar", () => {
     const oidas = volar(PYKASU, new LeccionesDelAire());
     expect(oidas.map((o) => o.que)).toEqual(["frio", "crucero"]);
+  });
+});
+
+/*
+ * **Lo que espera su hueco tiene que seguir siendo verdad cuando hay hueco.**
+ * Ver `sigueValiendo`.
+ */
+describe("una lección que espera su hueco", () => {
+  const aire = {
+    dt: 1,
+    enTierra: false,
+    altura: 4000,
+    vertical: 4,
+    oat: -2,
+    cabina: 1600,
+    ritmoDeCabina: 1,
+    presurizada: true,
+    crucero: 7000,
+    bajando: false,
+  };
+
+  it("la del frío vale bajo cero y subiendo, y bajando ya no", () => {
+    expect(sigueValiendo("frio", aire)).toBe(true);
+    expect(sigueValiendo("frio", { ...aire, vertical: -6 })).toBe(false);
+    expect(sigueValiendo("frio", { ...aire, oat: 3 })).toBe(false);
+  });
+
+  it("la de los oídos vale mientras la cabina baja", () => {
+    expect(sigueValiendo("oidos", { ...aire, ritmoDeCabina: -2 })).toBe(true);
+    expect(sigueValiendo("oidos", { ...aire, ritmoDeCabina: 0.5 })).toBe(false);
+  });
+
+  it("y ninguna en tierra", () => {
+    for (const l of ["frio", "crucero", "bolsa", "oidos"] as const)
+      expect(sigueValiendo(l, { ...aire, enTierra: true })).toBe(false);
+  });
+
+  it("y la que no llegó a contarse puede volver a tocar", () => {
+    const l = new LeccionesDelAire();
+    l.paso({ ...aire, oat: 1 });
+    expect(l.paso(aire)).toBe("frio");
+    expect(l.yaDicha("frio")).toBe(true);
+    l.noSeConto("frio");
+    expect(l.yaDicha("frio")).toBe(false);
   });
 });

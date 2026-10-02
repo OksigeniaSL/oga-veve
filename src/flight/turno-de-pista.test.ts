@@ -625,4 +625,47 @@ describe("el permiso que no llegó a oírse no se dio", () => {
     turno.paso("aterrizado");
     expect(retirados).toBe(0);
   });
+
+  /*
+   * **Y es permiso cuando suena, no cuando se pide.** En La Palma llegó con
+   * el avión en la cabecera y la máquina contando «one hundred». En los
+   * mínimos o se tiene, oído, o se va uno al aire.
+   */
+  it("a la altura de decisión sin haberse oído, se retira y al aire", () => {
+    let alto = 120;
+    let sinOir = true;
+    let retirados = 0;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      alto: () => alto,
+      permisoSinOir: () => sinOir,
+      retirarteElPermiso: () => void retirados++,
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    // Por encima de la decisión se le espera.
+    alto = 70;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    alto = 58;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land", "go around"]);
+    expect(retirados).toBe(1);
+    sinOir = false;
+  });
+
+  it("y si empezó a sonar antes de la decisión, vale: se aterriza", () => {
+    let alto = 120;
+    let sinOir = true;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      alto: () => alto,
+      permisoSinOir: () => sinOir,
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    sinOir = false;
+    alto = 40;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+  });
 });

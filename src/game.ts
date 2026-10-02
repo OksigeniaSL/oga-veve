@@ -439,6 +439,7 @@ import {
   elegirOtroAvion,
   elegirTorre,
   elegirTripulacion,
+  type AlSonar,
   type Instructor,
 } from "./audio/instructor";
 import { Frecuencia, PISTA_TUYA, type Transmision } from "./flight/radio";
@@ -525,7 +526,7 @@ import {
   type TranslationKey,
 } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
-import { Audio, type AudioLevel, type Cue } from "./audio/audio";
+import { Audio, yaHuboGesto, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, luzRojaDelTren, seVuelveADecir } from "./flight/tren";
@@ -544,6 +545,7 @@ import {
   Megafonia,
   conPasaje,
   conTripulacion,
+  seLePasoElMomento,
   type Anuncio,
 } from "./audio/megafonia";
 import {
@@ -565,7 +567,19 @@ import {
   concienciaUtil,
   velocidadDelDescenso,
 } from "./flight/despresurizacion";
-import { LeccionesDelAire, type LeccionDelAire } from "./flight/lecciones-del-aire";
+import {
+  ESPERA_SU_HUECO,
+  LeccionesDelAire,
+  sigueValiendo,
+  type LeccionDelAire,
+} from "./flight/lecciones-del-aire";
+import { Huecos, esDeLaMegafonia } from "./audio/turnos";
+import {
+  TurbulenciaDelVuelo,
+  turbulenciaDelCamino,
+  type SucesoDelCamino,
+  type Zona,
+} from "./flight/turbulencia-del-vuelo";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
 import type { Hito } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
@@ -2202,6 +2216,14 @@ export class Game {
   /** Lo que el aire enseña por el camino. Ver `flight/lecciones-del-aire.ts`. */
   private readonly leccionesDelAire = new LeccionesDelAire();
   /**
+   * **Lo que espera su hueco**: las lecciones del aire y lo que se ve por la
+   * ventanilla no se cuentan encima de nadie ni pegados a un anuncio. Ver
+   * `Huecos` en `audio/turnos.ts`.
+   */
+  private readonly huecos = new Huecos();
+  /** Las lecciones del aire que ya tocan y esperan su hueco, con su hora. */
+  private leccionesPorContar: { leccion: LeccionDelAire; desde: number }[] = [];
+  /**
    * **El descenso de emergencia en curso**, o `null`. Lo empieza
    * `despresurizar` y se acaba al pararse en el suelo o al empezar otro
    * vuelo. Ver `flight/despresurizacion.ts`.
@@ -2687,6 +2709,7 @@ export class Game {
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
     this.laTorreMandaEnLaLuz = false;
+    this.permisoDeAterrizar = null;
     this.vaca.quitar();
     this.traza = [];
     this.sinCatar = 0;
@@ -2719,6 +2742,7 @@ export class Game {
     this.yaDespego = false;
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.huecos.reiniciar();
     this.ventanilla.reiniciar();
     this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
@@ -3349,6 +3373,23 @@ export class Game {
    */
   private laTorreMandaEnLaLuz = false;
   /**
+   * **Tu permiso para aterrizar, y si ya sonó.** Sin «cleared to land» oído no
+   * hay permiso: la regla estaba escrita y se rompía, porque el juego daba la
+   * frase por dicha en cuanto la pedía. En Pettirossi con el JAZ 120 no sonó
+   * y la luz verde sí salió con tiempo; en La Palma llegó con la máquina
+   * contando «one hundred». Ahora la lámpara y su tarjeta salen **cuando
+   * empieza a sonar** —o, si no puede sonar, en el acto: la tarjeta es
+   * entonces su canal—, y a la altura de decisión se mira si se oyó. Ver
+   * `alSonarElPermiso` y `permisoSinOir` en `flight/turno-de-pista.ts`.
+   *
+   * - `esperando-su-voz`: dado, y su frase todavía espera turno o grabación.
+   * - `sonando`: su frase está sonando, con la lámpara ya puesta.
+   * - `oido`: sonó entera, o no podía sonar y salió su tarjeta.
+   */
+  private permisoDeAterrizar: "esperando-su-voz" | "sonando" | "oido" | null = null;
+  /** Cuál de los permisos dados es el de ahora: lo que avisa tarde, no cuenta. */
+  private permisosDados = 0;
+  /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
    * Solo existe cuando el escenario tiene un aeródromo de verdad con puestos de
@@ -3582,6 +3623,7 @@ export class Game {
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
     avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
     retirarteElPermiso: () => this.retirarElPermisoSinOir(),
+    permisoSinOir: () => this.permisoSinOir,
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -4483,6 +4525,27 @@ export class Game {
     conectarLaRadio(this.audio);
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
+    /*
+     * **Y lo que se pida antes de tener el pack, que lo espere.**
+     *
+     * El crosscheck de Jazlyn no sonaba en casa de Enrique: se pide en el
+     * puesto a los cuatro segundos, y el pack todavía no había bajado —ni
+     * empezado a bajar, si nadie había tocado nada en el juego—, así que se
+     * le pasaba a la voz del navegador, muda en Brave para Linux, y se daba
+     * por dicho. Ahora espera a su grabación y al audio despierto, con tope.
+     * Ver `estaLista` en `audio/instructor-grabado.ts`.
+     *
+     * **Y si la página ya tuvo su gesto, el pack baja ya.** El primer gesto se
+     * esperaba dentro del juego, y quien viene del hangar ya hizo el suyo —el
+     * clic de despegar— antes de que el juego existiera: ese clic desbloquea
+     * el audio de la página entera, y nadie lo aprovechaba. El pack no
+     * empezaba a bajar hasta tocar la primera tecla, con el puesto ya pasado.
+     */
+    this.instructor.esperarAlPack();
+    if (yaHuboGesto()) {
+      this.audio.unlock();
+      void this.instructor.cargar();
+    }
     /*
      * Y el volumen que quedó guardado también manda sobre la voz, **desde el
      * arranque**: se guarda entre partidas, así que quien dejó el juego en
@@ -6591,6 +6654,74 @@ export class Game {
     }
     this.cabeceraParaLaTorre = cabecera;
     this.laTorreMandaEnLaLuz = true;
+    /*
+     * **Y es permiso cuando suena, no cuando se pide.** La lámpara se pone
+     * por dentro, pero no se pinta ni sale su tarjeta hasta que su frase
+     * empieza a sonar: la luz y la voz son el mismo suceso. Ver
+     * `permisoDeAterrizar`.
+     */
+    this.permisoDeAterrizar = "esperando-su-voz";
+    const este = ++this.permisosDados;
+    const hablo = this.luzDeTorre("verde", "esperar", "ocupada", (que) =>
+      this.alSonarElPermiso(este, que, cabecera),
+    );
+    this.cabeceraParaLaTorre = null;
+    // Si la luz ya estaba verde no se dice otra vez: lo de antes vale.
+    if (!hablo) this.alSonarElPermiso(este, "no-suena", cabecera);
+  }
+
+  /**
+   * **Lo que pasa con la voz de tu permiso**: la lámpara y la tarjeta salen
+   * cuando empieza —o en el acto si no puede sonar—, y es permiso oído
+   * cuando acaba. Si algo urgente lo corta a medias y se sigue en final sin
+   * orden de irse, se repite: «I say again». Ver `permisoDeAterrizar`.
+   */
+  private alSonarElPermiso(
+    este: number,
+    que: Parameters<AlSonar>[0],
+    cabecera: string | null,
+  ): void {
+    if (este !== this.permisosDados || this.permisoDeAterrizar === null) return;
+    switch (que) {
+      case "empieza":
+        this.permisoDeAterrizar = "sonando";
+        this.mostrarElPermiso(cabecera);
+        return;
+      case "no-suena":
+        this.permisoDeAterrizar = "oido";
+        this.mostrarElPermiso(cabecera);
+        return;
+      case "acaba":
+        this.permisoDeAterrizar = "oido";
+        return;
+      case "cortada":
+        if (
+          this.faseDeAhora === "final" &&
+          this.laTorreMandaEnLaLuz &&
+          !this.laAproximacion.mandanFrustrar
+        ) {
+          // Se repite la frase, con la lámpara ya puesta.
+          this.ultimaLuzDeTorre = null;
+          this.cabeceraParaLaTorre = cabecera;
+          this.luzDeTorre("verde", "esperar", "ocupada", (q) =>
+            this.alSonarElPermiso(este, q, cabecera),
+          );
+          this.cabeceraParaLaTorre = null;
+        } else this.permisoDeAterrizar = null;
+        return;
+      case "se-cae":
+        // La retiró quien sabía que ya no valía: ver `retirarElPermisoSinOir`.
+        if (this.permisoDeAterrizar === "esperando-su-voz") this.retirarElPermisoSinOir();
+        this.permisoDeAterrizar = null;
+        return;
+    }
+  }
+
+  /** La lámpara verde pintada, su tarjeta y su sonido: el permiso, a la vista. */
+  private mostrarElPermiso(cabecera: string | null): void {
+    if (!this.laTorreMandaEnLaLuz) return;
+    // La luz ya es verde por dentro: esto la pinta, con su pista. Ver `luzDeTorre`.
+    this.cabeceraParaLaTorre = cabecera;
     this.luzDeTorre("verde");
     this.cabeceraParaLaTorre = null;
     this.hud.senal.mostrar(
@@ -6608,11 +6739,21 @@ export class Game {
       { segundos: SE_QUEDA_EL_PERMISO, prioridad: IMPORTANTE },
     );
     this.avisar("success");
+    const este = this.permisosDados;
     this.agenda.luego(SE_QUEDA_EL_PERMISO, () => {
-      if (this.laAproximacion.mandanFrustrar) return;
+      if (this.laAproximacion.mandanFrustrar || este !== this.permisosDados) return;
       this.luzDeTorre(null);
       this.laTorreMandaEnLaLuz = false;
     });
+  }
+
+  /**
+   * Si tu permiso para aterrizar está dado y **todavía no ha empezado a
+   * sonar**. Lo mira el turno a la altura de decisión: sin permiso oído no se
+   * aterriza. Ver `permisoSinOir` en `flight/turno-de-pista.ts`.
+   */
+  private get permisoSinOir(): boolean {
+    return this.permisoDeAterrizar === "esperando-su-voz";
   }
 
   /**
@@ -6963,7 +7104,12 @@ export class Game {
      * por la cabecera que no está en uso. Ver `flight/la-otra-cabecera.ts`.
      */
     alAirePor: "ocupada" | "enUso" = "ocupada",
-  ): void {
+    /**
+     * Y quien necesita saber si sonó la frase de la lámpara: tu permiso para
+     * aterrizar. Ver `alSonarElPermiso`.
+     */
+    alSonar?: AlSonar,
+  ): boolean {
     /*
      * **Y la verde no dice lo mismo en el aire que en tierra.** En las señales
      * de luz de verdad, la verde fija a un avión en tierra es «puede
@@ -7001,8 +7147,14 @@ export class Game {
             this.cabeceraParaLaTorre ?? cabeceraEnUso(this.elCampo().escenario),
           )
         : null;
+    /*
+     * **Y la verde de tu permiso no se pinta hasta que suena.** Ver
+     * `permisoDeAterrizar`.
+     */
+    const esperaSuVoz =
+      verde && enElAire && this.permisoDeAterrizar === "esperando-su-voz";
     this.hud.setLuzDeTorre(
-      afis ? null : luz,
+      afis || esperaSuVoz ? null : luz,
       rojaDice,
       this.conLaPista(this.miIndicativo.dicho, verde ? pistaEs : null, "escrito"),
       enElAire,
@@ -7012,10 +7164,10 @@ export class Game {
     if (cual === this.ultimaLuzDeTorre) {
       if (luz === "roja" && rojaDice === "esperar")
         this.explicarSiCambiaElPorque();
-      return;
+      return false;
     }
     this.ultimaLuzDeTorre = cual;
-    if (!luz) return;
+    if (!luz) return false;
     /*
      * **Y lo que decía la luz de antes, si todavía espera turno, se retira.**
      *
@@ -7126,6 +7278,7 @@ export class Game {
         `${clave}${pistaEs?.sufijo ?? ""}`,
         urgencia,
         { ...rellenoDe(yo), ...(pistaEs?.relleno ?? {}) },
+        alSonar,
       );
     /*
      * **Y si se espera por alguien, por quién.** La roja podía durar tres
@@ -7234,6 +7387,7 @@ export class Game {
       const dicha = this.porRadio(enRadio, urgencia);
       if (dicha && porQueDe) this.esperarQueSeOiga(dicha, porQueDe);
     }
+    return !!clave;
   }
 
   /**
@@ -7617,6 +7771,7 @@ export class Game {
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
     this.laTorreMandaEnLaLuz = false;
+    this.permisoDeAterrizar = null;
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
     this.traza = [];
@@ -7764,6 +7919,7 @@ export class Game {
      */
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.huecos.reiniciar();
     this.ventanilla.reiniciar();
     this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
@@ -8256,21 +8412,28 @@ export class Game {
       this.loMasAltoDelVuelo,
       this.flight.state.position.y,
     );
+    /*
+     * Lo que se pidió y todavía espera su voz, si se le pasó el momento, se
+     * retira: «armar toboganes» con el avión rodando no se dice. Ver
+     * `seLePasoElMomento`.
+     */
+    BOCA.retirar((c) => seLePasoElMomento(c, this.faseDeAhora as Fase));
     const anuncio = this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       conTripulacion: conTripulacion(this.aircraft.mass),
-      instructorHablando: this.instructor.hablando,
       /*
-       * **Y callada mientras hable cualquiera**, no solo la instructora: la
-       * torre, el otro avión y la voz de la máquina. La megafonía va por otra
-       * vía, pero taparlos en el despegue o en la final es lo que no hace
-       * nadie en una cabina de verdad. Ver `audio/megafonia.ts`.
+       * **Y un anuncio detrás de otro**: ni con otro sonando ni con otro
+       * esperando turno. Lo demás lo reparte la boca, que es un solo turno
+       * para todas las voces. Ver `audio/turnos.ts`.
        */
-      otrosHablando:
-        this.torre.hablando || this.otroAvion.hablando || this.maquina.ocupada,
-      megafoniaHablando: this.comandante.hablando || this.tripulacion.hablando,
+      megafoniaHablando:
+        this.comandante.hablando ||
+        this.tripulacion.hablando ||
+        BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       cartelPuesto: this.cinturonPuesto,
+      // Y sin «pueden soltarse» con una turbulencia anunciada por delante.
+      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia,
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La
@@ -8637,6 +8800,7 @@ export class Game {
    * toca. Ver `retirarteElPermiso` en `flight/turno-de-pista.ts`.
    */
   private retirarElPermisoSinOir(): void {
+    this.permisoDeAterrizar = null;
     if (this.laAproximacion.mandanFrustrar || !this.laTorreMandaEnLaLuz) return;
     this.hud.senal.caducar(this.esAfisAqui() ? "toma" : "verde");
     this.luzDeTorre(null);
@@ -9803,6 +9967,7 @@ export class Game {
     // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.huecos.reiniciar();
     this.ventanilla.reiniciar();
     this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
@@ -11021,6 +11186,8 @@ export class Game {
         ),
       ),
       tormenta: enLaTormenta,
+      // Y la del camino de este vuelo. Ver `flight/turbulencia-del-vuelo.ts`.
+      camino: this.turbulenciaDelVuelo.sacude(s0.y, this.flight.state.heightAboveGround),
     };
     // El campo de ráfagas lo lleva el viento del sitio, el mismo que el avión.
     const viento =
@@ -11067,7 +11234,7 @@ export class Game {
     // Ya con la tormenta dentro: ver `causasDe` en `flight/turbulencia.ts`.
     const movimiento = cuantoSeMueve(aire);
     this.atenderAlCinturon(movimiento, loDijo, loEncendio);
-    this.hablarDeLosBaches(movimiento);
+    this.hablarDeLosBaches(dt, movimiento);
     this.buscarNivelTranquilo(dt, movimiento, aire);
     this.atenderALaSobrevelocidad(dt);
 
@@ -12056,6 +12223,21 @@ export class Game {
     const s = this.flight.state;
     this.relojDeCabina += dt;
     /*
+     * El silencio de todas las voces, para el reparto de lo que puede
+     * esperar: cualquier boca y la máquina. Ver `Huecos`.
+     */
+    const megafoniaHabla = this.comandante.hablando || this.tripulacion.hablando;
+    this.huecos.paso(dt, {
+      alguienHabla:
+        megafoniaHabla ||
+        !BOCA.libre ||
+        this.maquina.ocupada ||
+        this.instructor.hablando ||
+        this.torre.hablando ||
+        this.otroAvion.hablando,
+      megafoniaHabla,
+    });
+    /*
      * Un vuelo nuevo, otro avión, o el avión puesto en otro sitio de golpe
      * —un banco, una lección que empieza en final—: la cabina se pone donde
      * estaría, y lo que se estaba contando se olvida.
@@ -12069,6 +12251,8 @@ export class Game {
       this.descensoDeEmergencia = null;
       this.porDecirDelDescenso = [];
       this.leccionesDelAire.olvidarElVuelo();
+      for (const p of this.leccionesPorContar) this.leccionesDelAire.noSeConto(p.leccion);
+      this.leccionesPorContar = [];
       this.cabinaDelAvion.reiniciar(s.position.y, s.onGround, this.aircraft);
     }
     this.cabinaDelAvion.paso(dt, {
@@ -12140,7 +12324,7 @@ export class Game {
     const s = this.flight.state;
     const aire = this.flight.aireDelDia();
     const oat = temperaturaExterior(s.position.y, aire);
-    const leccion = this.leccionesDelAire.paso({
+    const lectura = {
       dt,
       enTierra: s.onGround,
       altura: s.position.y,
@@ -12152,15 +12336,38 @@ export class Game {
         this.aircraft.presurizacion !== null && !this.cabinaDelAvion.despresurizada,
       crucero: this.navegacion.plan ? this.navegacion.cruceroPlaneado : null,
       bajando: this.navegacion.bajando,
-    });
+    };
+    const toca = this.leccionesDelAire.paso(lectura);
     if (
-      !leccion ||
       !laInstructoraLoExplica(this.tier.avisos) ||
       this.descensoDeEmergencia !== null ||
       this.sinMotor
-    )
+    ) {
+      if (toca) this.leccionesDelAire.noSeConto(toca);
+      for (const p of this.leccionesPorContar) this.leccionesDelAire.noSeConto(p.leccion);
+      this.leccionesPorContar = [];
       return;
-    this.contarLaLeccion(leccion, oat);
+    }
+    if (toca) this.leccionesPorContar.push({ leccion: toca, desde: this.relojDeCabina });
+    /*
+     * **Y se cuenta cuando hay hueco, si todavía es verdad.** Se contaba en el
+     * instante en que tocaba, y ese instante era el de otra voz: la del frío
+     * encima de Jazlyn contando el Teide, la de los oídos encima del azafato
+     * anunciando la bajada. Lo que deja de ser verdad mientras espera, o
+     * espera demasiado, no se cuenta —y puede volver a tocar otro día—.
+     */
+    this.leccionesPorContar = this.leccionesPorContar.filter((p) => {
+      const vale =
+        sigueValiendo(p.leccion, lectura) &&
+        this.relojDeCabina - p.desde <= ESPERA_SU_HUECO;
+      if (!vale) this.leccionesDelAire.noSeConto(p.leccion);
+      return vale;
+    });
+    const siguiente = this.leccionesPorContar[0];
+    if (!siguiente || !this.huecos.hayHueco) return;
+    this.leccionesPorContar.shift();
+    this.huecos.usar();
+    this.contarLaLeccion(siguiente.leccion, oat);
   }
 
   private contarLaLeccion(leccion: LeccionDelAire, oat: number): void {
@@ -13459,17 +13666,20 @@ export class Game {
        * urge de todo lo que suena: una autorización no puede esperar y el
        * paisaje sí. Un suceso, una voz.
        */
+      /*
+       * **Y no solo que no hable nadie: que haya hueco.** Con mirar si
+       * hablaba alguien, «a la izquierda, el Teide» salía en el primer
+       * silencio, pegado a lo anterior o con la lección del frío detrás. Lo
+       * que se ve espera su hueco, como las lecciones del aire, y se reparte
+       * con ellas. Ver `Huecos` en `audio/turnos.ts`.
+       */
       alguienHabla:
         // Y en un descenso de emergencia no se mira el paisaje: se baja.
         (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) ||
-        this.instructor.hablando ||
-        this.comandante.hablando ||
-        this.tripulacion.hablando ||
-        this.torre.hablando ||
-        this.otroAvion.hablando ||
-        this.maquina.ocupada,
+        !this.huecos.hayHueco,
     }, () => this.loQueSeMueve());
     if (!mirada) return;
+    this.huecos.usar();
     // Y al revés: el avión que se señaló aquí ya no lo cuenta la radio.
     if (mirada.hito.id) this.informacionDeTrafico.darPorContado(mirada.hito.id);
 
@@ -16079,6 +16289,117 @@ export class Game {
   private bachesDichos = false;
 
   /**
+   * **La turbulencia del camino de este vuelo**, y su anuncio atado a ella.
+   * Ver `flight/turbulencia-del-vuelo.ts`.
+   */
+  private readonly turbulenciaDelVuelo = new TurbulenciaDelVuelo();
+  /**
+   * Si el cartel lo encendió el anuncio de la turbulencia, con el pasaje
+   * suelto: al pasar se vuelve a apagar. Si ya estaba puesto —la bajada—, se
+   * queda como estaba.
+   */
+  private cartelPorLaTurbulencia = false;
+  /**
+   * La turbulencia que pide un banco para este vuelo, en lugar de la sorteada.
+   * Ver `ponerTurbulencia`.
+   */
+  private turbulenciaPedida: readonly Zona[] | null = null;
+
+  /**
+   * **Un banco pide la turbulencia del vuelo**: las zonas, por lo volado desde
+   * el despegue. Vale para el vuelo de ahora si ya despegó, y si no para el
+   * siguiente despegue.
+   */
+  ponerTurbulencia(zonas: readonly Zona[]): void {
+    this.turbulenciaPedida = zonas;
+    if (this.yaDespego) this.turbulenciaDelVuelo.empezar(zonas);
+  }
+
+  /** La turbulencia de este vuelo, para los bancos. */
+  get turbulenciaParaBanco(): {
+    zonas: readonly Zona[];
+    volado: number;
+    sucesos: readonly { volado: number; suceso: SucesoDelCamino }[];
+  } {
+    return {
+      zonas: this.turbulenciaDelVuelo.deEsteVuelo,
+      volado: this.turbulenciaDelVuelo.loVolado,
+      sucesos: [...this.turbulenciaDelVuelo.sucesos],
+    };
+  }
+
+  /**
+   * **La turbulencia del camino, repartida al despegar**: según el tiempo de
+   * los dos campos, lo largo del tramo y la variedad de lo real —a veces
+   * nada, unos minutos, más rato o casi todo el vuelo con tormenta—. Una
+   * vuelta al campo no tiene camino. Ver `turbulenciaDelCamino`.
+   */
+  private repartirLaTurbulencia(): void {
+    this.cartelPorLaTurbulencia = false;
+    if (this.turbulenciaPedida) {
+      this.turbulenciaDelVuelo.empezar(this.turbulenciaPedida);
+      return;
+    }
+    const destino = this.elDestino();
+    const salida = this.campoPorId(this.salidaId);
+    if (!destino || !salida || destino.id === this.salidaId) {
+      this.turbulenciaDelVuelo.empezar([]);
+      return;
+    }
+    const aqui = this.scenario.meteo ?? TIEMPO_DE_CASA;
+    const alli = destino.escenario.meteo ?? aqui;
+    const plan = this.navegacion.plan;
+    const recta = Math.hypot(destino.x - salida.x, destino.z - salida.z);
+    const origen = this.scenario.aerodrome?.origin;
+    this.turbulenciaDelVuelo.empezar(
+      turbulenciaDelCamino(
+        {
+          vientoKt: Math.max(aqui.vientoKt, alli.vientoKt),
+          tormenta:
+            aqui.lluvia === "tormenta" || alli.lluvia === "tormenta" || this.celdas.length > 0,
+          nubes: aqui.techoM !== null || alli.techoM !== null,
+          montana: !!origen && enCanarias(origen),
+        },
+        {
+          largo: plan?.total ?? recta * 1.15,
+          velocidad: this.aircraft.cruiseSpeed,
+          crucero: plan ? this.navegacion.cruceroPlaneado : this.flight.state.position.y + 1500,
+        },
+      ),
+    );
+  }
+
+  /**
+   * **El anuncio de la turbulencia, atado a la de verdad.** Ver
+   * `TurbulenciaDelVuelo`.
+   *
+   * - **Prevista**: antes de llegar, la comandante la anuncia y enciende el
+   *   cartel —el *ding*—, y luego llega.
+   * - **Sin avisar**: primero los baches, en seguida el cartel —que se enciende
+   *   solo, ver `cinturon.ts`— y el anuncio.
+   * - **Y al pasar**, se apaga el cartel si fue ella quien lo encendió.
+   *
+   * Lo dice con la frase que hay grabada, que todavía habla de «movimiento»;
+   * las de la palabra turbulencia, por grados, la segunda vez dicha de otro
+   * modo y el «ya estamos tranquilos» están en `PENDIENTE-VOCES-turbulencia.md`
+   * para grabarse. Sin pasaje no hay a quién anunciar: ahí la instructora
+   * cuenta los baches cuando se sienten. Ver `hablarDeLosBaches`.
+   */
+  private anunciarLaTurbulencia(suceso: SucesoDelCamino): void {
+    if (suceso.que === "paso") {
+      if (this.cartelPorLaTurbulencia && !this.megafonia.bajandoAlDestino)
+        this.dijoSoltarse = true;
+      this.cartelPorLaTurbulencia = false;
+      return;
+    }
+    if (this.cinturon.pasajeSuelto) this.cartelPorLaTurbulencia = true;
+    this.pidioAbrocharse = true;
+    const forma = unaForma("comandante.turbulencia");
+    this.comandante.decir(forma.texto, forma.id, "baja");
+    if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
+  }
+
+  /**
    * **Y los baches se explican, con calma.**
    *
    * Para muchos niños esta será la primera turbulencia que sientan, y lo que
@@ -16091,14 +16412,38 @@ export class Game {
    *   y ella lo cuenta.
    * - **Sin pasaje**, la instructora, porque no hay nadie más a bordo.
    *
-   * Una vez por racha, y en crucero: en la subida y la aproximación el cartel
-   * ya va puesto y la cabina tiene otras cosas que hacer. Vuelve a decirse
+   * Sin pasaje, una vez por racha y en crucero: en la subida y la
+   * aproximación la cabina tiene otras cosas que hacer. Vuelve a decirse
    * cuando el aire se calma y se vuelve a mover, no porque pase el rato —
    * con la misma banda muerta del cartel. Ver `SACUDE` en `cinturon.ts`.
    */
-  private hablarDeLosBaches(movimiento: number): void {
-    if (movimiento < YA_NO_SACUDE) this.bachesDichos = false;
+  private hablarDeLosBaches(dt: number, movimiento: number): void {
     const s = this.flight.state;
+    /*
+     * **Con pasaje, lo que se anuncia es lo que hay en el camino.** Esto
+     * anunciaba cualquier racha de más de lo que enciende el cartel en
+     * cuanto se pasaban los trescientos metros, y la primera que se cruza
+     * siempre es la de la capa de abajo, en la subida: «siempre la anuncia en
+     * el mismo sitio, al poco de despegar, y luego el vuelo es una balsa de
+     * aceite». Ver `anunciarLaTurbulencia`.
+     */
+    const conGente = conPasaje(this.aircraft.mass);
+    const enEmergencia =
+      this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado;
+    // Lo volado se lleva siempre: es lo que sitúa la turbulencia del camino.
+    const suceso = this.turbulenciaDelVuelo.paso(dt, {
+      enElAire: !s.onGround && this.yaDespego,
+      velocidad: s.groundSpeed,
+      movimiento,
+      sePuedeAnunciar:
+        conGente && this.faseDeAhora === "en-vuelo" && !enEmergencia && !this.sinMotor,
+      pasajeSuelto: this.cinturon.pasajeSuelto,
+    });
+    if (conGente) {
+      if (suceso) this.anunciarLaTurbulencia(suceso);
+      return;
+    }
+    if (movimiento < YA_NO_SACUDE) this.bachesDichos = false;
     if (
       this.bachesDichos ||
       movimiento < SACUDE ||
@@ -16108,14 +16453,8 @@ export class Game {
     )
       return;
     this.bachesDichos = true;
-    if (conPasaje(this.aircraft.mass)) {
-      const forma = unaForma("comandante.turbulencia");
-      this.comandante.decir(forma.texto, forma.id, "baja");
-      if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
-    } else {
-      const forma = unaForma("vuelo.baches");
-      this.instructor.decir(forma.texto, forma.id);
-    }
+    const forma = unaForma("vuelo.baches");
+    this.instructor.decir(forma.texto, forma.id);
   }
 
   private atenderAlCinturon(
@@ -16450,6 +16789,7 @@ export class Game {
     ) {
       this.yaDespego = true;
       this.avisar("achieved");
+      this.repartirLaTurbulencia();
     }
     if (avisaLaPerdida(state) && !this.wasStalled) this.avisar("perdida");
     if (state.crashed && !this.wasCrashed) this.avisar("error");

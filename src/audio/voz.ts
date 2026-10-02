@@ -185,8 +185,8 @@ export function decir(frase: string, urgencia: Urgencia = "normal"): void {
       // rápidos, y a los cuatro años una voz lenta se pierde antes de acabar.
       dicho.rate = 1.15;
       dicho.volume = volumen;
-      dicho.onend = listo;
-      dicho.onerror = listo;
+      dicho.onend = () => listo();
+      dicho.onerror = () => listo();
       sintesis.speak(dicho);
     } catch {
       // Sin voz se juega igual. Ver la cabecera de este fichero.

@@ -20,6 +20,7 @@ import {
   RIÑEN,
   SILENCIO,
 } from "./boca";
+import { CADUCA_LA_MEGAFONIA } from "./turnos";
 
 let reloj = 0;
 let cortes = 0;
@@ -546,36 +547,197 @@ describe("y una frase no se corta por la mitad", () => {
   });
 });
 
-describe("y la megafonía va por otra vía", () => {
+describe("y la megafonía va por el mismo turno", () => {
   /*
-   * **Lo corrigió quien juega, y tenía razón.**
+   * **Lo pidió quien juega, sabiendo lo de las dos vías.**
    *
-   * Esto empezó con una sola boca para todo el juego, con el argumento de que
-   * una radio es un solo canal. El argumento vale para la radio y no para la
-   * comandante:
-   *
-   * > «Pero en la realidad, la comandante le habla a los pasajeros por la
-   * > megafonía interna del avión, y lo que escucha en sus auriculares va por
-   * > otra vía.»
-   *
-   * En un avión hay dos vías y se solapan. Meterlas en el mismo turno no era
-   * prudencia: era un error de modelo, y se pagaba con la frase larga de la
-   * llegada cortada por un indicativo.
+   * Fue otra boca con este argumento: en un avión la megafonía y los
+   * auriculares van por dos vías y se solapan. Y se oía así: «todo el vuelo en
+   * silencio y cuando hablan lo hacen todos juntos». Su regla: «en el juego,
+   * para lo poco que hablan, que la megafonía no la pise nadie». Ver
+   * `MEGAFONIA` en `boca.ts` y `audio/turnos.ts`.
    */
-  it("son dos suelos distintos, no el mismo", () => {
-    expect(MEGAFONIA).not.toBe(BOCA);
+  it("es la misma boca", () => {
+    expect(MEGAFONIA).toBe(BOCA);
   });
 
-  it("y hablar por una no ocupa la otra", () => {
-    const dichas: string[] = [];
-    BOCA.pedir("normal", () => {
-      dichas.push("radio");
-      // No se llama a `listo`: la radio se queda hablando.
+  it("y mientras habla la megafonía, la radio espera", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("baja", frase("comandante.servicio"), "tripulacion.servicio");
+    b.pedir("baja", frase("charlie alfa, en final"), "otro.final@c-a");
+    expect(dicho).toEqual(["comandante.servicio"]);
+    expect(cortes).toBe(0);
+    acabar["comandante.servicio"]!();
+    expect(dicho).toEqual(["comandante.servicio", "charlie alfa, en final"]);
+  });
+
+  it("y tampoco la pisa la instructora: espera a que acabe", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("baja", frase("descenso"), "comandante.descenso");
+    b.pedir("normal", frase("oídos"), "vuelo.aire.oidos");
+    expect(dicho).toEqual(["descenso"]);
+    acabar["descenso"]!();
+    expect(dicho).toEqual(["descenso", "oídos"]);
+  });
+
+  it("y lo que es para ti pasa delante de lo que espera, sin cortar", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "vuelo.rodando");
+    b.pedir("baja", frase("bienvenida"), "comandante.bienvenida");
+    b.pedir("baja", frase("otro"), "otro.enCola@x");
+    b.pedir("mando", frase("permiso"), "torre.verde@z-p");
+    expect(cortes).toBe(0);
+    acabar["hablando"]!();
+    expect(dicho).toEqual(["hablando", "permiso"]);
+    acabar["permiso"]!();
+    // Y la megafonía, por delante de la frecuencia de los demás.
+    expect(dicho).toEqual(["hablando", "permiso", "bienvenida"]);
+  });
+
+  it("y lo urgente sí corta la megafonía, pero no barre sus anuncios", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("baja", frase("llegada"), "comandante.llegada");
+    b.pedir("baja", frase("cinturones"), "tripulacion.cinturones");
+    b.pedir("urgente", frase("¡Subí!"), "vuelo.terrenoSube");
+    expect(cortes).toBe(1);
+    expect(dicho).toEqual(["llegada", "¡Subí!"]);
+    acabar["¡Subí!"]!();
+    expect(dicho).toEqual(["llegada", "¡Subí!", "cinturones"]);
+  });
+
+  it("un anuncio aguanta más en la cola que un aviso", () => {
+    expect(cuantoAguanta("comandante.turbulencia")).toBe(CADUCA_LA_MEGAFONIA);
+    expect(cuantoAguanta("tripulacion.canario.servicio@mani")).toBe(CADUCA_LA_MEGAFONIA);
+    expect(cuantoAguanta("ventanilla@saludo-teide")).toBe(CADUCA_LA_MEGAFONIA);
+    // La de la instructora en avioneta es suya, no de la megafonía.
+    expect(cuantoAguanta("ventanilla.vos@teide")).toBe(CADUCA);
+  });
+});
+
+/*
+ * ── Lo que espera a su voz ────────────────────────────────────────────────
+ *
+ * El crosscheck de Jazlyn no sonaba en casa de Enrique: se pedía en el puesto
+ * antes de que su grabación hubiera bajado y se le pasaba a la voz del
+ * navegador, muda en Brave para Linux. Ahora espera en la cola sin que le
+ * toque, con tope. Ver `AlPedir.lista`.
+ */
+describe("lo que espera a su voz", () => {
+  function conReloj() {
+    let ahora = 0;
+    const pendientes: { cuando: number; hacer: () => void }[] = [];
+    const b = new Boca({
+      ahora: () => ahora,
+      cancelar: () => {},
+      esperar: (ms, hacer) => void pendientes.push({ cuando: ahora + ms, hacer }),
     });
-    MEGAFONIA.pedir("baja", () => {
-      dichas.push("megafonia");
+    const correr = (ms: number) => {
+      const hasta = ahora + ms;
+      for (;;) {
+        pendientes.sort((p, q) => p.cuando - q.cuando);
+        const p = pendientes[0];
+        if (!p || p.cuando > hasta) break;
+        pendientes.shift();
+        ahora = Math.max(ahora, p.cuando);
+        p.hacer();
+      }
+      ahora = hasta;
+    };
+    return { b, correr };
+  }
+
+  it("no le toca hasta que su voz está lista, y entonces suena", () => {
+    const { b, correr } = conReloj();
+    const { dicho, frase } = coro();
+    let lista = false;
+    b.pedir("baja", frase("crosscheck"), "comandante.crosscheck", {
+      lista: () => lista,
+      tope: 25000,
     });
-    expect(dichas).toEqual(["radio", "megafonia"]);
+    expect(dicho).toEqual([]);
+    expect(b.espera("comandante.crosscheck")).toBe(true);
+    correr(10000);
+    expect(dicho).toEqual([]);
+    lista = true;
+    correr(500);
+    expect(dicho).toEqual(["crosscheck"]);
+  });
+
+  it("y lo que tarda en estar lista no le cuenta para caducar", () => {
+    const { b, correr } = conReloj();
+    const { dicho, frase } = coro();
+    let lista = false;
+    // Un aviso de los de cuatro segundos, que espera doce a su grabación.
+    b.pedir("normal", frase("arrancá"), "vuelo.arrancando", {
+      lista: () => lista,
+      tope: 25000,
+    });
+    correr(12000);
+    lista = true;
+    correr(300);
+    expect(dicho).toEqual(["arrancá"]);
+  });
+
+  it("y con su tope cumplido le toca como esté: la espera tiene salida", () => {
+    const { b, correr } = conReloj();
+    const { dicho, frase } = coro();
+    b.pedir("baja", frase("crosscheck"), "comandante.crosscheck", {
+      lista: () => false,
+      tope: 25000,
+    });
+    correr(24000);
+    expect(dicho).toEqual([]);
+    correr(1500);
+    expect(dicho).toEqual(["crosscheck"]);
+  });
+
+  it("mientras espera a su voz, no ocupa la frecuencia", () => {
+    const { b } = conReloj();
+    const { dicho, frase } = coro();
+    b.pedir("baja", frase("crosscheck"), "comandante.crosscheck", {
+      lista: () => false,
+      tope: 25000,
+    });
+    expect(b.libre).toBe(true);
+    b.pedir("normal", frase("arrancá"), "vuelo.arrancando");
+    expect(dicho).toEqual(["arrancá"]);
+  });
+
+  it("y se puede retirar mientras espera, y quien la pidió se entera", () => {
+    const { b } = conReloj();
+    const { frase } = coro();
+    const caidas: string[] = [];
+    b.pedir("mando", frase("permiso"), "torre.aterrizar@z-p", {
+      lista: () => false,
+      tope: 25000,
+      alCaer: (porque) => caidas.push(porque),
+    });
+    b.retirar((c) => c === "torre.aterrizar@z-p");
+    expect(b.espera("torre.aterrizar@z-p")).toBe(false);
+    expect(caidas).toEqual(["ya no es verdad"]);
+  });
+
+  it("lo que no tenía con qué sonar no deja silencio ni cuenta como oído", () => {
+    const { b } = conReloj();
+    const { dicho, frase } = coro();
+    b.pedir("normal", (listo) => listo(true), "vuelo.rodando");
+    expect(b.habladas.map((h) => h.clave)).toEqual([]);
+    b.pedir("normal", frase("seguí"), "vuelo.raya");
+    expect(dicho).toEqual(["seguí"]);
+  });
+
+  it("y tu permiso se dice otra vez aunque haga poco del anterior", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("permiso 1"), "torre.aterrizar@z-p");
+    acabar["permiso 1"]!();
+    reloj = 20000;
+    b.pedir("mando", frase("permiso 2"), "torre.aterrizar@z-p");
+    expect(dicho).toEqual(["permiso 1", "permiso 2"]);
   });
 });
 

@@ -340,6 +340,25 @@ export interface AudioLevel {
  * `audio/volumen.ts`.
  */
 
+/**
+ * **Si la página ya recibió un gesto de quien juega**: un clic, un toque o
+ * una tecla, en cualquier momento desde que se abrió.
+ *
+ * Es lo que deja sonar el audio en un navegador, y vale para toda la página:
+ * el clic de «despegar» del hangar desbloquea el audio del vuelo aunque el
+ * vuelo todavía no existiera. Ver dónde se usa, en `Game`.
+ */
+export function yaHuboGesto(): boolean {
+  try {
+    const n = navigator as Navigator & {
+      userActivation?: { readonly hasBeenActive: boolean };
+    };
+    return !!n.userActivation?.hasBeenActive;
+  } catch {
+    return false;
+  }
+}
+
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
@@ -432,6 +451,16 @@ export class Audio {
 
   get available(): boolean {
     return this.context !== null;
+  }
+
+  /**
+   * **Si el audio ya puede sonar**: el contexto en marcha, que en un navegador
+   * de verdad es después del primer gesto. Lo que se pida antes espera —ver
+   * `estaLista` en `audio/instructor-grabado.ts`—: una grabación tocada en un
+   * contexto dormido no suena, y se daba por dicha.
+   */
+  get despierto(): boolean {
+    return this.context?.state === "running";
   }
 
   get level(): AudioLevel {

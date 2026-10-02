@@ -105,6 +105,12 @@ export interface AlrededorDelTurno {
    * siguiente se da otra vez, con su voz. Ver `paso`.
    */
   retirarteElPermiso?(): void;
+  /**
+   * **Si tu permiso está dado y todavía no ha empezado a sonar.** Sin
+   * «cleared to land» oído no hay permiso, y el permiso no se oye cuando se
+   * pide sino cuando suena. Ver `paso`. Sin esto se da por que no.
+   */
+  permisoSinOir?(): boolean;
   /** La torre te manda al aire; `sigue` dice si la pista sigue ocupada. */
   mandarteAlAire(alto: number, sigue: () => boolean): void;
   /**
@@ -574,7 +580,31 @@ export class TurnoDePista {
       return;
     }
     this.enFinal = true;
-    if (!this.aterrizajeSinAutorizar) return;
+    if (!this.aterrizajeSinAutorizar) {
+      /*
+       * **Y a la altura de decisión, el permiso tiene que haberse oído.**
+       *
+       * Se daba por bueno al pedirlo, y su frase podía esperar turno: en La
+       * Palma llegó con el avión en la cabecera y la máquina contando «one
+       * hundred». Lo real es que en los mínimos o se tiene el permiso, oído,
+       * o se va uno al aire. Si a esa altura todavía no ha empezado a sonar,
+       * se retira —no se dirá tarde— y la torre te manda al aire: el permiso
+       * llegó tarde porque la pista estuvo ocupada hasta el último momento, y
+       * eso es lo que dice su orden. Se vuelve por el circuito y se tiene en
+       * la final siguiente.
+       */
+      const alto = this.de.alto();
+      if (
+        alto < ALTURA_DE_DECISION &&
+        this.de.permisoSinOir?.() &&
+        !this.de.mandanFrustrar?.()
+      ) {
+        this.de.boca.retirar(esTuPermisoDeAterrizar);
+        this.de.retirarteElPermiso?.();
+        this.de.mandarteAlAire(alto, () => false);
+      }
+      return;
+    }
     /*
      * **Y con una orden de irse al aire puesta, el permiso pendiente se cae.**
      *

@@ -54,6 +54,15 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import {
+  autoplayDeVerdad,
+  enUnaLinea,
+  frasesOidas,
+  loOido,
+  oidoEnLaPagina,
+  redLentaParaLasVoces,
+  seSolapan,
+} from "./oido.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -211,6 +220,18 @@ page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
 await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
+/*
+ * **Y el oído**: lo que de verdad llega al altavoz, no lo que se pidió decir.
+ * Ver `scripts/oido.mjs`. Con `OGA_COMO_EN_CASA=1`, además, las condiciones de
+ * casa de Enrique: la política de autoplay de un navegador con pantalla y el
+ * pack de voz bajando por una red lenta. Ver `verificar-voces-de-verdad.mjs`.
+ */
+const COMO_EN_CASA = process.env.OGA_COMO_EN_CASA === "1";
+if (COMO_EN_CASA) {
+  await page.addInitScript(autoplayDeVerdad);
+  await redLentaParaLasVoces(page);
+}
+await page.addInitScript(oidoEnLaPagina);
 /*
  * **Y la hora se fija, que si no el banco mide la hora a la que se ejecuta.**
  *
@@ -453,6 +474,20 @@ await page
     timeout: 60000,
   })
   .catch(() => {});
+/*
+ * **Y una turbulencia en el camino, si se pide**: `OGA_TURBULENCIA=prevista`
+ * o `sin-avisar`, a los veinte kilómetros de despegar y durante diez. Es para
+ * mirar que lo que anuncia Jazlyn pasa de verdad, y en su orden: la prevista
+ * se anuncia antes de llegar; la de aire claro, cuando ya se mueve. Pide un
+ * crucero —`OGA_CRUCERO`— para que dé tiempo a cruzarla. Ver
+ * `flight/turbulencia-del-vuelo.ts`.
+ */
+const TURBULENCIA = process.env.OGA_TURBULENCIA ?? null;
+const ZONA_PEDIDA = TURBULENCIA
+  ? { desde: 20000, hasta: 30000, intensidad: "moderada", como: TURBULENCIA, capa: null }
+  : null;
+if (ZONA_PEDIDA)
+  await page.evaluate((z) => globalThis.__oga?.ponerTurbulencia?.([z]), ZONA_PEDIDA);
 
 const resultados = [];
 /**
@@ -5034,6 +5069,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
 }, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE]);
 fotografiando = false;
 await fotos;
+/** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
+const oido = await loOido(page);
+const frasesDelVuelo = frasesOidas(oido.sonidos);
+const ceroDelOido = frasesDelVuelo[0]?.t0 ?? 0;
+const turbulenciaDelVuelo = await page
+  .evaluate(() => globalThis.__oga?.turbulencia?.() ?? null)
+  .catch(() => null);
+/** Si el avión lleva tripulación de cabina: toboganes, servicio, cinturones. */
+const llevaTripulacion = await page
+  .evaluate(() => !!globalThis.__oga?.avion?.().conTripulacion)
+  .catch(() => false);
 /*
  * **Y lo que se dijo, en orden y con su hora, si se pide.** `OGA_VOCES=fichero`
  * vuelca las frases que sonaron y las que se cayeron: para saber qué ocupaba
@@ -5054,6 +5100,10 @@ if (process.env.OGA_VOCES) {
         aves: (vuelo.cantados ?? []).filter((c) => c.startsWith("aves:")),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
+        // Y lo que de verdad sonó, con su voz y su hora de audio.
+        oido: frasesDelVuelo.map((f) => enUnaLinea(f, ceroDelOido)),
+        navegador: oido.navegador,
+        turbulencia: turbulenciaDelVuelo,
       },
       null,
       1,
@@ -5106,6 +5156,114 @@ const relojDeVerdad =
 
 // ── Lo que se comprueba ───────────────────────────────────────────────────
 
+/*
+ * ── Lo que se oyó de verdad ─────────────────────────────────────────────
+ *
+ * Enrique: «todo el vuelo en silencio y cuando hablan lo hacen todos juntos»,
+ * y el crosscheck de Jazlyn, que no sonaba en su casa y aquí se daba por
+ * dicho. Estas tres miran el altavoz, no el historial. Ver `oido.mjs`.
+ */
+{
+  const choques = seSolapan(frasesDelVuelo);
+  comprobar(
+    "y nunca suenan dos voces a la vez, salvo la máquina",
+    frasesDelVuelo.length > 0 && choques.length === 0,
+    choques.length
+      ? `${choques.length} veces: ` +
+          choques
+            .slice(0, 4)
+            .map((c) => `${enUnaLinea(c.a, ceroDelOido)} ✕ ${enUnaLinea(c.b, ceroDelOido)} (${c.encima.toFixed(1)} s)`)
+            .join(" | ")
+      : `${frasesDelVuelo.length} frases oídas, ninguna de personas encima de otra`,
+    "«todo el vuelo en silencio y cuando hablan lo hacen todos juntos»",
+  );
+  /*
+   * **Y todo lo que pidió la megafonía, sonó con su voz.** Lo pedido sale del
+   * historial de sus dos bocas; lo oído, del altavoz. Una frase pedida que no
+   * llegó al altavoz es justo el silencio de casa.
+   */
+  const todo = vuelo.todoLoDicho ?? {};
+  const pedidas = [...(todo.comandante ?? []), ...(todo.tripulacion ?? [])].map((c) =>
+    c.replace(/~\d+$/, ""),
+  );
+  const prefijo = (c) =>
+    c === "comandante.bienvenidaConPlan"
+      ? "comandante.bienvenida"
+      : c.startsWith("tripulacion.")
+        ? c.split(".").slice(0, 2).join(".")
+        : c;
+  const deLaMegafonia = frasesDelVuelo.filter(
+    (f) => f.voz === "comandante" || f.voz.startsWith("tripulacion"),
+  );
+  const usadas = new Set();
+  const sinSonar = [];
+  for (const c of pedidas) {
+    const i = deLaMegafonia.findIndex(
+      (f, j) => !usadas.has(j) && f.piezas.some((p) => p.startsWith(prefijo(c))),
+    );
+    if (i < 0) sinSonar.push(c);
+    else usadas.add(i);
+  }
+  comprobar(
+    "y todo lo que pidió la megafonía, sonó con su voz",
+    pedidas.length > 0 && sinSonar.length === 0,
+    sinSonar.length
+      ? `sin sonar: ${sinSonar.join(", ")} · pedidas ${pedidas.length}, oídas ${deLaMegafonia.length}`
+      : `${pedidas.length} de ${pedidas.length}: ${pedidas.join(", ")}`,
+    "«Tripulación, armar toboganes y verificación cruzada» no se oye",
+  );
+  /*
+   * **Y los anuncios de Jazlyn del puesto a la despedida**, donde hay
+   * tripulación que armar y pasaje que despedir.
+   */
+  const deJazlyn = deLaMegafonia.filter((f) => f.voz === "comandante");
+  if (llevaTripulacion) {
+    const debe = [
+      "comandante.crosscheck",
+      "comandante.bienvenida",
+      "comandante.despegue",
+      ...(DESTINO ? ["comandante.llegada"] : []),
+    ];
+    const faltan = debe.filter(
+      (a) => !deJazlyn.some((f) => f.entera && f.piezas.some((p) => p.startsWith(a))),
+    );
+    comprobarSiVolo(
+      "y suenan los anuncios de Jazlyn, enteros, del puesto a la despedida",
+      faltan.length === 0,
+      faltan.length
+        ? `no sonaron: ${faltan.join(", ")} · de ella se oyó: ${deJazlyn.map((f) => f.piezas[0]).join(", ") || "nada"}`
+        : deJazlyn.map((f) => enUnaLinea(f, ceroDelOido)).join(" · "),
+      "jazlyn-es-el-centro",
+    );
+  }
+  /*
+   * **Y la turbulencia que se anuncia, llega**: la prevista, antes de
+   * llegar; la de aire claro, cuando ya se mueve. Solo si se pidió una.
+   */
+  if (ZONA_PEDIDA) {
+    const anuncios = (turbulenciaDelVuelo?.sucesos ?? []).filter(
+      (s) => s.suceso.que === "anunciar",
+    );
+    const primero = anuncios[0];
+    const oidaLaTurbulencia = deJazlyn.some((f) =>
+      f.piezas.some((p) => p.startsWith("comandante.turbulencia")),
+    );
+    const enSuOrden =
+      !!primero &&
+      (ZONA_PEDIDA.como === "sin-avisar"
+        ? primero.volado >= ZONA_PEDIDA.desde - 1500
+        : primero.volado < ZONA_PEDIDA.desde);
+    comprobarSiVolo(
+      `y la turbulencia ${ZONA_PEDIDA.como} se anuncia en su orden, y suena`,
+      enSuOrden && oidaLaTurbulencia,
+      primero
+        ? `anunciada a ${(primero.volado / 1000).toFixed(1)} km (la zona, de ${ZONA_PEDIDA.desde / 1000} a ${ZONA_PEDIDA.hasta / 1000} km) · ` +
+            `${oidaLaTurbulencia ? "sonó" : "no sonó"} · ${(turbulenciaDelVuelo?.sucesos ?? []).map((s) => `${s.suceso.que}@${(s.volado / 1000).toFixed(1)}km`).join(" ")} · volado ${((turbulenciaDelVuelo?.volado ?? 0) / 1000).toFixed(1)} km`
+        : `no se anunció · volado ${((turbulenciaDelVuelo?.volado ?? 0) / 1000).toFixed(1)} km`,
+      "«la turbulencia que anuncia Jazlyn no existe»",
+    );
+  }
+}
 /*
  * **Y se vuela el avión de verdad, no las cajas.**
  *
