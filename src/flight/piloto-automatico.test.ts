@@ -26,7 +26,7 @@ import {
   RITMO_MAXIMO,
   sePuedeConectar,
 } from "./piloto-automatico";
-import { CoefficientFlightModel } from "./fdm";
+import { CoefficientFlightModel, empujeLleno } from "./fdm";
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
 import { airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
@@ -266,6 +266,9 @@ describe("y pilotando de verdad, llega y se queda", () => {
           gas,
           verdadera: s.airspeed,
           ritmoDeCabeceo: s.pitchRate,
+          // El empuje y la masa, como se los da el juego a los gases.
+          empujeAFondo: empujeLleno(aircraft, airDensity(s.position.y), s.airspeed),
+          masa: aircraft.mass,
         },
         objetivos,
         dt,
@@ -455,6 +458,9 @@ describe("y con el avión trimado, que es como se engancha de verdad", () => {
           gas,
           verdadera: s.airspeed,
           ritmoDeCabeceo: s.pitchRate,
+          // El empuje y la masa, como se los da el juego a los gases.
+          empujeAFondo: empujeLleno(aircraft, airDensity(s.position.y), s.airspeed),
+          masa: aircraft.mass,
           timon: venia,
         },
         objetivos,
@@ -651,6 +657,9 @@ describe("y sin sacudir a nadie: los topes de un automático de verdad", () => {
             gas,
             verdadera: s.airspeed,
             ritmoDeCabeceo: s.pitchRate,
+            // El empuje y la masa, como se los da el juego a los gases.
+            empujeAFondo: empujeLleno(a, airDensity(s.position.y), s.airspeed),
+            masa: a.mass,
             // Lo que hace el juego al engancharlo. Ver `conElPilotoAutomatico`.
             timon: t === 0 ? timon : modelo.timonAhora(),
           },

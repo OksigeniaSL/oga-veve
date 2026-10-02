@@ -887,7 +887,21 @@ export interface QuienJuega {
   readonly enLaPista: boolean;
   /** A cuánto se acerca, m/s. Es lo que decide su separación. */
   readonly velocidad?: number;
+  /**
+   * **Si tiene prioridad**: un MAYDAY o un «minimum fuel» puestos. Entonces
+   * los que giran a la base le dejan más hueco por delante del de siempre, y
+   * si no les cabe, esperan en la esquina. Ver `PRIORIDAD` y
+   * `prioridad-en-la-fila.test.ts`.
+   */
+  readonly prioridad?: boolean;
 }
+
+/**
+ * **Lo que se le deja libre por delante a quien tiene prioridad**, s: dos
+ * minutos, que es lo que se aparta a los demás para que el que va justo de
+ * combustible entre primero y sin espera.
+ */
+const PRIORIDAD = 120;
 
 interface Volando {
   readonly grupo: Group;
@@ -1615,8 +1629,8 @@ export function crearTrafico(
    */
   const laFila = (
     sin: Volando | null,
-  ): { hora: number; velocidad: number; sale: boolean }[] => {
-    const fila: { hora: number; velocidad: number; sale: boolean }[] = [];
+  ): { hora: number; velocidad: number; sale: boolean; prioridad?: boolean }[] => {
+    const fila: { hora: number; velocidad: number; sale: boolean; prioridad?: boolean }[] = [];
     for (const b of aviones.values()) {
       if (b === sin) continue;
       const hora = horaDeUmbral(b);
@@ -1625,8 +1639,9 @@ export function crearTrafico(
     }
     const tu = opciones.quienJuega?.();
     const velocidad = tu?.velocidad ?? VUELA_A;
+    const prioridad = tu?.prioridad === true;
     if (tu?.alUmbral != null)
-      fila.push({ hora: reloj + tu.alUmbral, velocidad, sale: false });
+      fila.push({ hora: reloj + tu.alUmbral, velocidad, sale: false, prioridad });
     else if (tu?.enLaPista)
       fila.push(
         tuHora !== null
@@ -1652,7 +1667,9 @@ export function crearTrafico(
     let hora = natural;
     for (const b of laFila(sin)) {
       const detras = b.sale ? QUIEN_SALE : separacionPara(velocidad) + colchon;
-      const delante = b.sale ? 0 : separacionPara(b.velocidad) + colchon;
+      const delante = b.sale
+        ? 0
+        : separacionPara(b.velocidad) + colchon + (b.prioridad ? PRIORIDAD : 0);
       if (hora < b.hora + detras && hora > b.hora - delante) hora = b.hora + detras;
     }
     return hora - natural;

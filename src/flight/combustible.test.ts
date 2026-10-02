@@ -19,6 +19,8 @@ import {
   reservaEnKilos,
   seCargaAlCambiarDeDestino,
   cargaParaElPlan,
+  duracionDeLaReservaFinal,
+  quemaEsperando,
   RESERVA_SEGUNDOS,
 } from "./combustible";
 import { aircraftById, AIRCRAFT } from "./aircraft";
@@ -141,11 +143,31 @@ describe("el aviso", () => {
  * que impide que la franja se coma el instrumento entero.
  */
 describe("la franja de la reserva", () => {
-  it("son los cuarenta y cinco minutos de crucero de cada avión", () => {
+  it("es la reserva final de la ley: treinta minutos esperando en los de turbina, cuarenta y cinco en los de pistón", () => {
     for (const a of AIRCRAFT) {
-      const crucero = quemaPorSegundo(a, a.maxThrust / 3);
-      expect(reservaEnKilos(a) / crucero).toBeCloseTo(RESERVA_SEGUNDOS, 3);
+      const minutos = a.sound.engine === "piston" || a.sound.engine === "radial" ? 45 : 30;
+      expect(duracionDeLaReservaFinal(a), a.id).toBe(minutos * 60);
+      expect(reservaEnKilos(a) / quemaEsperando(a), a.id).toBeCloseTo(minutos * 60, 3);
     }
+  });
+
+  it("y con 12.478 kilos en final, el JAZ 120 no está en reserva", () => {
+    /*
+     * La captura de Gran Canaria: en final con 12.478 kilos y la barra en
+     * ámbar. La reserva eran 12.505 —cuarenta y cinco minutos a un tercio del
+     * empuje de nivel del mar—, tres veces la de verdad. La reserva final de
+     * un cuatrimotor de su clase son unos cuatro o cinco mil kilos.
+     */
+    const yvaga = AIRCRAFT.find((a) => a.id === "jaz-120")!;
+    expect(reservaEnKilos(yvaga)).toBeGreaterThan(3000);
+    expect(reservaEnKilos(yvaga)).toBeLessThan(6000);
+    expect(comoVaElDeposito(yvaga, 12478)).toBe("bien");
+  });
+
+  it("y un reactor esperando quema bastante menos que yendo a un tercio del empuje", () => {
+    // Que es por lo que la reserva de antes, a ese consumo, triplicaba la de verdad.
+    for (const a of AIRCRAFT.filter((x) => x.sound.engine === "turbofan"))
+      expect(quemaEsperando(a), a.id).toBeLessThan(quemaPorSegundo(a, a.maxThrust / 3) * 0.6);
   });
 
   it("y cabe holgada en el depósito de los seis: nunca más de un tercio", () => {

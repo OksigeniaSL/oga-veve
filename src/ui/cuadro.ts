@@ -43,7 +43,7 @@
  * Lo comprueba `cuadro-dos-vistas.test.ts`, avión por avión.
  */
 
-import { esDeChorro, type AircraftConfig } from "../flight/aircraft";
+import { esDeChorro, vueltasDelMotor, type AircraftConfig } from "../flight/aircraft";
 import { ascensoMaximo } from "../flight/carrera";
 import { loQueCabe, reservaEnKilos } from "../flight/combustible";
 import { familiaDe, patasDe, type Familia } from "./familia";
@@ -749,8 +749,6 @@ export function regimen(
   encendido: boolean,
 ): number {
   if (!encendido) return 0;
-  const { idleRpm, maxRpm } = a.sound;
-  return (
-    (idleRpm + Math.max(0, Math.min(1, gas)) * (maxRpm - idleRpm)) / maxRpm
-  );
+  // La misma cuenta que el sonido: ver `vueltasDelMotor`.
+  return vueltasDelMotor(a.sound, gas) / a.sound.maxRpm;
 }

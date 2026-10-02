@@ -193,6 +193,26 @@ export interface DatosDelTablero {
    * ninguna puesta. Ver `flight/altitud-seleccionada.ts`.
    */
   readonly ventanilla?: { readonly pies: number; readonly alerta: Alerta } | null;
+  /**
+   * **La velocidad que toca**, de la escalera de velocidades: los nudos y,
+   * arriba, el Mach. La enseñan la ventanilla SPD y la muesca magenta de la
+   * cinta. Ver `flight/escalera-de-velocidades.ts`.
+   */
+  readonly spd?: { readonly kt: number; readonly mach: number | null } | null;
+  /** Lo que hace cada mano del automático, para el FMA. `null` sin automático. */
+  readonly fma?: Fma | null;
+}
+
+/**
+ * **Las tres columnas del FMA** y si el automático está puesto. Cadena vacía
+ * es columna en blanco: esa mano es de quien vuela. Ver `fma` en
+ * `ui/cristal.ts`.
+ */
+export interface Fma {
+  readonly gases: string;
+  readonly lateral: string;
+  readonly vertical: string;
+  readonly piloto: boolean;
 }
 
 const GRADOS = 180 / Math.PI;
@@ -698,7 +718,7 @@ export class Tablero {
     const eicas = cajaDe("linea", "eicas");
     return `
       <g transform="translate(${pfd.x} ${BANDA.y})">
-        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: false, mach: true })}
+        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: false, mach: true, fma: true })}
       </g>
       <g transform="translate(${nd.x} ${BANDA.y})">
         ${pantallaDeNavegacion(nd.ancho, BANDA.alto)}
@@ -1142,11 +1162,34 @@ export class Tablero {
     for (const enRosa of this.todas('[data-bug="rosa"]'))
       poner(enRosa, "transform", `rotate(${n1(bugDeg)})`);
     escribir(this.pieza('[data-mcp="hdg"]'), pad3(Math.round(bugDeg) % 360));
-    escribir(
-      this.pieza('[data-mcp="spd"]'),
-      Number.isFinite(d.vref) ? String(Math.round(d.vref)) : "---",
-    );
+    /*
+     * **La ventanilla SPD y su muesca, con la velocidad que toca.** Enseñaba
+     * la Vref siempre: 146 en plena subida del JAZ 120, que es una velocidad
+     * de aterrizar puesta donde va la de subir. Ahora es la de la escalera de
+     * velocidades —250 abajo, la de subida, el Mach arriba, la de la llegada
+     * y la de final—, que es la que sostienen los gases si los hay. Arriba,
+     * con el Mach, como la escribe un panel: «.78».
+     */
+    const spd = d.spd ?? null;
+    const enMcp = spd
+      ? spd.mach !== null
+        ? `.${Math.round(spd.mach * 100)}`
+        : String(Math.round(spd.kt))
+      : "---";
+    escribir(this.pieza('[data-mcp="spd"]'), enMcp);
+    ponV("spd", spd ? spd.kt : NaN);
+    poner(this.pieza('[data-cristal="spd-sel-caja"]'), "visibility", spd ? "visible" : "hidden");
+    escribir(this.pieza('[data-cristal="spd-sel"]'), spd ? enMcp : "");
+    this.fma(d.fma ?? null);
     this.ventanillaAlt(d, dt);
+  }
+
+  /** **El FMA**: lo que hace cada mano. Ver `fma` en `ui/cristal.ts`. */
+  private fma(f: Fma | null): void {
+    escribir(this.pieza('[data-fma="gases"]'), f?.gases ?? "");
+    escribir(this.pieza('[data-fma="lateral"]'), f?.lateral ?? "");
+    escribir(this.pieza('[data-fma="vertical"]'), f?.vertical ?? "");
+    escribir(this.pieza('[data-fma="piloto"]'), f?.piloto ? "A/P" : "");
   }
 
   /** Dónde va el bug de la ventanilla ALT en la cinta, viajando. */

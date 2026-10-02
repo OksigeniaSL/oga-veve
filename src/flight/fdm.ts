@@ -487,12 +487,41 @@ export class CoefficientFlightModel implements FlightModel {
     this.state.crashed = true;
   }
 
+  /**
+   * **El ángulo de ataque que sostiene el peso** volando nivelado a esa
+   * velocidad y a esa altura, sin flaps, rad: la sustentación igual al peso,
+   * despejada de la recta de la ficha.
+   */
+  private alfaDeEquilibrio(velocidad: number, altura: number): number {
+    const ac = this.aircraft;
+    const qS = 0.5 * airDensity(altura, this.aire) * velocidad * velocidad * ac.wingArea;
+    const cl = (ac.mass * GRAVITY) / Math.max(1, qS);
+    return clamp((cl - ac.aero.cl0) / ac.aero.clAlpha, -0.05, ac.aero.alphaStall * 0.85);
+  }
+
+  /**
+   * El timón que sostiene el avión nivelado a la velocidad de ahora: el que
+   * anula el par de cabeceo con el ángulo de ataque de equilibrio. Ver
+   * `timonDeEquilibrio` en `model.ts`.
+   */
+  timonDeEquilibrio(): number {
+    const a = this.aircraft.aero;
+    const alfa = this.alfaDeEquilibrio(this.state.airspeed, this.state.position.y);
+    return clamp(-(a.cm0 + a.cmAlpha * alfa) / a.cmElevator, -1, 1);
+  }
+
   reset(initial: InitialConditions): void {
     const s = this.state;
     s.position.copy(initial.position);
     s.orientation.setFromAxisAngle(new Vector3(0, 1, 0), -initial.heading);
     this.updateBodyAxes();
     s.velocity.copy(this.forward).multiplyScalar(initial.airspeed);
+    /*
+     * Equilibrado: el morro arriba lo que pide el ala para sostener el peso, y
+     * la velocidad, horizontal. Ver `InitialConditions.equilibrado`.
+     */
+    if (initial.equilibrado && initial.airspeed > MIN_AIRSPEED)
+      this.rotateAboutRight(this.alfaDeEquilibrio(initial.airspeed, initial.position.y));
     s.rollRate = 0;
     s.pitchRate = 0;
     s.yawRate = 0;
@@ -505,6 +534,8 @@ export class CoefficientFlightModel implements FlightModel {
     this.trimSettle = 0;
     this.trimVisto = null;
     this.updateDerived();
+    // Y el timón que lo sostiene, para quien lo coja volando. Ver `timonAhora`.
+    if (initial.equilibrado) this.timonQueSostiene = this.timonDeEquilibrio();
     /*
      * **Y en el suelo solo si las ruedas tocan.**
      *
@@ -923,6 +954,12 @@ export class CoefficientFlightModel implements FlightModel {
        * amortiguador de guiñada— se quedan. Ver `ControlInputs.automatico`.
        */
       const manoDelAutomatico = controls.automatico === true;
+      /*
+       * Y la nivelada de los peldaños de abajo lleva la altura y nada más: el
+       * compensador que sostiene la subida se aparta, pero el nivelado de
+       * alas sigue, que ella no toca el alabeo. Ver `sostieneLaAltura`.
+       */
+      const otraLlevaLaAltura = manoDelAutomatico || controls.sostieneLaAltura === true;
       // Compensador automático: mantiene **la actitud que dejaste**.
       //
       // La primera versión llevaba el morro al horizonte, y eso está mal por
@@ -942,7 +979,7 @@ export class CoefficientFlightModel implements FlightModel {
         this.layers.climbHold > 0 &&
         Math.abs(controls.elevator) < 0.08 &&
         !s.onGround &&
-        !manoDelAutomatico
+        !otraLlevaLaAltura
       ) {
         // Se sostiene **la subida**, no la actitud del morro.
         //

@@ -2335,6 +2335,9 @@ export class Hud {
        * `alternarAerofrenos` en `flight/input.ts`.
        */
       readonly aerofrenos?: { readonly donde: number; readonly pedidos: boolean };
+      /** La velocidad que toca y el FMA. Ver `DatosDelTablero.spd` y `.fma`. */
+      readonly spd?: DatosDelTablero["spd"];
+      readonly fma?: DatosDelTablero["fma"];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2730,6 +2733,8 @@ export class Hud {
           combustible: mandos?.combustible ?? null,
           presion: mandos?.presion ?? null,
           ventanilla: mandos?.ventanilla ?? null,
+          spd: mandos?.spd ?? null,
+          fma: mandos?.fma ?? null,
         },
         dt,
         /*
@@ -3608,6 +3613,18 @@ export class Hud {
     const b = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
     b?.setAttribute("aria-pressed", String(puesto));
     b?.classList.toggle("boton--puesto", puesto);
+  }
+
+  /**
+   * **El botón del automático se ofrece**: late suave mientras se propone.
+   * Lo enciende el juego al llegar arriba, en los peldaños de abajo, en el
+   * avión que lo lleva y si no está puesto; se apaga al ponerlo o al dejar el
+   * nivel. Es el dedo de la instructora para quien no lee. Ver
+   * `.piloto-auto--propuesto` en la hoja.
+   */
+  proponerPilotoAutomatico(si: boolean): void {
+    const b = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
+    b?.classList.toggle("piloto-auto--propuesto", si && !b.hidden);
   }
 
   /**

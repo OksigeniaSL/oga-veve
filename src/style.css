@@ -3493,6 +3493,39 @@ button.motor__tecla::after {
   animation: none;
 }
 
+/*
+ * **Y al llegar arriba, el botón se ofrece.** Un latido suave del aro, sin
+ * color de alarma: es la instructora señalando el botón con el dedo —«si
+ * querés, poné el automático»— para quien no lee. Se apaga al ponerlo o al
+ * dejar el nivel. Ver `proponerPilotoAutomatico` en `ui/hud.ts`.
+ */
+.piloto-auto--propuesto {
+  box-shadow: 0 0 0 0 rgb(224 161 58 / 0.7);
+  animation: piloto-se-ofrece 1.6s ease-out infinite;
+}
+
+@keyframes piloto-se-ofrece {
+  0% {
+    box-shadow: 0 0 0 0 rgb(224 161 58 / 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgb(224 161 58 / 0);
+  }
+}
+
+/* Sin movimiento, un aro quieto: se ve igual que se ofrece. */
+@media (prefers-reduced-motion: reduce) {
+  .piloto-auto--propuesto {
+    animation: none;
+    box-shadow: 0 0 0 3px rgb(224 161 58 / 0.8);
+  }
+}
+
+.sin-movimiento .piloto-auto--propuesto {
+  animation: none;
+  box-shadow: 0 0 0 3px rgb(224 161 58 / 0.8);
+}
+
 .cuadro__tirador {
   position: absolute;
   left: 50%;
@@ -4221,6 +4254,33 @@ button.motor__tecla::after {
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * El FMA: verde lo que está mandando, como en cualquier pantalla de vuelo de
+ * Boeing, sobre una franja oscura para que se lea encima del cielo. Ver
+ * `fma` en `ui/cristal.ts`.
+ */
+.cr__fma-fondo {
+  fill: #05070a;
+  opacity: 0.82;
+}
+
+.cr__fma-raya {
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+.cr__fma {
+  fill: var(--cabina-normal);
+  font-family: var(--cabina-fuente);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cr__fma--piloto {
+  font-size: 11px;
 }
 
 /* Y la raya de «hasta aquí» del primer peldaño, de lado a lado de la cinta. */

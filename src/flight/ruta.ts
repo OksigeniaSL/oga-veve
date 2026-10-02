@@ -31,7 +31,9 @@
  *   cada mil pies que haya que perder. Ver `distanciaDeDescenso`.
  */
 
-import { nivelPara } from "./nivel-de-crucero";
+import { HASTA, haciaElEste, MEDIO_NIVEL, nivelPara, UN_NIVEL } from "./nivel-de-crucero";
+import { nivelQueAhorra } from "./nivel-que-ahorra";
+import type { AircraftConfig } from "./aircraft";
 
 /** Una milla náutica, en metros. La misma que la de la carta. */
 export const MILLA = 1852;
@@ -1181,6 +1183,13 @@ export function cruceroDelPlan(
     readonly cotaDeSalida: number;
     readonly declinacion: number;
     readonly visual?: boolean;
+    /**
+     * **La ficha del avión, para elegir por kilos.** Con ella el nivel es el
+     * que menos quema de los legales —ver `nivelQueAhorra`—; sin ella, el de
+     * la regla de la distancia, que es lo que había y lo que siguen usando las
+     * cuentas que no saben qué avión vuela.
+     */
+    readonly ficha?: AircraftConfig;
   },
   minima: number | null,
 ): number {
@@ -1191,11 +1200,31 @@ export function cruceroDelPlan(
   const verdadero = (Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI;
   const magnetico = verdadero + avion.declinacion;
   const minimo = minima ?? 0;
+  const tope = visual ? avion.techo : Math.max(avion.techo, minimo);
+  const suelo = visual ? 1500 : 3000;
+  if (avion.ficha) {
+    /*
+     * Los niveles legales por el rumbo, de la mínima al techo: los mismos que
+     * da `nivelPara`, uno de cada dos millares.
+     */
+    const legales: number[] = [];
+    const base = (haciaElEste(magnetico) ? UN_NIVEL : 0) + (visual ? MEDIO_NIVEL : 0);
+    for (let n = base + UN_NIVEL; n <= HASTA; n += 2 * UN_NIVEL) {
+      if (n < suelo || n * PIE < minimo - 1 || n * PIE > tope + 1) continue;
+      legales.push(n * PIE);
+    }
+    const ahorra = nivelQueAhorra(
+      avion.ficha,
+      r.total,
+      legales,
+      avion.cotaDeSalida,
+      r.cotaDelUmbral,
+    );
+    if (ahorra !== null) return ahorra;
+  }
   const pedido = Math.max(cruceroPorLaDistancia(r, avion.techo, avion.cotaDeSalida), minimo);
   let nivel = nivelPara(magnetico, pedido / PIE, visual);
   while (nivel * PIE < minimo - 1 && nivel * PIE < avion.techo) nivel += 2000;
-  const tope = visual ? avion.techo : Math.max(avion.techo, minimo);
-  const suelo = visual ? 1500 : 3000;
   while (nivel * PIE > tope + 1 && nivel > suelo) nivel -= 2000;
   return nivel * PIE;
 }
@@ -1429,6 +1458,37 @@ export class Seguimiento {
      * que al ritmo del automático son unos mil doscientos pies por minuto.
      */
     return Math.max(senda, l.altitud - POR_DELANTE);
+  }
+
+  /**
+   * **Si ya se vuela el último tramo, del punto de final al umbral.** Ahí
+   * manda la senda de la final —el `G/S` del automático— y en la ventanilla
+   * va la altitud de la frustrada. Media milla antes del punto, que es cuando
+   * se captura la senda desde abajo.
+   */
+  enElTramoFinal(l: Lectura): boolean {
+    const r = this.ruta;
+    if (!r || !this.yaBajando || l.enTierra) return false;
+    const falta = restante(r, this.activo, l.x, l.z);
+    const faf = r.fijos.findIndex((f) => f.papel === "faf");
+    const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
+    return falta <= suelo + MILLA / 2;
+  }
+
+  /**
+   * **La senda de la final**: a qué altitud va a esta distancia del umbral y
+   * a qué ritmo baja, para el `G/S` del automático. Es la de tres grados hasta
+   * el umbral, sin el suelo del punto de final —ése ya se ha pasado— ni lo
+   * que publique la carta para él. `null` sin plan.
+   */
+  sendaDeLaFinal(l: Lectura): { readonly altitud: number; readonly ritmo: number } | null {
+    const r = this.ruta;
+    if (!r) return null;
+    const falta = restante(r, this.activo, l.x, l.z);
+    return {
+      altitud: alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, false),
+      ritmo: -Math.max(0, l.aire) * ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA)),
+    };
   }
 
   /**

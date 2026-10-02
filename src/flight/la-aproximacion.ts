@@ -169,6 +169,15 @@ export interface AhoraMismo {
    * `flight/sin-motor.ts`.
    */
   readonly sinMotor?: boolean;
+  /**
+   * **Si se tiene prioridad**: con un MAYDAY o un «minimum fuel» puesto. A
+   * ése no se le inventa una frustrada —la de una de cada cuatro, la que
+   * sale del sorteo—; solo se le manda al aire si la pista está ocupada de
+   * verdad, o si su propia aproximación no está para seguir. Gando lo hizo
+   * con el JAZ 120 en reserva: «motor y al aire». «¿Los controladores de
+   * Gando son unos psicópatas?».
+   */
+  readonly conPrioridad?: boolean;
 }
 
 export class LaAproximacion {
@@ -492,6 +501,8 @@ export class LaAproximacion {
      * toda la aproximación.
      */
     if (this.ordenes === "nunca") return;
+    // Con prioridad no se inventa nada. Ver `AhoraMismo.conPrioridad`.
+    if (this.ordenes === "auto" && this.ahora.conPrioridad) return;
     if (this.ordenes === "auto") {
       this.leToca ??= Math.random() <= UNA_DE_CADA;
       if (!this.leToca) return;

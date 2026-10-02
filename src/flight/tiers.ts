@@ -92,6 +92,27 @@ export interface Tier {
    * aunque no escriba.
    */
   avisos: Peldano;
+  /**
+   * **Si el avión se nivela solo al llegar a su altura**: la nivelada
+   * asistida de los dos peldaños de abajo.
+   *
+   * Enrique, con el JAZ 90 en Guyrami a catorce mil pies: el avión seguía
+   * subiendo «salvo que baje el gas o dé flecha abajo, suelte, flecha
+   * abajo…», y con el JAZ 120 tuvo que ir a 185 nudos para no pasarse de
+   * veintinueve mil. En Guyrami más gas es más subida —nadie baja el morro—,
+   * así que la única forma de no subir era ir despacio.
+   *
+   * Lo de verdad, al llegar: se nivela, se pone el gas de crucero y se
+   * compensa hasta que el avión va solo. Aquí, en los dos peldaños de los
+   * pequeños, eso lo hace el avión al llegar a la altura de la ventanilla —o
+   * al crucero del plan, en el que no la lleva— con la palanca suelta: se
+   * queda ahí, y el gas pasa a ser velocidad. En cuanto se toca la palanca, es
+   * de quien vuela. Ver `sostenerElNivel` en `game.ts`.
+   *
+   * No es un automático escondido: no toca el gas, se aparta al primer toque
+   * y solo actúa a la altura que se ve en la cinta.
+   */
+  nivelada: boolean;
 }
 
 export const GUYRAMI: Tier = {
@@ -123,6 +144,7 @@ export const GUYRAMI: Tier = {
   sigueme: true,
   circuito: true,
   avisos: "dibujo",
+  nivelada: true,
 };
 
 export const TUKA: Tier = {
@@ -145,6 +167,7 @@ export const TUKA: Tier = {
   sigueme: true,
   circuito: true,
   avisos: "palabra",
+  nivelada: true,
 };
 
 export const TAGUATO: Tier = {
@@ -174,6 +197,7 @@ export const TAGUATO: Tier = {
   sigueme: false,
   circuito: false,
   avisos: "cifra",
+  nivelada: false,
 };
 
 export const TAGUATO_RUVICHA: Tier = {
@@ -187,6 +211,7 @@ export const TAGUATO_RUVICHA: Tier = {
   sigueme: false,
   circuito: false,
   avisos: "cabina",
+  nivelada: false,
 };
 
 export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];

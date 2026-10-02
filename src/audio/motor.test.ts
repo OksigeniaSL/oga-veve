@@ -17,7 +17,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
+import { AIRCRAFT, vueltasDelMotor, type AircraftConfig } from "../flight/aircraft";
 
 /**
  * La nota del motor, en hercios. **La misma cuenta que hace `audio.ts`**.
@@ -28,7 +28,7 @@ import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
  */
 function nota(a: AircraftConfig, gas: number): number {
   const s = a.sound;
-  const rpm = s.idleRpm + gas * (s.maxRpm - s.idleRpm);
+  const rpm = vueltasDelMotor(s, gas);
   return s.palasDeFan
     ? (rpm / 60) * s.palasDeFan
     : (rpm / 60) * (s.cylinders / 2);

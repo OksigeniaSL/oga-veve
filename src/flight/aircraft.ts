@@ -252,6 +252,38 @@ export function esDeChorro(a: AircraftConfig): boolean {
 }
 
 /**
+ * **Las vueltas del motor con el gas puesto**, en las de su ficha.
+ *
+ * En un motor de pistón o de hélice, en línea recta entre el ralentí y el
+ * tope: el gas abre la mariposa o el combustible y las vueltas siguen. **En
+ * un turbofán, no.** El gas de este juego es la parte del empuje que puede dar
+ * el motor a esa altura, y el empuje de un fan crece como el cuadrado o el
+ * cubo de sus vueltas; así que las vueltas son la raíz del empuje: con la
+ * mitad del empuje el fan va al 80 % largo, no al 60. Es lo que se ve en
+ * cualquier cabina: ralentí por el 20 %, aproximación por el 60–70 % y
+ * crucero por el 85–90 %, aunque el crucero pida bastante menos de la mitad
+ * del empuje. Contado por Enrique, que lo sabía: «lo real a FL290, N1 del
+ * 85–90 %»; el juego marcaba 69.
+ *
+ * Una sola cuenta para la aguja y para el sonido: ver `regimen` en
+ * `ui/cuadro.ts` y la nota del motor en `audio/audio.ts`.
+ */
+export function vueltasDelMotor(
+  s: Pick<AircraftSound, "engine" | "idleRpm" | "maxRpm">,
+  gas: number,
+): number {
+  const g = Math.max(0, Math.min(1, gas));
+  const parte = s.engine === "turbofan" ? Math.pow(g, EMPUJE_POR_VUELTAS) : g;
+  return s.idleRpm + parte * (s.maxRpm - s.idleRpm);
+}
+
+/**
+ * El exponente de la raíz: dos y medio, entre el cuadrado y el cubo con que
+ * crece el empuje de un turbofán con las vueltas del fan.
+ */
+const EMPUJE_POR_VUELTAS = 1 / 2.5;
+
+/**
  * ¿Tiene reversa este avión?
  *
  * Los turbofanes la tienen —las compuertas que desvían el chorro hacia
