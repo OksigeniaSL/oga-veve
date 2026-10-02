@@ -26,6 +26,7 @@
  */
 import { Box3, Raycaster, Vector2, Vector3, type Object3D } from "three";
 import type { Game } from "../game";
+import { CAMERA_MODES } from "../cameras";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { indicatedAirspeed } from "../flight/atmosphere";
@@ -1000,9 +1001,41 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     vista: () => juego.cameraMode,
     /** Y ponerse en una, sin ir pulsando la tecla a ciegas. Para el banco. */
     ponerVista: (cual: string) => {
-      for (let i = 0; i < 8 && juego.cameraMode !== cual; i++)
+      // Una vuelta entera como mucho: si la vista no es de este avión —la de
+      // pasaje en una avioneta—, la tecla no llega nunca y se para ahí.
+      for (let i = 0; i < CAMERA_MODES.length + 1 && juego.cameraMode !== cual; i++)
         juego.cicloDeCamara();
       return juego.cameraMode;
+    },
+    /**
+     * **Lo que se mira**: lo último señalado por la ventanilla, el giro de la
+     * cabeza y la vista que se tiene. Ver `cameras/mirada.ts`.
+     */
+    mirada: () => juego.miradaParaBanco,
+    /** Tocar la tarjeta de lo señalado, sin apuntar con el dedo. */
+    mirarHaciaLoSenalado: () => juego.mirarHaciaLoSenalado(),
+    /** Arrastrar el paisaje, en píxeles, y soltar si se pide. */
+    arrastrarLaMirada: (dx: number, dy: number, soltar = false) =>
+      juego.arrastrarLaMiradaParaBanco(dx, dy, soltar),
+    /**
+     * **Dónde cae un punto del mundo en la pantalla**, de −1 a 1 en los dos
+     * ejes, y si está delante de la cámara. Lo que está dentro del cuadro
+     * cae entre −1 y 1; el banco de la mirada lo usa para ver si lo señalado
+     * se ve. Con la cámara del último fotograma pintado.
+     */
+    /**
+     * En el pasaje, si ese punto se ve **por el cristal** desde la cámara de
+     * ahora —y no detrás de la pared—; `null` fuera del pasaje.
+     */
+    porLaVentanilla: (x: number, y: number, z: number) =>
+      juego.seVePorLaVentanillaParaBanco({ x, y, z }),
+    enElCuadro: (x: number, y: number, z: number) => {
+      const c = juego.camera;
+      c.updateMatrixWorld();
+      const p = new Vector3(x, y, z);
+      const delante = p.clone().applyMatrix4(c.matrixWorldInverse).z < 0;
+      p.project(c);
+      return { x: p.x, y: p.y, delante };
     },
     camara: () => {
       const gl = juego.renderer.getContext();

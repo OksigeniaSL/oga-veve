@@ -79,6 +79,11 @@ export interface AircraftMesh {
   relojes?: import("./relojes-cabina").Relojes | null;
   /** Y los mandos que se pueden pulsar. Ver `botones-cabina.ts`. */
   botones?: import("./botones-cabina").BotonesDeCabina | null;
+  /**
+   * Y los dos asientos de ventanilla, en el avión que lleva pasaje y trae sus
+   * ventanillas en el modelo. Ver `asiento-de-pasaje.ts`.
+   */
+  pasaje?: import("./asiento-de-pasaje").Pasaje | null;
   /** Y la placa con la matrícula en el panel. Ver `placa-de-cabina.ts`. */
   placa?: import("./placa-de-cabina").PlacaDeCabina | null;
   /**

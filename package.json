@@ -47,6 +47,7 @@
     "flaps": "node scripts/verificar-flaps.mjs",
     "licencias": "node scripts/verificar-licencias.mjs",
     "dedo": "node scripts/verificar-dedo.mjs",
+    "mirada": "node scripts/verificar-mirada.mjs",
     "actualizar": "node scripts/verificar-actualizar.mjs"
   },
   "dependencies": {

@@ -1241,7 +1241,24 @@ export class Senal {
     this.texto = raiz.querySelector('[data-hud="senal-texto"]');
     this.letra = raiz.querySelector('[data-hud="senal-letra"]');
     this.tecla = raiz.querySelector('[data-hud="senal-tecla"]');
-    this.caja?.addEventListener("click", () => this.accion?.());
+    /*
+     * **Y con un segundo dedo**, que es como se toca volando: el pulgar en la
+     * palanca y otro dedo en la tarjeta. El navegador no convierte en `click`
+     * el toque de un dedo que no es el primero —con otro ya puesto, lo cuenta
+     * como parte de un gesto de dos dedos—, así que ese toque se escucha al
+     * soltar. Y el `click` que pudiera venir detrás se traga: la llave del
+     * motor no puede arrancar y apagar con el mismo toque.
+     */
+    let tragarElClic = 0;
+    this.caja?.addEventListener("pointerup", (e) => {
+      if (e.pointerType !== "touch" || e.isPrimary || !this.accion) return;
+      tragarElClic = performance.now() + 500;
+      this.accion();
+    });
+    this.caja?.addEventListener("click", () => {
+      if (performance.now() < tragarElClic) return;
+      this.accion?.();
+    });
     this.medirse();
   }
 
