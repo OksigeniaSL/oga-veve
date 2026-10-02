@@ -1,5 +1,6 @@
 import { FLOTA, nombreEntero } from "./flota";
 import type { EquipoTcas } from "./tcas";
+import type { FrenosDelTipo } from "./frenada";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -462,11 +463,52 @@ export interface AircraftConfig {
    * turbohélice de diecinueve plazas ni una avioneta. Ellos frenan con la
    * hélice al ralentí, que ya frena mucho, y con el tren.
    *
-   * **Levantan resistencia y nada más.** En el avión de verdad también quitan
-   * algo de sustentación, y el ala la recupera con un poco más de ángulo; eso
-   * aquí no está, y lo que se nota —cuánto más deprisa se baja— sale igual.
+   * **En el aire levantan resistencia y nada más.** En el avión de verdad
+   * también quitan algo de sustentación, y el ala la recupera con un poco más
+   * de ángulo; eso en vuelo aquí no está, y lo que se nota —cuánto más deprisa
+   * se baja— sale igual. **En tierra es al revés**: lo que importa es la
+   * sustentación que matan. Ver `frenosDeTierra`.
    */
   aerofrenos: number | null;
+  /**
+   * **Los frenos de tierra**: los mismos paneles, todos y del todo, al tocar.
+   * `null` en el que no los lleva.
+   *
+   * En vuelo, la palanca saca solo los paneles de fuera y a medias —el tope de
+   * vuelo—; en tierra se levantan todos hasta arriba, y para lo que sirven no
+   * es tanto para frenar con el aire como para **matar la sustentación**: un
+   * reactor que toca a su Vref con los flaps de aterrizaje todavía lleva en el
+   * ala las tres cuartas partes de su peso, y una rueda que no carga no frena.
+   * Con los paneles arriba el peso pasa a las ruedas y los frenos muerden. Por
+   * eso se arman antes de aterrizar y salen solos al tocar.
+   *
+   * - `resistencia`: lo que suman al coeficiente de resistencia, del todo
+   *   arriba. Un panel de un 15 % de cuerda en la mitad de la envergadura,
+   *   levantado a cincuenta o sesenta grados, es una placa contra el aire: del
+   *   orden de siete centésimas sobre el ala entera, unas tres veces lo que
+   *   frenan en el tope de vuelo.
+   * - `sustentacion`: la parte de la sustentación del ala que se pierde, del
+   *   todo arriba. Rompen la corriente encima de los flaps, que es donde está
+   *   casi toda la sustentación de más; se quedan las raíces y las puntas.
+   *
+   * Ver `flight/frenada.ts` y `flight/palanca-de-aerofrenos.ts`.
+   */
+  frenosDeTierra: { resistencia: number; sustentacion: number } | null;
+  /**
+   * **Cómo frenan sus ruedas.** Ver `FrenosDelTipo` en `flight/frenada.ts`.
+   *
+   * No es el mismo número para los seis, y no lo era: un freno de avioneta
+   * sin antideslizante, uno de carbono con antideslizante modulado y las
+   * dieciséis ruedas de un cuatrimotor frenan distinto, y frenan distinto en
+   * mojado sobre todo.
+   */
+  frenos: FrenosDelTipo;
+  /**
+   * **Si lleva autofreno**: el selector LO, MED y MAX que se arma antes de
+   * aterrizar. Los dos reactores, como cualquier avión de línea; ni el
+   * turbohélice de diecinueve plazas ni las avionetas lo llevan.
+   */
+  autofreno: boolean;
   /**
    * **Qué TCAS lleva, si lleva alguno.** `null` si ninguno.
    *
@@ -837,6 +879,16 @@ export const PYKASU: AircraftConfig = {
   reglasDeVuelo: "visual",
   presurizacion: null,
   aerofrenos: null,
+  /*
+   * **Frenos de disco de avioneta, sin antideslizante.** Tres décimas y media
+   * en seco con el pie a fondo, que con el ala todavía sosteniendo el avión al
+   * tocar deja una media de dos décimas de g: lo del manual de un 172 (575 ft
+   * de rodadura a 2.550 lb). Y en mojado lo que un pie con cuidado le saca a
+   * la rueda sin bloquearla: el escalón casi modulado de la 25.109.
+   */
+  frenos: { enSeco: 0.35, psi: 50, antideslizante: 0.5 },
+  frenosDeTierra: null,
+  autofreno: false,
   tcas: null,
   avisosHablados: false,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
@@ -939,6 +991,14 @@ export const MAINUMBY: AircraftConfig = {
   reglasDeVuelo: "visual",
   presurizacion: null,
   aerofrenos: null,
+  /*
+   * **Y frena menos, porque es de rueda de cola.** Frenando fuerte, un avión
+   * con la rueda detrás se va de morro o se cruza: se frena con cuidado y la
+   * rodadura la pone la poca velocidad a la que toca.
+   */
+  frenos: { enSeco: 0.3, psi: 50, antideslizante: 0.5 },
+  frenosDeTierra: null,
+  autofreno: false,
   tcas: null,
   avisosHablados: false,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
@@ -1082,6 +1142,10 @@ export const PANAMBI: AircraftConfig = {
   // los tres mil ochocientos metros se vuela con la máscara de oxígeno puesta.
   presurizacion: null,
   aerofrenos: null,
+  // Frenos de bimotor ligero, sin antideslizante: como la avioneta.
+  frenos: { enSeco: 0.35, psi: 55, antideslizante: 0.5 },
+  frenosDeTierra: null,
+  autofreno: false,
   tcas: null,
   avisosHablados: false,
   // Y los límites, tomados de un bimotor ligero de esta clase.
@@ -1209,6 +1273,15 @@ export const ARASUNU: AircraftConfig = {
    */
   presurizacion: { diferencialMaximo: 5.0 * PSI, avisoHablado: false },
   aerofrenos: null,
+  /*
+   * **Los frenos de un turbohélice de cercanías**: algo más que una avioneta,
+   * con el antideslizante que el 1900D lleva como opción. Lo que le quita la
+   * pista de verdad es la hélice en reversa —ver `tieneReversa`—; ni frenos de
+   * tierra ni autofreno, que no los lleva ningún avión de su clase.
+   */
+  frenos: { enSeco: 0.38, psi: 100, antideslizante: 0.5 },
+  frenosDeTierra: null,
+  autofreno: false,
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
   avisosHablados: true,
@@ -1365,6 +1438,17 @@ export const ARAI: AircraftConfig = {
    */
   presurizacion: { diferencialMaximo: 8.4 * PSI, avisoHablado: true },
   aerofrenos: 0.025,
+  /*
+   * **Frenos de carbono con antideslizante modulado, frenos de tierra y
+   * autofreno**, como cualquier reactor de su clase. Cuatro décimas y media
+   * en seco: con los frenos de tierra arriba, la rodadura del E-170 a su peso
+   * máximo de aterrizaje (1.228 m de pista de aterrizaje en su manual de
+   * aeropuertos, de los que unos 300 son el aire) sale a cuatro décimas y
+   * media de g de media. Neumáticos a unas 170 psi.
+   */
+  frenos: { enSeco: 0.45, psi: 170, antideslizante: 0.8 },
+  frenosDeTierra: { resistencia: 0.07, sustentacion: 0.7 },
+  autofreno: true,
   tcas: "TCAS II",
   avisosHablados: true,
   // Reactor regional.
@@ -1587,6 +1671,17 @@ export const YVAGA: AircraftConfig = {
    */
   presurizacion: { diferencialMaximo: 8.9 * PSI, avisoHablado: false },
   aerofrenos: 0.02,
+  /*
+   * **Dieciséis ruedas con frenos, antideslizante y frenos de tierra**, y un
+   * peso que no se para como el de un regional: un 747-400 a su peso máximo
+   * de aterrizaje pide 1.900 m de pista, que son unos 1.140 de distancia de
+   * verdad y, quitando el aire, una media de unas 0,36 g en la rodadura. Su
+   * autofreno más fuerte para el avión a once pies por segundo al cuadrado,
+   * 0,34 g, que es lo que dan sus frenos. Neumáticos a 200 psi.
+   */
+  frenos: { enSeco: 0.34, psi: 200, antideslizante: 0.8 },
+  frenosDeTierra: { resistencia: 0.06, sustentacion: 0.7 },
+  autofreno: true,
   tcas: "TCAS II",
   avisosHablados: true,
   /*

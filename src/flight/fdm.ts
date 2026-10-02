@@ -50,18 +50,14 @@ import {
   tieneReversa,
   type AircraftConfig,
 } from "./aircraft";
-import { REVERSA_HASTA } from "./arcade";
-
-/**
- * Cuánto empuje da la reversa, como fracción del empuje máximo.
- *
- * Cuatro décimas. Un turbofán con las compuertas desplegadas da entre un tercio
- * y la mitad de su empuje hacia delante —no más, porque el chorro se desvía y
- * pierde—, y un turbohélice con la hélice en paso negativo anda por ahí. Es
- * bastante para acortar una parada y muy poco para mover el avión hacia atrás,
- * que es lo que hace que no se pueda usar de marcha atrás.
- */
-const REVERSA_DA = 0.4;
+import {
+  REVERSA_DA,
+  REVERSA_HASTA,
+  coeficienteDeFrenado,
+  frenoDelAutofreno,
+  parteQueSeLlevan,
+  resistenciaDeLosPaneles,
+} from "./frenada";
 
 /**
  * **Cuánto acelera, como mucho, quien conduce el avión rodando**, m/s².
@@ -408,6 +404,35 @@ export class CoefficientFlightModel implements FlightModel {
     this.superficie = superficie;
   }
 
+  /** Si la pista está mojada. Ver `ponerPistaMojada` en el modelo. */
+  private pistaMojada = false;
+
+  ponerPistaMojada(mojada: boolean): void {
+    this.pistaMojada = mojada;
+  }
+
+  /**
+   * **Lo que sostiene el aire ahora mismo**, N, hacia el techo del avión: lo
+   * que el ala le quita de peso a las ruedas. Lo apunta `integrate` y lo mira
+   * `resolveGround`, porque el freno muerde sobre lo que queda.
+   */
+  private apoyoDelAire = 0;
+
+  /**
+   * La rapidez sobre el suelo al acabar el paso anterior en tierra, m/s, o
+   * `null` en el aire. Con ella el autofreno sabe cuánto frena ya el avión sin
+   * él —el aire, la cuesta, el motor—, que es lo que mide uno de verdad.
+   */
+  private rapidezEnTierra: number | null = null;
+
+  /** El freno que ve la rueda ahora, de 0 a 1: el del pie o el del autofreno. */
+  private frenoDeAhora = 0;
+
+  /** Lo que está frenando la rueda, de 0 a 1. Lo mira el cuadro. */
+  frenoEnLaRueda(): number {
+    return this.frenoDeAhora;
+  }
+
   /** El timón que sostiene el avión ahora mismo. Ver `timonAhora`. */
   private timonQueSostiene = 0;
 
@@ -512,6 +537,8 @@ export class CoefficientFlightModel implements FlightModel {
 
   reset(initial: InitialConditions): void {
     const s = this.state;
+    this.rapidezEnTierra = null;
+    this.frenoDeAhora = 0;
     s.position.copy(initial.position);
     s.orientation.setFromAxisAngle(new Vector3(0, 1, 0), -initial.heading);
     this.updateBodyAxes();
@@ -662,9 +689,16 @@ export class CoefficientFlightModel implements FlightModel {
       ac.aero.cd0 +
       (ac.aero.cl0 * ac.aero.cl0) / (Math.PI * alargamiento * ac.aero.oswald) +
       resistenciaDelTren(ac, 1, 0);
-    const frenaA = (v: number): number =>
-      ROZAMIENTO[this.superficie] * ac.mass * GRAVITY +
-      0.5 * densidad * v * v * ac.wingArea * cd;
+    // La rodadura, sobre el peso que cargan las ruedas: el ala apoyada ya
+    // sostiene algo, como en `resolveGround`.
+    const frenaA = (v: number): number => {
+      const q = 0.5 * densidad * v * v * ac.wingArea;
+      return (
+        ROZAMIENTO[this.superficie] *
+          Math.max(0, ac.mass * GRAVITY - q * ac.aero.cl0) +
+        q * cd
+      );
+    };
     /*
      * Sobrando velocidad, el de sostener la pedida: con él el avión va
      * perdiendo lo que le sobra, y frenar de verdad es cosa del freno.
@@ -755,8 +789,19 @@ export class CoefficientFlightModel implements FlightModel {
     // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
     // cayendo si insistís, pero perdona el tirón nervioso de un crío.
     const stallAngle = a.alphaStall * (1 + 0.45 * this.layers.stallProtection);
-    const cl =
+    const clDelAla =
       liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps;
+    /*
+     * **Y lo que se llevan los frenos de tierra.** Con todos los paneles
+     * arriba la corriente se rompe encima de los flaps, que es donde está casi
+     * toda la sustentación de más: el ala deja de sostener el avión y el peso
+     * pasa a las ruedas, que es para lo que salen. Solo la sustentación
+     * positiva: una placa levantada no empuja el ala hacia arriba.
+     */
+    const cl =
+      clDelAla > 0
+        ? clDelAla * (1 - parteQueSeLlevan(ac, controls.frenosDeTierra ?? 0))
+        : clDelAla;
     const cd =
       a.cd0 +
       (cl * cl) / (Math.PI * aspectRatio * a.oswald) +
@@ -766,9 +811,15 @@ export class CoefficientFlightModel implements FlightModel {
       resistenciaDeLosFlaps(ac, assisted.flaps) +
       /*
        * **Y los aerofrenos, en el avión que los lleva**: lo que suman abiertos
-       * del todo, por lo abiertos que estén. Ver `aerofrenos` en la ficha.
+       * del todo, por lo abiertos que estén. Ver `aerofrenos` en la ficha. Y
+       * los de tierra, que son los mismos paneles todos arriba: frenan más,
+       * pero no se suman a los de vuelo. Ver `resistenciaDeLosPaneles`.
        */
-      (ac.aerofrenos ?? 0) * Math.max(0, Math.min(1, controls.aerofrenos ?? 0)) +
+      resistenciaDeLosPaneles(
+        ac,
+        controls.aerofrenos ?? 0,
+        controls.frenosDeTierra ?? 0,
+      ) +
       /*
        * **Y el tren, que fuera frena.**
        *
@@ -878,6 +929,8 @@ export class CoefficientFlightModel implements FlightModel {
     const forceX = thrust - drag * cosA + lift * sinA;
     const forceY = side;
     const forceZ = -drag * sinA - lift * cosA;
+    // Lo que el aire le quita de peso a las ruedas. Ver `resolveGround`.
+    this.apoyoDelAire = -forceZ;
 
     // Momentos. Las velocidades angulares se adimensionalizan con la
     // semi-envergadura y la cuerda partido por la velocidad; a velocidad
@@ -1258,6 +1311,8 @@ export class CoefficientFlightModel implements FlightModel {
      */
     if (s.position.y > wheelLevel + PEGADO_AL_SUELO) {
       s.onGround = false;
+      this.rapidezEnTierra = null;
+      this.frenoDeAhora = 0;
       return;
     }
 
@@ -1329,13 +1384,15 @@ export class CoefficientFlightModel implements FlightModel {
      * Cero coma cincuenta y cinco de coeficiente son cinco metros y medio por
      * segundo al cuadrado sobre todo el peso: desde velocidad de aproximación,
      * parada en noventa y cuatro metros. Una Cessna necesita ciento setenta y
-     * cinco, y frena a dos y medio o tres. El propio juego lo sabía y calculaba
-     * con dos y medio en dos sitios —el aviso de fin de pista y la fase de «ya
-     * no se puede parar»—, así que la física iba por un lado y las cuentas por
-     * otro.
+     * cinco. Se bajó a veintiocho centésimas para los seis, y seguía siendo un
+     * coche por otro lado: frenaba **sobre todo el peso desde el primer
+     * instante**, y un avión que toca todavía lo lleva casi entero en el ala.
      *
-     * Cero coma veintiocho son unos tres metros por segundo al cuadrado y
-     * ciento ochenta de parada: lo de verdad, y lo que las cuentas ya suponían.
+     * Ahora el freno muerde sobre **lo que cargan las ruedas** —el peso menos
+     * lo que sostiene el aire, que es la cuenta de `carrera.ts` desde
+     * siempre—, con el coeficiente de su tipo y de la pista seca o mojada. Al
+     * tocar un reactor sin frenos de tierra eso es poco, y es la lección: para
+     * eso salen. Ver `flight/frenada.ts`.
      */
     /*
      * **Y el suelo tiene tipo.** Dos centésimas sobre asfalto, cinco sobre
@@ -1343,8 +1400,15 @@ export class CoefficientFlightModel implements FlightModel {
      * verdad, y de ellos sale que una pista de hierba pida más carrera de
      * despegue que una de asfalto. Ver `world/superficie.ts`.
      */
-    const rolling = ROZAMIENTO[this.superficie] + 0.28 * controls.brakes;
     const longitudinal = s.velocity.dot(this.forward);
+    const rapidez = Math.abs(longitudinal);
+    const apoyado = Math.max(0, ac.mass * GRAVITY - this.apoyoDelAire);
+    const mu = coeficienteDeFrenado(
+      ac.frenos,
+      this.superficie,
+      this.pistaMojada,
+      rapidez,
+    );
     /*
      * **Y la reversa, que frena sin tocar las ruedas.**
      *
@@ -1354,33 +1418,45 @@ export class CoefficientFlightModel implements FlightModel {
      *
      * Y se apaga sola por debajo de treinta nudos, como en un avión de verdad:
      * más despacio deja de frenar y empieza a levantar del suelo lo que haya y
-     * a metérselo al motor. Ver `REVERSA_HASTA` en `arcade.ts`.
+     * a metérselo al motor. Ver `REVERSA_HASTA` en `frenada.ts`.
      */
-    if (
-      tieneReversa(this.aircraft) &&
-      controls.reversa > 0 &&
-      Math.abs(longitudinal) > REVERSA_HASTA
-    ) {
-      const empuje =
-        Math.min(1, controls.reversa) * this.aircraft.maxThrust * REVERSA_DA;
-      s.velocity.addScaledVector(
-        this.forward,
-        (-Math.sign(longitudinal) * empuje * dt) / this.aircraft.mass,
-      );
+    const reversa =
+      tieneReversa(ac) && controls.reversa > 0 && rapidez > REVERSA_HASTA
+        ? Math.min(1, controls.reversa) * ac.maxThrust * REVERSA_DA
+        : 0;
+    /*
+     * **Y el autofreno**, que pide una deceleración y no un pie: mira lo que
+     * ya frena el avión sin él —el aire, la cuesta, el motor, lo que se ha
+     * perdido desde el paso anterior— y aprieta lo que falta. Si el pie pisa
+     * más, manda el pie.
+     */
+    let freno = Math.max(0, Math.min(1, controls.brakes));
+    const objetivo = controls.autofreno ?? 0;
+    if (objetivo > 0) {
+      const porElAire =
+        this.rapidezEnTierra !== null ? (this.rapidezEnTierra - rapidez) / dt : 0;
+      const sinFreno =
+        porElAire + (ROZAMIENTO[this.superficie] * apoyado + reversa) / ac.mass;
+      const aFondo = sinFreno + (mu * apoyado) / ac.mass;
+      freno = Math.max(freno, frenoDelAutofreno(objetivo, sinFreno, aFondo));
     }
+    this.frenoDeAhora = freno;
+    const frena =
+      ((ROZAMIENTO[this.superficie] + mu * freno) * apoyado + reversa) /
+      ac.mass;
     s.velocity.addScaledVector(
       this.forward,
-      -Math.sign(longitudinal) *
-        Math.min(Math.abs(longitudinal), rolling * GRAVITY * dt),
+      -Math.sign(longitudinal) * Math.min(rapidez, frena * dt),
     );
 
     // Rozamiento estático: con el freno pisado y a paso de peatón, el avión
     // se queda quieto de verdad en vez de reptar contra el ralentí del
     // motor. Va después de la fricción y del empuje, que es donde importa:
     // cada paso el motor empuja un poquito y esto lo anula.
-    if (controls.brakes > 0.5 && Math.abs(longitudinal) < STATIC_GRIP) {
+    if (freno > 0.5 && rapidez < STATIC_GRIP) {
       s.velocity.addScaledVector(this.forward, -s.velocity.dot(this.forward));
     }
+    this.rapidezEnTierra = Math.abs(s.velocity.dot(this.forward));
 
     // El tren de aterrizaje no deja alabear ni guiñar libremente. El cabeceo
     // sí se respeta: es lo que permite rotar en el despegue.

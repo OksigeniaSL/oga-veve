@@ -47,6 +47,10 @@ import {
   marcasDeGas,
   siguientePaso,
 } from "./palanca-de-gas";
+import {
+  PalancaDeAerofrenos,
+  type LoQueLleva,
+} from "./palanca-de-aerofrenos";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
 const KEY_RAMP = 2.6;
@@ -58,13 +62,11 @@ const KEY_CENTRE = 3.4;
  */
 const RITMO_DEL_GAS = 0.6;
 
-/** Lo que tardan los aerofrenos en abrirse del todo, s. */
-const TARDAN_LOS_AEROFRENOS = 2;
-/**
- * Por encima de este gas los aerofrenos se cierran solos. Ver `update`: la
- * mitad del recorrido, como los cincuenta grados de palanca de Embraer.
+/*
+ * Lo que tardan los aerofrenos y el gas que los cierra viven ahora con su
+ * palanca. Ver `flight/palanca-de-aerofrenos.ts`.
  */
-export const GAS_QUE_CIERRA_LOS_AEROFRENOS = 0.5;
+export { GAS_QUE_CIERRA_LOS_AEROFRENOS } from "./palanca-de-aerofrenos";
 
 /**
  * Teclas por eje, declaradas por intención y no por posición.
@@ -458,10 +460,22 @@ export class InputManager {
     trenRetractil: boolean,
     tardanLosFlaps: number = TARDAN_LOS_FLAPS,
     llevaFlaps = true,
-    /** Y si lleva aerofrenos. Ver `aerofrenos` en la ficha. */
-    llevaAerofrenos = false,
+    /**
+     * Y si lleva aerofrenos, frenos de tierra y autofreno. Ver `aerofrenos`,
+     * `frenosDeTierra` y `autofreno` en la ficha. Un `true` a secas son los
+     * aerofrenos solos, que es como se llamaba antes.
+     */
+    llevaAerofrenos: boolean | LoQueLleva = false,
   ): void {
-    this.aerofrenosQueHay = llevaAerofrenos;
+    this.palancaDeAerofrenos.ponerAeronave(
+      typeof llevaAerofrenos === "boolean"
+        ? {
+            aerofrenos: llevaAerofrenos,
+            frenosDeTierra: false,
+            autofreno: false,
+          }
+        : llevaAerofrenos,
+    );
     this.recogerAerofrenos();
     this.tardanLosFlaps = tardanLosFlaps;
     this.flapsQueSeMueven = llevaFlaps;
@@ -474,36 +488,47 @@ export class InputManager {
   }
 
   /**
-   * **Los aerofrenos: se abren o se cierran.** Devuelve si la orden se
-   * aceptó; en el avión que no los lleva no hay palanca que mover.
-   *
-   * Como el tren, se guarda la orden y los paneles tardan un momento en
-   * llegar: un par de segundos en subir del todo. Ver `update`.
+   * **La palanca de los aerofrenos, un punto más**: recogida, armada, fuera,
+   * y vuelta abajo. Devuelve si la orden se aceptó; en el avión que no los
+   * lleva no hay palanca que mover. Lo demás —que salgan solos al tocar, que
+   * se recojan al meter gas, el autofreno— lo lleva la palanca. Ver
+   * `flight/palanca-de-aerofrenos.ts`.
    */
   alternarAerofrenos(): boolean {
-    if (!this.aerofrenosQueHay) return false;
-    this.aerofrenosPedidos = !this.aerofrenosPedidos;
-    return true;
+    return this.palancaDeAerofrenos.alternar();
+  }
+
+  /** Un punto más del selector del autofreno: OFF, LO, MED, MAX. */
+  alternarAutofreno(): boolean {
+    return this.palancaDeAerofrenos.alternarAutofreno();
   }
 
   /** Si este avión lleva aerofrenos. Lo mira el HUD. */
   get hayAerofrenos(): boolean {
-    return this.aerofrenosQueHay;
+    return this.palancaDeAerofrenos.hayPalanca;
   }
 
-  /** Si se han pedido abiertos. */
+  /** Si la palanca está fuera: a mano o porque salieron solos al tocar. */
   get aerofrenosAbiertos(): boolean {
-    return this.aerofrenosPedidos;
+    return this.palancaDeAerofrenos.palanca === "fuera";
   }
 
-  /** Cerrados y con la palanca arriba, de golpe: un vuelo nuevo o otro avión. */
+  /** Abajo y desarmado, de golpe: un vuelo nuevo o otro avión. */
   recogerAerofrenos(): void {
-    this.aerofrenosPedidos = false;
+    this.palancaDeAerofrenos.recoger();
     this.controls.aerofrenos = 0;
+    this.controls.frenosDeTierra = 0;
+    this.controls.autofreno = 0;
   }
 
-  private aerofrenosPedidos = false;
-  private aerofrenosQueHay = false;
+  /** La palanca, el autofreno y los frenos de tierra. */
+  readonly palancaDeAerofrenos = new PalancaDeAerofrenos();
+
+  /**
+   * La velocidad sobre el suelo, m/s. La pone el juego cada fotograma, como
+   * `pesoEnLasRuedas`: los frenos de tierra salen solos solo corriendo.
+   */
+  velocidadEnElSuelo = 0;
 
   /** Si este avión tiene palanca de tren. Lo miran el HUD y la cabina. */
   get hayPalancaDeTren(): boolean {
@@ -913,21 +938,20 @@ export class InputManager {
      */
     this.controls.reversa = this.held("reversa") || (gamepad?.reversa ?? false) ? 1 : 0;
     /*
-     * **Los aerofrenos, a su paso, y cerrados si se mete gas.**
-     *
-     * Suben en un par de segundos, que es lo que tarda el hidráulico. Y se
-     * cierran solos con el gas por encima de la mitad, como en la familia de
-     * Embraer —solo se abren con las palancas por debajo de cincuenta grados—:
-     * volar con gas y frenando a la vez es quemar combustible para nada, y el
-     * avión no deja.
+     * **Los aerofrenos, los frenos de tierra y el autofreno**, a su paso y
+     * con lo que ve el avión: si toca, a qué velocidad, el gas, la reversa y
+     * el pie. Ver `flight/palanca-de-aerofrenos.ts`.
      */
-    if (this.aerofrenosPedidos && this.controls.throttle > GAS_QUE_CIERRA_LOS_AEROFRENOS)
-      this.aerofrenosPedidos = false;
-    const aerofrenos = this.controls.aerofrenos ?? 0;
-    const meta = this.aerofrenosPedidos ? 1 : 0;
-    const paso = dt / TARDAN_LOS_AEROFRENOS;
-    this.controls.aerofrenos =
-      Math.abs(meta - aerofrenos) <= paso ? meta : aerofrenos + Math.sign(meta - aerofrenos) * paso;
+    const paneles = this.palancaDeAerofrenos.paso(dt, {
+      enElSuelo: this.pesoEnLasRuedas,
+      velocidadSuelo: this.velocidadEnElSuelo,
+      gas: this.controls.throttle,
+      reversa: this.controls.reversa,
+      pie: braking ? 1 : 0,
+    });
+    this.controls.aerofrenos = paneles.aerofrenos;
+    this.controls.frenosDeTierra = paneles.frenosDeTierra;
+    this.controls.autofreno = paneles.autofreno;
     this.controls.brakes = approach(
       this.controls.brakes,
       braking ? 1 : 0,
@@ -1088,6 +1112,9 @@ export class InputManager {
         break;
       case "aerofrenos":
         this.alternarAerofrenos();
+        break;
+      case "autofreno":
+        this.alternarAutofreno();
         break;
       /*
        * **Y las flechas de cabeceo, que ahora también tienen toque.** Se

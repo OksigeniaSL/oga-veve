@@ -296,3 +296,81 @@ export function seVuelveADecir(
   if (dicho.pedido !== pedido) return true;
   return dicho.que !== que;
 }
+
+/**
+ * **Cuándo se recuerda meter el tren después de despegar**, y cuántas veces.
+ *
+ * Contado volando en Guyrami con el JAZ 90: «nada más abandonar la pista:
+ * "mételo, el tren frena"; hija mía, dame tiempo de soltar el timón. Me parece
+ * muy rápido que me pida que quite el tren; debería avisarlo un poquito
+ * después y, si me lo dejo puesto, volver a recordar».
+ *
+ * Lo de verdad es rápido: «positive rate, gear up» a los pocos segundos de
+ * rotar, en cuanto el variómetro dice que se sube. Eso se queda en los
+ * peldaños de arriba. En el de abajo, quien vuela todavía tiene las dos manos
+ * en la palanca y el gas: se le da margen, y el primer recordatorio llega unos
+ * metros más arriba.
+ *
+ * Y el segundo, **cuando cambia algo** y no cuando pasa un rato: al cruzar los
+ * mil pies sobre el suelo —la altura a la que un avión de verdad ya está
+ * limpio y acelerando— o al acercarse a la velocidad máxima con el tren fuera,
+ * la VLE, que es lo que el tren puesto acaba trayendo. Un reloj rearmaría el
+ * aviso cada tantos segundos sin que pasara nada nuevo, y a la tercera se
+ * aprende a no escucharlo.
+ *
+ * Función pura: el juego le da lo que ve y lo que ya se dijo en este
+ * despegue, y ella dice si toca decir algo. Tocar el suelo lo rearma todo.
+ */
+export interface LoQueVeElRecordatorio {
+  readonly enElAire: boolean;
+  /** Subiendo de verdad: más de un metro por segundo. */
+  readonly subiendo: boolean;
+  /** Metros sobre el suelo. */
+  readonly alto: number;
+  /** Dónde está el tren, de 0 a 1. */
+  readonly donde: number;
+  /** Si la palanca está abajo. */
+  readonly pedido: boolean;
+  /** La velocidad indicada, en nudos, y la VLE de su ficha. */
+  readonly nudos: number;
+  readonly vleKt: number;
+  /** A partir de qué altura sobre el suelo se dice la primera vez, m. */
+  readonly primeroA: number;
+}
+
+export interface LoRecordado {
+  readonly primero: boolean;
+  readonly segundo: boolean;
+}
+
+export const NADA_RECORDADO: LoRecordado = { primero: false, segundo: false };
+
+/** Los mil pies sobre el suelo del segundo recordatorio, m. */
+export const SEGUNDO_RECORDATORIO_A = 1000 * 0.3048;
+
+/** Y la parte de la VLE a la que también se recuerda. */
+export const CERCA_DE_LA_VLE = 0.9;
+
+/**
+ * **El margen del peldaño de abajo**, m: la primera vez, sesenta metros más
+ * arriba de donde lo mete su ficha. Con un reactor subiendo a diez o quince
+ * metros por segundo son cuatro o cinco segundos más, que es el tiempo de
+ * soltar la palanca y mirar; y siempre por debajo de los mil pies del
+ * segundo.
+ */
+export const MARGEN_DEL_PRIMER_PELDANO = 60;
+
+export function recordarElTren(
+  e: LoQueVeElRecordatorio,
+  dicho: LoRecordado,
+): "primero" | "segundo" | null {
+  // Ya no está fuera, o ya se ha pedido meterlo: no hay nada que recordar.
+  if (!e.enElAire || !e.pedido || e.donde < 0.99) return null;
+  if (!dicho.primero) {
+    return e.subiendo && e.alto > e.primeroA ? "primero" : null;
+  }
+  if (dicho.segundo) return null;
+  const cruzaLosMil = e.alto > Math.max(SEGUNDO_RECORDATORIO_A, e.primeroA + 30);
+  const cercaDelTope = e.vleKt > 0 && e.nudos > e.vleKt * CERCA_DE_LA_VLE;
+  return cruzaLosMil || cercaDelTope ? "segundo" : null;
+}

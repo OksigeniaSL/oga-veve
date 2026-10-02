@@ -29,6 +29,12 @@
 import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
+import {
+  DECELERACION_DEL_AUTOFRENO,
+  deceleracionRodando,
+  frenoDelAutofreno,
+  type ModoDeAutofreno,
+} from "./frenada";
 
 /** Densidad del aire al nivel del mar, kg/m³. */
 const RHO = 1.225;
@@ -140,9 +146,11 @@ export function pistaQueHaceFalta(a: AircraftConfig): number {
  *   por debajo de la de umbral— con el rozamiento de frenar y la resistencia
  *   aerodinámica, que a esa velocidad todavía cuenta.
  *
- * El coeficiente de frenado es **el mismo que usa el motor de vuelo** —ver
- * `rolling` en `fdm.ts`—, porque si aquí se frenara distinto que ahí, esta
- * cuenta diría que el avión cabe y el avión se saldría igualmente.
+ * La frenada es **la misma que hace el motor de vuelo** —ver
+ * `deceleracionRodando` en `frenada.ts`—, porque si aquí se frenara distinto
+ * que ahí, esta cuenta diría que el avión cabe y el avión se saldría
+ * igualmente. Y es la del manual: freno a fondo, frenos de tierra en el que
+ * los lleva, sin reversa y en seco.
  */
 export function distanciaDeAterrizaje(
   a: AircraftConfig,
@@ -175,44 +183,67 @@ function finezaDeAterrizaje(a: AircraftConfig): number {
 }
 
 /**
+ * **Cómo se frena** en una cuenta de rodadura. Todo opcional: sin nada, la
+ * del manual de vuelo —freno a fondo con el pie desde que toca, los frenos de
+ * tierra fuera en el avión que los lleva, sin reversa y en seco—, que es como
+ * se certifica la distancia de aterrizaje en cualquier avión de transporte.
+ */
+export interface ComoSeFrena {
+  /** Si salen los frenos de tierra. Sin poner, en el avión que los lleva. */
+  readonly frenosDeTierra?: boolean;
+  /** Si la pista está mojada. */
+  readonly mojada?: boolean;
+  /** La reversa, de 0 a 1. */
+  readonly reversa?: number;
+  /** Con el autofreno en vez del pie. */
+  readonly autofreno?: ModoDeAutofreno;
+  /** Desde qué velocidad, m/s. Sin poner, la de toma. */
+  readonly desde?: number;
+}
+
+/**
  * La rodadura de frenada: de tocar tierra a pararse, en metros.
  *
  * **Se saca aparte porque hay dos motores de vuelo y los dos tienen que frenar
  * lo mismo.** El de coeficientes frena con fuerzas y le sale solo; el de
- * Guyrami no tiene fuerzas —el gas *es* la velocidad— y necesita que alguien le
- * diga cuánto tarda este avión en pararse. Ese alguien es esta función, y así
- * los dos peldaños frenan en los mismos metros aunque por dentro no se parezcan
- * en nada. Ver `ritmoDeFrenada` en `arcade.ts`.
+ * Guyrami no tiene fuerzas —el gas *es* la velocidad— y pregunta cuánto frena
+ * el avión a cada velocidad a `deceleracionRodando`, que es la cuenta que se
+ * integra aquí. Así los dos peldaños frenan en los mismos metros aunque por
+ * dentro no se parezcan en nada.
  *
- * Se integra desde la velocidad de toma —un pelo por debajo de la de umbral—
- * con el rozamiento de frenar y la resistencia aerodinámica, que a esa
- * velocidad todavía cuenta. El coeficiente de frenado es **el mismo que usa el
- * motor de vuelo** —ver `rolling` en `fdm.ts`—, porque si aquí se frenara
- * distinto que ahí, esta cuenta diría que el avión cabe y el avión se saldría
- * igualmente.
+ * Se integra desde la velocidad de toma con el freno sobre el peso que cargan
+ * las ruedas, la resistencia aerodinámica —que a esa velocidad todavía
+ * cuenta— y, si se pide, la reversa. Ver `flight/frenada.ts`.
  */
 export function rodaduraDeFrenada(
   a: AircraftConfig,
   superficie: Superficie = "asfalto",
+  como: ComoSeFrena = {},
 ): number {
-  const peso = a.mass * G;
-  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const cl = a.aero.cl0 + a.flapsLift;
-  const cd =
-    a.aero.cd0 +
-    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
-    a.flapsDrag +
-    resistenciaDelTren(a, 1, 1);
-  const mu = ROZAMIENTO[superficie] + 0.28;
-  const toma = velocidadDeToma(a);
+  const tierra = (como.frenosDeTierra ?? a.frenosDeTierra !== null) ? 1 : 0;
+  const suelo = { superficie, mojada: como.mojada ?? false };
+  const modo = como.autofreno ?? "off";
+  const objetivo = modo === "off" ? 0 : DECELERACION_DEL_AUTOFRENO[modo];
+  const base = {
+    freno: 1,
+    frenosDeTierra: tierra,
+    reversa: como.reversa ?? 0,
+    flaps: 1,
+  };
+  const desde = como.desde ?? velocidadDeToma(a);
   const pasos = 400;
-  const dv = toma / pasos;
+  const dv = desde / pasos;
   let s = 0;
   for (let i = 0; i < pasos; i++) {
     const v = (i + 0.5) * dv;
-    const q = 0.5 * RHO * v * v * a.wingArea;
-    const frena = (q * cd + mu * Math.max(0, peso - q * cl)) / a.mass;
-    s += (v / frena) * dv;
+    let freno = 1;
+    if (objetivo > 0) {
+      const sinFreno = deceleracionRodando(a, v, { ...base, freno: 0 }, suelo);
+      const aFondo = deceleracionRodando(a, v, base, suelo);
+      freno = frenoDelAutofreno(objetivo, sinFreno, aFondo);
+    }
+    const frena = deceleracionRodando(a, v, { ...base, freno }, suelo);
+    s += (v / Math.max(1e-3, frena)) * dv;
   }
   return s;
 }

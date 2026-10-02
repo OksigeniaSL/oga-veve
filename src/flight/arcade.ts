@@ -40,7 +40,7 @@ import type {
   GroundSampler,
   InitialConditions,
 } from "./model";
-import { loQueDaElMotor, tieneReversa, type AircraftConfig } from "./aircraft";
+import { loQueDaElMotor, type AircraftConfig } from "./aircraft";
 
 /**
  * Velocidad de crucero cómoda **a nivel del mar**, como fracción de la ficha.
@@ -88,26 +88,13 @@ const FRENAN_LOS_FLAPS = 4;
  */
 const FRENAN_EL_TREN = 4;
 
-/**
- * Cuánto frena la reversa, comparado con los frenos a fondo.
- *
- * La mitad. En un avión de línea la reversa aporta bastante menos que las ruedas
- * sobre pista seca —los frenos son los que paran— pero es la que salva la pista
- * mojada, donde la rueda patina y el chorro no. Media frenada es de sobra para
- * que se note y no tanto como para que sobre la pista.
+/*
+ * La reversa ya no frena aquí «la mitad del freno»: empuja hacia atrás lo que
+ * empuja en el modelo de coeficientes, con la misma cuenta. Ver
+ * `deceleracionRodando` en `flight/frenada.ts`, que es de donde sale ahora
+ * toda la frenada de este modelo.
  */
-export const REVERSA_FRENA = 0.5;
-
-/**
- * Y por debajo de cuántos metros por segundo se apaga sola.
- *
- * Quince, que son unos treinta nudos. Por debajo de ahí la reversa deja de
- * frenar y empieza a levantar del suelo lo que haya —piedras, agua, nieve— y a
- * metérselo al motor, así que en un avión de verdad se cancela antes de parar.
- * Aquí se cancela sola porque lo que se enseña es el gesto correcto, no el
- * castigo por no saberlo.
- */
-export const REVERSA_HASTA = 15;
+export { REVERSA_HASTA } from "./frenada";
 
 /**
  * Lo más lento que vuela, como fracción de la velocidad de aproximación.
@@ -270,9 +257,12 @@ import {
   ascensoMaximo,
   caidaSinMotor,
   carreraHastaVr,
-  rodaduraDeFrenada,
-  velocidadDeToma,
 } from "./carrera";
+import {
+  deceleracionRodando,
+  frenoDelAutofreno,
+  type MandosDeFrenada,
+} from "./frenada";
 
 export class ArcadeFlightModel implements FlightModel {
   readonly implementationName = "Modelo sencillo Óga Veve";
@@ -481,6 +471,21 @@ export class ArcadeFlightModel implements FlightModel {
     this.superficie = superficie;
   }
 
+  /** Si la pista está mojada. Ver `ponerPistaMojada` en el modelo. */
+  private pistaMojada = false;
+
+  /** El freno que ve la rueda ahora, de 0 a 1: el del pie o el del autofreno. */
+  private frenoDeAhora = 0;
+
+  /** Lo que está frenando la rueda, de 0 a 1. Lo mira el cuadro. */
+  frenoEnLaRueda(): number {
+    return this.frenoDeAhora;
+  }
+
+  ponerPistaMojada(mojada: boolean): void {
+    this.pistaMojada = mojada;
+  }
+
   /**
    * Lo más rápido que va este avión **aquí**, en metros por segundo.
    *
@@ -525,14 +530,6 @@ export class ArcadeFlightModel implements FlightModel {
   }
 
   /**
-   * Con cuánto frena este avión a fondo en esta superficie, en m/s².
-   *
-   * Parar desde la velocidad de toma en los metros que dice la física
-   * —`rodaduraDeFrenada`— pide `v²/2s`, y eso es una deceleración, no un ritmo.
-   * No es una analogía: son los mismos metros que decide `cabeEn` para dejar
-   * entrar al avión en la pista.
-   */
-  /**
    * La punta de este avión **en el suelo y en esta superficie**, m/s.
    *
    * Es la velocidad a la que tiende la carrera, y tiene que ser la misma en la
@@ -547,14 +544,6 @@ export class ArcadeFlightModel implements FlightModel {
     const cuesta = ROZAMIENTO[this.superficie] / ROZAMIENTO.asfalto;
     return (
       this.aircraft.cruiseSpeed * CRUISE_FRACTION * (1 - (cuesta - 1) * 0.05)
-    );
-  }
-
-  private frenadaAFondo(): number {
-    const toma = velocidadDeToma(this.aircraft);
-    return (
-      (toma * toma) /
-      (2 * Math.max(1, rodaduraDeFrenada(this.aircraft, this.superficie)))
     );
   }
 
@@ -801,34 +790,64 @@ export class ArcadeFlightModel implements FlightModel {
        * avión frenando pierde velocidad a un ritmo **casi constante**, y un
        * retardo exponencial nunca llega a cero, así que el avión reptaba.
        *
-       * La deceleración sale de los metros que dice la física: parar desde la
-       * velocidad de toma en `rodaduraDeFrenada` metros pide `v²/2s`. Y el freno
-       * a medias frena a medias, en la misma proporción que usan las dos cuentas
-       * de `carrera.ts`: el pie suelto deja solo la rodadura.
-       */
-      const mu = ROZAMIENTO[this.superficie];
-      const parte = (mu + 0.28 * controls.brakes) / (mu + 0.28);
-      /*
-       * **Y la reversa, que es la otra mitad de parar un avión grande.**
+       * **Y la deceleración es la del modelo de coeficientes**, no una media.
+       * Aquí había una sola, sacada de los metros de parada desde la
+       * velocidad de toma, igual desde el primer instante: el avión frenaba
+       * lo mismo con el ala sosteniéndolo que parado, y lo mismo con los
+       * frenos de tierra fuera que sin ellos. Ahora este modelo, que no tiene
+       * fuerzas, pregunta a `deceleracionRodando` cuánto frena el avión a esta
+       * velocidad con lo que lleva puesto —el pie, los frenos de tierra, la
+       * reversa, los flaps— y en esta pista seca o mojada. Es la misma cuenta
+       * que integra `carrera.ts`, así que los dos peldaños paran en los mismos
+       * metros.
        *
-       * No existía: «cuando tomo tierra no tengo reversa». Frena aparte de las
-       * ruedas —el chorro se desvía hacia delante, o la hélice cambia el paso—
-       * así que se **suma** a la deceleración del freno en vez de sustituirla.
-       *
-       * Y se apaga sola por debajo de `REVERSA_HASTA`. No es un capricho: por
-       * debajo de unos treinta nudos la reversa deja de frenar y empieza a
-       * levantar del suelo lo que haya —piedras, agua, nieve— y a metérselo al
-       * motor. Por eso en un avión de verdad se cancela antes de parar, y por
-       * eso aquí se cancela sola: lo que se aprende es el gesto correcto.
+       * La reversa va dentro: frena aparte de las ruedas —el chorro se desvía
+       * hacia delante, o la hélice cambia el paso— y se apaga sola por debajo
+       * de `REVERSA_HASTA`, como en un avión de verdad.
        */
-      const conReversa =
-        tieneReversa(this.aircraft) && this.speed > REVERSA_HASTA
-          ? clamp01(controls.reversa) * this.frenadaAFondo() * REVERSA_FRENA
-          : 0;
-      const decel =
-        Math.max(SIN_FRENO, this.frenadaAFondo() * parte) + conReversa;
+      const mandos: MandosDeFrenada = {
+        freno: controls.brakes,
+        frenosDeTierra: controls.frenosDeTierra ?? 0,
+        reversa: controls.reversa,
+        flaps: controls.flaps,
+        tren: controls.tren,
+      };
+      const sueloDeFrenada = {
+        superficie: this.superficie,
+        mojada: this.pistaMojada,
+      };
+      let freno = clamp01(controls.brakes);
+      const objetivo = controls.autofreno ?? 0;
+      if (objetivo > 0) {
+        // El autofreno: lo que falta hasta su deceleración. Ver
+        // `frenoDelAutofreno`.
+        const sinFreno = deceleracionRodando(
+          this.aircraft,
+          this.speed,
+          { ...mandos, freno: 0 },
+          sueloDeFrenada,
+        );
+        const aFondo = deceleracionRodando(
+          this.aircraft,
+          this.speed,
+          { ...mandos, freno: 1 },
+          sueloDeFrenada,
+        );
+        freno = Math.max(freno, frenoDelAutofreno(objetivo, sinFreno, aFondo));
+      }
+      this.frenoDeAhora = freno;
+      const decel = Math.max(
+        SIN_FRENO,
+        deceleracionRodando(
+          this.aircraft,
+          this.speed,
+          { ...mandos, freno },
+          sueloDeFrenada,
+        ),
+      );
       this.speed = Math.max(target * blando, this.speed - decel * step);
     } else {
+      this.frenoDeAhora = this.state.onGround ? clamp01(controls.brakes) : 0;
       this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
     }
     // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
@@ -836,7 +855,7 @@ export class ArcadeFlightModel implements FlightModel {
     // repta eternamente después de frenar. Un avión parado está parado.
     if (
       this.state.onGround &&
-      controls.brakes > 0.5 &&
+      Math.max(controls.brakes, this.frenoDeAhora) > 0.5 &&
       this.speed < STATIC_GRIP
     )
       this.speed = 0;

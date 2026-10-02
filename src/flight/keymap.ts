@@ -40,6 +40,7 @@ export type Accion =
   | "flaps"
   | "tren"
   | "aerofrenos"
+  | "autofreno"
   | "reversa"
   | "camera"
   | "assist"
@@ -170,6 +171,11 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    * cierran, o hasta que se mete gas. Solo en el avión que los lleva.
    */
   aerofrenos: { label: "tecla.aerofrenos", defecto: ["/"], held: false },
+  /*
+   * **Y el autofreno, al lado**: el punto, junto a la barra de los
+   * aerofrenos, porque se arman juntos antes de aterrizar.
+   */
+  autofreno: { label: "tecla.autofreno", defecto: ["."], held: false },
   camera: { label: "tecla.camera", defecto: ["KeyC"], held: false },
   assist: { label: "tecla.assist", defecto: ["KeyM"], held: false },
   reset: { label: "tecla.reset", defecto: ["KeyR"], held: false },

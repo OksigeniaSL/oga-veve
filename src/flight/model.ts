@@ -136,8 +136,26 @@ export interface ControlInputs {
    * no la palanca, como los flaps: los paneles tardan un momento en subir.
    * Solo frenan en el avión que los lleva. Ver `aerofrenos` en la ficha y
    * `alternarAerofrenos` en `flight/input.ts`. Sin poner, cerrados.
+   *
+   * Es **el tope de vuelo**: los paneles que la palanca saca en el aire, a
+   * medias. Los de tierra van aparte, abajo.
    */
   aerofrenos?: number;
+  /**
+   * **Los frenos de tierra**, de 0 abajo a 1 todos los paneles arriba del
+   * todo. Los mismos paneles que los aerofrenos, pero todos y del todo, y lo
+   * que hacen es matar la sustentación para que frenen las ruedas. Los saca
+   * la palanca armada al tocar, o a mano en tierra. Ver
+   * `flight/palanca-de-aerofrenos.ts`. Sin poner, abajo.
+   */
+  frenosDeTierra?: number;
+  /**
+   * **La deceleración que pide el autofreno**, m/s², o cero si no frena.
+   * `Infinity` es el freno a fondo de MAX. El modelo modula el freno para
+   * sostenerla, contando lo que ya frenan el aire y la reversa; el pie, si
+   * pisa más, manda. Ver `flight/frenada.ts`.
+   */
+  autofreno?: number;
 }
 
 export function neutralControls(): ControlInputs {
@@ -154,6 +172,8 @@ export function neutralControls(): ControlInputs {
     tren: 1,
     reversa: 0,
     aerofrenos: 0,
+    frenosDeTierra: 0,
+    autofreno: 0,
     engineOn: true,
   };
 }
@@ -485,4 +505,10 @@ export interface FlightModel {
    * carrera de despegue. Ver `world/superficie.ts`.
    */
   ponerSuperficie(superficie: Superficie): void;
+  /**
+   * **Si la pista está mojada**: llueve o acaba de llover. La rueda agarra
+   * menos, y menos cuanto más deprisa se va —ver `coeficienteDeFrenado` en
+   * `flight/frenada.ts`—. Lo dice el juego con el tiempo que hace.
+   */
+  ponerPistaMojada?(mojada: boolean): void;
 }

@@ -4525,6 +4525,24 @@ button.motor__tecla::after {
   fill: #14161a;
 }
 
+/* Y los dibujos, con la misma tinta: oscuro sobre el rojo o el ámbar. */
+.aviso-luz__dibujo {
+  fill: #14161a;
+  color: #14161a;
+}
+
+/* Las tres patas del tren, en el peldaño del dibujo. Ver `tresPatas`. */
+.aviso-luz__pata {
+  fill: none;
+  stroke: #14161a;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.aviso-luz__rueda {
+  fill: #14161a;
+}
+
 .cr__rosa {
   fill: rgb(0 0 0 / 0.35);
 }
@@ -9619,6 +9637,92 @@ button.motor__tecla::after {
 
 .mando:active {
   transform: scale(0.93);
+}
+
+/*
+ * **Armado**: listo, sin sacar nada todavía. El borde verde a trazos y el
+ * dibujo en blanco: es la palanca un punto arriba, la de «al tocar, salen
+ * solos». Ver flight/palanca-de-aerofrenos.ts.
+ */
+.mando--armado {
+  border-style: dashed;
+  border-color: var(--verde, #57c785);
+}
+
+/*
+ * El dibujo de la palanca va en su propio hueco, que se repinta al cambiar de
+ * posición sin tocar las rayas del autofreno; para la rejilla del botón es
+ * como si no estuviera.
+ */
+.mando__dibujo {
+  display: contents;
+}
+
+/*
+ * **El autofreno, en el rincón de la palanca**: tres rayas, una encendida por
+ * cada punto del selector —LO, MED, MAX—, verdes mientras frena. Apagadas se
+ * quedan como sombra, para que se vea que hay tres.
+ */
+.mando--aerofrenos {
+  position: relative;
+}
+
+.mando__autofreno {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  display: grid;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.mando__autofreno[hidden] {
+  display: none;
+}
+
+.mando__autofreno i {
+  display: block;
+  width: 9px;
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  color: rgba(255, 255, 255, 0.82);
+  opacity: 0.22;
+}
+
+.mando__autofreno[data-modo="lo"] i:nth-child(3),
+.mando__autofreno[data-modo="med"] i:nth-child(n + 2),
+.mando__autofreno[data-modo="max"] i {
+  opacity: 1;
+}
+
+.mando__autofreno--frenando i {
+  color: var(--verde, #57c785);
+}
+
+/*
+ * **Y en la tablet y el escritorio, aerofrenos y flaps en la misma fila**: la
+ * palanca de aerofrenos a la izquierda de la de flaps, como en el pedestal.
+ * La columna no crece por tenerla también en tierra, que es cuando más hace
+ * falta. En el teléfono los botones ya van en filas: ver más abajo.
+ */
+@media (min-height: 501px) {
+  /* La primera se lleva lo que sobra y su botón se arrima a la segunda. */
+  .hud:not(.hud--cabina) .hud__derecha {
+    grid-template-columns: 1fr auto;
+  }
+
+  .hud:not(.hud--cabina) .hud__derecha > * {
+    grid-column: 1 / -1;
+  }
+
+  .hud:not(.hud--cabina) .hud__derecha > .mando--aerofrenos {
+    grid-column: 1;
+  }
+
+  .hud:not(.hud--cabina) .hud__derecha > .mando--flaps {
+    grid-column: 2;
+  }
 }
 
 /*

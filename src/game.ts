@@ -599,7 +599,17 @@ import { Audio, yaHuboGesto, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
 import { patasDe, peldanoDe } from "./ui/familia";
-import { avisaDelTren, luzRojaDelTren, seVuelveADecir } from "./flight/tren";
+import { rodaduraDeFrenada } from "./flight/carrera";
+import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
+import {
+  MARGEN_DEL_PRIMER_PELDANO,
+  NADA_RECORDADO,
+  avisaDelTren,
+  luzRojaDelTren,
+  recordarElTren,
+  seVuelveADecir,
+  type LoRecordado,
+} from "./flight/tren";
 import {
   cargaParaElPlan,
   comoVaElDeposito,
@@ -2939,6 +2949,7 @@ export class Game {
     this.antesAlUmbral = Infinity;
     this.terrenoDicho = null;
     this.dichoDelTren = null;
+    this.recordadoDelTren = NADA_RECORDADO;
     this.tormentasDichas.clear();
     this.estelas.vaciar();
     this.tcas.reiniciar();
@@ -5110,8 +5121,10 @@ export class Game {
      * hacer una sola cosa. Ver `pulsarMandoDeCabina`.
      */
     this.hud.onMandoDeCabina((cual) => {
-      // Los aerofrenos no están en la cabina 3D, solo en el HUD y en la tecla.
+      // Los aerofrenos y el autofreno no se pulsan en la cabina 3D: en el HUD
+      // y con su tecla.
       if (cual === "aerofrenos") this.input.alternarAerofrenos();
+      else if (cual === "autofreno") this.input.alternarAutofreno();
       else this.pulsarMandoDeCabina(cual);
     });
     // `?fps=1` enciende el contador de fotogramas. Ver `Hud.mostrarFps`.
@@ -8216,6 +8229,7 @@ export class Game {
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
     this.dichoDelTren = null;
+    this.recordadoDelTren = NADA_RECORDADO;
     this.tormentasDichas.clear();
     this.estelas.vaciar();
     this.tcas.reiniciar();
@@ -9688,7 +9702,11 @@ export class Game {
       this.aircraft.trenRetractil,
       this.aircraft.tardanLosFlaps,
       this.aircraft.llevaFlaps,
-      this.aircraft.aerofrenos !== null,
+      {
+        aerofrenos: this.aircraft.aerofrenos !== null,
+        frenosDeTierra: this.aircraft.frenosDeTierra !== null,
+        autofreno: this.aircraft.autofreno,
+      },
     );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
@@ -10785,10 +10803,18 @@ export class Game {
       this.flight.state.position.z,
     );
     this.flight.ponerSuperficie(this.superficie);
+    /*
+     * **Y si la pista está mojada**: llueve donde está el avión. La rueda
+     * agarra menos, y menos cuanto más deprisa va. Ver `flight/frenada.ts`.
+     */
+    this.flight.ponerPistaMojada?.(this.lloviendo.clase !== "nada");
 
     // El interruptor de tierra/aire del tren: con el peso encima, la palanca
     // no lo mete. Ver `alternarTren` en `flight/input.ts`.
     this.input.pesoEnLasRuedas = this.flight.state.onGround;
+    // Y a qué velocidad corre: los frenos de tierra salen solos corriendo, no
+    // rodando por la plataforma. Ver `flight/palanca-de-aerofrenos.ts`.
+    this.input.velocidadEnElSuelo = this.flight.state.groundSpeed;
     // Y hasta dónde pueden bajar los flaps: el alivio de carga o unos flaps
     // tocados. Antes de mover los mandos, que es quien los lleva.
     this.atenderALosFlaps(dt);
@@ -11242,6 +11268,7 @@ export class Game {
     }
 
     this.atenderAlTren();
+    this.atenderALaListaDeAterrizaje();
 
     /*
      * **El aviso de terreno**, que es el que salva.
@@ -12214,6 +12241,28 @@ export class Game {
      */
     this.aircraftMesh.flaps?.poner(this.input.controls.flaps);
     /*
+     * **Y los aerofrenos, que son también los frenos de tierra**: los de vuelo
+     * hasta su tope y todos arriba al tocar, donde **están**, como los flaps.
+     * Y la palanca del pedestal en su sitio: abajo, armada, en el tope de
+     * vuelo o arriba del todo con los de tierra fuera. Ver
+     * `flight/palanca-de-aerofrenos.ts` y `world/aerofrenos.ts`.
+     */
+    const deTierra = this.input.controls.frenosDeTierra ?? 0;
+    this.aircraftMesh.aerofrenos?.poner(
+      this.input.controls.aerofrenos ?? 0,
+      deTierra,
+    );
+    const palanca = this.input.palancaDeAerofrenos.palanca;
+    this.aircraftMesh.palancaDeAerofrenos?.poner(
+      palanca === "armada"
+        ? POSICIONES_DE_LA_PALANCA.armada
+        : palanca === "fuera"
+          ? deTierra > 0
+            ? POSICIONES_DE_LA_PALANCA.arriba
+            : POSICIONES_DE_LA_PALANCA.topeDeVuelo
+          : POSICIONES_DE_LA_PALANCA.recogida,
+    );
+    /*
      * Y las luces de posición: la de choque parpadea con el motor en marcha,
      * que es su regla de verdad —se enciende **antes** de arrancar y dice
      * «esto está vivo, no te acerques»—. Ver `world/luces-de-posicion.ts`.
@@ -12352,6 +12401,10 @@ export class Game {
         aerofrenos: {
           donde: this.input.controls.aerofrenos ?? 0,
           pedidos: this.input.aerofrenosAbiertos,
+          palanca: this.input.palancaDeAerofrenos.palanca,
+          deTierra: this.input.controls.frenosDeTierra ?? 0,
+          autofreno: this.input.palancaDeAerofrenos.modo,
+          frenando: this.input.palancaDeAerofrenos.frenando,
         },
         // La velocidad que toca y lo que hace el automático. Ver `elFma`.
         spd: this.laSpdDelPanel(),
@@ -17855,10 +17908,33 @@ export class Game {
      * Ver `meteElTrenA` en la ficha de cada avión.
      */
     const meteA = this.aircraft.meteElTrenA ?? METE_EL_TREN;
-    const yaNoHaceFalta =
-      !s.onGround && s.verticalSpeed > 1 && sobreElSuelo > meteA;
-    if (yaNoHaceFalta && donde > 0.99 && pedido) {
-      if (!seVuelveADecir(this.dichoDelTren, "mete", pedido)) return;
+    /*
+     * **Y en el peldaño de abajo, con margen; y una segunda vez si se deja.**
+     * «Dame tiempo de soltar el timón»: ver `recordarElTren` en
+     * `flight/tren.ts`, que dice cuándo y por qué no con un reloj.
+     */
+    if (s.onGround) this.recordadoDelTren = NADA_RECORDADO;
+    const toca = recordarElTren(
+      {
+        enElAire: !s.onGround,
+        subiendo: s.verticalSpeed > 1,
+        alto: sobreElSuelo,
+        donde,
+        pedido,
+        nudos:
+          indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) *
+          NUDOS,
+        vleKt: this.aircraft.vleKt,
+        primeroA:
+          this.tier.model === "simple" ? meteA + MARGEN_DEL_PRIMER_PELDANO : meteA,
+      },
+      this.recordadoDelTren,
+    );
+    if (toca) {
+      this.recordadoDelTren =
+        toca === "primero"
+          ? { primero: true, segundo: false }
+          : { primero: true, segundo: true };
       this.dichoDelTren = { que: "mete", pedido };
       this.hud.senal.mostrar(
         "tren",
@@ -17896,7 +17972,12 @@ export class Game {
        * `normal` quedaba detrás de cualquier comentario de esos segundos —la
        * ruta, la comandante— y caducaba: también en Los Rodeos con el JAZ 90.
        */
-      this.cantar("positive rate", undefined, undefined, "mando");
+      /*
+       * La segunda vez ya no es «positive rate»: la subida está asentada hace
+       * rato. Es el recordatorio, con la misma frase.
+       */
+      if (toca === "primero")
+        this.cantar("positive rate", undefined, undefined, "mando");
       this.cantar(
         "gear up",
         t("vuelo.meteElTren"),
@@ -17904,6 +17985,141 @@ export class Game {
         "mando",
       );
     }
+  }
+
+  /** Lo recordado del tren en este despegue. Ver `recordarElTren`. */
+  private recordadoDelTren: LoRecordado = NADA_RECORDADO;
+
+  /**
+   * **La lista antes de aterrizar: los aerofrenos armados y el autofreno.**
+   *
+   * En un avión de línea se arman antes de tocar —es una línea de la lista
+   * de aterrizaje— para que al tocar salgan solos los frenos de tierra y el
+   * autofreno entre con ellos. Sin armarlos, al tocar el ala sigue llevando
+   * el avión y los frenos casi no muerden. Ver
+   * `flight/palanca-de-aerofrenos.ts` y `flight/frenada.ts`.
+   *
+   * Se pide **una vez por aproximación**, al entrar en final con el tren
+   * abajo, con la tarjeta del panel armado —que se toca para armarlos, o con
+   * su tecla—. Y en los tres peldaños de abajo, si al pasar los quinientos
+   * pies todavía no están, los arma la instructora, que es quien va al lado:
+   * es lo que hace el piloto que no vuela con la lista en un avión de dos. En
+   * el de cabina, la lista es de quien vuela.
+   *
+   * La voz que lo dice está por grabar: ver PENDIENTE-VOCES-aterrizaje.md.
+   */
+  private atenderALaListaDeAterrizaje(): void {
+    const p = this.input.palancaDeAerofrenos;
+    if (!p.hayPalanca && !p.hayAutofreno) return;
+    const s = this.flight.state;
+    /*
+     * **En la aproximación, no en el embudo de final**: el embudo empieza a
+     * tres kilómetros y medio, por debajo de los mil pies, y la lista de
+     * aterrizaje está hecha antes. La zona de aproximación es la de la cuenta
+     * del radioaltímetro: veinte kilómetros y yendo hacia la pista.
+     */
+    const enFinal =
+      !s.onGround &&
+      /*
+       * Y por debajo de mil metros sobre el suelo: la zona es un cono de
+       * veinte kilómetros que no mira la altura, y a treinta y seis mil pies
+       * sobre el campo no se está aproximando nadie. Es la altura a la que se
+       * baja el tren en un reactor que viene a aterrizar.
+       */
+      s.heightAboveGround < 1000 &&
+      enLaZonaDeAproximacion(
+        this.laPistaDeAhora(),
+        s.position.x,
+        s.position.z,
+        s.heading,
+      );
+    // Una aproximación nueva, una lista nueva: al tocar o al salir de ella.
+    if (!enFinal) {
+      this.listaDeAterrizaje = { pedida: false, hecha: false };
+      return;
+    }
+    const trenAbajo =
+      !this.aircraft.trenRetractil || this.input.trenQueSePide;
+    const faltaLaPalanca = p.hayPalanca && p.palanca === "recogida";
+    const faltaElAutofreno = p.hayAutofreno && p.modo === "off";
+    if (!trenAbajo || (!faltaLaPalanca && !faltaElAutofreno)) return;
+
+    const armar = (): void => {
+      if (p.hayPalanca && p.palanca === "recogida") p.ponerPalanca("armada");
+      if (p.hayAutofreno && p.modo === "off")
+        p.ponerAutofreno(this.autofrenoParaLaPista());
+    };
+    if (!this.listaDeAterrizaje.pedida) {
+      this.hud.senal.mostrar(
+        "aerofrenos-armados",
+        this.rotulo("hud.armaAerofrenos", "palabra.aerofrenos"),
+        null,
+        {
+          /*
+           * Seis segundos, los de una tarjeta corriente: es una línea de la
+           * lista y se le da tiempo a encontrar el botón o la tecla. Los dos
+           * segundos y medio de un aro no dan para eso.
+           */
+          segundos: 6,
+          /*
+           * Por encima del PAPI y del motor, que en final salen cada vez que
+           * cambian: con la misma importancia la tapaban al fotograma
+           * siguiente y la lista se daba por pedida sin haberse visto. Por
+           * debajo de lo urgente, que es el terreno o un bulto.
+           */
+          prioridad: (IMPORTANTE + URGENTE) / 2,
+          tecla: nombreDeTecla(this.input.preferredKey("aerofrenos")),
+          accion: armar,
+        },
+      );
+      /*
+       * Dada es **cuando se ve**: con otra tarjeta más importante puesta —un
+       * aviso de terreno, la frustrada— ésta no entra, y se vuelve a ofrecer en
+       * cuanto quede sitio. No es un reloj: es la cola de las tarjetas.
+       */
+      if (this.hud.senal.puesto.dibujo === "aerofrenos-armados")
+        this.listaDeAterrizaje = { ...this.listaDeAterrizaje, pedida: true };
+      return;
+    }
+    if (
+      this.tier.avisos !== "cabina" &&
+      !this.listaDeAterrizaje.hecha &&
+      s.heightAboveGround < 500 * 0.3048
+    ) {
+      this.listaDeAterrizaje = { ...this.listaDeAterrizaje, hecha: true };
+      armar();
+      this.hud.senal.mostrar(
+        "aerofrenos-armados",
+        this.rotulo("hud.aerofrenosArmados", "palabra.aerofrenos"),
+        null,
+        { segundos: 4 },
+      );
+    }
+  }
+
+  /** Lo hecho de la lista en esta aproximación. */
+  private listaDeAterrizaje = { pedida: false, hecha: false };
+
+  /**
+   * **El autofreno que pide esta pista**: LO si sobra pista, MED si va justa,
+   * MAX si ni así. Es la cuenta que se hace en la cabina con la tabla de
+   * distancias: la de aterrizaje con ese punto —el aire de los quince metros,
+   * unos trescientos, y la rodadura—, con un quince por ciento de margen, y
+   * contra la pista que hay. Con la pista mojada, la rodadura de mojado.
+   */
+  private autofrenoParaLaPista(): "lo" | "med" | "max" {
+    const largo = this.laPistaDeAhora().length;
+    const mojada = this.lloviendo.clase !== "nada";
+    for (const modo of ["lo", "med"] as const) {
+      const hace =
+        300 +
+        rodaduraDeFrenada(this.aircraft, this.superficie, {
+          autofreno: modo,
+          mojada,
+        });
+      if (hace * 1.15 <= largo) return modo;
+    }
+    return "max";
   }
 
   /** La hora solar del vuelo, para la térmica. Ver `calorDelSuelo`. */

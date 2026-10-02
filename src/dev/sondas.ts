@@ -988,6 +988,21 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     flaps: () => juego.aircraftMesh.flaps?.cuantos ?? 0,
     /** Mover los flaps a mano, para mirarlos sin esperar a que lleguen. */
     flapsPoner: (donde: number) => juego.aircraftMesh.flaps?.poner(donde),
+    /** Cuántos aerofrenos se mueven en el modelo, y cuántos suben en vuelo. */
+    aerofrenosDelModelo: () => ({
+      cuantos: juego.aircraftMesh.aerofrenos?.cuantos ?? 0,
+      deVuelo: juego.aircraftMesh.aerofrenos?.deVuelo ?? 0,
+    }),
+    /**
+     * Subir los aerofrenos a mano, para mirarlos: `vuelo` es la palanca hasta
+     * su tope de vuelo y `tierra` los frenos de tierra, los dos de 0 a 1. Ver
+     * `world/aerofrenos.ts`.
+     */
+    aerofrenosPoner: (vuelo: number, tierra: number) =>
+      juego.aircraftMesh.aerofrenos?.poner(vuelo, tierra),
+    /** Y su palanca en la cabina, de 0 recogida a 1 arriba. */
+    palancaDeAerofrenosPoner: (posicion: number) =>
+      juego.aircraftMesh.palancaDeAerofrenos?.poner(posicion),
     /**
      * **Cómo están los flaps en el modelo**, sin redondear: la matriz de cada
      * vacío y cuántas tapas y huecos se están dibujando.
@@ -1763,8 +1778,30 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** Los aerofrenos, pedidos como se piden: con su palanca. */
     pedirAerofrenos: (abiertos: boolean) => {
-      if (juego.input.aerofrenosAbiertos !== abiertos) juego.input.alternarAerofrenos();
+      juego.input.palancaDeAerofrenos.ponerPalanca(abiertos ? "fuera" : "recogida");
     },
+    /**
+     * **La palanca de los aerofrenos y el autofreno**, como están: la
+     * posición, el selector, si el autofreno frena, y dónde están los paneles
+     * de vuelo y los de tierra. Ver `flight/palanca-de-aerofrenos.ts`.
+     */
+    aerofrenos: () => {
+      const p = juego.input.palancaDeAerofrenos;
+      return {
+        palanca: p.palanca,
+        autofreno: p.modo,
+        frenando: p.frenando,
+        enVuelo: juego.input.controls.aerofrenos ?? 0,
+        enTierra: juego.input.controls.frenosDeTierra ?? 0,
+        pide: juego.input.controls.autofreno ?? 0,
+      };
+    },
+    /** La palanca a una posición, como la mueve quien vuela. */
+    ponerPalancaDeAerofrenos: (p: "recogida" | "armada" | "fuera") =>
+      juego.input.palancaDeAerofrenos.ponerPalanca(p),
+    /** El selector del autofreno. */
+    ponerAutofreno: (m: "off" | "lo" | "med" | "max") =>
+      juego.input.palancaDeAerofrenos.ponerAutofreno(m),
     /**
      * **Y un piloto que vuela el descenso de emergencia** como una
      * tripulación: gas al ralentí, aerofrenos —o el tren, en el que no los
@@ -1807,7 +1844,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         c.aileron = r.aileron;
         c.trim = 0;
         if (avion.aerofrenos !== null && !juego.input.aerofrenosAbiertos)
-          juego.input.alternarAerofrenos();
+          juego.input.palancaDeAerofrenos.ponerPalanca("fuera");
         if (avion.aerofrenos === null && avion.trenRetractil && !juego.input.trenQueSePide)
           juego.input.alternarTren();
       };

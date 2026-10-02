@@ -205,6 +205,7 @@ export const ES_PY = {
   "tecla.flaps": "Flaps",
   "tecla.tren": "Tren",
   "tecla.aerofrenos": "Aerofrenos",
+  "tecla.autofreno": "Autofreno",
   "tecla.camera": "Cambiar cámara",
   "tecla.assist": "Nivel de dificultad",
   "tecla.reset": "Volver a empezar",
@@ -1312,6 +1313,14 @@ export const ES_PY = {
      Ver `.gira` en style.css. */
   "hud.gira": "Girá la pantalla",
   "hud.bajarCuadro": "Bajar el tablero",
+  /*
+   * **La lista antes de aterrizar**, en la tarjeta: armar los aerofrenos y
+   * el autofreno. Son rótulos y no se dicen todavía: la voz está pendiente
+   * de grabar. Ver PENDIENTE-VOCES-aterrizaje.md y
+   * `flight/palanca-de-aerofrenos.ts`.
+   */
+  "hud.armaAerofrenos": "Armá los aerofrenos y el autofreno",
+  "hud.aerofrenosArmados": "Aerofrenos y autofreno armados: los armé yo",
   "hud.pilotoAutomatico": "Piloto automático",
   /*
    * El compensador. Solo lo lee un lector de pantalla: en la pantalla hay una
@@ -1547,6 +1556,7 @@ export const ES_PY = {
   "vuelo.sacaElTren": "Sacá el tren",
   "vuelo.trenEnElSuelo": "Con el avión en el suelo, el tren no se mete",
   "palabra.tren": "Tren",
+  "palabra.aerofrenos": "Aerofrenos",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.

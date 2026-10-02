@@ -57,7 +57,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
-    Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
+    Piel, aerofreno, aerofrenos_libres, banda, centro_de_gravedad, contorno,
+    de_ala, de_deriva, dentro_de, piezas_de_aerofrenos,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
     fowler, juntar, llantas, marca, neumaticos, paneles, paneles_zy,
     recogido,
@@ -430,8 +431,26 @@ def construir():
     # altura por la que baja el flap. Ver `jaz-90-arai.py`.
     flaps = [flap("dentro", E_POR_X * 6.0, 11.5, 0.73),
              flap("fuera", 11.65, 21.6, 0.73)]
+    # **Los aerofrenos, seis por semiala, como los del 747**: dos por dentro
+    # del motor de dentro y cuatro entre los dos motores. Y no todos hacen lo
+    # mismo, que es lo que tiene de suyo este avión: en vuelo, con la palanca
+    # en su tope, suben los dos del medio de los de fuera a cuarenta y cinco
+    # grados y los dos de dentro a veinte; los dos de más afuera se quedan
+    # abajo. En tierra suben los seis a cuarenta y cinco. Es el reparto del
+    # 747-400 —numerados allí del 1, el de fuera, al 6, el de dentro— que
+    # cuentan sus mecánicos en el foro técnico de Airliners.net. Van de la raya
+    # de la bisagra a la junta del flap, y el de más adentro empieza donde el
+    # fuselaje ya no le estorba al subir: lo mide `aerofrenos_libres`.
+    aerofrenos = [
+        aerofreno("1", 4.60, 8.00, 0.607, 0.72, vuelo=20, tierra=45),
+        aerofreno("2", 8.04, 11.45, 0.607, 0.72, vuelo=20, tierra=45),
+        aerofreno("3", 14.20, 15.75, 0.607, 0.72, vuelo=45, tierra=45),
+        aerofreno("4", 15.79, 17.34, 0.607, 0.72, vuelo=45, tierra=45),
+        aerofreno("5", 17.38, 18.93, 0.607, 0.72, vuelo=0, tierra=45),
+        aerofreno("6", 18.97, 20.45, 0.607, 0.72, vuelo=0, tierra=45),
+    ]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
-                     flaps=flaps, zonas=[
+                     flaps=flaps, aerofrenos=aerofrenos, zonas=[
         # El borde de ataque de metal, hasta donde empieza la punta: es el
         # tramo que lleva slats, y la punta en flecha no los lleva.
         ("aluminio", 3.2, x_flecha * E_POR_X, 0.0, 0.06),
@@ -450,8 +469,10 @@ def construir():
     # atrás hasta la última. La cuerda crece más de un diez por ciento. Ver
     # `fowler`.
     los_flaps = flaps_moviles(ala, flaps, fowler(
-        muescas=(0, 5, 20, 30), recorrido=(0, 0.45, 0.60, 0.80)))
+        muescas=(0, 5, 20, 30), recorrido=(0, 0.45, 0.60, 0.80)),
+        aerofrenos=aerofrenos)
     piezas += los_flaps
+    piezas += piezas_de_aerofrenos(aerofrenos)
 
     def cuerda_en(x):
         if x < QUIEBRO:
@@ -597,9 +618,10 @@ def construir():
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
     # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
     # la franja que no baja, lo que queda de él donde acaba cada flap.
+    # Y los aerofrenos, que son chapa del ala por encima del pozo.
     recogido(patas, [p for p in piezas if p.type == "MESH" and (
         p.name in ("fuselaje", "carenado", "ala")
-        or p.name.startswith(("flap-", "franja-")))])
+        or p.name.startswith(("flap-", "franja-", "aerofreno-")))])
     piezas += patas
     # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
     # lo que cuelga cerca de él. Ver `flaps_libres`.
@@ -608,6 +630,12 @@ def construir():
         or p.name in ("fuselaje", "carenado")
         or p.name.startswith(("pilon-", "motor-"))
         or (p.name.startswith("canoa-") and "-cola" not in p.name))])
+
+    # Y ningún aerofreno se mete en el fuselaje, el carenado o un motor al
+    # subir. Ver `aerofrenos_libres`.
+    aerofrenos_libres(aerofrenos, [p for p in piezas if p.type == "MESH" and (
+        p.name in ("fuselaje", "carenado")
+        or p.name.startswith(("pilon-", "motor-")))])
 
     piezas.append(centro_de_gravedad(z_ala(12.0) + CUERDA * 0.25))
     return piezas

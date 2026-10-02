@@ -511,8 +511,15 @@ export class Hud {
   private trenTouch!: HTMLElement;
   private flapsTouch!: HTMLElement;
   private aerofrenosTouch!: HTMLElement;
+  private aerofrenosDibujo!: HTMLElement;
+  private autofrenoRayas!: HTMLElement;
+  /** El dibujo y el rótulo puestos, para no rehacerlos cada fotograma. */
+  private palancaPintada = "";
+  private autofrenoPintado = "";
   /** A quién se le cuenta que se han pulsado. Ver `onMandoDeCabina`. */
-  private alTocarMando: ((cual: "tren" | "flaps" | "aerofrenos") => void) | null = null;
+  private alTocarMando:
+    | ((cual: "tren" | "flaps" | "aerofrenos" | "autofreno") => void)
+    | null = null;
 
   /**
    * Si este avión tiene tren que meter.
@@ -533,7 +540,12 @@ export class Hud {
 
   /** Y aerofrenos, que solo los llevan los reactores. Ver `aerofrenos`. */
   private get hayAerofrenos(): boolean {
-    return this.ficha.aerofrenos !== null;
+    return this.ficha.aerofrenos !== null || this.ficha.frenosDeTierra !== null;
+  }
+
+  /** Y autofreno, también solo ellos. Ver `autofreno` en la ficha. */
+  private get hayAutofreno(): boolean {
+    return this.ficha.autofreno;
   }
 
   private brakeHandler: ((pressed: boolean) => void) | null = null;
@@ -1447,15 +1459,32 @@ export class Hud {
         -->
         <button class="mando mando--tren" type="button" data-hud="tren-touch" hidden
                 aria-label="${t("tecla.tren")}">${DIBUJOS.tren}</button>
-        <button class="mando mando--flaps" type="button" data-hud="flaps-touch" hidden
-                aria-label="${t("tecla.flaps")}">${DIBUJOS.flaps}</button>
         <!--
-          Y los aerofrenos, en los reactores y en el aire: con el mismo dibujo
-          que la tarjeta que los pide en el descenso de emergencia. Ver
-          flight/despresurizacion.ts.
+          **Y la palanca de los aerofrenos, en tierra y en el aire.**
+
+          Solo existía volando, y al tocar desaparecía: «¿cómo que solo se ve
+          en el aire? ¿Pero no es que los aerofrenos sirven para tierra al
+          frenar?». Sirven: son los mismos paneles. El botón es la palanca de
+          tres posiciones —recogida, armada y fuera— y lleva el dibujo de la
+          posición en que está: el panel tumbado, el panel con la flecha de que
+          va a subir solo, y el panel de pie. Ver
+          flight/palanca-de-aerofrenos.ts.
+
+          Va **a la izquierda de la de flaps**, en la misma fila donde cabe,
+          que es donde está en el pedestal de un avión de línea: la palanca de
+          aerofrenos a la izquierda y la de flaps a la derecha. Y en su rincón,
+          el autofreno: tres rayas, una por punto del selector —LO, MED,
+          MAX—, que se arma con su tecla o tocando la tarjeta de la lista antes
+          de aterrizar.
         -->
         <button class="mando mando--aerofrenos" type="button" data-hud="aerofrenos-touch" hidden
-                aria-label="${t("tecla.aerofrenos")}">${DIBUJOS.aerofrenos}</button>
+                aria-label="${t("tecla.aerofrenos")}"><span class="mando__dibujo"
+                data-hud="aerofrenos-dibujo">${DIBUJOS["aerofrenos-recogidos"]}</span><span
+                class="mando__autofreno" data-hud="autofreno-rayas" data-modo="off" hidden
+                aria-label="${t("tecla.autofreno")}"><i></i><i></i><i></i></span></button>
+        <button class="mando mando--flaps" type="button" data-hud="flaps-touch" hidden
+                aria-label="${t("tecla.flaps")}">${DIBUJOS.flaps}</button>
+
         ${
           numbers
             ? `<div class="tarjeta horizonte">
@@ -1751,6 +1780,11 @@ export class Hud {
     this.trenTouch = pick(this.root, "tren-touch");
     this.flapsTouch = pick(this.root, "flaps-touch");
     this.aerofrenosTouch = pick(this.root, "aerofrenos-touch");
+    this.aerofrenosDibujo = pick(this.root, "aerofrenos-dibujo");
+    this.autofrenoRayas = pick(this.root, "autofreno-rayas");
+    // El marcado es nuevo: lo pintado en él, también.
+    this.palancaPintada = "";
+    this.autofrenoPintado = "";
     for (const [boton, cual] of [
       [this.trenTouch, "tren"],
       [this.flapsTouch, "flaps"],
@@ -2442,9 +2476,18 @@ export class Hud {
       readonly cabina?: number;
       /**
        * Los aerofrenos: dónde están, de 0 a 1, y si se han pedido. Ver
-       * `alternarAerofrenos` en `flight/input.ts`.
+       * `alternarAerofrenos` en `flight/input.ts`. Y la palanca de tres
+       * posiciones, los de tierra y el autofreno. Ver
+       * `flight/palanca-de-aerofrenos.ts`.
        */
-      readonly aerofrenos?: { readonly donde: number; readonly pedidos: boolean };
+      readonly aerofrenos?: {
+        readonly donde: number;
+        readonly pedidos: boolean;
+        readonly palanca?: "recogida" | "armada" | "fuera";
+        readonly deTierra?: number;
+        readonly autofreno?: "off" | "lo" | "med" | "max";
+        readonly frenando?: boolean;
+      };
       /** La velocidad que toca y el FMA. Ver `DatosDelTablero.spd` y `.fma`. */
       readonly spd?: DatosDelTablero["spd"];
       readonly fma?: DatosDelTablero["fma"];
@@ -2741,19 +2784,54 @@ export class Hud {
     this.trenTouch.hidden = !this.hayTren;
     this.flapsTouch.hidden = !this.hayFlaps;
     /*
-     * **Y el de los aerofrenos, solo en el aire y solo donde los hay.** En el
-     * suelo no frenan nada que no frene ya el freno, y así en el teléfono
-     * siguen cabiendo tres botones en fila: en tierra el freno, en el aire
-     * este. Encendido, abiertos; parpadeando, subiendo o bajando: los mismos
-     * estados que el tren y los flaps.
+     * **Y el de los aerofrenos, en tierra y en el aire, donde los hay.**
+     *
+     * Estaba solo en el aire, con el argumento de que en el suelo no frenan
+     * nada que no frene ya el freno. Es al revés: en el suelo es donde más
+     * frenan, porque matan la sustentación y el peso pasa a las ruedas. Y la
+     * palanca hay que verla al tocar, que es cuando sube sola.
+     *
+     * Lleva el dibujo de su posición —tumbado, armado, de pie— y los colores
+     * de siempre: verde fuera del todo, ámbar mientras suben o bajan, y el
+     * borde verde a trazos armada, que es «listo, sin sacar nada todavía».
      */
-    this.aerofrenosTouch.hidden = !this.hayAerofrenos || state.onGround;
+    this.aerofrenosTouch.hidden = !this.hayAerofrenos;
     const aerofrenos = mandos?.aerofrenos;
-    const abiertos = (aerofrenos?.donde ?? 0) > 0.98;
+    const palanca = aerofrenos?.palanca ?? (aerofrenos?.pedidos ? "fuera" : "recogida");
+    const donde = Math.max(aerofrenos?.donde ?? 0, aerofrenos?.deTierra ?? 0);
+    const abiertos = palanca === "fuera" && donde > 0.98;
     const moviendose =
-      !!aerofrenos && !abiertos && (aerofrenos.pedidos || aerofrenos.donde > 0.02);
+      !abiertos && (palanca === "fuera" ? true : donde > 0.02);
     this.aerofrenosTouch.classList.toggle("mando--fuera", abiertos);
     this.aerofrenosTouch.classList.toggle("mando--moviendose", moviendose);
+    this.aerofrenosTouch.classList.toggle(
+      "mando--armado",
+      palanca === "armada" && !moviendose,
+    );
+    const dibujo =
+      palanca === "fuera" || donde > 0.5
+        ? "aerofrenos"
+        : palanca === "armada"
+          ? "aerofrenos-armados"
+          : "aerofrenos-recogidos";
+    if (dibujo !== this.palancaPintada) {
+      this.palancaPintada = dibujo;
+      this.aerofrenosDibujo.innerHTML = DIBUJOS[dibujo];
+    }
+    /*
+     * Y el autofreno, en su rincón: una raya encendida por punto del selector,
+     * y verdes mientras frena.
+     */
+    this.autofrenoRayas.hidden = !this.hayAutofreno;
+    const modo = aerofrenos?.autofreno ?? "off";
+    if (modo !== this.autofrenoPintado) {
+      this.autofrenoPintado = modo;
+      this.autofrenoRayas.dataset["modo"] = modo;
+    }
+    this.autofrenoRayas.classList.toggle(
+      "mando__autofreno--frenando",
+      !!aerofrenos?.frenando,
+    );
     /*
      * Y los tres estados del tren, que son la pregunta que se hizo jugando:
      * «¿en qué parte del panel veo que se está poniendo o quitando?». Dentro,
@@ -3639,7 +3717,9 @@ export class Hud {
     window.setTimeout(() => b.classList.remove("mando--trabado"), 600);
   }
 
-  onMandoDeCabina(handler: (cual: "tren" | "flaps" | "aerofrenos") => void): void {
+  onMandoDeCabina(
+    handler: (cual: "tren" | "flaps" | "aerofrenos" | "autofreno") => void,
+  ): void {
     this.alTocarMando = handler;
   }
 
