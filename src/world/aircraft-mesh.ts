@@ -103,6 +103,19 @@ export interface AircraftMesh {
    */
   flaps?: import("./flaps").Flaps | null;
   /**
+   * Y los aerofrenos, en el avión que los lleva y cuyo modelo los trae
+   * sueltos: los dos reactores. `null` en los demás, que no los tienen, y en
+   * el respaldo de cajas. Ver `world/aerofrenos.ts`.
+   */
+  aerofrenos?: import("./aerofrenos").Aerofrenos | null;
+  /**
+   * Y su palanca en el pedestal de la cabina. Ver
+   * `world/palanca-de-aerofrenos.ts`.
+   */
+  palancaDeAerofrenos?:
+    | import("./palanca-de-aerofrenos").PalancaDeAerofrenos
+    | null;
+  /**
    * Si esto es el modelo de verdad y no las cajas de respaldo.
    *
    * Existe para poder **mirarlo desde fuera**, y hace falta porque el respaldo

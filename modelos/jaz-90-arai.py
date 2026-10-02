@@ -37,7 +37,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
-    Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
+    Piel, aerofreno, aerofrenos_libres, banda, centro_de_gravedad, contorno,
+    de_ala, de_deriva, dentro_de, piezas_de_aerofrenos,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
     en_punta, fowler, llantas, marca, neumaticos,
     paneles, paneles_zy, recogido, simetricos, superficie, turbofan, varillas,
@@ -291,8 +292,26 @@ def construir():
     # mover y las normales son las de siempre.
     flaps = [flap("dentro", E_POR_X * 2.80, 4.40, 0.73),
              flap("fuera", E_POR_X * (QUIEBRO + 0.15), 9.2, 0.73)]
+    # **Los aerofrenos, cinco por semiala, como los del E-170**: los dos de
+    # dentro del motor son solo de tierra, y los tres de fuera, los
+    # «multifunción», suben también en vuelo cuando se saca la palanca. Es el
+    # reparto que publica Embraer para la familia (cinco paneles por ala, tres
+    # multifunción por fuera y dos de tierra por dentro); los grados son los
+    # de su clase —los que publica Airbus para el A320: cuarenta en vuelo y
+    # cincuenta todos en tierra—. Van de la raya de la bisagra, que ya estaba
+    # pintada, a la junta del flap, y se parten en el motor, que es donde se
+    # parte la franja de los flaps. El de más adentro empieza pasado el
+    # carenado: levantado, su costado sube junto al fuselaje y lo mide
+    # `aerofrenos_libres`.
+    aerofrenos = [
+        aerofreno("1", 1.90, 3.04, 0.61, 0.715, vuelo=0, tierra=50),
+        aerofreno("2", 3.08, 4.36, 0.61, 0.715, vuelo=0, tierra=50),
+        aerofreno("3", 5.10, 6.30, 0.61, 0.715, vuelo=40, tierra=50),
+        aerofreno("4", 6.34, 7.54, 0.61, 0.715, vuelo=40, tierra=50),
+        aerofreno("5", 7.58, 8.76, 0.61, 0.715, vuelo=40, tierra=50),
+    ]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
-                     flaps=flaps, zonas=[
+                     flaps=flaps, aerofrenos=aerofrenos, zonas=[
         ("aluminio", 1.4, 12.2, 0.0, 0.07),
         # Los flaps, por dentro y por fuera del motor, y el alerón.
         (j, 1.0, 9.2, 0.715, 0.73),
@@ -315,8 +334,10 @@ def construir():
     # ciento; con el tercio de antes crecía un tres y en la última muesca el
     # giro se comía el carril y el borde volvía hacia delante.
     los_flaps = flaps_moviles(ala, flaps, fowler(
-        muescas=(0, 5, 15, 30), recorrido=(0, 0.44, 0.54, 0.80)))
+        muescas=(0, 5, 15, 30), recorrido=(0, 0.44, 0.54, 0.80)),
+        aerofrenos=aerofrenos)
     piezas += los_flaps
+    piezas += piezas_de_aerofrenos(aerofrenos)
 
     # Los carenados de los raíles de los flaps: las «canoas» que asoman por
     # detrás del borde de salida. Tres por ala, y la cola de las que caen bajo
@@ -437,9 +458,10 @@ def construir():
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
     # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
     # la franja que no baja, lo que queda de él donde acaba cada flap.
+    # Y los aerofrenos, que son chapa del ala por encima del pozo.
     recogido(patas, [p for p in piezas if p.type == "MESH" and (
         p.name in ("fuselaje", "carenado", "ala")
-        or p.name.startswith(("flap-", "franja-")))])
+        or p.name.startswith(("flap-", "franja-", "aerofreno-")))])
     piezas += patas
     # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
     # lo que cuelga cerca de él. Ver `flaps_libres`.
@@ -447,6 +469,12 @@ def construir():
         (p.parent and p.parent.name.startswith("bisagra-principal"))
         or p.name in ("fuselaje", "carenado", "pilon", "motor")
         or (p.name.startswith("canoa-") and "-cola" not in p.name))])
+
+    # Y ningún aerofreno se mete en el fuselaje, el carenado o el motor al
+    # subir. Ver `aerofrenos_libres`.
+    aerofrenos_libres(aerofrenos, [p for p in piezas if p.type == "MESH"
+                                   and p.name in ("fuselaje", "carenado",
+                                                  "pilon", "motor")])
 
     # El centro de gravedad, a un cuarto de la cuerda media del ala.
     piezas.append(centro_de_gravedad(z_ala(5.2) + 0.80))

@@ -54,6 +54,8 @@ import { crearLucesDePosicion } from "./luces-de-posicion";
 import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { prepararFlaps } from "./flaps";
+import { prepararAerofrenos } from "./aerofrenos";
+import { prepararPalancaDeAerofrenos } from "./palanca-de-aerofrenos";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
 import { luzDeCabina } from "./luz-de-cabina";
@@ -842,6 +844,10 @@ export async function cargarModelo(
     patas: prepararPatas(raiz),
     // Y los flaps, que en el avión que los trae sueltos bajan. Ver `flaps.ts`.
     flaps: prepararFlaps(raiz),
+    // Y los aerofrenos, en los reactores, que suben encima del ala; y su
+    // palanca en el pedestal. Ver `aerofrenos.ts` y `palanca-de-aerofrenos.ts`.
+    aerofrenos: prepararAerofrenos(raiz),
+    palancaDeAerofrenos: prepararPalancaDeAerofrenos(raiz),
     /*
      * Y la luz de dentro, **la última**: lo de arriba cambia los materiales
      * de los relojes y de los mandos, y la luz tiene que ver los que quedan.
