@@ -496,7 +496,8 @@ export class Hud {
   private trenTouch!: HTMLElement;
   private flapsTouch!: HTMLElement;
   private aerofrenosTouch!: HTMLElement;
-  private autofrenoTouch!: HTMLElement;
+  private aerofrenosDibujo!: HTMLElement;
+  private autofrenoRayas!: HTMLElement;
   /** El dibujo y el rótulo puestos, para no rehacerlos cada fotograma. */
   private palancaPintada = "";
   private autofrenoPintado = "";
@@ -1383,8 +1384,6 @@ export class Hud {
         -->
         <button class="mando mando--tren" type="button" data-hud="tren-touch" hidden
                 aria-label="${t("tecla.tren")}">${DIBUJOS.tren}</button>
-        <button class="mando mando--flaps" type="button" data-hud="flaps-touch" hidden
-                aria-label="${t("tecla.flaps")}">${DIBUJOS.flaps}</button>
         <!--
           **Y la palanca de los aerofrenos, en tierra y en el aire.**
 
@@ -1395,20 +1394,22 @@ export class Hud {
           posición en que está: el panel tumbado, el panel con la flecha de que
           va a subir solo, y el panel de pie. Ver
           flight/palanca-de-aerofrenos.ts.
+
+          Va **a la izquierda de la de flaps**, en la misma fila donde cabe,
+          que es donde está en el pedestal de un avión de línea: la palanca de
+          aerofrenos a la izquierda y la de flaps a la derecha. Y en su rincón,
+          el autofreno: tres rayas, una por punto del selector —LO, MED,
+          MAX—, que se arma con su tecla o tocando la tarjeta de la lista antes
+          de aterrizar.
         -->
         <button class="mando mando--aerofrenos" type="button" data-hud="aerofrenos-touch" hidden
-                aria-label="${t("tecla.aerofrenos")}">${DIBUJOS["aerofrenos-recogidos"]}</button>
-        <!--
-          Y el selector del autofreno, en los dos reactores: la rueda con su
-          pinza y tres rayas, que se encienden una por cada punto —LO, MED y
-          MAX—. Las letras, que son las de la cabina, donde se leen rótulos.
-        -->
-        <button class="mando mando--autofreno" type="button" data-hud="autofreno-touch" hidden
-                aria-label="${t("tecla.autofreno")}">${DIBUJOS.autofreno}${
-                  gauges
-                    ? `<span class="mando__rotulo" data-hud="autofreno-rotulo">OFF</span>`
-                    : ""
-                }</button>
+                aria-label="${t("tecla.aerofrenos")}"><span class="mando__dibujo"
+                data-hud="aerofrenos-dibujo">${DIBUJOS["aerofrenos-recogidos"]}</span><span
+                class="mando__autofreno" data-hud="autofreno-rayas" data-modo="off" hidden
+                aria-label="${t("tecla.autofreno")}"><i></i><i></i><i></i></span></button>
+        <button class="mando mando--flaps" type="button" data-hud="flaps-touch" hidden
+                aria-label="${t("tecla.flaps")}">${DIBUJOS.flaps}</button>
+
         ${
           numbers
             ? `<div class="tarjeta horizonte">
@@ -1699,7 +1700,8 @@ export class Hud {
     this.trenTouch = pick(this.root, "tren-touch");
     this.flapsTouch = pick(this.root, "flaps-touch");
     this.aerofrenosTouch = pick(this.root, "aerofrenos-touch");
-    this.autofrenoTouch = pick(this.root, "autofreno-touch");
+    this.aerofrenosDibujo = pick(this.root, "aerofrenos-dibujo");
+    this.autofrenoRayas = pick(this.root, "autofreno-rayas");
     // El marcado es nuevo: lo pintado en él, también.
     this.palancaPintada = "";
     this.autofrenoPintado = "";
@@ -1707,7 +1709,6 @@ export class Hud {
       [this.trenTouch, "tren"],
       [this.flapsTouch, "flaps"],
       [this.aerofrenosTouch, "aerofrenos"],
-      [this.autofrenoTouch, "autofreno"],
     ] as const) {
       boton.addEventListener("click", () => this.alTocarMando?.(cual));
     }
@@ -2705,24 +2706,22 @@ export class Hud {
           : "aerofrenos-recogidos";
     if (dibujo !== this.palancaPintada) {
       this.palancaPintada = dibujo;
-      this.aerofrenosTouch.innerHTML = DIBUJOS[dibujo];
+      this.aerofrenosDibujo.innerHTML = DIBUJOS[dibujo];
     }
     /*
-     * El del autofreno: una raya encendida por punto del selector, y verde
-     * mientras frena. Sus letras, donde se leen rótulos.
+     * Y el autofreno, en su rincón: una raya encendida por punto del selector,
+     * y verdes mientras frena.
      */
-    this.autofrenoTouch.hidden = !this.hayAutofreno;
+    this.autofrenoRayas.hidden = !this.hayAutofreno;
     const modo = aerofrenos?.autofreno ?? "off";
     if (modo !== this.autofrenoPintado) {
       this.autofrenoPintado = modo;
-      this.autofrenoTouch.dataset["modo"] = modo;
-      const rotulo = this.autofrenoTouch.querySelector(
-        '[data-hud="autofreno-rotulo"]',
-      );
-      if (rotulo) rotulo.textContent = modo.toUpperCase();
+      this.autofrenoRayas.dataset["modo"] = modo;
     }
-    this.autofrenoTouch.classList.toggle("mando--armado", modo !== "off" && !aerofrenos?.frenando);
-    this.autofrenoTouch.classList.toggle("mando--fuera", !!aerofrenos?.frenando);
+    this.autofrenoRayas.classList.toggle(
+      "mando__autofreno--frenando",
+      !!aerofrenos?.frenando,
+    );
     /*
      * Y los tres estados del tren, que son la pregunta que se hizo jugando:
      * «¿en qué parte del panel veo que se está poniendo o quitando?». Dentro,

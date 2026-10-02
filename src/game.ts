@@ -17445,6 +17445,13 @@ export class Game {
      */
     const enFinal =
       !s.onGround &&
+      /*
+       * Y por debajo de mil metros sobre el suelo: la zona es un cono de
+       * veinte kilómetros que no mira la altura, y a treinta y seis mil pies
+       * sobre el campo no se está aproximando nadie. Es la altura a la que se
+       * baja el tren en un reactor que viene a aterrizar.
+       */
+      s.heightAboveGround < 1000 &&
       enLaZonaDeAproximacion(
         this.laPistaDeAhora(),
         s.position.x,
