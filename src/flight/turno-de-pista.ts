@@ -245,6 +245,9 @@ export class TurnoDePista {
   /** Si en esta final ya se te dijo que la pista está ocupada. Ver `paso`. */
   private ocupadaDicha = false;
 
+  /** Si en esta final ya se te mandó al aire desde aquí. Ver `paso`. */
+  private alAireEnEstaFinal = false;
+
   constructor(private readonly de: AlrededorDelTurno) {
     /*
      * **Y la frecuencia le pregunta al dibujo si el que va a hablar ya está
@@ -613,10 +616,33 @@ export class TurnoDePista {
       this.aterrizajeSinAutorizar = false;
       this.numeroDos = null;
       this.ocupadaDicha = false;
+      this.alAireEnEstaFinal = false;
       return;
     }
     this.enFinal = true;
     if (!this.aterrizajeSinAutorizar) {
+      /*
+       * **Y con el permiso dado, la pista tiene que seguir libre.**
+       *
+       * La vigilancia de la pista se acababa al darte el permiso: lo que la
+       * ocupara después no lo miraba nadie, y se llegaba a la altura de
+       * decisión con un avión encima y la verde puesta. Gran Canaria, de
+       * noche, con el JAZ 120: «tengo un avión en la pista y nadie me dice que
+       * frustre, ya lo hago yo». Lo de verdad es lo mismo que sin permiso: con
+       * la pista ocupada no se aterriza, y si a la decisión sigue ocupada la
+       * torre te manda al aire, que anula el permiso que hubiera. Una vez por
+       * final: la orden se queda puesta hasta que se resuelve.
+       */
+      const ocupada = (): boolean => this.ocupadaEnElDibujo;
+      if (this.conTorre && !this.alAireEnEstaFinal && ocupada()) {
+        this.decirQueEstaOcupada();
+        const alto = this.de.alto();
+        if (alto < ALTURA_DE_DECISION && !this.de.mandanFrustrar?.()) {
+          this.alAireEnEstaFinal = true;
+          this.de.mandarteAlAire(alto, ocupada);
+          return;
+        }
+      }
       /*
        * **Y a la altura de decisión, el permiso tiene que haberse oído.**
        *
@@ -637,6 +663,7 @@ export class TurnoDePista {
       ) {
         this.de.boca.retirar(esTuPermisoDeAterrizar);
         this.de.retirarteElPermiso?.();
+        this.alAireEnEstaFinal = true;
         this.de.mandarteAlAire(alto, () => false);
       }
       return;
@@ -662,6 +689,7 @@ export class TurnoDePista {
       if (alto < ALTURA_DE_DECISION) {
         const delante = this.numeroDos;
         this.aterrizajeSinAutorizar = false;
+        this.alAireEnEstaFinal = true;
         this.de.mandarteAlAire(alto, () => this.de.radio.laTiene(delante));
       }
       return;
@@ -681,6 +709,7 @@ export class TurnoDePista {
       if (alto < ALTURA_DE_DECISION) {
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
+        this.alAireEnEstaFinal = true;
         this.de.mandarteAlAire(alto, ocupada);
       }
       return;
@@ -719,6 +748,7 @@ export class TurnoDePista {
       if (alto < ALTURA_DE_DECISION) {
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
+        this.alAireEnEstaFinal = true;
         this.de.mandarteAlAire(alto, todaviaNoEsTuya);
       }
       return;

@@ -593,6 +593,44 @@ describe("la pista que se ve, además de la que se oye", () => {
     expect(pasos).toEqual(["cleared to land", "go around"]);
   });
 
+  /*
+   * Gran Canaria, de noche, con el JAZ 120: «tengo un avión en la pista y
+   * nadie me dice que frustre, ya lo hago yo». El permiso se dio con la pista
+   * libre, y lo que la ocupaba después ya no lo miraba nadie: la vigilancia
+   * de la pista se acababa al dar el permiso.
+   */
+  it("y si alguien la ocupa después de tu permiso, a la decisión, al aire: una vez", () => {
+    const encima: string[] = [];
+    let alto = 250;
+    let ocupada = 0;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      trafico: () => dibujo(encima),
+      alto: () => alto,
+      avisarteOcupada: () => void ocupada++,
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    encima.push("EC-SAL");
+    // Por encima de la decisión todavía puede dejarla: se espera.
+    alto = 90;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    expect(ocupada).toBe(1);
+    alto = 58;
+    turno.paso("final");
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land", "go around"]);
+    // Y en la final siguiente, la pista libre, se vuelve a dar.
+    turno.paso("en-vuelo");
+    encima.length = 0;
+    alto = 250;
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land", "go around", "cleared to land"]);
+  });
+
   it("y la lámpara del punto de espera tampoco se pone verde", () => {
     const { turno } = montar(new Frecuencia(dados(3), "GCXO"), {
       trafico: () => dibujo(["EC-ABC"]),

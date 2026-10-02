@@ -237,11 +237,16 @@ const DE_LA_FASE: ReadonlySet<string> = (() => {
  * cuarenta metros en unos segundos, y para entonces la orden y su porqué
  * todavía están sonando: con el reloj corto caducaba, y la frustrada se
  * obedecía en silencio. Renunciar es ganar, y se dice.
+ *
+ * **Y el porqué de la pista ocupada**, por lo mismo: va detrás del «motor y
+ * al aire» de la torre, que corta y dura lo suyo. Llegando a Gando con un
+ * avión en la pista, la orden sonaba y «Pista ocupada. Subí y volvé por el
+ * circuito» caducaba esperando: en Guyrami se quedaba sin el porqué.
  */
 export function explicaLaOtraPunta(clave: string | undefined): boolean {
   return (
     !!clave &&
-    /^vuelo\.(?:laOtraPunta|alAireOtraPunta|alAireVientoDeCola|frustrada)(?:~\d+)?$/.test(
+    /^vuelo\.(?:laOtraPunta|alAireOtraPunta|alAireVientoDeCola|frustrada|mandanFrustrar)(?:~\d+)?$/.test(
       clave,
     )
   );

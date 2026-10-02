@@ -6541,11 +6541,18 @@ export class Game {
     );
     // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
     // es lo que se dice por radio, y lo demás es del instructor.
+    /*
+     * **Y en `mando`: renunciar es ganar, y se dice.** En `normal` no cabía
+     * en la cola —la orden de la torre, su porqué y los «muy rápido» de la
+     * subida van todos a la vez—, y en Gando las dos frustradas por la pista
+     * ocupada se obedecieron sin que nadie las felicitara.
+     */
     this.hechos.on("frustrada", () =>
       this.cantar(
         "going around. good decision",
         laFrustrada.texto,
         laFrustrada.id,
+        "mando",
       ),
     );
 
@@ -6894,12 +6901,20 @@ export class Game {
         porque === "noEstabilizada" && motivo
           ? `${dicho.id}+${motivo}`
           : dicho.id;
+      /*
+       * **Y con la pista ocupada, el porqué va en `mando`**, que es una orden
+       * con su porqué y va detrás de la de la torre, como el de la otra punta.
+       * En `normal` se caía de la cola: en Gando, con un avión en la pista, la
+       * torre dijo «motor y al aire» y la instructora no llegó a decir nada,
+       * con los «muy rápido» de la subida delante. Ver `explicaLaOtraPunta`.
+       */
       this.cantar(
         porque === "pistaOcupada" ? "go around, runway occupied" : "go around",
         porque === "pistaOcupada"
           ? dicho.texto
           : `${t(`motivo.${motivo}` as never)}. ${dicho.texto}`,
         conMotivo,
+        porque === "pistaOcupada" ? "mando" : "normal",
       );
     });
 

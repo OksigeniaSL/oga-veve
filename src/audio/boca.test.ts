@@ -1039,6 +1039,18 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
     expect(cuantoAguanta("vuelo.frustrada~2")).toBe(CADUCA_LA_ORDEN);
   });
 
+  /*
+   * Y el porqué de la pista ocupada, que es el mismo caso: se pide detrás del
+   * «motor y al aire» de la torre, que corta y dura lo suyo. En Gando, con la
+   * pista ocupada a la decisión, la torre sonó y «Pista ocupada. Subí y volvé
+   * por el circuito» caducó esperando las dos veces: en Guyrami la orden se
+   * quedaba sin el porqué.
+   */
+  it("y el porqué de la pista ocupada, también", () => {
+    expect(cuantoAguanta("vuelo.mandanFrustrar")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("vuelo.mandanFrustrar~3")).toBe(CADUCA_LA_ORDEN);
+  });
+
   it("y un aviso de paso, con su reloj corto", () => {
     expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
     expect(explicaLaOtraPunta("vuelo.alAireOtraPuntaX")).toBe(false);
