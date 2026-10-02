@@ -111,6 +111,24 @@ describe("qué se ve desde donde se va", () => {
     const v = queSeVe([rio], alNorte);
     expect(v?.lado).toBe("izquierda");
     expect(v?.distancia).toBeCloseTo(Math.hypot(6000, 3000), 0);
+    // Y **por ahí** se mira: la cámara que se gira hacia lo señalado apunta
+    // a este punto, no al primero del fichero, que va detrás del ala.
+    expect(v?.punto).toMatchObject({ x: -6000, z: -3000 });
+  });
+
+  it("y lo señalado dice a qué altura apuntar: a la cumbre, o un poco sobre el suelo", () => {
+    const cumbre = queSeVe([en("Teide", -12000, -6000, { ele: 3715 })], { ...alNorte, y: 3000 }, new Set(), () => 0);
+    expect(cumbre?.punto?.y).toBe(3715);
+    // Un lago no tiene cota: se apunta a su orilla, por encima del suelo que
+    // dice el relieve.
+    const lago = queSeVe(
+      [en("Ypacaraí", -12000, -6000, { clase: "agua", ele: null })],
+      { ...alNorte, y: 3000 },
+      new Set(),
+      () => 63,
+    );
+    expect(lago?.punto?.y).toBeGreaterThan(63);
+    expect(lago?.punto?.y).toBeLessThan(200);
   });
 
   it("sin hitos no pasa nada", () => {

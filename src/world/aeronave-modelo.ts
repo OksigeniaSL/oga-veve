@@ -61,6 +61,7 @@ import { atornillarPlaca } from "./placa-de-cabina";
 import { matriculaDe } from "../flight/matricula";
 import { vestirLaLibrea } from "./librea";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
+import { medirElPasaje } from "./asiento-de-pasaje";
 import { medirVistaAlFrente } from "./vista-al-frente";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
@@ -801,6 +802,12 @@ export async function cargarModelo(
 
   const ojo = ojoDelModelo(raiz, group);
   /*
+   * Y los asientos de ventanilla, con el modelo recién colocado y antes de
+   * tocarle nada: se miden sus ventanillas y su ala. Ver
+   * `asiento-de-pasaje.ts`.
+   */
+  const pasaje = medirElPasaje(raiz, group);
+  /*
    * Y lo que se ve desde ahí por encima del morro, **con el avión recién
    * montado**: sin discos de hélice ni pantallas encendidas, que no cambian
    * nada de lo que tapa. Ver `vista-al-frente.ts`.
@@ -829,6 +836,7 @@ export async function cargarModelo(
     helices,
     borrarHelices: discoDeHelice(helices),
     ojo,
+    pasaje,
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz, group),
     // Y los relojes, que hasta hoy eran discos grises. Ver `relojes-cabina.ts`.

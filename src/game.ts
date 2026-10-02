@@ -459,12 +459,25 @@ import {
 } from "./world/luces-de-rodadura";
 import {
   CAMERA_MODES,
+  comoSeMiraDesde,
   construirCamaras,
+  esDePasaje,
+  siguienteVista,
   type CameraMode,
   type CameraRig,
   type Contexto,
 } from "./cameras";
 import { sitioDeLaCola } from "./cameras/fuera";
+import {
+  darLaVuelta,
+  girarLaCabeza,
+  giroDeCabezaHacia,
+  giroDeVueltaHacia,
+  MiradaLibre,
+} from "./cameras/mirada";
+import { escucharLaMirada } from "./cameras/dedo-que-mira";
+import { MarcoDeVentanilla } from "./world/marco-de-ventanilla";
+import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
@@ -622,8 +635,12 @@ import {
   type SucesoDelCamino,
   type Zona,
 } from "./flight/turbulencia-del-vuelo";
-import { LoQueSeVe } from "./flight/lo-que-se-ve";
-import type { Hito } from "./world/hitos";
+import {
+  enFaseDeTrabajo,
+  LoQueSeVe,
+  type MomentoDeMirar,
+} from "./flight/lo-que-se-ve";
+import type { Hito, Mirada } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
 import { loQueSeDice } from "./audio/ventanilla";
 import { focoEncendido } from "./world/luces-de-posicion";
@@ -2926,6 +2943,9 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
+    this.loSenalado = null;
+    this.mirada.reiniciar();
     this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
@@ -3893,6 +3913,34 @@ export class Game {
    */
   private readonly camaras = construirCamaras();
   /**
+   * **El giro de la cabeza**, encima de la vista que toque: arrastrando el
+   * paisaje con el ratón o con un segundo dedo, o girándose hacia lo que
+   * señala la comandante. Vuelve sola. Ver `cameras/mirada.ts`.
+   */
+  private readonly mirada = new MiradaLibre();
+  /**
+   * **Dónde dejó la cámara la vista, sin el giro.**
+   *
+   * Las vistas de fuera se suavizan partiendo de donde estaba la cámara el
+   * fotograma anterior. Si se les diera la cámara ya girada, suavizarían
+   * desde lo girado y el giro se iría sumando consigo mismo: la cámara
+   * acabaría dando vueltas sola alrededor del avión. Así que antes de mover
+   * la vista se le devuelve lo suyo, y el giro va siempre encima.
+   */
+  private readonly poseDeLaVista = {
+    posicion: new Vector3(),
+    giro: new Quaternion(),
+    puesta: false,
+  };
+  /** El marco de la ventanilla del pasaje. Ver `world/marco-de-ventanilla.ts`. */
+  private readonly marcoDeVentanilla = new MarcoDeVentanilla();
+  /**
+   * **Lo último que se señaló por la ventanilla**, mientras se pueda mirar:
+   * qué es, por dónde se ve y qué tarjeta lo ofrece. Ver
+   * `mirarHaciaLoSenalado`.
+   */
+  private loSenalado: { mirada: Mirada; dibujo: string } | null = null;
+  /**
    * Lo que las cámaras necesitan saber del juego **sin conocer el juego**.
    *
    * Es un objeto y no cinco argumentos, y se reutiliza en vez de fabricarse
@@ -3907,6 +3955,7 @@ export class Game {
     movimientoReducido: false,
     traqueteo: 1,
     caidaMaxima: Number.POSITIVE_INFINITY,
+    pasaje: null as Contexto["pasaje"],
   };
   private readonly blobShadow: Mesh;
   /**
@@ -3968,14 +4017,27 @@ export class Game {
         -(((e.clientY - r.top) / r.height) * 2 - 1),
       ];
     };
-    options.canvas.addEventListener("pointermove", (e) => {
-      const [x, y] = enPantalla(e);
-      this.mirarLosMandos(x, y);
-    });
-    options.canvas.addEventListener("pointerup", (e) => {
-      const [x, y] = enPantalla(e);
-      this.pulsarElMando(x, y);
-      this.mirarLosMandos(x, y);
+    /*
+     * **Y arrastrar el paisaje es mirar.** Con el ratón, o con un segundo dedo
+     * mientras el pulgar lleva la palanca. Un toque sigue siendo un toque —a
+     * un mando de la cabina—, y un arrastre ya no pulsa nada al soltar. Ver
+     * `cameras/dedo-que-mira.ts`.
+     */
+    escucharLaMirada(options.canvas, {
+      alArrastrar: (dx, dy) => {
+        const k = this.radianesPorPixel();
+        this.mirada.arrastrar(dx * k, dy * k);
+      },
+      alSoltar: () => this.mirada.soltar(),
+      alTocar: (e) => {
+        const [x, y] = enPantalla(e);
+        this.pulsarElMando(x, y);
+        this.mirarLosMandos(x, y);
+      },
+      alPasar: (e) => {
+        const [x, y] = enPantalla(e);
+        this.mirarLosMandos(x, y);
+      },
     });
     this.renderer = new WebGLRenderer({
       canvas: options.canvas,
@@ -4026,6 +4088,8 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
+    // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella.
+    this.scene.add(this.marcoDeVentanilla.malla);
     /*
      * Las tormentas del día. Salen del tiempo de verdad: con buen tiempo no hay
      * ninguna y el radar está encendido sin pintar nada, que es lo que hace un
@@ -8196,6 +8260,9 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
+    this.loSenalado = null;
+    this.mirada.reiniciar();
     this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
@@ -10322,6 +10389,9 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
+    this.loSenalado = null;
+    this.mirada.reiniciar();
     this.reiniciarLaVentanillaAlt();
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
@@ -14260,9 +14330,14 @@ export class Game {
     return lista;
   }
 
-  private mirarPorLaVentanilla(dt: number): void {
+  /**
+   * **El momento, para la ventanilla**: dónde va el avión, a qué altura, a
+   * cuánto del campo y si hay hueco para hablar. Aparte porque lo preguntan
+   * dos: la comandante, para saber si puede contar algo, y la cámara, para
+   * saber si se puede girar a mirarlo. Ver `enFaseDeTrabajo`.
+   */
+  private momentoDeMirar(): MomentoDeMirar {
     const s = this.flight.state;
-    const conGente = conPasaje(this.aircraft.mass);
     /*
      * A cuánto está el campo más cercano del vuelo —el de salida o el de
      * llegada—, que es lo que decide si se está en la cabina estéril. Ver
@@ -14274,7 +14349,7 @@ export class Game {
         alCampo,
         Math.hypot(p.x - s.position.x, p.z - s.position.z),
       );
-    const mirada = this.ventanilla.paso(dt, {
+    return {
       fase: this.faseDeAhora as Fase,
       x: s.position.x,
       z: s.position.z,
@@ -14284,7 +14359,7 @@ export class Game {
       // metros por encima de Gando. Ver `cotaDeLaPistaAqui`.
       sobreElCampo: s.position.y - this.cotaDeLaPistaAqui(),
       alCampo,
-      conPasaje: conGente,
+      conPasaje: conPasaje(this.aircraft.mass),
       /*
        * Cualquiera de las bocas, y también la máquina. Esto es lo que menos
        * urge de todo lo que suena: una autorización no puede esperar y el
@@ -14301,7 +14376,19 @@ export class Game {
         // Y en un descenso de emergencia no se mira el paisaje: se baja.
         (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) ||
         !this.huecos.hayHueco,
-    }, () => this.loQueSeMueve());
+    };
+  }
+
+  private mirarPorLaVentanilla(dt: number): void {
+    const conGente = conPasaje(this.aircraft.mass);
+    const momento = this.momentoDeMirar();
+    /*
+     * **Y en cuanto empieza el trabajo, la cámara deja de ofrecerse.** Girarse
+     * a mirar el paisaje en una aproximación es exactamente lo que la cabina
+     * estéril prohíbe: la tarjeta se retira y, si estaba mirando, vuelve.
+     */
+    if (this.loSenalado && enFaseDeTrabajo(momento)) this.olvidarLoSenalado();
+    const mirada = this.ventanilla.paso(dt, momento, () => this.loQueSeMueve());
     if (!mirada) return;
     this.huecos.usar();
     // Y al revés: el avión que se señaló aquí ya no lo cuenta la radio.
@@ -14335,17 +14422,108 @@ export class Game {
       : canales.cifra && mirada.hito.ele !== null
         ? `${mirada.hito.nombre} · ${mirada.hito.ele} m`
         : mirada.hito.nombre;
+    const dibujo = comoDibujo(`hito-${mirada.hito.clase}-${mirada.lado}`);
+    /*
+     * **Y la tarjeta se toca para mirarlo.** El dibujo del sitio con su
+     * flecha ya decía hacia dónde mirar; tocándolo, la cámara se gira hacia
+     * allí, se queda un rato y vuelve sola. Sin leer y sin soltar los mandos:
+     * el pulgar sigue en la palanca y el otro dedo toca el dibujo. Ver
+     * `mirarHaciaLoSenalado`.
+     */
+    this.loSenalado = mirada.punto ? { mirada, dibujo } : null;
     this.hud.senal.mostrar(
-      comoDibujo(`hito-${mirada.hito.clase}-${mirada.lado}`),
+      dibujo,
       rotulo,
       null,
       /*
        * Prioridad cero: esto es lo que menos importa de todo lo que sale en
        * esa esquina. Un aviso de terreno, un tren sin bajar o la orden de la
        * torre tapan al paisaje, y hacen bien.
+       *
+       * Y doce segundos y no siete, ahora que se toca: siete eran para
+       * leerla, y para tocarla hay que oír la frase, encontrar la tarjeta y
+       * tener un dedo libre.
        */
-      { segundos: 7, prioridad: 0 },
+      {
+        segundos: mirada.punto ? 12 : 7,
+        prioridad: 0,
+        accion: mirada.punto ? () => this.mirarHaciaLoSenalado() : null,
+      },
     );
+  }
+
+  /**
+   * **Girarse hacia lo que se acaba de señalar**: la cámara va hacia allí con
+   * suavidad, se queda ocho segundos y vuelve sola.
+   *
+   * Desde la vista que se tenga: desde la cabina se gira la cabeza, desde
+   * fuera se da la vuelta al avión, y en el pasaje se mira por la ventanilla
+   * **del lado del sitio** — si el Teide está a la izquierda y se iba sentado
+   * a la derecha, se cambia de asiento, que es lo que haría cualquiera.
+   *
+   * Y nunca en las fases de trabajo: ahí se vuela. Devuelve si se giró.
+   */
+  mirarHaciaLoSenalado(): boolean {
+    const senalado = this.loSenalado;
+    const punto = senalado?.mirada.punto;
+    if (!senalado || !punto) return false;
+    if (enFaseDeTrabajo(this.momentoDeMirar())) {
+      this.olvidarLoSenalado();
+      return false;
+    }
+    if (esDePasaje(this.cameraMode) && this.hayPasaje) {
+      const p = this.flight.state.position;
+      const haciaEl = Math.atan2(punto.x - p.x, -(punto.z - p.z));
+      const relativo = Math.atan2(
+        Math.sin(haciaEl - this.flight.state.heading),
+        Math.cos(haciaEl - this.flight.state.heading),
+      );
+      const suyo = relativo < 0 ? "pasaje-izquierda" : "pasaje-derecha";
+      if (suyo !== this.cameraMode) {
+        this.cameraMode = suyo;
+        recordarVista(suyo);
+      }
+    }
+    this.mirada.empezarAMirar();
+    return true;
+  }
+
+  /**
+   * Lo señalado deja de poder mirarse: se retira su tarjeta y, si se estaba
+   * mirando, la cabeza vuelve.
+   */
+  private olvidarLoSenalado(): void {
+    if (this.loSenalado) this.hud.senal.caducar(this.loSenalado.dibujo);
+    this.loSenalado = null;
+    this.mirada.dejarDeMirar();
+  }
+
+  /** Lo señalado y hacia dónde se mira, para el banco. */
+  get miradaParaBanco(): {
+    senalado: { nombre: string; clase: string; lado: string; punto: { x: number; y: number; z: number } } | null;
+    guinada: number;
+    cabeceo: number;
+    apuntando: boolean;
+    vista: CameraMode;
+  } {
+    const m = this.loSenalado?.mirada;
+    return {
+      senalado:
+        m?.punto
+          ? { nombre: m.hito.nombre, clase: m.hito.clase, lado: m.lado, punto: m.punto }
+          : null,
+      guinada: this.mirada.guinada,
+      cabeceo: this.mirada.cabeceo,
+      apuntando: this.mirada.apuntando,
+      vista: this.vistaQueHay(),
+    };
+  }
+
+  /** Arrastrar el paisaje desde el banco, en píxeles, como un dedo. */
+  arrastrarLaMiradaParaBanco(dx: number, dy: number, soltar: boolean): void {
+    const k = this.radianesPorPixel();
+    this.mirada.arrastrar(dx * k, dy * k);
+    if (soltar) this.mirada.soltar();
   }
 
   private avanzarPlan(dt: number): void {
@@ -15376,7 +15554,8 @@ export class Game {
    */
   private updateCamera(dt: number): void {
     const state = this.flight.state;
-    const rig: CameraRig = this.camaras[this.cameraMode];
+    const modo = this.vistaQueHay();
+    const rig: CameraRig = this.camaras[modo];
 
     // El avión, escondido solo en la vista de pájaro. Va aquí y no al cambiar
     // de vista para que valga también cuando el modelo se carga o se cambia.
@@ -15390,8 +15569,19 @@ export class Game {
     ctx.aLaVista = this.adelantoDelSigueme;
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
+    ctx.pasaje = this.aircraftMesh.pasaje ?? null;
 
+    // Lo que puso la vista el paso anterior, sin el giro de la cabeza encima.
+    // Ver `poseDeLaVista`.
+    if (this.poseDeLaVista.puesta) {
+      this.camera.position.copy(this.poseDeLaVista.posicion);
+      this.camera.quaternion.copy(this.poseDeLaVista.giro);
+    }
     rig.update(this.camera, state, dt, ctx);
+    this.poseDeLaVista.posicion.copy(this.camera.position);
+    this.poseDeLaVista.giro.copy(this.camera.quaternion);
+    this.poseDeLaVista.puesta = true;
+    this.girarLaMirada(modo, dt);
     /*
      * Y el encuadre sobre el HUD, repasado dos veces por segundo: la barra de
      * arriba y el cuadro cambian de alto sin que cambie la ventana —se baja el
@@ -15404,6 +15594,82 @@ export class Game {
       this.encuadrarSobreElCuadro(false);
     }
     this.ajustarElAngulo(rig.fovDeseado(state, ctx), dt);
+    this.ponerElMarco(modo);
+  }
+
+  /**
+   * **La vista que se puede poner con este avión**: la elegida, salvo que sea
+   * una de pasaje y este avión no lo lleve —o su modelo todavía no ha
+   * llegado—, que entonces es la cabina. La elegida no se toca: al volver a
+   * un avión con pasaje, ahí sigue.
+   */
+  private vistaQueHay(): CameraMode {
+    return esDePasaje(this.cameraMode) && !this.hayPasaje ? "cockpit" : this.cameraMode;
+  }
+
+  /**
+   * Si este avión lleva pasaje y su modelo trae las ventanillas por las que
+   * mirar. Ver `world/asiento-de-pasaje.ts`.
+   */
+  private get hayPasaje(): boolean {
+    return conPasaje(this.aircraft.mass) && !!this.aircraftMesh.pasaje;
+  }
+
+  /**
+   * Cuántos radianes gira la cabeza por cada píxel que se arrastra: los que
+   * mide un píxel en el centro de la imagen. Así el paisaje se queda debajo
+   * del dedo, que es lo que hace que arrastrar se entienda solo.
+   */
+  private radianesPorPixel(): number {
+    const alto = this.renderer.domElement.clientHeight || window.innerHeight || 1;
+    return (2 * Math.tan(MathUtils.degToRad(this.camera.fov) / 2)) / alto;
+  }
+
+  /**
+   * **El giro de la cabeza, encima de la vista.** Desde dentro gira la
+   * cabeza; desde fuera, da la vuelta al avión. Y si se está mirando lo
+   * señalado, hacia dónde queda ahora, que el avión avanza. Ver
+   * `cameras/mirada.ts`.
+   */
+  private girarLaMirada(modo: CameraMode, dt: number): void {
+    const state = this.flight.state;
+    const { como, topes } = comoSeMiraDesde(modo);
+    this.mirada.ponerTopes(topes);
+    const punto = this.loSenalado?.mirada.punto;
+    if (this.mirada.apuntando && punto)
+      this.mirada.apuntarA(
+        como === "cabeza"
+          ? giroDeCabezaHacia(this.camera, state.orientation, punto)
+          : giroDeVueltaHacia(this.camera, state.position, punto),
+      );
+    this.mirada.paso(dt);
+    const giro = { guinada: this.mirada.guinada, cabeceo: this.mirada.cabeceo };
+    if (como === "cabeza") girarLaCabeza(this.camera, state.orientation, giro);
+    else
+      darLaVuelta(this.camera, state.position, giro, (x, z) =>
+        this.terrain.sampleSurface(x, z),
+      );
+  }
+
+  /**
+   * **El marco de la ventanilla**, en la vista de pasaje: encendido, en su
+   * sitio y con la luz de la hora. Y la losa de las ventanillas del modelo,
+   * escondida mientras tanto, que desde dentro taparía el cristal. Ver
+   * `world/marco-de-ventanilla.ts`.
+   */
+  private ponerElMarco(modo: CameraMode): void {
+    const pasaje = this.aircraftMesh.pasaje;
+    const dentro = esDePasaje(modo) && !!pasaje;
+    this.marcoDeVentanilla.visible = dentro;
+    if (pasaje) pasaje.ventanillas.visible = !dentro;
+    if (!dentro) return;
+    const asiento = modo === "pasaje-izquierda" ? pasaje.izquierda : pasaje.derecha;
+    this.marcoDeVentanilla.poner(
+      this.camera,
+      this.flight.state,
+      asiento.ventanilla,
+      diaEnLaCabina(this.sky.sunDirection.y),
+    );
   }
 
   /**
@@ -17608,9 +17874,8 @@ export class Game {
   }
 
   private cycleCamera(): void {
-    const index = CAMERA_MODES.indexOf(this.cameraMode);
-    this.cameraMode =
-      CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? "chase";
+    // Las de pasaje, solo en el avión que lo lleva. Ver `vistasDe`.
+    this.cameraMode = siguienteVista(this.cameraMode, this.hayPasaje);
     recordarVista(this.cameraMode);
     this.hud.ponerVistaDeCabina(this.cameraMode === "cockpit");
     // Y el encuadre, que cambia con ella: desde la cabina no hay cuadro que

@@ -72,6 +72,22 @@ export interface Contexto {
    * Sin límite, `Infinity`.
    */
   readonly caidaMaxima?: number;
+  /**
+   * Los dos asientos de ventanilla, si el avión lleva pasaje y el modelo sus
+   * ventanillas. Ver `world/asiento-de-pasaje.ts`.
+   */
+  readonly pasaje?: {
+    readonly izquierda: AsientoDePasaje;
+    readonly derecha: AsientoDePasaje;
+  } | null;
+}
+
+/** Lo que la vista de pasaje necesita de un asiento. */
+export interface AsientoDePasaje {
+  readonly ojo: { readonly x: number; readonly y: number; readonly z: number };
+  /** Hacia dónde se mira sentado, rad, en el marco del avión. */
+  readonly guinada: number;
+  readonly cabeceo: number;
 }
 
 export interface CameraRig {

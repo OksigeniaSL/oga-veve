@@ -109,6 +109,16 @@ export interface Mirada {
   readonly distancia: number;
   /** Ángulo respecto al morro, en grados, de 0 a 180. */
   readonly desdeElMorro: number;
+  /**
+   * **Por dónde se mira**, en el marco del escenario: el punto del hito por
+   * el que pasa la línea de vista, con la altura a la que se apunta.
+   *
+   * Lo pide la cámara que se gira hacia lo que se señala: un río es una
+   * línea, y girarse hacia su primer punto del fichero —que puede estar a
+   * cien kilómetros— sería mirar a otro sitio que el que la comandante dice.
+   * Ver `cameras/mirada.ts`.
+   */
+  readonly punto?: { readonly x: number; readonly y: number; readonly z: number };
 }
 
 /**
@@ -271,6 +281,9 @@ export function queSeVe(
         lado: cerca.rel < 0 ? "izquierda" : "derecha",
         distancia: cerca.d,
         desdeElMorro: Math.abs(cerca.rel),
+        // Sin relieve no se sabe la cota del suelo: el sitio a su cota, o un
+        // poco por encima del mar.
+        punto: { x: cerca.x, y: cerca.ele ?? POR_ENCIMA, z: cerca.z },
       },
       merito: (hito.peso ?? 1) * VALE_UN_PESO - cerca.d,
       puntos,
@@ -291,6 +304,7 @@ export function queSeVe(
         lado: rel < 0 ? "izquierda" : "derecha",
         distancia: p.d,
         desdeElMorro: Math.abs(rel),
+        punto: { x: p.x, y, z: p.z },
       };
     }
   }
