@@ -210,7 +210,14 @@ export function seLePasoElMomento(clave: string | undefined, fase: Fase): boolea
 const VALE_MIENTRAS: Readonly<Record<string, readonly Fase[]>> = {
   "comandante.crosscheck": ["estacionado", "arrancando", "rodando"],
   "comandante.bienvenida": ["rodando", "esperando", "autorizado", "back-taxi", "alineando"],
-  "comandante.despegue": ["autorizado", "alineando", "despegando"],
+  /*
+   * **Y el de sentarse vale también remontando la pista.** Donde se sale con
+   * back-taxi —Pettirossi—, entre la verde y la alineación se rueda por la
+   * propia pista, y eso es la misma ventana: ya se está en la pista y lo
+   * siguiente es despegar. Sin esto, el anuncio que esperaba turno detrás de
+   * la torre se retiraba al entrar en ella, y no se volvía a pedir.
+   */
+  "comandante.despegue": ["autorizado", "back-taxi", "alineando", "despegando"],
 };
 
 /**

@@ -27,8 +27,11 @@
  * 2. **Lo urgente**: el terreno, la pista ocupada, la frustrada. Es lo único
  *    que **corta** a quien esté hablando, megafonía incluida —un anuncio a
  *    medias se corta antes que callar un «subí» con el monte delante—.
- * 3. **Lo que es para ti** (`mando`): la lámpara, tus autorizaciones, la ruta.
- *    No corta a nadie, pero **pasa delante** de todo lo que espera.
+ * 3. **Lo que es para ti** (`mando`): la lámpara, tus autorizaciones, la ruta,
+ *    las aves de tu final y **el tráfico que tienes cerca**. No corta a nadie,
+ *    pero **pasa delante** de todo lo que espera; y lo que describe algo que
+ *    sigue ahí —las aves, el tráfico— espera lo que haga falta y lo retira
+ *    quien sabe que dejó de ser verdad.
  * 4. **La instructora** (`normal`): lo que enseña ahora mismo.
  * 5. **La megafonía**: la comandante y la tripulación. Habla cuando no habla
  *    nadie —ver `audio/megafonia.ts`— y una vez que habla **no la pisa nadie**:

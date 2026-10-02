@@ -256,3 +256,97 @@ describe("el aviso del TCAS, explicado una vez por pasada", () => {
     expect(info.yaContados.has("circuito:EC-ABC")).toBe(false);
   });
 });
+
+/**
+ * **Con la boca ocupada, pide turno y espera mientras sea verdad.**
+ *
+ * Esperaba a que nadie hablara ni esperara turno, y en una final con todos en
+ * el mismo turno eso no llegaba: camino de Tenerife Sur con el JAZ 90, el del
+ * circuito a doscientos pies en tu final y doce segundos sin una palabra,
+ * «callado: la boca (hablando, 2 en cola)». Ahora se pide en cuanto toca y lo
+ * que se mira mientras espera es si sigue siendo verdad. Ver `revisar`.
+ */
+describe("y con la boca ocupada, pide turno", () => {
+  /** Cómo se diría: la hora, las millas y la altura, como la clave de turno. */
+  const comoSeDice = (a: Parameters<typeof cifrasDelTrafico>[0]) =>
+    JSON.stringify(cifrasDelTrafico(a));
+
+  it("y mientras espera no se da otra; al sonar, sigue la regla de siempre", () => {
+    const info = new InformacionDeTrafico();
+    const dos = [al("A", 2, 300), al("B", 4, 300)];
+    const n = info.pedida("A", comoSeDice(info.paso(0.1, YO, dos)!));
+    expect(info.esperando?.id).toBe("A");
+    expect(info.paso(ENTRE_DOS, YO, dos)).toBeNull();
+    expect(info.porQueCalla).toBe("esperando turno");
+    info.seOyo(n);
+    expect(info.esperando).toBeNull();
+    expect(info.paso(ENTRE_DOS, YO, dos)?.id).toBe("B");
+  });
+
+  it("contado quiere decir oído: el TCAS explica entero lo que todavía espera", () => {
+    const info = new InformacionDeTrafico();
+    const n = info.pedida("A", comoSeDice(info.paso(0.1, YO, [al("A", 2, 300)])!));
+    expect(info.yaContados.has("A")).toBe(true);
+    expect(info.yaInformado("A")).toBe(false);
+    info.seOyo(n);
+    expect(info.yaInformado("A")).toBe(true);
+  });
+
+  it("si se cae de la cola sin sonar, no cuenta y se vuelve a dar", () => {
+    const info = new InformacionDeTrafico();
+    const n = info.pedida("A", comoSeDice(info.paso(0.1, YO, [al("A", 2, 300)])!));
+    info.seCayo(n);
+    expect(info.esperando).toBeNull();
+    // Sin esperar el rato entre dos: ese rato es para dos que se oyen.
+    expect(info.paso(0.1, YO, [al("A", 2, 300)])?.id).toBe("A");
+  });
+
+  it("si el otro se aleja mientras espera, se retira y no cuenta como dicha", () => {
+    const info = new InformacionDeTrafico();
+    const dice = comoSeDice(info.paso(0.1, YO, [al("A", 2, 300)])!);
+    info.pedida("A", dice);
+    expect(info.revisar(YO, [al("A", 2, 300)], comoSeDice)).toBeNull();
+    expect(info.revisar(YO, [al("A", 7, 300)], comoSeDice)).toEqual({ retirar: dice });
+    expect(info.esperando).toBeNull();
+    // Y si vuelve, se cuenta: la primera vez no se oyó.
+    expect(info.paso(0.1, YO, [al("A", 3, 300)])?.id).toBe("A");
+  });
+
+  it("y bajando de quinientos pies, o con el terreno, también se retira", () => {
+    for (const yo of [{ ...YO, sobreElSuelo: 100 }, { ...YO, callado: true }]) {
+      const info = new InformacionDeTrafico();
+      const dice = comoSeDice(info.paso(0.1, YO, [al("A", 2, 300)])!);
+      info.pedida("A", dice);
+      expect(info.revisar(yo, [al("A", 2, 300)], comoSeDice)?.retirar).toBe(dice);
+    }
+  });
+
+  it("si lo que diría ya es otro, se pide con lo de ahora, y lo de antes ya no cuenta", () => {
+    const info = new InformacionDeTrafico();
+    const antes = info.paso(0.1, YO, [al("A", 2, 300)])!;
+    const n = info.pedida("A", comoSeDice(antes));
+    // Pasa de las tres a las doce, a milla y media por delante.
+    const delante: Intruso = { id: "A", x: 0, y: YO.y + 300 * PIE, z: -1.5 * MILLA };
+    const r = info.revisar(YO, [delante], comoSeDice);
+    expect(r?.retirar).toBe(comoSeDice(antes));
+    expect(r?.otra?.aviso.hora).toBe(12);
+    expect(info.esperando?.n).toBe(r?.otra?.n);
+    // La que se retira avisa de que se cae: ya no es la que espera.
+    info.seCayo(n);
+    expect(info.esperando?.n).toBe(r?.otra?.n);
+    // Y mientras diga lo mismo, no se toca.
+    expect(info.revisar(YO, [delante], comoSeDice)).toBeNull();
+  });
+
+  it("y si lo cuenta otro mientras espera, se retira: un suceso, una voz", () => {
+    const info = new InformacionDeTrafico();
+    const dice = comoSeDice(info.paso(0.1, YO, [al("A", 2, 300)])!);
+    const n = info.pedida("A", dice);
+    expect(info.darPorContado("B")).toBeNull();
+    expect(info.darPorContado("A")).toBe(dice);
+    expect(info.esperando).toBeNull();
+    // El aviso de la que se retira no la descuenta: ya la contó otro.
+    info.seCayo(n);
+    expect(info.paso(ENTRE_DOS, YO, [al("A", 2, 300)])).toBeNull();
+  });
+});

@@ -558,6 +558,18 @@ describe("a lo que se le pasó el momento", () => {
     expect(seLePasoElMomento("comandante.crosscheck~2", "autorizado")).toBe(true);
   });
 
+  /*
+   * Donde se sale con back-taxi, entre la verde y la alineación se rueda por
+   * la propia pista: el anuncio que esperaba turno detrás de la torre se
+   * retiraba al entrar en ella y no se volvía a pedir. Ver `VALE_MIENTRAS`.
+   */
+  it("el de sentarse, de la verde al V1, también remontando la pista", () => {
+    expect(seLePasoElMomento("comandante.despegue", "autorizado")).toBe(false);
+    expect(seLePasoElMomento("comandante.despegue", "back-taxi")).toBe(false);
+    expect(seLePasoElMomento("comandante.despegue", "despegando")).toBe(false);
+    expect(seLePasoElMomento("comandante.despegue", "comprometido")).toBe(true);
+  });
+
   it("la bienvenida, con su plan y su sitio, hasta alinearse", () => {
     expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "rodando")).toBe(false);
     expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "en-vuelo")).toBe(true);

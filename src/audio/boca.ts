@@ -77,7 +77,7 @@
  * existe `SpeechSynthesisUtterance`.
  */
 
-import { esElAvisoDeAves, noSePierde } from "./torre";
+import { esElAvisoDeAves, esLaInformacionDeTrafico, noSePierde } from "./torre";
 import { CADUCA_LA_MEGAFONIA, esDeLaMegafonia, pesoDe } from "./turnos";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
@@ -148,7 +148,12 @@ export function cuantoAguanta(
   clave: string | undefined,
   urgencia: Urgencia = "normal",
 ): number {
-  if (noSePierde(clave, urgencia) || anunciaLaFase(clave) || esElAvisoDeAves(clave))
+  if (
+    noSePierde(clave, urgencia) ||
+    anunciaLaFase(clave) ||
+    esElAvisoDeAves(clave) ||
+    esLaInformacionDeTrafico(clave)
+  )
     return Infinity;
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
@@ -547,14 +552,20 @@ export class Boca {
    * **Si el canal está libre**: nadie hablando, nadie esperando turno y el
    * silencio de la frase anterior ya cumplido. Lo que se pida ahora suena ya.
    *
-   * Es lo que mira quien habla por su cuenta —la frecuencia, la torre dando
-   * tráfico, la instructora contando la fase— antes de abrir la boca. Una
-   * radio es de uno en uno: el que quiere transmitir espera a que el otro
-   * suelte el pulsador, y no se pone a la cola. Poniéndose a la cola, lo que
-   * decía el otro avión esperaba detrás de la torre, caducaba sin sonar y la
-   * frecuencia lo daba por dicho: en Los Rodeos, camino de Tenerife Sur, se
-   * cayeron así un «cleared to land» a otro, la información de tráfico y la
-   * fase de final, todas por «caducó esperando».
+   * Es lo que mira quien habla por su cuenta —la frecuencia de los demás—
+   * antes de abrir la boca. Una radio es de uno en uno: el que quiere
+   * transmitir espera a que el otro suelte el pulsador, y no se pone a la
+   * cola. Poniéndose a la cola, lo que decía el otro avión esperaba detrás de
+   * la torre, caducaba sin sonar y la frecuencia lo daba por dicho: en Los
+   * Rodeos, camino de Tenerife Sur, se cayeron así un «cleared to land» a
+   * otro, la información de tráfico y la fase de final, todas por «caducó
+   * esperando».
+   *
+   * **Y no vale para lo que es para ti.** La información de tráfico también
+   * esperaba aquí, y en una final con todos en el mismo turno la boca no se
+   * queda libre nunca: el del circuito, en tu final y sin una palabra. Lo
+   * tuyo pide turno y espera mientras sea verdad. Ver
+   * `esLaInformacionDeTrafico` en `audio/torre.ts`.
    */
   get libre(): boolean {
     return (
@@ -800,6 +811,17 @@ export class Boca {
       if (a.lista) continue;
       if (sueltaLaPista(a.clave, a.urgencia)) continue;
       if (noSePierde(a.clave, a.urgencia)) continue;
+      /*
+       * **Ni un anuncio de la megafonía**, por lo mismo que no lo barre un
+       * urgente: no describe un instante, y lo tira su propio reloj si espera
+       * demasiado. Con el peso más bajo de lo que se dice, era siempre el que
+       * sobraba: aterrizando en Los Rodeos con el JAZ 90, la fase de
+       * aterrizado, la de salir de la pista y los flaps llenaban la cola y
+       * «comandante.llegada: no cabía en la cola» — Jazlyn sin despedida. Va
+       * de uno en uno —ver `megafoniaHablando` en `game.ts`—, así que la cola
+       * crece como mucho en uno.
+       */
+      if (esDeLaMegafonia(a.clave)) continue;
       if (peor < 0) {
         peor = i;
         continue;
