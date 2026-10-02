@@ -969,8 +969,56 @@ const AEROFRENOS = icono(`
   <path d="M2.2 15.2 q6.4 -3.8 12.6 -3.1 l7 2.3 q-8.4 2 -19.6 0.8 Z" />
   <path d="M10.4 12.2 L14.8 5.2" fill="none" stroke="currentColor"
         stroke-width="2.8" stroke-linecap="round" />
+  <circle cx="10.4" cy="12.2" r="1.5" />
   <path d="M17 6.4 q2.4 0.6 3.2 2.8" fill="none" stroke="currentColor"
         stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+`);
+
+/**
+ * **Los aerofrenos recogidos**: el mismo panel, tumbado encima del ala, con
+ * su bisagra delante. Es la palanca abajo. Que se vea la tabla y no solo el
+ * ala es lo que lo separa del dibujo de los flaps, que es el borde de atrás
+ * bajando: aquí lo que se mueve está **encima**.
+ */
+const AEROFRENOS_RECOGIDOS = icono(`
+  <path d="M2.2 15.2 q6.4 -3.8 12.6 -3.1 l7 2.3 q-8.4 2 -19.6 0.8 Z" />
+  <path d="M10.4 11 L17 11.6" fill="none" stroke="currentColor"
+        stroke-width="2.6" stroke-linecap="round" />
+  <circle cx="10.4" cy="11" r="1.5" />
+`);
+
+/**
+ * **Los aerofrenos armados**: el panel tumbado y la flecha que dice que va a
+ * subir solo. Es la palanca un punto arriba, antes de aterrizar, y es el
+ * dibujo de la tarjeta que la pide en la lista. Ver
+ * `flight/palanca-de-aerofrenos.ts`.
+ */
+const AEROFRENOS_ARMADOS = icono(`
+  <path d="M2.2 15.2 q6.4 -3.8 12.6 -3.1 l7 2.3 q-8.4 2 -19.6 0.8 Z" />
+  <path d="M10.4 11 L17 11.6" fill="none" stroke="currentColor"
+        stroke-width="2.6" stroke-linecap="round" />
+  <circle cx="10.4" cy="11" r="1.5" />
+  <path d="M17.6 9.2 Q17.4 5 13.2 3.6" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" />
+  <path d="M13.4 1.6 L12.2 3.9 L14.6 5.2" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
+ * **El autofreno**: la rueda con la pinza del freno mordiendo, y las tres
+ * rayas de cuánto —LO, MED y MAX—. Las rayas se encienden en el botón según
+ * el selector; en la tarjeta van las tres.
+ */
+const AUTOFRENO = icono(`
+  <circle cx="8.6" cy="12" r="6.6" />
+  <circle class="senal__hueco" cx="8.6" cy="12" r="2.4" />
+  <rect x="13.4" y="7.8" width="3.4" height="8.4" rx="1.4" />
+  <path class="autofreno__raya" data-raya="1" d="M19.2 16.4 h3" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  <path class="autofreno__raya" data-raya="2" d="M19.2 12 h3" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  <path class="autofreno__raya" data-raya="3" d="M19.2 7.6 h3" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" />
 `);
 
 /**
@@ -1047,6 +1095,9 @@ export const DIBUJOS = {
   frio: FRIO,
   mascara: MASCARA,
   aerofrenos: AEROFRENOS,
+  "aerofrenos-recogidos": AEROFRENOS_RECOGIDOS,
+  "aerofrenos-armados": AEROFRENOS_ARMADOS,
+  autofreno: AUTOFRENO,
   freno: FRENO,
   combustible: COMBUSTIBLE,
   servicio: SERVICIO,

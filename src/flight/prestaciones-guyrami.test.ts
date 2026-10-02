@@ -73,9 +73,16 @@ function metros(
 describe("los metros de Guyrami", () => {
   for (const a of AIRCRAFT) {
     it(`${a.id} frena en los metros que dice la física`, () => {
+      // Como se aterriza y como cuenta la cuenta: flaps de aterrizaje, freno a
+      // fondo y los frenos de tierra fuera en el avión que los lleva.
       const d = metros(
         enElSuelo(a, velocidadDeToma(a)),
-        { throttle: 0, brakes: 1 },
+        {
+          throttle: 0,
+          brakes: 1,
+          flaps: 1,
+          frenosDeTierra: a.frenosDeTierra ? 1 : 0,
+        },
         (v) => v < 0.5,
       );
       const cuenta = rodaduraDeFrenada(a);
@@ -101,8 +108,13 @@ describe("los metros de Guyrami", () => {
     enHierba.ponerSuperficie("hierba");
     const d1 = metros(enAsfalto, { throttle: 0, brakes: 1 }, (v) => v < 0.5);
     const d2 = metros(enHierba, { throttle: 0, brakes: 1 }, (v) => v < 0.5);
-    // Menos, que en hierba se frena antes: el rozamiento de rodadura ayuda.
-    expect(d2).toBeLessThan(d1);
+    /*
+     * Más, que la rueda frenada patina en la hierba: el manual del 172 pide un
+     * 45 % más de rodadura de aterrizaje en hierba seca. Aquí decía que menos,
+     * porque solo contaba la rodadura —que en hierba sí frena más— y no el
+     * freno. Ver `EN_HIERBA` en `frenada.ts`.
+     */
+    expect(d2).toBeGreaterThan(d1 * 1.2);
   });
 });
 

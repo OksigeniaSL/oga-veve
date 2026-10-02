@@ -18,7 +18,7 @@
 import { describe, expect, it } from "vitest";
 import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT } from "./aircraft";
-import { rodaduraDeFrenada } from "./carrera";
+import { rodaduraDeFrenada, velocidadDeToma } from "./carrera";
 import { neutralControls } from "./model";
 
 const GRAVEDAD = 9.80665;
@@ -32,7 +32,19 @@ function frenarDesde(
   desde: number,
   /** Pendiente de la pista, en tanto por uno. Negativa es cuesta abajo. */
   pendiente = 0,
-): { metros: number; g: number; segundos: number; enElAire: number } {
+  /**
+   * Y cómo se aterriza, si se quiere como de verdad: los flaps de aterrizaje
+   * y los frenos de tierra en el que los lleva. Sin poner, el avión limpio.
+   */
+  comoSeAterriza = false,
+): {
+  metros: number;
+  g: number;
+  segundos: number;
+  enElAire: number;
+  /** La deceleración más fuerte mientras corre, en g. */
+  pico: number;
+} {
   const aircraft = AIRCRAFT.find((a) => a.id === id)!;
   const modelo = new CoefficientFlightModel({
     aircraft,
@@ -45,12 +57,20 @@ function frenarDesde(
   s.velocity.set(0, 0, -desde);
   s.heading = 0;
   s.position.y = aircraft.gearHeight;
-  const mandos = { ...neutralControls(), brakes: 1, throttle: 0 };
+  const mandos = {
+    ...neutralControls(),
+    brakes: 1,
+    throttle: 0,
+    ...(comoSeAterriza
+      ? { flaps: 1, frenosDeTierra: aircraft.frenosDeTierra ? 1 : 0 }
+      : {}),
+  };
   const dt = 1 / 60;
   let metros = 0;
   let segundos = 0;
   let enElAire = 0;
   let pasos = 0;
+  let pico = 0;
   let v = desde;
   while (v > 0.5 && segundos < 180) {
     const antes = s.position.clone();
@@ -58,7 +78,10 @@ function frenarDesde(
     metros += Math.hypot(s.position.x - antes.x, s.position.z - antes.z);
     if (!s.onGround) enElAire++;
     pasos++;
-    v = Math.hypot(s.velocity.x, s.velocity.z);
+    const ahora = Math.hypot(s.velocity.x, s.velocity.z);
+    // Corriendo: el último paso, el del rozamiento estático, no es frenar.
+    if (ahora > 2) pico = Math.max(pico, (v - ahora) / dt / GRAVEDAD);
+    v = ahora;
     segundos += dt;
   }
   return {
@@ -66,58 +89,56 @@ function frenarDesde(
     segundos,
     enElAire: enElAire / Math.max(1, pasos),
     g: (desde * desde) / (2 * metros) / GRAVEDAD,
+    pico,
   };
 }
 
 describe("la frenada en tierra", () => {
   it("frena como un avión, no como un coche", () => {
     /*
-     * Entre 0,2 y 0,45 g de media. Por debajo no se para en ninguna pista; por
-     * encima es un coche, y un avión que se planta como un coche enseña a no
-     * planificar la carrera de frenada — que es justo lo que hay que aprender.
+     * Como se aterriza —flaps de aterrizaje, freno a fondo y los frenos de
+     * tierra fuera en el que los lleva—, desde la velocidad de toma: entre 0,2
+     * y 0,5 g de media, y nunca más de 0,5 en ningún instante. Por debajo no
+     * se para en ninguna pista; por encima es un coche, y un avión que se
+     * planta como un coche enseña a no planificar la carrera de frenada.
      *
-     * Medido: los seis salen entre 0,31 y 0,33 g, o sea el coeficiente de
-     * freno del modelo —0,28 más la rodadura del asfalto— más lo poco que
-     * añade la resistencia aerodinámica promediada hasta pararse. Una avioneta
-     * de verdad en asfalto seco anda justo por ahí.
+     * Medido: de 0,28 a 0,30 g las avionetas y el turbohélice, 0,37 el
+     * cuatrimotor y 0,47 el regional, que es lo que para un reactor con frenos
+     * de carbono y los de tierra fuera. Ver `distancia-de-aterrizaje.test.ts`,
+     * que lo compara con los manuales.
      */
     for (const a of AIRCRAFT) {
-      const { g } = frenarDesde(a.id, a.approachSpeed);
+      const { g, pico } = frenarDesde(a.id, velocidadDeToma(a), 0, true);
       expect(g, `${a.id}: ${g.toFixed(2)} g`).toBeGreaterThan(0.2);
-      expect(g, `${a.id}: ${g.toFixed(2)} g`).toBeLessThan(0.45);
+      expect(g, `${a.id}: ${g.toFixed(2)} g`).toBeLessThan(0.5);
+      expect(pico, `${a.id}: pico de ${pico.toFixed(2)} g`).toBeLessThan(0.55);
     }
   });
 
   it("y para en lo que dice la cuenta que decide qué avión cabe", () => {
     /*
      * **Ésta es la que importa.** `rodaduraDeFrenada` es la que dice si un
-     * avión entra en una pista, y la que usa el motor de Guyrami, que no tiene
-     * fuerzas. Si el motor de coeficientes frenara distinto, media flota
-     * estaría autorizada a pistas donde no para.
+     * avión entra en una pista, y la que integra lo mismo que pregunta el
+     * motor de Guyrami, que no tiene fuerzas. Si el motor de coeficientes
+     * frenara distinto, media flota estaría autorizada a pistas donde no
+     * para.
      *
-     * Medido, los seis paran **algo antes** de lo que dice la cuenta —×0,79 a
-     * ×0,92—, y esa dirección es la buena: la cuenta va del lado seguro, así
-     * que ningún avión se cuela en una pista donde no pare. Lo que esto caza
-     * es un signo cambiado o un factor perdido, no un cinco por ciento.
-     *
-     *     jaz-20   174 m medidos · 207 de cuenta   ×0,84   0,32 g
-     *     jaz-25   131 m ·  142   ×0,92   0,33 g
-     *     jaz-40   308 m ·  363   ×0,85   0,32 g
-     *     jaz-60   369 m ·  450   ×0,82   0,32 g
-     *     jaz-90   764 m ·  962   ×0,79   0,31 g
-     *     jaz-120  932 m · 1112   ×0,84   0,31 g
+     * Antes salía entre ×0,79 y ×0,92: la cuenta frenaba sobre el peso que
+     * cargan las ruedas y el motor sobre todo el peso. Ahora los dos lo hacen
+     * sobre lo que cargan las ruedas, con la misma cuenta, y salen a menos de
+     * un uno por ciento: se deja un cinco.
      */
     for (const a of AIRCRAFT) {
-      const medido = frenarDesde(a.id, a.approachSpeed).metros;
+      const medido = frenarDesde(a.id, velocidadDeToma(a), 0, true).metros;
       const cuenta = rodaduraDeFrenada(a);
       expect(
         medido / cuenta,
         `${a.id}: ${Math.round(medido)} m medidos contra ${Math.round(cuenta)} de la cuenta`,
-      ).toBeGreaterThan(0.75);
+      ).toBeGreaterThan(0.95);
       expect(
         medido / cuenta,
         `${a.id}: ${Math.round(medido)} m medidos contra ${Math.round(cuenta)} de la cuenta`,
-      ).toBeLessThan(1.25);
+      ).toBeLessThan(1.05);
     }
   });
 
@@ -163,11 +184,17 @@ describe("la frenada en tierra", () => {
   });
 
   it("y en hierba se para más tarde que en asfalto, no antes", () => {
-    // El rozamiento de rodadura de la hierba ayuda a frenar, pero la cuenta de
-    // qué cabe la usa al revés para el despegue. Que no se crucen los signos.
-    for (const a of AIRCRAFT)
-      expect(rodaduraDeFrenada(a, "hierba"), a.id).toBeLessThan(
-        rodaduraDeFrenada(a, "asfalto"),
-      );
+    /*
+     * Rodar sin frenar cuesta más en hierba, pero frenar cuesta menos: la
+     * rueda frenada patina. El manual del 172 lo dice con su número —en
+     * hierba seca, la rodadura de aterrizaje un 45 % más larga—, y aquí se
+     * comprobaba al revés, porque solo se contaba la rodadura. Que la hierba
+     * pida más pista para parar, de un veinte a un sesenta por ciento.
+     */
+    for (const a of AIRCRAFT) {
+      const r = rodaduraDeFrenada(a, "hierba") / rodaduraDeFrenada(a, "asfalto");
+      expect(r, a.id).toBeGreaterThan(1.2);
+      expect(r, a.id).toBeLessThan(1.6);
+    }
   });
 });

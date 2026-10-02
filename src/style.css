@@ -9511,6 +9511,50 @@ button.motor__tecla::after {
 }
 
 /*
+ * **Armado**: listo, sin sacar nada todavía. El borde verde a trazos y el
+ * dibujo en blanco: es la palanca un punto arriba, la de «al tocar, salen
+ * solos». Ver flight/palanca-de-aerofrenos.ts.
+ */
+.mando--armado {
+  border-style: dashed;
+  border-color: var(--verde, #57c785);
+}
+
+/*
+ * El autofreno: una raya encendida por cada punto del selector. Apagadas, se
+ * quedan como sombra, para que se vea que hay tres.
+ */
+.mando--autofreno {
+  position: relative;
+}
+
+.mando--autofreno .autofreno__raya {
+  opacity: 0.25;
+}
+
+.mando--autofreno[data-modo="lo"] [data-raya="1"],
+.mando--autofreno[data-modo="med"] [data-raya="1"],
+.mando--autofreno[data-modo="med"] [data-raya="2"],
+.mando--autofreno[data-modo="max"] .autofreno__raya {
+  opacity: 1;
+}
+
+/* Y su rótulo de cabina, pequeño y abajo, sin tapar la rueda. */
+.mando__rotulo {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.82);
+  pointer-events: none;
+}
+
+/*
  * Y trabado: se pidió meter el tren con el avión en el suelo. Un meneo corto
  * de lado a lado, la cabeza que dice «no», con el borde en ámbar mientras
  * dura. Ni rojo ni parpadeo: no es una alarma, es un cerrojo. Ver
