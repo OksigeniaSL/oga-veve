@@ -637,7 +637,7 @@ def de_deriva(x, y, z, cuerda, espesor):
 
 def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
                zonas=(), cortes=(), puntos=13, simetria=True, punta=True,
-               angulo=35, flaps=(), marcar=False):
+               angulo=35, flaps=(), marcar=False, aerofrenos=()):
     """
     Una superficie con perfil: ala, estabilizador, deriva, pilón o pala.
 
@@ -657,6 +657,11 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     cuerda donde está su bisagra, y se marca cada vértice con su anillo y su
     punto del perfil. Con eso `flaps_moviles` sabe, sin adivinar por la
     geometría, qué caras son de la franja del flap.
+
+    `aerofrenos`, lo mismo para los paneles que se levantan encima del ala:
+    ver `aerofreno`. Sus extremos llevan anillo como los de un flap —y por el
+    mismo camino, sin tocar la chapa—, y sus cortes de cuerda tienen que ser
+    de los que ya pintan una zona.
     """
     # Las estaciones, con su distancia a la raíz a lo largo de la superficie.
     est = list(estaciones)
@@ -690,8 +695,13 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     # se notaba en el borde de salida y en el sombreado. Sacado de los
     # vértices de los dos anillos de al lado, cae justo sobre la arista que
     # los unía y el ala recogida sigue siendo la misma superficie.
-    for e in sorted(set(x for f in flaps for x in (f["e0"], f["e1"])
-                        if 0 < x < eta[-1])):
+    #
+    # Lo mismo en los extremos de cada aerofreno: un panel es un trozo de la
+    # chapa de arriba, y partirla con un anillo de los de las zonas —sacado
+    # de las cuatro cifras— movería la chapa y, en el JAZ 90, el foco de
+    # aterrizaje, que se busca en el borde de ataque. Ver `aerofreno`.
+    for e in sorted(set(x for f in tuple(flaps) + tuple(aerofrenos)
+                        for x in (f["e0"], f["e1"]) if 0 < x < eta[-1])):
         if any(abs(e - x) < 1e-4 for x in eta):
             continue
         viejos = [k for k in range(len(est)) if "entre" not in est[k]]
@@ -717,6 +727,15 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     us |= {u for z in zonas for u in (z[3], z[4]) if 0 < u < 1}
     us |= {u for u in cortes if 0 < u < 1}
     us |= {f["u0"] for f in flaps if 0 < f["u0"] < 1}
+    # Los de los aerofrenos, solo si ya los pinta una zona: un corte de cuerda
+    # nuevo cambiaría el perfil del ala entera, igual que el de un flap.
+    for a in aerofrenos:
+        for u in (a["u0"], a["u1"]):
+            if not any(abs(u - x) < 1e-9 for x in us):
+                raise SystemExit(
+                    f"El aerofreno {a['nombre']} se corta en {u} de la cuerda "
+                    "y ahí no hay junta pintada: un corte nuevo cambiaría el "
+                    "perfil del ala entera. Ver `aerofreno`.")
     us = sorted(us)
     # El contorno: del borde de salida por arriba al de ataque, y vuelta por
     # abajo. El de salida es un solo vértice: el perfil cierra en filo.
@@ -727,7 +746,7 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     bm = bmesh.new()
     # Solo si hay flaps que sacar: el anillo y el punto del perfil de cada
     # vértice. Las demás superficies salen exactamente como salían.
-    marcar = marcar or bool(flaps)
+    marcar = marcar or bool(flaps) or bool(aerofrenos)
     if marcar:
         capa_anillo = bm.verts.layers.int.new("anillo")
         capa_punto = bm.verts.layers.int.new("punto")
@@ -788,7 +807,7 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
         bm.faces.new(anillos[-1])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     obj = _malla_en_escena(nombre, bm, mats)
-    if flaps:
+    if flaps or aerofrenos:
         # Lo que `flaps_moviles` necesita saber de la rejilla. Va aparte y no
         # en las propiedades del objeto porque éstas se exportan al glTF.
         rejilla = {"eta": eta, "bucle": bucle}
@@ -800,8 +819,9 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
             # las del ala de siempre, el sombreado es el de siempre.
             viejo = superficie(
                 f"{nombre}-sin-cortes", estaciones, material_, curvatura,
-                zonas, tuple(cortes) + tuple(f["u0"] for f in flaps), puntos,
-                simetria, punta, angulo, marcar=True)
+                zonas, tuple(cortes) + tuple(f["u0"] for f in flaps)
+                + tuple(u for a in aerofrenos for u in (a["u0"], a["u1"])),
+                puntos, simetria, punta, angulo, marcar=True)
             nuevos = [i for i, e in enumerate(est) if "entre" not in e]
             rejilla["viejo"] = viejo.name
             rejilla["de_viejo"] = nuevos
@@ -1324,7 +1344,223 @@ def fowler(muescas, recorrido, ranura=0.015, solape=0.005):
             "redondo": 0.3, "vientre": 3}
 
 
-def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
+# ── Los aerofrenos ────────────────────────────────────────────────────────
+
+
+def aerofreno(nombre, e0, e1, u0, u1, vuelo, tierra):
+    """
+    Un panel de aerofreno: de `e0` a `e1` metros a lo largo del ala y de `u0`
+    —la bisagra, delante— a `u1` —su borde de atrás, junto al flap— en
+    fracción de cuerda, **por el extradós**.
+
+    Son los paneles que se levantan encima del ala, por delante de los flaps,
+    y en un avión de línea son **dos cosas con la misma chapa**:
+
+    - **En vuelo**, los de vuelo suben hasta el tope de vuelo de la palanca y
+      frenan el avión sin tocar el gas. No todos: los hay que solo suben en
+      tierra, porque arriba un panel cerca del fuselaje sacude la cola.
+    - **En tierra**, al tocar, suben todos y del todo: matan lo que el ala
+      todavía sustenta y el peso pasa a las ruedas, que entonces sí frenan.
+
+    `vuelo` y `tierra` son los grados de cada uno en cada caso; `vuelo` cero
+    es un panel solo de tierra. Ver `world/aerofrenos.ts`, que los mueve con
+    lo que dice el modelo de vuelo.
+
+    Recogido es **la misma chapa que ya estaba**, con sus caras y sus
+    normales: lo nuevo —su grosor por debajo y el hueco que deja— va aparte y
+    el juego no lo dibuja hasta que el panel sube. Es lo que hacen los flaps;
+    ver `flaps_moviles`. Y por eso `u0` y `u1` tienen que caer en una junta ya
+    pintada: la raya de la bisagra delante y la del flap detrás.
+    """
+    return {"nombre": nombre, "e0": e0, "e1": e1, "u0": u0, "u1": u1,
+            "vuelo": float(vuelo), "tierra": float(tierra)}
+
+
+def piezas_de_aerofrenos(aerofrenos):
+    """Lo que `flaps_moviles` sacó de cada panel, para sumarlo al avión."""
+    return [o for a in aerofrenos for o in a.get("piezas", [])]
+
+
+# El grosor de un panel, en fracción de la cuerda del ala en su sitio: más
+# gordo en la bisagra, que es donde se le clava el actuador, y casi filo en el
+# borde de atrás, que va apoyado sobre el flap. En el JAZ 90 son tres
+# centímetros y medio en la bisagra de dentro y casi uno atrás; en el Yvága,
+# casi nueve y dos. Es lo que hace que, levantado, **no parezca de papel**,
+# que es como se ven desde la ventanilla y lo primero que se dijo de ellos.
+_GRUESO_EN_LA_BISAGRA = 0.0075
+_GRUESO_ATRAS = 0.002
+# Y lo que el hueco del ala es más hondo que el panel: lo justo para que no
+# se peleen las dos caras, y no tanto como para tocar la nariz guardada del
+# flap, que baja por debajo de esta chapa.
+_HOLGURA_DEL_HUECO = 0.0015
+
+
+def _panel_de_aerofreno(nombre, a, piel, en, s, j_ba, bucle, hueco):
+    """
+    El grosor de un panel, el hueco que deja y su vacío con la bisagra.
+
+    - **Las tapas**, de metal y colgadas del panel: la cara de abajo
+      —un grosor que adelgaza hacia atrás—, la de la bisagra, la de atrás y
+      los dos costados. Recogido van dentro del ala, y el juego las apaga.
+    - **El hueco**, oscuro y fijo al ala: un fondo un pelo más hondo que el
+      panel, y sus cuatro paredes hasta la chapa. Es lo que se ve debajo de un
+      panel levantado.
+    - **El vacío** `aerofreno-…`, en el origen —recogido, el panel cuelga de
+      la misma matriz que el ala, como un flap—, con la bisagra, el eje y los
+      grados de vuelo y de tierra escritos en él. Girando en positivo por la
+      regla de la mano derecha, el borde de atrás sube.
+
+    La bisagra va **medio grueso por debajo de la chapa**, que es donde la
+    lleva un panel de verdad: así, al subir, el canto de delante se separa un
+    dedo de la chapa fija y se ve la junta, y el de abajo no asoma por
+    delante.
+    """
+    anillos = list(range(a["i0"], a["i1"] + 1))
+    js = list(range(a["jr"], a["jf"] + 1))
+    u0, u1 = a["u0"], a["u1"]
+    secs = {i: _seccion(en, i, s, a["jr"], a["jb"], j_ba) for i in anillos}
+
+    def grueso(i, j):
+        f = (u1 - bucle[j][0]) / (u1 - u0)
+        return secs[i]["c"] * (_GRUESO_ATRAS + (_GRUESO_EN_LA_BISAGRA
+                                                - _GRUESO_ATRAS) * f)
+
+    arriba = {(i, j): en(i, j, s) for i in anillos for j in js}
+    abajo = {(i, j): arriba[(i, j)] - secs[i]["gd"] * grueso(i, j)
+             for i in anillos for j in js}
+    fondo = {(i, j): arriba[(i, j)] - secs[i]["gd"] * (
+        grueso(i, j) + _HOLGURA_DEL_HUECO * secs[i]["c"])
+             for i in anillos for j in js}
+    i0, i1 = anillos[0], anillos[-1]
+    medio = js[len(js) // 2]
+    hacia_fuera = (arriba[(i1, medio)] - arriba[(i0, medio)]).normalized()
+
+    def cd(*ii):
+        return sum((secs[i]["cd"] for i in ii), Vector()).normalized()
+
+    def gd(*ii):
+        return sum((secs[i]["gd"] for i in ii), Vector()).normalized()
+
+    def caja_de(sup, inf, mira_inf, mira_lados, mat_inf=0):
+        """La superficie de abajo tendida de anillo a anillo, los cantos de
+        delante y de atrás hasta la de arriba, y los dos costados, cada cara
+        mirando a donde se le pide: `mira_inf` es +1 hacia arriba y
+        `mira_lados` +1 hacia fuera de la caja. La de arriba no va: en las
+        tapas es la piel del panel, y en el hueco, el aire. La de abajo lleva
+        el material `mat_inf`."""
+        caras = []
+        for ia, ib in zip(anillos, anillos[1:]):
+            for ja, jb_ in zip(js, js[1:]):
+                caras.append(([inf[(ia, ja)], inf[(ia, jb_)],
+                               inf[(ib, jb_)], inf[(ib, ja)]],
+                              mira_inf * gd(ia, ib), mat_inf))
+            # El canto de atrás (`jr`) y el de la bisagra (`jf`).
+            for j, sentido in ((js[0], 1), (js[-1], -1)):
+                caras.append(([sup[(ia, j)], sup[(ib, j)], inf[(ib, j)],
+                               inf[(ia, j)]],
+                              mira_lados * sentido * cd(ia, ib), 0))
+        # Y los costados, a tiras: un polígono largo y fino con la curva del
+        # extradós encima se triangula mal.
+        for i, sentido in ((i0, -1), (i1, 1)):
+            for ja, jb_ in zip(js, js[1:]):
+                caras.append(([sup[(i, ja)], sup[(i, jb_)], inf[(i, jb_)],
+                               inf[(i, ja)]],
+                              mira_lados * sentido * hacia_fuera, 0))
+        bm = bmesh.new()
+        for pts, quiere, mat in caras:
+            c = bm.faces.new([bm.verts.new(p) for p in pts])
+            c.material_index = mat
+            c.normal_update()
+            if c.normal.dot(quiere) < 0:
+                c.normal_flip()
+            c.smooth = False
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+        return bm
+
+    # Las tapas del panel: miran fuera de él. **De metal sin pintar**, que es
+    # como van por debajo y lo que hace que, levantados y vistos desde atrás
+    # —en la sombra del propio panel—, se lean como chapas y no como agujeros:
+    # con el gris del ala salían casi negros contra el hueco.
+    bm = caja_de(arriba, abajo, -1, 1)
+    tapas = _malla_en_escena(f"{nombre}-tapas", bm, ["aluminio"])
+    # El hueco: mira hacia dentro, a donde estaba el panel. **Con el fondo
+    # gris y las paredes oscuras**: debajo de un aerofreno no hay un pozo,
+    # hay la chapa de encima del flap a un palmo, y es lo que le da el sol.
+    # Con el fondo negro, desde atrás, el panel levantado y su sombra se
+    # fundían en una raya oscura; con el fondo claro el panel se recorta.
+    bm = caja_de(arriba, fondo, 1, -1, mat_inf=1)
+    agujero = _malla_en_escena(f"hueco-{nombre}", bm, [hueco, "gris"])
+
+    # La bisagra, medio grueso por debajo de la chapa, en los dos extremos.
+    jf = js[-1]
+    h0 = arriba[(i0, jf)] - secs[i0]["gd"] * grueso(i0, jf) * 0.5
+    h1 = arriba[(i1, jf)] - secs[i1]["gd"] * grueso(i1, jf) * 0.5
+    eje = (h1 - h0).normalized()
+    bisagra = (h0 + h1) / 2
+    atras = (arriba[(i0, js[0])] + arriba[(i1, js[0])]) / 2
+    # Que girar en positivo suba el borde de atrás, sea cual sea el lado.
+    if eje.cross(atras - bisagra).y < 0:
+        eje = -eje
+
+    bpy.ops.object.empty_add(location=(0.0, 0.0, 0.0))
+    b = bpy.context.object
+    b.name = nombre
+    b["bisagra"] = [float(c) for c in bisagra]
+    b["eje"] = [float(c) for c in eje]
+    b["vuelo"] = a["vuelo"]
+    b["tierra"] = a["tierra"]
+    bpy.context.view_layer.update()
+    for h in (piel, tapas):
+        h.parent = b
+        h.matrix_parent_inverse = b.matrix_world.inverted()
+    largo = (h1 - h0).length
+    cuerda = (arriba[(i0, js[0])] - arriba[(i0, jf)]).length
+    print(f"AEROFRENO: {nombre} · {largo:.2f} m de largo · "
+          f"{cuerda:.2f} m de cuerda · grueso {grueso(i0, jf) * 100:.1f}–"
+          f"{grueso(i0, js[0]) * 100:.1f} cm · vuelo {a['vuelo']:.0f}° · "
+          f"tierra {a['tierra']:.0f}°")
+    return [b, piel, tapas, agujero]
+
+
+def aerofrenos_libres(aerofrenos, obstaculos, tolerancia=0.02, pasos=12):
+    """
+    Que ningún panel se meta en nada al subir, **dicho al exportar**: se gira
+    cada uno hasta lo más que sube —en vuelo o en tierra— y se mira que sus
+    puntos no entren en el fuselaje, el carenado, la góndola o el pilón. El
+    de más adentro va pegado al carenado, y es el que lo pediría.
+    """
+    bpy.context.view_layer.update()
+    malos = []
+    for b in [o for o in piezas_de_aerofrenos(aerofrenos)
+              if o.type == "EMPTY"]:
+        tope = max(b["vuelo"], b["tierra"])
+        bis, eje = Vector(b["bisagra"]), Vector(b["eje"]).normalized()
+        puntos = [h.matrix_world @ v.co for h in b.children
+                  if h.type == "MESH" for v in h.data.vertices]
+        peor, donde = 0.0, ""
+        for q in range(1, pasos + 1):
+            giro = Matrix.Rotation(math.radians(tope * q / pasos), 3, eje)
+            for p in puntos:
+                r = giro @ (p - bis) + bis
+                for o in obstaculos:
+                    if o.type != "MESH":
+                        continue
+                    if not _en_caja(_caja([o], tolerancia), r):
+                        continue
+                    h = _hondo([o], r)
+                    if h > peor:
+                        peor, donde = h, f"dentro de {o.name} a {tope * q / pasos:.0f}°"
+        print(f"LIBRE: {b.name} {peor * 100:.1f} cm"
+              + (f" ({donde})" if peor > 0 else ""))
+        if peor > tolerancia:
+            malos.append(f"{b.name}: {donde}, {peor * 100:.1f} cm")
+    if malos:
+        raise SystemExit(
+            "Un aerofreno se mete en algo al subir: " + " · ".join(malos)
+            + ". Ver `aerofrenos_libres`.")
+
+
+def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=()):
     """
     Saca los flaps del ala como piezas propias, colgadas de su carril.
 
@@ -1376,6 +1612,12 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
     zona —la raya de la junta—: un corte nuevo cambiaría el perfil del ala
     entera. Los extremos, en cambio, pueden caer donde haga falta; ver los
     anillos «entre» de `superficie`.
+
+    **Y los aerofrenos, en el mismo viaje**: son chapa del extradós de la
+    misma ala, y se sacan con las mismas normales de antes y antes de rehacer
+    lo que queda —ver `_franja_fija`—. Sus piezas no van en lo que se
+    devuelve, que es de los flaps y lo recorren las canoas: se dejan en cada
+    panel y se recogen con `piezas_de_aerofrenos`. Ver `aerofreno`.
     """
     rej = _REJILLAS.pop(ala.name)
     eta, bucle = rej["eta"], rej["bucle"]
@@ -1391,6 +1633,16 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
         # vuelta por el extradós hasta la bisagra: el perfil del flap.
         f["cadena"] = list(range(f["jb"], n)) + list(range(0, f["jt"] + 1))
         f["puntos"] = set(f["cadena"])
+    # Y los aerofrenos, que son un trozo de la chapa de arriba: del corte de
+    # atrás (`u1`) al de la bisagra (`u0`), contados por el extradós, que va
+    # del borde de salida al de ataque. Ver `aerofreno`.
+    for a in aerofrenos:
+        a["i0"] = next(i for i, e in enumerate(eta) if abs(e - a["e0"]) < 1e-4)
+        a["i1"] = next(i for i, e in enumerate(eta) if abs(e - a["e1"]) < 1e-4)
+        a["jr"] = bucle.index((a["u1"], 1))
+        a["jf"] = bucle.index((a["u0"], 1))
+        a["jb"] = bucle.index((a["u1"], -1))
+        a["puntos"] = set(range(a["jr"], a["jf"] + 1))
 
     # El espejo, aplicado: las dos alas en una malla, como las escribe el
     # exportador. Y las normales de cada esquina, leídas ya con él.
@@ -1406,9 +1658,10 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
     me.attributes.new("normal-de-antes", "FLOAT_VECTOR", "CORNER") \
         .data.foreach_set("vector", antes)
 
-    def de_quien(cara, ca, cp):
-        """De qué flap y de qué lado es esta cara, o `None` si es del ala."""
-        for k, f in enumerate(flaps):
+    def de_quien(cara, ca, cp, cuales=flaps):
+        """De qué flap —o aerofreno, con `cuales`— y de qué lado es esta
+        cara, o `None` si es del ala."""
+        for k, f in enumerate(cuales):
             if all(f["i0"] <= v[ca] <= f["i1"] and v[cp] in f["puntos"]
                    for v in cara.verts):
                 return k, (1 if cara.calc_center_median().x > 0 else -1)
@@ -1504,11 +1757,33 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
             print(f"FLAP: {nombre} · cuerda {cuerda:.2f} m · "
                   f"{len(malla.polygons)} caras · " + d["resumen"])
 
+    # ── Los aerofrenos, cada uno una pieza ───────────────────────────────
+    for k, a in enumerate(aerofrenos):
+        a["piezas"] = []
+        for s, lado in lados:
+            nombre = f"aerofreno-{a['nombre']}-{lado}"
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            ca, cp, _ = indice(bm)
+            quitar(bm, [c for c in bm.faces
+                        if de_quien(c, ca, cp, aerofrenos) != (k, s)])
+            malla = bpy.data.meshes.new(f"m-{nombre}-piel")
+            bm.to_mesh(malla)
+            bm.free()
+            for mat in me.materials:
+                malla.materials.append(mat)
+            _normales_de_antes(malla)
+            piel = bpy.data.objects.new(f"{nombre}-piel", malla)
+            bpy.context.collection.objects.link(piel)
+            a["piezas"] += _panel_de_aerofreno(
+                nombre, a, piel, en, s, j_ba, bucle, hueco)
+
     # ── Y el ala, sin ellos ──────────────────────────────────────────────
     bm = bmesh.new()
     bm.from_mesh(me)
     ca, cp, _ = indice(bm)
-    quitar(bm, [c for c in bm.faces if de_quien(c, ca, cp)])
+    quitar(bm, [c for c in bm.faces if de_quien(c, ca, cp)
+                or de_quien(c, ca, cp, aerofrenos)])
     if vieja:
         salida.append(_franja_fija(ala, bm, rej, vieja, n))
     bm.to_mesh(me)
@@ -1612,8 +1887,16 @@ def _franja_fija(ala, bm, rej, vieja, n):
                         if p0 == p1 and partir.get(p0) and {r0, r1} == {a, b}:
                             na, nb = (n0, n1) if r0 == a else (n1, n0)
                             orden = medio if r0 == a else medio[::-1]
+                            # Solo los que siguen en el ala: un anillo que
+                            # cae dentro de un aerofreno se queda sin caras
+                            # al otro lado —el panel se llevó las suyas—, y
+                            # su vértice se fue con la columna que se rehace.
+                            # El panel es otra malla y su canto va por la
+                            # misma recta, así que no hace falta.
                             poli += [(i, p0, na.lerp(nb, cuanto[i]))
-                                     for i in orden]
+                                     for i in orden
+                                     if (i, p0, lado) in verts
+                                     and verts[(i, p0, lado)].is_valid]
                     if len(poli) > 3:
                         # En abanico desde el vértice de enfrente, que es el
                         # único de otro punto del perfil: los trozos caen

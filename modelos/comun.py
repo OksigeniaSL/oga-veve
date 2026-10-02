@@ -1500,24 +1500,50 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
             motores, entre, 0.24, alto_pedestal,
             max(alto_pedestal + 0.08, techo_en(z_l - 0.022)), z_l,
         )
-        # Y las dos de siempre detrás: flaps y aerofrenos.
+        # Y las dos de siempre detrás: flaps y aerofrenos. **Los aerofrenos a
+        # la izquierda y los flaps a la derecha**, que es donde van en el
+        # 737, el A320, el 747 y los E-Jets: la palanca de aerofrenos la lleva
+        # la mano del comandante sin cruzar el pedestal. Estaban al revés.
         for j, dz in enumerate((0.40, 0.50)):
-            x = entre + (0.10 if j else -0.10)
-            piezas.append(
-                cilindro(
-                    f"palanca-{'flaps' if j == 0 else 'frenos'}", 0.008, 0.12,
-                    (x, alto_pedestal + 0.06, panel_z + dz), "metal", lados=8,
-                )
+            x = entre + (-0.10 if j else 0.10)
+            palanca = cilindro(
+                f"palanca-{'flaps' if j == 0 else 'frenos'}", 0.008, 0.12,
+                (x, alto_pedestal + 0.06, panel_z + dz), "metal", lados=8,
             )
-            piezas.append(
-                redondear(
-                    caja(f"pomo-{'flaps' if j == 0 else 'frenos'}",
-                         x - 0.025, x + 0.025, alto_pedestal + 0.11,
-                         alto_pedestal + 0.14, panel_z + dz - 0.015,
-                         panel_z + dz + 0.015, "pomo"),
-                    radio=0.008,
-                )
+            pomo = redondear(
+                caja(f"pomo-{'flaps' if j == 0 else 'frenos'}",
+                     x - 0.025, x + 0.025, alto_pedestal + 0.11,
+                     alto_pedestal + 0.14, panel_z + dz - 0.015,
+                     panel_z + dz + 0.015, "pomo"),
+                radio=0.008,
             )
+            piezas += [palanca, pomo]
+            if j == 0:
+                continue
+            # **La de aerofrenos se mueve**, colgada de un vacío en su pie:
+            # hacia atrás, hacia el piloto, sale. Abajo del todo es
+            # recogida; un poco más atrás, armada —lista para subir sola al
+            # tocar—; a media carrera, el tope de vuelo; y atrás del todo,
+            # arriba, que es como queda con los frenos de tierra fuera. Es el
+            # recorrido de la palanca de un 737, en una sola cuenta: ver
+            # `world/palanca-de-aerofrenos.ts`, que la mueve.
+            #
+            # No se llama `bisagra-…` a propósito: ese nombre es el del tren,
+            # y `world/patas.ts` metería la palanca en el pozo.
+            bpy.ops.object.empty_add(
+                location=(x, alto_pedestal, panel_z + dz))
+            b = bpy.context.object
+            b.name = "palanca-aerofrenos"
+            # En los ejes del avión, como los de las patas: x a la derecha, y
+            # arriba, z a la cola. Girando en positivo sobre la x, el pomo va
+            # hacia atrás.
+            b["eje"] = [1.0, 0.0, 0.0]
+            b["grados"] = [0.0, 50.0]
+            bpy.context.view_layer.update()
+            for h in (palanca, pomo):
+                h.parent = b
+                h.matrix_parent_inverse = b.matrix_world.inverted()
+            piezas.append(b)
 
     # 5. El panel de techo. Es media cabina de un avión de línea, y es lo que
     #    un niño señala primero: filas y filas de interruptores.

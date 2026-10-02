@@ -976,6 +976,21 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     flaps: () => juego.aircraftMesh.flaps?.cuantos ?? 0,
     /** Mover los flaps a mano, para mirarlos sin esperar a que lleguen. */
     flapsPoner: (donde: number) => juego.aircraftMesh.flaps?.poner(donde),
+    /** Cuántos aerofrenos se mueven en el modelo, y cuántos suben en vuelo. */
+    aerofrenos: () => ({
+      cuantos: juego.aircraftMesh.aerofrenos?.cuantos ?? 0,
+      deVuelo: juego.aircraftMesh.aerofrenos?.deVuelo ?? 0,
+    }),
+    /**
+     * Subir los aerofrenos a mano, para mirarlos: `vuelo` es la palanca hasta
+     * su tope de vuelo y `tierra` los frenos de tierra, los dos de 0 a 1. Ver
+     * `world/aerofrenos.ts`.
+     */
+    aerofrenosPoner: (vuelo: number, tierra: number) =>
+      juego.aircraftMesh.aerofrenos?.poner(vuelo, tierra),
+    /** Y su palanca en la cabina, de 0 recogida a 1 arriba. */
+    palancaDeAerofrenosPoner: (posicion: number) =>
+      juego.aircraftMesh.palancaDeAerofrenos?.poner(posicion),
     /**
      * **Cómo están los flaps en el modelo**, sin redondear: la matriz de cada
      * vacío y cuántas tapas y huecos se están dibujando.
