@@ -62,6 +62,7 @@ import {
   DICE_UN_AFIS,
   enUnAfis,
   esElAvisoDeAves,
+  esLaInformacionDeTrafico,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
@@ -2012,7 +2013,14 @@ export class Game {
       this.comoSeDiceElTrafico(a).turno,
     );
     if (revision) {
-      BOCA.retirar((c) => c === revision.retirar);
+      /*
+       * Y si se vuelve a pedir dicha con lo de ahora, con el turno que tenía:
+       * es la misma información. Ver `retirar` en `audio/boca.ts`.
+       */
+      BOCA.retirar(
+        (c) => c === revision.retirar,
+        revision.otra ? { pasaSuTurnoA: esLaInformacionDeTrafico } : {},
+      );
       if (revision.otra) this.informarDelTrafico(revision.otra.aviso, revision.otra.n);
     }
     const info = this.informacionDeTrafico.paso(dt, yo, intrusos);

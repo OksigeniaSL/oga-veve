@@ -412,6 +412,13 @@ export interface AlPedir {
   readonly alCaer?: (porque: string) => void;
 }
 
+/**
+ * Lo que puede pasar entre retirar una frase y pedirla otra vez dicha con lo
+ * de ahora para que herede su turno, ms: lo que tarda en hacerse en el mismo
+ * paso. Ver `retirar`.
+ */
+const EN_EL_ACTO = 50;
+
 /** Cada cuánto se mira si una frase que esperaba a su voz ya está lista, ms. */
 const MIRAR_SI_ESTA_LISTA = 200;
 
@@ -604,6 +611,16 @@ export class Boca {
   pedir(urgencia: Urgencia, hacer: Hablar, clave?: string, al: AlPedir = {}): void {
     const ahora = this.reloj.ahora();
     const urgente = urgencia === "urgente";
+    /*
+     * Desde cuándo espera, para el orden de la cola: ahora, o el turno que le
+     * pasó lo que se retiró para pedirla otra vez. Ver `retirar`.
+     */
+    const hereda = this.turnoQuePasa;
+    this.turnoQuePasa = null;
+    const desde =
+      hereda && ahora - hereda.cuando < EN_EL_ACTO && hereda.a(clave)
+        ? hereda.desde
+        : ahora;
 
     /*
      * **Ni repetirse ni contradecirse**, y las dos comprobaciones van antes de
@@ -647,7 +664,7 @@ export class Boca {
        */
       const falta = this.calladaHasta - ahora;
       if (!urgente && falta > 0 && this.reloj.esperar) {
-        this.encolar({ hacer, urgencia, desde: ahora, clave, alCaer: al.alCaer });
+        this.encolar({ hacer, urgencia, desde, clave, alCaer: al.alCaer });
         this.reloj.esperar(falta, () => this.soltarLoQueEspera());
         return;
       }
@@ -668,7 +685,7 @@ export class Boca {
        * y entre iguales el que llegó antes.
        */
       if (!urgente && this.cola.length) {
-        this.encolar({ hacer, urgencia, desde: ahora, clave, alCaer: al.alCaer });
+        this.encolar({ hacer, urgencia, desde, clave, alCaer: al.alCaer });
         this.soltarLoQueEspera();
         return;
       }
@@ -738,7 +755,7 @@ export class Boca {
      * sí. Medido en el banco: la torre decía dos frases en un vuelo y pasó a
      * decir una.
      */
-    this.encolar({ hacer, urgencia, desde: ahora, clave, alCaer: al.alCaer });
+    this.encolar({ hacer, urgencia, desde, clave, alCaer: al.alCaer });
   }
 
   /**
@@ -1026,16 +1043,45 @@ export class Boca {
    * espera turno cuando la luz ya se ha puesto verde no es tarde, es lo
    * contrario de lo que pasa. Y mientras esperaba, empujaba hacia atrás la
    * autorización nueva hasta que caducaba. Ver `luzDeTorre` en `game.ts`.
+   *
+   * **Y lo que se retira para pedirse otra vez dicho con lo de ahora conserva
+   * su turno**, si se dice a quién pasa: `pasaSuTurnoA` dice qué tiene que ser
+   * lo siguiente que se pida para heredarlo. Es la información de tráfico,
+   * que se vuelve a pedir cuando el otro cambia de hora o de millas: se
+   * retiraba y se volvía a pedir al final de lo que manda, y en el circuito
+   * de Los Rodeos «subí» y «climb to» se le colaron delante —dieciocho
+   * segundos de un rombo lleno sin una palabra—. Dicha con lo de ahora es la
+   * misma información, y su sitio en la cola es el que tenía. Ver `revisar`
+   * en `flight/informacion-de-trafico.ts`.
    */
   retirar(
     sobra: (clave: string | undefined, urgencia: Urgencia) => boolean,
+    al: { readonly pasaSuTurnoA?: (clave: string | undefined) => boolean } = {},
   ): void {
     for (let i = this.cola.length - 1; i >= 0; i--) {
       const esta = this.cola[i]!;
       if (!sobra(esta.clave, esta.urgencia)) continue;
+      if (al.pasaSuTurnoA)
+        this.turnoQuePasa = {
+          desde: Math.min(esta.desde, this.turnoQuePasa?.desde ?? Infinity),
+          a: al.pasaSuTurnoA,
+          cuando: this.reloj.ahora(),
+        };
       this.tirar(i, "ya no es verdad");
     }
   }
+
+  /**
+   * El turno de lo que se retiró para volver a pedirse, si lo hay: lo hereda
+   * lo siguiente que se pida, si es lo que se dijo y se pide en el acto —la
+   * frase de ahora puede no llegar a pedirse, si no tiene con qué sonar—; si
+   * no, se pierde. Ver `retirar`.
+   */
+  private turnoQuePasa: {
+    readonly desde: number;
+    readonly a: (clave: string | undefined) => boolean;
+    readonly cuando: number;
+  } | null = null;
 
   /** Vuelo nuevo: se olvida hasta lo que ya había dicho. */
   empezarDeCero(): void {
