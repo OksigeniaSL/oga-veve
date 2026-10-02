@@ -63,6 +63,7 @@ import {
   redLentaParaLasVoces,
   seSolapan,
 } from "./oido.mjs";
+import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -584,7 +585,18 @@ if (process.env.OGA_TRAZA_ALA)
     globalThis.__trazaAla = [];
   });
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche]) => {
+/*
+ * **Si el avión lleva pasaje, y con él megafonía.** Una avioneta no la lleva:
+ * la comandante no tiene a quién hablar. Ver `conPasaje` en
+ * `audio/megafonia.ts`. Decide qué fases se vuelan a tiempo real —ver
+ * `scripts/reloj-del-banco.mjs`— y si se mide lo que pidió la megafonía.
+ */
+const conMegafonia = await page
+  .evaluate(() => !!globalThis.__oga?.avion?.().conPasaje)
+  .catch(() => true);
+const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
+
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -2782,14 +2794,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * dura el doble. Es la trampa de siempre de este banco: el reloj
      * acelerado comprime el juego y no el habla.
      */
-    const enLaCarrera = [
-      "autorizado",
-      "back-taxi",
-      "alineando",
-      "despegando",
-      "comprometido",
-    ].includes(fase);
-    const quiere = enLaCarrera ? 1 : veces;
+    /*
+     * **Y donde hay megafonía, también el rodaje de salida.** Es la ventana
+     * de Jazlyn —el crosscheck y la bienvenida—, y a ×3 el rodaje de Gran
+     * Canaria cabía en veintiún segundos de pared: la bienvenida se quedaba
+     * detrás de la torre y se retiraba al empezar la carrera. Las fases que
+     * van a uno están en `scripts/reloj-del-banco.mjs`, con su prueba.
+     */
+    const quiere = aTiempoReal.includes(fase) ? 1 : veces;
     if (quiere !== relojAhora) {
       relojAhora = quiere;
       o.acelerar?.(quiere);
@@ -5272,7 +5284,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
