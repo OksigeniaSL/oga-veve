@@ -71,6 +71,7 @@ import {
   esTelefono,
   esTelefonoApaisado,
 } from "./telefono";
+import { alPulsar, alPulsarDentro } from "./pulsar";
 import {
   alCambiarPantallaCompleta,
   alternarPantallaCompleta,
@@ -768,14 +769,18 @@ export class Hud {
      * porque sube desde él— o se toca cualquier otra cosa: un menú que se
      * queda abierto encima del vuelo es otra cosa que tapa el avión.
      */
+    /*
+     * Con su propio dedo, como todos los botones del vuelo: ver `ui/pulsar.ts`.
+     * El cierre al usar lo de dentro sigue en el `click` que sube desde él.
+     */
+    alPulsarDentro(this.root, '[data-hud="menu"]', () =>
+      this.abrirMenu(!this.root.classList.contains("hud--menu")),
+    );
+    alPulsarDentro(this.root, '[data-hud="pantalla-completa"]', () =>
+      alternarPantallaCompleta(),
+    );
     this.root.addEventListener("click", (e) => {
       const donde = e.target as HTMLElement | null;
-      if (donde?.closest('[data-hud="menu"]')) {
-        this.abrirMenu(!this.root.classList.contains("hud--menu"));
-        return;
-      }
-      if (donde?.closest('[data-hud="pantalla-completa"]'))
-        alternarPantallaCompleta();
       if (donde?.closest('[data-hud="menu-caja"] button')) this.abrirMenu(false);
     });
     window.addEventListener(
@@ -1667,6 +1672,10 @@ export class Hud {
      * dedo fuera. Es la misma regla que ya siguen los mandos de la cabina, y
      * la contraria que el freno — que es un pedal y se pisa. Ver
      * `pulsarMandoDeCabina` en `game.ts`.
+     *
+     * **Y con su propio dedo**, no con `click`: con el pulgar en la palanca,
+     * el navegador no daba el clic al otro dedo y los flaps no bajaban. Ver
+     * `ui/pulsar.ts`. Lo mismo todos los botones del vuelo.
      */
     this.trenTouch = pick(this.root, "tren-touch");
     this.flapsTouch = pick(this.root, "flaps-touch");
@@ -1676,7 +1685,7 @@ export class Hud {
       [this.flapsTouch, "flaps"],
       [this.aerofrenosTouch, "aerofrenos"],
     ] as const) {
-      boton.addEventListener("click", () => this.alTocarMando?.(cual));
+      alPulsar(boton, () => this.alTocarMando?.(cual));
     }
     // El «soltar» del freno y de los botones del motor se escucha en la
     // ventana: ver el constructor.
@@ -1716,7 +1725,7 @@ export class Hud {
     this.galones = pick(this.root, "galones");
     this.progress = pick(this.root, "progress");
     this.sound = pick(this.root, "sound");
-    this.sound.addEventListener("click", () => this.soundHandler?.());
+    alPulsar(this.sound, () => this.soundHandler?.());
     /*
      * El deslizador: mientras se arrastra, suena; al soltar, se guarda. Y sin
      * que el vuelo se entere de las flechas cuando tiene el foco: las mismas
@@ -1733,36 +1742,22 @@ export class Hud {
      * flechas del vuelo siguientes moverían el volumen y no el avión.
      */
     this.volumen.addEventListener("pointerup", () => this.volumen?.blur());
-    pick(this.root, "camara").addEventListener("click", () =>
-      this.camaraHandler?.(),
-    );
+    alPulsar(pick(this.root, "camara"), () => this.camaraHandler?.());
     this.gafas = pick(this.root, "gafas");
-    this.gafas.addEventListener("click", () => this.gafasHandler?.());
-    this.root
-      .querySelector('[data-hud="cinturon-mando"]')
-      ?.addEventListener("click", () => this.cinturonHandler?.());
-    this.root
-      .querySelector('[data-hud="piloto-auto"]')
-      ?.addEventListener("click", () => this.pilotoAutoHandler?.());
-    this.home.addEventListener("click", () => this.destinoHandler?.());
+    alPulsar(this.gafas, () => this.gafasHandler?.());
+    const cinturon = this.root.querySelector<HTMLElement>('[data-hud="cinturon-mando"]');
+    if (cinturon) alPulsar(cinturon, () => this.cinturonHandler?.());
+    const automatico = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
+    if (automatico) alPulsar(automatico, () => this.pilotoAutoHandler?.());
+    alPulsar(this.home, () => this.destinoHandler?.());
     this.mision = pick(this.root, "mision-boton");
-    this.mision.addEventListener("click", () => this.misionHandler?.());
-    pick(this.root, "pausa").addEventListener("click", () =>
-      this.pausaHandler?.(),
-    );
-    pick(this.root, "keys").addEventListener("click", () =>
-      this.keysHandler?.(),
-    );
-    pick(this.root, "ala").addEventListener("click", () => this.alaHandler?.());
-    pick(this.root, "credits").addEventListener("click", () =>
-      this.creditsHandler?.(),
-    );
-    pick(this.root, "cuaderno").addEventListener("click", () =>
-      this.cuadernoHandler?.(),
-    );
-    pick(this.root, "hangar").addEventListener("click", () =>
-      this.hangarHandler?.(),
-    );
+    alPulsar(this.mision, () => this.misionHandler?.());
+    alPulsar(pick(this.root, "pausa"), () => this.pausaHandler?.());
+    alPulsar(pick(this.root, "keys"), () => this.keysHandler?.());
+    alPulsar(pick(this.root, "ala"), () => this.alaHandler?.());
+    alPulsar(pick(this.root, "credits"), () => this.creditsHandler?.());
+    alPulsar(pick(this.root, "cuaderno"), () => this.cuadernoHandler?.());
+    alPulsar(pick(this.root, "hangar"), () => this.hangarHandler?.());
     // El mapa se vuelve a atar en cada `render()`, como todo lo demás: el HUD
     // se rehace entero al cambiar de idioma y los oyentes viejos se van con el
     // marcado viejo.
