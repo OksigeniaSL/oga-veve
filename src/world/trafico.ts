@@ -889,8 +889,9 @@ export interface QuienJuega {
   readonly velocidad?: number;
   /**
    * **Si tiene prioridad**: un MAYDAY o un «minimum fuel» puestos. Entonces
-   * nadie se le cuela delante, ni siquiera quien cabría: los demás esperan
-   * en la esquina de la base. Ver `PRIORIDAD`.
+   * los que giran a la base le dejan más hueco por delante del de siempre, y
+   * si no les cabe, esperan en la esquina. Ver `PRIORIDAD` y
+   * `prioridad-en-la-fila.test.ts`.
    */
   readonly prioridad?: boolean;
 }
