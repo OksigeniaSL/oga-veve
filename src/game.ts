@@ -6145,36 +6145,9 @@ export class Game {
      * doble raya la reconoce aquí.
      */
     this.hechos.on("gestoDelSenalero", ({ gesto }) => {
-      /*
-       * **El «despacio» del señalero se ve siempre y se dice solo a quien
-       * lleva el gas.** Donde el juego lleva la velocidad, pedirle a quien
-       * juega que frene es reñirle por lo que hace el juego: el gesto sigue en
-       * el mundo y en la tarjeta, que es lo que hace el señalero de verdad,
-       * pero sin la voz ni la tecla del freno. El «alto» sí: dice dónde se
-       * para, y eso se aprende igual lleve quien lleve el gas. Ver
-       * `laVelocidadEsDelJuego`.
-       */
-      const parando =
-        gesto === "alto" ||
-        (gesto === "despacio" && !this.laVelocidadEsDelJuego());
-      /*
-       * **Y las de ya parado, con lo que se hace en cada una**: con «frenos»,
-       * la tecla del freno; con «calzos», nada, que eso lo hace quien está
-       * abajo; y con «cortar motores», la llave, que se puede tocar como la
-       * de la fase. Ver `YA_PARADO` en `flight/senalero.ts`.
-       */
+      // La tarjeta, y la voz de las de parar. Ver `tarjetaDelSenalero`.
+      const parando = this.tarjetaDelSenalero(gesto);
       const cortar = gesto === "cortar";
-      const tecla =
-        parando || gesto === "frenos"
-          ? nombreDeTecla(this.input.preferredKey("brakes"))
-          : cortar
-            ? nombreDeTecla(this.input.preferredKey("engine"))
-            : null;
-      this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
-        segundos: Infinity,
-        tecla,
-        accion: cortar ? () => this.toggleEngine() : null,
-      });
       if (parando) {
         const cual = gesto === "alto" ? "vuelo.alto" : "vuelo.despacio";
         this.instructor.decir(t(cual), cual);
@@ -12554,6 +12527,45 @@ export class Game {
   /** Segundos parado en «en-puesto» con el señalero llamando todavía. */
   private paradoSinLlegar = 0;
 
+  /**
+   * **La tarjeta de la seña del señalero**, sin su voz: el mismo señalero
+   * dibujado, y la tecla de lo que se hace con esa seña. Devuelve si la seña
+   * es de parar, que es la que además se dice.
+   */
+  private tarjetaDelSenalero(gesto: string): boolean {
+    /*
+     * **El «despacio» del señalero se ve siempre y se dice solo a quien
+     * lleva el gas.** Donde el juego lleva la velocidad, pedirle a quien
+     * juega que frene es reñirle por lo que hace el juego: el gesto sigue en
+     * el mundo y en la tarjeta, que es lo que hace el señalero de verdad,
+     * pero sin la voz ni la tecla del freno. El «alto» sí: dice dónde se
+     * para, y eso se aprende igual lleve quien lleve el gas. Ver
+     * `laVelocidadEsDelJuego`.
+     */
+    const parando =
+      gesto === "alto" ||
+      (gesto === "despacio" && !this.laVelocidadEsDelJuego());
+    /*
+     * **Y las de ya parado, con lo que se hace en cada una**: con «frenos»,
+     * la tecla del freno; con «calzos», nada, que eso lo hace quien está
+     * abajo; y con «cortar motores», la llave, que se puede tocar como la de
+     * la fase. Ver `YA_PARADO` en `flight/senalero.ts`.
+     */
+    const cortar = gesto === "cortar";
+    const tecla =
+      parando || gesto === "frenos"
+        ? nombreDeTecla(this.input.preferredKey("brakes"))
+        : cortar
+          ? nombreDeTecla(this.input.preferredKey("engine"))
+          : null;
+    this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
+      segundos: Infinity,
+      tecla,
+      accion: cortar ? () => this.toggleEngine() : null,
+    });
+    return parando;
+  }
+
   /** Si el señalero estaba en el cuadro el fotograma anterior. */
   private senaleroEnCuadro = false;
   private readonly puntoDelSenalero = new Vector3();
@@ -12598,13 +12610,21 @@ export class Game {
     if (!hayQuienSenale && this.senalero.grupo.visible) this.senalero.reiniciar();
     if (volviendo && hayQuienSenale) this.senaleroAlPuestoDeLlegada();
     const s = this.flight.state;
+    /*
+     * **Lo que rueda por el suelo, no lo que marca el anemómetro.** Con viento
+     * de cara un avión parado en su puesto marca la velocidad del viento: en
+     * Los Rodeos, siete metros por segundo. El señalero no lo daba nunca por
+     * parado —ni frenos, ni calzos, ni cortar motores— y se quedaba en el
+     * alto. Es la misma corrección que ya se hizo en el tope de rodaje.
+     */
+    const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
     const gesto = hayQuienSenale
       ? this.senalero.paso(
           dt,
           {
             x: s.position.x,
             z: s.position.z,
-            velocidad: s.airspeed,
+            velocidad: porElSuelo,
             enElSuelo: s.onGround,
             motor: this.input.controls.engineOn,
           },
@@ -12618,7 +12638,7 @@ export class Game {
      */
     const llamando =
       fase === "en-puesto" &&
-      s.airspeed < 0.5 &&
+      porElSuelo < 0.5 &&
       (gesto === "adelante" || gesto === "izquierda" || gesto === "derecha");
     const antesDeLaRed = this.paradoSinLlegar;
     this.paradoSinLlegar = llamando ? this.paradoSinLlegar + dt : 0;
@@ -12650,7 +12670,7 @@ export class Game {
     if (
       volviendo &&
       pasado > SE_PASO_DEL_PUESTO &&
-      s.airspeed > 2 &&
+      porElSuelo > 2 &&
       !this.laVelocidadEsDelJuego()
     ) {
       if (!this.avisadoDeLaPasada) {
@@ -12697,6 +12717,19 @@ export class Game {
      * `senaleroALaVista`.
      */
     const enPantalla = !this.senaleroALaVista() ? null : gesto;
+    /*
+     * **Y si otra tarjeta le quitó el sitio y ya se fue, vuelve la suya.** Con
+     * la llegada callada mientras la lleva el señalero —ver
+     * `elSenaleroLlevaLaLlegada`— su tarjeta es la única: la de recoger los
+     * flaps la tapó al pararse en Los Rodeos y, al irse, la pantalla se quedó
+     * vacía quince segundos con el avión parado en el puesto.
+     */
+    if (
+      enPantalla !== null &&
+      enPantalla === this.gestoEnPantalla &&
+      this.hud.senal.puesto.dibujo === ""
+    )
+      this.tarjetaDelSenalero(enPantalla);
     if (enPantalla !== this.gestoEnPantalla) {
       this.gestoEnPantalla = enPantalla;
       if (enPantalla) {
