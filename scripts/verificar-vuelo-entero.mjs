@@ -63,6 +63,7 @@ import {
   redLentaParaLasVoces,
   seSolapan,
 } from "./oido.mjs";
+import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -584,7 +585,18 @@ if (process.env.OGA_TRAZA_ALA)
     globalThis.__trazaAla = [];
   });
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche]) => {
+/*
+ * **Si el avión lleva pasaje, y con él megafonía.** Una avioneta no la lleva:
+ * la comandante no tiene a quién hablar. Ver `conPasaje` en
+ * `audio/megafonia.ts`. Decide qué fases se vuelan a tiempo real —ver
+ * `scripts/reloj-del-banco.mjs`— y si se mide lo que pidió la megafonía.
+ */
+const conMegafonia = await page
+  .evaluate(() => !!globalThis.__oga?.avion?.().conPasaje)
+  .catch(() => true);
+const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
+
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -2198,6 +2210,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   visto: false,
   /** La seña que hacía al girar la llave. Ver la etapa «apagar». */
   alApagar: null,
+  /** Y dónde estaba el avión entonces. Ver la etapa «apagar». */
+  alApagarComo: null,
   gestos: new Set(),
   masCerca: Infinity,
   /* Y por qué no se le vio, que es lo que faltaba. Ver `comoVa`. */
@@ -2443,6 +2457,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * Desde cuándo está cada avión en la banda del TCAS, s. El TCAS mira una
    * vez por segundo y un avión recién puesto tarda ese ciclo en salir: lo que
    * se cuenta es el que lleva dos segundos y sigue sin rombo.
+   *
+   * **Y dos segundos seguidos, no desde la primera vez que se le vio.** La
+   * cuenta solo se borraba al salir de la banda por altura; si el avión dejaba
+   * de mirarse por otra cosa —más allá de las treinta millas, sin dibujar,
+   * fuera de la lista—, la hora vieja se quedaba. Los de la ruta dan la vuelta
+   * a su corredor con el mismo nombre y reaparecen en la otra punta, y si esa
+   * punta cae a veinte kilómetros de ti —llegando a El Hierro, a La Gomera,
+   * dando vueltas en Los Rodeos— el banco lo contaba sin rombo desde la
+   * primera muestra, con una hora de media hora antes, mientras el TCAS hacía
+   * lo que hace uno de verdad con un transpondedor nuevo: cogerlo en su ciclo.
+   * Medido: «el TCAS: no lo sigue», diez muestras, menos de un segundo. Ver
+   * `comoVeA` en `flight/tcas.ts`.
    */
   const enLaBandaDesde = new Map();
   /**
@@ -2770,14 +2796,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * dura el doble. Es la trampa de siempre de este banco: el reloj
      * acelerado comprime el juego y no el habla.
      */
-    const enLaCarrera = [
-      "autorizado",
-      "back-taxi",
-      "alineando",
-      "despegando",
-      "comprometido",
-    ].includes(fase);
-    const quiere = enLaCarrera ? 1 : veces;
+    /*
+     * **Y donde hay megafonía, también el rodaje de salida.** Es la ventana
+     * de Jazlyn —el crosscheck y la bienvenida—, y a ×3 el rodaje de Gran
+     * Canaria cabía en veintiún segundos de pared: la bienvenida se quedaba
+     * detrás de la torre y se retiraba al empezar la carrera. Las fases que
+     * van a uno están en `scripts/reloj-del-banco.mjs`, con su prueba.
+     */
+    const quiere = aTiempoReal.includes(fase) ? 1 : veces;
     if (quiere !== relojAhora) {
       relojAhora = quiere;
       o.acelerar?.(quiere);
@@ -2991,7 +3017,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         if (s.onGround && ENCIMA_DE_LA_PISTA.has(fase)) encima.push("tú");
         if (encima.length > 1) {
           dosEnLaPista++;
-          dosEnLaPistaDonde ??= `${t.toFixed(0)} s en «${fase}»: ${encima.join(", ")}`;
+          /*
+           * Con cómo va cada uno por dentro —camino, metros y dónde caen la
+           * doble raya, el despegue, la toma y la salida—: dos encima de la
+           * pista puede venir de varios sitios, y sin esto solo se adivinaba.
+           * Una vez al empezar y otra un rato después, para ver si se mueven.
+           */
+          if (dosEnLaPista === 1 || dosEnLaPista === 150) {
+            const dentro = (o.traficoPorDentro?.() ?? [])
+              .filter((d) => encima.includes(d.matricula))
+              .map(
+                (d) =>
+                  `${d.matricula} ${d.tipo} ${d.camino} ${d.recorrido} m (espera ${d.espera}, despega ${d.despega}, toca ${d.toca}, fuera ${d.fuera})` +
+                  `${d.conPermiso ? " con permiso" : ""} cedido ${d.cedido} s quieto ${d.quieto} s a ${d.alto} m`,
+              )
+              .join(" | ");
+            const aqui = `${t.toFixed(0)} s en «${fase}»: ${encima.join(", ")}${dentro ? ` [${dentro}]` : ""}`;
+            if (dosEnLaPista === 1) dosEnLaPistaDonde = aqui;
+            else dosEnLaPistaDonde += ` · y luego ${aqui}`;
+          }
         }
         const fila = (o.secuencia?.() ?? []).map((x) => ({ ...x, tuyo: false }));
         if (fase === "final" && !s.onGround && pistaAhora()) {
@@ -3037,12 +3081,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           const a = porId.get(b.id);
           if (!a) {
             radar.rombosSinAvion++;
-            radar.rombosSinAvionDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id}`;
+            /*
+             * Con la hora al centésimo de las primeras: dos muestras con la
+             * misma hora son el mismo paso del juego visto dos veces.
+             */
+            if (radar.rombosSinAvion <= 4)
+              radar.rombosSinAvionDonde = `${radar.rombosSinAvionDonde ? `${radar.rombosSinAvionDonde} · ` : ""}${t.toFixed(2)} s en «${fase}»: ${b.id}`;
           } else if (!a.dibujado && a.distancia < 30000) {
             radar.rombosSinDibujo++;
             radar.rombosSinDibujoDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(a.distancia)} m`;
           }
         }
+        /** Los que en esta muestra están en la banda. Ver `enLaBandaDesde`. */
+        const enLaBandaAhora = new Set();
         if (tc.equipo && tc.enMarcha) {
           const banda = { NORM: [2700, 2700], ABV: [9900, 2700], BLW: [2700, 9900] }[tc.banda ?? "NORM"];
           const pintadosIds = new Set(pintados.map((b) => b.id));
@@ -3056,11 +3107,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               enLaBandaDesde.delete(a.id);
               continue;
             }
+            enLaBandaAhora.add(a.id);
             if (!enLaBandaDesde.has(a.id)) enLaBandaDesde.set(a.id, t);
             if (t - enLaBandaDesde.get(a.id) < 2) continue;
             if (!pintadosIds.has(a.id)) {
               radar.vistosSinRombo++;
-              radar.vistosSinRomboDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.id} a ${Math.round(a.distancia)} m y ${Math.round(pies)} ft`;
+              /*
+               * Y cómo lo ve el TCAS: si lo sigue, a cuánto lo midió y con qué
+               * banda y altura propia pintó. Sin esto, un avión sin rombo podía
+               * ser del banco o del juego y solo se adivinaba cuál.
+               */
+              if (!radar.vistosSinRomboDonde) {
+                const ve = o.tcasComoVeA?.(a.id);
+                radar.vistosSinRomboDonde =
+                  `${t.toFixed(0)} s en «${fase}»: ${a.id} a ${Math.round(a.distancia)} m y ${Math.round(pies)} ft` +
+                  ` · banda ${tc.banda ?? "NORM"}, yo a ${Math.round(s.position.y)} m` +
+                  (ve
+                    ? ` · el TCAS: ${ve.sigue ? `lo sigue a ${ve.millas} NM y ${ve.pies} ft` : "no lo sigue"}, pintó con ${ve.banda} a ${ve.y} m y ${ve.intrusos} transpondedores`
+                    : "");
+              }
             }
           }
           /*
@@ -3090,6 +3155,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             }
           }
         }
+        // Y quien no está en la banda en esta muestra, por lo que sea, vuelve
+        // a empezar su cuenta. Ver `enLaBandaDesde`.
+        for (const id of [...enLaBandaDesde.keys()])
+          if (!enLaBandaAhora.has(id)) enLaBandaDesde.delete(id);
         if (!s.onGround && s.heightAboveGround > 152)
           for (const b of pintados) {
             if (b.clase === "otro") {
@@ -3101,7 +3170,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             if (pared - cercanoDesde.get(b.id) > CERCANO_SIN_INFORMAR && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
               cercanosSinInformar.add(b.id);
               radar.cercanosSinInformar = (radar.cercanosSinInformar ?? 0) + 1;
-              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft · la información: ${o.porQueCallaLaInformacion?.() ?? "?"} · informados: ${[...informados].join(", ") || "nadie"}`;
+              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft · la información: ${o.porQueCallaLaInformacion?.() ?? "?"} · informados: ${[...informados].join(", ") || "nadie"} · contados: ${(o.informacionDeTrafico?.() ?? []).join(", ") || "nadie"}`;
             }
           }
         const nombrados = o.nombrados?.();
@@ -4903,6 +4972,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         o.tocarMando
       ) {
         senalero.alApagar ??= sena ?? "ninguna";
+        /*
+         * Y dónde estaba el avión respecto a su sitio y a qué iba: una seña
+         * que no pasa del alto puede ser un avión pasado de la raya o uno que
+         * no acaba de pararse, y son dos arreglos distintos.
+         */
+        senalero.alApagarComo ??= `a ${elSenalero?.comoVa?.restante ?? "?"} m de su sitio, a ${porElSuelo(s).toFixed(2)} m/s, tras ${esperandoParaApagar.toFixed(0)} s esperando`;
         o.tocarMando("motor");
         if (!o.controles().engineOn) c.engineOn = false;
       }
@@ -5085,6 +5160,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       porQueNo: [...senalero.porQueNo],
       gestos: [...senalero.gestos],
       alApagar: senalero.alApagar,
+      alApagarComo: senalero.alApagarComo,
       masCerca: Math.round(senalero.masCerca),
     },
     verBackTaxi: (() => {
@@ -5217,7 +5293,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -5361,14 +5437,31 @@ const relojDeVerdad =
     if (i < 0) sinSonar.push(c);
     else usadas.add(i);
   }
-  comprobar(
-    "y todo lo que pidió la megafonía, sonó con su voz",
-    pedidas.length > 0 && sinSonar.length === 0,
-    sinSonar.length
-      ? `sin sonar: ${sinSonar.join(", ")} · pedidas ${pedidas.length}, oídas ${deLaMegafonia.length}`
-      : `${pedidas.length} de ${pedidas.length}: ${pedidas.join(", ")}`,
-    "«Tripulación, armar toboganes y verificación cruzada» no se oye",
-  );
+  /*
+   * **Y solo en el avión que la lleva.** En el JAZ 20 no hay pasaje ni
+   * megafonía, así que no se pide nada y esto salía en rojo con «0 de 0»:
+   * medía que una avioneta no tiene comandante que hable al pasaje, que es
+   * justo lo correcto. Ahí lo que se comprueba es lo contrario: que la
+   * megafonía calle.
+   */
+  if (conMegafonia)
+    comprobar(
+      "y todo lo que pidió la megafonía, sonó con su voz",
+      pedidas.length > 0 && sinSonar.length === 0,
+      sinSonar.length
+        ? `sin sonar: ${sinSonar.join(", ")} · pedidas ${pedidas.length}, oídas ${deLaMegafonia.length}`
+        : `${pedidas.length} de ${pedidas.length}: ${pedidas.join(", ")}`,
+      "«Tripulación, armar toboganes y verificación cruzada» no se oye",
+    );
+  else
+    comprobar(
+      "y en un avión sin pasaje la megafonía calla",
+      pedidas.length === 0 && deLaMegafonia.length === 0,
+      pedidas.length || deLaMegafonia.length
+        ? `pedidas ${pedidas.length}: ${pedidas.join(", ") || "—"} · oídas ${deLaMegafonia.length}`
+        : "ni pedida ni oída: no hay pasaje a quien hablar",
+      "«0 de 0» en rojo con el JAZ 20, que no lleva megafonía",
+    );
   /*
    * **Y los anuncios de Jazlyn del puesto a la despedida**, donde hay
    * tripulación que armar y pasaje que despedir.
@@ -6110,7 +6203,8 @@ if (vuelo.enBici) {
         ["alto", "frenos", "calzos", "cortar"].every((g) =>
           vuelo.senalero.gestos.includes(g),
         ),
-      `seña al apagar: ${vuelo.senalero.alApagar} · gestos: ${vuelo.senalero.gestos.join(", ")}`,
+      `seña al apagar: ${vuelo.senalero.alApagar} · gestos: ${vuelo.senalero.gestos.join(", ")}` +
+        (vuelo.senalero.alApagarComo ? ` · ${vuelo.senalero.alApagarComo}` : ""),
       "«llegaste, apagá el motor» antes que el señalero (captura 128)",
     );
 }

@@ -540,7 +540,18 @@ export class TurnoDePista {
     this.retirarLosQueNoEstan();
     this.numeroDos =
       fase === "final" && this.de.torre() ? this.quienVaDelante() : null;
-    const dichas = this.de.radio.despejarLaPista(this.numeroDos, this.conCalleUnica);
+    /*
+     * **Y al de la calle, la salida con la pista libre.** La frecuencia da
+     * por suelta la pista en cuanto dice «cleared for take-off», y el que lo
+     * recibió todavía la corre su medio minuto largo: eso solo lo sabe el
+     * dibujo. De Los Rodeos a La Gomera, el que esperaba en la doble raya
+     * recibía su salida al entrar tú en final y entraba detrás del que
+     * despegaba: «dos encima de la pista», más de cuatrocientas muestras.
+     * Con otro encima espera en su doble raya sin perder el turno, que es lo
+     * que se hace de verdad: la pista es de uno por vez.
+     */
+    const laCalle = this.conCalleUnica && !this.ocupadaEnElDibujo;
+    const dichas = this.de.radio.despejarLaPista(this.numeroDos, laCalle);
     const trafico = this.de.trafico();
     for (const dice of dichas)
       trafico?.anuncia(

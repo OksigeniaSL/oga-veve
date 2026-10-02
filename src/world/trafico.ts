@@ -1166,6 +1166,26 @@ export interface Trafico {
     esperandoTurno: boolean;
   }[];
   /**
+   * **Cómo va cada uno por dentro**, para el banco: en qué camino, cuántos
+   * metros lleva y dónde caen en él la doble raya, el despegue, la toma y la
+   * salida de la pista. Dos encima de la pista a la vez puede venir de varios
+   * sitios, y sin esto solo se podía adivinar de cuál.
+   */
+  porDentro(): {
+    matricula: string;
+    tipo: TipoDeTrafico["id"];
+    camino: "llegada" | "sinPermiso" | "salida" | "otro" | "sin caminos";
+    recorrido: number;
+    espera: number | null;
+    despega: number | null;
+    toca: number | null;
+    fuera: number | null;
+    conPermiso: boolean;
+    cedido: number;
+    quieto: number;
+    alto: number;
+  }[];
+  /**
    * **Todos fuera.** Lo pide volver a empezar: la frecuencia empieza de cero
    * con otras matrículas, y un dibujo de la partida anterior —la avioneta
    * parada en la hierba junto al punto de espera, con la roja encendida— no
@@ -2420,6 +2440,34 @@ export function crearTrafico(
         enLaPista: encimaDeLaPista(quien),
         esperandoTurno: !!quien.tresSesenta,
       }));
+    },
+    porDentro() {
+      return [...aviones].map(([matricula, quien]) => {
+        const c = quien.caminos;
+        const camino = !c
+          ? ("sin caminos" as const)
+          : quien.marca.camino === c.llegada
+            ? ("llegada" as const)
+            : quien.marca.camino === c.sinPermiso
+              ? ("sinPermiso" as const)
+              : quien.marca.camino === c.salida
+                ? ("salida" as const)
+                : ("otro" as const);
+        return {
+          matricula,
+          tipo: quien.tipo.id,
+          camino,
+          recorrido: Math.round(quien.recorrido),
+          espera: c ? Math.round(c.espera) : null,
+          despega: c?.enTierra ? Math.round(c.enTierra.despega) : null,
+          toca: c ? Math.round(c.toca) : null,
+          fuera: c ? Math.round(c.fuera) : null,
+          conPermiso: quien.conPermiso,
+          cedido: +quien.cedido.toFixed(1),
+          quieto: +quien.quieto.toFixed(1),
+          alto: Math.round(quien.grupo.position.y - cota),
+        };
+      });
     },
     ocupanLaPista() {
       return [...aviones]

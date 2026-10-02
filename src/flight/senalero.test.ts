@@ -123,6 +123,28 @@ describe("el señalero", () => {
     ).toBe("alto");
   });
 
+  /*
+   * De Los Rodeos a Tenerife Sur con el JAZ 90, parado a cinco metros y pico
+   * pasado de su sitio: «seña al apagar: alto». La tolerancia de llegar era
+   * de cinco metros por los dos lados, y pasado de ahí el alto no se acababa
+   * nunca. Un señalero no hace volver a nadie: parado, siguen los frenos.
+   */
+  it("y pararse largo también es llegar: frenos, calzos y cortar, no el alto para siempre", () => {
+    for (const restante of [-6, -9, -20]) {
+      expect(gestoDeSenalero(llegando({ restante, velocidad: 0 }), "alto")).toBe(
+        "frenos",
+      );
+      expect(
+        gestoDeSenalero(
+          llegando({ restante, velocidad: 0, parado: 2 * DURA_LA_SENA + 0.1 }),
+          "calzos",
+        ),
+      ).toBe("cortar");
+    }
+    // Y mientras sigue rodando pasado de su sitio, el alto.
+    expect(gestoDeSenalero(llegando({ restante: -9, velocidad: 2 }))).toBe("alto");
+  });
+
   it("parado a media calle no es haber llegado", () => {
     expect(gestoDeSenalero(llegando({ restante: 40, velocidad: 0 }))).toBe(
       "adelante",

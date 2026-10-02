@@ -59,7 +59,7 @@ import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnCastellano, pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
 import { esDeLaMegafonia } from "../audio/turnos";
-import { conTripulacion } from "../audio/megafonia";
+import { conPasaje, conTripulacion } from "../audio/megafonia";
 import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { vfeDeAterrizaje } from "../flight/limites";
@@ -386,6 +386,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     avion: () => ({
       id: juego.aircraft.id,
       nombre: juego.aircraft.name,
+      /*
+       * Si lleva pasaje, y con él megafonía: sin ella la comandante no tiene
+       * a quién hablar. Ver `conPasaje`.
+       */
+      conPasaje: conPasaje(juego.aircraft.mass),
       // Si lleva tripulación de cabina: toboganes, servicio. Ver `conTripulacion`.
       conTripulacion: conTripulacion(juego.aircraft.mass),
       // «fábrica» y no «cajas»: el respaldo dejó de ser media docena de
@@ -1491,6 +1496,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     traficoAnuncia: (matricula: string, clave: string, puedeAterrizar = false) =>
       juego.trafico?.anuncia(matricula, clave, puedeAterrizar),
+    /** Cómo va cada uno del tráfico por dentro. Ver `porDentro` en `trafico.ts`. */
+    traficoPorDentro: () => juego.trafico?.porDentro() ?? [],
     /** La fila de llegadas del tráfico. Ver `secuencia` en `trafico.ts`. */
     secuencia: () => juego.trafico?.secuencia() ?? [],
     /**
@@ -1498,6 +1505,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * cuántos avisos lleva dados. Ver `flight/tcas.ts`.
      */
     tcas: () => juego.tcasParaBanco,
+    /** Cómo ve el TCAS a uno de ellos. Ver `Tcas.comoVeA`. */
+    tcasComoVeA: (id: string) => juego.tcasComoVeAParaBanco(id),
     /**
      * **Lo que la radio ha nombrado de otros aviones**, con la matrícula o el
      * nombre del TCAS de cada uno. El banco comprueba que cada uno está en el

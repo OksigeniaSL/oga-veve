@@ -62,6 +62,7 @@ import {
   DICE_UN_AFIS,
   enUnAfis,
   esElAvisoDeAves,
+  esLaInformacionDeTrafico,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
@@ -2012,7 +2013,14 @@ export class Game {
       this.comoSeDiceElTrafico(a).turno,
     );
     if (revision) {
-      BOCA.retirar((c) => c === revision.retirar);
+      /*
+       * Y si se vuelve a pedir dicha con lo de ahora, con el turno que tenía:
+       * es la misma información. Ver `retirar` en `audio/boca.ts`.
+       */
+      BOCA.retirar(
+        (c) => c === revision.retirar,
+        revision.otra ? { pasaSuTurnoA: esLaInformacionDeTrafico } : {},
+      );
       if (revision.otra) this.informarDelTrafico(revision.otra.aviso, revision.otra.n);
     }
     const info = this.informacionDeTrafico.paso(dt, yo, intrusos);
@@ -2318,6 +2326,11 @@ export class Game {
         this.bandaDelTcas,
       ),
     };
+  }
+
+  /** Cómo ve el TCAS a uno, para el banco. Ver `Tcas.comoVeA`. */
+  tcasComoVeAParaBanco(id: string) {
+    return this.tcas.comoVeA(id);
   }
 
   /** Lo que el tráfico de las islas necesita saber de quien vuela. */
@@ -8768,12 +8781,30 @@ export class Game {
      * `vigilarLasAves`.
      */
     this.moverLasAves(dt);
-    // Y el TCAS, con todos ya en su sitio y también antes de la puerta: un
-    // transpondedor no deja de contestar porque el campo no tenga torre.
-    this.vigilarElTrafico(dt);
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
     // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír.
-    if (sinTorre(this.elCampoMontado().escenario.aerodrome)) return;
+    if (!sinTorre(this.elCampoMontado().escenario.aerodrome)) this.oirElCampo(dt);
+    /*
+     * **Y el TCAS, con todos ya en su sitio**, también en un campo sin torre:
+     * un transpondedor no deja de contestar porque no haya quien hable.
+     *
+     * Y detrás de la frecuencia del campo, no delante, que es lo que decía
+     * este comentario y no hacía: el tráfico del circuito se mueve —y se
+     * retira, y aparece donde dice su llamada— al oír el campo, en
+     * `turno.oir`. Mirado antes, el TCAS pintaba al del circuito donde estaba
+     * en el paso anterior, y al que acababa de retirarse lo seguía pintando un
+     * paso más: en el vuelo a La Gomera, «2 sin avión: circuito:EC-OOT», un
+     * rombo de un avión que ya no estaba en el mundo. Lo que se ve, lo que
+     * pinta el radar y lo que nombra la radio son el mismo paso.
+     */
+    this.vigilarElTrafico(dt);
+  }
+
+  /**
+   * **La frecuencia del campo montado**: con quién se habla, lo que pasa en
+   * ella y en su dibujo, y quién lo dice. Ver `oirLaRadio`.
+   */
+  private oirElCampo(dt: number): void {
     /*
      * **Y solo se oye si se está en su frecuencia.** A veinticuatro mil pies
      * se oía al de la plataforma del aeropuerto de salida pedir rodar a la

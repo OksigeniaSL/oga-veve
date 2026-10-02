@@ -21,6 +21,7 @@ import {
   SILENCIO,
 } from "./boca";
 import { CADUCA_LA_MEGAFONIA } from "./turnos";
+import { esLaInformacionDeTrafico } from "./torre";
 
 let reloj = 0;
 let cortes = 0;
@@ -1165,6 +1166,48 @@ describe("la información de tráfico espera su turno", () => {
     // Lo que es para ti pasa delante de la instructora y de la megafonía.
     expect(dicho).toEqual(["permiso", "tráfico"]);
     expect(b.descartadas.some((d) => d.includes("trafico"))).toBe(false);
+  });
+
+  /*
+   * En el circuito de Los Rodeos con el JAZ 90: la del que venía por la
+   * izquierda esperaba detrás de la anterior, y cada vez que el otro cambiaba
+   * de hora o de millas se retiraba y se volvía a pedir, al final de lo que
+   * manda: «subí» y «climb to» se le colaban delante, y el rombo lleno estuvo
+   * dieciocho segundos sin una palabra. Dicha con lo de ahora es la misma
+   * información, y conserva su sitio.
+   */
+  it("y dicha otra vez con lo de ahora, conserva su turno", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    const A_LAS_SIETE = "torre.canario.trafico@yo-trafico.hora.7-trafico.millas.4";
+    const A_LAS_OCHO = "torre.canario.trafico@yo-trafico.hora.8-trafico.millas.4";
+    b.pedir("mando", frase("la anterior"), "torre.canario.trafico@yo-trafico.hora.6");
+    reloj += 1000;
+    b.pedir("mando", frase("a las siete"), A_LAS_SIETE);
+    reloj += 1000;
+    b.pedir("mando", frase("subí"), "torre.canario.subir@yo");
+    reloj += 1000;
+    b.retirar((c) => c === A_LAS_SIETE, { pasaSuTurnoA: esLaInformacionDeTrafico });
+    b.pedir("mando", frase("a las ocho"), A_LAS_OCHO);
+    acabar["la anterior"]!();
+    expect(dicho).toEqual(["la anterior", "a las ocho"]);
+    acabar["a las ocho"]!();
+    expect(dicho).toEqual(["la anterior", "a las ocho", "subí"]);
+  });
+
+  it("y el turno solo pasa a lo que se dijo que lo heredaba, y una vez", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("a las siete"), INFO);
+    reloj += 1000;
+    b.pedir("mando", frase("subí"), "torre.canario.subir@yo");
+    reloj += 1000;
+    b.retirar((c) => c === INFO, { pasaSuTurnoA: esLaInformacionDeTrafico });
+    // Lo siguiente que se pide no es una información: no hereda nada.
+    b.pedir("mando", frase("climb"), "torre.canario.climbTo@yo");
+    acabar["hablando"]!();
+    expect(dicho).toEqual(["hablando", "subí"]);
   });
 
   it("en las dos torres y con la instructora; y la retira quien sabe", () => {
