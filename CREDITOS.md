@@ -87,8 +87,9 @@ Los puntos por los que va el plan de vuelo entre dos campos de Canarias —las
 salidas, las aproximaciones y sus nombres, CANDE, BUNIX, XO69E— son los que
 publica ENAIRE en el AIP de España: la parte AD 2 de GCXO, GCTS, GCLP, GCFV,
 GCRR, GCLA, GCHI y GCGM (cartas IAC, SID y ARR/DEP, con su tabla codificada y
-su lista de puntos) y las listas ENR 4.1 (radioayudas) y ENR 4.4 (puntos
-significativos), leídas el 27 de septiembre de 2026. Cada procedimiento lleva
+su lista de puntos, y la VPT de la 21 de Lanzarote, con los suyos) y las
+listas ENR 4.1 (radioayudas) y ENR 4.4 (puntos significativos), leídas el 27
+de septiembre de 2026. Cada procedimiento lleva
 en `src/world/procedimientos-canarias.ts` el nombre de la carta de la que
 sale.
 
