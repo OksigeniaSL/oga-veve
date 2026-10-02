@@ -1500,6 +1500,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * cuántos avisos lleva dados. Ver `flight/tcas.ts`.
      */
     tcas: () => juego.tcasParaBanco,
+    /** Cómo ve el TCAS a uno de ellos. Ver `Tcas.comoVeA`. */
+    tcasComoVeA: (id: string) => juego.tcasComoVeAParaBanco(id),
     /**
      * **Lo que la radio ha nombrado de otros aviones**, con la matrícula o el
      * nombre del TCAS de cada uno. El banco comprueba que cada uno está en el

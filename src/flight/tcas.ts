@@ -381,10 +381,38 @@ export class Tcas {
   private encendido = false;
   /** Cuántos avisos ha dado este vuelo. Para el banco. */
   avisosDados = 0;
+  /** Con qué se pintó la última vez. Ver `comoVeA`. */
+  private ultimoPintado: { banda: Banda; y: number; intrusos: number } | null = null;
 
   /** Lo que enseña la pantalla. Vacío si no hay TCAS o está en espera. */
   get enPantalla(): readonly Blanco[] {
     return this.ahora;
+  }
+
+  /**
+   * **Cómo ve a uno, para el banco**: si lo sigue, a cuántas millas y pies
+   * lo midió en el último ciclo, y con qué banda, altura propia y cuántos
+   * transpondedores se pintó la pantalla la última vez. Un avión que el banco
+   * ve en la banda y la pantalla no pinta puede deberse a cuatro cosas, y sin
+   * esto solo se podía adivinar cuál.
+   */
+  comoVeA(id: string): {
+    readonly sigue: boolean;
+    readonly millas: number | null;
+    readonly pies: number | null;
+    readonly banda: Banda | null;
+    readonly y: number | null;
+    readonly intrusos: number | null;
+  } {
+    const s = this.seguidos.get(id);
+    return {
+      sigue: !!s,
+      millas: s ? +s.r.toFixed(1) : null,
+      pies: s ? Math.round(s.a) : null,
+      banda: this.ultimoPintado?.banda ?? null,
+      y: this.ultimoPintado ? Math.round(this.ultimoPintado.y) : null,
+      intrusos: this.ultimoPintado?.intrusos ?? null,
+    };
   }
 
   /**
@@ -530,6 +558,7 @@ export class Tcas {
   private pintar(yo: Propio, intrusos: readonly Intruso[]): Blanco[] {
     const lista: Blanco[] = [];
     const banda = BANDAS[yo.banda ?? "NORM"];
+    this.ultimoPintado = { banda: yo.banda ?? "NORM", y: yo.y, intrusos: intrusos.length };
     for (const i of intrusos) {
       const seguido = this.seguidos.get(i.id);
       // Posado, no se pinta. Ver la cabecera.

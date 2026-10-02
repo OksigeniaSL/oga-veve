@@ -2443,6 +2443,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * Desde cuándo está cada avión en la banda del TCAS, s. El TCAS mira una
    * vez por segundo y un avión recién puesto tarda ese ciclo en salir: lo que
    * se cuenta es el que lleva dos segundos y sigue sin rombo.
+   *
+   * **Y dos segundos seguidos, no desde la primera vez que se le vio.** La
+   * cuenta solo se borraba al salir de la banda por altura; si el avión dejaba
+   * de mirarse por otra cosa —más allá de las treinta millas, sin dibujar,
+   * fuera de la lista—, la hora vieja se quedaba. Los de la ruta dan la vuelta
+   * a su corredor con el mismo nombre y reaparecen en la otra punta, y si esa
+   * punta cae a veinte kilómetros de ti —llegando a El Hierro, a La Gomera,
+   * dando vueltas en Los Rodeos— el banco lo contaba sin rombo desde la
+   * primera muestra, con una hora de media hora antes, mientras el TCAS hacía
+   * lo que hace uno de verdad con un transpondedor nuevo: cogerlo en su ciclo.
+   * Medido: «el TCAS: no lo sigue», diez muestras, menos de un segundo. Ver
+   * `comoVeA` en `flight/tcas.ts`.
    */
   const enLaBandaDesde = new Map();
   /**
@@ -3055,12 +3067,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           const a = porId.get(b.id);
           if (!a) {
             radar.rombosSinAvion++;
-            radar.rombosSinAvionDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id}`;
+            /*
+             * Con la hora al centésimo de las primeras: dos muestras con la
+             * misma hora son el mismo paso del juego visto dos veces.
+             */
+            if (radar.rombosSinAvion <= 4)
+              radar.rombosSinAvionDonde = `${radar.rombosSinAvionDonde ? `${radar.rombosSinAvionDonde} · ` : ""}${t.toFixed(2)} s en «${fase}»: ${b.id}`;
           } else if (!a.dibujado && a.distancia < 30000) {
             radar.rombosSinDibujo++;
             radar.rombosSinDibujoDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(a.distancia)} m`;
           }
         }
+        /** Los que en esta muestra están en la banda. Ver `enLaBandaDesde`. */
+        const enLaBandaAhora = new Set();
         if (tc.equipo && tc.enMarcha) {
           const banda = { NORM: [2700, 2700], ABV: [9900, 2700], BLW: [2700, 9900] }[tc.banda ?? "NORM"];
           const pintadosIds = new Set(pintados.map((b) => b.id));
@@ -3074,11 +3093,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               enLaBandaDesde.delete(a.id);
               continue;
             }
+            enLaBandaAhora.add(a.id);
             if (!enLaBandaDesde.has(a.id)) enLaBandaDesde.set(a.id, t);
             if (t - enLaBandaDesde.get(a.id) < 2) continue;
             if (!pintadosIds.has(a.id)) {
               radar.vistosSinRombo++;
-              radar.vistosSinRomboDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.id} a ${Math.round(a.distancia)} m y ${Math.round(pies)} ft`;
+              /*
+               * Y cómo lo ve el TCAS: si lo sigue, a cuánto lo midió y con qué
+               * banda y altura propia pintó. Sin esto, un avión sin rombo podía
+               * ser del banco o del juego y solo se adivinaba cuál.
+               */
+              if (!radar.vistosSinRomboDonde) {
+                const ve = o.tcasComoVeA?.(a.id);
+                radar.vistosSinRomboDonde =
+                  `${t.toFixed(0)} s en «${fase}»: ${a.id} a ${Math.round(a.distancia)} m y ${Math.round(pies)} ft` +
+                  ` · banda ${tc.banda ?? "NORM"}, yo a ${Math.round(s.position.y)} m` +
+                  (ve
+                    ? ` · el TCAS: ${ve.sigue ? `lo sigue a ${ve.millas} NM y ${ve.pies} ft` : "no lo sigue"}, pintó con ${ve.banda} a ${ve.y} m y ${ve.intrusos} transpondedores`
+                    : "");
+              }
             }
           }
           /*
@@ -3108,6 +3141,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             }
           }
         }
+        // Y quien no está en la banda en esta muestra, por lo que sea, vuelve
+        // a empezar su cuenta. Ver `enLaBandaDesde`.
+        for (const id of [...enLaBandaDesde.keys()])
+          if (!enLaBandaAhora.has(id)) enLaBandaDesde.delete(id);
         if (!s.onGround && s.heightAboveGround > 152)
           for (const b of pintados) {
             if (b.clase === "otro") {
