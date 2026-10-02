@@ -2309,6 +2309,58 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const traficoAntes = new Map();
   let deFrente = 0;
   let deFrenteDonde = null;
+  /**
+   * **Y una sola fuente: lo que se ve, lo que pinta el radar y lo que nombra
+   * la radio.** «Veo aviones durante el vuelo que no aparecen en el radar, es
+   * como si cada cosa fuera por su lado.» Se cuenta en cada muestra:
+   *
+   * - los aviones del mundo que se ven —dibujados y dentro del cuadro—;
+   * - los rombos del TCAS, y cuántos de ellos no son de ningún avión del
+   *   mundo o no se dibujan estando a menos de treinta kilómetros;
+   * - los que vuelan dentro de la banda del TCAS en marcha y no tienen rombo;
+   * - los rombos del cuadro plano que no caen en la marcación de ningún avión
+   *   del TCAS —el espejo, si un día vuelve—;
+   * - y cada vez que la radio nombra a un tráfico, si ese tráfico está en el
+   *   mundo en ese momento.
+   */
+  const radar = {
+    muestras: 0,
+    vistos: 0,
+    rombos: 0,
+    rombosSinAvion: 0,
+    rombosSinAvionDonde: null,
+    rombosSinDibujo: 0,
+    rombosSinDibujoDonde: null,
+    vistosSinRombo: 0,
+    vistosSinRomboDonde: null,
+    fueraDeBanda: 0,
+    piezasFueraDeSitio: 0,
+    piezasFueraDeSitioDonde: null,
+    piezas: 0,
+    nombrados: 0,
+    nombradosQueNoEstan: 0,
+    nombradosQueNoEstanDonde: null,
+    porClave: {},
+    modos: {},
+    dependencias: {},
+  };
+  let nombradosVistos = o.nombrados?.()?.total ?? 0;
+  /**
+   * Desde cuándo está cada avión en la banda del TCAS, s. El TCAS mira una
+   * vez por segundo y un avión recién puesto tarda ese ciclo en salir: lo que
+   * se cuenta es el que lleva dos segundos y sigue sin rombo.
+   */
+  const enLaBandaDesde = new Map();
+  /**
+   * **Y el cercano del que nadie dice nada.** En la final de La Palma había
+   * dos rombos llenos —a cien y a seiscientos pies— y no sonó ni el «traffic,
+   * traffic» ni la información de la torre. Desde cuándo es cercano cada uno
+   * —rombo lleno o círculo de aviso, volando por encima de quinientos pies—,
+   * y a quién se le ha informado.
+   */
+  const cercanoDesde = new Map();
+  const informados = new Set();
+  const cercanosSinInformar = new Set();
   /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
   const frecuenciaOidaAlli = [];
   /**
@@ -2838,6 +2890,107 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       if (total < habladasVistas) habladasVistas = 0;
       const nuevas = h.slice(Math.max(0, h.length - (total - habladasVistas)));
       habladasVistas = total;
+      if (o.avionesDelMundo && o.tcas) {
+        const mundo = o.avionesDelMundo();
+        const porId = new Map(mundo.map((a) => [a.id, a]));
+        const tc = o.tcas();
+        const pintados = tc.enPantalla ?? [];
+        radar.muestras++;
+        radar.modos[tc.modo ?? "—"] = (radar.modos[tc.modo ?? "—"] ?? 0) + 1;
+        const dep = o.dependencia?.() ?? "—";
+        radar.dependencias[`${dep}@${fase}`] = (radar.dependencias[`${dep}@${fase}`] ?? 0) + 1;
+        radar.vistos += mundo.filter((a) => a.enPantalla && !a.enElSuelo).length;
+        radar.rombos += pintados.length;
+        for (const b of pintados) {
+          const a = porId.get(b.id);
+          if (!a) {
+            radar.rombosSinAvion++;
+            radar.rombosSinAvionDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id}`;
+          } else if (!a.dibujado && a.distancia < 30000) {
+            radar.rombosSinDibujo++;
+            radar.rombosSinDibujoDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(a.distancia)} m`;
+          }
+        }
+        if (tc.equipo && tc.enMarcha) {
+          const banda = { NORM: [2700, 2700], ABV: [9900, 2700], BLW: [2700, 9900] }[tc.banda ?? "NORM"];
+          const pintadosIds = new Set(pintados.map((b) => b.id));
+          for (const a of mundo) {
+            if (a.enElSuelo || !a.dibujado) continue;
+            const pies = a.relativa / 0.3048;
+            const inclinada = Math.hypot(a.distancia, a.relativa) / 1852;
+            if (inclinada > 30) continue;
+            if (pies > banda[0] || pies < -banda[1]) {
+              if (a.enPantalla) radar.fueraDeBanda++;
+              enLaBandaDesde.delete(a.id);
+              continue;
+            }
+            if (!enLaBandaDesde.has(a.id)) enLaBandaDesde.set(a.id, t);
+            if (t - enLaBandaDesde.get(a.id) < 2) continue;
+            if (!pintadosIds.has(a.id)) {
+              radar.vistosSinRombo++;
+              radar.vistosSinRomboDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.id} a ${Math.round(a.distancia)} m y ${Math.round(pies)} ft`;
+            }
+          }
+          /*
+           * Y los rombos del cuadro plano, en su marcación: cada pieza encendida
+           * tiene que caer a menos de cinco grados de algún avión del TCAS.
+           */
+          const rumbo = s.heading;
+          const marcaciones = pintados.map((b) => {
+            const m = Math.atan2(b.x - s.position.x, -(b.z - s.position.z)) - rumbo;
+            return Math.atan2(Math.sin(m), Math.cos(m));
+          });
+          for (const el of document.querySelectorAll('[data-carta^="otro-"]')) {
+            if (el.getAttribute("visibility") !== "visible") continue;
+            const m = /translate\(([-\d.]+) ([-\d.]+)\)/.exec(el.getAttribute("transform") ?? "");
+            if (!m) continue;
+            const dx = Number(m[1]);
+            const dy = Number(m[2]);
+            if (Math.hypot(dx, dy) < 4) continue;
+            radar.piezas++;
+            const suya = Math.atan2(dx, -dy);
+            const cerca = marcaciones.some(
+              (q) => Math.abs(Math.atan2(Math.sin(suya - q), Math.cos(suya - q))) < (5 * Math.PI) / 180,
+            );
+            if (!cerca) {
+              radar.piezasFueraDeSitio++;
+              radar.piezasFueraDeSitioDonde ??= `${t.toFixed(0)} s en «${fase}»: pieza en ${Math.round((suya * 180) / Math.PI)}°`;
+            }
+          }
+        }
+        if (!s.onGround && s.heightAboveGround > 152)
+          for (const b of pintados) {
+            if (b.clase === "otro") {
+              cercanoDesde.delete(b.id);
+              continue;
+            }
+            if (!cercanoDesde.has(b.id)) cercanoDesde.set(b.id, t);
+            if (t - cercanoDesde.get(b.id) > 30 && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
+              cercanosSinInformar.add(b.id);
+              radar.cercanosSinInformar = (radar.cercanosSinInformar ?? 0) + 1;
+              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft`;
+            }
+          }
+        const nombrados = o.nombrados?.();
+        if (nombrados) {
+          const nuevosN = nombrados.lista.slice(
+            Math.max(0, nombrados.lista.length - (nombrados.total - nombradosVistos)),
+          );
+          nombradosVistos = nombrados.total;
+          for (const n of nuevosN) {
+            if (n.clave === "informacionDeTrafico" || n.clave === "traffic, traffic")
+              informados.add(n.quien);
+            radar.nombrados++;
+            const clave = n.clave.replace(/@.*$/, "");
+            radar.porClave[clave] = (radar.porClave[clave] ?? 0) + 1;
+            const id = n.quien && n.quien.includes(":") ? n.quien : n.quien ? `circuito:${n.quien}` : null;
+            if (!id || !porId.has(id)) {
+              radar.nombradosQueNoEstan++;
+              radar.nombradosQueNoEstanDonde ??= `${t.toFixed(0)} s en «${fase}»: ${clave} de ${n.quien ?? "nadie"}`;
+            }
+          }
+        }
+      }
       if (enElDestino && aterrizaConAfis && o.lamparaEncendida?.()) lamparaEnUnAfis++;
       if (fase === "esperando") {
         rojaDesde ??= t;
@@ -2908,7 +3061,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       for (const x of nuevas) {
         if (
-          /^[\d.]+s (?:torre\.(?:[a-z]+\.)?holdShort(?:Landing|Departing)@|vuelo\.esperaQue)/.test(x) &&
+          /^[\d.]+s (?:torre\.(?:[a-z]+\.)?(?:holdShort|afisInUse)(?:Landing|Departing)@|vuelo\.esperaQue)/.test(x) &&
           (!/@/.test(x) || (!!misLetrasEnLaTorre && x.includes(`@${misLetrasEnLaTorre}`)))
         )
           porQueSeDijo ??= `${t.toFixed(0)} s en «${fase}»: ${x.replace(/^[\d.]+s /, "").replace(/@.*$/, "")}`;
@@ -4602,6 +4755,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     rojaMasLargaDonde,
     deFrente,
     deFrenteDonde,
+    radar,
     porQueSeDijo,
     // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
     aterrizaConTorre: o.conFrecuencia?.(destino ?? undefined) ?? true,
@@ -5413,6 +5567,63 @@ comprobar(
     : "nadie de frente",
   "«un avión de frente y ni aviso ni radar ni nada», despegando de Pettirossi",
 );
+
+/*
+ * **Y una sola fuente de verdad del tráfico**: lo que se ve, lo que pinta el
+ * radar y lo que nombra la radio son los mismos aviones. Ver `radar` en el
+ * vuelo. «Veo aviones durante el vuelo que no aparecen en el radar, es como si
+ * cada cosa fuera por su lado.»
+ */
+if (vuelo.radar) {
+  const r = vuelo.radar;
+  console.log(
+    `\n  el radar: ${r.muestras} muestras · ${r.vistos} aviones vistos · ${r.rombos} rombos · ` +
+      `${r.fueraDeBanda} vistos fuera de la banda del TCAS · ${r.piezas} piezas en la carta\n` +
+      `  modos: ${Object.entries(r.modos).map(([k, v]) => `${k} ${v}`).join(" · ")}\n` +
+      `  la radio nombró ${r.nombrados} veces: ${Object.entries(r.porClave).map(([k, v]) => `${k} ${v}`).join(" · ")}\n` +
+      `  dependencias: ${Object.entries(r.dependencias).map(([k, v]) => `${k} ${v}`).join(" · ")}`,
+  );
+  comprobar(
+    "cada rombo del TCAS es un avión del mundo, y se dibuja",
+    r.rombosSinAvion === 0 && r.rombosSinDibujo === 0,
+    r.rombosSinAvion || r.rombosSinDibujo
+      ? `${r.rombosSinAvion} sin avión (${r.rombosSinAvionDonde ?? "—"}) · ${r.rombosSinDibujo} sin dibujo (${r.rombosSinDibujoDonde ?? "—"})`
+      : `${r.rombos} rombos en ${r.muestras} muestras, todos de un avión que se ve`,
+    "«veo aviones durante el vuelo que no aparecen en el radar»",
+  );
+  comprobar(
+    "y cada avión que vuela dentro de la banda del TCAS tiene su rombo",
+    r.vistosSinRombo === 0,
+    r.vistosSinRombo
+      ? `${r.vistosSinRombo} muestras, la primera a los ${r.vistosSinRomboDonde}`
+      : `${r.vistos} vistos; fuera de la banda, ${r.fueraDeBanda}`,
+    "en la 115 se veían tres aviones y la carta marcaba dos",
+  );
+  comprobar(
+    "y cada rombo de la carta cae en la marcación de su avión",
+    r.piezasFueraDeSitio === 0,
+    r.piezasFueraDeSitio
+      ? `${r.piezasFueraDeSitio} de ${r.piezas}, la primera a los ${r.piezasFueraDeSitioDonde}`
+      : `${r.piezas} piezas, todas en su sitio`,
+    "en la 115 el avión iba delante a la derecha y el rombo salía delante a la izquierda",
+  );
+  comprobar(
+    "y del tráfico cercano se informa: la torre, la instructora o la caja",
+    !r.cercanosSinInformar,
+    r.cercanosSinInformar
+      ? `${r.cercanosSinInformar} cercanos sin una palabra, el primero a los ${r.cercanosSinInformarDonde}`
+      : "ningún rombo lleno medio minuto sin que nadie lo cuente",
+    "en la final de La Palma, dos rombos llenos a cien y seiscientos pies y nadie dijo nada",
+  );
+  comprobar(
+    "y cada tráfico que nombra la radio está en el mundo al nombrarlo",
+    r.nombradosQueNoEstan === 0,
+    r.nombradosQueNoEstan
+      ? `${r.nombradosQueNoEstan} de ${r.nombrados}, el primero a los ${r.nombradosQueNoEstanDonde}`
+      : `${r.nombrados} nombrados, todos en el mundo`,
+    "la torre hacía esperar por un avión en la pista que aparecía al rato de la nada; en el Chaco, «tráfico aterrizando» y no aterrizaba nadie",
+  );
+}
 
 /*
  * **Y si se espera en la roja por alguien, se dice por quién.** La torre en
