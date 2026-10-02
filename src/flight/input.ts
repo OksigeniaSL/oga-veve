@@ -5,13 +5,27 @@
  * valores continuos, así que sus ejes se suavizan hacia el objetivo: sin eso
  * el avión pega tirones y se siente barato.
  *
+ * **Y en el aire, el teclado y el dedo no mueven los mandos: se los dan a una
+ * mano** que inclina el ala y cambia de trayectoria a un ritmo tranquilo y
+ * sostiene lo conseguido al soltar. Ver `flight/mano.ts`. El mando de juego y
+ * el joystick, que tienen muelle de verdad, siguen moviendo los mandos tal
+ * cual; su reparto está en `flight/mandos-fisicos.ts`.
+ *
  * El táctil no es un añadido: media de las partidas van a ser en la tablet
  * de alguien. Ver AGENTS.md, regla del test Ña Emy.
  */
 
 import { neutralControls, type ControlInputs } from "./model";
 import { mueveElTren, sePuedeMeter } from "./tren";
-import { mandoDelDedo } from "./palanca-de-mando";
+import {
+  DobleToque,
+  mandoDelDedo,
+  PUNTO_DEL_MANDO,
+  puntoDelMando,
+  separarEjes,
+} from "./palanca-de-mando";
+import { ManoQueSostiene, type LoQuePide, type LoQueVeLaMano } from "./mano";
+import { GasDelHotas, leerMando, type LecturaDelMando } from "./mandos-fisicos";
 import {
   DETENTES,
   TARDAN_LOS_FLAPS,
@@ -38,8 +52,6 @@ import {
 const KEY_RAMP = 2.6;
 /** Velocidad a la que un eje suelto vuelve al centro, por segundo. */
 const KEY_CENTRE = 3.4;
-/** Zona muerta de los sticks del mando. */
-const DEADZONE = 0.12;
 /**
  * Lo que sube o baja el gas por segundo con una tecla o un botón mantenido:
  * de ralentí a despegue en un segundo y dos tercios.
@@ -169,6 +181,47 @@ export class InputManager {
    */
   readonly pide = { alabeo: 0, timon: 0 };
 
+  /**
+   * **Qué ejes sostiene la mano** del teclado o del dedo: el avión se queda
+   * como se dejó. Lo miran los que antes se fiaban de ver los mandos en el
+   * centro para saber que nadie pilotaba —la nivelada de los peldaños de
+   * abajo, el vuelo recto con un instrumento abierto—: con la mano puesta,
+   * alguien pilota aunque no apriete nada. Ver `flight/mano.ts`.
+   */
+  readonly sostiene = { alabeo: false, cabeceo: false };
+
+  /** La mano que sostiene. Ver `flight/mano.ts`. */
+  readonly mano = new ManoQueSostiene();
+
+  /**
+   * Lo que la mano ve del avión, puesto por el juego en cada fotograma. Sin
+   * él —un banco que pilota escribiendo en los mandos— no hay mano.
+   */
+  private avion: LoQueVeLaMano | null = null;
+
+  /** Lo que se le pide a la mano en este fotograma. Uno, para no reservar. */
+  private readonly pideALaMano: LoQuePide = {
+    teclaAlabeo: 0,
+    teclaCabeceo: 0,
+    toqueAlabeo: 0,
+    toqueCabeceo: 0,
+    mandoAlabeo: false,
+    mandoCabeceo: false,
+  };
+
+  /** Los toques cortos que llegaron entre dos fotogramas, con su signo. */
+  private toquesPendientes = { alabeo: 0, cabeceo: 0 };
+
+  /** Si la mano llevaba cada eje en el fotograma anterior. */
+  private manoAntes = { alabeo: false, cabeceo: false };
+
+  /** Qué reparto tiene el mando conectado y cuál es su palanca de gases. */
+  private readonly gasDelHotas = new GasDelHotas();
+  /** Los botones del mando en el fotograma anterior, para ver el golpe. */
+  private botonesAntes = { flapsArriba: false, flapsAbajo: false, tren: false, aerofrenos: false };
+  /** El mando de juego de este fotograma, si hay. */
+  private mandoDeAhora: LecturaDelMando | null = null;
+
   private readonly keys = new Set<string>();
   private readonly actions: InputActions;
   /** Ejes del stick táctil, -1 a 1. */
@@ -253,6 +306,27 @@ export class InputManager {
   }
 
   /**
+   * **Una muesca abajo, o arriba**, sin dar la vuelta: los botones de flaps de
+   * un joystick o de un mando, que van de dos en dos como la palanca de
+   * verdad. La tecla y el botón de la pantalla siguen siendo uno solo que da
+   * la vuelta —ver `alternarFlaps`—, porque son una sola tecla.
+   */
+  flapsUnaMuesca(sentido: 1 | -1): void {
+    if (!this.flapsQueSeMueven) return;
+    const i = Math.max(0, Math.min(DETENTES.length - 1, muescaMasCercana(this.flapsPedidos) + sentido));
+    this.flapsPedidos = DETENTES[i]!;
+  }
+
+  /**
+   * **Lo que la mano ve del avión**, cada fotograma, antes de `update`. Lo pone
+   * el juego —ver `loQueVeLaMano` en `game.ts`—; con `null`, no hay mano y los
+   * mandos son los de siempre.
+   */
+  ponerAvion(ve: LoQueVeLaMano | null): void {
+    this.avion = ve;
+  }
+
+  /**
    * Dónde está la palanca de flaps: lo pedido, en una de sus cuatro muescas.
    *
    * No es dónde están los flaps —eso es `controls.flaps`, que tarda en
@@ -304,8 +378,17 @@ export class InputManager {
 
   /** Los toques de las flechas. Ver `flight/palanca-de-teclado.ts`. */
   private readonly toques = new ToquesDeCabeceo();
+  /** Y los de las flechas de alabeo, que con la mano puesta dan su paso. */
+  private readonly toquesDeAlabeo = new ToquesDeCabeceo();
   /** Y la cruceta del mando, que hace de interruptor del compensador. */
   private readonly cruceta = new CrucetaDelCompensador();
+
+  /** Si la mano puede llevar este eje ahora: en el aire y sin otra mano. */
+  private laManoPuede(eje: "alabeo" | "cabeceo"): boolean {
+    const ve = this.avion;
+    if (!ve || !this.mano.puedeCoger) return false;
+    return eje === "alabeo" ? !ve.otraManoAlabeo : !ve.otraManoCabeceo;
+  }
 
   /** La palanca de flaps. Empieza arriba, como está un avión en su puesto. */
   private flapsPedidos = 0;
@@ -517,6 +600,11 @@ export class InputManager {
      * mismo fallo que el gas clavado, y más difícil de ver.
      */
     this.controls.trim = 0;
+    // Y la mano, que empieza un vuelo sin coger nada: ni inclinación ni
+    // trayectoria del vuelo anterior. La palanca del dedo, al centro.
+    this.mano.soltar();
+    this.toquesPendientes = { alabeo: 0, cabeceo: 0 };
+    this.palancaDelDedo = { x: 0, y: 0 };
   }
 
   /**
@@ -610,16 +698,41 @@ export class InputManager {
 
   update(dt: number): void {
     const gamepad = this.readGamepad();
+    const ahora = ahoraEnSegundos();
+    const teclaAlabeo = this.axis("rollRight", "rollLeft");
+    const teclaCabeceo = this.axis("pitchUp", "pitchDown");
+    const teclaTrim = this.axis("trimUp", "trimDown");
+
+    /*
+     * **La mano, primero.** En el aire, el teclado y el dedo no mueven los
+     * mandos: le piden a la mano un ritmo o un sitio, y ella los mueve. Ver
+     * `flight/mano.ts`. El compensador, con la mano puesta, mueve lo que ella
+     * sostiene —la trayectoria—, que es lo que movía la rueda: el punto en el
+     * que el avión vuela solo.
+     */
+    if (this.avion) {
+      const p = this.pideALaMano;
+      p.teclaAlabeo = teclaAlabeo;
+      p.teclaCabeceo =
+        this.signoDeCabeceo * (teclaCabeceo !== 0 ? teclaCabeceo : this.mano.llevaCabeceo ? teclaTrim : 0);
+      p.toqueAlabeo = this.toquesPendientes.alabeo;
+      p.toqueCabeceo = this.toquesPendientes.cabeceo;
+      p.mandoAlabeo = (gamepad?.roll ?? 0) !== 0;
+      p.mandoCabeceo = (gamepad?.pitch ?? 0) !== 0;
+      this.mano.paso(dt, this.avion, p);
+    } else if (this.mano.llevaAlabeo || this.mano.llevaCabeceo) this.mano.soltar();
+    this.toquesPendientes.alabeo = 0;
+    this.toquesPendientes.cabeceo = 0;
+    this.cambiarDeModoLaPalanca(ahora);
+    const manoAlabeo = this.mano.llevaAlabeo;
+    const manoCabeceo = this.mano.llevaCabeceo;
 
     /*
      * La flecha, **corta mientras todavía puede ser un toque**: ver
      * `palancaEnLaDuda`. El dedo y el mando no pasan por aquí, que no dan
      * toques: dan la posición que tienen.
      */
-    const teclasDeCabeceo = palancaEnLaDuda(
-      this.axis("pitchUp", "pitchDown"),
-      this.toques.enDuda(ahoraEnSegundos()),
-    );
+    const teclasDeCabeceo = palancaEnLaDuda(teclaCabeceo, this.toques.enDuda(ahora));
     /*
      * Y el cabeceo, con su signo.
      *
@@ -630,51 +743,71 @@ export class InputManager {
     const pitchTarget =
       this.signoDeCabeceo *
       mandaQuienSeMueve(this.touchPitch + teclasDeCabeceo, gamepad?.pitch);
-    const rollTarget = mandaQuienSeMueve(
-      this.touchRoll + this.axis("rollRight", "rollLeft"),
-      gamepad?.roll,
-    );
+    const rollTarget = mandaQuienSeMueve(this.touchRoll + teclaAlabeo, gamepad?.roll);
     const rudderTarget = mandaQuienSeMueve(
       this.touchRudder + this.axis("yawRight", "yawLeft"),
       gamepad?.rudder,
     );
-    this.mueve.cabeceo = pitchTarget !== 0;
-    this.mueve.alabeo = rollTarget !== 0;
+    /*
+     * **Quién se mueve**: tecla, dedo en tierra, mando, y en el aire el dedo
+     * que acaba de mover la palanca —que se queda puesta, así que quieta no
+     * cuenta como moverse—. Ver `mueve`.
+     */
+    this.mueve.cabeceo = pitchTarget !== 0 || ahora - this.dedoMovio.cabeceo < MUEVE_UN_RATO;
+    this.mueve.alabeo = rollTarget !== 0 || ahora - this.dedoMovio.alabeo < MUEVE_UN_RATO;
     this.mueve.timon = rudderTarget !== 0;
     this.pide.alabeo = clamp(rollTarget, -1, 1);
     this.pide.timon = clamp(rudderTarget, -1, 1);
+    this.sostiene.alabeo = manoAlabeo;
+    this.sostiene.cabeceo = manoCabeceo;
+    this.controls.manoEnElAlabeo = manoAlabeo;
+    this.controls.manoEnElCabeceo = manoCabeceo;
 
-    this.controls.elevator = approach(
-      this.controls.elevator,
-      clamp(pitchTarget, -1, 1),
-      dt,
-    );
-
-    /*
-     * **Y el compensador, que no es un muelle.**
-     *
-     * El cabeceo vuelve al centro en cuanto se suelta la tecla —eso es un
-     * mando— y por eso volar nivelado a mano obligaba a tener la tecla medio
-     * pulsada para siempre. El compensador se mueve mientras se aprieta y
-     * **se queda donde se suelte**, que es lo que hace la rueda de cualquier
-     * cabina. Ver `ControlInputs.trim`.
-     *
-     * Despacio a propósito: `PASO_DE_TRIM` por segundo son unos cuatro
-     * segundos de recorrido de tope a tope. Un compensador rápido es un
-     * compensador con el que no se puede afinar, y afinar es para lo único
-     * que sirve.
-     */
-    const trim = this.axis("trimUp", "trimDown");
-    if (trim !== 0)
-      this.controls.trim = clamp(
-        this.controls.trim + trim * PASO_DE_TRIM * dt,
-        -1,
-        1,
+    if (manoCabeceo) {
+      // La mano lleva el compensador y la profundidad: ver `flight/mano.ts`.
+      this.controls.elevator = this.mano.elevator;
+      // En el modelo sencillo no hay compensador que llevar: ver `compensadorVivo`.
+      if (this.compensadorVivo) this.controls.trim = this.mano.trim;
+    } else {
+      /*
+       * Y si la mano acaba de soltarlo —el automático o la nivelada lo cogen—,
+       * la profundidad suya se va **de golpe**: la de la mano no es de quien
+       * vuela, y el automático se suelta si ve los mandos movidos. Ver
+       * `loSolto`.
+       */
+      if (this.manoAntes.cabeceo) this.controls.elevator = 0;
+      this.controls.elevator = approach(
+        this.controls.elevator,
+        clamp(pitchTarget, -1, 1),
+        dt,
       );
+
+      /*
+       * **Y el compensador, que no es un muelle.**
+       *
+       * El cabeceo vuelve al centro en cuanto se suelta la tecla —eso es un
+       * mando— y por eso volar nivelado a mano obligaba a tener la tecla medio
+       * pulsada para siempre. El compensador se mueve mientras se aprieta y
+       * **se queda donde se suelte**, que es lo que hace la rueda de cualquier
+       * cabina. Ver `ControlInputs.trim`.
+       *
+       * Despacio a propósito: `PASO_DE_TRIM` por segundo son unos cuatro
+       * segundos de recorrido de tope a tope. Un compensador rápido es un
+       * compensador con el que no se puede afinar, y afinar es para lo único
+       * que sirve.
+       */
+      if (teclaTrim !== 0)
+        this.controls.trim = clamp(
+          this.controls.trim + teclaTrim * PASO_DE_TRIM * dt,
+          -1,
+          1,
+        );
+    }
     /*
      * Y la cruceta del mando, que es su interruptor de compensador: un golpe,
      * un paso; mantenida, la rueda. Con el signo del cabeceo, como la flecha:
-     * quien vuela invertido lo tiene invertido todo.
+     * quien vuela invertido lo tiene invertido todo. Con la mano puesta, cada
+     * golpe es un toque de los suyos.
      */
     if (gamepad) {
       const pide = this.cruceta.paso(
@@ -683,18 +816,33 @@ export class InputManager {
         dt,
         PASO_DE_TRIM,
       );
-      if (pide !== 0) this.compensar(this.signoDeCabeceo * pide, true);
+      if (pide !== 0) {
+        if (manoCabeceo) {
+          if (Math.abs(pide) >= PASO_MINIMO_QUE_SE_OYE) {
+            this.toquesPendientes.cabeceo += this.signoDeCabeceo * Math.sign(pide);
+            this.actions.pasoDelCompensador?.(this.signoDeCabeceo * Math.sign(pide));
+          }
+        } else this.compensar(this.signoDeCabeceo * pide, true);
+      }
+      this.botonesDelMando(gamepad);
     }
-    this.controls.aileron = approach(
-      this.controls.aileron,
-      clamp(rollTarget, -1, 1),
-      dt,
-    );
+    if (manoAlabeo) this.controls.aileron = this.mano.aileron;
+    else {
+      if (this.manoAntes.alabeo) this.controls.aileron = 0;
+      this.controls.aileron = approach(
+        this.controls.aileron,
+        clamp(rollTarget, -1, 1),
+        dt,
+      );
+    }
+    this.manoAntes.alabeo = manoAlabeo;
+    this.manoAntes.cabeceo = manoCabeceo;
     this.controls.rudder = approach(
       this.controls.rudder,
       clamp(rudderTarget, -1, 1),
       dt,
     );
+    this.pintarLaPalancaDeMando();
 
     // Tocar el motor con el teclado o con los botones **suelta la palanca
     // táctil antes de leer nada**, no después. Yendo después, la palanca
@@ -763,7 +911,7 @@ export class InputManager {
      * pide y el modelo de vuelo decide si eso hace algo. Quien no la tiene,
      * aprieta y no pasa nada, que es exactamente lo que le pasaría de verdad.
      */
-    this.controls.reversa = this.held("reversa") ? 1 : 0;
+    this.controls.reversa = this.held("reversa") || (gamepad?.reversa ?? false) ? 1 : 0;
     /*
      * **Los aerofrenos, a su paso, y cerrados si se mete gas.**
      *
@@ -952,6 +1100,13 @@ export class InputManager {
       case "pitchDown":
         this.toques.apretar(event.code, -1, ahoraEnSegundos());
         break;
+      // Y las de alabeo, que con la mano puesta también dan su paso.
+      case "rollRight":
+        this.toquesDeAlabeo.apretar(event.code, 1, ahoraEnSegundos());
+        break;
+      case "rollLeft":
+        this.toquesDeAlabeo.apretar(event.code, -1, ahoraEnSegundos());
+        break;
       default:
         break;
     }
@@ -972,9 +1127,22 @@ export class InputManager {
   }
 
   private onKeyUp = (event: KeyboardEvent): void => {
-    // El toque se cierra al soltar: si duró poco, el compensador da un paso.
-    const toque = this.toques.soltar(event.code, ahoraEnSegundos());
-    if (toque !== 0) this.compensar(this.signoDeCabeceo * toque);
+    /*
+     * El toque se cierra al soltar: si duró poco, da un paso. Con la mano
+     * puesta, el paso es de la trayectoria que sostiene —medio grado—, con
+     * el mismo clic; sin ella, del compensador, como siempre.
+     */
+    const ahora = ahoraEnSegundos();
+    const toque = this.toques.soltar(event.code, ahora);
+    if (toque !== 0) {
+      if (this.laManoPuede("cabeceo")) {
+        this.toquesPendientes.cabeceo += this.signoDeCabeceo * Math.sign(toque);
+        this.actions.pasoDelCompensador?.(this.signoDeCabeceo * Math.sign(toque));
+      } else this.compensar(this.signoDeCabeceo * toque);
+    }
+    const toqueDeAlabeo = this.toquesDeAlabeo.soltar(event.code, ahora);
+    if (toqueDeAlabeo !== 0 && this.laManoPuede("alabeo"))
+      this.toquesPendientes.alabeo += Math.sign(toqueDeAlabeo);
     this.keys.delete(event.code);
     if (event.key.length === 1) this.keys.delete(event.key);
     const anotado = this.chars.get(event.code);
@@ -989,42 +1157,48 @@ export class InputManager {
     this.keys.clear();
     this.chars.clear();
     this.toques.olvidar();
+    this.toquesDeAlabeo.olvidar();
   };
 
   // ── Mando ─────────────────────────────────────────────────────────────
 
-  private readGamepad(): {
-    pitch: number;
-    roll: number;
-    rudder: number;
-    throttle?: number;
-    brakes: boolean;
-    trimArriba: boolean;
-    trimAbajo: boolean;
-  } | null {
+  /**
+   * El mando de juego o el joystick, con el reparto de su aparato. Ver
+   * `flight/mandos-fisicos.ts`, que dice cuál es cuál y qué hace cada botón.
+   */
+  private readGamepad(): LecturaDelMando | null {
     const pads = navigator.getGamepads?.() ?? [];
     const pad = Array.from(pads).find(
       (p): p is Gamepad => p !== null && p.connected,
     );
-    if (!pad) return null;
+    if (!pad) {
+      this.gasDelHotas.olvidar();
+      this.mandoDeAhora = null;
+      return null;
+    }
+    this.mandoDeAhora = leerMando(pad, this.gasDelHotas);
+    return this.mandoDeAhora;
+  }
 
-    const axis = (index: number): number => applyDeadzone(pad.axes[index] ?? 0);
-    // Gatillos como motor: derecho acelera, izquierdo frena. Es la
-    // disposición que espera cualquiera que haya jugado a algo de coches.
-    const rightTrigger = pad.buttons[7]?.value ?? 0;
-    const leftTrigger = pad.buttons[6]?.value ?? 0;
+  /**
+   * **Los botones del mando que se pulsan**: flaps, tren y aerofrenos, al
+   * apretarlos —no mientras—, que son palancas de un golpe como sus teclas.
+   */
+  private botonesDelMando(m: LecturaDelMando): void {
+    const antes = this.botonesAntes;
+    if (m.flapsArriba && !antes.flapsArriba) this.flapsUnaMuesca(-1);
+    if (m.flapsAbajo && !antes.flapsAbajo) this.flapsUnaMuesca(1);
+    if (m.tren && !antes.tren) this.alternarTren();
+    if (m.aerofrenos && !antes.aerofrenos) this.alternarAerofrenos();
+    antes.flapsArriba = m.flapsArriba;
+    antes.flapsAbajo = m.flapsAbajo;
+    antes.tren = m.tren;
+    antes.aerofrenos = m.aerofrenos;
+  }
 
-    return {
-      roll: axis(0),
-      pitch: -axis(1),
-      rudder: axis(2),
-      throttle: rightTrigger > 0.02 ? rightTrigger : undefined,
-      brakes: leftTrigger > 0.4 || (pad.buttons[0]?.pressed ?? false),
-      // La cruceta, arriba y abajo: el interruptor del compensador. Son los
-      // botones 12 y 13 del reparto estándar de cualquier mando.
-      trimArriba: pad.buttons[12]?.pressed ?? false,
-      trimAbajo: pad.buttons[13]?.pressed ?? false,
-    };
+  /** Qué mando de juego hay puesto, si hay: lo mira la pantalla de teclas. */
+  get aparatoDelMando(): LecturaDelMando["aparato"] | null {
+    return this.mandoDeAhora?.aparato ?? null;
   }
 
   // ── Táctil ────────────────────────────────────────────────────────────
@@ -1046,16 +1220,7 @@ export class InputManager {
       passive: true,
     });
 
-    if (stick) {
-      bindPad(
-        stick,
-        (x, y) => {
-          this.touchRoll = x;
-          this.touchPitch = -y;
-        },
-        { redondo: true },
-      );
-    }
+    if (stick) this.bindPalancaDeMando(stick);
     if (rudder)
       bindPad(
         rudder,
@@ -1089,6 +1254,264 @@ export class InputManager {
         () => this.marcasDeGas,
       );
     }
+  }
+
+  // ── La palanca de mando con el dedo ───────────────────────────────────
+
+  /** El mando de alabeo y cabeceo de la pantalla, si lo hay. */
+  private mandoEl: HTMLElement | null = null;
+  /** El dedo que lo lleva: uno solo, el que lo tocó primero. */
+  private dedoDelMando: number | null = null;
+  /** Si el gesto de ahora es de palanca que se queda —en el aire— o de volante. */
+  private palancaEnElAire = false;
+  /**
+   * Dónde ha dejado el dedo la palanca, −1 a 1, `y` positivo **abajo** como
+   * el dedo. En el aire se queda puesta al levantarlo; ver `flight/mano.ts`.
+   */
+  private palancaDelDedo = { x: 0, y: 0 };
+  /** Dónde estaba al empezar el gesto, para separar los ejes. */
+  private anclaDelGesto = { x: 0, y: 0 };
+  /** Lo que hay del dedo al punto si se agarró el punto, px. */
+  private agarreDelMando = { dx: 0, dy: 0 };
+  private readonly dobleToque = new DobleToque();
+  /** Si el gesto de ahora fue el segundo golpecito de un doble toque. */
+  private gestoDoble = false;
+  /** Cuándo movió el dedo cada eje de la palanca por última vez, s. */
+  private readonly dedoMovio = { alabeo: -Infinity, cabeceo: -Infinity };
+  /** El tamaño de dentro del mando, px, para no medirlo en cada fotograma. */
+  private tamanoDelMando: { ancho: number; alto: number } | null = null;
+  /** Lo último pintado, para no tocar el estilo por nada. */
+  private pintadoDelMando = { dx: Number.NaN, dy: Number.NaN };
+
+  /**
+   * **La palanca de mando con el pulgar.**
+   *
+   * En tierra, el volante y la profundidad de siempre, con muelle: lo que da
+   * el dedo, y al centro al soltarlo. En el aire, **una palanca que se queda
+   * donde se deja** y que dice cuánto se inclina y cuánto se sube o se baja;
+   * la mano del avión lo sostiene. Ver `flight/mano.ts` y
+   * `flight/palanca-de-mando.ts`, que cuentan el porqué de cada cosa:
+   *
+   * - Si el dedo cae **encima del punto**, lo agarra: arrastrar lo mueve
+   *   desde donde estaba, sin tirón. Si cae en otro sitio del mando, la
+   *   palanca va ahí, como siempre —un niño toca donde quiere ir—.
+   * - **Ejes separados**: lo que el pulgar se escapa de lado al bajar no
+   *   inclina el ala.
+   * - **Dos golpecitos la centran**: alas niveladas y vuelo nivelado, despacio.
+   */
+  private bindPalancaDeMando(element: HTMLElement): void {
+    this.mandoEl = element;
+    window.addEventListener("resize", () => (this.tamanoDelMando = null));
+
+    element.addEventListener("pointerdown", (event) => {
+      if (this.dedoDelMando !== null) return;
+      this.dedoDelMando = event.pointerId;
+      element.setPointerCapture(event.pointerId);
+      this.tamanoDelMando = null;
+      this.palancaEnElAire = this.mano.puedeCoger && this.avion !== null;
+      const doble = this.dobleToque.bajar(ahoraEnSegundos(), event.clientX, event.clientY);
+      if (!this.palancaEnElAire) {
+        this.gestoDoble = false;
+        this.moverElVolante(event);
+        return;
+      }
+      if (doble) {
+        // El segundo golpecito: al centro, despacio. La palanca se pinta
+        // donde va la mano, que vuelve con su ritmo. Ver `ManoQueSostiene.centrar`.
+        this.gestoDoble = true;
+        this.mano.centrar();
+        return;
+      }
+      this.gestoDoble = false;
+      const pintado = this.palancaPintada();
+      this.anclaDelGesto = { ...pintado };
+      // ¿El dedo cayó encima del punto? Entonces lo agarra.
+      const punto = this.puntoEnPantalla(pintado.x, pintado.y);
+      const dedo = this.dedoEnElMando(event);
+      const lejos = Math.hypot(dedo.dx - punto.dx, dedo.dy - punto.dy);
+      this.agarreDelMando =
+        lejos <= AGARRE_DEL_MANDO
+          ? { dx: punto.dx - dedo.dx, dy: punto.dy - dedo.dy }
+          : { dx: 0, dy: 0 };
+      this.moverLaPalanca(event);
+    });
+    element.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== this.dedoDelMando) return;
+      this.dobleToque.mover(event.clientX, event.clientY);
+      if (this.gestoDoble) return;
+      if (this.palancaEnElAire) this.moverLaPalanca(event);
+      else this.moverElVolante(event);
+    });
+    const soltar = (event: PointerEvent): void => {
+      if (event.pointerId !== this.dedoDelMando) return;
+      this.dedoDelMando = null;
+      this.dobleToque.subir(ahoraEnSegundos());
+      // El volante, con muelle; la palanca del aire, se queda.
+      if (!this.palancaEnElAire) {
+        this.touchRoll = 0;
+        this.touchPitch = 0;
+        this.palancaDelDedo = { x: 0, y: 0 };
+      }
+    };
+    element.addEventListener("pointerup", soltar);
+    element.addEventListener("pointercancel", soltar);
+  }
+
+  /** Dónde estaba el dedo la última vez, px del mando desde su centro. */
+  private ultimoDedo = { dx: 0, dy: 0 };
+
+  /** El dedo, en píxeles del mando desde su centro. */
+  private dedoEnElMando(event: PointerEvent): { dx: number; dy: number } {
+    const el = this.mandoEl!;
+    const rect = el.getBoundingClientRect();
+    /*
+     * En píxeles del mando y no de la pantalla: si algo por encima lo
+     * escalara, el punto se pintaría con otra regla que la del dedo. Ver
+     * `aPxDelHud` en `ui/escala.ts`, que resuelve lo mismo para el HUD.
+     */
+    const escala = el.offsetWidth > 0 ? rect.width / el.offsetWidth : 1;
+    this.ultimoDedo = {
+      dx: (event.clientX - (rect.left + rect.width / 2)) / escala,
+      dy: (event.clientY - (rect.top + rect.height / 2)) / escala,
+    };
+    return this.ultimoDedo;
+  }
+
+  private tamano(): { ancho: number; alto: number } {
+    if (!this.tamanoDelMando && this.mandoEl)
+      this.tamanoDelMando = { ancho: this.mandoEl.clientWidth, alto: this.mandoEl.clientHeight };
+    return this.tamanoDelMando ?? { ancho: 0, alto: 0 };
+  }
+
+  /** Dónde se pinta el punto para una palanca `x`, `y`, px del centro. */
+  private puntoEnPantalla(x: number, y: number): { dx: number; dy: number } {
+    const { ancho, alto } = this.tamano();
+    return puntoDelMando(x, y, ancho, alto);
+  }
+
+  /** En tierra: el volante y la profundidad, lo que da el dedo. */
+  private moverElVolante(event: PointerEvent): void {
+    const { dx, dy } = this.dedoEnElMando(event);
+    const { ancho, alto } = this.tamano();
+    const d = mandoDelDedo(dx, dy, ancho, alto, true);
+    this.palancaDelDedo = { x: d.x, y: d.y };
+    this.touchRoll = d.x;
+    this.touchPitch = -d.y;
+  }
+
+  /** En el aire: la palanca que se queda, con los ejes separados. */
+  private moverLaPalanca(event: PointerEvent): void {
+    const dedo = this.dedoEnElMando(event);
+    const { ancho, alto } = this.tamano();
+    const d = mandoDelDedo(
+      dedo.dx + this.agarreDelMando.dx,
+      dedo.dy + this.agarreDelMando.dy,
+      ancho,
+      alto,
+      true,
+    );
+    this.ponerLaPalanca(separarEjes(this.anclaDelGesto, { x: d.x, y: d.y }));
+  }
+
+  /** La palanca del dedo va aquí, y se lo dice a la mano eje por eje. */
+  private ponerLaPalanca(v: { x: number; y: number }): void {
+    const ahora = ahoraEnSegundos();
+    const antes = this.palancaDelDedo;
+    const cambiaX = !(Math.abs(v.x - antes.x) <= 1e-3);
+    const cambiaY = !(Math.abs(v.y - antes.y) <= 1e-3);
+    this.palancaDelDedo = { x: v.x, y: v.y };
+    if (cambiaX) this.dedoMovio.alabeo = ahora;
+    if (cambiaY) this.dedoMovio.cabeceo = ahora;
+    if (!cambiaX && !cambiaY) return;
+    // Arriba es morro arriba, salvo con el cabeceo invertido.
+    this.mano.ponerPalanca(cambiaX ? v.x : null, cambiaY ? -v.y * this.signoDeCabeceo : null);
+  }
+
+  /**
+   * **Del volante a la palanca, y al revés, con el dedo puesto.**
+   *
+   * Al despegar con el pulgar arriba —rotando—, en cuanto la mano puede coger
+   * el avión, **lo coge como va**: con la subida que dio la rotación, no con
+   * la que diría el pulgar en la palanca del aire, que con la curva suave es
+   * poca —media palanca son un par de grados— y el avión se habría quedado
+   * casi sin subir justo después de despegar. El punto salta a lo que la mano
+   * sostiene y el pulgar queda agarrándolo: de ahí en adelante, lo que mueva
+   * lo mueve desde ahí. Y al tocar el suelo, vuelve a ser la profundidad.
+   *
+   * Y si el dedo está en la palanca y la mano no lleva un eje porque lo
+   * llevaba otra —el automático, la nivelada— y ya lo ha soltado, se le da
+   * lo que pide el dedo sin esperar a que se mueva.
+   */
+  private cambiarDeModoLaPalanca(ahora: number): void {
+    if (this.dedoDelMando === null) {
+      // Sin dedo y en tierra, la palanca vuelve al centro: la del aire era de
+      // la mano, y la mano ya no lleva nada.
+      if (!this.mano.puedeCoger) this.palancaDelDedo = { x: 0, y: 0 };
+      return;
+    }
+    const aire = this.mano.puedeCoger && this.avion !== null;
+    if (aire === this.palancaEnElAire) {
+      if (aire && !this.gestoDoble) this.darleLoQueFalta();
+      return;
+    }
+    this.palancaEnElAire = aire;
+    this.agarreDelMando = { dx: 0, dy: 0 };
+    if (aire) {
+      this.touchRoll = 0;
+      this.touchPitch = 0;
+      this.gestoDoble = false;
+      // Coge los dos ejes como van, sin metas: ver `ponerPalanca`.
+      this.mano.ponerPalanca(null, null);
+      const m = this.mano.palanca();
+      const v = { x: m.x, y: -m.y * this.signoDeCabeceo };
+      const punto = this.puntoEnPantalla(v.x, v.y);
+      const dedo = this.ultimoDedo;
+      this.agarreDelMando = { dx: punto.dx - dedo.dx, dy: punto.dy - dedo.dy };
+      this.palancaDelDedo = v;
+      this.anclaDelGesto = { ...v };
+      this.dedoMovio.alabeo = this.dedoMovio.cabeceo = ahora - MUEVE_UN_RATO;
+    } else {
+      this.touchRoll = this.palancaDelDedo.x;
+      this.touchPitch = -this.palancaDelDedo.y;
+    }
+  }
+
+  /** Lo que pide el dedo, a los ejes que la mano todavía no lleva. */
+  private darleLoQueFalta(): void {
+    const sinAlabeo = !this.mano.llevaAlabeo && this.laManoPuede("alabeo");
+    const sinCabeceo = !this.mano.llevaCabeceo && this.laManoPuede("cabeceo");
+    if (!sinAlabeo && !sinCabeceo) return;
+    const v = this.palancaDelDedo;
+    this.mano.ponerPalanca(
+      sinAlabeo ? v.x : null,
+      sinCabeceo ? -v.y * this.signoDeCabeceo : null,
+    );
+  }
+
+  /**
+   * Dónde se pinta la palanca, `y` abajo como el dedo: debajo del dedo si lo
+   * hay; si no, en el aire, donde dice la mano —que es donde la dejó el dedo,
+   * o donde la lleva la tecla, o volviendo al centro tras el doble toque—; y
+   * en tierra, en el centro.
+   */
+  private palancaPintada(): { x: number; y: number } {
+    if (this.dedoDelMando !== null && !this.gestoDoble) return this.palancaDelDedo;
+    if (!this.mano.puedeCoger) return { x: 0, y: 0 };
+    const m = this.mano.palanca();
+    return { x: m.x, y: -m.y * this.signoDeCabeceo };
+  }
+
+  /** Pinta el punto de la palanca de mando, si se ha movido. */
+  private pintarLaPalancaDeMando(): void {
+    const el = this.mandoEl;
+    if (!el) return;
+    const p = this.palancaPintada();
+    const { dx, dy } = this.puntoEnPantalla(p.x, p.y);
+    const antes = this.pintadoDelMando;
+    if (Math.abs(dx - antes.dx) < 0.25 && Math.abs(dy - antes.dy) < 0.25) return;
+    this.pintadoDelMando = { dx, dy };
+    el.style.setProperty("--dx", `${dx.toFixed(1)}px`);
+    el.style.setProperty("--dy", `${dy.toFixed(1)}px`);
   }
 
   /**
@@ -1140,6 +1563,20 @@ const BORDE = 10;
  * Lo midió `verificar-dedo.mjs`.
  */
 const AGARRE = PUNTO / 2 + 4;
+
+/**
+ * Hasta dónde del centro del punto de la palanca de mando cuenta como
+ * agarrarlo, px: su radio y un margen de yema algo más ancho que el de la de
+ * gases, porque aquí el punto se mueve en dos ejes y se busca con el pulgar.
+ */
+const AGARRE_DEL_MANDO = PUNTO_DEL_MANDO / 2 + 6;
+
+/**
+ * Lo que sigue contando como «mueve» la palanca de mando después de que el
+ * dedo la mueva, s. Quieta no cuenta: se queda puesta, y si contara, el piloto
+ * automático no se podría poner con el pulgar apoyado. Ver `mueve`.
+ */
+const MUEVE_UN_RATO = 0.25;
 
 /**
  * **La palanca de gases con el pulgar**: se agarra el punto o se toca el
@@ -1336,10 +1773,6 @@ function approach(current: number, target: number, dt: number): number {
   return Math.abs(delta) <= step ? target : current + Math.sign(delta) * step;
 }
 
-function applyDeadzone(value: number): number {
-  if (Math.abs(value) < DEADZONE) return 0;
-  return Math.sign(value) * ((Math.abs(value) - DEADZONE) / (1 - DEADZONE));
-}
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;

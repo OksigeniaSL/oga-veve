@@ -169,7 +169,9 @@ export const EN: Dictionary = {
   "teclas.hint": "Click a key to change it. Escape leaves it alone.",
   "teclas.pulsa": "Press a key…",
   "teclas.toque":
-    "A short tap on the arrow leaves the nose a little higher or lower, and it stays: that's the trim, TRIM. Held down, the arrow is the stick and springs back when you let go. On a gamepad, the D-pad.",
+    "In the air, the arrows bank the plane and make it climb or descend gently, and when you let go it stays as you left it: the trim, TRIM, holds it. A short tap moves it a little more.",
+  "teclas.mando":
+    "You can also fly with a gamepad or a flight joystick: plug it in and move it. On the joystick, the hat switch is TRIM, the trigger brakes and the buttons on the base move the flaps and the gear.",
   "teclas.restore": "Back to default",
   "teclas.close": "Close",
   "tecla.pitchUp": "Nose up",
