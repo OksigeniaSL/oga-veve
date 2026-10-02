@@ -5661,6 +5661,44 @@ button.motor__tecla::after {
   .pie__promesa {
     display: none;
   }
+
+  /*
+   * **Y centrado, como lo de encima.** En un teléfono de pie el pie se parte
+   * en dos líneas y quedaba pegado a la izquierda, debajo de los tres botones
+   * del idioma, que van centrados: dos columnas que no se miraban. Sin la
+   * promesa —que es la que se iba a la derecha— no hay nada que alinear a un
+   * lado.
+   */
+  .pie {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/*
+ * ── **El logotipo, con su contorno claro** ──
+ *
+ * Sobre el verde bosque del fondo, las hojas del logotipo —que son de ese
+ * mismo verde— desaparecían y quedaba un tejado con un sol debajo: «el
+ * logotipo no contrasta con el verde». Y sobre la tierra del pie, lo mismo.
+ *
+ * Un logotipo no se recolorea, así que no se le toca ningún color: se le pone
+ * el contorno blanco que lleva la propia granja cuando lo pone sobre fondo
+ * oscuro, el de pegatina de sus carteles. Son cuatro sombras sin difuminar
+ * desplazadas a los cuatro lados, que dibujan un borde siguiendo la forma.
+ * Solo en las pantallas de antes de volar, que son las únicas donde sale y
+ * donde un filtro no le cuesta nada a ningún fotograma. Ver `ui/marca.ts`.
+ */
+.sello {
+  --contorno: 2px;
+  filter: drop-shadow(var(--contorno) 0 0 #fff)
+    drop-shadow(calc(-1 * var(--contorno)) 0 0 #fff)
+    drop-shadow(0 var(--contorno) 0 #fff)
+    drop-shadow(0 calc(-1 * var(--contorno)) 0 #fff);
+}
+
+.pie__marca .sello {
+  --contorno: 1.5px;
 }
 
 .hangar__marco {
