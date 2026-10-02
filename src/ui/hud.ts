@@ -68,6 +68,7 @@ import { matriculaDe } from "../flight/matricula";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
 import {
+  TELEFONO_APAISADO,
   ahoraEsTelefonoApaisado,
   esTelefono,
   esTelefonoApaisado,
@@ -852,6 +853,14 @@ export class Hud {
       });
     }
     alCambiarPantallaCompleta(() => this.pintarPantallaCompleta());
+    /*
+     * Y la pantalla grande es cosa del teléfono apaisado: si se gira o se
+     * deja de serlo, vuelve el cuadro entero, que fuera de ahí es el único.
+     */
+    if (typeof matchMedia === "function")
+      matchMedia(TELEFONO_APAISADO).addEventListener?.("change", () => {
+        if (this.grande) this.ponerGrande(null);
+      });
     this.render();
   }
 
