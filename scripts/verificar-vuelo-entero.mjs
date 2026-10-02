@@ -2210,6 +2210,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   visto: false,
   /** La seña que hacía al girar la llave. Ver la etapa «apagar». */
   alApagar: null,
+  /** Y dónde estaba el avión entonces. Ver la etapa «apagar». */
+  alApagarComo: null,
   gestos: new Set(),
   masCerca: Infinity,
   /* Y por qué no se le vio, que es lo que faltaba. Ver `comoVa`. */
@@ -3168,7 +3170,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             if (pared - cercanoDesde.get(b.id) > CERCANO_SIN_INFORMAR && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
               cercanosSinInformar.add(b.id);
               radar.cercanosSinInformar = (radar.cercanosSinInformar ?? 0) + 1;
-              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft · la información: ${o.porQueCallaLaInformacion?.() ?? "?"} · informados: ${[...informados].join(", ") || "nadie"}`;
+              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft · la información: ${o.porQueCallaLaInformacion?.() ?? "?"} · informados: ${[...informados].join(", ") || "nadie"} · contados: ${(o.informacionDeTrafico?.() ?? []).join(", ") || "nadie"}`;
             }
           }
         const nombrados = o.nombrados?.();
@@ -4970,6 +4972,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         o.tocarMando
       ) {
         senalero.alApagar ??= sena ?? "ninguna";
+        /*
+         * Y dónde estaba el avión respecto a su sitio y a qué iba: una seña
+         * que no pasa del alto puede ser un avión pasado de la raya o uno que
+         * no acaba de pararse, y son dos arreglos distintos.
+         */
+        senalero.alApagarComo ??= `a ${elSenalero?.comoVa?.restante ?? "?"} m de su sitio, a ${porElSuelo(s).toFixed(2)} m/s, tras ${esperandoParaApagar.toFixed(0)} s esperando`;
         o.tocarMando("motor");
         if (!o.controles().engineOn) c.engineOn = false;
       }
@@ -5152,6 +5160,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       porQueNo: [...senalero.porQueNo],
       gestos: [...senalero.gestos],
       alApagar: senalero.alApagar,
+      alApagarComo: senalero.alApagarComo,
       masCerca: Math.round(senalero.masCerca),
     },
     verBackTaxi: (() => {
@@ -5428,14 +5437,31 @@ const relojDeVerdad =
     if (i < 0) sinSonar.push(c);
     else usadas.add(i);
   }
-  comprobar(
-    "y todo lo que pidió la megafonía, sonó con su voz",
-    pedidas.length > 0 && sinSonar.length === 0,
-    sinSonar.length
-      ? `sin sonar: ${sinSonar.join(", ")} · pedidas ${pedidas.length}, oídas ${deLaMegafonia.length}`
-      : `${pedidas.length} de ${pedidas.length}: ${pedidas.join(", ")}`,
-    "«Tripulación, armar toboganes y verificación cruzada» no se oye",
-  );
+  /*
+   * **Y solo en el avión que la lleva.** En el JAZ 20 no hay pasaje ni
+   * megafonía, así que no se pide nada y esto salía en rojo con «0 de 0»:
+   * medía que una avioneta no tiene comandante que hable al pasaje, que es
+   * justo lo correcto. Ahí lo que se comprueba es lo contrario: que la
+   * megafonía calle.
+   */
+  if (conMegafonia)
+    comprobar(
+      "y todo lo que pidió la megafonía, sonó con su voz",
+      pedidas.length > 0 && sinSonar.length === 0,
+      sinSonar.length
+        ? `sin sonar: ${sinSonar.join(", ")} · pedidas ${pedidas.length}, oídas ${deLaMegafonia.length}`
+        : `${pedidas.length} de ${pedidas.length}: ${pedidas.join(", ")}`,
+      "«Tripulación, armar toboganes y verificación cruzada» no se oye",
+    );
+  else
+    comprobar(
+      "y en un avión sin pasaje la megafonía calla",
+      pedidas.length === 0 && deLaMegafonia.length === 0,
+      pedidas.length || deLaMegafonia.length
+        ? `pedidas ${pedidas.length}: ${pedidas.join(", ") || "—"} · oídas ${deLaMegafonia.length}`
+        : "ni pedida ni oída: no hay pasaje a quien hablar",
+      "«0 de 0» en rojo con el JAZ 20, que no lleva megafonía",
+    );
   /*
    * **Y los anuncios de Jazlyn del puesto a la despedida**, donde hay
    * tripulación que armar y pasaje que despedir.
@@ -6177,7 +6203,8 @@ if (vuelo.enBici) {
         ["alto", "frenos", "calzos", "cortar"].every((g) =>
           vuelo.senalero.gestos.includes(g),
         ),
-      `seña al apagar: ${vuelo.senalero.alApagar} · gestos: ${vuelo.senalero.gestos.join(", ")}`,
+      `seña al apagar: ${vuelo.senalero.alApagar} · gestos: ${vuelo.senalero.gestos.join(", ")}` +
+        (vuelo.senalero.alApagarComo ? ` · ${vuelo.senalero.alApagarComo}` : ""),
       "«llegaste, apagá el motor» antes que el señalero (captura 128)",
     );
 }
