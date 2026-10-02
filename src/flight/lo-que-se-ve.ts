@@ -19,9 +19,11 @@
  * 4. **Cada sitio una vez por vuelo.** Volver a nombrar el Teide diez minutos
  *    después no enseña nada y delata la máquina.
  * 5. **Solo lo que se ve**, que no es una regla de tiempo pero se decide
- *    aquí: el relieve se le pregunta a quien lo sabe. Ver `ponerSuelo`.
+ *    aquí: el relieve se le pregunta a quien lo sabe —ver `ponerSuelo`—, y
+ *    las nubes, a la capa del parte —ver `ponerNubes`—.
  */
 
+import type { CapaDeNubes } from "../world/capa-de-nubes";
 import { queSeVe, type Hito, type Mirada } from "../world/hitos";
 import type { Fase } from "./vuelo";
 
@@ -126,6 +128,7 @@ export class LoQueSeVe {
   private mirado = 0;
   private readonly dichos = new Set<string>();
   private suelo: ((x: number, z: number) => number | null) | null = null;
+  private capa: CapaDeNubes | null = null;
 
   constructor(private hitos: readonly Hito[] = []) {}
 
@@ -142,6 +145,15 @@ export class LoQueSeVe {
    */
   ponerSuelo(suelo: ((x: number, z: number) => number | null) | null): void {
     this.suelo = suelo;
+  }
+
+  /**
+   * **La capa de nubes, para no anunciar lo tapado.** «No tiene sentido que
+   * Jazlyn diga que miren por la ventanilla para ver las dunas de Maspalomas
+   * si hay nubes debajo: no se vería nada.» Ver `laCapaTapa`.
+   */
+  ponerNubes(capa: CapaDeNubes | null): void {
+    this.capa = capa;
   }
 
   /** Vuelo nuevo: se vuelve a poder señalar todo. */
@@ -206,6 +218,7 @@ export class LoQueSeVe {
       { x: momento.x, z: momento.z, rumbo: momento.rumbo, y: momento.altitud },
       this.dichos,
       this.suelo,
+      this.capa,
     );
     if (!mirada) return null;
     this.dichos.add(mirada.hito.nombre);

@@ -18,6 +18,7 @@ import {
   DESDE_EL_MORRO,
   RADIO_PARA_MIRAR,
   VALE_UN_PESO,
+  laCapaTapa,
   queSeVe,
   seVe,
   type Hito,
@@ -156,5 +157,69 @@ describe("si de verdad se ve", () => {
 
   it("donde nadie sabe la cota, se toma como mar", () => {
     expect(seVe({ x: 0, y: 500, z: 0 }, { x: 20000, y: 50, z: 0 }, () => null)).toBe(true);
+  });
+});
+
+describe("y sin nubes en medio", () => {
+  /*
+   * «No tiene sentido que Jazlyn diga que miren por la ventanilla para ver las
+   * dunas de Maspalomas si hay nubes debajo: no se vería nada.» La capa del
+   * parte, de mil a mil ochocientos metros.
+   */
+  const rota = { base: 1000, techo: 1800, tapadura: 0.75 };
+  const cubierta = { ...rota, tapadura: 1 };
+  const sueltas = { ...rota, tapadura: 0.45 };
+  const mar = () => 0;
+  const dunas = en("Dunas de Maspalomas", 9000, -3000, { clase: "agua", ele: null, peso: 3 });
+  const teide = en("Teide", -12000, -6000, { ele: 3715, peso: 2 });
+
+  it("por encima de una capa que tapa, lo de debajo no se anuncia", () => {
+    const encima = { ...alNorte, y: 3000 };
+    expect(queSeVe([dunas], encima, new Set(), mar, rota)).toBeNull();
+    expect(queSeVe([dunas], encima, new Set(), mar, cubierta)).toBeNull();
+    // Y sin la capa, sí: es lo que pasaba.
+    expect(queSeVe([dunas], encima, new Set(), mar)?.hito.nombre).toBe(
+      "Dunas de Maspalomas",
+    );
+  });
+
+  it("entre nubes sueltas el suelo se ve", () => {
+    const encima = { ...alNorte, y: 3000 };
+    expect(queSeVe([dunas], encima, new Set(), mar, sueltas)?.hito.nombre).toBe(
+      "Dunas de Maspalomas",
+    );
+  });
+
+  it("y el Teide asomando por encima del mar de nubes, visto desde encima, sí", () => {
+    const encima = { ...alNorte, y: 3000 };
+    expect(
+      queSeVe([dunas, teide], encima, new Set(), mar, cubierta)?.hito.nombre,
+    ).toBe("Teide");
+  });
+
+  it("y desde debajo de la capa, la cumbre que asoma por encima no se ve", () => {
+    const debajo = { ...alNorte, y: 600 };
+    expect(queSeVe([teide], debajo, new Set(), mar, cubierta)).toBeNull();
+    // Pero lo que está debajo con uno, sí.
+    expect(queSeVe([dunas], debajo, new Set(), mar, cubierta)?.hito.nombre).toBe(
+      "Dunas de Maspalomas",
+    );
+  });
+
+  it("y desde dentro de la nube no se ve nada", () => {
+    const dentro = { ...alNorte, y: 1400 };
+    expect(queSeVe([dunas, teide], dentro, new Set(), mar, cubierta)).toBeNull();
+  });
+
+  it("y la capa se curva con la Tierra: de lejos, la recta se mete en ella", () => {
+    /*
+     * Dos puntos a cincuenta metros por encima del techo: la recta entre los
+     * dos pasa más cerca de la Tierra por el medio, porque la Tierra —y la
+     * capa con ella— se abomba hacia la recta. A veinte kilómetros baja siete
+     * metros y no la toca; a ochenta baja más de cien y se mete en la nube.
+     */
+    const ojo = { x: 0, y: 1850, z: 0 };
+    expect(laCapaTapa(ojo, { x: 20_000, y: 1850, z: 0 }, cubierta)).toBe(false);
+    expect(laCapaTapa(ojo, { x: 80_000, y: 1850, z: 0 }, cubierta)).toBe(true);
   });
 });

@@ -62,6 +62,16 @@ import {
   Vector3,
   Vector4,
 } from "three";
+import {
+  type CapaDeNubes,
+  cuantoDentro,
+  densidadEnLaCapa,
+  type DibujoDeLaCapa,
+  RAMPA_DE_LA_NUBE,
+  ruidoDeNube,
+  SE_VE_DENTRO,
+  umbralDeLaNube,
+} from "./capa-de-nubes";
 import { factorDeCurvatura } from "./curvatura";
 import { mulberry32 } from "./noise";
 import type { Scenario } from "./scenarios";
@@ -249,6 +259,13 @@ const GLSL_COMUN = /* glsl */ `
    */
   uniform float pendienteDelHorizonte;
   uniform float senoDelHorizonte;
+  /*
+   * **Dentro de la nube**, de 0 a 1, y su color, en lineal. Dentro no hay
+   * cielo ni horizonte: hay gris, y el cielo y la bruma del mar se van a él.
+   * Ver \`alPaso\` en \`createSky\`.
+   */
+  uniform float enLaNube;
+  uniform vec3 colorDeLaNube;
 
   /*
    * La altura de una dirección **contada desde el horizonte que se ve**, no
@@ -382,7 +399,11 @@ const GLSL_COMUN = /* glsl */ `
     vec2 lado = l > 1e-5 ? h / l : vec2(1.0, 0.0);
     float s = senoDelHorizonte;
     float c = sqrt(1.0 - s * s);
-    return cieloParaPantalla(vec3(lado.x * c, -s, lado.y * c));
+    vec3 bruma = cieloParaPantalla(vec3(lado.x * c, -s, lado.y * c));
+    // Y dentro de la nube, la bruma es la nube.
+    return enLaNube > 0.0
+      ? mix(bruma, sRGBTransferOETF(vec4(colorDeLaNube, 1.0)).rgb, enLaNube)
+      : bruma;
   }
 
   /*
@@ -671,6 +692,13 @@ const FRAGMENT_SHADER = /* glsl */ `
       // Y a pantalla en sRGB, como el mar de arriba y como todo lo demás.
       sky = sRGBTransferOETF(vec4(sky, 1.0)).rgb;
     }
+    /*
+     * **Dentro de la nube no hay cielo.** Ni azul ni sol: el gris de la nube
+     * por todas partes, que es lo que se ve por la ventanilla al atravesarla
+     * y lo que hace que se note. Ver \`enLaNube\`.
+     */
+    if (enLaNube > 0.0)
+      sky = mix(sky, sRGBTransferOETF(vec4(colorDeLaNube, 1.0)).rgb, enLaNube);
 
     gl_FragColor = vec4(sky, 1.0);
   }
@@ -1016,6 +1044,20 @@ export interface SkyRig {
   readonly materialDelAgua: ShaderMaterial;
   /** Qué hora es ahora mismo. */
   readonly hora: number;
+  /**
+   * La capa de nubes puesta, en altitudes del mundo, o `null` sin capa. Ver
+   * `ponerNubes`.
+   */
+  readonly capa: CapaDeNubes | null;
+  /**
+   * **Cuánta nube hay en un punto del mundo**, de 0 a 1, con el mismo dibujo
+   * que se pinta. Ver `densidadEnLaCapa`.
+   */
+  densidadEn(x: number, y: number, z: number): number;
+  /** Cuánto está el ojo dentro de la nube ahora, de 0 a 1. Ver `alPaso`. */
+  readonly enLaNube: number;
+  /** El color de la nube vista desde donde está el ojo, en lineal. */
+  readonly colorDeLaNube: Color;
 }
 
 /**
@@ -1177,65 +1219,28 @@ function estrellas(): Points {
 /**
  * Una textura de nube, pintada una vez en un lienzo.
  *
- * Ruido de valor sumado en cuatro octavas y recortado por abajo: lo que queda
- * por debajo del umbral es cielo, y lo de arriba, nube. El recorte es lo que
- * separa una nube de una mancha — sin él sale niebla uniforme.
+ * Ruido de valor sumado en cuatro octavas —ver `ruidoDeNube`—, y en el alfa
+ * **el ruido entero**, sin recortar: el recorte, que es lo que separa una nube
+ * de una mancha, lo hace el material con el umbral de la tapadura. Ver
+ * `umbralDeLaNube`. Antes iba recortado aquí, a 0,52 para todas las capas, y
+ * una capa cubierta salía con los mismos agujeros que unas nubes sueltas.
+ *
+ * Blanco y alfa: es dato y no color, y por eso no lleva `SRGBColorSpace`. El
+ * blanco sale blanco en cualquier espacio, y el alfa no se convierte nunca.
  */
-function texturaDeNube(semilla: number): CanvasTexture {
-  const lado = 256;
+function texturaDeNube(ruido: Float32Array): CanvasTexture {
+  const lado = Math.round(Math.sqrt(ruido.length));
   const lienzo = document.createElement("canvas");
   lienzo.width = lado;
   lienzo.height = lado;
   const g = lienzo.getContext("2d")!;
   const imagen = g.createImageData(lado, lado);
-  const sorteo = mulberry32(semilla);
-
-  // Una rejilla de valores por octava, interpolada. Se envuelve por los bordes
-  // para que la textura se pueda repetir sin costura.
-  const octavas = [4, 8, 16, 32].map((n) => {
-    const v = new Float32Array(n * n);
-    for (let i = 0; i < v.length; i++) v[i] = sorteo();
-    return { n, v };
-  });
-
-  const suave = (t: number): number => t * t * (3 - 2 * t);
-  const valor = (
-    o: { n: number; v: Float32Array },
-    x: number,
-    y: number,
-  ): number => {
-    const fx = x * o.n;
-    const fy = y * o.n;
-    const x0 = Math.floor(fx) % o.n;
-    const y0 = Math.floor(fy) % o.n;
-    const x1 = (x0 + 1) % o.n;
-    const y1 = (y0 + 1) % o.n;
-    const tx = suave(fx - Math.floor(fx));
-    const ty = suave(fy - Math.floor(fy));
-    const a = o.v[y0 * o.n + x0]! * (1 - tx) + o.v[y0 * o.n + x1]! * tx;
-    const b = o.v[y1 * o.n + x0]! * (1 - tx) + o.v[y1 * o.n + x1]! * tx;
-    return a * (1 - ty) + b * ty;
-  };
-
-  for (let y = 0; y < lado; y++) {
-    for (let x = 0; x < lado; x++) {
-      let n = 0;
-      let peso = 0;
-      let amplitud = 1;
-      for (const o of octavas) {
-        n += valor(o, x / lado, y / lado) * amplitud;
-        peso += amplitud;
-        amplitud *= 0.5;
-      }
-      n /= peso;
-      // El recorte: por debajo de esto no hay nube.
-      const alfa = Math.max(0, (n - 0.52) / 0.48);
-      const i = (y * lado + x) * 4;
-      imagen.data[i] = 255;
-      imagen.data[i + 1] = 255;
-      imagen.data[i + 2] = 255;
-      imagen.data[i + 3] = Math.round(Math.min(1, alfa * 1.5) * 255);
-    }
+  for (let i = 0; i < ruido.length; i++) {
+    const k = i * 4;
+    imagen.data[k] = 255;
+    imagen.data[k + 1] = 255;
+    imagen.data[k + 2] = 255;
+    imagen.data[k + 3] = Math.round(Math.max(0, Math.min(1, ruido[i]!)) * 255);
   }
   g.putImageData(imagen, 0, 0);
   const textura = new CanvasTexture(lienzo);
@@ -1288,6 +1293,12 @@ function sinCurva<M extends Material>(material: M): M {
 export function materialDeNube(
   textura: Texture | null,
   radio: number,
+  /*
+   * **Y el recorte, que pone la tapadura.** El alfa del dibujo es el ruido
+   * entero; lo que pasa del umbral es nube. Un solo objeto para las cinco
+   * láminas: se cambia una vez y cambian todas. Ver `umbralDeLaNube`.
+   */
+  umbral: { value: number } = { value: umbralDeLaNube(0.45) },
 ): MeshBasicMaterial {
   const material = sinCurva(
     new MeshBasicMaterial({
@@ -1299,17 +1310,44 @@ export function materialDeNube(
       fog: true,
     }),
   );
+  /*
+   * Una pasada y no dos: three pinta lo transparente de doble cara dos
+   * veces, primero la de atrás y luego la de delante, para que un objeto
+   * cerrado se vea por dentro. Una lámina plana se ve de un lado cada vez, y
+   * la segunda llamada no pintaba nada: eran cinco dibujos de más.
+   */
+  material.forceSinglePass = true;
   material.onBeforeCompile = (programa) => {
-    programa.fragmentShader = programa.fragmentShader.replace(
-      "#include <fog_fragment>",
-      `#include <fog_fragment>
+    programa.uniforms.umbralDeLaNube = umbral;
+    programa.fragmentShader = programa.fragmentShader
+      .replace(
+        "void main() {",
+        "uniform float umbralDeLaNube;\nvoid main() {",
+      )
+      .replace(
+        "#include <map_fragment>",
+        `#ifdef USE_MAP
+          float ruidoDeNube = texture2D(map, vMapUv).a;
+          diffuseColor.a *= clamp((ruidoDeNube - umbralDeLaNube) / ${RAMPA_DE_LA_NUBE.toFixed(2)}, 0.0, 1.0);
+        #endif`,
+      )
+      .replace(
+        "#include <fog_fragment>",
+        `#include <fog_fragment>
         #ifdef USE_FOG
           gl_FragColor.a *= 1.0 - smoothstep(${(radio * DESVANECE_DESDE).toFixed(1)}, ${radio.toFixed(1)}, vFogDepth);
         #endif`,
-    );
+      );
   };
   return material;
 }
+
+/**
+ * La niebla dentro de la nube: la que deja la distancia de `SE_VE_DENTRO`
+ * fundida al noventa y cinco por ciento, con la misma cuenta que la
+ * visibilidad del parte —ver `ponerLluvia` en `game.ts`—.
+ */
+const NIEBLA_EN_LA_NUBE = 1.73 / SE_VE_DENTRO;
 
 /** Desde qué fracción de su radio se desvanece una capa de nubes. */
 export const DESVANECE_DESDE = 0.45;
@@ -1323,15 +1361,23 @@ export function radioDeLasNubes(lado: number): number {
  * Las nubes: cinco láminas apiladas, no una.
  *
  * Con una sola lámina, atravesarla es cruzar una hoja de papel infinitamente
- * fina y se ve el truco de golpe. Cinco repartidas en trescientos metros, cada
- * una con su desplazamiento, dan un banco con grosor: se entra, se está dentro
- * un rato y se sale. Es la diferencia entre una nube pintada y una nube.
+ * fina y se ve el truco de golpe. Cinco repartidas en el grosor de la capa,
+ * cada una con su desplazamiento, dan un banco con fondo: se entra, se está
+ * dentro un rato y se sale. Es la diferencia entre una nube pintada y una
+ * nube.
+ *
+ * **Y el grosor es el de la nube que es**, no setenta metros por lámina para
+ * todas: ver `grosorDeLaCapa`. Lo que se nota al atravesarla no lo ponen las
+ * láminas, que de cerca son papel: lo pone `alPaso` en `createSky`, con
+ * `densidadEnLaCapa`, cerrando la niebla y apagando el cielo donde el dibujo
+ * dice que hay nube.
  */
-function nubes(escenario: Scenario): Group {
+const LAMINAS = 5;
+
+function nubes(escenario: Scenario, umbral: { value: number }): Group {
   const grupo = new Group();
   grupo.name = "nubes";
   const lado = escenario.size * 4;
-  const capas = 5;
   /*
    * **Cuántas veces se repite el dibujo, o sea cómo de grande es una nube.**
    *
@@ -1347,14 +1393,19 @@ function nubes(escenario: Scenario): Group {
    * veces.
    */
   const repite = 12;
-  for (let i = 0; i < capas; i++) {
+  const ruidos: Float32Array[] = [];
+  const desfases: [number, number][] = [];
+  for (let i = 0; i < LAMINAS; i++) {
     // Dos triángulos por capa, como siempre: ver `materialDeNube`.
     const geo = new PlaneGeometry(lado, lado);
     geo.rotateX(-Math.PI / 2);
-    const textura = texturaDeNube(0xc10d + i * 977);
+    const ruido = ruidoDeNube(0xc10d + i * 977);
+    const textura = texturaDeNube(ruido);
     textura.repeat.set(repite, repite);
     textura.offset.set(i * 0.17, i * 0.31);
-    const material = materialDeNube(textura, radioDeLasNubes(lado));
+    ruidos.push(ruido);
+    desfases.push([i * 0.17, i * 0.31]);
+    const material = materialDeNube(textura, radioDeLasNubes(lado), umbral);
     const malla = new Mesh(geo, material);
     malla.position.y = i * 70;
     malla.renderOrder = -1;
@@ -1369,6 +1420,10 @@ function nubes(escenario: Scenario): Group {
    * nubes dan un respingo. Ver `updateSky`.
    */
   grupo.userData.paso = lado / repite;
+  // Y lo que hace falta para saber cuánta nube hay en un punto con el mismo
+  // dibujo que se pinta. Ver `densidadEnLaCapa`.
+  grupo.userData.ruidos = ruidos;
+  grupo.userData.desfases = desfases;
   grupo.visible = false;
   return grupo;
 }
@@ -1427,6 +1482,9 @@ export function createSky(scenario: Scenario): SkyRig {
      * ver `Terrain.vestirElAgua`. Con cero, la cúpula lo calcula todo.
      */
     radioDelAgua: { value: 0 },
+    // Dentro de la nube: ver `GLSL_COMUN` y `alPaso`.
+    enLaNube: { value: 0 },
+    colorDeLaNube: { value: new Color(1, 1, 1) },
   };
   const material = new ShaderMaterial({
     uniforms: {
@@ -1479,7 +1537,10 @@ export function createSky(scenario: Scenario): SkyRig {
   cielosEstrellados.scale.setScalar(scenario.size * 0.98);
   group.add(cielosEstrellados);
 
-  const bancoDeNubes = nubes(scenario);
+  /** El recorte de las cinco láminas, uno para todas. Ver `ponerNubes`. */
+  const umbral = { value: umbralDeLaNube(0.45) };
+  const bancoDeNubes = nubes(scenario, umbral);
+  bancoDeNubes.userData.umbral = umbral;
   group.add(bancoDeNubes);
 
   const sun = new DirectionalLight(0xfff1da, 2.9);
@@ -1503,8 +1564,29 @@ export function createSky(scenario: Scenario): SkyRig {
   /** Lo que multiplica al halo. Ver `ponerDeslumbre`. */
   let deslumbre = 1;
   const niebla = { bruma: scenario.fog.density, minimo: 0 };
+  /**
+   * Lo que pone la hora, antes de lo que le quita la capa: la fuerza del sol,
+   * el color de la bruma y la luz de las nubes. Ver `alPaso`.
+   */
+  const deLaHora = {
+    sol: 1,
+    bruma: new Color(),
+    nubes: new Color(1, 1, 1),
+  };
   const relleno = new Color();
   const nieblaDelSol = new Color();
+  /**
+   * **Lo que la capa le quita a la luz** vista desde donde está el ojo: al sol
+   * y a la cara de abajo de las nubes. Ver `alPaso`.
+   */
+  const bajoLaCapa = { sol: 1, nubes: 1 };
+  /** Cuánto está el ojo dentro de la nube ahora. Ver `alPaso`. */
+  let enLaNube = 0;
+  const colorDeLaNube = compartidos.colorDeLaNube.value;
+  const capaPuesta = (): CapaDeNubes | null =>
+    bancoDeNubes.visible
+      ? ((bancoDeNubes.userData.capa as CapaDeNubes | null | undefined) ?? null)
+      : null;
 
   const rig: SkyRig = {
     group,
@@ -1513,6 +1595,17 @@ export function createSky(scenario: Scenario): SkyRig {
     sunDirection,
     materialDelAgua,
     hora: 12,
+    get capa() {
+      return capaPuesta();
+    },
+    densidadEn(x: number, y: number, z: number) {
+      const dibujo = bancoDeNubes.userData.dibujo as DibujoDeLaCapa | undefined;
+      return capaPuesta() && dibujo ? densidadEnLaCapa(dibujo, x, y, z) : 0;
+    },
+    get enLaNube() {
+      return enLaNube;
+    },
+    colorDeLaNube,
     ponerHora(hora: number) {
       const h = ((hora % 24) + 24) % 24;
       (rig as { hora: number }).hora = h;
@@ -1552,7 +1645,8 @@ export function createSky(scenario: Scenario): SkyRig {
 
       sun.position.copy(sunDirection).multiplyScalar(scenario.size * 0.4);
       sun.color.setHex(m.sol);
-      sun.intensity = m.fuerza;
+      deLaHora.sol = m.fuerza;
+      sun.intensity = m.fuerza * bajoLaCapa.sol;
       ambient.intensity = m.relleno;
       ambient.color.setHex(m.ambiente);
 
@@ -1567,8 +1661,11 @@ export function createSky(scenario: Scenario): SkyRig {
       luz.r = Math.min(1, luz.r);
       luz.g = Math.min(1, luz.g);
       luz.b = Math.min(1, luz.b);
+      deLaHora.nubes.copy(luz);
       for (const capa of bancoDeNubes.children)
-        ((capa as Mesh).material as MeshBasicMaterial).color.copy(luz);
+        ((capa as Mesh).material as MeshBasicMaterial).color
+          .copy(luz)
+          .multiplyScalar(bajoLaCapa.nubes);
 
       const cielo = group.getObjectByName("estrellas") as Points | undefined;
       if (cielo) (cielo.material as PointsMaterial).opacity = m.estrellas;
@@ -1585,7 +1682,10 @@ export function createSky(scenario: Scenario): SkyRig {
        * direcciones, y con el malva de enfrente a secas el monte recortado
        * contra el ocaso se apagaba hacia un color que no tiene detrás.
        */
-      fog.color.setHex(m.horizonte).lerp(nieblaDelSol.setHex(m.horizonteSol), 0.3);
+      deLaHora.bruma
+        .setHex(m.horizonte)
+        .lerp(nieblaDelSol.setHex(m.horizonteSol), 0.3);
+      fog.color.copy(deLaHora.bruma);
     },
     ponerNiebla(bruma: number, minimo: number) {
       niebla.bruma = bruma;
@@ -1606,13 +1706,84 @@ export function createSky(scenario: Scenario): SkyRig {
    * la altura del ojo. Ver `updateSky`.
    */
   group.userData.alPaso = (ojo: Vector3): void => {
+    /*
+     * **La capa vista desde el ojo.** `subido` va de cero en la base a uno
+     * en el techo; `enLaNube`, de cero a uno según cuánta nube hay donde está
+     * el ojo, con el mismo dibujo que se pinta: un hueco es un hueco.
+     */
+    const capa = capaPuesta();
+    const dibujo = bancoDeNubes.userData.dibujo as DibujoDeLaCapa | undefined;
+    const subido = capa ? suave(capa.base, capa.techo, ojo.y) : 1;
+    enLaNube =
+      capa && dibujo
+        ? cuantoDentro(densidadEnLaCapa(dibujo, ojo.x, ojo.y, ojo.z))
+        : 0;
+    /*
+     * **Debajo de una capa que tapa, sin sol.** Con el cielo cubierto no hay
+     * sombras: la luz llega de toda la nube y no de un punto. Con la luz del
+     * sol entera debajo de una capa cerrada, el suelo salía con sus sombras
+     * de mediodía bajo un techo gris. Va de nada con la capa a medias a tres
+     * cuartos menos con ocho octavos, y se vuelve a encender al subir por
+     * ella: **al salir por arriba, el sol encima**.
+     *
+     * Y la cara de abajo de las nubes, gris: lo blanco es lo que les da el
+     * sol, y el sol les da por arriba.
+     */
+    const cubre = capa ? Math.max(0, Math.min(1, (capa.tapadura - 0.5) / 0.5)) : 0;
+    bajoLaCapa.sol = 1 - 0.75 * cubre * (1 - subido);
+    bajoLaCapa.nubes = capa ? 1 - 0.45 * capa.tapadura * (1 - subido) : 1;
+    sun.intensity = deLaHora.sol * bajoLaCapa.sol;
+    for (const lamina of bancoDeNubes.children) {
+      ((lamina as Mesh).material as MeshBasicMaterial).color
+        .copy(deLaHora.nubes)
+        .multiplyScalar(bajoLaCapa.nubes);
+      /*
+       * **Y desde encima, después del mar.** El agua es transparente y va en
+       * su turno, después de las nubes —ver `vestirElAgua` en `terrain.ts`—,
+       * y como la nube no escribe profundidad, el mar se pintaba **encima**
+       * de la capa: desde arriba no se veía, y se volaba sobre un mar de
+       * nubes viendo el mar. La lámina que queda por debajo del ojo va
+       * después del agua; la de encima, antes, como siempre.
+       */
+      lamina.renderOrder =
+        bancoDeNubes.position.y + lamina.position.y < ojo.y ? -0.25 : -1;
+    }
+    /*
+     * **Y dentro, gris.** El color de la nube a la altura del ojo —más
+     * oscura abajo, que es donde menos luz le llega—, y a él se van la
+     * bruma, el cielo y el mar. Ver `enLaNube` en `GLSL_COMUN`.
+     */
+    const gris =
+      0.2126 * deLaHora.nubes.r +
+      0.7152 * deLaHora.nubes.g +
+      0.0722 * deLaHora.nubes.b;
+    /*
+     * Casi gris: dentro, la luz llega rebotada de todas partes y pierde el
+     * color de la hora. Con el tinte entero, la nube de las tres de la tarde
+     * era una tormenta de arena.
+     */
+    colorDeLaNube
+      .setRGB(gris, gris, gris)
+      .lerp(deLaHora.nubes, 0.35)
+      .multiplyScalar(0.55 + 0.45 * subido);
+    compartidos.enLaNube.value = enLaNube;
+    fog.color
+      .copy(deLaHora.bruma)
+      .lerp(colorDeLaNube, Math.min(1, enLaNube * 1.5));
     compartidos.luzDelSol.value = sun.intensity;
     compartidos.luzDeRelleno.value
       .copy(relleno.copy(ambient.color))
       .multiplyScalar(ambient.intensity);
+    /*
+     * La bruma de siempre, lo que pone el parte o la lluvia y lo que pone la
+     * nube. **Lo del parte solo debajo de la capa**: la visibilidad del METAR
+     * la mide la estación, y la lluvia cae de la nube hacia abajo; encima del
+     * techo el aire está limpio, que es por lo que se sale a ver el sol.
+     */
     fog.density = Math.max(
       niebla.bruma * brumaALaAltura(ojo.y),
-      niebla.minimo,
+      niebla.minimo * (capa ? 1 - subido : 1),
+      enLaNube * NIEBLA_EN_LA_NUBE,
     );
     // El horizonte del mar desde esta altura. Ver `horizonteDesde`.
     const { pendiente, seno } = horizonteDesde(
@@ -1637,16 +1808,38 @@ export function ponerNubes(
   rig: SkyRig,
   alturaM: number | null,
   tapadura = 0.5,
+  /** De la base al techo, m. Ver `grosorDeLaCapa`. */
+  grosor = 280,
 ): void {
   const banco = rig.group.getObjectByName("nubes");
   if (!banco) return;
   banco.visible = alturaM !== null;
-  if (alturaM === null) return;
-  banco.position.y = alturaM;
-  for (const capa of banco.children) {
-    const mat = (capa as Mesh).material as MeshBasicMaterial;
-    mat.opacity = 0.18 + tapadura * 0.62;
+  if (alturaM === null) {
+    banco.userData.capa = null;
+    banco.userData.dibujo = undefined;
+    return;
   }
+  banco.position.y = alturaM;
+  const separacion = grosor / Math.max(1, banco.children.length - 1);
+  banco.children.forEach((lamina, i) => {
+    lamina.position.y = i * separacion;
+    const mat = (lamina as Mesh).material as MeshBasicMaterial;
+    mat.opacity = 0.18 + tapadura * 0.62;
+  });
+  const umbral = banco.userData.umbral as { value: number } | undefined;
+  const corte = umbralDeLaNube(tapadura);
+  if (umbral) umbral.value = corte;
+  const capa: CapaDeNubes = { base: alturaM, techo: alturaM + grosor, tapadura };
+  banco.userData.capa = capa;
+  const dibujo: DibujoDeLaCapa = {
+    base: alturaM,
+    separacion,
+    ruidos: banco.userData.ruidos as Float32Array[],
+    desfases: banco.userData.desfases as [number, number][],
+    paso: banco.userData.paso as number,
+    umbral: corte,
+  };
+  banco.userData.dibujo = dibujo;
 }
 
 /**
