@@ -779,13 +779,26 @@ async function unTelefono(quien) {
     await tocar(DEDO_PALANCA, p2.x, p2.y);
     await pausa(90);
     await tocar(DEDO_PALANCA, p2.x, p2.y);
-    await pausa(7000);
+    await pausa(5000);
+    /*
+     * La subida, **promediada** en dos segundos: en el modelo sencillo el
+     * bache del aire se suma tal cual al ascenso —ver `ponerRacha` en
+     * `arcade.ts`—, y una sola lectura daba de 0,4 a 1,6 m/s según cayera.
+     */
+    const lecturas = [];
+    for (let i = 0; i < 10; i++) {
+      lecturas.push((await mirarAire()).vs);
+      await pausa(200);
+    }
+    const vsMedia = lecturas.reduce((a, b) => a + b, 0) / lecturas.length;
     const c = await mirarAire();
     const lejos3 = await apartado();
     const doble = {
-      ok: !c.percance && Math.abs(c.alabeo) * G < 3 && Math.abs(c.vs) < 1 && lejos3 < RECORRIDO_DEL_MANDO * 0.12,
+      ok: !c.percance && Math.abs(c.alabeo) * G < 3 && Math.abs(vsMedia) < 1 && lejos3 < RECORRIDO_DEL_MANDO * 0.12,
       detalle:
-        `alabeo ${(c.alabeo * G).toFixed(1)}° · ${c.vs.toFixed(2)} m/s · el punto a ${lejos3.toFixed(1)} px del centro`,
+        `alabeo ${(c.alabeo * G).toFixed(1)}° · ${vsMedia.toFixed(2)} m/s de media en dos segundos · el punto a ${lejos3.toFixed(1)} px del centro` +
+        ` · la mano lleva ${c.mano.alabeo ? "alabeo" : "—"} y ${c.mano.cabeceo ? "cabeceo" : "—"}` +
+        ` · a ${c.alto.toFixed(0)} m`,
     };
     return { fija, flaps, tren, doble };
   }
