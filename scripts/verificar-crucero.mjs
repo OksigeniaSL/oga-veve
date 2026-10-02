@@ -27,8 +27,14 @@ const AVIONES = (process.argv[2] ?? "jaz-120,jaz-90").split(",");
 const TRAMOS = (process.argv[3] ?? "guyrami,tuka,taguato,taguato-ruvicha").split(",");
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "pettirossi";
 const TRAZA = !!process.env.OGA_TRAZA;
-/** Cinco minutos de vuelo medidos, después de uno para asentarse. */
-const ASIENTA = Number(process.env.OGA_ASIENTA ?? 60);
+/**
+ * Cinco minutos de vuelo medidos, después de dos para asentarse: el avión se
+ * coloca con un gas aproximado, y el JAZ 120 tarda algo más de un minuto en
+ * dejar la palanca quieta —medido: 72 al empezar, 69,3 a los treinta
+ * segundos y 69,1 desde el minuto—. Lo que se mide es el crucero, no la
+ * nivelada.
+ */
+const ASIENTA = Number(process.env.OGA_ASIENTA ?? 120);
 const MIDE = Number(process.env.OGA_MIDE ?? 300);
 const PUERTO = 5351;
 /** Crucero de cada uno: nivel 290 y su indicada de crucero, nudos. */
@@ -158,6 +164,10 @@ try {
         const ias = m.map((x) => x.ias ?? NaN).filter(Number.isFinite);
         const pies = m.map((x) => x.pies);
         const ok = n1Max - media <= 1 && media - n1Min <= 1;
+        // Y cuándo se apartó más, para saber si es un bache o el gas.
+        let peor = 0;
+        for (let i = 0; i < m.length; i++)
+          if (Math.abs(m[i].n1 - media) > Math.abs(m[peor].n1 - media)) peor = i;
         if (!ok) fallos++;
         const fila = {
           avion,
@@ -173,6 +183,13 @@ try {
         console.log(
           `${ok ? "✓" : "✗"} ${avion} ${tramo}: N1 ${fila.n1} · ${fila.kt} kt · ${fila.pies} ft · automático ${r.puesto ? "puesto" : "NO"} · ${m.length} muestras${r.plan ? " · CON PLAN" : ""}${r.tren > 0.01 ? " · TREN FUERA" : ""}`,
         );
+        if (process.env.OGA_DETALLE) {
+          const t0 = m[0]?.t ?? 0;
+          console.log(
+            `   lo más lejos: ${m[peor]?.n1.toFixed(1)} a los ${((m[peor]?.t ?? 0) - t0).toFixed(0)} s` +
+              ` · cada 30 s: ${m.filter((_, i) => i % Math.max(1, Math.round(m.length / 10)) === 0).map((x) => `${(x.t - t0).toFixed(0)}s ${x.n1.toFixed(1)}/${x.ias.toFixed(0)}/${x.vs.toFixed(0)}`).join(" · ")}`,
+          );
+        }
         if (TRAZA) {
           const lista = Object.entries(r.quien).sort((a, b) => b[1] - a[1]);
           console.log("   quién escribe el gas:");

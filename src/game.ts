@@ -15538,6 +15538,12 @@ export class Game {
       const punta = indicatedAirspeed(this.flight.velocidadMaxima(), s.position.y, aire) / NUDO;
       if (v.kt > punta * 0.97) v = { ...v, kt: Math.floor(punta * 0.97), mach: null };
     }
+    /*
+     * PENDIENTE-VOCES-automatico: al pasar el `tramo` a `terminal` y a
+     * `aproximacion`, en los tres peldaños de abajo, `vuelo.velocidadTerminal`
+     * y `vuelo.velocidadAproximacion`. Hoy lo dicen la ventanilla SPD y la
+     * muesca de la cinta, que se mueven solas.
+     */
     this.velocidadDeAhora = v;
     this.velocidadDeAhoraEn = this.relojDelJuego;
     return v;
