@@ -237,11 +237,16 @@ const DE_LA_FASE: ReadonlySet<string> = (() => {
  * cuarenta metros en unos segundos, y para entonces la orden y su porqué
  * todavía están sonando: con el reloj corto caducaba, y la frustrada se
  * obedecía en silencio. Renunciar es ganar, y se dice.
+ *
+ * **Y el porqué de la pista ocupada**, por lo mismo: va detrás del «motor y
+ * al aire» de la torre, que corta y dura lo suyo. Llegando a Gando con un
+ * avión en la pista, la orden sonaba y «Pista ocupada. Subí y volvé por el
+ * circuito» caducaba esperando: en Guyrami se quedaba sin el porqué.
  */
 export function explicaLaOtraPunta(clave: string | undefined): boolean {
   return (
     !!clave &&
-    /^vuelo\.(?:laOtraPunta|alAireOtraPunta|alAireVientoDeCola|frustrada)(?:~\d+)?$/.test(
+    /^vuelo\.(?:laOtraPunta|alAireOtraPunta|alAireVientoDeCola|frustrada|mandanFrustrar)(?:~\d+)?$/.test(
       clave,
     )
   );
@@ -487,6 +492,18 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   // «levantá la nariz» encima es otra orden para lo mismo.
   ["vuelo.lentoYBajo", "vuelo.bajasRapido"],
 ];
+
+/**
+ * **Lo que cambia la situación, y por eso no lo calla lo que se dijo antes.**
+ *
+ * En `NO_A_LA_VEZ` manda la primera, y con la orden de irse al aire eso solo
+ * vale en un sentido: dada, detrás no suena «estás en final» ni «venís bajo».
+ * Al revés no: la orden llega porque algo cambió —alguien entró en la pista—,
+ * y un «final» de hace seis segundos no la hace mentira. En Gando, la torre
+ * dijo «motor y al aire» y el porqué de la instructora se calló por reñir con
+ * su propio «final».
+ */
+const CAMBIA_LA_SITUACION = /^vuelo\.mandanFrustrar(?:~\d+)?$/;
 
 /** Con quién riñe esta clave, si riñe con alguien. */
 function riñenCon(clave: string): readonly string[] {
@@ -999,6 +1016,7 @@ export class Boca {
      */
     if (dicha !== undefined && ahora - dicha < NO_REPETIR && !noSePierde(clave, urgencia))
       return "repetida";
+    if (CAMBIA_LA_SITUACION.test(clave)) return null;
     for (const otra of riñenCon(clave)) {
       const cuando = this.dichas.get(otra);
       if (cuando !== undefined && ahora - cuando < RIÑEN) return `riñe con ${otra}`;

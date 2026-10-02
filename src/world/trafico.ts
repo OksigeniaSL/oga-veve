@@ -817,6 +817,14 @@ export const SE_VA_A_LOS = (ESPERA_MAXIMA + ESPERA_ENTRE_VUELOS) / 2;
 const QUIETO = 15;
 
 /**
+ * **Hasta dónde a cada lado del eje se está todavía sobre la pista**, m, para
+ * el que ya despegó: la mitad de una pista ancha de sesenta y un margen.
+ * Pasarlo es haber virado, que es una de las dos maneras de soltarla. Ver
+ * `encimaDeLaPista`.
+ */
+const CORREDOR_DE_LA_PISTA = 60;
+
+/**
  * **Hasta dónde mira por delante el tráfico que rueda**, m, para no echarse
  * encima de quien juega: lo que tarda en pararse a su paso de calle y un
  * margen. Ver `cedeA`.
@@ -1781,8 +1789,33 @@ export function crearTrafico(
    */
 
   /**
+   * Si un punto cae sobre la pista vista desde arriba: entre sus dos puntas
+   * y a menos de `CORREDOR_DE_LA_PISTA` del eje. Ver `encimaDeLaPista`.
+   */
+  const rumboDeLaPista = (runway.heading * Math.PI) / 180;
+  const sobreElAsfalto = (p: { x: number; z: number }): boolean => {
+    const dx = p.x - runway.x;
+    const dz = p.z - runway.z;
+    const along = dx * Math.sin(rumboDeLaPista) - dz * Math.cos(rumboDeLaPista);
+    const across = dx * Math.cos(rumboDeLaPista) + dz * Math.sin(rumboDeLaPista);
+    return (
+      Math.abs(along) <= runway.length / 2 && Math.abs(across) < CORREDOR_DE_LA_PISTA
+    );
+  };
+
+  /**
    * **Si está encima de la pista**: posado sin haberla dejado, o saliendo
-   * desde que pasa su doble raya hasta que tiene las ruedas en el aire.
+   * desde que pasa su doble raya hasta que **pasa el final de la pista o
+   * vira**.
+   *
+   * El que salía la soltaba al tener las ruedas en el aire, y eso no es lo
+   * de verdad: quien llega no cruza el umbral hasta que el que salió antes
+   * ha pasado el final de la pista en uso o ha empezado a virar (OACI,
+   * PANS-ATM 7.10). Con la regla de las ruedas, la torre te daba la verde
+   * —y a la altura de decisión no te mandaba al aire— con el otro a diez
+   * metros sobre el asfalto, delante del morro, que desde la final y de
+   * noche es un avión en la pista: «tengo un avión en la pista y nadie me
+   * dice que frustre», en Gando.
    */
   const encimaDeLaPista = (quien: Volando): boolean => {
     const c = quien.caminos;
@@ -1793,11 +1826,12 @@ export function crearTrafico(
     if (camino === c.salida) {
       if (r <= c.espera + 0.5) return false;
       const despega = c.enTierra?.despega ?? 0;
-      if (despega > 0) return r < despega;
-      return quien.grupo.position.y - cota < 10;
+      if (despega > 0 ? r < despega : quien.grupo.position.y - cota < 10) return true;
+      return sobreElAsfalto(quien.grupo.position);
     }
     return false;
   };
+
 
   /**
    * Si hay alguien encima de la pista **que no sea `matricula`**: otro
@@ -1940,13 +1974,17 @@ export function crearTrafico(
 
   /**
    * **Si viene alguien antes de que quien sale haya dejado la pista.** Lo
-   * que tarda en entrar, alinearse y correr su despegue; y si va a esperar
-   * alineado, lo que puede tardar la torre en darle la salida.
+   * que tarda en entrar, alinearse y correr su despegue, y lo que vuela
+   * después hasta pasar el final de la pista —ver `encimaDeLaPista`—; y si
+   * va a esperar alineado, lo que puede tardar la torre en darle la salida.
    */
   const llegaAntesDeQueSalga = (tipo: TipoDeTrafico, clave: string): boolean => {
+    const hastaElFinal =
+      Math.max(0, runway.length - tipo.carrera) / (tipo.aproximacion * 1.1);
     const hueco =
       ENTRAR_Y_ALINEARSE +
       tiempoDeCarrera(tipo) +
+      hastaElFinal +
       (clave === "torre.lineUpWait" ? ESPERA_MAXIMA : 0);
     return laFila(null).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,

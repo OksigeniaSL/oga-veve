@@ -474,6 +474,25 @@ describe("un suceso, una sola voz", () => {
     expect(dicho).toEqual(["frustrada"]);
   });
 
+  /*
+   * Al revés no riñen: la orden llega porque la situación cambió, y un
+   * «estás en final» o un «venís bajo» de hace unos segundos no la hace
+   * mentira. En Gando, la torre mandó al aire seis segundos después del
+   * «final» de la instructora, y el porqué —«Pista ocupada. Subí y volvé por
+   * el circuito»— se calló por reñir con él.
+   */
+  it("pero la orden de irse no la calla lo que se dijo antes", () => {
+    for (const antes of ["vuelo.final", "vuelo.papiBajo", "vuelo.aroBajo"]) {
+      const { dicho, acabar, frase } = coro();
+      const b = boca();
+      b.pedir("normal", frase(antes), antes);
+      acabar[antes]!();
+      reloj += SILENCIO + 1;
+      b.pedir("mando", frase("frustrada"), "vuelo.mandanFrustrar");
+      expect(dicho, antes).toEqual([antes, "frustrada"]);
+    }
+  });
+
   it("pero pasado el rato vuelve a poder decirse", () => {
     // Callarse para siempre sería el otro extremo: la situación pasa.
     const { dicho, acabar, frase } = coro();
@@ -1037,6 +1056,18 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
     expect(cuantoAguanta("vuelo.laOtraPunta")).toBe(CADUCA_LA_ORDEN);
     // Y la felicitación de haberla obedecido, que llega detrás.
     expect(cuantoAguanta("vuelo.frustrada~2")).toBe(CADUCA_LA_ORDEN);
+  });
+
+  /*
+   * Y el porqué de la pista ocupada, que es el mismo caso: se pide detrás del
+   * «motor y al aire» de la torre, que corta y dura lo suyo. En Gando, con la
+   * pista ocupada a la decisión, la torre sonó y «Pista ocupada. Subí y volvé
+   * por el circuito» caducó esperando las dos veces: en Guyrami la orden se
+   * quedaba sin el porqué.
+   */
+  it("y el porqué de la pista ocupada, también", () => {
+    expect(cuantoAguanta("vuelo.mandanFrustrar")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("vuelo.mandanFrustrar~3")).toBe(CADUCA_LA_ORDEN);
   });
 
   it("y un aviso de paso, con su reloj corto", () => {

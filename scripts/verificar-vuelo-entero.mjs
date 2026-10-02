@@ -596,7 +596,7 @@ const conMegafonia = await page
   .catch(() => true);
 const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -2666,6 +2666,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let bajandoATuPista = 0;
   let bajandoATuPistaDonde = null;
   /**
+   * **Y con alguien en tu pista por debajo de la decisión, la orden de irse.**
+   * Ver dónde se cuenta. Y el que estaba en tierra al lado, no encima: en un
+   * campo con paralelas, lo que diga quién estaba en cuál.
+   */
+  let enTuPistaSinOrden = 0;
+  let enTuPistaSinOrdenDonde = null;
+  let alCostadoDeTuPista = null;
+  /**
+   * **Y con `OGA_PISTA_OCUPADA=1`, alguien entra en tu pista después de tu
+   * permiso**: un despegue que se le pone a uno del tráfico dibujado, sin que
+   * la frecuencia lo sepa, con el avión a punto de llegar a la decisión. Es
+   * el caso que no vigilaba nadie —la pista se miraba hasta darte el permiso
+   * y ya no— y no se da solo: hace falta ponerlo. Cuándo y dónde se puso.
+   */
+  let pistaOcupadaPuesta = null;
+  /**
+   * **Y en la final, la ventanilla ALT no sube por encima de la del punto de
+   * final** si el automático no va bajando por la senda. Llegando a Gando en
+   * Guyrami saltaba de 2.100 a 3.000 con el avión bajando a la pista: «ningún
+   * sentido». Ver `ventanillaEnLaFinal` en `flight/altitud-seleccionada.ts`.
+   */
+  let ventanillaEnFinal = null;
+  let ventanillaQueSube = null;
+  /**
    * **Y la pista es de uno por vez, y las llegadas van en fila.** Se veían
    * dos o tres aviones entrando a la vez en la pista, uno encima del otro en
    * la misma final. Se cuentan las muestras con dos encima de la pista —tú
@@ -3284,6 +3308,64 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             bajandoATuPista++;
             bajandoATuPistaDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(a.y - cota)} m, ${Math.round(along + p.length / 2)} m del umbral${a.conPermiso ? "" : ", sin permiso"}`;
           }
+        }
+      }
+      /*
+       * **Y por debajo de la altura de decisión, con alguien en tu pista, al
+       * aire.** Se mira el asfalto, no lo que el juego cree: un avión en
+       * tierra dentro del rectángulo de tu pista —su largo y su ancho con
+       * margen de ala—. Si está y no hay orden de irse, es lo que vio Enrique
+       * en Gran Canaria: «tengo un avión en la pista y nadie me dice que
+       * frustre». Diez metros por debajo de los sesenta para que la orden
+       * tenga su fotograma, y el más cercano en el costado se apunta también:
+       * en las paralelas dice si estaba en la de al lado.
+       */
+      if (
+        pistaOcupadaPedida &&
+        pistaOcupadaPuesta === null &&
+        etapa === "final" &&
+        !s.onGround &&
+        (!destino || enElDestino) &&
+        tusAutorizaciones.length > 0 &&
+        alto(s) < 75 &&
+        alto(s) > 62
+      ) {
+        o.traficoAnuncia?.("EC-PSO", "torre.clearedTakeoff");
+        pistaOcupadaPuesta = `a los ${t.toFixed(0)} s, con el avión a ${Math.round(alto(s))} m`;
+      }
+      if (etapa === "final" && !s.onGround && (!destino || enElDestino)) {
+        const j = o.juegoParaTrazas?.();
+        const pies = j?.ventanillaParaBanco?.pies ?? null;
+        const alli = j?.navegacion?.alturaDelFinal ?? null;
+        if (pies !== null && alli !== null) {
+          ventanillaEnFinal = { pies, delFinal: Math.round(alli / 0.3048) };
+          // Doscientos pies de holgura: el reglaje y el redondeo a cien.
+          if (!j.pilotoPuesto && pies > alli / 0.3048 + 200)
+            ventanillaQueSube ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${pies} ft con el punto de final a ${Math.round(alli / 0.3048)}`;
+        }
+      }
+      if (etapa === "final" && !s.onGround && alto(s) < 50 && alto(s) > 2) {
+        const p = pistaAhora();
+        const rumbo = (p.heading * Math.PI) / 180;
+        const fx = Math.sin(rumbo);
+        const fz = -Math.cos(rumbo);
+        const cota = o.cotaDePistaDeAhora?.(p.x, p.z) ?? 0;
+        const orden = !!o.ordenDeFrustrar?.();
+        for (const a of o.trafico?.() ?? []) {
+          if (a.y - cota > 15) continue;
+          const along = (a.x - p.x) * fx + (a.z - p.z) * fz;
+          const across = -(a.x - p.x) * fz + (a.z - p.z) * fx;
+          if (Math.abs(along) > p.length / 2) continue;
+          const dentro = Math.abs(across) < (p.width ?? 45) / 2 + 10;
+          const dentroDe = (o.traficoPorDentro?.() ?? []).find(
+            (d) => d.matricula === a.matricula,
+          );
+          const como = `${a.matricula} a ${Math.round(along + p.length / 2)} m del umbral y ${Math.round(across)} m del eje (${a.enLaPista ? "en la pista para el juego" : "fuera para el juego"}${dentroDe ? `, ${dentroDe.camino} ${dentroDe.recorrido}/${dentroDe.espera}/${dentroDe.toca}/${dentroDe.fuera}` : ""})`;
+          if (dentro && !orden) {
+            enTuPistaSinOrden++;
+            enTuPistaSinOrdenDonde ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${como}`;
+          } else if (!dentro && Math.abs(across) < 400)
+            alCostadoDeTuPista ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${como}`;
         }
       }
       {
@@ -5586,6 +5668,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     frustradasPorElJuego,
     bajandoATuPista,
     bajandoATuPistaDonde,
+    enTuPistaSinOrden,
+    enTuPistaSinOrdenDonde,
+    alCostadoDeTuPista,
+    pistaOcupadaPuesta,
+    ventanillaEnFinal,
+    ventanillaQueSube,
     dosEnLaPista,
     dosEnLaPistaDonde,
     sinHueco,
@@ -5776,7 +5864,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1"]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -6355,6 +6443,47 @@ comprobar(
     ? `${vuelo.bajandoATuPista} muestras, la primera a los ${vuelo.bajandoATuPistaDonde}`
     : "nadie que viniera a aterrizar pasó bajo sobre ella",
   "uno sin permiso, detrás de ti en final, a quinientos ochenta metros del umbral y veintitrés de altura",
+);
+
+/*
+ * **Y en la final la ventanilla ALT no sube**: sin el automático bajando por
+ * la senda se queda en la del punto de final. Ver `ventanillaQueSube`.
+ */
+if (vuelo.ventanillaEnFinal)
+  comprobar(
+    "y en la final la ventanilla no sube por encima del punto de final",
+    !vuelo.ventanillaQueSube,
+    vuelo.ventanillaQueSube ??
+      `${vuelo.ventanillaEnFinal.pies} ft, con el punto de final a ${vuelo.ventanillaEnFinal.delFinal}`,
+    "«ningún sentido que, descendiendo, cuando me dice 2100 ahora me sube a 3000 si estoy llegando a la pista»",
+  );
+
+/*
+ * **Y con alguien en tu pista a la altura de decisión, la torre te manda al
+ * aire.** Sin la pista libre no hay permiso, y el que se dio se anula con su
+ * orden. Gran Canaria, de noche, con el JAZ 120: «tengo un avión en la pista
+ * y nadie me dice que frustre, ya lo hago yo». Ver `paso` en
+ * `flight/turno-de-pista.ts`.
+ */
+comprobar(
+  "y con alguien en tu pista a la decisión, te mandan al aire",
+  (vuelo.enTuPistaSinOrden ?? 0) === 0 &&
+    (process.env.OGA_PISTA_OCUPADA !== "1" ||
+      (!!vuelo.pistaOcupadaPuesta && (vuelo.frustradasPorLaPista ?? 0) > 0)),
+  [
+    vuelo.enTuPistaSinOrden
+      ? `${vuelo.enTuPistaSinOrden} muestras sin orden, la primera a los ${vuelo.enTuPistaSinOrdenDonde}`
+      : "nadie en tu pista por debajo de la decisión sin orden de irse",
+    vuelo.alCostadoDeTuPista ? `al costado: ${vuelo.alCostadoDeTuPista}` : null,
+    process.env.OGA_PISTA_OCUPADA === "1"
+      ? vuelo.pistaOcupadaPuesta
+        ? `despegue puesto ${vuelo.pistaOcupadaPuesta}, ${vuelo.frustradasPorLaPista ?? 0} frustrada(s) por la pista`
+        : "OGA_PISTA_OCUPADA: no se llegó a poner"
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · "),
+  "«tengo un avión en la pista y nadie me dice que frustre, ya lo hago yo»",
 );
 
 /*
