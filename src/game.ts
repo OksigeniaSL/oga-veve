@@ -12531,8 +12531,9 @@ export class Game {
    * avión se paraba a cuarenta y cinco metros del puesto —ver `LLEGADA` en
    * `flight/vuelo.ts`—, con el señalero todavía haciendo señas o sin haber
    * cruzado los bastones. El orden de verdad lo lleva él: alto, frenos,
-   * calzos y cortar motores; la llave sale con esa última seña. Si se para
-   * antes de su sitio y no sigue, al rato se da por llegado igual: ver
+   * calzos y cortar motores; la llave sale con esa última seña. La fase se
+   * apunta igual —es lo que es—, solo que callada. Si se para antes de su
+   * sitio y no sigue, al rato se da por llegado igual: ver
    * `PACIENCIA_EN_EL_PUESTO`.
    */
   private elSenaleroLlevaLaLlegada(vista: Vista): boolean {
@@ -12612,7 +12613,11 @@ export class Game {
       fase === "en-puesto" &&
       s.airspeed < 0.5 &&
       (gesto === "adelante" || gesto === "izquierda" || gesto === "derecha");
+    const antesDeLaRed = this.paradoSinLlegar;
     this.paradoSinLlegar = llamando ? this.paradoSinLlegar + dt : 0;
+    // Y al saltar la red, la llegada se anuncia entera, con su voz.
+    if (antesDeLaRed < PACIENCIA_EN_EL_PUESTO && this.paradoSinLlegar >= PACIENCIA_EN_EL_PUESTO)
+      this.faseAnunciada = "";
 
     /*
      * **Y pasarse del puesto tiene que doler un poco.**
@@ -13547,13 +13552,19 @@ export class Game {
     // saber leer; el instructor de voz vendrá a llenar este hueco.
     const conLetras = this.tier.instruments !== "none";
 
-    if (vista.fase !== this.faseAnunciada && !this.elSenaleroLlevaLaLlegada(vista)) {
+    if (vista.fase !== this.faseAnunciada) {
       const antes = this.faseAnunciada;
       this.faseAnunciada = vista.fase;
       // Si esto es solo reponer la tarjeta que alguien tapó, se pone y ya: ni
       // voz, ni rótulo, ni campana. Ver `soloLaTarjeta`.
       const repuesta = this.soloLaTarjeta;
       this.soloLaTarjeta = false;
+      /*
+       * **Y con el señalero llevando la llegada, la fase se apunta pero no se
+       * anuncia**: ni su tarjeta ni su voz. La llave sale con su seña de
+       * cortar motores. Ver `elSenaleroLlevaLaLlegada`.
+       */
+      const callada = this.elSenaleroLlevaLaLlegada(vista);
       /*
        * **Y alineado en la pista, su número.**
        *
@@ -13770,7 +13781,7 @@ export class Game {
        * pulsar ni tarjeta que tocar; solo hay que seguir viéndolo.
        */
       const seQueda = SE_QUEDAN.has(vista.fase);
-      this.hud.senal.mostrar(
+      if (!callada) this.hud.senal.mostrar(
         comoDibujo(guion.icono),
         conLetras ? frase : "",
         letra,
@@ -13806,7 +13817,7 @@ export class Game {
        */
       const loDiceElV1 =
         vista.fase === "comprometido" && canalesDe(this.tier.avisos).cabina;
-      if (!repuesta) {
+      if (!repuesta && !callada) {
         /*
          * **Y la de la fase de antes, si todavía espera turno, ya no vale.**
          * Lo que cuenta una fase aguanta en la cola lo que dure esa fase, no
