@@ -1454,6 +1454,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     cifrasDeCabina: () => cifrasDeLaCabina(),
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
+    /**
+     * Que un tráfico diga algo, y se le dibuje donde lo dice: para poner uno
+     * que sale a rodar detrás de ti y mirar la cola sin esperar a que la
+     * frecuencia lo saque. Ver `Trafico.anuncia`.
+     */
+    traficoAnuncia: (matricula: string, clave: string, puedeAterrizar = false) =>
+      juego.trafico?.anuncia(matricula, clave, puedeAterrizar),
     /** La fila de llegadas del tráfico. Ver `secuencia` en `trafico.ts`. */
     secuencia: () => juego.trafico?.secuencia() ?? [],
     /**

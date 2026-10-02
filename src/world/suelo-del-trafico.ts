@@ -444,17 +444,24 @@ export function sueloDelTrafico(
        * es la fila, y ahí sí se espera.
        */
       void evitar;
-      const deCabecera = [...bocas]
-        .sort((a, b) => a.along - b.along)
-        .filter(
-          (b, i) => i === 0 || mitad - b.along >= pistaQueNecesita,
-        );
+      const deCabecera = [...bocas].sort((a, b) => a.along - b.along);
       const fin = porDondeVas?.[porDondeVas.length - 1];
       const deTuCalle = (porDondeVas ?? []).filter(
         (e) => !fin || dist(e, fin) > PASA_A_TU_LADO + FILA_DE_SALIDA,
       );
+      /*
+       * Por orden de pista por delante: la primera que se puede rodar y le da
+       * su pista. Si ninguna se la da —la calle más cerca de la cabecera no
+       * se puede rodar, o el campo es más corto que eso, como El Hierro para
+       * el turbohélice—, la que más deja de las que se pueden rodar, que es
+       * lo que había: el de verdad remontaría la pista, y eso el tráfico no lo
+       * sabe hacer. Nunca, por no tener la ideal, una que deja menos.
+       */
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
+      let sinSuPista: ReturnType<SueloDelTrafico["salida"]> = null;
       for (const boca of deCabecera.slice(0, BOCAS_DE_SALIDA)) {
+        const daSuPista = mitad - boca.along >= pistaQueNecesita;
+        if (!daSuPista && sinSuPista) continue;
         const nudo = grafo.nudos[boca.nudo]!;
         const ruta = rutaConPuesto(nudo, "punto", evitar)?.puntos;
         if (!ruta) continue;
@@ -477,10 +484,15 @@ export function sueloDelTrafico(
         };
         const raya = hecha.hastaLaRaya[hecha.hastaLaRaya.length - 1]!;
         const encimaDeTuCalle = deTuCalle.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
+        if (!daSuPista) {
+          if (!encimaDeTuCalle) sinSuPista = salida;
+          deReserva ??= salida;
+          continue;
+        }
         if (!encimaDeTuCalle) return salida;
         deReserva ??= salida;
       }
-      return deReserva;
+      return sinSuPista ?? deReserva;
     },
 
     unaSolaCalle() {

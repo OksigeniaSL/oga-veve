@@ -352,11 +352,24 @@ function rodarHastaLaVerde(
   }
   trafico.dispose();
   const tipos = tiposDelCampo(aero.id, pista.length, sinTorre(aero));
+  /*
+   * Lo más que puede dejar una salida que se pueda rodar: la boca más cerca
+   * de la cabecera a la que se llega por las calles. Si ni ésa le da su pista
+   * —El Hierro para el turbohélice—, de ahí: el de verdad remontaría, y eso
+   * el tráfico no lo sabe hacer. Lo que se mira es que no salga de una que
+   * deja menos.
+   */
+  const mejor = suelo?.salida(undefined, undefined, Infinity);
+  const loMas = mejor
+    ? (() => {
+        const a = mejor.camino[mejor.camino.length - 1]!;
+        return pista.length / 2 - ejes(a.x, a.z).along;
+      })()
+    : Infinity;
   for (const [m, { queda, tipo: id }] of alEntrar) {
     const tipo = tipos.find((k) => k.id === id);
-    // La boca de la cabecera vale siempre: no hay otra con más pista.
-    if (tipo && queda < Math.min(tipo.carrera * PISTA_POR_DELANTE, pista.length - 200))
-      sinPista.add(`${m} (${id}) con ${Math.round(queda)} m`);
+    if (tipo && queda < Math.min(tipo.carrera * PISTA_POR_DELANTE, loMas) - 60)
+      sinPista.add(`${m} (${id}) con ${Math.round(queda)} m, cuando podía con ${Math.round(loMas)}`);
   }
   return {
     seMetio,
