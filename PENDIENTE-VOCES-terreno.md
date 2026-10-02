@@ -7,7 +7,7 @@ qué grabar y qué tocar después para que suenen.
 
 Son cuatro frases: dos de la caja de cabina (inglés aeronáutico, voz `cabina`)
 y dos de la instructora (`instructor`, castellano paraguayo con voseo).
-Unos 170 caracteres.
+Unos 140 caracteres; 190 con la quinta, la opcional.
 
 | Voz | Clave | es-PY | en | Para qué |
 |---|---|---|---|---|
