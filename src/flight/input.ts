@@ -1709,9 +1709,16 @@ export function releasesTouchThrottle(keyboard: number): boolean {
 }
 
 /**
- * Convierte un elemento en un pad analógico: la palanca de mando o el timón.
- * Da el mando de −1 a 1 y pinta el punto **debajo del dedo**, con la cuenta
- * de `mandoDelDedo`; al levantar el dedo, los dos vuelven al centro.
+ * Convierte un elemento en un pad analógico: hoy, el timón. Da el mando de −1
+ * a 1 y pinta el punto **debajo del dedo**, con la cuenta de `mandoDelDedo`;
+ * al levantar el dedo, los dos vuelven al centro. La palanca de mando tiene
+ * la suya: ver `bindPalancaDeMando`.
+ *
+ * **Y el pad es del dedo que lo tocó primero.** Cogía el último que caía
+ * encima: con el pulgar en los pedales, un segundo dedo que rozara el pad le
+ * robaba el mando, y al levantarse el segundo el timón volvía al centro con
+ * el primero todavía apretando. Es la regla del freno y de los botones —ver
+ * `ui/pulsar.ts`—: cada mando, de su dedo.
  */
 function bindPad(
   element: HTMLElement,
@@ -1746,6 +1753,7 @@ function bindPad(
   };
 
   element.addEventListener("pointerdown", (event) => {
+    if (pointerId !== null) return;
     pointerId = event.pointerId;
     element.setPointerCapture(event.pointerId);
     emit(event);
