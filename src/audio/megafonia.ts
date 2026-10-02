@@ -26,8 +26,8 @@
  *
  * Es la regla de la casa y aquí importa más que en ningún sitio: la megafonía
  * es ambiente y la instructora es la lección. Si está hablando, Jazlyn espera
- * su turno; si el turno no llega, se calla. Ver `audio/boca.ts`, que es quien
- * reparte la palabra.
+ * su turno, detrás de ella. Lo reparte la boca, que es un solo turno para
+ * todos con su orden escrito en `audio/turnos.ts`.
  *
  * ## El guion de cualquier vuelo de línea
  *
@@ -59,13 +59,18 @@
  *
  * La megafonía va en el mismo turno que la radio —ver `MEGAFONIA` en
  * `boca.ts` y el orden de `turnos.ts`—: una vez que habla no la pisa nadie,
- * y ella tampoco pisa a nadie. En un avión de verdad existe la **cabina estéril**: por
- * debajo de diez mil pies, en el despegue y en la llegada, nadie habla con los
- * pilotos de nada que no sea el vuelo. Aquí eso es la regla de siempre dicha
- * del todo: la megafonía espera a que **no hable nadie** —ni la instructora,
- * ni la torre, ni el otro avión, ni la voz de la máquina— y lo que no cabe en
- * su momento se calla. Lo nuevo del guion va en crucero y en la bajada, antes
- * de la final, que es donde lo pone cualquier comandante.
+ * y ella tampoco pisa a nadie. En un avión de verdad existe la **cabina
+ * estéril**: por debajo de diez mil pies, en el despegue y en la llegada, nadie
+ * habla con los pilotos de nada que no sea el vuelo. Aquí eso lo cuidan el
+ * guion —lo nuevo va en crucero y en la bajada, antes de la final, que es
+ * donde lo pone cualquier comandante— y el turno de la boca.
+ *
+ * **Y ya no espera aquí a que no hable nadie.** Lo hacía cuando era otra boca
+ * y se solapaba con todo; con el turno de la boca, esperar además aquí era
+ * esperar dos veces, y en un aeropuerto con la frecuencia llena el momento se
+ * pasaba sin hueco: en Pettirossi y en Los Rodeos, sin crosscheck ni
+ * bienvenida. Ahora pide su turno en su momento y la boca la pone donde le
+ * toca; lo que no puede es empezar un anuncio con otro sonando o esperando.
  */
 
 import type { Fase } from "../flight/vuelo";
@@ -189,16 +194,24 @@ const CUANDO: Record<Anuncio, readonly Fase[]> = {
 export function seLePasoElMomento(clave: string | undefined, fase: Fase): boolean {
   if (!clave) return false;
   const base = clave.replace(/[@~].*$/, "");
-  for (const a of DE_TIERRA)
-    if (base === a || base.startsWith(a)) return !CUANDO[a].includes(fase);
+  for (const [a, vale] of Object.entries(VALE_MIENTRAS))
+    if (base === a || base.startsWith(a)) return !vale.includes(fase);
   return false;
 }
 
-const DE_TIERRA = [
-  "comandante.crosscheck",
-  "comandante.bienvenida",
-  "comandante.despegue",
-] as const satisfies readonly Anuncio[];
+/**
+ * **Hasta cuándo vale cada anuncio de tierra que ya se pidió**, que es un
+ * poco más que su momento de pedirse: el crosscheck se pide en el puesto y
+ * vale hasta los primeros metros de rodaje —en un avión de verdad se arma al
+ * empezar a moverse, antes del retroceso—; la bienvenida, hasta despegar. Lo
+ * que espera en la cola tiene además su tope de reloj, ver
+ * `CADUCA_LA_MEGAFONIA` en `turnos.ts`: no se dice con el avión ya lejos.
+ */
+const VALE_MIENTRAS: Readonly<Record<string, readonly Fase[]>> = {
+  "comandante.crosscheck": ["estacionado", "arrancando", "rodando"],
+  "comandante.bienvenida": ["rodando", "esperando", "autorizado", "back-taxi", "alineando"],
+  "comandante.despegue": ["autorizado", "alineando", "despegando"],
+};
 
 /**
  * Cuánto se espera dentro de la fase antes de hablar, en segundos.
@@ -228,6 +241,13 @@ const SE_PASA = 25;
  * lo guardan sus condiciones, no el reloj.
  */
 const VENTANA: Partial<Record<Anuncio, number>> = {
+  /*
+   * **Y la bienvenida, todo el rodaje.** Con veinticinco segundos se perdía en
+   * los aeropuertos con la frecuencia llena: el crosscheck por delante, la
+   * autorización de la ruta, la instructora contando la fase… y el momento se
+   * pasaba sin hueco. Se da rodando, y el rodaje dura lo que dura.
+   */
+  "comandante.bienvenida": 120,
   "tripulacion.servicio": 120,
   "comandante.descenso": 60,
   "tripulacion.cinturones": 40,
@@ -321,18 +341,11 @@ export interface Momento {
    * no hay servicio, ni toboganes, ni nadie a quien mandar sentarse.
    */
   readonly conTripulacion?: boolean;
-  /** Si la instructora está diciendo algo ahora mismo. */
-  readonly instructorHablando: boolean;
   /**
-   * Si habla **cualquier otro** de fuera de la megafonía: la torre, el otro
-   * avión o la voz de la máquina. Ver «Y en los momentos tranquilos» arriba.
-   */
-  readonly otrosHablando?: boolean;
-  /**
-   * Si la propia megafonía está sonando: la comandante señalando un monte o
-   * la tripulación a media frase. Un anuncio no empieza encima de otro —el
-   * altavoz del techo es uno—, y esperar en la cola de la boca no sirve: allí
-   * lo que espera más de cuatro segundos caduca. Ver `CADUCA` en `boca.ts`.
+   * Si la propia megafonía está sonando **o esperando turno**: la comandante
+   * señalando un monte, la tripulación a media frase o un anuncio en la cola.
+   * Los anuncios van de uno en uno y en orden. Lo demás —la instructora, la
+   * torre— ya no la calla aquí: ver «Y en los momentos tranquilos» arriba.
    */
   readonly megafoniaHablando?: boolean;
   /**
@@ -340,6 +353,13 @@ export interface Momento {
    * el cartel puesto: con turbulencia, la tripulación se queda sentada.
    */
   readonly cartelPuesto?: boolean;
+  /**
+   * **Si hay una turbulencia anunciada que todavía no ha pasado.** Con ella
+   * por delante no se dice «ya pueden soltarse el cinturón»: salía diez
+   * segundos después de anunciarla. Se dice al pasar, que es cuando es verdad.
+   * Ver `turbulencia-del-vuelo.ts`.
+   */
+  readonly turbulenciaPorPasar?: boolean;
   /** A qué altura se va sobre el aeródromo, en metros. */
   readonly sobreElCampo: number;
   /** Y cuánto se sube o se baja, en metros por segundo. */
@@ -451,11 +471,12 @@ export class Megafonia {
   private seDanLasCondiciones(anuncio: Anuncio, m: Momento): boolean {
     switch (anuncio) {
       case "comandante.crucero":
-        return arribaYAsentado(m) && !this.descensoEmpezado;
+        return arribaYAsentado(m) && !this.descensoEmpezado && !m.turbulenciaPorPasar;
       case "tripulacion.servicio":
         return (
           this.hace("comandante.crucero") >= ANTES_DEL_SERVICIO &&
           !m.cartelPuesto &&
+          !m.turbulenciaPorPasar &&
           !this.descensoEmpezado &&
           m.sobreElCampo >= ARRIBA_DEL_TODO
         );
@@ -515,13 +536,10 @@ export class Megafonia {
     this.mirarSiBaja(dt, m);
     if (!m.conPasaje) return null;
     /*
-     * **Callada mientras habla cualquiera**, no solo la instructora: la torre
-     * dando una autorización, el otro avión, la máquina cantando un aviso, o
-     * la propia megafonía a media frase. Es la cabina estéril dicha con las
-     * reglas de este juego. Ver la cabecera.
+     * **Un anuncio detrás de otro**, nunca dos pedidos a la vez. El resto del
+     * turno lo lleva la boca. Ver la cabecera.
      */
-    const hayQueCallar =
-      m.instructorHablando || !!m.otrosHablando || !!m.megafoniaHablando;
+    const hayQueCallar = !!m.megafoniaHablando;
     for (const anuncio of ANUNCIOS) {
       if (this.dichos.has(anuncio)) continue;
       if (DE_LA_TRIPULACION.has(anuncio) && !m.conTripulacion) continue;

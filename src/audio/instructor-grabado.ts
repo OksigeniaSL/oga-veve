@@ -311,6 +311,11 @@ export class InstructorGrabado implements Instructor {
     return this.banco.piezas.size;
   }
 
+  /** Cómo va la bajada del pack. Ver `BancoDeVoces.estado`. */
+  get estadoDelPack(): BancoDeVoces["estado"] {
+    return this.banco.estado;
+  }
+
   /**
    * Quién tiene grabada esta frase, si la tiene alguien.
    *

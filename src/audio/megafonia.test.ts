@@ -16,7 +16,6 @@ import type { Fase } from "../flight/vuelo";
  */
 const CON_PASAJE = {
   conPasaje: true,
-  instructorHablando: false,
   sobreElCampo: 900,
   vertical: 0,
   desdeLoMasAlto: 0,
@@ -50,15 +49,20 @@ describe("la megafonía de cabina", () => {
     expect(correr(m, "rodando", 12)).toEqual([]);
   });
 
-  it("no habla por encima de la instructora", () => {
+  /*
+   * **Y no espera aquí a que se calle la instructora**: pide su turno y la
+   * boca la pone detrás. Esperando aquí además, en un aeropuerto con la
+   * frecuencia llena el momento se pasaba sin hueco. Ver `audio/turnos.ts`.
+   */
+  it("con otro anuncio sonando o esperando, no empieza otro", () => {
     const m = new Megafonia();
-    expect(correr(m, "rodando", 12, { instructorHablando: true })).toEqual([]);
+    expect(correr(m, "rodando", 12, { megafoniaHablando: true })).toEqual([]);
   });
 
   it("y si el momento se pasa, ese anuncio ya no se dice", () => {
     const m = new Megafonia();
-    // Media fase entera con la instructora hablando: el momento se va.
-    correr(m, "rodando", 40, { instructorHablando: true });
+    // Todo el rodaje con otro anuncio por delante: el momento se va.
+    correr(m, "rodando", 130, { megafoniaHablando: true });
     expect(correr(m, "rodando", 10)).toEqual([]);
   });
 
@@ -230,7 +234,6 @@ describe("y los anuncios no se pierden porque una lección salte una fase", () =
   const momento = (fase: string, extra = {}) => ({
     fase: fase as never,
     conPasaje: true,
-    instructorHablando: false,
     sobreElCampo: 1000,
     vertical: 0,
     desdeLoMasAlto: 0,
@@ -298,7 +301,6 @@ describe("y el anuncio de crucero es del final de la subida", () => {
   const enRuta = (extra = {}) => ({
     fase: "en-vuelo" as Fase,
     conPasaje: true,
-    instructorHablando: false,
     sobreElCampo: 3000,
     vertical: 0,
     desdeLoMasAlto: 0,
@@ -370,7 +372,6 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
           fase: tr.fase,
           conPasaje: true,
           conTripulacion: true,
-          instructorHablando: false,
           sobreElCampo: alto,
           vertical: tr.vertical ?? 0,
           desdeLoMasAlto: techo - alto,
@@ -448,11 +449,6 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
     expect(dichos).toContain("comandante.descenso");
   });
 
-  it("no habla nunca por encima de la torre, el otro avión o la máquina", () => {
-    const dichos = volar(new Megafonia(), DE_LINEA, { otrosHablando: true });
-    expect(dichos).toEqual([]);
-  });
-
   it("y un anuncio no empieza encima de otro de la megafonía", () => {
     // La comandante habla sin parar durante el crucero: el servicio no entra.
     const tramos = DE_LINEA.map((tr, i) =>
@@ -470,7 +466,6 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
       fase: "en-vuelo" as Fase,
       conPasaje: true,
       conTripulacion: true,
-      instructorHablando: false,
       sobreElCampo: 3000,
       vertical: 0,
       desdeLoMasAlto: 0,
@@ -504,7 +499,6 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
       fase: "en-vuelo" as Fase,
       conPasaje: true,
       conTripulacion: true,
-      instructorHablando: false,
       sobreElCampo: 3000,
       vertical: 0,
       desdeLoMasAlto: 0,
@@ -539,12 +533,29 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
  * crosscheck pedido en el puesto puede seguir esperando su grabación cuando
  * el avión ya rueda: «armar toboganes» rodando es justo lo que no se dice.
  */
+describe("y con la frecuencia llena o la turbulencia por delante", () => {
+  it("no dice «pueden soltarse» con una turbulencia anunciada que no ha pasado", () => {
+    const m = new Megafonia();
+    expect(correr(m, "en-vuelo", 40, { turbulenciaPorPasar: true })).not.toContain(
+      "comandante.crucero",
+    );
+    expect(correr(m, "en-vuelo", 10)).toContain("comandante.crucero");
+  });
+
+  it("y la bienvenida tiene todo el rodaje para encontrar su hueco", () => {
+    const m = new Megafonia();
+    correr(m, "rodando", 60, { megafoniaHablando: true });
+    expect(correr(m, "rodando", 5)).toEqual(["comandante.bienvenida"]);
+  });
+});
+
 describe("a lo que se le pasó el momento", () => {
-  it("el crosscheck, en el puesto sí y rodando no", () => {
+  it("el crosscheck, hasta los primeros metros de rodaje y no en la cola de la pista", () => {
     expect(seLePasoElMomento("comandante.crosscheck", "estacionado")).toBe(false);
     expect(seLePasoElMomento("comandante.crosscheck", "arrancando")).toBe(false);
-    expect(seLePasoElMomento("comandante.crosscheck", "rodando")).toBe(true);
-    expect(seLePasoElMomento("comandante.crosscheck~2", "rodando")).toBe(true);
+    expect(seLePasoElMomento("comandante.crosscheck", "rodando")).toBe(false);
+    expect(seLePasoElMomento("comandante.crosscheck", "esperando")).toBe(true);
+    expect(seLePasoElMomento("comandante.crosscheck~2", "autorizado")).toBe(true);
   });
 
   it("la bienvenida, con su plan y su sitio, hasta alinearse", () => {

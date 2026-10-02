@@ -560,7 +560,7 @@ import {
   sigueValiendo,
   type LeccionDelAire,
 } from "./flight/lecciones-del-aire";
-import { Huecos } from "./audio/turnos";
+import { Huecos, esDeLaMegafonia } from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
   turbulenciaDelCamino,
@@ -6555,11 +6555,11 @@ export class Game {
     switch (que) {
       case "empieza":
         this.permisoDeAterrizar = "sonando";
-        this.mostrarElPermiso();
+        this.mostrarElPermiso(cabecera);
         return;
       case "no-suena":
         this.permisoDeAterrizar = "oido";
-        this.mostrarElPermiso();
+        this.mostrarElPermiso(cabecera);
         return;
       case "acaba":
         this.permisoDeAterrizar = "oido";
@@ -6588,10 +6588,12 @@ export class Game {
   }
 
   /** La lámpara verde pintada, su tarjeta y su sonido: el permiso, a la vista. */
-  private mostrarElPermiso(): void {
+  private mostrarElPermiso(cabecera: string | null): void {
     if (!this.laTorreMandaEnLaLuz) return;
-    // La luz ya es verde por dentro: esto la pinta. Ver `luzDeTorre`.
+    // La luz ya es verde por dentro: esto la pinta, con su pista. Ver `luzDeTorre`.
+    this.cabeceraParaLaTorre = cabecera;
     this.luzDeTorre("verde");
+    this.cabeceraParaLaTorre = null;
     this.hud.senal.mostrar(
       "verde",
       // Y en un AFIS no te deja nadie: te dicen que está libre y bajás vos.
@@ -8200,21 +8202,18 @@ export class Game {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       conTripulacion: conTripulacion(this.aircraft.mass),
-      instructorHablando: this.instructor.hablando,
       /*
-       * **Y callada mientras hable cualquiera**, no solo la instructora: la
-       * torre, el otro avión y la voz de la máquina. La megafonía va por otra
-       * vía, pero taparlos en el despegue o en la final es lo que no hace
-       * nadie en una cabina de verdad. Ver `audio/megafonia.ts`.
+       * **Y un anuncio detrás de otro**: ni con otro sonando ni con otro
+       * esperando turno. Lo demás lo reparte la boca, que es un solo turno
+       * para todas las voces. Ver `audio/turnos.ts`.
        */
-      otrosHablando:
-        this.torre.hablando ||
-        this.otroAvion.hablando ||
-        this.maquina.ocupada ||
-        // Y si alguien espera turno, que hable primero: ver `audio/turnos.ts`.
-        !BOCA.libre,
-      megafoniaHablando: this.comandante.hablando || this.tripulacion.hablando,
+      megafoniaHablando:
+        this.comandante.hablando ||
+        this.tripulacion.hablando ||
+        BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       cartelPuesto: this.cinturonPuesto,
+      // Y sin «pueden soltarse» con una turbulencia anunciada por delante.
+      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia,
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La

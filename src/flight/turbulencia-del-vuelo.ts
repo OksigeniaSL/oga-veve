@@ -276,7 +276,11 @@ export class TurbulenciaDelVuelo {
   /** Si hay una anunciada por pasar todavía. */
   private porPasar = false;
   private veces = 0;
-  /** Lo que pasó en este vuelo, con lo volado: para los bancos. */
+  /**
+   * Lo que pasó, con lo volado de su vuelo: para los bancos. De toda la
+   * sesión y no del vuelo, que el banco lo lee después de volver a arrancar
+   * en el otro campo.
+   */
   readonly sucesos: { volado: number; suceso: SucesoDelCamino }[] = [];
 
   /** Vuelo nuevo, con su turbulencia. */
@@ -288,7 +292,11 @@ export class TurbulenciaDelVuelo {
     this.rachaAnunciada = false;
     this.porPasar = false;
     this.veces = 0;
-    this.sucesos.length = 0;
+  }
+
+  /** Si hay una anunciada que todavía no ha pasado. */
+  get porPasarTodavia(): boolean {
+    return this.porPasar;
   }
 
   /** Las zonas de este vuelo. Para los bancos y el juego. */

@@ -203,20 +203,22 @@ export async function loOido(page) {
 export function frasesOidas(sonidos) {
   const orden = [...sonidos].sort((a, b) => a.t0 - b.t0);
   const frases = [];
-  let actual = null;
+  /*
+   * La última frase de cada voz: la máquina puede cantar en medio de una
+   * frase de la comandante —es la única que no espera— y eso no parte la
+   * frase en dos.
+   */
+  const deCadaVoz = new Map();
   for (const s of orden) {
-    if (
-      actual &&
-      actual.voz === s.voz &&
-      Math.abs(s.t0 - actual.finProgramado) < 0.03
-    ) {
+    const actual = deCadaVoz.get(s.voz);
+    if (actual && Math.abs(s.t0 - actual.finProgramado) < 0.03) {
       actual.piezas.push(s.pieza);
       actual.finProgramado = s.t0 + s.dura;
       actual.t1 = s.t1;
       actual.entera = actual.entera && s.t1 >= s.t0 + s.dura - 0.05;
       continue;
     }
-    actual = {
+    const nueva = {
       voz: s.voz,
       piezas: [s.pieza],
       t0: s.t0,
@@ -224,7 +226,8 @@ export function frasesOidas(sonidos) {
       finProgramado: s.t0 + s.dura,
       entera: s.t1 >= s.t0 + s.dura - 0.05,
     };
-    frases.push(actual);
+    frases.push(nueva);
+    deCadaVoz.set(s.voz, nueva);
   }
   return frases;
 }

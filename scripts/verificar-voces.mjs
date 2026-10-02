@@ -370,6 +370,16 @@ await page
     { timeout: 90000 },
   )
   .catch(() => {});
+/*
+ * **Y al pack entero.** Los manifiestos llegan ahora antes que las piezas —lo
+ * que se pide va delante, ver `estaLista` en `instructor-grabado.ts`—, así que
+ * saber quién dice cada cosa ya no quiere decir que todo esté bajado.
+ */
+await page
+  .waitForFunction(() => (globalThis.__oga?.voz?.().pack ?? "listo") === "listo", null, {
+    timeout: 90000,
+  })
+  .catch(() => {});
 await page.waitForTimeout(500);
 
 const resultados = [];

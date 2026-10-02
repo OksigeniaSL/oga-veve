@@ -54,6 +54,7 @@ import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnCastellano, pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
 import { esDeLaMegafonia } from "../audio/turnos";
+import { conTripulacion } from "../audio/megafonia";
 import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { vfeDeAterrizaje } from "../flight/limites";
@@ -380,6 +381,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     avion: () => ({
       id: juego.aircraft.id,
       nombre: juego.aircraft.name,
+      // Si lleva tripulación de cabina: toboganes, servicio. Ver `conTripulacion`.
+      conTripulacion: conTripulacion(juego.aircraft.mass),
       // «fábrica» y no «cajas»: el respaldo dejó de ser media docena de
       // cajas el día que hubo fábrica paramétrica. Ver #68.
       dibujo: juego.aircraftMesh.deVerdad ? "modelo" : "fábrica",
@@ -540,6 +543,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     voz: () => ({
       piezas: juego.instructor.cuantasPiezas,
+      // Y cómo va la bajada: desde que los manifiestos llegan primero, saber
+      // quién dice qué ya no quiere decir que sus piezas estén bajadas.
+      pack: juego.instructor.estadoDelPack,
       ultima: juego.instructor.loUltimo,
       hablando: juego.instructor.hablando,
     }),

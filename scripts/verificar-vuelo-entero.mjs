@@ -4900,6 +4900,10 @@ const ceroDelOido = frasesDelVuelo[0]?.t0 ?? 0;
 const turbulenciaDelVuelo = await page
   .evaluate(() => globalThis.__oga?.turbulencia?.() ?? null)
   .catch(() => null);
+/** Si el avión lleva tripulación de cabina: toboganes, servicio, cinturones. */
+const llevaTripulacion = await page
+  .evaluate(() => !!globalThis.__oga?.avion?.().conTripulacion)
+  .catch(() => false);
 /*
  * **Y lo que se dijo, en orden y con su hora, si se pide.** `OGA_VOCES=fichero`
  * vuelca las frases que sonaron y las que se cayeron: para saber qué ocupaba
@@ -5037,8 +5041,7 @@ const relojDeVerdad =
    * tripulación que armar y pasaje que despedir.
    */
   const deJazlyn = deLaMegafonia.filter((f) => f.voz === "comandante");
-  const conTripulacion = (todo.tripulacion ?? []).length > 0 || pedidas.includes("comandante.crosscheck");
-  if (conTripulacion) {
+  if (llevaTripulacion) {
     const debe = [
       "comandante.crosscheck",
       "comandante.bienvenida",
