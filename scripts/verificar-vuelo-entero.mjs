@@ -2682,6 +2682,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * fases y decía «no canta V1» donde sí la canta. En Pettirossi, además, se
      * sale con back-taxi, y ese medio minuto también hay que verlo.
      */
+    /*
+     * **Y a uno, no a dos: es la ventana más hablada del vuelo, y la voz va
+     * en reloj de pared.**
+     *
+     * Las fases corren con el reloj del juego y las frases duran lo que
+     * duran. A dos, de la verde al V1 había diecinueve segundos de pared, y
+     * de Taguató para arriba la torre dice en ella dieciocho y pico —«pista
+     * uno dos, autorizado a despegar» y detrás la fraseología con el viento,
+     * diez segundos y medio ella sola—: no cabía nada más. Medido al juntar
+     * las voces y el radar, en Los Rodeos con el JAZ 90 y Taguató: la boca
+     * hablando sin parar de los 33,7 a los 56,5 s y, detrás de la torre, se
+     * cayeron sin sonar la fase de autorizado, la de despegando, el V1 de la
+     * instructora y «tripulación, sentados para el despegue» de Jazlyn. Se
+     * leyó como una cola parada. A uno, que es como se juega, esa ventana
+     * dura el doble. Es la trampa de siempre de este banco: el reloj
+     * acelerado comprime el juego y no el habla.
+     */
     const enLaCarrera = [
       "autorizado",
       "back-taxi",
@@ -2689,7 +2706,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       "despegando",
       "comprometido",
     ].includes(fase);
-    const quiere = enLaCarrera ? Math.min(2, veces) : veces;
+    const quiere = enLaCarrera ? 1 : veces;
     if (quiere !== relojAhora) {
       relojAhora = quiere;
       o.acelerar?.(quiere);
@@ -5100,8 +5117,14 @@ if (process.env.OGA_VOCES) {
         aves: (vuelo.cantados ?? []).filter((c) => c.startsWith("aves:")),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
-        // Y lo que de verdad sonó, con su voz y su hora de audio.
-        oido: frasesDelVuelo.map((f) => enUnaLinea(f, ceroDelOido)),
+        /*
+         * Y lo que de verdad sonó, con su voz, su hora de audio **y cuándo
+         * acabó**: sin el final, una frase de diez segundos se lee como diez
+         * segundos de boca callada.
+         */
+        oido: frasesDelVuelo.map(
+          (f) => `${enUnaLinea(f, ceroDelOido)} → ${(f.t1 - ceroDelOido).toFixed(1)}s`,
+        ),
         navegador: oido.navegador,
         turbulencia: turbulenciaDelVuelo,
       },
