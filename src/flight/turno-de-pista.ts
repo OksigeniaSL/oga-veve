@@ -56,6 +56,12 @@ export interface DibujoDelTurno {
    * que es lo que hacía todo antes de mirarlo. Ver `retirarLosQueNoEstan`.
    */
   dibujado?(matricula: string): boolean;
+  /**
+   * Quién de los dibujados que van a despegar está parado esperándote, detrás
+   * de ti. Sin esto se da por que nadie. Ver `esperanPorTi` en
+   * `world/trafico.ts`.
+   */
+  esperanPorTi?(): string[];
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -286,9 +292,22 @@ export class TurnoDePista {
          * **Y en una sola calle, el que ya está en ella va primero.** Espera
          * en la misma doble raya que vos, así que hasta que no entra en la
          * pista y se va no hay sitio para otro. Ver `USAN_LA_CALLE`.
+         *
+         * **Salvo que esté detrás de ti**, esperándote: el dibujado ya no te
+         * atraviesa, se para detrás —ver `cedeA` en `world/trafico.ts`—, y
+         * con él esperando a que pases y tú esperando a que pase él no
+         * pasaría nadie nunca. El primero de la fila es el primero, llegara
+         * quien llegara antes a la calle.
          */
-        (this.conCalleUnica && this.de.radio.alguienEnLaCalle))
+        (this.conCalleUnica &&
+          this.de.radio.alguienEnLaCalle &&
+          !this.teEsperanEnLaCalle))
     );
+  }
+
+  /** Si hay alguien de la calle parado detrás de ti. Ver `pistaDeOtros`. */
+  private get teEsperanEnLaCalle(): boolean {
+    return (this.de.trafico()?.esperanPorTi?.().length ?? 0) > 0;
   }
 
   /**
@@ -321,7 +340,13 @@ export class TurnoDePista {
     if (aterriza) return { porque: "aterriza", matricula: aterriza.matricula };
     const alineado = ocupan.find((o) => o.orden === "torre.lineUpWait");
     if (alineado) return { porque: "despega", matricula: alineado.matricula };
-    if (this.conCalleUnica && this.de.radio.alguienEnLaCalle)
+    // Y quien espera detrás de ti en la calle única no va primero: ver
+    // `teEsperanEnLaCalle`.
+    if (
+      this.conCalleUnica &&
+      this.de.radio.alguienEnLaCalle &&
+      !this.teEsperanEnLaCalle
+    )
       return { porque: "despega", matricula: this.de.radio.quienEstaEnLaCalle() };
     // Encima sin tenerla es el que ya corre su despegue. Ver `pistaDeOtros`.
     const encima = this.de.trafico()?.ocupanLaPista?.() ?? [];

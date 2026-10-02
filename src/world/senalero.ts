@@ -32,7 +32,7 @@ import {
   MeshLambertMaterial,
   SphereGeometry,
 } from "three";
-import { ALCANCE, gestoDeSenalero, type Gesto } from "../flight/senalero";
+import { ALCANCE, gestoDeSenalero, YA_PARADO, type Gesto } from "../flight/senalero";
 
 /** El naranja de los bastones. El mismo de los conos y los chalecos. */
 const BASTON = 0xff7a1a;
@@ -101,6 +101,12 @@ interface Brazo {
   readonly x: number;
   readonly z: number;
   readonly vaiven: number;
+  /**
+   * Y cuánto oscila **de lado**, en grados: los calzos se señalan juntando
+   * los bastones por encima de la cabeza a golpes, y cortar motores pasando
+   * el bastón por delante del cuello de un hombro al otro. Sin esto, quieto.
+   */
+  readonly vaivenDeLado?: number;
 }
 
 /*
@@ -162,16 +168,36 @@ const POSTURAS: Record<Exclude<Gesto, null>, Postura> = {
     ritmo: 0,
   },
   /*
-   * Frenos puestos: el mismo aspa, pero abajo. Ya está, llegaste.
+   * **Frenos de estacionamiento: la mano en alto, por delante, y el puño
+   * cerrado.**
    *
-   * Arriba dice «no te muevas más» y abajo dice «se acabó», y son dos cosas
-   * distintas: un vuelo que termina sin decir que ha terminado deja a quien
-   * juega mirando la pantalla a ver si falta algo.
+   * Aquí estaba un aspa abajo —«ya está, llegaste»—, que no es ninguna seña
+   * del Anexo 2: lo que se pide con el avión parado es el freno de
+   * estacionamiento, con una mano levantada por encima del hombro delante del
+   * cuerpo, que se cierra. El otro brazo, abajo.
    */
   frenos: {
-    izq: { x: -25, z: -20, vaiven: 0 },
-    der: { x: -25, z: 20, vaiven: 0 },
-    ritmo: 0,
+    izq: { x: 0, z: 10, vaiven: 0 },
+    der: { x: -125, z: -8, vaiven: 6 },
+    ritmo: 0.6,
+  },
+  /*
+   * **Calzos puestos**: los dos brazos estirados por encima de la cabeza y
+   * los bastones juntándose a golpes hasta tocarse.
+   */
+  calzos: {
+    izq: { x: -172, z: -6, vaiven: 0, vaivenDeLado: 9 },
+    der: { x: -172, z: 6, vaiven: 0, vaivenDeLado: -9 },
+    ritmo: 1.3,
+  },
+  /*
+   * **Cortar motores**: el brazo estirado a la altura del hombro y el bastón
+   * pasando por delante del cuello, de un hombro al otro. El otro, abajo.
+   */
+  cortar: {
+    izq: { x: 0, z: 10, vaiven: 0 },
+    der: { x: -95, z: 20, vaiven: 0, vaivenDeLado: 38 },
+    ritmo: 0.8,
   },
 };
 
@@ -420,7 +446,14 @@ export class Senalero {
    */
   paso(
     dt: number,
-    avion: { x: number; z: number; velocidad: number; enElSuelo: boolean },
+    avion: {
+      x: number;
+      z: number;
+      velocidad: number;
+      enElSuelo: boolean;
+      /** Si el motor sigue en marcha. Sin esto, que sí. */
+      motor?: boolean;
+    },
     volviendo: boolean,
   ): Gesto {
     this.ultimoVolviendo = volviendo;
@@ -471,10 +504,16 @@ export class Senalero {
         velocidad: avion.velocidad,
         enElSuelo: avion.enElSuelo,
         volviendo,
+        parado: this.parado,
+        ...(avion.motor === undefined ? {} : { motor: avion.motor }),
       },
       // El de antes, que es lo que distingue «llegó» de «se está moviendo».
       this.gesto,
     );
+    // Y el reloj de las señas de ya parado: corre mientras duran, y vuelve a
+    // cero si el avión rueda otra vez. Ver `YA_PARADO`.
+    this.parado =
+      this.gesto !== null && YA_PARADO.includes(this.gesto) ? this.parado + dt : 0;
 
     /*
      * **Está o no está, y no aparece de golpe delante del morro.**
@@ -577,10 +616,11 @@ export class Senalero {
     const acercar = (de: number, a: number) => de + (a - de) * paso;
 
     const donde = (b: Brazo) => b.x + onda * b.vaiven;
+    const deLado = (b: Brazo) => b.z + onda * (b.vaivenDeLado ?? 0);
     this.angulos.izq.x = acercar(this.angulos.izq.x, donde(postura.izq));
-    this.angulos.izq.z = acercar(this.angulos.izq.z, postura.izq.z);
+    this.angulos.izq.z = acercar(this.angulos.izq.z, deLado(postura.izq));
     this.angulos.der.x = acercar(this.angulos.der.x, donde(postura.der));
-    this.angulos.der.z = acercar(this.angulos.der.z, postura.der.z);
+    this.angulos.der.z = acercar(this.angulos.der.z, deLado(postura.der));
 
     this.izq.rotation.set(g(this.angulos.izq.x), 0, g(this.angulos.izq.z));
     this.der.rotation.set(g(this.angulos.der.x), 0, g(this.angulos.der.z));
@@ -588,9 +628,13 @@ export class Senalero {
     return gesto;
   }
 
+  /** Segundos con el avión parado en su sitio. Ver `YA_PARADO`. */
+  private parado = 0;
+
   /** Vuelta a empezar: otro vuelo, y todavía no hay nadie esperando. */
   reiniciar(): void {
     this.gesto = null;
+    this.parado = 0;
     this.t = 0;
     this.restante = Infinity;
     this.llegoAsuAlcance = false;

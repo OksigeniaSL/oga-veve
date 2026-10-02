@@ -24,10 +24,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { aLaPolilinea, type Aerodrome, type Punto } from "./aerodrome";
+import { aLaPolilinea, ANCHO_RODADURA, type Aerodrome, type Punto } from "./aerodrome";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
-import { cabeEn, campoDe } from "../flight/cabe";
+import { cabeEn, campoDe, radioDeGiro } from "../flight/cabe";
+import { DE_LADO_RODANDO } from "../flight/fdm";
 import { construirGrafo } from "./rodaje";
 import { enEjesDePista } from "./rumbo";
 import { SCENARIOS, type Scenario } from "./scenarios";
@@ -263,10 +264,23 @@ describe("pasarse la salida: la raya se rehace por la próxima, por delante", ()
             pasadas = Math.max(pasadas, aUnaBoca);
           }
         }
+        /*
+         * **Y lejos es más allá de donde la pasada se hace evidente.** La raya
+         * sigue apuntando a la salida que se acaba de dejar atrás mientras
+         * todavía se pueda girar hacia ella —«te pasaste» solo cuando es
+         * evidente, ver `seHaPasadoLaSalida`—, y eso a doce metros por
+         * segundo es el radio de giro a esa velocidad y media calle con su
+         * chaflán. Lo que se vigila aquí es lo de antes: cientos de metros
+         * hacia atrás.
+         */
+        const evidente =
+          Math.max(radioDeGiro(avion), (12 * 12) / DE_LADO_RODANDO) +
+          ANCHO_RODADURA / 2 +
+          15;
         expect(
           pasadas,
           `${esc.id} ${avion.id} pista ${Math.round(pista.heading)}: la raya se volvía lejos de toda boca, a buscar una salida ya pasada`,
-        ).toBeLessThan(50);
+        ).toBeLessThan(evidente + 5);
       }
     });
   }

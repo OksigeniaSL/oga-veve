@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { gestoDeSenalero, type Llegada } from "./senalero";
+import { DURA_LA_SENA, gestoDeSenalero, type Llegada } from "./senalero";
 
 const llegando = (l: Partial<Llegada> = {}): Llegada => ({
   restante: 50,
@@ -89,10 +89,38 @@ describe("el señalero", () => {
     );
   });
 
-  it("parado en el sitio: frenos, que es el final del vuelo", () => {
+  it("parado en el sitio: frenos", () => {
     expect(gestoDeSenalero(llegando({ restante: 0.5, velocidad: 0 }))).toBe(
       "frenos",
     );
+  });
+
+  /*
+   * «Llegaste, apagá el motor» salía antes que el señalero, con la tarjeta del
+   * final tapándole. El orden de verdad, del Anexo 2 de la OACI: alto, frenos
+   * de estacionamiento, calzos puestos, cortar motores; y apagados, nada más.
+   */
+  it("y después, por orden: calzos, cortar motores y, apagados, bastones abajo", () => {
+    const parado = (segundos: number, motor = true) =>
+      gestoDeSenalero(
+        llegando({ restante: 0.5, velocidad: 0, parado: segundos, motor }),
+        "frenos",
+      );
+    expect(parado(0)).toBe("frenos");
+    expect(parado(DURA_LA_SENA + 0.1)).toBe("calzos");
+    expect(parado(2 * DURA_LA_SENA + 0.1)).toBe("cortar");
+    // Y la de cortar se queda hasta que se apaga, no caduca.
+    expect(parado(60)).toBe("cortar");
+    expect(parado(60, false)).toBeNull();
+  });
+
+  it("y si vuelve a rodar en medio, otra vez alto", () => {
+    expect(
+      gestoDeSenalero(
+        llegando({ restante: 0.5, velocidad: 2, parado: 4 }),
+        "calzos",
+      ),
+    ).toBe("alto");
   });
 
   it("parado a media calle no es haber llegado", () => {

@@ -458,8 +458,32 @@ const SENALERO_IZQUIERDA = senalero(brazos(2.2, 8.6, 16.6, 2.4));
 const SENALERO_DERECHA = senalero(brazos(7.4, 2.4, 21.8, 8.6));
 /** Más despacio: los dos brazos abiertos y bajos. */
 const SENALERO_DESPACIO = senalero(brazos(4.2, 14.6, 19.8, 14.6));
-/** Frenos puestos: el aspa, pero abajo. Ya está, llegaste. */
-const SENALERO_FRENOS = senalero(brazos(16.4, 15.4, 7.6, 15.4));
+/**
+ * Frenos de estacionamiento: una mano en alto por delante, con el puño
+ * cerrado; la otra abajo. Es la seña del Anexo 2, no el aspa abajo que había.
+ */
+const SENALERO_FRENOS = senalero(`
+  ${brazos(8.4, 3.4, 14.6, 14.4)}
+  <circle cx="8.4" cy="3.4" r="1.4" />
+`);
+/**
+ * Calzos puestos: los dos brazos arriba y los bastones juntándose por encima
+ * de la cabeza hasta tocarse.
+ */
+const SENALERO_CALZOS = senalero(`
+  <path d="M10.9 8.2 L8.2 3.2 L11.4 0.7 M13.1 8.2 L15.8 3.2 L12.6 0.7"
+        stroke="currentColor" stroke-width="2.4" fill="none"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
+/**
+ * Cortar motores: el bastón pasando por delante del cuello, de un hombro al
+ * otro; el otro brazo, abajo.
+ */
+const SENALERO_CORTAR = senalero(`
+  <path d="M13.1 8.2 L17 6.9 L7.2 6.9 M10.9 8.2 L9.6 14.4"
+        stroke="currentColor" stroke-width="2.4" fill="none"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
 
 /**
  * El PAPI, dibujado: cuatro luces y qué hacer con ellas.
@@ -1065,6 +1089,8 @@ export const DIBUJOS = {
   "senalero-derecha": SENALERO_DERECHA,
   "senalero-despacio": SENALERO_DESPACIO,
   "senalero-frenos": SENALERO_FRENOS,
+  "senalero-calzos": SENALERO_CALZOS,
+  "senalero-cortar": SENALERO_CORTAR,
   /*
    * **El piloto automático suelto**: el mismo avión con la raya recta detrás
    * que lleva su botón, tachado. Que se parezcan es la mitad del aviso —lo

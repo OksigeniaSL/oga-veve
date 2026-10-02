@@ -21,7 +21,7 @@
  */
 
 import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
-import { construirGrafo, rodajeEntre, type Tramo } from "./rodaje";
+import { construirGrafo, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
 import { desplazadoDe } from "./umbral-desplazado";
 
@@ -40,6 +40,15 @@ export interface PistaEnUso {
   readonly desplazado?: number;
 }
 
+/**
+ * Unos sitios del mundo por los que no se quiere pasar, y a cuánto de ellos.
+ * Es `Ocupados` de `rodaje.ts` en los ejes del mundo.
+ */
+export interface OcupadosEnElMundo {
+  readonly puntos: readonly EnElPlano[];
+  readonly radio: number;
+}
+
 /** Lo que el tráfico necesita del suelo de este aeródromo. */
 export interface SueloDelTrafico {
   /**
@@ -54,6 +63,11 @@ export interface SueloDelTrafico {
   llegada(
     desdeElUmbral: number,
     evitar?: readonly EnElPlano[],
+    /**
+     * Por dónde no pasar si hay otra: tu avión y la raya por la que vas. Ver
+     * `OCUPADA_CUESTA`.
+     */
+    ocupados?: OcupadosEnElMundo,
   ): {
     /** Metros desde el umbral de aterrizar hasta la boca de la salida. */
     readonly boca: number;
@@ -72,6 +86,11 @@ export interface SueloDelTrafico {
      * caer encima. Ver `PASA_A_TU_LADO`.
      */
     porDondeVas?: readonly EnElPlano[],
+    /**
+     * La pista que tiene que quedarle por delante para despegar, m. Sin ella,
+     * cualquiera de las bocas de `BOCAS_DE_SALIDA`. Ver `PISTA_POR_DELANTE`.
+     */
+    pistaQueNecesita?: number,
   ): {
     readonly camino: readonly EnElPlano[];
     readonly espera: number;
@@ -130,6 +149,15 @@ const HOLGURA_DEL_PAVIMENTO = 6;
  */
 const VOLVER_CUESTA = 2;
 
+/**
+ * **Lo que cuesta una salida que pasa por encima de ti**, m: más que cualquier
+ * otra que no lo haga. Aterrizando, el tráfico salía por la calle en la que
+ * esperabas tú y se quedaba plantado entre tu doble raya y la pista, sin poder
+ * pasar ni dejarte pasar: lo que dice una torre es «siga hasta la próxima».
+ * Si no hay otra, por ésa, y espera a que pases. Ver `cedeA` en `trafico.ts`.
+ */
+const OCUPADA_CUESTA = 1e5;
+
 /** Y lo que cuesta una salida que obliga a torcer más de noventa grados, m. */
 const TORCER_CUESTA = 150;
 
@@ -143,8 +171,9 @@ const BOCAS_DE_SALIDA = 6;
 const RODANDO_HASTA_LA_BOCA = 80;
 
 /**
- * Lo que se aparta el tráfico de quien juega: ni aparca en su puesto ni espera
- * en su doble raya, m. Una envergadura larga de las de la flota y su margen.
+ * Lo que se aparta el tráfico de quien juega al elegir puesto: ni aparca en el
+ * suyo ni sale de uno pegado a él, m. Una envergadura larga de las de la flota
+ * y su margen. En su doble raya sí espera, en la fila: ver `salida`.
  */
 const APARTE_DE_TI = 80;
 
@@ -156,6 +185,23 @@ const APARTE_DE_TI = 80;
  * avión de quien juega contra uno que esperaba en su doble raya.
  */
 const PASA_A_TU_LADO = 17 + 18 + 7.5;
+
+/**
+ * **Lo que mide la fila de salida**, m, contado hacia atrás desde tu doble
+ * raya: lo que ocupan en la calle el que espera en ella y el de detrás. Ahí el
+ * tráfico no se aparta de tu raya: se pone en la cola. Ver `salida`.
+ */
+const FILA_DE_SALIDA = 120;
+
+/**
+ * **La pista que necesita por delante el que sale, en carreras de su tipo.**
+ *
+ * La carrera de `TIPOS` es la de despegue; lo que se pide para salir por una
+ * intersección es esa carrera con su margen, el mismo veinte por ciento y pico
+ * que se suma en cualquier cálculo de pista requerida. Con menos, por la boca
+ * de la cabecera. Ver `salida`.
+ */
+export const PISTA_POR_DELANTE = 1.25;
 
 /** Los puestos que no caen encima de quien juega; si no queda ninguno, todos. */
 function lejosDe(
@@ -242,7 +288,14 @@ export function sueloDelTrafico(
     punto: Punto,
     hacia: "puesto" | "punto",
     evitar: readonly EnElPlano[] | undefined,
-  ): Punto[] | null => {
+    ocupados?: OcupadosEnElMundo,
+  ): { puntos: Punto[]; ocupada: boolean } | null => {
+    const porDondeNo = ocupados?.puntos.length
+      ? {
+          puntos: ocupados.puntos.map((e): Punto => [e.x, -e.z]),
+          radio: ocupados.radio,
+        }
+      : undefined;
     const cerca = [...lejosDe(puestos, evitar)]
       .sort(
         (a, b) =>
@@ -250,13 +303,24 @@ export function sueloDelTrafico(
           Math.hypot(b[0] - punto[0], b[1] - punto[1]),
       )
       .slice(0, 8);
-    let mejor: { puntos: Punto[]; largo: number } | null = null;
-    for (const xy of cerca) {
-      const r =
-        hacia === "puesto"
-          ? rodajeEntre(grafo, punto, xy, 400)
-          : rodajeEntre(grafo, xy, punto, 400);
-      if (!r || (mejor && r.largo >= mejor.largo)) continue;
+    let mejor: { puntos: Punto[]; largo: number; ocupada: boolean } | null = null;
+    /*
+     * Hacia los puestos, de una vez: el buscador corre una vez por origen y
+     * cada destino es solo su último trozo. Uno por puesto eran ocho búsquedas
+     * por boca, y en Gando volver a elegir la salida al tomar tierra costaba
+     * noventa milisegundos —cinco fotogramas— con tu raya que rodear.
+     */
+    const rutas =
+      hacia === "puesto"
+        ? rodajesDesde(grafo, punto, cerca, 400, porDondeNo)
+        : cerca.map((xy) => rodajeEntre(grafo, xy, punto, 400, porDondeNo));
+    for (let k = 0; k < cerca.length; k++) {
+      const r = rutas[k];
+      if (!r) continue;
+      const ocupada = !!r.ocupada;
+      // La que no pasa por encima de nadie, y de ésas la más corta.
+      if (mejor && (ocupada && !mejor.ocupada)) continue;
+      if (mejor && ocupada === mejor.ocupada && r.largo >= mejor.largo) continue;
       /*
        * Y si el remate hasta el puesto cruza campo —hay aeródromos con los
        * puestos dibujados lejos de toda calle y fuera de la plataforma
@@ -265,14 +329,14 @@ export function sueloDelTrafico(
        */
       const puntos = recortarAlAsfalto([...r.puntos], hacia, porElAsfalto);
       if (!puntos) continue;
-      mejor = { puntos, largo: r.largo };
+      mejor = { puntos, largo: r.largo, ocupada };
     }
-    return mejor?.puntos ?? null;
+    return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada } : null;
   };
 
   let unaSola: boolean | undefined;
   const suelo: SueloDelTrafico = {
-    llegada(desdeElUmbral, evitar) {
+    llegada(desdeElUmbral, evitar, ocupados) {
       /*
        * **La salida que antes deja la pista libre**, no la primera que hay.
        *
@@ -289,15 +353,23 @@ export function sueloDelTrafico(
       const puede = umbral + desdeElUmbral;
       let mejor: { coste: number; boca: number; camino: EnElPlano[]; pista: number } | null =
         null;
-      for (const boca of bocas) {
-        const delante = boca.along >= puede;
-        const hastaLaBoca = delante
-          ? boca.along - puede
-          : (puede - boca.along) * VOLVER_CUESTA;
+      const hastaLa = (along: number): number =>
+        along >= puede ? along - puede : (puede - along) * VOLVER_CUESTA;
+      /*
+       * De la que menos cuesta llegar a la que más: lo que cuesta llegar a una
+       * boca es lo menos que puede costar salir por ella, así que en cuanto
+       * una sale bien las de detrás ya no se miran. Es lo que deja volver a
+       * elegir al tomar tierra sin que se note: ver `rehacerLaLlegada` en
+       * `trafico.ts`.
+       */
+      const enOrden = [...bocas].sort((a, b) => hastaLa(a.along) - hastaLa(b.along));
+      for (const boca of enOrden) {
+        const hastaLaBoca = hastaLa(boca.along);
         if (mejor && hastaLaBoca >= mejor.coste) continue;
         const desde = grafo.nudos[boca.nudo]!;
-        const ruta = rutaConPuesto(desde, "puesto", evitar);
-        if (!ruta) continue;
+        const hecha = rutaConPuesto(desde, "puesto", evitar, ocupados);
+        if (!hecha) continue;
+        const ruta = hecha.puntos;
         const camino = [enElEje(boca.along), ...ruta.map(alMundo)];
         const enLaPista = hastaSalir(camino, ejes, ancho);
         // Y la deja de verdad: un camino que se queda en la pista, o que
@@ -318,7 +390,10 @@ export function sueloDelTrafico(
           saleHacia(t, grafo.nudos[boca.nudo]!, pista.heading),
         );
         const coste =
-          hastaLaBoca + enLaPista * VOLVER_CUESTA + (haciaDelante ? 0 : TORCER_CUESTA);
+          hastaLaBoca +
+          enLaPista * VOLVER_CUESTA +
+          (haciaDelante ? 0 : TORCER_CUESTA) +
+          (hecha.ocupada ? OCUPADA_CUESTA : 0);
         /*
          * **Y la pista queda libre al pasar la doble raya de la salida**, no
          * al asomar las ruedas fuera del asfalto. Se daba por libre a ocho
@@ -341,24 +416,54 @@ export function sueloDelTrafico(
         : null;
     },
 
-    salida(evitar, porDondeVas) {
+    salida(evitar, porDondeVas, pistaQueNecesita = 0) {
       /*
        * Por la boca más cerca de la cabecera de salida —la que deja más pista
        * por delante—: del puesto a la boca por las calles, y en el camino, la
        * doble raya donde la calle ya está a la distancia de un punto de
-       * espera. Es la cuenta que usa el plan de tierra para quien juega, sin
-       * el filtro de la pista que hace falta: una avioneta despega en
-       * trescientos metros.
+       * espera. Es la cuenta que usa el plan de tierra para quien juega.
        *
-       * **Y no en la doble raya de quien juega**, si hay otra. Dos aviones en
-       * el mismo punto de espera son uno encima del otro, y el dibujado no se
-       * aparta: es ambiente. Si el campo no tiene más que esa, se usa igual.
+       * **Y en tu misma doble raya, si es la suya: detrás de ti, en la cola.**
+       * Aquí se apartaba de tu doble raya a la boca siguiente, y la siguiente
+       * queda más lejos de la cabecera: en Guaraní, con la paralela, el
+       * reactor salía del puesto hacia la otra punta de la pista mientras tú
+       * ibas a la cabecera. «Si los aviones deben ir hacia la cabecera X, ¿por
+       * qué este rueda a la cabecera contraria?» Un aeropuerto de verdad no
+       * reparte a los que salen por puntos de espera distintos para que no se
+       * junten: los pone en fila en el mismo, y el que llega detrás espera.
+       * Ahora el tráfico ve a quien juega —ver `cedeA` en `trafico.ts`— y la
+       * fila se hace sola, también contigo delante.
+       *
+       * **Y nunca con menos pista de la que necesita su tipo.** Una boca a
+       * mitad de pista es una salida por intersección, y un reactor no sale
+       * con ochocientos metros por delante. Ver `PISTA_POR_DELANTE`.
+       *
+       * Lo único que se sigue evitando es esperar **encima de la calle por la
+       * que vas a pasar** camino de otra doble raya: eso no es una fila, es un
+       * tapón. El final de tu raya —tu doble raya y lo que hay justo antes—
+       * es la fila, y ahí sí se espera.
        */
+      void evitar;
       const deCabecera = [...bocas].sort((a, b) => a.along - b.along);
+      const fin = porDondeVas?.[porDondeVas.length - 1];
+      const deTuCalle = (porDondeVas ?? []).filter(
+        (e) => !fin || dist(e, fin) > PASA_A_TU_LADO + FILA_DE_SALIDA,
+      );
+      /*
+       * Por orden de pista por delante: la primera que se puede rodar y le da
+       * su pista. Si ninguna se la da —la calle más cerca de la cabecera no
+       * se puede rodar, o el campo es más corto que eso, como El Hierro para
+       * el turbohélice—, la que más deja de las que se pueden rodar, que es
+       * lo que había: el de verdad remontaría la pista, y eso el tráfico no lo
+       * sabe hacer. Nunca, por no tener la ideal, una que deja menos.
+       */
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
+      let sinSuPista: ReturnType<SueloDelTrafico["salida"]> = null;
       for (const boca of deCabecera.slice(0, BOCAS_DE_SALIDA)) {
+        const daSuPista = mitad - boca.along >= pistaQueNecesita;
+        if (!daSuPista && sinSuPista) continue;
         const nudo = grafo.nudos[boca.nudo]!;
-        const ruta = rutaConPuesto(nudo, "punto", evitar);
+        const ruta = rutaConPuesto(nudo, "punto", evitar)?.puntos;
         if (!ruta) continue;
         const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
         if (!hecha) continue;
@@ -378,13 +483,16 @@ export function sueloDelTrafico(
           eje: espera + largo(hastaElEje) + 30,
         };
         const raya = hecha.hastaLaRaya[hecha.hastaLaRaya.length - 1]!;
-        const encimaDeTi =
-          evitar?.some((e) => dist(raya, e) <= APARTE_DE_TI) ||
-          porDondeVas?.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
-        if (!encimaDeTi) return salida;
+        const encimaDeTuCalle = deTuCalle.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
+        if (!daSuPista) {
+          if (!encimaDeTuCalle) sinSuPista = salida;
+          deReserva ??= salida;
+          continue;
+        }
+        if (!encimaDeTuCalle) return salida;
         deReserva ??= salida;
       }
-      return deReserva;
+      return sinSuPista ?? deReserva;
     },
 
     unaSolaCalle() {
