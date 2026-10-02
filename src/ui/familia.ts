@@ -291,6 +291,19 @@ export const MARCA_CIFRA = `data-desde="${CIFRAS_DESDE}"`;
 export const MARCA_ROTULO = `data-desde="${LETRAS_DESDE}"`;
 
 /**
+ * **Y el dibujo que ocupa el sitio de un rótulo mientras no se lee.**
+ *
+ * Una cifra sale desde el primer peldaño y su nombre desde el tercero, y en
+ * medio quedaban números sueltos: «2050» y «4044» en el EICAS de Guyrami, sin
+ * nada que dijera que uno es la altura de la cabina y el otro los kilos del
+ * depósito. **Nunca un número solo**: o se esconde con su rótulo, o lleva un
+ * dibujo donde irá la palabra — el surtidor junto a los kilos. El dibujo se
+ * va justo cuando llega la palabra, y por eso su marca sale de `LETRAS_DESDE`
+ * y no de un número escrito a mano.
+ */
+export const MARCA_HASTA_LETRAS = `data-hasta="${LETRAS_DESDE - 1}"`;
+
+/**
  * Y el tercero: **lo que aparece con el aparato al que pertenece.**
  *
  * Hay palabras que no se pueden separar de su instrumento. El «SPD» de una
@@ -303,7 +316,36 @@ export const MARCA_ROTULO = `data-desde="${LETRAS_DESDE}"`;
  * de que las palabras esperan al tercero, y está escrita aquí para que se vea
  * que es una excepción y no un descuido: son cuatro en todo el cuadro.
  */
-export const MARCA_CON_SU_APARATO = 'data-desde="2"';
+export const CON_SU_APARATO_DESDE: Peldano = 2;
+export const MARCA_CON_SU_APARATO = `data-desde="${CON_SU_APARATO_DESDE}"`;
+
+/**
+ * **La visera fina**: la del cuadro que no lleva nada en la visera más que
+ * las luces de aviso.
+ *
+ * La visera mide sesenta y cuatro y la sombra que echa, veinticuatro más, y
+ * todo ese alto es para el MCP de los reactores y la ventanilla ALT del
+ * turbohélice. Pero en la avioneta no hay MCP, y en el peldaño de los
+ * pequeños el MCP se esconde: lo que quedaba era una franja negra de ochenta
+ * píxeles entre el tirador y los instrumentos. Visto en el portátil: «al
+ * abrir el panel podría verse mejor si hacemos el panel más bajo y más
+ * ancho», y la franja vacía era justo eso que sobraba.
+ *
+ * Sin nada que poner, la visera se queda en lo que pide una fila de luces de
+ * aviso, y el dibujo se recorta por arriba. El cuadro sigue siendo el mismo
+ * —mismas coordenadas, mismo centro— y en pantalla sale más bajo y, con el
+ * mismo alto, más ancho. Ver `corteDeArriba` y `markup` en `tablero.ts`.
+ */
+export const VISERA_FINA = 26;
+
+/**
+ * Cuánto se recorta el cuadro por arriba: nada si la visera lleva el MCP en
+ * este peldaño, y si no, todo lo que sobra por encima de la visera fina.
+ */
+export function corteDeArriba(familia: Familia, peldano: number): number {
+  const conMcp = familia !== "esferas" && peldano >= CON_SU_APARATO_DESDE;
+  return conMcp ? 0 : BANDA.y - VISERA_FINA;
+}
 
 /*
  * ── **Y la cuenta de lo que de verdad ha salido** ──

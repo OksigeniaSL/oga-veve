@@ -201,7 +201,16 @@ export class CamaraDeFuera implements CameraRig {
         .normalize()
         .multiplyScalar(lejos)
         .add(state.position);
-      this.sinPerderElAvion(camera, state, ctx.caidaMaxima);
+      this.sinPerderElAvion(camera, state, ctx);
+    } else if (this.sitio === "cola") {
+      /*
+       * **Y parado, también con horizonte.** Quieto, la de cola mira al
+       * avión, y desde seis décimas de envergadura de alto eso es mirar al
+       * suelo: en la pista, con el cuadro abierto, no se veía el cielo. El
+       * mismo encuadre que andando. Ver `sinPerderElAvion`.
+       */
+      this.mirando.copy(state.position);
+      this.sinPerderElAvion(camera, state, ctx);
     } else if (this.sitio === "morro") {
       /*
        * **De frente se mira al avión, y a nada más.**
@@ -221,20 +230,30 @@ export class CamaraDeFuera implements CameraRig {
   }
 
   /**
-   * Baja el punto de mira lo justo para que el avión no caiga más de
-   * `caida` radianes por debajo del centro de la imagen.
+   * Coloca el punto de mira de arriba abajo con tres reglas, en este orden:
    *
-   * Mirar lejos levanta la vista y baja el avión; con el HUD comiéndose la
-   * mitad de abajo de una tablet, el avión acababa detrás del cuadro. Se sigue
-   * mirando tan lejos como se pueda, pero no más. Solo se toca el ángulo de
-   * arriba abajo: el rumbo de la mirada es el de siempre.
+   * 1. **El avión no cae más de `caidaMaxima` por debajo del centro.** Mirar
+   *    lejos levanta la vista y baja el avión; con el HUD comiéndose la mitad
+   *    de abajo de una tablet, el avión acababa detrás del cuadro. Se sigue
+   *    mirando tan lejos como se pueda, pero no más.
+   * 2. **El eje no mira más abajo de `bajadaMaxima`**, para que el horizonte
+   *    quede a la vista con algo de cielo: mirando al avión desde arriba, en
+   *    la pista, se veía solo asfalto.
+   * 3. **Y aun así, el avión no pasa de `caidaTope`**: si las dos de arriba
+   *    no caben a la vez —una franja libre pequeña—, gana el avión.
+   *
+   * Solo se toca el ángulo de arriba abajo: el rumbo de la mirada es el de
+   * siempre.
    */
   private sinPerderElAvion(
     camera: PerspectiveCamera,
     state: FlightState,
-    caida: number | undefined,
+    ctx: Contexto,
   ): void {
-    if (caida === undefined || !Number.isFinite(caida)) return;
+    const caida = ctx.caidaMaxima ?? Infinity;
+    const bajada = ctx.bajadaMaxima ?? Infinity;
+    const tope = ctx.caidaTope ?? Infinity;
+    if (![caida, bajada, tope].some(Number.isFinite)) return;
     const o = camera.position;
     const alAvion = Math.atan2(
       state.position.y - o.y,
@@ -245,8 +264,8 @@ export class CamaraDeFuera implements CameraRig {
     const llano = Math.hypot(dx, dz);
     if (llano < 1e-3) return;
     const alMirar = Math.atan2(this.mirando.y - o.y, llano);
-    if (alMirar - alAvion <= caida) return;
-    this.mirando.y = o.y + Math.tan(alAvion + caida) * llano;
+    const al = mirarSinPerderNada(alMirar, alAvion, caida, bajada, tope);
+    if (al !== alMirar) this.mirando.y = o.y + Math.tan(al) * llano;
   }
 
   fovDeseado(state: FlightState, ctx: Contexto): number {
@@ -292,4 +311,23 @@ export class CamaraDeFuera implements CameraRig {
       (Math.sin(t * 41) * 0.5 + Math.sin(t * 17.3) * 0.3 + bache * 1.4);
     this.deseada.x += cuanto * Math.sin(t * 23.7) * 0.35;
   }
+}
+
+/**
+ * Las tres reglas de `sinPerderElAvion`, en ángulos y sin cámara, para poder
+ * probarlas. `alMirar` y `alAvion` son elevaciones desde la cámara —negativas
+ * hacia abajo— y devuelve la elevación a la que mirar.
+ */
+export function mirarSinPerderNada(
+  alMirar: number,
+  alAvion: number,
+  caida: number,
+  bajada: number,
+  tope: number,
+): number {
+  let al = alMirar;
+  if (al - alAvion > caida) al = alAvion + caida;
+  if (al < -bajada) al = -bajada;
+  if (al - alAvion > tope) al = alAvion + tope;
+  return al;
 }

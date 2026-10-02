@@ -46,7 +46,9 @@ import {
   ANCHO_DEL_CUADRO,
   BANDA,
   VISERA,
+  VISERA_FINA,
   cajaDe,
+  corteDeArriba,
   familiaDe,
   patasDe,
   type Familia,
@@ -240,7 +242,19 @@ const HUECOS_DE_AVISO = 4;
  */
 export function huecosDeAviso(
   ids: readonly string[],
+  corte = 0,
 ): readonly { id: string; x: number; y: number }[] {
+  /*
+   * **Y con la visera fina, en una sola fila.** Ahí no hay MCP a la derecha,
+   * así que las cuatro caben lado a lado —acaban en la 416— en el alto de
+   * una luz. Ver `VISERA_FINA` en `familia.ts`.
+   */
+  if (corte > 0)
+    return ids.slice(0, HUECOS_DE_AVISO).map((id, i) => ({
+      id,
+      x: 8 + i * (ANCHO_DE_LUZ + 8),
+      y: corte + (VISERA_FINA - ALTO_DE_LUZ) / 2,
+    }));
   return ids.slice(0, HUECOS_DE_AVISO).map((id, i) => ({
     id,
     x: 8 + (i % 2) * (ANCHO_DE_LUZ + 8),
@@ -294,6 +308,13 @@ export function placaDeMatricula(matricula: string): string {
 export class Tablero {
   private raiz: SVGElement | null = null;
   private familia: Familia = "esferas";
+  /** Lo recortado por arriba en el último dibujo. Ver `corteDeArriba`. */
+  private corte = 0;
+  /**
+   * Ancho entre alto del último dibujo, recorte incluido. Lo lee el HUD para
+   * que la caja del cuadro tenga la forma del dibujo. Ver `Hud.render`.
+   */
+  proporcion = ANCHO_DEL_CUADRO / ALTO_DEL_CUADRO;
   /** El avión que se vuela: la altura de su cabina depende de él. */
   private avion: AircraftConfig | null = null;
   private cuadro: Cuadro | null = null;
@@ -386,6 +407,10 @@ export class Tablero {
         : familia === "cristal"
           ? this.deCristal(a, c)
           : this.deLinea(a, c);
+    const escalon = Math.max(1, Math.min(4, peldano));
+    const corte = corteDeArriba(familia, escalon);
+    this.corte = corte;
+    this.proporcion = ANCHO_DEL_CUADRO / (ALTO_DEL_CUADRO - corte);
     return `
       <!--
         **El dibujo, para un lector de pantalla, es ruido.**
@@ -399,12 +424,24 @@ export class Tablero {
       -->
       <p class="tablero__lectura" data-hud="lectura" aria-live="polite"></p>
       <svg class="tablero" data-hud="tablero" data-familia="${familia}"
-           data-peldano="${Math.max(1, Math.min(4, peldano))}"
-           viewBox="0 0 ${ANCHO_DEL_CUADRO} ${ALTO_DEL_CUADRO}"
+           data-peldano="${escalon}"
+           data-visera="${corte > 0 ? "fina" : "mcp"}"
+           viewBox="0 ${corte} ${ANCHO_DEL_CUADRO} ${ALTO_DEL_CUADRO - corte}"
            preserveAspectRatio="xMidYMid meet"
            aria-hidden="true" focusable="false">
-        ${this.mueble(a, familia)}
+        ${this.mueble(a, familia, corte)}
         ${dentro}
+        ${
+          /*
+           * Con la visera fina, su sombra cae **encima** de los instrumentos,
+           * que empiezan justo debajo: sin hueco para ella, se pinta la
+           * última, tenue y corta, y no recoge toques.
+           */
+          corte > 0
+            ? `<rect y="${BANDA.y}" width="${ANCHO_DEL_CUADRO}" height="12"
+                     class="tablero__sombra tablero__sombra--encima" />`
+            : ""
+        }
       </svg>
     `;
   }
@@ -416,7 +453,12 @@ export class Tablero {
    * debajo de un alero que le da sombra, y sin ese alero los instrumentos
    * parecen pegatinas. Cuesta cuatro rectángulos y cambia la cabina entera.
    */
-  private mueble(a: AircraftConfig, familia: Familia): string {
+  private mueble(a: AircraftConfig, familia: Familia, corte: number): string {
+    const visera =
+      corte > 0
+        ? `<rect y="${corte}" width="${ANCHO_DEL_CUADRO}" height="${VISERA_FINA}" class="tablero__visera" />`
+        : `<rect y="${VISERA}" width="${ANCHO_DEL_CUADRO}" height="24" class="tablero__sombra" />
+      <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />`;
     return `
       <defs>
         <linearGradient id="cabina-sombra" x1="0" y1="0" x2="0" y2="1">
@@ -424,9 +466,8 @@ export class Tablero {
           <stop offset="1" stop-color="#000" stop-opacity="0" />
         </linearGradient>
       </defs>
-      <rect width="${ANCHO_DEL_CUADRO}" height="${ALTO_DEL_CUADRO}" class="tablero__fascia" />
-      <rect y="${VISERA}" width="${ANCHO_DEL_CUADRO}" height="24" class="tablero__sombra" />
-      <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />
+      <rect y="${corte}" width="${ANCHO_DEL_CUADRO}" height="${ALTO_DEL_CUADRO - corte}" class="tablero__fascia" />
+      ${visera}
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
       ${this.panelDeAvisos()}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
@@ -529,7 +570,10 @@ export class Tablero {
      * hay que ver.
      */
     const donde = new Map(
-      huecosDeAviso(encendidas(estado).map((l) => l.id)).map((h) => [h.id, h]),
+      huecosDeAviso(
+        encendidas(estado).map((l) => l.id),
+        this.corte,
+      ).map((h) => [h.id, h]),
     );
     for (const l of LUCES) {
       const sel = `[data-luz="${l.id}"]`;

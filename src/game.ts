@@ -3913,6 +3913,8 @@ export class Game {
     movimientoReducido: false,
     traqueteo: 1,
     caidaMaxima: Number.POSITIVE_INFINITY,
+    bajadaMaxima: Number.POSITIVE_INFINITY,
+    caidaTope: Number.POSITIVE_INFINITY,
   };
   private readonly blobShadow: Mesh;
   /**
@@ -18377,16 +18379,42 @@ export class Game {
      * con la lente que se va a poner.
      */
     const franja = Math.max(0, abajo - arriba);
-    const altoDeImagen = alto + Math.abs(corrimiento) * 2;
-    const focal =
-      altoDeImagen / 2 / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
-    this.contextoDeCamara.caidaMaxima = propio
-      ? Number.POSITIVE_INFINITY
-      : Math.atan((franja * 0.12) / focal);
+    /*
+     * La focal es la de la pantalla entera: el corrimiento ya no acerca nada.
+     * Ver más abajo, donde se pone la lente.
+     */
+    const focal = alto / 2 / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
+    const sinTope = Number.POSITIVE_INFINITY;
+    const ctx = this.contextoDeCamara;
+    ctx.caidaMaxima = propio ? sinTope : Math.atan((franja * 0.12) / focal);
+    /*
+     * **Y el horizonte, siempre a la vista.**
+     *
+     * Parado en la pista con el cuadro abierto, la cámara de cola miraba al
+     * avión desde arriba y el cielo quedaba por encima de la pantalla: «no
+     * veo el cielo cuando estoy en la pista; está bien ver algo de horizonte,
+     * porque parece que va uno encajonado». Se le dice a la cámara cuánto
+     * puede mirar hacia abajo como mucho: lo que deja el horizonte a un
+     * quinto de la franja libre, contando desde arriba. Y como eso baja el
+     * avión, hasta dónde puede bajar él en ese caso: al ochenta y seis por
+     * ciento de la franja, que lo deja entero encima del cuadro. Si las dos
+     * cosas no caben a la vez, gana el avión. Ver `sinPerderElAvion` en
+     * `cameras/fuera.ts`.
+     */
+    ctx.bajadaMaxima = propio ? sinTope : Math.atan((franja * 0.3) / focal);
+    ctx.caidaTope = propio ? sinTope : Math.atan((franja * 0.36) / focal);
     if (!forzar && Math.abs(corrimiento - this.corrimientoPuesto) < 1) return;
     this.corrimientoPuesto = corrimiento;
-    if (Math.abs(corrimiento) < 1) this.camera.clearViewOffset();
-    else {
+    if (Math.abs(corrimiento) < 1) {
+      this.camera.clearViewOffset();
+      /*
+       * `setViewOffset` deja puesta su proporción, y quitarlo no la devuelve:
+       * la cabina —que no se corre— heredaba la del último encuadre de fuera
+       * y salía estirada.
+       */
+      this.camera.aspect = ancho / alto;
+      this.camera.zoom = 1;
+    } else {
       const extra = Math.abs(corrimiento) * 2;
       // Una imagen más alta de la que se recorta la ventana: recortando por
       // abajo el centro sube, y por arriba baja.
@@ -18398,6 +18426,16 @@ export class Game {
         ancho,
         alto,
       );
+      /*
+       * **Y sin acercar.** El ángulo de visión se reparte entre el alto de la
+       * imagen grande, no de la ventana, así que recortar era también hacer
+       * zoom: con el cuadro abierto en el portátil, un treinta y cinco por
+       * ciento más cerca, y el mundo se veía por una rendija. Es lo que hacía
+       * sentir el cuadro como un cajón. Con el zoom a la inversa queda lo que
+       * se quería desde el principio, un objetivo descentrable: la misma
+       * lente, corrida hacia arriba.
+       */
+      this.camera.zoom = alto / (alto + extra);
     }
     this.camera.updateProjectionMatrix();
   }

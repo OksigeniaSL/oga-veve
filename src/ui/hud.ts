@@ -1829,6 +1829,16 @@ export class Hud {
 
     this.badge.textContent = this.badgeText;
     this.tablero.bind(this.root, this.ficha);
+    /*
+     * La caja del cuadro, con la forma del dibujo que se acaba de pintar: sin
+     * MCP la visera se queda fina y el dibujo sale más apaisado. Escrito en
+     * la raíz porque lo lee también el volumen, que se pone al lado. Ver
+     * `corteDeArriba` en `familia.ts`.
+     */
+    this.root.style.setProperty(
+      "--cuadro-proporcion",
+      this.tablero.proporcion.toFixed(4),
+    );
     this.pictos.bind(this.root);
     this.medirLaBarra();
     this.senal.bind(this.root);
@@ -1936,12 +1946,22 @@ export class Hud {
     const panel = this.root.querySelector('[data-hud="tablero"]');
     if (!panel) return 0;
     const caja = panel.getBoundingClientRect();
+    if (caja.height <= 0) return 0;
+    /*
+     * Y **el tirador**, que va por encima del dibujo: contando solo el dibujo,
+     * la cámara dejaba la cola del avión debajo de la pestaña.
+     */
+    const tirador = this.root
+      .querySelector('[data-hud="cuadro-tirador"]')
+      ?.getBoundingClientRect();
+    const arriba =
+      tirador && tirador.height > 0 ? Math.min(caja.top, tirador.top) : caja.top;
     /*
      * Desde el borde de abajo y no la altura del dibujo: con el dedo el cuadro
      * vive despegado, encima de los pedales, y lo que tapa es todo lo que hay
      * de su borde de arriba para abajo. Y bajado, lo que asome.
      */
-    return caja.height > 0 ? Math.max(0, window.innerHeight - caja.top) : 0;
+    return Math.max(0, window.innerHeight - arriba);
   }
 
   /**

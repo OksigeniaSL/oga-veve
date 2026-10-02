@@ -287,6 +287,15 @@ body {
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr auto;
   gap: 12px;
+  /*
+   * **Lo que mide el cuadro de mandos, para él y para quien se pone al
+   * lado** —el volumen—. La proporción la escribe el HUD con la del dibujo
+   * pintado, recorte incluido —ver `Hud.render`—; ésta es la de la visera con
+   * MCP, por si se lee antes. Y el alto que se le deja: cuarenta centésimas de
+   * pantalla con la visera fina, y cuarenta y cuatro con el MCP. Ver `.cuadro`.
+   */
+  --cuadro-proporcion: 2.37;
+  --cuadro-alto: 40vh;
 }
 
 /*
@@ -981,7 +990,11 @@ body {
  * se hace en sus píxeles: el ancho de la pantalla, dividido por la escala.
  */
 .volumen {
-  --volumen-cuadro: min(calc(100vw - 16px), 1400px, calc(44vh * 2.37));
+  --volumen-cuadro: min(
+    calc(100vw - 16px),
+    1400px,
+    calc(var(--cuadro-alto, 40vh) * var(--cuadro-proporcion, 2.37))
+  );
   --volumen-hueco: calc(
     (100vw / var(--escala, 1) - var(--volumen-cuadro)) / 2
   );
@@ -3016,7 +3029,7 @@ button.motor__tecla::after {
     width: min(
       calc(100vw - 16px),
       1400px,
-      calc(44vh * var(--cuadro-proporcion)),
+      calc(var(--cuadro-alto) * var(--cuadro-proporcion)),
       calc(
         100vw - 2 *
           (var(--reserva-derecha, 16px) / var(--escala, 1) +
@@ -3332,8 +3345,10 @@ button.motor__tecla::after {
    * fija, dejar que mande el alto evita lo que pasaba con un `max-height`
    * suelto: la caja se quedaba ancha, el dibujo se encogía dentro y sobraban
    * doscientos píxeles de negro a cada lado.
+   *
+   * La proporción y el alto viven en `.hud` y no aquí: los lee también el
+   * volumen, que se pone al lado y tiene que saber cuánto ocupa el cuadro.
    */
-  --cuadro-proporcion: 2.37;
   /*
    * **Y se ensancha, porque sobraba pantalla a los lados.**
    *
@@ -3360,7 +3375,25 @@ button.motor__tecla::after {
    * asiento. En una tablet de aula en horizontal —640 de alto— son 320, y por
    * debajo manda el ancho, así que no se desborda.
    */
-  width: min(calc(100vw - 16px), 1400px, calc(44vh * var(--cuadro-proporcion)));
+  /*
+   * **Y más bajo y más ancho**, que es lo que se pidió con el panel abierto
+   * en el portátil: «al abrir el panel podría verse mejor si hacemos el panel
+   * más bajo y más ancho, ajustarlo para ganar visión». Ancho y alto van
+   * atados por la proporción del dibujo, así que «más ancho» solo se puede
+   * dar donde el dibujo cambia de forma: sin MCP que enseñar, la visera se
+   * queda fina —ver `VISERA_FINA`— y el dibujo es un doce por ciento más
+   * apaisado. Ahí el cuadro baja a cuarenta centésimas del alto y aun así
+   * sale más ancho que antes. Con el MCP en la visera la forma es la de
+   * siempre, y bajarlo sería estrecharlo: se queda en sus cuarenta y cuatro.
+   *
+   * La proporción no se escribe aquí: la pone el HUD en la caja con la del
+   * dibujo que se ha pintado, recorte incluido. Ver `Hud.render`.
+   */
+  width: min(
+    calc(100vw - 16px),
+    1400px,
+    calc(var(--cuadro-alto) * var(--cuadro-proporcion))
+  );
   pointer-events: none;
   /*
    * Y baja entero cuando se tira de él. Queda asomando el tirador, que es por
@@ -3390,6 +3423,14 @@ button.motor__tecla::after {
  * estaba, que es lo que impide que un panel bonito esconda un «terrain, pull
  * up».
  */
+/*
+ * Y con el MCP en la visera, las cuarenta y cuatro de siempre. Ver
+ * `--cuadro-alto` en `.hud`.
+ */
+.hud:has(.tablero[data-visera="mcp"]) {
+  --cuadro-alto: 44vh;
+}
+
 .cuadro--bajado {
   z-index: 5;
   transform: translate(-50%, calc(100% - var(--tirador-asoma, 34px)));
@@ -3670,6 +3711,12 @@ button.motor__tecla::after {
 .tablero__sombra {
   fill: url(#cabina-sombra);
   opacity: 0.85;
+}
+
+/* La de la visera fina, encima de los instrumentos: tenue y sin tocar. */
+.tablero__sombra--encima {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .tablero__hueco {
@@ -4425,6 +4472,26 @@ button.motor__tecla::after {
 }
 
 /*
+ * Y el dibujo que hace de rótulo mientras no se lee —el surtidor junto a los
+ * kilos del depósito—, que se va cuando llega la palabra. Ver
+ * `MARCA_HASTA_LETRAS` en `ui/familia.ts`.
+ */
+.tablero[data-peldano="3"] [data-hasta="2"],
+.tablero[data-peldano="4"] [data-hasta="2"] {
+  display: none;
+}
+
+/* El dibujo del rótulo, en el tono de los rótulos y con su hueco a oscuras. */
+.cr__icono {
+  fill: var(--cabina-apagado);
+  color: var(--cabina-apagado);
+}
+
+.cr__icono .senal__hueco {
+  fill: var(--cabina-pantalla);
+}
+
+/*
  * ── Las señales luminosas ──
  *
  * Dos escalones y nada más, que son los de un avión: ámbar es «mirá esto, no
@@ -4820,8 +4887,13 @@ button.motor__tecla::after {
 .cr__td-rotulo {
   fill: var(--cabina-normal);
   font-family: var(--cabina-fuente);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  stroke: var(--cabina-pantalla);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 
 .cr__eta {
