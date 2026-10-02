@@ -959,7 +959,12 @@ export class CoefficientFlightModel implements FlightModel {
        * compensador que sostiene la subida se aparta, pero el nivelado de
        * alas sigue, que ella no toca el alabeo. Ver `sostieneLaAltura`.
        */
-      const otraLlevaLaAltura = manoDelAutomatico || controls.sostieneLaAltura === true;
+      const otraLlevaLaAltura =
+        manoDelAutomatico ||
+        controls.sostieneLaAltura === true ||
+        // Y la mano del teclado o del dedo, que ya sostiene la trayectoria que
+        // se dejó, bajadas incluidas. Ver `flight/mano.ts`.
+        controls.manoEnElCabeceo === true;
       // Compensador automático: mantiene **la actitud que dejaste**.
       //
       // La primera versión llevaba el morro al horizonte, y eso está mal por
@@ -1162,7 +1167,10 @@ export class CoefficientFlightModel implements FlightModel {
         this.layers.wingLeveller > 0 &&
         Math.abs(controls.aileron) < 0.08 &&
         !s.onGround &&
-        !manoDelAutomatico
+        !manoDelAutomatico &&
+        // Ni con la mano sosteniendo la inclinación que se dejó: el nivelado
+        // la deshacía al soltar la tecla. Ver `flight/mano.ts`.
+        controls.manoEnElAlabeo !== true
       ) {
         rollMoment -=
           this.layers.wingLeveller *
