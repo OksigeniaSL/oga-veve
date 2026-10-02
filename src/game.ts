@@ -1894,34 +1894,63 @@ export class Game {
        * rearma cuando el otro se aleja de verdad o aterriza, no cuando pasa un
        * rato. Ver `SE_OLVIDA_MILLAS` en `flight/informacion-de-trafico.ts`.
        */
-      const yaContado = this.informacionDeTrafico.yaContados.has(a.id);
+      /*
+       * Contado quiere decir oído: una información que todavía espera turno
+       * no ha explicado nada, y el aviso se explica entero.
+       */
+      const yaContado = this.informacionDeTrafico.yaInformado(a.id);
       // El «traffic, traffic» ya lo cuenta: la radio no lo repite después.
-      this.informacionDeTrafico.darPorContado(a.id);
+      this.contadoPorOtro(a.id);
       this.avisarDelTrafico(a, yaContado);
     }
     this.explicarElTrafico();
-    const info = this.informacionDeTrafico.paso(
-      dt,
-      {
-        x: s.position.x,
-        y: s.position.y,
-        z: s.position.z,
-        rumbo: MathUtils.radToDeg(s.heading),
-        sobreElSuelo: s.heightAboveGround,
-        enElSuelo: s.onGround,
-        /*
-         * **Y con el canal ocupado, espera a que se libre.** La información
-         * de tráfico se pedía aunque la boca estuviera llena, esperaba detrás
-         * de la torre y caducaba sin sonar: camino de Tenerife Sur,
-         * «torre.canario.trafico: caducó esperando». Quien la da es la
-         * torre, y la torre no pisa a nadie: la da en cuanto el canal está
-         * libre, con el tráfico de ese momento.
-         */
-        callado: this.terrenoAhora !== null || !BOCA.libre,
-      },
-      intrusos,
+    const yo = {
+      x: s.position.x,
+      y: s.position.y,
+      z: s.position.z,
+      rumbo: MathUtils.radToDeg(s.heading),
+      sobreElSuelo: s.heightAboveGround,
+      enElSuelo: s.onGround,
+      /*
+       * **Y la boca ocupada ya no la calla: pide turno.** Esperaba a que el
+       * canal estuviera libre del todo —nadie hablando y nadie esperando—,
+       * porque pidiéndolo caducaba detrás de la torre: camino de Tenerife Sur,
+       * «torre.canario.trafico: caducó esperando». Con la megafonía en el
+       * mismo turno que todos, en una final eso no llega nunca: el del
+       * circuito a doscientos pies en tu final, doce segundos sin una palabra
+       * y «callado: la boca (hablando, 2 en cola)». Ahora espera su turno sin
+       * reloj y se retira si deja de ser verdad. Ver `esLaInformacionDeTrafico`
+       * en `audio/torre.ts`.
+       */
+      callado: this.terrenoAhora !== null,
+    };
+    /*
+     * Lo que esperaba turno y ya no está en la cola sin que su voz contara
+     * qué le pasó se da por dicho. Solo pasa cuando la boca se vacía de golpe
+     * —al cambiar de avión, que no avisa a nadie—, y una información que
+     * espera para siempre no deja pasar a ninguna otra.
+     */
+    const enCola = this.informacionDeTrafico.esperando;
+    if (enCola && !BOCA.espera(enCola.dice))
+      this.alOirLaInformacion(enCola.n, enCola.id, null);
+    const revision = this.informacionDeTrafico.revisar(yo, intrusos, (a) =>
+      this.comoSeDiceElTrafico(a).turno,
     );
+    if (revision) {
+      BOCA.retirar((c) => c === revision.retirar);
+      if (revision.otra) this.informarDelTrafico(revision.otra.aviso, revision.otra.n);
+    }
+    const info = this.informacionDeTrafico.paso(dt, yo, intrusos);
     if (info) this.informarDelTrafico(info);
+  }
+
+  /**
+   * **Ese avión lo cuenta otro** —el TCAS, la ventanilla—, y si su
+   * información esperaba turno, se retira: un suceso, una voz.
+   */
+  private contadoPorOtro(id: string): void {
+    const sobra = this.informacionDeTrafico.darPorContado(id);
+    if (sobra) BOCA.retirar((c) => c === sobra);
   }
 
   /**
@@ -1939,9 +1968,60 @@ export class Game {
    *
    * Y con prioridad cero: es información, no un aviso. Cualquier cosa que
    * importe más la tapa, y el «traffic, traffic» del TCAS el primero.
+   *
+   * **Y la voz, con el peso de lo que es para ti**, sin reloj: espera su
+   * turno mientras sea verdad. `n` es el número de una que ya esperaba y se
+   * vuelve a pedir con lo de ahora. Ver `revisar` en
+   * `flight/informacion-de-trafico.ts`.
    */
-  private informarDelTrafico(a: AvisoDeTrafico): void {
-    this.nombrar("informacionDeTrafico", a.id);
+  private informarDelTrafico(a: AvisoDeTrafico, n?: number): void {
+    const como = this.comoSeDiceElTrafico(a);
+    /*
+     * Se apunta antes de pedirla: con la boca libre le toca en el acto, y su
+     * voz avisa de que empieza antes de que esto vuelva.
+     */
+    const esta = n ?? this.informacionDeTrafico.pedida(a.id, como.turno);
+    // El dibujo no pide turno: sale en cuanto el otro está cerca.
+    if (n === undefined) this.tarjetaDelTrafico(a);
+    const alSonar: AlSonar = (que, porque) => {
+      if (que === "empieza" || que === "no-suena")
+        this.alOirLaInformacion(esta, a.id, a, como.porRadio ? como.texto : null);
+      else if (que === "se-cae") {
+        /*
+         * Si la boca no la dice porque se acaba de decir lo mismo, está
+         * dicha; si se cayó de la cola, no, y se vuelve a dar si sigue cerca.
+         */
+        if (porque === "repetida" || porque?.startsWith("riñe"))
+          this.alOirLaInformacion(esta, a.id, null);
+        else this.informacionDeTrafico.seCayo(esta);
+      }
+    };
+    if (como.porRadio)
+      this.torre.decir(como.texto, como.clave, "mando", como.relleno, alSonar);
+    else this.instructor.decir(como.texto, como.clave, "mando", undefined, alSonar);
+  }
+
+  /**
+   * **La información de tráfico, sonando**: ya cuenta como dicha y se nombra
+   * a quien nombra. La tarjeta se vuelve a poner con lo que se dice —es su
+   * gemelo dibujado— y la tira de la radio lo escribe, como se oye.
+   */
+  private alOirLaInformacion(
+    n: number,
+    id: string,
+    aviso: AvisoDeTrafico | null,
+    enLaRadio: string | null = null,
+  ): void {
+    if (this.informacionDeTrafico.esperando?.n !== n) return;
+    this.informacionDeTrafico.seOyo(n);
+    this.nombrar("informacionDeTrafico", id);
+    if (aviso) this.tarjetaDelTrafico(aviso);
+    if (enLaRadio && this.tier.instruments !== "none")
+      this.hud.radio(enLaRadio, undefined, true);
+  }
+
+  /** La tarjeta de la información de tráfico: tu avión y el otro en su hora. */
+  private tarjetaDelTrafico(a: AvisoDeTrafico): void {
     const altura = alturaDelOtro(a.relativa);
     const canales = canalesDe(this.tier.avisos);
     const rotulo = !canales.texto
@@ -1955,11 +2035,24 @@ export class Game {
       null,
       { segundos: SE_QUEDA_EL_TRAFICO, prioridad: 0 },
     );
+  }
+
+  /**
+   * **Cómo se dice la información de tráfico, y con qué clave espera turno.**
+   * La clave lleva dentro la hora, las millas y la altura —el relleno—, así
+   * que dos que se dirían distinto son dos frases. Ver `revisar`.
+   */
+  private comoSeDiceElTrafico(a: AvisoDeTrafico): {
+    readonly porRadio: boolean;
+    readonly texto: string;
+    readonly clave: string;
+    readonly relleno?: Readonly<Record<string, string>>;
+    readonly turno: string;
+  } {
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (conCifras && this.hayTorreQueHable()) {
       const yo = this.miIndicativo;
-      const texto = informacionEnRadio(yo.dicho, a);
       /*
        * **Y grabada, en la torre de cada sitio.** Iba con el texto montado y
        * sin receta, así que la decía siempre la voz del navegador —otra
@@ -1971,16 +2064,18 @@ export class Game {
         "torre.trafico",
         hablaDe(this.elCampo().escenario.aerodrome?.id),
       );
-      this.torre.decir(texto, clave, "normal", {
-        ...rellenoDe(yo),
-        ...informacionEnPiezas(a),
-      });
-      this.hud.radio(texto, undefined, true);
-      return;
+      const relleno = { ...rellenoDe(yo), ...informacionEnPiezas(a) };
+      return {
+        porRadio: true,
+        texto: informacionEnRadio(yo.dicho, a),
+        clave,
+        relleno,
+        turno: turnoDe(clave, relleno) ?? clave,
+      };
     }
     const clave =
-      `vuelo.otroAvion.${ladoDeLaHora(a.hora)}.${altura}` as TranslationKey;
-    this.instructor.decir(t(clave), clave);
+      `vuelo.otroAvion.${ladoDeLaHora(a.hora)}.${alturaDelOtro(a.relativa)}` as TranslationKey;
+    return { porRadio: false, texto: t(clave), clave, turno: clave };
   }
 
   /** Cuántas informaciones de tráfico van dadas y a quién. Para el banco. */
@@ -1989,15 +2084,14 @@ export class Game {
   }
 
   /**
-   * Por qué no se dio la información de tráfico en el último paso, y por qué
-   * calla la radio si es eso: quién tiene la boca. Para el banco.
+   * Por qué no se dio la información de tráfico en el último paso, y si es
+   * que espera turno, cómo está la boca. Para el banco.
    */
   get porQueCallaLaInformacionParaBanco(): string | null {
     const motivo = this.informacionDeTrafico.porQueCalla;
-    if (motivo !== "callado") return motivo;
-    return this.terrenoAhora !== null
-      ? "callado: el terreno"
-      : `callado: la boca (${BOCA.ocupada ? "hablando" : "en silencio"}, ${BOCA.cuantasEsperan} en cola)`;
+    if (motivo === "callado") return "callado: el terreno";
+    if (motivo !== "esperando turno") return motivo;
+    return `esperando turno: la boca (${BOCA.ocupada ? "hablando" : "en silencio"}, ${BOCA.cuantasEsperan} en cola)`;
   }
 
   /** Si ya se contó qué es un rombo. Una vez por partida, no por vuelo. */
@@ -13681,7 +13775,7 @@ export class Game {
     if (!mirada) return;
     this.huecos.usar();
     // Y al revés: el avión que se señaló aquí ya no lo cuenta la radio.
-    if (mirada.hito.id) this.informacionDeTrafico.darPorContado(mirada.hito.id);
+    if (mirada.hito.id) this.contadoPorOtro(mirada.hito.id);
 
     /*
      * **Y lo dice quien de verdad lo diría, con su frase.**

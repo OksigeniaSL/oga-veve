@@ -38,6 +38,18 @@
  * quien está posado, ni por debajo de quinientos pies, que es donde se calla
  * también la voz del TCAS: despegando o en la toma la cabeza está en otra
  * cosa. Ni con el terreno avisando, que manda sobre todo.
+ *
+ * ## Y con la boca ocupada, pide turno
+ *
+ * Esperaba a que nadie hablara ni esperara turno, y en una final —la torre
+ * con tu permiso, la instructora con los aros, la megafonía en el mismo
+ * turno— eso no llega: camino de Tenerife Sur, el del circuito a doscientos
+ * pies en tu final y ni una palabra. Ahora se pide en cuanto toca, con el peso
+ * de lo que es para ti, y espera su turno. Mientras espera, se mira en cada
+ * paso si sigue siendo verdad —ver `revisar`—: si el otro se fue, se retira;
+ * si lo que habría que decir ya es otro —otra hora del reloj, otras millas—,
+ * se pide con lo de ahora. Y **contada quiere decir oída**: si se cae sin
+ * sonar, no cuenta, y se vuelve a dar si sigue cerca.
  */
 
 import {
@@ -83,6 +95,34 @@ export interface QuienEscucha {
   readonly callado: boolean;
 }
 
+/**
+ * **Cómo se diría esta información**: la clave con la que espera turno en la
+ * boca, que lleva dentro lo que dice —la hora, las millas, la altura—. Dos
+ * informaciones del mismo avión que se dicen igual son la misma frase.
+ */
+export type ComoSeDice = (a: AvisoDeTrafico) => string;
+
+/** La que espera turno en la boca. Ver `InformacionDeTrafico.esperando`. */
+export interface EnLaCola {
+  /** Su número, para saber de cuál habla quien avisa. Ver `seOyo`. */
+  readonly n: number;
+  readonly id: string;
+  /** Con qué clave espera turno. Ver `ComoSeDice`. */
+  readonly dice: string;
+}
+
+/**
+ * Lo que hay que hacer con la que espera turno, según `revisar`: retirarla y,
+ * si sigue siendo verdad pero ya se diría de otra forma, pedirla con lo de
+ * ahora.
+ */
+export interface Revision {
+  /** La clave de turno que se retira de la boca. */
+  readonly retirar: string;
+  /** Y la información de ahora, si se vuelve a pedir, con su número. */
+  readonly otra?: { readonly aviso: AvisoDeTrafico; readonly n: number };
+}
+
 export class InformacionDeTrafico {
   private readonly contados = new Set<string>();
   private desdeLaUltima = Infinity;
@@ -93,24 +133,129 @@ export class InformacionDeTrafico {
    * nadie cerca.
    */
   porQueCalla: string | null = null;
+  /**
+   * La que espera turno, y cuánto hacía de la anterior cuando se pidió: si no
+   * llega a sonar, no cuenta como la última. Ver `noSono`.
+   */
+  private pendiente: (EnLaCola & { anterior: number }) | null = null;
+  /** Cuántas se han pedido, para numerarlas. */
+  private pedidas = 0;
+  /** Cuánto hacía de la anterior cuando `paso` dio la última. */
+  private anterior = Infinity;
 
-  /** Los que ya se contaron en esta pasada. */
+  /** Los que ya se contaron en esta pasada, o esperan turno para contarse. */
   get yaContados(): ReadonlySet<string> {
     return this.contados;
+  }
+
+  /**
+   * **Si a ese ya se le informó de verdad**: contado y no esperando turno. Lo
+   * pregunta el aviso del TCAS para saber si se explica o solo canta la caja:
+   * una información que todavía no ha sonado no ha explicado nada.
+   */
+  yaInformado(id: string): boolean {
+    return this.contados.has(id) && this.pendiente?.id !== id;
+  }
+
+  /** La que espera turno en la boca, si hay una. */
+  get esperando(): EnLaCola | null {
+    return this.pendiente;
   }
 
   /** Vuelo nuevo: nadie está contado. */
   reiniciar(): void {
     this.contados.clear();
     this.desdeLaUltima = Infinity;
+    this.pendiente = null;
+    this.anterior = Infinity;
   }
 
   /**
    * Ese ya se contó por otro lado —el aviso del TCAS, la instructora
    * señalándolo por la ventanilla—: un suceso, una sola voz.
+   *
+   * Devuelve la clave de turno de la información de ese mismo avión que
+   * esperaba en la boca, si había una, para que se retire: lo cuenta otro.
    */
-  darPorContado(id: string): void {
+  darPorContado(id: string): string | null {
     this.contados.add(id);
+    const p = this.pendiente;
+    if (p?.id !== id) return null;
+    this.pendiente = null;
+    return p.dice;
+  }
+
+  /**
+   * **Se pidió en la boca** la que acaba de dar `paso`, con esta clave de
+   * turno. Devuelve su número, que es con lo que se avisa de lo que le pase.
+   */
+  pedida(id: string, dice: string): number {
+    const n = ++this.pedidas;
+    this.pendiente = { n, id, dice, anterior: this.anterior };
+    return n;
+  }
+
+  /**
+   * **Sonó**: empezó a decirse, o no tenía con qué y su tarjeta ya se vio.
+   * Desde aquí cuenta como dicha.
+   */
+  seOyo(n: number): void {
+    if (this.pendiente?.n === n) this.pendiente = null;
+  }
+
+  /**
+   * **Se cayó de la cola sin sonar**: no está dicha. Se descuenta, y si sigue
+   * cerca se vuelve a dar en el paso siguiente, sin esperar el rato que va
+   * entre dos: ese rato es para que no se pisen dos que se oyen.
+   */
+  seCayo(n: number): void {
+    const p = this.pendiente;
+    if (p?.n === n) this.noSono(p);
+  }
+
+  private noSono(p: EnLaCola & { anterior: number }): void {
+    this.pendiente = null;
+    this.contados.delete(p.id);
+    this.desdeLaUltima = p.anterior + this.desdeLaUltima;
+  }
+
+  /**
+   * **Si la que espera turno sigue siendo verdad**, mirando dónde está el
+   * otro ahora. Se mira en cada paso, antes de `paso`.
+   *
+   * - Si ya no se daría —se alejó, se posó, bajaste de quinientos pies o
+   *   avisa el terreno—, se retira, y no cuenta como dicha.
+   * - Si se daría, pero **diciendo otra cosa** —otra hora del reloj, otras
+   *   millas, otra altura—, se retira y se pide con lo de ahora: una
+   *   información que espera turno diez segundos no puede decir dónde estaba
+   *   el otro, tiene que decir dónde está.
+   */
+  revisar(
+    yo: QuienEscucha,
+    intrusos: readonly Intruso[],
+    comoSeDice: ComoSeDice,
+  ): Revision | null {
+    const p = this.pendiente;
+    if (!p) return null;
+    const i = intrusos.find((q) => q.id === p.id);
+    const sigue =
+      !!i &&
+      !i.enElSuelo &&
+      !yo.enElSuelo &&
+      !yo.callado &&
+      yo.sobreElSuelo >= DESDE_ALTURA &&
+      Math.hypot(i.x - yo.x, i.y - yo.y, i.z - yo.z) / MILLA <= CERCA_MILLAS &&
+      Math.abs(i.y - yo.y) / PIE <= CERCA_PIES;
+    if (!sigue || !i) {
+      this.noSono(p);
+      return { retirar: p.dice };
+    }
+    const aviso = avisoDe(i, yo);
+    const dice = comoSeDice(aviso);
+    if (dice === p.dice) return null;
+    const n = ++this.pedidas;
+    this.pendiente = { ...p, n, dice };
+    return { retirar: p.dice, otra: { aviso, n } };
   }
 
   /**
@@ -145,9 +290,12 @@ export class InformacionDeTrafico {
         ? "callado"
         : yo.sobreElSuelo < DESDE_ALTURA
           ? "bajo"
-          : this.desdeLaUltima < ENTRE_DOS
-            ? "entre dos"
-            : null;
+          : // Y de una en una: la que espera turno, primero.
+            this.pendiente
+            ? "esperando turno"
+            : this.desdeLaUltima < ENTRE_DOS
+              ? "entre dos"
+              : null;
     if (this.porQueCalla) return null;
 
     let mejor: { i: Intruso; r: number } | null = null;
@@ -163,16 +311,22 @@ export class InformacionDeTrafico {
     }
     const { i } = mejor;
     this.contados.add(i.id);
+    this.anterior = this.desdeLaUltima;
     this.desdeLaUltima = 0;
-    const dx = i.x - yo.x;
-    const dz = i.z - yo.z;
-    return {
-      id: i.id,
-      hora: horaDelReloj((Math.atan2(dx, -dz) * 180) / Math.PI, yo.rumbo),
-      relativa: i.y - yo.y,
-      distancia: Math.hypot(dx, dz),
-    };
+    return avisoDe(i, yo);
   }
+}
+
+/** Dónde está el otro visto desde quien escucha: la hora, la altura, la distancia. */
+function avisoDe(i: Intruso, yo: QuienEscucha): AvisoDeTrafico {
+  const dx = i.x - yo.x;
+  const dz = i.z - yo.z;
+  return {
+    id: i.id,
+    hora: horaDelReloj((Math.atan2(dx, -dz) * 180) / Math.PI, yo.rumbo),
+    relativa: i.y - yo.y,
+    distancia: Math.hypot(dx, dz),
+  };
 }
 
 /** De qué lado queda algo a esa hora del reloj, para decirlo en casa. */

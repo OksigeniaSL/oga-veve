@@ -405,6 +405,28 @@ export function esElAvisoDeAves(clave: string | undefined): boolean {
 const AVISO_DE_AVES = /^torre\.(?:[a-z]+\.)?aves(?:@|$)/;
 
 /**
+ * **La información de tráfico que te dan a ti**: la torre en fraseología
+ * —«traffic, two o'clock, three miles»— o, en los peldaños de abajo, la
+ * instructora —«arriba a la derecha va otro avión, ¿lo ves?»—. Ver
+ * `flight/informacion-de-trafico.ts`.
+ *
+ * Tampoco caduca con el reloj, por lo mismo que las aves: lo que dice sigue
+ * siendo verdad mientras el otro siga cerca, y lo retira quien lo sabe —se
+ * alejó, aterrizó, bajaste de quinientos pies o ya lo cuenta el TCAS—. Antes
+ * no pedía turno: esperaba a que la boca estuviera libre del todo, y en una
+ * final con la torre, la instructora y la megafonía en el mismo turno eso no
+ * pasaba nunca. Camino de Tenerife Sur con el JAZ 90, el del circuito a
+ * doscientos pies en tu final y ni una palabra: «callado: la boca (hablando,
+ * 2 en cola)». Ver `vigilarElTrafico` en `game.ts`.
+ */
+export function esLaInformacionDeTrafico(clave: string | undefined): boolean {
+  return !!clave && INFORMACION_DE_TRAFICO.test(clave);
+}
+
+const INFORMACION_DE_TRAFICO =
+  /^(?:torre\.(?:[a-z]+\.)?trafico(?:@|$)|vuelo\.otroAvion\.[a-z]+\.[a-z]+$)/;
+
+/**
  * Si esta frase es **la frecuencia de un campo**: la torre hablándoles a los
  * demás, o los demás hablando. Todo eso va en `baja`.
  *

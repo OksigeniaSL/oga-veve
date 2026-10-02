@@ -1115,14 +1115,56 @@ describe("tu autorización no se pierde esperando turno", () => {
     );
     expect(cuantoAguanta("torre.clearedLand@yo", "mando")).toBe(Infinity);
     expect(cuantoAguanta("torre.aterrizar@yo", "mando")).toBe(Infinity);
-    expect(cuantoAguanta("torre.trafico@yo", "normal")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("torre.climbTo@yo", "mando")).toBe(CADUCA_LA_ORDEN);
+  });
+});
+
+/**
+ * **La información de tráfico que te dan a ti pide turno y espera mientras
+ * sea verdad.** Esperaba a que la boca estuviera libre del todo, y en una
+ * final con todos en el mismo turno no lo estaba nunca: camino de Tenerife
+ * Sur, el del circuito a doscientos pies en tu final y ni una palabra. Y
+ * pedida con la boca ocupada caducaba a los doce segundos de una orden. Ver
+ * `esLaInformacionDeTrafico` en `torre.ts` y `revisar` en
+ * `flight/informacion-de-trafico.ts`.
+ */
+describe("la información de tráfico espera su turno", () => {
+  const INFO = "torre.canario.trafico@fonetico.zulu-trafico.hora.2-trafico.millas.1-trafico.pies.3 trafico.above";
+
+  it("detrás de la fraseología más larga, y se dice", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("permiso"), "torre.canario.clearedLand@yo");
+    b.pedir("normal", frase("aros"), "vuelo.final");
+    b.pedir("baja", frase("bienvenidos"), "comandante.aproximacion");
+    b.pedir("mando", frase("tráfico"), INFO);
+    // Diez segundos y medio de «cleared to land» con el viento, y más.
+    reloj += 2 * CADUCA_LA_ORDEN;
+    acabar["permiso"]!();
+    // Lo que es para ti pasa delante de la instructora y de la megafonía.
+    expect(dicho).toEqual(["permiso", "tráfico"]);
+    expect(b.descartadas.some((d) => d.includes("trafico"))).toBe(false);
+  });
+
+  it("en las dos torres y con la instructora; y la retira quien sabe", () => {
+    expect(cuantoAguanta("torre.trafico@x-trafico.hora.2", "mando")).toBe(Infinity);
+    expect(cuantoAguanta(INFO, "mando")).toBe(Infinity);
+    expect(cuantoAguanta("vuelo.otroAvion.derecha.arriba", "mando")).toBe(Infinity);
+    expect(cuantoAguanta("vuelo.otroAvionX", "normal")).toBe(CADUCA);
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("tráfico"), INFO);
+    b.retirar((c) => c === INFO);
+    expect(b.espera(INFO)).toBe(false);
+    expect(sinHora(b.descartadas.at(-1))).toBe(`${INFO}: ya no es verdad`);
   });
 });
 
 /**
  * **El canal libre**: nadie hablando, nadie esperando y el silencio cumplido.
- * Es lo que mira quien habla por su cuenta —la frecuencia, la torre dando
- * tráfico— antes de abrir la boca, para no ponerse a la cola. Ver `libre`.
+ * Es lo que mira quien habla por su cuenta —la frecuencia de los demás— antes
+ * de abrir la boca, para no ponerse a la cola. Ver `libre`.
  */
 describe("el canal libre", () => {
   it("libre al principio, ocupado hablando, y otra vez libre tras el silencio", () => {
