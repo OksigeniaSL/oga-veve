@@ -167,9 +167,26 @@ export function gestoDeSenalero(s: Llegada, antes: Gesto = null): Gesto {
    * delante del cuello. Apagados, baja los bastones: ya no hay nada que
    * señalar, y entonces sí se acaba el vuelo. Ver `YA_PARADO`.
    */
+  /*
+   * **Y pararse largo también es haber llegado.**
+   *
+   * Esto pedía estar a menos de cinco metros del sitio por los dos lados, y
+   * un avión parado más allá se quedaba con el alto **para siempre**: ni
+   * frenos, ni calzos, ni cortar motores, y con la llegada callada mientras
+   * la lleva el señalero, tampoco la llave. Medido de Los Rodeos a Tenerife
+   * Sur con el JAZ 90: parado a cinco metros y pico pasado, «seña al apagar:
+   * alto». Y entre esos cinco metros y los diez a partir de los que el juego
+   * dice «te pasaste» no había ni aviso ni salida.
+   *
+   * Un señalero de verdad no hace volver a un avión por sus propios medios:
+   * cruza los bastones, y parado, pasado o no, siguen los frenos, los calzos
+   * y cortar motores. Si hay que recolocarlo, lo hace un tractor después.
+   * Parado **antes** de su sitio sí se le sigue llamando —«adelante»—, con su
+   * red: ver `PACIENCIA_EN_EL_PUESTO` en `game.ts`.
+   */
   const liston =
     antes !== null && YA_PARADO.includes(antes) ? SE_MUEVE_OTRA_VEZ : QUIETO;
-  if (s.velocidad < liston && Math.abs(s.restante) < PARADA * 2) {
+  if (s.velocidad < liston && s.restante < PARADA * 2) {
     if (s.motor === false) return null;
     const parado = s.parado ?? 0;
     return YA_PARADO[Math.min(YA_PARADO.length - 1, Math.floor(parado / DURA_LA_SENA))]!;
