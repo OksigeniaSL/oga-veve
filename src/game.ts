@@ -15600,11 +15600,15 @@ export class Game {
   /**
    * **La vista que se puede poner con este avión**: la elegida, salvo que sea
    * una de pasaje y este avión no lo lleve —o su modelo todavía no ha
-   * llegado—, que entonces es la cabina. La elegida no se toca: al volver a
-   * un avión con pasaje, ahí sigue.
+   * llegado—, que entonces es la de detrás. La elegida no se toca: al volver
+   * a un avión con pasaje, ahí sigue.
+   *
+   * La de detrás y no la cabina: el HUD se pone de cabina solo en la cabina
+   * —ver `ponerVistaDeCabina`—, y una cabina de respaldo con el cuadro plano
+   * encima serían dos tableros a la vez.
    */
   private vistaQueHay(): CameraMode {
-    return esDePasaje(this.cameraMode) && !this.hayPasaje ? "cockpit" : this.cameraMode;
+    return esDePasaje(this.cameraMode) && !this.hayPasaje ? "chase" : this.cameraMode;
   }
 
   /**
