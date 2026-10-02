@@ -15,6 +15,7 @@ import {
   descensoPara,
   gradosDichos,
   minutosDichos,
+  minutosQueSeDicen,
   nivelDicho,
   piezaDeGrados,
   segundosHastaTocar,
@@ -181,6 +182,20 @@ describe("la bienvenida con el plan", () => {
     });
     expect(b.texto).toContain("20 minutos");
     expect(b.texto).toContain("13 mil pies");
+  });
+
+  it("y más allá de lo grabado no se dice: una hora y cuarto no son «unos sesenta»", () => {
+    // Al JAZ 60 le pasa yendo a Pedro Juan o al Chaco. Ver `minutosQueSeDicen`.
+    expect(minutosQueSeDicen(61 * 60)).toBe(60);
+    expect(minutosQueSeDicen(75 * 60)).toBeNull();
+    expect(bienvenidaConPlan(forma, 75 * 60, 13)).toEqual({
+      clave: forma.id,
+      relleno: {},
+      texto: forma.texto,
+    });
+    const d = descensoPara("pettirossi", 75 * 60, TIEMPO_DE_CASA);
+    expect(d.relleno.minutos).toBeUndefined();
+    expect(d.texto).not.toContain("minutos");
   });
 
   it("y en una vuelta al campo no se inventa un plan", () => {

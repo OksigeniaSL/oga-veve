@@ -34,6 +34,8 @@
 import { HASTA, haciaElEste, MEDIO_NIVEL, nivelPara, UN_NIVEL } from "./nivel-de-crucero";
 import { nivelQueAhorra } from "./nivel-que-ahorra";
 import type { AircraftConfig } from "./aircraft";
+import { airDensity, SEA_LEVEL_DENSITY, type Aire } from "./atmosphere";
+import { NUDO, velocidadQueToca } from "./escalera-de-velocidades";
 
 /** Una milla náutica, en metros. La misma que la de la carta. */
 export const MILLA = 1852;
@@ -983,6 +985,148 @@ export function segundosHastaElFinal(
   return s;
 }
 
+/** Lo que el perfil necesita para contar cuánto se tarda. Ver `segundosPorElPerfil`. */
+export interface Perfil {
+  readonly avion: AircraftConfig;
+  /** De qué altitud se parte, m: la del avión, o la del campo antes de despegar. */
+  readonly altitud: number;
+  /** A qué altitud se va nivelado, m: el crucero del plan, o el de ahora. */
+  readonly crucero: number;
+  /** Si ya se pasó por el punto de descenso. */
+  readonly bajando: boolean;
+  readonly viento: Viento | null;
+  /** El aire del día; sin él, la atmósfera estándar. */
+  readonly atmosfera?: Aire;
+  /** La velocidad verdadera de ahora, m/s, volando; `null` en tierra. */
+  readonly verdadera: number | null;
+}
+
+/**
+ * Cada cuánto se mira el perfil, m, y en cuántos trozos como mucho: se cuenta
+ * en cada fotograma, y doscientos trozos dan el minuto bien de sobra.
+ */
+const TROZO = 1000;
+const TROZOS = 200;
+
+/** Cuánto se recorre antes de volver a contar la hora del perfil, m. */
+const RECONTAR = 500;
+
+/**
+ * **Cuánto se tarda en volar lo que queda del plan, con su perfil**, s.
+ *
+ * `segundosHastaElFinal` cuenta la ruta entera a una sola velocidad, y antes
+ * de despegar esa velocidad es la de crucero. Volando de Los Rodeos a La Palma
+ * la comandante anunciaba «unos quince minutos» —«en Binter son unos
+ * treinta»— y al empezar a bajar «faltan diez» salía de otra cuenta, la recta
+ * hasta el campo a la velocidad de ese momento. Ninguna de las dos sabía que
+ * se sube y se baja, ni que abajo se va más despacio.
+ *
+ * Aquí se recorre lo que queda de ruta a trozos, y en cada trozo se mira **a
+ * qué altura va el plan y a qué velocidad toca ir ahí**:
+ *
+ * - **La altura**, con las mismas reglas con las que el plan pone el T/C y el
+ *   T/D: dos millas por cada mil pies subiendo, tres bajando, y nivelado en
+ *   medio sin pasar del crucero.
+ * - **La velocidad**, la de la escalera: 250 nudos por debajo de diez mil
+ *   pies, la de subida del tipo, su Mach, la de maniobra en el área terminal,
+ *   la de los primeros flaps y la de final. Es la que pide la ventanilla SPD y
+ *   la que sostienen los gases automáticos; ver `velocidadQueToca`. Se pasa de
+ *   indicada a verdadera con el aire de esa altura, y a velocidad sobre el
+ *   suelo con el viento del tramo.
+ *
+ * **Y volando, lo que se vuela.** Lo que queda del tramo de la escalera en
+ * el que se va —el crucero o la bajada— se cuenta a la indicada de ahora y no
+ * a la que toca: quien cruza a doscientos nudos donde tocaban doscientos
+ * cincuenta llega más tarde, y la hora lo dice en el momento. Subiendo no,
+ * que se va acelerando y la de ahora no dice nada de la de arriba; ni en la
+ * llegada, donde la velocidad la ponen los flaps.
+ *
+ * No cuenta el rodaje: es lo que se dice por megafonía —«el vuelo va a durar
+ * unos veinticinco minutos»—, de ruedas arriba a ruedas abajo. Los treinta
+ * minutos de Binter de Los Rodeos a La Palma son de calzos a calzos.
+ */
+export function segundosPorElPerfil(
+  r: Ruta,
+  activo: number,
+  x: number,
+  z: number,
+  p: Perfil,
+): number {
+  const i = Math.max(1, Math.min(r.fijos.length - 1, activo));
+  const puntos: Punto[] = [{ x, z }, ...r.fijos.slice(i)];
+  const falta = restante(r, i, x, z);
+  if (falta <= 1) return 0;
+  const sube = (1000 * PIE) / (MILLAS_POR_MIL_PIES_SUBIENDO * MILLA);
+  const baja = (1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA);
+  const techo = Math.max(p.crucero, p.altitud);
+  /** Dónde va el plan a `hecho` metros de aquí y a `queda` del umbral. */
+  const enElPlan = (hecho: number, queda: number) => {
+    const bajada = r.cotaDelUmbral + queda * baja;
+    if (p.bajando)
+      return { altitud: Math.min(p.altitud, bajada), subiendo: false, bajando: true };
+    const subida = p.altitud < techo ? p.altitud + hecho * sube : techo;
+    const altitud = Math.min(techo, subida, bajada);
+    return {
+      altitud,
+      subiendo: subida < Math.min(techo, bajada),
+      bajando: bajada <= Math.min(techo, subida),
+    };
+  };
+  const queToca = (altitud: number, queda: number, subiendo: boolean, bajando: boolean) =>
+    velocidadQueToca(p.avion, {
+      altitud,
+      restante: queda,
+      bajando,
+      enFinal: false,
+      subiendo,
+      ...(p.atmosfera ? { aire: p.atmosfera } : {}),
+    });
+  const raizDeLaDensidad = (altitud: number) =>
+    Math.sqrt(airDensity(altitud, p.atmosfera) / SEA_LEVEL_DENSITY);
+
+  /*
+   * Cuánto más deprisa o más despacio que lo que toca se va ahora, si se va
+   * en crucero o bajando. Con tope: un número absurdo de un instante —el
+   * avión recién colocado, un picado— no puede decir que se llega mañana.
+   */
+  let factor = 1;
+  let tramoDeAhora: string | null = null;
+  if (p.verdadera !== null && p.verdadera > 1) {
+    const aqui = enElPlan(0, falta);
+    const toca = queToca(p.altitud, falta, aqui.subiendo, aqui.bajando);
+    if (toca.tramo === "crucero" || toca.tramo === "descenso") {
+      const indicada = (p.verdadera * raizDeLaDensidad(p.altitud)) / NUDO;
+      factor = Math.max(0.5, Math.min(1.5, indicada / Math.max(1, toca.kt)));
+      tramoDeAhora = toca.tramo;
+    }
+  }
+
+  const paso = Math.max(TROZO, falta / TROZOS);
+  let hecho = 0;
+  let s = 0;
+  for (let k = 1; k < puntos.length; k++) {
+    const a = puntos[k - 1]!;
+    const b = puntos[k]!;
+    const largoDelTramo = entre(a, b);
+    if (largoDelTramo <= 1) continue;
+    const haciaDonde = rumbo(a, b);
+    const n = Math.ceil(largoDelTramo / paso);
+    const d = largoDelTramo / n;
+    for (let j = 0; j < n; j++) {
+      const medio = hecho + (j + 0.5) * d;
+      const queda = Math.max(0, falta - medio);
+      const plan = enElPlan(medio, queda);
+      const toca = queToca(plan.altitud, queda, plan.subiendo, plan.bajando);
+      if (tramoDeAhora !== null && toca.tramo !== tramoDeAhora) tramoDeAhora = null;
+      const kt = toca.kt * (tramoDeAhora !== null ? factor : 1);
+      const verdadera = (kt * NUDO) / raizDeLaDensidad(plan.altitud);
+      s += d / sobreElSuelo(verdadera, haciaDonde, p.viento);
+    }
+    hecho += largoDelTramo;
+  }
+  return s;
+}
+
 /** Las millas que se recorren por cada mil pies que se bajan. La regla. */
 export const MILLAS_POR_MIL_PIES = 3;
 
@@ -1078,7 +1222,11 @@ export interface Progreso {
   readonly restante: number;
   /** Lo que mide la ruta entera, m. */
   readonly total: number;
-  /** Cuánto falta para llegar, s; `Infinity` parado. */
+  /**
+   * Cuánto falta para llegar, s: por el perfil si el plan sabe qué avión lo
+   * vuela —ver `segundosPorElPerfil`—, y si no a la velocidad de ahora, con
+   * `Infinity` parado.
+   */
   readonly segundos: number;
   /** Y para llegar al punto siguiente, s: la hora que da la carta. */
   readonly alSiguiente: number;
@@ -1241,6 +1389,8 @@ export interface Lectura {
   readonly aire: number;
   readonly enTierra: boolean;
   readonly viento: Viento | null;
+  /** El aire del día, para pasar de indicada a verdadera. Ver `segundosPorElPerfil`. */
+  readonly atmosfera?: Aire;
   /**
    * La altitud de la ventanilla del automático, m, si el avión la lleva y
    * está puesta. Subiendo hacia ella por encima del plan, el descenso cuenta
@@ -1276,13 +1426,32 @@ export class Seguimiento {
   private ultimo: Progreso | null = null;
   /** Aire entre suelo en el último paso: el viento de la bajada. */
   private aireSobreSuelo = 1;
+  /**
+   * El avión que vuela el plan. Con él, la hora sale del perfil —subida,
+   * crucero, bajada y llegada, cada una a su velocidad—; sin él, de la
+   * velocidad de ahora para todo. Ver `segundosPorElPerfil`.
+   */
+  private avion: AircraftConfig | null = null;
+  /** La última vez que se contó la hora del perfil. Ver `horaDelPerfil`. */
+  private contado: {
+    readonly x: number;
+    readonly z: number;
+    readonly altitud: number;
+    readonly aire: number;
+    readonly enTierra: boolean;
+    readonly activo: number;
+    readonly bajando: boolean;
+    readonly segundos: number;
+  } | null = null;
 
   /** Pone un plan nuevo, o ninguno. */
-  poner(ruta: Ruta | null, crucero = 0): void {
+  poner(ruta: Ruta | null, crucero = 0, avion: AircraftConfig | null = null): void {
     this.ruta = ruta;
     this.activo = 1;
     this.yaBajando = false;
     this.crucero = crucero;
+    this.avion = avion;
+    this.contado = null;
     this.ultimo = null;
   }
 
@@ -1395,7 +1564,9 @@ export class Seguimiento {
       alSiguiente: l.aire > 1 ? hastaElSiguiente / suelo : Infinity,
       restante: falta,
       total: r.total,
-      segundos: segundosHastaElFinal(r, this.activo, l.x, l.z, l.aire, l.viento),
+      segundos: this.avion
+        ? this.horaDelPerfil(r, this.avion, l)
+        : segundosHastaElFinal(r, this.activo, l.x, l.z, l.aire, l.viento),
       descenso,
       puntoDeDescenso:
         descenso !== null && !this.yaBajando && descenso < falta
@@ -1404,6 +1575,51 @@ export class Seguimiento {
       puntoDeSubida: this.dondeSeAcabaDeSubir(l, falta, descenso),
     };
     return { descenso: ahora, cambio: this.activo !== antes };
+  }
+
+  /**
+   * **La hora del perfil, sin contarla en cada fotograma.**
+   *
+   * Contarla son doscientos trozos de ruta con su escalera de velocidades,
+   * unos noventa microsegundos en el portátil y varias veces eso en una
+   * tablet, para una cifra que la pantalla escribe en décimas de minuto. Se
+   * vuelve a contar cuando cambia algo que la cambia —otro punto del plan, el
+   * punto de descenso, medio kilómetro recorrido, cien metros de altura, otra
+   * velocidad— y entre tanto se le descuenta lo recorrido.
+   */
+  private horaDelPerfil(r: Ruta, avion: AircraftConfig, l: Lectura): number {
+    const c = this.contado;
+    if (
+      c &&
+      c.activo === this.activo &&
+      c.bajando === this.yaBajando &&
+      c.enTierra === l.enTierra &&
+      Math.abs(l.altitud - c.altitud) < 100 &&
+      Math.abs(l.aire - c.aire) < 0.03 * c.aire
+    ) {
+      const movido = Math.hypot(l.x - c.x, l.z - c.z);
+      if (movido < RECONTAR) return l.enTierra ? c.segundos : c.segundos - movido / Math.max(1, l.aire);
+    }
+    const segundos = segundosPorElPerfil(r, this.activo, l.x, l.z, {
+      avion,
+      altitud: l.altitud,
+      crucero: this.desde(l),
+      bajando: this.yaBajando,
+      viento: l.viento,
+      ...(l.atmosfera ? { atmosfera: l.atmosfera } : {}),
+      verdadera: l.enTierra ? null : l.aire,
+    });
+    this.contado = {
+      x: l.x,
+      z: l.z,
+      altitud: l.altitud,
+      aire: l.aire,
+      enTierra: l.enTierra,
+      activo: this.activo,
+      bajando: this.yaBajando,
+      segundos,
+    };
+    return segundos;
   }
 
   /**

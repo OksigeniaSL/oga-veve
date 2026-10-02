@@ -30,9 +30,13 @@ import {
   libra,
   minimaEnCrucero,
   porElMar,
+  puntoAFaltando,
+  segundosPorElPerfil,
   type Ruta,
 } from "../flight/ruta";
-import { nivelDicho } from "../audio/partes-de-la-comandante";
+import { airDensity, SEA_LEVEL_DENSITY } from "../flight/atmosphere";
+import { NUDO, velocidadQueToca } from "../flight/escalera-de-velocidades";
+import { minutosDichos, nivelDicho } from "../audio/partes-de-la-comandante";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
 import { campoDeCasa, campoVecino, type CampoEnElMundo } from "./campo-del-vuelo";
 import { dondeCae, type Sitio } from "./entre-aerodromos";
@@ -462,6 +466,191 @@ describe("el crucero que se anuncia es el que se vuela", () => {
     // Ninguna regla semicircular suelta ni el nivel de antes.
     expect(fuenteDelJuego).not.toMatch(/\bnivelPara\(/);
     expect(fuenteDelJuego).not.toMatch(/\bnivelPrevisto\(/);
+  });
+});
+
+/**
+ * **Lo que dura el vuelo, como lo dice la comandante.**
+ *
+ * De Los Rodeos a La Palma anunciaba «unos quince minutos» y al empezar a
+ * bajar «faltan diez»; Binter pone treinta. Las dos cifras salían de cuentas
+ * distintas y ninguna contaba la subida ni la bajada. Ahora salen de la hora
+ * del plan —`segundosPorElPerfil`, la de la pantalla de navegación— y aquí se
+ * mira que la primera sea lo que de verdad se tarda volando el plan, que la
+ * segunda cuadre con la primera, y que las dos se parezcan a las de Binter.
+ */
+describe("lo que dura el vuelo", () => {
+  /** El crucero con el que el juego planea este tramo para este avión. */
+  const cruceroDe = (t: Tramo, avion: (typeof AIRCRAFT)[number]) =>
+    cruceroDelTramo(t.ruta, t.salida, { ...t.juego, techo: avion.alturaDeCrucero, ficha: avion });
+
+  /** Lo que anuncia la comandante en tierra: la hora del plan desde la pista. */
+  function anunciado(t: Tramo, avion: (typeof AIRCRAFT)[number]): number {
+    const a = t.ruta.fijos[0]!;
+    return segundosPorElPerfil(t.ruta, 1, a.x, a.z, {
+      avion,
+      altitud: t.juego.cotaDePista(t.salida, a.x, a.z),
+      crucero: cruceroDe(t, avion),
+      bajando: false,
+      viento: null,
+      verdadera: null,
+    });
+  }
+
+  /**
+   * **Y lo que se tarda volándolo**, segundo a segundo y sin la cuenta de
+   * arriba: el avión va por la ruta subiendo a dos millas por mil pies,
+   * nivelado y bajando a tres, a la velocidad que pide la escalera en cada
+   * sitio y multiplicada por `ritmo` en crucero y bajando —uno, como se
+   * planea; menos, como voló Enrique—. El seguimiento del juego va leyendo la hora como la
+   * lee la pantalla, y se apunta lo que dice al pasar el punto de descenso.
+   */
+  function volar(t: Tramo, avion: (typeof AIRCRAFT)[number], ritmo = 1) {
+    const r = t.ruta;
+    const crucero = cruceroDe(t, avion);
+    const cota = t.juego.cotaDePista(t.salida, 0, 0);
+    const sube = (1000 * 0.3048) / (2 * 1852);
+    const baja = (1000 * 0.3048) / (3 * 1852);
+    const plan = new Seguimiento();
+    plan.poner(r, crucero, avion);
+    const a = r.fijos[0]!;
+    plan.paso({ x: a.x, z: a.z, altitud: cota, vertical: 0, aire: avion.cruiseSpeed, enTierra: true, viento: null });
+    const enTierra = plan.progreso!.segundos;
+    const dt = 2;
+    let hecho = 0;
+    let h = cota;
+    let reloj = 0;
+    let alBajar: { reloj: number; eta: number } | null = null;
+    while (hecho < r.total && reloj < 4 * 3600) {
+      const queda = r.total - hecho;
+      const subida = cota + hecho * sube;
+      const bajada = r.cotaDelUmbral + queda * baja;
+      const nuevo = Math.min(crucero, subida, bajada);
+      const subiendo = subida < Math.min(crucero, bajada);
+      const bajando = plan.bajando || bajada <= Math.min(crucero, subida);
+      const toca = velocidadQueToca(avion, { altitud: nuevo, restante: queda, bajando, enFinal: false, subiendo });
+      const lento = toca.tramo === "crucero" || toca.tramo === "descenso" ? ritmo : 1;
+      const verdadera =
+        (toca.kt * lento * NUDO) / Math.sqrt(airDensity(nuevo) / SEA_LEVEL_DENSITY);
+      const p = puntoAFaltando(r, queda) ?? a;
+      const paso = plan.paso({
+        x: p.x,
+        z: p.z,
+        altitud: nuevo,
+        vertical: (nuevo - h) / dt,
+        aire: verdadera,
+        enTierra: false,
+        viento: null,
+      });
+      if (paso.descenso) alBajar = { reloj, eta: plan.progreso!.segundos };
+      h = nuevo;
+      hecho += verdadera * dt;
+      reloj += dt;
+    }
+    return { enTierra, total: reloj, alBajar };
+  }
+
+  const tramoDe = (nombre: string) => TRAMOS.find((t) => t.nombre.startsWith(nombre))!;
+
+  it("la comandante dice en tierra lo que da la pantalla de navegación", () => {
+    for (const t of TRAMOS) {
+      const v = volar(t, JAZ_90);
+      expect(Math.abs(v.enTierra - anunciado(t, JAZ_90)), t.nombre).toBeLessThan(30);
+    }
+  });
+
+  it("y es lo que se tarda volando el plan, con su subida y su bajada", () => {
+    for (const t of TRAMOS)
+      for (const avion of [JAZ_90, AIRCRAFT.find((a) => a.id === "jaz-60")!]) {
+        const v = volar(t, avion);
+        expect(Math.abs(v.total - anunciado(t, avion)), `${t.nombre} ${avion.id}`).toBeLessThan(60);
+      }
+  });
+
+  it("y lo que dice al empezar a bajar cuadra con lo primero", () => {
+    let vistos = 0;
+    for (const t of TRAMOS) {
+      const v = volar(t, JAZ_90);
+      if (!v.alBajar) continue;
+      vistos++;
+      // Lo volado hasta el punto de descenso y lo que dice que falta suman lo anunciado.
+      expect(Math.abs(v.alBajar.reloj + v.alBajar.eta - anunciado(t, JAZ_90)), t.nombre).toBeLessThan(60);
+      // Y lo que falta es lo que de verdad faltaba.
+      expect(Math.abs(v.total - v.alBajar.reloj - v.alBajar.eta), t.nombre).toBeLessThan(60);
+    }
+    expect(vistos).toBeGreaterThan(TRAMOS.length / 2);
+  });
+
+  it("y volando más despacio de lo planeado, la hora lo dice", () => {
+    /*
+     * Enrique voló lento a propósito, porque con el teclado no sostenía el
+     * nivel (#145). La primera cifra es lo que se planea; la de después, lo
+     * que se está volando.
+     */
+    const t = tramoDe("GCXO 30 → GCLA 36");
+    const deprisa = volar(t, JAZ_90);
+    const despacio = volar(t, JAZ_90, 0.75);
+    expect(despacio.enTierra).toBeCloseTo(deprisa.enTierra, 6);
+    expect(despacio.total).toBeGreaterThan(deprisa.total + 60);
+    expect(despacio.alBajar).not.toBeNull();
+    expect(Math.abs(despacio.total - despacio.alBajar!.reloj - despacio.alBajar!.eta)).toBeLessThan(60);
+  });
+
+  /*
+   * **Y contra las de verdad.** Binter publica la duración de calzos a calzos
+   * —con el rodaje de los dos campos y su margen— en sus ATR 72 y E195-E2
+   * (horarios de 2026, flightmapper.net): Los Rodeos–La Gomera, Gran Canaria y
+   * La Palma, treinta minutos; Los Rodeos–El Hierro, cuarenta; Gran
+   * Canaria–Lanzarote, cuarenta y cinco. Lo que anuncia la comandante es de
+   * ruedas arriba a ruedas abajo, y el JAZ 90 es un reactor: va por debajo
+   * —al menos los cinco minutos de rodar en los dos campos— y nunca por
+   * debajo de la mitad. Lo que había antes no cabía: de Los Rodeos a La Palma
+   * eran diecisiete minutos y medio, y se decían «quince».
+   */
+  const BINTER: Readonly<Record<string, number>> = {
+    "GCXO → GCGM": 30,
+    "GCXO → GCLP": 30,
+    "GCXO → GCLA": 30,
+    "GCXO → GCHI": 40,
+    "GCLP → GCRR": 45,
+  };
+  const deLaRuta = (ruta: string) => {
+    const [de, a] = ruta.split(" → ");
+    return TRAMOS.filter((t) => t.nombre.startsWith(de!) && t.nombre.includes(`→ ${a}`));
+  };
+  for (const [ruta, bloque] of Object.entries(BINTER))
+    it(`${ruta}: se parece a lo de Binter (${bloque} min de calzos a calzos)`, () => {
+      const tramos = deLaRuta(ruta);
+      expect(tramos.length).toBeGreaterThan(0);
+      for (const t of tramos) {
+        const min = anunciado(t, JAZ_90) / 60;
+        expect(min, t.nombre).toBeLessThanOrEqual(bloque - 5);
+        expect(min, t.nombre).toBeGreaterThanOrEqual(bloque / 2);
+      }
+    });
+
+  it("y lo que en Binter es más largo, aquí también", () => {
+    const media = (ruta: string) => {
+      const ts = deLaRuta(ruta);
+      return ts.reduce((s, t) => s + anunciado(t, JAZ_90), 0) / ts.length;
+    };
+    const cortas = Math.max(media("GCXO → GCGM"), media("GCXO → GCLP"), media("GCXO → GCLA"));
+    expect(media("GCXO → GCHI")).toBeGreaterThan(cortas);
+    expect(media("GCLP → GCRR")).toBeGreaterThan(cortas);
+  });
+
+  it("de Los Rodeos a La Palma ya no son quince minutos", () => {
+    for (const t of TRAMOS.filter((x) => x.nombre.startsWith("GCXO") && x.nombre.includes("GCLA")))
+      expect(minutosDichos(anunciado(t, JAZ_90)), t.nombre).toBeGreaterThanOrEqual(20);
+  });
+
+  it("y el juego no tiene otra cuenta: la bienvenida y el descenso salen del plan", () => {
+    const deLaComandante = /private planDelTramo\(\)[\s\S]*?\n {2}\}\n/.exec(fuenteDelJuego)?.[0] ?? "";
+    expect(deLaComandante).toContain("segundosPorElPerfil(");
+    const delDescenso = /case "comandante\.descenso": \{[\s\S]*?descensoPara\(/.exec(fuenteDelJuego)?.[0] ?? "";
+    expect(delDescenso).toContain("this.segundosDelPlanHasta(");
+    // Y el plan sabe qué avión lo vuela, que es lo que le da el perfil.
+    expect(fuenteDelJuego).toMatch(/this\.navegacion\.poner\(\s*ruta,[\s\S]*?this\.aircraft,?\s*\)/);
   });
 });
 
