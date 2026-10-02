@@ -13,6 +13,8 @@ import {
   AVISO,
   PRECAUCION,
   colorDelRelieve,
+  gravedadDelSuelo,
+  juntarAvisos,
   margenDeLaFase,
   mirarDelante,
   type PistaConocida,
@@ -166,6 +168,22 @@ describe("el caso que lo pidió: La Palma por la final recta de la 18", () => {
     expect(encima).not.toBeNull();
     // Con más de media milla —un cuarto de minuto a 140 nudos— de antelación.
     expect(primero!.millas - encima!).toBeGreaterThan(0.5);
+  });
+});
+
+describe("lo de debajo y lo de delante, juntos", () => {
+  it("el aviso de delante es el mismo «sube» que el de debajo, y su precaución va la última", () => {
+    expect(juntarAvisos(null, "aviso")).toBe("sube");
+    expect(juntarAvisos("bajo", "aviso")).toBe("sube");
+    expect(juntarAvisos("bajo", "precaucion")).toBe("bajo");
+    expect(juntarAvisos(null, "precaucion")).toBe("monte");
+    expect(juntarAvisos(null, null)).toBeNull();
+  });
+
+  it("e ir a más pesa más: así la precaución no tapa su propio aviso", () => {
+    expect(gravedadDelSuelo("sube")).toBeGreaterThan(gravedadDelSuelo("bajo"));
+    expect(gravedadDelSuelo("bajo")).toBeGreaterThan(gravedadDelSuelo("monte"));
+    expect(gravedadDelSuelo("monte")).toBeGreaterThan(gravedadDelSuelo(null));
   });
 });
 

@@ -596,6 +596,7 @@ import {
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
+  gravedadDelSuelo,
   juntarAvisos,
   mirarDelante,
   type AvisoDelSuelo,
@@ -2951,6 +2952,11 @@ export class Game {
    * manda sobre el de tráfico. Ver `flight/tcas.ts`.
    */
   private terrenoAhora: AvisoDelSuelo = null;
+
+  /** El aviso del suelo de este instante, se haya dicho o no. Para los bancos. */
+  get terrenoParaBanco(): AvisoDelSuelo {
+    return this.terrenoAhora;
+  }
   /**
    * **Lo que ve por delante el avisador de terreno**, en el avión que lo
    * lleva, y cada cuánto se mira. Ver `mirarElTerrenoDelante`.
@@ -10653,8 +10659,16 @@ export class Game {
      * que interrumpir es que se aprenda a desoírla. Ver `terrenoTranquiloDesde`.
      */
     this.terrenoTranquiloDesde = terreno ? 0 : this.terrenoTranquiloDesde + dt;
+    /*
+     * **Pero ir a más se dice siempre.** Sin esto, la precaución de delante
+     * tapaba su propio aviso: el «monte» seguía puesto sin un respiro hasta
+     * que el suelo ya pedía «pull up», y el «pull up» no podía sonar porque
+     * no había habido calma. Lo que no se repite es lo mismo o lo de menos.
+     */
     const puedeAvisar =
-      this.terrenoDicho === null || this.terrenoTranquiloDesde >= SE_REARMA;
+      this.terrenoDicho === null ||
+      this.terrenoTranquiloDesde >= SE_REARMA ||
+      gravedadDelSuelo(terreno) > gravedadDelSuelo(this.terrenoDicho);
     if (terreno && terreno !== this.terrenoDicho && puedeAvisar) {
       this.terrenoDicho = terreno;
       this.hud.senal.mostrar(

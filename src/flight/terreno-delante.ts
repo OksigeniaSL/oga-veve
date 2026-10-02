@@ -283,6 +283,15 @@ export function juntarAvisos(debajo: AvisoDeTerreno, delante: AvisoDelante): Avi
 }
 
 /**
+ * **Lo que pesa cada aviso del suelo**, para saber cuándo va a más: «sube»
+ * más que «bajo», y «bajo» más que «monte». Ir a más se dice siempre, aunque
+ * el aviso de antes siga puesto; ver el aviso de terreno en `Game`.
+ */
+export function gravedadDelSuelo(a: AvisoDelSuelo): number {
+  return a === "sube" ? 3 : a === "bajo" ? 2 : a === "monte" ? 1 : 0;
+}
+
+/**
  * **El color del relieve en la pantalla de navegación**, por lo que está por
  * encima o por debajo del avión, como lo pinta el EGPWS de verdad: rojo lo que
  * pasa de dos mil pies por encima; ámbar fuerte de mil a dos mil; ámbar flojo
