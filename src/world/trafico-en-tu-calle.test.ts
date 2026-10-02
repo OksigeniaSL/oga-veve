@@ -230,18 +230,24 @@ describe("el tráfico no espera encima de tu raya", () => {
         const deSiempre = suelo?.salida();
         if (!suelo || !deSiempre) continue;
         const raya = aLosMetros(deSiempre.camino, deSiempre.espera);
-        // Tu raya pasa justo por su doble raya de siempre.
+        /*
+         * Tu raya pasa justo por su doble raya de siempre, **camino de otra**:
+         * acaba lejos de ahí. Si acabara ahí, sería tu doble raya, y en la
+         * tuya sí se espera, en la fila —ver `FILA_DE_SALIDA` en
+         * `suelo-del-trafico.ts`—.
+         */
         const porDondeVas: EnElPlano[] = [-40, -20, 0, 20, 40].map((d) => ({
           x: raya.x + d,
           z: raya.z,
         }));
+        porDondeVas.push({ x: raya.x + 2000, z: raya.z + 2000 });
         const ahora = suelo.salida(undefined, porDondeVas);
         expect(ahora, esc.id).not.toBeNull();
         const nueva = aLosMetros(ahora!.camino, ahora!.espera);
         const igual = Math.hypot(nueva.x - raya.x, nueva.z - raya.z) < 1;
         // O se ha ido a otra, apartada de ti, o no había otra y es la de antes.
         if (!igual)
-          for (const p of porDondeVas)
+          for (const p of porDondeVas.slice(0, -1))
             expect(
               Math.hypot(nueva.x - p.x, nueva.z - p.z),
               `${esc.id}`,

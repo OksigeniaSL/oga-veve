@@ -95,6 +95,7 @@ import { cabeEn, campoDe } from "./flight/cabe";
 import {
   crearTrafico,
   tiposDelCampo,
+  type EnTierra,
   type QuienJuega,
   type Trafico,
 } from "./world/trafico";
@@ -459,7 +460,11 @@ import {
   rumboHacia,
   traves,
 } from "./world/rumbo";
-import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
+import {
+  PlanDeVuelo,
+  separacionEnTierra,
+  type Vista,
+} from "./world/plan-de-vuelo";
 import { comoDibujo } from "./ui/senal";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
@@ -8368,6 +8373,21 @@ export class Game {
              * `rodaje.ts` para la otra mitad: tu raya también lo rodea a él.
              */
             porDondeVas: cadaTanto(ruta, 10),
+            /*
+             * **Y el que aterriza no sale por donde estás tú**, si tiene
+             * otra salida: tu avión y tu raya, con la separación de ala. Ver
+             * `OCUPADA_CUESTA` en `world/suelo-del-trafico.ts`.
+             */
+            ocupados: this.flight.state.onGround
+              ? {
+                  puntos: [
+                    { x: yo.x, z: yo.z },
+                    ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
+                    ...cadaTanto(ruta, 30),
+                  ],
+                  radio: separacionEnTierra(this.aircraft.wingSpan),
+                }
+              : undefined,
           };
         },
       },
@@ -8392,6 +8412,37 @@ export class Game {
       alUmbral: alUmbral !== null && alUmbral > 0 ? alUmbral : null,
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
+      enTierra: s.onGround ? this.tuSitioEnTierra() : null,
+    };
+  }
+
+  /**
+   * **Tu avión en el suelo, visto desde el tráfico que rueda**: dónde está,
+   * cuánto ocupa y por dónde va a pasar en los próximos segundos —la raya por
+   * delante y hacia donde apunta el morro—. Con esto el tráfico se para
+   * detrás de ti y te cede los cruces. Ver `cedeA` en `world/trafico.ts`.
+   */
+  private tuSitioEnTierra(): EnTierra {
+    const s = this.flight.state;
+    const v = Math.hypot(s.velocity.x, s.velocity.z);
+    /*
+     * Cuatro segundos de lo que rueda, y nada si está parado: un avión parado
+     * no va a pasar por ningún cruce, y reservárselo dejaría al tráfico
+     * esperando a alguien que no viene.
+     */
+    const metros = v < 0.5 ? 0 : Math.max(15, v * 4);
+    const porDondeVa = this.plan?.porDondeVas(metros) ?? [];
+    for (let d = 6; d <= metros; d += 6)
+      porDondeVa.push({
+        x: s.position.x + (s.velocity.x / v) * d,
+        z: s.position.z + (s.velocity.z / v) * d,
+      });
+    return {
+      x: s.position.x,
+      z: s.position.z,
+      separacion: separacionEnTierra(this.aircraft.wingSpan),
+      porDondeVa,
+      esperandoLaPista: this.faseDeAhora === "esperando",
     };
   }
 

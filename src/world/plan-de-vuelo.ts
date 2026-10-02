@@ -513,6 +513,20 @@ const SEMIALA_DEL_TRAFICO = 17;
 const MARGEN_ENTRE_ALAS = 7.5;
 
 /**
+ * **Lo que tienen que separarse los ejes de tu avión y uno del tráfico** en
+ * las calles, m: tu semiala, la del más grande del tráfico y el margen de ala.
+ *
+ * Es una regla y no un número suelto, porque la usan los dos lados: tu raya
+ * rodea a un parado a esta distancia —ver `ocupadosAhora`— y el tráfico que
+ * rueda no se te acerca a menos de ella —ver `cedeA` en `trafico.ts`—. Si
+ * cada uno llevara la suya, uno se pararía a cuarenta metros y el otro
+ * pasaría a treinta.
+ */
+export function separacionEnTierra(envergadura: number): number {
+  return envergadura / 2 + SEMIALA_DEL_TRAFICO + MARGEN_ENTRE_ALAS;
+}
+
+/**
  * **El hueco que se deja al de delante en la cola de salida**, m, de borde a
  * borde: entre la cola del uno y el morro del otro, contados con la semiala
  * de cada uno como largo. Treinta: sitio para que el de delante gire al
@@ -1499,7 +1513,7 @@ export class PlanDeVuelo {
       puntos: saliendo
         ? [...this.ocupados(), ...this.hartos]
         : [...this.ocupados(), ...this.enCola()],
-      radio: this.avion.wingSpan / 2 + SEMIALA_DEL_TRAFICO + MARGEN_ENTRE_ALAS,
+      radio: separacionEnTierra(this.avion.wingSpan),
     };
   }
 
@@ -3168,6 +3182,31 @@ export class PlanDeVuelo {
   /** La ruta en coordenadas de mundo. Para las herramientas de comprobación. */
   rutaVisible(): readonly Punto[] {
     return this.rutaMundo;
+  }
+
+  /**
+   * **Por dónde vas a pasar en los próximos `metros`**, en los ejes del mundo:
+   * la raya por delante de lo recorrido, un punto cada `paso`. Es lo que mira
+   * el tráfico que rueda para cederte el paso en un cruce antes de que
+   * llegues a él, y no al verte encima. Ver `cedeA` en `trafico.ts`.
+   */
+  porDondeVas(metros: number, paso = 6): { x: number; z: number }[] {
+    const ruta = this.rutaMundo;
+    const hechos = this.recorridos;
+    if (ruta.length < 2 || hechos.length !== ruta.length || metros <= 0) return [];
+    const puntos: { x: number; z: number }[] = [];
+    const hasta = this.avance + metros;
+    for (let d = this.avance + paso; d <= hasta; d += paso) {
+      let i = 1;
+      while (i < ruta.length - 1 && hechos[i]! < d) i++;
+      const a = ruta[i - 1]!;
+      const b = ruta[i]!;
+      const largo = hechos[i]! - hechos[i - 1]!;
+      if (d > hechos[ruta.length - 1]!) break;
+      const t = largo > 0 ? Math.max(0, Math.min(1, (d - hechos[i - 1]!) / largo)) : 0;
+      puntos.push({ x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t });
+    }
+    return puntos;
   }
 
   /** La ruta **sin redondear**, tal y como la da el buscador. Para medirla. */
@@ -5386,14 +5425,21 @@ export class PlanDeVuelo {
    * da la velocidad a la que se puede ir para pararse a tiempo, frenando como
    * se frena rodando; sin nadie en la raya, sin límite.
    *
-   * Solo yendo hacia la pista: volviendo, los que van a salir vienen de
-   * frente y la raya los rodea.
+   * **Y detrás de cualquiera que esté en tu raya, no solo de tu cola.** El
+   * tráfico ya no atraviesa a nadie: se para y te cede el paso —ver `cedeA`
+   * en `trafico.ts`—. Si después el que se queda quieto en tu raya es él —uno
+   * que acaba de aterrizar y rueda a su puesto, o uno que sale y viene de
+   * frente mientras vuelves—, la raya pasaba por encima y te llevaba a
+   * atravesarle a ti. La raya los rodea al trazarla si hay por dónde; si no,
+   * o si aparecen después, se para detrás, a la ida, a la vuelta y entrando en
+   * la pista. Frente a frente, el que se quita es él: ver
+   * `PACIENCIA_CON_QUIEN_JUEGA` en `trafico.ts`.
    */
   private hastaElDeDelante(): number {
     this.detrasDe = null;
-    if (this.destino !== "espera") return Infinity;
+    if (this.destino === null) return Infinity;
     const ruta = this.rutaMundo;
-    const cola = this.colaQueHay().filter(
+    const cola = [...this.colaQueHay(), ...this.ocupados()].filter(
       (q) => !this.hartos.some((h) => Math.hypot(q[0] - h[0], q[1] - h[1]) < YA_NO_SE_LE_ESPERA),
     );
     if (ruta.length < 2 || !cola.length) return Infinity;
