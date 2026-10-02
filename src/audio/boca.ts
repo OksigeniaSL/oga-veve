@@ -493,6 +493,18 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   ["vuelo.lentoYBajo", "vuelo.bajasRapido"],
 ];
 
+/**
+ * **Lo que cambia la situación, y por eso no lo calla lo que se dijo antes.**
+ *
+ * En `NO_A_LA_VEZ` manda la primera, y con la orden de irse al aire eso solo
+ * vale en un sentido: dada, detrás no suena «estás en final» ni «venís bajo».
+ * Al revés no: la orden llega porque algo cambió —alguien entró en la pista—,
+ * y un «final» de hace seis segundos no la hace mentira. En Gando, la torre
+ * dijo «motor y al aire» y el porqué de la instructora se calló por reñir con
+ * su propio «final».
+ */
+const CAMBIA_LA_SITUACION = /^vuelo\.mandanFrustrar(?:~\d+)?$/;
+
 /** Con quién riñe esta clave, si riñe con alguien. */
 function riñenCon(clave: string): readonly string[] {
   const otras: string[] = [];
@@ -1004,6 +1016,7 @@ export class Boca {
      */
     if (dicha !== undefined && ahora - dicha < NO_REPETIR && !noSePierde(clave, urgencia))
       return "repetida";
+    if (CAMBIA_LA_SITUACION.test(clave)) return null;
     for (const otra of riñenCon(clave)) {
       const cuando = this.dichas.get(otra);
       if (cuando !== undefined && ahora - cuando < RIÑEN) return `riñe con ${otra}`;

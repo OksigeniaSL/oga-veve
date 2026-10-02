@@ -474,6 +474,25 @@ describe("un suceso, una sola voz", () => {
     expect(dicho).toEqual(["frustrada"]);
   });
 
+  /*
+   * Al revés no riñen: la orden llega porque la situación cambió, y un
+   * «estás en final» o un «venís bajo» de hace unos segundos no la hace
+   * mentira. En Gando, la torre mandó al aire seis segundos después del
+   * «final» de la instructora, y el porqué —«Pista ocupada. Subí y volvé por
+   * el circuito»— se calló por reñir con él.
+   */
+  it("pero la orden de irse no la calla lo que se dijo antes", () => {
+    for (const antes of ["vuelo.final", "vuelo.papiBajo", "vuelo.aroBajo"]) {
+      const { dicho, acabar, frase } = coro();
+      const b = boca();
+      b.pedir("normal", frase(antes), antes);
+      acabar[antes]!();
+      reloj += SILENCIO + 1;
+      b.pedir("mando", frase("frustrada"), "vuelo.mandanFrustrar");
+      expect(dicho, antes).toEqual([antes, "frustrada"]);
+    }
+  });
+
   it("pero pasado el rato vuelve a poder decirse", () => {
     // Callarse para siempre sería el otro extremo: la situación pasa.
     const { dicho, acabar, frase } = coro();
