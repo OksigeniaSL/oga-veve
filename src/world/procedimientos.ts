@@ -40,7 +40,7 @@
  *   terreno y las que importan para bajar.
  */
 
-import type { Papel } from "../flight/ruta";
+import type { Fijo, Papel } from "../flight/ruta";
 import { CANARIAS } from "./procedimientos-canarias";
 import { PARAGUAY } from "./procedimientos-paraguay";
 
@@ -56,18 +56,46 @@ export interface Publicado {
   readonly minimaPies: number | null;
 }
 
+/** Una aproximación publicada a una cabecera. */
+export interface Aproximacion {
+  /** El nombre de su carta, que es por donde se comprueba. */
+  readonly carta: string;
+  /**
+   * Sus ramas: cada una empieza en su punto de inicio y acaba en el de final.
+   * El umbral no va: lo pone el aeródromo del juego, que es donde se toca.
+   */
+  readonly ramas: readonly (readonly Publicado[])[];
+  /**
+   * **Si acaba en circuito**: a cuántas millas del umbral se entra a la vista
+   * en el eje de la pista. Ver `ramasDeLlegada`.
+   *
+   * Hay cabeceras cuya única aproximación publicada **no acaba alineada** con
+   * la pista: llega a un punto de final a treinta grados del eje y se termina
+   * a ojo, dando la vuelta que haga falta por el lado protegido. Antes el
+   * juego las tiraba enteras y calculaba una final recta a diez millas por el
+   * eje; en la 18 de La Palma esa recta cruzaba la ladera de Barlovento a mil
+   * ochocientos pies. Lo que se vuela ahora es lo publicado —llegada, punto
+   * de inicio, intermedio y punto de final, todo sobre el mar— y desde el
+   * punto de final, **a la vista**, al eje.
+   */
+  readonly aLaVista?: number;
+  /**
+   * **O la maniobra visual con derrota prescrita (VPT) que publica la carta**
+   * para terminarla: sus puntos, desde el punto de aproximación frustrada
+   * hasta el primero de la final recta. Es lo que publica Lanzarote para la
+   * 21: la RNP llega a RR551, sobre la Montaña de Tahíche, y la VPT sigue por
+   * la cantera de Argana y la rotonda de la LZ-301 hasta el umbral. Cuando la
+   * carta dice por dónde, no se calcula nada.
+   */
+  readonly vpt?: readonly Publicado[];
+}
+
 /** Lo publicado de un aeropuerto, por cabecera. */
 export interface Procedimientos {
   /** De dónde sale, para citarlo: la enmienda y su fecha. */
   readonly fuente: string;
-  /**
-   * Las ramas de la aproximación a cada cabecera: cada una empieza en su
-   * punto de inicio y acaba en el de final. El umbral no va: lo pone el
-   * aeródromo del juego, que es donde se toca.
-   */
-  readonly aproximaciones: Readonly<
-    Record<string, { readonly carta: string; readonly ramas: readonly (readonly Publicado[])[] }>
-  >;
+  /** La aproximación de cada cabecera que la tiene. Ver `Aproximacion`. */
+  readonly aproximaciones: Readonly<Record<string, Aproximacion>>;
   /** Las salidas de cada cabecera, con sus puntos en orden. */
   readonly salidas: Readonly<
     Record<string, readonly { readonly nombre: string; readonly carta: string; readonly fijos: readonly Publicado[] }[]>
@@ -89,6 +117,106 @@ export function ramasDe(
   if (!cabecera) return [];
   return procedimientosDe(oaci)?.aproximaciones[cabecera]?.ramas ?? [];
 }
+
+/**
+ * **Por dónde se llega a esta cabecera**, ya en el mundo: las ramas
+ * publicadas; las de una aproximación en circuito, con su final a la vista;
+ * o, sin nada publicado, la calculada sobre el eje.
+ *
+ * Es la única cuenta de esto: la usan el plan del juego —ver `rutaDelTramo`—
+ * y las pruebas, que antes llevaban cada una su copia.
+ *
+ * `umbral` y `rumbo` en el mundo: el umbral de aterrizaje en uso y su rumbo
+ * verdadero. `aMundo` pone un punto publicado en el mundo de quien pregunta.
+ */
+export function ramasDeLlegada(
+  oaci: string | null,
+  cabecera: string | null,
+  umbral: { readonly x: number; readonly z: number },
+  rumbo: number,
+  aMundo: (p: Publicado) => Fijo,
+): Fijo[][] {
+  if (!cabecera) return [];
+  const aproximacion = procedimientosDe(oaci)?.aproximaciones[cabecera];
+  if (!aproximacion || aproximacion.ramas.length === 0)
+    return [
+      aproximacionCalculada(cabecera, umbral, rumbo).map(
+        (f): Fijo => ({ ...f, minima: null, calculado: true }),
+      ),
+    ];
+  const ramas = aproximacion.ramas.map((r) => r.map(aMundo));
+  /*
+   * **El punto de final de la carta pasa a ser uno más de la ruta**, con su
+   * altitud mínima, cuando la aproximación acaba en circuito: la final de
+   * verdad del juego empieza donde empieza la final recta, que es donde
+   * empieza la senda que se enseña.
+   */
+  const hastaSuFinal = (r: readonly Fijo[]): Fijo[] =>
+    r.map((f): Fijo => (f.papel === "faf" ? { ...f, papel: "ruta" } : f));
+  const vpt = aproximacion.vpt?.map(aMundo);
+  if (vpt && vpt.length > 0) {
+    // La VPT de la carta: el último de sus puntos es donde empieza la final.
+    const enLaVpt = vpt.map(
+      (f, i): Fijo => ({ ...f, papel: i === vpt.length - 1 ? "faf" : "ruta" }),
+    );
+    return ramas.map((r) => [...hastaSuFinal(r), ...enLaVpt]);
+  }
+  const millas = aproximacion.aLaVista;
+  if (millas === undefined) return ramas;
+  /*
+   * **Y si la carta no dice por dónde, a la vista al eje**, cortándolo a
+   * treinta grados una milla antes de entrar en él: el corte de una
+   * interceptación de manual, y el que deja girar en el eje sin pasarse.
+   * Entrando de frente desde el punto de final de La Palma eran cuarenta y
+   * cinco grados con la costa de Santa Cruz por delante, y el avisador de
+   * terreno que mira hacia delante —ver `flight/terreno-delante.ts`— la
+   * veía antes del giro.
+   *
+   * Los dos puntos no son de ninguna carta y llevan los nombres que les da
+   * un ordenador de vuelo: «INTC», donde se empieza a cortar el eje, y «RX» y
+   * el número de la cabecera, el punto de su prolongación donde se entra.
+   */
+  const h = (rumbo * Math.PI) / 180;
+  const fx = Math.sin(h);
+  const fz = -Math.cos(h);
+  const enElEje: Fijo = {
+    nombre: `RX${cabecera}`,
+    x: umbral.x - fx * millas * MILLA,
+    z: umbral.z - fz * millas * MILLA,
+    papel: "faf",
+    minima: null,
+    calculado: true,
+    aLaVista: true,
+  };
+  return ramas.map((r) => {
+    const ultimo = r[r.length - 1];
+    /*
+     * Del lado del eje por el que se viene: el del último punto publicado.
+     * Viniendo por la izquierda de la final —el este, en la 18 de La Palma—
+     * se corta con treinta grados más que el rumbo de la pista y se gira a la
+     * izquierda para entrar; por la derecha, al revés.
+     */
+    const izquierda = ultimo
+      ? Math.sign((ultimo.x - enElEje.x) * fz - (ultimo.z - enElEje.z) * fx) || 1
+      : 1;
+    const c = h + izquierda * CORTE;
+    const corte: Fijo = {
+      nombre: "INTC",
+      x: enElEje.x - Math.sin(c) * ANTES_DE_CORTAR,
+      z: enElEje.z + Math.cos(c) * ANTES_DE_CORTAR,
+      papel: "ruta",
+      minima: null,
+      calculado: true,
+      aLaVista: true,
+    };
+    return [...hastaSuFinal(r), corte, enElEje];
+  });
+}
+
+/** A cuántos grados se corta el eje entrando a la vista. Ver `ramasDeLlegada`. */
+const CORTE = (30 * Math.PI) / 180;
+/** Y desde cuánto antes de entrar en él, m: una milla larga. */
+const ANTES_DE_CORTAR = 1.1 * 1852;
 
 /** Las salidas publicadas desde esa cabecera, o ninguna. */
 export function salidasDe(

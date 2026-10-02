@@ -75,7 +75,7 @@ import {
   COLOR_DE_ARCO,
   type Cuadro,
 } from "../ui/cuadro";
-import { dibujarLaCarta, millasHasta, type Mapa } from "../ui/carta";
+import { ASPECTO_DEL_RELIEVE, dibujarLaCarta, millasHasta, type Mapa } from "../ui/carta";
 import {
   CIFRAS_DESDE,
   apunta,
@@ -2213,6 +2213,19 @@ function pintarLaCarta(
   g.beginPath();
   g.arc(cx, cy, r, 0, Math.PI * 2);
   g.clip();
+
+  /*
+   * **El relieve del avisador de terreno, más abajo todavía**: es el suelo
+   * sobre el que va todo lo demás. Con los mismos colores y la misma opacidad
+   * que el cuadro plano. Ver `relieveEnLaCarta` en `ui/carta.ts`.
+   */
+  for (const c of dibujo.relieve) {
+    const aspecto = ASPECTO_DEL_RELIEVE[c.color];
+    g.globalAlpha = aspecto.opacidad;
+    g.fillStyle = PALETA[aspecto.color];
+    g.fillRect(cx + c.dx - c.lado / 2, cy + c.dy - c.lado / 2, c.lado, c.lado);
+  }
+  g.globalAlpha = 1;
 
   /*
    * **El radar, debajo de todo lo demás.**

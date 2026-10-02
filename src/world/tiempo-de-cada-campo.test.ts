@@ -103,6 +103,28 @@ describe("con viento flojo manda la pista preferente de cada campo", () => {
     expect(deFrente(sur.runway.heading, con(150, 12))).toBeGreaterThan(0);
   });
 
+  /*
+   * **La Palma, con la preferente del AIP**: la 36 mientras la cola no pase de
+   * diez nudos (AD 2-GCLA, 20.3). Estaba escrita la 18 con los cinco de
+   * siempre, y con el viento de costado que marcaba la pantalla de navegación
+   * llegando allí —089/4— ganaba la 18 por empate: la final recta calculada
+   * sobre Barlovento.
+   */
+  it("La Palma, con viento de costado o en calma, la 36", () => {
+    expect(nombre(conViento(LA_PALMA, con(89, 4)))).toBe("36");
+    expect(nombre(conViento(LA_PALMA, con(null, 0)))).toBe("36");
+  });
+
+  it("y con suroeste flojo también, que diez nudos de cola se aguantan", () => {
+    // 220/12: unos nueve de cola por la 36.
+    expect(nombre(conViento(LA_PALMA, con(220, 12)))).toBe("36");
+  });
+
+  it("y con suroeste de verdad, la 18", () => {
+    // 220/16: unos doce de cola por la 36, más de los diez.
+    expect(nombre(conViento(LA_PALMA, con(220, 16)))).toBe("18");
+  });
+
   it("y cada campo decide con su parte, no con el de otro", () => {
     // El METAR de La Palma no le cambia nada a El Hierro con su tiempo.
     const palma = leerMetar("GCLA 272100Z 15003KT CAVOK 25/22 Q1017")!;

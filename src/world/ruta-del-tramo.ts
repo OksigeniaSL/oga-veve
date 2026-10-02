@@ -29,12 +29,7 @@ import {
   type CampoEnElMundo,
 } from "./campo-del-vuelo";
 import { dondeCae, type Sitio } from "./entre-aerodromos";
-import {
-  aproximacionCalculada,
-  ramasDe,
-  salidasDe,
-  type Publicado,
-} from "./procedimientos";
+import { ramasDeLlegada, salidasDe, type Publicado } from "./procedimientos";
 import { oaciDe } from "./scenarios";
 import { cabeceraEnUso } from "./terrain";
 
@@ -89,19 +84,13 @@ export function rutaDelTramo(
     papel: "umbral",
     minima: null,
   };
-  const publicadas = ramasDe(oaciDe(llegada.escenario), cabLlegada).map((r) =>
-    r.map(aMundo),
+  const ramas = ramasDeLlegada(
+    oaciDe(llegada.escenario),
+    cabLlegada,
+    umbral,
+    llegada.pista.heading,
+    aMundo,
   );
-  const ramas =
-    publicadas.length > 0
-      ? publicadas
-      : cabLlegada
-        ? [
-            aproximacionCalculada(cabLlegada, umbral, llegada.pista.heading).map(
-              (f): Fijo => ({ ...f, minima: null, calculado: true }),
-            ),
-          ]
-        : [];
   let desde: Fijo;
   let cotaDeSalida: number;
   if (juego.enElAire === null) {

@@ -783,6 +783,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * de una prueba que no prueba nada.
      */
     avisoDeTerreno: () => juego.terrenoDicho,
+    /**
+     * Y el de este instante, se haya dicho o no: el dicho se queda puesto
+     * hasta tres segundos de calma, y una sonda que coloca el avión en varios
+     * sitios seguidos leería el del sitio de antes. Ver `terrenoParaBanco`.
+     */
+    avisoDeTerrenoAhora: () => juego.terrenoParaBanco,
     /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
     senalero: () => juego.senalero,
     /**

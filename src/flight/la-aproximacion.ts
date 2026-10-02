@@ -149,7 +149,7 @@ export interface AhoraMismo {
    */
   readonly techoDeNubes: number | null;
   /** Si hay un aviso de terreno puesto, que manda sobre todo lo demás. */
-  readonly terrenoDicho: "bajo" | "sube" | null;
+  readonly terrenoDicho: "bajo" | "sube" | "monte" | null;
   /** Si el vuelo ya se dio por terminado. */
   readonly vueloTerminado: boolean;
   /**

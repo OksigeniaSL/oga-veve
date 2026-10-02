@@ -396,6 +396,8 @@ export const EN: Dictionary = {
   "circuito.subida": "Climb straight ahead",
   "circuito.cruzado": "Turn left onto crosswind: we are going back to land",
   "circuito.encola": "Downwind: fly beside the runway, keeping it on your left",
+  "circuito.cruzado.derecha": "Turn right onto crosswind: we are going back to land",
+  "circuito.encola.derecha": "Downwind: fly beside the runway, keeping it on your right",
   "circuito.base": "Turn base and start down: we are landing now",
   "vuelo.papiAlto": "Whites: you are high, come down",
   "vuelo.lentoYBajo": "You are slow: add power",

@@ -1055,13 +1055,28 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * Los vértices del circuito que dibuja el juego, en coordenadas de mundo.
    *
-   * Se piden una vez y se guardan: son los mismos todo el vuelo mientras no
-   * cambie el viento, y pedirlos por fotograma es cruzar la frontera con el
-   * juego cientos de veces para nada.
+   * Se piden una vez **por pista** y se guardan: pedirlos por fotograma es
+   * cruzar la frontera con el juego cientos de veces para nada.
+   *
+   * **Y por pista, no una vez por vuelo.** Se pedían una sola vez, y la
+   * primera era en casa: llegando a La Gomera con el JAZ 60, el AFIS mandó al
+   * aire por un tráfico en la pista, el piloto subió por el eje y a ciento
+   * cincuenta metros giró hacia el final de la subida **del circuito de Los
+   * Rodeos**, a noventa kilómetros. Novecientos segundos derecho hacia
+   * Tenerife y contra la ladera del oeste a 1.190 m: el «too low» ×3 y el
+   * percance del banco 33/57 eran esto, no el circuito de La Gomera, que va
+   * por el sur, sobre el mar. Cambia la pista —otro campo u otra cabecera por
+   * el viento— y se vuelve a pedir.
    */
   let vertices;
+  let verticesDe = "";
   const circuito = () => {
-    if (vertices === undefined) vertices = alargarElVientoEnCola(o.circuito?.() ?? null);
+    const r = pistaAhora();
+    const de = r ? `${Math.round(r.x)},${Math.round(r.z)},${Math.round(r.heading)}` : "";
+    if (vertices === undefined || de !== verticesDe) {
+      verticesDe = de;
+      vertices = alargarElVientoEnCola(o.circuito?.() ?? null);
+    }
     return vertices;
   };
   /**
@@ -1842,6 +1857,48 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   };
 
   /**
+   * **El punto del plan a `desde` metros del umbral, contados por la ruta**,
+   * si ahí la ruta todavía no va por el eje: con su rumbo y los puntos que
+   * quedan antes de la final recta. `null` si a esa distancia ya es recta, que
+   * es lo de casi todas las aproximaciones.
+   *
+   * El eje es el del último tramo del plan, el que acaba en el umbral: ciento
+   * cincuenta metros de él a cada lado es estar en él.
+   */
+  function porLaRutaDeLlegada(plan, u, desde) {
+    const fijos = plan?.fijos ?? [];
+    const n = fijos.length;
+    if (n < 3) return null;
+    const ultimo = fijos[n - 1];
+    const antes = fijos[n - 2];
+    const ex = ultimo.x - antes.x;
+    const ez = ultimo.z - antes.z;
+    const el = Math.hypot(ex, ez) || 1;
+    let falta = desde;
+    for (let i = n - 1; i > 0; i--) {
+      const a = fijos[i - 1];
+      const b = fijos[i];
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      if (l < falta) {
+        falta -= l;
+        continue;
+      }
+      const t = 1 - falta / (l || 1);
+      const x = a.x + (b.x - a.x) * t;
+      const z = a.z + (b.z - a.z) * t;
+      const deLado = Math.abs(((x - u.x) * ez - (z - u.z) * ex) / el);
+      if (deLado < 150) return null;
+      return {
+        x,
+        z,
+        h: (Math.atan2(b.x - a.x, -(b.z - a.z)) + 2 * Math.PI) % (2 * Math.PI),
+        fijos: fijos.slice(i, n - 1).map((f) => ({ x: f.x, z: f.z, nombre: f.nombre })),
+      };
+    }
+    return null;
+  }
+
+  /**
    * Seguir la raya: se mira un punto de la ruta quince metros por delante y se
    * gira hacia él. Es lo que hace quien sigue una raya pintada en el suelo.
    */
@@ -2481,6 +2538,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const bajadaReciente = [];
   /** Cómo se pasó por la puerta, o `null` si no se ha pasado. */
   let enLaPuerta = null;
+  /**
+   * **La aproximación que acaba en circuito, por su ruta y no por el eje.**
+   *
+   * Los puntos del plan que quedan por volar antes de la final recta, o
+   * `null` si la final ya es recta. Ver `porLaRutaDeLlegada` y la 18 de La
+   * Palma en `world/procedimientos-canarias.ts`: su final a la vista entra en
+   * el eje a dos millas y media, y a diez kilómetros del umbral el eje pasa
+   * por encima de la ladera de Puntallana. Con `finalALaVista` la puerta es la
+   * de quinientos pies, que es la de una aproximación visual.
+   */
+  let aLaVista = null;
+  let finalALaVista = false;
   /** Dónde empezó la recogida y a qué se bajaba entonces. Ver `recoger`. */
   let empezoLaRecogida = null;
   /** A qué ritmo se tocó, m/s: lo que apunta el propio juego al tocar. */
@@ -3813,6 +3882,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     if (etapa === "subir" && (enLaPuerta || masAltoEnFinal > 0)) {
       enLaPuerta = null;
       masAltoEnFinal = 0;
+      // La vuelta es por el circuito, que entra alineado: ver `aLaVista`.
+      aLaVista = null;
+      finalALaVista = false;
       empezoLaRecogida = null;
       sendaSencilla = 0;
       bajadaReciente.length = 0;
@@ -4056,9 +4128,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * bajando a diez metros por segundo.
        */
       const DESDE = 10000;
-      const f = o.puntoDeFinalDe(DESDE, destino);
       const u = o.puntoDeFinalDe(0, destino);
+      /*
+       * **Y por la ruta de la aproximación, si a diez kilómetros todavía no es
+       * recta.** Se ponía el avión siempre en el eje, y en la 18 de La Palma
+       * el eje a diez kilómetros es la ladera de Puntallana: su aproximación
+       * llega por el mar desde el noreste y entra a la vista en el eje a dos
+       * millas y media. Ahí se pone en la ruta del plan, a diez kilómetros del
+       * umbral contados por ella, y se vuela por sus puntos hasta la final
+       * recta. Ver `porLaRutaDeLlegada`.
+       */
+      const enLaRuta = u ? porLaRutaDeLlegada(o.planDeVuelo?.(), u, DESDE) : null;
+      const f = enLaRuta ?? o.puntoDeFinalDe(DESDE, destino);
       if (!f || !u) return { etapa: "sin destino", destino };
+      aLaVista = enLaRuta ? enLaRuta.fijos : null;
+      finalALaVista = enLaRuta !== null;
       const alli = u.suelo;
       const aproximacion = o.avion().aproximacion;
       const enLaSenda = alli + (DESDE + 250) * SENDA + (suyas.tren ?? 0);
@@ -4320,7 +4404,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        */
       const tren = suyas.tren ?? 0;
       const ruedas = alto(s) - tren;
-      const objetivo = Math.max(0, (falta + puntoDeToma) * SENDA) + tren;
+      /*
+       * **Y por la ruta mientras la final no sea recta**: la senda es la de
+       * tres grados por lo que queda de ruta, hasta el punto del eje y de ahí
+       * al umbral. Ver `aLaVista`.
+       */
+      let queda = falta;
+      if (aLaVista?.length) {
+        queda = Math.hypot(aLaVista[0].x - s.position.x, aLaVista[0].z - s.position.z);
+        for (let k = 1; k < aLaVista.length; k++)
+          queda += Math.hypot(aLaVista[k].x - aLaVista[k - 1].x, aLaVista[k].z - aLaVista[k - 1].z);
+        const ultimoDeLaVista = aLaVista[aLaVista.length - 1];
+        const u0 = finalAhora(0);
+        if (u0) queda += Math.hypot(u0.x - ultimoDeLaVista.x, u0.z - ultimoDeLaVista.z);
+      }
+      const objetivo = Math.max(0, (queda + puntoDeToma) * SENDA) + tren;
       /*
        * **La velocidad de la final: la Vref más cinco nudos, en indicada y en
        * los seis aviones.**
@@ -4492,7 +4590,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * desde la base, y eso es visual — quinientos. Ver `PUERTA_ALTA`.
        */
       const puerta =
-        enElDestino && masAltoEnFinal >= PUERTA_ALTA ? PUERTA_ALTA : PUERTA_BAJA;
+        enElDestino && masAltoEnFinal >= PUERTA_ALTA && !finalALaVista
+          ? PUERTA_ALTA
+          : PUERTA_BAJA;
       if (!enLaPuerta && ruedas <= puerta && falta > 0) {
         const trayectoria = Math.atan2(s.velocity.x, -s.velocity.z);
         const mandosAhora = o.controles();
@@ -4611,6 +4711,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const tx = r.x + fx * (along + mirada);
       const tz = r.z + fz * (along + mirada);
       c.aileron = alPuntoPorElSuelo(s, tx, tz);
+      /*
+       * **Y mientras quede ruta antes de la final recta, por sus puntos**, con
+       * el viraje anticipado lo que mide su arco: un punto se pasa de pasada,
+       * como lo pasa un ordenador de vuelo. Con el último, a la final por el
+       * eje, que es lo de arriba.
+       */
+      if (aLaVista?.length) {
+        const sig = aLaVista[0];
+        const tras = aLaVista[1] ?? finalAhora(0);
+        c.aileron = alPuntoPorElSuelo(s, sig.x, sig.z);
+        const va = Math.atan2(sig.x - s.position.x, -(sig.z - s.position.z));
+        const luego = tras ? Math.atan2(tras.x - sig.x, -(tras.z - sig.z)) : va;
+        const giro = Math.abs(error(luego, va));
+        const antesDeGirar = radio * Math.tan(Math.min(giro, 2.6) / 2) + 100;
+        if (Math.hypot(sig.x - s.position.x, sig.z - s.position.z) < antesDeGirar) {
+          aLaVista = aLaVista.slice(1);
+          if (aLaVista.length === 0) aLaVista = null;
+        }
+      }
       if (s.onGround && s.onRunway) {
         toco = t;
         /*

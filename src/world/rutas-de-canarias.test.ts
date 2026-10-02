@@ -234,25 +234,45 @@ const destinoDe = (t: Tramo) => t.nombre.split(" → ")[1]!;
 /**
  * **Las cabeceras cuya aproximación calculada no libra el relieve**, y por qué.
  *
- * Son las cuatro de Canarias sin aproximación publicada en línea recta —ver
+ * Son las de Canarias sin aproximación publicada en línea recta —ver
  * `procedimientos-canarias.ts`—, y no es casualidad: si no la tienen es porque
- * el relieve no la deja. El juego hace ahí la aproximación calculada sobre el
- * eje, a diez millas, que es la de manual; y esa final recta pasa por donde la
- * carta de verdad no pasa. Lo que se comprueba de sus rutas es lo que es de la
- * ruta —ver `libra` con `soloEnRuta`—, salvo donde ni eso se puede.
+ * el relieve no la deja. Donde el juego hace la aproximación calculada sobre
+ * el eje, a diez millas, esa final recta pasa por donde la carta de verdad no
+ * pasa. Lo que se comprueba de sus rutas es lo que es de la ruta —ver `libra`
+ * con `soloEnRuta`—, salvo donde ni eso se puede. Y lo que vale para volarlas
+ * —el margen de cada tramo y el avisador de terreno— lo mira
+ * `aproximaciones-sobre-el-relieve.test.ts`.
+ *
+ * La 21 de Lanzarote salió de aquí al entrar su RNP con su maniobra visual
+ * publicada, que es carta de punta a punta.
  */
 const FINAL_QUE_NO_LIBRA: Readonly<Record<string, string>> = {
   "GCGM 09":
     "La Gomera no tiene aproximación instrumental: se entra a la vista. La final recta a la 09 viene por el oeste, bajo los acantilados de la costa sur.",
   "GCHI 16":
     "Las NDB de El Hierro acaban en circuito. La final recta a la 16 baja pegada a la ladera del norte de la isla.",
-  "GCRR 21":
-    "La RNP a la 21 de Lanzarote acaba en circuito. La final recta viene del noreste por encima de la isla.",
+  /*
+   * Y la 18 de La Palma, pero ya no por lo que era. Su RNP A se vuela sobre
+   * el mar hasta LA505 y de ahí a la vista al eje, que libra con el agua
+   * debajo hasta media milla del umbral. Lo que no cabe es la regla de la
+   * final calculada —mil pies a una milla a cada lado—: a una milla al oeste
+   * del eje están las laderas de Santa Cruz y de Breña Baja, a doscientos y
+   * trescientos metros. Es el sitio de la pista, el mismo para la 36 con su
+   * carta, y lo mide con su margen `aproximaciones-sobre-el-relieve.test.ts`.
+   */
   "GCLA 18":
-    "La RNP A a la 18 de La Palma es de circuito. Su punto intermedio calculado cae a diez millas al norte, contra la costa este, con la cumbre a menos de ocho kilómetros: ni la ruta hasta él cabe en la regla del aire.",
+    "La final a la vista entra en el eje a dos millas y media, sobre el mar; a una milla al oeste del eje están las laderas de Santa Cruz y Breña Baja, que es el sitio de la pista.",
 };
-/** De ellas, las que no libran ni la ruta hasta la final. */
-const NI_LA_RUTA = new Set(["GCLA 18"]);
+/**
+ * De ellas, las que no libran ni la ruta hasta la final. **Ninguna.**
+ *
+ * Estaba la 18 de La Palma: su punto intermedio calculado caía a diez millas
+ * al norte, contra la costa este, y la final recta cruzaba la ladera de
+ * Barlovento —«es peligroso, se puede entrar antes desde el mar»—. Ahora se
+ * llega por lo publicado, su RNP A sobre el mar, y se entra a la vista al eje
+ * a dos millas y media. Ver `Aproximacion.aLaVista`.
+ */
+const NI_LA_RUTA = new Set<string>();
 
 describe("las rutas de Canarias, sobre el relieve", () => {
   it("están todos los tramos de los ocho aeropuertos, con sus dos cabeceras", () => {
@@ -292,11 +312,11 @@ describe("las rutas de Canarias, sobre el relieve", () => {
 
   /*
    * (b) Ninguna cruza una isla de montaña por lo que no es de ninguna carta
-   * teniendo mar. Ver `porElMar`. La única que no puede es la de la 18 de La
-   * Palma desde El Hierro, por lo mismo de arriba: su punto intermedio
-   * calculado está contra la costa este de la isla.
+   * teniendo mar. Ver `porElMar`. Había dos que no podían, las de El Hierro a
+   * la 18 de La Palma, por lo mismo de arriba: su punto intermedio calculado
+   * estaba contra la costa este de la isla. Por NASOL van por el mar.
    */
-  const NO_PUEDE_IR_POR_EL_MAR = new Set(["GCHI 16 → GCLA 18", "GCHI 34 → GCLA 18"]);
+  const NO_PUEDE_IR_POR_EL_MAR = new Set<string>();
   for (const t of TRAMOS)
     it(`${t.nombre}: lo que no es de ninguna carta va por el mar`, () => {
       expect(porElMar(t.ruta.fijos, t.juego.cota!), nombres(t.ruta)).toBe(
@@ -451,22 +471,21 @@ describe("el crucero que se anuncia es el que se vuela", () => {
  * El techo de la avioneta de escuela y el del fumigador —tres mil y dos mil
  * quinientos metros— quedan por debajo de lo que pide la regla de los vuelos
  * por instrumentos cerca de las islas del oeste. Con esa regla, las rutas de
- * Los Rodeos y de El Hierro a la 18 de La Palma no libraban el relieve y caían
- * a la más corta, y el crucero del fumigador salía a nueve mil pies,
- * ochocientos por encima de lo que da. Lo que hace de verdad un avión así es
+ * Los Rodeos y de El Hierro a la 18 de La Palma no libraban el relieve —eran
+ * las de su punto intermedio calculado, contra la costa— y caían a la más
+ * corta, y el crucero del fumigador salía a nueve mil pies, ochocientos por
+ * encima de lo que da. Lo que hace de verdad un avión así es
  * volar con reglas visuales: por el mar, a la altura que se pueda y con el
  * margen de un vuelo visual. Ver `MARGEN_VISUAL` en `flight/ruta.ts`.
  */
 describe("las avionetas, con reglas visuales", () => {
   const avionetas = AIRCRAFT.filter((a) => a.reglasDeVuelo === "visual");
   /*
-   * La de siempre: desde la 34 de El Hierro no hay salida publicada, y el
-   * punto intermedio calculado de la 18 de La Palma está contra su costa
-   * este. Ni por el mar ni con el margen: ver `NO_PUEDE_IR_POR_EL_MAR` y
-   * `NI_LA_RUTA` arriba, que le pasa igual al reactor.
+   * Aquí estaba la de siempre, de la 34 de El Hierro a la 18 de La Palma: el
+   * punto intermedio calculado de esa cabecera estaba contra su costa este, y
+   * no había ruta que librara ni por el mar ni con el margen. Por la RNP A
+   * de la 18, sobre el mar, sí la hay. Ver `NI_LA_RUTA` arriba.
    */
-  const NI_ASI = "GCHI 34 → GCLA 18";
-  const NI_POR_EL_MAR = new Set(["GCHI 16 → GCLA 18", NI_ASI]);
 
   it("son la de escuela y el fumigador, y ninguna más", () => {
     expect(avionetas.map((a) => a.id).sort()).toEqual(["jaz-20", "jaz-25"]);
@@ -487,9 +506,8 @@ describe("las avionetas, con reglas visuales", () => {
         expect(
           libra(ruta.fijos, terreno, juego.cotaDePista(t.llegada, 0, 0), new Map(), true),
           dicho,
-        ).toBe(t.nombre !== NI_ASI);
-        if (!NI_POR_EL_MAR.has(t.nombre))
-          expect(porElMar(ruta.fijos, juego.cota!), dicho).toBe(true);
+        ).toBe(true);
+        expect(porElMar(ruta.fijos, juego.cota!), dicho).toBe(true);
         const crucero = cruceroDelTramo(ruta, t.salida, juego);
         expect(crucero, dicho).toBeLessThanOrEqual(avion.alturaDeCrucero + 1);
         // Y al medio nivel de los vuelos visuales: 4500, 6500…
@@ -497,16 +515,12 @@ describe("las avionetas, con reglas visuales", () => {
       }
     });
 
-  it("y con la regla de los instrumentos no les cabía: la de antes", () => {
-    const fumigador = avionetas.find((a) => a.id === "jaz-25")!;
-    const t = TRAMOS.find((x) => x.nombre === "GCXO 12 → GCLA 18")!;
-    const juego = { ...t.juego, techo: fumigador.alturaDeCrucero };
-    const ruta = rutaDelTramo(t.salida, t.llegada, juego);
-    const terreno = {
-      cota: juego.cota!,
-      techo: juego.techo,
-      cotaDeSalida: juego.cotaDePista(t.salida, 0, 0),
-    };
-    expect(libra(ruta.fijos, terreno, juego.cotaDePista(t.llegada, 0, 0), new Map(), true)).toBe(false);
-  });
+  /*
+   * Aquí había una prueba de «la de antes»: con la regla de los instrumentos
+   * y el techo del fumigador, la ruta de Los Rodeos a la 18 de La Palma no
+   * libraba. Era la del punto intermedio calculado contra la costa: por la RNP
+   * A de la 18 ya libra con las dos reglas. Las avionetas siguen con la suya
+   * porque es la suya —vuelan mirando por la ventana—, no porque la otra no
+   * quepa.
+   */
 });

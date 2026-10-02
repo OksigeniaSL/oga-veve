@@ -505,7 +505,8 @@ const papi = (blancas: number): string => {
  *
  * Y la vuelta va por la izquierda, como en el mundo entero: mirando el dibujo
  * de frente, se sube por el eje, se gira al lado de la mano izquierda y se
- * baja por fuera. Ver `world/circuito.ts`.
+ * baja por fuera. Ver `world/circuito.ts`. Donde el campo lo publica por la
+ * derecha, el mismo dibujo en espejo: ver `circuito-derecha-*`.
  */
 const TRAZO: Record<string, string> = {
   subida: "M15.5 18 V4",
@@ -521,15 +522,15 @@ const PUNTA: Record<string, string> = {
   base: "M17.6 20 L14.6 17.9 V22.1 Z",
 };
 
-const circuito = (tramo: string): string =>
-  icono(`
+const circuito = (tramo: string, derecha = false): string =>
+  icono(`<g${derecha ? ' transform="matrix(-1 0 0 1 24 0)"' : ""}>
   <path d="M15.5 19 V4 H7.5 V20 H15.5" fill="none" stroke="currentColor"
         stroke-width="1.3" stroke-linejoin="round" opacity="0.3" />
   <rect x="14.4" y="7" width="2.2" height="11" rx="1.1" opacity="0.5" />
   <path d="${TRAZO[tramo]}" fill="none" stroke="currentColor" stroke-width="2.4"
         stroke-linecap="round" />
   <path d="${PUNTA[tramo]}" />
-`);
+</g>`);
 
 /**
  * Lo que se ve por la ventanilla: la cosa, y por qué lado mirar.
@@ -1038,6 +1039,16 @@ export const DIBUJOS = {
   "circuito-cruzado": circuito("cruzado"),
   "circuito-encola": circuito("encola"),
   "circuito-base": circuito("base"),
+  /*
+   * **Y el mismo circuito en espejo, para los campos que lo publican por la
+   * derecha.** El dibujo era siempre el de la izquierda, y en La Gomera, que
+   * vuela el de la 09 por el sur y sobre el mar, la tarjeta de la frustrada
+   * señalaba la isla. Ver `circuitoPublicado` en `world/scenarios.ts`.
+   */
+  "circuito-derecha-subida": circuito("subida", true),
+  "circuito-derecha-cruzado": circuito("cruzado", true),
+  "circuito-derecha-encola": circuito("encola", true),
+  "circuito-derecha-base": circuito("base", true),
   tirar: TIRAR,
   aves: AVES,
   "aves-subi": AVES_SUBI,

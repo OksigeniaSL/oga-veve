@@ -15,9 +15,9 @@ import { describe, expect, it } from "vitest";
 import { destinosDe, oaciDe, SCENARIOS, type Scenario } from "./scenarios";
 import { dondeCae, type Sitio } from "./entre-aerodromos";
 import {
-  aproximacionCalculada,
   procedimientosDe,
   ramasDe,
+  ramasDeLlegada,
   salidasDe,
   type Publicado,
 } from "./procedimientos";
@@ -64,16 +64,13 @@ function plan(
 ): Ruta {
   const origen = salida.aerodrome!.origin;
   const umbral: Fijo = { ...cabLlegada, nombre: `RW${cabLlegada.nombre}`, papel: "umbral", minima: null };
-  const publicadas = ramasDe(oaciDe(llegada), cabLlegada.nombre).map((r) => r.map(aMundo(origen)));
-  const ramas = publicadas.length
-    ? publicadas
-    : [
-        aproximacionCalculada(cabLlegada.nombre, umbral, cabLlegada.rumbo).map((f) => ({
-          ...f,
-          minima: null,
-          calculado: true,
-        })),
-      ];
+  const ramas = ramasDeLlegada(
+    oaciDe(llegada),
+    cabLlegada.nombre,
+    umbral,
+    cabLlegada.rumbo,
+    aMundo(origen),
+  );
   return trazar({
     desde: { ...cabSalida, nombre: `RW${cabSalida.nombre}`, papel: "despegue", minima: null },
     salidas: salidasDe(oaciDe(salida), cabSalida.nombre).map((r) => r.map(aMundo(origen))),
@@ -136,7 +133,17 @@ describe("las rutas de Canarias, por lo publicado", () => {
             const ultimo = r.fijos[r.fijos.length - 1]!;
             expect(ultimo.nombre).toBe(`RW${cl.nombre}`);
             const recto = alineadas(r, cl.rumbo);
-            expect(recto, `${recto.toFixed(1)} NM alineadas: ${r.fijos.map((f) => f.nombre).join(" ")}`).toBeGreaterThanOrEqual(8);
+            /*
+             * **Salvo las que acaban en circuito**, que se alinean a la vista
+             * donde la isla deja: la 18 de La Palma, a dos millas y media; la
+             * 21 de Lanzarote, en la rotonda de la LZ-301 de su VPT, a milla y
+             * media. Ver `Aproximacion.aLaVista` y `Aproximacion.vpt`.
+             */
+            const suya = procedimientosDe(oaciDe(llegada))?.aproximaciones[cl.nombre];
+            const minimo = suya?.aLaVista ?? (suya?.vpt ? 1.5 : 8);
+            expect(recto, `${recto.toFixed(1)} NM alineadas: ${r.fijos.map((f) => f.nombre).join(" ")}`).toBeGreaterThanOrEqual(
+              minimo - 0.05,
+            );
             /*
              * Y sin rodeos absurdos. **La ruta de verdad es bastante más larga
              * que la recta en los saltos cortos**, y es de lo que va esto: de

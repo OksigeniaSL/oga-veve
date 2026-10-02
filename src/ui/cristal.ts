@@ -629,6 +629,8 @@ function carta(cx: number, cy: number, r: number): string {
     -->
     <clipPath id="${recorte}"><circle cx="0" cy="0" r="${r}" /></clipPath>
     <g data-carta="grupo" data-radio="${r}" transform="translate(${cx} ${cy})" clip-path="url(#${recorte})">
+      <!-- El relieve del avisador de terreno, el fondo de todo. Ver relieveEnLaCarta en ui/carta.ts. -->
+      <g data-carta="relieve" shape-rendering="crispEdges"></g>
       <!--
         El radar meteorológico, debajo de todo lo demás: la tormenta es el
         fondo sobre el que se decide, y la pista y los tráficos tienen que
