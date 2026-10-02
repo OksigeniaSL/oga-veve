@@ -9270,8 +9270,27 @@ export class Game {
       this.conPrioridad && alli && !s.onGround && this.navegacion.bajando && p !== null
         ? p.restante / velocidad
         : null;
+    /*
+     * **Y en la final del plan, a la fila aunque todavía no sea «final».**
+     *
+     * La fase de final empieza a trescientos metros y alineado; la final de
+     * una llegada empieza en el punto de final, a seis o siete millas. En
+     * medio la torre no te veía, y daba la salida a otro con vos bajando hacia
+     * la pista: a la decisión seguía corriendo por ella, o ya rotado a pocos
+     * metros sobre el asfalto, delante del morro. Medido en el banco de Gando:
+     * dos salidas autorizadas entre la base y tu final, y las dos acabaron en
+     * frustrada. Una torre de verdad te tiene en la secuencia desde el punto
+     * de final, y no suelta a nadie que no vaya a haber pasado el final de la
+     * pista antes de que llegues. Ver `llegaAntesDeQueSalga` en
+     * `world/trafico.ts`.
+     */
+    const enLaFinalDelPlan =
+      fase !== "final" &&
+      alli &&
+      !s.onGround &&
+      this.navegacion.enElTramoFinal(this.lecturaDeRuta());
     const alUmbral =
-      fase === "final" && !s.onGround
+      (fase === "final" || enLaFinalDelPlan) && !s.onGround
         ? distanciaAlUmbral(this.elCampo(), s.position.x, s.position.z) / velocidad
         : deLejos;
     return {
