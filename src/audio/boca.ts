@@ -78,6 +78,7 @@
  */
 
 import { esElAvisoDeAves, noSePierde } from "./torre";
+import { CADUCA_LA_MEGAFONIA, esDeLaMegafonia, pesoDe } from "./turnos";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
@@ -110,15 +111,12 @@ import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
  * `mando` **no corta**: cortar sigue siendo cosa de `urgente` y de nadie más,
  * que para eso se quitó esa potestad al resto. Lo único que hace es no
  * dejarse echar de la cola por un comentario.
+ *
+ * **Y lo que pesa cada una en la cola está en `audio/turnos.ts`**, con la
+ * megafonía en su sitio: la regla de turnos de todas las voces, en un solo
+ * sitio. Ver `pesoDe`.
  */
 export type Urgencia = "baja" | "normal" | "mando" | "urgente";
-
-const PESO: Record<Urgencia, number> = {
-  baja: 0,
-  normal: 1,
-  mando: 2,
-  urgente: 3,
-};
 
 /** Lo que espera más de esto ya no se dice. Ver la cabecera. */
 export const CADUCA = 4000;
@@ -157,7 +155,10 @@ export function cuantoAguanta(
     explicaLaOtraPunta(clave) ||
     esDelDescenso(clave)
     ? CADUCA_LA_ORDEN
-    : CADUCA;
+    : // Un anuncio espera su hueco más que un aviso: ver `CADUCA_LA_MEGAFONIA`.
+      esDeLaMegafonia(clave)
+      ? CADUCA_LA_MEGAFONIA
+      : CADUCA;
 }
 
 /**
@@ -376,7 +377,38 @@ export const RIÑEN = 10000;
  * Al despegar coinciden las cuatro, y lo que se oye es exactamente eso: «como
  * el camarote de los Hermanos Marx, pero en versión aeronave».
  */
-export type Hablar = (listo: () => void) => (() => void) | void;
+export type Hablar = (
+  /**
+   * Avisa de que acabó. Con `noSono`, que le tocó y no tenía con qué sonar:
+   * ver `noHablo`.
+   */
+  listo: (noSono?: boolean) => void,
+) => (() => void) | void;
+
+/**
+ * Lo que una frase puede pedir además de la palabra. Todo opcional.
+ */
+export interface AlPedir {
+  /**
+   * **Si su voz ya puede sonar**: la grabación bajada y el audio
+   * desbloqueado. Mientras diga que no, la frase espera en la cola —se ve
+   * esperando, se puede retirar— pero no le toca, y no cuenta para su
+   * caducidad: el reloj de lo que aguanta empieza cuando está lista. Ver
+   * `estaLista` en `audio/instructor-grabado.ts`.
+   */
+  readonly lista?: () => boolean;
+  /** Y hasta cuánto se le espera, ms. Pasado eso, le toca como esté. */
+  readonly tope?: number;
+  /**
+   * **Y si se cae sin sonar**, por qué: caducó, no cabía, ya no era verdad…
+   * Lo necesita quien da algo por dicho solo cuando suena —tu permiso para
+   * aterrizar—. Ver `alSonarElPermiso` en `game.ts`.
+   */
+  readonly alCaer?: (porque: string) => void;
+}
+
+/** Cada cuánto se mira si una frase que esperaba a su voz ya está lista, ms. */
+const MIRAR_SI_ESTA_LISTA = 200;
 
 /** El reloj, aparte para poder probar la caducidad sin esperar. */
 export interface Reloj {
@@ -480,6 +512,11 @@ export class Boca {
     urgencia: Urgencia;
     desde: number;
     clave?: string;
+    /** Mientras esté puesto, la frase espera a su voz. Ver `AlPedir.lista`. */
+    lista?: () => boolean;
+    /** Hasta cuándo se le espera la voz. */
+    hasta?: number;
+    alCaer?: (porque: string) => void;
   }[] = [];
   /** Cuándo se dijo cada cosa por última vez. Ver `NO_REPETIR` y `RIÑEN`. */
   private readonly dichas = new Map<string, number>();
@@ -522,7 +559,11 @@ export class Boca {
   get libre(): boolean {
     return (
       this.hablandoAhora === null &&
-      this.cola.length === 0 &&
+      /*
+       * Lo que todavía espera a su voz no ocupa la frecuencia: mientras baja
+       * su grabación, quien tenga algo que decir lo dice. Ver `AlPedir.lista`.
+       */
+      this.cola.every((c) => c.lista) &&
       this.reloj.ahora() >= this.calladaHasta
     );
   }
@@ -549,7 +590,7 @@ export class Boca {
    * Puede no llamarse nunca: si llega otra cosa mientras espera, o si pasa
    * demasiado tiempo. Es lo correcto — ver la cabecera.
    */
-  pedir(urgencia: Urgencia, hacer: Hablar, clave?: string): void {
+  pedir(urgencia: Urgencia, hacer: Hablar, clave?: string, al: AlPedir = {}): void {
     const ahora = this.reloj.ahora();
     const urgente = urgencia === "urgente";
 
@@ -559,11 +600,33 @@ export class Boca {
      * decirla ni aunque haya silencio. Ver la cabecera.
      */
     if (clave && !urgente) {
-      const porQueNo = this.noTocaDecirla(clave, ahora);
+      const porQueNo = this.noTocaDecirla(clave, ahora, urgencia);
       if (porQueNo) {
         this.apuntarDescarte(clave, porQueNo);
+        al.alCaer?.(porQueNo);
         return;
       }
+    }
+
+    /*
+     * **Y si su voz todavía no puede sonar, espera a que pueda**, en la cola
+     * y sin que le toque. Es el crosscheck de Jazlyn: se pedía en el puesto
+     * antes de que su grabación hubiera bajado, se le pasaba a la voz del
+     * navegador —muda en Brave para Linux— y se daba por dicho. Ver
+     * `AlPedir.lista`.
+     */
+    if (al.lista && !al.lista()) {
+      this.cola.push({
+        hacer,
+        urgencia,
+        desde: ahora,
+        clave,
+        lista: al.lista,
+        hasta: ahora + (al.tope ?? Infinity),
+        alCaer: al.alCaer,
+      });
+      this.mirarSiEstanListas();
+      return;
     }
 
     if (!this.ocupada) {
@@ -573,7 +636,7 @@ export class Boca {
        */
       const falta = this.calladaHasta - ahora;
       if (!urgente && falta > 0 && this.reloj.esperar) {
-        this.encolar({ hacer, urgencia, desde: ahora, clave });
+        this.encolar({ hacer, urgencia, desde: ahora, clave, alCaer: al.alCaer });
         this.reloj.esperar(falta, () => this.soltarLoQueEspera());
         return;
       }
@@ -594,7 +657,7 @@ export class Boca {
        * y entre iguales el que llegó antes.
        */
       if (!urgente && this.cola.length) {
-        this.encolar({ hacer, urgencia, desde: ahora, clave });
+        this.encolar({ hacer, urgencia, desde: ahora, clave, alCaer: al.alCaer });
         this.soltarLoQueEspera();
         return;
       }
@@ -642,8 +705,13 @@ export class Boca {
         const c = this.cola[i]!;
         if (sueltaLaPista(c.clave, c.urgencia)) continue;
         if (noSePierde(c.clave, c.urgencia)) continue;
-        this.apuntarDescarte(c.clave, "la barrió un urgente");
-        this.cola.splice(i, 1);
+        /*
+         * Ni un anuncio de la megafonía, que tampoco describe un instante:
+         * el servicio o la bajada siguen siendo verdad después de un aviso.
+         * Lo tira su propio reloj si espera demasiado. Ver `turnos.ts`.
+         */
+        if (esDeLaMegafonia(c.clave)) continue;
+        this.tirar(i, "la barrió un urgente");
       }
       this.reloj.cancelar();
       this.arrancar(urgencia, hacer, clave);
@@ -659,7 +727,38 @@ export class Boca {
      * sí. Medido en el banco: la torre decía dos frases en un vuelo y pasó a
      * decir una.
      */
-    this.encolar({ hacer, urgencia, desde: ahora, clave });
+    this.encolar({ hacer, urgencia, desde: ahora, clave, alCaer: al.alCaer });
+  }
+
+  /**
+   * **Quita una frase de la cola sin decirla**, apuntando por qué y
+   * avisando a quien la pidió si quería saberlo. Ver `AlPedir.alCaer`.
+   */
+  private tirar(i: number, porque: string): void {
+    const [c] = this.cola.splice(i, 1);
+    if (!c) return;
+    this.apuntarDescarte(c.clave, porque);
+    c.alCaer?.(porque);
+  }
+
+  /** Si hay programada una mirada a lo que espera a su voz. */
+  private mirando = false;
+
+  /**
+   * **Mira dentro de un rato si lo que esperaba a su voz ya puede sonar**, y
+   * sigue mirando mientras quede algo esperando. Sin reloj —en las pruebas
+   * que no lo dan— no se mira solo: se mira al pedir o al acabar una frase.
+   */
+  private mirarSiEstanListas(): void {
+    if (this.mirando || !this.reloj.esperar) return;
+    this.mirando = true;
+    this.reloj.esperar(MIRAR_SI_ESTA_LISTA, () => {
+      this.mirando = false;
+      // Sin pisar a nadie ni saltarse el silencio de la frase anterior.
+      if (!this.ocupada && this.reloj.ahora() >= this.calladaHasta)
+        this.soltarLoQueEspera();
+      if (this.cola.some((c) => c.lista)) this.mirarSiEstanListas();
+    });
   }
 
   /**
@@ -688,7 +787,8 @@ export class Boca {
    */
   private encolar(esta: (typeof this.cola)[number]): void {
     this.cola.push(esta);
-    if (this.cola.length <= PLAZAS_DE_ESPERA) return;
+    // Lo que espera a su voz no ocupa plaza: todavía no compite por hablar.
+    if (this.cola.filter((c) => !c.lista).length <= PLAZAS_DE_ESPERA) return;
     /*
      * Y lo que suelta la pista no se echa: si no queda otra, la cola crece
      * una plaza. Ver `sueltaLaPista`. Ni lo que la torre te da o te manda:
@@ -697,6 +797,7 @@ export class Boca {
     let peor = -1;
     for (let i = 0; i < this.cola.length; i++) {
       const a = this.cola[i]!;
+      if (a.lista) continue;
       if (sueltaLaPista(a.clave, a.urgencia)) continue;
       if (noSePierde(a.clave, a.urgencia)) continue;
       if (peor < 0) {
@@ -704,47 +805,63 @@ export class Boca {
         continue;
       }
       const b = this.cola[peor]!;
+      const pa = pesoDe(a.clave, a.urgencia);
+      const pb = pesoDe(b.clave, b.urgencia);
       if (
-        PESO[a.urgencia] < PESO[b.urgencia] ||
+        pa < pb ||
         /*
          * Y **mayor o igual**, no mayor: dos frases pedidas en el mismo
          * milisegundo tienen el mismo `desde`, y con la comparación estricta
          * ganaba la primera de la lista — o sea, otra vez la más vieja. Con
          * el igual incluido gana la última, que es la que acaba de llegar.
          */
-        (PESO[a.urgencia] === PESO[b.urgencia] && a.desde >= b.desde)
+        (pa === pb && a.desde >= b.desde)
       )
         peor = i;
     }
     if (peor < 0) return;
-    this.apuntarDescarte(this.cola[peor]!.clave, "no cabía en la cola");
-    this.cola.splice(peor, 1);
+    this.tirar(peor, "no cabía en la cola");
   }
 
   /** La siguiente que toca decir, o `undefined` si no queda ninguna viva. */
   private siguienteViva(): (typeof this.cola)[number] | undefined {
     const ahora = this.reloj.ahora();
+    /*
+     * **Lo que esperaba a su voz, primero**: si ya puede sonar —o se le acabó
+     * la espera—, entra en la cola como si acabara de llegar. Su reloj de
+     * caducidad empieza ahora: lo que tardó en bajar su grabación no es
+     * tiempo que haya pasado para lo que dice. Ver `AlPedir.lista`.
+     */
+    for (const c of this.cola) {
+      if (!c.lista) continue;
+      if (c.lista() || ahora >= (c.hasta ?? Infinity)) {
+        c.lista = undefined;
+        c.desde = ahora;
+      }
+    }
     // Lo caducado no se dice: contar el pasado es peor que callarse.
     for (let i = this.cola.length - 1; i >= 0; i--) {
       const c = this.cola[i]!;
+      if (c.lista) continue;
       if (sueltaLaPista(c.clave, c.urgencia)) continue;
-      if (ahora - c.desde > cuantoAguanta(c.clave, c.urgencia)) {
-        this.apuntarDescarte(this.cola[i]!.clave, "caducó esperando");
-        this.cola.splice(i, 1);
-      }
+      if (ahora - c.desde > cuantoAguanta(c.clave, c.urgencia))
+        this.tirar(i, "caducó esperando");
     }
-    if (!this.cola.length) return undefined;
-    let mejor = 0;
-    for (let i = 1; i < this.cola.length; i++) {
+    let mejor = -1;
+    for (let i = 0; i < this.cola.length; i++) {
       const a = this.cola[i]!;
-      const b = this.cola[mejor]!;
-      // Manda el peso; entre iguales, la que llegó antes: se dicen en orden.
-      if (
-        PESO[a.urgencia] > PESO[b.urgencia] ||
-        (PESO[a.urgencia] === PESO[b.urgencia] && a.desde < b.desde)
-      )
+      if (a.lista) continue;
+      if (mejor < 0) {
         mejor = i;
+        continue;
+      }
+      const b = this.cola[mejor]!;
+      const pa = pesoDe(a.clave, a.urgencia);
+      const pb = pesoDe(b.clave, b.urgencia);
+      // Manda el peso; entre iguales, la que llegó antes: se dicen en orden.
+      if (pa > pb || (pa === pb && a.desde < b.desde)) mejor = i;
     }
+    if (mejor < 0) return undefined;
     return this.cola.splice(mejor, 1)[0];
   }
 
@@ -828,9 +945,21 @@ export class Boca {
    * Dos copias de la misma regla es como un día una dice una cosa y la otra
    * otra.
    */
-  private noTocaDecirla(clave: string, ahora: number): string | null {
+  private noTocaDecirla(
+    clave: string,
+    ahora: number,
+    urgencia: Urgencia = "normal",
+  ): string | null {
     const dicha = this.dichas.get(clave);
-    if (dicha !== undefined && ahora - dicha < NO_REPETIR) return "repetida";
+    /*
+     * **Lo que la torre te da o te manda sí se repite**: no es un aviso que
+     * cansa, es una orden, y la lámpara solo la pide cuando cambia. Tu
+     * permiso de aterrizar dado otra vez en la final nueva, a los veinte
+     * segundos de la frustrada, se caía por «repetida» con la luz ya verde.
+     * Ver `noSePierde`.
+     */
+    if (dicha !== undefined && ahora - dicha < NO_REPETIR && !noSePierde(clave, urgencia))
+      return "repetida";
     for (const otra of riñenCon(clave)) {
       const cuando = this.dichas.get(otra);
       if (cuando !== undefined && ahora - cuando < RIÑEN) return `riñe con ${otra}`;
@@ -856,7 +985,7 @@ export class Boca {
     if (!clave) return true;
     const ahora = this.reloj.ahora();
     if (urgencia !== "urgente") {
-      const porQueNo = this.noTocaDecirla(clave, ahora);
+      const porQueNo = this.noTocaDecirla(clave, ahora, urgencia);
       if (porQueNo) {
         this.apuntarDescarte(clave, porQueNo);
         return false;
@@ -882,8 +1011,7 @@ export class Boca {
     for (let i = this.cola.length - 1; i >= 0; i--) {
       const esta = this.cola[i]!;
       if (!sobra(esta.clave, esta.urgencia)) continue;
-      this.apuntarDescarte(esta.clave, "ya no es verdad");
-      this.cola.splice(i, 1);
+      this.tirar(i, "ya no es verdad");
     }
   }
 
@@ -909,11 +1037,37 @@ export class Boca {
     this.cuantasHabladas++;
     if (this.habladas.length > 300) this.habladas.shift();
     const mia = ++this.cual;
+    let enElActo = true;
+    let callada = false;
     this.callaAhora =
-      hacer(() => {
+      hacer((noSono) => {
         if (mia !== this.cual) return;
-        this.acabo();
+        if (noSono && enElActo) callada = true;
+        else this.acabo();
       }) ?? null;
+    enElActo = false;
+    if (callada) this.noHablo();
+  }
+
+  /**
+   * **Lo que no tenía con qué sonar no ha sonado.**
+   *
+   * Una frase que, al tocarle, resulta no tener con qué sonar —ni grabación
+   * ni voz del navegador— lo avisa al acabar, en el acto. Se trata igual que
+   * `anotarSinVoz`: cuenta para no repetirse, pero no está en lo que se oyó y
+   * no deja silencio detrás, que no hubo frase que separar.
+   */
+  private noHablo(): void {
+    this.habladas.pop();
+    this.cuantasHabladas--;
+    this.hablandoAhora = null;
+    this.callaAhora = null;
+    if (!this.cola.length) return;
+    if (this.reloj.esperar) {
+      this.reloj.esperar(0, () => this.soltarLoQueEspera());
+      return;
+    }
+    this.soltarLoQueEspera();
   }
 
   /** Cómo callar a quien tiene la palabra ahora mismo, si alguien la tiene. */
@@ -965,35 +1119,19 @@ export const BOCA = new Boca({
 });
 
 /**
- * Y la segunda boca: **la megafonía de cabina**, que es otra vía.
+ * **Y la megafonía de cabina, que ya no es otra boca: es la misma.**
  *
- * Esto empezó siendo una sola para todo, con este argumento: una radio es un
- * solo canal, y si dos hablan a la vez no se oyen los dos, se pisan. El
- * argumento es correcto **y no se aplica a la comandante**, y lo corrigió
- * quien juega:
+ * Fue otra, con este argumento, que es verdad en un avión: la comandante
+ * habla al pasaje por los altavoces del techo y la torre entra por los
+ * auriculares, y las dos vías se solapan. Y se oía así: «todo el vuelo en
+ * silencio y cuando hablan lo hacen todos juntos» —Jazlyn contando el Teide
+ * con la instructora encima, la azafata con el agua y el maní de la granja y
+ * la radio encima—. Lo resolvió quien juega, sabiendo lo de las dos vías: «en
+ * el juego, para lo poco que hablan, que la megafonía no la pise nadie».
  *
- * > «Pero en la realidad, la comandante le habla a los pasajeros por la
- * > megafonía interna del avión, y lo que escucha en sus auriculares va por
- * > otra vía.»
- *
- * Exacto. En un avión de verdad hay dos vías y **se solapan**: la comandante
- * suena por los altavoces del pasaje mientras la torre entra por los
- * auriculares. Meterlas en el mismo turno no era prudencia, era un error de
- * modelo — y se pagaba con la frase larga de la llegada cortada por un
- * indicativo.
- *
- * Así que dos suelos: la radio —torre, otro avión e instructora— se turnan
- * entre ellos, y la megafonía va por su cuenta.
- *
- * **Y ésta no cancela la voz del navegador.** `speechSynthesis.cancel()` es
- * global: si la megafonía lo llamara, callaría a la radio, que es justo lo
- * que se quiere evitar. La megafonía habla con grabaciones y se corta con su
- * propio mando; si algún día una frase suya no estuviera grabada, sonaría por
- * el navegador y ahí sí competirían — la respuesta a eso es grabarla, no
- * volver a juntar los dos canales.
+ * Así que la megafonía pide la palabra en el mismo turno que todos, con su
+ * sitio en el orden de `audio/turnos.ts`: no corta a nadie, y una vez que habla
+ * nadie le habla encima salvo lo urgente. Se queda el nombre para que se lea
+ * quién habla por dónde.
  */
-export const MEGAFONIA = new Boca({
-  ahora: () => Date.now(),
-  esperar: (ms, hacer) => void setTimeout(hacer, ms),
-  cancelar() {},
-});
+export const MEGAFONIA = BOCA;

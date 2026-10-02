@@ -25,9 +25,10 @@
  * de AAC, el doble. Ver #65 y `banco-de-voz.ts`.
  */
 
-import type { Instructor } from "./instructor";
+import type { AlSonar, Instructor } from "./instructor";
 import type { Urgencia } from "./boca";
 import { BOCA, Boca } from "./boca";
+import { ESPERA_A_SU_VOZ } from "./turnos";
 import {
   BASE,
   CACHE,
@@ -78,6 +79,17 @@ export interface Altavoz {
     porRadio?: boolean,
     porAltavoz?: boolean,
   ): (() => void) | null;
+  /**
+   * Si hay audio en este navegador. Sin él nunca sonará nada grabado, así que
+   * no se espera a nada: se dice como se pueda. Sin el dato, se da por que sí.
+   */
+  readonly available?: boolean;
+  /**
+   * **Si el audio ya puede sonar**: el contexto despierto, que en un navegador
+   * es después del primer gesto. Mientras no, lo que se pide espera. Sin el
+   * dato, se da por que sí. Ver `estaLista`.
+   */
+  readonly despierto?: boolean;
 }
 
 /**
@@ -91,12 +103,46 @@ export interface Altavoz {
 export interface BancoDeVoces {
   readonly manifiestos: Manifiesto[];
   readonly piezas: Map<string, AudioBuffer>;
+  /**
+   * **Cómo va la bajada del pack**, que es lo que decide si una frase que
+   * todavía no tiene su grabación la espera o se le pasa a la voz del
+   * navegador:
+   *
+   * - `sin-pack`: no se va a bajar —no hay formato que se pueda tocar, o es
+   *   una prueba—. Lo que no está, no está, y no se espera a nada.
+   * - `por-pedir`: se bajará con el primer gesto. Lo que se pida antes, espera.
+   * - `manifiestos`: bajando los manifiestos. Todavía no se sabe qué hay.
+   * - `bajando`: los manifiestos puestos y las piezas en camino; lo que se
+   *   pide va delante.
+   * - `listo`: bajado. Lo que falte, falta de verdad.
+   */
+  estado: "sin-pack" | "por-pedir" | "manifiestos" | "bajando" | "listo";
+  /**
+   * Las piezas que se están trayendo, para no pedir dos veces la misma y
+   * para que lo que hace falta ya se pida por delante de lo demás.
+   */
+  readonly pidiendo: Map<string, Promise<void>>;
+  /** El formato y la carpeta con que se baja, puestos al empezar. */
+  formato?: Formato;
+  base?: string;
 }
 
 /** Una bolsa vacía. Cada juego crea la suya y se la pasa a sus cuatro bocas. */
 export function nuevoBancoDeVoces(): BancoDeVoces {
-  return { manifiestos: [], piezas: new Map() };
+  return { manifiestos: [], piezas: new Map(), estado: "sin-pack", pidiendo: new Map() };
 }
+
+/**
+ * **Cuántas piezas se traen a la vez de fondo**, mientras baja el pack.
+ *
+ * Seis, las conexiones que abre un navegador por servidor. Se pedían todas
+ * las de una voz de golpe —quinientas de la instructora—, y en una red lenta
+ * eso es una cola de quinientas delante de cualquier cosa que se pida
+ * después: el crosscheck de Jazlyn, que es la sexta voz, llegaba al minuto.
+ * Con el fondo en seis, lo que se necesita ya se pide aparte y pasa delante.
+ * Ver `traerPieza`.
+ */
+const DE_FONDO = 6;
 
 /**
  * Las grabaciones que se hicieron a voces y no se usan hasta rehacerlas.
@@ -186,9 +232,74 @@ export class InstructorGrabado implements Instructor {
     this.banco = banco;
   }
 
-  /** Si hay alguien que pueda hablar: el grabado o el suplente. */
+  /**
+   * Si hay alguien que pueda hablar: el grabado o el suplente. **Y el pack
+   * que está por llegar cuenta**: con él pedido o bajando, lo que se pide
+   * espera a su grabación, así que hay voz aunque todavía no haya piezas.
+   */
   get disponible(): boolean {
-    return this.banco.piezas.size > 0 || this.suplente.disponible;
+    const viene = this.banco.estado !== "sin-pack" && this.banco.estado !== "listo";
+    return this.banco.piezas.size > 0 || viene || this.suplente.disponible;
+  }
+
+  /**
+   * **Que espere al pack**: se va a bajar con el primer gesto, así que lo que
+   * se pida antes no se le pasa a la voz del navegador —muda en Brave para
+   * Linux—, sino que espera su grabación. Solo si este navegador puede tocar
+   * el pack y tiene audio; si no, nunca llegaría y no se espera a nada.
+   */
+  esperarAlPack(puede: (mime: string) => string = miraSiPuede): void {
+    if (this.banco.estado !== "sin-pack") return;
+    if (this.altavoz.available === false || !elegirFormato(puede)) return;
+    this.banco.estado = "por-pedir";
+  }
+
+  /**
+   * **Si esta frase ya puede sonar como tiene que sonar**: el audio despierto
+   * y, si está grabada, sus piezas bajadas. Lo pregunta la boca mientras la
+   * frase espera su turno; ver `AlPedir.lista` en `audio/boca.ts`.
+   *
+   * Es el arreglo del crosscheck de Jazlyn, que no sonaba en casa de Enrique:
+   * se pedía en el puesto, antes de que su grabación hubiera bajado —es la
+   * sexta voz del pack, y la primera vez después de publicar se bajan todas
+   * otra vez— y con el audio a veces todavía sin despertar. La frase se le
+   * pasaba entonces a la voz del navegador, que en Brave para Linux no
+   * existe, y se daba por dicha. Ahora espera, con su tope: ver
+   * `ESPERA_A_SU_VOZ`.
+   *
+   * **Y si le falta alguna pieza, la pide ya**, por delante de lo que baja de
+   * fondo. Pregunta y encargo van juntos a propósito: quien espera es quien
+   * sabe qué le falta.
+   */
+  estaLista(
+    clave: string | undefined,
+    relleno?: Readonly<Record<string, string>>,
+  ): boolean {
+    const b = this.banco;
+    if (b.estado === "sin-pack") return true;
+    if (this.altavoz.available === false) return true;
+    if (this.altavoz.despierto === false) return false;
+    if (!clave || A_VOCES.has(clave)) return true;
+    if (b.estado === "por-pedir" || b.estado === "manifiestos") return false;
+    const suena = this.quienLaDice(clave, relleno);
+    // Sin receta en ningún manifiesto: no hay grabación que esperar.
+    if (!suena) return true;
+    const faltan = suena.piezas.filter((p) => !b.piezas.has(`${suena.voz}/${p}`));
+    if (!faltan.length || b.estado === "listo") return true;
+    const m = b.manifiestos.find((x) => x.voz === suena.voz);
+    if (m) for (const p of faltan) void this.traerPieza(m, p);
+    return false;
+  }
+
+  /** Las piezas de una frase ya bajadas, en orden, o `null` si falta alguna. */
+  private cadenaDe(suena: { voz: string; piezas: readonly string[] }): AudioBuffer[] | null {
+    const cadena: AudioBuffer[] = [];
+    for (const pieza of suena.piezas) {
+      const buffer = this.banco.piezas.get(`${suena.voz}/${pieza}`);
+      if (!buffer) return null;
+      cadena.push(buffer);
+    }
+    return cadena.length ? cadena : null;
   }
 
   get hablando(): boolean {
@@ -282,6 +393,7 @@ export class InstructorGrabado implements Instructor {
     clave?: string,
     urgencia?: Urgencia,
     relleno?: Readonly<Record<string, string>>,
+    alSonar?: AlSonar,
   ): void {
     /*
      * **Y para los turnos, la frase y a quién va.** La torre habla con los
@@ -292,30 +404,31 @@ export class InstructorGrabado implements Instructor {
      * para el historial la frase sigue siendo la misma; ver `turnoDe`.
      */
     const turno = turnoDe(clave, relleno);
-    const suena = this.quienLaDice(clave ?? null, relleno);
-    if (!suena) {
-      /*
-       * Sin receta grabada, la dice el navegador — **pidiendo la palabra**.
-       *
-       * Ver `porElSuplente`, que cuenta por qué este camino no puede saltarse
-       * el turno.
-       */
-      this.porElSuplente(texto, clave, urgencia, turno);
+    const alCaer = alSonar ? (porque: string) => alSonar("se-cae", porque) : undefined;
+    const hablar = (listo: (noSono?: boolean) => void) =>
+      this.hablarYa(texto, clave, urgencia, relleno, alSonar, listo);
+    /*
+     * **Y si todavía no puede sonar como tiene que sonar, espera**: en la cola
+     * de la boca, a la vista de quien pregunte qué espera, pero sin que le
+     * toque hasta que esté lista o se le acabe el tope. Ver `estaLista`.
+     */
+    if (!this.estaLista(clave, relleno)) {
+      this.boca.pedir(urgencia ?? "normal", hablar, turno, {
+        lista: () => this.estaLista(clave, relleno),
+        tope: ESPERA_A_SU_VOZ,
+        alCaer,
+      });
       return;
     }
-    const cadena: AudioBuffer[] = [];
-    for (const pieza of suena.piezas) {
-      const buffer = this.banco.piezas.get(`${suena.voz}/${pieza}`);
-      /*
-       * Una pieza que el manifiesto promete y no está cargada deja la frase
-       * coja. Media frase es peor que ninguna: la dice el navegador entera —
-       * **y también pidiendo la palabra**. Ver `porElSuplente`.
-       */
-      if (!buffer) {
-        this.porElSuplente(texto, clave, urgencia, turno);
-        return;
-      }
-      cadena.push(buffer);
+    const suena = this.quienLaDice(clave ?? null, relleno);
+    /*
+     * Sin receta grabada, o con una pieza que el manifiesto promete y no está
+     * cargada —media frase es peor que ninguna—, la dice el navegador entera,
+     * **pidiendo la palabra**. Ver `porElSuplente`.
+     */
+    if (!suena || !this.cadenaDe(suena)) {
+      this.porElSuplente(texto, clave, urgencia, turno, relleno, alSonar);
+      return;
     }
     /*
      * **Y lo grabado también pide la palabra.**
@@ -327,90 +440,115 @@ export class InstructorGrabado implements Instructor {
      * habla y avisa al terminar, y eso es lo que se le da aquí. Ver
      * `audio/boca.ts`.
      */
-    this.boca.pedir(
-      urgencia ?? "normal",
-      (listo) => {
-        this.suplente.callar();
-        this.callarLoGrabado();
-        this.vocesUsadas.add(suena.voz);
-        this.ultima = clave ?? texto;
-        this.apuntar();
-        this.sonando = true;
-        this.cortar = this.altavoz.encadenarVoz(
-          cadena,
-          () => {
-            this.sonando = false;
-            this.cortar = null;
-            listo();
-          },
-          this.porRadio,
-          this.porAltavoz,
-        );
-        if (this.cortar) {
-          /*
-           * **Y se le dice a la boca cómo callarnos.**
-           *
-           * Cada boca se calla a sí misma antes de empezar, y con cuatro en el
-           * juego eso no basta: la que corta se calla a sí misma —que no
-           * estaba diciendo nada— y la anterior sigue sonando. Ver `Hablar`.
-           */
-          return () => this.callarLoGrabado();
-        }
-        /*
-         * **No hay grabación: habla el suplente del navegador, y la plaza se
-         * suelta cuando termina él, no antes.**
-         *
-         * Se soltaba en el acto, con este motivo escrito: «si no, la boca se
-         * queda esperando a una frase que nunca sonó». El motivo vale cuando
-         * de verdad no suena nada —el contexto de audio dormido— y es falso
-         * cuando sí suena: el suplente se pone a hablar **fuera del turno**, y
-         * lo siguiente le entra por encima.
-         *
-         * Y eso es lo que se oía, porque las frases que no están grabadas son
-         * las de inglés: «la voz inglesa corta la española, eso lo hace
-         * siempre».
-         *
-         *     Otro avión: «Echo Charlie Sierra November November, viendo en
-         *                  col…»
-         *     Torre:      «Echo Charlie Sierra November November… cleared to
-         *                  land»
-         *
-         * Así que se espera a que calle. No sabe avisar —la interfaz de un
-         * instructor no tiene aviso de fin— pero sí sabe decir si está
-         * hablando, así que se le pregunta. Con un tope: una voz del sistema
-         * que se queda colgada no puede dejar mudo el resto del vuelo.
-         */
-        /*
-         * **Y si el suplente no puede hablar, la plaza se suelta ya.**
-         *
-         * Es la misma regla que en `porElSuplente` y le faltaba a este camino:
-         * esperar dos segundos a que arranque un sintetizador que no existe es
-         * bloquear la boca por nada, y con tres plazas de cola lo que viene
-         * detrás se cae. Medido en el barrido después de quitar un
-         * `BOCA.callar()` que lo estaba tapando por accidente: la torre pasó a
-         * decir **una frase** en un vuelo entero en cuatro escenarios.
-         *
-         * Lo que suena, suena; lo que no, no estorba.
-         */
-        if (!this.suplente.disponible) {
+    this.boca.pedir(urgencia ?? "normal", hablar, turno, { alCaer });
+  }
+
+  /**
+   * **Habla ahora, que ya le toca**, con lo que haya en este momento: su
+   * grabación si está, la voz del navegador si no, y si no hay ninguna de las
+   * dos, nada — avisando a la boca en el acto de que no sonó.
+   *
+   * Se mira aquí y no al pedir porque entre pedir y hablar puede pasar un
+   * rato —el de esperar turno, o el de esperar a su grabación—, y lo que
+   * cuenta es lo que hay cuando suena.
+   */
+  private hablarYa(
+    texto: string,
+    clave: string | undefined,
+    urgencia: Urgencia | undefined,
+    relleno: Readonly<Record<string, string>> | undefined,
+    alSonar: AlSonar | undefined,
+    listo: (noSono?: boolean) => void,
+  ): (() => void) | void {
+    const suena = this.quienLaDice(clave ?? null, relleno);
+    const cadena = suena ? this.cadenaDe(suena) : null;
+    this.ultima = clave ?? texto;
+    this.apuntar();
+    if (suena && cadena) {
+      this.suplente.callar();
+      this.callarLoGrabado();
+      this.vocesUsadas.add(suena.voz);
+      this.sonando = true;
+      this.cortar = this.altavoz.encadenarVoz(
+        cadena,
+        () => {
           this.sonando = false;
+          this.cortar = null;
+          alSonar?.(this.cortando ? "cortada" : "acaba");
           listo();
-          return;
-        }
-        this.sonando = true;
-        this.vocesUsadas.add("navegador");
-        this.suplente.decir(texto, clave, urgencia);
-        // La misma espera en dos tiempos que el resto. Ver `porElSuplente`.
-        this.esperarAlSuplente(listo);
-        // Y al suplente se le calla igual, que también es una voz.
-        return () => {
-          if (this.esperando !== null) clearTimeout(this.esperando);
-          this.esperando = null;
-          this.suplente.callar();
-        };
-      },
-      turno,
-    );
+        },
+        this.porRadio,
+        this.porAltavoz,
+      );
+      if (this.cortar) {
+        alSonar?.("empieza");
+        /*
+         * **Y se le dice a la boca cómo callarnos.**
+         *
+         * Cada boca se calla a sí misma antes de empezar, y con cuatro en el
+         * juego eso no basta: la que corta se calla a sí misma —que no
+         * estaba diciendo nada— y la anterior sigue sonando. Ver `Hablar`.
+         */
+        return () => this.callarLoGrabado();
+      }
+    }
+    /*
+     * **Sin grabación —o sin audio para tocarla—: habla el suplente del
+     * navegador, y la plaza se suelta cuando termina él, no antes.**
+     *
+     * Se soltaba en el acto, con este motivo escrito: «si no, la boca se
+     * queda esperando a una frase que nunca sonó». El motivo vale cuando
+     * de verdad no suena nada y es falso cuando sí suena: el suplente se pone
+     * a hablar **fuera del turno**, y lo siguiente le entra por encima.
+     *
+     * Y eso es lo que se oía, porque las frases que no están grabadas son
+     * las de inglés: «la voz inglesa corta la española, eso lo hace
+     * siempre».
+     *
+     *     Otro avión: «Echo Charlie Sierra November November, viendo en
+     *                  col…»
+     *     Torre:      «Echo Charlie Sierra November November… cleared to
+     *                  land»
+     *
+     * Así que se espera a que calle. No sabe avisar —la interfaz de un
+     * instructor no tiene aviso de fin— pero sí sabe decir si está
+     * hablando, así que se le pregunta. Con un tope: una voz del sistema
+     * que se queda colgada no puede dejar mudo el resto del vuelo.
+     */
+    /*
+     * **Y si el suplente no puede hablar, la plaza se suelta ya**, y en el
+     * acto: la boca lo entiende como lo que es, una frase que no sonó, y no
+     * deja silencio detrás ni la cuenta como oída. Ver `noHablo` en `boca.ts`.
+     *
+     * Esperar dos segundos a que arranque un sintetizador que no existe es
+     * bloquear la boca por nada. Medido en el barrido después de quitar un
+     * `BOCA.callar()` que lo estaba tapando por accidente: la torre pasó a
+     * decir **una frase** en un vuelo entero en cuatro escenarios. Lo que
+     * suena, suena; lo que no, no estorba.
+     */
+    if (!this.suplente.disponible) {
+      this.sonando = false;
+      alSonar?.("no-suena");
+      listo(true);
+      return;
+    }
+    this.callarLoGrabado();
+    this.sonando = true;
+    this.vocesUsadas.add("navegador");
+    this.suplente.decir(texto, clave, urgencia);
+    alSonar?.("empieza");
+    // La misma espera en dos tiempos que el resto. Ver `porElSuplente`.
+    this.esperarAlSuplente(() => {
+      alSonar?.("acaba");
+      listo();
+    });
+    // Y al suplente se le calla igual, que también es una voz.
+    return () => {
+      if (this.esperando !== null) clearTimeout(this.esperando);
+      this.esperando = null;
+      this.suplente.callar();
+      alSonar?.("cortada");
+    };
   }
 
   /**
@@ -456,6 +594,8 @@ export class InstructorGrabado implements Instructor {
     urgencia: Urgencia | undefined,
     /** Con qué se piden los turnos: la frase y a quién va. Ver `turnoDe`. */
     turno: string | undefined = clave,
+    relleno?: Readonly<Record<string, string>>,
+    alSonar?: AlSonar,
   ): void {
     /*
      * **Y un suplente que no puede hablar no pide turno.**
@@ -482,28 +622,20 @@ export class InstructorGrabado implements Instructor {
        * historial contaba repeticiones que con voz nunca habrían pasado. Ver
        * `anotarSinVoz` en `audio/boca.ts`.
        */
-      if (!this.boca.anotarSinVoz(urgencia ?? "normal", turno)) return;
+      if (!this.boca.anotarSinVoz(urgencia ?? "normal", turno)) {
+        alSonar?.("se-cae", "repetida");
+        return;
+      }
       this.ultima = clave ?? texto;
       this.apuntar();
+      alSonar?.("no-suena");
       return;
     }
     this.boca.pedir(
       urgencia ?? "normal",
-      (listo) => {
-        this.callarLoGrabado();
-        this.ultima = clave ?? texto;
-        this.apuntar();
-        this.sonando = true;
-        this.vocesUsadas.add("navegador");
-        this.suplente.decir(texto, clave, urgencia);
-        this.esperarAlSuplente(listo);
-        return () => {
-          if (this.esperando !== null) clearTimeout(this.esperando);
-          this.esperando = null;
-          this.suplente.callar();
-        };
-      },
+      (listo) => this.hablarYa(texto, clave, urgencia, relleno, alSonar, listo),
       turno,
+      { alCaer: alSonar ? (porque) => alSonar("se-cae", porque) : undefined },
     );
   }
 
@@ -561,8 +693,17 @@ export class InstructorGrabado implements Instructor {
     const cortar = this.cortar;
     this.cortar = null;
     this.sonando = false;
-    cortar?.();
+    // Lo que acaba porque se le calla, acaba cortado: ver `AlSonar`.
+    this.cortando = true;
+    try {
+      cortar?.();
+    } finally {
+      this.cortando = false;
+    }
   }
+
+  /** Si lo que acaba ahora acaba porque se le calla. Ver `callarLoGrabado`. */
+  private cortando = false;
 
   /** Lo último que se pidió decir. Sirve para no repetirse. */
   get loUltimo(): string {
@@ -624,69 +765,110 @@ export class InstructorGrabado implements Instructor {
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,
   ): Promise<number> {
+    const b = this.banco;
+    // Una vez: el primer gesto y el arranque con gesto ya hecho llaman los dos.
+    if (b.estado === "manifiestos" || b.estado === "bajando" || b.estado === "listo")
+      return b.piezas.size;
     const formato = elegirFormato(puede);
-    if (!formato) return 0;
-    for (const voz of voces) {
-      try {
-        // El manifiesto siempre de la red. Ver `traer`.
-        const crudo = await traer(`${base}/${voz}/manifiesto.json`, false);
-        if (!crudo) continue;
-        const manifiesto = leerManifiesto(
-          JSON.parse(new TextDecoder().decode(crudo)),
-        );
-        if (!manifiesto) continue;
-        await this.cargarPiezas(manifiesto, formato, base);
-        /*
-         * El manifiesto se apunta **al final**, cuando ya hay piezas: puesto
-         * antes, las primeras frases del vuelo se resolverían como «grabado»
-         * con el pack a medio bajar y se caerían una a una al suplente.
-         * Funciona igual, pero el instructor cambiaría de voz a mitad del
-         * rodaje.
-         */
-        this.banco.manifiestos.push(manifiesto);
-      } catch {
-        // Una voz que no está no puede llevarse por delante a las otras tres.
-      }
+    if (!formato) {
+      b.estado = "sin-pack";
+      return 0;
     }
-    return this.banco.piezas.size;
-  }
-
-  private async cargarPiezas(
-    manifiesto: Manifiesto,
-    formato: Formato,
-    base: string,
-  ): Promise<void> {
-    const falta = loQueHaceFalta(manifiesto);
-    await Promise.all(
-      falta.map(async (pieza) => {
-        /*
-         * **Con lo que dura en la dirección**, que hace de huella.
-         *
-         * Los ficheros del pack no llevan huella en el nombre, y la caché los
-         * sirve por nombre: una frase regrabada con el mismo nombre —pasó con
-         * la de la reserva, que dejó de decir «buscá» y pasó a decir «seguí la
-         * flecha»— se seguía oyendo vieja para siempre en toda tablet que ya
-         * la tuviera, con el manifiesto nuevo al lado. Una toma nueva casi
-         * nunca dura lo mismo que la vieja, y la duración viene en el
-         * manifiesto, que se pide siempre de la red.
-         */
-        /*
-         * Y con la huella de la toma si la trae, que la duración sola no
-         * basta: sale redondeada a la trama del Opus y dos tomas distintas
-         * pueden medir lo mismo. Ver `Pieza.h`.
-         */
-        const { ms = 0, h } = manifiesto.piezas[pieza] ?? {};
-        const bytes = await traer(
-          `${ficheroDe(pieza, formato, manifiesto.voz, base)}?ms=${ms}${h ? `&h=${h}` : ""}`,
-        );
-        if (!bytes) return;
-        const buffer = await this.altavoz.decodificar(bytes);
-        // Con la voz delante: cuatro packs distintos pueden traer una pieza
-        // que se llame igual —«uno», «pista»— y la de la torre no es la del
-        // instructor.
-        if (buffer) this.banco.piezas.set(`${manifiesto.voz}/${pieza}`, buffer);
+    b.estado = "manifiestos";
+    b.formato = formato;
+    b.base = base;
+    /*
+     * **Primero todos los manifiestos, y apuntados en cuanto llegan.**
+     *
+     * Se bajaba voz a voz —manifiesto y todas sus piezas, y luego la
+     * siguiente—, y el manifiesto se apuntaba al final, con este motivo:
+     * «puesto antes, las primeras frases del vuelo se resolverían como
+     * grabado con el pack a medio bajar y se caerían una a una al suplente».
+     * Era verdad entonces, y el precio era el crosscheck de Jazlyn: la
+     * comandante es la sexta voz, y hasta que bajaban las cinco de delante
+     * —quinientas piezas de la instructora la primera— su frase del puesto no
+     * tenía grabación y se le pasaba a la voz del navegador, muda en Brave
+     * para Linux. Ahora lo que no está bajado espera —ver `estaLista`— y pide
+     * sus piezas por delante, así que conviene saber cuanto antes qué hay.
+     */
+    const manifiestos = await Promise.all(
+      voces.map(async (voz) => {
+        try {
+          // El manifiesto siempre de la red. Ver `traer`.
+          const crudo = await traer(`${base}/${voz}/manifiesto.json`, false);
+          if (!crudo) return null;
+          return leerManifiesto(JSON.parse(new TextDecoder().decode(crudo)));
+        } catch {
+          // Una voz que no está no puede llevarse por delante a las otras.
+          return null;
+        }
       }),
     );
+    for (const m of manifiestos) if (m) b.manifiestos.push(m);
+    b.estado = "bajando";
+    /*
+     * **Y las piezas, de fondo y de seis en seis**, en el orden de las voces.
+     * Lo que se necesita ya no espera a este turno: se pide aparte, por
+     * `estaLista`. Ver `DE_FONDO`.
+     */
+    const todas: [Manifiesto, string][] = [];
+    for (const m of b.manifiestos) for (const p of loQueHaceFalta(m)) todas.push([m, p]);
+    let siguiente = 0;
+    const deFondo = async (): Promise<void> => {
+      while (siguiente < todas.length) {
+        const [m, p] = todas[siguiente++]!;
+        await this.traerPieza(m, p);
+      }
+    };
+    await Promise.all(Array.from({ length: DE_FONDO }, deFondo));
+    b.estado = "listo";
+    return b.piezas.size;
+  }
+
+  /**
+   * **Trae una pieza**, una sola vez aunque la pidan dos: la que baja de fondo
+   * y la que pide una frase que la necesita ya comparten la misma petición.
+   */
+  private traerPieza(manifiesto: Manifiesto, pieza: string): Promise<void> {
+    const b = this.banco;
+    // Con la voz delante: cuatro packs distintos pueden traer una pieza que
+    // se llame igual —«uno», «pista»— y la de la torre no es la del
+    // instructor.
+    const cual = `${manifiesto.voz}/${pieza}`;
+    if (b.piezas.has(cual) || !b.formato) return Promise.resolve();
+    const ya = b.pidiendo.get(cual);
+    if (ya) return ya;
+    const formato = b.formato;
+    const base = b.base ?? BASE;
+    const trae = (async () => {
+      /*
+       * **Con lo que dura en la dirección**, que hace de huella.
+       *
+       * Los ficheros del pack no llevan huella en el nombre, y la caché los
+       * sirve por nombre: una frase regrabada con el mismo nombre —pasó con
+       * la de la reserva, que dejó de decir «buscá» y pasó a decir «seguí la
+       * flecha»— se seguía oyendo vieja para siempre en toda tablet que ya
+       * la tuviera, con el manifiesto nuevo al lado. Una toma nueva casi
+       * nunca dura lo mismo que la vieja, y la duración viene en el
+       * manifiesto, que se pide siempre de la red.
+       */
+      /*
+       * Y con la huella de la toma si la trae, que la duración sola no
+       * basta: sale redondeada a la trama del Opus y dos tomas distintas
+       * pueden medir lo mismo. Ver `Pieza.h`.
+       */
+      const { ms = 0, h } = manifiesto.piezas[pieza] ?? {};
+      const bytes = await traer(
+        `${ficheroDe(pieza, formato, manifiesto.voz, base)}?ms=${ms}${h ? `&h=${h}` : ""}`,
+      );
+      if (!bytes) return;
+      const buffer = await this.altavoz.decodificar(bytes);
+      if (buffer) b.piezas.set(cual, buffer);
+    })()
+      .catch(() => undefined)
+      .finally(() => b.pidiendo.delete(cual));
+    b.pidiendo.set(cual, trae);
+    return trae;
   }
 }
 

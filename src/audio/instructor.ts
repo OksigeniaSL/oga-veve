@@ -45,6 +45,25 @@ import { seguirLaVoz, volumenDeVoz, vozPermitida } from "./voz";
 import { chasquidoDeRadio } from "./radio";
 import { BOCA, type Urgencia } from "./boca";
 
+/**
+ * **Lo que le pasó a una frase**, para quien necesita saber si sonó de verdad.
+ *
+ * - `empieza`: empezó a sonar, grabada o con la voz del navegador.
+ * - `acaba`: sonó entera.
+ * - `cortada`: empezó y la cortó algo más urgente.
+ * - `no-suena`: le tocó y no tenía con qué sonar —ni grabación ni voz del
+ *   navegador—. Lo que tenga que verse se ve igual: su tarjeta es su canal.
+ * - `se-cae`: no llegó a tocarle —caducó, ya no era verdad, se repetía—.
+ *
+ * «Dicha» quiere decir que sonó, no que se pidió. Lo pidió Enrique después de
+ * un «cleared to land» que no se oyó con la luz verde puesta: el juego lo daba
+ * por dicho porque lo había pedido. Ver `alSonarElPermiso` en `game.ts`.
+ */
+export type AlSonar = (
+  que: "empieza" | "acaba" | "cortada" | "no-suena" | "se-cae",
+  porque?: string,
+) => void;
+
 export interface Instructor {
   /**
    * Dice algo. `texto` ya viene traducido y listo para leer.
@@ -77,6 +96,11 @@ export interface Instructor {
      * que ya viene montado.
      */
     relleno?: Readonly<Record<string, string>>,
+    /**
+     * Y si quien pide necesita saber si sonó: ver `AlSonar`. Las voces que no
+     * saben contarlo no lo llaman.
+     */
+    alSonar?: AlSonar,
   ): void;
   /** Se calla ahora mismo. */
   callar(): void;
@@ -405,8 +429,8 @@ export class VozDelNavegador implements Instructor {
           frase.addEventListener("end", cerrar);
           frase.addEventListener("error", cerrar);
         }
-        frase.onend = listo;
-        frase.onerror = listo;
+        frase.onend = () => listo();
+        frase.onerror = () => listo();
         speechSynthesis.speak(frase);
         /*
          * Y cómo callarla, para cuando otra voz tenga que cortarla.

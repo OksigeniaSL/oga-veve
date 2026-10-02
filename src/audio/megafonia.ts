@@ -57,9 +57,9 @@
  *
  * ## Y en los momentos tranquilos
  *
- * La megafonía va por otra vía que la radio y se solapa con ella —ver
- * `MEGAFONIA` en `boca.ts`—, pero eso no quiere decir que pueda hablar
- * encima de todo. En un avión de verdad existe la **cabina estéril**: por
+ * La megafonía va en el mismo turno que la radio —ver `MEGAFONIA` en
+ * `boca.ts` y el orden de `turnos.ts`—: una vez que habla no la pisa nadie,
+ * y ella tampoco pisa a nadie. En un avión de verdad existe la **cabina estéril**: por
  * debajo de diez mil pies, en el despegue y en la llegada, nadie habla con los
  * pilotos de nada que no sea el vuelo. Aquí eso es la regla de siempre dicha
  * del todo: la megafonía espera a que **no hable nadie** —ni la instructora,
@@ -174,6 +174,31 @@ const CUANDO: Record<Anuncio, readonly Fase[]> = {
   "comandante.aproximacion": ["en-vuelo"],
   "comandante.llegada": ["abandonando", "a-plataforma"],
 };
+
+/**
+ * **Si a un anuncio pedido se le pasó el momento** esperando su voz o su
+ * turno: los de tierra tienen sus fases, y fuera de ellas no se dicen.
+ *
+ * Hace falta desde que lo pedido espera a su grabación —ver `estaLista` en
+ * `audio/instructor-grabado.ts`—: el crosscheck pedido en el puesto puede
+ * estar esperando cuando el avión ya rueda, y «armar toboganes» rodando es
+ * justo lo que no se dice —«eso se dice antes de arrancar motores»—. Se
+ * retira de la cola y ya está. Se reconoce por la clave, con sus formas y su
+ * relleno detrás.
+ */
+export function seLePasoElMomento(clave: string | undefined, fase: Fase): boolean {
+  if (!clave) return false;
+  const base = clave.replace(/[@~].*$/, "");
+  for (const a of DE_TIERRA)
+    if (base === a || base.startsWith(a)) return !CUANDO[a].includes(fase);
+  return false;
+}
+
+const DE_TIERRA = [
+  "comandante.crosscheck",
+  "comandante.bienvenida",
+  "comandante.despegue",
+] as const satisfies readonly Anuncio[];
 
 /**
  * Cuánto se espera dentro de la fase antes de hablar, en segundos.

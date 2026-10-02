@@ -6,7 +6,7 @@
  * pasa por «rodando», no suena a vuelo: suena a máquina.
  */
 import { describe, expect, it } from "vitest";
-import { Megafonia, conPasaje, conTripulacion } from "./megafonia";
+import { Megafonia, conPasaje, conTripulacion, seLePasoElMomento } from "./megafonia";
 import type { Fase } from "../flight/vuelo";
 
 /*
@@ -531,5 +531,30 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
     const dichos = volar(new Megafonia(), tramos);
     expect(dichos).toContain("comandante.descenso");
     expect(dichos).not.toContain("comandante.aproximacion");
+  });
+});
+
+/*
+ * **Lo que esperaba su voz y se le pasó el momento, no se dice.** El
+ * crosscheck pedido en el puesto puede seguir esperando su grabación cuando
+ * el avión ya rueda: «armar toboganes» rodando es justo lo que no se dice.
+ */
+describe("a lo que se le pasó el momento", () => {
+  it("el crosscheck, en el puesto sí y rodando no", () => {
+    expect(seLePasoElMomento("comandante.crosscheck", "estacionado")).toBe(false);
+    expect(seLePasoElMomento("comandante.crosscheck", "arrancando")).toBe(false);
+    expect(seLePasoElMomento("comandante.crosscheck", "rodando")).toBe(true);
+    expect(seLePasoElMomento("comandante.crosscheck~2", "rodando")).toBe(true);
+  });
+
+  it("la bienvenida, con su plan y su sitio, hasta alinearse", () => {
+    expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "rodando")).toBe(false);
+    expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "en-vuelo")).toBe(true);
+  });
+
+  it("y lo del aire no lo retira esto: lo guardan sus condiciones", () => {
+    expect(seLePasoElMomento("comandante.descenso@x", "final")).toBe(false);
+    expect(seLePasoElMomento("tripulacion.servicio", "en-vuelo")).toBe(false);
+    expect(seLePasoElMomento(undefined, "rodando")).toBe(false);
   });
 });

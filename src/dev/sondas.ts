@@ -52,7 +52,8 @@ import {
 } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnCastellano, pistaEnPiezas, rellenoDe } from "../flight/matricula";
-import { BOCA, MEGAFONIA } from "../audio/boca";
+import { BOCA } from "../audio/boca";
+import { esDeLaMegafonia } from "../audio/turnos";
 import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { vfeDeAterrizaje } from "../flight/limites";
@@ -643,11 +644,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * de la cabina, del puesto a la despedida, no se podía leer en orden.
      */
     megafonia: () => {
-      const cero = BOCA.habladas[0]?.t ?? MEGAFONIA.habladas[0]?.t ?? 0;
-      return MEGAFONIA.habladas.map(
-        (h) => `${((h.t - cero) / 1000).toFixed(1)}s ${h.clave}`,
-      );
+      /*
+       * Ahora va en el mismo turno que la radio —ver `MEGAFONIA` en
+       * `boca.ts`—, así que se saca de lo hablado por su clave.
+       */
+      const cero = BOCA.habladas[0]?.t ?? 0;
+      return BOCA.habladas
+        .filter((h) => esDeLaMegafonia(h.clave))
+        .map((h) => `${((h.t - cero) / 1000).toFixed(1)}s ${h.clave}`);
     },
+    /**
+     * **La turbulencia del camino de este vuelo** y lo volado, y la forma de
+     * pedir una: `ponerTurbulencia([{ desde, hasta, intensidad, como, capa }])`
+     * por lo volado desde el despegue. Ver `flight/turbulencia-del-vuelo.ts`.
+     */
+    turbulencia: () => juego.turbulenciaParaBanco,
+    ponerTurbulencia: (zonas: Parameters<Game["ponerTurbulencia"]>[0]) =>
+      juego.ponerTurbulencia(zonas),
     /**
      * **Lo que dijo la voz de la máquina**, con la misma hora que `habladas`:
      * la cuenta y los avisos de las cajas no pasan por la boca, y sin esto

@@ -36,8 +36,13 @@
  * del suelo los remolinos son pequeños y el empujón horizontal es mayor que el
  * vertical; arriba, grandes e iguales en todas direcciones.
  *
- * Lo que no se modela, y queda en #82: la onda de montaña, la de aire claro en
- * crucero y la cortante de viento. Y la estela de otro avión, en su fichero.
+ * Y **la del camino**: las zonas de turbulencia de cada vuelo —la del parte,
+ * la de montaña, la de aire claro en crucero, la tormenta que acompaña casi
+ * todo el viaje—, que no salen de una cuenta de libro sino del tiempo del día
+ * y de la variedad de lo real. Ver `turbulencia-del-vuelo.ts`.
+ *
+ * Lo que no se modela, y queda en #82: la cortante de viento. Y la estela de
+ * otro avión, en su fichero.
  *
  * ## Por qué funciones y no un objeto con estado
  *
@@ -69,6 +74,11 @@ export interface Aire {
   readonly calor?: number;
   /** El eco de tormenta aquí, de 0 a 1. Ver `cuantoSacude` en `tormentas.ts`. */
   readonly tormenta?: number;
+  /**
+   * **La del camino**, σ_w en m/s: la zona de turbulencia de este vuelo que se
+   * esté cruzando, prevista o de aire claro. Ver `turbulencia-del-vuelo.ts`.
+   */
+  readonly camino?: number;
 }
 
 /** Nudos a metros por segundo. Aquí dentro todo va en SI. */
@@ -271,6 +281,8 @@ export interface Causas {
   readonly termica: number;
   readonly nube: number;
   readonly tormenta: number;
+  /** La del camino: ver `Aire.camino`. */
+  readonly camino: number;
 }
 
 export function causasDe(aire: Aire): Causas {
@@ -279,6 +291,7 @@ export function causasDe(aire: Aire): Causas {
     termica: termica(aire),
     nube: nube(aire),
     tormenta: POR_ECO * Math.max(0, Math.min(1, aire.tormenta ?? 0)),
+    camino: Math.max(0, aire.camino ?? 0),
   };
 }
 
@@ -293,7 +306,7 @@ export function causasDe(aire: Aire): Causas {
  */
 export function cuantoSeMueve(aire: Aire): number {
   const c = causasDe(aire);
-  return Math.hypot(c.mecanica, c.termica, c.nube, c.tormenta);
+  return Math.hypot(c.mecanica, c.termica, c.nube, c.tormenta, c.camino);
 }
 
 /**

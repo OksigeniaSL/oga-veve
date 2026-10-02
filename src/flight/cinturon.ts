@@ -146,6 +146,15 @@ export class Cinturon {
   }
 
   /**
+   * Si el pasaje va suelto: la comandante dijo que se podían soltar y nadie
+   * ha vuelto a pedir que se abrochen. Es lo que mira el anuncio de la
+   * turbulencia que llega sin avisar: ver `turbulencia-del-vuelo.ts`.
+   */
+  get pasajeSuelto(): boolean {
+    return this.soltado;
+  }
+
+  /**
    * Un paso. Devuelve si el cartel está encendido **ahora**.
    *
    * Quien llama compara con lo de antes para saber si suena el *ding*: aquí no

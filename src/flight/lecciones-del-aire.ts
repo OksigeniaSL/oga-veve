@@ -73,6 +73,41 @@ const BAJA = 0.8;
 const RATO_BAJANDO = 15;
 
 /**
+ * **Si una lección que ya tocaba sigue siendo verdad**, para contarla un rato
+ * después.
+ *
+ * Las lecciones esperan su hueco —ver `Huecos` en `audio/turnos.ts`—: se
+ * contaban en el instante en que tocaban, y ese instante era a menudo el de
+ * otra voz. La del frío caía encima de Jazlyn contando el Teide; la de los
+ * oídos, encima del azafato anunciando la bajada. Esperando, hay que saber si
+ * lo que dicen sigue siendo verdad cuando por fin hay sitio: «afuera ya hace
+ * cero grados» con el avión bajando ya no lo es.
+ */
+export function sigueValiendo(l: LeccionDelAire, x: LecturaDelAire): boolean {
+  if (x.enTierra) return false;
+  switch (l) {
+    case "frio":
+      // «Cada mil metros que subimos»: bajo cero, y sin bajar.
+      return x.oat <= 0 && x.vertical > -NIVELADO;
+    case "crucero":
+      return (
+        x.crucero !== null && !x.bajando && x.altura >= x.crucero - CERCA_DEL_CRUCERO
+      );
+    case "bolsa":
+      return x.presurizada && x.cabina >= CABINA_DE_LA_BOLSA - 100;
+    case "oidos":
+      // «Empezamos a bajar, y la cabina también baja».
+      return x.presurizada && x.ritmoDeCabina < 0;
+  }
+}
+
+/**
+ * Y cuánto se espera como mucho a que haya hueco para una, s: tres minutos.
+ * Más que eso ya no es contarlo cuando se ve.
+ */
+export const ESPERA_SU_HUECO = 180;
+
+/**
  * **Cuándo toca cada lección.** Pura: se le da el vuelo en cada paso y dice
  * qué lección toca ahora, si toca alguna. Una por paso.
  */
@@ -87,6 +122,14 @@ export class LeccionesDelAire {
   /** Si esta lección ya se contó en esta sesión. */
   yaDicha(l: LeccionDelAire): boolean {
     return this.dichas.has(l);
+  }
+
+  /**
+   * **Una lección que tocaba y no llegó a contarse**: se le pasó el momento
+   * esperando su hueco. Vuelve a poder tocar, la próxima vez que pase.
+   */
+  noSeConto(l: LeccionDelAire): void {
+    this.dichas.delete(l);
   }
 
   /**
