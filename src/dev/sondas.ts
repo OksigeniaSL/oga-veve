@@ -32,7 +32,12 @@ import { indicatedAirspeed } from "../flight/atmosphere";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
-import { cifrasDeLaCabina, rotulosDeLaCabina } from "../world/pantallas-cabina";
+import {
+  cifrasDeLaCabina,
+  rotulosDeLaCabina,
+  ultimaCartaDeLaCabina,
+} from "../world/pantallas-cabina";
+import type { Intruso } from "../flight/tcas";
 import { familiaDe } from "../ui/familia";
 import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento, esAfis, sinTorre } from "../world/aerodrome";
@@ -1462,10 +1467,82 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     tcas: () => juego.tcasParaBanco,
     /**
+     * **Lo que la radio ha nombrado de otros aviones**, con la matrícula o el
+     * nombre del TCAS de cada uno. El banco comprueba que cada uno está en el
+     * mundo al nombrarlo. Ver `nombrados` en `game.ts`.
+     */
+    nombrados: () => juego.nombradosParaBanco,
+    /** Con quién se habla por la radio ahora. Ver `flight/dependencia.ts`. */
+    dependencia: () => juego.dependenciaParaBanco,
+    /**
+     * Transpondedores de prueba para el TCAS, sin dibujo ni radio: el banco
+     * del radar pone uno en cada dirección y mira dónde sale. `null` los quita.
+     */
+    intrusosDePrueba: (lista: Intruso[] | null) => {
+      juego.intrusosDePrueba = lista ?? [];
+    },
+    /** La última carta pintada en la cabina, en píxeles. */
+    cartaDeCabina: () => ultimaCartaDeLaCabina(),
+    /**
+     * **Cada avión del mundo, y si se ve**: de las tres fuentes de tráfico,
+     * dónde está, si su dibujo está encendido y dónde cae en la pantalla.
+     * Es lo que el banco cuenta frente a los rombos del TCAS. Un avión se da
+     * por dibujado si hay un cuerpo encendido de su tráfico a menos de diez
+     * metros de donde dice estar.
+     */
+    avionesDelMundo: () => {
+      const s = juego.flight.state;
+      const cam = juego.camera;
+      cam.updateMatrixWorld();
+      const lienzo = juego.renderer.domElement;
+      const ancho = lienzo.clientWidth;
+      const alto = lienzo.clientHeight;
+      const cuerpos: Vector3[] = [];
+      for (const g of juego.gruposDelTraficoParaBanco) {
+        if (!g.visible) continue;
+        for (const c of g.children) {
+          let encendido = c.visible;
+          for (let p = c.parent; p && encendido; p = p.parent)
+            encendido = p.visible;
+          if (encendido) cuerpos.push(c.getWorldPosition(new Vector3()));
+        }
+      }
+      const fuentes: { id: string; x: number; y: number; z: number }[] = [];
+      for (const q of juego.trafico?.quienes() ?? [])
+        fuentes.push({ id: `circuito:${q.matricula}`, x: q.x, y: q.y, z: q.z });
+      for (const q of juego.avionesDeRutaParaBanco?.quienes() ?? [])
+        fuentes.push({ id: `ruta:${q.id}`, x: q.x, y: q.y, z: q.z });
+      for (const q of juego.islenosParaBanco?.quienes() ?? [])
+        fuentes.push({ id: `islas:${q.id}`, x: q.x, y: q.y, z: q.z });
+      return fuentes.map((f) => {
+        const v = new Vector3(f.x, f.y, f.z);
+        const dibujado = cuerpos.some((c) => c.distanceTo(v) < 10);
+        v.project(cam);
+        const enPantalla =
+          v.z > -1 && v.z < 1 && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
+        const suelo = juego.terrain.sampleHeight(f.x, f.z);
+        return {
+          id: f.id,
+          x: f.x,
+          y: f.y,
+          z: f.z,
+          enElSuelo: f.y - suelo < 5,
+          distancia: Math.hypot(f.x - s.position.x, f.z - s.position.z),
+          relativa: f.y - s.position.y,
+          dibujado,
+          enPantalla: dibujado && enPantalla,
+          px: Math.round(((v.x + 1) / 2) * ancho),
+          py: Math.round(((1 - v.y) / 2) * alto),
+        };
+      });
+    },
+    /**
      * A quién le ha dado ya la radio información de tráfico en esta pasada.
      * Ver `flight/informacion-de-trafico.ts`.
      */
     informacionDeTrafico: () => juego.informacionDeTraficoParaBanco,
+    /** Por qué no se informó del tráfico en el último paso. */
+    porQueCallaLaInformacion: () => juego.porQueCallaLaInformacionParaBanco,
     /**
      * Pone a uno del circuito donde dice una llamada —«otro.enCola»,
      * «otro.final»—, para mirar el TCAS sin esperar a que le toque hablar.

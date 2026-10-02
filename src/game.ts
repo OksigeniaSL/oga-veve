@@ -103,10 +103,13 @@ import {
   type SueloDelTrafico,
 } from "./world/suelo-del-trafico";
 import { MILLA, type Mapa } from "./ui/carta";
+import { ponerTamanoMinimo } from "./world/se-ve-de-lejos";
 import {
   Tcas,
-  soloAvisa,
+  bandaPara,
+  modoEnPantalla,
   type AvisoDeTrafico,
+  type Banda,
   type Intruso,
 } from "./flight/tcas";
 import {
@@ -270,6 +273,11 @@ const ESPERA_DEL_DESCENSO = 3000;
  */
 function loQueTardaEnDecirse(texto: string): number {
   return 500 + (texto.length / 14) * 1000;
+}
+
+/** Un porqué de la espera con su avión, como se apunta: «aterriza:EC-FLY». */
+function esperaPorQuien(por: EsperaPor): string {
+  return `${por.porque}:${por.matricula ?? "?"}`;
 }
 const URGENTE = 2;
 
@@ -435,11 +443,16 @@ import {
 } from "./audio/instructor";
 import { Frecuencia, PISTA_TUYA, type Transmision } from "./flight/radio";
 import {
+  dependenciaDe,
+  seOyeElCampo,
+  type Dependencia,
+} from "./flight/dependencia";
+import {
   alLevantarLaOrden,
   EXPLICA_LA_ESPERA,
   HOLD_SHORT_POR,
   TurnoDePista,
-  type PorQueEsperas,
+  type EsperaPor,
 } from "./flight/turno-de-pista";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
@@ -1346,6 +1359,26 @@ export class Game {
     return this.islenos;
   }
 
+  /**
+   * **Los grupos dibujados de los tres tráficos**, para el banco del radar:
+   * con ellos se mira si cada avión que el TCAS pinta se dibuja en el mundo y
+   * dónde cae en la pantalla. Ver `verificar-radar.mjs`.
+   */
+  get gruposDelTraficoParaBanco(): readonly Object3D[] {
+    return [
+      this.trafico?.grupo,
+      this.avionesDeRuta?.grupo,
+      this.avionesDeLasIslas?.grupo,
+    ].filter((g): g is Group => !!g);
+  }
+
+  /**
+   * **Tráfico de prueba**, sin dibujo ni radio: transpondedores puestos a mano
+   * para el banco del radar, que comprueba que cada uno sale en su sitio en
+   * la carta. Vacío en el juego. Ver `vigilarElTrafico`.
+   */
+  intrusosDePrueba: readonly Intruso[] = [];
+
   /** Para el banco: adelanta el reloj de los barcos, s. */
   adelantarLosBarcos(segundos: number): void {
     this.adelantoDeLosBarcos += segundos;
@@ -1786,9 +1819,22 @@ export class Game {
       intrusos.push({ id: `ruta:${q.id}`, x: q.x, y: q.y, z: q.z });
     for (const q of this.islenos?.quienes() ?? [])
       intrusos.push({ id: `islas:${q.id}`, x: q.x, y: q.y, z: q.z });
+    // Y los de prueba del banco del radar, que en el juego no hay ninguno.
+    intrusos.push(...this.intrusosDePrueba);
     this.llegandoAhora = llegando;
     this.apuntarLasEstelas();
 
+    /*
+     * **Y la banda de altura, como la pondría quien vuela**: ABV subiendo a
+     * la ventanilla, BLW bajando a ella, NORM nivelado. Ver `bandaPara`.
+     */
+    this.bandaDelTcas = s.onGround
+      ? "NORM"
+      : bandaPara(
+          this.ventanillaEnPies(),
+          this.altitudIndicada() / PIE_EN_METROS,
+          this.bandaDelTcas,
+        );
     const avisos = this.tcas.paso(
       dt,
       this.aircraft.tcas,
@@ -1798,6 +1844,7 @@ export class Game {
         z: s.position.z,
         sobreElSuelo: s.heightAboveGround,
         rumbo: MathUtils.radToDeg(s.heading),
+        banda: this.bandaDelTcas,
         /*
          * **En el aire, siempre; en tierra, desde el punto de espera.**
          *
@@ -1880,6 +1927,7 @@ export class Game {
    * importe más la tapa, y el «traffic, traffic» del TCAS el primero.
    */
   private informarDelTrafico(a: AvisoDeTrafico): void {
+    this.nombrar("informacionDeTrafico", a.id);
     const altura = alturaDelOtro(a.relativa);
     const canales = canalesDe(this.tier.avisos);
     const rotulo = !canales.texto
@@ -1924,6 +1972,18 @@ export class Game {
   /** Cuántas informaciones de tráfico van dadas y a quién. Para el banco. */
   get informacionDeTraficoParaBanco(): readonly string[] {
     return [...this.informacionDeTrafico.yaContados];
+  }
+
+  /**
+   * Por qué no se dio la información de tráfico en el último paso, y por qué
+   * calla la radio si es eso: quién tiene la boca. Para el banco.
+   */
+  get porQueCallaLaInformacionParaBanco(): string | null {
+    const motivo = this.informacionDeTrafico.porQueCalla;
+    if (motivo !== "callado") return motivo;
+    return this.terrenoAhora !== null
+      ? "callado: el terreno"
+      : `callado: la boca (${BOCA.ocupada ? "hablando" : "en silencio"}, ${BOCA.cuantasEsperan} en cola)`;
   }
 
   /** Si ya se contó qué es un rombo. Una vez por partida, no por vuelo. */
@@ -2003,6 +2063,7 @@ export class Game {
    * vez aquí tiene que aprender que eso se oye con calma.
    */
   private avisarDelTrafico(a: AvisoDeTrafico, yaContado = false): void {
+    this.nombrar("traffic, traffic", a.id);
     const lado = ladoDeLaHora(a.hora);
     const clave = `vuelo.trafico.${lado}` as TranslationKey;
     // Contado ya en esta pasada, suena la caja si la hay y nadie más. Ver
@@ -2066,6 +2127,13 @@ export class Game {
       equipo: this.aircraft.tcas,
       enPantalla: this.tcas.enPantalla,
       avisos: this.tcas.avisosDados,
+      enMarcha: this.tcas.enMarcha,
+      banda: this.bandaDelTcas,
+      modo: modoEnPantalla(
+        this.aircraft.tcas,
+        this.tcas.enMarcha,
+        this.bandaDelTcas,
+      ),
     };
   }
 
@@ -2635,6 +2703,7 @@ export class Game {
     this.tormentasDichas.clear();
     this.estelas.vaciar();
     this.tcas.reiniciar();
+    this.bandaDelTcas = "NORM";
     this.informacionDeTrafico.reiniciar();
     // Otro vuelo, otra final: las aves de la de antes se fueron.
     this.avesEnLaFinal.reiniciar();
@@ -2946,6 +3015,38 @@ export class Game {
    * `tcas` en `flight/aircraft.ts`.
    */
   private readonly tcas = new Tcas();
+  /** La posición del selector de banda del TCAS. Ver `bandaPara`. */
+  private bandaDelTcas: Banda = "NORM";
+  /**
+   * La dependencia en cuya frecuencia se está: tierra, torre, salida,
+   * control o aproximación. Ver `flight/dependencia.ts`.
+   */
+  private dependencia: Dependencia | null = null;
+
+  /** Con quién se habla ahora, mirando dónde se está. Ver `dependenciaDe`. */
+  private laDependenciaDeAhora(): Dependencia {
+    const s = this.flight.state;
+    const campo = this.elCampoMontado();
+    return dependenciaDe(
+      {
+        fase: this.faseDeAhora,
+        enTierra: s.onGround,
+        millas:
+          Math.hypot(
+            s.position.x - campo.pista.x,
+            s.position.z - campo.pista.z,
+          ) / MILLA,
+        pies: (s.position.y - this.cotaDelCampo(campo)) / PIE_EN_METROS,
+        esElDeSalida: campo.id === this.salidaId,
+      },
+      this.dependencia,
+    );
+  }
+
+  /** La dependencia de ahora, para el banco. */
+  get dependenciaParaBanco(): Dependencia | null {
+    return this.dependencia;
+  }
   /**
    * **Y lo que cuenta la radio del tráfico que se acerca**, lleve el avión
    * TCAS o no: es un servicio del control, no del equipo. Ver
@@ -3424,10 +3525,34 @@ export class Game {
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
   /**
-   * Por quién se dijo que se esperaba en esta roja. Ver
-   * `explicarSiCambiaElPorque`.
+   * Por quién se dijo ya que se esperaba en esta roja: «aterriza:EC-FLY». Uno
+   * por avión, porque el segundo que llega a la final es otro porqué aunque se
+   * llame igual. Se vacía al cambiar la luz. Ver `explicarSiCambiaElPorque`.
    */
-  private porQueExplicado: PorQueEsperas | null = null;
+  private readonly porQuesExplicados = new Set<string>();
+  /**
+   * **Y el porqué pedido que todavía no se ha oído**: con qué clave espera
+   * turno en la boca, desde cuántas frases habladas, por quién y cuántas veces
+   * se ha pedido. Si la boca lo tira sin decirlo, se pide otra vez. Ver
+   * `vigilarQueSeOyoElPorque`.
+   */
+  private porQuePendiente: {
+    clave: string;
+    desde: number;
+    quien: string;
+    veces: number;
+  } | null = null;
+  /** Cuántas veces se ha pedido ya cada porqué de esta roja. */
+  private readonly vecesDelPorque = new Map<string, number>();
+  /**
+   * **Lo que la radio ha dicho de otros aviones, y de cuál**: la clave y la
+   * matrícula —o el nombre que le da el TCAS— de cada vez que la torre, el
+   * AFIS, otro avión, la instructora o la caja nombran a un tráfico. Es lo que
+   * mira el banco para comprobar que cada uno de esos avisos habla de un avión
+   * que está en el mundo en ese momento. Ver `nombrar`.
+   */
+  private readonly nombrados: { t: number; clave: string; quien: string | null }[] = [];
+  private nombradosTotal = 0;
   private readonly radio = new Frecuencia();
   /**
    * **Y el turno de pista**: la frecuencia, el tráfico dibujado, la boca y tu
@@ -6402,13 +6527,17 @@ export class Game {
        */
       // Donde no hay torre que deje nada —sin nadie en la radio, o un AFIS
       // que informa—, se ve que está libre.
+      const sinLampara =
+        sinTorre(this.elCampo().escenario.aerodrome) || this.esAfisAqui();
       const libre = this.avisoCon(
-        sinTorre(this.elCampo().escenario.aerodrome) || this.esAfisAqui()
-          ? "vuelo.puedeVolverSinTorre"
-          : "vuelo.puedeVolver",
+        sinLampara ? "vuelo.puedeVolverSinTorre" : "vuelo.puedeVolver",
         "palabra.volve",
       );
-      this.hud.senal.mostrar("verde", libre.rotulo, null, {
+      /*
+       * Y sin lámpara, sin el dibujo de la lámpara: el de volver por el
+       * circuito. Ver `guionAfis` en `flight/vuelo.ts`.
+       */
+      this.hud.senal.mostrar(sinLampara ? "circuito-encola" : "verde", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
       });
@@ -6451,7 +6580,8 @@ export class Game {
         "vuelo.puedeAterrizarSinTorre",
         "palabra.aterriza",
       );
-      this.hud.senal.mostrar("verde", libre.rotulo, null, {
+      // El dibujo de la toma, no el de una lámpara que aquí no hay.
+      this.hud.senal.mostrar("toma", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_PERMISO,
         prioridad: IMPORTANTE,
       });
@@ -6464,8 +6594,12 @@ export class Game {
     this.luzDeTorre("verde");
     this.cabeceraParaLaTorre = null;
     this.hud.senal.mostrar(
-      "verde",
-      // Y en un AFIS no te deja nadie: te dicen que está libre y bajás vos.
+      /*
+       * Y en un AFIS no te deja nadie: te dicen que está libre y bajás vos.
+       * Por eso tampoco va el dibujo de la lámpara, que allí no hay, sino el
+       * de la toma. Ver `guionAfis` en `flight/vuelo.ts`.
+       */
+      this.esAfisAqui() ? "toma" : "verde",
       this.rotulo(
         this.esAfisAqui() ? "vuelo.puedeAterrizarAfis" : "vuelo.puedeAterrizar",
         "palabra.aterriza",
@@ -6517,10 +6651,10 @@ export class Game {
      * ruta ya lo hacía; la pista en uso también, que es un número que se lee.
      */
     conTira = false,
-  ): void {
+  ): string | null {
     const base = claveDeTorre(dice);
-    if (!base) return;
-    this.porRadioClave(base, urgencia, destino, conTira);
+    if (!base) return null;
+    return this.porRadioClave(base, urgencia, destino, conTira);
   }
 
   /**
@@ -6533,13 +6667,14 @@ export class Game {
     urgencia: Urgencia = "mando",
     destino?: DestinoEnRadio,
     conTira = false,
-  ): void {
+  ): string | null {
     const montada = this.deTorre(base, this.miIndicativo, destino);
-    if (montada) {
-      this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
-      if ((destino || conTira) && this.tier.instruments !== "none")
-        this.hud.radio(montada.texto, undefined, true);
-    }
+    if (!montada) return null;
+    this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
+    if ((destino || conTira) && this.tier.instruments !== "none")
+      this.hud.radio(montada.texto, undefined, true);
+    // Con qué clave espera turno en la boca. Ver `turnoDe`.
+    return turnoDe(montada.clave, montada.relleno) ?? null;
   }
 
   /** Si en el campo de ahora contesta un AFIS. Ver `Aerodrome.afis`. */
@@ -6560,6 +6695,7 @@ export class Game {
   private decirleAOtro(dice: Transmision): string | null {
     const montada = this.deTorre(dice.clave, dice.de);
     if (!montada) return null;
+    this.nombrar(dice.clave, dice.de.matricula);
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
     if (this.tier.instruments !== "none") this.hud.radio(montada.texto, undefined, false);
     return turnoDe(montada.clave, montada.relleno) ?? null;
@@ -6913,10 +7049,11 @@ export class Game {
      * otra punta no oye nada en castellano: se lo cuenta la instructora, y la
      * pista en uso va por radio.
      */
-    const trafico =
+    const conocido =
       afis && luz === "roja" && rojaDice === "esperar"
-        ? this.turno.traficoConocido
+        ? this.turno.traficoConocidoDe
         : null;
+    const trafico = conocido?.porque ?? null;
     const base: string | null = afis
       ? luz === "verde"
         ? enElAire
@@ -6997,18 +7134,30 @@ export class Game {
      * puede quedarse la pista —ver `Momento.esperandoLaPista`—, así que el
      * porqué no cambia hasta la verde. Ver `porQueEsperas`.
      */
-    const porQue =
-      luz === "roja" && rojaDice === "esperar" ? this.turno.porQueEsperas : null;
-    this.porQueExplicado = porQue;
+    const porQueDe =
+      luz === "roja" && rojaDice === "esperar"
+        ? this.turno.porQueEsperasDe
+        : null;
+    const porQue = porQueDe?.porque ?? null;
+    // Luz nueva, porqués nuevos: lo que se explicó en la roja anterior no vale.
+    this.porQuesExplicados.clear();
+    this.vecesDelPorque.clear();
+    this.porQuePendiente = null;
+    if (porQueDe) this.porQuesExplicados.add(esperaPorQuien(porQueDe));
+    // Y el tráfico que da un AFIS ya va dicho en su frase: no se repite.
+    if (conocido) this.porQuesExplicados.add(esperaPorQuien(conocido));
+    // El AFIS, que nombra el tráfico en la frase de su lámpara apagada.
+    if (clave && conocido) this.nombrar(clave, conocido.matricula);
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     /*
      * En los peldaños de abajo lo cuenta la instructora, en una línea y con
      * calma; en los de arriba lo dice la torre en la fraseología, más abajo.
      */
-    if (porQue && !conCifras) {
-      const explica = EXPLICA_LA_ESPERA[porQue];
+    if (porQueDe && !conCifras) {
+      const explica = EXPLICA_LA_ESPERA[porQueDe.porque];
       this.instructor.decir(t(explica), explica);
+      this.esperarQueSeOiga(explica, porQueDe);
     }
 
     /*
@@ -7063,8 +7212,8 @@ export class Game {
      * occupied», «runway in use zero two, no reported traffic» o con el
      * tráfico que haya. Ver `DICE_UN_AFIS`.
      */
-    if (conCifras && afis)
-      this.porRadioClave(
+    if (conCifras && afis) {
+      const dicha = this.porRadioClave(
         luz === "verde"
           ? enElAire
             ? "torre.afisFree"
@@ -7080,7 +7229,67 @@ export class Game {
                 : "torre.afisNoTraffic",
         urgencia,
       );
-    else if (conCifras) this.porRadio(enRadio, urgencia);
+      if (dicha && conocido) this.esperarQueSeOiga(dicha, conocido);
+    } else if (conCifras) {
+      const dicha = this.porRadio(enRadio, urgencia);
+      if (dicha && porQueDe) this.esperarQueSeOiga(dicha, porQueDe);
+    }
+  }
+
+  /**
+   * **El porqué de la espera, apuntado para comprobar que se oye**, y por
+   * quién. La boca puede tirar una frase que espera turno demasiado —en el
+   * punto de espera hablan casi a la vez la lámpara, su fraseología, la
+   * instructora y el que viene a aterrizar—, y entonces la espera se quedaba
+   * sin porqué: «ocupaban la pista a los 97 s: EC-FLY otro.final · no se dijo
+   * por qué», en el banco de Los Rodeos. Ver `vigilarQueSeOyoElPorque`.
+   */
+  private esperarQueSeOiga(clave: string, por: EsperaPor, veces = 1): void {
+    this.porQuePendiente = {
+      clave,
+      desde: BOCA.cuantasHabladas,
+      quien: esperaPorQuien(por),
+      veces,
+    };
+    this.nombrar(clave, por.matricula);
+  }
+
+  /**
+   * Si el porqué pedido ya no espera turno y no llegó a oírse, se olvida que
+   * se dijo para que `explicarSiCambiaElPorque` lo pida otra vez, si sigue
+   * siendo verdad. Lo que lo vuelve a pedir es que **no se oyó**, no que pase
+   * un rato; y como mucho tres veces, que una boca que tira siempre lo mismo
+   * no se arregla insistiendo.
+   */
+  private vigilarQueSeOyoElPorque(): void {
+    const p = this.porQuePendiente;
+    if (!p || BOCA.espera(p.clave)) return;
+    this.porQuePendiente = null;
+    const nuevas = BOCA.cuantasHabladas - p.desde;
+    const oida =
+      nuevas > 0 &&
+      BOCA.habladas.slice(-nuevas).some((h) => h.clave === p.clave);
+    if (oida || p.veces >= 3) return;
+    this.porQuesExplicados.delete(p.quien);
+    this.vecesDelPorque.set(p.quien, p.veces);
+  }
+
+  /**
+   * **Apunta que la radio ha nombrado a un tráfico**: con qué clave y a cuál.
+   * Ver `nombrados`.
+   */
+  private nombrar(clave: string, quien: string | null): void {
+    this.nombrados.push({ t: this.relojDelJuego, clave, quien });
+    this.nombradosTotal += 1;
+    if (this.nombrados.length > 400) this.nombrados.shift();
+  }
+
+  /** Lo que la radio ha nombrado, para el banco. Ver `nombrados`. */
+  get nombradosParaBanco(): {
+    lista: readonly { t: number; clave: string; quien: string | null }[];
+    total: number;
+  } {
+    return { lista: [...this.nombrados], total: this.nombradosTotal };
   }
 
   /**
@@ -7134,23 +7343,33 @@ export class Game {
    * reloj.
    */
   private explicarSiCambiaElPorque(): void {
-    const porQue = this.turno.porQueEsperas;
-    if (!porQue || porQue === this.porQueExplicado) return;
-    this.porQueExplicado = porQue;
+    this.vigilarQueSeOyoElPorque();
+    // Mientras el pedido espera turno no se pide otro: el que espera se oirá.
+    if (this.porQuePendiente) return;
+    const de = this.turno.porQueEsperasDe;
+    if (!de) return;
+    const quien = esperaPorQuien(de);
+    if (this.porQuesExplicados.has(quien)) return;
+    this.porQuesExplicados.add(quien);
+    const veces = (this.vecesDelPorque.get(quien) ?? 0) + 1;
+    const porQue = de.porque;
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     // Un AFIS no te para: te dice qué tráfico hay. Ver `luzDeTorre`.
+    let dicha: string | null;
     if (conCifras && this.esAfisAqui())
-      this.porRadioClave(
+      dicha = this.porRadioClave(
         porQue === "aterriza"
           ? "torre.afisInUseLanding"
           : "torre.afisInUseDeparting",
       );
-    else if (conCifras) this.porRadio(HOLD_SHORT_POR[porQue]);
+    else if (conCifras) dicha = this.porRadio(HOLD_SHORT_POR[porQue]);
     else {
       const explica = EXPLICA_LA_ESPERA[porQue];
       this.instructor.decir(t(explica), explica);
+      dicha = explica;
     }
+    if (dicha) this.esperarQueSeOiga(dicha, de, veces);
   }
 
   /**
@@ -7459,6 +7678,7 @@ export class Game {
     this.tormentasDichas.clear();
     this.estelas.vaciar();
     this.tcas.reiniciar();
+    this.bandaDelTcas = "NORM";
     this.informacionDeTrafico.reiniciar();
     // Otro vuelo, otra final: las aves de la de antes se fueron.
     this.avesEnLaFinal.reiniciar();
@@ -8130,18 +8350,33 @@ export class Game {
     // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír.
     if (sinTorre(this.elCampoMontado().escenario.aerodrome)) return;
     /*
+     * **Y solo se oye si se está en su frecuencia.** A veinticuatro mil pies
+     * se oía al de la plataforma del aeropuerto de salida pedir rodar a la
+     * cabecera. Fuera de la zona de la torre se habla con salida, con control
+     * o con aproximación, y la del campo deja de oírse; lo que tenía
+     * esperando turno, también. El campo sigue vivo —sus aviones despegan y
+     * aterrizan igual—, pero callado para vos. Ver `flight/dependencia.ts`.
+     */
+    const antes = this.dependencia;
+    this.dependencia = this.laDependenciaDeAhora();
+    const seOye = seOyeElCampo(this.dependencia);
+    if (!seOye && antes !== null && seOyeElCampo(antes)) this.turno.dejarDeOir();
+    /*
      * Pasa el tiempo en la frecuencia y en su dibujo, y quien habla ya está
      * donde dice. Ver `oir` en `flight/turno-de-pista.ts`.
      */
     const dice = this.turno.oir(dt, {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
-      instructorHablando: this.instructor.hablando,
+      // Sin oírla, ni la instructora ni la boca le quitan el turno: es otra
+      // frecuencia y no espera a nadie de esta cabina.
+      instructorHablando: seOye && this.instructor.hablando,
       // La radio es de uno en uno: se transmite con el canal libre, y no a la
       // cola. Ver `Momento.canalOcupado`.
-      canalOcupado: !BOCA.libre,
+      canalOcupado: seOye && !BOCA.libre,
     });
-    if (!dice) return;
+    if (!dice || !seOye) return;
+    this.nombrar(dice.clave, dice.de.matricula);
 
     /*
      * **Cuando la que habla es la torre, se le habla a otro.**
@@ -8403,7 +8638,7 @@ export class Game {
    */
   private retirarElPermisoSinOir(): void {
     if (this.laAproximacion.mandanFrustrar || !this.laTorreMandaEnLaLuz) return;
-    this.hud.senal.caducar("verde");
+    this.hud.senal.caducar(this.esAfisAqui() ? "toma" : "verde");
     this.luzDeTorre(null);
     this.laTorreMandaEnLaLuz = false;
   }
@@ -11260,6 +11495,11 @@ export class Game {
       objetivo ? null : this.alternoParaLaCarta(),
       // Y si es una ruta a otro aeropuerto, para pintarla. Ver `Mapa.update`.
       !objetivo,
+      /*
+       * Y los otros aviones, **los mismos que pinta la carta**: los del TCAS,
+       * y solo si el avión lo lleva. Ver `pintarElTrafico` en `ui/mapa.ts`.
+       */
+      this.aircraft.tcas ? this.tcas.enPantalla : [],
     );
     /*
      * Y dónde está el compensador, que es un mando que **se queda puesto** y
@@ -11380,6 +11620,19 @@ export class Game {
       this.camera,
       this.renderer.domElement.height,
     );
+    /*
+     * **Y los otros aviones, no más pequeños de dos píxeles**, con la misma
+     * regla que las aves: el rombo del TCAS a cinco kilómetros tiene que
+     * poder buscarse por la ventanilla. Con la cámara ya puesta, que es la
+     * que decide cuánto mide cada uno. Ver `world/se-ve-de-lejos.ts`.
+     */
+    const alto = this.renderer.domElement.height;
+    for (const grupo of [
+      this.trafico?.grupo,
+      this.avionesDeRuta?.grupo,
+      this.avionesDeLasIslas?.grupo,
+    ])
+      if (grupo) ponerTamanoMinimo(grupo.children, this.camera, alto);
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
   }
@@ -16486,11 +16739,17 @@ export class Game {
        * de lo que es cada uno. Ver `flight/tcas.ts`.
        */
       otros: this.aircraft.tcas ? this.traficoParaLaCarta() : [],
-      // Y el modo, solo con el TCAS trabajando: en espera no hay modo que decir.
-      soloTa:
-        !!this.aircraft.tcas &&
-        soloAvisa(this.aircraft.tcas) &&
+      /*
+       * Y el modo: «TA ONLY» trabajando, «TCAS STBY» en espera —rodando por
+       * la plataforma, que es cuando una carta vacía con aviones en el cielo
+       * hay que poder entenderla—, y la banda si no es la normal. Ver
+       * `modoEnPantalla` en `flight/tcas.ts`.
+       */
+      modoTcas: modoEnPantalla(
+        this.aircraft.tcas,
         this.tcas.enMarcha,
+        this.bandaDelTcas,
+      ),
       /*
        * **Y el aeropuerto de destino, si esta ruta lleva a otro.**
        *

@@ -615,6 +615,16 @@ export function cifrasDeLaCabina(): number {
   return loEscrito().cifras;
 }
 
+/**
+ * **La última carta que se pintó en la cabina**, ya en píxeles: para el banco
+ * del radar, que comprueba que el tráfico sale en su sitio también en el
+ * lienzo y no solo en el cuadro plano. `null` si no se ha pintado ninguna.
+ */
+let ultimaCarta: ReturnType<typeof dibujarLaCarta> | null = null;
+export function ultimaCartaDeLaCabina(): ReturnType<typeof dibujarLaCarta> | null {
+  return ultimaCarta;
+}
+
 function escribir(
   g: CanvasRenderingContext2D,
   texto: string,
@@ -762,9 +772,14 @@ function pintarRosa(
               : a === 270
                 ? "W"
                 : String(a / 10);
+      /*
+       * De canto, mirando hacia fuera, como la rosa del cuadro plano y la de
+       * cualquier pantalla de navegación: la de arriba, derecha. Ver
+       * `rosaDeRumbo` en `ui/cristal.ts`.
+       */
       g.save();
       g.translate(Math.sin(rad) * r * 0.81, -Math.cos(rad) * r * 0.81);
-      g.rotate((grados * Math.PI) / 180);
+      g.rotate(rad);
       escribir(g, texto, 0, 0, `500 ${letra}px ` + FUENTE, TINTA);
       g.restore();
     }
@@ -2164,6 +2179,7 @@ function pintarLaCarta(
    * **dónde va cada cosa, no**.
    */
   const dibujo = dibujarLaCarta(m ?? null, (d.rumbo * 180) / Math.PI, r);
+  ultimaCarta = dibujo;
 
   // ── Los anillos, con su cifra ──
   g.strokeStyle = "#2c3136";
@@ -2451,12 +2467,13 @@ function pintarLaCarta(
   g.restore();
 
   /*
-   * **TA ONLY**, encima de las millas y en cian: es lo que escribe la pantalla
-   * de un avión de línea cuando el TCAS avisa y no da maniobras, que es lo
-   * que hace el de este juego. Ver `soloAvisa` en `flight/tcas.ts`.
+   * **El modo del TCAS**, encima de las millas y en cian: «TA ONLY» cuando
+   * avisa y no da maniobras, que es lo que hace el de este juego, y «TCAS
+   * STBY» con el equipo en espera, en tierra. Lo mismo que el cuadro plano;
+   * ver `modoEnPantalla` en `flight/tcas.ts`.
    */
-  if (dibujo.soloTa)
-    escribir(g, "TA ONLY", 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");
+  if (dibujo.modoTcas)
+    escribir(g, dibujo.modoTcas, 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");
 
   /*
    * Las millas que faltan, en la esquina de enfrente del rango. Fuera del

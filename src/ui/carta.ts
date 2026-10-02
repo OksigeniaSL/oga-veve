@@ -170,10 +170,11 @@ export interface Mapa {
   readonly otros: readonly Otro[];
 
   /**
-   * Si el TCAS trabaja sin maniobras, que la pantalla lo dice: **TA ONLY**.
-   * Ver `soloAvisa` en `flight/tcas.ts`.
+   * **Lo que la pantalla escribe del modo del TCAS**: «TCAS STBY» en espera,
+   * «TA ONLY» trabajando sin maniobras, y la banda si no es la normal. `null`
+   * si no hay nada que escribir. Ver `modoEnPantalla` en `flight/tcas.ts`.
    */
-  readonly soloTa?: boolean;
+  readonly modoTcas?: string | null;
 
   /**
    * El aeropuerto al que se va, si esta ruta lleva a otro.
@@ -362,8 +363,8 @@ export interface Dibujo {
    */
   readonly otros: readonly OtroEnLaCarta[];
 
-  /** Si se escribe «TA ONLY». Ver `Mapa.soloTa`. */
-  readonly soloTa: boolean;
+  /** Lo que se escribe del modo del TCAS, o `null`. Ver `Mapa.modoTcas`. */
+  readonly modoTcas: string | null;
 
   /**
    * El aeropuerto de destino, con las millas que faltan.
@@ -466,7 +467,7 @@ export function dibujarLaCarta(
       pista: null,
       eje: null,
       otros: [],
-      soloTa: false,
+      modoTcas: null,
       destino: null,
       alterno: null,
       celdas: [],
@@ -555,7 +556,7 @@ export function dibujarLaCarta(
     pista,
     eje,
     otros: traficoEnLaCarta(m, aqui, r),
-    soloTa: m.soloTa ?? false,
+    modoTcas: m.modoTcas ?? null,
     destino,
     alterno,
     celdas,

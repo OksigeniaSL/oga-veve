@@ -51,6 +51,11 @@ export interface DibujoDelTurno {
    * nadie. Ver `ocupanLaPista` en `world/trafico.ts`.
    */
   ocupanLaPista?(): string[];
+  /**
+   * **Si el de esa matrícula está en el mundo.** Sin esto se da por que sí,
+   * que es lo que hacía todo antes de mirarlo. Ver `retirarLosQueNoEstan`.
+   */
+  dibujado?(matricula: string): boolean;
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -134,6 +139,12 @@ export const USAN_LA_CALLE: Readonly<Record<string, "saliendo" | "volviendo">> =
  * esperando su despegue.
  */
 export type PorQueEsperas = "aterriza" | "despega";
+
+/** Por qué se espera y por quién, si se sabe. Ver `porQueEsperasDe`. */
+export interface EsperaPor {
+  readonly porque: PorQueEsperas;
+  readonly matricula: string | null;
+}
 
 /**
  * Cómo lo dice la torre, en fraseología: la orden y la información de
@@ -285,18 +296,30 @@ export class TurnoDePista {
    * viene, y el alineado no sale hasta que él la deje.
    */
   get porQueEsperas(): PorQueEsperas | null {
+    return this.porQueEsperasDe?.porque ?? null;
+  }
+
+  /**
+   * **Lo mismo, con quién**: la matrícula del avión por el que se espera, si
+   * se sabe. Es lo que permite decir el porqué una vez **por avión** —el
+   * segundo que llega a la final es otro porqué, aunque se llame igual— y
+   * comprobar que el avión que se nombra está en el mundo. Ver
+   * `explicarSiCambiaElPorque` en `game.ts`.
+   */
+  get porQueEsperasDe(): EsperaPor | null {
     if (!this.conTorre) return null;
     const ocupan = this.de.radio.ocupanLaPista;
-    if (
-      ocupan.some(
-        (o) => o.orden === "torre.clearedLand" || o.orden === "otro.final",
-      )
-    )
-      return "aterriza";
-    if (ocupan.some((o) => o.orden === "torre.lineUpWait")) return "despega";
-    if (this.conCalleUnica && this.de.radio.alguienEnLaCalle) return "despega";
+    const aterriza = ocupan.find(
+      (o) => o.orden === "torre.clearedLand" || o.orden === "otro.final",
+    );
+    if (aterriza) return { porque: "aterriza", matricula: aterriza.matricula };
+    const alineado = ocupan.find((o) => o.orden === "torre.lineUpWait");
+    if (alineado) return { porque: "despega", matricula: alineado.matricula };
+    if (this.conCalleUnica && this.de.radio.alguienEnLaCalle)
+      return { porque: "despega", matricula: this.de.radio.quienEstaEnLaCalle() };
     // Encima sin tenerla es el que ya corre su despegue. Ver `pistaDeOtros`.
-    if (this.ocupadaEnElDibujo) return "despega";
+    const encima = this.de.trafico()?.ocupanLaPista?.() ?? [];
+    if (encima.length) return { porque: "despega", matricula: encima[0] ?? null };
     return null;
   }
 
@@ -316,11 +339,18 @@ export class TurnoDePista {
    * y con esto decidís vos. Ver `DICE_UN_AFIS` en `audio/torre.ts`.
    */
   get traficoConocido(): PorQueEsperas | null {
+    return this.traficoConocidoDe?.porque ?? null;
+  }
+
+  /** Lo mismo, con la matrícula de quien se informa. Ver `porQueEsperasDe`. */
+  get traficoConocidoDe(): EsperaPor | null {
     if (this.de.privado()) return null;
-    const porQue = this.porQueEsperas;
+    const porQue = this.porQueEsperasDe;
     if (porQue) return porQue;
-    if (this.de.radio.alguienViene) return "aterriza";
-    if (this.de.radio.alguienEnLaCalle) return "despega";
+    const viene = this.de.radio.quienViene();
+    if (viene) return { porque: "aterriza", matricula: viene };
+    const enLaCalle = this.de.radio.quienEstaEnLaCalle();
+    if (enLaCalle) return { porque: "despega", matricula: enLaCalle };
     return null;
   }
 
@@ -369,7 +399,9 @@ export class TurnoDePista {
     };
     const trafico = this.de.trafico();
     let alAire: Transmision | null = null;
-    for (const m of trafico?.paso(dt) ?? []) {
+    const alAireYa = trafico?.paso(dt) ?? [];
+    this.retirarLosQueNoEstan();
+    for (const m of alAireYa) {
       const dice = this.de.radio.seFueAlAire(m, momento);
       /*
        * **Y al que tenía el permiso se le dice, siempre**: se oyó su «cleared
@@ -388,7 +420,36 @@ export class TurnoDePista {
         dice.clave,
         this.de.radio.puedeAterrizar(dice.de.matricula),
       );
+    /*
+     * **Y lo que se dice de alguien, se dice de alguien que está.** Si después
+     * de colocarle el dibujo no lo tiene —una llamada sin marca, un camino que
+     * no se pudo trazar—, la frase no suena y ese avión deja la frecuencia:
+     * una radio que nombra a quien no está en el mundo es la que enseña que
+     * la radio es un adorno.
+     */
+    if (dice && trafico?.dibujado && !trafico.dibujado(dice.de.matricula)) {
+      this.de.radio.retirar(dice.de.matricula);
+      return null;
+    }
     return dice;
+  }
+
+  /**
+   * **Quien la radio ya nombró y el dibujo ya no tiene, deja la frecuencia.**
+   *
+   * El dibujo retira a quien se cansa de esperar en su doble raya —ver
+   * `OLVIDO_ESPERANDO` en `world/trafico.ts`— o se queda quieto en la pista,
+   * y no se lo decía a nadie: la frecuencia seguía con él y la torre te dejaba
+   * en la roja por un avión que ya no estaba, para darle la salida minutos
+   * después y verlo aparecer «de la nada» a mitad de pista, ya corriendo. Se
+   * mira en cada paso, antes de que nadie hable, y también antes de darte la
+   * pista. Sin dibujo —las pruebas que no lo montan— no se mira nada.
+   */
+  private retirarLosQueNoEstan(): void {
+    const trafico = this.de.trafico();
+    if (!trafico?.dibujado) return;
+    for (const m of this.de.radio.aMedias)
+      if (!trafico.dibujado(m)) this.de.radio.retirar(m);
   }
 
   /**
@@ -444,6 +505,8 @@ export class TurnoDePista {
     this.de.boca.retirar(daLaPistaAOtro);
     // En un campo sin torre no hay frecuencia a la que quitarle nada.
     if (this.de.privado()) return;
+    // A quien no está no se le quita nada: ver `retirarLosQueNoEstan`.
+    this.retirarLosQueNoEstan();
     this.numeroDos =
       fase === "final" && this.de.torre() ? this.quienVaDelante() : null;
     const dichas = this.de.radio.despejarLaPista(this.numeroDos, this.conCalleUnica);
@@ -636,6 +699,17 @@ export class TurnoDePista {
    */
   cambiarDeCampo(aerodromo: string | null | undefined): void {
     this.reiniciar(aerodromo);
+  }
+
+  /**
+   * **Se deja de oír esta frecuencia**: se ha salido de la zona de la torre.
+   * Lo suyo que esperaba turno en la boca ya no suena —se oiría en otra
+   * frecuencia, la de salida o la de control—, y la frecuencia sigue igual:
+   * sus aviones siguen volando, solo que ya no se les oye. Ver
+   * `flight/dependencia.ts`.
+   */
+  dejarDeOir(): void {
+    this.de.boca.retirar(esDeLaFrecuencia);
   }
 
   /**

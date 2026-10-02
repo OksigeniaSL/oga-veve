@@ -591,6 +591,58 @@ export class Frecuencia {
     return null;
   }
 
+  /**
+   * **Los que van por la mitad de su vuelo**: ya dijeron algo y no lo han
+   * terminado. Son los que tienen que estar en el mundo, porque la radio ya
+   * los nombró. Ver `retirar`.
+   */
+  get aMedias(): readonly string[] {
+    return this.aviones
+      .filter((a) => a.paso > 0)
+      .map((a) => a.indicativo.matricula);
+  }
+
+  /**
+   * **Ese avión ya no está en el mundo: su vuelo se acaba también aquí.**
+   *
+   * La frecuencia y el dibujo llevaban la cuenta cada uno por su lado, y el
+   * dibujo no le decía a la frecuencia cuándo retiraba a alguien —el que se
+   * cansa de esperar en la doble raya, el que se queda quieto en la pista—.
+   * La frecuencia seguía con él: la torre te dejaba en la roja por un avión
+   * «en la pista» que no estaba, y minutos después le daba la salida y
+   * aparecía de la nada a mitad de pista, ya corriendo. Y en el Chaco el AFIS
+   * daba «tráfico aterrizando» por uno que nadie veía llegar.
+   *
+   * Ahora quien no está en el mundo no está en la radio: se va, como el que
+   * termina su vuelo, y en su sitio llegará otro con otra matrícula. Ver
+   * `aMedias` y `oir` en `flight/turno-de-pista.ts`.
+   */
+  retirar(matricula: string): void {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    if (!a) return;
+    Object.assign(a, this.nuevo(), { falta: ESPERA_ENTRE_VUELOS });
+  }
+
+  /**
+   * **El que viene a aterrizar, con su matrícula**, si hay alguno: para poder
+   * decir por quién se espera y comprobar que está en el mundo. Ver
+   * `alguienViene` y `porQueEsperasDe` en `flight/turno-de-pista.ts`.
+   */
+  quienViene(): string | null {
+    return (
+      this.aviones.find((a) => vieneAAterrizar(a.guion, a.paso))?.indicativo
+        .matricula ?? null
+    );
+  }
+
+  /** El que está en la calle, si hay alguno. Ver `enLaCalle`. */
+  quienEstaEnLaCalle(): string | null {
+    return (
+      this.aviones.find((a) => enLaCalle(a.guion, a.paso))?.indicativo
+        .matricula ?? null
+    );
+  }
+
   /** Si ese avión tiene todavía la pista. Ver `laPistaQueTiene`. */
   laTiene(matricula: string): boolean {
     const a = this.aviones.find((x) => x.indicativo.matricula === matricula);

@@ -779,7 +779,16 @@ export function rosaDeRumbo(
               : g === 270
                 ? "W"
                 : String(g / 10);
-      carta += `<text x="${Math.sin(a) * (r - 22)}" y="${-Math.cos(a) * (r - 22) + 5}" ${marca(letra)} class="cr__cifra" text-anchor="middle">${letra}</text>`;
+      /*
+       * **Y cada cifra de canto, mirando hacia fuera**, como en la rosa de
+       * cualquier pantalla de navegación o de un HSI: la de arriba —la que se
+       * lee contra la línea de fe— siempre derecha. Iban todas con la misma
+       * inclinación, la del norte, así que volando al sur la de arriba salía
+       * cabeza abajo: en la final de La Palma, «S», «12» y «21» del revés.
+       */
+      const lx = Math.sin(a) * (r - 22);
+      const ly = -Math.cos(a) * (r - 22);
+      carta += `<text x="${lx}" y="${ly + 5}" transform="rotate(${g} ${lx} ${ly})" ${marca(letra)} class="cr__cifra" text-anchor="middle">${letra}</text>`;
     }
   }
   return `

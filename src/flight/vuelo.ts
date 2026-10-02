@@ -1060,8 +1060,15 @@ export function guionAfis(
   switch (fase) {
     case "esperando":
       return { clave: "vuelo.esperandoAfis", icono: "manga" };
+    /*
+     * **Y sin la luz verde dibujada**: un AFIS no tiene lámpara ni da
+     * permisos, y la tarjeta con el círculo verde y su flecha es el dibujo de
+     * la lámpara. En Mariscal Estigarribia se leyó así —«luego me dan luz
+     * verde»—, aunque la lámpara no se encendía. Lo que hay es la pista libre
+     * y quien vuela decidiendo entrar: el dibujo de ponerse en el eje.
+     */
     case "autorizado":
-      return { clave: "vuelo.autorizadoAfis", icono: "verde" };
+      return { clave: "vuelo.autorizadoAfis", icono: "eje" };
     default:
       return GUION[fase];
   }
@@ -1097,8 +1104,9 @@ export function guionSinTorre(
   switch (fase) {
     case "esperando":
       return { clave: "vuelo.esperandoMirando", icono: "manga" };
+    // Sin lámpara que encender, tampoco su dibujo. Ver `guionAfis`.
     case "autorizado":
-      return { clave: "vuelo.autorizadoSinTorre", icono: "verde" };
+      return { clave: "vuelo.autorizadoSinTorre", icono: "eje" };
     case "abandonando":
       return {
         clave: conBici
