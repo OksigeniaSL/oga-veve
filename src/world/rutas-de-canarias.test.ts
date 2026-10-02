@@ -234,20 +234,23 @@ const destinoDe = (t: Tramo) => t.nombre.split(" → ")[1]!;
 /**
  * **Las cabeceras cuya aproximación calculada no libra el relieve**, y por qué.
  *
- * Son las cuatro de Canarias sin aproximación publicada en línea recta —ver
+ * Son las de Canarias sin aproximación publicada en línea recta —ver
  * `procedimientos-canarias.ts`—, y no es casualidad: si no la tienen es porque
- * el relieve no la deja. El juego hace ahí la aproximación calculada sobre el
- * eje, a diez millas, que es la de manual; y esa final recta pasa por donde la
- * carta de verdad no pasa. Lo que se comprueba de sus rutas es lo que es de la
- * ruta —ver `libra` con `soloEnRuta`—, salvo donde ni eso se puede.
+ * el relieve no la deja. Donde el juego hace la aproximación calculada sobre
+ * el eje, a diez millas, esa final recta pasa por donde la carta de verdad no
+ * pasa. Lo que se comprueba de sus rutas es lo que es de la ruta —ver `libra`
+ * con `soloEnRuta`—, salvo donde ni eso se puede. Y lo que vale para volarlas
+ * —el margen de cada tramo y el avisador de terreno— lo mira
+ * `aproximaciones-sobre-el-relieve.test.ts`.
+ *
+ * La 21 de Lanzarote salió de aquí al entrar su RNP con su maniobra visual
+ * publicada, que es carta de punta a punta.
  */
 const FINAL_QUE_NO_LIBRA: Readonly<Record<string, string>> = {
   "GCGM 09":
     "La Gomera no tiene aproximación instrumental: se entra a la vista. La final recta a la 09 viene por el oeste, bajo los acantilados de la costa sur.",
   "GCHI 16":
     "Las NDB de El Hierro acaban en circuito. La final recta a la 16 baja pegada a la ladera del norte de la isla.",
-  "GCRR 21":
-    "La RNP a la 21 de Lanzarote acaba en circuito. La final recta viene del noreste por encima de la isla.",
   /*
    * Y la 18 de La Palma, pero ya no por lo que era. Su RNP A se vuela sobre
    * el mar hasta LA505 y de ahí a la vista al eje, que libra con el agua

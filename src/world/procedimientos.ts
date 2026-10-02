@@ -79,6 +79,15 @@ export interface Aproximacion {
    * punto de final, **a la vista**, al eje.
    */
   readonly aLaVista?: number;
+  /**
+   * **O la maniobra visual con derrota prescrita (VPT) que publica la carta**
+   * para terminarla: sus puntos, desde el punto de aproximación frustrada
+   * hasta el primero de la final recta. Es lo que publica Lanzarote para la
+   * 21: la RNP llega a RR551, sobre la Montaña de Tahíche, y la VPT sigue por
+   * la cantera de Argana y la rotonda de la LZ-301 hasta el umbral. Cuando la
+   * carta dice por dónde, no se calcula nada.
+   */
+  readonly vpt?: readonly Publicado[];
 }
 
 /** Lo publicado de un aeropuerto, por cabecera. */
@@ -136,34 +145,78 @@ export function ramasDeLlegada(
       ),
     ];
   const ramas = aproximacion.ramas.map((r) => r.map(aMundo));
+  /*
+   * **El punto de final de la carta pasa a ser uno más de la ruta**, con su
+   * altitud mínima, cuando la aproximación acaba en circuito: la final de
+   * verdad del juego empieza donde empieza la final recta, que es donde
+   * empieza la senda que se enseña.
+   */
+  const hastaSuFinal = (r: readonly Fijo[]): Fijo[] =>
+    r.map((f): Fijo => (f.papel === "faf" ? { ...f, papel: "ruta" } : f));
+  const vpt = aproximacion.vpt?.map(aMundo);
+  if (vpt && vpt.length > 0) {
+    // La VPT de la carta: el último de sus puntos es donde empieza la final.
+    const enLaVpt = vpt.map(
+      (f, i): Fijo => ({ ...f, papel: i === vpt.length - 1 ? "faf" : "ruta" }),
+    );
+    return ramas.map((r) => [...hastaSuFinal(r), ...enLaVpt]);
+  }
   const millas = aproximacion.aLaVista;
   if (millas === undefined) return ramas;
   /*
-   * **Lo publicado hasta su punto de final, y de ahí a la vista al eje.**
+   * **Y si la carta no dice por dónde, a la vista al eje**, cortándolo a
+   * treinta grados una milla antes de entrar en él: el corte de una
+   * interceptación de manual, y el que deja girar en el eje sin pasarse.
+   * Entrando de frente desde el punto de final de La Palma eran cuarenta y
+   * cinco grados con la costa de Santa Cruz por delante, y el avisador de
+   * terreno que mira hacia delante —ver `flight/terreno-delante.ts`— la
+   * veía antes del giro.
    *
-   * El punto de final de la carta pasa a ser uno más de la ruta, con su
-   * altitud mínima: la final de verdad del juego empieza en el eje, que es
-   * donde empieza la senda que se enseña. Ver `Aproximacion.aLaVista`.
-   *
-   * El punto del eje no es de ninguna carta y lleva el nombre que le da un
-   * ordenador de vuelo a un punto en la prolongación de la pista: «RX» y el
-   * número de la cabecera.
+   * Los dos puntos no son de ninguna carta y llevan los nombres que les da
+   * un ordenador de vuelo: «INTC», donde se empieza a cortar el eje, y «RX» y
+   * el número de la cabecera, el punto de su prolongación donde se entra.
    */
   const h = (rumbo * Math.PI) / 180;
+  const fx = Math.sin(h);
+  const fz = -Math.cos(h);
   const enElEje: Fijo = {
     nombre: `RX${cabecera}`,
-    x: umbral.x - Math.sin(h) * millas * MILLA,
-    z: umbral.z + Math.cos(h) * millas * MILLA,
+    x: umbral.x - fx * millas * MILLA,
+    z: umbral.z - fz * millas * MILLA,
     papel: "faf",
     minima: null,
     calculado: true,
     aLaVista: true,
   };
-  return ramas.map((r) => [
-    ...r.map((f): Fijo => (f.papel === "faf" ? { ...f, papel: "ruta" } : f)),
-    enElEje,
-  ]);
+  return ramas.map((r) => {
+    const ultimo = r[r.length - 1];
+    /*
+     * Del lado del eje por el que se viene: el del último punto publicado.
+     * Viniendo por la izquierda de la final —el este, en la 18 de La Palma—
+     * se corta con treinta grados más que el rumbo de la pista y se gira a la
+     * izquierda para entrar; por la derecha, al revés.
+     */
+    const izquierda = ultimo
+      ? Math.sign((ultimo.x - enElEje.x) * fz - (ultimo.z - enElEje.z) * fx) || 1
+      : 1;
+    const c = h + izquierda * CORTE;
+    const corte: Fijo = {
+      nombre: "INTC",
+      x: enElEje.x - Math.sin(c) * ANTES_DE_CORTAR,
+      z: enElEje.z + Math.cos(c) * ANTES_DE_CORTAR,
+      papel: "ruta",
+      minima: null,
+      calculado: true,
+      aLaVista: true,
+    };
+    return [...hastaSuFinal(r), corte, enElEje];
+  });
 }
+
+/** A cuántos grados se corta el eje entrando a la vista. Ver `ramasDeLlegada`. */
+const CORTE = (30 * Math.PI) / 180;
+/** Y desde cuánto antes de entrar en él, m: una milla larga. */
+const ANTES_DE_CORTAR = 1.1 * 1852;
 
 /** Las salidas publicadas desde esa cabecera, o ninguna. */
 export function salidasDe(

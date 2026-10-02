@@ -134,14 +134,15 @@ describe("las rutas de Canarias, por lo publicado", () => {
             expect(ultimo.nombre).toBe(`RW${cl.nombre}`);
             const recto = alineadas(r, cl.rumbo);
             /*
-             * **Salvo la que acaba en circuito**, que se alinea a la vista
-             * donde la isla deja: la 18 de La Palma, a dos millas y media. Ver
-             * `Aproximacion.aLaVista`.
+             * **Salvo las que acaban en circuito**, que se alinean a la vista
+             * donde la isla deja: la 18 de La Palma, a dos millas y media; la
+             * 21 de Lanzarote, en la rotonda de la LZ-301 de su VPT, a milla y
+             * media. Ver `Aproximacion.aLaVista` y `Aproximacion.vpt`.
              */
-            const aLaVista =
-              procedimientosDe(oaciDe(llegada))?.aproximaciones[cl.nombre]?.aLaVista;
+            const suya = procedimientosDe(oaciDe(llegada))?.aproximaciones[cl.nombre];
+            const minimo = suya?.aLaVista ?? (suya?.vpt ? 1.5 : 8);
             expect(recto, `${recto.toFixed(1)} NM alineadas: ${r.fijos.map((f) => f.nombre).join(" ")}`).toBeGreaterThanOrEqual(
-              aLaVista === undefined ? 8 : aLaVista - 0.05,
+              minimo - 0.05,
             );
             /*
              * Y sin rodeos absurdos. **La ruta de verdad es bastante más larga

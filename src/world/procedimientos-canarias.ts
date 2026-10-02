@@ -37,8 +37,11 @@
  *   alineado y sobre la ladera. Así que la RNP A entra: llegada a NASOL,
  *   VENZA y LA505, todo sobre el mar, y desde LA505 a la vista al eje a dos
  *   millas y media, por fuera de Santa Cruz. Ver `Aproximacion.aLaVista` en
- *   `procedimientos.ts`. Las otras dos siguen con la calculada, que en ellas
- *   libra el relieve: ver `aproximaciones-sobre-el-relieve.test.ts`.
+ *   `procedimientos.ts`. Y la RNP de la 21 de Lanzarote, con la maniobra
+ *   visual que publica para terminarla (VPT): su final recta calculada
+ *   rozaba el relieve que hay al lado, sobre Arrecife. Ver `Aproximacion.vpt`. Las de
+ *   El Hierro siguen con la calculada, que libra el relieve:
+ *   `aproximaciones-sobre-el-relieve.test.ts` lo mira en todos los campos.
  * - **La Gomera no tiene aproximación instrumental**. Sí tiene publicadas sus
  *   rutas de salida para los aviones pequeños (la carta ARR/DEP 1), y ésas
  *   entran como salidas de sus dos cabeceras.
@@ -89,6 +92,15 @@ function enCircuito(carta: string, ramas: readonly string[], millas: number) {
   return { carta, ramas: ramas.map(puntos), aLaVista: millas };
 }
 
+/**
+ * Una aproximación en circuito **con su maniobra visual publicada** (VPT):
+ * lo publicado hasta su punto de final y de ahí por los puntos de la VPT.
+ * Ver `Aproximacion.vpt`.
+ */
+function conVpt(carta: string, ramas: readonly string[], vpt: string) {
+  return { carta, ramas: ramas.map(puntos), vpt: puntos(vpt) };
+}
+
 function salida(nombre: string, carta: string, ruta: string) {
   return {
     nombre,
@@ -120,6 +132,8 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "COCTO": [27.795056, -15.213056],
   "COLON": [28.328611, -15.241944],
   "COSTI": [27.360000, -13.702222],
+  "DE1RR": [28.988889, -13.573611],
+  "DE2RR": [28.979444, -13.585556],
   "DEMEX": [28.200500, -13.839944],
   "DESUM": [30.389944, -13.318556],
   "DIBIB": [29.272444, -13.336000],
@@ -194,6 +208,7 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "MOROD": [28.454722, -17.210833],
   "MOVAS": [27.726028, -16.801389],
   "NASOL": [28.840472, -17.427194],
+  "NAVIM": [29.144333, -13.329556],
   "NERVO": [29.338611, -15.651944],
   "NIDES": [27.671111, -15.254778],
   "NINGU": [27.986917, -15.052944],
@@ -210,14 +225,18 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "REMGI": [27.090194, -15.269611],
   "RIPIX": [29.003556, -13.558694],
   "ROXES": [28.514222, -13.726750],
+  "RR03E": [29.022583, -13.473417],
   "RR05S": [28.861278, -13.653972],
   "RR450": [29.089694, -13.439694],
+  "RR550": [29.094083, -13.420167],
+  "RR551": [29.004028, -13.528444],
   "RULOB": [28.751389, -14.016667],
   "S2": [27.968333, -17.201389],
   "SAMAR": [30.899722, -14.415556],
   "SARAY": [29.758611, -14.157500],
   "SARWO": [27.518944, -16.243556],
   "SOMOB": [29.013056, -13.707500],
+  "SONUS": [29.043528, -13.411278],
   "SOTAD": [27.975194, -13.855139],
   "SUFEM": [28.048861, -15.111861],
   "TADEK": [28.926389, -13.973056],
@@ -245,6 +264,7 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "TS971": [27.987500, -16.421500],
   "TS972": [27.935056, -16.636000],
   "TUPIK": [27.890833, -14.745556],
+  "TUXAM": [29.130778, -13.486028],
   "TUVIL": [28.675472, -13.856389],
   "UMOTO": [28.633889, -13.420000],
   "VANUR": [28.707944, -17.610444],
@@ -451,6 +471,24 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
       "03": aproximacion("AD 2-GCRR IAC 1 · RNP Z RWY 03 (LPV ONLY)", [
         "BAPAL:iaf:5000 GARGO:ruta:2300 LOBSO:ruta:2300 GOLFY:if:2300 RR05S:faf:1700",
       ]),
+      /*
+       * La RNP de la 21 (IAC 7) llega por el mar desde LUNOB o NAVIM a SONUS
+       * y por RR03E a RR551, su punto de frustrada, sobre la Montaña de
+       * Tahíche a 1700 pies; y de ahí la termina su maniobra visual publicada
+       * (VPT 1): a 252° magnéticos hasta la cantera de Argana (DE1RR), a 210°
+       * por la rotonda de la LZ-301 (DE2RR) y al umbral. La final recta
+       * calculada que había, a diez millas por el eje, pasaba a tres millas
+       * del umbral a veinte metros del relieve que tiene al lado, a un cuarto
+       * de milla. Ver `conVpt`.
+       */
+      "21": conVpt(
+        "AD 2-GCRR IAC 7 · RNP RWY 21, y VPT 1 · maniobra visual a la 21",
+        [
+          "LUNOB:iaf:6000 TUXAM:ruta:4000 RR550:ruta:3500 SONUS:if:3000 RR03E:faf:2700 RR551:ruta:1700",
+          "NAVIM:iaf:5000 SONUS:if:3000 RR03E:faf:2700 RR551:ruta:1700",
+        ],
+        "DE1RR DE2RR",
+      ),
     },
     salidas: {
       "03": [
