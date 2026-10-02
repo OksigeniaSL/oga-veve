@@ -189,14 +189,100 @@ function trianguloDePantalla(): BufferGeometry {
   return g;
 }
 
+const _u = new Vector3();
+const _v = new Vector3();
+const _w = new Vector3();
+
+/**
+ * La base de la ventanilla en el mundo, como filas: a lo largo, arriba por la
+ * pared y hacia fuera. Multiplicar por ella lleva del mundo a la ventanilla.
+ */
+function baseDeLaVentanilla(
+  ventanilla: VentanillaDePasaje,
+  orientacion: Quaternion,
+  base: Matrix3,
+): Matrix3 {
+  const n = ventanilla.normal;
+  _w.set(n.x, n.y, n.z).normalize();
+  _v.set(0, 1, 0).addScaledVector(_w, -_w.y).normalize();
+  _u.crossVectors(_v, _w);
+  for (const e of [_u, _v, _w]) e.applyQuaternion(orientacion);
+  return base.set(_u.x, _u.y, _u.z, _v.x, _v.y, _v.z, _w.x, _w.y, _w.z);
+}
+
+/** Las medidas del cristal y del hueco del forro, en medios y con su esquina. */
+function medidasDelHueco(v: VentanillaDePasaje): {
+  a: number;
+  b: number;
+  r: number;
+  a1: number;
+  b1: number;
+  r1: number;
+} {
+  const a = v.ancho / 2;
+  const b = v.alto / 2;
+  // La misma esquina que el modelo: ver `ventanas` en `modelos/exterior.py`.
+  const r = Math.min(a, b) * 0.9;
+  return {
+    a,
+    b,
+    r,
+    a1: a + MARGEN_DEL_HUECO,
+    b1: b + MARGEN_DEL_HUECO,
+    r1: r + MARGEN_DEL_HUECO,
+  };
+}
+
+/** La distancia de la sombra: negativa dentro. La misma que el sombreador. */
+function caja(x: number, y: number, a: number, b: number, r: number): number {
+  const qx = Math.abs(x) - a + r;
+  const qy = Math.abs(y) - b + r;
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+}
+
+const _base = new Matrix3();
+const _o = new Vector3();
+const _d = new Vector3();
+const _c = new Vector3();
+
+/**
+ * **Si desde `desde` se ve `hacia` por el cristal**: la misma cuenta que hace
+ * el sombreador con cada píxel —pasar el hueco del forro y llegar al cristal
+ * sin tocar el canto, la junta ni la persiana—, para poder preguntarlo sin
+ * pintar. La usan las pruebas y el banco de la mirada: que lo señalado caiga
+ * en el centro de la pantalla no vale si en el centro está la pared.
+ */
+export function seVePorLaVentanilla(
+  desde: Vector3,
+  hacia: { readonly x: number; readonly y: number; readonly z: number },
+  avion: { readonly position: Vector3; readonly orientation: Quaternion },
+  ventanilla: VentanillaDePasaje,
+): boolean {
+  baseDeLaVentanilla(ventanilla, avion.orientation, _base);
+  const c = ventanilla.centro;
+  _c.set(c.x, c.y, c.z).applyQuaternion(avion.orientation).add(avion.position);
+  _o.copy(desde).sub(_c).applyMatrix3(_base);
+  _d.set(hacia.x, hacia.y, hacia.z).sub(desde).normalize().applyMatrix3(_base);
+  if (_d.z < 1e-4) return false;
+  const m = medidasDelHueco(ventanilla);
+  const t1 = (-FONDO - _o.z) / _d.z;
+  const t0 = -_o.z / _d.z;
+  const x1 = _o.x + _d.x * t1;
+  const y1 = _o.y + _d.y * t1;
+  const x0 = _o.x + _d.x * t0;
+  const y0 = _o.y + _d.y * t0;
+  return (
+    caja(x1, y1, m.a1, m.b1, m.r1) < 0 &&
+    caja(x0, y0, m.a, m.b, m.r) < -JUNTA &&
+    y0 < m.b - PERSIANA
+  );
+}
+
 export class MarcoDeVentanilla {
   readonly malla: Mesh;
   private readonly material: ShaderMaterial;
   private readonly base = new Matrix3();
   private readonly camara = new Matrix3();
-  private readonly u = new Vector3();
-  private readonly v = new Vector3();
-  private readonly w = new Vector3();
   private readonly centro = new Vector3();
   private readonly ojo = new Vector3();
 
@@ -257,17 +343,7 @@ export class MarcoDeVentanilla {
     camara.updateMatrixWorld();
     u.uInvProj!.value = camara.projectionMatrixInverse;
 
-    // La base de la ventanilla: a lo largo, arriba por la pared, y hacia fuera.
-    const n = ventanilla.normal;
-    this.w.set(n.x, n.y, n.z).normalize();
-    this.v.set(0, 1, 0).addScaledVector(this.w, -this.w.y).normalize();
-    this.u.crossVectors(this.v, this.w);
-    for (const e of [this.u, this.v, this.w]) e.applyQuaternion(avion.orientation);
-    this.base.set(
-      this.u.x, this.u.y, this.u.z,
-      this.v.x, this.v.y, this.v.z,
-      this.w.x, this.w.y, this.w.z,
-    );
+    baseDeLaVentanilla(ventanilla, avion.orientation, this.base);
     this.camara.setFromMatrix4(camara.matrixWorld);
     (u.uCamAVentana!.value as Matrix3).multiplyMatrices(this.base, this.camara);
 
@@ -276,16 +352,9 @@ export class MarcoDeVentanilla {
     this.ojo.copy(camara.position).sub(this.centro).applyMatrix3(this.base);
     (u.uOrigen!.value as Vector3).copy(this.ojo);
 
-    const a = ventanilla.ancho / 2;
-    const b = ventanilla.alto / 2;
-    // La misma esquina que el modelo: ver `ventanas` en `modelos/exterior.py`.
-    const r = Math.min(a, b) * 0.9;
-    (u.uCristal!.value as Vector3).set(a, b, r);
-    (u.uHueco!.value as Vector3).set(
-      a + MARGEN_DEL_HUECO,
-      b + MARGEN_DEL_HUECO,
-      r + MARGEN_DEL_HUECO,
-    );
+    const m = medidasDelHueco(ventanilla);
+    (u.uCristal!.value as Vector3).set(m.a, m.b, m.r);
+    (u.uHueco!.value as Vector3).set(m.a1, m.b1, m.r1);
 
     const luz = NOCHE + (1 - NOCHE) * dia;
     (u.uLuz!.value as Color)

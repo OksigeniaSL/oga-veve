@@ -469,6 +469,7 @@ import {
 } from "./cameras";
 import { sitioDeLaCola } from "./cameras/fuera";
 import {
+  asomarse,
   darLaVuelta,
   girarLaCabeza,
   giroDeCabezaHacia,
@@ -476,7 +477,8 @@ import {
   MiradaLibre,
 } from "./cameras/mirada";
 import { escucharLaMirada } from "./cameras/dedo-que-mira";
-import { MarcoDeVentanilla } from "./world/marco-de-ventanilla";
+import { MarcoDeVentanilla, seVePorLaVentanilla } from "./world/marco-de-ventanilla";
+import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
 import {
@@ -15619,6 +15621,23 @@ export class Game {
     return conPasaje(this.aircraft.mass) && !!this.aircraftMesh.pasaje;
   }
 
+  /** El asiento de ventanilla de esa vista, si es de pasaje y lo hay. */
+  private asientoDe(modo: CameraMode): AsientoDePasaje | null {
+    const pasaje = this.aircraftMesh.pasaje;
+    if (!pasaje || !esDePasaje(modo)) return null;
+    return modo === "pasaje-izquierda" ? pasaje.izquierda : pasaje.derecha;
+  }
+
+  /**
+   * Si desde la cámara de ahora se ve ese punto **por el cristal** de la
+   * ventanilla, o `null` si no se está en el pasaje. Para el banco.
+   */
+  seVePorLaVentanillaParaBanco(p: { x: number; y: number; z: number }): boolean | null {
+    const asiento = this.asientoDe(this.vistaQueHay());
+    if (!asiento) return null;
+    return seVePorLaVentanilla(this.camera.position, p, this.flight.state, asiento.ventanilla);
+  }
+
   /**
    * Cuántos radianes gira la cabeza por cada píxel que se arrastra: los que
    * mide un píxel en el centro de la imagen. Así el paisaje se queda debajo
@@ -15648,7 +15667,10 @@ export class Game {
       );
     this.mirada.paso(dt);
     const giro = { guinada: this.mirada.guinada, cabeceo: this.mirada.cabeceo };
-    if (como === "cabeza") girarLaCabeza(this.camera, state.orientation, giro);
+    const asiento = this.asientoDe(modo);
+    // En el pasaje no se gira la cabeza a secas: se asoma uno al cristal.
+    if (asiento) asomarse(this.camera, state.orientation, asiento, giro);
+    else if (como === "cabeza") girarLaCabeza(this.camera, state.orientation, giro);
     else
       darLaVuelta(this.camera, state.position, giro, (x, z) =>
         this.terrain.sampleSurface(x, z),
@@ -15663,11 +15685,10 @@ export class Game {
    */
   private ponerElMarco(modo: CameraMode): void {
     const pasaje = this.aircraftMesh.pasaje;
-    const dentro = esDePasaje(modo) && !!pasaje;
-    this.marcoDeVentanilla.visible = dentro;
-    if (pasaje) pasaje.ventanillas.visible = !dentro;
-    if (!dentro) return;
-    const asiento = modo === "pasaje-izquierda" ? pasaje.izquierda : pasaje.derecha;
+    const asiento = this.asientoDe(modo);
+    this.marcoDeVentanilla.visible = !!asiento;
+    if (pasaje) pasaje.ventanillas.visible = !asiento;
+    if (!asiento) return;
     this.marcoDeVentanilla.poner(
       this.camera,
       this.flight.state,

@@ -64,10 +64,11 @@ const GRADO = Math.PI / 180;
  *   hombro. Y un poco menos hacia abajo que hacia arriba, que la vista ya va
  *   inclinada hacia el panel.
  * - De pájaro no hay avión que estorbe: se puede mirar a todas partes.
- * - **En el pasaje, lo que deja la ventanilla.** Treinta y cinco grados a
- *   cada lado y algo menos arriba y abajo, que es lo que se gana acercando la
- *   cara al cristal. Más allá solo habría pared: lo que se enseña es real, y
- *   por una ventanilla no se ve lo que va delante del morro.
+ * - **En el pasaje, lo que deja la ventanilla**, asomándose: cincuenta
+ *   grados a cada lado y algo menos arriba y abajo, que es lo que se ve con
+ *   la cara pegada al cristal. Más allá solo habría pared: lo que se enseña
+ *   es real, y por una ventanilla no se ve lo que va delante del morro. Ver
+ *   `asomarse`.
  * - Desde fuera la vuelta es entera, y arriba y abajo con tope: mirando muy
  *   hacia arriba la cámara se iría debajo del avión, y mirando muy abajo se
  *   ve solo el lomo.
@@ -75,7 +76,7 @@ const GRADO = Math.PI / 180;
 export const TOPES: Readonly<Record<"cabina" | "pajaro" | "pasaje" | "fuera", Topes>> = {
   cabina: { izquierda: 140 * GRADO, derecha: 140 * GRADO, arriba: 50 * GRADO, abajo: 40 * GRADO },
   pajaro: { izquierda: Math.PI, derecha: Math.PI, arriba: 75 * GRADO, abajo: 75 * GRADO },
-  pasaje: { izquierda: 35 * GRADO, derecha: 35 * GRADO, arriba: 18 * GRADO, abajo: 22 * GRADO },
+  pasaje: { izquierda: 50 * GRADO, derecha: 50 * GRADO, arriba: 22 * GRADO, abajo: 28 * GRADO },
   fuera: { izquierda: Math.PI, derecha: Math.PI, arriba: 25 * GRADO, abajo: 60 * GRADO },
 };
 
@@ -296,6 +297,7 @@ const _q2 = new Quaternion();
 const _inversa = new Quaternion();
 const _v = new Vector3();
 const _v2 = new Vector3();
+const _ojo = new Vector3();
 
 /**
  * Hacia dónde mira una cámara **respecto del avión**: su guiñada y su
@@ -331,6 +333,75 @@ export function girarLaCabeza(
   const cabeceo = recortar(base.cabeceo + giro.cabeceo, -1.55, 1.55);
   _q.setFromAxisAngle(Y, base.guinada + giro.guinada);
   _q2.setFromAxisAngle(X, cabeceo);
+  camara.quaternion.copy(cuerpo).multiply(_q).multiply(_q2);
+}
+
+/**
+ * Lo que necesita `asomarse` de un asiento de ventanilla, en el marco del
+ * avión. Ver `world/asiento-de-pasaje.ts`.
+ */
+export interface AsientoParaAsomarse {
+  readonly ojo: { readonly x: number; readonly y: number; readonly z: number };
+  readonly guinada: number;
+  readonly cabeceo: number;
+  readonly ventanilla: {
+    readonly centro: { readonly x: number; readonly y: number; readonly z: number };
+    readonly normal: { readonly x: number; readonly y: number; readonly z: number };
+  };
+}
+
+/**
+ * **Cuánto se acerca la cara al cristal**, m: a los veintidós centímetros de
+ * quien se asoma, desde el medio metro de sentado. Y con qué giro se llega
+ * del todo, rad.
+ */
+export const CARA_EN_EL_CRISTAL = 0.22;
+const GIRO_PARA_ASOMARSE = 35 * GRADO;
+
+/**
+ * **Asomarse a la ventanilla**: en el pasaje, girar la cabeza no basta.
+ *
+ * Se vio en la captura del teléfono: la cámara se giró hacia el Teide, que iba
+ * un poco por delante del través, y lo que quedó en el centro de la pantalla
+ * fue la pared — la cabeza miraba hacia el sitio, pero el cristal se había
+ * quedado a un lado. Un pasajero no hace eso: **acerca la cara al cristal** y
+ * mira a través de él hacia donde quiere, que es como se ve lo que va delante
+ * o detrás.
+ *
+ * Así que aquí la mirada **pasa siempre por el centro del cristal**, y los
+ * ojos se acercan a él tanto más cuanto más se gira: sentados, a medio metro;
+ * girados del todo, con la cara en el cristal. Sin giro, los ojos quedan
+ * exactamente donde los pone el asiento.
+ */
+export function asomarse(
+  camara: PerspectiveCamera,
+  cuerpo: Quaternion,
+  asiento: AsientoParaAsomarse,
+  giro: Giro,
+): void {
+  if (giro.guinada === 0 && giro.cabeceo === 0) return;
+  const g = asiento.guinada + giro.guinada;
+  const c = recortar(asiento.cabeceo + giro.cabeceo, -1.4, 1.4);
+  const dir = _v.set(-Math.cos(c) * Math.sin(g), Math.sin(c), -Math.cos(c) * Math.cos(g));
+  const v = asiento.ventanilla;
+  const n = _v2.set(v.normal.x, v.normal.y, v.normal.z);
+  const alCristal = n.dot(
+    _ojo.set(v.centro.x - asiento.ojo.x, v.centro.y - asiento.ojo.y, v.centro.z - asiento.ojo.z),
+  );
+  const t = Math.min(1, Math.hypot(giro.guinada, giro.cabeceo) / GIRO_PARA_ASOMARSE);
+  const suave = t * t * (3 - 2 * t);
+  const d = alCristal + (Math.min(alCristal, CARA_EN_EL_CRISTAL) - alCristal) * suave;
+  const largo = d / Math.max(0.3, dir.dot(n));
+  // Los ojos nuevos menos los del asiento, en el marco del avión: lo que se
+  // mueve la cabeza. Se suma a lo que puso la vista, que lleva el cuello.
+  _ojo
+    .set(v.centro.x, v.centro.y, v.centro.z)
+    .addScaledVector(dir, -largo)
+    .sub(_v2.set(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z))
+    .applyQuaternion(cuerpo);
+  camara.position.add(_ojo);
+  _q.setFromAxisAngle(Y, g);
+  _q2.setFromAxisAngle(X, c);
   camara.quaternion.copy(cuerpo).multiply(_q).multiply(_q2);
 }
 

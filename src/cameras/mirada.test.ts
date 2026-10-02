@@ -23,6 +23,7 @@ import {
   type Contexto,
 } from "./index";
 import {
+  asomarse,
   darLaVuelta,
   girarLaCabeza,
   giroDeCabezaHacia,
@@ -32,6 +33,8 @@ import {
   TOPES,
 } from "./mirada";
 import { escucharLaMirada, UMBRAL, yaEsArrastre } from "./dedo-que-mira";
+import { asientoAnteVentanilla } from "../world/asiento-de-pasaje";
+import { seVePorLaVentanilla } from "../world/marco-de-ventanilla";
 import type { FlightState } from "../flight/model";
 
 const GRADO = Math.PI / 180;
@@ -62,11 +65,22 @@ const avion = (cambios: Partial<FlightState> = {}): FlightState =>
     ...cambios,
   }) as FlightState;
 
-const asiento = (lado: "izquierda" | "derecha") => ({
-  ojo: { x: lado === "izquierda" ? -1 : 1, y: 0.6, z: -1.7 },
-  guinada: (lado === "izquierda" ? 1 : -1) * 102 * GRADO,
-  cabeceo: -10 * GRADO,
-});
+/**
+ * El asiento de ventanilla del JAZ 90, como lo mide el modelo: el cristal en
+ * la piel a metro y medio del eje, la pared inclinada dieciséis grados.
+ */
+const asiento = (lado: "izquierda" | "derecha") => {
+  const s = lado === "izquierda" ? -1 : 1;
+  return asientoAnteVentanilla(
+    {
+      centro: { x: s * 1.49, y: 0.52, z: -1.57 },
+      normal: { x: s * Math.cos(16 * GRADO), y: Math.sin(16 * GRADO), z: 0 },
+      ancho: 0.27,
+      alto: 0.4,
+    },
+    lado,
+  );
+};
 
 const contexto = (cambios: Partial<Contexto> = {}): Contexto => ({
   aircraft: { wingSpan: 26, chord: 3, largo: 31 },
@@ -88,7 +102,14 @@ function mirarHacia(
   punto: Vector3,
   state = avion(),
   segundos = 3,
-): { x: number; y: number; delante: boolean; mirada: MiradaLibre; camara: PerspectiveCamera } {
+): {
+  x: number;
+  y: number;
+  delante: boolean;
+  porElCristal: boolean | null;
+  mirada: MiradaLibre;
+  camara: PerspectiveCamera;
+} {
   const rig = construirCamaras()[modo];
   const ctx = contexto();
   const camara = new PerspectiveCamera(62, 915 / 412, 0.6, 2e5);
@@ -96,6 +117,8 @@ function mirarHacia(
   const { como, topes } = comoSeMiraDesde(modo);
   mirada.ponerTopes(topes);
   const pose = { p: new Vector3(), q: new Quaternion(), puesta: false };
+  const sentado =
+    modo === "pasaje-izquierda" ? asiento("izquierda") : modo === "pasaje-derecha" ? asiento("derecha") : null;
   const dt = 1 / 60;
   // Primero la vista asentada, sin mirar nada.
   for (let i = 0; i < 120; i++) rig.update(camara, state, dt, ctx);
@@ -116,13 +139,18 @@ function mirarHacia(
     );
     mirada.paso(dt);
     const giro = { guinada: mirada.guinada, cabeceo: mirada.cabeceo };
-    if (como === "cabeza") girarLaCabeza(camara, state.orientation, giro);
+    // Como el juego: en el pasaje se asoma uno al cristal.
+    if (sentado) asomarse(camara, state.orientation, sentado, giro);
+    else if (como === "cabeza") girarLaCabeza(camara, state.orientation, giro);
     else darLaVuelta(camara, state.position, giro, () => 0);
   }
   camara.updateMatrixWorld();
   const delante = punto.clone().applyMatrix4(camara.matrixWorldInverse).z < 0;
   const p = punto.clone().project(camara);
-  return { x: p.x, y: p.y, delante, mirada, camara };
+  const porElCristal = sentado
+    ? seVePorLaVentanilla(camara.position, punto, state, sentado.ventanilla)
+    : null;
+  return { x: p.x, y: p.y, delante, porElCristal, mirada, camara };
 }
 
 /** El Teide visto desde el norte de Tenerife: a la izquierda y algo por debajo. */
@@ -139,7 +167,7 @@ describe("girarse hacia lo que se señala", () => {
     });
   }
 
-  it("desde la ventanilla de su lado, también", () => {
+  it("desde la ventanilla de su lado, también, y por el cristal", () => {
     // Un sitio por el través izquierdo y abajo, que es lo que se ve por una
     // ventanilla: un río a veinte kilómetros.
     const rio = new Vector3(-20_000, 100, 2_000);
@@ -147,6 +175,32 @@ describe("girarse hacia lo que se señala", () => {
     expect(r.delante).toBe(true);
     expect(Math.abs(r.x)).toBeLessThan(0.6);
     expect(Math.abs(r.y)).toBeLessThan(0.6);
+    expect(r.porElCristal).toBe(true);
+  });
+
+  it("y lo que va por delante del través, asomándose: no detrás de la pared", () => {
+    /*
+     * Lo que pasó en el teléfono: el Teide a cincuenta grados del morro, la
+     * cabeza girada hacia él y en el centro de la pantalla, la pared. Girando
+     * solo la cabeza el cristal se queda a un lado; asomándose, se mira a
+     * través de él.
+     */
+    const a = 50 * GRADO;
+    const teide = new Vector3(-Math.sin(a) * 30_000, 3715, -Math.cos(a) * 30_000);
+    const r = mirarHacia("pasaje-izquierda", teide);
+    expect(Math.abs(r.x)).toBeLessThan(0.6);
+    expect(r.porElCristal).toBe(true);
+  });
+
+  it("sin girar nada, los ojos se quedan donde los pone el asiento", () => {
+    const camara = new PerspectiveCamera();
+    const s = asiento("derecha");
+    camara.position.set(s.ojo.x, s.ojo.y, s.ojo.z);
+    asomarse(camara, new Quaternion(), s, { guinada: 0, cabeceo: 0 });
+    expect(camara.position.toArray()).toEqual([s.ojo.x, s.ojo.y, s.ojo.z]);
+    // Y con un giro de nada, casi donde estaban: sin saltos al empezar.
+    asomarse(camara, new Quaternion(), s, { guinada: 0.001, cabeceo: 0 });
+    expect(camara.position.distanceTo(new Vector3(s.ojo.x, s.ojo.y, s.ojo.z))).toBeLessThan(0.002);
   });
 
   it("y por la ventanilla no se gira más de lo que deja la ventanilla", () => {
@@ -306,8 +360,9 @@ describe("las vistas de pasaje", () => {
     const rig = construirCamaras()["pasaje-derecha"];
     const camara = new PerspectiveCamera();
     rig.update(camara, avion(), 1 / 60, contexto());
-    expect(camara.position.x).toBeCloseTo(1, 5);
-    expect(camara.position.y).toBeCloseTo(3000.6, 5);
+    const s = asiento("derecha");
+    expect(camara.position.x).toBeCloseTo(s.ojo.x, 5);
+    expect(camara.position.y).toBeCloseTo(3000 + s.ojo.y, 5);
     const mira = new Vector3(0, 0, -1).applyQuaternion(camara.quaternion);
     // A la derecha, un poco hacia la cola y un poco hacia abajo.
     expect(mira.x).toBeGreaterThan(0.9);

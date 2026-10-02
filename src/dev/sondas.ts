@@ -1023,6 +1023,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * cae entre −1 y 1; el banco de la mirada lo usa para ver si lo señalado
      * se ve. Con la cámara del último fotograma pintado.
      */
+    /**
+     * En el pasaje, si ese punto se ve **por el cristal** desde la cámara de
+     * ahora —y no detrás de la pared—; `null` fuera del pasaje.
+     */
+    porLaVentanilla: (x: number, y: number, z: number) =>
+      juego.seVePorLaVentanillaParaBanco({ x, y, z }),
     enElCuadro: (x: number, y: number, z: number) => {
       const c = juego.camera;
       c.updateMatrixWorld();
