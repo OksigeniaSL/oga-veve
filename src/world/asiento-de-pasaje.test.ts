@@ -106,8 +106,11 @@ describe("el asiento de ventanilla", () => {
           // Y nada de la piel ni de dentro: el fuselaje por dentro no se pinta.
           const piel = visto.filter((n) => /fuselaje|cintura|franja|puerta|asiento|suelo/.test(n));
           expect(piel, `${a.id} ${lado}`).toEqual([]);
-          // Y cielo o paisaje, que se ha venido a mirar fuera.
+          // Y cielo o paisaje, que se ha venido a mirar fuera: el ala se ve
+          // sin comerse el cristal. En el JAZ 60, debajo de la raíz, se comía
+          // tres cuartos.
           expect(visto.filter((n) => n === "").length).toBeGreaterThan(10);
+          expect(ala.length / visto.length, `${a.id} ${lado}`).toBeLessThan(0.45);
         }
       });
     });

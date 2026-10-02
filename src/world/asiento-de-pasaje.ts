@@ -16,6 +16,8 @@
  * - **La ventanilla de sobre el ala**, la que todo el mundo pide o evita: la
  *   que cae a un tercio de la cuerda de la raíz. Desde ahí se ve el ala
  *   entera hacia fuera y hacia atrás, el motor y los flaps cuando bajan.
+ *   **Y que deje ver**: si el ala se come el cristal —un ala alta, con la
+ *   ventanilla debajo de la raíz—, la de al lado. Ver `cuantoTapa`.
  * - **Sentado, no con la cara en el cristal**: los ojos a medio metro de la
  *   ventanilla, que es donde quedan con la espalda en el respaldo. Más cerca
  *   la ventanilla llena la pantalla y no se ve el marco, que es justo lo que
@@ -27,7 +29,7 @@
  * medidas del cristal que se miden aquí.
  */
 
-import { Box3, Matrix4, Vector3, type Mesh, type Object3D } from "three";
+import { Box3, Matrix4, Raycaster, Vector3, type Mesh, type Object3D } from "three";
 
 type Punto = { readonly x: number; readonly y: number; readonly z: number };
 
@@ -95,6 +97,55 @@ export const HACIA_ABAJO = 6 * GRADO;
  * y hacia atrás, y el borde de ataque, por delante del hombro.
  */
 export const SOBRE_EL_ALA = 0.35;
+
+/** Cuántas ventanillas se prueban, de la más cercana a la buscada hacia fuera. */
+const CANDIDATAS = 6;
+
+/**
+ * Cuánto del cristal puede tapar el avión, de 0 a 1: un tercio. Con el ala a
+ * la vista y dos tercios de paisaje, que es la foto de la ventanilla de sobre
+ * el ala de cualquier vuelo.
+ */
+export const TAPA_COMO_MUCHO = 1 / 3;
+
+/** Y lo menos: que el ala se vea, que es media razón de sentarse ahí. */
+export const TAPA_COMO_POCO = 0.08;
+
+/** Las piezas que tapan el cristal: el ala, sus flaps, góndolas y motores. */
+const LO_QUE_TAPA = /^(ala|flap|gondola|motor|toma|carenado|escapes)/;
+
+/**
+ * **Cuánto del cristal tapa el avión**, de 0 a 1, desde los ojos de un
+ * asiento: una rejilla de rayos por el cristal contra las piezas del ala.
+ */
+export function cuantoTapa(
+  asiento: AsientoDePasaje,
+  piezas: readonly Object3D[],
+  grupo: Object3D,
+): number {
+  const v = asiento.ventanilla;
+  const n = new Vector3(v.normal.x, v.normal.y, v.normal.z);
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const largo = new Vector3().crossVectors(arriba, n);
+  const ojo = new Vector3(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z).applyMatrix4(
+    grupo.matrixWorld,
+  );
+  const rayo = new Raycaster();
+  rayo.far = 400;
+  let tapados = 0;
+  let total = 0;
+  for (let i = -2; i <= 2; i++)
+    for (let j = -2; j <= 2; j++) {
+      const p = new Vector3(v.centro.x, v.centro.y, v.centro.z)
+        .addScaledVector(largo, (i / 2) * v.ancho * 0.4)
+        .addScaledVector(arriba, (j / 2) * v.alto * 0.4)
+        .applyMatrix4(grupo.matrixWorld);
+      rayo.set(ojo, p.sub(ojo).normalize());
+      total++;
+      if (rayo.intersectObjects(piezas as Object3D[], false).length) tapados++;
+    }
+  return tapados / total;
+}
 
 /**
  * Lo más que se inclina la pared, rad. Un fuselaje redondo inclina la
@@ -230,11 +281,22 @@ export function medirElPasaje(raiz: Object3D, grupo: Object3D): Pasaje | null {
   const raizDelAla = ala
     ? verticesDe(ala, aGrupo).filter((v) => Math.abs(v.x) < medioAncho + 0.6)
     : [];
+  // Lo que puede tapar el cristal: el ala y lo que cuelga de ella. Las palas
+  // no, que una hélice en marcha es un disco que se ve a través.
+  const piezasDelAla: Object3D[] = [];
+  raiz.traverse((o) => {
+    if ((o as Mesh).isMesh && LO_QUE_TAPA.test(o.name)) piezasDelAla.push(o);
+  });
 
-  const lado = (cual: "izquierda" | "derecha"): AsientoDePasaje | null => {
+  const filas = {
+    izquierda: separar(vertices.filter((v) => v.x < 0)),
+    derecha: separar(vertices.filter((v) => v.x > 0)),
+  };
+  if (!filas.izquierda.length || !filas.derecha.length) return null;
+
+  const lado = (cual: "izquierda" | "derecha"): AsientoDePasaje => {
     const s = cual === "izquierda" ? -1 : 1;
-    const fila = separar(vertices.filter((v) => s * v.x > 0));
-    if (!fila.length) return null;
+    const fila = filas[cual];
     const centroZ = (m: Medida): number => (m.zMin + m.zMax) / 2;
     let buscada: number;
     if (raizDelAla.length) {
@@ -248,30 +310,69 @@ export function medirElPasaje(raiz: Object3D, grupo: Object3D): Pasaje | null {
     } else {
       buscada = (centroZ(fila[0]!) + centroZ(fila[fila.length - 1]!)) / 2;
     }
-    const m = fila.reduce((a, b) =>
-      Math.abs(centroZ(b) - buscada) < Math.abs(centroZ(a) - buscada) ? b : a,
-    );
-    const yc = (m.yMin + m.yMax) / 2;
-    const inclinacion =
-      eje === null
-        ? 0
-        : Math.max(
-            -INCLINACION_MAXIMA,
-            Math.min(INCLINACION_MAXIMA, Math.atan2(yc - eje, m.x)),
-          );
-    return asientoAnteVentanilla(
-      {
-        centro: { x: s * m.x, y: yc, z: centroZ(m) },
-        normal: { x: s * Math.cos(inclinacion), y: Math.sin(inclinacion), z: 0 },
-        ancho: m.zMax - m.zMin,
-        alto: m.yMax - m.yMin,
-      },
-      cual,
-    );
+    /*
+     * **Y la que deje ver.** La de la cuerda buscada es la buena en un avión
+     * de ala baja; en el de ala alta, debajo de la raíz, el ala y la góndola
+     * se comían tres cuartos del cristal —medido en la primera captura del
+     * JAZ 60—, y se viene a mirar el paisaje. Así que de las más cercanas a
+     * la buscada se mira **cuánto tapa el avión**, con rayos por el cristal,
+     * y se queda la primera en la que el ala se ve sin quitar la vista.
+     */
+    const cercanas = [...fila]
+      .sort((a, b) => Math.abs(centroZ(a) - buscada) - Math.abs(centroZ(b) - buscada))
+      .slice(0, CANDIDATAS);
+    const asientos = cercanas.map((m) => {
+      const yc = (m.yMin + m.yMax) / 2;
+      const inclinacion =
+        eje === null
+          ? 0
+          : Math.max(
+              -INCLINACION_MAXIMA,
+              Math.min(INCLINACION_MAXIMA, Math.atan2(yc - eje, m.x)),
+            );
+      return asientoAnteVentanilla(
+        {
+          centro: { x: s * m.x, y: yc, z: centroZ(m) },
+          normal: { x: s * Math.cos(inclinacion), y: Math.sin(inclinacion), z: 0 },
+          ancho: m.zMax - m.zMin,
+          alto: m.yMax - m.yMin,
+        },
+        cual,
+      );
+    });
+    if (!piezasDelAla.length) return asientos[0]!;
+    // Ni tanta que tape, ni ninguna: el ala se tiene que ver. Si ninguna cae
+    // en medio, la que más cerca se quede.
+    let mejor = asientos[0]!;
+    let mejorFuera = Infinity;
+    for (const a of asientos) {
+      const tapa = cuantoTapa(a, piezasDelAla, grupo);
+      const fuera = Math.max(0, TAPA_COMO_POCO - tapa, tapa - TAPA_COMO_MUCHO);
+      if (fuera === 0) return a;
+      if (fuera < mejorFuera) {
+        mejor = a;
+        mejorFuera = fuera;
+      }
+    }
+    return mejor;
   };
 
-  const izquierda = lado("izquierda");
-  const derecha = lado("derecha");
-  if (!izquierda || !derecha) return null;
-  return { izquierda, derecha, ventanillas };
+  /*
+   * **Y se elige la primera vez que se mira, no al cargar.** Los rayos cuestan
+   * unas decenas de milisegundos —cincuenta en el JAZ 60, que prueba varias
+   * ventanillas—, y en una tablet eso es un tirón en mitad de la carga del
+   * avión para una vista que a lo mejor no se pide nunca. Medido aquí, con el
+   * modelo ya en su sitio: los rayos van en coordenadas del mundo.
+   */
+  let izquierda: AsientoDePasaje | undefined;
+  let derecha: AsientoDePasaje | undefined;
+  return {
+    get izquierda() {
+      return (izquierda ??= lado("izquierda"));
+    },
+    get derecha() {
+      return (derecha ??= lado("derecha"));
+    },
+    ventanillas,
+  };
 }
