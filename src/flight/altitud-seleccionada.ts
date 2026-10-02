@@ -94,6 +94,54 @@ export function aLaVentanilla(metros: number): number {
   return Math.round(metros / PIE / 100) * 100;
 }
 
+/**
+ * **La altitud de la frustrada**, en pies del altímetro: la del punto de
+ * final al millar de arriba, y nunca menos de mil quinientos pies sobre el
+ * campo, que es como sale en la mayoría de las cartas de estas islas y de
+ * Paraguay. La de cada carta no la tiene el juego.
+ */
+export function altitudDeLaFrustrada(delFinal: number, campo: number, tope: number): number {
+  const pies = Math.ceil((Math.max(delFinal, campo + 1500) + 1) / 1000) * 1000;
+  return Math.min(pies, tope);
+}
+
+/** Lo que decide qué lleva la ventanilla en la final. */
+export interface VentanillaEnLaFinal {
+  /** Si en este peldaño se leen las cifras de la cabina. Ver `Canales.cifra`. */
+  readonly conCifras: boolean;
+  /**
+   * Si el automático va puesto en su modo de aproximación —el `G/S` escrito
+   * en el FMA— en un avión cuya pantalla lo enseña.
+   */
+  readonly enAproximacion: boolean;
+  /** La altitud del punto de final, pies del altímetro. */
+  readonly delFinal: number;
+  /** La del campo, pies del altímetro. */
+  readonly campo: number;
+  /** Hasta dónde gira la ventanilla. Ver `topeDeLaVentanilla`. */
+  readonly tope: number;
+}
+
+/**
+ * **La ventanilla en la final**: la altitud de la frustrada, o `null` si se
+ * queda como está —en la del punto de final, que es la última que se puso—.
+ *
+ * En una cabina de verdad se pone la de la frustrada **con la senda
+ * capturada**: la bajada la manda el `G/S` del automático, y la ventanilla
+ * queda lista por si hay que irse. Así que aquí, solo con ese modo puesto y
+ * escrito en el FMA. Sin él, un número más alto en magenta encima de quien
+ * baja a la pista dice «subí», que es lo que leyó Enrique en Gando: «cuando
+ * me dice 2100 ahora me sube a 3000 si estoy llegando a la pista».
+ *
+ * **Y en los dos peldaños de abajo, nunca**: ahí no se leen cifras, y la
+ * frase que explicaba el cambio —«por si hay que subir»— no está grabada.
+ * Lo que no cambia no hay que explicarlo. Ver `PENDIENTE-VOCES-final.md`.
+ */
+export function ventanillaEnLaFinal(d: VentanillaEnLaFinal): number | null {
+  if (!d.conCifras || !d.enAproximacion) return null;
+  return altitudDeLaFrustrada(d.delFinal, d.campo, d.tope);
+}
+
 /** A cuántos pies de la seleccionada avisa acercándose. */
 export const AVISA_AL_ACERCARSE = 900;
 /** Y a cuántos se da por llegada, y por desviada una vez en ella. */

@@ -597,7 +597,7 @@ import { conectarLaRadio } from "./audio/radio";
 import { Audio, yaHuboGesto, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
-import { patasDe, peldanoDe } from "./ui/familia";
+import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, luzRojaDelTren, seVuelveADecir } from "./flight/tren";
 import {
   cargaParaElPlan,
@@ -817,6 +817,7 @@ import {
   girarLaVentanilla,
   llevaVentanillaDeAltitud,
   topeDeLaVentanilla,
+  ventanillaEnLaFinal,
   type Alerta,
 } from "./flight/altitud-seleccionada";
 import {
@@ -16411,22 +16412,18 @@ export class Game {
   }
 
   /**
-   * **En la final, la ventanilla lleva la altitud de la frustrada.**
+   * **En la final, la ventanilla lleva la altitud de la frustrada, cuando
+   * baja la senda.**
    *
-   * Llegando a Gran Canaria la ventanilla se quedaba en 2.100 con el avión en
-   * final —la altitud del punto de final, que se puso al empezar a bajar—, y
-   * eso parecía decir «quedate a 2.100». En una cabina de verdad, en cuanto se
-   * va por la senda se pone en la ventanilla **la altitud de la frustrada**:
-   * la bajada la manda la senda, y la ventanilla ya está lista por si hay que
-   * irse al aire. Una vez por aproximación; se rearma al dejar el tramo final.
+   * Es lo de una cabina de verdad: con la senda capturada, la bajada la manda
+   * el `G/S` del automático y en la ventanilla se pone la altitud de irse al
+   * aire. Se ponía en cuanto se pasaba el punto de final, en los cuatro
+   * peldaños y con el automático puesto o sin él, y en Guyrami eso era un
+   * 2.100 que saltaba a 3.000 con el avión bajando a la pista: «ningún
+   * sentido». Ahora, de Taguato para arriba y con el `G/S` escrito en el FMA;
+   * si no, se queda en la del punto de final. Ver `ventanillaEnLaFinal`.
    *
-   * La de cada carta no la tiene el juego; se usa la del punto de final al
-   * millar de arriba, y nunca menos de mil quinientos pies sobre el campo,
-   * que es como sale en la mayoría de las cartas de estas islas y de
-   * Paraguay.
-   *
-   * PENDIENTE-VOCES-automatico: `vuelo.ventanillaFrustrada`, en los tres
-   * peldaños de abajo.
+   * Una vez por aproximación; se rearma al dejar el tramo final.
    */
   private ponerLaFrustradaEnLaVentanilla(enElTramoFinal: boolean): void {
     if (!enElTramoFinal) {
@@ -16437,11 +16434,19 @@ export class Game {
     const alli = this.navegacion.alturaDelFinal;
     if (alli === null) return;
     const reglaje = alturaIndicada(0, this.qnhPuesta, this.qnhDelSitio);
-    const delFinal = (alli + reglaje) / PIE_EN_METROS;
-    const campo =
-      (this.cotaDelCampo(this.elCampo()) + reglaje) / PIE_EN_METROS + 1500;
-    const pies = Math.ceil((Math.max(delFinal, campo) + 1) / 1000) * 1000;
-    this.ventanillaAlt = Math.min(pies, topeDeLaVentanilla(this.aircraft));
+    const pies = ventanillaEnLaFinal({
+      conCifras: canalesDe(this.tier.avisos).cifra,
+      // El FMA solo lo lleva la pantalla de los de línea. Ver `elFma`.
+      enAproximacion:
+        this.pilotoPuesto &&
+        this.modoVertical === "G/S" &&
+        familiaDe(this.aircraft) === "linea",
+      delFinal: (alli + reglaje) / PIE_EN_METROS,
+      campo: (this.cotaDelCampo(this.elCampo()) + reglaje) / PIE_EN_METROS,
+      tope: topeDeLaVentanilla(this.aircraft),
+    });
+    if (pies === null) return;
+    this.ventanillaAlt = pies;
     this.frustradaEnLaVentanilla = true;
   }
 
@@ -16666,8 +16671,9 @@ export class Game {
     /*
      * **En la final manda la senda**: el `G/S` del automático baja por la de
      * tres grados hasta poco antes de la pista, y el `LOC` lo lleva al eje.
-     * La ventanilla ya no es «hasta dónde bajar»: lleva la altitud de la
-     * frustrada. Ver `ponerLaFrustradaEnLaVentanilla`.
+     * La ventanilla ya no es «hasta dónde bajar», y no se sigue: de Taguato
+     * para arriba lleva la altitud de la frustrada, y en los de abajo se queda
+     * en la del punto de final. Ver `ponerLaFrustradaEnLaVentanilla`.
      */
     const enLaFinal =
       this.objetivos.altitud !== null && this.navegacion.enElTramoFinal(lecturaDeAhora);
@@ -16758,6 +16764,20 @@ export class Game {
         if (ritmo !== this.objetivos.ritmo)
           this.objetivos = { ...this.objetivos, ritmo };
       }
+      /*
+       * **Y en la final, nunca hacia arriba.** Alineado y bajando a la pista
+       * fuera del tramo final del plan —una vuelta al campo sin plan, o por
+       * la otra punta—, aquí arriba manda la ventanilla, y un automático que
+       * sube hacia ella con la pista delante es el 3.000 de Gando hecho de
+       * verdad. Se queda en la altura que lleva, como uno que la sostiene:
+       * irse al aire lo decide quien vuela.
+       */
+      if (
+        this.faseDeAhora === "final" &&
+        this.objetivos.altitud !== null &&
+        this.objetivos.altitud > s.position.y
+      )
+        this.objetivos = { ...this.objetivos, altitud: s.position.y, ritmo: 0 };
     }
     /*
      * **El modo vertical**, el que se escribe arriba de la pantalla de vuelo:
