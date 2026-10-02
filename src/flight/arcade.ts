@@ -250,8 +250,13 @@ const MAX_TURN_RATE = 0.25;
  * `ascensoMaximo` en `carrera.ts`—, que es la cuenta de toda la vida, y así el
  * niño que cambia de avión nota que el grande sube como un ascensor.
  */
-/** Inclinación aparente en viraje a fondo, en radianes. Ver `MAX_TURN_RATE`. */
-const VISUAL_BANK = 0.75;
+/**
+ * Inclinación aparente en viraje a fondo, en radianes. Ver `MAX_TURN_RATE`.
+ *
+ * Exportada porque la mano que sostiene la inclinación —`flight/mano.ts`—
+ * pide aquí un alabeo y tiene que saber qué alerón lo da.
+ */
+export const VISUAL_BANK = 0.75;
 
 export interface ArcadeOptions {
   aircraft: AircraftConfig;

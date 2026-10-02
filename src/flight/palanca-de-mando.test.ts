@@ -6,9 +6,15 @@
 import { describe, expect, it } from "vitest";
 import hoja from "../style.css?raw";
 import {
+  CERCA_DEL_OTRO,
+  DobleToque,
+  ENTRE_TOQUES,
   MARGEN_DEL_PUNTO,
   mandoDelDedo,
   PUNTO_DEL_MANDO,
+  puntoDelMando,
+  RECORRIDO_ABAJO,
+  separarEjes,
 } from "./palanca-de-mando";
 
 /** El mando de alabeo y cabeceo: ciento cincuenta con dos de filo. */
@@ -35,8 +41,34 @@ describe("la palanca de mando con el dedo", () => {
         const dy = Math.sin(a) * lejos;
         const d = mandoDelDedo(dx, dy, LADO, LADO, true);
         expect(d.dx).toBeCloseTo(dx, 6);
-        expect(d.dy).toBeCloseTo(dy, 6);
+        // Abajo, hasta su tope, que llega antes. Ver `RECORRIDO_ABAJO`.
+        expect(d.dy).toBeCloseTo(Math.min(dy, RECORRIDO * RECORRIDO_ABAJO), 6);
       }
+  });
+
+  it("abajo llega a fondo antes del borde, para que el pulgar no choque con el marco", () => {
+    const abajo = RECORRIDO * RECORRIDO_ABAJO;
+    expect(mandoDelDedo(0, abajo, LADO, LADO, true).y).toBeCloseTo(1, 6);
+    expect(mandoDelDedo(0, abajo / 2, LADO, LADO, true).y).toBeCloseTo(0.5, 6);
+    // Y arriba sigue llegando al borde de su recorrido, como siempre.
+    expect(mandoDelDedo(0, -abajo, LADO, LADO, true).y).toBeCloseTo(-RECORRIDO_ABAJO, 6);
+    // El punto se queda en su tope de abajo aunque el dedo baje más.
+    expect(mandoDelDedo(0, RECORRIDO + 20, LADO, LADO, true).dy).toBeCloseTo(abajo, 6);
+  });
+
+  it("y sin dedo, el punto se pinta donde lo pondría el dedo", () => {
+    for (const [x, y] of [
+      [0, 0],
+      [0.5, -0.5],
+      [-1, 0],
+      [0.3, 0.8],
+      [0, 1],
+    ] as const) {
+      const p = puntoDelMando(x, y, LADO, LADO);
+      const d = mandoDelDedo(p.dx, p.dy, LADO, LADO, true);
+      expect(d.x).toBeCloseTo(x, 6);
+      expect(d.y).toBeCloseTo(y, 6);
+    }
   });
 
   it("y a fondo el punto recorre casi todo el mando, no once píxeles", () => {
@@ -64,12 +96,12 @@ describe("la palanca de mando con el dedo", () => {
   });
 
   it("en diagonal, fuera del círculo, se tira y se ladea a fondo con el punto en el borde", () => {
-    const d = mandoDelDedo(RECORRIDO, RECORRIDO, LADO, LADO, true);
+    const d = mandoDelDedo(RECORRIDO, -RECORRIDO, LADO, LADO, true);
     expect(d.x).toBe(1);
-    expect(d.y).toBe(1);
+    expect(d.y).toBe(-1);
     expect(Math.hypot(d.dx, d.dy)).toBeCloseTo(RECORRIDO, 6);
     // Apuntando hacia el dedo.
-    expect(d.dx).toBeCloseTo(d.dy, 6);
+    expect(d.dx).toBeCloseTo(-d.dy, 6);
   });
 
   it("el timón solo va de lado, y también llega hasta su tope", () => {
@@ -89,5 +121,71 @@ describe("la palanca de mando con el dedo", () => {
     const regla = /\.pad__punto\s*\{([^}]*)\}/.exec(hoja)?.[1] ?? "";
     expect(regla).toContain(`width: ${PUNTO_DEL_MANDO}px`);
     expect(regla).toContain("translate(var(--dx, 0px), var(--dy, 0px))");
+  });
+});
+
+describe("los ejes separados", () => {
+  it("bajando, lo que el pulgar se escapa de lado no inclina el ala", () => {
+    const r = separarEjes({ x: 0, y: 0 }, { x: 0.15, y: -0.6 });
+    expect(r.x).toBe(0);
+    expect(r.y).toBe(-0.6);
+  });
+
+  it("y ladeando, lo que se escapa arriba o abajo no sube ni baja", () => {
+    const r = separarEjes({ x: 0, y: 0.3 }, { x: 0.7, y: 0.45 });
+    expect(r.x).toBe(0.7);
+    expect(r.y).toBe(0.3);
+  });
+
+  it("en diagonal de verdad pasan los dos", () => {
+    const r = separarEjes({ x: 0, y: 0 }, { x: 0.6, y: 0.7 });
+    expect(r.x).toBeGreaterThan(0.3);
+    expect(r.y).toBe(0.7);
+  });
+
+  it("y desde donde estaba la palanca, no desde el centro", () => {
+    const r = separarEjes({ x: 0.5, y: -0.4 }, { x: 0.58, y: 0.1 });
+    expect(r.x).toBe(0.5);
+    expect(r.y).toBe(0.1);
+  });
+});
+
+describe("el doble toque", () => {
+  it("dos golpecitos seguidos y cerca son un doble toque", () => {
+    const d = new DobleToque();
+    expect(d.bajar(10, 100, 100)).toBe(false);
+    d.subir(10.08);
+    expect(d.bajar(10.25, 104, 98)).toBe(true);
+  });
+
+  it("si tardan, no", () => {
+    const d = new DobleToque();
+    d.bajar(10, 100, 100);
+    d.subir(10.08);
+    expect(d.bajar(10.08 + ENTRE_TOQUES + 0.05, 100, 100)).toBe(false);
+  });
+
+  it("si el primero arrastró la palanca, no fue un golpecito", () => {
+    const d = new DobleToque();
+    d.bajar(10, 100, 100);
+    d.mover(100, 140);
+    d.subir(10.1);
+    expect(d.bajar(10.2, 100, 140)).toBe(false);
+  });
+
+  it("si el segundo cae lejos del primero, no", () => {
+    const d = new DobleToque();
+    d.bajar(10, 100, 100);
+    d.subir(10.08);
+    expect(d.bajar(10.2, 100 + CERCA_DEL_OTRO + 10, 100)).toBe(false);
+  });
+
+  it("y un tercero seguido no es otro doble toque", () => {
+    const d = new DobleToque();
+    d.bajar(10, 100, 100);
+    d.subir(10.05);
+    expect(d.bajar(10.15, 100, 100)).toBe(true);
+    d.subir(10.2);
+    expect(d.bajar(10.3, 100, 100)).toBe(false);
   });
 });

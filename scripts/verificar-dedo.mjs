@@ -33,6 +33,15 @@
  * palanca de mando hacia arriba —que en este juego es morro arriba— y el
  * avión se va.
  *
+ * **Y ya en el aire, la palanca que se queda y las dos manos.** «Tengo que
+ * dejar el dedo puesto para mantener la subida o la bajada», «tocar los flaps
+ * o el tren obliga a soltar el joystick». Se deja la palanca inclinada y
+ * subiendo y se levanta el dedo: el avión tiene que seguir así y el punto,
+ * donde se dejó. Con el pulgar en la palanca, otro dedo toca los flaps y el
+ * tren —y antes, rodando, el freno—, y tienen que responder. Y dos
+ * golpecitos en la palanca la centran: alas niveladas y sin subir ni bajar.
+ * Ver `flight/mano.ts` y `ui/pulsar.ts`.
+ *
  * El volante lo lleva el juego: el banco vuela por defecto en Guyrami, el
  * peldaño donde el juego conduce por las calles. Lo que se mide aquí son los
  * mandos de pulgar, no la puntería rodando.
@@ -502,6 +511,7 @@ async function unTelefono(quien) {
   let tiempoDeFrenada = 0;
   let frenoCaja = null;
   let frenoAguanta = null;
+  let frenoConLaPalanca = null;
   let esperoVerde = 0;
   while (Date.now() - empezo < TOPE_S * 1000) {
     await pausa(80);
@@ -549,6 +559,10 @@ async function unTelefono(quien) {
        * levantara soltaba el freno. Ver `dedoDelFreno` en `ui/hud.ts`.
        */
       if (frenoAguanta === null && Date.now() - tiempoDeFrenada > 250) {
+        // Primero, con el pulgar todavía en la palanca: las dos manos.
+        frenoConLaPalanca = puestos.has(DEDO_PALANCA)
+          ? await page.evaluate(() => globalThis.__oga.controles().brakes)
+          : null;
         await soltarVolante();
         await pausa(250);
         frenoAguanta = await page.evaluate(
@@ -606,6 +620,9 @@ async function unTelefono(quien) {
   for (const id of [...puestos.keys()]) await subir(id);
   s = await leer();
 
+  // ── C. En el aire: la palanca que se queda, las dos manos, el doble toque ──
+  const aire = despego && !s.percance ? await enElAire() : null;
+
   comprobar(
     et("palanca de mando: el punto va debajo del dedo en todo su recorrido"),
     puntoDelMando !== null &&
@@ -651,6 +668,155 @@ async function unTelefono(quien) {
       ? `esperó la verde ${typeof esperoVerde === "number" ? esperoVerde.toFixed(0) : "?"} s · a ${s.alto.toFixed(0)} m`
       : `se quedó en «${etapa}» (fase ${s.fase}${s.percance ? `, percance ${s.percance}` : ""})`,
   );
+  comprobar(
+    et("dos manos: con el pulgar en la palanca, el otro dedo frena"),
+    frenoConLaPalanca !== null && frenoConLaPalanca > 0.5,
+    `freno a ${frenoConLaPalanca === null ? "?" : frenoConLaPalanca.toFixed(2)} con el pulgar en la palanca`,
+  );
+  if (aire === null)
+    comprobar(et("en el aire: se pudo medir"), false, "no llegó a volar");
+  else {
+    comprobar(
+      et("palanca fija: soltada inclinada y subiendo, el avión sigue así y el punto se queda"),
+      aire.fija.ok,
+      aire.fija.detalle,
+    );
+    comprobar(
+      et("dos manos: con el pulgar en la palanca, el otro dedo baja los flaps"),
+      aire.flaps.ok,
+      aire.flaps.detalle,
+    );
+    comprobar(
+      et("dos manos: con el pulgar en la palanca, el otro dedo mueve el tren"),
+      aire.tren.ok,
+      aire.tren.detalle,
+    );
+    comprobar(
+      et("doble toque: alas niveladas, sin subir ni bajar y el punto al centro"),
+      aire.doble.ok,
+      aire.doble.detalle,
+    );
+  }
   if (errores.length) comprobar(et("sin errores en la página"), false, errores.join(" · "));
   await ctx.close();
+
+  /**
+   * **Ya en el aire, con el dedo.** El banco va acelerado —`acelerar`—, así
+   * que las esperas de pared son el triple de vuelo.
+   */
+  async function enElAire() {
+    const G = 180 / Math.PI;
+    const mirarAire = () =>
+      page.evaluate(() => {
+        const o = globalThis.__oga;
+        const e = o.estado();
+        return {
+          alabeo: o.alabeo(),
+          vs: e.verticalSpeed,
+          alto: e.heightAboveGround,
+          mano: o.mano(),
+          flaps: o.palancaDeFlaps(),
+          tren: o.trenQueSePide(),
+          percance: o.percance(),
+        };
+      });
+    const centroDelPunto = async () => {
+      const p = await caja(".pad--stick .pad__punto");
+      return p ? { x: p.x + p.w / 2, y: p.y + p.h / 2 } : centroDelMando;
+    };
+    const apartado = async () => {
+      const p = await centroDelPunto();
+      return Math.hypot(p.x - centroDelMando.x, p.y - centroDelMando.y);
+    };
+    // Que suba un poco más antes de nada: a cuarenta metros, cualquier cosa
+    // que se pruebe es pegar con el suelo.
+    await pausa(1500);
+
+    // C1. Inclinada a la derecha y subiendo, y se levanta el dedo.
+    await volantear(0.75, 0.6);
+    await pausa(400);
+    await soltarVolante();
+    await pausa(4000);
+    const a1 = await mirarAire();
+    const lejos1 = await apartado();
+    await pausa(2000);
+    const a2 = await mirarAire();
+    const lejos2 = await apartado();
+    const fija = {
+      ok:
+        !a2.percance &&
+        Math.abs(a1.alabeo) * G > 8 &&
+        Math.abs(a2.alabeo - a1.alabeo) * G < 3 &&
+        a2.vs > 0.2 &&
+        lejos2 > RECORRIDO_DEL_MANDO * 0.3 &&
+        Math.abs(lejos2 - lejos1) < 3,
+      detalle:
+        `alabeo ${(a1.alabeo * G).toFixed(1)}° → ${(a2.alabeo * G).toFixed(1)}° a los dos segundos · ` +
+        `sube a ${a2.vs.toFixed(1)} m/s · el punto a ${lejos2.toFixed(0)} px del centro (antes ${lejos1.toFixed(0)})` +
+        ` · la mano lleva ${a2.mano.alabeo ? "alabeo" : "—"} y ${a2.mano.cabeceo ? "cabeceo" : "—"}`,
+    };
+
+    // C2. El pulgar agarra la palanca y se queda puesto; el otro dedo toca.
+    const punto = await centroDelPunto();
+    await bajar(DEDO_PALANCA, punto.x, punto.y);
+    await pausa(200);
+    await mover(DEDO_PALANCA, punto.x + 2, punto.y + 1);
+    const antes = await mirarAire();
+    const botonFlaps = await caja('[data-hud="flaps-touch"]');
+    let flaps = { ok: false, detalle: "el botón de flaps no se ve" };
+    if (botonFlaps) {
+      await tocar(DEDO_BOTON, botonFlaps.x + botonFlaps.w / 2, botonFlaps.y + botonFlaps.h / 2);
+      await pausa(300);
+      const d = await mirarAire();
+      flaps = {
+        ok: d.flaps > antes.flaps,
+        detalle: `palanca de flaps ${antes.flaps.toFixed(2)} → ${d.flaps.toFixed(2)} con el pulgar puesto`,
+      };
+    }
+    const botonTren = await caja('[data-hud="tren-touch"]');
+    let tren = { ok: true, detalle: "este avión no mete el tren: no hay botón (no se midió)" };
+    if (botonTren) {
+      const t0 = (await mirarAire()).tren;
+      await tocar(DEDO_BOTON, botonTren.x + botonTren.w / 2, botonTren.y + botonTren.h / 2);
+      await pausa(300);
+      const t1 = (await mirarAire()).tren;
+      tren = { ok: t1 !== t0, detalle: `tren pedido ${t0 ? "fuera" : "dentro"} → ${t1 ? "fuera" : "dentro"} con el pulgar puesto` };
+    }
+    await soltarVolante();
+    await pausa(300);
+
+    /*
+     * C3. Dos golpecitos encima del punto: al centro, despacio. Con gas de
+     * crucero y no a fondo: en el modelo sencillo, todo el gas es subir —«por
+     * encima del gas que sostiene el nivel se sube»— y no hay palanca que lo
+     * aguante nivelado. Eso es del avión, no de la palanca.
+     */
+    await ponerGas(0.55);
+    const p2 = await centroDelPunto();
+    await tocar(DEDO_PALANCA, p2.x, p2.y);
+    await pausa(90);
+    await tocar(DEDO_PALANCA, p2.x, p2.y);
+    await pausa(5000);
+    /*
+     * La subida, **promediada** en dos segundos: en el modelo sencillo el
+     * bache del aire se suma tal cual al ascenso —ver `ponerRacha` en
+     * `arcade.ts`—, y una sola lectura daba de 0,4 a 1,6 m/s según cayera.
+     */
+    const lecturas = [];
+    for (let i = 0; i < 10; i++) {
+      lecturas.push((await mirarAire()).vs);
+      await pausa(200);
+    }
+    const vsMedia = lecturas.reduce((a, b) => a + b, 0) / lecturas.length;
+    const c = await mirarAire();
+    const lejos3 = await apartado();
+    const doble = {
+      ok: !c.percance && Math.abs(c.alabeo) * G < 3 && Math.abs(vsMedia) < 1 && lejos3 < RECORRIDO_DEL_MANDO * 0.12,
+      detalle:
+        `alabeo ${(c.alabeo * G).toFixed(1)}° · ${vsMedia.toFixed(2)} m/s de media en dos segundos · el punto a ${lejos3.toFixed(1)} px del centro` +
+        ` · la mano lleva ${c.mano.alabeo ? "alabeo" : "—"} y ${c.mano.cabeceo ? "cabeceo" : "—"}` +
+        ` · a ${c.alto.toFixed(0)} m`,
+    };
+    return { fija, flaps, tren, doble };
+  }
 }

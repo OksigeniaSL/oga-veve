@@ -172,7 +172,13 @@ export const ES_PY = {
    * cabina y en el indicador.
    */
   "teclas.toque":
-    "Un toque cortito a la flecha deja el morro un poquito más arriba o más abajo, y se queda: es el compensador, TRIM. Apretada, la flecha es la palanca y vuelve al soltarla. Con mando, la cruceta.",
+    "En el aire, las flechas inclinan el avión y lo hacen subir o bajar despacio, y al soltarlas se queda como lo dejaste: lo sostiene el compensador, TRIM. Un toque cortito lo mueve un poquito más.",
+  /*
+   * **Que se puede jugar con mando o joystick.** Va debajo del dibujo del
+   * mando y del joystick. Ver `conMando` en `ui/teclas.ts`.
+   */
+  "teclas.mando":
+    "También se juega con mando o con joystick de vuelo: enchufalo y movelo. Con el joystick, la seta es el TRIM, el gatillo frena y los botones de la base mueven los flaps y el tren.",
   "teclas.restore": "Como venía",
   "teclas.close": "Cerrar",
   "tecla.pitchUp": "Subir el morro",

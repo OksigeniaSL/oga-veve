@@ -181,6 +181,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     pedirFlaps: (donde: number) => juego.input.ponerPalancaDeFlaps(donde),
     palancaDeFlaps: () => juego.input.palancaDeFlaps,
+    /** Lo que se le ha pedido al tren: la orden, no la posición. */
+    trenQueSePide: () => juego.input.trenQueSePide,
+    /**
+     * **Qué sostiene la mano** del teclado y del dedo, y dónde se pinta la
+     * palanca del aire. Ver `flight/mano.ts`.
+     */
+    mano: () => ({
+      alabeo: juego.input.mano.llevaAlabeo,
+      cabeceo: juego.input.mano.llevaCabeceo,
+      palanca: juego.input.mano.palanca(),
+    }),
     /**
      * Cuántos hitos del paisaje lleva señalados el vuelo.
      *

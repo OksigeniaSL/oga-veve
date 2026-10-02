@@ -120,6 +120,18 @@ export interface ControlInputs {
    */
   sostieneLaAltura?: boolean;
   /**
+   * **Si la mano de quien vuela sostiene la inclinación** —la del teclado o la
+   * del dedo, que se queda donde se deja—. Como `automatico`, pero para el
+   * alabeo y puesto por la mano: aparta el nivelado de alas, que si no la
+   * deshacía al soltar la tecla. Ver `flight/mano.ts`.
+   */
+  manoEnElAlabeo?: boolean;
+  /**
+   * Y **la trayectoria**: aparta el compensador que sostiene la subida, que
+   * nunca sostenía una bajada —«o bajo o subo»—. Ver `flight/mano.ts`.
+   */
+  manoEnElCabeceo?: boolean;
+  /**
    * **Los aerofrenos**, de 0 cerrados a 1 abiertos del todo. Es la posición y
    * no la palanca, como los flaps: los paneles tardan un momento en subir.
    * Solo frenan en el avión que los lleva. Ver `aerofrenos` en la ficha y

@@ -56,6 +56,7 @@ import {
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
+import type { LoQueVeLaMano } from "./flight/mano";
 import {
   claveDeTorre,
   DICE_LA_TORRE,
@@ -5372,8 +5373,9 @@ export class Game {
     return conElVueloRecto(
       mandos,
       {
-        cabeceo: m.cabeceo || (banco && c.elevator !== 0),
-        alabeo: m.alabeo || (banco && c.aileron !== 0),
+        // Y la mano del teclado o del dedo, que ya sostiene lo que se dejó.
+        cabeceo: m.cabeceo || this.input.sostiene.cabeceo || (banco && c.elevator !== 0),
+        alabeo: m.alabeo || this.input.sostiene.alabeo || (banco && c.aileron !== 0),
         timon: m.timon || (banco && c.rudder !== 0),
       },
       { alabeo: bankAngleOf(s.orientation), vertical: s.verticalSpeed },
@@ -10790,6 +10792,13 @@ export class Game {
     // Y hasta dónde pueden bajar los flaps: el alivio de carga o unos flaps
     // tocados. Antes de mover los mandos, que es quien los lleva.
     this.atenderALosFlaps(dt);
+    /*
+     * **Y lo que ve la mano del teclado y del dedo**, antes de mover los
+     * mandos: en el aire, la tecla y el dedo le piden un ritmo o un sitio, y
+     * ella sostiene lo conseguido. Con el piloto de pruebas no: el banco
+     * escribe en los mandos como siempre. Ver `flight/mano.ts`.
+     */
+    this.input.ponerAvion(this.pilotoDePruebas ? null : this.loQueVeLaMano());
     this.input.update(dt);
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
@@ -16636,6 +16645,95 @@ export class Game {
   }
 
   /**
+   * **Lo que ve la mano** del teclado y del dedo: el avión, el peldaño y si
+   * otra mano —el automático, la nivelada— lleva ya un eje. Se rellena el
+   * mismo objeto en cada fotograma, para no reservar memoria sesenta veces
+   * por segundo. Ver `flight/mano.ts`.
+   */
+  private loQueVeLaMano(): LoQueVeLaMano {
+    const s = this.flight.state;
+    const v = this.vistoPorLaMano;
+    v.aircraft = this.aircraft;
+    v.sencillo = this.tier.model === "simple";
+    v.amortiguaExtra = this.tier.assists.extraDamping;
+    v.protegePerdida = this.tier.assists.stallProtection > 0;
+    v.peldanoBajo = this.tier.inclinacionProtegida;
+    v.enTierra = s.onGround;
+    v.alabeo = bankAngleOf(s.orientation);
+    v.cabeceo = pitchAngleOf(s.orientation);
+    v.ritmoDeAlabeo = s.rollRate;
+    v.ritmoDeCabeceo = s.pitchRate;
+    v.vertical = s.verticalSpeed;
+    v.carga = s.loadFactor;
+    v.verdadera = s.airspeed;
+    v.alfa = s.alpha;
+    v.alfaDeAviso = s.stallWarningAlpha;
+    v.flaps = this.input.controls.flaps;
+    /*
+     * El timón que sostiene el avión, para que la mano lo coja sin tirón: el
+     * de ahora si quien vuela está tirando —rotando, al despegar—, que el de
+     * `timonAhora` va promediado y llega tarde; si no, ése, que cuenta también
+     * lo que empuja la ayuda del peldaño.
+     */
+    const c = this.input.controls;
+    v.timon =
+      Math.abs(c.elevator) > 0.08
+        ? Math.max(-1, Math.min(1, c.elevator + c.trim))
+        : this.flight.timonAhora();
+    v.mandoParaSubir = this.flight.mandoParaSubir ? this.mandoParaSubirDeLaMano : undefined;
+    v.otraManoAlabeo = this.pilotoPuesto && this.objetivos.rumbo !== null;
+    v.otraManoCabeceo =
+      (this.pilotoPuesto && this.objetivos.altitud !== null) || this.nivelada !== null;
+    return v;
+  }
+
+  /** El modelo de ahora, preguntado por la mano. Ver `mandoParaSubir`. */
+  private readonly mandoParaSubirDeLaMano = (ritmo: number): number =>
+    this.flight.mandoParaSubir?.(ritmo) ?? 0;
+
+  /** El objeto que se rellena para la mano. Ver `loQueVeLaMano`. */
+  private readonly vistoPorLaMano: { -readonly [K in keyof LoQueVeLaMano]: LoQueVeLaMano[K] } = {
+    aircraft: AIRCRAFT[0]!,
+    sencillo: false,
+    amortiguaExtra: 0,
+    protegePerdida: false,
+    peldanoBajo: false,
+    enTierra: true,
+    alabeo: 0,
+    cabeceo: 0,
+    ritmoDeAlabeo: 0,
+    ritmoDeCabeceo: 0,
+    vertical: 0,
+    carga: 1,
+    verdadera: 0,
+    alfa: 0,
+    alfaDeAviso: Math.PI,
+    flaps: 0,
+    timon: 0,
+    mandoParaSubir: undefined,
+    otraManoAlabeo: false,
+    otraManoCabeceo: false,
+  };
+
+  /**
+   * **Si quien vuela está moviendo un eje que lleva el automático**: la tecla
+   * apretada, el dedo moviendo la palanca o el mando de juego.
+   *
+   * El automático miraba solo los mandos —`loSolto`—, y con la mano de en
+   * medio la tecla ya no mueve el alerón a fondo: pide un ritmo, y en un
+   * reactor rápido el alerón que lo da puede no pasar de una décima. Sin esto
+   * la flecha no soltaba el automático y la mano se quedaba pidiendo contra
+   * él. Ver `flight/mano.ts`.
+   */
+  private tocanLoQueLleva(): boolean {
+    const m = this.input.mueve;
+    return (
+      (this.objetivos.rumbo !== null && m.alabeo) ||
+      (this.objetivos.altitud !== null && m.cabeceo)
+    );
+  }
+
+  /**
    * Un fotograma del piloto automático.
    *
    * Va **después** de quien pilota y antes del modelo de vuelo, en el mismo
@@ -16650,7 +16748,7 @@ export class Game {
      * **Y se suelta en cuanto lo tocan.** No hay nada más desconcertante que
      * un avión que se resiste, y en uno de verdad pasa exactamente lo mismo.
      */
-    if (s.onGround || loSolto(this.objetivos, c)) {
+    if (s.onGround || loSolto(this.objetivos, c) || this.tocanLoQueLleva()) {
       this.ponerPilotoAutomatico(false);
       return c;
     }
@@ -17057,7 +17155,8 @@ export class Game {
     const nivel = this.tier.nivelada ? this.nivelQueSeSostiene() : null;
     const tocan =
       this.input.mueve.cabeceo ||
-      Math.abs(c.elevator) > TOQUE ||
+      // La profundidad de la mano no es un toque: es la mano sosteniendo.
+      (!this.input.sostiene.cabeceo && Math.abs(c.elevator) > TOQUE) ||
       (this.nivelada !== null && Math.abs(c.trim - this.trimDeLaNivelada) > 1e-6);
     if (
       nivel === null ||

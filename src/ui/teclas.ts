@@ -405,6 +405,7 @@ export class KeyScreen {
       cuerpo: `
         ${teclado}
         ${this.compensador ? this.toqueDeFlecha() : ""}
+        ${this.conMando()}
         ${tabla}
       `,
     });
@@ -440,6 +441,35 @@ export class KeyScreen {
             ? ""
             : `<p class="teclas__pista">${t("teclas.toque")}</p>`
         }
+      </div>
+    `;
+  }
+
+  /**
+   * **Y que se puede jugar con mando o con joystick**, que no lo decía nadie.
+   *
+   * El mando de consola funcionaba desde hace tiempo y el joystick de vuelo
+   * se lee con su reparto —ver `flight/mandos-fisicos.ts`—, pero un mando que
+   * no se anuncia no existe. Dibujado, para quien no lee: un mando y un
+   * joystick, que es lo que hay que enchufar. La frase, para quien lee.
+   */
+  private conMando(): string {
+    return `
+      <div class="teclas__toque teclas__mando">
+        <svg class="teclas__toque-dibujo" viewBox="0 0 120 44" aria-hidden="true">
+          <path class="teclas__toque-tecla"
+                d="M10 14 Q10 9 17 9 H43 Q50 9 50 14 L54 31 Q55 37 49 37 Q45 37 42 31 H18
+                   Q15 37 11 37 Q5 37 6 31 Z" />
+          <circle cx="21" cy="18" r="4" class="teclas__toque-flecha" />
+          <circle cx="37" cy="25" r="4" class="teclas__toque-flecha" />
+          <circle cx="42" cy="15" r="1.8" class="teclas__toque-golpe" />
+          <rect x="82" y="34" width="34" height="7" rx="3" class="teclas__toque-tecla" />
+          <path d="M99 34 V16" class="teclas__toque-via" />
+          <rect x="93" y="5" width="12" height="13" rx="4" class="teclas__toque-tecla" />
+          <circle cx="99" cy="9" r="1.8" class="teclas__toque-golpe" />
+        </svg>
+        <span class="teclas__toque-rotulo"></span>
+        ${this.simple ? "" : `<p class="teclas__pista">${t("teclas.mando")}</p>`}
       </div>
     `;
   }

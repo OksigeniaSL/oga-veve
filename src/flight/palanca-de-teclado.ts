@@ -36,6 +36,16 @@
  * El mando de juego lo tiene en la cruceta, que es donde un simulador lleva
  * el interruptor del cuerno: arriba y abajo, a golpecitos o mantenida.
  *
+ * ## Y en el aire, la mano
+ *
+ * Desde la tanda de los mandos, **en el aire la flecha ya no es la palanca a
+ * fondo**: le pide a una mano un ritmo de alabeo o de cabeceo, con rampa al
+ * apretar y al soltar, y lo conseguido se queda —el morro y la inclinación
+ * donde se dejan—. El toque corto sigue siendo un tramo pequeño que se queda,
+ * medio grado de trayectoria, y la mano lo sostiene con el compensador. Ver
+ * `flight/mano.ts`. Lo de aquí abajo sigue mandando **en tierra**: rotar y
+ * rodar son gestos de palanca, y ahí el toque mueve el compensador.
+ *
  * ## La duda del principio
  *
  * Al apretar no se sabe todavía si va a ser un toque o palanca, y el timón no

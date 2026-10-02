@@ -113,6 +113,14 @@ export interface Tier {
    * y solo actúa a la altura que se ve en la cinta.
    */
   nivelada: boolean;
+  /**
+   * **Si la inclinación va protegida en cualquier avión**: la mano que lleva
+   * el teclado o el dedo no pasa de 33° y, si el aire la pasa, vuelve sola
+   * despacio. En los reactores va protegida en todos los peldaños, porque la
+   * protección es suya —la de Airbus y Embraer—; aquí se pone en los dos de
+   * los pequeños para todos. Ver `flight/mano.ts`.
+   */
+  inclinacionProtegida: boolean;
 }
 
 export const GUYRAMI: Tier = {
@@ -145,6 +153,7 @@ export const GUYRAMI: Tier = {
   circuito: true,
   avisos: "dibujo",
   nivelada: true,
+  inclinacionProtegida: true,
 };
 
 export const TUKA: Tier = {
@@ -168,6 +177,7 @@ export const TUKA: Tier = {
   circuito: true,
   avisos: "palabra",
   nivelada: true,
+  inclinacionProtegida: true,
 };
 
 export const TAGUATO: Tier = {
@@ -198,6 +208,7 @@ export const TAGUATO: Tier = {
   circuito: false,
   avisos: "cifra",
   nivelada: false,
+  inclinacionProtegida: false,
 };
 
 export const TAGUATO_RUVICHA: Tier = {
@@ -212,6 +223,7 @@ export const TAGUATO_RUVICHA: Tier = {
   circuito: false,
   avisos: "cabina",
   nivelada: false,
+  inclinacionProtegida: false,
 };
 
 export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];
