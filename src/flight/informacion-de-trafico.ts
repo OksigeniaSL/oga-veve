@@ -86,6 +86,13 @@ export interface QuienEscucha {
 export class InformacionDeTrafico {
   private readonly contados = new Set<string>();
   private desdeLaUltima = Infinity;
+  /**
+   * **Por qué no se informó en el último paso**, para el banco: un cercano
+   * del que nadie dice nada se puede deber a cinco cosas distintas, y sin
+   * esto solo se podía adivinar cuál. `null` es que se informó o que no había
+   * nadie cerca.
+   */
+  porQueCalla: string | null = null;
 
   /** Los que ya se contaron en esta pasada. */
   get yaContados(): ReadonlySet<string> {
@@ -132,9 +139,16 @@ export class InformacionDeTrafico {
       )
         this.contados.delete(id);
     }
-    if (yo.enElSuelo || yo.callado || yo.sobreElSuelo < DESDE_ALTURA)
-      return null;
-    if (this.desdeLaUltima < ENTRE_DOS) return null;
+    this.porQueCalla = yo.enElSuelo
+      ? "en el suelo"
+      : yo.callado
+        ? "callado"
+        : yo.sobreElSuelo < DESDE_ALTURA
+          ? "bajo"
+          : this.desdeLaUltima < ENTRE_DOS
+            ? "entre dos"
+            : null;
+    if (this.porQueCalla) return null;
 
     let mejor: { i: Intruso; r: number } | null = null;
     for (const i of intrusos) {
@@ -143,7 +157,10 @@ export class InformacionDeTrafico {
       if (r > CERCA_MILLAS || Math.abs(i.y - yo.y) / PIE > CERCA_PIES) continue;
       if (!mejor || r < mejor.r) mejor = { i, r };
     }
-    if (!mejor) return null;
+    if (!mejor) {
+      this.porQueCalla = this.contados.size ? "ya contado" : "nadie cerca";
+      return null;
+    }
     const { i } = mejor;
     this.contados.add(i.id);
     this.desdeLaUltima = 0;

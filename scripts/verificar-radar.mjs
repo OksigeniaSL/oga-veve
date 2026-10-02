@@ -75,6 +75,17 @@ function casanUnoAUno(piezas, reales) {
 /** Cada uno de los ocho a una distancia distinta, millas. Ver `casanUnoAUno`. */
 const millasDe = (i) => 2 + i * 0.5;
 
+/** Una foto de la pantalla de navegación del cuadro plano, sola y de cerca. */
+async function fotoDeLaCarta(page, ruta) {
+  const caja = await page.evaluate(() => {
+    const el = document.querySelector('[data-fondo="nd"]');
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+  if (caja && caja.width > 0) await page.screenshot({ path: ruta, clip: caja });
+}
+
 /** Si las marcaciones vistas son las ocho, cada una a menos de tres grados. */
 function lasOcho(vistas) {
   if (vistas.length !== 8) return `${vistas.length} de 8`;
@@ -85,12 +96,16 @@ function lasOcho(vistas) {
 
 try {
   for (const avion of AVIONES) {
-    const page = await navegador.newPage({ viewport: { width: 1280, height: 800 } });
+    // Con el doble de píxeles: la foto de la carta tiene que poder leerse.
+    const page = await navegador.newPage({
+      viewport: { width: 1280, height: 800 },
+      deviceScaleFactor: 2,
+    });
     const errores = [];
     page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
     await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
     await page.goto(
-      `${BASE}/?escenario=tenerife-norte&hora=16&leccion=vuelta&tramo=taguato&avion=${avion}&meteo=`,
+      `${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=taguato&avion=${avion}&meteo=`,
     );
     await page.waitForFunction(() => !!globalThis.__oga?.estado, null, { timeout: 120000 });
     await page.waitForTimeout(4000);
@@ -99,6 +114,26 @@ try {
       const ext = gl.getExtension("WEBGL_debug_renderer_info");
       return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "?";
     });
+    /*
+     * **En el puesto, el TCAS en espera, y la carta lo dice.** Las capturas
+     * 107 a 109 eran una carta vacía rodando, con aviones en el cielo: lo real
+     * es el equipo en espera, y lo que faltaba era que se leyera.
+     */
+    const enElPuesto = await page.evaluate(() => {
+      const o = globalThis.__oga;
+      const el = document.querySelector('[data-carta="solo-ta"]');
+      return {
+        fase: o.fase(),
+        modo: o.tcas().modo,
+        escrito: el?.getAttribute("visibility") === "visible" ? el.textContent : null,
+      };
+    });
+    comprobar(
+      `${avion}: en el puesto, «TCAS STBY» en la carta`,
+      enElPuesto.modo === "TCAS STBY" && enElPuesto.escrito === "TCAS STBY",
+      `fase ${enElPuesto.fase} · modo ${enElPuesto.modo} · escrito ${enElPuesto.escrito}`,
+    );
+    if (FOTOS) await fotoDeLaCarta(page, `${FOTOS}/${avion}-en-el-puesto-carta.png`);
     for (const rumbo of RUMBOS) {
       /*
        * Al aire, al noroeste del campo y lejos de su circuito, a 14 000 ft:
@@ -173,8 +208,10 @@ try {
         plano.piezas.length === 8 && casan,
         `${plano.piezas.length} piezas · ${vistas.map((v) => Math.round(v)).join(" ")} · modo ${plano.modo}`,
       );
-      if (FOTOS)
+      if (FOTOS) {
         await page.screenshot({ path: `${FOTOS}/${avion}-${rumbo}-cuadro.png` });
+        await fotoDeLaCarta(page, `${FOTOS}/${avion}-${rumbo}-carta.png`);
+      }
       /*
        * **Y en el lienzo de la cabina**, si el avión la lleva: desde dentro,
        * con su pantalla de navegación pintada.
@@ -221,6 +258,45 @@ try {
       );
     }
     await page.evaluate(() => globalThis.__oga.intrusosDePrueba(null));
+    /*
+     * **Y a veinticuatro mil pies no se oye el campo de salida** (la 132): ni
+     * su tráfico pidiendo rodar ni su torre hablándole a otro. Se vuela un
+     * rato largo —el reloj corrido— lejos y alto, y se cuenta lo que dijo la
+     * frecuencia del campo. Ver `flight/dependencia.ts`.
+     */
+    if (avion === AVIONES[0]) {
+      /*
+       * Con el pack de voz bajado, que baja tras el primer gesto: sin él la
+       * radio no pasa por la boca y lo que se cuenta aquí —lo que sonó— no
+       * vería nada aunque sonara. Ver el clic de `verificar-vuelo-entero.mjs`.
+       */
+      await page.mouse.click(640, 200);
+      await page
+        .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, { timeout: 60000 })
+        .catch(() => {});
+      const lejos = await page.evaluate(async (pie) => {
+        const o = globalThis.__oga;
+        const p = o.pista();
+        o.colocar(p.x - 40000, 24000 * pie, p.z - 20000, 120, (300 * Math.PI) / 180);
+        o.acelerar?.(8);
+        const antes = o.habladasTotal();
+        await new Promise((r) => setTimeout(r, 25000));
+        const total = o.habladasTotal();
+        const nuevas = o.habladas().slice(-(total - antes));
+        o.acelerar?.(1);
+        return {
+          dependencia: o.dependencia(),
+          habladas: total - antes,
+          deLosDemas: nuevas.filter((h) => /\s(?:otro|torre)\.[^@]*@fonetico\.(?:echo|zulu)/.test(h) && !/zulu-fonetico\.papa-fonetico\.alfa-fonetico\.romeo/.test(h)),
+          reloj: o.reloj(),
+        };
+      }, PIE);
+      comprobar(
+        `${avion} a 24 000 ft: la frecuencia del campo de salida no se oye`,
+        lejos.deLosDemas.length === 0 && /salida|control/.test(lejos.dependencia ?? ""),
+        `con ${lejos.dependencia} · ${lejos.habladas} frases en la boca · ${lejos.deLosDemas.length ? lejos.deLosDemas.join(" | ") : "ni una llamada de otro"}`,
+      );
+    }
     comprobar(`${avion}: sin errores en la consola`, errores.length === 0, errores.join(" | ") || "ninguno");
     console.log(`  ${avion} · ${gpu}`);
     await page.close();

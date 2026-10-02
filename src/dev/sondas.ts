@@ -1541,6 +1541,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * Ver `flight/informacion-de-trafico.ts`.
      */
     informacionDeTrafico: () => juego.informacionDeTraficoParaBanco,
+    /** Por qué no se informó del tráfico en el último paso. */
+    porQueCallaLaInformacion: () => juego.porQueCallaLaInformacionParaBanco,
     /**
      * Pone a uno del circuito donde dice una llamada —«otro.enCola»,
      * «otro.final»—, para mirar el TCAS sin esperar a que le toque hablar.

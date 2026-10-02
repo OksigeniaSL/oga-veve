@@ -2357,8 +2357,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * traffic» ni la información de la torre. Desde cuándo es cercano cada uno
    * —rombo lleno o círculo de aviso, volando por encima de quinientos pies—,
    * y a quién se le ha informado.
+   *
+   * **En segundos de reloj de pared, no de juego.** La información la dice
+   * una voz, y una voz dura lo que dura en el reloj de pared: con el juego
+   * corrido a doce, treinta segundos de juego son dos y medio de verdad, y en
+   * una final con la instructora hablando no hay hueco en dos y medio. Así
+   * lo contó la primera versión de esto —un cercano «sin una palabra» en
+   * Pettirossi que corrido a uno se habría informado—, y es la trampa de
+   * siempre de este banco: ver la memoria sobre la regla de medir.
    */
   const cercanoDesde = new Map();
+  const CERCANO_SIN_INFORMAR = 12;
   const informados = new Set();
   const cercanosSinInformar = new Set();
   /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
@@ -2964,11 +2973,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               cercanoDesde.delete(b.id);
               continue;
             }
-            if (!cercanoDesde.has(b.id)) cercanoDesde.set(b.id, t);
-            if (t - cercanoDesde.get(b.id) > 30 && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
+            const pared = performance.now() / 1000;
+            if (!cercanoDesde.has(b.id)) cercanoDesde.set(b.id, pared);
+            if (pared - cercanoDesde.get(b.id) > CERCANO_SIN_INFORMAR && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
               cercanosSinInformar.add(b.id);
               radar.cercanosSinInformar = (radar.cercanosSinInformar ?? 0) + 1;
-              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft`;
+              radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft · la información: ${o.porQueCallaLaInformacion?.() ?? "?"} · informados: ${[...informados].join(", ") || "nadie"}`;
             }
           }
         const nombrados = o.nombrados?.();
@@ -3055,7 +3065,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         }
       } else traficoAntes.clear();
       if (fase === "esperando" && !esperandoPorAlguien) {
-        const ocupan = o.ocupanLaPista?.() ?? [];
+        /*
+         * Y **los que se ven** encima de la pista, no solo los que la tienen
+         * según la frecuencia: el que corre su despegue ya la soltó para la
+         * radio y sigue en ella, y la torre te deja en la roja por él con
+         * «departing traffic». Mirando solo la frecuencia, el banco decía
+         * «no había nadie en la pista: no se midió» con la torre diciéndolo.
+         */
+        const ocupan = [
+          ...(o.ocupanLaPista?.() ?? []),
+          ...(o.trafico?.() ?? [])
+            .filter((a) => a.enLaPista)
+            .map((a) => ({ matricula: a.matricula, orden: "en la pista" })),
+        ];
         if (ocupan.length)
           esperandoPorAlguien = `${t.toFixed(0)} s: ${ocupan.map((x) => `${x.matricula} ${x.orden}`).join(", ")}`;
       }
@@ -5612,7 +5634,7 @@ if (vuelo.radar) {
     !r.cercanosSinInformar,
     r.cercanosSinInformar
       ? `${r.cercanosSinInformar} cercanos sin una palabra, el primero a los ${r.cercanosSinInformarDonde}`
-      : "ningún rombo lleno medio minuto sin que nadie lo cuente",
+      : "ningún rombo lleno doce segundos de reloj sin que nadie lo cuente",
     "en la final de La Palma, dos rombos llenos a cien y seiscientos pies y nadie dijo nada",
   );
   comprobar(

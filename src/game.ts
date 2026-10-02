@@ -1974,6 +1974,18 @@ export class Game {
     return [...this.informacionDeTrafico.yaContados];
   }
 
+  /**
+   * Por qué no se dio la información de tráfico en el último paso, y por qué
+   * calla la radio si es eso: quién tiene la boca. Para el banco.
+   */
+  get porQueCallaLaInformacionParaBanco(): string | null {
+    const motivo = this.informacionDeTrafico.porQueCalla;
+    if (motivo !== "callado") return motivo;
+    return this.terrenoAhora !== null
+      ? "callado: el terreno"
+      : `callado: la boca (${BOCA.ocupada ? "hablando" : "en silencio"}, ${BOCA.cuantasEsperan} en cola)`;
+  }
+
   /** Si ya se contó qué es un rombo. Una vez por partida, no por vuelo. */
   private traficoExplicado = false;
 
