@@ -18407,15 +18407,20 @@ export class Game {
      * avión desde arriba y el cielo quedaba por encima de la pantalla: «no
      * veo el cielo cuando estoy en la pista; está bien ver algo de horizonte,
      * porque parece que va uno encajonado». Se le dice a la cámara cuánto
-     * puede mirar hacia abajo como mucho: lo que deja el horizonte a un
-     * quinto de la franja libre, contando desde arriba. Y como eso baja el
-     * avión, hasta dónde puede bajar él en ese caso: al ochenta y dos por
-     * ciento de la franja, que lo deja entero encima del cuadro. Si las dos
-     * cosas no caben a la vez, gana el avión. Ver `sinPerderElAvion` en
+     * puede mirar hacia abajo como mucho: lo que deja el horizonte por debajo
+     * del borde de arriba de la franja libre, a un octavo de ella. Y como eso
+     * baja el avión, hasta dónde puede bajar él en ese caso: su centro, nueve
+     * grados por encima del borde de abajo. Son los que ocupan, mirando desde
+     * detrás y desde arriba, la cola y el estabilizador, que quedan más cerca
+     * de la cámara y salen más abajo: contado por porcentaje de la franja, en
+     * el portátil la cola se quedaba debajo del tirador. Si las dos cosas no
+     * caben a la vez, gana el avión. Ver `sinPerderElAvion` en
      * `cameras/fuera.ts`.
      */
-    ctx.bajadaMaxima = propio ? sinTope : Math.atan((franja * 0.3) / focal);
-    ctx.caidaTope = propio ? sinTope : Math.atan((franja * 0.32) / focal);
+    const mitadDeLaFranja = Math.atan(franja / 2 / focal);
+    const cola = (9 * Math.PI) / 180;
+    ctx.bajadaMaxima = propio ? sinTope : Math.atan((franja * 0.38) / focal);
+    ctx.caidaTope = propio ? sinTope : Math.max(0.02, mitadDeLaFranja - cola);
     if (
       !forzar &&
       Math.abs(corrimiento - this.corrimientoPuesto) < 1 &&
