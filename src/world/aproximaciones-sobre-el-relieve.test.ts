@@ -246,10 +246,15 @@ const DE_APROXIMACION = 72;
 /**
  * **La rama volada como se vuela**: a velocidad de reactor, por sus puntos de
  * pasada —el viraje empieza antes, con veinticinco grados de alabeo, como el
- * de un ordenador de vuelo— y bajando por la senda del plan.
+ * de un ordenador de vuelo— y bajando por la senda del plan, o a la altitud
+ * que se le diga.
  */
-function volar(r: Ruta): Instante[] {
-  const v = DE_APROXIMACION;
+function volar(
+  r: Ruta,
+  altitudDelPlan: (falta: number, activo: number) => number = (falta, activo) =>
+    alturaDeLaSenda(r, Math.min(r.fijos.length - 1, activo), Math.max(0, falta)),
+  v = DE_APROXIMACION,
+): Instante[] {
   const radio = (v * v) / (9.81 * Math.tan((25 * Math.PI) / 180));
   const f = r.fijos;
   const n = f.length;
@@ -271,8 +276,7 @@ function volar(r: Ruta): Instante[] {
   }
   const paso = v * 2;
   const vuelo: Instante[] = [];
-  const altitudEn = (falta: number, activo: number) =>
-    alturaDeLaSenda(r, Math.min(n - 1, activo), Math.max(0, falta));
+  const altitudEn = altitudDelPlan;
   const poner = (x: number, z: number, h: number, falta: number, activo: number, g: number) => {
     const alt = altitudEn(falta, activo);
     const luego = altitudEn(falta - paso, activo);
@@ -333,6 +337,62 @@ function primerAviso(
     const d = mirarDelante(p, cota, [pista]);
     if (d.aviso)
       return `${d.aviso} a ${(p.falta / MILLA).toFixed(1)} NM del umbral, ${Math.round(p.altitud)} m, ${d.segundos} s por delante`;
+  }
+  return null;
+}
+
+/**
+ * **La frustrada y la vuelta por el circuito, voladas**, en cada avión que
+ * lleva el avisador de terreno: desde la altura de decisión sobre el umbral,
+ * recto hasta el final de la subida, por sus esquinas a la altura del
+ * circuito y bajando por la base a la final. El primer aviso que salte, o
+ * `null`. Es lo que vuela quien se va al aire en La Gomera.
+ */
+function avisoEnElCircuito(
+  e: Scenario,
+  c: Cabecera,
+  cota: (x: number, z: number) => number | null,
+): string | null {
+  const h = (c.rumbo * Math.PI) / 180;
+  const pista = {
+    x: c.x + (Math.sin(h) * c.largo) / 2,
+    z: c.z - (Math.cos(h) * c.largo) / 2,
+    heading: c.rumbo,
+    length: c.largo,
+  };
+  const suelo = (x: number, z: number) => cota(x, z) ?? 0;
+  for (const avion of AIRCRAFT.filter((a) => a.avisosHablados)) {
+    const escala = escalaDeCircuito(avion.approachSpeed);
+    const forma = formaDelCircuito(
+      pista,
+      c.cota,
+      suelo,
+      escala,
+      manoPublicada(e, c.nombre, escala),
+      avion.velocidadDeCircuito,
+    );
+    const v = verticesDelCircuito(pista, c.cota, forma.mano, escala, forma.altura);
+    const puntos = [{ ...v[0]!, y: c.cota + 60 }, ...v.slice(1), { x: c.x, y: c.cota, z: c.z }];
+    const fijos = puntos.map(
+      (p, i): Fijo => ({ x: p.x, z: p.z, nombre: `C${i}`, papel: "ruta", minima: null }),
+    );
+    const r = rutaDe(fijos, c.cota);
+    // La altitud, la del dibujo del circuito: recta entre sus vértices.
+    const altitud = (falta: number) => {
+      const hecho = r.total - falta;
+      for (let i = 1; i < puntos.length; i++) {
+        if (r.acumulado[i]! < hecho) continue;
+        const l = r.acumulado[i]! - r.acumulado[i - 1]! || 1;
+        const t = Math.max(0, Math.min(1, (hecho - r.acumulado[i - 1]!) / l));
+        return puntos[i - 1]!.y + (puntos[i]!.y - puntos[i - 1]!.y) * t;
+      }
+      return c.cota;
+    };
+    for (const p of volar(r, altitud, avion.velocidadDeCircuito)) {
+      const d = mirarDelante(p, cota, [pistaConocida(e, c)]);
+      if (d.aviso)
+        return `${avion.id} ${d.aviso}, ${Math.round(p.falta)} m antes del umbral, ${Math.round(p.altitud)} m, ${d.segundos} s`;
+    }
   }
   return null;
 }
@@ -425,7 +485,8 @@ const FRUSTRADA_JUNTO_AL_MONTE: Readonly<Record<string, string>> = {
  * de verdad está a 3,7° (AD 2-GCRR, 14) por eso mismo, y el juego lleva una
  * sola senda para todas las pistas. Lo que dice el avisador es verdad: por
  * tres grados ahí se va bajo. Hasta que cada pista lleve su senda, se le pide
- * que sea solo la precaución, sin el «pull up», y en la última parte.
+ * que sea solo la precaución, sin el «pull up», y en la última parte: la
+ * misma final llegando por la aproximación y llegando por el circuito.
  */
 const AVISA_EN_LA_FINAL: Readonly<Record<string, string>> = {
   "GCRR 21":
@@ -480,6 +541,17 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
           return;
         }
         expect(peor.margen, `${dicho}: ${peor.donde}`).toBeGreaterThanOrEqual(DE_FRUSTRADA);
+      });
+
+      it(`${dicho}: volando la frustrada y el circuito, el aviso de terreno no salta`, () => {
+        const aviso = avisoEnElCircuito(e, c, cota);
+        if (dicho in AVISA_EN_LA_FINAL) {
+          // La misma final que la de la aproximación: la precaución, en ella.
+          const antes = Number(/precaucion, (\d+) m antes del umbral/.exec(aviso ?? "")?.[1]);
+          expect(antes, `${dicho}: ${aviso}`).toBeLessThan(2.5 * MILLA);
+          return;
+        }
+        expect(aviso, dicho).toBeNull();
       });
     }
   }
