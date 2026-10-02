@@ -311,7 +311,24 @@ async function unTelefono(quien) {
       `de ralentí a despegue en ${tarda.toFixed(1)} s mantenido · un toque de «−» baja ${unToque.toFixed(2)}` +
         ` · botones de ${Math.round(mas.w)}×${Math.round(mas.h)} px`,
     );
-  } else comprobar(et("botones: están a la vista"), false, "no se encontraron");
+  } else {
+    /*
+     * **En el teléfono apaisado ya no están, y a propósito**: «los dos
+     * botones de hélice con flecha repiten lo que ya hace la palanca de
+     * gases». Ahí lo que se pide es que no estén; en cualquier otro aparato
+     * con dedo, que estén.
+     */
+    const telefono = await page.evaluate(() =>
+      matchMedia(
+        "(pointer: coarse) and (orientation: landscape) and (max-height: 500px)",
+      ).matches,
+    );
+    comprobar(
+      et(telefono ? "botones: en el teléfono no están, lo hace la palanca" : "botones: están a la vista"),
+      telefono,
+      telefono ? "fuera, como se pidió" : "no se encontraron",
+    );
+  }
   await ponerGas(0, -8);
 
   // ── B. Arrancar, rodar y parar en el punto de espera ───────────────────
