@@ -303,6 +303,14 @@ const ENCIMA_DE_LA_PISTA = new Set<string>([
   "abandonando",
 ]);
 
+/**
+ * **A partir de cuánto volante gira quien juega**, de 0 a 1: el mismo listón
+ * que la zona muerta del mando de juego. Por debajo es un dedo apoyado en la
+ * palanca; por encima, manda él y la ayuda de rodaje calla. Ver
+ * `asistirRodaje`.
+ */
+const GIRA_QUIEN_JUEGA = 0.12;
+
 /** Por debajo de esto, m, el tráfico va «a tu misma altura». Trescientos pies. */
 const A_LA_MISMA_ALTURA = 91;
 
@@ -13152,6 +13160,21 @@ export class Game {
      * escalera para no añadir otro mando que se pueda desafinar por su cuenta.
      */
     const anticipa = anticipacionDeRodaje(fuerza);
+    /*
+     * **Y el volante de quien juega manda siempre.** Aquí se repartía: la
+     * ayuda pesaba menos cuanto más se giraba, pero seguía sumando, y con el
+     * dedo a media palanca tiraba hacia la raya lo bastante para anular el
+     * giro. Llegando a Fuerteventura con el JAZ 90, la raya se rehízo por la
+     * salida siguiente y el avión «se quedó pegado a la raya verde» sin poder
+     * salir por la que tenía delante. Es la regla de `mandaQuienSeMueve`: si
+     * alguien gira, gira él, en todos los aviones y en todos los peldaños; y
+     * si sale por otra salida, la raya se rehace desde allí. La ayuda vuelve
+     * en cuanto suelta. Un dedo apoyado en la palanca sin girar no es girar:
+     * por eso el listón y no el cero.
+     */
+    const pide = this.input.pide;
+    if (Math.abs(pide.alabeo) >= GIRA_QUIEN_JUEGA || Math.abs(pide.timon) >= GIRA_QUIEN_JUEGA)
+      return;
     const sugerido = this.plan.asistencia(s, suelo, anticipa);
     if (sugerido === 0) return;
 

@@ -17,7 +17,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { Aerodrome, Punto } from "./aerodrome";
+import { ANCHO_RODADURA, type Aerodrome, type Punto } from "./aerodrome";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { AIRCRAFT } from "../flight/aircraft";
 import { cabeEn, campoDe, radioDeGiro } from "../flight/cabe";
@@ -87,10 +87,16 @@ describe("aterrizar pasada la única salida: de vuelta por la pista", () => {
             if (v > 12) continue;
             /*
              * Solo cuando la última boca ya quedó atrás, y dada por pasada:
-             * treinta metros, como en `seHaPasadoLaSalida`. Antes de eso la
-             * raya todavía la toma, y es lo que toca.
+             * cuando la pasada es evidente, como en `seHaPasadoLaSalida` —a
+             * doce metros por segundo, el radio de giro a esa velocidad y media
+             * calle con su chaflán—. Antes de eso la raya todavía la toma, y es
+             * lo que toca: quien gira tarde todavía entra.
              */
-            if (bocas.some((b) => b > a - 35)) continue;
+            const evidente =
+              Math.max(radioDeGiro(avion), (12 * 12) / DE_LADO_RODANDO) +
+              ANCHO_RODADURA / 2 +
+              15;
+            if (bocas.some((b) => b > a - evidente - 5)) continue;
             const ruta = plan.rutaVisible();
             if (ruta.length < 2) continue;
             miradas++;
@@ -98,11 +104,9 @@ describe("aterrizar pasada la única salida: de vuelta por la pista", () => {
 
             /*
              * Primero hacia delante: la raya se ve. **Veinte metros y no
-             * cuarenta**: a doce metros por segundo la salida se da por perdida
-             * antes de llegar a ella —ya no da para girar allí, ver
-             * `seHaPasadoLaSalida`—, y la media vuelta se pone desde ahí, con
-             * lo que se tarda en frenar. Treinta y cinco metros pasada la boca,
-             * este avión, que no frena, la tiene a treinta y pocos.
+             * cuarenta**: la media vuelta se pone desde donde la salida se da
+             * por pasada, con lo que se tarda en frenar, y este avión, que no
+             * frena, la tiene a treinta y pocos.
              */
             const masAdelante = Math.max(...ruta.map((q) => ejes(q).along));
             expect(masAdelante - a, `${donde}: la raya no va por delante`).toBeGreaterThan(20);

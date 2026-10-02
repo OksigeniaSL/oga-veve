@@ -162,6 +162,13 @@ export class InputManager {
    */
   readonly mueve = { cabeceo: false, alabeo: false, timon: false };
 
+  /**
+   * **Y cuánto**, de −1 a 1: la petición de este fotograma en cada eje, antes
+   * de que el mando vaya hacia ella. Lo mira la ayuda de rodaje para saber si
+   * quien juega está girando el volante: ver `asistirRodaje` en `game.ts`.
+   */
+  readonly pide = { alabeo: 0, timon: 0 };
+
   private readonly keys = new Set<string>();
   private readonly actions: InputActions;
   /** Ejes del stick táctil, -1 a 1. */
@@ -627,6 +634,8 @@ export class InputManager {
     this.mueve.cabeceo = pitchTarget !== 0;
     this.mueve.alabeo = rollTarget !== 0;
     this.mueve.timon = rudderTarget !== 0;
+    this.pide.alabeo = clamp(rollTarget, -1, 1);
+    this.pide.timon = clamp(rudderTarget, -1, 1);
 
     this.controls.elevator = approach(
       this.controls.elevator,

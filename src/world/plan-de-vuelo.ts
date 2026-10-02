@@ -289,12 +289,24 @@ const HUECO_PARA_GIRAR = 25;
 const FRENADA_PARA_SALIR = 1.5;
 
 /**
- * Y lo que se frena para no pasarse una salida ya elegida, m/s²: a fondo, lo
- * que da el freno del modelo de vuelo —0,28 g—. Con esto se decide si la
- * elegida todavía se puede tomar, que es otra pregunta que si es cómoda. Ver
- * `daParaTomarla`.
+ * **Cuánto más allá de la boca hay que estar para habérsela pasado**, m,
+ * además del radio de giro: media calle de rodaje y el chaflán de su boca.
+ * Hasta ahí, girando, todavía se entra. Ver `seHaPasadoLaSalida`.
+ *
+ * Aquí estaba la frenada a fondo con la que se decidía si la salida que se
+ * tenía delante «ya no daba» para girar, y con ella el «te pasaste» antes de
+ * llegar a la boca —o al filo, mientras se giraba— en Pettirossi, Gran Canaria
+ * y Tenerife Sur. Se dice cuando la pasada es evidente, no cuando una cuenta
+ * la prevé.
  */
-const FRENADA_PARA_NO_PASARSE = 2.75;
+const PASADA_EVIDENTE = ANCHO_RODADURA / 2 + 15;
+
+/**
+ * Lo que tiene que apuntar el morro hacia el lado de la salida para ser un
+ * giro hacia ella y no ir pista abajo, rad: cinco grados. Ver
+ * `seHaPasadoLaSalida`.
+ */
+const RUMBO_DE_ENTRADA = (5 * Math.PI) / 180;
 
 /**
  * A qué distancia de la raya va, como mucho, quien la sigue por una salida,
@@ -3651,10 +3663,21 @@ export class PlanDeVuelo {
    * en ángulo de treinta grados o menos, así que quien la toma sigue un buen
    * trecho dentro del asfalto y mirando casi a lo largo de la pista, más allá
    * de la boca: para esta cuenta —treinta metros pasada la boca—, eso era
-   * pasársela. Se la pasa quien sigue
-   * pista abajo y se aparta de la raya, no quien va por ella; y quien ya no
-   * puede frenar para girar allí, aunque la tenga delante. Ver
-   * `salir-a-la-primera.test.ts`.
+   * pasársela. Se la pasa quien sigue pista abajo y se aparta de la raya, no
+   * quien va por ella. Ver `salir-a-la-primera.test.ts`.
+   *
+   * **Y volvió, y era otra vez la cuenta.** Con el JAZ 120 en Pettirossi y en
+   * Gran Canaria, «te pasaste» y la raya rehecha antes de llegar a la salida
+   * o al filo de su boca, mientras se giraba hacia ella; con el JAZ 90 en
+   * Fuerteventura, pegado a la raya nueva sin poder salir por la que tenía
+   * delante. Quedaba «y quien ya no puede frenar para girar allí, aunque la
+   * tenga delante», que es una previsión: sale de girar donde lo calcula la
+   * raya, y una persona gira tarde y abierta. La prueba de antes no lo veía
+   * porque su piloto es perfecto; ver `salida-con-giro-humano.test.ts`. Ahora
+   * solo se dice cuando la pasada es evidente: claramente más allá de la
+   * boca, sin el morro hacia ella y sin poder girar allí. Y lo de pegado era
+   * la ayuda de rodaje sumando contra el volante: ver `asistirRodaje` en
+   * `game.ts`.
    */
   private seHaPasadoLaSalida(): boolean {
     const salida = this.salidaDeLaRuta;
@@ -3664,36 +3687,66 @@ export class PlanDeVuelo {
     // Fuera del asfalto ya no se la está pasando: la está tomando, o es otra.
     if (Math.abs(aqui.across) > width / 2) return false;
     // Y rodando a lo largo de la pista, no girando hacia la calle.
-    const alEje = Math.cos(this.ultimoRumbo - (heading * Math.PI) / 180);
+    const relativo = this.ultimoRumbo - (heading * Math.PI) / 180;
+    const alEje = Math.cos(relativo);
     if (Math.abs(alEje) < Math.cos(Math.PI / 6)) return false;
     const sentido = alEje >= 0 ? 1 : -1;
     const boca = enEjesDePista(salida[0], -salida[1], x, z, heading);
-    const adelante = (boca.along - aqui.along) * sentido;
-    if (adelante < 0) {
-      // Pasada la boca: solo si no va por la raya, que es por la salida.
-      return !this.vaPorLaRaya();
-    }
-    // Delante: solo si ya no da para frenar hasta girar en ella.
-    return !this.daParaTomarla(salida, adelante);
+    /*
+     * **Solo pasada, y pasada de verdad: lo que ya no se puede girar.**
+     *
+     * Delante de la boca no se dice nunca, ni aunque se llegue deprisa:
+     * aquí estaba «ya no da para frenar hasta girar en ella», y una persona
+     * no gira donde lo calcula la raya —empieza tarde y abre la curva—, así
+     * que la cuenta la daba por perdida justo mientras giraba hacia ella. Y
+     * pasada la boca, unos metros no son pasársela: el morro de un JAZ 120
+     * cruza la boca bastante antes de que el avión acabe de girar. Pasársela
+     * es estar más allá de donde todavía se puede girar hacia ella: de la
+     * boca, el radio de giro a la velocidad que se lleva —el de la rueda de
+     * morro, o el que deja `DE_LADO_RODANDO`—, y media calle con su chaflán.
+     * Ver `PASADA_EVIDENTE`.
+     */
+    const pasado = (aqui.along - boca.along) * sentido;
+    const v = this.ultimaVelocidad;
+    const radio = Math.max(radioDeGiro(this.avion), (v * v) / DE_LADO_RODANDO);
+    if (pasado < radio + PASADA_EVIDENTE) return false;
+    // Ni yendo por la raya, que es por la salida.
+    if (this.vaPorLaRaya()) return false;
+    /*
+     * **Y sin rumbo de entrada.** Con el morro torcido hacia el lado de la
+     * salida, quien juega está girando hacia ella —o hacia otra que tiene
+     * delante, que también vale—, y eso no es pasársela.
+     */
+    const lado = this.dondeDejaLaPista(boca.along)?.lado ?? 0;
+    if (lado !== 0 && Math.sin(relativo) * lado > Math.sin(RUMBO_DE_ENTRADA)) return false;
+    return true;
   }
 
   /**
-   * **Si todavía se puede girar en ella**: si con `adelante` metros hasta la
-   * boca se frena, a fondo, hasta la velocidad más alta a la que el avión
-   * dobla esa curva —no la cómoda que pide la raya: ésa va con dos metros y
-   * medio por segundo al cuadrado de lateral, y el avión aguanta seis, ver
-   * `DE_LADO_RODANDO`—. Es la cuenta de lo imposible, no de lo cómodo: quien
-   * llega a la salida a trece metros por segundo gira en ella, y darla por
-   * perdida ahí era el «te pasaste» de nuevo, con la misma vuelta de salida en
-   * salida hasta el final de la pista. Visto en el banco en Los Rodeos por la
-   * 30. Una salida elegida no se cambia mientras se pueda tomar.
+   * **Por dónde deja la pista la raya al salir por su salida**: a lo largo del
+   * eje, m, y hacia qué lado —1 a la derecha del rumbo de la pista, −1 a la
+   * izquierda—, o `null` si no la deja. Es el primer punto de la raya, desde
+   * su boca, que ya está fuera del asfalto de la pista. Lo que se usa es el
+   * lado: ver «sin rumbo de entrada» en `seHaPasadoLaSalida`.
    */
-  private daParaTomarla(boca: Punto, adelante: number): boolean {
-    if (adelante <= 0) return true;
-    const v = this.ultimaVelocidad;
-    const comoda = Math.max(A_LA_SALIDA, this.velocidadDeLaRutaEn(boca));
-    const aTope = comoda * Math.sqrt(DE_LADO_RODANDO / LATERAL);
-    return v * v <= aTope * aTope + 2 * FRENADA_PARA_NO_PASARSE * adelante;
+  private dondeDejaLaPista(alongDeLaBoca: number): { along: number; lado: number } | null {
+    const { x, z, heading, width } = this.pista;
+    let cerca = Infinity;
+    let desde = 0;
+    this.rutaMundo.forEach(([px, pz], i) => {
+      const e = enEjesDePista(px, pz, x, z, heading);
+      const d = Math.hypot(e.along - alongDeLaBoca, e.across);
+      if (d < cerca) {
+        cerca = d;
+        desde = i;
+      }
+    });
+    for (let i = desde; i < this.rutaMundo.length; i++) {
+      const [px, pz] = this.rutaMundo[i]!;
+      const e = enEjesDePista(px, pz, x, z, heading);
+      if (Math.abs(e.across) > width / 2) return { along: e.along, lado: Math.sign(e.across) };
+    }
+    return null;
   }
 
   /**
@@ -3730,22 +3783,6 @@ export class PlanDeVuelo {
     while (desvio > Math.PI) desvio -= 2 * Math.PI;
     while (desvio < -Math.PI) desvio += 2 * Math.PI;
     return cerca < TOMANDO_LA_SALIDA && Math.abs(desvio) < MIRANDO_A_LA_RAYA;
-  }
-
-  /** La velocidad que pide la raya en su punto más cercano a `q`, m/s. */
-  private velocidadDeLaRutaEn(q: Punto): number {
-    const ruta = this.rutaMundo;
-    if (ruta.length < 2 || this.velocidades.length !== ruta.length) return A_LA_SALIDA;
-    let mejor = 0;
-    let d = Infinity;
-    for (let i = 0; i < ruta.length; i++) {
-      const e = Math.hypot(ruta[i]![0] - q[0], ruta[i]![1] + q[1]);
-      if (e < d) {
-        d = e;
-        mejor = i;
-      }
-    }
-    return this.velocidades[mejor]!;
   }
 
   /**
