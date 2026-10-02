@@ -886,6 +886,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const queda = Math.max(0, Math.min(1, ruedas / recogida.altura));
     const pide = -(RITMO_AL_TOCAR + (recogida.caida - RITMO_AL_TOCAR) * queda);
     /*
+     * **Y lo que baja, contra la pista y no contra el mar.** La de Los Rodeos
+     * cae medio metro largo en los cien de la recogida: volando nivelado, las
+     * ruedas se alejan de ella. La recogida, que miraba el variómetro, se
+     * daba por hecha a tres metros, se quedaba ahí flotando mientras la pista
+     * bajaba y la velocidad se iba, y el JAZ 90 de Gran Canaria se posó a
+     * 612 m y 2,7 m/s. Un piloto mira cómo se le acerca el suelo, que es lo
+     * que mide esto: el variómetro menos lo que baja la pista por delante.
+     */
+    const cota = o.cotaDePistaDeAhora ?? o.cotaDePista;
+    const bajaLaPista = cota
+      ? (cota(s.position.x + s.velocity.x * 0.5, s.position.z + s.velocity.z * 0.5) -
+          cota(s.position.x, s.position.z)) /
+        0.5
+      : 0;
+    const pistaBaja = Number.isFinite(bajaLaPista) ? bajaLaPista : 0;
+    const contraLaPista = s.verticalSpeed - pistaBaja;
+    /*
      * Y en el último metro y medio no se empuja: si baja menos de lo pedido,
      * se deja que se pose. Empujando ahí, el JAZ 60 pasó de bajar a 0,6 a
      * tocar a 2,3 — lo que se ganó recogiendo se perdió en el último palmo.
@@ -893,8 +910,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     const falta =
       ruedas < 1.5
-        ? Math.max(0, pide - s.verticalSpeed)
-        : pide - s.verticalSpeed;
+        ? Math.max(0, pide - contraLaPista)
+        : pide - contraLaPista;
     /*
      * **Y lo que acumula, solo hacia arriba.** Con el gas fuera la velocidad
      * cae, y a menos velocidad hace falta más ángulo para la misma
@@ -962,7 +979,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * subida— que esa aceleración pide.
      */
     const pendiente = (recogida.caida - RITMO_AL_TOCAR) / recogida.altura;
-    const acelera = pendiente * Math.max(0, -s.verticalSpeed);
+    const acelera = pendiente * Math.max(0, -contraLaPista);
     const porDelante = recogida.porAngulo
       ? recogida.porAngulo * 0.02 * acelera
       : 0.1 * acelera;
@@ -978,6 +995,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           kq * (s.pitchRate ?? 0),
       ),
     );
+    /*
+     * **En Guyrami, la palanca que da ese ritmo, preguntada al modelo.** Allí
+     * la palanca no mueve un ala: es cuánto se sube, a través de medio
+     * segundo de retraso y a medias con el gas. El juego sabe qué palanca da
+     * cada ritmo —se lo pregunta su automático, ver `mandoParaSubir`—, y la
+     * recogida le pide el del perfil, adelantado ese medio segundo y con lo
+     * que falte encima. A tientas, con el lazo de antes, el JAZ 90 de Guaraní
+     * se quedó bajando a tres metros por segundo hasta los siete de altura y
+     * tocó a 2,2; preguntándolo, en el banco de mesa los cuatro mayores
+     * tocan a 1,2 y la avioneta y el fumigador, como antes, a 1,5–1,7.
+     */
+    if (recogida.porAngulo === 0 && o.mandoParaSubir) {
+      const quiere =
+        pide + pistaBaja + acelera / 2.2 + 0.5 * falta;
+      const m = o.mandoParaSubir(quiere);
+      if (typeof m === "number" && Number.isFinite(m)) {
+        mandos.elevator = Math.max(-0.8, Math.min(0.8, m));
+        recogida.ultimoMando = mandos.elevator;
+        return;
+      }
+    }
     /*
      * **Y si baja menos de lo pedido, se sostiene la palanca: no se empuja.**
      * Era así solo en el último metro y medio. Más arriba, una racha que
@@ -4927,7 +4965,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         if (CON_EL_AUTOMATICO)
           senda = {
             altitud: s.position.y + (objetivo - alto(s)),
-            ritmo: objetivo > tren ? -porElSuelo(s) * SENDA : 0,
+            /*
+             * **Y al ritmo al que se acerca la senda, no al de la velocidad.**
+             * Por el eje es lo mismo; virando desde la base, no: el avión va
+             * de lado y la altura pedida apenas baja, pero el ritmo de
+             * entrada pedía bajar a la senda de toda la velocidad. Medido en
+             * Los Rodeos con el JAZ 90: del viraje salía 45 m por debajo de
+             * la senda, subía a buscarla y se tiraba a 7 m/s antes de la
+             * puerta. Por el eje, lo que se acerca al umbral; por la ruta de
+             * una llegada a la vista, lo que avanza por ella.
+             */
+            ritmo:
+              objetivo > tren
+                ? -(aLaVista?.length
+                    ? porElSuelo(s)
+                    : Math.max(0, s.velocity.x * fx + s.velocity.z * fz)) * SENDA
+                : 0,
             desde: o.reloj(),
           };
       }
