@@ -1491,6 +1491,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     traficoAnuncia: (matricula: string, clave: string, puedeAterrizar = false) =>
       juego.trafico?.anuncia(matricula, clave, puedeAterrizar),
+    /** Cómo va cada uno del tráfico por dentro. Ver `porDentro` en `trafico.ts`. */
+    traficoPorDentro: () => juego.trafico?.porDentro() ?? [],
     /** La fila de llegadas del tráfico. Ver `secuencia` en `trafico.ts`. */
     secuencia: () => juego.trafico?.secuencia() ?? [],
     /**

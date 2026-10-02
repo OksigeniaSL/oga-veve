@@ -2991,7 +2991,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         if (s.onGround && ENCIMA_DE_LA_PISTA.has(fase)) encima.push("tú");
         if (encima.length > 1) {
           dosEnLaPista++;
-          dosEnLaPistaDonde ??= `${t.toFixed(0)} s en «${fase}»: ${encima.join(", ")}`;
+          /*
+           * Con cómo va cada uno por dentro —camino, metros y dónde caen la
+           * doble raya, el despegue, la toma y la salida—: dos encima de la
+           * pista puede venir de varios sitios, y sin esto solo se adivinaba.
+           * Una vez al empezar y otra un rato después, para ver si se mueven.
+           */
+          if (dosEnLaPista === 1 || dosEnLaPista === 150) {
+            const dentro = (o.traficoPorDentro?.() ?? [])
+              .filter((d) => encima.includes(d.matricula))
+              .map(
+                (d) =>
+                  `${d.matricula} ${d.tipo} ${d.camino} ${d.recorrido} m (espera ${d.espera}, despega ${d.despega}, toca ${d.toca}, fuera ${d.fuera})` +
+                  `${d.conPermiso ? " con permiso" : ""} cedido ${d.cedido} s quieto ${d.quieto} s a ${d.alto} m`,
+              )
+              .join(" | ");
+            const aqui = `${t.toFixed(0)} s en «${fase}»: ${encima.join(", ")}${dentro ? ` [${dentro}]` : ""}`;
+            if (dosEnLaPista === 1) dosEnLaPistaDonde = aqui;
+            else dosEnLaPistaDonde += ` · y luego ${aqui}`;
+          }
         }
         const fila = (o.secuencia?.() ?? []).map((x) => ({ ...x, tuyo: false }));
         if (fase === "final" && !s.onGround && pistaAhora()) {

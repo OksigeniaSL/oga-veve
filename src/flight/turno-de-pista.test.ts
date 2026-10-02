@@ -441,6 +441,35 @@ describe("con una sola calle", () => {
     turno.paso("final");
     expect(pasos).toEqual([`torre.clearedTakeoff@${aOtros[0]!.de.matricula}`, "cleared to land"]);
   });
+
+  /*
+   * De Los Rodeos a La Gomera con el JAZ 60: «dos encima de la pista», los
+   * dos turbohélices de la calle. Uno corría su despegue con su permiso; al
+   * entrar tú en final, el que esperaba en la doble raya recibía también el
+   * suyo y entraba detrás, en la pista que el otro todavía pisaba. La salida
+   * se le da al de la calle con la pista libre, no con otro encima: la pista
+   * es de uno por vez.
+   */
+  it("pero no con otro todavía encima de la pista: la pista es de uno por vez", () => {
+    const radio = conUnoEnLaCalle();
+    const anunciadas: string[] = [];
+    const { turno, aOtros } = montar(radio, {
+      calleUnica: () => true,
+      trafico: () => ({
+        anuncia: (m, clave) => anunciadas.push(`${clave}@${m}`),
+        paso: () => [],
+        todaviaNo: () => false,
+        enFinal: () => null,
+        // El que ya corre su despegue, con su permiso y fuera de la frecuencia.
+        ocupanLaPista: () => ["EC-SAL"],
+      }),
+    });
+    turno.alSerTuya("final");
+    expect(aOtros).toEqual([]);
+    expect(anunciadas).toEqual([]);
+    // Y el de la calle sigue en ella, esperando: no pierde su turno.
+    expect(radio.alguienEnLaCalle).toBe(true);
+  });
 });
 
 describe("y la frecuencia pregunta al dibujo antes de hablar", () => {
