@@ -38,7 +38,8 @@ import { cuantaLuz } from "../world/hora";
 import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
-import { peldanoDe } from "./familia";
+import { BANDA, cajaDe, familiaDe, peldanoDe } from "./familia";
+import { CuadroDelTelefono, type Grande } from "./cuadro-telefono";
 import type { Mapa as MapaDeLaCarta } from "./carta";
 import { Tablero, type DatosDelTablero } from "./tablero";
 import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
@@ -67,6 +68,7 @@ import { matriculaDe } from "../flight/matricula";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
 import {
+  TELEFONO_APAISADO,
   ahoraEsTelefonoApaisado,
   esTelefono,
   esTelefonoApaisado,
@@ -450,6 +452,18 @@ export class Hud {
    */
   private readonly tablero = new Tablero();
   /**
+   * **Y el del teléfono**: cuatro losas grandes en lugar del cuadro encogido.
+   * La hoja enseña uno u otro según el aparato. Ver `ui/cuadro-telefono.ts`.
+   */
+  private readonly cuadroTel = new CuadroDelTelefono();
+  /**
+   * Qué pantalla del cuadro está puesta en grande en el teléfono, o `null`
+   * con las losas. Ver `ponerGrande`.
+   */
+  private grande: Grande | null = null;
+  /** Lo último que medía el cuadro del teléfono con las losas. */
+  private altoDeLasLosas = 0;
+  /**
    * Cómo habla la torre de este aeródromo. Ver `i18n/habla.ts`.
    *
    * El cartel de la luz tiene que decir lo mismo que se oye, y lo que se oye
@@ -768,6 +782,23 @@ export class Hud {
      * porque sube desde él— o se toca cualquier otra cosa: un menú que se
      * queda abierto encima del vuelo es otra cosa que tapa el avión.
      */
+    /*
+     * **Tocar una losa del cuadro del teléfono pone grande su pantalla**, y
+     * tocar la pantalla grande vuelve a las losas. Salvo la ventanilla ALT y
+     * sus teclas, que son la rueda: girarla no es pedir nada más. Ver
+     * `ponerGrande`.
+     */
+    this.root.addEventListener("click", (e) => {
+      const donde = e.target as Element | null;
+      if (donde?.closest?.("[data-mcp-rueda], [data-mcp-alt]")) return;
+      const losa = donde?.closest?.<HTMLElement>("[data-tel-grande]");
+      if (losa) {
+        this.ponerGrande(losa.dataset.telGrande as Grande);
+        return;
+      }
+      if (this.grande && donde?.closest?.('[data-hud="tablero"]'))
+        this.ponerGrande(null);
+    });
     this.root.addEventListener("click", (e) => {
       const donde = e.target as HTMLElement | null;
       if (donde?.closest('[data-hud="menu"]')) {
@@ -822,6 +853,14 @@ export class Hud {
       });
     }
     alCambiarPantallaCompleta(() => this.pintarPantallaCompleta());
+    /*
+     * Y la pantalla grande es cosa del teléfono apaisado: si se gira o se
+     * deja de serlo, vuelve el cuadro entero, que fuera de ahí es el único.
+     */
+    if (typeof matchMedia === "function")
+      matchMedia(TELEFONO_APAISADO).addEventListener?.("change", () => {
+        if (this.grande) this.ponerGrande(null);
+      });
     this.render();
   }
 
@@ -869,6 +908,35 @@ export class Hud {
   }
 
   /**
+   * **Pone grande una pantalla del cuadro, en el teléfono**, o vuelve a las
+   * losas con `null`.
+   *
+   * Es el mismo dibujo del cuadro plano, recortado a la pantalla que se pidió
+   * —la de actitud, la de navegación, la de motores— y puesto del alto que
+   * deja libre el teléfono: «o que tocar una pantalla la ponga grande». Ahí
+   * se leen el T/D, la carta y el resto de lo que en una losa no cabe. Se
+   * recorta con la caja del dibujo y no se pinta otro: el cuadro es uno.
+   */
+  private ponerGrande(cual: Grande | null): void {
+    this.grande = cual;
+    const cuadro = this.root.querySelector('[data-hud="cuadro"]');
+    cuadro?.classList.toggle("cuadro--grande", cual !== null);
+    const dibujo = this.root.querySelector('[data-hud="tablero"]');
+    if (!dibujo) return;
+    if (!dibujo.hasAttribute("data-entera"))
+      dibujo.setAttribute("data-entera", dibujo.getAttribute("viewBox") ?? "");
+    if (!cual) {
+      dibujo.setAttribute("viewBox", dibujo.getAttribute("data-entera") ?? "");
+      return;
+    }
+    const caja = cajaDe(familiaDe(this.ficha), this.cuadroTel.queSePoneGrande(cual));
+    dibujo.setAttribute(
+      "viewBox",
+      `${caja.x - 4} ${BANDA.y - 4} ${caja.ancho + 8} ${BANDA.alto + 8}`,
+    );
+  }
+
+  /**
    * Si el cuadro está bajado ahora mismo. Se guarda por perfil.
    *
    * **Y en el teléfono nace recogido**, mientras nadie diga otra cosa. En
@@ -890,6 +958,8 @@ export class Hud {
    */
   private ponerCuadroBajado(bajado: boolean): void {
     this.cuadroBajado = bajado;
+    // Recogido, se recoge entero: la pantalla grande también.
+    if (bajado && this.grande) this.ponerGrande(null);
     const cuadro = this.root.querySelector('[data-hud="cuadro"]');
     cuadro?.classList.toggle("cuadro--bajado", bajado);
     /*
@@ -1576,6 +1646,7 @@ export class Hud {
                    </svg>
                  </button>
                  ${this.tablero.markup(this.ficha, peldano)}
+                 ${this.cuadroTel.markup(this.ficha, peldano)}
                </div>`
             : ""
         }
@@ -1829,6 +1900,19 @@ export class Hud {
 
     this.badge.textContent = this.badgeText;
     this.tablero.bind(this.root, this.ficha);
+    this.cuadroTel.bind(this.root, this.ficha);
+    // El marcado es nuevo, con el cuadro entero: nada puesto en grande.
+    this.grande = null;
+    /*
+     * La caja del cuadro, con la forma del dibujo que se acaba de pintar: sin
+     * MCP la visera se queda fina y el dibujo sale más apaisado. Escrito en
+     * la raíz porque lo lee también el volumen, que se pone al lado. Ver
+     * `corteDeArriba` en `familia.ts`.
+     */
+    this.root.style.setProperty(
+      "--cuadro-proporcion",
+      this.tablero.proporcion.toFixed(4),
+    );
     this.pictos.bind(this.root);
     this.medirLaBarra();
     this.senal.bind(this.root);
@@ -1933,15 +2017,39 @@ export class Hud {
    * avión detrás de él. Cero desde la cabina, donde el cuadro no se dibuja.
    */
   get altoDelCuadro(): number {
+    /*
+     * **En el teléfono, las losas.** Puesta en grande una pantalla, se sigue
+     * contando lo que medían las losas: la grande es un vistazo que se cierra
+     * de un toque, y reencuadrar el avión para ella lo metería en una rendija
+     * para volver a sacarlo enseguida.
+     */
+    const losas = this.root
+      .querySelector('[data-hud="cuadro-tel"]')
+      ?.getBoundingClientRect();
+    if (losas && losas.height > 0) {
+      this.altoDeLasLosas = Math.max(0, window.innerHeight - losas.top);
+      return this.altoDeLasLosas;
+    }
+    if (this.grande) return this.altoDeLasLosas;
     const panel = this.root.querySelector('[data-hud="tablero"]');
     if (!panel) return 0;
     const caja = panel.getBoundingClientRect();
+    if (caja.height <= 0) return 0;
+    /*
+     * Y **el tirador**, que va por encima del dibujo: contando solo el dibujo,
+     * la cámara dejaba la cola del avión debajo de la pestaña.
+     */
+    const tirador = this.root
+      .querySelector('[data-hud="cuadro-tirador"]')
+      ?.getBoundingClientRect();
+    const arriba =
+      tirador && tirador.height > 0 ? Math.min(caja.top, tirador.top) : caja.top;
     /*
      * Desde el borde de abajo y no la altura del dibujo: con el dedo el cuadro
      * vive despegado, encima de los pedales, y lo que tapa es todo lo que hay
      * de su borde de arriba para abajo. Y bajado, lo que asome.
      */
-    return caja.height > 0 ? Math.max(0, window.innerHeight - caja.top) : 0;
+    return Math.max(0, window.innerHeight - arriba);
   }
 
   /**
@@ -1971,7 +2079,14 @@ export class Hud {
      * cartel del tutor se habría plantado encima de las esferas sin que nada
      * fallara por ningún sitio.
      */
-    const panel = this.root.querySelector('[data-hud="tablero"]');
+    /*
+     * En el teléfono lo que ocupa son las losas, no el dibujo, que ahí está
+     * escondido. Ver `ui/cuadro-telefono.ts`.
+     */
+    const losas = this.root.querySelector('[data-hud="cuadro-tel"]');
+    const altoDeLosas = losas?.getBoundingClientRect().height ?? 0;
+    const panel =
+      altoDeLosas > 0 ? losas : this.root.querySelector('[data-hud="tablero"]');
     const alto = panel
       ? aPxDelHud(this.root, panel.getBoundingClientRect().height)
       : 0;
@@ -2683,67 +2798,68 @@ export class Hud {
        */
       const nudos = ias * 1.94384;
       this.tablero.medirAceleracion(nudos, dt);
-      this.tablero.update(
-        {
-          estado: state,
-          nudos,
-          pies: state.position.y * 3.28084,
-          fpm: state.verticalSpeed * 196.85,
-          // Y la altura **sobre el suelo**, que es otra cosa: la del
-          // radioaltímetro. En La Palma o El Hierro la diferencia con la del
-          // altímetro son seiscientos metros de montaña.
-          sobreElTerreno: state.heightAboveGround * 3.28084,
-          alabeo: bank,
-          cabeceo: pitch,
-          sobreElSuelo:
-            Math.hypot(state.velocity.x, state.velocity.z) * 1.94384,
-          mach: esDeChorro(this.ficha)
-            ? state.airspeed /
-              velocidadDelSonido(state.position.y, mandos?.aire)
-            : null,
-          aire: mandos?.aire,
-          cabina: mandos?.cabina,
-          motores: Array.from({ length: this.ficha.motores }, () =>
-            regimen(this.ficha, throttle, engineOn),
-          ),
-          flaps: mandos?.flaps ?? 0,
-          // Lo más rápido que se puede ir con lo que está fuera: la banda
-          // roja de la cinta baja hasta aquí. Ver `topeDeLoSacado`.
-          topeKt: topeDeLoSacado(this.ficha, {
-            tren: mandos?.tren ?? 1,
-            flaps: mandos?.flaps ?? 0,
-          }),
+      const datos: DatosDelTablero = {
+        estado: state,
+        nudos,
+        pies: state.position.y * 3.28084,
+        fpm: state.verticalSpeed * 196.85,
+        // Y la altura **sobre el suelo**, que es otra cosa: la del
+        // radioaltímetro. En La Palma o El Hierro la diferencia con la del
+        // altímetro son seiscientos metros de montaña.
+        sobreElTerreno: state.heightAboveGround * 3.28084,
+        alabeo: bank,
+        cabeceo: pitch,
+        sobreElSuelo:
+          Math.hypot(state.velocity.x, state.velocity.z) * 1.94384,
+        mach: esDeChorro(this.ficha)
+          ? state.airspeed /
+            velocidadDelSonido(state.position.y, mandos?.aire)
+          : null,
+        aire: mandos?.aire,
+        cabina: mandos?.cabina,
+        motores: Array.from({ length: this.ficha.motores }, () =>
+          regimen(this.ficha, throttle, engineOn),
+        ),
+        flaps: mandos?.flaps ?? 0,
+        // Lo más rápido que se puede ir con lo que está fuera: la banda
+        // roja de la cinta baja hasta aquí. Ver `topeDeLoSacado`.
+        topeKt: topeDeLoSacado(this.ficha, {
           tren: mandos?.tren ?? 1,
-          reversa,
-          v1: decisionSpeed * 1.94384,
-          vr: this.vr * 1.94384,
-          vref: this.vref * 1.94384,
-          objetivo: mandos?.objetivo ?? null,
-          declinacion: this.magneticVariation,
-          viento: mandos?.viento ?? null,
-          // La pérdida: marco rojo alrededor del horizonte, que es donde mira
-          // quien ya está en apuros. Ver `cinta.ts` para el parpadeo.
-          perdida: !state.onGround && state.alpha > this.ficha.aero.alphaStall,
-          /*
-           * Y el mundo, para la carta. Llegaba solo a las pantallas de la
-           * cabina y por eso el cuadro plano seguía con la brújula sobre el
-           * fondo vacío: «en Lanzarote no veo la pista».
-           */
-          mapa: mandos?.mapa ?? null,
-          combustible: mandos?.combustible ?? null,
-          presion: mandos?.presion ?? null,
-          ventanilla: mandos?.ventanilla ?? null,
-          spd: mandos?.spd ?? null,
-          fma: mandos?.fma ?? null,
-        },
-        dt,
+          flaps: mandos?.flaps ?? 0,
+        }),
+        tren: mandos?.tren ?? 1,
+        reversa,
+        v1: decisionSpeed * 1.94384,
+        vr: this.vr * 1.94384,
+        vref: this.vref * 1.94384,
+        objetivo: mandos?.objetivo ?? null,
+        declinacion: this.magneticVariation,
+        viento: mandos?.viento ?? null,
+        // La pérdida: marco rojo alrededor del horizonte, que es donde mira
+        // quien ya está en apuros. Ver `cinta.ts` para el parpadeo.
+        perdida: !state.onGround && state.alpha > this.ficha.aero.alphaStall,
         /*
-         * En el teléfono, recogido es recogido del todo —ni la visera
-         * asoma—, así que no se dibuja lo que no se ve. En la tablet asoma la
-         * visera con sus luces de aviso, y ésas sí tienen que seguir vivas.
+         * Y el mundo, para la carta. Llegaba solo a las pantallas de la
+         * cabina y por eso el cuadro plano seguía con la brújula sobre el
+         * fondo vacío: «en Lanzarote no veo la pista».
          */
-        !(this.cuadroBajado && ahoraEsTelefonoApaisado()),
-      );
+        mapa: mandos?.mapa ?? null,
+        combustible: mandos?.combustible ?? null,
+        presion: mandos?.presion ?? null,
+        ventanilla: mandos?.ventanilla ?? null,
+        spd: mandos?.spd ?? null,
+        fma: mandos?.fma ?? null,
+      };
+      /*
+       * En el teléfono el cuadro plano solo se ve puesto en grande: lo de
+       * siempre son las losas, y no se dibuja lo que no se ve —recogido
+       * tampoco, que allí es recogido del todo—. En la tablet asoma la visera
+       * con sus luces de aviso, y ésas sí tienen que seguir vivas.
+       */
+      const telefono = ahoraEsTelefonoApaisado();
+      this.tablero.update(datos, dt, !telefono || this.grande !== null);
+      if (telefono && !this.cuadroBajado && this.grande === null)
+        this.cuadroTel.update(datos);
     }
 
     // El horizonte gira al revés que el avión y sube y baja con el cabeceo:

@@ -421,6 +421,9 @@ export const EN: Dictionary = {
   "avion.cambiarParado": "Stop on the ground to change aircraft",
   "hud.mandarCinturon": "Seatbelt sign",
   "hud.subirCuadro": "Raise the panel",
+  "hud.telGrande": "Show the screen big",
+  "hud.altBajar": "Lower the selected altitude",
+  "hud.altSubir": "Raise the selected altitude",
   "hud.volumen": "Volume",
   "hud.menu": "More buttons",
   "hud.pantallaCompleta": "Full screen",
@@ -606,7 +609,7 @@ export const EN: Dictionary = {
   "leccion.aterrizaje": "Land",
 
   "tactil.palanca": "Stick",
-  "tactil.timon": "Rudder",
+  "tactil.timon": "Rudder pedals",
   "tactil.motor": "Throttle",
   "galon.manga": "This flight\u2019s stripes",
   "galon.aproximacion": "Approach stripe",

@@ -78,12 +78,14 @@ import {
 import { ASPECTO_DEL_RELIEVE, dibujarLaCarta, millasHasta, type Mapa } from "../ui/carta";
 import {
   CIFRAS_DESDE,
+  LETRAS_DESDE,
   apunta,
   desdePara,
   empiezaElRepintado,
   loEscrito,
   type Peldano,
 } from "../ui/familia";
+import { SURTIDOR } from "../ui/surtidor";
 
 /**
  * La tipografía de la cabina: condensada, y la misma que el cuadro del HUD.
@@ -645,6 +647,7 @@ function escribir(
   fuente: string,
   color: string,
   alineado: CanvasTextAlign = "center",
+  filo: string | null = null,
 ): void {
   /*
    * **Una cifra entra un peldaño antes que un rótulo.**
@@ -662,7 +665,45 @@ function escribir(
   g.font = fuente;
   g.textAlign = alineado;
   g.textBaseline = "middle";
+  // Y con un filo del color del fondo, si se pide: lo que se pinta encima de
+  // una línea —el T/D sobre la ruta magenta— se lee despegado de ella.
+  if (filo) {
+    g.strokeStyle = filo;
+    g.lineWidth = 4;
+    g.lineJoin = "round";
+    g.strokeText(texto, 0, 0);
+  }
   g.fillText(texto, 0, 0);
+  g.restore();
+}
+
+/**
+ * **El surtidor, donde irá FUEL mientras no se lee.** Los kilos salen desde el
+ * primer peldaño y su rótulo desde el tercero: en medio, la cifra quedaba
+ * sola. El mismo dibujo que el cuadro plano. Ver `ui/surtidor.ts`.
+ */
+function surtidorEnLugarDeFuel(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  lado: number,
+): void {
+  if (peldanoDeAhora >= LETRAS_DESDE) return;
+  const k = lado / 24;
+  g.save();
+  g.translate(x, y);
+  g.scale(k, k);
+  g.fillStyle = TENUE;
+  g.fill(new Path2D(SURTIDOR.cuerpo));
+  g.fill(new Path2D(SURTIDOR.base));
+  g.fillStyle = FONDO;
+  const h = SURTIDOR.hueco;
+  g.fillRect(h.x, h.y, h.ancho, h.alto);
+  g.strokeStyle = TENUE;
+  g.lineWidth = 1.7;
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  g.stroke(new Path2D(SURTIDOR.manguera));
   g.restore();
 }
 
@@ -1780,6 +1821,7 @@ function reglaDeCombustibleDePie(
   deposito: DatosDeCabina["combustible"],
 ): void {
   escribir(g, "FUEL", x + w / 2, y - 8, "500 11px " + FUENTE, TENUE);
+  surtidorEnLugarDeFuel(g, x + w / 2 - 8, y - 22, 16);
   ventana(g, x, y, w, h);
   if (!deposito) return;
   const parte = (kg: number) => clamp01(kg / Math.max(1, deposito.cabe));
@@ -1877,6 +1919,12 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     "left",
   );
   escribir(g, "CAB ALT", ANCHO * 0.72, yAire, "500 11px " + FUENTE, TENUE, "right");
+  /*
+   * La altura de la cabina, con su rótulo y no antes: por ser cifra salía
+   * desde el primer peldaño, y en Guyrami era un número suelto que no decía
+   * de qué era. Igual que en el cuadro plano. Nunca un número solo.
+   */
+  if (peldanoDeAhora >= LETRAS_DESDE)
   escribir(
     g,
     `${Math.round(d.cabina / 0.3048 / 50) * 50}`,
@@ -2032,6 +2080,7 @@ function reglaDeCombustible(
   deposito: DatosDeCabina["combustible"],
 ): void {
   escribir(g, "FUEL", x - 8, y + h / 2, "500 12px " + FUENTE, TENUE, "right");
+  surtidorEnLugarDeFuel(g, x - 26, y + h / 2 - 9, 18);
   ventana(g, x, y, w, h);
   if (!deposito) return;
   const cabe = Math.max(1, deposito.cabe);
@@ -2368,7 +2417,7 @@ function pintarLaCarta(
       g.lineTo(x - 0.5, y - 2);
       g.lineTo(x + 3.5, y + 2);
       g.stroke();
-      escribir(g, "T/D", x + 9, y - 8, "600 11px " + FUENTE, PALETA.normal, "left");
+      escribir(g, "T/D", x + 10, y - 10, "700 15px " + FUENTE, PALETA.normal, "left", FONDO);
     }
     // Y el T/C, en la de los reactores: donde se acaba de subir.
     if (plan.subida && d.cuadro.familia === "linea") {
@@ -2382,7 +2431,7 @@ function pintarLaCarta(
       g.lineTo(x - 0.5, y + 2);
       g.lineTo(x + 3.5, y - 2);
       g.stroke();
-      escribir(g, "T/C", x + 9, y - 8, "600 11px " + FUENTE, PALETA.normal, "left");
+      escribir(g, "T/C", x + 10, y - 10, "700 15px " + FUENTE, PALETA.normal, "left", FONDO);
     }
   }
 

@@ -445,6 +445,8 @@ import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
+import { PantallaDespierta } from "./ui/pantalla-despierta";
+import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
 import { PantallaDeMision } from "./ui/pantalla-mision";
 import {
@@ -3398,6 +3400,11 @@ export class Game {
   /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
   private quieto = false;
   /**
+   * La pantalla del teléfono, encendida mientras se vuela y libre en cuanto
+   * no: en la pausa, en un panel y al irse. Ver `ui/pantalla-despierta.ts`.
+   */
+  private readonly despierta = new PantallaDespierta();
+  /**
    * Las luces azules de las calles de rodaje, que se encienden con el sol
    * bajo. Se montan con las de aproximación, después de moldear el terreno.
    */
@@ -3983,6 +3990,8 @@ export class Game {
     traqueteo: 1,
     caidaMaxima: Number.POSITIVE_INFINITY,
     pasaje: null as Contexto["pasaje"],
+    bajadaMaxima: Number.POSITIVE_INFINITY,
+    caidaTope: Number.POSITIVE_INFINITY,
   };
   private readonly blobShadow: Mesh;
   /**
@@ -5189,6 +5198,7 @@ export class Game {
      */
     if (this.quieto) return;
     this.running = true;
+    this.despierta.ponerse(true);
     this.clock.start();
     this.audio.setActive(true);
     this.renderer.setAnimationLoop(this.frame);
@@ -5222,6 +5232,7 @@ export class Game {
 
   stop(): void {
     this.running = false;
+    this.despierta.ponerse(false);
     this.renderer.setAnimationLoop(null);
     this.audio.setActive(false);
   }
@@ -5383,6 +5394,7 @@ export class Game {
       return;
     }
     this.running = false;
+    this.despierta.ponerse(false);
     this.renderer.setAnimationLoop(null);
     /*
      * Y se calla **el mundo**, no el sonido entero.
@@ -18785,6 +18797,8 @@ export class Game {
   private relojDelEncuadre = 0;
   /** El último corrimiento puesto, para no rehacer la lente si no cambia. */
   private corrimientoPuesto = Number.NaN;
+  /** Y lo último acercado. Ver `encuadrarSobreElCuadro`. */
+  private acercarPuesto = 1;
 
   /**
    * `forzar`: rehacer la lente aunque el corrimiento no haya cambiado. Lo
@@ -18831,16 +18845,63 @@ export class Game {
      * con la lente que se va a poner.
      */
     const franja = Math.max(0, abajo - arriba);
-    const altoDeImagen = alto + Math.abs(corrimiento) * 2;
+    /*
+     * La focal es la de la pantalla entera: el corrimiento ya no acerca nada.
+     * Ver más abajo, donde se pone la lente.
+     */
+    /*
+     * **Y en el teléfono, un poco más cerca.** «El avión se ve pequeño.» Con
+     * el mismo ángulo de arriba abajo en una pantalla dos veces más ancha que
+     * alta, a lo ancho se abren más de cien grados y el avión queda en un
+     * cuarto de la pantalla de un aparato que ya es pequeño. Un doce por
+     * ciento lo acerca sin quitar el horizonte. Desde la cabina, nada: ahí
+     * encuadra la propia cabina.
+     */
+    const acercar = !propio && ahoraEsTelefonoApaisado() ? 1.12 : 1;
     const focal =
-      altoDeImagen / 2 / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
-    this.contextoDeCamara.caidaMaxima = propio
-      ? Number.POSITIVE_INFINITY
-      : Math.atan((franja * 0.12) / focal);
-    if (!forzar && Math.abs(corrimiento - this.corrimientoPuesto) < 1) return;
+      (acercar * (alto / 2)) / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
+    const sinTope = Number.POSITIVE_INFINITY;
+    const ctx = this.contextoDeCamara;
+    ctx.caidaMaxima = propio ? sinTope : Math.atan((franja * 0.12) / focal);
+    /*
+     * **Y el horizonte, siempre a la vista.**
+     *
+     * Parado en la pista con el cuadro abierto, la cámara de cola miraba al
+     * avión desde arriba y el cielo quedaba por encima de la pantalla: «no
+     * veo el cielo cuando estoy en la pista; está bien ver algo de horizonte,
+     * porque parece que va uno encajonado». Se le dice a la cámara cuánto
+     * puede mirar hacia abajo como mucho: lo que deja el horizonte por debajo
+     * del borde de arriba de la franja libre, a un octavo de ella. Y como eso
+     * baja el avión, hasta dónde puede bajar él en ese caso: su centro, nueve
+     * grados por encima del borde de abajo. Son los que ocupan, mirando desde
+     * detrás y desde arriba, la cola y el estabilizador, que quedan más cerca
+     * de la cámara y salen más abajo: contado por porcentaje de la franja, en
+     * el portátil la cola se quedaba debajo del tirador. Si las dos cosas no
+     * caben a la vez, gana el avión. Ver `sinPerderElAvion` en
+     * `cameras/fuera.ts`.
+     */
+    const mitadDeLaFranja = Math.atan(franja / 2 / focal);
+    const cola = (9 * Math.PI) / 180;
+    ctx.bajadaMaxima = propio ? sinTope : Math.atan((franja * 0.38) / focal);
+    ctx.caidaTope = propio ? sinTope : Math.max(0.02, mitadDeLaFranja - cola);
+    if (
+      !forzar &&
+      Math.abs(corrimiento - this.corrimientoPuesto) < 1 &&
+      acercar === this.acercarPuesto
+    )
+      return;
     this.corrimientoPuesto = corrimiento;
-    if (Math.abs(corrimiento) < 1) this.camera.clearViewOffset();
-    else {
+    this.acercarPuesto = acercar;
+    if (Math.abs(corrimiento) < 1) {
+      this.camera.clearViewOffset();
+      /*
+       * `setViewOffset` deja puesta su proporción, y quitarlo no la devuelve:
+       * la cabina —que no se corre— heredaba la del último encuadre de fuera
+       * y salía estirada.
+       */
+      this.camera.aspect = ancho / alto;
+      this.camera.zoom = acercar;
+    } else {
       const extra = Math.abs(corrimiento) * 2;
       // Una imagen más alta de la que se recorta la ventana: recortando por
       // abajo el centro sube, y por arriba baja.
@@ -18852,6 +18913,16 @@ export class Game {
         ancho,
         alto,
       );
+      /*
+       * **Y sin acercar.** El ángulo de visión se reparte entre el alto de la
+       * imagen grande, no de la ventana, así que recortar era también hacer
+       * zoom: con el cuadro abierto en el portátil, un treinta y cinco por
+       * ciento más cerca, y el mundo se veía por una rendija. Es lo que hacía
+       * sentir el cuadro como un cajón. Con el zoom a la inversa queda lo que
+       * se quería desde el principio, un objetivo descentrable: la misma
+       * lente, corrida hacia arriba.
+       */
+      this.camera.zoom = (acercar * alto) / (alto + extra);
     }
     this.camera.updateProjectionMatrix();
   }

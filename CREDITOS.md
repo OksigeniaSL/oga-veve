@@ -249,6 +249,12 @@ sus colores y su proporción, y lo único que cambia entre pantallas es el
 tamaño. Ver `src/ui/marca.ts`, que además explica **dónde** aparece y por qué
 durante el vuelo no aparece en ninguna parte.
 
+Sobre el verde y la tierra de las pantallas de antes de volar lleva el
+**contorno blanco de pegatina** con el que la propia granja lo pone sobre fondo
+oscuro en sus carteles: sus hojas son del mismo verde que el fondo y sin él no
+se veían. El contorno se dibuja con la hoja de estilos alrededor de la forma;
+el logotipo no cambia ni un color.
+
 El fichero SVG es el mismo que se usa para BIMI en el correo de la granja, que
 es la versión pensada para verse pequeña y cuadrada. El PNG queda de respaldo
 para donde haga falta un mapa de bits.

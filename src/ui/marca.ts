@@ -133,6 +133,11 @@ export function cielo(): string {
  * el tejado es la casa. Entra tal cual, con sus colores y su proporción; lo
  * único que cambia entre pantallas es el tamaño. Un logotipo no se recolorea,
  * no se recorta y no se pone a media opacidad. Ver `CREDITOS.md`.
+ *
+ * **Y lleva el contorno blanco de pegatina**, que es como lo pone la propia
+ * granja sobre fondo oscuro: sus hojas son del mismo verde que el fondo de
+ * estas pantallas, y sin él solo se veían el tejado y el sol. Ver `.sello` en
+ * la hoja.
  */
 export function sello(lado: number): string {
   return `<img class="sello" src="${logotipo}" width="${lado}" height="${lado}"

@@ -33,8 +33,10 @@ import {
   marca,
   MARCA_CIFRA,
   MARCA_CON_SU_APARATO,
+  MARCA_HASTA_LETRAS,
   MARCA_ROTULO,
 } from "./familia";
+import { surtidorSvg } from "./surtidor";
 import {
   bandasDeVelocidad,
   rotuloDeMotor,
@@ -700,10 +702,16 @@ function carta(cx: number, cy: number, r: number): string {
         Tablero.laCarta con las cuentas de ui/carta.ts.
       -->
       <path data-carta="plan" class="cr__plan" visibility="hidden" d="M0 0" />
+      <!--
+        **Y su rótulo, que se lea.** Iba en letra de once, la de los nombres
+        de los puntos, y a tamaño real era una mancha verde al lado del
+        círculo: «no se lee». Más grande, en negrita y con un filo oscuro que
+        lo despega de la línea magenta que suele tener debajo.
+      -->
       <g data-carta="td" class="cr__td" visibility="hidden">
-        <circle r="6" />
-        <path d="M-3.5 -2 h3 l4 4" />
-        <text x="9" y="-7" ${MARCA_ROTULO} class="cr__td-rotulo">T/D</text>
+        <circle r="7" />
+        <path d="M-4 -2.2 h3.4 l4.6 4.6" />
+        <text x="11" y="-8" ${MARCA_ROTULO} class="cr__td-rotulo">T/D</text>
       </g>
       <!--
         Y el **T/C**, donde se acaba de subir: el mismo círculo verde con la
@@ -711,9 +719,9 @@ function carta(cx: number, cy: number, r: number): string {
         reactores, que es la que lo pinta de verdad. Ver puntoDeSubida en flight/ruta.ts.
       -->
       <g data-carta="tc" class="cr__td" visibility="hidden">
-        <circle r="6" />
-        <path d="M-3.5 2 h3 l4 -4" />
-        <text x="9" y="-7" ${MARCA_ROTULO} class="cr__td-rotulo">T/C</text>
+        <circle r="7" />
+        <path d="M-4 2.2 h3.4 l4.6 -4.6" />
+        <text x="11" y="-8" ${MARCA_ROTULO} class="cr__td-rotulo">T/C</text>
       </g>
       ${fijos}
       ${rombos}
@@ -953,12 +961,23 @@ export function reglaDeCombustible(
   const raya = tumbada
     ? `<line data-combustible="raya" x1="0" y1="-3" x2="0" y2="${h + 3}" />`
     : `<line data-combustible="raya" x1="-3" y1="${h}" x2="${w + 3}" y2="${h}" />`;
+  /*
+   * **Y donde irá FUEL, el surtidor**, mientras no se lee. Sin él, en los dos
+   * primeros peldaños quedaban los kilos solos al lado de la barra: «4044»
+   * sin decir de qué. Ver `MARCA_HASTA_LETRAS`.
+   */
+  const lado = 18;
+  const icono = tumbada
+    ? { x: -10 - lado, y: h / 2 - lado / 2 }
+    : { x: w / 2 - lado / 2, y: -lado - 6 };
   return `
     <g data-cristal="combustible" data-largo="${largo}" data-tumbada="${tumbada ? 1 : 0}">
       <g transform="translate(${x} ${y})">
         <text x="${tumbada ? -10 : w / 2}" y="${tumbada ? h - 8 : -8}"
               ${MARCA_ROTULO} class="cr__rotulo"
               text-anchor="${tumbada ? "end" : "middle"}">FUEL</text>
+        <svg ${MARCA_HASTA_LETRAS} class="cr__icono" x="${icono.x}" y="${icono.y}"
+             width="${lado}" height="${lado}" viewBox="0 0 24 24">${surtidorSvg()}</svg>
         <rect width="${w}" height="${h}" rx="2" class="cr__ventana" />
         <g class="cr__reserva">${fondo}</g>
         <g class="cr__deposito">${barra}</g>
@@ -1046,7 +1065,13 @@ function aireYCabina(ancho: number, y: number): string {
     <text x="${ancho * 0.28}" y="${y}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="end">OAT</text>
     <text data-cristal="oat" x="${ancho * 0.31}" y="${y}" ${MARCA_ROTULO} class="cr__aire"></text>
     <text x="${ancho * 0.72}" y="${y}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="end">CAB ALT</text>
-    <text data-cristal="cabina" x="${ancho * 0.75}" y="${y}" ${MARCA_CIFRA} class="cr__aire"></text>
+    <!--
+      La altura de la cabina, **con su rótulo y no antes**: salía desde el
+      primer peldaño por ser una cifra, y en Guyrami era un «2050» suelto en
+      mitad del EICAS que no decía de qué era. La temperatura ya esperaba a
+      las letras; ésta, igual. Nunca un número solo.
+    -->
+    <text data-cristal="cabina" x="${ancho * 0.75}" y="${y}" ${MARCA_ROTULO} class="cr__aire"></text>
   `;
 }
 

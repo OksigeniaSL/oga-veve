@@ -15,6 +15,7 @@ import { PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { construirCamaras, type Contexto } from "./index";
 import { BASE_FOV, FOV_DE_CABINA } from "./tipos";
 import { encuadreDeCabina } from "./dentro";
+import { mirarSinPerderNada } from "./fuera";
 import type { FlightState } from "../flight/model";
 
 /** Un avión volando hacia el norte, o parado si se le quita la velocidad. */
@@ -149,6 +150,49 @@ describe("la vista de detrás", () => {
     const camara = volar(construirCamaras().chase, state, contexto());
     expect(Number.isFinite(camara.position.x)).toBe(true);
     expect(Number.isFinite(camara.quaternion.x)).toBe(true);
+  });
+});
+
+/*
+ * «No veo el cielo cuando estoy en la pista; está bien ver algo de horizonte,
+ * porque parece que va uno encajonado.» Parada en la pista, la de cola miraba
+ * al avión desde arriba, y con el cuadro abierto el cielo quedaba fuera.
+ */
+describe("la vista de detrás deja ver el horizonte", () => {
+  const grado = Math.PI / 180;
+
+  it("parado, levanta la vista hasta dejar el horizonte dentro", () => {
+    const state = avion({
+      position: new Vector3(0, 2, 0),
+      velocity: new Vector3(0, 0, 0),
+      airspeed: 0,
+      onGround: true,
+      heightAboveGround: 2,
+    });
+    const bajada = 10 * grado;
+    const camara = volar(
+      construirCamaras().chase,
+      state,
+      contexto({ suelo: () => 0, bajadaMaxima: bajada }),
+    );
+    const aDondeMira = new Vector3(0, 0, -1).applyQuaternion(camara.quaternion);
+    expect(Math.asin(aDondeMira.y)).toBeGreaterThanOrEqual(-bajada - 1e-3);
+  });
+
+  it("y si no caben el horizonte y el avión, gana el avión", () => {
+    // El avión, veinte grados por debajo; la franja, pequeña.
+    const al = mirarSinPerderNada(-20 * grado, -20 * grado, 4 * grado, 6 * grado, 9 * grado);
+    expect(al).toBeCloseTo(-11 * grado);
+  });
+
+  it("y si caben, el horizonte manda sobre mirar al avión", () => {
+    const al = mirarSinPerderNada(-14 * grado, -18 * grado, 4 * grado, 10 * grado, 13 * grado);
+    expect(al).toBeCloseTo(-10 * grado);
+  });
+
+  it("volando y mirando lejos, no toca nada", () => {
+    const al = mirarSinPerderNada(-3 * grado, -6 * grado, 4 * grado, 10 * grado, 13 * grado);
+    expect(al).toBeCloseTo(-3 * grado);
   });
 });
 

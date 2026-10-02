@@ -279,6 +279,123 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     await new Promise((r) => setTimeout(r, 500));
   });
   /*
+   * **Y el cuadro del teléfono, abierto.** «El cuadro de mandos ocupa un
+   * montón, pero ni aún así se ve: no leo la altitud a la que debo llegar.»
+   * En el teléfono van cuatro losas en una fila baja, y se mira lo que se
+   * pidió: que se lean, que las teclas de la ventanilla ALT sean de dedo
+   * —medían 34 × 25—, que no pisen los pulgares, que por encima quede sitio
+   * para el avión y el horizonte, y que tocar una losa ponga grande su
+   * pantalla y otro toque la quite. Ver `ui/cuadro-telefono.ts`.
+   */
+  if (telefono) {
+    const losas = await page.evaluate(async () => {
+      const pisa = (a, b) =>
+        Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      const tel = document.querySelector('[data-hud="cuadro-tel"]');
+      if (!tel) return { falta: true };
+      const c = tel.getBoundingClientRect();
+      const visible = c.height > 0 && c.width > 0;
+      const fuera =
+        c.left < 0 || c.top < 0 || c.right > innerWidth || c.bottom > innerHeight;
+      const pulgares = [
+        ".pad--stick",
+        ".pad--rudder",
+        ".pad--throttle",
+        '[data-hud="brakes-touch"]',
+        ".hud__derecha > *",
+      ]
+        .flatMap((q) => [...document.querySelectorAll(q)])
+        .filter(
+          (o) =>
+            !o.closest("[hidden]") &&
+            getComputedStyle(o).display !== "none" &&
+            getComputedStyle(o).visibility !== "hidden" &&
+            o.getBoundingClientRect().width > 2 &&
+            pisa(c, o.getBoundingClientRect()),
+        )
+        .map((o) => o.dataset.hud ?? String(o.className).slice(0, 24));
+      const cifras = [...tel.querySelectorAll(".tel__cifra")]
+        .filter((e) => e.getBoundingClientRect().height > 0)
+        .map((e) => Math.round(e.getBoundingClientRect().height));
+      const teclas = [...tel.querySelectorAll(".tel__tecla")]
+        .filter((e) => getComputedStyle(e).display !== "none")
+        .map((e) => {
+          const r = e.getBoundingClientRect();
+          return [Math.round(r.width), Math.round(r.height)];
+        });
+      const barra = document.querySelector(".hud__arriba")?.getBoundingClientRect();
+      const libre = c.top - (barra?.bottom ?? 0);
+      // Y en grande: se toca el rumbo, se mira la pantalla, se toca otra vez.
+      document.querySelector(".tel__losa--hdg")?.click();
+      await new Promise((r) => setTimeout(r, 300));
+      const dibujo = document.querySelector('[data-hud="tablero"]');
+      const g = dibujo.getBoundingClientRect();
+      const grande =
+        g.height > 120 &&
+        g.top >= 0 &&
+        g.bottom <= innerHeight &&
+        g.left >= 0 &&
+        g.right <= innerWidth;
+      dibujo.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 300));
+      const vuelve = tel.getBoundingClientRect().height > 0;
+      return {
+        visible,
+        fuera,
+        pulgares: [...new Set(pulgares)],
+        cifras,
+        teclas,
+        libre: Math.round(libre),
+        alto: innerHeight,
+        grande: Math.round(g.height),
+        sale: grande,
+        vuelve,
+      };
+    });
+    comprobar(
+      `${donde0}: el cuadro del teléfono se ve, cabe y no pisa los pulgares`,
+      !losas.falta && losas.visible && !losas.fuera && losas.pulgares.length === 0,
+      losas.falta
+        ? "no hay losas"
+        : !losas.visible
+          ? "no se ve"
+          : losas.fuera
+            ? "se sale de la pantalla"
+            : losas.pulgares.map((p) => `pisa ${p}`).join(" · ") || "libre",
+      "era el cuadro del portátil encogido: ocupaba media pantalla y no se leía",
+    );
+    if (!losas.falta) {
+      comprobar(
+        `${donde0}: las cifras de las losas se leen`,
+        losas.cifras.length >= 3 && Math.min(...losas.cifras) >= 15,
+        `${losas.cifras.length} cifras, la más baja de ${Math.min(...losas.cifras)} px`,
+        "«no leo la altitud a la que debo llegar ni más detalles»",
+      );
+      comprobar(
+        `${donde0}: las teclas de la ventanilla ALT son de dedo`,
+        losas.teclas.every(([w, h]) => w >= 44 && h >= 44),
+        losas.teclas.length
+          ? losas.teclas.map(([w, h]) => `${w}×${h}`).join(", ")
+          : "sin ventanilla en este avión o peldaño",
+        "medían 34 × 25: más pequeñas que una yema",
+      );
+      comprobar(
+        `${donde0}: por encima de las losas queda sitio para el avión`,
+        losas.libre >= losas.alto * 0.35,
+        `${losas.libre} px libres de ${losas.alto}`,
+        "«el avión se ve pequeño»; y con el horizonte, que no parezca un cajón",
+      );
+      comprobar(
+        `${donde0}: tocar una losa pone grande su pantalla, y otro toque la quita`,
+        losas.sale && losas.vuelve,
+        `${losas.grande} px de alto en grande · ${losas.vuelve ? "vuelven las losas" : "no vuelven"}`,
+        "«o que tocar una pantalla la ponga grande»",
+      );
+    }
+  }
+
+  /*
    * **Y la tarjeta del destino, en lo más grande que puede ponerse.**
    *
    * En tierra la tarjeta dice «Pista» y nada más; volando a otro campo lleva
@@ -477,7 +594,16 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     const texto = document.querySelector('[data-hud="warning-text"]');
     const hint = document.querySelector('[data-hud="hint"]');
     const tutor = document.querySelector('[data-hud="tutor"]');
-    const cuadro = document.querySelector('[data-hud="tablero"]');
+    /*
+     * El cuadro que se ve: en el teléfono, las losas; el dibujo ahí está
+     * escondido y su caja vacía no pisaba nada nunca. Ver
+     * `ui/cuadro-telefono.ts`.
+     */
+    const losas = document.querySelector('[data-hud="cuadro-tel"]');
+    const cuadro =
+      losas && losas.getBoundingClientRect().height > 0
+        ? losas
+        : document.querySelector('[data-hud="tablero"]');
     if (!hud || !aviso || !texto || !hint || !tutor || !cuadro) return null;
     const alFrente = (el) => {
       const c = el.getBoundingClientRect();
@@ -663,6 +789,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       ? []
       : [
           '[data-hud="tablero"]',
+          '[data-hud="cuadro-tel"]',
           ".pad--stick",
           ".pad--rudder",
           ".pad--throttle",
@@ -874,6 +1001,69 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     "",
   );
   await page.close();
+}
+
+/*
+ * **La pantalla de inicio, de pie y en el portátil.** En un teléfono de pie el
+ * pie —Granja Óga, Hecho en Capiibary, Desarrollado por Oksigenia, Código
+ * fuente— quedaba pegado a la izquierda debajo de los idiomas, que van
+ * centrados; y el logotipo no contrastaba con el verde, también en el
+ * portátil. Se mira que cada línea del pie quede centrada y que el sello
+ * lleve su contorno claro.
+ */
+for (const [ancho, alto, dedo] of [
+  [412, 915, "dedo"],
+  [1280, 800],
+]) {
+  const page = await navegador.newPage({
+    viewport: { width: ancho, height: alto },
+    hasTouch: !!dedo,
+    isMobile: !!dedo,
+  });
+  const donde = `inicio ${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  try {
+    await page.goto(`${BASE}/`);
+    await page.waitForSelector(".pie", { timeout: 60000 });
+    await page.waitForTimeout(800);
+    const inicio = await page.evaluate(() => {
+      const pie = document.querySelector(".pie");
+      const hijos = [...pie.children].filter((e) => e.getBoundingClientRect().width > 2);
+      const lineas = new Map();
+      for (const e of hijos) {
+        const r = e.getBoundingClientRect();
+        const clave = Math.round(r.top / 8);
+        const l = lineas.get(clave) ?? { izq: Infinity, der: -Infinity };
+        l.izq = Math.min(l.izq, r.left);
+        l.der = Math.max(l.der, r.right);
+        lineas.set(clave, l);
+      }
+      const caja = pie.getBoundingClientRect();
+      const descentrado = [...lineas.values()].map((l) =>
+        Math.round(Math.abs(l.izq - caja.left - (caja.right - l.der))),
+      );
+      const sellos = [...document.querySelectorAll(".sello")]
+        .filter((e) => e.getBoundingClientRect().width > 2)
+        .map((e) => getComputedStyle(e).filter.includes("drop-shadow"));
+      return { descentrado, sellos };
+    });
+    if (dedo)
+      comprobar(
+        `${donde}: el pie va centrado`,
+        inicio.descentrado.every((d) => d <= 16),
+        `descentrado ${inicio.descentrado.join(", ")} px por línea`,
+        "debajo de los idiomas centrados, un pie a la izquierda no se mira con ellos",
+      );
+    comprobar(
+      `${donde}: el logotipo lleva su contorno claro`,
+      inicio.sellos.length > 0 && inicio.sellos.every(Boolean),
+      `${inicio.sellos.filter(Boolean).length} de ${inicio.sellos.length} sellos`,
+      "sus hojas son del mismo verde que el fondo: sin contorno no se ven",
+    );
+  } catch (e) {
+    comprobar(`${donde}: la pantalla de inicio sale`, false, String(e).slice(0, 120), "");
+  } finally {
+    await page.close();
+  }
 }
 
 for (const r of resultados) {

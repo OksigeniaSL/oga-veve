@@ -73,6 +73,15 @@ export interface Contexto {
    */
   readonly caidaMaxima?: number;
   /**
+   * Cuánto puede mirar hacia abajo el eje de la imagen como mucho, rad, para
+   * que **el horizonte se vea** con algo de cielo encima. Y `caidaTope`, lo
+   * más abajo que se deja al avión cuando por eso hay que levantar la vista.
+   * Los dos los calcula el juego con la franja libre del HUD; sin límite,
+   * `Infinity`. Ver `encuadrarSobreElCuadro`.
+   */
+  readonly bajadaMaxima?: number;
+  readonly caidaTope?: number;
+  /**
    * Los dos asientos de ventanilla, si el avión lleva pasaje y el modelo sus
    * ventanillas. Ver `world/asiento-de-pasaje.ts`.
    */

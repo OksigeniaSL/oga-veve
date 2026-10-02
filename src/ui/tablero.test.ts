@@ -18,19 +18,53 @@ import { AIRCRAFT, aircraftById } from "../flight/aircraft";
 import {
   ALTO_DEL_CUADRO,
   ANCHO_DEL_CUADRO,
+  BANDA,
+  corteDeArriba,
   familiaDe,
   VISERA,
+  VISERA_FINA,
 } from "./familia";
 
 const dibujo = (id: string) => new Tablero().markup(aircraftById(id));
 
 describe("el cuadro de cada avión", () => {
   it("lleva la caja de siempre, que es lo que lo mantiene centrado", () => {
+    /*
+     * La de siempre de ancho, en todos y en los cuatro peldaños; de alto, la
+     * entera si la visera lleva el MCP y recortada por arriba si no: el
+     * centro de lado a lado no se mueve nunca.
+     */
     for (const a of AIRCRAFT) {
-      expect(new Tablero().markup(a)).toContain(
-        `viewBox="0 0 ${ANCHO_DEL_CUADRO} ${ALTO_DEL_CUADRO}"`,
+      for (const p of [1, 2, 3, 4]) {
+        const corte = corteDeArriba(familiaDe(a), p);
+        expect(new Tablero().markup(a, p)).toContain(
+          `viewBox="0 ${corte} ${ANCHO_DEL_CUADRO} ${ALTO_DEL_CUADRO - corte}"`,
+        );
+      }
+    }
+  });
+
+  /*
+   * «Al abrir el panel podría verse mejor si hacemos el panel más bajo y más
+   * ancho.» La franja vacía de encima de los instrumentos era la visera sin
+   * nada que enseñar: en la avioneta no hay MCP y en Guyrami se esconde.
+   */
+  it("sin MCP que enseñar, la visera se queda fina y el cuadro, más apaisado", () => {
+    const avioneta = AIRCRAFT.find((a) => familiaDe(a) === "esferas")!;
+    const reactor = AIRCRAFT.find((a) => familiaDe(a) === "linea")!;
+    for (const p of [1, 2, 3, 4]) {
+      const t = new Tablero();
+      t.markup(avioneta, p);
+      expect(t.proporcion).toBeCloseTo(
+        ANCHO_DEL_CUADRO / (ALTO_DEL_CUADRO - BANDA.y + VISERA_FINA),
       );
     }
+    const enGuyrami = new Tablero();
+    expect(enGuyrami.markup(reactor, 1)).toContain('data-visera="fina"');
+    const conMcp = new Tablero();
+    expect(conMcp.markup(reactor, 3)).toContain('data-visera="mcp"');
+    expect(conMcp.proporcion).toBeCloseTo(ANCHO_DEL_CUADRO / ALTO_DEL_CUADRO);
+    expect(enGuyrami.proporcion).toBeGreaterThan(conMcp.proporcion * 1.1);
   });
 
   it("y la familia que le toca por el motor que lleva", () => {
@@ -170,6 +204,43 @@ describe("el panel de avisos cabe en la visera", () => {
     // `encendidas` las da por gravedad, así que las primeras son las graves.
     expect(huecosDeAviso(todas)).toHaveLength(4);
     expect(huecosDeAviso(todas).map((h) => h.id)).toEqual(todas.slice(0, 4));
+  });
+
+  it("y con la visera fina, las cuatro en fila dentro de ella", () => {
+    const corte = BANDA.y - VISERA_FINA;
+    const puestos = huecosDeAviso(todas, corte);
+    expect(puestos).toHaveLength(4);
+    for (const h of puestos) {
+      expect(h.y).toBeGreaterThanOrEqual(corte);
+      expect(h.y + 20).toBeLessThanOrEqual(BANDA.y);
+      expect(h.x + 96).toBeLessThanOrEqual(ANCHO_DEL_CUADRO - 8);
+    }
+  });
+});
+
+/*
+ * ── **Nunca un número solo** ──
+ *
+ * Una cifra sale desde el primer peldaño y su nombre desde el tercero, y en
+ * medio el EICAS de Guyrami enseñaba «2050» y «4044» sin decir de qué eran.
+ * La altura de la cabina se esconde con su rótulo, como la temperatura; los
+ * kilos del depósito llevan el surtidor donde irá FUEL.
+ */
+describe("ninguna cifra sin su rótulo o su dibujo", () => {
+  it("la altura de la cabina sale con CAB ALT, no antes", () => {
+    for (const a of AIRCRAFT) {
+      const m = /<text data-cristal="cabina"[^>]*>/.exec(new Tablero().markup(a));
+      if (m) expect(m[0]).toContain('data-desde="3"');
+    }
+  });
+
+  it("los kilos del depósito llevan el surtidor mientras FUEL no se lee", () => {
+    for (const a of AIRCRAFT) {
+      const marcado = new Tablero().markup(a);
+      const deposito = marcado.split('data-cristal="combustible"')[1];
+      if (!deposito) continue;
+      expect(deposito.slice(0, 1600)).toMatch(/data-hasta="2" class="cr__icono"/);
+    }
   });
 });
 
