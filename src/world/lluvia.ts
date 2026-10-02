@@ -20,10 +20,21 @@
  * inclinación **es** la sensación de velocidad con mal tiempo. Sin ella la
  * lluvia parece una cortina pintada delante.
  *
+ * ## Y va contra el avión
+ *
+ * «Estaba lloviendo y la lluvia iba hacia adelante en lugar de venir contra el
+ * avión; me parece que la mueves al contrario.» Así era: la caja va con la
+ * cámara y la gota está quieta en el aire, así que en la caja la gota tiene
+ * que moverse **al revés** de como se mueve la cámara, y se le sumaba. La raya
+ * apuntaba bien y la gota corría hacia delante con el avión, el doble de
+ * deprisa que él respecto al aire. Ahora la gota cae y se deja llevar por el
+ * viento, y la caja le resta lo que se ha movido la cámara: ver `paso`.
+ *
  * ## Lo que no hace
  *
- * No moja el parabrisas ni deja regueros. Eso es una capa de pantalla y va por
- * otro lado; aquí está el agua que cae.
+ * No moja el parabrisas: eso va en `world/gotas-en-el-parabrisas.ts`. Aquí
+ * está el agua que cae. Y no decide a qué altura llueve: se lo dice la capa de
+ * nubes, ver `lluviaALaAltura` en `world/capa-de-nubes.ts`.
  */
 
 import {
@@ -33,7 +44,6 @@ import {
   Group,
   LineBasicMaterial,
   LineSegments,
-  type Vector3,
 } from "three";
 import type { Lluvia } from "./meteo";
 
@@ -64,10 +74,13 @@ export const CAJA = 46;
  */
 export function envolver(y: number, alto = CAJA): number {
   const mitad = alto / 2;
-  let v = y;
-  while (v < -mitad) v += alto;
-  while (v > mitad) v -= alto;
-  return v;
+  if (y >= -mitad && y <= mitad) return y;
+  /*
+   * Con el resto y no a vueltas: al cambiar de vista la cámara salta decenas
+   * de metros en un fotograma, y un salto de diez kilómetros —la torre, un
+   * vecino— eran doscientas vueltas por gota.
+   */
+  return ((((y + mitad) % alto) + alto) % alto) - mitad;
 }
 
 /**
@@ -94,6 +107,36 @@ export function tocaRelampago(
   return azar() < porSegundo * dt;
 }
 
+/** Un vector de tres, sin pedir que sea de three. */
+interface Tres {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+/** Lo que necesita un fotograma de lluvia. */
+export interface PasoDeLluvia {
+  /** Dónde está la cámara ahora, en el mundo. */
+  readonly camara: Tres;
+  /**
+   * A qué velocidad va la cámara respecto al suelo, m/s. Es la del avión:
+   * todas las vistas van con él. Es lo que tumba la raya.
+   */
+  readonly velocidad: Tres;
+  /** El viento: a dónde va el aire, m/s. La gota va con él. */
+  readonly viento?: { readonly x: number; readonly z: number };
+  /**
+   * Cuánta de la lluvia del parte cae aquí, de 0 a 1: toda debajo de la
+   * capa, nada encima. Ver `lluviaALaAltura` en `world/capa-de-nubes.ts`.
+   */
+  readonly aqui?: number;
+  /**
+   * Un hueco sin gotas alrededor del ojo, m. Desde la cabina, lo que cae a
+   * un metro de los ojos cae dentro de la cabina.
+   */
+  readonly hueco?: number;
+}
+
 /** La lluvia montada, lista para colgar de la escena. */
 export interface LluviaEnElMundo {
   readonly grupo: Group;
@@ -103,12 +146,14 @@ export interface LluviaEnElMundo {
    * Un fotograma: mueve las gotas y devuelve **cuánto alumbra el relámpago**,
    * de cero a uno, para que lo use quien pinta el cielo.
    */
-  paso(dt: number, camara: Vector3, velocidad: Vector3): number;
+  paso(dt: number, p: PasoDeLluvia): number;
+  /** Cuántas rayas se pintan ahora. Para las pruebas y el banco. */
+  readonly pintadas: number;
   dispose(): void;
 }
 
 /** Lo que cae una gota en un segundo, m. Es la velocidad terminal de verdad. */
-const CAE = 9;
+export const CAE = 9;
 
 /**
  * Cuánto «obturador» lleva una raya de lluvia, s.
@@ -156,6 +201,10 @@ export function crearLluvia(): LluviaEnElMundo {
   let clase: Lluvia = "nada";
   let fuerza = 0;
   let cuantas = 0;
+  /** Las que se pintan ahora: las de la clase, por lo que cae aquí. */
+  let pintadas = 0;
+  /** Dónde estaba la cámara en el fotograma anterior. */
+  let antes: Tres | null = null;
   /** Lo que queda de fogonazo, en segundos. */
   let fogonazo = 0;
 
@@ -165,16 +214,40 @@ export function crearLluvia(): LluviaEnElMundo {
       clase = nueva;
       fuerza = cuanta;
       cuantas = Math.min(tope, cuantasGotas(clase, fuerza));
+      pintadas = cuantas;
       grupo.visible = cuantas > 0;
       geo.setDrawRange(0, cuantas * 2);
       mat.opacity = clase === "llovizna" ? 0.16 : 0.22 + 0.16 * fuerza;
     },
-    paso(dt, camara, velocidad) {
+    get pintadas() {
+      return grupo.visible ? pintadas : 0;
+    },
+    paso(dt, { camara, velocidad, viento, aqui = 1, hueco = 0 }) {
       if (fogonazo > 0) fogonazo = Math.max(0, fogonazo - dt);
+      /*
+       * Lo que se ha movido la cámara desde el fotograma anterior. Es lo que
+       * la caja le tiene que restar a cada gota: ver más abajo.
+       */
+      const mx = antes ? camara.x - antes.x : 0;
+      const my = antes ? camara.y - antes.y : 0;
+      const mz = antes ? camara.z - antes.z : 0;
+      antes = { x: camara.x, y: camara.y, z: camara.z };
+      /*
+       * **Y solo las que caen aquí.** Por encima del techo de la capa no
+       * cae nada —«sobre las nubes no llueve»—, y dentro va menguando. Las
+       * gotas se siguen moviendo todas, para que al volver a bajar no
+       * aparezcan de golpe en el mismo sitio en que se quedaron.
+       */
+      pintadas = Math.round(cuantas * Math.max(0, Math.min(1, aqui)));
+      grupo.visible = pintadas > 0;
+      geo.setDrawRange(0, pintadas * 2);
       if (cuantas === 0) return 0;
       if (tocaRelampago(clase, fuerza, dt, Math.random)) fogonazo = 0.18;
+      // Encima de las nubes el rayo se sigue viendo; las gotas, no hace falta
+      // ni moverlas: al volver a bajar están en cualquier sitio, como el agua.
+      if (pintadas === 0) return fogonazo > 0 ? fogonazo / 0.18 : 0;
 
-      grupo.position.copy(camara);
+      grupo.position.set(camara.x, camara.y, camara.z);
       /*
        * **La raya apunta a donde viene el agua, no a donde cae.**
        *
@@ -184,9 +257,11 @@ export function crearLluvia(): LluviaEnElMundo {
        * es una gota, es un cable— y se deja larga de todas formas, que es lo
        * que da la sensación.
        */
-      const vx = -velocidad.x;
-      const vy = -velocidad.y - CAE;
-      const vz = -velocidad.z;
+      const wx = viento?.x ?? 0;
+      const wz = viento?.z ?? 0;
+      const vx = wx - velocidad.x;
+      const vy = -CAE - velocidad.y;
+      const vz = wz - velocidad.z;
       /*
        * **Y la raya mide lo que mide de verdad: velocidad por exposición.**
        *
@@ -205,19 +280,35 @@ export function crearLluvia(): LluviaEnElMundo {
       const ey = vy * EXPOSICION;
       const ez = vz * EXPOSICION;
 
+      const hueco2 = hueco * hueco;
       for (let i = 0; i < cuantas; i++) {
-        // Caer y dejarse llevar: la gota se mueve en el mundo, y la caja con
-        // el avión, así que en coordenadas de la caja pasa lo contrario.
-        gy[i] = envolver(gy[i]! - CAE * dt + velocidad.y * dt);
-        gx[i] = envolver(gx[i]! + velocidad.x * dt);
-        gz[i] = envolver(gz[i]! + velocidad.z * dt);
+        /*
+         * **Caer y dejarse llevar, y la caja al revés.** La gota está en el
+         * aire: cae nueve metros por segundo y se la lleva el viento. La caja
+         * va con la cámara, así que en coordenadas de la caja a la gota se le
+         * **resta** lo que se ha movido la cámara. Aquí se sumaba, y la
+         * lluvia corría hacia delante con el avión.
+         *
+         * Con lo que se ha movido de verdad y no con la velocidad del avión:
+         * la cámara de persecución va detrás con su muelle, y al cambiar de
+         * vista salta; así la gota se queda quieta en el aire pase lo que
+         * pase con la cámara.
+         */
+        gy[i] = envolver(gy[i]! - CAE * dt - my);
+        gx[i] = envolver(gx[i]! + wx * dt - mx);
+        gz[i] = envolver(gz[i]! + wz * dt - mz);
         const k = i * 6;
-        posiciones[k] = gx[i]!;
-        posiciones[k + 1] = gy[i]!;
-        posiciones[k + 2] = gz[i]!;
-        posiciones[k + 3] = gx[i]! + ex;
-        posiciones[k + 4] = gy[i]! + ey;
-        posiciones[k + 5] = gz[i]! + ez;
+        const x = gx[i]!;
+        const y = gy[i]!;
+        const z = gz[i]!;
+        posiciones[k] = x;
+        posiciones[k + 1] = y;
+        posiciones[k + 2] = z;
+        // Dentro del hueco, la raya se queda en un punto y no se ve.
+        const fuera = x * x + y * y + z * z >= hueco2;
+        posiciones[k + 3] = fuera ? x + ex : x;
+        posiciones[k + 4] = fuera ? y + ey : y;
+        posiciones[k + 5] = fuera ? z + ez : z;
       }
       (geo.getAttribute("position") as BufferAttribute).needsUpdate = true;
       return fogonazo > 0 ? fogonazo / 0.18 : 0;

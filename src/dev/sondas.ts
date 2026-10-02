@@ -1260,6 +1260,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     ponerNubes: (techoM: number | null, tapadura = 0.9) =>
       juego.ponerTecho(techoM, tapadura),
+    /**
+     * La capa como cosa del mundo: base y techo en altitud y cuánto tapa, y
+     * cuánto está el ojo dentro de la nube ahora. Ver `world/capa-de-nubes.ts`.
+     */
+    capaDeNubes: () =>
+      juego.capaDeNubes && {
+        ...juego.capaDeNubes,
+        // Y el techo como lo da el parte, sobre el campo: lo que hay que
+        // devolverle a `ponerNubes` para volver a ponerla.
+        techoM: juego.techoDeNubes,
+        enLaNube: juego.sky.enLaNube,
+        niebla: juego.sky.fog.density,
+      },
+    /** Las rayas de lluvia, los jirones y las gotas del cristal de ahora. */
+    agua: () => juego.aguaParaBanco,
+    /** La ventanilla ALT a mano, en pies, para que el automático la guarde. */
+    ponerVentanillaAlt: (pies: number) => juego.ponerVentanillaAltParaBanco(pies),
     nubes: () => {
       const banco = juego.sky?.group.getObjectByName("nubes");
       if (!banco) return null;

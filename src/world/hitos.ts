@@ -28,6 +28,10 @@
  *   cuenta, no dónde está. Ver `world/lo-destacado.ts` y el ADR 0013.
  * - **Y se tiene que ver**: línea de vista desde el avión contra el relieve
  *   que el juego ya tiene, con la curvatura de la Tierra. Ver `seVe`.
+ * - **Y sin nubes en medio.** «No tiene sentido que Jazlyn diga que miren por
+ *   la ventanilla para ver las dunas de Maspalomas si hay nubes debajo: no se
+ *   vería nada.» La línea de vista mira también la capa del parte: si tapa
+ *   —BKN u OVC— y la línea la cruza, no se ve. Ver `laCapaTapa`.
  *
  * ## Y aquí solo está la geometría
  *
@@ -36,6 +40,8 @@
  * y vive en `flight/lo-que-se-ve.ts`. Separarlas es lo que permite comprobar
  * las dos sin volar.
  */
+
+import { type CapaDeNubes, TAPA_LA_VISTA } from "./capa-de-nubes";
 
 /**
  * Las clases que se reconocen desde el aire. Cada una tiene su dibujo.
@@ -209,6 +215,37 @@ export function seVe(
   return true;
 }
 
+/**
+ * **Si la capa de nubes tapa la línea de vista** entre dos puntos.
+ *
+ * Solo una capa que tapa —BKN u OVC, ver `TAPA_LA_VISTA`—: entre nubes
+ * sueltas el suelo se ve. Y tapa si la recta pasa por dentro de ella en algún
+ * punto: desde encima de la capa a un sitio que está debajo, desde debajo a
+ * una cumbre que asoma por encima, o desde dentro de la nube a cualquier
+ * cosa. El Teide asomando sobre el mar de nubes, visto desde encima, se ve.
+ *
+ * Con la curvatura, como `seVe`: la capa va a una altura sobre el mar y el
+ * mar se curva, así que la recta sube respecto a ella `s·(D−s)/2R` por el
+ * camino. Esa altura sobre la Tierra redonda es una parábola en el recorrido,
+ * y su punto más bajo se despeja: no hace falta recorrerla.
+ */
+export function laCapaTapa(
+  desde: { readonly x: number; readonly y: number; readonly z: number },
+  hasta: { readonly x: number; readonly y: number; readonly z: number },
+  capa: CapaDeNubes | null,
+): boolean {
+  if (!capa || capa.tapadura < TAPA_LA_VISTA) return false;
+  const d = Math.hypot(hasta.x - desde.x, hasta.z - desde.z);
+  const k = (d * d) / (2 * RADIO_PARA_MIRAR);
+  const sube = hasta.y - desde.y;
+  // La altura sobre la Tierra redonda a una fracción t del camino.
+  const h = (t: number): number => desde.y + sube * t - k * t * (1 - t);
+  const tMin = k > 0 ? Math.max(0, Math.min(1, (k - sube) / (2 * k))) : 0;
+  const masBajo = Math.min(h(0), h(1), h(tMin));
+  const masAlto = Math.max(h(0), h(1));
+  return masBajo <= capa.techo && masAlto >= capa.base;
+}
+
 /** Desde dónde se mira: dónde va el avión, a qué altura y hacia dónde. */
 export interface DesdeDonde {
   readonly x: number;
@@ -229,8 +266,9 @@ export interface DesdeDonde {
  * 2. **Lo que más merece**: el peso de cada uno, con la distancia en contra.
  *    Ver `VALE_UN_PESO`.
  * 3. **Que se vea**: la línea de vista contra el relieve, si se da el suelo
- *    y la altitud. Se mira por orden de mérito y se para en el primero que se
- *    ve, que así casi nunca hacen falta más de dos.
+ *    y la altitud, y contra la capa de nubes, si se da. Se mira por orden de
+ *    mérito y se para en el primero que se ve, que así casi nunca hacen falta
+ *    más de dos.
  *
  * `rumbo` en grados verdaderos, como en todo el juego.
  */
@@ -239,6 +277,7 @@ export function queSeVe(
   desde: DesdeDonde,
   yaDichos: ReadonlySet<string> = new Set(),
   suelo: ((x: number, z: number) => number | null) | null = null,
+  capa: CapaDeNubes | null = null,
 ): Mirada | null {
   interface Candidato {
     readonly mirada: Mirada;
@@ -278,13 +317,16 @@ export function queSeVe(
   }
   candidatos.sort((a, b) => b.merito - a.merito);
   for (const c of candidatos) {
-    if (!suelo || desde.y === undefined) return c.mirada;
+    if (desde.y === undefined || (!suelo && !capa)) return c.mirada;
     const ojo = { x: desde.x, y: desde.y, z: desde.z };
     // Con tres puntos basta: si ninguno de los tres más cerca se ve, el río
     // está detrás de una loma, y el cuarto no lo va a arreglar.
     for (const p of c.puntos.slice(0, 3)) {
-      const y = p.ele ?? (suelo(p.x, p.z) ?? 0) + POR_ENCIMA;
-      if (!seVe(ojo, { x: p.x, y, z: p.z }, suelo)) continue;
+      const y = p.ele ?? (suelo?.(p.x, p.z) ?? 0) + POR_ENCIMA;
+      const alli = { x: p.x, y, z: p.z };
+      if (suelo && !seVe(ojo, alli, suelo)) continue;
+      // Y la nube, que tapa igual que una loma. Ver `laCapaTapa`.
+      if (laCapaTapa(ojo, alli, capa)) continue;
       const rel = anguloRelativo(desde.rumbo, rumboHacia(p.x - desde.x, p.z - desde.z));
       return {
         hito: c.mirada.hito,

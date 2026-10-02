@@ -37,6 +37,11 @@
  *
  * Uso: `node scripts/verificar-rendimiento.mjs [escenario…]`
  *
+ * Y con `OGA_METAR="…"` mide con ese parte. Si trae capa de nubes, mide
+ * además **dentro de la nube**, a media capa sobre el campo: es donde se
+ * cierra la niebla, se apaga el cielo y pasan los jirones, el peor caso del
+ * tiempo. Ver `world/capa-de-nubes.ts`.
+ *
  * Y con `OGA_AVION=jaz-120` mide con ese avión, que es como se mide lo que
  * cuesta un avión: la librea de la casa se midió así, con el más grande.
  *
@@ -118,7 +123,10 @@ for (const escenario of ESCENARIOS) {
   const cdp = await page.context().newCDPSession(page);
   await page.goto(
     `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami` +
-      (process.env.OGA_AVION ? `&avion=${process.env.OGA_AVION}` : ""),
+      (process.env.OGA_AVION ? `&avion=${process.env.OGA_AVION}` : "") +
+      (process.env.OGA_METAR
+        ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
+        : ""),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 60000,
@@ -133,7 +141,15 @@ for (const escenario of ESCENARIOS) {
   const hayBandadas = await page.evaluate(
     () => typeof globalThis.__oga.mirarLaBandada === "function",
   );
-  for (const sitio of ["puesto", "aire", ...(hayBandadas ? ["bandada"] : [])]) {
+  const hayCapa = await page.evaluate(
+    () => !!globalThis.__oga.capaDeNubes?.(),
+  );
+  for (const sitio of [
+    "puesto",
+    "aire",
+    ...(hayCapa ? ["nube"] : []),
+    ...(hayBandadas ? ["bandada"] : []),
+  ]) {
     /*
      * **El peor caso de las aves**: la bandada que más aves lleva, de frente
      * y a su altura. Se vuelve a plantar el avión antes de cada medida,
@@ -142,6 +158,19 @@ for (const escenario of ESCENARIOS) {
     const aLaBandada = () =>
       page.evaluate(() => globalThis.__oga.mirarLaBandada(700, "mayor"));
     if (sitio === "bandada" && !(await aLaBandada())) continue;
+    if (sitio === "nube") {
+      // A media capa sobre el campo, con el automático guardando la altura.
+      await page.evaluate(() => {
+        const o = globalThis.__oga;
+        const c = o.capaDeNubes();
+        const r = o.pista();
+        const y = (c.base + c.techo) / 2;
+        o.colocar(r.x, y, r.z, 70, 0);
+        o.ponerVentanillaAlt?.(y / 0.3048);
+        o.pilotoAutomatico(true);
+      });
+      await page.waitForTimeout(1500);
+    }
     if (sitio === "aire") {
       // Sobre el aeródromo y a la altura del circuito, que es donde se ve
       // todo a la vez: el aeropuerto, el pueblo y el monte.

@@ -496,9 +496,20 @@ export class Audio {
    * por hora, el agua contra el morro suena como grava. La cuenta es la misma
    * que usa el viento, para que las dos crezcan juntas y no se peleen.
    */
-  ponerLluvia(clase: string, fuerza: number, velocidad: number): void {
+  ponerLluvia(
+    clase: string,
+    fuerza: number,
+    velocidad: number,
+    /**
+     * Cuánta de la lluvia del parte cae donde está el avión, de 0 a 1: encima
+     * de las nubes, nada. Ver `lluviaALaAltura` en `world/capa-de-nubes.ts`.
+     */
+    aqui = 1,
+  ): void {
     if (!this.rainGain || !this.rainBodyGain || !this.rainBody) return;
-    const cae = clase === "nada" ? 0 : clase === "llovizna" ? 0.35 : 1;
+    const cae =
+      (clase === "nada" ? 0 : clase === "llovizna" ? 0.35 : 1) *
+      Math.max(0, Math.min(1, aqui));
     const cuanta = cae * (0.35 + 0.65 * Math.max(0, Math.min(1, fuerza)));
     // Con el avión parado ya se oye; corriendo, el triple.
     const porVelocidad = 0.35 + 0.65 * Math.min(1, velocidad / 60);

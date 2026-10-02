@@ -136,6 +136,16 @@ import { ponerLaLuzDelDia } from "./world/luces-del-trafico";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
+import {
+  capaDelParte,
+  type CapaDeNubes,
+  lluviaALaAltura,
+} from "./world/capa-de-nubes";
+import { crearJirones, type JironesEnElMundo } from "./world/jirones";
+import {
+  crearGotasEnElParabrisas,
+  type GotasEnElParabrisas,
+} from "./world/gotas-en-el-parabrisas";
 import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
@@ -748,6 +758,7 @@ import {
 import {
   celdasDe,
   cuantoSacude,
+  ecoEn,
   laQueVieneDelante,
   seRodea,
   type Celda,
@@ -3399,6 +3410,19 @@ export class Game {
   techoDeNubes: number | null = null;
   /** El agua que cae, si cae. Ver `world/lluvia.ts`. */
   private lluvia!: LluviaEnElMundo;
+  /** La nube que pasa al atravesar la capa. Ver `world/jirones.ts`. */
+  private jirones!: JironesEnElMundo;
+  /** El agua en el cristal, desde la cabina. Ver `world/gotas-en-el-parabrisas.ts`. */
+  private gotas!: GotasEnElParabrisas;
+  /** Cuánto tapa la capa del parte. Ver `ponerTecho`. */
+  private tapaduraDeNubes = 0;
+  /**
+   * **La capa de nubes como cosa del mundo**: base y techo en altitud, y
+   * cuánto tapa. La miran la lluvia, que no cae por encima; la ventanilla, que
+   * no anuncia lo tapado, y el cielo, que la dibuja con su grosor. Ver
+   * `colocarLaCapa`.
+   */
+  capaDeNubes: CapaDeNubes | null = null;
   /**
    * La niebla que le toca a este sitio con buen tiempo.
    *
@@ -4338,6 +4362,12 @@ export class Game {
      */
     this.lluvia = crearLluvia();
     this.scene.add(this.lluvia.grupo);
+    // Y lo que pasa al atravesar la nube: los jirones y el cristal mojado.
+    // Ver `pasoDeLluvia`.
+    this.jirones = crearJirones();
+    this.scene.add(this.jirones.grupo);
+    this.gotas = crearGotasEnElParabrisas();
+    this.scene.add(this.gotas.grupo);
     this.nieblaDeCasa = this.sky.fog.density;
     /*
      * **Las cinco y media de la tarde**, y no el mediodía.
@@ -10118,6 +10148,8 @@ export class Game {
   ponerLluvia(clase: Lluvia, fuerza: number): void {
     this.lloviendo = { clase, fuerza };
     this.lluvia?.poner(clase, fuerza);
+    // Una nube que llueve es más gorda: ver `grosorDeLaCapa`.
+    this.colocarLaCapa();
     const espesa =
       clase === "nada"
         ? 0
@@ -10229,11 +10261,66 @@ export class Game {
    */
   private pasoDeLluvia(dt: number): void {
     if (!this.lluvia) return;
-    const alumbra = this.lluvia.paso(
-      dt,
-      this.camera.position,
-      this.flight.state.velocity,
-    );
+    const ojo = this.camera.position;
+    const viento = this.vientoAqui?.aire;
+    /*
+     * **Solo donde cae.** Debajo de la capa, toda la del parte; por encima
+     * del techo, nada —«sobre las nubes no llueve»—. Salvo dentro de un
+     * cumulonimbo, que es una torre: en tormenta, donde el radar pinta la
+     * célula llueve a cualquier altura. Ver `lluviaALaAltura`.
+     */
+    const aqui = (x: number, y: number, z: number): number =>
+      lluviaALaAltura(
+        y,
+        this.capaDeNubes,
+        this.lloviendo.clase === "tormenta" && ecoEn(this.celdas, x, z) >= 0.18,
+      );
+    const caeDondeElOjo = aqui(ojo.x, ojo.y, ojo.z);
+    const alumbra = this.lluvia.paso(dt, {
+      camara: ojo,
+      velocidad: this.flight.state.velocity,
+      ...(viento ? { viento } : {}),
+      aqui: caeDondeElOjo,
+      // Desde la cabina, lo que cae a dos metros y medio de los ojos cae
+      // dentro de la cabina: ahí no llueve.
+      hueco: this.cameraMode === "cockpit" ? 2.5 : 0,
+    });
+    /*
+     * **Y la nube que pasa.** Cerca de la capa —de doscientos metros por
+     * debajo de la base a doscientos por encima del techo— los jirones, que
+     * es lo que dice que se está atravesando. Ver `world/jirones.ts`.
+     */
+    const capa = this.capaDeNubes;
+    this.jirones.paso(dt, {
+      camara: ojo,
+      ...(viento ? { viento } : {}),
+      densidad: (x, y, z) => this.sky.densidadEn(x, y, z),
+      color: this.sky.colorDeLaNube,
+      cerca:
+        capa !== null && ojo.y > capa.base - 200 && ojo.y < capa.techo + 200,
+    });
+    /*
+     * **Y el cristal mojado, desde la cabina.** Lo moja la lluvia que cae
+     * aquí y la propia nube, que es agua: al atravesarla el parabrisas se
+     * llena de gotas aunque no llueva. Ver `world/gotas-en-el-parabrisas.ts`.
+     */
+    const s = this.flight.state;
+    const cuanta =
+      this.lloviendo.clase === "nada"
+        ? 0
+        : this.lloviendo.clase === "llovizna"
+          ? 0.35
+          : 0.55 + 0.45 * this.lloviendo.fuerza;
+    this.gotas.paso(dt, {
+      camara: this.camera,
+      mojado: Math.min(
+        1,
+        cuanta * aqui(s.position.x, s.position.y, s.position.z) +
+          0.6 * this.sky.enLaNube,
+      ),
+      velocidad: s.airspeed,
+      desdeDentro: this.cameraMode === "cockpit",
+    });
     if (alumbra > 0 || this.fogonazoAnterior > 0) {
       this.sky.ponerDeslumbre(1 + alumbra * 2.2);
       /*
@@ -10252,6 +10339,8 @@ export class Game {
       this.lloviendo.clase,
       this.lloviendo.fuerza,
       this.flight.state.airspeed,
+      // Y encima de las nubes no se oye llover, que tampoco llueve.
+      aqui(s.position.x, s.position.y, s.position.z),
     );
   }
 
@@ -10260,11 +10349,31 @@ export class Game {
 
   ponerTecho(techoM: number | null, tapadura: number): void {
     this.techoDeNubes = techoM;
+    this.tapaduraDeNubes = tapadura;
+    this.colocarLaCapa();
+  }
+
+  /**
+   * **La capa entera, con su grosor**: el cielo la dibuja, la lluvia sabe
+   * dónde deja de caer y la ventanilla qué tapa. Se rehace con el techo y con
+   * la lluvia, porque el grosor depende de si llueve: ver `grosorDeLaCapa`.
+   */
+  private colocarLaCapa(): void {
+    const capa = capaDelParte(
+      this.techoDeNubes === null
+        ? null
+        : (this.terrain?.runwayElevation ?? 0) + this.techoDeNubes,
+      this.tapaduraDeNubes,
+      this.lloviendo.clase,
+    );
+    this.capaDeNubes = capa;
+    this.ventanilla.ponerNubes(capa);
     if (!this.sky) return;
     ponerNubes(
       this.sky,
-      techoM === null ? null : this.terrain.runwayElevation + techoM,
-      tapadura,
+      capa?.base ?? null,
+      this.tapaduraDeNubes,
+      capa ? capa.techo - capa.base : undefined,
     );
   }
 
@@ -15756,6 +15865,27 @@ export class Game {
     const desde = this.ventanillaAlt ?? aLaVentanilla(this.altitudIndicada());
     this.ventanillaAlt = girarLaVentanilla(desde, pasos, topeDeLaVentanilla(this.aircraft));
     this.avisar("compensador");
+  }
+
+  /**
+   * La ventanilla ALT puesta a mano, en pies. Para el banco: plantar el avión
+   * a una altura y que el automático la guarde, sin girar la rueda a ciegas.
+   */
+  ponerVentanillaAltParaBanco(pies: number): void {
+    if (!this.llevaVentanillaAlt) return;
+    this.ventanillaAlt = Math.min(
+      Math.round(pies / 100) * 100,
+      topeDeLaVentanilla(this.aircraft),
+    );
+  }
+
+  /** Cuánto llueve, hay de jirones y de agua en el cristal ahora. Para el banco. */
+  get aguaParaBanco(): { rayas: number; jirones: number; gotas: number } {
+    return {
+      rayas: this.lluvia?.pintadas ?? 0,
+      jirones: this.jirones?.vistos ?? 0,
+      gotas: this.gotas?.enElCristal ?? 0,
+    };
   }
 
   /** Lo que el cuadro y las pantallas enseñan de la ventanilla. */
