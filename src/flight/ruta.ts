@@ -1683,8 +1683,20 @@ export class Seguimiento {
    * se captura la senda desde abajo.
    */
   enElTramoFinal(l: Lectura): boolean {
+    return this.yaBajando && this.enLaFinal(l);
+  }
+
+  /**
+   * **Si se está en la final, se haya empezado a bajar por el plan o no.**
+   *
+   * `enElTramoFinal` pide además el punto de descenso, y en una vuelta al
+   * campo no lo hay: se vuela por debajo de `DESNIVEL_QUE_CUENTA`. Lo que no
+   * depende de la senda —que la ventanilla no diga «subí» encima de quien baja
+   * a la pista— se mira aquí.
+   */
+  enLaFinal(l: Lectura): boolean {
     const r = this.ruta;
-    if (!r || !this.yaBajando || l.enTierra) return false;
+    if (!r || l.enTierra) return false;
     const falta = restante(r, this.activo, l.x, l.z);
     const faf = r.fijos.findIndex((f) => f.papel === "faf");
     const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;

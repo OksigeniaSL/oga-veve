@@ -342,6 +342,23 @@ describe("Seguimiento", () => {
     expect(s.bajando).toBe(true);
   });
 
+  it("en una vuelta al campo no hay T/D, pero la final se sabe igual", () => {
+    // Mil pies sobre el umbral: por debajo de lo que cuenta como bajada, así
+    // que el punto de descenso no llega nunca. La ventanilla tiene que saber
+    // de la final igualmente: ver `bajarLaVentanillaEnLaFinal` en game.ts.
+    const s = new Seguimiento();
+    s.poner(r, 1000 * PIE);
+    for (const este of [20, 40, 50]) {
+      s.paso(lectura(este, 1000));
+      expect(s.enLaFinal(lectura(este, 1000)), `milla ${este}`).toBe(false);
+    }
+    s.paso(lectura(57, 900));
+    expect(s.bajando).toBe(false);
+    expect(s.enElTramoFinal(lectura(57, 900))).toBe(false);
+    expect(s.enLaFinal(lectura(57, 900))).toBe(true);
+    expect(s.enLaFinal({ ...lectura(57, 900), enTierra: true })).toBe(false);
+  });
+
   it("subiendo, cuenta con el crucero planeado y no con la altura de ahora", () => {
     const s = new Seguimiento();
     s.poner(r, 9000 * PIE);

@@ -16175,6 +16175,8 @@ export class Game {
   private nivelada: { memoria: Memoria; nivel: number } | null = null;
   /** Si en esta aproximación ya se puso la frustrada en la ventanilla. */
   private frustradaEnLaVentanilla = false;
+  /** Y si ya se bajó a la del punto de final. Ver `bajarLaVentanillaEnLaFinal`. */
+  private finalEnLaVentanilla = false;
   /** Qué se le ha dicho a la torre del combustible. Ver `vigilarElCombustible`. */
   private llamadaDicha: LlamadaDeCombustible = "nada";
 
@@ -16357,8 +16359,10 @@ export class Game {
     const plan = this.navegacion.plan;
     if (s.onGround && plan && this.subidaPreparada !== plan)
       this.prepararLaSubida(plan, this.elCampo(this.salidaId));
-    const enElTramoFinal = this.navegacion.enElTramoFinal(this.lecturaDeRuta());
-    this.ponerLaFrustradaEnLaVentanilla(enElTramoFinal);
+    const lectura = this.lecturaDeRuta();
+    const enLaFinal = this.navegacion.enLaFinal(lectura);
+    this.bajarLaVentanillaEnLaFinal(enLaFinal);
+    this.ponerLaFrustradaEnLaVentanilla(this.navegacion.enElTramoFinal(lectura));
     const pies = this.altitudIndicada() / PIE_EN_METROS;
     const escalon = this.autorizacionDeSubida.paso({
       pies,
@@ -16377,7 +16381,7 @@ export class Game {
       s.onGround ||
       this.input.controls.tren > 0.5 ||
       this.faseDeAhora === "final" ||
-      enElTramoFinal;
+      enLaFinal;
     const paso = this.avisadorDeAltitud.paso(pies, callado ? null : this.ventanillaEnPies());
     this.alertaDeAltitud = paso.alerta;
     if (paso.tono) this.sonarElAvisador(paso.alerta);
@@ -16505,6 +16509,30 @@ export class Game {
     const indicada = alli + alturaIndicada(0, this.qnhPuesta, this.qnhDelSitio);
     const pies = Math.ceil(indicada / PIE_EN_METROS / 100) * 100;
     if (this.ventanillaAlt === null || pies < this.ventanillaAlt) this.ventanillaAlt = pies;
+  }
+
+  /**
+   * **En la final, la ventanilla no por encima del punto de final**, aunque
+   * nadie la bajara antes.
+   *
+   * Lo normal es que la baje `ponerLaVentanillaParaBajar` en el T/D del plan.
+   * Pero en una vuelta al campo no hay T/D —se vuela por debajo de lo que
+   * cuenta como bajada—, ni lo hay para quien empezó a bajar por su cuenta: la
+   * ventanilla seguía en el crucero planeado, y el banco vio un 6.000 en
+   * magenta en la final de Los Rodeos con el avión a trescientos metros. Es el
+   * mismo «subí» encima de quien baja a la pista que vio Enrique en Gando.
+   *
+   * Una vez por aproximación, y solo hacia abajo: quien gire la rueda en la
+   * final no ve que se le deshace.
+   */
+  private bajarLaVentanillaEnLaFinal(enLaFinal: boolean): void {
+    if (!enLaFinal) {
+      this.finalEnLaVentanilla = false;
+      return;
+    }
+    if (this.finalEnLaVentanilla) return;
+    this.finalEnLaVentanilla = true;
+    this.ponerLaVentanillaParaBajar();
   }
 
   /**
