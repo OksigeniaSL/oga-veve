@@ -39,8 +39,11 @@ describe("las formas de una frase", () => {
       const formas = cuantasFormas(clave);
       for (let n = 0; n < formas; n++) {
         const f = unaForma(clave, () => (n + 0.5) / formas);
-        expect(f.id).toBe(idDeLaForma(clave, n));
-        expect(f.texto).toBe(n === 0 ? t(clave) : VARIANTES[clave]![n - 1]);
+        // La forma que salga —con las retiradas fuera, el sorteo no casa con
+        // `n`—, su texto y su fichero son siempre de la misma.
+        const k = f.id === clave ? 0 : Number(f.id.split("~")[1]) - 1;
+        expect(f.id).toBe(idDeLaForma(clave, k));
+        expect(f.texto).toBe(k === 0 ? t(clave) : VARIANTES[clave]![k - 1]);
       }
     }
   });
@@ -67,5 +70,16 @@ describe("las formas de una frase", () => {
       expect(clave.startsWith("cabina.")).toBe(false);
       expect(clave.startsWith("torre.")).toBe(false);
     }
+  });
+
+  it("las retiradas no salen nunca, y las demás siguen con su número", async () => {
+    const { unaForma, RETIRADAS } = await import("./variantes");
+    const clave = "comandante.llegada.tenerife-sur" as const;
+    const vistas = new Set<string>();
+    for (let i = 0; i < 400; i++) vistas.add(unaForma(clave, () => (i + 0.5) / 400).id);
+    for (const r of RETIRADAS) expect(vistas.has(r)).toBe(false);
+    expect(vistas.has(clave)).toBe(true);
+    expect(vistas.has(`${clave}~3`)).toBe(true);
+    expect(vistas.has(`${clave}~5`)).toBe(true);
   });
 });

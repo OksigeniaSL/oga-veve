@@ -288,6 +288,25 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
 };
 
 /**
+ * **Formas retiradas del sorteo**, por su identificador de grabación.
+ *
+ * Una variante que deja de valer no se puede borrar de la lista sin más: las
+ * grabaciones se llaman por su número (`<clave>~2`, `~3`…), y quitar una corre
+ * a todas las de detrás, que sonarían con el texto de otra. Así que se queda
+ * en su sitio, sin salir, hasta que se escriba la que la sustituye y se grabe.
+ *
+ * - `comandante.llegada.tenerife-sur~2`: «se abrió porque el del norte se
+ *   llenaba de nubes». Enrique, que es de allí, no comparte ese relato y
+ *   prefiere que Jazlyn cuente otras cosas del sur.
+ * - `comandante.llegada.tenerife-norte~4`: «el del sur es el hermano
+ *   pequeño». Falso: Tenerife Sur mueve bastantes más pasajeros.
+ */
+export const RETIRADAS: ReadonlySet<string> = new Set([
+  "comandante.llegada.tenerife-sur~2",
+  "comandante.llegada.tenerife-norte~4",
+]);
+
+/**
  * Cuántas formas tiene una frase, contando la de `i18n`.
  *
  * Lo usa el guion que arma la lista de grabación.
@@ -350,7 +369,11 @@ export function unaForma(
       : texto;
   const otras = VARIANTES[clave];
   if (!otras?.length) return { texto: t(clave, valores), id: clave };
-  const n = Math.min(otras.length, Math.floor(azar() * (otras.length + 1)));
+  // Las que valen, por su número; las retiradas se quedan fuera del sorteo.
+  const validas = Array.from({ length: otras.length + 1 }, (_, k) => k).filter(
+    (k) => !RETIRADAS.has(idDeLaForma(clave, k)),
+  );
+  const n = validas[Math.min(validas.length - 1, Math.floor(azar() * validas.length))] ?? 0;
   return {
     texto: n === 0 ? t(clave, valores) : rellenar(otras[n - 1]!),
     id: idDeLaForma(clave, n),
