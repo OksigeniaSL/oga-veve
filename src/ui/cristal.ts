@@ -26,6 +26,7 @@
  * también es información.
  */
 
+import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import type { AircraftConfig } from "../flight/aircraft";
 import { PALETA } from "./paleta";
 import { QUIETA_LA_ALTITUD, marcasDeCinta, rodillo } from "./cinta";
@@ -905,7 +906,7 @@ export const ANCHO_DEL_RODAJE = 132;
 export const ALTO_DEL_RODAJE = 60;
 
 /** Desde qué peldaño lleva la GS su cifra. Ver `flight/escalera.ts`. */
-const CIFRA_DE_RODAJE_DESDE = 3;
+const CIFRA_DE_RODAJE_DESDE = CIFRAS_DE_AVISO_DESDE;
 
 export function rodajeEnTierra(
   x: number,

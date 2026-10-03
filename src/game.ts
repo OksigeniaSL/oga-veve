@@ -12547,6 +12547,8 @@ export class Game {
         minimos: this.losMinimosPuestos(),
         // Y la senda, la marca del ritmo y el arco: los del cuadro plano.
         perfil: this.perfilParaElCuadro(),
+        // Y en tierra, la GS de rodar: la del cuadro plano.
+        rodaje: this.rodajeParaElCuadro(),
       },
       dt,
     );
@@ -15660,7 +15662,8 @@ export class Game {
         const yaDichoEnLaPista = enLaPista !== null && !enLaPista.dice;
         if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista)
           this.instructor.decir(frase, clave);
-        if (conLetras) {
+        // Y el rótulo grande tampoco: la tarjeta, que se queda, ya lo dice.
+        if (conLetras && !yaDichoEnLaPista) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")

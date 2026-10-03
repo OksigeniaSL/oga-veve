@@ -29,6 +29,7 @@
  * lo mismo y recortado.
  */
 
+import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import {
   Box3,
   CanvasTexture,
@@ -226,6 +227,16 @@ export interface DatosDeCabina {
   readonly sobreElTerreno: number;
   /** Velocidad respecto al suelo, m/s. Dato auxiliar: va en cian. */
   readonly sobreElSuelo: number;
+  /**
+   * **En tierra, rodando**: la GS en nudos, el fondo de su barra y si se va
+   * rápido para lo que viene. La misma que el cuadro plano. Ver
+   * `rodajeEnTierra` en `ui/cristal.ts`.
+   */
+  readonly rodaje?: {
+    readonly nudos: number;
+    readonly escala: number;
+    readonly rapido: boolean;
+  } | null;
   /**
    * El número de Mach, o `null` si este avión no lo enseña.
    *
@@ -1627,6 +1638,46 @@ function medirLoQueTarda(d: DatosDeCabina, dt: number): void {
 }
 
 /**
+ * **La GS de rodar, en el lienzo**: un recuadro oscuro, la cifra verde o ámbar
+ * desde el tercer peldaño y debajo su barra, que se llena con la velocidad.
+ * Ver `rodajeEnTierra` en `ui/cristal.ts`, que es lo mismo en el cuadro plano.
+ */
+function pintarRodaje(
+  g: CanvasRenderingContext2D,
+  r: NonNullable<DatosDeCabina["rodaje"]>,
+  x: number,
+  y: number,
+): void {
+  const ancho = 150;
+  const alto = 68;
+  const color = r.rapido ? PALETA.precaucion : PALETA.normal;
+  g.fillStyle = "#05070a";
+  g.fillRect(x, y, ancho, alto);
+  g.strokeStyle = PALETA.filo;
+  g.lineWidth = 2;
+  g.strokeRect(x + 1, y + 1, ancho - 2, alto - 2);
+  escribir(g, "GS", x + 12, y + 20, "500 13px " + FUENTE, TENUE, "left");
+  // La cifra, desde el peldaño de los números: abajo manda el dibujo.
+  if (peldanoDeAhora >= CIFRAS_DE_AVISO_DESDE)
+    escribir(
+      g,
+      String(Math.max(0, Math.round(r.nudos))),
+      x + ancho - 12,
+      y + 22,
+      "600 30px " + FUENTE,
+      color,
+      "right",
+    );
+  const bx = x + 12;
+  const by = y + alto - 22;
+  const bw = ancho - 24;
+  g.fillStyle = PALETA.filo;
+  g.fillRect(bx, by, bw, 12);
+  g.fillStyle = color;
+  g.fillRect(bx, by, bw * Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala))), 12);
+}
+
+/**
  * La pantalla de navegación: la rosa entera, y el avión en el centro.
  *
  * Gira la carta, no el avión: lo que se mueve es el mundo. Es la forma de leer
@@ -1701,15 +1752,23 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     TINTA,
   );
   escribir(g, "HDG", cx, 48, "500 11px " + FUENTE, TENUE);
-  escribir(
-    g,
-    `GS ${Math.round(d.sobreElSuelo * NUDOS)}`,
-    izquierda + 12,
-    22,
-    "500 15px " + FUENTE,
-    PALETA.auxiliar,
-    "left",
-  );
+  /*
+   * **Y en tierra, la GS grande y con su color**, en el mismo sitio y con las
+   * mismas reglas que en el cuadro plano: la barra en los cuatro peldaños y la
+   * cifra con su «GS» desde el tercero. En el aire, la pequeña de apoyo. Ver
+   * `rodajeEnTierra` en `ui/cristal.ts`.
+   */
+  if (d.rodaje) pintarRodaje(g, d.rodaje, izquierda + 8, 8);
+  else
+    escribir(
+      g,
+      `GS ${Math.round(d.sobreElSuelo * NUDOS)}`,
+      izquierda + 12,
+      22,
+      "500 15px " + FUENTE,
+      PALETA.auxiliar,
+      "left",
+    );
   /*
    * **Y adónde vas, que es de lo que va esta pantalla.**
    *

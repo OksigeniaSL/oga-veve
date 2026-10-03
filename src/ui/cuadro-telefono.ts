@@ -30,6 +30,7 @@
  * ámbar cerca del límite.
  */
 
+import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import type { AircraftConfig } from "../flight/aircraft";
 import { luzDeTren } from "../flight/tren";
 import { enLaMuesca } from "../flight/flaps";
@@ -138,7 +139,7 @@ export class CuadroDelTelefono {
           <span data-tel-tierra>${rotulo("GS")}</span>
           <span class="tel__cifra" data-tel="ias" data-tel-vuelo>0</span>
           <span class="tel__cifra tel__cifra--rodaje" data-tel="gs" data-tel-tierra
-                data-desde="${LETRAS_DESDE}">0</span>
+                data-desde="${CIFRAS_DE_AVISO_DESDE}">0</span>
           <svg class="tel__banda" viewBox="0 0 100 10" preserveAspectRatio="none"
                aria-hidden="true" data-tel-vuelo>
             <rect width="100" height="10" rx="2" class="tel__fondo-banda" />

@@ -2285,6 +2285,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     rodaje: () => juego.vistaActual?.velocidadSugerida ?? 0,
     /**
+     * Y lo que se tarda en rodar la ruta de ahora siguiendo esa velocidad,
+     * s. Ver `segundosDeLaRuta` en el plan.
+     */
+    segundosDeLaRuta: () => juego.plan?.segundosDeLaRuta ?? 0,
+    /**
      * **Detrás de quién se rueda**: `cola` si es uno que va a despegar por tu
      * pista, `otro` si es un parado que no, `null` si nadie. El banco descuenta
      * del rodaje de ida el rato parado detrás de uno de tu cola, que es tráfico

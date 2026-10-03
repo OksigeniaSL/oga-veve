@@ -2334,6 +2334,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /** Y lo mismo a la ida: lo rodado y lo trazado. Ver «el rodaje de ida». */
   let idaMetros = 0;
   let largoDeLaIda = 0;
+  /** Y lo que tarda esa ida rodada como pide el juego, s. Ver «el rodaje de ida». */
+  let idaComoPideElJuego = 0;
   let antesIda = null;
   /**
    * Las puertas distintas que se asignaron durante una misma llegada.
@@ -4414,6 +4416,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         for (let i = 0; i < r.length - 1; i++)
           suma += Math.hypot(r[i + 1][0] - r[i][0], r[i + 1][1] - r[i][1]);
         largoDeLaIda = Math.max(largoDeLaIda, suma);
+        idaComoPideElJuego = Math.max(idaComoPideElJuego, o.segundosDeLaRuta?.() ?? 0);
       }
       // La velocidad la pide el juego, y al final de la ruta pide cero: el
       // avión se para solo encima de la raya. Ver `calcularVelocidades`.
@@ -5840,6 +5843,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     idaEnCola: +paradoEnLaCola.toFixed(0),
     idaMetros: Math.round(idaMetros),
     largoDeLaIda: Math.round(largoDeLaIda),
+    idaComoPideElJuego: Math.round(idaComoPideElJuego),
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
     despego: +despego.toFixed(0),
     toco: +toco.toFixed(0),
@@ -6943,8 +6947,23 @@ if (vuelo.enBici) {
  * ver `flight/velocidades-en-tierra.ts`.
  */
 const RODAJE_EN_RECTA = vuelo.avion?.rodaje?.recta ?? 9;
+/*
+ * **Y con las curvas que tiene, no con un tercio para todas.** Con el viraje a
+ * diez nudos, como pide el manual, una calle de Pettirossi con treinta y siete
+ * puntos de curva en cuatrocientos ochenta metros no se rueda en el tercio de
+ * más que se le daba: rodada como pide el juego, sin perder un segundo, son
+ * setenta y cuatro. Así que el tope es lo que tarda esa ruta a lo que pide el
+ * juego —ver `segundosDeLaRuta`— con un cuarto de holgura para quien la rueda
+ * con las manos, más los veinte de arrancar y pararse; o la cuenta de antes, si
+ * da más. Lo que esto caza sigue siendo lo que aburre: un plan que pide ir
+ * despacio sin motivo, o un rodaje que se atasca.
+ */
 const topeDeIda = Math.round(
-  Math.max(90, (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20),
+  Math.max(
+    90,
+    (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20,
+    (vuelo.idaComoPideElJuego ?? 0) * 1.25 + 20,
+  ),
 );
 /*
  * **Y el rato parado detrás de uno de tu cola no es rodaje: se descuenta.**
@@ -7507,6 +7526,25 @@ comprobarSiVolo(
             : "")
       : `${cuenta.size} frases distintas, ninguna más de ${MAS_DE_LA_CUENTA} veces`,
     "«me dice que meta el tren, luego que lo saque, luego que lo vuelva a meter, joder»",
+  );
+  /*
+   * **Y en la pista, una vez cada cosa por toma.** «Salí de la pista, que
+   * viene otro, una y otra vez: es una pesada.» Lo de arriba deja pasar hasta
+   * cuatro; aquí, con una toma por vuelo, «frená» y «salí de la pista» se
+   * dicen una vez como mucho. Ver `flight/lo-dicho-en-la-pista.ts`.
+   */
+  const deLaPista = dichas.filter(
+    (c) => c === "vuelo.aterrizado" || String(c).startsWith("vuelo.abandonando"),
+  );
+  const porClave = new Map();
+  for (const c of deLaPista) porClave.set(c, (porClave.get(c) ?? 0) + 1);
+  comprobarSiVolo(
+    "y en la pista, «frená» y «salí de la pista» una vez por toma",
+    [...porClave.values()].every((n) => n <= 1),
+    porClave.size
+      ? [...porClave].map(([c, n]) => `${c} ×${n}`).join(", ")
+      : "ninguna de las dos",
+    "«salí de la pista, que viene otro, una y otra vez: es una pesada»",
   );
 }
 

@@ -37,6 +37,7 @@ import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
   DE_TRANSPORTE,
   RECTA_LARGA,
+  esDeLinea,
   velocidadDeLaSalida,
   velocidadesEnTierra,
   type VelocidadesEnTierra,
@@ -1651,6 +1652,7 @@ export class PlanDeVuelo {
     this.raquetaGuardada = undefined;
     this.bocasPermitidasGuardadas = null;
     this.candidatosGuardados = null;
+    this.deLineaGuardados = null;
     this.puestoElegido = null;
     this.puerta.olvidar();
     this.destino = null;
@@ -1941,7 +1943,7 @@ export class PlanDeVuelo {
     enFirme: boolean,
   ): { ref: string | null; xy: Punto } | null {
     return this.puerta.pedir(enFirme, () => {
-      const puestos = this.puestosCandidatos();
+      const puestos = this.puestosParaLlegar();
       if (!puestos.length) return null;
       let mejor: { ref: string | null; xy: Punto } | null = null;
       let corto = Infinity;
@@ -2018,6 +2020,42 @@ export class PlanDeVuelo {
 
   /** Ver `puestosCandidatos`. Se tira al mudarse de campo. */
   private candidatosGuardados: { ref: string | null; xy: Punto }[] | null = null;
+
+  /**
+   * **Y un avión de línea llega a un puesto de avión de línea.**
+   *
+   * El tercio más alejado de los edificios —`puestosCandidatos`— es la regla
+   * de la avioneta: «que me suba a la chepa del Iberia»; donde hay aviación
+   * general, se va a ella. Y se aplicaba a los seis, así que el JAZ 120
+   * llegaba a Tenerife Sur y rodaba hasta la punta oeste, a la plataforma de
+   * las avionetas: dos kilómetros y medio de calle. «Un niño, a esta
+   * velocidad, para llegar hasta allá, se muere del aburrimiento.» Y no es lo
+   * que pasa: a un avión de pasaje se le da un puesto de los suyos.
+   *
+   * Así que el de línea llega a cualquier puesto donde quepa —con sus alas y
+   * su margen lejos de toda pared, que es lo que lo protege del edificio de
+   * al lado— y, de esos, `puestoDeLlegada` coge el más cercano rodando. **Solo
+   * al llegar**: el puesto de salida es el de siempre, que quien juega se
+   * aprende, y cambiarlo cambia la ida entera. Si en un campo no cabe en
+   * ninguno, los de siempre.
+   */
+  private puestosParaLlegar(): { ref: string | null; xy: Punto }[] {
+    if (!esDeLinea(this.avion)) return this.puestosCandidatos();
+    if (this.deLineaGuardados) return this.deLineaGuardados;
+    const holgura = this.avion.wingSpan / 2 + MARGEN_ENTRE_ALAS;
+    const caben = this.puestosEnElAsfalto().filter((p) => {
+      for (const e of this.aero.buildings ?? []) {
+        if (e.polygon.length < 2) continue;
+        if (aLaPolilinea(p.xy, [...e.polygon, e.polygon[0]!]) < holgura) return false;
+      }
+      return true;
+    });
+    this.deLineaGuardados = caben.length ? caben : this.puestosCandidatos();
+    return this.deLineaGuardados;
+  }
+
+  /** Ver `puestosParaLlegar`. Se tira al mudarse de campo. */
+  private deLineaGuardados: { ref: string | null; xy: Punto }[] | null = null;
 
   /**
    * El par puesto + punto de espera con el que menos se rueda.
@@ -5638,6 +5676,25 @@ export class PlanDeVuelo {
 
   /** Los metros de ruta recorridos hasta cada punto. Ver `velocidadAqui`. */
   private recorridos: number[] = [];
+
+  /**
+   * **Lo que se tarda en rodar la ruta entera a lo que pide el juego**, s:
+   * cada tramo a la velocidad de su perfil, con sus curvas y su parada. Es la
+   * cuenta del rodaje bien hecho, la de quien sigue la raya sin perder un
+   * segundo; lo mira el banco para saber si un rodaje aburre por lento o por
+   * largo. Ver «el rodaje de ida no aburre» en `verificar-vuelo-entero`.
+   */
+  get segundosDeLaRuta(): number {
+    const v = this.velocidades;
+    const r = this.recorridos;
+    let t = 0;
+    for (let i = 1; i < v.length && i < r.length; i++) {
+      const tramo = r[i]! - r[i - 1]!;
+      // Arrancando y parando el perfil vale cero; a paso de persona, no menos.
+      t += tramo / Math.max(1, (v[i]! + v[i - 1]!) / 2);
+    }
+    return t;
+  }
 
   /**
    * La velocidad que toca donde va el avión ahora, m/s.

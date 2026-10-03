@@ -128,6 +128,16 @@ export function velocidadesEnTierra(a: ClaseEnTierra): VelocidadesEnTierra {
 }
 
 /**
+ * **Si es un avión de línea**: de turbina, con su tripulación y su pasaje. Es
+ * el que rueda con las reglas del manual de Boeing y el que va a un puesto de
+ * la terminal, no a la plataforma de las avionetas. Ver `puestosCandidatos`
+ * en el plan de vuelo.
+ */
+export function esDeLinea(a: ClaseEnTierra): boolean {
+  return a.sound.engine === "turbofan" || a.sound.engine === "turboprop";
+}
+
+/**
  * **A qué velocidad se toma una salida** que se aparta `giro` grados del eje
  * de la pista, m/s: la rápida, a la suya; la que sale en ángulo, a la de
  * viraje.
