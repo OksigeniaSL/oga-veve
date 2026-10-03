@@ -236,7 +236,8 @@ export const SENDA_MAS_BAJA = -15 * RAD;
  *
  * Medio grado de trayectoria, que a cien nudos son cien pies por minuto: el
  * clic de la rueda de velocidad vertical de un automático. Y tres grados de
- * inclinación, una corrección pequeña de rumbo.
+ * inclinación, una corrección pequeña de rumbo; en la final, la mitad —ver
+ * `MENOS_EN_LA_FINAL`—.
  *
  * **Y los toques se suman.** Cada golpe partía de donde estuviera la consigna
  * en ese momento, y lo que le faltaba al golpe anterior se perdía: a golpes,
@@ -247,6 +248,77 @@ export const SENDA_MAS_BAJA = -15 * RAD;
  */
 export const TOQUE_DE_SENDA = 0.5 * RAD;
 export const TOQUE_DE_ALABEO = 3 * RAD;
+
+/**
+ * **Y en la final, la mitad**: con los flaps abajo del todo y cerca de las
+ * alas niveladas, el toque de alabeo se queda en la mitad —grado y medio—, y
+ * con los flaps a medias, en medio. Ver `toqueDeAlabeo` e `imanDeAlabeo`.
+ *
+ * Enrique, con el JAZ 120 en la final, flaps a tope y tren fuera: «para
+ * moverlo derecha izquierda (fino) e ir estabilizando, tienes que verme dando
+ * dedazos a las flechas de los nervios. Es como llevar un cochito loco». Tres
+ * grados por toque es una corrección pequeña en crucero, y en la final es
+ * demasiado: a 146 nudos, tres grados de inclinación giran el JAZ 120 cuatro
+ * décimas de grado por segundo, y en cuanto se quiere menos —meterse en el eje
+ * desde treinta metros pide uno o dos grados unos segundos— no hay toque que
+ * lo dé: o tres, o nada. Medido con un piloto que intenta meterse en el eje a
+ * toques, con tres décimas de reacción y un toque cada segundo largo: con tres
+ * grados por toque, el JAZ 120 en Taguató y el JAZ 90 en Tukã no llegaban a
+ * quedarse en el eje en un minuto; con grado y medio, se quedan en quince
+ * segundos, y ninguno se pasa al otro lado más de una vez. Ver
+ * `final-fina.test.ts`.
+ *
+ * Lo real: en la final **se corrige con inclinaciones pequeñas y las alas casi
+ * niveladas**. Una aproximación estabilizada es la que «solo necesita cambios
+ * pequeños de rumbo y de cabeceo para seguir la trayectoria» (Flight Safety
+ * Foundation, ALAR, nota 7.1), y el manual de vuelo de la FAA enseña la final
+ * igual: alineado con el eje, corrigiendo poco y pronto (FAA-H-8083-3C,
+ * capítulo 9). Los flaps abajo son la señal de que se está ahí: es la
+ * configuración de aterrizar.
+ */
+export const MENOS_EN_LA_FINAL = 0.5;
+
+/**
+ * **Lo fino que va la mano con estos flaps**, de 1 limpio a
+ * `1 − MENOS_EN_LA_FINAL` con los de aterrizar.
+ */
+export function finoConFlaps(flaps: number): number {
+  return 1 - MENOS_EN_LA_FINAL * Math.max(0, Math.min(1, Number.isFinite(flaps) ? flaps : 0));
+}
+
+/**
+ * **Y solo cerca de las alas niveladas**: hasta cinco grados de inclinación,
+ * que es donde se vuela una final. Más allá, el toque de siempre.
+ *
+ * Con el toque fino en todas partes, enderezar a golpes desde treinta grados
+ * —el viraje que mete el avión en la final— pedía el doble de golpes, y eso
+ * era volver a la otra queja de la misma final: «no me enderezo frente a la
+ * pista ni a martillazos con el teclado». Lejos del centro un toque sigue
+ * siendo de tres grados; cerca, de grado y medio.
+ */
+export const BANDA_FINA = 5 * RAD;
+
+/**
+ * **Lo que mueve un toque de alabeo** que empieza en `desde`, rad. Ver
+ * `TOQUE_DE_ALABEO`, `MENOS_EN_LA_FINAL` y `BANDA_FINA`.
+ */
+export function toqueDeAlabeo(desde: number, flaps: number): number {
+  return TOQUE_DE_ALABEO * (Math.abs(desde) < BANDA_FINA - 1e-9 ? finoConFlaps(flaps) : 1);
+}
+
+/**
+ * **El imán del centro con estos flaps**, rad: con los de aterrizar, el de los
+ * peldaños de abajo baja al de los de arriba —tres grados—.
+ *
+ * Seis grados de imán se comían las correcciones de la final: volviendo de
+ * una inclinación, soltar a cinco grados llevaba el ala a cero de golpe, y
+ * lo que se quería era cinco. Tres sigue recogiendo lo que se pasa quien
+ * suelta al ver el horizonte recto, que es para lo que está.
+ */
+export function imanDeAlabeo(peldanoBajo: boolean, flaps: number): number {
+  const base = peldanoBajo ? IMAN_DE_ALABEO_ABAJO : IMAN_DE_ALABEO;
+  return Math.max(IMAN_DE_ALABEO, base * finoConFlaps(flaps));
+}
 
 /**
  * **El imán del centro.** Al soltar la tecla **volviendo** hacia las alas
@@ -315,6 +387,11 @@ export interface LoQueVeLaMano {
   readonly timon: number;
   /** En el modelo sencillo, qué palanca da un ritmo de subida. */
   readonly mandoParaSubir?: ((ritmo: number) => number) | undefined;
+  /**
+   * Y qué alerón dibuja esta inclinación, rad. Ver `mandoParaInclinar` en
+   * `arcade.ts`. Sin él, la cuenta de siempre: `VISUAL_BANK`.
+   */
+  readonly mandoParaInclinar?: ((alabeo: number) => number) | undefined;
   /** Si otra mano —el automático, la nivelada— lleva ya ese eje. */
   readonly otraManoAlabeo: boolean;
   readonly otraManoCabeceo: boolean;
@@ -557,6 +634,13 @@ interface Eje {
   sentidoAlSoltar: number;
   /** Si la tecla que se soltó volvía hacia el centro: para el imán. */
   volvia: boolean;
+  /** Lo que se veía al soltar la tecla, rad. Ver `alIman`. */
+  alSoltar: number;
+  /**
+   * Lo menos que deja la tecla que se acaba de soltar, rad: un toque desde
+   * donde empezó. Ver `alMinimo`.
+   */
+  minimo: number | null;
 }
 
 const ejeNuevo = (consigna: Consigna): Eje => ({
@@ -573,6 +657,8 @@ const ejeNuevo = (consigna: Consigna): Eje => ({
   frenandoDesde: 0,
   sentidoAlSoltar: 0,
   volvia: false,
+  alSoltar: 0,
+  minimo: null,
 });
 
 /**
@@ -758,6 +844,7 @@ export class ManoQueSostiene {
     eje.metaDelDedo = false;
     eje.pendiente = null;
     eje.frenando = false;
+    eje.minimo = null;
   }
 
   /**
@@ -774,7 +861,7 @@ export class ManoQueSostiene {
     dt: number,
     tecla: number,
     toque: number,
-    paso: number,
+    paso: (desde: number) => number,
     iman: number,
     frena: boolean,
   ): void {
@@ -788,23 +875,47 @@ export class ManoQueSostiene {
       eje.meta = null;
       eje.metaDelDedo = false;
       eje.frenando = false;
+      eje.minimo = null;
       return;
     }
     const soltada = eje.teclaAntes !== 0;
     if (soltada && toque === 0) {
       eje.volvia = Math.abs(eje.desde) > iman && Math.sign(eje.desde) === -eje.teclaAntes;
+      /*
+       * Lo menos que deja: un toque desde donde empezó —o desde donde iban los
+       * toques de antes, si iban más allá—, parando en el centro como ellos.
+       * Ver `alMinimo`.
+       */
+      const sentido = eje.teclaAntes;
+      const base =
+        eje.pendiente !== null && (eje.pendiente - eje.desde) * sentido > 0
+          ? eje.pendiente
+          : eje.desde;
+      const minimo = base + sentido * paso(base);
+      eje.minimo = base * minimo < 0 ? 0 : minimo;
+      eje.sentidoAlSoltar = sentido;
       if (frena) {
         eje.frenando = true;
         eje.frenandoDesde = 0;
-        eje.sentidoAlSoltar = eje.teclaAntes;
-      } else alIman(eje, iman);
+      } else {
+        alIman(eje, iman);
+        alMinimo(eje);
+      }
     }
     if (toque !== 0) {
+      eje.minimo = null;
       const signo = Math.sign(toque);
       const pendiente = soltada ? eje.pendiente : eje.metaDelDedo ? null : eje.meta;
+      /*
+       * Desde donde estaba al apretar, si la tecla del toque acaba de soltarse:
+       * lo que se movió mientras se apretaba no se suma al paso. Así un toque
+       * es siempre un toque, dure una centésima o dos décimas, y lo que deja una
+       * tecla un poco más larga —ver `alMinimo`— empieza justo ahí.
+       */
+      const desde = soltada ? eje.desde : c.valor;
       const base =
-        pendiente !== null && (pendiente - c.valor) * signo > 0 ? pendiente : c.valor;
-      const meta = base + signo * paso;
+        pendiente !== null && (pendiente - desde) * signo > 0 ? pendiente : desde;
+      const meta = base + signo * paso(base);
       eje.meta = base * meta < 0 ? 0 : meta;
       eje.metaDelDedo = false;
       eje.prisa = true;
@@ -835,15 +946,32 @@ export class ManoQueSostiene {
      * —y vuelve a treinta y tres al soltar—, mientras que en los de abajo no
      * se pasa nunca de treinta y tres.
      */
-    const topeApretando = !conProteccion
-      ? INCLINACION_TOPE
-      : ve.peldanoBajo
-        ? INCLINACION_PROTEGIDA
-        : INCLINACION_TOPE_DEL_REACTOR;
-    const topeSuelto = conProteccion ? INCLINACION_PROTEGIDA : INCLINACION_TOPE;
+    /*
+     * Y en el modelo sencillo, no más de lo que dibuja el alerón a fondo a esta
+     * velocidad: pedir más dejaba la consigna por delante del ala, y al volver
+     * se tardaba un segundo en deshacer lo que no se veía. Ver
+     * `mandoParaInclinar` en `arcade.ts`.
+     */
+    const porGrado = ve.sencillo && ve.mandoParaInclinar ? Math.abs(ve.mandoParaInclinar(1)) : 0;
+    const alcanza = porGrado > 0 ? 1 / porGrado : Infinity;
+    const topeApretando = Math.min(
+      alcanza,
+      !conProteccion
+        ? INCLINACION_TOPE
+        : ve.peldanoBajo
+          ? INCLINACION_PROTEGIDA
+          : INCLINACION_TOPE_DEL_REACTOR,
+    );
+    const topeSuelto = Math.min(
+      alcanza,
+      conProteccion ? INCLINACION_PROTEGIDA : INCLINACION_TOPE,
+    );
     const c = eje.consigna;
-    const iman = ve.peldanoBajo ? IMAN_DE_ALABEO_ABAJO : IMAN_DE_ALABEO;
-    this.teclaYToques(eje, dt, tecla, pide.toqueAlabeo, TOQUE_DE_ALABEO, iman, true);
+    // Con los flaps de aterrizar y cerca de las alas niveladas, fino. Ver
+    // `MENOS_EN_LA_FINAL` y `toqueDeAlabeo`.
+    const iman = imanDeAlabeo(ve.peldanoBajo, ve.flaps);
+    const paso = (desde: number): number => toqueDeAlabeo(desde, ve.flaps);
+    this.teclaYToques(eje, dt, tecla, pide.toqueAlabeo, paso, iman, true);
     if (tecla !== 0) {
       // Tranquilo al apretar, y decidido si se mantiene. Ver `ritmoApretando`.
       let ritmo = ritmoApretando(eje.apretada, tranquilo, decidido);
@@ -864,6 +992,8 @@ export class ManoQueSostiene {
        * frena, y lo que se consigue es lo que se ve al soltar más lo que el
        * avión no puede dejar de rodar. Ver `FRENO_AL_SOLTAR`.
        */
+      // Lo que se veía al soltar: con eso se decide el imán. Ver `alIman`.
+      if (eje.frenandoDesde === 0) eje.alSoltar = ve.alabeo;
       eje.frenandoDesde += dt;
       c.poner(ve.alabeo);
       // Parado: cuando ya no rueda hacia donde iba la tecla.
@@ -873,7 +1003,8 @@ export class ManoQueSostiene {
         eje.frenandoDesde > FRENA_COMO_MUCHO
       ) {
         eje.frenando = false;
-        alIman(eje, iman);
+        alIman(eje, iman, eje.alSoltar);
+        alMinimo(eje);
       }
     } else {
       if (eje.meta !== null) eje.meta = acotar(eje.meta, topeSuelto);
@@ -890,9 +1021,18 @@ export class ManoQueSostiene {
     eje.teclaAntes = tecla;
 
     if (ve.sencillo) {
-      // En el modelo sencillo el alerón **es** la inclinación que se ve: ver
-      // `VISUAL_BANK` en `arcade.ts`.
-      this.aileron = acotar(c.valor / VISUAL_BANK, 1);
+      /*
+       * En el modelo sencillo el alerón **es** la inclinación que se ve: ver
+       * `VISUAL_BANK` en `arcade.ts`. Y se le pregunta al modelo cuál, porque
+       * despacio dibuja menos con el mismo alerón: en la final de Guyrami, la
+       * mitad. Así lo que pide la mano y lo que se ve son lo mismo, y al soltar
+       * la consigna se queda con el ala que se ve sin perder la mitad. Ver
+       * `mandoParaInclinar`.
+       */
+      this.aileron = acotar(
+        ve.mandoParaInclinar ? ve.mandoParaInclinar(c.valor) : c.valor / VISUAL_BANK,
+        1,
+      );
       return;
     }
     /*
@@ -936,7 +1076,7 @@ export class ManoQueSostiene {
      * asiento: `γ̇ = (g/V)·(n·cos φ − cos γ)`. Ver el amortiguador, abajo.
      */
     const cambia = (GRAVITY / v) * (ve.carga * Math.cos(phi) - Math.cos(gamma));
-    this.teclaYToques(eje, dt, tecla, pide.toqueCabeceo, TOQUE_DE_SENDA, IMAN_DE_SENDA, true);
+    this.teclaYToques(eje, dt, tecla, pide.toqueCabeceo, () => TOQUE_DE_SENDA, IMAN_DE_SENDA, true);
     if (tecla !== 0) {
       c.mover(dt, tecla, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
     } else if (eje.frenando) {
@@ -959,6 +1099,7 @@ export class ManoQueSostiene {
       ) {
         eje.frenando = false;
         alIman(eje, IMAN_DE_SENDA);
+        alMinimo(eje);
       }
     } else {
       if (eje.meta !== null) c.hacia(dt, eje.meta, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
@@ -1037,10 +1178,13 @@ export class ManoQueSostiene {
     const delViraje = (GRAVITY / v) * Math.tan(phi) * Math.sin(phi) * Math.cos(gamma);
     const pedido = giro / Math.cos(phi) + delViraje;
     const faltaGiro = pedido - ve.ritmoDeCabeceo;
+    // Despacio, más mano: ver `apretonPorVelocidad`.
+    const aprieta = apretonPorVelocidad(ve.aircraft, v);
     // El servo no sube el morro mientras el ala va pasada: que no se acumule.
-    if (!(cede && faltaGiro > 0)) this.trim = acotar(this.trim + SERVO * faltaGiro * dt, 1);
+    if (!(cede && faltaGiro > 0))
+      this.trim = acotar(this.trim + SERVO * aprieta * faltaGiro * dt, 1);
     if (cede) this.trim = acotar(this.trim - POR_ALFA_EN_EL_TRIM * pasado * dt, 1);
-    this.elevator = acotar(AMORTIGUA * faltaGiro, 1);
+    this.elevator = acotar(AMORTIGUA * aprieta * faltaGiro, 1);
     // La suma, con tope y quieta mientras cede o mientras se aprieta.
     if (!cede && tecla === 0)
       this.suma = acotar(
@@ -1089,13 +1233,52 @@ const AL_CENTRO_DESDE = 1 * RAD;
  * **El imán, al soltar**: si la tecla volvía hacia el centro y lo dejado está
  * cerca de él, al centro, con prisa —coge la consigna en marcha—.
  */
-function alIman(eje: Eje, iman: number): void {
-  if (eje.volvia && Math.abs(eje.consigna.valor) < iman) {
+function alIman(eje: Eje, iman: number, visto?: number): void {
+  /*
+   * **En el alabeo, cuenta lo que se veía al soltar**, no dónde se para el ala
+   * después. El JAZ 120 sigue rodando un par de grados después de soltar
+   * —es su inercia—, y volviendo de diez grados, soltar a cinco lo dejaba en
+   * tres y el imán se lo llevaba al cero: la corrección que se quería se
+   * perdía. Quien suelta cerca del centro quería el centro; quien suelta a
+   * cinco grados quería cinco, y se queda donde el ala se pare.
+   */
+  const donde = visto ?? eje.consigna.valor;
+  if (eje.volvia && Math.abs(donde) < iman) {
     eje.meta = 0;
     eje.metaDelDedo = false;
     eje.prisa = true;
   }
   eje.volvia = false;
+}
+
+/**
+ * **Apretar más no deja menos que un toque.** Al acabar de frenar, si el ala
+ * —o la trayectoria— se ha quedado más cerca de donde empezó que un toque, va
+ * hasta el toque, con prisa.
+ *
+ * Medido en la final con los flaps abajo, lo que dejaba la tecla según lo que
+ * se apretaba, en el JAZ 120 en Tukã: una décima, tres grados —un toque—;
+ * **un cuarto de segundo, dos décimas de grado**; medio segundo, nueve
+ * décimas; un segundo, casi cuatro. O sea que apretar un poco más que un
+ * toque dejaba casi nada, porque al soltar el ala se para donde está —ver
+ * `FRENO_AL_SOLTAR`— y en un cuarto de segundo el avión grande aún no se ha
+ * movido. Así no hay quien afine: «no responde la tecla bien, y cuando lo
+ * hace estoy girando más de lo que quería». En Guyrami era peor: un segundo
+ * entero dejaba siete décimas. Ahora lo que deja la tecla crece con lo que se
+ * aprieta, sin escalón hacia abajo.
+ *
+ * Si el imán ya se la llevó al centro, manda el imán.
+ */
+function alMinimo(eje: Eje): void {
+  const m = eje.minimo;
+  eje.minimo = null;
+  if (m === null || eje.meta !== null) return;
+  const sentido = eje.sentidoAlSoltar;
+  if ((eje.consigna.valor - m) * sentido < 0) {
+    eje.meta = m;
+    eje.metaDelDedo = false;
+    eje.prisa = true;
+  }
 }
 
 /**
@@ -1144,6 +1327,54 @@ const MIRA_EL_ALFA = 0.5;
 /** El servo del compensador, por segundo, y el amortiguador. */
 const SERVO = 1.2;
 const AMORTIGUA = 0.4;
+
+/**
+ * **La velocidad de maniobra del avión**, m/s: siete décimas de su crucero o
+ * casi el doble de su aproximación, la menor. Es donde se afinaron el servo y
+ * el amortiguador de la trayectoria —la fase «crucero» de
+ * `mano-respuesta.test.ts`—.
+ */
+export function velocidadDeManiobra(a: AircraftConfig): number {
+  return Math.min(a.cruiseSpeed * 0.7, a.approachSpeed * 1.9);
+}
+
+/**
+ * **Despacio, la mano aprieta más**: cuánto se multiplican el servo y el
+ * amortiguador de la trayectoria a esta velocidad, de 1 a `APRETON_MAXIMO`.
+ *
+ * Lo que mueve el morro es la fuerza del aire en la profundidad, y esa fuerza
+ * crece con el **cuadrado** de la velocidad. El servo y el amortiguador se
+ * afinaron a la velocidad de maniobra; en la final, los dos reactores vuelan
+ * a algo más de la mitad —el JAZ 120 a 146 nudos contra 277—, y ahí el mismo
+ * movimiento de profundidad empuja **un cuarto**. La mano se quedaba corta,
+ * el compensador hacía el trabajo tarde y la trayectoria entraba en un
+ * columpio que no se apagaba nunca: sin tocar nada, con los flaps abajo, el
+ * JAZ 120 subía y bajaba **±5,4 m/s cada 22 segundos** —ida y vuelta de un
+ * grado de senda a siete—, y el JAZ 90 ±1,4; los demás, ±0,05. Con el gas
+ * quieto, igual: no eran los gases, era la mano. En Guyrami no pasaba —el
+ * modelo sencillo no tiene columpio—, pero de Tukã para arriba es lo que se
+ * encuentra quien vuela esa misma final: el avión cabeceando solo mientras
+ * corrige de lado.
+ *
+ * Es lo que hace cualquier piloto automático y cualquier ley de mandos
+ * eléctricos: **programar la ganancia con la presión dinámica** (Stevens y
+ * Lewis, *Aircraft Control and Simulation*, la programación de ganancias), y
+ * lo que ya hace la ayuda que sostiene la subida en `fdm.ts`. Por encima de
+ * la de maniobra no cambia nada, así que en crucero todo sigue como estaba.
+ * Con esto, los dos reactores en la final se quedan en ±0,05 m/s pasado el
+ * primer minuto. Ver `final-fina.test.ts`.
+ */
+export function apretonPorVelocidad(a: AircraftConfig, verdadera: number): number {
+  const r = velocidadDeManiobra(a) / Math.max(verdadera, 1);
+  return Math.min(APRETON_MAXIMO, Math.max(1, r * r));
+}
+
+/**
+ * Y no más de cuatro veces, que es la presión dinámica de la mitad de la
+ * velocidad: más despacio que eso ya no es una final, es una pérdida, y ahí
+ * manda el avisador. Ver `LEJOS_DEL_AVISADOR`.
+ */
+export const APRETON_MAXIMO = 4;
 /** Lo más que aprieta la mano corrigiendo, g. */
 const MAS_CARGA = 0.4;
 

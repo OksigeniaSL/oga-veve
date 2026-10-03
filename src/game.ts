@@ -17653,6 +17653,9 @@ export class Game {
         ? Math.max(-1, Math.min(1, c.elevator + c.trim))
         : this.flight.timonAhora();
     v.mandoParaSubir = this.flight.mandoParaSubir ? this.mandoParaSubirDeLaMano : undefined;
+    v.mandoParaInclinar = this.flight.mandoParaInclinar
+      ? this.mandoParaInclinarDeLaMano
+      : undefined;
     v.otraManoAlabeo = this.pilotoPuesto && this.objetivos.rumbo !== null;
     v.otraManoCabeceo =
       (this.pilotoPuesto && this.objetivos.altitud !== null) || this.nivelada !== null;
@@ -17662,6 +17665,8 @@ export class Game {
   /** El modelo de ahora, preguntado por la mano. Ver `mandoParaSubir`. */
   private readonly mandoParaSubirDeLaMano = (ritmo: number): number =>
     this.flight.mandoParaSubir?.(ritmo) ?? 0;
+  private readonly mandoParaInclinarDeLaMano = (alabeo: number): number =>
+    this.flight.mandoParaInclinar?.(alabeo) ?? 0;
 
   /** El objeto que se rellena para la mano. Ver `loQueVeLaMano`. */
   private readonly vistoPorLaMano: { -readonly [K in keyof LoQueVeLaMano]: LoQueVeLaMano[K] } = {
@@ -17682,6 +17687,7 @@ export class Game {
     flaps: 0,
     timon: 0,
     mandoParaSubir: undefined,
+    mandoParaInclinar: undefined,
     otraManoAlabeo: false,
     otraManoCabeceo: false,
   };

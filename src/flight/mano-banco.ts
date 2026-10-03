@@ -104,6 +104,7 @@ export function loQueVe(v: VueloDeBanco): LoQueVeLaMano {
     flaps: v.flaps,
     timon: v.modelo.timonAhora(),
     mandoParaSubir: v.modelo.mandoParaSubir?.bind(v.modelo),
+    mandoParaInclinar: v.modelo.mandoParaInclinar?.bind(v.modelo),
     otraManoAlabeo: false,
     otraManoCabeceo: false,
   };
