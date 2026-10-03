@@ -238,6 +238,30 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
 
   if (!Number.isFinite(ala.x) || !Number.isFinite(alaIzquierda.x)) return null;
   /*
+   * **Y en un ala con winglet, en el pie del winglet, no en su punta.**
+   *
+   * El vértice más exterior de un ala con winglet está arriba del todo del
+   * winglet, dos o tres metros por encima del ala: mirado de frente con
+   * teleobjetivo, la roja y la verde de un reactor flotaban sobre las puntas.
+   * La luz de navegación de esos aviones va en la punta del ala, al pie del
+   * winglet. Así que de lo que queda a un tres por ciento de la envergadura
+   * del extremo, el punto más bajo; en un ala sin winglet es la misma punta.
+   */
+  const casiEnLaPunta = medido.x * 0.03;
+  const alPie = (lado: 1 | -1, punta: Vector3): void => {
+    const extremo = punta.x;
+    cuerpo.traverse((o) => {
+      const pos = (o as Mesh).geometry?.getAttribute?.("position");
+      if (!pos) return;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        if (lado * (extremo - v.x) <= casiEnLaPunta && v.y < punta.y) punta.copy(v);
+      }
+    });
+  };
+  alPie(1, ala);
+  alPie(-1, alaIzquierda);
+  /*
    * **Y un dedo por fuera de la chapa.**
    *
    * Clavada en el vértice, la luz queda a ras del ala y la prueba de
