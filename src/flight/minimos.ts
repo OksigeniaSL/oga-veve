@@ -164,42 +164,105 @@ export class Minimos {
   }
 }
 
-/** Por qué se mandó irse al aire. */
-export type PorQueMandaron =
-  | "pistaOcupada"
-  | "noEstabilizada"
-  | "otraCabecera"
-  /** Se llegó a los mínimos sin el permiso para aterrizar. */
-  | "sinPermiso"
-  | null;
+/**
+ * **Por qué se mandó irse al aire**: solo por lo que es de quien manda.
+ *
+ * - `pistaOcupada`: la torre, porque hay alguien en la pista —o, en un campo
+ *   sin torre, la vaca en la zona de toma—.
+ * - `otraCabecera`: la torre, porque se viene por la punta que no está en
+ *   uso. Ver `flight/la-otra-cabecera.ts`.
+ *
+ * Había dos más y se quitaron, porque ninguna torre las da:
+ *
+ * - `noEstabilizada`, ir alto, bajo, rápido o torcido a los mínimos. Esa
+ *   decisión es de quien vuela —en una compañía, de la tripulación—, no de la
+ *   torre: la torre manda al aire por la pista, por el tráfico o por la
+ *   separación (OACI, Doc 4444, capítulo 7). Ahora la instructora lo
+ *   propone, con calma y a los quinientos pies: ver `porQueNoEstaEstabilizada`.
+ * - `sinPermiso`, llegar a los mínimos sin el permiso oído **con la pista
+ *   libre**: era la torre mandándote al aire por su propio retraso. Ver
+ *   `paso` en `flight/turno-de-pista.ts`.
+ */
+export type PorQueMandaron = "pistaOcupada" | "otraCabecera" | null;
+
+// ── La puerta de la aproximación estabilizada ──────────────────────────
 
 /**
- * Si una orden de irse al aire ya no describe nada y hay que retirarla.
+ * **A qué altura sobre la pista se mira si la aproximación está
+ * estabilizada**, m: quinientos pies.
  *
- * ## Por qué es una función y no un `if` en el sitio
+ * Es la puerta de una aproximación visual en la regla de la Flight Safety
+ * Foundation —ALAR, nota 7.1, «Stabilized Approach»: a mil pies en
+ * instrumentos y a quinientos en visual— y en la circular de la FAA sobre la
+ * aproximación estabilizada (AC 120-71B). Por encima de ella se corrige; a
+ * partir de ella, si no se está, lo que se hace es irse al aire.
  *
- * Porque en el sitio faltaba. La orden salía por tres puertas —tocar tierra,
- * subir, alejarse— y ninguna es la que usa quien hace caso a medias:
- * **corregir**. Así que quien enderezaba la aproximación seguía con el
- * «abandoná» puesto hasta el final, aterrizaba bien, y el juego le daba el
- * aterrizaje por bueno sin retirar nunca la orden. Contado jugando: «me lo
- * validó, pero me dijo que abandonara, no le hice caso porque ya me dirás
- * tú».
- *
- * Y tenía razón en lo de «ya me dirás tú». Un juego que manda abandonar y
- * después felicita por no abandonar no enseña una regla: enseña que sus
- * reglas dan igual, que es lo contrario de la regla de las tres eses.
- *
- * ## Y solo la de no estabilizada
- *
- * La de pista ocupada no se levanta volando mejor: la vaca sigue ahí y eso no
- * depende de cómo vueles. Esa se retira cuando la pista queda libre, que lo
- * decide la torre y no el piloto. Confundir las dos sería dejar entrar a
- * alguien en una pista ocupada por haber estabilizado la aproximación.
+ * Aquí es la visual, quinientos, que es como se vuela este juego.
  */
-export function seLevantaLaOrden(
-  porque: PorQueMandaron,
-  estabilizada: boolean,
-): boolean {
-  return porque === "noEstabilizada" && estabilizada;
+export const PUERTA_ESTABILIZADA = 500 * 0.3048;
+
+/**
+ * **Los márgenes de la puerta**, que son los de la regla de verdad:
+ *
+ * - **la velocidad**, de cinco nudos por debajo de la de referencia a quince
+ *   por encima;
+ * - **la senda**, a menos de un punto de su escala, arriba o abajo;
+ * - **el ritmo de bajada**, no más de mil pies por minuto;
+ * - **alineado**: dentro del eje —los mismos sesenta metros y veinte grados
+ *   de los mínimos, `MARGENES`— y configurado para aterrizar.
+ */
+export const PUERTA = {
+  lentoKt: 5,
+  rapidoKt: 15,
+  puntos: 1,
+  /** Mil pies por minuto, m/s, negativo bajando. */
+  cayendo: -1000 * 0.3048 / 60,
+} as const;
+
+/** Lo que se mira en la puerta. Unidades del modelo, menos donde se dice. */
+export interface AproximacionEnLaPuerta {
+  /** Indicada, nudos. */
+  readonly kt: number;
+  /** La de referencia de este avión, nudos. */
+  readonly referenciaKt: number;
+  /** Velocidad vertical, m/s, negativa bajando. */
+  readonly vertical: number;
+  /** Cuánto se aparta del eje, m. */
+  readonly delEje: number;
+  /** Cuántos grados torcido respecto al rumbo de la pista. */
+  readonly torcido: number;
+  /** El desvío de la senda en puntos, + por encima; `null` si no se sabe. */
+  readonly puntos: number | null;
+  /** Tren abajo y flaps de aterrizar, en el avión que los lleva. */
+  readonly configurado: boolean;
+}
+
+/** Por qué no está estabilizada en la puerta. */
+export type MotivoDeLaPuerta =
+  | "lento"
+  | "cayendo"
+  | "sinConfigurar"
+  | "rapido"
+  | "torcido"
+  | "descolocado"
+  | "bajo"
+  | "alto";
+
+/**
+ * **¿Está estabilizada a los quinientos pies?** El primer motivo por el que
+ * no, o `null` si sí, en el orden de los mínimos: de lo que más mata a lo que
+ * menos. Ver `PUERTA`.
+ */
+export function porQueNoEstaEstabilizada(
+  a: AproximacionEnLaPuerta,
+): MotivoDeLaPuerta | null {
+  if (a.kt < a.referenciaKt - PUERTA.lentoKt) return "lento";
+  if (a.vertical < PUERTA.cayendo) return "cayendo";
+  if (!a.configurado) return "sinConfigurar";
+  if (a.kt > a.referenciaKt + PUERTA.rapidoKt) return "rapido";
+  if (Math.abs(a.torcido) > MARGENES.torcido) return "torcido";
+  if (Math.abs(a.delEje) > MARGENES.delEje) return "descolocado";
+  if (a.puntos !== null && a.puntos < -PUERTA.puntos) return "bajo";
+  if (a.puntos !== null && a.puntos > PUERTA.puntos) return "alto";
+  return null;
 }

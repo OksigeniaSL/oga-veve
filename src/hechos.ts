@@ -44,6 +44,8 @@
  * Se añaden de uno en uno y con lo justo: un hecho con datos que nadie mira
  * es una promesa de mantenerlos al día para nada.
  */
+import type { MotivoDeLaPuerta } from "./flight/minimos";
+
 export interface Hechos {
   /**
    * Se ha renunciado a un aterrizaje y el avión se ha ido al aire.
@@ -126,29 +128,29 @@ export interface Hechos {
    */
   papi: { readonly blancas: number };
   /**
-   * Te han mandado irte al aire, y por qué.
-   *
-   * Las dos razones llegan aquí porque para quien vuela son la misma cosa
-   * —hay que irse— y lo que cambia es el porqué. Estaban escritas en dos
-   * sitios distintos con su propia tarjeta, su propio sonido y su propia voz,
-   * y nada que las relacionara: una misión que quisiera contar cuántas veces
-   * te mandan al aire tenía que saber de las dos.
+   * Te han mandado irte al aire, y por qué. Solo lo manda quien puede
+   * mandarlo, y por lo que es suyo:
    *
    * - `pistaOcupada`: la torre. Hay algo abajo, y en un campo sin torre ese
    *   algo es una vaca en la zona de toma.
-   * - `noEstabilizada`: no la torre, la aproximación. `motivo` dice cuál de
-   *   los cinco.
    * - `otraCabecera`: se viene por la punta que no está en uso. `motivo` dice
    *   si además el viento de cola pasa del límite. Ver
    *   `flight/la-otra-cabecera.ts`.
-   * - `sinPermiso`: la torre, con la pista libre: se llegó a los mínimos sin
-   *   tu permiso para aterrizar oído. Ver `paso` en
-   *   `flight/turno-de-pista.ts`.
+   *
+   * Ir alto, bajo o rápido no es orden de nadie: lo propone la instructora.
+   * Ver `proponenIrseAlAire` y `PorQueMandaron` en `flight/minimos.ts`.
    */
   mandaronIrseAlAire: {
-    readonly porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | "sinPermiso";
+    readonly porque: "pistaOcupada" | "otraCabecera";
     readonly motivo?: string;
   };
+  /**
+   * **La instructora propone irse al aire**, con calma: a los quinientos
+   * pies la aproximación no está estabilizada, o a los mínimos no se ve la
+   * pista. No es una orden: quien vuela decide, y si se va, se felicita. Ver
+   * `mirarLaPuerta` en `flight/la-aproximacion.ts`.
+   */
+  proponenIrseAlAire: { readonly motivo: MotivoDeIrse };
   /**
    * La torre ha levantado la orden de irse al aire: la pista vuelve a ser
    * tuya.
@@ -158,14 +160,15 @@ export interface Hechos {
    * aterrizar. Ver `alLevantarLaOrden` en `flight/turno-de-pista.ts`.
    */
   pistaLibreOtraVez: {
-    readonly porque:
-      | "pistaOcupada"
-      | "noEstabilizada"
-      | "otraCabecera"
-      | "sinPermiso"
-      | null;
+    readonly porque: "pistaOcupada" | "otraCabecera" | null;
   };
 }
+
+/**
+ * Por qué propone la instructora irse al aire: lo que falla en la puerta de
+ * los quinientos pies, o la pista que no se ve a los mínimos.
+ */
+export type MotivoDeIrse = MotivoDeLaPuerta | "sinPista";
 
 /** Quien escucha un hecho. No devuelve nada: enterarse no contesta. */
 type Oyente<T> = (datos: T) => void;

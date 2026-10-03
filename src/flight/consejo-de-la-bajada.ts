@@ -153,7 +153,19 @@ export interface Lectura {
   readonly lentoLoCantaLaCaja?: boolean;
   /** El paso, s. */
   readonly dt: number;
+  /**
+   * **Si solo se dice lo que no puede esperar**: ir lento y la explicación del
+   * *sink rate*. Pasada la puerta de los quinientos pies, en la final: ahí se
+   * mira la pista y se posa, y corregir la senda o la velocidad a cada
+   * bamboleo es la «pesada» que no deja volar. Tampoco se celebra nada:
+   * callarse ahí no es que algo se haya arreglado. Ver `mirarLaSenda` en
+   * `game.ts`.
+   */
+  readonly soloLoUrgente?: boolean;
 }
+
+/** Lo que no puede esperar: ir lento y lo que canta la caja. */
+const URGENTES: ReadonlySet<Motivo> = new Set<Motivo>(["lento", "hundiendose"]);
 
 /**
  * **Cuánto tiene que durar lo que se ve para decir algo**, s.
@@ -191,6 +203,27 @@ export const RESPONDE_DESVIO = 0.3;
  */
 export const YA_CORRIGE_ACELERACION = 0.6;
 export const YA_CORRIGE_VERTICAL = 300;
+
+/**
+ * **Y el desvío que ya va hacia cero**, puntos por segundo: el rombo que se
+ * acerca al medio. Dos centésimas por segundo es un punto en cincuenta
+ * segundos: coger la senda desde un punto por encima bajando doscientos pies
+ * por minuto más deprisa que ella, a cuatro millas, va así —a una milla, el
+ * doble de rápido—. Menos que eso es el rombo quieto.
+ *
+ * Es la otra mitad de «lo que ya se está corrigiendo no se dice», y la que
+ * faltaba: se miraba solo el variómetro frente al ritmo de la senda, y quien
+ * llegaba a ella desde arriba bajando un poco más deprisa que la senda —lo
+ * normal— oía igual «estás por encima» a medio punto de cogerla. Enrique, con
+ * el JAZ 120: «avisa que estoy por encima cuando la estaba ya tocando».
+ */
+export const YA_CORRIGE_DESVIO = 0.02;
+
+/**
+ * Cuánto se suaviza el ritmo del desvío, s: un segundo. El desvío sale de la
+ * posición en cada fotograma, y su derivada a pelo es ruido.
+ */
+const SUAVIZA_EL_DESVIO = 1;
 
 /**
  * **Qué hay que hacer, mirando todo a la vez.** Uno solo, y el que arregla lo
@@ -271,6 +304,10 @@ export class ConsejoDeLaBajada {
   private quiere: { consejo: Consejo; durante: number } | null = null;
   /** Si en esta bajada se ha corregido algo: para decir «¡eso es!» al final. */
   private huboConsejo = false;
+  /** El desvío del paso anterior, puntos. Ver `YA_CORRIGE_DESVIO`. */
+  private desvioAntes: number | null = null;
+  /** A qué ritmo cambia el desvío, puntos por segundo, suavizado. */
+  private ritmoDelDesvio = 0;
 
   /** Lo último que se dijo y si el avión respondió. Para el banco. */
   get ultimo(): (Consejo & { respondio: boolean }) | null {
@@ -282,9 +319,25 @@ export class ConsejoDeLaBajada {
     this.dado = null;
     this.quiere = null;
     this.huboConsejo = false;
+    this.desvioAntes = null;
+    this.ritmoDelDesvio = 0;
+  }
+
+  /** A qué ritmo va el desvío, puntos por segundo. Ver `YA_CORRIGE_DESVIO`. */
+  private seguirElDesvio(l: Lectura): void {
+    if (l.desvio === null || this.desvioAntes === null || l.dt <= 0) {
+      this.desvioAntes = l.desvio;
+      this.ritmoDelDesvio = 0;
+      return;
+    }
+    const ahora = (l.desvio - this.desvioAntes) / l.dt;
+    const k = Math.min(1, l.dt / SUAVIZA_EL_DESVIO);
+    this.ritmoDelDesvio += (ahora - this.ritmoDelDesvio) * k;
+    this.desvioAntes = l.desvio;
   }
 
   paso(l: Lectura): Paso {
+    this.seguirElDesvio(l);
     this.mirarLaRespuesta(l);
     if (!l.activo) {
       this.quiere = null;
@@ -304,14 +357,18 @@ export class ConsejoDeLaBajada {
        * no hay nada que felicitar. Medido en el banco: un «¡eso es!» tres
        * décimas después de «metéle gas», sin que nadie hubiera tocado nada.
        */
-      if (this.huboConsejo && d.respondio && todoBien(l)) {
+      if (this.huboConsejo && d.respondio && todoBien(l) && !l.soloLoUrgente) {
         this.huboConsejo = false;
         this.quiere = null;
         return "bien";
       }
     }
     const quiere = queHacer(l);
-    if (!quiere || (quiere.motivo === "lento" && l.lentoLoCantaLaCaja)) {
+    if (
+      !quiere ||
+      (quiere.motivo === "lento" && l.lentoLoCantaLaCaja) ||
+      (l.soloLoUrgente && !URGENTES.has(quiere.motivo))
+    ) {
       this.quiere = null;
       return null;
     }
@@ -324,7 +381,7 @@ export class ConsejoDeLaBajada {
       : { consejo: quiere, durante: 0 };
     const hace = muyFuera(quiere, l) ? SOSTENER_MUY_FUERA : SOSTENER;
     if (this.quiere.durante < hace) return null;
-    if (yaLoEstaCorrigiendo(quiere, l)) return null;
+    if (yaLoEstaCorrigiendo(quiere, l, this.ritmoDelDesvio)) return null;
     if (!this.sePuedeDar(quiere, l)) return null;
     return this.dar(quiere, l);
   }
@@ -491,9 +548,12 @@ function muyFuera(c: Consejo, l: Lectura): boolean {
 }
 
 /**
- * **Si eso ya se está haciendo.** Ver `YA_CORRIGE_ACELERACION`.
+ * **Si eso ya se está haciendo.** Ver `YA_CORRIGE_ACELERACION` y
+ * `YA_CORRIGE_DESVIO`.
+ *
+ * @param ritmoDelDesvio a qué ritmo cambia el desvío, puntos por segundo
  */
-function yaLoEstaCorrigiendo(c: Consejo, l: Lectura): boolean {
+function yaLoEstaCorrigiendo(c: Consejo, l: Lectura, ritmoDelDesvio = 0): boolean {
   switch (c.accion) {
     case "masGas":
       return l.aceleracion > YA_CORRIGE_ACELERACION;
@@ -501,17 +561,20 @@ function yaLoEstaCorrigiendo(c: Consejo, l: Lectura): boolean {
     case "frenar":
       return l.aceleracion < -YA_CORRIGE_ACELERACION;
     case "narizAbajo":
-      // Alto y bajando más deprisa que la senda: la va a coger. Y lento y
-      // alto ganando velocidad, igual: ya se bajó el morro.
+      // Alto y bajando más deprisa que la senda, o con el rombo yendo al
+      // medio: la va a coger. Y lento y alto ganando velocidad, igual: ya se
+      // bajó el morro.
       return c.motivo === "lento"
         ? l.aceleracion > YA_CORRIGE_ACELERACION
-        : l.verticalObjetivo !== null &&
-            l.vertical < l.verticalObjetivo - YA_CORRIGE_VERTICAL;
+        : (l.verticalObjetivo !== null &&
+            l.vertical < l.verticalObjetivo - YA_CORRIGE_VERTICAL) ||
+            (l.desvio !== null && l.desvio > 0 && ritmoDelDesvio < -YA_CORRIGE_DESVIO);
     case "narizArriba":
       return c.motivo === "hundiendose"
         ? false
-        : l.verticalObjetivo !== null &&
-            l.vertical > l.verticalObjetivo + YA_CORRIGE_VERTICAL;
+        : (l.verticalObjetivo !== null &&
+            l.vertical > l.verticalObjetivo + YA_CORRIGE_VERTICAL) ||
+            (l.desvio !== null && l.desvio < 0 && ritmoDelDesvio > YA_CORRIGE_DESVIO);
   }
 }
 

@@ -518,3 +518,65 @@ describe("lo que ya pidió el paso siguiente", () => {
     for (let i = 0; i < 50; i++) expect(consejero.paso(llega)).not.toBe("bien");
   });
 });
+
+/**
+ * **«Estás por encima de la senda, bajá un poquito» cuando ya se estaba
+ * llegando a ella.** Enrique, con el JAZ 120: «avisa que estoy por encima
+ * cuando la estaba ya tocando». Dentro de un punto de la senda se está
+ * estabilizado —es el margen de la regla de verdad—, y lo que ya va hacia el
+ * medio no se dice. Y el rombo de la pantalla y la instructora miden la misma
+ * senda, con el mismo punto.
+ */
+describe("la senda que ya se está cogiendo", () => {
+  const PUNTO = 0.35;
+  /** Una final de puntos que van de `desde` a `hasta` en `segundos`. */
+  function bajandoALaSenda(desde: number, hasta: number, segundos: number, vertical = -850) {
+    const consejero = new ConsejoDeLaBajada();
+    let senda: Senda | null = null;
+    const dichos: { t: number; desvio: number; c: Consejo }[] = [];
+    const paso = 0.1;
+    for (let t = 0; t <= segundos; t += paso) {
+      const desvio = desde + ((hasta - desde) * t) / segundos;
+      const d = {
+        modo: "final" as const,
+        metros: 0,
+        puntos: desvio,
+        grados: desvio * PUNTO,
+        ritmo: -3.8,
+      };
+      senda = juzgarLaSenda(d, senda);
+      const p = consejero.paso(
+        base({ senda, desvio, vertical, verticalObjetivo: -750, dt: paso }),
+      );
+      if (p && p !== "bien") dichos.push({ t, desvio, c: p });
+    }
+    return dichos;
+  }
+
+  it("dentro de un punto no se avisa, aunque el rombo se quede ahí", () => {
+    expect(bajandoALaSenda(0.95, 0.95, 30, -750)).toEqual([]);
+    expect(bajandoALaSenda(-0.95, -0.95, 30, -650)).toEqual([]);
+  });
+
+  it("entrando a la senda desde arriba a un ritmo normal, ningún «por encima»", () => {
+    // Un punto y medio por encima, cogiéndola en un minuto: tres centésimas
+    // de punto por segundo, bajando cien pies por minuto más que la senda.
+    const dichos = bajandoALaSenda(1.6, -0.1, 57);
+    expect(dichos.filter((d) => d.c.accion === "narizAbajo")).toEqual([]);
+  });
+
+  it("pero más de un punto por encima y sin ir hacia ella, sí: una vez", () => {
+    const dichos = bajandoALaSenda(1.5, 1.5, 20, -750);
+    expect(dichos.map((d) => d.c.accion)).toEqual(["narizAbajo"]);
+  });
+
+  it("y el rombo y la instructora miden el mismo punto", () => {
+    // Un punto del rombo es el umbral de la instructora, en la final.
+    const justoDentro = { modo: "final" as const, metros: 0, puntos: 0.99, grados: 0.99 * PUNTO, ritmo: -3.8 };
+    const justoFuera = { ...justoDentro, puntos: 1.01, grados: 1.01 * PUNTO };
+    expect(juzgarLaSenda(justoDentro, null)).toBe("bien");
+    expect(juzgarLaSenda(justoFuera, null)).toBe("alto");
+    expect(juzgarLaSenda({ ...justoFuera, puntos: -1.01, grados: -1.01 * PUNTO }, null)).toBe("bajo");
+  });
+});
+

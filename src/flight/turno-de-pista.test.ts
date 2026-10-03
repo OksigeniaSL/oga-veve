@@ -495,11 +495,6 @@ describe("al levantarte la orden de irte al aire", () => {
     expect(alLevantarLaOrden("pistaOcupada", "en-vuelo", false)).toBe("volver");
     // Ni aunque la fase no se haya enterado todavía de que ya no es final.
     expect(alLevantarLaOrden("pistaOcupada", "final", false)).toBe("volver");
-    expect(alLevantarLaOrden("noEstabilizada", "en-vuelo", false)).toBe("volver");
-  });
-
-  it("corrigiendo en final, sí", () => {
-    expect(alLevantarLaOrden("noEstabilizada", "final", false)).toBe("aterrizar");
   });
 
   it("y a quien venía por la otra punta, a volver por la buena", () => {
@@ -510,7 +505,6 @@ describe("al levantarte la orden de irte al aire", () => {
 
   it("y en tierra no hay verde que dar", () => {
     expect(alLevantarLaOrden("pistaOcupada", "aterrizado", true)).toBe("nada");
-    expect(alLevantarLaOrden("noEstabilizada", "aterrizado", true)).toBe("nada");
   });
 });
 
@@ -695,17 +689,24 @@ describe("el permiso que no llegó a oírse no se dio", () => {
 
   /*
    * **Y es permiso cuando suena, no cuando se pide.** En La Palma llegó con
-   * el avión en la cabecera y la máquina contando «one hundred». En los
-   * mínimos o se tiene, oído, o se va uno al aire.
+   * el avión en la cabecera y la máquina contando «one hundred». Se arregló
+   * mandando al aire a quien llegaba a los mínimos sin haberlo oído, y eso era
+   * la torre mandándote al aire **por su propio retraso**, con la pista
+   * libre: Enrique, con el JAZ 120 en Guyrami, «si la torre no me manda al
+   * aire a la primera, sí lo hubiera metido». A los mínimos, con la pista
+   * libre, el permiso que no ha sonado se da a la vista.
    */
-  it("a la altura de decisión sin haberse oído, se retira y al aire", () => {
+  it("a la altura de decisión sin haberse oído, con la pista libre, se da a la vista: nadie al aire", () => {
     let alto = 120;
     let sinOir = true;
-    let retirados = 0;
+    let aLaVista = 0;
     const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
       alto: () => alto,
       permisoSinOir: () => sinOir,
-      retirarteElPermiso: () => void retirados++,
+      darteElPermisoYa: () => {
+        aLaVista++;
+        sinOir = false;
+      },
     });
     turno.pedirAterrizaje();
     turno.paso("final");
@@ -713,12 +714,12 @@ describe("el permiso que no llegó a oírse no se dio", () => {
     // Por encima de la decisión se le espera.
     alto = 70;
     turno.paso("final");
-    expect(pasos).toEqual(["cleared to land"]);
+    expect(aLaVista).toBe(0);
     alto = 58;
     turno.paso("final");
-    expect(pasos).toEqual(["cleared to land", "go around"]);
-    expect(retirados).toBe(1);
-    sinOir = false;
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+    expect(aLaVista).toBe(1);
   });
 
   it("y si empezó a sonar antes de la decisión, vale: se aterriza", () => {
@@ -738,31 +739,26 @@ describe("el permiso que no llegó a oírse no se dio", () => {
 });
 
 /**
- * **El permiso tardío de La Palma: la causa.** «La torre me dio el permiso con
- * el avión ya en la cabecera, con la máquina contando "one hundred».
- *
- * El permiso se pedía al entrar en la fase «final» del plan —mil pies como muy
- * pronto, cuarenta metros si uno se alineaba tarde, y otra vez cada vez que la
- * fase parpadeaba—, y con la pista libre `paso` lo daba **a la altura que
- * fuera**: solo miraba los mínimos cuando había algo que esperar. Ahora se
- * pide en la final de la torre —ver `final-de-la-torre.test.ts`—, y por
- * debajo de los mínimos no se da nunca: al aire, sin permiso.
+ * **El permiso tardío de La Palma, y lo que no se hace por él.** «La torre me
+ * dio el permiso con el avión ya en la cabecera, con la máquina contando "one
+ * hundred".» El permiso se pide ahora en la final de la torre, a millas —ver
+ * `final-de-la-torre.test.ts`—, y si aun así se llega a los mínimos sin él con
+ * la pista libre, la torre lo da: a la vista, sin la frase entera a destiempo.
+ * Lo que no hace es mandarte al aire por su retraso, que es lo que hacía:
+ * con la pista vacía, «sin permiso», casi en cada final de Enrique.
  */
-describe("el permiso, nunca por debajo de los mínimos", () => {
-  it("pedido por debajo de la decisión con la pista libre, no se da: al aire, sin permiso", () => {
-    const porques: (string | undefined)[] = [];
+describe("el permiso con la pista libre, también a los mínimos", () => {
+  it("pedido por debajo de la decisión con la pista libre, se da a la vista: no hay «sin permiso»", () => {
+    let aLaVista = 0;
     const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
       alto: () => 30,
-      mandarteAlAire: (_alto, _sigue, porque) => {
-        porques.push(porque);
-        pasos.push("go around");
-      },
+      darteElPermisoYa: () => void aLaVista++,
     });
     turno.pedirAterrizaje();
     turno.paso("final");
     turno.paso("final");
-    expect(pasos).toEqual(["go around"]);
-    expect(porques).toEqual(["sinPermiso"]);
+    expect(pasos).toEqual(["cleared to land"]);
+    expect(aLaVista).toBe(1);
   });
 
   it("y por encima, con la pista libre, se da en el acto", () => {
@@ -775,22 +771,24 @@ describe("el permiso, nunca por debajo de los mínimos", () => {
   });
 
   /*
-   * El permiso que no se oyó a la decisión ya mandaba al aire, pero como
-   * «pista ocupada» con la pista vacía. El porqué es el permiso.
+   * Y lo que sí manda al aire a los mínimos, aunque el permiso se oyera: con
+   * alguien en tu pista. Eso es de la torre y se queda. Ver «con el permiso
+   * dado, la pista tiene que seguir libre».
    */
-  it("y el que no llegó a oírse a la decisión manda al aire por el permiso, no por la pista", () => {
+  it("y el que no llegó a oírse a la decisión no manda a nadie al aire si la pista está libre", () => {
     let alto = 120;
-    const porques: (string | undefined)[] = [];
+    const ordenes: number[] = [];
     const { turno } = montar(new Frecuencia(dados(3), "GCXO"), {
       alto: () => alto,
       permisoSinOir: () => true,
-      mandarteAlAire: (_alto, _sigue, porque) => void porques.push(porque),
+      mandarteAlAire: (a) => void ordenes.push(a),
     });
     turno.pedirAterrizaje();
     turno.paso("final");
     alto = 55;
     turno.paso("final");
-    expect(porques).toEqual(["sinPermiso"]);
+    turno.paso("final");
+    expect(ordenes).toEqual([]);
   });
 
   /*

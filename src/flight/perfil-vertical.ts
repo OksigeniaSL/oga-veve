@@ -239,13 +239,19 @@ export type Senda = "alto" | "bien" | "bajo";
 /**
  * **Cuándo se va alto o bajo en la final**, en grados, y cuándo se vuelve.
  *
- * Se entra a tres décimas: entre tres y cuatro luces blancas del PAPI, o una
- * y ninguna. Y se sale a doce centésimas, **ya dentro de las dos blancas y
- * dos rojas** —que van de 2,83 a 3,17 grados—, con sitio para que la aguja que
- * ronda el borde no entre y salga a cada momento. Es lo que dice la
- * instructora: «hasta ver dos blancas y dos rojas».
+ * Se entra **pasado un punto de la escala**, el mismo punto que pinta el
+ * rombo: dentro de un punto la aproximación está estabilizada —es el margen
+ * de la regla de verdad, ver `PUERTA` en `flight/minimos.ts`— y no hay nada
+ * que corregir. Se entraba a tres décimas de grado, que son ocho décimas de
+ * punto, y Enrique lo oyó con el JAZ 120: «"estás por encima de la senda,
+ * bajá un poquito" cuando ya estaba llegando a ella».
+ *
+ * Y se sale a doce centésimas, **ya dentro de las dos blancas y dos rojas**
+ * —que van de 2,83 a 3,17 grados—, con sitio para que la aguja que ronda el
+ * borde no entre y salga a cada momento. Es lo que dice la instructora:
+ * «hasta ver dos blancas y dos rojas».
  */
-export const FINAL_ENTRA = 0.3;
+export const FINAL_ENTRA = GRADOS_POR_PUNTO;
 export const FINAL_SALE = 0.12;
 /** Y desde cuánto es venir muy fuera: cuatro blancas o cuatro rojas. */
 export const FINAL_MUY_FUERA = 0.5;

@@ -12,10 +12,15 @@ import { describe, expect, it } from "vitest";
 import {
   FINAL_DE_LA_TORRE,
   FinalDeLaTorre,
+  SUBIDA_CON_GAS,
+  SUBIDA_QUE_SACA,
   TECHO_DE_LA_FINAL,
   type LoQueVeLaTorre,
 } from "./final-de-la-torre";
 import { MILLA } from "./ruta";
+import { Boca } from "../audio/boca";
+import { Frecuencia } from "./radio";
+import { TurnoDePista } from "./turno-de-pista";
 
 /** Una final de tres grados, a `metros` del umbral. */
 function enLaSenda(metros: number, extra: Partial<LoQueVeLaTorre> = {}): LoQueVeLaTorre {
@@ -77,10 +82,27 @@ describe("la final de la torre", () => {
   it("se sale yéndose al aire, dándose la vuelta o pasando la pista", () => {
     const sube = new FinalDeLaTorre();
     expect(sube.paso(enLaSenda(2000))).toBe(true);
-    // Veinte metros por encima de lo más bajo de esta final: se fue al aire.
-    expect(sube.paso(enLaSenda(1900, { sobreLaPista: 105 + 21, vertical: 6 }))).toBe(false);
+    // Con el gas de despegue y subiendo: la frustrada de manual.
+    expect(
+      sube.paso(enLaSenda(1900, { sobreLaPista: 105 + SUBIDA_CON_GAS + 1, vertical: 6, gas: 1 })),
+    ).toBe(false);
     // Y no vuelve a entrar subiendo.
     expect(sube.paso(enLaSenda(1800, { sobreLaPista: 140, vertical: 6 }))).toBe(false);
+
+    // Sin gas, subiendo de verdad: trescientos pies sobre lo más bajo.
+    const sinGas = new FinalDeLaTorre();
+    expect(sinGas.paso(enLaSenda(2000))).toBe(true);
+    expect(sinGas.paso(enLaSenda(1950, { sobreLaPista: 105 + 40, vertical: 4 }))).toBe(true);
+    expect(
+      sinGas.paso(enLaSenda(1900, { sobreLaPista: 105 + SUBIDA_QUE_SACA + 1, vertical: 4 })),
+    ).toBe(false);
+
+    // Y con la orden de irse puesta, quien la obedece y sube, se va.
+    const obedece = new FinalDeLaTorre();
+    expect(obedece.paso(enLaSenda(2000))).toBe(true);
+    expect(
+      obedece.paso(enLaSenda(1900, { sobreLaPista: 105 + SUBIDA_CON_GAS + 1, vertical: 5, ordenDeIrse: true })),
+    ).toBe(false);
 
     const vuelta = new FinalDeLaTorre();
     vuelta.paso(enLaSenda(3000));
@@ -97,3 +119,104 @@ describe("la final de la torre", () => {
     expect(f.paso(enLaSenda(0, { enElAire: false, faseDelPlan: "aterrizado" }))).toBe(false);
   });
 });
+
+/**
+ * **El bamboleo no es irse al aire.** Se salía de la final al subir veinte
+ * metros sobre lo más bajo de ella, y el JAZ 120 con flaps sube y baja solo
+ * unos cinco metros por segundo con un periodo de veinte a cincuenta; quien
+ * vuela la final con el teclado va «o bajo o subo». Salir era perder el
+ * permiso y pedir otro —«la torre me da permiso para aterrizar dos veces»— y,
+ * si el segundo no se oía antes de los mínimos, al aire. Enrique, con el JAZ
+ * 120 en Tenerife Sur: «tener que hacer frustradas todos los vuelos es una
+ * basura».
+ */
+describe("una final con bamboleo", () => {
+  /**
+   * Una final de cinco millas: nivelada a `nivel` metros sobre la pista
+   * esperando la senda —«nos quedamos acá, nivelados, hasta que la senda nos
+   * venga a buscar»— y luego por ella, con la altura yendo y viniendo
+   * `amplitud` metros con ese periodo, y el variómetro que eso da. Devuelve
+   * lo que ve la torre en cada paso.
+   */
+  function finalConBamboleo(
+    amplitud: number,
+    periodo: number,
+    nivel = 1200 * 0.3048,
+    extra: Partial<LoQueVeLaTorre> = {},
+  ): LoQueVeLaTorre[] {
+    const vistas: LoQueVeLaTorre[] = [];
+    const v = 70;
+    const dt = 0.1;
+    const altoEn = (t: number, d: number) =>
+      Math.min(nivel, d * Math.tan((3 * Math.PI) / 180)) +
+      amplitud * Math.sin((2 * Math.PI * t) / periodo + Math.PI);
+    for (let t = 0, d = 4.9 * MILLA; d > 300; t += dt, d -= v * dt) {
+      const alto = altoEn(t, d);
+      const vertical = (alto - altoEn(t - dt, d + v * dt)) / dt;
+      vistas.push(enLaSenda(d, { sobreLaPista: alto, vertical, gas: 0.6, ...extra }));
+    }
+    return vistas;
+  }
+
+  it("arriba y abajo quince metros, cada veinte, treinta o cincuenta segundos, no saca de la final", () => {
+    for (const periodo of [20, 30, 50]) {
+      const f = new FinalDeLaTorre();
+      const dentro = finalConBamboleo(15, periodo).map((v) => f.paso(v));
+      // Se entra en el primer paso y no se sale nunca.
+      expect(dentro.every(Boolean), `periodo ${periodo} s`).toBe(true);
+    }
+  });
+
+  it("ni el de cinco metros por segundo del JAZ 120 nivelado, que de cresta a valle son ochenta", () => {
+    // ±5 m/s con un periodo de cincuenta segundos son ±40 m de altura.
+    const amplitud = (5 * 50) / (2 * Math.PI);
+    const f = new FinalDeLaTorre();
+    expect(finalConBamboleo(amplitud, 50).map((v) => f.paso(v)).every(Boolean)).toBe(true);
+  });
+
+  /*
+   * **Y con el turno de pista, como en el juego**: la fase de la torre es
+   * «final» mientras se está en su final, el permiso se pide al entrar en ella
+   * y el turno da un paso por fotograma. Ver `faseParaLaTorre` en `game.ts`.
+   */
+  function volarConElTurno(vistas: LoQueVeLaTorre[]) {
+    const final = new FinalDeLaTorre();
+    const permisos: number[] = [];
+    const alAire: number[] = [];
+    let retirados = 0;
+    let alto = 0;
+    const turno = new TurnoDePista({
+      radio: new Frecuencia(() => 0.5, "GCTS"),
+      boca: new Boca({ ahora: () => 0, cancelar: () => {} }),
+      trafico: () => null,
+      torre: () => true,
+      privado: () => false,
+      alUmbral: () => 3000,
+      alto: () => alto,
+      decirAOtro: () => null,
+      autorizarte: () => void permisos.push(Math.round(alto)),
+      mandarteAlAire: (a) => void alAire.push(Math.round(a)),
+      retirarteElPermiso: () => void retirados++,
+      permisoSinOir: () => false,
+    });
+    let antes = "";
+    for (const v of vistas) {
+      alto = v.sobreLaPista;
+      const fase = final.paso(v) ? "final" : "en-vuelo";
+      if (fase === "final" && antes !== "final") turno.pedirAterrizaje();
+      turno.paso(fase);
+      antes = fase;
+    }
+    return { permisos, alAire, retirados };
+  }
+
+  it("con el permiso dado, el bamboleo de quince metros no lo quita: la torre lo dice una vez y nadie va al aire", () => {
+    for (const periodo of [20, 30, 50]) {
+      const r = volarConElTurno(finalConBamboleo(15, periodo));
+      expect(r.permisos.length, `periodo ${periodo} s: ${r.permisos}`).toBe(1);
+      expect(r.alAire).toEqual([]);
+      expect(r.retirados).toBe(0);
+    }
+  });
+});
+

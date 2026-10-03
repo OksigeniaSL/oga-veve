@@ -17,7 +17,10 @@ import {
   estabilizada,
   porQueNoSeSigue,
   type Aproximacion,
-  seLevantaLaOrden,
+  type AproximacionEnLaPuerta,
+  porQueNoEstaEstabilizada,
+  PUERTA,
+  PUERTA_ESTABILIZADA,
 } from "./minimos";
 
 /** Una aproximación de manual: a la velocidad de referencia y en el eje. */
@@ -135,56 +138,41 @@ describe("el momento de decidir", () => {
   });
 });
 
-describe("y una orden de irse al aire que ya no describe nada se retira", () => {
-  /*
-   * La orden salía por tres puertas —tocar tierra, subir, alejarse— y ninguna
-   * es la que usa quien hace caso a medias: corregir. Así que quien enderezaba
-   * la aproximación seguía con el «abandoná» puesto hasta el final, aterrizaba
-   * bien, y el juego le daba el aterrizaje por bueno sin retirar nunca la
-   * orden. «Me lo validó, pero me dijo que abandonara.» Ver `seLevantaLaOrden`.
-   */
-  it("enderezar la aproximación la levanta", () => {
-    expect(seLevantaLaOrden("noEstabilizada", true)).toBe(true);
+/**
+ * **La puerta de los quinientos pies**, con los márgenes de la regla de
+ * verdad: la velocidad de cinco nudos por debajo a quince por encima, un punto
+ * de la senda, mil pies por minuto, alineado y configurado. Ver `PUERTA`.
+ */
+describe("la puerta de la aproximación estabilizada", () => {
+  const BUENA: AproximacionEnLaPuerta = {
+    kt: 140,
+    referenciaKt: 135,
+    vertical: -3.6,
+    delEje: 8,
+    torcido: 2,
+    puntos: 0.2,
+    configurado: true,
+  };
+
+  it("una final de manual pasa, y un punto de la senda todavía es estar en ella", () => {
+    expect(porQueNoEstaEstabilizada(BUENA)).toBeNull();
+    expect(porQueNoEstaEstabilizada({ ...BUENA, puntos: 0.95 })).toBeNull();
+    expect(porQueNoEstaEstabilizada({ ...BUENA, puntos: -0.95 })).toBeNull();
+    // De cinco nudos por debajo a quince por encima, también.
+    expect(porQueNoEstaEstabilizada({ ...BUENA, kt: 131 })).toBeNull();
+    expect(porQueNoEstaEstabilizada({ ...BUENA, kt: 149 })).toBeNull();
   });
 
-  it("y seguir mal, no", () => {
-    expect(seLevantaLaOrden("noEstabilizada", false)).toBe(false);
+  it("y pasado de eso, el porqué: alto, bajo, rápido, lento, cayendo o sin configurar", () => {
+    expect(porQueNoEstaEstabilizada({ ...BUENA, puntos: 2 })).toBe("alto");
+    expect(porQueNoEstaEstabilizada({ ...BUENA, puntos: -1.5 })).toBe("bajo");
+    expect(porQueNoEstaEstabilizada({ ...BUENA, kt: 135 + PUERTA.rapidoKt + 2 })).toBe("rapido");
+    expect(porQueNoEstaEstabilizada({ ...BUENA, kt: 135 - PUERTA.lentoKt - 2 })).toBe("lento");
+    expect(porQueNoEstaEstabilizada({ ...BUENA, vertical: -6 })).toBe("cayendo");
+    expect(porQueNoEstaEstabilizada({ ...BUENA, configurado: false })).toBe("sinConfigurar");
   });
 
-  it("pero la pista ocupada no se arregla volando mejor", () => {
-    /*
-     * La vaca sigue ahí, y eso no depende de cómo vueles. Confundir las dos
-     * sería dejar entrar a alguien en una pista ocupada por haber estabilizado
-     * la aproximación, que es exactamente lo que la orden existe para evitar.
-     */
-    expect(seLevantaLaOrden("pistaOcupada", true)).toBe(false);
-    expect(seLevantaLaOrden("pistaOcupada", false)).toBe(false);
-  });
-
-  it("y sin orden puesta no hay nada que levantar", () => {
-    expect(seLevantaLaOrden(null, true)).toBe(false);
-  });
-
-  it("y lo que decide «estabilizada» es la misma cuenta que dio la orden", () => {
-    /*
-     * Dos cuentas para «¿está bien esta aproximación?» acabarían discrepando,
-     * y entonces el juego mandaría abandonar y daría por buena la misma
-     * aproximación a la vez — que es de donde venimos.
-     */
-    const bien = {
-      velocidad: 75,
-      referencia: 75,
-      vertical: -3,
-      delEje: 5,
-      torcido: 2,
-    };
-    expect(porQueNoSeSigue(bien)).toBe(null);
-    expect(seLevantaLaOrden("noEstabilizada", estabilizada(bien))).toBe(true);
-
-    const rapido = { ...bien, velocidad: 75 * 1.5 };
-    expect(porQueNoSeSigue(rapido)).toBe("rapido");
-    expect(seLevantaLaOrden("noEstabilizada", estabilizada(rapido))).toBe(
-      false,
-    );
+  it("y la puerta está a quinientos pies", () => {
+    expect(PUERTA_ESTABILIZADA / 0.3048).toBeCloseTo(500, 5);
   });
 });
