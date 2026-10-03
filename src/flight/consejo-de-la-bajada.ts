@@ -298,7 +298,13 @@ export class ConsejoDeLaBajada {
     const d = this.dado;
     if (d && !d.resuelto && resuelto(d.consejo.motivo, l)) {
       d.resuelto = true;
-      if (this.huboConsejo && todoBien(l)) {
+      /*
+       * **Y se celebra lo que hizo quien vuela**, no lo que se arregló solo:
+       * si el avión no respondió —la marca bajó un peldaño, o el dato saltó—,
+       * no hay nada que felicitar. Medido en el banco: un «¡eso es!» tres
+       * décimas después de «metéle gas», sin que nadie hubiera tocado nada.
+       */
+      if (this.huboConsejo && d.respondio && todoBien(l)) {
         this.huboConsejo = false;
         this.quiere = null;
         return "bien";

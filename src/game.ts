@@ -18058,8 +18058,14 @@ export class Game {
        * olvidar lo dicho. Ver `Lectura.activo`.
        */
       s.verticalSpeed < 1.5 &&
-      // Y en la recogida, solo «quitá el gas». Ver `acompanarLaRecogida`.
-      s.heightAboveGround - this.aircraft.gearHeight > 15;
+      /*
+       * **Y por encima de cien pies.** Más abajo ya no se corrige la senda: se
+       * mira la pista y se posa, y en la recogida solo cabe «quitá el gas» —ver
+       * `acompanarLaRecogida`—. Medido en el banco: «un poco bajo para la
+       * pista: levantá suave» empezando a cincuenta pies, terminaba a un palmo
+       * del asfalto. Es la misma altura a la que deja de cantar la pérdida.
+       */
+      s.heightAboveGround - this.aircraft.gearHeight > Game.ALTO_PARA_LA_PERDIDA;
     const frenaConFlaps =
       this.aircraft.llevaFlaps &&
       this.input.palancaDeFlaps < 1 &&

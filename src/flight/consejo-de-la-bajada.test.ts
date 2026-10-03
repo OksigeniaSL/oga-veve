@@ -211,11 +211,21 @@ describe("espera el efecto", () => {
     for (let i = 0; i < 40; i++) c.paso(base({ senda: "alto", vertical: -700 }));
     expect(c.ultimo?.accion).toBe("narizAbajo");
     const bien: unknown[] = [];
+    // El morro abajo: el variómetro baja trescientos pies más, y la senda llega.
+    for (let i = 0; i < 20; i++) c.paso(base({ senda: "alto", vertical: -1000 }));
     for (let i = 0; i < 40; i++) {
       const p = c.paso(base());
       if (p === "bien") bien.push(p);
     }
     expect(bien).toHaveLength(1);
+  });
+
+  it("y lo que se arregló solo, sin que el avión respondiera, no se celebra", () => {
+    const c = new ConsejoDeLaBajada();
+    for (let i = 0; i < 40; i++) c.paso(base({ velocidad: "lento", kt: 128 }));
+    expect(c.ultimo?.accion).toBe("masGas");
+    // La marca baja un peldaño y la aguja, quieta, ya está en ella.
+    for (let i = 0; i < 40; i++) expect(c.paso(base({ kt: 128, marca: 130 }))).toBeNull();
   });
 
   it("con sink rate y lento, detrás de la caja va el gas; y airspeed low detrás no añade nada", () => {
