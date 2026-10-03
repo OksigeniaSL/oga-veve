@@ -1689,10 +1689,10 @@ export class Seguimiento {
   /**
    * **Si se está en la final, se haya empezado a bajar por el plan o no.**
    *
-   * `enElTramoFinal` pide además el punto de descenso, y en una vuelta al
-   * campo no lo hay: se vuela por debajo de `DESNIVEL_QUE_CUENTA`. Lo que no
-   * depende de la senda —que la ventanilla no diga «subí» encima de quien baja
-   * a la pista— se mira aquí.
+   * `enElTramoFinal` pide además el punto de descenso, y quien bajó antes por
+   * su cuenta no lo pasa: al llegar a él ya no quedaba `DESNIVEL_QUE_CUENTA`
+   * por bajar. Lo que no depende de la senda —que la ventanilla no diga «subí»
+   * encima de quien baja a la pista— se mira aquí.
    */
   enLaFinal(l: Lectura): boolean {
     const r = this.ruta;

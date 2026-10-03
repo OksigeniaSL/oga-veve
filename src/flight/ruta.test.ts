@@ -342,7 +342,7 @@ describe("Seguimiento", () => {
     expect(s.bajando).toBe(true);
   });
 
-  it("en una vuelta al campo no hay T/D, pero la final se sabe igual", () => {
+  it("quien bajó antes por su cuenta no pasa el T/D, pero la final se sabe igual", () => {
     // Mil pies sobre el umbral: por debajo de lo que cuenta como bajada, así
     // que el punto de descenso no llega nunca. La ventanilla tiene que saber
     // de la final igualmente: ver `bajarLaVentanillaEnLaFinal` en game.ts.

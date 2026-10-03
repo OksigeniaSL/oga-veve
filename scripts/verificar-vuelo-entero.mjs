@@ -2689,6 +2689,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let ventanillaEnFinal = null;
   let ventanillaQueSube = null;
+  let ventanillaAntes = null;
+  let ventanillaConOtroPlan = null;
+  const historiaDeLaVentanilla = [];
   /**
    * **Y la pista es de uno por vez, y las llegadas van en fila.** Se veían
    * dos o tres aviones entrando a la vez en la pista, uno encima del otro en
@@ -3333,15 +3336,45 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         o.traficoAnuncia?.("EC-PSO", "torre.clearedTakeoff");
         pistaOcupadaPuesta = `a los ${t.toFixed(0)} s, con el avión a ${Math.round(alto(s))} m`;
       }
+      {
+        /*
+         * La historia de la ventanilla: cada vez que cambia, cuándo, en qué
+         * etapa y con qué plan. Un «6.000 en la final» dice que pasó, no quién
+         * la puso ni si el juego sabía que estaba en la final.
+         */
+        const j = o.juegoParaTrazas?.();
+        const ahora = j?.ventanillaParaBanco?.pies ?? null;
+        if (ahora !== ventanillaAntes) {
+          const n = j?.navegacion;
+          historiaDeLaVentanilla.push(
+            `${t.toFixed(0)} s ${etapa} ${Math.round(alto(s))} m: ${ventanillaAntes}→${ahora}` +
+              ` (plan ${n?.plan ? "sí" : "no"}, fijo ${n?.indice ?? "-"}, quedan ${Math.round(n?.progreso?.restante ?? -1)} m)`,
+          );
+          ventanillaAntes = ahora;
+        }
+      }
       if (etapa === "final" && !s.onGround && (!destino || enElDestino)) {
         const j = o.juegoParaTrazas?.();
         const pies = j?.ventanillaParaBanco?.pies ?? null;
         const alli = j?.navegacion?.alturaDelFinal ?? null;
-        if (pies !== null && alli !== null) {
+        /*
+         * Solo si el plan del juego acaba aquí. Una vuelta al campo del banco
+         * se vuela con el plan del juego puesto hacia otro sitio —en Los
+         * Rodeos, 160 km por delante y la ventanilla en la autorización de
+         * subida—, y ese juego no sabe que se está aterrizando: no es la final
+         * de Gando, es otra pregunta. Se dice que no se midió.
+         */
+        const quedan = j?.navegacion?.progreso?.restante ?? Infinity;
+        if (pies !== null && alli !== null && quedan > 20000)
+          ventanillaConOtroPlan ??= `${t.toFixed(0)} s: el plan del juego acaba ${Math.round(quedan / 1000)} km más allá`;
+        else if (pies !== null && alli !== null) {
           ventanillaEnFinal = { pies, delFinal: Math.round(alli / 0.3048) };
           // Doscientos pies de holgura: el reglaje y el redondeo a cien.
           if (!j.pilotoPuesto && pies > alli / 0.3048 + 200)
-            ventanillaQueSube ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${pies} ft con el punto de final a ${Math.round(alli / 0.3048)}`;
+            ventanillaQueSube ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${pies} ft con el punto de final a ${Math.round(alli / 0.3048)}` +
+              ` · el juego: plan ${j.navegacion.plan ? "sí" : "no"}, fijo ${j.navegacion.indice} de ${j.navegacion.plan?.fijos?.length ?? 0},` +
+              ` quedan ${Math.round(j.navegacion.progreso?.restante ?? -1)} m, en la final ${j.navegacion.enLaFinal?.(j.lecturaDeRuta?.())}, fase ${j.faseDeAhora}` +
+              ` · historia: ${historiaDeLaVentanilla.slice(-6).join(" | ")}`;
         }
       }
       if (etapa === "final" && !s.onGround && alto(s) < 50 && alto(s) > 2) {
@@ -5674,6 +5707,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     pistaOcupadaPuesta,
     ventanillaEnFinal,
     ventanillaQueSube,
+    ventanillaConOtroPlan,
     dosEnLaPista,
     dosEnLaPistaDonde,
     sinHueco,
@@ -6457,6 +6491,13 @@ if (vuelo.ventanillaEnFinal)
       `${vuelo.ventanillaEnFinal.pies} ft, con el punto de final a ${vuelo.ventanillaEnFinal.delFinal}`,
     "«ningún sentido que, descendiendo, cuando me dice 2100 ahora me sube a 3000 si estoy llegando a la pista»",
   );
+else if (vuelo.ventanillaConOtroPlan)
+  resultados.push({
+    nombre: "y en la final la ventanilla no sube por encima del punto de final",
+    ok: true,
+    sinMedir: true,
+    detalle: `no se midió: ${vuelo.ventanillaConOtroPlan}`,
+  });
 
 /*
  * **Y con alguien en tu pista a la altura de decisión, la torre te manda al
