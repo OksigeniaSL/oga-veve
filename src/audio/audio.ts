@@ -848,7 +848,7 @@ export class Audio {
     if (n) {
       this.windGain?.gain.setTargetAtTime(n.viento.nivel, now, 0.12);
       this.windWhistle?.frequency.setTargetAtTime(n.viento.silbidoHz, now, 0.12);
-      this.windWhistle?.gain.setTargetAtTime(n.viento.silbido, now, 0.3);
+      this.fijar(this.windWhistle?.gain, n.viento.silbido, now, 0.3);
       this.windBody?.frequency.setTargetAtTime(n.viento.cuerpoHz, now, 0.15);
     } else {
       const speed = Math.min(1, state.airspeed / WIND_REFERENCE);
@@ -866,11 +866,11 @@ export class Audio {
     // El siseo y el cuerpo de siempre, que dentro entran por la pared.
     if (n) {
       this.enchufeDeLaLluvia?.seguir(n.lluvia.siseo > 1e-4, now);
-      this.rainGain?.gain.setTargetAtTime(n.lluvia.siseo, now, 0.4);
+      this.fijar(this.rainGain?.gain, n.lluvia.siseo, now, 0.4);
       // El cuerpo grave solo con lluvia de verdad: la llovizna es siseo y ya.
-      this.rainBodyGain?.gain.setTargetAtTime(n.lluvia.cuerpo, now, 0.4);
+      this.fijar(this.rainBodyGain?.gain, n.lluvia.cuerpo, now, 0.4);
       // Y el grave se abre al correr: más agua por segundo contra el mismo morro.
-      this.rainBody?.frequency.setTargetAtTime(n.lluvia.cuerpoHz, now, 0.4);
+      this.fijar(this.rainBody?.frequency, n.lluvia.cuerpoHz, now, 0.4);
     }
 
     // ── Bocina de pérdida ───────────────────────────────────────────────
@@ -892,10 +892,30 @@ export class Audio {
     const rolling = state.onGround ? Math.min(1, state.groundSpeed / 32) : 0;
     const rumor = n ? n.rodadura.rumor : Math.min(0.34, rolling * rolling * 0.2 * traqueteo);
     this.enchufeDeLaRodadura?.seguir(rumor > 1e-4, now);
-    this.rollGain?.gain.setTargetAtTime(rumor, now, 0.08);
+    this.fijar(this.rollGain?.gain, rumor, now, 0.08);
     // Y el trueno se desenchufa solo cuando acaba: ver `trueno`.
     this.enchufeDelTrueno?.seguir(false, now);
   }
+
+  /**
+   * Escribe una perilla **solo si ha cambiado**: la lluvia, la rodadura y el
+   * silbido pasan casi todo el vuelo quietos, y cada `setTargetAtTime` es un
+   * suceso más en la línea de tiempo del parámetro y un rato del fotograma.
+   */
+  private fijar(
+    param: AudioParam | undefined,
+    valor: number,
+    ahora: number,
+    constante: number,
+  ): void {
+    if (!param) return;
+    const antes = this.escrito.get(param);
+    if (antes !== undefined && Math.abs(valor - antes) < Math.max(1e-4, Math.abs(antes) * 0.01))
+      return;
+    this.escrito.set(param, valor);
+    param.setTargetAtTime(valor, ahora, constante);
+  }
+  private readonly escrito = new Map<AudioParam, number>();
 
   /**
    * **Lo que suena ahora en cada capa, medido**: el valor eficaz de cada una
