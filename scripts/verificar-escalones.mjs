@@ -150,13 +150,14 @@ try {
           cantadosVistos = cantados.length;
           // Lo que pide el paso, hecho dos segundos después.
           if (pendiente && t >= pendiente.en) {
-            const abiertos = j.input.aerofrenosAbiertos;
+            // La palanca tiene tres puntos —recogida, armada, fuera—: un solo
+            // toque desde abajo los arma, no los saca. Se pone donde se pide.
             if (pendiente.p.que === "tren") o.pedirTren(true);
             else if (pendiente.p.que === "aerofrenos") {
-              if (!abiertos) j.input.alternarAerofrenos();
+              o.ponerPalancaDeAerofrenos("fuera");
               linea.push(`${t}s el banco saca los aerofrenos`);
             } else if (pendiente.p.que === "recogerAerofrenos") {
-              if (abiertos) j.input.alternarAerofrenos();
+              o.ponerPalancaDeAerofrenos("recogida");
               linea.push(`${t}s el banco recoge los aerofrenos`);
             } else o.pedirFlaps((pendiente.p.objetivo.muesca ?? 0) / 3);
             pendiente = null;
