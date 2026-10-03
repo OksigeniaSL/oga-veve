@@ -56,7 +56,8 @@ import {
   MARCA_ROTULO,
 } from "./familia";
 import { CUANTOS_FIJOS, CUANTOS_OTROS } from "./cristal";
-import { dibujarLaCarta, type Mapa } from "./carta";
+import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
+import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { decima as n1, escribir, poner } from "./si-cambia";
 
@@ -194,7 +195,16 @@ export interface DatosDelTablero {
    * pies, y lo que dice el avisador. `null` si el avión no la lleva o no hay
    * ninguna puesta. Ver `flight/altitud-seleccionada.ts`.
    */
-  readonly ventanilla?: { readonly pies: number; readonly alerta: Alerta } | null;
+  readonly ventanilla?: {
+    readonly pies: number;
+    readonly alerta: Alerta;
+    /**
+     * Si la cinta la marca: el bug, la raya y su cifra encima. En la final de
+     * los peldaños que no leen cifras, no: ahí manda la senda. Ver
+     * `ventanillaParaElCuadro` en `game.ts`.
+     */
+    readonly enLaCinta?: boolean;
+  } | null;
   /**
    * **La velocidad que toca**, de la escalera de velocidades: los nudos y,
    * arriba, el Mach. La enseñan la ventanilla SPD y la muesca magenta de la
@@ -203,6 +213,12 @@ export interface DatosDelTablero {
   readonly spd?: { readonly kt: number; readonly mach: number | null } | null;
   /** Lo que hace cada mano del automático, para el FMA. `null` sin automático. */
   readonly fma?: Fma | null;
+  /**
+   * **La senda a la vista**: el desvío en puntos, la marca del ritmo del
+   * variómetro y el arco verde de la carta, en el avión que los lleva. Ver
+   * `flight/perfil-vertical.ts`.
+   */
+  readonly perfil?: PerfilEnElCuadro | null;
 }
 
 /**
@@ -1009,6 +1025,7 @@ export class Tablero {
     }
 
     this.vsi(d.fpm);
+    this.senda(d.perfil ?? null);
     this.tendencias(d);
     this.bugs(d, dt, rumbo);
 
@@ -1157,6 +1174,41 @@ export class Tablero {
   }
 
   /**
+   * **La senda y la marca del ritmo.** El rombo dice dónde está la senda:
+   * yendo alto queda por debajo de la raya, y se baja hasta que quede en el
+   * medio. Pasado el último punto se queda en el borde, asomando, que es lo
+   * que hace el de verdad. Ver `escalaDeLaSenda` en `cristal.ts`.
+   */
+  private senda(p: PerfilEnElCuadro | null): void {
+    const g = this.pieza('[data-cristal="senda"]');
+    if (g) {
+      const puntos = p?.puntos ?? null;
+      poner(g, "visibility", puntos === null ? "hidden" : "visible");
+      if (puntos !== null) {
+        const rombo = this.pieza('[data-cristal="senda-rombo"]');
+        const paso = Number(rombo?.dataset.paso) || 20;
+        const k = Math.max(-PUNTOS_A_FONDO, Math.min(PUNTOS_A_FONDO, puntos));
+        poner(rombo, "transform", `translate(0 ${n1(k * paso)})`);
+        escribir(
+          this.pieza('[data-cristal="senda-rotulo"]'),
+          p?.modo === "bajada" ? "VDEV" : "G/S",
+        );
+      }
+    }
+    const v = this.pieza('[data-cristal="vsi-objetivo"]');
+    if (v) {
+      const fpm = p?.ritmoFpm ?? null;
+      poner(v, "visibility", fpm === null ? "hidden" : "visible");
+      if (fpm !== null) {
+        const ampl = Number(v.dataset.ampl);
+        const max = Number(v.dataset.max);
+        const f = Math.max(-1, Math.min(1, fpm / max));
+        poner(v, "transform", `translate(0 ${n1(-f * ampl)})`);
+      }
+    }
+  }
+
+  /**
    * Los vectores de tendencia: dónde estarás dentro de seis segundos si no
    * tocas nada. Es la animación más valiosa del cuadro, porque lo que enseña
    * es anticipación — que es casi todo lo que es pilotar.
@@ -1278,7 +1330,8 @@ export class Tablero {
     const caja = this.pieza('[data-cristal="alt-sel-caja"]');
     const mcp = this.pieza("[data-mcp-alt]");
     escribir(this.pieza('[data-mcp="alt"]'), v ? String(v.pies) : "-----");
-    if (!v) {
+    // La visera la enseña siempre; la cinta, si la marca. Ver `enLaCinta`.
+    if (!v || v.enLaCinta === false) {
       this.bugDeAltitud = null;
       poner(bug, "visibility", "hidden");
       poner(caja, "visibility", "hidden");
@@ -1553,6 +1606,23 @@ export class Tablero {
       dibujo.eje?.desde ?? null,
       dibujo.eje?.hasta ?? null,
     );
+    /*
+     * **El arco verde**, a la escala de la carta y delante del avión: la
+     * carta va con el rumbo hacia arriba, así que delante es arriba. Fuera de
+     * la rosa, o pegado al avión, no se pinta. Ver `arcoDeAltitud`.
+     */
+    const arco = this.pieza('[data-carta="arco"]');
+    if (arco) {
+      const m = d.perfil?.arco ?? null;
+      const r = m === null ? null : m * pixelesPorMetro(dibujo.rango, radio);
+      if (r === null || r < 8 || r > radio - 2) poner(arco, "visibility", "hidden");
+      else {
+        const x = r * Math.sin(Math.PI / 6);
+        const y = -r * Math.cos(Math.PI / 6);
+        poner(arco, "visibility", "visible");
+        poner(arco, "d", `M${n1(-x)} ${n1(y)} A${n1(r)} ${n1(r)} 0 0 1 ${n1(x)} ${n1(y)}`);
+      }
+    }
     raya(
       '[data-carta="pista"]',
       dibujo.pista?.[0] ?? null,

@@ -2491,6 +2491,8 @@ export class Hud {
       /** La velocidad que toca y el FMA. Ver `DatosDelTablero.spd` y `.fma`. */
       readonly spd?: DatosDelTablero["spd"];
       readonly fma?: DatosDelTablero["fma"];
+      /** La senda a la vista. Ver `DatosDelTablero.perfil`. */
+      readonly perfil?: DatosDelTablero["perfil"];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2557,6 +2559,19 @@ export class Hud {
          * velocidad y la marca tiene que decirlo.
          */
         (this.vref - lenta) / (rapida - lenta),
+        /*
+         * **Y dónde está la senda, en la misma tarjeta de la altura.** Es lo
+         * que dicen las luces del PAPI —«estás alto, estás bajo»— dibujado como
+         * lo entiende quien todavía no lee: una raya rosa por la que hay que
+         * llevar el avioncito, con la misma cuenta que lo coloca a él. Solo en
+         * la final, que es donde hay una senda a la vista. Ver
+         * `flight/perfil-vertical.ts`.
+         */
+        mandos?.perfil?.metros !== null && mandos?.perfil?.metros !== undefined
+          ? Math.sqrt(
+              Math.max(0, state.heightAboveGround - mandos.perfil.metros) / 400,
+            )
+          : null,
       );
     }
 
@@ -2922,6 +2937,7 @@ export class Hud {
         ventanilla: mandos?.ventanilla ?? null,
         spd: mandos?.spd ?? null,
         fma: mandos?.fma ?? null,
+        perfil: mandos?.perfil ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de

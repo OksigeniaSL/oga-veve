@@ -244,7 +244,9 @@ export class CuadroDelTelefono {
     // La altitud, de veinte en veinte pies como el tambor: un cuatro que
     // baila entre 2403 y 2408 no deja leer la cifra.
     escribir(this.pieza("alt"), String(Math.round(d.pies / 20) * 20));
-    const v = d.ventanilla ?? null;
+    // La losa es la cinta en grande: en la final de los pequeños no marca la
+    // ventanilla, que ahí manda la senda. Ver `enLaCinta`.
+    const v = d.ventanilla && d.ventanilla.enLaCinta !== false ? d.ventanilla : null;
     const sel = this.pieza("alt-sel");
     if (sel) {
       escribir(sel, v ? String(v.pies) : "-----");

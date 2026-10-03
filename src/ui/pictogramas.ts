@@ -207,6 +207,8 @@ export class Pictogramas {
   /** El tope de Vref en la vía. Ver el marcado. */
   private vrefMark: SVGElement | null = null;
   private altPlane: SVGElement | null = null;
+  /** La raya de la senda en la tarjeta de la altura. Ver el marcado. */
+  private sendaMark: SVGElement | null = null;
   private propeller: SVGElement | null = null;
   private horizonte: SVGElement | null = null;
 
@@ -261,6 +263,17 @@ export class Pictogramas {
         <div class="picto">
           <svg viewBox="0 0 34 34" aria-hidden="true">
             <g class="picto__cerro">${CERRO}</g>
+            <!--
+              **Y la senda, en la final: la raya rosa por la que se baja.**
+
+              Es lo que dicen las luces del PAPI y el rombo de la pantalla de
+              los mayores, dicho en dibujo: con el avioncito encima de la raya
+              se va alto, debajo se va bajo, y encima de ella se va bien. Rosa,
+              que en este juego es siempre «lo que quiero». La coloca el HUD con
+              la misma cuenta que al avioncito. Ver flight/perfil-vertical.ts.
+            -->
+            <line class="picto__senda" data-picto="senda" x1="3" y1="0" x2="31" y2="0"
+                  visibility="hidden" />
             <g class="picto__avion" data-picto="altitude" transform="translate(9 22)">${AVION}</g>
           </svg>
         </div>
@@ -309,6 +322,7 @@ export class Pictogramas {
     this.speedMark = this.pick("speed");
     this.vrefMark = this.pick("vref");
     this.altPlane = this.pick("altitude");
+    this.sendaMark = this.pick("senda");
     this.propeller = this.pick("prop");
     this.horizonte = this.pick("horizonte");
   }
@@ -350,6 +364,11 @@ export class Pictogramas {
      * avioncito digan cosas distintas del mismo número.
      */
     vref: number | null = null,
+    /**
+     * Dónde va la senda en la tarjeta de la altura, con la misma escala que
+     * `height`, o `null` si no se baja por ninguna. Ver el marcado.
+     */
+    senda: number | null = null,
   ): void {
     if (!this.root) return;
 
@@ -381,6 +400,19 @@ export class Pictogramas {
       "transform",
       `translate(9 ${22 - clamp01(height) * 19})`,
     );
+    /*
+     * Y la raya de la senda a la altura de las alas del avioncito cuando se
+     * va por ella: el dibujo del avión tiene las alas a ocho de su origen.
+     */
+    if (this.sendaMark) {
+      const hay = senda !== null;
+      this.sendaMark.setAttribute("visibility", hay ? "visible" : "hidden");
+      if (hay) {
+        const y = (22 - clamp01(senda) * 19 + 8.2).toFixed(1);
+        this.sendaMark.setAttribute("y1", y);
+        this.sendaMark.setAttribute("y2", y);
+      }
+    }
 
     // La hélice gira de verdad. A ralentí se mueve despacio y se distingue;
     // a tope se convierte en un disco, que es exactamente lo que hace una

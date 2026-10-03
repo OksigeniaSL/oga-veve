@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT, esDeChorro, type AircraftConfig } from "./aircraft";
 import {
   ALTITUD_DEL_TOPE,
+  CONFIGURADO_DESDE,
+  FRENAR_ANTES,
   indicadaDeSubida,
   machDeCrucero,
   NUDO,
@@ -57,6 +59,21 @@ describe("la escalera de velocidades", () => {
     expect(ALTITUD_DEL_TOPE / PIE).toBeCloseTo(10000, 6);
   });
 
+  it("y bajando, la marca llega a 250 antes de los diez mil pies, para cruzarlos ya frenado", () => {
+    // SPD TRANS 250/10000: se cruza a 250, no se empieza a frenar al cruzar.
+    for (const a of AIRCRAFT.filter(esDeChorro)) {
+      const encima = velocidadQueToca(a, llegando(60, 10800));
+      expect(encima.tramo, a.id).toBe("descenso");
+      expect(encima.kt, a.id).toBe(TOPE_BAJO_EL_100);
+      const masArriba = velocidadQueToca(a, llegando(60, 12000));
+      expect(masArriba.kt, a.id).toBeGreaterThan(TOPE_BAJO_EL_100);
+    }
+    // Subiendo no: ahí el tope vale hasta los diez mil y no antes.
+    for (const a of AIRCRAFT.filter(esDeChorro))
+      expect(velocidadQueToca(a, subiendo(10500)).kt, a.id).toBeGreaterThan(TOPE_BAJO_EL_100);
+    expect(FRENAR_ANTES / PIE).toBeCloseTo(1000, 6);
+  });
+
   it("el Mach de crucero de los reactores es el de su clase", () => {
     expect(machDeCrucero(de("jaz-120"))).toBeCloseTo(0.78, 2);
     expect(machDeCrucero(de("jaz-90"))).toBeCloseTo(0.75, 2);
@@ -102,6 +119,32 @@ describe("la escalera de velocidades", () => {
       expect(aproximacion.tramo).toBe("aproximacion");
       expect(aproximacion.kt, id).toBeGreaterThanOrEqual(180);
       expect(aproximacion.kt, id).toBeLessThanOrEqual(200);
+    }
+  });
+
+  it("y antes de la final, ya con el tren y los segundos flaps: a la final se llega frenado", () => {
+    // «Pretende que entre a una velocidad de vértigo»: de la Vref y cincuenta
+    // a la Vref y cinco en las cinco millas no lo frena ningún reactor.
+    for (const a of AIRCRAFT.filter(esDeChorro)) {
+      const configurado = velocidadQueToca(a, llegando(6.5));
+      expect(configurado.tramo, a.id).toBe("aproximacion");
+      expect(configurado.kt, a.id).toBe(Math.round(vrefKt(a) + 20));
+      const final = velocidadQueToca(a, llegando(4.5));
+      expect(configurado.kt - final.kt, a.id).toBeLessThanOrEqual(15);
+    }
+    expect(CONFIGURADO_DESDE / MILLA).toBeCloseTo(8, 6);
+  });
+
+  it("llegando, aunque el plan no haya pasado su punto de descenso", () => {
+    // Quien empieza a bajar antes no pasa el T/D, y la marca se quedaba en
+    // 250 hasta la pista: «pretende que entre a una velocidad de vértigo».
+    for (const a of AIRCRAFT) {
+      const sinTd = (millas: number) =>
+        velocidadQueToca(a, { ...llegando(millas, 1900), bajando: false });
+      expect(sinTd(4).tramo, a.id).toBe("final");
+      expect(sinTd(4).kt, a.id).toBe(Math.round(vrefKt(a) + 5));
+      expect(sinTd(10).tramo, a.id).toBe("aproximacion");
+      expect(sinTd(20).tramo, a.id).toBe("terminal");
     }
   });
 
