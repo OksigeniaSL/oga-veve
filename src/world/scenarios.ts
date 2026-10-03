@@ -1118,12 +1118,17 @@ export const LA_PALMA: Scenario = {
   runway: pistaDe(GCLA as unknown as Aerodrome, "36"),
   colaPreferente: 10,
   /*
-   * Un grado, y aquí sí es la declinación de verdad: el asfalto corre a 179°
-   * verdaderos y la cabecera pone 18. En Canarias la declinación anda por los
-   * cinco al oeste, pero lo que manda para el número pintado es lo que diga
-   * el fichero del aeródromo, que sale de OpenStreetMap.
+   * **Cuatro grados al oeste, los del AIP**, y aquí la de verdad sirve tal
+   * cual: con ella el número pintado y la brújula dicen lo mismo.
+   *
+   * Ponía uno, «la declinación de verdad», y no lo era. El AIP de ENAIRE
+   * (AD 2-GCLA, en vigor desde el 1-oct-2026) da «4º W (2025)» en el 2.2, y
+   * en el 2.12 la pista corre a 179,01° y 359,01° verdaderos, o sea a 183° y
+   * 003° magnéticos: la 18 y la 36, que son los números de verdad —el 003
+   * redondea a cero, y el cero se pinta 36—. Con uno, alineado en la 36 el
+   * HDG marcaba 000 y no el 003 que se lee en esa cabina.
    */
-  magneticVariation: 1,
+  magneticVariation: 4,
   aerodrome: conPlataformasCosidas(GCLA as unknown as Aerodrome),
   // Por el este, sobre el mar (AIP España, AD 2-GCLA, 22.4).
   circuitoPublicado: { "36": "derecha", "18": "izquierda" },
