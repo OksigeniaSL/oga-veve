@@ -220,3 +220,37 @@ describe("una final con bamboleo", () => {
   });
 });
 
+/**
+ * **Y por qué se salió**, que decide si la aproximación siguiente es otra o
+ * la misma: saliéndose del cono al coger la final —el reactor que se pasa del
+ * eje en el viraje, quien se alinea a golpes de alabeo— y volviendo a entrar,
+ * el permiso que se oyó sigue valiendo. En el banco de Gran Canaria con la
+ * pista ocupada, la torre lo decía dos veces en la misma final.
+ */
+describe("por qué se sale de la final", () => {
+  it("yéndose, dándose la vuelta, por fuera del cono o tocando", () => {
+    const sube = new FinalDeLaTorre();
+    sube.paso(enLaSenda(2000));
+    sube.paso(enLaSenda(1900, { sobreLaPista: 105 + SUBIDA_QUE_SACA + 1, vertical: 4 }));
+    expect(sube.ultimaSalida).toBe("seVa");
+
+    const vuelta = new FinalDeLaTorre();
+    vuelta.paso(enLaSenda(3000));
+    vuelta.paso(enLaSenda(3000, { torcido: 150 }));
+    expect(vuelta.ultimaSalida).toBe("vuelta");
+
+    const pasado = new FinalDeLaTorre();
+    pasado.paso(enLaSenda(3000));
+    pasado.paso(enLaSenda(3000, { alUmbral: null, torcido: 50 }));
+    expect(pasado.ultimaSalida).toBe("fuera");
+
+    const toca = new FinalDeLaTorre();
+    toca.paso(enLaSenda(300));
+    toca.paso(enLaSenda(0, { enElAire: false, faseDelPlan: "aterrizado" }));
+    expect(toca.ultimaSalida).toBe("tierra");
+    // Y rodando sigue siendo eso: no se ha vuelto a salir de nada.
+    toca.paso(enLaSenda(0, { enElAire: false, faseDelPlan: "aterrizado" }));
+    expect(toca.ultimaSalida).toBe("tierra");
+  });
+});
+

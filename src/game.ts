@@ -9328,7 +9328,11 @@ export class Game {
     const antes = this.dependencia;
     this.dependencia = this.laDependenciaDeAhora();
     const seOye = seOyeElCampo(this.dependencia);
-    if (!seOye && antes !== null && seOyeElCampo(antes)) this.turno.dejarDeOir();
+    if (!seOye && antes !== null && seOyeElCampo(antes)) {
+      this.turno.dejarDeOir();
+      // Y fuera de su zona, el permiso de esa torre ya no es de nadie.
+      if (this.permisoDeAterrizar === "oido") this.permisoDeAterrizar = null;
+    }
     // Llegando a la zona de la torre de allí, la cota de su pista. Ver
     // `contarLaCotaDeLaPista`.
     if (
@@ -15548,7 +15552,21 @@ export class Game {
      * `faseDeLaTorre` y `flight/final-de-la-torre.ts`.
      */
     const torreAntes = this.faseDeLaTorre;
+    const estabaEnLaFinal = this.enLaFinalDeLaTorre;
     this.enLaFinalDeLaTorre = this.mirarLaFinalDeLaTorre(vista.fase);
+    /*
+     * **Y el permiso es de una aproximación.** Se acaba yéndose al aire,
+     * dándose la vuelta o tocando: lo que venga después es otra final con su
+     * permiso. Saliéndose del cono al coger la final y volviendo, no. Ver
+     * `SalidaDeLaFinal` y `pedirAterrizaje` más abajo.
+     */
+    if (
+      estabaEnLaFinal &&
+      !this.enLaFinalDeLaTorre &&
+      this.finalDeLaTorre.ultimaSalida !== "fuera" &&
+      this.permisoDeAterrizar === "oido"
+    )
+      this.permisoDeAterrizar = null;
     const torreAhora = this.faseParaLaTorre(vista.fase);
     this.faseDeLaTorre = torreAhora;
     /*
@@ -15569,12 +15587,21 @@ export class Game {
      * final corta. En un campo sin torre no autoriza nadie, y sin motor la
      * pista la da `autorizarSinMotor`, por la punta que sea.
      */
+    /*
+     * **Una vez por aproximación.** Quien se sale del cono al coger la final
+     * —el reactor que se pasa del eje en el viraje, quien se alinea a golpes
+     * de alabeo— y vuelve a entrar sigue en la misma aproximación, y el
+     * permiso que ya se oyó sigue valiendo: se pedía otra vez, y en el banco
+     * de Gran Canaria la torre lo dijo dos veces en la misma final. Enrique:
+     * «la torre me da permiso para aterrizar dos veces; eso no lo veo normal».
+     */
     if (
       torreAhora === "final" &&
       torreAntes !== "final" &&
       this.leccion.torre &&
       !this.sinMotor &&
-      !sinTorre(this.elCampo().escenario.aerodrome)
+      !sinTorre(this.elCampo().escenario.aerodrome) &&
+      this.permisoDeAterrizar !== "oido"
     )
       this.turno.pedirAterrizaje();
 

@@ -173,19 +173,40 @@ export function seVaDeVerdad(v: LoQueVeLaTorre, subido: number): boolean {
   return !!v.ordenDeIrse && subido > SUBIDA_CON_GAS;
 }
 
+/**
+ * **Por qué se salió de la final de la torre**, la última vez:
+ *
+ * - `seVa`: yéndose al aire de verdad. Ver `seVaDeVerdad`.
+ * - `vuelta`: dándose la vuelta.
+ * - `fuera`: fuera del cono, pasada la pista o lejos.
+ * - `tierra`: tocando tierra.
+ *
+ * Lo mira quien da el permiso: saliéndose del cono al coger la final y
+ * volviendo a entrar no se empieza otra aproximación, y el permiso que se oyó
+ * sigue valiendo. Ver `pedirAterrizaje` en `game.ts`.
+ */
+export type SalidaDeLaFinal = "seVa" | "vuelta" | "fuera" | "tierra";
+
 export class FinalDeLaTorre {
   private dentro = false;
   /** Lo más bajo de esta final, m sobre la pista. Ver `SUBIDA_QUE_SACA`. */
   private loMasBajo = Infinity;
+  /** Por qué se salió la última vez. Ver `SalidaDeLaFinal`. */
+  private salida: SalidaDeLaFinal | null = null;
 
   /** Si ahora se está en la final de la torre. */
   get enFinal(): boolean {
     return this.dentro;
   }
 
+  /** Por qué se salió de ella la última vez, o `null` si no se ha salido. */
+  get ultimaSalida(): SalidaDeLaFinal | null {
+    return this.salida;
+  }
+
   /** Un paso: dice si se está en la final de la torre. */
   paso(v: LoQueVeLaTorre): boolean {
-    if (!v.enElAire) return this.salir();
+    if (!v.enElAire) return this.salir(this.dentro ? "tierra" : this.salida);
     if (!this.dentro) {
       if (v.faseDelPlan === "final" || entra(v)) {
         this.dentro = true;
@@ -200,24 +221,25 @@ export class FinalDeLaTorre {
      * es otra final con su permiso. Subir y bajar unos metros corrigiendo no
      * es irse: ver `seVaDeVerdad`.
      */
-    if (seVaDeVerdad(v, v.sobreLaPista - this.loMasBajo)) return this.salir();
+    if (seVaDeVerdad(v, v.sobreLaPista - this.loMasBajo)) return this.salir("seVa");
     // La fase del plan es esta misma final vista más de cerca.
     if (v.faseDelPlan === "final") return true;
-    if (Math.abs(v.torcido) > TORCIDO_PARA_SALIR) return this.salir();
+    if (Math.abs(v.torcido) > TORCIDO_PARA_SALIR) return this.salir("vuelta");
     // Fuera del cono, pasada la pista o lejos: ya no se viene a ella.
     if (!v.enLaFinalDelPlan && (v.alUmbral === null || v.alUmbral > FINAL_DE_LA_TORRE + MILLA))
-      return this.salir();
+      return this.salir("fuera");
     return true;
   }
 
   /** Otro vuelo, o se puso el avión en otro sitio: ninguna final. */
   reiniciar(): void {
-    this.salir();
+    this.salir(null);
   }
 
-  private salir(): false {
+  private salir(porque: SalidaDeLaFinal | null): false {
     this.dentro = false;
     this.loMasBajo = Infinity;
+    this.salida = porque;
     return false;
   }
 }
