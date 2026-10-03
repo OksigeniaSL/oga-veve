@@ -104,6 +104,16 @@ describe("qué se pide", () => {
     expect(queHacer(base())).toBeNull();
   });
 
+  it("lo que lleva el automático no se le pide a quien vuela", () => {
+    // Con el automático en la senda, ni detrás del sink rate.
+    expect(queHacer(base({ morroDelAutomatico: true }), true)).toBeNull();
+    expect(queHacer(base({ senda: "alto", morroDelAutomatico: true }))).toBeNull();
+    // Y con los gases, el gas tampoco.
+    expect(queHacer(base({ velocidad: "lento", gasDelAutomatico: true }))).toBeNull();
+    // Lo demás, sí.
+    expect(queHacer(base({ senda: "alto", gasDelAutomatico: true }))?.accion).toBe("narizAbajo");
+  });
+
   it("un solo mando por consejo, y los contrarios son el mismo mando al revés", () => {
     for (const a of ACCIONES) {
       expect(["gas", "freno", "nariz"]).toContain(mandoDe(a));

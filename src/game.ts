@@ -18091,6 +18091,8 @@ export class Game {
       senda: this.objetivos.altitud !== null ? null : sendaQueSeAconseja,
       sendaMuyFuera: d ? sendaMuyFuera(d) : false,
       hundiendose: this.actitudDicha === "sink rate",
+      morroDelAutomatico: this.objetivos.altitud !== null,
+      gasDelAutomatico: this.gasesPuestos,
       kt,
       aceleracion: this.tendenciaDeVelocidad * NUDOS,
       vertical: s.verticalSpeed * PIES_POR_MINUTO,

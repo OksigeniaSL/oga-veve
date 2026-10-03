@@ -115,6 +115,14 @@ export interface Lectura {
   /** Si la caja de proximidad al suelo está diciendo *sink rate*. */
   readonly hundiendose?: boolean;
   /**
+   * **Si un mando lo lleva el automático**: el morro, con el automático
+   * bajando por la senda; el gas, con los gases automáticos. Lo que lleva él
+   * no se le pide a quien vuela —tocarlo lo suelta—, tampoco detrás de una
+   * caja que canta.
+   */
+  readonly morroDelAutomatico?: boolean;
+  readonly gasDelAutomatico?: boolean;
+  /**
    * La marca de la velocidad, nudos: la de la escalera de velocidades. Si
    * salta un peldaño, lo que pasa ha cambiado aunque el avión no se haya
    * movido. Ver `sePuedeDar`.
@@ -192,6 +200,16 @@ export const YA_CORRIGE_VERTICAL = 300;
  * el camino a la pérdida— y si no, nariz arriba.
  */
 export function queHacer(l: Lectura, hundiendose = false): Consejo | null {
+  const c = queHacerConTodo(l, hundiendose);
+  if (!c) return null;
+  // Y nada de lo que lleva el automático. Ver `Lectura.morroDelAutomatico`.
+  const mando = mandoDe(c.accion);
+  if (mando === "nariz" && l.morroDelAutomatico) return null;
+  if (mando === "gas" && l.gasDelAutomatico) return null;
+  return c;
+}
+
+function queHacerConTodo(l: Lectura, hundiendose: boolean): Consejo | null {
   const v = l.velocidad ?? "bien";
   const s = l.senda ?? "bien";
   if (hundiendose)
