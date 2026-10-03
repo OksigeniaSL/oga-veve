@@ -161,6 +161,7 @@ import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   alUmbralEnLaAproximacion,
+  enElConoDeLaSenda,
   enElEmbudoDeFinal,
   enLaZonaDeAproximacion,
   vieneEnFinal,
@@ -630,6 +631,7 @@ import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
 import { rodaduraDeFrenada } from "./flight/carrera";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
+import { GAS_AL_RALENTI } from "./flight/palanca-de-aerofrenos";
 import {
   MARGEN_DEL_PRIMER_PELDANO,
   NADA_RECORDADO,
@@ -883,7 +885,7 @@ import {
   escalonesDeSubida,
 } from "./flight/autorizacion-de-altitud";
 import { nivelMasTranquilo, ESPERA_CON_BACHES } from "./flight/nivel-tranquilo";
-import { ALTURA_DE_DECISION, MARGENES } from "./flight/minimos";
+import { ALTURA_DE_DECISION, MARGENES, PUERTA_ESTABILIZADA } from "./flight/minimos";
 import {
   bandaDeAhora,
   bandaDeVelocidad,
@@ -1097,6 +1099,13 @@ const SENDA_DE_LA_FINAL = (3 * Math.PI) / 180;
  * pasan a `RETARD` y cierran las palancas para la recogida.
  */
 const RETARD = 30 * 0.3048;
+
+/**
+ * **A qué ritmo baja el gas el `RETARD`**, por segundo: del gas de la final
+ * al ralentí en unos dos segundos, lo que dura la recogida. Ver
+ * `sostenerLaVelocidadDeLaFinal`.
+ */
+const RITMO_DEL_RETARD = 0.35;
 
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
@@ -3038,6 +3047,7 @@ export class Game {
     this.consejero.reiniciar();
     this.desvioAhora = null;
     this.sendaJuzgada = null;
+    this.sinkRateExplicado = false;
     this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
@@ -3336,10 +3346,12 @@ export class Game {
     como: string;
   }[] = [];
   /**
-   * El momento de la recogida, para la instructora: veinte pies. Ver
+   * El momento de la recogida, para la instructora: treinta pies, donde los
+   * gases de un reactor pasan a `RETARD`. Era a veinte, y con la boca de la
+   * final ocupada «quitá el gas» llegaba con las ruedas en el suelo. Ver
    * `acompanarLaRecogida`.
    */
-  private laRecogida = new AvisosDeAltura([{ metros: 20 * 0.3048, dice: "ahora" }]);
+  private laRecogida = new AvisosDeAltura([{ metros: RETARD, dice: "ahora" }]);
   /** Lo que marcaba el radioaltímetro en el último fotograma, m. */
   private radioAltura: number | null = null;
   /**
@@ -4020,14 +4032,13 @@ export class Game {
       this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
     decirAOtro: (dice) => this.decirleAOtro(dice),
     autorizarte: () => this.autorizarElAterrizaje(),
-    mandarteAlAire: (alto, sigue, porque) =>
-      porque === "sinPermiso"
-        ? this.laAproximacion.mandarIrseSinPermiso(alto)
-        : this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
+    mandarteAlAire: (alto, sigue) =>
+      this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
     avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
     retirarteElPermiso: () => this.retirarElPermisoSinOir(),
     permisoSinOir: () => this.permisoSinOir,
+    darteElPermisoYa: () => this.darElPermisoYa(),
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -6028,15 +6039,26 @@ export class Game {
     // Con la ayuda de la final, el gas lo cierra ella: es su RETARD.
     if (this.gasDeLaFinal !== null) return;
     const c = this.input.controls;
-    if (!c.engineOn || c.throttle <= GAS_EN_LA_RECOGIDA || this.sinMotor)
-      return;
+    /*
+     * **Y en el avión con frenos de tierra, cualquier gas es gas.** Suben solos
+     * al tocar si están armados y el gas está al ralentí —ver `GAS_AL_RALENTI`
+     * en `flight/palanca-de-aerofrenos.ts`—, así que tocar con una décima de
+     * gas ya los deja abajo, y aquí no se decía nada por debajo de quince
+     * centésimas. Enrique, con el JAZ 120 en Tenerife Sur: «nadie me dijo ni
+     * gas ni montar paneles; tuve que tomar tierra a toda velocidad».
+     */
+    const sobra = this.input.palancaDeAerofrenos.hayPalanca
+      ? GAS_AL_RALENTI
+      : GAS_EN_LA_RECOGIDA;
+    if (!c.engineOn || c.throttle <= sobra || this.sinMotor) return;
     this.hud.senal.mostrar(
       "toma",
       this.rotulo("vuelo.quitaElGas", "palabra.sinGas"),
       null,
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
-    this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas");
+    // En `mando`: llega tarde o no llega, y no la echa de la cola un consejo.
+    this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas", "mando");
   }
 
   /**
@@ -7024,31 +7046,6 @@ export class Game {
           this.instructor.decir(dicho.texto, dicho.id, "mando");
         return;
       }
-      /*
-       * **Sin permiso a los mínimos, con la pista libre.** La orden es la de
-       * siempre —la roja del aire y su «ida al aire», o «motor y al aire» en
-       * Canarias, que están grabadas—, y el porqué no es la pista: es que no
-       * se oyó tu permiso antes de la altura de decisión, y por debajo no se
-       * da. De Taguató para arriba, detrás, su fraseología: «go around» a
-       * secas, montado con piezas ya grabadas. La tarjeta cuenta el porqué; la
-       * voz de la instructora que lo explique está por grabar —ver
-       * `PENDIENTE-VOCES-torre-final.md`— y no se pide muda. En la cabina, el
-       * «go around» de quien vuela, que sí está.
-       */
-      if (porque === "sinPermiso") {
-        if (this.hayTorreQueHable() && !this.esAfisAqui()) {
-          this.luzDeTorre("roja", "alAire", "sinPermiso");
-          this.laTorreMandaEnLaLuz = true;
-        }
-        const dicho = this.avisoCon("vuelo.sinPermisoEnLosMinimos", "palabra.alAire");
-        this.hud.senal.mostrar("frustrada", dicho.rotulo, null, {
-          segundos: Infinity,
-          prioridad: URGENTE,
-        });
-        this.avisar("attention");
-        this.cantar("go around", undefined, undefined, "mando");
-        return;
-      }
       if (porque === "pistaOcupada") {
         /*
          * Vaca o lámpara según el campo **al que se viene**, y la vaca en su
@@ -7079,37 +7076,18 @@ export class Game {
         // Y a partir de aquí la luz la lleva la torre.
         this.laTorreMandaEnLaLuz = true;
       }
-      const dicho = this.avisoCon(
-        porque === "pistaOcupada"
-          ? "vuelo.mandanFrustrar"
-          : "vuelo.noEstabilizada",
-        "palabra.alAire",
-      );
-      this.hud.senal.mostrar(
-        "frustrada",
-        porque === "pistaOcupada"
-          ? dicho.rotulo
-          : this.rotuloCompuesto(
-              `${t(`motivo.${motivo}` as never)}. ${dicho.texto}`,
-              "palabra.alAire",
-            ),
-        null,
-        { segundos: Infinity, prioridad: URGENTE },
-      );
-      this.avisar("peligro");
+      const dicho = this.avisoCon("vuelo.mandanFrustrar", "palabra.alAire");
+      this.hud.senal.mostrar("frustrada", dicho.rotulo, null, {
+        segundos: Infinity,
+        prioridad: URGENTE,
+      });
       /*
-       * **Y la voz dice por qué, no solo qué hacer.**
-       *
-       * El motivo lo llevaba la tarjeta —«Vas muy despacio. Venís mal para
-       * bajar…»— y la voz no, porque los seis motivos no estaban grabados. A
-       * los cuatro años la voz **es** el canal, y una orden sin motivo no
-       * enseña: enseña a obedecer. Ahora se pide la receta que junta las dos
-       * piezas, y si no existe se cae sola a la de siempre. Ver `recetaDe`.
+       * **Con el tono de atención, no el de peligro.** Irse al aire no es una
+       * emergencia, es una maniobra, y se va a felicitar: la otra punta ya
+       * sonaba así, y la pista ocupada sonaba a alarma. Ver AGENTS.md, «la
+       * calma se enseña».
        */
-      const conMotivo =
-        porque === "noEstabilizada" && motivo
-          ? `${dicho.id}+${motivo}`
-          : dicho.id;
+      this.avisar("attention");
       /*
        * **Y con la pista ocupada, el porqué va en `mando`**, que es una orden
        * con su porqué y va detrás de la de la torre, como el de la otra punta.
@@ -7117,14 +7095,45 @@ export class Game {
        * torre dijo «motor y al aire» y la instructora no llegó a decir nada,
        * con los «muy rápido» de la subida delante. Ver `explicaLaOtraPunta`.
        */
-      this.cantar(
-        porque === "pistaOcupada" ? "go around, runway occupied" : "go around",
-        porque === "pistaOcupada"
-          ? dicho.texto
-          : `${t(`motivo.${motivo}` as never)}. ${dicho.texto}`,
-        conMotivo,
-        porque === "pistaOcupada" ? "mando" : "normal",
+      this.cantar("go around, runway occupied", dicho.texto, dicho.id, "mando");
+    });
+
+    /*
+     * **La instructora propone irse al aire**: a los quinientos pies la
+     * aproximación no está estabilizada, o a los mínimos no se ve la pista.
+     * Ver `mirarLaPuerta` en `flight/la-aproximacion.ts`.
+     *
+     * **Propone, y con calma.** Esto era una orden con la misma tarjeta que
+     * la de la torre, que no caducaba, y el tono de peligro: «Venís mal para
+     * bajar: gas y al aire», casi en cada final de Enrique con el JAZ 120. La
+     * torre no manda al aire por ir alto o rápido, y el avión no se va solo:
+     * decide quien vuela. Así que en los peldaños de abajo la instructora lo
+     * dice una vez, con el tono de atención y una tarjeta que se va sola, y si
+     * se va, se felicita como cualquier frustrada. En el de cabina la decisión
+     * es de quien vuela y no se dice nada: lo que suena es lo del avión.
+     *
+     * La frase nueva está por grabar —ver `PENDIENTE-VOCES-frustrada.md`—:
+     * hasta entonces se ve, con su dibujo y su porqué, y la voz calla, que
+     * una frase sin grabar es muda en el navegador de quien más juega.
+     */
+    this.hechos.on("proponenIrseAlAire", ({ motivo }) => {
+      this.apuntarCanto(`propone irse: ${motivo}`);
+      if (this.tier.avisos === "cabina") return;
+      const clave: TranslationKey =
+        motivo === "sinPista" ? "vuelo.proponeIrseSinPista" : "vuelo.proponeIrse";
+      const porQue = t(`motivo.${motivo}` as TranslationKey);
+      this.hud.senal.mostrar(
+        "frustrada",
+        canalesDe(this.tier.avisos).texto
+          ? canalesDe(this.tier.avisos).corto
+            ? t("palabra.alAire")
+            : `${porQue}. ${t(clave)}`
+          : "",
+        null,
+        { segundos: SE_QUEDA_EL_PERMISO, prioridad: IMPORTANTE },
       );
+      this.avisar("attention");
+      if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
     });
 
     /*
@@ -7320,11 +7329,29 @@ export class Game {
         } else this.permisoDeAterrizar = null;
         return;
       case "se-cae":
+        // Ya a la vista, la voz que sobra se va y el permiso se queda: ver
+        // `darElPermisoYa`.
+        if (this.permisoDeAterrizar === "oido") return;
         // La retiró quien sabía que ya no valía: ver `retirarElPermisoSinOir`.
         if (this.permisoDeAterrizar === "esperando-su-voz") this.retirarElPermisoSinOir();
         this.permisoDeAterrizar = null;
         return;
     }
+  }
+
+  /**
+   * **Tu permiso, a la vista ya, a los mínimos.** Su voz esperaba turno en la
+   * boca y la torre no te manda al aire por eso —era retraso suyo, con la
+   * pista libre—: la lámpara verde y la tarjeta salen en el acto, que es su
+   * canal cuando no puede sonar, y la frase que quedaba por decir se retira:
+   * a doscientos pies no se dice entera. Ver `darteElPermisoYa` en
+   * `flight/turno-de-pista.ts`.
+   */
+  private darElPermisoYa(): void {
+    if (this.permisoDeAterrizar !== "esperando-su-voz") return;
+    this.alSonarElPermiso(this.permisosDados, "no-suena", null);
+    BOCA.retirar(esTuPermisoDeAterrizar);
+    this.apuntarCanto("permiso a la vista, a los mínimos");
   }
 
   /** La lámpara verde pintada, su tarjeta y su sonido: el permiso, a la vista. */
@@ -7382,6 +7409,9 @@ export class Game {
       torcido,
       sobreLaPista: s.position.y - this.cotaDelCampo(campo),
       vertical: s.verticalSpeed,
+      // Lo que dice que uno se va al aire de verdad: ver `seVaDeVerdad`.
+      gas: this.input.controls.throttle,
+      ordenDeIrse: this.laAproximacion.mandanFrustrar,
     });
   }
 
@@ -7406,6 +7436,27 @@ export class Game {
    * el reloj de pared, y con el del juego acelerado la altura a la que suena
    * sale comprimida.
    */
+  /**
+   * **El desvío de la senda que pinta el rombo y el estado de tu permiso**,
+   * para el banco: lo que apunta en cada orden de irse al aire.
+   */
+  get sendaYPermisoParaBanco(): {
+    readonly puntos: number | null;
+    readonly modo: string | null;
+    readonly permiso: string | null;
+    readonly permisosDados: number;
+    readonly faseDeLaTorre: string;
+  } {
+    const d = this.desvioAhora;
+    return {
+      puntos: d ? +d.puntos.toFixed(2) : null,
+      modo: d?.modo ?? null,
+      permiso: this.permisoDeAterrizar,
+      permisosDados: this.permisosDados,
+      faseDeLaTorre: this.faseDeLaTorre,
+    };
+  }
+
   get permisoPorOirParaBanco(): boolean {
     return (
       this.turno.pidiendoAterrizaje ||
@@ -7768,11 +7819,10 @@ export class Game {
     luz: "verde" | "roja" | null,
     rojaDice: "esperar" | "alAire" = "esperar",
     /**
-     * Y por qué al aire, para la fraseología: la pista ocupada, que se viene
-     * por la cabecera que no está en uso —ver `flight/la-otra-cabecera.ts`—, o
-     * que se llegó a los mínimos sin permiso, que es «go around» a secas.
+     * Y por qué al aire, para la fraseología: la pista ocupada, o que se viene
+     * por la cabecera que no está en uso —ver `flight/la-otra-cabecera.ts`—.
      */
-    alAirePor: "ocupada" | "enUso" | "sinPermiso" = "ocupada",
+    alAirePor: "ocupada" | "enUso" = "ocupada",
     /**
      * Y quien necesita saber si sonó la frase de la lámpara: tu permiso para
      * aterrizar. Ver `alSonarElPermiso`.
@@ -8011,9 +8061,7 @@ export class Game {
         : rojaDice === "alAire"
           ? alAirePor === "enUso"
             ? "go around, runway in use"
-            : alAirePor === "sinPermiso"
-              ? "go around"
-              : "go around, runway occupied"
+            : "go around, runway occupied"
           : porQue
             ? HOLD_SHORT_POR[porQue]
             : "hold short of the runway";
@@ -8445,6 +8493,7 @@ export class Game {
     this.consejero.reiniciar();
     this.desvioAhora = null;
     this.sendaJuzgada = null;
+    this.sinkRateExplicado = false;
     this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
@@ -9280,7 +9329,11 @@ export class Game {
     const antes = this.dependencia;
     this.dependencia = this.laDependenciaDeAhora();
     const seOye = seOyeElCampo(this.dependencia);
-    if (!seOye && antes !== null && seOyeElCampo(antes)) this.turno.dejarDeOir();
+    if (!seOye && antes !== null && seOyeElCampo(antes)) {
+      this.turno.dejarDeOir();
+      // Y fuera de su zona, el permiso de esa torre ya no es de nadie.
+      if (this.permisoDeAterrizar === "oido") this.permisoDeAterrizar = null;
+    }
     // Llegando a la zona de la torre de allí, la cota de su pista. Ver
     // `contarLaCotaDeLaPista`.
     if (
@@ -12256,6 +12309,8 @@ export class Game {
       haciaOtroCampo: this.haciaOtroCampo(),
       sinMotor: this.sinMotor,
       conPrioridad: this.conPrioridad,
+      enLaFinalDeLaTorre: this.enLaFinalDeLaTorre,
+      enLaPuerta: this.loQueSeMiraEnLaPuerta(),
     });
     /*
      * **El aire, que no está quieto.**
@@ -14848,6 +14903,35 @@ export class Game {
               hastaElUmbralDeToma(campo.pista) - luces.papiAdentro,
             )
           : null,
+      sinTorre: sinTorre(campo.escenario.aerodrome),
+    };
+  }
+
+  /**
+   * **Lo que se mira en la puerta de los quinientos pies** y no sale del
+   * estado del avión: la indicada, el desvío de la senda que pinta el rombo
+   * —el mismo que mira la instructora, ver `mirarLaSenda`— y si va
+   * configurado. Ver `mirarLaPuerta` en `flight/la-aproximacion.ts`.
+   *
+   * Configurado es el tren abajo y los flaps de la aproximación por lo menos
+   * —la segunda muesca—: hay aviones que aterrizan con menos que todos, como
+   * el 737 con flaps 30 en vez de 40, y esto no es un examen de la muesca.
+   */
+  private loQueSeMiraEnLaPuerta(): {
+    readonly kt: number;
+    readonly puntos: number | null;
+    readonly configurado: boolean;
+    readonly vertical: number;
+  } {
+    const s = this.flight.state;
+    const d = this.desvioAhora;
+    return {
+      kt: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS,
+      puntos: d && d.modo === "final" ? d.puntos : null,
+      vertical: this.bajadaSostenida,
+      configurado:
+        (!this.aircraft.trenRetractil || this.input.trenQueSePide) &&
+        (!this.aircraft.llevaFlaps || muescaMasCercana(this.input.palancaDeFlaps) >= 2),
     };
   }
 
@@ -15469,7 +15553,21 @@ export class Game {
      * `faseDeLaTorre` y `flight/final-de-la-torre.ts`.
      */
     const torreAntes = this.faseDeLaTorre;
+    const estabaEnLaFinal = this.enLaFinalDeLaTorre;
     this.enLaFinalDeLaTorre = this.mirarLaFinalDeLaTorre(vista.fase);
+    /*
+     * **Y el permiso es de una aproximación.** Se acaba yéndose al aire,
+     * dándose la vuelta o tocando: lo que venga después es otra final con su
+     * permiso. Saliéndose del cono al coger la final y volviendo, no. Ver
+     * `SalidaDeLaFinal` y `pedirAterrizaje` más abajo.
+     */
+    if (
+      estabaEnLaFinal &&
+      !this.enLaFinalDeLaTorre &&
+      this.finalDeLaTorre.ultimaSalida !== "fuera" &&
+      this.permisoDeAterrizar === "oido"
+    )
+      this.permisoDeAterrizar = null;
     const torreAhora = this.faseParaLaTorre(vista.fase);
     this.faseDeLaTorre = torreAhora;
     /*
@@ -15490,12 +15588,21 @@ export class Game {
      * final corta. En un campo sin torre no autoriza nadie, y sin motor la
      * pista la da `autorizarSinMotor`, por la punta que sea.
      */
+    /*
+     * **Una vez por aproximación.** Quien se sale del cono al coger la final
+     * —el reactor que se pasa del eje en el viraje, quien se alinea a golpes
+     * de alabeo— y vuelve a entrar sigue en la misma aproximación, y el
+     * permiso que ya se oyó sigue valiendo: se pedía otra vez, y en el banco
+     * de Gran Canaria la torre lo dijo dos veces en la misma final. Enrique:
+     * «la torre me da permiso para aterrizar dos veces; eso no lo veo normal».
+     */
     if (
       torreAhora === "final" &&
       torreAntes !== "final" &&
       this.leccion.torre &&
       !this.sinMotor &&
-      !sinTorre(this.elCampo().escenario.aerodrome)
+      !sinTorre(this.elCampo().escenario.aerodrome) &&
+      this.permisoDeAterrizar !== "oido"
     )
       this.turno.pedirAterrizaje();
 
@@ -15574,7 +15681,22 @@ export class Game {
     // saber leer; el instructor de voz vendrá a llenar este hueco.
     const conLetras = this.tier.instruments !== "none";
 
-    if (vista.fase !== this.faseAnunciada) {
+    /*
+     * **Y un parpadeo de la fase en plena final no se anuncia.** La fase
+     * «final» del plan se sale al subir veinte metros —ver
+     * `SUBIDA_QUE_SACA_DE_FINAL` en `flight/vuelo.ts`—, y con el bamboleo
+     * del JAZ 120 eso pasa corrigiendo la senda: se oía «estás en final» y,
+     * dos segundos después, «andá a dar una vuelta» o «seguí la flecha», con
+     * el avión alineado y bajando a la pista. Mientras se siga en la final de
+     * la torre y nadie mande irse, no ha cambiado nada que decir: la final
+     * sigue. Ver `flight/final-de-la-torre.ts`.
+     */
+    const sigueEnLaFinal =
+      vista.fase === "en-vuelo" &&
+      this.faseAnunciada === "final" &&
+      this.enLaFinalDeLaTorre &&
+      !this.laAproximacion.mandanFrustrar;
+    if (vista.fase !== this.faseAnunciada && !sigueEnLaFinal) {
       const antes = this.faseAnunciada;
       this.faseAnunciada = vista.fase;
       // Si esto es solo reponer la tarjeta que alguien tapó, se pone y ya: ni
@@ -18691,6 +18813,15 @@ export class Game {
 
   /** El último aviso de actitud que se cantó, para no repetirlo. */
   private actitudDicha: AvisoDeActitud = null;
+  /**
+   * **Si el *sink rate* de esta bajada ya se explicó.** La caja suena cada
+   * vez que salta, que es lo real del avión; la explicación de la
+   * instructora va detrás **una vez**: la segunda ya se sabe qué es. En la
+   * final de Tenerife Sur con el JAZ 120 la caja saltó dos veces y la
+   * explicación se pidió las dos. Se olvida al acabar la bajada. Ver
+   * `mirarLaSenda`.
+   */
+  private sinkRateExplicado = false;
 
   /**
    * «Sink rate» y «bank angle»: los dos avisos de **cómo** se vuela.
@@ -18751,15 +18882,21 @@ export class Game {
      * dos consejos de dos sitios. Ver `flight/consejo-de-la-bajada.ts`.
      */
     const delConsejero = this.lecturaDelConsejo;
+    if (ahora === "sink rate" && this.sinkRateExplicado) {
+      this.cantar("sink rate");
+      return;
+    }
     if (ahora === "sink rate" && delConsejero?.activo) {
       const consejo = this.consejero.porLaCaja("hundiendose", {
         ...delConsejero,
         hundiendose: true,
       });
+      this.sinkRateExplicado = consejo !== null;
       if (consejo) this.decirElConsejo(consejo, "sink rate");
       else this.cantar("sink rate");
       return;
     }
+    if (ahora === "sink rate") this.sinkRateExplicado = true;
     const clave =
       ahora === "sink rate"
         ? this.bandaDeAhora === "lento"
@@ -18794,6 +18931,11 @@ export class Game {
   private lecturaDelConsejo: LecturaDelConsejo | null = null;
   /** La distancia al umbral del fotograma anterior, para saber si se acerca. */
   private alUmbralDeLaSenda = Infinity;
+  /**
+   * El variómetro de media en los últimos cinco segundos, m/s: lo que mira la
+   * puerta de los quinientos pies. Ver `loQueSeMiraEnLaPuerta`.
+   */
+  private bajadaSostenida = 0;
 
   /**
    * **El origen de la senda de la final**: las luces del PAPI, o, en la
@@ -18844,13 +18986,23 @@ export class Game {
    */
   private mirarLaSenda(dt: number): void {
     const s = this.flight.state;
+    this.bajadaSostenida += (s.verticalSpeed - this.bajadaSostenida) * Math.min(1, dt / 5);
     const alUmbral = this.distanceToRunway();
     const acercandose = alUmbral < this.alUmbralDeLaSenda - 0.05;
     this.alUmbralDeLaSenda = alUmbral;
     let d: Desvio | null = null;
     let objetivo: Objetivo = "nada";
     const equipo = equipoDeSenda(this.aircraft);
-    if (!s.onGround && this.vieneAAterrizar(acercandose)) {
+    /*
+     * **Y la senda de la final, solo donde la senda dice algo**: en su cono,
+     * ocho grados a cada lado del eje y diez millas. Ver `enElConoDeLaSenda`.
+     */
+    const pista = this.laPistaDeAhora();
+    if (
+      !s.onGround &&
+      this.vieneAAterrizar(acercandose) &&
+      enElConoDeLaSenda(pista, s.position.x, s.position.z)
+    ) {
       const o = this.origenDeLaSenda();
       const a = this.campoParaLaAproximacion();
       const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
@@ -18874,7 +19026,10 @@ export class Game {
       }
     }
     // **Acabada la bajada, se olvida lo dicho**: la siguiente empieza de cero.
-    if (d === null && this.desvioAhora !== null) this.consejero.reiniciar();
+    if (d === null && this.desvioAhora !== null) {
+      this.consejero.reiniciar();
+      this.sinkRateExplicado = false;
+    }
     this.desvioAhora = d;
     this.objetivoDeLaSenda = objetivo;
     this.sendaJuzgada =
@@ -18935,12 +19090,28 @@ export class Game {
      * bajando**, en cambio, sí es ir bajo, y ahí se pide levantar la nariz.
      * Lo mismo bajando por el plan: debajo de su senda se nivela y se espera.
      */
+    /*
+     * **Y pasada la puerta de los quinientos pies, en la final, solo lo que
+     * no puede esperar.** Ahí se mira si la aproximación está estabilizada, y
+     * si no, la instructora propone irse —ver `mirarLaPuerta` en
+     * `flight/la-aproximacion.ts`—; de ahí abajo se mira la pista y se posa.
+     * Corregir la senda o pedir menos gas a cada bamboleo era la «pesada» de
+     * Enrique en la final del JAZ 120: «"frená", "gas y al aire", "vas bajo",
+     * "dale gas", y el otro, "sink rate". Joder». Quedan ir lento, que es lo
+     * que pone un avión en pérdida a cien metros del suelo, y la explicación
+     * del *sink rate* detrás de su caja. Las luces del PAPI y el rombo siguen
+     * diciendo la senda a la vista.
+     */
+    const pasadaLaPuerta =
+      d?.modo === "final" &&
+      s.position.y - this.campoParaLaAproximacion().cota < PUERTA_ESTABILIZADA;
     const sendaQueSeAconseja =
       this.sendaJuzgada === "bajo" && s.verticalSpeed * PIES_POR_MINUTO > -300
         ? "bien"
         : this.sendaJuzgada;
     this.lecturaDelConsejo = {
       activo,
+      soloLoUrgente: pasadaLaPuerta,
       // Con los gases automáticos —o la ayuda de la final—, la velocidad la
       // llevan ellos.
       velocidad: this.gasesPuestos || this.gasDeLaFinal !== null ? null : this.velocidadJuzgada,
@@ -19056,9 +19227,27 @@ export class Game {
      * cabina va en pies, como todo lo demás.
      */
     const unidades = UNIT_SYSTEMS[this.tier.units];
+    /*
+     * **Y la senda, por cuánto**, igual: el rombo dice que se va alto, y el
+     * número dice cuánto. Un turbohélice llegando a Asunción a dos mil cien
+     * pies y a cuatro millas y media oyó «por encima de la senda» con el rombo
+     * a dos puntos, y no se lo creyó: iba unos trescientos cincuenta pies por
+     * encima de ella. Con el número delante se ve por qué.
+     */
+    const d = this.desvioAhora;
+    const porCuanto =
+      apunta === "aro"
+        ? this.runwayGuide.porCuanto
+        : (apunta === "senda" || apunta === "papi") &&
+            d !== null &&
+            (c.accion === "narizAbajo" || c.accion === "narizArriba") &&
+            c.motivo !== "hundiendose" &&
+            c.motivo !== "lento"
+          ? d.metros
+          : null;
     const conCifra =
-      apunta === "aro" && canalesDe(this.tier.avisos).cifra
-        ? `${larga} (${Math.round(Math.abs(unidades.altitude(this.runwayGuide.porCuanto)))} ${unidades.altitudeLabel()})`
+      porCuanto !== null && canalesDe(this.tier.avisos).cifra
+        ? `${larga} (${Math.round(Math.abs(unidades.altitude(porCuanto)))} ${unidades.altitudeLabel()})`
         : larga;
     const dibujo =
       c.accion === "masGas"
@@ -19426,6 +19615,16 @@ export class Game {
     const s = this.flight.state;
     const enLaFinal = !s.onGround && this.laVelocidadQueToca().peldano === "final";
     if (!enLaFinal) {
+      /*
+       * **Y al tocar, las palancas se quedan atrás.** Los gases de verdad se
+       * desconectan con el gas al ralentí después de la recogida; aquí se
+       * soltaba el gas donde lo hubiera dejado el `RETARD`, y si no había
+       * llegado abajo del todo, los frenos de tierra no subían: necesitan el
+       * gas al ralentí —ver `GAS_AL_RALENTI` en
+       * `flight/palanca-de-aerofrenos.ts`—. Enrique, con el JAZ 120: «tuve
+       * que tomar tierra a toda velocidad».
+       */
+      if (this.gasDeLaFinal && s.onGround) this.input.servoDelGas(0);
       if (this.gasDeLaFinal) this.soltarElGasDeLaFinal(false);
       if (!s.onGround) this.gasDeLaFinalDado = false;
       return;
@@ -19461,6 +19660,18 @@ export class Game {
     const aire = this.flight.aireDelDia();
     const toca = this.laVelocidadQueToca();
     const ruedas = s.heightAboveGround - this.aircraft.gearHeight;
+    /*
+     * **El `RETARD`, de verdad al ralentí antes de tocar.** Con el ritmo de
+     * siempre de los gases —doce centésimas por segundo— las palancas tardaban
+     * cuatro o cinco segundos en llegar abajo desde el gas de la final, y la
+     * recogida desde los treinta pies dura menos: se tocaba con gas y los
+     * frenos de tierra no subían. El de Boeing las lleva al ralentí en la
+     * recogida, para tocar con ellas atrás: aquí, en dos segundos.
+     */
+    if (ruedas < RETARD) {
+      this.input.servoDelGas(Math.max(0, this.input.controls.throttle - RITMO_DEL_RETARD * dt));
+      return;
+    }
     const gas = gasDeLosAutomaticos(
       {
         velocidad: indicatedAirspeed(s.airspeed, s.position.y, aire),

@@ -1121,6 +1121,17 @@ export const ES_PY = {
   "motivo.rapido": "Vas muy rápido",
   "motivo.torcido": "Estás torcido",
   "motivo.descolocado": "Estás fuera del eje",
+  "motivo.alto": "Vas alto",
+  "motivo.bajo": "Vas bajo",
+  "motivo.sinConfigurar": "Falta el tren o los flaps",
+  /*
+   * **La instructora propone irse al aire**, no lo manda: a los quinientos
+   * pies la aproximación no viene bien, o a los mínimos no se ve la pista.
+   * Decide quien vuela. Sin grabar: ver `PENDIENTE-VOCES-frustrada.md`.
+   */
+  "vuelo.proponeIrse": "Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar",
+  "vuelo.proponeIrseSinPista":
+    "Lo seguro es irnos al aire y volver a intentarlo",
   "vuelo.rotar": "Tirá para arriba",
   /*
    * **V1, dicho como lo dice una instructora y no como una alarma.**

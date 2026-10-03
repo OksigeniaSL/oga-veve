@@ -40,10 +40,9 @@
  * su punto de final aunque llegue de lado. Y, por supuesto, la fase «final»
  * del plan, que es lo mismo visto más de cerca.
  *
- * Y **no se sale por un instante**: se sale yéndose al aire —subiendo de
- * verdad desde lo más bajo de esta final—, dándose la vuelta, alejándose o
- * pasando de largo la pista. Es lo que hace que una final sea una y su
- * permiso uno.
+ * Y **no se sale por un instante**: se sale yéndose al aire de verdad —ver
+ * `seVaDeVerdad`—, dándose la vuelta, alejándose o pasando de largo la pista.
+ * Es lo que hace que una final sea una y su permiso uno.
  *
  * Sin three.js ni DOM: el juego le da lo que ve y esto dice si se está.
  */
@@ -87,11 +86,39 @@ export const TORCIDO_AL_ENTRAR = 60;
 export const TORCIDO_PARA_SALIR = 120;
 
 /**
- * Cuánto hay que subir desde lo más bajo de esta final para haberse ido al
- * aire, m. Los mismos veinte que sacan de la fase «final» del plan: ver
- * `SUBIDA_QUE_SACA_DE_FINAL` en `flight/vuelo.ts`.
+ * **Cuánto hay que subir desde lo más bajo de esta final para haberse ido al
+ * aire sin más señal que la subida**, m: cien, unos trescientos pies.
+ *
+ * Eran veinte, los mismos que sacan de la fase «final» del plan —ver
+ * `SUBIDA_QUE_SACA_DE_FINAL` en `flight/vuelo.ts`—, y veinte metros no es
+ * irse: es corregir. El JAZ 120 con flaps sube y baja solo unos cinco metros
+ * por segundo con un periodo de veinte a cincuenta —lo midió la tanda que
+ * arregló el alabeo—, y quien vuela la final con el teclado va «o bajo o
+ * subo»: un punto de la senda a dos millas son veinte metros. Con eso se
+ * salía de la final, el permiso se caía, se pedía otro al volver a bajar —«la
+ * torre me da permiso para aterrizar dos veces; eso no lo veo normal»— y si
+ * el segundo no llegaba a oírse antes de los mínimos, la torre te mandaba al
+ * aire por su propio retraso. Enrique, con el JAZ 120 en Tenerife Sur: «tener
+ * que hacer frustradas todos los vuelos es una basura».
+ *
+ * Cien metros no los hace ningún bamboleo: el de ese avión, nivelado
+ * esperando la senda, es de ochenta de cresta a valle en el peor caso —cinco
+ * metros por segundo con cincuenta de periodo—, y bajando por la senda, de
+ * diez. Y la frustrada de verdad no espera a esto: lleva el gas de despegue o
+ * la orden de irse, que sacan antes. Ver `seVaDeVerdad`.
  */
-export const SUBIDA_QUE_SACA = 20;
+export const SUBIDA_QUE_SACA = 100;
+
+/**
+ * **Y con el gas de despegue, bastante menos**, m: quince. El gas a fondo y
+ * el avión subiendo es la frustrada de manual —«TOGA», potencia de despegue,
+ * y el morro arriba—, y ahí no hace falta esperar a los cien metros para
+ * saber que uno se va.
+ */
+export const SUBIDA_CON_GAS = 15;
+
+/** El gas de despegue, de cero a uno. Ver `SUBIDA_CON_GAS`. */
+export const GAS_DE_DESPEGUE = 0.95;
 
 /** Lo que se sube sin estar subiendo, m/s: un bache, no una subida. */
 const SIN_SUBIR = 1;
@@ -119,23 +146,82 @@ export interface LoQueVeLaTorre {
   readonly sobreLaPista: number;
   /** Velocidad vertical, m/s, positiva subiendo. */
   readonly vertical: number;
+  /**
+   * El gas, de cero a uno. A fondo y subiendo es irse al aire: ver
+   * `SUBIDA_CON_GAS`. Sin esto, solo cuenta la subida.
+   */
+  readonly gas?: number;
+  /**
+   * **Si hay puesta una orden de irse al aire**, sea de quien sea: quien la
+   * obedece y sube, se va. Ver `seVaDeVerdad`.
+   */
+  readonly ordenDeIrse?: boolean;
 }
+
+/**
+ * **Si con esto uno se está yendo al aire de verdad**, y no corrigiendo la
+ * senda: subir cien metros sobre lo más bajo de la final, subir con el gas de
+ * despegue, o subir con una orden de irse al aire puesta. Ver
+ * `SUBIDA_QUE_SACA`.
+ *
+ * @param subido lo que se ha subido sobre lo más bajo de esta final, m
+ */
+export function seVaDeVerdad(v: LoQueVeLaTorre, subido: number): boolean {
+  if (subido > SUBIDA_QUE_SACA) return true;
+  if (v.vertical <= SIN_SUBIR) return false;
+  if ((v.gas ?? 0) >= GAS_DE_DESPEGUE && subido > SUBIDA_CON_GAS) return true;
+  return !!v.ordenDeIrse && subido > SUBIDA_CON_GAS;
+}
+
+/**
+ * **Por qué se salió de la final de la torre**, la última vez:
+ *
+ * - `seVa`: yéndose al aire de verdad. Ver `seVaDeVerdad`.
+ * - `vuelta`: dándose la vuelta.
+ * - `fuera`: fuera del cono, pasada la pista o lejos.
+ * - `tierra`: tocando tierra.
+ *
+ * Lo mira quien da el permiso: saliéndose del cono al coger la final y
+ * volviendo a entrar no se empieza otra aproximación, y el permiso que se oyó
+ * sigue valiendo. Ver `pedirAterrizaje` en `game.ts`.
+ */
+export type SalidaDeLaFinal = "seVa" | "vuelta" | "fuera" | "tierra";
 
 export class FinalDeLaTorre {
   private dentro = false;
   /** Lo más bajo de esta final, m sobre la pista. Ver `SUBIDA_QUE_SACA`. */
   private loMasBajo = Infinity;
+  /** Por qué se salió la última vez. Ver `SalidaDeLaFinal`. */
+  private salida: SalidaDeLaFinal | null = null;
+  /** Si se fue al aire y todavía no se ha dado la vuelta. Ver `paso`. */
+  private trasIrse = false;
 
   /** Si ahora se está en la final de la torre. */
   get enFinal(): boolean {
     return this.dentro;
   }
 
+  /** Por qué se salió de ella la última vez, o `null` si no se ha salido. */
+  get ultimaSalida(): SalidaDeLaFinal | null {
+    return this.salida;
+  }
+
   /** Un paso: dice si se está en la final de la torre. */
   paso(v: LoQueVeLaTorre): boolean {
-    if (!v.enElAire) return this.salir();
+    if (!v.enElAire) return this.salir(this.dentro ? "tierra" : this.salida);
     if (!this.dentro) {
-      if (v.faseDelPlan === "final" || entra(v)) {
+      /*
+       * **Y tras irse al aire, no se vuelve a entrar hasta haberse dado la
+       * vuelta.** Quien se va al aire a los mínimos nivela a menudo por encima
+       * de la pista, donde la fase «final» del plan y su último tramo todavía
+       * valen: en el banco de Gran Canaria, con la pista ocupada, el JAZ 120
+       * se fue, niveló y la torre le dio otra vez «autorizado para aterrizar»
+       * en plena frustrada, y otra más en la final de verdad. La final
+       * siguiente empieza volviendo, y volver es haber dado la vuelta: el
+       * viento en cola del circuito, o el viraje de vuelta de la frustrada.
+       */
+      if (this.trasIrse && Math.abs(v.torcido) > TORCIDO_PARA_SALIR) this.trasIrse = false;
+      if (!this.trasIrse && (v.faseDelPlan === "final" || entra(v))) {
         this.dentro = true;
         this.loMasBajo = v.sobreLaPista;
       }
@@ -145,26 +231,30 @@ export class FinalDeLaTorre {
     /*
      * **Irse al aire saca, aunque el plan siga en «final» un momento.** Se
      * sube de verdad desde lo más bajo de esta final, y lo que venga después
-     * es otra final con su permiso.
+     * es otra final con su permiso. Subir y bajar unos metros corrigiendo no
+     * es irse: ver `seVaDeVerdad`.
      */
-    if (v.sobreLaPista - this.loMasBajo > SUBIDA_QUE_SACA) return this.salir();
+    if (seVaDeVerdad(v, v.sobreLaPista - this.loMasBajo)) return this.salir("seVa");
     // La fase del plan es esta misma final vista más de cerca.
     if (v.faseDelPlan === "final") return true;
-    if (Math.abs(v.torcido) > TORCIDO_PARA_SALIR) return this.salir();
+    if (Math.abs(v.torcido) > TORCIDO_PARA_SALIR) return this.salir("vuelta");
     // Fuera del cono, pasada la pista o lejos: ya no se viene a ella.
     if (!v.enLaFinalDelPlan && (v.alUmbral === null || v.alUmbral > FINAL_DE_LA_TORRE + MILLA))
-      return this.salir();
+      return this.salir("fuera");
     return true;
   }
 
   /** Otro vuelo, o se puso el avión en otro sitio: ninguna final. */
   reiniciar(): void {
-    this.salir();
+    this.salir(null);
   }
 
-  private salir(): false {
+  private salir(porque: SalidaDeLaFinal | null): false {
     this.dentro = false;
     this.loMasBajo = Infinity;
+    this.salida = porque;
+    if (porque === "seVa") this.trasIrse = true;
+    else if (porque === "tierra" || porque === null) this.trasIrse = false;
     return false;
   }
 }

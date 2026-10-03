@@ -2293,9 +2293,10 @@ comprobar(
  * No se corrige, se va uno y se vuelve a empezar. Eso es lo que la hace una
  * regla y no un consejo, y es la más repetida de las que llevan a un
  * accidente cuando no se cumple: la aproximación no estabilizada. Aquí se
- * llega a mínimos descolocado del eje a propósito, y el juego tiene que
- * mandar irse al aire — la misma señal que cuando lo manda la torre, porque
- * para quien juega es lo mismo.
+ * llega a mínimos descolocado del eje a propósito, y la instructora tiene
+ * que proponer irse al aire con el dibujo de la frustrada. **Propone, no
+ * manda**: la torre manda al aire por la pista, no por ir descolocado, y quien
+ * decide es quien vuela. Ver `mirarLaPuerta` en `flight/la-aproximacion.ts`.
  */
 /*
  * Vuelo limpio antes de medir: la sección anterior deja una orden de la torre
@@ -2337,10 +2338,10 @@ const noEstabilizada = await page.evaluate(async () => {
   return { mandaron, dibujo, alto: Math.round(alto) };
 });
 comprobar(
-  "llegando a mínimos descolocado, el juego manda irse al aire",
+  "llegando a mínimos descolocado, la instructora propone irse al aire",
   noEstabilizada.mandaron,
   noEstabilizada.mandaron
-    ? `mandó frustrar, a ${noEstabilizada.alto} m sobre el umbral`
+    ? `propuso irse, a ${noEstabilizada.alto} m sobre el umbral`
     : `bajó hasta ${noEstabilizada.alto} m sobre el umbral sin que nadie dijera nada`,
   "la regla de la aproximación estabilizada no existía: se podía llegar al suelo de cualquier manera",
 );

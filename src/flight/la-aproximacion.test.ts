@@ -87,6 +87,7 @@ function montar(campo: () => CampoDeLaAproximacion): {
   hechos.on("minimos", () => dicho.push("minimos"));
   hechos.on("mandaronIrseAlAire", (d) => dicho.push(`frustrar:${d.porque}`));
   hechos.on("papi", (d) => dicho.push(`papi:${d.blancas}`));
+  hechos.on("proponenIrseAlAire", (d) => dicho.push(`propone:${d.motivo}`));
   const vaca = { quitar: () => {} } as unknown as Vaca;
   const aproximacion = new LaAproximacion({
     avion: () => PYKASU,
@@ -370,5 +371,70 @@ describe("por la otra punta", () => {
     s = enFinal(LOS_RODEOS, 1800, 200, 5);
     paso(aproximacion, s);
     expect(aproximacion.mandanFrustrar).toBe(false);
+  });
+});
+
+/**
+ * **Ir alto, bajo o rápido no es orden de la torre.** La torre manda al aire
+ * por la pista, por el tráfico o por la separación; irse por no venir
+ * estabilizado lo decide quien vuela. Aquí se mandaba con la orden y la
+ * lámpara roja de la torre —«Venís mal para bajar: gas y al aire»— y además
+ * una de cada cuatro finales salía una «pista ocupada» de sorteo sin nadie en
+ * la pista. Enrique, con el JAZ 120 en Tenerife Sur: «tener que hacer
+ * frustradas todos los vuelos es una basura».
+ */
+describe("ir alto o rápido no es orden de la torre", () => {
+  /** Una final dos puntos alta, de seiscientos pies a la toma, con torre. */
+  function finalAlta(velocidad: number, conTorre = true) {
+    const ordenes: string[] = [];
+    let s = enFinal(LOS_RODEOS, 3300, 190);
+    const { aproximacion, dicho } = montar(() => ({
+      ...visto(LOS_RODEOS, s),
+      sinTorre: !conTorre,
+    }));
+    // Lo que juega quien juega: el sorteo, como en el juego, y que salga.
+    aproximacion.ordenes = "auto";
+    const azar = Math.random;
+    Math.random = () => 0;
+    try {
+      for (let alto = 190; alto > 20; alto -= 2) {
+        // Dos puntos por encima de la senda: setenta centésimas de grado.
+        const d = alto / Math.tan(((3 + 0.7) * Math.PI) / 180);
+        s = { ...enFinal(LOS_RODEOS, d, alto, -4), airspeed: velocidad } as FlightState;
+        aproximacion.paso({
+          estado: s,
+          acercandose: true,
+          circuito: null,
+          faseDeAhora: "final",
+          techoDeNubes: null,
+          terrenoDicho: null,
+          vueloTerminado: false,
+          enLaPuerta: { kt: velocidad * 1.943844, puntos: 2, configurado: true, vertical: -4 },
+        });
+        if (aproximacion.mandanFrustrar) ordenes.push(`orden a ${Math.round(alto / 0.3048)} ft`);
+      }
+    } finally {
+      Math.random = azar;
+    }
+    return { dicho, ordenes, aproximacion };
+  }
+
+  it("dos puntos alto a cuatrocientos pies no da orden de la torre", () => {
+    const { dicho, ordenes } = finalAlta(PYKASU.approachSpeed);
+    expect(ordenes).toEqual([]);
+    expect(dicho.filter((d) => d.startsWith("frustrar"))).toEqual([]);
+  });
+
+  it("ni rápido a los mínimos: la instructora lo propone una vez, a los quinientos pies", () => {
+    const { dicho, ordenes, aproximacion } = finalAlta(PYKASU.approachSpeed * 1.5);
+    expect(ordenes).toEqual([]);
+    expect(dicho.filter((d) => d.startsWith("frustrar"))).toEqual([]);
+    expect(dicho.filter((d) => d.startsWith("propone"))).toEqual(["propone:rapido"]);
+    expect(aproximacion.porQueSePropuso?.alto).toBeLessThanOrEqual(153);
+  });
+
+  it("y donde no hay torre, la vaca sí se cruza: se ve", () => {
+    const { dicho } = finalAlta(PYKASU.approachSpeed, false);
+    expect(dicho).toContain("frustrar:pistaOcupada");
   });
 });

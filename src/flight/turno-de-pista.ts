@@ -22,7 +22,7 @@ import {
   esTuFraseologiaDeAterrizar,
   esTuPermisoDeAterrizar,
 } from "../audio/torre";
-import { ALTURA_DE_DECISION } from "./minimos";
+import { ALTURA_DE_DECISION, type PorQueMandaron } from "./minimos";
 import {
   laQueSeDice,
   PISTA_TUYA,
@@ -119,15 +119,24 @@ export interface AlrededorDelTurno {
    */
   permisoSinOir?(): boolean;
   /**
-   * La torre te manda al aire; `sigue` dice si la pista sigue ocupada.
-   *
-   * `porque` es `sinPermiso` cuando lo que falta no es la pista, que está
-   * libre, sino **tu permiso oído**: se llegó a los mínimos sin él. La orden
-   * es la misma —la roja del aire y su «ida al aire»—, y lo que cambia es el
-   * porqué que se cuenta: decir «pista ocupada» con la pista vacía sería
-   * enseñar una mentira. Ver `paso`.
+   * **Tu permiso, a la vista ya**: la lámpara verde y su tarjeta en el acto,
+   * sin esperar a que su voz encuentre hueco, y lo que de él quede por sonar
+   * se retira —un «cleared to land» a veinte metros del suelo no se dice—.
+   * La luz verde fija a un avión en vuelo es «autorizado para aterrizar» en
+   * las señales de luz de verdad (OACI, Anexo 2, apéndice 1), así que es un
+   * permiso dado, no un adorno. Ver `paso`.
    */
-  mandarteAlAire(alto: number, sigue: () => boolean, porque?: "sinPermiso"): void;
+  darteElPermisoYa?(): void;
+  /**
+   * La torre te manda al aire porque la pista está ocupada; `sigue` dice si
+   * lo sigue estando.
+   *
+   * **Solo por eso.** Mandaba también «sin permiso» cuando a los mínimos no
+   * se había oído tu «cleared to land» con la pista libre, o sea por su propio
+   * retraso, y eso no lo hace ninguna torre: con la pista libre, la torre te
+   * la da. Ver `paso`.
+   */
+  mandarteAlAire(alto: number, sigue: () => boolean): void;
   /**
    * Si hay puesta una orden de irse al aire, sea de quien sea. Ver `paso`.
    * Sin esto se da por que no.
@@ -208,7 +217,7 @@ export const EXPLICA_LA_ESPERA = {
  * frustrada, en cuanto el de delante dejaba la pista.
  */
 export function alLevantarLaOrden(
-  porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | "sinPermiso" | null,
+  porque: PorQueMandaron,
   fase: string,
   enTierra: boolean,
 ): "aterrizar" | "volver" | "nada" {
@@ -217,16 +226,8 @@ export function alLevantarLaOrden(
    * La de la otra punta tampoco se levanta en final: se levanta yéndose, y lo
    * que toca es volver por el circuito a la buena. Ver
    * `flight/la-otra-cabecera.ts`.
-   *
-   * Y la de los mínimos sin permiso, igual: se dio por debajo de ellos, y ahí
-   * ya no se autoriza a nadie. Se vuelve y se tiene en la final siguiente.
    */
-  if (
-    porque === "pistaOcupada" ||
-    porque === "otraCabecera" ||
-    porque === "sinPermiso" ||
-    fase !== "final"
-  )
+  if (porque === "pistaOcupada" || porque === "otraCabecera" || fase !== "final")
     return "volver";
   return "aterrizar";
 }
@@ -661,32 +662,27 @@ export class TurnoDePista {
         }
       }
       /*
-       * **Y a la altura de decisión, el permiso tiene que haberse oído.**
+       * **Y a la altura de decisión, el permiso tiene que verse.**
        *
        * Se daba por bueno al pedirlo, y su frase podía esperar turno: en La
        * Palma llegó con el avión en la cabecera y la máquina contando «one
-       * hundred». Lo real es que en los mínimos o se tiene el permiso, oído,
-       * o se va uno al aire. Si a esa altura todavía no ha empezado a sonar,
-       * se retira —no se dirá tarde— y la torre te manda al aire: el permiso
-       * llegó tarde porque la pista estuvo ocupada hasta el último momento, y
-       * eso es lo que dice su orden. Se vuelve por el circuito y se tiene en
-       * la final siguiente.
+       * hundred». Después se arregló mandándote al aire si a esa altura no
+       * había empezado a sonar, y eso era la torre castigándote por su propio
+       * retraso, con la pista libre: Enrique, con el JAZ 120 en Guyrami, «si
+       * la torre no me manda al aire a la primera, sí lo hubiera metido». Lo
+       * real es que la torre, con la pista libre, te la da (OACI, Doc 4444,
+       * capítulo 7: la autorización para aterrizar se da en cuanto se sabe que la
+       * pista estará libre). Así que a los mínimos se da **a la vista**: la
+       * lámpara verde y su tarjeta en el acto, y lo que de ella quede por
+       * sonar ya no se dice. Ver `darteElPermisoYa`.
        */
       const alto = this.de.alto();
-      /*
-       * Y no por la pista, que estaba libre: por el permiso que no llegó a
-       * oírse. Antes salía como «pista ocupada», que con la pista vacía es
-       * enseñar una mentira. Ver `mandarteAlAire`.
-       */
       if (
         alto < ALTURA_DE_DECISION &&
         this.de.permisoSinOir?.() &&
         !this.de.mandanFrustrar?.()
       ) {
-        this.de.boca.retirar(esTuPermisoDeAterrizar);
-        this.de.retirarteElPermiso?.();
-        this.alAireEnEstaFinal = true;
-        this.de.mandarteAlAire(alto, () => false, "sinPermiso");
+        this.de.darteElPermisoYa?.();
         return;
       }
       /*
@@ -789,22 +785,15 @@ export class TurnoDePista {
     this.despejeSinDecir = null;
     this.aterrizajeSinAutorizar = false;
     /*
-     * **Y nunca por debajo de los mínimos.** Todo lo de arriba miraba la
-     * altura solo cuando había algo que esperar; con la pista libre, el
-     * permiso se daba a la altura que fuera, y se pedía al entrar en la fase
-     * «final» del plan, que con la final cogida tarde empezaba a cuarenta
-     * metros: Enrique lo oyó en La Palma con la máquina contando «one
-     * hundred». Ahora se pide en la final de la torre, a millas —ver
-     * `flight/final-de-la-torre.ts`—, y si aun así se llega a los mínimos sin
-     * él, no se da: al aire, con su orden, que es lo que se hace sin permiso.
+     * **Con la pista libre, se da, también a los mínimos.** Se pide en la
+     * final de la torre, a millas —ver `flight/final-de-la-torre.ts`—, así que
+     * llegar aquí abajo sin él es un retraso de la torre —la final cogida muy
+     * tarde, una boca ocupada—, y por ese retraso no se manda a nadie al aire:
+     * lo hacía, con la pista vacía. Por debajo de los mínimos se da a la
+     * vista, sin la frase entera a destiempo: ver `darteElPermisoYa`.
      */
-    if (alto < ALTURA_DE_DECISION) {
-      this.alAireEnEstaFinal = true;
-      if (!this.de.mandanFrustrar?.())
-        this.de.mandarteAlAire(alto, () => false, "sinPermiso");
-      return;
-    }
     this.de.autorizarte();
+    if (alto < ALTURA_DE_DECISION) this.de.darteElPermisoYa?.();
   }
 
   /**

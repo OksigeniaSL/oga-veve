@@ -32,11 +32,12 @@ import type { AircraftConfig } from "./aircraft";
 import type { FlightState } from "./model";
 import {
   Minimos,
-  porQueNoSeSigue,
-  seLevantaLaOrden,
+  porQueNoEstaEstabilizada,
+  PUERTA_ESTABILIZADA,
+  seVeLaPista,
   type PorQueMandaron,
 } from "./minimos";
-import type { Reparto } from "../hechos";
+import type { MotivoDeIrse, Reparto } from "../hechos";
 import type { Circuito, TramoDeCircuito } from "../world/circuito";
 import { ALTURA_DE_CIRCUITO } from "../world/circuito";
 import { blancasDePapi } from "../world/aproximacion";
@@ -122,6 +123,11 @@ export interface CampoDeLaAproximacion {
    * enseñar un PAPI sería enseñar un instrumento que no está.
    */
   readonly senda: readonly [number, number] | null;
+  /**
+   * **Si no tiene torre**: una pista particular o sin servicio. Ahí lo que
+   * puede cruzarse es la vaca, y se ve. Ver `mirarSiMandanFrustrar`.
+   */
+  readonly sinTorre?: boolean;
 }
 
 /** Lo que no cambia en todo un vuelo. */
@@ -178,6 +184,29 @@ export interface AhoraMismo {
    * Gando son unos psicópatas?».
    */
   readonly conPrioridad?: boolean;
+  /**
+   * **Si se está en la final de la torre**: viniendo a la pista por su lado
+   * de aproximación, a millas. Ver `flight/final-de-la-torre.ts` y
+   * `seguirElCircuito`.
+   */
+  readonly enLaFinalDeLaTorre?: boolean;
+  /**
+   * **Lo que se mira en la puerta de los quinientos pies** y no sale del
+   * estado del avión: la indicada en nudos, el desvío de la senda en puntos
+   * —el del rombo— y si va configurado para aterrizar. Sin esto no se mira
+   * la puerta. Ver `mirarLaPuerta`.
+   */
+  readonly enLaPuerta?: {
+    readonly kt: number;
+    readonly puntos: number | null;
+    readonly configurado: boolean;
+    /**
+     * El ritmo de bajada **sostenido**, m/s: de media en los últimos cinco
+     * segundos. La regla habla de no bajar a más de mil pies por minuto de
+     * forma sostenida, y el variómetro de un instante es un bache.
+     */
+    readonly vertical: number;
+  };
 }
 
 export class LaAproximacion {
@@ -265,6 +294,15 @@ export class LaAproximacion {
   /** El último motivo por el que se mandó frustrar, con sus números. */
   porQueSeMando: Record<string, unknown> | null = null;
 
+  /**
+   * **Y el último por el que la instructora propuso irse**, con sus números.
+   * Para el banco. Ver `mirarLaPuerta`.
+   */
+  porQueSePropuso: Record<string, unknown> | null = null;
+
+  /** Si en esta aproximación ya se miró la puerta de los quinientos pies. */
+  private puertaMirada = false;
+
   /** Lo que pasa ahora mismo. Se pone al empezar cada paso. */
   private ahora!: AhoraMismo;
 
@@ -288,43 +326,10 @@ export class LaAproximacion {
     this.ahora = ahora;
     this.campo = this.mundo.campoDeAhora();
     this.explicarElPapi(ahora.acercandose);
+    this.mirarLaPuerta(ahora.acercandose);
     this.mirarLosMinimos(ahora.acercandose);
     this.mirarSiMandanFrustrar(ahora.acercandose);
     this.seguirElCircuito(ahora.acercandose);
-  }
-
-  /**
-   * Si la aproximación está estabilizada **ahora mismo**.
-   *
-   * Es la misma cuenta que decide dar la orden, sacada aparte para poder
-   * preguntarla también al revés: para levantarla. Dos cuentas para «¿está
-   * bien esta aproximación?» acabarían discrepando, y entonces el juego
-   * mandaría abandonar y a la vez daría por buena la misma aproximación.
-   */
-  private yaEstabilizada(): boolean {
-    const s = this.ahora.estado;
-    const pista = this.campo.pista;
-    const { across } = enEjesDePista(
-      s.position.x,
-      s.position.z,
-      pista.x,
-      pista.z,
-      pista.heading,
-    );
-    let torcido = ((s.heading * 180) / Math.PI - pista.heading + 540) % 360;
-    torcido -= 180;
-    return (
-      porQueNoSeSigue(
-        {
-          velocidad: s.airspeed,
-          referencia: this.mundo.avion().approachSpeed,
-          vertical: s.verticalSpeed,
-          delEje: across,
-          torcido,
-        },
-        this.ahora.techoDeNubes,
-      ) === null
-    );
   }
 
   /** Se empieza de nuevo: ni orden puesta, ni PAPI dicho, ni tramo. */
@@ -340,6 +345,8 @@ export class LaAproximacion {
     this.tramoDelCircuito = null;
     this.enElCircuito = false;
     this.minimos.reiniciar();
+    this.puertaMirada = false;
+    this.porQueSePropuso = null;
   }
 
   /**
@@ -421,33 +428,6 @@ export class LaAproximacion {
         return;
       }
       /*
-       * **Y arreglar la aproximación también la levanta.**
-       *
-       * Esto solo salía por tres puertas —tocar tierra, subir, alejarse— y
-       * ninguna es la que usa quien hace caso a medias: corregir. Así que
-       * quien enderezaba la aproximación seguía con la orden puesta hasta el
-       * final, aterrizaba bien y el juego le daba el aterrizaje por bueno sin
-       * retirar nunca el «abandoná». Contado jugando: «me lo validó, pero me
-       * dijo que abandonara, no le hice caso porque ya me dirás tú».
-       *
-       * Y tenía razón en lo de «ya me dirás tú»: un juego que manda abandonar
-       * y después felicita por no abandonar no está enseñando una regla, está
-       * enseñando que sus reglas dan igual. Que es lo contrario de lo que
-       * busca la regla de las tres eses.
-       *
-       * **Solo la de no estabilizada.** La de pista ocupada no se levanta
-       * corrigiendo nada: la vaca sigue ahí y eso no depende de cómo vueles.
-       * Esa se levanta cuando la pista queda libre, que es lo de arriba.
-       *
-       * Al levantarla se enciende la luz verde y se dice, igual que cuando la
-       * retira la torre: quien obedece a medias tiene derecho a saber que ya
-       * puede seguir. Ver `levantarLaOrden`.
-       */
-      if (seLevantaLaOrden(this.porqueMandaron, this.yaEstabilizada())) {
-        this.levantarLaOrden();
-        return;
-      }
-      /*
        * **Y si la mandó un avión de verdad, hasta que la deje.** Subir o
        * alejarse levanta una orden sin motivo a la vista; con el de delante
        * todavía en la pista, levantarla era decirte «cleared to land» con él
@@ -503,6 +483,19 @@ export class LaAproximacion {
     if (this.ordenes === "nunca") return;
     // Con prioridad no se inventa nada. Ver `AhoraMismo.conPrioridad`.
     if (this.ordenes === "auto" && this.ahora.conPrioridad) return;
+    /*
+     * **Y con torre, nada que no esté.** El sorteo se escribió cuando el
+     * juego no tenía más tráfico que el de la radio, y daba la orden con su
+     * «pista ocupada» y la lámpara roja **sin nadie en la pista**: una de
+     * cada cuatro finales, entre los doscientos y los quinientos pies, en
+     * cualquier aeropuerto. Hoy el tráfico se ve, y la torre ya manda al aire
+     * cuando hay alguien en tu pista de verdad —ver `paso` en
+     * `flight/turno-de-pista.ts`—. Inventarlo enseña que la torre manda
+     * irse por nada, y Enrique, con el JAZ 120 llegando a Tenerife Sur: «tener
+     * que hacer frustradas todos los vuelos es una basura». Queda la vaca,
+     * donde no hay torre, que se ve cruzar.
+     */
+    if (this.ordenes === "auto" && !this.campo.sinTorre) return;
     if (this.ordenes === "auto") {
       this.leToca ??= Math.random() <= UNA_DE_CADA;
       if (!this.leToca) return;
@@ -537,23 +530,6 @@ export class LaAproximacion {
     this.porqueMandaron = "pistaOcupada";
     this.altoAlMandar = alto;
     this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
-  }
-
-  /**
-   * **Y sin permiso a los mínimos**, con la pista libre: la torre no te lo
-   * pudo dar —o no se llegó a oír— antes de la altura de decisión, y por
-   * debajo de ella no se da. La misma puerta y la misma orden; lo que cambia
-   * es el porqué, que aquí no es la pista. Se levanta yéndose, como la de la
-   * pista ocupada. Ver `paso` en `flight/turno-de-pista.ts`.
-   */
-  mandarIrseSinPermiso(alto: number): void {
-    if (this.mandanFrustrar || this.ahora?.sinMotor) return;
-    this.laPistaSigueOcupada = null;
-    this.yaLoMandaron = true;
-    this.mandanFrustrar = true;
-    this.porqueMandaron = "sinPermiso";
-    this.altoAlMandar = alto;
-    this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "sinPermiso" });
   }
 
   /**
@@ -609,17 +585,19 @@ export class LaAproximacion {
    *
    * Sesenta metros sobre la pista son doscientos pies, que es la altura de
    * decisión de una aproximación de precisión de verdad y el número que
-   * aparece en todas las cartas.
+   * aparece en todas las cartas. Ahí se canta «minimums» y se mira la pista.
    *
-   * Y ahí pasa una de dos, que es exactamente lo que enseña:
-   *
-   * - **La aproximación está estabilizada**: se canta «minimums», se mira la
-   *   pista y se sigue. La palabra marca el momento y ya está.
-   * - **No lo está**: entonces no se corrige, **se va uno**. La regla de
-   *   verdad es del tipo «si a esta altura no estás como debes, no sigas», y
-   *   eso es lo que la hace una regla y no un consejo. Se usa la misma señal
-   *   y la misma orden que cuando lo manda la torre, porque para quien juega
-   *   es lo mismo: hay que irse.
+   * **Y quien decide es quien vuela.** Esto mandaba irse al aire, con la
+   * misma orden y la misma lámpara roja que la torre, si a esa altura se iba
+   * rápido, lento, torcido o fuera del eje: para quien juega era la torre
+   * mandándole al aire por ir un poco alto. Enrique, con el JAZ 120 en
+   * Guyrami, lo oía casi en cada final: «Venís mal para bajar: gas y al
+   * aire». Lo real es que la torre manda al aire por la pista, el tráfico o
+   * la separación, y que irse por no venir estabilizado lo decide la
+   * tripulación, a los quinientos pies —ver `mirarLaPuerta`—. Aquí queda lo
+   * que de verdad pasa a los mínimos: se canta, y si no se ve la pista, la
+   * instructora propone irse, que es lo que manda la regla de los mínimos;
+   * pero el avión no se va solo: se va quien vuela.
    */
   mirarLosMinimos(acercandose: boolean): void {
     // Sin motor no hay decisión que tomar a sesenta metros: se aterriza.
@@ -632,20 +610,54 @@ export class LaAproximacion {
      *
      * La altura de decisión es un punto de la aproximación, no una altura
      * cualquiera: cruzar los sesenta metros dando el giro a la base, con la
-     * pista a un kilómetro por el costado, no es llegar a mínimos. Y ahí el
-     * avión está **por definición** torcido respecto a la pista, así que la
-     * regla saltaba con «no estás alineado» y mandaba frustrar. En todos los
-     * vuelos: «me sale el mensaje de frustrada en todos los intentos de
-     * aterrizaje». Medido en el vídeo de un circuito en Mariscal Estigarribia:
-     * la orden salía en el segundo 393, con el avión en pleno viraje.
-     *
-     * Ver `enElEmbudoDeFinal`.
+     * pista a un kilómetro por el costado, no es llegar a mínimos. Medido en
+     * el vídeo de un circuito en Mariscal Estigarribia: la orden salía en el
+     * segundo 393, con el avión en pleno viraje. Ver `enElEmbudoDeFinal`.
      */
     if (enElEmbudoDeFinal(this.campo.pista, s.position.x, s.position.z) === null)
       return;
     const alto = s.position.y - this.campo.cota;
     if (!this.minimos.paso(alto, acercandose)) return;
+    this.mundo.hechos.emit("minimos", {});
+    // Dentro de la nube a los mínimos no hay pista que mirar. Ver `seVeLaPista`.
+    if (!seVeLaPista(this.ahora.techoDeNubes)) this.proponerIrse("sinPista", alto);
+  }
 
+  /**
+   * **La puerta de los quinientos pies**: si la aproximación no está
+   * estabilizada al cruzarla, la instructora propone irse al aire, con calma
+   * y una vez por aproximación. Ver `PUERTA_ESTABILIZADA` y
+   * `porQueNoEstaEstabilizada` en `flight/minimos.ts`.
+   *
+   * **Propone, no manda.** Ni orden, ni lámpara, ni la senda que se apaga:
+   * quien vuela decide, y si se va, se felicita como siempre —renunciar es
+   * ganar—. Y quien sigue y aterriza un poco largo, aterriza: la física pone
+   * lo que tenga que poner. Lo que se aprende es que a esa altura se mira y
+   * se decide, que es lo que se hace en una cabina de verdad.
+   *
+   * Se vuelve a mirar en otra aproximación: tras subir de nuevo por encima de
+   * la puerta con margen, o al reiniciar.
+   */
+  mirarLaPuerta(acercandose: boolean): void {
+    const puerta = this.ahora.enLaPuerta;
+    const s = this.ahora.estado;
+    if (!puerta || s.onGround) return;
+    const alto = s.position.y - this.campo.cota;
+    // Otra aproximación: por encima de la puerta con cien metros de margen.
+    if (alto > PUERTA_ESTABILIZADA + 100) this.puertaMirada = false;
+    if (
+      this.puertaMirada ||
+      !acercandose ||
+      this.mandanFrustrar ||
+      this.ahora.vueloTerminado ||
+      this.ahora.sinMotor ||
+      alto > PUERTA_ESTABILIZADA
+    )
+      return;
+    // Solo viniendo por el embudo, como los mínimos.
+    if (enElEmbudoDeFinal(this.campo.pista, s.position.x, s.position.z) === null)
+      return;
+    this.puertaMirada = true;
     const pista = this.campo.pista;
     const { across } = enEjesDePista(
       s.position.x,
@@ -656,53 +668,38 @@ export class LaAproximacion {
     );
     let torcido = ((s.heading * 180) / Math.PI - pista.heading + 540) % 360;
     torcido -= 180;
-    const motivo = porQueNoSeSigue(
-      {
-        velocidad: s.airspeed,
-        referencia: this.mundo.avion().approachSpeed,
-        vertical: s.verticalSpeed,
-        delEje: across,
-        torcido,
-      },
-      this.ahora.techoDeNubes,
-    );
-
-    if (!motivo) {
-      this.mundo.hechos.emit("minimos", {});
-      return;
-    }
-
-    /*
-     * No estabilizada: la misma orden de irse al aire que da la torre.
-     *
-     * Se reutiliza entera —la señal que se queda puesta, el circuito
-     * dibujado, la luz verde al levantarla— porque para quien juega es lo
-     * mismo: hay que irse. Lo que cambia es el porqué, y el porqué se dice.
-     */
-    this.yaLoMandaron = true;
-    this.mandanFrustrar = true;
-    this.porqueMandaron = "noEstabilizada";
-    this.altoAlMandar = alto;
-    /*
-     * Y **por qué**, con sus números. Para el banco.
-     *
-     * «Sale la frustrada en todas las aproximaciones» no se arregla sin saber
-     * cuál de los cinco motivos salta, y el motivo solo vivía dentro del texto
-     * de la tarjeta. Medirlo desde fuera era leer una frase traducida.
-     */
-    this.porQueSeMando = {
-      motivo,
-      velocidad: +s.airspeed.toFixed(1),
-      referencia: this.mundo.avion().approachSpeed,
-      vertical: +s.verticalSpeed.toFixed(1),
-      delEje: +across.toFixed(1),
-      torcido: +torcido.toFixed(1),
-      alto: Math.round(alto),
-    };
-    this.mundo.hechos.emit("mandaronIrseAlAire", {
-      porque: "noEstabilizada",
-      motivo,
+    const motivo = porQueNoEstaEstabilizada({
+      kt: puerta.kt,
+      referenciaKt: this.mundo.avion().approachSpeed * 1.943844,
+      vertical: puerta.vertical,
+      delEje: across,
+      torcido,
+      puntos: puerta.puntos,
+      configurado: puerta.configurado,
     });
+    if (motivo)
+      this.proponerIrse(motivo, alto, {
+        kt: Math.round(puerta.kt),
+        puntos: puerta.puntos,
+        delEje: Math.round(across),
+        torcido: Math.round(torcido),
+      });
+  }
+
+  /** La propuesta de irse, contada. Ver `mirarLaPuerta`. */
+  private proponerIrse(
+    motivo: MotivoDeIrse,
+    alto: number,
+    numeros: Record<string, unknown> = {},
+  ): void {
+    const s = this.ahora.estado;
+    this.porQueSePropuso = {
+      motivo,
+      alto: Math.round(alto),
+      vertical: +s.verticalSpeed.toFixed(1),
+      ...numeros,
+    };
+    this.mundo.hechos.emit("proponenIrseAlAire", { motivo });
   }
 
   /**
@@ -842,10 +839,17 @@ export class LaAproximacion {
      *
      * Ver `enElEmbudoDeFinal`.
      */
+    /*
+     * **Y la final de la torre también es venir a aterrizar**, a millas y
+     * antes que el embudo: llegando a Tenerife Sur por una final recta de
+     * diez kilómetros, se cantaba «base» del circuito justo después del
+     * permiso de aterrizar, con el avión alineado. Dos caminos a la vez.
+     */
     const enLlegada =
       !this.mandanFrustrar &&
       (fase === "final" ||
         fase === "aterrizado" ||
+        !!this.ahora.enLaFinalDeLaTorre ||
         (acercandose &&
           enElEmbudoDeFinal(this.campo.pista, s.position.x, s.position.z) !==
             null));

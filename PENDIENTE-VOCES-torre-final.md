@@ -9,7 +9,8 @@ canal visual, y ninguna se pide muda.
 
 ## Lo que ya suena, sin grabar nada
 
-- **La orden de irse al aire sin permiso a los mínimos**, con la pista libre:
+- ~~**La orden de irse al aire sin permiso a los mínimos**~~, que ya no se da
+  (tanda 10, ver `PENDIENTE-VOCES-frustrada.md`). Era, con la pista libre:
   la lámpara roja del aire con su castellano de siempre —«ida al aire» en
   casa, «motor y al aire» en Canarias— en los cuatro peldaños, y de Taguató
   para arriba su fraseología, **«{matrícula}, go around» a secas**. Esa no
@@ -26,11 +27,15 @@ canal visual, y ninguna se pide muda.
 
 ## Lo que falta: la instructora
 
-Voz `instructor`, castellano paraguayo con voseo. Unos 330 caracteres.
+Voz `instructor`, castellano paraguayo con voseo. Unos 230 caracteres.
+
+> **Ya no**: `vuelo.sinPermisoEnLosMinimos`. La torre no manda al aire por no
+> haberse oído el permiso con la pista libre —era mandarte al aire por su
+> propio retraso—; a los mínimos lo da a la vista. Ver
+> `PENDIENTE-VOCES-frustrada.md`.
 
 | clave | es-PY | en | dónde se engancha |
 |---|---|---|---|
-| `vuelo.sinPermisoEnLosMinimos` | La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito | The tower didn't clear you to land. No clearance, no landing: go around and rejoin the circuit | `game.ts`, `mandaronIrseAlAire` con `porque === "sinPermiso"`: detrás de la orden de la torre, en los tres peldaños de abajo (`laInstructoraLoExplica`), con `this.instructor.decir(dicho.texto, dicho.id, "mando")`. Y añadir la clave a `explicaLaOtraPunta` en `src/audio/boca.ts`, que es lo que la deja esperar lo que dura la orden, como `vuelo.mandanFrustrar`. La clave **ya está** en `src/i18n/es-PY.ts` y `en.ts`: hoy es el texto de la tarjeta. |
 | `vuelo.cotaDeLaPista` | Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos | Look at the chart: next to the runway it says how high it is above the sea. What the altimeter reads minus that is how high we are above the runway, and that's what the minimums are set from | `game.ts`, `contarLaCotaDeLaPista`: en el peldaño de los números, una vez por tramo, al entrar en la zona de la torre de llegada, detrás de la tarjeta. **Sin el número a propósito**, para que valga en cualquier campo: el número lo lleva la tarjeta (`hud.cotaDeLaPista`), y la carta y el plano. Esta clave **no está** todavía en `src/i18n/`: se añade al grabar. |
 
 ## Dónde se ve ya, mientras tanto
@@ -46,8 +51,6 @@ Voz `instructor`, castellano paraguayo con voseo. Unos 330 caracteres.
   `game.ts`.
 - **La explicación**: la tarjeta `hud.cotaDeLaPista` en el peldaño de los
   números, con la cota en sus unidades.
-- **El porqué de irse al aire sin permiso**: la tarjeta
-  `vuelo.sinPermisoEnLosMinimos`, con el dibujo de la frustrada.
 
 ## Grabar
 

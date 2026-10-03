@@ -156,6 +156,23 @@ const DESTINO = process.argv[6] ?? null;
  * campo. Sin la variable el banco vuela como siempre.
  */
 const CRUCERO_PEDIDO = Number(process.env.OGA_CRUCERO ?? 0) || 0;
+/**
+ * **Y una final volada como la vuela una persona, si se pide**:
+ * `OGA_BAMBOLEO=metros[,segundos]`.
+ *
+ * El piloto de este banco vuela la senda clavada, y así no ve lo que le pasa
+ * a quien la vuela con el teclado: Enrique, con el JAZ 120 en Guyrami, iba
+ * «o bajo o subo», y la torre lo mandaba al aire casi en cada final. Con esto
+ * la altura que se pide en la final se aparta de la senda arriba y abajo esos
+ * metros, con ese periodo —treinta segundos si no se dice—, y se pasa de un
+ * lado al otro deprisa, a golpes de tecla, como una mano que corrige tarde.
+ * Se apaga entre los cien y los sesenta metros sobre la pista, que es donde
+ * cualquiera ya tiene la pista delante y la final asentada.
+ */
+const BAMBOLEO = (process.env.OGA_BAMBOLEO ?? "")
+  .split(",")
+  .map(Number)
+  .filter((n) => Number.isFinite(n) && n > 0);
 if (DESTINO !== null && !/^[a-z-]+$/.test(DESTINO)) {
   console.log(`\n  ✗ «${DESTINO}» no es un campo.\n`);
   process.exit(2);
@@ -596,7 +613,7 @@ const conMegafonia = await page
   .catch(() => true);
 const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -1643,7 +1660,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const porLaSendaSencilla = (s, objetivo, dt) => {
     const quiere = Math.max(
       -CAIDA_MAXIMA,
-      Math.min(3, -porElSuelo(s) * SENDA + (objetivo - alto(s)) * 0.15),
+      Math.min(
+        bamboleo.length ? 8 : 3,
+        -porElSuelo(s) * SENDA + (objetivo - alto(s)) * 0.15 + bamboleoAhora.ritmo,
+      ),
     );
     const falta = quiere - s.verticalSpeed;
     // Con sitio para llegar a toda la palanca: con ocho, el acumulado se
@@ -2311,6 +2331,35 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let etapa = "arrancar";
   /** En qué campo se puso el avión al cruzar, si se cruzó. Ver `destino`. */
   let enElDestino = null;
+  /**
+   * **Cada orden de irse al aire, con lo que pasaba al darla**: por qué, a
+   * qué altura sobre la pista, el desvío de la senda en puntos —el del rombo—,
+   * en qué estaba tu permiso y en qué fase la veía la torre. Ver
+   * `OGA_BAMBOLEO`.
+   */
+  const ordenesDeIrse = [];
+  let habiaOrden = false;
+  /** Cuántas frases llevaba la boca al cruzar y al tocar: la final, en voces. */
+  let vocesAlCruzar = null;
+  let vocesAlTocar = null;
+  let cantadosAlCruzar = null;
+  let cantadosAlTocar = null;
+  /** Lo que se aparta de la senda ahora, m, y a qué ritmo, m/s. */
+  const bamboleoAhora = { metros: 0, ritmo: 0 };
+  /**
+   * **Y lo que le hace a la final de la torre**: cuántas veces se sale de
+   * ella en el aire, en el destino, cuánto se llega a subir sobre lo más bajo
+   * de esa final, y cuántos permisos se dan en ella. Ver
+   * `flight/final-de-la-torre.ts`.
+   */
+  const laFinalDeAlli = {
+    salidas: [],
+    masBajo: Infinity,
+    subidaMaxima: 0,
+    estaba: false,
+    permisosAlCruzar: null,
+    permisosAlTocar: null,
+  };
   let mudo = 0;
   let mudoMaximo = 0;
   let mudoDonde = "";
@@ -4334,6 +4383,51 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * que se hace lo que se enseña: subir por el eje y dar otra vuelta al
      * circuito. Ver `autorizarCuandoToque` en `game.ts`.
      */
+    {
+      const hayOrden = !!o.ordenDeFrustrar?.();
+      if (hayOrden && !habiaOrden) {
+        const sp = o.sendaYPermiso?.() ?? {};
+        ordenesDeIrse.push({
+          t: +t.toFixed(1),
+          porque: o.porQueMandaron?.() ?? null,
+          alto: Math.round(alto(s)),
+          pies: Math.round(alto(s) / 0.3048),
+          puntos: sp.puntos ?? null,
+          permiso: sp.permiso ?? null,
+          permisosDados: sp.permisosDados ?? null,
+          faseDeLaTorre: sp.faseDeLaTorre ?? null,
+          vertical: +s.verticalSpeed.toFixed(1),
+          motivo: o.porQueSeMando?.() ?? null,
+          enElDestino: !!enElDestino,
+        });
+      }
+      habiaOrden = hayOrden;
+    }
+    if (enElDestino && s.onGround && vocesAlTocar === null) {
+      vocesAlTocar = o.habladasTotal?.() ?? null;
+      cantadosAlTocar = (o.cantados?.() ?? []).length;
+      laFinalDeAlli.permisosAlTocar = o.sendaYPermiso?.()?.permisosDados ?? null;
+      laFinalDeAlli.alTocar = {
+        gas: +c.throttle.toFixed(2),
+        frenosDeTierra: o.frenosDeTierra?.() ?? null,
+      };
+    }
+    if (enElDestino && !s.onGround && vocesAlTocar === null) {
+      if (laFinalDeAlli.permisosAlCruzar === null)
+        laFinalDeAlli.permisosAlCruzar = o.sendaYPermiso?.()?.permisosDados ?? null;
+      const dentro = !!o.enLaFinalDeLaTorre?.();
+      if (dentro) {
+        laFinalDeAlli.masBajo = Math.min(laFinalDeAlli.masBajo, alto(s));
+        laFinalDeAlli.subidaMaxima = Math.max(
+          laFinalDeAlli.subidaMaxima,
+          alto(s) - laFinalDeAlli.masBajo,
+        );
+      }
+      if (laFinalDeAlli.estaba && !dentro)
+        laFinalDeAlli.salidas.push({ t: +t.toFixed(1), alto: Math.round(alto(s)), vertical: +s.verticalSpeed.toFixed(1) });
+      if (!dentro) laFinalDeAlli.masBajo = Infinity;
+      laFinalDeAlli.estaba = dentro;
+    }
     if (
       etapa === "final" &&
       !s.onGround &&
@@ -4708,6 +4802,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       await new Promise((r) => setTimeout(r, 500));
       enElDestino = o.campoDeAhora();
+      vocesAlCruzar = o.habladasTotal?.() ?? null;
+      cantadosAlCruzar = (o.cantados?.() ?? []).length;
       // La frecuencia de allí empieza de cero: lo que se dio aquí, aquí se queda.
       conPermisoOido.clear();
       pista = pistaAhora();
@@ -4997,7 +5093,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         if (u0) queda += Math.hypot(u0.x - ultimoDeLaVista.x, u0.z - ultimoDeLaVista.z);
       }
       const sendaDeVerdad = Math.max(0, (queda + puntoDeToma) * SENDA) + tren;
-      const objetivo = planearLaBajada(s, sendaDeVerdad, paso);
+      /*
+       * Ver `OGA_BAMBOLEO`: la mano que corrige a golpes. La forma es un seno
+       * pasado por una tangente hiperbólica: casi todo el rato a un lado o al
+       * otro, y el paso de uno a otro en pocos segundos.
+       */
+      if (bamboleo.length) {
+        const [amplitud, periodo = 30] = bamboleo;
+        const fase = (2 * Math.PI * t) / periodo;
+        const apaga = Math.max(0, Math.min(1, (ruedas - 60) / 40));
+        const k = 3;
+        const forma = Math.tanh(k * Math.sin(fase)) / Math.tanh(k);
+        const derivada =
+          ((k * Math.cos(fase) * (1 - Math.tanh(k * Math.sin(fase)) ** 2)) /
+            Math.tanh(k)) *
+          ((2 * Math.PI) / periodo);
+        bamboleoAhora.metros = amplitud * forma * apaga;
+        bamboleoAhora.ritmo = amplitud * derivada * apaga;
+      }
+      const objetivo = planearLaBajada(s, sendaDeVerdad, paso) + bamboleoAhora.metros;
       /*
        * **La velocidad de la final: la Vref más cinco nudos, en indicada y en
        * los seis aviones.**
@@ -5744,6 +5858,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     sinAnularAlDartela,
     frustradasPorLaPista,
     frustradasPorElJuego,
+    ordenesDeIrse,
+    laFinalDeAlli: { ...laFinalDeAlli, subidaMaxima: Math.round(laFinalDeAlli.subidaMaxima) },
+    vocesAlCruzar,
+    vocesAlTocar,
+    cantadosAlCruzar,
+    cantadosAlTocar,
+    cantadosTodos: o.cantados?.() ?? [],
+    habladasTotal: o.habladasTotal?.() ?? null,
     bajandoATuPista,
     bajandoATuPistaDonde,
     enTuPistaSinOrden,
@@ -5945,7 +6067,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1"]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -5983,6 +6105,19 @@ if (process.env.OGA_VOCES) {
         ),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
+        // La final del destino, en voces: ver `vocesAlCruzar`.
+        ordenesDeIrse: vuelo.ordenesDeIrse,
+        laFinalDeAlli: vuelo.laFinalDeAlli,
+        vocesAlCruzar: vuelo.vocesAlCruzar,
+        vocesAlTocar: vuelo.vocesAlTocar,
+        habladasTotal: vuelo.habladasTotal,
+        cantadosDeLaFinal:
+          vuelo.cantadosAlCruzar === null
+            ? []
+            : (vuelo.cantadosTodos ?? []).slice(
+                vuelo.cantadosAlCruzar,
+                vuelo.cantadosAlTocar ?? undefined,
+              ),
         /*
          * Y lo que de verdad sonó, con su voz, su hora de audio **y cuándo
          * acabó**: sin el final, una frase de diez segundos se lee como diez
@@ -8091,6 +8226,21 @@ const queTiempoHizo = vuelo.meteo
   : "";
 if (vuelo.subida?.length)
   console.log("\n  la subida:\n" + vuelo.subida.map((l) => "    " + l).join("\n"));
+// Cada orden de irse al aire, con su porqué. Ver `ordenesDeIrse`.
+console.log(
+  `\n  órdenes de irse al aire: ${vuelo.ordenesDeIrse?.length ?? 0}` +
+    (BAMBOLEO.length ? ` · bamboleo ±${BAMBOLEO[0]} m cada ${BAMBOLEO[1] ?? 30} s` : ""),
+);
+for (const r of vuelo.ordenesDeIrse ?? []) console.log(`    ${JSON.stringify(r)}`);
+{
+  const f = vuelo.laFinalDeAlli ?? {};
+  console.log(
+    `  la final de la torre allí: ${f.salidas?.length ?? "?"} salida(s) en el aire ${JSON.stringify(f.salidas ?? [])}` +
+      ` · subida máxima sobre lo más bajo ${f.subidaMaxima ?? "?"} m` +
+      ` · permisos dados ${f.permisosAlCruzar ?? "?"} → ${f.permisosAlTocar ?? "?"}` +
+      ` · al tocar ${JSON.stringify(f.alTocar ?? null)}`,
+  );
+}
 
 console.log(
   `\n  vuelo entero · ${ESCENARIO}${DESTINO ? ` → ${DESTINO}` : ""} · ${TRAMO} · reloj ×${vuelo.veces}` +

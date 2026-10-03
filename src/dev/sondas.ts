@@ -779,6 +779,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `permisoPorOirParaBanco` en `game.ts`.
      */
     permisoPorOir: () => juego.permisoPorOirParaBanco,
+    /**
+     * El desvío de la senda en puntos —el del rombo— y el estado de tu permiso
+     * para aterrizar. Ver `sendaYPermisoParaBanco` en `game.ts`.
+     */
+    sendaYPermiso: () => juego.sendaYPermisoParaBanco,
+    /** Cuánto han subido los frenos de tierra, de 0 a 1. */
+    frenosDeTierra: () => juego.input.controls.frenosDeTierra ?? 0,
     indicativo: () => {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;

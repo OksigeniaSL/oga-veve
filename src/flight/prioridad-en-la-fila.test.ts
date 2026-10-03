@@ -178,6 +178,12 @@ describe("y a quien tiene prioridad no se le inventa una frustrada", () => {
         cota: 0,
         alUmbral: distanciaAlUmbral(GANDO, s.position.x, s.position.z),
         senda: null,
+        /*
+         * El sorteo queda solo donde no hay torre, que es donde se cruza la
+         * vaca y se ve: con torre, la orden sale de quien ocupa la pista de
+         * verdad. Ver `mirarSiMandanFrustrar`.
+         */
+        sinTorre: true,
       }),
     });
     a.ordenes = "auto";
