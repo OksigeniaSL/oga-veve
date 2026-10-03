@@ -107,7 +107,7 @@ export function brilloDeMagnitud(m: number): number {
  * miles de débiles.
  */
 export function tamanoDeMagnitud(m: number): number {
-  return Math.max(2.2, Math.min(7, 2.2 + 1.6 * (2.5 - m)));
+  return Math.max(2.2, Math.min(7, 2.2 + 2 * (3 - m)));
 }
 
 /** Del `Mat3` por filas de la cuenta al `Matrix3` de three.js. */
