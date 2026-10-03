@@ -54,12 +54,13 @@
     }
   },
   "jaz-120": {
-    "glb": "f9e8b4b4d3778674735bf3e9cc18c9d1d3df6789ceec8470daa25690608df4da",
+    "glb": "7103b43c07391b0a9ad3179af52a0419fed712acffabaf9d1e03a9be5e9674b4",
     "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
     "ficha": {
       "body": 15921644,
       "accent": 3101251,
       "trim": 14520895,
+      "remate": 12475704,
       "blades": 0,
       "motivo": "sol"
     }

@@ -81,6 +81,11 @@ COLORES.update({
     # la ficha, que son los que mandan.
     "cola": (0.75, 0.36, 0.22, 1.0),
     "marca": (1.0, 1.0, 1.0, 1.0),
+    # - `remate` es el color de la casa que no va ni en el casco, ni en el
+    #   capó, ni en la raya: el tercero, en el avión que lleva los otros dos.
+    #   Las aletas de las puntas y el filete que lo acompaña. Aquí, del
+    #   terracota del logotipo, que es el que lo pide; manda la ficha.
+    "remate": (0.75, 0.36, 0.22, 1.0),
 })
 
 

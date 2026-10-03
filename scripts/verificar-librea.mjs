@@ -169,6 +169,14 @@ for (const id of NUESTROS) {
       "el .glb traía los suyos y salían descoloridos",
     );
   }
+  // Y el tercer color, en el avión que lo lleva: las aletas y el filete.
+  if (visto.colores.remate)
+    comprobar(
+      `${id}: las aletas y el filete llevan el remate de su ficha`,
+      visto.colores.remate === hex(visto.avion.librea.remate),
+      `${visto.colores.remate} · ficha ${hex(visto.avion.librea.remate)}`,
+      "«se echa de menos el terracota»: si no se repinta, sale el del .glb",
+    );
   comprobar(
     `${id}: la goma de las ruedas es oscura`,
     visto.colores.goma && luminancia(visto.colores.goma) < 0.05,

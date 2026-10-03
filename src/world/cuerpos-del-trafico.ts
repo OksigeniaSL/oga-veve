@@ -123,8 +123,12 @@ const DE_DENTRO =
 const PIEZA_DE_DENTRO =
   /asiento|panel|reloj|cuerno|boton|pomo|palanca|pedestal|mcp|bastidor|interruptores|marco-de-techo|suelo-cabina|alfeizar|forro|visera|tornillos|palas/;
 
-/** Lo que va del color de la librea. */
-const PINTADO = new Set(["capo", "cola", "detalle"]);
+/**
+ * Lo que va del color de la librea. Con el `remate` —las aletas y el filete
+ * del JAZ 120—, que del color del `.glb` es el terracota de la casa: si un
+ * tipo del tráfico usa ese modelo, no puede llevarlo.
+ */
+const PINTADO = new Set(["capo", "cola", "detalle", "remate"]);
 
 /** El cristal y la goma, como en la flota: ver `pintarDeLaFlota`. */
 const FIJOS: Record<string, number> = {

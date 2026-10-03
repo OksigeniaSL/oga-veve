@@ -37,9 +37,9 @@ tres cosas, y son las que se cambiaron:
   que crece del morro a la cola y se hace deriva, y los motores llevan la
   toma del color del sol. Ver la franja en `construir`.
 
-Y las puntas de ala **en flecha** en vez de las aletas del Arai: dos aviones de
-la misma casa se tienen que poder distinguir por la silueta, y la punta en
-flecha es la de los que cruzan océanos.
+Y las puntas de ala **con aleta partida**, una arriba y otra abajo, y del
+terracota de la casa: dos aviones de la misma casa se tienen que poder
+distinguir por la silueta, y el Arai levanta una sola. Ver `construir`.
 
 Los ayudantes están en `comun.py` y `exterior.py`. Aquí queda solo lo que es
 **este** avión.
@@ -339,17 +339,32 @@ def construir():
               fuera=0.018, paso=0.5, filas=12),
     ]))
 
-    # Y la raya del color del sol, pegada por debajo: la misma raya fina que
-    # acompaña a la franja del Arai, y aquí el ocre de la ficha. Nace un poco
-    # por detrás de la punta y se afila al llegar al lomo.
-    def fina_abajo(z):
-        grueso = 0.22 * _suave(z, -30.8, -28.0) * (
-            1 - _suave(z, cierra - 6.0, cierra))
-        return abajo(z) - grueso
+    # Y por debajo, **los otros dos colores del logotipo**: un filete
+    # terracota pegado a la hoja y la raya del color del sol debajo de él, la
+    # misma raya fina que acompaña a la franja del Arai. Los tres colores de
+    # la casa en fila, que es como los lleva el logotipo —el tejado, el sol y
+    # las hojas— y como pinta su franja una compañía de verdad cuando tiene
+    # tres. Sin el terracota, este era el único avión de la casa que no lo
+    # llevaba en ninguna parte: «se echa de menos el terracota: el logo de
+    # Granja Óga lo lleva y es un color fundamental». Los dos nacen un poco
+    # por detrás de la punta y se afilan al llegar al lomo.
+    def afila(z):
+        return _suave(z, -30.8, -28.0) * (1 - _suave(z, cierra - 6.0, cierra))
 
+    def filete_abajo(z):
+        return abajo(z) - 0.20 * afila(z)
+
+    def fina_abajo(z):
+        return filete_abajo(z) - 0.20 * afila(z)
+
+    # Solo el costado derecho: el izquierdo se lo da el espejo de la aleta
+    # de abajo, con la que va en una malla. Ver más abajo.
+    filete = banda("cintura-filete", PIEL, -30.8, cierra, filete_abajo, abajo,
+                   material_="remate", fuera=0.018, paso=0.4, filas=1,
+                   lados=(1,))
     piezas.append(banda("cintura-fina", PIEL, -30.8, cierra, fina_abajo,
-                        abajo, material_="detalle", fuera=0.018, paso=0.4,
-                        filas=1))
+                        filete_abajo, material_="detalle", fuera=0.018,
+                        paso=0.4, filas=1))
 
     # La marca detrás de la puerta de delante, sobre las ventanillas: la
     # misma firma que en el JAZ 90, a la escala de este avión. Ver `marca`.
@@ -374,20 +389,34 @@ def construir():
     piezas += cab
     dentro_de(PIEL, cab)
 
-    # ── Ala en flecha, con quiebro y punta en flecha ──────────────────────
+    # ── Ala en flecha, con quiebro y aletas partidas ──────────────────────
     #
-    # **La punta, en flecha y no con aleta.** Los últimos cuatro metros vuelven
-    # atrás con más flecha que el ala —cincuenta y tantos grados en el borde de
-    # ataque— y se afilan hasta una cuerda de palmo: es lo que lleva el avión
-    # que cruza océanos, porque a igual envergadura alarga el ala sin el peso
-    # ni el arrastre de una aleta. Y separa las dos siluetas de la casa: el
-    # Arai levanta la punta; el Yvága la estira.
+    # **La punta, con una aleta arriba y otra abajo.** Estuvo en flecha, sin
+    # aleta, para separar la silueta de la del Arai, y de frente —que es como
+    # se ve un avión que entra en pista hacia ti— se leía recta: «se echa de
+    # menos la curvatura, que le queda tan bien a los aviones modernos», y «las
+    # alas con las puntas dobladas dan sensación de avión más moderno».
     #
-    # Hasta el arranque de la flecha el ala es **la misma de antes**, la misma
-    # cuerda, el mismo espesor y el mismo calado por el mismo camino: la
-    # estación nueva cae sobre la recta que ya unía el quiebro con la punta.
-    # Así los flaps, las canoas y el foco de aterrizaje siguen donde estaban.
-    # Ver `flaps-del-modelo.test.ts`.
+    # Es la aleta partida de los de ahora —la de los 737 de última generación—:
+    # la de arriba sale del ala curvándose, como la de siempre, y acaba en una
+    # punta de cimitarra, con el borde de ataque tumbándose hacia atrás hasta
+    # juntarse con el de salida; la de abajo es un filo más corto que nace por
+    # debajo de la punta, hacia abajo y hacia fuera. Las dos hacen lo mismo:
+    # cortan el torbellino de la punta, que es lo que cuesta combustible. Y
+    # separan las dos siluetas de la casa mejor que la flecha, porque se ven
+    # de frente, de lado y desde la ventanilla: **el Arai levanta una aleta; el
+    # Yvága, dos.**
+    #
+    # Medidas de su clase: la del Arai levanta metro sesenta y cinco en
+    # veintiséis metros de ala; aquí, en sesenta, tres metros y medio la
+    # de arriba —entre lo que lleva un A340 y lo que daría la de un 737
+    # crecida a este ala— y metro y medio la de abajo. La de abajo, con más
+    # de cinco metros de suelo debajo.
+    #
+    # Hasta donde se levanta, el ala es **la misma de antes**, la misma cuerda,
+    # el mismo espesor y el mismo calado por el mismo camino: la de antes de
+    # la flecha, que acababa recta en `x_aleta`. Así los flaps, las canoas y el
+    # foco de aterrizaje siguen donde estaban. Ver `flaps-del-modelo.test.ts`.
     semi = ENVERGADURA / 2
     raiz, quiebro, punta = 14.5, 9.0, 3.2
     x_aleta = semi - 1.10
@@ -395,28 +424,46 @@ def construir():
     def sobre_la_recta(x, a, b):
         return a + (b - a) * (x - QUIEBRO) / (x_aleta - QUIEBRO)
 
-    x_flecha = 26.0
-    c_flecha = sobre_la_recta(x_flecha, quiebro, punta)
-    # El borde de salida sigue la flecha del ala, un poco más atrás; el de
-    # ataque es el que se tumba.
-    sale = z_ala(x_flecha) + c_flecha
-    salida_por_x = math.tan(FLECHA) - (quiebro - punta) / (x_aleta - QUIEBRO)
-
-    def en_flecha(x, cuerda):
-        z_sale = sale + (x - x_flecha) * salida_por_x * 1.12
-        return z_sale - cuerda
-
+    # Donde acaban los slats: el borde de ataque de metal no llega a la
+    # punta, como en uno de verdad.
+    x_slats = 26.0
+    # **El borde de fuera, en su sitio.** La punta más afuera de todo el
+    # avión es la de la aleta de arriba, y el juego escala el modelo por lo
+    # que mide de ancho: si cambia un centímetro, cambia el avión entero de
+    # tamaño —y con él el foco que mide `flaps-del-modelo.test.ts`—. Se corre
+    # la aleta para que lo de más afuera quede donde quedaba la punta en
+    # flecha, a 29,834 m del eje.
+    fuera = 0.0016
+    z_a = z_ala(x_aleta)
     estaciones = [
         de_ala(0.0, y_ala(0.0), z_ala(0.0), raiz, 0.14, 6, 2.0),
         de_ala(QUIEBRO, y_ala(QUIEBRO), z_ala(QUIEBRO), quiebro, 0.115, 6, 0.5),
-        de_ala(x_flecha, y_ala(x_flecha), z_ala(x_flecha), c_flecha,
-               sobre_la_recta(x_flecha, 0.115, 0.10), 6,
-               sobre_la_recta(x_flecha, 0.5, -2.0)),
-        de_ala(28.3, y_ala(28.3) + 0.03, en_flecha(28.3, 2.05), 2.05, 0.095,
-               7, -2.2),
-        de_ala(semi, y_ala(semi) + 0.10, en_flecha(semi, 0.62), 0.62, 0.09,
-               8, -2.5),
+        de_ala(x_slats, y_ala(x_slats), z_ala(x_slats),
+               sobre_la_recta(x_slats, quiebro, punta),
+               sobre_la_recta(x_slats, 0.115, 0.10), 6,
+               sobre_la_recta(x_slats, 0.5, -2.0)),
+        de_ala(x_aleta, y_ala(x_aleta), z_a, punta, 0.10, 6, -2.0),
+        # La de arriba: sube curvándose y echándose atrás, y la cuerda se
+        # cierra hasta un palmo en la punta, con el borde de ataque cada vez
+        # más tumbado —la cimitarra— y el de salida casi de pie. Con dos
+        # estaciones en la curva y no una: con una sola, de cerca se veía el
+        # pliegue donde el ala se dobla.
+        de_ala(semi - 0.66, y_ala(semi - 0.66) + 0.10, z_a + 0.40, 2.95,
+               0.095, 20, -1.6),
+        de_ala(semi - 0.38 + fuera, y_ala(semi - 0.38) + 0.42, z_a + 0.98,
+               2.50, 0.09, 46, -0.8),
+        de_ala(semi - 0.14 + fuera, y_ala(semi) + 1.30, z_a + 2.00, 1.95,
+               0.09, 72, 0.0),
+        de_ala(semi - 0.04 + fuera, y_ala(semi) + 2.80, z_a + 3.25, 1.15,
+               0.085, 80, 0.0),
+        de_ala(semi + fuera, y_ala(semi) + 3.45, z_a + 4.10, 0.46, 0.08,
+               82, 0.0),
     ]
+
+    def a_lo_largo(k):
+        """Lo que mide el ala por su borde de ataque hasta la estación `k`."""
+        return sum((b["pos"] - a["pos"]).length
+                   for a, b in zip(estaciones[:k], estaciones[1:k + 1]))
     j = "oscuro"
     # **El de dentro empieza a 6,0 m del eje, pasada la pata del ala.** Esa
     # pata cuelga a 5,6 m y se mete tumbándose hacia la panza por dentro del
@@ -451,9 +498,14 @@ def construir():
     ]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, aerofrenos=aerofrenos, zonas=[
-        # El borde de ataque de metal, hasta donde empieza la punta: es el
-        # tramo que lleva slats, y la punta en flecha no los lleva.
-        ("aluminio", 3.2, x_flecha * E_POR_X, 0.0, 0.06),
+        # El borde de ataque de metal, hasta donde acaban los slats.
+        ("aluminio", 3.2, x_slats * E_POR_X, 0.0, 0.06),
+        # **Y la aleta, en terracota**, desde donde el ala empieza a subir.
+        # Es donde las compañías de verdad ponen su color —una aleta es una
+        # cola pequeña que se ve de frente y desde la ventanilla—, y es el
+        # color del logotipo que este avión no llevaba: ver `remate` en
+        # `aircraft.ts`.
+        ("remate", a_lo_largo(3), 99.0, 0.0, 1.0),
         (j, 2.6, 21.6, 0.72, 0.73),
         (j, 2.6, 2.75, 0.73, 1.0),
         (j, 11.5, 11.65, 0.73, 1.0),
@@ -463,6 +515,23 @@ def construir():
         (j, 3.5, 20.5, 0.60, 0.607, "arriba"),
     ])
     piezas.append(ala)
+    # **La aleta de abajo**: nace dentro de la punta, por la mitad de delante
+    # de su cuerda, y baja hacia fuera a sesenta grados, con el borde de
+    # ataque echado atrás y el de salida recto. Es la que hace que la punta se
+    # lea partida y no una aleta más.
+    #
+    # Va en una malla con el filete de la franja, que es del mismo color: una
+    # llamada de dibujo para los dos. **Con la aleta delante**: al juntar,
+    # Blender se queda con los modificadores de la primera pieza y tira los
+    # de las demás, y el espejo que da la aleta de la izquierda es uno. Puesto
+    # el filete delante, la de la izquierda no salía.
+    raiz_abajo = semi - 0.90
+    aleta_abajo = superficie("aleta-abajo", [
+        de_ala(raiz_abajo, y_ala(raiz_abajo) + 0.03, z_a + 0.50, 1.90, 0.08,
+               -60),
+        de_ala(semi - 0.06, y_ala(semi) - 1.55, z_a + 2.05, 0.50, 0.07, -60),
+    ], material_="remate")
+    piezas.append(juntar("remate", [aleta_abajo, filete]))
     # **Fowler**, con los topes de un cuatrirreactor de fuselaje ancho —cinco,
     # veinte y treinta— y el carril más largo de la flota: cuatro quintos de
     # su cuerda, casi todo en la primera muesca, y el borde de salida hacia

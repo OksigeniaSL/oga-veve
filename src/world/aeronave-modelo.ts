@@ -316,6 +316,10 @@ function pintarDeLaFlota(raiz: Object3D, aircraft: AircraftConfig): void {
       // `AircraftAppearance.cola`.
       if (m.name === "cola" && aircraft.appearance.cola !== undefined)
         m.color.setHex(aircraft.appearance.cola);
+      // Y el tercer color, el de las aletas y el filete, si lo tiene. Ver
+      // `AircraftAppearance.remate`.
+      else if (m.name === "remate")
+        m.color.setHex(aircraft.appearance.remate ?? aircraft.appearance.accent);
       else if (ranura) m.color.setHex(aircraft.appearance[ranura]);
       else if (m.name === "cristal") m.color.setHex(CRISTAL);
       else if (m.name === "goma") m.color.setHex(GOMA);
