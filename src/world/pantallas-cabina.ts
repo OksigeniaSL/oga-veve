@@ -57,6 +57,7 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
   magenta: PALETA.objetivo,
 };
 import { luzDeTren } from "../flight/tren";
+import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { enLaMuesca } from "../flight/flaps";
 import {
   QUIETA_LA_ALTITUD,
@@ -75,7 +76,13 @@ import {
   COLOR_DE_ARCO,
   type Cuadro,
 } from "../ui/cuadro";
-import { ASPECTO_DEL_RELIEVE, dibujarLaCarta, millasHasta, type Mapa } from "../ui/carta";
+import {
+  ASPECTO_DEL_RELIEVE,
+  dibujarLaCarta,
+  millasHasta,
+  pixelesPorMetro,
+  type Mapa,
+} from "../ui/carta";
 import {
   CIFRAS_DESDE,
   LETRAS_DESDE,
@@ -299,6 +306,8 @@ export interface DatosDeCabina {
   readonly ventanilla?: {
     readonly pies: number;
     readonly alerta: "nada" | "cerca" | "fuera";
+    /** Si la cinta la marca. Ver `DatosDelTablero.ventanilla`. */
+    readonly enLaCinta?: boolean;
   } | null;
   /**
    * **La velocidad que toca y lo que hace el automático**, los mismos que el
@@ -318,6 +327,12 @@ export interface DatosDeCabina {
    * en `ui/tablero.ts`.
    */
   readonly minimos?: { readonly pies: number; readonly enEllos: boolean } | null;
+  /**
+   * **La senda a la vista**, la misma que el cuadro plano: el rombo del
+   * desvío, la marca del ritmo y el arco verde, en el avión que los lleva.
+   * Ver `DatosDelTablero.perfil` y `flight/perfil-vertical.ts`.
+   */
+  readonly perfil?: PerfilEnElCuadro | null;
 }
 
 /**
@@ -1030,6 +1045,8 @@ function horizonteDe(
   g.stroke();
   g.lineCap = "butt";
 
+  escalaDeLaSenda(g, x + w - 14, cy, h * 0.085, d);
+
   // Y la pérdida: marco rojo alrededor del horizonte, que es donde mira quien
   // ya está en apuros.
   if (d.perdida) {
@@ -1038,6 +1055,56 @@ function horizonteDe(
     g.strokeRect(x + 3, y + 3, w - 6, h - 6);
   }
   g.restore();
+}
+
+/**
+ * **La escala de la senda**, la del cuadro plano: cuatro puntos, la raya del
+ * medio y el rombo magenta de la senda, que yendo alto queda por debajo. Con
+ * su rótulo —`VDEV` bajando por el plan, `G/S` en la final— desde el peldaño
+ * de las letras. Ver `escalaDeLaSenda` en `ui/cristal.ts`.
+ */
+function escalaDeLaSenda(
+  g: CanvasRenderingContext2D,
+  x: number,
+  cy: number,
+  paso: number,
+  d: DatosDeCabina,
+): void {
+  const puntos = d.perfil?.puntos ?? null;
+  if (puntos === null) return;
+  g.save();
+  g.fillStyle = "rgba(5, 7, 10, 0.55)";
+  g.fillRect(x - 8, cy - 2.7 * paso, 16, 5.4 * paso);
+  g.strokeStyle = TINTA;
+  g.lineWidth = 1.5;
+  for (const k of [-2, -1, 1, 2]) {
+    g.beginPath();
+    g.arc(x, cy + k * paso, 3.2, 0, Math.PI * 2);
+    g.stroke();
+  }
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(x - 7, cy);
+  g.lineTo(x + 7, cy);
+  g.stroke();
+  const yy = cy + Math.max(-PUNTOS_A_FONDO, Math.min(PUNTOS_A_FONDO, puntos)) * paso;
+  g.fillStyle = PALETA.objetivo;
+  g.beginPath();
+  g.moveTo(x, yy - 7);
+  g.lineTo(x + 5.5, yy);
+  g.lineTo(x, yy + 7);
+  g.lineTo(x - 5.5, yy);
+  g.closePath();
+  g.fill();
+  g.restore();
+  escribir(
+    g,
+    d.perfil?.modo === "bajada" ? "VDEV" : "G/S",
+    x,
+    cy - 2.7 * paso - 8,
+    "500 10px " + FUENTE,
+    TENUE,
+  );
 }
 
 /** La ventana oscura de una cinta, con su filete. */
@@ -1297,7 +1364,8 @@ function cintaDeAltitud(
    * peldaño, una raya de lado a lado, «hasta aquí». Lo mismo que el cuadro
    * plano: ver `Tablero.ventanillaAlt`.
    */
-  const sel = d.ventanilla ?? null;
+  // Si la cinta la marca: en la final de los pequeños, no. Ver `enLaCinta`.
+  const sel = d.ventanilla && d.ventanilla.enLaCinta !== false ? d.ventanilla : null;
   if (sel) {
     const yy = Math.max(y + 40, Math.min(y + h - 12, medio - (sel.pies - pies) * POR_PIE));
     g.fillStyle = PALETA.objetivo;
@@ -1423,6 +1491,21 @@ function variometro(
     -1,
     Math.min(1, (d.vertical * PIES_POR_MINUTO) / d.cuadro.vsiMax),
   );
+  /*
+   * **La marca del ritmo**, la del cuadro plano: magenta, con la misma escala
+   * que la aguja. Ver `variometro` en `ui/cristal.ts`.
+   */
+  const ritmo = d.perfil?.ritmoFpm ?? null;
+  if (ritmo !== null) {
+    const yr = medio - Math.max(-1, Math.min(1, ritmo / d.cuadro.vsiMax)) * ampl;
+    g.fillStyle = PALETA.objetivo;
+    g.beginPath();
+    g.moveTo(x, yr - 5);
+    g.lineTo(x + 8, yr);
+    g.lineTo(x, yr + 5);
+    g.closePath();
+    g.fill();
+  }
   g.strokeStyle = TINTA;
   g.lineWidth = 2.5;
   g.beginPath();
@@ -2320,6 +2403,21 @@ function pintarLaCarta(
     TENUE,
     "right",
   );
+
+  /*
+   * **El arco verde**, el del cuadro plano: delante del avión y a la escala
+   * de la carta, donde se llega a la altitud de la ventanilla. Ver
+   * `Tablero.laCarta`.
+   */
+  const arco = d.perfil?.arco ?? null;
+  const ra = arco === null ? null : arco * pixelesPorMetro(dibujo.rango, r);
+  if (ra !== null && ra >= 8 && ra <= r - 2) {
+    g.strokeStyle = PALETA.normal;
+    g.lineWidth = 2.5;
+    g.beginPath();
+    g.arc(cx, cy, ra, -Math.PI / 2 - Math.PI / 6, -Math.PI / 2 + Math.PI / 6);
+    g.stroke();
+  }
 
   if (!m) return;
 

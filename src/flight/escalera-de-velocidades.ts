@@ -69,6 +69,19 @@ export const TOPE_BAJO_EL_100 = 250;
 export const ALTITUD_DEL_TOPE = 10000 * PIE;
 
 /**
+ * **Y bajando, se frena antes de llegar**, m: mil pies por encima de los diez
+ * mil.
+ *
+ * La regla es cruzar los diez mil pies **ya** a 250, no empezar a frenar al
+ * cruzarlos. Un ordenador de vuelo planea su tramo de frenada para llegar a
+ * esa altitud con la velocidad hecha —en el de Boeing es la transición de
+ * velocidad, «SPD TRANS 250/10000», de la página de descenso—, y la marca baja
+ * a 250 antes de que se llegue. Mil pies es lo que tarda un reactor en perder
+ * cuarenta nudos bajando más suave: medio minuto a un nudo y pico por segundo.
+ */
+export const FRENAR_ANTES = 1000 * PIE;
+
+/**
  * **A qué altitud la indicada de subida se convierte en el Mach de crucero**,
  * m: veintiocho mil pies.
  *
@@ -83,12 +96,28 @@ const CROSSOVER = 28000 * PIE;
 export const TERMINAL_DESDE = 30 * MILLA;
 /** Y desde cuántas se piden los primeros flaps. */
 export const APROXIMACION_DESDE = 12 * MILLA;
+/**
+ * Y desde cuántas se saca el tren y los segundos flaps, en un reactor.
+ *
+ * **Para llegar a la final ya frenado.** La escalera saltaba de la Vref y
+ * cincuenta a la Vref y cinco justo en las cinco millas, y un reactor no
+ * pierde cuarenta y cinco nudos en un instante: con el gas al ralentí y todo
+ * fuera tarda más de un minuto, o sea que entraba en la final a casi
+ * doscientos y llegaba a su velocidad a una milla de la pista. «Hay que
+ * entrar más despacio, y pretende que entre a una velocidad de vértigo.» Es
+ * lo que hace una tripulación de verdad: tren y flaps de en medio antes del
+ * punto de final, a la Vref y veinte —la de maniobra de esos flaps en los
+ * manuales de Boeing—, y la de aterrizar al pasarlo.
+ */
+export const CONFIGURADO_DESDE = 8 * MILLA;
 /** Y desde cuántas se va a la de final, configurado. */
 export const FINAL_DESDE = 5 * MILLA;
 
 /** Lo que se suma a la Vref en un reactor para cada tramo de la llegada, kt. */
 const LIMPIO_SOBRE_VREF = 80;
 const PRIMEROS_FLAPS_SOBRE_VREF = 50;
+/** Con el tren y los segundos flaps. Ver `CONFIGURADO_DESDE`. */
+const SEGUNDOS_FLAPS_SOBRE_VREF = 20;
 /** Y en final, en todos: el margen sin viento. */
 const FINAL_SOBRE_VREF = 5;
 
@@ -206,13 +235,30 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
   const chorro = esDeChorro(a);
   const conPlan = d.restante !== null;
   const falta = d.restante ?? Infinity;
+  /*
+   * **Llegando es estar cerca de la pista, haya saltado el T/D o no.**
+   *
+   * Los peldaños de la llegada colgaban de `bajando`, que es el aviso del
+   * punto de descenso del plan, y ese aviso no salta siempre: quien empieza
+   * a bajar antes por su cuenta no lo pasa nunca —ver `DESNIVEL_QUE_CUENTA`
+   * en `ruta.ts`—. Sin él, la marca se quedaba en la de crucero hasta la
+   * pista: 250 nudos a tres millas del umbral en el JAZ 120, que Enrique leyó
+   * bien: «pretende que entre a una velocidad de vértigo». Lo que dice qué
+   * velocidad toca llegando es dónde está la pista, que es lo que mira un
+   * ordenador de vuelo al pasar a su fase de aproximación.
+   */
+  const llegando = conPlan && (d.bajando || falta < TERMINAL_DESDE);
   let r: VelocidadQueToca;
-  if (d.enFinal || (conPlan && d.bajando && falta < FINAL_DESDE)) {
+  if (d.enFinal || (llegando && falta < FINAL_DESDE)) {
     r = { kt: vref + FINAL_SOBRE_VREF, mach: null, tramo: "final" };
-  } else if (conPlan && d.bajando && falta < APROXIMACION_DESDE) {
-    const kt = chorro ? vref + PRIMEROS_FLAPS_SOBRE_VREF : a.velocidadDeCircuito / NUDO;
+  } else if (llegando && falta < APROXIMACION_DESDE) {
+    const kt = !chorro
+      ? a.velocidadDeCircuito / NUDO
+      : falta < CONFIGURADO_DESDE
+        ? vref + SEGUNDOS_FLAPS_SOBRE_VREF
+        : vref + PRIMEROS_FLAPS_SOBRE_VREF;
     r = { kt, mach: null, tramo: "aproximacion" };
-  } else if (conPlan && d.bajando && falta < TERMINAL_DESDE) {
+  } else if (llegando && falta < TERMINAL_DESDE) {
     const kt = chorro
       ? Math.min(TOPE_BAJO_EL_100, vref + LIMPIO_SOBRE_VREF)
       : Math.min(
@@ -233,7 +279,8 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
         porMach = mach;
       }
     }
-    if (d.altitud < ALTITUD_DEL_TOPE && kt > TOPE_BAJO_EL_100) {
+    const tope = d.bajando ? ALTITUD_DEL_TOPE + FRENAR_ANTES : ALTITUD_DEL_TOPE;
+    if (d.altitud < tope && kt > TOPE_BAJO_EL_100) {
       kt = TOPE_BAJO_EL_100;
       porMach = null;
     }

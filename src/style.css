@@ -4343,6 +4343,37 @@ button.motor__tecla::after {
   fill: var(--cabina-objetivo);
 }
 
+/*
+ * **La escala de la senda** al borde del horizonte: puntos y raya en blanco,
+ * que son lo que tengo, y el rombo en magenta, que es la senda que quiero.
+ * Ver `escalaDeLaSenda` en `ui/cristal.ts`.
+ */
+.cr__senda-fondo {
+  fill: rgb(5 7 10 / 0.55);
+}
+
+.cr__senda-punto {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.5;
+}
+
+.cr__senda-medio {
+  stroke: var(--cabina-valor);
+  stroke-width: 2;
+}
+
+.cr__senda-rombo {
+  fill: var(--cabina-objetivo);
+}
+
+/* Y el arco verde de la carta: dónde se llega a la altitud de la ventanilla. */
+.cr__arco-altitud {
+  fill: none;
+  stroke: var(--cabina-normal);
+  stroke-width: 2.5;
+}
+
 /* La altura de la ventanilla ALT encima de la cinta, en su caja. */
 .cr__sel-caja {
   fill: #05070a;
@@ -9820,10 +9851,25 @@ button.motor__tecla::after {
  * Y más gruesa que la vía para que se lea a la primera en una tablet de aula,
  * donde esto se mira de reojo mientras se pilota. Ver `picto__via`.
  */
+/*
+ * **La marca de la velocidad, en rosa**, como la muesca de la cinta: es «lo
+ * que quiero», y en este juego eso es siempre magenta. Era verde, y la
+ * instructora dice «hasta la marca rosa»: en el peldaño de los pequeños la
+ * marca a la que se apunta tiene que ser la misma que en el cuadro de los
+ * mayores.
+ */
 .picto__vref {
-  stroke: #79e08a;
+  stroke: var(--cabina-objetivo);
   stroke-width: 3;
   stroke-linecap: round;
+}
+
+/* Y la raya de la senda en la tarjeta de la altura: rosa, por lo mismo. */
+.picto__senda {
+  stroke: var(--cabina-objetivo);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 3 2.2;
 }
 
 /*

@@ -142,6 +142,7 @@ export function pantallaDeActitud(
     <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
     ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30)}
     ${minimos(act.x + act.ancho - 8, opciones.fma ? 52 : 20)}
+    ${escalaDeLaSenda(act.x + act.ancho - 13, altoAct * ANCLA_DE_ACTITUD, altoAct * 0.085)}
     ${opciones.fma ? fma(act.x, act.ancho) : ""}
   `;
 }
@@ -165,6 +166,40 @@ function minimos(x: number, y: number): string {
     <g data-cristal="minimos" ${MARCA_ROTULO} visibility="hidden">
       <text x="${x}" y="${y}" class="cr__minimos cr__minimos--rotulo" text-anchor="end">BARO</text>
       <text data-cristal="minimos-cifra" x="${x}" y="${y + 17}" class="cr__minimos" text-anchor="end"></text>
+    </g>
+  `;
+}
+
+/**
+ * **La escala de la senda**: dónde está la senda de bajada respecto al avión.
+ *
+ * Cuatro puntos y una raya en medio, al borde derecho del horizonte y a la
+ * altura del avioncito, que es donde la pone una pantalla de vuelo de verdad;
+ * y un rombo magenta que es **la senda**: yendo alto queda por debajo de la
+ * raya, y se baja hasta que el rombo quede en el medio. Es la frase de la
+ * instructora —«hasta que el rombo quede en el medio»— dibujada.
+ *
+ * Bajando por el plan es el desvío del ordenador de vuelo, `VDEV`; en la final,
+ * la senda de la pista, `G/S`. Los dos rótulos en inglés de cabina y desde el
+ * peldaño de las letras; los puntos y el rombo, desde el primero, que son un
+ * dibujo. Solo en el avión que lo lleva: ver `equipoDeSenda` en
+ * `flight/perfil-vertical.ts`. La colocan `Tablero.senda` y la pantalla de la
+ * cabina con la misma cuenta.
+ */
+function escalaDeLaSenda(x: number, cy: number, paso: number): string {
+  const puntos = [-2, -1, 1, 2]
+    .map((k) => `<circle cx="0" cy="${k * paso}" r="3.2" class="cr__senda-punto" />`)
+    .join("");
+  return `
+    <g data-cristal="senda" transform="translate(${x} ${cy})" visibility="hidden">
+      <rect x="-8" y="${-2.7 * paso}" width="16" height="${5.4 * paso}" rx="4" class="cr__senda-fondo" />
+      ${puntos}
+      <line x1="-7" y1="0" x2="7" y2="0" class="cr__senda-medio" />
+      <g data-cristal="senda-rombo" data-paso="${paso}">
+        <path class="cr__senda-rombo" d="M0 -7 L5.5 0 L0 7 L-5.5 0 Z" />
+      </g>
+      <text data-cristal="senda-rotulo" x="0" y="${-2.7 * paso - 5}" ${MARCA_ROTULO}
+            class="cr__rotulo cr__rotulo--menudo" text-anchor="middle"></text>
     </g>
   `;
 }
@@ -596,6 +631,18 @@ function variometro(
       ${marcas}
       <text x="${w / 2}" y="11" ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">VS</text>
       <text x="${w / 2}" y="${h - 4}" ${MARCA_CIFRA} class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${Math.round(c.vsiMax / 1000)}</text>
+      <!--
+        **La marca del ritmo**: a cuántos pies por minuto hay que bajar para
+        seguir la senda con la velocidad sobre el suelo de ahora —los
+        setecientos de una final a ciento treinta y cinco nudos—. Magenta,
+        que es lo que se quiere, y con la misma escala que la aguja: se baja
+        hasta que la aguja llegue a ella. Es el ritmo requerido de las
+        pantallas de vuelo con perfil vertical. Ver Tablero.senda.
+      -->
+      <g data-cristal="vsi-objetivo" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}"
+         visibility="hidden">
+        <path class="cr__bug" d="M0 ${h / 2 - 5} l8 5 l-8 5 Z" />
+      </g>
       <g data-cristal="vsi" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}">
         <path class="cr__aguja-vsi" d="M0 ${h / 2} l${w} 0" />
       </g>
@@ -745,6 +792,13 @@ function carta(cx: number, cy: number, r: number): string {
         raya hacia arriba. Solo lo lleva la pantalla de navegación de los
         reactores, que es la que lo pinta de verdad. Ver puntoDeSubida en flight/ruta.ts.
       -->
+      <!--
+        **El arco verde**: dónde se llega a la altitud de la ventanilla con el
+        ritmo de ahora, el «altitude range arc» de la pantalla de navegación de
+        Boeing. Delante del avión y en verde. Si cae antes de la pista, se llega
+        abajo con sitio; si cae después, no da. Lo coloca Tablero.laCarta.
+      -->
+      <path data-carta="arco" class="cr__arco-altitud" visibility="hidden" d="M0 0" />
       <g data-carta="tc" class="cr__td" visibility="hidden">
         <circle r="7" />
         <path d="M-4 2.2 h3.4 l4.6 -4.6" />

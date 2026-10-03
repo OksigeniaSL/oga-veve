@@ -7600,9 +7600,14 @@ const NUMERO_EN_UNA_BOCA =
  * «bajás muy de golpe: levantá la nariz» justo después de «metéle gas».
  */
 {
-  const LENTO = /^(?:vuelo\.lentoYBajo|cabina\.airspeedLow)\b/;
+  /*
+   * Con los consejos de la bajada —ver `flight/consejo-de-la-bajada.ts`—, que
+   * dicen la acción: más gas es de ir lento, y menos gas, frenar o levantar
+   * la nariz por el *sink rate*, de ir rápido o bajar de golpe.
+   */
+  const LENTO = /^(?:vuelo\.lentoYBajo|vuelo\.consejo\.masGas|cabina\.airspeedLow)\b/;
   const RAPIDO =
-    /^(?:vuelo\.rapido|vuelo\.pediFlaps|vuelo\.bajasRapido|cabina\.airspeed)$/;
+    /^(?:vuelo\.rapido|vuelo\.pediFlaps|vuelo\.bajasRapido|cabina\.airspeed|tutor\.slow|vuelo\.consejo\.(?:menosGas|aerofrenos|narizArribaRitmo|narizArribaSuave))$/;
   const SEGUIDOS = 10;
   const oido = [];
   for (const h of vuelo.habladas ?? []) {

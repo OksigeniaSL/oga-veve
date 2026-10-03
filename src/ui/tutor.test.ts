@@ -155,6 +155,27 @@ describe("aflojar el motor solo viniendo a aterrizar", () => {
     expect(r.paso).toBe("done");
   });
 
+  /*
+   * «Metéle gas» de la instructora y «bajá el motor» del cartel, a la vez:
+   * en un reactor, el gas de una final bien volada pasa de cuatro décimas.
+   */
+  it("y no si la velocidad no sobra: lento o en su marca, no se pide quitar gas", () => {
+    for (const velocidad of ["lento", "bien"] as const) {
+      const r = pasoQueToca(enElAireYaVolado, {
+        ...mirada(enElAire(40, 200), true, true),
+        throttle: 0.9,
+        velocidad,
+      });
+      expect(r.paso, velocidad).toBe("done");
+    }
+    const rapido = pasoQueToca(enElAireYaVolado, {
+      ...mirada(enElAire(40, 200), true, true),
+      throttle: 0.9,
+      velocidad: "rapido",
+    });
+    expect(rapido.paso).toBe("slow");
+  });
+
   it("ni pasando cerca sin venir en final", () => {
     const r = pasoQueToca(enElAireYaVolado, {
       ...mirada(enElAire(40, 200), true, false),

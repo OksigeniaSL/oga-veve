@@ -1677,6 +1677,36 @@ export class Seguimiento {
   }
 
   /**
+   * **Lo que se va por encima de la senda del plan**, m —negativo, por
+   * debajo—, y a qué ritmo baja ella, m/s: lo que pinta el desvío vertical
+   * (`VDEV`) de la pantalla de vuelo y la marca del variómetro, y con lo que
+   * la instructora dice «nariz un poquito abajo, hasta que el rombo quede en
+   * el medio». Ver `flight/perfil-vertical.ts`.
+   *
+   * Es **la misma senda que sigue el automático** —la de tres grados con lo
+   * publicado para el siguiente punto—, sin el atajo de `POR_DELANTE`: el
+   * automático no pica para coger una senda que le queda lejos, pero el
+   * instrumento dice dónde está. `null` si todavía no toca bajar o si ya se
+   * vuela la final, que tiene su propia senda.
+   */
+  desvioDeLaSenda(l: Lectura): { readonly metros: number; readonly ritmo: number } | null {
+    const r = this.ruta;
+    if (!r || !this.yaBajando || l.enTierra || this.enLaFinal(l)) return null;
+    const falta = restante(r, this.activo, l.x, l.z);
+    const faf = r.fijos.findIndex((f) => f.papel === "faf");
+    const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
+    const hasta = Math.max(falta, suelo);
+    const senda = alturaDeLaSenda(r, this.activo, hasta, this.aireSobreSuelo);
+    const libre = alturaDeLaSenda(r, this.activo, hasta, this.aireSobreSuelo, false);
+    // Sujeta por lo publicado para el siguiente punto, la senda va nivelada.
+    const ritmo =
+      senda > libre || falta <= suelo
+        ? 0
+        : -Math.max(0, l.aire) * ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA));
+    return { metros: l.altitud - senda, ritmo };
+  }
+
+  /**
    * **Si ya se vuela el último tramo, del punto de final al umbral.** Ahí
    * manda la senda de la final —el `G/S` del automático— y en la ventanilla
    * va la altitud de la frustrada. Media milla antes del punto, que es cuando

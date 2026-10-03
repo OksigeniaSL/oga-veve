@@ -1305,6 +1305,35 @@ export const ES_PY = {
   "vuelo.lentoYBajo": "Venís lento: metéle gas",
   "vuelo.papiBajo": "Luces rojas: vas bajo, subí",
   "vuelo.papiBien": "Dos rojas y dos blancas: vas bien",
+  /*
+   * **Los consejos de la bajada y la final: la acción y el objetivo.**
+   *
+   * «No es que la instructora me corrija, es que no sé lo que tengo que
+   * hacer.» Cada uno nombra **un solo mando** —el gas, la nariz, lo que
+   * frena— y **hasta dónde**: la marca rosa de la cinta, dos blancas y dos
+   * rojas del PAPI, el rombo en el medio, la marca rosa del variómetro.
+   * Los decide uno solo, `flight/consejo-de-la-bajada.ts`, que espera a que el
+   * avión responda antes de volver a corregir.
+   *
+   * Sin grabar todavía: ver `PENDIENTE-VOCES-bajada.md`. Hasta que lo estén,
+   * se dice la grabada que nombra el mismo mando y la tarjeta enseña esa misma
+   * frase; éstas salen solas en cuanto tienen su grabación.
+   */
+  "vuelo.consejo.masGas": "Un poquito más de gas, hasta la marca rosa. La nariz, quieta.",
+  "vuelo.consejo.menosGas": "Un poquito menos de gas, hasta la marca rosa.",
+  "vuelo.consejo.narizAbajoPapi": "Nariz un poquito abajo, hasta ver dos blancas y dos rojas.",
+  "vuelo.consejo.narizArribaPapi": "Nariz un poquito arriba, hasta ver dos blancas y dos rojas.",
+  "vuelo.consejo.narizAbajoSenda": "Nariz un poquito abajo, hasta que el rombo quede en el medio.",
+  "vuelo.consejo.narizArribaSenda": "Nariz un poquito arriba, hasta que el rombo quede en el medio.",
+  "vuelo.consejo.narizArribaRitmo":
+    "Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.",
+  "vuelo.consejo.narizArribaSuave": "Nariz un poquito arriba, para bajar más suave.",
+  "vuelo.consejo.aerofrenos": "Sacá un poco los aerofrenos, hasta la marca rosa.",
+  // Y su palabra corta, para el peldaño que lee una palabra: el mando y hacia dónde.
+  "palabra.masGas": "Más gas",
+  "palabra.menosGas": "Menos gas",
+  "palabra.narizArriba": "Nariz arriba",
+  "palabra.narizAbajo": "Nariz abajo",
   "vuelo.bulto": "Por ahí no se pasa: hay un edificio",
   // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
   // La fila de avioncitos de la pantalla de fin: media hora cada uno.

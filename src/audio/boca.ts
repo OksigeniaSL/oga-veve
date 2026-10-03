@@ -491,6 +491,27 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   // Y bajar de golpe después de «metéle gas»: el gas ya es lo que lo corta, y
   // «levantá la nariz» encima es otra orden para lo mismo.
   ["vuelo.lentoYBajo", "vuelo.bajasRapido"],
+  /*
+   * **Y los consejos de la bajada, con su contrario.** Quien decide no darlos
+   * seguidos sin que el avión haya respondido es el consejero —ver
+   * `flight/consejo-de-la-bajada.ts`—; esto es la red de debajo, por si dos
+   * llegan a la cola a la vez. Más gas contra menos gas o contra lo que frena,
+   * y la nariz arriba contra la nariz abajo; con las grabadas que los dicen
+   * mientras las nuevas no tienen voz.
+   */
+  ["vuelo.consejo.masGas", "vuelo.consejo.menosGas"],
+  ["vuelo.consejo.masGas", "tutor.slow"],
+  ["vuelo.lentoYBajo", "vuelo.consejo.menosGas"],
+  ["vuelo.lentoYBajo", "tutor.slow"],
+  ["vuelo.consejo.masGas", "vuelo.consejo.aerofrenos"],
+  ["vuelo.consejo.masGas", "vuelo.pediFlaps"],
+  ["vuelo.consejo.masGas", "vuelo.bajasRapido"],
+  ["vuelo.consejo.masGas", "vuelo.consejo.narizArribaRitmo"],
+  ["vuelo.consejo.masGas", "vuelo.consejo.narizArribaSuave"],
+  ["vuelo.lentoYBajo", "vuelo.consejo.narizArribaRitmo"],
+  ["vuelo.lentoYBajo", "vuelo.consejo.narizArribaSuave"],
+  ["vuelo.consejo.narizArribaPapi", "vuelo.consejo.narizAbajoPapi"],
+  ["vuelo.consejo.narizArribaSenda", "vuelo.consejo.narizAbajoSenda"],
 ];
 
 /**

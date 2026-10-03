@@ -308,6 +308,12 @@ export class Tutor {
      * segundo que señalando algo que todavía no está.
      */
     hayRaya = true,
+    /**
+     * Cómo va la velocidad frente a su marca en la final, si alguien la
+     * juzga: la misma que mira la instructora de la bajada. Ver
+     * `Mirada.velocidad`.
+     */
+    velocidad: "lento" | "bien" | "rapido" | null = null,
   ): void {
     if (!this.root) return;
     if (this.callado) {
@@ -315,7 +321,7 @@ export class Tutor {
       return;
     }
 
-    this.step = this.nextStep(state, throttle, dt, enFinal, hayRaya);
+    this.step = this.nextStep(state, throttle, dt, enFinal, hayRaya, velocidad);
 
     if (this.step === "done" || state.crashed) {
       this.root.hidden = true;
@@ -366,6 +372,7 @@ export class Tutor {
     dt: number,
     enFinal: boolean,
     hayRaya: boolean,
+    velocidad: "lento" | "bien" | "rapido" | null,
   ): Step {
     const salida = pasoQueToca(
       {
@@ -373,7 +380,7 @@ export class Tutor {
         celebrando: this.celebrating,
         haVolado: this.hasFlown,
       },
-      { state, throttle, dt, hayRaya, enFinal },
+      { state, throttle, dt, hayRaya, enFinal, velocidad },
     );
     this.celebrating = salida.celebrando;
     this.hasFlown = salida.haVolado;
@@ -439,6 +446,17 @@ export interface Mirada {
    * ninguna intención de aterrizar. Ver `enElEmbudoDeFinal`.
    */
   readonly enFinal: boolean;
+  /**
+   * **Cómo va la velocidad frente a su marca**, si se juzga: `null` si no.
+   *
+   * El cartel de «bajá el motor» miraba solo la palanca —por encima de
+   * cuatro décimas, a quitar—, y en un reactor eso es el gas de una final
+   * bien volada. Así salía «bajá el motor» mientras la instructora pedía «un
+   * poquito más de gas»: dos consejos contrarios a la vez, y uno de ellos
+   * escrito en grande. Ahora solo se pide quitar gas si sobra velocidad, que
+   * es lo mismo que mira ella. Ver `flight/consejo-de-la-bajada.ts`.
+   */
+  readonly velocidad?: "lento" | "bien" | "rapido" | null;
 }
 
 /**
@@ -522,8 +540,12 @@ export function pasoQueToca(
    * que salía dando una vuelta por el valle y pedía quitar gas a veinte metros
    * de una ladera.
    */
+  const sobra = mirada.velocidad === undefined || mirada.velocidad === null
+    ? true
+    : mirada.velocidad === "rapido";
   if (
     enFinal &&
+    sobra &&
     throttle > APPROACH_THROTTLE &&
     state.heightAboveGround > ALTO_PARA_AFLOJAR
   )
