@@ -736,3 +736,97 @@ describe("el permiso que no llegó a oírse no se dio", () => {
     expect(pasos).toEqual(["cleared to land"]);
   });
 });
+
+/**
+ * **El permiso tardío de La Palma: la causa.** «La torre me dio el permiso con
+ * el avión ya en la cabecera, con la máquina contando "one hundred».
+ *
+ * El permiso se pedía al entrar en la fase «final» del plan —mil pies como muy
+ * pronto, cuarenta metros si uno se alineaba tarde, y otra vez cada vez que la
+ * fase parpadeaba—, y con la pista libre `paso` lo daba **a la altura que
+ * fuera**: solo miraba los mínimos cuando había algo que esperar. Ahora se
+ * pide en la final de la torre —ver `final-de-la-torre.test.ts`—, y por
+ * debajo de los mínimos no se da nunca: al aire, sin permiso.
+ */
+describe("el permiso, nunca por debajo de los mínimos", () => {
+  it("pedido por debajo de la decisión con la pista libre, no se da: al aire, sin permiso", () => {
+    const porques: (string | undefined)[] = [];
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      alto: () => 30,
+      mandarteAlAire: (_alto, _sigue, porque) => {
+        porques.push(porque);
+        pasos.push("go around");
+      },
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    turno.paso("final");
+    expect(pasos).toEqual(["go around"]);
+    expect(porques).toEqual(["sinPermiso"]);
+  });
+
+  it("y por encima, con la pista libre, se da en el acto", () => {
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      alto: () => 450,
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+  });
+
+  /*
+   * El permiso que no se oyó a la decisión ya mandaba al aire, pero como
+   * «pista ocupada» con la pista vacía. El porqué es el permiso.
+   */
+  it("y el que no llegó a oírse a la decisión manda al aire por el permiso, no por la pista", () => {
+    let alto = 120;
+    const porques: (string | undefined)[] = [];
+    const { turno } = montar(new Frecuencia(dados(3), "GCXO"), {
+      alto: () => alto,
+      permisoSinOir: () => true,
+      mandarteAlAire: (_alto, _sigue, porque) => void porques.push(porque),
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    alto = 55;
+    turno.paso("final");
+    expect(porques).toEqual(["sinPermiso"]);
+  });
+
+  /*
+   * De Taguató para arriba el permiso son dos frases: la lámpara en
+   * castellano, que es la que cuenta como oída, y detrás su fraseología con
+   * el viento. La segunda podía esperar turno hasta los veinte metros.
+   */
+  it("y a los mínimos, la fraseología de tu permiso que aún espera turno ya no se dice", () => {
+    let alto = 300;
+    const boca = new Boca({ ahora: () => 0, cancelar: () => {} });
+    const radio = "torre.canario.clearedLand@fonetico.zulu-viento.wind-cifra.0-cifra.3";
+    const turno = new TurnoDePista({
+      radio: new Frecuencia(dados(3), "GCXO"),
+      boca,
+      trafico: () => null,
+      torre: () => true,
+      privado: () => false,
+      alUmbral: () => 1800,
+      alto: () => alto,
+      decirAOtro: () => null,
+      // La lámpara suena y se oye; su fraseología espera detrás de alguien.
+      autorizarte: () => {
+        boca.pedir("urgente", () => {}, "vuelo.algoQueNoAcaba");
+        boca.pedir("mando", () => {}, radio);
+      },
+      mandarteAlAire: () => {},
+      permisoSinOir: () => false,
+    });
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(boca.espera(radio)).toBe(true);
+    alto = 70;
+    turno.paso("final");
+    expect(boca.espera(radio)).toBe(true);
+    alto = 58;
+    turno.paso("final");
+    expect(boca.espera(radio)).toBe(false);
+  });
+});

@@ -386,6 +386,10 @@ export const EN: Dictionary = {
     "We're higher than the plan: there's more to come down, so we'll start down earlier.",
   "palabra.aBajar": "Descend",
   "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
+  "hud.cotaDeLaPista":
+    "The runway we're heading to is {cota} above sea level: what the altimeter reads minus that is how high you are above it",
+  "vuelo.sinPermisoEnLosMinimos":
+    "The tower didn't clear you to land. No clearance, no landing: go around and rejoin the circuit",
   "percance.ocupada": "The runway was occupied and you were told to go around",
   "vuelo.puedeVolver": "Cleared to try again",
   "vuelo.puedeAterrizar": "The tower clears you to land",

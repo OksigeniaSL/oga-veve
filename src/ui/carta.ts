@@ -281,6 +281,30 @@ export interface RutaDeLaCarta {
    * pista. Ver `dibujarLaCarta`.
    */
   readonly abreElRango: boolean;
+  /**
+   * **La cota del umbral de llegada**, m, o `null` si no se sabe.
+   *
+   * Enrique la buscaba para calcular la aproximación, y no estaba en ninguna
+   * parte. En una carta de aproximación de verdad va junto a la pista —«THR
+   * ELEV», la cota del umbral— porque es la referencia de todo lo que se
+   * hace al final: lo que marca el altímetro menos la cota es lo alto que se
+   * va sobre la pista, y los mínimos se ponen sumándole la altura de
+   * decisión. Se escribe junto al punto del umbral, el «RW19» del plan. Ver
+   * `cotaEscrita`.
+   */
+  readonly cotaDelUmbral?: number | null;
+}
+
+/** Un pie, en metros. */
+const PIE = 0.3048;
+
+/**
+ * **La cota como se escribe en una carta**: «ELEV 108 FT», en pies, que es
+ * como vienen en las cartas de verdad —las de ENAIRE y las de la DINAC— y como
+ * marca el altímetro de la pantalla de vuelo. Lo usan la carta y el plano.
+ */
+export function cotaEscrita(metros: number): string {
+  return `ELEV ${Math.round(metros / PIE)} FT`;
 }
 
 /** Un tráfico, con lo que el TCAS dice de él. */
@@ -427,6 +451,11 @@ export interface Dibujo {
       dy: number;
       nombre: string;
       activo: boolean;
+      /**
+       * **Y en el umbral, su cota** como va en una carta: «ELEV 108 FT».
+       * `null` en los demás puntos. Ver `RutaDeLaCarta.cotaDelUmbral`.
+       */
+      cota: string | null;
     }[];
     readonly descenso: { dx: number; dy: number } | null;
     /** Y el de subida, el T/C. */
@@ -713,7 +742,15 @@ function rutaEnLaCarta(
   const fijos = ruta.fijos
     .map((f, i) => ({ f, i }))
     .filter(({ f, i }) => i >= ruta.activo && f.papel !== "despegue" && f.papel !== "aqui")
-    .map(({ f, i }) => ({ ...aqui(f), nombre: f.nombre, activo: i === ruta.activo }));
+    .map(({ f, i }) => ({
+      ...aqui(f),
+      nombre: f.nombre,
+      activo: i === ruta.activo,
+      cota:
+        f.papel === "umbral" && ruta.cotaDelUmbral != null
+          ? cotaEscrita(ruta.cotaDelUmbral)
+          : null,
+    }));
   const sig = ruta.fijos[ruta.activo];
   return {
     linea,

@@ -312,6 +312,12 @@ export interface DatosDeCabina {
     readonly vertical: string;
     readonly piloto: boolean;
   } | null;
+  /**
+   * **Los mínimos puestos**, los mismos que el cuadro plano: la altitud de
+   * decisión en pies y si ya se ha llegado a ella. Ver `DatosDelTablero.minimos`
+   * en `ui/tablero.ts`.
+   */
+  readonly minimos?: { readonly pies: number; readonly enEllos: boolean } | null;
 }
 
 /**
@@ -769,6 +775,19 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
   }
   radioaltimetro(g, x0 + anchoAct / 2, alto - 34, d);
+  /*
+   * **Los mínimos puestos**, arriba a la derecha del horizonte y debajo del
+   * FMA: «BARO» y la altitud de decisión, verdes, y ámbar al llegar a ella.
+   * Con las letras, desde el tercer peldaño, como en el cuadro plano. Ver
+   * `minimos` en `ui/cristal.ts`.
+   */
+  if (d.minimos && d.peldano >= 3) {
+    const color = d.minimos.enEllos ? PALETA.precaucion : PALETA.normal;
+    const y = d.cuadro.familia === "linea" ? 46 : 16;
+    // Con su filo oscuro: van encima del cielo del horizonte.
+    escribir(g, "BARO", x0 + anchoAct - 8, y, "600 11px " + FUENTE, color, "right", FONDO);
+    escribir(g, String(d.minimos.pies), x0 + anchoAct - 8, y + 17, "600 16px " + FUENTE, color, "right", FONDO);
+  }
   /*
    * **El FMA de los de línea**, como en el cuadro plano: arriba del
    * horizonte, lo que hace cada mano del automático, con las letras desde el
@@ -2405,6 +2424,8 @@ function pintarLaCarta(
       g.closePath();
       g.stroke();
       escribir(g, f.nombre, x + 8, y + 12, "600 11px " + FUENTE, color, "left");
+      // Y en el umbral, su cota, junto a la pista en uso. Ver `cotaEscrita`.
+      if (f.cota) escribir(g, f.cota, x + 8, y + 25, "600 11px " + FUENTE, color, "left");
     }
     if (plan.descenso) {
       const x = cx + plan.descenso.dx;

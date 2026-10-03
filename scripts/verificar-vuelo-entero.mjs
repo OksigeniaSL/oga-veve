@@ -2722,6 +2722,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let dijoToca = false;
   let pidioFreno = false;
   let tiempoDeRodajeIda = 0;
+  /**
+   * **Y de eso, el rato parado detrás de uno de tu cola**, que es tráfico y
+   * no rodaje. Ver «el rodaje de ida no aburre».
+   */
+  let paradoEnLaCola = 0;
   let tiempoDeRodajeVuelta = 0;
   let despego = 0;
   let toco = 0;
@@ -3105,7 +3110,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * detrás de la torre y se retiraba al empezar la carrera. Las fases que
      * van a uno están en `scripts/reloj-del-banco.mjs`, con su prueba.
      */
-    const quiere = aTiempoReal.includes(fase) ? 1 : veces;
+    /*
+     * **Y mientras tu permiso para aterrizar tenga algo por sonar.** Es la
+     * misma trampa en la final: a ×3 el avión baja el triple mientras la
+     * torre habla, y la altura a la que se oye sale comprimida. La lámpara en
+     * castellano y su fraseología con el viento son quince segundos de pared,
+     * que a ×3 eran cuarenta y cinco de juego y ciento y pico metros de senda:
+     * el «cleared to land a 19 m» que daba este banco era eso. Pedido y hasta
+     * que la fraseología empieza, a uno; después, a lo de siempre. Ver
+     * `permisoPorOir` en `src/dev/sondas.ts`.
+     */
+    const quiere =
+      aTiempoReal.includes(fase) || o.permisoPorOir?.() ? 1 : veces;
     if (quiere !== relojAhora) {
       relojAhora = quiere;
       o.acelerar?.(quiere);
@@ -3703,6 +3719,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           tusAutorizaciones.push({
             t: Math.round(t),
             fase,
+            /*
+             * Y si se estaba en la final de la torre, que empieza a millas del
+             * umbral: ahí es donde se pide el permiso, antes de que la fase
+             * del plan diga «final». Ver `src/flight/final-de-la-torre.ts`.
+             */
+            enLaFinalDeLaTorre: !!o.enLaFinalDeLaTorre?.(),
             dice: m[2],
             alli: !!enElDestino,
             // Y a qué altura sonó: con la pista ocupada hasta la decisión, la
@@ -4399,6 +4421,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
       c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
       c.aileron = timon(s, ruta);
+      /*
+       * Parado porque el juego pide cero, y lo pide por uno de tu cola que
+       * tienes delante en la raya: ver `detrasDeQuien` en
+       * `src/world/plan-de-vuelo.ts`.
+       */
+      if (porElSuelo(s) < 0.5 && quiere < 0.5 && o.detrasDeQuien?.() === "cola")
+        paradoEnLaCola += paso;
       if (fase === "esperando" || fase === "autorizado") etapa = "esperar";
     } else if (etapa === "esperar") {
       c.throttle = 0;
@@ -5795,6 +5824,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     dijoToca,
     pidioFreno,
     ida: +tiempoDeRodajeIda.toFixed(0),
+    idaEnCola: +paradoEnLaCola.toFixed(0),
     idaMetros: Math.round(idaMetros),
     largoDeLaIda: Math.round(largoDeLaIda),
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
@@ -6565,7 +6595,9 @@ comprobar(
  */
 {
   const tuyas = vuelo.tusAutorizaciones ?? [];
-  const fueraDeFinal = tuyas.filter((a) => a.fase !== "final");
+  // En final: la del plan, o la de la torre, que empieza antes y se sale
+  // yéndose al aire. Ver `src/flight/final-de-la-torre.ts`.
+  const fueraDeFinal = tuyas.filter((a) => a.fase !== "final" && !a.enLaFinalDeLaTorre);
   /*
    * Y en un AFIS, lo que allí se oye en su lugar: «pista libre» en castellano
    * y «runway free» en fraseología. Ver `LO_DICE_UN_AFIS`.
@@ -6602,25 +6634,38 @@ comprobar(
 }
 
 /*
- * **Y tu permiso llega antes de la altura de decisión.** En Los Rodeos, de
- * número dos detrás de otro, el de delante soltó la pista por debajo de los
- * sesenta metros, su «pista libre» esperó turno y tu permiso sonó a once
- * metros del suelo. Lo de verdad es lo otro: si la pista no es tuya a la
- * altura de decisión, la torre te manda al aire. Se mide con la voz, que es
- * cuando se entera quien vuela; la boca puede retrasarla unos segundos detrás
- * de otra frase, y por eso el margen es de veinte metros y no de cero.
+ * **Y el permiso de aterrizar se oye antes de los quinientos pies sobre la
+ * pista**, o antes de la decisión si está más alta.
+ *
+ * Lo de verdad es que la torre autoriza en final, a varias millas, y como
+ * tarde a los quinientos pies o a los mínimos; sin permiso ahí, uno se va al
+ * aire. Aquí había una comprobación más floja —por encima de cuarenta
+ * metros— que nació en Los Rodeos: de número dos detrás de otro, el de
+ * delante soltó la pista por debajo de los sesenta metros, su «pista libre»
+ * esperó turno y tu permiso sonó a once metros del suelo. Y Enrique lo oyó en
+ * La Palma con el avión en la cabecera y la máquina contando «one hundred».
+ *
+ * Se mide cada frase del permiso al **empezar a sonar**, que es cuando se
+ * entera quien vuela: la lámpara en castellano y, de Taguató para arriba, su
+ * fraseología con el viento. Y se mide bien porque mientras suenan el banco
+ * vuela a tiempo real: a ×3 la altura salía comprimida —ver `relojPara`— y
+ * así salían los «cleared to land a 19 m» de este banco.
  */
 {
   const tuyas = vuelo.tusAutorizaciones ?? [];
-  const bajas = tuyas.filter((a) => typeof a.alto === "number" && a.alto < 40);
+  // La altura de decisión del juego, sesenta metros: ver `src/flight/minimos.ts`.
+  const ALTURA_DE_DECISION = 60;
+  const LISTON = Math.max(500 * 0.3048, ALTURA_DE_DECISION);
+  const bajas = tuyas.filter((a) => typeof a.alto === "number" && a.alto < LISTON);
+  const enPies = (m) => Math.round(m / 0.3048);
   if (tuyas.length)
     comprobar(
-      "y tu permiso llega antes de la altura de decisión",
+      "el permiso de aterrizar se oye antes de los 500 ft sobre la pista",
       bajas.length === 0,
-      bajas.length
-        ? bajas.map((a) => `${a.t} s ${a.dice} a ${a.alto} m`).join(" · ")
-        : tuyas.map((a) => `${a.dice} a ${a.alto ?? "?"} m`).join(" · "),
-      "«cleared to land» a once metros del suelo, de número dos hasta el final, en Los Rodeos",
+      (bajas.length ? bajas : tuyas)
+        .map((a) => `${a.t} s ${a.dice} a ${a.alto ?? "?"} m (${typeof a.alto === "number" ? enPies(a.alto) : "?"} ft)`)
+        .join(" · ") + ` · listón ${Math.round(LISTON)} m`,
+      "«cleared to land» con la máquina contando «one hundred», en La Palma; y a once metros del suelo, de número dos, en Los Rodeos",
     );
 }
 
@@ -6883,11 +6928,29 @@ const RODAJE_EN_RECTA = 9;
 const topeDeIda = Math.round(
   Math.max(90, (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20),
 );
+/*
+ * **Y el rato parado detrás de uno de tu cola no es rodaje: se descuenta.**
+ *
+ * De La Palma a El Hierro con el JAZ 60 esto salía en rojo, de 104 a 140 s
+ * con su tope de 90, y no era el rodaje: la traza del coche enseñaba el avión
+ * parado cuarenta y cuatro segundos en la calle detrás de otro que esperaba su
+ * despegue, hasta que la torre se lo dio. Eso es tráfico de verdad, y dicho
+ * con voz —«hold short, departing traffic» y el porqué de la instructora—,
+ * que es justo lo que se enseña: la pista es de uno por vez. Lo que aburre es
+ * rodar despacio, no esperar a que despegue el de delante. Se descuenta y se
+ * dice cuánto, para que un descuento enorme se vea.
+ */
+const idaEnCola = vuelo.idaEnCola ?? 0;
+const idaRodando = vuelo.ida - idaEnCola;
 comprobar(
   "el rodaje de ida no aburre",
-  vuelo.ida > 0 && vuelo.ida <= topeDeIda,
-  `${vuelo.ida} s del puesto al punto de espera · ${vuelo.largoDeLaIda} m trazados, ` +
-    `${vuelo.idaMetros} m rodados, a ${(vuelo.idaMetros / Math.max(1, vuelo.ida)).toFixed(1)} m/s de media · tope ${topeDeIda} s`,
+  vuelo.ida > 0 && idaRodando <= topeDeIda,
+  `${vuelo.ida} s del puesto al punto de espera` +
+    (idaEnCola > 0
+      ? `, ${idaEnCola} s de ellos parado detrás de uno de tu cola: ${idaRodando} s rodando`
+      : "") +
+    ` · ${vuelo.largoDeLaIda} m trazados, ` +
+    `${vuelo.idaMetros} m rodados, a ${(vuelo.idaMetros / Math.max(1, idaRodando)).toFixed(1)} m/s de media · tope ${topeDeIda} s`,
   "«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»",
 );
 

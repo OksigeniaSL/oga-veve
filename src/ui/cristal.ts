@@ -141,7 +141,31 @@ export function pantallaDeActitud(
     ${opciones.mach ? `<text data-cristal="mach" x="${ANCHO_CINTA / 2}" y="${alto - 8}" data-desde="4" class="cr__aux" text-anchor="middle"></text>` : ""}
     <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
     ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30)}
+    ${minimos(act.x + act.ancho - 8, opciones.fma ? 52 : 20)}
     ${opciones.fma ? fma(act.x, act.ancho) : ""}
+  `;
+}
+
+/**
+ * **Los mínimos puestos**: «BARO» y la altitud de decisión, arriba a la
+ * derecha del horizonte, que es donde los pone la pantalla de vuelo de un
+ * avión de línea.
+ *
+ * Es una **altitud**, no una altura: la cota del umbral más los doscientos
+ * pies de la altura de decisión, la que se lee en el altímetro con el QNH
+ * puesto. Esa es la cuenta que se enseña —lo que marca el altímetro menos la
+ * cota es lo alto que vas sobre la pista— y la que hace falta para leer una
+ * carta de aproximación de verdad. Verde puesta, ámbar al llegar a ella, como
+ * el «minimums» de la máquina, que suena a la vez. Con las letras, desde el
+ * tercer peldaño: un número solo no dice qué es. Lo escribe el tablero; ver
+ * `Tablero.minimos`.
+ */
+function minimos(x: number, y: number): string {
+  return `
+    <g data-cristal="minimos" ${MARCA_ROTULO} visibility="hidden">
+      <text x="${x}" y="${y}" class="cr__minimos cr__minimos--rotulo" text-anchor="end">BARO</text>
+      <text data-cristal="minimos-cifra" x="${x}" y="${y + 17}" class="cr__minimos" text-anchor="end"></text>
+    </g>
   `;
 }
 
@@ -668,6 +692,9 @@ function carta(cx: number, cy: number, r: number): string {
         <path d="M0 -6 L1.9 -1.9 L6 0 L1.9 1.9 L0 6 L-1.9 1.9 L-6 0 L-1.9 -1.9 Z" />
         <text data-carta="fijo-nombre" x="8" y="13" ${MARCA_ROTULO}
               class="cr__fijo-nombre"></text>
+        <!-- Y en el umbral, su cota: «ELEV 108 FT». Ver cotaEscrita en ui/carta.ts. -->
+        <text data-carta="fijo-cota" x="8" y="25" ${MARCA_ROTULO}
+              class="cr__fijo-nombre cr__fijo-cota"></text>
       </g>`,
   ).join("");
   return `

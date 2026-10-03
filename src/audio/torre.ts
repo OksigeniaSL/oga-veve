@@ -74,6 +74,13 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   "runway in use": "torre.pistaEnUso",
   "go around, runway in use": "torre.goAroundEnUso",
   /*
+   * **Y a secas, a quien llega a los mínimos sin su permiso**, con la pista
+   * libre: no es «runway occupied», que no lo está. Se monta con piezas ya
+   * grabadas —tu matrícula y el «go around» de `goAroundEnUso`—, en las dos
+   * voces. Ver `paso` en `flight/turno-de-pista.ts`.
+   */
+  "go around": "torre.goAroundSinPermiso",
+  /*
    * **Y la respuesta a un MAYDAY**: el indicativo y «roger MAYDAY», que es
    * como una torre dice que ha oído la llamada de socorro y que desde ahí
    * manda ella en la frecuencia. La pista, después, en la autorización de
@@ -150,6 +157,8 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   "torre.clearedTakeoff": "torre.afisFreeTakeoff",
   "torre.goAround": "torre.afisOccupied",
   "torre.goAroundEnUso": "torre.pistaEnUso",
+  // Un AFIS no da permisos, así que tampoco manda al aire por no tenerlo.
+  "torre.goAroundSinPermiso": null,
   "torre.vacateNext": null,
   "torre.clearedTo": null,
 };
@@ -295,7 +304,7 @@ export function esDeLaLampara(
  * mismo que la lámpara, dicho como lo dice quien informa. Ver `DICE_UN_AFIS`.
  */
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión para que se quede
@@ -345,6 +354,23 @@ export function esTuPermisoDeAterrizar(
 ): boolean {
   return !!clave && urgencia !== "baja" && PERMISO_DE_ATERRIZAR.test(clave);
 }
+
+/**
+ * Y de tu permiso, **la mitad de la radio**: el «cleared to land» con el viento,
+ * o el «runway free» de un AFIS, que van detrás de la lámpara de Taguató para
+ * arriba. Es lo que se retira a los mínimos si todavía espera turno: el
+ * permiso ya se oyó en castellano, y dicho a veinte metros del suelo no
+ * enseña nada. Ver `paso` en `flight/turno-de-pista.ts`.
+ */
+export function esTuFraseologiaDeAterrizar(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  return !!clave && urgencia !== "baja" && FRASEOLOGIA_DE_ATERRIZAR.test(clave);
+}
+
+const FRASEOLOGIA_DE_ATERRIZAR =
+  /^torre\.(?:[a-z]+\.)?(?:clearedLand|afisFree)(?:\.[LCR])?(?:@|$)/;
 
 /*
  * En un AFIS no hay permiso, pero lo que ocupa su sitio se retira igual: el

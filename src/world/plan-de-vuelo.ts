@@ -1517,6 +1517,25 @@ export class PlanDeVuelo {
    */
   private detrasDe: Punto | null = null;
   private esperandoDetras = 0;
+  /**
+   * Si el de delante es **de tu cola** —va a despegar por tu pista— y no uno
+   * de los parados que vuelven. Ver `detrasDeQuien`.
+   */
+  private detrasDeTuCola = false;
+
+  /**
+   * **Detrás de quién se rueda ahora**, si hay alguien en tu raya: `cola` si
+   * es uno de tu cola, que va a despegar por la misma pista; `otro` si es un
+   * parado que no va a la pista; `null` si no hay nadie.
+   *
+   * Lo mira el banco del vuelo entero: el rato parado detrás de uno que espera
+   * su despegue es tráfico de verdad, dicho con voz, y no rodaje lento. Ver
+   * «el rodaje de ida no aburre» en `scripts/verificar-vuelo-entero.mjs`.
+   */
+  get detrasDeQuien(): "cola" | "otro" | null {
+    if (!this.detrasDe) return null;
+    return this.detrasDeTuCola ? "cola" : "otro";
+  }
 
   /**
    * Los de la cola a los que ya no se espera: se rodean como a cualquier
@@ -5491,9 +5510,11 @@ export class PlanDeVuelo {
    */
   private hastaElDeDelante(): number {
     this.detrasDe = null;
+    this.detrasDeTuCola = false;
     if (this.destino !== "espera" && this.destino !== "puesto") return Infinity;
     const ruta = this.rutaMundo;
-    const cola = [...this.colaQueHay(), ...this.ocupados()].filter(
+    const tuCola = this.colaQueHay();
+    const cola = [...tuCola, ...this.ocupados()].filter(
       (q) => !this.hartos.some((h) => Math.hypot(q[0] - h[0], q[1] - h[1]) < YA_NO_SE_LE_ESPERA),
     );
     if (ruta.length < 2 || !cola.length) return Infinity;
@@ -5539,6 +5560,8 @@ export class PlanDeVuelo {
     }
     if (!Number.isFinite(primero)) return Infinity;
     this.detrasDe = quien;
+    this.detrasDeTuCola =
+      !!quien && tuCola.some((q) => q[0] === quien![0] && q[1] === quien![1]);
     const hueco = primero - this.avance - seTocan - HUECO_EN_LA_COLA;
     return Math.sqrt(2 * FRENADA_DE_RODAJE * Math.max(0, hueco));
   }

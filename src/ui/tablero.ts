@@ -203,6 +203,13 @@ export interface DatosDelTablero {
   readonly spd?: { readonly kt: number; readonly mach: number | null } | null;
   /** Lo que hace cada mano del automático, para el FMA. `null` sin automático. */
   readonly fma?: Fma | null;
+  /**
+   * **Los mínimos puestos**: la altitud de decisión, en pies con el QNH —la
+   * cota del umbral de la pista a la que se va más doscientos—, y si ya se ha
+   * llegado a ella. `null` sin pista a la que ir. Ver `minimos` en
+   * `ui/cristal.ts`.
+   */
+  readonly minimos?: { readonly pies: number; readonly enEllos: boolean } | null;
 }
 
 /**
@@ -1008,6 +1015,18 @@ export class Tablero {
         escribir(cifra, String(Math.max(0, Math.round(d.sobreElTerreno))));
     }
 
+    /*
+     * Y los mínimos puestos, «BARO» y su altitud: verdes, y ámbar al llegar a
+     * ellos. Ver `minimos` en `ui/cristal.ts`.
+     */
+    const minimos = this.pieza('[data-cristal="minimos"]');
+    if (minimos) {
+      const m = d.minimos ?? null;
+      poner(minimos, "visibility", m ? "visible" : "hidden");
+      minimos.classList.toggle("cr--en-los-minimos", !!m?.enEllos);
+      if (m) escribir(this.pieza('[data-cristal="minimos-cifra"]'), String(m.pies));
+    }
+
     this.vsi(d.fpm);
     this.tendencias(d);
     this.bugs(d, dt, rumbo);
@@ -1754,6 +1773,8 @@ export class Tablero {
       poner(pieza, "transform", `translate(${n1(f.dx)} ${n1(f.dy)})`);
       pieza.classList.toggle("cr__fijo--activo", f.activo);
       escribir(pieza.querySelector('[data-carta="fijo-nombre"]'), f.nombre);
+      // Y en el umbral, su cota, junto a la pista en uso. Ver `cotaEscrita`.
+      escribir(pieza.querySelector('[data-carta="fijo-cota"]'), f.cota ?? "");
     }
     /*
      * **El T/C, en los reactores**, igual que el T/D: el punto de la ruta en

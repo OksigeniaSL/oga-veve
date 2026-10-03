@@ -540,6 +540,23 @@ export class LaAproximacion {
   }
 
   /**
+   * **Y sin permiso a los mínimos**, con la pista libre: la torre no te lo
+   * pudo dar —o no se llegó a oír— antes de la altura de decisión, y por
+   * debajo de ella no se da. La misma puerta y la misma orden; lo que cambia
+   * es el porqué, que aquí no es la pista. Se levanta yéndose, como la de la
+   * pista ocupada. Ver `paso` en `flight/turno-de-pista.ts`.
+   */
+  mandarIrseSinPermiso(alto: number): void {
+    if (this.mandanFrustrar || this.ahora?.sinMotor) return;
+    this.laPistaSigueOcupada = null;
+    this.yaLoMandaron = true;
+    this.mandanFrustrar = true;
+    this.porqueMandaron = "sinPermiso";
+    this.altoAlMandar = alto;
+    this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "sinPermiso" });
+  }
+
+  /**
    * **Te mandan al aire porque venís por la otra cabecera**, la que no está
    * en uso. Lo decide `LaOtraCabecera` —cuándo y por qué—; aquí se da por la
    * misma puerta que las demás órdenes, para que se levante igual —subiendo o

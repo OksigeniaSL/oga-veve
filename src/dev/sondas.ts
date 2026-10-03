@@ -755,6 +755,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/turno-de-pista.ts`.
      */
     pistaEsTuya: () => juego.laPistaEsTuyaParaBanco,
+    /**
+     * Si se está en la final de la torre, la que empieza a millas del umbral y
+     * desde la que se pide tu permiso. Ver `flight/final-de-la-torre.ts`.
+     */
+    enLaFinalDeLaTorre: () => juego.enLaFinalDeLaTorreParaBanco,
+    /**
+     * **Si tu permiso para aterrizar tiene todavía algo por sonar.** El banco
+     * vuela a tiempo real mientras tanto: la voz va con el reloj de pared, y a
+     * ×3 la altura a la que suena sale comprimida. Ver
+     * `permisoPorOirParaBanco` en `game.ts`.
+     */
+    permisoPorOir: () => juego.permisoPorOirParaBanco,
     indicativo: () => {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;
@@ -2197,6 +2209,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * velocidad de crucero del plan no cambiaba nada de lo que medía.
      */
     rodaje: () => juego.vistaActual?.velocidadSugerida ?? 0,
+    /**
+     * **Detrás de quién se rueda**: `cola` si es uno que va a despegar por tu
+     * pista, `otro` si es un parado que no, `null` si nadie. El banco descuenta
+     * del rodaje de ida el rato parado detrás de uno de tu cola, que es tráfico
+     * y no rodaje lento. Ver `detrasDeQuien` en `world/plan-de-vuelo.ts`.
+     */
+    detrasDeQuien: () => juego.plan?.detrasDeQuien ?? null,
     /**
      * Cómo va el rodaje por dentro: cuánta ruta queda y cuánto se va de ella.
      *

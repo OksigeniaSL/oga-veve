@@ -19,6 +19,7 @@ import {
   daLaPistaAOtro,
   esDeLaFrecuencia,
   esDeLaLampara,
+  esTuFraseologiaDeAterrizar,
   esTuPermisoDeAterrizar,
 } from "../audio/torre";
 import { ALTURA_DE_DECISION } from "./minimos";
@@ -117,8 +118,16 @@ export interface AlrededorDelTurno {
    * pide sino cuando suena. Ver `paso`. Sin esto se da por que no.
    */
   permisoSinOir?(): boolean;
-  /** La torre te manda al aire; `sigue` dice si la pista sigue ocupada. */
-  mandarteAlAire(alto: number, sigue: () => boolean): void;
+  /**
+   * La torre te manda al aire; `sigue` dice si la pista sigue ocupada.
+   *
+   * `porque` es `sinPermiso` cuando lo que falta no es la pista, que está
+   * libre, sino **tu permiso oído**: se llegó a los mínimos sin él. La orden
+   * es la misma —la roja del aire y su «ida al aire»—, y lo que cambia es el
+   * porqué que se cuenta: decir «pista ocupada» con la pista vacía sería
+   * enseñar una mentira. Ver `paso`.
+   */
+  mandarteAlAire(alto: number, sigue: () => boolean, porque?: "sinPermiso"): void;
   /**
    * Si hay puesta una orden de irse al aire, sea de quien sea. Ver `paso`.
    * Sin esto se da por que no.
@@ -199,7 +208,7 @@ export const EXPLICA_LA_ESPERA = {
  * frustrada, en cuanto el de delante dejaba la pista.
  */
 export function alLevantarLaOrden(
-  porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | null,
+  porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | "sinPermiso" | null,
   fase: string,
   enTierra: boolean,
 ): "aterrizar" | "volver" | "nada" {
@@ -208,8 +217,16 @@ export function alLevantarLaOrden(
    * La de la otra punta tampoco se levanta en final: se levanta yéndose, y lo
    * que toca es volver por el circuito a la buena. Ver
    * `flight/la-otra-cabecera.ts`.
+   *
+   * Y la de los mínimos sin permiso, igual: se dio por debajo de ellos, y ahí
+   * ya no se autoriza a nadie. Se vuelve y se tiene en la final siguiente.
    */
-  if (porque === "pistaOcupada" || porque === "otraCabecera" || fase !== "final")
+  if (
+    porque === "pistaOcupada" ||
+    porque === "otraCabecera" ||
+    porque === "sinPermiso" ||
+    fase !== "final"
+  )
     return "volver";
   return "aterrizar";
 }
@@ -656,6 +673,11 @@ export class TurnoDePista {
        * la final siguiente.
        */
       const alto = this.de.alto();
+      /*
+       * Y no por la pista, que estaba libre: por el permiso que no llegó a
+       * oírse. Antes salía como «pista ocupada», que con la pista vacía es
+       * enseñar una mentira. Ver `mandarteAlAire`.
+       */
       if (
         alto < ALTURA_DE_DECISION &&
         this.de.permisoSinOir?.() &&
@@ -664,8 +686,19 @@ export class TurnoDePista {
         this.de.boca.retirar(esTuPermisoDeAterrizar);
         this.de.retirarteElPermiso?.();
         this.alAireEnEstaFinal = true;
-        this.de.mandarteAlAire(alto, () => false);
+        this.de.mandarteAlAire(alto, () => false, "sinPermiso");
+        return;
       }
+      /*
+       * **Y lo que de tu permiso todavía espera turno a los mínimos, ya no se
+       * dice.** El permiso ya se oyó —la lámpara y su castellano—, pero de
+       * Taguató para arriba detrás va su fraseología, con el viento, y esa
+       * podía esperar detrás de lo que fuera: «cleared to land» a veinte
+       * metros del suelo. Es la regla de la cuenta del radioaltímetro: lo que
+       * ya no puede sonar a su altura, no se dice.
+       */
+      if (alto < ALTURA_DE_DECISION && this.de.boca.esperaAlguna(esTuFraseologiaDeAterrizar))
+        this.de.boca.retirar(esTuFraseologiaDeAterrizar);
       return;
     }
     /*
@@ -755,7 +788,31 @@ export class TurnoDePista {
     }
     this.despejeSinDecir = null;
     this.aterrizajeSinAutorizar = false;
+    /*
+     * **Y nunca por debajo de los mínimos.** Todo lo de arriba miraba la
+     * altura solo cuando había algo que esperar; con la pista libre, el
+     * permiso se daba a la altura que fuera, y se pedía al entrar en la fase
+     * «final» del plan, que con la final cogida tarde empezaba a cuarenta
+     * metros: Enrique lo oyó en La Palma con la máquina contando «one
+     * hundred». Ahora se pide en la final de la torre, a millas —ver
+     * `flight/final-de-la-torre.ts`—, y si aun así se llega a los mínimos sin
+     * él, no se da: al aire, con su orden, que es lo que se hace sin permiso.
+     */
+    if (alto < ALTURA_DE_DECISION) {
+      this.alAireEnEstaFinal = true;
+      if (!this.de.mandanFrustrar?.())
+        this.de.mandarteAlAire(alto, () => false, "sinPermiso");
+      return;
+    }
     this.de.autorizarte();
+  }
+
+  /**
+   * Si tu permiso para aterrizar está pedido y todavía no se ha dado: espera a
+   * lo que le toque. Para el banco, que vuela a tiempo real mientras tanto.
+   */
+  get pidiendoAterrizaje(): boolean {
+    return this.aterrizajeSinAutorizar;
   }
 
   /**
