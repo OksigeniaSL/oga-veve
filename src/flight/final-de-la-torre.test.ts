@@ -254,3 +254,26 @@ describe("por qué se sale de la final", () => {
   });
 });
 
+/*
+ * Tras irse al aire, quien nivela por encima de la pista está todavía en la
+ * fase «final» del plan y en su último tramo, y eso no es otra final: la
+ * siguiente empieza volviendo. En el banco de Gran Canaria con la pista
+ * ocupada, la torre daba otra vez el permiso en plena frustrada.
+ */
+describe("y tras irse al aire", () => {
+  it("no se vuelve a entrar sobre la pista, ni por la fase ni por el tramo del plan: se entra volviendo", () => {
+    const f = new FinalDeLaTorre();
+    f.paso(enLaSenda(1000));
+    f.paso(enLaSenda(900, { sobreLaPista: 52 + SUBIDA_CON_GAS + 1, vertical: 9, gas: 1 }));
+    expect(f.ultimaSalida).toBe("seVa");
+    // Nivelado sobre la pista, con la fase del plan en «final» y su tramo.
+    expect(
+      f.paso(enLaSenda(0, { alUmbral: null, faseDelPlan: "final", enLaFinalDelPlan: true, sobreLaPista: 250, vertical: -0.5 })),
+    ).toBe(false);
+    // Ni a tres kilómetros por delante sin haberse dado la vuelta.
+    expect(f.paso(enLaSenda(3000))).toBe(false);
+    // El viento en cola del circuito, y de vuelta por la final: ahora sí.
+    expect(f.paso(enLaSenda(3000, { alUmbral: null, torcido: 180, sobreLaPista: 300 }))).toBe(false);
+    expect(f.paso(enLaSenda(4000))).toBe(true);
+  });
+});

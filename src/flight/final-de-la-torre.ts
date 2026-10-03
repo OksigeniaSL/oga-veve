@@ -193,6 +193,8 @@ export class FinalDeLaTorre {
   private loMasBajo = Infinity;
   /** Por qué se salió la última vez. Ver `SalidaDeLaFinal`. */
   private salida: SalidaDeLaFinal | null = null;
+  /** Si se fue al aire y todavía no se ha dado la vuelta. Ver `paso`. */
+  private trasIrse = false;
 
   /** Si ahora se está en la final de la torre. */
   get enFinal(): boolean {
@@ -208,7 +210,18 @@ export class FinalDeLaTorre {
   paso(v: LoQueVeLaTorre): boolean {
     if (!v.enElAire) return this.salir(this.dentro ? "tierra" : this.salida);
     if (!this.dentro) {
-      if (v.faseDelPlan === "final" || entra(v)) {
+      /*
+       * **Y tras irse al aire, no se vuelve a entrar hasta haberse dado la
+       * vuelta.** Quien se va al aire a los mínimos nivela a menudo por encima
+       * de la pista, donde la fase «final» del plan y su último tramo todavía
+       * valen: en el banco de Gran Canaria, con la pista ocupada, el JAZ 120
+       * se fue, niveló y la torre le dio otra vez «autorizado para aterrizar»
+       * en plena frustrada, y otra más en la final de verdad. La final
+       * siguiente empieza volviendo, y volver es haber dado la vuelta: el
+       * viento en cola del circuito, o el viraje de vuelta de la frustrada.
+       */
+      if (this.trasIrse && Math.abs(v.torcido) > TORCIDO_PARA_SALIR) this.trasIrse = false;
+      if (!this.trasIrse && (v.faseDelPlan === "final" || entra(v))) {
         this.dentro = true;
         this.loMasBajo = v.sobreLaPista;
       }
@@ -240,6 +253,8 @@ export class FinalDeLaTorre {
     this.dentro = false;
     this.loMasBajo = Infinity;
     this.salida = porque;
+    if (porque === "seVa") this.trasIrse = true;
+    else if (porque === "tierra" || porque === null) this.trasIrse = false;
     return false;
   }
 }
