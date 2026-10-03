@@ -46,6 +46,26 @@
   const malla = await cargarModelo(aircraft, "/");
   escena.add(malla.group);
   malla.patas?.poner?.(1);
+  /*
+   * `?luces=1`: **con las luces encendidas, a media luz**, para ver dónde
+   * caen la roja, la verde y los focos. De día se los come el sol, igual que
+   * en el juego, así que se baja la luz y se oscurece el fondo; el avión se
+   * sigue viendo para saber dónde está cada una. Ver `luces-de-posicion.ts`.
+   */
+  if (q.get("luces")) {
+    escena.background = new Color(0x141a22);
+    sol.intensity = 0.7;
+    escena.children
+      .filter((o) => o.isHemisphereLight)
+      .forEach((h) => (h.intensity = 0.3));
+    malla.luces?.paso(0, {
+      navegacion: true,
+      baliza: false,
+      estroboscopicas: false,
+      aterrizaje: true,
+      rodaje: true,
+    });
+  }
   const caja = new Box3().setFromObject(malla.group);
   const centro = caja.getCenter(new Vector3());
   const tam = caja.getSize(new Vector3());

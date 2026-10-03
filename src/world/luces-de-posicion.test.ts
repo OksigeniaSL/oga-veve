@@ -12,6 +12,8 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { AIRCRAFT } from "../flight/aircraft";
 import {
   CADA_DESTELLO,
   crearLucesDePosicion,
@@ -25,11 +27,13 @@ import {
   lucesDelTrafico,
 } from "./luces-del-trafico";
 import {
+  Box3,
   BufferGeometry,
   Float32BufferAttribute,
   Mesh,
   Object3D,
   type Points,
+  Vector3,
 } from "three";
 
 const avion = { wingSpan: 30, chord: 4 };
@@ -332,3 +336,108 @@ describe("las puntas son las del avión que hay", () => {
     expect(puestas()[VERDE]!.x).toBeCloseTo(avion.wingSpan / 2, 6);
   });
 });
+
+/*
+ * ── Los dos faros del 172, en el ala izquierda ─────────────────────────────
+ *
+ * En la avioneta de ala alta iban uno en cada ala, simétricos, como en un
+ * bimotor. El 172 de ahora lleva el de aterrizaje y el de rodaje juntos en el
+ * borde de ataque del ala izquierda, y de frente se le ven las dos luces en un
+ * ala y ninguna en la otra.
+ */
+describe("los faros de la avioneta de ala alta", () => {
+  const l = crearLucesDePosicion({ ...avion, id: "jaz-20" }, conAlaSencilla());
+  l.paso(0, { ...lucesDelTrafico("volando", 500), rodaje: true });
+  const t = l.luces.tamanosAhora;
+  const p = puestas(l);
+
+  it("el de aterrizaje y el de rodaje encendidos, y ninguno en el ala derecha", () => {
+    expect(t[FOCO], "el de la derecha no existe").toBe(0);
+    expect(t[FOCO + 1]).toBeGreaterThan(0);
+    expect(t[RODAJE]).toBeGreaterThan(0);
+  });
+
+  it("los dos en el ala izquierda, uno al lado del otro", () => {
+    expect(p[FOCO + 1]!.x).toBeLessThan(0);
+    expect(p[RODAJE]!.x).toBeLessThan(0);
+    expect(Math.abs(p[RODAJE]!.x - p[FOCO + 1]!.x)).toBeLessThan(avion.wingSpan * 0.1);
+  });
+
+  it("y el bimotor de ala baja sigue con uno en cada ala", () => {
+    const b = crearLucesDePosicion({ ...avion, id: "jaz-40" }, conAlaSencilla());
+    b.paso(0, lucesDelTrafico("volando", 500));
+    expect(b.luces.tamanosAhora[FOCO]).toBeGreaterThan(0);
+    expect(b.luces.tamanosAhora[FOCO + 1]).toBeGreaterThan(0);
+  });
+});
+
+/** Un ala recta sin más, para lo que no depende de la forma. */
+function conAlaSencilla(): Object3D {
+  const geo = new BufferGeometry();
+  geo.setAttribute(
+    "position",
+    new Float32BufferAttribute(
+      [0, 0, -4, 15, 0, 0, -15, 0, 0, 3, 0, -1, -3, 0, -1, 0, 1, 0, 0, 2, 4].flat(),
+      3,
+    ),
+  );
+  return new Mesh(geo);
+}
+
+/*
+ * ── Y en el ala con aleta partida, en el ala ───────────────────────────────
+ *
+ * El JAZ 120 lleva una aleta arriba y otra abajo, y la de abajo baja metro y
+ * medio hacia fuera. La roja y la verde se ponían en lo más bajo de la punta,
+ * que era la punta de esa hoja: colgando en el aire, debajo del ala. Medido
+ * con su `.glb`, que es lo que carga el juego.
+ */
+const fs = (
+  globalThis as unknown as {
+    process: { getBuiltinModule(nombre: string): unknown };
+  }
+).process.getBuiltinModule("node:fs") as {
+  readFileSync(ruta: string): Uint8Array;
+};
+
+async function modelo(id: string): Promise<Object3D> {
+  const b = fs.readFileSync(`public/assets/aeronaves/${id}.glb`);
+  const datos = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+  const m = await new GLTFLoader().parseAsync(datos as ArrayBuffer, "");
+  m.scene.updateWorldMatrix(true, true);
+  return m.scene;
+}
+
+describe("la roja y la verde, en la punta del ala y no en la aleta", () => {
+  for (const id of ["jaz-120", "jaz-90"]) {
+    it(`${id}: a la altura del ala, donde arrancan las aletas`, async () => {
+      const raiz = await modelo(id);
+      const a = AIRCRAFT.find((x) => x.id === id)!;
+      const l = crearLucesDePosicion(a, raiz);
+      // Lo que mide el ala sola en su punta: el canto de abajo y el de arriba
+      // donde el ala acaba y empieza a subir la aleta.
+      const ala = new Box3();
+      const v = new Vector3();
+      const extremo = new Box3().setFromObject(raiz).max.x;
+      raiz.traverse((o) => {
+        const pos = (o as Mesh).geometry?.getAttribute?.("position");
+        if (!pos || !o.name.startsWith("ala")) return;
+        for (let i = 0; i < pos.count; i++) {
+          v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+          // La punta del ala, antes de que la aleta se levante.
+          if (extremo - v.x < extremo * 0.07 && extremo - v.x > extremo * 0.025)
+            ala.expandByPoint(v);
+        }
+      });
+      for (const luz of [l.sitios.alaDerecha, l.sitios.alaIzquierda.clone().setX(-l.sitios.alaIzquierda.x)]) {
+        // Ni colgando de la hoja de abajo ni arriba de la de arriba: a la
+        // altura del ala, con un palmo de margen.
+        expect(luz.y, "por debajo del ala").toBeGreaterThan(ala.min.y - 0.25);
+        expect(luz.y, "por encima del ala").toBeLessThan(ala.max.y + 0.25);
+        // Y en la punta: más allá de donde el ala empieza a acabar.
+        expect(luz.x).toBeGreaterThan(ala.min.x);
+      }
+    });
+  }
+});
+

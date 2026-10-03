@@ -246,11 +246,23 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
    * La luz de navegación de esos aviones va en la punta del ala, al pie del
    * winglet. Así que de lo que queda a un tres por ciento de la envergadura
    * del extremo, el punto más bajo; en un ala sin winglet es la misma punta.
+   *
+   * **Y el más bajo del ala, no de lo que cuelgue de ella.** El JAZ 120 lleva
+   * aleta partida: una hoja sube y otra **baja** sesenta grados hacia fuera,
+   * metro y medio por debajo del ala. Lo más bajo de la punta era la punta de
+   * esa hoja, y ahí acabaron la roja y la verde, colgando en el aire debajo
+   * del ala —medido de frente con la tarjeta de verdad—. La luz va en la
+   * punta del ala, en la unión con las aletas, así que si el modelo trae su
+   * ala con nombre se busca solo en ella, como el foco: la hoja de abajo es
+   * otra pieza (`remate`, la del terracota). Sin nombres —la geometría fundida
+   * del tráfico— se mira todo, que en los modelos que usa, de aleta solo
+   * hacia arriba, es lo mismo.
    */
   const casiEnLaPunta = medido.x * 0.03;
   const alPie = (lado: 1 | -1, punta: Vector3): void => {
     const extremo = punta.x;
     cuerpo.traverse((o) => {
+      if (hayAla && !o.name.startsWith("ala")) return;
       const pos = (o as Mesh).geometry?.getAttribute?.("position");
       if (!pos) return;
       for (let i = 0; i < pos.count; i++) {
@@ -261,6 +273,43 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
   };
   alPie(1, ala);
   alPie(-1, alaIzquierda);
+  /*
+   * **Y el foco en el borde de ataque, aunque el ala no tenga un vértice
+   * donde va.** Un ala recta como la del 172 se dibuja con sus estaciones en
+   * la raíz y en la punta, y entre el siete y el dieciocho por ciento de la
+   * envergadura no hay ninguna: el foco caía en el sitio de respaldo, a la
+   * altura del centro de la caja, que en un ala alta es **un metro por debajo
+   * del ala**, a media puerta. Se ve de frente: los faros flotando junto a
+   * los montantes. Así que se busca el borde de ataque del ala —lo más
+   * adelantado de su mitad de dentro— y el foco va en él, a su sitio de
+   * siempre de la envergadura, con la altura del vértice de ese borde más
+   * cercano.
+   */
+  if (!Number.isFinite(foco.z) && hayAla) {
+    const donde = medido.x * 0.12;
+    let delante = Infinity;
+    const borde: Vector3[] = [];
+    cuerpo.traverse((o) => {
+      const pos = (o as Mesh).geometry?.getAttribute?.("position");
+      if (!pos || !o.name.startsWith("ala")) return;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        const fuera = v.x - centro.x;
+        if (fuera <= 0 || fuera > medido.x * 0.25) continue;
+        delante = Math.min(delante, v.z);
+        borde.push(v.clone());
+      }
+    });
+    let cerca = Infinity;
+    for (const p of borde) {
+      if (p.z > delante + medido.z * 0.01) continue;
+      const d = Math.abs(p.x - centro.x - donde);
+      if (d < cerca) {
+        cerca = d;
+        foco.set(centro.x + donde, p.y, p.z);
+      }
+    }
+  }
   /*
    * **Y un dedo por fuera de la chapa.**
    *
