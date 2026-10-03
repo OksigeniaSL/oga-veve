@@ -94,13 +94,21 @@ function sendaDe(p: Prueba): number {
   return Math.asin(Math.max(-1, Math.min(1, s.verticalSpeed / Math.max(s.airspeed, 1))));
 }
 
-/** Inclina hasta `grados` con la tecla, la suelta y deja que se asiente. */
+/**
+ * Inclina hasta `grados` con la tecla, la suelta y deja que se asiente.
+ *
+ * Suelta al **ver** la inclinación, como quien vuela: mirando la consigna, en
+ * el modelo sencillo —donde la mano deja la consigna en el ala que se ve al
+ * soltar— volvía a apretar una y otra vez hasta el tope de 33°, y en Guyrami
+ * se medía el enderezar desde donde caía cada vez.
+ */
 function inclinar(p: Prueba, grados: number): number {
   const meta = grados * RAD;
-  vuela(p, 40, () => ({
-    teclaAlabeo:
-      p.v.mano.alabeo.activo && p.v.mano.alabeo.consigna.valor >= meta - 0.4 * RAD ? 0 : 1,
-  }));
+  let soltada = false;
+  vuela(p, 40, () => {
+    soltada = soltada || (p.v.mano.alabeo.activo && alabeoDe(p) >= meta - 0.4 * RAD);
+    return { teclaAlabeo: soltada ? 0 : 1 };
+  });
   vuela(p, 6, () => ({}));
   return alabeoDe(p);
 }
@@ -595,11 +603,28 @@ describe("la tecla responde", () => {
 
   it("un toque corrige unos grados que se ven, y no se pasa", () => {
     for (const r of filas.values()) {
+      if (r.fase !== "crucero") continue;
       const donde = `${r.avion} en ${r.peldano}, ${r.fase}`;
       expect(r.toqueFinal, donde).toBeGreaterThan(2.5);
       expect(r.toqueFinal, donde).toBeLessThan(4.5);
       expect(r.toqueAUno, donde).toBeGreaterThan(1.5);
       expect(r.pasaElToque, donde).toBeLessThan(1);
+    }
+  });
+
+  /*
+   * Y en la final, con los flaps abajo, uno o dos grados: «para moverlo derecha
+   * izquierda (fino) e ir estabilizando, tienes que verme dando dedazos a las
+   * flechas». Ver `MENOS_EN_LA_FINAL` en `mano.ts` y `final-fina.test.ts`.
+   */
+  it("en la final, un toque es una corrección fina", () => {
+    for (const r of filas.values()) {
+      if (r.fase !== "final") continue;
+      const donde = `${r.avion} en ${r.peldano}`;
+      expect(r.toqueFinal, donde).toBeGreaterThan(1);
+      expect(r.toqueFinal, donde).toBeLessThan(2);
+      expect(r.toqueAUno, donde).toBeGreaterThan(1);
+      expect(r.pasaElToque, donde).toBeLessThan(0.5);
     }
   });
 
@@ -640,15 +665,14 @@ describe("el cabeceo con la tecla", () => {
   });
 
   it("al soltar, la trayectoria deja de cambiar enseguida", () => {
-    for (const r of filas) {
-      /*
-       * Menos el JAZ 120 en la final con los flaps abajo: ahí la trayectoria
-       * no se queda quieta ni sin tocar nada, y eso es otra cosa. Ver el
-       * informe de esta tanda.
-       */
-      if (r.avion === "jaz-120" && r.fase === "final") continue;
+    /*
+     * También el JAZ 120 en la final, que estaba fuera: con los flaps abajo su
+     * trayectoria no se quedaba quieta ni sin tocar nada —±5 m/s cada 22 s—,
+     * y lo que seguía al soltar eran seis grados. Era la mano, que apretaba
+     * lo mismo a la mitad de velocidad. Ver `apretonPorVelocidad` en `mano.ts`.
+     */
+    for (const r of filas)
       expect(r.sigue, `${r.avion} en ${r.peldano}, ${r.fase}`).toBeLessThan(2.5);
-    }
   });
 
   it("y nadie se levanta del asiento", () => {

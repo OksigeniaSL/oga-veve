@@ -350,6 +350,27 @@ export class ArcadeFlightModel implements FlightModel {
   private ultimoGas = 0;
 
   /**
+   * **Qué alerón dibuja esta inclinación ahora**: la cuenta de `step`
+   * despejada, como `mandoParaSubir`. El alerón dibuja `VISUAL_BANK` por lo
+   * que muerde el mando a esta velocidad.
+   *
+   * Lo pregunta la mano del teclado —ver `flight/mano.ts`—, que pide
+   * inclinaciones: sin esto, en la final del JAZ 120 se dibujaba la mitad de
+   * lo que pedía, y al soltar la tecla la mano cogía lo dibujado como lo
+   * pedido y se quedaba con la mitad.
+   *
+   * **Sin acotar**: más de uno quiere decir que a esta velocidad el alerón a
+   * fondo no llega a dibujarla —despacio el mando no da más, que es la lección
+   * de este peldaño—, y la mano lo usa para no pedir lo que no hay. Infinito
+   * si el mando no muerde nada.
+   */
+  mandoParaInclinar(alabeo: number): number {
+    const bite = clamp01((this.speed - IDLE_SPEED) / (this.punta() * 0.55));
+    if (bite <= 0.01) return alabeo === 0 ? 0 : Math.sign(alabeo) * Infinity;
+    return alabeo / (VISUAL_BANK * bite);
+  }
+
+  /**
    * **Qué palanca da este ritmo de subida ahora**, de −1 a 1.
    *
    * Es la cuenta de `step` despejada: aquí la palanca no gira el morro, es

@@ -353,6 +353,12 @@ export interface FlightModel {
    */
   mandoParaSubir?(ritmo: number): number;
   /**
+   * **Qué alerón dibuja esta inclinación**, rad, en el modelo en el que el
+   * alerón es la inclinación que se ve: el sencillo. Sin acotar: más de uno es
+   * que no llega. Ver `mandoParaInclinar` en `arcade.ts`.
+   */
+  mandoParaInclinar?(alabeo: number): number;
+  /**
    * Rompe el avión. Lo llama el juego cuando se ha metido en un edificio.
    *
    * Va aquí y por el mismo motivo que `setOnRunway`: `state` es de solo
