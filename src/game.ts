@@ -4465,6 +4465,9 @@ export class Game {
      * del día en la que un paisaje no tiene forma, y era la que estaba fijada.
      */
     this.horaDelVuelo = this.horaPedida();
+    // Y el día del cielo de noche, si se pide otro. Ver `fechaPedida`.
+    const fecha = this.fechaPedida();
+    if (fecha) this.sky.ponerFecha(fecha);
     this.sky.ponerHora(this.horaDelVuelo);
     this.scene.add(this.sky.group);
     /*
@@ -8378,6 +8381,21 @@ export class Game {
      */
     const lon = this.scenario.aerodrome?.origin.lon;
     return lon === undefined ? HORA_BUENA : horaSolarEn(lon, new Date());
+  }
+
+  /**
+   * **Qué noche se mira**: `?fecha=2027-05-20` para el cielo de otro día.
+   *
+   * Sin ella, el de hoy, que es el que quien juega puede salir a mirar. Con
+   * ella se ve lo que no cabe en una noche de octubre: la Cruz del Sur alta
+   * sobre Asunción es de las noches de otoño, y en octubre solo se la ve de
+   * madrugada. Se lee igual que la hora: por la dirección.
+   */
+  private fechaPedida(): Date | null {
+    const q = new URLSearchParams(location.search).get("fecha");
+    if (!q || !/^\d{4}-\d{2}-\d{2}$/.test(q)) return null;
+    const f = new Date(`${q}T12:00:00Z`);
+    return Number.isFinite(f.getTime()) ? f : null;
   }
 
   /**
