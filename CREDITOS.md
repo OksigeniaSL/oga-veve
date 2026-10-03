@@ -500,6 +500,36 @@ Que no pidan atribución no cambia lo que hacemos con ella: **la procedencia se
 escribe igual**, que es la regla de esta casa y el motivo de que exista este
 fichero.
 
+## Los ruidos
+
+**Ni una muestra grabada.** Todo lo que suena en el juego y no es una voz se
+sintetiza en el navegador al arrancar, con la Web Audio API: osciladores,
+ruido blanco generado en memoria con `Math.random`, filtros y unos pocos
+golpes cortos calculados muestra a muestra en `src/audio/`. No hay ficheros de
+audio de terceros en el repositorio ni en el paquete, y por eso no hay
+licencias que anotar aquí más que la nuestra.
+
+Lo que está hecho así:
+
+- **El motor y la hélice**, el **viento** con su silbido, la **bocina** y el
+  **bataneo** de la pérdida, los **motivos** de la interfaz y el
+  **chasquido** del pulsador de la radio — `src/audio/audio.ts`.
+- **La lluvia** de fuera y **el trueno** — `audio.ts`.
+- **Los ruidos del vuelo** — `src/audio/ruidos.ts` decide y
+  `src/audio/ruidos-en-el-aire.ts` suena —: la lluvia contra el parabrisas y
+  sobre el pasaje, los **limpias**, el **granizo**, la rodadura con sus
+  **juntas** y sus baches, el **tren** —sus golpes, su motor y el aire en las
+  patas—, el **chirrido** de las ruedas al tocar, la **reversa**, los
+  **aerofrenos**, el zumbido de los **flaps**, la **APU** y el **aire** de la
+  cabina. El golpe del tren, el chirrido y el ciclo de los limpias son
+  muestras, pero hechas aquí: se calculan al montar el sonido, con su fórmula
+  a la vista.
+
+**Si algún día entra un sonido grabado** —un trueno, un motor de verdad—,
+entra con licencia verificable y nada más: **CC0 o CC BY**, con la dirección
+de donde se bajó, el autor, la licencia y la fecha anotados aquí antes de
+subirlo. «Estaba para descargar» no es una licencia, igual que con el arte.
+
 ## Nombres de aeronaves y marcas registradas
 
 Las aeronaves del juego son **diseños genéricos originales con nombres

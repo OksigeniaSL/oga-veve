@@ -238,6 +238,63 @@ export interface AircraftSound {
    */
   growlHz: number;
   growlRise: number;
+  /**
+   * **Lo que suena además del motor**: el tren, los flaps, los limpias, la
+   * APU, el aire de la cabina y lo que aísla el fuselaje.
+   *
+   * Va aquí por la misma razón que el motor: es de este avión y de ningún
+   * otro, y con ello un avión nuevo suena entero rellenando datos. Ver
+   * `audio/ruidos.ts`, que es quien los lee.
+   */
+  ruidos: RuidosDelAvion;
+}
+
+/**
+ * Lo que suena de un avión que no es el motor, dato a dato.
+ *
+ * Cada campo es un hecho de su clase de avión y no una preferencia de mezcla:
+ * un entrenador de ala alta no lleva limpiaparabrisas ni APU, y si sonaran
+ * serían la clase de mentira que este juego no se permite —un aviso sonoro
+ * solo se pone en el avión que lo llevaría, y un ruido igual—.
+ */
+export interface RuidosDelAvion {
+  /**
+   * Cuánto se oye el tren al soltarse, al trabarse y con las patas al aire,
+   * de 0 a 1. Cero en el tren fijo: no se mueve, no suena.
+   *
+   * Lo que decide si un tren es ruidoso o discreto no es su tamaño, es
+   * **dónde va metido respecto a quien escucha** y cuánto aísla lo que hay en
+   * medio: el de un turbohélice de diecinueve plazas se mete en las góndolas,
+   * a un metro del pasaje y sin forro; el de un cuatrimotor de fuselaje ancho
+   * es enorme, pero va bajo un suelo grueso y una cabina hecha para no oírlo.
+   */
+  tren: number;
+  /**
+   * Con qué se mueven los flaps: un motor eléctrico —que zumba agudo— o la
+   * hidráulica —que zumba más grave y más largo—. `null` si no los lleva.
+   */
+  flaps: "electricos" | "hidraulicos" | null;
+  /** Si lleva limpiaparabrisas. Los aviones de transporte sí; las avionetas, no. */
+  limpias: boolean;
+  /**
+   * Si lleva APU: la turbina pequeña de la cola que da luz y aire con los
+   * motores parados. Los reactores sí; este turbohélice y las avionetas, no.
+   */
+  apu: boolean;
+  /**
+   * Con qué se ventila la cabina: `packs` es el aire sangrado de los motores
+   * o de la APU, el soplido que se oye al embarcar; `ventilacion`, los
+   * ventiladores de un turbohélice pequeño, que solo van con motor; `nada`,
+   * las tomas de aire de una avioneta, que no suenan.
+   */
+  aire: "packs" | "ventilacion" | "nada";
+  /**
+   * Cuánto aísla el fuselaje de lo de fuera, de 0 a 1: la chapa desnuda de
+   * un fumigador es casi cero, el forro y el suelo de un fuselaje ancho casi
+   * uno. Decide cuánto se apaga y cuánto se oscurece desde dentro lo que
+   * suena fuera —el viento, la lluvia, las patas—.
+   */
+  aislamiento: number;
 }
 
 /**
@@ -952,6 +1009,17 @@ export const PYKASU: AircraftConfig = {
     maxRpm: 2700,
     growlHz: 300,
     growlRise: 320,
+    // Tren fijo y flaps de motor eléctrico, que en un ala alta de escuela se
+    // oye zumbar detrás del asiento. Sin limpias, sin APU y sin más aire que
+    // el de las tomas.
+    ruidos: {
+      tren: 0,
+      flaps: "electricos",
+      limpias: false,
+      apu: false,
+      aire: "nada",
+      aislamiento: 0.15,
+    },
   },
   aero: {
     cl0: 0.28,
@@ -1071,6 +1139,16 @@ export const MAINUMBY: AircraftConfig = {
     maxRpm: 2100,
     growlHz: 190,
     growlRise: 210,
+    // Ni tren que se mueva ni flaps: lo que suena es el radial, el aire en
+    // los tirantes y una cabina de chapa que no aísla de nada.
+    ruidos: {
+      tren: 0,
+      flaps: null,
+      limpias: false,
+      apu: false,
+      aire: "nada",
+      aislamiento: 0.05,
+    },
   },
   aero: {
     cl0: 0.35,
@@ -1213,6 +1291,19 @@ export const PANAMBI: AircraftConfig = {
     maxRpm: 2600,
     growlHz: 250,
     growlRise: 300,
+    /*
+     * El tren de un bimotor ligero lo mueve un motor eléctrico con su
+     * reductora, a dos palmos de los pies y sin forro en medio: se oye
+     * entero, de la primera vuelta al golpe del final.
+     */
+    ruidos: {
+      tren: 0.7,
+      flaps: "electricos",
+      limpias: false,
+      apu: false,
+      aire: "nada",
+      aislamiento: 0.25,
+    },
   },
   aero: {
     cl0: 0.25,
@@ -1356,6 +1447,21 @@ export const ARASUNU: AircraftConfig = {
     maxRpm: 2000,
     growlHz: 420,
     growlRise: 260,
+    /*
+     * **El tren más ruidoso de la flota**, y no por grande: el principal se
+     * mete en las góndolas de los motores, pegado al pasaje y sin el suelo
+     * grueso de un avión de línea en medio. Limpias como todo avión de
+     * transporte de su clase; sin APU, que este tamaño no la lleva, y con
+     * ventiladores que solo van con los motores en marcha.
+     */
+    ruidos: {
+      tren: 0.85,
+      flaps: "hidraulicos",
+      limpias: true,
+      apu: false,
+      aire: "ventilacion",
+      aislamiento: 0.45,
+    },
   },
   aero: {
     cl0: 0.3,
@@ -1574,6 +1680,19 @@ export const ARAI: AircraftConfig = {
     maxRpm: 7400,
     growlHz: 520,
     growlRise: 700,
+    /*
+     * Un reactor regional: tren hidráulico bajo el suelo del pasaje, que se
+     * oye golpear sin ser un estruendo; flaps de motor eléctrico, que en su
+     * clase es como se mueven; limpias, APU en la cola y packs.
+     */
+    ruidos: {
+      tren: 0.55,
+      flaps: "electricos",
+      limpias: true,
+      apu: true,
+      aire: "packs",
+      aislamiento: 0.7,
+    },
   },
   aero: {
     cl0: 0.18,
@@ -1777,6 +1896,19 @@ export const YVAGA: AircraftConfig = {
     maxRpm: 3600,
     growlHz: 360,
     growlRise: 620,
+    /*
+     * El cuatrimotor: tren enorme, pero bajo un suelo grueso y un forro hecho
+     * para no oírlo, así que se nota más que se oye. Flaps hidráulicos, que
+     * es como se mueven los de su tamaño, limpias, APU y packs.
+     */
+    ruidos: {
+      tren: 0.5,
+      flaps: "hidraulicos",
+      limpias: true,
+      apu: true,
+      aire: "packs",
+      aislamiento: 0.8,
+    },
   },
   aero: {
     cl0: 0.2,
