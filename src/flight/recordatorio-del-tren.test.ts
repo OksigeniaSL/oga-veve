@@ -22,6 +22,7 @@ const META = ARAI.meteElTrenA!;
 function subiendo(alto: number, extra: Partial<LoQueVeElRecordatorio> = {}): LoQueVeElRecordatorio {
   return {
     enElAire: true,
+    trasDespegar: true,
     subiendo: true,
     alto,
     donde: 1,
@@ -76,6 +77,16 @@ describe("el recordatorio del tren tras despegar", () => {
     const dicho = { primero: true, segundo: false };
     for (let i = 0; i < 1000; i++)
       expect(recordarElTren(subiendo(150), dicho)).toBeNull();
+  });
+
+  it("con el tren bajado para aterrizar no se dice nunca, aunque el avión suba un momento al alinearse", () => {
+    // Tenerife Sur, JAZ 120 en Guyrami, en final a 1.300 ft: el tren se metió
+    // al salir antes de que tocara recordarlo, y en la final, al corregir, el
+    // variómetro marcó subida. «¿Cómo que "mételo, el tren te frena"?»
+    const enFinal = { trasDespegar: false, alto: 400 };
+    expect(recordarElTren(subiendo(400, enFinal), NADA_RECORDADO)).toBeNull();
+    expect(recordarElTren(subiendo(400, { ...enFinal, nudos: ARAI.vleKt * 0.95 }), NADA_RECORDADO)).toBeNull();
+    expect(recordarElTren(subiendo(400, enFinal), { primero: true, segundo: false })).toBeNull();
   });
 
   it("y no dice nada si ya se pidió meterlo, si está entrando o si se está en el suelo", () => {
