@@ -15834,6 +15834,11 @@ export class Game {
     const state = this.flight.state;
     const modo = this.vistaQueHay();
     const rig: CameraRig = this.camaras[modo];
+    // Por la ventanilla del pasaje no hay cabina delante: el cuadro se recoge
+    // solo, y vuelve como estaba al salir. Aquí y no al cambiar de vista,
+    // porque la de pasaje solo existe cuando el modelo ha llegado. Ver
+    // `ponerVistaDePasaje` en `hud.ts`.
+    this.hud.ponerVistaDePasaje(!!this.asientoDe(modo));
 
     // El avión, escondido solo en la vista de pájaro. Va aquí y no al cambiar
     // de vista para que valga también cuando el modelo se carga o se cambia.

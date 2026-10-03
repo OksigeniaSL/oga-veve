@@ -329,6 +329,14 @@ const FLECHA_SEGUIR = `
 const ESTO_ES_TACTIL =
   typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
 
+/**
+ * Cómo quiere el cuadro quien juega: lo guardado, y si no hay nada, recogido
+ * en el teléfono y abierto en lo demás. Ver `cuadroBajado` en `Hud`.
+ */
+function cuadroElegido(): boolean {
+  return (leerTexto("cuadro-bajado") ?? (esTelefono() ? "1" : "0")) === "1";
+}
+
 export class Hud {
   readonly tutor = new Tutor();
   readonly mapa = new Mapa();
@@ -963,8 +971,30 @@ export class Hud {
    * pedales, y se abre de un toque cuando se quiera mirar. Lo que se elija a
    * partir de ahí se guarda y manda.
    */
-  private cuadroBajado =
-    (leerTexto("cuadro-bajado") ?? (esTelefono() ? "1" : "0")) === "1";
+  private cuadroBajado = cuadroElegido();
+
+  /** Si se está mirando por una ventanilla del pasaje. Ver `ponerVistaDePasaje`. */
+  private enPasaje = false;
+
+  /**
+   * **Desde la ventanilla del pasaje, el cuadro se recoge solo.**
+   *
+   * Ahí no hay cabina delante: un pasajero no ve los instrumentos, ve el ala
+   * y el paisaje. Y en el portátil, con el cuadro abierto, la ventanilla
+   * quedaba con su tercio de abajo detrás de él —en el JAZ 120, ciento
+   * veinticinco píxeles de cristal—, que es justo donde va el ala. Recogido
+   * queda su asa, como en el teléfono, y se puede abrir de un toque si se
+   * quiere mirar algo; los avisos y los pictogramas siguen donde estaban.
+   *
+   * **Lo que se elige no se toca**: al volver a otra vista el cuadro queda
+   * como lo tenía quien juega, que es lo que está guardado. Y si en el pasaje
+   * lo abre a mano, eso también es elegir, y se guarda como siempre.
+   */
+  ponerVistaDePasaje(enPasaje: boolean): void {
+    if (enPasaje === this.enPasaje) return;
+    this.enPasaje = enPasaje;
+    this.ponerCuadroBajado(enPasaje || cuadroElegido());
+  }
 
   /**
    * Baja o sube el cuadro de mandos.
