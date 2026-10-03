@@ -64,6 +64,7 @@ import {
   enUnAfis,
   esElAvisoDeAves,
   esLaInformacionDeTrafico,
+  esTuPermisoDeAterrizar,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
@@ -151,6 +152,7 @@ import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
+  alUmbralEnLaAproximacion,
   enElEmbudoDeFinal,
   enLaZonaDeAproximacion,
   vieneEnFinal,
@@ -161,6 +163,7 @@ import {
   type PasoDeAro,
 } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
+import { FinalDeLaTorre } from "./flight/final-de-la-torre";
 import { crearGranja, type Granja } from "./world/granja";
 import {
   arrancarAbreOtroTramo,
@@ -839,7 +842,7 @@ import {
   escalonesDeSubida,
 } from "./flight/autorizacion-de-altitud";
 import { nivelMasTranquilo, ESPERA_CON_BACHES } from "./flight/nivel-tranquilo";
-import { MARGENES } from "./flight/minimos";
+import { ALTURA_DE_DECISION, MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
   yaLoEstaCorrigiendo,
@@ -2937,6 +2940,7 @@ export class Game {
     this.avisadoDeLaSenda = false;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
+    this.olvidarLaFinalDeLaTorre();
     this.vaca.quitar();
     this.traza = [];
     this.sinCatar = 0;
@@ -3651,6 +3655,26 @@ export class Game {
   /** Cuál de los permisos dados es el de ahora: lo que avisa tarde, no cuenta. */
   private permisosDados = 0;
   /**
+   * **La final de la torre**: desde dónde te ve en final y te da la pista, a
+   * millas del umbral y sin parpadear. Ver `flight/final-de-la-torre.ts`.
+   */
+  private readonly finalDeLaTorre = new FinalDeLaTorre();
+  /** Si ahora se está en ella. Ver `faseParaLaTorre`. */
+  private enLaFinalDeLaTorre = false;
+  /**
+   * **La fase del vuelo como la ve la torre**, la del paso anterior: la del
+   * plan, salvo que en el aire y en la final de la torre es «final» aunque el
+   * plan todavía no lo diga.
+   *
+   * La fase «final» del plan empieza a mil pies, alineado, y es la que pinta
+   * los aros y cuenta «estás en final»; para eso está bien. Para la torre no:
+   * es la que decide cuándo se pide tu permiso, cuándo la pista pasa a ser
+   * tuya y qué calla la frecuencia, y a mil pies el permiso llegaba tarde. Lo
+   * leen el turno de pista, la frecuencia y la fila de llegadas; lo demás
+   * sigue con la del plan.
+   */
+  private faseDeLaTorre = "";
+  /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
    * Solo existe cuando el escenario tiene un aeródromo de verdad con puestos de
@@ -3879,8 +3903,10 @@ export class Game {
       this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
     decirAOtro: (dice) => this.decirleAOtro(dice),
     autorizarte: () => this.autorizarElAterrizaje(),
-    mandarteAlAire: (alto, sigue) =>
-      this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
+    mandarteAlAire: (alto, sigue, porque) =>
+      porque === "sinPermiso"
+        ? this.laAproximacion.mandarIrseSinPermiso(alto)
+        : this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
     avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
     retirarteElPermiso: () => this.retirarElPermisoSinOir(),
@@ -6855,6 +6881,31 @@ export class Game {
           this.instructor.decir(dicho.texto, dicho.id, "mando");
         return;
       }
+      /*
+       * **Sin permiso a los mínimos, con la pista libre.** La orden es la de
+       * siempre —la roja del aire y su «ida al aire», o «motor y al aire» en
+       * Canarias, que están grabadas—, y el porqué no es la pista: es que no
+       * se oyó tu permiso antes de la altura de decisión, y por debajo no se
+       * da. De Taguató para arriba, detrás, su fraseología: «go around» a
+       * secas, montado con piezas ya grabadas. La tarjeta cuenta el porqué; la
+       * voz de la instructora que lo explique está por grabar —ver
+       * `PENDIENTE-VOCES-torre-final.md`— y no se pide muda. En la cabina, el
+       * «go around» de quien vuela, que sí está.
+       */
+      if (porque === "sinPermiso") {
+        if (this.hayTorreQueHable() && !this.esAfisAqui()) {
+          this.luzDeTorre("roja", "alAire", "sinPermiso");
+          this.laTorreMandaEnLaLuz = true;
+        }
+        const dicho = this.avisoCon("vuelo.sinPermisoEnLosMinimos", "palabra.alAire");
+        this.hud.senal.mostrar("frustrada", dicho.rotulo, null, {
+          segundos: Infinity,
+          prioridad: URGENTE,
+        });
+        this.avisar("attention");
+        this.cantar("go around", undefined, undefined, "mando");
+        return;
+      }
       if (porque === "pistaOcupada") {
         /*
          * Vaca o lámpara según el campo **al que se viene**, y la vaca en su
@@ -6978,7 +7029,8 @@ export class Game {
       }
       const queDice = alLevantarLaOrden(
         porque,
-        this.faseDeAhora,
+        // La final de la torre: es la torre quien levanta la orden.
+        this.faseParaLaTorre(this.faseDeAhora),
         this.flight.state.onGround,
       );
       if (queDice !== "aterrizar") {
@@ -7111,7 +7163,7 @@ export class Game {
         return;
       case "cortada":
         if (
-          this.faseDeAhora === "final" &&
+          this.faseParaLaTorre(this.faseDeAhora) === "final" &&
           this.laTorreMandaEnLaLuz &&
           !this.laAproximacion.mandanFrustrar
         ) {
@@ -7160,6 +7212,64 @@ export class Game {
       this.luzDeTorre(null);
       this.laTorreMandaEnLaLuz = false;
     });
+  }
+
+  /** La fase que ve la torre, a partir de la del plan. Ver `faseDeLaTorre`. */
+  private faseParaLaTorre(fase: string): string {
+    return fase === "en-vuelo" && this.enLaFinalDeLaTorre ? "final" : fase;
+  }
+
+  /**
+   * Un paso de la final de la torre, con la pista del campo que se tiene
+   * delante. Ver `flight/final-de-la-torre.ts`.
+   */
+  private mirarLaFinalDeLaTorre(fase: string): boolean {
+    const s = this.flight.state;
+    const campo = this.elCampo();
+    const pista = campo.pista;
+    const torcido =
+      (((((s.heading * 180) / Math.PI - pista.heading) % 360) + 540) % 360) - 180;
+    // El tramo final del plan, solo si es el del campo al que se va.
+    const alli = this.elDestino()?.id === this.elCampoMontado().id;
+    return this.finalDeLaTorre.paso({
+      enElAire: !s.onGround,
+      faseDelPlan: fase,
+      enLaFinalDelPlan: alli && this.navegacion.enLaFinal(this.lecturaDeRuta()),
+      alUmbral: alUmbralEnLaAproximacion(pista, s.position.x, s.position.z),
+      torcido,
+      sobreLaPista: s.position.y - this.cotaDelCampo(campo),
+      vertical: s.verticalSpeed,
+    });
+  }
+
+  /** Otro vuelo, otro tramo: ninguna final de la torre. */
+  private olvidarLaFinalDeLaTorre(): void {
+    this.finalDeLaTorre.reiniciar();
+    this.enLaFinalDeLaTorre = false;
+    this.faseDeLaTorre = "";
+    // Y la cota de la pista de llegada, que es de este tramo.
+    this.cotaContada = false;
+  }
+
+  /** Si se está en la final de la torre, para el banco. */
+  get enLaFinalDeLaTorreParaBanco(): boolean {
+    return this.enLaFinalDeLaTorre;
+  }
+
+  /**
+   * **Si tu permiso para aterrizar todavía tiene algo por sonar**: pedido y
+   * sin dar, dado y esperando su voz o sonando, o con su fraseología en la
+   * cola. Para el banco, que vuela a tiempo real mientras tanto: la voz va con
+   * el reloj de pared, y con el del juego acelerado la altura a la que suena
+   * sale comprimida.
+   */
+  get permisoPorOirParaBanco(): boolean {
+    return (
+      this.turno.pidiendoAterrizaje ||
+      this.permisoDeAterrizar === "esperando-su-voz" ||
+      this.permisoDeAterrizar === "sonando" ||
+      BOCA.esperaAlguna(esTuPermisoDeAterrizar)
+    );
   }
 
   /**
@@ -7259,7 +7369,7 @@ export class Game {
 
   /** Si la pista es tuya ahora mismo: su fase, y que no seas el número dos. */
   get laPistaEsTuyaParaBanco(): boolean {
-    return this.turno.laPistaEsTuya(this.faseDeAhora);
+    return this.turno.laPistaEsTuya(this.faseParaLaTorre(this.faseDeAhora));
   }
 
   /** Quién ocupa la pista, para el banco. Ver `ocupanLaPista`. */
@@ -7515,10 +7625,11 @@ export class Game {
     luz: "verde" | "roja" | null,
     rojaDice: "esperar" | "alAire" = "esperar",
     /**
-     * Y por qué al aire, para la fraseología: la pista ocupada, o que se viene
-     * por la cabecera que no está en uso. Ver `flight/la-otra-cabecera.ts`.
+     * Y por qué al aire, para la fraseología: la pista ocupada, que se viene
+     * por la cabecera que no está en uso —ver `flight/la-otra-cabecera.ts`—, o
+     * que se llegó a los mínimos sin permiso, que es «go around» a secas.
      */
-    alAirePor: "ocupada" | "enUso" = "ocupada",
+    alAirePor: "ocupada" | "enUso" | "sinPermiso" = "ocupada",
     /**
      * Y quien necesita saber si sonó la frase de la lámpara: tu permiso para
      * aterrizar. Ver `alSonarElPermiso`.
@@ -7757,7 +7868,9 @@ export class Game {
         : rojaDice === "alAire"
           ? alAirePor === "enUso"
             ? "go around, runway in use"
-            : "go around, runway occupied"
+            : alAirePor === "sinPermiso"
+              ? "go around"
+              : "go around, runway occupied"
           : porQue
             ? HOLD_SHORT_POR[porQue]
             : "hold short of the runway";
@@ -8187,6 +8300,7 @@ export class Game {
     this.avisadoDeLaSenda = false;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
+    this.olvidarLaFinalDeLaTorre();
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
     this.traza = [];
@@ -9000,12 +9114,22 @@ export class Game {
     this.dependencia = this.laDependenciaDeAhora();
     const seOye = seOyeElCampo(this.dependencia);
     if (!seOye && antes !== null && seOyeElCampo(antes)) this.turno.dejarDeOir();
+    // Llegando a la zona de la torre de allí, la cota de su pista. Ver
+    // `contarLaCotaDeLaPista`.
+    if (
+      this.dependencia === "torre" &&
+      antes !== null &&
+      !seOyeElCampo(antes) &&
+      !this.flight.state.onGround
+    )
+      this.contarLaCotaDeLaPista();
     /*
      * Pasa el tiempo en la frecuencia y en su dibujo, y quien habla ya está
      * donde dice. Ver `oir` en `flight/turno-de-pista.ts`.
      */
     const dice = this.turno.oir(dt, {
-      fase: this.faseDeAhora,
+      // Y para la frecuencia, la final es la de la torre. Ver `faseDeLaTorre`.
+      fase: this.faseParaLaTorre(this.faseDeAhora),
       deDia: this.sky.sunDirection.y > 0,
       // Sin oírla, ni la instructora ni la boca le quitan el turno: es otra
       // frecuencia y no espera a nadie de esta cabina.
@@ -9306,7 +9430,7 @@ export class Game {
       !s.onGround &&
       this.navegacion.enElTramoFinal(this.lecturaDeRuta());
     const alUmbral =
-      (fase === "final" || enLaFinalDelPlan) && !s.onGround
+      (fase === "final" || enLaFinalDelPlan || this.enLaFinalDeLaTorre) && !s.onGround
         ? distanciaAlUmbral(this.elCampo(), s.position.x, s.position.z) / velocidad
         : deLejos;
     return {
@@ -12254,6 +12378,8 @@ export class Game {
         // Y la velocidad que toca y el FMA, los mismos que el cuadro plano.
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
+        // Y los mínimos puestos, los mismos también. Ver `losMinimosPuestos`.
+        minimos: this.losMinimosPuestos(),
       },
       dt,
     );
@@ -12444,6 +12570,7 @@ export class Game {
         // La velocidad que toca y lo que hace el automático. Ver `elFma`.
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
+        minimos: this.losMinimosPuestos(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -14847,13 +14974,39 @@ export class Game {
     }
     this.presentarLaMatricula();
     /*
+     * **Y para la torre, la final empieza antes que la del plan.** Ver
+     * `faseDeLaTorre` y `flight/final-de-la-torre.ts`.
+     */
+    const torreAntes = this.faseDeLaTorre;
+    this.enLaFinalDeLaTorre = this.mirarLaFinalDeLaTorre(vista.fase);
+    const torreAhora = this.faseParaLaTorre(vista.fase);
+    this.faseDeLaTorre = torreAhora;
+    /*
      * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
      * —la lámpara verde y el «cleared to land» se dicen más abajo, en este
      * mismo paso— se le quita a quien la tuviera. Ver `alSerTuya` en
      * `flight/turno-de-pista.ts`.
      */
-    if (PISTA_TUYA.has(vista.fase) && !PISTA_TUYA.has(faseDeAntes))
-      this.turno.alSerTuya(vista.fase);
+    if (PISTA_TUYA.has(torreAhora) && !PISTA_TUYA.has(torreAntes))
+      this.turno.alSerTuya(torreAhora);
+    /*
+     * **Y tu permiso para aterrizar se pide al entrar en la final de la torre**,
+     * a millas del umbral, y una sola vez por final.
+     *
+     * Se pedía al cambiar la fase del plan a «final», en el mismo sitio que
+     * anuncia la fase: a mil pies como muy pronto, a cuarenta metros si uno
+     * se alineaba tarde, y otra vez cada vez que esa fase parpadeaba en la
+     * final corta. En un campo sin torre no autoriza nadie, y sin motor la
+     * pista la da `autorizarSinMotor`, por la punta que sea.
+     */
+    if (
+      torreAhora === "final" &&
+      torreAntes !== "final" &&
+      this.leccion.torre &&
+      !this.sinMotor &&
+      !sinTorre(this.elCampo().escenario.aerodrome)
+    )
+      this.turno.pedirAterrizaje();
 
     /*
      * **Una orden que espera a que hagas algo no puede perderse por el camino.**
@@ -15024,15 +15177,8 @@ export class Game {
          * número de pista, y no sonó nunca: al entrar en «alineando» el avión
          * ya viene rodando desde la calle. Medido en Pettirossi.
          */
-        // Y en un campo sin torre no autoriza nadie: en la pista de hierba
-        // de la granja no hay a quién oír.
-        // Sin motor la pista la da `autorizarSinMotor`, por la punta que sea.
-        if (
-          vista.fase === "final" &&
-          !this.sinMotor &&
-          !sinTorre(this.elCampo().escenario.aerodrome)
-        )
-          this.turno.pedirAterrizaje();
+        // Tu permiso para aterrizar ya no se pide aquí, al anunciar la fase:
+        // se pide al entrar en la final de la torre. Ver `faseDeLaTorre`.
         if (vista.fase === "arrancando" || vista.fase === "rodando")
           this.autorizarLaRuta();
       }
@@ -15317,8 +15463,9 @@ export class Game {
       }
     }
 
-    // Tu «cleared to land», cuando toca. Ver `paso` en `flight/turno-de-pista.ts`.
-    this.turno.paso(vista.fase);
+    // Tu «cleared to land», cuando toca, en la final de la torre. Ver `paso`
+    // en `flight/turno-de-pista.ts`.
+    this.turno.paso(this.faseDeLaTorre);
 
     /*
      * **Entrar en pista sin la luz verde para el vuelo.**
@@ -15565,6 +15712,7 @@ export class Game {
       activo: this.navegacion.indice,
       descenso: p.puntoDeDescenso,
       conNombres: this.tier.avisos === "cifra" || this.tier.avisos === "cabina",
+      cotaDelUmbral: plan.cotaDelUmbral,
     });
   }
 
@@ -19146,6 +19294,77 @@ export class Game {
     };
   }
 
+  /**
+   * **La cota del umbral de la pista a la que se va**, m: la del plan si se va
+   * a otro campo —la mide el plan en su umbral de llegada—, y si no, la del
+   * campo que se tiene debajo. Es la que va en la carta y en el plano junto a
+   * la pista en uso, y la referencia de los mínimos. Ver `losMinimosPuestos`.
+   */
+  private cotaDeLaPistaALaQueSeVa(): number {
+    const plan = this.navegacion.plan;
+    if (plan && this.elDestino()) return plan.cotaDelUmbral;
+    return this.cotaDelCampo(this.elCampo());
+  }
+
+  /**
+   * **Los mínimos puestos en la pantalla de vuelo**, «BARO» y su altitud: la
+   * cota del umbral más la altura de decisión, en pies con el QNH, que es
+   * como se ponen en un avión de verdad y lo que lleva una carta de
+   * aproximación —«DA(H) 308 (200)»—. Lo que se lee en el altímetro menos la
+   * cota es lo alto que se va sobre la pista, y ahí está la lección.
+   *
+   * Ámbar al llegar a ellos viniendo en la final de la torre, a la vez que el
+   * «minimums» de la máquina; saliendo de un campo más bajo que el de llegada
+   * se cruza esa altitud subiendo, y eso no es llegar a los mínimos. Sin
+   * aeródromo no hay pista a la que ir, ni mínimos. Los dibuja la pantalla de
+   * vuelo de los que la llevan; ver `minimos` en `ui/cristal.ts`.
+   */
+  private losMinimosPuestos(): { pies: number; enEllos: boolean } | null {
+    if (!this.scenario.aerodrome) return null;
+    const altura = Math.round(ALTURA_DE_DECISION / PIE_EN_METROS / 10) * 10;
+    const pies = Math.round(this.cotaDeLaPistaALaQueSeVa() / PIE_EN_METROS) + altura;
+    const enEllos =
+      !this.flight.state.onGround &&
+      this.enLaFinalDeLaTorre &&
+      this.altitudIndicada() / PIE_EN_METROS <= pies;
+    return { pies, enEllos };
+  }
+
+  /**
+   * **En el peldaño de los números, la instructora cuenta la cota de la
+   * pista**, una vez por tramo, al entrar en la zona de la torre de llegada:
+   * a cuánto está sobre el mar y que el altímetro menos eso es lo alto que se
+   * va sobre ella. Es lo que hace falta para leer la carta y los mínimos de la
+   * pantalla de vuelo —ver `losMinimosPuestos`—, y se cuenta antes de la
+   * final, que es cuando hay calma: en la final hablan la torre, la máquina
+   * y el permiso.
+   *
+   * Por ahora con la tarjeta, que lleva el número en las unidades del
+   * peldaño; su voz está por grabar —sin el número, para que valga en
+   * cualquier campo— y no se pide muda. Ver `PENDIENTE-VOCES-torre-final.md`.
+   * Abajo no se cuenta, que no hay números; arriba ya se vuela con la carta.
+   */
+  private contarLaCotaDeLaPista(): void {
+    if (this.tier.avisos !== "cifra" || this.cotaContada || !this.elDestino()) return;
+    this.cotaContada = true;
+    const cota = this.cotaDeLaPistaALaQueSeVa();
+    const escrita =
+      this.tier.units === "metric"
+        ? `${Math.round(cota)} m`
+        : `${Math.round(cota / PIE_EN_METROS)} ft`;
+    this.hud.senal.mostrar("senda", t("hud.cotaDeLaPista", { cota: escrita }), null, {
+      segundos: 9,
+    });
+  }
+
+  /** Si en este tramo ya se contó la cota de la pista de llegada. */
+  private cotaContada = false;
+
+  /** Los mínimos puestos, para el banco. Ver `losMinimosPuestos`. */
+  get minimosParaBanco(): { pies: number; enEllos: boolean } | null {
+    return this.losMinimosPuestos();
+  }
+
   /** El plan de vuelo como lo quiere la carta. Ver `RutaDeLaCarta`. */
   private rutaParaLaCarta(): Mapa["ruta"] {
     const plan = this.navegacion.plan;
@@ -19163,6 +19382,8 @@ export class Game {
       restante: p.restante,
       hora: this.horaDeLlegada(p.alSiguiente),
       abreElRango: !this.flight.state.onGround && this.faseDeAhora !== "final",
+      // Y la cota del umbral de llegada, junto a su pista. Ver `RutaDeLaCarta`.
+      cotaDelUmbral: plan.cotaDelUmbral,
     };
   }
 

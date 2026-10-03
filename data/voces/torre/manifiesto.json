@@ -1538,6 +1538,14 @@
       "{c5}",
       "torre.solo.birdsOnFinal",
       "{altura}"
+    ],
+    "torre.goAroundSinPermiso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAroundSolo"
     ]
   }
 }

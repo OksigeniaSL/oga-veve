@@ -1247,6 +1247,20 @@ export const ES_PY = {
   "palabra.aBajar": "A bajar",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
+  /*
+   * Y a los mínimos sin el permiso de la torre, con la pista libre: el porqué
+   * no es la pista. De momento solo en la tarjeta; la voz, cuando se grabe
+   * (ver `PENDIENTE-VOCES-torre-final.md`).
+   */
+  /*
+   * La cota de la pista de llegada, en el peldaño de los números: solo en la
+   * tarjeta, con el número. Su voz está por grabar, sin él. Ver
+   * `contarLaCotaDeLaPista` en `game.ts`.
+   */
+  "hud.cotaDeLaPista":
+    "La pista a la que vamos está a {cota} sobre el mar: lo que marca el altímetro menos eso es lo alto que vas sobre ella",
+  "vuelo.sinPermisoEnLosMinimos":
+    "La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
   // Y en la pista de casa, donde no hay torre que deje nada: se ve.

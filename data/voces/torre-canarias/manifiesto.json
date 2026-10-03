@@ -1552,6 +1552,14 @@
       "{c5}",
       "torre.canario.solo.birdsOnFinal",
       "{altura}"
+    ],
+    "torre.canario.goAroundSinPermiso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.goAroundSolo"
     ]
   }
 }

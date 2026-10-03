@@ -141,9 +141,12 @@ export interface Hechos {
    * - `otraCabecera`: se viene por la punta que no está en uso. `motivo` dice
    *   si además el viento de cola pasa del límite. Ver
    *   `flight/la-otra-cabecera.ts`.
+   * - `sinPermiso`: la torre, con la pista libre: se llegó a los mínimos sin
+   *   tu permiso para aterrizar oído. Ver `paso` en
+   *   `flight/turno-de-pista.ts`.
    */
   mandaronIrseAlAire: {
-    readonly porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera";
+    readonly porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | "sinPermiso";
     readonly motivo?: string;
   };
   /**
@@ -155,7 +158,12 @@ export interface Hechos {
    * aterrizar. Ver `alLevantarLaOrden` en `flight/turno-de-pista.ts`.
    */
   pistaLibreOtraVez: {
-    readonly porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | null;
+    readonly porque:
+      | "pistaOcupada"
+      | "noEstabilizada"
+      | "otraCabecera"
+      | "sinPermiso"
+      | null;
   };
 }
 

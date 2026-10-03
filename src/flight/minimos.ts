@@ -169,6 +169,8 @@ export type PorQueMandaron =
   | "pistaOcupada"
   | "noEstabilizada"
   | "otraCabecera"
+  /** Se llegó a los mínimos sin el permiso para aterrizar. */
+  | "sinPermiso"
   | null;
 
 /**

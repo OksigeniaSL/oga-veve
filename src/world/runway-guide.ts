@@ -325,6 +325,32 @@ export function enLaZonaDeAproximacion(
 }
 
 /**
+ * **Cuánto falta por el eje hasta el umbral de aterrizar**, m, si el avión está
+ * dentro del cono de la aproximación —el de `enLaZonaDeAproximacion`, sin
+ * mirar hacia dónde apunta—; `null` fuera de él o pasado el umbral.
+ *
+ * Lo usa la final de la torre, que mira el rumbo por su cuenta y con otra
+ * vara: ver `flight/final-de-la-torre.ts`.
+ */
+export function alUmbralEnLaAproximacion(
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    desplazado?: number;
+  },
+  x: number,
+  z: number,
+): number | null {
+  const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
+  const alUmbral = -along - hastaElUmbralDeToma(runway);
+  if (alUmbral < 0 || alUmbral > HASTA_DONDE_SE_APROXIMA) return null;
+  const ancho = ANCHO_EN_EL_UMBRAL + alUmbral * Math.tan(ABIERTA_LA_APROXIMACION);
+  return Math.abs(across) <= ancho ? alUmbral : null;
+}
+
+/**
  * Lo más torcido que se puede venir respecto a la pista y seguir en final,
  * grados. Treinta, los mismos que pide la fase «final» del plan de vuelo.
  */

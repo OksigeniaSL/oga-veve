@@ -43,6 +43,7 @@ import { esAguaDeCasa } from "../world/agua-de-casa";
 import { fondoPara, type FondoDelMapa } from "./fondo-del-mapa";
 import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
+import { cotaEscrita } from "./carta";
 import {
   encuadreCon,
   escalones,
@@ -1117,6 +1118,30 @@ export class Mapa {
       g.fillStyle = "#1d1b19";
       g.fillText(f.nombre, tx, y + 8);
     });
+    /*
+     * **Y la pista de llegada, con su nombre y su cota**: «RW19 · ELEV 108
+     * FT», junto a su umbral, que es donde la lleva una carta de
+     * aproximación. La pista ya la dibuja la barra blanca; lo que faltaba es
+     * lo que hace falta para calcular la bajada. Ver `cotaEscrita`.
+     */
+    const umbral = ruta.fijos.findIndex((f) => f.papel === "umbral");
+    if (ruta.conNombres && umbral >= 0 && ruta.cotaDelUmbral != null) {
+      const [x, y] = pts[umbral]!;
+      if (x > -20 && x < LADO + 20 && y > -20 && y < LADO + 20) {
+        const texto = `${ruta.fijos[umbral]!.nombre} · ${cotaEscrita(ruta.cotaDelUmbral)}`;
+        g.font = "700 11px system-ui, sans-serif";
+        const ancho = g.measureText(texto).width;
+        const izquierda = x + 10 + ancho > LADO - 2;
+        g.textAlign = izquierda ? "right" : "left";
+        const tx = izquierda ? x - 10 : x + 10;
+        const ty = Math.max(10, Math.min(LADO - 10, y + 14));
+        g.lineWidth = 3;
+        g.strokeStyle = "#f4efe6";
+        g.strokeText(texto, tx, ty);
+        g.fillStyle = "#1d1b19";
+        g.fillText(texto, tx, ty);
+      }
+    }
     if (ruta.descenso) {
       const [x, y] = this.enElPapel(ruta.descenso, puesto);
       if (x > 0 && x < LADO && y > 0 && y < LADO) {
@@ -1336,4 +1361,9 @@ export interface RutaEnElMapa {
   readonly descenso: { readonly x: number; readonly z: number } | null;
   /** Si se rotulan los puntos: desde el peldaño que lee. */
   readonly conNombres: boolean;
+  /**
+   * La cota del umbral de llegada, m, para escribirla junto a su pista. Ver
+   * `RutaDeLaCarta.cotaDelUmbral` en `ui/carta.ts`.
+   */
+  readonly cotaDelUmbral?: number | null;
 }

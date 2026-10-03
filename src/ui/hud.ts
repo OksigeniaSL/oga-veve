@@ -2491,6 +2491,8 @@ export class Hud {
       /** La velocidad que toca y el FMA. Ver `DatosDelTablero.spd` y `.fma`. */
       readonly spd?: DatosDelTablero["spd"];
       readonly fma?: DatosDelTablero["fma"];
+      /** Los mínimos puestos. Ver `DatosDelTablero.minimos`. */
+      readonly minimos?: DatosDelTablero["minimos"];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2922,6 +2924,7 @@ export class Hud {
         ventanilla: mandos?.ventanilla ?? null,
         spd: mandos?.spd ?? null,
         fma: mandos?.fma ?? null,
+        minimos: mandos?.minimos ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de
