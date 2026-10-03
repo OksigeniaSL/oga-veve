@@ -2955,6 +2955,7 @@ export class Game {
     this.terrenoDicho = null;
     this.dichoDelTren = null;
     this.recordadoDelTren = NADA_RECORDADO;
+    this.trenPorMeter = true;
     this.tormentasDichas.clear();
     this.estelas.vaciar();
     this.tcas.reiniciar();
@@ -6576,6 +6577,11 @@ export class Game {
       });
     });
     this.hechos.on("frustrada", () => this.avisar("achieved"));
+    // Una frustrada es otra salida: el tren se vuelve a recordar.
+    this.hechos.on("frustrada", () => {
+      this.trenPorMeter = true;
+      this.recordadoDelTren = NADA_RECORDADO;
+    });
     // Al cuaderno: renunciar es ganar, y el grado más alto lo pide.
     this.hechos.on("frustrada", () =>
       this.apuntar({ frustradas: this.cuaderno.frustradas + 1 }),
@@ -8360,6 +8366,7 @@ export class Game {
     this.terrenoDicho = null;
     this.dichoDelTren = null;
     this.recordadoDelTren = NADA_RECORDADO;
+    this.trenPorMeter = true;
     this.tormentasDichas.clear();
     this.estelas.vaciar();
     this.tcas.reiniciar();
@@ -18144,9 +18151,13 @@ export class Game {
      * `flight/tren.ts`, que dice cuándo y por qué no con un reloj.
      */
     if (s.onGround) this.recordadoDelTren = NADA_RECORDADO;
+    // La salida dura hasta que el tren entra; ver `trasDespegar` en `tren.ts`.
+    if (s.onGround) this.trenPorMeter = true;
+    else if (donde < 0.01) this.trenPorMeter = false;
     const toca = recordarElTren(
       {
         enElAire: !s.onGround,
+        trasDespegar: this.trenPorMeter,
         subiendo: s.verticalSpeed > 1,
         alto: sobreElSuelo,
         donde,
@@ -18219,6 +18230,13 @@ export class Game {
 
   /** Lo recordado del tren en este despegue. Ver `recordarElTren`. */
   private recordadoDelTren: LoRecordado = NADA_RECORDADO;
+  /**
+   * Si el tren aún no ha entrado desde el despegue o desde la última
+   * frustrada: mientras tanto, y solo entonces, se recuerda meterlo. Una
+   * frustrada es otra salida —«positive rate, gear up» otra vez—, así que la
+   * rearma. Ver `trasDespegar` en `flight/tren.ts`.
+   */
+  private trenPorMeter = true;
 
   /**
    * **La lista antes de aterrizar: los aerofrenos armados y el autofreno.**

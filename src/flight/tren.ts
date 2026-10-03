@@ -323,6 +323,16 @@ export function seVuelveADecir(
  */
 export interface LoQueVeElRecordatorio {
   readonly enElAire: boolean;
+  /**
+   * **Si es la salida**: el tren no se ha metido todavía desde que se dejó el
+   * suelo o desde la última frustrada. Es lo único que hace de esto un
+   * recordatorio de despegue. Sin ello, con el tren bajado para aterrizar,
+   * bastaba un instante subiendo —al corregir para alinearse con la pista— para
+   * oír «metélo, el tren te frena» en plena final, que es enseñar justo lo
+   * contrario. Contado en Tenerife Sur con el JAZ 120: «¿cómo que "mételo, el
+   * tren te frena"? Estoy entrando ya en línea de pista».
+   */
+  readonly trasDespegar: boolean;
   /** Subiendo de verdad: más de un metro por segundo. */
   readonly subiendo: boolean;
   /** Metros sobre el suelo. */
@@ -365,7 +375,8 @@ export function recordarElTren(
   dicho: LoRecordado,
 ): "primero" | "segundo" | null {
   // Ya no está fuera, o ya se ha pedido meterlo: no hay nada que recordar.
-  if (!e.enElAire || !e.pedido || e.donde < 0.99) return null;
+  // Y fuera de la salida, el tren abajo es para aterrizar: tampoco.
+  if (!e.trasDespegar || !e.enElAire || !e.pedido || e.donde < 0.99) return null;
   if (!dicho.primero) {
     return e.subiendo && e.alto > e.primeroA ? "primero" : null;
   }
