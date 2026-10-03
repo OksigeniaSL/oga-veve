@@ -1406,6 +1406,21 @@ export class Hud {
             <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
                     aria-label="${t("hud.throttleUp")}">${pictos ? motorMas(chorro) : "+"}</button>
           </div>
+          <!--
+            **Quién lleva el gas**, cuando no lo lleva quien vuela: el avión
+            —sus gases automáticos, con el dibujo del botón del automático— o
+            la instructora en la final de Guyrami —una mano—. Sin esto la
+            palanca se mueve sola y no se sabe por qué. En la pantalla de los
+            de línea lo dice además el FMA; aquí lo dice el dibujo, que se lee
+            sin saber leer. Ver ponerQuienLlevaElGas.
+          -->
+          <span class="motor__quien" data-hud="gas-quien" role="img" hidden>
+            <svg class="motor__quien-avion" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" fill="currentColor" />
+            </svg>
+            <span class="motor__quien-ayuda" aria-hidden="true">${DIBUJOS.mano}</span>
+          </span>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
           <!--
             Y la reversa, encima del gas y solo cuando está metida.
@@ -2014,6 +2029,7 @@ export class Hud {
     this.ponerHayCinturon(this.hayCinturon);
     this.ponerMandoDeCinturon(this.cinturonEncendido);
     this.ponerGasDeNivel(this.gasDeNivel);
+    this.ponerQuienLlevaElGas(this.quienLlevaElGas);
   }
 
   /**
@@ -3498,23 +3514,25 @@ export class Hud {
   }
 
   /**
-   * Dónde está el gas que **mantiene el nivel**, de 0 a 1, o `null` si en este
-   * modelo no hay uno.
+   * **La marca del motor: dónde va el gas que toca**, de 0 a 1, o `null` si
+   * ahora no hay una que sea verdad. La cuenta la decide
+   * `flight/gas-que-toca.ts`; aquí solo se pinta.
    *
-   * En el peldaño de los pequeños el motor *es* la velocidad y hay un punto
-   * exacto en el que el avión ni sube ni baja: por encima sube solo, por
-   * debajo planea. Esa es la lección entera de ese peldaño y **no había nada
-   * que la señalara**, así que había que descubrirla a ciegas. Contado
-   * jugando: «no puedo estabilizar el avión, o sube o baja, pero las flechas
-   * no me lo mantienen estable».
+   * En el peldaño de los pequeños, con la altura en manos de quien vuela, es
+   * el gas que **mantiene el nivel**: el motor *es* la velocidad y hay un
+   * punto exacto en el que el avión ni sube ni baja —por encima sube solo,
+   * por debajo planea—. Esa es la lección entera de ese peldaño y no había
+   * nada que la señalara: «no puedo estabilizar el avión, o sube o baja, pero
+   * las flechas no me lo mantienen estable». Con la marca puesta se ve, y se
+   * entiende sin una palabra.
    *
-   * Y no lo mantienen porque ahí no es cosa de las flechas: es del gas. Con
-   * la marca puesta se ve, y se entiende sin una palabra — que es exactamente
-   * cómo tiene que entenderse a los cuatro años.
-   *
-   * En el modelo de coeficientes **no existe ese punto**: la velocidad de
-   * equilibrio sale de la actitud, y ahí lo que mantiene el nivel es el
-   * compensador. Por eso se apaga, en vez de enseñar una marca que mentiría.
+   * Y cuando algo sostiene la altura —la nivelada, el automático— o en la
+   * final, es el gas que da **la velocidad de la marca rosa**: arriba, el gas
+   * de crucero. «Ya estamos arriba: gas de crucero, hasta la marca del
+   * motor» necesitaba una marca a la que llevarlo. En el modelo completo sale
+   * nivelado o en la final —la referencia de empuje de una cabina de
+   * verdad—, y subiendo o bajando se apaga: ahí la velocidad la lleva el
+   * morro, y una marca de nivelar mentiría.
    */
   ponerGasDeNivel(fraccion: number | null): void {
     this.gasDeNivel = fraccion;
@@ -3527,6 +3545,34 @@ export class Hud {
 
   /** Se recuerda: `render()` rehace el marcado. Ver `ponerGasDeNivel`. */
   private gasDeNivel: number | null = null;
+
+  /**
+   * **Quién lleva el gas**, si no lo lleva quien vuela: `avion` con los gases
+   * automáticos puestos, `ayuda` cuando lo lleva la instructora en la final de
+   * Guyrami, `null` si es de quien vuela. El dibujo sale en la tarjeta del
+   * motor, en los cuatro peldaños: es el canal que no se retira. Ver
+   * `sostenerLaVelocidadDeLaFinal` en `game.ts`.
+   */
+  ponerQuienLlevaElGas(quien: "avion" | "ayuda" | null): void {
+    this.quienLlevaElGas = quien;
+    const m = this.root.querySelector<HTMLElement>('[data-hud="gas-quien"]');
+    if (!m) return;
+    m.hidden = quien === null;
+    if (quien === null) {
+      m.removeAttribute("data-quien");
+      m.removeAttribute("aria-label");
+      m.removeAttribute("title");
+    } else {
+      const dice = t(quien === "avion" ? "hud.gasDelAvion" : "hud.gasDeLaAyuda");
+      m.dataset.quien = quien;
+      m.setAttribute("aria-label", dice);
+      m.title = dice;
+    }
+    m.closest(".motor")?.classList.toggle("motor--lo-llevan", quien !== null);
+  }
+
+  /** Se recuerda: `render()` rehace el marcado. Ver `ponerQuienLlevaElGas`. */
+  private quienLlevaElGas: "avion" | "ayuda" | null = null;
 
   setLuzDeTorre(
     luz: "verde" | "roja" | null,

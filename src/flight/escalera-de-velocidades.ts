@@ -130,6 +130,30 @@ export type Tramo =
   | "aproximacion"
   | "final";
 
+/**
+ * **El peldaño de la escalera**, que no es lo mismo que el tramo: dentro de un
+ * tramo la marca puede cambiar sola —el Mach que baja la indicada al subir,
+ * la placa de lo que se lleva sacado— sin que haya pasado nada que decir. El
+ * peldaño cambia solo cuando cambia **la regla** que pone la marca, y eso sí
+ * es un escalón alcanzado: cruzar los diez mil pies, entrar en el área
+ * terminal, empezar la aproximación, sacar el tren, la final. Lo mira la
+ * cadena del «¿y ahora qué?»: ver `flight/siguiente-paso.ts`.
+ *
+ * - `bajo-el-100`: el tope de 250 nudos por debajo de diez mil pies, subiendo
+ *   o bajando, cuando es él quien pone la marca.
+ * - `primeros-flaps` y `segundos-flaps`: los dos peldaños de la aproximación;
+ *   el segundo, con el tren, solo en los reactores (ver `CONFIGURADO_DESDE`).
+ */
+export type PeldanoDeVelocidad =
+  | "subida"
+  | "bajo-el-100"
+  | "crucero"
+  | "descenso"
+  | "terminal"
+  | "primeros-flaps"
+  | "segundos-flaps"
+  | "final";
+
 /** Lo que toca: la indicada, y el Mach si es el Mach quien manda. */
 export interface VelocidadQueToca {
   /** La indicada que toca, en nudos. */
@@ -137,6 +161,45 @@ export interface VelocidadQueToca {
   /** El Mach que se sostiene, si arriba manda el Mach; `null` si no. */
   readonly mach: number | null;
   readonly tramo: Tramo;
+  /** El peldaño: la regla que pone la marca. Ver `PeldanoDeVelocidad`. */
+  readonly peldano: PeldanoDeVelocidad;
+}
+
+/**
+ * **Los flaps que pide cada peldaño**, en muescas de la palanca —de 0 a 3,
+ * ver `DETENTES` en `flaps.ts`—, en el avión que los lleva.
+ *
+ * Es la otra mitad de la escalera: cada velocidad de la llegada es la de
+ * maniobra de unos flaps, y no se puede pedir la una sin los otros. Es el
+ * orden del manual de Boeing (FCTM 737, «Approach»: flaps 1 y 5 frenando
+ * hacia la aproximación, tren y flaps 15 antes del punto de final, y los de
+ * aterrizar al coger la senda) en las tres muescas de este juego, una cada
+ * vez y **por su orden**. Los de hélice no tienen el peldaño de en medio:
+ * los primeros al empezar la aproximación y los de aterrizar en la final.
+ */
+export function flapsQuePide(a: AircraftConfig, peldano: PeldanoDeVelocidad): number {
+  if (!a.llevaFlaps) return 0;
+  switch (peldano) {
+    case "primeros-flaps":
+      return 1;
+    case "segundos-flaps":
+      return 2;
+    case "final":
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * **Y si pide el tren**, en el avión que lo mete: en los reactores con los
+ * segundos flaps —tren y flaps 15 del 737, antes del punto de final—, y en
+ * los demás en la final, que es donde lo saca un bimotor de escuela o un
+ * turbohélice que viene por instrumentos: al cruzar el punto de final.
+ */
+export function trenQuePide(a: AircraftConfig, peldano: PeldanoDeVelocidad): boolean {
+  if (!a.trenRetractil) return false;
+  return peldano === "final" || peldano === "segundos-flaps";
 }
 
 /** Dónde va el avión, para saber en qué peldaño está. */
@@ -250,14 +313,20 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
   const llegando = conPlan && (d.bajando || falta < TERMINAL_DESDE);
   let r: VelocidadQueToca;
   if (d.enFinal || (llegando && falta < FINAL_DESDE)) {
-    r = { kt: vref + FINAL_SOBRE_VREF, mach: null, tramo: "final" };
+    r = { kt: vref + FINAL_SOBRE_VREF, mach: null, tramo: "final", peldano: "final" };
   } else if (llegando && falta < APROXIMACION_DESDE) {
+    const configurado = chorro && falta < CONFIGURADO_DESDE;
     const kt = !chorro
       ? a.velocidadDeCircuito / NUDO
-      : falta < CONFIGURADO_DESDE
+      : configurado
         ? vref + SEGUNDOS_FLAPS_SOBRE_VREF
         : vref + PRIMEROS_FLAPS_SOBRE_VREF;
-    r = { kt, mach: null, tramo: "aproximacion" };
+    r = {
+      kt,
+      mach: null,
+      tramo: "aproximacion",
+      peldano: configurado ? "segundos-flaps" : "primeros-flaps",
+    };
   } else if (llegando && falta < TERMINAL_DESDE) {
     const kt = chorro
       ? Math.min(TOPE_BAJO_EL_100, vref + LIMPIO_SOBRE_VREF)
@@ -265,7 +334,7 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
           cruceroDeHelice(a, d.altitud, aire),
           Math.round(((a.velocidadDeCircuito / NUDO) * 1.2) / 5) * 5,
         );
-    r = { kt, mach: null, tramo: "terminal" };
+    r = { kt, mach: null, tramo: "terminal", peldano: "terminal" };
   } else {
     const tramo: Tramo = d.bajando ? "descenso" : d.subiendo ? "subida" : "crucero";
     const mach = machDeCrucero(a);
@@ -279,12 +348,14 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
         porMach = mach;
       }
     }
+    let peldano: PeldanoDeVelocidad = tramo;
     const tope = d.bajando ? ALTITUD_DEL_TOPE + FRENAR_ANTES : ALTITUD_DEL_TOPE;
     if (d.altitud < tope && kt > TOPE_BAJO_EL_100) {
       kt = TOPE_BAJO_EL_100;
       porMach = null;
+      peldano = "bajo-el-100";
     }
-    r = { kt, mach: porMach, tramo };
+    r = { kt, mach: porMach, tramo, peldano };
   }
   const tope = (d.topeKt ?? Infinity) - 10;
   if (r.kt > tope) r = { ...r, kt: tope, mach: null };

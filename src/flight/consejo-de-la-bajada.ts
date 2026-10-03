@@ -360,6 +360,24 @@ export class ConsejoDeLaBajada {
   }
 
   /**
+   * **Lo que acaba de pedir otro, anotado como dicho.** Lo usa la cadena del
+   * «¿y ahora qué?»: al cambiar la marca de peldaño dice «menos gas, hasta la
+   * marca», y tres segundos después aquí se vería la velocidad lejos de la
+   * marca nueva y se diría lo mismo. Es el mismo suceso, y lleva una sola
+   * voz: con esto, lo que se pidió allí sigue aquí las mismas reglas —no se
+   * repite mientras dure, ni va detrás lo contrario sin que el avión haya
+   * respondido—. Ver `flight/siguiente-paso.ts`.
+   *
+   * No se celebra: no fue una corrección, fue el paso siguiente.
+   */
+  anotar(c: Consejo, l: Lectura): void {
+    this.mirarLaRespuesta(l);
+    const hubo = this.huboConsejo;
+    this.dar(c, l);
+    this.huboConsejo = hubo;
+  }
+
+  /**
    * **Si este consejo se puede dar ahora**, mirando el último que se dio.
    *
    * - El mismo otra vez, no mientras dure lo que lo motivó: se espera a que

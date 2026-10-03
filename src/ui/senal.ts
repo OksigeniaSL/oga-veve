@@ -326,6 +326,61 @@ const DESCENSO = icono(`
 `);
 
 /**
+ * **Subir hasta la raya**: la subida con su punta, y arriba la raya a trazos
+ * que es la altura de la ventanilla —la misma raya que se ve en la cinta—.
+ * Se entiende sin leer: se sube hasta ahí y no más. Ver
+ * `flight/siguiente-paso.ts`.
+ */
+const SUBIDA = icono(`
+  <path d="M2 21.5 h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.45" />
+  <path d="M3 19 L15 7.4" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" fill="none" />
+  <path d="M17.4 5 L11.6 6.2 L16.2 10.6 Z" />
+  <path d="M5 3 H22" stroke="currentColor" stroke-width="2" stroke-dasharray="2.6 2.2"
+        stroke-linecap="round" fill="none" />
+`);
+
+/**
+ * **El crucero: la subida que se acaba**, que es el punto de descenso al
+ * revés. La subida, el círculo donde se dobla —el «T/C» de la carta y de la
+ * pantalla de navegación— y la raya a nivel que sigue. Arriba ya se está.
+ */
+const CRUCERO = icono(`
+  <path d="M2 21.5 h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.45" />
+  <path d="M2.6 18.4 L10.4 8 H22" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <circle cx="10.4" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6" />
+`);
+
+/**
+ * **Nivelar bajando**: la bajada que se acaba a nivel sobre la raya a trazos
+ * de la ventanilla, y por delante, la senda que viene a buscarla. Es lo que
+ * se hace en la altura del punto de final: quedarse, y esperar.
+ */
+const NIVELAR = icono(`
+  <path d="M2 3.4 L9.6 12.4 H17" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M2 15.6 H22" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.6 2.2"
+        stroke-linecap="round" fill="none" opacity="0.8" />
+  <path d="M17 12.4 L22 20" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2 2"
+        stroke-linecap="round" fill="none" opacity="0.55" />
+  <path d="M19.6 12.4 L15.6 9.6 V15.2 Z" />
+`);
+
+/**
+ * **La velocidad que toca**: la cinta de velocidad con sus marcas y la
+ * muesca de la marca —rosa en la cinta— en medio, apuntando. Es «a esta
+ * velocidad», sin decir si más deprisa o más despacio: eso lo dicen el gas o
+ * la nariz cuando hay que tocarlos.
+ */
+const VELOCIDAD = icono(`
+  <rect x="4" y="2.4" width="9.6" height="19.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.8" />
+  <path d="M8.6 6 H13.6 M10.2 9 H13.6 M8.6 12 H13.6 M10.2 15 H13.6 M8.6 18 H13.6"
+        stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.7" />
+  <path d="M21.4 8.4 L14.8 12 L21.4 15.6 Z" />
+`);
+
+/**
  * Lo corregiste: **la senda, y un visto**.
  *
  * Es la de la senda con la línea entera en vez de a trazos y una marca de
@@ -1165,6 +1220,10 @@ export const DIBUJOS = {
   ala: ALA,
   senda: SENDA,
   descenso: DESCENSO,
+  subida: SUBIDA,
+  crucero: CRUCERO,
+  nivelar: NIVELAR,
+  velocidad: VELOCIDAD,
   corregido: CORREGIDO,
   gafas: GAFAS,
   flaps: FLAPS,

@@ -424,6 +424,45 @@ export const EN: Dictionary = {
   "palabra.menosGas": "Less power",
   "palabra.narizArriba": "Nose up",
   "palabra.narizAbajo": "Nose down",
+  "vuelo.paso.subir": "We climb up to the height line, at the speed of the pink mark.",
+  "vuelo.paso.acelerarGas": "Now we can go faster: more power, up to the pink mark.",
+  "vuelo.paso.acelerarNariz": "Now we can go faster: nose a little down, up to the pink mark.",
+  "vuelo.paso.frenarGas": "Now we slow down: less power, down to the pink mark.",
+  "vuelo.paso.frenarAerofrenos": "Now we slow down: a little speed brake, down to the pink mark.",
+  "vuelo.paso.frenarNariz":
+    "Now we slow down: nose a little up, which slows us, down to the pink mark.",
+  "vuelo.paso.mantener": "The pink mark changed and we're already at that speed: we keep it like this.",
+  "vuelo.paso.marcaDelAutomatico":
+    "The pink mark changed: the autopilot takes the engines there. Watch the lever move.",
+  "vuelo.paso.crucero":
+    "We're up: cruise power, to the mark on the engine. That takes us to the pink mark.",
+  "vuelo.paso.cruceroConAutomatico":
+    "We're up: cruise power, to the mark on the engine. And if you like, switch on the autopilot: it's the button that's pulsing.",
+  "vuelo.paso.cruceroConGases":
+    "We're up. The autopilot sets cruise power: watch the lever go by itself to the engine mark.",
+  "vuelo.paso.bajar": "We start down: less power, and we come down gently to the height line.",
+  "vuelo.paso.bajarConAutomatico":
+    "We start down. The autopilot follows the path down to the height line: you check the speed stays on the pink mark.",
+  "vuelo.paso.nivelar":
+    "We've reached the line: we stay here, level, until the glide path comes to meet us.",
+  "vuelo.paso.flaps1": "First flaps, one notch, and to the pink mark.",
+  "vuelo.paso.flaps2": "Another notch of flaps, and to the pink mark.",
+  "vuelo.paso.flaps3": "Landing flaps, all the way down, and to the pink mark.",
+  "vuelo.paso.tren": "Gear down: we're about to land.",
+  "vuelo.paso.recogerAerofrenos": "We're at the pink mark: speed brakes in.",
+  "vuelo.paso.senda": "We're on final: nose along the glide path, and the speed on the pink mark.",
+  "vuelo.paso.sendaConGases":
+    "We're on final. The plane holds the power for the pink mark: you fly the nose along the glide path.",
+  "vuelo.paso.sendaConAyuda":
+    "We're on final. I'll hold the power for the pink mark: you fly the nose along the glide path.",
+  "vuelo.paso.gasTuyo": "You moved the throttle: now the speed is yours, to the pink mark.",
+  "palabra.crucero": "Cruise",
+  "palabra.nivela": "Level off",
+  "palabra.laSenda": "Glide path",
+  "palabra.asi": "Steady",
+  "palabra.aerofrenosAdentro": "Speed brakes in",
+  "hud.gasDelAvion": "The plane holds the power",
+  "hud.gasDeLaAyuda": "The instructor holds the power",
   "vuelo.bulto": "No way through: there is a building",
   "pausa.titulo": "The flight is paused",
   "pausa.seguir": "Keep flying",

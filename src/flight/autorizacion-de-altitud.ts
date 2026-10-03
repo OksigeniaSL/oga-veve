@@ -183,6 +183,15 @@ export class AutorizacionDeSubida {
   }
 
   /**
+   * **Si esta subida la da el control**: hay escalones por dar o ya se dio
+   * alguno. Entonces la subida la cuenta la torre, y quien diga el paso de
+   * subir solo lo enseña. Ver `flight/siguiente-paso.ts`.
+   */
+  get conControl(): boolean {
+    return this.quedan.length > 0 || this.ultima !== null;
+  }
+
+  /**
    * Un paso. Devuelve la altura que el control autoriza **ahora**, pies, o
    * `null` si ahora no toca ninguna.
    */

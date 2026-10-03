@@ -748,7 +748,7 @@ import {
   hastaDondeBajan,
   type CargaDeFlaps,
 } from "./flight/carga-de-flaps";
-import { siguienteDetente } from "./flight/flaps";
+import { muescaMasCercana, siguienteDetente } from "./flight/flaps";
 import {
   NADA_DICHO,
   flapsTrasLaToma,
@@ -833,16 +833,28 @@ import {
   type Objetivos,
 } from "./flight/piloto-automatico";
 import {
+  gasDeLosAutomaticos,
   llevaGasesAutomaticos,
   llevaPilotoAutomatico,
+  memoriaDeGasesNueva,
   type ModoDeGases,
 } from "./flight/gases-automaticos";
 import {
   NUDO,
+  flapsQuePide,
+  trenQuePide,
   velocidadQueToca,
   vrefKt,
   type VelocidadQueToca,
 } from "./flight/escalera-de-velocidades";
+import {
+  CadenaDelVuelo,
+  comoSeDice,
+  consejoDelPaso,
+  type LecturaDelPaso,
+  type Paso as PasoDeLaCadena,
+} from "./flight/siguiente-paso";
+import { gasQueSostiene, marcaDelGas } from "./flight/gas-que-toca";
 import {
   AvisadorDeAltitud,
   PIE as PIE_EN_METROS,
@@ -1058,6 +1070,23 @@ const SE_QUEDAN_LOS_MINIMOS = 4;
  * de pasar.
  */
 const SE_QUEDA_EL_DESCENSO = 6;
+
+/**
+ * Lo que dura la tarjeta de un paso de la cadena del «¿y ahora qué?», s. La
+ * del punto de descenso, que es uno de ellos: hay que poder mirarla y mirar
+ * después la marca o la raya que nombra. Ver `decirElPaso`.
+ */
+const SE_QUEDA_EL_PASO = SE_QUEDA_EL_DESCENSO;
+
+/** La senda de la final, rad: los tres grados de toda la flota. */
+const SENDA_DE_LA_FINAL = (3 * Math.PI) / 180;
+
+/**
+ * **Desde qué altura de ruedas lleva el gas al ralentí** la ayuda de la final
+ * de Guyrami, m: treinta pies, que es donde los gases automáticos de un 737
+ * pasan a `RETARD` y cierran las palancas para la recogida.
+ */
+const RETARD = 30 * 0.3048;
 
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
@@ -5184,10 +5213,12 @@ export class Game {
      * cuanto tocás los mandos. Ver `llevaPilotoAutomatico`.
      */
     this.hud.ponerHayPilotoAutomatico(llevaPilotoAutomatico(this.aircraft));
-    // Y la marca del gas de nivel, que es del modelo. Ver `ponerGasDeNivel`.
+    // Y la marca del motor, que se pone en cada fotograma: ver
+    // `ponerLaMarcaDelMotor`. Hasta el primero, la de su modelo.
     this.hud.ponerGasDeNivel(
       this.tier.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
     );
+    this.marcaDelMotorPuesta = undefined;
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
     this.hud.onVentanillaAlt((pasos) => this.girarLaVentanillaAlt(pasos));
     this.hud.onDestino(() => this.siguienteDestino());
@@ -5978,6 +6009,8 @@ export class Game {
    */
   private acompanarLaRecogida(l: Lectura): void {
     if (!this.laRecogida.paso(l)) return;
+    // Con la ayuda de la final, el gas lo cierra ella: es su RETARD.
+    if (this.gasDeLaFinal !== null) return;
     const c = this.input.controls;
     if (!c.engineOn || c.throttle <= GAS_EN_LA_RECOGIDA || this.sinMotor)
       return;
@@ -6668,6 +6701,15 @@ export class Game {
       this.trenPorMeter = true;
       this.recordadoDelTren = NADA_RECORDADO;
     });
+    /*
+     * Y la siguiente aproximación se configura otra vez paso a paso; y el gas
+     * de la final de Guyrami se suelta, que irse al aire es gas a fondo y lo
+     * pone quien vuela. Ver `flight/siguiente-paso.ts`.
+     */
+    this.hechos.on("frustrada", () => {
+      this.cadena.otraAproximacion();
+      this.soltarElGasDeLaFinal(false);
+    });
     // Al cuaderno: renunciar es ganar, y el grado más alto lo pide.
     this.hechos.on("frustrada", () =>
       this.apuntar({ frustradas: this.cuaderno.frustradas + 1 }),
@@ -6714,21 +6756,14 @@ export class Game {
        */
       this.megafonia.empezarElDescenso();
       this.ponerLaVentanillaParaBajar();
-      const cabina = !laInstructoraLoExplica(this.tier.avisos);
-      this.hud.senal.mostrar(
-        "descenso",
-        cabina
-          ? "TOP OF DESCENT"
-          : this.rotulo("vuelo.empezamosABajar", "palabra.aBajar"),
-        null,
-        { segundos: SE_QUEDA_EL_DESCENSO, prioridad: IMPORTANTE },
-      );
       this.avisar("attention");
-      if (!cabina)
-        this.instructor.decir(
-          t("vuelo.empezamosABajar"),
-          "vuelo.empezamosABajar",
-        );
+      /*
+       * **La tarjeta y la voz las pone la cadena del «¿y ahora qué?»**: el
+       * punto de descenso es uno de sus escalones, y su paso es bajar, con la
+       * raya de la altura y la marca de la velocidad como objetivo. Se decían
+       * aquí, y la cadena lo diría otra vez en el fotograma siguiente. Ver
+       * `decirElPaso` y `flight/siguiente-paso.ts`.
+       */
     });
 
     /*
@@ -11149,7 +11184,17 @@ export class Game {
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
     // mando del jugador borraba la asistencia y los cuatro peldaños daban
     // exactamente el mismo número.
+    const gasAntesDelBanco = this.input.controls.throttle;
     this.pilotoDePruebas?.(this.input.controls);
+    /*
+     * **Si quien vuela tocó el gas en este fotograma**: la tecla, el dedo o el
+     * mando —`mueveElGas`— o el piloto del banco, que hace de teclado y
+     * escribe en los mandos sin pasar por ellos. Lo mira la ayuda de la final
+     * de Guyrami para soltarse, como un A/T al empujar las palancas.
+     */
+    const tocoElGas =
+      this.input.mueveElGas ||
+      Math.abs(this.input.controls.throttle - gasAntesDelBanco) > 1e-4;
     this.limitarElRodaje();
     this.asistirRodaje(dt);
     if (this.flight.state.crashed) {
@@ -11179,6 +11224,9 @@ export class Game {
        * en los mandos de la persona, y el automático los leía como si alguien
        * hubiera tocado la palanca: abrir el mapa lo soltaba, con su alarma.
        */
+      // La velocidad de la final de Guyrami, antes que el automático: lo que
+      // ella escribe en el gas lo copian él y la nivelada. Ver abajo.
+      this.sostenerLaVelocidadDeLaFinal(dt, tocoElGas);
       let mandos = this.conElPilotoAutomatico(dt);
       // La nivelada de los peldaños de abajo, si no manda el automático.
       if (!this.pilotoPuesto) mandos = this.sostenerElNivel(dt, mandos);
@@ -11752,6 +11800,14 @@ export class Game {
      */
     this.cantarLaPerdida();
     this.cantarLaActitud();
+    /*
+     * **Y el «¿y ahora qué?»**: el paso siguiente si se acaba de alcanzar un
+     * escalón, antes que la instructora de la bajada, que espera al
+     * fotograma siguiente si se dijo uno. Y la marca del motor, que es la
+     * mitad de cabina de lo que dice el paso. Ver `seguirLaCadena`.
+     */
+    this.seguirLaCadena(dt);
+    this.ponerLaMarcaDelMotor();
     // Y la instructora de la bajada, si le toca decir algo. Ver `mirarLaSenda`.
     this.aconsejarLaBajada();
 
@@ -12809,8 +12865,16 @@ export class Game {
        * ni salida. Ver `Tutor.update`.
        */
       (this.plan?.rutaVisible().length ?? 0) > 1,
-      // Y la velocidad, la misma que juzga la instructora de la bajada.
-      this.desvioAhora ? this.velocidadJuzgada : null,
+      /*
+       * Y la velocidad, la misma que juzga la instructora de la bajada. Con
+       * el gas en manos de los gases o de la ayuda de la final, la velocidad
+       * no es de quien vuela, y no se le pide bajar el motor.
+       */
+      this.gasesPuestos || this.gasDeLaFinal !== null
+        ? "bien"
+        : this.desvioAhora
+          ? this.velocidadJuzgada
+          : null,
     );
     this.avanzarPlan(dt);
     this.atenderAlSenalero(dt);
@@ -17386,7 +17450,16 @@ export class Game {
      *
      * PENDIENTE-VOCES-automatico: `vuelo.gasesAutomaticos` al ponerlos.
      */
-    this.gasesPuestos = puesto && llevaGasesAutomaticos(this.aircraft);
+    /*
+     * Y si el gas de la final de Guyrami era de los gases del avión, se quedan
+     * al soltarse el automático —a seiscientos pies, para aterrizar a mano—:
+     * en un avión de verdad el A/T no se va con el A/P. Ver
+     * `sostenerLaVelocidadDeLaFinal`.
+     */
+    this.gasesPuestos =
+      (puesto && llevaGasesAutomaticos(this.aircraft)) ||
+      (!puesto && this.gasDeLaFinal === "gases");
+    this.pintarQuienLlevaElGas();
     /*
      * **Y con ventanilla ALT, a la altura de la ventanilla.**
      *
@@ -17812,7 +17885,19 @@ export class Game {
     if (!this.gasesPuestos) return;
     this.gasesPuestos = false;
     this.objetivos = { ...this.objetivos, velocidad: null };
+    this.pintarQuienLlevaElGas();
     this.avisar("attention");
+  }
+
+  /**
+   * **El dibujo de quién lleva el gas**, en la tarjeta del motor: el del
+   * automático con los gases puestos, la mano de la instructora con la ayuda
+   * de la final, nada si es de quien vuela. Ver `ponerQuienLlevaElGas`.
+   */
+  private pintarQuienLlevaElGas(): void {
+    this.hud.ponerQuienLlevaElGas(
+      this.gasesPuestos ? "avion" : this.gasDeLaFinal === "ayuda" ? "ayuda" : null,
+    );
   }
 
   /**
@@ -17853,23 +17938,29 @@ export class Game {
        * Recién llegado, la de la final, que es la que quedó puesta: la de
        * despegar se pone en el puesto, para la salida. Ver `RECIEN_LLEGADO`.
        */
-      v = { kt: Math.round(vrefKt(this.aircraft) + 5), mach: null, tramo: "final" };
+      v = { kt: Math.round(vrefKt(this.aircraft) + 5), mach: null, tramo: "final", peldano: "final" };
     } else if (s.onGround) {
       /*
        * En tierra, la de la subida inicial: la Vr y veinte nudos, que es la V2
        * y el margen con que se sale. Es la que se lleva puesta al despegar.
        */
-      v = { kt: Math.round(this.aircraft.rotationSpeed / NUDO + 20), mach: null, tramo: "subida" };
+      v = {
+        kt: Math.round(this.aircraft.rotationSpeed / NUDO + 20),
+        mach: null,
+        tramo: "subida",
+        peldano: "subida",
+      };
     }
     if (this.tier.model === "simple") {
       const punta = indicatedAirspeed(this.flight.velocidadMaxima(), s.position.y, aire) / NUDO;
       if (v.kt > punta * 0.97) v = { ...v, kt: Math.floor(punta * 0.97), mach: null };
     }
     /*
-     * PENDIENTE-VOCES-automatico: al pasar el `tramo` a `terminal` y a
-     * `aproximacion`, en los tres peldaños de abajo, `vuelo.velocidadTerminal`
-     * y `vuelo.velocidadAproximacion`. Hoy lo dicen la ventanilla SPD y la
-     * muesca de la cinta, que se mueven solas.
+     * Lo que se dice al cambiar de peldaño —frenar a 250, a la de maniobra,
+     * los primeros flaps— lo dice la cadena del «¿y ahora qué?», con la marca
+     * nueva en su objetivo: ver `seguirLaCadena`. Sustituye a las
+     * `vuelo.velocidadTerminal` y `vuelo.velocidadAproximacion` que esperaban
+     * aquí: ver `PENDIENTE-VOCES-escalones.md`.
      */
     this.velocidadDeAhora = v;
     this.velocidadDeAhoraEn = this.relojDelJuego;
@@ -18060,6 +18151,17 @@ export class Game {
    * o `null` si no hay nada puesto. Ver `Fma` en `ui/tablero.ts`.
    */
   private elFma(): Fma | null {
+    /*
+     * **Los gases solos, sin el automático**: los de la final de Guyrami. El
+     * FMA de un Boeing escribe el modo de los gases aunque el A/P esté
+     * suelto, y a treinta pies, `RETARD`: las palancas al ralentí para la
+     * recogida. Ver `sostenerLaVelocidadDeLaFinal`.
+     */
+    if (!this.pilotoPuesto && this.gasesPuestos) {
+      const s = this.flight.state;
+      const retard = !s.onGround && s.heightAboveGround - this.aircraft.gearHeight < RETARD;
+      return { gases: retard ? "RETARD" : "SPD", lateral: "", vertical: "", piloto: false };
+    }
     if (!this.pilotoPuesto) return null;
     const gases = !this.gasesPuestos
       ? ""
@@ -18642,15 +18744,16 @@ export class Game {
         : this.sendaJuzgada;
     this.lecturaDelConsejo = {
       activo,
-      // Con los gases automáticos, la velocidad la llevan ellos.
-      velocidad: this.gasesPuestos ? null : this.velocidadJuzgada,
+      // Con los gases automáticos —o la ayuda de la final—, la velocidad la
+      // llevan ellos.
+      velocidad: this.gasesPuestos || this.gasDeLaFinal !== null ? null : this.velocidadJuzgada,
       velocidadMuyFuera: velocidadMuyFuera(kt, marca),
       // Y con el automático en la senda, la senda.
       senda: this.objetivos.altitud !== null ? null : sendaQueSeAconseja,
       sendaMuyFuera: d ? sendaMuyFuera(d) : false,
       hundiendose: this.actitudDicha === "sink rate",
       morroDelAutomatico: this.objetivos.altitud !== null,
-      gasDelAutomatico: this.gasesPuestos,
+      gasDelAutomatico: this.gasesPuestos || this.gasDeLaFinal !== null,
       kt,
       aceleracion: this.tendenciaDeVelocidad * NUDOS,
       vertical: s.verticalSpeed * PIES_POR_MINUTO,
@@ -18690,7 +18793,8 @@ export class Game {
    */
   private aconsejarLaBajada(): void {
     const l = this.lecturaDelConsejo;
-    if (!l) return;
+    // Un suceso, una voz: si la cadena acaba de decir un paso, al siguiente.
+    if (!l || this.pasoEnEsteFotograma) return;
     const p = this.consejero.paso(l);
     if (!p) return;
     // Lo corregido se celebra, con la senda y su visto. Ver `loCorregiste`.
@@ -18794,6 +18898,419 @@ export class Game {
   /** Lo último que aconsejó la instructora de la bajada. Para el banco. */
   get consejoParaBanco(): ConsejoDeLaBajada["ultimo"] {
     return this.consejero.ultimo;
+  }
+
+  // ── El «¿y ahora qué?»: el paso siguiente en cada escalón ───────────
+
+  /**
+   * **La cadena del vuelo**: el único sitio que dice qué toca ahora en cada
+   * escalón alcanzado —subir, el crucero, bajar, frenar, nivelar, los flaps,
+   * el tren, la senda—. La instructora de la bajada corrige lo que se sale;
+   * esto dice adónde se va. Ver `flight/siguiente-paso.ts`.
+   */
+  private readonly cadena = new CadenaDelVuelo();
+  /**
+   * Si la cadena dijo un paso en este fotograma: la instructora de la bajada
+   * espera al siguiente. Un suceso, una voz.
+   */
+  private pasoEnEsteFotograma = false;
+
+  /** Los pasos dichos en este tramo, en orden. Para el banco. */
+  get pasosParaBanco(): readonly PasoDeLaCadena[] {
+    return this.cadena.pasos;
+  }
+
+  /** Lo que mira la cadena en este fotograma. */
+  private lecturaDelPaso(dt: number): LecturaDelPaso {
+    const s = this.flight.state;
+    const plan = this.navegacion.plan;
+    const v = this.laVelocidadQueToca();
+    const crucero = plan ? aLaVentanilla(this.navegacion.cruceroPlaneado) : null;
+    return {
+      enTierra: s.onGround,
+      conPlan: plan !== null,
+      sobreElSuelo: s.heightAboveGround / PIE_EN_METROS,
+      pies: this.altitudIndicada() / PIE_EN_METROS,
+      vertical: s.verticalSpeed * PIES_POR_MINUTO,
+      kt: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS,
+      marca: v.kt,
+      peldano: v.peldano,
+      // La raya: la ventanilla, o el crucero del plan si el avión no la lleva.
+      hasta: this.ventanillaEnPies() ?? crucero,
+      crucero,
+      bajando: this.navegacion.bajando,
+      enLaFinal: plan !== null && this.navegacion.enLaFinal(this.lecturaDeRuta()),
+      // Lo pedido y no dónde están: lo que sale, ya se hizo.
+      flaps: this.aircraft.llevaFlaps ? muescaMasCercana(this.input.palancaDeFlaps) : 0,
+      flapsQuePide: flapsQuePide(this.aircraft, v.peldano),
+      vfe: this.aircraft.vfePorMuesca,
+      tren: this.aircraft.trenRetractil ? this.input.trenQueSePide : null,
+      trenQuePide: trenQuePide(this.aircraft, v.peldano),
+      aerofrenos: this.input.aerofrenosAbiertos,
+      dt,
+    };
+  }
+
+  /** Un paso de la cadena, y si toca, se dice. Ver `decirElPaso`. */
+  private seguirLaCadena(dt: number): void {
+    this.pasoEnEsteFotograma = false;
+    const l = this.lecturaDelPaso(dt);
+    const p = this.cadena.paso(l);
+    if (!p) return;
+    this.pasoEnEsteFotograma = true;
+    this.decirElPaso(p, l);
+  }
+
+  /**
+   * **Un paso, dicho y enseñado**, por los dos canales que pidió Enrique: lo
+   * que dice la instructora, con la acción y el objetivo, y la señal de la
+   * cabina que lo confirma —la marca de la velocidad, la raya de la altura,
+   * la marca del motor, los flaps, el tren, el FMA—, que ya están puestas
+   * porque las mueve la misma escalera.
+   *
+   * - **La tarjeta**, en los cuatro peldaños: el dibujo del mando que se pide,
+   *   con su tecla; la palabra corta en Tukã; en Taguató la frase con los
+   *   números del objetivo —la velocidad, la altura, los grados de flaps—; y
+   *   en el de cabina, lo que se lee en una cabina de verdad, en inglés.
+   * - **La voz**: la frase nueva en cuanto tenga su grabación; hasta entonces,
+   *   la grabada que pide lo mismo, y la tarjeta enseña esa misma —si no, el
+   *   cartel diría una cosa y la instructora otra—. Sin ninguna que sirva, la
+   *   voz calla: una frase sin grabar es muda en el navegador de quien más
+   *   juega. Ver `PENDIENTE-VOCES-escalones.md`.
+   * - **En el peldaño de cabina no explica nadie**, como en el resto del
+   *   juego: ahí se lee la cabina. Solo el tren se canta, «gear down», que es
+   *   lo que dice quien vuela en una de verdad y está grabado.
+   * - **Y a la instructora de la bajada se le anota** lo que se pidió, para
+   *   que no lo repita como consejo. Ver `ConsejoDeLaBajada.anotar`.
+   */
+  private decirElPaso(p: PasoDeLaCadena, l: LecturaDelPaso): void {
+    const c = this.input.controls;
+    const como = comoSeDice(p, {
+      gasDelAutomatico: this.gasesPuestos || this.gasDeLaFinal !== null,
+      alturaDelAutomatico: this.pilotoPuesto && this.objetivos.altitud !== null,
+      velocidadConElMorro:
+        this.tier.model !== "simple" && l.vertical > 500 && c.throttle >= 0.85,
+      quedaGas: c.throttle >= 0.25,
+      /*
+       * Y no con los flaps de la final por delante: con ellos los aerofrenos
+       * se recogen —ver «recogerAerofrenos»—, y pedirlos ahí era sacarlos y
+       * recogerlos en el mismo segundo. Medido en `verificar-escalones.mjs`.
+       */
+      aerofrenos:
+        this.aircraft.aerofrenos !== null &&
+        !this.input.aerofrenosAbiertos &&
+        l.flapsQuePide < 2,
+      conTorre: this.autorizacionDeSubida.conControl,
+      gasHacia: this.haciaLaMarcaDelMotor(),
+      gasDeLaFinal: this.gasDeLaFinal,
+      porLaSenda: l.vertical < -500,
+      ofreceAutomatico:
+        llevaPilotoAutomatico(this.aircraft) &&
+        !this.pilotoPuesto &&
+        laInstructoraLoExplica(this.tier.avisos),
+    });
+    /*
+     * Y al llegar arriba, el botón del automático late mientras se ofrece —el
+     * dedo de la instructora para quien no lee—; con el paso siguiente deja de
+     * latir, salvo que lo esté proponiendo la nivelada. Ver
+     * `proponerPilotoAutomatico`.
+     */
+    const ofrece =
+      llevaPilotoAutomatico(this.aircraft) &&
+      !this.pilotoPuesto &&
+      laInstructoraLoExplica(this.tier.avisos);
+    if (p.que === "crucero" && ofrece) this.hud.proponerPilotoAutomatico(true);
+    else if (!this.pilotoPuesto && this.nivelada === null)
+      this.hud.proponerPilotoAutomatico(false);
+    const canales = canalesDe(this.tier.avisos);
+    let forma: { readonly texto: string; readonly id: string } | null = null;
+    if (this.instructor.vozDe(como.nueva))
+      forma = { texto: t(como.nueva as TranslationKey), id: como.nueva };
+    else if (como.grabada) forma = laForma(como.grabada as TranslationKey, 0);
+    const larga = forma?.texto ?? t(como.nueva as TranslationKey);
+    const numeros = this.numerosDelPaso(p);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cabina
+        ? this.pasoEnCabina(p)
+        : canales.corto
+          ? t(como.corta as TranslationKey)
+          : canales.cifra && numeros
+            ? `${larga} (${numeros})`
+            : larga;
+    const tecla =
+      como.mando === "flaps" || como.mando === "tren" || como.mando === "aerofrenos"
+        ? nombreDeTecla(this.input.preferredKey(como.mando))
+        : null;
+    this.hud.senal.mostrar(comoDibujo(como.dibujo), rotulo, null, {
+      segundos: SE_QUEDA_EL_PASO,
+      prioridad: IMPORTANTE,
+      tecla,
+    });
+    const habla = !como.calla && laInstructoraLoExplica(this.tier.avisos);
+    const dice = habla ? (forma?.id ?? "sin voz") : canales.cabina ? "cabina" : "la torre";
+    this.apuntarCanto(`paso ${p.escalon}: ${p.que} (${p.objetivo.kt} kt) → ${dice}`);
+    if (p.que === "tren") {
+      // Lo que se canta al sacarlo en cualquier cabina: grabado.
+      if (habla && forma) this.cantar("gear down", forma.texto, forma.id);
+      else if (canales.cabina) this.cantar("gear down");
+    } else if (habla && forma) {
+      this.instructor.decir(forma.texto, forma.id);
+    }
+    const consejo = consejoDelPaso(p, como.mando);
+    if (consejo && this.lecturaDelConsejo?.activo)
+      this.consejero.anotar(consejo, this.lecturaDelConsejo);
+  }
+
+  /**
+   * **Los números del objetivo**, para el peldaño que lee cifras: la
+   * velocidad, la altura y los grados de flaps, en las unidades del peldaño.
+   * Es el número de lo que la marca enseña: «a la marca rosa» con «220 km/h»
+   * al lado es la misma frase hecha medible. `null` si no hay ninguno.
+   */
+  private numerosDelPaso(p: PasoDeLaCadena): string | null {
+    const u = UNIT_SYSTEMS[this.tier.units];
+    const partes = [`${Math.round(u.speed(p.objetivo.kt * NUDO))} ${u.speedLabel()}`];
+    if (p.objetivo.pies !== null)
+      partes.push(
+        `${Math.round(u.altitude(p.objetivo.pies * PIE_EN_METROS) / 10) * 10} ${u.altitudeLabel()}`,
+      );
+    if (p.objetivo.muesca !== null) {
+      const grados = this.aircraft.muescasDeFlaps[p.objetivo.muesca];
+      if (grados !== undefined) partes.push(`${grados}°`);
+    }
+    return partes.join(" · ");
+  }
+
+  /**
+   * **Lo que se lee en una cabina de verdad** con cada paso, para el peldaño
+   * de cabina: las palabras de la lista de llamadas y de la pantalla de
+   * Boeing —«FLAPS 15», «GEAR DOWN», «SPD 250»—, sin traducir, como IAS o
+   * HDG. El punto de descenso es el mensaje de siempre, «TOP OF DESCENT».
+   */
+  private pasoEnCabina(p: PasoDeLaCadena): string {
+    const kt = `SPD ${p.objetivo.kt}`;
+    const transicion = altitudDeTransicion(oaciDe(this.elCampo().escenario));
+    const altura = (pies: number | null): string =>
+      pies === null
+        ? ""
+        : pies > transicion
+          ? `FL${String(Math.round(pies / 100)).padStart(3, "0")}`
+          : `${Math.round(pies / 100) * 100} FT`;
+    switch (p.que) {
+      case "subir":
+        return `CLIMB ${altura(p.objetivo.pies)} · ${kt}`;
+      case "acelerar":
+      case "frenar":
+      case "mantener":
+        return kt;
+      case "crucero": {
+        const mach = this.laVelocidadQueToca().mach;
+        return `TOP OF CLIMB · ${mach !== null ? `M.${Math.round(mach * 100)}` : kt}`;
+      }
+      case "bajar":
+        return "TOP OF DESCENT";
+      case "nivelar":
+        return `LEVEL ${altura(p.objetivo.pies)}`;
+      case "flaps":
+        return `FLAPS ${this.aircraft.muescasDeFlaps[p.objetivo.muesca ?? 1] ?? ""} · ${kt}`;
+      case "tren":
+        return "GEAR DOWN";
+      case "recogerAerofrenos":
+        return `SPEEDBRAKE DOWN · ${kt}`;
+      case "senda":
+        return `FINAL · ${kt}`;
+    }
+  }
+
+  // ── La marca del motor ────────────────────────────────────────────────
+
+  /** Lo último que se pintó de la marca del motor, para no repintar a cada fotograma. */
+  private marcaDelMotorPuesta: number | null | undefined = undefined;
+
+  /**
+   * **La marca del motor, a cada momento**: el gas que toca. Ver
+   * `flight/gas-que-toca.ts`, que decide qué es verdad en cada modelo y
+   * momento; aquí se cuenta con lo que se lleva sacado y se pinta.
+   */
+  private ponerLaMarcaDelMotor(): void {
+    const m = this.laMarcaDelMotor();
+    const antes = this.marcaDelMotorPuesta;
+    if (antes !== undefined && (m === antes || (m !== null && antes !== null && Math.abs(m - antes) < 0.004)))
+      return;
+    this.marcaDelMotorPuesta = m;
+    this.hud.ponerGasDeNivel(m);
+  }
+
+  /** El gas que toca ahora, o `null`. Ver `ponerLaMarcaDelMotor`. */
+  private laMarcaDelMotor(): number | null {
+    const s = this.flight.state;
+    const aire = this.flight.aireDelDia();
+    const v = this.laVelocidadQueToca();
+    const sencillo = this.tier.model === "simple";
+    const enLaFinal = this.desvioAhora?.modo === "final" || this.faseDeAhora === "final";
+    const verdadera = trueFromIndicated(v.kt * NUDO, s.position.y, aire);
+    const gasDeLaMarca = sencillo
+      ? this.flight.gasPara(verdadera)
+      : gasQueSostiene(this.aircraft, {
+          altura: s.position.y,
+          verdadera,
+          aire,
+          flaps: this.input.controls.flaps,
+          tren: this.input.controls.tren,
+          // La senda de tres grados, que es la de toda la flota en la final.
+          pendiente: enLaFinal ? -SENDA_DE_LA_FINAL : 0,
+        });
+    return marcaDelGas({
+      sencillo,
+      enTierra: s.onGround,
+      alturaSostenida:
+        this.nivelada !== null || (this.pilotoPuesto && this.objetivos.altitud !== null),
+      vertical: s.verticalSpeed,
+      enLaFinal,
+      gasDeLaMarca,
+    });
+  }
+
+  /**
+   * **Hacia dónde queda la marca del motor**, para el paso del crucero: si el
+   * gas va por encima, «menos»; por debajo, «más»; a menos de cinco
+   * centésimas, ya está.
+   */
+  private haciaLaMarcaDelMotor(): "mas" | "menos" | null {
+    const m = this.laMarcaDelMotor();
+    if (m === null) return null;
+    const gas = this.input.controls.throttle;
+    return gas > m + 0.05 ? "menos" : gas < m - 0.05 ? "mas" : null;
+  }
+
+  // ── La velocidad de la final, en el peldaño de abajo ──────────────────
+
+  /**
+   * **Quién lleva el gas en la final de Guyrami**, si no lo lleva quien
+   * vuela: `gases`, los gases automáticos del avión que los lleva; `ayuda`,
+   * la instructora, en el que no. `null`: el gas es de quien vuela.
+   */
+  private gasDeLaFinal: "gases" | "ayuda" | null = null;
+  /** Si en esta final ya se dio: una vez por aproximación. */
+  private gasDeLaFinalDado = false;
+  /** Lo que la ayuda recuerda de un paso al siguiente. */
+  private memoriaDelGasDeLaFinal = memoriaDeGasesNueva();
+
+  /**
+   * **En la final del peldaño de abajo, el niño solo lleva la senda.**
+   *
+   * Es la mitad de la queja de la final que no era de frases: con el morro
+   * se lleva la senda y con el gas la velocidad, y a los cuatro años son dos
+   * manos para una sola cabeza. Lo pidió Enrique tal cual: «en Guyrami, gas
+   * automático en la final o ayuda que sostenga la velocidad, para que el
+   * niño solo lleve la senda».
+   *
+   * - **En el avión que lleva gases automáticos**, los suyos: los reactores
+   *   vuelan la final con el A/T en `SPD` a la marca, como uno de verdad, y
+   *   el FMA lo escribe. Ver `flight/gases-automaticos.ts` y el ADR 0015.
+   * - **En el que no los lleva, una ayuda del peldaño**, que lo dice: la mano
+   *   de la instructora en la tarjeta del motor y «yo te llevo el motor».
+   *   Lo que el avión no lleva no se inventa: no sale en ninguna pantalla del
+   *   avión como si fuera suyo.
+   * - **Se ve quién lleva el gas**: el dibujo en la tarjeta del motor, en los
+   *   cuatro peldaños, y la palanca que se mueve sola.
+   * - **Se suelta como un A/T de verdad**: al tocar el gas, que pasa a ser de
+   *   quien vuela, y al tocar tierra. Y en la recogida, a treinta pies, se
+   *   lleva al ralentí, que es el `RETARD` de los gases de Boeing.
+   * - **Una vez por aproximación**, al entrar en la final. Quien la suelta
+   *   tocando el gas no la ve volver hasta la siguiente aproximación: el gas
+   *   que se coge, se respeta.
+   *
+   * `tocoElGas` es si quien vuela —o el piloto del banco, que hace de
+   * teclado— movió el gas en este fotograma.
+   */
+  private sostenerLaVelocidadDeLaFinal(dt: number, tocoElGas: boolean): void {
+    const s = this.flight.state;
+    const enLaFinal = !s.onGround && this.laVelocidadQueToca().peldano === "final";
+    if (!enLaFinal) {
+      if (this.gasDeLaFinal) this.soltarElGasDeLaFinal(false);
+      if (!s.onGround) this.gasDeLaFinalDado = false;
+      return;
+    }
+    if (this.gasDeLaFinal === null) {
+      /*
+       * **Se decide una vez, al entrar en la final**, en el peldaño que se
+       * esté: bajar a Guyrami a media final no la engancha —el gas que se
+       * llevaba es de quien lo llevaba—, ni la engancha quien entra tocando
+       * el gas. Lo comprueba `verificar-cambio-de-peldano.mjs`.
+       */
+      if (this.gasDeLaFinalDado) return;
+      this.gasDeLaFinalDado = true;
+      if (
+        this.tier.id !== "guyrami" ||
+        tocoElGas ||
+        this.sinMotor ||
+        this.laAproximacion.mandanFrustrar
+      )
+        return;
+      this.gasDeLaFinal = llevaGasesAutomaticos(this.aircraft) ? "gases" : "ayuda";
+      if (this.gasDeLaFinal === "gases") this.gasesPuestos = true;
+      this.memoriaDelGasDeLaFinal = memoriaDeGasesNueva();
+      this.pintarQuienLlevaElGas();
+      this.apuntarCanto(`gas de la final: ${this.gasDeLaFinal}`);
+    }
+    if (tocoElGas || this.laAproximacion.mandanFrustrar) {
+      this.soltarElGasDeLaFinal(tocoElGas);
+      return;
+    }
+    // Con el automático puesto, el gas de los reactores lo mueve él.
+    if (this.pilotoPuesto && this.gasesPuestos) return;
+    const aire = this.flight.aireDelDia();
+    const toca = this.laVelocidadQueToca();
+    const ruedas = s.heightAboveGround - this.aircraft.gearHeight;
+    const gas = gasDeLosAutomaticos(
+      {
+        velocidad: indicatedAirspeed(s.airspeed, s.position.y, aire),
+        gas: this.input.controls.throttle,
+        empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
+        masa: this.aircraft.mass,
+        ...(this.tier.model === "simple"
+          ? {
+              equilibrio: this.flight.gasPara(
+                trueFromIndicated(toca.kt * NUDO, s.position.y, aire),
+              ),
+            }
+          : {}),
+      },
+      ruedas < RETARD ? "IDLE" : "SPD",
+      toca.kt * NUDO,
+      dt,
+      this.memoriaDelGasDeLaFinal,
+    );
+    this.input.servoDelGas(gas);
+  }
+
+  /**
+   * **Se suelta el gas de la final**: el dibujo se va, y los gases del
+   * reactor, si eran suyos, también —con el automático puesto los lleva él,
+   * y se quedan—. Si fue por tocarlo, se dice: el gas ahora es de quien vuela.
+   */
+  private soltarElGasDeLaFinal(porTocar: boolean): void {
+    const era = this.gasDeLaFinal;
+    if (!era) return;
+    this.gasDeLaFinal = null;
+    if (era === "gases" && !this.pilotoPuesto) this.gasesPuestos = false;
+    this.pintarQuienLlevaElGas();
+    this.apuntarCanto(`gas de la final: suelto${porTocar ? " al tocarlo" : ""}`);
+    if (!porTocar || this.flight.state.onGround) return;
+    this.avisar("attention");
+    const canales = canalesDe(this.tier.avisos);
+    const clave: TranslationKey = "vuelo.paso.gasTuyo";
+    // La cinta con su marca: la velocidad, ahora, es de quien vuela.
+    this.hud.senal.mostrar(
+      comoDibujo("velocidad"),
+      canales.texto ? (canales.corto ? t("palabra.gas") : t(clave)) : "",
+      null,
+      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+    );
+    // Sin grabar todavía: se ve, y la voz calla. Ver PENDIENTE-VOCES-escalones.
+    if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
   }
 
   /**
@@ -19781,14 +20298,19 @@ export class Game {
     this.hud.ponerPilotoAutomatico(this.pilotoPuesto);
     this.hud.proponerPilotoAutomatico(false);
     /*
-     * Y la marca del gas que sostiene el nivel, que **solo es verdad en el
-     * modelo sencillo**: allí el motor es la velocidad y hay un punto exacto
-     * en el que no se sube ni se baja. En el de coeficientes eso lo hace el
-     * compensador, y una marca aquí mentiría. Ver `ponerGasDeNivel`.
+     * Y la ayuda del gas de la final es del peldaño de abajo: subiendo de
+     * peldaño, el gas vuelve a quien vuela. Ver `sostenerLaVelocidadDeLaFinal`.
+     */
+    if (next.id !== "guyrami") this.soltarElGasDeLaFinal(false);
+    /*
+     * Y la marca del motor, que cambia de significado con el modelo: se
+     * vuelve a contar en el fotograma siguiente. Ver `ponerLaMarcaDelMotor`
+     * y `flight/gas-que-toca.ts`.
      */
     this.hud.ponerGasDeNivel(
       next.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
     );
+    this.marcaDelMotorPuesta = undefined;
     this.keyScreen?.setSimple(
       next.instruments === "none" || next.instruments === "pictorial",
     );

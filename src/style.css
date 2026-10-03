@@ -1882,9 +1882,10 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
   opacity: 1;
 }
 
-/* Barra de motor */
+/* Barra de motor. Relativa, para el dibujo de quién lleva el gas. */
 .motor {
   width: 132px;
+  position: relative;
 }
 
 /* Las dos teclas del motor, flanqueando la barra. El símbolo dice lo que
@@ -2017,6 +2018,50 @@ button.motor__tecla::after {
   width: 0%;
   background: linear-gradient(90deg, var(--verde-bosque), var(--ocre));
   transition: width 90ms linear;
+}
+
+/*
+ * **Quién lleva el gas**, cuando no lo lleva quien vuela: el dibujo del
+ * automático o la mano de la instructora, en verde, que es el color de lo
+ * que está puesto y funcionando en una cabina —el modo activo del FMA—.
+ * Pequeño y en la esquina de la tarjeta: es un estado, no un aviso. Ver
+ * `ponerQuienLlevaElGas` en `hud.ts`.
+ */
+.motor__quien {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  color: var(--ok);
+  pointer-events: none;
+}
+
+.motor__quien[hidden] {
+  display: none;
+}
+
+.motor__quien svg {
+  width: 100%;
+  height: 100%;
+  fill: currentcolor;
+}
+
+.motor__quien-ayuda,
+.motor__quien-avion {
+  display: none;
+}
+
+.motor__quien[data-quien="avion"] .motor__quien-avion,
+.motor__quien[data-quien="ayuda"] .motor__quien-ayuda {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Y la pista del gas, con un filo verde mientras se mueve sola. */
+.motor--lo-llevan .motor__pista {
+  box-shadow: 0 0 0 1px var(--ok);
 }
 
 /* Horizonte artificial: dos mitades que rotan y se desplazan. */
