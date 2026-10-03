@@ -15,7 +15,7 @@
  */
 
 import { escribirRincon } from "./escala";
-import { fan } from "./pictogramas";
+import { fan, motorMas, motorMenos } from "./pictogramas";
 import { surtidorSvg } from "./surtidor";
 
 /** Un icono de veinticuatro por veinticuatro, como todos los del juego. */
@@ -725,6 +725,33 @@ const TIRAR = icono(`
 `);
 
 /**
+ * **Nariz un poquito arriba, y un poquito abajo**: los dos consejos de la
+ * senda en la final y en la bajada. Ver `flight/consejo-de-la-bajada.ts`.
+ *
+ * Es el mismo avión de perfil que el de tirar en la rotación —el mando es el
+ * mismo, la palanca—, menos levantado y con la flecha más corta, porque lo
+ * que se pide es **un poquito**; y el de abajo, el mismo dibujo al revés. El
+ * dibujo enseña **qué mando** se toca, que es lo que no se puede leer a los
+ * cuatro años: el objetivo ya está en el cuadro —el rombo, las luces—.
+ */
+const AVION_DE_PERFIL = `<path d="M3.6 16.4 L12.8 13.6 L16.6 11.4 a1.6 1.6 0 0 1 2 2.4
+           L16 15.9 L12 19.6 H9.9 L10.8 16.4 L5.8 17.8 Z" />`;
+const NARIZ_ARRIBA = icono(`
+  ${AVION_DE_PERFIL}
+  <path d="M19.6 8.6 V4.2 M17.4 6.4 L19.6 3.8 L21.8 6.4" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
+`);
+const NARIZ_ABAJO = icono(`
+  <g transform="matrix(1 0 0 -1 0 24)">
+    ${AVION_DE_PERFIL}
+    <path d="M19.6 8.6 V4.2 M17.4 6.4 L19.6 3.8 L21.8 6.4" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+  </g>
+`);
+
+/**
  * El back-taxi: **la pista, y la flecha que baja, da la vuelta y sube**.
  *
  * Es el dibujo entero de la maniobra, que es lo que hace falta a los cuatro
@@ -1119,6 +1146,18 @@ export const DIBUJOS = {
   "circuito-derecha-encola": circuito("encola", true),
   "circuito-derecha-base": circuito("base", true),
   tirar: TIRAR,
+  "nariz-arriba": NARIZ_ARRIBA,
+  "nariz-abajo": NARIZ_ABAJO,
+  /*
+   * **Más gas y menos gas**: el motor de este avión con su flecha, el mismo
+   * dibujo que llevan los botones del gas. Un dibujo, un significado: lo que
+   * pide la tarjeta es justo el botón que hay que tocar. Hélice en los de
+   * hélice y reactor en los reactores, como el de arrancar: ver `chorro`.
+   */
+  "gas-mas": motorMas(false),
+  "gas-menos": motorMenos(false),
+  "gas-mas-reactor": motorMas(true),
+  "gas-menos-reactor": motorMenos(true),
   aves: AVES,
   "aves-subi": AVES_SUBI,
   papi0: papi(0),
@@ -1226,6 +1265,17 @@ export class Senal {
    * que lleva este. Lo pone el HUD. Ver `REACTOR`.
    */
   chorro = false;
+  /**
+   * El dibujo del motor que lleva **este** avión: la hélice o el reactor, y
+   * los del gas con el suyo.
+   */
+  private delMotorDeHoy(dibujo: DibujoDeSenal): DibujoDeSenal {
+    if (!this.chorro) return dibujo;
+    if (dibujo === "helice") return "reactor";
+    if (dibujo === "gas-mas") return "gas-mas-reactor";
+    if (dibujo === "gas-menos") return "gas-menos-reactor";
+    return dibujo;
+  }
   private raiz: HTMLElement | null = null;
   private caja: HTMLElement | null = null;
   private dibujo: HTMLElement | null = null;
@@ -1423,8 +1473,7 @@ export class Senal {
     this.actual = dibujo;
     this.queda = opciones.segundos ?? 6;
     this.caja.hidden = false;
-    this.dibujo.innerHTML =
-      DIBUJOS[this.chorro && dibujo === "helice" ? "reactor" : dibujo] ?? "";
+    this.dibujo.innerHTML = DIBUJOS[this.delMotorDeHoy(dibujo)] ?? "";
 
     if (this.texto) {
       this.texto.textContent = texto;

@@ -307,6 +307,24 @@ export function idDeLaForma(clave: TranslationKey, n: number): string {
 }
 
 /**
+ * **Una forma concreta**, la número `n` empezando en cero, con su
+ * identificador de grabación. Para quien no puede decir cualquiera: de las
+ * del aro bajo, la que pide gas y morro a la vez no vale para un consejo de
+ * un solo mando. Ver `fraseDe` en `flight/consejo-de-la-bajada.ts`.
+ */
+export function laForma(
+  clave: TranslationKey,
+  n: number,
+): { readonly texto: string; readonly id: string } {
+  const otras = VARIANTES[clave];
+  const k = Math.max(0, Math.min(n, otras?.length ?? 0));
+  return {
+    texto: k === 0 ? t(clave) : otras![k - 1]!,
+    id: idDeLaForma(clave, k),
+  };
+}
+
+/**
  * Una de las formas, al azar, con su identificador de grabación.
  *
  * `azar` se puede pasar para poder comprobarlo sin depender de la suerte.

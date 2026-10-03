@@ -819,6 +819,7 @@ import {
 import {
   NUDO,
   velocidadQueToca,
+  vrefKt,
   type VelocidadQueToca,
 } from "./flight/escalera-de-velocidades";
 import {
@@ -842,10 +843,33 @@ import { nivelMasTranquilo, ESPERA_CON_BACHES } from "./flight/nivel-tranquilo";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
+  bandaDeVelocidad,
   yaLoEstaCorrigiendo,
   queSeDice,
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
+import {
+  arcoDeAltitud,
+  desvioEnLaBajada,
+  desvioEnLaFinal,
+  equipoDeSenda,
+  juzgarLaSenda,
+  juzgarLaVelocidadEnLaBajada,
+  sendaMuyFuera,
+  velocidadMuyFuera,
+  type Desvio,
+  type PerfilEnElCuadro,
+  type Senda,
+  type Velocidad,
+} from "./flight/perfil-vertical";
+import {
+  ConsejoDeLaBajada,
+  cantoDe,
+  fraseDe,
+  type Consejo,
+  type Lectura as LecturaDelConsejo,
+  type Objetivo,
+} from "./flight/consejo-de-la-bajada";
 import {
   callar,
   conectarLaMezcla,
@@ -864,7 +888,7 @@ import {
 } from "./flight/avisos-de-actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
-import { unaForma } from "./audio/variantes";
+import { laForma, unaForma } from "./audio/variantes";
 import {
   LaAproximacion,
   type CampoDeLaAproximacion,
@@ -1313,6 +1337,23 @@ const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "alineando",
   "despegando",
   "comprometido",
+]);
+
+/**
+ * **Recién llegado**: corriendo por la pista después de tocar, saliendo de
+ * ella y rodando al puesto. Ahí el cuadro sigue siendo el de la llegada.
+ *
+ * En la carrera de aterrizaje, a cincuenta y ocho nudos, el JAZ 120 ya
+ * enseñaba en magenta la velocidad de despegar y la altitud del tramo
+ * siguiente —SPD 187 y ALT 16.000—: el plan nuevo se preparaba en cuanto las
+ * ruedas tocaban. En una cabina de verdad eso se pone en el puesto, antes de
+ * arrancar para la salida; rodando hacia él, lo que hay puesto es lo de la
+ * llegada. Ver `prepararLaSubida` y `laVelocidadQueToca`.
+ */
+const RECIEN_LLEGADO: ReadonlySet<string> = new Set<Fase>([
+  "aterrizado",
+  "abandonando",
+  "a-plataforma",
 ]);
 
 export class Game {
@@ -2935,6 +2976,11 @@ export class Game {
     this.laOtraCabecera.reiniciar();
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
+    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
+    this.consejero.reiniciar();
+    this.desvioAhora = null;
+    this.sendaJuzgada = null;
+    this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
     this.vaca.quitar();
@@ -5955,14 +6001,6 @@ export class Game {
   }
 
   /**
-   * El rótulo del aro perdido, **con la cifra cuando toca**.
-   *
-   * «Pasaste por encima del aro» es la frase; «por encima del aro, 38 m» es la
-   * misma frase con el número que la hace medible, y ese número es justo el
-   * peldaño en el que se empieza a leer un instrumento en vez de un dibujo.
-   * En pies donde la cabina va en pies, como todo lo demás.
-   */
-  /**
    * **Si se viene lento, «subí» es el consejo contrario.**
    *
    * Un avión bajo la senda porque va lento no se arregla tirando: se arregla
@@ -5982,20 +6020,6 @@ export class Game {
    */
   private get bajoPorqueVaLento(): boolean {
     return this.bandaDeAhora === "lento";
-  }
-
-  private rotuloDelAro(donde: "alto" | "bajo"): string {
-    const clave = donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo";
-    const corta = donde === "alto" ? "palabra.baja" : "palabra.subi";
-    if (!canalesDe(this.tier.avisos).cifra) return this.rotulo(clave, corta);
-    const unidades = UNIT_SYSTEMS[this.tier.units];
-    const cuanto = Math.round(
-      Math.abs(unidades.altitude(this.runwayGuide.porCuanto)),
-    );
-    return this.rotuloCompuesto(
-      `${t(clave)} (${cuanto} ${unidades.altitudeLabel()})`,
-      corta,
-    );
   }
 
   /**
@@ -8185,6 +8209,11 @@ export class Game {
     // tenerlo junto: antes eran cinco líneas repartidas por este método.
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
+    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
+    this.consejero.reiniciar();
+    this.desvioAhora = null;
+    this.sendaJuzgada = null;
+    this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
     this.vaca.quitar();
@@ -11092,6 +11121,13 @@ export class Game {
     }
     this.bandaDeAhora = banda;
     this.hud.setBandaDeVelocidad(banda);
+    /*
+     * **Y la senda, con lo que mira la instructora de la bajada.** Aquí, con
+     * la banda ya juzgada y antes de que hablen la caja de la velocidad y la
+     * del *sink rate*: las tres beben de esta misma lectura. Ver
+     * `mirarLaSenda`.
+     */
+    this.mirarLaSenda(dt);
     this.hud.mostrarFps(dt, {
       llamadas: this.renderer.info.render.calls,
       triangulos: this.renderer.info.render.triangles,
@@ -11193,7 +11229,25 @@ export class Game {
               this.aircraft.vfePorMuesca,
               siguienteDetente(this.input.palancaDeFlaps),
             );
-        if (sinMotorDice) {
+        /*
+         * **En la bajada y en la final habla la instructora de la bajada**, y
+         * aquí solo canta la caja. «Venís lento: metéle gas» y «vas muy
+         * rápido» salían de aquí cada uno por su cuenta, sin saber lo que se
+         * había dicho antes ni esperar a que el avión respondiera: era uno de
+         * los cuatro sitios que daban consejos de la final. Ahora lo lento lo
+         * canta la caja —*airspeed low*, en el avión que la lleva— y detrás va
+         * el consejo que toca, que sale del consejero y sigue sus reglas; lo
+         * rápido lo dice el consejero cuando le toca. Ver
+         * `flight/consejo-de-la-bajada.ts`.
+         */
+        const delConsejero = this.lecturaDelConsejo;
+        if (delConsejero?.activo && !this.flight.state.onGround) {
+          if (banda === "lento" && delConsejero.lentoLoCantaLaCaja) {
+            const consejo = this.consejero.porLaCaja("lento", delConsejero);
+            if (consejo) this.decirElConsejo(consejo, "airspeed low");
+            else this.cantar("airspeed low");
+          }
+        } else if (sinMotorDice) {
           this.hud.senal.mostrar(
             "senda",
             this.rotulo(
@@ -11443,6 +11497,8 @@ export class Game {
      */
     this.cantarLaPerdida();
     this.cantarLaActitud();
+    // Y la instructora de la bajada, si le toca decir algo. Ver `mirarLaSenda`.
+    this.aconsejarLaBajada();
 
     this.hud.ponerLucesDeAviso({
       // La luz de terreno es roja: la precaución de delante va en ámbar, en
@@ -11791,29 +11847,34 @@ export class Game {
        * Y la regla de la casa es que nada juzgue por un canal que quien juega
        * no tiene delante.
        */
-      // Y sin motor, «subí» es tirar sin gas: el planeo se acorta. Ver
-      // `flight/sin-motor.ts`.
-      if (donde === "bajo" && (this.bajoPorqueVaLento || this.sinMotor)) {
-        // Se calla la senda: lo que hay que hacer es meter gas, y de eso
-        // habla la banda de velocidad. Ver `bajoPorqueVaLento`.
-      } else if ((donde === "alto" || donde === "bajo") && this.seVenLosAros) {
-        this.avisadoDeLaSenda = true;
-        this.hud.senal.mostrar(
-          donde === "alto" ? "aro-alto" : "aro-bajo",
-          this.rotuloDelAro(donde),
-          null,
-          { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
-        );
-        // Y de las formas que tiene, una: éste es de los que más se repiten
-        // en una aproximación. Ver `audio/variantes.ts`.
-        const cual = unaForma(
-          donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo",
-        );
-        this.cantar(
-          donde === "alto" ? "too high, come down" : "too low, climb",
-          cual.texto,
-          cual.id,
-        );
+      /*
+       * **Y lo que se dice lo decide la instructora de la bajada**, que es la
+       * que sabe qué se dijo antes y si el avión respondió. El aro perdido es
+       * una prueba de golpe de cómo va la senda, y con ella elige el consejo:
+       * bajo **por ir lento** es gas, no subir —lo que antes hacía callar a
+       * la senda aquí—, y bajo a la velocidad buena, nariz arriba. Antes el
+       * aro hablaba por su cuenta, y era uno de los cuatro sitios que daban
+       * consejos de la final. Ver `flight/consejo-de-la-bajada.ts`.
+       *
+       * Y sin motor, nada: «subí» es tirar sin gas y el planeo se acorta. Ver
+       * `flight/sin-motor.ts`.
+       */
+      const delConsejero = this.lecturaDelConsejo;
+      if (
+        (donde === "alto" || donde === "bajo") &&
+        this.seVenLosAros &&
+        !this.sinMotor &&
+        delConsejero?.activo
+      ) {
+        const consejo = this.consejero.porElAro(donde, delConsejero);
+        if (consejo)
+          this.decirElConsejo(
+            consejo,
+            cantoDe(consejo, false),
+            consejo.accion === "narizAbajo" || consejo.accion === "narizArriba"
+              ? "aro"
+              : undefined,
+          );
       }
     }
     this.laAproximacion.paso({
@@ -12254,6 +12315,8 @@ export class Game {
         // Y la velocidad que toca y el FMA, los mismos que el cuadro plano.
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
+        // Y la senda, la marca del ritmo y el arco: los del cuadro plano.
+        perfil: this.perfilParaElCuadro(),
       },
       dt,
     );
@@ -12444,6 +12507,11 @@ export class Game {
         // La velocidad que toca y lo que hace el automático. Ver `elFma`.
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
+        /*
+         * **Y la senda a la vista**: el desvío, la marca del ritmo y el arco
+         * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
+         */
+        perfil: this.perfilParaElCuadro(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -12474,6 +12542,8 @@ export class Game {
        * ni salida. Ver `Tutor.update`.
        */
       (this.plan?.rutaVisible().length ?? 0) > 1,
+      // Y la velocidad, la misma que juzga la instructora de la bajada.
+      this.desvioAhora ? this.velocidadJuzgada : null,
     );
     this.avanzarPlan(dt);
     this.atenderAlSenalero(dt);
@@ -16291,9 +16361,30 @@ export class Game {
   }
 
   /** Lo que el cuadro y las pantallas enseñan de la ventanilla. */
-  private ventanillaParaElCuadro(): { pies: number; alerta: Alerta } | null {
+  private ventanillaParaElCuadro(): {
+    pies: number;
+    alerta: Alerta;
+    enLaCinta: boolean;
+  } | null {
     const pies = this.ventanillaEnPies();
-    return pies === null ? null : { pies, alerta: this.alertaDeAltitud };
+    if (pies === null) return null;
+    /*
+     * **Y en la final, en los peldaños que no leen cifras, la cinta no la
+     * marca.** Lo que guía en la final es la senda —el rombo, las luces del
+     * PAPI, la raya rosa de la tarjeta de la altura— y la ventanilla lleva ahí
+     * la altitud del punto de final: un 1.900 en magenta encima de quien baja
+     * a una pista que está a 200 dice «quedate acá», lo contrario de la senda.
+     * «Me venía diciendo que me mantuviera a 1900 en Tenerife Sur cuando la
+     * pista está a 200.» En una cabina de verdad ese número tampoco es un
+     * objetivo en la final: es la altitud a la que se para la bajada, o la de
+     * irse al aire, y quien vuela sigue la senda. La ventanilla sigue puesta
+     * —el panel de la visera la enseña—; lo que se quita es la marca de la
+     * cinta, que a los cuatro años es una orden. De Taguato para arriba, que
+     * lee y sabe para qué es, se ve como siempre. Ver `ventanillaEnLaFinal`.
+     */
+    const enLaCinta =
+      this.desvioAhora?.modo !== "final" || canalesDe(this.tier.avisos).cifra;
+    return { pies, alerta: this.alertaDeAltitud, enLaCinta };
   }
 
   /** Vuelo nuevo: la ventanilla vacía y nada contado. */
@@ -16357,7 +16448,14 @@ export class Game {
   private atenderALaVentanilla(): void {
     const s = this.flight.state;
     const plan = this.navegacion.plan;
-    if (s.onGround && plan && this.subidaPreparada !== plan)
+    // Y no rodando todavía de la llegada: eso se prepara en el puesto. Ver
+    // `RECIEN_LLEGADO`.
+    if (
+      s.onGround &&
+      plan &&
+      this.subidaPreparada !== plan &&
+      !RECIEN_LLEGADO.has(this.faseDeAhora)
+    )
       this.prepararLaSubida(plan, this.elCampo(this.salidaId));
     const lectura = this.lecturaDeRuta();
     const enLaFinal = this.navegacion.enLaFinal(lectura);
@@ -17198,7 +17296,13 @@ export class Game {
       }),
       aire,
     });
-    if (s.onGround) {
+    if (s.onGround && RECIEN_LLEGADO.has(this.faseDeAhora)) {
+      /*
+       * Recién llegado, la de la final, que es la que quedó puesta: la de
+       * despegar se pone en el puesto, para la salida. Ver `RECIEN_LLEGADO`.
+       */
+      v = { kt: Math.round(vrefKt(this.aircraft) + 5), mach: null, tramo: "final" };
+    } else if (s.onGround) {
       /*
        * En tierra, la de la subida inicial: la Vr y veinte nudos, que es la V2
        * y el margen con que se sale. Es la que se lleva puesta al despegar.
@@ -17373,6 +17477,16 @@ export class Game {
    */
   private nivelQueSeSostiene(): number | null {
     if (this.navegacion.bajando) return null;
+    /*
+     * **Y en la final, nada**: ahí manda la senda. La nivelada se soltaba con
+     * la fase «final», y esa fase entra bajando: quien llegaba al punto de
+     * final nivelado a su altitud y soltaba la palanca se quedaba sostenido en
+     * ella, en Tenerife Sur a 1.900 pies con la pista a 200. «Si me dejo
+     * llevar por este plan de vuelo no toco el suelo nunca»; y al tirarse a
+     * buscar la pista, *sink rate*. Volando la final, la palanca es de quien
+     * vuela. Ver `mirarLaSenda`.
+     */
+    if (this.desvioAhora?.modo === "final") return null;
     const ventanilla = this.ventanillaEnMetros();
     if (ventanilla !== null) return ventanilla;
     if (!this.navegacion.plan) return null;
@@ -17777,6 +17891,24 @@ export class Game {
      * quien explica lo que hay que hacer es la instructora, y tiene que
      * explicar lo que sirve. Ver `bandaDeAhora`.
      */
+    /*
+     * **Y en la bajada y la final, la explicación es un consejo del
+     * consejero**: la acción que toca con todo a la vista, y solo si no es lo
+     * mismo que ya se dijo ni lo contrario sin que el avión haya respondido.
+     * Si no toca, la caja suena sola. Bajando a Gran Canaria sonaron a la vez
+     * *sink rate*, *airspeed low*, «metéle gas» y «bajás rápido»: dos cajas y
+     * dos consejos de dos sitios. Ver `flight/consejo-de-la-bajada.ts`.
+     */
+    const delConsejero = this.lecturaDelConsejo;
+    if (ahora === "sink rate" && delConsejero?.activo) {
+      const consejo = this.consejero.porLaCaja("hundiendose", {
+        ...delConsejero,
+        hundiendose: true,
+      });
+      if (consejo) this.decirElConsejo(consejo, "sink rate");
+      else this.cantar("sink rate");
+      return;
+    }
     const clave =
       ahora === "sink rate"
         ? this.bandaDeAhora === "lento"
@@ -17784,6 +17916,352 @@ export class Game {
           : "vuelo.bajasRapido"
         : "vuelo.muyInclinado";
     this.cantar(ahora, t(clave), clave, "normal");
+  }
+
+  // ── La senda a la vista, y la instructora de la bajada ──────────────
+
+  /**
+   * **La instructora de la bajada y de la final.** Una sola, que decide qué
+   * se dice y espera a que el avión responda. Había cuatro sitios dando
+   * consejos de la final cada uno por su cuenta —la banda de velocidad, la
+   * explicación del *sink rate*, los aros y el tutor— y por eso salían dos
+   * contrarios seguidos. Ver `flight/consejo-de-la-bajada.ts`.
+   */
+  private readonly consejero = new ConsejoDeLaBajada();
+  /**
+   * **Dónde está la senda ahora**, o `null` si no se baja por ninguna: lo que
+   * pintan el cuadro, las pantallas de la cabina y los pictogramas, y lo que
+   * mira la instructora. Una cuenta por fotograma. Ver `mirarLaSenda`.
+   */
+  private desvioAhora: Desvio | null = null;
+  /** La senda y la velocidad juzgadas, con su histéresis. */
+  private sendaJuzgada: Senda | null = null;
+  private velocidadJuzgada: Velocidad | null = null;
+  /** A qué se apunta al hablar de la senda. Ver `Objetivo`. */
+  private objetivoDeLaSenda: Objetivo = "nada";
+  /** Lo que mira la instructora en este fotograma. Ver `mirarLaSenda`. */
+  private lecturaDelConsejo: LecturaDelConsejo | null = null;
+  /** La distancia al umbral del fotograma anterior, para saber si se acerca. */
+  private alUmbralDeLaSenda = Infinity;
+
+  /**
+   * **El origen de la senda de la final**: las luces del PAPI, o, en la
+   * pista que no las lleva, donde irían —trescientos metros pista adentro
+   * del umbral de aterrizaje, que es donde se apunta y donde va la antena de
+   * la senda de un ILS—. Es el mismo origen de los aros: ver `SENDA_DESDE`.
+   */
+  private origenDeLaSenda(): {
+    readonly x: number;
+    readonly z: number;
+    readonly papi: boolean;
+  } {
+    const a = this.campoParaLaAproximacion();
+    if (a.senda) return { x: a.senda[0], z: a.senda[1], papi: true };
+    const campo = this.elCampo();
+    const [x, z] = enLaPistaDe(campo, hastaElUmbralDeToma(campo.pista) - SENDA_DESDE);
+    return { x, z, papi: false };
+  }
+
+  /**
+   * **Si se viene a aterrizar por la final**: alineado, por el embudo y
+   * acercándose, o por el último tramo del plan. Es la misma pregunta que
+   * hacen el aviso de terreno y los mínimos.
+   */
+  private vieneAAterrizar(acercandose: boolean): boolean {
+    const s = this.flight.state;
+    if (s.onGround || !acercandose) return false;
+    if (this.faseDeAhora === "final") return true;
+    if (
+      vieneEnFinal(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading) !==
+      null
+    )
+      return true;
+    return (
+      this.navegacion.plan !== null &&
+      this.navegacion.enLaFinal(this.lecturaDeRuta())
+    );
+  }
+
+  /**
+   * **Mira la senda y arma lo que mira la instructora**, una vez por
+   * fotograma.
+   *
+   * Calcula el desvío —el del plan bajando, el de la pista en la final—, lo
+   * juzga con su histéresis y deja la lectura del consejero. No dice nada:
+   * hablan la caja de la velocidad, la del *sink rate*, los aros y
+   * `aconsejarLaBajada`, todos con esta misma lectura.
+   */
+  private mirarLaSenda(dt: number): void {
+    const s = this.flight.state;
+    const alUmbral = this.distanceToRunway();
+    const acercandose = alUmbral < this.alUmbralDeLaSenda - 0.05;
+    this.alUmbralDeLaSenda = alUmbral;
+    let d: Desvio | null = null;
+    let objetivo: Objetivo = "nada";
+    const equipo = equipoDeSenda(this.aircraft);
+    if (!s.onGround && this.vieneAAterrizar(acercandose)) {
+      const o = this.origenDeLaSenda();
+      const a = this.campoParaLaAproximacion();
+      const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
+      const alto = s.position.y - a.cota;
+      d = desvioEnLaFinal(alto, suelo, s.groundSpeed);
+      /*
+       * **Y a qué se apunta**: a las luces si las hay y se ven —las mismas
+       * distancias en las que las explica `explicarElPapi`—; si no, al rombo
+       * de la pantalla, en el avión que lo lleva. En una avioneta lejos de un
+       * PAPI no hay nada que nombrar, y la senda no se juzga.
+       */
+      const seVeElPapi =
+        o.papi && suelo > 150 && suelo < 6000 && alto > 15 && alto < 300;
+      objetivo = seVeElPapi ? "papi" : equipo.final ? "senda" : "nada";
+    } else if (!s.onGround) {
+      const bajada = this.navegacion.desvioDeLaSenda(this.lecturaDeRuta());
+      // Bajando por el plan, solo en el avión que tiene con qué verla.
+      if (bajada && equipo.bajada) {
+        d = desvioEnLaBajada(bajada.metros, bajada.ritmo);
+        objetivo = "senda";
+      }
+    }
+    // **Acabada la bajada, se olvida lo dicho**: la siguiente empieza de cero.
+    if (d === null && this.desvioAhora !== null) this.consejero.reiniciar();
+    this.desvioAhora = d;
+    this.objetivoDeLaSenda = objetivo;
+    this.sendaJuzgada =
+      d && objetivo !== "nada" ? juzgarLaSenda(d, this.sendaJuzgada) : null;
+    const kt =
+      indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS;
+    const marca = this.laVelocidadQueToca().kt;
+    /*
+     * **La velocidad, con la vara de la final donde la hay.** Bajando hacia la
+     * pista por debajo de cuatrocientos metros manda la banda de la
+     * aproximación, que es la que pinta la tortuga y la que hace cantar a la
+     * caja: un solo veredicto para el color, la caja y la instructora. Más
+     * arriba, la marca de la escalera de velocidades, que es la que se ve en
+     * la cinta.
+     */
+    const deLaFinal = this.bandaDeLaAproximacion();
+    this.velocidadJuzgada = !d
+      ? null
+      : deLaFinal !== null
+        ? deLaFinal
+        : juzgarLaVelocidadEnLaBajada(kt, marca, this.velocidadJuzgada);
+    const c = this.input.controls;
+    const activo =
+      d !== null &&
+      !s.onGround &&
+      !this.sinMotor &&
+      !this.laAproximacion.mandanFrustrar &&
+      this.terrenoAhora === null &&
+      /*
+       * Subiendo no se baja por ninguna senda: es una frustrada, o se está
+       * cogiendo la senda desde abajo, y eso no se corrige. Se calla sin
+       * olvidar lo dicho. Ver `Lectura.activo`.
+       */
+      s.verticalSpeed < 1.5 &&
+      // Y en la recogida, solo «quitá el gas». Ver `acompanarLaRecogida`.
+      s.heightAboveGround - this.aircraft.gearHeight > 15;
+    const frenaConFlaps =
+      this.aircraft.llevaFlaps &&
+      this.input.palancaDeFlaps < 1 &&
+      kt <
+        vfeDeLaMuesca(
+          this.aircraft.vfePorMuesca,
+          siguienteDetente(this.input.palancaDeFlaps),
+        );
+    const frenaConAerofrenos =
+      this.aircraft.aerofrenos !== null && !this.input.aerofrenosAbiertos;
+    /*
+     * **Por debajo de la senda y nivelado no es ir bajo: es esperarla.** Una
+     * senda nunca se coge subiendo: se llega a ella por debajo, nivelado a la
+     * altitud del punto de final, y se empieza a bajar cuando el rombo llega
+     * al medio. Es la forma normal de entrar en una final. Por debajo **y
+     * bajando**, en cambio, sí es ir bajo, y ahí se pide levantar la nariz.
+     * Lo mismo bajando por el plan: debajo de su senda se nivela y se espera.
+     */
+    const sendaQueSeAconseja =
+      this.sendaJuzgada === "bajo" && s.verticalSpeed * PIES_POR_MINUTO > -300
+        ? "bien"
+        : this.sendaJuzgada;
+    this.lecturaDelConsejo = {
+      activo,
+      // Con los gases automáticos, la velocidad la llevan ellos.
+      velocidad: this.gasesPuestos ? null : this.velocidadJuzgada,
+      velocidadMuyFuera: velocidadMuyFuera(kt, marca),
+      // Y con el automático en la senda, la senda.
+      senda: this.objetivos.altitud !== null ? null : sendaQueSeAconseja,
+      sendaMuyFuera: d ? sendaMuyFuera(d) : false,
+      hundiendose: this.actitudDicha === "sink rate",
+      kt,
+      aceleracion: this.tendenciaDeVelocidad * NUDOS,
+      vertical: s.verticalSpeed * PIES_POR_MINUTO,
+      verticalObjetivo: d ? d.ritmo * PIES_POR_MINUTO : null,
+      desvio: d ? d.puntos : null,
+      quedaGas: c.throttle >= 0.25,
+      puedeFrenar: d?.modo === "bajada" ? frenaConAerofrenos : frenaConFlaps,
+      lentoLoCantaLaCaja: deLaFinal !== null,
+      marca,
+      modo: d?.modo ?? "final",
+      dt,
+    };
+  }
+
+  /**
+   * La banda de la final si es ella la que juzga ahora, o `null`: bajando
+   * hacia la pista por debajo de cuatrocientos metros. Ver `bandaDeVelocidad`.
+   */
+  private bandaDeLaAproximacion(): Velocidad | null {
+    const s = this.flight.state;
+    if (s.onGround) return null;
+    return bandaDeVelocidad(
+      {
+        sobreElSuelo: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+        enElSuelo: false,
+        vertical: s.verticalSpeed,
+        velocidad: s.airspeed,
+      },
+      this.aircraft.approachSpeed,
+      this.bandaDeAhora,
+    );
+  }
+
+  /**
+   * **Lo que dice la instructora en la bajada**, si toca: un paso del
+   * consejero con la lectura de este fotograma. Ver `mirarLaSenda`.
+   */
+  private aconsejarLaBajada(): void {
+    const l = this.lecturaDelConsejo;
+    if (!l) return;
+    const p = this.consejero.paso(l);
+    if (!p) return;
+    // Lo corregido se celebra, con la senda y su visto. Ver `loCorregiste`.
+    if (p === "bien") this.hechos.emit("loCorregiste", {});
+    else this.decirElConsejo(p, cantoDe(p, false));
+  }
+
+  /**
+   * **Si en este cuadro hay una marca de velocidad a la que apuntar**: la
+   * cinta de los de cristal y los pictogramas de los pequeños la llevan; el
+   * anemómetro redondo de una avioneta, no.
+   */
+  private hayMarcaDeVelocidad(): boolean {
+    return (
+      familiaDe(this.aircraft) !== "esferas" ||
+      this.tier.instruments === "none" ||
+      this.tier.instruments === "pictorial"
+    );
+  }
+
+  /**
+   * **Un consejo de la bajada, dicho**: la tarjeta con el dibujo del mando y
+   * la voz, por quien la diría.
+   *
+   * La frase es la nueva —la que nombra el objetivo— en cuanto tiene su
+   * grabación; mientras no, la grabada que pide el mismo mando, y la tarjeta
+   * enseña **esa misma**: si no, el cartel diría una cosa y la instructora
+   * otra. Si no hay ninguna grabada que sirva, la tarjeta lleva la nueva y la
+   * voz se calla: una frase sin grabar es muda en el navegador de quien más
+   * juega. Ver `PENDIENTE-VOCES-bajada.md`.
+   *
+   * `ingles` es lo que suena en el peldaño de cabina, o la caja que acaba de
+   * cantar y a la que esto explica. Ver `cantoDe` y `cantar`.
+   */
+  private decirElConsejo(c: Consejo, ingles: string, objetivo?: Objetivo): void {
+    const apunta: Objetivo =
+      objetivo ??
+      (c.accion === "masGas" || c.accion === "menosGas" || c.accion === "frenar"
+        ? this.hayMarcaDeVelocidad()
+          ? "marca"
+          : "nada"
+        : c.motivo === "hundiendose"
+          ? equipoDeSenda(this.aircraft).ritmo
+            ? "ritmo"
+            : "nada"
+          : this.objetivoDeLaSenda);
+    const frena = this.desvioAhora?.modo === "bajada" ? "aerofrenos" : "flaps";
+    const f = fraseDe(c, apunta, frena);
+    let forma: { readonly texto: string; readonly id: string } | null = null;
+    if (f.nueva && this.instructor.vozDe(f.nueva))
+      forma = { texto: t(f.nueva as TranslationKey), id: f.nueva };
+    else if (f.grabadas.length) {
+      const g = f.grabadas[Math.floor(Math.random() * f.grabadas.length)]!;
+      forma = laForma(g.clave as TranslationKey, g.forma);
+    }
+    const larga = forma?.texto ?? (f.nueva ? t(f.nueva as TranslationKey) : "");
+    /*
+     * **Y en el peldaño de las cifras, el aro dice por cuánto se escapó.** «Por
+     * encima del aro» es la frase; con «38 m» detrás es la misma frase con el
+     * número que la hace medible, y ese número es justo el peldaño en el que
+     * se empieza a leer un instrumento en vez de un dibujo. En pies donde la
+     * cabina va en pies, como todo lo demás.
+     */
+    const unidades = UNIT_SYSTEMS[this.tier.units];
+    const conCifra =
+      apunta === "aro" && canalesDe(this.tier.avisos).cifra
+        ? `${larga} (${Math.round(Math.abs(unidades.altitude(this.runwayGuide.porCuanto)))} ${unidades.altitudeLabel()})`
+        : larga;
+    const dibujo =
+      c.accion === "masGas"
+        ? "gas-mas"
+        : c.accion === "menosGas"
+          ? "gas-menos"
+          : c.accion === "frenar"
+            ? frena
+            : c.accion === "narizAbajo"
+              ? apunta === "aro"
+                ? "aro-alto"
+                : "nariz-abajo"
+              : apunta === "aro"
+                ? "aro-bajo"
+                : "nariz-arriba";
+    this.hud.senal.mostrar(
+      comoDibujo(dibujo),
+      this.rotuloCompuesto(conCifra, f.corta as TranslationKey),
+      null,
+      {
+        segundos: SE_QUEDA_EL_ARO,
+        prioridad: IMPORTANTE,
+        ...(c.accion === "frenar" && frena === "flaps"
+          ? { tecla: nombreDeTecla(this.input.preferredKey("flaps")) }
+          : {}),
+      },
+    );
+    this.apuntarCanto(
+      `consejo ${c.accion} (${c.motivo}, ${apunta}) → ${forma?.id ?? "sin voz"}`,
+    );
+    this.cantar(ingles, forma?.texto, forma?.id);
+  }
+
+  /** Lo último que aconsejó la instructora de la bajada. Para el banco. */
+  get consejoParaBanco(): ConsejoDeLaBajada["ultimo"] {
+    return this.consejero.ultimo;
+  }
+
+  /**
+   * **Lo que el cuadro pinta de la senda**, según lo que lleva este avión:
+   * el desvío en puntos, la marca del ritmo y el arco verde. Ver
+   * `equipoDeSenda`.
+   */
+  private perfilParaElCuadro(): PerfilEnElCuadro | null {
+    const d = this.desvioAhora;
+    const equipo = equipoDeSenda(this.aircraft);
+    const s = this.flight.state;
+    const arco = equipo.arco
+      ? arcoDeAltitud(
+          s.position.y,
+          this.ventanillaEnMetros(),
+          s.verticalSpeed,
+          s.groundSpeed,
+        )
+      : null;
+    if (d === null && arco === null) return null;
+    const pinta = d !== null && (d.modo === "final" ? equipo.final : equipo.bajada);
+    return {
+      modo: d?.modo ?? null,
+      puntos: pinta && d ? d.puntos : null,
+      ritmoFpm: pinta && d && equipo.ritmo ? d.ritmo * PIES_POR_MINUTO : null,
+      arco,
+      metros: d && d.modo === "final" ? d.metros : null,
+    };
   }
 
   /** Si la pérdida ya se cantó, para no repetirla mientras dure. */

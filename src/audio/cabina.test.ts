@@ -13,6 +13,7 @@ import manifiesto from "../../data/voces/cabina/manifiesto.json";
 import fuenteDelJuego from "../game.ts?raw";
 import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU } from "../flight/aircraft";
 import { LA_CUENTA } from "../flight/avisos-de-altura";
+import { CANTOS_DEL_CONSEJO } from "../flight/consejo-de-la-bajada";
 import {
   CLAVE_DE_CABINA,
   claveDeCabina,
@@ -155,6 +156,8 @@ describe("los cantos de cabina", () => {
     const pedidos = [
       ...loQueCantaElJuego(),
       ...LA_CUENTA.map((e) => e.dice),
+      // Y los del consejero de la bajada, que se piden desde su módulo.
+      ...CANTOS_DEL_CONSEJO,
     ];
     // Y que el lector vea lo que tiene que ver, ramas de ternario incluidas:
     // una regla de medir que no ve nada da siempre verde.
