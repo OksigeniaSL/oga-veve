@@ -125,6 +125,20 @@ export function canalesDe(peldano: Peldano): Canales {
 }
 
 /**
+ * **Desde qué peldaño, de uno a cuatro, lleva su número lo que se avisa con un
+ * número**: el tercero, el de `cifra`.
+ *
+ * Lo usa la GS de rodar, que en tierra crece y se pinta verde o ámbar según lo
+ * que viene: la barra que se llena es el dibujo y está en los cuatro; la cifra
+ * con su «GS», desde aquí. Sale de la tabla y no de un tres escrito a mano en
+ * el cuadro plano, en la cabina y en el teléfono. Ver `rodajeEnTierra` en
+ * `ui/cristal.ts`.
+ */
+export const CIFRAS_DE_AVISO_DESDE: 1 | 2 | 3 | 4 = (PELDANOS.findIndex(
+  (p) => CANALES[p].cifra,
+) + 1) as 1 | 2 | 3 | 4;
+
+/**
  * De quién es un canto de cabina: de **la tripulación** o de **una caja** del
  * avión —el radioaltímetro, el avisador de terreno, el de pérdida, el TCAS—.
  *

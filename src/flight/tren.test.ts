@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AVISA_DESDE,
-  TARDA_EL_TREN,
+  LO_MAS_QUE_TARDA_EL_TREN,
   avisaDelTren,
   luzDeTren,
   luzRojaDelTren,
@@ -18,28 +18,73 @@ import { AIRCRAFT, aircraftById } from "./aircraft";
 import { DETENTES, resistenciaDeLosFlaps } from "./flaps";
 
 describe("el tren se mueve, no salta", () => {
+  const tarda = { sale: 8, entra: 6 };
+
   it("tarda lo suyo en salir", () => {
     let donde = 0;
-    for (let t = 0; t < TARDA_EL_TREN - 1; t += 0.5) {
-      donde = mueveElTren({ donde, quiero: true }, 0.5);
+    for (let t = 0; t < tarda.sale - 1; t += 0.5) {
+      donde = mueveElTren({ donde, quiero: true }, 0.5, tarda);
     }
     expect(donde).toBeLessThan(1);
     expect(donde).toBeGreaterThan(0.85);
   });
 
-  it("y lo mismo en meterse", () => {
+  it("y lo suyo en meterse, que no tiene por qué ser lo mismo", () => {
     let donde = 1;
-    donde = mueveElTren({ donde, quiero: false }, TARDA_EL_TREN / 2);
+    donde = mueveElTren({ donde, quiero: false }, tarda.entra / 2, tarda);
     expect(donde).toBeCloseTo(0.5, 6);
   });
 
   it("no se pasa por ningún extremo", () => {
-    expect(mueveElTren({ donde: 0.9, quiero: true }, 100)).toBe(1);
-    expect(mueveElTren({ donde: 0.1, quiero: false }, 100)).toBe(0);
+    expect(mueveElTren({ donde: 0.9, quiero: true }, 100, tarda)).toBe(1);
+    expect(mueveElTren({ donde: 0.1, quiero: false }, 100, tarda)).toBe(0);
   });
 
   it("y con el paso parado no se mueve", () => {
-    expect(mueveElTren({ donde: 0.4, quiero: true }, 0)).toBe(0.4);
+    expect(mueveElTren({ donde: 0.4, quiero: true }, 0, tarda)).toBe(0.4);
+  });
+});
+
+/**
+ * **Lo que tarda es de cada avión**, que eran diez segundos para todos.
+ *
+ * «Tarda mucho en ponerse y quitarse; creo que en los aviones tarda poco.» El
+ * bimotor de pistón tardaba lo de un avión de línea. Ahora cada ficha dice lo
+ * suyo y de dónde lo saca; aquí se mira que lo diga quien tiene que decirlo y
+ * que no se salga de lo que tarda un tren de verdad.
+ */
+describe("el tren tarda lo de su avión", () => {
+  it("el que mete el tren dice lo que tarda, y el de tren fijo no", () => {
+    for (const a of AIRCRAFT) {
+      if (a.trenRetractil) expect(a.tardaElTren, a.id).not.toBeNull();
+      else expect(a.tardaElTren, a.id).toBeNull();
+    }
+  });
+
+  it("entre los cuatro y los quince segundos, a salir y a entrar", () => {
+    for (const a of AIRCRAFT) {
+      if (!a.tardaElTren) continue;
+      for (const s of [a.tardaElTren.sale, a.tardaElTren.entra]) {
+        expect(s, a.id).toBeGreaterThanOrEqual(4);
+        expect(s, a.id).toBeLessThanOrEqual(15);
+      }
+    }
+  });
+
+  it("y el bimotor de pistón, lo de su manual: seis o siete segundos", () => {
+    // PA-34 Seneca II, manual de vuelo, sección 7: «gear extension or
+    // retraction normally takes six to seven seconds».
+    const t = aircraftById("jaz-40").tardaElTren!;
+    expect(t.sale).toBeLessThanOrEqual(7);
+    expect(t.entra).toBeLessThanOrEqual(7);
+  });
+
+  it("y nadie tarda más que el tope de la flota, que es el que esperan los bancos", () => {
+    for (const a of AIRCRAFT) {
+      if (!a.tardaElTren) continue;
+      expect(a.tardaElTren.sale, a.id).toBeLessThanOrEqual(LO_MAS_QUE_TARDA_EL_TREN);
+      expect(a.tardaElTren.entra, a.id).toBeLessThanOrEqual(LO_MAS_QUE_TARDA_EL_TREN);
+    }
   });
 });
 

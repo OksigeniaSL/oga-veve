@@ -16,7 +16,12 @@
  */
 
 import { neutralControls, type ControlInputs } from "./model";
-import { mueveElTren, sePuedeMeter } from "./tren";
+import {
+  LO_MAS_QUE_TARDA_EL_TREN,
+  mueveElTren,
+  sePuedeMeter,
+  type TardaElTren,
+} from "./tren";
 import {
   DobleToque,
   mandoDelDedo,
@@ -445,6 +450,14 @@ export class InputManager {
   private trenPedido = true;
   /** Y si este avión lo mete siquiera. Lo pone el juego al cambiar de avión. */
   private trenQueSeMete = false;
+  /**
+   * Y lo que tarda el de este avión, a salir y a entrar. Ver `tardaElTren` en
+   * `aircraft.ts`. Sin decir avión, lo más largo de la flota.
+   */
+  private tardaElTren: TardaElTren = {
+    sale: LO_MAS_QUE_TARDA_EL_TREN,
+    entra: LO_MAS_QUE_TARDA_EL_TREN,
+  };
 
   /**
    * Qué avión se vuela hoy, para los mandos que no todos llevan.
@@ -466,6 +479,8 @@ export class InputManager {
      * aerofrenos solos, que es como se llamaba antes.
      */
     llevaAerofrenos: boolean | LoQueLleva = false,
+    /** Y lo que tarda su tren. Ver `tardaElTren` en `aircraft.ts`. */
+    tardaElTren: TardaElTren | null = null,
   ): void {
     this.palancaDeAerofrenos.ponerAeronave(
       typeof llevaAerofrenos === "boolean"
@@ -484,6 +499,10 @@ export class InputManager {
       this.controls.flaps = 0;
     }
     this.trenQueSeMete = trenRetractil;
+    this.tardaElTren = tardaElTren ?? {
+      sale: LO_MAS_QUE_TARDA_EL_TREN,
+      entra: LO_MAS_QUE_TARDA_EL_TREN,
+    };
     if (!trenRetractil) this.ponerElTrenFuera();
   }
 
@@ -975,13 +994,18 @@ export class InputManager {
     /*
      * **El tren sí, porque se mueve solo.**
      *
-     * Los demás mandos están donde los dejás; éste tarda diez segundos en ir
-     * de un sitio a otro, así que entre la orden y la posición hay un camino
-     * que alguien tiene que recorrer cada fotograma. Y en el avión que no lo
-     * mete se queda fuera, que es la verdad de sus patas.
+     * Los demás mandos están donde los dejás; éste tarda sus segundos en ir
+     * de un sitio a otro —los de su avión, y no los mismos al salir que al
+     * entrar—, así que entre la orden y la posición hay un camino que alguien
+     * tiene que recorrer cada fotograma. Y en el avión que no lo mete se queda
+     * fuera, que es la verdad de sus patas.
      */
     this.controls.tren = this.trenQueSeMete
-      ? mueveElTren({ donde: this.controls.tren, quiero: this.trenPedido }, dt)
+      ? mueveElTren(
+          { donde: this.controls.tren, quiero: this.trenPedido },
+          dt,
+          this.tardaElTren,
+        )
       : 1;
   }
 

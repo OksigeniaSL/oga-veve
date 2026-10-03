@@ -591,12 +591,22 @@ import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
   GUION,
+  PARADO,
   SE_QUEDAN,
-  YA_ES_RODAJE,
   guionAfis,
   guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
+import { velocidadesEnTierra } from "./flight/velocidades-en-tierra";
+import {
+  DEJA_DE_PEDIR,
+  NADA_DICHO_EN_LA_PISTA,
+  PIDE_FRENAR,
+  hayQueFrenarEnLaPista,
+  laTorreMetePrisa,
+  seDiceEnLaPista,
+  type LoDichoEnLaPista,
+} from "./flight/lo-dicho-en-la-pista";
 import { reconocer } from "./flight/reconocimiento";
 import {
   alturaDeEdificio,
@@ -1302,8 +1312,6 @@ const LA_FRANJA = 60;
  * sigue aterrizando, no sobrevolando el campo.
  */
 const A_UN_LADO_DEL_EJE = 40;
-
-const RODAJE_DE_VERDAD = 12;
 
 /**
  * Cuánto se mete el coche del «sígame» en la calle de salida al esperar, m.
@@ -3339,6 +3347,12 @@ export class Game {
    * donde empieza el vuelo. Ver dónde se apunta.
    */
   private yaTocoTierra = true;
+  /**
+   * Lo que ya se dijo en la pista en esta toma: «frená», «salí de la pista» y
+   * la prisa de la torre, una vez cada cosa. Lo rearma tocar tierra otra vez.
+   * Ver `flight/lo-dicho-en-la-pista.ts`.
+   */
+  private loDichoEnLaPista: LoDichoEnLaPista = NADA_DICHO_EN_LA_PISTA;
   /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
   private alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
@@ -5988,6 +6002,8 @@ export class Game {
    */
   private alTocarTierra(): void {
     BOCA.retirar((clave) => !!clave && DEL_AIRE.test(clave));
+    // Una toma nueva: lo que se dice en la pista se vuelve a decir una vez.
+    this.loDichoEnLaPista = NADA_DICHO_EN_LA_PISTA;
   }
 
   /**
@@ -10017,6 +10033,7 @@ export class Game {
         frenosDeTierra: this.aircraft.frenosDeTierra !== null,
         autofreno: this.aircraft.autofreno,
       },
+      this.aircraft.tardaElTren,
     );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
@@ -10447,6 +10464,43 @@ export class Game {
     if (conCifras && this.hayTorreQueHable() && !this.esAfisAqui())
       this.porRadio("vacate next available", "mando", undefined, true);
     else this.instructor.decir(dicho.texto, dicho.id, "normal");
+  }
+
+  /**
+   * **«Expedite vacating»**: el avión se ha quedado parado en la pista después
+   * de oír que había que dejarla. Lo dice la torre, una vez por toma, que es
+   * quien insiste en una frecuencia de verdad; la instructora ya lo dijo y no
+   * lo repite. Ver `flight/lo-dicho-en-la-pista.ts`.
+   *
+   * De Taguató para arriba, en fraseología: «{matrícula}, expedite vacating»
+   * (Doc 4444, 12.3.4.24), escrito en la tira de la radio. En los dos de
+   * abajo, en castellano, como la lámpara: «{matrícula}, acelere abandono de
+   * pista». **Y solo con su grabación**: sin ella la frase sería muda en el
+   * navegador de quien más juega, y lo que queda es lo que se ve —la tira, y
+   * la tarjeta de salir de la pista, que sigue puesta—.
+   *
+   * La fraseología va montada aquí y no en `CLAVE_DE_TORRE` porque aquella
+   * tabla solo apunta a lo que ya está grabado, y lo comprueba su prueba. Al
+   * grabarla, va a la tabla y esto pasa a `porRadio`. Ver
+   * `PENDIENTE-VOCES-tierra-2.md`.
+   */
+  private meterPrisaParaSalir(): void {
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    const yo = this.miIndicativo;
+    const habla = hablaDe(this.elCampo().escenario.aerodrome?.id);
+    const relleno = rellenoDe(yo);
+    if (conCifras) {
+      const clave = comoSeDiceAqui("torre.expediteVacating", habla);
+      const texto = `${yo.dicho}, expedite vacating`;
+      this.hud.radio(texto, undefined, true);
+      if (this.instructor.vozDe(clave, relleno))
+        this.torre.decir(texto, clave, "mando", relleno);
+      return;
+    }
+    const clave = comoSeDiceAqui("torre.acelereAbandono", habla) as TranslationKey;
+    if (this.instructor.vozDe(clave, relleno))
+      this.torre.decir(t(clave, { indicativo: yo.dicho }), clave, "mando", relleno);
   }
 
   /**
@@ -11387,6 +11441,8 @@ export class Game {
         : null,
       // Y la de antes, para que salir de la banda no sea rozar su borde.
       this.bandaDeAhora,
+      // Y rodando, lo más que rueda este avión. Ver `velocidadesEnTierra`.
+      velocidadesEnTierra(this.aircraft).rectaLarga,
     );
     /*
      * **Y hacia dónde va la aguja**, filtrada en un segundo: el aviso de
@@ -12636,6 +12692,8 @@ export class Game {
         minimos: this.losMinimosPuestos(),
         // Y la senda, la marca del ritmo y el arco: los del cuadro plano.
         perfil: this.perfilParaElCuadro(),
+        // Y en tierra, la GS de rodar: la del cuadro plano.
+        rodaje: this.rodajeParaElCuadro(),
       },
       dt,
     );
@@ -12830,6 +12888,8 @@ export class Game {
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
         minimos: this.losMinimosPuestos(),
+        // Y en tierra, la GS de rodar. Ver `rodajeParaElCuadro`.
+        rodaje: this.rodajeParaElCuadro(),
         /*
          * **Y la senda a la vista**: el desvío, la marca del ritmo y el arco
          * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
@@ -15782,8 +15842,26 @@ export class Game {
         BOCA.retirar((c) => anunciaLaFase(c) && c !== clave);
         // Y «motor a fondo» ya se dijo al soltar el gas. Ver `decirElGasSuelto`.
         const yaDicho = vista.fase === "despegando" && this.gasSueltoDicho;
-        if (!loDiceElV1 && !yaDicho) this.instructor.decir(frase, clave);
-        if (conLetras) {
+        /*
+         * **Y en la pista, una vez por toma.** «Salí de la pista, que viene
+         * otro, una y otra vez: es una pesada.» Se entraba en «abandonando»
+         * —y en la carrera, con su «frená»— cada vez que se aceleraba hacia la
+         * salida y se volvía a frenar, y cada entrada era la frase entera. La
+         * tarjeta vuelve cuantas veces haga falta; la voz, una. Ver
+         * `flight/lo-dicho-en-la-pista.ts`.
+         */
+        const enLaPista =
+          vista.fase === "abandonando"
+            ? seDiceEnLaPista(this.loDichoEnLaPista, "salir")
+            : vista.fase === "aterrizado"
+              ? seDiceEnLaPista(this.loDichoEnLaPista, "frena")
+              : null;
+        if (enLaPista) this.loDichoEnLaPista = enLaPista.dicho;
+        const yaDichoEnLaPista = enLaPista !== null && !enLaPista.dice;
+        if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista)
+          this.instructor.decir(frase, clave);
+        // Y el rótulo grande tampoco: la tarjeta, que se queda, ya lo dice.
+        if (conLetras && !yaDichoEnLaPista) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")
@@ -15861,17 +15939,25 @@ export class Game {
      * Y el rodaje del juego va a trece: en El Hierro, rodando pista atrás
      * hasta la única salida a la velocidad que pone el propio juego y con
      * viento de cara, la tarjeta de «frená» estuvo puesta cuarenta segundos
-     * seguidos. Lo que se frena es lo que se avanza —la del suelo—, y en
-     * «abandonando» ya se rueda: ahí solo hace falta frenar si se va a
-     * velocidad de carrera, que es lo que dice `YA_ES_RODAJE`.
+     * seguidos. Lo que se frena es lo que se avanza —la del suelo—.
+     *
+     * **Y hasta la velocidad de la salida que se va a tomar**, no hasta paso
+     * de calle: por una rápida se sale a cincuenta nudos, y por una en ángulo
+     * se llega a diez. Lo que toca en cada punto de la pista lo dice el plan.
+     * Ver `hayQueFrenarEnLaPista`.
      */
     const porElSuelo = this.flight.state.groundSpeed;
     const corriendo =
       // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
       // `yaTocoTierra`.
       this.yaTocoTierra &&
-      ((vista.fase === "aterrizado" && porElSuelo > RODAJE_DE_VERDAD) ||
-        (vista.fase === "abandonando" && porElSuelo > YA_ES_RODAJE));
+      hayQueFrenarEnLaPista({
+        fase: vista.fase,
+        enLaPista: this.flight.state.onRunway,
+        porElSuelo,
+        toca: vista.velocidadSugerida,
+        yaSePedia: this.pidiendoFreno,
+      });
     if (corriendo !== this.pidiendoFreno) {
       this.pidiendoFreno = corriendo;
       if (corriendo) {
@@ -15884,14 +15970,40 @@ export class Game {
             tecla: nombreDeTecla(this.input.preferredKey("brakes")),
           },
         );
-        this.avisar("attention");
-        this.instructor.decir(t("vuelo.aterrizado"), "vuelo.aterrizado");
+        // La voz y la campana, una vez por toma: la tarjeta basta las demás.
+        const frena = seDiceEnLaPista(this.loDichoEnLaPista, "frena");
+        this.loDichoEnLaPista = frena.dicho;
+        if (frena.dice) {
+          this.avisar("attention");
+          this.instructor.decir(t("vuelo.aterrizado"), "vuelo.aterrizado");
+        }
       } else {
         // Que la tarjeta que tocara vuelva sola en el próximo fotograma, sin
         // repetir la voz ni la campana. Ver `soloLaTarjeta`.
         this.faseAnunciada = "";
         this.soloLaTarjeta = true;
       }
+    }
+
+    /*
+     * **Y si se queda parado en la pista, la torre mete prisa.** Una vez por
+     * toma, y es la torre y no la instructora: «expedite vacating». Ver
+     * `flight/lo-dicho-en-la-pista.ts`.
+     */
+    const campoDeAhora = this.elCampo().escenario.aerodrome;
+    if (
+      this.yaTocoTierra &&
+      laTorreMetePrisa(this.loDichoEnLaPista, {
+        abandonando: vista.fase === "abandonando",
+        enLaPista: this.flight.state.onRunway,
+        porElSuelo,
+        parado: PARADO,
+        hayTorre:
+          this.hayTorreQueHable() && !esAfis(campoDeAhora),
+      })
+    ) {
+      this.loDichoEnLaPista = { ...this.loDichoEnLaPista, prisa: true };
+      this.meterPrisaParaSalir();
     }
 
     // Tu «cleared to land», cuando toca, en la final de la torre. Ver `paso`
@@ -16793,7 +16905,7 @@ export class Game {
       this.input.controls.tren,
       s.heightAboveGround,
       s.verticalSpeed < -0.5,
-      // Y lo que ya se ha pedido: el tren tarda diez segundos en salir, y
+      // Y lo que ya se ha pedido: el tren tarda sus segundos en salir, y
       // avisar de lo que acabás de hacer enseña a no hacer caso.
       this.input.trenQueSePide,
       /*
@@ -16998,6 +17110,11 @@ export class Game {
      * ahí no hay altura a la que ir, y la raya de la cinta seguía diciendo
      * «1.900» con las ruedas en el suelo. Ver `RECIEN_LLEGADO`.
      */
+    /*
+     * **Y en tierra, ni eso: apagada hasta el puesto.** Ver
+     * `apagadoHastaElPuesto`.
+     */
+    if (this.apagadoHastaElPuesto()) return null;
     const llegando =
       this.desvioAhora?.modo === "final" ||
       (this.flight.state.onGround && RECIEN_LLEGADO.has(this.faseDeAhora));
@@ -18141,9 +18258,72 @@ export class Game {
    * **La velocidad de la ventanilla SPD y de la muesca de la cinta**: la que
    * toca, en el aire y en tierra. Ver `laVelocidadQueToca`.
    */
-  private laSpdDelPanel(): { kt: number; mach: number | null } {
+  private laSpdDelPanel(): { kt: number; mach: number | null } | null {
+    if (this.apagadoHastaElPuesto()) return null;
     const v = this.laVelocidadQueToca();
     return { kt: v.kt, mach: v.mach };
+  }
+
+  /**
+   * **Recién llegado y en tierra, el SPD y el ALT de volar se apagan** hasta
+   * preparar el tramo siguiente en el puesto.
+   *
+   * «La velocidad en la pista debería marcarla el cuadro, en lugar de ponerme
+   * velocidades y altitudes que no necesito usar.» Primero se veía el tramo
+   * siguiente puesto antes de tiempo —SPD 187 y ALT 16.000 a cincuenta y ocho
+   * nudos por la pista— y después, ya arreglado eso, lo de la llegada: la de
+   * final y la altitud de la frustrada, rodando. Ninguna de las dos se usa en
+   * tierra: rodando se mira la velocidad sobre el suelo —ver
+   * `rodajeParaElCuadro`— y la cinta de velocidad no sirve por debajo de
+   * treinta nudos. Así que se apagan, con sus guiones en el panel, y vuelven
+   * en el puesto, que es donde una tripulación prepara la salida. Ver
+   * `RECIEN_LLEGADO` y `prepararLaSubida`.
+   */
+  /** Si la GS de rodar va en ámbar. Ver `rodajeParaElCuadro`. */
+  private gsRapida = false;
+
+  private apagadoHastaElPuesto(): boolean {
+    return this.flight.state.onGround && RECIEN_LLEGADO.has(this.faseDeAhora);
+  }
+
+  /**
+   * **La GS de rodar, para el cuadro**: en tierra y fuera de la carrera de
+   * despegue, la velocidad sobre el suelo en nudos, el fondo de su barra —una
+   * vez y media lo más que rueda este avión, o la salida rápida que lleva su
+   * ruta— y si se va rápido para lo que viene. El veredicto es el mismo que
+   * ya dan la raya, el «frená» de la pista y el «más despacio» de las calles:
+   * no uno más. Ver `rodajeEnTierra` en `ui/cristal.ts`.
+   */
+  private rodajeParaElCuadro(): {
+    nudos: number;
+    escala: number;
+    rapido: boolean;
+  } | null {
+    const s = this.flight.state;
+    if (!s.onGround || EN_DESPEGUE.has(this.faseDeAhora as Fase)) return null;
+    const vista = this.vistaActual;
+    const maxima =
+      vista?.velocidadMaxima ?? velocidadesEnTierra(this.aircraft).rectaLarga;
+    /*
+     * **Ámbar en cuanto se va por encima de lo que toca aquí**, con la banda
+     * muerta de «frená»: el perfil ya frena para cada curva y para la boca de
+     * la salida, así que ir pasado de él es llegar rápido a lo que viene. El
+     * aviso hablado espera a ir bastante más pasado —ver `vaRapido`—; el
+     * color, no, que es para mirarlo y no cansa.
+     */
+    const toca = vista?.velocidadSugerida ?? maxima;
+    const margen = this.gsRapida ? DEJA_DE_PEDIR : PIDE_FRENAR;
+    this.gsRapida =
+      this.pidiendoFreno ||
+      (vista?.rapido ?? false) ||
+      this.bandaDeAhora === "rapido" ||
+      (toca > 0.5 && s.groundSpeed > toca + margen);
+    const rapido = this.gsRapida;
+    return {
+      nudos: s.groundSpeed / NUDO,
+      escala: (maxima * 1.5) / NUDO,
+      rapido,
+    };
   }
 
   /**
@@ -19517,7 +19697,7 @@ export class Game {
           tecla: nombreDeTecla(this.input.preferredKey("tren")),
         },
       );
-      // Sacar el tren se avisa, no se grita: quedan diez segundos de tren y
+      // Sacar el tren se avisa, no se grita: quedan segundos de tren y
       // kilómetros de final. Era «urgente» y cortaba a quien hablara.
       this.cantar("gear down", t("vuelo.sacaElTren"), "vuelo.sacaElTren");
       return;

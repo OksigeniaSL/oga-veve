@@ -93,7 +93,9 @@ describe("en Fuerteventura, aterrizando por la 01", () => {
     const primera = laSalida(plan);
     expect(primera).not.toBeNull();
     // Por la pista hacia ella, pasándose de rápido: eso sí es la carrera.
-    expect(paso(estado(primera! - 300, 22), 0, 2)).toBe("aterrizado");
+    // Cincuenta nudos largos, más que los treinta y cinco de una salida
+    // rápida de su clase. Ver `dejaDeAterrizar` en `flight/vuelo.ts`.
+    expect(paso(estado(primera! - 300, 26), 0, 2)).toBe("aterrizado");
     // Y frena veinte metros antes de la boca, para girar.
     expect(paso(estado(primera! - 20, 10), 0, 2)).toBe("abandonando");
     expect(laSalida(plan)).toBe(primera);

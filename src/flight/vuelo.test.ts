@@ -1016,8 +1016,9 @@ describe("la carrera de aterrizaje", () => {
     const vistas = new Set();
     // Frenando de verdad, pasando justo por el listón que antes hacía saltar
     // la fase de una a otra. Los números siguen la velocidad de rodaje: se
-    // subió de nueve a trece y con ella los dos listones. Ver `vuelo.ts`.
-    for (const velocidad of [22, 19, 21, 17, 20, 18, 21, 17]) {
+    // subió de nueve a trece y con ella los dos listones, y otra vez con la
+    // recta larga de un avión de línea, treinta nudos. Ver `vuelo.ts`.
+    for (const velocidad of [24, 21, 23, 19, 22, 20, 23, 19]) {
       vistas.add(durante(v, enLaCarrera(velocidad), 1));
     }
     expect([...vistas]).toEqual(["aterrizado"]);

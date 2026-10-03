@@ -9,7 +9,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InputManager, type InputActions } from "./input";
-import { TARDA_EL_TREN, luzRojaDelTren } from "./tren";
+import { LO_MAS_QUE_TARDA_EL_TREN as TARDA_EL_TREN, luzRojaDelTren } from "./tren";
 
 /** Un mando sin navegador: la ventana y el HUD, de mentira. */
 function mando(trabado = vi.fn(), retractil = true): InputManager {

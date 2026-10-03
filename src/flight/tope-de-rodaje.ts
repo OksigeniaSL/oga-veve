@@ -50,8 +50,9 @@ import {
 /**
  * La velocidad de rodaje, m/s, para cuando el plan no sugiere ninguna.
  *
- * Nueve. Es el mismo número que usan la banda de velocidad y el plan, y por
- * eso está escrito con su nombre y no suelto: es **el** número.
+ * Nueve, diecisiete nudos y medio. **Ya no es el número de todos**: lo que se
+ * rueda lo dice cada avión —ver `flight/velocidades-en-tierra.ts`— y llega
+ * del plan en la vista. Esto queda para cuando no hay plan que pregunte.
  */
 export const RODAJE = 9;
 
@@ -265,8 +266,15 @@ export function limitarElRodaje(
      * casi que se escapa.» El trinquete es para no *añadir* velocidad de
      * aterrizaje, no para dejarte por debajo de lo que rueda cualquiera.
      */
-    const rodaje = topeDeRodaje({ velocidad: porElSuelo, rodaje: RODAJE });
-    techo = Math.min(techo, Math.max(rodaje.velocidad, porElSuelo));
+    /*
+     * **Y ahora es lo más que rueda este avión, y por una salida rápida, lo de
+     * la salida.** Era la velocidad de rodaje de todos con su holgura, y con
+     * ella el trinquete no dejaba volver a coger lo que se lleva por la pista
+     * hacia una salida rápida, que se toma a cincuenta nudos: quien frenaba de
+     * más ya no la alcanzaba. Ver `velocidadMaxima` en el plan.
+     */
+    const suelo = vista?.velocidadMaxima ?? topeDeRodaje({ velocidad: porElSuelo, rodaje: RODAJE }).velocidad;
+    techo = Math.min(techo, Math.max(suelo, porElSuelo));
   } else {
     techo = Infinity;
   }
@@ -315,7 +323,7 @@ export function limitarElRodaje(
     return techo;
   }
 
-  const tope = topeDeRodaje({
+  const holgado = topeDeRodaje({
     velocidad: porElSuelo,
     /*
      * La velocidad de rodaje de **este sitio**, que el plan ya calcula: en
@@ -323,6 +331,14 @@ export function limitarElRodaje(
      */
     rodaje: vista.velocidadSugerida || RODAJE,
   });
+  /*
+   * **Y la holgura nunca pasa de lo que rueda este avión**: en una recta larga
+   * se va a treinta nudos, y un quince por ciento encima son treinta y cinco,
+   * que ya no se aceptan en ninguna calle. Ver `velocidadMaxima`.
+   */
+  const tope = {
+    velocidad: Math.min(holgado.velocidad, vista.velocidadMaxima ?? Infinity),
+  };
   /*
    * Límites, no mandos: se coge lo más restrictivo de lo que pide quien
    * juega y lo que deja el tope, así esto nunca acelera ni suelta el freno.

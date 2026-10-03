@@ -55,7 +55,7 @@ import {
   MARCA_CON_SU_APARATO,
   MARCA_ROTULO,
 } from "./familia";
-import { CUANTOS_FIJOS, CUANTOS_OTROS } from "./cristal";
+import { CUANTOS_FIJOS, CUANTOS_OTROS, rodajeEnTierra } from "./cristal";
 import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
@@ -211,6 +211,17 @@ export interface DatosDelTablero {
    * cinta. Ver `flight/escalera-de-velocidades.ts`.
    */
   readonly spd?: { readonly kt: number; readonly mach: number | null } | null;
+  /**
+   * **En tierra, rodando**: la velocidad sobre el suelo, en nudos, el fondo de
+   * su barra y si se va rápido para lo que viene —una curva, la salida—.
+   * `null` en el aire y en la carrera de despegue, donde manda la cinta. Ver
+   * `rodajeEnTierra` en `cristal.ts`.
+   */
+  readonly rodaje?: {
+    readonly nudos: number;
+    readonly escala: number;
+    readonly rapido: boolean;
+  } | null;
   /** Lo que hace cada mano del automático, para el FMA. `null` sin automático. */
   readonly fma?: Fma | null;
   /**
@@ -734,6 +745,13 @@ export class Tablero {
         ${this.chapa(a, placa.ancho)}
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
               ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
+        <!--
+          Y en tierra, la GS grande y con su color en el sitio de la pequeña,
+          entre el retrato y las luces del tren. Una avioneta de esta clase no
+          lleva pantalla de navegación: la que se lee rodando es la del GPS.
+          Ver rodajeEnTierra en cristal.ts.
+        -->
+        ${rodajeEnTierra(10, BANDA.alto - 120, placa.ancho - 20)}
         ${lucesDeTren(
           (placa.ancho - patasDe(a) * 22 + 6) / 2,
           BANDA.alto - 48,
@@ -907,6 +925,7 @@ export class Tablero {
     // Los avisos, en las tres familias: la avioneta también se cae.
     this.avisos(raiz, d, dt);
     if (cifras) this.texto("gs", `GS ${Math.round(d.sobreElSuelo)}`);
+    this.rodaje(d.rodaje ?? null, cifras);
     if (cifras && this.familia === "linea" && this.avion) {
       /*
        * Las mismas dos cuentas que el EICAS de la cabina, de los mismos sitios:
@@ -1932,6 +1951,25 @@ export class Tablero {
       `${Math.round(d.nudos)} nudos, ` +
       `${Math.round(d.pies / 10) * 10} pies, ` +
       `rumbo ${rumbo}`;
+  }
+
+  /**
+   * **La GS de rodar**: grande, verde o ámbar, en tierra; y la pequeña de
+   * apoyo, en el aire. Las dos no a la vez: es la misma velocidad. Ver
+   * `rodajeEnTierra` en `cristal.ts`.
+   */
+  private rodaje(r: DatosDelTablero["rodaje"] | null, cifras: boolean): void {
+    poner(this.pieza('[data-cristal="rodaje"]'), "visibility", r ? "visible" : "hidden");
+    poner(this.pieza('[data-cristal="gs"]'), "visibility", r ? "hidden" : "visible");
+    if (!r) return;
+    const parte = Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala)));
+    for (const relleno of this.todas<SVGElement>('[data-cristal="rodaje-relleno"]')) {
+      poner(relleno, "width", n1(parte * Number(relleno.dataset.ancho)));
+      relleno.classList.toggle("cr__rodaje-relleno--rapido", r.rapido);
+    }
+    const cifra = this.pieza('[data-cristal="rodaje-cifra"]');
+    cifra?.classList.toggle("cr__rodaje-cifra--rapido", r.rapido);
+    if (cifras) escribir(cifra, String(Math.max(0, Math.round(r.nudos))));
   }
 
   private texto(que: string, valor: string): void {

@@ -2334,6 +2334,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /** Y lo mismo a la ida: lo rodado y lo trazado. Ver «el rodaje de ida». */
   let idaMetros = 0;
   let largoDeLaIda = 0;
+  /** Y lo que tarda esa ida rodada como pide el juego, s. Ver «el rodaje de ida». */
+  let idaComoPideElJuego = 0;
   let antesIda = null;
   /**
    * Las puertas distintas que se asignaron durante una misma llegada.
@@ -4414,6 +4416,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         for (let i = 0; i < r.length - 1; i++)
           suma += Math.hypot(r[i + 1][0] - r[i][0], r[i + 1][1] - r[i][1]);
         largoDeLaIda = Math.max(largoDeLaIda, suma);
+        idaComoPideElJuego = Math.max(idaComoPideElJuego, o.segundosDeLaRuta?.() ?? 0);
       }
       // La velocidad la pide el juego, y al final de la ruta pide cero: el
       // avión se para solo encima de la raya. Ver `calcularVelocidades`.
@@ -5496,7 +5499,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         -1,
         Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
       );
-      if (porElSuelo(s) < 8) {
+      /*
+       * **Y se frena hasta la velocidad de la salida, no hasta paso de calle.**
+       * Lo que toca aquí lo dice el juego —frenando para llegar a la boca a la
+       * de esa salida: cincuenta nudos por una rápida, diez por una en
+       * ángulo—, y es lo que hace quien sabe: suelta el freno ahí y rueda
+       * hasta la salida. Antes se frenaba hasta ocho metros por segundo fuera
+       * cual fuera la salida. Ver `hayQueFrenarEnLaPista`.
+       */
+      if (porElSuelo(s) < Math.max(8, o.rodaje() ?? 0)) {
         dejoDeFrenarA = porElSuelo(s);
         etapa = "volver";
       }
@@ -5523,7 +5534,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * por encima de la de rodaje, pida lo que pida la raya.
        */
       // Y al final de la ruta pide cero, que es pararse encima de la raya.
-      const quiere = Math.min(9, o.rodaje() ?? 9);
+      // Lo que pide el juego y nada más: veinte nudos en recta, treinta en
+      // las largas, diez en los virajes, cincuenta por una salida rápida.
+      // Estaba topado en nueve metros por segundo, lo de antes para todos.
+      const quiere = o.rodaje() ?? 9;
       const vaA = porElSuelo(s);
       c.throttle = Math.max(
         0,
@@ -5531,7 +5545,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       );
       if (vaA > quiere + 0.5) c.throttle = Math.min(c.throttle, 0.02);
       c.brakes = vaA > quiere + 1.5 ? Math.min(1, (vaA - quiere - 1.5) * 0.5) : 0;
-      if (!s.onRunway) rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
+      // Rodando por las calles: la salida rápida se toma a lo suyo y no cuenta.
+      if (!s.onRunway && fase === "a-plataforma")
+        rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
       c.aileron = timon(s, ruta);
       /*
        * Y el largo de **la ruta que el juego trazó** para volver, que es el
@@ -5827,6 +5843,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     idaEnCola: +paradoEnLaCola.toFixed(0),
     idaMetros: Math.round(idaMetros),
     largoDeLaIda: Math.round(largoDeLaIda),
+    idaComoPideElJuego: Math.round(idaComoPideElJuego),
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
     despego: +despego.toFixed(0),
     toco: +toco.toFixed(0),
@@ -6928,9 +6945,29 @@ if (vuelo.enBici) {
  * arrancar y de pararse en la doble raya. Y nunca menos de los noventa de
  * antes: en una calle corta sigue mandando lo que aguanta un niño.
  */
-const RODAJE_EN_RECTA = 9;
+/*
+ * **Y a lo que rueda ese avión, no a nueve para todos.** Lo de cada clase sale
+ * de su ficha —veinte nudos en recta un avión de línea, quince una avioneta—;
+ * ver `flight/velocidades-en-tierra.ts`.
+ */
+const RODAJE_EN_RECTA = vuelo.avion?.rodaje?.recta ?? 9;
+/*
+ * **Y con las curvas que tiene, no con un tercio para todas.** Con el viraje a
+ * diez nudos, como pide el manual, una calle de Pettirossi con treinta y siete
+ * puntos de curva en cuatrocientos ochenta metros no se rueda en el tercio de
+ * más que se le daba: rodada como pide el juego, sin perder un segundo, son
+ * setenta y cuatro. Así que el tope es lo que tarda esa ruta a lo que pide el
+ * juego —ver `segundosDeLaRuta`— con un cuarto de holgura para quien la rueda
+ * con las manos, más los veinte de arrancar y pararse; o la cuenta de antes, si
+ * da más. Lo que esto caza sigue siendo lo que aburre: un plan que pide ir
+ * despacio sin motivo, o un rodaje que se atasca.
+ */
 const topeDeIda = Math.round(
-  Math.max(90, (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20),
+  Math.max(
+    90,
+    (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20,
+    (vuelo.idaComoPideElJuego ?? 0) * 1.25 + 20,
+  ),
 );
 /*
  * **Y el rato parado detrás de uno de tu cola no es rodaje: se descuenta.**
@@ -7306,10 +7343,16 @@ comprobarSiVolo(
  * es lo mismo que oye quien juega: lo más deprisa que se rodó de vuelta fuera
  * de la pista.
  */
+/*
+ * Y **la de ese avión**: el aviso salta un quince por ciento por encima de lo
+ * más que rueda en una recta larga —ver `bandaDeRodaje`—, y por las calles,
+ * que la salida rápida se toma a lo suyo.
+ */
+const avisoDeRodaje = (vuelo.avion?.rodaje?.rectaLarga ?? 9) * 1.15;
 comprobarSiVolo(
   "y se vuelve rodando a la velocidad de rodaje",
-  vuelo.toco > 0 && vuelo.rodajeMasRapido <= 9 * 1.35,
-  `lo más rápido fuera de la pista: ${vuelo.rodajeMasRapido} m/s (el aviso salta a ${(9 * 1.35).toFixed(1)})`,
+  vuelo.toco > 0 && vuelo.rodajeMasRapido <= avisoDeRodaje,
+  `lo más rápido por las calles: ${vuelo.rodajeMasRapido} m/s (el aviso salta a ${avisoDeRodaje.toFixed(1)})`,
   "en el circuito de Tenerife Norte con el JAZ 90, «vuelo.despacio» sale hasta 5 veces en su rodaje de vuelta",
 );
 
@@ -7487,6 +7530,25 @@ comprobarSiVolo(
             : "")
       : `${cuenta.size} frases distintas, ninguna más de ${MAS_DE_LA_CUENTA} veces`,
     "«me dice que meta el tren, luego que lo saque, luego que lo vuelva a meter, joder»",
+  );
+  /*
+   * **Y en la pista, una vez cada cosa por toma.** «Salí de la pista, que
+   * viene otro, una y otra vez: es una pesada.» Lo de arriba deja pasar hasta
+   * cuatro; aquí, con una toma por vuelo, «frená» y «salí de la pista» se
+   * dicen una vez como mucho. Ver `flight/lo-dicho-en-la-pista.ts`.
+   */
+  const deLaPista = dichas.filter(
+    (c) => c === "vuelo.aterrizado" || String(c).startsWith("vuelo.abandonando"),
+  );
+  const porClave = new Map();
+  for (const c of deLaPista) porClave.set(c, (porClave.get(c) ?? 0) + 1);
+  comprobarSiVolo(
+    "y en la pista, «frená» y «salí de la pista» una vez por toma",
+    [...porClave.values()].every((n) => n <= 1),
+    porClave.size
+      ? [...porClave].map(([c, n]) => `${c} ×${n}`).join(", ")
+      : "ninguna de las dos",
+    "«salí de la pista, que viene otro, una y otra vez: es una pesada»",
   );
 }
 

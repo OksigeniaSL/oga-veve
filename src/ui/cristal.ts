@@ -26,6 +26,7 @@
  * también es información.
  */
 
+import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import type { AircraftConfig } from "../flight/aircraft";
 import { PALETA } from "./paleta";
 import { QUIETA_LA_ALTITUD, marcasDeCinta, rodillo } from "./cinta";
@@ -871,7 +872,70 @@ function carta(cx: number, cy: number, r: number): string {
       avisa y no da maniobras. Ver flight/tcas.ts.
     -->
     <text data-carta="solo-ta" x="${cx - r + 4}" y="${cy + r}" ${MARCA_ROTULO}
-          class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>`;
+          class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>
+    <!--
+      Y en tierra, la GS grande y con su color, arriba a la izquierda debajo
+      del viento: encima de todo lo demás, que rodando es lo que se mira. Ver
+      rodajeEnTierra.
+    -->
+    ${rodajeEnTierra(8, 30)}`;
+}
+
+/**
+ * **La velocidad sobre el suelo, en tierra, grande y con su color.**
+ *
+ * «La velocidad en la pista debería marcarla también el cuadro, en lugar de
+ * ponerme velocidades y altitudes que no necesito usar.» Rodando, un piloto
+ * mira la GS de la pantalla de navegación: la cinta de velocidad no sirve en
+ * tierra —la de un Airbus empieza en treinta nudos— y en la pantalla de vuelo
+ * no hay marca de rodaje. Aquí la GS estaba, pero en cian y pequeña debajo de
+ * la cinta de altitud, que es lo que es en el aire: un dato de apoyo.
+ *
+ * En tierra crece y se pone en su sitio, arriba a la izquierda de la de
+ * navegación —donde la escribe una de verdad—, y se pinta con el color de lo
+ * que viene: **verde** a lo que toca en la recta o en la salida, **ámbar** si
+ * se llega rápido a una curva o a la salida. Es el mismo veredicto que la raya
+ * del suelo y que «frená», no uno más.
+ *
+ * Y crece con la escalera, como todo aviso: **el dibujo en los cuatro
+ * peldaños** —una barra que se llena con la velocidad, verde o ámbar— y la
+ * cifra con su «GS» desde el tercero, que es donde entran los números. Ver
+ * `flight/escalera.ts`. La pone y la quita `Tablero.rodaje`.
+ */
+export const ANCHO_DEL_RODAJE = 132;
+export const ALTO_DEL_RODAJE = 60;
+
+/** Desde qué peldaño lleva la GS su cifra. Ver `flight/escalera.ts`. */
+const CIFRA_DE_RODAJE_DESDE = CIFRAS_DE_AVISO_DESDE;
+
+export function rodajeEnTierra(
+  x: number,
+  y: number,
+  ancho: number = ANCHO_DEL_RODAJE,
+): string {
+  const alto = ALTO_DEL_RODAJE;
+  /*
+   * **Dos barras, y se ve una**: con la cifra, fina y debajo de ella; sin la
+   * cifra —los dos peldaños de abajo—, gorda y en medio de su caja, que ahí
+   * es todo lo que hay que mirar y una caja con una raya al pie parecía un
+   * instrumento a medio pintar.
+   */
+  const barra = (y: number, grueso: number, cuando: string) => `
+      <g transform="translate(10 ${y})" ${cuando}>
+        <rect width="${ancho - 20}" height="${grueso}" rx="3" class="cr__rodaje-carril" />
+        <rect data-cristal="rodaje-relleno" data-ancho="${ancho - 20}" width="0"
+              height="${grueso}" rx="3" class="cr__rodaje-relleno" />
+      </g>`;
+  return `
+    <g data-cristal="rodaje" transform="translate(${x} ${y})" visibility="hidden">
+      <rect width="${ancho}" height="${alto}" rx="6" class="cr__rodaje-fondo" />
+      <text x="10" y="25" ${MARCA_ROTULO} class="cr__rotulo">GS</text>
+      <text data-cristal="rodaje-cifra" x="${ancho - 10}" y="30"
+            data-desde="${CIFRA_DE_RODAJE_DESDE}" class="cr__rodaje-cifra"
+            text-anchor="end"></text>
+      ${barra(alto - 19, 11, `data-desde="${CIFRA_DE_RODAJE_DESDE}"`)}
+      ${barra(16, alto - 32, `data-hasta="${CIFRA_DE_RODAJE_DESDE - 1}"`)}
+    </g>`;
 }
 
 /**

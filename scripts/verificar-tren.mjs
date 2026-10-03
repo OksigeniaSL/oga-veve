@@ -224,6 +224,7 @@ try {
         antes,
         despues: o.controles().tren,
         tarda: dentro === null ? null : dentro - pedido,
+        deSuFicha: o.avion?.()?.tardaElTren?.entra ?? null,
         empezo: aMedias === null ? null : aMedias - pedido,
         rapidoConTren,
         rapidoSinTren,
@@ -253,15 +254,23 @@ try {
       );
       /*
        * Y **tarda**, medido en el reloj del juego: de pedirlo a tenerlo dentro,
-       * los diez segundos de `TARDA_EL_TREN`, y empezando a moverse enseguida.
+       * lo que dice su ficha —`tardaElTren.entra`, ya no diez segundos para
+       * todos—, con un segundo de margen por lo que mide el reloj del banco,
+       * y empezando a moverse enseguida.
        */
       comprobar(
-        etiqueta("y tarda, que es medio mando"),
-        siSeMidio(visto.tarda !== null && visto.tarda >= 8 && visto.empezo < 1),
+        etiqueta("y tarda lo que tarda el suyo, que es medio mando"),
+        siSeMidio(
+          visto.tarda !== null &&
+            visto.deSuFicha !== null &&
+            visto.tarda >= 4 &&
+            Math.abs(visto.tarda - visto.deSuFicha) <= 1 &&
+            visto.empezo < 1,
+        ),
         medido
-          ? `dentro a los ${visto.tarda?.toFixed(1) ?? "—"} s de juego`
+          ? `dentro a los ${visto.tarda?.toFixed(1) ?? "—"} s de juego · su ficha dice ${visto.deSuFicha ?? "—"} s`
           : noSeMidio,
-        "un tren instantáneo no enseña a pedirlo antes de necesitarlo",
+        "un tren instantáneo no enseña a pedirlo antes de necesitarlo, y uno de avión de línea en una avioneta tampoco es el suyo",
       );
       comprobar(
         etiqueta("y con él metido el avión corre más"),
