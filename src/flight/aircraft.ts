@@ -1,6 +1,7 @@
 import { FLOTA, nombreEntero } from "./flota";
 import type { EquipoTcas } from "./tcas";
 import type { FrenosDelTipo } from "./frenada";
+import type { TardaElTren } from "./tren";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -768,6 +769,24 @@ export interface AircraftConfig {
    */
   meteElTrenA: number | null;
   /**
+   * **Lo que tarda el tren en salir y en entrar**, s; `null` en el de tren
+   * fijo.
+   *
+   * Eran diez segundos para todos y en los dos sentidos, puestos largos a
+   * propósito «para que se note que tarda». Y eso enseñaba un avión que no
+   * existe: el bimotor de pistón tardaba lo de un avión de línea, y quien lo
+   * vuela lo notó —«tarda mucho en ponerse y quitarse; creo que en los
+   * aviones tarda poco»—. Lo que hay que aprender, que el tren se pide antes
+   * de necesitarlo, ya lo enseña el estado de en medio del cuadro mientras se
+   * mueve; no hace falta alargarlo.
+   *
+   * Dos números y no uno porque son dos maniobras: al salir ayudan el peso y
+   * el aire, y al entrar los dos están en contra. Donde el manual de la clase
+   * da una sola cifra para las dos, se pone la misma en las dos. Cada ficha
+   * dice de dónde sale la suya. Ver `mueveElTren` en `flight/tren.ts`.
+   */
+  tardaElTren: TardaElTren | null;
+  /**
    * Cabeceo máximo con las ruedas en el suelo, rad. Lo impone la geometría
    * del tren: más allá, la cola toca. Sin este límite el avión rota hasta
    * ponerse de pie en la pista y se queda en pérdida sin llegar a despegar.
@@ -928,6 +947,7 @@ export const PYKASU: AircraftConfig = {
   trenRetractil: false,
   // Tren fijo: un entrenador de escuela lleva las patas al aire a propósito.
   meteElTrenA: null,
+  tardaElTren: null,
   maxGroundPitch: 0.21, // 12°
   // 3,3 m de morro y diez centímetros de pata: 1,7°.
   minGroundPitch: -0.030,
@@ -1031,6 +1051,7 @@ export const MAINUMBY: AircraftConfig = {
   trenRetractil: false,
   // Tren fijo: un fumigador trabaja bajo y no le compensa el peso ni la avería.
   meteElTrenA: null,
+  tardaElTren: null,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   // Patín de cola: se apoya de morro arriba, y bajarlo
   // clava la hélice. Poco juego a propósito.
@@ -1183,6 +1204,14 @@ export const PANAMBI: AircraftConfig = {
   // Sesenta metros: cuando ya no queda pista donde posarse delante, que es la
   // regla de escuela. Sale de una pista corta, así que tarda en quedarse sin.
   meteElTrenA: 60,
+  /*
+   * **Siete segundos, a salir y a entrar**: el manual del bimotor cuya placa de
+   * flaps lleva, el Piper PA-34 Seneca II —sección 7, «Landing Gear»—, dice
+   * «gear extension or retraction normally takes six to seven seconds». Una
+   * sola cifra para los dos sentidos, que lo mueve la misma bomba eléctrica
+   * reversible; se toma la de arriba.
+   */
+  tardaElTren: { sale: 7, entra: 7 },
   maxGroundPitch: 0.19, // 11°
   // 3,6 m de morro y diez centímetros: 1,6°.
   minGroundPitch: -0.028,
@@ -1322,6 +1351,16 @@ export const ARASUNU: AircraftConfig = {
   // Veinticinco: «positive rate, gear up». Un turbohélice regional mete el tren
   // a los pocos segundos de despegar, no a trescientos metros.
   meteElTrenA: 25,
+  /*
+   * **Seis segundos, a salir y a entrar.** El tren de un turbohélice de
+   * cercanías lo mueve una bomba hidráulica propia en el ala, como el del
+   * 1900D, y los seis segundos de su subida son la cifra que circula en el
+   * material de instrucción de ese avión; el manual de vuelo que la daría no
+   * es público, así que es la estimación de su clase y no una cita. Por
+   * debajo de la del bimotor de pistón porque sus patas son cortas para su
+   * peso y la bomba es de avión de línea.
+   */
+  tardaElTren: { sale: 6, entra: 6 },
   maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
   // 5,5 m de morro y doce centímetros: 1,3°.
   minGroundPitch: -0.022,
@@ -1522,6 +1561,14 @@ export const ARAI: AircraftConfig = {
   // Veinte: el tren entra en cuanto el variómetro dice que sube. Con las patas
   // fuera a más de doscientos cinco nudos se pasaría de su propio límite.
   meteElTrenA: 20,
+  /*
+   * **Ocho segundos, a salir y a entrar.** Estimación de su clase, y dicha
+   * como tal: los manuales de tripulación de los reactores de línea no
+   * publican lo que tarda el tren en recorrer —dicen qué luces se ven y en
+   * qué orden, no cuánto tardan— y el de mantenimiento, que sí lo da, no es
+   * público. Si un día se tiene la cifra de su manual, va aquí.
+   */
+  tardaElTren: { sale: 8, entra: 8 },
   maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
   // 11,5 m de morro y quince centímetros: 0,75°.
   minGroundPitch: -0.013,
@@ -1734,6 +1781,14 @@ export const YVAGA: AircraftConfig = {
   // Veinte: igual que el de pasillo único. Un avión de línea no vuela con el
   // tren fuera más que los segundos de después del despegue.
   meteElTrenA: 20,
+  /*
+   * **Diez segundos, a salir y a entrar**: cinco patas, cuatro de ellas
+   * principales de cuatro ruedas, con sus compuertas y su secuencia, tardan
+   * algo más que las tres de un pasillo único. Estimación de su clase, por lo
+   * mismo que en el JAZ 90: el tiempo de recorrido está en el manual de
+   * mantenimiento, que no es público.
+   */
+  tardaElTren: { sale: 10, entra: 10 },
   maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
   // 25 m de morro y quince centímetros: 0,34°.
   minGroundPitch: -0.006,

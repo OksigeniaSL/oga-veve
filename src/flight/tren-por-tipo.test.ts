@@ -67,8 +67,8 @@ describe("el tren, por tipo", () => {
 
   it("y le da tiempo a meterlo antes de pasarse de su límite", () => {
     /*
-     * **La comprobación que de verdad importa.** El tren tarda en entrar —diez
-     * segundos en este juego— así que entre que se pide y está dentro el avión
+     * **La comprobación que de verdad importa.** El tren tarda en entrar —lo
+     * que diga su ficha, ver `tardaElTren`— así que entre que se pide y está dentro el avión
      * sigue acelerando. Si la altura a la que se pide llega tan tarde que para
      * entonces ya se va más rápido de lo que el tren aguanta, el aviso llega
      * cuando ya se rompió algo.

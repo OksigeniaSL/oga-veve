@@ -469,6 +469,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * **a qué velocidad se puede**, que es lo que dicen estos dos.
        */
       trenRetractil: juego.aircraft.trenRetractil,
+      // Y lo que tarda su tren, a salir y a entrar. Ver `verificar-tren`.
+      tardaElTren: juego.aircraft.tardaElTren,
       llevaFlaps: juego.aircraft.llevaFlaps,
       vleKt: juego.aircraft.vleKt,
       // La de los flaps de aterrizaje, que es la que mira el piloto del banco

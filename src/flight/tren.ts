@@ -28,13 +28,28 @@
  */
 
 /**
- * Lo que tarda el tren en salir o en meterse, en segundos.
+ * Lo que tarda el tren en salir y en meterse, en segundos.
  *
- * Diez, que es lo que tarda el de un avión de línea; los de una avioneta
- * retráctil van por los seis. Se deja uno solo y largo a propósito: lo que hay
- * que aprender es que **tarda**, y con cuatro segundos eso no se nota.
+ * **Es de cada avión**, y está en su ficha: ver `tardaElTren` en
+ * `aircraft.ts`. Aquí había un número para todos —diez, «uno solo y largo a
+ * propósito: lo que hay que aprender es que tarda»— y con él el bimotor de
+ * pistón tardaba lo que un avión de línea. Lo que se aprende, que el tren se
+ * pide antes de necesitarlo, lo enseña el estado de en medio del cuadro
+ * mientras viaja, sea de seis segundos o de diez.
  */
-export const TARDA_EL_TREN = 10;
+export interface TardaElTren {
+  /** De dentro a fuera y trabado. */
+  readonly sale: number;
+  /** De fuera a dentro y trabado. */
+  readonly entra: number;
+}
+
+/**
+ * Lo más que tarda el tren de cualquier avión de la flota, s. Para quien
+ * necesita esperar a que llegue sin saber qué avión es: los bancos y las
+ * pruebas del mando.
+ */
+export const LO_MAS_QUE_TARDA_EL_TREN = 10;
 
 /**
  * El `K_uc` de la correlación de Mair y Birdsall, con los flaps recogidos y con
@@ -130,9 +145,9 @@ export interface Tren {
  * porque la regla de «con el avión en el suelo no» no es del tren, es del
  * avión que está apoyado encima.
  */
-export function mueveElTren(t: Tren, dt: number): number {
-  const paso = dt / TARDA_EL_TREN;
-  return t.quiero ? Math.min(1, t.donde + paso) : Math.max(0, t.donde - paso);
+export function mueveElTren(t: Tren, dt: number, tarda: TardaElTren): number {
+  if (t.quiero) return Math.min(1, t.donde + dt / Math.max(0.1, tarda.sale));
+  return Math.max(0, t.donde - dt / Math.max(0.1, tarda.entra));
 }
 
 /**
@@ -210,7 +225,7 @@ export function luzRojaDelTren(
  * ## Y no se avisa de lo que ya se ha hecho
  *
  * `sePide` es lo que el piloto **ya ha pedido**, que no es lo mismo que dónde
- * está el tren: tarda diez segundos en salir. Mirando solo la posición, quien
+ * está el tren: tarda sus segundos en salir. Mirando solo la posición, quien
  * bajaba el tren a trescientos metros y seguía descendiendo cruzaba los
  * doscientos cincuenta con el tren a medio camino y se llevaba la bronca por
  * algo que acababa de hacer. Dicho jugando: «si ya bajé el tren en la
@@ -251,7 +266,7 @@ export const AVISA_DESDE = 250;
  * Lo último que se avisó del tren, para no repetirlo.
  *
  * `pedido` es lo que estaba pedido el mando cuando se dijo —no dónde estaba el
- * tren, que tarda diez segundos en llegar.
+ * tren, que tarda sus segundos en llegar.
  */
 export interface LoDichoDelTren {
   readonly que: "mete" | "saca";

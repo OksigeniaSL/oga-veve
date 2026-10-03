@@ -9930,6 +9930,7 @@ export class Game {
         frenosDeTierra: this.aircraft.frenosDeTierra !== null,
         autofreno: this.aircraft.autofreno,
       },
+      this.aircraft.tardaElTren,
     );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
@@ -16500,7 +16501,7 @@ export class Game {
       this.input.controls.tren,
       s.heightAboveGround,
       s.verticalSpeed < -0.5,
-      // Y lo que ya se ha pedido: el tren tarda diez segundos en salir, y
+      // Y lo que ya se ha pedido: el tren tarda sus segundos en salir, y
       // avisar de lo que acabás de hacer enseña a no hacer caso.
       this.input.trenQueSePide,
       /*
@@ -18773,7 +18774,7 @@ export class Game {
           tecla: nombreDeTecla(this.input.preferredKey("tren")),
         },
       );
-      // Sacar el tren se avisa, no se grita: quedan diez segundos de tren y
+      // Sacar el tren se avisa, no se grita: quedan segundos de tren y
       // kilómetros de final. Era «urgente» y cortaba a quien hablara.
       this.cantar("gear down", t("vuelo.sacaElTren"), "vuelo.sacaElTren");
       return;
