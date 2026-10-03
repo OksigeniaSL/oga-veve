@@ -38,6 +38,9 @@ const VISTAS = {
   frente: { dir: [0.02, 0.16, -1], lejos: 1.55, mira: [0.5, 0.45, 0.5] },
   // Y la punta de la izquierda de cerca, de tres cuartos por delante.
   punta: { dir: [-0.55, 0.25, -0.8], lejos: 0.28, mira: [0.02, 0.5, 0.62] },
+  // Y la misma punta de frente y a su altura: ahí se ve si la luz va en el
+  // ala, al pie de la aleta, o colgada de la aleta de abajo.
+  "punta-de-frente": { dir: [-0.12, 0.04, -1], lejos: 0.3, mira: [0.04, 0.45, 0.62] },
   cola: { dir: [-1, 0.15, 0.25], lejos: 0.62, mira: [0.5, 0.72, 0.9] },
   "cola-derecha": { dir: [1, 0.15, 0.25], lejos: 0.62, mira: [0.5, 0.72, 0.9] },
   puerta: { dir: [-1, 0.12, -0.35], lejos: 0.55, mira: [0.5, 0.45, 0.16] },
@@ -63,7 +66,9 @@ try {
   for (const id of PEDIDOS.length ? PEDIDOS : TODOS) {
     const page = await navegador.newPage({ viewport: { width: 1200, height: 700 } });
     page.on("pageerror", (e) => console.log(`  ${id} ERROR:`, e.message));
-    await page.goto(`${BASE}/scripts/ver-librea.html?avion=${id}`);
+    // `OGA_LUCES=1`: con las luces encendidas y a media luz. Ver el `.html`.
+    const luces = process.env.OGA_LUCES ? "&luces=1" : "";
+    await page.goto(`${BASE}/scripts/ver-librea.html?avion=${id}${luces}`);
     await page.waitForFunction(() => globalThis.__listo === true, null, {
       timeout: 60000,
     });

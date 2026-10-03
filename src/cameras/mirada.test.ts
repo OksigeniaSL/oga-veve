@@ -28,6 +28,7 @@ import {
   girarLaCabeza,
   giroDeCabezaHacia,
   giroDeVueltaHacia,
+  giroParaQueSeVea,
   MiradaLibre,
   SE_QUEDA,
   TOPES,
@@ -35,6 +36,7 @@ import {
 import { escucharLaMirada, UMBRAL, yaEsArrastre } from "./dedo-que-mira";
 import { asientoAnteVentanilla } from "../world/asiento-de-pasaje";
 import { seVePorLaVentanilla } from "../world/marco-de-ventanilla";
+import { CAMPO_DEL_PASAJE } from "../world/hitos";
 import type { FlightState } from "../flight/model";
 
 const GRADO = Math.PI / 180;
@@ -192,6 +194,35 @@ describe("girarse hacia lo que se señala", () => {
     expect(r.porElCristal).toBe(true);
   });
 
+  /*
+   * **Lo que la comandante puede señalar, se puede mirar.** Ella solo cuenta
+   * lo que cae en el campo de la ventanilla del pasaje —ver
+   * `CAMPO_DEL_PASAJE`—, y eso tiene que poder verse por el cristal de ese
+   * lado, en sus cuatro esquinas: lo más adelantado, lo de más atrás, lo más
+   * alto y lo más bajo. Con la ventanilla más estrecha de la flota, la del
+   * JAZ 90.
+   */
+  for (const lado of ["izquierda", "derecha"] as const)
+    it(`todo lo que se cuenta con pasaje se ve por la ventanilla de la ${lado}`, () => {
+      const s = lado === "izquierda" ? -1 : 1;
+      const c = CAMPO_DEL_PASAJE;
+      for (const desdeElMorro of [c.desde, (c.desde + c.hasta) / 2, c.hasta])
+        for (const altura of [c.arriba!, 0, -c.abajo!]) {
+          const a = desdeElMorro * GRADO;
+          const lejos = 30_000;
+          const p = new Vector3(
+            s * Math.sin(a) * lejos,
+            3000 + Math.tan(altura * GRADO) * lejos,
+            -Math.cos(a) * lejos,
+          );
+          const r = mirarHacia(`pasaje-${lado}`, p);
+          const donde = `${desdeElMorro}° del morro, ${altura}° de altura`;
+          expect(r.porElCristal, donde).toBe(true);
+          expect(Math.abs(r.x), donde).toBeLessThan(0.85);
+          expect(Math.abs(r.y), donde).toBeLessThan(0.85);
+        }
+    });
+
   it("sin girar nada, los ojos se quedan donde los pone el asiento", () => {
     const camara = new PerspectiveCamera();
     const s = asiento("derecha");
@@ -243,6 +274,97 @@ describe("girarse hacia lo que se señala", () => {
     }
     expect(m.apuntando).toBe(false);
     expect(Math.abs(m.guinada)).toBeLessThan(0.01);
+  });
+});
+
+/*
+ * ── Y desde fuera, que se vea al señalarse ────────────────────────────────
+ *
+ * Desde la vista de detrás, el Teide que la comandante acababa de señalar
+ * quedaba justo detrás del avión, o fuera del cuadro a un costado. Al
+ * señalarse, la cámara gira un poco o sube lo justo: ver `giroParaQueSeVea`.
+ */
+describe("dejar a la vista lo señalado, desde detrás", () => {
+  /** Lo que mide el bulto del avión de prueba: un tercio de su largo. */
+  const BULTO = 31 * 0.3;
+
+  /**
+   * La vista de detrás asentada, y unos segundos de encuadre como lo hace el
+   * juego. Devuelve el giro que pidió al empezar, dónde cae lo señalado en la
+   * pantalla y cuánto se aparta del avión, en radianes, visto desde la cámara.
+   */
+  function encuadrar(punto: (camara: PerspectiveCamera) => Vector3, state = avion()) {
+    const rig = construirCamaras().chase;
+    const ctx = contexto();
+    const camara = new PerspectiveCamera(62, 16 / 9, 0.6, 2e5);
+    const mirada = new MiradaLibre();
+    mirada.ponerTopes(TOPES.fuera);
+    const dt = 1 / 60;
+    for (let i = 0; i < 180; i++) rig.update(camara, state, dt, ctx);
+    const pose = { p: camara.position.clone(), q: camara.quaternion.clone() };
+    const sitio = punto(camara);
+    const pedido = giroParaQueSeVea(camara, state.position, BULTO, sitio);
+    mirada.empezarAMirar();
+    for (let i = 0; i < 4 * 60; i++) {
+      camara.position.copy(pose.p);
+      camara.quaternion.copy(pose.q);
+      rig.update(camara, state, dt, ctx);
+      pose.p.copy(camara.position);
+      pose.q.copy(camara.quaternion);
+      mirada.apuntarA(giroParaQueSeVea(camara, state.position, BULTO, sitio));
+      mirada.paso(dt);
+      darLaVuelta(camara, state.position, { guinada: mirada.guinada, cabeceo: mirada.cabeceo }, () => 0);
+    }
+    camara.updateMatrixWorld();
+    const p = sitio.clone().project(camara);
+    const haciaSitio = sitio.clone().sub(camara.position).normalize();
+    const haciaAvion = state.position.clone().sub(camara.position).normalize();
+    return { pedido, x: p.x, y: p.y, delante: p.z < 1, aparte: haciaSitio.angleTo(haciaAvion) };
+  }
+
+  it("lo que queda justo detrás del avión, asoma por encima o a un lado", () => {
+    // En la línea de la cámara al avión, kilómetros más allá: tapado.
+    const r = encuadrar((c) =>
+      c.position.clone().add(avion().position.clone().sub(c.position).multiplyScalar(300)),
+    );
+    expect(Math.hypot(r.pedido.guinada, r.pedido.cabeceo)).toBeGreaterThan(GRADO);
+    expect(r.delante).toBe(true);
+    expect(Math.abs(r.x)).toBeLessThan(0.85);
+    expect(Math.abs(r.y)).toBeLessThan(0.85);
+    // Apartado del avión más de lo que mide el avión visto desde aquí: la
+    // cámara de detrás va a unos cuarenta y cinco metros de este.
+    expect(r.aparte).toBeGreaterThan(Math.asin(BULTO / 45));
+  });
+
+  it("lo que cae fuera del cuadro, a un costado, entra; girando lo justo y no hasta el centro", () => {
+    const a = 75 * GRADO;
+    const r = encuadrar(() => new Vector3(Math.sin(a) * 30_000, 2500, -Math.cos(a) * 30_000));
+    expect(r.delante).toBe(true);
+    expect(Math.abs(r.x)).toBeLessThan(0.85);
+    // Lo justo: queda hacia el borde de su lado, no en el centro.
+    expect(r.x).toBeGreaterThan(0.4);
+    // A la derecha, la vuelta es a la derecha: guiñada negativa.
+    expect(r.pedido.guinada).toBeLessThan(0);
+  });
+
+  it("y lo que ya se ve no mueve nada", () => {
+    const a = 20 * GRADO;
+    const r = encuadrar(() => new Vector3(-Math.sin(a) * 30_000, 3600, -Math.cos(a) * 30_000));
+    expect(Math.abs(r.pedido.guinada)).toBeLessThan(1e-6);
+    expect(Math.abs(r.pedido.cabeceo)).toBeLessThan(1e-6);
+  });
+
+  it("y en un viraje, con la cámara a la altura del avión, tampoco lo tapa", () => {
+    // Veinticinco grados de alabeo: la cámara de detrás se va con el lomo.
+    const q = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), -25 * GRADO);
+    const state = avion({ orientation: q });
+    const r = encuadrar(
+      (c) => c.position.clone().add(state.position.clone().sub(c.position).multiplyScalar(300)),
+      state,
+    );
+    expect(Math.abs(r.x)).toBeLessThan(0.85);
+    expect(Math.abs(r.y)).toBeLessThan(0.85);
+    expect(r.aparte).toBeGreaterThan(Math.asin(BULTO / 45));
   });
 });
 

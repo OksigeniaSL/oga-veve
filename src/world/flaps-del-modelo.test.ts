@@ -239,12 +239,19 @@ describe("los flaps de cada modelo", () => {
  * moviera: el foco sale un dedo por delante del vértice, y el dedo es el uno
  * por ciento del lado mayor del avión —ver `puntasDe`—, que era el largo y
  * pasó de 68 a 64 m. El vértice es el mismo.
+ *
+ * **Y menos el de las tres avionetas, que se fue al ala a propósito.** Sus
+ * alas rectas no tienen vértice entre el 7 y el 18 % de la envergadura, y el
+ * foco caía en el sitio de respaldo, a la altura del centro de la caja: en el
+ * 172, un metro por debajo del ala alta, junto a los montantes; en el
+ * Panambi, medio metro por encima de su ala baja. Ahora va en el borde de
+ * ataque de su ala. Ver `puntasDe`.
  */
 describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
   const ANTES: Record<string, readonly [number, number, number]> = {
-    "jaz-20": [1.3201, 0.1919, 0.162],
-    "jaz-25": [1.4993, -0.0426, -1.593],
-    "jaz-40": [1.4268, 0.0754, -0.7475],
+    "jaz-20": [1.3201, 1.1156, -1.0043],
+    "jaz-25": [1.4993, 1.3391, -1.9311],
+    "jaz-40": [1.4268, -0.3984, -0.7192],
     "jaz-60": [3.1, -0.1968, -1.0479],
     "jaz-90": [3.9753, -0.7022, -1.7613],
     "jaz-120": [9.3855, -0.9135, -7.0682],

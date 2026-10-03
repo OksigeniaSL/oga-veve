@@ -20,11 +20,20 @@
  *    después no enseña nada y delata la máquina.
  * 5. **Solo lo que se ve**, que no es una regla de tiempo pero se decide
  *    aquí: el relieve se le pregunta a quien lo sabe —ver `ponerSuelo`—, y
- *    las nubes, a la capa del parte —ver `ponerNubes`—.
+ *    las nubes, a la capa del parte —ver `ponerNubes`—. **Y por la ventanilla
+ *    de quien escucha**: con pasaje, la del asiento; en avioneta, la de la
+ *    cabina. Lo que va delante del morro no está a ningún lado. Ver
+ *    `CAMPO_DEL_PASAJE`.
  */
 
 import type { CapaDeNubes } from "../world/capa-de-nubes";
-import { queSeVe, type Hito, type Mirada } from "../world/hitos";
+import {
+  CAMPO_DE_LA_CABINA,
+  CAMPO_DEL_PASAJE,
+  queSeVe,
+  type Hito,
+  type Mirada,
+} from "../world/hitos";
 import type { Fase } from "./vuelo";
 
 /**
@@ -219,6 +228,7 @@ export class LoQueSeVe {
       this.dichos,
       this.suelo,
       this.capa,
+      momento.conPasaje ? CAMPO_DEL_PASAJE : CAMPO_DE_LA_CABINA,
     );
     if (!mirada) return null;
     this.dichos.add(mirada.hito.nombre);

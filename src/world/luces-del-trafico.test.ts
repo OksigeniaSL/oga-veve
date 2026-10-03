@@ -210,11 +210,12 @@ describe("cada clase con su equipo", () => {
       expect(equipoDe(silueta)).toEqual(DE_PASAJE);
   });
 
-  it("la avioneta de ala alta, la baliza en la deriva y el faro en el ala", () => {
+  it("la avioneta de ala alta, la baliza en la deriva y los dos faros en el ala izquierda", () => {
     expect(equipoDe("ala-alta")).toEqual({
       baliza: "deriva",
       estroboscopicas: "puntas",
       rodaje: "ala",
+      focos: "ala-izquierda",
     });
   });
 
@@ -230,9 +231,11 @@ describe("cada clase con su equipo", () => {
     // Sin baliza de abajo ni destello en la cola.
     expect(t[4]).toBe(0);
     expect(t[7]).toBe(0);
+    // Ni foco en el ala derecha: los dos faros del 172 van en la izquierda.
+    expect(t[8]).toBe(0);
     // Y con todo lo demás: tres de navegación, una baliza, dos destellos y
-    // los dos focos.
-    expect(t.filter((x) => x > 0)).toHaveLength(8);
+    // el foco de aterrizaje.
+    expect(t.filter((x) => x > 0)).toHaveLength(7);
   });
 });
 
@@ -248,7 +251,9 @@ describe("el tráfico del aeródromo, con sus luces", () => {
   };
   /** Índices de las luces: ver `ORDEN` en `luces-del-trafico.ts`. */
   const RODAJE = 10;
-  const FOCO = 8;
+  // El de aterrizaje del ala izquierda: la avioneta de ala alta lleva los dos
+  // faros en esa ala, y en la derecha ninguno. Ver `equipoDe`.
+  const FOCO = 9;
 
   it("rodando a la cabecera lleva el faro, y en la doble raya lo apaga", () => {
     const t = crearTrafico(PISTA, 100, "ala-alta");

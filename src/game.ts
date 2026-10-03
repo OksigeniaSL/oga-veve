@@ -500,10 +500,18 @@ import {
   girarLaCabeza,
   giroDeCabezaHacia,
   giroDeVueltaHacia,
+  giroParaQueSeVea,
   MiradaLibre,
+  type FranjaLibre,
 } from "./cameras/mirada";
 import { escucharLaMirada } from "./cameras/dedo-que-mira";
-import { MarcoDeVentanilla, seVePorLaVentanilla } from "./world/marco-de-ventanilla";
+import {
+  cortinaDe,
+  MarcoDeVentanilla,
+  queSeTocaEnLaPared,
+  seVePorLaVentanilla,
+} from "./world/marco-de-ventanilla";
+import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
@@ -3033,6 +3041,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
     this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
@@ -4073,11 +4082,37 @@ export class Game {
   /** El marco de la ventanilla del pasaje. Ver `world/marco-de-ventanilla.ts`. */
   private readonly marcoDeVentanilla = new MarcoDeVentanilla();
   /**
+   * **La cabina de pasaje**: las persianas —o el cristal que se oscurece—,
+   * las ventanillas de al lado y las luces. Ver `world/cabina-de-pasaje.ts`.
+   */
+  private readonly cabinaDePasaje = new CabinaDePasaje();
+  /**
    * **Lo último que se señaló por la ventanilla**, mientras se pueda mirar:
    * qué es, por dónde se ve y qué tarjeta lo ofrece. Ver
    * `mirarHaciaLoSenalado`.
    */
   private loSenalado: { mirada: Mirada; dibujo: string } | null = null;
+  /**
+   * Si la cámara de fuera se está girando **sola**, lo justo para que lo
+   * señalado se vea, y no porque se tocó la tarjeta. Ver `dejarloALaVista`.
+   */
+  private encuadreSolo = false;
+  /**
+   * La franja de la pantalla que queda libre entre la barra de arriba y el
+   * cuadro, de −1 a 1. La mide `encuadrarSobreElCuadro`, dos veces por
+   * segundo, que medir el HUD en cada fotograma costaría un recálculo de
+   * estilos por imagen.
+   */
+  private franjaLibre: FranjaLibre = { arriba: 1, abajo: -1 };
+  /**
+   * Lo que se le pide a la vista que deje a la vista lo señalado: las de fuera
+   * que siguen al avión. La de frente no, que mira hacia atrás a propósito.
+   */
+  private static readonly SIGUEN_AL_AVION: ReadonlySet<CameraMode> = new Set<CameraMode>([
+    "chase",
+    "wing",
+    "izquierda",
+  ]);
   /**
    * Lo que las cámaras necesitan saber del juego **sin conocer el juego**.
    *
@@ -4171,6 +4206,8 @@ export class Game {
       alSoltar: () => this.mirada.soltar(),
       alTocar: (e) => {
         const [x, y] = enPantalla(e);
+        // En el pasaje, la ventanilla: su persiana o su botón.
+        if (this.tocarLaPared(x, y)) return;
         this.pulsarElMando(x, y);
         this.mirarLosMandos(x, y);
       },
@@ -4228,8 +4265,10 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
-    // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella.
+    // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella,
+    // y el tinte de su cristal, cuando lo lleva.
     this.scene.add(this.marcoDeVentanilla.malla);
+    this.scene.add(this.marcoDeVentanilla.cristal);
     /*
      * Las tormentas del día. Salen del tiempo de verdad: con buen tiempo no hay
      * ninguna y el radar está encendido sin pintar nada, que es lo que hace un
@@ -8510,6 +8549,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
     this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
@@ -10841,6 +10881,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
     this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
@@ -12201,6 +12242,7 @@ export class Game {
     // Ya con la tormenta dentro: ver `causasDe` en `flight/turbulencia.ts`.
     const movimiento = cuantoSeMueve(aire);
     this.atenderAlCinturon(movimiento, loDijo, loEncendio);
+    this.prepararLaCabina(dt);
     this.hablarDeLosBaches(dt, movimiento);
     this.buscarNivelTranquilo(dt, movimiento, aire);
     this.atenderALaSobrevelocidad(dt);
@@ -15027,6 +15069,46 @@ export class Game {
         accion: mirada.punto ? () => this.mirarHaciaLoSenalado() : null,
       },
     );
+    this.dejarloALaVista();
+  }
+
+  /**
+   * **Y desde fuera, que se vea sin tener que tocar nada.**
+   *
+   * Desde la vista de detrás, el Teide que la comandante acababa de señalar
+   * quedaba justo detrás del avión —en un viraje la cámara baja a la altura
+   * del fuselaje— o fuera del cuadro, a un costado. Así que al señalarse, si
+   * desde aquí no se ve, la cámara **gira un poco o sube** lo justo para que
+   * se vea, se queda su rato y vuelve sola: lo mismo que al tocar la tarjeta,
+   * en pequeño. Ver `giroParaQueSeVea`.
+   *
+   * Solo si la cabeza está en su sitio: si alguien está mirando con el dedo,
+   * manda el dedo.
+   */
+  private dejarloALaVista(): void {
+    const punto = this.loSenalado?.mirada.punto;
+    if (!punto || !Game.SIGUEN_AL_AVION.has(this.vistaQueHay())) return;
+    if (!this.mirada.enSuSitio) return;
+    const giro = giroParaQueSeVea(
+      this.camera,
+      this.flight.state.position,
+      this.bultoDelAvion,
+      punto,
+      this.franjaLibre,
+    );
+    // Si ya se ve —o le falta un grado—, no se mueve nada.
+    if (Math.hypot(giro.guinada, giro.cabeceo) < MathUtils.degToRad(1)) return;
+    this.encuadreSolo = true;
+    this.mirada.empezarAMirar();
+  }
+
+  /**
+   * Lo que mide el bulto del avión visto desde fuera, m: el fuselaje y la
+   * deriva, que son lo que tapa. Un tercio del largo: en el JAZ 120 la deriva
+   * sube unos veinte metros sobre la panza. Las alas son un filo y no cuentan.
+   */
+  private get bultoDelAvion(): number {
+    return this.largoDelAvion * 0.3;
   }
 
   /**
@@ -15138,6 +15220,8 @@ export class Game {
       this.olvidarLoSenalado();
       return false;
     }
+    // Tocando la tarjeta se mira de verdad, centrado: ya no es el encuadre.
+    this.encuadreSolo = false;
     if (esDePasaje(this.cameraMode) && this.hayPasaje) {
       const p = this.flight.state.position;
       const haciaEl = Math.atan2(punto.x - p.x, -(punto.z - p.z));
@@ -15150,6 +15234,8 @@ export class Game {
         this.cameraMode = suyo;
         recordarVista(suyo);
       }
+      // Y lo primero que hace cualquiera para mirar algo: subir la persiana.
+      this.cabinaDePasaje.abrir();
     }
     this.mirada.empezarAMirar();
     return true;
@@ -15162,6 +15248,7 @@ export class Game {
   private olvidarLoSenalado(): void {
     if (this.loSenalado) this.hud.senal.caducar(this.loSenalado.dibujo);
     this.loSenalado = null;
+    this.encuadreSolo = false;
     this.mirada.dejarDeMirar();
   }
 
@@ -16329,7 +16416,14 @@ export class Game {
   seVePorLaVentanillaParaBanco(p: { x: number; y: number; z: number }): boolean | null {
     const asiento = this.asientoDe(this.vistaQueHay());
     if (!asiento) return null;
-    return seVePorLaVentanilla(this.camera.position, p, this.flight.state, asiento.ventanilla);
+    const c = this.cabinaDePasaje;
+    return seVePorLaVentanilla(
+      this.camera.position,
+      p,
+      this.flight.state,
+      asiento.ventanilla,
+      cortinaDe(asiento.ventanilla, c.tipoDeVentanilla, c.tapan[0]),
+    );
   }
 
   /**
@@ -16353,11 +16447,28 @@ export class Game {
     const { como, topes } = comoSeMiraDesde(modo);
     this.mirada.ponerTopes(topes);
     const punto = this.loSenalado?.mirada.punto;
+    /*
+     * El encuadre que se puso solo es de las vistas de fuera: pasando a la
+     * cabina o al pasaje se deja, que dentro no se gira la cabeza sin que
+     * nadie lo pida. Y acabado su rato, se olvida.
+     */
+    if (this.encuadreSolo && (!this.mirada.apuntando || !Game.SIGUEN_AL_AVION.has(modo))) {
+      if (this.mirada.apuntando) this.mirada.dejarDeMirar();
+      this.encuadreSolo = false;
+    }
     if (this.mirada.apuntando && punto)
       this.mirada.apuntarA(
         como === "cabeza"
           ? giroDeCabezaHacia(this.camera, state.orientation, punto)
-          : giroDeVueltaHacia(this.camera, state.position, punto),
+          : this.encuadreSolo
+            ? giroParaQueSeVea(
+                this.camera,
+                state.position,
+                this.bultoDelAvion,
+                punto,
+                this.franjaLibre,
+              )
+            : giroDeVueltaHacia(this.camera, state.position, punto),
       );
     this.mirada.paso(dt);
     const giro = { guinada: this.mirada.guinada, cabeceo: this.mirada.cabeceo };
@@ -16386,9 +16497,82 @@ export class Game {
     this.marcoDeVentanilla.poner(
       this.camera,
       this.flight.state,
-      asiento.ventanilla,
+      asiento,
       diaEnLaCabina(this.sky.sunDirection.y),
+      this.cabinaDePasaje,
     );
+  }
+
+  /**
+   * **La cabina de pasaje, a su hora**: las ventanillas claras y la cabina
+   * apagada para despegar y aterrizar, y en crucero cada uno con la suya. Va
+   * aunque no se esté mirando por la ventanilla: quien se pasa al asiento en
+   * plena carrera de despegue la encuentra ya preparada, no subiéndose. Ver
+   * `world/cabina-de-pasaje.ts`.
+   */
+  private prepararLaCabina(dt: number): void {
+    const tipo = this.aircraft.ventanillas;
+    if (!tipo) return;
+    if (tipo !== this.cabinaDePasaje.tipoDeVentanilla) this.cabinaDePasaje.reiniciar(tipo);
+    const fase = this.faseDeAhora as Fase;
+    this.cabinaDePasaje.paso(
+      dt,
+      this.cabinaForzadaParaBanco ?? cabinaPreparada(fase, this.cinturon.pasajeSuelto),
+      enLaPuerta(fase),
+    );
+  }
+
+  /**
+   * Preparar la cabina a mano, o `null` para dejarla a su hora. Solo para el
+   * banco: mirar cómo se aclaran las ventanillas sin volar un despegue.
+   */
+  cabinaForzadaParaBanco: boolean | null = null;
+
+  /**
+   * **Un toque en la pared del pasaje**: en la ventanilla, la persiana baja un
+   * paso —o el cristal se oscurece un tono—; en el botón del cristal, lo
+   * mismo. Devuelve si se tocó la ventanilla, aunque no se dejara: con la
+   * cabina preparada da un respingo y vuelve. Ver `CabinaDePasaje.tocar`.
+   */
+  private tocarLaPared(x: number, y: number): boolean {
+    const asiento = this.asientoDe(this.vistaQueHay());
+    if (!asiento) return false;
+    const que = queSeTocaEnLaPared(
+      this.camera,
+      x,
+      y,
+      this.flight.state,
+      asiento.ventanilla,
+      this.cabinaDePasaje.tipoDeVentanilla,
+    );
+    if (!que) return false;
+    this.cabinaDePasaje.tocar();
+    return true;
+  }
+
+  /** Tocar la ventanilla de uno, sin apuntar con el dedo. Para el banco. */
+  tocarLaVentanillaParaBanco(): boolean {
+    if (!this.asientoDe(this.vistaQueHay())) return false;
+    this.cabinaDePasaje.tocar();
+    return true;
+  }
+
+  /** Cómo está la cabina de pasaje. Para el banco. */
+  get cabinaParaBanco(): {
+    tipo: string;
+    tapan: readonly number[];
+    luz: number;
+    bloqueada: boolean;
+    vecinas: { delante: boolean; detras: boolean };
+  } {
+    const c = this.cabinaDePasaje;
+    return {
+      tipo: c.tipoDeVentanilla,
+      tapan: [...c.tapan],
+      luz: c.luz,
+      bloqueada: c.bloqueada,
+      vecinas: { ...c.vecinas },
+    };
   }
 
   /**
@@ -20171,6 +20355,12 @@ export class Game {
     const arriba = this.hud.altoDeArriba;
     const abajo = alto - this.hud.altoDelCuadro;
     const corrimiento = propio ? 0 : (arriba - (alto - abajo)) / 2;
+    // La franja libre, de −1 a 1, para dejar a la vista lo señalado sin que
+    // caiga debajo del cuadro. Ver `dejarloALaVista`.
+    this.franjaLibre = {
+      arriba: 1 - (2 * arriba) / Math.max(1, alto),
+      abajo: 1 - (2 * abajo) / Math.max(1, alto),
+    };
     /*
      * **Y el avión, dentro de la franja.** La cámara de cola mira lejos para
      * que se vea hacia dónde se va, y eso baja el avión unos diecisiete grados

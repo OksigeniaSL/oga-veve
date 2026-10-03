@@ -1055,6 +1055,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     mirada: () => juego.miradaParaBanco,
     /** Tocar la tarjeta de lo señalado, sin apuntar con el dedo. */
     mirarHaciaLoSenalado: () => juego.mirarHaciaLoSenalado(),
+    /**
+     * **La cabina de pasaje**: cuánto tapa cada ventanilla, las luces, si se
+     * deja tocar y qué hay al lado. Ver `world/cabina-de-pasaje.ts`.
+     */
+    cabina: () => juego.cabinaParaBanco,
+    /** Tocar la ventanilla de uno —su persiana o su botón— desde el pasaje. */
+    tocarLaVentanilla: () => juego.tocarLaVentanillaParaBanco(),
+    /** Preparar la cabina para despegar o aterrizar a mano; `null`, a su hora. */
+    prepararLaCabina: (si: boolean | null) => {
+      juego.cabinaForzadaParaBanco = si;
+    },
     /** Arrastrar el paisaje, en píxeles, y soltar si se pide. */
     arrastrarLaMirada: (dx: number, dy: number, soltar = false) =>
       juego.arrastrarLaMiradaParaBanco(dx, dy, soltar),

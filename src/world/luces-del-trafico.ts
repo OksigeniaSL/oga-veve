@@ -194,11 +194,14 @@ export function faseDelTuyo(a: ComoVaElTuyo): FaseDeLuces {
  * - `estroboscopicas`: ninguna, en las dos puntas, o en las puntas y en la
  *   cola.
  * - `rodaje`: el faro en la pata de morro, o en el borde del ala.
+ * - `focos`: uno de aterrizaje en cada ala, o los dos faros juntos en el ala
+ *   izquierda.
  */
 export interface EquipoDeLuces {
   readonly baliza: "deriva" | "lomo-y-panza";
   readonly estroboscopicas: "ninguna" | "puntas" | "puntas-y-cola";
   readonly rodaje: "morro" | "ala";
+  readonly focos: "dos-alas" | "ala-izquierda";
 }
 
 /** El de un avión de pasaje: el turbohélice, el reactor, el grande. */
@@ -206,13 +209,18 @@ export const DE_PASAJE: EquipoDeLuces = {
   baliza: "lomo-y-panza",
   estroboscopicas: "puntas-y-cola",
   rodaje: "morro",
+  focos: "dos-alas",
 };
 
 /**
  * El equipo de cada silueta, con el avión de verdad de su clase:
  *
  * - **Ala alta** (la clase del Cessna 172S): la baliza en lo alto de la
- *   deriva, los destellos en las puntas y los dos faros en el borde del ala.
+ *   deriva, los destellos en las puntas y **los dos faros en el borde del ala
+ *   izquierda**, el de aterrizaje y el de rodaje uno al lado del otro. Así
+ *   los lleva el 172 de ahora, y de frente se le ven las dos luces en un ala
+ *   y ninguna en la otra. Iban uno en cada ala, simétricos, que es otro
+ *   avión.
  * - **Biplano** fumigador: la baliza en la deriva y nada de destellos; su
  *   anticolisión es la baliza, que es lo que pide la norma.
  * - **Bimotor de ala baja** (la clase del Seneca): la baliza en la deriva,
@@ -223,11 +231,26 @@ export const DE_PASAJE: EquipoDeLuces = {
 export function equipoDe(silueta: Silueta): EquipoDeLuces {
   switch (silueta) {
     case "ala-alta":
-      return { baliza: "deriva", estroboscopicas: "puntas", rodaje: "ala" };
+      return {
+        baliza: "deriva",
+        estroboscopicas: "puntas",
+        rodaje: "ala",
+        focos: "ala-izquierda",
+      };
     case "biplano":
-      return { baliza: "deriva", estroboscopicas: "ninguna", rodaje: "ala" };
+      return {
+        baliza: "deriva",
+        estroboscopicas: "ninguna",
+        rodaje: "ala",
+        focos: "dos-alas",
+      };
     case "bimotor-ala-baja":
-      return { baliza: "deriva", estroboscopicas: "puntas", rodaje: "morro" };
+      return {
+        baliza: "deriva",
+        estroboscopicas: "puntas",
+        rodaje: "morro",
+        focos: "dos-alas",
+      };
     default:
       return DE_PASAJE;
   }
@@ -625,7 +648,9 @@ export class LucesDeUnAvion {
       equipo.estroboscopicas !== "ninguna",
       equipo.estroboscopicas !== "ninguna",
       equipo.estroboscopicas === "puntas-y-cola",
-      true,
+      // El de aterrizaje de la derecha, salvo en la clase que los lleva los
+      // dos en el ala izquierda. Ver `equipoDe`.
+      equipo.focos !== "ala-izquierda",
       true,
       true,
     ];
