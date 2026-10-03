@@ -265,8 +265,11 @@ export const RITMO_DE_CAMBIO = 20;
  * Diez: un poco más deprisa que los gases en `SPD` —ver
  * `PARA_LA_VELOCIDAD`—, porque el morro cambia la velocidad casi al momento
  * y el motor tarda.
+ *
+ * Es también la de la mano del teclado cuando sostiene la velocidad de un
+ * avión compensado: ver `sostieneLaVelocidad` en `mano.ts`.
  */
-const PARA_LA_VELOCIDAD_CON_EL_MORRO = 10;
+export const PARA_LA_VELOCIDAD_CON_EL_MORRO = 10;
 
 /** Cómo cambia de altura el automático. Ver la cabecera. */
 export type ModoVertical = "ALT" | "V/S" | "FLCH SPD" | "VNAV PTH" | "G/S";

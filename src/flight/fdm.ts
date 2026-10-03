@@ -1927,6 +1927,54 @@ export function empujeLleno(
   );
 }
 
+/** Lo que hace falta saber para contar lo que frena el avión. */
+export interface ParaSostener {
+  /** La altura del avión, m. */
+  readonly altura: number;
+  /** La velocidad verdadera que se quiere sostener, m/s. */
+  readonly verdadera: number;
+  readonly aire?: Aire;
+  /** Los flaps, de 0 a 1, donde están. */
+  readonly flaps: number;
+  /** El tren, de 0 dentro a 1 fuera. */
+  readonly tren: number;
+  /**
+   * **La pendiente de la trayectoria**, rad: cero nivelado, negativa
+   * bajando. Por la senda de tres grados, el peso empuja: se necesita menos
+   * gas que nivelado, y eso es lo que hace que una final se vuele con poco
+   * motor.
+   */
+  readonly pendiente: number;
+}
+
+/**
+ * **El empuje que sostiene esa velocidad por esa pendiente**, N, con lo que
+ * se lleve sacado.
+ *
+ * Es la resistencia de `step`, término a término —la parásita, la inducida
+ * con la sustentación que pide el peso, los flaps, el tren y la onda—, más lo
+ * que pide la pendiente. Vive aquí, al lado de la de verdad, porque la usan
+ * dos que no son este modelo: la marca del motor (`gasQueSostiene` en
+ * `gas-que-toca.ts`) y lo que cuesta lo sacado en el modelo sencillo
+ * (`arcade.ts`). Si una cambia, cambian las tres.
+ */
+export function empujeQueSostiene(a: AircraftConfig, p: ParaSostener): number {
+  const aire = p.aire ?? AIRE_ESTANDAR;
+  const rho = airDensity(p.altura, aire);
+  const v = Math.max(1, p.verdadera);
+  const qS = 0.5 * rho * v * v * a.wingArea;
+  const peso = a.mass * GRAVITY;
+  const cl = (peso * Math.cos(p.pendiente)) / Math.max(1, qS);
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const cd =
+    a.aero.cd0 +
+    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
+    resistenciaDeLosFlaps(a, p.flaps) +
+    resistenciaDelTren(a, p.tren, fraccionDeLosFlaps(a, p.flaps)) +
+    resistenciaDeOnda(machDe(v, p.altura, aire), a.mmo, a.aero.cd0);
+  return qS * cd + peso * Math.sin(p.pendiente);
+}
+
 /**
  * **El ángulo con el que la estabilidad devuelve el morro**, rad.
  *

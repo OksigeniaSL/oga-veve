@@ -29,16 +29,23 @@
  */
 
 import { Euler, Quaternion, Vector3 } from "three";
-import { AIRE_ESTANDAR, type Aire, airDensity } from "./atmosphere";
+import { AIRE_ESTANDAR, type Aire, airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
-import { AGARRE_DEL_PEDAL, giroDelPedal, MAX_PASO } from "./fdm";
+import {
+  AGARRE_DEL_PEDAL,
+  empujeLleno,
+  empujeQueSostiene,
+  giroDelPedal,
+  MAX_PASO,
+} from "./fdm";
 import type {
   ControlInputs,
   FlightModel,
   FlightState,
   GroundSampler,
   InitialConditions,
+  LoSacado,
 } from "./model";
 import { loQueDaElMotor, type AircraftConfig } from "./aircraft";
 
@@ -67,26 +74,17 @@ const IDLE_SPEED = 2;
 const MANDAN_LOS_FLAPS = 0.25;
 
 /**
- * Y cuánto frenan.
+ * Y cuánto frenan **rodando**, con los de despegue puestos.
  *
- * La resistencia de los flaps no se nota en la velocidad máxima —ahí manda el
- * motor— sino en que con el gas bajo se pierde velocidad antes. Multiplicado
- * por cuatro porque el coeficiente de la ficha es de resistencia y aquí se usa
- * contra una velocidad, no contra una fuerza: con el 0,06 del Pykasu sale un
- * veinticuatro por ciento menos de velocidad a igualdad de gas, que es lo que
- * hace que una aproximación con flaps entre donde no entra sin ellos.
+ * Multiplicado por cuatro porque el coeficiente de la ficha es de resistencia
+ * y aquí se usa contra una velocidad, no contra una fuerza. En el suelo se
+ * queda como estaba: la carrera de este modelo está medida contra la de
+ * `carrera.ts` con esta cuenta (ver `prestaciones-guyrami.test.ts`).
+ *
+ * **Volando ya no**: ahí lo sacado cuesta lo que cuesta en el modelo completo.
+ * Ver `puntaConLoSacado` y `gasQueNiSubeNiBaja`.
  */
 const FRENAN_LOS_FLAPS = 4;
-
-/**
- * Y cuánto frena el tren, con la misma regla de tres que los flaps.
- *
- * El coeficiente de `tren.ts` es de resistencia y aquí se usa contra una
- * velocidad: con las dos centésimas del tren del JAZ 120 fuera sale un ocho por
- * ciento menos de velocidad a igualdad de gas. Se nota al soltar el gas, que es
- * donde tiene que notarse.
- */
-const FRENAN_EL_TREN = 4;
 
 /*
  * La reversa ya no frena aquí «la mitad del freno»: empuja hacia atrás lo que
@@ -141,6 +139,10 @@ const RODANDO_TRAS_TOMAR = 12;
  */
 const VUELO_DE_VERDAD = 3;
 
+/**
+ * El gas que ni sube ni baja **con el avión limpio**, de 0 a 1. Con el tren o
+ * los flaps fuera hace falta más: ver `gasQueNiSubeNiBaja`.
+ */
 export const MOTOR_QUE_SOSTIENE = 0.55;
 
 /**
@@ -231,21 +233,19 @@ function agarreRodando(velocidad: number): number {
   return DE_LADO_RODANDO + (AGARRE_DEL_PEDAL - DE_LADO_RODANDO) * t;
 }
 
-/**
- * Ritmo de viraje máximo, en radianes por segundo.
+/*
+ * **El ritmo de viraje tiene que cuadrar con la inclinación que se dibuja**, o
+ * el ojo aprende una cosa aquí y descubre otra en el peldaño siguiente. Iban
+ * medio radián por segundo —dieciséis grados por segundo— con el avión
+ * enseñando treinta de alabeo; con esa inclinación la física da siete, y para
+ * girar a dieciséis harían falta cuarenta y seis. O sea que aquí se aprendía
+ * que treinta grados es un giro rápido, y en Tukã se descubría lo contrario.
  *
- * **Y tiene que cuadrar con la inclinación que se dibuja**, o el ojo aprende
- * una cosa aquí y descubre otra en el peldaño siguiente. Iban medio radián por
- * segundo —dieciséis grados por segundo— con el avión enseñando treinta de
- * alabeo; con esa inclinación la física da siete, y para girar a dieciséis
- * harían falta cuarenta y seis. O sea que aquí se aprendía que treinta grados
- * es un giro rápido, y en Tukã se descubría lo contrario.
- *
- * Un cuarto de radián son catorce grados por segundo, que a velocidad de
- * crucero de este modelo salen de unos cuarenta y tres de alabeo: eso sí se
- * parece a lo que hace el avión de al lado.
+ * Luego fue un cuarto de radián por segundo a fondo para todos, que cuadraba
+ * con la avioneta a la velocidad de este modelo y con nadie más. Ahora el
+ * viraje sale de la inclinación dibujada y de la velocidad, como en el avión
+ * de al lado: ver el viraje en vuelo de `step`.
  */
-const MAX_TURN_RATE = 0.25;
 /*
  * **El ascenso también lo pone el avión.**
  *
@@ -256,7 +256,7 @@ const MAX_TURN_RATE = 0.25;
  * niño que cambia de avión nota que el grande sube como un ascensor.
  */
 /**
- * Inclinación aparente en viraje a fondo, en radianes. Ver `MAX_TURN_RATE`.
+ * Inclinación aparente en viraje a fondo, en radianes.
  *
  * Exportada porque la mano que sostiene la inclinación —`flight/mano.ts`—
  * pide aquí un alabeo y tiene que saber qué alerón lo da.
@@ -403,13 +403,174 @@ export class ArcadeFlightModel implements FlightModel {
     const bite = clamp01((this.speed - IDLE_SPEED) / (cruise * 0.55));
     if (bite <= 0.01) return 0;
     const sube = ascensoMaximo(this.aircraft);
-    const motor =
-      gas >= MOTOR_QUE_SOSTIENE
-        ? ((gas - MOTOR_QUE_SOSTIENE) / (1 - MOTOR_QUE_SOSTIENE)) * (sube * SUBE_SOLO)
-        : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) *
-          caidaSinMotor(this.aircraft, this.speed);
+    const motor = this.ritmoDelMotor(gas);
     const porPalanca = sube * (0.4 + 0.6 * gas);
     return clamp((ritmo / bite - motor) / Math.max(0.01, porPalanca), -1, 1);
+  }
+
+  // ── Lo que cuesta lo sacado ───────────────────────────────────────────
+
+  /** Lo que se lleva sacado en el último paso: la palanca de flaps y el tren. */
+  private sacado: LoSacado = { flaps: 0, tren: 1 };
+
+  /**
+   * **Lo más lento que vuela con estos flaps**, m/s: la mínima de vuelo de
+   * siempre, que baja con lo que sostienen los flaps. Ver `MINIMA_DE_VUELO` y
+   * `MANDAN_LOS_FLAPS`.
+   *
+   * **Y la resistencia no la baja.** Antes este suelo se multiplicaba también
+   * por lo que frenaban los flaps y el tren, y una resistencia no hace volar
+   * más despacio: hace falta más gas para la misma velocidad. Con tren y flaps
+   * a tope el JAZ 60 de Guyrami bajaba al ralentí hasta **42 nudos**, y el
+   * JAZ 20 hasta 37: menos que su pérdida. «Esta avioneta casi no baja»,
+   * contado con ella a 45 nudos en la final. Un avión no vuela más despacio
+   * que su pérdida con el gas que sea.
+   */
+  private sueloDeVuelo(flaps: number): number {
+    return (
+      this.aircraft.approachSpeed *
+      MINIMA_DE_VUELO *
+      (1 - this.aircraft.flapsLift * clamp01(flaps) * MANDAN_LOS_FLAPS)
+    );
+  }
+
+  /**
+   * **El gas que sostiene esta velocidad nivelado en el modelo completo**, sin
+   * tope: más de uno quiere decir que ni a fondo. Las mismas fuerzas que en
+   * `fdm.ts`: ver `empujeQueSostiene`.
+   */
+  private gasDelModeloCompleto(verdadera: number, s: LoSacado): number {
+    const altura = this.state.position.y;
+    const v = Math.max(1, verdadera);
+    const lleno = empujeLleno(this.aircraft, airDensity(altura, this.aire), v);
+    if (!(lleno > 0)) return Infinity;
+    return (
+      empujeQueSostiene(this.aircraft, {
+        altura,
+        verdadera: v,
+        aire: this.aire,
+        flaps: s.flaps,
+        tren: s.tren,
+        pendiente: 0,
+      }) / lleno
+    );
+  }
+
+  /**
+   * **La punta con lo que se lleva sacado**, m/s: la de siempre, o lo que el
+   * avión sostiene nivelado a fondo con eso fuera, si es menos.
+   *
+   * La punta de este modelo es la de subir a fondo —en los de hélice, más o
+   * menos su velocidad de mejor ascenso—, y de ahí se restaba la resistencia
+   * de lo sacado con una regla de tres. En los reactores salía bien: a ellos
+   * les sobra empuje y su punta queda muy por encima de su final. En los de
+   * hélice no: su final está cerca de su punta, y restando, el gas a fondo con
+   * tren y flaps daba **menos que su propia velocidad de aproximación**. El
+   * JAZ 60 en Guyrami, flaps en el segundo punto, tren fuera y los dos motores
+   * a cien: 89 nudos, para una marca de 98. «Me pide 98, pero no paso de 89.»
+   * Con tren y flaps de aterrizar, 68.
+   *
+   * Lo de verdad es lo contrario: todo avión certificado tiene que poder
+   * **subir** a fondo con tren y flaps de aterrizar a su Vref —un 3,3 % la
+   * avioneta, un 3,2 % el de cercanías y el de transporte: 14 CFR 23.77 y
+   * 25.119—, así que nivelado va más deprisa que su final. Así que ahora el
+   * gas a fondo da lo que el avión sostiene nivelado con eso sacado, con las
+   * fuerzas del modelo completo, y nunca más que su punta: el JAZ 60 con todo
+   * fuera, 103 nudos a 1.500 pies para una final de 98, y el modelo completo
+   * dice lo mismo. Ver `aproximacion-por-tipo.test.ts`.
+   *
+   * Sin tope de abajo: si con eso sacado no sostiene ni la mínima de vuelo, la
+   * mínima. Lo pregunta también la marca de velocidad, que no pide más de lo
+   * que el avión da con lo que lleva fuera.
+   */
+  puntaConLoSacado(s: LoSacado = this.sacado): number {
+    const punta = this.punta();
+    if (this.gasDelModeloCompleto(punta, s) <= 1) return punta;
+    const suelo = this.sueloDeVuelo(s.flaps);
+    if (punta <= suelo) return suelo;
+    /*
+     * La resistencia con la velocidad es una U —abajo la inducida, arriba la
+     * parásita—, así que se busca primero el fondo y desde ahí, por la rama de
+     * la derecha, dónde deja de llegar el gas a fondo.
+     */
+    let fondo = suelo;
+    let menos = this.gasDelModeloCompleto(suelo, s);
+    const PASOS = 12;
+    for (let i = 1; i <= PASOS; i++) {
+      const v = suelo + ((punta - suelo) * i) / PASOS;
+      const g = this.gasDelModeloCompleto(v, s);
+      if (g < menos) {
+        menos = g;
+        fondo = v;
+      }
+    }
+    if (menos > 1) return suelo;
+    let llega = fondo;
+    let noLlega = punta;
+    for (let i = 0; i < 20; i++) {
+      const v = (llega + noLlega) / 2;
+      if (this.gasDelModeloCompleto(v, s) <= 1) llega = v;
+      else noLlega = v;
+    }
+    return llega;
+  }
+
+  /**
+   * **El gas que ni sube ni baja con lo que se lleva sacado**, a esta
+   * velocidad, de 0 a 1 o algo más: limpio, `MOTOR_QUE_SOSTIENE`; con el tren
+   * y los flaps fuera, más.
+   *
+   * La recta del motor —por encima de este gas se sube, por debajo se baja—
+   * tenía el mismo punto con el avión limpio que con todo fuera, y con lo
+   * sacado ese punto quedaba muy por debajo del gas que pide la final: el
+   * JAZ 20 en Guyrami, a su velocidad de final con los flaps abajo, llevaba
+   * el gas por encima del de subir. Quitando gas se iba más despacio y no se
+   * bajaba: «esta avioneta casi no baja».
+   *
+   * Lo sacado se come una parte de lo que sobra de empuje, y esa parte se
+   * cuenta con el modelo completo a esta velocidad: lo que pide de más con eso
+   * fuera, entre lo que sobra limpio. Esa misma parte sube aquí el gas que ni
+   * sube ni baja. A la punta con lo sacado se come todo lo que sobraba, así que
+   * ahí el gas a fondo vuela recto, como dice `puntaConLoSacado`.
+   */
+  gasQueNiSubeNiBaja(s: LoSacado = this.sacado, verdadera = this.speed): number {
+    const limpio = this.gasDelModeloCompleto(verdadera, { flaps: 0, tren: 0 });
+    const con = this.gasDelModeloCompleto(verdadera, s);
+    const sobra = 1 - limpio;
+    const come = sobra > 0.02 ? clamp((con - limpio) / sobra, 0, 2) : 0;
+    return MOTOR_QUE_SOSTIENE + (1 - MOTOR_QUE_SOSTIENE) * come;
+  }
+
+  /**
+   * **Lo que sube o baja el motor solo**, m/s, sin tocar la palanca: la recta
+   * del motor de `step`, con su punto en `gasQueNiSubeNiBaja`.
+   *
+   * Por debajo, hasta el planeo al ralentí, que con lo sacado es más empinado:
+   * a la misma velocidad, cada newton de resistencia de más es `V·ΔD/W` de
+   * caída de más. Es para lo que se sacan los flaps: bajar más empinado sin
+   * coger velocidad. Por encima, hasta lo que sube a fondo, menos lo que se
+   * come lo sacado.
+   */
+  private ritmoDelMotor(gas: number): number {
+    const nivelado = this.gasQueNiSubeNiBaja();
+    if (gas >= nivelado)
+      return (
+        ((gas - nivelado) / (1 - MOTOR_QUE_SOSTIENE)) *
+        (ascensoMaximo(this.aircraft) * SUBE_SOLO)
+      );
+    const v = Math.max(1, this.speed);
+    const deMas =
+      resistenciaDeLosFlaps(this.aircraft, this.sacado.flaps) +
+      resistenciaDelTren(
+        this.aircraft,
+        this.sacado.tren,
+        fraccionDeLosFlaps(this.aircraft, this.sacado.flaps),
+      );
+    const caida =
+      caidaSinMotor(this.aircraft, v) +
+      (v * 0.5 * SEA_LEVEL_DENSITY * v * v * this.aircraft.wingArea * deMas) /
+        (this.aircraft.mass * GRAVITY);
+    return ((gas - nivelado) / nivelado) * caida;
   }
 
   setOnRunway(enPista: boolean): void {
@@ -630,11 +791,18 @@ export class ArcadeFlightModel implements FlightModel {
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION * 0.94;
   }
 
-  gasPara(velocidad: number): number {
-    const cruise = this.punta();
-    const floor = this.aircraft.approachSpeed * MINIMA_DE_VUELO;
-    if (cruise <= floor) return 1;
-    return Math.max(0, Math.min(1, (velocidad - floor) / (cruise - floor)));
+  /**
+   * La cuenta de `step` al revés, **con lo que se lleva sacado**: entre la
+   * mínima de vuelo de esos flaps y la punta con eso fuera. Sin lo sacado se
+   * pedía el gas del avión limpio, y los gases de la final de Guyrami, que van
+   * derechos a este número, se quedaban cortos con tren y flaps. Ver
+   * `puntaConLoSacado`.
+   */
+  gasPara(velocidad: number, sacado: LoSacado = this.sacado): number {
+    const suelo = this.sueloDeVuelo(sacado.flaps);
+    const punta = this.puntaConLoSacado(sacado);
+    if (punta <= suelo) return 1;
+    return Math.max(0, Math.min(1, (velocidad - suelo) / (punta - suelo)));
   }
 
   /**
@@ -700,45 +868,37 @@ export class ArcadeFlightModel implements FlightModel {
      *
      * - **Se vuela más despacio.** El suelo de velocidad en vuelo baja, que es
      *   para lo que se ponen: cruzar el umbral más lento y tocar más corto.
-     * - **Y se frena.** La velocidad que da un gas cualquiera baja, así que con
-     *   flaps y motor al ralentí se pierde velocidad antes y se baja más
-     *   empinado sin coger carrerilla. Eso es lo que hace que una aproximación
-     *   con flaps entre donde no entra sin ellos.
+     * - **Y cuestan gas.** Con tren y flaps hace falta más gas para la misma
+     *   velocidad y para no bajar, y se baja más empinado sin coger
+     *   carrerilla: lo que cuestan es lo que cuestan en el modelo completo.
+     *   Ver `puntaConLoSacado` y `gasQueNiSubeNiBaja`.
      */
     const flaps = clamp01(controls.flaps);
-    const masSustentacion =
-      1 - this.aircraft.flapsLift * flaps * MANDAN_LOS_FLAPS;
-    /*
-     * Y el tren fuera frena también, por lo mismo que los flaps: aquí la
-     * resistencia no se nota en el tope sino en que con el gas bajo se pierde
-     * velocidad antes. Ver `flight/tren.ts`.
-     *
-     * **Fuera frena; dentro no regala nada.** Esto restaba al meterlo —el avión
-     * limpio iba un ocho por ciento más deprisa que el de su ficha—, que es el
-     * mismo error que dejaba a los reactores sin resistencia en el otro modelo
-     * (#170). Ahora la ficha es el avión limpio y el tren fuera cuesta.
-     *
-     * **Y solo volando**: rodando, lo que cuesta el tren ya está dentro de la
-     * carrera —`carreraHastaVr` lo cuenta, y de ahí sale el ritmo de este
-     * modelo en el suelo—, y contarlo aquí otra vez alargaría la carrera dos
-     * veces por lo mismo.
-     */
-    const masResistencia =
-      1 -
-      resistenciaDeLosFlaps(this.aircraft, flaps) * FRENAN_LOS_FLAPS -
-      (this.state.onGround
-        ? 0
-        : resistenciaDelTren(
-            this.aircraft,
-            controls.tren,
-            fraccionDeLosFlaps(this.aircraft, flaps),
-          ) * FRENAN_EL_TREN);
-    const floor = this.state.onGround
-      ? 0
-      : this.aircraft.approachSpeed * MINIMA_DE_VUELO * masSustentacion;
+    this.sacado = { flaps, tren: clamp01(controls.tren) };
     const gas = controls.engineOn ? controls.throttle : 0;
     this.ultimoGas = gas;
-    const wanted = (floor + gas * (cruise - floor)) * masResistencia;
+    let wanted: number;
+    if (this.state.onGround) {
+      /*
+       * **Rodando, como estaba**: del cero a la punta del suelo, y los flaps
+       * de despegue frenan con su regla de tres. El tren no: lo que cuesta ya
+       * está dentro de la carrera —`carreraHastaVr` lo cuenta, y de ahí sale
+       * el ritmo de este modelo en el suelo—, y contarlo aquí otra vez
+       * alargaría la carrera dos veces por lo mismo.
+       */
+      wanted =
+        gas * cruise * (1 - resistenciaDeLosFlaps(this.aircraft, flaps) * FRENAN_LOS_FLAPS);
+    } else {
+      /*
+       * **Volando, de la mínima de esos flaps a la punta con lo sacado**, en
+       * línea recta con el gas. Limpio es lo de siempre; con el tren y los
+       * flaps fuera, el gas a fondo da lo que el avión sostiene nivelado con
+       * eso fuera. Ver `sueloDeVuelo` y `puntaConLoSacado`.
+       */
+      const suelo = this.sueloDeVuelo(flaps);
+      const punta = Math.max(suelo, this.puntaConLoSacado(this.sacado));
+      wanted = suelo + gas * (punta - suelo);
+    }
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
     // mucho más rápida, el avión llegaba a velocidad de vuelo en menos de dos
     // segundos y despegaba sin carrera: se perdía justo la parte que sí se
@@ -973,13 +1133,29 @@ export class ArcadeFlightModel implements FlightModel {
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
       this.bank += (0 - this.bank) * Math.min(1, step * 5);
     } else {
-      // Viraje en vuelo. El morro gira y el avión se inclina para acompañar;
-      // en un avión de verdad es al revés, pero lo que ve el ojo es lo mismo.
-      this.guinada = controls.aileron * MAX_TURN_RATE * bite;
+      /*
+       * Viraje en vuelo: el alerón pide una inclinación y el rumbo gira lo que
+       * da con ella un viraje coordinado, `ω = g·tan φ / V`. El morro gira al
+       * momento y el ala dibujada acompaña un pelo después; en un avión de
+       * verdad es al revés, pero lo que ve el ojo es lo mismo, y así la tecla
+       * responde enseguida.
+       *
+       * Giraba con el alerón a un ritmo fijo —un cuarto de radián por segundo
+       * a fondo— y se dibujaba la inclinación a juego, que cuadraba con la
+       * física para la avioneta a la velocidad de este modelo y para nadie
+       * más: el JAZ 120 en la final, con tres grados de ala, giraba dos veces
+       * y media lo de verdad. Mientras volaba la final a ochenta nudos —la
+       * mitad de lo suyo, porque el gas no contaba lo sacado: ver `gasPara`—
+       * no se notaba tanto; a su velocidad, un piloto que corrige a toques se
+       * pasaba de lado a lado del eje sin llegar a meterse. Con la cuenta del
+       * viraje coordinado la inclinación que se ve es la que gira, en todos y
+       * a cualquier velocidad, que es lo que el número de antes quería: ver
+       * la nota sobre el ritmo de viraje, más arriba.
+       */
+      const inclinacion = controls.aileron * VISUAL_BANK * bite;
+      this.bank += (inclinacion - this.bank) * Math.min(1, step * 3.5);
+      this.guinada = (GRAVITY * Math.tan(inclinacion)) / Math.max(this.speed, 10);
       this.heading += this.guinada * step;
-      this.bank +=
-        (controls.aileron * VISUAL_BANK * bite - this.bank) *
-        Math.min(1, step * 3.5);
     }
 
     /*
@@ -1100,13 +1276,11 @@ export class ArcadeFlightModel implements FlightModel {
      * Sigue sin poder caerse: la palanca puede compensar el planeo entero, así
      * que quien tire y no entienda por qué baja, deja de bajar. Lo que ya no
      * puede es no enterarse.
+     *
+     * Y con el tren y los flaps fuera, el gas que ni sube ni baja es más alto:
+     * ver `gasQueNiSubeNiBaja`.
      */
-    const planeo =
-      gas >= MOTOR_QUE_SOSTIENE
-        ? ((gas - MOTOR_QUE_SOSTIENE) / (1 - MOTOR_QUE_SOSTIENE)) *
-          (ascensoMaximo(this.aircraft) * SUBE_SOLO)
-        : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) *
-          caidaSinMotor(this.aircraft, this.speed);
+    const planeo = this.ritmoDelMotor(gas);
     /*
      * **Y sin motor no se puede volar recto, por mucho que se tire.**
      *

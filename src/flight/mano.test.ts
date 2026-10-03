@@ -26,6 +26,8 @@ import {
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { GUYRAMI, TAGUATO, TAGUATO_RUVICHA, TUKA, type Tier } from "./tiers";
 import { EN_GRADOS, empezar, volar, type Medida, type VueloDeBanco } from "./mano-banco";
+import { airDensity, GRAVITY } from "./atmosphere";
+import { empujeLleno } from "./fdm";
 
 const RAD = Math.PI / 180;
 const avion = (id: string): AircraftConfig => AIRCRAFT.find((a) => a.id === id)!;
@@ -156,6 +158,14 @@ describe("la bajada que se deja, se queda", () => {
    * nunca sostenía un descenso. Ahora, lo que se suelta bajando sigue bajando
    * por la misma trayectoria.
    */
+  /*
+   * **Por tipo.** Con mandos eléctricos —y en el modelo sencillo, donde la
+   * palanca compensada se queda con su trayectoria mientras el gas no cambie—,
+   * lo que se suelta bajando sigue por la misma trayectoria. En un avión de
+   * cables, suelto, lo que se sostiene es la velocidad: con el gas quitado
+   * sigue bajando, a la velocidad a la que se soltó, por la trayectoria que da
+   * ese gas. Tampoco vuelve a nivelado. Ver `sostieneLaVelocidad` en `mano.ts`.
+   */
   for (const a of AIRCRAFT)
     for (const tier of PELDANOS)
       it(`${a.id} en ${tier.id}`, () => {
@@ -168,13 +178,21 @@ describe("la bajada que se deja, se queda", () => {
         }));
         const asentado = ultima(v, 3, () => ({}));
         const gamma = (m: Medida, ias: number) => m.vertical / ias;
-        expect(asentado.vertical, "baja").toBeLessThan(-0.5);
+        const porVelocidad = tier.model !== "simple" && a.mandos === "convencionales";
+        // Con la velocidad compensada, lo que baja es lo que da el gas quitado:
+        // seis décimas de metro por segundo en la avioneta, que es poco.
+        expect(asentado.vertical, "baja").toBeLessThan(porVelocidad ? -0.3 : -0.5);
+        const compensada = v.mano.velocidadCompensada;
+        if (porVelocidad) expect(compensada, "suelta, compensa la velocidad").not.toBeNull();
         let peor = 0;
-        volar(v, 10, () => ({}), (m) => {
+        let lejos = 0;
+        volar(v, porVelocidad ? 30 : 10, () => ({}), (m) => {
           peor = Math.max(peor, Math.abs(gamma(m, m.ias) - gamma(asentado, asentado.ias)));
+          if (compensada !== null) lejos = Math.max(lejos, Math.abs(m.ias - compensada));
           expect(m.vertical, `a los ${m.t.toFixed(1)} s sigue bajando`).toBeLessThan(0);
         });
-        expect(peor * EN_GRADOS, "la trayectoria se mantiene").toBeLessThan(1.2);
+        if (porVelocidad) expect(lejos / 0.514444, "la velocidad se mantiene, kt").toBeLessThan(3);
+        else expect(peor * EN_GRADOS, "la trayectoria se mantiene").toBeLessThan(1.2);
       });
 });
 
@@ -196,12 +214,38 @@ describe("sin sacudidas", () => {
       // Más gas, que es lo que se pone para virar sin perder velocidad.
       v.gas = Math.min(1, v.gas + 0.1);
       const alto = v.modelo.state.position.y;
+      const ias = v.modelo.state.airspeed;
+      // Lo que sube de más con la décima de gas, `ΔT·V/W`. Ver abajo.
+      const sobra =
+        (0.1 * empujeLleno(a, airDensity(alto), ias) * ias) / (a.mass * GRAVITY);
+      let peor = 0;
+      let lejos = 0;
       // Un viraje normal, de unos treinta grados: se aprieta hasta ahí.
-      volar(v, 20, () => ({
-        teclaAlabeo: v.mano.alabeo.consigna.valor < 28 * RAD ? 1 : 0,
-      }));
+      volar(
+        v,
+        20,
+        () => ({ teclaAlabeo: v.mano.alabeo.consigna.valor < 28 * RAD ? 1 : 0 }),
+        (m) => {
+          peor = Math.max(peor, Math.abs(m.vertical));
+          lejos = Math.max(lejos, Math.abs(v.modelo.state.airspeed - ias));
+        },
+      );
       expect(Math.abs(v.mano.alabeo.consigna.valor) * EN_GRADOS, a.id).toBeGreaterThan(25);
-      expect(Math.abs(v.modelo.state.position.y - alto), a.id).toBeLessThan(30);
+      if (a.mandos === "electricos")
+        expect(Math.abs(v.modelo.state.position.y - alto), a.id).toBeLessThan(30);
+      else {
+        /*
+         * **En uno de cables, la velocidad**: suelto en un viraje, el avión
+         * compensado sostiene la velocidad y no se mete en espiral —la de
+         * antes de la mano bajaba cien metros por segundo—, y lo que suba es
+         * lo que dé la décima de gas de más, `ΔT·V/W`: el JAZ 120, con sus
+         * ochenta y dos kilonewtons de más, unos cuatro metros por segundo, y
+         * algo más al asentarse, que es lo que se pasa un lazo amortiguado.
+         * Ver `sostieneLaVelocidad` en `mano.ts`.
+         */
+        expect(peor, `${a.id}: V/S`).toBeLessThan(1.4 * sobra + 0.5);
+        expect(lejos / 0.514444, `${a.id}: velocidad, kt`).toBeLessThan(5);
+      }
     }
   });
 });

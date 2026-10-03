@@ -10953,7 +10953,9 @@ export class Game {
         this.input.controls.flaps = 1;
       }
     }
-    this.input.controls.throttle = this.flight.gasPara(entrada);
+    // Con lo que lleva sacado: en el modelo sencillo, con tren y flaps hace
+    // falta más gas. Ver `gasPara` en `arcade.ts`.
+    this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls);
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.runwayGuide.reset(this.flight.state.position);
@@ -17638,6 +17640,14 @@ export class Game {
     v.vertical = s.verticalSpeed;
     v.carga = s.loadFactor;
     v.verdadera = s.airspeed;
+    v.indicada = indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia());
+    /*
+     * Y si algo lleva ya la velocidad con el gas: los gases del reactor o la
+     * ayuda de la final de Guyrami. Entonces la mano sostiene la senda en todos
+     * los aviones, y no le pelea la velocidad a quien la lleva. Ver
+     * `sostieneLaVelocidad` en `flight/mano.ts`.
+     */
+    v.gasLlevaLaVelocidad = this.gasesPuestos || this.gasDeLaFinal !== null;
     v.alfa = s.alpha;
     v.alfaDeAviso = s.stallWarningAlpha;
     v.flaps = this.input.controls.flaps;
@@ -17682,6 +17692,8 @@ export class Game {
     vertical: 0,
     carga: 1,
     verdadera: 0,
+    indicada: 0,
+    gasLlevaLaVelocidad: false,
     alfa: 0,
     alfaDeAviso: Math.PI,
     flaps: 0,
@@ -18086,7 +18098,13 @@ export class Game {
       };
     }
     if (this.tier.model === "simple") {
-      const punta = indicatedAirspeed(this.flight.velocidadMaxima(), s.position.y, aire) / NUDO;
+      /*
+       * Con lo que se lleva sacado: con tren y flaps, el gas a fondo da menos.
+       * Ver `puntaConLoSacado` en `arcade.ts`.
+       */
+      const verdadera =
+        this.flight.puntaConLoSacado?.(this.input.controls) ?? this.flight.velocidadMaxima();
+      const punta = indicatedAirspeed(verdadera, s.position.y, aire) / NUDO;
       if (v.kt > punta * 0.97) v = { ...v, kt: Math.floor(punta * 0.97), mach: null };
     }
     /*
@@ -19366,6 +19384,7 @@ export class Game {
       vertical: s.verticalSpeed,
       enLaFinal,
       gasDeLaMarca,
+      niSubeNiBaja: this.flight.gasQueNiSubeNiBaja?.(this.input.controls),
     });
   }
 

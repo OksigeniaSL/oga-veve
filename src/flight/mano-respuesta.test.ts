@@ -53,6 +53,13 @@ function preparar(a: AircraftConfig, tier: Tier, fase: Fase): Prueba {
   const ias = fase === "crucero" ? maniobra(a) : a.approachSpeed;
   const v =
     fase === "crucero" ? empezar(a, tier, ias, 1500, 0) : empezar(a, tier, ias, 300, 1);
+  /*
+   * El gas de estas pruebas busca la velocidad —ver `vuela`—, así que la mano
+   * sostiene la trayectoria en todos: es lo que mide esta tabla. Lo que hace
+   * suelta en un avión de cables con el gas en la mano de quien vuela, en
+   * `aproximacion-por-tipo.test.ts`.
+   */
+  v.gasLlevaLaVelocidad = true;
   const p = { v, ias };
   vuela(p, 20, (t) => (t === 0 ? { palanca: { x: 0, y: 0 } } : {}));
   return p;

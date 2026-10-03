@@ -100,6 +100,9 @@ function vuela(
 function enLaFinal(a: AircraftConfig, tier: Tier, senda = -3, gas: Gas = "automatico"): Final {
   const ias = a.approachSpeed;
   const v = empezar(a, tier, ias, senda < 0 ? 600 : 300, 1);
+  // Con el gas buscando la velocidad, la mano sostiene la senda en todos. Ver
+  // `sostieneLaVelocidad` en `mano.ts`.
+  v.gasLlevaLaVelocidad = true;
   const f: Final = { v, ias, gas: "automatico", memoria: memoriaDeGasesNueva() };
   vuela(f, 0.1, () => ({}));
   v.mano.ponerPalanca(0, 0);
@@ -108,6 +111,7 @@ function enLaFinal(a: AircraftConfig, tier: Tier, senda = -3, gas: Gas = "automa
   v.mano.cabeceo.prisa = false;
   vuela(f, 60, () => ({}));
   f.gas = gas;
+  v.gasLlevaLaVelocidad = gas !== "fijo";
   return f;
 }
 
