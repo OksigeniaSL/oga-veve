@@ -537,10 +537,16 @@ export class OidoDelVuelo {
               tambor: 0.3 + 0.5 * rapido,
             }
           : {
-              siseo: cuanta * 0.5 * (0.1 + 0.55 * quieto) * dentro,
+              /*
+               * Y en el pasaje, poco también en tierra. Enrique: «dentro de
+               * un avión, oír llover, lo que se dice oír llover, pues no
+               * tanto». Un siseo y alguna gota que se adivinan, la mitad que
+               * antes con el avión quieto.
+               */
+              siseo: cuanta * 0.5 * (0.08 + 0.25 * quieto) * dentro,
               cuerpo,
               cuerpoHz,
-              gotas: cuanta * (0.12 + 0.45 * quieto),
+              gotas: cuanta * (0.08 + 0.2 * quieto),
               ritmo: 3 + 25 * cuanta * (0.3 + 0.7 * quieto),
               tono: 1400,
               tambor: 0.5,
@@ -586,8 +592,13 @@ export class OidoDelVuelo {
     const pisando = suelo && gs > 0.5;
     const rodadura = {
       rumor,
+      /*
+       * Y suaves rodando: se notan de verdad en la carrera, que es cuando la
+       * rueda las pisa deprisa. A 22 kt, un golpe flojo cada segundo y pico;
+       * a partir de unos 90 kt, enteros.
+       */
       juntas: pisando
-        ? f.juntas * Math.pow(Math.min(1, gs / 15), 0.8) * porVista(o, 0.45, 0.9, 0.8)
+        ? f.juntas * Math.pow(Math.min(1, gs / 45), 1.5) * porVista(o, 0.45, 0.9, 0.8)
         : 0,
       cada: pisando && f.juntas > 0 ? f.separacion / gs : 0,
       /*
@@ -663,10 +674,17 @@ export class OidoDelVuelo {
      * Desde fuera, nada: el soplido de los packs es de dentro, y la toma de
      * aire de la panza no se oye desde la cola del avión.
      */
+    /*
+     * **Y bajo, que es un soplido de fondo y no una ducha.** Estaba a −32 dB en
+     * el pasaje, por encima de todo lo demás en el puesto, y se oía como lluvia
+     * con el cielo despejado. Enrique: «¿el aire acondicionado? A esa potencia,
+     * la pulmonía va a ser de las buenas». Doce decibelios menos: se nota si
+     * se escucha, y no se confunde con nada.
+     */
     const aire = conPacks
-      ? porVista(o, 0, 0.32, 0.5)
+      ? porVista(o, 0, 0.08, 0.12)
       : conVentilacion
-        ? porVista(o, 0, 0.25, 0.35)
+        ? porVista(o, 0, 0.06, 0.09)
         : 0;
 
     return {

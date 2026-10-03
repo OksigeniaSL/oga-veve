@@ -69,10 +69,18 @@ export interface Firme {
 }
 
 /**
- * Cada cuántos metros va una junta de losa. Ver la cabecera: entre los cuatro
- * y los seis y pico según el grueso, y cinco es el medio honrado.
+ * **Cada cuántos metros suena un golpe**, que no es cada junta de losa.
+ *
+ * Las losas tienen juntas cada cinco metros o así, pero esas las traga el
+ * neumático: lo que se oye dentro es la rueda de morro pisando las luces del
+ * eje y las juntas de dilatación, cada quince o treinta metros (OACI, Anexo 14).
+ * Con cinco, rodando a 22 kt sonaban dos o tres golpes por segundo, y Enrique,
+ * que lo ha vivido: «eso cuando se nota es en carrera; en rodadura podrá
+ * notarse, pero mucho más espaciado… está mal calculado». Con quince, rodando
+ * es menos de uno por segundo, y en la carrera, a 140 kt, casi cinco: el
+ * traqueteo de un despegue.
  */
-export const JUNTA_CADA = 5;
+export const JUNTA_CADA = 15;
 
 /**
  * Los firmes, por material y por estado.

@@ -197,11 +197,24 @@ describe("la rodadura y sus juntas", () => {
   const rodando = (firme = FIRMES.losas.cuidado, gs = 10, oido: Oido = "cabina") =>
     uno(ARAI, { oido, enElSuelo: true, ias: gs, gs, firme }).rodadura;
 
-  it("sobre losas suenan las juntas, a su compás: cinco metros entre la velocidad", () => {
+  it("sobre losas suenan los golpes del eje, a su compás: quince metros entre la velocidad", () => {
     const r = rodando(FIRMES.losas.cuidado, 10);
     expect(r.juntas).toBeGreaterThan(0);
-    expect(r.cada).toBeCloseTo(0.5, 5);
-    expect(rodando(FIRMES.losas.cuidado, 20).cada).toBeCloseTo(0.25, 5);
+    expect(r.cada).toBeCloseTo(1.5, 5);
+    expect(rodando(FIRMES.losas.cuidado, 20).cada).toBeCloseTo(0.75, 5);
+  });
+
+  /*
+   * «Eso cuando se nota es en carrera; en rodadura podrá notarse, pero mucho
+   * más espaciado.» Rodando a 22 kt, menos de un golpe por segundo y flojo; en
+   * la carrera, a 140 kt, varios por segundo y enteros.
+   */
+  it("rodando, espaciados y flojos; en la carrera, seguidos y enteros", () => {
+    const rodaje = rodando(FIRMES.losas.cuidado, 11.3);
+    const carrera = rodando(FIRMES.losas.cuidado, 72);
+    expect(1 / rodaje.cada).toBeLessThan(1);
+    expect(1 / carrera.cada).toBeGreaterThan(4);
+    expect(rodaje.juntas).toBeLessThan(carrera.juntas * 0.25);
   });
 
   it("y el tren principal pisa la misma junta una batalla después", () => {
