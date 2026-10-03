@@ -914,7 +914,18 @@ export function rodajeEnTierra(
   ancho: number = ANCHO_DEL_RODAJE,
 ): string {
   const alto = ALTO_DEL_RODAJE;
-  const barra = { x: 10, y: alto - 19, ancho: ancho - 20, alto: 11 };
+  /*
+   * **Dos barras, y se ve una**: con la cifra, fina y debajo de ella; sin la
+   * cifra —los dos peldaños de abajo—, gorda y en medio de su caja, que ahí
+   * es todo lo que hay que mirar y una caja con una raya al pie parecía un
+   * instrumento a medio pintar.
+   */
+  const barra = (y: number, grueso: number, cuando: string) => `
+      <g transform="translate(10 ${y})" ${cuando}>
+        <rect width="${ancho - 20}" height="${grueso}" rx="3" class="cr__rodaje-carril" />
+        <rect data-cristal="rodaje-relleno" data-ancho="${ancho - 20}" width="0"
+              height="${grueso}" rx="3" class="cr__rodaje-relleno" />
+      </g>`;
   return `
     <g data-cristal="rodaje" transform="translate(${x} ${y})" visibility="hidden">
       <rect width="${ancho}" height="${alto}" rx="6" class="cr__rodaje-fondo" />
@@ -922,11 +933,8 @@ export function rodajeEnTierra(
       <text data-cristal="rodaje-cifra" x="${ancho - 10}" y="30"
             data-desde="${CIFRA_DE_RODAJE_DESDE}" class="cr__rodaje-cifra"
             text-anchor="end"></text>
-      <g transform="translate(${barra.x} ${barra.y})">
-        <rect width="${barra.ancho}" height="${barra.alto}" rx="3" class="cr__rodaje-carril" />
-        <rect data-cristal="rodaje-relleno" data-ancho="${barra.ancho}" width="0"
-              height="${barra.alto}" rx="3" class="cr__rodaje-relleno" />
-      </g>
+      ${barra(alto - 19, 11, `data-desde="${CIFRA_DE_RODAJE_DESDE}"`)}
+      ${barra(16, alto - 32, `data-hasta="${CIFRA_DE_RODAJE_DESDE - 1}"`)}
     </g>`;
 }
 

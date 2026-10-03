@@ -1668,13 +1668,16 @@ function pintarRodaje(
       color,
       "right",
     );
+  // Sin la cifra, la barra gorda y en medio: es todo lo que hay que mirar.
+  const conCifra = peldanoDeAhora >= CIFRAS_DE_AVISO_DESDE;
   const bx = x + 12;
-  const by = y + alto - 22;
+  const bh = conCifra ? 12 : alto - 32;
+  const by = conCifra ? y + alto - 22 : y + 16;
   const bw = ancho - 24;
   g.fillStyle = PALETA.filo;
-  g.fillRect(bx, by, bw, 12);
+  g.fillRect(bx, by, bw, bh);
   g.fillStyle = color;
-  g.fillRect(bx, by, bw * Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala))), 12);
+  g.fillRect(bx, by, bw * Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala))), bh);
 }
 
 /**

@@ -591,7 +591,9 @@ import {
 } from "./flight/vuelo";
 import { velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
+  DEJA_DE_PEDIR,
   NADA_DICHO_EN_LA_PISTA,
+  PIDE_FRENAR,
   hayQueFrenarEnLaPista,
   laTorreMetePrisa,
   seDiceEnLaPista,
@@ -17959,6 +17961,9 @@ export class Game {
    * en el puesto, que es donde una tripulación prepara la salida. Ver
    * `RECIEN_LLEGADO` y `prepararLaSubida`.
    */
+  /** Si la GS de rodar va en ámbar. Ver `rodajeParaElCuadro`. */
+  private gsRapida = false;
+
   private apagadoHastaElPuesto(): boolean {
     return this.flight.state.onGround && RECIEN_LLEGADO.has(this.faseDeAhora);
   }
@@ -17981,10 +17986,21 @@ export class Game {
     const vista = this.vistaActual;
     const maxima =
       vista?.velocidadMaxima ?? velocidadesEnTierra(this.aircraft).rectaLarga;
-    const rapido =
+    /*
+     * **Ámbar en cuanto se va por encima de lo que toca aquí**, con la banda
+     * muerta de «frená»: el perfil ya frena para cada curva y para la boca de
+     * la salida, así que ir pasado de él es llegar rápido a lo que viene. El
+     * aviso hablado espera a ir bastante más pasado —ver `vaRapido`—; el
+     * color, no, que es para mirarlo y no cansa.
+     */
+    const toca = vista?.velocidadSugerida ?? maxima;
+    const margen = this.gsRapida ? DEJA_DE_PEDIR : PIDE_FRENAR;
+    this.gsRapida =
       this.pidiendoFreno ||
       (vista?.rapido ?? false) ||
-      this.bandaDeAhora === "rapido";
+      this.bandaDeAhora === "rapido" ||
+      (toca > 0.5 && s.groundSpeed > toca + margen);
+    const rapido = this.gsRapida;
     return {
       nudos: s.groundSpeed / NUDO,
       escala: (maxima * 1.5) / NUDO,

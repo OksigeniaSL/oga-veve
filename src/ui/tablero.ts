@@ -1962,11 +1962,9 @@ export class Tablero {
     poner(this.pieza('[data-cristal="rodaje"]'), "visibility", r ? "visible" : "hidden");
     poner(this.pieza('[data-cristal="gs"]'), "visibility", r ? "hidden" : "visible");
     if (!r) return;
-    const relleno = this.pieza<SVGElement>('[data-cristal="rodaje-relleno"]');
-    if (relleno) {
-      const ancho = Number(relleno.dataset.ancho);
-      const parte = Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala)));
-      poner(relleno, "width", n1(parte * ancho));
+    const parte = Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala)));
+    for (const relleno of this.todas<SVGElement>('[data-cristal="rodaje-relleno"]')) {
+      poner(relleno, "width", n1(parte * Number(relleno.dataset.ancho)));
       relleno.classList.toggle("cr__rodaje-relleno--rapido", r.rapido);
     }
     const cifra = this.pieza('[data-cristal="rodaje-cifra"]');
