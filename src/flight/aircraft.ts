@@ -567,6 +567,23 @@ export interface AircraftConfig {
    */
   avisosHablados: boolean;
   /**
+   * **Cómo se oscurecen las ventanillas del pasaje**, o `null` sin pasaje.
+   *
+   * - `persiana`: la de siempre, de plástico, que sube y baja cada uno con la
+   *   mano. Para despegar y aterrizar se sube —se la pide la tripulación—, y
+   *   en crucero se baja quien quiera.
+   * - `electrocromica`: sin persiana; el cristal se oscurece con un botón, en
+   *   cinco pasos. Es la del 787 y la del 777X, los de largo radio de esta
+   *   generación. Para despegar y aterrizar **la tripulación las aclara todas
+   *   a la vez** desde su panel, y el pasajero no puede cambiarlas.
+   *
+   * El porqué de las dos cosas es el mismo: que se vea fuera si pasa algo —un
+   * motor, fuego— y que los ojos estén hechos a la luz de fuera si hay que
+   * salir. No se explica en cada vuelo; se ve pasar. Ver
+   * `world/cabina-de-pasaje.ts`.
+   */
+  ventanillas: "persiana" | "electrocromica" | null;
+  /**
    * **Vmo**: velocidad indicada máxima, en nudos.
    *
    * Es un límite de **estructura**: lo que aguanta un fuselaje es presión
@@ -903,6 +920,7 @@ export const PYKASU: AircraftConfig = {
   autofreno: false,
   tcas: null,
   avisosHablados: false,
+  ventanillas: null,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
   vleKt: 85,
@@ -1013,6 +1031,7 @@ export const MAINUMBY: AircraftConfig = {
   autofreno: false,
   tcas: null,
   avisosHablados: false,
+  ventanillas: null,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
   vleKt: 80,
@@ -1160,6 +1179,7 @@ export const PANAMBI: AircraftConfig = {
   autofreno: false,
   tcas: null,
   avisosHablados: false,
+  ventanillas: null,
   // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
   vleKt: 152,
@@ -1297,6 +1317,8 @@ export const ARASUNU: AircraftConfig = {
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
   avisosHablados: true,
+  // Persiana de plástico, como cualquier turbohélice regional.
+  ventanillas: "persiana",
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
   vmoKt: 250,
   vleKt: 184,
@@ -1463,6 +1485,8 @@ export const ARAI: AircraftConfig = {
   autofreno: true,
   tcas: "TCAS II",
   avisosHablados: true,
+  // Persiana de plástico, como cualquier reactor de pasillo único.
+  ventanillas: "persiana",
   // Reactor regional.
   vmoKt: 320,
   /*
@@ -1696,6 +1720,13 @@ export const YVAGA: AircraftConfig = {
   autofreno: true,
   tcas: "TCAS II",
   avisosHablados: true,
+  /*
+   * **Electrocrómicas**, como las de los largos radios de esta generación —el
+   * 787 y el 777X—, que son los que llevan ventanillas tan grandes como estas
+   * (36 × 52 cm en el modelo). Los cuatrimotores de antes, el 747 o el A340,
+   * llevan persiana: si este se quisiera de aquella generación, es esta línea.
+   */
+  ventanillas: "electrocromica",
   /*
    * Los del de fuselaje ancho, que son los del avión del que sale: 365 nudos y
    * Mach 0,92. Y es el único de la flota donde el cruce cae a una altura a la

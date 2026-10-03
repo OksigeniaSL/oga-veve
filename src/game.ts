@@ -505,7 +505,13 @@ import {
   type FranjaLibre,
 } from "./cameras/mirada";
 import { escucharLaMirada } from "./cameras/dedo-que-mira";
-import { MarcoDeVentanilla, seVePorLaVentanilla } from "./world/marco-de-ventanilla";
+import {
+  cortinaDe,
+  MarcoDeVentanilla,
+  queSeTocaEnLaPared,
+  seVePorLaVentanilla,
+} from "./world/marco-de-ventanilla";
+import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
@@ -3032,6 +3038,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
     this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
@@ -4065,6 +4072,11 @@ export class Game {
   /** El marco de la ventanilla del pasaje. Ver `world/marco-de-ventanilla.ts`. */
   private readonly marcoDeVentanilla = new MarcoDeVentanilla();
   /**
+   * **La cabina de pasaje**: las persianas —o el cristal que se oscurece—,
+   * las ventanillas de al lado y las luces. Ver `world/cabina-de-pasaje.ts`.
+   */
+  private readonly cabinaDePasaje = new CabinaDePasaje();
+  /**
    * **Lo último que se señaló por la ventanilla**, mientras se pueda mirar:
    * qué es, por dónde se ve y qué tarjeta lo ofrece. Ver
    * `mirarHaciaLoSenalado`.
@@ -4184,6 +4196,8 @@ export class Game {
       alSoltar: () => this.mirada.soltar(),
       alTocar: (e) => {
         const [x, y] = enPantalla(e);
+        // En el pasaje, la ventanilla: su persiana o su botón.
+        if (this.tocarLaPared(x, y)) return;
         this.pulsarElMando(x, y);
         this.mirarLosMandos(x, y);
       },
@@ -4241,8 +4255,10 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
-    // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella.
+    // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella,
+    // y el tinte de su cristal, cuando lo lleva.
     this.scene.add(this.marcoDeVentanilla.malla);
+    this.scene.add(this.marcoDeVentanilla.cristal);
     /*
      * Las tormentas del día. Salen del tiempo de verdad: con buen tiempo no hay
      * ninguna y el radar está encendido sin pintar nada, que es lo que hace un
@@ -8521,6 +8537,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
     this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
@@ -10832,6 +10849,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
     this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
@@ -12184,6 +12202,7 @@ export class Game {
     // Ya con la tormenta dentro: ver `causasDe` en `flight/turbulencia.ts`.
     const movimiento = cuantoSeMueve(aire);
     this.atenderAlCinturon(movimiento, loDijo, loEncendio);
+    this.prepararLaCabina(dt);
     this.hablarDeLosBaches(dt, movimiento);
     this.buscarNivelTranquilo(dt, movimiento, aire);
     this.atenderALaSobrevelocidad(dt);
@@ -15170,6 +15189,8 @@ export class Game {
         this.cameraMode = suyo;
         recordarVista(suyo);
       }
+      // Y lo primero que hace cualquiera para mirar algo: subir la persiana.
+      this.cabinaDePasaje.abrir();
     }
     this.mirada.empezarAMirar();
     return true;
@@ -16350,7 +16371,14 @@ export class Game {
   seVePorLaVentanillaParaBanco(p: { x: number; y: number; z: number }): boolean | null {
     const asiento = this.asientoDe(this.vistaQueHay());
     if (!asiento) return null;
-    return seVePorLaVentanilla(this.camera.position, p, this.flight.state, asiento.ventanilla);
+    const c = this.cabinaDePasaje;
+    return seVePorLaVentanilla(
+      this.camera.position,
+      p,
+      this.flight.state,
+      asiento.ventanilla,
+      cortinaDe(asiento.ventanilla, c.tipoDeVentanilla, c.tapan[0]),
+    );
   }
 
   /**
@@ -16424,9 +16452,82 @@ export class Game {
     this.marcoDeVentanilla.poner(
       this.camera,
       this.flight.state,
-      asiento.ventanilla,
+      asiento,
       diaEnLaCabina(this.sky.sunDirection.y),
+      this.cabinaDePasaje,
     );
+  }
+
+  /**
+   * **La cabina de pasaje, a su hora**: las ventanillas claras y la cabina
+   * apagada para despegar y aterrizar, y en crucero cada uno con la suya. Va
+   * aunque no se esté mirando por la ventanilla: quien se pasa al asiento en
+   * plena carrera de despegue la encuentra ya preparada, no subiéndose. Ver
+   * `world/cabina-de-pasaje.ts`.
+   */
+  private prepararLaCabina(dt: number): void {
+    const tipo = this.aircraft.ventanillas;
+    if (!tipo) return;
+    if (tipo !== this.cabinaDePasaje.tipoDeVentanilla) this.cabinaDePasaje.reiniciar(tipo);
+    const fase = this.faseDeAhora as Fase;
+    this.cabinaDePasaje.paso(
+      dt,
+      this.cabinaForzadaParaBanco ?? cabinaPreparada(fase, this.cinturon.pasajeSuelto),
+      enLaPuerta(fase),
+    );
+  }
+
+  /**
+   * Preparar la cabina a mano, o `null` para dejarla a su hora. Solo para el
+   * banco: mirar cómo se aclaran las ventanillas sin volar un despegue.
+   */
+  cabinaForzadaParaBanco: boolean | null = null;
+
+  /**
+   * **Un toque en la pared del pasaje**: en la ventanilla, la persiana baja un
+   * paso —o el cristal se oscurece un tono—; en el botón del cristal, lo
+   * mismo. Devuelve si se tocó la ventanilla, aunque no se dejara: con la
+   * cabina preparada da un respingo y vuelve. Ver `CabinaDePasaje.tocar`.
+   */
+  private tocarLaPared(x: number, y: number): boolean {
+    const asiento = this.asientoDe(this.vistaQueHay());
+    if (!asiento) return false;
+    const que = queSeTocaEnLaPared(
+      this.camera,
+      x,
+      y,
+      this.flight.state,
+      asiento.ventanilla,
+      this.cabinaDePasaje.tipoDeVentanilla,
+    );
+    if (!que) return false;
+    this.cabinaDePasaje.tocar();
+    return true;
+  }
+
+  /** Tocar la ventanilla de uno, sin apuntar con el dedo. Para el banco. */
+  tocarLaVentanillaParaBanco(): boolean {
+    if (!this.asientoDe(this.vistaQueHay())) return false;
+    this.cabinaDePasaje.tocar();
+    return true;
+  }
+
+  /** Cómo está la cabina de pasaje. Para el banco. */
+  get cabinaParaBanco(): {
+    tipo: string;
+    tapan: readonly number[];
+    luz: number;
+    bloqueada: boolean;
+    vecinas: { delante: boolean; detras: boolean };
+  } {
+    const c = this.cabinaDePasaje;
+    return {
+      tipo: c.tipoDeVentanilla,
+      tapan: [...c.tapan],
+      luz: c.luz,
+      bloqueada: c.bloqueada,
+      vecinas: { ...c.vecinas },
+    };
   }
 
   /**
