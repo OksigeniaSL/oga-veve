@@ -259,6 +259,42 @@ export function enElEmbudoDeFinal(
 }
 
 /**
+ * **Hasta dónde llega la senda de la final**, m del umbral: diez millas. Es el
+ * alcance de la senda de un ILS en la OACI (Anexo 10, volumen I, 3.1.5.3:
+ * ocho grados a cada lado del eje, hasta diez millas). Ver `enElConoDeLaSenda`.
+ */
+export const ALCANCE_DE_LA_SENDA = 10 * 1852;
+
+/**
+ * **¿Está el avión donde la senda de la final dice algo?** Del lado por el que
+ * se entra, a menos de diez millas y dentro de ocho grados a cada lado del eje
+ * prolongado —el ancho del embudo—: el sector en el que una senda de ILS da
+ * su indicación, y en el que tiene sentido decir «estás por encima de la
+ * senda».
+ *
+ * Fuera de él no hay senda que valga. El rombo y la instructora la medían
+ * desde que el plan llegaba a su último tramo, mirando solo la distancia, y
+ * un turbohélice que llegaba a la vista a Asunción por un costado oía «estás
+ * por encima de la senda, bajá un poquito» como si ya estuviera en ella.
+ */
+export function enElConoDeLaSenda(
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    desplazado?: number;
+  },
+  x: number,
+  z: number,
+): boolean {
+  const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
+  const alUmbral = -along - hastaElUmbralDeToma(runway);
+  if (alUmbral < 0 || alUmbral > ALCANCE_DE_LA_SENDA) return false;
+  return Math.abs(across) <= ANCHO_EN_EL_UMBRAL + alUmbral * Math.tan(EMBUDO_DE_FINAL);
+}
+
+/**
  * Hasta dónde llega **la aproximación**, m del umbral: veinte kilómetros.
  *
  * Es más que el embudo de final, y a propósito: el embudo es donde se está

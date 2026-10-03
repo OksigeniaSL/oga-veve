@@ -13,6 +13,8 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  ALCANCE_DE_LA_SENDA,
+  enElConoDeLaSenda,
   enElEmbudoDeFinal,
   enLaZonaDeAproximacion,
   ENTRADA_EN_FINAL,
@@ -199,3 +201,33 @@ describe("la zona de aproximación", () => {
     expect(enLaZonaDeAproximacion(pista, sx, sz, rumbo)).toBe(false);
   });
 });
+
+/**
+ * **El cono de la senda de la final**: ocho grados a cada lado del eje y diez
+ * millas, el sector en el que una senda de ILS dice algo. Fuera de él, el
+ * rombo y la instructora no hablan de la senda: un turbohélice que llegaba a
+ * Asunción por un costado oía «estás por encima de la senda» como si ya
+ * estuviera en ella.
+ */
+describe("el cono de la senda", () => {
+  const h = (pista.heading * Math.PI) / 180;
+  const [fx, fz] = [Math.sin(h), -Math.cos(h)];
+  /** Un punto a `d` metros antes del umbral y `lado` metros a la derecha. */
+  const en = (d: number, lado = 0): [number, number] => {
+    const atras = pista.length / 2 + d;
+    return [pista.x - fx * atras + Math.cos(h) * lado, pista.z - fz * atras + Math.sin(h) * lado];
+  };
+
+  it("por el eje, hasta diez millas", () => {
+    expect(enElConoDeLaSenda(pista, ...en(9 * 1852))).toBe(true);
+    expect(enElConoDeLaSenda(pista, ...en(ALCANCE_DE_LA_SENDA + 500))).toBe(false);
+  });
+
+  it("y no por un costado, ni pasada la pista", () => {
+    // A tres millas, un kilómetro de lado son más de ocho grados.
+    expect(enElConoDeLaSenda(pista, ...en(3 * 1852, 1000))).toBe(false);
+    expect(enElConoDeLaSenda(pista, ...en(3 * 1852, 600))).toBe(true);
+    expect(enElConoDeLaSenda(pista, ...en(-200))).toBe(false);
+  });
+});
+

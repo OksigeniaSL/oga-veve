@@ -161,6 +161,7 @@ import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   alUmbralEnLaAproximacion,
+  enElConoDeLaSenda,
   enElEmbudoDeFinal,
   enLaZonaDeAproximacion,
   vieneEnFinal,
@@ -18986,7 +18987,16 @@ export class Game {
     let d: Desvio | null = null;
     let objetivo: Objetivo = "nada";
     const equipo = equipoDeSenda(this.aircraft);
-    if (!s.onGround && this.vieneAAterrizar(acercandose)) {
+    /*
+     * **Y la senda de la final, solo donde la senda dice algo**: en su cono,
+     * ocho grados a cada lado del eje y diez millas. Ver `enElConoDeLaSenda`.
+     */
+    const pista = this.laPistaDeAhora();
+    if (
+      !s.onGround &&
+      this.vieneAAterrizar(acercandose) &&
+      enElConoDeLaSenda(pista, s.position.x, s.position.z)
+    ) {
       const o = this.origenDeLaSenda();
       const a = this.campoParaLaAproximacion();
       const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
@@ -19211,9 +19221,27 @@ export class Game {
      * cabina va en pies, como todo lo demás.
      */
     const unidades = UNIT_SYSTEMS[this.tier.units];
+    /*
+     * **Y la senda, por cuánto**, igual: el rombo dice que se va alto, y el
+     * número dice cuánto. Un turbohélice llegando a Asunción a dos mil cien
+     * pies y a cuatro millas y media oyó «por encima de la senda» con el rombo
+     * a dos puntos, y no se lo creyó: iba unos trescientos cincuenta pies por
+     * encima de ella. Con el número delante se ve por qué.
+     */
+    const d = this.desvioAhora;
+    const porCuanto =
+      apunta === "aro"
+        ? this.runwayGuide.porCuanto
+        : (apunta === "senda" || apunta === "papi") &&
+            d !== null &&
+            (c.accion === "narizAbajo" || c.accion === "narizArriba") &&
+            c.motivo !== "hundiendose" &&
+            c.motivo !== "lento"
+          ? d.metros
+          : null;
     const conCifra =
-      apunta === "aro" && canalesDe(this.tier.avisos).cifra
-        ? `${larga} (${Math.round(Math.abs(unidades.altitude(this.runwayGuide.porCuanto)))} ${unidades.altitudeLabel()})`
+      porCuanto !== null && canalesDe(this.tier.avisos).cifra
+        ? `${larga} (${Math.round(Math.abs(unidades.altitude(porCuanto)))} ${unidades.altitudeLabel()})`
         : larga;
     const dibujo =
       c.accion === "masGas"
