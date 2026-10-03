@@ -17198,7 +17198,6 @@ export class Game {
     const v = this.vistoPorLaMano;
     v.aircraft = this.aircraft;
     v.sencillo = this.tier.model === "simple";
-    v.amortiguaExtra = this.tier.assists.extraDamping;
     v.protegePerdida = this.tier.assists.stallProtection > 0;
     v.peldanoBajo = this.tier.inclinacionProtegida;
     v.enTierra = s.onGround;
@@ -17238,7 +17237,6 @@ export class Game {
   private readonly vistoPorLaMano: { -readonly [K in keyof LoQueVeLaMano]: LoQueVeLaMano[K] } = {
     aircraft: AIRCRAFT[0]!,
     sencillo: false,
-    amortiguaExtra: 0,
     protegePerdida: false,
     peldanoBajo: false,
     enTierra: true,

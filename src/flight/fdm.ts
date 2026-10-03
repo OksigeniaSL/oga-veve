@@ -978,10 +978,21 @@ export class CoefficientFlightModel implements FlightModel {
     // extra y un empujón para nivelar las alas cuando nadie toca nada.
     if (this.layers.extraDamping > 0) {
       const k = this.layers.extraDamping * qS;
-      // El alabeo del avión, no el del aire: la ayuda frena lo que el avión
-      // gira, y la ráfaga no es suya.
-      rollMoment -=
-        ((k * 0.5 * s.rollRate * ac.wingSpan) / (2 * vRef)) * ac.wingSpan;
+      /*
+       * El alabeo del avión, no el del aire: la ayuda frena lo que el avión
+       * gira, y la ráfaga no es suya.
+       *
+       * **Y no con la mano llevando el alabeo**, igual que el nivelado de
+       * abajo. La ayuda está para quien lleva el alerón directo —un mando de
+       * juego, un joystick—, al que le quita el nervio; la mano ya pide un
+       * ritmo y sostiene la inclinación, así que aquí solo frenaba el avión. En
+       * Tukã le quitaba al JAZ 120 la mitad de lo que rueda a fondo, y con la
+       * flecha mantenida no llegaba a enderezar en la final. Ver
+       * `flight/mano.ts`.
+       */
+      if (controls.manoEnElAlabeo !== true)
+        rollMoment -=
+          ((k * 0.5 * s.rollRate * ac.wingSpan) / (2 * vRef)) * ac.wingSpan;
       pitchMoment -= k * 0.6 * qHat * ac.chord;
       yawMoment -= k * 0.9 * rHat * ac.wingSpan;
     }

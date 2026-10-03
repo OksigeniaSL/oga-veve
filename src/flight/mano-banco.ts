@@ -89,7 +89,6 @@ export function loQueVe(v: VueloDeBanco): LoQueVeLaMano {
   return {
     aircraft: v.aircraft,
     sencillo,
-    amortiguaExtra: v.tier.assists.extraDamping,
     protegePerdida: v.tier.assists.stallProtection > 0,
     peldanoBajo: v.tier.inclinacionProtegida,
     enTierra: s.onGround,

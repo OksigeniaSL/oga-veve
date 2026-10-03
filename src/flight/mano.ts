@@ -39,15 +39,18 @@
  *
  * Lleva dos **consignas**: la inclinación que se quiere y la trayectoria que
  * se quiere —subir, nivelado, bajar—, y mueve el alerón y la profundidad
- * para que el avión las siga. La tecla mueve la consigna **a un ritmo**, con
- * rampa al apretar y al soltar; el dedo la lleva **a un sitio**, el de la
- * palanca, que se queda donde se deja. Ninguno de los dos mueve el mando a
- * fondo.
+ * para que el avión las siga. La tecla mueve la consigna **a un ritmo**, que
+ * arranca enseguida, y al soltarla el avión se para donde está; el dedo la
+ * lleva **a un sitio**, el de la palanca, que se queda donde se deja. Ninguno
+ * de los dos mueve el mando a fondo.
  *
- * - **El ritmo de alabeo sale del avión**: una parte de lo que rueda a fondo a
- *   esa velocidad, que es la cuenta de la ficha. Sale unos 15–20 °/s en las
- *   avionetas, 10 en el turbohélice, 5–6 en el JAZ 90 y 4 en el de fuselaje
- *   ancho, y **menos despacio y con flaps**, como en el de verdad.
+ * - **El ritmo de alabeo sale del avión, y crece con la tecla.** Arranca al
+ *   momento y **tranquilo** —una parte de lo que rueda a fondo a esa
+ *   velocidad, la de un viraje con pasaje—, y si se mantiene la tecla sube a
+ *   un ritmo **decidido**, dos tercios de lo que rueda a fondo, que es el de
+ *   quien mete el avión en vereda en una final. Despacio, todo es más lento,
+ *   como en el de verdad: el alerón muerde con la velocidad. Ver
+ *   `ritmosDeAlabeo`.
  * - **El ritmo de la trayectoria sale de lo que se nota en el asiento**: un
  *   cuarto de g, que deprisa es poco ángulo y despacio es más.
  * - **La trayectoria, no el morro.** Lo que se quiere sostener es si se sube o
@@ -86,7 +89,8 @@ import { VISUAL_BANK } from "./arcade";
 const RAD = Math.PI / 180;
 
 /**
- * **La parte del alabeo a fondo que pide la tecla**: algo más de un quinto.
+ * **La parte del alabeo a fondo con la que arranca la tecla**: algo más de un
+ * quinto. Es el ritmo **tranquilo**, el del pasaje.
  *
  * La avioneta de escuela rueda a fondo a unos setenta grados por segundo y un
  * piloto entra en un viraje normal a unos quince: un quinto largo. Con la
@@ -97,8 +101,68 @@ const RAD = Math.PI / 180;
  */
 export const PARTE_DEL_ALABEO = 0.22;
 
-/** Con los flaps abajo del todo, el alabeo que se pide baja un 15 %. */
+/** Con los flaps abajo del todo, el ritmo tranquilo baja un 15 %. */
 export const MENOS_CON_FLAPS = 0.15;
+
+/**
+ * **Y el tranquilo no baja de tres grados por segundo**, si el avión da al
+ * menos el doble.
+ *
+ * Con solo la parte, el JAZ 120 en la final con los flaps abajo arrancaba a
+ * dos grados por segundo, y el JAZ 90 a tres escasos: la tecla parecía no
+ * hacer nada. Tres es lo más lento de lo que se hace con pasaje.
+ */
+export const SUELO_TRANQUILO = 3 * RAD;
+
+/**
+ * **La parte del alabeo a fondo a la que sube la tecla mantenida**: dos
+ * tercios. Es el ritmo **decidido**.
+ *
+ * Contado volando el JAZ 120 hacia la pista: «termino dando golpes a las
+ * flechas, reacciona a una velocidad absurda, no me da tiempo de estabilizar.
+ * Una cosa es deprisa y otra es que se meta 20 segundos para ponerse en
+ * horizontal». Con solo el ritmo tranquilo, el grande enderezaba de treinta
+ * grados a cero en trece segundos en la final; un piloto de verdad, en una
+ * final, corrige con más decisión que con pasaje en crucero.
+ *
+ * Y la vara de medir es la norma de cualidades de vuelo: **MIL-F-8785C**
+ * (1980), tablas IXa y IXf, pide en la aproximación poder cambiar treinta
+ * grados de inclinación en 1,3 s una avioneta (clase I), 1,8 s un avión medio
+ * (clase II-L) y 2,5 s uno grande (clase III), con el mando a fondo. La NASA
+ * lo confirmó para los grandes en simulador con movimiento —NASA/CR-2020-
+ * 5002350, tabla 1—. Con dos tercios del mando y el arranque tranquilo, la
+ * tecla mantenida tiene que tardar **como mucho el doble** de lo del grande:
+ * cinco segundos. El JAZ 120 endereza en la final en algo más de cuatro, y
+ * todos los demás, antes que él. Ver `mano-respuesta.test.ts`.
+ */
+export const PARTE_DECIDIDA = 2 / 3;
+
+/**
+ * **Y la tecla decidida nunca pasa de quince grados por segundo**: es lo que
+ * pide la palanca de un Airbus en ley normal llevada al tope (FCOM del A320,
+ * capítulo 27, *normal law*, alabeo).
+ *
+ * En los grandes no llega a contar —dos tercios de lo suyo ya es menos—; en
+ * las avionetas sí, y es a propósito. Ruedan a fondo a setenta, y dos tercios
+ * de eso con una tecla es volver a lo de antes: «al pulsar la tecla hace un
+ * movimiento rapidísimo… los pasajeros vomitan hasta la primera papilla». Su
+ * ritmo tranquilo ya anda por los quince —el de entrar en un viraje normal,
+ * ver `PARTE_DEL_ALABEO`—, y en ellas la tecla mantenida no acelera más. Y es
+ * lo que deja a quien vuela asentar el ala sin oscilar: ver
+ * `AL_CENTRO_POR_GRADO`.
+ *
+ * Con la inclinación protegida —la de Airbus, en los reactores y en los dos
+ * peldaños de abajo—, tampoco el tranquilo pasa de aquí.
+ */
+export const RITMO_DE_LA_LEY = 15 * RAD;
+
+/**
+ * Lo que se mantiene la tecla antes de que el ritmo empiece a subir, s, y lo
+ * que tarda en llegar al decidido. Un toque o una corrección corta se quedan
+ * en el tranquilo; mantenida, en poco más de un segundo va decidida.
+ */
+export const ESPERA_PARA_DECIDIR = 0.3;
+export const SUBE_EN = 0.6;
 
 /**
  * **La carga con la que la mano cambia de trayectoria**, en g: un cuarto.
@@ -116,13 +180,27 @@ export const SENDA_POR_SEGUNDO = 3 * RAD;
 /**
  * Lo que tarda el ritmo pedido en llegar entero al apretar, s.
  *
- * Es la rampa: el ala empieza a moverse despacio y se anima, como empieza a
- * girar un avión cuando la mano empieza a mover la palanca.
+ * Es la rampa: la trayectoria empieza a cambiar despacio y se anima, como
+ * empieza a girar un avión cuando la mano empieza a mover la palanca.
  */
 export const RAMPA_AL_APRETAR = 0.45;
 
-/** Y lo que tarda en pararse al soltar, s: el ala no se clava de golpe. */
+/** Y lo que tarda en pararse al soltar, s: no se clava de golpe. */
 export const RAMPA_AL_SOLTAR = 0.3;
+
+/**
+ * **Las rampas del alabeo, más cortas**: una décima y media al apretar y un
+ * cuarto de segundo al soltar.
+ *
+ * Con las de la trayectoria —casi medio segundo para llegar al ritmo—, el ala
+ * del JAZ 120 tardaba un segundo en moverse un grado: «tarda en reaccionar un
+ * poco». Lo lento de un avión grande es el ritmo, no el arranque: la mano
+ * mueve el volante en una décima y el avión empieza a rodar enseguida, a su
+ * paso. Lo que tarda el avión en responder al alerón ya lo pone el modelo de
+ * vuelo, con la inercia de cada uno.
+ */
+export const RAMPA_DEL_ALABEO_AL_APRETAR = 0.15;
+export const RAMPA_DEL_ALABEO_AL_SOLTAR = 0.25;
 
 /**
  * **La inclinación a la que vuelve el avión protegido**: 33°.
@@ -159,16 +237,36 @@ export const SENDA_MAS_BAJA = -15 * RAD;
  * Medio grado de trayectoria, que a cien nudos son cien pies por minuto: el
  * clic de la rueda de velocidad vertical de un automático. Y tres grados de
  * inclinación, una corrección pequeña de rumbo.
+ *
+ * **Y los toques se suman.** Cada golpe partía de donde estuviera la consigna
+ * en ese momento, y lo que le faltaba al golpe anterior se perdía: a golpes,
+ * el ala no iba más deprisa que con la tecla mantenida —«no me enderezo
+ * frente a la pista ni a martillazos con el teclado»—. Ahora cada golpe se
+ * suma a lo que quedaba por hacer, y lo hace a ritmo decidido: tres golpes
+ * son nueve grados, y se ven.
  */
 export const TOQUE_DE_SENDA = 0.5 * RAD;
 export const TOQUE_DE_ALABEO = 3 * RAD;
 
 /**
- * Al soltar la tecla cerca de las alas niveladas o de volar nivelado, la
- * consigna se va al cero: es el imán de la palanca de gases puesto en el
- * mando —ver `alIman`— y es lo que deja volar recto sin puntería.
+ * **El imán del centro.** Al soltar la tecla **volviendo** hacia las alas
+ * niveladas o hacia el vuelo nivelado, cerca de ellos, la consigna se va al
+ * cero: es el imán de la palanca de gases puesto en el mando —ver `alIman`— y
+ * es lo que deja volar recto sin puntería. Y un toque que pasaría por el cero
+ * se queda en él, como una muesca.
+ *
+ * Solo volviendo. Saliendo del centro, una corrección corta se queda donde se
+ * deja: con el imán para todo, apretar un cuarto de segundo desde nivelado no
+ * hacía nada, porque el imán lo devolvía al cero.
+ *
+ * Con la tecla decidida el ala no se para en seco al soltar —el avión tiene
+ * su inercia: ver `FRENO_AL_SOLTAR`—, y quien suelta al ver el horizonte recto
+ * lo deja un par de grados pasado: el imán del alabeo tiene que cogerlo ahí.
+ * Y en los peldaños de abajo es más generoso, que quien vuela allí tiene
+ * cuatro años.
  */
-export const IMAN_DE_ALABEO = 2 * RAD;
+export const IMAN_DE_ALABEO = 3 * RAD;
+export const IMAN_DE_ALABEO_ABAJO = 6 * RAD;
 export const IMAN_DE_SENDA = 0.3 * RAD;
 
 /**
@@ -190,8 +288,6 @@ export interface LoQueVeLaMano {
   readonly aircraft: AircraftConfig;
   /** Si vuela el modelo sencillo, el del primer peldaño. Ver `arcade.ts`. */
   readonly sencillo: boolean;
-  /** La ayuda que amortigua del peldaño. Ver `AssistLayers.extraDamping`. */
-  readonly amortiguaExtra: number;
   /** Si el peldaño no deja entrar en pérdida. Ver `stallProtection`. */
   readonly protegePerdida: boolean;
   /** Si el peldaño es de los de abajo, con la inclinación protegida. */
@@ -250,6 +346,12 @@ export class Consigna {
   /** A qué ritmo se mueve ahora, rad/s. */
   ritmo = 0;
 
+  /** Con sus rampas, s: ver `RAMPA_AL_APRETAR` y las del alabeo. */
+  constructor(
+    private readonly alApretar = RAMPA_AL_APRETAR,
+    private readonly alSoltar = RAMPA_AL_SOLTAR,
+  ) {}
+
   /**
    * Un fotograma pidiendo `pide` (−1 a 1) del ritmo `ritmoMaximo`, sin pasar
    * de `[min, max]`.
@@ -260,7 +362,7 @@ export class Consigna {
       Math.abs(quiere) > Math.abs(this.ritmo) &&
       (this.ritmo === 0 || Math.sign(quiere) === Math.sign(this.ritmo));
     const paso =
-      (Math.max(ritmoMaximo, 1e-6) / (acelera ? RAMPA_AL_APRETAR : RAMPA_AL_SOLTAR)) * dt;
+      (Math.max(ritmoMaximo, 1e-6) / (acelera ? this.alApretar : this.alSoltar)) * dt;
     this.ritmo += acotar(quiere - this.ritmo, paso);
     let v = this.valor + this.ritmo * dt;
     if (v > max) {
@@ -288,7 +390,7 @@ export class Consigna {
     }
     // Lo que se puede llevar y aún pararse en lo que falta: v² = 2·a·d.
     const frena = Math.sqrt(
-      2 * (Math.max(ritmoMaximo, 1e-6) / RAMPA_AL_SOLTAR) * Math.abs(falta),
+      2 * (Math.max(ritmoMaximo, 1e-6) / this.alSoltar) * Math.abs(falta),
     );
     const pide =
       (Math.sign(falta) * Math.min(ritmoMaximo, frena)) / Math.max(ritmoMaximo, 1e-6);
@@ -309,32 +411,57 @@ export class Consigna {
 /**
  * **Lo que rueda el avión con el alerón a fondo**, rad/s por unidad de mando,
  * a esta velocidad. Es la cuenta de la ficha —`clAileron/|clP| · 2V/b`, ver
- * `AircraftConfig.aero.clAileron`— con el amortiguamiento que añade el
- * peldaño, y con el mismo suelo de velocidad que el modelo de vuelo.
+ * `AircraftConfig.aero.clAileron`— con el mismo suelo de velocidad que el
+ * modelo de vuelo. Sin el amortiguamiento de más del peldaño, que el modelo
+ * de vuelo aparta mientras la mano lleva el alabeo: ver `manoEnElAlabeo`.
  */
-export function alabeoAFondo(a: AircraftConfig, verdadera: number, amortiguaExtra = 0): number {
+export function alabeoAFondo(a: AircraftConfig, verdadera: number): number {
   const vRef = Math.max(verdadera, a.cruiseSpeed * 0.35);
-  return (
-    (a.aero.clAileron * 2 * vRef) /
-    ((Math.abs(a.aero.clP) + 0.5 * Math.max(0, amortiguaExtra)) * a.wingSpan)
-  );
+  return (a.aero.clAileron * 2 * vRef) / (Math.abs(a.aero.clP) * a.wingSpan);
 }
 
 /**
- * **El ritmo de alabeo que pide la mano**, rad/s: una parte del que da el
- * avión a fondo, y menos con flaps. Despacio sale más lento porque el avión
- * de verdad también lo es: el alerón muerde con la velocidad.
+ * **Los dos ritmos de alabeo de la mano**, rad/s: el **tranquilo**, con el
+ * que arranca la tecla, y el **decidido**, al que sube si se mantiene. Los dos
+ * son partes del que da el avión a fondo a esta velocidad —ver
+ * `PARTE_DEL_ALABEO` y `PARTE_DECIDIDA`—, así que despacio salen más lentos,
+ * porque el avión de verdad también lo es: el alerón muerde con la velocidad.
+ * Ninguno pasa nunca del alabeo a fondo; el decidido no pasa de
+ * `RITMO_DE_LA_LEY`, y con la inclinación protegida, el tranquilo tampoco.
  */
+export function ritmosDeAlabeo(
+  a: AircraftConfig,
+  verdadera: number,
+  flaps: number,
+  protegido: boolean,
+): { tranquilo: number; decidido: number } {
+  const aFondo = alabeoAFondo(a, verdadera);
+  const parte = PARTE_DEL_ALABEO * aFondo * (1 - MENOS_CON_FLAPS * Math.max(0, Math.min(1, flaps)));
+  const tranquilo = Math.min(
+    protegido ? RITMO_DE_LA_LEY : Infinity,
+    Math.max(parte, Math.min(SUELO_TRANQUILO, aFondo / 2)),
+  );
+  const decidido = Math.max(tranquilo, Math.min(RITMO_DE_LA_LEY, PARTE_DECIDIDA * aFondo));
+  return { tranquilo, decidido };
+}
+
+/** El ritmo tranquilo: con el que arranca la tecla. Ver `ritmosDeAlabeo`. */
 export function ritmoDeAlabeoDeLaMano(
   a: AircraftConfig,
   verdadera: number,
   flaps: number,
+  protegido = false,
 ): number {
-  return (
-    PARTE_DEL_ALABEO *
-    alabeoAFondo(a, verdadera) *
-    (1 - MENOS_CON_FLAPS * Math.max(0, Math.min(1, flaps)))
-  );
+  return ritmosDeAlabeo(a, verdadera, flaps, protegido).tranquilo;
+}
+
+/**
+ * **El ritmo de la tecla mantenida** `apretada` segundos: el tranquilo hasta
+ * `ESPERA_PARA_DECIDIR`, y de ahí sube al decidido en `SUBE_EN`.
+ */
+export function ritmoApretando(apretada: number, tranquilo: number, decidido: number): number {
+  const sube = Math.max(0, Math.min(1, (apretada - ESPERA_PARA_DECIDIR) / SUBE_EN));
+  return tranquilo + (decidido - tranquilo) * sube;
 }
 
 /**
@@ -402,16 +529,50 @@ interface Eje {
   meta: number | null;
   /** Si la meta la puso el dedo: entonces la palanca se pinta en la meta. */
   metaDelDedo: boolean;
+  /**
+   * Si a la meta se va con prisa —al ritmo decidido: los toques, el dedo, el
+   * imán que coge la consigna en marcha— o despacio —el doble toque, la
+   * protección que devuelve a 33°—. Solo cuenta en el alabeo.
+   */
+  prisa: boolean;
   /** La tecla del fotograma anterior, para ver cuándo se suelta. */
   teclaAntes: number;
+  /** Lo que lleva apretada la tecla de ahora, s. */
+  apretada: number;
+  /** Dónde estaba la consigna al apretarla, rad: si se vuelve al centro. */
+  desde: number;
+  /**
+   * La meta que dejaron los toques de antes y que la tecla de ahora aparta, por
+   * si ésta acaba siendo otro toque: entonces se suma a ella. Ver
+   * `TOQUE_DE_ALABEO`.
+   */
+  pendiente: number | null;
+  /**
+   * Si acaba de soltarse la tecla y el avión está frenando el alabeo que
+   * llevaba, y desde cuándo, s. Ver `FRENO_AL_SOLTAR`.
+   */
+  frenando: boolean;
+  frenandoDesde: number;
+  /** Hacia dónde iba la tecla que se soltó, ±1. */
+  sentidoAlSoltar: number;
+  /** Si la tecla que se soltó volvía hacia el centro: para el imán. */
+  volvia: boolean;
 }
 
-const ejeNuevo = (): Eje => ({
+const ejeNuevo = (consigna: Consigna): Eje => ({
   activo: false,
-  consigna: new Consigna(),
+  consigna,
   meta: null,
   metaDelDedo: false,
+  prisa: false,
   teclaAntes: 0,
+  apretada: 0,
+  desde: 0,
+  pendiente: null,
+  frenando: false,
+  frenandoDesde: 0,
+  sentidoAlSoltar: 0,
+  volvia: false,
 });
 
 /**
@@ -420,8 +581,10 @@ const ejeNuevo = (): Eje => ({
  * `llevaCabeceo`.
  */
 export class ManoQueSostiene {
-  readonly alabeo: Eje = ejeNuevo();
-  readonly cabeceo: Eje = ejeNuevo();
+  readonly alabeo: Eje = ejeNuevo(
+    new Consigna(RAMPA_DEL_ALABEO_AL_APRETAR, RAMPA_DEL_ALABEO_AL_SOLTAR),
+  );
+  readonly cabeceo: Eje = ejeNuevo(new Consigna());
 
   /** Lo que pide la mano a los mandos en este fotograma. */
   aileron = 0;
@@ -468,6 +631,7 @@ export class ManoQueSostiene {
     if (x !== null && this.alabeo.activo) {
       this.alabeo.meta = curvaDelDedo(x) * this.inclinacionDelDedo(ve);
       this.alabeo.metaDelDedo = true;
+      this.alabeo.prisa = true;
     }
     if (y !== null && this.cabeceo.activo) {
       const { sube, baja } = sendasDelDedo(ve.aircraft);
@@ -486,6 +650,7 @@ export class ManoQueSostiene {
       if (!eje.activo) continue;
       eje.meta = 0;
       eje.metaDelDedo = false;
+      eje.prisa = false;
     }
   }
 
@@ -574,6 +739,7 @@ export class ManoQueSostiene {
     eje.activo = true;
     eje.meta = null;
     eje.metaDelDedo = false;
+    eje.frenando = false;
     if (cual === "alabeo") {
       eje.consigna.poner(ve.alabeo);
     } else {
@@ -590,6 +756,60 @@ export class ManoQueSostiene {
     eje.activo = false;
     eje.meta = null;
     eje.metaDelDedo = false;
+    eje.pendiente = null;
+    eje.frenando = false;
+  }
+
+  /**
+   * **Lo que hacen la tecla y los toques con la meta de un eje**, en un
+   * fotograma. Al apretar, la tecla aparta la meta —manda ella— y guarda la de
+   * los toques, por si acaba siendo otro. Al soltar volviendo al centro y
+   * cerca de él, el imán —o, con `frena`, el freno, y el imán cuando pare—.
+   * Y el toque, que se suma a lo que le quedaba al de antes y no cruza el
+   * centro: ver `TOQUE_DE_ALABEO` e `IMAN_DE_ALABEO`. Mover la consigna es
+   * cosa de quien llama.
+   */
+  private teclaYToques(
+    eje: Eje,
+    dt: number,
+    tecla: number,
+    toque: number,
+    paso: number,
+    iman: number,
+    frena: boolean,
+  ): void {
+    const c = eje.consigna;
+    if (tecla !== 0) {
+      if (tecla !== eje.teclaAntes) {
+        eje.apretada = 0;
+        eje.desde = c.valor;
+        eje.pendiente = eje.meta !== null && !eje.metaDelDedo ? eje.meta : null;
+      } else eje.apretada += dt;
+      eje.meta = null;
+      eje.metaDelDedo = false;
+      eje.frenando = false;
+      return;
+    }
+    const soltada = eje.teclaAntes !== 0;
+    if (soltada && toque === 0) {
+      eje.volvia = Math.abs(eje.desde) > iman && Math.sign(eje.desde) === -eje.teclaAntes;
+      if (frena) {
+        eje.frenando = true;
+        eje.frenandoDesde = 0;
+        eje.sentidoAlSoltar = eje.teclaAntes;
+      } else alIman(eje, iman);
+    }
+    if (toque !== 0) {
+      const signo = Math.sign(toque);
+      const pendiente = soltada ? eje.pendiente : eje.metaDelDedo ? null : eje.meta;
+      const base =
+        pendiente !== null && (pendiente - c.valor) * signo > 0 ? pendiente : c.valor;
+      const meta = base + signo * paso;
+      eje.meta = base * meta < 0 ? 0 : meta;
+      eje.metaDelDedo = false;
+      eje.prisa = true;
+    }
+    if (soltada) eje.pendiente = null;
   }
 
   private inclinacionDelDedo(ve: LoQueVeLaMano): number {
@@ -605,14 +825,16 @@ export class ManoQueSostiene {
       eje.teclaAntes = tecla;
       return;
     }
-    const ritmo = Math.max(ritmoDeAlabeoDeLaMano(ve.aircraft, ve.verdadera, ve.flaps), 0.5 * RAD);
+    const conProteccion = protegido(ve);
+    const ritmos = ritmosDeAlabeo(ve.aircraft, ve.verdadera, ve.flaps, conProteccion);
+    const tranquilo = Math.max(ritmos.tranquilo, 0.5 * RAD);
+    const decidido = Math.max(ritmos.decidido, tranquilo);
     /*
      * Los topes. Sin protección, sesenta. Protegido, treinta y tres suelto; y
      * apretando, el reactor de los peldaños de arriba llega a sesenta y siete
      * —y vuelve a treinta y tres al soltar—, mientras que en los de abajo no
      * se pasa nunca de treinta y tres.
      */
-    const conProteccion = protegido(ve);
     const topeApretando = !conProteccion
       ? INCLINACION_TOPE
       : ve.peldanoBajo
@@ -620,22 +842,50 @@ export class ManoQueSostiene {
         : INCLINACION_TOPE_DEL_REACTOR;
     const topeSuelto = conProteccion ? INCLINACION_PROTEGIDA : INCLINACION_TOPE;
     const c = eje.consigna;
+    const iman = ve.peldanoBajo ? IMAN_DE_ALABEO_ABAJO : IMAN_DE_ALABEO;
+    this.teclaYToques(eje, dt, tecla, pide.toqueAlabeo, TOQUE_DE_ALABEO, iman, true);
     if (tecla !== 0) {
-      eje.meta = null;
-      eje.metaDelDedo = false;
+      // Tranquilo al apretar, y decidido si se mantiene. Ver `ritmoApretando`.
+      let ritmo = ritmoApretando(eje.apretada, tranquilo, decidido);
+      // Y volviendo de una inclinación, despacio al pasar por el centro. Ver
+      // `AL_CENTRO_POR_GRADO`.
+      if (Math.abs(eje.desde) > AL_CENTRO_DESDE && Math.sign(eje.desde) === -tecla)
+        ritmo = Math.min(
+          ritmo,
+          Math.max(Math.min(tranquilo, AL_CENTRO_MINIMO), AL_CENTRO_POR_GRADO * Math.abs(c.valor)),
+        );
       c.mover(dt, tecla, ritmo, -topeApretando, topeApretando);
-    } else {
-      if (eje.teclaAntes !== 0 && Math.abs(c.valor) < IMAN_DE_ALABEO) eje.meta = 0;
-      if (pide.toqueAlabeo !== 0) {
-        eje.meta = (eje.meta ?? c.valor) + Math.sign(pide.toqueAlabeo) * TOQUE_DE_ALABEO;
-        eje.metaDelDedo = false;
+    } else if (eje.frenando) {
+      /*
+       * **Soltada la tecla, el ala se para donde está.** La consigna va
+       * delante del avión —el avión tarda en seguirla—, y al soltar el avión
+       * seguía hasta ella y un poco más: «cuando lo hace, estoy girando más de
+       * lo que quería». Ahora la consigna se queda con el avión mientras
+       * frena, y lo que se consigue es lo que se ve al soltar más lo que el
+       * avión no puede dejar de rodar. Ver `FRENO_AL_SOLTAR`.
+       */
+      eje.frenandoDesde += dt;
+      c.poner(ve.alabeo);
+      // Parado: cuando ya no rueda hacia donde iba la tecla.
+      if (
+        ve.sencillo ||
+        ve.ritmoDeAlabeo * eje.sentidoAlSoltar < PARADO ||
+        eje.frenandoDesde > FRENA_COMO_MUCHO
+      ) {
+        eje.frenando = false;
+        alIman(eje, iman);
       }
+    } else {
       if (eje.meta !== null) eje.meta = acotar(eje.meta, topeSuelto);
       // La protección: suelto y pasado de treinta y tres, vuelve despacio.
-      else if (Math.abs(c.valor) > topeSuelto) eje.meta = Math.sign(c.valor) * topeSuelto;
+      else if (Math.abs(c.valor) > topeSuelto) {
+        eje.meta = Math.sign(c.valor) * topeSuelto;
+        eje.prisa = false;
+      }
       const rango = Math.max(topeSuelto, Math.abs(c.valor));
-      if (eje.meta !== null) c.hacia(dt, eje.meta, ritmo, -rango, rango);
-      else c.mover(dt, 0, ritmo, -rango, rango);
+      if (eje.meta !== null) c.hacia(dt, eje.meta, eje.prisa ? decidido : tranquilo, -rango, rango);
+      // Soltada, se para en su rampa, venga del ritmo que venga.
+      else c.mover(dt, 0, decidido, -rango, rango);
     }
     eje.teclaAntes = tecla;
 
@@ -650,9 +900,18 @@ export class ManoQueSostiene {
      * sostiene —la cuenta de la ficha— más lo que falta para llegar a él. Con
      * el ritmo de la consigna de entrada, para no ir siempre detrás.
      */
-    const aFondo = Math.max(alabeoAFondo(ve.aircraft, ve.verdadera, ve.amortiguaExtra), 1e-3);
+    const aFondo = Math.max(alabeoAFondo(ve.aircraft, ve.verdadera), 1e-3);
+    if (eje.frenando) {
+      this.aileron = acotar((-FRENO_AL_SOLTAR * ve.ritmoDeAlabeo) / aFondo, 1);
+      return;
+    }
     const falta = c.valor - ve.alabeo;
-    const quiere = acotar(c.ritmo + POR_ALABEO * falta, 1.5 * ritmo + Math.abs(c.ritmo));
+    /*
+     * Y nunca más deprisa que el ritmo decidido, ni alcanzando: apretando a
+     * ritmo decidido, el avión iba un poco por detrás y al alcanzar la
+     * consigna se pasaba del ritmo un diez por ciento.
+     */
+    const quiere = acotar(c.ritmo + POR_ALABEO * falta, Math.max(decidido, Math.abs(c.ritmo)));
     this.aileron = acotar((quiere + POR_RITMO_DE_ALABEO * (quiere - ve.ritmoDeAlabeo)) / aFondo, 1);
   }
 
@@ -668,16 +927,40 @@ export class ManoQueSostiene {
     const v = Math.max(ve.verdadera, 15);
     const ritmo = ritmoDeSendaDeLaMano(v);
     const c = eje.consigna;
+    const gamma = trayectoria(ve);
+    // Hasta setenta y dos grados: el tope del reactor apretando es sesenta y
+    // siete, y acotado a sesenta el viraje pedía menos tirón del que hacía falta.
+    const phi = acotar(ve.alabeo, 72 * RAD);
+    /*
+     * Lo deprisa que cambia ya la trayectoria, de lo que se nota en el
+     * asiento: `γ̇ = (g/V)·(n·cos φ − cos γ)`. Ver el amortiguador, abajo.
+     */
+    const cambia = (GRAVITY / v) * (ve.carga * Math.cos(phi) - Math.cos(gamma));
+    this.teclaYToques(eje, dt, tecla, pide.toqueCabeceo, TOQUE_DE_SENDA, IMAN_DE_SENDA, true);
     if (tecla !== 0) {
-      eje.meta = null;
-      eje.metaDelDedo = false;
       c.mover(dt, tecla, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
-    } else {
-      if (eje.teclaAntes !== 0 && Math.abs(c.valor) < IMAN_DE_SENDA) eje.meta = 0;
-      if (pide.toqueCabeceo !== 0) {
-        eje.meta = (eje.meta ?? c.valor) + Math.sign(pide.toqueCabeceo) * TOQUE_DE_SENDA;
-        eje.metaDelDedo = false;
+    } else if (eje.frenando) {
+      /*
+       * **Soltada la tecla, la trayectoria se queda donde va.** Es lo mismo
+       * que en el alabeo, y aquí se notaba más: la trayectoria va por detrás
+       * del morro hasta segundo y medio, y la consigna, que iba delante,
+       * seguía tirando de ella. Soltando la flecha al ir bajando tres grados,
+       * el avión seguía hasta bajar de cinco a ocho, y el JAZ 120 en la final,
+       * quince: «bajo muy de golpe, o bajo o subo». Ahora la consigna se
+       * queda con la trayectoria mientras ésta deja de cambiar, y el
+       * amortiguador de abajo es el que la para.
+       */
+      eje.frenandoDesde += dt;
+      c.poner(Math.max(SENDA_MAS_BAJA, Math.min(SENDA_MAS_ALTA, gamma)));
+      if (
+        ve.sencillo ||
+        cambia * eje.sentidoAlSoltar < PARADA_LA_SENDA ||
+        eje.frenandoDesde > FRENA_COMO_MUCHO
+      ) {
+        eje.frenando = false;
+        alIman(eje, IMAN_DE_SENDA);
       }
+    } else {
       if (eje.meta !== null) c.hacia(dt, eje.meta, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
       else c.mover(dt, 0, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
     }
@@ -706,13 +989,8 @@ export class ManoQueSostiene {
      * tecla bajando a tres grados: llegaba a cuatro y medio y volvía a dos y
      * medio, ida y vuelta cada ocho segundos. Así que también se mira **lo
      * deprisa que cambia ya la trayectoria**, y eso sale de lo que se nota en
-     * el asiento: `γ̇ = (g/V)·(n·cos φ − cos γ)`.
+     * el asiento: es `cambia`, arriba.
      */
-    const gamma = trayectoria(ve);
-    // Hasta setenta y dos grados: el tope del reactor apretando es sesenta y
-    // siete, y acotado a sesenta el viraje pedía menos tirón del que hacía falta.
-    const phi = acotar(ve.alabeo, 72 * RAD);
-    const cambia = (GRAVITY / v) * (ve.carga * Math.cos(phi) - Math.cos(gamma));
     /*
      * Y lo que falta de **siempre** se va sumando, despacio: en un viraje
      * cerrado o con la velocidad cambiando, la cuenta de arriba se quedaba
@@ -735,7 +1013,10 @@ export class ManoQueSostiene {
     const firmeza = Math.min(POR_TRAYECTORIA, FIRMEZA / tarda);
     const falta = c.valor - gamma;
     let giro =
-      c.ritmo + firmeza * falta + AMORTIGUA_LA_SENDA * (c.ritmo - cambia) + this.suma;
+      c.ritmo +
+      firmeza * falta +
+      (eje.frenando ? FRENO_DE_LA_SENDA : AMORTIGUA_LA_SENDA) * (c.ritmo - cambia) +
+      this.suma;
     /*
      * **Y lejos del avisador.** Sosteniendo —y siempre en los peldaños que no
      * dejan entrar en pérdida—, si el ala va hacia el avisador el morro cede
@@ -781,6 +1062,64 @@ export function protegido(ve: {
 }): boolean {
   return ve.peldanoBajo || esDeChorro(ve.aircraft);
 }
+
+/**
+ * **Volviendo a alas niveladas, la tecla afloja al llegar.** Cerca del centro
+ * el ritmo no pasa de tres veces lo que falta por segundo —a cinco grados,
+ * quince por segundo; a uno, tres—, y nunca baja de dos, así que el ala se
+ * posa en el cero en vez de cruzarlo lanzada, y del otro lado sale igual de
+ * despacio.
+ *
+ * Es lo que hace falta para que quien vuela no entre en oscilación con la
+ * tecla. Una persona tarda unas tres décimas en ver y en soltar, y a ritmo
+ * decidido eso son cinco grados pasados; vuelve, se pasa otra vez, y así:
+ * «me costó un montón estabilizarlo… no responde la tecla bien, y cuando lo
+ * hace estoy girando más de lo que quería». Con el ala aflojando al llegar,
+ * lo que se pasa en esas tres décimas es menos de un grado, y el imán lo
+ * recoge. Es el imán del centro, hecho camino: ver `IMAN_DE_ALABEO`.
+ *
+ * Solo si la tecla empezó con el ala inclinada al otro lado —más de un
+ * grado—: inclinarse desde nivelado va al ritmo de siempre.
+ */
+const AL_CENTRO_POR_GRADO = 3;
+const AL_CENTRO_MINIMO = 2 * RAD;
+const AL_CENTRO_DESDE = 1 * RAD;
+
+/**
+ * **El imán, al soltar**: si la tecla volvía hacia el centro y lo dejado está
+ * cerca de él, al centro, con prisa —coge la consigna en marcha—.
+ */
+function alIman(eje: Eje, iman: number): void {
+  if (eje.volvia && Math.abs(eje.consigna.valor) < iman) {
+    eje.meta = 0;
+    eje.metaDelDedo = false;
+    eje.prisa = true;
+  }
+  eje.volvia = false;
+}
+
+/**
+ * **Cuánto alerón en contra pide el alabeo que queda al soltar**, en «a
+ * fondo» por cada rad/s que se lleva: cuatro veces lo que lo sostendría. Es
+ * el volante llevado al otro lado para parar el giro, como hace la mano de
+ * quien vuela, y a ritmo decidido se va al tope: el avión para lo antes que
+ * su inercia le deja. El JAZ 120, que rueda despacio y pesa mucho, sigue un
+ * par de grados; la avioneta, casi nada.
+ */
+const FRENO_AL_SOLTAR = 4;
+/**
+ * Lo que se toma por parado, rad/s —rodando hacia donde iba la tecla—, y lo
+ * más que se frena, s.
+ */
+const PARADO = 0.3 * RAD;
+const FRENA_COMO_MUCHO = 2;
+/**
+ * Y la trayectoria parada, rad/s, y cuánto giro de morro en contra pide la
+ * trayectoria que aún cambia mientras se frena: el doble del amortiguador de
+ * siempre. Ver `AMORTIGUA_LA_SENDA`.
+ */
+const PARADA_LA_SENDA = 0.1 * RAD;
+const FRENO_DE_LA_SENDA = 3;
 
 /** Cuánto ritmo de alabeo pide cada radián de alabeo que falta, 1/s. */
 const POR_ALABEO = 1.4;
