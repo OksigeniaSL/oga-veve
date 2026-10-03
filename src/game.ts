@@ -500,7 +500,9 @@ import {
   girarLaCabeza,
   giroDeCabezaHacia,
   giroDeVueltaHacia,
+  giroParaQueSeVea,
   MiradaLibre,
+  type FranjaLibre,
 } from "./cameras/mirada";
 import { escucharLaMirada } from "./cameras/dedo-que-mira";
 import { MarcoDeVentanilla, seVePorLaVentanilla } from "./world/marco-de-ventanilla";
@@ -4068,6 +4070,27 @@ export class Game {
    * `mirarHaciaLoSenalado`.
    */
   private loSenalado: { mirada: Mirada; dibujo: string } | null = null;
+  /**
+   * Si la cámara de fuera se está girando **sola**, lo justo para que lo
+   * señalado se vea, y no porque se tocó la tarjeta. Ver `dejarloALaVista`.
+   */
+  private encuadreSolo = false;
+  /**
+   * La franja de la pantalla que queda libre entre la barra de arriba y el
+   * cuadro, de −1 a 1. La mide `encuadrarSobreElCuadro`, dos veces por
+   * segundo, que medir el HUD en cada fotograma costaría un recálculo de
+   * estilos por imagen.
+   */
+  private franjaLibre: FranjaLibre = { arriba: 1, abajo: -1 };
+  /**
+   * Lo que se le pide a la vista que deje a la vista lo señalado: las de fuera
+   * que siguen al avión. La de frente no, que mira hacia atrás a propósito.
+   */
+  private static readonly SIGUEN_AL_AVION: ReadonlySet<CameraMode> = new Set<CameraMode>([
+    "chase",
+    "wing",
+    "izquierda",
+  ]);
   /**
    * Lo que las cámaras necesitan saber del juego **sin conocer el juego**.
    *
@@ -14982,6 +15005,46 @@ export class Game {
         accion: mirada.punto ? () => this.mirarHaciaLoSenalado() : null,
       },
     );
+    this.dejarloALaVista();
+  }
+
+  /**
+   * **Y desde fuera, que se vea sin tener que tocar nada.**
+   *
+   * Desde la vista de detrás, el Teide que la comandante acababa de señalar
+   * quedaba justo detrás del avión —en un viraje la cámara baja a la altura
+   * del fuselaje— o fuera del cuadro, a un costado. Así que al señalarse, si
+   * desde aquí no se ve, la cámara **gira un poco o sube** lo justo para que
+   * se vea, se queda su rato y vuelve sola: lo mismo que al tocar la tarjeta,
+   * en pequeño. Ver `giroParaQueSeVea`.
+   *
+   * Solo si la cabeza está en su sitio: si alguien está mirando con el dedo,
+   * manda el dedo.
+   */
+  private dejarloALaVista(): void {
+    const punto = this.loSenalado?.mirada.punto;
+    if (!punto || !Game.SIGUEN_AL_AVION.has(this.vistaQueHay())) return;
+    if (!this.mirada.enSuSitio) return;
+    const giro = giroParaQueSeVea(
+      this.camera,
+      this.flight.state.position,
+      this.bultoDelAvion,
+      punto,
+      this.franjaLibre,
+    );
+    // Si ya se ve —o le falta un grado—, no se mueve nada.
+    if (Math.hypot(giro.guinada, giro.cabeceo) < MathUtils.degToRad(1)) return;
+    this.encuadreSolo = true;
+    this.mirada.empezarAMirar();
+  }
+
+  /**
+   * Lo que mide el bulto del avión visto desde fuera, m: el fuselaje y la
+   * deriva, que son lo que tapa. Un tercio del largo: en el JAZ 120 la deriva
+   * sube unos veinte metros sobre la panza. Las alas son un filo y no cuentan.
+   */
+  private get bultoDelAvion(): number {
+    return this.largoDelAvion * 0.3;
   }
 
   /**
@@ -15093,6 +15156,8 @@ export class Game {
       this.olvidarLoSenalado();
       return false;
     }
+    // Tocando la tarjeta se mira de verdad, centrado: ya no es el encuadre.
+    this.encuadreSolo = false;
     if (esDePasaje(this.cameraMode) && this.hayPasaje) {
       const p = this.flight.state.position;
       const haciaEl = Math.atan2(punto.x - p.x, -(punto.z - p.z));
@@ -15117,6 +15182,7 @@ export class Game {
   private olvidarLoSenalado(): void {
     if (this.loSenalado) this.hud.senal.caducar(this.loSenalado.dibujo);
     this.loSenalado = null;
+    this.encuadreSolo = false;
     this.mirada.dejarDeMirar();
   }
 
@@ -16308,11 +16374,28 @@ export class Game {
     const { como, topes } = comoSeMiraDesde(modo);
     this.mirada.ponerTopes(topes);
     const punto = this.loSenalado?.mirada.punto;
+    /*
+     * El encuadre que se puso solo es de las vistas de fuera: pasando a la
+     * cabina o al pasaje se deja, que dentro no se gira la cabeza sin que
+     * nadie lo pida. Y acabado su rato, se olvida.
+     */
+    if (this.encuadreSolo && (!this.mirada.apuntando || !Game.SIGUEN_AL_AVION.has(modo))) {
+      if (this.mirada.apuntando) this.mirada.dejarDeMirar();
+      this.encuadreSolo = false;
+    }
     if (this.mirada.apuntando && punto)
       this.mirada.apuntarA(
         como === "cabeza"
           ? giroDeCabezaHacia(this.camera, state.orientation, punto)
-          : giroDeVueltaHacia(this.camera, state.position, punto),
+          : this.encuadreSolo
+            ? giroParaQueSeVea(
+                this.camera,
+                state.position,
+                this.bultoDelAvion,
+                punto,
+                this.franjaLibre,
+              )
+            : giroDeVueltaHacia(this.camera, state.position, punto),
       );
     this.mirada.paso(dt);
     const giro = { guinada: this.mirada.guinada, cabeceo: this.mirada.cabeceo };
@@ -20128,6 +20211,12 @@ export class Game {
     const arriba = this.hud.altoDeArriba;
     const abajo = alto - this.hud.altoDelCuadro;
     const corrimiento = propio ? 0 : (arriba - (alto - abajo)) / 2;
+    // La franja libre, de −1 a 1, para dejar a la vista lo señalado sin que
+    // caiga debajo del cuadro. Ver `dejarloALaVista`.
+    this.franjaLibre = {
+      arriba: 1 - (2 * arriba) / Math.max(1, alto),
+      abajo: 1 - (2 * abajo) / Math.max(1, alto),
+    };
     /*
      * **Y el avión, dentro de la franja.** La cámara de cola mira lejos para
      * que se vea hacia dónde se va, y eso baja el avión unos diecisiete grados

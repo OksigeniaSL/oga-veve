@@ -156,16 +156,79 @@ export const ALCANCE = 30_000;
 export const HASTA_DONDE_SE_MIRA = 100;
 
 /**
- * **Ni lo que va justo delante del morro.**
- *
- * Diez grados. Por una ventanilla del pasaje no se ve lo que va de frente, y
- * decirle a la fila de la izquierda que mire un volcán que está a tres grados
- * del morro es mandarla a mirar el ala. Pero tampoco más: llegando a La Palma
- * la isla entera va a diez o quince grados del morro hasta que se empieza a
- * bajar, y con veinte no se contaba nunca — se veía por todas las ventanillas
- * de un lado y la comandante callada.
+ * **Ni lo que va justo delante del morro**, en grados: lo mínimo de la
+ * geometría, que es lo que mira quien no va sentado en ninguna parte. Quien
+ * cuenta algo en el juego lo cuenta desde un asiento, y lo que vale es el
+ * campo de su ventanilla: ver `CAMPO_DEL_PASAJE` y `CAMPO_DE_LA_CABINA`.
  */
 export const DESDE_EL_MORRO = 10;
+
+/**
+ * **Lo que cabe en una ventanilla**: entre qué grados desde el morro y entre
+ * qué alturas, en grados sobre o bajo el horizonte de los ojos. Lo que cae
+ * fuera no está «a la derecha»: está delante, detrás, arriba o debajo, y no
+ * se ve por ella.
+ */
+export interface CampoDeLaVentanilla {
+  readonly desde: number;
+  readonly hasta: number;
+  /** Lo más alto que se ve, grados sobre el horizonte. Sin él, no hay techo. */
+  readonly arriba?: number;
+  /** Lo más bajo, grados bajo el horizonte. Sin él, no hay suelo. */
+  readonly abajo?: number;
+}
+
+/**
+ * **Lo que ve el pasaje por su ventanilla**, que es a quien le habla la
+ * comandante.
+ *
+ * La ventanilla mira de lado: sentado, un poco hacia la cola —ver
+ * `asiento-de-pasaje.ts`—, y asomándose al cristal se gira hasta cincuenta
+ * grados hacia delante o hacia atrás y algo menos arriba y abajo —ver
+ * `TOPES.pasaje` en `cameras/mirada.ts`—. De ahí sale esto, con un poco de
+ * margen para que lo señalado no quede rozando el canto:
+ *
+ * - **Desde cincuenta y cinco grados del morro.** Se oyó dos veces con lo que
+ *   iba delante: «a la derecha, el Teide» con el Teide por delante del ala,
+ *   fuera de la ventanilla; y subiendo a Gran Canaria, «los que van por el
+ *   lado derecho, miren por la ventanilla: el Pico de las Nieves», con la
+ *   isla delante del morro. «Está al frente, eso no lo puede decir Jazlyn.»
+ *   Delante no es ningún lado: una comandante espera a que el pasaje de ese
+ *   lado lo tenga en la ventanilla, y como lo de delante viene hacia atrás,
+ *   llega solo.
+ * - **Hasta el ala**, como siempre: `HASTA_DONDE_SE_MIRA`.
+ * - **Ni muy arriba ni muy abajo.** Por una ventanilla de pasaje no se ve el
+ *   cielo de encima de la cabeza ni lo que va justo debajo del avión: treinta
+ *   grados por encima del horizonte y cuarenta por debajo, con la cara en el
+ *   cristal.
+ *
+ * Lo comprueba `mirada.test.ts`: todo lo que cae en este campo se puede
+ * mirar por el cristal de su lado.
+ */
+export const CAMPO_DEL_PASAJE: CampoDeLaVentanilla = {
+  desde: 55,
+  hasta: HASTA_DONDE_SE_MIRA,
+  arriba: 30,
+  abajo: 40,
+};
+
+/**
+ * **Y lo que ve quien va en la cabina** de una avioneta, que es a quien le
+ * habla la instructora: «mirá por la ventanilla, a tu derecha». Lo de los
+ * cuarenta grados del morro para dentro se ve por el parabrisas, y eso no es
+ * ninguna ventanilla ni ningún lado: es delante. Sin techo ni suelo, que en
+ * una cabina se mira con todo el cuello.
+ */
+export const CAMPO_DE_LA_CABINA: CampoDeLaVentanilla = {
+  desde: 40,
+  hasta: HASTA_DONDE_SE_MIRA,
+};
+
+/** El campo de la geometría sola, sin asiento: para las pruebas de la cuenta. */
+export const SIN_ASIENTO: CampoDeLaVentanilla = {
+  desde: DESDE_EL_MORRO,
+  hasta: HASTA_DONDE_SE_MIRA,
+};
 
 /**
  * **Cuánto vale un punto de peso, en metros.**
@@ -281,8 +344,9 @@ export interface DesdeDonde {
  *
  * Tres cosas por orden, y ninguna sobra:
  *
- * 1. **Que esté a su alcance y a un lado**: ni detrás del ala ni delante del
- *    morro. Ver `HASTA_DONDE_SE_MIRA` y `DESDE_EL_MORRO`.
+ * 1. **Que esté a su alcance y en la ventanilla de quien lo va a mirar**: ni
+ *    detrás del ala, ni delante del morro, ni encima ni debajo de lo que deja
+ *    ver el cristal. Ver `CampoDeLaVentanilla`.
  * 2. **Lo que más merece**: el peso de cada uno, con la distancia en contra.
  *    Ver `VALE_UN_PESO`.
  * 3. **Que se vea**: la línea de vista contra el relieve, si se da el suelo
@@ -298,6 +362,7 @@ export function queSeVe(
   yaDichos: ReadonlySet<string> = new Set(),
   suelo: ((x: number, z: number) => number | null) | null = null,
   capa: CapaDeNubes | null = null,
+  campo: CampoDeLaVentanilla = SIN_ASIENTO,
 ): Mirada | null {
   interface Candidato {
     readonly mirada: Mirada;
@@ -318,7 +383,7 @@ export function queSeVe(
       if (d > alcance || d < 1) continue;
       const rel = anguloRelativo(desde.rumbo, rumboHacia(dx, dz));
       const abs = Math.abs(rel);
-      if (abs > HASTA_DONDE_SE_MIRA || abs < DESDE_EL_MORRO) continue;
+      if (abs > campo.hasta || abs < campo.desde) continue;
       puntos.push({ x: p.x, z: p.z, ele: p.ele, d, rel });
     }
     if (puntos.length === 0) continue;
@@ -340,12 +405,15 @@ export function queSeVe(
   }
   candidatos.sort((a, b) => b.merito - a.merito);
   for (const c of candidatos) {
-    if (desde.y === undefined || (!suelo && !capa)) return c.mirada;
+    if (desde.y === undefined) return c.mirada;
     const ojo = { x: desde.x, y: desde.y, z: desde.z };
     // Con tres puntos basta: si ninguno de los tres más cerca se ve, el río
     // está detrás de una loma, y el cuarto no lo va a arreglar.
     for (const p of c.puntos.slice(0, 3)) {
       const y = p.ele ?? (suelo?.(p.x, p.z) ?? 0) + POR_ENCIMA;
+      // Y que quepa en el cristal de arriba abajo: lo de justo debajo del
+      // avión no se ve por una ventanilla, por cerca que esté.
+      if (!cabeDeAlto(campo, y - desde.y, p.d)) continue;
       const alli = { x: p.x, y, z: p.z };
       if (suelo && !seVe(ojo, alli, suelo)) continue;
       // Y la nube, que tapa igual que una loma. Ver `laCapaTapa`.
@@ -361,6 +429,12 @@ export function queSeVe(
     }
   }
   return null;
+}
+
+/** Si algo a `sube` metros por encima de los ojos y `lejos` en planta cabe en el campo. */
+function cabeDeAlto(campo: CampoDeLaVentanilla, sube: number, lejos: number): boolean {
+  const altura = (Math.atan2(sube, lejos) * 180) / Math.PI;
+  return altura <= (campo.arriba ?? 90) && altura >= -(campo.abajo ?? 90);
 }
 
 /**

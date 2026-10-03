@@ -478,6 +478,125 @@ export function giroDeCabezaHacia(
 export const POR_ENCIMA_DEL_AVION = 8 * GRADO;
 
 /**
+ * La franja de la pantalla que se ve de verdad, de arriba abajo, en
+ * coordenadas de pantalla de −1 a 1: lo que queda entre la barra de botones y
+ * el cuadro de mandos. Ver `encuadrarSobreElCuadro` en `game.ts`.
+ */
+export interface FranjaLibre {
+  readonly arriba: number;
+  readonly abajo: number;
+}
+
+/** Toda la pantalla, para quien no tenga nada encima. */
+export const PANTALLA_ENTERA: FranjaLibre = { arriba: 1, abajo: -1 };
+
+/**
+ * **Hasta dónde se deja lo señalado**, de 0 a 1 de la media pantalla: dentro,
+ * pero sin rozar el canto.
+ *
+ * A lo ancho, la mitad: en los costados de la pantalla están los mandos y la
+ * propia tarjeta de lo señalado, y en la primera captura el Teide quedó al
+ * setenta y cuatro por ciento, asomando junto a la tarjeta que lo anunciaba.
+ * De arriba abajo, dentro de la franja libre y sin pegarse a sus bordes.
+ */
+const SIN_ROZAR = { ancho: 0.5, alto: 0.72 };
+
+/** Y cuánto se separa del avión, rad, por encima de lo que mide. */
+const APARTE_DEL_AVION = 2 * GRADO;
+
+/** Cuánta vuelta de más se acepta por subir la cámara en vez de girarla, rad. */
+const PREFIERE_SUBIR = 5 * GRADO;
+
+/**
+ * **Desde fuera, lo justo para que lo señalado se vea**: el giro más pequeño
+ * que lo deja dentro del cuadro y que no lo deja detrás del avión.
+ *
+ * Pedido así: el Teide, señalado por la comandante, quedaba justo detrás del
+ * avión en la vista de detrás —ladeado en un viraje, la cámara baja a la
+ * altura del fuselaje—, y lo que estaba a un costado caía fuera del cuadro.
+ * Tocando la tarjeta la cámara ya se gira hacia allí; esto es lo que hace sola
+ * al señalarse, y por eso es menos: **gira un poco o sube la cámara**, lo que
+ * haga falta y nada más. El avión no se mueve en el cuadro —la vuelta lo deja
+ * donde estaba—; lo que se mueve es el paisaje detrás de él.
+ *
+ * - Si lo señalado cae fuera de la franja que se ve, se gira hasta meterlo
+ *   dentro, con margen (`SIN_ROZAR`).
+ * - Si con eso queda detrás del avión —a menos de lo que mide el avión visto
+ *   desde aquí—, se sube la cámara hasta que asome por encima de él, o se gira
+ *   a un lado si así es menos: lo que pida menos vuelta.
+ * - Si ya se ve, el giro es cero.
+ *
+ * `radio` es lo que mide el bulto del avión, m: el fuselaje y la deriva, que
+ * son lo que tapa; las alas son un filo. Ver `game.ts`.
+ */
+export function giroParaQueSeVea(
+  camara: PerspectiveCamera,
+  centro: Vector3,
+  radio: number,
+  punto: { readonly x: number; readonly y: number; readonly z: number },
+  franja: FranjaLibre = PANTALLA_ENTERA,
+): Giro {
+  /*
+   * Todo en los ejes de la cámara: un giro de la vuelta cambia lo que se mira
+   * y deja el avión quieto en el cuadro, así que basta con saber dónde caen
+   * los dos respecto al centro de la imagen.
+   */
+  _inversa.copy(camara.quaternion).invert();
+  const enCamara = (p: { x: number; y: number; z: number }): Giro => {
+    _v.set(p.x, p.y, p.z).sub(camara.position).applyQuaternion(_inversa);
+    return {
+      guinada: Math.atan2(-_v.x, -_v.z),
+      cabeceo: Math.atan2(_v.y, Math.hypot(_v.x, _v.z)),
+    };
+  };
+  const sitio = enCamara(punto);
+  const avion = enCamara(centro);
+  const lejos = camara.position.distanceTo(centro);
+  const bulto = Math.asin(Math.min(0.99, radio / Math.max(lejos, 1e-3))) + APARTE_DEL_AVION;
+
+  /*
+   * Lo que se ve, en ángulos. La pantalla va con la lente corrida hacia
+   * arriba —ver `encuadrarSobreElCuadro`—, así que la franja se pasa a
+   * ángulos con la propia proyección: `y = e5·tan(cabeceo) − e9`.
+   */
+  const e = camara.projectionMatrix.elements;
+  const ancho = Math.atan(SIN_ROZAR.ancho / (e[0] ?? 1));
+  const alto = (ndc: number): number => Math.atan((ndc + (e[9] ?? 0)) / (e[5] ?? 1));
+  const margen = (1 - SIN_ROZAR.alto) * (franja.arriba - franja.abajo) * 0.5;
+  const techo = alto(franja.arriba - margen);
+  const suelo = alto(franja.abajo + margen);
+
+  const dentro = (v: number, a: number, b: number): number => (v < a ? a : v > b ? b : v);
+  // Lo que hay que girar para meterlo en la franja, y no más.
+  let guinada = sitio.guinada - dentro(sitio.guinada, -ancho, ancho);
+  let cabeceo = sitio.cabeceo - dentro(sitio.cabeceo, suelo, techo);
+
+  // Y que no quede detrás del avión.
+  const g = sitio.guinada - guinada - avion.guinada;
+  const c = sitio.cabeceo - cabeceo - avion.cabeceo;
+  if (Math.hypot(g, c) < bulto) {
+    // Subiendo la cámara, asoma por encima del avión…
+    const encima = avion.cabeceo + bulto;
+    const subir = sitio.cabeceo - encima;
+    // …o girando, por un costado.
+    const lado = g >= 0 ? 1 : -1;
+    const girar = sitio.guinada - dentro(avion.guinada + lado * bulto, -ancho, ancho);
+    /*
+     * **Subir, salvo que girar sea bastante menos**, y no lo que salga más
+     * barato por una centésima: esto se vuelve a preguntar en cada fotograma,
+     * y con las dos cuentas casi iguales la cámara iría de una a otra. Subir
+     * es lo que menos cambia hacia dónde se mira, y solo vale si por encima
+     * del avión queda franja.
+     */
+    const cabeEncima = encima <= techo;
+    if (cabeEncima && Math.abs(subir - cabeceo) <= Math.abs(girar - guinada) + PREFIERE_SUBIR)
+      cabeceo = subir;
+    else guinada = girar;
+  }
+  return { guinada, cabeceo };
+}
+
+/**
  * **Hacia dónde dar la vuelta** para que, desde fuera, `punto` quede delante
  * de la mirada y por encima del avión. Se mide desde el avión y no desde la
  * cámara: a los kilómetros a los que está lo que se señala, la diferencia son

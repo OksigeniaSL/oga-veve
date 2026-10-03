@@ -19,10 +19,15 @@ import {
 import type { Hito } from "../world/hitos";
 import type { Fase } from "./vuelo";
 
+/*
+ * Los tres por el través, que es donde los ve el pasaje: a sesenta y tantos
+ * grados del morro. Lo que va delante no está a ningún lado; ver «y lo que va
+ * delante del morro» abajo.
+ */
 const HITOS: Hito[] = [
   { nombre: "Teide", clase: "montana", x: -6000, z: -3000, ele: 3715 },
-  { nombre: "La Palma", clase: "isla", x: 9000, z: -12000, ele: null },
-  { nombre: "Adeje", clase: "ciudad", x: -9000, z: -20000, ele: null },
+  { nombre: "La Palma", clase: "isla", x: 12000, z: -6500, ele: null },
+  { nombre: "Adeje", clase: "ciudad", x: -18000, z: -9500, ele: null },
 ];
 
 const CRUCERO = {
@@ -162,6 +167,50 @@ describe("cuándo se señala lo que se ve", () => {
     expect(correr(m, LO_PRIMERO + 1)).toEqual(["izquierda: Teide"]);
   });
 
+  /*
+   * **Y lo que va delante del morro, no.** «Los que van por el lado derecho,
+   * miren por la ventanilla: el Pico de las Nieves», con la isla delante del
+   * morro subiendo a Gran Canaria: «está al frente, eso no lo puede decir
+   * Jazlyn». Y antes, «a la derecha, el Teide» con el Teide por delante del
+   * ala, fuera de la ventanilla. Delante no es ningún lado: se espera a que
+   * llegue a la ventanilla, y como viene hacia atrás, llega.
+   */
+  describe("y lo que va delante del morro", () => {
+    /** Un pico a quince kilómetros y a veinte grados del morro, a la derecha. */
+    const PICO: Hito[] = [
+      { nombre: "Pico de las Nieves", clase: "montana", x: 5130, z: -14100, ele: 1949 },
+    ];
+
+    it("con pasaje no se señala, aunque se vea", () => {
+      const m = new LoQueSeVe(PICO);
+      expect(correr(m, 3 * CADA)).toEqual([]);
+    });
+
+    it("y cuando llega a la ventanilla de su lado, sí", () => {
+      const m = new LoQueSeVe(PICO);
+      correr(m, LO_PRIMERO + 5);
+      // Volando hacia el norte, el pico se queda atrás: a doce kilómetros de
+      // avance ya va a sesenta y tantos grados del morro.
+      expect(correr(m, 3, { z: -12_000 })).toEqual(["derecha: Pico de las Nieves"]);
+    });
+
+    it("en avioneta tampoco: la instructora no dice «a tu derecha» de lo que va delante", () => {
+      const m = new LoQueSeVe(PICO);
+      const avioneta = { conPasaje: false, altitud: 1500, sobreElCampo: 1000 };
+      expect(correr(m, 3 * CADA, avioneta)).toEqual([]);
+      expect(correr(m, 3, { ...avioneta, z: -10_000 })).toEqual([
+        "derecha: Pico de las Nieves",
+      ]);
+    });
+
+    it("ni lo que va justo debajo del avión, que por una ventanilla no se ve", () => {
+      // Un río a mil quinientos metros por el través, con el avión a cuatro mil.
+      const rio: Hito[] = [{ nombre: "río", clase: "agua", x: 1500, z: -200, ele: null }];
+      const m = new LoQueSeVe(rio);
+      expect(correr(m, 3 * CADA)).toEqual([]);
+    });
+  });
+
   it("sin hitos, calla", () => {
     const m = new LoQueSeVe([]);
     expect(correr(m, 30 * CADA)).toEqual([]);
@@ -188,23 +237,24 @@ describe("cuándo se señala lo que se ve", () => {
 
     it("un barco a la vista se señala, con las mismas reglas", () => {
       const m = new LoQueSeVe([]);
-      expect(conBarcos(m, LO_PRIMERO - 5, () => [barco(3000, -8000)])).toEqual([]);
-      expect(conBarcos(m, 10, () => [barco(3000, -8000)])).toEqual([
+      expect(conBarcos(m, LO_PRIMERO - 5, () => [barco(8000, -3000)])).toEqual([]);
+      expect(conBarcos(m, 10, () => [barco(8000, -3000)])).toEqual([
         "derecha: un barco",
       ]);
     });
 
     it("pero no más allá de su alcance, que un barco a veinte kilómetros no se ve", () => {
       const m = new LoQueSeVe([]);
-      expect(conBarcos(m, 30 * CADA, () => [barco(0, -20_000)])).toEqual([]);
+      // Por el través y a veinte kilómetros: en la ventanilla, y no se ve.
+      expect(conBarcos(m, 30 * CADA, () => [barco(18_800, -6_800)])).toEqual([]);
     });
 
     it("y una vez por vuelo, aunque pasen tres", () => {
       const m = new LoQueSeVe([]);
       const dichos = conBarcos(m, 30 * CADA, () => [
-        barco(3000, -8000),
-        barco(-3000, -6000),
-        barco(1000, -4000),
+        barco(8000, -3000),
+        barco(-6000, -3000),
+        barco(6000, -1500),
       ]);
       expect(dichos).toHaveLength(1);
     });
