@@ -24,6 +24,17 @@
 
 import type { ControlInputs, FlightState } from "../flight/model";
 import { vueltasDelMotor, type AircraftSound } from "../flight/aircraft";
+import { indicatedAirspeed } from "../flight/atmosphere";
+import type { Lluvia } from "../world/meteo";
+import { FIRME_LISO, type Firme } from "../world/firme";
+import {
+  OidoDelVuelo,
+  fuerzaDelCinturon,
+  type AvionQueSuena,
+  type Niveles,
+  type Oido,
+} from "./ruidos";
+import { Enchufe, RuidosEnElAire, type Medida } from "./ruidos-en-el-aire";
 import type { Volumen as Paso } from "../ui/ajustes";
 import {
   DE_FABRICA,
@@ -64,6 +75,14 @@ const DEFAULT_ENGINE: AircraftSound = {
   maxRpm: 2700,
   growlHz: 300,
   growlRise: 320,
+  ruidos: {
+    tren: 0,
+    flaps: "electricos",
+    limpias: false,
+    apu: false,
+    aire: "nada",
+    aislamiento: 0.15,
+  },
 };
 /** Velocidad indicada, en m/s, a la que el viento llega a su tope. */
 const WIND_REFERENCE = 75;
@@ -435,6 +454,39 @@ export class Audio {
 
   /** Rodadura: solo con ruedas en el suelo. */
   private rollGain: GainNode | null = null;
+  /**
+   * Y los enchufes de las tres capas de siempre que pasan la mayor parte del
+   * vuelo calladas: la lluvia, el trueno y la rodadura. Callada, una capa se
+   * desenchufa y no cuesta. Ver `Enchufe` en `ruidos-en-el-aire.ts`.
+   */
+  private enchufeDeLaLluvia: Enchufe | null = null;
+  private enchufeDelTrueno: Enchufe | null = null;
+  private enchufeDeLaRodadura: Enchufe | null = null;
+
+  /**
+   * **Los ruidos del vuelo**: la lluvia según dónde se esté, el granizo, las
+   * juntas, el tren, el chirrido, la reversa, los aerofrenos, los flaps, la
+   * APU y el aire. Lo que suena está en `ruidos-en-el-aire.ts` y lo que se
+   * decide en `ruidos.ts`; aquí solo se juntan.
+   */
+  private ruidos: RuidosEnElAire | null = null;
+  private oidoDelVuelo: OidoDelVuelo | null = null;
+  /** Desde dónde se escucha: lo pone el juego con la vista. */
+  private oido: Oido = "fuera";
+  /** El firme que hay debajo de las ruedas. Ver `world/firme.ts`. */
+  private firme: Firme = FIRME_LISO;
+  /** Cuánto graniza donde está el avión, de 0 a 1. */
+  private granizoAqui = 0;
+  /** La lluvia que hay, puesta por `ponerLluvia`. */
+  private lluviaAhora: { clase: Lluvia; fuerza: number; aqui: number } = {
+    clase: "nada",
+    fuerza: 0,
+    aqui: 1,
+  };
+  /** El reloj del audio en el último paso: de ahí sale el `dt` del oído. */
+  private ultimoPaso = 0;
+  /** Lo último que se decidió. Para el banco. */
+  private ultimosNiveles: Niveles | null = null;
 
   /**
    * Bocina de pérdida.
@@ -493,40 +545,51 @@ export class Audio {
    *
    * Y **sube con la velocidad**, que es lo que la hace lluvia de cabina y no
    * lluvia de ventana: parado bajo un aguacero se oye un siseo; a doscientos
-   * por hora, el agua contra el morro suena como grava. La cuenta es la misma
-   * que usa el viento, para que las dos crezcan juntas y no se peleen.
+   * por hora, el agua contra el morro suena como grava.
+   *
+   * Aquí solo se apunta: cómo suena depende también de **dónde se escucha**
+   * —fuera, en la cabina o en el pasaje— y eso lo decide el paso de cada
+   * fotograma con todo lo demás. Ver `audio/ruidos.ts`.
    */
   ponerLluvia(
     clase: string,
     fuerza: number,
-    velocidad: number,
+    /** Ya no hace falta: la velocidad la trae el paso. Se queda por quien llama. */
+    _velocidad?: number,
     /**
      * Cuánta de la lluvia del parte cae donde está el avión, de 0 a 1: encima
      * de las nubes, nada. Ver `lluviaALaAltura` en `world/capa-de-nubes.ts`.
      */
     aqui = 1,
   ): void {
-    if (!this.rainGain || !this.rainBodyGain || !this.rainBody) return;
-    const cae =
-      (clase === "nada" ? 0 : clase === "llovizna" ? 0.35 : 1) *
-      Math.max(0, Math.min(1, aqui));
-    const cuanta = cae * (0.35 + 0.65 * Math.max(0, Math.min(1, fuerza)));
-    // Con el avión parado ya se oye; corriendo, el triple.
-    const porVelocidad = 0.35 + 0.65 * Math.min(1, velocidad / 60);
-    const ahora = this.context?.currentTime ?? 0;
-    this.rainGain.gain.setTargetAtTime(cuanta * porVelocidad * 0.5, ahora, 0.4);
-    // El cuerpo grave solo con lluvia de verdad: la llovizna es siseo y ya.
-    this.rainBodyGain.gain.setTargetAtTime(
-      clase === "llovizna" ? 0.05 : 0.35 + 0.3 * fuerza,
-      ahora,
-      0.4,
-    );
-    // Y el grave se abre al correr: más agua por segundo contra el mismo morro.
-    this.rainBody.frequency.setTargetAtTime(
-      360 + 220 * Math.min(1, velocidad / 60),
-      ahora,
-      0.4,
-    );
+    this.lluviaAhora = { clase: clase as Lluvia, fuerza, aqui };
+  }
+
+  /** Cuánto graniza donde está el avión, de 0 a 1. Ver `granizoAqui` en `game.ts`. */
+  ponerGranizo(cuanto: number): void {
+    this.granizoAqui = Math.max(0, Math.min(1, cuanto));
+  }
+
+  /**
+   * **Desde dónde se escucha**: fuera, en la cabina de mando o en el pasaje.
+   * Lo pone el juego con la vista. Ver `oidoDe` en `audio/ruidos.ts`.
+   */
+  ponerOido(oido: Oido): void {
+    this.oido = oido;
+  }
+
+  /** El firme que hay debajo de las ruedas. Ver `world/firme.ts`. */
+  ponerFirme(firme: Firme): void {
+    this.firme = firme;
+  }
+
+  /**
+   * **El avión que suena**, entero: lo que dice su ficha del tren, los flaps,
+   * los limpias, la APU, el aire y lo que aísla. Ver `avionQueSuena`.
+   */
+  ponerAvion(avion: AvionQueSuena): void {
+    if (this.oidoDelVuelo) this.oidoDelVuelo.ponerAvion(avion);
+    else this.oidoDelVuelo = new OidoDelVuelo(avion);
   }
 
   /**
@@ -540,6 +603,7 @@ export class Audio {
     if (!this.thunderGain || !this.context) return;
     const ahora = this.context.currentTime;
     const pico = 0.5 + 0.5 * Math.max(0, Math.min(1, fuerza));
+    this.enchufeDelTrueno?.seguir(true, ahora);
     const g = this.thunderGain.gain;
     g.cancelScheduledValues(ahora);
     g.setValueAtTime(0, ahora);
@@ -630,7 +694,59 @@ export class Audio {
   ): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running") return;
+    this.seguir(state, controls, stallWarnAt, traqueteo);
+  }
+
+  /**
+   * Lo mismo que `update`, **sin preguntar si el contexto suena**.
+   *
+   * Es para medir: un contexto sin altavoz —el de `medirElCoste`— no está
+   * nunca en marcha antes de renderizar, y lo que se quiere medir es justo
+   * lo que costaría si lo estuviera.
+   */
+  seguir(
+    state: FlightState,
+    controls: ControlInputs,
+    stallWarnAt = 0.24,
+    traqueteo = 1,
+  ): void {
+    const ctx = this.context;
+    if (!ctx) return;
     const now = ctx.currentTime;
+
+    /*
+     * **Los ruidos del vuelo, primero**: lo que deciden también toca al motor
+     * —con la reversa puesta, las vueltas suben— y al viento y la lluvia de
+     * siempre, que ahora suenan distinto según dónde se escuche.
+     */
+    const dt = now - this.ultimoPaso;
+    this.ultimoPaso = now;
+    const decidido = this.oidoDelVuelo?.paso(dt, {
+      oido: this.oido,
+      // La indicada y no la verdadera: lo que suena es el aire que pega, y a
+      // diez mil metros hay la mitad.
+      ias: indicatedAirspeed(state.airspeed, state.position.y),
+      gs: state.groundSpeed,
+      enElSuelo: state.onGround,
+      vs: state.verticalSpeed,
+      derrape: state.beta,
+      motor: controls.engineOn,
+      gas: controls.throttle,
+      tren: controls.tren,
+      flaps: controls.flaps,
+      reversa: controls.reversa,
+      aerofrenos: Math.max(controls.aerofrenos ?? 0, controls.frenosDeTierra ?? 0),
+      lluvia: this.lluviaAhora,
+      granizo: this.granizoAqui,
+      firme: this.firme,
+      traqueteo,
+    });
+    const n = decidido?.niveles ?? null;
+    this.ultimosNiveles = n;
+    if (n && this.ruidos) {
+      this.ruidos.aplicar(n);
+      for (const s of decidido!.sucesos) this.ruidos.tocar(s);
+    }
 
     // ── Motor ───────────────────────────────────────────────────────────
     // El régimen sigue al gas pero con inercia: un motor de pistón no sube
@@ -639,8 +755,8 @@ export class Audio {
     // Apagado, las vueltas caen a cero y con ellas todo lo demás. La bajada
     // no es instantánea porque una hélice tiene inercia: sigue girando un
     // rato, cada vez más despacio, y ese sonido es el que marca el final de
-    // un vuelo.
-    const gas = controls.engineOn ? controls.throttle : 0;
+    // un vuelo. Y con la reversa, las que pida la reversa: ver `gasDelMotor`.
+    const gas = n ? n.gasDelMotor : controls.engineOn ? controls.throttle : 0;
     // La misma cuenta que la aguja del cuadro: ver `vueltasDelMotor`.
     const rpm = controls.engineOn ? vueltasDelMotor(spec, gas) : 0;
     /*
@@ -726,17 +842,36 @@ export class Audio {
     this.propFilter?.frequency.setTargetAtTime(120 + rpm * 0.08, now, 0.1);
 
     // ── Viento ──────────────────────────────────────────────────────────
-    const speed = Math.min(1, state.airspeed / WIND_REFERENCE);
     // El viento sube con la velocidad y además con el derrape: volar de lado
     // hace más ruido, y es la única pista sonora de que el viraje va sucio.
-    const slip = Math.min(1, Math.abs(state.beta) * 5);
-    this.windGain?.gain.setTargetAtTime(
-      speed * speed * 0.34 * (1 + slip * 0.5),
-      now,
-      0.12,
-    );
-    this.windWhistle?.frequency.setTargetAtTime(600 + speed * 1900, now, 0.12);
-    this.windBody?.frequency.setTargetAtTime(420 + slip * 340, now, 0.15);
+    // Cuánto y cómo, según dónde se escuche: ver `curvaDelViento`.
+    if (n) {
+      this.windGain?.gain.setTargetAtTime(n.viento.nivel, now, 0.12);
+      this.windWhistle?.frequency.setTargetAtTime(n.viento.silbidoHz, now, 0.12);
+      this.fijar(this.windWhistle?.gain, n.viento.silbido, now, 0.3);
+      this.windBody?.frequency.setTargetAtTime(n.viento.cuerpoHz, now, 0.15);
+    } else {
+      const speed = Math.min(1, state.airspeed / WIND_REFERENCE);
+      const slip = Math.min(1, Math.abs(state.beta) * 5);
+      this.windGain?.gain.setTargetAtTime(
+        speed * speed * 0.34 * (1 + slip * 0.5),
+        now,
+        0.12,
+      );
+      this.windWhistle?.frequency.setTargetAtTime(600 + speed * 1900, now, 0.12);
+      this.windBody?.frequency.setTargetAtTime(420 + slip * 340, now, 0.15);
+    }
+
+    // ── Lluvia de fuera ─────────────────────────────────────────────────
+    // El siseo y el cuerpo de siempre, que dentro entran por la pared.
+    if (n) {
+      this.enchufeDeLaLluvia?.seguir(n.lluvia.siseo > 1e-4, now);
+      this.fijar(this.rainGain?.gain, n.lluvia.siseo, now, 0.4);
+      // El cuerpo grave solo con lluvia de verdad: la llovizna es siseo y ya.
+      this.fijar(this.rainBodyGain?.gain, n.lluvia.cuerpo, now, 0.4);
+      // Y el grave se abre al correr: más agua por segundo contra el mismo morro.
+      this.fijar(this.rainBody?.frequency, n.lluvia.cuerpoHz, now, 0.4);
+    }
 
     // ── Bocina de pérdida ───────────────────────────────────────────────
     // Suena a partir del ochenta y cinco por ciento del ángulo crítico, que
@@ -751,14 +886,51 @@ export class Audio {
     this.buffetGain?.gain.setTargetAtTime(buffet, now, 0.08);
 
     // ── Rodadura ────────────────────────────────────────────────────────
-    const rolling = state.onGround ? Math.min(1, state.airspeed / 32) : 0;
     // Más fuerte cuanto más blando el suelo: un campo suena a campo. Con tope,
-    // que un ruido de rodadura por encima del motor deja de ser rodadura.
-    this.rollGain?.gain.setTargetAtTime(
-      Math.min(0.34, rolling * rolling * 0.2 * traqueteo),
-      now,
-      0.08,
-    );
+    // que un ruido de rodadura por encima del motor deja de ser rodadura. Y
+    // con la velocidad **del suelo**: ver `rodadura.rumor` en `ruidos.ts`.
+    const rolling = state.onGround ? Math.min(1, state.groundSpeed / 32) : 0;
+    const rumor = n ? n.rodadura.rumor : Math.min(0.34, rolling * rolling * 0.2 * traqueteo);
+    this.enchufeDeLaRodadura?.seguir(rumor > 1e-4, now);
+    this.fijar(this.rollGain?.gain, rumor, now, 0.08);
+    // Y el trueno se desenchufa solo cuando acaba: ver `trueno`.
+    this.enchufeDelTrueno?.seguir(false, now);
+  }
+
+  /**
+   * Escribe una perilla **solo si ha cambiado**: la lluvia, la rodadura y el
+   * silbido pasan casi todo el vuelo quietos, y cada `setTargetAtTime` es un
+   * suceso más en la línea de tiempo del parámetro y un rato del fotograma.
+   */
+  private fijar(
+    param: AudioParam | undefined,
+    valor: number,
+    ahora: number,
+    constante: number,
+  ): void {
+    if (!param) return;
+    const antes = this.escrito.get(param);
+    if (antes !== undefined && Math.abs(valor - antes) < Math.max(1e-4, Math.abs(antes) * 0.01))
+      return;
+    this.escrito.set(param, valor);
+    param.setTargetAtTime(valor, ahora, constante);
+  }
+  private readonly escrito = new Map<AudioParam, number>();
+
+  /**
+   * **Lo que suena ahora en cada capa, medido**: el valor eficaz de cada una
+   * en decibelios, y lo que se decidió para ellas. Para el banco de sonidos:
+   * la reproducción de verdad no se puede oír desde un banco, pero se puede
+   * medir. Ver `scripts/verificar-sonidos.mjs`.
+   */
+  medirLosRuidos(): { oido: Oido; medida: Medida; niveles: Niveles | null } | null {
+    if (!this.ruidos) return null;
+    return { oido: this.oido, medida: this.ruidos.medir(), niveles: this.ultimosNiveles };
+  }
+
+  /** Y los golpes sueltos que han sonado desde la última vez. Para el banco. */
+  ruidosTocados(): string[] {
+    return this.ruidos?.sacarTocados() ?? [];
   }
 
   /**
@@ -791,13 +963,23 @@ export class Audio {
      */
     const suBus: Bus = m.manda ? "avisos" : "interfaz";
     if (m.manda) this.agacharUnRato(m.notas.length * 0.2);
+    /*
+     * **El *ding* del cinturón suena donde está**: en el techo del pasaje.
+     * Desde ahí va por el altavoz de la megafonía, que es el que lo toca en
+     * un avión; desde la cabina de mando y desde fuera se oye más flojo. Ver
+     * `fuerzaDelCinturon`.
+     */
+    const delTecho = kind === "cinturon";
+    const fuerza = (m.fuerza ?? FUERZA) * (delTecho ? fuerzaDelCinturon(this.oido) : 1);
+    const porElAltavoz = delTecho && this.oido === "pasaje" ? this.entradaDeAltavoz : null;
     m.notas.forEach((frecuencia, i) => {
       this.pluck(
         frecuencia,
         ctx.currentTime + i * m.paso,
         m.dura,
         suBus,
-        m.fuerza ?? FUERZA,
+        fuerza,
+        porElAltavoz,
       );
     });
   }
@@ -927,6 +1109,18 @@ export class Audio {
 
     const noise = this.noiseBuffer();
 
+    /*
+     * ── Los ruidos del vuelo, y la pared ─────────────────────────────
+     *
+     * Van antes que el viento y la lluvia porque estos dos entran ahora por
+     * **la pared**: lo que suena fuera del avión se oye desde dentro a través
+     * del fuselaje, apagado y sin agudos. Ver `audio/ruidos-en-el-aire.ts`.
+     */
+    this.ruidos = this.sinRuidos
+      ? null
+      : new RuidosEnElAire(ctx, noise, this.bus("ambiente"));
+    const pared = this.ruidos?.pared ?? this.bus("ambiente");
+
     // ── Motor: dos tonos y una capa de ruido de hélice ──────────────────
     this.engineFilter = ctx.createBiquadFilter();
     this.engineFilter.type = "lowpass";
@@ -973,7 +1167,7 @@ export class Audio {
     // ── Viento: cuerpo grave y silbido agudo ────────────────────────────
     this.windGain = ctx.createGain();
     this.windGain.gain.value = 0;
-    this.windGain.connect(this.bus("ambiente"));
+    this.windGain.connect(pared);
 
     this.windBody = ctx.createBiquadFilter();
     this.windBody.type = "bandpass";
@@ -1033,7 +1227,7 @@ export class Audio {
      */
     this.rainGain = ctx.createGain();
     this.rainGain.gain.value = 0;
-    this.rainGain.connect(this.bus("ambiente"));
+    this.enchufeDeLaLluvia = new Enchufe(this.rainGain, pared, 2);
 
     const rainHiss = ctx.createBiquadFilter();
     rainHiss.type = "highpass";
@@ -1065,8 +1259,9 @@ export class Audio {
     this.thunderGain.gain.value = 0;
     this.loopNoise(noise)
       .connect(thunderFilter)
-      .connect(this.thunderGain)
-      .connect(this.bus("ambiente"));
+      .connect(this.thunderGain);
+    // Lo que dura un trueno y un poco más: ver `trueno`.
+    this.enchufeDelTrueno = new Enchufe(this.thunderGain, pared, 3);
 
     // ── Rodadura ────────────────────────────────────────────────────────
     const rollFilter = ctx.createBiquadFilter();
@@ -1074,11 +1269,30 @@ export class Audio {
     rollFilter.frequency.value = 260;
     this.rollGain = ctx.createGain();
     this.rollGain.gain.value = 0;
-    this.loopNoise(noise)
-      .connect(rollFilter)
-      .connect(this.rollGain)
-      .connect(this.bus("ambiente"));
+    this.loopNoise(noise).connect(rollFilter).connect(this.rollGain);
+    this.enchufeDeLaRodadura = new Enchufe(this.rollGain, this.bus("ambiente"), 1);
+
+    // Y las capas de siempre, para que el banco las mida junto a las nuevas.
+    this.ruidos?.anotar("viento", this.windGain);
+    this.ruidos?.anotar("lluvia", this.rainGain);
+    this.ruidos?.anotar("rumor", this.rollGain);
+    this.ruidos?.anotar("motor", this.engineGain);
+    this.ruidos?.anotar("todo", limitador);
   }
+
+  /**
+   * **Para medir**: monta el grafo entero en el contexto que se le dé —uno
+   * sin altavoz, de los que renderizan más deprisa que el reloj— en vez de
+   * en el del navegador. Con `sinRuidos`, sin los ruidos del vuelo: lo que
+   * cuestan sale de comparar los dos montajes. Ver `medirElCoste` en
+   * `dev/sondas.ts`.
+   */
+  montarEn(ctx: BaseAudioContext, sinRuidos = false): void {
+    this.sinRuidos = sinRuidos;
+    this.context = ctx as AudioContext;
+    this.build();
+  }
+  private sinRuidos = false;
 
   /** Dos segundos de ruido blanco generados en memoria. Cero bytes de red. */
   private noiseBuffer(): AudioBuffer {
@@ -1105,6 +1319,8 @@ export class Audio {
     duration: number,
     bus: Bus = "interfaz",
     fuerza = FUERZA,
+    /** Por dónde sale, si no es por su bus: el altavoz del techo, por ejemplo. */
+    porDonde: AudioNode | null = null,
   ): void {
     const ctx = this.context!;
     const oscillator = ctx.createOscillator();
@@ -1116,7 +1332,7 @@ export class Audio {
     gain.gain.linearRampToValueAtTime(fuerza, at + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
-    oscillator.connect(gain).connect(this.bus(bus));
+    oscillator.connect(gain).connect(porDonde ?? this.bus(bus));
     oscillator.start(at);
     oscillator.stop(at + duration + 0.05);
   }

@@ -699,7 +699,9 @@ import {
 } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
-import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
+import { sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
+import { firmeDe } from "./world/firme";
+import { avionQueSuena, oidoDe } from "./audio/ruidos";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
 import {
   AvisosDeAltura,
@@ -801,6 +803,7 @@ import {
   celdasDe,
   cuantoSacude,
   ecoEn,
+  granizoDeLaCelda,
   laQueVieneDelante,
   seRodea,
   type Celda,
@@ -3532,8 +3535,15 @@ export class Game {
    * una sopa permanente. Ver `ponerLluvia`.
    */
   private nieblaDeCasa = 0;
-  /** Lo que está cayendo ahora mismo, para las sondas y el sonido. */
-  lloviendo: { clase: Lluvia; fuerza: number } = { clase: "nada", fuerza: 0 };
+  /**
+   * Lo que está cayendo ahora mismo, para las sondas y el sonido. Y el
+   * granizo del parte, de 0 a 1: ver `Meteo.granizo`.
+   */
+  lloviendo: { clase: Lluvia; fuerza: number; granizo: number } = {
+    clase: "nada",
+    fuerza: 0,
+    granizo: 0,
+  };
   /** Contra qué se choca además del suelo. Ver `world/obstaculos.ts`. */
   readonly bultos = new Obstaculos();
   /** Dónde estaba el avión antes de este paso, para mirar el camino entero. */
@@ -4922,6 +4932,8 @@ export class Game {
     conectarLaRadio(this.audio);
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
+    // Y lo que suena además del motor: el tren, los flaps, la APU…
+    this.audio.ponerAvion(avionQueSuena(this.aircraft));
     /*
      * **Y lo que se pida antes de tener el pack, que lo espere.**
      *
@@ -10092,7 +10104,7 @@ export class Game {
      * el cielo despejado y seco. Ver `world/lluvia.ts`.
      */
     this.visibilidadDelParte = meteo.visibilidadM;
-    this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia);
+    this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia, meteo.granizo ?? 0);
     this.terrain.rehacerAerodromo(this.scenario);
     /*
      * **Y los otros campos, con el suyo.**
@@ -10469,8 +10481,10 @@ export class Game {
    * aunque el METAR diga diez, porque el METAR mide desde la torre y quien
    * vuela mira a través de veinte kilómetros de agua.
    */
-  ponerLluvia(clase: Lluvia, fuerza: number): void {
-    this.lloviendo = { clase, fuerza };
+  ponerLluvia(clase: Lluvia, fuerza: number, granizo = 0): void {
+    // Sin agua no hay granizo que caiga con ella: un parte con `GR` trae
+    // siempre su clase de lluvia, y uno a mano sin lluvia no lo lleva.
+    this.lloviendo = { clase, fuerza, granizo: clase === "nada" ? 0 : granizo };
     this.lluvia?.poner(clase, fuerza);
     // Una nube que llueve es más gorda: ver `grosorDeLaCapa`.
     this.colocarLaCapa();
@@ -10669,12 +10683,30 @@ export class Game {
     const luz = this.relampagos.paso(dt, this.reducedMotion);
     if (luz > 0 || this.luzDelRayo > 0) this.sky.ponerRelampago(luz);
     this.luzDelRayo = luz;
+    const llueveEncima = aqui(s.position.x, s.position.y, s.position.z);
     this.audio.ponerLluvia(
       this.lloviendo.clase,
       this.lloviendo.fuerza,
       this.flight.state.airspeed,
       // Y encima de las nubes no se oye llover, que tampoco llueve.
-      aqui(s.position.x, s.position.y, s.position.z),
+      llueveEncima,
+    );
+    /*
+     * **Y el granizo, solo donde el tiempo lo trae**: el del parte, donde cae
+     * su lluvia, y el de dentro de una célula fuerte, donde el radar pinta
+     * magenta —«granizo o giro; ni acercarse»—. Lo que se oye va con lo que
+     * se ve: las rayas blancas de `lluvia.ts` y la mancha del radar.
+     */
+    const granizo = Math.max(
+      this.lloviendo.granizo * llueveEncima,
+      granizoDeLaCelda(ecoEn(this.celdas, s.position.x, s.position.z)),
+    );
+    this.audio.ponerGranizo(granizo);
+    this.lluvia.ponerGranizo(
+      Math.max(
+        this.lloviendo.granizo * caeDondeElOjo,
+        granizoDeLaCelda(ecoEn(this.celdas, ojo.x, ojo.z)),
+      ),
     );
   }
 
@@ -11034,13 +11066,21 @@ export class Game {
      * `superficie.test.ts`.
      */
     const aqui = this.elVecinoDeAhora();
-    this.superficie = superficieEn(
-      aqui?.campo.comoCampo ?? this.scenario,
+    const campoDeAqui = aqui?.campo.comoCampo ?? this.scenario;
+    const suelo = sueloEn(
+      campoDeAqui,
       aqui ? aqui.pavimento : this.pavimento,
       this.flight.state.position.x,
       this.flight.state.position.z,
     );
+    this.superficie = suelo.superficie;
     this.flight.ponerSuperficie(this.superficie);
+    /*
+     * **Y de qué está hecho, para el oído**: las losas de una plataforma
+     * suenan a juntas y el asfalto no, aunque las dos sean firmes para la
+     * rueda. Ver `world/firme.ts`.
+     */
+    this.audio.ponerFirme(firmeDe(campoDeAqui, suelo));
     /*
      * **Y si la pista está mojada**: llueve donde está el avión. La rueda
      * agarra menos, y menos cuanto más deprisa va. Ver `flight/frenada.ts`.
@@ -12340,6 +12380,11 @@ export class Game {
     }
     this.advanceMission();
     this.announce(this.flight.state);
+    /*
+     * **Y desde dónde se escucha**, que es la vista: fuera, la cabina de mando
+     * o el pasaje no oyen lo mismo. Ver `oidoDe`.
+     */
+    this.audio.ponerOido(oidoDe(this.vistaQueHay()));
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
     // que es donde la ponen los fabricantes.
     this.audio.update(

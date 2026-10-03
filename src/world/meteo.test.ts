@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deFrente, leerMetar, TIEMPO_DE_CASA } from "./meteo";
+import { atisEnTexto, deFrente, leerMetar, TIEMPO_DE_CASA } from "./meteo";
 
 describe("leerMetar", () => {
   it("lee el de Tenerife Norte, que es el que puso la 30 en uso", () => {
@@ -159,5 +159,34 @@ describe("lo que tapan las nubes y lo que se ve", () => {
 
   it("y sin techo no hay tapadura", () => {
     expect(leerMetar("GCXO 241200Z 30012KT 9999 FEW020 18/16 Q1012")?.tapadura).toBeUndefined();
+  });
+});
+
+describe("el granizo del parte", () => {
+  it("GR es granizo, y GS granizo pequeño, que pega menos", () => {
+    const gr = leerMetar("METAR GCXO 021300Z 31012KT 3000 TSGR BKN010CB 19/17 Q1017")!;
+    const gs = leerMetar("METAR GCXO 021300Z 31012KT 3000 SHGS BKN010 19/17 Q1017")!;
+    expect(gr.granizo).toBeGreaterThan(0);
+    expect(gs.granizo).toBeGreaterThan(0);
+    expect(gr.granizo!).toBeGreaterThan(gs.granizo!);
+  });
+
+  it("pegado a la lluvia, como se escribe: +TSRAGR es tormenta fuerte con granizo", () => {
+    const m = leerMetar("METAR SGAS 021300Z 18020G35KT 2000 +TSRAGR OVC008CB 22/20 Q1008")!;
+    expect(m.lluvia).toBe("tormenta");
+    expect(m.fuerzaDeLluvia).toBe(1);
+    expect(m.granizo).toBe(1);
+  });
+
+  it("sin GR ni GS no graniza, ni con la peor tormenta", () => {
+    const m = leerMetar("METAR SGAS 021300Z 18020G35KT 2000 +TSRA OVC008CB 22/20 Q1008")!;
+    expect(m.granizo ?? 0).toBe(0);
+  });
+
+  it("y lo dice el ATIS escrito, que es lo que se lee antes de oírlo", () => {
+    const m = leerMetar("METAR GCXO 021300Z 31012KT 3000 TSRAGR BKN010CB 19/17 Q1017")!;
+    expect(atisEnTexto("GCXO", "30", m)).toContain("GR");
+    const sin = leerMetar("METAR GCXO 021300Z 31012KT 3000 TSRA BKN010CB 19/17 Q1017")!;
+    expect(atisEnTexto("GCXO", "30", sin)).not.toContain("GR");
   });
 });

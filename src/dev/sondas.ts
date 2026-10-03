@@ -1267,8 +1267,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         } else if (guardada !== undefined) u.value = guardada;
       }
     },
-    ponerLluvia: (clase: string, fuerza = 0.7) =>
-      juego.ponerLluvia(clase as Lluvia, fuerza),
+    ponerLluvia: (clase: string, fuerza = 0.7, granizo = 0) =>
+      juego.ponerLluvia(clase as Lluvia, fuerza, granizo),
+    /**
+     * **Lo que suena en cada capa de los ruidos del vuelo**, medido en el
+     * grafo de verdad —valor eficaz en decibelios—, y lo que se decidió para
+     * cada una. La reproducción no se oye desde un banco; se mide. Ver
+     * `audio/ruidos.ts` y `scripts/verificar-sonidos.mjs`.
+     */
+    ruidos: () => juego.audio.medirLosRuidos(),
+    /** Los golpes sueltos que han sonado desde la última vez: `toque`, `tren:fuera`… */
+    ruidosTocados: () => juego.audio.ruidosTocados(),
     /**
      * Vuelve a armar la senda desde donde está el avión.
      *

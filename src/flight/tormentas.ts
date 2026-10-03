@@ -256,3 +256,18 @@ export function laQueVieneDelante(
   }
   return mejor;
 }
+
+/**
+ * **Cuánto graniza dentro de una célula**, de 0 a 1, con el eco que hay ahí.
+ *
+ * El granizo sale donde el radar pinta magenta, que es lo que quiere decir el
+ * magenta: granizo o giro, y ni acercarse. Desde el borde del magenta hasta el
+ * núcleo, de nada a todo. Una tormenta floja no llega al magenta y no tiene
+ * granizo, que es lo que pasa de verdad: hacen falta corrientes muy fuertes
+ * para sostener una piedra el rato que tarda en crecer.
+ */
+export function granizoDeLaCelda(eco: number): number {
+  // Del mismo corte que pinta el magenta, no de una copia del número.
+  const desde = CORTES.find(([, color]) => color === "magenta")?.[0] ?? 0.88;
+  return Math.max(0, Math.min(1, (eco - desde) / (1 - desde)));
+}

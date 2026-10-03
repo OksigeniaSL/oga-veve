@@ -14,6 +14,7 @@ import {
   colorDelEco,
   cuantoSacude,
   ecoEn,
+  granizoDeLaCelda,
   type Celda,
   laQueVieneDelante,
   seRodea,
@@ -260,5 +261,29 @@ describe("a cuáles se les da la vuelta", () => {
 
   it("a una tormenta, sí", () => {
     expect(celdasDe("tormenta", 0.7, LADO, 1).filter(seRodea).length).toBe(4);
+  });
+});
+
+describe("el granizo de una célula", () => {
+  it("solo donde el radar pinta magenta, y del borde al núcleo de nada a todo", () => {
+    expect(granizoDeLaCelda(0.5)).toBe(0);
+    expect(granizoDeLaCelda(0.87)).toBe(0);
+    expect(granizoDeLaCelda(0.94)).toBeCloseTo(0.5, 5);
+    expect(granizoDeLaCelda(1)).toBe(1);
+    // Empieza justo donde empieza el magenta.
+    expect(colorDelEco(0.89)).toBe("magenta");
+    expect(granizoDeLaCelda(0.89)).toBeGreaterThan(0);
+  });
+
+  it("una tormenta floja no llega al magenta, y no tiene granizo", () => {
+    for (const c of celdasDe("tormenta", 0.35, 60000))
+      expect(granizoDeLaCelda(ecoEn([c], c.x, c.z))).toBe(0);
+    for (const c of celdasDe("tormenta", 1, 60000))
+      expect(granizoDeLaCelda(ecoEn([c], c.x, c.z))).toBeGreaterThan(0.9);
+  });
+
+  it("y la lluvia sola, por fuerte que sea, tampoco", () => {
+    for (const c of celdasDe("lluvia", 1, 60000))
+      expect(granizoDeLaCelda(ecoEn([c], c.x, c.z))).toBe(0);
   });
 });

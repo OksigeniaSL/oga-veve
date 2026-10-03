@@ -76,6 +76,16 @@ export interface Meteo {
    * caer una tormenta floja y una lluvia muy fuerte.
    */
   readonly fuerzaDeLluvia: number;
+  /**
+   * **Si graniza, y cuánto**, de cero a uno: el `GR` y el `GS` del METAR.
+   *
+   * `GR` es granizo de verdad, de más de cinco milímetros; `GS`, el pequeño
+   * y la nieve granulada, que pegan menos. Va aparte de la lluvia porque no
+   * cambia lo que se ve por el parabrisas igual que el agua y sí cambia lo
+   * que se oye: piedra contra chapa. Sin poner, no graniza. Ver
+   * `audio/ruidos.ts`.
+   */
+  readonly granizo?: number;
   /** De dónde salió: `'metar'` si es de verdad, `'defecto'` si es el de casa. */
   readonly fuente: "metar" | "defecto" | "mano";
 }
@@ -83,9 +93,12 @@ export interface Meteo {
 /**
  * Las cuatro maneras de que caiga agua que este juego distingue.
  *
- * Ni nieve ni granizo: en Asunción y en Canarias no cae nieve en ninguno de los
+ * Sin nieve: en Asunción y en Canarias no cae nieve en ninguno de los
  * aeropuertos del juego, y meter un caso que no se puede ver ni probar es
  * meter código muerto. El día que haya un campo donde nieve, entra aquí.
+ *
+ * **El granizo sí cae**, en las tormentas de los dos sitios, y va aparte:
+ * ver `Meteo.granizo`.
  */
 export type Lluvia = "nada" | "llovizna" | "lluvia" | "tormenta";
 
@@ -166,6 +179,7 @@ export function leerMetar(crudo: string): Meteo | null {
   let visibilidadM = TIEMPO_DE_CASA.visibilidadM;
   let lluvia: Lluvia = "nada";
   let fuerzaDeLluvia = 0;
+  let granizo = 0;
   let vistoViento = false;
 
   for (const p of partes) {
@@ -199,11 +213,28 @@ export function leerMetar(crudo: string): Meteo | null {
      * `VCTS` es «tormenta en las cercanías» y cuenta como tormenta: los rayos
      * se ven desde lejos, que es justo cuando impresionan.
      */
+    /*
+     * Y lo que cae puede ser más de una cosa pegada —`+TSRAGR`, `SHRAGS`—, que
+     * es como se escribe la lluvia con granizo. Se mira la primera para la
+     * clase, como siempre, y todas para el granizo.
+     */
     const w =
-      /^(VC)?([-+])?(MI|BC|PR|DR|BL|SH|TS|FZ)?(DZ|RA|SN|GR|GS|UP)?$/.exec(p);
+      /^(VC)?([-+])?(MI|BC|PR|DR|BL|SH|TS|FZ)?((?:DZ|RA|SN|GR|GS|UP)*)$/.exec(p);
     if (w && (w[3] === "TS" || w[4])) {
-      const cae = w[4];
+      const todo = w[4] ?? "";
+      const cae = todo.slice(0, 2) || undefined;
       const tormenta = w[3] === "TS";
+      /*
+       * **El granizo, solo si cae aquí**: un grupo de las cercanías no lo
+       * lleva nunca —`VC` va con tormenta o chubasco, no con lo que cae—, y
+       * si llegara, no es granizo encima. El grande pega más que el pequeño,
+       * y la intensidad del grupo manda en los dos.
+       */
+      if (!w[1]) {
+        const i = w[2] === "-" ? 0 : w[2] === "+" ? 2 : 1;
+        if (/GR/.test(todo)) granizo = Math.max(granizo, [0.5, 0.75, 1][i]!);
+        if (/GS/.test(todo)) granizo = Math.max(granizo, [0.25, 0.4, 0.55][i]!);
+      }
       const clase: Lluvia = tormenta
         ? "tormenta"
         : cae === "DZ"
@@ -263,6 +294,7 @@ export function leerMetar(crudo: string): Meteo | null {
         ...(tapadura !== undefined ? { tapadura } : {}),
         lluvia,
         fuerzaDeLluvia,
+        ...(granizo > 0 ? { granizo } : {}),
         fuente: "metar",
       }
     : null;
@@ -487,12 +519,19 @@ export function atisEnTexto(
       : meteo.lluvia === "tormenta"
         ? "TS"
         : `${intensidad}${meteo.lluvia === "llovizna" ? "DZ" : "RA"}`;
+  /*
+   * Y el granizo, con su abreviatura de siempre: `GR` el grande y `GS` el
+   * pequeño. Es lo único que lo dice por escrito antes de oírlo.
+   */
+  const piedra =
+    (meteo.granizo ?? 0) <= 0 ? null : (meteo.granizo ?? 0) >= 0.6 ? "GR" : "GS";
   return [
     `${oaci} ${quien}`,
     ...(pista ? [`RWY ${pista}`] : []),
     viento,
     vis,
     ...(agua ? [agua] : []),
+    ...(piedra ? [piedra] : []),
     nubes,
     `T${Math.round(meteo.temp)}`,
     `QNH ${Math.round(meteo.qnh)}`,
