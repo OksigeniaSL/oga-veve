@@ -17197,11 +17197,22 @@ export class Game {
     this.bajarLaVentanillaEnLaFinal(enLaFinal);
     this.ponerLaFrustradaEnLaVentanilla(this.navegacion.enElTramoFinal(lectura));
     const pies = this.altitudIndicada() / PIE_EN_METROS;
-    const escalon = this.autorizacionDeSubida.paso({
-      pies,
-      sobreElSuelo: s.heightAboveGround / PIE_EN_METROS,
-      enTierra: s.onGround,
-    });
+    /*
+     * **Y los escalones de subida, solo subiendo.** Ningún control da «suba a
+     * seis mil» a quien ya baja hacia su destino o vuela la final: los
+     * escalones se dan en la salida, y una vez en la bajada lo que se autoriza
+     * es bajar. El banco lo vio llegando a Los Rodeos —la ventanilla saltó de
+     * 17.000 a 6.000 en la final—, porque el primer escalón no se había dado
+     * en la subida y la cuenta lo daba al rozar su altura por debajo.
+     */
+    const enLaSalida = !this.navegacion.bajando && !enLaFinal;
+    const escalon = enLaSalida
+      ? this.autorizacionDeSubida.paso({
+          pies,
+          sobreElSuelo: s.heightAboveGround / PIE_EN_METROS,
+          enTierra: s.onGround,
+        })
+      : null;
     if (escalon !== null) this.autorizarAltura(escalon);
     /*
      * **Y callado con el tren fuera o en final**, como el de un avión de línea:
