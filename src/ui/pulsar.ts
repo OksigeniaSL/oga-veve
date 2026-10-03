@@ -97,20 +97,30 @@ export function alPulsar(boton: HTMLElement, accion: () => void): void {
  * **Lo mismo, por delegación**: para botones que se rehacen al repintar, en
  * los que la escucha tiene que vivir en algo que no se rehace. `accion`
  * recibe el elemento que casa con `selector`.
+ *
+ * `salvo` deja fuera lo que, estando dentro del botón, es otro mando: la
+ * ventanilla ALT dentro de su losa del teléfono es una rueda, y girarla no es
+ * pedir la pantalla grande.
  */
 export function alPulsarDentro(
   raiz: HTMLElement,
   selector: string,
   accion: (boton: Element) => void,
+  salvo?: string,
 ): void {
   escucharLaVentana();
+  const elBoton = (e: Event): Element | null => {
+    const donde = e.target as Element | null;
+    if (salvo && donde?.closest?.(salvo)) return null;
+    const boton = donde?.closest?.(selector) ?? null;
+    return boton && raiz.contains(boton) ? boton : null;
+  };
   raiz.addEventListener("pointerdown", (e) => {
-    const boton = (e.target as Element | null)?.closest?.(selector);
-    if (boton && raiz.contains(boton)) apuntar(e, boton, () => accion(boton));
+    const boton = elBoton(e);
+    if (boton) apuntar(e, boton, () => accion(boton));
   });
   raiz.addEventListener("click", (e) => {
-    const boton = (e.target as Element | null)?.closest?.(selector);
-    if (!boton || !raiz.contains(boton)) return;
-    if (!yaAtendido(boton)) accion(boton);
+    const boton = elBoton(e);
+    if (boton && !yaAtendido(boton)) accion(boton);
   });
 }

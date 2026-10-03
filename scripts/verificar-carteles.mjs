@@ -49,6 +49,38 @@ const navegador = await chromium.launch({
 });
 
 const resultados = [];
+/**
+ * Lo que se toca y mide menos de una yema, en píxeles de pantalla: los
+ * botones, los mandos que se arrastran y el asa del cuadro, visibles y sin
+ * nada encima. Corre en la página.
+ */
+function pequenos() {
+  const YEMA = 44;
+  const sel =
+    'button, [role="button"], a[href], input, select, [data-mcp-rueda], ' +
+    '[data-mcp-alt], [data-tel-grande], [data-hud="cuadro-tirador"]';
+  const fuera = [];
+  for (const el of document.querySelectorAll(sel)) {
+    if (el.closest("[hidden]")) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) continue;
+    if (r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) continue;
+    const cs = getComputedStyle(el);
+    if (cs.visibility === "hidden" || cs.pointerEvents === "none" || Number(cs.opacity) === 0)
+      continue;
+    const x = Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2));
+    const y = Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2));
+    const encima = document.elementFromPoint(x, y);
+    if (!encima || !(el.contains(encima) || encima.contains(el))) continue;
+    if (r.width < YEMA - 0.5 || r.height < YEMA - 0.5)
+      fuera.push(
+        `${el.dataset?.hud ?? el.dataset?.telGrande ?? String(el.className?.baseVal ?? el.className).slice(0, 24)} ` +
+          `${Math.round(r.width)}×${Math.round(r.height)}`,
+      );
+  }
+  return fuera;
+}
+
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
@@ -266,6 +298,19 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     );
   }
   /*
+   * **Y todo lo que se toca, de yema.** Con la escala del HUD, los botones
+   * de la barra, el automático, el cinturón, el tren, los aerofrenos y los
+   * flaps se dibujaban a 29 píxeles en un teléfono de 360 de alto, y el asa
+   * del cuadro a 32. Se mide con el cuadro recogido, aquí, y abierto, más
+   * abajo. Lo tapado por otra cosa no cuenta: no se puede tocar.
+   *
+   * **En el teléfono.** En la tablet con el dedo va el cuadro entero, y la
+   * rueda de la ventanilla ALT de su visera —37 × 27 en una de 1024 × 600—
+   * ya ocupa todo el alto de la visera: hacerla de yema es otro cuadro, y
+   * queda apuntado aparte.
+   */
+  const pequenosRecogido = dedo && telefono ? await page.evaluate(pequenos) : [];
+  /*
    * **Y el cuadro, abierto para medir.** Recogido no pisa nada porque no está;
    * lo que tiene que caber es el cuadro abierto, que es el peor caso: se
    * abre como lo abre quien juega, tocando el asa.
@@ -278,6 +323,16 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 500));
   });
+  if (dedo && telefono) {
+    const todos = [...pequenosRecogido, ...(await page.evaluate(pequenos))];
+    const unicos = [...new Map(todos.map((p) => [p, p])).values()];
+    comprobar(
+      `${donde0}: todo lo que se toca mide al menos 44 × 44`,
+      unicos.length === 0,
+      unicos.join(" · ") || "todo de yema",
+      "con la escala del HUD los botones se encogían a 29 píxeles: no los acierta un dedo",
+    );
+  }
   /*
    * **Y el cuadro del teléfono, abierto.** «El cuadro de mandos ocupa un
    * montón, pero ni aún así se ve: no leo la altitud a la que debo llegar.»

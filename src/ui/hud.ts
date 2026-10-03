@@ -808,18 +808,27 @@ export class Hud {
      * tocar la pantalla grande vuelve a las losas. Salvo la ventanilla ALT y
      * sus teclas, que son la rueda: girarla no es pedir nada más. Ver
      * `ponerGrande`.
+     *
+     * **Con su propio dedo**, como el resto de los botones del vuelo: las
+     * losas escuchaban `click`, y con el pulgar en la palanca el toque del
+     * otro dedo no lo da nunca —el navegador lo cuenta como un gesto de dos
+     * dedos—. Ver `ui/pulsar.ts`.
      */
-    this.root.addEventListener("click", (e) => {
-      const donde = e.target as Element | null;
-      if (donde?.closest?.("[data-mcp-rueda], [data-mcp-alt]")) return;
-      const losa = donde?.closest?.<HTMLElement>("[data-tel-grande]");
-      if (losa) {
-        this.ponerGrande(losa.dataset.telGrande as Grande);
-        return;
-      }
-      if (this.grande && donde?.closest?.('[data-hud="tablero"]'))
-        this.ponerGrande(null);
-    });
+    const laRueda = "[data-mcp-rueda], [data-mcp-alt]";
+    alPulsarDentro(
+      this.root,
+      "[data-tel-grande]",
+      (losa) => this.ponerGrande((losa as HTMLElement).dataset.telGrande as Grande),
+      laRueda,
+    );
+    alPulsarDentro(
+      this.root,
+      '[data-hud="tablero"]',
+      () => {
+        if (this.grande) this.ponerGrande(null);
+      },
+      laRueda,
+    );
     /*
      * Con su propio dedo, como todos los botones del vuelo: ver `ui/pulsar.ts`.
      * El cierre al usar lo de dentro sigue en el `click` que sube desde él.

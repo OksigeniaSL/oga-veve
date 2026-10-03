@@ -15,6 +15,7 @@
  */
 
 import { escribirRincon } from "./escala";
+import { alPulsar } from "./pulsar";
 import { fan } from "./pictogramas";
 import { surtidorSvg } from "./surtidor";
 
@@ -1288,22 +1289,17 @@ export class Senal {
     this.tecla = raiz.querySelector('[data-hud="senal-tecla"]');
     /*
      * **Y con un segundo dedo**, que es como se toca volando: el pulgar en la
-     * palanca y otro dedo en la tarjeta. El navegador no convierte en `click`
-     * el toque de un dedo que no es el primero —con otro ya puesto, lo cuenta
-     * como parte de un gesto de dos dedos—, así que ese toque se escucha al
-     * soltar. Y el `click` que pudiera venir detrás se traga: la llave del
-     * motor no puede arrancar y apagar con el mismo toque.
+     * palanca y otro dedo en la tarjeta. Es lo mismo que les pasaba a los
+     * botones del vuelo, y se resuelve igual y en el mismo sitio: ver
+     * `ui/pulsar.ts`. Aquí había una copia de aquello hecha a mano —el
+     * `pointerup` de los dedos que no son el primero, y el `click` de detrás
+     * tragado medio segundo—, que hacía lo mismo por otro camino: no miraba
+     * si el dedo que se levantaba había bajado en la tarjeta, y el ratón y el
+     * primer dedo seguían esperando un `click`. Ahora es un botón más. Y el
+     * `click` que llega detrás sigue sin contar dos veces: la llave del motor
+     * no puede arrancar y apagar con el mismo toque.
      */
-    let tragarElClic = 0;
-    this.caja?.addEventListener("pointerup", (e) => {
-      if (e.pointerType !== "touch" || e.isPrimary || !this.accion) return;
-      tragarElClic = performance.now() + 500;
-      this.accion();
-    });
-    this.caja?.addEventListener("click", () => {
-      if (performance.now() < tragarElClic) return;
-      this.accion?.();
-    });
+    if (this.caja) alPulsar(this.caja, () => this.accion?.());
     this.medirse();
   }
 

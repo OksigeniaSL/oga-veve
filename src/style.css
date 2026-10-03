@@ -2098,6 +2098,8 @@ button.motor__tecla::after {
   justify-items: center;
   gap: 2px;
   min-width: 116px;
+  /* Que se toca: nunca más baja que una yema. Ver `--yema`. */
+  min-height: var(--tacto);
   /*
    * **Y se puede tocar.** Es un botón —tocarla cambia de destino, que es la
    * tecla J para quien no tiene teclado—, pero vive dentro del HUD, que deja
@@ -2920,6 +2922,30 @@ button.motor__tecla::after {
   }
 }
 /*
+ * **Y con el dedo, nada que se toque por debajo de una yema.**
+ *
+ * La escala lo encoge todo, también los botones: los de la barra de arriba,
+ * el automático, el cinturón, el tren, los aerofrenos y los flaps se
+ * dibujaban a 29 píxeles en un teléfono de 360 de alto, y a 26 los dos
+ * redondos. Cuarenta y cuatro es lo mínimo que acierta un dedo —lo que piden
+ * las pautas de accesibilidad y las de los dos sistemas de los teléfonos—, y
+ * el dedo no encoge con la pantalla. Así que con el dedo el tacto se mide en
+ * píxeles **de pantalla**: dividido por la escala, como ya se hace con las
+ * reservas de los pulgares. Medido en `verificar-carteles`.
+ */
+@media (max-height: 640px) and (pointer: coarse) {
+  .hud {
+    --yema: calc(44px / var(--escala));
+    --tacto: max(calc(48px * var(--escala-hud)), var(--yema));
+  }
+
+  /* Y el asa del cuadro en la tablet, que medía 29 de alto: en el teléfono
+     tiene la suya, más abajo. */
+  .hud .cuadro__tirador {
+    height: max(34px, var(--yema));
+  }
+}
+/*
  * La escala vale también **sin dedo**: una ventana de portátil a media altura
  * tiene el mismo problema que un teléfono, y la tarjeta del destino se le iba
  * igual por debajo. Lo que es solo del dedo es la reserva de los pulgares.
@@ -3467,8 +3493,9 @@ button.motor__tecla::after {
 .cinturon-mando {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  /* Cuarenta y cuatro de pantalla también en el teléfono: ver `--yema`. */
+  width: max(44px, var(--yema, 0px));
+  height: max(44px, var(--yema, 0px));
   border: 0;
   border-radius: 50%;
   background: rgb(0 0 0 / 0.45);
@@ -10456,11 +10483,12 @@ button.motor__tecla::after {
    * Y su asa, una pestaña encima del cuadro y no una franja de su ancho: el
    * cuadro nace recogido y lo que queda encima de los pedales tiene que
    * decir qué hay debajo —la esfera— y hacia dónde se abre —la flecha—.
-   * Grande para el dedo: ciento cincuenta por treinta y dos de pantalla.
+   * Grande para el dedo: ciento cincuenta por cuarenta y cuatro de pantalla.
+   * Tenía treinta y dos de alto, por debajo de una yema.
    */
   .hud .cuadro__tirador {
     width: calc(150px / var(--escala, 1));
-    height: calc(32px / var(--escala, 1));
+    height: calc(44px / var(--escala, 1));
     transform: translate(-50%, -100%);
     grid-auto-flow: column;
     gap: calc(8px / var(--escala, 1));
@@ -10488,7 +10516,7 @@ button.motor__tecla::after {
      la sombra de la visera de lado a lado, una franja oscura sin nada. */
   .hud .cuadro--bajado {
     clip-path: inset(
-      calc(-40px / var(--escala, 1)) calc(50% - 80px / var(--escala, 1)) 100%
+      calc(-52px / var(--escala, 1)) calc(50% - 80px / var(--escala, 1)) 100%
     );
   }
 
@@ -10560,9 +10588,14 @@ button.motor__tecla::after {
    * **El tutor, encima de la palanca**, que es donde hay hueco y no tapa el
    * avión ni el cuadro abierto: estrecho, para no llegar a él. Y en letra de
    * teléfono, por lo mismo que la orden.
+   *
+   * **Y a la derecha de la cámara y la pausa**, no debajo de ellas: desde que
+   * miden una yema —ver `--yema`—, la columna baja hasta los 104 píxeles en
+   * un teléfono de 330 de alto, y un tutor de dos líneas, que crece hacia
+   * arriba desde encima de la palanca, se montaba sobre la pausa.
    */
   .hud .tutor {
-    left: var(--borde-izq);
+    left: calc(var(--borde-izq) + var(--tacto) + 10px / var(--escala, 1));
     bottom: calc((max(20px, env(safe-area-inset-bottom)) + 150px + 10px) /
           var(--escala, 1));
     top: auto;
