@@ -137,6 +137,7 @@ import { ponerLaLuzDelDia } from "./world/luces-del-trafico";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
+import { Relampagos } from "./world/relampago";
 import {
   capaDelParte,
   type CapaDeNubes,
@@ -10457,20 +10458,30 @@ export class Game {
       velocidad: s.airspeed,
       desdeDentro: this.cameraMode === "cockpit",
     });
-    if (alumbra > 0 || this.fogonazoAnterior > 0) {
-      this.sky.ponerDeslumbre(1 + alumbra * 2.2);
-      /*
-       * **Y el trueno con el rayo, no después.**
-       *
-       * Un trueno de verdad llega segundos más tarde —el sonido tarda tres
-       * segundos por kilómetro— y esa espera es preciosa y aquí no vale: a los
-       * cuatro años, un ruido que llega cinco segundos después del destello no
-       * es el mismo suceso. Suena con él y su fuerza dice lo cerca que cayó.
-       */
-      if (alumbra > 0 && this.fogonazoAnterior === 0)
-        this.audio.trueno(this.lloviendo.fuerza);
-      this.fogonazoAnterior = alumbra;
-    }
+    /*
+     * **El rayo alumbra el mundo.** Se pedía la luz por `ponerDeslumbre`,
+     * que es el halo del sol y se recorta a uno: el fogonazo no pasaba de lo
+     * normal y no se veía nada. Y al acabar dejaba el deslumbre en uno, o sea
+     * sin las gafas de sol aunque se llevaran puestas. Ahora la luz es suya,
+     * con su forma y su espera entre rayos —ver `world/relampago.ts`—, y
+     * con el movimiento reducido es un resplandor y no un destello.
+     */
+    const cae = alumbra > 0 && this.fogonazoAnterior === 0;
+    this.fogonazoAnterior = alumbra;
+    /*
+     * **Y el trueno con el rayo, no después.**
+     *
+     * Un trueno de verdad llega segundos más tarde —el sonido tarda tres
+     * segundos por kilómetro— y esa espera es preciosa y aquí no vale: a los
+     * cuatro años, un ruido que llega cinco segundos después del destello no
+     * es el mismo suceso. Suena con él y su fuerza dice lo cerca que cayó. Y
+     * solo con el que alumbra: el que cae pegado al anterior se queda en él,
+     * un rayo y un trueno.
+     */
+    if (cae && this.relampagos.cae()) this.audio.trueno(this.lloviendo.fuerza);
+    const luz = this.relampagos.paso(dt, this.reducedMotion);
+    if (luz > 0 || this.luzDelRayo > 0) this.sky.ponerRelampago(luz);
+    this.luzDelRayo = luz;
     this.audio.ponerLluvia(
       this.lloviendo.clase,
       this.lloviendo.fuerza,
@@ -10482,6 +10493,10 @@ export class Game {
 
   /** Lo que alumbraba el rayo del fotograma anterior. Ver `pasoDeLluvia`. */
   private fogonazoAnterior = 0;
+  /** Los rayos que alumbran, con su espera. Ver `world/relampago.ts`. */
+  private readonly relampagos = new Relampagos();
+  /** Lo que alumbró el rayo en el fotograma anterior, ya con su forma. */
+  private luzDelRayo = 0;
 
   ponerTecho(techoM: number | null, tapadura: number): void {
     this.techoDeNubes = techoM;
