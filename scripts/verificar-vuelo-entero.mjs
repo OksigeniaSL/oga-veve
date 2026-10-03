@@ -5960,6 +5960,10 @@ if (process.env.OGA_VOCES) {
         maquina: vuelo.maquina,
         // Y lo que pasó con las aves de la final. Ver `vigilarLasAves`.
         aves: (vuelo.cantados ?? []).filter((c) => c.startsWith("aves:")),
+        // Y los pasos del «¿y ahora qué?», y quién llevó el gas de la final.
+        pasos: (vuelo.cantados ?? []).filter(
+          (c) => c.startsWith("paso ") || c.startsWith("gas de la final"),
+        ),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
         /*
@@ -7605,9 +7609,16 @@ const NUMERO_EN_UNA_BOCA =
    * dicen la acción: más gas es de ir lento, y menos gas, frenar o levantar
    * la nariz por el *sink rate*, de ir rápido o bajar de golpe.
    */
-  const LENTO = /^(?:vuelo\.lentoYBajo|vuelo\.consejo\.masGas|cabina\.airspeedLow)\b/;
+  /*
+   * Y los pasos del «¿y ahora qué?» que piden lo mismo —ver
+   * `flight/siguiente-paso.ts`—: más gas es de ir lento; menos gas,
+   * aerofrenos, la nariz que frena y los flaps, de ir rápido. Hoy suenan con
+   * las grabadas de arriba; con su grabación, con éstas.
+   */
+  const LENTO =
+    /^(?:vuelo\.lentoYBajo|vuelo\.consejo\.masGas|cabina\.airspeedLow|vuelo\.paso\.acelerarGas)\b/;
   const RAPIDO =
-    /^(?:vuelo\.rapido|vuelo\.pediFlaps|vuelo\.bajasRapido|cabina\.airspeed|tutor\.slow|vuelo\.consejo\.(?:menosGas|aerofrenos|narizArribaRitmo|narizArribaSuave))$/;
+    /^(?:vuelo\.rapido|vuelo\.pediFlaps|vuelo\.bajasRapido|cabina\.airspeed|tutor\.slow|vuelo\.consejo\.(?:menosGas|aerofrenos|narizArribaRitmo|narizArribaSuave)|vuelo\.paso\.(?:frenarGas|frenarAerofrenos|frenarNariz|flaps[123]))$/;
   const SEGUIDOS = 10;
   const oido = [];
   for (const h of vuelo.habladas ?? []) {
@@ -7632,6 +7643,37 @@ const NUMERO_EN_UNA_BOCA =
       ? seguidos.slice(0, 6).join(" · ")
       : `${lentos.length} de ir lento y ${rapidos.length} de ir rápido o bajar de golpe, ninguno a menos de ${SEGUIDOS} s del otro`,
     "«le meto gas y “bajás muy rápido”, pero si estoy tomando tierra ¿qué se supone que tengo que hacer?»",
+  );
+}
+
+/*
+ * **Y el «¿y ahora qué?»: cada escalón, un paso, y ninguno dos veces.**
+ *
+ * «Ni sabía a qué velocidad debería ir ahora», llegando a La Palma. Cada
+ * escalón alcanzado dice el siguiente paso —ver `flight/siguiente-paso.ts`—,
+ * y los de la salida —subir, el crucero, el punto de descenso, la velocidad
+ * de subir— se viven una vez por tramo: si uno sale dos veces, la cadena ha
+ * perdido la cuenta. Los de la llegada pueden volver tras una frustrada, que
+ * es otra aproximación. Se apunta la lista entera, en orden, que es lo que
+ * hace falta para ver si el orden es el de un vuelo de verdad.
+ */
+{
+  const pasos = (vuelo.cantados ?? [])
+    .map((c) => /^paso (\S+): (\S+)/.exec(String(c)))
+    .filter(Boolean)
+    .map((m) => `${m[1]}=${m[2]}`);
+  const deLaSalida = pasos.filter((p) =>
+    /^(?:subida|crucero|descenso|velocidad:[^=]*:salida)=/.test(p),
+  );
+  const repetidos = deLaSalida.filter((p, i) => deLaSalida.indexOf(p) !== i);
+  const delGas = (vuelo.cantados ?? []).filter((c) => /^gas de la final/.test(String(c)));
+  comprobar(
+    "y el «¿y ahora qué?» dice cada escalón una vez",
+    repetidos.length === 0,
+    `${pasos.length ? pasos.join(" → ") : "ningún paso"}` +
+      (delGas.length ? ` · ${delGas.join(" · ")}` : "") +
+      (repetidos.length ? ` · repetidos: ${repetidos.join(", ")}` : ""),
+    "«ni sabía a qué velocidad debería ir ahora»",
   );
 }
 

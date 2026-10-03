@@ -486,3 +486,35 @@ describe("una final con errores", () => {
     void repetidos;
   });
 });
+
+describe("lo que ya pidió el paso siguiente", () => {
+  it("no se repite como consejo: la marca bajó, se dijo «frená» y no se oye detrás «menos gas»", () => {
+    const consejero = new ConsejoDeLaBajada();
+    // La cadena del «¿y ahora qué?» acaba de pedir frenar a la marca nueva.
+    const rapida = base({ velocidad: "rapido", velocidadMuyFuera: true, kt: 212, marca: 182 });
+    consejero.anotar({ accion: "menosGas", motivo: "rapido" }, rapida);
+    // Y la velocidad sigue lejos de la marca un buen rato, sin que el avión
+    // haya respondido todavía: la instructora calla.
+    for (let i = 0; i < 200; i++) expect(consejero.paso(rapida)).toBeNull();
+  });
+
+  it("ni va detrás lo contrario sin que el avión haya respondido", () => {
+    const consejero = new ConsejoDeLaBajada();
+    consejero.anotar({ accion: "menosGas", motivo: "rapido" }, base({ kt: 212 }));
+    // De golpe «lento» —un bache, la marca que se mueve—: sin respuesta al
+    // «menos gas», no sale «más gas».
+    const lenta = base({ velocidad: "lento", kt: 212, aceleracion: 0 });
+    for (let i = 0; i < 200; i++) expect(consejero.paso(lenta)).toBeNull();
+  });
+
+  it("y no se celebra: no fue una corrección, fue el paso siguiente", () => {
+    const consejero = new ConsejoDeLaBajada();
+    consejero.anotar(
+      { accion: "menosGas", motivo: "rapido" },
+      base({ velocidad: "rapido", kt: 212 }),
+    );
+    // El avión responde y llega a la marca.
+    const llega = base({ velocidad: "bien", kt: 180, aceleracion: -1 });
+    for (let i = 0; i < 50; i++) expect(consejero.paso(llega)).not.toBe("bien");
+  });
+});

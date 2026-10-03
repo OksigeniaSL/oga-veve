@@ -1350,6 +1350,68 @@ export const ES_PY = {
   "palabra.menosGas": "Menos gas",
   "palabra.narizArriba": "Nariz arriba",
   "palabra.narizAbajo": "Nariz abajo",
+  /*
+   * **El «¿y ahora qué?»: el paso siguiente en cada escalón del vuelo**, con
+   * su acción y su objetivo. «Ni sabía a qué velocidad debería ir ahora»,
+   * llegando a La Palma a mil ochocientos pies. Los decide uno solo,
+   * `flight/siguiente-paso.ts`: subir, acelerar o frenar a la marca nueva, el
+   * crucero, bajar, nivelar, los flaps por su orden, el tren y la senda.
+   *
+   * Sin grabar todavía: ver `PENDIENTE-VOCES-escalones.md`. Hasta que lo
+   * estén, se dice la grabada que pide lo mismo —«Bajá el motor», «Bajá los
+   * flaps para frenar», «Sacá el tren», «Empezamos a bajar»— y, si ninguna
+   * sirve, el paso se ve en la tarjeta y en la cabina y la voz calla.
+   */
+  "vuelo.paso.subir": "Subimos hasta la raya de la altura, a la velocidad de la marca rosa.",
+  "vuelo.paso.acelerarGas": "Ya podemos ir más rápido: más gas, hasta la marca rosa.",
+  "vuelo.paso.acelerarNariz":
+    "Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.",
+  "vuelo.paso.frenarGas": "Ahora vamos más despacio: menos gas, hasta la marca rosa.",
+  "vuelo.paso.frenarAerofrenos":
+    "Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.",
+  "vuelo.paso.frenarNariz":
+    "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.",
+  "vuelo.paso.mantener": "La marca rosa cambió y ya vamos a esa velocidad: seguimos así.",
+  "vuelo.paso.marcaDelAutomatico":
+    "La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.",
+  "vuelo.paso.crucero":
+    "Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.",
+  "vuelo.paso.cruceroConAutomatico":
+    "Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.",
+  "vuelo.paso.cruceroConGases":
+    "Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.",
+  "vuelo.paso.bajar":
+    "Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.",
+  "vuelo.paso.bajarConAutomatico":
+    "Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.",
+  "vuelo.paso.nivelar":
+    "Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
+  "vuelo.paso.flaps1": "Los primeros flaps, una muesca, y a la marca rosa.",
+  "vuelo.paso.flaps2": "Otra muesca de flaps, y a la marca rosa.",
+  "vuelo.paso.flaps3": "Los flaps de aterrizar, abajo del todo, y a la marca rosa.",
+  "vuelo.paso.tren": "Sacá el tren, que ya vamos a aterrizar.",
+  "vuelo.paso.recogerAerofrenos": "Ya vamos a la marca rosa: aerofrenos adentro.",
+  "vuelo.paso.senda":
+    "Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.",
+  /*
+   * Y en la final de Guyrami, **quién lleva el gas**: el avión que lleva gases
+   * automáticos los usa; en el que no, lo lleva la instructora, que es una
+   * ayuda del peldaño y no del avión. Ver `sostenerLaVelocidadDeLaFinal` en
+   * `game.ts`.
+   */
+  "vuelo.paso.sendaConGases":
+    "Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.",
+  "vuelo.paso.sendaConAyuda":
+    "Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.",
+  "vuelo.paso.gasTuyo": "Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.",
+  "palabra.crucero": "Crucero",
+  "palabra.nivela": "Nivelá",
+  "palabra.laSenda": "La senda",
+  "palabra.asi": "Así",
+  "palabra.aerofrenosAdentro": "Aerofrenos adentro",
+  // Lo que dice el dibujo de quién lleva el gas, para quien no lo ve.
+  "hud.gasDelAvion": "El avión lleva el motor",
+  "hud.gasDeLaAyuda": "La instructora lleva el motor",
   "vuelo.bulto": "Por ahí no se pasa: hay un edificio",
   // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
   // La fila de avioncitos de la pantalla de fin: media hora cada uno.
