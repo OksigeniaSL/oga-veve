@@ -168,6 +168,27 @@ describe("en la cola de salida de Los Rodeos, por la 30", () => {
     expect(hueco).toBeLessThan(SE_TOCAN + 45);
   });
 
+  /*
+   * Y lo sabe quien pregunta: parado ahí se está esperando a uno de tu cola,
+   * que es tráfico y no rodaje lento. Lo descuenta el banco del vuelo entero
+   * en «el rodaje de ida no aburre». Ver `detrasDeQuien`.
+   */
+  it("y dice que está detrás de uno de su cola, no de otro parado", () => {
+    const { plan } = unPlan();
+    plan.enCola = () => [delante];
+    plan.reiniciar();
+    rodar(plan, 120);
+    expect(plan.detrasDeQuien).toBe("cola");
+    const otro = unPlan().plan;
+    otro.ocupados = () => [delante];
+    otro.reiniciar();
+    rodar(otro, 5);
+    expect(otro.detrasDeQuien).not.toBe("cola");
+    const nadie = unPlan().plan;
+    rodar(nadie, 5);
+    expect(nadie.detrasDeQuien).toBeNull();
+  });
+
   it("detrás de la doble raya a la que va uno que todavía no ha llegado no se para", () => {
     const { plan } = unPlan();
     plan.enCola = () => [delante];
