@@ -558,11 +558,22 @@ const circuito = (tramo: string, derecha = false): string =>
 </g>`);
 
 /**
+ * Una estrella de cuatro puntas, como se dibuja una estrella que brilla: el
+ * punto solo no se lee como estrella, y la de cinco puntas es la de las
+ * banderas, no la del cielo.
+ */
+const estrella = (cx: number, cy: number, r: number): string => {
+  const e = r * 0.32;
+  const p = (x: number, y: number) => `${+(cx + x).toFixed(2)} ${+(cy + y).toFixed(2)}`;
+  return `<path d="M${p(0, -r)} L${p(e, -e)} L${p(r, 0)} L${p(e, e)} L${p(0, r)} L${p(-e, e)} L${p(-r, 0)} L${p(-e, -e)} Z" />`;
+};
+
+/**
  * Lo que se ve por la ventanilla: la cosa, y por qué lado mirar.
  *
- * Diez tarjetas que son dos ideas: **qué es** —una montaña, una isla, un
- * pueblo, y en Canarias un barco u otro avión— y **hacia dónde girar la
- * cabeza**. La flecha va al borde que
+ * Catorce tarjetas que son dos ideas: **qué es** —una montaña, una isla, un
+ * pueblo, en Canarias un barco u otro avión, y de noche la Cruz del Sur o la
+ * Polar— y **hacia dónde girar la cabeza**. La flecha va al borde que
  * corresponde y el dibujo va corrido al otro lado, como quien se aparta para
  * dejar mirar.
  *
@@ -611,7 +622,55 @@ const FIGURA: Record<string, string> = {
   // El otro avión, visto desde abajo: el mismo avión de la señal del piloto
   // automático, que ya es el avión de este juego.
   avion: `<path d="M12 5 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />`,
+  /*
+   * **La Cruz del Sur**, como se ve de pie mirando al sur: Gácrux arriba, Ácrux
+   * abajo y la más brillante, Mimosa a la izquierda, δ a la derecha y la
+   * pequeña ε entre las dos de abajo. Con el palo y el travesaño apenas
+   * marcados: lo que se reconoce son las cuatro, no las rayas.
+   */
+  "cruz-del-sur": `
+  <path d="M12 12.4 V18.6 M8.2 14.9 H16.8" stroke="currentColor" stroke-width="0.8"
+        stroke-dasharray="1 1.2" fill="none" opacity="0.45" />
+  ${estrella(12, 9.2, 3)}
+  ${estrella(12.6, 21.8, 3.2)}
+  ${estrella(5, 15.2, 3)}
+  ${estrella(19.2, 14.2, 2.3)}
+  <circle cx="16.6" cy="18.8" r="1.1" />`,
+  /*
+   * **La Polar**, con las dos de la Osa Mayor que apuntan a ella: la forma de
+   * encontrarla que se enseña en cualquier sitio donde se ve. La línea de las
+   * dos punteras, alargada, llega a la Polar.
+   */
+  polar: `
+  <path d="M8.8 15.2 L11 12.6" stroke="currentColor" stroke-width="0.9"
+        stroke-dasharray="1 1.1" fill="none" opacity="0.55" />
+  ${estrella(13, 11, 3.6)}
+  ${estrella(7.2, 17.4, 2.3)}
+  ${estrella(3.6, 22, 2)}`,
 };
+
+/*
+ * **Lo que se ve de otro avión de noche**: su silueta apenas, y sus luces en
+ * su sitio sobre un trozo de cielo oscuro —sobre el barro de la tarjeta, el
+ * rojo y el verde no se distinguen—. Es la lección entera en un dibujo:
+ *
+ * - **De frente**: la verde a la izquierda y la roja a la derecha —son las
+ *   suyas, al revés de como las verías desde dentro— y los dos focos.
+ * - **Alejándose**: más pequeño, de espaldas, y solo la blanca de la cola.
+ * - **Cruzando**: de perfil, con la luz del lado que enseña y la flecha hacia
+ *   donde va. La roja, hacia tu izquierda; la verde, hacia tu derecha.
+ *
+ * Y no solo por el color, que hay quien no distingue el rojo del verde: cada
+ * luz está en su lado del dibujo, y la flecha dice hacia dónde.
+ */
+const NOCHE = `<rect class="senal__noche" x="0.5" y="0.5" width="23" height="23" rx="3.5" />`;
+const PERFIL = `<path class="senal__silueta" d="M2 12.8 Q2.4 10.6 5.2 10.4 H16.2 L19.8 5.6 H22 L21.2 10.4 Q22.4 10.9 22.4 12.3 Q21.9 14 19.3 14.1 H5.2 Q2.6 14 2 12.8 Z" />`;
+const cruzando = (luz: "roja" | "verde", derecha: boolean): string =>
+  icono(`${NOCHE}<g${derecha ? ' transform="matrix(-1 0 0 1 24 0)"' : ""}>
+    ${PERFIL}
+    <circle class="senal__luz-${luz}" cx="11.8" cy="13.6" r="2.2" />
+    <path d="M3 19.4 L7 16.8 V18.5 H20.5 V20.3 H7 V22 Z" />
+  </g>`);
 
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
@@ -1163,6 +1222,32 @@ export const DIBUJOS = {
   "hito-barco-derecha": hito("barco", "derecha"),
   "hito-avion-izquierda": hito("avion", "izquierda"),
   "hito-avion-derecha": hito("avion", "derecha"),
+  "hito-cruz-del-sur-izquierda": hito("cruz-del-sur", "izquierda"),
+  "hito-cruz-del-sur-derecha": hito("cruz-del-sur", "derecha"),
+  "hito-polar-izquierda": hito("polar", "izquierda"),
+  "hito-polar-derecha": hito("polar", "derecha"),
+  // Las luces de otro avión, de noche. Ver `NOCHE`.
+  "luces-de-frente": icono(`${NOCHE}
+    <g class="senal__silueta">
+      <rect x="1.5" y="12.3" width="21" height="1.8" rx="0.9" />
+      <circle cx="12" cy="13.2" r="3.2" />
+      <rect x="11.2" y="6" width="1.6" height="5.5" rx="0.6" />
+      <circle cx="7.3" cy="15.2" r="1.4" />
+      <circle cx="16.7" cy="15.2" r="1.4" />
+    </g>
+    <circle class="senal__luz-verde" cx="2.4" cy="13.2" r="2.3" />
+    <circle class="senal__luz-roja" cx="21.6" cy="13.2" r="2.3" />
+    <circle class="senal__luz-blanca" cx="9.6" cy="13.8" r="1.2" />
+    <circle class="senal__luz-blanca" cx="14.4" cy="13.8" r="1.2" />`),
+  "luces-se-aleja": icono(`${NOCHE}
+    <g class="senal__silueta">
+      <rect x="5" y="12.2" width="14" height="1.3" rx="0.65" />
+      <circle cx="12" cy="12.8" r="2.2" />
+      <rect x="11.4" y="8" width="1.2" height="4.2" rx="0.5" />
+    </g>
+    <circle class="senal__luz-blanca" cx="12" cy="13.2" r="1.8" />`),
+  "luces-cruza-izquierda": cruzando("roja", false),
+  "luces-cruza-derecha": cruzando("verde", true),
   ...TRAFICO,
   ...CERCANO,
 } as const;

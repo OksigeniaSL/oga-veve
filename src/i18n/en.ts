@@ -644,6 +644,12 @@ export const EN: Dictionary = {
   "hito.unBarco": "a ship",
   "hito.otroAvion": "another aeroplane",
   "hito.avion.vos": "Look, on your {lado}: another aeroplane.",
+  "hito.cruzDelSur": "Southern Cross",
+  "hito.polar": "Pole Star",
+  "luces.deFrente": "Green on your left and red on your right: it's coming towards you",
+  "luces.seAleja": "Only the white light: it's moving away",
+  "luces.cruzaIzquierda": "You see its red light: it's heading to your left",
+  "luces.cruzaDerecha": "You see its green light: it's heading to your right",
   /*
    * What you can see out of the window, written by hand: one sentence per
    * place, with something worth remembering. The side goes first, as a

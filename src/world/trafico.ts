@@ -1173,6 +1173,11 @@ export interface Trafico {
     enLaPista: boolean;
     /** Si está dando la vuelta de espera en la esquina de la base. */
     esperandoTurno: boolean;
+    /**
+     * Rumbo verdadero, grados: hacia dónde apunta el morro. Lo que hace falta
+     * para saber qué luces se le ven. Ver `queLucesSeLeVen`.
+     */
+    rumbo: number;
   }[];
   /**
    * **Cómo va cada uno por dentro**, para el banco: en qué camino, cuántos
@@ -2488,6 +2493,8 @@ export function crearTrafico(
         tipo: quien.tipo.id,
         enLaPista: encimaDeLaPista(quien),
         esperandoTurno: !!quien.tresSesenta,
+        // El giro del modelo es el rumbo negado. Ver `giroDelModelo`.
+        rumbo: ((((-quien.grupo.rotation.y * 180) / Math.PI) % 360) + 360) % 360,
       }));
     },
     porDentro() {

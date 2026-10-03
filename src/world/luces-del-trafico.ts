@@ -525,6 +525,47 @@ const ORDEN: readonly {
   { clase: "rodaje", color: FOCO, sector: [0, grados(40)] },
 ];
 
+/**
+ * **Lo que se le ve a otro avión de noche**, desde donde se le mira: es la
+ * lección de las luces de navegación dicha al revés, desde el lado de quien
+ * las ve.
+ *
+ * - `de-frente`: la roja y la verde a la vez —la verde a tu izquierda y la
+ *   roja a tu derecha—, que es que viene hacia ti.
+ * - `cruza-izquierda`: solo la roja, la de su ala izquierda: le estás viendo
+ *   el costado izquierdo, así que va pasando hacia tu izquierda.
+ * - `cruza-derecha`: solo la verde, y va hacia tu derecha.
+ * - `se-aleja`: solo la blanca de la cola.
+ *
+ * Con los mismos sectores y el mismo desborde que pinta la tarjeta —ver
+ * `alumbraHacia`—: lo que dice la tarjeta es lo que se ve en el cielo.
+ * `rumbo` en grados, como en todo el juego; el norte es la Z negativa.
+ */
+export type LoQueSeLeVe =
+  | "de-frente"
+  | "cruza-izquierda"
+  | "cruza-derecha"
+  | "se-aleja";
+
+export function queLucesSeLeVen(
+  otro: { readonly x: number; readonly z: number; readonly rumbo: number },
+  yo: { readonly x: number; readonly z: number },
+): LoQueSeLeVe | null {
+  const dx = yo.x - otro.x;
+  const dz = yo.z - otro.z;
+  if (Math.hypot(dx, dz) < 1) return null;
+  // Dónde estás tú visto desde su morro, a derechas.
+  const haciaTi = Math.atan2(dx, -dz) - grados(otro.rumbo);
+  const verde = alumbraHacia(ORDEN[0]!.sector, haciaTi) > 0.5;
+  const roja = alumbraHacia(ORDEN[1]!.sector, haciaTi) > 0.5;
+  const blanca = alumbraHacia(ORDEN[2]!.sector, haciaTi) > 0.5;
+  if (verde && roja) return "de-frente";
+  if (roja) return "cruza-izquierda";
+  if (verde) return "cruza-derecha";
+  if (blanca) return "se-aleja";
+  return null;
+}
+
 /** Hacia dónde alumbra cada luz, en el orden de la geometría. Para las pruebas. */
 export const SECTORES: readonly (readonly [number, number])[] = ORDEN.map(
   (l) => l.sector,

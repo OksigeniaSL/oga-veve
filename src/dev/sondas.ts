@@ -1231,6 +1231,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         z: m[6] * v[0]! + m[7] * v[1]! + m[8] * v[2]!,
       };
     },
+    /** Lo que se le vio a otro avión de noche en este vuelo, si ya salió. */
+    lucesDeNoche: () => juego.lucesDeNocheParaBanco,
     /**
      * **Apaga la noche** —estrellas, Luna y Vía Láctea— para medir lo que
      * cuesta: el mismo cuadro con y sin ella. Solo para el banco.

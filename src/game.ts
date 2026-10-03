@@ -135,9 +135,12 @@ import {
 } from "./flight/informacion-de-trafico";
 import {
   faseDelTuyo,
+  type LoQueSeLeVe,
   lucesDelTrafico,
   ponerLaLuzDelDia,
+  queLucesSeLeVen,
 } from "./world/luces-del-trafico";
+import { estrellasQueSeSenalan } from "./world/hitos-del-cielo";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
@@ -2975,6 +2978,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
     this.mirada.reiniciar();
@@ -8343,6 +8347,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
     this.mirada.reiniciar();
@@ -8943,6 +8948,7 @@ export class Game {
     if (anuncio && !enEmergencia) this.decirPorMegafonia(anuncio);
 
     this.mirarPorLaVentanilla(dt);
+    this.contarLasLucesDeNoche(dt);
 
     /*
      * **El reloj, antes de la puerta.**
@@ -10628,6 +10634,7 @@ export class Game {
     this.megafonia.reiniciar();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
+    this.lucesDeNocheContadas = null;
     // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
     this.loSenalado = null;
     this.mirada.reiniciar();
@@ -14611,6 +14618,21 @@ export class Game {
           id,
         });
       }
+    /*
+     * **Y de noche, las estrellas que se enseñan**: la Cruz del Sur en
+     * Paraguay y la Polar en Canarias, si se ven desde aquí —con el cielo
+     * abierto y a una altura que quepa en una ventanilla—. No se quedan
+     * quietas en el mapa, que el cielo gira: se piden cuando toca mirar,
+     * como los barcos. Ver `world/hitos-del-cielo.ts`.
+     */
+    lista.push(
+      ...estrellasQueSeSenalan(
+        this.sky.cielo,
+        this.sky.seVenLasEstrellas,
+        this.flight.state.position,
+        { cruzDelSur: t("hito.cruzDelSur"), polar: t("hito.polar") },
+      ),
+    );
     return lista;
   }
 
@@ -14701,11 +14723,18 @@ export class Game {
      * la figura dicen «mirá hacia allá, es una montaña», que es todo lo que
      * hace falta para girar la cabeza. El nombre lo dice la voz igual.
      */
+    /*
+     * Y una estrella no tiene cota: tiene altura sobre el horizonte, en
+     * grados, que es la cifra con la que se la busca. La de la Polar es la
+     * latitud de quien la mira.
+     */
     const rotulo = !canales.texto
       ? ""
-      : canales.cifra && mirada.hito.ele !== null
-        ? `${mirada.hito.nombre} · ${mirada.hito.ele} m`
-        : mirada.hito.nombre;
+      : canales.cifra && mirada.hito.altura !== undefined
+        ? `${mirada.hito.nombre} · ${Math.round(mirada.hito.altura)}°`
+        : canales.cifra && mirada.hito.ele !== null
+          ? `${mirada.hito.nombre} · ${mirada.hito.ele} m`
+          : mirada.hito.nombre;
     const dibujo = comoDibujo(`hito-${mirada.hito.clase}-${mirada.lado}`);
     /*
      * **Y la tarjeta se toca para mirarlo.** El dibujo del sitio con su
@@ -14734,6 +14763,96 @@ export class Game {
         accion: mirada.punto ? () => this.mirarHaciaLoSenalado() : null,
       },
     );
+  }
+
+  /**
+   * Lo que se le vio a otro avión de noche en este vuelo, si ya se contó:
+   * se cuenta una vez. Ver `contarLasLucesDeNoche`.
+   */
+  private lucesDeNocheContadas: LoQueSeLeVe | null = null;
+  /** Cuánto falta para volver a mirar, s. Ver `contarLasLucesDeNoche`. */
+  private mirarLasLucesEn = 0;
+
+  /**
+   * **Lo que se le ve a otro avión de noche**, contado una vez por vuelo.
+   *
+   * De noche un avión es un puñado de luces, y su patrón dice hacia dónde
+   * va: la verde a tu izquierda y la roja a tu derecha, viene hacia ti; la
+   * blanca sola, se va. La primera vez del vuelo que, de noche y en vuelo
+   * tranquilo, otro avión queda delante y cerca, sale la tarjeta con **lo
+   * que se le ve de verdad desde aquí** —ver `queLucesSeLeVen`— y, desde el
+   * tercer peldaño, la frase escrita.
+   *
+   * La explicación es de la instructora, así que como `explicarElTrafico` va
+   * en los tres peldaños de abajo y espera hueco: es una lección, no un
+   * aviso. Su voz todavía no está grabada —ver `PENDIENTE-VOCES-noche.md`—, y
+   * hasta entonces cuenta el dibujo, que es el canal que está siempre.
+   */
+  private contarLasLucesDeNoche(dt: number): void {
+    if (this.lucesDeNocheContadas) return;
+    this.mirarLasLucesEn -= dt;
+    if (this.mirarLasLucesEn > 0) return;
+    this.mirarLasLucesEn = 1;
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    // Noche hecha: el sol a más de cuatro grados por debajo del horizonte.
+    if (this.sky.sunDirection.y > -0.07) return;
+    const s = this.flight.state;
+    // Y con calma, como `explicarElTrafico`: en el aire, alto y nivelado.
+    if (s.onGround || s.heightAboveGround < 300) return;
+    if (Math.abs(s.verticalSpeed) > 3) return;
+    if (!this.huecos.hayHueco) return;
+    /*
+     * Y con la esquina libre: una tarjeta que importa más —un aro, una orden
+     * de la torre— no deja entrar a esta, y como sale una vez por vuelo, se
+     * perdería sin haberse visto. Se espera a que se vaya.
+     */
+    const puesta = this.hud.senal.puesto;
+    if (puesta.prioridad > 0 && puesta.queda > 0) return;
+    const yo = { x: s.position.x, z: s.position.z };
+    const otros: { x: number; y: number; z: number; rumbo: number }[] = [
+      ...(this.trafico?.quienes() ?? []),
+      ...(this.avionesDeRuta?.quienes() ?? []),
+      ...(this.islenos?.quienes() ?? []),
+    ];
+    let elMasCerca: { que: LoQueSeLeVe; d: number } | null = null;
+    for (const o of otros) {
+      const dx = o.x - yo.x;
+      const dz = o.z - yo.z;
+      const d = Math.hypot(dx, dz);
+      // Lo bastante cerca para verle las luces, y no encima.
+      if (d < 400 || d > 8000) continue;
+      if (Math.abs(o.y - s.position.y) > 900) continue;
+      // Y delante, que es por donde se mira: cuarenta y cinco grados.
+      const haciaEl = Math.atan2(dx, -dz) - s.heading;
+      if (Math.abs(Math.atan2(Math.sin(haciaEl), Math.cos(haciaEl))) > Math.PI / 4)
+        continue;
+      const que = queLucesSeLeVen(o, yo);
+      if (que && (!elMasCerca || d < elMasCerca.d)) elMasCerca = { que, d };
+    }
+    if (!elMasCerca) return;
+    this.lucesDeNocheContadas = elMasCerca.que;
+    this.huecos.usar();
+    const canales = canalesDe(this.tier.avisos);
+    const clave = {
+      "de-frente": "luces.deFrente",
+      "se-aleja": "luces.seAleja",
+      "cruza-izquierda": "luces.cruzaIzquierda",
+      "cruza-derecha": "luces.cruzaDerecha",
+    } as const satisfies Record<LoQueSeLeVe, TranslationKey>;
+    const rotulo = !canales.texto
+      ? ""
+      : canales.corto
+        ? t("palabra.mira")
+        : t(clave[elMasCerca.que]);
+    this.hud.senal.mostrar(comoDibujo(`luces-${elMasCerca.que}`), rotulo, null, {
+      segundos: 9,
+      prioridad: 0,
+    });
+  }
+
+  /** Lo que se le vio a otro avión de noche en este vuelo, para el banco. */
+  get lucesDeNocheParaBanco(): LoQueSeLeVe | null {
+    return this.lucesDeNocheContadas;
   }
 
   /**

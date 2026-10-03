@@ -46,9 +46,11 @@ import { type CapaDeNubes, TAPA_LA_VISTA } from "./capa-de-nubes";
 /**
  * Las clases que se reconocen desde el aire. Cada una tiene su dibujo.
  *
- * Las cinco primeras son sitios. Las dos últimas **se mueven** —un barco entre
- * islas, otro avión— y no vienen de ningún fichero: las pone el juego mientras
- * están a la vista. Ver `barcos.ts` y `trafico-de-las-islas.ts`.
+ * Las cinco primeras son sitios. Las dos siguientes **se mueven** —un barco
+ * entre islas, otro avión— y no vienen de ningún fichero: las pone el juego
+ * mientras están a la vista. Ver `barcos.ts` y `trafico-de-las-islas.ts`. Y
+ * las dos últimas son **del cielo**, la Cruz del Sur y la Polar, que se
+ * señalan de noche cuando se ven. Ver `hitos-del-cielo.ts`.
  */
 export type ClaseDeHito =
   | "montana"
@@ -57,7 +59,9 @@ export type ClaseDeHito =
   | "agua"
   | "bosque"
   | "barco"
-  | "avion";
+  | "avion"
+  | "cruz-del-sur"
+  | "polar";
 
 /** Un sitio desde el que se ve un hito, en el marco local del escenario. */
 export interface PuntoDeHito {
@@ -99,6 +103,12 @@ export interface Hito {
    * un 2; un barco que pasa, un 1. Ver `VALE_UN_PESO`.
    */
   readonly peso?: number;
+  /**
+   * **A qué altura sobre el horizonte está**, en grados, si es del cielo. Es
+   * la cifra que se escribe en la tarjeta en vez de la cota: la de la Polar
+   * es la latitud de quien la mira. Ver `hitos-del-cielo.ts`.
+   */
+  readonly altura?: number;
   /**
    * **Los otros sitios desde los que se ve lo mismo.** Un río es una línea y
    * una sierra es larga: el río Paraguay se ve a la derecha durante media

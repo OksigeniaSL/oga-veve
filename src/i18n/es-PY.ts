@@ -724,6 +724,22 @@ export const ES_PY = {
   "hito.otroAvion": "otro avión",
   "hito.avion.vos": "Mirá, a la {lado}: otro avión.",
   /*
+   * Y lo que se señala del cielo de noche, que se escribe en la tarjeta
+   * desde el segundo peldaño. La frase hablada todavía no está grabada: ver
+   * `PENDIENTE-VOCES-noche.md`.
+   */
+  "hito.cruzDelSur": "Cruz del Sur",
+  "hito.polar": "Estrella Polar",
+  /*
+   * **Lo que se ve de otro avión de noche**, escrito en su tarjeta desde el
+   * tercer peldaño; en el segundo, «¡Mirá!». Es la regla de las luces de
+   * navegación dicha desde el lado de quien las mira. Ver `queLucesSeLeVen`.
+   */
+  "luces.deFrente": "Verde a tu izquierda y roja a tu derecha: viene hacia vos",
+  "luces.seAleja": "Solo la luz blanca: se está yendo",
+  "luces.cruzaIzquierda": "Ves su luz roja: va hacia tu izquierda",
+  "luces.cruzaDerecha": "Ves su luz verde: va hacia tu derecha",
+  /*
    * ── **Lo que se ve por la ventanilla, contado a mano** ──────────────────
    *
    * Las plantillas de arriba —«Ahí abajo, a la {lado}, {nombre}»— ya no se
