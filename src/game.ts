@@ -16382,8 +16382,15 @@ export class Game {
      * cinta, que a los cuatro años es una orden. De Taguato para arriba, que
      * lee y sabe para qué es, se ve como siempre. Ver `ventanillaEnLaFinal`.
      */
-    const enLaCinta =
-      this.desvioAhora?.modo !== "final" || canalesDe(this.tier.avisos).cifra;
+    /*
+     * Y lo mismo recién llegado, corriendo por la pista y rodando al puesto:
+     * ahí no hay altura a la que ir, y la raya de la cinta seguía diciendo
+     * «1.900» con las ruedas en el suelo. Ver `RECIEN_LLEGADO`.
+     */
+    const llegando =
+      this.desvioAhora?.modo === "final" ||
+      (this.flight.state.onGround && RECIEN_LLEGADO.has(this.faseDeAhora));
+    const enLaCinta = !llegando || canalesDe(this.tier.avisos).cifra;
     return { pies, alerta: this.alertaDeAltitud, enLaCinta };
   }
 
