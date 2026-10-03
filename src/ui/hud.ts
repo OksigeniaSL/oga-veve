@@ -2534,6 +2534,8 @@ export class Hud {
       readonly minimos?: DatosDelTablero["minimos"];
       /** La senda a la vista. Ver `DatosDelTablero.perfil`. */
       readonly perfil?: DatosDelTablero["perfil"];
+      /** En tierra, la GS de rodar. Ver `DatosDelTablero.rodaje`. */
+      readonly rodaje?: DatosDelTablero["rodaje"];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2980,6 +2982,7 @@ export class Hud {
         fma: mandos?.fma ?? null,
         minimos: mandos?.minimos ?? null,
         perfil: mandos?.perfil ?? null,
+        rodaje: mandos?.rodaje ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de

@@ -35,6 +35,13 @@ import { aLaPolilinea, ANCHO_RODADURA } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
 import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
+  DE_TRANSPORTE,
+  RECTA_LARGA,
+  velocidadDeLaSalida,
+  velocidadesEnTierra,
+  type VelocidadesEnTierra,
+} from "../flight/velocidades-en-tierra";
+import {
   AIRE_ESTANDAR,
   type Aire,
   trueFromIndicated,
@@ -189,25 +196,21 @@ const AMBAR = enLineal(0xe8b13a);
 const ROJO = enLineal(0xc94a3d);
 
 /**
- * Velocidad de rodaje cómoda en recta, m/s. Unos cuarenta y siete por hora.
+ * La velocidad de rodaje en recta de un avión de línea, m/s: veinte nudos.
  *
- * Un avión rueda en recta hasta a treinta nudos —cincuenta y cinco por hora—,
- * así que cuarenta es realista y no es un atajo. Con treinta, los dos
- * kilómetros de plataforma a cabecera de Silvio Pettirossi eran cuatro minutos
- * de reloj por cada sentido, y eso a un niño de cuatro años se le hace
- * eterno: «es mucho rato en rodadura salir y entrar, la verdad».
+ * **Ya no es la de todos.** Eran trece metros por segundo, veinticinco nudos,
+ * para los seis aviones y en cualquier recta. Cada avión rueda ahora a lo de
+ * su clase —ver `flight/velocidades-en-tierra.ts`—: veinte nudos en recta y
+ * hasta treinta en las rectas largas un avión de línea, menos una avioneta.
+ * Esto queda para quien necesita una sola velocidad sin saber de qué avión:
+ * el coche del sígame mientras nadie le dice cuál sigue.
  *
- * La otra mitad del problema no se arregla con velocidad sino con viento: la
- * cabecera en uso la elige el viento, y en Silvio Pettirossi la contraria está
- * al lado de la plataforma. Eso está apuntado aparte.
- *
- * **Y trece, no once**, después de cronometrarlo entero: «voy a una velocidad
- * absurdamente lenta, es aburrido pasarse cuatro minutos en una pista, eso un
- * niño no lo aguanta». Trece son cuarenta y siete por hora, todavía por debajo
- * de los treinta nudos a los que rueda un avión de verdad en recta, y es
- * también la velocidad del coche que te lleva: seguirle es ir bien.
+ * Lo del aburrimiento —«es aburrido pasarse cuatro minutos en una pista, eso
+ * un niño no lo aguanta»— no se arregla rodando más deprisa de lo que se rueda:
+ * se arregla con lo que se rueda. Ver `puestoDeLlegada` y
+ * `salidaPorDelanteQue`.
  */
-export const CRUCERO = 13;
+export const CRUCERO = DE_TRANSPORTE.recta;
 
 /*
  * **Cuánta pista hace falta lo dice el avión, no una constante.**
@@ -282,16 +285,21 @@ const TRAS_TOMAR_TIERRA = 1000;
 const HUECO_PARA_GIRAR = 25;
 
 /**
- * Con qué se frena para tomar una salida de pista, m/s², y a qué velocidad
- * se toma, m/s. Ver `salidaPorDelanteQue`.
+ * Con qué se frena para tomar una salida de pista, m/s². Ver
+ * `salidaPorDelanteQue`.
  *
  * Un metro y medio por segundo cada segundo es una frenada de aterrizaje
- * tranquila —la de un freno automático en su punto más suave anda por ahí— y
- * ocho metros por segundo, treinta por hora, es a lo que se entra en una
- * salida sin que el avión se abra. Con esas dos, una avioneta que toca a
- * treinta metros por segundo tiene su primera salida útil a unos trescientos
- * metros, y un reactor que toca a setenta, a kilómetro y medio: que es donde
- * los aeropuertos ponen sus salidas rápidas.
+ * tranquila —la de un freno automático en su punto más suave anda por ahí—.
+ *
+ * **Y a qué velocidad se toma ya no es un número para todas.** Eran ocho
+ * metros por segundo, treinta por hora, tanto para una salida en ángulo recto
+ * como para una rápida, que está hecha para dejar la pista a cincuenta nudos:
+ * el juego pedía frenar hasta paso de calle para tomarla, y con eso la primera
+ * salida útil quedaba siempre más lejos de lo que queda de verdad. Ahora cada
+ * salida se toma a la suya —la rápida a la de su clave, la de ángulo a la de
+ * viraje—, y un reactor que toca a setenta metros por segundo encuentra su
+ * salida rápida donde la pone el aeropuerto. Ver
+ * `flight/velocidades-en-tierra.ts`.
  */
 const FRENADA_PARA_SALIR = 1.5;
 
@@ -326,7 +334,6 @@ const ENCIMA_DE_LA_RAYA = 5;
 
 /** Lo que se aparta el morro de la raya en quien la sigue, rad: diez grados. */
 const MIRANDO_A_LA_RAYA = (10 * Math.PI) / 180;
-const A_LA_SALIDA = 8;
 
 /**
  * Volviendo por la pista después de aterrizar: con qué se frena hasta el paso
@@ -656,8 +663,29 @@ const MEDIA_VUELTA = (150 * Math.PI) / 180;
  */
 const LATERAL = 2.5;
 
-/** Lo más despacio que se pide rodar. Por debajo, una curva parece una parada. */
-const MINIMO_EN_CURVA = 6;
+/**
+ * **Hasta qué radio una curva es un viraje**, m: ahí se rueda a la velocidad
+ * de viraje de cada avión —diez nudos uno de línea—, que es lo que pide el
+ * manual antes de cualquier giro de más de treinta grados. Por encima es una
+ * curva suave de la calle, y su velocidad sale de la cuenta del radio.
+ *
+ * Aquí había un suelo de seis metros por segundo, «por debajo, una curva
+ * parece una parada»; diez nudos son cinco y pico, y una curva a diez nudos
+ * no parece una parada: es como se gira.
+ */
+const ES_UN_VIRAJE = 60;
+
+/**
+ * Y desde qué radio un punto ya es recta, m: por encima, la cuenta del radio
+ * deja ir más deprisa que la recta larga.
+ */
+const YA_ES_RECTA = 150;
+
+/**
+ * Cuánto de la ruta se cuenta como la boca de la salida de pista, a cada lado
+ * de donde la ruta deja el eje, m: lo que mide el redondeo de ese codo.
+ */
+const BOCA_DE_LA_RUTA = 30;
 
 /**
  * Lo más largo que se deja un tramo de la raya, m.
@@ -804,6 +832,16 @@ export function errorDeRumbo(
   return e;
 }
 
+/**
+ * **Por dónde deja la pista una ruta de vuelta**: cuántos metros de ella van
+ * por la pista hasta la boca de la salida, y a qué velocidad se toma esa
+ * salida, m/s. Ver `calcularVelocidades`.
+ */
+export interface SalidaDeLaRuta {
+  readonly porLaPista: number;
+  readonly velocidad: number;
+}
+
 export interface Vista {
   readonly fase: Fase;
   readonly clave: string;
@@ -813,6 +851,17 @@ export interface Vista {
   readonly letra: string | null;
   /** A qué velocidad habría que ir aquí, m/s. */
   readonly velocidadSugerida: number;
+  /**
+   * **Lo más que rueda este avión**, m/s: lo de su recta larga, o lo de la
+   * salida rápida por la que va su ruta si es más. Ver
+   * `flight/velocidades-en-tierra.ts`.
+   */
+  readonly velocidadMaxima: number;
+  /**
+   * A qué velocidad se toma la salida de pista por la que va la ruta, m/s, si
+   * va por una. Ver `laSalida`.
+   */
+  readonly velocidadDeSalida?: number;
   /** Va bastante más rápido de lo que toca. */
   readonly rapido: boolean;
   /** Metros que faltan para el final del tramo actual. */
@@ -2949,7 +2998,21 @@ export class PlanDeVuelo {
     anticipa = 0,
   ): number {
     if (this.rutaMundo.length < 2) return 0;
-    if (sobreElSuelo > 4 || estado.airspeed > 18) return 0;
+    /*
+     * **Y saliendo de la pista, hasta la velocidad de la salida.** Por encima
+     * de dieciocho metros por segundo la ayuda callaba, que es lo que protege
+     * la carrera de despegue; pero una salida rápida se toma a cincuenta
+     * nudos, veintiséis, y donde el juego conduce el avión se la pasaba de
+     * largo sin que nadie girara. Después de tocar, y solo hasta lo que pide
+     * esa salida: a la velocidad de la toma sigue sin tocar el volante.
+     */
+    const recienLlegado =
+      this.faseAnterior === "aterrizado" || this.faseAnterior === "abandonando";
+    const tope = recienLlegado
+      ? Math.max(18, (this.laSalida?.velocidad ?? 0) + 4)
+      : 18;
+    const rapido = recienLlegado ? estado.groundSpeed : estado.airspeed;
+    if (sobreElSuelo > 4 || rapido > tope) return 0;
 
     const p: Punto = [estado.position.x, estado.position.z];
 
@@ -3326,6 +3389,8 @@ export class PlanDeVuelo {
       luzVerde: p.luzVerde,
       letra: this.letraActual(estado),
       velocidadSugerida: sugerida,
+      velocidadMaxima: Math.max(this.enTierra.rectaLarga, this.laSalida?.velocidad ?? 0),
+      velocidadDeSalida: this.laSalida?.velocidad,
       /*
        * **Vas rápido para lo que te queda**, que no es lo mismo que ir rápido.
        *
@@ -3567,7 +3632,11 @@ export class PlanDeVuelo {
    * la misma cuenta desde donde se esté. Ver `salidaPorDelanteQue` y
    * `seHaPasadoLaSalida`.
    */
-  private rutaDeVuelta(meta: Punto): { ruta: Ruta | null; salida: Punto | null } {
+  private rutaDeVuelta(meta: Punto): {
+    ruta: Ruta | null;
+    salida: Punto | null;
+    porLaSalida?: SalidaDeLaRuta | null;
+  } {
     const porLaSalida = (salida: Punto | null) => {
       if (!salida) return null;
       const hastaLaSalida = this.porLaPistaHasta(salida);
@@ -3580,6 +3649,16 @@ export class PlanDeVuelo {
         { desdeLaCalle: true },
       );
       if (!desdeLaSalida) return null;
+      /*
+       * Y a qué velocidad se toma, mirando por dónde se va de verdad: los
+       * primeros metros de la calle por la que sigue la ruta. Ver
+       * `velocidadParaSalirPor`.
+       */
+      const boca = hastaLosMetros(desdeLaSalida.puntos, PRIMER_TRAMO_DE_CALLE);
+      const lejos = boca[boca.length - 1]!;
+      const dx = lejos[0] - salida[0];
+      const dy = lejos[1] - salida[1];
+      const l = Math.hypot(dx, dy);
       return {
         ruta: {
           ...desdeLaSalida,
@@ -3588,6 +3667,10 @@ export class PlanDeVuelo {
           letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
         },
         salida,
+        porLaSalida: {
+          porLaPista: hastaLaSalida.largo,
+          velocidad: this.velocidadParaSalirPor(l > 1 ? [dx / l, dy / l] : null),
+        },
       };
     };
     /*
@@ -3658,9 +3741,46 @@ export class PlanDeVuelo {
   private ponerLaVuelta(vuelta: {
     ruta: Ruta | null;
     salida: Punto | null;
+    porLaSalida?: SalidaDeLaRuta | null;
   }): void {
-    this.ponerRuta(vuelta.ruta);
+    this.ponerRuta(vuelta.ruta, vuelta.porLaSalida ?? null);
     this.salidaDeLaRuta = vuelta.ruta ? vuelta.salida : null;
+  }
+
+  /**
+   * **Por dónde y a qué velocidad deja la pista la ruta de ahora**, o `null`
+   * si no la deja por una salida. Ver `calcularVelocidades`.
+   */
+  private laSalida: SalidaDeLaRuta | null = null;
+
+  /** Las velocidades en tierra de este avión. Ver `flight/velocidades-en-tierra.ts`. */
+  private get enTierra(): VelocidadesEnTierra {
+    return velocidadesEnTierra(this.avion);
+  }
+
+  /**
+   * **El rumbo de la carrera**, en grados verdaderos: el de la pista hacia
+   * donde mira el morro, que al tocar es la trayectoria y parado es lo que
+   * decide quien pilota. Ver «por delante» en `salidaPorDelanteQue`.
+   */
+  private rumboDeLaCarrera(): number {
+    const sentido =
+      Math.cos(this.ultimoRumbo - (this.pista.heading * Math.PI) / 180) >= 0 ? 1 : -1;
+    return sentido > 0 ? this.pista.heading : (this.pista.heading + 180) % 360;
+  }
+
+  /**
+   * **A qué velocidad se toma una salida**: lo que se aparta del eje la calle
+   * por la que se sale, mirado en sus primeros metros, y la velocidad de este
+   * avión para una salida así. Ver `velocidadDeLaSalida`.
+   */
+  private velocidadParaSalirPor(direccion: readonly [number, number] | null): number {
+    const t = this.enTierra;
+    if (!direccion) return t.viraje;
+    const h = (this.rumboDeLaCarrera() * Math.PI) / 180;
+    const coseno = direccion[0] * Math.sin(h) + direccion[1] * Math.cos(h);
+    const giro = (Math.acos(Math.max(-1, Math.min(1, coseno))) * 180) / Math.PI;
+    return velocidadDeLaSalida(t, giro);
   }
 
   /**
@@ -4767,9 +4887,21 @@ export class PlanDeVuelo {
        * delante: a cuarenta metros por segundo una boca a cien metros no es
        * una salida, es una que se va a pasar. Ver `FRENADA_PARA_SALIR`.
        */
+      /*
+       * **Y frenando hasta la velocidad de esa salida**, no hasta paso de
+       * calle: a una rápida se llega a la suya. Se mira la calle más derecha
+       * de las que salen de este nudo hacia delante.
+       */
+      let aLaSalida = 0;
+      for (const t of calles) {
+        const d = haciaDondeSale(t, nudo);
+        if (d && saleHaciaDelante(d, rumboDeLaCarrera))
+          aLaSalida = Math.max(aLaSalida, this.velocidadParaSalirPor(d));
+      }
+      if (!aLaSalida) aLaSalida = this.enTierra.viraje;
       const v = this.ultimaVelocidad;
       const paraFrenar =
-        Math.max(0, v * v - A_LA_SALIDA * A_LA_SALIDA) / (2 * FRENADA_PARA_SALIR);
+        Math.max(0, v * v - aLaSalida * aLaSalida) / (2 * FRENADA_PARA_SALIR);
       if (adelante < HUECO_PARA_GIRAR + paraFrenar) continue;
       /*
        * **Y la primera de esas, no la que deja más cerca de casa.**
@@ -5344,6 +5476,8 @@ export class PlanDeVuelo {
       sobreElSuelo,
       motor,
       desalineado,
+      // La de la salida por la que va la ruta de vuelta. Ver `laSalida`.
+      velocidadDeSalida: this.laSalida?.velocidad,
     };
   }
 
@@ -5365,7 +5499,12 @@ export class PlanDeVuelo {
 
   private calcularVelocidades(): void {
     const n = this.rutaMundo.length;
-    this.velocidades = new Array<number>(n).fill(CRUCERO);
+    /*
+     * **Lo de este avión**, y no un número para los seis: ver
+     * `flight/velocidades-en-tierra.ts`.
+     */
+    const t = this.enTierra;
+    this.velocidades = new Array<number>(n).fill(t.recta);
     this.recorridos = new Array<number>(n).fill(0);
     for (let i = 1; i < n; i++) {
       this.recorridos[i] =
@@ -5376,6 +5515,22 @@ export class PlanDeVuelo {
         );
     }
     if (n < 2) return;
+    const recto = (i: number): boolean => (this.radios[i] ?? Infinity) > YA_ES_RECTA;
+
+    /*
+     * **En las rectas largas, hasta treinta nudos.** «On long straight taxi
+     * routes, speeds up to 30 knots are acceptable», y en las demás veinte. Se
+     * mira el tramo entero sin curva: si mide `RECTA_LARGA` o más, se rueda a
+     * la de recta larga; si no, a la de recta.
+     */
+    let desde = 0;
+    for (let i = 0; i <= n; i++) {
+      if (i < n && recto(i)) continue;
+      const hasta = i - 1;
+      if (hasta > desde && this.recorridos[hasta]! - this.recorridos[desde]! >= RECTA_LARGA)
+        for (let k = desde; k <= hasta; k++) this.velocidades[k] = t.rectaLarga;
+      desde = i + 1;
+    }
 
     // **Por el radio de la curva, no por el ángulo del vértice.**
     //
@@ -5386,21 +5541,55 @@ export class PlanDeVuelo {
     // entre veinte puntos lo dejaba en cuatro grados por punto, o sea recta.
     for (let i = 0; i < n; i++) {
       const r = this.radios[i] ?? Infinity;
-      if (!Number.isFinite(r)) continue;
+      if (!Number.isFinite(r) || recto(i)) continue;
+      const fisica = Math.sqrt(LATERAL * r);
       /*
-       * **Y una media vuelta no es una curva.** El suelo de seis metros por
-       * segundo está para que un codo de calle no parezca una parada, y en la
-       * media vuelta del back-taxi pedía justo lo que el avión no puede: con
-       * la rueda de morro a tope, el JAZ 90 cierra su radio de 4,19 m a
-       * menos de cinco metros por segundo —ver `DE_LADO_RODANDO` en `fdm.ts`—
-       * y a seis se abre y se sale de la raya. Una media vuelta en pista se da
-       * a paso de persona, que es lo que sale de la cuenta sin el suelo: tres
-       * metros por segundo largos con ese radio.
+       * **Y una media vuelta no es una curva.** Con la rueda de morro a tope,
+       * el JAZ 90 cierra su radio de 4,19 m a menos de cinco metros por
+       * segundo —ver `DE_LADO_RODANDO` en `fdm.ts`— y a seis se abre y se
+       * sale de la raya. Una media vuelta en pista se da a paso de persona,
+       * que es lo que sale de la cuenta del radio; y nunca más deprisa que un
+       * viraje.
+       *
+       * **Y un viraje, a la de viraje de este avión**: diez nudos uno de
+       * línea, ocho una avioneta, «10 knots or less prior to turn entry». Las
+       * curvas suaves de la calle, a lo que dé su radio.
        */
-      const enCurva = Math.min(CRUCERO, Math.sqrt(LATERAL * r));
       this.velocidades[i] = this.exactos[i]
-        ? enCurva
-        : Math.max(MINIMO_EN_CURVA, enCurva);
+        ? Math.min(t.viraje, fisica)
+        : r < ES_UN_VIRAJE
+          ? t.viraje
+          : Math.min(this.velocidades[i]!, fisica);
+    }
+
+    /*
+     * **Y saliendo de la pista, la velocidad de la salida que se va a tomar.**
+     *
+     * «Frená, pretende que me mueva por la pista a cuatro nudos pero que salga
+     * ya porque viene otro.» La ruta de vuelta empieza en la pista y deja el eje
+     * por una salida, y aquí todo eso era calle: veinticinco nudos por la pista
+     * y la boca de la salida rápida, redondeada a dieciocho metros, como un
+     * codo de plataforma. Lo de verdad: por la pista se va como mucho a lo que
+     * se rueda en una recta larga, y frenando para llegar a la boca a la de la
+     * salida —la rápida, a cincuenta nudos, y la que sale en ángulo, a la de
+     * viraje—; y por la rápida se sigue a la suya hasta la curva del final,
+     * frenando para tomarla. Ver `rutaDeVuelta`.
+     */
+    const salida = this.laSalida;
+    if (salida) {
+      const boca = salida.porLaPista;
+      const deLaPista = Math.max(t.rectaLarga, salida.velocidad);
+      let enLaRapida = salida.velocidad > t.viraje;
+      for (let i = 0; i < n; i++) {
+        const d = this.recorridos[i]!;
+        if (d < boca - BOCA_DE_LA_RUTA) this.velocidades[i] = deLaPista;
+        else if (d <= boca + BOCA_DE_LA_RUTA) this.velocidades[i] = salida.velocidad;
+        else if (enLaRapida) {
+          // Por la salida rápida hasta su primer viraje.
+          if (!recto(i) && (this.radios[i] ?? Infinity) < ES_UN_VIRAJE) enLaRapida = false;
+          else this.velocidades[i] = Math.max(this.velocidades[i]!, salida.velocidad);
+        }
+      }
     }
 
     /*
@@ -5665,11 +5854,13 @@ export class PlanDeVuelo {
   /** Cuántas veces se ha puesto una ruta. Lo mira el banco. Ver #151. */
   vecesQueSePusoLaRuta = 0;
 
-  private ponerRuta(ruta: Ruta | null): void {
+  private ponerRuta(ruta: Ruta | null, salida: SalidaDeLaRuta | null = null): void {
     this.vecesQueSePusoLaRuta++;
     this.ruta = ruta;
     // La pone `ponerLaVuelta` después, si esta ruta deja la pista por una.
     this.salidaDeLaRuta = null;
+    // Y por dónde y a qué la deja, que lo necesita ya el perfil de velocidad.
+    this.laSalida = ruta ? salida : null;
     // Ruta nueva, cuenta nueva: el avance que se llevaba era de otro camino.
     this.avance = 0;
     this.dondeEstaba = null;

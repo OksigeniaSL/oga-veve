@@ -132,6 +132,16 @@ export interface Situacion {
    * usa no se aplica. Ver «Rozar el monte no es llegar» en `deducir`.
    */
   readonly perdida?: number;
+  /**
+   * **A qué velocidad se toma la salida de pista por la que va la ruta**, m/s,
+   * si va por una: la rápida a la suya, la de ángulo a la de viraje. Ver
+   * `flight/velocidades-en-tierra.ts`.
+   *
+   * Opcional para las pruebas que no van de esto; sin ella, la carrera de
+   * aterrizaje se deja a velocidad de rodaje, como siempre. Ver
+   * `YA_ES_RODAJE`.
+   */
+  readonly velocidadDeSalida?: number;
 }
 
 export interface Paso {
@@ -286,10 +296,35 @@ const FUERA_DE_LA_CARRERA = 300;
  * rodaje: tienen que quedar por encima de ella con holgura, y hay una prueba
  * que lo sujeta. Ver `vuelo-y-rodaje.test.ts`.
  */
-export const AÚN_ATERRIZANDO = 20;
+export const AÚN_ATERRIZANDO = 22;
 
 /** Y por debajo de esto ya se rueda, así que toca dejar la pista. */
-export const YA_ES_RODAJE = 16;
+export const YA_ES_RODAJE = 18;
+
+/*
+ * **Y estaban en veinte y dieciséis**, por encima de los trece de la recta de
+ * entonces con su holgura. Rodar ya no es trece para todos: en una recta larga
+ * un avión de línea va a treinta nudos, quince metros y medio por segundo, y
+ * el tope de Guyrami le deja algo más. Con dieciséis, rodar a lo que se rueda
+ * por la pista hasta la salida volvía a ser aterrizar —«frená»— y frenar un
+ * poco, salir —«salí de la pista»—, una y otra vez. Ver
+ * `vuelo-y-rodaje.test.ts`.
+ *
+ * ## Y por una salida rápida, a su velocidad
+ *
+ * Una salida rápida se toma a cincuenta nudos, veintiséis metros por segundo,
+ * que es más que los dos números: con ellos, quien frenaba lo justo para
+ * tomarla seguía «aterrizando» al dejar la pista, con «frená» puesto. Así que
+ * la carrera se deja a la velocidad de la salida que se va a tomar si es más
+ * que la de rodaje, con la misma banda muerta encima. Ver
+ * `velocidadDeSalida`.
+ */
+const BANDA_DE_LA_CARRERA = AÚN_ATERRIZANDO - YA_ES_RODAJE;
+
+/** Por debajo de esto se deja de aterrizar, con la salida que se va a tomar. */
+export function dejaDeAterrizar(velocidadDeSalida?: number): number {
+  return Math.max(YA_ES_RODAJE, velocidadDeSalida ?? 0);
+}
 
 /**
  * Cuánto hay que subir en final para dejar de estar en final, m.
@@ -618,8 +653,9 @@ export class Vuelo {
        * histéresis: para **entrar** hace falta ir deprisa y para **salir**
        * hace falta bajar a velocidad de rodaje. Ver `AÚN_ATERRIZANDO`.
        */
+      const deja = dejaDeAterrizar(s.velocidadDeSalida);
       const liston =
-        this.fase === "aterrizado" ? YA_ES_RODAJE : AÚN_ATERRIZANDO;
+        this.fase === "aterrizado" ? deja : deja + BANDA_DE_LA_CARRERA;
       /*
        * **Y una vez rodando, se vuelve a la carrera por el suelo, no por el
        * aire.**

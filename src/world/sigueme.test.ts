@@ -19,7 +19,7 @@ import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { sitioDeLaCola } from "../cameras/fuera";
 import { colocarModelo, ojoDelModelo } from "./aeronave-modelo";
 import { Sigueme, adelantoDelSigueme, salidaDeLaRuta } from "./sigueme";
-import { CRUCERO } from "./plan-de-vuelo";
+import { DE_TRANSPORTE } from "../flight/velocidades-en-tierra";
 import { cabeEn, campoDe } from "../flight/cabe";
 import { SCENARIOS } from "./scenarios";
 import { medirVistaAlFrente, type VistaAlFrente } from "./vista-al-frente";
@@ -260,8 +260,8 @@ describe("el coche, esperando fuera de la pista y guiando sin dejarse alcanzar",
       [0, -3000],
     ];
     coche.ponerRuta(recta);
-    // El tope de rodaje deja un quince por ciento por encima del crucero.
-    const v = CRUCERO * 1.15;
+    // Lo más que deja el tope de rodaje: la recta larga de un avión de línea.
+    const v = DE_TRANSPORTE.rectaLarga;
     let menor = Infinity;
     for (let t = 0, z = 0; t < 120; t += 0.05, z -= v * 0.05) {
       coche.paso(0.05, { x: 0, z }, true, false, cota, null, -z);

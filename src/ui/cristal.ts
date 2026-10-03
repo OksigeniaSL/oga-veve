@@ -871,7 +871,62 @@ function carta(cx: number, cy: number, r: number): string {
       avisa y no da maniobras. Ver flight/tcas.ts.
     -->
     <text data-carta="solo-ta" x="${cx - r + 4}" y="${cy + r}" ${MARCA_ROTULO}
-          class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>`;
+          class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>
+    <!--
+      Y en tierra, la GS grande y con su color, arriba a la izquierda debajo
+      del viento: encima de todo lo demás, que rodando es lo que se mira. Ver
+      rodajeEnTierra.
+    -->
+    ${rodajeEnTierra(8, 30)}`;
+}
+
+/**
+ * **La velocidad sobre el suelo, en tierra, grande y con su color.**
+ *
+ * «La velocidad en la pista debería marcarla también el cuadro, en lugar de
+ * ponerme velocidades y altitudes que no necesito usar.» Rodando, un piloto
+ * mira la GS de la pantalla de navegación: la cinta de velocidad no sirve en
+ * tierra —la de un Airbus empieza en treinta nudos— y en la pantalla de vuelo
+ * no hay marca de rodaje. Aquí la GS estaba, pero en cian y pequeña debajo de
+ * la cinta de altitud, que es lo que es en el aire: un dato de apoyo.
+ *
+ * En tierra crece y se pone en su sitio, arriba a la izquierda de la de
+ * navegación —donde la escribe una de verdad—, y se pinta con el color de lo
+ * que viene: **verde** a lo que toca en la recta o en la salida, **ámbar** si
+ * se llega rápido a una curva o a la salida. Es el mismo veredicto que la raya
+ * del suelo y que «frená», no uno más.
+ *
+ * Y crece con la escalera, como todo aviso: **el dibujo en los cuatro
+ * peldaños** —una barra que se llena con la velocidad, verde o ámbar— y la
+ * cifra con su «GS» desde el tercero, que es donde entran los números. Ver
+ * `flight/escalera.ts`. La pone y la quita `Tablero.rodaje`.
+ */
+export const ANCHO_DEL_RODAJE = 132;
+export const ALTO_DEL_RODAJE = 60;
+
+/** Desde qué peldaño lleva la GS su cifra. Ver `flight/escalera.ts`. */
+const CIFRA_DE_RODAJE_DESDE = 3;
+
+export function rodajeEnTierra(
+  x: number,
+  y: number,
+  ancho: number = ANCHO_DEL_RODAJE,
+): string {
+  const alto = ALTO_DEL_RODAJE;
+  const barra = { x: 10, y: alto - 19, ancho: ancho - 20, alto: 11 };
+  return `
+    <g data-cristal="rodaje" transform="translate(${x} ${y})" visibility="hidden">
+      <rect width="${ancho}" height="${alto}" rx="6" class="cr__rodaje-fondo" />
+      <text x="10" y="25" ${MARCA_ROTULO} class="cr__rotulo">GS</text>
+      <text data-cristal="rodaje-cifra" x="${ancho - 10}" y="30"
+            data-desde="${CIFRA_DE_RODAJE_DESDE}" class="cr__rodaje-cifra"
+            text-anchor="end"></text>
+      <g transform="translate(${barra.x} ${barra.y})">
+        <rect width="${barra.ancho}" height="${barra.alto}" rx="3" class="cr__rodaje-carril" />
+        <rect data-cristal="rodaje-relleno" data-ancho="${barra.ancho}" width="0"
+              height="${barra.alto}" rx="3" class="cr__rodaje-relleno" />
+      </g>
+    </g>`;
 }
 
 /**

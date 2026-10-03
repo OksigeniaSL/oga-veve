@@ -24,6 +24,7 @@
  * Si alguna cambia de nombre, esto deja de compilar, que es justo lo que se
  * quiere: la alternativa era un `as unknown as` y enterarse en la pista.
  */
+import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
 import { Box3, Raycaster, Vector2, Vector3, type Object3D } from "three";
 import type { Game } from "../game";
 import { CAMERA_MODES } from "../cameras";
@@ -471,6 +472,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       trenRetractil: juego.aircraft.trenRetractil,
       // Y lo que tarda su tren, a salir y a entrar. Ver `verificar-tren`.
       tardaElTren: juego.aircraft.tardaElTren,
+      /*
+       * Y a qué rueda, m/s: en recta, en las largas, en los virajes y por una
+       * salida rápida. El banco mide el rodaje contra esto y no contra un
+       * número para todos. Ver `flight/velocidades-en-tierra.ts`.
+       */
+      rodaje: velocidadesEnTierra(juego.aircraft),
       llevaFlaps: juego.aircraft.llevaFlaps,
       vleKt: juego.aircraft.vleKt,
       // La de los flaps de aterrizaje, que es la que mira el piloto del banco

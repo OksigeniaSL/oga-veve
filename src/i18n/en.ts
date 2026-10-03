@@ -258,7 +258,9 @@ export const EN: Dictionary = {
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
   "torre.alAire": "{indicativo}, go around",
+  "torre.acelereAbandono": "{indicativo}, expedite vacating",
   "torre.canario.alAire": "{indicativo}, go around",
+  "torre.canario.acelereAbandono": "{indicativo}, expedite vacating",
   // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
   "torre.destino": "{indicativo}, cleared to {destino}",
   "torre.canario.destino": "{indicativo}, cleared to {destino}",

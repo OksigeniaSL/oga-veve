@@ -41,7 +41,7 @@ import {
   MeshLambertMaterial,
   SphereGeometry,
 } from "three";
-import { CRUCERO } from "./plan-de-vuelo";
+import { DE_TRANSPORTE } from "../flight/velocidades-en-tierra";
 import { distanciaALaVista, type VistaAlFrente } from "./vista-al-frente";
 
 /** El amarillo de los vehículos de plataforma. */
@@ -149,8 +149,15 @@ export function adelantoDelSigueme(avion: {
  * otra vez aquí, con otro número, era pedir que volviera a pasar. El coche va
  * a lo que el juego te pide ir, y el tope te deja un quince por ciento más:
  * con eso siempre se le alcanza, y seguirle es exactamente ir bien.
+ *
+ * **Y es lo más que rueda un avión de línea**, treinta nudos en una recta
+ * larga. Lo que se rueda ya no es un número para todos —ver
+ * `flight/velocidades-en-tierra.ts`— y el coche no sabe a quién lleva; pero no
+ * hace falta que lo sepa: nunca se adelanta más de su distancia al avión que
+ * guía —ver `objetivo`—, así que con uno que rueda despacio espera, y con uno
+ * que va a treinta nudos por una recta larga no se deja alcanzar.
  */
-const VELOCIDAD = CRUCERO;
+const VELOCIDAD = DE_TRANSPORTE.rectaLarga;
 
 /**
  * Cuánto más deprisa que el crucero va el coche cuando el avión se le echa

@@ -1,4 +1,5 @@
 import { MARGENES } from "./minimos";
+import { DE_TRANSPORTE } from "./velocidades-en-tierra";
 import { RECOGIDA } from "./avisos-de-actitud";
 
 /**
@@ -204,16 +205,22 @@ export function bandaDeCircuito(
  * un aeropuerto de verdad se rueda a paso de bicicleta y se sale de la curva
  * más despacio todavía.
  *
- * **Y aquí sí es una constante, a diferencia de la de aproximación.** La
- * velocidad de rodaje no es del avión: es de la calle. Una avioneta y un
- * reactor ruedan a la misma velocidad porque el ancho de la calle, el radio de
- * la curva y el tiempo de reacción de quien va a los mandos son los mismos.
- * Lo que cambia entre ellos es lo que cuesta parar, y de eso ya avisa el
- * freno.
+ * **Y no es una constante, como se creyó.** Aquí ponía que la velocidad de
+ * rodaje «no es del avión: es de la calle», y que una avioneta y un reactor
+ * ruedan igual. No ruedan igual: un avión de línea va a veinte nudos en recta
+ * y hasta treinta en las rectas largas —lo dice su manual—, y una avioneta,
+ * menos. Con nueve metros por segundo para todos, esta banda decía «más
+ * despacio» a los veintitrés nudos a quien rodaba como se rueda. Lo que se
+ * pasa de lo que rueda **ese** avión en una recta larga es ir rápido en
+ * cualquier calle; lo de cada curva lo dice la raya. Ver
+ * `flight/velocidades-en-tierra.ts`.
  */
 
-/** A lo que se rueda, m/s. Nueve metros por segundo son treinta y dos por hora. */
-const RODAJE = 9;
+/**
+ * Lo que se rueda si no se dice el avión, m/s: lo más de un avión de línea,
+ * treinta nudos.
+ */
+const RODAJE = DE_TRANSPORTE.rectaLarga;
 
 /** Por debajo de esto no se está rodando, se está saliendo o llegando. */
 const APENAS_SE_MUEVE = 2;
@@ -221,10 +228,12 @@ const APENAS_SE_MUEVE = 2;
 /**
  * Y por encima de esto tampoco se está rodando: se está aterrizando.
  *
- * **Dos veces y media la de rodaje**, que son cuarenta y cuatro nudos: muy por
+ * **Veintidós metros y medio por segundo**, cuarenta y cuatro nudos: por
  * encima de cualquier margen que esta banda vaya a avisar, y por debajo de lo
  * que se posa el avión más lento de la flota —el fumigador toca a cincuenta y
- * cuatro—. Entre las dos cosas no hay nada que confundir.
+ * cuatro—. Entre las dos cosas no hay nada que confundir. Eran dos veces y
+ * media la de rodaje de entonces, y se queda en su número: lo que separa
+ * rodar de aterrizar no se mueve con lo que rueda cada avión.
  *
  * Hace falta porque callar la banda «en la pista» no basta, y está medido:
  * tocando un metro fuera del asfalto, el juego soltaba «más despacio»
@@ -236,10 +245,14 @@ const APENAS_SE_MUEVE = 2;
  * polígono, y las ruedas caen donde caen—; la velocidad no. Un avión a ciento
  * treinta nudos no está rodando por ninguna calle del mundo.
  */
-const YA_NO_ES_RODAJE = RODAJE * 2.5;
+const YA_NO_ES_RODAJE = 22.5;
 
-/** Cuánto se puede pasar de la de rodaje antes de avisar. */
-const MARGEN_RODAJE = 0.35;
+/**
+ * Cuánto se puede pasar de la recta larga antes de avisar: un quince por
+ * ciento, lo mismo que deja el tope de Guyrami. Era un tercio largo sobre los
+ * nueve de entonces, que no eran lo más que se rueda sino lo de cada día.
+ */
+const MARGEN_RODAJE = 0.15;
 
 /**
  * En qué banda va la velocidad rodando, o `null` si esto no es rodar.
@@ -252,6 +265,8 @@ export function bandaDeRodaje(
   velocidad: number,
   enElSuelo: boolean,
   corriendo: boolean,
+  /** Lo más que rueda este avión, m/s: su recta larga. */
+  rodaje: number = RODAJE,
 ): BandaDeVelocidad {
   /*
    * **Lo que calla la banda es la maniobra, no el sitio.**
@@ -268,7 +283,7 @@ export function bandaDeRodaje(
   if (velocidad < APENAS_SE_MUEVE) return null;
   // Y ni aterrizando ni despegando, lo diga la fase o no. Ver `YA_NO_ES_RODAJE`.
   if (velocidad > YA_NO_ES_RODAJE) return null;
-  return velocidad > RODAJE * (1 + MARGEN_RODAJE) ? "rapido" : "bien";
+  return velocidad > rodaje * (1 + MARGEN_RODAJE) ? "rapido" : "bien";
 }
 
 /**
@@ -307,10 +322,12 @@ export function bandaDeAhora(
   circuito: number | null = null,
   /** La banda del fotograma anterior. Ver `bandaDeVelocidad`. */
   antes: BandaDeVelocidad = null,
+  /** Lo más que rueda este avión, m/s. Ver `bandaDeRodaje`. */
+  rodaje: number = RODAJE,
 ): BandaDeVelocidad {
   if (s.enElSuelo && s.enLaPista) return null;
   return (
-    bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo) ??
+    bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo, rodaje) ??
     bandaDeVelocidad(s, vref, antes) ??
     (circuito === null ? null : bandaDeCircuito(s, vref, circuito))
   );

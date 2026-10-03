@@ -5496,7 +5496,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         -1,
         Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
       );
-      if (porElSuelo(s) < 8) {
+      /*
+       * **Y se frena hasta la velocidad de la salida, no hasta paso de calle.**
+       * Lo que toca aquí lo dice el juego —frenando para llegar a la boca a la
+       * de esa salida: cincuenta nudos por una rápida, diez por una en
+       * ángulo—, y es lo que hace quien sabe: suelta el freno ahí y rueda
+       * hasta la salida. Antes se frenaba hasta ocho metros por segundo fuera
+       * cual fuera la salida. Ver `hayQueFrenarEnLaPista`.
+       */
+      if (porElSuelo(s) < Math.max(8, o.rodaje() ?? 0)) {
         dejoDeFrenarA = porElSuelo(s);
         etapa = "volver";
       }
@@ -5523,7 +5531,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * por encima de la de rodaje, pida lo que pida la raya.
        */
       // Y al final de la ruta pide cero, que es pararse encima de la raya.
-      const quiere = Math.min(9, o.rodaje() ?? 9);
+      // Lo que pide el juego y nada más: veinte nudos en recta, treinta en
+      // las largas, diez en los virajes, cincuenta por una salida rápida.
+      // Estaba topado en nueve metros por segundo, lo de antes para todos.
+      const quiere = o.rodaje() ?? 9;
       const vaA = porElSuelo(s);
       c.throttle = Math.max(
         0,
@@ -5531,7 +5542,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       );
       if (vaA > quiere + 0.5) c.throttle = Math.min(c.throttle, 0.02);
       c.brakes = vaA > quiere + 1.5 ? Math.min(1, (vaA - quiere - 1.5) * 0.5) : 0;
-      if (!s.onRunway) rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
+      // Rodando por las calles: la salida rápida se toma a lo suyo y no cuenta.
+      if (!s.onRunway && fase === "a-plataforma")
+        rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
       c.aileron = timon(s, ruta);
       /*
        * Y el largo de **la ruta que el juego trazó** para volver, que es el
@@ -6924,7 +6937,12 @@ if (vuelo.enBici) {
  * arrancar y de pararse en la doble raya. Y nunca menos de los noventa de
  * antes: en una calle corta sigue mandando lo que aguanta un niño.
  */
-const RODAJE_EN_RECTA = 9;
+/*
+ * **Y a lo que rueda ese avión, no a nueve para todos.** Lo de cada clase sale
+ * de su ficha —veinte nudos en recta un avión de línea, quince una avioneta—;
+ * ver `flight/velocidades-en-tierra.ts`.
+ */
+const RODAJE_EN_RECTA = vuelo.avion?.rodaje?.recta ?? 9;
 const topeDeIda = Math.round(
   Math.max(90, (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20),
 );
@@ -7302,10 +7320,16 @@ comprobarSiVolo(
  * es lo mismo que oye quien juega: lo más deprisa que se rodó de vuelta fuera
  * de la pista.
  */
+/*
+ * Y **la de ese avión**: el aviso salta un quince por ciento por encima de lo
+ * más que rueda en una recta larga —ver `bandaDeRodaje`—, y por las calles,
+ * que la salida rápida se toma a lo suyo.
+ */
+const avisoDeRodaje = (vuelo.avion?.rodaje?.rectaLarga ?? 9) * 1.15;
 comprobarSiVolo(
   "y se vuelve rodando a la velocidad de rodaje",
-  vuelo.toco > 0 && vuelo.rodajeMasRapido <= 9 * 1.35,
-  `lo más rápido fuera de la pista: ${vuelo.rodajeMasRapido} m/s (el aviso salta a ${(9 * 1.35).toFixed(1)})`,
+  vuelo.toco > 0 && vuelo.rodajeMasRapido <= avisoDeRodaje,
+  `lo más rápido por las calles: ${vuelo.rodajeMasRapido} m/s (el aviso salta a ${avisoDeRodaje.toFixed(1)})`,
   "en el circuito de Tenerife Norte con el JAZ 90, «vuelo.despacio» sale hasta 5 veces en su rodaje de vuelta",
 );
 

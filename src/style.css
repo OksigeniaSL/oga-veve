@@ -4236,6 +4236,41 @@ button.motor__tecla::after {
   fill: var(--cabina-precaucion);
 }
 
+/*
+ * La GS de rodar, en tierra: grande, sobre su fondo de pantalla para leerse
+ * encima de la rosa, verde mientras va bien y ámbar si se llega rápido a lo
+ * que viene. Ver `rodajeEnTierra` en `ui/cristal.ts`.
+ */
+.cr__rodaje-fondo {
+  fill: var(--cabina-pantalla);
+  stroke: var(--cabina-filo);
+  stroke-width: 1px;
+}
+
+.cr__rodaje-cifra {
+  fill: var(--cabina-normal);
+  font-family: var(--cabina-fuente);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__rodaje-cifra--rapido {
+  fill: var(--cabina-precaucion);
+}
+
+.cr__rodaje-carril {
+  fill: var(--cabina-filo);
+}
+
+.cr__rodaje-relleno {
+  fill: var(--cabina-normal);
+}
+
+.cr__rodaje-relleno--rapido {
+  fill: var(--cabina-precaucion);
+}
+
 /* Dato auxiliar: cian. Viento, velocidad respecto al suelo, Mach. */
 .cr__aux {
   fill: var(--cabina-auxiliar);
@@ -11027,6 +11062,27 @@ button.motor__tecla::after {
 
   .hud .tel__marca {
     fill: var(--cabina-objetivo);
+  }
+
+  /*
+   * En tierra, la losa de la velocidad es la GS de rodar: su barra y su cifra,
+   * verdes o ámbar, y la de vuelo escondida. Ver `CuadroDelTelefono.update`.
+   */
+  .hud .tel__losa--en-tierra [data-tel-vuelo],
+  .hud .tel__losa:not(.tel__losa--en-tierra) [data-tel-tierra] {
+    display: none;
+  }
+
+  .hud .tel__rodaje,
+  .hud .tel__cifra--rodaje {
+    fill: var(--cabina-normal);
+    color: var(--cabina-normal);
+  }
+
+  .hud .tel__rodaje--rapido,
+  .hud .tel__cifra--rapido {
+    fill: var(--cabina-precaucion);
+    color: var(--cabina-precaucion);
   }
 
   /* La altura pedida, en magenta: lo que quiero. */

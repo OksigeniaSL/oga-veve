@@ -315,6 +315,14 @@ export const ES_PY = {
    */
   "torre.alAire": "{indicativo}, ida al aire",
   /*
+   * Y a quien se queda parado en la pista después de oír que había que
+   * dejarla, la prisa: «acelere abandono de pista» —«expedite vacating»—, la
+   * de la fraseología después del aterrizaje (RD 1180/2018, 1.4.21 c; las dos
+   * salen del Doc 4444 en castellano). Una vez por toma, y solo con su
+   * grabación. Ver `meterPrisaParaSalir` en `game.ts`.
+   */
+  "torre.acelereAbandono": "{indicativo}, acelere abandono de pista",
+  /*
    * Y a dónde se va, **antes de rodar**. En un vuelo a otro aeródromo lo
    * primero que da el control es la autorización con su límite —«cleared to
    * Tenerife Norte»—, y es lo que dice que ese vuelo va a alguna parte. En
@@ -381,6 +389,7 @@ export const ES_PY = {
   "torre.canario.aterrizar": "{indicativo}, autorizado para aterrizar",
   // En España no es «ida al aire»: «motor y al aire» (RD 1180/2018, 1.4.19).
   "torre.canario.alAire": "{indicativo}, motor y al aire",
+  "torre.canario.acelereAbandono": "{indicativo}, acelere abandono de pista",
   "torre.canario.destino": "{indicativo}, autorizado a {destino}",
   /*
    * **Y en España se sube con «suba»**, no con «ascienda»: es la palabra del
