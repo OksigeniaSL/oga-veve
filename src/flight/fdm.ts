@@ -261,6 +261,41 @@ import { ROZAMIENTO, type Superficie } from "../world/superficie";
  * manda en los grandes, que es donde estaba el fallo.
  */
 export const DE_LADO_RODANDO = 6;
+
+/**
+ * **Lo más de lado que tira el pedal en la carrera**, m/s²: un quinto de g.
+ *
+ * El timón mandaba en tierra con un ritmo que crecía con la velocidad hasta
+ * los veinticinco metros por segundo y de ahí no bajaba, sin mirar lo que
+ * agarran las ruedas. Medido con la tecla, en la carrera de aterrizaje del JAZ
+ * 120 a 130 nudos: un segundo de pedal giraba la proa **veintidós grados** y
+ * tiraba de lado con **2,6 g**. Así se sale cualquiera por un lado de la
+ * pista: Enrique tuvo que tomar tierra deprisa y «casi me salgo por un lado
+ * de la pista, porque enderezar el avión me estaba costando un dedo».
+ *
+ * En la carrera el ala todavía sostiene casi todo el avión y las ruedas
+ * agarran poco: la corrección de eje de un avión de línea a esa velocidad es
+ * de pocos grados de rumbo, pequeña y progresiva. Un quinto de g a 130 nudos
+ * es grado y siete décimas por segundo con el pedal a fondo, que es girar con
+ * decisión sin salirse; rodando despacio no cambia nada, que ahí manda la
+ * geometría. Ver `carrera-fina.test.ts`.
+ */
+export const AGARRE_DEL_PEDAL = 0.2 * GRAVITY;
+
+/**
+ * **Lo que gira el pedal en tierra a esta velocidad**, rad/s por unidad de
+ * mando, una vez asentado: lo de siempre —crece con la velocidad hasta los
+ * veinticinco metros por segundo, porque es aerodinámico— y nunca más de lo
+ * que agarran las ruedas. Ver `AGARRE_DEL_PEDAL`. Lo usa también el modelo
+ * sencillo, para que el pedal haga lo mismo en los dos.
+ */
+export function giroDelPedal(velocidad: number): number {
+  const v = Math.abs(velocidad);
+  return Math.min(PEDAL_EN_TIERRA * Math.min(1, v / 25), AGARRE_DEL_PEDAL / Math.max(1, v));
+}
+
+/** Lo que gira el pedal a fondo, rad/s, de veinticinco metros por segundo arriba. */
+const PEDAL_EN_TIERRA = 0.4;
 /**
  * Lo que llega a girar la rueda de morro, en radianes.
  *
@@ -1479,8 +1514,11 @@ export class CoefficientFlightModel implements FlightModel {
     // Guiñada en tierra proporcional al timón y a la velocidad: dirigible
     // rodando, inútil parado, como una rueda de morro de verdad.
     // Timón: dirige más cuanto más deprisa se va, porque es aerodinámico.
+    // Con el tope de lo que agarran las ruedas: ver `giroDelPedal`. El 1,5 es
+    // lo que se come el freno de guiñada de arriba —cada paso quita la mitad
+    // de `settle`—, para que el giro que se asienta sea el de la cuenta.
     s.yawRate +=
-      controls.rudder * 0.6 * Math.min(1, Math.abs(longitudinal) / 25) * settle;
+      controls.rudder * 1.5 * giroDelPedal(Math.abs(longitudinal)) * settle;
     /*
      * Y la rueda de morro, que es al revés que el timón: manda a paso de
      * peatón y se queda sin autoridad al coger carrerilla. Va con el mando de

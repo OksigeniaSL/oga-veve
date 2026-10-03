@@ -13,6 +13,8 @@ import {
   DURA_UN_TOQUE,
   LA_CRUCETA_SE_MANTIENE,
   PASO_DE_UN_TOQUE,
+  PULSO_EN_LA_CARRERA,
+  PulsoDeTecla,
   RECORRIDO_EN_LA_DUDA,
   ToquesDeCabeceo,
   palancaEnLaDuda,
@@ -117,5 +119,44 @@ describe("la cruceta del mando", () => {
   it("las dos a la vez no mueven nada", () => {
     const c = new CrucetaDelCompensador();
     expect(c.paso(true, true, DT, RUEDA)).toBe(0);
+  });
+});
+
+/**
+ * Y en la carrera, el toque de pie: ver `PULSO_EN_LA_CARRERA` y
+ * `carrera-fina.test.ts`, que mide lo que gira.
+ */
+describe("el toque de pie en la carrera", () => {
+  /** Aprieta `dura` segundos y devuelve la tecla que manda en cada décima. */
+  function apretar(dura: number, alarga: boolean): number[] {
+    const p = new PulsoDeTecla();
+    const manda: number[] = [];
+    for (let t = 0; t < 0.6 - 1e-9; t += 0.05) manda.push(p.paso(t < dura - 1e-9 ? 1 : 0, t, alarga));
+    return manda;
+  }
+
+  it("un toque corto dura lo que un toque de pie", () => {
+    const manda = apretar(0.1, true);
+    const apretada = manda.filter((x) => x === 1).length * 0.05;
+    expect(apretada).toBeCloseTo(PULSO_EN_LA_CARRERA, 9);
+  });
+
+  it("mantenida, dura lo que se mantiene", () => {
+    const manda = apretar(0.45, true);
+    expect(manda.filter((x) => x === 1).length * 0.05).toBeCloseTo(0.45, 9);
+  });
+
+  it("rodando despacio, la tecla es lo que se aprieta", () => {
+    const manda = apretar(0.1, false);
+    expect(manda.filter((x) => x === 1).length * 0.05).toBeCloseTo(0.1, 9);
+  });
+
+  it("y la tecla contraria corta el toque al momento", () => {
+    const p = new PulsoDeTecla();
+    expect(p.paso(1, 0, true)).toBe(1);
+    expect(p.paso(0, 0.05, true)).toBe(1);
+    expect(p.paso(-1, 0.1, true)).toBe(-1);
+    expect(p.paso(0, 0.15, true)).toBe(-1);
+    expect(p.paso(0, 0.5, true)).toBe(0);
   });
 });

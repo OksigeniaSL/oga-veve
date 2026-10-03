@@ -32,7 +32,7 @@ import { Euler, Quaternion, Vector3 } from "three";
 import { AIRE_ESTANDAR, type Aire, airDensity } from "./atmosphere";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
-import { MAX_PASO } from "./fdm";
+import { AGARRE_DEL_PEDAL, giroDelPedal, MAX_PASO } from "./fdm";
 import type {
   ControlInputs,
   FlightModel,
@@ -212,6 +212,24 @@ const GROUND_TURN = 1.9;
  * que se pasa la salida se pasa la salida.
  */
 const DE_LADO_RODANDO = 6;
+
+/**
+ * **Y deprisa por la pista, lo del pedal.** Lo que se tira de lado con las
+ * flechas va de `DE_LADO_RODANDO` rodando a `AGARRE_DEL_PEDAL` en la carrera,
+ * entre quince y veintiocho metros por segundo: donde el modelo completo deja
+ * de mandar con la rueda de morro y manda el pedal.
+ *
+ * En este peldaño las flechas son el volante a cualquier velocidad —quien lo
+ * vuela tiene cuatro años y no va a buscar otra tecla—, pero a 130 nudos el
+ * volante de verdad no se toca: lo que lleva el eje es el pedal, con poco
+ * agarre y correcciones pequeñas. Con el agarre de rodar, un segundo de
+ * flecha en la carrera del JAZ 120 giraba la proa cinco grados: «casi me
+ * salgo por un lado de la pista».
+ */
+function agarreRodando(velocidad: number): number {
+  const t = clamp01((velocidad - 15) / 13);
+  return DE_LADO_RODANDO + (AGARRE_DEL_PEDAL - DE_LADO_RODANDO) * t;
+}
 
 /**
  * Ritmo de viraje máximo, en radianes por segundo.
@@ -934,9 +952,22 @@ export class ArcadeFlightModel implements FlightModel {
        * que para maniobrar hay que moverse, que es la lección del rodaje.
        */
       const porLaRueda = this.speed / Math.max(0.5, radioDeGiro(this.aircraft));
-      const porElAgarre = DE_LADO_RODANDO / Math.max(1, this.speed);
+      const porElAgarre = agarreRodando(this.speed) / Math.max(1, this.speed);
       const tope = Math.min(GROUND_TURN, porLaRueda, porElAgarre);
-      const giro = clamp(controls.aileron * tope, -tope, tope);
+      /*
+       * **Y el pedal, que aquí no hacía nada.** En este modelo el timón no
+       * existía: ni en el aire ni en el suelo. Enrique, en la carrera del JAZ
+       * 120 en Guyrami: «casi voy a por el martillo a ver si el timón se
+       * enteraba de que estaba moviendo fino el avión para estabilizarlo». Y
+       * en la carrera de un avión de verdad es justo el pedal lo que lleva el
+       * eje: el volante de la rueda de morro no se toca deprisa. Gira lo mismo
+       * que en el modelo completo: ver `giroDelPedal` en `fdm.ts`.
+       */
+      const giro = clamp(
+        controls.aileron * tope + controls.rudder * giroDelPedal(this.speed),
+        -tope,
+        tope,
+      );
       this.heading += giro * step;
       this.guinada = giro;
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.

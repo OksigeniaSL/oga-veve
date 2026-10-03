@@ -41,6 +41,8 @@ import {
 import { Keymap, type Accion } from "./keymap";
 import {
   CrucetaDelCompensador,
+  DEPRISA_EN_TIERRA,
+  PulsoDeTecla,
   ToquesDeCabeceo,
   palancaEnLaDuda,
 } from "./palanca-de-teclado";
@@ -382,6 +384,10 @@ export class InputManager {
    * peldaño. Lo pone el juego al construir el modelo.
    */
   compensadorVivo = true;
+
+  /** El toque de pie de las teclas de dirección en la carrera. Ver `PulsoDeTecla`. */
+  private readonly pulsoDelVolante = new PulsoDeTecla();
+  private readonly pulsoDelPedal = new PulsoDeTecla();
 
   /** Los toques de las flechas. Ver `flight/palanca-de-teclado.ts`. */
   private readonly toques = new ToquesDeCabeceo();
@@ -787,11 +793,23 @@ export class InputManager {
     const pitchTarget =
       this.signoDeCabeceo *
       mandaQuienSeMueve(this.touchPitch + teclasDeCabeceo, gamepad?.pitch);
-    const rollTarget = mandaQuienSeMueve(this.touchRoll + teclaAlabeo, gamepad?.roll);
-    const rudderTarget = mandaQuienSeMueve(
-      this.touchRudder + this.axis("yawRight", "yawLeft"),
-      gamepad?.rudder,
+    /*
+     * **Y en la carrera, cada toque es un toque de pie**: ver
+     * `PULSO_EN_LA_CARRERA`. Solo en el suelo y deprisa, y solo las teclas: el
+     * dedo y el mando dan la posición que tienen.
+     */
+    const enLaCarrera = this.pesoEnLasRuedas && this.velocidadEnElSuelo > DEPRISA_EN_TIERRA;
+    const teclaDeVolante = this.pulsoDelVolante.paso(teclaAlabeo, ahora, enLaCarrera);
+    const teclaDePedal = this.pulsoDelPedal.paso(
+      this.axis("yawRight", "yawLeft"),
+      ahora,
+      enLaCarrera,
     );
+    const rollTarget = mandaQuienSeMueve(
+      this.touchRoll + (manoAlabeo ? teclaAlabeo : teclaDeVolante),
+      gamepad?.roll,
+    );
+    const rudderTarget = mandaQuienSeMueve(this.touchRudder + teclaDePedal, gamepad?.rudder);
     /*
      * **Quién se mueve**: tecla, dedo en tierra, mando, y en el aire el dedo
      * que acaba de mover la palanca —que se queda puesta, así que quieta no

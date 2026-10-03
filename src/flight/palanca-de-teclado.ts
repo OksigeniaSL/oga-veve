@@ -187,3 +187,54 @@ export class CrucetaDelCompensador {
       : 0;
   }
 }
+
+/**
+ * **Lo menos que dura una tecla en la carrera**, s: tres décimas.
+ *
+ * Por la pista y deprisa, el pedal —Q y E— y, en el peldaño de abajo, las
+ * flechas giran con el agarre de las ruedas, que es poco: un quinto de g. Ver
+ * `AGARRE_DEL_PEDAL` en `fdm.ts`. Con la rampa de la tecla, un toque de una
+ * décima no pasaba de un cuarto de pedal y giraba la proa cinco centésimas de
+ * grado a 130 nudos: nada. Y para que se notara había que mantenerla, y
+ * entonces se iba de largo: «casi voy a por el martillo a ver si el timón se
+ * enteraba de que estaba moviendo fino el avión para estabilizarlo».
+ *
+ * Así que en la carrera un toque **dura lo que dura un toque de pie**: tres
+ * décimas aunque el dedo se levante antes. Es medio grado de proa a 130
+ * nudos, algo más despacio, que es la corrección pequeña con la que se lleva
+ * el eje; y mantenida, la tecla sigue girando con decisión. Es la misma regla
+ * que en el aire: apretar poco no deja menos que un toque. Ver `alMinimo` en
+ * `mano.ts` y `carrera-fina.test.ts`.
+ */
+export const PULSO_EN_LA_CARRERA = 0.3;
+
+/**
+ * A partir de qué velocidad sobre el suelo se está en la carrera, m/s: treinta
+ * nudos, donde el agarre de rodar empieza a dejar paso al del pedal. Rodando,
+ * la tecla es el volante de siempre y un toque gira lo que gira.
+ */
+export const DEPRISA_EN_TIERRA = 15;
+
+/**
+ * **Una tecla de dirección con su toque de pie**: devuelve la tecla que manda
+ * en este fotograma, −1, 0 o 1. Con `alarga` —en la carrera—, la tecla que se
+ * suelta antes de `PULSO_EN_LA_CARRERA` sigue apretada hasta cumplirlo.
+ */
+export class PulsoDeTecla {
+  private signo = 0;
+  private desde = 0;
+
+  paso(tecla: number, ahora: number, alarga: boolean): number {
+    const t = Math.sign(tecla);
+    if (t !== 0) {
+      if (t !== this.signo) {
+        this.signo = t;
+        this.desde = ahora;
+      }
+      return t;
+    }
+    if (this.signo !== 0 && alarga && ahora - this.desde < PULSO_EN_LA_CARRERA) return this.signo;
+    this.signo = 0;
+    return 0;
+  }
+}
