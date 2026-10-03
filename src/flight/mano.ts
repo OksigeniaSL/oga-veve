@@ -53,12 +53,18 @@
  *   `ritmosDeAlabeo`.
  * - **El ritmo de la trayectoria sale de lo que se nota en el asiento**: un
  *   cuarto de g, que deprisa es poco ángulo y despacio es más.
- * - **La trayectoria, no el morro.** Lo que se quiere sostener es si se sube o
- *   se baja, y eso es la trayectoria: el morro es como se consigue. La mano
- *   lo hace como la del piloto automático de este juego —la trayectoria pide
- *   morro, el morro pide giro y el giro pide profundidad— y con el
- *   compensador: lo que la sostiene se queda en el TRIM, que es lo que hace un
- *   piloto al soltar y lo que se ve en la aguja.
+ * - **La trayectoria, no el morro, mientras se aprieta.** Lo que se pide con
+ *   la tecla es subir o bajar, y eso es la trayectoria: el morro es como se
+ *   consigue. La mano lo hace como la del piloto automático de este juego —la
+ *   trayectoria pide morro, el morro pide giro y el giro pide profundidad— y
+ *   con el compensador: lo que la sostiene se queda en el TRIM, que es lo que
+ *   hace un piloto al soltar y lo que se ve en la aguja.
+ * - **Y suelta, lo que sostiene el avión de verdad, por tipo.** Con mandos
+ *   eléctricos —el JAZ 90, como la ley normal de Airbus o un Embraer E2—, la
+ *   trayectoria. Con mandos de cables —todos los demás, el JAZ 120 incluido,
+ *   que es un 747 clásico—, **la velocidad a la que quedó compensado**: el gas
+ *   sube o baja el avión a esa velocidad, y el morro la cambia. Ver
+ *   `AircraftConfig.mandos` y `sostieneLaVelocidad`.
  * - **Y no lleva el avión a la pérdida.** Soltada, si el ala se acerca al
  *   avisador —poco gas sosteniendo una subida—, cede el morro antes que
  *   pasarse: es lo que haría el avión compensado, que vuelve a su velocidad.
@@ -85,6 +91,8 @@ import { GRAVITY } from "./atmosphere";
 import { esDeChorro, type AircraftConfig } from "./aircraft";
 import { ascensoMaximo } from "./carrera";
 import { VISUAL_BANK } from "./arcade";
+import { ACELERACION_MAXIMA } from "./gases-automaticos";
+import { PARA_LA_VELOCIDAD_CON_EL_MORRO } from "./piloto-automatico";
 
 const RAD = Math.PI / 180;
 
@@ -349,6 +357,55 @@ export const IMAN_DE_SENDA = 0.3 * RAD;
  */
 export const LEJOS_DEL_AVISADOR = 1.5 * RAD;
 
+/**
+ * **Si la mano, suelta, sostiene la velocidad compensada** —en vez de la
+ * trayectoria—: en los aviones de mandos convencionales, mientras nadie lleve
+ * ya la velocidad con el gas.
+ *
+ * Enrique, en la final de la avioneta a un campo de hierba: «esta avioneta
+ * casi no baja». Quitaba gas y la mano sostenía el nivel con el morro, como la
+ * ley normal de un Airbus, hasta que la velocidad se iba a 45 nudos y cedía
+ * al acercarse al avisador. Eso es lo que hace un avión de mandos eléctricos;
+ * uno de cables, compensado a una velocidad, **baja el morro solo al quitarle
+ * gas y desciende a esa misma velocidad**: es la estabilidad de velocidad que
+ * la norma exige a todo avión certificado (14 CFR 23.173 y 25.173), y es como
+ * se vuela una aproximación de avioneta: la velocidad con el morro y
+ * compensador, la bajada con el gas (FAA, *Airplane Flying Handbook*,
+ * FAA-H-8083-3C, capítulo 9).
+ *
+ * Con gases automáticos o con la ayuda de la final de Guyrami llevando la
+ * velocidad, la trayectoria, en todos: es lo que hace quien vuela a mano con
+ * los gases puestos —la senda con el morro, compensando a la velocidad que
+ * ellos llevan—, y así la ayuda que lleva el gas y la mano no pelean.
+ */
+export function sostieneLaVelocidad(ve: {
+  readonly aircraft: AircraftConfig;
+  readonly gasLlevaLaVelocidad: boolean;
+}): boolean {
+  return ve.aircraft.mandos === "convencionales" && !ve.gasLlevaLaVelocidad;
+}
+
+/**
+ * **Lo que mueve un toque de morro en la velocidad compensada**, m/s: dos
+ * nudos, morro arriba más despacio. Se ve moverse en la cinta y no se come una
+ * final: la Vref más cinco se pisa con dos o tres toques. Es el golpe del
+ * compensador eléctrico, que en un avión de cables es lo que cambia la
+ * velocidad a la que vuela solo.
+ */
+export const TOQUE_DE_VELOCIDAD = 2 * 0.514444;
+
+/**
+ * **Lo que tarda la trayectoria pedida en seguir a la velocidad**, s.
+ *
+ * El lazo es el del automático en `FLCH SPD`: la velocidad que falta pide una
+ * aceleración —la recupera en `PARA_LA_VELOCIDAD_CON_EL_MORRO`—, y la energía
+ * que gana el avión de verdad dice cuánta subida o bajada sobra. Medirla es lo
+ * que lo amortigua: mirando solo la velocidad que falta, el morro iría
+ * siempre tarde y el avión subiría y bajaría como un fugoide sin piloto. Ver
+ * `medirLaEnergia` y `aproximacion-por-tipo.test.ts`.
+ */
+const SIGUE_LA_VELOCIDAD = 1;
+
 /** Lo que espera la mano después de despegar antes de coger el avión, s. */
 export const ESPERA_AL_DESPEGAR = 0.5;
 
@@ -378,6 +435,20 @@ export interface LoQueVeLaMano {
   readonly carga: number;
   /** Velocidad verdadera, m/s. */
   readonly verdadera: number;
+  /**
+   * Velocidad indicada, m/s: la que sostiene un avión compensado, porque lo
+   * que compensa el compensador es un ángulo de ataque, y a uno ge eso es una
+   * indicada. Ver `sostieneLaVelocidad`.
+   */
+  readonly indicada: number;
+  /**
+   * **Si algo lleva ya la velocidad con el gas**: los gases automáticos del
+   * reactor o la ayuda de la final de Guyrami. Entonces la mano sostiene la
+   * trayectoria en todos los aviones —con gases automáticos, un piloto vuela
+   * la senda con el morro y compensa a la velocidad que ellos llevan—, y dos
+   * manos no pelean por la misma velocidad. Ver `sostieneLaVelocidad`.
+   */
+  readonly gasLlevaLaVelocidad: boolean;
   /** Ángulo de ataque y el del avisador, rad. */
   readonly alfa: number;
   readonly alfaDeAviso: number;
@@ -680,6 +751,29 @@ export class ManoQueSostiene {
 
   /** Lo que se ha ido sumando de trayectoria que faltaba, rad/s. */
   private suma = 0;
+  /**
+   * **La velocidad compensada**, indicada, m/s, o `null` si ahora no se
+   * sostiene una: la que sostiene la mano suelta en un avión de cables. Ver
+   * `sostieneLaVelocidad`.
+   */
+  private compensada: number | null = null;
+  /** La compensada de antes de apretar la tecla: un toque cuenta desde ella. */
+  private compensadaAlApretar: number | null = null;
+  /**
+   * En el modelo sencillo, **la palanca compensada**: la que se dejó al soltar.
+   * Ahí no hay velocidad que sostener con el morro —el gas es la velocidad—,
+   * y lo que hace el avión compensado es quedarse con su palanca: el gas sube
+   * o baja. Ver `pasoDelCabeceo`.
+   */
+  private palancaCompensada: number | null = null;
+  private palancaAlApretar: number | null = null;
+  /** Lo que gana de energía el avión, medido, para el lazo de la velocidad. */
+  private readonly energia: Energia = { verdadera: null, gana: 0 };
+
+  /** La velocidad compensada de ahora, indicada, m/s, o `null`. */
+  get velocidadCompensada(): number | null {
+    return this.compensada;
+  }
   /** Lo que lleva en el aire desde que despegó, s. */
   private enElAire = 0;
   /** Lo último visto, para pintar la palanca sin pedírselo otra vez al juego. */
@@ -758,7 +852,8 @@ export class ManoQueSostiene {
         )
       : 0;
     let y = 0;
-    if (c.activo) {
+    // Con la velocidad compensada la mano está suelta: la palanca, al centro.
+    if (c.activo && this.compensada === null) {
       const { sube, baja } = sendasDelDedo(ve.aircraft);
       const s = c.metaDelDedo && c.meta !== null ? c.meta : c.consigna.valor;
       y = palancaDeLaCurva(s >= 0 ? s / sube : -s / baja);
@@ -776,6 +871,16 @@ export class ManoQueSostiene {
     }
     this.aileron = 0;
     this.elevator = 0;
+    this.olvidarLaCompensada();
+  }
+
+  private olvidarLaCompensada(): void {
+    this.compensada = null;
+    this.compensadaAlApretar = null;
+    this.palancaCompensada = null;
+    this.palancaAlApretar = null;
+    this.energia.verdadera = null;
+    this.energia.gana = 0;
   }
 
   /** Un fotograma de la mano. */
@@ -835,6 +940,7 @@ export class ManoQueSostiene {
       this.trim = acotar(ve.timon, 1);
       this.elevator = 0;
       this.suma = 0;
+      this.olvidarLaCompensada();
     }
   }
 
@@ -1076,7 +1182,74 @@ export class ManoQueSostiene {
      * asiento: `γ̇ = (g/V)·(n·cos φ − cos γ)`. Ver el amortiguador, abajo.
      */
     const cambia = (GRAVITY / v) * (ve.carga * Math.cos(phi) - Math.cos(gamma));
-    this.teclaYToques(eje, dt, tecla, pide.toqueCabeceo, () => TOQUE_DE_SENDA, IMAN_DE_SENDA, true);
+    /*
+     * **Suelta, ¿la trayectoria o la velocidad?** En un avión de cables, la
+     * velocidad a la que quedó compensado; con mandos eléctricos o con algo
+     * llevando ya la velocidad con el gas, la trayectoria. Ver
+     * `sostieneLaVelocidad`.
+     */
+    const porVelocidad = sostieneLaVelocidad(ve);
+    medirLaEnergia(this.energia, ve, dt);
+    if (!porVelocidad) {
+      this.compensada = null;
+      this.palancaCompensada = null;
+    }
+    /*
+     * **Y la trayectoria que quedó pedida no ata al avión compensado.** Lo que
+     * dejaron las teclas mientras el gas llevaba la velocidad —un toque, el
+     * imán— era una senda para volar con los gases puestos; soltados éstos,
+     * manda lo compensado. Y el dedo en el centro es la mano suelta. Se quedan
+     * el dedo fuera del centro, que es una mano sosteniendo la palanca ahí, y
+     * el doble toque, que pide recto y nivelado a propósito.
+     */
+    if (porVelocidad && eje.meta !== null && tecla === 0) {
+      const dedoAlCentro = eje.metaDelDedo && eje.meta === 0;
+      const deLasTeclas = !eje.metaDelDedo && eje.prisa;
+      if (dedoAlCentro || deLasTeclas) {
+        eje.meta = null;
+        eje.metaDelDedo = false;
+      }
+    }
+    // Al apretar, manda la tecla; lo compensado se guarda, que un toque se
+    // cuenta desde ahí.
+    if (tecla !== 0 && eje.teclaAntes === 0) {
+      this.compensadaAlApretar = this.compensada;
+      this.palancaAlApretar = this.palancaCompensada;
+      this.compensada = null;
+      this.palancaCompensada = null;
+    }
+    /*
+     * **Y en el avión compensado, un toque mueve lo compensado**, que es lo que
+     * hace el compensador: dos nudos de velocidad —ver `TOQUE_DE_VELOCIDAD`—,
+     * o en el modelo sencillo, la palanca que da medio grado de trayectoria
+     * más o menos. Se suman como los de la trayectoria: cada uno cuenta desde
+     * lo que dejó el anterior.
+     */
+    let toque = pide.toqueCabeceo;
+    if (porVelocidad && toque !== 0 && !eje.metaDelDedo) {
+      const signo = Math.sign(toque);
+      const recienSoltada = eje.teclaAntes !== 0 && tecla === 0;
+      if (ve.sencillo) {
+        const subir = ve.mandoParaSubir;
+        if (subir) {
+          const base =
+            (recienSoltada ? this.palancaAlApretar : this.palancaCompensada) ??
+            subir(ve.vertical);
+          const paso = Math.abs(
+            subir(v * Math.sin(gamma + TOQUE_DE_SENDA)) - subir(v * Math.sin(gamma)),
+          );
+          this.palancaCompensada = acotar(base + signo * paso, 1);
+        }
+      } else {
+        const base =
+          (recienSoltada ? this.compensadaAlApretar : this.compensada) ?? ve.indicada;
+        this.compensada = Math.max(1, base - signo * TOQUE_DE_VELOCIDAD);
+      }
+      toque = 0;
+    }
+    this.teclaYToques(eje, dt, tecla, toque, () => TOQUE_DE_SENDA, IMAN_DE_SENDA, true);
+    /** Si este fotograma la mano sostiene lo compensado, y no una trayectoria. */
+    let compensado = false;
     if (tecla !== 0) {
       c.mover(dt, tecla, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
     } else if (eje.frenando) {
@@ -1098,16 +1271,53 @@ export class ManoQueSostiene {
         eje.frenandoDesde > FRENA_COMO_MUCHO
       ) {
         eje.frenando = false;
-        alIman(eje, IMAN_DE_SENDA);
-        alMinimo(eje);
+        if (porVelocidad && eje.meta === null) {
+          /*
+           * **Parado el morro, se compensa ahí**: la velocidad de ahora es la
+           * que se sostiene desde ya, como el piloto que lleva el morro donde
+           * quiere y mueve el compensador hasta que la palanca no tira. El imán
+           * del nivelado y el toque mínimo son de la trayectoria, y aquí no se
+           * sostiene una.
+           */
+          if (!ve.sencillo && this.compensada === null) this.compensada = ve.indicada;
+        } else {
+          alIman(eje, IMAN_DE_SENDA);
+          alMinimo(eje);
+        }
+      }
+    } else if (porVelocidad && eje.meta === null) {
+      compensado = true;
+      if (ve.sencillo) c.poner(Math.max(SENDA_MAS_BAJA, Math.min(SENDA_MAS_ALTA, gamma)));
+      else {
+        if (this.compensada === null) this.compensada = ve.indicada;
+        haciaLaVelocidad(c, dt, ve, this.compensada, this.energia.gana, v, ritmo);
       }
     } else {
-      if (eje.meta !== null) c.hacia(dt, eje.meta, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
-      else c.mover(dt, 0, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
+      // El dedo o el doble toque piden una trayectoria: ésa se sostiene.
+      if (eje.meta !== null) {
+        c.hacia(dt, eje.meta, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
+        this.compensada = null;
+        this.palancaCompensada = null;
+      } else c.mover(dt, 0, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
     }
     eje.teclaAntes = tecla;
 
     if (ve.sencillo) {
+      const subir = ve.mandoParaSubir;
+      if (compensado && subir) {
+        /*
+         * **En el modelo sencillo, el avión compensado se queda con su
+         * palanca.** Ahí el gas es la velocidad —es la regla de ese peldaño—
+         * y no hay velocidad que sostener con el morro; lo que sí hay es la
+         * recta del motor: por encima del gas que ni sube ni baja se sube, por
+         * debajo se baja. Sosteniendo la trayectoria, la mano se la comía y
+         * quitar gas no bajaba el avión. Con la palanca quieta, sí. Ver
+         * `gasQueNiSubeNiBaja` en `arcade.ts`.
+         */
+        if (this.palancaCompensada === null) this.palancaCompensada = acotar(subir(ve.vertical), 1);
+        this.elevator = this.palancaCompensada;
+        return;
+      }
       // En el modelo sencillo la palanca **es** cuánto se sube: se le pide al
       // modelo la que da esta trayectoria. Ver `mandoParaSubir`.
       const ritmoDeSubida = v * Math.sin(c.valor);
@@ -1185,13 +1395,84 @@ export class ManoQueSostiene {
       this.trim = acotar(this.trim + SERVO * aprieta * faltaGiro * dt, 1);
     if (cede) this.trim = acotar(this.trim - POR_ALFA_EN_EL_TRIM * pasado * dt, 1);
     this.elevator = acotar(AMORTIGUA * aprieta * faltaGiro, 1);
-    // La suma, con tope y quieta mientras cede o mientras se aprieta.
-    if (!cede && tecla === 0)
+    /*
+     * La suma, con tope y quieta mientras cede o mientras se aprieta. Y
+     * sosteniendo la velocidad, también quieta: ahí lo que falta de
+     * trayectoria lo corrige la velocidad, y sumarlo aparte la haría pasarse.
+     */
+    if (!cede && tecla === 0 && !compensado)
       this.suma = acotar(
         this.suma + SUMA_DE_LA_SENDA * (firmeza / POR_TRAYECTORIA) ** 2 * falta * dt,
         SUMA_MAXIMA / v,
       );
   }
+}
+
+/** Lo que la mano recuerda para medir la energía que gana el avión. */
+interface Energia {
+  /** La verdadera del paso anterior, m/s, o `null` recién cogido el avión. */
+  verdadera: number | null;
+  /** Lo que gana, promediado, en metros de subida por segundo. */
+  gana: number;
+}
+
+/** En cuánto tiempo se promedia la energía que se gana, s. */
+const PROMEDIO_DE_LA_ENERGIA = 1;
+
+/**
+ * **La energía que gana el avión por segundo**, en metros de subida: lo que
+ * sube más lo que acelera, `V/S + V·dV/dt / g`. Es lo que cambia el gas; el
+ * morro solo la reparte entre subir y acelerar, así que cambiando de
+ * trayectoria apenas se mueve, y se puede promediar sin que llegue tarde.
+ *
+ * Se promedia **la suma** y no la aceleración sola. Con la aceleración
+ * promediada y la subida de este instante, al soltar una bajada la subida
+ * crecía al momento y la aceleración llegaba un segundo y medio tarde: la
+ * cuenta veía de más, pedía subir de más, y el avión se nivelaba un momento
+ * antes de volver a bajar. Medido con el JAZ 120 soltando la tecla bajando:
+ * de −9 m/s a +1,5 y de vuelta a −2,7, antes de quedarse en −1,9.
+ */
+function medirLaEnergia(e: Energia, ve: LoQueVeLaMano, dt: number): void {
+  if (dt <= 0) return;
+  if (e.verdadera !== null) {
+    // Con tope: un salto de la medida —el avión recolocado— no es energía.
+    const acelera = Math.max(-3, Math.min(3, (ve.verdadera - e.verdadera) / dt));
+    const ahora = ve.vertical + (ve.verdadera * acelera) / GRAVITY;
+    e.gana += (ahora - e.gana) * Math.min(1, dt / PROMEDIO_DE_LA_ENERGIA);
+  } else e.gana = ve.vertical;
+  e.verdadera = ve.verdadera;
+}
+
+/**
+ * **La trayectoria que sostiene la velocidad compensada**, y la consigna
+ * hacia ella: es la mitad de fuera del lazo, la del automático en `FLCH SPD`
+ * (ver `piloto-automatico.ts`). La velocidad que falta pide una aceleración,
+ * y lo que gana el avión de energía y no se va en esa aceleración es subida
+ * —o bajada, si gana de menos—: `γ = asen((Ė − V·a_pedida/g)/V)`. Con el gas
+ * quitado el avión pierde energía, y la cuenta pide bajar a la misma
+ * velocidad; con el gas puesto, subir. La mitad de dentro —la trayectoria
+ * pide morro y compensador— es la de siempre. Ver `SIGUE_LA_VELOCIDAD` y
+ * `medirLaEnergia`.
+ */
+function haciaLaVelocidad(
+  c: Consigna,
+  dt: number,
+  ve: LoQueVeLaMano,
+  compensada: number,
+  gana: number,
+  v: number,
+  ritmo: number,
+): void {
+  // Lo que falta es de indicada; la aceleración que se pide, de la verdadera.
+  const verdaderaPorIndicada = ve.verdadera / Math.max(1, ve.indicada);
+  const pide = acotar(
+    ((compensada - ve.indicada) * verdaderaPorIndicada) / PARA_LA_VELOCIDAD_CON_EL_MORRO,
+    ACELERACION_MAXIMA,
+  );
+  const sube = gana - (v * pide) / GRAVITY;
+  const quiere = Math.max(SENDA_MAS_BAJA, Math.min(SENDA_MAS_ALTA, Math.asin(acotar(sube / v, 0.5))));
+  c.ritmo = acotar((quiere - c.valor) / SIGUE_LA_VELOCIDAD, ritmo);
+  c.valor = Math.max(SENDA_MAS_BAJA, Math.min(SENDA_MAS_ALTA, c.valor + c.ritmo * dt));
 }
 
 /** La trayectoria del avión, rad: cuánto sube por cada metro que avanza. */

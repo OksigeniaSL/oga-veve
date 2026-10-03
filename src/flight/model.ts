@@ -158,6 +158,15 @@ export interface ControlInputs {
   autofreno?: number;
 }
 
+/**
+ * Lo que se lleva sacado: la palanca de flaps, de 0 a 1, y el tren, de 0
+ * dentro a 1 fuera.
+ */
+export interface LoSacado {
+  readonly flaps: number;
+  readonly tren: number;
+}
+
 export function neutralControls(): ControlInputs {
   return {
     elevator: 0,
@@ -425,8 +434,24 @@ export interface FlightModel {
    * relación entre el mando y la velocidad **es** el modelo. Antes había un
    * número fijo del cuarenta y cinco por ciento que valía para uno de los dos
    * y dejaba al otro a media velocidad.
+   *
+   * `sacado` es lo que se lleva fuera; sin él, lo del último paso. En el
+   * modelo sencillo cambia la cuenta —con tren y flaps hace falta más gas—, y
+   * quien coloca el avión configurado se lo dice antes del primer paso.
    */
-  gasPara(velocidad: number): number;
+  gasPara(velocidad: number, sacado?: LoSacado): number;
+  /**
+   * **Lo más rápido que va a fondo con eso sacado**, m/s verdaderos: en el
+   * modelo sencillo, que es donde el gas es la velocidad. Lo mira la marca de
+   * velocidad para no pedir lo que no se alcanza. Ver `puntaConLoSacado` en
+   * `arcade.ts`.
+   */
+  puntaConLoSacado?(sacado?: LoSacado): number;
+  /**
+   * **El gas que ni sube ni baja con eso sacado**, en el modelo sencillo. Ver
+   * `gasQueNiSubeNiBaja` en `arcade.ts` y la marca del motor.
+   */
+  gasQueNiSubeNiBaja?(sacado?: LoSacado): number;
   /**
    * Y qué gas hace falta **rodando**, que no es lo mismo ni de lejos.
    *

@@ -27,56 +27,23 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import { AIRE_ESTANDAR, airDensity, GRAVITY, type Aire } from "./atmosphere";
+import { AIRE_ESTANDAR, airDensity } from "./atmosphere";
 import { MOTOR_QUE_SOSTIENE } from "./arcade";
-import { empujeLleno } from "./fdm";
-import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
-import { machDe, resistenciaDeOnda } from "./limites";
-import { resistenciaDelTren } from "./tren";
+import { empujeLleno, empujeQueSostiene, type ParaSostener } from "./fdm";
 
-/** Lo que hace falta saber para contar el gas. */
-export interface ParaSostener {
-  /** La altura del avión, m. */
-  readonly altura: number;
-  /** La velocidad verdadera que se quiere sostener, m/s. */
-  readonly verdadera: number;
-  readonly aire?: Aire;
-  /** Los flaps, de 0 a 1, donde están. */
-  readonly flaps: number;
-  /** El tren, de 0 dentro a 1 fuera. */
-  readonly tren: number;
-  /**
-   * **La pendiente de la trayectoria**, rad: cero nivelado, negativa
-   * bajando. Por la senda de tres grados, el peso empuja: se necesita menos
-   * gas que nivelado, y eso es lo que hace que una final se vuele con poco
-   * motor.
-   */
-  readonly pendiente: number;
-}
+export type { ParaSostener } from "./fdm";
 
 /**
  * **El gas que sostiene esa velocidad**, de 0 a 1, en el modelo completo; o
  * `null` si ni a fondo se llega.
  *
- * La resistencia es la de `fdm.ts`, término a término —la parásita, la
- * inducida con la sustentación que pide el peso, los flaps, el tren y la
- * onda—, y el empuje el de `empujeLleno`: si uno cambia, esto cambia con él.
+ * La resistencia es la de `fdm.ts` —ver `empujeQueSostiene`—, y el empuje el
+ * de `empujeLleno`: si uno cambia, esto cambia con él.
  */
 export function gasQueSostiene(a: AircraftConfig, p: ParaSostener): number | null {
-  const aire = p.aire ?? AIRE_ESTANDAR;
-  const rho = airDensity(p.altura, aire);
+  const rho = airDensity(p.altura, p.aire ?? AIRE_ESTANDAR);
   const v = Math.max(1, p.verdadera);
-  const qS = 0.5 * rho * v * v * a.wingArea;
-  const peso = a.mass * GRAVITY;
-  const cl = (peso * Math.cos(p.pendiente)) / Math.max(1, qS);
-  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const cd =
-    a.aero.cd0 +
-    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
-    resistenciaDeLosFlaps(a, p.flaps) +
-    resistenciaDelTren(a, p.tren, fraccionDeLosFlaps(a, p.flaps)) +
-    resistenciaDeOnda(machDe(v, p.altura, aire), a.mmo, a.aero.cd0);
-  const empuje = qS * cd + peso * Math.sin(p.pendiente);
+  const empuje = empujeQueSostiene(a, p);
   const lleno = empujeLleno(a, rho, v);
   if (!(lleno > 0)) return null;
   const gas = empuje / lleno;
@@ -108,6 +75,12 @@ export interface LecturaDeLaMarca {
   readonly enLaFinal: boolean;
   /** El gas que sostiene la marca rosa —nivelado, o por la senda en la final—, o `null`. */
   readonly gasDeLaMarca: number | null;
+  /**
+   * En el modelo sencillo, **el gas que ni sube ni baja con lo que se lleva
+   * sacado**: con tren y flaps es más que `MOTOR_QUE_SOSTIENE`. Sin él, ése.
+   * Ver `gasQueNiSubeNiBaja` en `arcade.ts`.
+   */
+  readonly niSubeNiBaja?: number | undefined;
 }
 
 /**
@@ -124,8 +97,9 @@ export interface LecturaDeLaMarca {
  */
 export function marcaDelGas(l: LecturaDeLaMarca): number | null {
   if (l.sencillo) {
-    if (l.enTierra || (!l.alturaSostenida && !l.enLaFinal)) return MOTOR_QUE_SOSTIENE;
-    return l.gasDeLaMarca ?? MOTOR_QUE_SOSTIENE;
+    const niSubeNiBaja = Math.min(1, l.niSubeNiBaja ?? MOTOR_QUE_SOSTIENE);
+    if (l.enTierra || (!l.alturaSostenida && !l.enLaFinal)) return niSubeNiBaja;
+    return l.gasDeLaMarca ?? niSubeNiBaja;
   }
   if (l.enTierra) return null;
   if (!l.enLaFinal && Math.abs(l.vertical) > NIVELADO) return null;

@@ -475,6 +475,25 @@ export interface AircraftConfig {
    * parezca un avión grande.
    */
   motores: number;
+  /**
+   * **Cómo llega la palanca a la profundidad**: por cables y varillas, o por
+   * un ordenador. Decide qué sostiene el avión cuando quien vuela suelta la
+   * palanca, y por eso qué hace la mano del teclado. Ver `flight/mano.ts`.
+   *
+   * - `convencionales`: la palanca mueve la profundidad y el compensador la
+   *   descarga. Suelto y compensado, el avión **vuelve a la velocidad a la
+   *   que se compensó**: es la estabilidad de velocidad que la norma exige a
+   *   todo avión certificado —14 CFR 23.173 y 25.173: soltando poco a poco el
+   *   mando, la velocidad vuelve a menos de un 10 % de la de compensación en
+   *   subida, aproximación y aterrizaje—. Quitar gas lo baja a esa velocidad;
+   *   ponerlo lo sube. «El gas, para subir o bajar; el morro, para la
+   *   velocidad» (FAA, *Airplane Flying Handbook*, FAA-H-8083-3C).
+   * - `electricos`: la palanca le pide al ordenador un cambio de trayectoria y,
+   *   suelta, **el avión sostiene la trayectoria** y se compensa solo, sin
+   *   estabilidad de velocidad: la ley normal de Airbus desde el A320 (FCOM,
+   *   *Flight Controls — Normal Law — Pitch*) y la de los Embraer E2.
+   */
+  mandos: "convencionales" | "electricos";
   /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
   cruiseSpeed: number;
   /**
@@ -974,6 +993,9 @@ export const PYKASU: AircraftConfig = {
    */
   maxThrust: 2600,
   motores: 1,
+  // Cables y varillas, como toda avioneta de escuela: compensada, vuelve a su
+  // velocidad. Ver `mandos`.
+  mandos: "convencionales",
   cruiseSpeed: 60,
   /*
    * Tres mil metros: un monomotor de escuela sin presurizar cruza entre dos mil
@@ -1102,6 +1124,7 @@ export const MAINUMBY: AircraftConfig = {
   inertia: { xx: 1600, yy: 2400, zz: 3600 },
   maxThrust: 5200,
   motores: 1,
+  mandos: "convencionales",
   cruiseSpeed: 55,
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
   // lo que sube es para ir de un campo a otro.
@@ -1263,6 +1286,7 @@ export const PANAMBI: AircraftConfig = {
   inertia: { xx: 3400, yy: 4200, zz: 6800 },
   maxThrust: 5000,
   motores: 2,
+  mandos: "convencionales",
   cruiseSpeed: 80,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
@@ -1410,6 +1434,9 @@ export const ARASUNU: AircraftConfig = {
   inertia: { xx: 26000, yy: 32000, zz: 52000 },
   maxThrust: 14000,
   motores: 2,
+  // Cables, como el Beech 1900D y el Twin Otter de su clase: ninguno de los
+  // dos lleva mandos eléctricos. Ver `mandos`.
+  mandos: "convencionales",
   cruiseSpeed: 90,
   // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
   // un turbohélice regional presurizado.
@@ -1598,6 +1625,13 @@ export const ARAI: AircraftConfig = {
    * gas, que es lo que delataba que el número no era el suyo.
    */
   motores: 2,
+  /*
+   * **Mandos eléctricos, los de un regional de hoy**: la palanca pide
+   * trayectoria y, suelta, el avión la sostiene y se compensa solo, como la ley
+   * normal de Airbus y la de los Embraer E2. Es el único de la flota. Ver
+   * `mandos` y `flight/mano.ts`.
+   */
+  mandos: "electricos",
   cruiseSpeed: 220,
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
@@ -1855,6 +1889,15 @@ export const YVAGA: AircraftConfig = {
    */
   maxThrust: 820000,
   motores: 4,
+  /*
+   * **Convencionales, los del 747 clásico** del que salen sus números (NASA
+   * CR-2144): de la cabina a los actuadores hidráulicos por cables, sin
+   * ordenador en medio, con su compensador y su estabilidad de velocidad. El
+   * primer Boeing con mandos eléctricos fue el 777, veinticinco años después,
+   * y aun ése imita la estabilidad de velocidad. Ver `mandos` y
+   * `flight/mano.ts`.
+   */
+  mandos: "convencionales",
   cruiseSpeed: 230,
   /*
    * Diez mil setecientos: treinta y cinco mil pies, que es donde la CR-2144

@@ -27,6 +27,12 @@ export interface VueloDeBanco {
   readonly tier: Tier;
   readonly mano: ManoQueSostiene;
   gas: number;
+  /**
+   * Si algo lleva la velocidad con el gas —los gases automáticos, la ayuda de
+   * la final de Guyrami, o el gas de la prueba que la busca—: entonces la mano
+   * sostiene la trayectoria en todos. Ver `sostieneLaVelocidad` en `mano.ts`.
+   */
+  gasLlevaLaVelocidad: boolean;
   /** El compensador de quien vuela, sin mano. */
   trim: number;
   flaps: number;
@@ -64,13 +70,14 @@ export function empezar(
     trim = m.timonDeEquilibrio?.() ?? 0;
     modelo = m;
   }
-  const gas = Math.max(0, Math.min(1, modelo.gasPara(tas)));
+  const gas = Math.max(0, Math.min(1, modelo.gasPara(tas, { flaps, tren: 1 })));
   const v: VueloDeBanco = {
     modelo,
     aircraft,
     tier,
     mano: new ManoQueSostiene(),
     gas,
+    gasLlevaLaVelocidad: false,
     trim,
     flaps,
     t: 0,
@@ -99,6 +106,8 @@ export function loQueVe(v: VueloDeBanco): LoQueVeLaMano {
     vertical: s.verticalSpeed,
     carga: s.loadFactor,
     verdadera: s.airspeed,
+    indicada: s.airspeed * Math.sqrt(airDensity(s.position.y) / SEA_LEVEL_DENSITY),
+    gasLlevaLaVelocidad: v.gasLlevaLaVelocidad,
     alfa: s.alpha,
     alfaDeAviso: s.stallWarningAlpha,
     flaps: v.flaps,
