@@ -1204,6 +1204,69 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * otra página con otro arranque, y lo que se compara ya no es solo el sol.
      */
     ponerHora: (hora: number) => juego.ponerHora(hora),
+    /**
+     * **El cielo de noche de ahora**: cuánto se ven las estrellas, cuántas hay
+     * puestas y dónde está la Luna, en grados. Ver `world/cielo-de-noche.ts`.
+     */
+    cieloDeNoche: () => {
+      const c = juego.sky.cielo;
+      const estrellas = juego.sky.group.getObjectByName("estrellas") as
+        | (Object3D & { geometry?: { getAttribute(n: string): { count: number } } })
+        | undefined;
+      const luna = c
+        ? {
+            altura: (Math.asin(c.luna[1]) * 180) / Math.PI,
+            acimut:
+              (((Math.atan2(c.luna[0], -c.luna[2]) * 180) / Math.PI) + 360) % 360,
+            fase: c.fase,
+          }
+        : null;
+      return {
+        seVen: juego.sky.seVenLasEstrellas,
+        cuantas: estrellas?.geometry?.getAttribute("position").count ?? 0,
+        dibujadas: !!estrellas?.visible,
+        luna,
+        lunaDibujada: !!juego.sky.group.getObjectByName("luna")?.visible,
+      };
+    },
+    /**
+     * Hacia dónde está, en el mundo, una estrella del catálogo —ascensión
+     * recta y declinación J2000, en grados— a esta hora y en este sitio.
+     */
+    haciaLaEstrella: (ra: number, dec: number) => {
+      const c = juego.sky.cielo;
+      if (!c) return null;
+      const r = (ra * Math.PI) / 180;
+      const d = (dec * Math.PI) / 180;
+      const v = [Math.cos(d) * Math.cos(r), Math.cos(d) * Math.sin(r), Math.sin(d)];
+      const m = c.mundoDesdeJ2000;
+      return {
+        x: m[0] * v[0]! + m[1] * v[1]! + m[2] * v[2]!,
+        y: m[3] * v[0]! + m[4] * v[1]! + m[5] * v[2]!,
+        z: m[6] * v[0]! + m[7] * v[1]! + m[8] * v[2]!,
+      };
+    },
+    /** Lo que se le vio a otro avión de noche en este vuelo, si ya salió. */
+    lucesDeNoche: () => juego.lucesDeNocheParaBanco,
+    /**
+     * **Apaga la noche** —estrellas, Luna y Vía Láctea— para medir lo que
+     * cuesta: el mismo cuadro con y sin ella. Solo para el banco.
+     */
+    apagarLaNoche: (apagada: boolean) => {
+      const grupo = juego.sky.group.getObjectByName("cielo-estrellado");
+      if (grupo) grupo.visible = !apagada;
+      const cupula = juego.sky.group.getObjectByName("cielo") as
+        | (Object3D & { material: { uniforms: Record<string, { value: unknown }> } })
+        | undefined;
+      const u = cupula?.material.uniforms.viaLactea;
+      if (u) {
+        const guardada = (u as { guardada?: number }).guardada;
+        if (apagada) {
+          (u as { guardada?: number }).guardada = u.value as number;
+          u.value = 0;
+        } else if (guardada !== undefined) u.value = guardada;
+      }
+    },
     ponerLluvia: (clase: string, fuerza = 0.7) =>
       juego.ponerLluvia(clase as Lluvia, fuerza),
     /**

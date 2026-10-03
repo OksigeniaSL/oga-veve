@@ -10,8 +10,11 @@
 import { describe, expect, it } from "vitest";
 import type { Points } from "three";
 import {
+  alumbraHacia,
   CADA_ESTROBO,
+  DE_PASAJE,
   DURA_EL_ESTROBO,
+  equipoDe,
   estroboAhora,
   LucesDeUnAvion,
   lucesDelTrafico,
@@ -162,6 +165,74 @@ describe("las luces de un avión", () => {
     expect(s.morro.z).toBeLessThan(-12);
     // Y la baliza de arriba por encima de la de abajo.
     expect(s.lomo.y).toBeGreaterThan(s.panza.y);
+    // Y lo alto de la deriva, por encima del lomo y detrás.
+    expect(s.deriva.y).toBeGreaterThan(s.lomo.y);
+    expect(s.deriva.z).toBeGreaterThan(s.lomo.z);
+  });
+});
+
+describe("de frente se ven las dos, aunque no sea exactamente de frente", () => {
+  /*
+   * Desde trescientos metros delante de un reactor, cada punta de ala ve el
+   * ojo cuatro grados hacia el otro lado del eje: con el borde a cuchillo no
+   * se veía ni la roja ni la verde. Las de verdad se desbordan —el 14 CFR
+   * 25.1395 deja diez grados enteros— y aquí también.
+   */
+  const g = (x: number) => (x * Math.PI) / 180;
+  const [VERDE, ROJA, BLANCA] = [SECTORES[0]!, SECTORES[1]!, SECTORES[2]!];
+
+  it("a cuatro grados del morro, de un lado o del otro, las dos enteras", () => {
+    for (const a of [-4, 4]) {
+      expect(alumbraHacia(VERDE, g(a))).toBeGreaterThan(0.99);
+      expect(alumbraHacia(ROJA, g(a))).toBeGreaterThan(0.99);
+    }
+  });
+
+  it("y a treinta grados ya solo la de su lado", () => {
+    expect(alumbraHacia(VERDE, g(30))).toBe(1);
+    expect(alumbraHacia(ROJA, g(30))).toBe(0);
+    expect(alumbraHacia(ROJA, g(-30))).toBe(1);
+    expect(alumbraHacia(VERDE, g(-30))).toBe(0);
+  });
+
+  it("y de espaldas, la blanca sola: se aleja", () => {
+    expect(alumbraHacia(BLANCA, g(180))).toBe(1);
+    expect(alumbraHacia(VERDE, g(180))).toBe(0);
+    expect(alumbraHacia(ROJA, g(180))).toBe(0);
+    // Y de frente, la blanca no.
+    expect(alumbraHacia(BLANCA, 0)).toBe(0);
+  });
+});
+
+describe("cada clase con su equipo", () => {
+  it("los de pasaje, dos balizas y destellos en las puntas y en la cola", () => {
+    for (const silueta of ["cola-en-t", "reactor", "cuatrimotor"] as const)
+      expect(equipoDe(silueta)).toEqual(DE_PASAJE);
+  });
+
+  it("la avioneta de ala alta, la baliza en la deriva y el faro en el ala", () => {
+    expect(equipoDe("ala-alta")).toEqual({
+      baliza: "deriva",
+      estroboscopicas: "puntas",
+      rodaje: "ala",
+    });
+  });
+
+  it("y una avioneta del tráfico no enciende lo que no lleva", () => {
+    const l = new LucesDeUnAvion(
+      sitiosPorMedidas(11),
+      materialDeLuces(),
+      0,
+      equipoDe("ala-alta"),
+    );
+    l.paso(0, lucesDelTrafico("volando", 500));
+    const t = l.tamanosAhora;
+    // Sin baliza de abajo ni destello en la cola.
+    expect(t[4]).toBe(0);
+    expect(t[7]).toBe(0);
+    // Y con todo lo demás: tres de navegación, una baliza, dos destellos y
+    // los dos focos.
+    expect(t.filter((x) => x > 0)).toHaveLength(8);
   });
 });
 

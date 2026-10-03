@@ -7514,6 +7514,33 @@ button.motor__tecla::after {
 }
 
 /*
+ * **Las luces de otro avión de noche**, sobre su trozo de cielo oscuro: el
+ * rojo y el verde de verdad, que sobre el barro de la tarjeta no se
+ * distinguirían, y la silueta apenas, que de noche no se ve más. Ver
+ * `NOCHE` en `ui/senal.ts`.
+ */
+.senal__noche {
+  fill: #0b1322;
+}
+
+.senal__silueta {
+  fill: var(--tinta);
+  opacity: 0.32;
+}
+
+.senal__luz-roja {
+  fill: #ff4a3d;
+}
+
+.senal__luz-verde {
+  fill: #3ee066;
+}
+
+.senal__luz-blanca {
+  fill: #ffffff;
+}
+
+/*
  * La letra de la calle es un dato, no una palabra.
  *
  * Una «A» pintada en el suelo se reconoce sin saber leer, igual que el número

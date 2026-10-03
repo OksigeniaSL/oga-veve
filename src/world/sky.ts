@@ -36,24 +36,20 @@
  */
 
 import {
-  AdditiveBlending,
   BackSide,
-  BufferGeometry,
   CanvasTexture,
   Color,
   DirectionalLight,
   DoubleSide,
-  Float32BufferAttribute,
   Fog,
   FogExp2,
   Group,
   HemisphereLight,
   type Material,
+  Matrix3,
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
-  Points,
-  PointsMaterial,
   ShaderMaterial,
   SphereGeometry,
   type Texture,
@@ -72,8 +68,13 @@ import {
   SE_VE_DENTRO,
   umbralDeLaNube,
 } from "./capa-de-nubes";
+import {
+  type CieloDeAhora,
+  cieloDe,
+  instanteDeLaHora,
+} from "./cielo-de-noche";
 import { factorDeCurvatura } from "./curvatura";
-import { mulberry32 } from "./noise";
+import { cargarEstrellas, crearCieloEstrellado } from "./estrellas";
 import type { Scenario } from "./scenarios";
 
 /*
@@ -608,10 +609,58 @@ const FRAGMENT_SHADER = /* glsl */ `
    * \`Terrain.vestirElAgua\`.
    */
   uniform float radioDelAgua;
+  /*
+   * **La Vía Láctea**: de la cúpula a coordenadas galácticas, y cuánta se
+   * ve —nada de día, nada con la capa cerrada—. Ver \`viaLacteaEn\`.
+   */
+  uniform mat3 alGalactico;
+  uniform float viaLactea;
   varying vec3 vDireccion;
   varying vec3 vVista;
   ${GLSL_COMUN}
   ${GLSL_DEL_SOL}
+
+  /*
+   * **La Vía Láctea, en su sitio de esta noche.** No es una textura pegada al
+   * cielo: es el plano de la galaxia, que se cuenta en cada píxel con la
+   * matriz galáctica de la IAU girada con el cielo de esta hora. Así cruza
+   * por donde cruza —de Sagitario al Cisne en las noches de octubre— y se
+   * pone y sale con las estrellas.
+   *
+   * Tres cosas que se ven a simple vista en un cielo de campo, y nada más:
+   * la banda, estrecha y con un halo más ancho; **más brillante hacia el
+   * centro de la galaxia**, en Sagitario y Escorpio, que es por lo que en
+   * Paraguay se ve mucho mejor que en Europa; y **la Gran Grieta**, el polvo
+   * que la parte en dos desde el Cisne hasta Sagitario.
+   *
+   * En lineal y sumada al cielo: es luz. Cuesta un producto de matriz y tres
+   * exponenciales en los píxeles de cielo cerca de la banda, y solo de noche:
+   * de día \`viaLactea\` es cero y no se calcula. Medido con la tarjeta del
+   * portátil, cinco centésimas de milisegundo por cuadro. Ver
+   * \`MEDIDO_DE_NOCHE\`.
+   */
+  vec3 viaLacteaEn(vec3 dir) {
+    vec3 g = alGalactico * dir;
+    /*
+     * Sin arcos: el seno de la latitud galáctica es la Z, y a lo que importa
+     * —treinta grados del plano— seno y ángulo son casi lo mismo. Más allá
+     * la banda ya no suma nada que se vea y no se calcula.
+     */
+    if (abs(g.z) > 0.5) return vec3(0.0);
+    float b2 = g.z * g.z;
+    float banda = exp(-b2 * 55.0) * 0.65 + exp(-b2 * 9.0) * 0.35;
+    // La longitud por su coseno y su seno, en el plano.
+    vec2 l = g.xy / max(length(g.xy), 1e-4);
+    float centro = 0.3 + 0.7 * exp((l.x - 1.0) * 1.6);
+    // Al cuadrado a mano: \`pow\` de un negativo no está definido, y en la
+    // NVIDIA eso es un píxel negro. Ver «ningún píxel del cielo sale NaN».
+    float grieta = (g.z - 0.02) / 0.035;
+    float polvo = exp(-grieta * grieta)
+      * smoothstep(-0.39, 0.0, l.y) * smoothstep(0.17, 0.54, l.x);
+    float alto = sobreElHorizonte(dir);
+    return vec3(0.62, 0.68, 0.85) * banda * centro * (1.0 - 0.55 * polvo)
+      * smoothstep(0.02, 0.2, alto);
+  }
 
   void main() {
     vec3 dir = normalize(vDireccion);
@@ -689,6 +738,7 @@ const FRAGMENT_SHADER = /* glsl */ `
         float rasante = rasanteEn(sobreElHorizonte(dir));
         sky = conElSol(sky, disc, rasante);
       }
+      if (viaLactea > 0.0) sky += viaLacteaEn(dir) * viaLactea;
       // Y a pantalla en sRGB, como el mar de arriba y como todo lo demás.
       sky = sRGBTransferOETF(vec4(sky, 1.0)).rgb;
     }
@@ -1055,6 +1105,25 @@ export interface SkyRig {
   /** Qué hora es ahora mismo. */
   readonly hora: number;
   /**
+   * **El cielo de noche de esta hora y este sitio**: dónde están las
+   * estrellas, la Luna y el Sol de verdad, en los ejes del juego. Ver
+   * `cielo-de-noche.ts`. Lo lee la ventanilla para señalar la Cruz del Sur o
+   * la Polar.
+   */
+  readonly cielo: CieloDeAhora | null;
+  /**
+   * Cuánto se ven las estrellas ahora mismo desde el ojo, de 0 a 1: lo que
+   * deja la hora y lo que deja la capa de nubes. Cero mientras el catálogo
+   * no ha llegado: lo que no se pinta no se señala.
+   */
+  readonly seVenLasEstrellas: number;
+  /**
+   * El día del cielo de noche. Es el de quien juega; se cambia con
+   * `?fecha=AAAA-MM-DD` para mirar otro —la Cruz del Sur alta es de las
+   * noches de otoño, no de las de octubre—.
+   */
+  ponerFecha(fecha: Date): void;
+  /**
    * La capa de nubes puesta, en altitudes del mundo, o `null` sin capa. Ver
    * `ponerNubes`.
    */
@@ -1177,53 +1246,6 @@ function solALaHora(
       ? 90 + (azimutMediodia - 90) * (claro / 0.5)
       : azimutMediodia + (270 - azimutMediodia) * ((claro - 0.5) / 0.5);
   return { altura, azimut };
-}
-
-/**
- * Las estrellas: mil doscientos puntos en la esfera, siempre las mismas.
- *
- * Semilla fija por lo mismo que las casas: un cielo que se sortea cada partida
- * no se aprende, y aprenderse el cielo es de las cosas que este juego debería
- * poder enseñar. Se agrupan un poco hacia una banda, que es la vía láctea de
- * los pobres y basta para que no parezca papel picado.
- */
-function estrellas(): Points {
-  const cuantas = 1200;
-  const posiciones = new Float32Array(cuantas * 3);
-  const tamanos = new Float32Array(cuantas);
-  const sorteo = mulberry32(0xc1e10);
-
-  for (let i = 0; i < cuantas; i++) {
-    // Distribución uniforme en la esfera: el coseno de la latitud, no la
-    // latitud. Sorteando el ángulo directamente se amontonan en los polos.
-    const z = sorteo() * 2 - 1;
-    const r = Math.sqrt(1 - z * z);
-    const a = sorteo() * Math.PI * 2;
-    // Solo la mitad de arriba: debajo del horizonte no se ven.
-    const y = Math.abs(z) * 0.92 + 0.04;
-    posiciones[i * 3] = r * Math.cos(a);
-    posiciones[i * 3 + 1] = y;
-    posiciones[i * 3 + 2] = r * Math.sin(a);
-    tamanos[i] = sorteo();
-  }
-
-  const geo = new BufferGeometry();
-  geo.setAttribute("position", new Float32BufferAttribute(posiciones, 3));
-  const material = new PointsMaterial({
-    color: 0xdce6f2,
-    size: 0.0022,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 0,
-    depthWrite: false,
-    blending: AdditiveBlending,
-  });
-  // Sin la curva de la Tierra: las estrellas están en el infinito, y su
-  // esfera va pegada al ojo.
-  const puntos = new Points(geo, sinCurva(material));
-  puntos.name = "estrellas";
-  puntos.renderOrder = -1;
-  return puntos;
 }
 
 /**
@@ -1448,6 +1470,22 @@ function nubes(escenario: Scenario, umbral: { value: number }): Group {
   return grupo;
 }
 
+/**
+ * El cielo de los escenarios sin aeródromo extraído: los dos inventados están
+ * en Paraguay de nombre, y se les pone el de Asunción.
+ */
+const CIELO_DE_ASUNCION = { lat: -25.2637, lon: -57.5759 } as const;
+
+/**
+ * **Lo que pesa la noche**, puesto mirando con la tarjeta del portátil.
+ *
+ * `viaLactea` es cuánta luz suma la banda en su sitio más brillante, en
+ * lineal: un cielo de noche cerrada es `0x03050c`, unas milésimas, y la Vía
+ * Láctea a simple vista es más o menos otro tanto por encima. Más que eso y
+ * parece una nube; menos y no llega a un escalón de color.
+ */
+export const MEDIDO_DE_NOCHE = { viaLactea: 0.02 } as const;
+
 export function createSky(scenario: Scenario): SkyRig {
   const group = new Group();
 
@@ -1512,6 +1550,9 @@ export function createSky(scenario: Scenario): SkyRig {
       // Los de la niebla los pone three.js cada fotograma con `fog: true`;
       // la cúpula no se empaña, pero el mar que pinta debajo sí.
       ...UniformsUtils.clone(UniformsLib.fog),
+      // La Vía Láctea, solo en la cúpula. Ver `viaLacteaEn`.
+      alGalactico: { value: new Matrix3() },
+      viaLactea: { value: 0 },
     },
     vertexShader: VERTEX_SHADER,
     fragmentShader: FRAGMENT_SHADER,
@@ -1553,9 +1594,47 @@ export function createSky(scenario: Scenario): SkyRig {
   dome.name = "cielo";
   group.add(dome);
 
-  const cielosEstrellados = estrellas();
-  cielosEstrellados.scale.setScalar(scenario.size * 0.98);
-  group.add(cielosEstrellados);
+  /*
+   * **Las estrellas de verdad y la Luna**, en el sitio y el día del vuelo, y
+   * la Vía Láctea en la cúpula. Ver `estrellas.ts` y `cielo-de-noche.ts`.
+   *
+   * El sitio es el del aeródromo; los dos escenarios inventados están en
+   * Paraguay de nombre, y se les da el cielo de Asunción. El día es el de
+   * quien juega, salvo que se pida otro: ver `ponerFecha`.
+   */
+  const estrellado = crearCieloEstrellado();
+  group.add(estrellado.grupo);
+  const origen = scenario.aerodrome?.origin ?? CIELO_DE_ASUNCION;
+  const sitio = { lat: origen.lat, lon: origen.lon, fecha: new Date() };
+  let cielo: CieloDeAhora | null = null;
+  /** Lo que deja ver la hora, de 0 a 1. Las nubes lo bajan en `alPaso`. */
+  let deNoche = 0;
+  /** Y lo que dejan las nubes desde donde está el ojo. Ver `alPaso`. */
+  let porLasNubes = 1;
+  let catalogo: "sin pedir" | "pidiendo" | "puesto" = "sin pedir";
+  const pedirEstrellas = (): void => {
+    if (catalogo !== "sin pedir") return;
+    catalogo = "pidiendo";
+    void cargarEstrellas().then((c) => {
+      if (!c) {
+        // Se vuelve a pedir la próxima vez que se ponga la hora.
+        catalogo = "sin pedir";
+        return;
+      }
+      estrellado.ponerCatalogo(c);
+      catalogo = "puesto";
+    });
+  };
+  const ponerElBrilloDeNoche = (): void => {
+    const brillo = deNoche * porLasNubes;
+    estrellado.ponerBrillo(brillo);
+    /*
+     * La Vía Láctea es lo primero que se come la luz: con el crepúsculo
+     * náutico todavía no se ve, y solo sale entera con la noche cerrada.
+     */
+    const cerrada = Math.max(0, Math.min(1, (deNoche - 0.55) / 0.45));
+    material.uniforms.viaLactea!.value = MEDIDO_DE_NOCHE.viaLactea * cerrada * porLasNubes;
+  };
 
   /** El recorte de las cinco láminas, uno para todas. Ver `ponerNubes`. */
   const umbral = { value: umbralDeLaNube(0.45) };
@@ -1620,6 +1699,16 @@ export function createSky(scenario: Scenario): SkyRig {
     sunDirection,
     materialDelAgua,
     hora: 12,
+    get cielo() {
+      return cielo;
+    },
+    get seVenLasEstrellas() {
+      return estrellado.cuantas > 0 ? deNoche * porLasNubes : 0;
+    },
+    ponerFecha(fecha: Date) {
+      sitio.fecha = fecha;
+      rig.ponerHora(rig.hora);
+    },
     get capa() {
       return capaPuesta();
     },
@@ -1694,8 +1783,20 @@ export function createSky(scenario: Scenario): SkyRig {
           .copy(luz)
           .multiplyScalar(bajoLaCapa.nubes);
 
-      const cielo = group.getObjectByName("estrellas") as Points | undefined;
-      if (cielo) (cielo.material as PointsMaterial).opacity = m.estrellas;
+      /*
+       * **Y el cielo de noche de esta hora**: las estrellas, la Luna y la Vía
+       * Láctea donde están en este sitio a esta hora de sol. Ver
+       * `instanteDeLaHora`.
+       */
+      cielo = cieloDe(instanteDeLaHora(sitio.fecha, h, sitio.lon), sitio.lat, sitio.lon);
+      estrellado.ponerCielo(cielo);
+      const g = cielo.galacticasDesdeMundo;
+      (material.uniforms.alGalactico!.value as Matrix3).set(
+        g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7], g[8],
+      );
+      deNoche = m.estrellas;
+      if (deNoche > 0) pedirEstrellas();
+      ponerElBrilloDeNoche();
 
       /*
        * **La niebla toma el color del horizonte.**
@@ -1761,6 +1862,15 @@ export function createSky(scenario: Scenario): SkyRig {
      */
     const cubre = capa ? Math.max(0, Math.min(1, (capa.tapadura - 0.5) / 0.5)) : 0;
     bajoLaCapa.sol = 1 - 0.75 * cubre * (1 - subido);
+    /*
+     * **Y las estrellas, con la misma capa.** Debajo de un cielo cubierto no
+     * se ve ninguna; con la capa rota, las de los huecos —la propia nube tapa
+     * las que tiene delante—; y al salir por encima, todas. Dentro de la
+     * nube, ni una. Ver `ponerElBrilloDeNoche`.
+     */
+    const antes = porLasNubes;
+    porLasNubes = (1 - cubre * (1 - subido)) * (1 - enLaNube);
+    if (Math.abs(porLasNubes - antes) > 1e-3) ponerElBrilloDeNoche();
     bajoLaCapa.nubes = capa ? 1 - 0.45 * capa.tapadura * (1 - subido) : 1;
     sun.intensity = deLaHora.sol * bajoLaCapa.sol;
     /*
@@ -1839,6 +1949,7 @@ export function createSky(scenario: Scenario): SkyRig {
     );
     compartidos.pendienteDelHorizonte.value = pendiente;
     compartidos.senoDelHorizonte.value = seno;
+    estrellado.ponerHorizonte(seno);
   };
   return rig;
 }
@@ -1919,8 +2030,6 @@ export function updateSky(rig: SkyRig, cameraPosition: Vector3): void {
   );
   const dome = rig.group.getObjectByName("cielo");
   if (dome) dome.position.copy(cameraPosition);
-  const estrellado = rig.group.getObjectByName("estrellas");
-  if (estrellado) estrellado.position.copy(cameraPosition);
   // Las nubes siguen a la cámara **solo en horizontal y a saltos**: en vertical
   // están donde están, que es lo que permite atravesarlas. Ver `dondeVaElBanco`.
   const banco = rig.group.getObjectByName("nubes");

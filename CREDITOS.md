@@ -222,6 +222,30 @@ escenarios españoles y de EOX sobre datos Sentinel en Silvio Pettirossi, y las
 dos están en la tabla de arriba. Un fichero de licencias que afirma lo
 contrario de lo que hace el código es peor que no tenerlo.
 
+## El cielo de noche
+
+| Fuente | Uso | Licencia |
+| ------ | --- | -------- |
+| [Yale Bright Star Catalogue](https://heasarc.gsfc.nasa.gov/W3Browse/star-catalog/bsc5p.html), 5.ª edición revisada (Hoffleit y Warren, 1991), en la tabla **BSC5P de la HEASARC** (NASA) | Las 5080 estrellas hasta la magnitud 6,0 que se ven de noche, cada una en su sitio, con su brillo y su color: `data/cielo/estrellas.json`, sacado con `scripts/bsc5-a-estrellas.mjs` | **Dominio público**: obra del Gobierno de EE. UU. |
+
+**Cómo se comprobó la licencia**, el 3 de octubre de 2026: la NASA publica
+esa misma tabla en [catalog.data.gov](https://catalog.data.gov/dataset/bright-star-catalog)
+—«Bright Star Catalog», editor *High Energy Astrophysics Science Archive
+Research Center*— con la licencia
+[`https://www.usa.gov/government-works`](https://www.usa.gov/government-works),
+que es la de las obras del Gobierno de EE. UU.: sin derechos de autor y sin
+condiciones. Se baja de ahí, de la HEASARC, y no de una copia cualquiera,
+precisamente para que la licencia sea la de esa página.
+
+Y no el HYG, que es la otra base de estrellas que se usa en todas partes: va
+con **CC BY-SA**, y el *share-alike* obligaría a dar con la misma licencia lo
+que se construya con él. Para cinco mil puntos con su brillo, el de Yale da lo
+mismo sin ataduras.
+
+La Luna, el Sol de verdad y la Vía Láctea no vienen de ningún fichero: son
+cuentas —las fórmulas de baja precisión del *Astronomical Almanac* y la
+matriz galáctica de la IAU—, escritas en `src/world/cielo-de-noche.ts`.
+
 ## Software de terceros
 
 | Paquete                                        | Uso                              | Licencia   |

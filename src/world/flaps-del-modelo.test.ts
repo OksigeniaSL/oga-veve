@@ -9,7 +9,6 @@
  * veinte. Esto lo caza sin abrir el juego.
  */
 import { describe, expect, it } from "vitest";
-import type { Points } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT } from "../flight/aircraft";
 import { DETENTES } from "../flight/flaps";
@@ -261,12 +260,10 @@ describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
         "",
       );
       modelo.scene.updateWorldMatrix(true, true);
-      const foco = crearLucesDePosicion(a, modelo.scene).grupo
-        .children[2] as Points;
-      const p = foco.geometry.getAttribute("position");
-      expect(p.getX(0)).toBeCloseTo(antes[0], 3);
-      expect(p.getY(0)).toBeCloseTo(antes[1], 3);
-      expect(p.getZ(0)).toBeCloseTo(antes[2], 3);
+      const foco = crearLucesDePosicion(a, modelo.scene).sitios.foco;
+      expect(Math.abs(foco.x)).toBeCloseTo(antes[0], 3);
+      expect(foco.y).toBeCloseTo(antes[1], 3);
+      expect(foco.z).toBeCloseTo(antes[2], 3);
     });
   }
 });

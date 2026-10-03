@@ -28,21 +28,36 @@
  * Las de posición se llevan encendidas siempre en vuelo, no solo de noche. Lo
  * que cambia de día es que no se ven, y eso sale gratis: son puntos pequeños
  * y de día se los come la luz, igual que pasa de verdad.
+ *
+ * ## Y las mismas que los demás, con las mismas reglas
+ *
+ * Tu avión llevaba tres de navegación que se veían **desde todos lados**, una
+ * baliza y los focos; los demás, ya once, cada una alumbrando hacia donde
+ * alumbra —ver `luces-del-trafico.ts`—. Visto desde la cámara de fuera, por
+ * detrás, tu avión enseñaba los dos focos de aterrizaje encendidos y la roja
+ * y la verde, que desde atrás no se ven: la lección al revés, en el avión que
+ * más se mira. Ahora es la misma clase, con el equipo de tu avión —la baliza
+ * en la deriva de la avioneta, abajo y arriba en el reactor—, los destellos
+ * en la pista y en vuelo, el faro de rodaje rodando, y cada una en su sector.
  */
 
 import {
-  AdditiveBlending,
   Box3,
-  BufferAttribute,
-  BufferGeometry,
   CanvasTexture,
   Group,
   type Mesh,
   Object3D,
-  Points,
-  PointsMaterial,
   Vector3,
 } from "three";
+import { modeloPorId } from "../flight/flota";
+import {
+  type Encendidas,
+  equipoDe,
+  LucesDeUnAvion,
+  materialDeLuces,
+  type SitiosDeLuz,
+  sitiosDeLuz,
+} from "./luces-del-trafico";
 
 /**
  * El dibujo de una luz: un punto redondo que se apaga hacia el borde.
@@ -77,21 +92,6 @@ export function laRedonda(): CanvasTexture | null {
   return redonda;
 }
 
-/** Los tres colores de posición, tal cual los fija la norma. */
-const VERDE = 0x2ad04a;
-const ROJA = 0xe8352c;
-const BLANCA = 0xf2f4f0;
-
-/**
- * Lo que mide una luz en pantalla, en píxeles.
- *
- * Nueve. Una luz de navegación de verdad se ve a kilómetros como un punto, no
- * como una bombilla: lo que llega de ella es su brillo, no su tamaño. Por eso
- * no se atenúa con la distancia —`sizeAttenuation` apagado— que es lo mismo
- * que ya hacen las luces del aeropuerto.
- */
-const TAMANO = 9;
-
 /** Cada cuántos segundos da un destello la de choque. */
 export const CADA_DESTELLO = 1.1;
 
@@ -110,12 +110,16 @@ export function destellaAhora(segundos: number): boolean {
 
 export interface LucesDePosicion {
   readonly grupo: Group;
+  /** Dónde ha puesto cada luz: las puntas, la cola, la deriva, el foco… */
+  readonly sitios: SitiosDeLuz;
+  /** Las luces mismas, para las pruebas. Ver `LucesDeUnAvion`. */
+  readonly luces: LucesDeUnAvion;
   /**
-   * Un paso del reloj del vuelo.
-   *
-   * `motor` enciende la de choque y `aterrizando` el foco. Ver `paso` abajo.
+   * Un paso del reloj del vuelo: qué va encendido ahora. Lo decide la misma
+   * tabla que el tráfico, con lo que está haciendo tu avión. Ver
+   * `faseDelTuyo` y `lucesDelTrafico`.
    */
-  paso(segundos: number, motor: boolean, aterrizando: boolean): void;
+  paso(segundos: number, encendidas: Encendidas): void;
 }
 
 /**
@@ -234,6 +238,30 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
 
   if (!Number.isFinite(ala.x) || !Number.isFinite(alaIzquierda.x)) return null;
   /*
+   * **Y en un ala con winglet, en el pie del winglet, no en su punta.**
+   *
+   * El vértice más exterior de un ala con winglet está arriba del todo del
+   * winglet, dos o tres metros por encima del ala: mirado de frente con
+   * teleobjetivo, la roja y la verde de un reactor flotaban sobre las puntas.
+   * La luz de navegación de esos aviones va en la punta del ala, al pie del
+   * winglet. Así que de lo que queda a un tres por ciento de la envergadura
+   * del extremo, el punto más bajo; en un ala sin winglet es la misma punta.
+   */
+  const casiEnLaPunta = medido.x * 0.03;
+  const alPie = (lado: 1 | -1, punta: Vector3): void => {
+    const extremo = punta.x;
+    cuerpo.traverse((o) => {
+      const pos = (o as Mesh).geometry?.getAttribute?.("position");
+      if (!pos) return;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        if (lado * (extremo - v.x) <= casiEnLaPunta && v.y < punta.y) punta.copy(v);
+      }
+    });
+  };
+  alPie(1, ala);
+  alPie(-1, alaIzquierda);
+  /*
    * **Y un dedo por fuera de la chapa.**
    *
    * Clavada en el vértice, la luz queda a ras del ala y la prueba de
@@ -260,14 +288,23 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
 }
 
 /**
- * Las luces de una aeronave, colocadas por su envergadura y su largo.
+ * **Lo que miden las de tu avión**, veces las del tráfico.
  *
- * No hace falta saber de qué avión es: las puntas de ala y la cola están
- * donde están en todos, y es lo que hace que esto valga para los seis y para
- * los que vengan.
+ * Uno y medio. El tráfico se ve casi siempre de lejos y sus luces son puntos
+ * pequeños; el tuyo se ve a veinte metros desde la cámara de fuera, y a ese
+ * tamaño una luz de seis píxeles en la punta de un ala de once metros no se
+ * encuentra. Son las mismas luces y la misma regla; solo cambia lo cerca que
+ * se miran.
+ */
+export const LAS_TUYAS = 1.5;
+
+/**
+ * Las luces de una aeronave, en las puntas de verdad de su modelo y con el
+ * equipo de su clase: la avioneta con la baliza en la deriva, el reactor con
+ * dos, arriba y abajo. Ver `equipoDe`.
  */
 export function crearLucesDePosicion(
-  a: { readonly wingSpan: number; readonly chord: number },
+  a: { readonly wingSpan: number; readonly chord: number; readonly id?: string },
   /**
    * El avión ya montado, si lo hay: de él se sacan **las puntas de ala de
    * verdad**.
@@ -282,119 +319,41 @@ export function crearLucesDePosicion(
    */
   cuerpo?: Object3D,
 ): LucesDePosicion {
-  const p = cuerpo ? puntasDe(cuerpo) : null;
-  const media = a.wingSpan / 2;
-  const ala = p?.ala ?? new Vector3(media, 0, 0);
-  const alaIzquierda = p?.alaIzquierda ?? new Vector3(-media, 0, 0);
-  const cola = p?.cola ?? new Vector3(0, a.chord * 0.35, a.chord * 1.9);
-  const lomo = p?.lomo ?? new Vector3(0, a.chord * 0.42, 0);
-  const dondeFoco = p?.foco ?? new Vector3(media * 0.28, 0, -a.chord);
-  const sitios: [Vector3, number][] = [
-    // Punta de ala derecha: verde. Estribor.
-    [ala, VERDE],
-    // Punta de ala izquierda: roja. Babor.
-    [alaIzquierda, ROJA],
-    // Cola: blanca, mirando atrás.
-    [cola, BLANCA],
-  ];
-
+  const sitios = (cuerpo ? sitiosDeLuz(cuerpo) : null) ?? porLaFicha(a);
+  const material = materialDeLuces();
+  material.size = LAS_TUYAS;
+  const silueta = (a.id ? modeloPorId(a.id)?.silueta : undefined) ?? "reactor";
+  const luces = new LucesDeUnAvion(sitios, material, 0, equipoDe(silueta));
   const grupo = new Group();
   grupo.name = "luces-de-posicion";
-
-  const posiciones = new Float32Array(sitios.length * 3);
-  const colores = new Float32Array(sitios.length * 3);
-  sitios.forEach(([donde, color], i) => {
-    posiciones[i * 3] = donde.x;
-    posiciones[i * 3 + 1] = donde.y;
-    posiciones[i * 3 + 2] = donde.z;
-    colores[i * 3] = ((color >> 16) & 255) / 255;
-    colores[i * 3 + 1] = ((color >> 8) & 255) / 255;
-    colores[i * 3 + 2] = (color & 255) / 255;
-  });
-  const geo = new BufferGeometry();
-  geo.setAttribute("position", new BufferAttribute(posiciones, 3));
-  geo.setAttribute("color", new BufferAttribute(colores, 3));
-  const fijas = new Points(
-    geo,
-    new PointsMaterial({
-      size: TAMANO,
-      sizeAttenuation: false,
-      vertexColors: true,
-      transparent: true,
-      depthWrite: false,
-      blending: AdditiveBlending,
-      map: laRedonda(),
-    }),
-  );
-  grupo.add(fijas);
-
-  // Y la de choque, roja y arriba del fuselaje, que va por su cuenta.
-  const choqueGeo = new BufferGeometry();
-  choqueGeo.setAttribute(
-    "position",
-    new BufferAttribute(new Float32Array([lomo.x, lomo.y, lomo.z]), 3),
-  );
-  const choque = new Points(
-    choqueGeo,
-    new PointsMaterial({
-      size: TAMANO * 1.5,
-      sizeAttenuation: false,
-      color: ROJA,
-      transparent: true,
-      depthWrite: false,
-      blending: AdditiveBlending,
-      map: laRedonda(),
-    }),
-  );
-  grupo.add(choque);
-
-  /*
-   * **Y el foco de aterrizaje, que es el que se ve desde fuera.**
-   *
-   * Dos luces blancas grandes en la raíz del ala, mirando adelante. Aquí no
-   * son un haz que ilumine el suelo —eso es un foco de verdad en el motor de
-   * render y cuesta— sino lo que se ve de él desde fuera, que es un avión con
-   * dos puntos muy brillantes delante. Es lo que se reconoce en aproximación
-   * desde el suelo, y es lo que se preguntó.
-   */
-  const focoGeo = new BufferGeometry();
-  const xFoco = Math.abs(dondeFoco.x);
-  focoGeo.setAttribute(
-    "position",
-    new BufferAttribute(
-      new Float32Array([
-        xFoco,
-        dondeFoco.y,
-        dondeFoco.z,
-        -xFoco,
-        dondeFoco.y,
-        dondeFoco.z,
-      ]),
-      3,
-    ),
-  );
-  const foco = new Points(
-    focoGeo,
-    new PointsMaterial({
-      size: TAMANO * 2.2,
-      sizeAttenuation: false,
-      color: 0xfff6e0,
-      transparent: true,
-      depthWrite: false,
-      blending: AdditiveBlending,
-      map: laRedonda(),
-    }),
-  );
-  foco.visible = false;
-  grupo.add(foco);
-
+  grupo.add(luces.puntos);
   return {
     grupo,
-    paso(segundos, motor, aterrizando) {
-      // La de choque solo con el motor en marcha, que es su regla de verdad.
-      choque.visible = motor && destellaAhora(segundos);
-      // Y el foco cuando toca: con el motor parado no alumbra nadie.
-      foco.visible = motor && aterrizando;
+    sitios,
+    luces,
+    paso(segundos, encendidas) {
+      luces.paso(segundos, encendidas);
     },
+  };
+}
+
+/**
+ * Los sitios sacados de la ficha, sin modelo: media envergadura a cada lado,
+ * la cola detrás del ala, el foco en la raíz y la deriva sobre la cola.
+ */
+function porLaFicha(a: {
+  readonly wingSpan: number;
+  readonly chord: number;
+}): SitiosDeLuz {
+  const media = a.wingSpan / 2;
+  return {
+    alaDerecha: new Vector3(media, 0, 0),
+    alaIzquierda: new Vector3(-media, 0, 0),
+    cola: new Vector3(0, a.chord * 0.35, a.chord * 1.9),
+    lomo: new Vector3(0, a.chord * 0.42, 0),
+    panza: new Vector3(0, -a.chord * 0.3, 0),
+    foco: new Vector3(media * 0.28, 0, -a.chord),
+    morro: new Vector3(0, -a.chord * 0.2, -a.chord * 1.6),
+    deriva: new Vector3(0, a.chord * 0.9, a.chord * 1.7),
   };
 }
