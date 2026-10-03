@@ -31,6 +31,7 @@ import {
 import { giroDelModelo } from "./rumbo";
 import {
   desfaseDe,
+  equipoDe,
   LucesDeUnAvion,
   lucesDelTrafico,
   materialDeLuces,
@@ -154,6 +155,7 @@ export function crearAvionesDeRuta(
             sitios,
             materialDeLasLuces,
             desfaseDe(a.id),
+            equipoDe(a.silueta),
           );
           malla.add(suyas.puntos);
           luces.set(a.id, suyas);

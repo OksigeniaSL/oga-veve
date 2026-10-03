@@ -61,10 +61,12 @@ import {
   MeshLambertMaterial,
   type Material,
   type Object3D,
+  Vector3,
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
+import { puntasDe } from "./luces-de-posicion";
 
 /** Una librea del tráfico: el blanco y el color que la distingue. */
 export interface LibreaDelTrafico {
@@ -110,6 +112,15 @@ export interface CuerpoHorneado {
   readonly pintado: BufferGeometry;
   /** Triángulos entre las dos, para poder medirlo. */
   readonly triangulos: number;
+  /**
+   * **Dónde va el foco de aterrizaje**, en los ejes del cuerpo horneado: en
+   * el borde de ataque del ala, junto a la raíz. Se busca en el modelo antes
+   * de fundirlo, que es cuando todavía se sabe qué pieza es el ala; en la
+   * geometría fundida lo más adelantado junto al fuselaje es la toma de aire
+   * del motor, y ahí salían los focos del tráfico, como los faros de un
+   * coche. Ver `puntasDe`.
+   */
+  readonly foco?: Vector3;
 }
 
 /**
@@ -166,6 +177,8 @@ export function hornear(
   ruedas: number,
 ): CuerpoHorneado | null {
   raiz.updateMatrixWorld(true);
+  // El foco, en el ala con nombre, antes de que el nombre se pierda.
+  const focoDelModelo = puntasDe(raiz)?.foco ?? null;
   const fijas: BufferGeometry[] = [];
   const pintadas: BufferGeometry[] = [];
   const color = new Color();
@@ -240,7 +253,18 @@ export function hornear(
         ? (pintado.index?.count ?? pintado.getAttribute("position").count)
         : 0)) /
     3;
-  return { fijo, pintado: otro, triangulos: Math.round(triangulos) };
+  // Y el foco, con el mismo traslado y la misma escala que el cuerpo.
+  const foco = focoDelModelo
+    ?.clone()
+    .sub(new Vector3(cx, caja.min.y, cz))
+    .multiplyScalar(escala)
+    .add(new Vector3(0, -ruedas, 0));
+  return {
+    fijo,
+    pintado: otro,
+    triangulos: Math.round(triangulos),
+    ...(foco ? { foco } : {}),
+  };
 }
 
 /**

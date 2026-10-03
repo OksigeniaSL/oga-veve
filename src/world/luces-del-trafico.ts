@@ -32,6 +32,28 @@
  *
  * Ver `lucesDelTrafico`, que es la tabla escrita y comprobada sin navegador.
  *
+ * ## Y cada uno lleva las suyas, que no son las mismas
+ *
+ * La norma de cuándo es una; **dónde van**, depende del avión. En uno de
+ * pasaje —el turbohélice de las islas, el reactor, el grande— la baliza roja
+ * va dos veces, encima y debajo del fuselaje, y los destellos en las dos
+ * puntas y en la cola; el faro de rodaje, en la pata de morro. En una
+ * avioneta de escuela de ala alta la baliza va una sola vez, en lo alto de la
+ * deriva, los destellos solo en las puntas, y el faro de rodaje en el borde
+ * del ala junto al de aterrizaje. Y el biplano fumigador no lleva destellos:
+ * su luz anticolisión es la baliza. Ver `equipoDe`.
+ *
+ * Lo que manda en el cuándo y en el cuántos es la norma de certificación —el
+ * 14 CFR 25.1385 a 25.1401 para los de transporte y su gemela de la parte 23
+ * para los pequeños— y el Anexo 2 de la OACI, que fija los sectores de cada
+ * luz de navegación y pide la anticolisión con los motores en marcha. La
+ * cadencia de los destellos, entre cuarenta y cien por minuto, es la del
+ * 25.1401: la baliza y los destellos de aquí van a cincuenta y cinco y a
+ * cincuenta.
+ *
+ * Y **el tuyo lleva las mismas**, con las mismas reglas: es la misma clase
+ * con el equipo de tu avión. Ver `luces-de-posicion.ts`.
+ *
  * ## Y de día, las estroboscópicas son lo que se ve
  *
  * Un reactor a cuatro kilómetros mide siete píxeles y se confunde con el
@@ -60,6 +82,7 @@ import {
   PointsMaterial,
   Vector3,
 } from "three";
+import type { Silueta } from "../flight/flota";
 import {
   destellaAhora,
   focoEncendido,
@@ -106,6 +129,8 @@ export interface Encendidas {
 export function lucesDelTrafico(
   fase: FaseDeLuces,
   altitud = 0,
+  /** Con el tren fuera, los focos van encendidos a cualquier altura. */
+  trenFuera = false,
 ): Encendidas {
   const motores = fase !== "aparcado";
   const enLaPista =
@@ -117,8 +142,95 @@ export function lucesDelTrafico(
     rodaje: fase === "rodando" || fase === "entrando",
     aterrizaje:
       fase === "carrera" ||
-      (fase === "volando" && focoEncendido(altitud, false)),
+      (fase === "volando" && focoEncendido(altitud, trenFuera)),
   };
+}
+
+/** Lo que hace falta saber de tu avión para sus luces. */
+export interface ComoVaElTuyo {
+  /** Si el motor está en marcha. */
+  readonly motor: boolean;
+  readonly enElSuelo: boolean;
+  /** Si las ruedas pisan la pista. */
+  readonly enLaPista: boolean;
+  /** Velocidad sobre el suelo, m/s. */
+  readonly velocidad: number;
+}
+
+/**
+ * Más deprisa que esto sobre la pista es correr para despegar o frenar
+ * después de tocar, m/s: unos treinta nudos. Por debajo se está entrando,
+ * alineando o saliendo de ella.
+ */
+export const DE_CARRERA = 15;
+
+/**
+ * **En qué anda tu avión, para sus luces**: la misma tabla que el tráfico,
+ * sacada de lo que tu avión está haciendo y no de un camino escrito.
+ *
+ * En el aire, volando, con el motor o sin él: la baliza y los destellos no se
+ * apagan porque se pare un motor. En el suelo, con el motor parado, aparcado;
+ * en la pista, corriendo o, despacio, entrando o saliendo, y parado en ella,
+ * alineado; y fuera de la pista, rodando o parado esperando. Ver
+ * `lucesDelTrafico`, que es quien decide qué se enciende en cada una.
+ */
+export function faseDelTuyo(a: ComoVaElTuyo): FaseDeLuces {
+  if (!a.enElSuelo) return "volando";
+  if (!a.motor) return "aparcado";
+  if (a.enLaPista)
+    return a.velocidad > DE_CARRERA
+      ? "carrera"
+      : a.velocidad > 1
+        ? "entrando"
+        : "alineado";
+  return a.velocidad > 1 ? "rodando" : "esperando";
+}
+
+/**
+ * **Qué luces lleva un avión, y dónde**, por su silueta. Ver la cabecera.
+ *
+ * - `baliza`: en lo alto de la deriva —una— o encima y debajo del fuselaje
+ *   —dos—. La de abajo es la que se ve cuando te pasa por encima.
+ * - `estroboscopicas`: ninguna, en las dos puntas, o en las puntas y en la
+ *   cola.
+ * - `rodaje`: el faro en la pata de morro, o en el borde del ala.
+ */
+export interface EquipoDeLuces {
+  readonly baliza: "deriva" | "lomo-y-panza";
+  readonly estroboscopicas: "ninguna" | "puntas" | "puntas-y-cola";
+  readonly rodaje: "morro" | "ala";
+}
+
+/** El de un avión de pasaje: el turbohélice, el reactor, el grande. */
+export const DE_PASAJE: EquipoDeLuces = {
+  baliza: "lomo-y-panza",
+  estroboscopicas: "puntas-y-cola",
+  rodaje: "morro",
+};
+
+/**
+ * El equipo de cada silueta, con el avión de verdad de su clase:
+ *
+ * - **Ala alta** (la clase del Cessna 172S): la baliza en lo alto de la
+ *   deriva, los destellos en las puntas y los dos faros en el borde del ala.
+ * - **Biplano** fumigador: la baliza en la deriva y nada de destellos; su
+ *   anticolisión es la baliza, que es lo que pide la norma.
+ * - **Bimotor de ala baja** (la clase del Seneca): la baliza en la deriva,
+ *   los destellos en las puntas y el faro de rodaje en la pata de morro.
+ * - **Los de pasaje** —el de cola en T, el reactor y el cuatrimotor—:
+ *   `DE_PASAJE`.
+ */
+export function equipoDe(silueta: Silueta): EquipoDeLuces {
+  switch (silueta) {
+    case "ala-alta":
+      return { baliza: "deriva", estroboscopicas: "puntas", rodaje: "ala" };
+    case "biplano":
+      return { baliza: "deriva", estroboscopicas: "ninguna", rodaje: "ala" };
+    case "bimotor-ala-baja":
+      return { baliza: "deriva", estroboscopicas: "puntas", rodaje: "morro" };
+    default:
+      return DE_PASAJE;
+  }
 }
 
 /** Cada cuántos segundos destellan las estroboscópicas. */
@@ -208,6 +320,8 @@ export interface SitiosDeLuz {
   readonly panza: Vector3;
   readonly foco: Vector3;
   readonly morro: Vector3;
+  /** Lo alto de la deriva: donde va la baliza de una avioneta. */
+  readonly deriva: Vector3;
 }
 
 /**
@@ -224,6 +338,7 @@ export function sitiosDeLuz(cuerpo: Object3D): SitiosDeLuz | null {
   const ancho = Math.abs(p.ala.x - p.alaIzquierda.x);
   const panza = new Vector3(0, Infinity, p.lomo.z);
   const morro = new Vector3(0, 0, Infinity);
+  const deriva = new Vector3(0, -Infinity, 0);
   const v = new Vector3();
   cuerpo.traverse((o) => {
     const pos = (o as Mesh).geometry?.getAttribute?.("position");
@@ -234,15 +349,19 @@ export function sitiosDeLuz(cuerpo: Object3D): SitiosDeLuz | null {
       // motores, que bajan más que la panza.
       if (Math.abs(v.x) > ancho * 0.04) continue;
       if (v.z < morro.z) morro.copy(v);
+      // Lo más alto por detrás del lomo: la punta de la deriva.
+      if (v.z > p.lomo.z && v.y > deriva.y) deriva.copy(v);
       if (Math.abs(v.z - p.lomo.z) < ancho * 0.15 && v.y < panza.y)
         panza.copy(v);
     }
   });
   if (!Number.isFinite(panza.y)) panza.set(0, p.lomo.y - ancho * 0.1, p.lomo.z);
   if (!Number.isFinite(morro.z)) morro.set(0, p.foco.y, p.foco.z - ancho * 0.1);
+  if (!Number.isFinite(deriva.y)) deriva.copy(p.cola).setY(p.lomo.y + ancho * 0.1);
   // Un dedo por fuera de la chapa, como las demás. Ver `puntasDe`.
   panza.y -= ancho * 0.01;
   morro.z -= ancho * 0.01;
+  deriva.y += ancho * 0.01;
   return {
     alaDerecha: p.ala,
     alaIzquierda: p.alaIzquierda,
@@ -251,6 +370,7 @@ export function sitiosDeLuz(cuerpo: Object3D): SitiosDeLuz | null {
     panza,
     foco: p.foco,
     morro: new Vector3(0, morro.y - ancho * 0.02, morro.z),
+    deriva,
   };
 }
 
@@ -275,6 +395,7 @@ export function sitiosPorMedidas(envergadura: number): SitiosDeLuz {
     panza: new Vector3(0, -0.12 * m, 0),
     foco: new Vector3(0.28 * m, 0, -0.15 * m),
     morro: new Vector3(0, -0.1 * m, -0.8 * m),
+    deriva: new Vector3(0, 0.3 * m, 0.8 * m),
   };
 }
 
@@ -310,6 +431,36 @@ export function materialDeLuces(): PointsMaterial {
   return material;
 }
 
+const grados = (g: number): number => (g * Math.PI) / 180;
+
+/**
+ * **Cuánto se pasa cada luz de su sector**, en radianes: entera hasta cinco
+ * grados más allá del borde y apagándose del todo a los veinte. Ver
+ * `HACIA_DONDE_ALUMBRA` y el 14 CFR 25.1395.
+ */
+export const DESBORDA = { entera: grados(5), hasta: grados(20) } as const;
+
+/**
+ * **Cuánto alumbra una luz hacia un lado**, de 0 a 1: `angulo` es desde el
+ * morro, a derechas, y `sector` su centro y su media apertura. Es la misma
+ * cuenta que hace la tarjeta, escrita aquí para poder comprobarla.
+ */
+export function alumbraHacia(
+  sector: readonly [number, number],
+  angulo: number,
+): number {
+  if (sector[1] >= Math.PI - 1e-6) return 1;
+  const d = Math.abs(
+    ((((angulo - sector[0] + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) %
+      (2 * Math.PI)) -
+      Math.PI,
+  );
+  const a = sector[1] + DESBORDA.entera;
+  const b = sector[1] + DESBORDA.hasta;
+  const t = Math.max(0, Math.min(1, (d - a) / (b - a)));
+  return 1 - t * t * (3 - 2 * t);
+}
+
 /**
  * **Y cada luz alumbra hacia donde alumbra**, que es la mitad de lo que
  * enseñan.
@@ -326,6 +477,16 @@ export function materialDeLuces(): PointsMaterial {
  * Se mira en el plano del avión —la dirección del ojo contada desde el
  * morro, en horizontal— y se decide en la tarjeta, luz a luz: once vértices,
  * ni una cuenta en la CPU.
+ *
+ * **Y se desbordan un poco, como las de verdad.** Con el borde a cuchillo
+ * justo en el morro, desde trescientos metros delante de un reactor no se
+ * veía ni la roja ni la verde: cada punta de ala está diecisiete metros a su
+ * lado, y desde ella el ojo queda cuatro grados hacia el otro lado del eje.
+ * Las de verdad no son así: el 14 CFR 25.1395 deja que cada luz de delante
+ * pase al lado contrario a toda potencia hasta diez grados, y la limita a una
+ * cuarta parte hasta veinte. Aquí, entera hasta cinco y apagándose hasta
+ * veinte. Por eso de frente, aunque no sea exactamente de frente, se ven las
+ * dos. Ver `DESBORDA`.
  */
 const HACIA_DONDE_ALUMBRA = `
   float alumbra = 1.0;
@@ -335,12 +496,11 @@ const HACIA_DONDE_ALUMBRA = `
     vec3 atras = normalize( ( modelViewMatrix * vec4( 0.0, 0.0, 1.0, 0.0 ) ).xyz );
     float desdeElMorro = atan( dot( ojo, derecha ), - dot( ojo, atras ) );
     float fuera = abs( mod( desdeElMorro - sector.x + PI, 2.0 * PI ) - PI );
-    alumbra = 1.0 - smoothstep( sector.y, sector.y + 0.06, fuera );
+    alumbra = 1.0 - smoothstep( sector.y + ${DESBORDA.entera.toFixed(4)}, sector.y + ${DESBORDA.hasta.toFixed(4)}, fuera );
   }
   gl_PointSize = size * tamano * alumbra * mix( 1.0, deDia, luzDelDia );
 `;
 
-const grados = (g: number): number => (g * Math.PI) / 180;
 
 /** Hacia todos lados: la baliza y los destellos. */
 const TODO = [0, Math.PI] as const;
@@ -383,23 +543,50 @@ export class LucesDeUnAvion {
   /** Lo que se encendió la última vez, para no subir lo mismo otra vez. */
   private encendidoAntes = -1;
 
+  /** Las que este avión lleva de verdad, en el orden de la geometría. */
+  private readonly lleva: readonly boolean[];
+
   constructor(
     sitios: SitiosDeLuz,
     material: PointsMaterial,
     private readonly desfase = 0,
+    /** Qué lleva y dónde. Ver `equipoDe`. */
+    equipo: EquipoDeLuces = DE_PASAJE,
   ) {
+    const derivaSola = equipo.baliza === "deriva";
+    const focoIzquierdo = new Vector3(
+      -Math.abs(sitios.foco.x),
+      sitios.foco.y,
+      sitios.foco.z,
+    );
     const donde = [
       sitios.alaDerecha,
       sitios.alaIzquierda,
       sitios.cola,
-      sitios.lomo,
+      derivaSola ? sitios.deriva : sitios.lomo,
       sitios.panza,
       sitios.alaDerecha,
       sitios.alaIzquierda,
       sitios.cola,
       new Vector3(Math.abs(sitios.foco.x), sitios.foco.y, sitios.foco.z),
-      new Vector3(-Math.abs(sitios.foco.x), sitios.foco.y, sitios.foco.z),
-      sitios.morro,
+      focoIzquierdo,
+      // En el ala, un poco por fuera del de aterrizaje, como en el 172.
+      equipo.rodaje === "ala"
+        ? focoIzquierdo.clone().setX(focoIzquierdo.x * 1.25)
+        : sitios.morro,
+    ];
+    this.lleva = [
+      true,
+      true,
+      true,
+      true,
+      !derivaSola,
+      equipo.estroboscopicas !== "ninguna",
+      equipo.estroboscopicas !== "ninguna",
+      equipo.estroboscopicas === "puntas-y-cola",
+      true,
+      true,
+      true,
     ];
     const pos = new Float32Array(ORDEN.length * 3);
     const col = new Float32Array(ORDEN.length * 3);
@@ -456,7 +643,7 @@ export class LucesDeUnAvion {
     if (clave === this.encendidoAntes) return;
     this.encendidoAntes = clave;
     ORDEN.forEach(({ clase }, i) =>
-      this.tamanos.setX(i, ahora[clase] ? TAMANO[clase] : 0),
+      this.tamanos.setX(i, this.lleva[i] && ahora[clase] ? TAMANO[clase] : 0),
     );
     this.tamanos.needsUpdate = true;
   }

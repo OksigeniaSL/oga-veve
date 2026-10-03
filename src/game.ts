@@ -133,7 +133,11 @@ import {
   informacionEnRadio,
   ladoDeLaHora,
 } from "./flight/informacion-de-trafico";
-import { ponerLaLuzDelDia } from "./world/luces-del-trafico";
+import {
+  faseDelTuyo,
+  lucesDelTrafico,
+  ponerLaLuzDelDia,
+} from "./world/luces-del-trafico";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
@@ -669,7 +673,6 @@ import {
 import type { Hito, Mirada } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
 import { loQueSeDice } from "./audio/ventanilla";
-import { focoEncendido } from "./world/luces-de-posicion";
 import {
   calorDelSuelo,
   capaDeMezcla,
@@ -12316,21 +12319,24 @@ export class Game {
           : POSICIONES_DE_LA_PALANCA.recogida,
     );
     /*
-     * Y las luces de posición: la de choque parpadea con el motor en marcha,
-     * que es su regla de verdad —se enciende **antes** de arrancar y dice
-     * «esto está vivo, no te acerques»—. Ver `world/luces-de-posicion.ts`.
+     * **Y las luces, con las mismas reglas que los demás**: la baliza con el
+     * motor en marcha —se enciende **antes** de arrancar y dice «esto está
+     * vivo, no te acerques»—, los destellos al pisar la pista y en vuelo, el
+     * faro rodando y los focos en la carrera y por debajo de diez mil pies o
+     * con el tren fuera, que es donde hay tráfico y pájaros y el foco es lo
+     * que hace que te vean. Ver `world/luces-del-trafico.ts`.
      */
+    const s = this.flight.state;
     this.aircraftMesh.luces?.paso(
       this.relojDeRuta,
-      this.input.controls.engineOn,
-      /*
-       * Y el foco: con el tren fuera o por debajo de diez mil pies, que es la
-       * regla de verdad y tiene porqué — a esa altura es donde hay tráfico y
-       * donde hay pájaros, y el foco es lo que hace que te vean. Ver
-       * `focoEncendido`.
-       */
-      focoEncendido(
-        this.flight.state.position.y - this.cotaDeLaPistaAqui(),
+      lucesDelTrafico(
+        faseDelTuyo({
+          motor: this.input.controls.engineOn,
+          enElSuelo: s.onGround,
+          enLaPista: s.onRunway,
+          velocidad: Math.hypot(s.velocity.x, s.velocity.z),
+        }),
+        s.position.y,
         this.input.controls.tren > 0.5,
       ),
     );

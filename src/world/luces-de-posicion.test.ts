@@ -1,12 +1,14 @@
 /**
- * Las luces de posición: el patrón que hace que un avión de noche sea un
+ * Las luces de tu avión: el patrón que hace que un avión de noche sea un
  * avión.
  *
  * Preguntado jugando: «¿y si es de noche, el avión no lleva luces de
- * posición?». No las llevaba. Lo que se comprueba aquí es lo único que puede
- * estar mal de verdad: **el lado**. Verde a estribor y roja a babor no es una
- * convención del juego, es la de la navegación entera —barcos incluidos— y
- * ponerlas al revés enseña a leer mal un avión que viene de frente.
+ * posición?». No las llevaba. Lo que se comprueba aquí es lo que puede estar
+ * mal de verdad: **el lado** —verde a estribor y roja a babor no es una
+ * convención del juego, es la de la navegación entera, barcos incluidos, y
+ * ponerlas al revés enseña a leer mal un avión que viene de frente—, **el
+ * cuándo** de cada una, que es la misma tabla que la del tráfico, y **dónde
+ * van en cada avión**, que no es lo mismo en una avioneta que en un reactor.
  */
 
 import { describe, expect, it } from "vitest";
@@ -18,6 +20,11 @@ import {
   focoEncendido,
 } from "./luces-de-posicion";
 import {
+  DE_CARRERA,
+  faseDelTuyo,
+  lucesDelTrafico,
+} from "./luces-del-trafico";
+import {
   BufferGeometry,
   Float32BufferAttribute,
   Mesh,
@@ -27,14 +34,31 @@ import {
 
 const avion = { wingSpan: 30, chord: 4 };
 
-/** Los puntos fijos, con su sitio y su color. */
-function fijas(): { x: number; z: number; r: number; g: number; b: number }[] {
-  const luces = crearLucesDePosicion(avion);
+/** Índices de las luces: ver `ORDEN` en `luces-del-trafico.ts`. */
+const VERDE = 0;
+const ROJA = 1;
+const BLANCA = 2;
+const BALIZA = 3;
+const BALIZA_ABAJO = 4;
+const ESTROBO_COLA = 7;
+const FOCO = 8;
+const RODAJE = 10;
+
+/** Las luces, con su sitio y su color. */
+function puestas(luces = crearLucesDePosicion(avion)): {
+  x: number;
+  y: number;
+  z: number;
+  r: number;
+  g: number;
+  b: number;
+}[] {
   const p = luces.grupo.children[0] as Points;
   const pos = p.geometry.getAttribute("position");
   const col = p.geometry.getAttribute("color");
   return Array.from({ length: pos.count }, (_, i) => ({
     x: pos.getX(i),
+    y: pos.getY(i),
     z: pos.getZ(i),
     r: col.getX(i),
     g: col.getY(i),
@@ -44,34 +68,93 @@ function fijas(): { x: number; z: number; r: number; g: number; b: number }[] {
 
 describe("dónde va cada luz", () => {
   it("la verde a estribor, que es la derecha", () => {
-    const verde = fijas().find((l) => l.g > 0.5 && l.r < 0.4)!;
-    expect(verde).toBeDefined();
+    const verde = puestas()[VERDE]!;
+    expect(verde.g).toBeGreaterThan(0.5);
+    expect(verde.r).toBeLessThan(0.4);
     expect(verde.x, "la verde tiene que estar a la derecha").toBeGreaterThan(0);
     expect(verde.x).toBeCloseTo(avion.wingSpan / 2, 6);
   });
 
   it("y la roja a babor, que es la izquierda", () => {
-    const roja = fijas().find((l) => l.r > 0.5 && l.g < 0.4)!;
-    expect(roja).toBeDefined();
+    const roja = puestas()[ROJA]!;
+    expect(roja.r).toBeGreaterThan(0.5);
+    expect(roja.g).toBeLessThan(0.4);
     expect(roja.x, "la roja tiene que estar a la izquierda").toBeLessThan(0);
     expect(roja.x).toBeCloseTo(-avion.wingSpan / 2, 6);
   });
 
   it("y la blanca atrás, en la cola", () => {
-    const blanca = fijas().find((l) => l.r > 0.8 && l.g > 0.8 && l.b > 0.8)!;
-    expect(blanca).toBeDefined();
+    const blanca = puestas()[BLANCA]!;
+    expect(Math.min(blanca.r, blanca.g, blanca.b)).toBeGreaterThan(0.8);
     // El morro mira a −Z, así que la cola es Z positiva.
     expect(blanca.z).toBeGreaterThan(0);
   });
 
-  it("y son tres, ni una más", () => {
-    expect(fijas()).toHaveLength(3);
-  });
-
   it("y van con el avión: las puntas al final del ala que tenga", () => {
     const grande = crearLucesDePosicion({ wingSpan: 60, chord: 8 });
-    const p = grande.grupo.children[0] as Points;
-    expect(p.geometry.getAttribute("position").getX(0)).toBeCloseTo(30, 6);
+    expect(puestas(grande)[VERDE]!.x).toBeCloseTo(30, 6);
+  });
+
+  it("y está en el grupo que los bancos saben apartar", () => {
+    // `verificar-cabina` mide la envergadura sin lo que brilla encima.
+    expect(crearLucesDePosicion(avion).grupo.name).toBe("luces-de-posicion");
+  });
+});
+
+describe("cuándo, con la misma tabla que el tráfico", () => {
+  const tuyo = (
+    a: Partial<Parameters<typeof faseDelTuyo>[0]>,
+  ): ReturnType<typeof faseDelTuyo> =>
+    faseDelTuyo({
+      motor: true,
+      enElSuelo: true,
+      enLaPista: false,
+      velocidad: 0,
+      ...a,
+    });
+
+  it("con el motor parado en el suelo, aparcado: solo la navegación", () => {
+    const l = crearLucesDePosicion(avion);
+    l.paso(0.01, lucesDelTrafico(tuyo({ motor: false })));
+    const t = l.luces.tamanosAhora;
+    expect(t.filter((x) => x > 0)).toHaveLength(3);
+    expect(t[BALIZA]).toBe(0);
+  });
+
+  it("la baliza, con el motor en marcha, que es su regla de verdad", () => {
+    /*
+     * La roja se enciende **antes** de arrancar y dice «esto está vivo, no te
+     * acerques». Con el motor parado no tiene nada que avisar.
+     */
+    const l = crearLucesDePosicion(avion);
+    l.paso(0.01, lucesDelTrafico(tuyo({ motor: true })));
+    expect(l.luces.tamanosAhora[BALIZA]).toBeGreaterThan(0);
+  });
+
+  it("rodando, el faro de rodaje; parado esperando, apagado; y sin destellos fuera de la pista", () => {
+    expect(tuyo({ velocidad: 6 })).toBe("rodando");
+    expect(tuyo({ velocidad: 0 })).toBe("esperando");
+    const rodando = lucesDelTrafico(tuyo({ velocidad: 6 }));
+    expect(rodando.rodaje).toBe(true);
+    expect(rodando.estroboscopicas).toBe(false);
+    expect(lucesDelTrafico(tuyo({ velocidad: 0 })).rodaje).toBe(false);
+  });
+
+  it("al pisar la pista, los destellos; corriendo, además los focos", () => {
+    expect(tuyo({ enLaPista: true, velocidad: 0 })).toBe("alineado");
+    expect(tuyo({ enLaPista: true, velocidad: 4 })).toBe("entrando");
+    expect(tuyo({ enLaPista: true, velocidad: DE_CARRERA + 5 })).toBe("carrera");
+    const alineado = lucesDelTrafico(tuyo({ enLaPista: true }));
+    expect(alineado.estroboscopicas).toBe(true);
+    expect(alineado.aterrizaje).toBe(false);
+    expect(lucesDelTrafico(tuyo({ enLaPista: true, velocidad: 40 })).aterrizaje).toBe(true);
+  });
+
+  it("y en el aire, volando, aunque se pare el motor", () => {
+    expect(tuyo({ enElSuelo: false, motor: false })).toBe("volando");
+    const arriba = lucesDelTrafico("volando", 9000, false);
+    expect(arriba.estroboscopicas).toBe(true);
+    expect(arriba.baliza).toBe(true);
   });
 });
 
@@ -85,17 +168,10 @@ describe("la de choque", () => {
     expect(fraccion).toBeCloseTo(DURA_EL_DESTELLO / CADA_DESTELLO, 1);
   });
 
-  it("y solo con el motor en marcha, que es su regla de verdad", () => {
-    /*
-     * La roja de arriba se enciende **antes** de arrancar y dice «esto está
-     * vivo, no te acerques». Con el motor parado no tiene nada que avisar.
-     */
-    const luces = crearLucesDePosicion(avion);
-    const choque = luces.grupo.children[1] as Points;
-    luces.paso(0.01, false, false);
-    expect(choque.visible).toBe(false);
-    luces.paso(0.01, true, false);
-    expect(choque.visible).toBe(true);
+  it("y entre cuarenta y cien destellos por minuto, que es lo que pide el 25.1401", () => {
+    const porMinuto = 60 / CADA_DESTELLO;
+    expect(porMinuto).toBeGreaterThanOrEqual(40);
+    expect(porMinuto).toBeLessThanOrEqual(100);
   });
 });
 
@@ -107,6 +183,7 @@ describe("el foco de aterrizaje", () => {
    */
   it("con el tren fuera, encendido, esté donde esté", () => {
     expect(focoEncendido(9000, true)).toBe(true);
+    expect(lucesDelTrafico("volando", 9000, true).aterrizaje).toBe(true);
   });
 
   it("y por debajo de diez mil pies aunque el tren esté dentro", () => {
@@ -115,6 +192,7 @@ describe("el foco de aterrizaje", () => {
 
   it("y arriba, apagado", () => {
     expect(focoEncendido(9000, false)).toBe(false);
+    expect(lucesDelTrafico("volando", 9000, false).aterrizaje).toBe(false);
   });
 
   it("y los diez mil pies son diez mil pies, no una cifra redonda inventada", () => {
@@ -123,13 +201,58 @@ describe("el foco de aterrizaje", () => {
     expect(focoEncendido(3049, false)).toBe(false);
   });
 
-  it("y con el motor parado no alumbra nadie", () => {
-    const luces = crearLucesDePosicion(avion);
-    const foco = luces.grupo.children[2] as Points;
-    luces.paso(0.5, false, true);
-    expect(foco.visible).toBe(false);
-    luces.paso(0.5, true, true);
-    expect(foco.visible).toBe(true);
+  it("y aparcado con el motor parado no alumbra nadie", () => {
+    const l = crearLucesDePosicion(avion);
+    l.paso(0.5, lucesDelTrafico("aparcado"));
+    expect(l.luces.tamanosAhora[FOCO]).toBe(0);
+    l.paso(0.5, lucesDelTrafico("carrera"));
+    expect(l.luces.tamanosAhora[FOCO]).toBeGreaterThan(0);
+  });
+});
+
+/*
+ * ── Y cada avión con las suyas ─────────────────────────────────────────────
+ *
+ * Un reactor lleva dos balizas —arriba y abajo del fuselaje— y destellos en
+ * las puntas y en la cola; una avioneta de ala alta, una baliza en lo alto
+ * de la deriva y destellos solo en las puntas, y el faro de rodaje en el ala;
+ * el biplano fumigador, ningún destello. Se comprueba con el avión de la
+ * flota, por su silueta.
+ */
+describe("cada avión con su equipo", () => {
+  /** Lo que se enciende volando, en un destello. */
+  const enElDestello = (id: string): readonly number[] => {
+    const l = crearLucesDePosicion({ ...avion, id });
+    l.paso(0, lucesDelTrafico("volando", 500));
+    return l.luces.tamanosAhora;
+  };
+
+  it("el reactor: dos balizas y tres destellos", () => {
+    const t = enElDestello("jaz-90");
+    expect(t[BALIZA]).toBeGreaterThan(0);
+    expect(t[BALIZA_ABAJO]).toBeGreaterThan(0);
+    expect(t[ESTROBO_COLA]).toBeGreaterThan(0);
+  });
+
+  it("la avioneta: una baliza, en la deriva, y destellos solo en las puntas", () => {
+    const t = enElDestello("jaz-20");
+    expect(t[BALIZA]).toBeGreaterThan(0);
+    expect(t[BALIZA_ABAJO]).toBe(0);
+    expect(t[5]).toBeGreaterThan(0);
+    expect(t[ESTROBO_COLA]).toBe(0);
+    const l = crearLucesDePosicion({ ...avion, id: "jaz-20" });
+    const baliza = puestas(l)[BALIZA]!;
+    // En la deriva: detrás del ala y más alta que el lomo.
+    expect(baliza.z).toBeGreaterThan(0);
+    expect(baliza.y).toBeGreaterThan(l.sitios.lomo.y);
+    // Y el faro de rodaje en el ala, no en el morro.
+    expect(Math.abs(puestas(l)[RODAJE]!.x)).toBeGreaterThan(1);
+  });
+
+  it("el biplano fumigador: sin destellos, su anticolisión es la baliza", () => {
+    const t = enElDestello("jaz-25");
+    expect([5, 6, 7].map((i) => t[i])).toEqual([0, 0, 0]);
+    expect(t[BALIZA]).toBeGreaterThan(0);
   });
 });
 
@@ -158,7 +281,7 @@ describe("las puntas son las del avión que hay", () => {
       // El lomo del fuselaje.
       [0, 2, 0],
       // Y la punta del timón, que es lo más alto de todo y **no** lleva la de
-      // choque.
+      // choque de un reactor.
       [0, 6, 9],
     ].flat();
     const geo = new BufferGeometry();
@@ -166,53 +289,46 @@ describe("las puntas son las del avión que hay", () => {
     return new Mesh(geo);
   }
 
-  const conCuerpo = () => crearLucesDePosicion(avion, conAlaEnFlecha());
+  const conCuerpo = () => puestas(crearLucesDePosicion(avion, conAlaEnFlecha()));
 
   it("la verde en la punta de ala de verdad, con su flecha y su diedro", () => {
-    const p = (conCuerpo().grupo.children[0] as Points).geometry.getAttribute(
-      "position",
-    );
+    const p = conCuerpo()[VERDE]!;
     // En la punta y un dedo por fuera, que si no la tapa el ala. Ver `dedo`.
-    expect(p.getX(0)).toBeGreaterThan(15);
-    expect(p.getX(0)).toBeLessThan(15.5);
-    expect(p.getY(0)).toBeCloseTo(-1.2, 5);
+    expect(p.x).toBeGreaterThan(15);
+    expect(p.x).toBeLessThan(15.5);
+    expect(p.y).toBeCloseTo(-1.2, 5);
     // Lo que se perdía: la punta está cinco metros por detrás del centro.
-    expect(p.getZ(0)).toBeCloseTo(5, 5);
+    expect(p.z).toBeCloseTo(5, 5);
   });
 
   it("y la roja en la otra, que no tiene por qué ser simétrica de oficio", () => {
-    const p = (conCuerpo().grupo.children[0] as Points).geometry.getAttribute(
-      "position",
-    );
-    expect(p.getX(1)).toBeLessThan(-15);
-    expect(p.getX(1)).toBeGreaterThan(-15.5);
-    expect(p.getZ(1)).toBeCloseTo(5, 5);
+    const p = conCuerpo()[ROJA]!;
+    expect(p.x).toBeLessThan(-15);
+    expect(p.x).toBeGreaterThan(-15.5);
+    expect(p.z).toBeCloseTo(5, 5);
   });
 
-  it("y la de choque en el lomo, no en la punta del timón", () => {
-    const p = (conCuerpo().grupo.children[1] as Points).geometry.getAttribute(
-      "position",
-    );
-    expect(p.getY(0)).toBeCloseTo(2.3, 5);
-    expect(p.getY(0), "el timón no lleva luz de choque").toBeLessThan(6);
+  it("y la de choque de un reactor en el lomo, no en la punta del timón", () => {
+    const p = conCuerpo()[BALIZA]!;
+    expect(p.y).toBeCloseTo(2.3, 5);
+    expect(p.y, "el timón no lleva luz de choque").toBeLessThan(6);
   });
 
-  it("y el foco en la raíz del ala mirando adelante", () => {
-    const p = (conCuerpo().grupo.children[2] as Points).geometry.getAttribute(
-      "position",
-    );
-    expect(Math.abs(p.getX(0))).toBeCloseTo(3.5, 5);
+  it("pero la de la avioneta, en lo alto de la deriva", () => {
+    const l = crearLucesDePosicion({ ...avion, id: "jaz-20" }, conAlaEnFlecha());
+    expect(puestas(l)[BALIZA]!.y).toBeGreaterThan(6);
+  });
+
+  it("y el foco en la raíz del ala mirando adelante, uno por ala", () => {
+    const [d, i] = [conCuerpo()[FOCO]!, conCuerpo()[FOCO + 1]!];
+    expect(Math.abs(d.x)).toBeCloseTo(3.5, 5);
+    expect(i.x).toBeCloseTo(-d.x, 5);
     // Y asomando por el borde de ataque, no enrasado con él.
-    expect(p.getZ(0)).toBeLessThan(-4);
-    expect(p.getZ(0)).toBeGreaterThan(-4.5);
-    // Y son dos, una por ala.
-    expect(p.count).toBe(2);
+    expect(d.z).toBeLessThan(-4);
+    expect(d.z).toBeGreaterThan(-4.5);
   });
 
   it("y sin modelo se sigue tirando de la ficha, que es lo que hay", () => {
-    const p = (
-      crearLucesDePosicion(avion).grupo.children[0] as Points
-    ).geometry.getAttribute("position");
-    expect(p.getX(0)).toBeCloseTo(avion.wingSpan / 2, 6);
+    expect(puestas()[VERDE]!.x).toBeCloseTo(avion.wingSpan / 2, 6);
   });
 });

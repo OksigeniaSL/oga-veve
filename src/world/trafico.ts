@@ -84,6 +84,7 @@ import {
 import { ALTURA_DE_DECISION } from "../flight/minimos";
 import {
   desfaseDe,
+  equipoDe,
   LucesDeUnAvion,
   lucesDelTrafico,
   materialDeLuces,
@@ -1366,11 +1367,15 @@ export function crearTrafico(
        * avioneta o la flecha del reactor dejaban la luz flotando un palmo
        * fuera de la punta, que de cerca es lo que se ve.
        */
-      if (!sitiosDelCuerpo.has(hecho))
+      if (!sitiosDelCuerpo.has(hecho)) {
+        const sitios = sitiosDeLuz(vestirCuerpo(hecho, libreaDe(tipo.id)));
+        // Y el foco en el ala, que en el cuerpo fundido ya no se distingue
+        // de la toma del motor. Ver `CuerpoHorneado.foco`.
         sitiosDelCuerpo.set(
           hecho,
-          sitiosDeLuz(vestirCuerpo(hecho, libreaDe(tipo.id))),
+          sitios && hecho.foco ? { ...sitios, foco: hecho.foco } : sitios,
         );
+      }
       const sitios = sitiosDelCuerpo.get(hecho);
       if (sitios) sitiosPorTipo.set(tipo.id, sitios);
       for (const [matricula, quien] of aviones) {
@@ -1445,7 +1450,13 @@ export function crearTrafico(
         sitiosPorMedidas(tipo.envergadura);
       sitiosPorTipo.set(tipo.id, sitios);
     }
-    return new LucesDeUnAvion(sitios, materialDeLasLuces, desfaseDe(matricula));
+    return new LucesDeUnAvion(
+      sitios,
+      materialDeLasLuces,
+      desfaseDe(matricula),
+      // Cada uno con las de su clase: la avioneta, la baliza en la deriva.
+      equipoDe(tipo.silueta),
+    );
   };
 
   /**
