@@ -41,6 +41,7 @@ import {
   AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineSegments,
@@ -143,6 +144,13 @@ export interface LluviaEnElMundo {
   /** Pone la clase y la fuerza. `"nada"` la apaga entera. */
   poner(clase: Lluvia, fuerza: number): void;
   /**
+   * **Y si graniza**, de 0 a 1: las rayas se vuelven blancas y caen más
+   * deprisa, que es lo que hace una piedra de hielo —el doble y pico que una
+   * gota—. Es lo que se ve del granizo; lo que se oye va en `audio/ruidos.ts`,
+   * y el sonido no puede ser lo único que lo diga.
+   */
+  ponerGranizo(cuanto: number): void;
+  /**
    * Un fotograma: mueve las gotas y devuelve **cuánto alumbra el relámpago**,
    * de cero a uno, para que lo use quien pinta el cielo.
    */
@@ -200,6 +208,10 @@ export function crearLluvia(): LluviaEnElMundo {
 
   let clase: Lluvia = "nada";
   let fuerza = 0;
+  /** Cuánto graniza, y lo que cae de más por eso, m/s. */
+  let granizo = 0;
+  const agua = new Color(0x9fb4c2);
+  const hielo = new Color(0xeef3f6);
   let cuantas = 0;
   /** Las que se pintan ahora: las de la clase, por lo que cae aquí. */
   let pintadas = 0;
@@ -217,7 +229,16 @@ export function crearLluvia(): LluviaEnElMundo {
       pintadas = cuantas;
       grupo.visible = cuantas > 0;
       geo.setDrawRange(0, cuantas * 2);
-      mat.opacity = clase === "llovizna" ? 0.16 : 0.22 + 0.16 * fuerza;
+      mat.opacity =
+        (clase === "llovizna" ? 0.16 : 0.22 + 0.16 * fuerza) + 0.2 * granizo;
+    },
+    ponerGranizo(cuanto) {
+      const g = Math.max(0, Math.min(1, cuanto));
+      if (Math.abs(g - granizo) < 0.01) return;
+      granizo = g;
+      mat.color.copy(agua).lerp(hielo, g);
+      mat.opacity =
+        (clase === "llovizna" ? 0.16 : 0.22 + 0.16 * fuerza) + 0.2 * granizo;
     },
     get pintadas() {
       return grupo.visible ? pintadas : 0;
@@ -259,8 +280,10 @@ export function crearLluvia(): LluviaEnElMundo {
        */
       const wx = viento?.x ?? 0;
       const wz = viento?.z ?? 0;
+      // Una piedra de hielo cae bastante más deprisa que una gota.
+      const cae = CAE + 16 * granizo;
       const vx = wx - velocidad.x;
-      const vy = -CAE - velocidad.y;
+      const vy = -cae - velocidad.y;
       const vz = wz - velocidad.z;
       /*
        * **Y la raya mide lo que mide de verdad: velocidad por exposición.**
@@ -294,7 +317,7 @@ export function crearLluvia(): LluviaEnElMundo {
          * vista salta; así la gota se queda quieta en el aire pase lo que
          * pase con la cámara.
          */
-        gy[i] = envolver(gy[i]! - CAE * dt - my);
+        gy[i] = envolver(gy[i]! - cae * dt - my);
         gx[i] = envolver(gx[i]! + wx * dt - mx);
         gz[i] = envolver(gz[i]! + wz * dt - mz);
         const k = i * 6;
