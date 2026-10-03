@@ -144,6 +144,11 @@ export class CuadroDelTelefono {
           encogido medían treinta y cuatro por veinticinco. Y van por el mismo
           camino que las del cuadro plano, \`data-mcp-rueda\`: un toque, un
           millar; arrastrando, una rueda. Ver el constructor del HUD.
+
+          La cifra pedida se lee y no se toca: también se arrastraba, y medía
+          cuarenta por quince, que no lo acierta una yema. La rueda está en
+          las dos teclas de al lado, que hacen lo mismo y son de dedo, y la
+          losa entera es la que pone grande la pantalla.
         -->
         <div class="tel__grupo">
           <button type="button" class="tel__losa tel__losa--alt" data-tel-grande="actitud"
@@ -153,7 +158,7 @@ export class CuadroDelTelefono {
             <span class="tel__cifra" data-tel="alt">0</span>
             ${
               ventanilla
-                ? `<span class="tel__sel" data-tel="alt-sel" data-mcp-alt=""
+                ? `<span class="tel__sel" data-tel="alt-sel"
                          data-desde="${CON_SU_APARATO_DESDE}">-----</span>`
                 : ""
             }

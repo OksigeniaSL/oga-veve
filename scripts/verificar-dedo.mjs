@@ -692,6 +692,11 @@ async function unTelefono(quien) {
       aire.tren.detalle,
     );
     comprobar(
+      et("dos manos: con el pulgar en la palanca, el otro dedo toca las losas del cuadro"),
+      aire.losas.ok,
+      aire.losas.detalle,
+    );
+    comprobar(
       et("doble toque: alas niveladas, sin subir ni bajar y el punto al centro"),
       aire.doble.ok,
       aire.doble.detalle,
@@ -782,6 +787,45 @@ async function unTelefono(quien) {
       const t1 = (await mirarAire()).tren;
       tren = { ok: t1 !== t0, detalle: `tren pedido ${t0 ? "fuera" : "dentro"} → ${t1 ? "fuera" : "dentro"} con el pulgar puesto` };
     }
+    /*
+     * **Y las losas del cuadro del teléfono**, con el pulgar todavía puesto:
+     * escuchaban `click`, y el toque de un segundo dedo no lo da. El otro dedo
+     * abre el cuadro por su asa, toca la losa del rumbo —la pantalla se pone
+     * grande— y toca la grande —vuelven las losas—. Y el cuadro, como estaba.
+     */
+    const cuadroBajado = () =>
+      page.evaluate(() =>
+        document.querySelector('[data-hud="cuadro"]')?.classList.contains("cuadro--bajado"),
+      );
+    const enGrande = () =>
+      page.evaluate(() =>
+        document.querySelector('[data-hud="cuadro"]')?.classList.contains("cuadro--grande"),
+      );
+    const tocarEn = async (sel) => {
+      const c = await caja(sel);
+      if (!c) return false;
+      await tocar(DEDO_BOTON, c.x + c.w / 2, c.y + c.h / 2);
+      await pausa(450);
+      return true;
+    };
+    let losas = { ok: true, detalle: "sin losas en este cuadro (no se midió)" };
+    const estabaBajado = await cuadroBajado();
+    if (estabaBajado) await tocarEn('[data-hud="cuadro-tirador"]');
+    const abierto = !(await cuadroBajado());
+    if (await caja(".tel__losa--hdg")) {
+      await tocarEn(".tel__losa--hdg");
+      const grande = await enGrande();
+      if (grande) await tocarEn('[data-hud="tablero"]');
+      const vuelve = !(await enGrande());
+      losas = {
+        ok: abierto && grande && vuelve,
+        detalle:
+          `${abierto ? "el asa abre el cuadro" : "el asa no lo abre"} · ` +
+          `${grande ? "la losa pone grande el rumbo" : "la losa no responde"} · ` +
+          `${vuelve ? "otro toque vuelve a las losas" : "no vuelve"}, todo con el pulgar puesto`,
+      };
+    } else if (!abierto) losas = { ok: false, detalle: "el asa no abre el cuadro con el pulgar puesto" };
+    if (estabaBajado && !(await cuadroBajado())) await tocarEn('[data-hud="cuadro-tirador"]');
     await soltarVolante();
     await pausa(300);
 
@@ -817,6 +861,6 @@ async function unTelefono(quien) {
         ` · la mano lleva ${c.mano.alabeo ? "alabeo" : "—"} y ${c.mano.cabeceo ? "cabeceo" : "—"}` +
         ` · a ${c.alto.toFixed(0)} m`,
     };
-    return { fija, flaps, tren, doble };
+    return { fija, flaps, tren, losas, doble };
   }
 }

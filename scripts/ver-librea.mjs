@@ -33,6 +33,11 @@ const VISTAS = {
   "tres-cuartos": { dir: [-0.9, 0.35, -0.75], lejos: 1.9 },
   "tres-cuartos-atras": { dir: [0.85, 0.3, 0.9], lejos: 1.9 },
   atras: { dir: [0.12, 0.18, 1], lejos: 1.7, mira: [0.5, 0.55, 0.5] },
+  // De frente y un poco desde arriba, como se ve al avión que entra en pista
+  // hacia ti: es donde se lee la punta del ala, y donde se echó de menos.
+  frente: { dir: [0.02, 0.16, -1], lejos: 1.55, mira: [0.5, 0.45, 0.5] },
+  // Y la punta de la izquierda de cerca, de tres cuartos por delante.
+  punta: { dir: [-0.55, 0.25, -0.8], lejos: 0.28, mira: [0.02, 0.5, 0.62] },
   cola: { dir: [-1, 0.15, 0.25], lejos: 0.62, mira: [0.5, 0.72, 0.9] },
   "cola-derecha": { dir: [1, 0.15, 0.25], lejos: 0.62, mira: [0.5, 0.72, 0.9] },
   puerta: { dir: [-1, 0.12, -0.35], lejos: 0.55, mira: [0.5, 0.45, 0.16] },

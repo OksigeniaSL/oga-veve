@@ -133,6 +133,18 @@ export interface AircraftAppearance {
    * —franja de un color, cola de otro— sin salir de la paleta.
    */
   cola?: number;
+  /**
+   * **El tercer color de la casa, si el avión lleva sitio para él**: las
+   * aletas de las puntas de ala y el filete que va con la franja. Lo pinta
+   * el material `remate` del modelo —ver `exterior.py`—, y sin esto sale del
+   * color del capó.
+   *
+   * Existe por el JAZ 120, que iba de verde con raya ocre y era el único de
+   * la casa sin terracota en ninguna parte: «se echa de menos el terracota: el
+   * logo de Granja Óga lo lleva y es un color fundamental». Con franja, raya y
+   * cola ya repartidas, el tercero no tenía dónde ir.
+   */
+  remate?: number;
   /** Cuántas palas lleva la hélice. */
   blades: number;
   /**
@@ -1743,6 +1755,10 @@ export const YVAGA: AircraftConfig = {
     // naciendo en la raíz: las hojas verdes sobre verde no se verían.
     accent: CASA.verde,
     trim: CASA.ocre,
+    // Y el terracota, que es el que faltaba: en las aletas partidas de las
+    // puntas, que es donde una compañía pone su color, y en un filete entre
+    // la franja y la raya —los tres colores del logotipo en fila—.
+    remate: CASA.terracota,
     blades: 0,
     motivo: "sol",
   },

@@ -329,6 +329,14 @@ const FLECHA_SEGUIR = `
 const ESTO_ES_TACTIL =
   typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
 
+/**
+ * Cómo quiere el cuadro quien juega: lo guardado, y si no hay nada, recogido
+ * en el teléfono y abierto en lo demás. Ver `cuadroBajado` en `Hud`.
+ */
+function cuadroElegido(): boolean {
+  return (leerTexto("cuadro-bajado") ?? (esTelefono() ? "1" : "0")) === "1";
+}
+
 export class Hud {
   readonly tutor = new Tutor();
   readonly mapa = new Mapa();
@@ -800,18 +808,27 @@ export class Hud {
      * tocar la pantalla grande vuelve a las losas. Salvo la ventanilla ALT y
      * sus teclas, que son la rueda: girarla no es pedir nada más. Ver
      * `ponerGrande`.
+     *
+     * **Con su propio dedo**, como el resto de los botones del vuelo: las
+     * losas escuchaban `click`, y con el pulgar en la palanca el toque del
+     * otro dedo no lo da nunca —el navegador lo cuenta como un gesto de dos
+     * dedos—. Ver `ui/pulsar.ts`.
      */
-    this.root.addEventListener("click", (e) => {
-      const donde = e.target as Element | null;
-      if (donde?.closest?.("[data-mcp-rueda], [data-mcp-alt]")) return;
-      const losa = donde?.closest?.<HTMLElement>("[data-tel-grande]");
-      if (losa) {
-        this.ponerGrande(losa.dataset.telGrande as Grande);
-        return;
-      }
-      if (this.grande && donde?.closest?.('[data-hud="tablero"]'))
-        this.ponerGrande(null);
-    });
+    const laRueda = "[data-mcp-rueda], [data-mcp-alt]";
+    alPulsarDentro(
+      this.root,
+      "[data-tel-grande]",
+      (losa) => this.ponerGrande((losa as HTMLElement).dataset.telGrande as Grande),
+      laRueda,
+    );
+    alPulsarDentro(
+      this.root,
+      '[data-hud="tablero"]',
+      () => {
+        if (this.grande) this.ponerGrande(null);
+      },
+      laRueda,
+    );
     /*
      * Con su propio dedo, como todos los botones del vuelo: ver `ui/pulsar.ts`.
      * El cierre al usar lo de dentro sigue en el `click` que sube desde él.
@@ -963,8 +980,30 @@ export class Hud {
    * pedales, y se abre de un toque cuando se quiera mirar. Lo que se elija a
    * partir de ahí se guarda y manda.
    */
-  private cuadroBajado =
-    (leerTexto("cuadro-bajado") ?? (esTelefono() ? "1" : "0")) === "1";
+  private cuadroBajado = cuadroElegido();
+
+  /** Si se está mirando por una ventanilla del pasaje. Ver `ponerVistaDePasaje`. */
+  private enPasaje = false;
+
+  /**
+   * **Desde la ventanilla del pasaje, el cuadro se recoge solo.**
+   *
+   * Ahí no hay cabina delante: un pasajero no ve los instrumentos, ve el ala
+   * y el paisaje. Y en el portátil, con el cuadro abierto, la ventanilla
+   * quedaba con su tercio de abajo detrás de él —en el JAZ 120, ciento
+   * veinticinco píxeles de cristal—, que es justo donde va el ala. Recogido
+   * queda su asa, como en el teléfono, y se puede abrir de un toque si se
+   * quiere mirar algo; los avisos y los pictogramas siguen donde estaban.
+   *
+   * **Lo que se elige no se toca**: al volver a otra vista el cuadro queda
+   * como lo tenía quien juega, que es lo que está guardado. Y si en el pasaje
+   * lo abre a mano, eso también es elegir, y se guarda como siempre.
+   */
+  ponerVistaDePasaje(enPasaje: boolean): void {
+    if (enPasaje === this.enPasaje) return;
+    this.enPasaje = enPasaje;
+    this.ponerCuadroBajado(enPasaje || cuadroElegido());
+  }
 
   /**
    * Baja o sube el cuadro de mandos.

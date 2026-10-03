@@ -1031,6 +1031,16 @@ export interface SkyRig {
    */
   ponerDeslumbre(cuanto: number): void;
   /**
+   * **La luz de un relámpago**, de cero a uno: cero es sin rayo.
+   *
+   * No es el deslumbre —eso es el halo del sol, y se recorta a uno—: es la
+   * luz que llega de toda la nube cuando cae un rayo, y alumbra el suelo, el
+   * avión, las nubes y la bruma con sus colores. La forma en el tiempo, y lo
+   * que la hace segura para quien es sensible a los destellos, está en
+   * `relampago.ts`; esto solo la pone.
+   */
+  ponerRelampago(cuanto: number): void;
+  /**
    * La niebla, en dos partes: la bruma del aire, que se queda abajo, y un
    * mínimo que no depende de la altura —lo que diga el parte o la lluvia—.
    * Ver `brumaALaAltura` y `updateSky`, que es quien las junta.
@@ -1349,6 +1359,16 @@ export function materialDeNube(
  */
 const NIEBLA_EN_LA_NUBE = 1.73 / SE_VE_DENTRO;
 
+/**
+ * Cuánta luz de relleno suma un rayo en su pico, en la escala de `relleno`
+ * de los momentos del día —de 0,3 de noche a 1 a mediodía—. Ver
+ * `ponerRelampago`.
+ */
+const LUZ_DEL_RAYO = 1.5;
+
+/** El blanco frío de una descarga: la luz del rayo y lo que enciende. */
+const COLOR_DEL_RAYO = new Color(0xdde4f2);
+
 /** Desde qué fracción de su radio se desvanece una capa de nubes. */
 export const DESVANECE_DESDE = 0.45;
 
@@ -1563,6 +1583,8 @@ export function createSky(scenario: Scenario): SkyRig {
   const sunDirection = new Vector3(0, 1, 0);
   /** Lo que multiplica al halo. Ver `ponerDeslumbre`. */
   let deslumbre = 1;
+  /** Lo que alumbra el rayo ahora. Ver `ponerRelampago`. */
+  let relampago = 0;
   const niebla = { bruma: scenario.fog.density, minimo: 0 };
   /**
    * Lo que pone la hora, antes de lo que le quita la capa: la fuerza del sol,
@@ -1570,6 +1592,9 @@ export function createSky(scenario: Scenario): SkyRig {
    */
   const deLaHora = {
     sol: 1,
+    /** La luz de relleno de la hora, sin el rayo. Ver `ponerRelampago`. */
+    relleno: 1,
+    ambiente: new Color(),
     bruma: new Color(),
     nubes: new Color(1, 1, 1),
   };
@@ -1647,6 +1672,8 @@ export function createSky(scenario: Scenario): SkyRig {
       sun.color.setHex(m.sol);
       deLaHora.sol = m.fuerza;
       sun.intensity = m.fuerza * bajoLaCapa.sol;
+      deLaHora.relleno = m.relleno;
+      deLaHora.ambiente.setHex(m.ambiente);
       ambient.intensity = m.relleno;
       ambient.color.setHex(m.ambiente);
 
@@ -1691,6 +1718,9 @@ export function createSky(scenario: Scenario): SkyRig {
       niebla.bruma = bruma;
       niebla.minimo = minimo;
     },
+    ponerRelampago(cuanto: number) {
+      relampago = Math.max(0, Math.min(1, cuanto));
+    },
     ponerDeslumbre(cuanto: number) {
       deslumbre = Math.max(0, Math.min(1, cuanto));
       // Se vuelve a poner la hora que ya había: es lo que recalcula el halo, y
@@ -1733,10 +1763,22 @@ export function createSky(scenario: Scenario): SkyRig {
     bajoLaCapa.sol = 1 - 0.75 * cubre * (1 - subido);
     bajoLaCapa.nubes = capa ? 1 - 0.45 * capa.tapadura * (1 - subido) : 1;
     sun.intensity = deLaHora.sol * bajoLaCapa.sol;
+    /*
+     * **Y el rayo, como luz de relleno.** Llega de toda la nube y no de un
+     * punto, así que no echa sombras: sube la luz que rellena y la tiñe del
+     * blanco frío de la descarga. De noche se ve el avión y la cara de abajo
+     * de las nubes se enciende —medido con la tarjeta del portátil, la capa
+     * pasa de 0,04 a casi 0,2 de luz—, que es lo que hace un rayo; de día,
+     * con la luz que ya hay, se nota menos, como en uno de verdad. Sin llegar
+     * a blanco en ninguna de las dos. Ver `relampago.ts`.
+     */
+    ambient.intensity = deLaHora.relleno + relampago * LUZ_DEL_RAYO;
+    ambient.color.copy(deLaHora.ambiente).lerp(COLOR_DEL_RAYO, relampago * 0.6);
     for (const lamina of bancoDeNubes.children) {
       ((lamina as Mesh).material as MeshBasicMaterial).color
         .copy(deLaHora.nubes)
-        .multiplyScalar(bajoLaCapa.nubes);
+        .multiplyScalar(bajoLaCapa.nubes)
+        .lerp(COLOR_DEL_RAYO, relampago * 0.55);
       /*
        * **Y desde encima, después del mar.** El agua es transparente y va en
        * su turno, después de las nubes —ver `vestirElAgua` en `terrain.ts`—,
@@ -1765,11 +1807,16 @@ export function createSky(scenario: Scenario): SkyRig {
     colorDeLaNube
       .setRGB(gris, gris, gris)
       .lerp(deLaHora.nubes, 0.35)
-      .multiplyScalar(0.55 + 0.45 * subido);
+      .multiplyScalar(0.55 + 0.45 * subido)
+      // Dentro de la nube el rayo lo enciende todo, pero a medias: es la
+      // pantalla entera, y lo que se quiere es un fogonazo, no un flash.
+      .lerp(COLOR_DEL_RAYO, relampago * 0.4);
     compartidos.enLaNube.value = enLaNube;
     fog.color
       .copy(deLaHora.bruma)
-      .lerp(colorDeLaNube, Math.min(1, enLaNube * 1.5));
+      .lerp(colorDeLaNube, Math.min(1, enLaNube * 1.5))
+      // Y la bruma, que en una tormenta es casi todo lo que se ve.
+      .lerp(COLOR_DEL_RAYO, relampago * 0.4);
     compartidos.luzDelSol.value = sun.intensity;
     compartidos.luzDeRelleno.value
       .copy(relleno.copy(ambient.color))

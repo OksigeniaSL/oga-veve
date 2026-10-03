@@ -515,6 +515,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         // La deriva, que es la del capó si la ficha no le da una suya.
         cola:
           juego.aircraft.appearance.cola ?? juego.aircraft.appearance.accent,
+        // Y las aletas y el filete, igual. Ver `AircraftAppearance.remate`.
+        remate:
+          juego.aircraft.appearance.remate ?? juego.aircraft.appearance.accent,
         // Y el motivo de la cola, si lo lleva. Ver `world/librea.ts`.
         motivo: juego.aircraft.appearance.motivo ?? null,
       },
