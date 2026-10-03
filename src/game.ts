@@ -3046,6 +3046,7 @@ export class Game {
     this.consejero.reiniciar();
     this.desvioAhora = null;
     this.sendaJuzgada = null;
+    this.sinkRateExplicado = false;
     this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
@@ -8491,6 +8492,7 @@ export class Game {
     this.consejero.reiniciar();
     this.desvioAhora = null;
     this.sendaJuzgada = null;
+    this.sinkRateExplicado = false;
     this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
@@ -18777,6 +18779,15 @@ export class Game {
 
   /** El último aviso de actitud que se cantó, para no repetirlo. */
   private actitudDicha: AvisoDeActitud = null;
+  /**
+   * **Si el *sink rate* de esta bajada ya se explicó.** La caja suena cada
+   * vez que salta, que es lo real del avión; la explicación de la
+   * instructora va detrás **una vez**: la segunda ya se sabe qué es. En la
+   * final de Tenerife Sur con el JAZ 120 la caja saltó dos veces y la
+   * explicación se pidió las dos. Se olvida al acabar la bajada. Ver
+   * `mirarLaSenda`.
+   */
+  private sinkRateExplicado = false;
 
   /**
    * «Sink rate» y «bank angle»: los dos avisos de **cómo** se vuela.
@@ -18837,15 +18848,21 @@ export class Game {
      * dos consejos de dos sitios. Ver `flight/consejo-de-la-bajada.ts`.
      */
     const delConsejero = this.lecturaDelConsejo;
+    if (ahora === "sink rate" && this.sinkRateExplicado) {
+      this.cantar("sink rate");
+      return;
+    }
     if (ahora === "sink rate" && delConsejero?.activo) {
       const consejo = this.consejero.porLaCaja("hundiendose", {
         ...delConsejero,
         hundiendose: true,
       });
+      this.sinkRateExplicado = consejo !== null;
       if (consejo) this.decirElConsejo(consejo, "sink rate");
       else this.cantar("sink rate");
       return;
     }
+    if (ahora === "sink rate") this.sinkRateExplicado = true;
     const clave =
       ahora === "sink rate"
         ? this.bandaDeAhora === "lento"
@@ -18966,7 +18983,10 @@ export class Game {
       }
     }
     // **Acabada la bajada, se olvida lo dicho**: la siguiente empieza de cero.
-    if (d === null && this.desvioAhora !== null) this.consejero.reiniciar();
+    if (d === null && this.desvioAhora !== null) {
+      this.consejero.reiniciar();
+      this.sinkRateExplicado = false;
+    }
     this.desvioAhora = d;
     this.objetivoDeLaSenda = objetivo;
     this.sendaJuzgada =
