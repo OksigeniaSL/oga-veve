@@ -5,9 +5,11 @@
  * Es lo que se enseña con ellas: si ves la verde a tu izquierda y la roja a
  * tu derecha, viene hacia ti; si solo ves la blanca, se va. Para verlo hay que
  * ponerse delante y detrás de un avión que vuela, y eso es lo que hace esto:
- * se anuncia uno en final y el tuyo se clava a unos cientos de metros de él,
- * en su línea, mirándolo. Dos fotos por posición: la de la cámara de fuera y
- * una con teleobjetivo, que a esa distancia un reactor son treinta píxeles.
+ * se anuncia uno en final y el tuyo se clava a setecientos metros de él, en su
+ * línea y mirándolo, en una página nueva para cada posición —la tarjeta de lo
+ * que se le ve sale una vez por vuelo—. Fotos de la cámara de fuera y con
+ * teleobjetivo, que a esa distancia un reactor son veinte píxeles; y la
+ * tarjeta que sale, con lo que dice.
  *
  *     OGA_GPU=1 node scripts/ver-luces-de-noche.mjs carpeta [escenario] [hora]
  */

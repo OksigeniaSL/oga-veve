@@ -4,19 +4,27 @@
  *
  * Existe porque «antes de añadir un efecto, se mide» y porque lo que se ve en
  * una captura de SwiftShader no vale para juzgar una estrella de un píxel.
- * Con `OGA_GPU=1` —lo normal aquí— usa la tarjeta del portátil y lo dice: si
- * el renderizador que contesta es SwiftShader, la foto no sirve.
+ * Usa la tarjeta del portátil salvo con `OGA_GPU=0`, y dice cuál contestó: si
+ * es SwiftShader, la foto no sirve.
  *
  * Cada tiro es `escenario:hora:rumbo:cabeceo[:fecha]`: el avión clavado a
- * mil quinientos metros sobre su pista, mirando a ese rumbo con el morro
- * levantado esos grados, y la cámara de fuera detrás. Por ejemplo, la Polar
- * desde Los Rodeos y la Cruz del Sur de madrugada desde Asunción:
+ * mil quinientos metros sobre su pista y mirando a ese rumbo, con la cámara de
+ * fuera detrás **y girada esos grados hacia arriba** solo para pintar. La de
+ * fuera mira de serie unos veinticinco grados hacia abajo, así que con
+ * cincuenta el centro de la foto queda a unos veinticinco sobre el horizonte.
+ * Por ejemplo, la Polar desde Los Rodeos esta noche y la Cruz del Sur alta
+ * sobre Asunción una noche de otoño:
  *
- *     OGA_GPU=1 node scripts/ver-noche.mjs carpeta \
- *       tenerife-norte:21:0:20 pettirossi:5:150:15
+ *     node scripts/ver-noche.mjs carpeta \
+ *       tenerife-norte:21:0:50 pettirossi:21:190:55:2027-05-20
  *
- * `OGA_METAR="…"` vuela con ese parte: para ver que bajo una capa cerrada no
- * hay estrellas.
+ * Con `OGA_MIRA=luna`, un teleobjetivo de cuatro grados a la Luna; con
+ * `OGA_SIN=1`, también la foto sin la noche; y con `OGA_METAR="…"`, con ese
+ * parte: para ver que bajo una capa cerrada no hay estrellas.
+ *
+ * Lo que cuesta se mide **por pieza**: una consulta de tiempo de la tarjeta
+ * alrededor de la llamada de las estrellas, la de la Luna y la de la cúpula
+ * con y sin la Vía Láctea. Ver `porPieza`.
  */
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
