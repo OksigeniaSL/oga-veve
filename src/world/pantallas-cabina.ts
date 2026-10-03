@@ -784,8 +784,9 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   if (d.minimos && d.peldano >= 3) {
     const color = d.minimos.enEllos ? PALETA.precaucion : PALETA.normal;
     const y = d.cuadro.familia === "linea" ? 46 : 16;
-    escribir(g, "BARO", x0 + anchoAct - 8, y, "600 11px " + FUENTE, color, "right");
-    escribir(g, String(d.minimos.pies), x0 + anchoAct - 8, y + 17, "600 16px " + FUENTE, color, "right");
+    // Con su filo oscuro: van encima del cielo del horizonte.
+    escribir(g, "BARO", x0 + anchoAct - 8, y, "600 11px " + FUENTE, color, "right", FONDO);
+    escribir(g, String(d.minimos.pies), x0 + anchoAct - 8, y + 17, "600 16px " + FUENTE, color, "right", FONDO);
   }
   /*
    * **El FMA de los de línea**, como en el cuadro plano: arriba del

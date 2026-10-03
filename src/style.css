@@ -4192,6 +4192,12 @@ button.motor__tecla::after {
   font-size: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  /* Encima del cielo del horizonte: con su filo oscuro, que verde sobre azul
+     no se lee. */
+  paint-order: stroke;
+  stroke: var(--cabina-pantalla);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 
 .cr__minimos--rotulo {
