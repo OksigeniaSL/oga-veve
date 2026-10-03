@@ -113,19 +113,42 @@ export function superficieEn(
   x: number,
   z: number,
 ): Superficie {
+  return sueloEn(escenario, pavimento, x, z).superficie;
+}
+
+/**
+ * Lo mismo que `superficieEn`, y además **lo que dice el fichero que es**:
+ * `asphalt`, `concrete`, `grass`… o `null` si no lo dice.
+ *
+ * La física se conforma con firme o blando; el oído no. Rodar sobre las losas
+ * de hormigón de una plataforma suena a juntas —«trocotó, trocotó»— y rodar
+ * sobre asfalto, no, aunque las dos cosas sean «asfalto» para el rozamiento.
+ * Va en la misma función para que las dos preguntas se contesten con la misma
+ * geometría: si cada una mirara la pista a su manera, el avión podría rodar
+ * por hierba sonando a hormigón. Ver `world/firme.ts`.
+ */
+export function sueloEn(
+  escenario: Scenario,
+  pavimento: Pavimento | null,
+  x: number,
+  z: number,
+): { superficie: Superficie; dicho: string | null } {
   const aero: Aerodrome | undefined = escenario.aerodrome;
   if (!aero) {
     // Una pista inventada es de asfalto, y su rectángulo es el de siempre.
     const r = escenario.runway;
     const { along, across } = enEjesDePista(x, z, r.x, r.z, r.heading);
     return Math.abs(along) <= r.length / 2 && Math.abs(across) <= r.width / 2
-      ? "asfalto"
-      : "campo";
+      ? { superficie: "asfalto", dicho: null }
+      : { superficie: "campo", dicho: null };
   }
 
   for (const pista of aero.runways) {
     if (!enLaPista(pista, x, z)) continue;
-    return esDura(pista.surface) ? "asfalto" : "hierba";
+    return {
+      superficie: esDura(pista.surface) ? "asfalto" : "hierba",
+      dicho: pista.surface ?? null,
+    };
   }
 
   if (pavimento?.hay(x, z)) {
@@ -136,9 +159,9 @@ export function superficieEn(
      * —OpenStreetMap muchas veces no lo dice—, lo que diga la pista: un campo
      * de hierba lo es entero, y uno de asfalto también.
      */
-    const dicho = aero.aprons[0]?.surface;
-    return esDura(dicho ?? aero.runways[0]?.surface) ? "asfalto" : "hierba";
+    const dicho = aero.aprons[0]?.surface ?? aero.runways[0]?.surface ?? null;
+    return { superficie: esDura(dicho) ? "asfalto" : "hierba", dicho };
   }
 
-  return "campo";
+  return { superficie: "campo", dicho: null };
 }
