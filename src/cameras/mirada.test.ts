@@ -16,7 +16,9 @@ import {
   comoSeMiraDesde,
   construirCamaras,
   esDePasaje,
+  esSobreElAla,
   siguienteVista,
+  vistaDePasaje,
   vistasDe,
   CAMERA_MODES,
   type CameraMode,
@@ -471,11 +473,54 @@ describe("las vistas de pasaje", () => {
     expect(siguienteVista("pasaje-derecha", true)).toBe("wing");
     // La recordada de otro avión, en uno sin pasaje: sigue por donde caería.
     expect(siguienteVista("pasaje-izquierda", false)).toBe("wing");
-    // Y la vuelta entera pasa por todas las que hay.
+    // Y la vuelta entera pasa por todas las que hay, con pasaje y sin las de
+    // encima del ala.
     let v: CameraMode = "chase";
     const vistas = new Set<CameraMode>();
     for (let i = 0; i < CAMERA_MODES.length; i++) vistas.add((v = siguienteVista(v, true)));
+    expect(vistas.size).toBe(CAMERA_MODES.length - 2);
+  });
+
+  /*
+   * **Las de encima del ala**, en el avión que lleva frenos de tierra: detrás
+   * de las otras dos, y en los demás la tecla se las salta.
+   */
+  it("las de encima del ala, solo donde hay frenos de tierra que mirar", () => {
+    expect(vistasDe(true).some(esSobreElAla)).toBe(false);
+    expect(vistasDe(false, true).some(esDePasaje)).toBe(false);
+    expect(vistasDe(true, true).filter(esDePasaje)).toEqual([
+      "pasaje-izquierda",
+      "pasaje-derecha",
+      "pasaje-ala-izquierda",
+      "pasaje-ala-derecha",
+    ]);
+    expect(siguienteVista("pasaje-derecha", true, true)).toBe("pasaje-ala-izquierda");
+    expect(siguienteVista("pasaje-ala-izquierda", true, true)).toBe("pasaje-ala-derecha");
+    expect(siguienteVista("pasaje-ala-derecha", true, true)).toBe("wing");
+    // La recordada en un avión que no las tiene: sigue por donde caería.
+    expect(siguienteVista("pasaje-ala-izquierda", true)).toBe("wing");
+    let v: CameraMode = "chase";
+    const vistas = new Set<CameraMode>();
+    for (let i = 0; i < CAMERA_MODES.length; i++) vistas.add((v = siguienteVista(v, true, true)));
     expect(vistas.size).toBe(CAMERA_MODES.length);
+    // Y desde encima del ala se cambia de lado sin cambiar de fila.
+    expect(vistaDePasaje("izquierda", "pasaje-ala-derecha")).toBe("pasaje-ala-izquierda");
+    expect(vistaDePasaje("derecha", "pasaje-izquierda")).toBe("pasaje-derecha");
+  });
+
+  it("desde encima del ala se sienta en su asiento, y sin él en el de siempre", () => {
+    const rig = construirCamaras()["pasaje-ala-derecha"];
+    const camara = new PerspectiveCamera();
+    const siempre = asiento("derecha");
+    const ala = { ...siempre, ojo: { ...siempre.ojo, z: siempre.ojo.z + 2 } };
+    const ctx = contexto();
+    rig.update(camara, avion(), 1 / 60, {
+      ...ctx,
+      pasaje: { ...ctx.pasaje!, sobreElAla: { izquierda: ala, derecha: ala } },
+    });
+    expect(camara.position.z).toBeCloseTo(ala.ojo.z, 5);
+    rig.update(camara, avion(), 1 / 60, ctx);
+    expect(camara.position.z).toBeCloseTo(siempre.ojo.z, 5);
   });
 
   it("se sienta donde dice el asiento y mira por la ventanilla", () => {

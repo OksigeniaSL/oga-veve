@@ -53,6 +53,25 @@
  * noche, las luces del pasaje, que se bajan para despegar y aterrizar. Ver
  * `diaEnLaCabina` en `luz-de-cabina.ts` y `CabinaDePasaje`.
  *
+ * ## Y la salida sobre el ala, desde la fila de al lado
+ *
+ * En el asiento de encima del ala de un avión de pasillo único —el JAZ 90, de
+ * la clase del A320 y el 737— la ventanilla de al lado es la de la trampilla
+ * de la salida de emergencia: asoma el trozo de su marco, el asa roja de
+ * arriba y, encima, el letrero «EXIT», que es como se ve desde la fila de al
+ * lado. Va del lado y a la altura que la mide el modelo —ver
+ * `SalidaDeAlLado` y `salidaEnLaPared`—, y el letrero, con su tamaño y sus
+ * colores de verdad: letras rojas sobre blanco iluminado, que es lo que pide
+ * la norma de certificación, con las letras de al menos treinta y ocho
+ * milímetros —aquí, cuarenta y cuatro—. Alumbra solo: de noche, con la cabina
+ * apagada para aterrizar, es lo que se sigue viendo. «EXIT» va en inglés, como
+ * los rótulos de los instrumentos: es lo que pone en cualquier avión.
+ *
+ * Las letras no son una textura: son nueve trazos rectos —E, X, I y T no
+ * tienen curvas— medidos como distancias, igual que el resto del marco. Se
+ * ven nítidas a cualquier distancia, y solo las paga el puñado de píxeles del
+ * letrero.
+ *
  * **Lo que cuesta**, medido con la tarjeta del portátil a 1280 × 720, el
  * marco solo sobre una escena vacía: 0,32 ms el de antes y 0,45 este. Lo
  * pagan solo los píxeles que lo usan —la pared no paga el hueco, ni el hueco
@@ -87,10 +106,11 @@ import {
   ShaderMaterial,
   Vector2,
   Vector3,
+  Vector4,
   type IUniform,
   type PerspectiveCamera,
 } from "three";
-import type { AsientoDePasaje, VentanillaDePasaje } from "./asiento-de-pasaje";
+import type { AsientoDePasaje, SalidaDeAlLado, VentanillaDePasaje } from "./asiento-de-pasaje";
 import type { TipoDeVentanilla, Vecinas } from "./cabina-de-pasaje";
 
 /**
@@ -143,6 +163,21 @@ const RESPALDO = { delante: 0.5, bajoLosOjos: 0.05, hueco: 0.04, ancho: 0.48 };
 const BOTON = { bajo: BISEL * 0.5, ancho: 0.064, alto: 0.022 };
 
 /**
+ * **La trampilla de la salida y su letrero**, m.
+ *
+ * - El forro de la trampilla es algo más grande que el hueco de fuera: dos
+ *   centímetros por lado. Su esquina, la del contorno de fuera.
+ * - El asa, arriba, a ocho centímetros del borde: un hueco oscuro de catorce
+ *   por cuatro y medio con su tapa roja.
+ * - El letrero, a tres centímetros por encima: veintiuno por ocho y medio,
+ *   con su canto oscuro de seis milímetros. Las letras, de cuatro centímetros
+ *   largos, con trazo de ocho milímetros.
+ */
+const SALIDA = { forro: 0.02, esquina: 0.1 };
+const ASA = { bajo: 0.08, ancho: 0.14, alto: 0.045 };
+const LETRERO = { encima: 0.03, ancho: 0.21, alto: 0.085, canto: 0.006 };
+
+/**
  * **El grano del forro**: una tesela de ruido de sesenta y cuatro de lado, que
  * el sombreador lee a dos escalas —el granulado del plástico y sus manchas
  * grandes—. Leído de una textura, con sus mipmaps, sale más barato que
@@ -184,6 +219,9 @@ const COLORES = {
   // El botón del cristal que se oscurece, y sus luces.
   boton: "#2d3034",
   luz: "#7fc4ff",
+  // La salida: la tapa roja del asa, y el letrero, rojo sobre blanco.
+  rojo: "#c8102e",
+  letrero: "#f4f4ee",
 };
 
 /** El color de la luz del pasaje de noche, cálido. */
@@ -217,6 +255,9 @@ uniform float uPaso;
 uniform float uAtras;
 uniform vec2 uVecinas;
 uniform vec3 uTapan;
+// La trampilla de la salida: su centro a lo largo y de alto en la pared, y sus
+// medias medidas. Sin salida, medida cero.
+uniform vec4 uSalida;
 varying vec2 vNdc;
 
 // Distancia a un rectángulo de esquinas redondas: negativa dentro.
@@ -230,6 +271,11 @@ float cual(float x) { return clamp(floor(x / uPaso + 0.5), -1.0, 1.0); }
 // Si está —o es una columna—, y cuánto la tapa su pasajero.
 float hay(float k) { return k == 0.0 ? 1.0 : (k == uAtras ? uVecinas.y : uVecinas.x); }
 float tapa(float k) { return k == 0.0 ? uTapan.x : (k == uAtras ? uTapan.z : uTapan.y); }
+// Dónde va su centro a lo largo de la pared: a su paso, salvo la de la
+// trampilla de la salida, que va en medio de ella.
+float centroDe(float k) {
+  return (uSalida.z > 0.0 && k == sign(uSalida.x)) ? uSalida.x : k * uPaso;
+}
 
 // El rayo de este píxel, en los ejes de la ventanilla.
 vec3 rayo() {
@@ -255,6 +301,30 @@ uniform vec3 uBoton;
 uniform vec3 uLuzBoton;
 uniform vec3 uLuz;
 uniform sampler2D uGrano;
+uniform vec3 uRojo;
+uniform vec3 uLetrero;
+
+// Distancia a un trazo recto, de a a b.
+float trazo(vec2 p, vec2 a, vec2 b) {
+  vec2 pa = p - a;
+  vec2 ba = b - a;
+  return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0));
+}
+
+// «EXIT», centrado en p, m: cuánto cubre cada punto. Nueve trazos rectos.
+float letrasExit(vec2 p, float a) {
+  float h = 0.018;
+  float d = trazo(p, vec2(-0.063, -h), vec2(-0.063, h));
+  d = min(d, trazo(p, vec2(-0.063, h), vec2(-0.038, h)));
+  d = min(d, trazo(p, vec2(-0.063, 0.0), vec2(-0.041, 0.0)));
+  d = min(d, trazo(p, vec2(-0.063, -h), vec2(-0.038, -h)));
+  d = min(d, trazo(p, vec2(-0.025, -h), vec2(0.007, h)));
+  d = min(d, trazo(p, vec2(-0.025, h), vec2(0.007, -h)));
+  d = min(d, trazo(p, vec2(0.019, -h), vec2(0.019, h)));
+  d = min(d, trazo(p, vec2(0.031, h), vec2(0.063, h)));
+  d = min(d, trazo(p, vec2(0.047, h), vec2(0.047, -h)));
+  return 1.0 - smoothstep(0.004 - a, 0.004 + a, d);
+}
 
 void main() {
   vec3 d = rayo();
@@ -272,8 +342,8 @@ void main() {
   // La ventanilla de la fila que toca aquí, y la de uno para la luz.
   float k = cual(q1.x);
   float esta = hay(k);
-  vec2 c1 = q1 - vec2(k * uPaso, 0.0);
-  vec2 c0 = q0 - vec2(k * uPaso, 0.0);
+  vec2 c1 = q1 - vec2(centroDe(k), 0.0);
+  vec2 c0 = q0 - vec2(centroDe(k), 0.0);
   float s1 = esta > 0.5 ? caja(c1, uHueco.xy, uHueco.z) : 1.0;
   float s0 = caja(c0, uCristal.xy, uCristal.z);
   // El grano del plástico y sus manchas grandes, de una tesela de ruido: de
@@ -286,6 +356,9 @@ void main() {
   // Solo donde se ve pared: dentro del hueco no se paga. Las ramas no llevan
   // derivadas: los anchos de píxel ya están calculados arriba.
   vec3 fuera = vec3(0.0);
+  // Lo que alumbra por sí mismo, encima de la luz de la cabina: el letrero.
+  vec3 propia = vec3(0.0);
+  float enPropia = 0.0;
   if (s1 > -a1) {
   float sLuz = min(s1, caja(q1, uHueco.xy, uHueco.z));
   // Más clara cerca de las ventanillas, que es por donde entra la luz, y el
@@ -304,6 +377,37 @@ void main() {
   pared *= 1.0 - 0.32 * (1.0 - smoothstep(0.0015, 0.0015 + a1, dj));
   pared *= 1.0 + 0.05 * (1.0 - smoothstep(0.0015, 0.0015 + a1, abs(dj - 0.004)));
   pared *= 1.0 + grano;
+
+  // ── La salida sobre el ala ──
+  // Solo cerca de la trampilla y su letrero: el resto de la pared no la paga.
+  vec2 h = q1 - uSalida.xy;
+  if (uSalida.z > 0.0 && abs(h.x) < uSalida.z + 0.06 && h.y > -uSalida.w - 0.06
+      && h.y < uSalida.w + ${(LETRERO.encima + LETRERO.alto + 0.02).toFixed(3)}) {
+    // La trampilla es otra pieza de forro, un pelo más clara, con su junta
+    // oscura alrededor.
+    float sh = caja(h, uSalida.zw, ${SALIDA.esquina.toFixed(3)});
+    pared *= 1.0 + 0.04 * (1.0 - smoothstep(-a1, a1, sh));
+    pared = mix(pared, uSombra * 0.7, 0.8 * (1.0 - smoothstep(0.003, 0.003 + a1 * 1.5, abs(sh))));
+    // El asa, arriba: un hueco oscuro con su tapa roja. Solo cerca de ella.
+    vec2 pa = h - vec2(0.0, uSalida.w - ${ASA.bajo.toFixed(3)});
+    if (abs(pa.x) < ${(ASA.ancho / 2 + 0.02).toFixed(3)} && abs(pa.y) < ${(ASA.alto / 2 + 0.02).toFixed(4)}) {
+      float sa = caja(pa, vec2(${(ASA.ancho / 2).toFixed(3)}, ${(ASA.alto / 2).toFixed(4)}), 0.012);
+      vec3 asa = mix(uJunta, uRojo, 1.0 - smoothstep(-0.008 - a1, -0.008 + a1, sa));
+      pared = mix(pared, asa, 1.0 - smoothstep(-a1, a1, sa));
+    }
+    // Y el letrero encima: su canto oscuro y su cara blanca, que alumbra sola.
+    // Solo en él: las letras son nueve trazos, y el resto de la trampilla no
+    // tiene por qué pagarlos.
+    vec2 pl = h - vec2(0.0, uSalida.w + ${(LETRERO.encima + LETRERO.alto / 2).toFixed(4)});
+    if (abs(pl.x) < ${(LETRERO.ancho / 2 + 0.02).toFixed(4)} && abs(pl.y) < ${(LETRERO.alto / 2 + 0.02).toFixed(4)}) {
+      float sl = caja(pl, vec2(${(LETRERO.ancho / 2).toFixed(4)}, ${(LETRERO.alto / 2).toFixed(4)}), 0.008);
+      pared = mix(pared, uJunta, 1.0 - smoothstep(-a1, a1, sl));
+      // A lo largo de la pared es hacia la izquierda de quien la mira desde
+      // dentro —ver baseDeLaVentanilla—: sin darle la vuelta se leía «TIXƎ».
+      propia = mix(uLetrero, uRojo, letrasExit(vec2(-pl.x, pl.y), a1));
+      enPropia = 1.0 - smoothstep(-${LETRERO.canto.toFixed(3)} - a1, -${LETRERO.canto.toFixed(3)} + a1, sl);
+    }
+  }
   // El botón del cristal que se oscurece, en el bisel de debajo de la
   // ventanilla de uno: un canto oscuro con cuatro luces, tantas encendidas
   // como tonos.
@@ -371,7 +475,10 @@ void main() {
   if (d.z < 1e-4) {
     color = uPared * 0.6;
     alfa = 1.0;
+    enPropia = 0.0;
   }
+  // El letrero está en la pared: dentro del hueco de una ventanilla, no.
+  enPropia *= 1.0 - enHueco;
 
   // ── El respaldo de delante ──
   // Un plano de pie a lo ancho del avión, por delante de los ojos: si el
@@ -395,9 +502,10 @@ void main() {
     asiento *= 1.0 - 0.25 * (1.0 - smoothstep(0.0, 0.02, -sr));
     color = mix(color, asiento, respaldo);
     alfa = max(alfa, respaldo);
+    enPropia *= 1.0 - respaldo;
   }
 
-  gl_FragColor = vec4(color * uLuz, alfa);
+  gl_FragColor = vec4(mix(color * uLuz, propia, enPropia), alfa);
   #include <colorspace_fragment>
 }
 `;
@@ -578,6 +686,57 @@ export function queSeTocaEnLaPared(
   return null;
 }
 
+/**
+ * **Dónde va la trampilla de la salida en la pared**, en los ejes de la
+ * ventanilla de uno, m: su centro a lo largo —hacia la cola, positivo— y de
+ * alto, y sus medias medidas, con el forro.
+ *
+ * **A un paso de cuaderna, como las vecinas**, y no donde la pone el modelo:
+ * el de fuera separa más sus ventanillas para que se lean de lejos —ver
+ * `pasoDeVentanillas`—, y desde dentro la trampilla ocupa el sitio de la
+ * ventanilla de al lado, que es lo que es. Nunca encima del hueco de uno.
+ */
+export function salidaEnLaPared(
+  ventanilla: VentanillaDePasaje,
+  salida: SalidaDeAlLado,
+): { haciaLaCola: number; arriba: number; medioAncho: number; medioAlto: number } {
+  const m = medidasDelHueco(ventanilla);
+  const medioAncho = salida.ancho / 2 + SALIDA.forro;
+  const lejos = Math.max(pasoDeVentanillas(ventanilla.ancho), m.a1 + BISEL + medioAncho + 0.01);
+  return {
+    haciaLaCola: salida.haciaLaCola >= 0 ? lejos : -lejos,
+    arriba: salida.arriba,
+    medioAncho,
+    medioAlto: salida.alto / 2 + SALIDA.forro,
+  };
+}
+
+/**
+ * **Lo que tiene que asomar de la salida**, en coordenadas del avión: la
+ * esquina de abajo del letrero que da a la ventanilla de uno, y el canto de la
+ * trampilla de ese lado, a media altura. Lo usa quien elige hacia dónde se
+ * mira sentado: que asome no es que se vea entero.
+ */
+export function loQueAsomaDeLaSalida(
+  ventanilla: VentanillaDePasaje,
+  salida: SalidaDeAlLado,
+): Vector3[] {
+  const s = salidaEnLaPared(ventanilla, salida);
+  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const c = ventanilla.centro;
+  const enLaPared = (largo: number, alto: number): Vector3 =>
+    new Vector3(c.x, c.y, c.z)
+      .add(new Vector3(0, 0, largo))
+      .addScaledVector(arriba, alto)
+      .addScaledVector(n, -FONDO);
+  const hacia = Math.sign(s.haciaLaCola);
+  return [
+    enLaPared(s.haciaLaCola - (hacia * LETRERO.ancho) / 4, s.arriba + s.medioAlto + LETRERO.encima),
+    enLaPared(s.haciaLaCola - hacia * s.medioAncho, s.arriba),
+  ];
+}
+
 /** Lo que se le pide a la cabina para pintarla. Ver `CabinaDePasaje`. */
 export interface CabinaQueSePinta {
   readonly tipoDeVentanilla: TipoDeVentanilla;
@@ -620,6 +779,7 @@ export class MarcoDeVentanilla {
       uAtras: { value: 1 },
       uVecinas: { value: new Vector2(1, 1) },
       uTapan: { value: new Vector3() },
+      uSalida: { value: new Vector4() },
     };
     this.material = new ShaderMaterial({
       vertexShader: VERTICES,
@@ -641,6 +801,8 @@ export class MarcoDeVentanilla {
         uLuzBoton: { value: lineal(COLORES.luz) },
         uLuz: { value: new Color(1, 1, 1) },
         uGrano: { value: teselaDeGrano() },
+        uRojo: { value: lineal(COLORES.rojo) },
+        uLetrero: { value: lineal(COLORES.letrero) },
       },
       depthTest: true,
       depthWrite: true,
@@ -745,7 +907,26 @@ export class MarcoDeVentanilla {
     const vecinas = cabina?.vecinas ?? { delante: true, detras: true };
     u.uConPersiana!.value = tipo === "persiana" ? 1 : 0;
     (u.uTapan!.value as Vector3).set(tapan[0], tapan[1], tapan[2]);
-    (u.uVecinas!.value as Vector2).set(vecinas.delante ? 1 : 0, vecinas.detras ? 1 : 0);
+    /*
+     * **La salida de al lado**, en los ejes de la pared: a lo largo, hacia la
+     * cola si la pared mira hacia allí. Y con salida, esa vecina está siempre:
+     * la trampilla lleva su ventanilla, no hay columna. Ver `salidaEnLaPared`.
+     */
+    const salida = asiento.salida;
+    const atras = u.uAtras!.value as number;
+    let conSalida = { delante: false, detras: false };
+    if (salida) {
+      const s = salidaEnLaPared(ventanilla, salida);
+      (u.uSalida!.value as Vector4).set(s.haciaLaCola * atras, s.arriba, s.medioAncho, s.medioAlto);
+      conSalida =
+        salida.haciaLaCola > 0
+          ? { delante: false, detras: true }
+          : { delante: true, detras: false };
+    } else (u.uSalida!.value as Vector4).set(0, 0, 0, 0);
+    (u.uVecinas!.value as Vector2).set(
+      vecinas.delante || conSalida.delante ? 1 : 0,
+      vecinas.detras || conSalida.detras ? 1 : 0,
+    );
     u.uParpadeo!.value = cabina?.parpadeo ?? 0;
 
     /*

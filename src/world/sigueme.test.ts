@@ -37,11 +37,25 @@ const fs = (
 const MEDIO_LARGO = (4.3 * 1.4) / 2;
 const MEDIO_ANCHO = (1.8 * 1.4) / 2;
 
+/**
+ * **La cámara de detrás de tierra** de cada avión, que es desde donde se ve al
+ * coche: en el que lleva frenos de tierra en el modelo va más cerca. Ver
+ * `sitioDeLaCola` y `adelantoDelSigueme` en `game.ts`.
+ */
+function colaEnTierra(a: AircraftConfig, grupo: Object3D): { y: number; z: number } {
+  let conFrenos = false;
+  grupo.traverse((o) => {
+    if (/^aerofreno-/.test(o.name)) conFrenos = true;
+  });
+  return sitioDeLaCola(a.wingSpan, conFrenos ? 1 : 0);
+}
+
 async function montar(a: AircraftConfig): Promise<{
   grupo: Group;
   ojo: { x: number; y: number; z: number };
   vista: VistaAlFrente;
   adelanto: number;
+  cola: { y: number; z: number };
 }> {
   const b = fs.readFileSync(`public/assets/aeronaves/${a.id}.glb`);
   const datos = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
@@ -50,13 +64,14 @@ async function montar(a: AircraftConfig): Promise<{
   const ojo = ojoDelModelo(modelo.scene, grupo);
   if (!ojo) throw new Error(`${a.id}: el modelo no trae asiento`);
   const vista = medirVistaAlFrente(grupo, ojo);
+  const cola = colaEnTierra(a, grupo);
   const adelanto = adelantoDelSigueme({
     ojo,
     vista,
     tren: a.gearHeight,
-    cola: sitioDeLaCola(a.wingSpan),
+    cola,
   });
-  return { grupo, ojo, vista, adelanto };
+  return { grupo, ojo, vista, adelanto, cola };
 }
 
 /**
@@ -82,10 +97,9 @@ function trasera(d: number, tren: number): Vector3[] {
 describe("el coche del sígame, fuera del ángulo muerto de cada avión", () => {
   for (const a of AIRCRAFT) {
     it(`${a.id}: desde la cabina y desde detrás`, async () => {
-      const { grupo, ojo, adelanto } = await montar(a);
+      const { grupo, ojo, adelanto, cola } = await montar(a);
       grupo.updateMatrixWorld(true);
       const ojos = new Vector3(ojo.x, ojo.y, ojo.z);
-      const cola = sitioDeLaCola(a.wingSpan);
       const camara = new Vector3(0, cola.y, cola.z);
 
       // Desde detrás se ve siempre, en todos: es desde donde se juega.
@@ -113,9 +127,8 @@ describe("el coche del sígame, fuera del ángulo muerto de cada avión", () => 
    */
   it("jaz-120: a los treinta de antes, el coche no se veía", async () => {
     const a = AIRCRAFT.find((x) => x.id === "jaz-120")!;
-    const { grupo, ojo, adelanto } = await montar(a);
+    const { grupo, ojo, adelanto, cola } = await montar(a);
     grupo.updateMatrixWorld(true);
-    const cola = sitioDeLaCola(a.wingSpan);
     const centro = trasera(30, a.gearHeight)[1]!;
     expect(
       seVeDesde(grupo, new Vector3(ojo.x, ojo.y, ojo.z), centro),

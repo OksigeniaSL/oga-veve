@@ -88,7 +88,18 @@ export interface Contexto {
   readonly pasaje?: {
     readonly izquierda: AsientoDePasaje;
     readonly derecha: AsientoDePasaje;
+    /** Y los de encima del ala, en el avión que los tiene. */
+    readonly sobreElAla?: {
+      readonly izquierda: AsientoDePasaje;
+      readonly derecha: AsientoDePasaje;
+    } | null;
   } | null;
+  /**
+   * **Cuánto están fuera los frenos de tierra**, de 0 a 1, en el avión cuyo
+   * modelo los lleva; sin poner, en los demás. Con ellos la cámara de detrás
+   * se acerca en tierra, y baja mientras están fuera. Ver `CamaraDeFuera`.
+   */
+  readonly frenosDeTierra?: number | null;
 }
 
 /** Lo que la vista de pasaje necesita de un asiento. */

@@ -11,6 +11,12 @@
  * `world/asiento-de-pasaje.ts`—, y el marco de la ventanilla lo pinta
  * `world/marco-de-ventanilla.ts` encima de lo que se ve.
  *
+ * **Y la de encima del ala**, en los que llevan frenos de tierra: la misma
+ * vista desde otro asiento, el que deja ver los paneles levantarse al tocar.
+ * Pedida por Enrique, que los recuerda desde la ventanilla —«parecen de
+ * papel»—; la de siempre va por delante del ala y no los ve. Sin asiento de
+ * encima del ala, la de su lado de siempre.
+ *
  * Sin asiento medido —el avión de cajas, o uno sin ventanillas— no hay vista
  * de pasaje: el juego no la ofrece. Ver `vistasDe` en `index.ts`.
  */
@@ -18,7 +24,7 @@
 import { Quaternion, Vector3, type PerspectiveCamera } from "three";
 import type { FlightState } from "../flight/model";
 import { Cuello } from "./dentro";
-import type { CameraRig, Contexto } from "./tipos";
+import type { AsientoDePasaje, CameraRig, Contexto } from "./tipos";
 
 /**
  * El ángulo de la vista de pasaje, grados.
@@ -34,6 +40,26 @@ export const FOV_DE_PASAJE = 64;
 const Y = new Vector3(0, 1, 0);
 const X = new Vector3(1, 0, 0);
 
+/** Los asientos de un avión: los de siempre y, si los tiene, los de encima del ala. */
+interface Asientos<A> {
+  readonly izquierda: A;
+  readonly derecha: A;
+  readonly sobreElAla?: { readonly izquierda: A; readonly derecha: A } | null;
+}
+
+/**
+ * El asiento de una vista de pasaje, si el avión lo tiene. Sin asiento de
+ * encima del ala, el de siempre de ese lado.
+ */
+export function asientoDeLaVista<A extends AsientoDePasaje>(
+  pasaje: Asientos<A> | null | undefined,
+  lado: "izquierda" | "derecha",
+  sobreElAla: boolean,
+): A | null {
+  if (!pasaje) return null;
+  return (sobreElAla ? pasaje.sobreElAla?.[lado] : null) ?? pasaje[lado];
+}
+
 export class CamaraDePasaje implements CameraRig {
   readonly muestraElAvion = true;
   private readonly offset = new Vector3();
@@ -41,7 +67,10 @@ export class CamaraDePasaje implements CameraRig {
   private readonly giro = new Quaternion();
   private readonly arriba = new Quaternion();
 
-  constructor(readonly lado: "izquierda" | "derecha") {}
+  constructor(
+    readonly lado: "izquierda" | "derecha",
+    readonly sobreElAla = false,
+  ) {}
 
   update(
     camera: PerspectiveCamera,
@@ -49,7 +78,7 @@ export class CamaraDePasaje implements CameraRig {
     dt: number,
     ctx: Contexto,
   ): void {
-    const asiento = ctx.pasaje?.[this.lado];
+    const asiento = asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla);
     const cabeza = this.cuello.paso(state, dt, ctx, true);
     if (asiento) {
       this.offset.set(asiento.ojo.x, asiento.ojo.y + cabeza, asiento.ojo.z);

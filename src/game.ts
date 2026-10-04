@@ -489,12 +489,16 @@ import {
   comoSeMiraDesde,
   construirCamaras,
   esDePasaje,
+  esSobreElAla,
+  ladoDelPasaje,
   siguienteVista,
+  vistaDePasaje,
   type CameraMode,
   type CameraRig,
   type Contexto,
 } from "./cameras";
 import { sitioDeLaCola } from "./cameras/fuera";
+import { asientoDeLaVista } from "./cameras/pasaje";
 import {
   asomarse,
   darLaVuelta,
@@ -4186,6 +4190,7 @@ export class Game {
     traqueteo: 1,
     caidaMaxima: Number.POSITIVE_INFINITY,
     pasaje: null as Contexto["pasaje"],
+    frenosDeTierra: null as number | null,
     bajadaMaxima: Number.POSITIVE_INFINITY,
     caidaTope: Number.POSITIVE_INFINITY,
   };
@@ -9964,7 +9969,13 @@ export class Game {
           ojo: malla.ojo,
           vista: malla.vista,
           tren: this.aircraft.gearHeight,
-          cola: sitioDeLaCola(this.aircraft.wingSpan),
+          /*
+           * **La de cola de tierra**, que es desde donde se ve al coche: en el
+           * avión con frenos de tierra va más cerca. Con la de volar, el
+           * coche se ponía donde lo veía una cámara que en tierra ya no está.
+           * Ver `sitioDeLaCola`.
+           */
+          cola: sitioDeLaCola(this.aircraft.wingSpan, malla.aerofrenos ? 1 : 0),
         }),
       };
     return this.adelantoMedido.metros;
@@ -15448,7 +15459,8 @@ export class Game {
         Math.sin(haciaEl - this.flight.state.heading),
         Math.cos(haciaEl - this.flight.state.heading),
       );
-      const suyo = relativo < 0 ? "pasaje-izquierda" : "pasaje-derecha";
+      // Del mismo asiento: desde encima del ala, al de encima del ala del otro lado.
+      const suyo = vistaDePasaje(relativo < 0 ? "izquierda" : "derecha", this.cameraMode);
       if (suyo !== this.cameraMode) {
         this.cameraMode = suyo;
         recordarVista(suyo);
@@ -16662,6 +16674,11 @@ export class Game {
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;
+    // Los frenos de tierra, en el avión cuyo modelo los lleva: la de cola se
+    // acerca en tierra por ellos. Ver `sitioDeLaCola`.
+    ctx.frenosDeTierra = this.aircraftMesh.aerofrenos
+      ? (this.input.controls.frenosDeTierra ?? 0)
+      : null;
 
     // Lo que puso la vista el paso anterior, sin el giro de la cabeza encima.
     // Ver `poseDeLaVista`.
@@ -16700,7 +16717,13 @@ export class Game {
    * encima serían dos tableros a la vez.
    */
   private vistaQueHay(): CameraMode {
-    return esDePasaje(this.cameraMode) && !this.hayPasaje ? "chase" : this.cameraMode;
+    const modo = this.cameraMode;
+    if (!esDePasaje(modo)) return modo;
+    if (!this.hayPasaje) return "chase";
+    // Y la de encima del ala, en el que no la tiene: la ventanilla de su lado.
+    if (esSobreElAla(modo) && !this.haySobreElAla)
+      return `pasaje-${ladoDelPasaje(modo)}`;
+    return modo;
   }
 
   /**
@@ -16711,11 +16734,19 @@ export class Game {
     return conPasaje(this.aircraft.mass) && !!this.aircraftMesh.pasaje;
   }
 
+  /**
+   * Y si además tiene asiento de encima del ala: el que lleva frenos de tierra
+   * en el modelo. Ver `asientoSobreElAla` en `world/asiento-de-pasaje.ts`.
+   */
+  private get haySobreElAla(): boolean {
+    return this.hayPasaje && !!this.aircraftMesh.pasaje?.sobreElAla;
+  }
+
   /** El asiento de ventanilla de esa vista, si es de pasaje y lo hay. */
   private asientoDe(modo: CameraMode): AsientoDePasaje | null {
     const pasaje = this.aircraftMesh.pasaje;
     if (!pasaje || !esDePasaje(modo)) return null;
-    return modo === "pasaje-izquierda" ? pasaje.izquierda : pasaje.derecha;
+    return asientoDeLaVista(pasaje, ladoDelPasaje(modo), esSobreElAla(modo));
   }
 
   /**
@@ -20582,7 +20613,7 @@ export class Game {
 
   private cycleCamera(): void {
     // Las de pasaje, solo en el avión que lo lleva. Ver `vistasDe`.
-    this.cameraMode = siguienteVista(this.cameraMode, this.hayPasaje);
+    this.cameraMode = siguienteVista(this.cameraMode, this.hayPasaje, this.haySobreElAla);
     recordarVista(this.cameraMode);
     this.hud.ponerVistaDeCabina(this.cameraMode === "cockpit");
     // Y el encuadre, que cambia con ella: desde la cabina no hay cuadro que

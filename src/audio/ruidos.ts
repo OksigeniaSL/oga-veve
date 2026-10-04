@@ -64,7 +64,14 @@ export type Oido = "fuera" | "cabina" | "pasaje";
  */
 export function oidoDe(vista: CameraMode): Oido {
   if (vista === "cockpit") return "cabina";
-  if (vista === "pasaje-izquierda" || vista === "pasaje-derecha") return "pasaje";
+  // Las cuatro ventanillas, también las de encima del ala: es el mismo pasaje.
+  if (
+    vista === "pasaje-izquierda" ||
+    vista === "pasaje-derecha" ||
+    vista === "pasaje-ala-izquierda" ||
+    vista === "pasaje-ala-derecha"
+  )
+    return "pasaje";
   return "fuera";
 }
 

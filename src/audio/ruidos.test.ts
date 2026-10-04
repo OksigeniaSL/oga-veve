@@ -66,6 +66,8 @@ describe("desde dónde se escucha", () => {
     expect(oidoDe("cockpit")).toBe("cabina");
     expect(oidoDe("pasaje-izquierda")).toBe("pasaje");
     expect(oidoDe("pasaje-derecha")).toBe("pasaje");
+    expect(oidoDe("pasaje-ala-izquierda")).toBe("pasaje");
+    expect(oidoDe("pasaje-ala-derecha")).toBe("pasaje");
     for (const v of ["chase", "wing", "izquierda", "morro"] as const)
       expect(oidoDe(v)).toBe("fuera");
   });
