@@ -79,8 +79,13 @@ export type Accion =
  *   es el gas. «Pitch for airspeed, power for altitude» (FAA, *Airplane
  *   Flying Handbook*, FAA-H-8083-3C, cap. 9, la aproximación estabilizada).
  *   Ver `mandos` en `aircraft.ts` y `flight/mano.ts`.
+ * - `gasVelocidad`: **el modelo sencillo de Guyrami**, donde el gas es la
+ *   velocidad y el morro solo la senda (ADR 0002). Como `morroSenda`, salvo
+ *   que lento es siempre gas: ahí bajar el morro no da velocidad. Medido en
+ *   la bajada a Gando: lento y alto, la instructora pedía «bajá un poco la
+ *   nariz» con el morro ya abajo del todo y la aguja quieta.
  */
-export type Tecnica = "morroSenda" | "morroVelocidad";
+export type Tecnica = "morroSenda" | "morroVelocidad" | "gasVelocidad";
 
 /** Por qué se pide: lo que se ha visto. */
 export type Motivo = "lento" | "rapido" | "alto" | "bajo" | "hundiendose";
@@ -310,6 +315,7 @@ function queHacerConTodo(l: Lectura, hundiendose: boolean): Consejo | null {
           { accion: "masGas", motivo: "hundiendose" }
         : { accion: "narizArriba", motivo: "hundiendose" };
   if (v === "lento") {
+    if (l.tecnica === "gasVelocidad") return { accion: "masGas", motivo: "lento" };
     if (porVelocidad)
       // Con el morro la velocidad: abajo. Y si además se va bajo, el gas, que
       // es lo único que no empeora ninguna de las dos.

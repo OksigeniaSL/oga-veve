@@ -705,6 +705,15 @@ describe("por tipo: con el morro la velocidad y con el gas la senda", () => {
     expect(queHacer(cables({ vertical: -1600 }), true)?.accion).toBe("masGas");
   });
 
+  it("y en Guyrami, donde el gas es la velocidad, lento es siempre gas", () => {
+    // Bajar el morro ahí no da velocidad: la nariz ya abajo del todo y
+    // «bajá un poco la nariz» no arreglaba nada.
+    const sencillo = (c: Partial<Lectura>) => base({ tecnica: "gasVelocidad", ...c });
+    expect(queHacer(sencillo({ velocidad: "lento", senda: "alto" }))?.accion).toBe("masGas");
+    expect(queHacer(sencillo({ senda: "alto" }))?.accion).toBe("narizAbajo");
+    expect(queHacer(sencillo({ velocidad: "rapido" }))?.accion).toBe("menosGas");
+  });
+
   it("el gas por la senda responde en el variómetro, no en la aguja", () => {
     const c = new ConsejoDeLaBajada();
     for (let i = 0; i < 40; i++) c.paso(cables({ senda: "bajo", vertical: -900 }));

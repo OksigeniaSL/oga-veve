@@ -129,9 +129,10 @@ perfil, «un poco bajo para la pista, levantá suave».
   de cables, en el modelo completo, sin gases automáticos y sin el automático
   en la senda, se aconseja con **el morro en la velocidad y el gas en la
   senda** —alto, menos gas; bajo, más gas; lento, nariz abajo; rápido, nariz
-  arriba; con *sink rate*, gas—. Todos los demás, como estaba: el morro en la
-  senda y el gas en la velocidad. Es la misma raya que ya separaba lo que
-  sostiene la mano suelta.
+  arriba; con *sink rate*, gas—. En Guyrami, donde el gas es la velocidad y
+  bajar el morro no la da, lento es siempre gas. Todos los demás, como
+  estaba: el morro en la senda y el gas en la velocidad. Es la misma raya que
+  ya separaba lo que sostiene la mano suelta.
 - **El perfil de la bajada no es la pista.** Por debajo del perfil nunca se
   pide subir: se baja más suave o se nivela un momento. Por encima, bajando y
   sin poder bajar más deprisa —el gas al mínimo o el morro a fondo—, los

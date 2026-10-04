@@ -19190,13 +19190,14 @@ export class Game {
      * demás, al revés. Ver `Tecnica` y el ADR 0017.
      */
     const tecnica: Tecnica =
-      this.tier.model !== "simple" &&
-      this.aircraft.mandos === "convencionales" &&
-      !this.gasesPuestos &&
-      this.gasDeLaFinal === null &&
-      this.objetivos.altitud === null
-        ? "morroVelocidad"
-        : "morroSenda";
+      this.tier.model === "simple"
+        ? "gasVelocidad"
+        : this.aircraft.mandos === "convencionales" &&
+            !this.gasesPuestos &&
+            this.gasDeLaFinal === null &&
+            this.objetivos.altitud === null
+          ? "morroVelocidad"
+          : "morroSenda";
     this.lecturaDelConsejo = {
       activo,
       soloLoUrgente: pasadaLaPuerta,
