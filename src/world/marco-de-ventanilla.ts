@@ -874,6 +874,24 @@ export function elMarcoEntero(ventanilla: VentanillaDePasaje): Vector3[] {
 }
 
 /**
+ * **El cristal entero**, en coordenadas del avión: sus cuatro bordes, por
+ * dentro de la junta. Lo usa quien elige hacia dónde se mira desde la fila de
+ * la salida, para que no quede nada de él debajo del HUD: ahí, a sesenta y
+ * cuatro grados, la mitad de abajo —el ala— quedaba bajo la barra de abajo.
+ */
+export function elCristalEntero(ventanilla: VentanillaDePasaje): Vector3[] {
+  const m = medidasDelHueco(ventanilla);
+  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const c = ventanilla.centro;
+  const en = (largo: number, alto: number): Vector3 =>
+    new Vector3(c.x, c.y, c.z + largo).addScaledVector(arriba, alto);
+  const a = m.a - JUNTA;
+  const b = m.b - JUNTA;
+  return [en(0, b), en(0, -b), en(a, 0), en(-a, 0)];
+}
+
+/**
  * **La franja de la funda del cabezal**: el color de la librea que va en el
  * avión, como lo lleva una compañía en sus fundas. El de la franja del avión,
  * salvo que sea el verde del tapizado, que encima de él no se vería: entonces

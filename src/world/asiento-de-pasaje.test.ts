@@ -27,11 +27,17 @@ import { prepararAerofrenos } from "./aerofrenos";
 import { prepararFlaps } from "./flaps";
 import {
   elCantoDeLaTrampilla,
+  elCristalEntero,
   loQueAsomaDeLaSalida,
   seVePorLaVentanilla,
 } from "./marco-de-ventanilla";
+import { CamaraDePasaje, FOV_DE_PASAJE } from "../cameras/pasaje";
+import type { Contexto } from "../cameras/tipos";
+import type { FlightState } from "../flight/model";
 import {
+  ANGULOS_EN_LA_SALIDA,
   asientoAnteVentanilla,
+  libreDelHud,
   medirElPasaje,
   OJOS_A,
   seVeSentado,
@@ -368,21 +374,41 @@ describe("el asiento de encima del ala", () => {
       // Y no es una ventanilla de la fila: ésa es la de siempre.
       expect(asiento.ventanilla.centro.z).not.toBeCloseTo(pasaje![lado].ventanilla.centro.z, 1);
       // El asa y el letrero, enteros dentro de la pantalla de una tablet y
-      // fuera de los botones de arriba a la derecha.
+      // sin nada del HUD encima.
       const asoma = loQueAsomaDeLaSalida(asiento.ventanilla, salida!);
       expect(asoma.length).toBeGreaterThanOrEqual(6);
-      for (const p of asoma) expect(seVeSentado(asiento, p), lado).toBe(true);
+      for (const p of asoma) expect(libreDelHud(asiento, p), lado).toBe(true);
+      /*
+       * Y el cristal entero, también sin HUD encima: a sesenta y cuatro grados
+       * la mitad de abajo —el ala, a lo que se viene— quedaba debajo de la
+       * barra de instrumentos. Por eso esta fila abre la vista, y solo ella.
+       */
+      for (const p of elCristalEntero(asiento.ventanilla))
+        expect(libreDelHud(asiento, p), lado).toBe(true);
+      expect(asiento.fov, lado).toBeGreaterThanOrEqual(Math.min(...ANGULOS_EN_LA_SALIDA));
+      expect(asiento.fov, lado).toBeLessThanOrEqual(Math.max(...ANGULOS_EN_LA_SALIDA));
+      expect(pasaje![lado].fov ?? FOV_DE_PASAJE, `${lado}, el de siempre`).toBe(FOV_DE_PASAJE);
+      // Y la cámara de esta vista pide ese ángulo; la de siempre, el suyo.
+      const ctx = { pasaje } as unknown as Contexto;
+      const estado = {} as FlightState;
+      expect(new CamaraDePasaje(lado, true).fovDeseado(estado, ctx)).toBe(asiento.fov);
+      expect(new CamaraDePasaje(lado).fovDeseado(estado, ctx)).toBe(FOV_DE_PASAJE);
       // Y el canto de arriba de la trampilla, que dice que el cristal va en
-      // una pieza: al menos una esquina —la otra puede quedar debajo de los
-      // botones de arriba a la derecha—.
+      // una pieza: al menos una esquina en la pantalla. La otra puede quedar
+      // debajo de los botones de arriba a la derecha.
       const canto = elCantoDeLaTrampilla(asiento.ventanilla, salida!);
-      expect(
-        seVeSentado(asiento, canto[0]!) || seVeSentado(asiento, canto[1]!),
-        lado,
-      ).toBe(true);
-      // Mirando de lado, y poco hacia la cola: menos de treinta grados.
+      expect(seVeSentado(asiento, canto[0]!) || seVeSentado(asiento, canto[1]!), lado).toBe(
+        true,
+      );
+      // Mirando de lado, y poco hacia la cola: no más de treinta grados.
       expect(Math.abs(asiento.guinada) - Math.PI / 2).toBeLessThan(30.01 * (Math.PI / 180));
     }
+  });
+
+  it("jaz-120: el ángulo de siempre desde encima del ala", async () => {
+    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-120")!);
+    expect(pasaje!.sobreElAla!.izquierda.fov ?? FOV_DE_PASAJE).toBe(FOV_DE_PASAJE);
+    expect(pasaje!.sobreElAla!.derecha.fov ?? FOV_DE_PASAJE).toBe(FOV_DE_PASAJE);
   });
 
   it("jaz-120: sin salida sobre el ala, que lleva puertas", async () => {
