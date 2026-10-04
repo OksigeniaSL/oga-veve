@@ -512,6 +512,7 @@ import {
 import { escucharLaMirada } from "./cameras/dedo-que-mira";
 import {
   cortinaDe,
+  franjaDeLaFunda,
   MarcoDeVentanilla,
   queSeTocaEnLaPared,
   seVePorLaVentanilla,
@@ -16834,6 +16835,7 @@ export class Game {
     this.marcoDeVentanilla.visible = !!asiento;
     if (pasaje) pasaje.ventanillas.visible = !asiento;
     if (!asiento) return;
+    this.marcoDeVentanilla.librea(franjaDeLaFunda(this.aircraft.appearance));
     this.marcoDeVentanilla.poner(
       this.camera,
       this.flight.state,

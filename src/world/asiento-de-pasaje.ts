@@ -52,7 +52,11 @@ import {
   type Object3D,
 } from "three";
 import { FOV_DE_PASAJE } from "../cameras/pasaje";
-import { loQueAsomaDeLaSalida, seVePorLaVentanilla } from "./marco-de-ventanilla";
+import {
+  elMarcoEntero,
+  loQueAsomaDeLaSalida,
+  seVePorLaVentanilla,
+} from "./marco-de-ventanilla";
 
 type Punto = { readonly x: number; readonly y: number; readonly z: number };
 
@@ -83,6 +87,13 @@ export interface AsientoDePasaje {
    * al lado. Ver `SalidaDeAlLado`.
    */
   readonly salida?: SalidaDeAlLado | null;
+  /**
+   * **Dónde quedan los ojos sentado del todo**, con la espalda en el respaldo,
+   * si para mirar uno se ha despegado de él y asomado al cristal; si no, son
+   * `ojo`. Es lo que dice dónde está el asiento —el de uno y el de delante—,
+   * que no se mueven cuando uno se asoma. Ver `asientoSobreElAla`.
+   */
+  readonly sentado?: Punto | null;
 }
 
 /**
@@ -283,14 +294,18 @@ function separar(vertices: readonly Vector3[]): Medida[] {
  * `OJOS_A` de la pared en esa dirección. Así la ventanilla queda en el centro
  * de la mirada en cualquier avión, sea cual sea lo alta que vaya.
  *
- * `atras` y `abajo` son hacia dónde se mira, rad: los de sentado si no se
- * dicen. El asiento de encima del ala mira hacia sus paneles.
+ * `atras` y `abajo` son hacia dónde se mira, rad, y `ojosA`, a cuánto del
+ * cristal: los de sentado si no se dicen. El asiento de encima del ala mira
+ * hacia sus paneles, asomado, y a veces `encima` del centro del cristal, m,
+ * por la pared.
  */
 export function asientoAnteVentanilla(
   v: VentanillaDePasaje,
   lado: "izquierda" | "derecha",
   atras = HACIA_ATRAS,
   abajo = HACIA_ABAJO,
+  ojosA = OJOS_A,
+  encima = 0,
 ): AsientoDePasaje {
   const s = lado === "izquierda" ? -1 : 1;
   const dir = new Vector3(
@@ -299,8 +314,11 @@ export function asientoAnteVentanilla(
     Math.cos(abajo) * Math.sin(atras),
   );
   const n = new Vector3(v.normal.x, v.normal.y, v.normal.z);
-  const largo = OJOS_A / Math.max(0.3, dir.dot(n));
-  const ojo = new Vector3(v.centro.x, v.centro.y, v.centro.z).addScaledVector(dir, -largo);
+  const largo = ojosA / Math.max(0.3, dir.dot(n));
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const ojo = new Vector3(v.centro.x, v.centro.y, v.centro.z)
+    .addScaledVector(arriba, encima)
+    .addScaledVector(dir, -largo);
   return {
     ojo: { x: ojo.x, y: ojo.y, z: ojo.z },
     guinada: Math.atan2(-dir.x, -dir.z),
@@ -510,6 +528,30 @@ const MIRAR_ATRAS = { desde: -5, hasta: 45, paso: 2.5 };
 const MIRAR_ABAJO = { desde: 2, hasta: 16, paso: 2 };
 
 /**
+ * **Asomado al cristal**: a cuánto de él se prueban los ojos desde el asiento
+ * de encima del ala, m, de más cerca a sentado del todo.
+ *
+ * Enrique, con la primera versión de esta vista, sentado a `OJOS_A` y mirando
+ * casi cuarenta grados hacia la cola: «tiene pinta de avión de carga: detrás no
+ * hay asiento ni nada, está vacío». Casi toda la pantalla era pared en
+ * perspectiva y el cristal, una rendija. Y es que quien quiere ver el ala no se
+ * queda con la espalda en el respaldo: **se despega de él y se acerca a la
+ * ventanilla**. Así que se prueba de cerca a lejos y gana el más cerca que
+ * todavía deja ver lo que se viene a ver —los paneles, la salida y el marco
+ * entero alrededor del cristal—: el cristal crece y la pared deja de mandar.
+ * Más cerca de un tercio de metro ya es la frente en el cristal, y desde ahí no
+ * se ve el marco.
+ */
+const ASOMADO = [0.34, 0.38, 0.42, 0.46, 0.5, OJOS_A];
+
+/**
+ * Cuánto por encima del centro del cristal se prueba a apuntar, en altos de
+ * cristal: asomado, el letrero de la salida queda alto, y mirando un poco más
+ * arriba entra en la pantalla sin perder el ala, que va por la parte de abajo.
+ */
+const APUNTAR_ENCIMA = [0, 0.15, 0.3];
+
+/**
  * **Lo que se ve sentado**, para que asome la salida: el ángulo de la vista
  * de pasaje en la pantalla más estrecha que se juega, una tablet de 4:3, y un
  * margen —más arriba, donde va la barra de botones—. Grados.
@@ -528,7 +570,7 @@ const MARGEN = { lados: 3, arriba: 6, abajo: 3 };
 const PANELES_QUE_BASTAN = 3;
 
 /** Si un punto cae dentro de lo que se ve desde un asiento, con su margen. */
-function seVeSentado(asiento: AsientoDePasaje, p: Vector3): boolean {
+export function seVeSentado(asiento: AsientoDePasaje, p: Vector3): boolean {
   const giro = new Quaternion().setFromEuler(
     new Euler(asiento.cabeceo, asiento.guinada, 0, "YXZ"),
   );
@@ -721,6 +763,8 @@ function tapadoPorElAla(
  *   canto de la trampilla dentro de la pantalla, en una tablet de 4:3—; la que
  *   ve más piezas, paneles y flaps, que también se pidieron; y la que mira más
  *   derecho a ellas.
+ * - **Y asomado**: elegida la ventanilla, los ojos se acercan al cristal todo lo
+ *   que deje seguir viendo lo mismo con el marco entero. Ver `ASOMADO`.
  *
  * `ventanillaDe` pone una medida de la fila en la pared; `tapado` dice si algo
  * se cruza entre dos puntos.
@@ -762,23 +806,50 @@ function asientoSobreElAla(
     for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i]! > b[i]!;
     return false;
   };
-  let mejor: { asiento: AsientoDePasaje; nota: Nota } | null = null;
+  type Mirada = { asiento: AsientoDePasaje; nota: Nota; entero: boolean };
   const ojo = new Vector3();
   const mira = new Vector3();
   const alCentro = new Vector3();
-  for (const m of candidatas) {
-    const v = ventanillaDe(m, cual);
-    const conSalida = conSuSalida(asientoAnteVentanilla(v, cual), fila, salida).salida;
-    const asomar = conSalida ? loQueAsomaDeLaSalida(v, conSalida) : [];
-    const cristal = new Vector3(v.centro.x, v.centro.y, v.centro.z);
-    // De cada pieza, los puntos que no tapa nada del ala.
-    const libres = piezas
-      .map((p) => ({ panel: p.panel, puntos: p.puntos.filter((q) => !tapado(cristal, q)) }))
-      .filter((p) => p.puntos.length > 0);
-    if (!libres.length) continue;
+
+  /*
+   * Lo que no depende de cómo se mire, una vez por ventanilla: los rayos contra
+   * el ala son lo caro, y asomado se mira varias veces por la misma.
+   */
+  const deCada = new Map<
+    VentanillaDePasaje,
+    { asomar: Vector3[]; cristal: Vector3; libres: PiezaDelAla[]; marco: Vector3[] }
+  >();
+  const preparar = (v: VentanillaDePasaje) => {
+    let p = deCada.get(v);
+    if (!p) {
+      const conSalida = conSuSalida(asientoAnteVentanilla(v, cual), fila, salida).salida;
+      const cristal = new Vector3(v.centro.x, v.centro.y, v.centro.z);
+      p = {
+        asomar: conSalida ? loQueAsomaDeLaSalida(v, conSalida) : [],
+        cristal,
+        // De cada pieza, los puntos que no tapa nada del ala.
+        libres: piezas
+          .map((q) => ({ panel: q.panel, puntos: q.puntos.filter((x) => !tapado(cristal, x)) }))
+          .filter((q) => q.puntos.length > 0),
+        marco: elMarcoEntero(v),
+      };
+      deCada.set(v, p);
+    }
+    return p;
+  };
+
+  /** Cada manera de mirar por una ventanilla, desde `ojosA` y apuntando `encima`. */
+  const mirar = (
+    v: VentanillaDePasaje,
+    ojosA: number,
+    encima: number,
+    cada: (m: Mirada) => void,
+  ): void => {
+    const { asomar, cristal, libres, marco } = preparar(v);
+    if (!libres.length) return;
     for (let atras = MIRAR_ATRAS.desde; atras <= MIRAR_ATRAS.hasta; atras += MIRAR_ATRAS.paso)
       for (let abajo = MIRAR_ABAJO.desde; abajo <= MIRAR_ABAJO.hasta; abajo += MIRAR_ABAJO.paso) {
-        const a = asientoAnteVentanilla(v, cual, atras * GRADO, abajo * GRADO);
+        const a = asientoAnteVentanilla(v, cual, atras * GRADO, abajo * GRADO, ojosA, encima);
         ojo.set(a.ojo.x, a.ojo.y, a.ojo.z);
         let paneles = 0;
         let vistas = 0;
@@ -790,13 +861,60 @@ function asientoSobreElAla(
         mira.subVectors(cristal, ojo).normalize();
         const desvio = mira.angleTo(alCentro.subVectors(centroide, ojo));
         const asoma = asomar.length > 0 && asomar.every((p) => seVeSentado(a, p));
-        const nota: Nota = [Math.min(paneles, PANELES_QUE_BASTAN), asoma ? 1 : 0, vistas, -desvio];
-        if (!mejor || mejorQue(nota, mejor.nota)) mejor = { asiento: a, nota };
+        cada({
+          asiento: a,
+          nota: [Math.min(paneles, PANELES_QUE_BASTAN), asoma ? 1 : 0, vistas, -desvio],
+          entero: marco.every((p) => seVeSentado(a, p)),
+        });
       }
+  };
+
+  // Primero, la ventanilla y hacia dónde, sentado del todo.
+  let mejor: Mirada | null = null;
+  for (const m of candidatas)
+    mirar(ventanillaDe(m, cual), OJOS_A, 0, (x) => {
+      if (!mejor || mejorQue(x.nota, mejor.nota)) mejor = x;
+    });
+
+  /*
+   * **Y luego, asomado**: en esa misma ventanilla, lo más cerca del cristal que
+   * deje ver lo mismo —tantos paneles, la salida si asomaba— con el marco
+   * entero alrededor. Ver `ASOMADO`. Y mirando un poco por encima del centro
+   * del cristal si hace falta, que de cerca el letrero de la salida se va por
+   * arriba de la pantalla. La ventanilla, la de antes: acercarse no es
+   * cambiarse de asiento.
+   */
+  const elegida: Mirada | null = mejor;
+  if (elegida) {
+    const [paneles, asoma] = (elegida as Mirada).nota;
+    const v = (elegida as Mirada).asiento.ventanilla;
+    /*
+     * Y mirando hacia lo mismo: girando la cabeza, al acercarse, los paneles se
+     * tapan unos a otros —medido con rayos en el JAZ 120, de seis a uno—; y
+     * sin agacharse más que sentado, que más abajo se pierde el horizonte, y
+     * un ala sin horizonte no dice dónde está.
+     */
+    const cabeceo = (elegida as Mirada).asiento.cabeceo - 2 * GRADO;
+    const guinada = (elegida as Mirada).asiento.guinada;
+    for (const ojosA of ASOMADO) {
+      if (ojosA >= OJOS_A) break;
+      let cerca: Mirada | null = null;
+      for (const encima of APUNTAR_ENCIMA)
+        mirar(v, ojosA, encima * v.alto, (x) => {
+          if (!x.entero || x.nota[0] < paneles || x.nota[1] < asoma) return;
+          if (x.asiento.cabeceo < cabeceo) return;
+          if (Math.abs(x.asiento.guinada - guinada) > 2 * MIRAR_ATRAS.paso * GRADO * 1.01) return;
+          if (!cerca || mejorQue(x.nota, cerca.nota)) cerca = x;
+        });
+      if (cerca) {
+        mejor = cerca;
+        break;
+      }
+    }
   }
 
   const asiento =
-    mejor?.asiento ??
+    (mejor as Mirada | null)?.asiento ??
     asientoAnteVentanilla(
       ventanillaDe(
         [...fila].sort(
@@ -806,5 +924,8 @@ function asientoSobreElAla(
       ),
       cual,
     );
-  return conSuSalida(asiento, fila, salida);
+  // Y dónde se sentaría con la espalda en el respaldo, ante esa misma
+  // ventanilla: es donde está el asiento, el de uno y el de delante.
+  const sentado = asientoAnteVentanilla(asiento.ventanilla, cual).ojo;
+  return { ...conSuSalida(asiento, fila, salida), sentado };
 }
