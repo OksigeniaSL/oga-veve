@@ -120,6 +120,12 @@ export interface Marca {
    * que ese guion existe para dar: la pista es de todos y hay turnos.
    */
   readonly tope?: number;
+  /**
+   * **Con qué pendiente sube si se va al aire desde otro sitio**, en tanto por
+   * uno. Solo la lleva la marca de `torre.goAround`, que es la que se rehace
+   * desde donde esté quien la recibe. Ver `alAireDesde`.
+   */
+  readonly pendiente?: number;
 }
 
 /** A cuánto vuela el tráfico del circuito, m/s. Una avioneta en circuito. */
@@ -287,6 +293,11 @@ export interface TipoDeTrafico {
   readonly carrera: number;
   /** La pista más corta en la que opera, m. */
   readonly pistaMinima: number;
+  /**
+   * **Lo que sube al irse al aire**, m/s: el ritmo de la frustrada, con el
+   * tren y los flaps recogiéndose. Ver `subidaHasta`.
+   */
+  readonly subeAlAire: number;
 }
 
 /*
@@ -301,6 +312,14 @@ export interface TipoDeTrafico {
  *   cien y opera en pistas de mil doscientos, como El Hierro y La Gomera.
  * - reactor de pasaje (la clase del A320): 135 kt, toca a cuatrocientos y
  *   frena en mil; despega en mil ochocientos.
+ *
+ * Y **lo que sube al irse al aire**, que es lo que hace que una frustrada se
+ * vea como una frustrada. El manual de vuelo del 737 dice que el empuje de
+ * frustrada da «de 1.000 a 2.000 ft/min» de subida (FCOM, Go-Around and
+ * Missed Approach): mil quinientos, el centro. El regional de ala alta y el
+ * bimotor, algo menos; la avioneta, unos seiscientos, por debajo de los
+ * setecientos treinta a Vy del manual de un C172S a nivel del mar, porque
+ * sube recogiendo los flaps.
  */
 export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
   avioneta: {
@@ -312,6 +331,7 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
     frena: 200,
     carrera: 300,
     pistaMinima: 0,
+    subeAlAire: 3, // 600 ft/min
   },
   bimotor: {
     id: "bimotor",
@@ -322,6 +342,7 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
     frena: 350,
     carrera: 550,
     pistaMinima: 800,
+    subeAlAire: 5, // 1.000 ft/min
   },
   turbohelice: {
     id: "turbohelice",
@@ -332,6 +353,7 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
     frena: 600,
     carrera: 1100,
     pistaMinima: 1200,
+    subeAlAire: 6, // 1.200 ft/min
   },
   reactor: {
     id: "reactor",
@@ -342,6 +364,7 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
     frena: 1000,
     carrera: 1800,
     pistaMinima: 1800,
+    subeAlAire: 7.6, // 1.500 ft/min
   },
 };
 
@@ -480,6 +503,11 @@ export function trazar(
    * a un lado de la cabecera, que es lo único que se puede hacer sin calles.
    */
   tierra?: TierraDelTrafico | null,
+  /**
+   * Lo que sube al irse al aire, m/s. Sin calles no hay tipo que lo diga, y
+   * va el de la avioneta. Ver `TipoDeTrafico.subeAlAire`.
+   */
+  subeAlAire = tierra?.tipo.subeAlAire ?? TIPOS.avioneta.subeAlAire,
 ): Caminos | null {
   const v = verticesDelCircuito(runway, cota, mano, escala, altura);
   const [umbral, arriba, lejos, esquina, entrada] = v;
@@ -536,24 +564,6 @@ export function trazar(
     z: entrada.z + (aterriza.z - entrada.z) * hastaDecidir,
   };
   /*
-   * **Y acaba donde empieza la vuelta siguiente**, en `lejos`, que es el
-   * primer punto de `llegada`: ahí se engancha otra vuelta al circuito, con
-   * permiso o sin él. Acababa en la esquina de la base y se retiraba en el
-   * aire; al cantar otra vez viento en cola reaparecía en su marca, y para
-   * quien volaba ese mismo viento en cola eso era un avión viniendo de
-   * frente por su línea. Ver `otraVuelta`.
-   */
-  const sinPermiso = [lejos, esquina, entrada, decision, arriba, lejos];
-  const decide = largoDelCamino([lejos, esquina, entrada, decision]);
-  /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
-  let salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
-  /**
-   * **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. Acaba
-   * en `lejos`, donde empieza la vuelta siguiente: ver `otraVuelta`.
-   */
-  const alAire = [umbral, arriba, lejos];
-
-  /*
    * **La velocidad crece con el circuito, no con el tramo.** El circuito de un
    * reactor es cuatro veces más grande porque el reactor vuela cuatro veces
    * más deprisa —ver `escalaDeCircuito`—, así que su tráfico también; y las
@@ -561,6 +571,46 @@ export function trazar(
    * distancia en cualquier avión.
    */
   const vuela = VUELA_A * escala;
+  /*
+   * **Y al irse al aire, sube como sube su tipo**, no en una recta hasta el
+   * final de la subida del circuito. Así era: de la altura de decisión a
+   * `arriba`, siete kilómetros más allá, un cuatro por ciento —seiscientos
+   * pies por minuto el reactor— que cruzaba el umbral a cien metros y el
+   * final de la pista a doscientos. Visto desde el punto de espera de Los
+   * Rodeos, eso no es una frustrada: «va en línea de pista, estabilizado,
+   * pero sigue volando… no es una frustrada: es que el juego no supo hacerlo
+   * aterrizar, sino que casi». Ahora sube a su ritmo de frustrada hasta la
+   * altura del circuito y sigue nivelado. Ver `subidaHasta`.
+   */
+  const pendiente = pendienteDeFrustrada(subeAlAire, vuela);
+  /*
+   * **Y acaba donde empieza la vuelta siguiente**, en `lejos`, que es el
+   * primer punto de `llegada`: ahí se engancha otra vuelta al circuito, con
+   * permiso o sin él. Acababa en la esquina de la base y se retiraba en el
+   * aire; al cantar otra vez viento en cola reaparecía en su marca, y para
+   * quien volaba ese mismo viento en cola eso era un avión viniendo de
+   * frente por su línea. Ver `otraVuelta`.
+   */
+  const sinPermiso = [
+    lejos,
+    esquina,
+    entrada,
+    decision,
+    ...subidaHasta(decision, arriba, pendiente),
+    lejos,
+  ];
+  const decide = largoDelCamino([lejos, esquina, entrada, decision]);
+  /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
+  let salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
+  /**
+   * **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. Acaba
+   * en `lejos`, donde empieza la vuelta siguiente: ver `otraVuelta`.
+   *
+   * Empieza en la altura de decisión, que es donde se manda al aire a quien
+   * todavía no se veía; empezaba en la punta de la pista y a ras de suelo, y
+   * el que aparecía con su orden salía rodando del asfalto hacia arriba.
+   */
+  const alAire = [decision, ...subidaHasta(decision, arriba, pendiente), lejos];
   // La toma, de donde se cuenta hacia atrás: es el único punto del circuito
   // que está donde está y no admite discusión.
   let enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza]);
@@ -736,7 +786,7 @@ export function trazar(
      * Este camino es el de quien **no estaba dibujado**. Al que ya se ve se
      * le manda al aire desde donde esté: ver `alAireDesde`.
      */
-    "torre.goAround": { camino: alAire, metros: 0, velocidad: vuela },
+    "torre.goAround": { camino: alAire, metros: 0, velocidad: vuela, pendiente },
   };
   return {
     marcas,
@@ -767,11 +817,48 @@ export function trazar(
  * donde está y sigue por el mismo camino hacia arriba.
  */
 export function alAireDesde(marca: Marca, sitio: Sitio): Marca {
+  /*
+   * Los dos últimos puntos de la orden son `arriba` y `lejos`: se sube desde
+   * aquí a su ritmo hasta la altura de `arriba` y se sigue igual que la
+   * orden. Ver `subidaHasta`.
+   */
+  const arriba = marca.camino[marca.camino.length - 2];
+  const lejos = marca.camino[marca.camino.length - 1];
+  if (!arriba || !lejos || marca.pendiente === undefined)
+    return { ...marca, camino: [sitio, ...marca.camino.slice(1)], metros: 0 };
   return {
-    camino: [sitio, ...marca.camino.slice(1)],
+    camino: [sitio, ...subidaHasta(sitio, arriba, marca.pendiente), lejos],
     metros: 0,
     velocidad: marca.velocidad,
+    pendiente: marca.pendiente,
   };
+}
+
+/**
+ * **La pendiente de una frustrada**, en tanto por uno: lo que sube su tipo
+ * entre lo que vuela. Con un tope del quince por ciento, que es más de lo
+ * que sube ninguno de estos aviones con el tren saliendo de su sitio.
+ */
+export function pendienteDeFrustrada(subeAlAire: number, vuela: number): number {
+  return Math.min(0.15, subeAlAire / Math.max(1, vuela));
+}
+
+/**
+ * **Lo que vuela quien se va al aire desde `desde` hasta `arriba`**: sube con
+ * su `pendiente` hacia `arriba` hasta su altura y sigue nivelado. Si no le da
+ * para llegar arriba antes de `arriba` —se fue al aire muy cerca de él—, va
+ * derecho: sube lo que haga falta. Devuelve los puntos de después de `desde`.
+ */
+export function subidaHasta(desde: Sitio, arriba: Sitio, pendiente: number): Sitio[] {
+  const dx = arriba.x - desde.x;
+  const dz = arriba.z - desde.z;
+  const d = Math.hypot(dx, dz);
+  const sube = arriba.y - desde.y;
+  if (sube <= 0 || d < 1 || pendiente <= 0) return [arriba];
+  const hace = sube / pendiente;
+  if (hace >= d) return [arriba];
+  const f = hace / d;
+  return [{ x: desde.x + dx * f, y: arriba.y, z: desde.z + dz * f }, arriba];
 }
 
 /** El unitario que va de un punto a otro, en el plano. */
@@ -1083,8 +1170,12 @@ export interface Trafico {
    * Pasa el tiempo. Devuelve las matrículas de los que acaban de llegar a la
    * altura de decisión **sin permiso** y se han ido al aire, para que la
    * frecuencia lo sepa. Ver `seFueAlAire` en `flight/radio.ts`.
+   *
+   * `alLlegarSinPermiso` es la frecuencia, preguntada en la decisión por el
+   * que llega sin su permiso con la pista libre: si se lo da ahora, aterriza.
+   * Ver `autorizarAlLlegar` en `flight/radio.ts`.
    */
-  paso(dt: number): string[];
+  paso(dt: number, alLlegarSinPermiso?: (matricula: string) => boolean): string[];
   /**
    * Si el de esa matrícula viene a aterrizar y todavía no ha salido de la
    * pista. Hasta entonces no puede decir «pista libre».
@@ -1288,6 +1379,7 @@ export function crearTrafico(
       esc,
       forma.altura,
       suelo ? { ...suelo, tipo } : null,
+      tipo.subeAlAire,
     );
   };
 
@@ -2195,7 +2287,7 @@ export function crearTrafico(
       colocar(quien);
       alumbrar(quien);
     },
-    paso(dt) {
+    paso(dt, alLlegarSinPermiso) {
       let seFueron: string[] | null = null;
       reloj += dt;
       /*
@@ -2336,9 +2428,25 @@ export function crearTrafico(
           quien.marca.camino === c.sinPermiso &&
           antes < c.decide &&
           quien.recorrido >= c.decide
-        )
-          (seFueron ??= []).push(matricula);
-        else if (
+        ) {
+          /*
+           * **Sin permiso y con la pista libre, se pregunta antes de irse.**
+           * Era lo que pasaba casi siempre: medido con quien juega esperando
+           * en la roja y la instructora callada, 28 de cada 42 que se iban
+           * al aire lo hacían con la pista libre y nadie con ella, porque su
+           * «cleared to land» no encontró hueco en la frecuencia entre la
+           * final y la decisión; con la instructora hablando un tercio del
+           * rato, 54 de 62, y callados. Desde el punto de espera eso es un
+           * avión que baja estabilizado y no aterriza. Una torre con la pista
+           * libre le da el permiso tarde, y aterriza; la frecuencia lo apunta
+           * —y lo dice si puede—. Con la pista de otro, al aire. Ver
+           * `autorizarAlLlegar` en `flight/radio.ts`.
+           */
+          if (!pistaOcupadaPorOtro(matricula) && alLlegarSinPermiso?.(matricula)) {
+            quien.marca = { ...quien.marca, camino: c.llegada };
+            quien.conPermiso = true;
+          } else (seFueron ??= []).push(matricula);
+        } else if (
           /*
            * **Con permiso, y la pista ocupada en la decisión: al aire.** No
            * se le da permiso con nadie encima —ver `todaviaNo`—, pero la pista

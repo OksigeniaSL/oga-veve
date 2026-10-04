@@ -334,6 +334,9 @@ const LA_SUJETAN: ReadonlySet<string> = new Set([
   "torre.clearedLand",
 ]);
 
+/** Las llamadas de quien viene a aterrizar antes de su permiso. */
+const LLAMADAS_DE_LLEGADA: ReadonlySet<string> = new Set(["otro.enCola", "otro.final"]);
+
 /** Y lo que la suelta: despegar, irse al aire o salir de ella. */
 const LA_SUELTAN: ReadonlySet<string> = new Set([
   "torre.clearedTakeoff",
@@ -810,6 +813,70 @@ export class Frecuencia {
       de: a.indicativo,
       respuesta: false,
       ...(tenia ? { quitaPermiso: true } : {}),
+    };
+    this.canal = HUECO_DEL_CANAL;
+    this.dicho = dice;
+    return dice;
+  }
+
+  /**
+   * **Uno que viene a aterrizar llegó a la altura de decisión sin haber oído
+   * su permiso, con la pista libre en el dibujo: ¿se le da ahora?**
+   *
+   * Lo que pasaba antes era irse al aire siempre, y casi siempre sin razón:
+   * su «cleared to land» espera hueco en la frecuencia, y entre la final y la
+   * decisión hay de quince a cuarenta segundos; con quien juega hablando con
+   * la torre en el punto de espera, o la instructora contando algo, no lo
+   * encontraba. Y la frustrada del guion, después, dejaba su segunda vuelta
+   * sin poder cantar viento en cola en la roja, así que volvía a bajar sin
+   * permiso y se iba otra vez: una pasada tras otra sobre la pista libre.
+   * «Va en línea de pista, estabilizado, pero sigue volando.»
+   *
+   * Una torre de verdad, con la pista libre y nadie con ella, autoriza tarde
+   * —«late landing clearance»— y el avión aterriza. Aquí igual: si nadie más
+   * tiene la pista, la pista no es tuya y su guion espera un permiso sin una
+   * orden de irse por medio, se le da. Se dice si la frecuencia puede hablar
+   * ahora, como `seFueAlAire`; si no, se da callado —lo que no se oye es la
+   * frase, el permiso sí está, y la lámpara de quien espera sigue en rojo
+   * hasta que deje la pista—. `null` es que no: se va al aire.
+   *
+   * `pistaTuya` es si la pista es de quien juega: ver `laPistaEsTuya` en
+   * `flight/turno-de-pista.ts`.
+   */
+  autorizarAlLlegar(
+    matricula: string,
+    m: Momento,
+    pistaTuya: boolean,
+  ): Transmision | "callado" | null {
+    if (pistaTuya) return null;
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    if (!a) return null;
+    if (this.aviones.some((b) => b !== a && laPistaQueTiene(b.guion, b.paso) !== null))
+      return null;
+    /*
+     * El permiso que le toca, y entre medias solo sus propias llamadas de
+     * llegada sin decir: viento en cola o final. Una orden de irse al aire
+     * del guion por delante es una frustrada que la torre quiere, y se hace.
+     */
+    const pasos = GUIONES[a.guion];
+    let i = a.paso;
+    while (i < pasos.length && LLAMADAS_DE_LLEGADA.has(pasos[i]!.clave)) i++;
+    if (pasos[i]?.clave !== "torre.clearedLand") return null;
+    a.paso = i;
+    a.estrena = false;
+    this.avanzar(a);
+    if (
+      this.canal > 0 ||
+      m.instructorHablando ||
+      m.canalOcupado ||
+      (CALLADAS.has(m.fase) && !m.esperandoLaPista)
+    )
+      return "callado";
+    const dice: Transmision = {
+      voz: "torre",
+      clave: "torre.clearedLand",
+      de: a.indicativo,
+      respuesta: false,
     };
     this.canal = HUECO_DEL_CANAL;
     this.dicho = dice;

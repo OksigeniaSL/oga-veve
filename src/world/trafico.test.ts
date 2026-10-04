@@ -283,8 +283,19 @@ describe("al que mandan al aire, desde donde está", () => {
     const m = alAireDesde(marcas["torre.goAround"]!, aqui);
     expect(entre(porElCamino(m.camino, m.metros)!.sitio, aqui)).toBeLessThan(1);
     // Y va a donde iba el de siempre: el final de la subida y la esquina.
-    expect(m.camino.slice(1)).toEqual(marcas["torre.goAround"]!.camino.slice(1));
-    expect(entre(m.camino[1]!, v[1]!)).toBeLessThan(1);
+    expect(m.camino.slice(-2)).toEqual(marcas["torre.goAround"]!.camino.slice(-2));
+    expect(entre(m.camino.at(-2)!, v[1]!)).toBeLessThan(1);
+    /*
+     * Subiendo a su ritmo de frustrada hasta la altura del circuito, y de ahí
+     * nivelado: no en una recta larga hasta el final de la subida, que era un
+     * cuatro por ciento y no se veía subir. Ver `subidaHasta`.
+     */
+    const [desde, nivela] = m.camino;
+    if (nivela!.y > desde!.y + 1 && m.camino.length > 3) {
+      const pendiente = (nivela!.y - desde!.y) / entre(desde!, nivela!);
+      expect(pendiente).toBeCloseTo(marcas["torre.goAround"]!.pendiente!, 3);
+      expect(nivela!.y).toBeCloseTo(v[1]!.y, 3);
+    }
   });
 
   it("y dibujado no da el salto: sigue donde estaba al oír la orden", () => {
