@@ -30,7 +30,13 @@ import {
   type CampoEnElMundo,
 } from "./campo-del-vuelo";
 import { dondeCae, type Sitio } from "./entre-aerodromos";
-import { ramasDeLlegada, salidasDe, type Publicado } from "./procedimientos";
+import {
+  ramasDeLlegada,
+  salidasEnElMundo,
+  subidaSinCarta,
+  type PistaDeSalida,
+  type Publicado,
+} from "./procedimientos";
 import { oaciDe } from "./scenarios";
 import { cabeceraEnUso } from "./terrain";
 
@@ -65,9 +71,18 @@ export interface DelJuego {
 /**
  * El plan de `salida` a `llegada` por las cabeceras en uso de cada uno.
  *
- * En tierra sale de la mitad de la pista con su salida publicada; en el aire,
- * desde donde está el avión directo a la aproximación, que es lo que hace un
- * ordenador de vuelo cuando se decide un desvío. Ver `trazar`.
+ * En tierra sale **del final de la pista**, subiendo recto, con su salida
+ * publicada; en el aire, desde donde está el avión directo a la aproximación,
+ * que es lo que hace un ordenador de vuelo cuando se decide un desvío. Ver
+ * `trazar`.
+ *
+ * Salía de la cabecera de despegue, donde empieza la carrera, y de ahí
+ * directo al primer punto de la salida. Despegando por la 30 de Los Rodeos
+ * ese punto es el VOR, a espaldas del avión, y la raya nacía en la cabecera
+ * y salía hacia el nordeste: «debería nacer en la salida, no en la 30, sino
+ * en la 12 en este caso en que despego hacia el oeste». Lo de verdad —y lo
+ * que pinta cualquier ordenador de vuelo— empieza en el final de la pista y
+ * sube con su rumbo hasta donde la carta deja virar. Ver `salidasEnElMundo`.
  */
 export function rutaDelTramo(
   salida: CampoEnElMundo,
@@ -99,22 +114,31 @@ export function rutaDelTramo(
   );
   let desde: Fijo;
   let cotaDeSalida: number;
+  let pista: PistaDeSalida | null = null;
   if (juego.enElAire === null) {
-    const [x, z] = enLaPistaDe(salida, salida.pista.length / 2);
-    desde = { x, z, nombre: `RW${cabSalida ?? ""}`, papel: "despegue", minima: null };
+    const [x, z] = finalDeLaPista(salida);
+    desde = {
+      x,
+      z,
+      nombre: `RW${cabSalida ?? ""}`,
+      papel: "despegue",
+      minima: null,
+      carrera: salida.pista.length,
+    };
     cotaDeSalida = juego.cotaDePista(salida, x, z);
+    pista = { x, z, rumbo: salida.pista.heading, cota: cotaDeSalida };
   } else {
     const { x, z, altitud } = juego.enElAire;
     desde = { x, z, nombre: "PPOS", papel: "aqui", minima: null };
     cotaDeSalida = altitud;
   }
-  const salidas =
-    juego.enElAire === null
-      ? salidasDe(oaciDe(salida.escenario), cabSalida).map((r) => r.map(aMundo))
-      : [];
+  const salidas = pista
+    ? salidasEnElMundo(oaciDe(salida.escenario), cabSalida, pista, aMundo)
+    : [];
   return trazar({
     desde,
     salidas,
+    ...(pista ? { subida: subidaSinCarta(pista) } : {}),
     ramas,
     umbral,
     cotaDelUmbral: juego.cotaDePista(llegada, ux, uz),
@@ -134,6 +158,16 @@ export function rutaDelTramo(
         }
       : {}),
   });
+}
+
+/**
+ * **El final de la pista de salida**, en el mundo: donde acaba el asfalto por
+ * delante del que despega (el DER de la OACI). Es el otro extremo del de la
+ * cabecera en uso: `enLaPistaDe` cuenta desde el centro hacia atrás, y la
+ * cabecera está a media pista por detrás.
+ */
+export function finalDeLaPista(salida: CampoEnElMundo): readonly [number, number] {
+  return enLaPistaDe(salida, -salida.pista.length / 2);
 }
 
 /**
