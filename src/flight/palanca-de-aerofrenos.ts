@@ -20,7 +20,9 @@
  *   a medias: para bajar o frenar sin flaps. En tierra, todos y del todo: los
  *   frenos de tierra.
  *
- * El botón y la tecla la mueven en ese orden, y de «fuera» vuelve abajo.
+ * El botón y la tecla la mueven en ese orden, y de «fuera» vuelve abajo. En
+ * vuelo con el tren dentro, de abajo a fuera directamente: ver
+ * `SIGUIENTE_EN_VUELO`.
  *
  * ## Lo que hacen solos
  *
@@ -65,6 +67,22 @@ export type PosicionDeLaPalanca = "recogida" | "armada" | "fuera";
 /** El orden en que la mueven el botón y la tecla. */
 const SIGUIENTE: Readonly<Record<PosicionDeLaPalanca, PosicionDeLaPalanca>> = {
   recogida: "armada",
+  armada: "fuera",
+  fuera: "recogida",
+};
+
+/**
+ * **Y en vuelo con el tren dentro, de abajo a fuera y vuelta.**
+ *
+ * Armar es cosa de la lista de aterrizaje, con el tren ya fuera; bajando por
+ * el perfil, la palanca va de abajo directamente al tope de vuelo, que es
+ * para lo que se toca ahí. Con un solo orden para todo, la tecla que enseña
+ * la tarjeta del paso —«sacá los aerofrenos», el DRAG REQUIRED de la
+ * bajada— solo los armaba: un toque y no salía nada. Visto por T9d en la
+ * bajada del modelo completo, y apuntado por Enrique como el 213.
+ */
+const SIGUIENTE_EN_VUELO: Readonly<Record<PosicionDeLaPalanca, PosicionDeLaPalanca>> = {
+  recogida: "fuera",
   armada: "fuera",
   fuera: "recogida",
 };
@@ -218,12 +236,14 @@ export class PalancaDeAerofrenos {
   }
 
   /**
-   * Un punto más de palanca: recogida, armada, fuera, y vuelta abajo.
-   * Devuelve si había palanca que mover.
+   * Un punto más de palanca: recogida, armada, fuera, y vuelta abajo. En
+   * vuelo con el tren dentro, de abajo a fuera y vuelta: ver
+   * `SIGUIENTE_EN_VUELO`. Devuelve si había palanca que mover.
    */
-  alternar(): boolean {
+  alternar(enVueloConElTrenDentro = false): boolean {
     if (!this.hayPalanca) return false;
-    this.ponerPalanca(SIGUIENTE[this._palanca]);
+    const orden = enVueloConElTrenDentro ? SIGUIENTE_EN_VUELO : SIGUIENTE;
+    this.ponerPalanca(orden[this._palanca]);
     return true;
   }
 

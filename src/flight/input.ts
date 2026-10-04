@@ -526,7 +526,14 @@ export class InputManager {
    * `flight/palanca-de-aerofrenos.ts`.
    */
   alternarAerofrenos(): boolean {
-    return this.palancaDeAerofrenos.alternar();
+    /*
+     * En vuelo con el tren dentro, la tecla los saca y los recoge: armarlos es
+     * de la lista de aterrizaje, con el tren fuera. Ver `SIGUIENTE_EN_VUELO`.
+     * El tren fijo cuenta como fuera, igual que para la lista: ver
+     * `atenderALaListaDeAterrizaje` en `game.ts`.
+     */
+    const trenFuera = !this.trenQueSeMete || this.trenPedido;
+    return this.palancaDeAerofrenos.alternar(!this.pesoEnLasRuedas && !trenFuera);
   }
 
   /** Un punto más del selector del autofreno: OFF, LO, MED, MAX. */
