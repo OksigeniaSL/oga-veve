@@ -76,12 +76,41 @@ export function rutaDelTramo(
 ): Ruta {
   const cabSalida = cabeceraEnUso(salida.escenario);
   const cabLlegada = cabeceraEnUso(llegada.escenario);
-  const aMundo = (p: Publicado): Fijo => ({
-    ...dondeCae(juego.origen, p),
-    nombre: p.nombre,
-    papel: p.papel,
-    minima: p.minimaPies === null ? null : p.minimaPies * PIE,
-  });
+  /*
+   * **Cada punto publicado, puesto desde su propio campo.**
+   *
+   * Se ponían todos desde el origen del mundo, y el aeródromo de llegada no:
+   * ése llega con su geometría medida desde **su** origen —la proyección del
+   * extractor, con el coseno de su latitud— y corrido entero hasta donde cae.
+   * Son dos proyecciones distintas, y a cien kilómetros la diferencia ya
+   * tuerce la final: medido en todos los tramos del juego, el punto de final
+   * caía hasta 137 m a un lado del eje y el último tramo iba hasta 0,84° de la
+   * pista —de Pedro Juan Caballero a Asunción—, y de Fuerteventura a Gando 55
+   * m y 0,28°. Enrique lo voló así: «las líneas nunca me estabilizan con la
+   * pista; suele salirse el avión y tengo que llevarlo yo a ojo».
+   *
+   * Un punto de la carta de un campo se pone con la proyección de ese campo,
+   * igual que su pista: entonces la final cae sobre el eje, que es lo que
+   * dice la carta. Ver `final-por-el-eje.test.ts`.
+   */
+  const ponerDesde = (campo: CampoEnElMundo) => {
+    const suyo = campo.escenario.aerodrome?.origin ?? null;
+    return (p: Publicado): Fijo => {
+      const d = suyo
+        ? (() => {
+            const c = dondeCae(suyo, p);
+            return { x: campo.desplazamiento.x + c.x, z: campo.desplazamiento.z + c.z };
+          })()
+        : dondeCae(juego.origen, p);
+      return {
+        ...d,
+        nombre: p.nombre,
+        papel: p.papel,
+        minima: p.minimaPies === null ? null : p.minimaPies * PIE,
+      };
+    };
+  };
+  const aMundo = ponerDesde(llegada);
   const [ux, uz] = umbralEnUso(llegada);
   const umbral: Fijo = {
     x: ux,
@@ -108,9 +137,10 @@ export function rutaDelTramo(
     desde = { x, z, nombre: "PPOS", papel: "aqui", minima: null };
     cotaDeSalida = altitud;
   }
+  // Y las de la salida, desde el campo de salida, por lo mismo.
   const salidas =
     juego.enElAire === null
-      ? salidasDe(oaciDe(salida.escenario), cabSalida).map((r) => r.map(aMundo))
+      ? salidasDe(oaciDe(salida.escenario), cabSalida).map((r) => r.map(ponerDesde(salida)))
       : [];
   return trazar({
     desde,

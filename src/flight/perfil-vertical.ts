@@ -174,6 +174,17 @@ export function desvioEnLaFinal(
 }
 
 /**
+ * **La altura de la senda de la final** a `suelo` metros de donde arranca, m
+ * sobre la cota de la pista: la que pinta el rombo con `desvioEnLaFinal` y la
+ * que baja el `G/S` del automático. Una sola cuenta para los dos, para que el
+ * automático en su senda deje el rombo en el medio. Ver `sendaDelGs` en
+ * `game.ts`.
+ */
+export function alturaDeLaSendaDeLaFinal(suelo: number): number {
+  return Math.max(1, suelo) * Math.tan((SENDA_DE_LA_FINAL * Math.PI) / 180);
+}
+
+/**
  * **El desvío bajando por el plan**: lo que se va por encima de la senda del
  * ordenador de vuelo. Ver `Seguimiento.desvioDeLaSenda` en `ruta.ts`.
  *

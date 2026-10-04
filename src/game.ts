@@ -894,12 +894,14 @@ import {
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
 import {
+  alturaDeLaSendaDeLaFinal,
   arcoDeAltitud,
   desvioEnLaBajada,
   desvioEnLaFinal,
   equipoDeSenda,
   juzgarLaSenda,
   juzgarLaVelocidadEnLaBajada,
+  ritmoDeLaSenda,
   sendaMuyFuera,
   velocidadMuyFuera,
   type Desvio,
@@ -17882,7 +17884,7 @@ export class Game {
     const enLaFinal =
       this.objetivos.altitud !== null && this.navegacion.enElTramoFinal(lecturaDeAhora);
     if (enLaFinal) {
-      const senda = this.navegacion.sendaDeLaFinal(lecturaDeAhora);
+      const senda = this.sendaDelGs();
       const sobreLaPista = s.position.y - this.cotaDelCampo(this.elCampo());
       /*
        * **Y a seiscientos pies se suelta para aterrizar a mano.** Un
@@ -18281,13 +18283,59 @@ export class Game {
     );
     const alUmbral = -along - pista.length / 2;
     if (alUmbral < 0 || alUmbral > 25000 || Math.abs(across) > 2500) return null;
+    /*
+     * **Hasta noventa grados de corte**, que es lo que admite la captura de
+     * un localizador. Se paraba en cuarenta y cinco, y la RNP de la 03L de
+     * Gando gira cuarenta y siete en FALPU para entrar en la final: el
+     * automático se quedaba en `HDG HOLD` con el rumbo del tramo de antes y
+     * se iba de la final hacia el monte. «Suele salirse el avión y tengo que
+     * llevarlo yo a ojo.»
+     */
     const torcido = (((s.heading * 180) / Math.PI - pista.heading + 540) % 360) - 180;
-    if (Math.abs(torcido) > 45) return null;
+    if (Math.abs(torcido) > 90) return null;
     // A kilómetro y medio por delante: una entrada en el eje de unos treinta
     // grados como mucho, que es como captura un localizador.
     const corrige = Math.max(-Math.PI / 6, Math.min(Math.PI / 6, -Math.atan(across / 1500)));
-    const rumbo = (pista.heading * Math.PI) / 180 + corrige;
+    /*
+     * **Y la derrota, no el rumbo**: lo que tiene que ir por el eje es el
+     * camino sobre el suelo. Con viento cruzado el morro va al viento, y un
+     * localizador que pide el rumbo de la pista se queda a un lado del eje,
+     * tanto más cuanto más sopla: con diez nudos de costado en la final del
+     * JAZ 120, unos cien metros, media pista paralela en Gando. Se pide la
+     * derrota que corrige hacia el eje y se le suma la deriva de ahora, que
+     * es lo que hace el de verdad.
+     */
+    const v = s.velocity;
+    const deriva =
+      Math.hypot(v.x, v.z) > 10
+        ? (((s.heading - Math.atan2(v.x, -v.z)) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI) - Math.PI
+        : 0;
+    const rumbo = (pista.heading * Math.PI) / 180 + corrige + Math.max(-0.35, Math.min(0.35, deriva));
     return ((rumbo % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  }
+
+  /**
+   * **La senda que baja el `G/S` del automático**: la misma que pinta el
+   * rombo y que juzga la instructora —tres grados desde las luces del PAPI, o
+   * desde donde irían—, con la misma cota y la misma distancia. Ver
+   * `origenDeLaSenda` y `mirarLaSenda`.
+   *
+   * Era otra: la del plan, de tres grados por lo que quedaba de ruta hasta
+   * el umbral mismo y estirada con el viento. Así el automático bajaba la
+   * final unos quince metros por debajo de la senda del rombo al llegar —el
+   * umbral contra las luces, que van trescientos metros pista adentro— y más
+   * con viento de cola; el rombo decía «bajo» con el automático haciendo lo
+   * suyo. Una senda es un haz quieto en el suelo, y es una para todos.
+   */
+  private sendaDelGs(): { readonly altitud: number; readonly ritmo: number } {
+    const s = this.flight.state;
+    const o = this.origenDeLaSenda();
+    const a = this.campoParaLaAproximacion();
+    const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
+    return {
+      altitud: a.cota + alturaDeLaSendaDeLaFinal(suelo),
+      ritmo: ritmoDeLaSenda(s.groundSpeed),
+    };
   }
 
   /**
