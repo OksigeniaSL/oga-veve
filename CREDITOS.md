@@ -374,9 +374,11 @@ cámara y la sombra. Son de Oksigenia SL como los modelos, bajo Apache-2.0, y
 llevan dentro la librea de la casa, que es contenido propietario: ver el
 apartado del logotipo.
 
-Al lado va `huellas.json`, que dice de qué modelo, de qué ficha y de qué
-librea salió cada foto; `src/ui/retratos.test.ts` avisa si alguno de los tres
-cambió y los retratos no se rehicieron.
+Cada foto lleva en el nombre la huella de su imagen —`jaz-120-9db9a3c8.webp`—,
+para que ninguna caché enseñe la de antes, y `src/ui/retratos-huellas.json`
+dice de qué modelo, de qué ficha y de qué librea salió cada una;
+`src/ui/retratos.test.ts` avisa si alguno de los tres cambió y los retratos no
+se rehicieron.
 
 ### Los barcos y los turbohélices de las islas
 

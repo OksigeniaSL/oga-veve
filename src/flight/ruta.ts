@@ -52,8 +52,12 @@ export interface Punto {
 /**
  * Qué es cada punto dentro del plan.
  *
- * - `despegue`: la cabecera por la que se sale, rotulada como la rotula un
- *   ordenador de vuelo, «RW30».
+ * - `despegue`: la pista por la que se sale, rotulada como la rotula un
+ *   ordenador de vuelo, «RW30», y puesta **en su final**, donde acaba el
+ *   asfalto por delante (el DER de la OACI): es ahí donde empieza una salida,
+ *   no donde empieza la carrera. Ver `rutaDelTramo` en
+ *   `world/ruta-del-tramo.ts`. También es `despegue` la subida recta de un
+ *   plan sin salida publicada: sigue siendo el despegue. Ver `trazar`.
  * - `salida`: un punto de una salida publicada.
  * - `ruta`: uno de en medio. Se deja por si hace falta; hoy las rutas entre
  *   islas van de la salida a la llegada sin nada entre medias, que es como
@@ -105,6 +109,26 @@ export interface Fijo extends Punto {
    * aproximación. Ver `sinRepetidos`.
    */
   readonly deSalida?: boolean;
+  /**
+   * **Si el punto acaba la subida con el rumbo de pista**: el «(2500)» o el
+   * «D12.6 TFN» de una salida, donde la carta deja virar. Se vira al llegar a
+   * él y no antes: un ordenador de vuelo no adelanta el viraje de un tramo que
+   * acaba en una altitud o en una distancia, porque hasta ahí no se puede
+   * virar. Ver `avanzar` y `arranqueDeLaSalida` en `world/procedimientos.ts`.
+   */
+  readonly recta?: boolean;
+  /**
+   * Si el punto no es de los de nombre de una salida, sino **de cómo
+   * empieza**: el final de su subida recta o el corte del radial que lleva al
+   * primero. Una salida no se suelta antes de su primer punto con nombre; ver
+   * `trazar`.
+   */
+  readonly deArranque?: boolean;
+  /**
+   * En el final de la pista de un `despegue`: **lo que se ha rodado por ella
+   * para llegar ahí**, m, desde la cabecera. Ver `libra`.
+   */
+  readonly carrera?: number;
 }
 
 /** Un plan de vuelo hecho: sus puntos y lo que mide. */
@@ -198,8 +222,23 @@ export function rutaDe(fijos: readonly Fijo[], cotaDelUmbral: number): Ruta {
  * se sale directo, que es lo que haría una torre con una salida que se va al
  * otro lado.
  *
- * `desde` es la cabecera de despegue o, rehaciendo el plan en el aire, la
- * posición del avión: en ese caso no se ofrecen salidas, que ya se salió.
+ * `desde` es el final de la pista de despegue o, rehaciendo el plan en el
+ * aire, la posición del avión: en ese caso no se ofrecen salidas, que ya se
+ * salió.
+ *
+ * ## Y todas empiezan subiendo recto
+ *
+ * Cada salida trae delante lo que manda su carta antes del primer punto con
+ * nombre —«subir en rumbo de pista hasta 12.6 DME TFN»—; ver
+ * `salidasEnElMundo` en `world/procedimientos.ts`. Y la que no es de ninguna
+ * carta sube también con el rumbo de pista hasta `subida`, unos cuatrocientos
+ * pies sobre la pista, antes de virar hacia la aproximación: es lo mínimo de
+ * una salida omnidireccional (PANS-OPS, Doc 8168, vol. II, parte I, sección
+ * 3: no se vira antes de 120 m sobre el final de la pista). Lo pidió quien
+ * lo voló, despegando por la 30 de Los Rodeos: la raya nacía donde empieza
+ * la carrera y salía hacia el nordeste, a sus espaldas, «y me obliga a ir a
+ * buscar el punto de cruce: durante un rato vuelo fuera del plan de ruta por
+ * lo ilógico del diseño de inicio».
  */
 export function trazar(entrada: {
   readonly desde: Fijo;
@@ -208,13 +247,19 @@ export function trazar(entrada: {
   readonly umbral: Fijo;
   readonly cotaDelUmbral: number;
   /**
+   * Dónde acaba la subida recta de un plan **sin salida publicada**, con
+   * papel `despegue`. Sin ella —en el aire, o en las pruebas de geometría— se
+   * va directo desde `desde`. Ver `yaVaRecto`.
+   */
+  readonly subida?: Fijo;
+  /**
    * El relieve, para no mandar a nadie contra un monte ni por encima de una
    * isla. Ver `libra` y `porElMar`. Sin él —en las pruebas de geometría— no
    * se mira.
    */
   readonly terreno?: Terreno;
 }): Ruta {
-  const { desde, umbral, terreno } = entrada;
+  const { desde, umbral, terreno, subida } = entrada;
   const candidatas: Candidata[] = [];
   const poner = (todo: readonly Fijo[], conSalida: boolean, e: Entrada) => {
     const limpia = sinRepetidos(todo);
@@ -226,10 +271,17 @@ export function trazar(entrada: {
     const tras = e.fijos[1] ?? umbral;
     // Directo al intermedio, solo si el giro en él cabe en el tope.
     const cabe = (antes: Punto) => !e.alIF || giroEn(antes, inicio, tras) <= GIRO_EN_EL_IF;
-    if (cabe(desde)) poner([desde, ...e.fijos, umbral], false, e);
+    // Sin carta, primero se sube recto; salvo si a donde se va ya está delante.
+    const recto = subida && !yaVaRecto(desde, subida, inicio) ? [subida] : [];
+    if (cabe(recto[0] ?? desde)) poner([desde, ...recto, ...e.fijos, umbral], false, e);
     for (const salida of entrada.salidas) {
       if (salida.length === 0) continue;
-      let k = 1;
+      /*
+       * Hasta su primer punto con nombre como poco: lo de delante es cómo
+       * empieza —la subida recta, el corte del radial— y soltar la salida ahí
+       * sería volar la subida y olvidarse de la carta. Ver `Fijo.deArranque`.
+       */
+      let k = Math.max(1, salida.findIndex((f) => f.deArranque !== true) + 1);
       while (k < salida.length && acerca(salida[k - 1]!, salida[k]!, inicio)) k++;
       for (; k <= salida.length; k++)
         if (cabe(salida[k - 1]!))
@@ -298,6 +350,29 @@ interface Entrada {
  * directo, en grados. Ver `trazar`.
  */
 export const GIRO_EN_EL_IF = 45;
+
+/**
+ * Lo que se tolera entre el rumbo de pista y el de un punto que está delante
+ * para decir que ya se va hacia él subiendo recto, en grados. Ver `yaVaRecto`.
+ *
+ * Dos: es lo que separa una salida de navegación de área cuyo primer punto
+ * está en la prolongación del eje —el XO500 de la 30 de Los Rodeos, a 0,2°—
+ * de una que vira a él nada más despegar —el RIPIX de la 03 de Lanzarote, a
+ * siete—.
+ */
+export const RECTO = 2;
+
+/**
+ * **Si para ir de `desde` a `siguiente` ya se sube con el rumbo de pista**, y
+ * más allá de `subida`: entonces el punto donde acaba la subida recta sobra.
+ * El rumbo de pista es el de `desde` a `subida`, que es por donde va.
+ */
+export function yaVaRecto(desde: Punto, subida: Punto, siguiente: Punto): boolean {
+  return (
+    entre(desde, siguiente) > entre(desde, subida) &&
+    giroEn(desde, subida, siguiente) <= RECTO
+  );
+}
 
 /**
  * Las entradas a la aproximación: cada rama desde su punto de inicio y, una
@@ -621,10 +696,22 @@ export function libra(
   const total = largo(fijos);
   let recorrido = 0;
   let despegando = fijos[0]?.papel === "despegue";
+  /*
+   * **La subida se cuenta desde la cabecera**, aunque el plan empiece en el
+   * final de la pista: el avión despega dentro de ella y llega al final
+   * subiendo, y las dos millas por cada mil pies son lo que se sube de media
+   * hasta el crucero —acelerando, con el gas de subida—, no lo que sube un
+   * avión recién despegado, que va al doble. Contarla desde el final, sin
+   * más, dejaba al que sale por la 34 de El Hierro a ciento cincuenta metros
+   * a una milla de la pista, con la ladera de al lado más alta que eso, y se
+   * quedaba sin plan que librara. Lo que sí empieza en el final es el área del
+   * despegue de abajo, que es como la mide la OACI.
+   */
+  const rodado = despegando ? (fijos[0]?.carrera ?? 0) : 0;
   const puede = (hecho: number): number => {
     const falta = total - hecho;
     const senda = cotaDelUmbral + (falta / (MILLAS_POR_MIL_PIES * MILLA)) * 1000 * PIE;
-    const subida = terreno.cotaDeSalida + (hecho / (2 * MILLA)) * 1000 * PIE;
+    const subida = terreno.cotaDeSalida + ((hecho + rodado) / (2 * MILLA)) * 1000 * PIE;
     return Math.min(terreno.techo, senda, Math.max(subida, cotaDelUmbral));
   };
   for (let i = 1; i < fijos.length; i++) {
@@ -849,9 +936,15 @@ export function avanzar(r: Ruta, activo: number, x: number, z: number): number {
     const tramo = entre(a, b);
     const recorrido = alLargoDe(a, b, p);
     const giro = Math.abs(diferencia(rumbo(a, b), rumbo(b, c)));
-    // Media milla por cada treinta grados de giro, hasta dos: lo que tarda en
-    // girar un avión de línea a veinticinco grados de alabeo.
-    const antes = Math.min(2 * MILLA, (giro / 30) * 0.5 * MILLA);
+    /*
+     * Media milla por cada treinta grados de giro, hasta dos: lo que tarda en
+     * girar un avión de línea a veinticinco grados de alabeo. **Salvo donde
+     * acaba la subida recta**, que se vira al llegar: con dos millas de
+     * adelanto, la subida de una salida sin carta —cuatrocientos pies, menos
+     * de una milla— se daba por hecha al despegar, y el viraje se pedía a
+     * cien pies del suelo. Ver `Fijo.recta`.
+     */
+    const antes = b.recta === true ? 0 : Math.min(2 * MILLA, (giro / 30) * 0.5 * MILLA);
     if (recorrido >= tramo - antes || entre(p, b) < 0.3 * MILLA) i++;
     else break;
   }

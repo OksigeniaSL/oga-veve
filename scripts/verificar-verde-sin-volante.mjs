@@ -27,6 +27,11 @@ const ESCENARIOS = (process.argv[2] ?? "pettirossi").split(",");
 const AVION = process.argv[3] ?? "jaz-20";
 const GASES = (process.env.OGA_GAS ?? "rodaje,fondo").split(",");
 const RELOJ = 3;
+/**
+ * Cuánto se deja rodar, s de juego: el rodaje de Los Rodeos con el JAZ 120,
+ * del puesto a la cabecera 30, no cabe en los diez minutos de Pettirossi.
+ */
+const TIEMPO = Number(process.env.OGA_TIEMPO ?? 600);
 const PUERTO = 5243;
 
 const server = await createServer({
@@ -87,7 +92,7 @@ try {
       const page = await abrir(escenario, errores);
 
       const r = await page.evaluate(
-        async ([gas, RELOJ]) => {
+        async ([gas, RELOJ, TIEMPO]) => {
           const o = globalThis.__oga;
           o.acelerar(RELOJ);
           const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -141,7 +146,7 @@ try {
             }
             return d;
           };
-          while (o.reloj() - empezo < 600) {
+          while (o.reloj() - empezo < TIEMPO) {
             await espera(100);
             const s = o.estado();
             const f = o.fase();
@@ -220,7 +225,7 @@ try {
             traza,
           };
         },
-        [gas, RELOJ],
+        [gas, RELOJ, TIEMPO],
       );
       if (process.env.OGA_TRAZA) console.log(r.traza.join("\n"));
       comprobar(

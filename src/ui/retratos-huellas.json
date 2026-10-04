@@ -7,7 +7,8 @@
       "accent": 12475704,
       "trim": 3101251,
       "blades": 2
-    }
+    },
+    "retrato": "jaz-20-f447b2ca.webp"
   },
   "jaz-25": {
     "glb": "69d64ae66dd7d3075ea9d85f7ec06cb05bf09a54f2d665d5b7dfb711302cfcd1",
@@ -17,7 +18,8 @@
       "accent": 3101251,
       "trim": 12475704,
       "blades": 3
-    }
+    },
+    "retrato": "jaz-25-c17fe827.webp"
   },
   "jaz-40": {
     "glb": "9a8a3dde5a4057686e40bbd2d8f8c7cd4de205d7f217f619b95fa612e0c996c9",
@@ -28,7 +30,8 @@
       "trim": 12475704,
       "blades": 3,
       "motivo": "sol"
-    }
+    },
+    "retrato": "jaz-40-40efdee8.webp"
   },
   "jaz-60": {
     "glb": "56df1c28556b38b7df0e5d014af6dc1cbcfd9189008d8fe2103534bc4d697cfd",
@@ -40,7 +43,8 @@
       "cola": 12475704,
       "blades": 4,
       "motivo": "sol-y-hojas"
-    }
+    },
+    "retrato": "jaz-60-5f5b86fb.webp"
   },
   "jaz-90": {
     "glb": "c9c5edf748fde8c9a921023dc3458e6c9d055fb0a7d7398ec1ccd291f96573c2",
@@ -51,7 +55,8 @@
       "trim": 3101251,
       "blades": 0,
       "motivo": "sol-y-hojas"
-    }
+    },
+    "retrato": "jaz-90-f2ed3673.webp"
   },
   "jaz-120": {
     "glb": "7103b43c07391b0a9ad3179af52a0419fed712acffabaf9d1e03a9be5e9674b4",
@@ -63,6 +68,7 @@
       "remate": 12475704,
       "blades": 0,
       "motivo": "sol"
-    }
+    },
+    "retrato": "jaz-120-9db9a3c8.webp"
   }
 }

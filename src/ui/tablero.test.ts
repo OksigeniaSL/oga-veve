@@ -11,6 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 import { huecosDeAviso, placaDeMatricula, Tablero } from "./tablero";
+import { retratoDe } from "./retratos";
 import { matriculaDe } from "../flight/matricula";
 import { hayQueMoverElTrozo, marcasDeAltitud, POR_PIE } from "./cristal";
 import { LUCES } from "../flight/avisos-de-cabina";
@@ -321,7 +322,10 @@ describe("la placa de las avionetas", () => {
     for (const a of AIRCRAFT.filter((x) => familiaDe(x) === "esferas")) {
       const marcado = new Tablero().markup(a, 1);
       const retrato = marcado.match(/<image [^>]*>/)?.[0] ?? "";
-      expect(retrato).toContain(`${a.id}.webp`);
+      // El mismo fichero que en el hangar, con la huella de su imagen en el
+      // nombre: ver `ui/retratos.ts`.
+      expect(retrato).toContain(retratoDe(a.id));
+      expect(retrato).toMatch(new RegExp(`${a.id}-[0-9a-f]{8}\\.webp`));
       expect(retrato).not.toContain("data-desde");
       const marco = marcado.match(/<rect data-fondo="placa"[^>]*>/)?.[0] ?? "";
       expect(marco).not.toContain("data-desde");

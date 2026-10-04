@@ -646,6 +646,15 @@ const RADIO_CURVA = 18;
 const MEDIA_VUELTA = (150 * Math.PI) / 180;
 
 /**
+ * **Cuánto por detrás de la boca tiene que dejar la pista una salida para ir
+ * hacia atrás**, m: más que la media calle y el chaflán de una boca. Por
+ * debajo, lo que vuelve es el dibujo de los datos —el nudo de la boca unos
+ * metros más allá de donde la calle deja la pista— y no la salida. Ver
+ * `sinGanchoAlSalir`.
+ */
+const SALIDA_AL_REVES = 15;
+
+/**
  * Aceleración lateral cómoda en tierra, m/s².
  *
  * De aquí sale la velocidad de cada curva: `v = √(a·r)`. Es la misma cuenta que
@@ -3050,7 +3059,7 @@ export class PlanDeVuelo {
       ? Math.max(18, (this.laSalida?.velocidad ?? 0) + 4)
       : 18;
     const rapido = recienLlegado ? estado.groundSpeed : estado.airspeed;
-    if (sobreElSuelo > 4 || rapido > tope) return 0;
+    if (this.ruedasSobreElSuelo(sobreElSuelo) > 4 || rapido > tope) return 0;
 
     const p: Punto = [estado.position.x, estado.position.z];
 
@@ -3384,6 +3393,24 @@ export class PlanDeVuelo {
     return entrada?.puntos ?? null;
   }
 
+  /**
+   * **Lo alto que van las ruedas**, m, y no el avión.
+   *
+   * Lo que llega es la altura del avión sobre el suelo, y rodando un avión no
+   * está a cero: está a la altura de su tren —ver `gearHeight`—. Los listones
+   * de aquí eran de avioneta, con su metro y medio: cuatro metros para que la
+   * ayuda de rodaje ayude y tres para avisar de «más despacio» y de «te
+   * saliste de la raya». El JAZ 120 rueda a casi seis metros y el JAZ 90 a
+   * más de tres, así que en Guyrami la ayuda no le giraba nunca al de cuatro
+   * motores —con la verde y sin tocar el volante seguía recto hasta salirse—
+   * y a los dos reactores no se les avisaba de nada. Medido con
+   * `verificar-verde-sin-volante` en Pettirossi, buscando por qué Enrique
+   * entraba en la pista de Los Rodeos «sin pasar de cinco».
+   */
+  private ruedasSobreElSuelo(sobreElSuelo: number): number {
+    return sobreElSuelo - this.avion.gearHeight;
+  }
+
   /** Avanza un fotograma y dice qué hay que enseñar. */
   paso(
     estado: FlightState,
@@ -3478,7 +3505,7 @@ export class PlanDeVuelo {
          * pregunta que ya contestaba el tope de rodaje con `onRunway`.
          */
         !estado.onRunway &&
-        sobreElSuelo < 3 &&
+        this.ruedasSobreElSuelo(sobreElSuelo) < 3 &&
         this.rutaMundo.length > 1 &&
         vaRapido(p.fase, estado.groundSpeed, sugerida, s.restante),
       restante: s.restante,
@@ -3491,7 +3518,7 @@ export class PlanDeVuelo {
         (p.fase === "rodando" || p.fase === "a-plataforma") &&
         this.rutaMundo.length > 1 &&
         s.alaRuta > FUERA_DE_RUTA &&
-        sobreElSuelo < 3,
+        this.ruedasSobreElSuelo(sobreElSuelo) < 3,
       cambio: p.cambio,
     };
   }
@@ -3700,7 +3727,7 @@ export class PlanDeVuelo {
       return {
         ruta: {
           ...desdeLaSalida,
-          puntos: [...hastaLaSalida.puntos, ...desdeLaSalida.puntos],
+          puntos: this.sinGanchoAlSalir([...hastaLaSalida.puntos, ...desdeLaSalida.puntos]),
           largo: hastaLaSalida.largo + desdeLaSalida.largo,
           letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
         },
@@ -3752,18 +3779,96 @@ export class PlanDeVuelo {
      */
     const porLaPista = this.vueltaPorLaPista(meta);
     if (porLaPista) return { ruta: porLaPista, salida: null };
+    const porLaPistaAun = this.rodandoPorLaPista();
+    const directa = rodajeEntre(
+      this.grafo,
+      this.ultimaPos,
+      meta,
+      600,
+      this.ocupadosAhora(false),
+      // Y si ya está girando hacia una calle, por la calle.
+      { desdeFuera: true, desdeLaCalle: !porLaPistaAun },
+    );
+    /*
+     * Y si sale rodando por la pista, también sin ganchos: es la raya de
+     * recién tocado, a setenta metros por segundo, que va por el eje de la
+     * pista de los datos —en Mariscal Estigarribia, cinco metros al lado del
+     * de verdad— y hace el mismo zigzag en la boca. Ver `sinGanchoAlSalir`.
+     */
     return {
-      ruta: rodajeEntre(
-        this.grafo,
-        this.ultimaPos,
-        meta,
-        600,
-        this.ocupadosAhora(false),
-        // Y si ya está girando hacia una calle, por la calle.
-        { desdeFuera: true, desdeLaCalle: !this.rodandoPorLaPista() },
-      ),
+      ruta:
+        directa && porLaPistaAun
+          ? { ...directa, puntos: this.sinGanchoAlSalir(directa.puntos) }
+          : directa,
       salida: null,
     };
+  }
+
+  /**
+   * **La raya de salida, del eje hacia la calle y sin ganchos.**
+   *
+   * Tras aterrizar en Pettirossi, la raya verde se torcía primero a la
+   * izquierda y luego barría a la derecha hacia la salida: una ese. «Esa curva
+   * ahí, ¿qué pinta?» El nudo de la boca —donde la calle toca la pista en los
+   * datos— no está en el eje: en la 12 de Pettirossi cae seis metros al otro
+   * lado del de la salida, porque la calle de los datos cruza el eje antes de
+   * acabar. La raya iba del eje a ese nudo y de ahí a la calle, y el redondeo
+   * dibujaba un gancho hacia fuera antes del giro. Lo mismo, de uno a seis
+   * metros, en diez de los dieciocho campos. Y de la misma familia, en
+   * Mariscal Estigarribia y en El Hierro: el nudo de la boca diez metros más
+   * allá de donde la calle deja la pista, así que la raya llegaba a él, daba
+   * media vuelta, deshacía esos diez metros y volvía a girar. Un zigzag.
+   *
+   * Un avión que deja la pista rueda por el eje y gira desde él hacia el lado
+   * de la salida, sin abrirse al contrario ni pasarse para volver. Así que,
+   * hasta dejar la pista:
+   *
+   * - lo que cae sobre ella al otro lado del eje se lleva al eje;
+   * - y lo que se pasa de largo para volver se quita: se gira donde la calle
+   *   deja la pista de verdad. Salvo si la salida misma va hacia atrás —una
+   *   rápida tomada al revés, que es la última que se coge—: ahí volver es la
+   *   salida.
+   *
+   * El nudo de la boca sigue siendo la boca —es lo que miran «te pasaste» y el
+   * sígame—; solo cambia lo que se pinta y se rueda.
+   */
+  private sinGanchoAlSalir(puntos: readonly Punto[]): Punto[] {
+    const { x, z, heading, width } = this.pista;
+    const ejes = puntos.map((p) => enEjesDePista(p[0], -p[1], x, z, heading));
+    const fuera = ejes.findIndex((e) => Math.abs(e.across) > width / 2);
+    if (fuera < 1) return [...puntos];
+    const lado = Math.sign(ejes[fuera]!.across);
+    const sentido = Math.cos(this.ultimoRumbo - (heading * Math.PI) / 180) >= 0 ? 1 : -1;
+    const delante = (i: number) => ejes[i]!.along * sentido;
+    let masLejos = -Infinity;
+    for (let i = 1; i < fuera; i++) masLejos = Math.max(masLejos, delante(i));
+    const alReves = delante(fuera) < masLejos - SALIDA_AL_REVES;
+    const enElEje = (along: number): Punto => {
+      const [ex, ez] = puntoDePista(this.pista, -along);
+      return [ex, -ez];
+    };
+    const quedan: { p: Punto; d: number }[] = [];
+    const poner = (p: Punto, d: number) => {
+      const antes = quedan[quedan.length - 1]?.p;
+      if (antes && Math.hypot(p[0] - antes[0], p[1] - antes[1]) < 0.5) return;
+      quedan.push({ p, d });
+    };
+    puntos.forEach((p, i) => {
+      // El primero es el avión, que está donde esté.
+      if (i === 0 || i >= fuera) return poner(p, delante(i));
+      const d = delante(i);
+      const q = ejes[i]!.across * lado < 0 ? enElEje(ejes[i]!.along) : p;
+      let quitado = false;
+      if (!alReves && d >= delante(0))
+        while (quedan.length > 1 && quedan[quedan.length - 1]!.d > d + 0.5) {
+          quedan.pop();
+          quitado = true;
+        }
+      // Y si se quitó lo que se pasaba, se gira desde el eje, a su altura.
+      if (quitado) poner(enElEje(ejes[i]!.along), d);
+      poner(q, d);
+    });
+    return quedan.map((q) => q.p);
   }
 
   /** Lo que queda hasta una boca, a lo largo de la pista y hacia donde se rueda, m. */

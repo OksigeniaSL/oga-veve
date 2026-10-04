@@ -29,16 +29,18 @@ import {
   cruceroDelPlan,
   libra,
   minimaEnCrucero,
+  minimaEnRuta,
   porElMar,
   puntoAFaltando,
   segundosPorElPerfil,
+  type Fijo,
   type Ruta,
 } from "../flight/ruta";
 import { airDensity, SEA_LEVEL_DENSITY } from "../flight/atmosphere";
 import { NUDO, velocidadQueToca } from "../flight/escalera-de-velocidades";
 import { minutosDichos, nivelDicho } from "../audio/partes-de-la-comandante";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
-import { campoDeCasa, campoVecino, type CampoEnElMundo } from "./campo-del-vuelo";
+import { campoDeCasa, campoVecino, enLaPistaDe, type CampoEnElMundo } from "./campo-del-vuelo";
 import { dondeCae, type Sitio } from "./entre-aerodromos";
 import { TIEMPO_DE_CASA, type Meteo } from "./meteo";
 import { procedimientosDe } from "./procedimientos";
@@ -174,7 +176,12 @@ interface Tramo {
   readonly llegada: CampoEnElMundo;
   readonly juego: DelJuego;
   readonly ruta: Ruta;
-  /** La recta de la pista de salida al umbral de llegada, m. */
+  /**
+   * La recta de la pista de salida al umbral de llegada, m: desde la cabecera
+   * de despegue, donde empieza la carrera. El plan empieza en el otro
+   * extremo, el final de la pista, pero la distancia entre los dos campos no
+   * cambia por eso.
+   */
   readonly directo: number;
 }
 
@@ -208,7 +215,8 @@ function tramo(sal: Scenario, cs: string, lle: Scenario, cl: string): Tramo {
     techo: JAZ_90.alturaDeCrucero,
   };
   const ruta = rutaDelTramo(salida, llegada, juego);
-  const a = ruta.fijos[0]!;
+  const [ax, az] = enLaPistaDe(salida, salida.pista.length / 2);
+  const a = { x: ax, z: az };
   const b = ruta.fijos[ruta.fijos.length - 1]!;
   return {
     nombre: `${oaciDe(sal)} ${cs} → ${oaciDe(lle)} ${cl}`,
@@ -350,6 +358,8 @@ describe("las rutas de Canarias, sobre el relieve", () => {
    */
   const VECES_LA_RECTA = 3.5;
   const MAS_VUELTA: Readonly<Record<string, string>> = {
+    "GCXO 30 → GCTS 07":
+      "La 30 de Los Rodeos sube recta hasta 12.6 DME TFN, ocho millas mar adentro, y vuelve al VOR por su radial 303 (AD 2-GCXO SID 4); de ahí por la costa este hasta KUTUR, el punto de inicio del lado del que se viene, y la vuelta a la 07. Son las dos pistas en contra y además la salida que se aleja.",
     "GCTS 07 → GCXO 12":
       "La 07 de Tenerife Sur sale al este y la 12 de Los Rodeos se entra por el noroeste —BASUX, o directo a XO11W— o por el VOR, al que desde el sur solo se llega rodeando Anaga por LUCSI. La más corta por el mar es rodear Teno: por TS901 y MOROD, frente a La Gomera, y de vuelta al este.",
   };
@@ -389,6 +399,19 @@ describe("las rutas de Canarias, sobre el relieve", () => {
  * Laguna. Y las dos a la 25 iban a buscar QITTI, doce millas al sur del
  * punto intermedio, para volver. Las de la 07 son ahora más largas, y es lo
  * que cuesta entrar por el lado del que se viene sin cruzar la isla.
+ *
+ * **Y las de la 30, como empieza su carta.** Iban de la cabecera directo al
+ * VOR, cuatro millas y media a espaldas del avión: la raya salía hacia el
+ * nordeste desde donde empieza la carrera, y Enrique tuvo que ir a buscarla
+ * por encima de Anaga a seis mil pies. Las convencionales de la 30 suben
+ * recto hasta 12.6 DME TFN y las que van al VOR vuelven a él por su radial
+ * 303 (AD 2-GCXO SID 4): `D12.6 TFN` e `INTC` son eso, y son veinte millas
+ * más.
+ *
+ * | Pistas  | Antes de la subida recta                    | NM   | Con ella                                                   | NM    |
+ * |---------|---------------------------------------------|------|------------------------------------------------------------|-------|
+ * | 30 → 25 | RW30 TFN ARTEM TS511 TS506 RW25             | 54,9 | RW30 D12.6 TFN INTC TFN ARTEM TS511 TS506 RW25             | 76,4  |
+ * | 30 → 07 | RW30 TFN ARTEM KUTUR TS717 TS710 TS705 RW07 | 94,4 | RW30 D12.6 TFN INTC TFN ARTEM KUTUR TS717 TS710 TS705 RW07 | 115,8 |
  */
 describe("de Los Rodeos a Tenerife Sur", () => {
   const tfn = TRAMOS.filter((t) => t.nombre.startsWith("GCXO") && t.nombre.includes("GCTS"));
@@ -397,12 +420,80 @@ describe("de Los Rodeos a Tenerife Sur", () => {
 
   it("va por la costa este, y a la 25 directo a su punto intermedio", () => {
     expect(de("12", "25")).toBe("RW12 XO400 TS511 TS506 RW25");
-    expect(de("30", "25")).toBe("RW30 TFN ARTEM TS511 TS506 RW25");
+    expect(de("30", "25")).toBe("RW30 D12.6 TFN INTC TFN ARTEM TS511 TS506 RW25");
   });
 
   it("y a la 07 por KUTUR, el punto de inicio del lado del que viene", () => {
     expect(de("12", "07")).toBe("RW12 XO400 KUTUR TS717 TS710 TS705 RW07");
-    expect(de("30", "07")).toBe("RW30 TFN ARTEM KUTUR TS717 TS710 TS705 RW07");
+    expect(de("30", "07")).toBe("RW30 D12.6 TFN INTC TFN ARTEM KUTUR TS717 TS710 TS705 RW07");
+  });
+
+  /*
+   * **La 30, como su carta**: «Subir en rumbo de pista hasta 12.6 DME TFN.
+   * Virar a la derecha a rumbo magnético 028º para interceptar y seguir R-303
+   * TFN directo a DVOR/DME TFN» (AD 2-GCXO SID 4, GDV4J). Con la declinación
+   * de la carta, 3,6° al oeste, y la del VOR, 4°.
+   */
+  it("la 30 sube recta hasta 12.6 DME TFN y vuelve al VOR por su radial 303", () => {
+    for (const cl of ["25", "07"]) {
+      const t = tfn.find((x) => x.nombre === `GCXO 30 → GCTS ${cl}`)!;
+      const [der, d126, intc, vor] = t.ruta.fijos;
+      expect([der, d126, intc, vor].map((f) => f!.nombre)).toEqual(["RW30", "D12.6 TFN", "INTC", "TFN"]);
+      const rumbo = (a: Fijo, b: Fijo) => ((Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI + 360) % 360;
+      const millas = (a: Fijo, b: Fijo) => Math.hypot(b.x - a.x, b.z - a.z) / 1852;
+      // Con el rumbo de pista hasta el arco de 12,6 millas del VOR...
+      expect(rumbo(der!, d126!)).toBeCloseTo(t.salida.pista.heading, 0);
+      expect(millas(d126!, vor!)).toBeCloseTo(12.6, 1);
+      // ...a 028 magnético hasta el radial 303, y por él al VOR.
+      expect(rumbo(d126!, intc!)).toBeCloseTo(28 - 3.6, 0);
+      expect(rumbo(vor!, intc!)).toBeCloseTo(303 - 4, 0);
+      // Ocho millas largas mar adentro antes de virar: el que lo pedía.
+      expect(millas(der!, d126!)).toBeGreaterThan(8);
+      expect(d126!.recta).toBe(true);
+    }
+  });
+
+  /*
+   * **Y por encima de Anaga con su margen.** El VOR está en la cresta, a mil
+   * veinte metros; la regla del aire pide seiscientos más sobre lo más alto a
+   * ocho kilómetros (ENR 1.3), y el plan sube a dos millas por cada mil pies
+   * desde la cabecera. Directo al VOR desde la cabecera, como iba antes, se
+   * llegaba a él a cuatro mil cuatrocientos pies: novecientos por debajo de
+   * esa mínima y mil sobre la cresta. La carta no deja ir así, y Enrique
+   * cruzó Anaga a seis mil buscando la raya. Por la carta, la vuelta por el
+   * radial 303 llega a él con la subida hecha.
+   */
+  it("y la 30 cruza Anaga por encima de su mínima en ruta", () => {
+    for (const cl of ["25", "07"]) {
+      const t = tfn.find((x) => x.nombre === `GCXO 30 → GCTS ${cl}`)!;
+      const f = t.ruta.fijos;
+      const crucero = cruceroDelTramo(t.ruta, t.salida, t.juego);
+      const cota = t.juego.cotaDePista(t.salida, 0, 0);
+      const carrera = f[0]!.carrera ?? 0;
+      const desde = f.findIndex((x) => x.nombre === "INTC");
+      const hasta = f.findIndex((x) => x.nombre === "ARTEM");
+      expect(desde).toBeGreaterThan(0);
+      let hecho = t.ruta.acumulado[desde]!;
+      let sobreTierra = 0;
+      for (let i = desde + 1; i <= hasta; i++) {
+        const a = f[i - 1]!;
+        const b = f[i]!;
+        const l = Math.hypot(b.x - a.x, b.z - a.z);
+        for (let k = 0; k < l; k += 185) {
+          const x = a.x + ((b.x - a.x) * k) / l;
+          const z = a.z + ((b.z - a.z) * k) / l;
+          const suelo = t.juego.cota!(x, z);
+          if (suelo === null || suelo <= 1) continue;
+          sobreTierra++;
+          const altura = Math.min(crucero, cota + ((hecho + k + carrera) / (2 * 1852)) * 1000 * 0.3048);
+          const minima = minimaEnRuta(t.juego.cota!, x, z)!;
+          expect(altura, `${t.nombre} en ${a.nombre}>${b.nombre}`).toBeGreaterThanOrEqual(minima);
+        }
+        hecho += l;
+      }
+      // Que de verdad pasa por encima de la isla: del radial a La Laguna.
+      expect(sobreTierra).toBeGreaterThan(20);
+    }
   });
 
   it("nunca por XANOS, frente a La Gomera, ni por encima de la Dorsal", () => {
@@ -614,6 +705,21 @@ describe("lo que dura el vuelo", () => {
     "GCXO → GCHI": 40,
     "GCLP → GCRR": 45,
   };
+  /*
+   * **Salvo la que vuela entera la salida de la 30 de Los Rodeos y entra a
+   * la 03 de Gran Canaria por el sur**, que son los vientos de siempre: la
+   * GDV4J sube ocho millas largas hasta 12.6 DME TFN y vuelve al VOR antes de
+   * ir hacia Gran Canaria (AD 2-GCXO SID 4), y la RNP de la 03L se coge por
+   * el sur de la isla. Son veinte millas más que antes de volar la salida
+   * como es, y no caben en los cinco minutos de rodaje: un avión de Binter
+   * no las vuela enteras, porque el control lo lleva por vectores en cuanto
+   * sube. El juego no da vectores; vuela la carta, y la carta es así. Lo que
+   * sí se le pide es que quepa en el bloque de Binter.
+   */
+  const POR_LA_CARTA_ENTERA: Readonly<Record<string, string>> = {
+    "GCXO 30 → GCLP 03L":
+      "La GDV4J entera, por 12.6 DME TFN y el VOR, y la RNP de la 03L por el sur de Gran Canaria.",
+  };
   const deLaRuta = (ruta: string) => {
     const [de, a] = ruta.split(" → ");
     return TRAMOS.filter((t) => t.nombre.startsWith(de!) && t.nombre.includes(`→ ${a}`));
@@ -624,7 +730,12 @@ describe("lo que dura el vuelo", () => {
       expect(tramos.length).toBeGreaterThan(0);
       for (const t of tramos) {
         const min = anunciado(t, JAZ_90) / 60;
-        expect(min, t.nombre).toBeLessThanOrEqual(bloque - 5);
+        if (t.nombre in POR_LA_CARTA_ENTERA) {
+          expect(min, t.nombre).toBeGreaterThan(bloque - 5);
+          expect(min, t.nombre).toBeLessThanOrEqual(bloque);
+        } else {
+          expect(min, t.nombre).toBeLessThanOrEqual(bloque - 5);
+        }
         expect(min, t.nombre).toBeGreaterThanOrEqual(bloque / 2);
       }
     });

@@ -48,6 +48,14 @@ const VISTAS = {
   // Y la firma de cerca, por los dos costados: que se lea del derecho.
   firma: { dir: [-1, 0.1, -0.15], lejos: 0.22, mira: "marca" },
   "firma-derecha": { dir: [1, 0.1, -0.15], lejos: 0.22, mira: "marca" },
+  // Desde detrás y por encima, como la cámara de seguir del juego: es la
+  // vista de las capturas de Enrique sin frenos de tierra a la vista.
+  "detras-alto": { dir: [0.05, 0.42, 1], lejos: 1.25, mira: [0.5, 0.4, 0.55] },
+  // Y el ala izquierda desde junto al fuselaje, por encima y mirando hacia
+  // atrás y afuera, como desde una ventanilla sobre el ala: es desde donde se
+  // ve subir la fila de paneles en un avión de verdad. Encuadrada con el JAZ
+  // 120; en los pequeños sale más de lejos.
+  ventanilla: { dir: [0.8, 0.45, -0.4], lejos: 0.2, mira: [0.38, 0.42, 0.6] },
 };
 
 mkdirSync(CARPETA, { recursive: true });
@@ -68,7 +76,9 @@ try {
     page.on("pageerror", (e) => console.log(`  ${id} ERROR:`, e.message));
     // `OGA_LUCES=1`: con las luces encendidas y a media luz. Ver el `.html`.
     const luces = process.env.OGA_LUCES ? "&luces=1" : "";
-    await page.goto(`${BASE}/scripts/ver-librea.html?avion=${id}${luces}`);
+    // `OGA_FRENOS=1`: recién tocado, con flaps y frenos de tierra fuera.
+    const frenos = process.env.OGA_FRENOS ? "&frenos=1" : "";
+    await page.goto(`${BASE}/scripts/ver-librea.html?avion=${id}${luces}${frenos}`);
     await page.waitForFunction(() => globalThis.__listo === true, null, {
       timeout: 60000,
     });

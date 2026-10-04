@@ -59,7 +59,7 @@
  */
 
 import type { Papel } from "../flight/ruta";
-import type { Procedimientos, Publicado } from "./procedimientos";
+import type { Arranque, Procedimientos, Publicado, Salida } from "./procedimientos";
 
 const FUENTE =
   "AIP España (ENAIRE), AD 2 GCXO GCTS GCLP GCFV GCRR GCLA GCHI GCGM, ENR 4.1 y ENR 4.4, AIRAC AMDT 08/26 (WEF 03-SEP-2026)";
@@ -101,12 +101,37 @@ function conVpt(carta: string, ramas: readonly string[], vpt: string) {
   return { carta, ramas: ramas.map(puntos), vpt: puntos(vpt) };
 }
 
-function salida(nombre: string, carta: string, ruta: string) {
+function salida(nombre: string, carta: string, ruta: string, arranque?: Arranque): Salida {
   return {
     nombre,
     carta,
     fijos: puntos(ruta).map((p): Publicado => ({ ...p, papel: "salida" })),
+    ...(arranque ? { arranque } : {}),
   };
+}
+
+/** «Subir en rumbo de pista hasta alcanzar 1000 ft.» Ver `Arranque`. */
+const hastaLosPies = (pies: number): Arranque => ({ pies });
+
+/** «Subir en rumbo de pista hasta 12.6 DME TFN»; con más cosas, en `mas`. */
+function hastaElDme(vor: string, millas: number, mas: Omit<Arranque, "dme"> = {}): Arranque {
+  return { ...mas, dme: { de: punto(vor), millas } };
+}
+
+/**
+ * La declinación de Canarias, grados al oeste: la que imprime cada carta
+ * («VAR 3º35.0'W (2025)») y la que llevan sus tablas codificadas (+3.6).
+ */
+const VAR = 3.6;
+
+/**
+ * «Virar a rumbo magnético 028º para interceptar y seguir R-303 TFN»: el
+ * rumbo con la declinación de aquí y el radial con la de su radioayuda, que
+ * la ficha de cada una da aparte —«DVOR (4° W)» para TFN, AD 2-GCXO 2.19—.
+ * Los dos, a verdaderos.
+ */
+function cortando(rumbo: number, vor: string, radial: number, declinacionDelVor: number) {
+  return { corta: { rumbo: rumbo - VAR, de: punto(vor), radial: radial - declinacionDelVor } };
 }
 
 /** Los puntos, por su nombre publicado: latitud y longitud, en grados. */
@@ -145,6 +170,9 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "ESIQE": [27.725000, -17.148611],
   "FALPU": [27.778833, -15.454139],
   "FOCCU": [28.847778, -13.661806],
+  // FTV y HR no salen en ninguna salida como punto, pero sus arcos DME dicen
+  // dónde se vira: AD 2-GCFV y AD 2-GCHI, 2.19, las coordenadas del DME.
+  "FTV": [28.430917, -13.864500],
   "FUFFU": [28.224500, -16.023222],
   "FV04N": [28.530389, -13.861194],
   "FV07S": [28.317944, -13.868222],
@@ -167,6 +195,7 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "GOPIM": [27.892500, -15.063667],
   "HI400": [27.729722, -17.837444],
   "HIE": [27.816167, -17.886389],
+  "HR": [27.816056, -17.886444],
   "IBOLO": [28.357306, -13.662000],
   "ISLET": [28.142778, -15.295000],
   "KASAS": [29.986389, -15.768611],
@@ -294,6 +323,79 @@ const P: Readonly<Record<string, readonly [number, number]>> = {
   "YOSMA": [28.621389, -16.583278],
 };
 
+/*
+ * **Cómo empieza cada salida**, de la descripción textual de su carta (la
+ * página «SALIDAS NORMALIZADAS POR INSTRUMENTOS» de cada AD 2 SID) y, en las
+ * de navegación de área, del primer tramo de su tabla codificada. Ver
+ * `Arranque` en `procedimientos.ts`. Solo las que no suben recto a su primer
+ * punto: las demás —todas las de Gran Canaria y Tenerife Sur, y las de
+ * navegación de área de Los Rodeos, El Hierro, la 21 de Lanzarote y la 19 de
+ * Fuerteventura— lo tienen delante, en la prolongación del eje. Y las de
+ * navegación de área de la 03 de Lanzarote van a RIPIX siete grados a la
+ * derecha del eje: suben lo de una salida sin carta y viran.
+ *
+ * Van después de `P`, que es de donde leen sus radioayudas.
+ */
+
+/**
+ * Los Rodeos, 30, las convencionales (AD 2-GCXO SID 4): «Subir en rumbo de
+ * pista hasta 12.6 DME TFN». Las que van al VOR, «virar a la derecha a rumbo
+ * magnético 028º para interceptar y seguir R-303 TFN directo a DVOR/DME TFN»;
+ * las que van a TESEL viran a la izquierda a por él.
+ *
+ * Es la queja de la que sale todo esto: la raya iba del arranque de la
+ * carrera al VOR, cuatro millas y media a espaldas del avión, y lo de verdad
+ * son ocho millas largas mar adentro y la vuelta por el radial 303, que entra
+ * en la isla por Bajamar y cruza el VOR —en la cresta de Anaga, a 1020 m—
+ * subiendo a FL070.
+ */
+const XO30 = hastaElDme("TFN", 12.6);
+const XO30_AL_VOR = hastaElDme("TFN", 12.6, cortando(28, "TFN", 303, 4));
+
+/**
+ * Los Rodeos, 12, las convencionales (AD 2-GCXO SID 2): «Subir en R-118 LRO
+ * hasta 8.0 DME LRO a 4000 ft o superior. Virar a la izquierda a rumbo
+ * magnético 007º para interceptar y seguir R-097 TFN directo a DVOR/DME
+ * TFN», las que van al oeste; «hasta 16.0 DME LRO a 5100 ft o superior», y
+ * el arco de 18 millas, las que van al norte y al este. El radial 118 del
+ * VOR del campo es el rumbo de pista con cuatro grados de diferencia. Las de
+ * Gran Canaria cortan el radial 320 de GDV, que está delante.
+ */
+const XO12_AL_OESTE = hastaElDme("LRO", 8, { minimaPies: 4000, ...cortando(7, "TFN", 97, 4) });
+const XO12_AL_NORTE = hastaElDme("LRO", 16, { minimaPies: 5100 });
+
+/** La Palma (AD 2-GCLA SID 1 y 2): la 18 hasta 1000 ft; la 36, hasta 600 ft. */
+const LA18 = hastaLosPies(1000);
+const LA36 = hastaLosPies(600);
+
+/**
+ * El Hierro, 16 (AD 2-GCHI SID 2): «Subir en rumbo de pista hasta alcanzar
+ * 800 ft […] No virar antes de alcanzar 3.0 DME HR», y la de Gran Canaria,
+ * «directo a 3.0 DME HR».
+ */
+const HI16 = hastaElDme("HR", 3, { pies: 800 });
+const HI16_AL_ESTE = hastaElDme("HR", 3);
+
+/**
+ * Fuerteventura (AD 2-GCFV SID 1 a 4): la 01, «subir en rumbo de pista hasta
+ * alcanzar 500 ft», también las de navegación de área («CA 020 +500»); la
+ * 19, hasta 5.0 DME FTV, o «directo a cruzar 5.4 DME FTV a 2600 ft o
+ * superior» las que van al oeste.
+ */
+const FV01 = hastaLosPies(500);
+const FV19 = hastaElDme("FTV", 5);
+const FV19_AL_OESTE = hastaElDme("FTV", 5.4, { minimaPies: 2600 });
+
+/**
+ * Lanzarote (AD 2-GCRR SID 2, 3 y 5): la 21, «directo a cruzar 5.3 DME LTE a
+ * 1300 ft o superior», o a 6.8 DME y 1200 ft la de KORAL; la 03, «en R-037
+ * LTE directo a cruzar 4.0 DME LTE a 1600 ft o superior», que es también la
+ * subida convencional con que empiezan las de navegación de área por RR450.
+ */
+const RR21 = hastaElDme("LTE", 5.3, { minimaPies: 1300 });
+const RR21_KORAL = hastaElDme("LTE", 6.8, { minimaPies: 1200 });
+const RR03 = hastaElDme("LTE", 4, { minimaPies: 1600 });
+
 export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
   GCFV: {
     fuente: FUENTE,
@@ -307,26 +409,26 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
     },
     salidas: {
       "01": [
-        salida("KORAL9Q", "AD 2-GCFV SID 2 · SID RNAV RWY 01", "FV672 LTE LZR DIBIB POKAB GAMVA KORAL"),
-        salida("SAMAR9Q", "AD 2-GCFV SID 2 · SID RNAV RWY 01", "FV672 LTE YOLAS PEPES SAMAR"),
-        salida("VASTO9Q", "AD 2-GCFV SID 2 · SID RNAV RWY 01", "FV672 LTE YOLAS VASTO"),
-        salida("SAMAR1S", "AD 2-GCFV SID 3 · SID RNAV RWY 01", "ADOVO FV672 LTE YOLAS PEPES SAMAR"),
-        salida("VASTO1S", "AD 2-GCFV SID 3 · SID RNAV RWY 01", "ADOVO FV672 LTE YOLAS VASTO"),
-        salida("KORAL1S", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO TADEK LZR DIBIB GAMVA KORAL"),
-        salida("LARYS5Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO LARYS"),
-        salida("LORPO4Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO BETAN LORPO"),
-        salida("LUNOB4Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO MAPED LUNOB"),
-        salida("MAPED4Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO MAPED"),
+        salida("KORAL9Q", "AD 2-GCFV SID 2 · SID RNAV RWY 01", "FV672 LTE LZR DIBIB POKAB GAMVA KORAL", FV01),
+        salida("SAMAR9Q", "AD 2-GCFV SID 2 · SID RNAV RWY 01", "FV672 LTE YOLAS PEPES SAMAR", FV01),
+        salida("VASTO9Q", "AD 2-GCFV SID 2 · SID RNAV RWY 01", "FV672 LTE YOLAS VASTO", FV01),
+        salida("SAMAR1S", "AD 2-GCFV SID 3 · SID RNAV RWY 01", "ADOVO FV672 LTE YOLAS PEPES SAMAR", FV01),
+        salida("VASTO1S", "AD 2-GCFV SID 3 · SID RNAV RWY 01", "ADOVO FV672 LTE YOLAS VASTO", FV01),
+        salida("KORAL1S", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO TADEK LZR DIBIB GAMVA KORAL", FV01),
+        salida("LARYS5Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO LARYS", FV01),
+        salida("LORPO4Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO BETAN LORPO", FV01),
+        salida("LUNOB4Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO MAPED LUNOB", FV01),
+        salida("MAPED4Q", "AD 2-GCFV SID 1 · SID RWY 01 (convencional)", "ADOVO MAPED", FV01),
       ],
       "19": [
         salida("KORAL7R", "AD 2-GCFV SID 5 · SID RNAV RWY 19", "FV780 FV781 ARGOX LTE DIBIB POKAB GAMVA KORAL"),
         salida("SAMAR7R", "AD 2-GCFV SID 5 · SID RNAV RWY 19", "FV780 FV781 ARGOX PEPES SAMAR"),
         salida("VASTO8R", "AD 2-GCFV SID 5 · SID RNAV RWY 19", "FV780 FV781 ARGOX YOLAS VASTO"),
-        salida("KORAL1W", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "TADEK LZR KORAL"),
-        salida("LARYS4R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "RASEP LARYS"),
-        salida("LORPO4R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "LORPO"),
-        salida("LUNOB3R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "MAPED LUNOB"),
-        salida("MAPED3R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "MAPED"),
+        salida("KORAL1W", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "TADEK LZR KORAL", FV19),
+        salida("LARYS4R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "RASEP LARYS", FV19_AL_OESTE),
+        salida("LORPO4R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "LORPO", FV19_AL_OESTE),
+        salida("LUNOB3R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "MAPED LUNOB", FV19),
+        salida("MAPED3R", "AD 2-GCFV SID 4 · SID RWY 19 (convencional)", "MAPED", FV19),
       ],
     },
   },
@@ -352,9 +454,9 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
     salidas: {
       "16": [
         salida("YELBE1X", "AD 2-GCHI SID 1 · SID RNAV RWY 16", "HI400 YELBE"),
-        salida("ARACO1X", "AD 2-GCHI SID 2 · SID RWY 16 (convencional)", "ARACO"),
-        salida("LPC2X", "AD 2-GCHI SID 2 · SID RWY 16 (convencional)", "TOMOS LPC"),
-        salida("TFN2X", "AD 2-GCHI SID 2 · SID RWY 16 (convencional)", "MOROD TESEL TFN"),
+        salida("ARACO1X", "AD 2-GCHI SID 2 · SID RWY 16 (convencional)", "ARACO", HI16),
+        salida("LPC2X", "AD 2-GCHI SID 2 · SID RWY 16 (convencional)", "TOMOS LPC", HI16_AL_ESTE),
+        salida("TFN2X", "AD 2-GCHI SID 2 · SID RWY 16 (convencional)", "MOROD TESEL TFN", HI16),
       ],
     },
   },
@@ -382,30 +484,30 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
     },
     salidas: {
       "18": [
-        salida("YEQAY1U", "AD 2-GCLA SID 1 · SID RNAV RWY 18/36", "ARACO YEQAY"),
-        salida("BIMBO6U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN BRICK KASAS BIMBO"),
-        salida("GDV4U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN ARTEM GDV"),
-        salida("KONBA2U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN BRICK KASAS KONBA"),
-        salida("KORAL7U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS LZR KORAL"),
-        salida("LALTO1U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN ARTEM GDV XIBUS LALTO"),
-        salida("LARYS2U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS"),
-        salida("SAMAR6U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN BRICK KASAS SAMAR"),
-        salida("SARAY1U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS SARAY"),
-        salida("TFN4U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN"),
-        salida("VASTO5U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS SARAY VASTO"),
+        salida("YEQAY1U", "AD 2-GCLA SID 1 · SID RNAV RWY 18/36", "ARACO YEQAY", LA18),
+        salida("BIMBO6U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN BRICK KASAS BIMBO", LA18),
+        salida("GDV4U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN ARTEM GDV", LA18),
+        salida("KONBA2U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN BRICK KASAS KONBA", LA18),
+        salida("KORAL7U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS LZR KORAL", LA18),
+        salida("LALTO1U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN ARTEM GDV XIBUS LALTO", LA18),
+        salida("LARYS2U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS", LA18),
+        salida("SAMAR6U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN BRICK KASAS SAMAR", LA18),
+        salida("SARAY1U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS SARAY", LA18),
+        salida("TFN4U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN", LA18),
+        salida("VASTO5U", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "ARACO TFN LARYS SARAY VASTO", LA18),
       ],
       "36": [
-        salida("YEQAY1T", "AD 2-GCLA SID 1 · SID RNAV RWY 18/36", "VANUR YEQAY"),
-        salida("BIMBO6T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR BRICK KASAS BIMBO"),
-        salida("GDV4T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN ARTEM GDV"),
-        salida("KONBA2T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR BRICK KASAS KONBA"),
-        salida("KORAL7T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS LZR KORAL"),
-        salida("LALTO1T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN ARTEM GDV XIBUS LALTO"),
-        salida("LARYS2T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS"),
-        salida("SAMAR6T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR BRICK KASAS SAMAR"),
-        salida("SARAY1T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS SARAY"),
-        salida("TFN4T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN"),
-        salida("VASTO5T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS SARAY VASTO"),
+        salida("YEQAY1T", "AD 2-GCLA SID 1 · SID RNAV RWY 18/36", "VANUR YEQAY", LA36),
+        salida("BIMBO6T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR BRICK KASAS BIMBO", LA36),
+        salida("GDV4T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN ARTEM GDV", LA36),
+        salida("KONBA2T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR BRICK KASAS KONBA", LA36),
+        salida("KORAL7T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS LZR KORAL", LA36),
+        salida("LALTO1T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN ARTEM GDV XIBUS LALTO", LA36),
+        salida("LARYS2T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS", LA36),
+        salida("SAMAR6T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR BRICK KASAS SAMAR", LA36),
+        salida("SARAY1T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS SARAY", LA36),
+        salida("TFN4T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN", LA36),
+        salida("VASTO5T", "AD 2-GCLA SID 2 · SID RWY 18 / RWY 36 (convencional)", "VANUR TFN LARYS SARAY VASTO", LA36),
       ],
     },
   },
@@ -497,14 +599,14 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
         salida("SAMAR6M", "AD 2-GCRR SID 1 · SID RNAV RWY 03", "RIPIX RR450 PEPES SAMAR"),
         salida("SOTAD3M", "AD 2-GCRR SID 1 · SID RNAV RWY 03", "RIPIX RR450 TENDA TOSPU IBOLO FV621 FV622 FV623 SOTAD"),
         salida("VASTO7M", "AD 2-GCRR SID 1 · SID RNAV RWY 03", "RIPIX RR450 KUCOS VASTO"),
-        salida("DESUM1Y", "AD 2-GCRR SID 2 · SID RNAV RWY 03", "RR450 KUCOS EDUPI DESUM"),
-        salida("SAMAR1Y", "AD 2-GCRR SID 2 · SID RNAV RWY 03", "RR450 PEPES SAMAR"),
-        salida("VASTO2Y", "AD 2-GCRR SID 2 · SID RNAV RWY 03", "RR450 KUCOS MANZU VASTO"),
-        salida("KEMEV3M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LZR ELNAN SOMOB RULOB KEMEV"),
-        salida("KORAL1P", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "ALUGO KORAL"),
-        salida("LARYS1M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LZR LARYS"),
-        salida("LORPO3M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LZR ELNAN SOMOB KOSIB LORPO"),
-        salida("TENDA7M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LINDE TENDA"),
+        salida("DESUM1Y", "AD 2-GCRR SID 2 · SID RNAV RWY 03", "RR450 KUCOS EDUPI DESUM", RR03),
+        salida("SAMAR1Y", "AD 2-GCRR SID 2 · SID RNAV RWY 03", "RR450 PEPES SAMAR", RR03),
+        salida("VASTO2Y", "AD 2-GCRR SID 2 · SID RNAV RWY 03", "RR450 KUCOS MANZU VASTO", RR03),
+        salida("KEMEV3M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LZR ELNAN SOMOB RULOB KEMEV", RR03),
+        salida("KORAL1P", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "ALUGO KORAL", RR03),
+        salida("LARYS1M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LZR LARYS", RR03),
+        salida("LORPO3M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LZR ELNAN SOMOB KOSIB LORPO", RR03),
+        salida("TENDA7M", "AD 2-GCRR SID 3 · SID RWY 03 (convencional)", "LINDE TENDA", RR03),
       ],
       "21": [
         salida("BAMKU3N", "AD 2-GCRR SID 4 · SID RNAV RWY 21", "FOCCU UMOTO FV731 FV732 BAMKU"),
@@ -513,11 +615,11 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
         salida("SAMAR8N", "AD 2-GCRR SID 4 · SID RNAV RWY 21", "FOCCU MAPOV PERER ARVEM PEPES SAMAR"),
         salida("SOTAD3N", "AD 2-GCRR SID 4 · SID RNAV RWY 21", "FOCCU TENDA TOSPU IBOLO FV621 FV622 FV623 SOTAD"),
         salida("VASTO8N", "AD 2-GCRR SID 4 · SID RNAV RWY 21", "FOCCU MAPOV PERER ARVEM VASTO"),
-        salida("KEMEV3N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "GOMSU RULOB KEMEV"),
-        salida("KORAL1G", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "LZR KORAL"),
-        salida("LARYS1N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "MAPED LARYS"),
-        salida("LORPO1N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "GOMSU KOSIB LORPO"),
-        salida("TENDA3N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "TENDA"),
+        salida("KEMEV3N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "GOMSU RULOB KEMEV", RR21),
+        salida("KORAL1G", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "LZR KORAL", RR21_KORAL),
+        salida("LARYS1N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "MAPED LARYS", RR21),
+        salida("LORPO1N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "GOMSU KOSIB LORPO", RR21),
+        salida("TENDA3N", "AD 2-GCRR SID 5 · SID RWY 21 (convencional)", "TENDA", RR21),
       ],
     },
   },
@@ -584,32 +686,32 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
     salidas: {
       "12": [
         salida("YEQAY1C", "AD 2-GCXO SID 1 · SID RNAV RWY 12", "XO400 XO401 TESEL YEQAY"),
-        salida("ARACO4K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "TFN TESEL ARACO"),
-        salida("BIMBO7K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "KASAS BIMBO"),
+        salida("ARACO4K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "TFN TESEL ARACO", XO12_AL_OESTE),
+        salida("BIMBO7K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "KASAS BIMBO", XO12_AL_NORTE),
         salida("GDV4K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "GDV"),
-        salida("HIE6K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "TFN TESEL MOROD HIE"),
-        salida("KONBA6K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "KASAS KONBA"),
-        salida("KORAL8K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS LZR KORAL"),
+        salida("HIE6K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "TFN TESEL MOROD HIE", XO12_AL_OESTE),
+        salida("KONBA6K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "KASAS KONBA", XO12_AL_NORTE),
+        salida("KORAL8K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS LZR KORAL", XO12_AL_NORTE),
         salida("LALTO1K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "GDV XIBUS LALTO"),
-        salida("LARYS2K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS"),
-        salida("SAMAR7K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "KASAS SAMAR"),
-        salida("SARAY2K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS SARAY"),
-        salida("VASTO6K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS SARAY VASTO"),
+        salida("LARYS2K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS", XO12_AL_NORTE),
+        salida("SAMAR7K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "KASAS SAMAR", XO12_AL_NORTE),
+        salida("SARAY2K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS SARAY", XO12_AL_NORTE),
+        salida("VASTO6K", "AD 2-GCXO SID 2 · SID RWY 12 (convencional)", "LARYS SARAY VASTO", XO12_AL_NORTE),
       ],
       "30": [
         salida("HIE1Z", "AD 2-GCXO SID 3 · SID RNAV RWY 30", "XO500 TESEL MOROD HIE"),
         salida("YEQAY1J", "AD 2-GCXO SID 3 · SID RNAV RWY 30", "XO500 TESEL YEQAY"),
-        salida("ARACO2J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TESEL ARACO"),
-        salida("BIMBO6J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN KASAS BIMBO"),
-        salida("GDV4J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN ARTEM GDV"),
-        salida("HIE4J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TESEL MOROD HIE"),
-        salida("KONBA5J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN KASAS KONBA"),
-        salida("KORAL7J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS LZR KORAL"),
-        salida("LALTO1J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN ARTEM GDV XIBUS LALTO"),
-        salida("LARYS2J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS"),
-        salida("SAMAR6J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN KASAS SAMAR"),
-        salida("SARAY2J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS SARAY"),
-        salida("VASTO5J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS SARAY VASTO"),
+        salida("ARACO2J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TESEL ARACO", XO30),
+        salida("BIMBO6J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN KASAS BIMBO", XO30_AL_VOR),
+        salida("GDV4J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN ARTEM GDV", XO30_AL_VOR),
+        salida("HIE4J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TESEL MOROD HIE", XO30),
+        salida("KONBA5J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN KASAS KONBA", XO30_AL_VOR),
+        salida("KORAL7J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS LZR KORAL", XO30_AL_VOR),
+        salida("LALTO1J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN ARTEM GDV XIBUS LALTO", XO30_AL_VOR),
+        salida("LARYS2J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS", XO30_AL_VOR),
+        salida("SAMAR6J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN KASAS SAMAR", XO30_AL_VOR),
+        salida("SARAY2J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS SARAY", XO30_AL_VOR),
+        salida("VASTO5J", "AD 2-GCXO SID 4 · SID RWY 30 (convencional)", "TFN LARYS SARAY VASTO", XO30_AL_VOR),
       ],
     },
   },

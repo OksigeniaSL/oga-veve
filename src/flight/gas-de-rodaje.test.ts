@@ -122,15 +122,27 @@ describe("el gas de rodaje da la velocidad de rodaje", () => {
     it(`${a.id}, modelo sencillo: el gas de nueve lo pone a nueve`, () => {
       /*
        * Aquí el gas **es** la velocidad y el modelo la alcanza al ritmo que
-       * le da su carrera de despegue: un avión de doscientas cincuenta
-       * toneladas tarda más en ponerse a rodar que una avioneta, y eso es
-       * verdad. Por eso se le dan tres minutos, y lo que se pide es que llegue
-       * a la que se le pidió y no a otra.
+       * le da su carrera de despegue. Con el gas de sostener, eso es casi un
+       * minuto en el JAZ 120; con el de llegar, el que pide el tope, se pone a
+       * rodar como en el modelo completo. Se daban tres minutos «porque un
+       * avión de doscientas cincuenta toneladas tarda más en ponerse a rodar
+       * que una avioneta», y con eso el JAZ 120 de Guyrami hacía el viraje de
+       * alineación entero a cinco nudos: «es ir montado sobre un caracol».
+       * Ver `gasParaRodar` en `arcade.ts`.
        */
       const m = new ArcadeFlightModel({ aircraft: a, ground: () => 0 });
-      const r = llega(m, a, RODAJE, 180);
+      const r = llega(m, a, RODAJE);
+      expect(r.dentro, `${a.id}: no llegó`).not.toBeNull();
+      expect(r.dentro!, `${a.id}: tardó ${r.dentro!.toFixed(1)} s`).toBeLessThan(30);
       cerca(r.final, RODAJE, `${a.id} sencillo, desde parado`);
       expect(r.maximo).toBeLessThan(RODAJE * 1.05);
+    });
+
+    it(`${a.id}, modelo sencillo: yendo ya a nueve, el de llegar es el de sostener`, () => {
+      // La marca de rodaje de la palanca es el de sostener: esa no cambia.
+      const m = new ArcadeFlightModel({ aircraft: a, ground: () => 0 });
+      expect(m.gasParaRodar(RODAJE, RODAJE)).toBeCloseTo(m.gasParaRodar(RODAJE), 9);
+      expect(m.gasParaRodar(RODAJE, 0)).toBeGreaterThanOrEqual(m.gasParaRodar(RODAJE));
     });
   }
 });

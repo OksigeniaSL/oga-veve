@@ -67,7 +67,7 @@ import {
  * 0,65 según el avión—. Más es un tirón en la plataforma; menos, un avión que
  * tarda un minuto en ponerse a rodar. Ver `gasParaRodar`.
  */
-const ACELERA_RODANDO = 0.6;
+export const ACELERA_RODANDO = 0.6;
 
 /**
  * **Y en cuánto tiempo se quiere cerrar lo que falta**, s.
@@ -76,7 +76,7 @@ const ACELERA_RODANDO = 0.6;
  * soltando en proporción a lo que falta, y así se llega sin pasarse. Es la
  * misma forma de pisar el acelerador de cualquiera que conduce.
  */
-const EN_LLEGAR_RODANDO = 4;
+export const EN_LLEGAR_RODANDO = 4;
 import { type AssistLayers, uniformAssists } from "./assists";
 import type {
   ControlInputs,
