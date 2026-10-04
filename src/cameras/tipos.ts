@@ -108,6 +108,8 @@ export interface AsientoDePasaje {
   /** Hacia dónde se mira sentado, rad, en el marco del avión. */
   readonly guinada: number;
   readonly cabeceo: number;
+  /** El ángulo de la vista desde él, grados, si no es el de siempre. */
+  readonly fov?: number;
 }
 
 export interface CameraRig {
