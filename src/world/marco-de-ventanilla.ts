@@ -55,27 +55,27 @@
  *   mirando hacia la cola lo primero que hay es **su propio asiento**, vacío,
  *   donde está: su cara de delante con el cabezal y la funda, con los colores
  *   de la casa. El de la fila de detrás va a su distancia entre filas, detrás
- *   de ése, y no se ve: puesto delante sería un asiento donde no lo hay. Y
- *   detrás de él, como desde la fila de delante de una salida de verdad, la
- *   trampilla queda tapada y asoman por encima el asa y el letrero.
+ *   de ése, y no se ve: puesto delante sería un asiento donde no lo hay.
  *
  * Y la luz: de día la cabina la alumbra lo que entra por las ventanillas; de
  * noche, las luces del pasaje, que se bajan para despegar y aterrizar. Ver
  * `diaEnLaCabina` en `luz-de-cabina.ts` y `CabinaDePasaje`.
  *
- * ## Y la salida sobre el ala, desde la fila de al lado
+ * ## Y la salida sobre el ala
  *
  * En el asiento de encima del ala de un avión de pasillo único —el JAZ 90, de
- * la clase del A320 y el 737— la ventanilla de al lado es la de la trampilla
- * de la salida de emergencia: asoma el trozo de su marco, el asa roja de
- * arriba y, encima, el letrero «EXIT», que es como se ve desde la fila de al
- * lado. Va del lado y a la altura que la mide el modelo —ver
- * `SalidaDeAlLado` y `salidaEnLaPared`—, y el letrero, con su tamaño y sus
- * colores de verdad: letras rojas sobre blanco iluminado, que es lo que pide
- * la norma de certificación, con las letras de al menos treinta y ocho
- * milímetros —aquí, cuarenta y cuatro—. Alumbra solo: de noche, con la cabina
- * apagada para aterrizar, es lo que se sigue viendo. «EXIT» va en inglés, como
- * los rótulos de los instrumentos: es lo que pone en cualquier avión.
+ * la clase del A320 y el 737— la ventanilla es **la de la trampilla** de la
+ * salida de emergencia: alrededor del cristal, la trampilla con su junta, el
+ * asa roja justo encima del cristal y, encima, el letrero «EXIT», que es lo
+ * que tiene de frente quien se sienta en esa fila. Desde la fila de al lado,
+ * lo mismo asoma por donde va la ventanilla vecina. Va a la altura que la mide
+ * el modelo —ver `SalidaDeAlLado` y `salidaEnLaPared`—, y el letrero, con su
+ * tamaño y sus colores de verdad: letras rojas sobre blanco iluminado, que es
+ * lo que pide la norma de certificación, con las letras de al menos treinta y
+ * ocho milímetros —aquí, cuarenta y cuatro—. Alumbra solo: de noche, con la
+ * cabina apagada para aterrizar, es lo que se sigue viendo. «EXIT» va en
+ * inglés, como los rótulos de los instrumentos: es lo que pone en cualquier
+ * avión.
  *
  * Las letras no son una textura: son nueve trazos rectos —E, X, I y T no
  * tienen curvas— medidos como distancias, igual que el resto del marco. Se
@@ -393,11 +393,12 @@ void main() {
   // Más clara cerca de las ventanillas, que es por donde entra la luz, y el
   // panel de abajo un punto más gris, con su junta.
   float bajo = uHueco.y + 0.17;
-  vec3 pared = mix(uPared, uAbajo, 1.0 - smoothstep(-bajo - a1, -bajo + a1, q1.y));
-  pared *= mix(1.06, 0.7, smoothstep(0.0, 0.7, sLuz));
   // Y algo más oscura hacia el techo y hacia el suelo: la luz entra a la
-  // altura de las ventanillas.
-  pared *= 1.0 - 0.1 * smoothstep(0.15, 0.6, abs(q1.y));
+  // altura de las ventanillas. Con el grano, aparte: la trampilla de la salida
+  // la comparte —ver más abajo—.
+  float luzPared = mix(1.06, 0.7, smoothstep(0.0, 0.7, sLuz))
+    * (1.0 - 0.1 * smoothstep(0.15, 0.6, abs(q1.y))) * (1.0 + grano);
+  vec3 pared = mix(uPared, uAbajo, 1.0 - smoothstep(-bajo - a1, -bajo + a1, q1.y)) * luzPared;
   pared *= 1.0 - 0.35 * (1.0 - smoothstep(0.004, 0.004 + a1, abs(q1.y + bajo)));
   // Las juntas de los paneles, uno cada dos ventanillas, con su sombra.
   float xj = q1.x * uAtras - 0.5 * uPaso;
@@ -405,7 +406,6 @@ void main() {
   float dj = abs(xj - m * floor(xj / m + 0.5));
   pared *= 1.0 - 0.32 * (1.0 - smoothstep(0.0015, 0.0015 + a1, dj));
   pared *= 1.0 + 0.05 * (1.0 - smoothstep(0.0015, 0.0015 + a1, abs(dj - 0.004)));
-  pared *= 1.0 + grano;
 
   // ── La salida sobre el ala ──
   // Solo cerca de la trampilla y su letrero: el resto de la pared no la paga.
@@ -413,9 +413,11 @@ void main() {
   if (uSalida.z > 0.0 && abs(h.x) < uSalida.z + 0.06 && h.y > -uSalida.w - 0.06
       && h.y < uSalida.w + ${(LETRERO.encima + LETRERO.alto + 0.02).toFixed(3)}) {
     // La trampilla es otra pieza de forro, un pelo más clara, con su junta
-    // oscura alrededor.
+    // oscura alrededor. Y entera: sin las juntas de los paneles ni el gris de
+    // abajo de la pared, que la cruzaban —se veía desde la fila de la salida,
+    // con la trampilla de frente—.
     float sh = caja(h, uSalida.zw, ${SALIDA.esquina.toFixed(3)});
-    pared *= 1.0 + 0.04 * (1.0 - smoothstep(-a1, a1, sh));
+    pared = mix(pared, uPared * luzPared * 1.04, 1.0 - smoothstep(-a1, a1, sh));
     pared = mix(pared, uSombra * 0.7, 0.8 * (1.0 - smoothstep(0.003, 0.003 + a1 * 1.5, abs(sh))));
     // El asa, arriba: un hueco oscuro con su tapa roja. Solo cerca de ella.
     vec2 pa = h - vec2(0.0, uSalida.w - ${ASA.bajo.toFixed(3)});
@@ -757,6 +759,10 @@ export function queSeTocaEnLaPared(
  * el de fuera separa más sus ventanillas para que se lean de lejos —ver
  * `pasoDeVentanillas`—, y desde dentro la trampilla ocupa el sitio de la
  * ventanilla de al lado, que es lo que es. Nunca encima del hueco de uno.
+ *
+ * **Salvo que la ventanilla de uno sea la suya**, desde la fila de la salida:
+ * entonces la trampilla va alrededor del cristal de uno, a la altura que la
+ * pone el modelo. Ver `SalidaDeAlLado.enLaTrampilla`.
  */
 export function salidaEnLaPared(
   ventanilla: VentanillaDePasaje,
@@ -766,7 +772,7 @@ export function salidaEnLaPared(
   const medioAncho = salida.ancho / 2 + SALIDA.forro;
   const lejos = Math.max(pasoDeVentanillas(ventanilla.ancho), m.a1 + BISEL + medioAncho + 0.01);
   return {
-    haciaLaCola: salida.haciaLaCola >= 0 ? lejos : -lejos,
+    haciaLaCola: salida.enLaTrampilla ? 0 : salida.haciaLaCola >= 0 ? lejos : -lejos,
     arriba: salida.arriba,
     medioAncho,
     medioAlto: salida.alto / 2 + SALIDA.forro,
@@ -778,6 +784,11 @@ export function salidaEnLaPared(
  * esquina de abajo del letrero que da a la ventanilla de uno, y el canto de la
  * trampilla de ese lado, a media altura. Lo usa quien elige hacia dónde se
  * mira sentado: que asome no es que se vea entero.
+ *
+ * **Desde la fila de la salida, entero**: lo que Enrique pidió tener de frente
+ * —el asa roja justo encima del cristal y el letrero encima—. Las cuatro
+ * esquinas del letrero y las dos de abajo del asa. Y el canto de la trampilla,
+ * aparte: ver `elCantoDeLaTrampilla`.
  */
 export function loQueAsomaDeLaSalida(
   ventanilla: VentanillaDePasaje,
@@ -792,11 +803,55 @@ export function loQueAsomaDeLaSalida(
       .add(new Vector3(0, 0, largo))
       .addScaledVector(arriba, alto)
       .addScaledVector(n, -FONDO);
+  if (salida.enLaTrampilla) {
+    const borde = s.arriba + s.medioAlto;
+    const letrero = borde + LETRERO.encima;
+    const medio = LETRERO.ancho / 2 + LETRERO.canto;
+    const asa = borde - ASA.bajo - ASA.alto / 2;
+    return [
+      enLaPared(-medio, letrero + LETRERO.alto + LETRERO.canto),
+      enLaPared(medio, letrero + LETRERO.alto + LETRERO.canto),
+      enLaPared(-medio, letrero),
+      enLaPared(medio, letrero),
+      enLaPared(-ASA.ancho / 2, asa),
+      enLaPared(ASA.ancho / 2, asa),
+    ];
+  }
   const hacia = Math.sign(s.haciaLaCola);
   return [
     enLaPared(s.haciaLaCola - (hacia * LETRERO.ancho) / 4, s.arriba + s.medioAlto + LETRERO.encima),
     enLaPared(s.haciaLaCola - hacia * s.medioAncho, s.arriba),
   ];
+}
+
+/**
+ * **El canto de la trampilla**, desde la fila de la salida, en coordenadas del
+ * avión: sus dos esquinas de arriba y sus dos lados a la altura del cristal.
+ * Es lo que dice que el cristal va en una pieza que se abre, y no en la pared
+ * como los demás. Entero no cabe con el ala —baja hasta las rodillas—, así que
+ * quien elige hacia dónde se mira cuenta cuántos de estos puntos se ven.
+ */
+export function elCantoDeLaTrampilla(
+  ventanilla: VentanillaDePasaje,
+  salida: SalidaDeAlLado,
+): Vector3[] {
+  const s = salidaEnLaPared(ventanilla, salida);
+  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const c = new Vector3(ventanilla.centro.x, ventanilla.centro.y, ventanilla.centro.z);
+  const borde = s.arriba + s.medioAlto;
+  return [
+    [-s.medioAncho, borde],
+    [s.medioAncho, borde],
+    [-s.medioAncho, 0],
+    [s.medioAncho, 0],
+  ].map(([largo, alto]) =>
+    c
+      .clone()
+      .add(new Vector3(0, 0, s.haciaLaCola + largo!))
+      .addScaledVector(arriba, alto!)
+      .addScaledVector(n, -FONDO),
+  );
 }
 
 /**
@@ -1037,11 +1092,14 @@ export class MarcoDeVentanilla {
     let conSalida = { delante: false, detras: false };
     if (salida) {
       const s = salidaEnLaPared(ventanilla, salida);
+      // Desde la fila de la salida, la trampilla es la de uno —a lo largo, en
+      // cero— y las de al lado son de la fila, como siempre.
       (u.uSalida!.value as Vector4).set(s.haciaLaCola * atras, s.arriba, s.medioAncho, s.medioAlto);
-      conSalida =
-        salida.haciaLaCola > 0
-          ? { delante: false, detras: true }
-          : { delante: true, detras: false };
+      if (!salida.enLaTrampilla)
+        conSalida =
+          salida.haciaLaCola > 0
+            ? { delante: false, detras: true }
+            : { delante: true, detras: false };
     } else (u.uSalida!.value as Vector4).set(0, 0, 0, 0);
     (u.uVecinas!.value as Vector2).set(
       vecinas.delante || conSalida.delante ? 1 : 0,
