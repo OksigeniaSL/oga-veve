@@ -154,6 +154,126 @@ describe("la vista de detrás", () => {
 });
 
 /*
+ * «Algo más cerca y algo más baja en tierra», pedido para ver levantarse los
+ * frenos de tierra del JAZ 120 y del JAZ 90, que desde ciento dos metros eran
+ * dos o tres píxeles de canto. Solo en el avión que los lleva, y sin saltos al
+ * tocar ni al despegar.
+ */
+describe("la de detrás, en tierra, en los que llevan frenos de tierra", () => {
+  const grande = { wingSpan: 59.64, chord: 8.32, largo: 64 };
+  /** La JAZ 120 en la pista, parada. */
+  const enTierra = (cambios: Partial<FlightState> = {}) =>
+    avion({
+      position: new Vector3(0, 6, 0),
+      velocity: new Vector3(0, 0, 0),
+      airspeed: 0,
+      onGround: true,
+      heightAboveGround: 6,
+      ...cambios,
+    });
+  /** Dónde está la cámara respecto del avión, sin el traqueteo ni la mirada. */
+  const dondeVa = (camara: PerspectiveCamera, state: FlightState) =>
+    camara.position.clone().sub(state.position);
+
+  it("sin frenos de tierra en el modelo, va donde fue siempre", () => {
+    const state = enTierra();
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true });
+    const camara = volar(construirCamaras().chase, state, ctx, 600);
+    expect(dondeVa(camara, state).z).toBeCloseTo(59.64 * 1.6, 0);
+  });
+
+  it("con ellos recogidos, se acerca sin cambiar el ángulo desde el que mira", () => {
+    const state = enTierra();
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 0 });
+    const d = dondeVa(volar(construirCamaras().chase, state, ctx, 600), state);
+    expect(d.z).toBeLessThan(59.64 * 1.2);
+    expect(d.z).toBeGreaterThan(59.64 * 1.0);
+    expect(Math.atan2(d.y, d.z)).toBeCloseTo(Math.atan2(0.6, 1.6), 2);
+  });
+
+  it("y con ellos fuera, más baja", () => {
+    const state = enTierra();
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 1 });
+    const d = dondeVa(volar(construirCamaras().chase, state, ctx, 600), state);
+    const grados = (Math.atan2(d.y, d.z) * 180) / Math.PI;
+    expect(grados).toBeLessThan(15);
+    expect(grados).toBeGreaterThan(10);
+  });
+
+  it("volando, aunque los lleve, donde siempre", () => {
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 0 });
+    const state = avion();
+    const camara = volar(construirCamaras().chase, state, ctx, 600);
+    expect(dondeVa(camara, state).z).toBeCloseTo(59.64 * 1.6, 0);
+  });
+
+  it("al tocar y al despegar se mueve sin saltos", () => {
+    const rig = construirCamaras().chase;
+    const camara = new PerspectiveCamera(BASE_FOV, 16 / 9, 0.1, 1e6);
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 0 });
+    const dt = 1 / 60;
+    let antes: Vector3 | null = null;
+    let salto = 0;
+    // Corriendo a setenta metros por segundo por la pista, como al tocar.
+    const velocidad = new Vector3(0, 0, -70);
+    const donde = new Vector3(0, 6, 0);
+    const paso = (suelo: boolean, frenos: number, medir = true) => {
+      donde.addScaledVector(velocidad, dt);
+      const state = enTierra({
+        position: donde.clone(),
+        velocity: velocidad,
+        airspeed: 70,
+        onGround: suelo,
+      });
+      rig.update(camara, state, dt, { ...ctx, frenosDeTierra: frenos });
+      const d = dondeVa(camara, state);
+      if (antes && medir) salto = Math.max(salto, d.distanceTo(antes));
+      antes = d;
+    };
+    // Volando, asentada —lo que tarda en llegar desde el origen no cuenta—;
+    // tocando, con los frenos saliendo en un segundo; y despegando otra vez.
+    for (let i = 0; i < 300; i++) paso(false, 0, false);
+    for (let i = 0; i < 360; i++) paso(true, Math.min(1, i / 60));
+    for (let i = 0; i < 360; i++) paso(false, 0);
+    // Treinta metros de acercamiento en dos segundos y medio son unos veinte
+    // centímetros por fotograma; un tirón serían metros.
+    expect(salto).toBeLessThan(0.6);
+  });
+
+  it("y en la carrera, a setenta metros por segundo, no se queda atrás", () => {
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 1 });
+    const rig = construirCamaras().chase;
+    const camara = new PerspectiveCamera(BASE_FOV, 16 / 9, 0.1, 1e6);
+    const dt = 1 / 60;
+    const velocidad = new Vector3(0, 0, -70);
+    let state = enTierra({ velocity: velocidad, airspeed: 70 });
+    for (let i = 0; i < 600; i++) {
+      state = enTierra({
+        position: state.position.clone().addScaledVector(velocidad, dt),
+        velocity: velocidad,
+        airspeed: 70,
+      });
+      rig.update(camara, state, dt, ctx);
+    }
+    const parado = enTierra();
+    const quieta = volar(construirCamaras().chase, parado, ctx, 600);
+    // Donde la pondría parado, a menos de un metro: sin los diez de retraso.
+    expect(dondeVa(camara, state).distanceTo(dondeVa(quieta, parado))).toBeLessThan(1);
+  });
+
+  it("y abriendo el juego en tierra ya está cerca, sin acercarse delante de nadie", () => {
+    const state = enTierra();
+    const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 0 });
+    const rig = construirCamaras().chase;
+    const camara = new PerspectiveCamera(BASE_FOV, 16 / 9, 0.1, 1e6);
+    // Un fotograma para la posición deseada; el suavizado de la posición la
+    // lleva luego, como siempre.
+    for (let i = 0; i < 120; i++) rig.update(camara, state, 1 / 60, ctx);
+    expect(dondeVa(camara, state).z).toBeLessThan(59.64 * 1.2);
+  });
+});
+
+/*
  * «No veo el cielo cuando estoy en la pista; está bien ver algo de horizonte,
  * porque parece que va uno encajonado.» Parada en la pista, la de cola miraba
  * al avión desde arriba, y con el cuadro abierto el cielo quedaba fuera.

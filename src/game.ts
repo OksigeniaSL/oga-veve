@@ -4190,6 +4190,7 @@ export class Game {
     traqueteo: 1,
     caidaMaxima: Number.POSITIVE_INFINITY,
     pasaje: null as Contexto["pasaje"],
+    frenosDeTierra: null as number | null,
     bajadaMaxima: Number.POSITIVE_INFINITY,
     caidaTope: Number.POSITIVE_INFINITY,
   };
@@ -9968,7 +9969,13 @@ export class Game {
           ojo: malla.ojo,
           vista: malla.vista,
           tren: this.aircraft.gearHeight,
-          cola: sitioDeLaCola(this.aircraft.wingSpan),
+          /*
+           * **La de cola de tierra**, que es desde donde se ve al coche: en el
+           * avión con frenos de tierra va más cerca. Con la de volar, el
+           * coche se ponía donde lo veía una cámara que en tierra ya no está.
+           * Ver `sitioDeLaCola`.
+           */
+          cola: sitioDeLaCola(this.aircraft.wingSpan, malla.aerofrenos ? 1 : 0),
         }),
       };
     return this.adelantoMedido.metros;
@@ -16667,6 +16674,11 @@ export class Game {
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;
+    // Los frenos de tierra, en el avión cuyo modelo los lleva: la de cola se
+    // acerca en tierra por ellos. Ver `sitioDeLaCola`.
+    ctx.frenosDeTierra = this.aircraftMesh.aerofrenos
+      ? (this.input.controls.frenosDeTierra ?? 0)
+      : null;
 
     // Lo que puso la vista el paso anterior, sin el giro de la cabeza encima.
     // Ver `poseDeLaVista`.

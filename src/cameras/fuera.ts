@@ -12,6 +12,9 @@ import { Vector3, type PerspectiveCamera } from "three";
 import type { FlightState } from "../flight/model";
 import { fovConVelocidad, type CameraRig, type Contexto } from "./tipos";
 
+/** Lo deprisa que la posición alcanza la que se pide, 1/s. */
+const SUAVIZADO = 7;
+
 /** Cuánto retrocede la cámara por cada m/s² de aceleración. */
 const ACCELERATION_LAG = 0.9;
 /** Amplitud del traqueteo de pista, en metros. */
@@ -53,9 +56,80 @@ const MIRA_LO_MINIMO = 32;
  * Aparte porque **también lo pregunta el coche del sígame**: lo que el lomo
  * del avión tapa desde aquí es lo que decide a cuánto se tiene que poner para
  * que quien juega lo vea. Ver `distanciaALaVista`.
+ *
+ * **De la envergadura, y no del largo**, al revés que las de costado y la de
+ * frente, y por el mismo motivo que ellas: la distancia sale de lo que hay que
+ * encuadrar. De costado ocupa la pantalla el fuselaje de morro a cola; desde
+ * detrás, el ala de punta a punta.
+ *
+ * ## Y en tierra, en los que llevan frenos de tierra, más cerca
+ *
+ * Volando hace falta el aire de alrededor —el horizonte, la actitud, hacia
+ * dónde se va—, y el avión ocupa un tercio del ancho. En tierra lo que pasa,
+ * pasa en el ala: al tocar se levantan los frenos de tierra, y desde aquí no
+ * se veían. En el JAZ 120 la cámara iba a ciento dos metros y cada panel
+ * levantado ocupaba entre dos y cuatro píxeles de alto, casi de canto.
+ * Enrique pidió la cámara **algo más cerca y algo más baja en tierra** en los
+ * aviones grandes, y son estos los que los llevan.
+ *
+ * - `cerca`, de 0 —volando— a 1 —en tierra—, la acerca **sin cambiar el
+ *   ángulo desde el que se mira**: así baja también, en metros, y el lomo
+ *   tapa lo mismo que tapaba. Hasta donde las puntas del ala caben todavía en
+ *   una tablet de 4:3 sin meterse debajo de los botones, y el coche del sígame
+ *   se sigue viendo por encima de la deriva sin irse más allá de su tope.
+ * - `bajo`, de 0 a 1, baja el ángulo **mientras los frenos de tierra están
+ *   fuera**. Un panel levantado se ve desde atrás por lo que su ángulo le saca
+ *   al de la cámara —cuarenta y cinco grados menos veintiuno era casi de
+ *   canto—, así que bajar la cámara es lo que más lo abre. Solo entonces,
+ *   porque rodando detrás del coche la deriva lo taparía: cuando se rueda, los
+ *   paneles ya se recogieron al meter gas. Ver `palanca-de-aerofrenos.ts`.
  */
-export function sitioDeLaCola(envergadura: number): { y: number; z: number } {
-  return { y: envergadura * 0.6, z: envergadura * 1.6 };
+export function sitioDeLaCola(
+  envergadura: number,
+  cerca = 0,
+  bajo = 0,
+): { y: number; z: number } {
+  const lejos = envergadura * (DETRAS + (DETRAS_EN_TIERRA - DETRAS) * cerca);
+  const angulo = ANGULO_DE_LA_COLA + (ANGULO_CON_FRENOS - ANGULO_DE_LA_COLA) * bajo;
+  return { y: lejos * Math.tan(angulo), z: lejos };
+}
+
+/** Cuántas envergaduras por detrás va la de cola volando, y en tierra. */
+const DETRAS = 1.6;
+const DETRAS_EN_TIERRA = 1.15;
+
+/**
+ * El ángulo desde el que mira la de cola, rad: seis décimas de envergadura de
+ * alto a uno coma seis de distancia, veintiún grados. Y en tierra con los
+ * frenos fuera, trece: el panel de cuarenta y cinco grados se abre de 24 a 32
+ * grados vistos. Y no menos: a trece la punta de la deriva ya llega al
+ * horizonte, y más abajo se comería la pista de delante, que es adonde se va.
+ */
+const ANGULO_DE_LA_COLA = Math.atan2(0.6, DETRAS);
+const ANGULO_CON_FRENOS = (13 * Math.PI) / 180;
+
+/**
+ * Lo que tarda la de cola en acercarse al tocar y en alejarse al despegar, s,
+ * y en bajar cuando salen los frenos de tierra. **Sin saltos**: un tirón de
+ * cámara justo al tocar es lo último que hace falta en el momento en que más
+ * se mira. Con su arranque y su frenada suaves —ver `rampa`—, y encima del
+ * suavizado de la posición, que ya va aparte.
+ */
+const TARDA_AL_TOCAR = 2.5;
+const TARDA_AL_DESPEGAR = 3;
+const TARDA_EN_BAJAR = 1.5;
+
+/** Un paso de una rampa de 0 a 1 que tarda `tarda` s; `NaN`, sin empezar. */
+function rampa(ahora: number, meta: number, dt: number, tarda: number): number {
+  if (!Number.isFinite(ahora)) return meta;
+  const paso = dt / tarda;
+  return Math.abs(meta - ahora) <= paso ? meta : ahora + Math.sign(meta - ahora) * paso;
+}
+
+/** Con arranque y frenada: la rampa lineal pasada por una curva suave. */
+function suave(t: number): number {
+  const x = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
+  return x * x * (3 - 2 * x);
 }
 
 /** Desde dónde mira cada una de las tres. */
@@ -71,6 +145,14 @@ export class CamaraDeFuera implements CameraRig {
   /** Cuánto traqueteo hay ahora mismo, de 0 a 1. Se apaga solo al despegar. */
   private shake = 0;
   private relojDeTraqueteo = 0;
+  /**
+   * Cuánto se ha acercado la de cola por ir en tierra, y cuánto ha bajado por
+   * los frenos de tierra, de 0 a 1 en rampa. `NaN` hasta el primer fotograma:
+   * al abrir el juego en el puesto ya está cerca, sin acercarse delante de
+   * nadie. Ver `sitioDeLaCola`.
+   */
+  private enTierra = Number.NaN;
+  private conFrenos = Number.NaN;
 
   // Vectores de trabajo, reutilizados: uno por fotograma sería basura.
   private readonly offset = new Vector3();
@@ -116,7 +198,29 @@ export class CamaraDeFuera implements CameraRig {
       const lejos = Math.max(ctx.aircraft.largo * 1.6, 26);
       this.offset.set(0, ctx.aircraft.chord * 1.4, -lejos);
     } else if (this.sitio === "cola") {
-      const cola = sitioDeLaCola(ctx.aircraft.wingSpan);
+      // En tierra, más cerca; con los frenos de tierra fuera, más baja. Solo
+      // en el avión que los lleva. Ver `sitioDeLaCola`.
+      const frenos = ctx.frenosDeTierra;
+      const lleva = frenos != null;
+      const tocando = lleva && state.onGround;
+      const metaTierra = tocando ? 1 : 0;
+      this.enTierra = rampa(
+        this.enTierra,
+        metaTierra,
+        dt,
+        metaTierra > (this.enTierra || 0) ? TARDA_AL_TOCAR : TARDA_AL_DESPEGAR,
+      );
+      this.conFrenos = rampa(
+        this.conFrenos,
+        tocando ? Math.max(0, Math.min(1, frenos)) : 0,
+        dt,
+        TARDA_EN_BAJAR,
+      );
+      const cola = sitioDeLaCola(
+        ctx.aircraft.wingSpan,
+        suave(this.enTierra),
+        suave(this.conFrenos),
+      );
       this.offset.set(0, cola.y, cola.z);
     } else {
       /*
@@ -169,6 +273,18 @@ export class CamaraDeFuera implements CameraRig {
       this.offset.z += ACCELERATION_LAG * Math.max(0, this.surge);
     this.offset.applyQuaternion(state.orientation);
     this.deseada.copy(state.position).add(this.offset);
+    /*
+     * **Y en tierra, sin quedarse atrás.** El suavizado de abajo persigue al
+     * avión y, a velocidad constante, se queda detrás lo que el avión recorre
+     * en un séptimo de segundo: en la carrera del JAZ 120, a setenta metros por
+     * segundo, diez metros más lejos de lo pedido —setenta y nueve en vez de
+     * setenta, medido—, justo cuando suben los frenos de tierra. Se le pide ese
+     * trecho por delante, en la misma rampa que la acerca: al tocar, sin salto.
+     */
+    if (this.sitio === "cola") {
+      const adelanto = suave(this.enTierra);
+      if (adelanto > 0) this.deseada.addScaledVector(state.velocity, adelanto / SUAVIZADO);
+    }
     this.traquetear(state, dt, ctx);
 
     // Nunca por debajo del terreno: en un vuelo rasante la cámara de
@@ -178,7 +294,7 @@ export class CamaraDeFuera implements CameraRig {
 
     // Suavizado exponencial independiente de la tasa de fotogramas: sin el
     // `1 - exp`, la cámara iría distinta a 30 y a 120 fps.
-    camera.position.lerp(this.deseada, 1 - Math.exp(-dt * 7));
+    camera.position.lerp(this.deseada, 1 - Math.exp(-dt * SUAVIZADO));
 
     /*
      * **Y nunca más cerca de donde va el coche del sígame.**
