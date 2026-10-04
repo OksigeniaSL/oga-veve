@@ -487,6 +487,11 @@ export const EN: Dictionary = {
   "palabra.crucero": "Cruise",
   "palabra.nivela": "Level off",
   "palabra.laSenda": "Glide path",
+  "vuelo.paso.cotaAlMar":
+    "The runway we're going to is almost at sea level: what the altimeter shows is nearly all we still have to come down.",
+  "vuelo.paso.cotaEnAlto":
+    "The runway we're going to is higher than the sea: what we still have to come down is what the altimeter shows minus the runway's number, the one under the tape.",
+  "palabra.pista": "Runway",
   "palabra.asi": "Steady",
   "palabra.aerofrenosAdentro": "Speed brakes in",
   "hud.gasDelAvion": "The plane holds the power",

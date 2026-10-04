@@ -12750,6 +12750,8 @@ export class Game {
         fma: this.elFma(),
         // Y los mínimos puestos, los mismos también. Ver `losMinimosPuestos`.
         minimos: this.losMinimosPuestos(),
+        // Y la cota de la pista, la del cuadro plano. Ver `cotaParaLaCinta`.
+        cotaDeLaPista: this.cotaParaLaCinta(),
         // Y la senda, la marca del ritmo y el arco: los del cuadro plano.
         perfil: this.perfilParaElCuadro(),
         // Y en tierra, la GS de rodar: la del cuadro plano.
@@ -12948,6 +12950,7 @@ export class Game {
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
         minimos: this.losMinimosPuestos(),
+        cotaDeLaPista: this.cotaParaLaCinta(),
         // Y en tierra, la GS de rodar. Ver `rodajeParaElCuadro`.
         rodaje: this.rodajeParaElCuadro(),
         /*
@@ -19441,6 +19444,8 @@ export class Game {
       tren: this.aircraft.trenRetractil ? this.input.trenQueSePide : null,
       trenQuePide: trenQuePide(this.aircraft, v.peldano),
       aerofrenos: this.input.aerofrenosAbiertos,
+      // La cota de la pista a la que se va, la de debajo de la cinta.
+      cotaDeLaPista: this.elDestino() ? this.cotaParaLaCinta() : null,
       dt,
     };
   }
@@ -19564,6 +19569,9 @@ export class Game {
    */
   private numerosDelPaso(p: PasoDeLaCadena): string | null {
     const u = UNIT_SYSTEMS[this.tier.units];
+    // La cota, sola: la velocidad no tiene que ver con ella.
+    if (p.que === "cota" && p.objetivo.pies !== null)
+      return `${Math.round(u.altitude(p.objetivo.pies * PIE_EN_METROS))} ${u.altitudeLabel()}`;
     const partes = [`${Math.round(u.speed(p.objetivo.kt * NUDO))} ${u.speedLabel()}`];
     if (p.objetivo.pies !== null)
       partes.push(
@@ -19614,6 +19622,9 @@ export class Game {
         return `SPEEDBRAKE DOWN · ${kt}`;
       case "senda":
         return `FINAL · ${kt}`;
+      // Como la escribe la carta junto a la pista. Ver `cotaEscrita`.
+      case "cota":
+        return `ELEV ${p.objetivo.pies ?? 0} FT`;
     }
   }
 
@@ -21296,6 +21307,8 @@ export class Game {
   private contarLaCotaDeLaPista(): void {
     if (this.tier.avisos !== "cifra" || this.cotaContada || !this.elDestino()) return;
     this.cotaContada = true;
+    // Si ya la dijo la cadena al empezar a bajar, no se cuenta dos veces.
+    if (this.cadena.yaDicho("cota")) return;
     const cota = this.cotaDeLaPistaALaQueSeVa();
     const escrita =
       this.tier.units === "metric"
@@ -21308,6 +21321,26 @@ export class Game {
 
   /** Si en este tramo ya se contó la cota de la pista de llegada. */
   private cotaContada = false;
+
+  /**
+   * **La cota de la pista a la que se va, en la cinta de altitud**, pies, o
+   * `null` sin pista a la que ir.
+   *
+   * Enrique, en Guyrami: «sigo sin saber la altitud de la pista… ¿cuánto
+   * tengo que bajar? ¿Eso no lo sabe el piloto?». Lo sabe: la pantalla de
+   * vuelo de un Boeing la pinta en la cinta de altitud —la marca de la
+   * altitud de aterrizaje, con el suelo rayado debajo— y la carta la escribe
+   * junto a la pista. Aquí estaba desde el tercer peldaño, en letras; en los
+   * de abajo no había nada. Ahora la cinta pinta la pista **a su cota** —la
+   * ponía siempre en el cero, y Los Rodeos está a 2.073 pies— y debajo de la
+   * cinta va la cifra con el dibujo de una pista, en los cuatro peldaños.
+   * En pies, que es como marca la cinta. Ver `cintaDeAltitud` en
+   * `ui/cristal.ts`.
+   */
+  private cotaParaLaCinta(): number | null {
+    if (!this.scenario.aerodrome) return null;
+    return Math.round(this.cotaDeLaPistaALaQueSeVa() / PIE_EN_METROS);
+  }
 
   /** Los mínimos puestos, para el banco. Ver `losMinimosPuestos`. */
   get minimosParaBanco(): { pies: number; enEllos: boolean } | null {

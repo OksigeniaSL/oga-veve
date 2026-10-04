@@ -339,6 +339,12 @@ export interface DatosDeCabina {
    */
   readonly minimos?: { readonly pies: number; readonly enEllos: boolean } | null;
   /**
+   * **La cota de la pista a la que se va**, pies, o `null`: la cinta de
+   * altitud pinta ahí la pista, con el suelo debajo, y bajo la cinta va la
+   * cifra con su dibujo. Ver `Game.cotaParaLaCinta`.
+   */
+  readonly cotaDeLaPista?: number | null;
+  /**
    * **La senda a la vista**, la misma que el cuadro plano: el rombo del
    * desvío, la marca del ritmo y el arco verde, en el avión que los lleva.
    * Ver `DatosDelTablero.perfil` y `flight/perfil-vertical.ts`.
@@ -1353,10 +1359,27 @@ function cintaDeAltitud(
     }
   }
   /*
-   * Y **la pista vive en el cero**: quien juegue sin saber leer descubrirá que
-   * el suelo está en el cero antes de saber leer la altitud.
+   * Y **la pista vive a su cota**, con el suelo rayado debajo: la marca de la
+   * altitud de aterrizaje de un Boeing. Vivía en el cero, que es el mar. Lo
+   * mismo que el cuadro plano; ver `Tablero.cotaDeLaPista`.
    */
-  const suelo = medio + pies * POR_PIE;
+  const cota = d.cotaDeLaPista ?? null;
+  const suelo = medio + (pies - (cota ?? 0)) * POR_PIE;
+  if (suelo < y + h) {
+    g.save();
+    g.beginPath();
+    g.rect(x + 2, suelo, w - 16, y + h - suelo);
+    g.clip();
+    g.strokeStyle = "rgba(138, 106, 62, 0.55)";
+    g.lineWidth = 1.6;
+    g.beginPath();
+    for (let k = -h; k < w + h; k += 5) {
+      g.moveTo(x + k, suelo);
+      g.lineTo(x + k + h, suelo + h);
+    }
+    g.stroke();
+    g.restore();
+  }
   g.fillStyle = SIMBOLO;
   g.fillRect(x + 2, suelo - 1, w - 16, 2);
 
@@ -1413,6 +1436,27 @@ function cintaDeAltitud(
     g.lineWidth = sel.alerta === "nada" ? 1 : 2.4;
     g.strokeRect(x + 3, y + 16, w - 6, 19);
     escribir(g, String(sel.pies), x + w - 7, y + 26, "600 15px " + FUENTE, PALETA.objetivo, "right");
+  }
+  /*
+   * **Y la cota de la pista a la que se va, en grande**, abajo: el dibujo de
+   * una pista y su cifra, en pies como la cinta. Ver `Game.cotaParaLaCinta`.
+   */
+  if (cota !== null) {
+    const yb = y + h - 44;
+    g.fillStyle = "rgba(5, 7, 10, 0.92)";
+    g.fillRect(x + 2, yb, w - 4, 22);
+    g.strokeStyle = "#2c3136";
+    g.lineWidth = 1;
+    g.strokeRect(x + 2, yb, w - 4, 22);
+    g.fillStyle = "#6f757b";
+    g.beginPath();
+    g.moveTo(x + 5, yb + 19);
+    g.lineTo(x + 11, yb + 3);
+    g.lineTo(x + 16, yb + 3);
+    g.lineTo(x + 22, yb + 19);
+    g.closePath();
+    g.fill();
+    escribir(g, String(cota), x + w - 6, yb + 11, "600 15px " + FUENTE, TINTA, "right");
   }
 
   caja(g, x, medio, w, 30);

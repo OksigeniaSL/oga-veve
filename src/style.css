@@ -4729,6 +4729,40 @@ button.motor__tecla::after {
   stroke-dasharray: 3 6;
 }
 
+/*
+ * La pista en la cinta de altitud, a su cota, con el suelo rayado debajo: la
+ * marca de la altitud de aterrizaje. Y bajo la cinta, su cifra con el dibujo
+ * de una pista. Ver cintaDeAltitud en ui/cristal.ts.
+ */
+.cr__suelo-raya {
+  fill: #8a6a3e;
+  opacity: 0.55;
+}
+
+.cr__cota-caja {
+  fill: rgb(5 7 10 / 0.92);
+  stroke: #2c3136;
+  stroke-width: 1;
+}
+
+.cr__cota-dibujo {
+  fill: #6f757b;
+}
+
+.cr__cota-eje {
+  stroke: var(--cabina-valor);
+  stroke-width: 1.2;
+  stroke-dasharray: 2 2;
+}
+
+.cr__cota-cifra {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* La cifra del anillo de en medio: la mitad del rango. Ver ui/carta.ts. */
 .cr__anillo {
   fill: var(--cabina-auxiliar);

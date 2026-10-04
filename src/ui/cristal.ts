@@ -512,13 +512,25 @@ function cintaDeAltitud(
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-alt"><rect width="${w}" height="${h}" /></clipPath>
       <clipPath id="${yo}-tambor"><rect x="${w - 34}" y="${h / 2 - 16}" width="34" height="32" /></clipPath>
+      <pattern id="${yo}-suelo" width="5" height="5" patternUnits="userSpaceOnUse"
+               patternTransform="rotate(45)">
+        <rect width="1.6" height="5" class="cr__suelo-raya" />
+      </pattern>
       <g clip-path="url(#${yo}-alt)">
         <g data-tira="alt" data-medio="${h / 2}" data-porunidad="${POR_PIE}"
              transform="translate(0 ${h / 2})">
           <g data-trozo="alt" data-base="0">${marcasDeAltitud(0, h)}</g>
-          <!-- La pista vive en el cero: quien juegue sin leer descubrirá que
-               el suelo **está** en el cero antes de saber leer la altitud. -->
-          <path class="cr__pista" d="M2 -1 l${w - 20} 0 l0 2 l${-(w - 20)} 0 Z" />
+          <!--
+            **La pista vive a su cota**, con el suelo rayado debajo: la marca
+            de la altitud de aterrizaje de la pantalla de vuelo de un Boeing.
+            Vivía en el cero, que es el mar, y Los Rodeos está a 2.073 pies:
+            quien bajaba mirando la cinta llegaba al suelo con la pista todavía
+            por debajo. La coloca el tablero; ver Tablero.cotaDeLaPista.
+          -->
+          <g data-cristal="pista-cinta" data-porunidad="${POR_PIE}" transform="translate(0 0)">
+            <rect x="2" y="1" width="${w - 18}" height="${h}" fill="url(#${yo}-suelo)" />
+            <path class="cr__pista" d="M2 -1 l${w - 20} 0 l0 2 l${-(w - 20)} 0 Z" />
+          </g>
         </g>
         <rect data-tendencia="alt" data-medio="${h / 2}" data-porunidad="${POR_PIE}"
               x="0" y="${h / 2}" width="3" height="0" class="cr__tendencia" />
@@ -566,6 +578,20 @@ function cintaDeAltitud(
       -->
       <text data-cristal="qnh" x="${w / 2}" y="${h - 6}" ${MARCA_CIFRA}
             class="cr__qnh" text-anchor="middle"></text>
+      <!--
+        **Y la cota de la pista a la que se va, en grande**: el dibujo de una
+        pista y su cifra, en pies como la cinta, encima de la ventanilla de
+        presión. Lo que marca el altímetro menos esto es lo que queda por
+        bajar. En los cuatro peldaños: el dibujo dice qué es esa cifra. Ver
+        Game.cotaParaLaCinta.
+      -->
+      <g data-cristal="cota-pista" visibility="hidden">
+        <rect x="2" y="${h - 44}" width="${w - 4}" height="22" rx="3" class="cr__cota-caja" />
+        <path class="cr__cota-dibujo" d="M5 ${h - 25} L11 ${h - 41} L16 ${h - 41} L22 ${h - 25} Z" />
+        <path class="cr__cota-eje" d="M13.5 ${h - 39} L13.5 ${h - 27}" />
+        <text data-cristal="cota-pista-cifra" x="${w - 6}" y="${h - 27}" ${MARCA_CIFRA}
+              class="cr__cota-cifra" text-anchor="end"></text>
+      </g>
     </g>
   `;
 }

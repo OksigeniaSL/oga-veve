@@ -2548,6 +2548,8 @@ export class Hud {
       readonly fma?: DatosDelTablero["fma"];
       /** Los mínimos puestos. Ver `DatosDelTablero.minimos`. */
       readonly minimos?: DatosDelTablero["minimos"];
+      /** La cota de la pista a la que se va. Ver `DatosDelTablero.cotaDeLaPista`. */
+      readonly cotaDeLaPista?: DatosDelTablero["cotaDeLaPista"];
       /** La senda a la vista. Ver `DatosDelTablero.perfil`. */
       readonly perfil?: DatosDelTablero["perfil"];
       /** En tierra, la GS de rodar. Ver `DatosDelTablero.rodaje`. */
@@ -2997,6 +2999,7 @@ export class Hud {
         spd: mandos?.spd ?? null,
         fma: mandos?.fma ?? null,
         minimos: mandos?.minimos ?? null,
+        cotaDeLaPista: mandos?.cotaDeLaPista ?? null,
         perfil: mandos?.perfil ?? null,
         rodaje: mandos?.rodaje ?? null,
       };

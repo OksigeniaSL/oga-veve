@@ -1456,6 +1456,17 @@ export const ES_PY = {
   "palabra.crucero": "Crucero",
   "palabra.nivela": "Nivelá",
   "palabra.laSenda": "La senda",
+  /*
+   * **La cota de la pista, empezada la bajada**: «¿cuánto tengo que bajar?».
+   * Sin el número, para que valga en cualquier campo: el número va debajo de
+   * la cinta de altitud y en la tarjeta. Sin grabar: ver
+   * `PENDIENTE-VOCES-llegada.md`.
+   */
+  "vuelo.paso.cotaAlMar":
+    "La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.",
+  "vuelo.paso.cotaEnAlto":
+    "La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.",
+  "palabra.pista": "Pista",
   "palabra.asi": "Así",
   "palabra.aerofrenosAdentro": "Aerofrenos adentro",
   // Lo que dice el dibujo de quién lleva el gas, para quien no lo ve.
