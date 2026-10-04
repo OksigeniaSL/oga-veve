@@ -2452,6 +2452,8 @@ function pintarLaCarta(
     g.stroke();
   }
   g.setLineDash([]);
+  // Y la cifra del anillo de en medio, la mitad del rango. Ver `rangoConMemoria`.
+  escribir(g, String(dibujo.rango / 2), cx - r * 0.5 + 4, cy - 4, "500 11px " + FUENTE, TENUE, "left");
   /*
    * La cifra del rango, **fuera de la rosa**. Puesta dentro caía encima de las
    * marcas de grados y lo que se leía era «5 NM» tachado por cuatro rayas.
@@ -2765,6 +2767,37 @@ function pintarLaCarta(
    */
   if (dibujo.modoTcas)
     escribir(g, dibujo.modoTcas, 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");
+
+  /*
+   * **Lo que falta del tramo**, la barra magenta que se vacía al llegar al
+   * punto y se llena al pasarlo, con su estrella: lo mismo que el cuadro
+   * plano. Ver `Dibujo.ruta.falta` en `ui/carta.ts`.
+   */
+  const falta = dibujo.ruta?.falta ?? null;
+  if (falta !== null) {
+    const largo = 64;
+    const x = ANCHO - 12 - largo - 16;
+    const y = 66;
+    g.fillStyle = "#23282d";
+    g.fillRect(x, y, largo, 7);
+    g.fillStyle = PALETA.objetivo;
+    g.fillRect(x, y, largo * falta, 7);
+    const ex = x + largo + 10;
+    const ey = y + 3.5;
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.moveTo(ex, ey - 6);
+    g.lineTo(ex + 1.9, ey - 1.9);
+    g.lineTo(ex + 6, ey);
+    g.lineTo(ex + 1.9, ey + 1.9);
+    g.lineTo(ex, ey + 6);
+    g.lineTo(ex - 1.9, ey + 1.9);
+    g.lineTo(ex - 6, ey);
+    g.lineTo(ex - 1.9, ey - 1.9);
+    g.closePath();
+    g.stroke();
+  }
 
   /*
    * Las millas que faltan, en la esquina de enfrente del rango. Fuera del

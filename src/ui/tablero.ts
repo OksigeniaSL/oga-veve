@@ -1815,7 +1815,20 @@ export class Tablero {
         escribir(this.pieza('[data-carta="alterno-oaci"]'), a2.oaci ?? "");
       }
     }
+    /*
+     * **Lo que falta del tramo**, la barra que se vacía al llegar al punto:
+     * el dibujo, en los cuatro peldaños. Ver `Dibujo.ruta.falta`.
+     */
+    const falta = dibujo.ruta?.falta ?? null;
+    for (const g of this.todas<SVGElement>('[data-carta="falta"]'))
+      poner(g, "visibility", falta === null ? "hidden" : "visible");
+    if (falta !== null)
+      for (const relleno of this.todas<SVGElement>('[data-carta="falta-relleno"]'))
+        poner(relleno, "width", n1(falta * Number(relleno.dataset.ancho)));
     if (!cifras) return;
+    // La cifra del anillo de en medio, la mitad del rango. Ver `rangoConMemoria`.
+    for (const anillo of this.todas<SVGElement>('[data-carta="anillo"]'))
+      escribir(anillo, String(dibujo.rango / 2));
     this.texto("millas-destino",
       // Con el indicativo delante: a qué sitio son esas millas.
       dibujo.destino

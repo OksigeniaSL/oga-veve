@@ -117,7 +117,7 @@ import {
   sueloDelTrafico,
   type SueloDelTrafico,
 } from "./world/suelo-del-trafico";
-import { MILLA, type Mapa } from "./ui/carta";
+import { MILLA, rangoConMemoria, type Mapa, type RangoElegido } from "./ui/carta";
 import { ponerTamanoMinimo } from "./world/se-ve-de-lejos";
 import {
   Tcas,
@@ -21103,7 +21103,7 @@ export class Game {
    * una brújula sobre un fondo vacío: «en Lanzarote no veo la pista».
    */
   private elMapa(): Mapa {
-    return {
+    const m: Mapa = {
       x: this.flight.state.position.x,
       z: this.flight.state.position.z,
       /*
@@ -21190,7 +21190,16 @@ export class Game {
        */
       ruta: this.rutaParaLaCarta(),
     };
+    /*
+     * **Y el rango, con memoria**: el mismo para las dos superficies, y sin
+     * cerrarse mientras se va hacia el punto. Ver `rangoConMemoria`.
+     */
+    this.rangoDeLaCarta = rangoConMemoria(m, this.rangoDeLaCarta, this.flight.state.onGround);
+    return { ...m, rango: this.rangoDeLaCarta.rango };
   }
+
+  /** El último rango que eligió la carta. Ver `rangoConMemoria`. */
+  private rangoDeLaCarta: RangoElegido | null = null;
 
   /**
    * **La cota del umbral de la pista a la que se va**, m: la del plan si se va

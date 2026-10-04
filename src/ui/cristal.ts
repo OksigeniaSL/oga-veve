@@ -1012,6 +1012,9 @@ export function rosaDeRumbo(
 
 // ── La pantalla de navegación ─────────────────────────────────────────
 
+/** Lo que mide la barra de lo que falta del tramo, px. */
+export const BARRA_DEL_TRAMO = 64;
+
 /** La rosa grande, la ruta en magenta y el viento en cian. */
 export function pantallaDeNavegacion(ancho: number, alto: number): string {
   const cx = ancho / 2;
@@ -1053,6 +1056,28 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
       vuelo. Ver cruceroDelPlan en flight/ruta.ts.
     -->
     <text data-cristal="crz" x="${ancho - 12}" y="54" ${MARCA_ROTULO} class="cr__crz" text-anchor="end"></text>
+    <!--
+      **La cifra del anillo de en medio**: la mitad del rango, junto al
+      anillo, como la escribe una pantalla de navegación. Es la que dice que
+      la carta cambió de escala sin leer «NM»: el anillo es el dibujo y el
+      número lo acompaña. Ver rangoConMemoria en ui/carta.ts.
+    -->
+    <text data-carta="anillo" x="${cx - r * 0.5 + 4}" y="${cy - 4}" ${MARCA_CIFRA}
+          class="cr__anillo"></text>
+    <!--
+      **Y lo que falta del tramo, sin leer**: la estrella del punto al que se
+      va y una barra magenta que se vacía según se llega a él y se llena al
+      pasarlo. Es lo que dice que el punto se acerca en los peldaños que no
+      leen sus millas. Ver Dibujo.ruta.falta en ui/carta.ts.
+    -->
+    <g data-carta="falta" class="cr__falta" visibility="hidden"
+       transform="translate(${ancho - 12 - BARRA_DEL_TRAMO - 16} 66)">
+      <rect width="${BARRA_DEL_TRAMO}" height="7" rx="3.5" class="cr__falta-carril" />
+      <rect data-carta="falta-relleno" data-ancho="${BARRA_DEL_TRAMO}" width="0"
+            height="7" rx="3.5" class="cr__falta-relleno" />
+      <path transform="translate(${BARRA_DEL_TRAMO + 10} 3.5)"
+            d="M0 -6 L1.9 -1.9 L6 0 L1.9 1.9 L0 6 L-1.9 1.9 L-6 0 L-1.9 -1.9 Z" />
+    </g>
   `;
 }
 

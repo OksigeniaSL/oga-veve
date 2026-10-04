@@ -4729,6 +4729,30 @@ button.motor__tecla::after {
   stroke-dasharray: 3 6;
 }
 
+/* La cifra del anillo de en medio: la mitad del rango. Ver ui/carta.ts. */
+.cr__anillo {
+  fill: var(--cabina-auxiliar);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lo que falta del tramo: la barra que se vacía al llegar al punto. */
+.cr__falta-carril {
+  fill: #23282d;
+}
+
+.cr__falta-relleno {
+  fill: var(--cabina-objetivo);
+}
+
+.cr__falta path {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 1.4;
+}
+
 .cr__ruta {
   fill: none;
   stroke: var(--cabina-objetivo);
