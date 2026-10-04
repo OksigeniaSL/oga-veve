@@ -47,6 +47,17 @@
   escena.add(malla.group);
   malla.patas?.poner?.(1);
   /*
+   * `?frenos=1`: **recién tocado**, con los flaps de aterrizaje y los frenos
+   * de tierra fuera, que es como lo vio Enrique en Los Rodeos y en Gran
+   * Canaria: «yo no veo en la aeronave los frenos esos que se levantan». Así
+   * se mira si los paneles suben y si se ven desde detrás y desde la
+   * ventanilla. Ver `world/aerofrenos.ts`.
+   */
+  if (q.get("frenos")) {
+    malla.flaps?.poner?.(1);
+    malla.aerofrenos?.poner?.(0, 1);
+  }
+  /*
    * `?luces=1`: **con las luces encendidas, a media luz**, para ver dónde
    * caen la roja, la verde y los focos. De día se los come el sol, igual que
    * en el juego, así que se baja la luz y se oscurece el fondo; el avión se
