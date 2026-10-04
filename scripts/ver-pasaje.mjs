@@ -103,8 +103,11 @@ try {
   }, TEIDE_A);
   if (!teide) console.log("  (el escenario no tiene Teide)");
 
-  for (const vista of ["pasaje-derecha", "pasaje-izquierda"]) {
-    await page.evaluate((v) => globalThis.__oga.ponerVista(v), vista);
+  // Y las de encima del ala, en el avión que las tiene: la tecla se las
+  // salta en los demás, y entonces no hay captura.
+  for (const vista of ["pasaje-derecha", "pasaje-izquierda", "pasaje-ala-derecha", "pasaje-ala-izquierda"]) {
+    const puesta = await page.evaluate((v) => globalThis.__oga.ponerVista(v), vista);
+    if (puesta !== vista) continue;
     await pausa(2500);
     await page.screenshot({ path: `${FOTOS}/${AVION}-${vista}.png` });
   }
@@ -252,7 +255,10 @@ try {
             qs.push(q);
             await new Promise((r) => requestAnimationFrame(r));
           }
-          for (let i = 0; i < 6; i++) await new Promise((r) => requestAnimationFrame(r));
+          // Hasta que la tarjeta tenga la última: con el escritorio ocupado, seis
+          // fotogramas no bastaban y la vuelta salía sin medida.
+          for (let i = 0; i < 120 && !gl.getQueryParameter(qs[qs.length - 1], gl.QUERY_RESULT_AVAILABLE); i++)
+            await new Promise((r) => requestAnimationFrame(r));
           const ms = [];
           for (const q of qs) {
             if (gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE))
@@ -272,13 +278,27 @@ try {
           piezas.forEach((m, i) => padres[i]?.add(m));
         }
       });
-      if (r)
+      // Sin resultado si la tarjeta partió la medida —`GPU_DISJOINT`, cuando el
+      // escritorio le pide algo a la vez—: esa vuelta no cuenta.
+      if (!r || r.nada == null || r.marco == null) console.log(`  marco solo · ${nombre.padEnd(14)} · sin medida`);
+      else
         console.log(
           `  marco solo · ${nombre.padEnd(14)} · ${(r.marco - r.nada).toFixed(3)} ms` +
             ` (vacía ${r.nada.toFixed(3)}, con ${r.piezas.join(" + ")} ${r.marco.toFixed(3)})`,
         );
     };
     for (let vuelta = 1; vuelta <= 3; vuelta++) await soloElMarco(`claro (${vuelta})`);
+    /*
+     * Y desde encima del ala, que en el de pasillo único lleva la trampilla de
+     * la salida y su letrero en la pared: lo que cuesta de más está ahí.
+     */
+    const ala = await page.evaluate(() => globalThis.__oga.ponerVista("pasaje-ala-izquierda"));
+    if (ala === "pasaje-ala-izquierda") {
+      await pausa(2500);
+      for (let vuelta = 1; vuelta <= 3; vuelta++) await soloElMarco(`ala (${vuelta})`);
+    }
+    await page.evaluate(() => globalThis.__oga.ponerVista("pasaje-derecha"));
+    await pausa(2500);
     if (conCabina) {
       await page.evaluate(() => globalThis.__oga.prepararLaCabina(false));
       for (let i = 0; i < 4; i++) await page.evaluate(() => globalThis.__oga.tocarLaVentanilla());
@@ -303,6 +323,12 @@ try {
       await page.evaluate(() => globalThis.__oga.ponerVista("pasaje-derecha"));
       await pausa(2500);
       await medir(`ventanilla (${vuelta})`);
+      if ((await page.evaluate(() => globalThis.__oga.ponerVista("pasaje-ala-izquierda"))) ===
+        "pasaje-ala-izquierda") {
+        await pausa(2500);
+        await medir(`encima ala (${vuelta})`);
+      }
+      await page.evaluate(() => globalThis.__oga.ponerVista("pasaje-derecha"));
     }
     // Oscurecida del todo, si es de las que se oscurecen; si es de persiana,
     // bajada: las dos cosas que se pueden hacer con ella.

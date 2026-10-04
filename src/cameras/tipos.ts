@@ -88,6 +88,11 @@ export interface Contexto {
   readonly pasaje?: {
     readonly izquierda: AsientoDePasaje;
     readonly derecha: AsientoDePasaje;
+    /** Y los de encima del ala, en el avión que los tiene. */
+    readonly sobreElAla?: {
+      readonly izquierda: AsientoDePasaje;
+      readonly derecha: AsientoDePasaje;
+    } | null;
   } | null;
 }
 

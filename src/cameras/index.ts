@@ -44,6 +44,15 @@ export const CAMERA_MODES = [
    */
   "pasaje-izquierda",
   "pasaje-derecha",
+  /*
+   * **Y las dos de encima del ala**, en los que llevan frenos de tierra: el
+   * asiento desde el que se ven levantarse los paneles al tocar y bajar los
+   * flaps. Detrás de las otras dos, que es como se recorre el pasaje: hacia la
+   * cola. Pedidas por Enrique, que los recuerda desde la ventanilla —«parecen
+   * de papel»—. Ver `asientoSobreElAla` en `world/asiento-de-pasaje.ts`.
+   */
+  "pasaje-ala-izquierda",
+  "pasaje-ala-derecha",
   "wing",
   "izquierda",
   /*
@@ -76,15 +85,44 @@ export function construirCamaras(): Readonly<Record<CameraMode, CameraRig>> {
     pajaro: new CamaraDeDentro(false, false),
     "pasaje-izquierda": new CamaraDePasaje("izquierda"),
     "pasaje-derecha": new CamaraDePasaje("derecha"),
+    "pasaje-ala-izquierda": new CamaraDePasaje("izquierda", true),
+    "pasaje-ala-derecha": new CamaraDePasaje("derecha", true),
   };
 }
 
-/** Las dos de pasaje. */
-export const VISTAS_DE_PASAJE: readonly CameraMode[] = ["pasaje-izquierda", "pasaje-derecha"];
+/** Las de pasaje: las dos de siempre y las dos de encima del ala. */
+export const VISTAS_DE_PASAJE: readonly CameraMode[] = [
+  "pasaje-izquierda",
+  "pasaje-derecha",
+  "pasaje-ala-izquierda",
+  "pasaje-ala-derecha",
+];
 
-/** Si es una vista de ventanilla del pasaje. */
-export function esDePasaje(modo: CameraMode): modo is "pasaje-izquierda" | "pasaje-derecha" {
-  return modo === "pasaje-izquierda" || modo === "pasaje-derecha";
+/** Una vista de ventanilla del pasaje. */
+export type VistaDePasaje =
+  | "pasaje-izquierda"
+  | "pasaje-derecha"
+  | "pasaje-ala-izquierda"
+  | "pasaje-ala-derecha";
+
+/** Si es una vista de ventanilla del pasaje, también las de encima del ala. */
+export function esDePasaje(modo: CameraMode): modo is VistaDePasaje {
+  return VISTAS_DE_PASAJE.includes(modo);
+}
+
+/** Si es una de las dos de encima del ala. */
+export function esSobreElAla(modo: CameraMode): modo is "pasaje-ala-izquierda" | "pasaje-ala-derecha" {
+  return modo === "pasaje-ala-izquierda" || modo === "pasaje-ala-derecha";
+}
+
+/** De qué lado mira una vista de pasaje. */
+export function ladoDelPasaje(modo: VistaDePasaje): "izquierda" | "derecha" {
+  return modo.endsWith("izquierda") ? "izquierda" : "derecha";
+}
+
+/** La vista de pasaje de un lado, de la misma fila que `como`. */
+export function vistaDePasaje(lado: "izquierda" | "derecha", como: CameraMode): VistaDePasaje {
+  return esSobreElAla(como) ? `pasaje-ala-${lado}` : `pasaje-${lado}`;
 }
 
 /**
@@ -93,14 +131,23 @@ export function esDePasaje(modo: CameraMode): modo is "pasaje-izquierda" | "pasa
  * Las del pasaje, solo si hay pasaje que mirar: en una avioneta quien va
  * detrás va en la cabina, y ofrecer una ventanilla de pasaje sería enseñar un
  * avión que no es. Ver `world/asiento-de-pasaje.ts`.
+ *
+ * Y las de encima del ala, solo en el que lleva frenos de tierra que mirar
+ * —`sobreElAla`—: en los demás serían la misma ventanilla otra vez.
  */
-export function vistasDe(conPasaje: boolean): readonly CameraMode[] {
-  return conPasaje ? CAMERA_MODES : CAMERA_MODES.filter((m) => !esDePasaje(m));
+export function vistasDe(conPasaje: boolean, sobreElAla = false): readonly CameraMode[] {
+  return CAMERA_MODES.filter(
+    (m) => !esDePasaje(m) || (conPasaje && (!esSobreElAla(m) || sobreElAla)),
+  );
 }
 
 /** La que viene detrás de `actual` al pulsar la tecla. */
-export function siguienteVista(actual: CameraMode, conPasaje: boolean): CameraMode {
-  const lista = vistasDe(conPasaje);
+export function siguienteVista(
+  actual: CameraMode,
+  conPasaje: boolean,
+  sobreElAla = false,
+): CameraMode {
+  const lista = vistasDe(conPasaje, sobreElAla);
   const i = lista.indexOf(actual);
   // Desde una que este avión no tiene —la de pasaje recordada de otro—, se
   // sigue desde donde caería en la lista entera.

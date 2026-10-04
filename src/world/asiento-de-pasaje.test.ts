@@ -10,11 +10,22 @@
  * asomara por ningún lado, aquí salta.
  */
 import { describe, expect, it } from "vitest";
-import { Group, Raycaster, Vector3, type Object3D } from "three";
+import {
+  Box3,
+  Group,
+  Quaternion,
+  Raycaster,
+  Vector3,
+  type Mesh,
+  type Object3D,
+} from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { conPasaje } from "../audio/megafonia";
 import { colocarModelo } from "./aeronave-modelo";
+import { prepararAerofrenos } from "./aerofrenos";
+import { prepararFlaps } from "./flaps";
+import { seVePorLaVentanilla } from "./marco-de-ventanilla";
 import {
   asientoAnteVentanilla,
   medirElPasaje,
@@ -67,6 +78,9 @@ function porLaVentanilla(grupo: Object3D, asiento: AsientoDePasaje): string[] {
 }
 
 const CON_PASAJE = AIRCRAFT.filter((a) => conPasaje(a.mass));
+
+/** El avión quieto en su sitio: para preguntar por el cristal en sus ejes. */
+const QUIETO = { position: new Vector3(), orientation: new Quaternion() };
 
 describe("el asiento de ventanilla", () => {
   it("hay aviones con pasaje, que si no esto no mira nada", () => {
@@ -140,4 +154,197 @@ describe("el asiento de ventanilla", () => {
       .normalize();
     expect(mira.dot(alCentro)).toBeGreaterThan(0.9999);
   });
+});
+
+/*
+ * **El asiento de encima del ala**, pedido por Enrique para ver los frenos de
+ * tierra desde la ventanilla —«parecen de papel»—. Se mira con rayos, como lo
+ * de arriba, y con los paneles levantados y los flaps abajo de verdad, movidos
+ * por el mismo código que los mueve en el juego.
+ */
+describe("el asiento de encima del ala", () => {
+  const CON_FRENOS = ["jaz-90", "jaz-120"];
+
+  async function montarMoviendo(a: AircraftConfig) {
+    const b = fs.readFileSync(`public/assets/aeronaves/${a.id}.glb`);
+    const datos = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+    const modelo = await new GLTFLoader().parseAsync(datos as ArrayBuffer, "");
+    const grupo = colocarModelo(modelo.scene, a);
+    const pasaje = medirElPasaje(modelo.scene, grupo);
+    return {
+      grupo,
+      pasaje,
+      aerofrenos: prepararAerofrenos(modelo.scene),
+      flaps: prepararFlaps(modelo.scene),
+    };
+  }
+
+  /** Lo primero que corta un rayo de los ojos a cada punto, por el cristal. */
+  function vistoDesde(grupo: Object3D, asiento: AsientoDePasaje, puntos: Vector3[]): string[] {
+    grupo.updateMatrixWorld(true);
+    const ojo = new Vector3(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z);
+    return puntos
+      .filter((p) => seVePorLaVentanilla(ojo, p, QUIETO, asiento.ventanilla))
+      .map((p) => {
+        const dir = p.clone().sub(ojo).normalize();
+        const corte = new Raycaster(ojo, dir, 0.01, 400)
+          .intersectObject(grupo, true)
+          .find((c) => c.object.visible);
+        return corte?.object.name ?? "";
+      });
+  }
+
+  /** El centro de cada pieza cuyo nombre case, en coordenadas del avión. */
+  function centros(grupo: Object3D, patron: RegExp): Vector3[] {
+    grupo.updateMatrixWorld(true);
+    const salida: Vector3[] = [];
+    grupo.traverse((o) => {
+      if (!patron.test(o.name)) return;
+      const caja = new Box3().setFromObject(o);
+      if (!caja.isEmpty()) salida.push(caja.getCenter(new Vector3()));
+    });
+    return salida;
+  }
+
+  /** Uno de cada pocos vértices de las piezas que casen, en coordenadas del avión. */
+  function verticesDeLasPiezas(grupo: Object3D, patron: RegExp): Vector3[] {
+    grupo.updateMatrixWorld(true);
+    const salida: Vector3[] = [];
+    grupo.traverse((o) => {
+      if (!patron.test(o.name)) return;
+      o.traverse((h) => {
+        const pos = (h as Mesh).isMesh ? (h as Mesh).geometry.getAttribute("position") : null;
+        if (!pos) return;
+        const paso = Math.max(1, Math.floor(pos.count / 40));
+        for (let i = 0; i < pos.count; i += paso)
+          salida.push(new Vector3().fromBufferAttribute(pos, i).applyMatrix4(h.matrixWorld));
+      });
+    });
+    return salida;
+  }
+
+  it("solo en los que llevan frenos de tierra", async () => {
+    for (const a of CON_PASAJE) {
+      const { pasaje } = await montarMoviendo(a);
+      expect(!!pasaje?.sobreElAla, a.id).toBe(CON_FRENOS.includes(a.id));
+    }
+  });
+
+  for (const id of CON_FRENOS) {
+    const a = AIRCRAFT.find((x) => x.id === id)!;
+
+    it(`${id}: por el cristal se ven los paneles levantados`, async () => {
+      const { grupo, pasaje, aerofrenos } = await montarMoviendo(a);
+      pasaje!.ventanillas.visible = false;
+      aerofrenos!.poner(0, 1);
+      for (const lado of ["izquierda", "derecha"] as const) {
+        const asiento = pasaje!.sobreElAla![lado];
+        const paneles = centros(grupo, new RegExp(`^aerofreno-\\d+-${lado}-piel$`));
+        const vistos = vistoDesde(grupo, asiento, paneles).filter((n) => /^aerofreno-/.test(n));
+        // Al menos tres paneles a la vista, como desde la fila de verdad.
+        expect(vistos.length, `${id} ${lado}`).toBeGreaterThanOrEqual(3);
+        // Y el asiento de siempre, por delante, veía menos: si viera lo mismo,
+        // esta vista no haría falta.
+        const antes = vistoDesde(grupo, pasaje![lado], paneles).filter((n) =>
+          /^aerofreno-/.test(n),
+        );
+        expect(antes.length, `${id} ${lado}, el de siempre`).toBeLessThan(vistos.length);
+      }
+    });
+
+    it(`${id}: y los flaps bajando`, async () => {
+      const { grupo, pasaje, flaps } = await montarMoviendo(a);
+      pasaje!.ventanillas.visible = false;
+      flaps!.poner(1);
+      for (const lado of ["izquierda", "derecha"] as const) {
+        const asiento = pasaje!.sobreElAla![lado];
+        // Un flap salido es una chapa larga: se miran sus puntos, no su centro,
+        // que puede caer justo fuera del cristal con medio flap a la vista.
+        const puntos = verticesDeLasPiezas(grupo, new RegExp(`^flap-[^-]+-${lado}-piel$`));
+        const vistos = vistoDesde(grupo, asiento, puntos).filter((n) => /^flap-/.test(n));
+        expect(vistos.length, `${id} ${lado}`).toBeGreaterThanOrEqual(3);
+        // Y el instrumento distingue: desde el asiento de siempre, por delante
+        // del ala, asoma menos flap que desde aquí.
+        const desdeSiempre = vistoDesde(grupo, pasaje![lado], puntos).filter((n) =>
+          /^flap-/.test(n),
+        );
+        expect(desdeSiempre.length, `${id} ${lado}, el de siempre`).toBeLessThan(vistos.length);
+      }
+    });
+
+    it(`${id}: encima del ala o un poco detrás, y dentro del avión`, async () => {
+      const { grupo, pasaje } = await montarMoviendo(a);
+      // La raíz del ala, de borde de ataque a borde de salida, junto al fuselaje.
+      const fuselaje = new Box3().setFromObject(grupo.getObjectByName("fuselaje")!);
+      const raiz = verticesDeLasPiezas(grupo, /^ala$/).filter(
+        (v) => Math.abs(v.x) < fuselaje.max.x + 0.6,
+      );
+      const ataque = Math.min(...raiz.map((v) => v.z));
+      const salida = Math.max(...raiz.map((v) => v.z));
+      for (const lado of ["izquierda", "derecha"] as const) {
+        const ala = pasaje!.sobreElAla![lado];
+        const siempre = pasaje![lado];
+        // Encima de la raíz o poco detrás de su borde de salida.
+        expect(ala.ventanilla.centro.z, `${id} ${lado}`).toBeGreaterThan(ataque);
+        expect(ala.ventanilla.centro.z, `${id} ${lado}`).toBeLessThan(salida + 3);
+        // Y o más atrás que el de siempre, o en el mismo y mirando más hacia la
+        // cola, que es donde están los paneles.
+        expect(
+          ala.ventanilla.centro.z > siempre.ventanilla.centro.z ||
+            Math.abs(ala.guinada) > Math.abs(siempre.guinada),
+          `${id} ${lado}`,
+        ).toBe(true);
+        expect(Math.abs(ala.ojo.x)).toBeLessThan(Math.abs(ala.ventanilla.centro.x) - 0.35);
+        expect(Math.sign(ala.guinada)).toBe(lado === "izquierda" ? 1 : -1);
+        // Mirando hacia abajo, al ala, y sin perder el horizonte.
+        expect(ala.cabeceo).toBeLessThan(0);
+        expect(ala.cabeceo).toBeGreaterThan(-17 * (Math.PI / 180));
+      }
+      expect(pasaje!.sobreElAla!.izquierda.ojo.z).toBeCloseTo(
+        pasaje!.sobreElAla!.derecha.ojo.z,
+        1,
+      );
+    });
+  }
+
+  /*
+   * La salida de emergencia sobre el ala: en el de pasillo único, el asiento
+   * es el de la fila de delante y la salida va al lado, hacia la cola, que es
+   * hacia donde se mira; en el de fuselaje ancho, que lleva puertas, no hay.
+   */
+  it("jaz-90: la fila de delante de la salida sobre el ala", async () => {
+    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-90")!);
+    for (const lado of ["izquierda", "derecha"] as const) {
+      const salida = pasaje!.sobreElAla![lado].salida;
+      expect(salida, lado).toBeTruthy();
+      // Detrás, a poco más de un metro en el modelo, y del tamaño de una
+      // trampilla de tipo III: medio metro de ancho por uno de alto.
+      expect(salida!.haciaLaCola).toBeGreaterThan(0);
+      expect(salida!.haciaLaCola).toBeLessThan(1.3);
+      expect(salida!.ancho).toBeGreaterThan(0.4);
+      expect(salida!.ancho).toBeLessThan(0.7);
+      expect(salida!.alto).toBeGreaterThan(0.8);
+      expect(salida!.alto).toBeLessThan(1.2);
+    }
+  });
+
+  it("jaz-120: sin salida sobre el ala, que lleva puertas", async () => {
+    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-120")!);
+    expect(pasaje!.sobreElAla!.izquierda.salida ?? null).toBeNull();
+    expect(pasaje!.sobreElAla!.derecha.salida ?? null).toBeNull();
+  });
+
+  /*
+   * **Y la ve cualquier asiento que esté al lado**, no solo el de encima del
+   * ala: si el de siempre cae junto a la salida, ahí está. Y ninguno que no.
+   */
+  it("la salida, en el asiento que la tiene al lado y en ninguno más", async () => {
+    for (const a of CON_PASAJE) {
+      const { pasaje } = await montarMoviendo(a);
+      const conSalida = !!pasaje!.izquierda.salida;
+      expect(conSalida, a.id).toBe(a.id === "jaz-90");
+      expect(!!pasaje!.derecha.salida, a.id).toBe(conSalida);
+    }
+  });
+
 });
