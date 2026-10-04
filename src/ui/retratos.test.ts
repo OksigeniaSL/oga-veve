@@ -10,8 +10,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "../flight/aircraft";
-import huellas from "../../public/assets/aeronaves/retratos/huellas.json";
-import { CARPETA_DE_RETRATOS, TAMANO_DE_RETRATO } from "./retratos";
+import huellas from "./retratos-huellas.json";
+import { CARPETA_DE_RETRATOS, TAMANO_DE_RETRATO, retratoDe } from "./retratos";
 
 /*
  * `fs` y `crypto` de Node, pedidos en marcha: ver `flaps-del-modelo.test.ts`,
@@ -25,6 +25,7 @@ const pedir = (
 const fs = pedir("node:fs") as {
   existsSync(ruta: string): boolean;
   readFileSync(ruta: string): Uint8Array;
+  readdirSync(ruta: string): string[];
 };
 const crypto = pedir("node:crypto") as {
   createHash(algo: string): {
@@ -39,17 +40,48 @@ const CON_MODELO = AIRCRAFT.filter((a) =>
 );
 const HUELLAS = huellas as Record<
   string,
-  { glb: string; librea: string; ficha: unknown }
+  { glb: string; librea: string; ficha: unknown; retrato?: string }
 >;
+/** El fichero del retrato de un avión, como lo pide el hangar. */
+const fichero = (id: string): string =>
+  `public/${CARPETA_DE_RETRATOS}/${HUELLAS[id]?.retrato ?? `${id}.webp`}`;
 const REHACER = "rehacelos con `npm run retratos`";
 
 describe("los retratos de la flota", () => {
   it("hay uno por cada avión que tiene modelo", () => {
     expect(CON_MODELO.length).toBeGreaterThan(0);
     for (const a of CON_MODELO) {
-      expect(fs.existsSync(`public/${CARPETA_DE_RETRATOS}/${a.id}.webp`), a.id).toBe(true);
       expect(HUELLAS[a.id], `${a.id}: sin huella; ${REHACER}`).toBeDefined();
+      expect(fs.existsSync(fichero(a.id)), fichero(a.id)).toBe(true);
     }
+  });
+
+  /*
+   * **Y con la huella de la imagen en el nombre**, que es lo que impide que
+   * una caché enseñe el de antes. Con el retrato nuevo del JAZ 120 en el
+   * servidor, Enrique seguía viendo en «¿Con qué volás?» el viejo, de puntas
+   * rectas y sin terracota: se llamaba igual, y el navegador, Cloudflare y el
+   * service worker guardan por nombre. Ver `ui/retratos.ts`.
+   */
+  it("llevan en el nombre la huella de su imagen, y el hangar pide ése", () => {
+    for (const a of CON_MODELO) {
+      const nombre = HUELLAS[a.id]?.retrato ?? "";
+      expect(nombre, `${a.id}: sin nombre con huella; ${REHACER}`).toMatch(
+        new RegExp(`^${a.id}-[0-9a-f]{8}\\.webp$`),
+      );
+      expect(sha(fichero(a.id)).slice(0, 8), `${nombre}: la imagen no es la de su nombre`).toBe(
+        nombre.slice(a.id.length + 1, a.id.length + 9),
+      );
+      expect(retratoDe(a.id).endsWith(`/${CARPETA_DE_RETRATOS}/${nombre}`), a.id).toBe(true);
+    }
+  });
+
+  it("y no queda ninguno de antes en la carpeta", () => {
+    const pedidos = new Set(CON_MODELO.map((a) => HUELLAS[a.id]?.retrato));
+    const sobran = fs
+      .readdirSync(`public/${CARPETA_DE_RETRATOS}`)
+      .filter((f) => !pedidos.has(f));
+    expect(sobran).toEqual([]);
   });
 
   it("son del modelo de hoy", () => {
@@ -84,7 +116,7 @@ describe("los retratos de la flota", () => {
    */
   it("son WebP transparentes, del tamaño que espera la tarjeta y ligeros", () => {
     for (const a of CON_MODELO) {
-      const b = fs.readFileSync(`public/${CARPETA_DE_RETRATOS}/${a.id}.webp`);
+      const b = fs.readFileSync(fichero(a.id));
       const texto = (desde: number, hasta: number): string =>
         String.fromCharCode(...b.subarray(desde, hasta));
       expect(texto(0, 4) + texto(8, 12), a.id).toBe("RIFFWEBP");
