@@ -1365,6 +1365,35 @@ export const ES_PY = {
     "Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.",
   "vuelo.consejo.narizArribaSuave": "Nariz un poquito arriba, para bajar más suave.",
   "vuelo.consejo.aerofrenos": "Sacá un poco los aerofrenos, hasta la marca rosa.",
+  /*
+   * **Las del perfil de la bajada** (el `VDEV`), que no son las de la pista:
+   * por debajo del perfil no se sube, se baja más suave o se nivela, y por
+   * encima y sin poder bajar más deprisa se sacan los aerofrenos, que es el
+   * «DRAG REQUIRED» de Boeing. Y **las del avión de cables** sin gases
+   * automáticos, que lleva la senda con el gas y la velocidad con el morro
+   * (ADR 0017). Sin grabar: ver `PENDIENTE-VOCES-llegada.md`.
+   */
+  "vuelo.consejo.nivelarPerfil":
+    "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.",
+  "vuelo.consejo.narizAbajoPerfil":
+    "Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.",
+  "vuelo.consejo.aerofrenosPerfil":
+    "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.",
+  "vuelo.consejo.masGasPerfil":
+    "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.",
+  "vuelo.consejo.menosGasPerfil":
+    "Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.",
+  "vuelo.consejo.masGasPapi":
+    "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.",
+  "vuelo.consejo.masGasSenda":
+    "Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.",
+  "vuelo.consejo.menosGasPapi":
+    "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.",
+  "vuelo.consejo.menosGasSenda":
+    "Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.",
+  "vuelo.consejo.masGasSuave": "Bajamos muy de golpe: un toque de gas, para bajar más suave.",
+  "vuelo.consejo.narizAbajoMarca": "Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.",
+  "vuelo.consejo.narizArribaMarca": "Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.",
   // Y su palabra corta, para el peldaño que lee una palabra: el mando y hacia dónde.
   "palabra.masGas": "Más gas",
   "palabra.menosGas": "Menos gas",

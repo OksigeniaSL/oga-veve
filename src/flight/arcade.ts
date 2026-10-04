@@ -279,6 +279,7 @@ import {
 import {
   deceleracionRodando,
   frenoDelAutofreno,
+  resistenciaDeLosPaneles,
   type MandosDeFrenada,
 } from "./frenada";
 
@@ -451,6 +452,7 @@ export class ArcadeFlightModel implements FlightModel {
         aire: this.aire,
         flaps: s.flaps,
         tren: s.tren,
+        aerofrenos: s.aerofrenos ?? 0,
         pendiente: 0,
       }) / lleno
     );
@@ -565,7 +567,8 @@ export class ArcadeFlightModel implements FlightModel {
         this.aircraft,
         this.sacado.tren,
         fraccionDeLosFlaps(this.aircraft, this.sacado.flaps),
-      );
+      ) +
+      resistenciaDeLosPaneles(this.aircraft, this.sacado.aerofrenos ?? 0, 0);
     const caida =
       caidaSinMotor(this.aircraft, v) +
       (v * 0.5 * SEA_LEVEL_DENSITY * v * v * this.aircraft.wingArea * deMas) /
@@ -874,7 +877,20 @@ export class ArcadeFlightModel implements FlightModel {
      *   Ver `puntaConLoSacado` y `gasQueNiSubeNiBaja`.
      */
     const flaps = clamp01(controls.flaps);
-    this.sacado = { flaps, tren: clamp01(controls.tren) };
+    /*
+     * **Y los aerofrenos, que tampoco aparecían aquí.** En el modelo completo
+     * suman su resistencia; en éste no hacían nada en el aire, y la
+     * instructora no podía pedirlos sin mentir: bajando a Gando en Guyrami,
+     * por encima del perfil y a todo lo que daba el avión, lo único que de
+     * verdad hace bajar más sin coger velocidad es lo que pide el ordenador
+     * de un Boeing con su «DRAG REQUIRED». Cuestan lo que cuestan allí, por la
+     * misma cuenta que el tren y los flaps: ver `gasQueNiSubeNiBaja`.
+     */
+    this.sacado = {
+      flaps,
+      tren: clamp01(controls.tren),
+      aerofrenos: this.state.onGround ? 0 : clamp01(controls.aerofrenos ?? 0),
+    };
     const gas = controls.engineOn ? controls.throttle : 0;
     this.ultimoGas = gas;
     let wanted: number;

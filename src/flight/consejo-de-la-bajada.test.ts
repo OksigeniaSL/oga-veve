@@ -26,6 +26,7 @@ import {
   RESPONDE_DESVIO,
   RESPONDE_KT,
   RESPONDE_VERTICAL,
+  ENTRE_CONSEJOS,
   type Accion,
   type Consejo,
   type Lectura,
@@ -44,6 +45,7 @@ const ACCIONES: readonly Accion[] = [
   "frenar",
   "narizArriba",
   "narizAbajo",
+  "nivelar",
 ];
 
 const base = (cambios: Partial<Lectura> = {}): Lectura => ({
@@ -376,6 +378,7 @@ function volarUnaFinal(semilla: number): {
       frenar: () => (gas = Math.max(0, gas - 0.1 * cuanto)),
       narizArriba: () => (morro += 0.35 * cuanto),
       narizAbajo: () => (morro -= 0.35 * cuanto),
+      nivelar: () => (morro += 0.2 * cuanto),
     };
     pendiente.push({ cuando: ahora + tarda, hacer: hacer[p.accion] });
   }
@@ -399,6 +402,7 @@ function respondioEntre(c: Consejo, traza: readonly Instante[], desde: number, h
       case "frenar":
         return x.aceleracion < -RESPONDE_ACELERACION || al.kt - x.kt > RESPONDE_KT;
       case "narizArriba":
+      case "nivelar":
         return (
           x.vertical - al.vertical > RESPONDE_VERTICAL ||
           Math.abs(x.desvio) < Math.abs(al.desvio) - RESPONDE_DESVIO
@@ -577,6 +581,137 @@ describe("la senda que ya se está cogiendo", () => {
     expect(juzgarLaSenda(justoDentro, null)).toBe("bien");
     expect(juzgarLaSenda(justoFuera, null)).toBe("alto");
     expect(juzgarLaSenda({ ...justoFuera, puntos: -1.01, grados: -1.01 * PUNTO }, null)).toBe("bajo");
+  });
+});
+
+/*
+ * ── El perfil de la bajada, que no es la pista ─────────────────────────
+ *
+ * Enrique, bajando a Gando con el JAZ 120 en Guyrami: a siete mil pies, con
+ * la ventanilla en dos mil cien y el aeropuerto a nivel del mar, «un poco
+ * bajo para la pista, levantá suave»; y bajando desde el FL184 a todo lo que
+ * daba el avión y a la velocidad de su marca, «estás por encima de la senda,
+ * bajá un poquito», una y otra vez, y un «bajá el motor» con otro «por
+ * encima» dos segundos detrás. «Estoy bajando lo que me da el avión… no
+ * puede decirme que voy mal, porque entonces yo ya no sé qué hacer.»
+ */
+describe("el perfil de la bajada", () => {
+  const perfil = (cambios: Partial<Lectura> = {}) =>
+    base({ modo: "bajada", vertical: -1500, verticalObjetivo: -1400, ...cambios });
+
+  it("por debajo del perfil nunca se pide subir: se baja más suave o se nivela", () => {
+    for (const tecnica of ["morroSenda", "morroVelocidad"] as const)
+      for (const velocidad of ["bien", "rapido"] as const) {
+        const c = queHacer(perfil({ senda: "bajo", tecnica, velocidad }));
+        expect(c?.accion, `${tecnica}/${velocidad}`).not.toBe("narizArriba");
+      }
+    expect(queHacer(perfil({ senda: "bajo" }))?.accion).toBe("nivelar");
+  });
+
+  it("y sus frases hablan del perfil, no de la pista", () => {
+    for (const accion of ACCIONES)
+      for (const motivo of ["alto", "bajo"] as const) {
+        const f = fraseDe({ accion, motivo }, "senda", "aerofrenos", "bajada");
+        const donde = `${accion}/${motivo}`;
+        if (f.nueva) expect(t(f.nueva as TranslationKey), donde).not.toMatch(/pista/i);
+        for (const g of f.grabadas)
+          expect(textoDe(g.clave, g.forma), `${donde} ${g.clave}~${g.forma}`).not.toMatch(
+            /pista|levantá|subí|tirá/i,
+          );
+      }
+  });
+
+  it("alto, bajando, con el gas al mínimo o el morro a fondo: los aerofrenos, el DRAG REQUIRED", () => {
+    const alto = perfil({ senda: "alto", alLimite: true, vertical: -1200 });
+    expect(queHacer(alto)).toEqual({ accion: "frenar", motivo: "alto" });
+    // Con el automático en la senda también: el morro es suyo, los aerofrenos no.
+    expect(queHacer({ ...alto, morroDelAutomatico: true, gasDelAutomatico: true })?.accion).toBe(
+      "frenar",
+    );
+    // Y nivelado por encima no hace falta frenar nada: hace falta bajar.
+    expect(queHacer(perfil({ senda: "alto", alLimite: true, vertical: 0 }))?.accion).toBe(
+      "narizAbajo",
+    );
+    // Con los aerofrenos ya fuera, no se piden otra vez.
+    expect(queHacer({ ...alto, puedeFrenar: false })).toBeNull();
+  });
+
+  it("y la tarjeta los nombra, con la frase del perfil", () => {
+    const f = fraseDe({ accion: "frenar", motivo: "alto" }, "senda", "aerofrenos", "bajada");
+    expect(f.nueva).toBe("vuelo.consejo.aerofrenosPerfil");
+    expect(f.corta).toBe("palabra.aerofrenos");
+  });
+
+  it("los aerofrenos se piden una vez, aunque el avión siga alto", () => {
+    const c = new ConsejoDeLaBajada();
+    const alto = perfil({ senda: "alto", alLimite: true, vertical: -1200, desvio: 1.5 });
+    const dichos: Consejo[] = [];
+    for (let i = 0; i < 1200; i++) {
+      const p = c.paso(alto);
+      if (p && p !== "bien") dichos.push(p);
+    }
+    expect(dichos.map((d) => d.accion)).toEqual(["frenar"]);
+  });
+
+  it("nunca dos consejos de la bajada en pocos segundos", () => {
+    const c = new ConsejoDeLaBajada();
+    let t = 0;
+    const cuando: number[] = [];
+    // Lo que pasa cambia cada pocos segundos, y cada cambio pide otra cosa.
+    const fases: Partial<Lectura>[] = [
+      { velocidad: "rapido", kt: 290 },
+      { senda: "alto", kt: 270 },
+      { velocidad: "rapido", kt: 292, aceleracion: -1 },
+      { senda: "alto", kt: 268, vertical: -1200 },
+    ];
+    for (let i = 0; i < 1200; i++) {
+      t += 0.1;
+      const fase = fases[Math.floor(t / 4) % fases.length]!;
+      const p = c.paso(perfil({ ...fase, dt: 0.1 }));
+      if (p && p !== "bien") cuando.push(t);
+    }
+    expect(cuando.length).toBeGreaterThan(1);
+    for (let i = 1; i < cuando.length; i++)
+      expect(cuando[i]! - cuando[i - 1]!).toBeGreaterThanOrEqual(ENTRE_CONSEJOS - 0.01);
+  });
+});
+
+/*
+ * ── Por tipo, el ADR 0017 ──────────────────────────────────────────────
+ *
+ * En el avión de cables sin gases automáticos, la velocidad la lleva el morro
+ * y la senda el gas: soltándolo vuelve a su velocidad compensada. Los
+ * consejos dicen la acción que vale para ese avión.
+ */
+describe("por tipo: con el morro la velocidad y con el gas la senda", () => {
+  const cables = (cambios: Partial<Lectura> = {}) => base({ tecnica: "morroVelocidad", ...cambios });
+
+  it("alto, menos gas; bajo, más gas; y la nariz quieta", () => {
+    expect(queHacer(cables({ senda: "alto" }))).toEqual({ accion: "menosGas", motivo: "alto" });
+    expect(queHacer(cables({ senda: "bajo" }))).toEqual({ accion: "masGas", motivo: "bajo" });
+  });
+
+  it("lento, nariz abajo; rápido, nariz arriba", () => {
+    expect(queHacer(cables({ velocidad: "lento" }))?.accion).toBe("narizAbajo");
+    expect(queHacer(cables({ velocidad: "rapido" }))?.accion).toBe("narizArriba");
+  });
+
+  it("y nunca subir el morro yendo lento, ni bajo y lento: gas", () => {
+    expect(queHacer(cables({ velocidad: "lento", senda: "bajo" }))?.accion).toBe("masGas");
+    expect(queHacer(cables({ velocidad: "lento", hundiendose: true }), true)?.accion).toBe("masGas");
+  });
+
+  it("y con sink rate a su velocidad, gas: el morro es la velocidad", () => {
+    expect(queHacer(cables({ vertical: -1600 }), true)?.accion).toBe("masGas");
+  });
+
+  it("el gas por la senda responde en el variómetro, no en la aguja", () => {
+    const c = new ConsejoDeLaBajada();
+    for (let i = 0; i < 40; i++) c.paso(cables({ senda: "bajo", vertical: -900 }));
+    expect(c.ultimo?.accion).toBe("masGas");
+    // Mete gas: la aguja quieta, el variómetro sube trescientos.
+    c.paso(cables({ senda: "bajo", vertical: -600 }));
+    expect(c.ultimo?.respondio).toBe(true);
   });
 });
 

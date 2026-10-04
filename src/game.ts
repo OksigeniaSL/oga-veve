@@ -916,6 +916,7 @@ import {
   type Consejo,
   type Lectura as LecturaDelConsejo,
   type Objetivo,
+  type Tecnica,
 } from "./flight/consejo-de-la-bajada";
 import {
   callar,
@@ -19175,6 +19176,21 @@ export class Game {
       this.sendaJuzgada === "bajo" && s.verticalSpeed * PIES_POR_MINUTO > -300
         ? "bien"
         : this.sendaJuzgada;
+    /*
+     * **Con qué se lleva qué en este avión**, que es lo que dice cada consejo.
+     * El de cables sin gases automáticos, en el modelo completo y sin el
+     * automático en la senda, se vuela con el morro en la velocidad y el gas
+     * en la senda: soltándolo vuelve a su velocidad compensada. Todos los
+     * demás, al revés. Ver `Tecnica` y el ADR 0017.
+     */
+    const tecnica: Tecnica =
+      this.tier.model !== "simple" &&
+      this.aircraft.mandos === "convencionales" &&
+      !this.gasesPuestos &&
+      this.gasDeLaFinal === null &&
+      this.objetivos.altitud === null
+        ? "morroVelocidad"
+        : "morroSenda";
     this.lecturaDelConsejo = {
       activo,
       soloLoUrgente: pasadaLaPuerta,
@@ -19182,8 +19198,16 @@ export class Game {
       // llevan ellos.
       velocidad: this.gasesPuestos || this.gasDeLaFinal !== null ? null : this.velocidadJuzgada,
       velocidadMuyFuera: velocidadMuyFuera(kt, marca),
-      // Y con el automático en la senda, la senda.
-      senda: this.objetivos.altitud !== null ? null : sendaQueSeAconseja,
+      /*
+       * **Y la senda, también con el automático en ella**: el morro es suyo y
+       * no se le pide a quien vuela —ver `queHacer`—, pero si baja por encima
+       * del perfil con el gas al mínimo, los aerofrenos sí, que es justo
+       * cuando el ordenador de un Boeing escribe «DRAG REQUIRED».
+       */
+      senda: sendaQueSeAconseja,
+      tecnica,
+      // El avión ya no baja más deprisa: el gas al mínimo o el morro a fondo.
+      alLimite: c.throttle < 0.25 || c.elevator <= -0.9,
       sendaMuyFuera: d ? sendaMuyFuera(d) : false,
       hundiendose: this.actitudDicha === "sink rate",
       morroDelAutomatico: this.objetivos.altitud !== null,
@@ -19233,7 +19257,7 @@ export class Game {
     if (!p) return;
     // Lo corregido se celebra, con la senda y su visto. Ver `loCorregiste`.
     if (p === "bien") this.hechos.emit("loCorregiste", {});
-    else this.decirElConsejo(p, cantoDe(p, false));
+    else this.decirElConsejo(p, cantoDe(p, false, l.modo));
   }
 
   /**
@@ -19263,10 +19287,12 @@ export class Game {
    * `ingles` es lo que suena en el peldaño de cabina, o la caja que acaba de
    * cantar y a la que esto explica. Ver `cantoDe` y `cantar`.
    */
-  private decirElConsejo(c: Consejo, ingles: string, objetivo?: Objetivo): void {
+  private decirElConsejo(c: Consejo, ingles: string | null, objetivo?: Objetivo): void {
+    // El gas o los aerofrenos que se piden por la senda apuntan a la senda.
+    const porLaSenda = c.motivo === "alto" || c.motivo === "bajo";
     const apunta: Objetivo =
       objetivo ??
-      (c.accion === "masGas" || c.accion === "menosGas" || c.accion === "frenar"
+      ((c.accion === "masGas" || c.accion === "menosGas" || c.accion === "frenar") && !porLaSenda
         ? this.hayMarcaDeVelocidad()
           ? "marca"
           : "nada"
@@ -19275,8 +19301,9 @@ export class Game {
             ? "ritmo"
             : "nada"
           : this.objetivoDeLaSenda);
-    const frena = this.desvioAhora?.modo === "bajada" ? "aerofrenos" : "flaps";
-    const f = fraseDe(c, apunta, frena);
+    const modo = this.desvioAhora?.modo ?? "final";
+    const frena = modo === "bajada" ? "aerofrenos" : "flaps";
+    const f = fraseDe(c, apunta, frena, modo);
     let forma: { readonly texto: string; readonly id: string } | null = null;
     if (f.nueva && this.instructor.vozDe(f.nueva))
       forma = { texto: t(f.nueva as TranslationKey), id: f.nueva };
@@ -19306,9 +19333,7 @@ export class Game {
         ? this.runwayGuide.porCuanto
         : (apunta === "senda" || apunta === "papi") &&
             d !== null &&
-            (c.accion === "narizAbajo" || c.accion === "narizArriba") &&
-            c.motivo !== "hundiendose" &&
-            c.motivo !== "lento"
+            porLaSenda
           ? d.metros
           : null;
     const conCifra =
@@ -19322,13 +19347,15 @@ export class Game {
           ? "gas-menos"
           : c.accion === "frenar"
             ? frena
-            : c.accion === "narizAbajo"
-              ? apunta === "aro"
-                ? "aro-alto"
-                : "nariz-abajo"
-              : apunta === "aro"
-                ? "aro-bajo"
-                : "nariz-arriba";
+            : c.accion === "nivelar"
+              ? "nivelar"
+              : c.accion === "narizAbajo"
+                ? apunta === "aro"
+                  ? "aro-alto"
+                  : "nariz-abajo"
+                : apunta === "aro"
+                  ? "aro-bajo"
+                  : "nariz-arriba";
     this.hud.senal.mostrar(
       comoDibujo(dibujo),
       this.rotuloCompuesto(conCifra, f.corta as TranslationKey),
@@ -19336,14 +19363,29 @@ export class Game {
       {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
-        ...(c.accion === "frenar" && frena === "flaps"
-          ? { tecla: nombreDeTecla(this.input.preferredKey("flaps")) }
+        // Con su tecla, la de los flaps o la de los aerofrenos: es lo que se pide.
+        ...(c.accion === "frenar"
+          ? {
+              tecla: nombreDeTecla(
+                this.input.preferredKey(frena === "flaps" ? "flaps" : "aerofrenos"),
+              ),
+            }
           : {}),
       },
     );
     this.apuntarCanto(
-      `consejo ${c.accion} (${c.motivo}, ${apunta}) → ${forma?.id ?? "sin voz"}`,
+      `consejo ${c.accion} (${c.motivo}, ${apunta}, ${modo}) → ${forma?.id ?? "sin voz"}`,
     );
+    /*
+     * **Sin canto de cabina**, que es por debajo del perfil de la bajada: en
+     * los peldaños de abajo lo dice la instructora, si tiene su grabación; en
+     * el de cabina queda la tarjeta. Ver `cantoDe`.
+     */
+    if (ingles === null) {
+      if (forma && laInstructoraLoExplica(this.tier.avisos))
+        this.instructor.decir(forma.texto, forma.id);
+      return;
+    }
     this.cantar(ingles, forma?.texto, forma?.id);
   }
 

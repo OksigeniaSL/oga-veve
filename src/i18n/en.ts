@@ -427,6 +427,27 @@ export const EN: Dictionary = {
     "Nose a little up: we come down softer, to the pink mark on the vertical speed.",
   "vuelo.consejo.narizArribaSuave": "Nose a little up, to come down softer.",
   "vuelo.consejo.aerofrenos": "A little speed brake, down to the pink mark.",
+  "vuelo.consejo.nivelarPerfil":
+    "We're a little below the profile: come down softer, or level off a moment, until the diamond reaches the middle.",
+  "vuelo.consejo.narizAbajoPerfil":
+    "We're above the profile: nose a little down, until the diamond reaches the middle.",
+  "vuelo.consejo.aerofrenosPerfil":
+    "We're above the profile and the plane is already coming down as fast as it can: speed brakes out, until the diamond reaches the middle.",
+  "vuelo.consejo.masGasPerfil":
+    "We're a little below the profile: a touch of power, to come down softer, until the diamond reaches the middle.",
+  "vuelo.consejo.menosGasPerfil":
+    "We're above the profile: a little less power, to come down more, until the diamond reaches the middle.",
+  "vuelo.consejo.masGasPapi":
+    "A little low for the runway: a touch of power, nose still, until you see two white and two red.",
+  "vuelo.consejo.masGasSenda":
+    "A little low: a touch of power, nose still, until the diamond is in the middle.",
+  "vuelo.consejo.menosGasPapi":
+    "A little high for the runway: a little less power, nose still, until you see two white and two red.",
+  "vuelo.consejo.menosGasSenda":
+    "A little high: a little less power, nose still, until the diamond is in the middle.",
+  "vuelo.consejo.masGasSuave": "We're coming down too steeply: a touch of power, to come down softer.",
+  "vuelo.consejo.narizAbajoMarca": "We're slow: nose a touch down, up to the pink mark.",
+  "vuelo.consejo.narizArribaMarca": "We're fast: nose a touch up, down to the pink mark.",
   "palabra.masGas": "More power",
   "palabra.menosGas": "Less power",
   "palabra.narizArriba": "Nose up",
