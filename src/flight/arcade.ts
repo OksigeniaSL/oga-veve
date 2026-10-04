@@ -33,7 +33,9 @@ import { AIRE_ESTANDAR, type Aire, airDensity, GRAVITY, SEA_LEVEL_DENSITY } from
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import {
+  ACELERA_RODANDO,
   AGARRE_DEL_PEDAL,
+  EN_LLEGAR_RODANDO,
   empujeLleno,
   empujeQueSostiene,
   giroDelPedal,
@@ -811,13 +813,33 @@ export class ArcadeFlightModel implements FlightModel {
    * cero—, así que el gas es la fracción del crucero y ya está. Es la misma
    * recta que usa `step` cuando `onGround`.
    *
-   * Y sin `desde`: aquí el gas **es** la velocidad, y el modelo ya la
-   * alcanza a su paso. Ver `gasParaRodar` en `model.ts`.
+   * **Y con `desde`, el de llegar, como en el modelo completo.** Aquí ponía
+   * «sin `desde`: el gas es la velocidad, y el modelo ya la alcanza a su
+   * paso». Y su paso es el de la carrera de despegue —ver `ritmoDeCarrera`—,
+   * que en el JAZ 120 es de casi un minuto: con el gas de diez nudos, desde
+   * parado se acerca a ellos a una décima de metro por segundo cada segundo.
+   * En Guyrami, que es donde el juego lleva el gas rodando, el avión salía
+   * de la doble raya con la verde y hacía el viraje de alineación entero a
+   * cuatro o cinco nudos: «autorizado a despegar y entrando en pista sin
+   * pasar de 5; es ir montado sobre un caracol». Un avión de verdad pone algo
+   * más de gas para arrancar y lo suelta al llegar, y gira a unos diez nudos
+   * —«10 knots or less», 737 FCTM, «Taxi Speed and Braking»—.
+   *
+   * Así que, faltando velocidad, se pide lo que acelera hacia ella al mismo
+   * ritmo que en el modelo completo —`ACELERA_RODANDO`, soltándolo en
+   * `EN_LLEGAR_RODANDO`—: este modelo va hacia su objetivo con un retardo de
+   * ritmo `k`, así que acelerar `a` es pedir `a/k` por encima de lo que se
+   * lleva. A la avioneta no le cambia nada, que ya llegaba antes.
    */
-  gasParaRodar(velocidad: number): number {
+  gasParaRodar(velocidad: number, desde = velocidad): number {
     // En el suelo no hay altura que valga: la punta es la de abajo.
     const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
-    return Math.max(0, Math.min(1, velocidad / cruise));
+    const quiero = Math.max(0, velocidad);
+    const ahora = Math.max(0, Math.min(desde, quiero));
+    const acelera = Math.min(ACELERA_RODANDO, (quiero - ahora) / EN_LLEGAR_RODANDO);
+    const ritmo = Math.max(1e-3, this.ritmoDeCarrera());
+    const objetivo = Math.max(quiero, ahora + acelera / ritmo);
+    return Math.max(0, Math.min(1, objetivo / cruise));
   }
 
   step(dt: number, controls: ControlInputs): void {

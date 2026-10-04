@@ -3059,7 +3059,7 @@ export class PlanDeVuelo {
       ? Math.max(18, (this.laSalida?.velocidad ?? 0) + 4)
       : 18;
     const rapido = recienLlegado ? estado.groundSpeed : estado.airspeed;
-    if (sobreElSuelo > 4 || rapido > tope) return 0;
+    if (this.ruedasSobreElSuelo(sobreElSuelo) > 4 || rapido > tope) return 0;
 
     const p: Punto = [estado.position.x, estado.position.z];
 
@@ -3393,6 +3393,24 @@ export class PlanDeVuelo {
     return entrada?.puntos ?? null;
   }
 
+  /**
+   * **Lo alto que van las ruedas**, m, y no el avión.
+   *
+   * Lo que llega es la altura del avión sobre el suelo, y rodando un avión no
+   * está a cero: está a la altura de su tren —ver `gearHeight`—. Los listones
+   * de aquí eran de avioneta, con su metro y medio: cuatro metros para que la
+   * ayuda de rodaje ayude y tres para avisar de «más despacio» y de «te
+   * saliste de la raya». El JAZ 120 rueda a casi seis metros y el JAZ 90 a
+   * más de tres, así que en Guyrami la ayuda no le giraba nunca al de cuatro
+   * motores —con la verde y sin tocar el volante seguía recto hasta salirse—
+   * y a los dos reactores no se les avisaba de nada. Medido con
+   * `verificar-verde-sin-volante` en Pettirossi, buscando por qué Enrique
+   * entraba en la pista de Los Rodeos «sin pasar de cinco».
+   */
+  private ruedasSobreElSuelo(sobreElSuelo: number): number {
+    return sobreElSuelo - this.avion.gearHeight;
+  }
+
   /** Avanza un fotograma y dice qué hay que enseñar. */
   paso(
     estado: FlightState,
@@ -3487,7 +3505,7 @@ export class PlanDeVuelo {
          * pregunta que ya contestaba el tope de rodaje con `onRunway`.
          */
         !estado.onRunway &&
-        sobreElSuelo < 3 &&
+        this.ruedasSobreElSuelo(sobreElSuelo) < 3 &&
         this.rutaMundo.length > 1 &&
         vaRapido(p.fase, estado.groundSpeed, sugerida, s.restante),
       restante: s.restante,
@@ -3500,7 +3518,7 @@ export class PlanDeVuelo {
         (p.fase === "rodando" || p.fase === "a-plataforma") &&
         this.rutaMundo.length > 1 &&
         s.alaRuta > FUERA_DE_RUTA &&
-        sobreElSuelo < 3,
+        this.ruedasSobreElSuelo(sobreElSuelo) < 3,
       cambio: p.cambio,
     };
   }
