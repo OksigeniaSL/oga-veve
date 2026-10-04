@@ -147,6 +147,13 @@ export interface LecturaDelPaso {
   /** Si los aerofrenos están fuera. */
   readonly aerofrenos?: boolean;
   /**
+   * **Si se va por encima del perfil de la bajada**: entonces los aerofrenos
+   * están fuera para bajar —el «DRAG REQUIRED» que pide la instructora— y no
+   * para frenar, y no se recogen por llegar a la marca. Ver
+   * `flight/consejo-de-la-bajada.ts`.
+   */
+  readonly altoEnElPerfil?: boolean;
+  /**
    * **La cota de la pista a la que se va**, pies, o `null` si no se sabe. Ver
    * el paso `cota`.
    */
@@ -379,7 +386,15 @@ export class CadenaDelVuelo {
      * antes de configurar para aterrizar—. Es el escalón que sigue a «un poco
      * de aerofrenos, hasta la marca»: llegar a ella.
      */
-    if (l.aerofrenos && (l.kt <= l.marca + MARGEN_KT || l.flapsQuePide >= 2))
+    /*
+     * Y no mientras se va por encima del perfil: ahí están fuera para bajar,
+     * no para frenar, y pedirlos adentro al llegar a la marca era deshacer en
+     * el acto lo que acababa de pedir la instructora.
+     */
+    if (
+      l.aerofrenos &&
+      (l.flapsQuePide >= 2 || (l.kt <= l.marca + MARGEN_KT && !l.altoEnElPerfil))
+    )
       nuevo(`aerofrenos:${l.peldano}`, "recogerAerofrenos", objetivo());
     if (l.trenQuePide && l.tren === false) {
       nuevo("tren", "tren", objetivo());

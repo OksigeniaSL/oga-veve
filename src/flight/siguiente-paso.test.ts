@@ -461,6 +461,12 @@ describe("la cadena del «¿y ahora qué?»", () => {
     for (let i = 0; i < 20 && !p; i++)
       p = otra.paso({ ...base, peldano: "segundos-flaps", marca: 152, kt: 190, flaps: 1, flapsQuePide: 2, tren: true });
     expect(p?.que).toBe("recogerAerofrenos");
+    // Pero por encima del perfil están fuera para bajar, no para frenar: el
+    // «DRAG REQUIRED» de la instructora. Ahí, en la marca, se quedan.
+    const alto = new CadenaDelVuelo();
+    for (const e of ["subida", "crucero", "descenso", "velocidad:terminal:llegada"]) cadenaDiga(alto, e);
+    for (let i = 0; i < 20; i++) expect(alto.paso({ ...base, kt: 214, altoEnElPerfil: true })).toBeNull();
+    expect(alto.paso({ ...base, kt: 214 })?.que).toBe("recogerAerofrenos");
   });
 
   it("y la velocidad de la llegada se dice aunque la subida no se haya dicho", () => {

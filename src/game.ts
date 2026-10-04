@@ -11281,6 +11281,9 @@ export class Game {
     // Y a qué velocidad corre: los frenos de tierra salen solos corriendo, no
     // rodando por la plataforma. Ver `flight/palanca-de-aerofrenos.ts`.
     this.input.velocidadEnElSuelo = this.flight.state.groundSpeed;
+    // Y si el gas es la velocidad, que en Guyrami no cierra los aerofrenos de
+    // vuelo. Ver `LoQueVeLaPalanca.gasEsVelocidad`.
+    this.input.gasEsVelocidad = this.tier.model === "simple";
     // Y hasta dónde pueden bajar los flaps: el alivio de carga o unos flaps
     // tocados. Antes de mover los mandos, que es quien los lleva.
     this.atenderALosFlaps(dt);
@@ -19444,6 +19447,8 @@ export class Game {
       tren: this.aircraft.trenRetractil ? this.input.trenQueSePide : null,
       trenQuePide: trenQuePide(this.aircraft, v.peldano),
       aerofrenos: this.input.aerofrenosAbiertos,
+      // Por encima del perfil, los aerofrenos son para bajar: no se recogen.
+      altoEnElPerfil: this.desvioAhora?.modo === "bajada" && this.sendaJuzgada === "alto",
       // La cota de la pista a la que se va, la de debajo de la cinta.
       cotaDeLaPista: this.elDestino() ? this.cotaParaLaCinta() : null,
       dt,
