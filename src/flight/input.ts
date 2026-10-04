@@ -452,6 +452,12 @@ export class InputManager {
    */
   pesoEnLasRuedas = false;
 
+  /**
+   * **Si el gas es la velocidad**, la regla del modelo sencillo de Guyrami.
+   * Lo pone el juego; ver `LoQueVeLaPalanca.gasEsVelocidad`.
+   */
+  gasEsVelocidad = false;
+
   /** Si se ha pedido el tren fuera. Empieza fuera, como está en su puesto. */
   private trenPedido = true;
   /** Y si este avión lo mete siquiera. Lo pone el juego al cambiar de avión. */
@@ -985,6 +991,7 @@ export class InputManager {
       gas: this.controls.throttle,
       reversa: this.controls.reversa,
       pie: braking ? 1 : 0,
+      gasEsVelocidad: this.gasEsVelocidad,
     });
     this.controls.aerofrenos = paneles.aerofrenos;
     this.controls.frenosDeTierra = paneles.frenosDeTierra;

@@ -110,9 +110,37 @@ flaps 2 y tren); los reactores, su punta. El gas de la marca de la final:
   el morro y la velocidad con el gas —«un poquito más de gas, hasta la marca
   rosa; la nariz, quieta»—, que es la técnica con gases automáticos. En un
   avión de cables sin ellos, ahora, la velocidad la lleva el morro y la senda
-  el gas. Queda por decidir el consejo por tipo.
+  el gas. Queda por decidir el consejo por tipo. *Decidido el 4 de octubre:
+  ver la adenda.*
 - **La marca de los primeros flaps de los de hélice** en Guyrami a poca altura
   —la del circuito: 120 nudos el JAZ 60— sigue por encima de su punta, y la
   marca la recorta al 97 %, como antes.
 - **Las teclas del compensador**, con la mano puesta, siguen siendo las del
   morro; no mueven la velocidad compensada a ritmo propio.
+
+## Adenda (2026-10-04): el consejo por tipo, y los aerofrenos en Guyrami
+
+Enrique, bajando a Gando con el JAZ 120 en Guyrami: «estás por encima de la
+senda, bajá un poquito», una y otra vez, mientras bajaba a todo lo que daba
+el avión y a la velocidad de su marca; y a siete mil pies, por debajo del
+perfil, «un poco bajo para la pista, levantá suave».
+
+- **El consejo por tipo** (`Tecnica` en `consejo-de-la-bajada.ts`): el avión
+  de cables, en el modelo completo, sin gases automáticos y sin el automático
+  en la senda, se aconseja con **el morro en la velocidad y el gas en la
+  senda** —alto, menos gas; bajo, más gas; lento, nariz abajo; rápido, nariz
+  arriba; con *sink rate*, gas—. En Guyrami, donde el gas es la velocidad y
+  bajar el morro no la da, lento es siempre gas. Todos los demás, como
+  estaba: el morro en la senda y el gas en la velocidad. Es la misma raya que
+  ya separaba lo que sostiene la mano suelta.
+- **El perfil de la bajada no es la pista.** Por debajo del perfil nunca se
+  pide subir: se baja más suave o se nivela un momento. Por encima, bajando y
+  sin poder bajar más deprisa —el gas al mínimo o el morro a fondo—, los
+  aerofrenos, una vez: es el «DRAG REQUIRED» del ordenador de vuelo de Boeing
+  (737 FCOM, *FMC Messages*; FCTM, cap. 4, *Descent — Speedbrakes*).
+- **Los aerofrenos, también en el modelo sencillo.** No estaban: en Guyrami
+  no hacían nada en el aire, y pedirlos habría sido mentir. Ahora entran en
+  lo sacado (`LoSacado.aerofrenos`) con la resistencia de `fdm.ts`, por la
+  misma cuenta que el tren y los flaps: con el mismo gas se baja más empinado
+  y más despacio. Ver `arcade-aerofrenos.test.ts`.
+- **Y nunca dos consejos de la bajada en ocho segundos** (`ENTRE_CONSEJOS`).

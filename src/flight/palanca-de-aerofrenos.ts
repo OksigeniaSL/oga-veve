@@ -117,6 +117,14 @@ export interface LoQueVeLaPalanca {
   readonly reversa: number;
   /** El pie en el freno, de 0 a 1. */
   readonly pie: number;
+  /**
+   * **Si el gas es la velocidad y no el empuje**, que es la regla de
+   * Guyrami (ADR 0002). Entonces el gas alto no cierra los de vuelo: ahí la
+   * palanca a 0,95 es «a 266 nudos», no «empuje de subida», y los aerofrenos
+   * que pide la instructora bajando por encima del perfil se cerraban en el
+   * mismo instante en que se sacaban.
+   */
+  readonly gasEsVelocidad?: boolean;
 }
 
 /** Lo que manda a los mandos. */
@@ -293,6 +301,7 @@ export class PalancaDeAerofrenos {
     } else if (
       this._palanca === "fuera" &&
       !this.deTierra &&
+      !e.gasEsVelocidad &&
       e.gas > GAS_QUE_CIERRA_LOS_AEROFRENOS
     ) {
       // En el aire, con gas, se cierran solos. Ver la cabecera.

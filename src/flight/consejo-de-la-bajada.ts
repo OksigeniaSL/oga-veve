@@ -54,8 +54,38 @@ export type { Senda, Velocidad } from "./perfil-vertical";
  *   la final, los aerofrenos en la bajada—. Cuál, lo decide quien lo dice,
  *   que sabe qué lleva el avión.
  * - `narizArriba` y `narizAbajo`: la palanca de mando, un pelín.
+ * - `nivelar`: bajando por debajo del perfil, bajar más suave o nivelar un
+ *   momento hasta que el perfil llegue. Nunca subir: ver `queHacer`.
  */
-export type Accion = "masGas" | "menosGas" | "frenar" | "narizArriba" | "narizAbajo";
+export type Accion =
+  | "masGas"
+  | "menosGas"
+  | "frenar"
+  | "narizArriba"
+  | "narizAbajo"
+  | "nivelar";
+
+/**
+ * **Con qué se lleva qué, según el avión.** Lo que pidió el ADR 0017 —«queda
+ * por decidir el consejo por tipo»— y lo que dice el manual de cada uno:
+ *
+ * - `morroSenda`: **con el morro la senda y con el gas la velocidad.** Es
+ *   como se vuela a mano un avión con gases automáticos o con mandos
+ *   eléctricos, que al soltarlo sostiene su trayectoria; y en Guyrami, donde
+ *   el gas es la velocidad por regla del peldaño.
+ * - `morroVelocidad`: **con el morro la velocidad y con el gas la senda.** Es
+ *   el avión de cables sin gases automáticos puestos, en el modelo completo:
+ *   soltándolo vuelve a su velocidad compensada, y lo que lo sube o lo baja
+ *   es el gas. «Pitch for airspeed, power for altitude» (FAA, *Airplane
+ *   Flying Handbook*, FAA-H-8083-3C, cap. 9, la aproximación estabilizada).
+ *   Ver `mandos` en `aircraft.ts` y `flight/mano.ts`.
+ * - `gasVelocidad`: **el modelo sencillo de Guyrami**, donde el gas es la
+ *   velocidad y el morro solo la senda (ADR 0002). Como `morroSenda`, salvo
+ *   que lento es siempre gas: ahí bajar el morro no da velocidad. Medido en
+ *   la bajada a Gando: lento y alto, la instructora pedía «bajá un poco la
+ *   nariz» con el morro ya abajo del todo y la aguja quieta.
+ */
+export type Tecnica = "morroSenda" | "morroVelocidad" | "gasVelocidad";
 
 /** Por qué se pide: lo que se ha visto. */
 export type Motivo = "lento" | "rapido" | "alto" | "bajo" | "hundiendose";
@@ -75,7 +105,9 @@ export function contrarias(a: Accion, b: Accion): boolean {
   return (
     par("masGas", "menosGas") ||
     par("masGas", "frenar") ||
-    par("narizArriba", "narizAbajo")
+    par("narizArriba", "narizAbajo") ||
+    par("nivelar", "narizAbajo") ||
+    par("nivelar", "frenar")
   );
 }
 
@@ -130,6 +162,14 @@ export interface Lectura {
   readonly marca?: number;
   /** Si se va por la bajada del plan o por la final. Ver `Desvio.modo`. */
   readonly modo?: "bajada" | "final";
+  /** Con qué se lleva qué en este avión. Sin decir, `morroSenda`. Ver `Tecnica`. */
+  readonly tecnica?: Tecnica;
+  /**
+   * **Si el avión ya no baja más deprisa** sin coger velocidad: el gas al
+   * mínimo —el de la mano o el de los gases automáticos—, o el morro abajo
+   * del todo. Es la condición del «DRAG REQUIRED» de Boeing. Ver `queHacer`.
+   */
+  readonly alLimite?: boolean;
   /** Indicada, nudos. */
   readonly kt: number;
   /** Cómo cambia la indicada, nudos por segundo. */
@@ -181,6 +221,19 @@ const URGENTES: ReadonlySet<Motivo> = new Set<Motivo>(["lento", "hundiendose"]);
  */
 export const SOSTENER = 3;
 export const SOSTENER_MUY_FUERA = 1.5;
+
+/**
+ * **Nunca dos consejos de la bajada en pocos segundos**, s: ocho.
+ *
+ * Bajando a Gando, Enrique oyó «bajá el motor» y, dos segundos después,
+ * otra vez «por encima de la senda»: dos mandos distintos, cada uno con su
+ * motivo, y quien vuela sin tiempo de hacer ninguno. Ocho segundos es lo que
+ * tarda en decirse un consejo, en leerse su tarjeta y en verse empezar su
+ * efecto. No rearma nada: un consejo que no puede darse espera, y si cuando
+ * pasa el respiro ya no hace falta, no se da. Ver la memoria «el reloj no
+ * rearma un aviso».
+ */
+export const ENTRE_CONSEJOS = 8;
 
 /**
  * **Cuándo ha respondido el avión** a un consejo.
@@ -242,22 +295,56 @@ export function queHacer(l: Lectura, hundiendose = false): Consejo | null {
   return c;
 }
 
+/**
+ * **Cuánto hay que ir bajando para que el perfil alto sea de aerofrenos**,
+ * pies por minuto: quinientos, que es bajar de verdad. Nivelado y por encima
+ * del perfil no hace falta frenar nada: hace falta empezar a bajar.
+ */
+export const BAJANDO_DE_VERDAD = 500;
+
 function queHacerConTodo(l: Lectura, hundiendose: boolean): Consejo | null {
   const v = l.velocidad ?? "bien";
   const s = l.senda ?? "bien";
+  const porVelocidad = l.tecnica === "morroVelocidad";
+  const enElPerfil = l.modo === "bajada";
   if (hundiendose)
     return v === "lento"
       ? { accion: "masGas", motivo: "lento" }
-      : { accion: "narizArriba", motivo: "hundiendose" };
-  if (v === "lento")
+      : porVelocidad
+        ? // En el de cables, lo que frena la caída es el gas: el morro es la velocidad.
+          { accion: "masGas", motivo: "hundiendose" }
+        : { accion: "narizArriba", motivo: "hundiendose" };
+  if (v === "lento") {
+    if (l.tecnica === "gasVelocidad") return { accion: "masGas", motivo: "lento" };
+    if (porVelocidad)
+      // Con el morro la velocidad: abajo. Y si además se va bajo, el gas, que
+      // es lo único que no empeora ninguna de las dos.
+      return s === "bajo"
+        ? { accion: "masGas", motivo: "lento" }
+        : { accion: "narizAbajo", motivo: "lento" };
     return s === "alto"
       ? // Lento y alto: el morro abajo da velocidad y baja a la senda.
         { accion: "narizAbajo", motivo: "lento" }
       : // Lento y en la senda o bajo: gas, y la nariz quieta.
         { accion: "masGas", motivo: "lento" };
+  }
   if (v === "rapido") {
-    // Rápido y bajo: el morro arriba frena y sube a la senda.
-    if (s === "bajo") return { accion: "narizArriba", motivo: "bajo" };
+    if (porVelocidad) {
+      // Rápido y alto: quitar gas baja y, con el morro quieto, no acelera.
+      if (s === "alto")
+        return l.quedaGas
+          ? { accion: "menosGas", motivo: "alto" }
+          : l.puedeFrenar
+            ? { accion: "frenar", motivo: "rapido" }
+            : null;
+      // Por debajo del perfil, el morro que frena es el que baja más suave.
+      if (s === "bajo" && enElPerfil) return { accion: "nivelar", motivo: "bajo" };
+      return { accion: "narizArriba", motivo: "rapido" };
+    }
+    // Rápido y bajo: el morro arriba frena y sube a la senda. En el perfil,
+    // bajar más suave, que también frena: ahí no se sube.
+    if (s === "bajo")
+      return enElPerfil ? { accion: "nivelar", motivo: "bajo" } : { accion: "narizArriba", motivo: "bajo" };
     if (l.quedaGas) return { accion: "menosGas", motivo: "rapido" };
     if (l.puedeFrenar) return { accion: "frenar", motivo: "rapido" };
     // Sin gas que quitar y sin nada que frene no hay mando que pedir: si así
@@ -265,8 +352,44 @@ function queHacerConTodo(l: Lectura, hundiendose: boolean): Consejo | null {
     // los mínimos. Ver `porQueNoSeSigue`.
     return null;
   }
-  if (s === "alto") return { accion: "narizAbajo", motivo: "alto" };
-  if (s === "bajo") return { accion: "narizArriba", motivo: "bajo" };
+  if (s === "alto") {
+    /*
+     * **El «DRAG REQUIRED» de Boeing**: por encima del perfil, bajando, y el
+     * avión ya no baja más deprisa sin coger velocidad —el gas al mínimo, o
+     * el morro abajo del todo—. El ordenador de vuelo escribe eso, y lo que
+     * pide son los aerofrenos (Boeing 737 FCOM, *FMC Messages*, y el FCTM,
+     * cap. 4, *Descent — Speedbrakes*). Enrique, bajando a Gando desde el
+     * FL184 a todo lo que daba el avión y a la velocidad de su marca: «estás
+     * por encima de la senda, bajá un poquito», una y otra vez. «Estoy
+     * bajando lo que me da el avión… no puede decirme que voy mal, porque
+     * entonces yo ya no sé qué hacer.»
+     */
+    if (enElPerfil && l.alLimite && l.vertical < -BAJANDO_DE_VERDAD)
+      return l.puedeFrenar ? { accion: "frenar", motivo: "alto" } : null;
+    if (porVelocidad)
+      return l.quedaGas
+        ? { accion: "menosGas", motivo: "alto" }
+        : l.puedeFrenar
+          ? { accion: "frenar", motivo: "alto" }
+          : null;
+    return { accion: "narizAbajo", motivo: "alto" };
+  }
+  if (s === "bajo") {
+    /*
+     * **Por debajo del perfil de la bajada no se sube: se baja más suave, o
+     * se nivela un momento, y el perfil llega.** Es como se coge cualquier
+     * senda, desde abajo. A siete mil pies, con la ventanilla en dos mil cien
+     * y Gando a nivel del mar, la instructora le dijo a Enrique «un poco bajo
+     * para la pista, levantá suave»: ni era la pista ni había que subir.
+     */
+    if (enElPerfil)
+      return porVelocidad
+        ? { accion: "masGas", motivo: "bajo" }
+        : { accion: "nivelar", motivo: "bajo" };
+    return porVelocidad
+      ? { accion: "masGas", motivo: "bajo" }
+      : { accion: "narizArriba", motivo: "bajo" };
+  }
   return null;
 }
 
@@ -308,6 +431,8 @@ export class ConsejoDeLaBajada {
   private desvioAntes: number | null = null;
   /** A qué ritmo cambia el desvío, puntos por segundo, suavizado. */
   private ritmoDelDesvio = 0;
+  /** Desde cuándo no se da un consejo, s. Ver `ENTRE_CONSEJOS`. */
+  private desdeElUltimo = Infinity;
 
   /** Lo último que se dijo y si el avión respondió. Para el banco. */
   get ultimo(): (Consejo & { respondio: boolean }) | null {
@@ -321,6 +446,7 @@ export class ConsejoDeLaBajada {
     this.huboConsejo = false;
     this.desvioAntes = null;
     this.ritmoDelDesvio = 0;
+    this.desdeElUltimo = Infinity;
   }
 
   /** A qué ritmo va el desvío, puntos por segundo. Ver `YA_CORRIGE_DESVIO`. */
@@ -337,6 +463,7 @@ export class ConsejoDeLaBajada {
   }
 
   paso(l: Lectura): Paso {
+    this.desdeElUltimo += l.dt;
     this.seguirElDesvio(l);
     this.mirarLaRespuesta(l);
     if (!l.activo) {
@@ -450,6 +577,7 @@ export class ConsejoDeLaBajada {
   private sePuedeDar(c: Consejo, l: Lectura): boolean {
     const d = this.dado;
     if (!d) return true;
+    if (this.desdeElUltimo < ENTRE_CONSEJOS) return false;
     if (c.accion === d.consejo.accion)
       return d.resuelto || (!d.respondio && !d.muyFuera && muyFuera(c, l));
     if (contrarias(c.accion, d.consejo.accion))
@@ -472,6 +600,7 @@ export class ConsejoDeLaBajada {
     };
     this.huboConsejo = true;
     this.quiere = null;
+    this.desdeElUltimo = 0;
     return c;
   }
 
@@ -489,13 +618,24 @@ function respondio(d: Dado, l: Lectura): boolean {
     d.desvio !== null &&
     l.desvio !== null &&
     Math.abs(l.desvio) < Math.abs(d.desvio) - RESPONDE_DESVIO;
+  /*
+   * El gas que se pide para la senda —el avión de cables, o los aerofrenos
+   * del perfil— responde en el variómetro, no en la aguja: con el morro
+   * quieto, la velocidad se queda y lo que cambia es lo que se baja.
+   */
+  const porLaSenda = d.consejo.motivo === "alto" || d.consejo.motivo === "bajo";
   switch (d.consejo.accion) {
     case "masGas":
-      return l.aceleracion > RESPONDE_ACELERACION || l.kt - d.kt > RESPONDE_KT;
+      return porLaSenda || d.consejo.motivo === "hundiendose"
+        ? l.vertical - d.vertical > RESPONDE_VERTICAL || desvioMejor
+        : l.aceleracion > RESPONDE_ACELERACION || l.kt - d.kt > RESPONDE_KT;
     case "menosGas":
     case "frenar":
-      return l.aceleracion < -RESPONDE_ACELERACION || d.kt - l.kt > RESPONDE_KT;
+      return porLaSenda
+        ? d.vertical - l.vertical > RESPONDE_VERTICAL || desvioMejor
+        : l.aceleracion < -RESPONDE_ACELERACION || d.kt - l.kt > RESPONDE_KT;
     case "narizArriba":
+    case "nivelar":
       return l.vertical - d.vertical > RESPONDE_VERTICAL || desvioMejor;
     case "narizAbajo":
       return d.vertical - l.vertical > RESPONDE_VERTICAL || desvioMejor;
@@ -554,7 +694,18 @@ function muyFuera(c: Consejo, l: Lectura): boolean {
  * @param ritmoDelDesvio a qué ritmo cambia el desvío, puntos por segundo
  */
 function yaLoEstaCorrigiendo(c: Consejo, l: Lectura, ritmoDelDesvio = 0): boolean {
+  // Lo que se pide para la senda se ve en ella: el rombo yendo al medio.
+  const subeHaciaElla =
+    (l.verticalObjetivo !== null && l.vertical > l.verticalObjetivo + YA_CORRIGE_VERTICAL) ||
+    (l.desvio !== null && l.desvio < 0 && ritmoDelDesvio > YA_CORRIGE_DESVIO);
+  const bajaHaciaElla =
+    (l.verticalObjetivo !== null && l.vertical < l.verticalObjetivo - YA_CORRIGE_VERTICAL) ||
+    (l.desvio !== null && l.desvio > 0 && ritmoDelDesvio < -YA_CORRIGE_DESVIO);
+  if (c.motivo === "bajo" && c.accion !== "narizArriba") return subeHaciaElla;
+  if (c.motivo === "alto" && c.accion !== "narizAbajo") return bajaHaciaElla;
   switch (c.accion) {
+    case "nivelar":
+      return subeHaciaElla;
     case "masGas":
       return l.aceleracion > YA_CORRIGE_ACELERACION;
     case "menosGas":
@@ -644,7 +795,19 @@ const UNA = (clave: string, forma = 0): Forma => ({ clave, forma });
  * *sink rate*. De las formas de los aros se quedan las que piden un solo
  * mando: «Venís bajo. Tirá un poquito y un toque de motor» pide dos.
  */
-export function fraseDe(c: Consejo, objetivo: Objetivo, frena: "flaps" | "aerofrenos"): Frase {
+export function fraseDe(
+  c: Consejo,
+  objetivo: Objetivo,
+  frena: "flaps" | "aerofrenos",
+  /**
+   * **Por qué senda**: la del perfil de la bajada (`VDEV`) o la de la final.
+   * Las del perfil hablan del perfil, no de la pista: «un poco bajo para la
+   * pista» a siete mil pies no es verdad. Sin decir, la de la final.
+   */
+  modo: "bajada" | "final" = "final",
+): Frase {
+  const perfil = modo === "bajada";
+  const luces = objetivo === "papi";
   switch (c.accion) {
     /*
      * **La marca, solo donde hay marca.** La cinta de los de cristal la lleva
@@ -653,18 +816,48 @@ export function fraseDe(c: Consejo, objetivo: Objetivo, frena: "flaps" | "aerofr
      * una marca que no existe.
      */
     case "masGas":
+      /*
+       * **El gas por la senda**, en el avión de cables: lo que lo sube o lo
+       * baja es el gas. Ninguna grabada lo pide sin decir «venís lento», que
+       * no es lo que pasa: se ve en la tarjeta y la voz espera su grabación.
+       */
+      if (c.motivo === "bajo")
+        return {
+          nueva: perfil
+            ? "vuelo.consejo.masGasPerfil"
+            : luces
+              ? "vuelo.consejo.masGasPapi"
+              : "vuelo.consejo.masGasSenda",
+          grabadas: [],
+          corta: "palabra.masGas",
+        };
+      if (c.motivo === "hundiendose")
+        return { nueva: "vuelo.consejo.masGasSuave", grabadas: [], corta: "palabra.masGas" };
       return {
         nueva: objetivo === "marca" ? "vuelo.consejo.masGas" : null,
         grabadas: [UNA("vuelo.lentoYBajo")],
         corta: "palabra.masGas",
       };
     case "menosGas":
+      if (c.motivo === "alto")
+        return {
+          nueva: perfil
+            ? "vuelo.consejo.menosGasPerfil"
+            : luces
+              ? "vuelo.consejo.menosGasPapi"
+              : "vuelo.consejo.menosGasSenda",
+          grabadas: [UNA("tutor.slow")],
+          corta: "palabra.menosGas",
+        };
       return {
         nueva: objetivo === "marca" ? "vuelo.consejo.menosGas" : null,
         grabadas: [UNA("tutor.slow")],
         corta: "palabra.menosGas",
       };
     case "frenar":
+      // Los aerofrenos del perfil: el «DRAG REQUIRED». Ver `queHacer`.
+      if (c.motivo === "alto" && frena === "aerofrenos")
+        return { nueva: "vuelo.consejo.aerofrenosPerfil", grabadas: [], corta: "palabra.aerofrenos" };
       return frena === "flaps"
         ? { nueva: null, grabadas: [UNA("vuelo.pediFlaps")], corta: "palabra.flaps" }
         : {
@@ -672,6 +865,13 @@ export function fraseDe(c: Consejo, objetivo: Objetivo, frena: "flaps" | "aerofr
             grabadas: [],
             corta: "palabra.aerofrenos",
           };
+    /*
+     * **Por debajo del perfil, bajar más suave o nivelar**: ninguna grabada
+     * lo dice —las de los aros piden subir—, así que hasta tener la suya se
+     * ve y no se oye.
+     */
+    case "nivelar":
+      return { nueva: "vuelo.consejo.nivelarPerfil", grabadas: [], corta: "palabra.nivela" };
     case "narizAbajo": {
       if (objetivo === "aro")
         return {
@@ -679,15 +879,29 @@ export function fraseDe(c: Consejo, objetivo: Objetivo, frena: "flaps" | "aerofr
           grabadas: [UNA("vuelo.aroAlto"), UNA("vuelo.aroAlto", 1), UNA("vuelo.aroAlto", 2), UNA("vuelo.aroAlto", 3)],
           corta: "palabra.narizAbajo",
         };
+      // La del perfil no nombra la pista: de las de los aros, la que no la nombra.
       const grabadas =
         c.motivo === "lento" ? [UNA("vuelo.planeoLento")] : [UNA("vuelo.aroAlto", 1)];
       return {
-        nueva: objetivo === "papi" ? "vuelo.consejo.narizAbajoPapi" : "vuelo.consejo.narizAbajoSenda",
+        nueva:
+          c.motivo === "lento"
+            ? "vuelo.consejo.narizAbajoMarca"
+            : perfil
+              ? "vuelo.consejo.narizAbajoPerfil"
+              : luces
+                ? "vuelo.consejo.narizAbajoPapi"
+                : "vuelo.consejo.narizAbajoSenda",
         grabadas,
         corta: "palabra.narizAbajo",
       };
     }
     case "narizArriba": {
+      // Rápido en el de cables: con el morro la velocidad.
+      if (c.motivo === "rapido")
+        return { nueva: "vuelo.consejo.narizArribaMarca", grabadas: [], corta: "palabra.narizArriba" };
+      // En el perfil no se sube: se baja más suave. Ver `nivelar`.
+      if (perfil && c.motivo !== "hundiendose")
+        return { nueva: "vuelo.consejo.nivelarPerfil", grabadas: [], corta: "palabra.nivela" };
       if (c.motivo === "hundiendose")
         return {
           nueva: objetivo === "ritmo" ? "vuelo.consejo.narizArribaRitmo" : "vuelo.consejo.narizArribaSuave",
@@ -717,7 +931,17 @@ export function fraseDe(c: Consejo, objetivo: Objetivo, frena: "flaps" | "aerofr
  * low, climb* son de la tripulación; *sink rate* lo canta la caja por su
  * cuenta y aquí solo se le pone la explicación.
  */
-export function cantoDe(c: Consejo, cajaDeLento: boolean): string {
+export function cantoDe(
+  c: Consejo,
+  cajaDeLento: boolean,
+  modo: "bajada" | "final" = "final",
+): string | null {
+  /*
+   * **Y por debajo del perfil de la bajada, ninguno**: *too low, climb* es de
+   * la final, y en el perfil no se sube. Ahí la tarjeta, y en los peldaños de
+   * abajo la instructora. Ver `queHacer`.
+   */
+  if (modo === "bajada" && c.motivo === "bajo") return null;
   return CANTOS[c.motivo === "lento" && cajaDeLento ? "lentoConCaja" : c.motivo];
 }
 

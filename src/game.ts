@@ -117,7 +117,7 @@ import {
   sueloDelTrafico,
   type SueloDelTrafico,
 } from "./world/suelo-del-trafico";
-import { MILLA, type Mapa } from "./ui/carta";
+import { MILLA, rangoConMemoria, type Mapa, type RangoElegido } from "./ui/carta";
 import { ponerTamanoMinimo } from "./world/se-ve-de-lejos";
 import {
   Tcas,
@@ -894,12 +894,14 @@ import {
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
 import {
+  alturaDeLaSendaDeLaFinal,
   arcoDeAltitud,
   desvioEnLaBajada,
   desvioEnLaFinal,
   equipoDeSenda,
   juzgarLaSenda,
   juzgarLaVelocidadEnLaBajada,
+  ritmoDeLaSenda,
   sendaMuyFuera,
   velocidadMuyFuera,
   type Desvio,
@@ -914,6 +916,7 @@ import {
   type Consejo,
   type Lectura as LecturaDelConsejo,
   type Objetivo,
+  type Tecnica,
 } from "./flight/consejo-de-la-bajada";
 import {
   callar,
@@ -11278,6 +11281,9 @@ export class Game {
     // Y a qué velocidad corre: los frenos de tierra salen solos corriendo, no
     // rodando por la plataforma. Ver `flight/palanca-de-aerofrenos.ts`.
     this.input.velocidadEnElSuelo = this.flight.state.groundSpeed;
+    // Y si el gas es la velocidad, que en Guyrami no cierra los aerofrenos de
+    // vuelo. Ver `LoQueVeLaPalanca.gasEsVelocidad`.
+    this.input.gasEsVelocidad = this.tier.model === "simple";
     // Y hasta dónde pueden bajar los flaps: el alivio de carga o unos flaps
     // tocados. Antes de mover los mandos, que es quien los lleva.
     this.atenderALosFlaps(dt);
@@ -12747,6 +12753,8 @@ export class Game {
         fma: this.elFma(),
         // Y los mínimos puestos, los mismos también. Ver `losMinimosPuestos`.
         minimos: this.losMinimosPuestos(),
+        // Y la cota de la pista, la del cuadro plano. Ver `cotaParaLaCinta`.
+        cotaDeLaPista: this.cotaParaLaCinta(),
         // Y la senda, la marca del ritmo y el arco: los del cuadro plano.
         perfil: this.perfilParaElCuadro(),
         // Y en tierra, la GS de rodar: la del cuadro plano.
@@ -12945,6 +12953,7 @@ export class Game {
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
         minimos: this.losMinimosPuestos(),
+        cotaDeLaPista: this.cotaParaLaCinta(),
         // Y en tierra, la GS de rodar. Ver `rodajeParaElCuadro`.
         rodaje: this.rodajeParaElCuadro(),
         /*
@@ -17882,7 +17891,7 @@ export class Game {
     const enLaFinal =
       this.objetivos.altitud !== null && this.navegacion.enElTramoFinal(lecturaDeAhora);
     if (enLaFinal) {
-      const senda = this.navegacion.sendaDeLaFinal(lecturaDeAhora);
+      const senda = this.sendaDelGs();
       const sobreLaPista = s.position.y - this.cotaDelCampo(this.elCampo());
       /*
        * **Y a seiscientos pies se suelta para aterrizar a mano.** Un
@@ -18281,13 +18290,59 @@ export class Game {
     );
     const alUmbral = -along - pista.length / 2;
     if (alUmbral < 0 || alUmbral > 25000 || Math.abs(across) > 2500) return null;
+    /*
+     * **Hasta noventa grados de corte**, que es lo que admite la captura de
+     * un localizador. Se paraba en cuarenta y cinco, y la RNP de la 03L de
+     * Gando gira cuarenta y siete en FALPU para entrar en la final: el
+     * automático se quedaba en `HDG HOLD` con el rumbo del tramo de antes y
+     * se iba de la final hacia el monte. «Suele salirse el avión y tengo que
+     * llevarlo yo a ojo.»
+     */
     const torcido = (((s.heading * 180) / Math.PI - pista.heading + 540) % 360) - 180;
-    if (Math.abs(torcido) > 45) return null;
+    if (Math.abs(torcido) > 90) return null;
     // A kilómetro y medio por delante: una entrada en el eje de unos treinta
     // grados como mucho, que es como captura un localizador.
     const corrige = Math.max(-Math.PI / 6, Math.min(Math.PI / 6, -Math.atan(across / 1500)));
-    const rumbo = (pista.heading * Math.PI) / 180 + corrige;
+    /*
+     * **Y la derrota, no el rumbo**: lo que tiene que ir por el eje es el
+     * camino sobre el suelo. Con viento cruzado el morro va al viento, y un
+     * localizador que pide el rumbo de la pista se queda a un lado del eje,
+     * tanto más cuanto más sopla: con diez nudos de costado en la final del
+     * JAZ 120, unos cien metros, media pista paralela en Gando. Se pide la
+     * derrota que corrige hacia el eje y se le suma la deriva de ahora, que
+     * es lo que hace el de verdad.
+     */
+    const v = s.velocity;
+    const deriva =
+      Math.hypot(v.x, v.z) > 10
+        ? (((s.heading - Math.atan2(v.x, -v.z)) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI) - Math.PI
+        : 0;
+    const rumbo = (pista.heading * Math.PI) / 180 + corrige + Math.max(-0.35, Math.min(0.35, deriva));
     return ((rumbo % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  }
+
+  /**
+   * **La senda que baja el `G/S` del automático**: la misma que pinta el
+   * rombo y que juzga la instructora —tres grados desde las luces del PAPI, o
+   * desde donde irían—, con la misma cota y la misma distancia. Ver
+   * `origenDeLaSenda` y `mirarLaSenda`.
+   *
+   * Era otra: la del plan, de tres grados por lo que quedaba de ruta hasta
+   * el umbral mismo y estirada con el viento. Así el automático bajaba la
+   * final unos quince metros por debajo de la senda del rombo al llegar —el
+   * umbral contra las luces, que van trescientos metros pista adentro— y más
+   * con viento de cola; el rombo decía «bajo» con el automático haciendo lo
+   * suyo. Una senda es un haz quieto en el suelo, y es una para todos.
+   */
+  private sendaDelGs(): { readonly altitud: number; readonly ritmo: number } {
+    const s = this.flight.state;
+    const o = this.origenDeLaSenda();
+    const a = this.campoParaLaAproximacion();
+    const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
+    return {
+      altitud: a.cota + alturaDeLaSendaDeLaFinal(suelo),
+      ritmo: ritmoDeLaSenda(s.groundSpeed),
+    };
   }
 
   /**
@@ -19127,6 +19182,22 @@ export class Game {
       this.sendaJuzgada === "bajo" && s.verticalSpeed * PIES_POR_MINUTO > -300
         ? "bien"
         : this.sendaJuzgada;
+    /*
+     * **Con qué se lleva qué en este avión**, que es lo que dice cada consejo.
+     * El de cables sin gases automáticos, en el modelo completo y sin el
+     * automático en la senda, se vuela con el morro en la velocidad y el gas
+     * en la senda: soltándolo vuelve a su velocidad compensada. Todos los
+     * demás, al revés. Ver `Tecnica` y el ADR 0017.
+     */
+    const tecnica: Tecnica =
+      this.tier.model === "simple"
+        ? "gasVelocidad"
+        : this.aircraft.mandos === "convencionales" &&
+            !this.gasesPuestos &&
+            this.gasDeLaFinal === null &&
+            this.objetivos.altitud === null
+          ? "morroVelocidad"
+          : "morroSenda";
     this.lecturaDelConsejo = {
       activo,
       soloLoUrgente: pasadaLaPuerta,
@@ -19134,8 +19205,16 @@ export class Game {
       // llevan ellos.
       velocidad: this.gasesPuestos || this.gasDeLaFinal !== null ? null : this.velocidadJuzgada,
       velocidadMuyFuera: velocidadMuyFuera(kt, marca),
-      // Y con el automático en la senda, la senda.
-      senda: this.objetivos.altitud !== null ? null : sendaQueSeAconseja,
+      /*
+       * **Y la senda, también con el automático en ella**: el morro es suyo y
+       * no se le pide a quien vuela —ver `queHacer`—, pero si baja por encima
+       * del perfil con el gas al mínimo, los aerofrenos sí, que es justo
+       * cuando el ordenador de un Boeing escribe «DRAG REQUIRED».
+       */
+      senda: sendaQueSeAconseja,
+      tecnica,
+      // El avión ya no baja más deprisa: el gas al mínimo o el morro a fondo.
+      alLimite: c.throttle < 0.25 || c.elevator <= -0.9,
       sendaMuyFuera: d ? sendaMuyFuera(d) : false,
       hundiendose: this.actitudDicha === "sink rate",
       morroDelAutomatico: this.objetivos.altitud !== null,
@@ -19185,7 +19264,7 @@ export class Game {
     if (!p) return;
     // Lo corregido se celebra, con la senda y su visto. Ver `loCorregiste`.
     if (p === "bien") this.hechos.emit("loCorregiste", {});
-    else this.decirElConsejo(p, cantoDe(p, false));
+    else this.decirElConsejo(p, cantoDe(p, false, l.modo));
   }
 
   /**
@@ -19215,10 +19294,12 @@ export class Game {
    * `ingles` es lo que suena en el peldaño de cabina, o la caja que acaba de
    * cantar y a la que esto explica. Ver `cantoDe` y `cantar`.
    */
-  private decirElConsejo(c: Consejo, ingles: string, objetivo?: Objetivo): void {
+  private decirElConsejo(c: Consejo, ingles: string | null, objetivo?: Objetivo): void {
+    // El gas o los aerofrenos que se piden por la senda apuntan a la senda.
+    const porLaSenda = c.motivo === "alto" || c.motivo === "bajo";
     const apunta: Objetivo =
       objetivo ??
-      (c.accion === "masGas" || c.accion === "menosGas" || c.accion === "frenar"
+      ((c.accion === "masGas" || c.accion === "menosGas" || c.accion === "frenar") && !porLaSenda
         ? this.hayMarcaDeVelocidad()
           ? "marca"
           : "nada"
@@ -19227,8 +19308,9 @@ export class Game {
             ? "ritmo"
             : "nada"
           : this.objetivoDeLaSenda);
-    const frena = this.desvioAhora?.modo === "bajada" ? "aerofrenos" : "flaps";
-    const f = fraseDe(c, apunta, frena);
+    const modo = this.desvioAhora?.modo ?? "final";
+    const frena = modo === "bajada" ? "aerofrenos" : "flaps";
+    const f = fraseDe(c, apunta, frena, modo);
     let forma: { readonly texto: string; readonly id: string } | null = null;
     if (f.nueva && this.instructor.vozDe(f.nueva))
       forma = { texto: t(f.nueva as TranslationKey), id: f.nueva };
@@ -19258,9 +19340,7 @@ export class Game {
         ? this.runwayGuide.porCuanto
         : (apunta === "senda" || apunta === "papi") &&
             d !== null &&
-            (c.accion === "narizAbajo" || c.accion === "narizArriba") &&
-            c.motivo !== "hundiendose" &&
-            c.motivo !== "lento"
+            porLaSenda
           ? d.metros
           : null;
     const conCifra =
@@ -19274,13 +19354,15 @@ export class Game {
           ? "gas-menos"
           : c.accion === "frenar"
             ? frena
-            : c.accion === "narizAbajo"
-              ? apunta === "aro"
-                ? "aro-alto"
-                : "nariz-abajo"
-              : apunta === "aro"
-                ? "aro-bajo"
-                : "nariz-arriba";
+            : c.accion === "nivelar"
+              ? "nivelar"
+              : c.accion === "narizAbajo"
+                ? apunta === "aro"
+                  ? "aro-alto"
+                  : "nariz-abajo"
+                : apunta === "aro"
+                  ? "aro-bajo"
+                  : "nariz-arriba";
     this.hud.senal.mostrar(
       comoDibujo(dibujo),
       this.rotuloCompuesto(conCifra, f.corta as TranslationKey),
@@ -19288,14 +19370,29 @@ export class Game {
       {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
-        ...(c.accion === "frenar" && frena === "flaps"
-          ? { tecla: nombreDeTecla(this.input.preferredKey("flaps")) }
+        // Con su tecla, la de los flaps o la de los aerofrenos: es lo que se pide.
+        ...(c.accion === "frenar"
+          ? {
+              tecla: nombreDeTecla(
+                this.input.preferredKey(frena === "flaps" ? "flaps" : "aerofrenos"),
+              ),
+            }
           : {}),
       },
     );
     this.apuntarCanto(
-      `consejo ${c.accion} (${c.motivo}, ${apunta}) → ${forma?.id ?? "sin voz"}`,
+      `consejo ${c.accion} (${c.motivo}, ${apunta}, ${modo}) → ${forma?.id ?? "sin voz"}`,
     );
+    /*
+     * **Sin canto de cabina**, que es por debajo del perfil de la bajada: en
+     * los peldaños de abajo lo dice la instructora, si tiene su grabación; en
+     * el de cabina queda la tarjeta. Ver `cantoDe`.
+     */
+    if (ingles === null) {
+      if (forma && laInstructoraLoExplica(this.tier.avisos))
+        this.instructor.decir(forma.texto, forma.id);
+      return;
+    }
     this.cantar(ingles, forma?.texto, forma?.id);
   }
 
@@ -19351,6 +19448,10 @@ export class Game {
       tren: this.aircraft.trenRetractil ? this.input.trenQueSePide : null,
       trenQuePide: trenQuePide(this.aircraft, v.peldano),
       aerofrenos: this.input.aerofrenosAbiertos,
+      // Por encima del perfil, los aerofrenos son para bajar: no se recogen.
+      altoEnElPerfil: this.desvioAhora?.modo === "bajada" && this.sendaJuzgada === "alto",
+      // La cota de la pista a la que se va, la de debajo de la cinta.
+      cotaDeLaPista: this.elDestino() ? this.cotaParaLaCinta() : null,
       dt,
     };
   }
@@ -19474,6 +19575,9 @@ export class Game {
    */
   private numerosDelPaso(p: PasoDeLaCadena): string | null {
     const u = UNIT_SYSTEMS[this.tier.units];
+    // La cota, sola: la velocidad no tiene que ver con ella.
+    if (p.que === "cota" && p.objetivo.pies !== null)
+      return `${Math.round(u.altitude(p.objetivo.pies * PIE_EN_METROS))} ${u.altitudeLabel()}`;
     const partes = [`${Math.round(u.speed(p.objetivo.kt * NUDO))} ${u.speedLabel()}`];
     if (p.objetivo.pies !== null)
       partes.push(
@@ -19524,6 +19628,9 @@ export class Game {
         return `SPEEDBRAKE DOWN · ${kt}`;
       case "senda":
         return `FINAL · ${kt}`;
+      // Como la escribe la carta junto a la pista. Ver `cotaEscrita`.
+      case "cota":
+        return `ELEV ${p.objetivo.pies ?? 0} FT`;
     }
   }
 
@@ -21055,7 +21162,7 @@ export class Game {
    * una brújula sobre un fondo vacío: «en Lanzarote no veo la pista».
    */
   private elMapa(): Mapa {
-    return {
+    const m: Mapa = {
       x: this.flight.state.position.x,
       z: this.flight.state.position.z,
       /*
@@ -21142,7 +21249,16 @@ export class Game {
        */
       ruta: this.rutaParaLaCarta(),
     };
+    /*
+     * **Y el rango, con memoria**: el mismo para las dos superficies, y sin
+     * cerrarse mientras se va hacia el punto. Ver `rangoConMemoria`.
+     */
+    this.rangoDeLaCarta = rangoConMemoria(m, this.rangoDeLaCarta, this.flight.state.onGround);
+    return { ...m, rango: this.rangoDeLaCarta.rango };
   }
+
+  /** El último rango que eligió la carta. Ver `rangoConMemoria`. */
+  private rangoDeLaCarta: RangoElegido | null = null;
 
   /**
    * **La cota del umbral de la pista a la que se va**, m: la del plan si se va
@@ -21197,6 +21313,8 @@ export class Game {
   private contarLaCotaDeLaPista(): void {
     if (this.tier.avisos !== "cifra" || this.cotaContada || !this.elDestino()) return;
     this.cotaContada = true;
+    // Si ya la dijo la cadena al empezar a bajar, no se cuenta dos veces.
+    if (this.cadena.yaDicho("cota")) return;
     const cota = this.cotaDeLaPistaALaQueSeVa();
     const escrita =
       this.tier.units === "metric"
@@ -21209,6 +21327,26 @@ export class Game {
 
   /** Si en este tramo ya se contó la cota de la pista de llegada. */
   private cotaContada = false;
+
+  /**
+   * **La cota de la pista a la que se va, en la cinta de altitud**, pies, o
+   * `null` sin pista a la que ir.
+   *
+   * Enrique, en Guyrami: «sigo sin saber la altitud de la pista… ¿cuánto
+   * tengo que bajar? ¿Eso no lo sabe el piloto?». Lo sabe: la pantalla de
+   * vuelo de un Boeing la pinta en la cinta de altitud —la marca de la
+   * altitud de aterrizaje, con el suelo rayado debajo— y la carta la escribe
+   * junto a la pista. Aquí estaba desde el tercer peldaño, en letras; en los
+   * de abajo no había nada. Ahora la cinta pinta la pista **a su cota** —la
+   * ponía siempre en el cero, y Los Rodeos está a 2.073 pies— y debajo de la
+   * cinta va la cifra con el dibujo de una pista, en los cuatro peldaños.
+   * En pies, que es como marca la cinta. Ver `cintaDeAltitud` en
+   * `ui/cristal.ts`.
+   */
+  private cotaParaLaCinta(): number | null {
+    if (!this.scenario.aerodrome) return null;
+    return Math.round(this.cotaDeLaPistaALaQueSeVa() / PIE_EN_METROS);
+  }
 
   /** Los mínimos puestos, para el banco. Ver `losMinimosPuestos`. */
   get minimosParaBanco(): { pies: number; enEllos: boolean } | null {

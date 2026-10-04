@@ -79,6 +79,16 @@ describe("la palanca de los aerofrenos", () => {
     expect(sale.aerofrenos).toBe(0);
   });
 
+  it("pero no en Guyrami, donde el gas es la velocidad y no el empuje", () => {
+    // Bajando a Gando a 266 nudos el gas va a 0,95: los aerofrenos que pide
+    // la instructora por encima del perfil se cerraban al sacarlos.
+    const p = palanca();
+    p.ponerPalanca("fuera");
+    const sale = durante(p, 3, { ...EN_EL_AIRE, gas: 0.95, gasEsVelocidad: true });
+    expect(p.palanca).toBe("fuera");
+    expect(sale.aerofrenos).toBe(1);
+  });
+
   it("armada en el aire no saca nada", () => {
     const p = palanca();
     p.ponerPalanca("armada");

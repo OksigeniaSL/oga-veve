@@ -165,6 +165,8 @@ export interface ControlInputs {
 export interface LoSacado {
   readonly flaps: number;
   readonly tren: number;
+  /** Los aerofrenos de vuelo, de 0 a 1, en el avión que los lleva. */
+  readonly aerofrenos?: number;
 }
 
 export function neutralControls(): ControlInputs {

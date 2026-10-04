@@ -68,7 +68,12 @@ interface Oido {
  * vuela es un alumno aplicado: va a la marca de velocidad poco a poco, saca
  * el tren y los flaps un par de segundos después de que se los pidan.
  */
-function volar(a: AircraftConfig, trozos: readonly Trozo[], cadena = new CadenaDelVuelo()): {
+function volar(
+  a: AircraftConfig,
+  trozos: readonly Trozo[],
+  cadena = new CadenaDelVuelo(),
+  extra: Partial<LecturaDelPaso> = {},
+): {
   oido: Oido[];
   porFotograma: number[];
 } {
@@ -125,6 +130,7 @@ function volar(a: AircraftConfig, trozos: readonly Trozo[], cadena = new CadenaD
         tren: a.trenRetractil ? tren : null,
         trenQuePide: trenQuePide(a, v.peldano),
         dt: DT,
+        ...extra,
       };
       const p = cadena.paso(l);
       porFotograma.push(p ? 1 : 0);
@@ -138,6 +144,18 @@ function volar(a: AircraftConfig, trozos: readonly Trozo[], cadena = new CadenaD
   }
   return { oido, porFotograma };
 }
+
+/** Cómo va el avión, por defecto: a mano y sin nada puesto. */
+const COMO: ComoVa = {
+  gasDelAutomatico: false,
+  alturaDelAutomatico: false,
+  velocidadConElMorro: false,
+  quedaGas: true,
+  aerofrenos: false,
+  conTorre: false,
+  gasHacia: null,
+  gasDeLaFinal: null,
+};
 
 /** El vuelo entero del JAZ 90, de Los Rodeos a La Palma pero más largo. */
 const VUELO: readonly Trozo[] = [
@@ -205,6 +223,27 @@ describe("la cadena del «¿y ahora qué?»", () => {
     expect(que["velocidad:terminal:llegada"]!.objetivo.kt).toBeLessThanOrEqual(220);
     expect(que.final!.que).toBe("senda");
     expect(que.final!.objetivo.kt).toBe(Math.round(vrefKt(a) + 5));
+  });
+
+  it("y empezada la bajada, a qué altura del mar está la pista: sin llevarse ningún otro paso", () => {
+    // Enrique, en Guyrami: «sigo sin saber la altitud de la pista… ¿cuánto
+    // tengo que bajar? ¿Eso no lo sabe el piloto?».
+    const a = de("jaz-90");
+    const sin = volar(a, VUELO).oido.map((o) => o.paso.escalon);
+    const { oido } = volar(a, VUELO, new CadenaDelVuelo(), { cotaDeLaPista: 79 });
+    const con = oido.map((o) => o.paso.escalon);
+    expect(con.filter((e) => e !== "cota")).toEqual(sin);
+    expect(con.indexOf("cota")).toBeGreaterThan(con.indexOf("descenso"));
+    const cota = oido.find((o) => o.paso.escalon === "cota")!.paso;
+    expect(cota.objetivo.pies).toBe(79);
+    const dicho = comoSeDice(cota, COMO);
+    expect(dicho.nueva).toBe("vuelo.paso.cotaAlMar");
+    expect(dicho.mando).toBeNull();
+    expect(DIBUJOS).toHaveProperty(dicho.dibujo);
+    // Y la de Los Rodeos, a 2.073 pies, se resta.
+    expect(comoSeDice({ ...cota, objetivo: { ...cota.objetivo, pies: 2073 } }, COMO).nueva).toBe(
+      "vuelo.paso.cotaEnAlto",
+    );
   });
 
   it("y nunca dos a la vez: un paso por fotograma, con un respiro entre dos", () => {
@@ -422,6 +461,12 @@ describe("la cadena del «¿y ahora qué?»", () => {
     for (let i = 0; i < 20 && !p; i++)
       p = otra.paso({ ...base, peldano: "segundos-flaps", marca: 152, kt: 190, flaps: 1, flapsQuePide: 2, tren: true });
     expect(p?.que).toBe("recogerAerofrenos");
+    // Pero por encima del perfil están fuera para bajar, no para frenar: el
+    // «DRAG REQUIRED» de la instructora. Ahí, en la marca, se quedan.
+    const alto = new CadenaDelVuelo();
+    for (const e of ["subida", "crucero", "descenso", "velocidad:terminal:llegada"]) cadenaDiga(alto, e);
+    for (let i = 0; i < 20; i++) expect(alto.paso({ ...base, kt: 214, altoEnElPerfil: true })).toBeNull();
+    expect(alto.paso({ ...base, kt: 214 })?.que).toBe("recogerAerofrenos");
   });
 
   it("y la velocidad de la llegada se dice aunque la subida no se haya dicho", () => {

@@ -56,6 +56,70 @@ export function rangoPara(millas: number): number {
   return RANGOS[RANGOS.length - 1]!;
 }
 
+/**
+ * **El rango que eligió la carta y por qué**, para elegir el siguiente con
+ * memoria. Ver `rangoConMemoria`.
+ */
+export interface RangoElegido {
+  readonly rango: number;
+  /**
+   * Lo que se estaba mirando: el punto del plan al que se iba
+   * —«fijo:3»—, la pista en el aire o la pista en tierra.
+   */
+  readonly clave: string;
+}
+
+/**
+ * **El rango, con memoria: no se cierra mientras se va hacia lo que se mira.**
+ *
+ * Elegido sin memoria, el rango se cerraba cada vez que el punto siguiente
+ * pasaba de los cuatro quintos del rango de abajo: el punto bajaba por la
+ * pantalla hacia el avión y, de golpe, volvía a salir arriba, otra vez a la
+ * misma distancia del avión en el cristal. Enrique, bajando a Gando: «esa
+ * marca, es la cuarta vez que aparece más adelante… cuando estoy llegando,
+ * se recoloca el radar y me pone el símbolo otra vez más adelante». Es la
+ * zanahoria delante del burro: una carta que nunca deja ver que se llega.
+ *
+ * Un piloto no toca el mando del rango mientras va hacia un punto: lo deja
+ * bajar por la pantalla hasta él. Así que:
+ *
+ * - **Se abre** siempre que haga falta para que quepa lo que se mira.
+ * - **Se cierra** solo **al pasar el punto** —el siguiente se mira de cero— o
+ *   **cuando el que viene detrás ya cabe** en el rango de abajo: entonces se
+ *   cierra para ver los dos, el punto y el giro que sigue.
+ * - **Con la pista**, en el aire, se cierra cuando la pista cabe en la mitad
+ *   del rango de abajo, no en sus cuatro quintos: el salto es uno, y pequeño.
+ * - **En tierra, sin memoria**, como siempre: ahí se mira la pista y lo que
+ *   rueda alrededor.
+ */
+export function rangoConMemoria(
+  m: Mapa | null,
+  antes: RangoElegido | null,
+  enTierra: boolean,
+): RangoElegido {
+  if (!m) return { rango: RANGOS[1]!, clave: "nada" };
+  const ruta = m.ruta;
+  const siguiente = ruta?.abreElRango ? ruta.fijos[ruta.activo] : undefined;
+  const despues = siguiente ? ruta?.fijos[ruta.activo + 1] : undefined;
+  let lejos = siguiente
+    ? millasHasta(siguiente, m)
+    : m.pista
+      ? millasHasta(m.pista, m)
+      : RANGOS[1]!;
+  for (const o of m.otros) if (o.abreElRango) lejos = Math.max(lejos, millasHasta(o, m));
+  const hace = rangoPara(lejos);
+  const clave = enTierra ? "tierra" : siguiente ? `fijo:${ruta!.activo}` : "pista";
+  if (enTierra || !antes || antes.clave !== clave || hace > antes.rango)
+    return { rango: hace, clave };
+  if (siguiente) {
+    // Se cierra para ver los dos, el punto y el que viene detrás.
+    const ambos = despues ? rangoPara(Math.max(lejos, millasHasta(despues, m))) : antes.rango;
+    return { rango: Math.min(antes.rango, ambos), clave };
+  }
+  const abajo = RANGOS[RANGOS.indexOf(antes.rango as (typeof RANGOS)[number]) - 1];
+  return { rango: abajo !== undefined && lejos <= abajo * 0.5 ? abajo : antes.rango, clave };
+}
+
 /** Un punto del mundo, en metros. */
 export interface Punto {
   readonly x: number;
@@ -244,6 +308,14 @@ export interface Mapa {
    * recto y estable tengo que abrirme, para eso existen los planes de vuelo.»
    */
   readonly ruta?: RutaDeLaCarta | null;
+
+  /**
+   * **El rango ya elegido, con su memoria**, si quien pide la carta la
+   * lleva: lo pide cada fotograma en las dos superficies, y la memoria es
+   * del vuelo, no de cada una. Sin él, se elige aquí sin memoria. Ver
+   * `rangoConMemoria`.
+   */
+  readonly rango?: number;
 }
 
 /** El plan de vuelo como lo necesita la carta. Ver `Mapa.ruta`. */
@@ -465,6 +537,13 @@ export interface Dibujo {
     /** El punto al que se va, con sus millas: lo de arriba a la derecha. */
     readonly siguiente: { nombre: string; millas: number } | null;
     readonly hora: string | null;
+    /**
+     * **Lo que falta del tramo**, de 1 al salir del punto de antes a 0 al
+     * llegar al siguiente, o `null` si no hay tramo. Es la barra que dice sin
+     * leer que el punto se acerca: se vacía al llegar y se llena al pasarlo.
+     * Ver `rangoConMemoria`, que es su otra mitad.
+     */
+    readonly falta: number | null;
   } | null;
 }
 
@@ -620,7 +699,7 @@ export function dibujarLaCarta(
   // Y lo que el piloto abriría el rango para ver. Ver `Otro.abreElRango`.
   for (const o of m?.otros ?? [])
     if (o.abreElRango) lejos = Math.max(lejos, millasHasta(o, m!));
-  const rango = rangoPara(lejos);
+  const rango = m?.rango ?? rangoPara(lejos);
   const por = pixelesPorMetro(rango, r);
   if (!m)
     return {
@@ -752,6 +831,8 @@ function rutaEnLaCarta(
           : null,
     }));
   const sig = ruta.fijos[ruta.activo];
+  const antes = ruta.fijos[ruta.activo - 1];
+  const tramo = sig && antes ? millasHasta(sig, antes) : 0;
   return {
     linea,
     fijos,
@@ -760,6 +841,10 @@ function rutaEnLaCarta(
     crucero: ruta.crucero ?? null,
     siguiente: sig ? { nombre: sig.nombre, millas: millasHasta(sig, yo) } : null,
     hora: ruta.hora,
+    falta:
+      sig && tramo > 0.05 && ruta.abreElRango
+        ? Math.max(0, Math.min(1, millasHasta(sig, yo) / tramo))
+        : null,
   };
 }
 

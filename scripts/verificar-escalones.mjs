@@ -113,10 +113,26 @@ try {
         let pendiente = null;
         let soltado = null;
         let fin = "tope";
+        /*
+         * **Y la hora del plan, contra la de verdad.** Enrique, de
+         * Fuerteventura a Gran Canaria: la comandante dijo quince minutos al
+         * empezar a bajar y a los quince aún quedaban la final y la toma. Se
+         * apunta lo que decía el plan al salir y en el punto de descenso, y lo
+         * que tardó de verdad hasta tocar.
+         */
+        let horaAlSalir = null;
+        let horaEnElTd = null;
+        let horaAlSoltar = null;
+        let tocoEn = null;
         while (o.reloj() - reloj0 < tope) {
           await espera(250);
           const t = +(o.reloj() - reloj0).toFixed(1);
           const s = j.flight.state;
+          const progHora = j.navegacion.progreso;
+          if (horaAlSalir === null && progHora && Number.isFinite(progHora.segundos))
+            horaAlSalir = { t, s: progHora.segundos };
+          if (horaEnElTd === null && j.navegacion.bajando && progHora && Number.isFinite(progHora.segundos))
+            horaEnElTd = { t, s: progHora.segundos };
           const pies = Math.round(j.altitudIndicada() / 0.3048);
           const kt = Math.round(s.airspeed * 1.94384);
           // Los pasos nuevos, con su hora.
@@ -170,10 +186,14 @@ try {
           }
           if (!j.pilotoPuesto && soltado === null) {
             soltado = t;
+            // Y lo que decía el plan aquí, para medir hasta aquí y no a ojo.
+            const p = j.navegacion.progreso;
+            if (p && Number.isFinite(p.segundos)) horaAlSoltar = { t, s: p.segundos };
             linea.push(`${t}s el automático se suelta [${pies} ft, ${kt} kt] · FMA ${JSON.stringify(j.elFma())} · gases ${j.gasesPuestos}`);
           }
           if (s.onGround) {
             fin = "en tierra";
+            tocoEn = t;
             break;
           }
           if (soltado !== null && t - soltado > 20) {
@@ -192,6 +212,7 @@ try {
           pasos: pasosVistos,
           linea,
           duro: +(o.reloj() - reloj0).toFixed(0),
+          hora: { alSalir: horaAlSalir, enElTd: horaEnElTd, alSoltar: horaAlSoltar, toco: tocoEn },
         };
       },
       [VECES, TOPE],
@@ -263,6 +284,34 @@ if (!vuelo || vuelo.error) {
         repite.push(`${l.split(" [")[0]} y ${m}`);
   }
   comprobar("la instructora de la bajada no repite lo que pidió el paso", repite.length === 0, repite.join(" · "));
+  /*
+   * **La hora del plan, contra la de verdad**: lo que decía al salir y en el
+   * punto de descenso, frente a lo que se tardó hasta tocar. Un quince por
+   * ciento: la comandante lo dice en múltiplos de cinco minutos, y un vuelo
+   * con su viento y sus giros no se clava.
+   */
+  const h = vuelo.hora;
+  /*
+   * Hasta tocar si tocó; si no, hasta donde se soltó el automático, a
+   * seiscientos pies, con lo que el plan decía que quedaba desde ahí.
+   */
+  const hasta = h?.toco != null ? { t: h.toco, s: 0 } : h?.alSoltar ?? null;
+  if (hasta) {
+    const parte = (desde) => {
+      if (!desde || desde.t >= hasta.t) return null;
+      const real = hasta.t - desde.t;
+      const dijo = desde.s - hasta.s;
+      return { dijo: dijo / 60, real: real / 60, error: (dijo - real) / real };
+    };
+    const salir = parte(h.alSalir);
+    const td = parte(h.enElTd);
+    const dice = (x) => (x ? `dijo ${x.dijo.toFixed(1)} min, tardó ${x.real.toFixed(1)} (${(x.error * 100).toFixed(0)} %)` : "—");
+    comprobar(
+      "la hora del plan cuadra con lo que se tarda",
+      [salir, td].every((x) => !x || Math.abs(x.error) < 0.15),
+      `al salir ${dice(salir)} · en el T/D ${dice(td)}`,
+    );
+  } else comprobar("la hora del plan cuadra con lo que se tarda", false, `no llegó a la final (${vuelo.fin})`);
   if (process.env.OGA_VOCES) {
     const { writeFile } = await import("node:fs/promises");
     await writeFile(process.env.OGA_VOCES, JSON.stringify(vuelo, null, 1));

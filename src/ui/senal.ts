@@ -368,6 +368,20 @@ const NIVELAR = icono(`
 `);
 
 /**
+ * **La cota de la pista**: una pista en su suelo, el mar debajo con sus
+ * olas, y entre los dos la flecha de lo que hay de uno a otro. Es «la pista
+ * está a esta altura del mar», que es lo que se resta del altímetro para
+ * saber lo que queda por bajar. Ver `flight/siguiente-paso.ts`.
+ */
+const COTA = icono(`
+  <path d="M5 9.6 L9 3.6 H15 L19 9.6 Z" />
+  <path d="M12 11.4 V16.6" stroke="currentColor" stroke-width="1.6" fill="none" />
+  <path d="M9.8 14.6 L12 17.4 L14.2 14.6 Z" />
+  <path d="M2 19.6 q2.5 -2 5 0 t5 0 t5 0 t5 0" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" fill="none" opacity="0.8" />
+`);
+
+/**
  * **La velocidad que toca**: la cinta de velocidad con sus marcas y la
  * muesca de la marca —rosa en la cinta— en medio, apuntando. Es «a esta
  * velocidad», sin decir si más deprisa o más despacio: eso lo dicen el gas o
@@ -1223,6 +1237,7 @@ export const DIBUJOS = {
   subida: SUBIDA,
   crucero: CRUCERO,
   nivelar: NIVELAR,
+  cota: COTA,
   velocidad: VELOCIDAD,
   corregido: CORREGIDO,
   gafas: GAFAS,

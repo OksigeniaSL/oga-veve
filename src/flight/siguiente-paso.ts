@@ -72,6 +72,8 @@ import { TRAS_DESPEGAR } from "./autorizacion-de-altitud";
  * - `tren`: el tren abajo.
  * - `recogerAerofrenos`: ya en la marca, los aerofrenos adentro.
  * - `senda`: en la final y configurado, llevar la senda a la marca.
+ * - `cota`: empezada la bajada, a qué altura del mar está la pista a la que
+ *   se va: lo que queda por bajar es lo que marca el altímetro menos eso.
  */
 export type QueHacer =
   | "subir"
@@ -84,7 +86,8 @@ export type QueHacer =
   | "flaps"
   | "tren"
   | "recogerAerofrenos"
-  | "senda";
+  | "senda"
+  | "cota";
 
 /** El objetivo de un paso: lo que se ve en la cabina y a lo que se apunta. */
 export interface ObjetivoDelPaso {
@@ -143,6 +146,18 @@ export interface LecturaDelPaso {
   readonly trenQuePide: boolean;
   /** Si los aerofrenos están fuera. */
   readonly aerofrenos?: boolean;
+  /**
+   * **Si se va por encima del perfil de la bajada**: entonces los aerofrenos
+   * están fuera para bajar —el «DRAG REQUIRED» que pide la instructora— y no
+   * para frenar, y no se recogen por llegar a la marca. Ver
+   * `flight/consejo-de-la-bajada.ts`.
+   */
+  readonly altoEnElPerfil?: boolean;
+  /**
+   * **La cota de la pista a la que se va**, pies, o `null` si no se sabe. Ver
+   * el paso `cota`.
+   */
+  readonly cotaDeLaPista?: number | null;
   /** El paso, s. */
   readonly dt: number;
 }
@@ -163,6 +178,14 @@ export const MARGEN_KT = 5;
  * cuanto un bache lo pase. Con la placa de la cinta a la vista, se ve.
  */
 export const MARGEN_VFE = 5;
+
+/**
+ * **Por debajo de cuánto está una pista «casi a nivel del mar»**, m:
+ * cincuenta. Gando, Fuerteventura, Lanzarote, La Palma y El Hierro, sí;
+ * Tenerife Sur, a 64, ya hay que restarla, y Los Rodeos, a 632, mucho.
+ */
+export const CASI_EL_MAR = 50;
+const PIE = 0.3048;
 
 /** Nivelado es subir o bajar menos que esto, pies por minuto. */
 export const NIVELADO_FPM = 300;
@@ -363,7 +386,15 @@ export class CadenaDelVuelo {
      * antes de configurar para aterrizar—. Es el escalón que sigue a «un poco
      * de aerofrenos, hasta la marca»: llegar a ella.
      */
-    if (l.aerofrenos && (l.kt <= l.marca + MARGEN_KT || l.flapsQuePide >= 2))
+    /*
+     * Y no mientras se va por encima del perfil: ahí están fuera para bajar,
+     * no para frenar, y pedirlos adentro al llegar a la marca era deshacer en
+     * el acto lo que acababa de pedir la instructora.
+     */
+    if (
+      l.aerofrenos &&
+      (l.flapsQuePide >= 2 || (l.kt <= l.marca + MARGEN_KT && !l.altoEnElPerfil))
+    )
       nuevo(`aerofrenos:${l.peldano}`, "recogerAerofrenos", objetivo());
     if (l.trenQuePide && l.tren === false) {
       nuevo("tren", "tren", objetivo());
@@ -431,6 +462,18 @@ export class CadenaDelVuelo {
       !(l.trenQuePide && l.tren === false)
     )
       nuevo("final", "senda", objetivo());
+
+    // ── Y la cota de la pista, cuando no hay nada más que decir ────────
+    /*
+     * **A qué altura del mar está la pista.** Enrique, en Guyrami: «sigo sin
+     * saber la altitud de la pista… ¿cuánto tengo que bajar? ¿Eso no lo sabe
+     * el piloto?». Lo sabe, y es lo que mira al empezar a bajar: la cota de la
+     * pista, que es lo que se resta del altímetro. Va después del punto de
+     * descenso, nunca con él, y la última de la fila: es un dato, no un mando,
+     * y no puede llevarse por delante un paso que pide algo.
+     */
+    if (l.bajando && !l.enLaFinal && l.cotaDeLaPista != null && this.dichos.has("descenso"))
+      nuevo("cota", "cota", objetivo(l.cotaDeLaPista));
     return fuera;
   }
 }
@@ -634,6 +677,21 @@ export function comoSeDice(p: Paso, c: ComoVa): FraseDelPaso {
         corta: "palabra.aerofrenosAdentro",
         dibujo: "aerofrenos-recogidos",
         mando: "aerofrenos",
+      };
+    /*
+     * **La cota de la pista**: «casi a nivel del mar» por debajo de cincuenta
+     * metros, que es lo que se ve en el altímetro; y si no, que se reste. El
+     * número va en la tarjeta y debajo de la cinta, y la frase no lo lleva,
+     * para que valga en cualquier campo.
+     */
+    case "cota":
+      return {
+        ...sin,
+        nueva:
+          (p.objetivo.pies ?? 0) < CASI_EL_MAR / PIE ? "vuelo.paso.cotaAlMar" : "vuelo.paso.cotaEnAlto",
+        corta: "palabra.pista",
+        dibujo: "cota",
+        mando: null,
       };
     case "senda":
       return {

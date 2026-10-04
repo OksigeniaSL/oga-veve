@@ -6103,6 +6103,8 @@ if (process.env.OGA_VOCES) {
         pasos: (vuelo.cantados ?? []).filter(
           (c) => c.startsWith("paso ") || c.startsWith("gas de la final"),
         ),
+        // Y los consejos de la bajada y la final, para contar lo que se dice.
+        consejos: (vuelo.cantados ?? []).filter((c) => c.startsWith("consejo ")),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
         // La final del destino, en voces: ver `vocesAlCruzar`.

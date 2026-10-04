@@ -232,6 +232,12 @@ export interface DatosDelTablero {
    */
   readonly minimos?: { readonly pies: number; readonly enEllos: boolean } | null;
   /**
+   * **La cota de la pista a la que se va**, pies, o `null`: la cinta de
+   * altitud pinta ahí la pista, con el suelo debajo, y bajo la cinta va la
+   * cifra con su dibujo. Ver `Game.cotaParaLaCinta`.
+   */
+  readonly cotaDeLaPista?: number | null;
+  /**
    * **La senda a la vista**: el desvío en puntos, la marca del ritmo del
    * variómetro y el arco verde de la carta, en el avión que los lleva. Ver
    * `flight/perfil-vertical.ts`.
@@ -1342,6 +1348,23 @@ export class Tablero {
     escribir(this.pieza('[data-cristal="spd-sel"]'), spd ? enMcp : "");
     this.fma(d.fma ?? null);
     this.ventanillaAlt(d, dt);
+    this.cotaDeLaPista(d);
+  }
+
+  /**
+   * **La pista a su cota en la cinta, y su cifra debajo.** Sin pista a la que
+   * ir, la pista vuelve al cero y la cifra se esconde. Ver
+   * `Game.cotaParaLaCinta`.
+   */
+  private cotaDeLaPista(d: DatosDelTablero): void {
+    const cota = d.cotaDeLaPista ?? null;
+    for (const g of this.todas<SVGElement>('[data-cristal="pista-cinta"]'))
+      poner(g, "transform", `translate(0 ${n1(-(cota ?? 0) * Number(g.dataset.porunidad))})`);
+    for (const g of this.todas<SVGElement>('[data-cristal="cota-pista"]'))
+      poner(g, "visibility", cota === null ? "hidden" : "visible");
+    if (cota !== null)
+      for (const t of this.todas<SVGElement>('[data-cristal="cota-pista-cifra"]'))
+        escribir(t, String(cota));
   }
 
   /** **El FMA**: lo que hace cada mano. Ver `fma` en `ui/cristal.ts`. */
@@ -1815,7 +1838,20 @@ export class Tablero {
         escribir(this.pieza('[data-carta="alterno-oaci"]'), a2.oaci ?? "");
       }
     }
+    /*
+     * **Lo que falta del tramo**, la barra que se vacía al llegar al punto:
+     * el dibujo, en los cuatro peldaños. Ver `Dibujo.ruta.falta`.
+     */
+    const falta = dibujo.ruta?.falta ?? null;
+    for (const g of this.todas<SVGElement>('[data-carta="falta"]'))
+      poner(g, "visibility", falta === null ? "hidden" : "visible");
+    if (falta !== null)
+      for (const relleno of this.todas<SVGElement>('[data-carta="falta-relleno"]'))
+        poner(relleno, "width", n1(falta * Number(relleno.dataset.ancho)));
     if (!cifras) return;
+    // La cifra del anillo de en medio, la mitad del rango. Ver `rangoConMemoria`.
+    for (const anillo of this.todas<SVGElement>('[data-carta="anillo"]'))
+      escribir(anillo, String(dibujo.rango / 2));
     this.texto("millas-destino",
       // Con el indicativo delante: a qué sitio son esas millas.
       dibujo.destino

@@ -1938,6 +1938,8 @@ export interface ParaSostener {
   readonly flaps: number;
   /** El tren, de 0 dentro a 1 fuera. */
   readonly tren: number;
+  /** Los aerofrenos de vuelo, de 0 a 1. Sin ellos, recogidos. */
+  readonly aerofrenos?: number;
   /**
    * **La pendiente de la trayectoria**, rad: cero nivelado, negativa
    * bajando. Por la senda de tres grados, el peso empuja: se necesita menos
@@ -1971,6 +1973,7 @@ export function empujeQueSostiene(a: AircraftConfig, p: ParaSostener): number {
     (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
     resistenciaDeLosFlaps(a, p.flaps) +
     resistenciaDelTren(a, p.tren, fraccionDeLosFlaps(a, p.flaps)) +
+    resistenciaDeLosPaneles(a, p.aerofrenos ?? 0, 0) +
     resistenciaDeOnda(machDe(v, p.altura, aire), a.mmo, a.aero.cd0);
   return qS * cd + peso * Math.sin(p.pendiente);
 }
