@@ -25,11 +25,12 @@ import { conPasaje } from "../audio/megafonia";
 import { colocarModelo } from "./aeronave-modelo";
 import { prepararAerofrenos } from "./aerofrenos";
 import { prepararFlaps } from "./flaps";
-import { seVePorLaVentanilla } from "./marco-de-ventanilla";
+import { loQueAsomaDeLaSalida, seVePorLaVentanilla } from "./marco-de-ventanilla";
 import {
   asientoAnteVentanilla,
   medirElPasaje,
   OJOS_A,
+  seVeSentado,
   type AsientoDePasaje,
   type Pasaje,
 } from "./asiento-de-pasaje";
@@ -294,7 +295,25 @@ describe("el asiento de encima del ala", () => {
             Math.abs(ala.guinada) > Math.abs(siempre.guinada),
           `${id} ${lado}`,
         ).toBe(true);
-        expect(Math.abs(ala.ojo.x)).toBeLessThan(Math.abs(ala.ventanilla.centro.x) - 0.35);
+        /*
+         * Asomado al cristal, que es como se mira el ala —«tiene pinta de avión
+         * de carga», dijo Enrique del JAZ 90 sentado del todo, toda pared—:
+         * más cerca del cristal que sentado, pero sin la frente en él. El JAZ
+         * 120, con su cristal grande, ya lo llena sentado: acercándose se
+         * pierden paneles o el marco, y se queda donde está. Y el asiento,
+         * donde está: sentado, a su distancia de siempre.
+         */
+        const n = ala.ventanilla.normal;
+        const c = ala.ventanilla.centro;
+        const aLaPared = (o: { x: number; y: number; z: number }): number =>
+          (c.x - o.x) * n.x + (c.y - o.y) * n.y + (c.z - o.z) * n.z;
+        expect(aLaPared(ala.ojo), `${id} ${lado}`).toBeLessThan(
+          id === "jaz-90" ? OJOS_A - 0.03 : OJOS_A + 1e-6,
+        );
+        expect(aLaPared(ala.ojo), `${id} ${lado}`).toBeGreaterThan(0.3);
+        expect(ala.sentado, `${id} ${lado}`).toBeTruthy();
+        expect(aLaPared(ala.sentado!)).toBeCloseTo(OJOS_A, 5);
+        expect(Math.abs(ala.sentado!.x)).toBeLessThan(Math.abs(c.x) - 0.35);
         expect(Math.sign(ala.guinada)).toBe(lado === "izquierda" ? 1 : -1);
         // Mirando hacia abajo, al ala, y sin perder el horizonte.
         expect(ala.cabeceo).toBeLessThan(0);
@@ -325,6 +344,13 @@ describe("el asiento de encima del ala", () => {
       expect(salida!.ancho).toBeLessThan(0.7);
       expect(salida!.alto).toBeGreaterThan(0.8);
       expect(salida!.alto).toBeLessThan(1.2);
+      // Y asomado al cristal sigue asomando: el letrero y el canto de la
+      // trampilla, dentro de la pantalla de una tablet. Es por lo que existe
+      // esta vista, con los paneles.
+      const asiento = pasaje!.sobreElAla![lado];
+      const asoma = loQueAsomaDeLaSalida(asiento.ventanilla, salida!);
+      expect(asoma.length).toBeGreaterThan(0);
+      for (const p of asoma) expect(seVeSentado(asiento, p), lado).toBe(true);
     }
   });
 

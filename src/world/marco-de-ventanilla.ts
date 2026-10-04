@@ -48,6 +48,16 @@
  * - **El respaldo de la fila de delante**, de pie entre los ojos y la pared:
  *   sentado no se ve, y asomándose hacia delante, sí. Es un plano más, y lo
  *   que tapa lo tapa de verdad.
+ * - **Y el de uno, desde encima del ala.** «Tiene pinta de avión de carga:
+ *   detrás no hay asiento ni nada, está vacío», dijo Enrique de la primera
+ *   versión de esa vista. Ahí uno se despega del respaldo y se acerca al
+ *   cristal para ver el ala —ver `ASOMADO` en `asiento-de-pasaje.ts`—, y
+ *   mirando hacia la cola lo primero que hay es **su propio asiento**, vacío,
+ *   donde está: su cara de delante con el cabezal y la funda, con los colores
+ *   de la casa. El de la fila de detrás va a su distancia entre filas, detrás
+ *   de ése, y no se ve: puesto delante sería un asiento donde no lo hay. Y
+ *   detrás de él, como desde la fila de delante de una salida de verdad, la
+ *   trampilla queda tapada y asoman por encima el asa y el letrero.
  *
  * Y la luz: de día la cabina la alumbra lo que entra por las ventanillas; de
  * noche, las luces del pasaje, que se bajan para despegar y aterrizar. Ver
@@ -112,6 +122,7 @@ import {
 } from "three";
 import type { AsientoDePasaje, SalidaDeAlLado, VentanillaDePasaje } from "./asiento-de-pasaje";
 import type { TipoDeVentanilla, Vecinas } from "./cabina-de-pasaje";
+import { CASA } from "../flight/aircraft";
 
 /**
  * **Las medidas del marco**, m, sacadas de una ventanilla de avión de línea.
@@ -154,6 +165,19 @@ export function pasoDeVentanillas(ancho: number): number {
  * y ocho de ancho.
  */
 const RESPALDO = { delante: 0.5, bajoLosOjos: 0.05, hueco: 0.04, ancho: 0.48 };
+
+/**
+ * **El respaldo de uno**, m: su cara de delante, dieciocho centímetros por
+ * detrás de los ojos sentado —lo que va de los ojos a la nuca apoyada en el
+ * cabezal—, que con los cincuenta del de delante y el grosor de un respaldo
+ * da los ochenta entre filas. El mismo asiento que el de delante: igual de
+ * alto, igual de ancho y con el mismo hueco con la pared.
+ *
+ * Y la funda del cabezal, por delante: un paño crema de treinta y cuatro
+ * centímetros de ancho por veinticuatro de alto, con una franja del color de
+ * la casa. Ver `franjaDeLaFunda`.
+ */
+const PROPIO = { detras: 0.18, cabezal: 0.27, funda: { ancho: 0.34, alto: 0.24 } };
 
 /**
  * **El botón del cristal que se oscurece**, m: en el bisel, justo debajo del
@@ -287,7 +311,10 @@ vec3 rayo() {
 const FRAGMENTOS = /* glsl */ `
 ${COMUN}
 uniform float uConPersiana;
-uniform vec3 uRespaldo;
+// Los respaldos: el plano a lo largo, lo alto y el canto de la pared, en ejes
+// de pie —ver uVertical—; y el de uno, si se pinta.
+uniform vec4 uRespaldo;
+uniform vec2 uVertical;
 uniform float uParpadeo;
 uniform vec3 uPared;
 uniform vec3 uBisel;
@@ -303,6 +330,8 @@ uniform vec3 uLuz;
 uniform sampler2D uGrano;
 uniform vec3 uRojo;
 uniform vec3 uLetrero;
+uniform vec4 uPropio;
+uniform vec3 uFranja;
 
 // Distancia a un trazo recto, de a a b.
 float trazo(vec2 p, vec2 a, vec2 b) {
@@ -489,20 +518,53 @@ void main() {
   float t = abs(d.x) > 1e-5 ? (uRespaldo.x - uOrigen.x) / d.x : -1.0;
   if (t > 0.0 && t < tPared) {
     vec3 p = uOrigen + d * t;
-    float pared0 = -uFondo - ${RESPALDO.hueco.toFixed(3)};
-    vec2 r = vec2(p.z - (pared0 - ${(RESPALDO.ancho / 2).toFixed(3)}), p.y - (uRespaldo.y - 0.6));
+    // De pie y a lo ancho del avión, no por la pared inclinada: un respaldo
+    // no se tumba con el fuselaje.
+    vec2 e = vec2(p.z * uVertical.x - p.y * uVertical.y, p.y * uVertical.x + p.z * uVertical.y);
+    vec2 r = vec2(e.x - (uRespaldo.z - ${(RESPALDO.ancho / 2).toFixed(3)}), e.y - (uRespaldo.y - 0.6));
     float sr = caja(r, vec2(${(RESPALDO.ancho / 2).toFixed(3)}, 0.6), 0.07);
     // Lo que mide un píxel en el respaldo, sin derivadas, que dentro de una
     // rama no valen: la distancia por el ángulo, contando lo tumbado.
     float ar = clamp(t * px / max(abs(d.x), 0.05), 1e-4, 0.05);
     float respaldo = 1.0 - smoothstep(-ar, ar, sr);
     // La funda del reposacabezas arriba, y el tapizado más oscuro hacia abajo.
-    vec3 asiento = mix(uAsiento, uFunda, smoothstep(-0.155 - ar, -0.155 + ar, p.y - uRespaldo.y));
-    asiento *= mix(0.75, 1.0, smoothstep(-0.6, 0.0, p.y - uRespaldo.y));
+    vec3 asiento = mix(uAsiento, uFunda, smoothstep(-0.155 - ar, -0.155 + ar, e.y - uRespaldo.y));
+    asiento *= mix(0.75, 1.0, smoothstep(-0.6, 0.0, e.y - uRespaldo.y));
     asiento *= 1.0 - 0.25 * (1.0 - smoothstep(0.0, 0.02, -sr));
     color = mix(color, asiento, respaldo);
     alfa = max(alfa, respaldo);
     enPropia *= 1.0 - respaldo;
+  }
+
+  // ── El respaldo de uno ──
+  // Desde encima del ala, asomado al cristal: su cara de delante, por detrás
+  // del hombro. Lo mismo que el de delante, mirado del otro lado. Solo donde el
+  // rayo va hacia la cola y lo cruza antes que la pared.
+  float tp = (uPropio.w > 0.5 && abs(d.x) > 1e-5) ? (uPropio.x - uOrigen.x) / d.x : -1.0;
+  if (tp > 0.0 && tp < tPared) {
+    vec3 p = uOrigen + d * tp;
+    vec2 e = vec2(p.z * uVertical.x - p.y * uVertical.y, p.y * uVertical.x + p.z * uVertical.y);
+    vec2 r = vec2(e.x - (uPropio.z - ${(RESPALDO.ancho / 2).toFixed(3)}), e.y - (uPropio.y - 0.6));
+    float sr = caja(r, vec2(${(RESPALDO.ancho / 2).toFixed(3)}, 0.6), 0.07);
+    float ar = clamp(tp * px / max(abs(d.x), 0.05), 1e-4, 0.05);
+    float cubre = 1.0 - smoothstep(-ar, ar, sr);
+    // De arriba abajo: el cabezal y, debajo de su costura, el respaldo.
+    float h = uPropio.y - e.y;
+    vec3 asiento = uAsiento * mix(1.12, 0.72, smoothstep(0.0, 0.7, h));
+    asiento *= 1.0 - 0.45 * (1.0 - smoothstep(0.004, 0.004 + ar, abs(h - ${PROPIO.cabezal.toFixed(3)})));
+    // La funda, centrada en el cabezal, con su franja del color de la casa.
+    vec2 f = vec2(r.x, h - ${(PROPIO.funda.alto / 2 + 0.015).toFixed(4)});
+    float sf = caja(f, vec2(${(PROPIO.funda.ancho / 2).toFixed(3)}, ${(PROPIO.funda.alto / 2).toFixed(3)}), 0.02);
+    float banda = 1.0 - smoothstep(0.016 - ar, 0.016 + ar, abs(h - ${(PROPIO.funda.alto * 0.68).toFixed(4)}));
+    vec3 funda = mix(uFunda, uFranja, banda);
+    asiento = mix(asiento, funda, 1.0 - smoothstep(-ar, ar, sf));
+    // Más claro del lado de la ventanilla, que es por donde le entra la luz, y
+    // el canto más oscuro, que se dobla hacia atrás.
+    asiento *= mix(0.85, 1.1, smoothstep(-${(RESPALDO.ancho / 2).toFixed(3)}, ${(RESPALDO.ancho / 2).toFixed(3)}, r.x));
+    asiento *= 1.0 - 0.3 * (1.0 - smoothstep(0.0, 0.025, -sr));
+    color = mix(color, asiento, cubre);
+    alfa = max(alfa, cubre);
+    enPropia *= 1.0 - cubre;
   }
 
   gl_FragColor = vec4(mix(color * uLuz, propia, enPropia), alfa);
@@ -737,6 +799,40 @@ export function loQueAsomaDeLaSalida(
   ];
 }
 
+/**
+ * **Lo que tiene que verse del marco** para que se lea como una ventanilla, en
+ * coordenadas del avión: el borde de fuera del bisel, arriba y abajo, en la
+ * pared. Si se sale por arriba o por abajo, la ventanilla se come la pantalla
+ * y se pierde lo que dice «estás dentro». Lo usa quien elige a cuánto del
+ * cristal se asoma uno.
+ */
+export function elMarcoEntero(ventanilla: VentanillaDePasaje): Vector3[] {
+  const m = medidasDelHueco(ventanilla);
+  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const c = ventanilla.centro;
+  return [1, -1].map((s) =>
+    new Vector3(c.x, c.y, c.z)
+      .addScaledVector(arriba, s * (m.b1 + BISEL))
+      .addScaledVector(n, -FONDO),
+  );
+}
+
+/**
+ * **La franja de la funda del cabezal**: el color de la librea que va en el
+ * avión, como lo lleva una compañía en sus fundas. El de la franja del avión,
+ * salvo que sea el verde del tapizado, que encima de él no se vería: entonces
+ * el del remate o el de la raya. En el JAZ 90 y en el JAZ 120 sale el
+ * terracota del tejado del logotipo.
+ */
+export function franjaDeLaFunda(librea: {
+  readonly accent: number;
+  readonly trim: number;
+  readonly remate?: number;
+}): number {
+  return librea.accent !== CASA.verde ? librea.accent : (librea.remate ?? librea.trim);
+}
+
 /** Lo que se le pide a la cabina para pintarla. Ver `CabinaDePasaje`. */
 export interface CabinaQueSePinta {
   readonly tipoDeVentanilla: TipoDeVentanilla;
@@ -787,7 +883,8 @@ export class MarcoDeVentanilla {
       uniforms: {
         ...fila,
         uConPersiana: { value: 1 },
-        uRespaldo: { value: new Vector3(0, 0, 1) },
+        uRespaldo: { value: new Vector4(0, 0, 0, 1) },
+        uVertical: { value: new Vector2(1, 0) },
         uParpadeo: { value: 0 },
         uPared: { value: lineal(COLORES.pared) },
         uBisel: { value: lineal(COLORES.bisel) },
@@ -803,6 +900,8 @@ export class MarcoDeVentanilla {
         uGrano: { value: teselaDeGrano() },
         uRojo: { value: lineal(COLORES.rojo) },
         uLetrero: { value: lineal(COLORES.letrero) },
+        uPropio: { value: new Vector4() },
+        uFranja: { value: new Color(CASA.terracota) },
       },
       depthTest: true,
       depthWrite: true,
@@ -893,13 +992,34 @@ export class MarcoDeVentanilla {
     const e = this.enElAvion.elements;
     // La fila «a lo largo» de la base, en el avión: su z dice hacia la cola.
     u.uAtras!.value = (e[6] ?? 0) >= 0 ? 1 : -1;
+    // Sentado del todo, que es donde está el asiento: asomado, los ojos se
+    // van, pero los respaldos se quedan donde están.
+    const sentado = asiento.sentado ?? asiento.ojo;
     this.sentado
-      .set(asiento.ojo.x - c.x, asiento.ojo.y - c.y, asiento.ojo.z - c.z)
+      .set(sentado.x - c.x, sentado.y - c.y, sentado.z - c.z)
       .applyMatrix3(this.enElAvion);
-    (u.uRespaldo!.value as Vector3).set(
-      this.sentado.x - (u.uAtras!.value as number) * RESPALDO.delante,
-      this.sentado.y - RESPALDO.bajoLosOjos,
-      1,
+    /*
+     * **Los respaldos van de pie**, y la pared no: se inclina con el fuselaje
+     * —ver `INCLINACION_MAXIMA`—. Así que se miden en ejes de pie, con lo
+     * vertical de verdad: lo alto, desde los ojos sentado; y el canto de la
+     * ventanilla, a su hueco de la pared a esa altura. Medidos por la pared se
+     * veían tumbados, como caídos hacia el pasillo.
+     */
+    const cv = e[4] ?? 1;
+    const sv = e[5] ?? 0;
+    (u.uVertical!.value as Vector2).set(cv, sv);
+    const alto = this.sentado.y * cv + this.sentado.z * sv - RESPALDO.bajoLosOjos;
+    const yPared = (alto + FONDO * sv) / cv;
+    const canto = -yPared * sv - FONDO * cv - RESPALDO.hueco;
+    const atrasDe = u.uAtras!.value as number;
+    (u.uRespaldo!.value as Vector4).set(this.sentado.x - atrasDe * RESPALDO.delante, alto, canto, 1);
+    // Y el de uno, solo si se ha despegado de él: sentado, uno lo tiene en la
+    // espalda y no lo ve.
+    (u.uPropio!.value as Vector4).set(
+      this.sentado.x + atrasDe * PROPIO.detras,
+      alto,
+      canto,
+      asiento.sentado ? 1 : 0,
     );
 
     const tipo = cabina?.tipoDeVentanilla ?? "persiana";
@@ -945,6 +1065,11 @@ export class MarcoDeVentanilla {
     // El tinte, solo si hay algún cristal oscurecido.
     this.cristal.visible =
       this.malla.visible && tipo === "electrocromica" && Math.max(...tapan) > 0.003;
+  }
+
+  /** El color de la franja de la funda, de la librea del avión. Ver `franjaDeLaFunda`. */
+  librea(franja: number): void {
+    (this.material.uniforms.uFranja!.value as Color).setHex(franja);
   }
 
   /** Lo que mide la ventanilla que se está pintando. Para las pruebas. */
