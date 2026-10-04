@@ -18,7 +18,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { MILLA, PIE } from "../flight/ruta";
+import { MILLA, PIE, avanzar, rutaDe, trazar, type Fijo } from "../flight/ruta";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
 import { campoDeCasa, campoVecino, enLaPistaDe } from "./campo-del-vuelo";
 import { dondeCae } from "./entre-aerodromos";
@@ -101,4 +101,58 @@ describe("el plan sale del final de la pista, subiendo con su rumbo", () => {
         expect(vistos, nombre).toBeGreaterThan(0);
       });
     }
+});
+
+describe("la subida recta, en la geometría del plan", () => {
+  // Una pista al norte: el final en el origen y el norte hacia -z.
+  const der: Fijo = { x: 0, z: 0, nombre: "RW36", papel: "despegue", minima: null };
+  const subida: Fijo = {
+    x: 0,
+    z: -1500,
+    nombre: "(400)",
+    papel: "despegue",
+    minima: null,
+    recta: true,
+    deArranque: true,
+  };
+  const umbral: Fijo = { x: 60000, z: 0, nombre: "RW09", papel: "umbral", minima: null };
+  const alEste: Fijo = { x: 30000, z: 0, nombre: "ESTE", papel: "if", minima: null };
+  const alNorte: Fijo = { x: 0, z: -30000, nombre: "NORTE", papel: "if", minima: null };
+
+  it("sin carta, se sube recto antes de virar hacia la aproximación", () => {
+    const r = trazar({ desde: der, subida, salidas: [], ramas: [[alEste]], umbral, cotaDelUmbral: 0 });
+    expect(r.fijos.map((f) => f.nombre)).toEqual(["RW36", "(400)", "ESTE", "RW09"]);
+  });
+
+  it("y si a donde se va ya está delante, el punto de la subida sobra", () => {
+    const r = trazar({ desde: der, subida, salidas: [], ramas: [[alNorte]], umbral, cotaDelUmbral: 0 });
+    expect(r.fijos.map((f) => f.nombre)).toEqual(["RW36", "NORTE", "RW09"]);
+  });
+
+  it("una salida no se suelta antes de su primer punto con nombre", () => {
+    // Desde donde acaba la subida recta de la carta, ir directo al destino
+    // es más corto que pasar por su primer punto; pero el primer punto se
+    // vuela.
+    const finRecta: Fijo = { ...subida, x: 0, z: -5000, nombre: "D8.0 VOR", papel: "salida" };
+    const primero: Fijo = { x: -2000, z: -9000, nombre: "PRIMO", papel: "salida", minima: null };
+    const r = trazar({
+      desde: der,
+      salidas: [[finRecta, primero]],
+      ramas: [[alEste]],
+      umbral,
+      cotaDelUmbral: 0,
+    });
+    expect(r.fijos.map((f) => f.nombre)).toEqual(["RW36", "D8.0 VOR", "PRIMO", "ESTE", "RW09"]);
+  });
+
+  it("donde acaba la subida se vira al llegar, sin adelantar el viraje", () => {
+    // Un viraje de noventa grados adelanta milla y media: más que la subida.
+    const r = rutaDe([der, subida, alEste, umbral], 0);
+    const recien = { x: 0, z: -200 };
+    expect(avanzar(r, 1, recien.x, recien.z)).toBe(1);
+    const sinMarca = rutaDe([der, { ...subida, recta: false }, alEste, umbral], 0);
+    expect(avanzar(sinMarca, 1, recien.x, recien.z)).toBe(2);
+    // Y pasado el punto, sí.
+    expect(avanzar(r, 1, 0, -1600)).toBe(2);
+  });
 });
