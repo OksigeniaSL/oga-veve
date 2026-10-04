@@ -1603,7 +1603,17 @@ export class Seguimiento {
     const segundos = segundosPorElPerfil(r, this.activo, l.x, l.z, {
       avion,
       altitud: l.altitud,
-      crucero: this.desde(l),
+      /*
+       * **Y sin bajar todavía, al crucero del plan**, aunque ahora se vaya
+       * nivelado más abajo: la torre da la subida a escalones, y nivelado en
+       * el primero el perfil contaba la ruta entera a esa altura, a 250 nudos.
+       * Medido volando el plan de Fuerteventura a Gran Canaria con el JAZ 120:
+       * nivelado a novecientos pies decía 35 minutos, y se tardó 26. Es lo que
+       * hace un ordenador de vuelo: la hora sale de la altitud de crucero
+       * planeada, no de la del escalón. Para el punto de descenso sigue
+       * contando la de ahora: ver `desde`.
+       */
+      crucero: this.yaBajando ? this.desde(l) : Math.max(this.desde(l), this.crucero),
       bajando: this.yaBajando,
       viento: l.viento,
       ...(l.atmosfera ? { atmosfera: l.atmosfera } : {}),
