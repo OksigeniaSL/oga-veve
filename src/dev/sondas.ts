@@ -2360,6 +2360,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * que lo busca a tientas llega tarde al suelo.
      */
     mandoParaSubir: (ritmo: number) => juego.flight.mandoParaSubir?.(ritmo) ?? null,
+    /**
+     * Qué gas sostiene esta velocidad verdadera, m/s, con lo que se lleva
+     * sacado: la pregunta de `gasPara` en el modelo de ahora. La necesita la
+     * recogida del banco de vuelo entero en Guyrami, donde el gas es la
+     * velocidad: ver `gas` en la recogida de `verificar-vuelo-entero.mjs`.
+     */
+    gasPara: (velocidad: number) => juego.flight.gasPara(velocidad),
     /** Los pares puesto + espera que se consideraron, con sus metros. */
     pares: () => juego.plan?.paresVistos ?? [],
     /**
