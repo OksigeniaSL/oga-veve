@@ -34,8 +34,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import caja, cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, flap, flaps_libres, flaps_moviles, helice, llantas,
-    marca, neumaticos, paneles, paneles_zy, ranurado, recogido, simetricos,
+    bisagra, espejo, flap, flaps_libres, flaps_moviles, helice, largo_hasta,
+    llantas, mando, mandos_libres, mandos_moviles, marca, neumaticos,
+    paneles, paneles_zy, piezas_de_mandos, ranurado, recogido, simetricos,
     superficie, varillas, zy,
 )
 
@@ -198,12 +199,18 @@ def construir():
     # no hay raya pintada que mover.
     flaps = [flap("dentro", 0.70, 2.14, 0.735),
              flap("fuera", 2.79, 3.55, 0.735)]
+    # **Y el alerón, que se mueve**, de la junta de la bisagra al borde de
+    # salida: veinte grados arriba y veinte abajo, los del Beech 58 Baron en
+    # su ficha de tipo (FAA 3A16, hoja X). El Baron y no el Seneca II del
+    # resto de la ficha porque éste lleva estabilizador entero móvil, y el
+    # modelo, como el Baron, plano fijo con su profundidad. Ver `mando`.
+    alerones = [mando("aleron", 3.70, 5.60, 0.755, "alabeo", 20, 20)]
     ala = superficie("ala", [
         de_ala(0.0, y_ala(0.0), ALA_Z, 2.10, 0.15, 6, 2.0),
         de_ala(MOTOR, y_ala(MOTOR), ALA_Z + 0.06, 1.80, 0.14, 6, 1.5),
         # Menos la punta redonda, que sobresale medio espesor.
         de_ala(semi - 0.06, y_ala(semi), ALA_Z + 0.22, 1.05, 0.11, 6, -1.0),
-    ], curvatura=0.02, flaps=flaps, zonas=[
+    ], curvatura=0.02, flaps=flaps, mandos=alerones, zonas=[
         (j, 0.65, 3.55, 0.72, 0.735),
         (j, 0.65, 0.70, 0.735, 1.0),
         (j, 3.55, 3.60, 0.735, 1.0),
@@ -214,7 +221,9 @@ def construir():
     # Ranurados, con los topes de un bimotor de pistón de seis plazas: diez,
     # veinticinco y cuarenta. Ver `ranurado`.
     piezas += flaps_moviles(ala, flaps, ranurado(
-        muescas=(0, 10, 25, 40), recorrido=(0, 0.15, 0.21, 0.25)))
+        muescas=(0, 10, 25, 40), recorrido=(0, 0.15, 0.21, 0.25)),
+        mandos=alerones)
+    piezas += piezas_de_mandos(alerones)
 
     # ── Góndolas y hélices ────────────────────────────────────────────────
     #
@@ -248,20 +257,37 @@ def construir():
     # Convencional: el estabilizador en el fuselaje y la deriva encima. La cola
     # en T es del JAZ 60, y son dos siluetas distintas justamente porque se
     # distinguen de lejos.
-    piezas.append(superficie("deriva", [
+    #
+    # **Y los dos timones se mueven**, con los topes del Baron (FAA 3A16,
+    # hoja X): la profundidad treinta grados arriba y quince abajo, y el de
+    # dirección veinticinco a cada lado. El de dirección, de encima de la
+    # aleta dorsal —ahí la junta hace codo— hasta la punta, con su junta
+    # pintada hasta arriba. Ver `mando`.
+    de_la_deriva = [
         de_deriva(0.0, 0.30, 2.95, 2.10, 0.05),
         de_deriva(0.0, 0.46, 3.72, 1.34, 0.10),
         de_deriva(0.0, 1.72, 4.40, 0.78, 0.09),
-    ], material_="cola", simetria=False, zonas=[
+    ]
+    pie, punta_d = largo_hasta(de_la_deriva, 1), largo_hasta(de_la_deriva, 2)
+    timon = [mando("timon-de-direccion", pie, punta_d, 0.635, "guinada",
+                   25, 25)]
+    deriva = superficie("deriva", de_la_deriva, material_="cola",
+                        simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.2, 1.3, 0.62, 0.635),
-    ]))
-    piezas.append(superficie("estabilizador", [
+        ("oscuro", 1.3, punta_d, 0.62, 0.635),
+    ])
+    piezas.append(deriva)
+    piezas += mandos_moviles(deriva, timon)
+    profundidad = [mando("profundidad", 0.25, 2.2, 0.615, "cabeceo", 30, 15)]
+    estabilizador = superficie("estabilizador", [
         de_ala(0.0, 0.26, 3.95, 1.05, 0.10, 3),
         de_ala(2.30, 0.26 + 2.3 * math.tan(math.radians(3)), 4.14, 0.70,
                0.09, 3),
-    ], zonas=[
+    ], mandos=profundidad, zonas=[
         ("oscuro", 0.25, 2.2, 0.60, 0.615),
-    ]))
+    ])
+    piezas.append(estabilizador)
+    piezas += mandos_moviles(estabilizador, profundidad)
 
     # ── Tren triciclo ─────────────────────────────────────────────────────
     #
@@ -321,6 +347,13 @@ def construir():
     flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
         (p.parent and p.parent.name.startswith("bisagra-"))
         or p.name in ("fuselaje", "gondola"))])
+    # Ni los mandos al moverse. Ver `mandos_libres`.
+    def mallas(*nombres):
+        return [p for p in piezas if p.type == "MESH"
+                and (p.name in nombres or p.name.startswith(nombres))]
+    mandos_libres(alerones, mallas("fuselaje", "gondola"))
+    mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-"))
+    mandos_libres(profundidad, mallas("fuselaje", "deriva", "timon-"))
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.55))
     return piezas

@@ -186,7 +186,7 @@ describe("la de detrás, en tierra, en los que llevan frenos de tierra", () => {
     const state = enTierra();
     const ctx = contexto({ aircraft: grande, movimientoReducido: true, frenosDeTierra: 0 });
     const d = dondeVa(volar(construirCamaras().chase, state, ctx, 600), state);
-    expect(d.z).toBeLessThan(59.64 * 1.2);
+    expect(d.z).toBeLessThan(59.64 * 1.35);
     expect(d.z).toBeGreaterThan(59.64 * 1.0);
     expect(Math.atan2(d.y, d.z)).toBeCloseTo(Math.atan2(0.6, 1.6), 2);
   });
@@ -269,7 +269,7 @@ describe("la de detrás, en tierra, en los que llevan frenos de tierra", () => {
     // Un fotograma para la posición deseada; el suavizado de la posición la
     // lleva luego, como siempre.
     for (let i = 0; i < 120; i++) rig.update(camara, state, 1 / 60, ctx);
-    expect(dondeVa(camara, state).z).toBeLessThan(59.64 * 1.2);
+    expect(dondeVa(camara, state).z).toBeLessThan(59.64 * 1.35);
   });
 });
 

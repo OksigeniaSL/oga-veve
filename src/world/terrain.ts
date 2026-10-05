@@ -1258,8 +1258,20 @@ export class Terrain {
       (col, fila) => fino(fila * n + col) - nivel,
     );
     const lejos = this.scenario.relieveLejano;
-    const lejano = lejos ? alturasDe("horizonte") : null;
-    if (!lejos || !lejano) return { fina, lejana: null };
+    if (!lejos || !alturasDe("horizonte")) return { fina, lejana: null };
+    /*
+     * **Y el lejano, con la misma cuenta que su malla**, que ya no se puede
+     * leer por el número de nudo: desde que el horizonte solo lleva los
+     * nudos de tierra —ver «solo los nudos que usa algún cuadro» en
+     * `buildFarMesh`—, el nudo `i` de la malla no es la muestra `i` del mapa.
+     * La cota que se dibuja es la del mapa con el mar hundido, tal cual, y
+     * esa no se moldea después: es esta.
+     */
+    const hundido = nivel - HUNDIDO_LEJOS;
+    const lejano = (i: number): number => {
+      const h = lejos.datos[i] ?? 0;
+      return esAguaDeCasa(h, nivel) ? hundido : h;
+    };
     const tamano = this.scenario.size * vecesLejosDe(this.scenario);
     const paso = tamano / (lejos.resolucion - 1);
     const m = lejos.resolucion;
@@ -1724,8 +1736,6 @@ export class Terrain {
     const paso = (tamano / (lejos.resolucion - 1)) * SALTO;
     const mitad = tamano / 2;
 
-    const posiciones = new Float32Array(res * res * 3);
-    const colores = new Float32Array(res * res * 3);
     const tinte = new Color();
     const manchas = new ValueNoise2D(this.scenario.seed ^ 0x5eed);
     const escala = 7.5 / tamano;
@@ -1747,39 +1757,6 @@ export class Terrain {
       const h = lejos.datos[f * ancho + c] ?? 0;
       return esAguaDeCasa(h, this.scenario.waterLevel) ? hundido : h;
     };
-
-    for (let fila = 0; fila < res; fila++) {
-      for (let col = 0; col < res; col++) {
-        const i = fila * res + col;
-        const h = cota(fila, col);
-        const x = -mitad + col * paso;
-        const z = -mitad + fila * paso;
-        posiciones[i * 3] = x;
-        posiciones[i * 3 + 1] = h;
-        posiciones[i * 3 + 2] = z;
-
-        // La pendiente a esta escala, que es la que decide si se pinta de
-        // roca o de hierba. Con el paso del mapa fino salían acantilados por
-        // todas partes.
-        const dx = (cota(fila, col + 1) - cota(fila, col - 1)) / (2 * paso);
-        const dz = (cota(fila + 1, col) - cota(fila - 1, col)) / (2 * paso);
-        const pendiente = Math.min(1, Math.hypot(dx, dz));
-        const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
-        colourFor(
-          h,
-          pendiente,
-          this.scenario,
-          manchas.fbm(x * escala, z * escala, 3),
-          luz,
-          tinte,
-          // La tierra baja del horizonte no es fondo de río. Ver `cota`.
-          h <= hundido,
-        );
-        colores[i * 3] = tinte.r;
-        colores[i * 3 + 1] = tinte.g;
-        colores[i * 3 + 2] = tinte.b;
-      }
-    }
 
     const indices: number[] = [];
     const dentro = this.half - paso;
@@ -1831,6 +1808,67 @@ export class Terrain {
           continue;
         const a = fila * res + col;
         indices.push(a, a + res, a + 1, a + 1, a + res, a + res + 1);
+      }
+    }
+
+    /*
+     * **Y solo los nudos que usa algún cuadro.**
+     *
+     * Se hacían todos —el millón largo de la rejilla de mil veinticuatro—,
+     * con su color, su ruido y su sitio en la tarjeta, aunque los cuadros que
+     * se dibujan son los de tierra: en un mundo de Canarias, menos de uno de
+     * cada diez. Y en dos mallas, la de dentro y la de fuera, porque el anillo
+     * va partido en dos. Eran setenta y cinco megas de posiciones, colores y
+     * normales por escenario, la mitad en la memoria del navegador y la otra
+     * en la de la tarjeta, para dibujar mar que no se dibuja. Con La Palma
+     * pasando de 760 a 297 metros por muestra —lo «a bloques» de la captura
+     * de Enrique del punto 166, ver `segmentosLejos`— habrían sido setenta y
+     * cinco más.
+     *
+     * Así que primero se decide qué cuadros van, y luego se hacen solo sus
+     * nudos, renumerados. Lo que se dibuja es exactamente lo mismo: las
+     * normales salen de las mismas caras.
+     */
+    const nuevo = new Int32Array(res * res).fill(-1);
+    let usados = 0;
+    for (let k = 0; k < indices.length; k++) {
+      const v = indices[k]!;
+      if (nuevo[v]! < 0) nuevo[v] = usados++;
+      indices[k] = nuevo[v]!;
+    }
+    const posiciones = new Float32Array(usados * 3);
+    const colores = new Float32Array(usados * 3);
+    for (let fila = 0; fila < res; fila++) {
+      for (let col = 0; col < res; col++) {
+        const i = nuevo[fila * res + col]!;
+        if (i < 0) continue;
+        const h = cota(fila, col);
+        const x = -mitad + col * paso;
+        const z = -mitad + fila * paso;
+        posiciones[i * 3] = x;
+        posiciones[i * 3 + 1] = h;
+        posiciones[i * 3 + 2] = z;
+
+        // La pendiente a esta escala, que es la que decide si se pinta de
+        // roca o de hierba. Con el paso del mapa fino salían acantilados por
+        // todas partes.
+        const dx = (cota(fila, col + 1) - cota(fila, col - 1)) / (2 * paso);
+        const dz = (cota(fila + 1, col) - cota(fila - 1, col)) / (2 * paso);
+        const pendiente = Math.min(1, Math.hypot(dx, dz));
+        const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
+        colourFor(
+          h,
+          pendiente,
+          this.scenario,
+          manchas.fbm(x * escala, z * escala, 3),
+          luz,
+          tinte,
+          // La tierra baja del horizonte no es fondo de río. Ver `cota`.
+          h <= hundido,
+        );
+        colores[i * 3] = tinte.r;
+        colores[i * 3 + 1] = tinte.g;
+        colores[i * 3 + 2] = tinte.b;
       }
     }
 

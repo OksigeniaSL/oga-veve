@@ -65,9 +65,13 @@ import { ANCLA_DE_LA_PROYECCION } from "./curvatura";
  * rendijas de cielo a lo largo de los aerofrenos. Y **`remate`** lleva la
  * aleta de abajo de la punta del JAZ 120, junta con un filete del fuselaje
  * que, como está dentro de la raíz, no se mueve.
+ *
+ * Y **los alerones**, que son chapa de la punta, y la cala oscura que dejan:
+ * sin doblarlos con ella, el ala subía y el alerón se quedaba abajo. Ver
+ * `world/superficies-de-mando.ts`.
  */
 export const PIEZAS_DEL_ALA =
-  /^(ala|franja-fija|remate|aerofreno-|hueco-aerofreno-|flap-|hueco-flap-|canoa-|cola-canoa-|hueco-cola-canoa-|motor|pilon)/;
+  /^(ala|franja-fija|remate|aerofreno-|hueco-aerofreno-|flap-|hueco-flap-|aleron-|hueco-aleron-|canoa-|cola-canoa-|hueco-cola-canoa-|motor|pilon)/;
 
 /**
  * **La forma de una viga en voladizo con la carga repartida**, de 0 en la

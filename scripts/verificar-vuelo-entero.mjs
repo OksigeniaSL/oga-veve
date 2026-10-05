@@ -5310,9 +5310,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * Rodeos, con veinte nudos, el JAZ 90 empezaba la recogida bajando a
            * seis y la repartía: tocaba a cuatro.
            */
+          /*
+           * **Y en los reactores de Guyrami, desde la senda y no desde lo
+           * que baje en ese instante** (punto 254). Ahí la final se vuela a
+           * escalones —ver `porLaSendaSencilla` y el gas de dos estados— y
+           * en los últimos cuatrocientos metros el JAZ 120 bajaba a 4,7, 7,9,
+           * 1,9 y 5,9 m/s cada medio segundo: la recogida empezaba donde la
+           * pillara el vaivén. Pillada en un valle, a 2,3 m/s, repartía eso
+           * hasta el suelo y flotaba: 611 m pasado el umbral, medido con la
+           * traza del ala. En el banco de mesa, empezando a 2,3 tocaba a
+           * 604–644 m; desde la senda, a 453–479, y a 430–479 empiece a lo
+           * que empiece, siempre a 1,2 m/s. Es lo que hace un piloto: la
+           * recogida es la misma a la misma altura, no la que dicte el
+           * variómetro de ese segundo. Las hélices de Guyrami no: vuelan la
+           * final limpias y lentas —ver `LIMPIO`— y no se han tocado.
+           */
           caida: Math.max(
             RITMO_AL_TOCAR,
-            Math.min(6, -s.verticalSpeed, porElSuelo(s) * SENDA * 1.1),
+            SENCILLO && !LIMPIO
+              ? porElSuelo(s) * SENDA
+              : Math.min(6, -s.verticalSpeed, porElSuelo(s) * SENDA * 1.1),
           ),
           palanca:
             CON_EL_AUTOMATICO && palancaMedia !== null
@@ -5336,8 +5353,37 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * hélices, que vuelan la final limpias y lentas —ver `LIMPIO`—: en
            * los reactores el gas medio es más que el que sostiene la Vref, ese
            * modelo acelera con él, y el JAZ 120 flotó hasta los 865 m.
+           *
+           * **Y en los reactores de Guyrami, el gas de la Vref, preguntado al
+           * modelo**, y no el del instante (punto 254). La ley de la final
+           * mueve el gas a escalones de cinco centésimas diez veces por
+           * segundo, y la recogida se quedaba con el escalón que pillara: el
+           * JAZ 120 de Los Rodeos a Reina Sofía tocó a 622–655 m y a 2,0–2,5
+           * m/s en una tanda y a 393 m y 1,5 en otra, con el mismo código.
+           * Medido en un banco de mesa con estas mismas leyes sobre el modelo
+           * sencillo: empezando a recoger con 0,10 de gas, 263 m y 3,3 m/s;
+           * con 0,12, 301 m y 2,8; con 0,25, 435 m y 1,2.
+           *
+           * **Al ralentí no**, que es lo que pedía el punto 254 y no se puede
+           * sin tocar el modelo: en Guyrami el mando crece con el gas —ver
+           * `mando` en `flight/arcade.ts`, «sin motor no se puede volar
+           * recto»— y ese modelo no tiene velocidad que cambiar por
+           * sustentación, que es con lo que recoge al ralentí un avión de
+           * verdad. Medido en el mismo banco de mesa: ralentí al empezar la
+           * recogida, 182 m y 5,1 m/s en los nueve casos —y en este banco,
+           * de Los Rodeos a Reina Sofía, 168 m y 6,3 m/s—; al ralentí a los
+           * treinta pies, como el `RETARD` de los gases del juego, 240 m y
+           * 5,2; cortando a los dos metros, 394 m y 4,1. Con el gas de la Vref
+           * sostenido, de 438 a 453 m y a 1,2 m/s en los nueve, sin depender
+           * de dónde iba el escalón; y los cinco nudos de más se los come la
+           * recogida, que es como se cruza el umbral. Al tocar, el gas al
+           * ralentí —ver la etapa `frenar`—, y los frenos de tierra suben.
            */
-          gas: LIMPIO ? Math.max(c.throttle, gasMedioEnFinal) : c.throttle,
+          gas: LIMPIO
+            ? Math.max(c.throttle, gasMedioEnFinal)
+            : SENCILLO && typeof o.gasPara === "function"
+              ? (o.gasPara(vref) ?? c.throttle)
+              : c.throttle,
         };
         empezoLaRecogida = {
           ruedas: +ruedas.toFixed(1),

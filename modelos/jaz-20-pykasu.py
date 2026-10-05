@@ -35,9 +35,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_deriva, de_ala, dentro_de,
-    espejo, estacion, flap, flaps_libres, flaps_moviles, helice, llantas,
-    marca, neumaticos, paneles, paneles_zy, ranurado, simetricos, superficie,
-    varillas, zy,
+    espejo, estacion, flap, flaps_libres, flaps_moviles, helice, largo_hasta,
+    llantas, mando, mandos_libres, mandos_moviles, marca, neumaticos, paneles,
+    paneles_zy, piezas_de_mandos, ranurado, simetricos, superficie, varillas,
+    zy,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -213,7 +214,13 @@ def construir():
     # junta de la bisagra y el corte entre los dos.
     junta = "oscuro"
     flaps = [flap("dentro", 0.60, 2.72, 0.72)]
-    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps, zonas=[
+    # **Y el alerón, que se mueve**: la franja de fuera, de la junta de la
+    # bisagra al borde de salida y entre las dos juntas de los lados. Veinte
+    # grados arriba y quince abajo, los del 172S en su ficha de tipo (FAA
+    # 3A12, hoja XII). Ver `mando` y `flight/recorrido-de-mandos.ts`.
+    alerones = [mando("aleron", 2.80, 4.97, 0.72, "alabeo", 20, 15)]
+    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps,
+                     mandos=alerones, zonas=[
         (junta, 0.55, 5.02, 0.705, 0.72),
         (junta, 0.55, 0.60, 0.72, 1.0),
         (junta, 2.72, 2.80, 0.72, 1.0),
@@ -226,7 +233,9 @@ def construir():
     # acaba con la nariz justo debajo del labio, abriendo una ranura estrecha.
     # Ver `ranurado`.
     piezas += flaps_moviles(ala, flaps, ranurado(
-        muescas=(0, 10, 20, 30), recorrido=(0, 0.15, 0.21, 0.25)))
+        muescas=(0, 10, 20, 30), recorrido=(0, 0.15, 0.21, 0.25)),
+        mandos=alerones)
+    piezas += piezas_de_mandos(alerones)
 
     # **Y su montante, que es media silueta de este avión.** Va del costado
     # bajo del fuselaje al ala, a media envergadura: es lo que permite que un
@@ -246,21 +255,40 @@ def construir():
     # La deriva en flecha con su aleta dorsal delante —la que la une al lomo
     # en curva—, y el timón marcado por su junta. El estabilizador, recto y
     # de punta cuadrada, con su timón de profundidad.
-    piezas.append(superficie("deriva", [
+    #
+    # **Y los dos timones se mueven**, con los topes del 172S en su ficha de
+    # tipo (FAA 3A12, hoja XII): la profundidad veintiocho grados arriba y
+    # veintitrés abajo, y el de dirección diecisiete y tres cuartos a cada
+    # lado, medidos de canto a la bisagra, que es como gira aquí. El de
+    # dirección empieza encima de la aleta dorsal —ahí la junta hace codo, y
+    # lo de debajo es aleta, no timón— y sube hasta la punta: la junta pintada
+    # se alarga con él. Ver `mando`.
+    de_la_deriva = [
         de_deriva(0.0, 0.40, 3.20, 2.30, 0.05),
         de_deriva(0.0, 0.62, 4.28, 1.30, 0.09),
         de_deriva(0.0, 1.76, 5.06, 0.64, 0.09),
-    ], material_="capo", simetria=False, zonas=[
+    ]
+    pie, punta_d = largo_hasta(de_la_deriva, 1), largo_hasta(de_la_deriva, 2)
+    timon = [mando("timon-de-direccion", pie, punta_d, 0.615, "guinada",
+                   17.73, 17.73)]
+    deriva = superficie("deriva", de_la_deriva, material_="capo",
+                        simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.25, 1.40, 0.60, 0.615),
-    ]))
+        ("oscuro", 1.40, punta_d, 0.60, 0.615),
+    ])
+    piezas.append(deriva)
+    piezas += mandos_moviles(deriva, timon)
     y_cola = 0.34
-    piezas.append(superficie("estabilizador", [
+    profundidad = [mando("profundidad", 0.18, 1.62, 0.575, "cabeceo", 28, 23)]
+    estabilizador = superficie("estabilizador", [
         de_ala(0.0, y_cola, 4.55, 0.98, 0.09),
         de_ala(1.00, y_cola, 4.58, 0.95, 0.09),
         de_ala(1.72, y_cola, 4.72, 0.66, 0.08),
-    ], zonas=[
+    ], mandos=profundidad, zonas=[
         ("oscuro", 0.18, 1.62, 0.56, 0.575),
-    ]))
+    ])
+    piezas.append(estabilizador)
+    piezas += mandos_moviles(estabilizador, profundidad)
 
     # ── Tren triciclo fijo ────────────────────────────────────────────────
     #
@@ -317,6 +345,15 @@ def construir():
     # se clava en el ala justo por delante de ellos. Ver `flaps_libres`.
     flaps_libres(piezas, [p for p in piezas if p.type == "MESH"
                           and p.name in ("fuselaje", "puntal-del-ala")])
+    # Ni los mandos al moverse: el alerón no toca el puntal, la profundidad
+    # no toca el timón ni el fuselaje, y el timón no toca la profundidad. Ver
+    # `mandos_libres`.
+    def mallas(*nombres):
+        return [p for p in piezas if p.type == "MESH"
+                and (p.name in nombres or p.name.startswith(nombres))]
+    mandos_libres(alerones, mallas("fuselaje", "puntal-del-ala"))
+    mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-"))
+    mandos_libres(profundidad, mallas("fuselaje", "deriva", "timon-"))
 
     # El centro de gravedad, a un cuarto de la cuerda: por ahí gira el avión.
     piezas.append(centro_de_gravedad(BORDE_DE_ATAQUE + raiz * 0.28))

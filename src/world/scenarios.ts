@@ -1178,6 +1178,19 @@ export const LA_PALMA: Scenario = {
    */
   destino: ["tenerife-norte", "el-hierro"],
   vecesLejos: 19,
+  /*
+   * **Y con sus propias muestras, como Los Rodeos y Gando.** Con las 400 del
+   * fino, 304 km daban 760 metros por muestra: la Caldera de Taburiente y la
+   * Cumbre Vieja, que empiezan a nueve kilómetros de la pista —donde se acaba
+   * el mapa fino—, salían en facetas de casi un kilómetro. Es la mitad que
+   * quedaba de la captura de Enrique del punto 166 —«el resto de la isla,
+   * verde plano y a bloques, como estar jugando en Minecraft»—: lo verde
+   * plano lo quitó la ortofoto por teselas, y lo de a bloques era esto. Con
+   * 1.024 se quedan en 297, lo mismo que los otros dos, y el mar abierto no
+   * se malla —ver `buildFarMesh`—, así que lo que se paga en triángulos es
+   * solo tierra.
+   */
+  segmentosLejos: 1024,
 };
 
 /**
@@ -1480,6 +1493,18 @@ export const FUERTEVENTURA: Scenario = {
   destino: ["lanzarote", "gran-canaria"],
   vecesLejos: 20,
   /*
+   * **Y aquí no, todavía, sus propias muestras.** Con las 400 del fino, 320
+   * km dan 800 m por muestra, y con 1.024 serían 313, como La Palma. Pero
+   * este mundo lleva tres islas enteras —Fuerteventura, Lanzarote y Gran
+   * Canaria— y el horizonte pasaba de 41.000 triángulos a 264.000: medido
+   * con la tarjeta, de 304.000 a 521.000 en el cuadro y de 1,2 a 2,2 ms de
+   * GPU en el aire (4,3 en otra tirada), y a cuatro veces más lento una
+   * tirada por encima de lo exigido (42 ms) y otra dentro (25,5), con la
+   * máquina cargada. Hasta medirlo en calma, o a una resolución de en medio,
+   * se queda en 800. Y el relieve de aquí es bajo y gastado, que es donde
+   * menos se notan las facetas.
+   */
+  /*
    * El alisio, que aquí sopla más constante que en ninguna otra isla: del
    * nordeste y sin descanso. Es lo que hace que la 01 sea la cabecera de casa.
    */
@@ -1564,6 +1589,9 @@ export const EL_HIERRO: Scenario = {
    */
   destino: ["la-gomera", "la-palma"],
   vecesLejos: 13,
+  // Y sus propias muestras, por lo mismo que La Palma: con las 400 del fino,
+  // 208 km daban 520 m por muestra. Con 640, 325.
+  segmentosLejos: 640,
   // Alisio del nornordeste. Con él se entra por la 34, o sea desde el mar.
   vientoDominante: { vientoDe: 20, vientoKt: 14, techoM: 1200, temp: 22 },
   nameKey: "scenario.elHierro.name",
@@ -1640,6 +1668,14 @@ export const LA_GOMERA: Scenario = {
    */
   destino: ["tenerife-sur", "tenerife-norte", "el-hierro"],
   vecesLejos: 12,
+  /*
+   * **Y aquí no, todavía, sus propias muestras**, aunque con las 400 del fino
+   * 192 km dan 480 m por muestra. Con 640 serían 300, y este mapa pasaría a
+   * ser el más fino sobre la bocana de Santa Cruz de Tenerife —más que el de
+   * Los Rodeos, a 316—: una de sus muestras cae en el muelle, a dos metros, y
+   * la línea de barcos de Las Palmas a Santa Cruz pasaba por tierra según
+   * `rutas-de-barcos.test.ts`. Hay que mirar antes esa línea o esa prueba.
+   */
   vientoDominante: { vientoDe: 45, vientoKt: 12, techoM: 1300, temp: 23 },
   nameKey: "scenario.laGomera.name",
   pais: "es",

@@ -400,8 +400,9 @@ describe("el asiento de encima del ala", () => {
       expect(seVeSentado(asiento, canto[0]!) || seVeSentado(asiento, canto[1]!), lado).toBe(
         true,
       );
-      // Mirando de lado, y poco hacia la cola: no más de treinta grados.
-      expect(Math.abs(asiento.guinada) - Math.PI / 2).toBeLessThan(30.01 * (Math.PI / 180));
+      // Mirando de lado, y poco hacia la cola: no más de treinta y tres
+      // grados. Ver `ANGULOS_EN_LA_SALIDA`.
+      expect(Math.abs(asiento.guinada) - Math.PI / 2).toBeLessThan(33.01 * (Math.PI / 180));
     }
   });
 

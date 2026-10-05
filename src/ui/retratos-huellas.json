@@ -1,29 +1,29 @@
 {
   "jaz-20": {
-    "glb": "46c3b3ae9a8f233372ac513c6035c1d55c50cc79b86f51b8a08649ce8adacc43",
-    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "glb": "fb42509190c815274f272f512a92ccd686bdd51075a8d30593441b68a4772d56",
+    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
     "ficha": {
       "body": 15000282,
       "accent": 12475704,
       "trim": 3101251,
       "blades": 2
     },
-    "retrato": "jaz-20-f447b2ca.webp"
+    "retrato": "jaz-20-48f63a91.webp"
   },
   "jaz-25": {
-    "glb": "69d64ae66dd7d3075ea9d85f7ec06cb05bf09a54f2d665d5b7dfb711302cfcd1",
-    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "glb": "0f8d5c104da6527624ab45ea0ad3a4b779e11dcdc6a140a2fdd6e7094c0d54f7",
+    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
     "ficha": {
       "body": 14520895,
       "accent": 3101251,
       "trim": 12475704,
       "blades": 3
     },
-    "retrato": "jaz-25-c17fe827.webp"
+    "retrato": "jaz-25-3fe7649d.webp"
   },
   "jaz-40": {
-    "glb": "9a8a3dde5a4057686e40bbd2d8f8c7cd4de205d7f217f619b95fa612e0c996c9",
-    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "glb": "060030363345102a63e6ce900bdc6a43da0a4883af84a5d3df04fdd9cf2b40fc",
+    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
     "ficha": {
       "body": 15527142,
       "accent": 3101251,
@@ -31,11 +31,11 @@
       "blades": 3,
       "motivo": "sol"
     },
-    "retrato": "jaz-40-40efdee8.webp"
+    "retrato": "jaz-40-2ffbaf6f.webp"
   },
   "jaz-60": {
-    "glb": "56df1c28556b38b7df0e5d014af6dc1cbcfd9189008d8fe2103534bc4d697cfd",
-    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "glb": "4564958f9149dca617489157e7d5d0c462bc6a80420027c4122fcb02b9afd7b0",
+    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
     "ficha": {
       "body": 15527142,
       "accent": 14520895,
@@ -44,11 +44,11 @@
       "blades": 4,
       "motivo": "sol-y-hojas"
     },
-    "retrato": "jaz-60-5f5b86fb.webp"
+    "retrato": "jaz-60-50be7c71.webp"
   },
   "jaz-90": {
-    "glb": "2cb5a64407b2e6725758e85524b32d1e4a6377d2cfbdd359aebc86b10520cab8",
-    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "glb": "bb7b893b816210c69310cde6cf12b952516137ae2bcd5667eac145964a4da16e",
+    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
     "ficha": {
       "body": 15921644,
       "accent": 12475704,
@@ -56,11 +56,11 @@
       "blades": 0,
       "motivo": "sol-y-hojas"
     },
-    "retrato": "jaz-90-50a459ef.webp"
+    "retrato": "jaz-90-a97b4844.webp"
   },
   "jaz-120": {
-    "glb": "d23e8c880fa6e8ea451e7305087cbc37203b46d273830751230646f0e870629d",
-    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "glb": "82cd7012877669eb6f262f1ef98d5b6b5399929698f6500d854f0b010153947b",
+    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
     "ficha": {
       "body": 15921644,
       "accent": 3101251,
@@ -69,6 +69,6 @@
       "blades": 0,
       "motivo": "sol"
     },
-    "retrato": "jaz-120-180b0e7b.webp"
+    "retrato": "jaz-120-6c3ab36e.webp"
   }
 }

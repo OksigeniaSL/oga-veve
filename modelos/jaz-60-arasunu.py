@@ -34,7 +34,8 @@ from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
     bisagra, en_punta, espejo, flap, flaps_libres, flaps_moviles, helice,
-    llantas, marca, neumaticos, paneles, paneles_zy, ranurado, recogido,
+    largo_hasta, llantas, mando, mandos_libres, mandos_moviles, marca,
+    neumaticos, paneles, paneles_zy, piezas_de_mandos, ranurado, recogido,
     simetricos,
     superficie, varillas, ventanas, zy,
 )
@@ -211,7 +212,12 @@ def construir():
     # encima de la góndola se queda quieto, como el carenado de detrás del
     # motor de un turbohélice de verdad. Ver `jaz-40-panambi.py`.
     flaps = [flap("dentro", 1.02, 2.64, 0.73), flap("fuera", 3.70, 6.3, 0.73)]
-    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps, zonas=[
+    # **Y el alerón, que se mueve**: veinticuatro grados arriba y diecisiete
+    # abajo, los del Beech 1900D en su ficha de tipo (FAA A24CE, hoja X).
+    # Ver `mando`.
+    alerones = [mando("aleron", 6.45, 9.35, 0.755, "alabeo", 24, 17)]
+    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps,
+                     mandos=alerones, zonas=[
         (j, 0.95, 6.3, 0.715, 0.73),
         (j, 0.95, 1.02, 0.73, 1.0),
         (j, 3.62, 3.70, 0.73, 1.0),
@@ -223,7 +229,9 @@ def construir():
     # Ranurados, con los topes de un turbohélice de diecinueve plazas: diez,
     # veinte y treinta y cinco. Ver `ranurado`.
     piezas += flaps_moviles(ala, flaps, ranurado(
-        muescas=(0, 10, 20, 35), recorrido=(0, 0.15, 0.21, 0.25)))
+        muescas=(0, 10, 20, 35), recorrido=(0, 0.15, 0.21, 0.25)),
+        mandos=alerones)
+    piezas += piezas_de_mandos(alerones)
 
     # ── Góndolas y hélices ────────────────────────────────────────────────
     #
@@ -271,19 +279,41 @@ def construir():
     alto = 3.55
     punta_z = 7.30
     punta_c = 1.75
-    piezas.append(superficie("deriva", [
+    #
+    # **Y los dos timones se mueven**, con los topes del 1900D (FAA A24CE,
+    # hoja X): la profundidad veinte grados arriba y catorce abajo, y el de
+    # dirección veinticinco a cada lado. El de dirección va de encima de la
+    # aleta dorsal —ahí la junta hace codo— hasta un palmo por debajo del
+    # estabilizador, como en la cola en T de su clase: el plano va encima de
+    # la deriva, no del timón. Su junta pintada sube con él, y arriba lleva la
+    # suya. Ver `mando`.
+    de_la_deriva = [
         de_deriva(0.0, 0.72, 3.80, 4.60, 0.05),
         de_deriva(0.0, 1.10, 5.40, 2.95, 0.12),
         de_deriva(0.0, alto, punta_z, punta_c, 0.12),
-    ], material_="cola", simetria=False, zonas=[
+    ]
+    pie = largo_hasta(de_la_deriva, 1)
+    techo = pie + (3.30 - 1.10) / (alto - 1.10) * (
+        largo_hasta(de_la_deriva, 2) - pie)
+    timon = [mando("timon-de-direccion", pie, techo, 0.675, "guinada",
+                   25, 25)]
+    deriva = superficie("deriva", de_la_deriva, material_="cola",
+                        simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.55, 2.4, 0.66, 0.675),
-    ], punta=False))
-    piezas.append(superficie("estabilizador", [
+        ("oscuro", 2.4, techo, 0.66, 0.675),
+        ("oscuro", techo, techo + 0.05, 0.66, 1.0),
+    ], punta=False)
+    piezas.append(deriva)
+    piezas += mandos_moviles(deriva, timon)
+    profundidad = [mando("profundidad", 0.3, 3.2, 0.64, "cabeceo", 20, 14)]
+    estabilizador = superficie("estabilizador", [
         de_ala(0.0, alto - 0.02, punta_z - 0.05, 1.85, 0.11),
         de_ala(3.45, alto - 0.02, punta_z + 0.55, 1.00, 0.10),
-    ], material_="capo", zonas=[
+    ], material_="capo", mandos=profundidad, zonas=[
         ("oscuro", 0.3, 3.2, 0.62, 0.64),
-    ]))
+    ])
+    piezas.append(estabilizador)
+    piezas += mandos_moviles(estabilizador, profundidad)
     # La bala que tapa el cruce de la deriva con el estabilizador.
     bala = Piel([
         (punta_z - 0.45, 0.0, alto + 0.02, alto + 0.02),
@@ -347,6 +377,16 @@ def construir():
     flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
         (p.parent and p.parent.name.startswith("bisagra-"))
         or p.name in ("fuselaje", "carenado", "gondola"))])
+
+    # Ni los mandos al moverse: el timón por debajo del plano y de la bala,
+    # y la profundidad por encima de la deriva. Ver `mandos_libres`.
+    def mallas(*nombres):
+        return [p for p in piezas if p.type == "MESH"
+                and (p.name in nombres or p.name.startswith(nombres))]
+    mandos_libres(alerones, mallas("fuselaje", "gondola"))
+    mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-",
+                                "bala-de-cola"))
+    mandos_libres(profundidad, mallas("deriva", "timon-", "bala-de-cola"))
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.08 + 2.2 * 0.27))
     return piezas

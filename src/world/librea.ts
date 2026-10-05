@@ -163,13 +163,22 @@ export function vestirLaLibrea(raiz: Object3D, aircraft: AircraftConfig): void {
   const pedido = aircraft.appearance.motivo;
   const motivo = pedido && motivoQueSeLee(pedido, cola);
 
-  for (const malla of colas) {
-    if (!motivo) continue;
-    const perfil = perfilDe(malla, aRaiz);
+  /*
+   * **La deriva y su timón, un solo dibujo.** El timón de dirección es ahora
+   * una pieza aparte —se mueve: ver `world/superficies-de-mando.ts`— con el
+   * mismo material, y medida cada una por su lado salían dos soles: uno en
+   * la deriva y otro, pequeño, en el timón. Medidas juntas, el motivo cae
+   * en la cola entera y el timón se lleva el trozo que le toca, que es como
+   * se pinta una cola de verdad: por encima de las juntas.
+   */
+  if (motivo && colas.length) {
+    const perfil = perfilDe(colas, aRaiz);
     const lienzo = lienzoDeCola(perfil, motivo, hex(cola), hex(body));
-    if (!lienzo) continue;
-    ponerUV(malla, perfil.uv);
-    ponerTextura(malla.material as MeshStandardMaterial, lienzo);
+    if (lienzo)
+      colas.forEach((malla, i) => {
+        ponerUV(malla, perfil.uv[i]!);
+        ponerTextura(malla.material as MeshStandardMaterial, lienzo);
+      });
   }
 
   for (const malla of marcas) {
@@ -253,45 +262,57 @@ interface PerfilDeCola {
   readonly y1: number;
   /** Cada altura con vértices, con su borde de ataque y de salida. */
   readonly anillos: readonly { y: number; ataque: number; salida: number }[];
-  readonly uv: Float32Array;
+  /** Las coordenadas de textura de cada malla, en su orden. */
+  readonly uv: readonly Float32Array[];
 }
 
-function perfilDe(malla: Mesh, aRaiz: Matrix4): PerfilDeCola {
-  const pos = malla.geometry.getAttribute("position");
-  const aAvion = new Matrix4().multiplyMatrices(aRaiz, malla.matrixWorld);
+function perfilDe(mallas: readonly Mesh[], aRaiz: Matrix4): PerfilDeCola {
   const v = new Vector3();
-  const zs = new Float32Array(pos.count);
-  const ys = new Float32Array(pos.count);
+  const puntos = mallas.map((malla) => {
+    const pos = malla.geometry.getAttribute("position");
+    const aAvion = new Matrix4().multiplyMatrices(aRaiz, malla.matrixWorld);
+    const zs = new Float32Array(pos.count);
+    const ys = new Float32Array(pos.count);
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(aAvion);
+      zs[i] = v.z;
+      ys[i] = v.y;
+    }
+    return { zs, ys };
+  });
   let z0 = Infinity;
   let z1 = -Infinity;
   let y0 = Infinity;
   let y1 = -Infinity;
   // Los anillos de la superficie están a alturas exactas: se agrupan por el
-  // milímetro.
+  // milímetro. Los de la deriva y los de su timón caen a las mismas.
   const porAltura = new Map<number, { y: number; ataque: number; salida: number }>();
-  for (let i = 0; i < pos.count; i++) {
-    v.fromBufferAttribute(pos, i).applyMatrix4(aAvion);
-    zs[i] = v.z;
-    ys[i] = v.y;
-    z0 = Math.min(z0, v.z);
-    z1 = Math.max(z1, v.z);
-    y0 = Math.min(y0, v.y);
-    y1 = Math.max(y1, v.y);
-    const clave = Math.round(v.y * 1000);
-    const a = porAltura.get(clave);
-    if (a) {
-      a.ataque = Math.min(a.ataque, v.z);
-      a.salida = Math.max(a.salida, v.z);
-    } else porAltura.set(clave, { y: v.y, ataque: v.z, salida: v.z });
-  }
+  for (const { zs, ys } of puntos)
+    for (let i = 0; i < zs.length; i++) {
+      const z = zs[i]!;
+      const y = ys[i]!;
+      z0 = Math.min(z0, z);
+      z1 = Math.max(z1, z);
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+      const clave = Math.round(y * 1000);
+      const a = porAltura.get(clave);
+      if (a) {
+        a.ataque = Math.min(a.ataque, z);
+        a.salida = Math.max(a.salida, z);
+      } else porAltura.set(clave, { y, ataque: z, salida: z });
+    }
   const anillos = [...porAltura.values()].sort((a, b) => a.y - b.y);
-  const uv = new Float32Array(pos.count * 2);
   const dz = Math.max(z1 - z0, 1e-6);
   const dy = Math.max(y1 - y0, 1e-6);
-  for (let i = 0; i < pos.count; i++) {
-    uv[i * 2] = (zs[i]! - z0) / dz;
-    uv[i * 2 + 1] = (y1 - ys[i]!) / dy;
-  }
+  const uv = puntos.map(({ zs, ys }) => {
+    const uno = new Float32Array(zs.length * 2);
+    for (let i = 0; i < zs.length; i++) {
+      uno[i * 2] = (zs[i]! - z0) / dz;
+      uno[i * 2 + 1] = (y1 - ys[i]!) / dy;
+    }
+    return uno;
+  });
   return { z0, z1, y0, y1, anillos, uv };
 }
 
