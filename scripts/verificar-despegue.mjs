@@ -79,7 +79,7 @@ await page.addInitScript(() => {
  * `verificar-vuelo-entero.mjs`; para el parte de verdad,
  * `OGA_METEO_DE_VERDAD=1`.
  */
-const METEO = process.env.OGA_METEO_DE_VERDAD ? "" : "&meteo=";
+const METEO = process.env.OGA_METEO_DE_VERDAD ? "&meteo=verdad" : "&meteo=";
 await page.goto(
   `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}` +
     `&avion=${AVION}` +

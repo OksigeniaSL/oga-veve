@@ -193,6 +193,7 @@ import {
   atisEnTexto,
   deFrente,
   pedirMetar,
+  proxyDelParte,
   TIEMPO_DE_CASA,
   tiempoEntreCampos,
   vientoComoVector,
@@ -23179,8 +23180,7 @@ export class Game {
    */
   private async volverAMirarElParte(): Promise<void> {
     const antes = this.parteDeHoy?.decision ?? null;
-    const q = new URLSearchParams(window.location.search);
-    const proxy = q.get("meteo") ?? PROXY_METEO;
+    const proxy = proxyDelParte();
     if (proxy && this.scenario.meteo?.fuente !== "mano") {
       const ids = [this.elCampo().id, this.destinoId].filter(
         (id): id is string => !!id,

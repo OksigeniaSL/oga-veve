@@ -350,6 +350,36 @@ export function leerMetar(crudo: string): Meteo | null {
 }
 
 /**
+ * **Por qué proxy se pide el parte**, o `null` si no se pide.
+ *
+ * - `?meteo=` vacío: sin parte, el tiempo de casa.
+ * - `?meteo=<dirección>`: ese proxy.
+ * - `?meteo=verdad`: el del `.env`, aunque lo maneje un banco.
+ * - Sin nada: el del `.env` (`VITE_METEO`)… **salvo en desarrollo con el
+ *   navegador manejado por un banco** (`navigator.webdriver`), que va con el
+ *   tiempo de casa.
+ *
+ * Lo último es el arreglo en la raíz de lo que pasó cuatro veces el
+ * 5-oct-2026: con el proxy del `.env`, los bancos pedían el parte de verdad,
+ * la tarjeta del tiempo salía sola a proponer no salir —Los Rodeos en OVC003,
+ * Pettirossi en BKN010—, que es lo que tiene que hacer, y el banco se quedaba
+ * en el puesto o medía una escena congelada detrás de ella. Se iban poniendo
+ * `&meteo=` banco a banco, y quedaban más de cuarenta. Un banco mide lo mismo
+ * cada vez; el día que haga falta el parte real, `?meteo=verdad`. En
+ * producción no cambia nada.
+ */
+export function proxyDelParte(
+  q: URLSearchParams = new URLSearchParams(globalThis.location?.search ?? ""),
+): string | null {
+  const delEnv = import.meta.env.VITE_METEO ?? null;
+  const pedido = q.get("meteo");
+  if (pedido === "verdad") return delEnv;
+  if (pedido !== null) return pedido || null;
+  if (import.meta.env.DEV && globalThis.navigator?.webdriver) return null;
+  return delEnv;
+}
+
+/**
  * Pide el METAR de un aeropuerto a través del proxy propio.
  *
  * Devuelve el tiempo de casa si no hay proxy configurado, si la red falla o si

@@ -319,7 +319,7 @@ const HORA = process.env.OGA_HORA ?? "16";
 const METAR = process.env.OGA_METAR
   ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
   : process.env.OGA_METEO_DE_VERDAD
-    ? ""
+    ? "&meteo=verdad"
     : "&meteo=";
 /*
  * **Y la lección, si se pide otra.** `OGA_LECCION=rodaje` para mirar con

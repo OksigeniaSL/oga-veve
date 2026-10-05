@@ -168,9 +168,18 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   await page.addInitScript(() => {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
+  /*
+   * **Con el tiempo de casa, no con el del día.** Con el proxy del `.env`, el
+   * 5-oct-2026 Pettirossi daba BKN010: la tarjeta del tiempo salía sola a
+   * proponer no salir con la avioneta (techo por debajo de los 1.500 ft del
+   * vuelo visual), que es lo que tiene que hacer, y tapaba los carteles que
+   * mide este banco. Ver `verificar-despegue.mjs`; para el parte de verdad,
+   * `OGA_METEO_DE_VERDAD=1`.
+   */
   await page.goto(
     `${BASE}/?escenario=${juego.escenario}&hora=16&leccion=despegue` +
-      `&tramo=${juego.tramo}&avion=${juego.avion}`,
+      `&tramo=${juego.tramo}&avion=${juego.avion}` +
+      (process.env.OGA_METEO_DE_VERDAD ? "&meteo=verdad" : "&meteo="),
   );
   /*
    * **Y si no arranca, se dice.** Aquí había un `.catch(() => {})`, y un

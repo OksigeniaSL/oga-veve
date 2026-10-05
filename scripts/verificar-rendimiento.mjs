@@ -162,7 +162,7 @@ for (const escenario of ESCENARIOS) {
       (process.env.OGA_METAR
         ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
         : process.env.OGA_METEO_DE_VERDAD
-          ? ""
+          ? "&meteo=verdad"
           : "&meteo="),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {

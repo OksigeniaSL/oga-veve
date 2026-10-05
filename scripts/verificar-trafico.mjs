@@ -83,7 +83,7 @@ await page.addInitScript(() => {
  * la tarjeta del tiempo sale sola en el puesto a proponer no salir, con la
  * escena parada detrás. Para el parte de verdad, `OGA_METEO_DE_VERDAD=1`.
  */
-const METEO = process.env.OGA_METEO_DE_VERDAD ? "" : "&meteo=";
+const METEO = process.env.OGA_METEO_DE_VERDAD ? "&meteo=verdad" : "&meteo=";
 await page.goto(
   `${BASE}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=guyrami${METEO}`,
 );

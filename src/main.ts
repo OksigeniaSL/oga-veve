@@ -23,7 +23,7 @@ import { cargarManifiesto, juegoDeTeselas } from "./world/teselas-de-ortofoto";
 import { mundoElegido } from "./ui/mundo";
 import { cargarCiudad } from "./world/ciudades";
 import { conViento } from "./world/scenarios";
-import { leerMetar, pedirMetar, vientoDeCasa, type Meteo } from "./world/meteo";
+import { leerMetar, pedirMetar, proxyDelParte, vientoDeCasa, type Meteo } from "./world/meteo";
 
 /**
  * De dónde sale el tiempo de esta partida.
@@ -69,7 +69,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   if (!icao) return deCasa;
   // El proxy se configura al construir; sin él no se pide nada. Ver
   // `workers/meteo.js`, que es el que hace falta y son diez líneas.
-  const proxy = q.get("meteo") ?? import.meta.env.VITE_METEO ?? null;
+  const proxy = proxyDelParte(q);
   return pedirMetar(icao, proxy, deCasa);
 }
 import { detectLocale, setLocale, t } from "./i18n";
@@ -602,8 +602,7 @@ game.start();
  * todos los campos.
  */
 if (meteo.fuente !== "mano") {
-  const q = new URLSearchParams(location.search);
-  const proxy = q.get("meteo") ?? import.meta.env.VITE_METEO ?? null;
+  const proxy = proxyDelParte();
   for (const d of destinosDeHoy) {
     const icao = d.aerodrome?.id;
     if (!icao || !proxy) continue;
