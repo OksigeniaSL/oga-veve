@@ -11084,6 +11084,16 @@ export class Game {
         conPorque && this.instructor.vozDe(conPorque) ? conPorque : base
       ) as TranslationKey;
       if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, "normal");
+      /*
+       * Y escrita, en los peldaños que leen: sin grabación la instructora no
+       * suena, y lo que se decide aquí no se veía en ninguna parte más que en
+       * la raya. Detrás de la tarjeta del verde, que sale en ese momento.
+       */
+      if (canalesDe(this.tier.avisos).texto)
+        this.agenda.luego(3, () => {
+          if (this.flight.state.onGround)
+            this.hud.flash(t((conPorque ?? base) as TranslationKey), 5);
+        });
     }
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
@@ -11100,7 +11110,7 @@ export class Game {
         sale.desde === "interseccion"
           ? calle
             ? `${yo.dicho}, departing from intersection ${calle}, runway ${rw}`
-            : ""
+            : `${yo.dicho}, intersection departure, runway ${rw}`
           : `${yo.dicho}, backtracking runway ${rw}`,
       );
     } else {
