@@ -22465,6 +22465,14 @@ export class Game {
         cosasDeLaVuelta(clase, (c) => puntos?.has(c) ?? false),
       );
       this.vueltaDe = this.aircraft.id;
+      /*
+       * Y si se rehace con el motor ya en marcha —el modelo llega después de
+       * arrancar, o la lección empieza en la pista—, el arranque ya pasó: ni
+       * funda ni calzos, que si no un avión rodando llevaría los suyos puestos
+       * para el banco y, al llegar a un puesto, a la vista.
+       */
+      if (this.input.controls.engineOn || !this.flight.state.onGround)
+        this.vueltaAlAvion.alArrancar(this.tier.avisos);
       this.fundasYCalzos?.soltar();
       this.fundasYCalzos = null;
       this.fundasDe = null;

@@ -635,6 +635,20 @@ const SALIDA_OCUPADA = 1000;
 const VOLVER_POR_LA_PISTA = 2 * SALIDA_OCUPADA;
 
 /**
+ * **Y lo que cuesta de más una salida desde la que, para llegar al puesto, hay
+ * que volver a pisar una pista** —cruzarla o rodar por ella—, m.
+ *
+ * Diez kilómetros: más que cualquier pista entera y que las otras dos juntas,
+ * así que cualquier salida por delante que no cruce gana a todas las que
+ * cruzan; y si cruzan todas —un campo con la plataforma al otro lado de otra
+ * pista—, gana la primera, como siempre. Ver `vuelveAPisarUnaPista`.
+ */
+const CRUZAR_UNA_PISTA = 10 * SALIDA_OCUPADA;
+
+/** Cada cuánto se mira si la raya pisa una pista, m. Ver `vuelveAPisarUnaPista`. */
+const CADA_CUANTO_SE_MIRA_LA_PISTA = 5;
+
+/**
  * A partir de cuántos metros de la raya se considera que ya no vas por ella, m.
  *
  * Veinticinco: más de media calle de rodaje. Menos que eso es ir por la raya
@@ -3876,6 +3890,31 @@ export class PlanDeVuelo {
       { desdeFuera: true, desdeLaCalle: !porLaPistaAun },
     );
     /*
+     * **Y la calle que cruza pista no se coge si todavía se puede seguir.**
+     *
+     * Una salida rápida nace en el eje, y a sus primeros metros
+     * `rodandoPorLaPista` da por metido en ella a quien pasa por delante de
+     * la boca rodando derecho: ahí no hay salida «por delante» que buscar y
+     * la raya sale de esa calle. En Gando, tomando por la 03L, la fase pasaba
+     * a «abandonando» justo en la boca de la que sale hacia la 03R —al revés
+     * de la plataforma—, a cinco metros de ella, y la raya volvía a cruzar
+     * las dos pistas por sus puntas norte. Ver `CRUZAR_UNA_PISTA`.
+     *
+     * Si quien está en esa boca sigue encima del asfalto de la pista y desde
+     * esa calle a casa hay que volver a pisar una, se mira si hay una salida
+     * por delante que no la pise; si la hay, se sigue rodando hasta ella, que
+     * es lo que hace quien todavía no ha girado.
+     */
+    if (
+      directa &&
+      !porLaPistaAun &&
+      this.encimaDeLaPista() &&
+      this.vuelveAPisarUnaPista(directa)
+    ) {
+      const otra = porLaSalida(this.salidaPorDelanteQue(true, meta, true));
+      if (otra?.ruta && !this.vuelveAPisarUnaPista(otra.ruta)) return otra;
+    }
+    /*
      * Y si sale rodando por la pista, también sin ganchos: es la raya de
      * recién tocado, a setenta metros por segundo, que va por el eje de la
      * pista de los datos —en Mariscal Estigarribia, cinco metros al lado del
@@ -5082,6 +5121,11 @@ export class PlanDeVuelo {
     soloHaciaDelante: boolean,
     /** A dónde se va de verdad; sin ella, al puesto de salida. */
     meta?: Punto,
+    /**
+     * Y si se busca aunque parezca que ya se está saliendo por una calle. Ver
+     * «la calle que cruza pista» en `rutaDeVuelta`.
+     */
+    aunqueSalga = false,
   ): Punto | null {
     const x = this.ultimaPos[0];
     const z = -this.ultimaPos[1];
@@ -5096,7 +5140,7 @@ export class PlanDeVuelo {
     if (Math.abs(aqui.across) > this.pista.width) return null;
     // Ni girando ya hacia una calle: quien está saliendo, sale. Ver
     // `rodandoPorLaPista`.
-    if (!this.rodandoPorLaPista()) return null;
+    if (!aunqueSalga && !this.rodandoPorLaPista()) return null;
 
     /*
      * **Y «por delante» es hacia donde mira el morro, no hacia donde mira la
@@ -5287,16 +5331,86 @@ export class PlanDeVuelo {
        */
       const vuelve =
         !soloHaciaDelante && hasta && this.vuelvePorLaPista(hasta, along, sentido);
+      /*
+       * **Y la primera útil es la que deja la pista hacia casa**, no la
+       * primera que hay.
+       *
+       * En Gando, tomando por la 03L, la primera boca por delante es una
+       * calle que sale hacia el este, hacia la 03R, y la plataforma está al
+       * oeste. Desde ahí no hay manera de volver sin pisar pista: la raya
+       * rodaba ciento cuarenta y cinco metros **por la 03R**, subía por la
+       * paralela del este, cruzaba las dos pistas por sus puntas norte y
+       * bajaba por la del oeste: 4,5 km de raya para un puesto al que,
+       * saliendo hacia el oeste, hay uno. Y al cruzar la punta de la 03L la
+       * fase volvía a «abandonando» con otro avión ya alineado en ella, que
+       * la torre había autorizado porque la pista estaba libre cuando se le
+       * dio. Medido con el banco del vuelo entero Fuerteventura–Gran Canaria:
+       * «dos encima de la pista» ciento cincuenta y seis muestras, a 3.092 m
+       * del umbral.
+       *
+       * Ningún piloto deja la pista hacia el lado contrario de su plataforma
+       * si puede dejarla hacia ella: cruzar una pista en uso pide una
+       * autorización expresa de la torre, y la otra pista de un campo con dos
+       * no es una calle. Se rueda un poco más por la pista que se acaba de
+       * usar —que es lo normal— y se sale por la primera que lleva a casa
+       * sin pisar otra.
+       */
+      const cruza = hasta !== null && this.vuelveAPisarUnaPista(hasta);
       const coste =
         adelante +
         (hasta?.ocupada ? SALIDA_OCUPADA : 0) +
-        (vuelve ? VOLVER_POR_LA_PISTA : 0);
+        (vuelve ? VOLVER_POR_LA_PISTA : 0) +
+        (cruza ? CRUZAR_UNA_PISTA : 0);
       if (coste < cerca) {
         cerca = coste;
         mejor = nudo;
       }
     }
     return mejor;
+  }
+
+  /** Si el avión está sobre el asfalto de la pista en uso, de punta a punta. */
+  private encimaDeLaPista(): boolean {
+    const { x, z, heading, width, length } = this.pista;
+    const aqui = enEjesDePista(this.ultimaPos[0], -this.ultimaPos[1], x, z, heading);
+    return Math.abs(aqui.across) <= width / 2 && Math.abs(aqui.along) <= length / 2;
+  }
+
+  /**
+   * Si una ruta que sale de la pista en uso **vuelve a pisar una pista**
+   * —esta misma o la otra de un campo con dos— después de haberla dejado:
+   * cruzarla o rodar por ella. Ver `CRUZAR_UNA_PISTA`.
+   *
+   * «Dejada» es a `FUERA_DE_LA_PISTA` del borde, donde se pinta la doble
+   * raya: una salida rápida va casi pegada al borde sus primeros metros y no
+   * puede contar como volver a ella. Y se mira cada pocos metros y no en los
+   * vértices, porque una calle que cruza una pista de cuarenta y cinco metros
+   * puede no tener ninguno encima del asfalto.
+   */
+  private vuelveAPisarUnaPista(ruta: Ruta): boolean {
+    const enPista = this.grafo.enPista;
+    if (!enPista) return false;
+    const { x, z, heading, width } = this.pista;
+    const fuera = width / 2 + FUERA_DE_LA_PISTA;
+    let dejada = false;
+    for (let i = 1; i < ruta.puntos.length; i++) {
+      const a = ruta.puntos[i - 1]!;
+      const b = ruta.puntos[i]!;
+      const n = Math.max(
+        1,
+        Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / CADA_CUANTO_SE_MIRA_LA_PISTA),
+      );
+      for (let k = 0; k <= n; k++) {
+        const q: Punto = [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n];
+        if (dejada) {
+          if (enPista(q)) return true;
+        } else if (
+          Math.abs(enEjesDePista(q[0], -q[1], x, z, heading).across) >= fuera
+        )
+          dejada = true;
+      }
+    }
+    return false;
   }
 
   /**
