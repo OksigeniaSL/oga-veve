@@ -1493,17 +1493,20 @@ export const FUERTEVENTURA: Scenario = {
   destino: ["lanzarote", "gran-canaria"],
   vecesLejos: 20,
   /*
-   * **Y aquí no, todavía, sus propias muestras.** Con las 400 del fino, 320
-   * km dan 800 m por muestra, y con 1.024 serían 313, como La Palma. Pero
-   * este mundo lleva tres islas enteras —Fuerteventura, Lanzarote y Gran
-   * Canaria— y el horizonte pasaba de 41.000 triángulos a 264.000: medido
-   * con la tarjeta, de 304.000 a 521.000 en el cuadro y de 1,2 a 2,2 ms de
-   * GPU en el aire (4,3 en otra tirada), y a cuatro veces más lento una
-   * tirada por encima de lo exigido (42 ms) y otra dentro (25,5), con la
-   * máquina cargada. Hasta medirlo en calma, o a una resolución de en medio,
-   * se queda en 800. Y el relieve de aquí es bajo y gastado, que es donde
-   * menos se notan las facetas.
+   * **Y sus propias muestras, como La Palma: 313 m y no 800.** Con las 400
+   * del fino, 320 km daban 800 m por muestra, y el relieve de la isla salía
+   * en facetas de casi un kilómetro — lo «a bloques» que Enrique vio en La
+   * Palma, «como estar jugando en Minecraft».
+   *
+   * Se quedó en 800 un tiempo por el coste: este mundo lleva Fuerteventura,
+   * Lanzarote y el este de Gran Canaria, y, cuadro a cuadro, el horizonte
+   * pasaba de 41.000 triángulos a 264.000. Pero las dos primeras son llanos
+   * de kilómetros, y doscientos triángulos para un llano es tirar vértices:
+   * ahora el horizonte junta lo llano en bloques y deja cuadro a cuadro la
+   * montaña y la costa —ver `world/malla-lejana.ts`—, y a 313 m se queda en
+   * unos 127.000.
    */
+  segmentosLejos: 1024,
   /*
    * El alisio, que aquí sopla más constante que en ninguna otra isla: del
    * nordeste y sin descanso. Es lo que hace que la 01 sea la cabecera de casa.
@@ -1669,13 +1672,20 @@ export const LA_GOMERA: Scenario = {
   destino: ["tenerife-sur", "tenerife-norte", "el-hierro"],
   vecesLejos: 12,
   /*
-   * **Y aquí no, todavía, sus propias muestras**, aunque con las 400 del fino
-   * 192 km dan 480 m por muestra. Con 640 serían 300, y este mapa pasaría a
-   * ser el más fino sobre la bocana de Santa Cruz de Tenerife —más que el de
-   * Los Rodeos, a 316—: una de sus muestras cae en el muelle, a dos metros, y
-   * la línea de barcos de Las Palmas a Santa Cruz pasaba por tierra según
-   * `rutas-de-barcos.test.ts`. Hay que mirar antes esa línea o esa prueba.
+   * **Y sus propias muestras: 300 m y no 480.** Con las 400 del fino, 192
+   * km daban 480 m por muestra, y Garajonay y los barrancos del norte, que
+   * empiezan donde se acaba el mapa fino, salían en facetas de medio
+   * kilómetro.
+   *
+   * Se quedó en 480 un tiempo porque con 640 este mapa pasa a ser el más fino
+   * sobre el puerto de Santa Cruz de Tenerife, y dos de sus muestras caen en
+   * él a dos metros: `rutas-de-barcos.test.ts` daba la línea de Las Palmas
+   * por tierra. Era la prueba: contaba como tierra todo lo que pasara de un
+   * metro, y el juego da por mar lo que no pasa del agua, que aquí está a dos
+   * —ver `esAguaDeCasa`—. Con la regla del juego, ese barco va por el agua
+   * del puerto, que es por donde va.
    */
+  segmentosLejos: 640,
   vientoDominante: { vientoDe: 45, vientoKt: 12, techoM: 1300, temp: 23 },
   nameKey: "scenario.laGomera.name",
   pais: "es",
