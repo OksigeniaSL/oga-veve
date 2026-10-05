@@ -8425,6 +8425,21 @@ if ((vuelo.cambiosDeFase ?? []).length) {
   for (const c of vuelo.cambiosDeFase) console.log(`      ${c}`);
 }
 
+/*
+ * **Y lo que se bajó de ortofoto por teselas** en el vuelo entero, que es lo
+ * que pesa volar en un teléfono con datos. Ver `world/teselas-de-ortofoto.ts`.
+ */
+{
+  const t = await page
+    .evaluate(() => globalThis.__oga.teselas?.() ?? null)
+    .catch(() => null);
+  if (t)
+    console.log(
+      `\n  teselas de ortofoto: ${t.bajadas} bajadas · ${(t.bytes / 1048576).toFixed(1)} MB · ` +
+        `${t.puestas}/${t.capas} en la tarjeta · ${t.fallos} fallos`,
+    );
+}
+
 const sinMedir = resultados.filter((r) => r.sinMedir).length;
 console.log(
   `\n  ${resultados.length - fallos - sinMedir} de ${resultados.length - sinMedir} comprobaciones` +

@@ -28,6 +28,13 @@
  * motivo que el relieve tiene dos: el detalle que hace falta rodando es
  * absurdo a diez kilómetros, y una sola imagen para las dos cosas o pesa
  * veinte megas o es una acuarela.
+ *
+ * ## Y por encima, las teselas
+ *
+ * Donde hay juego de teselas —las siete islas Canarias—, la isla entera se
+ * pinta además por teselas que se bajan según se miran, y éstas se quedan de
+ * base: lo que se ve mientras llegan y sin red. Ver `teselas-de-ortofoto.ts`
+ * y el ADR 0018.
  */
 
 import {

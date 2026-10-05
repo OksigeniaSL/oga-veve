@@ -42,6 +42,12 @@ import { Terrain } from "./terrain";
 import type { Scenario } from "./scenarios";
 import { dondeCae } from "./entre-aerodromos";
 import { exposicionDelVecino } from "./ortofoto";
+/*
+ * La marca de dónde acaba la lectura de la foto: el fundido sustituye la de
+ * three entera, y las teselas tienen que saber dónde colgarse detrás. Ver
+ * `vestirConTeselas`.
+ */
+import { FIN_DE_LA_FOTO } from "./teselas-de-ortofoto";
 import type { Ciudad } from "./ciudad";
 import { crearLucesDeCiudad, type LucesDeCiudad } from "./luces-de-ciudad";
 import { crearAerodromoLejano, type AerodromoLejano } from "./aerodromo-lejano";
@@ -78,6 +84,7 @@ export const GLSL_DEL_FUNDIDO = {
       }
       diffuseColor *= sampledDiffuseColor;
     #endif
+    ${FIN_DE_LA_FOTO}
   `,
 } as const;
 

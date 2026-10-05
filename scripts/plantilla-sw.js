@@ -69,6 +69,9 @@ self.addEventListener("activate", (evento) => {
        */
       const uso = await caches.open(CACHE_USO);
       for (const peticion of await uso.keys()) {
+        // Las teselas y su índice se quedan: ver `esTesela`. Sin índice, las
+        // teselas guardadas no se pueden usar sin red.
+        if (esDeLasTeselas(peticion.url)) continue;
         if (!/-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(new URL(peticion.url).pathname))
           await uso.delete(peticion);
       }
@@ -79,6 +82,25 @@ self.addEventListener("activate", (evento) => {
 
 /** Lo que nunca se guarda: lo de fuera de casa. */
 const esDeCasa = (url) => new URL(url).origin === self.location.origin;
+
+/*
+ * **Las teselas de ortofoto, como si llevaran huella.**
+ *
+ * Son la isla entera en trocitos —ver `world/teselas-de-ortofoto.ts`— y se
+ * guardan según se miran, como todo lo demás. Pero se llaman por su sitio en
+ * el mosaico (`data/teselas/pnoa/15/…/….jpg`) y no llevan huella en el
+ * nombre, así que con la regla de abajo pasarían dos cosas malas: cada una
+ * se volvería a pedir por detrás **cada vez que se usa** —cientos de
+ * peticiones por vuelo, el doble de datos en un teléfono— y todas se
+ * borrarían al estrenar cada versión del juego, que es lo contrario de
+ * guardarlas.
+ *
+ * No cambian: la foto de un sitio es la de ese vuelo del IGN, y si un día se
+ * rehacen con otra se publican en otra carpeta. El índice sí se renueva, como
+ * cualquier fichero sin huella.
+ */
+const esTesela = (url) => /\/data\/teselas\/[\w-]+\/\d+\/\d+\/\d+\.jpg$/.test(new URL(url).pathname);
+const esDeLasTeselas = (url) => new URL(url).pathname.includes("/data/teselas/");
 
 self.addEventListener("fetch", (evento) => {
   const peticion = evento.request;
@@ -187,9 +209,9 @@ self.addEventListener("fetch", (evento) => {
    * rehiciera la cabina entera. Así siguen funcionando sin red y se ponen al
    * día solos, un vuelo después.
    */
-  const conHuella = /-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(
-    new URL(peticion.url).pathname,
-  );
+  const conHuella =
+    /-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(new URL(peticion.url).pathname) ||
+    esTesela(peticion.url);
   const renovar = () =>
     fetch(peticion).then((res) => {
       // Solo lo que salió bien. Un 404 guardado es un 404 para siempre.

@@ -26,6 +26,7 @@ import {
   DoubleSide,
   Euler,
   Group,
+  type Material,
   MathUtils,
   Mesh,
   MeshBasicMaterial,
@@ -454,6 +455,10 @@ import {
 } from "./world/scenarios";
 import { SENDA_DE_SIEMPRE, sendaDeLaCabecera } from "./world/sendas-publicadas";
 import { crearTeselas, type Teselas } from "./world/teselas";
+import {
+  TeselasDeOrtofoto,
+  type ManifiestoDeTeselas,
+} from "./world/teselas-de-ortofoto";
 import { exposicionDe, type Ortofoto } from "./world/ortofoto";
 import { mundoElegido } from "./ui/mundo";
 
@@ -11190,6 +11195,53 @@ export class Game {
   private anilloMedio: Ortofoto | undefined;
   private anilloPartido = false;
 
+  /**
+   * **La ortofoto por teselas**, si hay juego de teselas para este sitio:
+   * la isla entera y las de enfrente, con el detalle que pide la distancia.
+   * Ver `world/teselas-de-ortofoto.ts` y el punto 166 de la lista.
+   */
+  teselasDeOrtofoto: TeselasDeOrtofoto | null = null;
+
+  /**
+   * Pone las teselas en todos los suelos con foto: el mapa fino de casa, las
+   * dos mallas del horizonte y la isla de cada vecino, **cada uno en su
+   * marco**. Devuelve `null` si el juego de teselas no tiene nada en este
+   * mundo —Cuatro Vientos con el de Canarias—, y entonces no se gasta nada.
+   */
+  ponerTeselasDeOrtofoto(
+    manifiesto: ManifiestoDeTeselas,
+    juego: string,
+  ): TeselasDeOrtofoto | null {
+    const origen = this.scenario.aerodrome?.origin;
+    if (!origen || this.teselasDeOrtofoto) return this.teselasDeOrtofoto;
+    const teselas = new TeselasDeOrtofoto(
+      manifiesto,
+      juego,
+      origen,
+      this.scenario.size * vecesLejosDe(this.scenario),
+    );
+    if (!teselas.hayAlgo) {
+      teselas.dispose();
+      return null;
+    }
+    const materialDe = (grupo: Group, nombre: string) => () =>
+      ((grupo.getObjectByName(nombre) as Mesh | undefined)?.material as
+        | Material
+        | undefined) ?? null;
+    for (const nombre of ["terreno", "horizonte", "horizonte-medio"])
+      teselas.apuntar({ material: materialDe(this.terrain.group, nombre), origen });
+    for (const v of this.vecinos) {
+      const suyo = v.base.aerodrome?.origin;
+      if (suyo)
+        teselas.apuntar({
+          material: materialDe(v.mundo.terreno.group, "terreno"),
+          origen: suyo,
+        });
+    }
+    this.teselasDeOrtofoto = teselas;
+    return teselas;
+  }
+
   /** La foto del vecino `i`, cuando llegue. Ver `ponerAnillos`. */
   ponerFotoDelVecino(i: number, foto: Ortofoto): void {
     this.vecinos[i]?.mundo.ponerFoto(foto);
@@ -12918,6 +12970,25 @@ export class Game {
       v.mundo.alPaso(this.camera.position.x, this.camera.position.z);
       if (!v.lucesPuestas && v.mundo.cerca) this.ponerLucesDelVecino(v);
     }
+    /*
+     * Las teselas de ortofoto, con la cámara ya puesta: es desde donde se
+     * mira lo que decide qué se baja. Ver `world/teselas-de-ortofoto.ts`.
+     */
+    if (this.teselasDeOrtofoto) {
+      const ojo = this.camera.position;
+      this.camera.getWorldDirection(this.miradaDeLasTeselas);
+      this.teselasDeOrtofoto.alPaso(
+        {
+          x: ojo.x,
+          z: ojo.z,
+          altura: ojo.y - this.terrain.sampleHeight(ojo.x, ojo.z),
+          mira: { x: this.miradaDeLasTeselas.x, z: this.miradaDeLasTeselas.z },
+        },
+        this.renderer,
+        this.renderer.domElement.height,
+        this.camera.fov,
+      );
+    }
     this.pasoDeLluvia(dt);
 
     /*
@@ -13574,6 +13645,9 @@ export class Game {
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
   }
+
+  /** Hacia dónde mira la cámara, para las teselas. Sin reservar en cada cuadro. */
+  private readonly miradaDeLasTeselas = new Vector3();
 
   /** Dónde estaba el avión la última vez que se dobló el ala: para ver si lo han movido. */
   private readonly dondeElAla = new Vector3(Number.NaN, 0, 0);

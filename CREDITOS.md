@@ -49,9 +49,9 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Concepción, Ayolas, Pilar, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
 | [OpenStreetMap](https://www.openstreetmap.org)                                                                                                                               | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades, y dónde está cada sitio que la comandante señala en ruta —el Teide, Anaga, Itaipú…—, en `data/hitos/destacados.json` | **ODbL**                                                                |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data)                                                                                                            | Coordenadas, pistas y elevación de aeropuertos                                                                                         | **Unlicense** (dominio público)                                         |
-| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
+| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres; y las siete islas Canarias enteras en teselas por niveles, de z11 a z16, que se bajan según se miran. Ver abajo | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
-| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los nueve escenarios paraguayos, en cuatro encuadres                                                                        | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los nueve escenarios paraguayos, en cuatro encuadres; y Paraguay en teselas por niveles —el país entero a z11 y los pasillos de las rutas y los campos hasta z14—. Ver abajo | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
 | [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado; y los puntos del río Paraguay y del Paraná que se señalan por la ventanilla | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
 | [AIP España](https://aip.enaire.es/AIP/) — ENAIRE, AIRAC AMDT 08/26 (en vigor desde el 03-SEP-2026)                                                                           | Los puntos del plan de vuelo en Canarias: salidas (SID), aproximaciones RNP y rutas de salida de La Gomera de los ocho aeropuertos de las islas, con sus nombres y coordenadas publicados. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 | [AIP Paraguay](https://www.dinac.gov.py/v3/index.php/ais/aip-paraguay) — DINAC, AMDT AIRAC 01/2026 | Los puntos del plan de vuelo en Paraguay: aproximaciones RNP de Asunción, Guaraní, Encarnación, Mariscal Estigarribia y Pedro Juan Caballero, y salidas de Asunción y Guaraní; y las cotas y la pista de Pilar, la plataforma de Ayolas y el servicio de radio de cada campo. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
@@ -80,6 +80,40 @@ Pesos medidos: el horizonte anda por los cien kilobytes y `medio` va de
 doscientos veinticinco —El Hierro, que es casi todo mar— a dos megas y pico
 —Cuatro Vientos, que es Madrid entero—. Solo se baja la del escenario que se
 abre, y se guarda.
+
+**Y las islas enteras, en teselas.** El 5 de octubre de 2026, por una captura
+de Enrique sobre La Palma —Santa Cruz y su volcán «preciosos» con la foto
+fina, y el resto de la isla «verde plano y a bloques, como estar jugando en
+Minecraft»—, entró una quinta forma de sacar la misma fuente: las teselas del
+mosaico `EPSG:3857` del mismo servicio WMTS, **tal cual las sirve el IGN** de
+z14 a z16, y de z11 a z13 **promediadas aquí** a partir de las de z14 —los
+niveles bajos del IGN son otro mosaico, con otra exposición, y mezclarlos
+dibujaría costuras de color—. Qué teselas: las siete islas enteras hasta z15
+(cuatro metros por píxel), y z16 (dos) en los pasillos de llegada y salida
+de cada pista y alrededor de lo que la comandante señala por la ventanilla.
+Lo decide `src/world/cobertura-de-teselas.ts`, las saca
+`scripts/ortofoto-a-teselas.mjs` y las pinta `src/world/teselas-de-ortofoto.ts`.
+
+Son 17.137 teselas y 197 MB —La Palma 24, Tenerife 61, Gran Canaria 43,
+Fuerteventura 32, Lanzarote 19, La Gomera 10, El Hierro 8— y **no se
+versionan**: van al servidor de la web con el resto del juego y se rehacen
+con el guion, que sí está en el repositorio (ADR 0018). Quien juega no se
+baja eso: se baja lo que mira, con el detalle que pide la distancia, y lo
+guarda para la próxima. La licencia y la atribución son las mismas —CC BY
+4.0 · scne.es— porque la fuente es la misma.
+
+**Y Paraguay, con el mismo criterio y la fuente que tiene.** Paraguay no
+publica ortofoto nacional abierta que se pueda alcanzar —ver más abajo—, así
+que sus teselas salen de lo mismo que sus fotos de una pieza: **Sentinel-2
+cloudless de EOX, la tanda de 2025, CC BY-NC-SA 4.0**, con su atribución y su
+uso no comercial. Es un solo mosaico a todos los niveles, así que se piden
+todos tal cual y no hay costuras de color que evitar; y se acaba en z14,
+ocho metros y medio por píxel, porque el satélite ve a diez. Como Paraguay es
+tierra de punta a punta, no se cubre entero a todos los niveles: el país a
+z11 —antes, en ruta, la foto del horizonte iba a doscientos setenta metros
+por píxel—, los pasillos de las once rutas a z12 y z13, y treinta kilómetros
+alrededor de cada campo a z14. Son 16.030 teselas y 168 MB, con el mismo
+guion (`--fuente s2`) y fuera del repositorio, como las de Canarias.
 
 ### El plan de vuelo: AIP España
 
