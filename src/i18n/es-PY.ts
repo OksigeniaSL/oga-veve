@@ -1816,12 +1816,17 @@ export const ES_PY = {
   "vuelo.teLoPasaste": "Te pasaste. Frená y volvé",
   "vuelo.yaPodesTocar": "Ya podés tocar",
   /*
-   * Lo único que se dice en los últimos veinte pies: ahí ya no hay velocidad
-   * que corregir, y llegar con gas hace flotar el avión y se come la pista.
-   * Ver `acompanarLaRecogida`.
+   * Lo único que se dice en la recogida: ahí ya no hay velocidad que
+   * corregir, y llegar con gas hace flotar el avión y se come la pista. Y la
+   * nariz, que es la otra mitad: quitar el gas sin recoger es tocar con toda
+   * la bajada de la senda. A la altura de cada clase de avión: ver
+   * `acompanarLaRecogida` y `flight/recogida.ts`.
    */
   "vuelo.quitaElGas": "Quitá el gas",
   "palabra.sinGas": "Sin gas",
+  "vuelo.narizEnLaRecogida": "La nariz un poquito arriba",
+  "vuelo.narizYQuitaElGas": "La nariz un poquito arriba, y quitá el gas",
+  "palabra.narizYSinGas": "Nariz arriba, sin gas",
   "percance.coche": "Le pasaste por encima al coche",
   "percance.edificio": "Chocaste con un edificio",
   "percance.fuera": "Tocaste tierra fuera de la pista",
