@@ -1283,7 +1283,9 @@ body {
 
 .hoja__lista {
   display: flex;
-  gap: 4px;
+  /* Con aire: la senda, la toma y la frustrada llevan su raya de suelo, y
+     pegadas se leían como una sola raya larga. */
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1417,7 +1419,7 @@ body {
 
 .hoja--cuaderno .hoja__lista {
   flex-wrap: wrap;
-  gap: 3px;
+  gap: 4px 7px;
 }
 
 .hoja--cuaderno .hoja__dibujo > svg:first-child {

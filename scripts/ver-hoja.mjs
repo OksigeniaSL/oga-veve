@@ -79,7 +79,8 @@ const vuelo = (minutos, extra) => ({
 
 /** Abre el juego y espera al avión de verdad. */
 async function abrir(opciones, consulta) {
-  const page = await navegador.newPage(opciones);
+  // En castellano de Paraguay, que es como lo ve quien juega.
+  const page = await navegador.newPage({ locale: "es-PY", ...opciones });
   page.on("pageerror", (e) => console.log("  ERROR:", e.message));
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
   await page.goto(`${BASE}/?${consulta}`);
@@ -336,6 +337,30 @@ async function elRotuloDelTcas() {
   await page.close();
 }
 
+/**
+ * **Y un punto de la tarjeta del avión, abierto por su `id`** desde el
+ * registro de explicaciones, como lo abriría cualquier otro sitio del juego.
+ */
+async function unPuntoDeLaTarjeta() {
+  const page = await abrir(
+    { viewport: { width: 1600, height: 900 } },
+    "escenario=tenerife-norte&hora=12&leccion=despegue&tramo=taguato&avion=jaz-90&meteo=",
+  );
+  await page.waitForTimeout(1500);
+  for (const id of ["avion.alerones", "avion.reactor"]) {
+    const abierta = await page.evaluate(async (cual) => {
+      const m = await import("/src/ui/explicaciones.ts");
+      m.abrirExplicacion(cual);
+      await new Promise((r) => setTimeout(r, 400));
+      const v = document.getElementById("explicacion");
+      return { abierta: !!v && !v.hidden, cual: v?.dataset.abierta ?? null };
+    }, id);
+    comprobar(`el punto ${id} se abre por su id`, abierta.cual === id, `${abierta.cual}`);
+    await page.screenshot({ path: `${FOTOS}/portatil-${id.replace(".", "-")}.png` });
+  }
+  await page.close();
+}
+
 /** `OGA_SOLO=tcas` mira solo el rótulo del TCAS, que es lo rápido. */
 const SOLO = process.env.OGA_SOLO ?? "";
 try {
@@ -351,6 +376,7 @@ try {
     "taguato",
   );
   await elRotuloDelTcas();
+  await unPuntoDeLaTarjeta();
 } finally {
   await navegador.close();
   await server.close();
