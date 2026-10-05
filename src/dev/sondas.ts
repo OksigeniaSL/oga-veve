@@ -25,7 +25,15 @@
  * quiere: la alternativa era un `as unknown as` y enterarse en la pista.
  */
 import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
-import { Box3, Raycaster, Vector2, Vector3, type Object3D } from "three";
+import {
+  Box3,
+  InstancedMesh,
+  Matrix4,
+  Raycaster,
+  Vector2,
+  Vector3,
+  type Object3D,
+} from "three";
 import type { Game } from "../game";
 import { CAMERA_MODES } from "../cameras";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
@@ -1188,6 +1196,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         ? juego.terrain.group.getObjectByName(`aerodromo:${aero.id}`)
         : null;
       const salida: string[] = [];
+      recinto?.updateMatrixWorld(true);
+      const p = new Vector3();
+      const m = new Matrix4();
       recinto?.traverse((o) => {
         const pos = (
           o as {
@@ -1205,14 +1216,36 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         ).geometry?.attributes?.position;
         if (!pos || pos.count === 0) return;
         const d: number[] = [];
-        for (
-          let i = 0;
-          i < pos.count;
-          i += Math.max(1, Math.floor(pos.count / 40))
-        ) {
-          d.push(
-            pos.getY(i) - juego.terrain.sampleHeight(pos.getX(i), pos.getZ(i)),
-          );
+        const sobreElSuelo = (): void => {
+          d.push(p.y - juego.terrain.sampleHeight(p.x, p.z));
+        };
+        /*
+         * **Y las instancias, cada una en su sitio.** Las luces de pista son
+         * una sola esfera de veinte centímetros repetida con una matriz por
+         * luz —ver `luces` en `world/aerodrome.ts`—, y esto leía la esfera
+         * tal cual, alrededor del origen: comparaba su cota, unos
+         * centímetros, con el suelo del centro del escenario, que en Los
+         * Rodeos está a 619 m. De ahí el «luces-pista: −619 m» de
+         * `verificar-mallas.mjs`: las luces estaban bien y la sonda no.
+         */
+        if (o instanceof InstancedMesh) {
+          const paso = Math.max(1, Math.floor(o.count / 40));
+          for (let i = 0; i < o.count; i += paso) {
+            o.getMatrixAt(i, m);
+            p.setFromMatrixPosition(m).applyMatrix4(o.matrixWorld);
+            sobreElSuelo();
+          }
+        } else {
+          for (
+            let i = 0;
+            i < pos.count;
+            i += Math.max(1, Math.floor(pos.count / 40))
+          ) {
+            p.set(pos.getX(i), pos.getY(i), pos.getZ(i)).applyMatrix4(
+              o.matrixWorld,
+            );
+            sobreElSuelo();
+          }
         }
         d.sort((a, b) => a - b);
         salida.push(
