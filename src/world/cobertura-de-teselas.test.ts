@@ -16,6 +16,10 @@ import {
   NIVEL_MAX,
   NIVEL_MIN,
   NIVEL_PEDIDO_MIN,
+  NIVEL_DE_SENTINEL,
+  NIVEL_DEL_PAIS,
+  RUTAS_DE_PARAGUAY,
+  CAJA_DE_PARAGUAY,
   aIndice,
   deLlave,
   enElIndice,
@@ -24,6 +28,7 @@ import {
   madresHasta,
   pistasEnGrados,
   planDeLaIsla,
+  planDeParaguay,
   tierraDeLosRelieves,
   type Cumbre,
   type IndiceDeTeselas,
@@ -31,6 +36,7 @@ import {
   type Tesela,
 } from "./cobertura-de-teselas";
 import { mapasDeCanarias } from "./relieve-en-disco";
+import { SCENARIOS } from "./scenarios";
 
 const fs = () =>
   (
@@ -196,5 +202,69 @@ describe("la cobertura de las teselas", () => {
     for (const p of pistas)
       for (const u of [p.a, p.b])
         expect(enElIndice(enDisco!, teselaDe(u.lat, u.lon, NIVEL_MAX)), `${u.lat},${u.lon}`).toBe(true);
+  });
+});
+
+describe("la cobertura de Paraguay", () => {
+  /** El aeródromo de cada escenario paraguayo, y su origen. */
+  const campos: Record<string, { lat: number; lon: number }> = {};
+  const deEscenario: Record<string, string> = {};
+  for (const e of SCENARIOS) {
+    const o = e.aerodrome?.origin;
+    if (!o || o.lat > 0) continue;
+    campos[e.aerodrome!.id] = o;
+    deEscenario[e.id] = e.aerodrome!.id;
+  }
+  const plan = planDeParaguay(campos);
+
+  it("las rutas son las de los escenarios, ni una más ni una menos", () => {
+    const deVerdad = new Set<string>();
+    for (const e of SCENARIOS) {
+      const a = deEscenario[e.id];
+      if (!a) continue;
+      for (const d of e.destino ?? []) {
+        const b = deEscenario[d];
+        if (b) deVerdad.add([a, b].sort().join("–"));
+      }
+    }
+    const apuntadas = new Set(RUTAS_DE_PARAGUAY.map(([a, b]) => [a, b].sort().join("–")));
+    expect([...apuntadas].sort()).toEqual([...deVerdad].sort());
+  });
+
+  it("el país entero al nivel grueso, de Bahía Negra a Encarnación", () => {
+    for (const [lat, lon] of [
+      [-20.23, -58.17],
+      [-27.33, -55.87],
+      [-22.5, -61.5],
+      [-24.0, -56.0],
+    ] as const)
+      expect(plan.get(NIVEL_DEL_PAIS)!.has(llave(teselaDe(lat, lon, NIVEL_DEL_PAIS)))).toBe(true);
+    expect(CAJA_DE_PARAGUAY.sur).toBeLessThan(-27.3);
+  });
+
+  it("cada ruta, de punta a punta, a z13; y cada campo y sus alrededores a z14", () => {
+    for (const [a, b] of RUTAS_DE_PARAGUAY) {
+      const pa = campos[a]!;
+      const pb = campos[b]!;
+      for (let f = 0; f <= 1; f += 0.02) {
+        const lat = pa.lat + (pb.lat - pa.lat) * f;
+        const lon = pa.lon + (pb.lon - pa.lon) * f;
+        expect(plan.get(13)!.has(llave(teselaDe(lat, lon, 13))), `${a}–${b} ${f.toFixed(2)}`).toBe(true);
+      }
+    }
+    for (const [id, p] of Object.entries(campos))
+      for (const d of [0, 0.1, 0.2])
+        for (const [dl, dn] of [[d, 0], [-d, 0], [0, d], [0, -d]] as const)
+          expect(
+            plan.get(NIVEL_DE_SENTINEL)!.has(llave(teselaDe(p.lat + dl, p.lon + dn, NIVEL_DE_SENTINEL))),
+            `${id} ${dl},${dn}`,
+          ).toBe(true);
+  });
+
+  it("y no pide z14 en mitad de una ruta larga, que se cruza en crucero", () => {
+    const a = campos.SGAS!;
+    const b = campos.SGME!;
+    const medio = teselaDe((a.lat + b.lat) / 2, (a.lon + b.lon) / 2, NIVEL_DE_SENTINEL);
+    expect(plan.get(NIVEL_DE_SENTINEL)!.has(llave(medio))).toBe(false);
   });
 });

@@ -50,7 +50,7 @@ escenario, y se bajarían enteros aunque se mirara una esquina.
   pinta lo mismo peor, y son cuarenta y siete megas en la tarjeta.
 - **No se versionan.** 17.137 teselas y 197 MB no van al repositorio: van al
   servidor de la web con el juego (`deploy-oga-veve.sh`), desde `data/teselas`
-  —carpeta o enlace—, y se rehacen con `scripts/pnoa-a-teselas.mjs`, que sí
+  —carpeta o enlace—, y se rehacen con `scripts/ortofoto-a-teselas.mjs`, que sí
   está versionado junto con la regla de qué se saca. El índice
   (`manifiesto.json`) viaja con ellas: sin índice el juego no pide ninguna.
 - **El trabajador de servicio las guarda para siempre**: no se vuelven a pedir
@@ -71,12 +71,20 @@ escenario, y se bajarían enteros aunque se mirara una esquina.
 
 ## Consecuencias
 
-- El aula y el teléfono bajan lo que se mira: medido en el banco, entre uno y
-  dos megas por vista, y lo ya visto no se vuelve a bajar.
+- El aula y el teléfono bajan lo que se mira, y lo ya visto no se vuelve a
+  bajar. Medido en el banco del vuelo entero, de puesto a puesto: Los Rodeos →
+  La Palma, 472 teselas y 6,2 MB; Gran Canaria → Lanzarote, 398 y 4,5 MB. Una
+  vista suelta, entre uno y tres megas. A cambio deja de bajarse la foto de
+  en medio, que eran entre medio y un megabyte por escenario.
 - La tarjeta lleva unos veinte megas más que antes (la textura de capas menos
-  la foto de en medio).
-- Paraguay no tiene juego de teselas todavía: ver el informe del punto 166.
-  El sistema no depende de la fuente; hace falta su cobertura y su extracción.
+  la foto de en medio): medido, de 178 a 198 MB en La Palma y de 233 a 253 en
+  Los Rodeos.
+- **Paraguay va con su fuente**, Sentinel-2 cloudless de EOX (CC BY-NC-SA
+  4.0), la misma de sus fotos de una pieza: el país entero a z11, los pasillos
+  de las rutas a z12 y z13 y treinta kilómetros alrededor de cada campo a z14,
+  que es el tope de un satélite de diez metros. 16.030 teselas, 168 MB. No
+  hay ortofoto nacional abierta que se pueda alcanzar; el día que la haya,
+  es otra fuente en el mismo guion.
 - La geometría del horizonte no cambia: lo lejano sigue en la rejilla del
   relieve lejano de cada escenario. La de La Palma va a 760 metros por
   muestra, y eso también se ve; es otro arreglo (`segmentosLejos`).

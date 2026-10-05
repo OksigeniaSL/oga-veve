@@ -47,7 +47,7 @@ function elPackDeVoz(): Plugin {
  * Son decenas de miles de ficheros que el juego pide por `fetch` según mira
  * —ver `world/teselas-de-ortofoto.ts`— y no pasan por el paquete. Tampoco
  * están en el repositorio: pesan cientos de megas y se rehacen con
- * `scripts/pnoa-a-teselas.mjs` (ADR 0018). Así que se copian tal cual si
+ * `scripts/ortofoto-a-teselas.mjs` (ADR 0018). Así que se copian tal cual si
  * están en `data/teselas` —una carpeta o un enlace a ella—, y si no están,
  * el juego se publica sin teselas y vuela con las fotos de una pieza.
  */

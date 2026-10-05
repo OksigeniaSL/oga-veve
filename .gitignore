@@ -6,7 +6,7 @@ datos/dem/
 # descargan con `scripts/hgt-a-heightmap.mjs`, no se versionan.
 dist/
 # Las teselas de ortofoto: cientos de megas que se rehacen con
-# `scripts/pnoa-a-teselas.mjs` y van al servidor de la web, no al repositorio.
+# `scripts/ortofoto-a-teselas.mjs` y van al servidor de la web, no al repositorio.
 # Puede ser una carpeta o un enlace a ella. Ver el ADR 0018.
 /data/teselas
 .DS_Store

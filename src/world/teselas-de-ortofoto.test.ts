@@ -323,9 +323,10 @@ describe("el sombreador, colgado detrás de la foto", () => {
 });
 
 describe("qué juego de teselas toca", () => {
-  it("el del PNOA a las fotos del PNOA, y ninguno a las de Sentinel-2", () => {
+  it("el del PNOA a las fotos del PNOA, y el de Sentinel-2 a las de Paraguay", () => {
     expect(juegoDeTeselas("PNOA · Instituto Geográfico Nacional de España")).toBe("pnoa");
-    expect(juegoDeTeselas("Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA")).toBeNull();
+    expect(juegoDeTeselas("Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA")).toBe("s2");
+    expect(juegoDeTeselas("otra cosa")).toBeNull();
     expect(juegoDeTeselas(undefined)).toBeNull();
   });
 });

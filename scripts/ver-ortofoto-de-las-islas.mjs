@@ -21,7 +21,9 @@
  * - `la-palma-desde-tfn` — la misma, llegando desde Los Rodeos: La Palma es
  *   el vecino y el resto de la isla salía de la foto del horizonte;
  * - `teide` y `nieves` — las cumbres de Tenerife y Gran Canaria desde
- *   crucero.
+ *   crucero;
+ * - `paraguay-en-ruta` — de Asunción a Encarnación, en crucero y lejos de
+ *   los dos campos.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -59,6 +61,18 @@ const VISTAS = {
     sitio: [28.43, -16.47],
     altura: 3658,
     mira: [28.27269, -16.64227],
+  },
+  /*
+   * Y Paraguay en ruta, de Asunción a Encarnación a diez mil pies y a ciento
+   * diez kilómetros de casa: lo que antes era la foto del horizonte.
+   */
+  "paraguay-en-ruta": {
+    escenario: "pettirossi",
+    destino: "encarnacion",
+    origen: [-25.240156, -57.519227],
+    sitio: [-26.035, -56.846],
+    altura: 3048,
+    mira: [-27.227537, -55.837584],
   },
   nieves: {
     escenario: "gran-canaria",

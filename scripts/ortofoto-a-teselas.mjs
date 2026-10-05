@@ -1,29 +1,36 @@
 #!/usr/bin/env node
 /**
- * PNOA → teselas de ortofoto por niveles, isla a isla.
+ * Ortofoto → teselas por niveles: las islas Canarias del PNOA y los pasillos
+ * de Paraguay de Sentinel-2.
  *
  * El hermano de `ortofoto-publica.mjs`, que saca cuatro fotos de una pieza por
- * escenario. Éste saca **teselas sueltas** del mosaico del IGN, las de la isla
- * entera, para que el juego se baje solo las que mira y con el detalle que le
- * toca por la distancia. Es la respuesta a la captura de La Palma de Enrique
- * (punto 166): «el resto de la isla, verde plano y a bloques, como estar
- * jugando en Minecraft». Qué teselas y a qué nivel lo decide
- * `src/world/cobertura-de-teselas.ts`; aquí solo se piden, se guardan y se
- * apuntan.
+ * escenario. Éste saca **teselas sueltas** del mosaico web, para que el juego
+ * se baje solo las que mira y con el detalle que le toca por la distancia. Es
+ * la respuesta a la captura de La Palma de Enrique (punto 166): «el resto de
+ * la isla, verde plano y a bloques, como estar jugando en Minecraft». Qué
+ * teselas y a qué nivel lo decide `src/world/cobertura-de-teselas.ts`; aquí
+ * solo se piden, se guardan y se apuntan.
+ *
+ * ## Las dos fuentes
+ *
+ * - **`pnoa`** (por omisión), el PNOA del IGN, CC BY 4.0: las siete islas
+ *   enteras hasta z15 y z16 en pasillos y cumbres. De z14 a z16 tal cual las
+ *   sirve el IGN; **z13, z12 y z11 hechas aquí**, promediando de cuatro en
+ *   cuatro con `ffmpeg`, porque los niveles bajos del IGN son otro mosaico,
+ *   con otra exposición, y mezclarlos dibujaría costuras de color.
+ * - **`s2`**, Sentinel-2 cloudless de EOX, la tanda de 2025, CC BY-NC-SA 4.0:
+ *   Paraguay entero hasta z12 y los pasillos de sus rutas hasta z14, que es
+ *   todo lo que da un satélite de diez metros. Es un solo mosaico a todos los
+ *   niveles, así que todos se piden tal cual.
  *
  * ## Lo que hace
  *
- * 1. Dónde hay tierra, con el relieve que ya está en `data/terrain/`: así no
- *    se le piden al IGN miles de teselas de mar. Las que aun así salen de
- *    mar —el IGN contesta con un JPEG liso de novecientos bytes— se apuntan y
- *    no se vuelven a pedir.
- * 2. z14 de la isla entera, y con ellas **z13, z12 y z11 hechas aquí**,
- *    promediando de cuatro en cuatro con `ffmpeg`: los niveles bajos del IGN
- *    son otro mosaico, con otra exposición, y mezclarlos dibujaría costuras
- *    de color entre niveles.
- * 3. z15 de la isla entera.
- * 4. z16 en los pasillos de llegada y salida y alrededor de las cumbres.
- * 5. El índice, `manifiesto.json`, con lo que hay de verdad en disco y lo que
+ * 1. Dónde hay tierra, con el relieve que ya está en `data/terrain/` (solo en
+ *    Canarias): así no se piden miles de teselas de mar. Las que aun así
+ *    salen lisas —el IGN contesta con un JPEG de novecientos bytes en el
+ *    mar— se apuntan y no se vuelven a pedir.
+ * 2. Las teselas del plan, nivel a nivel, y las promediadas si toca.
+ * 3. El índice, `manifiesto.json`, con lo que hay de verdad en disco y lo que
  *    pesa cada isla. Se reescribe después de cada paso, así que una tirada
  *    cortada a medias ya deja algo que el juego puede usar.
  *
@@ -36,20 +43,22 @@
  *
  * ## Uso
  *
- *   node scripts/pnoa-a-teselas.mjs                    # las siete islas
- *   node scripts/pnoa-a-teselas.mjs la-palma tenerife  # esas
- *   node scripts/pnoa-a-teselas.mjs --plan             # cuántas, sin bajar nada
- *   node scripts/pnoa-a-teselas.mjs --a /otra/carpeta  # a otro sitio
+ *   node scripts/ortofoto-a-teselas.mjs                    # las siete islas
+ *   node scripts/ortofoto-a-teselas.mjs la-palma tenerife  # esas
+ *   node scripts/ortofoto-a-teselas.mjs --fuente s2        # Paraguay
+ *   node scripts/ortofoto-a-teselas.mjs --plan             # cuántas, sin bajar nada
+ *   node scripts/ortofoto-a-teselas.mjs --a /otra/carpeta  # a otro sitio
  *
- * Sale a `data/teselas/pnoa/<z>/<x>/<y>.jpg`. Se puede cortar y relanzar: lo
- * que ya está en disco no se vuelve a pedir. **Y no se lanzan dos tiradas de
- * la misma isla a la vez**: la segunda pisaría a la primera. Cada isla deja un
- * cerrojo con su PID mientras corre, y otra tirada que lo encuentre vivo se
- * niega.
+ * Sale a `data/teselas/<fuente>/<z>/<x>/<y>.jpg`. Se puede cortar y
+ * relanzar: lo que ya está en disco no se vuelve a pedir. **Y no se lanzan
+ * dos tiradas de la misma isla a la vez**: la segunda pisaría a la primera.
+ * Cada isla deja un cerrojo con su PID mientras corre, y otra tirada que lo
+ * encuentre vivo se niega.
  *
- * El servidor del IGN va a su ritmo: medido el 5 de octubre de 2026, entre
- * catorce y veintitrés teselas por segundo con ocho peticiones a la vez. Una
- * isla grande es media hora; las siete, unas horas. En segundo plano.
+ * Medido el 5 de octubre de 2026: el IGN dio entre cuarenta y cincuenta
+ * teselas por segundo con ocho peticiones a la vez, y las siete islas
+ * —17.137 teselas, 197 MB— salieron en ocho minutos. Otro día puede ir diez
+ * veces más lento: en segundo plano.
  *
  * Hace falta `ffmpeg` en la máquina, como para `ortofoto-publica.mjs`. No es
  * dependencia del juego: corre aquí.
@@ -61,10 +70,12 @@ import { mkdir, rm, writeFile, appendFile, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  CAJA_DE_PARAGUAY,
   ISLAS_CANARIAS,
   NIVEL_MIN,
   NIVEL_PEDIDO_MIN,
   NIVEL_MAX,
+  NIVEL_DE_SENTINEL,
   LADO_DE_TESELA,
   aIndice,
   deLlave,
@@ -72,22 +83,62 @@ import {
   madresHasta,
   pistasEnGrados,
   planDeLaIsla,
+  planDeParaguay,
   tierraDeLosRelieves,
 } from '../src/world/cobertura-de-teselas.ts';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-const FUENTE = {
-  id: 'pnoa',
-  fuente: 'PNOA · Instituto Geográfico Nacional de España',
-  licencia: 'CC BY 4.0 · scne.es',
-  servicio: 'https://www.ign.es/wmts/pnoa-ma',
-  capa: 'OI.OrthoimageCoverage',
-  url: (z, x, y) =>
-    'https://www.ign.es/wmts/pnoa-ma?service=WMTS&request=GetTile&version=1.0.0' +
-    '&layer=OI.OrthoimageCoverage&style=default&format=image/jpeg' +
-    `&tilematrixset=EPSG:3857&TileMatrix=${z}&TileRow=${y}&TileCol=${x}`,
+const FUENTES = {
+  pnoa: {
+    id: 'pnoa',
+    fuente: 'PNOA · Instituto Geográfico Nacional de España',
+    licencia: 'CC BY 4.0 · scne.es',
+    servicio: 'https://www.ign.es/wmts/pnoa-ma',
+    capa: 'OI.OrthoimageCoverage',
+    nivelMax: NIVEL_MAX,
+    nota:
+      'Teselas del mosaico EPSG:3857 tal cual las sirve el IGN de z14 a z16; ' +
+      'z11 a z13 promediadas aquí a partir de las de z14. Ver scripts/ortofoto-a-teselas.mjs.',
+    url: (z, x, y) =>
+      'https://www.ign.es/wmts/pnoa-ma?service=WMTS&request=GetTile&version=1.0.0' +
+      '&layer=OI.OrthoimageCoverage&style=default&format=image/jpeg' +
+      `&tilematrixset=EPSG:3857&TileMatrix=${z}&TileRow=${y}&TileCol=${x}`,
+  },
+  s2: {
+    id: 's2',
+    fuente: 'Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA',
+    // La misma que en `ortofoto-publica.mjs`: ver allí por qué esta y no otra.
+    licencia:
+      'CC BY-NC-SA 4.0 · EOX s2cloudless, uso no comercial —juego gratuito, de código abierto y sin fines de lucro—. Consultado 2026-09-12 en cloudless.eox.at/documentation/license',
+    servicio: 'https://tiles.maps.eox.at/wmts',
+    capa: 's2cloudless-2025_3857',
+    nivelMax: NIVEL_DE_SENTINEL,
+    nota:
+      'Teselas del mosaico EPSG:3857 tal cual las sirve EOX, de z11 a z14: un solo ' +
+      'mosaico a todos los niveles. Ver scripts/ortofoto-a-teselas.mjs.',
+    url: (z, x, y) =>
+      'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default' +
+      `/GoogleMapsCompatible/${z}/${y}/${x}.jpg`,
+  },
 };
+
+/** La zona de Paraguay, como si fuera una isla: para el índice y el cerrojo. */
+const PARAGUAY = { id: 'paraguay', nombre: 'Paraguay', caja: CAJA_DE_PARAGUAY };
+
+/**
+ * Los campos de Paraguay por su aeródromo: el origen de cada uno, que es de
+ * donde sale todo lo demás del escenario.
+ */
+function cargarCampos() {
+  const out = {};
+  for (const id of ['sgas', 'sgay', 'sgco', 'sgen', 'sges', 'sgme', 'sgpi', 'sgpj', 'yvytu']) {
+    const aero = JSON.parse(readFileSync(join(RAIZ, 'data', 'aerodromes', `${id}.aero.json`), 'utf8'));
+    // Por su identificador, que es como van las rutas: ver `RUTAS_DE_PARAGUAY`.
+    out[aero.id] = aero.origin;
+  }
+  return out;
+}
 
 /** Por debajo de esto, el JPEG es el liso del mar: medido, 912 bytes. */
 const LISO = 1500;
@@ -97,17 +148,24 @@ const A_LA_VEZ = 8;
 
 const args = process.argv.slice(2);
 const SOLO_PLAN = args.includes('--plan');
+const dondeFuente = args.indexOf('--fuente');
+const FUENTE = FUENTES[dondeFuente >= 0 ? args[dondeFuente + 1] : 'pnoa'];
+if (!FUENTE) {
+  console.error(`fuentes: ${Object.keys(FUENTES).join(', ')}`);
+  process.exit(1);
+}
 const dondeA = args.indexOf('--a');
 const SALIDA =
   dondeA >= 0 && args[dondeA + 1]
     ? args[dondeA + 1]
     : join(RAIZ, 'data', 'teselas', FUENTE.id);
-const pedidas = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--a');
-const ISLAS = pedidas.length
-  ? ISLAS_CANARIAS.filter((i) => pedidas.includes(i.id))
-  : ISLAS_CANARIAS;
+const pedidas = args.filter(
+  (a, i) => !a.startsWith('--') && args[i - 1] !== '--a' && args[i - 1] !== '--fuente',
+);
+const TODAS = FUENTE.id === 's2' ? [PARAGUAY] : ISLAS_CANARIAS;
+const ISLAS = pedidas.length ? TODAS.filter((i) => pedidas.includes(i.id)) : TODAS;
 if (pedidas.length && ISLAS.length !== pedidas.length) {
-  console.error(`islas: ${ISLAS_CANARIAS.map((i) => i.id).join(', ')}`);
+  console.error(`islas: ${TODAS.map((i) => i.id).join(', ')}`);
   process.exit(1);
 }
 
@@ -295,7 +353,7 @@ async function escribirIndice() {
   for (const { t, bytes } of enDisco()) {
     todas.push(t);
     total += bytes;
-    const id = islaDe(t)?.id ?? 'fuera';
+    const id = islaDe(t, TODAS)?.id ?? 'fuera';
     const i = porIsla.get(id) ?? { teselas: {}, bytes: 0 };
     i.teselas[t.z] = (i.teselas[t.z] ?? 0) + 1;
     i.bytes += bytes;
@@ -306,14 +364,12 @@ async function escribirIndice() {
     licencia: FUENTE.licencia,
     servicio: FUENTE.servicio,
     capa: FUENTE.capa,
-    nota:
-      'Teselas del mosaico EPSG:3857 tal cual las sirve el IGN de z14 a z16; ' +
-      'z11 a z13 promediadas aquí a partir de las de z14. Ver scripts/pnoa-a-teselas.mjs.',
+    nota: FUENTE.nota,
     generado: new Date().toISOString().slice(0, 10),
     lado: LADO_DE_TESELA,
     nivelMin: NIVEL_MIN,
-    nivelMax: NIVEL_MAX,
-    islas: ISLAS_CANARIAS.map((i) => ({
+    nivelMax: FUENTE.nivelMax,
+    islas: TODAS.map((i) => ({
       id: i.id,
       nombre: i.nombre,
       caja: i.caja,
@@ -353,38 +409,59 @@ async function cerrar(isla) {
 
 // ── La tirada ─────────────────────────────────────────────────────────────
 
-const mapas = cargarRelieves();
-const datos = { tierra: tierraDeLosRelieves(mapas), pistas: cargarPistas(), cumbres: cargarCumbres() };
-console.log(
-  `pnoa → teselas · ${mapas.length} relieves, ${datos.pistas.length} pistas, ` +
-    `${datos.cumbres.length} cumbres · salida ${SALIDA}`,
-);
-
+console.log(`${FUENTE.id} → teselas · salida ${SALIDA}`);
 await mkdir(SALIDA, { recursive: true });
 const mar = await leerMar();
 
-for (const isla of ISLAS) {
-  const plan = planDeLaIsla(isla, datos);
-  const cuenta = [...plan.pedidas].map(([z, s]) => `z${z} ${s.size}`).join(' · ');
-  const porPasillo = [...plan.motivo.values()].filter((m) => m === 'pasillo').length;
-  console.log(
-    `\n${isla.nombre}: ${cuenta} (z${NIVEL_MAX}: ${porPasillo} de pasillo, ` +
-      `${plan.motivo.size - porPasillo} de cumbre)`,
-  );
-  if (SOLO_PLAN) continue;
-  const abrir = await cerrar(isla);
-  if (!abrir) continue;
-  try {
-    const z14 = [...plan.pedidas.get(NIVEL_PEDIDO_MIN)];
-    await bajar(z14, mar, `z${NIVEL_PEDIDO_MIN}`);
-    await hacerGruesas(z14.filter((k) => existsSync(ruta(deLlave(k)))));
-    await escribirIndice();
-    for (let z = NIVEL_PEDIDO_MIN + 1; z <= NIVEL_MAX; z++) {
-      await bajar([...plan.pedidas.get(z)], mar, `z${z}`);
-      await escribirIndice();
+if (FUENTE.id === 's2') {
+  /*
+   * **Paraguay**: un solo mosaico a todos los niveles, así que se piden
+   * todos tal cual, de los gruesos a los finos.
+   */
+  const plan = planDeParaguay(cargarCampos());
+  console.log(`\nParaguay: ${[...plan].map(([z, s]) => `z${z} ${s.size}`).join(' · ')}`);
+  if (!SOLO_PLAN) {
+    const abrir = await cerrar(PARAGUAY);
+    if (abrir) {
+      try {
+        for (const [z, lista] of [...plan].sort((a, b) => a[0] - b[0])) {
+          await bajar([...lista], mar, `z${z}`);
+          await escribirIndice();
+        }
+      } finally {
+        await abrir();
+      }
     }
-  } finally {
-    await abrir();
+  }
+} else {
+  const mapas = cargarRelieves();
+  const datos = { tierra: tierraDeLosRelieves(mapas), pistas: cargarPistas(), cumbres: cargarCumbres() };
+  console.log(
+    `  ${mapas.length} relieves, ${datos.pistas.length} pistas, ${datos.cumbres.length} cumbres`,
+  );
+  for (const isla of ISLAS) {
+    const plan = planDeLaIsla(isla, datos);
+    const cuenta = [...plan.pedidas].map(([z, s]) => `z${z} ${s.size}`).join(' · ');
+    const porPasillo = [...plan.motivo.values()].filter((m) => m === 'pasillo').length;
+    console.log(
+      `\n${isla.nombre}: ${cuenta} (z${NIVEL_MAX}: ${porPasillo} de pasillo, ` +
+        `${plan.motivo.size - porPasillo} de cumbre)`,
+    );
+    if (SOLO_PLAN) continue;
+    const abrir = await cerrar(isla);
+    if (!abrir) continue;
+    try {
+      const z14 = [...plan.pedidas.get(NIVEL_PEDIDO_MIN)];
+      await bajar(z14, mar, `z${NIVEL_PEDIDO_MIN}`);
+      await hacerGruesas(z14.filter((k) => existsSync(ruta(deLlave(k)))));
+      await escribirIndice();
+      for (let z = NIVEL_PEDIDO_MIN + 1; z <= NIVEL_MAX; z++) {
+        await bajar([...plan.pedidas.get(z)], mar, `z${z}`);
+        await escribirIndice();
+      }
+    } finally {
+      await abrir();
+    }
   }
 }
 if (SOLO_PLAN) process.exit(0);

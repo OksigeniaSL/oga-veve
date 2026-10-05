@@ -42,7 +42,7 @@
  * ## Sin dependencias, a propósito
  *
  * Este fichero no importa nada: lo usan el juego, las pruebas y el extractor
- * (`scripts/pnoa-a-teselas.mjs`), que lo carga con Node tal cual. Los datos
+ * (`scripts/ortofoto-a-teselas.mjs`), que lo carga con Node tal cual. Los datos
  * —las pistas, las cumbres, dónde hay tierra— se le pasan.
  */
 
@@ -397,6 +397,126 @@ export function planDeLaIsla(
     motivo.set(llave(t), por);
   }
   return { pedidas, motivo };
+}
+
+// ── Paraguay: Sentinel-2, por los pasillos de las rutas ──────────────────
+
+/**
+ * **Paraguay, con el mismo criterio y otra fuente.**
+ *
+ * Paraguay no publica ortofoto nacional abierta —o no de forma que se pueda
+ * alcanzar—, así que la fuente es la de sus fotos de una pieza: Sentinel-2
+ * cloudless de EOX, la tanda de 2025, que es un solo mosaico a todos los
+ * niveles —no hay costuras de color que evitar— y se acaba en z14, ocho
+ * metros y medio por píxel, porque el satélite ve a diez. Pedir más sería
+ * fabricar detalle.
+ *
+ * Y lo que cambia es **qué se cubre**. Una isla canaria se cubre entera
+ * porque es pequeña y está rodeada de mar; Paraguay es tierra de punta a
+ * punta, cuatrocientos mil kilómetros cuadrados. Así que:
+ *
+ * - **el país entero a z11** —sesenta y nueve metros por píxel—, que es lo
+ *   que se ve a veinte kilómetros y más, y antes era la foto del horizonte
+ *   a doscientos setenta;
+ * - **z12 y z13 en los pasillos de las rutas**, veinticinco y doce
+ *   kilómetros a cada lado de la recta entre los dos campos —lo que se ve
+ *   desde crucero—, y a cuarenta kilómetros de cada campo;
+ * - **z14 a treinta kilómetros de cada campo**, que es donde se sube, se baja
+ *   y se vuela bajo. En crucero no se pide: a tres mil metros, el píxel de
+ *   z13 ya es más fino que el de la pantalla.
+ *
+ * Unas trece mil teselas y ciento cincuenta megas. Con z14 en todos los
+ * pasillos eran treinta y nueve mil y cuatrocientos: detalle para mirar el
+ * suelo a mil pies en mitad de una ruta de trescientos kilómetros, que es
+ * justo donde no se vuela.
+ */
+export const CAJA_DE_PARAGUAY: Caja = { sur: -27.65, norte: -19.25, oeste: -62.7, este: -54.2 };
+
+/**
+ * Las rutas de Paraguay, por el identificador de cada aeródromo: las de
+ * `destino` en `scenarios.ts`, que una prueba compara con éstas. SGOG es la
+ * pista de la granja, Yvytu Rape.
+ */
+export const RUTAS_DE_PARAGUAY: readonly (readonly [string, string])[] = [
+  ["SGAS", "SGOG"],
+  ["SGAS", "SGEN"],
+  ["SGAS", "SGES"],
+  ["SGAS", "SGCO"],
+  ["SGAS", "SGPJ"],
+  ["SGAS", "SGME"],
+  ["SGAS", "SGPI"],
+  ["SGAS", "SGAY"],
+  ["SGES", "SGOG"],
+  ["SGES", "SGEN"],
+  ["SGES", "SGPJ"],
+];
+
+/**
+ * Por nivel, cuánto se cubre en Paraguay: medio ancho del pasillo de cada
+ * ruta y radio alrededor de cada campo, m. Ver la cabecera de esta parte.
+ */
+export const PASILLOS_DE_PARAGUAY: Readonly<Record<number, { readonly ancho: number; readonly radio: number }>> = {
+  12: { ancho: 25000, radio: 40000 },
+  13: { ancho: 12000, radio: 40000 },
+  14: { ancho: 0, radio: 30000 },
+};
+
+/** El nivel que cubre el país entero, y el más fino que da Sentinel-2. */
+export const NIVEL_DEL_PAIS = 11;
+export const NIVEL_DE_SENTINEL = 14;
+
+/** Metros entre un punto y el segmento entre dos sitios, en plano local. */
+export function distanciaAlSegmento(
+  lat: number,
+  lon: number,
+  a: { readonly lat: number; readonly lon: number },
+  b: { readonly lat: number; readonly lon: number },
+): number {
+  const lat0 = (a.lat + b.lat) / 2;
+  const k = Math.cos(lat0 * RAD);
+  const m = (la: number, lo: number) => ({ x: lo * RAD * R * k, y: la * RAD * R });
+  const pa = m(a.lat, a.lon);
+  const pb = m(b.lat, b.lon);
+  const q = m(lat, lon);
+  const dx = pb.x - pa.x;
+  const dy = pb.y - pa.y;
+  const l2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((q.x - pa.x) * dx + (q.y - pa.y) * dy) / l2));
+  return Math.hypot(q.x - (pa.x + dx * t), q.y - (pa.y + dy * t));
+}
+
+/**
+ * El plan de Paraguay: el país entero hasta `NIVEL_DEL_PAIS`, y los pasillos
+ * de las rutas y los alrededores de cada campo hasta `NIVEL_DE_SENTINEL`.
+ */
+export function planDeParaguay(
+  campos: Readonly<Record<string, { readonly lat: number; readonly lon: number }>>,
+  rutas: readonly (readonly [string, string])[] = RUTAS_DE_PARAGUAY,
+): Map<number, Set<string>> {
+  const out = new Map<number, Set<string>>();
+  for (let z = NIVEL_MIN; z <= NIVEL_DEL_PAIS; z++)
+    out.set(z, new Set(teselasDeLaCaja(CAJA_DE_PARAGUAY, z).map(llave)));
+  const tramos = rutas
+    .map(([a, b]) => [campos[a], campos[b]] as const)
+    .filter((t): t is readonly [{ lat: number; lon: number }, { lat: number; lon: number }] => !!t[0] && !!t[1]);
+  const sitios = Object.values(campos);
+  for (let z = NIVEL_DEL_PAIS + 1; z <= NIVEL_DE_SENTINEL; z++) {
+    const { ancho, radio } = PASILLOS_DE_PARAGUAY[z] ?? { ancho: 0, radio: 0 };
+    const s = new Set<string>();
+    const lado = metrosPorPixel(-24, z) * LADO_DE_TESELA;
+    const holgura = lado * 0.71;
+    for (const t of teselasDeLaCaja(CAJA_DE_PARAGUAY, z)) {
+      const c = aGrados(t.x + 0.5, t.y + 0.5, t.z);
+      if (
+        sitios.some((p) => metrosEntre(c.lat, c.lon, p.lat, p.lon) <= radio + holgura) ||
+        (ancho > 0 &&
+          tramos.some(([a, b]) => distanciaAlSegmento(c.lat, c.lon, a, b) <= ancho + holgura))
+      )
+        s.add(llave(t));
+    }
+    out.set(z, s);
+  }
+  return out;
 }
 
 /**

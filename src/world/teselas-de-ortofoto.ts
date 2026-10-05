@@ -144,6 +144,8 @@ export const BASE_DE_TESELAS = "data/teselas";
 export function juegoDeTeselas(fuente: string | undefined): string | null {
   if (!fuente) return null;
   if (/PNOA/i.test(fuente)) return "pnoa";
+  // Paraguay: Sentinel-2 cloudless de EOX, el mismo mosaico que sus fotos.
+  if (/Sentinel-2/i.test(fuente)) return "s2";
   return null;
 }
 
@@ -754,10 +756,12 @@ export class TeselasDeOrtofoto {
    * teselas por fotograma como mucho.
    */
   alPaso(ojo: Ojo, pintor: WebGLRenderer, altoPx: number, fovGrados: number): void {
-    this.vestir();
     const ahora = performance.now();
     if (ahora - this.ultima >= CADA) {
       this.ultima = ahora;
+      // Vestir busca las mallas por su nombre, y eso recorre el aeródromo
+      // entero: cada cuarto de segundo basta, no en cada fotograma.
+      this.vestir();
       this.elegir(ojo, altoPx, fovGrados);
       this.pedir();
     }
