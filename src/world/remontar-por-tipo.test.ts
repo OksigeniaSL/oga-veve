@@ -22,10 +22,11 @@ import { PlanDeVuelo, type ComoSeSale } from "./plan-de-vuelo";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { cabeEn, campoDe, radioDeGiro } from "../flight/cabe";
 import {
-  paraEntrarYDespegar,
-  pistaQueHaceFalta,
+  pistaNecesariaHoy,
   remontaHastaLaCabecera,
+  type DiaDeDespegue,
 } from "../flight/carrera";
+import { airDensity, aireDelParte } from "../flight/atmosphere";
 import { esDeLinea } from "../flight/velocidades-en-tierra";
 import { enEjesDePista } from "./rumbo";
 import {
@@ -59,9 +60,15 @@ interface Entrada {
 }
 
 /** Rueda hasta el verde y devuelve por dónde se va a salir. */
-function entrada(esc: Scenario, avion: AircraftConfig, vientoDe: number): Entrada | null {
+function entrada(
+  esc: Scenario,
+  avion: AircraftConfig,
+  vientoDe: number,
+  dia?: DiaDeDespegue,
+): Entrada | null {
   const pista = conViento(esc, { ...TIEMPO_DE_CASA, vientoDe, vientoKt: 15 }).runway;
   const plan = new PlanDeVuelo(esc.aerodrome!, pista, () => 0, avion);
+  if (dia) plan.diaDeDespegue = () => dia;
   plan.reiniciar();
   const dt = 0.1;
   let p: Punto | null = null;
@@ -158,6 +165,9 @@ const CAMPOS: readonly [Scenario, number, number][] = [
  */
 const EN_LA_CABECERA = 160;
 
+/** Lo que la avioneta quiere por delante cuando remonta un trozo, m. */
+const trozo = (a: AircraftConfig): number => Math.max(1200, 2 * pistaNecesariaHoy(a));
+
 describe("remontar la pista según el avión", () => {
   let remontes = 0;
   let trozos = 0;
@@ -185,10 +195,10 @@ describe("remontar la pista según el avión", () => {
           it(`${donde}: sin remontar, la pista que queda le basta con su margen`, () => {
             expect(r.sale!.desde, donde).not.toBe("remonte");
             if (r.sale!.desde !== "interseccion") return;
-            // La cuenta de AIM 4-3-10 b: con el factor de escuela la avioneta;
-            // el de línea, con la que se quiere al elegir por dónde entrar.
+            // La cuenta de AIM 4-3-10 b: la pista que necesita hoy, con el
+            // margen de su clase, cabe en la que queda desde la intersección.
             expect(r.sale!.porDelante, donde).toBeGreaterThanOrEqual(
-              delinea ? pistaQueHaceFalta(avion) : paraEntrarYDespegar(avion),
+              delinea ? pistaNecesariaHoy(avion) : Math.max(600, pistaNecesariaHoy(avion)),
             );
           });
           continue;
@@ -203,13 +213,14 @@ describe("remontar la pista según el avión", () => {
             expect(hastaElFinal, donde).toBe(true);
             expect(r.sale!.hastaElFinal, donde).toBe(true);
           } else if (!hastaElFinal) {
-            // Un trozo: lo justo para tener por delante la pista que se quiere.
-            expect(r.mitad - r.giro!, donde).toBeGreaterThanOrEqual(pistaQueHaceFalta(avion) - 1);
-            expect(r.mitad - r.giro!, donde).toBeLessThan(pistaQueHaceFalta(avion) + 60);
+            // Un trozo: lo justo para tener por delante la pista que se quiere,
+            // el doble de la que necesita hoy.
+            expect(r.mitad - r.giro!, donde).toBeGreaterThanOrEqual(trozo(avion) - 1);
+            expect(r.mitad - r.giro!, donde).toBeLessThan(trozo(avion) + 60);
             expect(r.sale!.hastaElFinal, donde).toBe(false);
           } else {
             // Hasta el final porque la que se quiere no cabe con un trozo detrás.
-            expect(2 * r.mitad, donde).toBeLessThan(pistaQueHaceFalta(avion) + 400);
+            expect(2 * r.mitad, donde).toBeLessThan(trozo(avion) + 400);
           }
           expect(r.sale!.desde, donde).toBe("remonte");
         });
@@ -259,18 +270,53 @@ describe("remontar la pista según el avión", () => {
     expect(radio).toBeLessThan(9);
   });
 
-  it("en Estigarribia, por la 19, la avioneta sale desde la calle y el reactor remonta lo que queda detrás", () => {
+  it("en Estigarribia, por la 19, el regional y la avioneta salen desde la calle; el de fuselaje ancho, no", () => {
     const pykasu = AIRCRAFT.find((a) => a.id === "jaz-20")!;
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
-    const chica = entrada(ESTIGARRIBIA, pykasu, 180)!;
-    const grande = entrada(ESTIGARRIBIA, jaz90, 180)!;
-    expect(chica.giro).toBeNull();
-    expect(chica.sale!.desde).toBe("interseccion");
-    expect(chica.sale!.porDelante).toBeGreaterThan(2900);
-    expect(grande.giro).not.toBeNull();
+    const jaz120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
+    for (const avion of [pykasu, jaz90]) {
+      const r = entrada(ESTIGARRIBIA, avion, 180)!;
+      expect(r.giro, avion.id).toBeNull();
+      expect(r.sale!.desde, avion.id).toBe("interseccion");
+      expect(r.sale!.porDelante, avion.id).toBeGreaterThan(2900);
+    }
+    // El grande necesita más que los 2.948 m que quedan: pide la pista entera.
+    const grande = entrada(ESTIGARRIBIA, jaz120, 180)!;
+    expect(grande.sale!.necesitaHoy).toBeGreaterThan(grande.sale!.desdeLaEntrada);
     expect(grande.sale!.desde).toBe("remonte");
     expect(grande.sale!.hastaElFinal).toBe(true);
     expect(grande.sale!.porDelante).toBeGreaterThan(3450);
+  });
+
+  it("la misma avioneta, en el mismo campo: sale desde la calle un día de tablas y remonta una tarde de calor", () => {
+    // Pedro Juan Caballero, 571 m, por la 21: la calle deja 924 m al bimotor.
+    const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
+    const fresco = entrada(PEDRO_JUAN, jaz40, 210)!;
+    expect(fresco.sale!.desde).toBe("interseccion");
+    const cota = 571;
+    const calor: DiaDeDespegue = {
+      densidad: airDensity(cota, aireDelParte(38, cota)),
+      vientoDeFrente: 0,
+      superficie: "asfalto",
+    };
+    const caliente = entrada(PEDRO_JUAN, jaz40, 210, calor)!;
+    expect(caliente.sale!.desde).toBe("remonte");
+    expect(caliente.sale!.porQue).toBe("calor");
+    expect(caliente.sale!.necesitaHoy).toBeGreaterThan(fresco.sale!.necesitaHoy * 1.1);
+  });
+
+  it("y con viento de cola, también, y dice que es por el viento", () => {
+    const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
+    const cola: DiaDeDespegue = { densidad: 1.225, vientoDeFrente: -4, superficie: "asfalto" };
+    const r = entrada(PEDRO_JUAN, jaz40, 210, cola)!;
+    expect(r.sale!.desde).toBe("remonte");
+    expect(r.sale!.porQue).toBe("cola");
+  });
+
+  it("con viento de cara, la cuenta da menos pista que en las tablas", () => {
+    const pykasu = AIRCRAFT.find((a) => a.id === "jaz-20")!;
+    const cara: DiaDeDespegue = { densidad: 1.225, vientoDeFrente: 5, superficie: "asfalto" };
+    expect(pistaNecesariaHoy(pykasu, cara)).toBeLessThan(pistaNecesariaHoy(pykasu) * 0.8);
   });
 
   it("en Estigarribia, por la 01, la avioneta remonta un trozo y el de línea la pista entera", () => {

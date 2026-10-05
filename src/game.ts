@@ -291,6 +291,13 @@ const DICE_LA_TORRE_TRAS_TOCAR = 8;
 /** Y lo que espera la instructora detrás de la torre, s: una voz y luego otra. */
 const EXPLICA_TRAS_LA_TORRE = 6;
 
+/**
+ * Lo que se deja entre una línea y la siguiente de un intercambio por radio,
+ * s: lo que dura en la tira una frase corta, que es lo que tarda en decirse y
+ * contestarse. Ver `contarPorDondeSeSale`.
+ */
+const SEPARA_LA_RADIO = 4;
+
 /** Lo que se queda la tarjeta de la explicación, s: hay tiempo para mirarla. */
 const SE_QUEDA_LA_EXPLICACION = 10;
 
@@ -651,7 +658,7 @@ import {
   guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
-import { barraDeRodaje, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
+import { barraDeRodaje, esDeLinea, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
   DEJA_DE_PEDIR,
   NADA_DICHO_EN_LA_PISTA,
@@ -682,7 +689,7 @@ import { Audio, yaHuboGesto, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
-import { rodaduraDeFrenada } from "./flight/carrera";
+import { rodaduraDeFrenada, type DiaDeDespegue } from "./flight/carrera";
 import { TomaLarga } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI } from "./flight/palanca-de-aerofrenos";
@@ -4743,6 +4750,7 @@ export class Game {
       this.plan.ocupados = () => this.paradosEnLasCalles(false);
       this.plan.enCola = () => this.paradosEnLasCalles(true);
       this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
+      this.plan.diaDeDespegue = () => this.diaDeDespegue();
     }
     /*
      * **Y el dibujo va con el plan, no con la lección.**
@@ -10383,6 +10391,7 @@ export class Game {
     this.plan.ocupados = () => this.paradosEnLasCalles(false);
     this.plan.enCola = () => this.paradosEnLasCalles(true);
     this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
+    this.plan.diaDeDespegue = () => this.diaDeDespegue();
     // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
     this.scene.add(this.plan.grupo);
     this.colocarSenalero();
@@ -10780,6 +10789,26 @@ export class Game {
     return aireDelParte(meteo.temp, cota, meteo.qnh);
   }
 
+  /**
+   * **Cómo está hoy el día para despegar en el campo donde se está**: el aire
+   * con su temperatura y su cota, el viento de frente en la cabecera en uso y
+   * el suelo. Es lo que el plan de tierra usa para decidir si se sale desde
+   * la intersección o se remonta; lo mismo con lo que vuela el motor de vuelo,
+   * que si no la cuenta diría una cosa y el avión haría otra. Ver
+   * `pistaNecesariaHoy` en `flight/carrera.ts`.
+   */
+  private diaDeDespegue(): DiaDeDespegue {
+    const campo = this.elCampo();
+    const meteo = campo.escenario.meteo ?? TIEMPO_DE_CASA;
+    const terreno = this.terrain as Terrain | undefined;
+    const cota = terreno ? this.cotaDelCampo(campo) : 0;
+    return {
+      densidad: airDensity(cota, aireDelParte(meteo.temp, cota, meteo.qnh)),
+      vientoDeFrente: deFrente(campo.escenario.runway.heading, meteo) * 0.514444,
+      superficie: this.superficie,
+    };
+  }
+
   /** Lo que se lleva sin recalcular el viento, s. Ver `seguirElViento`. */
   private desdeElViento = Infinity;
 
@@ -10965,36 +10994,45 @@ export class Game {
   }
 
   /**
-   * **Por dónde se sale, contado antes de entrar**: remontando la pista
-   * (punto 234) o desde la intersección.
+   * **Por dónde se sale, contado antes de entrar**: desde la intersección o
+   * remontando la pista (punto 234), y por qué.
    *
    * En los campos sin calle hasta la cabecera se entra por donde llega la
-   * calle, y de ahí depende el avión —ver `remontaHastaLaCabecera` en
-   * `flight/carrera.ts`—: el de línea rueda por la pista hasta su final y da
-   * la vuelta allí; la avioneta remonta un trozo, o sale desde la calle si la
-   * pista que queda le sobra. La raya lo dibuja —un lazo rojo, que es donde se
-   * va despacio—, y nadie lo decía: «esto es lo que no se entiende: ese giro
-   * ahí en la pista», en Pilar con el turbohélice. Así que se dice una vez,
-   * con el verde y antes de entrar:
+   * calle, y lo que se hace desde ahí lo decide la cuenta de quien vuela: la
+   * pista que su avión necesita **hoy** —con el aire, el viento y el suelo del
+   * día y el margen de su manual o su operador— contra la que queda desde la
+   * intersección. Si le da, sale desde ahí; si no, pide remontar: el de línea
+   * hasta el final, la avioneta un trozo. Ver `remontaHastaLaCabecera` y
+   * `pistaNecesariaHoy` en `flight/carrera.ts`. La raya lo dibuja —el lazo
+   * rojo donde se da la vuelta— y además se dice, una vez, con el verde y
+   * antes de entrar. Enrique preguntó «¿qué diría la torre y qué decidiría el
+   * piloto según su manual?», y son las dos partes:
    *
-   * - **la instructora**, en los tres peldaños de abajo: «vamos por la pista
-   *   hasta el final y damos la vuelta allá», «vamos un trecho por la pista y
-   *   damos la vuelta» o «salimos desde acá, sin ir hasta el final». Solo con
-   *   su grabación: sin ella no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y
-   *   se entiende igual con el lazo de la raya y la tarjeta de la media
-   *   vuelta al entrar;
-   * - **la radio**, de Taguató para arriba y en fraseología, escrita en su
-   *   tira. Remontando, «backtrack runway two zero», que es la orden de la
-   *   OACI (Doc 4444, 12.3.4.7 p; «regreso por pista», RD 1180/2018, anexo V,
-   *   1.4.8), y es la misma para un trozo que hasta el final: dónde se da la
-   *   vuelta lo decide quien vuela. Desde la intersección, la pista que queda
-   *   desde ella: «TORA runway two zero, from intersection Alfa, one thousand
-   *   two hundred metres» (SERA, AMC1 SERA.14001, apéndice 1, 1.4.10 p),
-   *   redondeada hacia abajo a la centena, como se redondea la distancia que
-   *   da una torre (FAA, AIM 4-3-10 c). La voz, cuando estén grabadas sus
-   *   piezas. **Donde contesta un AFIS, no**: un AFIS no da órdenes, y por
-   *   dónde se sale lo decide quien vuela; ahí lo cuenta la instructora. Y
-   *   sin nadie en la radio, tampoco.
+   * - **En los tres peldaños de abajo, la instructora**, que es quien vuela a
+   *   tu lado: «salimos desde acá, sin ir hasta el final», «vamos un trecho
+   *   por la pista y damos la vuelta» o «vamos por la pista hasta el final», y
+   *   con el porqué cuando el día lo cambia: «hoy hace calor» o «hoy el viento
+   *   viene de atrás, y el avión necesita más pista». Solo con su grabación:
+   *   sin ella no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y se entiende
+   *   igual con el lazo de la raya y la tarjeta de la media vuelta.
+   * - **De Taguató para arriba, la radio**, escrita en su tira y en la
+   *   fraseología de SERA (AMC1 SERA.14001, apéndice 1, 1.4.10) y de la OACI
+   *   (Doc 4444, 12.3.4.7), la misma que en castellano trae el RD 1180/2018,
+   *   anexo V, 1.4.8 y 1.4.11. Con torre, **la torre ofrece**: «advise able to
+   *   depart from runway one niner, intersection Alfa» (o); **quien vuela
+   *   contesta con su cuenta**: «affirm», y la torre le da la pista que queda,
+   *   «TORA runway one niner, from intersection Alfa, two thousand niner
+   *   hundred metres» (p), redondeada a la baja como la da una torre (AIM
+   *   4-3-10 c); o «negative, request backtrack» —«request full length» el de
+   *   línea, que tiene su despegue calculado para la pista entera (AIM 4-3-10
+   *   a)— y la torre, «backtrack runway one niner» (Doc 4444, 12.3.4.7 p).
+   *   **Con un AFIS no hay oferta ni orden**: un AFIS no da autorizaciones, así
+   *   que quien vuela dice lo que va a hacer, «backtracking runway zero one» o
+   *   «departing from intersection Alfa». Y sin nadie en la radio, nada.
+   *
+   * Y si no le da **ni con la pista entera**, eso ya no se decide aquí: es una
+   * negativa argumentada de la tarjeta del tiempo, antes de arrancar. Ver
+   * `flight/parte-de-salida.ts`.
    */
   private contarPorDondeSeSale(): void {
     const sale = this.plan?.comoSeSale ?? null;
@@ -11002,36 +11040,71 @@ export class Game {
     this.remonteContado = true;
     const campo = this.elCampo();
     const aero = campo.escenario.aerodrome;
-    const clave: TranslationKey =
-      sale.desde === "interseccion"
-        ? "vuelo.desdeLaInterseccion"
-        : sale.hastaElFinal
-          ? "vuelo.remontar"
-          : "vuelo.remontarUnTrecho";
-    if (this.tier.avisos !== "cabina" && this.instructor.vozDe(clave))
-      this.instructor.decir(t(clave), clave, "normal");
+    const delinea = esDeLinea(this.aircraft);
+    if (this.tier.avisos !== "cabina") {
+      const base =
+        sale.desde === "interseccion"
+          ? "vuelo.desdeLaInterseccion"
+          : sale.hastaElFinal
+            ? "vuelo.remontar"
+            : "vuelo.remontarUnTrecho";
+      // El porqué, solo si remonta: saliendo desde la calle no hay nada que explicar.
+      const conPorque =
+        sale.desde === "remonte" && sale.porQue ? `${base}.${sale.porQue}` : null;
+      const clave = (
+        conPorque && this.instructor.vozDe(conPorque) ? conPorque : base
+      ) as TranslationKey;
+      if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, "normal");
+    }
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
-    if (!conCifras || sinTorre(aero) || esAfis(aero)) return;
+    if (!conCifras || sinTorre(aero)) return;
     const yo = this.miIndicativo;
     const pista = pistaEnPiezas(cabeceraEnUso(campo.escenario));
     if (!pista) return;
-    if (sale.desde === "interseccion") {
-      // Sin el nombre de la calle no hay frase: la intersección se nombra.
-      const calle = calleDicha(sale.calle);
-      if (!calle) return;
-      const texto =
-        `${yo.dicho}, TORA runway ${pista.dicho}, from intersection ${calle}, ` +
-        `${metrosDichos(sale.porDelante)} metres`;
-      this.hud.radio(texto, undefined, true);
-      return;
+    const calle = calleDicha(sale.calle);
+    const rw = pista.dicho;
+    const lineas: string[] = [];
+    if (esAfis(aero)) {
+      // Quien vuela dice lo que va a hacer: un AFIS informa, no autoriza.
+      lineas.push(
+        sale.desde === "interseccion"
+          ? calle
+            ? `${yo.dicho}, departing from intersection ${calle}, runway ${rw}`
+            : ""
+          : `${yo.dicho}, backtracking runway ${rw}`,
+      );
+    } else {
+      const remonta = sale.desde === "remonte";
+      // La oferta, si la entrada es una intersección con nombre que decir.
+      const ofrece = calle && sale.desdeLaEntrada < sale.entera - 150;
+      if (ofrece)
+        lineas.push(`${yo.dicho}, advise able to depart from runway ${rw}, intersection ${calle}`);
+      if (remonta) {
+        const pide = delinea ? "request full length" : "request backtrack";
+        lineas.push(ofrece ? `Negative, ${pide}, ${yo.dicho}` : `${yo.dicho}, ${pide}`);
+        lineas.push(`${yo.dicho}, backtrack runway ${rw}`);
+      } else if (ofrece) {
+        lineas.push(`Affirm, ${yo.dicho}`);
+        lineas.push(
+          `${yo.dicho}, TORA runway ${rw}, from intersection ${calle}, ` +
+            `${metrosDichos(sale.desdeLaEntrada)} metres`,
+        );
+      }
     }
-    const texto = `${yo.dicho}, backtrack runway ${pista.dicho}`;
-    this.hud.radio(texto, undefined, true);
-    const claveDeTorre = `${comoSeDiceAqui("torre.backtrack", hablaDe(aero?.id))}${pista.sufijo}`;
     const relleno = { ...rellenoDe(yo), ...pista.relleno };
-    if (this.instructor.vozDe(claveDeTorre, relleno))
-      this.torre.decir(texto, claveDeTorre, "mando", relleno);
+    const claveDeTorre = `${comoSeDiceAqui("torre.backtrack", hablaDe(aero?.id))}${pista.sufijo}`;
+    lineas
+      .filter((l) => l)
+      .forEach((texto, i) => {
+        this.agenda.luego(i * SEPARA_LA_RADIO, () => {
+          if (this.flight.state.onGround === false) return;
+          this.hud.radio(texto, undefined, true);
+          // La voz de la torre, la que ya tiene sus piezas: «backtrack runway».
+          if (texto.endsWith(`backtrack runway ${rw}`) && this.instructor.vozDe(claveDeTorre, relleno))
+            this.torre.decir(texto, claveDeTorre, "mando", relleno);
+        });
+      });
   }
 
   /** Si ya se contó por dónde se sale en este despegue. Ver `contarPorDondeSeSale`. */

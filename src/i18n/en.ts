@@ -330,6 +330,14 @@ export const EN: Dictionary = {
   "vuelo.desdeLaInterseccion":
     "We'll take off from here, without going to the end: the runway ahead is more than we need",
   "vuelo.backTaxiUnTrecho": "Taxi back to the drawn turn and turn around there",
+  "vuelo.remontar.calor":
+    "It's hot today and the plane needs more runway: we'll taxi along the runway to the far end and turn around there",
+  "vuelo.remontar.cola":
+    "The wind is from behind today and the plane needs more runway: we'll taxi along the runway to the far end and turn around there",
+  "vuelo.remontarUnTrecho.calor":
+    "It's hot today and the plane needs more runway: we'll taxi back along the runway a little way and turn around",
+  "vuelo.remontarUnTrecho.cola":
+    "The wind is from behind today and the plane needs more runway: we'll taxi back along the runway a little way and turn around",
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
   "vuelo.noEstabilizada": "Not like this: go around and try again",

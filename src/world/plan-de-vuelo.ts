@@ -48,9 +48,12 @@ import {
   trueFromIndicated,
 } from "../flight/atmosphere";
 import {
-  paraEntrarYDespegar,
+  DIA_DE_TABLAS,
+  pistaNecesariaHoy,
   pistaQueHaceFalta,
+  porQueHoyMasPista,
   remontaHastaLaCabecera,
+  type DiaDeDespegue,
   pistaQueNecesita,
 } from "../flight/carrera";
 import { radioDeGiro } from "../flight/cabe";
@@ -396,6 +399,14 @@ export interface ComoSeSale {
   readonly porDelante: number;
   /** La calle por la que se llega a la pista, si tiene nombre. */
   readonly calle: string | null;
+  /** La pista que queda por delante desde donde se entra, m: la TORA de la intersección. */
+  readonly desdeLaEntrada: number;
+  /** La pista entera, m: la TORA desde la cabecera. */
+  readonly entera: number;
+  /** La que este avión necesita hoy, con su margen, m. Ver `pistaNecesariaHoy`. */
+  readonly necesitaHoy: number;
+  /** Por qué hoy necesita bastante más que en las tablas, si es así. */
+  readonly porQue: "calor" | "cola" | null;
 }
 
 /**
@@ -2690,23 +2701,46 @@ export class PlanDeVuelo {
 
   /**
    * **La pista que tiene que quedar por delante para despegar desde donde se
-   * entra, sin remontar**, m. Depende de la clase, como el remonte: ver
-   * `remontaHastaLaCabecera` en `flight/carrera.ts`.
+   * entra, sin remontar**, m: la que este avión necesita **hoy**, con el aire,
+   * el viento y el suelo del día y el margen de su clase —ver
+   * `pistaNecesariaHoy` en `flight/carrera.ts`—, que es la cuenta que hace
+   * quien vuela antes de aceptar una intersección (FAA, AIM 4-3-10 b).
    *
-   * - **La avioneta** acepta la intersección en cuanto le cabe la distancia de
-   *   despegue de su ficha con el margen de escuela: `paraEntrarYDespegar`.
-   * - **El de línea**, solo si desde ahí queda la que se quiere al elegir por
-   *   dónde entrar —`pistaQueSeQuiere`—, la misma vara que ya lo mandaba a la
-   *   cabecera donde había calle hasta ella. Donde no la hay, y la única
-   *   entrada es a media pista, remonta hasta el final: en Mariscal
-   *   Estigarribia, por la 19, el reactor salía desde la calle con quinientos
-   *   cincuenta metros detrás, que es justo lo que un avión de línea no hace
-   *   si no tiene su despegue calculado para esa intersección.
+   * Enrique lo precisó: no es una regla por tipo de avión, es lo que se hace
+   * en cada momento. La misma avioneta sale desde la calle una mañana fresca
+   * con viento de cara y remonta una tarde de calor con viento de cola.
+   *
+   * Con el suelo de siempre para la avioneta, seiscientos metros: por debajo
+   * de eso no se entra a una pista ni con el avión más pequeño de la flota, y
+   * los veredictos medidos en los aeródromos del juego siguen siendo los
+   * mismos. Ver `paraEntrarYDespegar`.
    */
   private pistaParaNoRemontar(): number {
-    return remontaHastaLaCabecera(this.avion)
-      ? this.pistaQueSeQuiere()
-      : paraEntrarYDespegar(this.avion);
+    const hoy = pistaNecesariaHoy(this.avion, this.diaDeHoy());
+    return esDeLinea(this.avion) ? hoy : Math.max(600, hoy);
+  }
+
+  /**
+   * **Hasta dónde remonta la avioneta cuando remonta un trozo**, m de pista
+   * por delante: el doble de la que necesita hoy, con los mil doscientos de
+   * siempre como suelo, que es la que se quiere al elegir intersección
+   * —`pistaQueHaceFalta`— contada con el día. Ver `remontaHastaLaCabecera`.
+   */
+  private pistaParaElTrozo(): number {
+    const quiere = this.pistaQueSeQuiere();
+    if (!Number.isFinite(quiere)) return quiere;
+    return Math.max(1200, 2 * pistaNecesariaHoy(this.avion, this.diaDeHoy()));
+  }
+
+  /**
+   * **El día de hoy para despegar**: el aire, el viento en la cabecera en uso
+   * y el suelo. Lo pone quien sabe del tiempo —el juego—; sin él, el día de
+   * tablas, que es con el que se mide en las pruebas.
+   */
+  diaDeDespegue: (() => DiaDeDespegue) | null = null;
+
+  private diaDeHoy(): DiaDeDespegue {
+    return this.diaDeDespegue?.() ?? DIA_DE_TABLAS;
   }
 
   /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
@@ -4342,7 +4376,7 @@ export class PlanDeVuelo {
       soloLaCabecera ||
       !!this.aero.salidasPorInterseccion?.soloDesde?.length ||
       remontaHastaLaCabecera(this.avion);
-    const seQuiere = remontaEntera ? Infinity : this.pistaQueSeQuiere();
+    const seQuiere = remontaEntera ? Infinity : this.pistaParaElTrozo();
     /*
      * Y si el trozo que se dejaría detrás es corto, hasta el final igual: dar
      * la vuelta a ciento ochenta metros de la punta —el bimotor de pistón en
@@ -5605,18 +5639,26 @@ export class PlanDeVuelo {
   private comoSeSaleDesde(along: number, remonta: boolean, calle: string | null): ComoSeSale {
     const mitad = this.largoDePista / 2;
     const giro = this.giroDelBackTaxi;
+    const dia = this.diaDeHoy();
+    const comun = {
+      calle,
+      desdeLaEntrada: mitad - Math.max(-mitad, along),
+      entera: this.largoDePista,
+      necesitaHoy: pistaNecesariaHoy(this.avion, dia),
+      porQue: porQueHoyMasPista(this.avion, dia),
+    };
     if (remonta && giro !== null)
       return {
+        ...comun,
         desde: "remonte",
         hastaElFinal: this.remonteHastaElFinal,
         porDelante: mitad - giro,
-        calle,
       };
     return {
+      ...comun,
       desde: along + mitad > EN_LA_CABECERA ? "interseccion" : "cabecera",
       hastaElFinal: false,
-      porDelante: mitad - Math.max(-mitad, along),
-      calle,
+      porDelante: comun.desdeLaEntrada,
     };
   }
 

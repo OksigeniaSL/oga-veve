@@ -29,9 +29,11 @@
  *   lo que pasa cuando el avión se aparta o la cola se mueve.
  * - **Y la cola de salida no se esquiva**: el de delante va a la misma pista,
  *   y detrás de él se espera por la misma calle.
- * - **(e) Ningún avión despega con menos pista de la que necesita**, con su
- *   margen —`paraEntrarYDespegar` en `flight/carrera.ts`—, y donde el AIP no
- *   deja salir por intersección, desde la cabecera. En toda la flota: cada
+ * - **(e) Ningún avión despega con menos pista de la que necesita**, con el
+ *   margen de su clase —`pistaNecesariaHoy` en `flight/carrera.ts`: 1,33 de
+ *   escuela la avioneta, con su suelo de seiscientos metros, y 1,15 de la
+ *   norma de certificación el de línea—, y donde el AIP no deja salir por
+ *   intersección, desde la cabecera. En toda la flota: cada
  *   avión que cabe en el campo, desde cada punto de espera que el plan
  *   considera.
  *
@@ -43,7 +45,8 @@ import { aLaPolilinea, ANCHO_RODADURA, type Aerodrome, type Punto } from "./aero
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { cabeEn, campoDe } from "../flight/cabe";
-import { paraEntrarYDespegar } from "../flight/carrera";
+import { pistaNecesariaHoy } from "../flight/carrera";
+import { esDeLinea } from "../flight/velocidades-en-tierra";
 import { construirGrafo, LEJOS_DE_LA_PARED, type Grafo } from "./rodaje";
 import { enEjesDePista } from "./rumbo";
 import { SCENARIOS, conViento, type Scenario } from "./scenarios";
@@ -829,7 +832,10 @@ function mirarLaPistaDeDespegue(esc: Scenario, r: Resultado): void {
     plan.reiniciar();
     const hace = soloLaCabecera
       ? pista.length - DESDE_LA_CABECERA
-      : Math.min(paraEntrarYDespegar(avion), pista.length - DESDE_LA_CABECERA);
+      : Math.min(
+          esDeLinea(avion) ? pistaNecesariaHoy(avion) : Math.max(600, pistaNecesariaHoy(avion)),
+          pista.length - DESDE_LA_CABECERA,
+        );
     const vistas = new Set<string>();
     for (const espera of plan.esperasVistas) {
       const k = `${espera[0].toFixed(0)},${espera[1].toFixed(0)}`;

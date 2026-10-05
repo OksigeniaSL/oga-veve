@@ -1140,6 +1140,20 @@ export const ES_PY = {
   "vuelo.desdeLaInterseccion":
     "Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra",
   "vuelo.backTaxiUnTrecho": "Andá hasta la vuelta dibujada y girá ahí",
+  /*
+   * **Y el porqué, cuando el día lo cambia**: la misma avioneta que otro día
+   * sale desde la calle, hoy remonta. Lo que lo cambia es lo que se cuenta
+   * —el calor, que hace el aire más fino, o el viento de cola—, y solo cuando
+   * alarga la cuenta una décima o más. Ver `porQueHoyMasPista`.
+   */
+  "vuelo.remontar.calor":
+    "Hoy hace calor y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá",
+  "vuelo.remontar.cola":
+    "Hoy el viento viene de atrás y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá",
+  "vuelo.remontarUnTrecho.calor":
+    "Hoy hace calor y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta",
+  "vuelo.remontarUnTrecho.cola":
+    "Hoy el viento viene de atrás y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
   "vuelo.noEstabilizada": "Así no: andate y volvé a intentarlo",
