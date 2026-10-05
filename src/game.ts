@@ -22239,6 +22239,9 @@ export class Game {
     if (this.enLaVuelta) this.cerrarLaVuelta();
     if (this.tarjetaDelTiempo?.abierta) this.tarjetaDelTiempo.cerrar();
     const r = v.alArrancar(this.tier.avisos);
+    // Quien decidió quedarse y después arranca, cambió de idea: la línea de
+    // quedarse ya está en la bitácora, y este vuelo no la repite.
+    if (this.decisionDeHoy === "en-tierra") this.decisionDeHoy = null;
     this.fundasYCalzos?.recogerCalzos();
     if (!v.fundaPuesta) this.fundasYCalzos?.quitarFundas(false);
     this.anemometro = r.fundaOlvidada
