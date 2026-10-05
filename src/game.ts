@@ -6321,6 +6321,14 @@ export class Game {
    * treinta y quita el gas a veinte—, cada cosa en su altura. Un suceso, una
    * voz.
    *
+   * **Y ojo con la boca**, que ya pasó: con un solo número para todos, estuvo
+   * a veinte pies, y con la boca de la final ocupada «quitá el gas» llegaba
+   * con las ruedas en el suelo; por eso se subió a treinta. Ahora vuelve a
+   * veinte y a quince, que es lo de cada manual, así que la tarjeta sale en el
+   * momento —es el canal que no espera— y la voz va en `mando`, que no la echa
+   * un consejo. Si vuelve a llegar tarde, lo que se mueve es la cola, no la
+   * altura.
+   *
    * Y el gas solo se pide a quien lo lleva: con la ayuda de la final o los
    * gases del avión, el gas lo quitan ellos —es su `RETARD`—, y a quien juega
    * se le pide la nariz y nada más.
