@@ -12244,10 +12244,27 @@ button.motor__tecla::after {
   /*
    * Y el subtítulo, que va debajo de la barra de arriba, baja con ella abierta
    * al sitio de las losas: arriba tapaba el rumbo de la pantalla grande.
+   *
+   * **Pero no hasta abajo del todo**: ahí, en la última franja de la pantalla
+   * de navegación, va el modo del TCAS —«TCAS STBY» en tierra— con la
+   * distancia al destino y la escala, como en la de un avión de verdad. El
+   * subtítulo se apoyaba encima y lo tapaba los segundos que duraba, que en
+   * tierra es justo cuando se pregunta por qué la pantalla no enseña a nadie.
+   * Medido en un teléfono de 844 × 390: el rótulo empieza un 12 % del alto de
+   * la pantalla por encima de su borde de abajo, así que el subtítulo sube un
+   * 14 % de ese alto —el de `.cuadro--grande > .tablero`, aquí abajo— y queda
+   * encima de la franja, en cualquier teléfono. Ver `scripts/ver-hoja.mjs`.
    */
   .hud:has(.cuadro--grande) .hud__abajo > [data-hud="hint"] {
     top: auto;
-    bottom: calc((20px + 56px + 12px) / var(--escala, 1));
+    bottom: calc(
+      (20px + 56px + 12px) / var(--escala, 1) +
+        (100vh - 64px - 92px) / var(--escala, 1) * 0.14
+    );
+    bottom: calc(
+      (20px + 56px + 12px) / var(--escala, 1) +
+        (100dvh - 64px - 92px) / var(--escala, 1) * 0.14
+    );
   }
 
   .hud .cuadro.cuadro--grande > .tablero {
