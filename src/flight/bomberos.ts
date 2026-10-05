@@ -54,7 +54,11 @@
  * general, no la pide—, y por eso aterrizan en un campo de tierra sin
  * bomberos. Tampoco es de los aviones del Estado, que el Anexo 6 no cubre: el
  * servicio de pasaje de la Fuerza Aérea Paraguaya, el SETAM, va a Concepción
- * —que no tiene bomberos— con un CASA 212 (Aviacionline, 2026).
+ * —que no tiene bomberos— con un CASA 212 (Aviacionline, 2026). Ni de los
+ * cargueros, que tienen su propia tabla rebajada: un avión de la 9 que solo
+ * lleva carga pide un nivel de protección 7 (EASA, AMC2 ADR.OPS.B.010(a)(2) c,
+ * tabla 2). Por eso a Guaraní, que es de la 7, han ido 747 de carga, y ningún
+ * 747 de pasaje.
  */
 
 import type { AircraftConfig } from "./aircraft";
