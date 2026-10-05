@@ -37,8 +37,10 @@ const PIE = 0.3048;
 /**
  * **La senda de la final**, en grados: la del PAPI y la de un ILS normal.
  *
- * Es la misma que pintan las luces del PAPI —ver `ANGULOS` en
- * `world/aproximacion.ts`, centradas en tres grados— y la de los aros.
+ * Es la de casi todas las pistas, y la que se usa si no se dice otra: cada
+ * pista lleva la que publica su AIP —3,7° en la 21 de Lanzarote, 3,45° en la
+ * 19 de Fuerteventura—, la misma a la que se reglan las luces del PAPI. Ver
+ * `world/sendas-publicadas.ts` y `angulosDelPapi` en `world/aproximacion.ts`.
  */
 export const SENDA_DE_LA_FINAL = 3;
 
@@ -160,16 +162,18 @@ export function desvioEnLaFinal(
   alto: number,
   suelo: number,
   sobreElSuelo: number,
+  /** El ángulo de la senda de esa pista, grados. Ver `world/sendas-publicadas.ts`. */
+  angulo = SENDA_DE_LA_FINAL,
 ): Desvio {
   const d = Math.max(1, suelo);
-  const grados = (Math.atan2(alto, d) * 180) / Math.PI - SENDA_DE_LA_FINAL;
-  const metros = alto - d * Math.tan((SENDA_DE_LA_FINAL * Math.PI) / 180);
+  const grados = (Math.atan2(alto, d) * 180) / Math.PI - angulo;
+  const metros = alto - d * Math.tan((angulo * Math.PI) / 180);
   return {
     modo: "final",
     metros,
     puntos: grados / GRADOS_POR_PUNTO,
     grados,
-    ritmo: ritmoDeLaSenda(sobreElSuelo),
+    ritmo: ritmoDeLaSenda(sobreElSuelo, angulo),
   };
 }
 
@@ -180,8 +184,8 @@ export function desvioEnLaFinal(
  * automático en su senda deje el rombo en el medio. Ver `sendaDelGs` en
  * `game.ts`.
  */
-export function alturaDeLaSendaDeLaFinal(suelo: number): number {
-  return Math.max(1, suelo) * Math.tan((SENDA_DE_LA_FINAL * Math.PI) / 180);
+export function alturaDeLaSendaDeLaFinal(suelo: number, angulo = SENDA_DE_LA_FINAL): number {
+  return Math.max(1, suelo) * Math.tan((angulo * Math.PI) / 180);
 }
 
 /**
@@ -210,8 +214,8 @@ export function desvioEnLaBajada(metros: number, ritmo: number): Desvio {
  * está quieta en el suelo. A ciento treinta y cinco nudos sobre el suelo son
  * setecientos y pico pies por minuto, la cifra que se aprende de memoria.
  */
-export function ritmoDeLaSenda(sobreElSuelo: number): number {
-  return -Math.max(0, sobreElSuelo) * Math.tan((SENDA_DE_LA_FINAL * Math.PI) / 180);
+export function ritmoDeLaSenda(sobreElSuelo: number, angulo = SENDA_DE_LA_FINAL): number {
+  return -Math.max(0, sobreElSuelo) * Math.tan((angulo * Math.PI) / 180);
 }
 
 /**

@@ -430,6 +430,7 @@ import {
   vecesLejosDe,
   type Scenario,
 } from "./world/scenarios";
+import { SENDA_DE_SIEMPRE, sendaDeLaCabecera } from "./world/sendas-publicadas";
 import { crearTeselas, type Teselas } from "./world/teselas";
 import { exposicionDe, type Ortofoto } from "./world/ortofoto";
 import { mundoElegido } from "./ui/mundo";
@@ -1097,9 +1098,6 @@ const SE_QUEDA_EL_DESCENSO = 6;
  * después la marca o la raya que nombra. Ver `decirElPaso`.
  */
 const SE_QUEDA_EL_PASO = SE_QUEDA_EL_DESCENSO;
-
-/** La senda de la final, rad: los tres grados de toda la flota. */
-const SENDA_DE_LA_FINAL = (3 * Math.PI) / 180;
 
 /**
  * **Desde qué altura de ruedas lleva el gas al ralentí** la ayuda de la final
@@ -4877,6 +4875,8 @@ export class Game {
        * en la misma pantalla y ninguna de acuerdo. Ver `SENDA_DESDE`.
        */
       this.aproximacion?.papiAdentro ?? SENDA_DESDE,
+      // Y con el ángulo de su PAPI. Ver `sendas-publicadas.ts`.
+      sendaDeLaCabecera(oaciDe(this.scenario), cabeceraEnUso(this.scenario)),
     );
     /*
      * **Y solo cuando toca.** El haz de luz, los postes y los aros de la senda
@@ -8805,6 +8805,8 @@ export class Game {
       // Y si el fichero trae las luces mapeadas, el PAPI va donde está de
       // verdad y no donde lo pondríamos nosotros. Ver `sitiarPapi`.
       this.scenario.aerodrome?.visualAids ?? [],
+      // Reglado a la senda que publica su AIP. Ver `sendas-publicadas.ts`.
+      sendaDeLaCabecera(oaciDe(this.scenario), cabeceraEnUso(this.scenario)),
     );
     if (this.aproximacion) {
       this.scene.add(this.aproximacion.grupo);
@@ -8871,6 +8873,7 @@ export class Game {
       cabeceraEnUso(v.campo.escenario),
       suelo,
       aero.visualAids ?? [],
+      sendaDeLaCabecera(oaciDe(v.campo.escenario), cabeceraEnUso(v.campo.escenario)),
     );
     if (v.aproximacion) {
       v.mundo.colgarDeCerca(v.aproximacion.grupo);
@@ -9930,6 +9933,8 @@ export class Game {
        * en la misma pantalla y ninguna de acuerdo. Ver `SENDA_DESDE`.
        */
       this.aproximacion?.papiAdentro ?? SENDA_DESDE,
+      // Y con el ángulo de su PAPI. Ver `sendas-publicadas.ts`.
+      sendaDeLaCabecera(oaciDe(this.scenario), cabeceraEnUso(this.scenario)),
     );
     if (estaba) this.scene.add(this.runwayGuide.group);
     this.runwayGuide.reset(this.flight.state.position);
@@ -11848,7 +11853,7 @@ export class Game {
         !fueraDeLaSenda(
           this.distanceToRunway(),
           this.flight.state.position.y - this.cotaDeLaPistaAqui(),
-          Math.tan(GLIDE_SLOPE),
+          Math.tan((this.sendaDe(this.elCampo()) * Math.PI) / 180),
         ),
       /*
        * **Y sobre la pista, ni una palabra.** Ver `Cerca.sobreLaPista`.
@@ -14926,8 +14931,19 @@ export class Game {
               hastaElUmbralDeToma(campo.pista) - luces.papiAdentro,
             )
           : null,
+      angulo: this.sendaDe(campo),
       sinTorre: sinTorre(campo.escenario.aerodrome),
     };
+  }
+
+  /**
+   * **El ángulo de la senda de la pista en uso de un campo**, grados: el que
+   * publica su AIP para el PAPI y el ILS, tres en casi todas. Es la de las
+   * luces del mundo, el rombo de la final, el `G/S` del automático y la
+   * instructora. Ver `world/sendas-publicadas.ts`.
+   */
+  private sendaDe(campo: CampoEnElMundo): number {
+    return sendaDeLaCabecera(oaciDe(campo.escenario), cabeceraEnUso(campo.escenario));
   }
 
   /**
@@ -16376,6 +16392,8 @@ export class Game {
         ruta ? this.cruceroDe(ruta, salida) : 0,
         this.aircraft,
       );
+      // La final del plan, con la senda de su pista. Ver `perfilDeLaBajada`.
+      this.navegacion.ponerSendaDeLaFinal(this.sendaDe(llegada));
     }
     const lectura = this.lecturaDeRuta();
     const paso = this.navegacion.paso(lectura);
@@ -18372,9 +18390,10 @@ export class Game {
     const o = this.origenDeLaSenda();
     const a = this.campoParaLaAproximacion();
     const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
+    const angulo = a.angulo ?? SENDA_DE_SIEMPRE;
     return {
-      altitud: a.cota + alturaDeLaSendaDeLaFinal(suelo),
-      ritmo: ritmoDeLaSenda(s.groundSpeed),
+      altitud: a.cota + alturaDeLaSendaDeLaFinal(suelo, angulo),
+      ritmo: ritmoDeLaSenda(s.groundSpeed, angulo),
     };
   }
 
@@ -19113,7 +19132,7 @@ export class Game {
       const a = this.campoParaLaAproximacion();
       const suelo = Math.hypot(s.position.x - o.x, s.position.z - o.z);
       const alto = s.position.y - a.cota;
-      d = desvioEnLaFinal(alto, suelo, s.groundSpeed);
+      d = desvioEnLaFinal(alto, suelo, s.groundSpeed, a.angulo);
       /*
        * **Y a qué se apunta**: a las luces si las hay y se ven —las mismas
        * distancias en las que las explica `explicarElPapi`—; si no, al rombo
@@ -19702,8 +19721,8 @@ export class Game {
           aire,
           flaps: this.input.controls.flaps,
           tren: this.input.controls.tren,
-          // La senda de tres grados, que es la de toda la flota en la final.
-          pendiente: enLaFinal ? -SENDA_DE_LA_FINAL : 0,
+          // La senda de su pista, tres grados en casi todas. Ver `sendaDe`.
+          pendiente: enLaFinal ? -(this.sendaDe(this.elCampo()) * Math.PI) / 180 : 0,
         });
     return marcaDelGas({
       sencillo,

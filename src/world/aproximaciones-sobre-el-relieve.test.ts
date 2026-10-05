@@ -42,6 +42,7 @@ import {
   MILLA,
   PIE,
   alturaDeLaSenda,
+  finalDeLaRuta,
   libra,
   perfilDeLaBajada,
   rutaDe,
@@ -51,6 +52,7 @@ import {
   type Ruta,
 } from "../flight/ruta";
 import { FINAL_DESDE } from "../flight/escalera-de-velocidades";
+import { sendaDeLaCabecera } from "./sendas-publicadas";
 import { mirarDelante, type PistaConocida } from "../flight/terreno-delante";
 import { campoDeCasa, campoVecino } from "./campo-del-vuelo";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
@@ -494,19 +496,20 @@ const FRUSTRADA_JUNTO_AL_MONTE: Readonly<Record<string, string>> = {
 };
 
 /**
- * **Las finales en las que el avisador de terreno habla**, con su porqué.
+ * **Las finales del circuito en las que el avisador de terreno habla**, con
+ * su porqué.
  *
- * Una: la 21 de Lanzarote, que por la senda de tres grados del juego pasa a
- * treinta y cinco metros de la loma que hay a una milla del umbral. Su PAPI
- * de verdad está a 3,7° (AD 2-GCRR, 14) por eso mismo, y el juego lleva una
- * sola senda para todas las pistas. Lo que dice el avisador es verdad: por
- * tres grados ahí se va bajo. Hasta que cada pista lleve su senda, se le pide
- * que sea solo la precaución, sin el «pull up», y en la última parte: la
- * misma final llegando por la aproximación y llegando por el circuito.
+ * Una: la 21 de Lanzarote, que por tres grados pasa a treinta y cinco metros
+ * de la loma que hay a una milla del umbral. Su PAPI de verdad está a 3,7°
+ * (AD 2-GCRR, 2.14) por eso mismo, y la aproximación ya baja por él: ver
+ * `sendas-publicadas.ts`, y volándola el avisador ya no dice nada. Lo que
+ * queda es el circuito dibujado, que entra en final a los tres grados de
+ * siempre: ahí se le pide que sea solo la precaución, sin el «pull up», y en
+ * la última parte.
  */
 const AVISA_EN_LA_FINAL: Readonly<Record<string, string>> = {
   "GCRR 21":
-    "Con tres grados se pasa a treinta y cinco metros de la loma de antes del umbral; su PAPI está a 3,7°.",
+    "El circuito entra en final a tres grados y pasa a treinta y cinco metros de la loma de antes del umbral; su PAPI está a 3,7°.",
 };
 
 describe("las aproximaciones de cada campo, sobre el relieve", () => {
@@ -537,12 +540,16 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
       it(`${dicho}: volando la aproximación, el aviso de terreno no salta`, () => {
         for (const rama of ramas(e, c)) {
           const r = rutaDeLaRama(rama, c);
-          const aviso = primerAviso(r, cota, pistaConocida(e, c));
+          // La final con la senda de su PAPI, como la vuela el juego. Ver
+          // `sendas-publicadas.ts`.
+          const perfil = perfilDeLaBajada(
+            c.cota,
+            null,
+            finalDeLaRuta(r),
+            sendaDeLaCabecera(oaciDe(e), c.nombre),
+          );
+          const aviso = primerAviso(r, cota, pistaConocida(e, c), perfil);
           const por = `${dicho} por ${rama.map((f) => f.nombre).join(" ")}`;
-          if (dicho in AVISA_EN_LA_FINAL) {
-            expect(aviso, por).toMatch(/^precaucion a [0-2]\.\d NM/);
-            continue;
-          }
           expect(aviso, por).toBeNull();
         }
       });
@@ -565,6 +572,7 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
               c.cota,
               velocidadesDeLaBajada(JAZ_120),
               faf > 0 ? r.total - r.acumulado[faf]! : FINAL_DESDE,
+              sendaDeLaCabecera(oaciDe(e), c.nombre),
             );
             const { inicial, intermedia } = inicialEIntermedia(r, cota, deLaCarta, perfil);
             if (inicial)
@@ -575,8 +583,7 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
               );
             const aviso = primerAviso(r, cota, pistaConocida(e, c), perfil);
             const por = `${dicho} por ${rama.map((f) => f.nombre).join(" ")}`;
-            if (dicho in AVISA_EN_LA_FINAL) expect(aviso, por).toMatch(/^precaucion a [0-2]\.\d NM/);
-            else expect(aviso, por).toBeNull();
+            expect(aviso, por).toBeNull();
           }
         });
 

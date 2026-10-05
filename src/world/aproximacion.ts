@@ -37,8 +37,17 @@ import type { Pista, Punto, Umbral } from "./aerodrome";
 /** Un umbral del que sí sabemos dónde está. */
 type Situado = Umbral & { readonly xy: Punto };
 
-/** Los cuatro ángulos del PAPI, en grados, del más cerca de la pista al más lejos. */
-const ANGULOS = [2.5, 2.8333, 3.1667, 3.5];
+/**
+ * **Los cuatro ángulos del PAPI**, en grados, del más cerca de la pista al más
+ * lejos, para una senda de `senda` grados: treinta y diez minutos por debajo
+ * y por encima de ella, que es como se reglan las cuatro unidades (OACI,
+ * Anexo 14, 5.3.5, y su manual de diseño, parte 4). Para tres grados, 2°30',
+ * 2°50', 3°10' y 3°30'; para los 3,7° de la 21 de Lanzarote, de 3°12' a
+ * 4°12'. Ver `sendas-publicadas.ts`.
+ */
+export function angulosDelPapi(senda = 3): readonly number[] {
+  return [senda - 0.5, senda - 1 / 6, senda + 1 / 6, senda + 0.5];
+}
 
 /**
  * Cuántas de las cuatro luces se ven blancas desde un ángulo dado, de 0 a 4.
@@ -51,8 +60,8 @@ const ANGULOS = [2.5, 2.8333, 3.1667, 3.5];
  * unidad más cercana a la pista es la del ángulo más pequeño, así que las
  * blancas se cuentan desde ella hacia fuera.
  */
-export function blancasDePapi(grados: number): number {
-  return ANGULOS.filter((a) => grados >= a).length;
+export function blancasDePapi(grados: number, senda = 3): number {
+  return angulosDelPapi(senda).filter((a) => grados >= a).length;
 }
 
 /** Blanco de luz y rojo de luz. Ni uno ni otro son el blanco y el rojo del HUD. */
@@ -226,6 +235,8 @@ export interface Aproximacion {
    * diferencia son siete de altura sobre el umbral.
    */
   readonly papiAdentro: number;
+  /** El ángulo de la senda de esta cabecera, grados: al que va reglado el PAPI. */
+  readonly senda: number;
   dispose(): void;
 }
 
@@ -243,7 +254,10 @@ export function crearAproximacion(
   cabecera: string | null,
   altura: (p: Punto) => number,
   ayudas: readonly AyudaVisual[] = [],
+  /** El ángulo de la senda de esta cabecera, grados. Ver `sendas-publicadas.ts`. */
+  senda = 3,
 ): Aproximacion | null {
+  const ANGULOS = angulosDelPapi(senda);
   const conNombre = Object.entries(pista.thresholds).filter(
     (e): e is [string, Situado] => e[1] !== null && e[1].xy !== null,
   );
@@ -399,6 +413,7 @@ export function crearAproximacion(
     grupo,
     mirarDesde,
     papiAdentro,
+    senda,
     dispose() {
       grupo.traverse((o) => {
         const g = (o as { geometry?: BufferGeometry }).geometry;

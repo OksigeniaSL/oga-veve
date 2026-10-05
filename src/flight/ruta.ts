@@ -1783,6 +1783,15 @@ export class Seguimiento {
 
 
   /**
+   * **La senda de la final de la pista del plan**, grados: la que publica su
+   * AIP. Ver `world/sendas-publicadas.ts`. Va aparte de `poner` porque es de
+   * la pista, no del plan, y un plan se pone sin saber todavía a qué pista.
+   */
+  ponerSendaDeLaFinal(grados: number): void {
+    this.anguloDeLaFinal = grados;
+  }
+
+  /**
    * **El perfil de la bajada de este plan**, con sus tramos para frenar si el
    * avión los lleva, y `null` si no hay avión: entonces la recta de siempre.
    * Ver `perfilDeLaBajada`.

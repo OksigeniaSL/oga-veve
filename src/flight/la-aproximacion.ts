@@ -124,6 +124,11 @@ export interface CampoDeLaAproximacion {
    */
   readonly senda: readonly [number, number] | null;
   /**
+   * **El ángulo de su senda**, grados: al que va reglado su PAPI. Tres en
+   * casi todas; 3,7 en la 21 de Lanzarote. Ver `world/sendas-publicadas.ts`.
+   */
+  readonly angulo?: number;
+  /**
    * **Si no tiene torre**: una pista particular o sin servicio. Ahí lo que
    * puede cruzarse es la vaca, y se ve. Ver `mirarSiMandanFrustrar`.
    */
@@ -744,7 +749,7 @@ export class LaAproximacion {
     // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco
     // sirve: se mira hasta la valla y a partir de ahí se mira la pista.
     if (suelo < 150 || suelo > 6000) return;
-    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI);
+    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI, this.campo.angulo);
     if (blancas === this.papiEnPantalla) return;
     // La primera lectura no se anuncia si ya venís bien: la tarjeta es para
     // enseñar a corregir, no para felicitar a quien todavía no ha hecho nada.
