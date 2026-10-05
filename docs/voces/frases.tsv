@@ -13,6 +13,13 @@ instructor	instructor/vuelo.esperandoAfis.ogg	es-PY	Pará y escuchá: acá nadie
 instructor	instructor/vuelo.autorizadoAfis.ogg	es-PY	La pista está libre: entrá cuando estés listo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.backTaxi.ogg	es-PY	Andá hasta el fondo y dá la vuelta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.remontar.ogg	es-PY	Vamos por la pista hasta el final y damos la vuelta allá	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remontarUnTrecho.ogg	es-PY	Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.desdeLaInterseccion.ogg	es-PY	Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.backTaxiUnTrecho.ogg	es-PY	Andá hasta la vuelta dibujada y girá ahí	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remontar.calor.ogg	es-PY	Hoy hace calor y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remontar.cola.ogg	es-PY	Hoy el viento viene de atrás y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remontarUnTrecho.calor.ogg	es-PY	Hoy hace calor y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remontarUnTrecho.cola.ogg	es-PY	Hoy el viento viene de atrás y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.minimos.ogg	es-PY	Mirá la pista: ¿la ves?	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.noEstabilizada.ogg	es-PY	Así no: andate y volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
@@ -1037,4 +1044,7 @@ instructor	instructor/pitot.enElAire.ogg	es-PY	Volamos sin anemómetro: con el h
 instructor	instructor/vuelta.empezar.ogg	es-PY	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.	se dice en src/game.ts
 instructor	instructor/vuelta.entera.ogg	es-PY	¡Vuelta lista! El avión está para volar.	se dice en src/game.ts
 instructor	instructor/parte.salgoIgual.voz.ogg	es-PY	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.	se dice en src/game.ts
+instructor	instructor/parte.yaSePuede.voz.ogg	es-PY	Miramos otra vez y ya mejoró: ahora sí podemos salir.	se dice en src/game.ts
+instructor	instructor/parte.sigueIgual.voz.ogg	es-PY	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.	se dice en src/game.ts
+instructor	instructor/parte.esperamos.voz.ogg	es-PY	Esperamos un rato y volvemos a mirar el parte.	se dice en src/game.ts
 instructor	instructor/parte.ganaste.ogg	es-PY	¡Hoy ganaste: decidiste bien!	se dice en src/game.ts

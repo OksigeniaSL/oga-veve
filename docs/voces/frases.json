@@ -98,6 +98,55 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.remontarUnTrecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.desdeLaInterseccion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.backTaxiUnTrecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Andá hasta la vuelta dibujada y girá ahí",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.remontar.calor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy hace calor y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.remontar.cola",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy el viento viene de atrás y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.remontarUnTrecho.calor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy hace calor y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.remontarUnTrecho.cola",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy el viento viene de atrás y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.alineando",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -9767,6 +9816,27 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "parte.yaSePuede.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Miramos otra vez y ya mejoró: ahora sí podemos salir.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "parte.sigueIgual.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "parte.esperamos.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esperamos un rato y volvemos a mirar el parte.",
     "para": "se dice en src/game.ts"
   },
   {

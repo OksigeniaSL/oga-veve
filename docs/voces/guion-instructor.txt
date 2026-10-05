@@ -12,6 +12,13 @@ Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y
 La pista está libre: entrá cuando estés listo
 Andá hasta el fondo y dá la vuelta
 Vamos por la pista hasta el final y damos la vuelta allá
+Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar
+Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra
+Andá hasta la vuelta dibujada y girá ahí
+Hoy hace calor y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá
+Hoy el viento viene de atrás y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá
+Hoy hace calor y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta
+Hoy el viento viene de atrás y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta
 Ponete derechito en el eje
 Mirá la pista: ¿la ves?
 Así no: andate y volvé a intentarlo
@@ -374,4 +381,7 @@ Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta
 Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
 ¡Vuelta lista! El avión está para volar.
 Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+Miramos otra vez y ya mejoró: ahora sí podemos salir.
+Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
+Esperamos un rato y volvemos a mirar el parte.
 ¡Hoy ganaste: decidiste bien!
