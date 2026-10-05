@@ -69,6 +69,13 @@ export interface EnAproximacion {
   readonly sobreElSuelo: number;
   readonly vertical: number;
   readonly enElSuelo: boolean;
+  /**
+   * **Si irse al aire ahora, con las ruedas en el suelo, sería una
+   * frustrada**: una toma larga, o una en la que se propuso irse, y todavía
+   * sin reversa, con velocidad y con pista. Ver `idaTrasTocar` en
+   * `toma-larga.ts`.
+   */
+  readonly idaTrasTocar?: boolean;
 }
 
 /**
@@ -108,6 +115,17 @@ export class Frustrada {
      * despegar. Eso tiene su propio nombre y no es este.
      */
     if (s.enElSuelo) {
+      /*
+       * **Salvo que tocar haya sido la toma larga**: irse al aire desde ahí,
+       * sin reversa y con pista, es la frustrada de después de tocar del FCTM
+       * del 737, y se celebra como cualquier otra. Ver `toma-larga.ts`.
+       */
+      if (s.idaTrasTocar) {
+        this.siguiendo = true;
+        this.loMasBajo = 0;
+        this.rearmaPorDebajo = Infinity;
+        return false;
+      }
       this.siguiendo = false;
       this.loMasBajo = Infinity;
       this.rearmaPorDebajo = Infinity;

@@ -259,8 +259,12 @@ export const EN: Dictionary = {
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
   "torre.alAire": "{indicativo}, go around",
   "torre.acelereAbandono": "{indicativo}, expedite vacating",
+  "torre.aterrizoSinPermiso":
+    "{indicativo}, landed without clearance, call the tower by telephone on arrival",
   "torre.canario.alAire": "{indicativo}, go around",
   "torre.canario.acelereAbandono": "{indicativo}, expedite vacating",
+  "torre.canario.aterrizoSinPermiso":
+    "{indicativo}, landed without clearance, call the tower by telephone on arrival",
   // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
   "torre.destino": "{indicativo}, cleared to {destino}",
   "torre.canario.destino": "{indicativo}, cleared to {destino}",
@@ -334,6 +338,10 @@ export const EN: Dictionary = {
   "motivo.sinConfigurar": "Gear or flaps not set",
   "vuelo.proponeIrse": "This one isn't coming right. If you like, we go around and try again",
   "vuelo.proponeIrseSinPista": "The safe thing is to go around and try again",
+  "vuelo.tomaLarga": "Not like this: we go around and try again",
+  "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
+  "vuelo.aterrizasteContraLaOrden":
+    "The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here",
   "vuelo.rotar": "Pull up and fly",
   "vuelo.comprometido": "We're flying now — keep going",
   "vuelo.despegando": "Full power",

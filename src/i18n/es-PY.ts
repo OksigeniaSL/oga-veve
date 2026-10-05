@@ -323,6 +323,15 @@ export const ES_PY = {
    */
   "torre.acelereAbandono": "{indicativo}, acelere abandono de pista",
   /*
+   * Y a quien aterrizó con la orden de irse al aire puesta, después de tocar:
+   * que llame a la torre por teléfono al llegar, que es lo que se hace en
+   * España y en la OACI (no hay frase del Doc 4444 para esto; en la FAA es el
+   * aviso de Brasher). Sin grabar: ver `aterrizoContraLaOrden` en `game.ts`
+   * y `PENDIENTE-VOCES-torre-final.md`.
+   */
+  "torre.aterrizoSinPermiso":
+    "{indicativo}, aterrizó sin autorización; llame a la torre por teléfono a su llegada",
+  /*
    * Y a dónde se va, **antes de rodar**. En un vuelo a otro aeródromo lo
    * primero que da el control es la autorización con su límite —«cleared to
    * Tenerife Norte»—, y es lo que dice que ese vuelo va a alguna parte. En
@@ -390,6 +399,8 @@ export const ES_PY = {
   // En España no es «ida al aire»: «motor y al aire» (RD 1180/2018, 1.4.19).
   "torre.canario.alAire": "{indicativo}, motor y al aire",
   "torre.canario.acelereAbandono": "{indicativo}, acelere abandono de pista",
+  "torre.canario.aterrizoSinPermiso":
+    "{indicativo}, aterrizó sin autorización; llame a la torre por teléfono a su llegada",
   "torre.canario.destino": "{indicativo}, autorizado a {destino}",
   /*
    * **Y en España se sube con «suba»**, no con «ascienda»: es la palabra del
@@ -1132,6 +1143,22 @@ export const ES_PY = {
   "vuelo.proponeIrse": "Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar",
   "vuelo.proponeIrseSinPista":
     "Lo seguro es irnos al aire y volver a intentarlo",
+  /*
+   * **La toma larga**: flotando o tocando pasada la zona de toma, o sin
+   * pista para parar, mientras todavía se puede subir. La instructora lo
+   * propone, a tiempo y en calma. Sin grabar: ver `PENDIENTE-VOCES-final.md`
+   * y `flight/toma-larga.ts`.
+   */
+  "vuelo.tomaLarga": "Así no: nos vamos al aire y lo volvemos a intentar",
+  "vuelo.tomaLargaSinPista":
+    "No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar",
+  /*
+   * **Y después de aterrizar contra la orden de la torre**, una vez y detrás
+   * de la torre: por qué, cuando la torre manda irse, uno se va. Sin grabar:
+   * ver `aterrizoContraLaOrden` en `game.ts`.
+   */
+  "vuelo.aterrizasteContraLaOrden":
+    "La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos",
   "vuelo.rotar": "Tirá para arriba",
   /*
    * **V1, dicho como lo dice una instructora y no como una alarma.**

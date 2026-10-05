@@ -49,7 +49,21 @@ captura estaba en la tuya. Si algún día se dibuja tráfico en la paralela, har
 falta una frase que lo cuente («ese avión está en la otra pista: la nuestra
 está libre»), y no antes.
 
-## 3. Grabar
+## 3. La toma larga y aterrizar contra la orden (tanda 13, puntos 206 y 237)
+
+Encargo del 5 de octubre de 2026. Las claves y sus textos **ya están** en
+`src/i18n/es-PY.ts` y `en.ts` (el guaraní, quieto: cae al castellano), y el
+código ya las pide **solo con su grabación** (`this.instructor.vozDe(clave)`):
+mientras tanto lo cuenta la tarjeta de la frustrada, con su dibujo, su texto
+en los peldaños que leen y el tono de atención. Unos 260 caracteres.
+
+| voz | clave | es-PY | en | dónde se engancha |
+|---|---|---|---|---|
+| instructor | `vuelo.tomaLarga` | Así no: nos vamos al aire y lo volvemos a intentar | Not like this: we go around and try again | `game.ts`, `mirarLaTomaLarga`: flotando o tocando pasada la zona de toma, una vez por toma, en los tres peldaños de abajo. Ver `src/flight/toma-larga.ts`. |
+| instructor | `vuelo.tomaLargaSinPista` | No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar | Not enough runway to stop: we go around and try again | Lo mismo, rodando sin pista para parar mientras todavía se puede subir. |
+| instructor | `vuelo.aterrizasteContraLaOrden` | La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos | The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here | `game.ts`, `aterrizoContraLaOrden`: después de aterrizar con la orden de la pista ocupada puesta, detrás de la torre (seis segundos), una vez; no en el peldaño de cabina. |
+
+## 4. Grabar
 
 ```bash
 # Primero las claves y los textos en src/i18n/es-PY.ts y en.ts (el guaraní,

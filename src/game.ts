@@ -277,6 +277,26 @@ const SE_QUEDA_EL_ARO = 2.5;
 const SE_QUEDA_EL_PERMISO = 6;
 
 /**
+ * **Cuándo dice la torre que se aterrizó sin autorización**, s después de
+ * juzgar la toma: con el avión ya frenando, pasada la carrera, que es cuando
+ * se le habla en una frecuencia de verdad. Ver `aterrizoContraLaOrden`.
+ */
+const DICE_LA_TORRE_TRAS_TOCAR = 8;
+
+/** Y lo que espera la instructora detrás de la torre, s: una voz y luego otra. */
+const EXPLICA_TRAS_LA_TORRE = 6;
+
+/** Lo que se queda la tarjeta de la explicación, s: hay tiempo para mirarla. */
+const SE_QUEDA_LA_EXPLICACION = 10;
+
+/**
+ * Hasta cuánto torcido respecto a la pista en uso se mira la toma larga, rad:
+ * treinta grados, la mitad de un cruce. Más es otra cosa —la otra cabecera o
+ * cruzarla—. Ver `mirarLaTomaLarga`.
+ */
+const ALINEADO_CON_LA_PISTA = (30 * Math.PI) / 180;
+
+/**
  * Por debajo de esto, en m/s sobre el suelo, el avión está parado: es cuando
  * el mecánico puede mirar unos flaps tocados. Ver `atenderALosFlaps`.
  */
@@ -636,6 +656,7 @@ import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
 import { rodaduraDeFrenada } from "./flight/carrera";
+import { TomaLarga } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI } from "./flight/palanca-de-aerofrenos";
 import {
@@ -3087,6 +3108,7 @@ export class Game {
     this.runwayGuide.reset();
     this.landing.reset();
     this.frustrada.reiniciar();
+    this.tomaLarga.reiniciar();
     // Esto también baja `vueloTerminado` y cierra el panel del final.
     this.reiniciarGalones();
     this.yaDespego = false;
@@ -3573,6 +3595,12 @@ export class Game {
   readonly galones = new Galones();
   /** Reconoce cuándo se renuncia a una aproximación. Ver `flight/frustrada.ts`. */
   private readonly frustrada = new Frustrada();
+  /** La toma larga: si no se toca en la zona de toma, al aire. Ver `flight/toma-larga.ts`. */
+  private readonly tomaLarga = new TomaLarga();
+  /** Cuándo se miró por última vez si queda pista para parar, s de `relojDeLaToma`. */
+  private paraPararMirado = { t: -Infinity, v: 0, metros: 0 };
+  /** El reloj de la toma larga, s. */
+  private relojDeLaToma = 0;
   /**
    * La base de las nubes sobre el aeródromo, en metros. `null` si despejado.
    *
@@ -5807,9 +5835,22 @@ export class Game {
      * —golpe, fuera de pista— que vienen justo debajo. El aviso enseña; la
      * consecuencia la pone la física.
      */
-    if (this.laAproximacion.porqueMandaron === "pistaOcupada")
-      this.sufrirPercance("ocupada");
-    else if (veredicto === "fuera") this.sufrirPercance("fuera");
+    /*
+     * **Y aterrizar contra la orden de la torre: se dice, con calma.**
+     *
+     * Esto rompía el avión con el percance de la pista ocupada, y en realidad
+     * no pasaba nunca: la orden se levanta al tocar y este juicio llega dos
+     * segundos después, sin ella. Así que no pasaba nada, y Enrique lo vio:
+     * «la frustrada, a pesar de que me lo ordenó la torre, no la respeté, pero
+     * no me mató a los pasajeros». Ni una cosa ni la otra: lo que pasa de
+     * verdad es que la torre lo dice después de tocar y hay que llamarla, y
+     * la instructora cuenta por qué cuando la torre manda irse, uno se va.
+     * Las normas se muestran, no se imponen. Ver `aterrizoContraLaOrden`.
+     */
+    const conLaOrden = this.laAproximacion.tocoConLaOrden;
+    this.laAproximacion.tocoConLaOrden = null;
+    if (conLaOrden === "pistaOcupada") this.aterrizoContraLaOrden();
+    if (veredicto === "fuera") this.sufrirPercance("fuera");
     /*
      * **Y sin tren, que es un aterrizaje de panza y no un aterrizaje.**
      *
@@ -8633,6 +8674,7 @@ export class Game {
     this.runwayGuide.reset();
     this.landing.reset();
     this.frustrada.reiniciar();
+    this.tomaLarga.reiniciar();
     this.reiniciarGalones();
     this.wasOnGround = true;
     this.yaDespego = false;
@@ -10540,6 +10582,70 @@ export class Game {
   }
 
   /**
+   * **Se aterrizó con la orden de irse al aire puesta**, la de la pista
+   * ocupada. Lo que pasa de verdad, en calma y en su orden (punto 237):
+   *
+   * 1. **La torre lo dice después de tocar**, con el avión ya frenado. No hay
+   *    frase del Doc 4444 para esto; lo que se hace en España y en la OACI es
+   *    pedirle a quien aterrizó que llame a la torre por teléfono al llegar,
+   *    y en la FAA es el aviso de Brasher («possible pilot deviation, advise
+   *    you contact the tower»). De Taguató para arriba en fraseología, escrita
+   *    en la tira de la radio; abajo en castellano, como la lámpara. Solo
+   *    donde hay torre: un AFIS no da permisos que saltarse.
+   * 2. **Y la instructora, una vez y detrás**, cuenta por qué: cuando la torre
+   *    manda irse, uno se va, porque ella ve lo que desde la cabina no se ve.
+   *    En el peldaño de cabina no: ahí no hay quien lo explique.
+   *
+   * Nada se rompe ni se pinta de rojo. Las dos frases están sin grabar —ver
+   * `PENDIENTE-VOCES-torre-final.md` y `PENDIENTE-VOCES-final.md`— y suenan
+   * solo con su grabación; mientras tanto lo cuentan la tira de la radio y la
+   * tarjeta de la frustrada, con su dibujo y el tono de atención.
+   */
+  private aterrizoContraLaOrden(): void {
+    this.apuntarCanto("aterrizó con la orden de irse puesta");
+    const conTorre = this.hayTorreQueHable() && !this.esAfisAqui();
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    const yo = this.miIndicativo;
+    const habla = hablaDe(this.elCampo().escenario.aerodrome?.id);
+    const relleno = rellenoDe(yo);
+    // Con el avión ya frenado: en la carrera manda frenar.
+    this.agenda.luego(DICE_LA_TORRE_TRAS_TOCAR, () => {
+      if (this.percance || !this.flight.state.onGround) return;
+      if (conTorre) {
+        if (conCifras) {
+          const clave = comoSeDiceAqui("torre.landedWithoutClearance", habla);
+          const texto = `${yo.dicho}, landed without clearance, call the tower by telephone on arrival`;
+          this.hud.radio(texto, undefined, true);
+          if (this.instructor.vozDe(clave, relleno))
+            this.torre.decir(texto, clave, "normal", relleno);
+        } else {
+          const clave = comoSeDiceAqui("torre.aterrizoSinPermiso", habla) as TranslationKey;
+          const texto = t(clave, { indicativo: yo.dicho });
+          this.hud.radio(texto, undefined, true);
+          if (this.instructor.vozDe(clave, relleno))
+            this.torre.decir(texto, clave, "normal", relleno);
+        }
+      }
+      if (this.tier.avisos === "cabina") return;
+      // Y detrás, la instructora: un suceso, una voz.
+      this.agenda.luego(conTorre ? EXPLICA_TRAS_LA_TORRE : 0, () => {
+        if (this.percance) return;
+        const clave: TranslationKey = "vuelo.aterrizasteContraLaOrden";
+        const canales = canalesDe(this.tier.avisos);
+        this.hud.senal.mostrar(
+          "frustrada",
+          canales.texto ? (canales.corto ? t("palabra.alAire") : t(clave)) : "",
+          null,
+          { segundos: SE_QUEDA_LA_EXPLICACION, prioridad: IMPORTANTE },
+        );
+        this.avisar("attention");
+        if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
+      });
+    });
+  }
+
+  /**
    * **«Expedite vacating»**: el avión se ha quedado parado en la pista después
    * de oír que había que dejarla. Lo dice la torre, una vez por toma, que es
    * quien insiste en una frecuencia de verdad; la instructora ya lo dijo y no
@@ -11034,6 +11140,7 @@ export class Game {
     this.runwayGuide.reset(this.flight.state.position);
     this.landing.reset();
     this.frustrada.reiniciar();
+    this.tomaLarga.reiniciar();
     this.laAproximacion.reiniciar();
     this.reiniciarGalones();
     this.wasOnGround = false;
@@ -11795,6 +11902,7 @@ export class Game {
 
     this.atenderAlTren();
     this.atenderALaListaDeAterrizaje();
+    this.mirarLaTomaLarga(dt);
 
     /*
      * **El aviso de terreno**, que es el que salva.
@@ -11812,6 +11920,8 @@ export class Game {
       sobreElSuelo: this.flight.state.heightAboveGround,
       vertical: this.flight.state.verticalSpeed,
       enElSuelo: this.flight.state.onGround,
+      // Irse al aire después de una toma larga también es una frustrada.
+      idaTrasTocar: this.tomaLarga.idaTrasTocar,
       /*
        * **Y «final» deja de valer como excusa si se va muy por debajo.**
        *
@@ -16113,6 +16223,12 @@ export class Game {
       // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
       // `yaTocoTierra`.
       this.yaTocoTierra &&
+      /*
+       * Y no con la frustrada de la toma larga propuesta y todavía a tiempo:
+       * «frená» y «nos vamos al aire» a la vez son dos órdenes contrarias. Ver
+       * `flight/toma-larga.ts`.
+       */
+      !(this.tomaLarga.propuestaAbierta && this.tier.avisos !== "cabina") &&
       hayQueFrenarEnLaPista({
         fase: vista.fase,
         enLaPista: this.flight.state.onRunway,
@@ -20333,6 +20449,72 @@ export class Game {
 
   /** Lo hecho de la lista en esta aproximación. */
   private listaDeAterrizaje = { pedida: false, hecha: false };
+
+  /**
+   * **La toma larga**: si no se toca en la zona de toma, al aire; y si con
+   * la pista que queda no se para, también, mientras se pueda. En los
+   * peldaños de abajo lo propone la instructora a tiempo y en calma, una vez
+   * por toma; si se hace, se felicita como cualquier frustrada. Ver
+   * `flight/toma-larga.ts`.
+   *
+   * Lo que se decía antes en una toma así: el veredicto, «frená» y, al final
+   * del asfalto, el percance de pasarse la pista. Nadie proponía irse.
+   */
+  private mirarLaTomaLarga(dt: number): void {
+    this.relojDeLaToma += dt;
+    const s = this.flight.state;
+    const campo = this.elCampo();
+    const pista = campo.pista;
+    const { along } = enEjesDePista(s.position.x, s.position.z, pista.x, pista.z, pista.heading);
+    const desdeElCentro = hastaElUmbralDeToma(pista);
+    const mojada = this.lloviendo.clase !== "nada";
+    /*
+     * Y en el sentido de la pista en uso: quien toca por la otra cabecera
+     * cuenta su pista al revés, y su toma no es larga por estar lejos de un
+     * umbral que no es el suyo. Ver `flight/la-otra-cabecera.ts`.
+     */
+    const giro = s.heading - (pista.heading * Math.PI) / 180;
+    const alineado = Math.abs(Math.atan2(Math.sin(giro), Math.cos(giro))) < ALINEADO_CON_LA_PISTA;
+    const porque = this.tomaLarga.paso({
+      enFinal: this.faseDeAhora === "final" && alineado,
+      enElSuelo: s.onGround,
+      enLaPista: s.onGround && s.onRunway && alineado,
+      sobreLaPista: s.position.y - this.cotaDelCampo(campo),
+      pasado: along + desdeElCentro,
+      queda: pista.length / 2 - along,
+      paraAterrizar: pista.length / 2 + desdeElCentro,
+      porElSuelo: s.groundSpeed,
+      aproximacion: this.aircraft.approachSpeed,
+      reversa: this.input.controls.reversa > 0,
+      /*
+       * Con freno a fondo y lo que lleve el avión, y mirado como mucho cuatro
+       * veces por segundo: son cuatrocientos trozos de frenada.
+       */
+      paraParar: (v) => {
+        const m = this.paraPararMirado;
+        if (this.relojDeLaToma - m.t < 0.25 && Math.abs(v - m.v) < 3) return m.metros;
+        const metros = rodaduraDeFrenada(this.aircraft, this.superficie, { desde: v, mojada });
+        this.paraPararMirado = { t: this.relojDeLaToma, v, metros };
+        return metros;
+      },
+    });
+    if (!porque) return;
+    this.apuntarCanto(`toma larga: ${porque}`);
+    // En el de cabina decide quien vuela, como en la puerta de los quinientos.
+    if (this.tier.avisos === "cabina") return;
+    const clave: TranslationKey =
+      porque === "noPara" ? "vuelo.tomaLargaSinPista" : "vuelo.tomaLarga";
+    const canales = canalesDe(this.tier.avisos);
+    this.hud.senal.mostrar(
+      "frustrada",
+      canales.texto ? (canales.corto ? t("palabra.alAire") : t(clave)) : "",
+      null,
+      { segundos: SE_QUEDA_EL_PERMISO, prioridad: URGENTE },
+    );
+    this.avisar("attention");
+    // Sin grabar todavía, muda: lo dice la tarjeta. Ver PENDIENTE-VOCES-final.md.
+    if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, "urgente");
+  }
 
   /**
    * **El autofreno que pide esta pista**: LO si sobra pista, MED si va justa,

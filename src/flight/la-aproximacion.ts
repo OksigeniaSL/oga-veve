@@ -268,6 +268,14 @@ export class LaAproximacion {
   porqueMandaron: PorQueMandaron = null;
 
   /**
+   * **Con qué orden puesta se tocó tierra**, si se tocó con una: la que se
+   * levanta al tocar. Lo mira el juego al juzgar la toma, que llega dos
+   * segundos después, cuando la orden ya no está. Ver `aterrizoContraLaOrden`
+   * en `game.ts`. Lo borra quien lo lee.
+   */
+  tocoConLaOrden: PorQueMandaron = null;
+
+  /**
    * Cómo se sortean las órdenes de irse al aire.
    *
    * `auto` es lo que se juega: una de cada cuatro aproximaciones. Las otras
@@ -342,6 +350,7 @@ export class LaAproximacion {
     this.laPistaSigueOcupada = null;
     this.mandanFrustrar = false;
     this.porqueMandaron = null;
+    this.tocoConLaOrden = null;
     this.yaLoMandaron = false;
     this.leToca = null;
     this.altoAlMandar = 0;
@@ -429,6 +438,14 @@ export class LaAproximacion {
        * describe nada y se retira.
        */
       if (s.onGround) {
+        /*
+         * Y se apunta con qué orden se tocó: el juicio de la toma llega dos
+         * segundos después y, sin esto, la orden ya no estaba. Por eso
+         * aterrizar contra la orden de la torre no tenía ninguna
+         * consecuencia —el percance de la pista ocupada que la esperaba no
+         * llegaba nunca—. Ver `aterrizoContraLaOrden` en `game.ts`.
+         */
+        this.tocoConLaOrden = this.porqueMandaron;
         this.levantarLaOrden();
         return;
       }
