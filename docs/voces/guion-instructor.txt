@@ -197,6 +197,9 @@ Pará acá
 Te pasaste. Frená y volvé
 Ya podés tocar
 Quitá el gas
+Hoy volás sin mí. ¿Lo querés así?
+Dale. Si hay peligro, te aviso.
+Bueno: hoy te acompaño.
 Entraste sin la luz verde. La próxima, esperala
 Subí derecho por el eje
 Girá a la izquierda: volvemos a la pista
@@ -287,6 +290,11 @@ El rombo dice dónde está la senda, la rampa invisible que baja hasta la pista.
 Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.
 GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.
 Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.
+Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.
+Piloto es quien ya despega y aterriza. El avión lo llevás vos, del puesto al puesto, y la instructora te ayuda cuando hace falta.
+Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.
+Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.
+Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.
 Las barras de la manga dicen cuánto aprendiste y cuánto te toca cuidar. Cuatro barras son las de la comandante, y no quieren decir que manda más: quieren decir que responde por todos los que van a bordo.
 Para despegar y para aterrizar, las persianas de las ventanillas van subidas, y de noche se bajan las luces de la cabina. Así se ve afuera si pasa algo, y los ojos ya están acostumbrados a la luz de afuera si hubiera que salir. En algunos aviones nuevos, la tripulación aclara todas las ventanillas a la vez.
 Antes de despegar, la tripulación enseña dónde están las salidas, cómo se abrocha el cinturón, el chaleco y las máscaras. Aunque vueles seguido, se mira siempre: cada avión es distinto, y la salida más cerca puede estar detrás tuyo.

@@ -1541,6 +1541,27 @@
     }
   },
   {
+    "id": "vuelo.sinInstructora.pregunta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy volás sin mí. ¿Lo querés así?",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sinInstructora.si",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Dale. Si hay peligro, te aviso.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sinInstructora.no",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Bueno: hoy te acompaño.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.sinPermiso",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2168,6 +2189,41 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.grado-aprendiz.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.grado-piloto.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Piloto es quien ya despega y aterriza. El avión lo llevás vos, del puesto al puesto, y la instructora te ayuda cuando hace falta.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.grado-comandante.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.grado-instructora.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.sin-instructora.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.",
     "para": "lo que explica tocar una pieza del cuadro"
   },
   {
