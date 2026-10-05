@@ -752,6 +752,11 @@ export class ManoQueSostiene {
   /** Lo que se ha ido sumando de trayectoria que faltaba, rad/s. */
   private suma = 0;
   /**
+   * Y en el modelo sencillo, lo que se ha ido sumando de subida que faltaba,
+   * m/s: lo que el aire se lleva y la palanca devuelve. Ver `pasoDelCabeceo`.
+   */
+  private subidaQueFalta = 0;
+  /**
    * **La velocidad compensada**, indicada, m/s, o `null` si ahora no se
    * sostiene una: la que sostiene la mano suelta en un avión de cables. Ver
    * `sostieneLaVelocidad`.
@@ -871,6 +876,7 @@ export class ManoQueSostiene {
     }
     this.aileron = 0;
     this.elevator = 0;
+    this.subidaQueFalta = 0;
     this.olvidarLaCompensada();
   }
 
@@ -940,6 +946,7 @@ export class ManoQueSostiene {
       this.trim = acotar(ve.timon, 1);
       this.elevator = 0;
       this.suma = 0;
+      this.subidaQueFalta = 0;
       this.olvidarLaCompensada();
     }
   }
@@ -1304,6 +1311,7 @@ export class ManoQueSostiene {
 
     if (ve.sencillo) {
       const subir = ve.mandoParaSubir;
+      if (compensado) this.subidaQueFalta = 0;
       if (compensado && subir) {
         /*
          * **En el modelo sencillo, el avión compensado se queda con su
@@ -1321,9 +1329,37 @@ export class ManoQueSostiene {
       // En el modelo sencillo la palanca **es** cuánto se sube: se le pide al
       // modelo la que da esta trayectoria. Ver `mandoParaSubir`.
       const ritmoDeSubida = v * Math.sin(c.valor);
+      /*
+       * **Y mirando lo que sube de verdad**, que es lo que mira una mano.
+       *
+       * La cuenta del modelo da la palanca de esa subida **en aire quieto**, y
+       * el aire de este modelo no está quieto: el bache —ver `ponerRacha` en
+       * `arcade.ts`— se suma tal cual a lo que sube el avión. Así que el
+       * nivelado del doble toque bajaba con el aire todo lo que bajara el
+       * aire. Medido en `verificar-dedo.mjs`, con una tarde de térmicas en
+       * Pettirossi a sesenta metros: la palanca quieta en 0,10, el aire a
+       * −2,5 m/s y el avión a −0,8 medio segundo después, siguiéndolo; con una
+       * bajada larga, −1,5 de media en dos segundos «nivelado». Un piloto que
+       * sostiene la altura tira cuando el aire le baja, y es lo que ya hacía
+       * esta mano en el modelo completo —ver `this.suma`, abajo—.
+       *
+       * Lo que falta se va sumando, y solo con la consigna quieta y la palanca
+       * con recorrido: mientras la tecla o el dedo la mueven, lo que falta es
+       * lo que tarda el avión en seguirla, no aire. Suelta —el avión
+       * compensado de cables— no se suma nada: ahí el avión va con el aire,
+       * como uno compensado de verdad.
+       */
+      const pide = ritmoDeSubida + this.subidaQueFalta;
       this.elevator = ve.mandoParaSubir
-        ? acotar(ve.mandoParaSubir(ritmoDeSubida), 1)
+        ? acotar(ve.mandoParaSubir(pide), 1)
         : acotar(c.valor / sendasDelDedo(ve.aircraft).sube, 1);
+      const falta = ritmoDeSubida - ve.vertical;
+      const conRecorrido = Math.abs(this.elevator) < 1 || this.elevator * falta < 0;
+      if (tecla === 0 && c.ritmo === 0 && conRecorrido)
+        this.subidaQueFalta = acotar(
+          this.subidaQueFalta + SUMA_DE_SUBIDA * falta * dt,
+          SUMA_DE_SUBIDA_MAXIMA,
+        );
       return;
     }
 
@@ -1601,6 +1637,21 @@ const POR_ALFA = 2;
 const POR_ALFA_EN_EL_TRIM = 3;
 /** Lo que suma por segundo cada radián de trayectoria que falta, 1/s². */
 const SUMA_DE_LA_SENDA = 0.25;
+/**
+ * **En el modelo sencillo, lo que suma por segundo cada m/s de subida que
+ * falta**, 1/s. Uno: con el avión de ese modelo, que se pone a lo que pide la
+ * palanca en algo menos de medio segundo, deshace un bache sostenido en tres o
+ * cuatro segundos sin pasarse —es un lazo de segundo orden con amortiguamiento
+ * de 0,74—. Ver `pasoDelCabeceo`.
+ */
+const SUMA_DE_SUBIDA = 1;
+/**
+ * Y hasta dónde, m/s: tres. Más que la ráfaga más fuerte que trae una tarde
+ * de térmicas cerca del suelo, y menos que lo que sube cualquier avión de la
+ * flota con la palanca —ver `ascensoMaximo`—, para que no se quede cargada de
+ * algo que la palanca no puede dar.
+ */
+const SUMA_DE_SUBIDA_MAXIMA = 3;
 /** Y hasta dónde, en giro por velocidad: m/s². Un tercio de g. */
 const SUMA_MAXIMA = 0.33 * 9.80665;
 /** Cuánto mira hacia delante el ángulo de ataque, s. */

@@ -723,6 +723,8 @@ async function unTelefono(quien) {
           flaps: o.palancaDeFlaps(),
           tren: o.trenQueSePide(),
           percance: o.percance(),
+          aire: o.rafagas?.()?.vertical ?? 0,
+          fase: o.fase(),
         };
       });
     const centroDelPunto = async () => {
@@ -758,7 +760,10 @@ async function unTelefono(quien) {
       detalle:
         `alabeo ${(a1.alabeo * G).toFixed(1)}° → ${(a2.alabeo * G).toFixed(1)}° a los dos segundos · ` +
         `sube a ${a2.vs.toFixed(1)} m/s · el punto a ${lejos2.toFixed(0)} px del centro (antes ${lejos1.toFixed(0)})` +
-        ` · la mano lleva ${a2.mano.alabeo ? "alabeo" : "—"} y ${a2.mano.cabeceo ? "cabeceo" : "—"}`,
+        ` · la mano lleva ${a2.mano.alabeo ? "alabeo" : "—"} y ${a2.mano.cabeceo ? "cabeceo" : "—"}` +
+        // Si falla, de qué: la palanca que pinta la mano, el aire y la altura.
+        ` · palanca de cabeceo ${a1.mano.palanca.y.toFixed(2)} → ${a2.mano.palanca.y.toFixed(2)}` +
+        ` · aire ${a2.aire.toFixed(1)} m/s · a ${a1.alto.toFixed(0)} → ${a2.alto.toFixed(0)} m · ${a2.fase}`,
     };
 
     // C2. El pulgar agarra la palanca y se queda puesto; el otro dedo toca.
@@ -845,13 +850,33 @@ async function unTelefono(quien) {
      * La subida, **promediada** en dos segundos: en el modelo sencillo el
      * bache del aire se suma tal cual al ascenso —ver `ponerRacha` en
      * `arcade.ts`—, y una sola lectura daba de 0,4 a 1,6 m/s según cayera.
+     *
+     * **Y con el aire al lado.** Esto fallaba a ratos —−1,48 y −1,66 m/s de
+     * media— y desde aquí no se podía saber de quién era: medido con el bache
+     * de cada lectura, el avión bajaba exactamente lo que bajaba el aire, con
+     * la palanca quieta. Era la mano del modelo sencillo, que no miraba lo que
+     * subía de verdad —ver `subidaQueFalta` en `flight/mano.ts`—. Si vuelve a
+     * fallar, el detalle dice si el aire bajaba y si la palanca se movió para
+     * deshacerlo.
      */
     const lecturas = [];
     for (let i = 0; i < 10; i++) {
-      lecturas.push((await mirarAire()).vs);
+      lecturas.push(
+        await page.evaluate(() => {
+          const o = globalThis.__oga;
+          return {
+            vs: o.estado().verticalSpeed,
+            aire: o.rafagas?.()?.vertical ?? 0,
+            palanca: o.controles().elevator,
+          };
+        }),
+      );
       await pausa(200);
     }
-    const vsMedia = lecturas.reduce((a, b) => a + b, 0) / lecturas.length;
+    const media = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    const vsMedia = media(lecturas.map((l) => l.vs));
+    const aireMedio = media(lecturas.map((l) => l.aire));
+    const palancas = lecturas.map((l) => l.palanca);
     const c = await mirarAire();
     const lejos3 = await apartado();
     const doble = {
@@ -859,7 +884,9 @@ async function unTelefono(quien) {
       detalle:
         `alabeo ${(c.alabeo * G).toFixed(1)}° · ${vsMedia.toFixed(2)} m/s de media en dos segundos · el punto a ${lejos3.toFixed(1)} px del centro` +
         ` · la mano lleva ${c.mano.alabeo ? "alabeo" : "—"} y ${c.mano.cabeceo ? "cabeceo" : "—"}` +
-        ` · a ${c.alto.toFixed(0)} m`,
+        ` · a ${c.alto.toFixed(0)} m` +
+        ` · el aire a ${aireMedio.toFixed(2)} m/s de media` +
+        ` · la palanca de ${Math.min(...palancas).toFixed(2)} a ${Math.max(...palancas).toFixed(2)}`,
     };
     return { fija, flaps, tren, losas, doble };
   }

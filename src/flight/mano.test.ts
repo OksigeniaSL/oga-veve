@@ -352,6 +352,33 @@ describe("el dedo", () => {
     expect(Math.abs(v.mano.palanca().x)).toBeLessThan(0.1);
     expect(Math.abs(v.mano.palanca().y)).toBeLessThan(0.1);
   });
+
+  /*
+   * **Y nivelado quiere decir sin bajar, también con el aire bajando.** En el
+   * modelo sencillo la mano sacaba la palanca de la cuenta del modelo —la que
+   * da tal subida— y no miraba lo que subía de verdad: con una térmica de
+   * las cuatro de la tarde, el avión «nivelado» bajaba con el aire todo lo
+   * que bajara el aire. Medido en `verificar-dedo.mjs`: la palanca quieta en
+   * 0,10 y la subida pegada al bache, −2,5 m/s de aire y −0,8 de avión medio
+   * segundo después. El bache se nota y la mano lo deshace, como el modelo
+   * completo.
+   */
+  it("en Guyrami, el doble toque sostiene el nivelado aunque el aire baje", () => {
+    for (const id of ["jaz-20", "jaz-60", "jaz-120"]) {
+      const a = avion(id);
+      const v = empezar(a, GUYRAMI, maniobra(a));
+      volar(v, 6, (t) => (t === 0 ? { palanca: { x: 0.6, y: 0.6 } } : {}));
+      volar(v, 15, (t) => (t === 0 ? { centrar: true } : {}));
+      const bajada: number[] = [];
+      v.modelo.ponerRacha?.(0, -1.5, 0, 0);
+      volar(v, 12, () => ({}), (m) => bajada.push(m.vertical));
+      v.modelo.ponerRacha?.(0, 0, 0, 0);
+      const ultimos = bajada.slice(-4 * 60);
+      const media = ultimos.reduce((s, x) => s + x, 0) / ultimos.length;
+      expect(Math.min(...bajada), `${id}: el bache se nota`).toBeLessThan(-0.5);
+      expect(Math.abs(media), `${id}: nivelado con el aire bajando`).toBeLessThan(0.2);
+    }
+  });
 });
 
 describe("los toques cortos", () => {
