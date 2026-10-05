@@ -129,4 +129,35 @@ describe("el bote en la carrera de despegue", () => {
     // Y ahora, a fondo y tirando: no se despega, porque ya aterrizó.
     expect(tirarYSubir(m, 4)).toBeLessThan(1);
   });
+
+  it("y posado con el aire bajando, se queda en el suelo y frena", () => {
+    /*
+     * El bache de bajada que traía al tocar se restaba de la subida en el
+     * paso siguiente y la dejaba en positivo: un fotograma en el suelo y otro
+     * en el aire, sin frenar en los de aire. Medido en Pettirossi a las
+     * cuatro de la tarde: nueve segundos así, acelerando con el freno puesto.
+     * Ver `porElAire` en `apply`.
+     */
+    for (const aire of [-0.1, -0.5, -1.5]) {
+      const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
+      m.reset({ position: new Vector3(0, 60, 0), heading: 0, airspeed: 40 });
+      m.state.onRunway = true;
+      // Un poco de vuelo de verdad, y posado a catorce con el freno a fondo,
+      // como lo deja `verificar-llegadas.mjs`.
+      for (let t = 0; t < 2; t += 1 / 60) m.step(1 / 60, { ...neutralControls(), engineOn: true });
+      m.reset({ position: new Vector3(0, PYKASU.gearHeight + 0.05, 0), heading: 0, airspeed: 14 });
+      m.state.onRunway = true;
+      const frenando = { ...neutralControls(), engineOn: true, throttle: 0, brakes: 1 };
+      let enElAire = 0;
+      for (let t = 0; t < 8; t += 1 / 60) {
+        // Como el juego, que pone el bache en cada fotograma.
+        m.ponerRacha(0, aire);
+        m.step(1 / 60, frenando);
+        m.state.onRunway = true;
+        if (!m.state.onGround && t > 0.5) enElAire++;
+      }
+      expect(enElAire, `${aire} m/s`).toBe(0);
+      expect(m.state.groundSpeed, `${aire} m/s`).toBeLessThan(0.5);
+    }
+  });
 });

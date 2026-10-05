@@ -64,6 +64,14 @@ const CAMPOS = process.argv.length > 3 ? process.argv.slice(3) : TODOS;
 const AVION = process.env.OGA_AVION ?? null;
 const FOTOS = process.env.OGA_FOTOS ?? null;
 const CON_GPU = process.env.OGA_GPU === "1";
+/**
+ * **Y la máquina cargada, si se pide**: `OGA_LENTO=4` frena la página cuatro
+ * veces con el propio Chrome —`Emulation.setCPUThrottlingRate`—. Este banco
+ * fallaba un campo distinto cada vez corriendo junto a los vuelos enteros y a
+ * solas pasaba siempre; con esto la carga se pone a voluntad y sin cargar la
+ * máquina de nadie.
+ */
+const LENTO = Number(process.env.OGA_LENTO ?? 0) || 0;
 const PUERTO = 5297;
 
 const server = await createServer({
@@ -94,6 +102,10 @@ try {
     });
     const errores = [];
     page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
+    if (LENTO > 1)
+      await (await page.context().newCDPSession(page)).send("Emulation.setCPUThrottlingRate", {
+        rate: LENTO,
+      });
     await page.addInitScript(() =>
       localStorage.setItem("oga-veve:teclas-vistas", "1"),
     );
@@ -148,6 +160,34 @@ try {
           return p.z < 1 && Math.abs(p.x) < borde && Math.abs(p.y) < borde;
         },
       };
+      /*
+       * **Las esperas, en segundos de juego y no de pared.** Este banco
+       * esperaba con relojes de pared —dos segundos entre colocación y
+       * colocación, dos y medio de frenada, siete décimas para que llegue la
+       * cámara— y a solas pasaba siempre; junto a los vuelos enteros fallaba
+       * un campo distinto cada vez. Con la máquina cargada cada fotograma
+       * dura más y el juego avanza menos por segundo de pared —el paso tiene
+       * tope, ver `MAX_PASO`—: medido con la página frenada cuatro veces
+       * (`OGA_LENTO=4`), en Pettirossi y en La Gomera la foto «recién
+       * frenado» se sacaba a segundo y medio de juego de la toma, con el avión
+       * todavía a 13 m/s por la pista, y el coche, que espera en la boca, no
+       * estaba. Lo que se mide aquí es lo que se ve en un momento del juego,
+       * así que se espera a ese momento por el reloj del juego, con un tope de
+       * pared para no colgarse. Ver `reloj` en `dev/sondas.ts`.
+       *
+       * Y el coche no estaba por un fallo del juego que esto destapó: con el
+       * aire bajando al tocar, el avión del modelo sencillo rodaba un
+       * fotograma en el suelo y otro en el aire, y el coche, que solo sale
+       * con el avión en el suelo, parpadeaba. Ver `porElAire` en `apply`, en
+       * `flight/arcade.ts`.
+       */
+      globalThis.__esperaDeJuego = async (segundos, topeDePared = 60_000) => {
+        const desde = o.reloj();
+        const t0 = performance.now();
+        while (o.reloj() - desde < segundos && performance.now() - t0 < topeDePared)
+          await new Promise((r) => setTimeout(r, 40));
+        return o.reloj() - desde;
+      };
       // Con el motor en marcha y frenado, y sin órdenes de irse al aire.
       o.mandarFrustrar?.("nunca");
       globalThis.__mandos = {
@@ -179,8 +219,7 @@ try {
              * persecución tarda unos fotogramas en llegar, y en esos la
              * tarjeta es del sitio de antes. Eso es el banco, no el juego.
              */
-            if (performance.now() - (globalThis.__colocadoEn ?? -Infinity) < 600)
-              return null;
+            if (o.reloj() - (globalThis.__colocadoEn ?? -Infinity) < 0.6) return null;
             const s = o.senalero();
             const g = s.grupo;
             const ok =
@@ -208,9 +247,11 @@ try {
        * Se vuelve a poner cada dos segundos para que no baje.
        */
       const f = o.puntoDeFinal(2500);
-      for (let i = 0; i < 9; i++) {
+      const volandoDesde = o.reloj();
+      const volandoT0 = performance.now();
+      while (o.reloj() - volandoDesde < 18 && performance.now() - volandoT0 < 180_000) {
         o.colocar(f.x, f.suelo + 250, f.z, o.avion().aproximacion ?? 50, f.h);
-        await espera(2000);
+        await globalThis.__esperaDeJuego(2);
       }
       /*
        * **Y se toca donde toca uno de verdad**: en el punto de visada, que la
@@ -230,12 +271,30 @@ try {
       const t = o.puntoDeFinal(-visada);
       o.pedirTren?.(true);
       o.colocar(t.x, o.sueloDeVuelo(t.x, t.z) + tren + 0.05, t.z, 14, t.h);
-      for (let i = 0; i < 60; i++) {
-        await espera(500);
-        if (o.fase() === "abandonando" || o.estado().groundSpeed < 1) break;
-      }
-      await espera(2500);
-      return { fase: o.fase(), percance: o.percance?.() ?? null };
+      /*
+       * **Y recién frenado es parado**, no «en abandonando»: colocado a
+       * catorce metros por segundo, el plan ya está en «abandonando» al primer
+       * vistazo, y lo que daba el momento de la foto eran los dos segundos y
+       * medio de pared de después. Ahora se espera a que el avión se pare —con
+       * tope de cuarenta segundos de juego— y un segundo y medio de juego más
+       * para que la cámara y la raya se pongan.
+       */
+      const tocoEn = o.reloj();
+      const tocoT0 = performance.now();
+      while (
+        o.estado().groundSpeed >= 0.5 &&
+        o.reloj() - tocoEn < 40 &&
+        performance.now() - tocoT0 < 180_000
+      )
+        await espera(50);
+      const paradoEn = o.reloj() - tocoEn;
+      await globalThis.__esperaDeJuego(1.5);
+      return {
+        fase: o.fase(),
+        percance: o.percance?.() ?? null,
+        paradoEn,
+        parado: o.estado().groundSpeed < 0.5,
+      };
     });
     await foto("1-en-pista");
 
@@ -265,7 +324,16 @@ try {
       if (col) for (let k = 0; k < col.count; k++) if (col.getW(k) > 0.5) encendidas++;
       const coche = o.sigueme?.();
       const cg = coche?.grupo;
+      const st = o.estado();
+      let padres = "";
+      for (let r = cg; r && r !== escena; r = r.parent) padres += r.visible ? "v" : "·";
+      const diag =
+        `fase ${o.fase()} · ${st.onRunway ? "en pista" : "fuera de pista"} · ${st.groundSpeed.toFixed(1)} m/s · ` +
+        `reloj ${o.reloj().toFixed(1)} s · avance ${avance.toFixed(0)} m de ${ruta.length} puntos · ` +
+        `coche: ruta ${coche?.ruta?.length ?? "?"} · largo ${coche ? Math.round(coche.largo ?? -1) : "?"} · ` +
+        `esperando ${coche?.esperandoEnLaSalida ?? "?"} · t ${coche?.t?.toFixed?.(1) ?? "?"} · padres ${padres}`;
       return {
+        diag,
         puntos: ruta.length,
         rayaEnEscena: !!raya && m.enEscena(raya),
         encendidas,
@@ -317,8 +385,8 @@ try {
         const p = aDelFinal(d);
         if (!p) continue;
         o.colocar(p.x, o.sueloDeVuelo(p.x, p.z) + tren + 0.05, p.z, 3, p.rumbo);
-        globalThis.__colocadoEn = performance.now();
-        await espera(700);
+        globalThis.__colocadoEn = o.reloj();
+        await globalThis.__esperaDeJuego(0.7);
         const s = o.senalero();
         const g = s.grupo;
         if (m.enEscena(g)) visto = true;
@@ -338,11 +406,13 @@ try {
        * boca del puesto, y ella viene pedaleando desde la salida de la pista.
        * Lo que se mira es que llegue y se quede, no que se teletransporte.
        */
-      for (let k = 0; bg && k < 40; k++) {
+      const biciDesde = o.reloj();
+      const biciT0 = performance.now();
+      while (bg && o.reloj() - biciDesde < 20 && performance.now() - biciT0 < 180_000) {
         const p = o.estado().position;
         if (bg.visible && Math.hypot(bg.position.x - p.x, bg.position.z - p.z) < 30)
           break;
-        await espera(500);
+        await espera(100);
       }
       const aqui = o.estado().position;
       return {
@@ -364,6 +434,12 @@ try {
     const bien = [];
     const mal = [];
     const mira = (ok, texto) => (ok ? bien : mal).push(texto);
+    mira(
+      pista.parado,
+      pista.parado
+        ? `parado a los ${pista.paradoEn.toFixed(1)} s de juego`
+        : `sin parar en ${pista.paradoEn.toFixed(1)} s de juego`,
+    );
     mira(enPista.puntos > 1, `ruta de ${enPista.puntos} puntos`);
     mira(enPista.rayaEnEscena, "raya en la escena");
     mira(enPista.encendidas > 0, `${enPista.encendidas} luces encendidas`);
@@ -400,7 +476,7 @@ try {
     if (!ok) fallos++;
     filas.push(
       `${ok ? "✓" : "✗"} ${campo} (${pista.fase}${pista.percance ? `, percance ${pista.percance}` : ""})` +
-        (mal.length ? `\n    falla: ${mal.join(" · ")}` : "") +
+        (mal.length ? `\n    falla: ${mal.join(" · ")}\n    al frenar: ${enPista.diag}` : "") +
         `\n    bien: ${bien.join(" · ")}`,
     );
     console.log(filas[filas.length - 1]);

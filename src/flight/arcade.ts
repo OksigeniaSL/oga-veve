@@ -1509,6 +1509,24 @@ export class ArcadeFlightModel implements FlightModel {
       s.position.y = wheelLevel;
       s.onGround = true;
       if (this.climb < 0) this.climb = 0;
+      /*
+       * **Y con las ruedas en el suelo, el aire ya no lleva al avión.**
+       *
+       * El bache se apagaba en el paso siguiente, pero después de restarlo de
+       * la subida —`delPiloto` en `step`—: con el aire bajando al tocar, la
+       * subida puesta a cero menos un bache negativo daba una subida
+       * positiva, el avión se despegaba un milímetro, el aire volvía a
+       * bajarlo, y así un fotograma sí y otro no. Medido en Pettirossi a las
+       * cuatro de la tarde con `verificar-llegadas.mjs`: posado a 14 m/s con
+       * el freno a fondo, nueve segundos rodando con las ruedas en el aire la
+       * mitad de los fotogramas, acelerando hasta 19,6 m/s —en el aire no
+       * frena nada— y el coche del sígame, que solo sale con el avión en el
+       * suelo, encendiéndose y apagándose. Con −0,1 m/s de aire bastaba: de
+       * catorce metros por segundo a doce y medio en ocho segundos, en vez de
+       * pararse en cuatro.
+       */
+      this.porElAire = 0;
+      this.cargaDelAire = 0;
       // En tierra el avión se endereza solo: aquí no hay puntas de ala que
       // apoyar ni nada que romper.
       this.bank *= Math.max(0, 1 - dt * 6);
