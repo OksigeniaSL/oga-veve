@@ -69,6 +69,19 @@ export interface Vuelo {
   readonly galones: readonly string[];
   /** Por dónde se pasó. Ver la cabecera. */
   readonly traza: readonly Paso[];
+  /**
+   * **Lo de antes de volar**, si hubo algo que contar: la vuelta al avión
+   * hecha entera o a medias, y la decisión de no salir o el despegue
+   * abortado por la funda del pitot. Renunciar es ganar, y se apunta como lo
+   * que es. Ver `flight/vuelta-al-avion.ts` y `flight/parte-de-salida.ts`.
+   *
+   * Opcional: los vuelos de antes no lo llevan, y el cuaderno lo puede contar
+   * sin cambiar su pantalla.
+   */
+  readonly antes?: {
+    readonly vuelta?: "entera" | "a-medias";
+    readonly decision?: "en-tierra" | "abortado";
+  };
 }
 
 /** Dónde vive. */

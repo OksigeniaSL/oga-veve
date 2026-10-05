@@ -1413,6 +1413,64 @@ export class Audio {
    * alguien habla —ver `empiezaLaVoz`— y el chasquido de cierre suena
    * justamente cuando la voz acaba, así que se quedaría a medias.
    */
+  /**
+   * **Lo que suena en la vuelta al avión**, hecho aquí mismo con Web Audio:
+   * sin ficheros que licenciar.
+   *
+   * - `funda`: el soplo de la funda que sale volando, ruido que sube.
+   * - `calzo`: el golpe seco de la cuña de goma contra el asfalto.
+   * - `cierre`: el clac de una tapa que se cierra y se traba.
+   * - `mirar`: la nota suave de «esto está bien».
+   * - `glup`: el combustible en el vasito de la purga.
+   *
+   * Por el bus de interfaz, como un toque de la pantalla: no son avisos, son
+   * respuestas a lo que se toca.
+   */
+  ruidoDeLaVuelta(que: "funda" | "calzo" | "cierre" | "mirar" | "glup"): void {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running") return;
+    const t = ctx.currentTime;
+    const salida = this.bus("interfaz");
+    if (que === "mirar") {
+      this.pluck(783.99, t, 0.3, "interfaz", FUERZA * 0.7);
+      this.pluck(1046.5, t + 0.09, 0.35, "interfaz", FUERZA * 0.6);
+      return;
+    }
+    if (que === "glup") {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(220, t);
+      o.frequency.exponentialRampToValueAtTime(520, t + 0.12);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.18, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      o.connect(g).connect(salida);
+      o.start(t);
+      o.stop(t + 0.2);
+      return;
+    }
+    const largo = que === "funda" ? 0.42 : que === "calzo" ? 0.14 : 0.08;
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = this.noiseBuffer();
+    const filtro = ctx.createBiquadFilter();
+    filtro.type = que === "funda" ? "bandpass" : "lowpass";
+    filtro.Q.value = que === "funda" ? 1.4 : 0.7;
+    if (que === "funda") {
+      filtro.frequency.setValueAtTime(500, t);
+      filtro.frequency.exponentialRampToValueAtTime(3200, t + largo);
+    } else filtro.frequency.value = que === "calzo" ? 420 : 2600;
+    const sobre = ctx.createGain();
+    sobre.gain.setValueAtTime(0.0001, t);
+    sobre.gain.linearRampToValueAtTime(que === "calzo" ? 0.35 : 0.16, t + (que === "funda" ? 0.08 : 0.004));
+    sobre.gain.exponentialRampToValueAtTime(0.0001, t + largo);
+    fuente.connect(filtro).connect(sobre).connect(salida);
+    fuente.start(t, Math.random() * 1.2, largo + 0.05);
+    fuente.stop(t + largo + 0.08);
+    // Y el calzo, con su cuerpo: un golpe grave debajo del ruido.
+    if (que === "calzo") this.pluck(98, t, 0.18, "interfaz", FUERZA * 0.9);
+  }
+
   chasquido(cual: "abre" | "cierra"): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running") return;

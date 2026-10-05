@@ -1195,4 +1195,82 @@ export const EN: Dictionary = {
     "The landing lights go on for take-off, for landing, and whenever you fly below ten thousand feet, where there are more planes and birds: so they can see you.",
   "tarjeta.voz.matricula":
     "The registration is like the plane's ID card: no other plane in the world has the same one. The first letters say which country it's from: Z P is Paraguay, and E C is Spain.",
+  // ── Before flying: the walk-around (item 125) and the weather (item 129) ──
+  "vuelta.titulo": "The walk-around",
+  "vuelta.abrir": "Walk around the plane",
+  "vuelta.volver": "Back",
+  "vuelta.seguir": "Keep walking around",
+  "vuelta.lista": "Walk-around done",
+  "vuelta.empezar":
+    "Before we fly, we walk around the plane. Touch what's glowing.",
+  "vuelta.entera": "Walk-around done! The plane is ready to fly.",
+  "vuelta.pitot.nombre": "The pitot cover",
+  "vuelta.pitot.globo": "Cover off: the pitot has to breathe.",
+  "vuelta.pitot.voz":
+    "This red cover protects the pitot while the plane is parked. It has to come off: with it on, the plane can't tell how fast it's going.",
+  "vuelta.sondas.nombre": "The probes and their covers",
+  "vuelta.sondas.globo": "Probes uncovered and undamaged.",
+  "vuelta.sondas.voz":
+    "These are the probes that measure speed. The covers come off, and we check they're clean and undamaged.",
+  "vuelta.superficies.nombre": "The tail controls",
+  "vuelta.superficies.globo": "They move freely.",
+  "vuelta.superficies.voz":
+    "The controls on the tail have to move freely, with nothing jamming them.",
+  "vuelta.calzos.nombre": "The wheel and the chocks",
+  "vuelta.calzos.globo": "Tyre inflated; chocks away.",
+  "vuelta.calzos.voz":
+    "Chocks are the wedges that stop the plane from rolling. They come out, and we check the tyre is properly inflated.",
+  "vuelta.frenos.nombre": "Wheels and brakes",
+  "vuelta.frenos.globo": "The brake pin sticks out: brake left.",
+  "vuelta.frenos.voz":
+    "On every wheel we check the tyre and the brake. While this little pin sticks out, the brake still has wear left.",
+  "vuelta.combustible.nombre": "The fuel",
+  "vuelta.combustible.globo": "Checked through the wing cap, and sumped: blue, no water.",
+  "vuelta.combustible.voz":
+    "Through this cap we look at how much fuel there is. And with the little cup we drain some from the bottom: it has to come out blue, with no water.",
+  "vuelta.aceite.nombre": "The oil",
+  "vuelta.aceite.globo": "The dipstick, between the two marks.",
+  "vuelta.aceite.voz":
+    "With the dipstick we check the engine oil: it has to sit between the two marks.",
+  "vuelta.helice.nombre": "The propeller",
+  "vuelta.helice.globo": "No nicks, no dents.",
+  "vuelta.helice.voz":
+    "We look at the propeller without handling it: no nicks, no dents. And never stand in front of it.",
+  "vuelta.motores.nombre": "The engines",
+  "vuelta.motores.globo": "Inlet and exhaust clear.",
+  "vuelta.motores.voz":
+    "We look into the engine inlet and the exhaust at the back: nothing inside, not a bird, not a rag.",
+  "vuelta.puertas.nombre": "Doors and panels",
+  "vuelta.puertas.globo": "All closed and latched.",
+  "vuelta.puertas.voz":
+    "Doors and panels that aren't in use have to be closed and latched before we go.",
+  "vuelta.luces.nombre": "The lights",
+  "vuelta.luces.globo": "Red on the left, green on the right: they work.",
+  "vuelta.luces.voz":
+    "We switch the lights on and check they all work: red on the left, green on the right and white at the back.",
+  "pitot.noMarca": "The airspeed isn't moving: throttle back and brake, calmly.",
+  "pitot.abortado":
+    "Well done! Stopping was the right call. It was the pitot cover: back to the stand to take it off.",
+  "pitot.enElAire":
+    "We're flying without airspeed: attitude and power, nice and calm. We'll go round and land.",
+  "pitot.volver": "Back to the stand",
+  "parte.abrir": "Today's weather",
+  "parte.titulo": "Today's weather",
+  "parte.salida": "Departure",
+  "parte.llegada": "Arrival",
+  "parte.aVolar": "Let's fly!",
+  "parte.meQuedo": "I'll stay today",
+  "parte.salgoIgual": "Go anyway",
+  "parte.ganaste": "You won today: good decision!",
+  "parte.sinMetar": "no METAR: the usual weather here",
+  "parte.propone.tormenta":
+    "There's a thunderstorm over the field. Better not to go today, or wait for it to pass.",
+  "parte.propone.visibilidad":
+    "Visibility is too low for this plane. Better to stay today, or wait for it to clear.",
+  "parte.propone.techo":
+    "The clouds are too low for this plane. Better to stay today, or wait for them to lift.",
+  "parte.propone.cruzado":
+    "The crosswind is stronger than this plane is known to handle. Better to stay today, or wait for it to ease.",
+  "parte.salgoIgual.voz":
+    "All right: we go, carefully. And if it's no good up there, we come back.",
 };

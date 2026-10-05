@@ -518,6 +518,7 @@ import {
   type LucesDeRodadura,
 } from "./world/luces-de-rodadura";
 import {
+  BASE_FOV,
   CAMERA_MODES,
   comoSeMiraDesde,
   construirCamaras,
@@ -765,7 +766,7 @@ import {
   turnoDe,
   type BancoDeVoces,
 } from "./audio/instructor-grabado";
-import { apuntarVuelo, type Paso } from "./flight/bitacora";
+import { apuntarVuelo, type Paso, type Vuelo } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { firmeDe } from "./world/firme";
@@ -1026,6 +1027,24 @@ import {
   type CampoDelVuelo,
 } from "./flight/alterno";
 import { dibujarReloj, relojDe } from "./ui/reloj";
+import {
+  claseDeVuelta,
+  cosasDeLaVuelta,
+  VueltaAlAvion,
+  type CosaDeLaVuelta,
+} from "./flight/vuelta-al-avion";
+import { AnemometroTapado, velocidadDeComprobar } from "./flight/anemometro-tapado";
+import {
+  decidir,
+  limitesDe,
+  parteDe,
+  type Decision,
+  type ParteDeUnCampo,
+} from "./flight/parte-de-salida";
+import { FundasYCalzos } from "./world/fundas-y-calzos";
+import { CamaraDeLaVuelta } from "./cameras/vuelta";
+import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
+import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
@@ -3621,6 +3640,36 @@ export class Game {
    * mira. Ver `ui/tarjeta-del-avion.ts`.
    */
   private tarjetaDelAvion: TarjetaDelAvion | null = null;
+
+  // ── Antes de volar: la vuelta al avión y el tiempo de hoy ─────────────
+  /** La vuelta de este vuelo, con lo mirado y lo que queda puesto. */
+  private vueltaAlAvion: VueltaAlAvion | null = null;
+  /** De qué avión es esa vuelta: otro avión, otra vuelta. */
+  private vueltaDe = "";
+  /** La funda y los calzos del avión que está en el puesto, y de qué malla. */
+  private fundasYCalzos: FundasYCalzos | null = null;
+  private fundasDe: AircraftMesh | null = null;
+  private readonly camaraDeLaVuelta = new CamaraDeLaVuelta();
+  private pantallaDeLaVuelta: PantallaDeLaVuelta | null = null;
+  /** Si se está dando la vuelta ahora: la cámara y la pantalla son suyas. */
+  private enLaVuelta = false;
+  /** Lo que se está mirando, y de qué lado del avión. */
+  private cosaQueSeMira: CosaDeLaVuelta | null = null;
+  /** Segundos que quedan de la prueba de luces de la vuelta. */
+  private pruebaDeLuces = 0;
+  /** La funda olvidada en la carrera, si se olvidó. Ver `flight/anemometro-tapado.ts`. */
+  private anemometro: AnemometroTapado | null = null;
+  /** Si al volver a empezar hay que conservar la funda: el despegue se abortó por ella. */
+  private volverAQuitarLaFunda = false;
+  private tarjetaDelTiempo: TarjetaDelTiempo | null = null;
+  /** El parte de hoy leído contra este avión, mientras se está en el puesto. */
+  private parteDeHoy: { partes: ParteDeUnCampo[]; decision: Decision } | null = null;
+  /** Si ya se abrió sola la tarjeta del tiempo en este vuelo. */
+  private parteYaAbierto = false;
+  /** Lo de antes de volar que va a la bitácora. Ver `Vuelo.antes`. */
+  private decisionDeHoy: "en-tierra" | "abortado" | null = null;
+  /** Reloj de la pantalla de la vuelta, para sus globos. */
+  private relojDeLaVuelta = 0;
   /** La tarjeta, para el banco de rendimiento: abierta o no, y cuánto ha pintado. */
   get tarjeta(): { readonly abierta: boolean; readonly pintadas: number } | null {
     return this.tarjetaDelAvion;
@@ -4329,10 +4378,14 @@ export class Game {
     escucharLaMirada(options.canvas, {
       alArrastrar: (dx, dy) => {
         const k = this.radianesPorPixel();
+        // En la vuelta al avión, el dedo mira alrededor de lo que se tiene delante.
+        if (this.enLaVuelta) return this.camaraDeLaVuelta.mirarAlrededor(-dx * k, dy * 0.02);
         this.mirada.arrastrar(dx * k, dy * k);
       },
       alSoltar: () => this.mirada.soltar(),
       alTocar: (e) => {
+        // Y un toque en el paisaje no pulsa mandos de cabina: se está fuera.
+        if (this.enLaVuelta) return;
         const [x, y] = enPantalla(e);
         // En el pasaje, la ventanilla: su persiana o su botón.
         if (this.tocarLaPared(x, y)) return;
@@ -5236,6 +5289,10 @@ export class Game {
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
     this.hud.onGafas(() => this.alternarGafas());
+    // Antes de volar: la vuelta al avión y el tiempo de hoy.
+    this.hud.onAntesDeVolar((que) =>
+      que === "vuelta" ? this.abrirLaVuelta() : this.abrirElParte(),
+    );
     this.llevarLasGafas(leerGafas());
     /*
      * **Los dos momentos del despegue, cada uno con lo suyo.**
@@ -6558,6 +6615,8 @@ export class Game {
       segundos: Math.round(this.duracion),
       galones: this.galones.lista,
       traza: this.traza,
+      // Y lo de antes de volar, si hubo: la vuelta al avión. Ver `loDeAntes`.
+      ...this.loDeAntes(),
     });
     this.agenda.luego(TARDA_EL_FINAL, () => {
       if (!this.vueloTerminado) return;
@@ -8619,6 +8678,8 @@ export class Game {
     // Lo que quedaba apuntado era del vuelo anterior: una pantalla de percance
     // de una partida que ya no existe, saliendo encima de la que empieza.
     this.agenda.vaciar();
+    // Y lo de antes de volar, de cero: otra vuelta y otro parte. Ver `nuevoVueloAntesDeVolar`.
+    this.nuevoVueloAntesDeVolar();
     this.hud.cerrarFinDeVuelo();
     this.dichoDeLaToma = false;
     this.avisadoDeLaPasada = false;
@@ -12735,6 +12796,8 @@ export class Game {
     this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
+    // La vuelta al avión, el tiempo de hoy y la funda olvidada. Ver `atenderAntesDeVolar`.
+    this.atenderAntesDeVolar(dt);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
@@ -12965,12 +13028,11 @@ export class Game {
          *
          * Es el fallo recurrente de esta casa —dos superficies que enseñan lo
          * mismo y una se queda atrás— y esta vez le tocó a la de dentro.
+         *
+         * Y la del reloj: con la funda del pitot puesta, cero. Ver
+         * `indicadaDelReloj`.
          */
-        velocidad: indicatedAirspeed(
-          this.flight.state.airspeed,
-          this.flight.state.position.y,
-          this.flight.aireDelDia(),
-        ),
+        velocidad: this.indicadaDelReloj(),
         // Y a cuál hay que ir para aterrizar, que es lo que la cinta no decía.
         vref: this.aircraft.approachSpeed,
         altura: this.flight.state.position.y,
@@ -13150,16 +13212,22 @@ export class Game {
     const s = this.flight.state;
     this.aircraftMesh.luces?.paso(
       this.relojDeRuta,
-      lucesDelTrafico(
-        faseDelTuyo({
-          motor: this.input.controls.engineOn,
-          enElSuelo: s.onGround,
-          enLaPista: s.onRunway,
-          velocidad: Math.hypot(s.velocity.x, s.velocity.z),
-        }),
-        s.position.y,
-        this.input.controls.tren > 0.5,
-      ),
+      /*
+       * Y en la vuelta al avión, la prueba de luces: todas encendidas un
+       * rato, que es como se mira que anden. Ver `tocarEnLaVuelta`.
+       */
+      this.pruebaDeLuces > 0
+        ? { navegacion: true, baliza: true, estroboscopicas: true, rodaje: true, aterrizaje: true }
+        : lucesDelTrafico(
+            faseDelTuyo({
+              motor: this.input.controls.engineOn,
+              enElSuelo: s.onGround,
+              enLaPista: s.onRunway,
+              velocidad: Math.hypot(s.velocity.x, s.velocity.z),
+            }),
+            s.position.y,
+            this.input.controls.tren > 0.5,
+          ),
     );
     // La luz de dentro sigue al sol: de día la que rebota, de noche la roja
     // del panel. Cada fotograma porque el avión puede cambiar en cualquiera;
@@ -13187,12 +13255,8 @@ export class Game {
          * grados, así que el horizonte de dentro seguía nivelado con el avión
          * alabeado treinta grados.
          */
-        velocidad:
-          indicatedAirspeed(
-            this.flight.state.airspeed,
-            this.flight.state.position.y,
-            this.flight.aireDelDia(),
-          ) * NUDOS,
+        // Con la funda del pitot puesta, cero. Ver `indicadaDelReloj`.
+        velocidad: this.indicadaDelReloj() * NUDOS,
         pies: this.flight.state.position.y * PIES,
         fpm: this.flight.state.verticalSpeed * PIES_POR_MINUTO,
         rumbo:
@@ -13295,6 +13359,8 @@ export class Game {
         rodaje: this.rodajeParaElCuadro(),
         // Y lo que acaba de cambiar, resaltado en su sitio. Ver `mirarLoQueCambia`.
         resaltes: this.loQueCambia.resaltes,
+        // Y la funda del pitot, si se quedó puesta. Ver `vigilarLaFunda`.
+        pitotTapado: this.pitotTapado,
         /*
          * **Y la senda a la vista**: el desvío, la marca del ritmo y el arco
          * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
@@ -13392,6 +13458,8 @@ export class Game {
       if (grupo) ponerTamanoMinimo(grupo.children, this.camera, alto);
     // El ala que se dobla, con la cámara ya puesta. Ver `world/ala-que-se-dobla.ts`.
     this.aircraftMesh.ala?.antesDePintar(this.camera);
+    // Y los puntos de la vuelta al avión, con la cámara ya puesta.
+    this.colocarLaVuelta();
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
   }
@@ -17130,6 +17198,27 @@ export class Game {
    * `src/cameras/`, una vista por fichero.
    */
   private updateCamera(dt: number): void {
+    /*
+     * **En la vuelta al avión, la cámara es suya**: a pie, delante de lo que
+     * se mira. Desde fuera y con el avión a la vista, sea cual sea la vista
+     * que se tenía; al cerrar la vuelta se vuelve a ella. Ver
+     * `cameras/vuelta.ts`.
+     */
+    if (this.enLaVuelta) {
+      this.hud.ponerVistaDePasaje(false);
+      this.aircraftMesh.group.visible = true;
+      this.ponerElMarco("chase");
+      this.camaraDeLaVuelta.colocar(
+        this.camera,
+        this.aircraftMesh.group,
+        this.aircraftMesh.vuelta?.tamano ?? this.aircraft.wingSpan,
+        (x, z) => this.terrain.sampleSurface(x, z),
+        dt,
+      );
+      this.ajustarElAngulo(BASE_FOV, dt);
+      this.poseDeLaVista.puesta = false;
+      return;
+    }
     const state = this.flight.state;
     const modo = this.vistaQueHay();
     const rig: CameraRig = this.camaras[modo];
@@ -22001,6 +22090,489 @@ export class Game {
       decir: (texto, clave) => this.instructor.decir(texto, clave),
     });
     this.tarjetaDelAvion.alternar(this.aircraft);
+  }
+
+  // ── Antes de volar ────────────────────────────────────────────────────
+  //
+  // La vuelta al avión (punto 125 de la lista de Enrique) y el tiempo de hoy
+  // con la decisión de si se sale (punto 129). La lógica vive en
+  // `flight/vuelta-al-avion.ts`, `flight/anemometro-tapado.ts` y
+  // `flight/parte-de-salida.ts`; aquí solo se engancha al vuelo.
+
+  /** Si el avión está en su puesto con el motor parado: cuando se hace todo esto. */
+  private enElPuesto(): boolean {
+    return (
+      this.faseDeAhora === "estacionado" &&
+      !this.input.controls.engineOn &&
+      !this.percance &&
+      this.flight.state.onGround
+    );
+  }
+
+  /**
+   * La vuelta de este vuelo. Se hace otra si cambia el avión o si llega su
+   * modelo —con las cajas de respaldo no hay dónde mirar—.
+   */
+  private laVuelta(): VueltaAlAvion {
+    const puntos = this.aircraftMesh.vuelta?.puntos ?? null;
+    const de = `${this.aircraft.id}:${puntos ? "modelo" : "cajas"}`;
+    if (!this.vueltaAlAvion || this.vueltaDe !== de) {
+      const clase = claseDeVuelta(modeloPorId(this.aircraft.id)?.silueta);
+      this.vueltaAlAvion = new VueltaAlAvion(
+        clase,
+        cosasDeLaVuelta(clase, (c) => puntos?.has(c) ?? false),
+      );
+      this.vueltaDe = de;
+      this.fundasYCalzos?.soltar();
+      this.fundasYCalzos = null;
+      this.fundasDe = null;
+    }
+    return this.vueltaAlAvion;
+  }
+
+  /** Lo de antes de volar, para los bancos. */
+  get antesDeVolarParaBanco(): Record<string, unknown> {
+    const v = this.vueltaAlAvion;
+    return {
+      enLaVuelta: this.enLaVuelta,
+      clase: v?.clase ?? null,
+      cosas: v?.cosas ?? [],
+      hechas: v ? v.cosas.filter((c) => v.hecha(c)) : [],
+      empezada: v?.empezada ?? false,
+      fundaPuesta: v?.fundaPuesta ?? false,
+      calzosPuestos: v?.calzosPuestos ?? false,
+      tapado: this.pitotTapado,
+      abortando: this.anemometro?.abortando ?? false,
+      salir: this.parteDeHoy?.decision.salir ?? null,
+      motivos: this.parteDeHoy?.decision.motivos ?? [],
+      decision: this.decisionDeHoy,
+    };
+  }
+
+  /** Si el motor iba en marcha el paso anterior: arrancar es el cambio. */
+  private motorAntes = false;
+
+  /** Cuánto lleva el avión en el puesto en este vuelo, s. */
+  private enElPuestoDesde = 0;
+  private relojDelParte = 0;
+
+  /** Un paso de lo de antes de volar. No hace casi nada fuera del puesto. */
+  private atenderAntesDeVolar(dt: number): void {
+    const v = this.laVuelta();
+    const motor = this.input.controls.engineOn;
+    if (motor && !this.motorAntes) this.alArrancarAntesDeVolar(v);
+    this.motorAntes = motor;
+    const puesto = this.enElPuesto();
+    this.ponerFundasYCalzos(v, puesto);
+    this.fundasYCalzos?.paso(dt);
+    this.pruebaDeLuces = Math.max(0, this.pruebaDeLuces - dt);
+    this.relojDeLaVuelta += dt;
+    if (puesto) {
+      this.enElPuestoDesde += dt;
+      // El parte de la llegada llega cuando llega: se relee cada dos segundos.
+      this.relojDelParte -= dt;
+      if (this.relojDelParte <= 0 || !this.parteDeHoy) {
+        this.relojDelParte = 2;
+        this.parteDeHoy = this.leerElParte();
+      }
+      /*
+       * **Y si algo pasa del límite, la tarjeta sale sola**, una vez por
+       * vuelo y con un respiro para que se vea dónde se está. Es lo único
+       * de antes de volar que no espera a que se pida: mirar si hoy se sale
+       * no es opcional, aunque quedarse sí lo sea.
+       */
+      if (
+        !this.parteYaAbierto &&
+        !this.parteDeHoy.decision.salir &&
+        this.enElPuestoDesde > 2.5 &&
+        !this.enLaVuelta &&
+        !this.hayPanelAbierto
+      ) {
+        this.parteYaAbierto = true;
+        this.abrirElParte();
+      }
+    }
+    this.hud.ponerAntesDeVolar(
+      puesto && !this.enLaVuelta
+        ? {
+            vuelta: v.cosas.length > 0,
+            vueltaHecha: v.entera,
+            tiempo: true,
+            tiempoAvisa: !!this.parteDeHoy && !this.parteDeHoy.decision.salir,
+          }
+        : null,
+    );
+    this.vigilarLaFunda();
+  }
+
+  /**
+   * La funda y los calzos en el avión del puesto. Se ponen al llegar el
+   * modelo, y se quitan si cambia la malla —otro avión, otro vuelo—.
+   */
+  private ponerFundasYCalzos(v: VueltaAlAvion, puesto: boolean): void {
+    const malla = this.aircraftMesh;
+    if (this.fundasDe && this.fundasDe !== malla) {
+      this.fundasYCalzos?.soltar();
+      this.fundasYCalzos = null;
+      this.fundasDe = null;
+    }
+    const pv = malla.vuelta;
+    if (this.fundasDe || !puesto || !pv || !(v.fundaPuesta || v.calzosPuestos)) return;
+    this.fundasYCalzos = new FundasYCalzos(
+      v.fundaPuesta ? pv.fundas : [],
+      pv.rueda,
+      pv.tamano,
+      v.calzosPuestos,
+    );
+    malla.group.add(this.fundasYCalzos.grupo);
+    this.fundasDe = malla;
+  }
+
+  /**
+   * **Al arrancar**: se cierra lo de antes de volar, quien está abajo se lleva
+   * los calzos, y la funda se queda o se va según quién hizo la vuelta. Ver
+   * `VueltaAlAvion.alArrancar`.
+   */
+  private alArrancarAntesDeVolar(v: VueltaAlAvion): void {
+    if (this.enLaVuelta) this.cerrarLaVuelta();
+    if (this.tarjetaDelTiempo?.abierta) this.tarjetaDelTiempo.cerrar();
+    const r = v.alArrancar(this.tier.avisos);
+    this.fundasYCalzos?.recogerCalzos();
+    if (!v.fundaPuesta) this.fundasYCalzos?.quitarFundas(false);
+    this.anemometro = r.fundaOlvidada
+      ? new AnemometroTapado(velocidadDeComprobar(v.clase, this.aircraft))
+      : null;
+  }
+
+  /** Si el anemómetro marca cero por la funda: todos los relojes lo enseñan. */
+  private get pitotTapado(): boolean {
+    return this.anemometro !== null && (this.vueltaAlAvion?.fundaPuesta ?? false);
+  }
+
+  /** La velocidad indicada que enseñan los relojes: cero con la funda puesta. */
+  private indicadaDelReloj(): number {
+    if (this.pitotTapado) return 0;
+    return indicatedAirspeed(
+      this.flight.state.airspeed,
+      this.flight.state.position.y,
+      this.flight.aireDelDia(),
+    );
+  }
+
+  /**
+   * **La funda olvidada, en la carrera**: se ve que la aguja no se mueve, se
+   * propone abortar con calma, y abortar se felicita como una frustrada. Ver
+   * `flight/anemometro-tapado.ts`.
+   */
+  private vigilarLaFunda(): void {
+    const a = this.anemometro;
+    if (!a || !this.pitotTapado) return;
+    const s = this.flight.state;
+    const suceso = a.paso({
+      tapado: true,
+      enTierra: s.onGround,
+      velocidad: s.groundSpeed,
+      gas: this.input.controls.throttle,
+    });
+    if (suceso === "noMarca") {
+      this.hud.senal.mostrar("pitot-tapado", this.rotulo("pitot.noMarca", "palabra.frena"), null, {
+        segundos: 10,
+        prioridad: IMPORTANTE,
+      });
+      this.instructor.decir(t("pitot.noMarca"), "pitot.noMarca", "mando");
+    } else if (suceso === "abortado") {
+      this.decisionDeHoy = "abortado";
+      this.avisar("achieved");
+      this.hud.senal.mostrar("pitot-tapado", this.rotulo("pitot.abortado", "palabra.bien"), null, {
+        segundos: Infinity,
+        prioridad: IMPORTANTE,
+        accion: () => this.volverAQuitarLaFundaAlPuesto(),
+      });
+      this.instructor.decir(t("pitot.abortado"), "pitot.abortado", "mando");
+      // Y la red de siempre: si nadie toca la tarjeta, se vuelve solo.
+      this.agenda.luego(14, () => {
+        if (this.anemometro === a && this.flight.state.onGround) this.volverAQuitarLaFundaAlPuesto();
+      });
+    } else if (suceso === "enElAire") {
+      this.instructor.decir(t("pitot.enElAire"), "pitot.enElAire", "mando");
+    }
+  }
+
+  /**
+   * **De vuelta al puesto, a sacar la funda.** El vuelo vuelve a empezar en
+   * el puesto con la funda donde estaba, y la vuelta se abre sola delante de
+   * ella. Lo abortado ya quedó en la bitácora.
+   */
+  private volverAQuitarLaFundaAlPuesto(): void {
+    if (!this.anemometro) return;
+    this.apuntarLoDeAntes("abortado");
+    this.volverAQuitarLaFunda = true;
+    this.resetFlight();
+    this.agenda.luego(1.5, () => {
+      if (this.enElPuesto() && this.vueltaAlAvion?.fundaPuesta) this.abrirLaVuelta();
+    });
+  }
+
+  /**
+   * **Vuelo nuevo**: vuelta nueva, parte nuevo. Salvo la funda que se dejó
+   * puesta y por la que se abortó: esa sigue donde estaba, y la vuelta es de
+   * quien la empezó.
+   */
+  private nuevoVueloAntesDeVolar(): void {
+    const conservar = this.volverAQuitarLaFunda;
+    this.volverAQuitarLaFunda = false;
+    if (this.enLaVuelta) this.cerrarLaVuelta();
+    this.anemometro = null;
+    this.vueltaAlAvion = null;
+    this.vueltaDe = "";
+    this.fundasYCalzos?.soltar();
+    this.fundasYCalzos = null;
+    this.fundasDe = null;
+    this.parteDeHoy = null;
+    this.parteYaAbierto = false;
+    this.decisionDeHoy = null;
+    this.enElPuestoDesde = 0;
+    this.motorAntes = false;
+    if (conservar) this.laVuelta().empezar();
+  }
+
+  /** Abre la vuelta al avión, si se puede dar: en el puesto y con su modelo. */
+  private abrirLaVuelta(): void {
+    if (this.enLaVuelta || !this.enElPuesto()) return;
+    const v = this.laVuelta();
+    if (!this.aircraftMesh.vuelta || v.cosas.length === 0) return;
+    const raiz = document.getElementById("vuelta-al-avion");
+    if (!raiz) return;
+    this.pantallaDeLaVuelta ??= new PantallaDeLaVuelta(raiz, {
+      alTocar: (c) => this.tocarEnLaVuelta(c),
+      alIrA: (c) => this.irEnLaVuelta(c),
+      alCerrar: () => this.cerrarLaVuelta(),
+    });
+    if (this.tarjetaDelAvion?.abierta) this.tarjetaDelAvion.cerrar();
+    v.empezar();
+    this.enLaVuelta = true;
+    const d = this.elDeposito();
+    this.pantallaDeLaVuelta.abrir(
+      v,
+      this.tier.avisos === "cifra" || this.tier.avisos === "cabina",
+      { lleno: d.kilos / d.cabe, reserva: d.reserva / d.cabe, estado: d.estado },
+    );
+    this.camaraDeLaVuelta.empezar(
+      this.camera,
+      this.aircraftMesh.group.getWorldPosition(this.puntoDeLaVuelta),
+    );
+    this.irEnLaVuelta(v.siguiente ?? v.cosas[0]!);
+    this.instructor.decir(t("vuelta.empezar"), "vuelta.empezar");
+  }
+
+  private cerrarLaVuelta(): void {
+    if (!this.enLaVuelta) return;
+    this.enLaVuelta = false;
+    this.cosaQueSeMira = null;
+    this.pantallaDeLaVuelta?.cerrar();
+  }
+
+  /**
+   * **De qué lado del avión se mira cada cosa**: el del orden del manual. En
+   * la avioneta, la rueda y el combustible del ala derecha, que es por donde
+   * pasa la vuelta del 172 después de la cola; en el de línea, el motor, la
+   * rueda y las puertas de la bodega de la derecha, que es donde las lleva.
+   */
+  private ladoDe(c: CosaDeLaVuelta): number {
+    const derecha: readonly CosaDeLaVuelta[] = ["calzos", "combustible", "motores", "frenos", "puertas"];
+    const p = this.aircraftMesh.vuelta?.puntos.get(c);
+    return p?.espejo && derecha.includes(c) ? 1 : -1;
+  }
+
+  /** Va a mirar una cosa: la cámara rodea el avión hasta ella. */
+  private irEnLaVuelta(c: CosaDeLaVuelta): void {
+    const p = this.aircraftMesh.vuelta?.puntos.get(c);
+    if (!p) return;
+    const lado = this.ladoDe(c);
+    this.puntoDeLaVuelta.copy(p.donde);
+    if (lado > 0) this.puntoDeLaVuelta.x = -this.puntoDeLaVuelta.x;
+    this.camaraDeLaVuelta.ir(c, this.puntoDeLaVuelta, lado);
+    this.cosaQueSeMira = c;
+  }
+
+  /** Se toca una cosa de la vuelta: responde, y se sigue con la siguiente. */
+  private tocarEnLaVuelta(c: CosaDeLaVuelta): void {
+    const v = this.vueltaAlAvion;
+    if (!v || !this.enLaVuelta) return;
+    const primera = v.tocar(c);
+    if (c !== this.cosaQueSeMira) this.irEnLaVuelta(c);
+    if (c === "pitot" || c === "sondas") {
+      this.fundasYCalzos?.quitarFundas(true);
+      if (primera) this.audio.ruidoDeLaVuelta("funda");
+    } else if (c === "calzos") {
+      this.fundasYCalzos?.quitarCalzos(true);
+      if (primera) this.audio.ruidoDeLaVuelta("calzo");
+    } else if (c === "luces") {
+      this.pruebaDeLuces = 5;
+      this.audio.chasquido("abre");
+    } else if (c === "combustible") this.audio.ruidoDeLaVuelta("glup");
+    else if (c === "puertas") this.audio.ruidoDeLaVuelta("cierre");
+    else this.audio.ruidoDeLaVuelta("mirar");
+    this.pantallaDeLaVuelta?.responder(c, primera, this.relojDeLaVuelta);
+    const clave = `vuelta.${c}.voz`;
+    this.instructor.decir(t(clave as TranslationKey), clave);
+    if (!primera) return;
+    if (v.entera) {
+      this.avisar("achieved");
+      this.instructor.decir(t("vuelta.entera"), "vuelta.entera");
+      return;
+    }
+    // Y a lo siguiente, con tiempo para ver lo que acaba de pasar.
+    this.agenda.luego(2.4, () => {
+      const sigue = this.vueltaAlAvion?.siguiente;
+      if (this.enLaVuelta && sigue && this.cosaQueSeMira === c) this.irEnLaVuelta(sigue);
+    });
+  }
+
+  /** Vectores de trabajo de la vuelta: uno por fotograma sería basura. */
+  private readonly puntoDeLaVuelta = new Vector3();
+  private readonly enVistaDeLaVuelta = new Vector3();
+  private readonly cosasEnPantalla: CosaEnPantalla[] = [];
+
+  /**
+   * **Dónde cae cada cosa de la vuelta en la pantalla**, con la cámara ya
+   * puesta. Lo que queda detrás del avión no se enseña, salvo lo que se está
+   * mirando, que la cámara tiene delante.
+   */
+  private colocarLaVuelta(): void {
+    const pantalla = this.pantallaDeLaVuelta;
+    const pv = this.aircraftMesh.vuelta;
+    const v = this.vueltaAlAvion;
+    if (!this.enLaVuelta || !pantalla || !pv || !v) return;
+    const g = this.aircraftMesh.group;
+    g.updateWorldMatrix(true, false);
+    this.camera.updateMatrixWorld();
+    const lado = this.camaraDeLaVuelta.ladoDeLaCamara(g);
+    const vista = this.camera.matrixWorldInverse;
+    const fondo = -this.enVistaDeLaVuelta
+      .setFromMatrixPosition(g.matrixWorld)
+      .applyMatrix4(vista).z;
+    const margen = pv.tamano * 0.12;
+    const ancho = this.renderer.domElement.clientWidth || window.innerWidth;
+    const alto = this.renderer.domElement.clientHeight || window.innerHeight;
+    const lista = this.cosasEnPantalla;
+    lista.length = 0;
+    for (const c of v.cosas) {
+      const p = pv.puntos.get(c);
+      if (!p) continue;
+      const q = this.enVistaDeLaVuelta.copy(p.donde);
+      if (p.espejo && lado > 0) q.x = -q.x;
+      g.localToWorld(q).applyMatrix4(vista);
+      const lejos = -q.z;
+      q.applyMatrix4(this.camera.projectionMatrix);
+      const dentro = lejos > 0.3 && Math.abs(q.x) < 1.02 && Math.abs(q.y) < 1.02;
+      lista.push({
+        cosa: c,
+        x: ((q.x + 1) / 2) * ancho,
+        y: ((1 - q.y) / 2) * alto,
+        seVe: dentro && (lejos < fondo + margen || c === this.cosaQueSeMira),
+      });
+    }
+    pantalla.colocar(lista, this.relojDeLaVuelta);
+  }
+
+  /** El parte de hoy, leído contra este avión: la salida y, si se va a otro campo, la llegada. */
+  private leerElParte(): { partes: ParteDeUnCampo[]; decision: Decision } {
+    const limites = limitesDe(this.aircraft);
+    const salida = this.elCampo();
+    const campos: { papel: "salida" | "llegada"; esc: Scenario }[] = [
+      { papel: "salida", esc: salida.escenario },
+    ];
+    if (this.destinoId && this.destinoId !== salida.id) {
+      const llegada = this.elCampo(this.destinoId);
+      if (llegada.id === this.destinoId) campos.push({ papel: "llegada", esc: llegada.escenario });
+    }
+    const partes = campos.map(({ papel, esc }) =>
+      parteDe(
+        {
+          oaci: esc.aerodrome?.id ?? esc.id.toUpperCase(),
+          pista: cabeceraEnUso(esc),
+          rumbo: esc.runway.heading,
+          meteo: esc.meteo ?? TIEMPO_DE_CASA,
+        },
+        papel,
+        limites,
+      ),
+    );
+    this.declinaciones = new Map(
+      campos.map(({ esc }) => [
+        esc.aerodrome?.id ?? esc.id.toUpperCase(),
+        esc.magneticVariation ?? 0,
+      ]),
+    );
+    return { partes, decision: decidir(partes) };
+  }
+
+  private declinaciones = new Map<string, number>();
+
+  /** Abre la tarjeta del tiempo de hoy, con la decisión. */
+  private abrirElParte(): void {
+    const raiz = document.getElementById("tarjeta-del-tiempo");
+    if (!raiz) return;
+    this.tarjetaDelTiempo ??= new TarjetaDelTiempo(raiz, {
+      alQuedarse: () => this.quedarseEnTierra(),
+      alSalir: (conTodoBien) => {
+        if (!conTodoBien)
+          this.instructor.decir(t("parte.salgoIgual.voz"), "parte.salgoIgual.voz");
+      },
+      // Al hangar como lo hace el final del vuelo: sin escenario en la dirección.
+      alHangar: () => window.location.assign(window.location.pathname),
+    });
+    if (this.enLaVuelta) this.cerrarLaVuelta();
+    const parte = this.leerElParte();
+    this.parteDeHoy = parte;
+    this.tarjetaDelTiempo.minimoDeTechoM = limitesDe(this.aircraft).techoM;
+    this.tarjetaDelTiempo.abrir({
+      ...parte,
+      peldano: this.tier.avisos,
+      declinacion: (oaci) => this.declinaciones.get(oaci) ?? 0,
+    });
+    const motivo = parte.decision.motivos[0]?.motivo;
+    if (motivo) this.instructor.decir(t(`parte.propone.${motivo}`), `parte.propone.${motivo}`);
+  }
+
+  /**
+   * **Hoy me quedo.** Se felicita igual que un buen vuelo —«hoy ganaste:
+   * decidiste bien»— y queda en la bitácora. Renunciar es ganar.
+   */
+  private quedarseEnTierra(): void {
+    if (this.decisionDeHoy === "en-tierra") return;
+    this.avisar("achieved");
+    this.instructor.decir(t("parte.ganaste"), "parte.ganaste");
+    this.apuntarLoDeAntes("en-tierra");
+  }
+
+  /** Lo de antes de volar de este vuelo, para su línea de la bitácora. */
+  private loDeAntes(): Pick<Vuelo, "antes"> {
+    const v = this.vueltaAlAvion;
+    const vuelta = v && v.cuantas > 0 ? (v.entera ? "entera" : "a-medias") : undefined;
+    const decision = this.decisionDeHoy ?? undefined;
+    if (!vuelta && !decision) return {};
+    return { antes: { ...(vuelta ? { vuelta } : {}), ...(decision ? { decision } : {}) } };
+  }
+
+  /**
+   * Una línea en la bitácora por lo decidido en tierra: quedarse, o el
+   * despegue abortado por la funda. Son vuelos que no llegan a apagarse en el
+   * puesto de llegada, y también cuentan.
+   */
+  private apuntarLoDeAntes(decision: "en-tierra" | "abortado"): void {
+    this.decisionDeHoy = decision;
+    apuntarVuelo({
+      fecha: new Date().toISOString(),
+      escenario: this.scenario.id,
+      leccion: this.leccion.id,
+      tramo: this.tier.id,
+      segundos: Math.round(this.duracion),
+      galones: [],
+      traza: this.traza,
+      ...this.loDeAntes(),
+    });
   }
 
   /** Pasa al siguiente idioma y repinta todo lo que lleva texto. */

@@ -144,6 +144,13 @@ export interface AircraftMesh {
    */
   deVerdad?: boolean;
   /**
+   * **Dónde está cada cosa de la vuelta al avión**, medida en este modelo: la
+   * funda del pitot, la rueda de los calzos, la boca del combustible. Solo en
+   * el modelo de verdad; con las cajas de respaldo no hay vuelta que dar. Ver
+   * `puntos-de-la-vuelta.ts`.
+   */
+  vuelta?: import("./puntos-de-la-vuelta").PuntosDeLaVuelta | null;
+  /**
    * `encuadre`: dónde caen la visera y los instrumentos vistos desde ahí, si el
    * modelo los trae. Ver `EncuadreDeCabina`.
    */

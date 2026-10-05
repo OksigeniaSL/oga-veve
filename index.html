@@ -448,6 +448,15 @@
     <div id="tarjeta-avion" class="tarjeta-avion" hidden></div>
 
     <!--
+      Antes de volar: la vuelta al avión, que va encima del mundo y no del
+      HUD —se juega mirando el avión—, y la tarjeta del tiempo con la decisión
+      de si hoy se sale. Ver src/ui/vuelta-al-avion.ts y
+      src/ui/tarjeta-del-tiempo.ts.
+    -->
+    <div id="vuelta-al-avion" class="vuelta" hidden></div>
+    <div id="tarjeta-del-tiempo" class="tarjeta-tiempo" hidden></div>
+
+    <!--
       El menú de pausa. Va fuera del HUD porque el HUD se rehace entero al
       cambiar de idioma o de peldaño, y esto tiene que poder estar abierto
       mientras eso pasa.

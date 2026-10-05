@@ -2138,4 +2138,82 @@ export const ES_PY = {
   "explica.modo-avion.corta": "Modo avión",
   "explica.modo-avion.texto":
     "El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.",
+  // ── Antes de volar: la vuelta al avión (punto 125) y el tiempo (punto 129) ──
+  "vuelta.titulo": "La vuelta al avión",
+  "vuelta.abrir": "Dar la vuelta al avión",
+  "vuelta.volver": "Volver",
+  "vuelta.seguir": "Seguir la vuelta",
+  "vuelta.lista": "Vuelta lista",
+  "vuelta.empezar":
+    "Antes de volar, damos la vuelta al avión. Tocá lo que brilla.",
+  "vuelta.entera": "¡Vuelta lista! El avión está para volar.",
+  "vuelta.pitot.nombre": "La funda del pitot",
+  "vuelta.pitot.globo": "Fuera la funda: el pitot tiene que respirar.",
+  "vuelta.pitot.voz":
+    "Esta funda roja tapa el pitot mientras el avión está guardado. Hay que sacarla: sin ella fuera, el avión no sabe a qué velocidad va.",
+  "vuelta.sondas.nombre": "Las sondas y sus fundas",
+  "vuelta.sondas.globo": "Sondas sin funda y sin golpes.",
+  "vuelta.sondas.voz":
+    "Estas son las sondas que miden la velocidad. Se les saca la funda y se mira que estén sanas y limpias.",
+  "vuelta.superficies.nombre": "Los timones de la cola",
+  "vuelta.superficies.globo": "Se mueven libres, sin trabas.",
+  "vuelta.superficies.voz":
+    "Los timones de la cola tienen que moverse libres, sin nada que los trabe.",
+  "vuelta.calzos.nombre": "La rueda y los calzos",
+  "vuelta.calzos.globo": "Rueda inflada; calzos fuera.",
+  "vuelta.calzos.voz":
+    "Los calzos son las cuñas que no dejan rodar al avión. Se sacan, y se mira que la rueda esté bien inflada.",
+  "vuelta.frenos.nombre": "Las ruedas y los frenos",
+  "vuelta.frenos.globo": "El pernito del freno asoma: queda freno.",
+  "vuelta.frenos.voz":
+    "En cada rueda se mira la goma y el freno. Este pernito, mientras asome, dice que al freno todavía le queda.",
+  "vuelta.combustible.nombre": "El combustible",
+  "vuelta.combustible.globo": "Se mira por la boca del ala, y se purga: azul y sin agua.",
+  "vuelta.combustible.voz":
+    "Por esta boca se mira cuánto combustible hay. Y con el vasito se saca un poco de abajo: tiene que salir azul y sin agua.",
+  "vuelta.aceite.nombre": "El aceite",
+  "vuelta.aceite.globo": "La varilla, entre las dos rayas.",
+  "vuelta.aceite.voz":
+    "Con la varilla se mira el aceite del motor: tiene que llegar entre las dos rayas.",
+  "vuelta.helice.nombre": "La hélice",
+  "vuelta.helice.globo": "Sin mellas ni golpes.",
+  "vuelta.helice.voz":
+    "La hélice se mira sin tocarla de más: que no tenga mellas ni golpes. Y nunca se para uno delante de ella.",
+  "vuelta.motores.nombre": "Los motores",
+  "vuelta.motores.globo": "Toma y salida libres.",
+  "vuelta.motores.voz":
+    "Se mira la boca del motor y la salida de atrás: que no haya nada adentro, ni un pájaro ni un trapo.",
+  "vuelta.puertas.nombre": "Puertas y tapas",
+  "vuelta.puertas.globo": "Todo cerrado y trabado.",
+  "vuelta.puertas.voz":
+    "Las puertas y las tapas que no se usan tienen que estar bien cerradas antes de salir.",
+  "vuelta.luces.nombre": "Las luces",
+  "vuelta.luces.globo": "Roja a la izquierda, verde a la derecha: encienden.",
+  "vuelta.luces.voz":
+    "Se prenden las luces y se mira que anden todas: la roja a la izquierda, la verde a la derecha y la blanca atrás.",
+  "pitot.noMarca": "El anemómetro no marca: gas atrás y frená, con calma.",
+  "pitot.abortado":
+    "¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.",
+  "pitot.enElAire":
+    "Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.",
+  "pitot.volver": "Volver al puesto",
+  "parte.abrir": "El tiempo de hoy",
+  "parte.titulo": "El tiempo de hoy",
+  "parte.salida": "Salida",
+  "parte.llegada": "Llegada",
+  "parte.aVolar": "¡A volar!",
+  "parte.meQuedo": "Hoy me quedo",
+  "parte.salgoIgual": "Salgo igual",
+  "parte.ganaste": "¡Hoy ganaste: decidiste bien!",
+  "parte.sinMetar": "sin METAR: el tiempo típico del lugar",
+  "parte.propone.tormenta":
+    "Hay tormenta encima del campo. Hoy mejor no salir, o esperar a que pase.",
+  "parte.propone.visibilidad":
+    "Se ve muy poco para este avión. Hoy mejor quedarse, o esperar a que abra.",
+  "parte.propone.techo":
+    "Las nubes están muy bajas para este avión. Hoy mejor quedarse, o esperar a que suban.",
+  "parte.propone.cruzado":
+    "El viento de costado es más fuerte de lo que este avión sabe aguantar. Hoy mejor quedarse, o esperar a que afloje.",
+  "parte.salgoIgual.voz":
+    "Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.",
 } as const;
