@@ -226,13 +226,13 @@ instructor	instructor/grado.aprendiz.ogg	es-PY	Aprendiz	los cuatro grados del cu
 instructor	instructor/grado.piloto.ogg	es-PY	Piloto	los cuatro grados del cuaderno
 instructor	instructor/grado.comandante.ogg	es-PY	Comandante	los cuatro grados del cuaderno
 instructor	instructor/grado.instructora.ogg	es-PY	Instructora	los cuatro grados del cuaderno
-instructor	instructor/galon.manga.ogg	es-PY	Los galones de este vuelo	los galones que se ganan en el vuelo
-instructor	instructor/galon.aproximacion.ogg	es-PY	Galón de la aproximación	los galones que se ganan en el vuelo
-instructor	instructor/galon.toma.ogg	es-PY	Galón del aterrizaje	los galones que se ganan en el vuelo
-instructor	instructor/galon.aros.ogg	es-PY	Galón de los aros	los galones que se ganan en el vuelo
-instructor	instructor/galon.velocidad.ogg	es-PY	Galón de la velocidad	los galones que se ganan en el vuelo
-instructor	instructor/galon.rodaje.ogg	es-PY	Galón del rodaje	los galones que se ganan en el vuelo
-instructor	instructor/galon.frustrada.ogg	es-PY	Galón de la frustrada	los galones que se ganan en el vuelo
+instructor	instructor/galon.manga.ogg	es-PY	La hoja de la instructora	lo que marca la hoja de la instructora en cada vuelo
+instructor	instructor/galon.aproximacion.ogg	es-PY	Aproximación estabilizada	lo que marca la hoja de la instructora en cada vuelo
+instructor	instructor/galon.toma.ogg	es-PY	Aterrizaje	lo que marca la hoja de la instructora en cada vuelo
+instructor	instructor/galon.aros.ogg	es-PY	Los aros	lo que marca la hoja de la instructora en cada vuelo
+instructor	instructor/galon.velocidad.ogg	es-PY	La velocidad	lo que marca la hoja de la instructora en cada vuelo
+instructor	instructor/galon.rodaje.ogg	es-PY	El rodaje	lo que marca la hoja de la instructora en cada vuelo
+instructor	instructor/galon.frustrada.ogg	es-PY	Frustrada cuando tocaba	lo que marca la hoja de la instructora en cada vuelo
 instructor	instructor/tutor.throttle.ogg	es-PY	Dale motor	los consejos de los primeros minutos
 instructor	instructor/tutor.speed.ogg	es-PY	Esperá a que corra	los consejos de los primeros minutos
 instructor	instructor/tutor.pull.ogg	es-PY	Tirá para arriba	los consejos de los primeros minutos
@@ -296,7 +296,8 @@ instructor	instructor/explica.grado-piloto.texto.ogg	es-PY	Piloto es quien ya de
 instructor	instructor/explica.grado-comandante.texto.ogg	es-PY	Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.grado-instructora.texto.ogg	es-PY	Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.sin-instructora.texto.ogg	es-PY	Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.	lo que explica tocar una pieza del cuadro
-instructor	instructor/explica.galones.texto.ogg	es-PY	Las barras de la manga dicen cuánto aprendiste y cuánto te toca cuidar. Cuatro barras son las de la comandante, y no quieren decir que manda más: quieren decir que responde por todos los que van a bordo.	lo que explica tocar una pieza del cuadro
+instructor	instructor/explica.galones.texto.ogg	es-PY	Las barras de la manga dicen tu grado, como en cualquier línea aérea: una, quien aprende; dos, la segunda oficial; tres, la primera oficial, que ya lleva el avión; y cuatro, la comandante. Cuatro barras no quieren decir que manda más: quieren decir que responde por todos los que van a bordo. Lo que hiciste bien en cada vuelo no va en la manga: lo marca la instructora en su hoja, con un visto.	lo que explica tocar una pieza del cuadro
+instructor	instructor/explica.hoja.texto.ogg	es-PY	Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.persianas.texto.ogg	es-PY	Para despegar y para aterrizar, las persianas de las ventanillas van subidas, y de noche se bajan las luces de la cabina. Así se ve afuera si pasa algo, y los ojos ya están acostumbrados a la luz de afuera si hubiera que salir. En algunos aviones nuevos, la tripulación aclara todas las ventanillas a la vez.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.video-seguridad.texto.ogg	es-PY	Antes de despegar, la tripulación enseña dónde están las salidas, cómo se abrocha el cinturón, el chaleco y las máscaras. Aunque vueles seguido, se mira siempre: cada avión es distinto, y la salida más cerca puede estar detrás tuyo.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.mascaras.texto.ogg	es-PY	Si la cabina pierde el aire, caen máscaras del techo. Primero te ponés la tuya y después ayudás a quien está al lado, aunque sea un niño: sin aire no podrías ayudar a nadie. El oxígeno sale aunque la bolsita no se infle, y el avión baja enseguida adonde se respira bien.	lo que explica tocar una pieza del cuadro

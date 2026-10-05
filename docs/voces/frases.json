@@ -1740,50 +1740,50 @@
     "id": "galon.manga",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Los galones de este vuelo",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "La hoja de la instructora",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "galon.aproximacion",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Galón de la aproximación",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "Aproximación estabilizada",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "galon.toma",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Galón del aterrizaje",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "Aterrizaje",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "galon.aros",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Galón de los aros",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "Los aros",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "galon.velocidad",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Galón de la velocidad",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "La velocidad",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "galon.rodaje",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Galón del rodaje",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "El rodaje",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "galon.frustrada",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Galón de la frustrada",
-    "para": "los galones que se ganan en el vuelo"
+    "texto": "Frustrada cuando tocaba",
+    "para": "lo que marca la hoja de la instructora en cada vuelo"
   },
   {
     "id": "tutor.throttle",
@@ -2230,7 +2230,14 @@
     "id": "explica.galones.texto",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Las barras de la manga dicen cuánto aprendiste y cuánto te toca cuidar. Cuatro barras son las de la comandante, y no quieren decir que manda más: quieren decir que responde por todos los que van a bordo.",
+    "texto": "Las barras de la manga dicen tu grado, como en cualquier línea aérea: una, quien aprende; dos, la segunda oficial; tres, la primera oficial, que ya lleva el avión; y cuatro, la comandante. Cuatro barras no quieren decir que manda más: quieren decir que responde por todos los que van a bordo. Lo que hiciste bien en cada vuelo no va en la manga: lo marca la instructora en su hoja, con un visto.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.hoja.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.",
     "para": "lo que explica tocar una pieza del cuadro"
   },
   {
