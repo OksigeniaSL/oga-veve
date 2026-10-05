@@ -111,10 +111,20 @@ export interface CambiosDelPaso {
 
 const NADA: CambiosDelPaso = { nuevos: [], suena: false };
 
+/** El FMA sin automático: las tres columnas en blanco. */
+const FMA_EN_BLANCO = { gases: "", lateral: "", vertical: "" } as const;
+
 export class LoQueCambia {
   private spd: { peldano: string; texto: string; kt: number } | null = null;
   private alt: number | null = null;
-  private fma: Record<(typeof COLUMNAS_DEL_FMA)[number], string> | null = null;
+  /**
+   * Lo que escribía el FMA: en blanco sin automático, que también es lo que
+   * escribe. Poner el automático con el FMA en blanco es un cambio de modo
+   * como cualquier otro, y se recuadra.
+   */
+  private fma: Record<(typeof COLUMNAS_DEL_FMA)[number], string> = { ...FMA_EN_BLANCO };
+  /** Si ya se leyó el cuadro una vez: lo de la primera lectura llega, no cambia. */
+  private leido = false;
   private readonly vivos = new Map<QueCambia, { edad: number; hacia: Resalte["hacia"] }>();
   private desdeElTono = Infinity;
 
@@ -122,7 +132,8 @@ export class LoQueCambia {
   reiniciar(): void {
     this.spd = null;
     this.alt = null;
-    this.fma = null;
+    this.fma = { ...FMA_EN_BLANCO };
+    this.leido = false;
     this.vivos.clear();
     this.desdeElTono = Infinity;
   }
@@ -177,12 +188,14 @@ export class LoQueCambia {
      * blanco no se recuadra —un hueco no se encuadra—, y la que cambia por el
      * botón se recuadra igual, que es lo que hace el de verdad.
      */
-    if (l.fma && this.fma)
+    const fma = l.fma ?? FMA_EN_BLANCO;
+    if (this.leido)
       for (const col of COLUMNAS_DEL_FMA) {
-        const ahora = l.fma[col];
+        const ahora = fma[col];
         if (ahora && ahora !== this.fma[col]) cambia(`fma-${col}`, null, l.fmaPorLaMano);
       }
-    this.fma = l.fma ? { gases: l.fma.gases, lateral: l.fma.lateral, vertical: l.fma.vertical } : null;
+    this.fma = { gases: fma.gases, lateral: fma.lateral, vertical: fma.vertical };
+    this.leido = true;
 
     if (!nuevos.length) return NADA;
     // Con la mano en algo, lo que cambia a la vez es por ella: no suena.

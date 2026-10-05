@@ -129,7 +129,7 @@ try {
     }));
     console.log(`  ${tramo}: al cambiar la ventanilla`, JSON.stringify(resalte));
     if (!resalte.caja) fallos.push(`${tramo}: la ventanilla ALT no late al cambiar`);
-    if (!resalte.flecha.includes("alt-sube")) fallos.push(`${tramo}: la marca no lleva su flecha`);
+    if (resalte.flecha.length !== 1) fallos.push(`${tramo}: la marca no lleva su flecha`);
     if (resalte.tonos < 1) fallos.push(`${tramo}: el cambio no sonó`);
     await page.screenshot({ path: `${FOTOS}/${tramo}-cambio-alt.png` });
     await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
@@ -145,6 +145,8 @@ try {
         .map((r) => r.dataset.fmaCaja),
     );
     console.log(`  ${tramo}: el FMA recuadrado`, JSON.stringify(fma));
+    // El FMA se lee desde el peldaño de las letras: en Guyrami no se pinta.
+    if (tramo !== "guyrami" && !fma.length) fallos.push(`${tramo}: el FMA no recuadra el modo nuevo`);
     await page.screenshot({ path: `${FOTOS}/${tramo}-fma.png` });
     await page.close();
   }

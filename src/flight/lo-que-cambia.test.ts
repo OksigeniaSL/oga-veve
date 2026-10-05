@@ -76,6 +76,14 @@ describe("lo que cambia", () => {
     expect(blanco.paso({ ...BASE, fma: { ...BASE.fma!, gases: "" } }).nuevos).toEqual([]);
   });
 
+  it("y poner el automático con el FMA en blanco recuadra los modos que salen", () => {
+    const c = new LoQueCambia();
+    c.paso({ ...BASE, fma: null });
+    c.paso({ ...BASE, fma: null });
+    const r = c.paso({ ...BASE, fma: { gases: "SPD", lateral: "LNAV", vertical: "" }, fmaPorLaMano: true });
+    expect(r).toEqual({ nuevos: ["fma-gases", "fma-lateral"], suena: false });
+  });
+
   it("dura lo del FMA de verdad y se apaga solo", () => {
     const c = arrancado();
     c.paso({ ...BASE, alt: 7000 });
