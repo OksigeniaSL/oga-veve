@@ -37,7 +37,9 @@
  *
  * La vuelta al avión los mueve al tocarlos, como se comprueba un alerón en el
  * suelo: `piezas` dice cuáles hay, de quién es cada malla con
- * `ejeDeLaPieza`, y `poner` los lleva a donde se diga.
+ * `ejeDeLaPieza`, y se ponen a mano con `aMano`: mientras no sea `null`, el
+ * juego los lleva ahí, a su ritmo, en vez de adonde dicen los mandos. Ver
+ * `mandosQueSeVen` en `game.ts`.
  */
 
 import { Matrix4, Quaternion, Vector3, type Object3D } from "three";
@@ -99,6 +101,12 @@ export interface SuperficiesDeMando {
   poner(mandos: PosicionDeLosMandos): void;
   /** Los grados a los que está ahora cada una, por nombre. Para las pruebas. */
   grados(nombre: string): number;
+  /**
+   * **Movidos a mano**, desde fuera: la vuelta al avión, al tocar un alerón,
+   * lo sube y lo baja como se comprueba en el suelo. Mientras no sea `null`,
+   * el juego los pone aquí y no donde dicen los mandos; con `null`, vuelven.
+   */
+  aMano: PosicionDeLosMandos | null;
 }
 
 /**
@@ -273,5 +281,6 @@ export function prepararMandos(
     grados(nombre: string) {
       return piezas.find((p) => p.nombre === nombre)?.grados ?? 0;
     },
+    aMano: null,
   };
 }

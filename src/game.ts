@@ -13399,7 +13399,9 @@ export class Game {
      */
     this.mandosQueSeVen = acercarLosMandos(
       this.mandosQueSeVen,
-      this.flight.state.onGround ? this.mandosDelPiloto : this.mandosAlModelo,
+      // Y si alguien los mueve a mano —la vuelta al avión—, manda él.
+      this.aircraftMesh.mandos?.aMano ??
+        (this.flight.state.onGround ? this.mandosDelPiloto : this.mandosAlModelo),
       dt,
     );
     this.aircraftMesh.mandos?.poner(this.mandosQueSeVen);
