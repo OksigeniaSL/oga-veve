@@ -33,8 +33,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, de_ala, de_deriva, dentro_de, espejo,
-    estacion, helice, llantas, neumaticos, paneles, simetricos, superficie,
-    varillas,
+    estacion, helice, largo_hasta, llantas, mando, mandos_libres,
+    mandos_moviles, neumaticos, paneles, simetricos, superficie, varillas,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -166,28 +166,40 @@ def construir():
     # Perfil grueso y curvado, de avión lento que tiene que sustentar mucho
     # peso de líquido a poca velocidad. Alerones en las dos, con su junta.
     j = "oscuro"
+    # **Y los cuatro alerones se mueven**, los dos de cada lado a la vez, que
+    # es como van en un biplano de esta clase: unidos por una varilla entre
+    # las dos alas. Los grados son provisionales —ver `RECORRIDO_DE_MANDOS`
+    # en `flight/recorrido-de-mandos.ts`—: la ficha de tipo del Ag Cat (FAA
+    # 1A16) no se ha podido leer, y van los del 172S (3A12), que es un mando
+    # de cables de la misma época.
+    alerones_a = [mando("aleron-alto", 3.36, 6.05, 0.755, "alabeo", 20, 15)]
+    alerones_b = [mando("aleron-bajo", 3.16, 5.55, 0.755, "alabeo", 20, 15)]
     semi_a = ENVERGADURA / 2
     semi_b = ENVERGADURA * 0.46
     ta = math.tan(math.radians(1.5))
     tb = math.tan(math.radians(2.5))
-    piezas.append(superficie("ala-alta", [
+    ala_alta = superficie("ala-alta", [
         de_ala(0.0, ALA_ALTA, LE_ALTA, CUERDA, 0.12, 1.5),
         # La punta redonda sobresale medio espesor: se descuenta, para que el
         # avión mida de ancho lo que dice su ficha.
         de_ala(semi_a - 0.10, ALA_ALTA + semi_a * ta, LE_ALTA, CUERDA * 0.96,
                0.12, 1.5),
-    ], curvatura=0.04, zonas=[
+    ], curvatura=0.04, mandos=alerones_a, zonas=[
         (j, 3.3, 6.05, 0.74, 0.755),
         (j, 3.3, 3.36, 0.755, 1.0),
-    ]))
-    piezas.append(superficie("ala-baja", [
+    ])
+    piezas.append(ala_alta)
+    piezas += mandos_moviles(ala_alta, alerones_a)
+    ala_baja = superficie("ala-baja", [
         de_ala(0.0, ALA_BAJA, LE_BAJA, CUERDA * 0.94, 0.12, 2.5),
         de_ala(semi_b, ALA_BAJA + semi_b * tb, LE_BAJA, CUERDA * 0.90, 0.12,
                2.5),
-    ], curvatura=0.04, zonas=[
+    ], curvatura=0.04, mandos=alerones_b, zonas=[
         (j, 3.1, 5.55, 0.74, 0.755),
         (j, 3.1, 3.16, 0.755, 1.0),
-    ]))
+    ])
+    piezas.append(ala_baja)
+    piezas += mandos_moviles(ala_baja, alerones_b)
 
     # Los montantes en I entre las dos alas: lo que dice «biplano» es el hueco
     # **con algo dentro**. Perfilados, anchos, inclinados hacia delante por
@@ -220,21 +232,35 @@ def construir():
     # Deriva alta y redondeada con el timón grande —a poca velocidad hace falta
     # mucho timón— y el estabilizador con sus riostras, que es lo que llevan
     # los aviones de estructura de tubos.
-    piezas.append(superficie("deriva", [
+    #
+    # **Y los dos timones se mueven.** El de dirección, de encima de la aleta
+    # dorsal a donde acaba su junta pintada: por debajo es aleta, y por
+    # encima la junta hace codo y la punta se queda quieta. Los grados,
+    # provisionales como los del alerón. Ver `mando`.
+    de_la_deriva = [
         de_deriva(0.0, 0.20, 2.85, 1.55, 0.06),
         de_deriva(0.0, 0.34, 3.30, 1.10, 0.09),
         de_deriva(0.0, 1.18, 3.55, 0.78, 0.09),
         de_deriva(0.0, 1.46, 3.78, 0.48, 0.08),
-    ], material_="capo", simetria=False, zonas=[
+    ]
+    timon = [mando("timon-de-direccion", largo_hasta(de_la_deriva, 1), 1.3,
+                   0.52, "guinada", 17.73, 17.73)]
+    deriva = superficie("deriva", de_la_deriva, material_="capo",
+                        simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.2, 1.3, 0.50, 0.52),
-    ]))
-    piezas.append(superficie("estabilizador", [
+    ])
+    piezas.append(deriva)
+    piezas += mandos_moviles(deriva, timon)
+    profundidad = [mando("profundidad", 0.2, 2.3, 0.58, "cabeceo", 28, 23)]
+    estabilizador = superficie("estabilizador", [
         de_ala(0.0, 0.16, 3.30, 1.08, 0.09),
         de_ala(2.35, 0.16, 3.42, 0.88, 0.08),
         de_ala(2.50, 0.16, 3.58, 0.60, 0.08),
-    ], zonas=[
+    ], mandos=profundidad, zonas=[
         ("oscuro", 0.2, 2.3, 0.56, 0.58),
-    ]))
+    ])
+    piezas.append(estabilizador)
+    piezas += mandos_moviles(estabilizador, profundidad)
     piezas.append(varillas("riostras-de-cola", [
         ((0.10, -0.10, 3.55), (1.30, 0.14, 3.70), 0.015),
         ((0.06, 0.80, 3.55), (1.30, 0.20, 3.70), 0.015),
@@ -272,6 +298,19 @@ def construir():
     # radial de fumigador y lo que dice su propia ficha (`appearance.blades`).
     piezas += helice("helice", (0, 0.02, -4.40), radio=1.30, cuantas=3,
                      buje=0.24, cuerda=0.20, largo_cono=0.42)
+
+    # Y ningún mando toca nada al moverse: ni los alerones los montantes y
+    # los cables, ni la profundidad el timón y sus riostras. Ver
+    # `mandos_libres`.
+    def mallas(*nombres):
+        return [p for p in piezas if p.type == "MESH"
+                and (p.name in nombres or p.name.startswith(nombres))]
+    mandos_libres(alerones_a + alerones_b,
+                  mallas("fuselaje", "riostra-entre-alas", "cables"))
+    mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-",
+                                "riostras-de-cola"))
+    mandos_libres(profundidad, mallas("fuselaje", "deriva", "timon-",
+                                      "riostras-de-cola"))
 
     piezas.append(centro_de_gravedad(LE_BAJA - 0.05))
     return piezas

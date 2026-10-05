@@ -79,6 +79,11 @@ import {
 } from "./flight/sin-motor";
 import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
 import { Reversa, tiempoDeReversa } from "./flight/reversa";
+import {
+  acercarLosMandos,
+  MANDOS_AL_CENTRO,
+  type PosicionDeLosMandos,
+} from "./world/superficies-de-mando";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -3953,6 +3958,22 @@ export class Game {
   plan: PlanDeVuelo | null = null;
   /** Ver `abrirVentanaDePruebas`. Siempre nulo fuera de desarrollo. */
   pilotoDePruebas: ((c: ControlInputs) => void) | null = null;
+  /**
+   * **Lo que mueve los alerones, la profundidad y el timón que se ven.**
+   *
+   * En el aire, lo que le llega al modelo de vuelo: la mano, el automático o
+   * la nivelada, quien sea que lleve el avión, que es lo que mueve las
+   * superficies de un avión de verdad. **En tierra, solo lo que pide quien
+   * pilota**: la ayuda de rodaje gira la rueda de morro con el alabeo y
+   * movía los alerones sola, y con viento las ayudas los meneaban. Con los
+   * mandos sueltos, un avión parado tiene las superficies quietas —en una
+   * avioneta, con el seguro de mandos; en uno de línea, con la hidráulica—,
+   * y así tienen que estar aquí. Ver `world/superficies-de-mando.ts`.
+   */
+  private mandosDelPiloto: PosicionDeLosMandos = MANDOS_AL_CENTRO;
+  private mandosAlModelo: PosicionDeLosMandos = MANDOS_AL_CENTRO;
+  /** Y los que se ven, ya a su ritmo: los del mundo y los de la tarjeta. */
+  private mandosQueSeVen: PosicionDeLosMandos = MANDOS_AL_CENTRO;
   /**
    * La voz que dice qué toca.
    *
@@ -11799,6 +11820,13 @@ export class Game {
     // exactamente el mismo número.
     const gasAntesDelBanco = this.input.controls.throttle;
     this.pilotoDePruebas?.(this.input.controls);
+    // Lo que pide quien pilota, antes de las ayudas de rodaje: es lo que se
+    // ve en tierra. Ver `mandosDelPiloto`.
+    this.mandosDelPiloto = {
+      alabeo: this.input.controls.aileron,
+      cabeceo: this.input.controls.elevator,
+      guinada: this.input.controls.rudder,
+    };
     /*
      * **Si quien vuela tocó el gas en este fotograma**: la tecla, el dedo o el
      * mando —`mueveElGas`— o el piloto del banco, que hace de teclado y
@@ -11855,6 +11883,20 @@ export class Game {
       const reversa = this.reversa.paso(dt, mandos.reversa);
       if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       this.flight.step(dt, mandos);
+      /*
+       * Y lo que le ha llegado, para las superficies. **El compensador mueve
+       * la profundidad en los de hélice** —es una aleta en su borde de
+       * salida, y con la mano suelta la deja donde se compensó—, y **no en
+       * los reactores**, que compensan girando el plano de cola entero. En el
+       * modelo sencillo no hay compensador. Ver `mandosDelPiloto`.
+       */
+      const conAleta =
+        this.tier.model !== "simple" && this.aircraft.sound.engine !== "turbofan";
+      this.mandosAlModelo = {
+        alabeo: mandos.aileron,
+        cabeceo: mandos.elevator + (conAleta ? mandos.trim : 0),
+        guinada: mandos.rudder,
+      };
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
@@ -13350,6 +13392,17 @@ export class Game {
      * tarda dos segundos en irse hacia la cola. Ver `world/reversas.ts`.
      */
     this.aircraftMesh.reversas?.poner(this.reversa.abierta);
+    /*
+     * Y los alerones, la profundidad y el timón: en el aire con lo que le
+     * llega al modelo y en tierra con lo que pide quien pilota, a su ritmo.
+     * Ver `mandosDelPiloto` y `world/superficies-de-mando.ts`.
+     */
+    this.mandosQueSeVen = acercarLosMandos(
+      this.mandosQueSeVen,
+      this.flight.state.onGround ? this.mandosDelPiloto : this.mandosAlModelo,
+      dt,
+    );
+    this.aircraftMesh.mandos?.poner(this.mandosQueSeVen);
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
     this.aircraftMesh.aerofrenos?.poner(
       this.input.controls.aerofrenos ?? 0,
@@ -13380,6 +13433,7 @@ export class Game {
         disco: (this.giroDeHelice - 20) / 25,
         carga: this.flight.state.loadFactor,
         enTierra: this.flight.state.onGround,
+        mandos: this.mandosQueSeVen,
       },
       dt,
     );

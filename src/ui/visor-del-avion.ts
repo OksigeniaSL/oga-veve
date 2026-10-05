@@ -43,6 +43,24 @@ import {
 import type { ModeloDeLaTarjeta } from "../world/modelo-de-la-tarjeta";
 import type { PiezaDelAvion } from "../world/puntos-del-avion";
 import { deNoche, type Encendidas } from "../world/luces-del-trafico";
+import {
+  MANDOS_AL_CENTRO,
+  type PosicionDeLosMandos,
+} from "../world/superficies-de-mando";
+
+/** Si los mandos se han movido lo bastante como para repintar la tarjeta. */
+function mandosDistintos(
+  a: PosicionDeLosMandos | undefined,
+  b: PosicionDeLosMandos | undefined,
+): boolean {
+  const x = a ?? MANDOS_AL_CENTRO;
+  const y = b ?? MANDOS_AL_CENTRO;
+  return (
+    Math.abs(x.alabeo - y.alabeo) > 2e-3 ||
+    Math.abs(x.cabeceo - y.cabeceo) > 2e-3 ||
+    Math.abs(x.guinada - y.guinada) > 2e-3
+  );
+}
 
 /** Lo que el visor necesita de un pintor. El de verdad es `WebGLRenderer`. */
 export interface Pintor {
@@ -89,6 +107,11 @@ export interface EnVivo {
   /** La carga, en g, y si está en el suelo: para el ala que se dobla. */
   readonly carga: number;
   readonly enTierra: boolean;
+  /**
+   * Y los mandos, los que mueven los alerones, la profundidad y el timón,
+   * ya a su ritmo. Ver `acercarLosMandos` en `world/superficies-de-mando.ts`.
+   */
+  readonly mandos?: PosicionDeLosMandos;
 }
 
 /** Un punto ya proyectado, en píxeles CSS desde la esquina del lienzo. */
@@ -404,13 +427,15 @@ export class VisorDelAvion {
       Math.abs(a.frenosDeTierra - e.frenosDeTierra) > 1e-3 ||
       (palas && Math.abs(a.helice - e.helice) > 1e-3) ||
       (m.helices.length > 0 && (a.disco > 0.01) !== (e.disco > 0.01)) ||
-      (!!m.ala && Math.abs(a.carga - e.carga) > 0.02);
+      (!!m.ala && Math.abs(a.carga - e.carga) > 0.02) ||
+      (!!m.mandos && mandosDistintos(a.mandos, e.mandos));
     this.vivo = e;
     m.ala?.paso(dt, e.carga, e.enTierra);
     if (!cambia) return;
     m.patas?.poner(e.tren);
     m.flaps?.poner(e.flaps);
     m.aerofrenos?.poner(e.aerofrenos, e.frenosDeTierra);
+    m.mandos?.poner(e.mandos ?? MANDOS_AL_CENTRO);
     m.borrarHelices?.(e.disco);
     for (const h of m.helices) h.rotation.z = e.helice;
     this.marcar();

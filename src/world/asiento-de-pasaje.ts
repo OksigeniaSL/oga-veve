@@ -195,8 +195,12 @@ export const TAPA_COMO_MUCHO = 1 / 3;
 /** Y lo menos: que el ala se vea, que es media razón de sentarse ahí. */
 export const TAPA_COMO_POCO = 0.08;
 
-/** Las piezas que tapan el cristal: el ala, sus flaps, góndolas y motores. */
-const LO_QUE_TAPA = /^(ala|flap|gondola|motor|toma|carenado|escapes)/;
+/**
+ * Las piezas que tapan el cristal: el ala, sus flaps y sus alerones —que son
+ * la punta del borde de salida, sacada a su pieza para que se mueva—,
+ * góndolas y motores.
+ */
+const LO_QUE_TAPA = /^(ala|flap|aleron|gondola|motor|toma|carenado|escapes)/;
 
 /**
  * **Cuánto del cristal tapa el avión**, de 0 a 1, desde los ojos de un

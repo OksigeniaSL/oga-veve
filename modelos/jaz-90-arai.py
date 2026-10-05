@@ -40,9 +40,10 @@ from exterior import (  # noqa: E402
     Piel, aerofreno, aerofrenos_libres, banda, centro_de_gravedad, contorno,
     de_ala, de_deriva, dentro_de, piezas_de_aerofrenos,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
-    en_punta, fowler, llantas, marca, neumaticos,
-    paneles, paneles_zy, recogido, reversa, simetricos, superficie, turbofan,
-    varillas, ventanas, zy,
+    en_punta, fowler, largo_hasta, llantas, mando, mandos_libres,
+    mandos_moviles, marca, neumaticos, paneles, paneles_zy, piezas_de_mandos,
+    recogido, reversa, simetricos, superficie, turbofan, varillas, ventanas,
+    zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -310,8 +311,14 @@ def construir():
         aerofreno("4", 6.34, 7.54, 0.61, 0.715, vuelo=40, tierra=50),
         aerofreno("5", 7.58, 8.76, 0.61, 0.715, vuelo=40, tierra=50),
     ]
+    # **Y el alerón, que se mueve**, de la junta de la bisagra al borde de
+    # salida y entre sus dos juntas: veinticinco grados a cada lado, los que
+    # publica Airbus para el A320 (FCOM, DSC-27-10), que es la clase de la que
+    # sale también el ángulo de los aerofrenos de arriba. Ver `mando`.
+    alerones = [mando("aleron", 9.3, 12.05, 0.78, "alabeo", 25, 25)]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
-                     flaps=flaps, aerofrenos=aerofrenos, zonas=[
+                     flaps=flaps, aerofrenos=aerofrenos, mandos=alerones,
+                     zonas=[
         ("aluminio", 1.4, 12.2, 0.0, 0.07),
         # Los flaps, por dentro y por fuera del motor, y el alerón.
         (j, 1.0, 9.2, 0.715, 0.73),
@@ -335,9 +342,10 @@ def construir():
     # giro se comía el carril y el borde volvía hacia delante.
     los_flaps = flaps_moviles(ala, flaps, fowler(
         muescas=(0, 5, 15, 30), recorrido=(0, 0.44, 0.54, 0.80)),
-        aerofrenos=aerofrenos)
+        aerofrenos=aerofrenos, mandos=alerones)
     piezas += los_flaps
     piezas += piezas_de_aerofrenos(aerofrenos)
+    piezas += piezas_de_mandos(alerones)
 
     # Los carenados de los raíles de los flaps: las «canoas» que asoman por
     # detrás del borde de salida. Tres por ala, y la cola de las que caen bajo
@@ -388,22 +396,40 @@ def construir():
     # fuselaje**, no en su punta: la cola en T es del JAZ 60 y son dos
     # siluetas distintas a propósito. Al lado el uno del otro tienen que
     # poder contarse.
-    piezas.append(superficie("deriva", [
+    #
+    # **Y los dos timones se mueven**, con los topes del A320 (FCOM,
+    # DSC-27-20): la profundidad treinta grados arriba y diecisiete abajo, y
+    # el de dirección treinta a cada lado, que es su tope en tierra y a poca
+    # velocidad. El de dirección, de encima de la aleta dorsal —ahí la junta
+    # hace codo— hasta la punta, con su junta pintada hasta arriba. Ver
+    # `mando`.
+    de_la_deriva = [
         de_deriva(0.0, 1.40, 7.30, 7.60, 0.05),
         de_deriva(0.0, 2.10, 9.70, 5.20, 0.10),
         de_deriva(0.0, 7.20, 13.40, 2.25, 0.10),
-    ], material_="cola", simetria=False, zonas=[
+    ]
+    pie, punta_d = largo_hasta(de_la_deriva, 1), largo_hasta(de_la_deriva, 2)
+    timon = [mando("timon-de-direccion", pie, punta_d, 0.692, "guinada",
+                   30, 30)]
+    deriva = superficie("deriva", de_la_deriva, material_="cola",
+                        simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.8, 5.9, 0.68, 0.692),
-    ]))
+        ("oscuro", 5.9, punta_d, 0.68, 0.692),
+    ])
+    piezas.append(deriva)
+    piezas += mandos_moviles(deriva, timon)
     y_est = 0.78
-    piezas.append(superficie("estabilizador", [
+    profundidad = [mando("profundidad", 0.9, 5.0, 0.695, "cabeceo", 30, 17)]
+    estabilizador = superficie("estabilizador", [
         de_ala(0.0, y_est, 11.50, 3.30, 0.10, 6),
         de_ala(5.15, y_est + 5.15 * math.tan(math.radians(6)), 14.45, 1.20,
                0.09, 6),
-    ], material_="gris", zonas=[
+    ], material_="gris", mandos=profundidad, zonas=[
         ("aluminio", 0.9, 5.0, 0.0, 0.07),
         ("oscuro", 0.9, 5.0, 0.68, 0.695),
-    ]))
+    ])
+    piezas.append(estabilizador)
+    piezas += mandos_moviles(estabilizador, profundidad)
 
     # ── Tren ──────────────────────────────────────────────────────────────
     #
@@ -479,6 +505,14 @@ def construir():
     aerofrenos_libres(aerofrenos, [p for p in piezas if p.type == "MESH"
                                    and p.name in ("fuselaje", "carenado",
                                                   "pilon", "motor")])
+
+    # Ni los mandos al moverse. Ver `mandos_libres`.
+    def mallas(*nombres):
+        return [p for p in piezas if p.type == "MESH"
+                and (p.name in nombres or p.name.startswith(nombres))]
+    mandos_libres(alerones, mallas("fuselaje", "canoa-", "cola-canoa-"))
+    mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-"))
+    mandos_libres(profundidad, mallas("fuselaje", "deriva", "timon-"))
 
     # El centro de gravedad, a un cuarto de la cuerda media del ala.
     piezas.append(centro_de_gravedad(z_ala(5.2) + 0.80))

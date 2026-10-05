@@ -642,7 +642,7 @@ def de_deriva(x, y, z, cuerda, espesor):
 
 def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
                zonas=(), cortes=(), puntos=13, simetria=True, punta=True,
-               angulo=35, flaps=(), marcar=False, aerofrenos=()):
+               angulo=35, flaps=(), marcar=False, aerofrenos=(), mandos=()):
     """
     Una superficie con perfil: ala, estabilizador, deriva, pilón o pala.
 
@@ -667,6 +667,11 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     ver `aerofreno`. Sus extremos llevan anillo como los de un flap —y por el
     mismo camino, sin tocar la chapa—, y sus cortes de cuerda tienen que ser
     de los que ya pintan una zona.
+
+    `mandos`, los alerones, la profundidad y el timón de dirección: ver
+    `mando`. Esos no añaden nada a la rejilla —ni anillos ni cortes—: tienen
+    que caer en los que ya pinta una zona, porque un anillo o un corte nuevo
+    movería la chapa, y aquí solo se comprueba que estén.
     """
     # Las estaciones, con su distancia a la raíz a lo largo de la superficie.
     est = list(estaciones)
@@ -741,6 +746,21 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
                     f"El aerofreno {a['nombre']} se corta en {u} de la cuerda "
                     "y ahí no hay junta pintada: un corte nuevo cambiaría el "
                     "perfil del ala entera. Ver `aerofreno`.")
+    # Y lo mismo los mandos, a lo largo y a lo ancho: su bisagra en una junta
+    # pintada y sus extremos en un anillo que ya estaba. Ver `mando`.
+    for m in mandos:
+        if not any(abs(m["u0"] - x) < 1e-9 for x in us):
+            raise SystemExit(
+                f"El mando {m['nombre']} tiene la bisagra en {m['u0']} de la "
+                "cuerda y ahí no hay junta pintada: un corte nuevo cambiaría "
+                "el perfil entero. Ver `mando`.")
+        for e in (m["e0"], m["e1"]):
+            if not any(abs(e - x) < 1e-4 and "entre" not in k
+                       for x, k in zip(eta, est)):
+                raise SystemExit(
+                    f"El mando {m['nombre']} acaba en {e} m y ahí no hay "
+                    "anillo: póngasele la junta que lo pinta, que es lo que "
+                    "trae el anillo. Ver `mando`.")
     us = sorted(us)
     # El contorno: del borde de salida por arriba al de ataque, y vuelta por
     # abajo. El de salida es un solo vértice: el perfil cierra en filo.
@@ -751,7 +771,7 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     bm = bmesh.new()
     # Solo si hay flaps que sacar: el anillo y el punto del perfil de cada
     # vértice. Las demás superficies salen exactamente como salían.
-    marcar = marcar or bool(flaps) or bool(aerofrenos)
+    marcar = marcar or bool(flaps) or bool(aerofrenos) or bool(mandos)
     if marcar:
         capa_anillo = bm.verts.layers.int.new("anillo")
         capa_punto = bm.verts.layers.int.new("punto")
@@ -812,7 +832,7 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
         bm.faces.new(anillos[-1])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     obj = _malla_en_escena(nombre, bm, mats)
-    if flaps or aerofrenos:
+    if flaps or aerofrenos or mandos:
         # Lo que `flaps_moviles` necesita saber de la rejilla. Va aparte y no
         # en las propiedades del objeto porque éstas se exportan al glTF.
         rejilla = {"eta": eta, "bucle": bucle}
@@ -1674,7 +1694,258 @@ def aerofrenos_libres(aerofrenos, obstaculos, tolerancia=0.02, pasos=12):
             + ". Ver `aerofrenos_libres`.")
 
 
-def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=()):
+# ── Los mandos: alerones, profundidad y timón de dirección ──────────────
+
+
+def mando(nombre, e0, e1, u0, eje, positivo, negativo):
+    """
+    Una superficie de mando que se mueve: un alerón, la profundidad o el timón
+    de dirección. De `e0` a `e1` metros a lo largo de la superficie y desde
+    `u0` de la cuerda —la junta pintada de su bisagra— hasta el borde de
+    salida.
+
+    **Estaban pintados y no se movían**, ni en el mundo ni en la tarjeta del
+    avión: la raya de la junta en el ala y nada más. Y un mando que se mueve
+    en la cabina y no mueve nada fuera enseña que los mandos son decoración;
+    el alerón que sube cuando se gira el volante es lo primero que se mira en
+    la vuelta al avión de cualquier escuela.
+
+    - `eje`: qué mando lo mueve, `"alabeo"`, `"cabeceo"` o `"guinada"`.
+    - `positivo` y `negativo`: los grados de su tope a cada lado. Positivo es
+      el borde de salida **hacia arriba**, o **a la derecha** en el timón; los
+      dos en positivo. Tienen que ser los de la ficha del avión
+      —`RECORRIDO_DE_MANDOS` en `flight/recorrido-de-mandos.ts`, con su
+      fuente—, que es de donde los lee el juego; aquí sirven para mirar al
+      exportar que nada choca en los topes. Lo comprueba
+      `world/superficies-de-mando.test.ts`.
+
+    Como los aerofrenos, **no cambia la rejilla**: sus extremos y su bisagra
+    tienen que caer en anillos y cortes que ya pinta una zona —la junta—. Un
+    anillo o un corte nuevo movería la chapa del avión recogido. Ver
+    `_superficie_de_mando` y `flaps_moviles`.
+    """
+    if eje not in ("alabeo", "cabeceo", "guinada"):
+        raise SystemExit(f"El mando {nombre} no sabe qué es «{eje}».")
+    return {"nombre": nombre, "e0": e0, "e1": e1, "u0": u0, "eje": eje,
+            "positivo": float(positivo), "negativo": float(negativo)}
+
+
+def largo_hasta(estaciones, k):
+    """Lo que mide una superficie por su borde de ataque hasta la estación
+    `k`: el `e` de esa estación, para poner un mando que empiece en ella."""
+    return sum((b["pos"] - a["pos"]).length
+               for a, b in zip(estaciones[:k], estaciones[1:k + 1]))
+
+
+def mandos_moviles(superficie_, mandos, hueco="oscuro"):
+    """Los mandos de una superficie que no lleva flaps: el estabilizador, la
+    deriva o las alas del biplano. Es lo mismo que hace `flaps_moviles` con
+    los del ala, sin flaps. Devuelve sus piezas, para sumarlas al avión."""
+    return (flaps_moviles(superficie_, [], None, hueco, mandos=mandos)
+            + piezas_de_mandos(mandos))
+
+
+def piezas_de_mandos(mandos):
+    """Lo que `flaps_moviles` sacó de cada mando, para sumarlo al avión."""
+    return [o for m in mandos for o in m.get("piezas", [])]
+
+
+# Cuánto más adelante llega la cala que la nariz: lo justo para que no se
+# peleen, y no tanto como para salirse de la chapa del ala, que por delante
+# de la bisagra es más gruesa.
+_CALA_DEL_MANDO = 1.2
+# Y en cuántos tramos se dibuja la media vuelta de la nariz.
+_TRAMOS_DE_NARIZ = 8
+
+
+def _superficie_de_mando(nombre, m, piel, en, s, j_ba, material_, hueco):
+    """
+    La nariz, las tapas, la cala del ala y el vacío de un mando.
+
+    **Un mando de verdad gira sobre su nariz.** El borde de delante de un
+    alerón no es la pared roma del corte: es un medio cilindro con el centro
+    en la bisagra, y la bisagra va a medio grueso, en la junta. Así, gire
+    hacia donde gire, la nariz ocupa siempre el mismo sitio y por arriba no
+    se abre rendija; por el lado al que baja, sí, una estrecha, con la cala
+    oscura detrás. Es lo que se ve desde la ventanilla en un viraje.
+
+    - **Las tapas**, colgadas del vacío y del material de la superficie: la
+      nariz y los dos costados, cada uno el perfil del mando cerrado por la
+      nariz.
+    - **El hueco**, fijo y oscuro: la cala donde se mete la nariz —un pelo más
+      honda que ella— y las dos paredes de los costados, que cierran el ala
+      que queda a cada lado.
+    - **El vacío**, en el origen —quieto, el mando cuelga de la misma matriz
+      que el ala, como un flap—, con la bisagra, el eje, qué mando lo mueve,
+      su signo y los grados de cada tope.
+
+    Recogido, las tapas y el hueco van por dentro y no se ven, y su borde cae
+    en el borde de la chapa: el juego no los dibuja con el mando en el
+    centro, como hace con los flaps. Ver `world/superficies-de-mando.ts`.
+    """
+    anillos = list(range(m["i0"], m["i1"] + 1))
+    jt, jb = m["jt"], m["jb"]
+    cadena = m["cadena"]
+    secs = {}
+    for i in anillos:
+        arriba, abajo = en(i, jt, s), en(i, jb, s)
+        centro = (arriba + abajo) / 2
+        cd = (en(i, 0, s) - en(i, j_ba, s)).normalized()
+        sube = arriba - centro
+        delante = -(cd - sube.normalized() * cd.dot(sube.normalized()))
+        secs[i] = {"P": arriba, "L": abajo, "H": centro, "sube": sube,
+                   "delante": delante.normalized() * sube.length}
+
+    def arco(i, hondo=1.0):
+        """La media vuelta de delante, de la junta de arriba a la de abajo."""
+        sec = secs[i]
+        pts = []
+        for q in range(_TRAMOS_DE_NARIZ + 1):
+            fi = math.pi / 2 - math.pi * q / _TRAMOS_DE_NARIZ
+            pts.append(sec["H"] + sec["delante"] * hondo * math.cos(fi)
+                       + sec["sube"] * math.sin(fi))
+        return pts
+
+    i0, i1 = anillos[0], anillos[-1]
+    a_lo_ancho = (secs[i1]["H"] - secs[i0]["H"]).normalized()
+
+    def costado(i, hondo, mira):
+        """El perfil del mando en el anillo `i`, cerrado por delante con la
+        nariz o con la cala: un abanico desde la bisagra."""
+        borde = [en(i, j, s) for j in cadena] + arco(i, hondo)[1:-1]
+        centro = secs[i]["H"]
+        return [([centro, a, b], mira)
+                for a, b in zip(borde, borde[1:] + borde[:1])]
+
+    def tubo(hondo, hacia_fuera):
+        caras = []
+        for ia, ib in zip(anillos, anillos[1:]):
+            pa, pb = arco(ia, hondo), arco(ib, hondo)
+            for q in range(_TRAMOS_DE_NARIZ):
+                medio = (pa[q] + pa[q + 1] + pb[q] + pb[q + 1]) / 4
+                fuera = medio - (secs[ia]["H"] + secs[ib]["H"]) / 2
+                caras.append(([pa[q], pa[q + 1], pb[q + 1], pb[q]],
+                              fuera if hacia_fuera else -fuera))
+        return caras
+
+    def malla(nombre_, caras, mat):
+        bm = bmesh.new()
+        for pts, quiere in caras:
+            c = bm.faces.new([bm.verts.new(p) for p in pts])
+            c.normal_update()
+            if c.normal.dot(quiere) < 0:
+                c.normal_flip()
+            c.smooth = False
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+        return _malla_en_escena(nombre_, bm, [mat])
+
+    # Las tapas miran fuera del mando; el hueco, hacia donde está el mando.
+    tapas = malla(f"{nombre}-tapas", tubo(1.0, True)
+                  + costado(i0, 1.0, -a_lo_ancho)
+                  + costado(i1, 1.0, a_lo_ancho), material_)
+    agujero = malla(f"hueco-{nombre}", tubo(_CALA_DEL_MANDO, False)
+                    + costado(i0, _CALA_DEL_MANDO, a_lo_ancho)
+                    + costado(i1, _CALA_DEL_MANDO, -a_lo_ancho), hueco)
+
+    # **Una bisagra es una recta.** Si el borde de la junta hace codo —la
+    # deriva con aleta dorsal, un ala con quiebro—, un mando que lo cruce no
+    # puede girar entero, y se dice aquí y no en el juego.
+    # La recta es la de los dos extremos, pasando por el medio de todos: si el
+    # borde se curva un poco entre medias —un plano de cola de tres
+    # estaciones—, el error se reparte a los dos lados en vez de caer entero
+    # en el centro.
+    h0, h1 = secs[i0]["H"], secs[i1]["H"]
+    eje = (h1 - h0).normalized()
+    bisagra = sum((secs[i]["H"] for i in anillos), Vector()) / len(anillos)
+    peor = max((secs[i]["H"] - bisagra
+                - eje * (secs[i]["H"] - bisagra).dot(eje)).length
+               for i in anillos)
+    radio = min(secs[i]["sube"].length for i in anillos)
+    if peor > max(0.005, 0.6 * radio):
+        raise SystemExit(
+            f"La bisagra de {nombre} hace codo ({peor * 100:.1f} cm fuera de "
+            f"la recta, con una nariz de {radio * 100:.1f} cm): un mando no "
+            "puede girar sobre una bisagra torcida. Ver `mando`.")
+    # Que girar en positivo lleve el borde de salida hacia arriba, o a la
+    # derecha en el timón, sea cual sea el lado.
+    salida = (en(i0, 0, s) + en(i1, 0, s)) / 2
+    mueve = eje.cross(salida - bisagra)
+    if (mueve.x if m["eje"] == "guinada" else mueve.y) < 0:
+        eje = -eje
+    # Y qué signo lleva: el volante a la derecha sube el alerón derecho y baja
+    # el izquierdo; tirar sube la profundidad; el pie derecho lleva el timón a
+    # la derecha.
+    signo = (1 if s >= 0 else -1) if m["eje"] == "alabeo" else 1
+
+    bpy.ops.object.empty_add(location=(0.0, 0.0, 0.0))
+    b = bpy.context.object
+    b.name = nombre
+    b["bisagra"] = [float(c) for c in bisagra]
+    b["eje"] = [float(c) for c in eje]
+    b["mando"] = m["eje"]
+    b["signo"] = float(signo)
+    b["positivo"] = m["positivo"]
+    b["negativo"] = m["negativo"]
+    bpy.context.view_layer.update()
+    for h in (piel, tapas):
+        h.parent = b
+        h.matrix_parent_inverse = b.matrix_world.inverted()
+    largo = (h1 - h0).length
+    cuerda = (salida - bisagra).length
+    print(f"MANDO: {nombre} · {m['eje']} · {largo:.2f} m de largo · "
+          f"{cuerda:.2f} m de cuerda · nariz {radio * 100:.1f} cm · "
+          f"bisagra recta a {peor * 1000:.1f} mm · "
+          f"+{m['positivo']:.0f}° / −{m['negativo']:.0f}°")
+    return [b, piel, tapas, agujero]
+
+
+def mandos_libres(mandos, obstaculos, tolerancia=0.02, pasos=6):
+    """
+    Que ningún mando se meta en nada al moverse, **dicho al exportar**: se
+    gira cada uno hasta sus dos topes y se mira que sus puntos no entren en
+    el fuselaje, en el otro plano de la cola o en lo que se le dé. Lo que ya
+    estaba dentro con el mando en el centro —la raíz de la profundidad, que
+    nace dentro del cono de cola— no cuenta: no se ve ni se mueve hacia
+    fuera.
+    """
+    bpy.context.view_layer.update()
+    malos = []
+    for b in [o for o in piezas_de_mandos(mandos) if o.type == "EMPTY"]:
+        bis, eje = Vector(b["bisagra"]), Vector(b["eje"]).normalized()
+        puntos = [h.matrix_world @ v.co for h in b.children
+                  if h.type == "MESH" for v in h.data.vertices]
+        cerca = [(o, _caja([o], tolerancia)) for o in obstaculos
+                 if o.type == "MESH" and not o.name.startswith(b.name)]
+        dentro = {k for k, p in enumerate(puntos) for o, caja in cerca
+                  if _en_caja(caja, p) and _hondo([o], p) > 0}
+        peor, donde = 0.0, ""
+        for tope in (b["positivo"], -b["negativo"]):
+            for q in range(1, pasos + 1):
+                giro = Matrix.Rotation(math.radians(tope * q / pasos), 3, eje)
+                for k, p in enumerate(puntos):
+                    if k in dentro:
+                        continue
+                    r = giro @ (p - bis) + bis
+                    for o, caja in cerca:
+                        if not _en_caja(caja, r):
+                            continue
+                        h = _hondo([o], r)
+                        if h > peor:
+                            peor = h
+                            donde = (f"dentro de {o.name} a "
+                                     f"{tope * q / pasos:+.0f}°")
+        print(f"LIBRE: {b.name} {peor * 100:.1f} cm"
+              + (f" ({donde})" if peor > 0 else ""))
+        if peor > tolerancia:
+            malos.append(f"{b.name}: {donde}, {peor * 100:.1f} cm")
+    if malos:
+        raise SystemExit(
+            "Un mando se mete en algo al moverse: " + " · ".join(malos)
+            + ". Ver `mandos_libres`.")
+
+
+def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=(),
+                  mandos=()):
     """
     Saca los flaps del ala como piezas propias, colgadas de su carril.
 
@@ -1757,6 +2028,24 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=()):
         a["jf"] = bucle.index((a["u0"], 1))
         a["jb"] = bucle.index((a["u1"], -1))
         a["puntos"] = set(range(a["jr"], a["jf"] + 1))
+    # Y los mandos, que son la franja de atrás como un flap: del intradós en
+    # la bisagra al borde de salida y vuelta por el extradós. Sus anillos ya
+    # estaban —lo comprueba `superficie`—, y ninguno es de los «entre».
+    for m in mandos:
+        m["i0"] = next(i for i, e in enumerate(eta) if abs(e - m["e0"]) < 1e-4)
+        m["i1"] = next(i for i, e in enumerate(eta) if abs(e - m["e1"]) < 1e-4)
+        if any(m["i0"] <= i <= m["i1"] for i in rej.get("entre", {})):
+            raise SystemExit(
+                f"El mando {m['nombre']} cruza un anillo puesto para un flap: "
+                "sus normales no son las del ala. Ver `mando`.")
+        m["jt"] = bucle.index((m["u0"], 1))
+        m["jb"] = bucle.index((m["u0"], -1))
+        m["cadena"] = list(range(m["jb"], n)) + list(range(0, m["jt"] + 1))
+        m["puntos"] = set(m["cadena"])
+    # **La deriva no va en espejo**: es una sola, de canto en el plano de
+    # simetría, y sus dos caras están a los dos lados de él. Así que sus
+    # piezas no se reparten por lados, y el timón sale entero.
+    simetrica = any(mod.type == "MIRROR" for mod in ala.modifiers)
 
     # El espejo, aplicado: las dos alas en una malla, como las escribe el
     # exportador. Y las normales de cada esquina, leídas ya con él.
@@ -1778,6 +2067,8 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=()):
         for k, f in enumerate(cuales):
             if all(f["i0"] <= v[ca] <= f["i1"] and v[cp] in f["puntos"]
                    for v in cara.verts):
+                if not simetrica:
+                    return k, 0
                 return k, (1 if cara.calc_center_median().x > 0 else -1)
         return None
 
@@ -1800,6 +2091,11 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=()):
     bm.from_mesh(me)
     ca, cp, entera = indice(bm)
     entera = {k: v.co.copy() for k, v in entera.items()}
+    if not simetrica:
+        # Sin espejo, cada punto de cada anillo está una sola vez: su lado
+        # es el cero. Ver `simetrica`.
+        entera.update({(v[ca], v[cp], 0): v.co.copy()
+                       for v in bm.verts if v.link_faces})
     centros = {}
     for cara in bm.faces:
         quien = de_quien(cara, ca, cp)
@@ -1892,12 +2188,38 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro", aerofrenos=()):
             a["piezas"] += _panel_de_aerofreno(
                 nombre, a, piel, en, s, j_ba, bucle, hueco)
 
+    # ── Los mandos, cada uno una pieza ───────────────────────────────────
+    #
+    # Como los aerofrenos: la chapa de antes con sus normales, y lo nuevo
+    # —la nariz, las tapas y la cala— aparte. Sus piezas se dejan en cada
+    # mando y se recogen con `piezas_de_mandos`. Ver `mando`.
+    for k, m in enumerate(mandos):
+        m["piezas"] = []
+        for s, lado in (lados if simetrica else ((0, None),)):
+            nombre = f"{m['nombre']}-{lado}" if lado else m["nombre"]
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            ca, cp, _ = indice(bm)
+            quitar(bm, [c for c in bm.faces
+                        if de_quien(c, ca, cp, mandos) != (k, s)])
+            malla = bpy.data.meshes.new(f"m-{nombre}-piel")
+            bm.to_mesh(malla)
+            bm.free()
+            for mat in me.materials:
+                malla.materials.append(mat)
+            _normales_de_antes(malla)
+            piel = bpy.data.objects.new(f"{nombre}-piel", malla)
+            bpy.context.collection.objects.link(piel)
+            m["piezas"] += _superficie_de_mando(
+                nombre, m, piel, en, s, j_ba, me.materials[0].name, hueco)
+
     # ── Y el ala, sin ellos ──────────────────────────────────────────────
     bm = bmesh.new()
     bm.from_mesh(me)
     ca, cp, _ = indice(bm)
     quitar(bm, [c for c in bm.faces if de_quien(c, ca, cp)
-                or de_quien(c, ca, cp, aerofrenos)])
+                or de_quien(c, ca, cp, aerofrenos)
+                or de_quien(c, ca, cp, mandos)])
     if vieja:
         salida.append(_franja_fija(ala, bm, rej, vieja, n))
     bm.to_mesh(me)

@@ -140,8 +140,13 @@ export function puntosDelAvion(
       fuera.push({ pieza, donde, espejo });
   };
 
-  // El ala: la de arriba en el biplano, que es la que se ve primero.
-  const ala = mallasDe(raiz, /^(ala|ala-alta)$/);
+  /*
+   * El ala: la de arriba en el biplano, que es la que se ve primero. **Con
+   * su alerón**, que ahora es una pieza aparte —ver
+   * `world/superficies-de-mando.ts`—: sin él, el borde de salida de la punta
+   * era la junta de la bisagra y el punto se iba un palmo hacia delante.
+   */
+  const ala = mallasDe(raiz, /^(ala|ala-alta|aleron-(alto-)?(izquierda|derecha))$/);
   const delAla = vertices(ala, aGrupo, izquierda);
   const caja = cajaDe(delAla);
   const punta = caja ? caja.min.x : -a.wingSpan / 2;
@@ -162,14 +167,20 @@ export function puntosDelAvion(
 
   // La profundidad, en el borde de salida del estabilizador.
   {
-    const estab = vertices(mallasDe(raiz, /^estabilizador$/), aGrupo, izquierda);
+    // Con la profundidad, que es una pieza aparte, como el alerón.
+    const estab = vertices(
+      mallasDe(raiz, /^(estabilizador|profundidad-(izquierda|derecha))$/),
+      aGrupo,
+      izquierda,
+    );
     const c = cajaDe(estab);
     if (c) poner("profundidad", new Vector3(c.min.x * 0.55, media(estab, "y"), c.max.z - 0.05));
   }
 
   // El timón de dirección: el borde de atrás de la deriva, a media altura.
   {
-    const deriva = vertices(mallasDe(raiz, /^deriva$/), aGrupo);
+    // Y con el timón, que también.
+    const deriva = vertices(mallasDe(raiz, /^(deriva|timon-de-direccion)$/), aGrupo);
     const c = cajaDe(deriva);
     if (c) {
       const alto = c.min.y + (c.max.y - c.min.y) * 0.55;

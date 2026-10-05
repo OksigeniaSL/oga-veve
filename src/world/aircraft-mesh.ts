@@ -120,6 +120,12 @@ export interface AircraftMesh {
    */
   reversas?: import("./reversas").Reversas | null;
   /**
+   * Y los alerones, la profundidad y el timón de dirección, en los modelos
+   * que los traen sueltos: los seis de la flota. `null` en el respaldo de
+   * cajas. Ver `world/superficies-de-mando.ts`.
+   */
+  mandos?: import("./superficies-de-mando").SuperficiesDeMando | null;
+  /**
    * Y el ala que se dobla con la carga, en los aviones grandes cuyo modelo la
    * trae: los dos reactores. `null` en los demás. Ver `world/ala-que-se-dobla.ts`.
    */

@@ -8,7 +8,8 @@
  * juego —`leerElModelo`—, se coloca con `colocarModelo`, que le pone la
  * escala, los colores de la flota y la librea, y se le preparan con las
  * funciones de siempre las piezas que se mueven: las patas, los flaps, los
- * aerofrenos, el ala que se dobla, las hélices y las luces. Lo que se vea
+ * aerofrenos, los alerones, la profundidad y el timón, el ala que se dobla,
+ * las hélices y las luces. Lo que se vea
  * moverse en la tarjeta es lo mismo que se mueve en el avión.
  *
  * Lo que **no** se le monta es la cabina —pantallas, relojes, botones, placa,
@@ -29,6 +30,8 @@ import { prepararPatas, type Patas } from "./patas";
 import { prepararFlaps, type Flaps } from "./flaps";
 import { prepararAerofrenos, type Aerofrenos } from "./aerofrenos";
 import { prepararElAla, type AlaQueSeDobla } from "./ala-que-se-dobla";
+import { prepararMandos, type SuperficiesDeMando } from "./superficies-de-mando";
+import { recorridoDeMandos } from "../flight/recorrido-de-mandos";
 import {
   esconderLoDeDentro,
   puntosDelAvion,
@@ -43,6 +46,8 @@ export interface ModeloDeLaTarjeta {
   readonly patas: Patas | null;
   readonly flaps: Flaps | null;
   readonly aerofrenos: Aerofrenos | null;
+  /** Los alerones, la profundidad y el timón. Ver `superficies-de-mando.ts`. */
+  readonly mandos: SuperficiesDeMando | null;
   readonly ala: AlaQueSeDobla | null;
   readonly puntos: readonly PuntoDelAvion[];
   /** Lo que mide el avión dibujado, m: de punta a punta, de morro a cola y de alto. */
@@ -77,6 +82,7 @@ export function montarModeloDeLaTarjeta(
     patas: prepararPatas(raiz),
     flaps: prepararFlaps(raiz),
     aerofrenos: prepararAerofrenos(raiz),
+    mandos: prepararMandos(raiz, recorridoDeMandos(a.id)),
     ala: prepararElAla(raiz, grupo, a.alaQueSeDobla, luces.luces.puntos),
     puntos,
     medidas: { ancho: tam.x, largo: tam.z, alto: tam.y },
