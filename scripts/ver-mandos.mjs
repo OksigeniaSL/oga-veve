@@ -11,6 +11,9 @@
  *
  * Uso: `OGA_GPU=1 node scripts/ver-mandos.mjs carpeta [aviones] [vistas]`,
  * con `aviones` como `jaz-20,jaz-90` y `vistas` como `chase,izquierda`.
+ * Con `OGA_EN_VUELO=1`, en la final y con el motor en marcha: en el aire se
+ * ve lo que le llega al modelo de vuelo, y se fotografía a la media
+ * décima de mover los mandos, antes de que el avión gire mucho.
  */
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
@@ -24,6 +27,7 @@ const AVIONES = (process.argv[3] ?? "jaz-20,jaz-25,jaz-40,jaz-60,jaz-90,jaz-120"
 const VISTAS = (process.argv[4] ?? "chase").split(",");
 mkdirSync(CARPETA, { recursive: true });
 const CON_GPU = process.env.OGA_GPU === "1";
+const EN_VUELO = process.env.OGA_EN_VUELO === "1";
 const PUERTO = 5371;
 
 const server = await createServer({ root: RAIZ, server: { port: PUERTO, hmr: false }, logLevel: "error" });
@@ -41,7 +45,10 @@ try {
     const page = await navegador.newPage({ viewport: { width: 1280, height: 800 } });
     page.on("pageerror", (e) => console.log("  ERROR:", e.message.slice(0, 200)));
     await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
-    await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&tramo=taguato&avion=${id}&meteo=&viento=000/00`);
+    await page.goto(
+      `${BASE}/?escenario=tenerife-norte&hora=12&tramo=taguato&avion=${id}&meteo=&viento=000/00` +
+        (EN_VUELO ? "&leccion=aterrizaje" : ""),
+    );
     await page.waitForFunction(
       () => globalThis.__oga?.estado?.() && globalThis.__oga?.aeronave?.().deVerdad,
       null,
@@ -61,15 +68,15 @@ try {
     ]) {
       await page.evaluate((m) => {
         globalThis.__oga.pilotar((c) => {
-          c.engineOn = false;
-          c.throttle = 0;
-          c.brakes = 1;
+          c.engineOn = m.vuelo;
+          c.throttle = m.vuelo ? 0.5 : 0;
+          c.brakes = m.vuelo ? 0 : 1;
           c.aileron = m.aileron;
           c.elevator = m.elevator;
           c.rudder = m.rudder;
         });
-      }, m);
-      await pausa(1200);
+      }, { ...m, vuelo: EN_VUELO });
+      await pausa(EN_VUELO ? 600 : 1200);
       const grados = await page.evaluate(() => {
         const g = globalThis.__oga.aeronave().grupo;
         const fuera = {};
