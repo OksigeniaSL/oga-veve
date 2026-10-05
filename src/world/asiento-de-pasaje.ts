@@ -615,23 +615,42 @@ function medioAngulo(asiento: AsientoDePasaje): { alto: number; ancho: number } 
  * **Lo que tapa el HUD** en una tablet de 4:3, que es donde más pantalla se
  * come: rectángulos en coordenadas de pantalla, de −1 a 1 y con y hacia
  * arriba, medidos en la captura de 1024 × 768 con un margen. La fila de
- * botones de arriba, la segunda fila que en 4:3 baja por la izquierda, la
- * columna de la izquierda, el bloque de la velocidad, el relieve, los flaps y
- * el motor arriba a la derecha, la columna de la derecha y la barra de
- * instrumentos de abajo.
+ * botones de arriba; la segunda, con el subtítulo, y la tercera, a la que
+ * bajan los botones cuando el subtítulo ocupa la segunda; la columna de la
+ * izquierda; la tarjeta, el gas y los bloques de la derecha, y la columna de
+ * más a la derecha; el volumen y la palanca de abajo a la izquierda, y la
+ * barra de instrumentos de abajo con los pedales.
  *
  * Con la vista de la fila de la salida del JAZ 90 a sesenta y cuatro grados,
  * el asa y el letrero cabían, pero la mitad de abajo del cristal —el ala, a lo
  * que se viene— quedaba debajo de la barra de abajo. Lo que se pidió ver tiene
  * que caer donde no hay HUD, no solo dentro de la pantalla.
+ *
+ * **Y medido otra vez** (punto 254), con el HUD de ahora en una tablet con
+ * dedo: el borde de abajo del cristal pisaba la barra, que con los pedales
+ * debajo empieza bastante más arriba de lo que decía —a un 81 % del alto y no
+ * a un 90 %—, y el letrero del lado derecho quedaba debajo de los botones de
+ * arriba. Ésos son dos filas, y una tercera mientras hay subtítulo, que se
+ * lleva la segunda: esa va aparte, en `HUD_DE_PASO`.
  */
 const HUD: readonly { x0: number; x1: number; y0: number; y1: number }[] = [
   { x0: -1, x1: 1, y0: 0.82, y1: 1 },
-  { x0: -0.32, x1: -0.03, y0: 0.64, y1: 1 },
-  { x0: -1, x1: -0.84, y0: 0.5, y1: 1 },
-  { x0: 0.4, x1: 1, y0: -0.15, y1: 1 },
-  { x0: 0.68, x1: 1, y0: -1, y1: 1 },
-  { x0: -1, x1: 1, y0: -1, y1: -0.8 },
+  { x0: -0.52, x1: 0.4, y0: 0.66, y1: 1 },
+  { x0: -1, x1: -0.6, y0: 0.5, y1: 1 },
+  { x0: 0.33, x1: 1, y0: -0.15, y1: 1 },
+  { x0: 0.48, x1: 1, y0: -1, y1: -0.15 },
+  { x0: -1, x1: -0.58, y0: -1, y1: -0.33 },
+  { x0: -1, x1: 1, y0: -1, y1: -0.6 },
+];
+
+/**
+ * **Y la tercera fila de botones**, la que solo está mientras habla alguien:
+ * el subtítulo ocupa la segunda y los botones que no caben bajan. Lo de debajo
+ * se ve casi siempre, así que no manda como el resto del HUD: entre dos
+ * miradas que enseñan lo mismo, gana la que tampoco queda debajo de ella.
+ */
+const HUD_DE_PASO: readonly { x0: number; x1: number; y0: number; y1: number }[] = [
+  { x0: -0.44, x1: 0.32, y0: 0.51, y1: 1 },
 ];
 
 /** Dónde cae un punto en la pantalla de 4:3, de −1 a 1, o `null` si detrás. */
@@ -654,11 +673,16 @@ function enLaPantalla(asiento: AsientoDePasaje, p: Vector3): { x: number; y: num
  * del otro y miran igual, y el HUD no es simétrico —los botones grandes van a
  * la derecha—. Lo que vale desde un lado tiene que valer desde el otro.
  */
-export function libreDelHud(asiento: AsientoDePasaje, p: Vector3): boolean {
+export function libreDelHud(
+  asiento: AsientoDePasaje,
+  p: Vector3,
+  tambienLoDePaso = false,
+): boolean {
   const e = enLaPantalla(asiento, p);
   if (!e || Math.abs(e.x) > 0.97 || Math.abs(e.y) > 0.97) return false;
+  const rectangulos = tambienLoDePaso ? [...HUD, ...HUD_DE_PASO] : HUD;
   const tapa = (x: number): boolean =>
-    HUD.some((r) => x > r.x0 && x < r.x1 && e.y > r.y0 && e.y < r.y1);
+    rectangulos.some((r) => x > r.x0 && x < r.x1 && e.y > r.y0 && e.y < r.y1);
   return !tapa(e.x) && !tapa(-e.x);
 }
 
@@ -682,12 +706,21 @@ export function libreDelHud(asiento: AsientoDePasaje, p: Vector3): boolean {
  *
  * Girar menos hacia la cola no cabe, medido con rayos: los tres paneles por el
  * cristal piden, con menos de treinta grados, mirar hacia abajo, y entonces el
- * letrero se va debajo de la fila de botones de arriba. Sale setenta y siete
+ * letrero se va debajo de la fila de botones de arriba. Salía setenta y siete
  * grados y treinta hacia la cola, mirando ocho hacia arriba.
+ *
+ * **Y con el HUD medido de nuevo** (punto 254) no cabía: en una tablet con
+ * dedo, entre las dos filas de botones de arriba y la barra con los pedales
+ * de abajo queda el 58 % del alto, y el letrero, el asa, el cristal y el
+ * horizonte piden sesenta y tres grados de alto. Sale noventa y dos y treinta
+ * y dos y medio hacia la cola, a la misma altura de ojos. Abierto así se
+ * nota en las esquinas, pero es la única vista que lo hace y lo que se
+ * pidió ver queda donde no hay HUD; más cerrado, o el cristal pisaba la barra
+ * o el letrero quedaba debajo de los botones.
  */
 const MIRAR_ABAJO_EN_LA_SALIDA = { desde: -14, hasta: 16, paso: 2 };
 const APUNTAR_ENCIMA_EN_LA_SALIDA = [0, 0.06, 0.12, 0.18, 0.24, 0.3];
-export const ANGULOS_EN_LA_SALIDA = [74, 77, 80];
+export const ANGULOS_EN_LA_SALIDA = [74, 77, 80, 84, 88, 92];
 
 /**
  * **Cuántos paneles bastan**: con tres levantados a la vista ya se ve lo que
@@ -1065,6 +1098,9 @@ function asientoSobreElAla(
             const horizonte = seVePorLaVentanilla(ojo, lejos, QUIETO, v) && libreDelHud(a, lejos);
             const flap = vistas > paneles ? 1 : 0;
             const deCanto = canto.filter((p) => libreDelHud(a, p)).length;
+            // Y que la salida asome también con el subtítulo puesto.
+            const conSubtitulo =
+              asoma && asomar.every((p) => libreDelHud(a, p, true)) ? 1 : 0;
             // Y luego, lo menos girado hacia la cola, con la vista menos
             // abierta, más canto de la trampilla y los ojos más bajos.
             nota = [
@@ -1073,6 +1109,7 @@ function asientoSobreElAla(
               entero ? 1 : 0,
               horizonte ? 1 : 0,
               flap,
+              conSubtitulo,
               -atras,
               -(fov ?? FOV_DE_PASAJE),
               deCanto,

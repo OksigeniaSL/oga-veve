@@ -16,6 +16,18 @@
  *   usa: lo que se ve es la hélice embalándose con la palanca atrás. Ver
  *   `giroDeHelice` en `game.ts`.
  *
+ *   **Se miró si se podía enseñar en el disco, y no** (punto 254). Una
+ *   hélice que gira se ve como un velo, y lo tupido del velo es lo que tapa
+ *   cada pala vista de frente: su cuerda por el coseno de su paso. Al tocar
+ *   la palanca está en paso fino, unos diez a veinte grados a tres cuartos de
+ *   la pala, y en reversa unos diez a quince **del otro lado** del plano: el
+ *   coseno pasa de 0,94–0,98 a 0,97–0,98. De lado, el grueso del disco es la
+ *   cuerda por el seno: de 0,17–0,34 a 0,17–0,26 cuerdas, un par de
+ *   centímetros. Y despacio, que es cuando se verían las palas girar sobre
+ *   sí mismas, no se usa nunca: la reversa embala la hélice. Así que no se
+ *   dibuja: un cambio que el ojo no ve en el avión de verdad no se inventa
+ *   aquí.
+ *
  * Y **el empuje al revés espera a que esté abierta**: con las compuertas a
  * medio camino el motor se queda al ralentí de reversa, que no frena, y solo
  * con ellas abiertas del todo da lo que pide la palanca. En los aviones de

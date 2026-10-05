@@ -180,6 +180,22 @@ const RESPALDO = { delante: 0.5, bajoLosOjos: 0.05, hueco: 0.04, ancho: 0.48 };
 const PROPIO = { detras: 0.18, cabezal: 0.27, funda: { ancho: 0.34, alto: 0.24 } };
 
 /**
+ * **El compartimento de arriba**, m: su fondo, por encima del centro del
+ * cristal, y lo que sale de la pared hacia el pasillo. Faltaba (punto 254):
+ * desde encima del ala, asomado al cristal y mirando hacia arriba para ver el
+ * letrero, por encima de la pared no había nada, y en un avión de pasaje lo
+ * primero que hay encima de la ventanilla es el borde del portaequipajes.
+ *
+ * En un avión de pasaje el cajón de los lados va **justo encima de la fila de
+ * ventanillas**: su fondo, un palmo por encima del bisel, y sale de la pared
+ * cuarenta y cinco centímetros, lo que medio asiento de ventanilla. Así se ve
+ * su labio arriba al acercarse al cristal, como se ve desde cualquier asiento
+ * de ventanilla. Con la salida sobre el ala, siempre por encima de su letrero:
+ * va en la pared, debajo del cajón.
+ */
+const MALETERO = { sobreElBisel: 0.09, sale: 0.45, labio: 0.035, sobreElLetrero: 0.05 };
+
+/**
  * **El botón del cristal que se oscurece**, m: en el bisel, justo debajo del
  * hueco, como el del 787. Su centro, por debajo del borde del hueco, y lo que
  * mide.
@@ -332,6 +348,10 @@ uniform vec3 uRojo;
 uniform vec3 uLetrero;
 uniform vec4 uPropio;
 uniform vec3 uFranja;
+// El compartimento de arriba: lo alto de su fondo, por encima del centro del
+// cristal y en vertical, lo que sale de la pared y dónde está la pared a esa
+// altura, en ejes de pie. Ver MALETERO.
+uniform vec3 uMaletero;
 
 // Distancia a un trazo recto, de a a b.
 float trazo(vec2 p, vec2 a, vec2 b) {
@@ -510,6 +530,49 @@ void main() {
   }
   // El letrero está en la pared: dentro del hueco de una ventanilla, no.
   enPropia *= 1.0 - enHueco;
+
+  // ── El compartimento de arriba ──
+  // Su fondo, un plano a lo ancho a su altura, de la pared hacia el pasillo; y
+  // su puerta, de pie, donde acaba. Solo los rayos que suben y van hacia la
+  // pared: el resto de la pantalla no lo paga.
+  float eyO = uOrigen.y * uVertical.x + uOrigen.z * uVertical.y;
+  float eyD = d.y * uVertical.x + d.z * uVertical.y;
+  float tPared0 = d.z > 1e-4 ? (-uFondo - uOrigen.z) / d.z : 1e9;
+  if (eyD > 1e-4) {
+    float tb = (uMaletero.x - eyO) / eyD;
+    if (tb > 0.0 && tb < tPared0) {
+      vec3 p = uOrigen + d * tb;
+      float hondo = uMaletero.z - (p.z * uVertical.x - p.y * uVertical.y);
+      float am = clamp(tb * px / max(eyD, 0.05), 1e-4, 0.05);
+      if (hondo < uMaletero.y + am) {
+        // El fondo: en sombra, que mira al suelo, con el labio de delante más
+        // oscuro y su junta.
+        float labio = smoothstep(uMaletero.y - ${MALETERO.labio.toFixed(3)} - am, uMaletero.y - ${MALETERO.labio.toFixed(3)} + am, hondo);
+        vec3 fondo = mix(uPared * 0.8 * (1.0 + grano), uSombra * 0.9, labio);
+        fondo *= 1.0 - 0.3 * (1.0 - smoothstep(0.002, 0.002 + am, abs(hondo - uMaletero.y + ${MALETERO.labio.toFixed(3)})));
+        float cubre = 1.0 - smoothstep(uMaletero.y - am, uMaletero.y + am, hondo);
+        color = mix(color, fondo, cubre);
+        alfa = max(alfa, cubre);
+        enPropia *= 1.0 - cubre;
+      } else {
+        // Pasa por delante del fondo: la puerta, si el rayo va hacia la pared.
+        float dxD = d.z * uVertical.x - d.y * uVertical.y;
+        float exO = uOrigen.z * uVertical.x - uOrigen.y * uVertical.y;
+        float tf = dxD > 1e-4 ? (uMaletero.z - uMaletero.y - exO) / dxD : -1.0;
+        if (tf > tb && tf < tPared0) {
+          float alto = eyO + eyD * tf - uMaletero.x;
+          // Clara, con la junta de abajo y el tirador a lo largo.
+          vec3 puerta = uBisel * 0.96;
+          float af = clamp(tf * px / max(dxD, 0.05), 1e-4, 0.05);
+          puerta *= 1.0 - 0.35 * (1.0 - smoothstep(0.004, 0.004 + af, abs(alto - 0.06)));
+          puerta = mix(puerta, uSombra, 0.6 * (1.0 - smoothstep(0.012, 0.012 + af, alto)));
+          color = puerta;
+          alfa = 1.0;
+          enPropia = 0.0;
+        }
+      }
+    }
+  }
 
   // ── El respaldo de delante ──
   // Un plano de pie a lo ancho del avión, por delante de los ojos: si el
@@ -974,6 +1037,7 @@ export class MarcoDeVentanilla {
         uRojo: { value: lineal(COLORES.rojo) },
         uLetrero: { value: lineal(COLORES.letrero) },
         uPropio: { value: new Vector4() },
+        uMaletero: { value: new Vector3() },
         uFranja: { value: new Color(CASA.terracota) },
       },
       depthTest: true,
@@ -1086,6 +1150,25 @@ export class MarcoDeVentanilla {
     const canto = -yPared * sv - FONDO * cv - RESPALDO.hueco;
     const atrasDe = u.uAtras!.value as number;
     (u.uRespaldo!.value as Vector4).set(this.sentado.x - atrasDe * RESPALDO.delante, alto, canto, 1);
+    /*
+     * Y el compartimento de arriba, también de pie: su fondo a su altura y la
+     * pared ahí, para saber cuánto sale de ella. Con la salida sobre el ala,
+     * por encima de su letrero. Ver `MALETERO`.
+     */
+    const letrero = asiento.salida
+      ? salidaEnLaPared(ventanilla, asiento.salida).arriba +
+        salidaEnLaPared(ventanilla, asiento.salida).medioAlto +
+        LETRERO.encima +
+        LETRERO.alto +
+        MALETERO.sobreElLetrero
+      : 0;
+    const altoMaletero = Math.max(m.b1 + BISEL + MALETERO.sobreElBisel, letrero);
+    const yMaletero = (altoMaletero + FONDO * sv) / cv;
+    (u.uMaletero!.value as Vector3).set(
+      altoMaletero,
+      MALETERO.sale,
+      -yMaletero * sv - FONDO * cv,
+    );
     // Y el de uno, solo si se ha despegado de él: sentado, uno lo tiene en la
     // espalda y no lo ve.
     (u.uPropio!.value as Vector4).set(
