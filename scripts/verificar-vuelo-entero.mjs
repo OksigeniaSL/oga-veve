@@ -2329,6 +2329,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const carrera = [];
   let faseAnterior = "";
   let etapa = "arrancar";
+  /** Lo que lleva esperando en el puesto a que suene el crosscheck, s. */
+  let esperandoParaArrancar = 0;
   /** En qué campo se puso el avión al cruzar, si se cruzó. Ver `destino`. */
   let enElDestino = null;
   /**
@@ -4493,8 +4495,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       bajadaReciente.length = 0;
     }
     if (etapa === "arrancar") {
-      c.engineOn = true;
-      c.brakes = 0;
+      /*
+       * **Y con tripulación de cabina, después de los toboganes**, que es como
+       * arranca un piloto de verdad: el crosscheck va con las puertas
+       * cerradas, antes del arranque, y arrancado ya no se dice. El banco
+       * arrancaba en el primer fotograma y se lo comía. Con su tope: una espera
+       * sin salida es un banco colgado. Ver `listoParaArrancarParaBanco`.
+       */
+      esperandoParaArrancar += paso;
+      const aLosToboganes =
+        fase === "estacionado" &&
+        o.listoParaArrancar?.() === false &&
+        esperandoParaArrancar < 60;
+      c.engineOn = !aLosToboganes;
+      c.brakes = aLosToboganes ? 1 : 0;
       if (fase === "rodando" || fase === "arrancando") etapa = "rodar";
     } else if (etapa === "rodar") {
       tiempoDeRodajeIda += paso;
@@ -5852,6 +5866,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     cuentaOida: o.cuentaOida?.() ?? [],
     // Y lo que sonó por la megafonía, en orden: el guion de la cabina.
     megafonia: o.megafonia?.() ?? [],
+    // Y la lista de después del aterrizaje, punto por punto con su hora.
+    listaTrasLaToma: o.listaTrasLaToma?.() ?? [],
+    // Y los motivos y tonos que sonaron, con su hora: los de cabina y el de cambio.
+    tonos: (o.sonidos?.() ?? []).map((x) => ({ ...x })),
     pistaDeOtros,
     pistaDeOtrosDonde,
     dadaAOtroTrasLaTuya,
@@ -6278,6 +6296,46 @@ const relojDeVerdad =
         ? `no sonaron: ${faltan.join(", ")} · de ella se oyó: ${deJazlyn.map((f) => f.piezas[0]).join(", ") || "nada"}`
         : deJazlyn.map((f) => enUnaLinea(f, ceroDelOido)).join(" · "),
       "jazlyn-es-el-centro",
+    );
+  }
+  /*
+   * **Y los tonos de la cabina, los de Boeing y Airbus**: el cartel del
+   * cinturón con su nota grave, y lo que se le dice a la tripulación con su
+   * llamada aguda y grave delante. Lo que se mide es que sonaron; cuál es cuál
+   * lo dicen `tonos-de-cabina.test.ts` y `motivos.test.ts`.
+   */
+  if (conMegafonia) {
+    const tonos = vuelo.tonos ?? [];
+    const cuantos = (que) => tonos.filter((x) => x.que === que).length;
+    comprobarSiVolo(
+      "y el cartel del cinturón suena con su nota, y la tripulación con su llamada",
+      cuantos("cinturon") > 0 && (!llevaTripulacion || cuantos("llamadaTripulacion") >= 2),
+      `cinturón ${cuantos("cinturon")} · llamadas a la tripulación ${cuantos("llamadaTripulacion")}` +
+        ` · pasajero ${cuantos("llamadaPasajero")} · cambios en el cuadro ${cuantos("cambio")}`,
+      "el juego tocaba dos notas para los cinturones",
+    );
+  }
+  /*
+   * **Y después de aterrizar, la lista punto por punto**: cada punto con su
+   * respiro detrás del anterior, y en el orden de su clase. «Los flaps los
+   * estoy recogiendo ahora, que la instructora no me da ni tiempo a hacerlo
+   * todo.» Ver `ListaDeDespuesDeAterrizar`.
+   */
+  if (DESTINO) {
+    const lista = vuelo.listaTrasLaToma ?? [];
+    const ORDEN = ["aerofrenos", "flaps", "luces", "transpondedor"];
+    const enOrden = lista.every(
+      (p, i) => i === 0 || ORDEN.indexOf(p.punto) > ORDEN.indexOf(lista[i - 1].punto),
+    );
+    const respiros = lista.slice(1).map((p, i) => +(p.t - lista[i].t).toFixed(1));
+    comprobarSiVolo(
+      "y después de aterrizar, la lista punto por punto y con su respiro",
+      lista.length >= 2 && enOrden && respiros.every((r) => r >= 3.5),
+      lista.length
+        ? lista.map((p) => `${p.punto}:${p.como}@${p.t}s`).join(" · ") +
+            ` · respiros ${respiros.join(", ")} s`
+        : "no se leyó ningún punto",
+      "«la instructora no me da ni tiempo a hacerlo todo»",
     );
   }
   /*
