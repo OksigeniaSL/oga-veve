@@ -487,6 +487,16 @@ if (process.env.OGA_OTRA_PUNTA === "1" && DESTINO)
     (d) => globalThis.__oga?.aterrizarPorLaOtraPunta?.(d),
     DESTINO,
   );
+/*
+ * **Y sin instructora, si se pide**: `OGA_SIN_INSTRUCTORA=1`. Es para contar
+ * lo que se dice con ella y sin ella en el mismo vuelo: la instructora solo
+ * habla de seguridad, y la máquina y la torre siguen igual. Se pone por la
+ * sonda, sin pasar por el grado de comandante —un banco no puede aterrizar
+ * diez veces antes de volar— y sin tocar el perfil. Ver
+ * `flight/sin-instructora.ts`.
+ */
+if (process.env.OGA_SIN_INSTRUCTORA === "1")
+  await page.evaluate(() => globalThis.__oga?.sinInstructora?.(true));
 await page
   .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, {
     timeout: 60000,
@@ -5865,6 +5875,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       .join("-"),
     // Todo lo que dijo cada boca, para poder contarlo al final del parte.
     todoLoDicho: o.dichoTodo?.() ?? {},
+    // Y lo que el modo sin instructora no la dejó decir. Ver `OGA_SIN_INSTRUCTORA`.
+    calladas: o.calladas?.() ?? [],
     /*
      * **Y la voz de la máquina, que no pasa por ninguna boca**: la cuenta y
      * los avisos de las cajas. Con la cuenta, cada número con lo que marcaba
@@ -6123,6 +6135,8 @@ if (process.env.OGA_VOCES) {
         habladas: vuelo.habladas,
         descartes: vuelo.descartes,
         todo: vuelo.todoLoDicho,
+        calladas: vuelo.calladas,
+        sinInstructora: process.env.OGA_SIN_INSTRUCTORA === "1",
         maquina: vuelo.maquina,
         // Y lo que pasó con las aves de la final. Ver `vigilarLasAves`.
         aves: (vuelo.cantados ?? []).filter((c) => c.startsWith("aves:")),

@@ -393,7 +393,58 @@ export class InstructorGrabado implements Instructor {
    */
   readonly vocesUsadas = new Set<string>();
 
+  /**
+   * **Lo único que puede decir esta boca, si hay algo que la calle.**
+   *
+   * Es el modo sin instructora: con él puesto, la instructora solo dice lo
+   * que la lista deja —ver `suenaSinInstructora` en
+   * `flight/sin-instructora.ts`— y lo demás no llega ni a pedir turno. Va
+   * aquí, en la puerta de la boca, y no en cada sitio que la llama, porque
+   * son sesenta sitios en `game.ts` y una frase nueva no puede colarse por
+   * haberse escrito en el sexagésimo primero.
+   *
+   * `null` es la instructora de siempre: todo pasa.
+   */
+  callaSalvo: ((clave: string | undefined) => boolean) | null = null;
+
+  /**
+   * Lo que el modo sin instructora no dejó decir, en orden. Para los bancos:
+   * es la mitad de la cuenta de «qué se dice con ella y sin ella».
+   */
+  readonly calladas: string[] = [];
+
   decir(
+    texto: string,
+    clave?: string,
+    urgencia?: Urgencia,
+    relleno?: Readonly<Record<string, string>>,
+    alSonar?: AlSonar,
+  ): void {
+    if (this.callaSalvo && !this.callaSalvo(clave)) {
+      if (import.meta.env.DEV) {
+        this.calladas.push(clave ?? texto);
+        if (this.calladas.length > 5000) this.calladas.shift();
+      }
+      /*
+       * Y quien espera saber si sonó se entera de que no: se cae, con su
+       * motivo. Hoy solo lo escucha la información de tráfico, que está en
+       * la lista y no llega aquí; el día que otra lo escuche, sabrá por qué.
+       */
+      alSonar?.("se-cae", "sin-instructora");
+      return;
+    }
+    this.decirLoPedido(texto, clave, urgencia, relleno, alSonar);
+  }
+
+  /**
+   * **Lo que se pide con el dedo**, que no pasa por `callaSalvo`.
+   *
+   * Tocar una pieza del cuadro, la tarjeta del avión o la pregunta de si se
+   * vuela sin instructora es pedirle a ella que hable. Callar eso sería
+   * romper un botón: el modo sin instructora es para que no corrija ni
+   * aconseje sin que se lo pidan, no para que no conteste.
+   */
+  decirLoPedido(
     texto: string,
     clave?: string,
     urgencia?: Urgencia,

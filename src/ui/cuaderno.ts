@@ -23,16 +23,46 @@
  * «lo que hice el sábado» no es una fila de una tabla, es **el dibujo de por
  * dónde fui**. `plano()` ya sabe pintar un aeródromo con una traza encima y
  * ya encuadra para que el vuelo entero quepa; no había que inventar nada.
+ *
+ * ## Y sin una palabra en el peldaño que no lee
+ *
+ * El punto 131: «un sello por aeropuerto visitado, horas de vuelo en dibujo, y
+ * los galones que se ganan con lo que significan». La página se leía: cifras
+ * con su palabra debajo, una frase de lo que falta y dos títulos. Ahora va por
+ * la escalera de comunicación como el resto del juego —ver
+ * `flight/escalera.ts`—:
+ *
+ * - **Las horas, en avioncitos**, los mismos del final del vuelo. La cifra,
+ *   desde el peldaño de los números.
+ * - **Las cuentas, en puntos** que se cuentan con el dedo —una estrella por
+ *   cada diez—, con el dibujo de lo que cuentan: la toma, la frustrada, la
+ *   manga de viento de cada aeródromo. La cifra, también desde los números.
+ * - **Un sello por campo**, con su isla o su país, su pista y su paisaje. Ver
+ *   `sellos.ts`.
+ * - **La escalera de grados**, cada uno con su explicación al tocarlo: qué
+ *   quiere decir, en voz y dibujo. Ver `explicaciones-de-serie.ts`.
+ * - **Y el interruptor de volar sin instructora**, con su candado y lo que
+ *   falta mientras no se tiene el grado. Ver `flight/sin-instructora.ts`.
+ *
+ * Las palabras —el nombre del grado, las glosas, los títulos— salen desde el
+ * peldaño de la palabra, como en el cuadro.
  */
 
 import { t } from "../i18n";
 import {
   barrasDe,
   grado,
+  GRADOS,
   loQueFalta,
   type Cuaderno,
   type Grado,
+  type Requisito,
 } from "../flight/cuaderno";
+import { canalesDe, type Peldano } from "../flight/escalera";
+import {
+  GRADO_PARA_VOLAR_SIN_INSTRUCTORA,
+  loQueFaltaParaVolarSinInstructora,
+} from "../flight/sin-instructora";
 
 /** Las horas, como se dicen en un cuaderno de vuelo: horas y minutos. */
 function horasDe(segundos: number): string {
@@ -45,11 +75,15 @@ import { abrirCuriosidades, abrirExplicacion } from "./explicaciones";
 import { LAMPARITA } from "./ventana-de-explicacion";
 import { manga as dibujarManga } from "./manga";
 import { leerBitacora, type Vuelo } from "../flight/bitacora";
-import { plano } from "./hangar";
+import { nombreCorto, plano } from "./hangar";
 import { SCENARIOS } from "../world/scenarios";
 import type { Aerodrome } from "../world/aerodrome";
 import { desplazarAerodromo } from "../world/aerodromo-desplazado";
 import { dondeCae } from "../world/entre-aerodromos";
+import { dibujarRelojEnFilas, dibujarReloj, relojDe } from "./reloj";
+import { DIBUJOS, type DibujoDeSenal } from "./senal";
+import { camposDeLosSellos, selloDe } from "./sellos";
+import { CANDADO, INSTRUCTORA_CALLADA } from "./instructora-callada";
 
 /**
  * Alto del lienzo de la manga en el cuaderno.
@@ -129,18 +163,83 @@ export function losOtrosCampos(v: Vuelo): Aerodrome[] {
   return otros;
 }
 
+/**
+ * **Una cuenta en puntos**, para contar con el dedo: un punto por cada una y
+ * una estrella por cada diez, como se cuentan los billetes. Hasta noventa y
+ * nueve se dibuja entero; con más, nueve estrellas y nueve puntos, que es ya
+ * más de lo que se cuenta con el dedo y no un número que mentir.
+ *
+ * `hueco` dibuja los puntos vacíos: es lo que **falta**, no lo hecho, y por
+ * eso se distingue de un vistazo.
+ */
+export function enPuntos(n: number, hueco = false): string {
+  const cuanto = Math.max(0, Math.floor(n));
+  if (cuanto === 0) return "";
+  const diez = Math.min(9, Math.floor(cuanto / 10));
+  const uno = diez === 9 && cuanto >= 100 ? 9 : cuanto % 10;
+  const piezas: string[] = [];
+  for (let i = 0; i < diez; i++) piezas.push("estrella");
+  for (let i = 0; i < uno; i++) piezas.push("punto");
+  const porFila = 5;
+  const filas = Math.ceil(piezas.length / porFila);
+  const ancho = Math.min(piezas.length, porFila) * 10;
+  const dibujo = piezas
+    .map((p, i) => {
+      const cx = 5 + (i % porFila) * 10;
+      const cy = 5 + Math.floor(i / porFila) * 10;
+      return p === "estrella"
+        ? `<path class="puntos__estrella${hueco ? " puntos__estrella--hueca" : ""}" transform="translate(${cx} ${cy})"
+             d="M0 -4.6 L1.3 -1.4 L4.4 -1.4 L1.9 0.6 L2.8 3.8 L0 1.9 L-2.8 3.8 L-1.9 0.6 L-4.4 -1.4 L-1.3 -1.4 Z" />`
+        : `<circle class="puntos__punto${hueco ? " puntos__punto--hueco" : ""}" cx="${cx}" cy="${cy}" r="3.3" />`;
+    })
+    .join("");
+  /*
+   * Con su tamaño puesto: un SVG sin él mide trescientos por ciento cincuenta
+   * en todos los navegadores. Diez unidades son once píxeles, un punto que se
+   * cuenta con la vista sin acercarse.
+   */
+  return `<svg class="puntos" viewBox="0 0 ${ancho} ${filas * 10}"
+    width="${(ancho * 1.1).toFixed(1)}" height="${(filas * 11).toFixed(1)}" aria-hidden="true">${dibujo}</svg>`;
+}
+
+/** El dibujo de cada cuenta, de los de la tarjeta de señal: ya se reconocen. */
+const DIBUJO_DE: Readonly<Record<string, DibujoDeSenal>> = {
+  despegues: "subida",
+  aterrizajes: "toma",
+  frustradas: "frustrada",
+  // La manga de viento: la tiene cada aeródromo y ninguna otra cosa.
+  aerodromos: "manga",
+};
+
+/** Lo que el cuaderno necesita del juego, para lo que depende del vuelo. */
+export interface OpcionesDelCuaderno {
+  /** El peldaño de la escalera: decide si hay cifras y palabras. */
+  readonly peldano?: () => Peldano;
+  /** Si se vuela sin instructora ahora mismo. */
+  readonly sinInstructora?: () => boolean;
+  /** Y quien la pone o la quita. Ver `Game.ponerSinInstructora`. */
+  readonly alCambiarSinInstructora?: (sin: boolean) => void;
+}
+
 export class CuadernoScreen {
   private readonly root: HTMLElement;
   /** Foco atrapado y Escape que cierra desde donde sea. Ver `ui/panel.ts`. */
   private readonly panel: Panel;
   private cuaderno: Cuaderno;
+  private readonly opciones: OpcionesDelCuaderno;
 
-  constructor(root: HTMLElement, cuaderno: Cuaderno) {
+  constructor(
+    root: HTMLElement,
+    cuaderno: Cuaderno,
+    opciones: OpcionesDelCuaderno = {},
+  ) {
     this.root = root;
     this.cuaderno = cuaderno;
+    this.opciones = opciones;
     this.panel = new Panel(root, () => this.hide());
     this.pintar();
     root.addEventListener("click", (e) => {
+      const tocado = e.target as HTMLElement | null;
       if (e.target === root) this.hide();
       /*
        * **Y el de cerrar se llama `data-accion="cerrar"`, como en todos.**
@@ -157,24 +256,37 @@ export class CuadernoScreen {
        * de dentro del botón, y entonces el `target` es el texto y no el botón.
        * Es la misma forma que ya usan los otros paneles. Ver `concha.ts`.
        */
-      if ((e.target as HTMLElement)?.closest?.('[data-accion="cerrar"]'))
-        this.hide();
+      if (tocado?.closest?.('[data-accion="cerrar"]')) this.hide();
       /*
        * **Y las curiosidades del vuelo**, con su lamparita: el cuaderno es
        * donde se mira lo que uno ya sabe, y el rincón de los porqués va al
        * lado. Se abre encima, y al cerrarlo se vuelve aquí. Ver
        * `ui/ventana-de-explicacion.ts`.
        */
-      if ((e.target as HTMLElement)?.closest?.('[data-accion="curiosidades"]'))
-        abrirCuriosidades();
+      if (tocado?.closest?.('[data-accion="curiosidades"]')) abrirCuriosidades();
       /*
        * **Y la manga, tocada, dice qué son sus barras.** AGENTS.md lo pide
        * sin rodeos: si el juego enseña a contar los galones, tiene que
        * enseñar también qué significan. Cuatro no quieren decir que mandes;
        * quieren decir que respondes.
        */
-      if ((e.target as HTMLElement)?.closest?.(".cuaderno__manga"))
-        abrirExplicacion("galones");
+      if (tocado?.closest?.(".cuaderno__manga")) abrirExplicacion("galones");
+      /*
+       * **Y cada escalón de la escalera, lo suyo**: de qué se responde con
+       * ese grado. Ver `GRADO_APRENDIZ` en `explicaciones-de-serie.ts`.
+       */
+      const escalon = tocado?.closest?.<HTMLElement>("[data-grado]");
+      if (escalon?.dataset.grado) abrirExplicacion(`grado-${escalon.dataset.grado}`);
+      /*
+       * **El interruptor de volar sin instructora.** Con el grado, pone y
+       * quita; sin él, explica qué hace falta —que es lo único que se puede
+       * hacer con un candado: saber cómo se abre—.
+       */
+      if (tocado?.closest?.("[data-sola]")) {
+        if (this.puedeSola) this.opciones.alCambiarSinInstructora?.(!this.vaSola);
+        else abrirExplicacion("sin-instructora");
+      }
+      if (tocado?.closest?.("[data-sola-que]")) abrirExplicacion("sin-instructora");
     });
   }
 
@@ -184,19 +296,43 @@ export class CuadernoScreen {
     if (!this.root.hidden) this.pintar();
   }
 
+  /** Si el cuaderno ya abre el interruptor. */
+  private get puedeSola(): boolean {
+    return loQueFaltaParaVolarSinInstructora(this.cuaderno) === null;
+  }
+
+  /** Si se vuela sin instructora ahora. */
+  private get vaSola(): boolean {
+    return this.opciones.sinInstructora?.() ?? false;
+  }
+
   private pintar(): void {
     const c = this.cuaderno;
     const g: Grado = grado(c);
+    const canales = canalesDe(this.opciones.peldano?.() ?? "cifra");
     const falta = loQueFalta(c);
-    const cuenta = (clave: string, valor: string): string => `
-      <div class="cuaderno__dato">
-        <span class="cuaderno__cifra">${valor}</span>
-        <span class="cuaderno__glosa">${t(clave as never)}</span>
+    const cuenta = (que: keyof typeof DIBUJO_DE, n: number): string => `
+      <div class="cuaderno__dato" role="img" aria-label="${n} ${t(`cuaderno.${que}` as never)}">
+        <span class="cuaderno__dibujo" aria-hidden="true">${DIBUJOS[DIBUJO_DE[que]!]}</span>
+        ${
+          canales.cifra
+            ? `<span class="cuaderno__cifra">${n}</span>`
+            : `<span class="cuaderno__puntos">${enPuntos(n)}</span>`
+        }
+        ${canales.texto ? `<span class="cuaderno__glosa">${t(`cuaderno.${que}` as never)}</span>` : ""}
       </div>`;
+    /*
+     * Lo que falta para el grado siguiente, **salvo que sea el de volar sin
+     * instructora**: entonces lo cuenta su interruptor, con su candado, y
+     * decirlo dos veces seguidas sería ruido.
+     */
+    const faltaAqui =
+      falta &&
+      !(falta.grado === GRADO_PARA_VOLAR_SIN_INSTRUCTORA && !this.puedeSola);
     this.root.innerHTML = armarPanel({
       titulo: t("cuaderno.title"),
       panel: "cuaderno",
-      clase: "cuaderno__panel",
+      clase: `cuaderno__panel${canales.texto ? "" : " cuaderno__panel--sin-letras"}`,
       acciones: [
         {
           dice: t("explica.curiosidades"),
@@ -206,37 +342,149 @@ export class CuadernoScreen {
         CERRAR(),
       ],
       cuerpo: `
-        <div class="cuaderno__manga">${dibujarManga(barrasDe(g), CUADERNO_ALTO, t("galon.manga"))}</div>
-        <h3 class="cuaderno__grado">${t(`grado.${g}` as never)}</h3>
+        <button type="button" class="cuaderno__manga" aria-label="${t("explica.galones.corta")}">
+          ${dibujarManga(barrasDe(g), CUADERNO_ALTO, t("galon.manga"))}
+        </button>
+        ${canales.texto ? `<h3 class="cuaderno__grado">${t(`grado.${g}` as never)}</h3>` : ""}
+        ${this.laEscalera(g, canales.texto)}
+        ${this.elInterruptor(canales.texto, canales.cifra)}
+        <div class="cuaderno__horas" role="img" aria-label="${horasDe(c.segundos)} ${t("cuaderno.horas")}">
+          ${
+            canales.cifra
+              ? dibujarReloj(relojDe(c.segundos), t("fin.horas"))
+              : dibujarRelojEnFilas(c.segundos, t("fin.horas"))
+          }
+          ${canales.cifra ? `<span class="cuaderno__cifra">${horasDe(c.segundos)}</span>` : ""}
+          ${canales.texto ? `<span class="cuaderno__glosa">${t("cuaderno.horas")}</span>` : ""}
+        </div>
         <div class="cuaderno__datos">
-          ${cuenta("cuaderno.horas", horasDe(c.segundos))}
-          ${cuenta("cuaderno.despegues", String(c.despegues))}
-          ${cuenta("cuaderno.aterrizajes", String(c.aterrizajes))}
-          ${cuenta("cuaderno.frustradas", String(c.frustradas))}
-          ${cuenta("cuaderno.aerodromos", String(c.aerodromos.length))}
+          ${cuenta("despegues", c.despegues)}
+          ${cuenta("aterrizajes", c.aterrizajes)}
+          ${cuenta("frustradas", c.frustradas)}
+          ${cuenta("aerodromos", c.aerodromos.length)}
         </div>
         ${
-          falta
-            ? `<p class="cuaderno__falta">${t("cuaderno.falta", {
-                grado: t(`grado.${falta.grado}` as never),
-              })} ${[
-                falta.falta.aterrizajes
-                  ? `${falta.falta.aterrizajes} × ${t("cuaderno.aterrizajes")}`
-                  : "",
-                falta.falta.aerodromos
-                  ? `${falta.falta.aerodromos} × ${t("cuaderno.aerodromos")}`
-                  : "",
-                falta.falta.frustradas
-                  ? `${falta.falta.frustradas} × ${t("cuaderno.frustradas")}`
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" · ")}</p>`
-            : `<p class="cuaderno__falta">${t("cuaderno.completo")}</p>`
+          faltaAqui && falta
+            ? `<div class="cuaderno__falta">
+                ${
+                  canales.texto
+                    ? `<p>${t("cuaderno.falta", { grado: t(`grado.${falta.grado}` as never) })} ${this.faltaEnPalabras(falta.falta)}</p>`
+                    : ""
+                }
+                ${this.faltaEnDibujo(falta.falta, canales.cifra)}
+              </div>`
+            : !falta && canales.texto
+              ? `<p class="cuaderno__falta">${t("cuaderno.completo")}</p>`
+              : ""
         }
-        ${this.losVuelos()}
+        ${this.losSellos(canales.texto)}
+        ${this.losVuelos(canales.texto)}
       `,
     });
+  }
+
+  /**
+   * **La escalera de grados**: los ganados, enteros, y el siguiente con su
+   * borde a trazos, que es la meta y no un reproche. Los de más arriba todavía
+   * no están, como los galones que no se han ganado.
+   */
+  private laEscalera(g: Grado, conTexto: boolean): string {
+    const hasta = GRADOS.indexOf(g);
+    const escalones = GRADOS.slice(0, Math.min(GRADOS.length, hasta + 2)).map(
+      (cual, i) => `
+        <button type="button" class="cuaderno__escalon${i > hasta ? " cuaderno__escalon--meta" : ""}"
+                data-grado="${cual}" aria-label="${t(`grado.${cual}` as never)}">
+          ${dibujarManga(barrasDe(cual), CUADERNO_ALTO, t(`grado.${cual}` as never))}
+          ${conTexto ? `<span class="cuaderno__escalon-nombre">${t(`grado.${cual}` as never)}</span>` : ""}
+        </button>`,
+    );
+    return `<div class="cuaderno__escalera" role="group" aria-label="${t("cuaderno.grados")}">${escalones.join("")}</div>`;
+  }
+
+  /**
+   * **El interruptor de volar sin instructora**, con su dibujo: ella con el
+   * dedo en los labios. Encendido, se ve entera; apagado, apagada. Sin el
+   * grado, el candado en la bola del interruptor y debajo lo que falta, en
+   * cosas que se pueden hacer esta tarde.
+   */
+  private elInterruptor(conTexto: boolean, conCifras: boolean): string {
+    const puede = this.puedeSola;
+    const sola = puede && this.vaSola;
+    const falta = loQueFaltaParaVolarSinInstructora(this.cuaderno);
+    const frase = !puede
+      ? t("cuaderno.sinInstructoraFalta")
+      : sola
+        ? t("cuaderno.sinInstructoraPuesta")
+        : t("cuaderno.sinInstructoraQuitada");
+    return `
+      <div class="cuaderno__sola${puede ? "" : " cuaderno__sola--cerrada"}${sola ? " cuaderno__sola--puesta" : ""}">
+        <button type="button" class="cuaderno__sola-boton" data-sola role="switch"
+                aria-checked="${sola}"${puede ? "" : ' aria-disabled="true"'}
+                aria-label="${t("cuaderno.sinInstructora")}">
+          <span class="cuaderno__sola-dibujo">${INSTRUCTORA_CALLADA}</span>
+          <span class="cuaderno__sola-llave" aria-hidden="true">
+            <span class="cuaderno__sola-bola">${puede ? "" : CANDADO}</span>
+          </span>
+        </button>
+        <button type="button" class="cuaderno__sola-que" data-sola-que
+                aria-label="${t("cuaderno.queEs")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">${LAMPARITA}</svg>
+        </button>
+        ${
+          conTexto
+            ? `<p class="cuaderno__sola-texto">${frase}${
+                falta ? ` ${this.faltaEnPalabras(falta)}` : ""
+              }</p>`
+            : ""
+        }
+        ${falta ? this.faltaEnDibujo(falta, conCifras) : ""}
+      </div>`;
+  }
+
+  /** Lo que falta, en palabras: «3 × aterrizajes · 1 × frustradas». */
+  private faltaEnPalabras(f: Omit<Requisito, "grado">): string {
+    return [
+      f.aterrizajes ? `${f.aterrizajes} × ${t("cuaderno.aterrizajes")}` : "",
+      f.aerodromos ? `${f.aerodromos} × ${t("cuaderno.aerodromos")}` : "",
+      f.frustradas ? `${f.frustradas} × ${t("cuaderno.frustradas")}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  /**
+   * Lo que falta, en dibujo: la toma, la manga o la frustrada, y al lado
+   * **puntos vacíos**, uno por cada uno que falta — o la cifra, desde el
+   * peldaño de los números.
+   */
+  private faltaEnDibujo(f: Omit<Requisito, "grado">, conCifras: boolean): string {
+    const una = (que: keyof typeof DIBUJO_DE, n: number): string =>
+      n
+        ? `<span class="cuaderno__falta-una">
+             <span class="cuaderno__dibujo" aria-hidden="true">${DIBUJOS[DIBUJO_DE[que]!]}</span>
+             ${conCifras ? `<span class="cuaderno__falta-cifra">× ${n}</span>` : enPuntos(n, true)}
+           </span>`
+        : "";
+    return `<div class="cuaderno__falta-dibujo" aria-hidden="true">
+      ${una("aterrizajes", f.aterrizajes)}${una("aerodromos", f.aerodromos)}${una("frustradas", f.frustradas)}
+    </div>`;
+  }
+
+  /**
+   * **Los sellos**, uno por campo, en el orden en que se ganaron. Sin ninguno
+   * no se pinta nada: una sección vacía dice que falta algo. Ver `sellos.ts`.
+   */
+  private losSellos(conTexto: boolean): string {
+    const campos = camposDeLosSellos(this.cuaderno.aerodromos);
+    if (!campos.length) return "";
+    return `
+      ${conTexto ? `<h3 class="cuaderno__grado cuaderno__grado--vuelos">${t("cuaderno.sellos")}</h3>` : ""}
+      <ul class="estampas" aria-label="${t("cuaderno.sellos")}">${campos
+        .map(
+          (e) =>
+            `<li class="estampas__una">${selloDe(e, nombreCorto(t(e.nameKey as never)))}</li>`,
+        )
+        .join("")}</ul>`;
   }
 
   /**
@@ -246,12 +494,12 @@ export class CuadernoScreen {
    * simplemente no está. Una sección vacía en la página que uno enseña es
    * peor que ninguna — dice que falta algo.
    */
-  private losVuelos(): string {
+  private losVuelos(conTexto: boolean): string {
     const vuelos = leerBitacora().slice(0, CUANTOS_SE_VEN);
     if (!vuelos.length) return "";
     return `
-      <h3 class="cuaderno__grado cuaderno__grado--vuelos">${t("cuaderno.vuelos")}</h3>
-      <ul class="bitacora">${vuelos.map(tarjetaDeVuelo).join("")}</ul>`;
+      ${conTexto ? `<h3 class="cuaderno__grado cuaderno__grado--vuelos">${t("cuaderno.vuelos")}</h3>` : ""}
+      <ul class="bitacora" aria-label="${t("cuaderno.vuelos")}">${vuelos.map(tarjetaDeVuelo).join("")}</ul>`;
   }
 
   get visible(): boolean {

@@ -67,6 +67,49 @@ export function relojDe(segundos: number, deEsteVuelo = 0): Reloj {
   };
 }
 
+/**
+ * **Cuántas filas de avioncitos caben en el cuaderno**: cuatro, que son doce
+ * horas. La fila del final del vuelo tiene una sola y pone el resto en cifra,
+ * porque allí se mira de pasada; el cuaderno es la página que se enseña, y
+ * en el peldaño que no lee no puede acabar en un número.
+ */
+export const FILAS_DEL_CUADERNO = 4;
+
+/**
+ * **Las horas en filas, sin una cifra**: para el cuaderno en el peldaño que
+ * no lee. El mismo avioncito por media hora y el mismo arco de la media hora
+ * en curso que al final del vuelo —quien los vio allí los reconoce aquí—,
+ * en filas de doce. Y si un día no caben, un «más» dibujado, que se entiende
+ * sin saber contar hasta cien.
+ */
+export function dibujarRelojEnFilas(segundos: number, etiqueta: string): string {
+  const total = Math.max(0, Math.floor(segundos));
+  const ganados = Math.floor(total / MEDIA_HORA);
+  const fraccion = (total % MEDIA_HORA) / MEDIA_HORA;
+  if (ganados === 0 && fraccion === 0) return "";
+  const caben = AVIONES_MAXIMOS * FILAS_DEL_CUADERNO;
+  const aviones = Math.min(ganados, caben);
+  const filas = Math.max(1, Math.ceil(aviones / AVIONES_MAXIMOS));
+  const sobran = ganados > caben;
+  const ancho = 26 + AVIONES_MAXIMOS * 15 + (sobran ? 18 : 0);
+  const alto = filas * 18 + 4;
+  const dibujados = Array.from({ length: aviones }, (_, i) => {
+    const x = 24 + (i % AVIONES_MAXIMOS) * 15;
+    const y = 4 + Math.floor(i / AVIONES_MAXIMOS) * 18;
+    return `<g transform="translate(${x} ${y})"><path class="reloj__avion" d="${AVION}" /></g>`;
+  }).join("");
+  return `
+    <svg class="reloj reloj--filas" viewBox="0 0 ${ancho} ${alto}" role="img" aria-label="${etiqueta}">
+      <circle class="reloj__pista" cx="11" cy="11" r="${RADIO}" />
+      <circle class="reloj__arco" cx="11" cy="11" r="${RADIO}"
+              stroke-dasharray="${(fraccion * VUELTA).toFixed(2)} ${VUELTA.toFixed(2)}"
+              transform="rotate(-90 11 11)" />
+      ${dibujados}
+      ${sobran ? `<path class="reloj__mas" d="M${ancho - 12} ${alto - 12} h10 M${ancho - 7} ${alto - 17} v10" />` : ""}
+    </svg>
+  `;
+}
+
 /** El perfil de un avioncito, visto desde arriba. Cabe en catorce píxeles. */
 const AVION =
   "M7 1 L8 5.6 L13 7.4 v1.2 L8 7.8 v2.9 L9.8 12 v1 L7 12.3 L4.2 13 v-1 " +

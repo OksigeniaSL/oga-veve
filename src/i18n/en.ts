@@ -666,6 +666,19 @@ export const EN: Dictionary = {
   "cuaderno.falta": "For {grado} you still need:",
   "cuaderno.completo": "That is all of them. Keep flying",
   "cuaderno.vuelos": "Your flights",
+  "cuaderno.sellos": "Your stamps",
+  "cuaderno.grados": "The ranks",
+  "cuaderno.queEs": "What is this?",
+  "cuaderno.sinInstructora": "Fly without the instructor",
+  "cuaderno.sinInstructoraPuesta":
+    "You fly without the instructor because you know how to look after yourself.",
+  "cuaderno.sinInstructoraQuitada": "The instructor flies with you.",
+  "cuaderno.sinInstructoraFalta": "To fly without the instructor you still need:",
+  "sinInstructora.si": "Yes, without the instructor",
+  "sinInstructora.no": "No, with the instructor",
+  "vuelo.sinInstructora.pregunta": "Today you're flying without me. Is that how you want it?",
+  "vuelo.sinInstructora.si": "Off you go. If there's any danger, I'll tell you.",
+  "vuelo.sinInstructora.no": "All right: I'll fly with you today.",
   "vuelo.sinPermiso":
     "You went in without the green light. Wait for it next time",
 
@@ -1065,6 +1078,21 @@ export const EN: Dictionary = {
     "GS is the speed over the ground. While taxiing, this bar shows how fast you're going, and the pink mark how far to fill it: before a turn it drops, because turns are taken slowly. Green means you're fine; amber, that you need to brake.",
   "explica.gs-rodaje.presenta":
     "This bar shows how fast we're taxiing. Fill it up to the pink mark, no more.",
+  "explica.grado-aprendiz.corta": "Student",
+  "explica.grado-aprendiz.texto":
+    "Student is the first rank. You're learning, and the instructor flies beside you and tells you what comes next. Getting things wrong is learning too: every flight counts.",
+  "explica.grado-piloto.corta": "Pilot",
+  "explica.grado-piloto.texto":
+    "A pilot can already take off and land. You fly the plane from stand to stand, and the instructor helps when you need it.",
+  "explica.grado-comandante.corta": "Captain",
+  "explica.grado-comandante.texto":
+    "Being captain doesn't mean you're in charge: it means you answer for the plane and for everyone on board. To get there you need to have gone around at least once, because knowing when not to land is what keeps everyone safe. That's why with this rank you can fly without the instructor.",
+  "explica.grado-instructora.corta": "Instructor",
+  "explica.grado-instructora.texto":
+    "An instructor knows enough to teach someone else. She answers for her plane and, on top of that, for what the person flying beside her learns.",
+  "explica.sin-instructora.corta": "No instructor",
+  "explica.sin-instructora.texto":
+    "You fly without the instructor because you already know how to look after yourself. She stays quiet and only speaks up if there's danger: the ground too close, another plane, a stall, an order from the tower or a go-around that's needed. The tower and the aircraft's own voice carry on as usual. You need to be a captain to choose it.",
   "explica.galones.corta": "Stripes",
   "explica.galones.texto":
     "The stripes on the sleeve show how much you've learned and how much you have to look after. Four stripes belong to the captain, and they don't mean she's more in charge: they mean she answers for everyone on board.",

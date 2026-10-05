@@ -182,6 +182,16 @@ export interface VozDeLasExplicaciones {
   grabada(clave: string): boolean;
   /** Dice la frase grabada. Solo se llama si `grabada` dijo que sí. */
   decir(clave: string, texto: string): void;
+  /**
+   * **Y la presentación de la primera vez**, que no la pidió nadie.
+   *
+   * Va aparte de `decir` porque no es lo mismo: abrir una explicación con el
+   * dedo es pedirle a la instructora que hable, y presentar el arco verde es
+   * ella enseñando por su cuenta. Sin instructora, lo primero se contesta y
+   * lo segundo se calla. Ver `flight/sin-instructora.ts`. Sin esto, se
+   * presenta con `decir`, como siempre.
+   */
+  presentar?(clave: string, texto: string): void;
   /** Se calla ahora mismo, si estaba diciendo una explicación. */
   callar(): void;
 }
@@ -448,7 +458,8 @@ export function estaPresentada(id: string): boolean {
 export function presentar(e: Explicacion): boolean {
   yaPresentada(e.id);
   if (!e.presenta || !voz || !voz.grabada(e.presenta)) return false;
-  voz.decir(e.presenta, t(e.presenta));
+  if (voz.presentar) voz.presentar(e.presenta, t(e.presenta));
+  else voz.decir(e.presenta, t(e.presenta));
   return true;
 }
 

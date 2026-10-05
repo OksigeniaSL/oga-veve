@@ -517,6 +517,12 @@ const game = new Game({
   ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
 });
 miga("juego creado");
+/*
+ * **Y si se vuela sin instructora, se pregunta si se quiere así.** Con la
+ * dirección puesta no, por lo mismo que no se pregunta quién vuela: es un
+ * banco o un enlace directo. Ver `Game.preguntarSiVuelaSinInstructora`.
+ */
+if (!directo) game.preguntarSiVuelaSinInstructora();
 
 /*
  * **Y lo que falta, con el juego ya en marcha**: los dos anillos y las fotos

@@ -1817,6 +1817,18 @@ export const ES_PY = {
   "cuaderno.falta": "Para {grado} te falta:",
   "cuaderno.completo": "¡Ya está todo! A seguir volando",
   "cuaderno.vuelos": "Tus vuelos",
+  "cuaderno.sellos": "Tus sellos",
+  "cuaderno.grados": "Los grados",
+  "cuaderno.queEs": "¿Qué es esto?",
+  "cuaderno.sinInstructora": "Volar sin instructora",
+  "cuaderno.sinInstructoraPuesta": "Volás sin instructora porque ya sabés cuidarte.",
+  "cuaderno.sinInstructoraQuitada": "La instructora vuela con vos.",
+  "cuaderno.sinInstructoraFalta": "Para volar sin instructora te falta:",
+  "sinInstructora.si": "Sí, sin instructora",
+  "sinInstructora.no": "No, con instructora",
+  "vuelo.sinInstructora.pregunta": "Hoy volás sin mí. ¿Lo querés así?",
+  "vuelo.sinInstructora.si": "Dale. Si hay peligro, te aviso.",
+  "vuelo.sinInstructora.no": "Bueno: hoy te acompaño.",
   // Se dice una vez y sin regañar. Lo que hay que aprender no es que el juego
   // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
   "vuelo.sinPermiso": "Entraste sin la luz verde. La próxima, esperala",
@@ -2113,6 +2125,21 @@ export const ES_PY = {
     "GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.",
   "explica.gs-rodaje.presenta":
     "Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.",
+  "explica.grado-aprendiz.corta": "Aprendiz",
+  "explica.grado-aprendiz.texto":
+    "Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.",
+  "explica.grado-piloto.corta": "Piloto",
+  "explica.grado-piloto.texto":
+    "Piloto es quien ya despega y aterriza. El avión lo llevás vos, del puesto al puesto, y la instructora te ayuda cuando hace falta.",
+  "explica.grado-comandante.corta": "Comandante",
+  "explica.grado-comandante.texto":
+    "Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.",
+  "explica.grado-instructora.corta": "Instructora",
+  "explica.grado-instructora.texto":
+    "Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.",
+  "explica.sin-instructora.corta": "Sin instructora",
+  "explica.sin-instructora.texto":
+    "Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.",
   "explica.galones.corta": "Galones",
   "explica.galones.texto":
     "Las barras de la manga dicen cuánto aprendiste y cuánto te toca cuidar. Cuatro barras son las de la comandante, y no quieren decir que manda más: quieren decir que responde por todos los que van a bordo.",

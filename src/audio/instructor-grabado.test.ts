@@ -22,6 +22,7 @@ const bocaDePrueba = (): Boca =>
 import { InstructorGrabado, turnoDe, type Altavoz } from "./instructor-grabado";
 import type { Instructor } from "./instructor";
 import type { Manifiesto } from "./banco-de-voz";
+import { suenaSinInstructora } from "../flight/sin-instructora";
 
 const PACK: Manifiesto = {
   version: 1,
@@ -496,5 +497,49 @@ describe("los turnos de la torre", () => {
   it("y sin matrícula, la frase a secas, como siempre", () => {
     expect(turnoDe("vuelo.despacio")).toBe("vuelo.despacio");
     expect(turnoDe(undefined)).toBeUndefined();
+  });
+});
+
+/*
+ * **Sin instructora, la puerta está en la boca**: lo que no es seguridad no
+ * llega ni a pedir turno, y lo que se pide con el dedo pasa siempre. Ver
+ * `flight/sin-instructora.ts`.
+ */
+describe("sin instructora", () => {
+  it("calla el consejo y deja pasar la seguridad", () => {
+    const suplente = new Suplente();
+    const i = new InstructorGrabado(new Grabadora(), suplente, bocaDePrueba());
+    i.callaSalvo = suenaSinInstructora;
+    i.decir("Un poquito menos de gas", "vuelo.consejo.menosGas");
+    i.decir("Bajá el motor", "tutor.slow");
+    expect(suplente.dichas).toEqual([]);
+    expect(i.calladas).toEqual(["vuelo.consejo.menosGas", "tutor.slow"]);
+    i.decir("El suelo está cerca: subí", "vuelo.terrenoSube", "urgente");
+    expect(suplente.dichas).toEqual(["El suelo está cerca: subí"]);
+  });
+
+  it("y quien espera saber si sonó se entera de que se cayó, y por qué", () => {
+    const i = new InstructorGrabado(new Grabadora(), new Suplente(), bocaDePrueba());
+    i.callaSalvo = suenaSinInstructora;
+    const oido: string[] = [];
+    i.decir("Seguí la raya verde", "vuelo.rodando", "normal", undefined, (q, p) =>
+      oido.push(`${q}:${p}`),
+    );
+    expect(oido).toEqual(["se-cae:sin-instructora"]);
+  });
+
+  it("lo que se pide con el dedo contesta igual", () => {
+    const suplente = new Suplente();
+    const i = new InstructorGrabado(new Grabadora(), suplente, bocaDePrueba());
+    i.callaSalvo = suenaSinInstructora;
+    i.decirLoPedido("Esta es la velocidad", "explica.velocidad.texto", "urgente");
+    expect(suplente.dichas).toEqual(["Esta es la velocidad"]);
+  });
+
+  it("y sin la puerta puesta, todo pasa, como siempre", () => {
+    const suplente = new Suplente();
+    const i = new InstructorGrabado(new Grabadora(), suplente, bocaDePrueba());
+    i.decir("Seguí la raya verde", "vuelo.rodando");
+    expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
   });
 });
