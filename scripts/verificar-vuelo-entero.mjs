@@ -1120,8 +1120,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * **Lo que lleva el piloto obediente**, si se pidió. Ver `OBEDIENTE`.
    *
-   * - `armado`: ya va hacia la final —del viento en cola en adelante—, que es
-   *   donde una mano ajena puede coger el gas.
+   * - `armado`: ya va hacia la final —del viento en cola en adelante, o
+   *   puesto en la final de otro campo—: desde ahí el gas no lo mueve el
+   *   guion. Una final que empieza en el fotograma en que el guion movía el
+   *   gas es una final que empieza «tocando el gas», y la ayuda no se engancha:
+   *   le pasó a la primera tirada del JAZ 120, que voló la final entera con
+   *   el gas que llevaba al ponerlo allí.
+   * - `gas`: el gas del obediente desde que se armó, o `null`.
    * - `gasAjeno`: el gas se ha movido solo, y ya no se toca.
    * - `quitado`: se lo pidieron, y se quitó.
    * - `nariz`: la trayectoria que se sostiene desde que pidieron levantar la
@@ -1132,6 +1137,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const obediente = {
     armado: false,
+    gas: null,
     gasAjeno: false,
     quitado: false,
     nariz: null,
@@ -1143,21 +1149,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const NARIZ_UN_POQUITO = (2 * Math.PI) / 180;
   const obedecer = (mandos, gasDelJuego) => {
     const s = o.estado();
-    if (s.onGround) {
+    if (s.onGround || !obediente.armado) {
+      obediente.gas = null;
       obediente.ultimoGas = null;
       return;
     }
+    // Se queda con el gas que hay: el que se ve en la palanca al armarse.
+    if (obediente.gas === null) obediente.gas = gasDelJuego;
     /*
      * El gas, quieto: si se movió desde lo que se escribió el fotograma
      * anterior, lo mueve otra mano —la ayuda de la final, los gases del
      * avión— y no se pelea con ella. Escribirle encima es tocarlo, y tocarlo
      * suelta la ayuda: es justo lo que hace el piloto de siempre.
      */
-    if (
-      obediente.armado &&
-      obediente.ultimoGas !== null &&
-      Math.abs(gasDelJuego - obediente.ultimoGas) > 1e-4
-    )
+    if (obediente.ultimoGas !== null && Math.abs(gasDelJuego - obediente.ultimoGas) > 1e-4)
       obediente.gasAjeno = true;
     const pedidos = o.pedidosDeLaRecogida?.() ?? [];
     for (; obediente.vistos < pedidos.length; obediente.vistos++) {
@@ -1171,9 +1176,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       if (p.gas) obediente.quitado = true;
     }
-    if (obediente.quitado) c.throttle = 0;
-    else if (obediente.gasAjeno) c.throttle = gasDelJuego;
-    mandos.throttle = c.throttle;
+    if (obediente.quitado) obediente.gas = 0;
+    else if (obediente.gasAjeno) obediente.gas = gasDelJuego;
+    mandos.throttle = obediente.gas;
+    c.throttle = obediente.gas;
     if (obediente.nariz !== null && o.mandoParaSubir) {
       const pide = o.mandoParaSubir(Math.max(1, s.airspeed) * Math.sin(obediente.nariz));
       if (typeof pide === "number") mandos.elevator = Math.max(-1, Math.min(1, pide));
@@ -4901,6 +4907,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const alli = u.suelo;
       const aproximacion = o.avion().aproximacion;
       const enLaSenda = alli + (DESDE + 250) * SENDA + (suyas.tren ?? 0);
+      // El obediente, armado antes de ponerlo en la final: ver `obediente`.
+      if (obedienteEnElBanco) obediente.armado = true;
       o.colocar(f.x, enLaSenda, f.z, aproximacion + 3, f.h);
       /*
        * **Y un reactor llega a los cuatro kilómetros estabilizado, como uno de
