@@ -26,8 +26,12 @@ import fuenteDelJuego from "../game.ts?raw";
 import { AIRCRAFT } from "../flight/aircraft";
 import {
   Seguimiento,
+  altitudDelPerfil,
   cruceroDelPlan,
+  finalDeLaRuta,
   libra,
+  perfilDeLaBajada,
+  velocidadesDeLaBajada,
   minimaEnCrucero,
   minimaEnRuta,
   porElMar,
@@ -601,7 +605,9 @@ describe("lo que dura el vuelo", () => {
     const crucero = cruceroDe(t, avion);
     const cota = t.juego.cotaDePista(t.salida, 0, 0);
     const sube = (1000 * 0.3048) / (2 * 1852);
-    const baja = (1000 * 0.3048) / (3 * 1852);
+    // La bajada, la del perfil del avión, con sus tramos para frenar si los
+    // lleva: la que sigue el automático. Ver `perfilDeLaBajada`.
+    const perfil = perfilDeLaBajada(r.cotaDelUmbral, velocidadesDeLaBajada(avion), finalDeLaRuta(r));
     const plan = new Seguimiento();
     plan.poner(r, crucero, avion);
     const a = r.fijos[0]!;
@@ -615,7 +621,7 @@ describe("lo que dura el vuelo", () => {
     while (hecho < r.total && reloj < 4 * 3600) {
       const queda = r.total - hecho;
       const subida = cota + hecho * sube;
-      const bajada = r.cotaDelUmbral + queda * baja;
+      const bajada = altitudDelPerfil(perfil, queda);
       const nuevo = Math.min(crucero, subida, bajada);
       const subiendo = subida < Math.min(crucero, bajada);
       const bajando = plan.bajando || bajada <= Math.min(crucero, subida);
@@ -716,6 +722,15 @@ describe("lo que dura el vuelo", () => {
    * sube. El juego no da vectores; vuela la carta, y la carta es así. Lo que
    * sí se le pide es que quepa en el bloque de Binter.
    */
+  /*
+   * **Lo que se deja para rodar en los dos campos**, min: cinco, y medio
+   * menos desde que la bajada lleva sus tramos para frenar —ver
+   * `perfilDeLaBajada` en `flight/ruta.ts`—, que también vuela el E195-E2 de
+   * Binter: nivelado antes del punto de final y al entrar en el área
+   * terminal se va más bajo y más despacio, y de Los Rodeos a la 03L de Gran
+   * Canaria eso son siete segundos más de veinticinco minutos.
+   */
+  const RODAR = 4.5;
   const POR_LA_CARTA_ENTERA: Readonly<Record<string, string>> = {
     "GCXO 30 → GCLP 03L":
       "La GDV4J entera, por 12.6 DME TFN y el VOR, y la RNP de la 03L por el sur de Gran Canaria.",
@@ -734,7 +749,7 @@ describe("lo que dura el vuelo", () => {
           expect(min, t.nombre).toBeGreaterThan(bloque - 5);
           expect(min, t.nombre).toBeLessThanOrEqual(bloque);
         } else {
-          expect(min, t.nombre).toBeLessThanOrEqual(bloque - 5);
+          expect(min, t.nombre).toBeLessThanOrEqual(bloque - RODAR);
         }
         expect(min, t.nombre).toBeGreaterThanOrEqual(bloque / 2);
       }

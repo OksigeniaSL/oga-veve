@@ -16,7 +16,17 @@ import { campoDeCasa, campoVecino } from "../world/campo-del-vuelo";
 import { dondeCae } from "../world/entre-aerodromos";
 import { desplazarAerodromo } from "../world/aerodromo-desplazado";
 import { cruceroDelTramo, rutaDelTramo, type DelJuego } from "../world/ruta-del-tramo";
-import { MILLA, PIE, Seguimiento, segundosPorElPerfil, type Lectura } from "./ruta";
+import {
+  MILLA,
+  PIE,
+  Seguimiento,
+  altitudDelPerfil,
+  distanciaDelPerfil,
+  perfilDeLaBajada,
+  segundosPorElPerfil,
+  velocidadesDeLaBajada,
+  type Lectura,
+} from "./ruta";
 import { YVAGA } from "./aircraft";
 import { velocidadQueToca, vrefKt } from "./escalera-de-velocidades";
 import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
@@ -69,14 +79,16 @@ describe("la hora del plan, de Fuerteventura a Gran Canaria", () => {
      * encargo escritas aquí y no sacadas de la escalera: desde el punto de
      * descenso del FL190, por la senda de tres grados, a 250 por debajo de
      * diez mil pies, a la de maniobra en las últimas treinta millas, con los
-     * flaps en las doce y a la de aproximación en las cinco.
+     * flaps en las doce y a la de aproximación en las cinco. La altura, la del
+     * perfil con sus tramos para frenar, que se comprueba en `ruta.test.ts`.
      */
     const vref = vrefKt(YVAGA);
-    const desde = 19 * 3 * MILLA;
+    const perfil = perfilDeLaBajada(20, velocidadesDeLaBajada(YVAGA));
+    const desde = distanciaDelPerfil(perfil, 20 + 19000 * PIE);
     let s = 0;
     const paso = 100;
     for (let queda = desde; queda > 0; queda -= paso) {
-      const altitud = 20 + (queda / (3 * MILLA)) * 1000 * PIE;
+      const altitud = altitudDelPerfil(perfil, queda);
       const kt =
         queda < 5 * MILLA
           ? vref + 5
