@@ -1900,6 +1900,125 @@ export const ES_PY = {
   "galon.rodaje": "Galón del rodaje",
   "galon.frustrada": "Galón de la frustrada",
 
+  /*
+   * **La tarjeta del avión**: la ficha, los puntos que se tocan y lo que
+   * cuenta cada uno. Los rótulos de la ficha —WINGSPAN, MTOW, VREF— no están
+   * aquí porque no se traducen; lo que se traduce es la glosa de debajo. Ver
+   * `ui/tarjeta-del-avion.ts` y `ui/explicaciones-del-avion.ts`.
+   */
+  "tarjeta.abrir": "Ver el avión de cerca",
+  "tarjeta.ficha.envergadura": "De punta a punta del ala",
+  "tarjeta.ficha.largo": "De la nariz a la cola",
+  "tarjeta.ficha.mtow": "Lo más que puede pesar para despegar",
+  "tarjeta.ficha.crucero": "A qué velocidad viaja",
+  "tarjeta.ficha.alcance": "Hasta dónde llega sin volver a cargar combustible",
+  "tarjeta.ficha.techo": "Lo más alto que puede subir",
+  "tarjeta.ficha.motores": "Cuántos motores lleva, y de qué clase",
+  "tarjeta.ficha.plazas": "Cuántas personas caben, con quien pilota",
+  "tarjeta.ficha.vref": "A qué velocidad cruza el umbral para aterrizar",
+  "tarjeta.motor.piston": "de pistón",
+  "tarjeta.motor.radial": "radial",
+  "tarjeta.motor.turbohelice": "turbohélice",
+  "tarjeta.motor.turbofan": "turbofán",
+  "tarjeta.pieza.alerones": "Alerones",
+  "tarjeta.pieza.profundidad": "Timón de profundidad",
+  "tarjeta.pieza.timon": "Timón de dirección",
+  "tarjeta.pieza.flaps": "Flaps",
+  "tarjeta.pieza.aerofrenos": "Aerofrenos",
+  "tarjeta.pieza.pitot": "Tubo pitot",
+  "tarjeta.pieza.motor": "Motor",
+  "tarjeta.pieza.tren": "Tren de aterrizaje",
+  "tarjeta.pieza.luces": "Luces de navegación",
+  "tarjeta.luz.navegacion": "Luces de navegación",
+  "tarjeta.luz.baliza": "Baliza",
+  "tarjeta.luz.estroboscopicas": "Destellos",
+  "tarjeta.luz.aterrizaje": "Faros de aterrizaje",
+  "tarjeta.tamano": "Comparar el tamaño",
+  "tarjeta.tamano.colectivos": "De largo, como {n} colectivos en fila",
+  "tarjeta.tamano.uno": "De largo, como un colectivo",
+  "tarjeta.tamano.menos": "Más corto que un colectivo",
+  "tarjeta.matricula.nombre": "Matrícula {matricula}",
+  "tarjeta.pais.ZP": "Paraguay",
+  "tarjeta.pais.EC": "España",
+  "tarjeta.alerones":
+    "Alerones. Cuando uno sube, el del otro lado baja: un ala sostiene más y la otra menos, y el avión se inclina para girar.",
+  "tarjeta.profundidad":
+    "Timón de profundidad. Sube o baja la cola, y con ella la nariz: si tirás de la palanca, la nariz sube.",
+  "tarjeta.timon":
+    "Timón de dirección. Lleva la cola a un lado y la nariz mira al otro. Se mueve con los pedales.",
+  "tarjeta.flaps":
+    "Flaps. Salen por detrás del ala y la hacen más curva y más grande: así sostiene al avión volando más despacio, para despegar y para aterrizar.",
+  "tarjeta.aerofrenos":
+    "Aerofrenos. Se levantan encima del ala, frenan y le quitan sustentación: para bajar sin acelerar y, al tocar la pista, para que las ruedas apoyen y frenen.",
+  "tarjeta.pitot":
+    "Tubo pitot. El aire entra de frente por la punta, y cuanto más rápido vuela el avión, más empuja. Así se mide la velocidad.",
+  "tarjeta.pitotMorro":
+    "Tubos pitot, a los dos lados de la nariz: uno para cada piloto. El aire entra de frente, y cuanto más rápido, más empuja. Así se mide la velocidad.",
+  "tarjeta.motorPiston":
+    "Motor y hélice. El motor hace girar la hélice; sus palas son alas chiquitas que empujan el aire hacia atrás y tiran del avión hacia adelante.",
+  "tarjeta.motorRadial":
+    "Motor radial. Sus cilindros van en círculo, como los rayos de una estrella, y hacen girar la hélice, que tira del avión.",
+  "tarjeta.turbohelice":
+    "Turbohélice. Adentro lleva una turbina, como la de un reactor, pero en vez de soplar hace girar la hélice.",
+  "tarjeta.reactor":
+    "Reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. El que más empuja es el ventilador grande de adelante.",
+  "tarjeta.tren":
+    "Tren de aterrizaje. Sale para aterrizar y se guarda después de despegar: guardado, el aire pasa mejor y el avión va más rápido.",
+  "tarjeta.trenFijo":
+    "Tren fijo. Va siempre afuera: es más sencillo y más liviano, aunque frena un poco al avión.",
+  "tarjeta.luces":
+    "Luces de navegación: roja en la punta izquierda, verde en la derecha y blanca en la cola. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.luzBaliza":
+    "Baliza: la luz roja que parpadea. Se enciende antes de arrancar el motor y dice: este avión está vivo, no te acerques.",
+  "tarjeta.luzEstrobos":
+    "Destellos: luces blancas muy fuertes. Se encienden al entrar en la pista y en vuelo, para que los demás aviones te vean desde lejos.",
+  "tarjeta.luzAterrizaje":
+    "Faros de aterrizaje. Se encienden en la pista y por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.",
+  "tarjeta.matricula":
+    "La matrícula es la cédula del avión: no hay otro en el mundo que se llame igual. ZP quiere decir Paraguay; EC, España. Por radio se dice letra por letra.",
+
+  /*
+   * Y lo que dice la instructora al tocar cada punto: lo mismo, contado. Sin
+   * grabar todavía —ver `PENDIENTE-VOCES-tarjeta.md`—, y hasta que lo estén
+   * no suenan: el globo se lee.
+   */
+  "tarjeta.voz.alerones":
+    "Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.",
+  "tarjeta.voz.profundidad":
+    "Este es el timón de profundidad, en la cola. Si tirás de la palanca, la cola baja y la nariz sube.",
+  "tarjeta.voz.timon":
+    "Este es el timón de dirección. Con los pedales, la cola va para un lado y la nariz mira para el otro.",
+  "tarjeta.voz.flaps":
+    "Estos son los flaps. Al bajarlos, el ala se hace más curva y más grande, y sostiene al avión aunque vaya más despacio. Se usan para despegar y para aterrizar.",
+  "tarjeta.voz.aerofrenos":
+    "Estos son los aerofrenos. Se levantan encima del ala para frenar en el aire, y al tocar la pista, para que el avión apoye las ruedas y frene mejor.",
+  "tarjeta.voz.pitot":
+    "Este tubito es el pitot. El aire entra por la punta, y cuanto más rápido volás, más fuerte empuja: así sabe el avión a qué velocidad va.",
+  "tarjeta.voz.pitotMorro":
+    "Estos tubitos a los lados de la nariz son los pitot, uno para cada piloto. El aire entra de frente, y cuanto más rápido volás, más empuja: así se mide la velocidad.",
+  "tarjeta.voz.motorPiston":
+    "Acá está el motor. Hace girar la hélice, y la hélice, que tiene palas como alas chiquitas, tira del avión hacia adelante.",
+  "tarjeta.voz.motorRadial":
+    "Este es un motor radial: los cilindros van en círculo, como los rayos de una estrella. Hace girar la hélice, y la hélice tira del avión.",
+  "tarjeta.voz.turbohelice":
+    "Este es un turbohélice: adentro tiene una turbina, como la de un reactor, pero en vez de soplar, hace girar la hélice.",
+  "tarjeta.voz.reactor":
+    "Esto es un reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. Y el que más empuja es el ventilador grande de adelante.",
+  "tarjeta.voz.tren":
+    "Este es el tren de aterrizaje. Sale para aterrizar, y después de despegar se guarda adentro: así el aire pasa mejor y el avión va más rápido.",
+  "tarjeta.voz.trenFijo":
+    "Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.",
+  "tarjeta.voz.luces":
+    "Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.voz.luzBaliza":
+    "La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.",
+  "tarjeta.voz.luzEstrobos":
+    "Estos destellos blancos se encienden al entrar en la pista y en todo el vuelo, para que los demás aviones te vean desde lejos.",
+  "tarjeta.voz.luzAterrizaje":
+    "Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.",
+  "tarjeta.voz.matricula":
+    "La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.",
+
   "language.label": "Idioma",
   "language.changed": "Idioma: {name}",
 } as const;

@@ -11394,3 +11394,583 @@ button.motor__tecla::after {
     display: none;
   }
 }
+
+/*
+ * ── La tarjeta del avión ────────────────────────────────────────────────
+ *
+ * La misma en el hangar y en el vuelo: el avión en 3D con sus puntos, la
+ * ficha y la matrícula. Ver `ui/tarjeta-del-avion.ts`.
+ *
+ * Como el plano, **no es un velo**: lo de alrededor sigue recibiendo los
+ * dedos, porque en el vuelo se mira volando y con los mandos a mano. Solo la
+ * concha recoge los toques.
+ */
+.tarjeta-avion {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.tarjeta-avion[hidden] {
+  display: none;
+}
+
+.tarjeta-avion .concha {
+  pointer-events: auto;
+  width: min(1000px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * El cuerpo, lo que quede entre la cabecera y «Cerrar», y sin desbordar:
+ * también en el vuelo, donde la concha de instrumento crece con lo que lleva
+ * y aquí se comía la fila de abajo, que es por donde se cierra.
+ */
+.tarjeta-avion .concha.concha--tarjeta {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.concha--tarjeta .concha__cuerpo,
+.concha--tarjeta.concha--instrumento .concha__cuerpo {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+}
+
+.tav {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 1fr);
+  gap: 16px;
+  min-height: 0;
+}
+
+/*
+ * El visor: el lienzo, y encima los puntos y el globo. `touch-action: none`
+ * porque el dedo que lo arrastra gira el avión, no desplaza la página.
+ */
+.tav__visor {
+  position: relative;
+  height: clamp(240px, 56vh, 480px);
+  min-height: 0;
+  border-radius: var(--r-m);
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #22322a, #15201b 70%);
+  box-shadow: inset 0 0 0 1px var(--linea);
+  touch-action: none;
+  user-select: none;
+}
+
+.tav__lienzo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 240ms ease;
+  cursor: grab;
+}
+
+.tav__lienzo:active {
+  cursor: grabbing;
+}
+
+.tav--3d .tav__lienzo {
+  opacity: 1;
+}
+
+/* Hasta que llega el modelo, el retrato; y si no llega, se queda. */
+.tav__retrato {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.tav--3d .tav__retrato {
+  display: none;
+}
+
+.tav__puntos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tav--comparando .tav__puntos {
+  display: none;
+}
+
+/*
+ * Los puntos: el dibujo de su pieza en un círculo que late, para que se vea
+ * que se tocan sin tener que decirlo. Del tamaño de un dedo pequeño; detrás
+ * del avión se apagan y no laten.
+ */
+.tav__punto {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  border-radius: 50%;
+  border: 2px solid var(--ocre);
+  background: rgb(18 25 15 / 0.82);
+  color: var(--ocre-tinta);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: tav-late 2.4s ease-out infinite;
+}
+
+.tav__punto svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tav__punto--detras {
+  opacity: 0.32;
+  animation: none;
+}
+
+.tav__punto[aria-pressed="true"] {
+  background: var(--ocre);
+  color: #12190f;
+  opacity: 1;
+}
+
+@keyframes tav-late {
+  0% {
+    box-shadow: 0 0 0 0 rgb(221 146 63 / 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgb(221 146 63 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(221 146 63 / 0);
+  }
+}
+
+/* El globo, junto a su punto: el dibujo en grande y lo que cuenta. */
+.tav__globo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: min(300px, 72%);
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  border: 1px solid var(--ocre);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--poso);
+  color: var(--tinta);
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  align-items: start;
+  pointer-events: none;
+}
+
+.tav__globo[hidden] {
+  display: none;
+}
+
+.tav__globo-dibujo {
+  width: 52px;
+  height: 52px;
+  color: var(--ocre-tinta);
+}
+
+.tav__globo-texto {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+/* La mano que gira: se va en cuanto alguien lo gira. */
+.tav__gira {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 56px;
+  margin-left: -28px;
+  color: var(--tinta-suave);
+  opacity: 0.75;
+  pointer-events: none;
+  animation: tav-gira 2.6s ease-in-out infinite;
+}
+
+.tav--girado .tav__gira {
+  display: none;
+}
+
+@keyframes tav-gira {
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+.sin-movimiento .tav__punto,
+.sin-movimiento .tav__gira {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tav__punto,
+  .tav__gira {
+    animation: none;
+  }
+}
+
+/* Las luces y el tamaño, en la esquina del visor. */
+.tav__mandos {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tav__luz,
+.tav__tamano {
+  width: 44px;
+  height: 44px;
+  padding: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--linea-fuerte);
+  background: rgb(18 25 15 / 0.82);
+  color: var(--tinta);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.tav__luz svg,
+.tav__tamano svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tav__luz[aria-pressed="false"] svg {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+}
+
+.tav__luz[aria-pressed="true"],
+.tav__tamano[aria-pressed="true"] {
+  border-color: var(--ocre);
+  box-shadow: 0 0 12px rgb(242 176 92 / 0.45);
+}
+
+.tav__cuenta {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(18 25 15 / 0.85);
+  color: var(--tinta);
+  font-size: 14px;
+}
+
+.tav__cuenta[hidden] {
+  display: none;
+}
+
+/*
+ * La ficha: rótulo de cabina en ocre, la cifra grande en la letra de los
+ * instrumentos —condensada y de ancho fijo, la de una placa de tipo— y la
+ * glosa debajo, pequeña. «Con letra molona», y con letras que ya hay en el
+ * sistema: ver `--cabina-fuente`.
+ */
+.tav__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ocre) rgb(228 226 218 / 0.09);
+}
+
+.tav__clase {
+  margin: 0;
+  color: var(--tinta-suave);
+  font-size: 14px;
+}
+
+.tav__ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.tav__dato {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 8px 10px;
+  border-radius: var(--r-s);
+  border: 1px solid var(--linea);
+  background: rgb(0 0 0 / 0.22);
+}
+
+.tav__rotulo {
+  font-family: var(--cabina-fuente);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ocre-tinta);
+}
+
+.tav__valor {
+  margin: 0;
+  font-family: var(--cabina-fuente);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--cabina-valor);
+  font-variant-numeric: tabular-nums;
+}
+
+.tav__unidad {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+.tav__tambien {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+
+.tav__glosa {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--tinta-suave);
+}
+
+/* La matrícula: la chapa del cuadro, su bandera y cómo se dice. */
+.tav__matricula {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: var(--r-s);
+  border: 1px solid var(--linea);
+  background: rgb(0 0 0 / 0.22);
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tav__placa {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgb(0 0 0 / 0.55);
+  background: #d6d9d3;
+  color: #141816;
+  font:
+    700 20px ui-monospace,
+    "SFMono-Regular",
+    "Cascadia Mono",
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+}
+
+.tav__paises {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.tav__pais {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tav__pais--otro {
+  opacity: 0.6;
+}
+
+.tav__bandera {
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.3);
+}
+
+.tav__dicho {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--tinta-suave);
+}
+
+/*
+ * **En el vuelo, a un lado y no en medio.** Lo mismo que el plano: una
+ * tarjeta en medio tapa el mundo, y esta se abre para ver el avión mientras
+ * se vuela. En pantalla grande va arriba a la izquierda, sin tocar la columna
+ * de mandos de la derecha ni el cuadro de abajo.
+ */
+@media (min-width: 1100px) and (min-height: 640px) {
+  .tarjeta-avion--vuelo {
+    place-items: start start;
+    padding: 72px 0 0 20px;
+  }
+
+  /*
+   * Con alto fijo: la fila del cuerpo reparte lo que queda y el visor la
+   * llena. Tapa la parte de arriba del cuadro en un portátil de 768, que es
+   * lo que cuesta un avión que se vea; se cierra con su botón o con Escape.
+   */
+  .tarjeta-avion--vuelo .concha {
+    width: min(860px, 62vw);
+    height: min(560px, calc(100vh - 300px));
+  }
+
+  .tarjeta-avion--vuelo .tav {
+    height: 100%;
+  }
+
+  .tarjeta-avion--vuelo .tav__visor {
+    height: auto;
+  }
+}
+
+/*
+ * **En el teléfono tumbado**, todo el alto para el avión y la ficha al lado,
+ * rodando. La concha se encoge de márgenes: allí cada píxel de alto cuenta.
+ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .tarjeta-avion .concha.concha--tarjeta {
+    height: 100%;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .concha--tarjeta .concha__cabecera {
+    padding-bottom: 6px;
+  }
+
+  .tav {
+    grid-template-columns: minmax(0, 1.25fr) minmax(220px, 1fr);
+    gap: 10px;
+  }
+
+  .tav__visor {
+    height: auto;
+  }
+
+  .tav__valor {
+    font-size: 22px;
+  }
+
+  .tav__globo {
+    width: min(260px, 80%);
+    padding: 8px 10px;
+  }
+
+  /* Las luces y el tamaño, en fila arriba: en columna no caben de alto. */
+  .tav__mandos {
+    top: 8px;
+    right: 8px;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .tav__luz,
+  .tav__tamano {
+    width: 38px;
+    height: 38px;
+    padding: 6px;
+  }
+
+  .tav__globo-texto {
+    font-size: 13px;
+  }
+}
+
+/* Y de pie, uno encima del otro. */
+@media (max-width: 640px) and (orientation: portrait) {
+  .tav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tav__visor {
+    height: 42vh;
+  }
+}
+
+/*
+ * ── En el hangar, el botón de mirarlo de cerca ──
+ *
+ * En la esquina de cada ficha de avión, en la misma celda de la rejilla: un
+ * botón no puede ir dentro de otro, así que la ficha y él son hermanos.
+ */
+.ficha-avion {
+  display: grid;
+}
+
+.ficha-avion > .ficha {
+  grid-area: 1 / 1;
+}
+
+.ficha__de-cerca {
+  grid-area: 1 / 1;
+  justify-self: end;
+  align-self: start;
+  z-index: 1;
+  width: var(--tacto);
+  height: var(--tacto);
+  margin: 6px;
+  padding: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--linea-fuerte);
+  background: rgb(18 25 15 / 0.82);
+  color: var(--ocre-tinta);
+  cursor: pointer;
+}
+
+.ficha__de-cerca svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * ── En el cuadro, lo que la abre ──
+ *
+ * El retrato de la placa y la matrícula, que se tocan, y su botón en la fila
+ * de arriba —en el teléfono, dentro del menú—.
+ */
+.tablero [data-tarjeta-avion] {
+  /*
+   * El cuadro entero deja pasar el dedo al mundo —ver `.cuadro`— y aquí se
+   * devuelve a propósito, como en la rueda de la ventanilla ALT.
+   */
+  pointer-events: all;
+  cursor: pointer;
+}
+

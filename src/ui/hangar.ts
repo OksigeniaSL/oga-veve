@@ -43,6 +43,7 @@ import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
 import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
+import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import { missionsFor } from "../content/missions";
 import { objectiveTarget, type Mission } from "../missions/types";
@@ -925,7 +926,15 @@ function fichaDeAvion(
 ): string {
   const modelo = modeloPorId(avion.id);
   const no = !veredicto.cabe;
+  /*
+   * **Y al lado, el botón de mirarlo de cerca**: la tarjeta del avión, en 3D,
+   * con sus piezas y su ficha. Va fuera del botón de elegir —un botón no
+   * puede ir dentro de otro— y encima de su esquina, en la misma celda de la
+   * rejilla. También en los que no caben aquí: mirar un avión no es volarlo.
+   * Ver `ui/tarjeta-del-avion.ts`.
+   */
   return `
+    <div class="ficha-avion">
     <button class="ficha ficha--avion${no ? " ficha--nocabe" : ""}"
             type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
@@ -945,8 +954,30 @@ function fichaDeAvion(
         <span class="ficha__dato">${FABRICANTE} ${modelo?.numero ?? ""}</span>
         <span class="ficha__nombre">${modelo?.nombre ?? avion.name}</span>
       </span>
-    </button>`;
+    </button>
+    <button class="ficha__de-cerca" type="button" data-de-cerca="${avion.id}"
+            aria-label="${t("tarjeta.abrir")} — ${FABRICANTE} ${modelo?.numero ?? ""} ${
+              modelo?.nombre ?? avion.name
+            }">${DE_CERCA}</button>
+    </div>`;
 }
+
+/**
+ * El dibujo de mirarlo de cerca: un avión con la flecha que lo rodea, que es
+ * lo que se hace dentro —girarlo con el dedo—.
+ */
+const DE_CERCA = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 7.2 l1 3.2 4.4 1.6 v1.2 l-4.4-.8 -.4 2.8 1.4 1 v.9 l-2-.5 -2 .5 v-.9
+           l1.4-1 -.4-2.8 -4.4.8 v-1.2 l4.4-1.6 Z" fill="currentColor" />
+  <path d="M4.2 9.4 A8.6 8.6 0 0 1 19.6 8" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" />
+  <path d="M20.6 4.8 l-.6 3.8 -3.8-.8" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M19.8 14.6 A8.6 8.6 0 0 1 4.4 16" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" />
+  <path d="M3.4 19.2 l.6-3.8 3.8.8" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+</svg>`;
 
 function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
   return `
@@ -1447,6 +1478,18 @@ export function abrirHangar(
    * `fichaDeDestinoQueNoCabe`.
    */
   let avionCambiado = false;
+  /*
+   * **La tarjeta del avión**, la misma que se abre en el vuelo. Se crea al
+   * pedirla, no antes: es un contexto de WebGL y un modelo que leer, y quien
+   * no la abre no tiene por qué pagarlos. Ver `ui/tarjeta-del-avion.ts`.
+   */
+  let tarjeta: TarjetaDelAvion | null = null;
+  const abrirTarjeta = (a: AircraftConfig): void => {
+    const raiz = document.getElementById("tarjeta-avion");
+    if (!raiz) return;
+    tarjeta ??= new TarjetaDelAvion(raiz, { enVuelo: false });
+    tarjeta.abrir(a);
+  };
 
   /*
    * Los dos mundos, dibujados. El de la foto es una loma con su textura y sus
@@ -1954,6 +1997,13 @@ export function abrirHangar(
         return;
       }
 
+      const deCerca = boton.getAttribute("data-de-cerca");
+      if (deCerca) {
+        const a = AIRCRAFT.find((x) => x.id === deCerca);
+        if (a) abrirTarjeta(a);
+        return;
+      }
+
       const idAvion = boton.getAttribute("data-avion");
       if (idAvion) {
         const pedido = AIRCRAFT.find((a) => a.id === idAvion);
@@ -2001,6 +2051,8 @@ export function abrirHangar(
       if (boton.hasAttribute("data-despegar")) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
+        // La tarjeta suelta su tarjeta gráfica: el vuelo monta la suya.
+        tarjeta?.soltar();
         root.hidden = true;
         root.innerHTML = "";
         resolve({

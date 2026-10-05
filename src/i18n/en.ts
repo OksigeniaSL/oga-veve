@@ -986,4 +986,110 @@ export const EN: Dictionary = {
   "tripulacion.canario.cinturones":
     "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
   "servicio.rotulo": "In-flight service",
+  "tarjeta.abrir": "See the plane up close",
+  "tarjeta.ficha.envergadura": "Wingtip to wingtip",
+  "tarjeta.ficha.largo": "Nose to tail",
+  "tarjeta.ficha.mtow": "The most it can weigh to take off",
+  "tarjeta.ficha.crucero": "How fast it travels",
+  "tarjeta.ficha.alcance": "How far it goes without refuelling",
+  "tarjeta.ficha.techo": "The highest it can climb",
+  "tarjeta.ficha.motores": "How many engines, and what kind",
+  "tarjeta.ficha.plazas": "How many people fit, pilot included",
+  "tarjeta.ficha.vref": "How fast it crosses the threshold to land",
+  "tarjeta.motor.piston": "piston",
+  "tarjeta.motor.radial": "radial",
+  "tarjeta.motor.turbohelice": "turboprop",
+  "tarjeta.motor.turbofan": "turbofan",
+  "tarjeta.pieza.alerones": "Ailerons",
+  "tarjeta.pieza.profundidad": "Elevator",
+  "tarjeta.pieza.timon": "Rudder",
+  "tarjeta.pieza.flaps": "Flaps",
+  "tarjeta.pieza.aerofrenos": "Spoilers",
+  "tarjeta.pieza.pitot": "Pitot tube",
+  "tarjeta.pieza.motor": "Engine",
+  "tarjeta.pieza.tren": "Landing gear",
+  "tarjeta.pieza.luces": "Navigation lights",
+  "tarjeta.luz.navegacion": "Navigation lights",
+  "tarjeta.luz.baliza": "Beacon",
+  "tarjeta.luz.estroboscopicas": "Strobes",
+  "tarjeta.luz.aterrizaje": "Landing lights",
+  "tarjeta.tamano": "Compare the size",
+  "tarjeta.tamano.colectivos": "As long as {n} buses in a row",
+  "tarjeta.tamano.uno": "As long as a bus",
+  "tarjeta.tamano.menos": "Shorter than a bus",
+  "tarjeta.matricula.nombre": "Registration {matricula}",
+  "tarjeta.pais.ZP": "Paraguay",
+  "tarjeta.pais.EC": "Spain",
+  "tarjeta.alerones":
+    "Ailerons. When one goes up, the other goes down: one wing lifts more and the other less, and the plane banks to turn.",
+  "tarjeta.profundidad":
+    "Elevator. It moves the tail up or down, and the nose with it: pull the stick and the nose comes up.",
+  "tarjeta.timon":
+    "Rudder. It pushes the tail to one side and the nose points the other way. You move it with the pedals.",
+  "tarjeta.flaps":
+    "Flaps. They slide out behind the wing and make it more curved and bigger, so it holds the plane up at a slower speed: for take-off and landing.",
+  "tarjeta.aerofrenos":
+    "Spoilers. They rise on top of the wing, slow the plane and spoil some lift: to come down without speeding up and, on the runway, to put the weight on the wheels so they brake.",
+  "tarjeta.pitot":
+    "Pitot tube. Air rushes straight into its tip, and the faster the plane flies, the harder it pushes. That's how airspeed is measured.",
+  "tarjeta.pitotMorro":
+    "Pitot tubes, one on each side of the nose: one for each pilot. Air rushes straight in, and the faster you go, the harder it pushes. That's how airspeed is measured.",
+  "tarjeta.motorPiston":
+    "Engine and propeller. The engine spins the propeller; its blades are little wings that push air backwards and pull the plane forwards.",
+  "tarjeta.motorRadial":
+    "Radial engine. Its cylinders sit in a circle, like the points of a star, and they spin the propeller, which pulls the plane.",
+  "tarjeta.turbohelice":
+    "Turboprop. Inside there's a turbine, like a jet's, but instead of blowing it spins the propeller.",
+  "tarjeta.reactor":
+    "Jet engine. It swallows air at the front, burns fuel and blows it out of the back very fast. The big fan at the front does most of the pushing.",
+  "tarjeta.tren":
+    "Landing gear. It comes down to land and folds away after take-off: tucked in, the air flows past better and the plane goes faster.",
+  "tarjeta.trenFijo":
+    "Fixed gear. It's always out: simpler and lighter, though it slows the plane down a little.",
+  "tarjeta.luces":
+    "Navigation lights: red on the left wingtip, green on the right and white on the tail. If at night you see the red and the green together, that plane is coming towards you.",
+  "tarjeta.luzBaliza":
+    "Beacon: the flashing red light. It goes on before the engine starts and says: this plane is alive, keep clear.",
+  "tarjeta.luzEstrobos":
+    "Strobes: very bright white flashes. They go on when entering the runway and stay on in flight, so other planes see you from far away.",
+  "tarjeta.luzAterrizaje":
+    "Landing lights. They go on on the runway and below ten thousand feet, where there are more planes and birds: so they can see you.",
+  "tarjeta.matricula":
+    "The registration is the plane's ID: no other plane in the world has the same one. ZP means Paraguay; EC, Spain. On the radio it's spelled out letter by letter.",
+  "tarjeta.voz.alerones":
+    "These are the ailerons. When you move the stick to one side, one goes up and the other goes down, and the plane banks to turn.",
+  "tarjeta.voz.profundidad":
+    "This is the elevator, on the tail. If you pull the stick, the tail goes down and the nose comes up.",
+  "tarjeta.voz.timon":
+    "This is the rudder. With the pedals, the tail swings one way and the nose points the other.",
+  "tarjeta.voz.flaps":
+    "These are the flaps. Lower them and the wing gets more curved and bigger, so it holds the plane up even when it's slower. They're for take-off and landing.",
+  "tarjeta.voz.aerofrenos":
+    "These are the spoilers. They rise on top of the wing to slow down in the air, and on the runway, to put the plane's weight on its wheels so it brakes better.",
+  "tarjeta.voz.pitot":
+    "This little tube is the pitot. Air goes in at the tip, and the faster you fly, the harder it pushes: that's how the plane knows its speed.",
+  "tarjeta.voz.pitotMorro":
+    "These little tubes on the sides of the nose are the pitots, one for each pilot. Air goes straight in, and the faster you fly, the harder it pushes: that's how speed is measured.",
+  "tarjeta.voz.motorPiston":
+    "Here's the engine. It spins the propeller, and the propeller, with blades like little wings, pulls the plane forwards.",
+  "tarjeta.voz.motorRadial":
+    "This is a radial engine: the cylinders sit in a circle, like the points of a star. It spins the propeller, and the propeller pulls the plane.",
+  "tarjeta.voz.turbohelice":
+    "This is a turboprop: inside there's a turbine, like a jet's, but instead of blowing, it spins the propeller.",
+  "tarjeta.voz.reactor":
+    "This is a jet engine. It swallows air at the front, burns fuel and blows it out of the back very fast. And the big fan at the front does most of the pushing.",
+  "tarjeta.voz.tren":
+    "This is the landing gear. It comes down to land, and after take-off it folds away inside: that way the air flows past better and the plane goes faster.",
+  "tarjeta.voz.trenFijo":
+    "This gear never folds away: it's always out. It's simpler and lighter, though it slows the plane down a little.",
+  "tarjeta.voz.luces":
+    "These are the navigation lights: red on the left, green on the right and white at the back. If at night you see the red and the green together, that plane is coming straight at you.",
+  "tarjeta.voz.luzBaliza":
+    "The beacon is the flashing red light. It goes on before the engine starts and tells everyone: keep clear, this plane is about to move.",
+  "tarjeta.voz.luzEstrobos":
+    "These white flashes go on when you enter the runway and stay on the whole flight, so other planes can see you from far away.",
+  "tarjeta.voz.luzAterrizaje":
+    "The landing lights go on for take-off, for landing, and whenever you fly below ten thousand feet, where there are more planes and birds: so they can see you.",
+  "tarjeta.voz.matricula":
+    "The registration is like the plane's ID card: no other plane in the world has the same one. The first letters say which country it's from: Z P is Paraguay, and E C is Spain.",
 };

@@ -528,7 +528,7 @@ function conSuEncuadre(
  * giran; las palas se quedan con una copia de su material para poder
  * desvanecerse sin desvanecer el tren, que lleva el mismo.
  */
-function discoDeHelice(ejes: readonly Object3D[]): ((cuanto: number) => void) | undefined {
+export function discoDeHelice(ejes: readonly Object3D[]): ((cuanto: number) => void) | undefined {
   const partes: { palas: Material[]; disco: MeshBasicMaterial }[] = [];
   const v = new Vector3();
   for (const eje of ejes) {
@@ -747,15 +747,18 @@ export function colocarModelo(raiz: Object3D, aircraft: AircraftConfig): Group {
 }
 
 /**
- * Carga el modelo de una aeronave, o `null` si no lo hay.
+ * **El fichero del modelo, leído y sin tocar**, o `null` si no está o falla.
  *
- * Devuelve lo mismo que `createAircraftMesh` para que quien lo use no tenga que
- * saber de dónde salió el avión.
+ * Aparte de `cargarModelo` porque lo lee también la tarjeta del avión —ver
+ * `world/modelo-de-la-tarjeta.ts`—, que necesita el mismo `.glb` y no la
+ * cabina encendida. Pedido así: «reutiliza el mismo modelo, no hagas otro».
+ * El navegador lo tiene ya en su caché la segunda vez, así que leerlo dos
+ * veces cuesta el análisis y no la descarga.
  */
-export async function cargarModelo(
+export async function leerElModelo(
   aircraft: AircraftConfig,
   base = import.meta.env.BASE_URL ?? "/",
-): Promise<AircraftMesh | null> {
+): Promise<Object3D | null> {
   const url = `${base}${base.endsWith("/") ? "" : "/"}${CARPETA}/${aircraft.id}.glb`;
 
   try {
@@ -767,7 +770,6 @@ export async function cargarModelo(
     return null;
   }
 
-  let raiz: Object3D;
   try {
     /*
      * Con plazo, y aquí importa doble: este fichero ya tiene decidido que
@@ -780,12 +782,25 @@ export async function cargarModelo(
       PLAZO_DE_IMAGEN,
       `el modelo ${url.split("/").pop()}`,
     );
-    if (!gltf) return null;
-    raiz = gltf.scene;
+    return gltf ? gltf.scene : null;
   } catch {
     // Un modelo roto no puede dejar a nadie sin volar.
     return null;
   }
+}
+
+/**
+ * Carga el modelo de una aeronave, o `null` si no lo hay.
+ *
+ * Devuelve lo mismo que `createAircraftMesh` para que quien lo use no tenga que
+ * saber de dónde salió el avión.
+ */
+export async function cargarModelo(
+  aircraft: AircraftConfig,
+  base = import.meta.env.BASE_URL ?? "/",
+): Promise<AircraftMesh | null> {
+  const raiz = await leerElModelo(aircraft, base);
+  if (!raiz) return null;
 
   const group = colocarModelo(raiz, aircraft);
   const helices = ejesDeHelice(raiz);

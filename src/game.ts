@@ -479,6 +479,7 @@ import { laConchaLaLleva } from "./ui/panel";
 import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
+import { TarjetaDelAvion } from "./ui/tarjeta-del-avion";
 import { PantallaDePausa } from "./ui/pausa";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
@@ -3600,6 +3601,16 @@ export class Game {
    * arrancar aunque falte un `div`. Ver `ui/pantalla-ala.ts`.
    */
   private ala: PantallaDelAla | null = null;
+  /**
+   * **La tarjeta del avión**, la misma del hangar, en vivo. Se monta la primera
+   * vez que se abre: es un segundo contexto de WebGL y no se paga si nadie la
+   * mira. Ver `ui/tarjeta-del-avion.ts`.
+   */
+  private tarjetaDelAvion: TarjetaDelAvion | null = null;
+  /** La tarjeta, para el banco de rendimiento: abierta o no, y cuánto ha pintado. */
+  get tarjeta(): { readonly abierta: boolean; readonly pintadas: number } | null {
+    return this.tarjetaDelAvion;
+  }
   private keyScreen: KeyScreen | null = null;
 
   /** Reconoce el aterrizaje y su calidad. Ver `flight/aterrizaje.ts`. */
@@ -5239,6 +5250,7 @@ export class Game {
     this.hud.onKeys(() => this.keyScreen?.toggle());
     this.hud.onCredits(() => this.credits.toggle());
     this.hud.onAla(() => this.ala?.alternar());
+    this.hud.onTarjetaDelAvion(() => this.abrirLaTarjeta());
     // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección
     // ya está guardada, cambiar de aeropuerto es empezar otro vuelo, y así no
     // hay que inventar el desmontaje en caliente de un escenario entero —que
@@ -13009,6 +13021,24 @@ export class Game {
             ? POSICIONES_DE_LA_PALANCA.arriba
             : POSICIONES_DE_LA_PALANCA.topeDeVuelo
           : POSICIONES_DE_LA_PALANCA.recogida,
+    );
+    /*
+     * **Y la tarjeta del avión, en vivo**: el tren, los flaps, los aerofrenos,
+     * las hélices y el ala del avión que se vuela, copiados en el de la
+     * tarjeta. Con la tarjeta cerrada no hace nada. Ver `enVivo`.
+     */
+    this.tarjetaDelAvion?.enVivo(
+      {
+        tren: this.input.controls.tren,
+        flaps: this.input.controls.flaps,
+        aerofrenos: this.input.controls.aerofrenos ?? 0,
+        frenosDeTierra: deTierra,
+        helice: this.propellerAngle,
+        disco: (this.giroDeHelice - 20) / 25,
+        carga: this.flight.state.loadFactor,
+        enTierra: this.flight.state.onGround,
+      },
+      dt,
     );
     /*
      * **Y las luces, con las mismas reglas que los demás**: la baliza con el
@@ -21769,6 +21799,22 @@ export class Game {
       this.aircraft,
       () => this.reducedMotion,
     );
+  }
+
+  /**
+   * Abre o cierra la tarjeta del avión que se vuela.
+   *
+   * Lo que cuenta lo dice la instructora, por su vía de siempre y con su
+   * clave: lo grabado suena y lo que no, no. Ver `PENDIENTE-VOCES-tarjeta.md`.
+   */
+  abrirLaTarjeta(): void {
+    const raiz = document.getElementById("tarjeta-avion");
+    if (!raiz) return;
+    this.tarjetaDelAvion ??= new TarjetaDelAvion(raiz, {
+      enVuelo: true,
+      decir: (texto, clave) => this.instructor.decir(texto, clave),
+    });
+    this.tarjetaDelAvion.alternar(this.aircraft);
   }
 
   /** Pasa al siguiente idioma y repinta todo lo que lleva texto. */
