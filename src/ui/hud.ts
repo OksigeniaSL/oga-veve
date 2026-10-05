@@ -273,6 +273,23 @@ const ALTAVOZ: Record<AudioLevel["id"], string> = {
  * pantalla. Ahora es uno, relleno y con el portón grande, que es lo que hace
  * que un hangar no sea una casa.
  */
+/**
+ * **Dar la vuelta al avión**: el avión visto desde arriba y la flecha que lo
+ * rodea, que es lo que se hace a pie antes de cada vuelo.
+ */
+const ICONO_VUELTA = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 6.5 v11 M7 11.5 h10 M10 16.5 h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M4.2 8 A9 9 0 1 1 6 18.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="2.4 2.2"/>
+  <path d="M2.4 6.2 L4.4 9.4 L7.2 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+/** **El tiempo de hoy**: el sol asomando detrás de la nube, en su hoja. */
+const ICONO_PARTE = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <circle cx="15" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+  <path d="M15 2 v1.6 M20.8 8 h-1.6 M19.2 3.8 l-1.1 1.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M5 19 a3.6 3.6 0 0 1 0.6 -7.1 a4.8 4.8 0 0 1 9.2 1 a3.1 3.1 0 0 1 0.4 6.1 Z" fill="currentColor"/>
+</svg>`;
+
 const HANGAR = `
   <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
     <path fill-rule="evenodd"
@@ -665,6 +682,10 @@ export class Hud {
   private keysHandler: (() => void) | null = null;
   private camaraHandler: (() => void) | null = null;
   private gafasHandler: (() => void) | null = null;
+  /** Los de antes de volar: la vuelta al avión y el tiempo. */
+  private antesHandler: ((que: "vuelta" | "tiempo") => void) | null = null;
+  /** Lo que se enseñaba la última vez, para no tocar el DOM si no cambia. */
+  private antesPuesto = -1;
   private gafas!: HTMLElement;
   private misionHandler: (() => void) | null = null;
   private mision!: HTMLElement;
@@ -876,6 +897,9 @@ export class Hud {
      * todo lo que se toca volando. Ver `ui/tarjeta-del-avion.ts`.
      */
     alPulsarDentro(this.root, "[data-tarjeta-avion]", () => this.tarjetaHandler?.());
+    // Antes de volar: la vuelta y el tiempo. Ver `ponerAntesDeVolar`.
+    alPulsarDentro(this.root, '[data-hud="antes-vuelta"]', () => this.antesHandler?.("vuelta"));
+    alPulsarDentro(this.root, '[data-hud="antes-tiempo"]', () => this.antesHandler?.("tiempo"));
     alPulsarDentro(this.root, '[data-hud="menu"]', () =>
       this.abrirMenu(!this.root.classList.contains("hud--menu")),
     );
@@ -1131,6 +1155,8 @@ export class Hud {
    * así que la forma barata y sin sorpresas de traducirlos es rehacerlos.
    */
   render(): void {
+    // Rehecho el HUD, los botones de antes de volar se vuelven a poner.
+    this.antesPuesto = -1;
     const gauges = this.instruments !== "none";
     const pictorial = this.instruments === "pictorial";
     // Reactor o hélice: decide el dibujo del motor en todo el HUD. Ver `fan`.
@@ -1251,6 +1277,19 @@ export class Hud {
         <div class="cinturon llamada-de-pasaje" data-hud="llamada-de-pasaje" hidden role="status">
           <svg viewBox="0 0 24 24" aria-hidden="true">${LLAMADA_DE_PASAJE}</svg>
         </div>
+      </div>
+      <!--
+        **Antes de volar**: la vuelta al avión y el tiempo de hoy. Solo en el
+        puesto y con el motor parado, que es cuando se hacen las dos cosas de
+        verdad; al arrancar se van. Al lado de la pausa y no en la barra, por
+        lo mismo que la pausa: actúan sobre este vuelo. Ver
+        flight/vuelta-al-avion.ts y flight/parte-de-salida.ts.
+      -->
+      <div class="antes" data-hud="antes" hidden>
+        <button class="sonido antes__boton" type="button" data-hud="antes-vuelta"
+                aria-label="${t("vuelta.abrir")}">${ICONO_VUELTA}</button>
+        <button class="sonido antes__boton" type="button" data-hud="antes-tiempo"
+                aria-label="${t("parte.abrir")}">${ICONO_PARTE}</button>
       </div>
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
@@ -2676,15 +2715,20 @@ export class Hud {
       readonly rodaje?: DatosDelTablero["rodaje"];
       /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
       readonly resaltes?: DatosDelTablero["resaltes"];
+      /**
+       * **Si el pitot lleva la funda puesta.** Entonces el anemómetro marca
+       * cero corra lo que corra, en todos los relojes que lo enseñan, y sin
+       * velocidad que leer no hay V1 que cantar. Ver
+       * `flight/anemometro-tapado.ts`.
+       */
+      readonly pitotTapado?: boolean;
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
-    const ias = indicatedAirspeed(
-      state.airspeed,
-      state.position.y,
-      mandos?.aire,
-    );
+    const ias = mandos?.pitotTapado
+      ? 0
+      : indicatedAirspeed(state.airspeed, state.position.y, mandos?.aire);
 
     if (this.pictos.present) {
       // Fracciones, no unidades: aquí no hay nudos ni pies que valgan.
@@ -2840,7 +2884,13 @@ export class Hud {
       this.enLaCarrera = true;
     if (!enDespegue || (enSuelo && state.airspeed < 5))
       this.enLaCarrera = false;
-    const despegando = this.enLaCarrera && state.airspeed > decisionSpeed;
+    /*
+     * Con la funda del pitot puesta no hay V1: es una velocidad que se lee en
+     * el anemómetro, y el anemómetro marca cero. Y sin V1 el freno sigue a
+     * mano, que es justo lo que hace falta para abortar.
+     */
+    const despegando =
+      this.enLaCarrera && !mandos?.pitotTapado && state.airspeed > decisionSpeed;
     this.comprometido = despegando;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
@@ -3520,6 +3570,38 @@ export class Hud {
   /** Y el de pausa, que no tenía tecla ni botón. */
   onPausa(handler: () => void): void {
     this.pausaHandler = handler;
+  }
+
+  /** Los de antes de volar. Ver `ponerAntesDeVolar`. */
+  onAntesDeVolar(handler: (que: "vuelta" | "tiempo") => void): void {
+    this.antesHandler = handler;
+  }
+
+  /**
+   * **Los botones de antes de volar**: cuáles se ven, y si alguno pide que lo
+   * miren; sin `ver`, se esconden. La vuelta late hasta que se hace; el tiempo,
+   * en ámbar, si algo del día pasa del límite de este avión.
+   */
+  ponerAntesDeVolar(
+    ver: boolean,
+    vuelta: boolean,
+    vueltaHecha: boolean,
+    tiempoAvisa: boolean,
+  ): void {
+    // Un número y no un objeto: se llama en cada paso del vuelo.
+    const clave = ver ? 1 + (vuelta ? 2 : 0) + (vueltaHecha ? 4 : 0) + (tiempoAvisa ? 8 : 0) : 0;
+    if (clave === this.antesPuesto) return;
+    this.antesPuesto = clave;
+    const caja = this.root.querySelector<HTMLElement>('[data-hud="antes"]');
+    if (!caja) return;
+    caja.hidden = !ver;
+    const botonDeVuelta = caja.querySelector<HTMLElement>('[data-hud="antes-vuelta"]');
+    const botonDelTiempo = caja.querySelector<HTMLElement>('[data-hud="antes-tiempo"]');
+    if (botonDeVuelta) {
+      botonDeVuelta.hidden = !vuelta;
+      botonDeVuelta.classList.toggle("antes__boton--late", vuelta && !vueltaHecha);
+    }
+    botonDelTiempo?.classList.toggle("antes__boton--avisa", tiempoAvisa);
   }
 
   /** El de las gafas de sol. Ver `flight/gafas.ts`. */

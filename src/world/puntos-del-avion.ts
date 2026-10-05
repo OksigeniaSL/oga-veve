@@ -49,7 +49,7 @@ export interface PuntoDelAvion {
 }
 
 /** Los vértices de unas mallas, en los ejes del grupo, que cumplan `vale`. */
-function vertices(
+export function vertices(
   mallas: readonly Mesh[],
   aGrupo: Matrix4,
   vale: (v: Vector3) => boolean = () => true,
@@ -69,7 +69,7 @@ function vertices(
 }
 
 /** Las mallas que se llaman así, o que cuelgan de algo que se llama así. */
-function mallasDe(raiz: Object3D, nombre: RegExp): Mesh[] {
+export function mallasDe(raiz: Object3D, nombre: RegExp): Mesh[] {
   const fuera: Mesh[] = [];
   raiz.traverse((o) => {
     if (!(o as Mesh).isMesh) return;

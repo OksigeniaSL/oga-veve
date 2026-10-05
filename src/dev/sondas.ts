@@ -895,6 +895,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * posible** y hay que poder distinguirlo de un avión que no sube.
      */
     combustible: () => juego.depositoParaBanco,
+    /** La vuelta al avión, la funda y el parte de hoy. Ver `Game.atenderAntesDeVolar`. */
+    antesDeVolar: () => juego.antesDeVolarParaBanco,
     /** La aeronave montada: para saber si vuela el modelo o las cajas. */
     aeronave: () => ({
       grupo: juego.aircraftMesh.group,

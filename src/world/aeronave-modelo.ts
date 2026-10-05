@@ -35,6 +35,8 @@
  *    Pykasu y 1,80 el Mainumby, medidos con el avión parado en la pista.
  */
 
+import { puntosDelAvion } from "./puntos-del-avion";
+import { puntosDeLaVuelta } from "./puntos-de-la-vuelta";
 import {
   Box3,
   CircleGeometry,
@@ -805,6 +807,12 @@ export async function cargarModelo(
 
   const group = colocarModelo(raiz, aircraft);
   const helices = ejesDeHelice(raiz);
+  /*
+   * **Y dónde está cada cosa de la vuelta al avión**, con el modelo recién
+   * colocado: las mismas medidas que la tarjeta, más las suyas. Solo lee
+   * vértices, una vez por avión. Ver `puntos-de-la-vuelta.ts`.
+   */
+  const vuelta = puntosDeLaVuelta(raiz, group, aircraft, puntosDelAvion(raiz, group, aircraft));
 
   /*
    * **Y las luces de posición, aquí también.**
@@ -896,5 +904,6 @@ export async function cargarModelo(
     luzDeCabina: luzDeCabina(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
+    vuelta,
   };
 }

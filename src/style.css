@@ -13052,3 +13052,701 @@ svg .ex-raya {
   cursor: pointer;
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Antes de volar: la vuelta al avión y el tiempo de hoy.
+ * Ver src/ui/vuelta-al-avion.ts y src/ui/tarjeta-del-tiempo.ts.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/*
+ * Los dos botones, al lado de la pausa. En fila y no en la columna: la
+ * columna del ojo y la pausa baja hasta casi el mando de los pulgares en un
+ * teléfono apaisado, y dos botones más la echaban encima. A su derecha hay
+ * cielo en los dos repartos.
+ */
+.antes {
+  position: absolute;
+  top: calc(var(--borde-arriba, max(16px, env(safe-area-inset-top))) + var(--tacto) + 10px);
+  left: calc(var(--borde-izq, max(16px, env(safe-area-inset-left))) + var(--tacto) + 10px);
+  display: flex;
+  gap: 10px;
+}
+
+.antes[hidden],
+.antes__boton[hidden] {
+  display: none;
+}
+
+.antes__boton svg {
+  width: 60%;
+  height: 60%;
+}
+
+/* La vuelta late mientras no se ha hecho: está para tocarla, no para leerla. */
+.antes__boton--late {
+  border-color: var(--ocre);
+  animation: antes-late 2.4s ease-out infinite;
+}
+
+/* Y el tiempo, en ámbar, si algo pasa del límite de este avión. */
+.antes__boton--avisa {
+  border-color: #f0b030;
+  color: #f0b030;
+  box-shadow: 0 0 0 3px rgb(240 176 48 / 0.35), var(--poso);
+}
+
+@keyframes antes-late {
+  0% { box-shadow: 0 0 0 0 rgb(221 146 63 / 0.55), var(--poso); }
+  70% { box-shadow: 0 0 0 12px rgb(221 146 63 / 0), var(--poso); }
+  100% { box-shadow: 0 0 0 0 rgb(221 146 63 / 0), var(--poso); }
+}
+
+/* Mientras se da la vuelta, el mundo es de la vuelta: ni HUD ni mandos. */
+body.con-vuelta #hud,
+body.con-vuelta #tactil {
+  visibility: hidden;
+  /* Y transparente: algún reloj del cuadro se pone visible por su cuenta. */
+  opacity: 0;
+}
+
+.vuelta {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  pointer-events: none;
+  color: #f4f2ea;
+  --lado: 52px;
+}
+
+.vuelta[hidden] {
+  display: none;
+}
+
+.vuelta button {
+  pointer-events: auto;
+  cursor: pointer;
+  font: inherit;
+}
+
+.vuelta svg {
+  width: 100%;
+  height: 100%;
+}
+
+.vuelta__rojo { fill: #d8232a; }
+.vuelta__amarillo { fill: #f2c230; }
+.vuelta__verde { fill: #4fbf6a; }
+.vuelta__ambar { fill: #e0a43a; }
+.vuelta__azul { fill: #3d8ee8; }
+.vuelta__luz-roja { fill: #e3423a; }
+
+/* Los puntos que se tocan, encima de su pieza. */
+.vuelta__punto {
+  position: absolute;
+  left: calc(var(--lado) / -2);
+  top: calc(var(--lado) / -2);
+  width: var(--lado);
+  height: var(--lado);
+  padding: 8px;
+  border-radius: 50%;
+  border: 2px solid rgb(244 242 234 / 0.75);
+  background: rgb(18 25 15 / 0.78);
+  color: #f4f2ea;
+  display: grid;
+  place-items: center;
+}
+
+.vuelta__punto[hidden] {
+  display: none;
+}
+
+/* El siguiente late en ocre, que es el color de «esto se toca» del juego. */
+.vuelta__punto.vuelta--siguiente,
+.vuelta__paso.vuelta--siguiente {
+  border-color: var(--ocre);
+  animation: antes-late 2s ease-out infinite;
+}
+
+.vuelta__punto.vuelta--hecha {
+  opacity: 0.72;
+  border-color: #4fbf6a;
+}
+
+.vuelta__visto {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2f8f4a;
+  color: #fff;
+  padding: 3px;
+  display: none;
+}
+
+.vuelta--hecha > .vuelta__visto {
+  display: block;
+}
+
+/* Arriba, la lista de la vuelta en dibujos: se va marcando. */
+.vuelta__lista {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 8px;
+  list-style: none;
+  border-radius: 30px;
+  background: rgb(18 25 15 / 0.7);
+}
+
+.vuelta__paso {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 7px;
+  border-radius: 50%;
+  border: 2px solid rgb(244 242 234 / 0.35);
+  background: transparent;
+  color: #f4f2ea;
+}
+
+.vuelta__paso.vuelta--hecha {
+  border-color: #4fbf6a;
+}
+
+.vuelta__boton {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  padding: 12px;
+  border-radius: 50%;
+  border: 2px solid rgb(244 242 234 / 0.6);
+  background: rgb(18 25 15 / 0.82);
+  color: #f4f2ea;
+}
+
+.vuelta__volver {
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+}
+
+.vuelta__seguir {
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  border-color: var(--ocre);
+}
+
+.vuelta--entera .vuelta__seguir {
+  background: #2f8f4a;
+  border-color: #6fd38a;
+  animation: antes-late 2s ease-out infinite;
+}
+
+/* Abajo, la mano: ahí acaba la funda que se quita. */
+.vuelta__mano {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  padding: 10px;
+  border-radius: 50%;
+  background: rgb(18 25 15 / 0.6);
+  color: #f4f2ea;
+}
+
+.vuelta__en-la-mano {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  width: 30px;
+  height: 30px;
+}
+
+.vuelta__funda-que-vuela {
+  position: fixed;
+  left: -18px;
+  top: -18px;
+  width: 36px;
+  height: 36px;
+  animation: funda-a-la-mano 0.9s cubic-bezier(0.3, 0.1, 0.3, 1) forwards;
+}
+
+@keyframes funda-a-la-mano {
+  0% { transform: translate(var(--desde-x), var(--desde-y)) scale(1.2) rotate(0deg); }
+  45% { transform: translate(calc((var(--desde-x) + var(--hasta-x)) / 2), calc(var(--desde-y) - 90px)) scale(1.5) rotate(-160deg); }
+  100% { transform: translate(var(--hasta-x), var(--hasta-y)) scale(0.8) rotate(-360deg); }
+}
+
+/* El globo de lo tocado: el dibujo en grande, moviéndose. */
+.vuelta__globo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: min(320px, 70vw);
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 2px solid var(--ocre);
+  background: rgb(18 25 15 / 0.9);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.vuelta__globo[hidden] {
+  display: none;
+}
+
+.vuelta__globo-dibujo {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  animation: globo-entra 0.35s ease-out;
+}
+
+.vuelta__globo-texto {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+@keyframes globo-entra {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Lo que se mueve en cada dibujo: el calzo se aparta, la cola sube y baja… */
+.vuelta__globo-dibujo--calzos .vuelta__calzo {
+  animation: calzo-fuera 1.2s ease-in forwards;
+}
+
+@keyframes calzo-fuera {
+  to { transform: translateX(14px); opacity: 0.25; }
+}
+
+.vuelta__globo-dibujo--superficies .vuelta__mueve {
+  transform-origin: 30px 28px;
+  animation: cola-mueve 0.9s ease-in-out 2 alternate;
+}
+
+@keyframes cola-mueve {
+  from { transform: rotate(-22deg); }
+  to { transform: rotate(18deg); }
+}
+
+.vuelta__globo-dibujo--motores .vuelta__gira {
+  transform-origin: 24px 24px;
+  animation: gira-despacio 2.4s linear;
+}
+
+.vuelta__globo-dibujo--helice svg {
+  transform-origin: 50% 50%;
+  animation: gira-despacio 2.4s linear;
+}
+
+@keyframes gira-despacio {
+  to { transform: rotate(180deg); }
+}
+
+.vuelta__globo-dibujo--frenos .vuelta__perno,
+.vuelta__globo-dibujo--luces .vuelta__luz-roja,
+.vuelta__globo-dibujo--aceite .vuelta__ambar {
+  animation: parpadea 0.6s ease-in-out 4 alternate;
+}
+
+@keyframes parpadea {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+
+.vuelta__globo-dibujo--puertas .vuelta__pestillo {
+  animation: pestillo 0.5s ease-out forwards;
+}
+
+@keyframes pestillo {
+  from { transform: translateX(10px); }
+  to { transform: translateX(0); }
+}
+
+/* El combustible: el surtidor, el depósito con su nivel y el vasito de la purga. */
+.vuelta__deposito {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+}
+
+.vuelta__surtidor {
+  width: 34px;
+  height: 34px;
+  color: #f4f2ea;
+}
+
+.vuelta__surtidor .senal__hueco {
+  fill: #12190f;
+}
+
+.vuelta__tanque {
+  position: relative;
+  width: 20px;
+  height: 100%;
+  border: 2px solid #f4f2ea;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vuelta__nivel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #4fbf6a;
+  transform-origin: bottom;
+  animation: sube 1s ease-out;
+}
+
+.vuelta__deposito--reserva .vuelta__nivel { background: #e0a43a; }
+.vuelta__deposito--poco .vuelta__nivel { background: #e3423a; }
+
+.vuelta__raya {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  height: 2px;
+  background: #f4f2ea;
+}
+
+@keyframes sube {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.vuelta__purga {
+  width: 28px;
+  height: 28px;
+  animation: globo-entra 0.4s ease-out 0.9s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vuelta *,
+  .antes__boton--late {
+    animation: none !important;
+  }
+}
+
+/* En el teléfono apaisado, todo un poco más justo. */
+@media (max-height: 500px) {
+  .vuelta {
+    --lado: 46px;
+  }
+
+  .vuelta__paso {
+    width: 38px;
+    height: 38px;
+    padding: 5px;
+  }
+
+  .vuelta__boton {
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+  }
+
+  .vuelta__globo-dibujo {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* ── La tarjeta del tiempo ─────────────────────────────────────────── */
+
+.tarjeta-tiempo {
+  position: fixed;
+  inset: 0;
+  z-index: 31;
+  display: grid;
+  place-items: center;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background: rgb(8 12 10 / 0.45);
+}
+
+.tarjeta-tiempo[hidden] {
+  display: none;
+}
+
+.tarjeta-tiempo .concha {
+  width: min(760px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.parte {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.parte__campos {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.parte__de-a {
+  flex: 0 0 28px;
+  align-self: center;
+  color: var(--tinta-suave);
+}
+
+.parte__campo {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+  border: 1px solid var(--linea);
+}
+
+.parte__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.parte__papel {
+  width: 28px;
+  height: 28px;
+}
+
+.parte__oaci {
+  font-size: 20px;
+  letter-spacing: 0.08em;
+}
+
+.parte__rwy {
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.12);
+}
+
+.parte__dibujos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.parte__dibujo {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 6px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: rgb(0 0 0 / 0.2);
+  color: var(--tinta);
+}
+
+.parte__dibujo svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Lo que pasa del límite, en ámbar: es una decisión, no una alarma. */
+.parte--pasa {
+  border-color: #f0b030;
+  color: #f6c862;
+  background: rgb(240 176 48 / 0.12);
+}
+
+.parte__viento .parte__manga {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 42%;
+  height: 42%;
+}
+
+.parte__pista { fill: #5a5f5a; }
+.parte__numero { fill: #f4f2ea; font: bold 7px sans-serif; }
+.parte__flecha { stroke: #8fd3ff; }
+.parte__flecha-punta { fill: #8fd3ff; }
+.parte--pasa .parte__flecha { stroke: #f6c862; }
+.parte--pasa .parte__flecha-punta { fill: #f6c862; }
+.parte__sol { fill: #f2c230; stroke: #f2c230; }
+.parte__agua { stroke: #8fd3ff; }
+.parte__rayo { fill: #f2c230; }
+.parte__minimo { stroke: #f6c862; fill: none; }
+.parte__estrella { fill: #f2c230; }
+
+.parte__cifras {
+  margin: 8px 0 0;
+  font: 13px/1.35 ui-monospace, monospace;
+  color: #8fd3ff;
+  overflow-wrap: anywhere;
+}
+
+.parte__metares {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.parte__metar {
+  font: 12px/1.35 ui-monospace, monospace;
+  color: var(--tinta-suave);
+  overflow-wrap: anywhere;
+}
+
+.parte__decision {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.parte__porques {
+  display: flex;
+  gap: 8px;
+}
+
+.parte__porque {
+  width: 52px;
+  height: 52px;
+  padding: 5px;
+  border-radius: 12px;
+  border: 2px solid;
+}
+
+.parte__porque svg {
+  width: 100%;
+  height: 100%;
+}
+
+.parte__propone {
+  margin: 0;
+  text-align: center;
+  max-width: 46ch;
+}
+
+.parte__botones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.parte__boton {
+  min-width: 56px;
+  min-height: 56px;
+  padding: 8px 16px;
+  border-radius: 28px;
+  border: 2px solid var(--linea-fuerte);
+  background: var(--barro-claro);
+  color: var(--tinta);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.parte__boton svg {
+  width: 32px;
+  height: 32px;
+}
+
+.parte__boton--principal {
+  border-color: #6fd38a;
+  background: #2f6f45;
+}
+
+.parte__ganaste {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.parte__ganaste > svg {
+  width: 96px;
+  height: 96px;
+  animation: globo-entra 0.5s ease-out;
+}
+
+.parte__ganaste-frase {
+  margin: 0;
+  font-size: 20px;
+  text-align: center;
+}
+
+/*
+ * **En el teléfono apaisado, la decisión tiene que caber sin desplazar**:
+ * medido en un Pixel de 360 de alto, la tarjeta entera dejaba los botones
+ * debajo del borde. Los dibujos van más pequeños y la fila de porqués se
+ * quita, que ya están en ámbar arriba.
+ */
+@media (max-height: 500px) {
+  .tarjeta-tiempo {
+    padding-block: 4px;
+  }
+
+  .parte {
+    gap: 6px;
+  }
+
+  .parte__campo {
+    padding: 6px;
+  }
+
+  .parte__dibujos {
+    grid-template-columns: repeat(4, 50px);
+    gap: 4px;
+  }
+
+  .parte__dibujo {
+    padding: 3px;
+  }
+
+  .parte__cabecera {
+    margin-bottom: 4px;
+  }
+
+  .parte__oaci {
+    font-size: 16px;
+  }
+
+  .parte__cifras {
+    margin-top: 4px;
+    font-size: 10.5px;
+  }
+
+  .parte__porques {
+    display: none;
+  }
+
+  .parte__propone {
+    font-size: 13px;
+  }
+
+  .parte__boton {
+    min-height: 48px;
+    padding: 4px 12px;
+    font-size: 14px;
+  }
+
+  .parte__ganaste > svg {
+    width: 64px;
+    height: 64px;
+  }
+}

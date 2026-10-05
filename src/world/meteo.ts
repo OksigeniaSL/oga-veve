@@ -86,6 +86,29 @@ export interface Meteo {
    * `audio/ruidos.ts`.
    */
   readonly granizo?: number;
+  /**
+   * **Las rachas**, nudos: el `G` del grupo del viento —`18012G22KT` son doce
+   * con rachas de veintidós—. Sin poner, no hay rachas.
+   *
+   * Hacen falta para decidir si hoy se sale: el viento cruzado de un avión se
+   * compara **con las rachas dentro**, como lo hace la tabla de cualquier
+   * manual de vuelo. Ver `flight/parte-de-salida.ts`.
+   */
+  readonly rachaKt?: number;
+  /**
+   * **Si la tormenta está encima del campo**, y no en las cercanías: `TS` y
+   * no `VCTS`. Las dos son «tormenta» para lo que se ve y se oye —ver
+   * `lluvia`—, pero para decidir si se sale no son lo mismo: con una en las
+   * cercanías se mira hacia dónde va; con una encima, no se sale. Sin poner,
+   * no la hay.
+   */
+  readonly tormentaEncima?: boolean;
+  /**
+   * **El parte tal cual llegó**, si llegó uno. La tarjeta del tiempo lo
+   * enseña entero en el peldaño de cabina, que es como lo lee un piloto: los
+   * grupos del METAR no se traducen, igual que los rótulos de los relojes.
+   */
+  readonly crudo?: string;
   /** De dónde salió: `'metar'` si es de verdad, `'defecto'` si es el de casa. */
   readonly fuente: "metar" | "defecto" | "mano";
 }
@@ -181,15 +204,29 @@ export function leerMetar(crudo: string): Meteo | null {
   let fuerzaDeLluvia = 0;
   let granizo = 0;
   let vistoViento = false;
+  let rachaKt = 0;
+  let tormentaEncima = false;
+  /*
+   * Lo que viene detrás de `TEMPO`, `BECMG` o `NOSIG` es la tendencia, lo que
+   * se espera, y no lo que hay. Para el cielo de hoy se lee igual —ver la
+   * lluvia, abajo—, pero «tormenta encima» habla de ahora y solo puede salir
+   * de lo de antes.
+   */
+  let enLaTendencia = false;
 
   for (const p of partes) {
+    if (p === "TEMPO" || p === "BECMG" || p === "NOSIG" || p === "RMK")
+      enLaTendencia = true;
     // Viento: 29014KT, 18012G22KT, VRB03KT, 00000KT.
     const v = /^(\d{3}|VRB)(\d{2,3})(G\d{2,3})?(KT|MPS)$/.exec(p);
     if (v) {
       const fuerza = Number(v[2]);
       // En metros por segundo en algunos países; a nudos, que es lo que canta
       // la manga y lo que dice la carta.
-      vientoKt = v[4] === "MPS" ? Math.round(fuerza * 1.94384) : fuerza;
+      const aNudos = (n: number): number =>
+        v[4] === "MPS" ? Math.round(n * 1.94384) : n;
+      vientoKt = aNudos(fuerza);
+      if (v[3]) rachaKt = aNudos(Number(v[3].slice(1)));
       // Variable o en calma no es una dirección: es la ausencia de una.
       vientoDe = v[1] === "VRB" || vientoKt === 0 ? null : Number(v[1]);
       vistoViento = true;
@@ -224,6 +261,7 @@ export function leerMetar(crudo: string): Meteo | null {
       const todo = w[4] ?? "";
       const cae = todo.slice(0, 2) || undefined;
       const tormenta = w[3] === "TS";
+      if (tormenta && !w[1] && !enLaTendencia) tormentaEncima = true;
       /*
        * **El granizo, solo si cae aquí**: un grupo de las cercanías no lo
        * lleva nunca —`VC` va con tormenta o chubasco, no con lo que cae—, y
@@ -253,7 +291,15 @@ export function leerMetar(crudo: string): Meteo | null {
 
     // Nubes: BKN010 son ocho octavos a mil pies. Solo cuentan las capas que
     // tapan —cielo roto o cubierto—, que son las que ponen techo.
-    const n = /^(FEW|SCT|BKN|OVC)(\d{3})$/.exec(p);
+    /*
+     * Con su `CB` o su `TCU` detrás si la capa es de nube de tormenta
+     * —`BKN008CB`—, que sigue siendo una capa a esa altura; y `VV001`, la
+     * visibilidad vertical de la niebla, que es un cielo tapado a cien pies.
+     * Sin ellos, el parte de una tormenta de verdad salía sin techo.
+     */
+    const n =
+      /^(FEW|SCT|BKN|OVC)(\d{3})(?:CB|TCU)?$/.exec(p) ??
+      (/^VV(\d{3})$/.test(p) ? ["", "OVC", p.slice(2)] : null);
     if (n) {
       if (n[1] === "BKN" || n[1] === "OVC") {
         const pies = Number(n[2]) * 100;
@@ -295,6 +341,9 @@ export function leerMetar(crudo: string): Meteo | null {
         lluvia,
         fuerzaDeLluvia,
         ...(granizo > 0 ? { granizo } : {}),
+        ...(rachaKt > 0 ? { rachaKt } : {}),
+        ...(tormentaEncima ? { tormentaEncima } : {}),
+        crudo: partes.join(" "),
         fuente: "metar",
       }
     : null;

@@ -1026,6 +1026,20 @@ const GAFAS = icono(`
 const COMBUSTIBLE = icono(surtidorSvg());
 
 /**
+ * **El anemómetro que no marca, y por qué**: la esfera con la aguja en cero
+ * y, colgando del tubo, la cinta de la funda. Es el aviso de la funda del
+ * pitot olvidada en la carrera —ver `flight/anemometro-tapado.ts`— y se lee
+ * sin una letra: la aguja quieta y la cinta que no tenía que estar.
+ */
+const PITOT_TAPADO = icono(`
+  <circle cx="10" cy="11" r="8.4" fill="none" stroke="currentColor" stroke-width="2.2" />
+  <path d="M10 11 L4.6 15.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+  <circle cx="10" cy="11" r="1.6" />
+  <path d="M17 3.4 H23 V7.6 H17 Z" />
+  <path d="M19 7.6 L18.2 22.6 L21.2 21.8 L21.6 7.6 Z" />
+`);
+
+/**
  * **El servicio a bordo**: una botella de agua y un vaso, en su bandeja.
  *
  * Es el dibujo de cuando la tripulación anuncia que pasa por el pasillo, y en
@@ -1250,6 +1264,7 @@ const AVES_SUBI = icono(`
  */
 export const DIBUJOS = {
   llave: LLAVE,
+  "pitot-tapado": PITOT_TAPADO,
   helice: HELICE,
   reactor: REACTOR,
   amarillo: RAYA,
