@@ -28,13 +28,12 @@
  * - **Tormenta**: lo que pinta el radar. El mismo número que el eco, porque es
  *   lo mismo: agua subiendo y bajando. En el rojo, severa; por eso no se entra.
  *
- * **Cómo** se mueve es un campo de ráfagas **quieto en el espacio y llevado por
- * el viento** —la hipótesis de Taylor, la de todos los modelos de turbulencia
- * de vuelo—: el avión lo atraviesa, así que a más velocidad, baches más
- * seguidos, y la misma nube sacude igual al volver a pasar. Con las escalas y
- * las proporciones entre componentes del modelo de Dryden de MIL-F-8785C: cerca
- * del suelo los remolinos son pequeños y el empujón horizontal es mayor que el
- * vertical; arriba, grandes e iguales en todas direcciones.
+ * **Cómo** llega al avión —por tramos, con el fondo de Dryden y los baches
+ * sueltos de la norma— va aparte, en `rafagas.ts`. Aquí quedan las escalas de
+ * Dryden de MIL-F-8785C, que son de la altura y no del avión: cerca del suelo
+ * los remolinos son pequeños y el empujón horizontal es mayor que el vertical;
+ * arriba, grandes e iguales en todas direcciones. Y **cuánto del rato** hay
+ * racha, que sale de la causa: ver `constanciaDe`.
  *
  * Y **la del camino**: las zonas de turbulencia de cada vuelo —la del parte,
  * la de montaña, la de aire claro en crucero, la tormenta que acompaña casi
@@ -46,10 +45,8 @@
  *
  * ## Por qué funciones y no un objeto con estado
  *
- * Para poder probarlo sin volar: entra el sitio y el reloj, y sale un vector.
- * El ruido es de valores en rejilla —un número al azar en cada nudo, repartido
- * suave entre los ocho de alrededor—, que es barato, no se repite y no guarda
- * nada.
+ * Para poder probarlo sin volar: entra el aire de aquí y sale un número. El
+ * estado —los filtros, la racha en la que se está— vive en `Rafagas`.
  */
 
 /** Lo que hace falta saber del momento para calcular la ráfaga. */
@@ -62,6 +59,11 @@ export interface Aire {
   readonly baseDeNubes: number | null;
   /** Altura del avión sobre el mar. */
   readonly altura: number;
+  /**
+   * Cuánto se está dentro de la nube que se ve, de 0 a 1: la densidad del
+   * dibujo en el sitio del avión. Ver `cuantoDentro` en `world/capa-de-nubes.ts`.
+   */
+  readonly dentroDeNube?: number;
   /**
    * Rugosidad del terreno de barlovento, m: la `z0` de la capa de superficie.
    * Sin dato, la de campo abierto. Ver `rugosidadDe`.
@@ -259,10 +261,19 @@ const BORDE_DE_NUBE = 250;
 /** Y cuánto se mueve ahí, σ_w en m/s: ligera. */
 const EN_LA_NUBE = 0.8;
 
+/**
+ * **La nube**: el borde de la base, donde entra el aire que la alimenta, y
+ * **dentro**, que es lo que pidió Enrique —«al cruzar nubes»—. Una nube es
+ * aire que sube y se condensa: el estratocúmulo del alisio, que es casi toda
+ * la que hay aquí, se cruza con turbulencia ligera, y se nota en el mismo
+ * sitio en el que se ve, porque sale de la misma densidad que se pinta.
+ */
 function nube(aire: Aire): number {
-  if (aire.baseDeNubes === null) return 0;
+  const dentro = EN_LA_NUBE * Math.max(0, Math.min(1, aire.dentroDeNube ?? 0));
+  if (aire.baseDeNubes === null) return dentro;
   const aLaNube = Math.abs(aire.altura - aire.baseDeNubes);
-  return aLaNube < BORDE_DE_NUBE ? EN_LA_NUBE * (1 - aLaNube / BORDE_DE_NUBE) : 0;
+  const borde = aLaNube < BORDE_DE_NUBE ? EN_LA_NUBE * (1 - aLaNube / BORDE_DE_NUBE) : 0;
+  return Math.max(borde, dentro);
 }
 
 /**
@@ -310,6 +321,43 @@ export function cuantoSeMueve(aire: Aire): number {
 }
 
 /**
+ * **Qué parte del rato hay racha**, de 0 a 1, según de dónde venga.
+ *
+ * Es la frecuencia del parte de turbulencia del AIM (7-1-21, TBL 7-1-11):
+ * *ocasional* es menos de un tercio del tiempo, *intermitente* de un tercio a
+ * dos tercios y *continua* más de dos tercios. Cada causa tiene la suya:
+ *
+ * - **la mecánica**, intermitente tirando a continua: el viento racheado a ras
+ *   de suelo no da tregua;
+ * - **la térmica**, un tercio: las columnas que suben ocupan alrededor de un
+ *   tercio del cielo en una tarde de convección (Lenschow y Stephens, *Bound.
+ *   Layer Meteor.* 19, 1980), y entre una y otra se baja tranquilo;
+ * - **la nube**, intermitente;
+ * - **la tormenta**, continua: dentro de la célula no hay respiro;
+ * - **la del camino**, de ocasional a intermitente según su fuerza: la
+ *   ligera va a ratos, la fuerte casi todo el rato.
+ *
+ * Mezcladas, cada una pesa lo que sacude.
+ */
+export function constanciaDe(c: Causas): number {
+  const camino = 0.3 + 0.3 * Math.max(0, Math.min(1, (c.camino - 0.95) / 1.05));
+  const partes: [number, number][] = [
+    [c.mecanica, 0.65],
+    [c.termica, 0.33],
+    [c.nube, 0.5],
+    [c.tormenta, 0.85],
+    [c.camino, camino],
+  ];
+  let peso = 0;
+  let suma = 0;
+  for (const [sigma, cuanto] of partes) {
+    peso += sigma * sigma;
+    suma += sigma * sigma * cuanto;
+  }
+  return peso > 0 ? suma / peso : 0;
+}
+
+/**
  * **Los cuatro niveles**, que son reales y están definidos por lo que le pasa
  * a la gente —la tabla de criterios de los PIREP de turbulencia del AIM de la
  * FAA, capítulo 7—: ligera, el café se mueve y no se
@@ -347,7 +395,7 @@ const PIE = 0.3048;
  * de un palmo, sacuden el ala sin mover el avión, y en pantalla serían un
  * temblor que marea y no enseña nada.
  */
-function escalas(sobreElSuelo: number): {
+export function escalasDeDryden(sobreElSuelo: number): {
   lw: number;
   luv: number;
   horizontal: number;
@@ -369,21 +417,6 @@ function escalas(sobreElSuelo: number): {
   };
 }
 
-/** Dónde está el avión y con qué viento se mueve el campo de ráfagas. */
-export interface Donde {
-  /** Posición en el mundo, m. */
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-  /** El reloj, s. Solo se usa para llevar el campo con el viento. */
-  readonly t: number;
-  /** El viento del parte en ejes del mundo, m/s, hacia donde va. */
-  readonly vientoX: number;
-  readonly vientoZ: number;
-  /** La envergadura del avión, m: la de la ráfaga de alabeo. */
-  readonly envergadura: number;
-}
-
 /** Lo que llega: la ráfaga en ejes del mundo, m/s, y la de alabeo, rad/s. */
 export interface Racha {
   readonly x: number;
@@ -397,81 +430,3 @@ export interface Racha {
 }
 
 export const QUIETO: Racha = { x: 0, y: 0, z: 0, alabeo: 0 };
-
-/**
- * La ráfaga de este instante y este sitio.
- *
- * Con desviación típica σ_w en vertical, la de Dryden en horizontal, y la de
- * alabeo de MIL-F-8785C, `σ_p = 1,9·σ_w / √(L_w·b)`, que es pequeña: un bache
- * mueve las alas un poco, no las voltea.
- */
-export function rachaEn(aire: Aire, donde: Donde): Racha {
-  const sigma = cuantoSeMueve(aire);
-  if (!(sigma > 0)) return QUIETO;
-  const e = escalas(aire.sobreElSuelo);
-  // El campo va con el viento: lo que se muestrea es el aire que ahora pasa
-  // por aquí, que hace un rato estaba más atrás.
-  const x = donde.x - donde.vientoX * donde.t;
-  const z = donde.z - donde.vientoZ * donde.t;
-  const y = donde.y;
-  const horizontal = sigma * e.horizontal;
-  const b = Math.max(1, donde.envergadura);
-  const sigmaP = (1.9 * sigma) / Math.sqrt(e.lw * b);
-  return {
-    x: horizontal * ruido(x / e.luv, y / e.luv, z / e.luv, 0),
-    y: sigma * ruido(x / e.lw, y / e.lw, z / e.lw, 1),
-    z: horizontal * ruido(x / e.luv, y / e.luv, z / e.luv, 2),
-    alabeo: sigmaP * ruido(x / e.lw, y / e.lw, z / e.lw, 3),
-  };
-}
-
-// ── El ruido ────────────────────────────────────────────────────────────────
-
-/** Un número al azar, pero siempre el mismo, para cada nudo de la rejilla. */
-function azar(i: number, j: number, k: number, canal: number): number {
-  let h =
-    Math.imul(i, 374761393) ^
-    Math.imul(j, 668265263) ^
-    Math.imul(k, 1274126177) ^
-    Math.imul(canal, 1911520717);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  h ^= h >>> 16;
-  return ((h >>> 0) / 4294967295) * 2 - 1;
-}
-
-const suave = (t: number): number => t * t * (3 - 2 * t);
-const entre = (a: number, b: number, t: number): number => a + (b - a) * t;
-
-function valor(x: number, y: number, z: number, canal: number): number {
-  const i = Math.floor(x);
-  const j = Math.floor(y);
-  const k = Math.floor(z);
-  const fx = suave(x - i);
-  const fy = suave(y - j);
-  const fz = suave(z - k);
-  const a = entre(azar(i, j, k, canal), azar(i + 1, j, k, canal), fx);
-  const b = entre(azar(i, j + 1, k, canal), azar(i + 1, j + 1, k, canal), fx);
-  const c = entre(azar(i, j, k + 1, canal), azar(i + 1, j, k + 1, canal), fx);
-  const d = entre(
-    azar(i, j + 1, k + 1, canal),
-    azar(i + 1, j + 1, k + 1, canal),
-    fx,
-  );
-  return entre(entre(a, b, fy), entre(c, d, fy), fz);
-}
-
-/**
- * Lo que vale el ruido de dos octavas sin normalizar, en desviación típica.
- * Medido sobre doscientas mil muestras: 0,339. Ver `turbulencia.test.ts`.
- */
-const DESVIACION_DEL_RUIDO = 0.339;
-
-/**
- * Ruido de desviación típica uno: una octava a la escala y otra más fina, que
- * es lo que da el bache corto encima del vaivén largo.
- */
-export function ruido(x: number, y: number, z: number, canal: number): number {
-  const grueso = valor(x, y, z, canal);
-  const fino = valor(x * 2.3 + 17.1, y * 2.3 - 5.3, z * 2.3 + 9.7, canal + 7);
-  return (grueso * 0.8 + fino * 0.45) / DESVIACION_DEL_RUIDO;
-}

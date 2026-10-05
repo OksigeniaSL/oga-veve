@@ -114,6 +114,11 @@ export interface AircraftMesh {
    */
   aerofrenos?: import("./aerofrenos").Aerofrenos | null;
   /**
+   * Y el ala que se dobla con la carga, en los aviones grandes cuyo modelo la
+   * trae: los dos reactores. `null` en los demás. Ver `world/ala-que-se-dobla.ts`.
+   */
+  ala?: import("./ala-que-se-dobla").AlaQueSeDobla | null;
+  /**
    * Y su palanca en el pedestal de la cabina. Ver
    * `world/palanca-de-aerofrenos.ts`.
    */

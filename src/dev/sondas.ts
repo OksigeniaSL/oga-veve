@@ -699,6 +699,26 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * por lo volado desde el despegue. Ver `flight/turbulencia-del-vuelo.ts`.
      */
     turbulencia: () => juego.turbulenciaParaBanco,
+    /** Las ráfagas de ahora: si se está en una racha y lo que sopla. Ver `flight/rafagas.ts`. */
+    rafagas: () => juego.rafagasParaBanco,
+    /**
+     * **El ala que se dobla**: cuánto ha subido la punta, m, y con qué se
+     * dobla. `null` en el avión que no la dobla. Ver `world/ala-que-se-dobla.ts`.
+     */
+    ala: () => {
+      const a = juego.aircraftMesh.ala;
+      return a
+        ? {
+            punta: a.flexion.punta,
+            porG: a.flexion.porG,
+            hz: a.flexion.hz,
+            piezas: a.piezas,
+            raiz: a.raiz,
+            largo: a.largo,
+            estaciones: a.estaciones.length,
+          }
+        : null;
+    },
     ponerTurbulencia: (zonas: Parameters<Game["ponerTurbulencia"]>[0]) =>
       juego.ponerTurbulencia(zonas),
     /**

@@ -661,6 +661,41 @@ export interface AircraftConfig {
    */
   ventanillas: "persiana" | "electrocromica" | null;
   /**
+   * **El ala que se dobla**, en el avión cuya ala se ve doblarse desde la
+   * ventanilla; sin poner, en los demás.
+   *
+   * Pedido por Enrique, que ha volado mucho de pasajero: «en los grandes y
+   * modernos, el ala que se dobla vista desde la ventanilla mientras dentro
+   * casi no se nota». En vuelo las puntas suben con la carga y en tierra
+   * caen; con las ráfagas se doblan de más y oscilan.
+   *
+   * - `porG`: cuánto sube la punta por cada g de carga, m, desde como está en
+   *   tierra parado, que es como la dibuja el modelo.
+   * - `hz`: la frecuencia de su primer modo de flexión, con la que oscila.
+   *
+   * La cifra que hay publicada es la del 787: en el ensayo de carga última de
+   * 2010 sus puntas subieron **unos 7,6 m (25 pies) al 150 % de la carga
+   * máxima** (Boeing, 28-3-2010); con la carga límite de un avión de
+   * transporte, 2,5 g (14 CFR 25.337), eso es 7,6 / 3,75 = **2,03 m por g**,
+   * un 6,7 % de su semienvergadura de 30,06 m. Es del mismo orden que la que
+   * dan la NASA y Boeing para un ala así en crucero, alrededor del 10 % de la
+   * semienvergadura (Nguyen et al., AIAA Aviation 2014), que no dice desde qué
+   * forma la mide; se toma la del ensayo, que sí lo dice.
+   *
+   * Para el A320 y el 747 no hay cifra publicada que se pueda citar, así que
+   * se escala desde esa con la cuenta de una viga: con la misma deformación en
+   * la raíz y el mismo espesor relativo, la flexión partida por la
+   * semienvergadura va con el alargamiento (`δ/L ∝ L/h ∝ b²/S`). El del 787,
+   * alrededor de diez. Ver `flexionEscalada` en `world/ala-que-se-dobla.ts`,
+   * que es donde se comprueba la cuenta.
+   *
+   * Las frecuencias, en la horquilla que da Airbus para el primer modo de
+   * flexión del ala de un avión de línea, «generalmente entre 1,1 y 1,5 Hz»
+   * (patente US 8.649.919 B2, 2014): el ala corta, en el extremo rígido; la
+   * larga, en el blando.
+   */
+  alaQueSeDobla?: { readonly porG: number; readonly hz: number };
+  /**
    * **Vmo**: velocidad indicada máxima, en nudos.
    *
    * Es un límite de **estructura**: lo que aguanta un fuselaje es presión
@@ -1666,6 +1701,13 @@ export const ARAI: AircraftConfig = {
   avisosHablados: true,
   // Persiana de plástico, como cualquier reactor de pasillo único.
   ventanillas: "persiana",
+  /*
+   * **Ochenta centímetros por g**: trece metros de semiala con alargamiento
+   * 9,4, escalados desde el 787 —ver `alaQueSeDobla` en la ficha—. En crucero,
+   * casi un metro más arriba que en el puesto. Y a 1,5 Hz, el extremo rígido
+   * de la horquilla, que es un ala corta.
+   */
+  alaQueSeDobla: { porG: 0.82, hz: 1.5 },
   // Reactor regional.
   vmoKt: 320,
   /*
@@ -1936,6 +1978,14 @@ export const YVAGA: AircraftConfig = {
    * llevan persiana: si este se quisiera de aquella generación, es esta línea.
    */
   ventanillas: "electrocromica",
+  /*
+   * **Un metro y cuarenta por g**: treinta metros de semiala, pero con el
+   * alargamiento de un 747, siete, que es un ala más corta y gruesa que la del
+   * 787 —ver `alaQueSeDobla` en la ficha—. En crucero, la punta metro y medio
+   * por encima de donde está en tierra. Y a 1,1 Hz, el extremo blando de la
+   * horquilla, que es la más larga de la flota.
+   */
+  alaQueSeDobla: { porG: 1.4, hz: 1.1 },
   /*
    * Los del de fuselaje ancho, que son los del avión del que sale: 365 nudos y
    * Mach 0,92. Y es el único de la flota donde el cruce cae a una altura a la

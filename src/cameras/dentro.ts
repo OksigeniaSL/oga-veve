@@ -5,8 +5,8 @@
  * suavizado ninguno**: la cámara es la cabeza del piloto y va rígidamente
  * unida al avión, así que copia su posición y su orientación sin filtrar
  * nada. Cualquier retardo aquí se lee como que la cabeza va suelta. Lo único
- * que se mueve son los centímetros que da el cuello en un bache: ver
- * `CUELLO_HZ`.
+ * que se mueve son los milímetros que se hunde el cuerpo en un bache: ver
+ * `Cuello`.
  */
 
 import { Vector3, type PerspectiveCamera } from "three";
@@ -91,25 +91,45 @@ export function encuadreDeCabina(
 }
 
 /**
- * **La cabeza en un bache**: lo que se mueve respecto al asiento.
+ * **El cuerpo en un bache**: lo que se mueven los ojos respecto al asiento.
  *
  * La cámara va unida al avión, y así tiene que ser: la cabeza del piloto no va
- * suelta. Pero un bache se siente precisamente en el cuerpo —el asiento sube de
- * golpe y la cabeza se queda un instante atrás—, y sin eso la turbulencia solo
- * se veía desde fuera, en el avión moviéndose. Desde dentro, el horizonte
- * cabeceaba y nada más.
+ * suelta. Pero un bache se siente en el cuerpo —el asiento empuja de golpe y
+ * el cuerpo se hunde un poco en él—, y sin eso la turbulencia solo se veía
+ * desde fuera.
  *
- * Es un muelle con amortiguador —el cuello—: responde al **cambio** de carga
- * vertical y no a la carga, así que un viraje sostenido o una subida no bajan
- * la vista, y un bache la mueve unos centímetros y la devuelve. Con tope de
- * cuatro centímetros y un hercio y medio: se nota y no marea. Y nada con el
- * movimiento reducido del sistema, como el traqueteo.
+ * **Y era esto lo que «parece del render».** Medido antes de tocarlo con
+ * `scripts/medir-sacudidas.mjs` (JAZ 120 en crucero, turbulencia moderada):
+ * el cuello de antes era un muelle de hercio y medio que respondía a la
+ * aceleración del fotograma, y con el vaivén lento del aire —todo por debajo
+ * de un hercio— llevaba los ojos hasta 2,5 cm del asiento, de tres a casi
+ * cinco de pico a pico. O sea: la cabina, el panel y el marco de la
+ * ventanilla flotando arriba y abajo delante de la cara sin que el avión
+ * hiciera nada. Un cuerpo de verdad no se mueve respecto al asiento con algo
+ * tan lento: va con el avión.
+ *
+ * Ahora es el cuerpo sentado, con sus números:
+ *
+ * - **lo mueve la carga**, lo que empuja el asiento —el factor de carga del
+ *   modelo de vuelo en el aire; en tierra, lo que sube y baja el avión—, y no
+ *   una resta de velocidades;
+ * - **es duro**: la resonancia vertical del cuerpo sentado está hacia los
+ *   cuatro o cinco hercios (Griffin, *Handbook of Human Vibration*, 1990), así
+ *   que con lo lento no se mueve nada y con un bache se hunde unos milímetros
+ *   y vuelve. Bien amortiguado, sin rebote: ni un temblor que no traiga el
+ *   aire;
+ * - **y cuánto, lo dice el avión**: un bache moderado en el cuatrimotor son
+ *   tres décimas de g y medio centímetro; en la avioneta, que con el mismo aire
+ *   carga tres veces más, el triple. «En el avión grande se nota menos que en
+ *   la avioneta.» Tope de dos centímetros y medio.
+ *
+ * Y nada con el movimiento reducido del sistema, como el traqueteo.
  */
-const CUELLO_HZ = 1.5;
-const CUELLO_AMORTIGUA = 0.55;
-const CABEZA_HASTA = 0.04;
-/** Lo que tarda el cuerpo en hacerse a una carga que dura, s. */
-const SE_HACE_A_LA_CARGA = 1.2;
+const CUERPO_HZ = 4;
+const CUERPO_AMORTIGUA = 0.7;
+const CABEZA_HASTA = 0.025;
+/** La carga que se toma como mucho, g de más o de menos: un golpe no es una catapulta. */
+const CARGA_HASTA = 2.5;
 
 /**
  * El cuello, aparte: lo usan la cabina y el asiento de ventanilla, que en un
@@ -120,10 +140,8 @@ export class Cuello {
   /** Dónde está la cabeza respecto al asiento, m, y a qué velocidad va. */
   private cabeza = 0;
   private cabezaVa = 0;
-  /** La subida del fotograma anterior, para sacar la aceleración vertical. */
+  /** La subida del fotograma anterior, para la carga en tierra. */
   private subidaAntes: number | null = null;
-  /** La aceleración a la que el cuerpo ya se ha hecho, m/s². */
-  private hecho = 0;
 
   /** Un paso. Devuelve cuánto está la cabeza por encima de su sitio, m. */
   paso(state: FlightState, dt: number, ctx: Contexto, activo: boolean): number {
@@ -132,25 +150,32 @@ export class Cuello {
     if (!activo || ctx.movimientoReducido || !(dt > 0) || antes === null) {
       this.cabeza = 0;
       this.cabezaVa = 0;
-      this.hecho = 0;
       return 0;
     }
     // Un fotograma larguísimo no es un bache: es la pestaña que vuelve.
     const paso = Math.min(dt, 0.05);
-    const acelera = Math.max(
-      -15,
-      Math.min(15, (state.verticalSpeed - antes) / Math.max(dt, 1e-3)),
-    );
-    this.hecho += (acelera - this.hecho) * Math.min(1, paso / SE_HACE_A_LA_CARGA);
-    const w = 2 * Math.PI * CUELLO_HZ;
-    const empuje = acelera - this.hecho;
-    this.cabezaVa +=
-      (-w * w * this.cabeza - 2 * CUELLO_AMORTIGUA * w * this.cabezaVa - empuje) *
-      paso;
-    this.cabeza = Math.max(
-      -CABEZA_HASTA,
-      Math.min(CABEZA_HASTA, this.cabeza + this.cabezaVa * paso),
-    );
+    /*
+     * Lo que empuja el asiento, g de más: en el aire, la carga del modelo; en
+     * tierra el ala no sostiene y lo que se nota es el suelo —el golpe de la
+     * toma, los baches de la pista—, que es lo que sube y baja el avión.
+     */
+    const deMas = state.onGround
+      ? (state.verticalSpeed - antes) / Math.max(dt, 1e-3) / 9.80665
+      : state.loadFactor - 1;
+    const empuje = Math.max(-CARGA_HASTA, Math.min(CARGA_HASTA, deMas)) * 9.80665;
+    /*
+     * El muelle, con el paso partido para que a cuatro hercios no se dispare
+     * en un fotograma de cincuenta milisegundos.
+     */
+    const w = 2 * Math.PI * CUERPO_HZ;
+    const trozos = Math.max(1, Math.ceil(paso / 0.004));
+    const h = paso / trozos;
+    for (let i = 0; i < trozos; i++) {
+      this.cabezaVa +=
+        (-w * w * this.cabeza - 2 * CUERPO_AMORTIGUA * w * this.cabezaVa - empuje) * h;
+      this.cabeza += this.cabezaVa * h;
+    }
+    this.cabeza = Math.max(-CABEZA_HASTA, Math.min(CABEZA_HASTA, this.cabeza));
     return this.cabeza;
   }
 }

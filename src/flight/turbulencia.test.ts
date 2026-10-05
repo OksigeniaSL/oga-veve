@@ -7,16 +7,13 @@ import { describe, expect, it } from "vitest";
 import {
   CAMPO_ABIERTO,
   MAR,
-  QUIETO,
   calorDelSuelo,
   causasDe,
+  constanciaDe,
   cuantoSeMueve,
   nivelDe,
-  rachaEn,
   rugosidadDe,
-  ruido,
   type Aire,
-  type Donde,
 } from "./turbulencia";
 
 const KT = 0.514444;
@@ -28,20 +25,10 @@ const CALMA: Aire = {
   altura: 700,
 };
 
-const AQUI: Donde = {
-  x: 0,
-  y: 700,
-  z: 0,
-  t: 0,
-  vientoX: 0,
-  vientoZ: 0,
-  envergadura: 11,
-};
 
 describe("de dónde sale", () => {
   it("sin viento, sin sol, sin nubes y sin tormenta, nada", () => {
     expect(cuantoSeMueve(CALMA)).toBe(0);
-    expect(rachaEn(CALMA, AQUI)).toBe(QUIETO);
   });
 
   /*
@@ -151,89 +138,25 @@ describe("los cuatro niveles", () => {
   });
 });
 
-describe("la ráfaga", () => {
-  const movido: Aire = {
-    sobreElSuelo: 300,
-    vientoKt: 20,
-    baseDeNubes: null,
-    altura: 700,
-  };
-
-  /** Recorre el campo a esta velocidad y devuelve las rachas de cada paso. */
-  function recorrer(aire: Aire, velocidad: number, segundos: number) {
-    const rachas = [];
-    for (let t = 0; t < segundos; t += 0.05)
-      rachas.push(rachaEn(aire, { ...AQUI, x: velocidad * t, t }));
-    return rachas;
-  }
-
-  const rms = (xs: number[]) =>
-    Math.sqrt(xs.reduce((s, x) => s + x * x, 0) / xs.length);
-
-  it("el ruido tiene desviación típica uno", () => {
-    const muestras: number[] = [];
-    for (let i = 0; i < 40000; i++)
-      muestras.push(ruido(i * 0.37, i * 0.11 + 3, i * 0.23 - 7, i % 4));
-    expect(rms(muestras)).toBeGreaterThan(0.9);
-    expect(rms(muestras)).toBeLessThan(1.1);
-  });
-
-  it("la vertical tiene la fuerza que se dice, de media", () => {
-    const rachas = recorrer(movido, 60, 600);
-    const vertical = rms(rachas.map((r) => r.y));
-    const sigma = cuantoSeMueve(movido);
-    expect(vertical).toBeGreaterThan(sigma * 0.7);
-    expect(vertical).toBeLessThan(sigma * 1.3);
+describe("dentro de la nube y cuánto del rato", () => {
+  it("dentro de la nube que se ve, ligera; fuera, nada", () => {
+    expect(cuantoSeMueve({ ...CALMA, dentroDeNube: 1 })).toBeGreaterThan(0.4);
+    expect(nivelDe(cuantoSeMueve({ ...CALMA, dentroDeNube: 1 }))).toBe("ligera");
+    expect(cuantoSeMueve({ ...CALMA, dentroDeNube: 0 })).toBe(0);
   });
 
   /*
-   * **Y cerca del suelo empuja más de lado que hacia arriba**, que es lo que
-   * dice Dryden: el suelo aplasta los remolinos verticales. Arriba, igual en
-   * todas direcciones.
+   * La frecuencia del AIM (TBL 7-1-11): la térmica, ocasional; la tormenta,
+   * continua; la del camino, según su fuerza.
    */
-  it("cerca del suelo, más de lado que hacia arriba; arriba, igual", () => {
-    const bajo = recorrer({ ...movido, sobreElSuelo: 40 }, 60, 600);
-    expect(rms(bajo.map((r) => r.x))).toBeGreaterThan(
-      rms(bajo.map((r) => r.y)) * 1.3,
-    );
-    const nube = { ...CALMA, baseDeNubes: 700, sobreElSuelo: 900 };
-    const alto = recorrer(nube, 60, 600);
-    const lado = rms(alto.map((r) => r.x));
-    const arriba = rms(alto.map((r) => r.y));
-    expect(lado / arriba).toBeGreaterThan(0.7);
-    expect(lado / arriba).toBeLessThan(1.4);
-  });
-
-  /*
-   * **Está quieta en el sitio**: el mismo aire en el mismo instante sopla
-   * igual, y a más velocidad se cruzan más baches por segundo. Es la hipótesis
-   * de Taylor, la de todos los modelos de turbulencia de vuelo.
-   */
-  it("el mismo sitio, la misma racha; y más rápido, más baches", () => {
-    expect(rachaEn(movido, { ...AQUI, x: 123 })).toEqual(
-      rachaEn(movido, { ...AQUI, x: 123 }),
-    );
-    const cruces = (v: number) => {
-      const ys = recorrer(movido, v, 120).map((r) => r.y);
-      let n = 0;
-      for (let i = 1; i < ys.length; i++)
-        if (Math.sign(ys[i]!) !== Math.sign(ys[i - 1]!)) n++;
-      return n;
-    };
-    expect(cruces(120)).toBeGreaterThan(cruces(40) * 1.8);
-  });
-
-  it("y no se dispara: la peor racha no pasa de cuatro veces la fuerza", () => {
-    const sigma = cuantoSeMueve(movido);
-    const peor = Math.max(
-      ...recorrer(movido, 60, 600).map((r) => Math.abs(r.y)),
-    );
-    expect(peor).toBeLessThan(sigma * 4);
-  });
-
-  it("el alabeo es pequeño: un bache mueve las alas, no las voltea", () => {
-    const rachas = recorrer(movido, 40, 600);
-    expect(rms(rachas.map((r) => r.alabeo))).toBeLessThan(0.1);
-    expect(rms(rachas.map((r) => r.alabeo))).toBeGreaterThan(0);
+  it("cada causa con su frecuencia", () => {
+    const sola = (c: Partial<ReturnType<typeof causasDe>>) =>
+      constanciaDe({ mecanica: 0, termica: 0, nube: 0, tormenta: 0, camino: 0, ...c });
+    expect(sola({ termica: 1 })).toBeLessThan(1 / 3);
+    expect(sola({ tormenta: 2 })).toBeGreaterThan(2 / 3);
+    expect(sola({ mecanica: 1 })).toBeGreaterThan(1 / 3);
+    expect(sola({ mecanica: 1 })).toBeLessThan(2 / 3 + 0.01);
+    expect(sola({ camino: 0.95 })).toBeLessThan(sola({ camino: 2 }));
+    expect(sola({})).toBe(0);
   });
 });

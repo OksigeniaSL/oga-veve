@@ -50,6 +50,7 @@ import type {
   LoSacado,
 } from "./model";
 import { loQueDaElMotor, type AircraftConfig } from "./aircraft";
+import { cargaPorRafaga } from "./rafagas";
 
 /**
  * Velocidad de crucero cómoda **a nivel del mar**, como fracción de la ficha.
@@ -624,6 +625,16 @@ export class ArcadeFlightModel implements FlightModel {
    * Y solo la vertical. Un empujón de lado en un modelo donde el rumbo lo lleva
    * el mando sería el avión girando solo, que a los cuatro años es un mando
    * roto; un bache es el mundo moviéndose, que es lo que es.
+   *
+   * **Y el bache mueve a cada avión lo que lo movería de verdad.** Se sumaba
+   * entero al ascenso, con el mismo retraso para los seis: el cuatrimotor
+   * subía y bajaba con el aire igual que la avioneta. Ahora entra como entra
+   * en un ala: la ráfaga cambia el ángulo de ataque, eso es una carga —la de
+   * Pratt y Walker, `ρ·V·a·U/(2·W/S)`, ver `cargaPorRafaga`— y la carga
+   * acelera el avión hasta que va con el aire. La avioneta, con poca carga
+   * alar, se pone con él en medio segundo y lo nota entero; el grande tarda
+   * dos y apenas se entera, que es lo que pidió Enrique: «en el avión grande
+   * se nota menos».
    */
   ponerRacha(_x: number, y: number): void {
     this.bache = y;
@@ -631,6 +642,10 @@ export class ArcadeFlightModel implements FlightModel {
 
   /** El bache de ahora mismo, m/s. Ver `ponerRacha`. */
   private bache = 0;
+  /** Lo que el aire lleva ya al avión hacia arriba, m/s. Ver `ponerRacha`. */
+  private porElAire = 0;
+  /** Y la carga que pone ahora, g, encima de la de volar. */
+  private cargaDelAire = 0;
 
   romper(): void {}
 
@@ -640,6 +655,8 @@ export class ArcadeFlightModel implements FlightModel {
     this.guinada = 0;
     this.speed = initial.airspeed;
     this.climb = 0;
+    this.porElAire = 0;
+    this.cargaDelAire = 0;
     this.bank = 0;
     this.pitch = 0;
     this.state.position.copy(initial.position);
@@ -1342,8 +1359,30 @@ export class ArcadeFlightModel implements FlightModel {
      * pase una ráfaga. Ver `ponerRacha`.
      */
     const racha = this.state.onGround ? 0 : this.bache;
-    const wantedClimb = (canClimb ? (mando + planeo) * bite : 0) + racha;
-    this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
+    const wantedClimb = canClimb ? (mando + planeo) * bite : 0;
+    const delPiloto = this.climb - this.porElAire;
+    const piloto = delPiloto + (wantedClimb - delPiloto) * Math.min(1, step * 2.2);
+    /*
+     * El avión se pone con el aire al ritmo `g·Δn/U`: la ráfaga menos lo que ya
+     * lleva, por lo que carga cada metro por segundo. Exacto para cualquier
+     * paso, que con el reloj acelerado los pasos son largos.
+     */
+    const ac = this.aircraft;
+    const porMetro = cargaPorRafaga({
+      densidad: airDensity(this.state.position.y, this.aire),
+      velocidad: this.speed,
+      clAlpha: ac.aero.clAlpha,
+      cargaAlar: (ac.mass * GRAVITY) / ac.wingArea,
+    });
+    if (this.state.onGround || !(step > 0)) {
+      this.porElAire = 0;
+      this.cargaDelAire = 0;
+    } else {
+      const cambia = (racha - this.porElAire) * (1 - Math.exp(-GRAVITY * porMetro * step));
+      this.porElAire += cambia;
+      this.cargaDelAire = cambia / step / GRAVITY;
+    }
+    this.climb = piloto + this.porElAire;
 
     // El morro apunta a donde se va, más un pelín para que se vea la
     // intención. Sin ángulo de ataque: aquí no existe.
@@ -1458,7 +1497,16 @@ export class ArcadeFlightModel implements FlightModel {
      * No es un ajuste nuevo: es dejar de mentir sobre un número que ya existía.
      */
     s.yawRate = this.guinada;
-    s.loadFactor = 1;
+    /*
+     * **La carga, la de verdad que tiene este modelo**: en el aire, uno más lo
+     * que pone el bache —ver `ponerRacha`—; en tierra, lo que ya sostiene el
+     * ala con la velocidad, de nada parado a todo al rotar. No es el giro: el
+     * alabeo de este modelo es de dibujo. Lo leen el cuello de quien va dentro
+     * y el ala que se dobla. Ver `cameras/dentro.ts` y `world/ala-que-se-dobla.ts`.
+     */
+    s.loadFactor = s.onGround
+      ? Math.min(1, (this.speed / Math.max(1, this.aircraft.rotationSpeed)) ** 2)
+      : 1 + this.cargaDelAire;
     // Ni pérdida ni choque: en este peldaño no se puede perder.
     s.stalled = false;
     s.stallWarning = false;

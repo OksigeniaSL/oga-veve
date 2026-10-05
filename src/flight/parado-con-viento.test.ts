@@ -14,7 +14,8 @@ import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
-import { rachaEn, type Aire } from "./turbulencia";
+import { causasDe, constanciaDe, cuantoSeMueve, type Aire } from "./turbulencia";
+import { Rafagas } from "./rafagas";
 
 const KT = 0.514444;
 
@@ -54,15 +55,18 @@ function aparcado(
   };
   let peor = 0;
   let mas = -Infinity;
+  const rafagas = new Rafagas(deDonde + nudos);
   for (let t = 0; t < 60; t += 1 / 60) {
-    const r = rachaEn(aire, {
-      x: 0,
-      y: a.gearHeight,
-      z: 0,
-      t,
-      vientoX: vx,
-      vientoZ: vz,
+    const r = rafagas.paso(1 / 60, {
+      sigma: cuantoSeMueve(aire),
+      constancia: constanciaDe(causasDe(aire)),
+      sobreElSuelo: a.gearHeight,
+      enTierra: true,
+      velocidad: m.state.airspeed,
+      densidad: 1.225,
       envergadura: a.wingSpan,
+      cuerda: a.chord,
+      rumbo: 0,
     });
     m.ponerRacha(r.x, r.y, r.z, r.alabeo);
     m.step(1 / 60, {
