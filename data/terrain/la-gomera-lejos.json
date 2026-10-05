@@ -7,7 +7,7 @@
     "lon": -17.2146
   },
   "tamanoM": 192000,
-  "resolucion": 401,
-  "minM": 0,
-  "maxM": 3655
+  "resolucion": 641,
+  "minM": -1,
+  "maxM": 3686
 }

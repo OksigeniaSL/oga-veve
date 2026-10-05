@@ -509,10 +509,24 @@ describe("el agua sobre la tierra", () => {
     const a = GLSL_DEL_CIELO.agua;
     expect(a).toContain("if (hayTierra(cameraPosition.xz + vRayo.xz, length(vRayo)))");
     expect(a).not.toMatch(/\bdiscard\s*;/);
-    // Una lectura por fragmento, filtrada por la tarjeta, y sin bucles.
-    expect(a.match(/textureLod\(/g)?.length).toBe(1);
-    expect(a).not.toContain("texelFetch");
+    // Sin bucles: las islas vecinas van escritas en el propio mapa.
     expect(a).not.toMatch(/\bfor \(/);
+  });
+
+  it("y la orilla es la de la malla: tres nudos de su triángulo, no cuatro filtrados", () => {
+    /*
+     * Con el filtro de la tarjeta el cuadro se repartía a cuatro esquinas y
+     * la malla lo dibuja en dos triángulos: en la costa del horizonte, con el
+     * mar hundido treinta metros, el agua se quitaba encima de la rampa que
+     * baja al fondo y salían dientes oscuros. Tres lecturas sueltas por
+     * mapa —dos comunes y la de la esquina de su triángulo—, partidas por la
+     * misma diagonal que la malla. Ver `enLosDosTriangulos` en
+     * `world/terrain.ts`, que hace la misma cuenta y tiene sus pruebas.
+     */
+    const a = GLSL_DEL_CIELO.agua;
+    expect(a).not.toContain("textureLod(mapa");
+    expect(a.match(/texelFetch\(mapa/g)?.length).toBe(4);
+    expect(a).toContain("if (t.x + t.y <= 1.0)");
   });
 });
 

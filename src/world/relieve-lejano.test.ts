@@ -16,9 +16,11 @@
 
 import { describe, expect, it } from "vitest";
 import { SCENARIOS, vecesLejosDe } from "./scenarios";
+import { enCanarias } from "./canarias";
 
 interface Ficha {
   readonly tamanoM?: number;
+  readonly resolucion?: number;
 }
 
 const RELIEVES = import.meta.glob("../../data/terrain/*-lejos.json", {
@@ -67,6 +69,42 @@ describe("el mapa lejano mide lo que se dibuja", () => {
     it(`${esc.id}: la foto del horizonte cubre ${lado / 1000} km`, () => {
       if (PENDIENTES.has(esc.id)) return;
       expect(foto.tamanoM).toBe(lado);
+    });
+  }
+});
+
+/*
+ * **Y a unos trescientos metros por muestra en las islas.**
+ *
+ * Es lo que quita lo «a bloques» de la captura de Enrique en La Palma —«verde
+ * plano y a bloques, como estar jugando en Minecraft»—: con las 400 muestras
+ * del mapa fino repartidas en mundos de trescientos kilómetros, cada una
+ * cubría setecientos u ochocientos metros y las cumbres salían en facetas de
+ * casi un kilómetro. Fuerteventura y La Gomera se quedaron atrás un tiempo
+ * —ver su `segmentosLejos`— y esta prueba es la que no deja que vuelva a
+ * pasar.
+ *
+ * Gran Canaria se queda fuera **a sabiendas**: su mundo mide 380 km para
+ * alcanzar Lanzarote, y con 1.024 muestras le salen 371 m. Esta lista solo
+ * puede menguar.
+ */
+const MAS_ANCHAS = new Set(["gran-canaria"]);
+
+describe("el relieve lejano de las islas, a unos trescientos metros por muestra", () => {
+  for (const esc of SCENARIOS) {
+    if (!esc.aerodrome || !enCanarias(esc.aerodrome.origin)) continue;
+    const relieve = de(RELIEVES, "-lejos.json", esc.id);
+    it(`${esc.id}: su mapa lejano tiene las muestras que dice y no pasa de 330 m`, () => {
+      expect(relieve?.tamanoM).toBeDefined();
+      expect(relieve?.resolucion).toBeDefined();
+      // Que el fichero sea el que se extrajo con sus muestras, y no el viejo.
+      if (esc.segmentosLejos) expect(relieve!.resolucion).toBe(esc.segmentosLejos + 1);
+      const paso = relieve!.tamanoM! / (relieve!.resolucion! - 1);
+      if (MAS_ANCHAS.has(esc.id)) {
+        expect(paso, "afinado: quitarlo de MAS_ANCHAS").toBeGreaterThan(330);
+        return;
+      }
+      expect(paso).toBeLessThanOrEqual(330);
     });
   }
 });

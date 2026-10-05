@@ -807,16 +807,28 @@ const VERTICE_DEL_AGUA = /* glsl */ `
  * entera para nada: sobre el mar de Gran Canaria, junto con leer los cuatro
  * nudos de cada cuadro y recorrer las islas vecinas en un bucle, casi dos
  * milisegundos por cuadro. Así que donde hay tierra el agua sale
- * **transparente** en vez de tirarse, el mapa se lee una sola vez con el
- * filtro de la tarjeta y las islas vecinas van escritas en el propio mapa:
- * un par de décimas de milisegundo.
+ * **transparente** en vez de tirarse y las islas vecinas van escritas en el
+ * propio mapa: un par de décimas de milisegundo.
  *
- * El filtro reparte el cuadro a cuatro esquinas y la malla a dos
- * triángulos, así que por dentro de un cuadro las dos orillas no coinciden
- * del todo. De lejos da igual —es donde hacía falta— y de cerca manda el
- * fondo de profundidad, que ahí sí distingue: a menos de un kilómetro solo
- * se aparta el agua de la tierra que le saca dos metros, y a tres
- * kilómetros ya de toda.
+ * **Y en los dos triángulos de cada cuadro, como la malla**, no a cuatro
+ * esquinas. Se leía con el filtro de la tarjeta, que reparte el cuadro a
+ * cuatro esquinas, y se dio por bueno con este argumento: «por dentro de un
+ * cuadro las dos orillas no coinciden del todo; de lejos da igual». De lejos
+ * no daba igual. En el horizonte el mar va hundido treinta metros —ver
+ * `buildFarMesh`—, así que un cuadro de costa con una esquina en tierra es
+ * una rampa empinada que baja hasta el fondo, y donde el filtro decía
+ * «tierra» y los triángulos ya estaban bajo el agua, el agua se quitaba y se
+ * veía la rampa, con la foto del mar, que es casi negra: una cuña oscura en
+ * cada cuadro de costa. Eran los dientes oscuros a lo largo de la costa de
+ * las capturas de La Palma y de Jandía, y salían a cualquier distancia.
+ *
+ * Así que se leen los tres nudos del triángulo en el que cae el punto, con
+ * la misma diagonal que la malla —ver `buildFarMesh` y `buildTerrainMesh`—,
+ * y la orilla que sale es la raya en la que la malla cruza el agua. Son tres
+ * lecturas sueltas en vez de una filtrada, medidas con la tarjeta del
+ * portátil contra `main`, alternando las dos en el mismo navegador y en
+ * Fuerteventura, La Gomera, La Palma y Los Rodeos: el tiempo de GPU no se
+ * movió por encima de lo que se mueve entre dos tiradas iguales.
  */
 const GLSL_DE_LAS_ORILLAS = /* glsl */ `
   uniform float conOrillas;
@@ -833,7 +845,19 @@ const GLSL_DE_LAS_ORILLAS = /* glsl */ `
     if (any(lessThan(g, vec2(0.0))) || any(greaterThan(g, vec2(sitio.w - 1.0))))
       return 0.0;
     dentro = true;
-    return textureLod(mapa, (g + 0.5) / sitio.w, 0.0).r;
+    // El cuadro y el triángulo: el de la esquina (0, 0) o el de la (1, 1),
+    // partidos por la diagonal de (1, 0) a (0, 1), que es la de la malla.
+    vec2 c = min(floor(g), vec2(sitio.w - 2.0));
+    vec2 t = g - c;
+    ivec2 i = ivec2(c);
+    float b = texelFetch(mapa, i + ivec2(1, 0), 0).r;
+    float d = texelFetch(mapa, i + ivec2(0, 1), 0).r;
+    if (t.x + t.y <= 1.0) {
+      float a = texelFetch(mapa, i, 0).r;
+      return a + (b - a) * t.x + (d - a) * t.y;
+    }
+    float e = texelFetch(mapa, i + ivec2(1, 1), 0).r;
+    return e + (d - e) * (1.0 - t.x) + (b - e) * (1.0 - t.y);
   }
 
   bool hayTierra(vec2 p, float lejos) {

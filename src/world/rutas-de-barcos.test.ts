@@ -12,6 +12,7 @@ import { dondeCae, type Sitio } from "./entre-aerodromos";
 import { LINEAS, NUDO, Navieras } from "./rutas-de-barcos";
 import { enCanarias } from "./canarias";
 import { SCENARIOS } from "./scenarios";
+import { esAguaDeCasa } from "./agua-de-casa";
 
 interface Mapa {
   readonly id: string;
@@ -19,6 +20,8 @@ interface Mapa {
   readonly tamanoM: number;
   readonly resolucion: number;
   readonly datos: Int16Array;
+  /** El agua de su escenario, m: lo que el juego pinta como mar. */
+  readonly nivel: number;
 }
 
 /*
@@ -56,12 +59,16 @@ const MAPAS: Mapa[] = [
   const b = fs.readFileSync(`data/terrain/${id}.bin`);
   const copia = b.slice();
   const datos = new Int16Array(copia.buffer, 0, copia.byteLength / 2);
-  return { ...ficha, datos };
+  const nivel = SCENARIOS.find((s) => `${s.id}-lejos` === id)!.waterLevel;
+  return { ...ficha, datos, nivel };
 });
 
-/** La cota en un sitio según el mapa más fino que lo cubra, o `null`. */
-function cota(p: Sitio): number | null {
-  let mejor: { h: number; paso: number } | null = null;
+/**
+ * La cota en un sitio según el mapa más fino que lo cubra, con el agua de su
+ * escenario, o `null`.
+ */
+function cota(p: Sitio): { h: number; nivel: number } | null {
+  let mejor: { h: number; paso: number; nivel: number } | null = null;
   for (const m of MAPAS) {
     const { x, z } = dondeCae(m.origen, p);
     const mitad = m.tamanoM / 2;
@@ -70,9 +77,9 @@ function cota(p: Sitio): number | null {
     const col = Math.round((x + mitad) / paso);
     const fila = Math.round((z + mitad) / paso);
     const h = m.datos[fila * m.resolucion + col] ?? 0;
-    if (!mejor || paso < mejor.paso) mejor = { h, paso };
+    if (!mejor || paso < mejor.paso) mejor = { h, paso, nivel: m.nivel };
   }
-  return mejor?.h ?? null;
+  return mejor;
 }
 
 describe("las líneas de barcos", () => {
@@ -109,9 +116,20 @@ describe("las líneas de barcos", () => {
             lat: a.lat + (b.lat - a.lat) * f,
             lon: a.lon + (b.lon - a.lon) * f,
           };
-          const h = cota(p);
-          expect(h, `${p.lat.toFixed(4)}, ${p.lon.toFixed(4)} sin relieve`).not.toBeNull();
-          if (h! > 1) enTierra.push(`${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}: ${h} m`);
+          const aqui = cota(p);
+          expect(aqui, `${p.lat.toFixed(4)}, ${p.lon.toFixed(4)} sin relieve`).not.toBeNull();
+          /*
+           * **Tierra es lo que el juego pinta como tierra**: lo que sale del
+           * agua de su escenario, a dos metros en Canarias. Contaba como
+           * tierra todo lo que pasara de un metro, y con el mapa lejano de La
+           * Gomera a trescientos metros —el más fino sobre el puerto de Santa
+           * Cruz— dos muestras de dentro del puerto, a dos metros, sacaban
+           * la línea de Las Palmas por tierra. A dos metros el juego dibuja
+           * mar —ver `esAguaDeCasa`—, y por ahí va el barco.
+           */
+          const { h, nivel } = aqui!;
+          if (!esAguaDeCasa(h, nivel))
+            enTierra.push(`${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}: ${h} m`);
         }
         recorrido += largo;
       }

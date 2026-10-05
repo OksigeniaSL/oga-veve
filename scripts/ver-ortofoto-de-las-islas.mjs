@@ -21,6 +21,12 @@
  * - `la-palma-caldera`, `la-palma-norte` y `la-palma-teide` — el relieve
  *   lejano de La Palma: la Caldera desde el mar del este, el norte de la
  *   isla desde fuera del mapa fino y el Teide visto desde ella;
+ * - `fuerteventura-betancuria`, `fuerteventura-jandia`, `la-gomera-norte` y
+ *   `la-gomera-oeste` — el relieve lejano de las dos islas que se quedaron a
+ *   ochocientos y a cuatrocientos ochenta metros por muestra: el macizo de
+ *   Betancuria desde el aeropuerto, Jandía desde el aire, y el norte y el
+ *   oeste de La Gomera desde el mar. Y con ellas la costa, que es donde
+ *   salían los dientes oscuros en el agua;
  * - `la-palma-desde-tfn` — la misma, llegando desde Los Rodeos: La Palma es
  *   el vecino y el resto de la isla salía de la foto del horizonte;
  * - `teide` y `nieves` — las cumbres de Tenerife y Gran Canaria desde
@@ -77,6 +83,40 @@ const VISTAS = {
     sitio: [28.62, -17.70],
     altura: 2500,
     mira: [28.27269, -16.64227],
+  },
+  /*
+   * **Y Fuerteventura y La Gomera**, que se quedaron fuera de aquello: la
+   * una por los triángulos de sus llanos y la otra por la línea de barcos de
+   * Santa Cruz. Ver `segmentosLejos` en `world/scenarios.ts` y
+   * `world/malla-lejana.ts`.
+   */
+  "fuerteventura-betancuria": {
+    escenario: "fuerteventura",
+    origen: [28.4527, -13.8638],
+    sitio: [28.47, -13.9],
+    altura: 1200,
+    mira: [28.4, -14.08],
+  },
+  "fuerteventura-jandia": {
+    escenario: "fuerteventura",
+    origen: [28.4527, -13.8638],
+    sitio: [28.2, -14.1],
+    altura: 1500,
+    mira: [28.08, -14.36],
+  },
+  "la-gomera-norte": {
+    escenario: "la-gomera",
+    origen: [28.0296, -17.2146],
+    sitio: [28.28, -17.22],
+    altura: 1500,
+    mira: [28.12, -17.25],
+  },
+  "la-gomera-oeste": {
+    escenario: "la-gomera",
+    origen: [28.0296, -17.2146],
+    sitio: [28.1, -17.45],
+    altura: 1200,
+    mira: [28.12, -17.25],
   },
   "la-palma-desde-tfn": {
     escenario: "tenerife-norte",

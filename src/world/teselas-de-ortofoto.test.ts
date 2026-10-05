@@ -318,7 +318,20 @@ describe("el sombreador, colgado detrás de la foto", () => {
 
   it("lee las derivadas sin cortar, para que no salga una raya en cada borde", () => {
     expect(GLSL_DE_LAS_TESELAS.cuerpo).toContain("textureGrad(");
-    expect(GLSL_DE_LAS_TESELAS.cuerpo).toContain("dFdx(enLaTesela)");
+    expect(GLSL_DE_LAS_TESELAS.cuerpo).not.toContain("dFdx(enLaTesela)");
+  });
+
+  it("y del nivel más fino, antes de mirar el índice: las rayas en los bordes de nivel de la costa", () => {
+    /*
+     * Derivar la coordenada dentro de la tesela mezcla dos niveles donde se
+     * tocan, y el mipmap salta al color medio de la tesela; y derivar dentro
+     * de un «if» que no toman todos los píxeles deja la derivada sin definir.
+     */
+    const c = GLSL_DE_LAS_TESELAS.cuerpo;
+    expect(c).toContain("dFdx(vTesela)");
+    expect(c).toContain("dFdy(vTesela)");
+    expect(c.indexOf("dFdx(vTesela)")).toBeLessThan(c.indexOf("if (celdaT"));
+    expect(c.match(/dFd[xy]\(/g)?.length).toBe(2);
   });
 });
 

@@ -24,10 +24,10 @@ import {
   Group,
   HalfFloatType,
   InstancedMesh,
-  LinearFilter,
   Matrix4,
   Mesh,
   MeshLambertMaterial,
+  NearestFilter,
   PlaneGeometry,
   RedFormat,
   ShaderMaterial,
@@ -47,6 +47,7 @@ import { discoDeAgua, LADO_SIN_CURVA } from "./curvatura";
 import { mapaDelPavimento, type MapaDelPavimento } from "./mapa-del-pavimento";
 import { delante } from "./rumbo";
 import { esAguaDeCasa } from "./agua-de-casa";
+import { mallarConDetalle } from "./malla-lejana";
 import { vecesLejosDe, type Scenario } from "./scenarios";
 
 /**
@@ -132,6 +133,34 @@ export function cabeceraContraria(escenario: Scenario): string | null {
 /** Cuánto se hunde el mar del mapa lejano bajo el agua, m. Ver `buildFarMesh`. */
 const HUNDIDO_LEJOS = 30;
 
+/**
+ * Cuánto puede apartarse un bloque del horizonte de sus muestras, m. Ver
+ * `world/malla-lejana.ts`.
+ *
+ * **Cuatro metros.** Una muestra de trescientos metros ya yerra decenas en
+ * cualquier ladera —es lo que mide y no más—, y cuatro metros en un llano de
+ * kilómetros, con la foto encima, no se ven ni sobrevolándolo a mil pies: es
+ * menos de un grado de pendiente en un cuadro. Medido sobre el mapa de
+ * Fuerteventura a 313 m: con dos metros, 178.000 triángulos; con cuatro,
+ * 127.000; con ocho, 91.000. Los mundos del oeste —La Palma, Los Rodeos, La
+ * Gomera, El Hierro— apenas cambian: allí casi no hay llano.
+ */
+const TOLERANCIA_LEJOS = 4;
+
+/**
+ * El bloque más grande del horizonte, en cuadros: dieciséis, unos cinco
+ * kilómetros a trescientos metros por muestra.
+ *
+ * Por la curva de la Tierra, que se dibuja doblando cada nudo —ver
+ * `world/curvatura.ts` y el ADR 0009—: entre dos nudos a cinco kilómetros, el
+ * triángulo se aparta de la curva `s²/8R`, medio metro. Más grande, y la
+ * curva empieza a notarse en la forma; y en Fuerteventura los bloques de
+ * treinta y dos ya no quitan nada más. La regla del ADR —nada de triángulos
+ * de más de 250 m donde se apoye algo— no toca aquí: en el horizonte no se
+ * apoya nada, que las ciudades y los aeródromos van en los mapas finos.
+ */
+const BLOQUE_LEJOS = 16;
+
 
 /**
  * Un mapa de orillas: la cota de cada nudo sobre el agua, en una textura, y
@@ -178,9 +207,14 @@ export function mapaDeOrillas(
       medias[fila * lado + col] = DataUtils.toHalfFloat(h);
     }
   const textura = new DataTexture(medias, lado, lado, RedFormat, HalfFloatType);
-  // Un nudo por texel y el reparto entre nudos lo hace la tarjeta.
-  textura.minFilter = LinearFilter;
-  textura.magFilter = LinearFilter;
+  /*
+   * Un nudo por texel, y el reparto entre nudos lo hace el sombreador, en los
+   * dos triángulos de la malla: ver `GLSL_DE_LAS_ORILLAS` en `world/sky.ts`.
+   * Con el filtro de la tarjeta el reparto era a cuatro esquinas, y la orilla
+   * no era la de la malla.
+   */
+  textura.minFilter = NearestFilter;
+  textura.magFilter = NearestFilter;
   textura.generateMipmaps = false;
   textura.needsUpdate = true;
   return { textura, x0: esquina, z0: esquina, paso, lado };
@@ -188,9 +222,9 @@ export function mapaDeOrillas(
 
 /**
  * La cota sobre el agua que da un mapa de orillas en un punto, repartida
- * entre los cuatro nudos del cuadro como la reparte el filtro de la tarjeta.
- * Es la cuenta de `orillaEn` en el agua —ver `world/sky.ts`—, aquí para poder
- * comprobarla. `null` fuera del mapa.
+ * entre los tres nudos del triángulo de la malla en el que cae. Es la cuenta
+ * de `orillaEn` en el agua —ver `world/sky.ts`—, aquí para poder comprobarla.
+ * `null` fuera del mapa.
  */
 export function sobreElAguaEn(
   mapa: MapaDeOrillas,
@@ -202,13 +236,41 @@ export function sobreElAguaEn(
   if (gx < 0 || gz < 0 || gx > mapa.lado - 1 || gz > mapa.lado - 1) return null;
   const c = Math.min(Math.floor(gx), mapa.lado - 2);
   const f = Math.min(Math.floor(gz), mapa.lado - 2);
-  const u = gx - c;
-  const v = gz - f;
-  const h = (cc: number, ff: number): number =>
-    nudoDeOrillas(mapa, ff * mapa.lado + cc);
-  const arriba = h(c, f) + (h(c + 1, f) - h(c, f)) * u;
-  const abajo = h(c, f + 1) + (h(c + 1, f + 1) - h(c, f + 1)) * u;
-  return arriba + (abajo - arriba) * v;
+  return enLosDosTriangulos(
+    (cc, ff) => nudoDeOrillas(mapa, ff * mapa.lado + cc),
+    c,
+    f,
+    gx - c,
+    gz - f,
+  );
+}
+
+/**
+ * **El valor dentro de un cuadro, como lo dibuja la malla**: en dos
+ * triángulos partidos por la diagonal que va de la esquina (1, 0) a la
+ * (0, 1), que es la de `buildTerrainMesh` y `buildFarMesh`. `u` va por las
+ * columnas y `v` por las filas, de 0 a 1.
+ *
+ * No es lo mismo que repartirlo a cuatro esquinas: en un cuadro de costa
+ * del horizonte, con una esquina en tierra y tres en el mar hundido, las dos
+ * cuentas ponen la orilla hasta un cuarto de cuadro más allá una de la otra.
+ * Ver `GLSL_DE_LAS_ORILLAS` en `world/sky.ts`.
+ */
+export function enLosDosTriangulos(
+  h: (col: number, fila: number) => number,
+  c: number,
+  f: number,
+  u: number,
+  v: number,
+): number {
+  const b = h(c + 1, f);
+  const d = h(c, f + 1);
+  if (u + v <= 1) {
+    const a = h(c, f);
+    return a + (b - a) * u + (d - a) * v;
+  }
+  const e = h(c + 1, f + 1);
+  return e + (d - e) * (1 - u) + (b - e) * (1 - v);
 }
 
 export class Terrain {
@@ -715,6 +777,72 @@ export class Terrain {
 
   /** Hasta dónde llega la foto de en medio, si la hay. Ver `partirElHorizonte`. */
   private medioDelHorizonte = 0;
+
+  /** Las cotas que dibuja el horizonte. Ver `cotasLejanas`. */
+  private cotasDelHorizonte: Float32Array | null = null;
+
+  /**
+   * **Las cotas que dibuja el horizonte**, nudo a nudo: las del mapa lejano,
+   * con el mar hundido —ver `buildFarMesh`— y la costa a medio camino.
+   *
+   * Hechas una vez y no en cada pregunta: el horizonte se rehace dos o tres
+   * veces al cargar —entero, partido y recortado sobre los vecinos— y en
+   * cada una se preguntaba varias veces por cada nudo si era mar. Con el
+   * millón de nudos de los mapas de trescientos metros, eso era lo que se
+   * notaba al arrancar. Y de aquí las lee también el agua, para que su
+   * orilla sea la de la malla: ver `mapasDeOrillas`.
+   *
+   * ## La costa, a medio camino entre la muestra de tierra y la de mar
+   *
+   * Hundir el mar treinta metros pone la orilla —la raya en la que la malla
+   * cruza el agua— donde caiga entre las dos muestras, y eso depende de lo
+   * alta que sea la de tierra. Con una playa a cinco metros, la orilla se
+   * queda pegada a la tierra; con un acantilado de trescientos, como el norte
+   * de La Palma o Jandía, se va al noventa por ciento del camino hacia la
+   * muestra de mar, o sea casi un cuadro entero mar adentro. Cada cuadro de
+   * costa con su esquina en lo alto del acantilado era una cuña de tierra que
+   * salía al mar, y como encima va la foto, que ahí es mar, salía oscura: los
+   * dientes oscuros a lo largo de la costa, que se vieron en las capturas del
+   * relieve lejano de La Palma y de Fuerteventura.
+   *
+   * Dónde está la costa de verdad entre dos muestras de trescientos metros no
+   * lo sabe el mapa, pero más allá de la mitad del camino no hay por qué
+   * ponerla. Así que el mar que linda con tierra se hunde tanto como sube la
+   * tierra de al lado —la más alta—, si es más que los treinta de siempre: en
+   * un acantilado la orilla cae a mitad de camino, y en una playa se queda
+   * donde estaba, del lado de la tierra. Lo hundido no se ve, que el agua lo
+   * tapa.
+   */
+  private cotasLejanas(lejos: {
+    readonly datos: Int16Array;
+    readonly resolucion: number;
+  }): Float32Array {
+    if (this.cotasDelHorizonte) return this.cotasDelHorizonte;
+    const nivel = this.scenario.waterLevel;
+    const hundido = nivel - HUNDIDO_LEJOS;
+    const datos = lejos.datos;
+    const n = lejos.resolucion;
+    const alturas = Float32Array.from(datos, (h) =>
+      esAguaDeCasa(h, nivel) ? hundido : h,
+    );
+    for (let f = 0; f < n; f++)
+      for (let c = 0; c < n; c++) {
+        const i = f * n + c;
+        if (alturas[i] !== hundido) continue;
+        let tierra = nivel;
+        for (let df = -1; df <= 1; df++)
+          for (let dc = -1; dc <= 1; dc++) {
+            const ff = f + df;
+            const cc = c + dc;
+            if (ff < 0 || cc < 0 || ff >= n || cc >= n) continue;
+            const h = datos[ff * n + cc]!;
+            if (h > tierra) tierra = h;
+          }
+        alturas[i] = Math.min(hundido, nivel - (tierra - nivel));
+      }
+    this.cotasDelHorizonte = alturas;
+    return alturas;
+  }
 
   recortarElHorizonte(
     huecos: readonly { x: number; z: number; medio: number; nivel?: number }[],
@@ -1267,11 +1395,8 @@ export class Terrain {
      * La cota que se dibuja es la del mapa con el mar hundido, tal cual, y
      * esa no se moldea después: es esta.
      */
-    const hundido = nivel - HUNDIDO_LEJOS;
-    const lejano = (i: number): number => {
-      const h = lejos.datos[i] ?? 0;
-      return esAguaDeCasa(h, nivel) ? hundido : h;
-    };
+    const alturas = this.cotasLejanas(lejos);
+    const lejano = (i: number): number => alturas[i] ?? 0;
     const tamano = this.scenario.size * vecesLejosDe(this.scenario);
     const paso = tamano / (lejos.resolucion - 1);
     const m = lejos.resolucion;
@@ -1751,14 +1876,13 @@ export class Terrain {
      */
     const hundido = this.scenario.waterLevel - HUNDIDO_LEJOS;
     const ancho = lejos.resolucion;
-    const cota = (fila: number, col: number): number => {
-      const f = clampInt(fila, 0, res - 1) * SALTO;
-      const c = clampInt(col, 0, res - 1) * SALTO;
-      const h = lejos.datos[f * ancho + c] ?? 0;
-      return esAguaDeCasa(h, this.scenario.waterLevel) ? hundido : h;
-    };
+    const alturas = this.cotasLejanas(lejos);
+    const cota = (fila: number, col: number): number =>
+      alturas[
+        clampInt(fila, 0, res - 1) * SALTO * ancho +
+          clampInt(col, 0, res - 1) * SALTO
+      ]!;
 
-    const indices: number[] = [];
     const dentro = this.half - paso;
     /*
      * **Y el mar abierto no se malla, que ya lo pinta el agua.**
@@ -1781,35 +1905,56 @@ export class Terrain {
      */
     const bajoElAgua = (fila: number, col: number): boolean =>
       cota(fila, col) <= hundido;
-    for (let fila = 0; fila < res - 1; fila++) {
-      for (let col = 0; col < res - 1; col++) {
-        const cx = -mitad + (col + 0.5) * paso;
-        const cz = -mitad + (fila + 0.5) * paso;
-        if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) continue;
-        // Y lo mismo sobre el mapa fino del vecino. Ver `huecosDelHorizonte`.
-        if (this.enUnHueco(cx, cz, paso)) continue;
-        /*
-         * Y el reparto entre la foto de en medio y la del horizonte. El
-         * cuadro del borde va en las dos —se pisan por un cuadro— y así no
-         * queda ranura entre una y otra.
-         */
-        if (trozo) {
-          const aqui =
-            Math.abs(cx) < trozo.medio + paso &&
-            Math.abs(cz) < trozo.medio + paso;
-          if (aqui !== trozo.dentro) continue;
-        }
-        if (
-          bajoElAgua(fila, col) &&
-          bajoElAgua(fila + 1, col) &&
-          bajoElAgua(fila, col + 1) &&
-          bajoElAgua(fila + 1, col + 1)
-        )
-          continue;
-        const a = fila * res + col;
-        indices.push(a, a + res, a + 1, a + 1, a + res, a + res + 1);
+    const va = (fila: number, col: number): boolean => {
+      // El mar abierto primero, que es casi todo el mundo y lo más barato.
+      if (
+        bajoElAgua(fila, col) &&
+        bajoElAgua(fila + 1, col) &&
+        bajoElAgua(fila, col + 1) &&
+        bajoElAgua(fila + 1, col + 1)
+      )
+        return false;
+      const cx = -mitad + (col + 0.5) * paso;
+      const cz = -mitad + (fila + 0.5) * paso;
+      if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) return false;
+      // Y lo mismo sobre el mapa fino del vecino. Ver `huecosDelHorizonte`.
+      if (this.enUnHueco(cx, cz, paso)) return false;
+      /*
+       * Y el reparto entre la foto de en medio y la del horizonte: cada
+       * cuadro va en una de las dos, y el borde lo comparten nudo a nudo.
+       */
+      if (trozo) {
+        const aqui =
+          Math.abs(cx) < trozo.medio + paso &&
+          Math.abs(cz) < trozo.medio + paso;
+        if (aqui !== trozo.dentro) return false;
       }
-    }
+      return true;
+    };
+    /*
+     * **Y con los triángulos donde hay relieve**, no uno por cada cuadro.
+     *
+     * Fuerteventura se quedó en ochocientos metros por muestra porque a
+     * trescientos su horizonte pasaba de 41.000 triángulos a 264.000: lleva
+     * tres islas, y dos de ellas son llanos de kilómetros. Lo llano se junta
+     * en bloques de hasta dieciséis cuadros mientras ninguna muestra se
+     * aparte más de `TOLERANCIA_LEJOS`; la montaña, la costa y los bordes con
+     * otra malla van cuadro a cuadro como siempre. Ver `world/malla-lejana.ts`.
+     */
+    const nivel = this.scenario.waterLevel;
+    const costa = (fila: number, col: number): boolean =>
+      cota(fila, col) <= nivel ||
+      cota(fila + 1, col) <= nivel ||
+      cota(fila, col + 1) <= nivel ||
+      cota(fila + 1, col + 1) <= nivel;
+    const indices = mallarConDetalle(
+      res,
+      cota,
+      va,
+      costa,
+      TOLERANCIA_LEJOS,
+      BLOQUE_LEJOS,
+    );
 
     /*
      * **Y solo los nudos que usa algún cuadro.**
@@ -1830,46 +1975,49 @@ export class Terrain {
      * normales salen de las mismas caras.
      */
     const nuevo = new Int32Array(res * res).fill(-1);
-    let usados = 0;
+    // Y en qué nudo de la rejilla cae cada uno, para no recorrerla entera.
+    const orden: number[] = [];
     for (let k = 0; k < indices.length; k++) {
       const v = indices[k]!;
-      if (nuevo[v]! < 0) nuevo[v] = usados++;
+      if (nuevo[v]! < 0) {
+        nuevo[v] = orden.length;
+        orden.push(v);
+      }
       indices[k] = nuevo[v]!;
     }
+    const usados = orden.length;
     const posiciones = new Float32Array(usados * 3);
     const colores = new Float32Array(usados * 3);
-    for (let fila = 0; fila < res; fila++) {
-      for (let col = 0; col < res; col++) {
-        const i = nuevo[fila * res + col]!;
-        if (i < 0) continue;
-        const h = cota(fila, col);
-        const x = -mitad + col * paso;
-        const z = -mitad + fila * paso;
-        posiciones[i * 3] = x;
-        posiciones[i * 3 + 1] = h;
-        posiciones[i * 3 + 2] = z;
+    for (let i = 0; i < usados; i++) {
+      const fila = Math.floor(orden[i]! / res);
+      const col = orden[i]! - fila * res;
+      const h = cota(fila, col);
+      const x = -mitad + col * paso;
+      const z = -mitad + fila * paso;
+      posiciones[i * 3] = x;
+      posiciones[i * 3 + 1] = h;
+      posiciones[i * 3 + 2] = z;
 
-        // La pendiente a esta escala, que es la que decide si se pinta de
-        // roca o de hierba. Con el paso del mapa fino salían acantilados por
-        // todas partes.
-        const dx = (cota(fila, col + 1) - cota(fila, col - 1)) / (2 * paso);
-        const dz = (cota(fila + 1, col) - cota(fila - 1, col)) / (2 * paso);
-        const pendiente = Math.min(1, Math.hypot(dx, dz));
-        const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
-        colourFor(
-          h,
-          pendiente,
-          this.scenario,
-          manchas.fbm(x * escala, z * escala, 3),
-          luz,
-          tinte,
-          // La tierra baja del horizonte no es fondo de río. Ver `cota`.
-          h <= hundido,
-        );
-        colores[i * 3] = tinte.r;
-        colores[i * 3 + 1] = tinte.g;
-        colores[i * 3 + 2] = tinte.b;
-      }
+      // La pendiente a esta escala, que es la que decide si se pinta de
+      // roca o de hierba. Con el paso del mapa fino salían acantilados por
+      // todas partes.
+      const dx = (cota(fila, col + 1) - cota(fila, col - 1)) / (2 * paso);
+      const dz = (cota(fila + 1, col) - cota(fila - 1, col)) / (2 * paso);
+      const pendiente = Math.min(1, Math.hypot(dx, dz));
+      const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
+      colourFor(
+        h,
+        pendiente,
+        this.scenario,
+        manchas.fbm(x * escala, z * escala, 3),
+        luz,
+        tinte,
+        // La tierra baja del horizonte no es fondo de río. Ver `cota`.
+        h <= hundido,
+      );
+      colores[i * 3] = tinte.r;
+      colores[i * 3 + 1] = tinte.g;
+      colores[i * 3 + 2] = tinte.b;
     }
 
     const geo = new BufferGeometry();

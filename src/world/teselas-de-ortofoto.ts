@@ -544,6 +544,27 @@ varying vec2 vTesela;
 `,
   cuerpo: /* glsl */ `
   if (teselasPuestas > 0.5) {
+    /*
+     * **Las derivadas, aquí arriba y del nivel más fino**, y no de la
+     * coordenada dentro de la tesela.
+     *
+     * Se sacaban de «enLaTesela», que se divide por el lado de **su** nivel.
+     * Donde se tocan teselas de dos niveles, los cuatro píxeles que la
+     * tarjeta compara para derivar caen a los dos lados: uno mide en teselas
+     * de z14 y su vecino en z16, la derivada sale cuatro veces más grande de
+     * lo que es y el mipmap salta al último, el de un píxel —el color medio
+     * de la tesela entera—. Y en la costa ese color medio es casi negro,
+     * porque media tesela es mar: eran las rayas discontinuas a lo largo de
+     * los bordes de las teselas cerca de la costa, que se vieron en las
+     * capturas del relieve lejano de La Palma y de Jandía. Y además se
+     * derivaba dentro de dos «if» que no toman todos los píxeles el mismo
+     * camino, que en GLSL deja la derivada sin definir.
+     *
+     * «vTesela» es la misma para todos los niveles y no tiene saltos: su
+     * derivada, escalada al nivel de cada píxel, es la buena a los dos lados.
+     */
+    vec2 dxT = dFdx(vTesela);
+    vec2 dyT = dFdy(vTesela);
     vec2 celdaT = floor(vTesela / 256.0);
     if (celdaT.x >= 0.0 && celdaT.y >= 0.0 && celdaT.x < teselasCeldas.x && celdaT.y < teselasCeldas.y) {
       vec4 enIndice = texelFetch(teselasIndice, ivec2(celdaT), 0);
@@ -551,10 +572,11 @@ varying vec2 vTesela;
         float capaT = floor(enIndice.r * 255.0 + 0.5) + 256.0 * floor(enIndice.g * 255.0 + 0.5);
         float nivelT = floor(enIndice.b * 255.0 + 0.5);
         // La tesela del nivel que diga el índice, y dentro de ella.
-        vec2 enLaTesela = vTesela / (256.0 * exp2(teselasNivel - nivelT));
-        // Las derivadas, de la coordenada sin cortar: con las de «fract»
-        // salta el mipmap en cada borde de tesela y se dibuja una raya.
-        vec4 fotoT = textureGrad(teselasCapas, vec3(fract(enLaTesela), capaT), dFdx(enLaTesela), dFdy(enLaTesela));
+        float escalaT = 1.0 / (256.0 * exp2(teselasNivel - nivelT));
+        vec2 enLaTesela = vTesela * escalaT;
+        // Y sin cortar: con las derivadas de «fract» salta el mipmap en cada
+        // borde de tesela y se dibuja una raya.
+        vec4 fotoT = textureGrad(teselasCapas, vec3(fract(enLaTesela), capaT), dxT * escalaT, dyT * escalaT);
         diffuseColor.rgb = fotoT.rgb;
       }
     }

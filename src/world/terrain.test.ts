@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { ShaderMaterial, Vector4, type Mesh } from "three";
 import {
   buildHeightfield,
+  enLosDosTriangulos,
   nudoDeOrillas,
   SIN_ORILLA,
   sobreElAguaEn,
@@ -371,10 +372,41 @@ describe("las orillas que mira el agua", () => {
    */
   const nivel = VALLE_CORDILLERA.waterLevel;
 
-  it("dice la misma cota sobre el agua que el suelo, en cualquier punto", () => {
+  it("dice la misma cota sobre el agua que la malla que se dibuja, en cualquier punto", () => {
+    /*
+     * **La de la malla, en sus dos triángulos**, y no la del suelo que se
+     * pisa, que reparte cada cuadro a cuatro esquinas. Lo que el agua tiene
+     * que saber es por dónde cruza la malla su lámina: con el reparto a
+     * cuatro esquinas, en la costa del horizonte se quitaba el agua encima
+     * de la rampa del mar hundido y salían dientes oscuros. Ver
+     * `GLSL_DE_LAS_ORILLAS` en `world/sky.ts`.
+     */
     const t = new Terrain(VALLE_CORDILLERA);
     const { fina } = t.mapasDeOrillas();
     const lado = VALLE_CORDILLERA.size;
+    const n = VALLE_CORDILLERA.segments + 1;
+    const paso = lado / VALLE_CORDILLERA.segments;
+    const pos = (t.group.getObjectByName("terreno") as Mesh).geometry.getAttribute("position");
+    /** La cota de la malla en un punto, y la mayor de sus nudos sobre el agua. */
+    const malla = (x: number, z: number): { cota: number; mayor: number } => {
+      const gx = (x + lado / 2) / paso;
+      const gz = (z + lado / 2) / paso;
+      const c = Math.min(Math.floor(gx), n - 2);
+      const f = Math.min(Math.floor(gz), n - 2);
+      let mayor = 0;
+      const cota = enLosDosTriangulos(
+        (cc, ff) => {
+          const y = pos.getY(ff * n + cc);
+          mayor = Math.max(mayor, Math.abs(y - nivel));
+          return y;
+        },
+        c,
+        f,
+        gx - c,
+        gz - f,
+      );
+      return { cota, mayor };
+    };
     let tierra = 0;
     let agua = 0;
     for (let i = 0; i < 40; i++)
@@ -382,13 +414,16 @@ describe("las orillas que mira el agua", () => {
         const x = ((i + 0.37) / 40 - 0.5) * lado * 0.98;
         const z = ((j + 0.61) / 40 - 0.5) * lado * 0.98;
         const sobre = sobreElAguaEn(fina, x, z)!;
-        const suelo = t.sampleHeight(x, z) - nivel;
-        // En medio flotante: al milímetro cerca del cero, que es donde se
-        // decide la orilla, y a una parte en mil lejos de él.
-        expect(Math.abs(sobre - suelo)).toBeLessThan(
-          0.002 + Math.abs(suelo) * 0.001,
-        );
-        if (Math.abs(suelo) > 0.01) expect(Math.sign(sobre)).toBe(Math.sign(suelo));
+        const { cota, mayor } = malla(x, z);
+        const suelo = cota - nivel;
+        /*
+         * En medio flotante: al milímetro cerca del cero y a una parte en mil
+         * lejos de él — de lo que miden los nudos, que el triángulo mezcla
+         * tres y el error de cada uno es una parte en dos mil de lo suyo.
+         */
+        const holgura = 0.002 + mayor * 0.001;
+        expect(Math.abs(sobre - suelo)).toBeLessThan(holgura);
+        if (Math.abs(suelo) > holgura) expect(Math.sign(sobre)).toBe(Math.sign(suelo));
         if (sobre > 0) tierra++;
         else agua++;
       }
@@ -434,6 +469,88 @@ describe("las orillas que mira el agua", () => {
         esAguaDeCasa(h, nivel) ? -30 : h <= nivel ? nivel - h : h - nivel,
       );
     }
+  });
+
+  it("y la costa del horizonte, sin dientes: el agua se quita justo donde la malla sale de ella", () => {
+    /*
+     * Una isla redonda en el horizonte, con el mar hundido treinta metros. En
+     * cada triángulo de la malla que cruza el agua, la orilla que dice el mapa
+     * tiene que ser la raya en la que cruza el triángulo: con el reparto a
+     * cuatro esquinas, el agua se quitaba encima de la rampa que baja al
+     * fondo y se veía una cuña oscura en cada cuadro de costa.
+     */
+    const resolucion = 65;
+    const datos = new Int16Array(resolucion * resolucion);
+    for (let f = 0; f < resolucion; f++)
+      for (let c = 0; c < resolucion; c++) {
+        // El mar, dos metros bajo la lámina: agua de casa, que se hunde.
+        const d = Math.hypot(c - 50, f - 32);
+        datos[f * resolucion + c] = Math.round(nivel - 2 + Math.max(0, 400 - d * 90));
+      }
+    const esc: Scenario = { ...VALLE_CORDILLERA, relieveLejano: { datos, resolucion } };
+    const t = new Terrain(esc);
+    const { lejana } = t.mapasDeOrillas();
+    const malla = t.group.getObjectByName("horizonte") as Mesh;
+    const pos = malla.geometry.getAttribute("position");
+    const ind = malla.geometry.getIndex()!;
+    let cruzan = 0;
+    let mirados = 0;
+    for (let k = 0; k < ind.count; k += 3) {
+      const v = [ind.getX(k), ind.getX(k + 1), ind.getX(k + 2)];
+      const y = v.map((i) => pos.getY(i) - nivel);
+      if (Math.min(...y) >= 0 || Math.max(...y) <= 0) continue;
+      cruzan++;
+      for (let a = 1; a < 10; a++)
+        for (let b = 1; a + b < 10; b++) {
+          const w = [a / 10, b / 10, 1 - a / 10 - b / 10];
+          const x = w.reduce((s, wi, j) => s + wi * pos.getX(v[j]!), 0);
+          const z = w.reduce((s, wi, j) => s + wi * pos.getZ(v[j]!), 0);
+          const enLaMalla = w.reduce((s, wi, j) => s + wi * y[j]!, 0);
+          if (Math.abs(enLaMalla) < 0.05) continue;
+          const sobre = sobreElAguaEn(lejana!, x, z)!;
+          expect(Math.sign(sobre), `en ${x.toFixed(0)}, ${z.toFixed(0)}`).toBe(Math.sign(enLaMalla));
+          mirados++;
+        }
+    }
+    // Que la prueba no pase en vacío: la isla tiene costa.
+    expect(cruzan).toBeGreaterThan(20);
+    expect(mirados).toBeGreaterThan(200);
+  });
+
+  it("y la costa no sale más allá de medio camino hacia la muestra de mar, ni en un acantilado", () => {
+    /*
+     * Con el mar hundido treinta metros, un acantilado de trescientos ponía
+     * la orilla al noventa por ciento del camino hacia la muestra de mar: una
+     * cuña de tierra mar adentro en cada cuadro de costa, con la foto del mar
+     * encima. Ver `cotasLejanas`.
+     */
+    const resolucion = 65;
+    const datos = new Int16Array(resolucion * resolucion);
+    // Al oeste de la columna 50, mar; al este, un acantilado de 300 m en la
+    // mitad norte y una playa a 5 m en la sur.
+    for (let f = 0; f < resolucion; f++)
+      for (let c = 0; c < resolucion; c++)
+        datos[f * resolucion + c] = c < 50 ? nivel - 2 : f < 32 ? nivel + 300 : nivel + 5;
+    const esc: Scenario = { ...VALLE_CORDILLERA, relieveLejano: { datos, resolucion } };
+    const t = new Terrain(esc);
+    const { lejana } = t.mapasDeOrillas();
+    const tamano = esc.size * vecesLejosDe(esc);
+    const paso = tamano / (resolucion - 1);
+    const x = (c: number): number => -tamano / 2 + c * paso;
+    const z = (fila: number): number => -tamano / 2 + fila * paso;
+    // Entre el nudo 49 (mar) y el 50 (tierra): en el acantilado, la orilla
+    // en medio, y no al noventa por ciento hacia el mar.
+    expect(sobreElAguaEn(lejana!, x(49.6), z(10))!).toBeGreaterThan(0);
+    expect(sobreElAguaEn(lejana!, x(49.4), z(10))!).toBeLessThan(0);
+    expect(sobreElAguaEn(lejana!, x(49.15), z(10))!).toBeLessThan(0);
+    /*
+     * Y en la playa, del lado de la tierra, como estaba: ahí el mar sigue
+     * hundido sus treinta metros —menos, y de lejos el fondo de profundidad
+     * no lo separaría del agua— y la orilla no se mueve más de un séptimo de
+     * cuadro.
+     */
+    expect(sobreElAguaEn(lejana!, x(49.9), z(50))!).toBeGreaterThan(0);
+    expect(sobreElAguaEn(lejana!, x(49.6), z(50))!).toBeLessThan(0);
   });
 
   it("y sin mirar sobre el mapa fino de una isla vecina", () => {
