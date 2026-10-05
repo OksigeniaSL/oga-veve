@@ -1138,6 +1138,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * - `vistos`: cuántos pedidos se han atendido.
    * - `atendidos`: qué se pidió y a qué altura de ruedas, para el parte.
    * - `ultimoGas`: el gas escrito en el fotograma anterior.
+   * - `suma` y `reloj`: lo que la mano lleva sumado de subida que falta, m/s,
+   *   y cuándo se sumó por última vez. Ver `obedecer`.
    */
   const obediente = {
     armado: false,
@@ -1148,6 +1150,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     vistos: 0,
     atendidos: [],
     ultimoGas: null,
+    suma: 0,
+    reloj: null,
   };
   /** Cuánto levanta la nariz el obediente: grado y medio de trayectoria. */
   const NARIZ_UN_POQUITO = (1.5 * Math.PI) / 180;
@@ -1178,7 +1182,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     for (; obediente.vistos < pedidos.length; obediente.vistos++) {
       const p = pedidos[obediente.vistos];
       const ruedas = s.heightAboveGround - (o.avion?.().tren ?? 0);
-      obediente.atendidos.push(`${p.que} a ${Math.round(ruedas / 0.3048)} ft`);
+      obediente.atendidos.push(
+        `${p.que} a ${Math.round(ruedas / 0.3048)} ft bajando ${(-s.verticalSpeed).toFixed(1)} m/s`,
+      );
       if (p.nariz && obediente.nariz === null) {
         const v = Math.max(1, s.airspeed);
         const ahora = Math.asin(Math.max(-1, Math.min(1, s.verticalSpeed / v)));
@@ -1190,9 +1196,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     else if (obediente.gasAjeno) obediente.gas = gasDelJuego;
     mandos.throttle = obediente.gas;
     c.throttle = obediente.gas;
+    /*
+     * La nariz, con la mano de Guyrami: la trayectoria pedida, y lo que le
+     * falta de subida sumado poco a poco, que es lo que hace esa mano para
+     * que el aire no se lleve lo que se sostiene —`subidaQueFalta` en
+     * `flight/mano.ts`, a uno por segundo y con tope de tres—. Sin eso, una
+     * térmica bajando en la recogida se sumaba entera al toque.
+     */
     if (obediente.nariz !== null && o.mandoParaSubir) {
-      const pide = o.mandoParaSubir(Math.max(1, s.airspeed) * Math.sin(obediente.nariz));
-      if (typeof pide === "number") mandos.elevator = Math.max(-1, Math.min(1, pide));
+      const ahora = o.reloj();
+      const dt =
+        obediente.reloj === null ? 0 : Math.max(0, Math.min(0.1, ahora - obediente.reloj));
+      obediente.reloj = ahora;
+      const ritmo = Math.max(1, s.airspeed) * Math.sin(obediente.nariz);
+      const pide = o.mandoParaSubir(ritmo + obediente.suma);
+      if (typeof pide === "number") {
+        mandos.elevator = Math.max(-1, Math.min(1, pide));
+        const falta = ritmo - s.verticalSpeed;
+        if (Math.abs(mandos.elevator) < 1 || mandos.elevator * falta < 0)
+          obediente.suma = Math.max(-3, Math.min(3, obediente.suma + falta * dt));
+      }
     }
     obediente.ultimoGas = mandos.throttle;
   };
@@ -4634,6 +4657,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     if (obedienteEnElBanco) {
       if (etapa === "subir" && aDonde < 3 && (obediente.nariz !== null || obediente.quitado)) {
         obediente.nariz = null;
+        obediente.suma = 0;
+        obediente.reloj = null;
         obediente.quitado = false;
         obediente.gasAjeno = false;
       }
