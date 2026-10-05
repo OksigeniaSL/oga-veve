@@ -3644,8 +3644,9 @@ export class Game {
   // ── Antes de volar: la vuelta al avión y el tiempo de hoy ─────────────
   /** La vuelta de este vuelo, con lo mirado y lo que queda puesto. */
   private vueltaAlAvion: VueltaAlAvion | null = null;
-  /** De qué avión es esa vuelta: otro avión, otra vuelta. */
+  /** De qué avión es esa vuelta, y si con su modelo: otro avión, otra vuelta. */
   private vueltaDe = "";
+  private vueltaConModelo = false;
   /** La funda y los calzos del avión que está en el puesto, y de qué malla. */
   private fundasYCalzos: FundasYCalzos | null = null;
   private fundasDe: AircraftMesh | null = null;
@@ -22115,14 +22116,19 @@ export class Game {
    */
   private laVuelta(): VueltaAlAvion {
     const puntos = this.aircraftMesh.vuelta?.puntos ?? null;
-    const de = `${this.aircraft.id}:${puntos ? "modelo" : "cajas"}`;
-    if (!this.vueltaAlAvion || this.vueltaDe !== de) {
+    // Sin montar cadenas: esto se pregunta en cada paso.
+    if (
+      !this.vueltaAlAvion ||
+      this.vueltaDe !== this.aircraft.id ||
+      this.vueltaConModelo !== !!puntos
+    ) {
+      this.vueltaConModelo = !!puntos;
       const clase = claseDeVuelta(modeloPorId(this.aircraft.id)?.silueta);
       this.vueltaAlAvion = new VueltaAlAvion(
         clase,
         cosasDeLaVuelta(clase, (c) => puntos?.has(c) ?? false),
       );
-      this.vueltaDe = de;
+      this.vueltaDe = this.aircraft.id;
       this.fundasYCalzos?.soltar();
       this.fundasYCalzos = null;
       this.fundasDe = null;
@@ -22193,14 +22199,10 @@ export class Game {
       }
     }
     this.hud.ponerAntesDeVolar(
-      puesto && !this.enLaVuelta
-        ? {
-            vuelta: v.cosas.length > 0,
-            vueltaHecha: v.entera,
-            tiempo: true,
-            tiempoAvisa: !!this.parteDeHoy && !this.parteDeHoy.decision.salir,
-          }
-        : null,
+      puesto && !this.enLaVuelta,
+      v.cosas.length > 0,
+      v.entera,
+      !!this.parteDeHoy && !this.parteDeHoy.decision.salir,
     );
     this.vigilarLaFunda();
   }
@@ -22432,7 +22434,7 @@ export class Game {
   /** Vectores de trabajo de la vuelta: uno por fotograma sería basura. */
   private readonly puntoDeLaVuelta = new Vector3();
   private readonly enVistaDeLaVuelta = new Vector3();
-  private readonly cosasEnPantalla: CosaEnPantalla[] = [];
+  private readonly cosasEnPantalla: { -readonly [K in keyof CosaEnPantalla]: CosaEnPantalla[K] }[] = [];
 
   /**
    * **Dónde cae cada cosa de la vuelta en la pantalla**, con la cámara ya
@@ -22455,24 +22457,26 @@ export class Game {
     const margen = pv.tamano * 0.12;
     const ancho = this.renderer.domElement.clientWidth || window.innerWidth;
     const alto = this.renderer.domElement.clientHeight || window.innerHeight;
+    // Los mismos objetos en cada fotograma: uno nuevo por cosa sería basura.
     const lista = this.cosasEnPantalla;
-    lista.length = 0;
-    for (const c of v.cosas) {
+    while (lista.length < v.cosas.length) lista.push({ cosa: "luces", x: 0, y: 0, seVe: false });
+    lista.length = v.cosas.length;
+    v.cosas.forEach((c, i) => {
+      const e = lista[i]!;
+      e.cosa = c;
+      e.seVe = false;
       const p = pv.puntos.get(c);
-      if (!p) continue;
+      if (!p) return;
       const q = this.enVistaDeLaVuelta.copy(p.donde);
       if (p.espejo && lado > 0) q.x = -q.x;
       g.localToWorld(q).applyMatrix4(vista);
       const lejos = -q.z;
       q.applyMatrix4(this.camera.projectionMatrix);
       const dentro = lejos > 0.3 && Math.abs(q.x) < 1.02 && Math.abs(q.y) < 1.02;
-      lista.push({
-        cosa: c,
-        x: ((q.x + 1) / 2) * ancho,
-        y: ((1 - q.y) / 2) * alto,
-        seVe: dentro && (lejos < fondo + margen || c === this.cosaQueSeMira),
-      });
-    }
+      e.x = ((q.x + 1) / 2) * ancho;
+      e.y = ((1 - q.y) / 2) * alto;
+      e.seVe = dentro && (lejos < fondo + margen || c === this.cosaQueSeMira);
+    });
     pantalla.colocar(lista, this.relojDeLaVuelta);
   }
 

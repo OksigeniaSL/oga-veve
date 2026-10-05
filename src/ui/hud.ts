@@ -685,7 +685,7 @@ export class Hud {
   /** Los de antes de volar: la vuelta al avión y el tiempo. */
   private antesHandler: ((que: "vuelta" | "tiempo") => void) | null = null;
   /** Lo que se enseñaba la última vez, para no tocar el DOM si no cambia. */
-  private antesPuesto = "";
+  private antesPuesto = -1;
   private gafas!: HTMLElement;
   private misionHandler: (() => void) | null = null;
   private mision!: HTMLElement;
@@ -1156,7 +1156,7 @@ export class Hud {
    */
   render(): void {
     // Rehecho el HUD, los botones de antes de volar se vuelven a poner.
-    this.antesPuesto = "";
+    this.antesPuesto = -1;
     const gauges = this.instruments !== "none";
     const pictorial = this.instruments === "pictorial";
     // Reactor o hélice: decide el dibujo del motor en todo el HUD. Ver `fan`.
@@ -3579,35 +3579,29 @@ export class Hud {
 
   /**
    * **Los botones de antes de volar**: cuáles se ven, y si alguno pide que lo
-   * miren. `null` los esconde. La vuelta late hasta que se hace; el tiempo,
+   * miren; sin `ver`, se esconden. La vuelta late hasta que se hace; el tiempo,
    * en ámbar, si algo del día pasa del límite de este avión.
    */
   ponerAntesDeVolar(
-    que: {
-      readonly vuelta: boolean;
-      readonly vueltaHecha: boolean;
-      readonly tiempo: boolean;
-      readonly tiempoAvisa: boolean;
-    } | null,
+    ver: boolean,
+    vuelta: boolean,
+    vueltaHecha: boolean,
+    tiempoAvisa: boolean,
   ): void {
-    const clave = que
-      ? `${+que.vuelta}${+que.vueltaHecha}${+que.tiempo}${+que.tiempoAvisa}`
-      : "";
+    // Un número y no un objeto: se llama en cada paso del vuelo.
+    const clave = ver ? 1 + (vuelta ? 2 : 0) + (vueltaHecha ? 4 : 0) + (tiempoAvisa ? 8 : 0) : 0;
     if (clave === this.antesPuesto) return;
     this.antesPuesto = clave;
     const caja = this.root.querySelector<HTMLElement>('[data-hud="antes"]');
     if (!caja) return;
-    caja.hidden = !que || (!que.vuelta && !que.tiempo);
-    const vuelta = caja.querySelector<HTMLElement>('[data-hud="antes-vuelta"]');
-    const tiempo = caja.querySelector<HTMLElement>('[data-hud="antes-tiempo"]');
-    if (vuelta) {
-      vuelta.hidden = !que?.vuelta;
-      vuelta.classList.toggle("antes__boton--late", !!que && !que.vueltaHecha);
+    caja.hidden = !ver;
+    const botonDeVuelta = caja.querySelector<HTMLElement>('[data-hud="antes-vuelta"]');
+    const botonDelTiempo = caja.querySelector<HTMLElement>('[data-hud="antes-tiempo"]');
+    if (botonDeVuelta) {
+      botonDeVuelta.hidden = !vuelta;
+      botonDeVuelta.classList.toggle("antes__boton--late", vuelta && !vueltaHecha);
     }
-    if (tiempo) {
-      tiempo.hidden = !que?.tiempo;
-      tiempo.classList.toggle("antes__boton--avisa", !!que?.tiempoAvisa);
-    }
+    botonDelTiempo?.classList.toggle("antes__boton--avisa", tiempoAvisa);
   }
 
   /** El de las gafas de sol. Ver `flight/gafas.ts`. */
