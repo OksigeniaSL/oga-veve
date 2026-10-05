@@ -159,7 +159,7 @@ export class CuadroDelTelefono {
             <rect data-tel="aguja" x="-1" y="-1" width="2" height="12" class="tel__aguja" />
           </svg>
           <svg class="tel__banda" viewBox="0 0 100 10" preserveAspectRatio="none"
-               aria-hidden="true" data-tel-tierra>
+               aria-hidden="true" data-tel-tierra data-explica="gs-rodaje">
             <rect width="100" height="10" rx="2" class="tel__fondo-banda" />
             <rect data-tel="gs-relleno" width="0" height="10" rx="2" class="tel__rodaje" />
             <rect data-tel="gs-marca" x="-2" y="-1" width="4" height="12" class="tel__marca" />
