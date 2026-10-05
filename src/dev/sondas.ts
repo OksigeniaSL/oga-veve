@@ -683,6 +683,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `MEGAFONIA` en `boca.ts`— y el volcado de voces no las veía: el guion
      * de la cabina, del puesto a la despedida, no se podía leer en orden.
      */
+    /**
+     * **Si toca arrancar**: con tripulación, después del crosscheck. El piloto
+     * del banco espera a esto en el puesto, como uno de verdad. Ver
+     * `listoParaArrancarParaBanco`.
+     */
+    listoParaArrancar: () => juego.listoParaArrancarParaBanco,
+    /** La lista de después del aterrizaje leída, punto por punto y con su hora. */
+    listaTrasLaToma: () => juego.listaLeidaParaBanco.slice(),
     megafonia: () => {
       /*
        * Ahora va en el mismo turno que la radio —ver `MEGAFONIA` en

@@ -93,6 +93,26 @@ describe("la megafonía de cabina", () => {
     ]);
   });
 
+  it("los toboganes, antes de arrancar: en cuanto se cierran las puertas", () => {
+    const m = new Megafonia();
+    const conAuxiliares = { conTripulacion: true };
+    // Las puertas ya están cerradas al empezar en el puesto: segundo y medio.
+    expect(correr(m, "estacionado", 1.5, conAuxiliares)).toEqual(["comandante.crosscheck"]);
+  });
+
+  it("y con el motor ya en marcha, no: se le pasó el momento", () => {
+    const m = new Megafonia();
+    const conAuxiliares = { conTripulacion: true };
+    // Se arrancó en el primer segundo, antes de que la comandante cogiera el
+    // micrófono: el anuncio ya no se dice, ni arrancando ni rodando.
+    correr(m, "estacionado", 0.5, conAuxiliares);
+    const despues = [
+      ...correr(m, "arrancando", 20, conAuxiliares),
+      ...correr(m, "rodando", 20, conAuxiliares),
+    ];
+    expect(despues).not.toContain("comandante.crosscheck");
+  });
+
   it("y los toboganes se arman parados, nunca rodando ni autorizado", () => {
     /*
      * «Armar rampas y verificación cruzada» arma los toboganes de evacuación
@@ -550,10 +570,16 @@ describe("y con la frecuencia llena o la turbulencia por delante", () => {
 });
 
 describe("a lo que se le pasó el momento", () => {
-  it("el crosscheck, hasta los primeros metros de rodaje y no en la cola de la pista", () => {
+  /*
+   * «Tripulación, armar rampas y verificación cruzada», después de arrancar
+   * motores, está mal: se dice antes, con las puertas cerradas, antes del
+   * remolque y del arranque. Pedido en el puesto y esperando su grabación, si
+   * se arranca mientras tanto ya no se dice.
+   */
+  it("el crosscheck, solo con el motor parado en el puesto", () => {
     expect(seLePasoElMomento("comandante.crosscheck", "estacionado")).toBe(false);
-    expect(seLePasoElMomento("comandante.crosscheck", "arrancando")).toBe(false);
-    expect(seLePasoElMomento("comandante.crosscheck", "rodando")).toBe(false);
+    expect(seLePasoElMomento("comandante.crosscheck", "arrancando")).toBe(true);
+    expect(seLePasoElMomento("comandante.crosscheck", "rodando")).toBe(true);
     expect(seLePasoElMomento("comandante.crosscheck", "esperando")).toBe(true);
     expect(seLePasoElMomento("comandante.crosscheck~2", "autorizado")).toBe(true);
   });

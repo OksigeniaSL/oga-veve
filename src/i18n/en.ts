@@ -573,6 +573,11 @@ export const EN: Dictionary = {
     "After landing checklist: flaps up is yours; lights and transponder, I've got them.",
   "vuelo.alPuestoConFlaps":
     "We reached the stand with the flaps out. No problem: next time, raise them after leaving the runway.",
+  "vuelo.despues.aerofrenos": "Speed brakes in: lever down.",
+  "vuelo.despues.luces": "I'll do the lights: landing lights off, taxi light on.",
+  "vuelo.despues.transpondedor": "And the transponder: TCAS to standby.",
+  "palabra.luces": "Lights",
+  "palabra.transpondedor": "Transponder",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Gear up — it is slowing you down",
   "vuelo.tormenta": "Storm ahead: go around it, don't fly through",

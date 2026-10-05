@@ -162,6 +162,18 @@ const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
  * regla que ya gobierna la bienvenida: no se dice fuera de tiempo.
  */
 /*
+ * **Y antes de arrancar, no después.** Quedaba el puesto con el motor en
+ * marcha —la fase `arrancando`— como momento bueno, y en la cola de la boca el
+ * anuncio esperaba a que bajara su grabación o a que acabara la instructora
+ * con «arrancá el motor»: salía con los motores ya en marcha, y Enrique lo
+ * oyó así. En un avión de verdad va con las puertas cerradas, **antes del
+ * remolque y del arranque**: aquí no hay remolque, así que es el puesto con
+ * el motor parado y nada más. Si el motor se arranca antes de que suene, se
+ * le pasó el momento y no se dice: ver `VALE_MIENTRAS`. Y para que suene a
+ * tiempo, se pide en cuanto se puede —ver `ESPERA_DE`— y la instructora espera
+ * a que acabe para decir «arrancá el motor»: ver `Game.decirLaFase`.
+ */
+/*
  * **Y el descenso ya no va en la final.** «Empezamos a bajar» sonaba al
  * entrar en final, que es justo donde no lo dice nadie: ahí se está a un
  * minuto de la pista, con la instructora hablando y la cabina estéril. Lo de
@@ -169,7 +181,7 @@ const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
  * `en-vuelo`— y a la final no llega nada nuevo de la megafonía.
  */
 const CUANDO: Record<Anuncio, readonly Fase[]> = {
-  "comandante.crosscheck": ["estacionado", "arrancando"],
+  "comandante.crosscheck": ["estacionado"],
   "comandante.bienvenida": ["rodando", "esperando", "alineando"],
   "comandante.despegue": ["autorizado", "alineando", "despegando"],
   "comandante.crucero": ["en-vuelo"],
@@ -200,15 +212,17 @@ export function seLePasoElMomento(clave: string | undefined, fase: Fase): boolea
 }
 
 /**
- * **Hasta cuándo vale cada anuncio de tierra que ya se pidió**, que es un
- * poco más que su momento de pedirse: el crosscheck se pide en el puesto y
- * vale hasta los primeros metros de rodaje —en un avión de verdad se arma al
- * empezar a moverse, antes del retroceso—; la bienvenida, hasta despegar. Lo
- * que espera en la cola tiene además su tope de reloj, ver
- * `CADUCA_LA_MEGAFONIA` en `turnos.ts`: no se dice con el avión ya lejos.
+ * **Hasta cuándo vale cada anuncio de tierra que ya se pidió**, que en algunos
+ * es un poco más que su momento de pedirse: la bienvenida, hasta despegar. El
+ * crosscheck, no: vale mientras el motor siga parado en el puesto, que es
+ * cuando se arman los toboganes de verdad —con las puertas cerradas, antes
+ * del remolque y del arranque—. Pedido en el puesto y esperando su grabación,
+ * si mientras tanto se arranca, se retira. Lo que espera en la cola tiene
+ * además su tope de reloj, ver `CADUCA_LA_MEGAFONIA` en `turnos.ts`: no se
+ * dice con el avión ya lejos.
  */
 const VALE_MIENTRAS: Readonly<Record<string, readonly Fase[]>> = {
-  "comandante.crosscheck": ["estacionado", "arrancando", "rodando"],
+  "comandante.crosscheck": ["estacionado"],
   "comandante.bienvenida": ["rodando", "esperando", "autorizado", "back-taxi", "alineando"],
   /*
    * **Y el de sentarse vale también remontando la pista.** Donde se sale con
@@ -229,6 +243,17 @@ const VALE_MIENTRAS: Readonly<Record<string, readonly Fase[]>> = {
  * mientras tú vuelas.
  */
 const ESPERA = 4;
+
+/**
+ * **Y los que no pueden esperar tanto**, s. El crosscheck se dice con las
+ * puertas cerradas, y las puertas ya están cerradas al empezar el vuelo en el
+ * puesto: cuatro segundos son los que tarda quien juega en arrancar, y
+ * arrancado ya no toca. Uno, que es lo que tarda la comandante en coger el
+ * micrófono.
+ */
+const ESPERA_DE: Partial<Record<Anuncio, number>> = {
+  "comandante.crosscheck": 1,
+};
 
 /**
  * Y cuánto dura el momento. Pasado esto, ese anuncio ya no toca.
@@ -461,6 +486,11 @@ export class Megafonia {
     this.descensoEmpezado = true;
   }
 
+  /** Si ese anuncio ya se dijo en este vuelo. */
+  yaDicho(anuncio: Anuncio): boolean {
+    return this.dichos.has(anuncio);
+  }
+
   /** Si ya se empezó a bajar hacia el destino. Para el juego y los bancos. */
   get bajandoAlDestino(): boolean {
     return this.descensoEmpezado && this.estuvoArriba;
@@ -581,7 +611,8 @@ export class Megafonia {
       const espera = llevaba + dt;
       this.listoDesde.set(anuncio, espera);
       if (hayQueCallar) return null;
-      if (espera < ESPERA || espera > ESPERA + (VENTANA[anuncio] ?? SE_PASA))
+      const desde = ESPERA_DE[anuncio] ?? ESPERA;
+      if (espera < desde || espera > desde + (VENTANA[anuncio] ?? SE_PASA))
         continue;
       this.dichos.add(anuncio);
       this.haceQue.set(anuncio, 0);

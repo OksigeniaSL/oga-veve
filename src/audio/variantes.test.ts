@@ -72,6 +72,36 @@ describe("las formas de una frase", () => {
     }
   });
 
+  /*
+   * **Lo que no tiene pieza, fuera del sorteo.** Las otras formas de
+   * «sentados para el despegue» están escritas y sin grabar hasta el 6 de
+   * octubre: mientras tanto suena la única grabada, y en cuanto haya pieza
+   * entran solas. Ver `conPieza`.
+   */
+  it("el despegue tiene sus otras formas, y sin grabar no salen", () => {
+    const clave = "comandante.despegue" as const;
+    expect(cuantasFormas(clave)).toBe(4);
+    expect(VARIANTES[clave]).toContain("Tripulación, despegue inmediato.");
+    const soloLaGrabada = (id: string) => id === clave;
+    for (let i = 0; i < 40; i++)
+      expect(unaForma(clave, () => (i + 0.5) / 40, undefined, soloLaGrabada).id).toBe(clave);
+  });
+
+  it("y en cuanto se graba una, entra en el sorteo", () => {
+    const clave = "comandante.despegue" as const;
+    const grabadas = new Set([clave, `${clave}~2`]);
+    const vistas = new Set<string>();
+    for (let i = 0; i < 40; i++)
+      vistas.add(unaForma(clave, () => (i + 0.5) / 40, undefined, (id) => grabadas.has(id)).id);
+    expect([...vistas].sort()).toEqual([clave, `${clave}~2`]);
+  });
+
+  it("y si no hay ninguna grabada, la de siempre", () => {
+    const f = unaForma("comandante.despegue", () => 0.99, undefined, () => false);
+    expect(f.id).toBe("comandante.despegue");
+    expect(f.texto).toBe(t("comandante.despegue"));
+  });
+
   it("las retiradas no salen nunca, y las demás siguen con su número", async () => {
     const { unaForma, RETIRADAS } = await import("./variantes");
     const clave = "comandante.llegada.tenerife-sur" as const;

@@ -566,6 +566,18 @@ body {
   height: 62%;
 }
 
+/*
+ * La luz de llamada de un pasajero, con la pieza del cartel y en azul: es el
+ * color de las llamadas de pasajero en las luces de la cabina de Boeing y de
+ * Airbus. Ver `ponerLlamadaDePasaje` en `ui/hud.ts`.
+ */
+.cinturon.llamada-de-pasaje {
+  color: #5aa9ff;
+  box-shadow:
+    var(--filo),
+    0 0 14px -2px #5aa9ff;
+}
+
 /* Tocado el interruptor: el cartel parpadea dos veces. Ver
    `destellarCinturon`. Y se deja ver aunque estuviera apagado. */
 .cinturon.cinturon--destello {
@@ -4282,20 +4294,26 @@ button.motor__tecla::after {
 }
 
 /*
- * La GS de rodar, en tierra: grande, sobre su fondo de pantalla para leerse
- * encima de la rosa, verde mientras va bien y ámbar si se llega rápido a lo
- * que viene. Ver `rodajeEnTierra` en `ui/cristal.ts`.
+ * La GS de rodar, en tierra: una fila del alto de los rótulos de la esquina,
+ * sin caja, con el dibujo de rodar en cian como lo auxiliar, la barra verde
+ * mientras va bien y ámbar si se llega rápido a lo que viene, y la marca
+ * magenta de hasta dónde llenarla. Ver `rodajeEnTierra` en `ui/cristal.ts`.
  */
-.cr__rodaje-fondo {
-  fill: var(--cabina-pantalla);
-  stroke: var(--cabina-filo);
-  stroke-width: 1px;
+.cr__rodaje-dibujo {
+  fill: var(--cabina-auxiliar);
+}
+
+.cr__rodaje-pata {
+  fill: none;
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 1.6px;
+  stroke-linecap: round;
 }
 
 .cr__rodaje-cifra {
   fill: var(--cabina-normal);
   font-family: var(--cabina-fuente);
-  font-size: 28px;
+  font-size: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -4314,6 +4332,10 @@ button.motor__tecla::after {
 
 .cr__rodaje-relleno--rapido {
   fill: var(--cabina-precaucion);
+}
+
+.cr__rodaje-marca {
+  fill: var(--cabina-objetivo);
 }
 
 /* Dato auxiliar: cian. Viento, velocidad respecto al suelo, Mach. */
@@ -4494,6 +4516,27 @@ button.motor__tecla::after {
 
 .cr__fma--piloto {
   font-size: 11px;
+}
+
+/*
+ * **Lo que acaba de cambiar**: el marco de la ventanilla, blanco y grueso
+ * mientras late; la flecha de la marca, magenta como ella; y el recuadro del
+ * modo nuevo del FMA, el del FMA de Boeing y de Airbus. Ver `Tablero.resaltar`.
+ */
+.tablero__mcp.cr__cambia rect,
+.cr__cambia .cr__sel-caja {
+  stroke: var(--cabina-valor);
+  stroke-width: 3;
+}
+
+.cr__flecha {
+  fill: var(--cabina-objetivo);
+}
+
+.cr__fma-caja {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.5;
 }
 
 /* Y la raya de «hasta aquí» del primer peldaño, de lado a lado de la cinta. */
@@ -11206,6 +11249,16 @@ button.motor__tecla::after {
   .hud .tel__sel--fuera {
     outline-color: var(--cabina-precaucion);
     color: var(--cabina-precaucion);
+  }
+
+  /* Lo que acaba de cambiar: el marco blanco que late. Ver `flight/lo-que-cambia.ts`. */
+  .hud .tel__losa.tel__cambia {
+    border-color: var(--cabina-valor);
+    box-shadow: inset 0 0 0 1px var(--cabina-valor);
+  }
+
+  .hud .tel__sel.tel__cambia {
+    outline: 2px solid var(--cabina-valor);
   }
 
   /*

@@ -58,6 +58,16 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
   magenta: PALETA.objetivo,
 };
 import { luzDeTren } from "../flight/tren";
+import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
+import { RODAR } from "../ui/cristal";
+import {
+  COLUMNAS_DEL_FMA,
+  DURA_EL_RESALTE,
+  PARPADEA_AL_CAMBIAR,
+  luceLaVentanilla,
+  type Resalte,
+  type Resaltes,
+} from "../flight/lo-que-cambia";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { enLaMuesca } from "../flight/flaps";
 import {
@@ -235,6 +245,8 @@ export interface DatosDeCabina {
   readonly rodaje?: {
     readonly nudos: number;
     readonly escala: number;
+    /** La velocidad que toca aquí, nudos: la marca. Ver `barraDeRodaje`. */
+    readonly toca: number;
     readonly rapido: boolean;
   } | null;
   /**
@@ -332,6 +344,12 @@ export interface DatosDeCabina {
     readonly vertical: string;
     readonly piloto: boolean;
   } | null;
+  /**
+   * **Lo que acaba de cambiar**, lo mismo que el cuadro plano: la ventanilla
+   * ALT y las marcas parpadean y los modos del FMA se recuadran. Ver
+   * `flight/lo-que-cambia.ts`.
+   */
+  readonly resaltes?: Resaltes | null;
   /**
    * **Los mínimos puestos**, los mismos que el cuadro plano: la altitud de
    * decisión en pies y si ya se ha llegado a ella. Ver `DatosDelTablero.minimos`
@@ -834,6 +852,14 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       if (texto)
         escribir(g, texto, x0 + tercio * i + tercio / 2, 11, "600 12px " + FUENTE, PALETA.normal);
     });
+    // Y el modo nuevo, recuadrado sus diez segundos. Ver `flight/lo-que-cambia.ts`.
+    COLUMNAS_DEL_FMA.forEach((col, i) => {
+      const r = d.resaltes?.[`fma-${col}`];
+      if (!r || r.edad >= DURA_EL_RESALTE || !columnas[i]) return;
+      g.strokeStyle = TINTA;
+      g.lineWidth = 1.5;
+      g.strokeRect(x0 + tercio * i + 2, 2, tercio - 4, 18);
+    });
     if (d.fma.piloto)
       escribir(g, "A/P", x0 + anchoAct / 2, 24, "600 11px " + FUENTE, PALETA.normal);
   }
@@ -1281,6 +1307,7 @@ function cintaDeVelocidad(
     g.lineTo(x + w, ys + 7);
     g.closePath();
     g.fill();
+    flechaDeLaMarca(g, d.resaltes?.spd, x + w - 19, ys);
   }
 
   /*
@@ -1422,6 +1449,7 @@ function cintaDeAltitud(
       g.closePath();
       g.fill();
     }
+    flechaDeLaMarca(g, d.resaltes?.alt, x + 19, yy);
   }
   g.restore();
   if (sel) {
@@ -1431,9 +1459,16 @@ function cintaDeAltitud(
      */
     g.fillStyle = "#05070a";
     g.fillRect(x + 3, y + 16, w - 6, 19);
-    g.strokeStyle =
-      sel.alerta === "fuera" ? PRECAUCION : sel.alerta === "cerca" ? TINTA : "#2c3136";
-    g.lineWidth = sel.alerta === "nada" ? 1 : 2.4;
+    // Y recién cambiada, el marco blanco que late. Ver `flight/lo-que-cambia.ts`.
+    const cambia = luceLaVentanilla(d.resaltes?.alt, sinMovimiento());
+    g.strokeStyle = cambia
+      ? TINTA
+      : sel.alerta === "fuera"
+        ? PRECAUCION
+        : sel.alerta === "cerca"
+          ? TINTA
+          : "#2c3136";
+    g.lineWidth = cambia ? 3 : sel.alerta === "nada" ? 1 : 2.4;
     g.strokeRect(x + 3, y + 16, w - 6, 19);
     escribir(g, String(sel.pies), x + w - 7, y + 26, "600 15px " + FUENTE, PALETA.objetivo, "right");
   }
@@ -1681,47 +1716,105 @@ function medirLoQueTarda(d: DatosDeCabina, dt: number): void {
   }
 }
 
+/** Si está puesto «Movimiento: reducido»: entonces nada parpadea. */
+function sinMovimiento(): boolean {
+  return typeof document !== "undefined" &&
+    document.documentElement.classList.contains("sin-movimiento");
+}
+
 /**
- * **La GS de rodar, en el lienzo**: un recuadro oscuro, la cifra verde o ámbar
- * desde el tercer peldaño y debajo su barra, que se llena con la velocidad.
- * Ver `rodajeEnTierra` en `ui/cristal.ts`, que es lo mismo en el cuadro plano.
+ * **La flecha de una marca que cambia**, al lado de la marca y magenta como
+ * ella: hacia dónde se fue. Late con la ventanilla y se queda hasta el final
+ * del resalte, como en el cuadro plano. Ver `Tablero.resaltar`.
  */
+function flechaDeLaMarca(
+  g: CanvasRenderingContext2D,
+  r: Resalte | undefined,
+  cx: number,
+  cy: number,
+): void {
+  if (!r?.hacia) return;
+  if (!luceLaVentanilla(r, sinMovimiento()) && r.edad < PARPADEA_AL_CAMBIAR) return;
+  const s = r.hacia === "sube" ? -1 : 1;
+  g.fillStyle = PALETA.objetivo;
+  g.beginPath();
+  g.moveTo(cx, cy + 9 * s);
+  g.lineTo(cx + 5.5, cy + 3 * s);
+  g.lineTo(cx + 2.2, cy + 3 * s);
+  g.lineTo(cx + 2.2, cy - 3 * s);
+  g.lineTo(cx - 2.2, cy - 3 * s);
+  g.lineTo(cx - 2.2, cy + 3 * s);
+  g.lineTo(cx - 5.5, cy + 3 * s);
+  g.closePath();
+  g.fill();
+}
+
+/**
+ * **La GS de rodar, en el lienzo**: el mismo dibujo de rodar, la barra fina
+ * con su marca magenta de hasta dónde llenarla y, desde el tercer peldaño, la
+ * cifra verde o ámbar con su «GS». En la esquina y fuera de la rosa, del alto
+ * de los rótulos de esa esquina. Ver `rodajeEnTierra` en `ui/cristal.ts`, que
+ * es lo mismo en el cuadro plano.
+ */
+let piezasDeRodar: { cuerpo: Path2D; trazos: Path2D } | null = null;
+
 function pintarRodaje(
   g: CanvasRenderingContext2D,
   r: NonNullable<DatosDeCabina["rodaje"]>,
   x: number,
   y: number,
+  ancho: number,
 ): void {
-  const ancho = 150;
-  const alto = 68;
+  const alto = 20;
   const color = r.rapido ? PALETA.precaucion : PALETA.normal;
-  g.fillStyle = "#05070a";
-  g.fillRect(x, y, ancho, alto);
-  g.strokeStyle = PALETA.filo;
-  g.lineWidth = 2;
-  g.strokeRect(x + 1, y + 1, ancho - 2, alto - 2);
-  escribir(g, "GS", x + 12, y + 20, "500 13px " + FUENTE, TENUE, "left");
+  piezasDeRodar ??= { cuerpo: new Path2D(RODAR.cuerpo), trazos: new Path2D(RODAR.trazos) };
+  g.save();
+  g.translate(x, y);
+  g.fillStyle = AUXILIAR;
+  g.strokeStyle = AUXILIAR;
+  g.lineWidth = 1.6;
+  g.lineCap = "round";
+  g.fill(piezasDeRodar.cuerpo);
+  g.stroke(piezasDeRodar.trazos);
+  for (const [cx, cy] of RODAR.ruedas) {
+    g.beginPath();
+    g.arc(cx, cy, RODAR.radio, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.lineCap = "butt";
+  g.restore();
   // La cifra, desde el peldaño de los números: abajo manda el dibujo.
-  if (peldanoDeAhora >= CIFRAS_DE_AVISO_DESDE)
+  const conCifra = peldanoDeAhora >= CIFRAS_DE_AVISO_DESDE;
+  if (conCifra) {
+    escribir(g, "GS", x + 30, y + alto / 2, "500 13px " + FUENTE, TENUE, "left");
     escribir(
       g,
       String(Math.max(0, Math.round(r.nudos))),
-      x + ancho - 12,
-      y + 22,
-      "600 30px " + FUENTE,
+      x + 80,
+      y + alto / 2,
+      "600 17px " + FUENTE,
       color,
       "right",
     );
-  // Sin la cifra, la barra gorda y en medio: es todo lo que hay que mirar.
-  const conCifra = peldanoDeAhora >= CIFRAS_DE_AVISO_DESDE;
-  const bx = x + 12;
-  const bh = conCifra ? 12 : alto - 32;
-  const by = conCifra ? y + alto - 22 : y + 16;
-  const bw = ancho - 24;
+  }
+  const bx = x + (conCifra ? 88 : 32);
+  const bw = ancho - (bx - x);
+  const bh = 6;
+  const by = y + (alto - bh) / 2;
   g.fillStyle = PALETA.filo;
   g.fillRect(bx, by, bw, bh);
   g.fillStyle = color;
-  g.fillRect(bx, by, bw * Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala))), bh);
+  g.fillRect(bx, by, bw * parteDeLaBarra(r.nudos, r.escala), bh);
+  // Y la marca de hasta dónde llenarla. Ver `barraDeRodaje`.
+  const mx = bx + bw * parteDeLaBarra(r.toca, r.escala);
+  g.fillStyle = PALETA.objetivo;
+  g.fillRect(mx - 1.25, by - 4, 2.5, bh + 8);
+  g.beginPath();
+  g.moveTo(mx - 4, by - 7);
+  g.lineTo(mx + 4, by - 7);
+  g.lineTo(mx, by - 3);
+  g.closePath();
+  g.fill();
 }
 
 /**
@@ -1800,12 +1893,14 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   );
   escribir(g, "HDG", cx, 48, "500 11px " + FUENTE, TENUE);
   /*
-   * **Y en tierra, la GS grande y con su color**, en el mismo sitio y con las
-   * mismas reglas que en el cuadro plano: la barra en los cuatro peldaños y la
-   * cifra con su «GS» desde el tercero. En el aire, la pequeña de apoyo. Ver
+   * **Y en tierra, la GS de rodar**, en el sitio de la pequeña de apoyo y con
+   * las mismas reglas que en el cuadro plano: el dibujo, la barra y su marca en
+   * los cuatro peldaños, y la cifra con su «GS» desde el tercero. Ver
    * `rodajeEnTierra` en `ui/cristal.ts`.
    */
-  if (d.rodaje) pintarRodaje(g, d.rodaje, izquierda + 8, 8);
+  // Ciento cuarenta de ancho: en el de cristal, más cerraba contra la caja
+  // del rumbo.
+  if (d.rodaje) pintarRodaje(g, d.rodaje, izquierda + 10, 20, 140);
   else
     escribir(
       g,

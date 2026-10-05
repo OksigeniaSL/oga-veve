@@ -1138,6 +1138,35 @@ const AEROFRENOS_RECOGIDOS = icono(`
 `);
 
 /**
+ * **Las luces de rodaje**: el morro del avión con la luz de rodaje encendida
+ * —el haz corto hacia el suelo— y la de aterrizaje apagada, un círculo hueco.
+ * Es el punto de las luces de la lista de después del aterrizaje. Ver
+ * `ListaDeDespuesDeAterrizar` en `flight/despues-de-aterrizar.ts`.
+ */
+const LUCES_DE_RODAJE = icono(`
+  <path d="M1.5 10.5 h9.5 q4.5 0 6 2.6 q-1.5 2.4 -6 2.4 h-9.5 z" />
+  <path d="M15.6 14.6 L22.6 18.4 L22.6 21.4 L13.8 16.2 Z" opacity="0.75" />
+  <circle cx="8" cy="5.4" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M6.2 7.2 L9.8 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+  <path d="M2.2 21.6 H22.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+`);
+
+/**
+ * **El transpondedor**: la caja que contesta, con sus ondas, y la pausa de
+ * «en espera» encima. Es el punto del transpondedor de la misma lista: el
+ * TCAS deja de vigilar en tierra, que es lo que escribe la pantalla de
+ * navegación —«TCAS STBY»—.
+ */
+const TRANSPONDEDOR = icono(`
+  <rect x="2" y="11" width="11" height="9" rx="1.6" />
+  <rect class="senal__hueco" x="4.2" y="13.4" width="6.6" height="2.4" rx="0.6" />
+  <path d="M15.4 13.2 q2 2.3 0 4.6 M18.2 11.4 q3.4 4.1 0 8.2" fill="none"
+        stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+  <rect x="4.6" y="2.6" width="2.6" height="6" rx="0.8" />
+  <rect x="8.8" y="2.6" width="2.6" height="6" rx="0.8" />
+`);
+
+/**
  * **Los aerofrenos armados**: el panel tumbado y la flecha que dice que va a
  * subir solo. Es la palanca un punto arriba, antes de aterrizar, y es el
  * dibujo de la tarjeta que la pide en la lista. Ver
@@ -1252,6 +1281,8 @@ export const DIBUJOS = {
   aerofrenos: AEROFRENOS,
   "aerofrenos-recogidos": AEROFRENOS_RECOGIDOS,
   "aerofrenos-armados": AEROFRENOS_ARMADOS,
+  "luces-de-rodaje": LUCES_DE_RODAJE,
+  transpondedor: TRANSPONDEDOR,
   autofreno: AUTOFRENO,
   freno: FRENO,
   combustible: COMBUSTIBLE,
