@@ -1797,6 +1797,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return Math.max(-0.8, Math.min(0.8, falta * 0.06 + sendaSencilla * 0.03));
   };
 
+  /**
+   * **La senda como la lleva un niño en Guyrami: con la mano.** Ver
+   * `OBEDIENTE`. La mano del modelo sencillo pide una trayectoria y busca la
+   * palanca que la da —`mandoParaSubir`—, hasta el tope, y no el ocho décimas
+   * de la ley de este banco. Con ese tope, y la ayuda sosteniendo la Vref más
+   * cinco con el gas, el JAZ 20 no bajaba la senda de tres grados: llegaba a
+   * los quinientos pies 53 m por encima. La trayectoria que se pide es la de
+   * la ley de arriba: la de la senda más lo que falta de altura.
+   */
+  const porLaSendaConLaMano = (s, objetivo, dt) => {
+    const quiere = Math.max(
+      -CAIDA_MAXIMA,
+      Math.min(3, -porElSuelo(s) * SENDA + (objetivo - alto(s)) * 0.15),
+    );
+    const pide = o.mandoParaSubir?.(quiere);
+    return typeof pide === "number"
+      ? Math.max(-1, Math.min(1, pide))
+      : porLaSendaSencilla(s, objetivo, dt);
+  };
+
   const palancaPorVelocidad = (s, objetivo, extra = 0) =>
     ganancia(s) *
     Math.max(-0.35, Math.min(0.35, (s.airspeed - objetivo) * 0.05 + extra));
@@ -5539,7 +5559,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * debajo, la senda se recupera con gas y no con la palanca.
          */
         c.elevator = SENCILLO
-          ? porLaSendaSencilla(s, objetivo, paso)
+          ? obedienteEnElBanco
+            ? porLaSendaConLaMano(s, objetivo, paso)
+            : porLaSendaSencilla(s, objetivo, paso)
           : aLaAltura(s, objetivo, vref);
         /*
          * Y un reactor, con el morro del automático por la misma senda: la
