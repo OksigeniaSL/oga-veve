@@ -270,18 +270,32 @@ describe("remontar la pista según el avión", () => {
     expect(radio).toBeLessThan(9);
   });
 
-  it("en Estigarribia, por la 19, el regional y la avioneta salen desde la calle; el de fuselaje ancho, no", () => {
+  it("en Estigarribia, por la 19, salen desde la calle; el de fuselaje ancho, una tarde de calor del Chaco con viento de cola, remonta", () => {
     const pykasu = AIRCRAFT.find((a) => a.id === "jaz-20")!;
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
     const jaz120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
-    for (const avion of [pykasu, jaz90]) {
+    /*
+     * Un día de tablas le dan a los tres los 2.948 m que quedan desde la calle:
+     * el de fuselaje ancho necesita unos 2.400 con el 1,15 de su
+     * certificación, porque un reactor despega en 1,39 veces su rodadura y no
+     * en el 1,8 de una avioneta. Ver `deRodarADespegarHoy` en `carrera.ts`.
+     */
+    for (const avion of [pykasu, jaz90, jaz120]) {
       const r = entrada(ESTIGARRIBIA, avion, 180)!;
       expect(r.giro, avion.id).toBeNull();
       expect(r.sale!.desde, avion.id).toBe("interseccion");
       expect(r.sale!.porDelante, avion.id).toBeGreaterThan(2900);
     }
-    // El grande necesita más que los 2.948 m que quedan: pide la pista entera.
-    const grande = entrada(ESTIGARRIBIA, jaz120, 180)!;
+    // Y una tarde de 38 grados con cinco metros por segundo de cola —en el
+    // Chaco no es raro—, el grande ya no cabe desde la calle: pide la pista
+    // entera.
+    const cota = 155;
+    const tarde: DiaDeDespegue = {
+      densidad: airDensity(cota, aireDelParte(38, cota)),
+      vientoDeFrente: -5,
+      superficie: "asfalto",
+    };
+    const grande = entrada(ESTIGARRIBIA, jaz120, 180, tarde)!;
     expect(grande.sale!.necesitaHoy).toBeGreaterThan(grande.sale!.desdeLaEntrada);
     expect(grande.sale!.desde).toBe("remonte");
     expect(grande.sale!.hastaElFinal).toBe(true);

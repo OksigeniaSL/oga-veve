@@ -184,9 +184,34 @@ export function margenDeSuClase(a: AircraftConfig): {
  */
 export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE_TABLAS): number {
   return (
-    distanciaDeDespegue(a, dia.superficie, dia.densidad, dia.vientoDeFrente) *
+    carreraHastaVr(a, dia.superficie, dia.densidad, dia.vientoDeFrente) *
+    deRodarADespegarHoy(a) *
     margenDeSuClase(a).factor
   );
+}
+
+/**
+ * **De la rodadura hasta la rotación a la distancia de despegue, por clase**,
+ * para la cuenta del día.
+ *
+ * `distanciaDeDespegue` usa 1,8 para todos, que es la cifra de una avioneta:
+ * un 172 rueda 265 m hasta rotar y pasa los cincuenta pies a los 500, porque
+ * sube despacio y su tramo en el aire es largo. Un reactor se separa enseguida
+ * y sube mucho más empinado: un 747 a este peso rueda 1.800 y despega en 2.500
+ * (1,39), que es lo que dice `pistaQueNecesita`. Con el 1,8 y el 1,15 de su
+ * certificación, el JAZ 120 «necesitaba» 3.627 m en Los Rodeos a veinte
+ * grados, la tarjeta del tiempo le proponía no salir por falta de pista y el
+ * banco se quedaba en el puesto, por la pista por la que salían los 747 de
+ * verdad (5-oct-2026).
+ *
+ * Solo aquí, de momento: `cabeEn` decide qué avión se ofrece en cada campo con
+ * `pistaQueNecesita`, y ese 1,8 está haciendo de margen del aterrizaje que su
+ * cuenta no lleva (la toma de un reactor no puede gastar más del 60 % de la
+ * pista: CAT.POL.A.230). Corregirlo allí pide ponerle a la vez ese margen, y
+ * cambia qué avión cabe dónde: está en la lista.
+ */
+function deRodarADespegarHoy(a: AircraftConfig): number {
+  return a.sound.engine === "turbofan" ? 2500 / 1800 : 1.8;
 }
 
 /**
