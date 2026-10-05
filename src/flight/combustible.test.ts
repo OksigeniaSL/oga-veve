@@ -238,9 +238,16 @@ describe("elegir otro destino en tierra carga para él", () => {
       );
       if (destinos.length < 2) continue;
       const campos = camposDeLaRuta(salida, destinos);
+      /*
+       * A la décima de kilo y no al kilo: desde Los Rodeos, con La Gomera en su
+       * ruta, Gran Canaria y La Palma con su alternativo suman 223.718 y
+       * 223.671 m —cuarenta y siete metros de diferencia, dos décimas de kilo—
+       * y al kilo salían iguales. Cada una pide lo suyo; lo que coincidía era
+       * el redondeo.
+       */
       const cargas = new Set(
         campos.map((c) =>
-          Math.round(cargaParaElPlan(jaz90, tramosDelPlan(campos[0]!, c, campos))),
+          Math.round(10 * cargaParaElPlan(jaz90, tramosDelPlan(campos[0]!, c, campos))),
         ),
       );
       // Uno por destino y otro para la vuelta al campo.

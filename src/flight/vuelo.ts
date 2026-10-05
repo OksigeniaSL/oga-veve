@@ -110,12 +110,16 @@ export interface Situacion {
   /**
    * Y cuánta pista necesita **este** avión para despegar entero, en metros.
    *
-   * El mínimo de verdad —`pistaQueNecesita`, el que decide si un avión cabe en
-   * un campo—, no el que uno querría tener. Son dos preguntas distintas y el
-   * juego tiene las dos: aquélla dice cuánta pista se **quiere** teniéndola y
-   * es la que traza el punto de giro del back-taxi; ésta dice cuándo ya no hay
-   * alternativa. Para reconocer que alguien está despegando de verdad manda la
-   * segunda. Ver `flight/carrera.ts`.
+   * El mínimo de verdad —la distancia de despegue de hoy, sin márgenes, con el
+   * aire, el viento y el peso del día: `distanciaDeDespegue`—, no el que uno
+   * querría tener. Son dos preguntas distintas y el juego tiene las dos:
+   * aquélla dice cuánta pista se **quiere** teniéndola y es la que traza el
+   * punto de giro del back-taxi; ésta dice cuándo ya no hay alternativa. Para
+   * reconocer que alguien está despegando de verdad manda la segunda. Ver
+   * `flight/carrera.ts`.
+   *
+   * Era la regla de qué avión cabe en un campo, que lleva además la toma y los
+   * márgenes de la norma; aquí se está saliendo, y la toma no pinta nada.
    */
   readonly pistaQueNecesita: number;
   /** Metros de altura sobre el terreno. */

@@ -49,7 +49,7 @@ import type {
   InitialConditions,
   LoSacado,
 } from "./model";
-import { loQueDaElMotor, type AircraftConfig } from "./aircraft";
+import { conMasa, loQueDaElMotor, masaDe, type AircraftConfig } from "./aircraft";
 import { cargaPorRafaga } from "./rafagas";
 
 /**
@@ -297,7 +297,13 @@ export class ArcadeFlightModel implements FlightModel {
   readonly implementationName = "Modelo sencillo Óga Veve";
   readonly state: FlightState;
 
-  private readonly aircraft: AircraftConfig;
+  /**
+   * El avión con lo que pesa ahora, como en el modelo de coeficientes: lo que
+   * sube, lo que planea, lo que corre hasta Vr y lo que frena salen de su
+   * peso. Ver `ponerMasa`.
+   */
+  private aircraft: AircraftConfig;
+  private readonly ficha: AircraftConfig;
   private readonly ground: GroundSampler;
 
   private heading = 0;
@@ -325,6 +331,7 @@ export class ArcadeFlightModel implements FlightModel {
 
   constructor(options: ArcadeOptions) {
     this.aircraft = options.aircraft;
+    this.ficha = options.aircraft;
     this.ground = options.ground;
     this.state = {
       position: new Vector3(),
@@ -605,7 +612,7 @@ export class ArcadeFlightModel implements FlightModel {
     const caida =
       caidaSinMotor(this.aircraft, v) +
       (v * 0.5 * SEA_LEVEL_DENSITY * v * v * this.aircraft.wingArea * deMas) /
-        (this.aircraft.mass * GRAVITY);
+        (masaDe(this.aircraft) * GRAVITY);
     return ((gas - nivelado) / nivelado) * caida;
   }
 
@@ -642,6 +649,16 @@ export class ArcadeFlightModel implements FlightModel {
 
   aireDelDia(): Aire {
     return this.aire;
+  }
+
+  /** Lo que pesa ahora. Ver `ponerMasa` en `model.ts`. */
+  ponerMasa(kg: number): void {
+    if (Math.abs(kg - masaDe(this.aircraft)) < 0.5) return;
+    this.aircraft = conMasa(this.ficha, kg);
+  }
+
+  masaAhora(): number {
+    return masaDe(this.aircraft);
   }
 
   /**
@@ -1437,7 +1454,7 @@ export class ArcadeFlightModel implements FlightModel {
       densidad: airDensity(this.state.position.y, this.aire),
       velocidad: this.speed,
       clAlpha: ac.aero.clAlpha,
-      cargaAlar: (ac.mass * GRAVITY) / ac.wingArea,
+      cargaAlar: (masaDe(ac) * GRAVITY) / ac.wingArea,
     });
     if (this.state.onGround || !(step > 0)) {
       this.porElAire = 0;

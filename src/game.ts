@@ -51,6 +51,7 @@ import {
 import {
   AIRCRAFT,
   PYKASU,
+  conMasa,
   esDeChorro,
   velocidadDePerdida,
   type AircraftConfig,
@@ -721,6 +722,7 @@ import {
   hayQueLlenar,
   llamadaDeCombustible,
   loQueCabe,
+  masaConCombustible,
   quemaPorSegundo,
   reservaEnKilos,
   seCargaAlCambiarDeDestino,
@@ -2632,6 +2634,37 @@ export class Game {
    * única cuenta atrás de verdad que hay aquí.
    */
   private combustible = 0;
+
+  /**
+   * **Lo que pesa el avión ahora**, kg: su masa sin combustible más lo que
+   * queda en los depósitos. Ver `masaConCombustible`.
+   */
+  masaDeAhora(): number {
+    return masaConCombustible(this.aircraft, this.combustible);
+  }
+
+  /**
+   * **El avión con lo que pesa ahora**, para las cuentas de física que lo
+   * preguntan fuera del modelo de vuelo: el gas de una velocidad, el planeo,
+   * la pista de hoy. Una copia de la ficha —no sirve para comparar por
+   * identidad— que se guarda mientras no cambie el peso. Ver `conMasa`.
+   */
+  avionConPeso(): AircraftConfig {
+    const masa = this.masaDeAhora();
+    const guardado = this.conPesoGuardado;
+    if (guardado && guardado.ficha === this.aircraft && Math.abs(guardado.masa - masa) < 1)
+      return guardado.avion;
+    const avion = conMasa(this.aircraft, masa);
+    this.conPesoGuardado = { ficha: this.aircraft, masa, avion };
+    return avion;
+  }
+
+  /** Ver `avionConPeso`. */
+  private conPesoGuardado: {
+    readonly ficha: AircraftConfig;
+    readonly masa: number;
+    readonly avion: AircraftConfig;
+  } | null = null;
 
   /** Lo que se está quemando ahora mismo, en kilos por segundo. */
   private quemaDeAhora = 0;
@@ -10951,6 +10984,9 @@ export class Game {
       densidad: airDensity(cota, aireDelParte(meteo.temp, cota, meteo.qnh)),
       vientoDeFrente: deFrente(campo.escenario.runway.heading, meteo) * 0.514444,
       superficie: this.superficie,
+      // Y lo que pesa hoy: un vuelo largo sale con más combustible y necesita
+      // más pista. Ver `masaConCombustible`.
+      masa: this.masaDeAhora(),
     };
   }
 
@@ -12320,7 +12356,7 @@ export class Game {
           s.position.y,
           this.flight.aireDelDia(),
         ),
-        planeo: planeoDe(this.aircraft),
+        planeo: planeoDe(this.avionConPeso()),
       });
       banda = b.banda;
       sinMotorDe = b.de;
@@ -14261,6 +14297,13 @@ export class Game {
         })
       : 0;
     this.combustible = Math.max(0, antes - this.quemaDeAhora * dt);
+    /*
+     * **Y el avión pesa lo que lleva.** La masa era la de la ficha y no bajaba
+     * al quemar (#91); Enrique pidió la pista «como se hace en el mundo real,
+     * según tipo de avión, peso, viento, etc., en cada momento». Con esto un
+     * vuelo largo sale más pesado y aterriza más ligero. Ver `ponerMasa`.
+     */
+    this.flight.ponerMasa?.(this.masaDeAhora());
 
     /*
      * El aviso de reserva, una vez. Ámbar y en voz de aviso —nunca de
@@ -14348,7 +14391,7 @@ export class Game {
     this.sinMotor = true;
     this.laOtraCabecera.reiniciar();
     const s = this.flight.state;
-    const planeo = planeoDe(this.aircraft);
+    const planeo = planeoDe(this.avionConPeso());
     const campos = this.camposDelVuelo().map((c) => ({
       ...c,
       cota: this.cotaDelCampo(this.elCampo(c.id)),
@@ -19177,7 +19220,7 @@ export class Game {
         // Lo que empuja el motor aquí y lo que pesa el avión: los gases miden
         // con eso cuánto acelera cada trozo de palanca.
         empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
-        masa: this.aircraft.mass,
+        masa: this.masaDeAhora(),
         /*
          * **Y en el modelo sencillo, con sus propias cuentas**: ahí la palanca
          * es cuánto se sube y el gas es la velocidad, y las dos cosas se le
@@ -21123,7 +21166,7 @@ export class Game {
     const verdadera = trueFromIndicated(v.kt * NUDO, s.position.y, aire);
     const gasDeLaMarca = sencillo
       ? this.flight.gasPara(verdadera)
-      : gasQueSostiene(this.aircraft, {
+      : gasQueSostiene(this.avionConPeso(), {
           altura: s.position.y,
           verdadera,
           aire,
@@ -21273,7 +21316,7 @@ export class Game {
         velocidad: indicatedAirspeed(s.airspeed, s.position.y, aire),
         gas: this.input.controls.throttle,
         empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
-        masa: this.aircraft.mass,
+        masa: this.masaDeAhora(),
         ...(this.tier.model === "simple"
           ? {
               equilibrio: this.flight.gasPara(
@@ -22183,6 +22226,9 @@ export class Game {
             ground,
             assist: tier.assists,
           });
+    // Nace con lo que pesa el avión ahora, no con la ficha: cambiar de peldaño
+    // en el aire no le quita el combustible. Ver `ponerMasa`.
+    if (this.combustible > 0) modelo.ponerMasa?.(this.masaDeAhora());
     /*
      * Y si el toque de flecha tiene compensador que mover: en el modelo
      * sencillo no lo hay. Ver `compensadorVivo` en `flight/input.ts`.

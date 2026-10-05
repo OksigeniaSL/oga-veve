@@ -27,7 +27,7 @@
  * pantalla roja, ni música de miedo. No es una alarma, es una maniobra.
  */
 
-import type { AircraftConfig } from "./aircraft";
+import { masaDe, type AircraftConfig } from "./aircraft";
 import { SEA_LEVEL_DENSITY } from "./atmosphere";
 import type { CampoDelVuelo } from "./alterno";
 import type { BandaDeVelocidad } from "./velocidad-de-aproximacion";
@@ -72,7 +72,7 @@ export interface Planeo {
  * pasillo único; y el JAZ 120 a 236 y 16, lo de un cuatrimotor grande.
  */
 export function planeoDe(
-  avion: Pick<AircraftConfig, "mass" | "wingArea" | "wingSpan"> & {
+  avion: Pick<AircraftConfig, "mass" | "masaDeAhora" | "wingArea" | "wingSpan"> & {
     readonly aero: Pick<AircraftConfig["aero"], "cd0" | "oswald">;
   },
 ): Planeo {
@@ -82,7 +82,9 @@ export function planeoDe(
   const sustentacion = Math.sqrt(avion.aero.cd0 / k);
   return {
     velocidad: Math.sqrt(
-      (2 * avion.mass * G) /
+      // Con lo que pesa ahora: la de mejor planeo va con la raíz del peso, y
+      // con los depósitos casi vacíos es algo más lenta.
+      (2 * masaDe(avion) * G) /
         (SEA_LEVEL_DENSITY * avion.wingArea * sustentacion),
     ),
     fineza: 1 / (2 * Math.sqrt(avion.aero.cd0 * k)),
