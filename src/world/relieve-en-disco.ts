@@ -25,6 +25,7 @@ const fs = () =>
   ).process.getBuiltinModule("node:fs") as {
     readFileSync(ruta: string, codificacion?: string): Uint8Array | string;
     existsSync(ruta: string): boolean;
+    readdirSync(ruta: string): string[];
   };
 
 /** Radio terrestre, m: el de los extractores y el de `entre-aerodromos.ts`. */
@@ -107,4 +108,34 @@ export function relieveDe(
     }
     return null;
   };
+}
+
+/**
+ * **Los mapas de Canarias tal cual**, finos y lejanos, para saber dónde hay
+ * tierra: es lo que usa el extractor de teselas, y con esto las pruebas miran
+ * la cobertura contra el mismo relieve. Ver `tierraDeLosRelieves`.
+ */
+export function mapasDeCanarias(): {
+  origen: { lat: number; lon: number };
+  tamanoM: number;
+  datos: Int16Array;
+}[] {
+  const out: { origen: { lat: number; lon: number }; tamanoM: number; datos: Int16Array }[] = [];
+  for (const f of fs().readdirSync("data/terrain")) {
+    if (!f.endsWith(".json")) continue;
+    const ficha = JSON.parse(fs().readFileSync(`data/terrain/${f}`, "utf8") as string) as {
+      origen?: { lat: number; lon: number };
+      tamanoM: number;
+    };
+    const bin = `data/terrain/${f.replace(/\.json$/, ".bin")}`;
+    if (!ficha.origen || !fs().existsSync(bin)) continue;
+    if (ficha.origen.lat < 27 || ficha.origen.lat > 30 || ficha.origen.lon > -13) continue;
+    const b = fs().readFileSync(bin) as Uint8Array;
+    out.push({
+      origen: ficha.origen,
+      tamanoM: ficha.tamanoM,
+      datos: new Int16Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)),
+    });
+  }
+  return out;
 }

@@ -42,6 +42,39 @@ function elPackDeVoz(): Plugin {
 }
 
 /**
+ * **Y las teselas de ortofoto, por lo mismo que el pack de voz.**
+ *
+ * Son decenas de miles de ficheros que el juego pide por `fetch` según mira
+ * —ver `world/teselas-de-ortofoto.ts`— y no pasan por el paquete. Tampoco
+ * están en el repositorio: pesan cientos de megas y se rehacen con
+ * `scripts/pnoa-a-teselas.mjs` (ADR 0018). Así que se copian tal cual si
+ * están en `data/teselas` —una carpeta o un enlace a ella—, y si no están,
+ * el juego se publica sin teselas y vuela con las fotos de una pieza.
+ */
+function lasTeselas(): Plugin {
+  let raiz = process.cwd();
+  let salida = resolve("dist");
+  return {
+    name: "teselas-de-ortofoto",
+    apply: "build",
+    configResolved(config) {
+      raiz = config.root;
+      salida = carpetaDeSalida(config);
+    },
+    async closeBundle() {
+      const desde = resolve(raiz, "data/teselas");
+      if (!existsSync(desde)) return;
+      // Sin las listas de trabajo del extractor: el mar y los cerrojos.
+      await cp(desde, resolve(salida, "data/teselas"), {
+        recursive: true,
+        dereference: true,
+        filter: (f) => !/(^|\/)(mar\.txt|\.cerrojo-[\w-]+)$/.test(f),
+      });
+    },
+  };
+}
+
+/**
  * **La carpeta donde escribe esta compilación**, la que diga Vite.
  *
  * Los dos complementos que escriben fuera del paquete —el pack de voz y el
@@ -139,7 +172,12 @@ function elTrabajadorDeServicio(): Plugin {
 
 export default defineConfig({
   base: "./",
-  plugins: [elPackDeVoz(), relievesComprimidos(), elTrabajadorDeServicio()],
+  plugins: [
+    elPackDeVoz(),
+    lasTeselas(),
+    relievesComprimidos(),
+    elTrabajadorDeServicio(),
+  ],
   /*
    * **Las pruebas tienen que ver la hoja de estilos de verdad.**
    *

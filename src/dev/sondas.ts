@@ -1389,6 +1389,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       return img ? { ancho: img.width ?? 0, alto: img.height ?? 0 } : null;
     },
     /**
+     * **Las teselas de ortofoto**: cuántas puestas, cuántas queridas, cuánto
+     * bajado. Y con `teselasEncendidas(false)` se apagan sin tocar nada más,
+     * para comparar la misma vista con ellas y sin ellas. Ver
+     * `world/teselas-de-ortofoto.ts`.
+     */
+    teselas: () => juego.teselasDeOrtofoto?.estado() ?? null,
+    teselasEncendidas: (si: boolean) => {
+      if (juego.teselasDeOrtofoto) juego.teselasDeOrtofoto.encendidas = si;
+      return !!juego.teselasDeOrtofoto;
+    },
+    /**
      * Dónde está el avión **en ejes de pista**: a lo largo y al costado.
      *
      * Es con lo que el juego decide `onRunway`, y de ahí cuelgan cosas que no

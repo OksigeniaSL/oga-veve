@@ -19,6 +19,7 @@ import {
 } from "./flight/lecciones";
 import { conRelieve } from "./world/relieve";
 import { cargarOrtofoto } from "./world/ortofoto";
+import { cargarManifiesto, juegoDeTeselas } from "./world/teselas-de-ortofoto";
 import { mundoElegido } from "./ui/mundo";
 import { cargarCiudad } from "./world/ciudades";
 import { conViento } from "./world/scenarios";
@@ -525,9 +526,29 @@ miga("juego creado");
  * en cuanto llega; hasta entonces esas zonas se ven con el suelo dibujado.
  */
 if (mundoElegido() === "foto") {
-  void cargarOrtofoto(escenario.id, "medio").then(
-    (medio) => medio && game.ponerAnillos({ medio }),
-  );
+  /*
+   * **Y las teselas, si hay juego de teselas para este sitio**, antes que la
+   * foto de en medio: si las teselas cubren el mundo de casa, la de en medio
+   * sobra. Pintaba cincuenta y cuatro kilómetros a diecisiete metros por
+   * píxel y las teselas pintan la isla entera a lo que pida la distancia;
+   * bajarla serían uno o dos megas y cuarenta y siete en la tarjeta para
+   * nada. Sin teselas —Cuatro Vientos, Paraguay, o sin índice publicado—,
+   * la de en medio como siempre. Ver `world/teselas-de-ortofoto.ts`.
+   */
+  const juegoDeTeselasAqui = juegoDeTeselas(ortofoto?.ficha.fuente);
+  void (juegoDeTeselasAqui
+    ? cargarManifiesto(juegoDeTeselasAqui)
+    : Promise.resolve(undefined)
+  ).then((manifiesto) => {
+    const teselas =
+      manifiesto && juegoDeTeselasAqui
+        ? game.ponerTeselasDeOrtofoto(manifiesto, juegoDeTeselasAqui)
+        : null;
+    if (teselas) return;
+    void cargarOrtofoto(escenario.id, "medio").then(
+      (medio) => medio && game.ponerAnillos({ medio }),
+    );
+  });
   void cargarOrtofoto(escenario.id, "horizonte").then(
     (horizonte) => horizonte && game.ponerAnillos({ horizonte }),
   );

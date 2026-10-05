@@ -130,6 +130,25 @@ for (const escenario of ESCENARIOS) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   const cdp = await page.context().newCDPSession(page);
+  /*
+   * **Lo que se baja, contado por la red**: fotos, teselas y todo lo demás.
+   * Con las teselas de ortofoto (punto 166), «cuánto pesa» depende de dónde
+   * se mire, así que se cuenta lo que de verdad llega y no lo que hay en el
+   * servidor.
+   */
+  const bajado = { total: 0, teselas: 0, nTeselas: 0, fotos: 0 };
+  page.on("response", async (r) => {
+    const u = r.url();
+    const largo =
+      Number(r.headers()["content-length"] ?? 0) ||
+      (await r.body().catch(() => Buffer.alloc(0))).length;
+    bajado.total += largo;
+    if (u.includes("/teselas/") && /\.jpg(\?|$)/.test(u)) {
+      bajado.teselas += largo;
+      bajado.nTeselas++;
+    } else if (u.includes("/ortho/") && /\.jpg(\?|$)/.test(u)) bajado.fotos += largo;
+  });
+  const t0 = Date.now();
   await page.goto(
     `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami` +
       (process.env.OGA_AVION ? `&avion=${process.env.OGA_AVION}` : "") +
@@ -140,6 +159,8 @@ for (const escenario of ESCENARIOS) {
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 60000,
   });
+  /** Hasta poder jugar, s: el tiempo de carga que se nota. */
+  const arranque = (Date.now() - t0) / 1000;
   await page.waitForTimeout(14000);
 
   if (!tarjeta) tarjeta = await page.evaluate(() => {
@@ -156,6 +177,12 @@ for (const escenario of ESCENARIOS) {
   for (const sitio of [
     "puesto",
     "aire",
+    /*
+     * **Y en crucero**, a tres mil metros sobre el campo: es donde más isla
+     * cabe en el cuadro y donde la ortofoto por teselas tiene más que pintar.
+     * Ver `world/teselas-de-ortofoto.ts`.
+     */
+    "crucero",
     /*
      * **La tarjeta justo después del aire, en el mismo sitio**, para que la
      * diferencia sea la tarjeta y nada más. Medida al final, detrás de la
@@ -201,6 +228,17 @@ for (const escenario of ESCENARIOS) {
         { timeout: 60000 },
       );
       await page.waitForTimeout(1500);
+    }
+    if (sitio === "crucero") {
+      await page.evaluate(() => {
+        const o = globalThis.__oga;
+        const r = o.pista();
+        o.colocar(r.x, o.suelo(r.x, r.z) + 3000, r.z, 120);
+        o.ponerVentanillaAlt?.((o.suelo(r.x, r.z) + 3000) / 0.3048);
+        o.pilotoAutomatico?.(true);
+      });
+      // Lo que haya que bajar para ese sitio, que en crucero es lo que más.
+      await page.waitForTimeout(8000);
     }
     if (sitio === "aire") {
       // Sobre el aeródromo y a la altura del circuito, que es donde se ve
@@ -290,7 +328,35 @@ for (const escenario of ESCENARIOS) {
         const pintadas = (globalThis.__oga.tarjetaDelAvion?.().pintadas ?? 0) - antes;
         tiempos.sort((a, b) => a - b);
         const en = (p) => tiempos[Math.floor(tiempos.length * p)] ?? 0;
+        /*
+         * **La memoria de texturas**, sumada a mano: lo que ocupa en la
+         * tarjeta cada textura que cuelga de un material de la escena, sin
+         * contar dos veces la misma. three solo dice cuántas hay, y lo que se
+         * quiere saber es cuánto pesan —una ortofoto de 3.584 de lado son
+         * cincuenta megas en la tarjeta aunque baje en uno—.
+         */
+        const vistas = new Set();
+        let bytesDeTexturas = 0;
+        const mirar = (t) => {
+          if (!t || !t.isTexture || vistas.has(t)) return;
+          vistas.add(t);
+          const img = t.image ?? {};
+          const ancho = img.width ?? img.videoWidth ?? 0;
+          const alto = img.height ?? img.videoHeight ?? 0;
+          const capas = img.depth ?? 1;
+          const conMip = t.generateMipmaps && t.minFilter !== 1006 ? 4 / 3 : 1;
+          bytesDeTexturas += ancho * alto * 4 * capas * conMip;
+        };
+        globalThis.__oga.escena().traverse((o) => {
+          const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+          for (const m of ms) {
+            for (const v of Object.values(m)) mirar(v);
+            for (const v of Object.values(m.userData ?? {})) mirar(v);
+            for (const u of Object.values(m.uniforms ?? {})) mirar(u?.value);
+          }
+        });
         return {
+          texturasMB: bytesDeTexturas / 1048576,
           pintadas,
           mediana: en(0.5),
           p95: en(0.95),
@@ -299,7 +365,18 @@ for (const escenario of ESCENARIOS) {
           ...globalThis.__oga.coste(),
         };
       }, { ms: MIDE, conGpu: CON_GPU, girando: sitio === "girando" });
-      filas.push({ escenario, sitio, veces, nombre, ...medida });
+      filas.push({
+        escenario,
+        sitio,
+        veces,
+        nombre,
+        arranque,
+        bajadoMB: bajado.total / 1048576,
+        teselasMB: bajado.teselas / 1048576,
+        nTeselas: bajado.nTeselas,
+        fotosMB: bajado.fotos / 1048576,
+        ...medida,
+      });
     }
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
     if (sitio === "girando")
@@ -330,6 +407,11 @@ for (const f of filas) {
       `${f.llamadas} dibujos · ${(f.triangulos / 1000).toFixed(0)}k △` +
       (f.gpu !== null && f.gpu !== undefined ? ` · GPU ${f.gpu.toFixed(2)} ms` : "") +
       (f.aves ? ` · aves ${f.aves.cerca}+${f.aves.lejos}` : "") +
+      ` · texturas ${f.texturasMB.toFixed(0)} MB` +
+      (f.veces === 1
+        ? ` · bajado ${f.bajadoMB.toFixed(1)} MB (fotos ${f.fotosMB.toFixed(1)}, ` +
+          `teselas ${f.nTeselas}: ${f.teselasMB.toFixed(1)}) · arranque ${f.arranque.toFixed(1)} s`
+        : "") +
       (f.sitio === "tarjeta" || f.sitio === "girando"
         ? ` · tarjeta ${Math.round((f.pintadas * 1000) / MIDE)}/s`
         : "") +
