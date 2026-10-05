@@ -102,6 +102,27 @@ coger el avión; el modelo nuevo nace equilibrado (`InitialConditions.
 equilibrado`) y el compensador se deja en el que sostiene el avión. Lo
 comprueba `scripts/verificar-cambio-de-peldano.mjs` en tres fases del vuelo.
 
+### La bajada, con sus tramos para frenar (añadido el 5 de octubre de 2026)
+
+La escalera pedía frenar en la bajada y la senda no dejaba: era una recta de
+tres millas por cada mil pies desde el umbral, y por ella un reactor limpio
+al ralentí no frena. En el modelo completo el JAZ 120 llegaba a las cinco
+millas a unos 224 kt, sin sitio para los flaps 2 y 3 (punto 213).
+
+`perfilDeLaBajada` en `flight/ruta.ts` construye ahora la de los reactores
+como un ordenador de vuelo, de la pista hacia atrás: la final con el ángulo
+de su senda (el que publica el AIP de esa pista, ver
+`world/sendas-publicadas.ts`); nivelado antes del punto de final, de la del
+área terminal a la configurada y como poco desde las doce millas (FCTM del
+737: a la altura del circuito y a la de maniobra sin flaps a unas 12 NM en
+una entrada directa); nivelado al entrar en el área terminal, de 250 a la de
+maniobra; nivelado a 10.500 ft, de la de bajar a 250; y tres por mil entre
+medias. Cada tramo para frenar mide una milla por cada diez nudos, que es la
+regla con la que se planea la bajada en la cabina: el punto de descenso
+desde FL290 pasa de 87 a unas 100 NM. Lo siguen el automático, el desvío
+vertical, el punto de descenso y la hora del plan. Los de hélice siguen con
+la recta: frenan bajando con la hélice al ralentí.
+
 ### La final
 
 Pasado el punto de final, la ventanilla lleva **la altitud de la frustrada**
