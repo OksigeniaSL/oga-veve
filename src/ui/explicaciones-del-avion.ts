@@ -41,6 +41,12 @@ export interface ExplicacionDelAvion {
   readonly id: `avion.${string}`;
   /** El dibujo, en un lienzo de 48 por 48. Va en los cuatro peldaños. */
   readonly dibujo: string;
+  /**
+   * Su nombre, en una palabra o dos: el título de la ventana cuando se abre
+   * por su `id` desde el registro de explicaciones. Ver `DEL_AVION` en
+   * `ui/explicaciones-de-serie.ts`.
+   */
+  readonly corta: TranslationKey;
   /** Lo que se lee en el globo. */
   readonly texto: TranslationKey;
   /**
@@ -129,34 +135,41 @@ const de = (
   id: ExplicacionDelAvion["id"],
   dibujo: keyof typeof DIBUJOS,
   clave: string,
+  corta: TranslationKey,
 ): ExplicacionDelAvion => ({
   id,
   dibujo: DIBUJOS[dibujo],
+  corta,
   texto: `tarjeta.${clave}` as TranslationKey,
   voz: `tarjeta.voz.${clave}` as TranslationKey,
   video: null,
 });
 
 /** Todas, por su `id`. Lo que recorre el registro y lo que mira la prueba. */
+/*
+ * La palabra corta es la de su pieza o su luz en la tarjeta cuando la hay —la
+ * misma que lee el lector de pantalla en el punto—, y una propia cuando el
+ * punto es una variante: un reactor no es «el motor» a secas.
+ */
 export const EXPLICACIONES_DEL_AVION: readonly ExplicacionDelAvion[] = [
-  de("avion.alerones", "alerones", "alerones"),
-  de("avion.profundidad", "profundidad", "profundidad"),
-  de("avion.timon", "timon", "timon"),
-  de("avion.flaps", "flaps", "flaps"),
-  de("avion.aerofrenos", "aerofrenos", "aerofrenos"),
-  de("avion.pitot", "pitot", "pitot"),
-  de("avion.pitot-morro", "pitot", "pitotMorro"),
-  de("avion.motor-piston", "helice", "motorPiston"),
-  de("avion.motor-radial", "helice", "motorRadial"),
-  de("avion.turbohelice", "turbohelice", "turbohelice"),
-  de("avion.reactor", "reactor", "reactor"),
-  de("avion.tren", "tren", "tren"),
-  de("avion.tren-fijo", "tren-fijo", "trenFijo"),
-  de("avion.luces", "luces", "luces"),
-  de("avion.luz-baliza", "baliza", "luzBaliza"),
-  de("avion.luz-estrobos", "estrobos", "luzEstrobos"),
-  de("avion.luz-aterrizaje", "aterrizaje", "luzAterrizaje"),
-  de("avion.matricula", "matricula", "matricula"),
+  de("avion.alerones", "alerones", "alerones", "tarjeta.pieza.alerones"),
+  de("avion.profundidad", "profundidad", "profundidad", "tarjeta.pieza.profundidad"),
+  de("avion.timon", "timon", "timon", "tarjeta.pieza.timon"),
+  de("avion.flaps", "flaps", "flaps", "tarjeta.pieza.flaps"),
+  de("avion.aerofrenos", "aerofrenos", "aerofrenos", "tarjeta.pieza.aerofrenos"),
+  de("avion.pitot", "pitot", "pitot", "tarjeta.pieza.pitot"),
+  de("avion.pitot-morro", "pitot", "pitotMorro", "tarjeta.corta.pitotMorro"),
+  de("avion.motor-piston", "helice", "motorPiston", "tarjeta.corta.motorPiston"),
+  de("avion.motor-radial", "helice", "motorRadial", "tarjeta.corta.motorRadial"),
+  de("avion.turbohelice", "turbohelice", "turbohelice", "tarjeta.corta.turbohelice"),
+  de("avion.reactor", "reactor", "reactor", "tarjeta.corta.reactor"),
+  de("avion.tren", "tren", "tren", "tarjeta.pieza.tren"),
+  de("avion.tren-fijo", "tren-fijo", "trenFijo", "tarjeta.corta.trenFijo"),
+  de("avion.luces", "luces", "luces", "tarjeta.luz.navegacion"),
+  de("avion.luz-baliza", "baliza", "luzBaliza", "tarjeta.luz.baliza"),
+  de("avion.luz-estrobos", "estrobos", "luzEstrobos", "tarjeta.luz.estroboscopicas"),
+  de("avion.luz-aterrizaje", "aterrizaje", "luzAterrizaje", "tarjeta.luz.aterrizaje"),
+  de("avion.matricula", "matricula", "matricula", "tarjeta.corta.matricula"),
 ];
 
 const POR_ID = new Map(EXPLICACIONES_DEL_AVION.map((e) => [e.id, e]));

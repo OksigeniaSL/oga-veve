@@ -314,6 +314,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     vias: () => juego.scenario.ciudad?.vias ?? [],
     /** Los galones ganados en este vuelo, para comprobarlos desde el banco. */
     galones: () => juego.galones.lista,
+    /**
+     * La hoja de la instructora con estas partes marcadas, en el HUD y, si se
+     * pide, en el final del vuelo. Para mirarla sin volar. Ver `ui/hoja.ts`.
+     */
+    hojaParaBanco: (lista: string[], enElFinal = false) =>
+      juego.ensenarLaHojaParaBanco(lista as never, enElFinal),
+    /** Y la manga del HUD con las barras de otro grado. */
+    gradoParaBanco: (barras: number, clave: string) =>
+      juego.hud.ponerGrado(barras, clave as TranslationKey),
+    /** Y la pantalla del ascenso, con las barras de antes ya cosidas. */
+    ascensoParaBanco: (barras: number, nombre: string, antes: number) =>
+      juego.hud.mostrarAscenso(barras, nombre, "", antes),
     /** Los bultos con los que se choca, para poder apuntarles desde el banco. */
     bultos: () => juego.bultos,
     /** Segundos que le quedan al aviso de bulto. Para el banco. */

@@ -33,6 +33,7 @@ import {
   type Explicacion,
 } from "./explicaciones";
 import { DE_SERIE, ponerLasDeSerie } from "./explicaciones-de-serie";
+import { EXPLICACIONES_DEL_AVION } from "./explicaciones-del-avion";
 import { piezaEn } from "./tocar-para-explicar";
 
 /** Una ventana de mentira que apunta lo que le piden. */
@@ -395,5 +396,64 @@ describe("dónde cae el dedo", () => {
   it("y lo del cuadro recogido no se toca", () => {
     const luz = pieza("avisos", 0, 0, 100, 20, true);
     expect(piezaEn([luz], 10, 10, 0)).toBeNull();
+  });
+});
+
+/*
+ * **Los puntos de la tarjeta del avión en 3D, también en el registro.** La
+ * tarjeta los enseña en su globo y así sigue; pero hasta ahora no estaban
+ * apuntados, y por su `id` no se podían abrir desde ningún otro sitio.
+ */
+describe("los puntos de la tarjeta del avión", () => {
+  beforeEach(() => ponerLasDeSerie());
+
+  it("los dieciocho están en el registro, con su palabra corta", () => {
+    expect(EXPLICACIONES_DEL_AVION).toHaveLength(18);
+    const falta: string[] = [];
+    for (const e of EXPLICACIONES_DEL_AVION) {
+      const r = explicacionDe(e.id);
+      if (!r) {
+        falta.push(e.id);
+        continue;
+      }
+      expect(r.corta, e.id).toBe(e.corta);
+      expect(r.texto, e.id).toBe(e.texto);
+      expect(r.voz, e.id).toBe(e.voz);
+      // Sin rincón: se llega desde la tarjeta o por su `id`.
+      expect(r.rincon, e.id).toBeUndefined();
+      for (const k of [r.corta, r.texto, r.voz ?? ""]) {
+        if (!(k in ES_PY)) falta.push(`es-PY ${k}`);
+        if (!(k in EN)) falta.push(`en ${k}`);
+      }
+    }
+    expect(falta).toEqual([]);
+    // Y los dieciocho son distintos: un `id` repetido taparía a otro.
+    expect(new Set(EXPLICACIONES_DEL_AVION.map((e) => e.id)).size).toBe(18);
+  });
+
+  it("y se abren por su id, con su dibujo y su palabra", () => {
+    const v = ventanaDePrueba();
+    ponerPantallaDeExplicaciones(v);
+    expect(abrirExplicacion("avion.reactor", { peldano: "palabra" })).toBe(true);
+    const como = v.mostradas[0]!;
+    expect(como.palabra).toBe(ES_PY["tarjeta.corta.reactor"]);
+    const d = como.explicacion.dibujo;
+    expect("svg" in d && d.svg.startsWith("<svg")).toBe(true);
+  });
+
+  it("y sin grabar, callan: el globo de la tarjeta se lee igual", () => {
+    const voz = vozDePrueba([]);
+    ponerVozDeLasExplicaciones(voz);
+    ponerPantallaDeExplicaciones(ventanaDePrueba());
+    abrirExplicacion("avion.alerones");
+    expect(voz.dichas).toEqual([]);
+  });
+
+  it("y grabada, la instructora dice la suya, la de la tarjeta", () => {
+    const voz = vozDePrueba(["tarjeta.voz.alerones"]);
+    ponerVozDeLasExplicaciones(voz);
+    ponerPantallaDeExplicaciones(ventanaDePrueba());
+    abrirExplicacion("avion.alerones");
+    expect(voz.dichas).toEqual(["tarjeta.voz.alerones"]);
   });
 });

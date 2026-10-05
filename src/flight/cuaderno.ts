@@ -25,8 +25,12 @@
  * el segundo oficial, tres el primer oficial y cuatro el comandante; instructor
  * es una habilitación aparte y por eso va la última. Los nombres se han dejado
  * en el registro del juego —«Aprendiz», «Instructora»— pero la escalera es la
- * de una carrera de verdad, y la manga que la dibuja ya existía: es la misma
- * que cuenta los galones de un vuelo.
+ * de una carrera de verdad.
+ *
+ * **Y la manga lleva solo estas barras**, en todas partes: el HUD, el final
+ * del vuelo, el ascenso y el cuaderno. Llegó a contar también lo ganado en
+ * cada vuelo, con hasta seis barras que no lleva ningún uniforme; eso es ahora
+ * la hoja de la instructora, con un visto por parte. Ver `ui/hoja.ts`.
  */
 
 import { leerProgreso, ponerProgreso } from "../datos/guardado";

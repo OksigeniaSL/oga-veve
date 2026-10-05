@@ -8,6 +8,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  anunciaElPuntoDeDescenso,
   anunciaLaFase,
   Boca,
   BOCA,
@@ -1302,6 +1303,37 @@ describe("la fase se cuenta aunque la torre hable antes", () => {
     reloj += 3 * CADUCA;
     acabar["permiso"]!();
     expect(dicho).toEqual(["permiso", "final"]);
+  });
+
+  /*
+   * Y el punto de descenso, igual: el T/D llegaba con la comandante hablando
+   * por la megafonía y «empezamos a bajar» caducaba a los cuatro segundos. El
+   * 154 de la lista.
+   */
+  it("el «empezamos a bajar» espera detrás de la megafonía, y va antes que el anuncio", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("baja", frase("teide"), "ventanilla@ventanilla.teide");
+    b.pedir("normal", frase("bajar"), "vuelo.empezamosABajar");
+    reloj += 4 * CADUCA;
+    b.pedir("baja", frase("anuncio"), "comandante.descenso@x");
+    acabar["teide"]!();
+    expect(dicho).toEqual(["teide", "bajar"]);
+    acabar["bajar"]!();
+    expect(dicho).toEqual(["teide", "bajar", "anuncio"]);
+    expect(anunciaElPuntoDeDescenso("vuelo.paso.bajarConAutomatico")).toBe(true);
+    expect(anunciaElPuntoDeDescenso("vuelo.paso.bajar~2")).toBe(true);
+    expect(anunciaElPuntoDeDescenso("vuelo.paso.nivelar")).toBe(false);
+  });
+
+  it("y lo retira quien sabe que se pasó: ya no suena", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("baja", frase("teide"), "ventanilla@ventanilla.teide");
+    b.pedir("normal", frase("bajar"), "vuelo.empezamosABajar");
+    b.retirar((c) => anunciaElPuntoDeDescenso(c));
+    acabar["teide"]!();
+    expect(dicho).toEqual(["teide"]);
   });
 
   it("y las de los tres guiones son de fase; un aviso suelto no", () => {

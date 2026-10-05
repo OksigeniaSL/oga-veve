@@ -151,6 +151,7 @@ export function cuantoAguanta(
   if (
     noSePierde(clave, urgencia) ||
     anunciaLaFase(clave) ||
+    anunciaElPuntoDeDescenso(clave) ||
     esElAvisoDeAves(clave) ||
     esLaInformacionDeTrafico(clave)
   )
@@ -184,6 +185,27 @@ export function esDelDescenso(clave: string | undefined): boolean {
 
 const DEL_DESCENSO =
   /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
+
+/**
+ * **La instructora en el punto de descenso**: «empezamos a bajar». Aguanta lo
+ * que dura el paso, no un reloj, como lo que cuenta una fase.
+ *
+ * El 154 de la lista pedía comprobar que sonaba en Guyrami, y no sonaba.
+ * Medido con `verificar-escalones` de Tenerife Norte a Tenerife Sur con el JAZ
+ * 90: el T/D llegó mientras la comandante señalaba el Teide por la megafonía,
+ * que no la pisa nadie, y «vuelo.empezamosABajar: caducó esperando» a los
+ * cuatro segundos de un aviso. El punto de descenso no es un instante: sigue
+ * siendo verdad mientras se baja hacia el destino. Así que espera lo que haga
+ * falta, pasa delante del anuncio de la bajada —la instructora va antes que la
+ * megafonía, ver `audio/turnos.ts`—, y lo retira quien sabe que ya no vale: el
+ * paso siguiente de la cadena que habla, o el cambio de fase. Ver
+ * `decirElPaso` y `anunciarLaFase` en `game.ts`.
+ */
+export function anunciaElPuntoDeDescenso(clave: string | undefined): boolean {
+  return !!clave && DEL_PUNTO_DE_DESCENSO.test(clave);
+}
+
+const DEL_PUNTO_DE_DESCENSO = /^vuelo\.(?:empezamosABajar|paso\.bajar(?:ConAutomatico)?)(?:~\d+)?$/;
 
 /**
  * **La instructora contando la fase en la que se entra**: «estás en final,

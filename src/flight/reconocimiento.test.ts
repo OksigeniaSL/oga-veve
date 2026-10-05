@@ -14,12 +14,12 @@ describe("el reconocimiento del final", () => {
   it("sin galones también hay final, y no es malo", () => {
     const f = reconocer([]);
     expect(f.nivel).toBe("llegaste");
-    // Y sin manga: una manga vacía sería el hueco que este juego no dibuja.
-    expect(f.manga).toBe(false);
+    // Y sin hoja: una hoja en blanco sería el hueco que este juego no dibuja.
+    expect(f.hoja).toBe(false);
   });
 
-  it("con uno ya hay manga que enseñar", () => {
-    expect(reconocer(["toma"]).manga).toBe(true);
+  it("con uno ya hay hoja que enseñar", () => {
+    expect(reconocer(["toma"]).hoja).toBe(true);
   });
 
   it("y crece con lo que se llevó", () => {

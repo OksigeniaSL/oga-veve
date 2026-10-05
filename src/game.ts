@@ -617,7 +617,7 @@ import {
 import { Vaca } from "./world/vaca";
 import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
-import { Galones } from "./flight/galones";
+import { Galones, type Galon } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
 import { ROCE, percanceAlTocar, type Percance } from "./flight/percance";
 import {
@@ -630,6 +630,7 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
+import { nombresDelPeldano } from "./ui/hoja";
 import {
   guardarSinInstructora,
   leerSinInstructora,
@@ -638,7 +639,7 @@ import {
 } from "./flight/sin-instructora";
 import { preguntarSiVuelaSinInstructora } from "./ui/pregunta-sin-instructora";
 import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
-import { BOCA, MEGAFONIA, anunciaLaFase } from "./audio/boca";
+import { BOCA, MEGAFONIA, anunciaElPuntoDeDescenso, anunciaLaFase } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
@@ -6747,6 +6748,7 @@ export class Game {
        */
       const ahora = grado(this.cuaderno);
       if (ahora !== this.gradoAlEmpezar) {
+        const antes = this.gradoAlEmpezar;
         this.gradoAlEmpezar = ahora;
         this.hud.mostrarAscenso(
           barrasDe(ahora),
@@ -6754,7 +6756,10 @@ export class Game {
           // mensaje: en Guyrami se enseñan igual y sin una palabra.
           this.tier.instruments === "none" ? "" : t(`grado.${ahora}` as never),
           this.relojDeHoras(),
+          // Las del grado de antes ya estaban cosidas: solo entra la nueva.
+          barrasDe(antes),
         );
+        this.ponerElGradoEnLaManga();
         this.avisar("achieved");
         return;
       }
@@ -6775,6 +6780,8 @@ export class Game {
         plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
         // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
         this.relojDeHoras(),
+        // Y el nombre de cada parte de la hoja, desde el peldaño que lee.
+        nombresDelPeldano(canalesDe(this.tier.avisos)),
       );
       this.avisar("achieved");
     });
@@ -15324,9 +15331,41 @@ export class Game {
   private reiniciarGalones(): void {
     this.galones.reiniciar();
     this.hud.setGalones([]);
+    this.ponerElGradoEnLaManga();
     // Y se quita el final del vuelo anterior, que ya no habla de este.
     this.vueloTerminado = false;
     this.hud.cerrarFinDeVuelo();
+  }
+
+  /**
+   * **La manga del HUD lleva las barras del grado**, el que se tenía al
+   * empezar el vuelo: el ascenso se enseña al terminarlo, que es su momento,
+   * y no a mitad de una final porque el aterrizaje acaba de sumar. Ver
+   * `ui/hoja.ts` y `barrasDe`.
+   */
+  private ponerElGradoEnLaManga(): void {
+    this.hud.ponerGrado(
+      barrasDe(this.gradoAlEmpezar),
+      `grado.${this.gradoAlEmpezar}` as TranslationKey,
+    );
+  }
+
+  /**
+   * **Para los bancos y las capturas**: la hoja con estas partes marcadas, en
+   * el HUD y, si se pide, en el final del vuelo, tal como las enseña el juego
+   * en este peldaño. No toca lo ganado de verdad ni el cuaderno.
+   */
+  ensenarLaHojaParaBanco(lista: readonly Galon[], enElFinal = false): void {
+    this.hud.setGalones(lista);
+    if (!enElFinal) return;
+    const final = reconocer(lista);
+    this.hud.mostrarFinDeVuelo(
+      lista,
+      this.tier.instruments === "none" ? "" : t(`fin.${final.nivel}` as never),
+      "",
+      this.relojDeHoras(),
+      nombresDelPeldano(canalesDe(this.tier.avisos)),
+    );
   }
 
   /**
@@ -15340,7 +15379,7 @@ export class Game {
    * Y se celebra con las cuatro notas que suben, no con un cartel: un galón se
    * gana muchas veces mientras se está haciendo otra cosa —cruzando el
    * penúltimo aro, rodando hacia el puesto— y un cartel ahí tapa la lección
-   * que se está dando. El sonido y el chevrón que aparece bastan.
+   * que se está dando. El sonido y el visto que aparece en la hoja bastan.
    */
   private contarGalones(
     dt: number,
@@ -16688,6 +16727,8 @@ export class Game {
          * `audio/boca.ts`.
          */
         BOCA.retirar((c) => anunciaLaFase(c) && c !== clave);
+        // Y el «empezamos a bajar» que siguiera esperando, que es del camino.
+        BOCA.retirar((c) => anunciaElPuntoDeDescenso(c));
         // Y «motor a fondo» ya se dijo al soltar el gas. Ver `decirElGasSuelto`.
         const yaDicho = vista.fase === "despegando" && this.gasSueltoDicho;
         /*
@@ -20662,6 +20703,14 @@ export class Game {
     const yaExplicada = marcaNueva && this.cambiosExplicados.has(p.que);
     if (marcaNueva) this.cambiosExplicados.add(p.que);
     const habla = !como.calla && laInstructoraLoExplica(this.tier.avisos) && !yaExplicada;
+    /*
+     * **Y si la instructora pasa al paso siguiente, el «empezamos a bajar» que
+     * esperara turno ya no vale**: aguanta en la cola lo que dura su paso, no
+     * un reloj, y lo retira quien sabe que se ha pasado. Solo si este paso
+     * habla: uno que solo se ve no quita la voz al anterior. Ver
+     * `anunciaElPuntoDeDescenso` en `audio/boca.ts`.
+     */
+    if (habla && forma && p.que !== "bajar") BOCA.retirar((c) => anunciaElPuntoDeDescenso(c));
     const dice = habla
       ? (forma?.id ?? "sin voz")
       : yaExplicada

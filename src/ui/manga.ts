@@ -1,55 +1,51 @@
 /**
- * La manga con sus galones, dibujada en un solo sitio.
+ * La manga del uniforme con las barras del grado, dibujada en un solo sitio.
  *
  * Estaba escrita cuatro veces —el HUD en vuelo, el final del vuelo, el
- * ascenso de grado y el cuaderno— con los mismos números a mano, y en las
- * cuatro estaba mal a partir de la quinta barra: con `y = 21 − n·5,5` la
- * quinta cae en `−1` y la tela empieza en `2`, así que se salía por arriba, y
- * la sexta caía fuera del lienzo y **no se dibujaba**.
+ * ascenso de grado y el cuaderno— con los mismos números a mano, y ahora la
+ * pintan los cuatro desde aquí.
  *
- * Y hay seis galones, no cuatro: aproximación, frustrada, toma, aros,
- * velocidad y rodaje. O sea que la manga nunca pudo enseñar un vuelo redondo.
- * Se vio en vídeo, con cinco galones ganados y el quinto partido por el borde
- * de la tela.
+ * ## Las barras son el grado, y nunca más de cuatro
  *
- * Ahora las barras se reparten: con cuatro o menos salen exactamente donde
- * salían —el caso de siempre no cambia de aspecto— y de la quinta en adelante
- * se juntan lo justo para caber en la misma tela.
+ * Esta manga llegó a dibujar hasta seis barras: una por cada galón que se
+ * ganaba en un vuelo. Seis barras no las lleva ningún uniforme, y el juego
+ * enseñaba a contar algo que no significaba nada. Enrique: «Claro, que sea
+ * real, y si hay varios modos, pues el más usado en LATAM–UE». Así que la
+ * manga lleva **las barras del grado de quien juega**, con el esquema de
+ * `barrasDe` en `flight/cuaderno.ts` —una, dos, tres o cuatro—, y lo que se
+ * gana en cada vuelo es la hoja de la instructora, que es otra cosa y se
+ * dibuja aparte. Ver `ui/hoja.ts`.
+ *
+ * Y el tope está aquí y no en quien llama: si mañana alguien le pasa a la
+ * manga una cuenta que no es un grado, sale con cuatro barras como mucho, que
+ * es lo más que lleva una manga de verdad.
  */
+
+/** Lo más que lleva una manga: las cuatro de la comandante. */
+export const BARRAS_MAXIMAS = 4;
 
 /** El dibujo de la manga, en unidades de su lienzo. */
 const TELA = { y: 2, alto: 28 } as const;
 /** Dónde se apoya la barra de abajo, justo encima del puño. */
 const LA_DE_ABAJO = 21;
-/** Y hasta dónde puede subir la de arriba sin comerse el borde de la tela. */
-const LA_DE_ARRIBA = 4.5;
-/** La separación de siempre, la que se ve con cuatro barras o menos. */
+/** La separación entre barras. Con cuatro, la de arriba cae en 4,5. */
 const SEPARACION = 5.5;
-/** Lo gorda que es una barra cuando hay sitio de sobra. */
+/** Lo gorda que es una barra. */
 const GORDA = 3.6;
-/** Y lo que se le deja de aire a la de al lado. */
-const AIRE = 0.9;
 
-/** Dónde y cómo de gorda va cada barra, con este número de barras. */
-export function repartoDeBarras(barras: number): {
-  paso: number;
-  alto: number;
-} {
-  if (barras < 2) return { paso: SEPARACION, alto: GORDA };
-  const paso = Math.min(
-    SEPARACION,
-    (LA_DE_ABAJO - LA_DE_ARRIBA) / (barras - 1),
-  );
-  return { paso, alto: Math.min(GORDA, paso - AIRE) };
+/** Las barras que se dibujan de verdad: enteras, de cero a cuatro. */
+export function barrasDeLaManga(barras: number): number {
+  if (!Number.isFinite(barras)) return 0;
+  return Math.min(BARRAS_MAXIMAS, Math.max(0, Math.round(barras)));
 }
 
 /**
  * La manga entera, en SVG.
  *
  * `animarDesde` es cuántas barras ya estaban puestas: las anteriores salen sin
- * animación y solo entran creciendo las nuevas, que es lo que hace que los
- * galones «aparezcan de uno en uno» sin que salten todos a la vez cuando la
- * manga se repinta. Ver `galon-entra` en el CSS.
+ * animación y solo entra creciendo la nueva, que es como se enseña un ascenso
+ * —la barra que se acaba de ganar— sin que las de antes salten a la vez. Ver
+ * `galon-entra` en el CSS.
  */
 export function manga(
   barras: number,
@@ -57,19 +53,19 @@ export function manga(
   etiqueta: string,
   animarDesde = 0,
 ): string {
-  const { paso, alto: grosor } = repartoDeBarras(barras);
-  const barra = (n: number): string =>
-    `<rect class="manga__barra${n < animarDesde ? " manga__barra--ya" : ""}" x="9" y="${(
+  const n = barrasDeLaManga(barras);
+  const barra = (i: number): string =>
+    `<rect class="manga__barra${i < animarDesde ? " manga__barra--ya" : ""}" x="9" y="${(
       LA_DE_ABAJO -
-      n * paso
+      i * SEPARACION
     ).toFixed(
       2,
-    )}" width="30" height="${grosor.toFixed(2)}" rx="${(grosor / 2).toFixed(2)}" />`;
+    )}" width="30" height="${GORDA.toFixed(2)}" rx="${(GORDA / 2).toFixed(2)}" />`;
   return `
     <svg viewBox="0 0 48 ${alto}" role="img" aria-label="${etiqueta}">
       <rect class="manga__tela" x="4" y="${TELA.y}" width="40" height="${TELA.alto}" rx="6" />
       <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
-      ${Array.from({ length: barras }, (_, i) => barra(i)).join("")}
+      ${Array.from({ length: n }, (_, i) => barra(i)).join("")}
     </svg>
   `;
 }

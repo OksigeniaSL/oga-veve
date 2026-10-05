@@ -213,6 +213,11 @@ try {
           linea,
           duro: +(o.reloj() - reloj0).toFixed(0),
           hora: { alSalir: horaAlSalir, enElTd: horaEnElTd, alSoltar: horaAlSoltar, toco: tocoEn },
+          // Lo que pidió decir la instructora, por su clave. Ver el 154, abajo.
+          dichas: [...(o.dichoTodo?.().instructor ?? [])],
+          // Y lo que dijo la boca y lo que tiró, para saber por qué si calla.
+          habladas: o.habladas?.() ?? [],
+          descartadas: o.descartadas?.() ?? [],
         };
       },
       [VECES, TOPE],
@@ -257,6 +262,31 @@ if (!vuelo || vuelo.error) {
     faltan.length === 0 && !desordenados,
     `${escalones.join(" → ")}${faltan.length ? ` · faltan: ${faltan.join(", ")}` : ""}`,
   );
+  /*
+   * **Y el punto de descenso, dicho donde la instructora explica.**
+   *
+   * El 154 de la lista: «ya existe el aviso `puntoDeDescenso`: comprobar que
+   * suena en Guyrami». El T/D lo anuncia el paso `bajar` de la cadena, y en
+   * los tres peldaños de abajo la instructora lo dice —con la grabada de
+   * «empezamos a bajar» mientras la frase nueva no tenga voz—. Se mira aquí y
+   * no en el vuelo entero porque aquel salta a la final del otro campo y no
+   * pasa nunca por el T/D: allí un «no suena» no diría nada. En el peldaño de
+   * cabina no habla nadie: es el mensaje de la pantalla, «TOP OF DESCENT».
+   */
+  {
+    const canto = vuelo.linea.find((l) => /paso descenso: bajar \(/.test(l));
+    const clave = canto ? / → (\S+)$/.exec(canto.trim())?.[1] ?? null : null;
+    const deCabina = TRAMO === "taguato-ruvicha";
+    const dicha =
+      !!clave && (vuelo.dichas ?? []).some((c) => String(c).split(/[@~]/)[0] === clave);
+    comprobar(
+      "el punto de descenso suena donde la instructora explica",
+      deCabina ? !!canto : !!canto && /^vuelo\./.test(clave ?? "") && dicha,
+      !canto
+        ? "el paso de bajar no salió"
+        : `${canto.replace(/^[\d.]+s /, "")}${deCabina ? "" : dicha ? " · dicha" : " · no la pidió la instructora"}`,
+    );
+  }
   const repetidos = escalones.filter((e, i) => escalones.indexOf(e) !== i);
   comprobar("ninguno se dice dos veces", repetidos.length === 0, repetidos.join(", "));
   const juntos = [];
