@@ -41,6 +41,8 @@ function horasDe(segundos: number): string {
 }
 import { Panel } from "./panel";
 import { armarPanel, CERRAR } from "./concha";
+import { abrirCuriosidades, abrirExplicacion } from "./explicaciones";
+import { LAMPARITA } from "./ventana-de-explicacion";
 import { manga as dibujarManga } from "./manga";
 import { leerBitacora, type Vuelo } from "../flight/bitacora";
 import { plano } from "./hangar";
@@ -157,6 +159,22 @@ export class CuadernoScreen {
        */
       if ((e.target as HTMLElement)?.closest?.('[data-accion="cerrar"]'))
         this.hide();
+      /*
+       * **Y las curiosidades del vuelo**, con su lamparita: el cuaderno es
+       * donde se mira lo que uno ya sabe, y el rincón de los porqués va al
+       * lado. Se abre encima, y al cerrarlo se vuelve aquí. Ver
+       * `ui/ventana-de-explicacion.ts`.
+       */
+      if ((e.target as HTMLElement)?.closest?.('[data-accion="curiosidades"]'))
+        abrirCuriosidades();
+      /*
+       * **Y la manga, tocada, dice qué son sus barras.** AGENTS.md lo pide
+       * sin rodeos: si el juego enseña a contar los galones, tiene que
+       * enseñar también qué significan. Cuatro no quieren decir que mandes;
+       * quieren decir que respondes.
+       */
+      if ((e.target as HTMLElement)?.closest?.(".cuaderno__manga"))
+        abrirExplicacion("galones");
     });
   }
 
@@ -179,7 +197,14 @@ export class CuadernoScreen {
       titulo: t("cuaderno.title"),
       panel: "cuaderno",
       clase: "cuaderno__panel",
-      acciones: [CERRAR()],
+      acciones: [
+        {
+          dice: t("explica.curiosidades"),
+          como: "curiosidades",
+          dibujo: LAMPARITA,
+        },
+        CERRAR(),
+      ],
       cuerpo: `
         <div class="cuaderno__manga">${dibujarManga(barrasDe(g), CUADERNO_ALTO, t("galon.manga"))}</div>
         <h3 class="cuaderno__grado">${t(`grado.${g}` as never)}</h3>

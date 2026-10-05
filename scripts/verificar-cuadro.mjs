@@ -320,6 +320,15 @@ const crecer = await page.evaluate(() => {
       const letras = [...svg.querySelectorAll("text")].filter((t) => {
         const texto = t.textContent.trim();
         if (!texto || esCifra(texto)) return false;
+        /*
+         * **Y lo que se reconoce no se lee.** La placa de la matrícula va en
+         * los cuatro peldaños a propósito —es la misma forma que va pintada
+         * en el avión y que dice la torre— y lleva `data-se-reconoce` para
+         * decirlo. Sin esto contaba sus letras como palabras: doce fallos,
+         * dos por avión, de una decisión que ya estaba tomada. Ver
+         * `placaDeMatricula` en `ui/tablero.ts`.
+         */
+        if (t.closest("[data-se-reconoce]")) return false;
         for (let n = t; n && n !== svg; n = n.parentElement) {
           if (getComputedStyle(n).display === "none") return false;
           if (n.getAttribute?.("visibility") === "hidden") return false;

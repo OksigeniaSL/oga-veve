@@ -480,6 +480,15 @@ import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
+import {
+  abrirCuriosidades,
+  abrirExplicacion,
+  ponerContextoDeLasExplicaciones,
+  ponerVozDeLasExplicaciones,
+  presentar,
+  siguienteQuePresentar,
+  type Explicacion,
+} from "./ui/explicaciones";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -5141,6 +5150,8 @@ export class Game {
           ajustes: () => this.ajustesUI?.abrir(),
           // Igual que el botón del hangar: recargar. Ver `onHangar`.
           hangar: () => location.reload(),
+          // Y el rincón de los porqués, encima de la pausa. Ver #196.
+          curiosidades: () => abrirCuriosidades(),
         },
         this.tier.instruments !== "none",
       );
@@ -5155,6 +5166,27 @@ export class Game {
      * una tarde y lo cazó un `pageerror` del banco.
      */
     this.aplicarAjustes();
+    /*
+     * **La voz y el momento de las explicaciones.** Tocar una pieza del
+     * cuadro abre su explicación, y la dice la instructora — pero solo con su
+     * frase grabada: lo que todavía no lo está se queda en el dibujo y el
+     * texto, y no pasa a la voz del navegador, muda en Brave para Linux y un
+     * robot leyendo un párrafo en el resto. Ver `ui/explicaciones.ts`.
+     *
+     * Y urgente, que aquí no corta a nadie: la ventana congela el vuelo y lo
+     * calla todo al abrirse, y lo que se pidió con el dedo no puede quedarse
+     * esperando turno —ni caerse por «repetida» al pedirla otra vez con el
+     * altavoz—.
+     */
+    ponerVozDeLasExplicaciones({
+      grabada: (clave) => this.instructor.vozDe(clave) !== null,
+      decir: (clave, texto) => this.instructor.decir(texto, clave, "urgente"),
+      callar: () => this.instructor.callar(),
+    });
+    ponerContextoDeLasExplicaciones(() => ({
+      peldano: this.tier.avisos,
+      enTierra: this.flight.state.onGround,
+    }));
     /*
      * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
      * abierto. Ver `quedarQuieto` y #70.
@@ -9358,6 +9390,7 @@ export class Game {
 
     this.mirarPorLaVentanilla(dt);
     this.contarLasLucesDeNoche(dt);
+    this.presentarLoNuevo(dt);
 
     /*
      * **El reloj, antes de la puerta.**
@@ -15593,6 +15626,70 @@ export class Game {
    */
   private get bultoDelAvion(): number {
     return this.largoDelAvion * 0.3;
+  }
+
+  /** Cuánto falta para volver a mirar si hay algo nuevo que presentar, s. */
+  private mirarLoNuevoEn = 0;
+
+  /**
+   * **La primera vez que sale en la pantalla, la instructora lo presenta**:
+   * el arco verde, el círculo del T/D y del T/C, el rombo de la senda, la
+   * barra de la GS de rodar. Una vez por partida y en los peldaños de abajo.
+   *
+   * Es lo que pidió Enrique con una captura delante —«¿qué significa ese
+   * arco?»— y lo que ya hacía `explicarElTrafico` con el rombo del TCAS: un
+   * dibujo nuevo en la pantalla no se entiende sin que alguien lo diga, y en
+   * los peldaños de abajo no se lee. Así que se dice, con calma:
+   *
+   * - **La pieza se ilumina en su sitio**, que es el canal que está siempre.
+   * - Sale la tarjeta con su dibujo —y la palabra o la frase, según el
+   *   peldaño—, y tocarla abre la explicación entera.
+   * - Y la voz, cuando tenga su grabación. Hasta entonces calla. Ver
+   *   `PENDIENTE-VOCES-explicaciones.md`.
+   *
+   * Es una lección, no un aviso: espera hueco como `contarLasLucesDeNoche` y
+   * cede la tarjeta a cualquier cosa que importe más. Lo que sale, la cuenta
+   * el cuadro; ver `Tablero.seVe`.
+   */
+  private presentarLoNuevo(dt: number): void {
+    this.mirarLoNuevoEn -= dt;
+    if (this.mirarLoNuevoEn > 0) return;
+    this.mirarLoNuevoEn = 1;
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    if (!this.huecos.hayHueco) return;
+    const puesta = this.hud.senal.puesto;
+    if (puesta.prioridad > 0 && puesta.queda > 0) return;
+    const e = siguienteQuePresentar((x) => this.esMomentoDePresentar(x));
+    if (!e) return;
+    this.huecos.usar();
+    presentar(e);
+    this.hud.resaltarLoQueSeExplica(e.id);
+    if (!e.tarjeta) return;
+    const canales = canalesDe(this.tier.avisos);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.corto || !e.presenta
+        ? t(e.corta)
+        : t(e.presenta);
+    this.hud.senal.mostrar(e.tarjeta, rotulo, null, {
+      segundos: 9,
+      prioridad: 0,
+      accion: () => abrirExplicacion(e.id),
+    });
+  }
+
+  /**
+   * Si es buen momento para presentar esto. **Con calma quiere decir lo que
+   * en `explicarElTrafico`**: lejos del suelo y sin ir deprisa hacia él. La
+   * barra de rodar, en tierra y rodando despacio, que es cuando se mira; lo
+   * de la pantalla de navegación, en el aire y alto.
+   */
+  private esMomentoDePresentar(e: Explicacion): boolean {
+    const s = this.flight.state;
+    if (e.id === "gs-rodaje")
+      return s.onGround && s.groundSpeed > 1 && s.groundSpeed < 12;
+    if (s.onGround || s.heightAboveGround < 300) return false;
+    return Math.abs(s.verticalSpeed) < 15;
   }
 
   /**

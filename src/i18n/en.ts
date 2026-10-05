@@ -986,4 +986,106 @@ export const EN: Dictionary = {
   "tripulacion.canario.cinturones":
     "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
   "servicio.rotulo": "In-flight service",
+
+  /*
+   * Tapping a piece of the panel explains it, and the corner of flight
+   * curiosities. See `ui/explicaciones-de-serie.ts`. The voice is not
+   * recorded yet; see `PENDIENTE-VOCES-explicaciones.md`.
+   */
+  "explica.oir": "Listen again",
+  "explica.curiosidades": "Flight curiosities",
+  "explica.velocidad.corta": "Speed",
+  "explica.velocidad.texto":
+    "IAS is the speed of the air flowing over the wing, in knots. The wing only holds the plane up if the air flows fast: too slow and it stops holding, too fast and the plane suffers. Stay in the green. It is measured by a little tube facing forward: the pitot.",
+  "explica.altitud.corta": "Height",
+  "explica.altitud.texto":
+    "ALT is the altitude: how many feet above the sea you are. A thousand feet is about three hundred metres. The altimeter doesn't look at the ground: it measures how much the air above you weighs, and higher up it weighs less. That's why it needs the pressure of the day. The pink mark is the altitude you asked the plane for.",
+  "explica.rumbo.corta": "Heading",
+  "explica.rumbo.texto":
+    "HDG is the heading: where the nose of the plane points, in degrees, like a compass. North is 360, east 90, south 180 and west 270. Runways are named after their heading: runway 03 points at 30 degrees.",
+  "explica.actitud.corta": "Horizon",
+  "explica.actitud.texto":
+    "This is the artificial horizon. Blue is the sky and brown is the ground; the little yellow plane in the middle is you. If the blue goes down, the nose is going up; if it tilts, you are turning. It lets you fly straight even when you can't see anything outside, inside a cloud.",
+  "explica.variometro.corta": "Up or down",
+  "explica.variometro.texto":
+    "V/S tells you whether the plane is climbing or descending, and how fast, in feet per minute. Up is climbing, down is descending, and in the middle the plane is level.",
+  "explica.coordinador.corta": "Turn",
+  "explica.coordinador.texto":
+    "The little plane tilts when you turn, and shows how fast the plane is turning. The ball underneath says whether the turn is clean: if it slides to one side, you bring it back to the middle with the pedal on that side.",
+  "explica.motor.corta": "Engine",
+  "explica.motor.texto":
+    "How hard the engine is working. On propeller planes it is measured in turns per minute, RPM; on jets, by how fast the big fan at the front spins, N1. More power means going faster or climbing; less power, going slower or descending. On a jet the needle takes a few seconds to reach what you asked for: a big engine doesn't hurry.",
+  "explica.flaps.corta": "Flaps",
+  "explica.flaps.texto":
+    "The flaps are the back part of the wing, and they slide down and out. They make the wing bigger and more curved, so it holds the plane up at a lower speed. They come out for take-off and landing, and go back in for the cruise, because they also slow you down.",
+  "explica.tren.corta": "Wheels",
+  "explica.tren.texto":
+    "The gear lights. Green means wheel down and locked, ready to touch the ground. After take-off the wheels go up, because outside they slow the air. Before landing you always check: three greens.",
+  "explica.combustible.corta": "Fuel",
+  "explica.combustible.texto":
+    "How much fuel is left. On most planes it is inside the wings. The amber band is the reserve: what is always kept in case you have to wait or go to another airport. You never count on the reserve to get there.",
+  "explica.presurizacion.corta": "Cabin air",
+  "explica.presurizacion.texto":
+    "Up there the air is so thin it isn't enough to breathe well. So the plane pumps air into the cabin and inflates it a little, like a balloon: inside it feels like being on a high hill, at most two thousand four hundred metres, even when outside you are above ten thousand. CAB ALT tells you how high the cabin is.",
+  "explica.avisos.corta": "Warning lights",
+  "explica.avisos.texto":
+    "They light up when something wants you to look at it. Amber means careful; red means something has to be done now. And always in the same order: first fly the plane, then look at what's happening.",
+  "explica.matricula.corta": "Registration",
+  "explica.matricula.texto":
+    "It is the plane's name, like a car's number plate. The first letters tell the country: ZP is Paraguay. The tower calls you by these letters, each one with its radio word: Zulu, Papa… That's why it is in plain sight, so you know they're talking to you.",
+  "explica.carta.corta": "Map",
+  "explica.carta.texto":
+    "This is the map screen. The yellow triangle is you, and what's above it is what lies ahead. The pink line is the route of the flight plan. The diamonds are other planes: TCAS only shows you the ones flying near your altitude. Those much higher or lower don't appear, even if you can see them out of the window.",
+  "explica.carta.tierra":
+    "On the ground the traffic radar rests; what's on the runway, the tower tells you. That's why the screen says TCAS STBY: the system is waiting. It starts working at the holding point, before entering the runway, and meanwhile whatever is taxiing you look at out of the window.",
+  "explica.tcas.corta": "Another plane",
+  "explica.tcas.texto":
+    "Each diamond is another plane flying near your altitude. Hollow, it's around; filled, it's close. If it turns into an amber circle, TCAS warns you —traffic, traffic— and you look for it outside. The number is hundreds of feet: +10 is a thousand feet above, and −05 five hundred below. The little arrow says whether it is climbing or descending. Airliners also have a red square that tells you whether to climb or descend; here TCAS is in TA ONLY and only warns.",
+  "explica.arco.corta": "Green arc",
+  "explica.arco.texto":
+    "This green arc shows where you will reach the altitude you asked for, if you keep climbing or descending like now. If it falls before the runway, you get down with time to spare; if it falls after, you won't make it: descend faster or start earlier.",
+  "explica.arco.presenta":
+    "See the green arc on the map? That's where we'll reach the altitude we asked for.",
+  "explica.td.corta": "Start down",
+  "explica.td.texto":
+    "T/D means top of descent: this is where we start going down. From this green circle, descending calmly, you reach the runway at just the right height.",
+  "explica.td.presenta": "Look at the green circle on the map: that's where we start going down.",
+  "explica.tc.corta": "Done climbing",
+  "explica.tc.texto":
+    "T/C means top of climb: this is where we finish climbing. From this green circle the plane flies level, in the cruise, until the T/D.",
+  "explica.tc.presenta": "That green circle on the map is where we finish climbing.",
+  "explica.senda.corta": "Glide path",
+  "explica.senda.texto":
+    "The diamond shows where the glide path is, the invisible ramp down to the runway. If the diamond is low, you are high: come down a bit more. If it is high, you are low. You fly towards the diamond until it sits in the middle.",
+  "explica.senda.presenta":
+    "There's the glide path diamond. If we keep it in the middle, we're heading nicely for the runway.",
+  "explica.gs-rodaje.corta": "Taxi",
+  "explica.gs-rodaje.texto":
+    "GS is the speed over the ground. While taxiing, this bar shows how fast you're going, and the pink mark how far to fill it: before a turn it drops, because turns are taken slowly. Green means you're fine; amber, that you need to brake.",
+  "explica.gs-rodaje.presenta":
+    "This bar shows how fast we're taxiing. Fill it up to the pink mark, no more.",
+  "explica.galones.corta": "Stripes",
+  "explica.galones.texto":
+    "The stripes on the sleeve show how much you've learned and how much you have to look after. Four stripes belong to the captain, and they don't mean she's more in charge: they mean she answers for everyone on board.",
+  "explica.persianas.corta": "The windows",
+  "explica.persianas.texto":
+    "For take-off and landing the window shades go up, and at night the cabin lights are dimmed. That way you can see outside if something happens, and your eyes are already used to the light outside if you need to get out. On some new planes the crew clears all the windows at once.",
+  "explica.video-seguridad.corta": "Before take-off",
+  "explica.video-seguridad.texto":
+    "Before take-off, the crew shows where the exits are, how the seat belt fastens, the life vest and the masks. Even if you fly often, you always watch: every plane is different, and the nearest exit may be behind you.",
+  "explica.mascaras.corta": "The masks",
+  "explica.mascaras.texto":
+    "If the cabin loses its air, masks drop from the ceiling. Put yours on first and then help the person next to you, even a child: without air you couldn't help anyone. Oxygen is flowing even if the bag doesn't inflate, and the plane descends right away to where you can breathe well.",
+  "explica.no-fumar.corta": "No smoking",
+  "explica.no-fumar.texto":
+    "There's no smoking on the plane, not even electronic cigarettes, and least of all in the toilet: a fire in the air is one of the most dangerous things there is. That's why the toilets have smoke detectors.",
+  "explica.cinturon.corta": "The seat belt",
+  "explica.cinturon.texto":
+    "Even when the seat belt sign is off, keep it on loosely while you're seated. Sometimes the air moves suddenly without warning, with a clear sky, and the belt is what keeps you in your seat.",
+  "explica.mesitas.corta": "Table and seat back",
+  "explica.mesitas.texto":
+    "For take-off and landing, the table stowed and the seat back upright. That way nobody gets hurt if the plane brakes hard, and the aisle to the exit stays clear in case you need to get out fast.",
+  "explica.modo-avion.corta": "Flight mode",
+  "explica.modo-avion.texto":
+    "Your phone, in flight mode. Its radio searching for a signal sneaks into the pilots' headsets as a buzz, right when they are listening to the tower. And up there there's no signal anyway: the phone drains its battery looking for one.",
 };
