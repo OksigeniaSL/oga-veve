@@ -33,6 +33,9 @@
 import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import type { AircraftConfig } from "../flight/aircraft";
 import { luzDeTren } from "../flight/tren";
+import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
+import { RODAR } from "./cristal";
+import { luceLaVentanilla } from "../flight/lo-que-cambia";
 import { enLaMuesca } from "../flight/flaps";
 import { t } from "../i18n";
 import {
@@ -52,6 +55,11 @@ import {
 import { DIBUJOS } from "./senal";
 import { decima, escribir, poner } from "./si-cambia";
 import type { DatosDelTablero } from "./tablero";
+
+/** El dibujo de rodar, el del cuadro plano, para la losa de la GS. Ver `RODAR`. */
+const RODAR_SVG = `<svg viewBox="0 0 24 20"><path d="${RODAR.cuerpo}" />
+  <path d="${RODAR.trazos}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+  ${RODAR.ruedas.map(([cx, cy]) => `<circle cx="${cx}" cy="${cy}" r="${RODAR.radio}" />`).join("")}</svg>`;
 
 /** Qué pantalla del cuadro se pone grande al tocar cada losa. */
 export type Grande = "actitud" | "rumbo" | "motor";
@@ -129,14 +137,17 @@ export class CuadroDelTelefono {
         -->
         <!--
           Y en tierra, la misma losa es la GS de rodar: su barra verde o ámbar
-          en los cuatro peldaños, y la cifra con «GS» desde el tercero, como en
-          el cuadro plano. La de vuelo se esconde: rodando no sirve. Ver
-          rodajeEnTierra en cristal.ts.
+          con la marca magenta de hasta dónde llenarla en los cuatro peldaños,
+          el dibujo de rodar donde irá «GS» mientras no se lee, y la cifra con
+          «GS» desde el tercero, como en el cuadro plano. La de vuelo se
+          esconde: rodando no sirve. Ver rodajeEnTierra en cristal.ts.
         -->
         <button type="button" class="tel__losa tel__losa--ias" data-tel-grande="actitud"
                 data-tel="losa-ias" aria-label="${t("hud.telGrande")}">
           <span data-tel-vuelo>${rotulo("IAS")}</span>
           <span data-tel-tierra>${rotulo("GS")}</span>
+          <span class="tel__dibujo" data-tel-tierra data-hasta="${LETRAS_DESDE - 1}"
+                aria-hidden="true">${RODAR_SVG}</span>
           <span class="tel__cifra" data-tel="ias" data-tel-vuelo>0</span>
           <span class="tel__cifra tel__cifra--rodaje" data-tel="gs" data-tel-tierra
                 data-desde="${CIFRAS_DE_AVISO_DESDE}">0</span>
@@ -151,6 +162,7 @@ export class CuadroDelTelefono {
                aria-hidden="true" data-tel-tierra>
             <rect width="100" height="10" rx="2" class="tel__fondo-banda" />
             <rect data-tel="gs-relleno" width="0" height="10" rx="2" class="tel__rodaje" />
+            <rect data-tel="gs-marca" x="-2" y="-1" width="4" height="12" class="tel__marca" />
           </svg>
         </button>
         <!--
@@ -258,8 +270,10 @@ export class CuadroDelTelefono {
       escribir(gs, String(Math.max(0, Math.round(r.nudos))));
       gs?.classList.toggle("tel__cifra--rapido", r.rapido);
       const relleno = this.pieza("gs-relleno");
-      poner(relleno, "width", decima(Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala))) * 100));
+      poner(relleno, "width", decima(parteDeLaBarra(r.nudos, r.escala) * 100));
       relleno?.classList.toggle("tel__rodaje--rapido", r.rapido);
+      // Y la marca de hasta dónde llenarla. Ver `barraDeRodaje`.
+      poner(this.pieza("gs-marca"), "x", decima(parteDeLaBarra(r.toca, r.escala) * 100 - 2));
     }
     escribir(this.pieza("ias"), String(Math.max(0, Math.round(d.nudos))));
     poner(
@@ -284,6 +298,17 @@ export class CuadroDelTelefono {
       sel.classList.toggle("tel__sel--cerca", v?.alerta === "cerca");
       sel.classList.toggle("tel__sel--fuera", v?.alerta === "fuera");
     }
+    /*
+     * **Y lo que acaba de cambiar**, como en el cuadro plano: la losa de la
+     * velocidad y la ventanilla de la altitud laten su marco al cambiar la
+     * marca. Ver `flight/lo-que-cambia.ts`.
+     */
+    const quieto = this.raiz.closest(".sin-movimiento") !== null;
+    this.pieza("losa-ias")?.classList.toggle(
+      "tel__cambia",
+      r === null && luceLaVentanilla(d.resaltes?.spd, quieto),
+    );
+    sel?.classList.toggle("tel__cambia", luceLaVentanilla(d.resaltes?.alt, quieto));
 
     const rumbo =
       (((d.estado.heading * GRADOS + (d.declinacion ?? 0)) % 360) + 360) % 360;

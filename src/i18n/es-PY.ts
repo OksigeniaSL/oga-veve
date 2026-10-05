@@ -1620,6 +1620,19 @@ export const ES_PY = {
     "Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.",
   "vuelo.alPuestoConFlaps":
     "Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.",
+  /*
+   * **Y la lista de después del aterrizaje, punto por punto**: lo que tiene
+   * tecla lo pide la instructora y lo hace quien vuela; las luces y el
+   * transpondedor los hace ella y lo dice al hacerlo. Uno detrás de otro, cada
+   * uno hecho antes de pedir el siguiente. Ver `ListaDeDespuesDeAterrizar` en
+   * `flight/despues-de-aterrizar.ts`. Sin grabar todavía: ver
+   * `PENDIENTE-VOCES-aterrizaje.md`.
+   */
+  "vuelo.despues.aerofrenos": "Los aerofrenos, adentro: bajá la palanca.",
+  "vuelo.despues.luces": "Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.",
+  "vuelo.despues.transpondedor": "Y el transpondedor: pongo el TCAS en espera.",
+  "palabra.luces": "Luces",
+  "palabra.transpondedor": "Transpondedor",
   "vuelo.meteElTren": "Metélo, el tren te frena",
   /*
    * **Y es una tormenta, no lluvia.** Solo se avisa de las células de núcleo

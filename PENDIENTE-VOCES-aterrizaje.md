@@ -68,3 +68,24 @@ instructora explica detrás.
      de `REVERSA_HASTA` con la tecla todavía apretada (una vez por carrera).
    - El autofreno: «decel» cuando `frenando` pasa a `true`; `vuelo.autofrenoSuelto`
      cuando se desarma con el pie.
+
+## La lista de después del aterrizaje, punto por punto
+
+Tanda del cuadro y la cabina (punto 248b), 5 de octubre de 2026. Aquí las
+claves **sí están en `src/i18n/`** —en `es-PY.ts` y en `en.ts`— y el juego ya
+las usa: sin grabación se ven en su tarjeta, con su dibujo y su tecla, y la voz
+calla, que una frase sin grabar es muda en Brave para Linux. En cuanto tengan
+su pieza, suenan solas: `decirElPuntoDeLaLista` en `game.ts` mira
+`instructor.vozDe`.
+
+Voz `instructor`. Unos 200 caracteres.
+
+| Clave | es-PY | en | Cuándo |
+|---|---|---|---|
+| `vuelo.despues.aerofrenos` | Los aerofrenos, adentro: bajá la palanca. | Speed brakes in: lever down. | fuera de la pista, en los reactores, si la palanca sigue fuera (primer punto de la lista) |
+| `vuelo.despues.luces` | Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje. | I'll do the lights: landing lights off, taxi light on. | después de los flaps, hechos o esperados veinte segundos |
+| `vuelo.despues.transpondedor` | Y el transpondedor: pongo el TCAS en espera. | And the transponder: TCAS to standby. | después de las luces, con su respiro |
+
+Los flaps usan la que ya está grabada, `vuelo.flapsArribaAlSalir`, y en el
+peldaño de cabina, al leer el primer punto, `vuelo.despuesDelAterrizaje`. Ver
+`ListaDeDespuesDeAterrizar` en `src/flight/despues-de-aterrizar.ts`.

@@ -19,6 +19,14 @@
  * de rodaje y la bienvenida suena entera antes de la doble raya. Esto
  * reproduce ese rodaje con la boca, la megafonía y las duraciones grabadas, a
  * los dos relojes. Ver `scripts/reloj-del-banco.mjs`.
+ *
+ * **Y el crosscheck, en el puesto y no rodando.** Ese volcado tenía el
+ * crosscheck acabando a los 23,9 con el avión ya rodando, que es justo lo que
+ * Enrique oyó y está mal: los toboganes se arman con las puertas cerradas,
+ * antes del remolque y del arranque. Ahora vale solo con el motor parado en el
+ * puesto —ver `VALE_MIENTRAS` en `megafonia.ts`—: si quien juega se queda en
+ * el puesto lo que dura la autorización de ruta, suena detrás de ella; si
+ * arranca antes, se retira y no se dice.
  */
 import { describe, expect, it } from "vitest";
 import { anunciaLaFase, Boca, type Hablar } from "./boca";
@@ -62,7 +70,7 @@ const EN_LA_CARRERA = new Set<Fase>(["autorizado", "alineando", "despegando", "c
  * Del puesto a la carrera en Gando, con el rodaje a `veces` y la carrera a
  * uno. Devuelve lo que sonó, en orden.
  */
-function elRodaje(veces: number): string[] {
+function elRodaje(veces: number, puesto = 0): string[] {
   let ahora = 0;
   const luego: { cuando: number; hacer: () => void }[] = [];
   const esperar = (ms: number, hacer: () => void) => {
@@ -116,13 +124,30 @@ function elRodaje(veces: number): string[] {
   boca.pedir("normal", frase("vuelo.nuestroAvion", DURA.nuestroAvion), "vuelo.nuestroAvion");
   boca.pedir("mando", frase("torre.destino", DURA.destino), "torre.canario.destino@yo");
   boca.pedir("mando", frase("torre.clearedTo", DURA.clearedTo), "torre.canario.clearedTo@yo");
-  for (let t = 0; t < 6; t += 0.5)
-    decir(megafonia.paso(0.5, { fase: "estacionado", ...conPasaje }));
+  const PASO = 50;
+  /*
+   * Lo que se está en el puesto con el motor parado, ms de pared: la
+   * megafonía pide el crosscheck en cuanto puede y la boca lo pone detrás de
+   * la autorización de ruta.
+   */
+  for (let pared = PASO; pared <= puesto; pared += PASO) {
+    avanzar(pared);
+    boca.retirar((c) => seLePasoElMomento(c, "estacionado"));
+    decir(
+      megafonia.paso(PASO / 1000, {
+        fase: "estacionado",
+        ...conPasaje,
+        megafoniaHablando:
+          comandanteHablando || boca.esperaAlguna((c) => esDeLaMegafonia(c)),
+      }),
+    );
+  }
+  // Y si se arranca antes de que suene, el crosscheck ya no vale.
+  boca.retirar((c) => seLePasoElMomento(c, "arrancando"));
 
   let fase: Fase = "estacionado";
   let juego = 0;
-  const PASO = 50;
-  for (let pared = PASO; pared <= 120000 && juego < 100; pared += PASO) {
+  for (let pared = puesto + PASO; pared <= puesto + 120000 && juego < 100; pared += PASO) {
     avanzar(pared);
     const ahoraFase = faseA(juego);
     if (ahoraFase !== fase) {
@@ -160,8 +185,11 @@ function elRodaje(veces: number): string[] {
 
 describe("la bienvenida de Jazlyn en el rodaje de Gran Canaria", () => {
   it("a tiempo real suena entera, detrás del crosscheck y antes de la doble raya", () => {
-    const sono = elRodaje(1);
+    // En el puesto lo que dura la autorización de ruta, y el crosscheck.
+    const sono = elRodaje(1, 24000);
     expect(sono).toContain("comandante.crosscheck");
+    // Y antes de rodar: con el motor parado, que es cuando se arman los toboganes.
+    expect(sono.indexOf("comandante.crosscheck")).toBeLessThan(sono.indexOf("vuelo.rodando"));
     expect(sono).toContain("comandante.bienvenida");
     expect(sono.indexOf("comandante.bienvenida")).toBeGreaterThan(
       sono.indexOf("comandante.crosscheck"),
@@ -174,13 +202,26 @@ describe("la bienvenida de Jazlyn en el rodaje de Gran Canaria", () => {
     );
   });
 
-  it("a ×3 el rodaje cabe en veinte segundos y la torre se lleva su hueco", () => {
-    const sono = elRodaje(3);
+  /*
+   * A ×3 el rodaje dura veintiún segundos de pared, y la bienvenida no cabía
+   * porque el crosscheck se comía su principio. Con el crosscheck dicho en el
+   * puesto, que es su sitio, el rodaje entero es de la bienvenida y cabe.
+   */
+  it("a ×3, con el crosscheck dicho en el puesto, la bienvenida cabe y la torre se lleva su hueco", () => {
+    const sono = elRodaje(3, 24000);
     expect(sono).toContain("comandante.crosscheck");
-    expect(sono).not.toContain("comandante.bienvenida");
+    expect(sono).toContain("comandante.bienvenida");
     // Lo que se medía era el reloj, no la boca: la torre dijo todo lo suyo.
     expect(sono).toEqual(
       expect.arrayContaining(["torre.roja", "torre.verde", "torre.clearedTakeoff"]),
     );
+  });
+
+  it("y arrancando antes de que suene, el crosscheck no se dice rodando", () => {
+    // Seis segundos en el puesto, con la torre hablando: se arranca y se rueda.
+    const sono = elRodaje(1, 6000);
+    expect(sono).not.toContain("comandante.crosscheck");
+    // Y la bienvenida sigue en su sitio.
+    expect(sono).toContain("comandante.bienvenida");
   });
 });

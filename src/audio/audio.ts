@@ -29,12 +29,12 @@ import type { Lluvia } from "../world/meteo";
 import { FIRME_LISO, type Firme } from "../world/firme";
 import {
   OidoDelVuelo,
-  fuerzaDelCinturon,
   type AvionQueSuena,
   type Niveles,
   type Oido,
 } from "./ruidos";
 import { Enchufe, RuidosEnElAire, type Medida } from "./ruidos-en-el-aire";
+import { AGUDA, GRAVE, esTonoDeCabina, fuerzaDelTono } from "./tonos-de-cabina";
 import type { Volumen as Paso } from "../ui/ajustes";
 import {
   DE_FABRICA,
@@ -116,14 +116,28 @@ export type Cue =
    */
   | "aro"
   /**
-   * El *ding* del cartel del cinturón.
+   * El *ding* del cartel del cinturón: **una nota grave**, al encenderse y al
+   * apagarse.
    *
-   * Es el sonido de un avión de línea y no de un juego: dos notas cortas,
-   * limpias y sin prisa, las mismas que suenan sobre tu cabeza cuando la
-   * comandante enciende el cartel. Va con la megafonía —ver `audio/megafonia`—
-   * y solo en los aviones que llevan pasaje.
+   * Es el sonido de un avión de línea y no de un juego, y eran dos notas, que
+   * no es lo que suena en ninguno: el de dos notas es la llamada de la
+   * tripulación. Va con la megafonía y solo en los aviones que llevan pasaje.
+   * Ver `audio/tonos-de-cabina.ts`, que tiene los cuatro y de dónde salen.
    */
   | "cinturon"
+  /** Un pasajero que llama a la tripulación: una nota aguda. */
+  | "llamadaPasajero"
+  /** La cabina de mando llama a la tripulación: aguda y grave. */
+  | "llamadaTripulacion"
+  /** Y la de emergencia: aguda y grave, tres veces. */
+  | "llamadaEmergencia"
+  /**
+   * **Algo cambió en el cuadro**: la marca de la velocidad, la ventanilla de
+   * la altitud o un modo del automático. Una nota sola, suave y corta, que no
+   * se parece a ningún aviso ni a ningún tono de cabina: dice «mirá, eso es
+   * nuevo» y nada más. Ver `flight/lo-que-cambia.ts`.
+   */
+  | "cambio"
   /**
    * Y un aro que se ha perdido. Dos notas que bajan.
    *
@@ -285,10 +299,25 @@ export const MOTIVOS: Record<Cue, Motivo> = {
    */
   aro: { notas: [659.25, 880, 1174.66], paso: 0.07, dura: 0.18 },
   /*
-   * El cinturón: dos notas y punto. Suena a cabina de pasaje porque es lo que
-   * es —un timbre, no un aviso— y por eso no manda callar a nadie.
+   * **Los tonos de la cabina de pasaje**, los de Boeing y Airbus: el cinturón
+   * una grave, el pasajero una aguda, la tripulación aguda y grave y la
+   * emergencia tres veces eso. Largos y sin prisa, como un timbre que se
+   * apaga solo; ninguno manda callar a nadie. Ver `audio/tonos-de-cabina.ts`.
    */
-  cinturon: { notas: [1046.5, 783.99], paso: 0.22, dura: 0.45 },
+  cinturon: { notas: [GRAVE], paso: 0.5, dura: 1.1 },
+  llamadaPasajero: { notas: [AGUDA], paso: 0.5, dura: 1.1 },
+  llamadaTripulacion: { notas: [AGUDA, GRAVE], paso: 0.55, dura: 1 },
+  llamadaEmergencia: {
+    notas: [AGUDA, GRAVE, AGUDA, GRAVE, AGUDA, GRAVE],
+    paso: 0.45,
+    dura: 0.8,
+  },
+  /*
+   * Y lo que cambia en el cuadro: un si, solo, corto. Ni sube ni baja, que en
+   * este idioma sonoro sería decir «bien» o «corregí»; un cambio de marca no
+   * es ninguna de las dos cosas.
+   */
+  cambio: { notas: [987.77], paso: 0.1, dura: 0.28 },
   altitud: { notas: [523.25, 659.25, 783.99], paso: 0.02, dura: 0.9 },
   aroFallado: { notas: [440, 349.23], paso: 0.16, dura: 0.3 },
   /*
@@ -964,13 +993,14 @@ export class Audio {
     const suBus: Bus = m.manda ? "avisos" : "interfaz";
     if (m.manda) this.agacharUnRato(m.notas.length * 0.2);
     /*
-     * **El *ding* del cinturón suena donde está**: en el techo del pasaje.
-     * Desde ahí va por el altavoz de la megafonía, que es el que lo toca en
-     * un avión; desde la cabina de mando y desde fuera se oye más flojo. Ver
-     * `fuerzaDelCinturon`.
+     * **Los tonos de la cabina suenan donde están**: en el techo del pasaje.
+     * Desde ahí van por el altavoz de la megafonía, que es el que los toca en
+     * un avión; desde la cabina de mando y desde fuera se oyen más flojos, y
+     * el de un pasajero que llama, solo en el pasaje. Ver `fuerzaDelTono`.
      */
-    const delTecho = kind === "cinturon";
-    const fuerza = (m.fuerza ?? FUERZA) * (delTecho ? fuerzaDelCinturon(this.oido) : 1);
+    const delTecho = esTonoDeCabina(kind);
+    const fuerza = (m.fuerza ?? FUERZA) * (delTecho ? fuerzaDelTono(kind, this.oido) : 1);
+    if (fuerza <= 0) return;
     const porElAltavoz = delTecho && this.oido === "pasaje" ? this.entradaDeAltavoz : null;
     m.notas.forEach((frecuencia, i) => {
       this.pluck(

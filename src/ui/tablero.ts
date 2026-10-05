@@ -77,6 +77,14 @@ import {
   tamborDeAltitud,
 } from "./cristal";
 import { luzDeTren } from "../flight/tren";
+import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
+import {
+  DURA_EL_RESALTE,
+  COLUMNAS_DEL_FMA,
+  PARPADEA_AL_CAMBIAR,
+  luceLaVentanilla,
+  type Resaltes,
+} from "../flight/lo-que-cambia";
 import { bienPuesta } from "../flight/altimetro";
 import { matriculaDe } from "../flight/matricula";
 import { anillosDe } from "../flight/tormentas";
@@ -220,10 +228,18 @@ export interface DatosDelTablero {
   readonly rodaje?: {
     readonly nudos: number;
     readonly escala: number;
+    /** La velocidad que toca aquí, nudos: la marca. Ver `barraDeRodaje`. */
+    readonly toca: number;
     readonly rapido: boolean;
   } | null;
   /** Lo que hace cada mano del automático, para el FMA. `null` sin automático. */
   readonly fma?: Fma | null;
+  /**
+   * **Lo que acaba de cambiar**, con cuánto hace: la ventanilla SPD y la marca
+   * de la cinta, la ventanilla ALT y su marca, los modos del FMA. Ver
+   * `flight/lo-que-cambia.ts` y `Tablero.resaltar`.
+   */
+  readonly resaltes?: Resaltes | null;
   /**
    * **Los mínimos puestos**: la altitud de decisión, en pies con el QNH —la
    * cota del umbral de la pista a la que se va más doscientos—, y si ya se ha
@@ -752,12 +768,12 @@ export class Tablero {
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
               ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
         <!--
-          Y en tierra, la GS grande y con su color en el sitio de la pequeña,
-          entre el retrato y las luces del tren. Una avioneta de esta clase no
-          lleva pantalla de navegación: la que se lee rodando es la del GPS.
-          Ver rodajeEnTierra en cristal.ts.
+          Y en tierra, la GS de rodar con su dibujo, su barra y su marca, en
+          el sitio de la pequeña, entre el retrato y las luces del tren. Una
+          avioneta de esta clase no lleva pantalla de navegación: la que se
+          lee rodando es la del GPS. Ver rodajeEnTierra en cristal.ts.
         -->
-        ${rodajeEnTierra(10, BANDA.alto - 120, placa.ancho - 20)}
+        ${rodajeEnTierra(14, BANDA.alto - 92, placa.ancho - 28)}
         ${lucesDeTren(
           (placa.ancho - patasDe(a) * 22 + 6) / 2,
           BANDA.alto - 48,
@@ -1349,6 +1365,47 @@ export class Tablero {
     this.fma(d.fma ?? null);
     this.ventanillaAlt(d, dt);
     this.cotaDeLaPista(d);
+    this.resaltar(d);
+  }
+
+  /**
+   * **Lo que acaba de cambiar, en su sitio.** La ventanilla —la de encima de
+   * la cinta y la del panel del automático— parpadea su marco al principio,
+   * nunca la cifra; la marca de la cinta lleva al lado la flecha de hacia
+   * dónde se fue, que es el dibujo del cambio y se lee sin números; y el modo
+   * nuevo del FMA se recuadra sus diez segundos. Con «Movimiento: reducido»,
+   * nada parpadea: luce y se apaga. Ver `flight/lo-que-cambia.ts`.
+   */
+  private resaltar(d: DatosDelTablero): void {
+    const r = d.resaltes ?? null;
+    const quieto = this.raiz?.closest(".sin-movimiento") !== null;
+    const conMarca = {
+      spd: !!d.spd,
+      alt: !!d.ventanilla && d.ventanilla.enLaCinta !== false,
+    };
+    for (const que of ["spd", "alt"] as const) {
+      const x = r?.[que];
+      const luce = luceLaVentanilla(x, quieto);
+      this.pieza(`[data-cristal="${que}-sel-caja"]`)?.classList.toggle("cr__cambia", luce);
+      this.pieza(`[data-mcp="${que}"]`)?.parentElement?.classList.toggle("cr__cambia", luce);
+      // La flecha late con la ventanilla y luego se queda hasta el final.
+      const flecha =
+        x?.hacia && conMarca[que] && (luce || x.edad >= PARPADEA_AL_CAMBIAR) ? x.hacia : null;
+      for (const hacia of ["sube", "baja"] as const)
+        poner(
+          this.pieza(`[data-flecha="${que}-${hacia}"]`),
+          "visibility",
+          flecha === hacia ? "visible" : "hidden",
+        );
+    }
+    for (const col of COLUMNAS_DEL_FMA) {
+      const x = r?.[`fma-${col}`];
+      poner(
+        this.pieza(`[data-fma-caja="${col}"]`),
+        "visibility",
+        x && x.edad < DURA_EL_RESALTE ? "visible" : "hidden",
+      );
+    }
   }
 
   /**
@@ -1998,11 +2055,15 @@ export class Tablero {
     poner(this.pieza('[data-cristal="rodaje"]'), "visibility", r ? "visible" : "hidden");
     poner(this.pieza('[data-cristal="gs"]'), "visibility", r ? "hidden" : "visible");
     if (!r) return;
-    const parte = Math.max(0, Math.min(1, r.nudos / Math.max(1, r.escala)));
+    const parte = parteDeLaBarra(r.nudos, r.escala);
     for (const relleno of this.todas<SVGElement>('[data-cristal="rodaje-relleno"]')) {
       poner(relleno, "width", n1(parte * Number(relleno.dataset.ancho)));
       relleno.classList.toggle("cr__rodaje-relleno--rapido", r.rapido);
     }
+    // Y la marca de hasta dónde llenarla. Ver `barraDeRodaje`.
+    const marca = parteDeLaBarra(r.toca, r.escala);
+    for (const m of this.todas<SVGElement>('[data-cristal="rodaje-marca"]'))
+      poner(m, "transform", `translate(${n1(marca * Number(m.dataset.ancho))} 0)`);
     const cifra = this.pieza('[data-cristal="rodaje-cifra"]');
     cifra?.classList.toggle("cr__rodaje-cifra--rapido", r.rapido);
     if (cifras) escribir(cifra, String(Math.max(0, Math.round(r.nudos))));

@@ -603,7 +603,7 @@ import {
   guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
-import { velocidadesEnTierra } from "./flight/velocidades-en-tierra";
+import { barraDeRodaje, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
   DEJA_DE_PEDIR,
   NADA_DICHO_EN_LA_PISTA,
@@ -673,6 +673,13 @@ import {
   segundosHastaTocar,
 } from "./audio/partes-de-la-comandante";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
+import {
+  LlamadasDelPasaje,
+  esperaTrasLaLlamada,
+  llamadaAntesDe,
+  type TonoDeCabina,
+} from "./audio/tonos-de-cabina";
+import { LoQueCambia } from "./flight/lo-que-cambia";
 import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
 import { CabinaPresurizada } from "./flight/cabina-presurizada";
 import {
@@ -690,7 +697,7 @@ import {
   sigueValiendo,
   type LeccionDelAire,
 } from "./flight/lecciones-del-aire";
-import { Huecos, esDeLaMegafonia } from "./audio/turnos";
+import { CADUCA_LA_MEGAFONIA, Huecos, esDeLaMegafonia } from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
   turbulenciaDelCamino,
@@ -767,9 +774,11 @@ import {
 } from "./flight/carga-de-flaps";
 import { muescaMasCercana, siguienteDetente } from "./flight/flaps";
 import {
+  ListaDeDespuesDeAterrizar,
   NADA_DICHO,
   flapsTrasLaToma,
   type LoDicho,
+  type PuntoLeido,
 } from "./flight/despues-de-aterrizar";
 import {
   enElPavimento,
@@ -3094,6 +3103,7 @@ export class Game {
     this.yaDespego = false;
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.reiniciarLoQueSuena();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
     this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
@@ -8656,6 +8666,7 @@ export class Game {
      */
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.reiniciarLoQueSuena();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
     this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
@@ -8910,8 +8921,28 @@ export class Game {
     const boca = anuncio.startsWith("tripulacion.")
       ? this.tripulacion
       : this.comandante;
-    boca.decir(dicho.texto, dicho.clave, "baja", dicho.relleno);
-    if (this.tier.instruments !== "none") this.hud.radio(dicho.texto);
+    /*
+     * El crosscheck avisa al acabar —o al no poder sonar—: la instructora
+     * espera a eso para pedir el motor. Ver `faseTrasElCrosscheck`.
+     */
+    const alSonar =
+      anuncio === "comandante.crosscheck"
+        ? (que: string) => {
+            if (que !== "empieza") this.crosscheckAcabado = true;
+          }
+        : undefined;
+    /*
+     * **Y lo que se le dice a la tripulación, detrás de su llamada**: aguda y
+     * grave, y la voz al acabar. Ver `conSuLlamada`.
+     */
+    this.conSuLlamada(
+      dicho.clave,
+      () => {
+        boca.decir(dicho.texto, dicho.clave, "baja", dicho.relleno, alSonar);
+        if (this.tier.instruments !== "none") this.hud.radio(dicho.texto);
+      },
+      dicho.relleno,
+    );
 
     /*
      * **Y el servicio se ve**, en los cuatro peldaños: una botella de agua en
@@ -9070,16 +9101,27 @@ export class Game {
      * Y por `unaForma`, que es lo que hace que aterrizar once veces no
      * suene once veces igual. Ver `audio/variantes.ts`.
      */
-    const forma = unaForma(cual, Math.random, {
+    const forma = unaForma(
+      cual,
+      Math.random,
+      {
+        /*
+         * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
+         * medio que en pantalla separa el aeropuerto de su ciudad —«Guaraní ·
+         * Ciudad del Este»— y que en voz alta no es nada: se lee como un
+         * tropiezo o no se lee. En coma es una frase: «bienvenidos a Guaraní,
+         * Ciudad del Este», que además es como lo diría cualquiera.
+         */
+        campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
+      },
       /*
-       * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
-       * medio que en pantalla separa el aeropuerto de su ciudad —«Guaraní ·
-       * Ciudad del Este»— y que en voz alta no es nada: se lee como un
-       * tropiezo o no se lee. En coma es una frase: «bienvenidos a Guaraní,
-       * Ciudad del Este», que además es como lo diría cualquiera.
+       * **Y las formas de sentarse para despegar, solo las grabadas.** Están
+       * escritas y sin grabar hasta el 6 de octubre: mientras tanto suena la
+       * de siempre, y cada una entra en el sorteo el día que tenga su pieza.
+       * Ver `PENDIENTE-VOCES-megafonia.md`.
        */
-      campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
-    });
+      anuncio === "comandante.despegue" ? (id) => this.instructor.vozDe(id) !== null : undefined,
+    );
     if (anuncio !== "comandante.bienvenida")
       return { clave: forma.id, texto: forma.texto };
     /*
@@ -9214,6 +9256,10 @@ export class Game {
      * `seLePasoElMomento`.
      */
     BOCA.retirar((c) => seLePasoElMomento(c, this.faseDeAhora as Fase));
+    // Las llamadas de cabina que esperan su anuncio, y el «arrancá el motor»
+    // que espera a los toboganes. Ver `atenderALasLlamadas`.
+    this.atenderALasLlamadas();
+    this.decirLaFaseDelPuesto();
     const anuncio = this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
@@ -9226,6 +9272,7 @@ export class Game {
       megafoniaHablando:
         this.comandante.hablando ||
         this.tripulacion.hablando ||
+        this.llamadas.length > 0 ||
         BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       cartelPuesto: this.cinturonPuesto,
       // Y sin «pueden soltarse» con una turbulencia anunciada por delante.
@@ -9258,6 +9305,8 @@ export class Game {
     const enEmergencia =
       this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado;
     if (anuncio && !enEmergencia) this.decirPorMegafonia(anuncio);
+    // Y alguna vez, en el servicio, un pasajero que llama.
+    this.atenderAlPasaje(dt);
 
     this.mirarPorLaVentanilla(dt);
     this.contarLasLucesDeNoche(dt);
@@ -11038,6 +11087,7 @@ export class Game {
     // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.reiniciarLoQueSuena();
     this.huecos.reiniciar();
     this.ventanilla.reiniciar();
     this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
@@ -11935,6 +11985,12 @@ export class Game {
      * fotograma siguiente si se dijo uno. Y la marca del motor, que es la
      * mitad de cabina de lo que dice el paso. Ver `seguirLaCadena`.
      */
+    /*
+     * Lo que cambia en el cuadro, antes que la cadena: el paso que cuenta una
+     * marca nueva sabe así si ya se ve y se oye en su sitio. Ver
+     * `mirarLoQueCambia`.
+     */
+    this.mirarLoQueCambia(dt);
     this.seguirLaCadena(dt);
     this.ponerLaMarcaDelMotor();
     // Y la instructora de la bajada, si le toca decir algo. Ver `mirarLaSenda`.
@@ -12771,6 +12827,8 @@ export class Game {
         perfil: this.perfilParaElCuadro(),
         // Y en tierra, la GS de rodar: la del cuadro plano.
         rodaje: this.rodajeParaElCuadro(),
+        // Y lo que acaba de cambiar, resaltado: lo del cuadro plano.
+        resaltes: this.loQueCambia.resaltes,
       },
       dt,
     );
@@ -12968,6 +13026,8 @@ export class Game {
         cotaDeLaPista: this.cotaParaLaCinta(),
         // Y en tierra, la GS de rodar. Ver `rodajeParaElCuadro`.
         rodaje: this.rodajeParaElCuadro(),
+        // Y lo que acaba de cambiar, resaltado en su sitio. Ver `mirarLoQueCambia`.
+        resaltes: this.loQueCambia.resaltes,
         /*
          * **Y la senda a la vista**: el desvío, la marca del ritmo y el arco
          * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
@@ -13641,7 +13701,9 @@ export class Game {
     const ahora = Date.now();
     const libre = {
       instructor: !this.instructor.hablando && !this.maquina.ocupada,
-      megafonia: !this.comandante.hablando && !this.tripulacion.hablando,
+      // Con una llamada esperando su voz, la megafonía no está libre.
+      megafonia:
+        !this.comandante.hablando && !this.tripulacion.hablando && this.llamadas.length === 0,
     };
     for (const por of ["instructor", "megafonia"] as const) {
       const i = this.porDecirDelDescenso.findIndex((f) => f.por === por);
@@ -13650,7 +13712,10 @@ export class Game {
       if (!f || ahora < hasta) continue;
       if (!libre[por] && ahora - Math.max(f.desde, hasta) < ESPERA_DEL_DESCENSO) continue;
       this.porDecirDelDescenso.splice(i, 1);
-      this.hastaDelDescenso[por] = ahora + loQueTardaEnDecirse(t(f.clave));
+      // Y si lleva llamada delante, lo que dura la llamada también cuenta.
+      const tono = por === "megafonia" ? llamadaAntesDe(f.clave) : null;
+      this.hastaDelDescenso[por] =
+        ahora + loQueTardaEnDecirse(t(f.clave)) + (tono ? esperaTrasLaLlamada(tono) * 1000 : 0);
       if (por === "instructor") this.instructor.decir(t(f.clave), f.clave, "mando");
       else
         this.porMegafoniaYa(
@@ -13960,8 +14025,20 @@ export class Game {
    * tira. Ver `porMegafonia`, que es el de los anuncios sueltos de siempre.
    */
   private porMegafoniaYa(boca: Instructor, clave: TranslationKey): void {
-    boca.decir(t(clave), clave, "mando");
-    if (this.tier.instruments !== "none") this.hud.radio(t(clave));
+    /*
+     * Con su llamada delante y sin esperar a que se calle nadie: la de
+     * emergencia, tres veces aguda y grave, antes del «descenso de
+     * emergencia». Ver `conSuLlamada`.
+     */
+    this.conSuLlamada(
+      clave,
+      () => {
+        boca.decir(t(clave), clave, "mando");
+        if (this.tier.instruments !== "none") this.hud.radio(t(clave));
+      },
+      undefined,
+      true,
+    );
   }
 
   /** Si en el campo de ahora hay una torre que conteste: con lección de torre y con torre. */
@@ -15540,6 +15617,8 @@ export class Game {
     this.vistaActual = vista;
     this.decirElGasSuelto(vista);
     this.flapsTrasLaToma(faseDeAntes, vista.fase);
+    // Y la lista de después del aterrizaje, punto por punto. Ver `leerLaLista`.
+    this.leerLaLista(vista.fase, dt);
     /*
      * **Y si te pasaste la salida, se dice.** El plan cuenta las veces que
      * rehace la raya por la siguiente; aquí se dice una vez por cada una.
@@ -16004,7 +16083,15 @@ export class Game {
               : null;
         if (enLaPista) this.loDichoEnLaPista = enLaPista.dicho;
         const yaDichoEnLaPista = enLaPista !== null && !enLaPista.dice;
-        if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista)
+        /*
+         * **Y en el puesto, «arrancá el motor» detrás de los toboganes**: en
+         * el avión con tripulación, el crosscheck va antes del arranque. La
+         * tarjeta con la llave sale ya; la voz, al acabar la comandante. Ver
+         * `decirLaFaseDelPuesto`.
+         */
+        if (vista.fase === "estacionado" && this.esperaAlCrosscheck())
+          this.faseTrasElCrosscheck = { frase, clave, desde: this.relojDelJuego };
+        else if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista)
           this.instructor.decir(frase, clave);
         // Y el rótulo grande tampoco: la tarjeta, que se queda, ya lo dice.
         if (conLetras && !yaDichoEnLaPista) {
@@ -17223,6 +17310,8 @@ export class Game {
    */
   girarLaVentanillaAlt(pasos: number): void {
     if (!this.llevaVentanillaAlt || pasos === 0) return;
+    // Lo que gira la mano no se avisa: ver `flight/lo-que-cambia.ts`.
+    this.manoEnElAutomatico = this.relojDelJuego;
     const desde = this.ventanillaAlt ?? aLaVentanilla(this.altitudIndicada());
     this.ventanillaAlt = girarLaVentanilla(desde, pasos, topeDeLaVentanilla(this.aircraft));
     this.avisar("compensador");
@@ -17671,6 +17760,8 @@ export class Game {
    * de asustar a quien va dentro.
    */
   ponerPilotoAutomatico(puesto = !this.pilotoPuesto): void {
+    // El modo que cambia por el botón se recuadra, sin tono. Ver `mirarLoQueCambia`.
+    this.manoEnElAutomatico = this.relojDelJuego;
     /*
      * **Y en tierra no engancha**, que es la raíz de la alarma sin motivo.
      *
@@ -18542,6 +18633,7 @@ export class Game {
   private rodajeParaElCuadro(): {
     nudos: number;
     escala: number;
+    toca: number;
     rapido: boolean;
   } | null {
     const s = this.flight.state;
@@ -18563,12 +18655,12 @@ export class Game {
       (vista?.rapido ?? false) ||
       this.bandaDeAhora === "rapido" ||
       (toca > 0.5 && s.groundSpeed > toca + margen);
-    const rapido = this.gsRapida;
-    return {
-      nudos: s.groundSpeed / NUDO,
-      escala: (maxima * 1.5) / NUDO,
-      rapido,
-    };
+    /*
+     * Y la marca de hasta dónde llenar la barra es esa misma velocidad: la del
+     * tramo que se rueda, que baja antes de cada curva y cambia en la boca de
+     * la salida. Ver `barraDeRodaje`.
+     */
+    return { ...barraDeRodaje(s.groundSpeed, toca, maxima), rapido: this.gsRapida };
   }
 
   /**
@@ -18671,28 +18763,19 @@ export class Game {
     );
     this.palancaDeFlapsVista = palanca;
     this.dichoTrasLaToma = paso.dicho;
-    if (!paso.toca || !this.aircraft.llevaFlaps) return;
+    /*
+     * **Al salir de la pista, los flaps los pide la lista**, en su turno y no
+     * encima de la fase y de la torre: «los flaps los estoy recogiendo ahora,
+     * que la instructora no me da ni tiempo a hacerlo todo». Aquí quedan la
+     * carrera y el puesto. Ver `leerLaLista`.
+     */
+    if (!paso.toca || paso.toca === "alSalir" || !this.aircraft.llevaFlaps) return;
     const clave: TranslationKey =
-      paso.toca === "enLaCarrera"
-        ? "vuelo.flapsEnLaCarrera"
-        : paso.toca === "alPuesto"
-          ? "vuelo.alPuestoConFlaps"
-          : canalesDe(this.tier.avisos).cabina
-            ? "vuelo.despuesDelAterrizaje"
-            : "vuelo.flapsArribaAlSalir";
-    this.hud.senal.mostrar(
-      "flaps",
-      this.rotulo(clave, "palabra.flaps"),
-      null,
-      {
-        segundos: SE_QUEDA_EL_ARO * 2,
-        prioridad: IMPORTANTE,
-        // La tecla solo cuando lo que toca es subirlos.
-        ...(paso.toca === "alSalir"
-          ? { tecla: nombreDeTecla(this.input.preferredKey("flaps")) }
-          : {}),
-      },
-    );
+      paso.toca === "enLaCarrera" ? "vuelo.flapsEnLaCarrera" : "vuelo.alPuestoConFlaps";
+    this.hud.senal.mostrar("flaps", this.rotulo(clave, "palabra.flaps"), null, {
+      segundos: SE_QUEDA_EL_ARO * 2,
+      prioridad: IMPORTANTE,
+    });
     this.instructor.decir(t(clave), clave);
   }
 
@@ -19422,7 +19505,15 @@ export class Game {
      * el de cabina queda la tarjeta. Ver `cantoDe`.
      */
     if (ingles === null) {
-      if (forma && laInstructoraLoExplica(this.tier.avisos))
+      /*
+       * **Y lo que ya se ve, no se dice.** Un consejo de velocidad hacia la
+       * marca, con la marca recién cambiada y parpadeando en su sitio con su
+       * tono, es el mismo suceso que el cuadro ya está contando: la tarjeta
+       * sale, la voz no. Los umbrales del consejero no cambian; lo que cambia
+       * es que no habla encima del cuadro. Ver `mirarLoQueCambia`.
+       */
+      const loCuentaElCuadro = apunta === "marca" && this.loQueCambia.vivo("spd");
+      if (forma && laInstructoraLoExplica(this.tier.avisos) && !loCuentaElCuadro)
         this.instructor.decir(forma.texto, forma.id);
       return;
     }
@@ -19432,6 +19523,311 @@ export class Game {
   /** Lo último que aconsejó la instructora de la bajada. Para el banco. */
   get consejoParaBanco(): ConsejoDeLaBajada["ultimo"] {
     return this.consejero.ultimo;
+  }
+
+  // ── Lo que cambia en el cuadro, y lo que suena en la cabina ─────────
+
+  /**
+   * **Lo que cambia en el cuadro**: la marca de la velocidad, la ventanilla
+   * ALT y los modos del FMA, resaltados en su sitio y con su tono. Ver
+   * `flight/lo-que-cambia.ts`.
+   */
+  private readonly loQueCambia = new LoQueCambia();
+  /** Cuándo tocó la mano el automático o su ventanilla, s del juego. */
+  private manoEnElAutomatico = -Infinity;
+  /**
+   * **Las marcas nuevas que ya se explicaron en este vuelo**, por lo que
+   * pedían: «más gas», «menos gas», «seguimos así». Ver `decirElPaso`.
+   */
+  private readonly cambiosExplicados = new Set<string>();
+
+  /**
+   * **Las llamadas que esperan su anuncio**: el tono de la tripulación —o el
+   * de emergencia— va delante de la megafonía que lo lleva, y la voz espera a
+   * que acabe. Ver `audio/tonos-de-cabina.ts`.
+   */
+  private llamadas: {
+    tono: TonoDeCabina;
+    clave: string;
+    relleno?: Readonly<Record<string, string>>;
+    decir: () => void;
+    /** Si no espera a que se calle nadie: los de la emergencia. */
+    ya: boolean;
+    desde: number;
+    sono: number | null;
+  }[] = [];
+  /** Los pasajeros que llaman durante el servicio. Ver `LlamadasDelPasaje`. */
+  private readonly llamadasDelPasaje = new LlamadasDelPasaje();
+  /**
+   * **«Arrancá el motor», esperando a los toboganes.** En el avión con
+   * tripulación de cabina, el crosscheck va antes del arranque: la instructora
+   * espera a que acabe para pedir el motor. Ver `decirLaFaseDelPuesto`.
+   */
+  private faseTrasElCrosscheck: { frase: string; clave: string; desde: number } | null = null;
+  /** Si el crosscheck de este vuelo ya sonó, o ya no va a sonar. */
+  private crosscheckAcabado = false;
+  /** La lista de después del aterrizaje de este avión. Ver `leerLaLista`. */
+  private listaTrasLaToma: { de: AircraftConfig; lista: ListaDeDespuesDeAterrizar } | null = null;
+
+  /**
+   * **Si un piloto de verdad arrancaría ya**: con tripulación de cabina, con
+   * los toboganes armados —el crosscheck dicho, o que ya no vaya a sonar—; sin
+   * ella, cuando quiera. Para el banco, que arrancaba en el primer fotograma y
+   * se comía el crosscheck. Ver `faseTrasElCrosscheck`.
+   */
+  get listoParaArrancarParaBanco(): boolean {
+    return (
+      this.crosscheckAcabado ||
+      !conTripulacion(this.aircraft.mass) ||
+      !conPasaje(this.aircraft.mass)
+    );
+  }
+
+  /** La lista de después del aterrizaje leída en este vuelo, con su hora. Para el banco. */
+  readonly listaLeidaParaBanco: { punto: string; como: string; t: number }[] = [];
+
+  /** Vuelo nuevo: nada encendido, nada esperando, nada explicado. */
+  private reiniciarLoQueSuena(): void {
+    this.loQueCambia.reiniciar();
+    this.cambiosExplicados.clear();
+    this.llamadas = [];
+    this.llamadasDelPasaje.reiniciar();
+    // Con `?.`: un vuelo puede rehacerse antes de que exista el HUD.
+    this.hud?.ponerLlamadaDePasaje(false);
+    this.faseTrasElCrosscheck = null;
+    this.crosscheckAcabado = false;
+    this.listaTrasLaToma = null;
+    this.listaLeidaParaBanco.length = 0;
+  }
+
+  /**
+   * **Lo que cambió en el cuadro en este paso**: se resalta en su sitio —lo
+   * pinta el tablero con `resaltes`— y, si no lo movió la mano, suena el tono
+   * de cambio. Solo en el cuadro que lo enseña: la marca de la velocidad y la
+   * ventanilla ALT son de las cintas, que la avioneta de esferas no lleva.
+   *
+   * «Cuando hay un cambio de altitud o velocidad estaría bien alguna señal
+   * acústica y otra visual en el elemento que cambia, para yo verlo.»
+   */
+  private mirarLoQueCambia(dt: number): void {
+    const conCintas = familiaDe(this.aircraft) !== "esferas";
+    const spd = conCintas ? this.laSpdDelPanel() : null;
+    const fma = conCintas ? this.elFma() : null;
+    // Un segundo y medio: lo que tarda en verse en el cuadro lo que se tocó.
+    const mano = this.relojDelJuego - this.manoEnElAutomatico < 1.5;
+    const r = this.loQueCambia.paso({
+      spd: spd
+        ? {
+            peldano: this.laVelocidadQueToca().peldano,
+            texto: spd.mach !== null ? `.${Math.round(spd.mach * 100)}` : String(Math.round(spd.kt)),
+            kt: spd.kt,
+          }
+        : null,
+      alt: conCintas ? this.ventanillaEnPies() : null,
+      altPorLaMano: mano,
+      fma: fma ? { gases: fma.gases, lateral: fma.lateral, vertical: fma.vertical } : null,
+      fmaPorLaMano: mano,
+      // Y en la carrera de despegue y en la final baja, el tono se calla.
+      callado:
+        EN_DESPEGUE.has(this.faseDeAhora as Fase) ||
+        (this.faseDeAhora === "final" && this.flight.state.heightAboveGround < 1000 * PIE_EN_METROS),
+      dt,
+    });
+    if (r.suena) this.avisar("cambio");
+  }
+
+  /**
+   * **Un anuncio de la megafonía con su llamada delante**, si la lleva: el
+   * tono suena cuando el anuncio puede sonar —su grabación bajada y nadie
+   * hablando— y la voz va detrás, al acabar el tono. Sin llamada, se dice ya.
+   * Ver `llamadaAntesDe` en `audio/tonos-de-cabina.ts`.
+   *
+   * Los de la emergencia no esperan a que se calle nadie: su llamada suena en
+   * el acto.
+   */
+  private conSuLlamada(
+    clave: string,
+    decir: () => void,
+    relleno?: Readonly<Record<string, string>>,
+    ya = false,
+  ): void {
+    const tono = llamadaAntesDe(clave);
+    if (!tono) {
+      decir();
+      return;
+    }
+    this.llamadas.push({ tono, clave, relleno, decir, ya, desde: this.relojDelJuego, sono: null });
+    this.atenderALasLlamadas();
+  }
+
+  /**
+   * **Las llamadas, una detrás de otra.** La primera de la fila suena cuando
+   * puede y su voz va al acabar el tono; la siguiente espera. Lo que pierde su
+   * momento esperando —el crosscheck, si se arranca antes— se retira sin
+   * sonar, y lo que espera demasiado, también: ver `CADUCA_LA_MEGAFONIA`.
+   */
+  private atenderALasLlamadas(): void {
+    const l = this.llamadas[0];
+    if (!l) return;
+    const ahora = this.relojDelJuego;
+    if (l.sono === null) {
+      const caduca =
+        seLePasoElMomento(l.clave, this.faseDeAhora as Fase) ||
+        ahora - l.desde > CADUCA_LA_MEGAFONIA / 1000;
+      if (caduca) {
+        this.llamadas.shift();
+        if (l.clave.startsWith("comandante.crosscheck")) this.crosscheckAcabado = true;
+        return;
+      }
+      const libre =
+        !this.comandante.hablando && !this.tripulacion.hablando && !this.instructor.hablando;
+      if (!l.ya && !(libre && this.instructor.estaLista(l.clave, l.relleno))) return;
+      this.avisar(l.tono);
+      l.sono = ahora;
+      return;
+    }
+    if (ahora - l.sono < esperaTrasLaLlamada(l.tono)) return;
+    this.llamadas.shift();
+    l.decir();
+  }
+
+  /**
+   * **Un pasajero que llama, alguna vez, en el servicio**: su nota aguda —que
+   * se oye en el pasaje— y su luz encima del asiento, que se ve desde la vista
+   * de pasaje hasta que llega la tripulación. Solo con tripulación de cabina:
+   * sin ella no hay a quién llamar. Ver `LlamadasDelPasaje`.
+   */
+  private atenderAlPasaje(dt: number): void {
+    if (!conTripulacion(this.aircraft.mass)) return;
+    const llama = this.llamadasDelPasaje.paso({
+      fase: this.faseDeAhora as Fase,
+      pasajeSuelto: this.cinturon.pasajeSuelto,
+      servicioDicho: this.megafonia.yaDicho("tripulacion.servicio"),
+      bajando: this.megafonia.bajandoAlDestino,
+      dt,
+    });
+    if (llama) this.avisar("llamadaPasajero");
+    this.hud.ponerLlamadaDePasaje(
+      this.llamadasDelPasaje.luzEncendida && oidoDe(this.vistaQueHay()) === "pasaje",
+    );
+  }
+
+  /**
+   * **«Arrancá el motor», detrás de los toboganes.** Si la fase del puesto se
+   * dijo mientras el crosscheck esperaba su turno, la frase sale en cuanto el
+   * crosscheck acaba —o deja de poder sonar, o pasa un rato—, y solo si
+   * todavía se está en el puesto con el motor parado. Ver
+   * `faseTrasElCrosscheck`.
+   */
+  private decirLaFaseDelPuesto(): void {
+    const f = this.faseTrasElCrosscheck;
+    if (!f) return;
+    const sigue = this.faseDeAhora === "estacionado";
+    // Quince segundos como mucho: la tarjeta con la llave ya está a la vista.
+    if (sigue && !this.crosscheckAcabado && this.relojDelJuego - f.desde < 15) return;
+    this.faseTrasElCrosscheck = null;
+    if (sigue) this.instructor.decir(f.frase, f.clave);
+  }
+
+  /** Si la instructora espera al crosscheck para pedir el motor. */
+  private esperaAlCrosscheck(): boolean {
+    return (
+      conTripulacion(this.aircraft.mass) &&
+      conPasaje(this.aircraft.mass) &&
+      !this.crosscheckAcabado &&
+      !this.megafonia.yaDicho("comandante.crosscheck")
+    ) || this.llamadas.some((l) => l.clave.startsWith("comandante.crosscheck"));
+  }
+
+  /**
+   * **La lista de después del aterrizaje, leída punto por punto.** Lo que es
+   * de quien vuela se pide con su tarjeta y su tecla; lo de la instructora lo
+   * dice al hacerlo. En el peldaño de cabina se lee en inglés de cabina y la
+   * voz es la de la lista entera, que es la grabada. Ver
+   * `ListaDeDespuesDeAterrizar` en `flight/despues-de-aterrizar.ts`.
+   */
+  private leerLaLista(fase: Fase, dt: number): void {
+    if (!this.listaTrasLaToma || this.listaTrasLaToma.de !== this.aircraft)
+      this.listaTrasLaToma = {
+        de: this.aircraft,
+        lista: new ListaDeDespuesDeAterrizar(this.aircraft),
+      };
+    const leido = this.listaTrasLaToma.lista.paso({
+      fase,
+      flapsFuera: this.input.palancaDeFlaps > 0,
+      aerofrenosFuera: this.input.aerofrenosAbiertos,
+      hablando: this.instructor.hablando || this.torre.hablando,
+      dt,
+    });
+    if (!leido) return;
+    this.listaLeidaParaBanco.push({ ...leido, t: +this.relojDelJuego.toFixed(1) });
+    this.decirElPuntoDeLaLista(leido);
+  }
+
+  /** Un punto de la lista, con su tarjeta, su tecla y, si la tiene, su voz. */
+  private decirElPuntoDeLaLista(p: PuntoLeido): void {
+    const canales = canalesDe(this.tier.avisos);
+    const QUE: Record<
+      PuntoLeido["punto"],
+      { clave: TranslationKey; corta: TranslationKey; cabina: string; dibujo: string }
+    > = {
+      aerofrenos: {
+        clave: "vuelo.despues.aerofrenos",
+        corta: "palabra.aerofrenosAdentro",
+        cabina: "SPEED BRAKE — DOWN",
+        dibujo: "aerofrenos-recogidos",
+      },
+      flaps: {
+        clave: "vuelo.flapsArribaAlSalir",
+        corta: "palabra.flaps",
+        cabina: "FLAPS — UP",
+        dibujo: "flaps",
+      },
+      luces: {
+        clave: "vuelo.despues.luces",
+        corta: "palabra.luces",
+        cabina: "LIGHTS — TAXI",
+        dibujo: "luces-de-rodaje",
+      },
+      transpondedor: {
+        clave: "vuelo.despues.transpondedor",
+        corta: "palabra.transpondedor",
+        cabina: "TCAS — STBY",
+        dibujo: "transpondedor",
+      },
+    };
+    const q = QUE[p.punto];
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cabina
+        ? q.cabina
+        : canales.corto
+          ? t(q.corta)
+          : t(q.clave);
+    const tecla =
+      p.como === "pide"
+        ? nombreDeTecla(this.input.preferredKey(p.punto === "flaps" ? "flaps" : "aerofrenos"))
+        : null;
+    this.hud.senal.mostrar(comoDibujo(q.dibujo), rotulo, null, {
+      segundos: p.como === "pide" ? SE_QUEDA_EL_ARO * 2 : 5,
+      prioridad: IMPORTANTE,
+      tecla,
+    });
+    /*
+     * **La voz**, la del punto en los peldaños que explican, si tiene su
+     * grabación; en el de cabina, la de la lista entera al leer el primero,
+     * que es la grabada y la que dice de quién es cada cosa. Lo que no está
+     * grabado se ve y no se oye: una frase sin grabar es muda en el navegador
+     * de quien más juega. Ver `PENDIENTE-VOCES-aterrizaje.md`.
+     */
+    const lista = this.listaTrasLaToma?.lista.leidos ?? [];
+    const clave: TranslationKey | null = canales.cabina
+      ? lista.length === 1
+        ? "vuelo.despuesDelAterrizaje"
+        : null
+      : q.clave;
+    this.apuntarCanto(`lista ${p.punto}: ${p.como} → ${clave ?? "cabina"}`);
+    if (clave && this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
   }
 
   // ── El «¿y ahora qué?»: el paso siguiente en cada escalón ───────────
@@ -19585,8 +19981,29 @@ export class Game {
       prioridad: IMPORTANTE,
       tecla,
     });
-    const habla = !como.calla && laInstructoraLoExplica(this.tier.avisos);
-    const dice = habla ? (forma?.id ?? "sin voz") : canales.cabina ? "cabina" : "la torre";
+    /*
+     * **Y la marca nueva, explicada una vez y vista las demás.** Enrique:
+     * «estar escuchando a la instructora diciendo "bajá el motor" es un medio
+     * coñazo a veces». Cuando el paso es una marca de velocidad que acaba de
+     * cambiar, el cambio ya se ve y se oye en su sitio —la ventanilla SPD y la
+     * marca de la cinta parpadean, con su flecha y su tono; ver
+     * `mirarLoQueCambia`—. La instructora lo cuenta la primera vez de cada
+     * cosa en el vuelo, para que se sepa qué es eso que parpadea; las demás,
+     * la tarjeta y el cuadro bastan.
+     */
+    const marcaNueva =
+      (p.que === "acelerar" || p.que === "frenar" || p.que === "mantener") &&
+      this.loQueCambia.vivo("spd");
+    const yaExplicada = marcaNueva && this.cambiosExplicados.has(p.que);
+    if (marcaNueva) this.cambiosExplicados.add(p.que);
+    const habla = !como.calla && laInstructoraLoExplica(this.tier.avisos) && !yaExplicada;
+    const dice = habla
+      ? (forma?.id ?? "sin voz")
+      : yaExplicada
+        ? "el cuadro"
+        : canales.cabina
+          ? "cabina"
+          : "la torre";
     this.apuntarCanto(`paso ${p.escalon}: ${p.que} (${p.objetivo.kt} kt) → ${dice}`);
     if (p.que === "tren") {
       // Lo que se canta al sacarlo en cualquier cabina: grabado.

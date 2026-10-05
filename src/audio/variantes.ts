@@ -77,6 +77,26 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
   "vuelo.puedeVolver": ["La pista quedó libre: podés volver a bajar"],
 
   /*
+   * **Y la orden de sentarse para despegar**, que se dice de más de una
+   * manera en cualquier avión de línea, y todas reales: «Tripulación,
+   * despegue inmediato» —la favorita de Enrique—, y en inglés, que es como la
+   * dicen muchas tripulaciones de habla castellana, «cabin crew, seats for
+   * take-off» y «cabin crew, prepare for take-off». La de `i18n`, «sentados
+   * para el despegue», es la primera y la única grabada.
+   *
+   * Sin grabar hasta el 6 de octubre, que ElevenLabs no tiene saldo: ver
+   * `PENDIENTE-VOCES-megafonia.md`. Y mientras no lo estén **no entran en el
+   * sorteo**: la voz del navegador es muda en Brave para Linux, y un sorteo
+   * que cae en una sin grabar es un anuncio que no suena. Ver `conPieza` en
+   * `unaForma`.
+   */
+  "comandante.despegue": [
+    "Tripulación, despegue inmediato.",
+    "Cabin crew, seats for take-off.",
+    "Cabin crew, prepare for take-off.",
+  ],
+
+  /*
    * **Y los avisos de senda**, que salen varias veces en cada aproximación.
    * Son los que más cansan de oír repetidos, y los que menos se pueden callar:
    * si no se dicen, no se aprende a corregir.
@@ -362,6 +382,15 @@ export function unaForma(
    * cada cinco veces.
    */
   valores?: Record<string, string | number>,
+  /**
+   * **Si esa forma tiene su grabación**, por su identificador. Con esto, las
+   * que no la tienen se quedan fuera del sorteo mientras quede alguna que sí:
+   * una forma sin grabar la dice la voz del navegador, que en Brave para
+   * Linux es muda, y sortear entre una que suena y otra que no es sortear si
+   * el anuncio suena. Si no suena ninguna, la de `i18n`, como siempre. Sin
+   * esto, se sortea entre todas.
+   */
+  conPieza?: (id: string) => boolean,
 ): { readonly texto: string; readonly id: string } {
   const rellenar = (texto: string): string =>
     valores
@@ -370,9 +399,13 @@ export function unaForma(
   const otras = VARIANTES[clave];
   if (!otras?.length) return { texto: t(clave, valores), id: clave };
   // Las que valen, por su número; las retiradas se quedan fuera del sorteo.
-  const validas = Array.from({ length: otras.length + 1 }, (_, k) => k).filter(
+  const sinRetirar = Array.from({ length: otras.length + 1 }, (_, k) => k).filter(
     (k) => !RETIRADAS.has(idDeLaForma(clave, k)),
   );
+  const grabadas = conPieza
+    ? sinRetirar.filter((k) => conPieza(idDeLaForma(clave, k)))
+    : sinRetirar;
+  const validas = grabadas.length ? grabadas : conPieza ? [0] : sinRetirar;
   const n = validas[Math.min(validas.length - 1, Math.floor(azar() * validas.length))] ?? 0;
   return {
     texto: n === 0 ? t(clave, valores) : rellenar(otras[n - 1]!),

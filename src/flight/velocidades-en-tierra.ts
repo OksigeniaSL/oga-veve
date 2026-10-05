@@ -148,3 +148,60 @@ export function velocidadDeLaSalida(
 ): number {
   return Math.abs(giro) <= GIRO_DE_UNA_SALIDA_RAPIDA ? t.salidaRapida : t.viraje;
 }
+
+// ── La barra de la GS de rodar ─────────────────────────────────────────
+
+/**
+ * **La barra de la GS en tierra, en números**: lo que se lleva, el fondo de la
+ * barra y **la marca de hasta dónde llenarla**, todo en nudos, que es lo que
+ * pinta la pantalla.
+ *
+ * La marca la pidió Enrique al ver la barra por primera vez —«¿qué es esa
+ * barra verde en el radar?»—: una barra que se llena y se pone ámbar sin decir
+ * hasta dónde es un veredicto sin la regla. Es la velocidad que toca en el
+ * tramo que se rueda: veinte nudos en una recta, treinta en una recta larga,
+ * diez antes de una curva y la de la salida que se va a tomar. Y como el
+ * perfil de la raya frena **antes** de cada curva —el manual de Boeing pide
+ * los diez nudos «prior to turn entry», no dentro—, la marca baja al
+ * acercarse a la curva o a la boca de la salida, y vuelve a subir al salir de
+ * ella. Es la misma velocidad contra la que se pinta el ámbar, así que ir por
+ * encima de la marca y ver la barra ámbar son la misma cosa.
+ *
+ * El fondo es vez y media lo más que rueda este avión —o la salida rápida de
+ * su ruta, si es más—: deja sitio para ver que uno se pasa sin que la barra se
+ * quede llena del todo a la velocidad buena.
+ */
+export interface BarraDeRodaje {
+  /** La GS de ahora, nudos. */
+  readonly nudos: number;
+  /** El fondo de la barra, nudos. */
+  readonly escala: number;
+  /** La velocidad que toca aquí, nudos: donde va la marca. */
+  readonly toca: number;
+}
+
+/** Cuánto más allá de lo más que se rueda llega la barra. Ver `BarraDeRodaje`. */
+export const FONDO_DE_LA_BARRA = 1.5;
+
+/**
+ * La barra de este momento, con las velocidades del modelo en m/s.
+ *
+ * `toca` es la del perfil de la raya en el punto en que se va —ver
+ * `velocidadSugerida` en `world/plan-de-vuelo.ts`— y `maxima`, lo más que
+ * rueda este avión por esta ruta. La marca se redondea a medio nudo: el
+ * perfil se mueve de centímetro en centímetro y una marca que tiembla en la
+ * pantalla no deja leer la barra.
+ */
+export function barraDeRodaje(gs: number, toca: number, maxima: number): BarraDeRodaje {
+  const escala = (Math.max(maxima, NUDO) * FONDO_DE_LA_BARRA) / NUDO;
+  return {
+    nudos: Math.max(0, gs) / NUDO,
+    escala,
+    toca: Math.min(escala, Math.round((Math.max(0, toca) / NUDO) * 2) / 2),
+  };
+}
+
+/** Qué parte de la barra es un número de nudos, de 0 a 1. */
+export function parteDeLaBarra(nudos: number, escala: number): number {
+  return Math.max(0, Math.min(1, nudos / Math.max(1, escala)));
+}

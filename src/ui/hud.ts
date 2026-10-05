@@ -205,6 +205,19 @@ const AERONAUTICAL: UnitSystem = {
  * una prenda—, separada del tronco y de las piernas por un hueco para que no
  * se funda con ellos. La hebilla es un marco con su agujero, que es lo que es.
  */
+/**
+ * **La luz de llamada de un pasajero**: la figura de la tripulante, la que va
+ * dibujada en el botón de llamada de encima de cada asiento. Ver
+ * `ponerLlamadaDePasaje`.
+ */
+const LLAMADA_DE_PASAJE = `
+  <circle cx="12" cy="5" r="3" fill="currentColor"/>
+  <path d="M7.4 21 L8.6 12.4 a3.4 3.4 0 0 1 3.4-3 a3.4 3.4 0 0 1 3.4 3 L16.6 21 Z"
+        fill="currentColor"/>
+  <path d="M15.6 11 L19.4 4.6" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round"/>
+`;
+
 const CINTURON = `
   <circle cx="12" cy="4" r="2.7" fill="currentColor"/>
   <path d="M6.6 12 V10 a2.8 2.8 0 0 1 2.8-2.8 h5.2 a2.8 2.8 0 0 1 2.8 2.8 V12 Z"
@@ -1147,6 +1160,15 @@ export class Hud {
         -->
         <div class="cinturon" data-hud="cinturon" hidden role="status">
           <svg viewBox="0 0 24 24" aria-hidden="true">${CINTURON}</svg>
+        </div>
+        <!--
+          Y la luz de llamada de un pasajero, la azul de encima del asiento:
+          solo en la vista de pasaje, que es desde donde se ve. Suena con su
+          nota aguda y se apaga cuando la tripulación llega. La enciende
+          «atenderAlPasaje», en game.ts. Ver audio/tonos-de-cabina.ts.
+        -->
+        <div class="cinturon llamada-de-pasaje" data-hud="llamada-de-pasaje" hidden role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true">${LLAMADA_DE_PASAJE}</svg>
         </div>
       </div>
       <div class="hud__arriba">
@@ -2554,6 +2576,8 @@ export class Hud {
       readonly perfil?: DatosDelTablero["perfil"];
       /** En tierra, la GS de rodar. Ver `DatosDelTablero.rodaje`. */
       readonly rodaje?: DatosDelTablero["rodaje"];
+      /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
+      readonly resaltes?: DatosDelTablero["resaltes"];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -3002,6 +3026,7 @@ export class Hud {
         cotaDeLaPista: mandos?.cotaDeLaPista ?? null,
         perfil: mandos?.perfil ?? null,
         rodaje: mandos?.rodaje ?? null,
+        resaltes: mandos?.resaltes ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de
@@ -4058,6 +4083,22 @@ export class Hud {
     const caja = this.root.querySelector<HTMLElement>('[data-hud="cinturon"]');
     if (caja) caja.hidden = !encendido;
   }
+
+  /**
+   * Enciende o apaga la luz de llamada de un pasajero. Como el cartel, es un
+   * dibujo iluminado y nada más; solo se enseña en la vista de pasaje, que es
+   * desde donde se ve. Ver `LlamadasDelPasaje` en `audio/tonos-de-cabina.ts`.
+   */
+  ponerLlamadaDePasaje(encendida: boolean): void {
+    // Se mira cada imagen: la pieza se busca una vez.
+    this.llamadaDePasaje ??= this.root.querySelector<HTMLElement>(
+      '[data-hud="llamada-de-pasaje"]',
+    );
+    const caja = this.llamadaDePasaje;
+    if (caja && caja.hidden === encendida) caja.hidden = !encendida;
+  }
+
+  private llamadaDePasaje: HTMLElement | null = null;
 
   /**
    * Y si este avión lleva cartel del cinturón, para enseñar su interruptor.
