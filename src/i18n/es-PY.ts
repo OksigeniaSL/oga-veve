@@ -1123,6 +1123,12 @@ export const ES_PY = {
     "Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos",
   "vuelo.autorizadoAfis": "La pista está libre: entrá cuando estés listo",
   "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
+  /*
+   * **Y antes de entrar, por qué el lazo de la raya está al fondo**: en los
+   * campos sin calle hasta la cabecera se remonta la pista. Una vez por
+   * despegue, con el verde. Ver `contarElRemonte` en `game.ts`.
+   */
+  "vuelo.remontar": "Vamos por la pista hasta el final y damos la vuelta allá",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
   "vuelo.noEstabilizada": "Así no: andate y volvé a intentarlo",

@@ -4253,9 +4253,21 @@ export class PlanDeVuelo {
      * remontaba desde la E-2 hasta dejar mil doscientos metros por delante.
      * Eso es una salida por intersección, y no por una de las permitidas.
      */
-    const hastaLaCabecera =
-      soloLaCabecera || !!this.aero.salidasPorInterseccion?.soloDesde?.length;
-    const quiere = hastaLaCabecera ? Infinity : pistaQueHaceFalta(this.avion);
+    /*
+     * **Y en cualquier caso, hasta el final: remontar es ir a la cabecera**
+     * (punto 234). Aquí se daba la vuelta en el primer sitio desde el que ya
+     * quedaba pista para despegar, «ni un metro más», y eso dejaba el lazo a
+     * media pista, a veces a cuarenta metros de por donde se había entrado.
+     * Mirado en Pilar con el turbohélice: «esto es lo que no se entiende: ese
+     * giro ahí en la pista». Y no se entiende porque no es lo que se hace: la
+     * radio dice «backtrack runway two zero» —Doc 4444, 12.3.4.7 p); en
+     * Canarias «regreso por pista», RD 1180/2018, anexo V, 1.4.8—, se rueda
+     * por la pista hasta su final y la vuelta se da allí, en el ensanche de la
+     * cabecera si lo hay y si no en el ancho de la pista. El AIP de La Palma
+     * lo escribe así: «must accomplish back-track at the end of the runway».
+     * Un lazo en la cabecera se entiende solo: es donde empieza la pista.
+     */
+    const quiere = Infinity;
     const aLaCabecera = mitad - quiere <= umbral + RADIO_CURVA;
 
     // Con apartadero en la cabecera y la pista entera por delante, por él.

@@ -10737,6 +10737,52 @@ export class Game {
   }
 
   /**
+   * **Remontar la pista, contado antes de entrar** (punto 234).
+   *
+   * En los campos sin calle hasta la cabecera se entra por donde llega la
+   * calle, se rueda por la pista hasta su final y se da la vuelta allí. La raya
+   * lo dibujaba —un lazo rojo al fondo, que es donde se va despacio— y nadie lo
+   * decía: «esto es lo que no se entiende: ese giro ahí en la pista», en Pilar
+   * con el turbohélice. Así que se dice una vez, con el verde y antes de
+   * entrar:
+   *
+   * - **la instructora**, en los tres peldaños de abajo: «vamos por la pista
+   *   hasta el final y damos la vuelta allá». Solo con su grabación: sin ella
+   *   no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y se entiende igual con el
+   *   lazo al fondo y la tarjeta de la media vuelta al entrar;
+   * - **la radio**, de Taguató para arriba y en fraseología, escrita en su
+   *   tira: «backtrack runway two zero», que es la orden de la OACI (Doc 4444,
+   *   12.3.4.7 p; «regreso por pista», RD 1180/2018, anexo V, 1.4.8). La voz,
+   *   cuando esté grabada su pieza. **Donde contesta un AFIS, no**: un AFIS no
+   *   da órdenes, y remontar lo decide quien vuela; ahí lo cuenta la
+   *   instructora. Y sin nadie en la radio, tampoco.
+   */
+  private contarElRemonte(): void {
+    if (this.remonteContado || (this.plan?.dondeSeGira ?? null) === null) return;
+    this.remonteContado = true;
+    const campo = this.elCampo();
+    const aero = campo.escenario.aerodrome;
+    const clave: TranslationKey = "vuelo.remontar";
+    if (this.tier.avisos !== "cabina" && this.instructor.vozDe(clave))
+      this.instructor.decir(t(clave), clave, "normal");
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras || sinTorre(aero) || esAfis(aero)) return;
+    const yo = this.miIndicativo;
+    const pista = pistaEnPiezas(cabeceraEnUso(campo.escenario));
+    if (!pista) return;
+    const texto = `${yo.dicho}, backtrack runway ${pista.dicho}`;
+    this.hud.radio(texto, undefined, true);
+    const claveDeTorre = `${comoSeDiceAqui("torre.backtrack", hablaDe(aero?.id))}${pista.sufijo}`;
+    const relleno = { ...rellenoDe(yo), ...pista.relleno };
+    if (this.instructor.vozDe(claveDeTorre, relleno))
+      this.torre.decir(texto, claveDeTorre, "mando", relleno);
+  }
+
+  /** Si ya se contó el remonte de este despegue. Ver `contarElRemonte`. */
+  private remonteContado = false;
+
+  /**
    * **«Hace calor: vamos a necesitar más pista»**, antes de despegar, cuando
    * pesa. Ver `flight/caliente-y-alto.ts`, que es quien decide si pesa.
    *
@@ -15822,6 +15868,7 @@ export class Game {
     }
     if (!this.flight.state.onGround) {
       this.salidasDichas.dicha = false;
+      this.remonteContado = false;
       this.calorDicho = false;
       this.calorPorDecir = false;
     } else if (this.calorPorDecir && !this.hud.senal.puesto.dibujo) {
@@ -16277,6 +16324,8 @@ export class Game {
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")
           this.avisar("success");
+        // Y si desde ahí se remonta la pista, se cuenta. Ver `contarElRemonte`.
+        if (vista.fase === "autorizado") this.contarElRemonte();
       }
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.
