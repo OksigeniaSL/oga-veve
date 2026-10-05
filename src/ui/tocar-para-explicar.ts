@@ -22,6 +22,12 @@
  * - **Encima de un mando** —un botón, la palanca, el gas, la rueda de la
  *   ventanilla ALT—, nada. Los mandos del vuelo y los botones del HUD son
  *   suyos.
+ * - **Y en la pantalla grande del teléfono**, solo los símbolos y las piezas
+ *   pequeñas: el arco, el rombo del tráfico, el T/D, el tren. Los
+ *   instrumentos enteros y el fondo de cada pantalla llevan
+ *   `data-explica-fondo`, y tocarlos ahí es lo que fue siempre: volver a las
+ *   losas. Si el toque de vuelta abriera una explicación, de la pantalla
+ *   grande no se saldría nunca.
  *
  * Y los símbolos pequeños se tocan con el dedo y no con la punta de un lápiz:
  * un rombo de diez píxeles se busca como si midiera `DEDO`.
@@ -125,8 +131,11 @@ export function escucharLosToquesQueExplican(raiz: HTMLElement): () => void {
     if (!donde) return null;
     // Lo que tiene debajo el dedo, si recoge toques y lleva explicación.
     const directa = donde.closest("[data-explica]");
-    if (directa && raiz.contains(directa) && seVe(directa))
+    if (directa && raiz.contains(directa) && seVe(directa)) {
+      if (directa.hasAttribute("data-explica-fondo") && directa.closest(".cuadro--grande"))
+        return null;
       return directa.getAttribute("data-explica");
+    }
     if (donde.closest(MANDO)) return null;
     /*
      * **Y a través del cuadro**, solo si el dedo cayó en el mundo: el lienzo.

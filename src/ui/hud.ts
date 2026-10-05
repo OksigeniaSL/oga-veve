@@ -837,10 +837,13 @@ export class Hud {
      * **Y lo que se explica al tocarlo, tampoco.** La barra de la GS de rodar
      * va dentro de su losa, y en la pantalla grande cada símbolo tiene su
      * explicación: tocarlos abre la ventana, y si además pusieran grande la
-     * losa o volvieran a las losas, el mismo toque haría dos cosas. Ver
+     * losa o volvieran a las losas, el mismo toque haría dos cosas. Los
+     * instrumentos enteros y el fondo de cada pantalla —`data-explica-fondo`—
+     * no: tocar la pantalla grande sigue siendo volver a las losas. Ver
      * `ui/tocar-para-explicar.ts`.
      */
-    const laRueda = "[data-mcp-rueda], [data-mcp-alt], [data-explica]";
+    const laRueda =
+      "[data-mcp-rueda], [data-mcp-alt], [data-explica]:not([data-explica-fondo])";
     alPulsarDentro(
       this.root,
       "[data-tel-grande]",

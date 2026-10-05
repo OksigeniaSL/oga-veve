@@ -215,6 +215,14 @@ export function esferaSvg(
   return `
     <g class="esfera" data-dial="${id}"${
       explicaDelDial(id) ? ` data-explica="${explicaDelDial(id)}"` : ""
+    }${
+      /*
+       * Un reloj de vuelo o de motor es un instrumento entero: en la pantalla
+       * grande del teléfono, tocarlo es volver a las losas, como siempre. El
+       * depósito y los flaps son piezas, y se explican. Ver
+       * `ui/tocar-para-explicar.ts`.
+       */
+      id !== "fuel" && id !== "flaps" ? " data-explica-fondo" : ""
     }
        transform="translate(${donde.x - donde.radio} ${donde.y - donde.radio}) scale(${escala})">
       ${empotrada()}

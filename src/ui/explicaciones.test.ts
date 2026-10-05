@@ -341,6 +341,27 @@ describe("las de serie", () => {
       expect([...vistas], id).toContain(id);
   });
 
+  /*
+   * **Y en la pantalla grande del teléfono se puede volver.** Tocar la
+   * pantalla grande es volver a las losas; si los instrumentos enteros
+   * recogieran ese toque para explicarse, no se saldría nunca. Los símbolos,
+   * sí: son pequeños y son lo que se pregunta.
+   */
+  it("y los instrumentos enteros son fondo; los símbolos, no", () => {
+    const fondo = new Set<string>();
+    const pieza = new Set<string>();
+    for (const a of AIRCRAFT) {
+      const marcado = new Tablero().markup(a, 4);
+      for (const m of marcado.matchAll(/<[^>]*data-explica="([^"]+)"[^>]*>/g))
+        (m[0].includes("data-explica-fondo") ? fondo : pieza).add(m[1]!);
+    }
+    for (const id of ["tcas", "td", "tc", "arco", "senda", "gs-rodaje", "tren", "avisos"])
+      expect([...fondo], id).not.toContain(id);
+    for (const id of ["carta", "actitud", "altitud", "velocidad", "rumbo", "motor"])
+      expect([...fondo], id).toContain(id);
+    expect([...pieza]).toContain("tcas");
+  });
+
   it("y no se pisan las que alguien ya afinó", () => {
     olvidarTodo();
     registrarExplicacion({ ...T, id: "arco", rotulo: "ARC" });

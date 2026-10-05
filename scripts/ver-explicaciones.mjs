@@ -258,6 +258,39 @@ try {
     `${stbyTel} px`,
   );
   await telefono.screenshot({ path: `${FOTOS}/telefono-carta-grande.png` });
+  /*
+   * En la pantalla grande, el rótulo del modo del TCAS se explica, y el resto
+   * de la pantalla sigue siendo volver a las losas.
+   */
+  const rotuloTcas = await telefono.evaluate(() => {
+    const r = [...document.querySelectorAll('[data-carta="solo-ta"]')]
+      .map((e) => e.getBoundingClientRect())
+      .find((x) => x.width > 0);
+    return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+  });
+  if (rotuloTcas) {
+    await telefono.touchscreen.tap(rotuloTcas.x, rotuloTcas.y);
+    await telefono.waitForTimeout(400);
+    const v = await laVentana(telefono);
+    comprobar("teléfono: tocar «TCAS STBY» lo explica", v.cual === "tcas", `${v.cual}`);
+    await telefono.screenshot({ path: `${FOTOS}/telefono-ventana-tcas-en-tierra.png` });
+    await cerrarLaVentana(telefono);
+  }
+  const centro = await telefono.evaluate(() => {
+    const r = document.querySelector('[data-hud="tablero"]')?.getBoundingClientRect();
+    return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+  });
+  if (centro) {
+    await telefono.touchscreen.tap(centro.x, centro.y);
+    await telefono.waitForTimeout(400);
+    const v = await laVentana(telefono);
+    const sigue = await telefono.evaluate(() => !!document.querySelector(".cuadro--grande"));
+    comprobar(
+      "teléfono: tocar la pantalla grande vuelve a las losas, sin abrir nada",
+      !v.abierta && !sigue,
+      `${v.abierta ? `abre ${v.cual}` : "no abre"} · ${sigue ? "sigue grande" : "vuelven las losas"}`,
+    );
+  }
   await telefono.evaluate(async () => {
     const m = await import("/src/ui/explicaciones.ts");
     m.abrirExplicacion("td");

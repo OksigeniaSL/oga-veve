@@ -330,7 +330,7 @@ function horizonte(
     arco += `<line x1="${cx + Math.sin(a) * r}" y1="${cy - Math.cos(a) * r}" x2="${cx + Math.sin(a) * (r + r1)}" y2="${cy - Math.cos(a) * (r + r1)}" class="cr__alabeo" />`;
   }
   return `
-    <g data-explica="actitud" transform="translate(${x} ${y})">
+    <g data-explica="actitud" data-explica-fondo transform="translate(${x} ${y})">
       <clipPath id="${yo}-act"><rect width="${w}" height="${h}" rx="4" /></clipPath>
       <g clip-path="url(#${yo}-act)">
         <g data-cristal="disco" data-cx="${cx}" data-cy="${cy}" data-porgrado="${porGrado}"
@@ -400,7 +400,7 @@ function cintaDeVelocidad(
       width="${clase.endsWith("blanco") ? 4 : 5}"
       height="${(hasta - desde) * c.asiMax * POR_NUDO}" class="${clase}" />`;
   return `
-    <g data-explica="velocidad" transform="translate(${x} ${y})">
+    <g data-explica="velocidad" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-ias"><rect width="${w}" height="${h}" /></clipPath>
       <g clip-path="url(#${yo}-ias)">
@@ -546,7 +546,7 @@ function cintaDeAltitud(
     )
     .join("");
   return `
-    <g data-explica="altitud" transform="translate(${x} ${y})">
+    <g data-explica="altitud" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-alt"><rect width="${w}" height="${h}" /></clipPath>
       <clipPath id="${yo}-tambor"><rect x="${w - 34}" y="${h / 2 - 16}" width="34" height="32" /></clipPath>
@@ -692,7 +692,7 @@ function variometro(
     marcas += `<line x1="0" y1="${yy}" x2="${i % 2 === 0 ? 8 : 5}" y2="${yy}" class="cr__marca" />`;
   }
   return `
-    <g data-explica="variometro" transform="translate(${x} ${y})">
+    <g data-explica="variometro" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       ${marcas}
       <text x="${w / 2}" y="11" ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">VS</text>
@@ -734,7 +734,7 @@ function cintaDeRumbo(
     }
   }
   return `
-    <g data-explica="rumbo" transform="translate(${x} ${y})">
+    <g data-explica="rumbo" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-hdg"><rect width="${w}" height="${h}" /></clipPath>
       <g clip-path="url(#${yo}-hdg)">
@@ -1107,7 +1107,7 @@ export function rosaDeRumbo(
     }
   }
   return `
-    <g ${conAvion ? 'data-explica="rumbo" ' : ""}transform="translate(${cx} ${cy})">
+    <g ${conAvion ? 'data-explica="rumbo" data-explica-fondo ' : ""}transform="translate(${cx} ${cy})">
       <circle cx="0" cy="0" r="${r + 3}" class="cr__rosa-caja" />
       <g data-cristal="rosa" data-radio="${r}">${carta}
         <g data-bug="rosa"><path class="cr__bug" d="M0 ${-r} l-6 -9 l12 0 Z" /></g>
@@ -1138,7 +1138,7 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     arcos += `<circle cx="${cx}" cy="${cy}" r="${r * f}" class="cr__arco-rango" />`;
   }
   return `
-    <rect data-fondo="nd" data-explica="carta" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
+    <rect data-fondo="nd" data-explica="carta" data-explica-fondo width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     ${arcos}
     ${rosaDeRumbo(cx, cy, r, false)}
     ${carta(cx, cy, r)}
@@ -1317,7 +1317,7 @@ export function pantallaDeMotores(
   const patas = patasDe(a);
   const yTren = alto - 26;
   return `
-    <rect data-fondo="eicas" data-explica="motor" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
+    <rect data-fondo="eicas" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     <text x="${ancho / 2}" y="20" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
@@ -1580,7 +1580,7 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
     )
     .join("");
   return `
-    <rect data-fondo="motor" data-explica="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
+    <rect data-fondo="motor" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
     ${diales}
     ${mandoDeMotor(16, yMando, ancho - 32, n)}
     ${relojes}
@@ -1621,7 +1621,7 @@ export function franjaDeMotor(
       </g>`;
   }
   return `
-    <rect data-fondo="motor" data-explica="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
+    <rect data-fondo="motor" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
     <text x="${ancho / 2}" y="16" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${barras}
     ${c.flaps.length > 1 ? reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34, c.flaps) : ""}
