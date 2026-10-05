@@ -87,7 +87,8 @@ describe("en Guyrami, quien recoge al ralentí toca suave", () => {
    * Una final del modelo sencillo a la Vref y por la senda de tres grados,
    * con lo que hace la ayuda de la final —el gas que sostiene la Vref, y al
    * ralentí desde la altura de su clase— y lo que hace quien obedece: la
-   * senda con la mano y, a la altura de la nariz, dos grados más arriba.
+   * senda con la mano y, a la altura de la nariz, grado y medio más arriba,
+   * como el piloto obediente del banco de vuelo entero.
    * Devuelve a qué ritmo se toca, m/s.
    */
   function tomar(a: typeof PYKASU, recoge: boolean): number {
@@ -104,7 +105,7 @@ describe("en Guyrami, quien recoge al ralentí toca suave", () => {
       if (ruedas < r.gas) enRetard = true;
       if (recoge && !recogio && ruedas < r.nariz) {
         recogio = true;
-        senda += 2 * RAD;
+        senda += 1.5 * RAD;
       }
       c.throttle = enRetard
         ? Math.max(0, c.throttle - 0.35 / 60)

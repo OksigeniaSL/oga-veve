@@ -189,10 +189,14 @@ const BAMBOLEO = (process.env.OGA_BAMBOLEO ?? "")
  * - **El gas no lo toca**, y si se mueve solo —la ayuda o los gases del
  *   avión—, lo deja moverse. Lo quita solo cuando se lo piden.
  * - **No recoge por su cuenta.** Cuando se lo piden, levanta la nariz un
- *   poquito —dos grados de trayectoria, lo más bajo de los «dos o tres
- *   grados» del manual de Boeing, ver `flight/recogida.ts`— y la sostiene ahí
- *   hasta tocar, con la mano del modelo sencillo (`mandoParaSubir`), que es la
- *   que pone la trayectoria en Guyrami.
+ *   poquito —grado y medio de trayectoria— y la sostiene ahí hasta tocar,
+ *   con la mano del modelo sencillo (`mandoParaSubir`), que es la que pone la
+ *   trayectoria en Guyrami. Lo que el manual de Boeing pide es cabeceo, «2° -
+ *   3°» —ver `flight/recogida.ts`—, y en ese modelo el cabeceo es la
+ *   trayectoria más lo que se ve de palanca: medido en un banco de mesa, grado
+ *   y medio de trayectoria son +2,4° de cabeceo en los dos reactores, el medio
+ *   de la horquilla; dos grados eran +3,0°, el borde, y el JAZ 90 flotaba
+ *   hasta los 682 m.
  * - Reacciona al instante: lo que se mide es lo que se pide, no los reflejos.
  *
  * Lo que se pide lo apunta el juego al dar la tarjeta —ver
@@ -1145,8 +1149,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     atendidos: [],
     ultimoGas: null,
   };
-  /** Cuánto levanta la nariz el obediente: dos grados de trayectoria. */
-  const NARIZ_UN_POQUITO = (2 * Math.PI) / 180;
+  /** Cuánto levanta la nariz el obediente: grado y medio de trayectoria. */
+  const NARIZ_UN_POQUITO = (1.5 * Math.PI) / 180;
   const obedecer = (mandos, gasDelJuego) => {
     const s = o.estado();
     if (s.onGround || !obediente.armado) {
