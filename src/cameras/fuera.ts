@@ -99,12 +99,12 @@ export function sitioDeLaCola(
  *
  * **La de tierra, medida otra vez en una tablet de 4:3 con dedo** (punto 254):
  * a 1,15 la punta derecha del JAZ 90 quedaba debajo de la caja del gas, que
- * con el HUD táctil empieza al 76 % del ancho. A 1,26 las dos puntas caben
+ * con el HUD táctil empieza al 76 % del ancho. A 1,3 las dos puntas caben
  * con un margen, y el avión sigue más cerca que volando, que es lo que se
  * pidió.
  */
 const DETRAS = 1.6;
-const DETRAS_EN_TIERRA = 1.26;
+const DETRAS_EN_TIERRA = 1.3;
 
 /**
  * El ángulo desde el que mira la de cola, rad: seis décimas de envergadura de
