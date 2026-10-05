@@ -60,13 +60,18 @@ function desdeLaPunta(
 }
 
 describe("el dato: dónde empieza la pista para aterrizar", () => {
-  it("la 01 de Fuerteventura, a mil metros de la punta; la 19, a 460", () => {
+  /*
+   * Con las cifras del AIP (AD 2-GCFV, 2.12): «THR RWY 01 displaced 1000 m» y
+   * «THR RWY 19 displaced 466 m». Estaban los 1001,3 y 460,2 de OurAirports;
+   * ver `umbrales-publicados.ts`.
+   */
+  it("la 01 de Fuerteventura, a mil metros de la punta; la 19, a 466", () => {
     expect(POR_LA_01.runway.heading).toBeLessThan(10);
-    expect(POR_LA_01.runway.desplazado).toBeCloseTo(1001.3, 1);
-    expect(POR_LA_01.runway.desplazadoEnfrente).toBeCloseTo(460.2, 1);
+    expect(POR_LA_01.runway.desplazado).toBe(1000);
+    expect(POR_LA_01.runway.desplazadoEnfrente).toBe(466);
     expect(POR_LA_19.runway.heading).toBeGreaterThan(170);
-    expect(POR_LA_19.runway.desplazado).toBeCloseTo(460.2, 1);
-    expect(POR_LA_19.runway.desplazadoEnfrente).toBeCloseTo(1001.3, 1);
+    expect(POR_LA_19.runway.desplazado).toBe(466);
+    expect(POR_LA_19.runway.desplazadoEnfrente).toBe(1000);
   });
 
   it("y donde el fichero no lo trae, todo sigue como estaba", () => {
@@ -89,14 +94,14 @@ describe("tocar: antes o después de la barra", () => {
 
   it("en las flechas es antes del umbral; pasada la barra, no", () => {
     expect(antesDelUmbralDeToma(r, punta + 150, r.heading)).toBe(true);
-    expect(antesDelUmbralDeToma(r, punta + 1000, r.heading)).toBe(true);
+    expect(antesDelUmbralDeToma(r, punta + 995, r.heading)).toBe(true);
     expect(antesDelUmbralDeToma(r, punta + 1010, r.heading)).toBe(false);
     expect(antesDelUmbralDeToma(r, 0, r.heading)).toBe(false);
   });
 
   it("y quien entra por la otra punta mira el umbral de la otra punta", () => {
     const vuelta = r.heading + 180;
-    // La 19 tiene 460 m desplazados, en el otro extremo.
+    // La 19 tiene 466 m desplazados, en el otro extremo.
     expect(antesDelUmbralDeToma(r, -punta - 300, vuelta)).toBe(true);
     expect(antesDelUmbralDeToma(r, -punta - 500, vuelta)).toBe(false);
     // Y las flechas de la 01 son pista de sobra para quien va hacia allá.
@@ -131,7 +136,7 @@ describe("tocar: antes o después de la barra", () => {
 
   it("y quien entra por la 19 cuenta desde la barra de la 19", () => {
     const vuelta = r.heading + 180;
-    // La 19 tiene 460 m desplazados en la otra punta.
+    // La 19 tiene 466 m desplazados en la otra punta.
     expect(sobreDondeSeToca(r, -punta - 300, vuelta)).toBe(false);
     expect(sobreDondeSeToca(r, -punta - 500, vuelta)).toBe(true);
   });
@@ -265,13 +270,13 @@ describe("la pintura: flechas, barra, y lo de aterrizar pasada la barra", () => 
 
   it("la barra blanca cruza la pista donde empieza la parte en la que se toca", () => {
     const enLaBarra = pintura.filter(
-      (p) => Math.abs(p.along - 1001.3) < 2.5 && Math.abs(p.across) > ancho * 0.4,
+      (p) => Math.abs(p.along - 1000) < 2.5 && Math.abs(p.across) > ancho * 0.4,
     );
     expect(enLaBarra.length).toBeGreaterThan(0);
-    // Y la de la 19, a 460 de su punta.
+    // Y la de la 19, a 466 de su punta.
     const enLaOtra = pintura.filter(
       (p) =>
-        Math.abs(p.along - (largo - 460.2)) < 2.5 && Math.abs(p.across) > ancho * 0.4,
+        Math.abs(p.along - (largo - 466)) < 2.5 && Math.abs(p.across) > ancho * 0.4,
     );
     expect(enLaOtra.length).toBeGreaterThan(0);
   });
@@ -299,7 +304,7 @@ describe("la pintura: flechas, barra, y lo de aterrizar pasada la barra", () => 
     const cerca01 = Math.min(...numeros.map((n) => n.along));
     const cerca19 = Math.max(...numeros.map((n) => n.along));
     expect(cerca01).toBeCloseTo(1001 + 100, -1);
-    expect(cerca19).toBeCloseTo(largo - 460 - 100, -1);
+    expect(cerca19).toBeCloseTo(largo - 466 - 100, -1);
   });
 
   /*
@@ -333,7 +338,7 @@ describe("la pintura: flechas, barra, y lo de aterrizar pasada la barra", () => 
     const visto = vistoDesde(fueraDe(u19, 1, 5000));
     const verdes = visto.filter((l) => l.color === verde);
     expect(verdes.length).toBeGreaterThan(0);
-    for (const v of verdes) expect(v.along).toBeCloseTo(largo - 460, -1);
+    for (const v of verdes) expect(v.along).toBeCloseTo(largo - 466, -1);
     const bordes = visto.filter((l) => Math.abs(l.across) > ancho / 2);
     for (const b of bordes.filter((l) => l.along > largo - 450))
       expect(b.color, `borde a ${Math.round(b.along)} m`).toBe(roja);

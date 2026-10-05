@@ -4253,9 +4253,21 @@ export class PlanDeVuelo {
      * remontaba desde la E-2 hasta dejar mil doscientos metros por delante.
      * Eso es una salida por intersección, y no por una de las permitidas.
      */
-    const hastaLaCabecera =
-      soloLaCabecera || !!this.aero.salidasPorInterseccion?.soloDesde?.length;
-    const quiere = hastaLaCabecera ? Infinity : pistaQueHaceFalta(this.avion);
+    /*
+     * **Y en cualquier caso, hasta el final: remontar es ir a la cabecera**
+     * (punto 234). Aquí se daba la vuelta en el primer sitio desde el que ya
+     * quedaba pista para despegar, «ni un metro más», y eso dejaba el lazo a
+     * media pista, a veces a cuarenta metros de por donde se había entrado.
+     * Mirado en Pilar con el turbohélice: «esto es lo que no se entiende: ese
+     * giro ahí en la pista». Y no se entiende porque no es lo que se hace: la
+     * radio dice «backtrack runway two zero» —Doc 4444, 12.3.4.7 p); en
+     * Canarias «regreso por pista», RD 1180/2018, anexo V, 1.4.8—, se rueda
+     * por la pista hasta su final y la vuelta se da allí, en el ensanche de la
+     * cabecera si lo hay y si no en el ancho de la pista. El AIP de La Palma
+     * lo escribe así: «must accomplish back-track at the end of the runway».
+     * Un lazo en la cabecera se entiende solo: es donde empieza la pista.
+     */
+    const quiere = Infinity;
     const aLaCabecera = mitad - quiere <= umbral + RADIO_CURVA;
 
     // Con apartadero en la cabecera y la pista entera por delante, por él.
@@ -4465,17 +4477,16 @@ export class PlanDeVuelo {
    * Devuelve `null` cuando no hace falta, que es lo normal: si desde donde se
    * entra ya queda pista de sobra por delante, se entra y se despega.
    *
-   * **Hasta dónde se vuelve.** Hasta el primer sitio desde el que ya se puede
-   * despegar con la pista de una salida por intersección delante
-   * —`pistaQueHaceFalta`, que sale de lo que corre **este** avión—, y si
-   * el campo es más corto que eso, hasta el umbral. Ni un metro más: volver
-   * hasta la cabecera por costumbre es rodar de balde, y aquí lo que sobra de
-   * rodaje se paga en niños aburridos.
+   * **Hasta dónde se vuelve: hasta el final** (punto 234). Se volvía hasta el
+   * primer sitio desde el que ya se podía despegar —«ni un metro más», por no
+   * aburrir a nadie rodando—, y el lazo salía a media pista y a veces pegado
+   * a la entrada: «esto es lo que no se entiende: ese giro ahí en la pista».
+   * Remontar es ir a la cabecera, que es lo que dice la radio y lo que se
+   * entiende sin que nadie lo explique. Ver `vueltaDelBackTaxi`.
    *
-   * Medido: en Mariscal Estigarribia se entra en el metro 1208 del eje, se
-   * vuelven 650 —por debajo de `LO_MAXIMO_DE_IDA`, que es lo que aguanta la
-   * paciencia de quien tiene cuatro años— y quedan 1200 por delante, cuando el
-   * avión necesita 450.
+   * Medido: en Mariscal Estigarribia, por la 01, se entra en el metro 1208 del
+   * eje y se remonta hasta treinta metros de la punta: dos kilómetros y
+   * novecientos de pista. Es lo largo de ese campo, no del dibujo.
    *
    * **Y la media vuelta se dibuja, no se pide.** Un vértice de ciento ochenta
    * grados no lo redondea nadie —`redondear` se queda con radio cero y la

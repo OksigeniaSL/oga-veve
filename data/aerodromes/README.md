@@ -72,6 +72,12 @@ trae los umbrales a 279 pies y la cota de verdad son 653, cien metros más
 arriba. `src/world/cota-de-pista.test.ts` compara la cota de cada pista con el
 relieve medido de Copernicus, así que un error así ya no pasa callado.
 
+Lo mismo con los **umbrales desplazados**: la cifra de cada cabecera, con su
+AIP y su enmienda, está en `src/world/umbrales-publicados.ts`, y
+`umbrales-publicados.test.ts` comprueba que cada fichero de aquí dice lo
+mismo. Los que se corrigieron —Fuerteventura, Lanzarote y la pista entera de
+La Palma, que OpenStreetMap dibujaba 58 m más corta— van marcados `manual`.
+
 ## Lo que hay ahora
 
 | | Pista | Ancho | Pendiente | Elevación |

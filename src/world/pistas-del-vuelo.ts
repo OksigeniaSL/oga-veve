@@ -32,6 +32,12 @@ export interface Pista {
   readonly desplazado?: number;
   /** Y el de la otra punta. */
   readonly desplazadoEnfrente?: number;
+  /**
+   * Si la pista para aterrizar acaba en el umbral de enfrente, y lo mismo por
+   * la otra punta. Ver `umbrales-publicados.ts`.
+   */
+  readonly acabaEnElOtroUmbral?: boolean;
+  readonly acabaEnElOtroUmbralEnfrente?: boolean;
 }
 
 /**

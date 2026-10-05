@@ -913,8 +913,16 @@ def torno(nombre, perfil_, en=(0, 0, 0), lados=32, eje="z", material_="capo"):
     return liso(_malla_en_escena(nombre, bm, mats), angulo=40)
 
 
+# **La reversa de un turbofán**, en fracciones del largo de la góndola desde
+# la boca: dónde empieza el manguito que se desliza —la parte de atrás de la
+# cubierta, que acaba en la tobera del aire frío— y cuánto se va hacia la cola
+# abierto del todo. Es lo que deja a la vista la cascada. Ver `reversa`.
+REVERSA_DESDE = 0.34
+REVERSA_RECORRIDO = 0.13
+
+
 def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True,
-             anillo=None):
+             anillo=None, reversa=False):
     """
     Un turbofán de verdad: labio, fan, tobera de derivación, núcleo y cono.
 
@@ -938,6 +946,11 @@ def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True,
     como la franja, y va donde la cubierta es cilíndrica: el tramo recto de
     delante, que es el que asoma por delante del ala. Desde 0,05 es la
     cubierta de la toma entera, pegada al labio.
+
+    Con `reversa`, la cubierta se acaba en `REVERSA_DESDE` y lo de detrás —el
+    manguito con la tobera— lo pone `reversa`, que se mueve: aquí quedan, por
+    debajo de él, la cascada oscura y la pared del conducto, que solo se ven
+    con el manguito abierto.
     """
     L, R = largo, diametro / 2
     f = -L / 2
@@ -951,6 +964,25 @@ def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True,
         else:
             tramo.insert(0, (f + desde * L, 1.0 * R, color))
         cubierta_recta = tramo + cubierta_recta
+    if reversa:
+        d, rec = REVERSA_DESDE, REVERSA_RECORRIDO
+        # La cubierta acaba en el manguito; detrás, escondidas por él, la
+        # cascada —oscura, a ras de su forro— y la pared del conducto, que
+        # baja hasta el núcleo.
+        detras = [
+            (f + d * L, 1.0 * R),
+            (f + d * L, 0.93 * R, "oscuro"),    # la cara de atrás, y la cascada
+            (f + (d + rec) * L, 0.93 * R),
+            (f + (d + rec + 0.02) * L, 0.90 * R),
+            (f + 0.60 * L, 0.74 * R),
+        ]
+    else:
+        detras = [
+            (f + 0.52 * L, 0.95 * R),
+            (f + 0.66 * L, 0.84 * R),           # la tobera fría
+            (f + 0.655 * L, 0.80 * R, "oscuro"),
+            (f + 0.60 * L, 0.74 * R),
+        ]
     perfil_ = [
         (f + 0.20 * L, 0.0, "oscuro"),          # punta del cono del fan
         (f + 0.27 * L, 0.24 * R),
@@ -962,10 +994,7 @@ def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True,
         (f + 0.012 * L, 0.975 * R),
         (f + 0.05 * L, 1.0 * R, delante),      # la cubierta
         *cubierta_recta,
-        (f + 0.52 * L, 0.95 * R),
-        (f + 0.66 * L, 0.84 * R),               # la tobera fría
-        (f + 0.655 * L, 0.80 * R, "oscuro"),
-        (f + 0.60 * L, 0.74 * R),
+        *detras,
         (f + 0.62 * L, 0.58 * R, "gris"),       # el núcleo asoma
         (f + 0.70 * L, 0.56 * R),
         (f + 0.86 * L, 0.46 * R),
@@ -978,6 +1007,86 @@ def turbofan(nombre, en, largo, diametro, cubierta="capo", espejo_=True,
     if espejo_:
         espejo(obj)
     return obj
+
+
+def reversa(nombre, en, largo, diametro, cubierta="capo", espejo_=True):
+    """
+    **La reversa de un turbofán**: el manguito que se va hacia la cola y la
+    cascada que deja a la vista. Va con un `turbofan(..., reversa=True)` del
+    mismo `nombre`, `en`, `largo` y `diametro`.
+
+    Es la de cascada de los turbofanes de la clase del JAZ 90 —el CF34 del
+    E-170— y de la del JAZ 120 —el JT9D del 747 clásico—: la parte de atrás de
+    la cubierta, con la tobera del aire frío, es una pieza aparte que unos
+    actuadores deslizan hacia atrás. Al abrirse deja un hueco en la cubierta y
+    en el hueco una corona de rejillas, la cascada, por la que el aire del fan
+    sale hacia delante; unas compuertas por dentro le cierran el paso por la
+    tobera. Es lo que se ve desde la ventanilla de encima del ala al tocar.
+
+    Devuelve tres piezas: el vacío `reversa-<nombre>` en el origen, con el
+    `eje` por el que se desliza —hacia la cola— y el `recorrido` en metros,
+    del que cuelga el manguito; y las lamas de la cascada, fijas, por debajo
+    del manguito. Ver `world/reversas.ts`, que lo mueve con lo que dice
+    `flight/reversa.ts`, que es donde está lo que tarda.
+    """
+    L, R = largo, diametro / 2
+    f = -L / 2
+    d, rec = REVERSA_DESDE, REVERSA_RECORRIDO
+    # El manguito: por fuera, la cubierta y la tobera; por dentro, el forro
+    # del conducto, que pasa por fuera de la cascada y de la pared fija. Con
+    # la materia a la derecha, como todo `torno`.
+    perfil_ = [
+        (f + d * L, 1.0 * R),
+        (f + 0.52 * L, 0.95 * R),
+        (f + 0.66 * L, 0.84 * R),               # la tobera fría
+        (f + 0.655 * L, 0.80 * R, "oscuro"),
+        (f + 0.60 * L, 0.765 * R),
+        (f + (d + rec) * L, 0.945 * R),
+        (f + d * L, 0.955 * R, cubierta),
+        (f + d * L, 1.0 * R),                   # y su cara de delante
+    ]
+    manguito = torno(f"{nombre}-manguito", perfil_, en=en, lados=36,
+                     material_=cubierta)
+    # Las lamas de la cascada: veinticuatro a lo largo, del forro hacia fuera,
+    # grises sobre el fondo oscuro. Es lo que hace que el hueco se lea como
+    # una rejilla y no como una raya negra.
+    bm = bmesh.new()
+    ox, oy, oz = en
+    lamas = 24
+    for i in range(lamas):
+        ang = math.tau * (i + 0.5) / lamas
+        c, sn = math.cos(ang), math.sin(ang)
+        tx, ty = -sn, c
+        ancho = 0.035 * R
+        z0, z1 = oz + f + d * L, oz + f + (d + rec) * L
+        r0, r1 = 0.90 * R, 0.945 * R
+        vs = []
+        for z in (z0, z1):
+            for r in (r0, r1):
+                for t in (-ancho, ancho):
+                    vs.append(bm.verts.new(Vector((ox + c * r + tx * t,
+                                                   oy + sn * r + ty * t, z))))
+        # Caja: 0-7 = (z, r, t)
+        for cara in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6),
+                     (0, 2, 6, 4), (1, 5, 7, 3)):
+            bm.faces.new([vs[k] for k in cara])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    cascada = _malla_en_escena(f"{nombre}-cascada", bm, ["gris"])
+    if espejo_:
+        espejo(manguito)
+        espejo(cascada)
+
+    bpy.ops.object.empty_add(location=(0.0, 0.0, 0.0))
+    vacio = bpy.context.object
+    vacio.name = f"reversa-{nombre}"
+    vacio["eje"] = [0.0, 0.0, 1.0]
+    vacio["recorrido"] = float(rec * L)
+    bpy.context.view_layer.update()
+    manguito.parent = vacio
+    manguito.matrix_parent_inverse = vacio.matrix_world.inverted()
+    print(f"REVERSA: {nombre} · manguito de {(0.66 - d) * L:.2f} m · "
+          f"se va {rec * L:.2f} m hacia la cola")
+    return [vacio, manguito, cascada]
 
 
 def cono_de_helice(nombre, en, radio, largo=None, material_="capo"):

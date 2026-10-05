@@ -61,7 +61,7 @@ from exterior import (  # noqa: E402
     de_ala, de_deriva, dentro_de, piezas_de_aerofrenos,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
     fowler, juntar, llantas, marca, neumaticos, paneles, paneles_zy,
-    recogido,
+    recogido, reversa,
     simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
@@ -591,7 +591,11 @@ def construir():
         adelanto = 0.9 if n else 0.0
         centro = (x, y_ala(x) - 2.30, z_ala(x) - 2.55 - adelanto)
         piezas.append(turbofan(f"motor-{n}", centro, largo=6.60,
-                               diametro=3.20, anillo=(0.05, 0.20, "detalle")))
+                               diametro=3.20, anillo=(0.05, 0.20, "detalle"),
+                               reversa=True))
+        # Y su reversa, la del fan del JT9D del 747 clásico: el manguito de
+        # atrás se va hacia la cola y deja ver la cascada. Ver `reversa`.
+        piezas += reversa(f"motor-{n}", centro, largo=6.60, diametro=3.20)
         piezas.append(superficie(f"pilon-{n}", [
             de_deriva(x, centro[1] + 1.20, centro[2] - 2.2, 7.4, 0.10),
             de_deriva(x, y_ala(x) - 0.10, z_ala(x) - 1.3, 6.4, 0.10),

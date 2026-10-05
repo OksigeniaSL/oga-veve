@@ -61,6 +61,8 @@ import { laRedonda } from "./luces-de-posicion";
 import { laDibujaLaGranja } from "./granja";
 import { esDura } from "./superficie";
 import { ANCHO_RODADURA } from "./ancho-de-rodadura";
+import { umbralPublicado } from "./umbrales-publicados";
+import { puntoDeVisada } from "../flight/toma-larga";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -988,10 +990,10 @@ export function createAerodrome(
     // trozo de noventa metros con los mismos umbrales que la buena, y
     // pintarlo sería pintar dos veces encima.
     if (largoDePista(pista) < PISTA_DE_VERDAD) continue;
-    grupo.add(marcas(pista, pintada));
+    grupo.add(marcas(pista, pintada, aero.id));
   }
   if (principal) {
-    grupo.add(luces(principal, cota));
+    grupo.add(luces(principal, cota, aero.id));
   }
   grupo.add(rodadura(aero, pintada));
   grupo.add(mangas(aero, cota, viento));
@@ -1990,13 +1992,15 @@ export function colorVisto(
 export function lucesDePista(
   pista: Pista,
   altura: (p: Punto) => number,
+  /** El indicativo OACI del campo, para leer su AIP. Ver `umbrales-publicados.ts`. */
+  oaci: string | null = null,
 ): LuzDePista[] {
   if (!pista.lit) return [];
-  const umbrales = Object.values(pista.thresholds).filter(
-    (u): u is Umbral => u !== null && u.xy !== null,
+  const conNombre = Object.entries(pista.thresholds).filter(
+    (e): e is [string, Umbral] => e[1] !== null && e[1].xy !== null,
   );
-  if (umbrales.length < 2) return [];
-  const [a, b] = umbrales as [Umbral, Umbral];
+  if (conNombre.length < 2) return [];
+  const [[nombreA, a], [nombreB, b]] = conNombre as [[string, Umbral], [string, Umbral]];
   const ancho = pista.widthM ?? 45;
 
   /*
@@ -2010,6 +2014,7 @@ export function lucesDePista(
   const dA = alLargoDelEje(pista.centerline, a.xy!);
   const dB = alLargoDelEje(pista.centerline, b.xy!);
   const [alPrincipio, alFin] = dA <= dB ? [a, b] : [b, a];
+  const [nombrePrincipio, nombreFin] = dA <= dB ? [nombreA, nombreB] : [nombreB, nombreA];
   const desde = Math.min(dA, dB);
   const largo = Math.abs(dB - dA);
   if (largo < 1) return [];
@@ -2017,6 +2022,17 @@ export function lucesDePista(
     Math.max(0, Math.min(u.displacedM ?? 0, largo / 2));
   const dPrincipio = desplazado(alPrincipio);
   const dFin = desplazado(alFin);
+  /*
+   * **Y dónde se acaba la pista para cada uno**, que no siempre es la punta:
+   * en La Palma, quien aterriza por la 36 acaba en el umbral 18 —«the last 52
+   * m of RWY 36 are not usable for take-off and landing»— y viceversa. Quien
+   * va hacia el fin acaba en `hastaFin`, y quien va hacia el principio, en
+   * `hastaPrincipio`. Sin el dato, en la punta. Ver `umbrales-publicados.ts`.
+   */
+  const acabaEnSuUmbral = (llega: string): boolean =>
+    !!umbralPublicado(oaci, llega)?.hastaElOtroUmbral;
+  const hastaFin = acabaEnSuUmbral(nombrePrincipio) ? largo - dFin : largo;
+  const hastaPrincipio = acabaEnSuUmbral(nombreFin) ? dPrincipio : 0;
   // Seiscientos metros o un tercio de la pista, lo que sea menos: OACI.
   const AMBAR = Math.min(600, largo / 3);
 
@@ -2047,11 +2063,16 @@ export function lucesDePista(
   for (let s = SEPARACION / 2; s < largo; s += SEPARACION) {
     // Quien va hacia el fin: rojas en la zona desplazada de su umbral, ámbar
     // en los últimos seiscientos metros por delante, blancas en medio.
+    // Y pasado el final de su pista para aterrizar, rojas: ahí ya no es suya.
     const haciaElFin =
-      s < dPrincipio ? roja : largo - s < AMBAR ? ambar : blanca;
+      s < dPrincipio || s > hastaFin ? roja : hastaFin - s < AMBAR ? ambar : blanca;
     // Y quien va hacia el principio, lo mismo desde la otra punta.
     const haciaElPrincipio =
-      largo - s < dFin ? roja : s < AMBAR ? ambar : blanca;
+      largo - s < dFin || s < hastaPrincipio
+        ? roja
+        : s - hastaPrincipio < AMBAR
+          ? ambar
+          : blanca;
     for (const lado of [-1, 1])
       poner(s, lado * (ancho / 2 + 1.5), haciaElPrincipio, haciaElFin);
   }
@@ -2074,13 +2095,23 @@ export function lucesDePista(
       poner(s, k * (ancho / 11), desdeElFin, desdeElPrincipio);
   };
   // En la punta del principio, quien está fuera está del lado del principio.
-  if (dPrincipio > 0) {
+  /*
+   * Y donde la pista de enfrente acaba en el umbral, las dos filas son una:
+   * verde hacia fuera para quien llega y roja hacia dentro para quien rueda
+   * hacia ella, en la barra. Lo que queda detrás es el principio de la carrera
+   * de despegue de esa cabecera, y no lleva fila. Es La Palma.
+   */
+  if (hastaPrincipio > 0) {
+    fila(dPrincipio, roja, verde);
+  } else if (dPrincipio > 0) {
     fila(0, roja, null);
     fila(dPrincipio, null, verde);
   } else {
     fila(0, roja, verde);
   }
-  if (dFin > 0) {
+  if (hastaFin < largo) {
+    fila(largo - dFin, verde, roja);
+  } else if (dFin > 0) {
     fila(largo, null, roja);
     fila(largo - dFin, verde, null);
   } else {
@@ -2100,10 +2131,14 @@ export function lucesDePista(
  * El PAPI y las luces de aproximación van aparte, en la cabecera en uso: ver
  * `world/aproximacion.ts`.
  */
-function luces(pista: Pista, altura: (p: Punto) => number): Group {
+function luces(
+  pista: Pista,
+  altura: (p: Punto) => number,
+  oaci: string | null,
+): Group {
   const grupo = new Group();
   grupo.name = "luces";
-  const todas = lucesDePista(pista, altura);
+  const todas = lucesDePista(pista, altura, oaci);
   if (todas.length === 0) return grupo;
 
   /*
@@ -2612,7 +2647,12 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
   return grupo;
 }
 
-function marcas(pista: Pista, altura: (p: Punto) => number): Group {
+function marcas(
+  pista: Pista,
+  altura: (p: Punto) => number,
+  /** El indicativo OACI del campo, para leer su AIP. Ver `umbrales-publicados.ts`. */
+  oaci: string | null = null,
+): Group {
   const grupo = new Group();
   grupo.name = "marcas";
 
@@ -2871,25 +2911,47 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     }
   }
 
-  // Punto de toma: los dos rectángulos gordos a cuatrocientos metros del
-  // umbral. Son la referencia visual de dónde apuntar en la aproximación, y
-  // en un aeropuerto grande se ven desde muy lejos.
-  for (const [desde, sentido] of [
-    [tomaA, 1],
-    [tomaB, -1],
+  /*
+   * **La distancia de aterrizaje de cada cabecera**, que es la que manda en
+   * el punto de toma y en la zona de toma (OACI, Anexo 14, vol. I, tablas 5-2
+   * y 5-3): del umbral de aterrizaje a la otra punta, o al umbral de enfrente
+   * si la pista acaba en él, como en La Palma. Ver `umbrales-publicados.ts`.
+   */
+  const acaba = (n: string) => !!umbralPublicado(oaci, n)?.hastaElOtroUmbral;
+  const ldaA = (acaba(nombreA) ? largo - dB : largo) - dA;
+  const ldaB = (acaba(nombreB) ? largo - dA : largo) - dB;
+
+  // Punto de toma: los dos rectángulos gordos. Son la referencia visual de
+  // dónde apuntar en la aproximación, y en un aeropuerto grande se ven desde
+  // muy lejos.
+  /*
+   * **Y a la distancia de su tabla, no a cuatrocientos en todas.** Cuatrocientos
+   * metros es lo de una pista de 2.400 o más; en una de 1.200 a 2.400 van a
+   * trescientos, y así se ven en la foto de La Palma. Con cuatrocientos en
+   * todas, la pintura decía una cosa y la toma larga —que cuenta con la
+   * tabla, ver `puntoDeVisada`— otra.
+   */
+  const visadaA = puntoDeVisada(ldaA);
+  const visadaB = puntoDeVisada(ldaB);
+  for (const [desde, sentido, visada] of [
+    [tomaA, 1, visadaA],
+    [tomaB, -1, visadaB],
   ] as const) {
     for (const lado of [-1, 1]) {
-      raya(desde + sentido * 400, lado * (ancho * 0.24), 50, 7);
+      raya(desde + sentido * visada, lado * (ancho * 0.24), 50, 7);
     }
   }
 
-  // Zona de toma: parejas de barras cada ciento cincuenta metros a partir de
-  // los ciento cincuenta. Dicen cuánta pista queda gastada mientras se rueda.
-  for (const [desde, sentido] of [
-    [tomaA, 1],
-    [tomaB, -1],
+  // Zona de toma: parejas de barras a partir de los ciento cincuenta metros.
+  // Dicen cuánta pista queda gastada mientras se rueda. Ninguna a menos de
+  // cincuenta metros del punto de toma, que es lo que pide el Anexo 14
+  // (5.2.6.3).
+  for (const [desde, sentido, visada] of [
+    [tomaA, 1, visadaA],
+    [tomaB, -1, visadaB],
   ] as const) {
     for (const d of [150, 550, 700]) {
+      if (Math.abs(d - visada) <= 50) continue;
       for (const lado of [-1, 1]) {
         raya(desde + sentido * d, lado * (ancho * 0.24), 22.5, 3);
       }

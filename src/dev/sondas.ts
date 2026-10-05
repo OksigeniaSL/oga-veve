@@ -34,6 +34,7 @@ import { indicatedAirspeed } from "../flight/atmosphere";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
+import { vistaDesdeLaOtraCabecera } from "../world/umbral-desplazado";
 import {
   cifrasDeLaCabina,
   rotulosDeLaCabina,
@@ -84,12 +85,7 @@ let porLaOtraPunta: string | null = null;
 function alReves<
   T extends { heading: number; desplazado?: number; desplazadoEnfrente?: number },
 >(p: T): T {
-  return {
-    ...p,
-    heading: (p.heading + 180) % 360,
-    desplazado: p.desplazadoEnfrente ?? 0,
-    desplazadoEnfrente: p.desplazado ?? 0,
-  };
+  return vistaDesdeLaOtraCabecera(p);
 }
 
 /**

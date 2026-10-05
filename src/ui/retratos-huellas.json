@@ -47,7 +47,7 @@
     "retrato": "jaz-60-5f5b86fb.webp"
   },
   "jaz-90": {
-    "glb": "c9c5edf748fde8c9a921023dc3458e6c9d055fb0a7d7398ec1ccd291f96573c2",
+    "glb": "2cb5a64407b2e6725758e85524b32d1e4a6377d2cfbdd359aebc86b10520cab8",
     "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
     "ficha": {
       "body": 15921644,
@@ -56,10 +56,10 @@
       "blades": 0,
       "motivo": "sol-y-hojas"
     },
-    "retrato": "jaz-90-f2ed3673.webp"
+    "retrato": "jaz-90-50a459ef.webp"
   },
   "jaz-120": {
-    "glb": "7103b43c07391b0a9ad3179af52a0419fed712acffabaf9d1e03a9be5e9674b4",
+    "glb": "d23e8c880fa6e8ea451e7305087cbc37203b46d273830751230646f0e870629d",
     "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
     "ficha": {
       "body": 15921644,
@@ -69,6 +69,6 @@
       "blades": 0,
       "motivo": "sol"
     },
-    "retrato": "jaz-120-9db9a3c8.webp"
+    "retrato": "jaz-120-180b0e7b.webp"
   }
 }

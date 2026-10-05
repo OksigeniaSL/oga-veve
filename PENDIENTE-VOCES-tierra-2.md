@@ -108,3 +108,86 @@ Hornear el pack, restaurar lo re-codificado y `node scripts/verificar-voces.mjs`
 - Comprobarlo con el banco del vuelo entero parando el avión en la pista
   después de «salí de la pista»: la torre lo dice una vez, y no otra si se
   vuelve a parar.
+
+---
+
+# Pendiente: remontar la pista, contado antes de entrar (tanda 14, punto 234)
+
+Encargo del 5 de octubre de 2026. En Pilar, con el turbohélice entrando en
+pista, Enrique: «esto es lo que no se entiende: ese giro ahí en la pista». Es
+remontar la pista (*backtrack*): en los campos sin calle hasta la cabecera se
+entra por donde llega la calle, se rueda por la pista hasta el final y se da la
+vuelta allí. El lazo ya va donde de verdad se da la vuelta —en la cabecera, o
+en su ensanche si lo hay, ver `vueltaDelBackTaxi` en
+`src/world/plan-de-vuelo.ts`—, y ahora se cuenta una vez, con el verde y antes
+de entrar (`contarElRemonte` en `src/game.ts`). ElevenLabs sigue sin saldo
+hasta el 6 de octubre, así que **no se ha grabado nada** y el juego funciona
+sin estas frases: lo que no está grabado no suena.
+
+## Lo que ya se ve y se oye, sin grabar nada
+
+- **El lazo al fondo**, en la cabecera: es lo que se entiende sin leer ni oír.
+- **La tarjeta de la media vuelta** al entrar en la pista, con su voz de
+  siempre: «Andá hasta el fondo y dá la vuelta» (`vuelo.backTaxi`, grabada).
+- **La radio, escrita en su tira** de Taguató para arriba, donde hay torre:
+  «{matrícula}, backtrack runway two zero».
+
+## Lo que falta
+
+| voz | clave | dice | cuándo |
+|---|---|---|---|
+| instructor | `vuelo.remontar` | Vamos por la pista hasta el final y damos la vuelta allá | con el verde, antes de entrar, en los tres peldaños de abajo; una vez por despegue. Clave y texto ya en `src/i18n/es-PY.ts` y `en.ts` (el guaraní, quieto). Unos 60 caracteres. |
+| torre | `torre.backtrack` (y `.L`, `.R`, `.C`) | {matrícula}, backtrack runway {pista} | lo mismo, de Taguató para arriba, en Paraguay y con torre. **No en un AFIS** —Pilar, Concepción, Estigarribia, La Gomera…—, que no da órdenes: ahí lo cuenta la instructora. |
+| torre-canarias | `torre.canario.backtrack` (y `.L`, `.R`, `.C`) | lo mismo | en Canarias |
+
+La fraseología es la de la OACI: «BACKTRACK RUNWAY (number)» (Doc 4444,
+12.3.4.7 p) y, en castellano, «REGRESO POR PISTA (número)» (RD 1180/2018,
+anexo V, 1.4.8 p). Como el resto de la radio de los peldaños de arriba, va en
+inglés.
+
+## 1. Grabar las piezas
+
+- La de la instructora sale sola con el resto de `vuelo.*`:
+  `node scripts/frases-para-grabar.mjs` y `node scripts/voces-elevenlabs.mjs
+  instructor`. Su receta en `crudo/instructor/recetas.json`:
+  `"vuelo.remontar": ["vuelo.remontar"]`.
+- La de la torre es **una pieza por voz**, que la matrícula y las cifras de la
+  pista ya están grabadas. En `scripts/frases-para-grabar.mjs`, en
+  `TORRE_SOLO`, junto a `torre.solo.runwayInUse`:
+
+  ```js
+  ["torre.solo.backtrackRunway", "backtrack runway", "remontar la pista, antes de su número"],
+  ```
+
+  (la lista genera también la de `torre.canario.solo.*`; comprobarlo como con
+  `runwayInUse`). Y luego:
+
+  ```bash
+  node scripts/frases-para-grabar.mjs
+  node scripts/voces-elevenlabs.mjs --cuanto torre
+  node scripts/voces-elevenlabs.mjs torre
+  node scripts/voces-elevenlabs.mjs --cuanto torre-canarias
+  node scripts/voces-elevenlabs.mjs torre-canarias
+  ```
+
+## 2. Las recetas
+
+En `crudo/torre/recetas.json`, como `torre.pistaEnUso`:
+
+```json
+"torre.backtrack": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.backtrackRunway", "{r1}", "{r2}"],
+"torre.backtrack.L": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.backtrackRunway", "{r1}", "{r2}", "lado.left"],
+"torre.backtrack.R": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.backtrackRunway", "{r1}", "{r2}", "lado.right"],
+"torre.backtrack.C": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.backtrackRunway", "{r1}", "{r2}", "lado.center"]
+```
+
+Y en `crudo/torre-canarias/recetas.json`, las cuatro con `torre.canario.` y
+`torre.canario.solo.backtrackRunway`. Hornear el pack, restaurar lo
+re-codificado y `node scripts/verificar-voces.mjs`.
+
+## 3. Después de grabar
+
+Nada: `contarElRemonte` ya pide las dos voces **solo si su grabación está en
+el pack** (`instructor.vozDe`), así que en cuanto estén, suenan. Comprobarlo
+con el banco del vuelo entero saliendo de Encarnación con viento del norte
+(la 12 se remonta, y hay torre) y de Pilar (AFIS: solo la instructora).

@@ -324,6 +324,7 @@ export const EN: Dictionary = {
     "Stop and listen: nobody clears you here. The radio tells you who is around, and you decide",
   "vuelo.autorizadoAfis": "The runway is free: enter when you are ready",
   "vuelo.backTaxi": "Backtrack to the far end, then turn around",
+  "vuelo.remontar": "We'll taxi along the runway to the far end and turn around there",
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
   "vuelo.noEstabilizada": "Not like this: go around and try again",

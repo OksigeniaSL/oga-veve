@@ -6,7 +6,7 @@
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "3077",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los cuatro puestos de estacionamiento están puestos a mano sobre la plataforma grande, en las cabeceras de las calles L1, L3 y L4: OpenStreetMap no trae ninguno para este aeropuerto —cero `parking_position`— y sin puestos no hay de dónde salir ni a dónde volver, así que el juego no encontraba ninguna ruta de rodaje y el campo no se podía jugar. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los cuatro puestos de estacionamiento están puestos a mano sobre la plataforma grande, en las cabeceras de las calles L1, L3 y L4: OpenStreetMap no trae ninguno para este aeropuerto —cero `parking_position`— y sin puestos no hay de dónde salir ni a dónde volver, así que el juego no encontraba ninguna ruta de rodaje y el campo no se podía jugar. Van marcados «manual» para que la próxima extracción no se los lleve por delante. · Los umbrales desplazados, del AIP de España (AD 2-GCFV, enmienda 408/26 del 9-JUL-26, 2.12): 1000 m el 01 y 466 m el 19, donde OurAirports traía 1001,3 y 460,2. Van marcados «manual»; los vigila src/world/umbrales-publicados.test.ts."
   },
   "origin": {
     "lat": 28.4527,
@@ -37,9 +37,10 @@
           ],
           "elevM": 22.9,
           "headingTrue": 182,
-          "displacedM": 460.2,
+          "displacedM": 466,
           "papi": null,
-          "approachLights": null
+          "approachLights": null,
+          "manual": true
         },
         "01": {
           "xy": [
@@ -48,9 +49,10 @@
           ],
           "elevM": 11.3,
           "headingTrue": 2,
-          "displacedM": 1001.3,
+          "displacedM": 1000,
           "papi": null,
-          "approachLights": null
+          "approachLights": null,
+          "manual": true
         }
       },
       "markings": null,

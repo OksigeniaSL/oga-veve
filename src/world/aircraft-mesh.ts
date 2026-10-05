@@ -114,6 +114,12 @@ export interface AircraftMesh {
    */
   aerofrenos?: import("./aerofrenos").Aerofrenos | null;
   /**
+   * Y las reversas, en los turbofanes cuyo modelo trae el manguito suelto: el
+   * JAZ 90 y el JAZ 120. `null` en los demás y en el respaldo de cajas. Ver
+   * `world/reversas.ts`.
+   */
+  reversas?: import("./reversas").Reversas | null;
+  /**
    * Y el ala que se dobla con la carga, en los aviones grandes cuyo modelo la
    * trae: los dos reactores. `null` en los demás. Ver `world/ala-que-se-dobla.ts`.
    */

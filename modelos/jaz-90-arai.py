@@ -41,8 +41,8 @@ from exterior import (  # noqa: E402
     de_ala, de_deriva, dentro_de, piezas_de_aerofrenos,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
     en_punta, fowler, llantas, marca, neumaticos,
-    paneles, paneles_zy, recogido, simetricos, superficie, turbofan, varillas,
-    ventanas, zy,
+    paneles, paneles_zy, recogido, reversa, simetricos, superficie, turbofan,
+    varillas, ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -371,7 +371,11 @@ def construir():
     motor_y = y_ala(QUIEBRO) - 1.40
     motor_z = z_ala(QUIEBRO) - 1.20
     piezas.append(turbofan("motor", (QUIEBRO, motor_y, motor_z),
-                           largo=3.40, diametro=1.70))
+                           largo=3.40, diametro=1.70, reversa=True))
+    # Y su reversa, la de cascada del CF34 de su clase: el manguito de atrás
+    # de la cubierta se va hacia la cola y deja ver la rejilla. Ver `reversa`.
+    piezas += reversa("motor", (QUIEBRO, motor_y, motor_z), largo=3.40,
+                      diametro=1.70)
     piezas.append(superficie("pilon", [
         de_deriva(QUIEBRO, motor_y + 0.62, motor_z - 1.0, 3.8, 0.11),
         de_deriva(QUIEBRO, y_ala(QUIEBRO) - 0.05, z_ala(QUIEBRO) - 0.55,

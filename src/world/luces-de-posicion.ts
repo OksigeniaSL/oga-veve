@@ -202,6 +202,31 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
   cuerpo.traverse((o) => {
     if (o.name.startsWith("ala") && (o as Mesh).geometry) hayAla = true;
   });
+  /*
+   * **Y fuera de las góndolas** (punto 209). En el JAZ 60 la franja de la raíz
+   * llega hasta el motor, y el ala sigue por dentro de la góndola: el punto más
+   * adelantado del ala en esa franja estaba **dentro** de ella, y los focos no
+   * se veían de frente. En un turbohélice de su clase —el 1900D de su ficha:
+   * ala baja, cola en T y el tren en las góndolas— van en el borde de ataque,
+   * entre el fuselaje y el motor, y alumbran a través del disco de la hélice.
+   * Así que lo que cae dentro de una góndola o de un motor no cuenta.
+   */
+  /*
+   * Una caja por banda y no una por malla: las góndolas van de dos en dos en
+   * la misma malla, por simetría, y su caja juntas cubría el fuselaje entero.
+   */
+  const gondolas: Box3[] = [];
+  cuerpo.traverse((o) => {
+    const pos = (o as Mesh).geometry?.getAttribute?.("position");
+    if (!/^(gondola|motor)/.test(o.name) || !pos) return;
+    const bandas = [new Box3(), new Box3()];
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      bandas[v.x >= centro.x ? 0 : 1]!.expandByPoint(v);
+    }
+    for (const c of bandas) if (!c.isEmpty()) gondolas.push(c.expandByScalar(0.05));
+  });
+  const enUnaGondola = (p: Vector3): boolean => gondolas.some((g) => g.containsPoint(p));
 
   cuerpo.traverse((o) => {
     const geo = (o as Mesh).geometry;
@@ -230,7 +255,8 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
         (!hayAla || o.name.startsWith("ala")) &&
         fuera > medido.x * 0.07 &&
         fuera < medido.x * 0.18 &&
-        v.z < foco.z
+        v.z < foco.z &&
+        !enUnaGondola(v)
       )
         foco.copy(v);
     }

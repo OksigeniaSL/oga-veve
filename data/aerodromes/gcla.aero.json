@@ -6,7 +6,7 @@
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "3080",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. · La pista y los PAPI están puestos a mano con el AIP de España (AD 2-GCLA, AIRAC AMDT 09/26, en vigor desde el 1-OCT-26). 2.12: la 18 empieza a correr en 283811.04N 0174520.91W y tiene el umbral desplazado 52 m, en 283809.36N 0174520.85W a 20,3 m; la 36 empieza en 283657.94N 0174519.48W y lo tiene desplazado 142 m, en 283702.55N 0174519.55W a 31,7 m; cada una acaba en el umbral de la otra («the last 142 m of RWY 18 are not usable for take-off and landing, belong to CWY», y 52 m de la 36), y las dos tienen 2.058 m de LDA (2.13). OpenStreetMap dibujaba 2.200 m que acababan 58 m antes de la punta sur, en medio del ensanche de la 36, y OurAirports traía cero en los dos desplazados. El rumbo es 179,01° verdadero (183° magnético) y 359,01° (003°), con 4° W de declinación (2.2): el número de la pista es 18/36, el que lleva pintado. Los ocho PAPI de cada cabecera (2.14: 3°, MEHT 18,15 m la 18 y 17,64 m la 36) están medidos en la ortofoto PNOA del IGN —las cuatro cajas sobre su losa blanca, a los dos lados—: a 316 m del umbral 18 y a 327 del 36. OpenStreetMap los tenía bien de costado pero 70 y 130 m corridos pista abajo, y con el desplazado el de la 36 se quedaba a 197 m del umbral, una senda que cruzaba la barra a diez metros. Todo va marcado «manual» para que la próxima extracción no se lo lleve por delante; lo vigila src/world/umbrales-publicados.test.ts."
   },
   "origin": {
     "lat": 28.626499,
@@ -22,39 +22,40 @@
       "centerline": [
         [
           -20.3,
-          1100.8
+          1100.9
         ],
         [
-          18.2,
-          -1098.7
+          18.4,
+          -1156.9
         ]
       ],
       "thresholds": {
         "18": {
           "xy": [
-            -19.5,
-            1101
+            -20.3,
+            1100.9
           ],
-          "elevM": 19.8,
-          "headingTrue": 179,
-          "displacedM": 0,
+          "elevM": 20.3,
+          "headingTrue": 179.01,
+          "displacedM": 52,
           "papi": null,
           "approachLights": null
         },
         "36": {
           "xy": [
-            19.5,
-            -1100.7
+            18.4,
+            -1156.9
           ],
-          "elevM": 31.4,
-          "headingTrue": 359,
-          "displacedM": 0,
+          "elevM": 31.7,
+          "headingTrue": 359.01,
+          "displacedM": 142,
           "papi": null,
           "approachLights": null
         }
       },
       "markings": null,
-      "magneticVariation": 1
+      "magneticVariation": 4,
+      "manual": true
     }
   ],
   "taxiways": [
@@ -1734,113 +1735,129 @@
       "tipo": "papi",
       "xy": [
         -51.7,
-        -817.4
-      ]
+        -687.5
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -42.6,
-        -817.2
-      ]
+        -687.5
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -33.8,
-        -817.1
-      ]
+        -687.5
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -24.6,
-        -817.4
-      ]
+        -687.5
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         50.1,
-        -815.9
-      ]
+        -686.7
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         59.2,
-        -815.6
-      ]
+        -686.7
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         68.2,
-        -815.5
-      ]
+        -686.7
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         77.1,
-        -815.5
-      ]
+        -686.7
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -79.5,
-        802.5
-      ]
+        732.4
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -70.3,
-        803
-      ]
+        732.4
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -61.5,
-        803.6
-      ]
+        732.4
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         -52.4,
-        802.9
-      ]
-    },
-    {
-      "tipo": "papi",
-      "xy": [
-        49.2,
-        804.5
-      ]
-    },
-    {
-      "tipo": "papi",
-      "xy": [
-        40.4,
-        804.7
-      ]
-    },
-    {
-      "tipo": "papi",
-      "xy": [
-        31.5,
-        804.5
-      ]
+        732.4
+      ],
+      "manual": true
     },
     {
       "tipo": "papi",
       "xy": [
         22.6,
-        805
-      ]
+        734.5
+      ],
+      "manual": true
+    },
+    {
+      "tipo": "papi",
+      "xy": [
+        31.5,
+        734.5
+      ],
+      "manual": true
+    },
+    {
+      "tipo": "papi",
+      "xy": [
+        40.4,
+        734.5
+      ],
+      "manual": true
+    },
+    {
+      "tipo": "papi",
+      "xy": [
+        49.2,
+        734.5
+      ],
+      "manual": true
     }
   ]
 }

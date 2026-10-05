@@ -77,6 +77,7 @@ import {
   queSeDiceSinMotor,
 } from "./flight/sin-motor";
 import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
+import { Reversa, tiempoDeReversa } from "./flight/reversa";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -825,7 +826,9 @@ import {
 } from "./world/campo-del-vuelo";
 import {
   antesDelUmbralDeToma,
+  hastaElFinDeToma,
   hastaElUmbralDeToma,
+  paraAterrizarDe,
   sobreDondeSeToca,
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
@@ -3324,6 +3327,8 @@ export class Game {
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
   aircraft: AircraftConfig;
+  /** La reversa de este avión: lo que tarda en abrirse y cuándo empuja. Ver `flight/reversa.ts`. */
+  private readonly reversa: Reversa;
   scenario: Scenario;
   flight: FlightModel;
   private tier: Tier = rememberedTier();
@@ -4282,6 +4287,7 @@ export class Game {
     this.noCaben = options.noCaben ?? [];
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
+    this.reversa = new Reversa(tiempoDeReversa(this.aircraft));
 
     /*
      * El dedo sobre la cabina: mirar qué mando hay debajo y pulsarlo al soltar.
@@ -10735,6 +10741,52 @@ export class Game {
   }
 
   /**
+   * **Remontar la pista, contado antes de entrar** (punto 234).
+   *
+   * En los campos sin calle hasta la cabecera se entra por donde llega la
+   * calle, se rueda por la pista hasta su final y se da la vuelta allí. La raya
+   * lo dibujaba —un lazo rojo al fondo, que es donde se va despacio— y nadie lo
+   * decía: «esto es lo que no se entiende: ese giro ahí en la pista», en Pilar
+   * con el turbohélice. Así que se dice una vez, con el verde y antes de
+   * entrar:
+   *
+   * - **la instructora**, en los tres peldaños de abajo: «vamos por la pista
+   *   hasta el final y damos la vuelta allá». Solo con su grabación: sin ella
+   *   no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y se entiende igual con el
+   *   lazo al fondo y la tarjeta de la media vuelta al entrar;
+   * - **la radio**, de Taguató para arriba y en fraseología, escrita en su
+   *   tira: «backtrack runway two zero», que es la orden de la OACI (Doc 4444,
+   *   12.3.4.7 p; «regreso por pista», RD 1180/2018, anexo V, 1.4.8). La voz,
+   *   cuando esté grabada su pieza. **Donde contesta un AFIS, no**: un AFIS no
+   *   da órdenes, y remontar lo decide quien vuela; ahí lo cuenta la
+   *   instructora. Y sin nadie en la radio, tampoco.
+   */
+  private contarElRemonte(): void {
+    if (this.remonteContado || (this.plan?.dondeSeGira ?? null) === null) return;
+    this.remonteContado = true;
+    const campo = this.elCampo();
+    const aero = campo.escenario.aerodrome;
+    const clave: TranslationKey = "vuelo.remontar";
+    if (this.tier.avisos !== "cabina" && this.instructor.vozDe(clave))
+      this.instructor.decir(t(clave), clave, "normal");
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras || sinTorre(aero) || esAfis(aero)) return;
+    const yo = this.miIndicativo;
+    const pista = pistaEnPiezas(cabeceraEnUso(campo.escenario));
+    if (!pista) return;
+    const texto = `${yo.dicho}, backtrack runway ${pista.dicho}`;
+    this.hud.radio(texto, undefined, true);
+    const claveDeTorre = `${comoSeDiceAqui("torre.backtrack", hablaDe(aero?.id))}${pista.sufijo}`;
+    const relleno = { ...rellenoDe(yo), ...pista.relleno };
+    if (this.instructor.vozDe(claveDeTorre, relleno))
+      this.torre.decir(texto, claveDeTorre, "mando", relleno);
+  }
+
+  /** Si ya se contó el remonte de este despegue. Ver `contarElRemonte`. */
+  private remonteContado = false;
+
+  /**
    * **«Hace calor: vamos a necesitar más pista»**, antes de despegar, cuando
    * pesa. Ver `flight/caliente-y-alto.ts`, que es quien decide si pesa.
    *
@@ -11524,6 +11576,15 @@ export class Game {
       if (!this.pilotoPuesto) mandos = this.sostenerElNivel(dt, mandos);
       if (this.hayInstrumentoAbierto && !this.pilotoPuesto && !this.nivelada)
         mandos = this.mantenerElVueloRecto(mandos);
+      /*
+       * **Y la reversa empuja cuando está abierta**, no al apretar: el chorro
+       * se da la vuelta cuando el manguito ha dejado a la vista la cascada,
+       * un par de segundos después. Los mandos siguen diciendo lo que se pide
+       * —el REV del cuadro, la toma larga—; al modelo de vuelo le llega lo
+       * que empuja. Ver `flight/reversa.ts`.
+       */
+      const reversa = this.reversa.paso(dt, mandos.reversa);
+      if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       this.flight.step(dt, mandos);
       this.mirarSiChocaConAlgo();
     }
@@ -12995,6 +13056,11 @@ export class Game {
      * vuelo o arriba del todo con los de tierra fuera. Ver
      * `flight/palanca-de-aerofrenos.ts` y `world/aerofrenos.ts`.
      */
+    /*
+     * Y las reversas, **donde están** y no donde está la palanca: el manguito
+     * tarda dos segundos en irse hacia la cola. Ver `world/reversas.ts`.
+     */
+    this.aircraftMesh.reversas?.poner(this.reversa.abierta);
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
     this.aircraftMesh.aerofrenos?.poner(
       this.input.controls.aerofrenos ?? 0,
@@ -15820,6 +15886,7 @@ export class Game {
     }
     if (!this.flight.state.onGround) {
       this.salidasDichas.dicha = false;
+      this.remonteContado = false;
       this.calorDicho = false;
       this.calorPorDecir = false;
     } else if (this.calorPorDecir && !this.hud.senal.puesto.dibujo) {
@@ -16275,6 +16342,8 @@ export class Game {
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")
           this.avisar("success");
+        // Y si desde ahí se remonta la pista, se cuenta. Ver `contarElRemonte`.
+        if (vista.fase === "autorizado") this.contarElRemonte();
       }
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.
@@ -16821,8 +16890,18 @@ export class Game {
      * todo en un fotograma. Una hélice de verdad arranca despacio, se para
      * despacio y, apagada, está quieta.
      */
+    /*
+     * **Y con la palanca en reversa, la hélice se embala.** En un turbohélice
+     * la reversa es la propia hélice: las palas pasan de paso y el motor sube
+     * de potencia para empujar al revés. El cambio de paso no se distingue con
+     * la hélice girando; lo que se ve —y se oye— es el disco. Tres cuartos de
+     * lo que da hacia delante, que es el orden de una reversa a fondo. Ver
+     * `flight/reversa.ts`.
+     */
+    const haciaAtras =
+      this.aircraft.sound.engine === "turboprop" ? this.reversa.empuje * 0.75 : 0;
     const quiere = this.input.controls.engineOn
-      ? 6 + this.input.controls.throttle * 96
+      ? 6 + Math.max(this.input.controls.throttle, haciaAtras) * 96
       : 0;
     const prisa = quiere > this.giroDeHelice ? 1.4 : 0.6;
     this.giroDeHelice +=
@@ -20948,8 +21027,13 @@ export class Game {
       enLaPista: s.onGround && s.onRunway && alineado,
       sobreLaPista: s.position.y - this.cotaDelCampo(campo),
       pasado: along + desdeElCentro,
-      queda: pista.length / 2 - along,
-      paraAterrizar: pista.length / 2 + desdeElCentro,
+      /*
+       * Hasta el final de la pista **para aterrizar**, que en La Palma es el
+       * umbral de enfrente y no la punta del asfalto. Ver
+       * `umbral-desplazado.ts`.
+       */
+      queda: hastaElFinDeToma(pista) - along,
+      paraAterrizar: paraAterrizarDe(pista),
       porElSuelo: s.groundSpeed,
       aproximacion: this.aircraft.approachSpeed,
       reversa: this.input.controls.reversa > 0,
@@ -20991,7 +21075,12 @@ export class Game {
    * contra la pista que hay. Con la pista mojada, la rodadura de mojado.
    */
   private autofrenoParaLaPista(): "lo" | "med" | "max" {
-    const largo = this.laPistaDeAhora().length;
+    /*
+     * **Contra la distancia de aterrizaje, no contra el asfalto.** Era el largo
+     * de la pista, y en la 01 de Fuerteventura son mil metros de flechas que
+     * no se pueden usar para parar: 3.406 de asfalto contra 2.406 de LDA.
+     */
+    const largo = paraAterrizarDe(this.laPistaDeAhora());
     const mojada = this.lloviendo.clase !== "nada";
     for (const modo of ["lo", "med"] as const) {
       const hace =
