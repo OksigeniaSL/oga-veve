@@ -108,8 +108,27 @@ export function grado(c: Cuaderno): Grado {
   return cual;
 }
 
-/** Cuántas barras lleva la hombrera de ese grado. Una por escalón. */
-export const barrasDe = (g: Grado): number => GRADOS.indexOf(g) + 1;
+/**
+ * **Cuántas barras lleva la hombrera de ese grado: las de verdad.**
+ *
+ * Eran una por escalón, y eso dejaba a la comandante con tres y a la
+ * instructora con cuatro: justo al revés de lo que se verá el día que se suba
+ * a un avión. En una línea aérea, una barra es la del cadete que aprende, tres
+ * las del primer oficial que ya lleva el avión y cuatro las de la comandante,
+ * que responde por él y por todos a bordo. Quien enseña en una línea —la
+ * instructora— es una comandante que además enseña, y lleva sus mismas cuatro
+ * barras. Las dos de segundo oficial no tienen escalón en el juego y se saltan.
+ * AGENTS.md: «cuatro barras no quieren decir que mandes, quieren decir que
+ * respondes».
+ */
+const BARRAS: Readonly<Record<Grado, number>> = {
+  aprendiz: 1,
+  piloto: 3,
+  comandante: 4,
+  instructora: 4,
+};
+
+export const barrasDe = (g: Grado): number => BARRAS[g];
 
 /**
  * Lo que falta para el siguiente grado, o `null` si ya está el más alto.

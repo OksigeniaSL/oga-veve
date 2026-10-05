@@ -23,6 +23,13 @@ describe("el grado", () => {
     expect(barrasDe("aprendiz")).toBe(1);
   });
 
+  it("y cada grado, con las barras de verdad: la comandante lleva cuatro", () => {
+    expect(barrasDe("piloto")).toBe(3);
+    expect(barrasDe("comandante")).toBe(4);
+    // Quien enseña en una línea es una comandante que además enseña.
+    expect(barrasDe("instructora")).toBe(4);
+  });
+
   it("sube con lo que se ha hecho", () => {
     expect(grado(con({ aterrizajes: 3, aerodromos: ["gcxo"] }))).toBe("piloto");
     expect(
