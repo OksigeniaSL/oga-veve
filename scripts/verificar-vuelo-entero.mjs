@@ -2834,6 +2834,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let caidaAlTocar = null;
   /** Lo más deprisa que se rodó de vuelta fuera de la pista, m/s. */
   let rodajeMasRapido = 0;
+  /**
+   * Los segundos de reloj fuera de la pista y con el motor en marcha, de la
+   * salida al apagado: lo que tuvo la lista de después del aterrizaje para
+   * leerse. Ver la comprobación de la lista.
+   */
+  let segundosFueraDeLaPista = 0;
   /** Cuánta pista hay para aterrizar en la que se tocó, m. */
   let pistaParaTocar = 0;
   /** Dónde y cómo se tocó: del eje, pasado el umbral y a qué velocidad. */
@@ -5676,6 +5682,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       // Rodando por las calles: la salida rápida se toma a lo suyo y no cuenta.
       if (!s.onRunway && fase === "a-plataforma")
         rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
+      if (fase === "a-plataforma" || fase === "en-puesto") segundosFueraDeLaPista += paso;
       c.aileron = timon(s, ruta);
       /*
        * Y el largo de **la ruta que el juego trazó** para volver, que es el
@@ -5709,6 +5716,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * se apaga a mano, que es lo que hacía antes.
        */
       esperandoParaApagar += paso;
+      if (fase === "en-puesto" && c.engineOn) segundosFueraDeLaPista += paso;
       /*
        * **Y con la seña de cortar motores, no antes.** Quien juega apaga
        * cuando el señalero se lo dice, después del alto, los frenos y los
@@ -5994,6 +6002,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     enLaPuerta,
     empezoLaRecogida,
     rodajeMasRapido: +rodajeMasRapido.toFixed(1),
+    segundosFueraDeLaPista: +segundosFueraDeLaPista.toFixed(1),
     desplazadoAlTocar: Math.round(desplazadoAlTocar),
     tocoA: +tocoA.toFixed(0),
     rodaduraMedida: Math.round(rodaduraMedida),
@@ -6328,13 +6337,27 @@ const relojDeVerdad =
       (p, i) => i === 0 || ORDEN.indexOf(p.punto) > ORDEN.indexOf(lista[i - 1].punto),
     );
     const respiros = lista.slice(1).map((p, i) => +(p.t - lista[i].t).toFixed(1));
+    /*
+     * **Con tiempo para leerla.** La lista empieza seis segundos después de
+     * salir de la pista y deja cuatro entre punto y punto, sin hablar encima
+     * de nadie; quien llega al puesto y apaga antes no la oye entera, y eso
+     * es lo suyo: el apagado manda. En Pilar se remonta la pista y se sale
+     * directo a la plataforma, y en la granja el puesto está al lado: el
+     * banco apagaba a los pocos segundos y la comprobación pedía dos puntos
+     * que no cabían. Con menos de medio minuto fuera de la pista, solo se
+     * mira el orden y el respiro de lo que sí se leyó.
+     */
+    const fuera = vuelo.segundosFueraDeLaPista ?? Infinity;
+    const cabian = fuera >= 30;
     comprobarSiVolo(
       "y después de aterrizar, la lista punto por punto y con su respiro",
-      lista.length >= 2 && enOrden && respiros.every((r) => r >= 3.5),
+      (lista.length >= 2 || (!cabian && lista.length <= 1)) &&
+        enOrden &&
+        respiros.every((r) => r >= 3.5),
       lista.length
         ? lista.map((p) => `${p.punto}:${p.como}@${p.t}s`).join(" · ") +
-            ` · respiros ${respiros.join(", ")} s`
-        : "no se leyó ningún punto",
+            ` · respiros ${respiros.join(", ")} s · ${fuera.toFixed(0)} s fuera de la pista`
+        : `no se leyó ningún punto · ${fuera.toFixed(0)} s fuera de la pista`,
       "«la instructora no me da ni tiempo a hacerlo todo»",
     );
   }
