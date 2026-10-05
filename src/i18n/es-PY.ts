@@ -1126,9 +1126,34 @@ export const ES_PY = {
   /*
    * **Y antes de entrar, por qué el lazo de la raya está al fondo**: en los
    * campos sin calle hasta la cabecera se remonta la pista. Una vez por
-   * despegue, con el verde. Ver `contarElRemonte` en `game.ts`.
+   * despegue, con el verde. Ver `contarPorDondeSeSale` en `game.ts`.
    */
   "vuelo.remontar": "Vamos por la pista hasta el final y damos la vuelta allá",
+  /*
+   * **Y con la avioneta, un trozo o nada.** El de línea remonta hasta el final;
+   * la avioneta remonta solo lo que le hace falta, o sale desde la calle si la
+   * pista que queda le sobra. Ver `remontaHastaLaCabecera` en
+   * `flight/carrera.ts` y `contarPorDondeSeSale` en `game.ts`.
+   */
+  "vuelo.remontarUnTrecho":
+    "Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar",
+  "vuelo.desdeLaInterseccion":
+    "Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra",
+  "vuelo.backTaxiUnTrecho": "Andá hasta la vuelta dibujada y girá ahí",
+  /*
+   * **Y el porqué, cuando el día lo cambia**: la misma avioneta que otro día
+   * sale desde la calle, hoy remonta. Lo que lo cambia es lo que se cuenta
+   * —el calor, que hace el aire más fino, o el viento de cola—, y solo cuando
+   * alarga la cuenta una décima o más. Ver `porQueHoyMasPista`.
+   */
+  "vuelo.remontar.calor":
+    "Hoy hace calor y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá",
+  "vuelo.remontar.cola":
+    "Hoy el viento viene de atrás y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá",
+  "vuelo.remontarUnTrecho.calor":
+    "Hoy hace calor y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta",
+  "vuelo.remontarUnTrecho.cola":
+    "Hoy el viento viene de atrás y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
   "vuelo.noEstabilizada": "Así no: andate y volvé a intentarlo",
@@ -2265,14 +2290,53 @@ export const ES_PY = {
   "parte.salgoIgual": "Salgo igual",
   "parte.ganaste": "¡Hoy ganaste: decidiste bien!",
   "parte.sinMetar": "sin METAR: el tiempo típico del lugar",
+  /*
+   * **La propuesta, con su porqué**: no basta con «mejor no»; se dice qué
+   * pasaría. Enrique: «que se explique con datos al piloto, que sepa que es
+   * una negativa argumentada». Con calma, y con las dos salidas buenas:
+   * quedarse o esperar.
+   */
   "parte.propone.tormenta":
-    "Hay tormenta encima del campo. Hoy mejor no salir, o esperar a que pase.",
+    "Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.",
   "parte.propone.visibilidad":
-    "Se ve muy poco para este avión. Hoy mejor quedarse, o esperar a que abra.",
+    "Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.",
   "parte.propone.techo":
-    "Las nubes están muy bajas para este avión. Hoy mejor quedarse, o esperar a que suban.",
+    "Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.",
   "parte.propone.cruzado":
-    "El viento de costado es más fuerte de lo que este avión sabe aguantar. Hoy mejor quedarse, o esperar a que afloje.",
+    "Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.",
+  "parte.propone.pista":
+    "Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.",
+  /* La palabra de cada porqué, desde el segundo peldaño. */
+  "parte.palabra.cruzado": "Viento de costado",
+  "parte.palabra.visibilidad": "Se ve poco",
+  "parte.palabra.techo": "Nubes bajas",
+  "parte.palabra.tormenta": "Tormenta",
+  "parte.palabra.pista": "No alcanza la pista",
+  /*
+   * Y las cifras, desde el tercero: lo de hoy contra lo que aguanta el avión.
+   * Las unidades son las de cabina —nudos y pies— y no se traducen.
+   */
+  "parte.cifras.cruzado": "viento de costado hoy: {hoy} · este avión, probado hasta {limite}",
+  "parte.cifras.visibilidad": "se ve hoy: {hoy} · este avión necesita {limite}",
+  "parte.cifras.techo": "nubes hoy a {hoy} · este avión necesita {limite}",
+  "parte.cifras.tormenta": "tormenta encima del campo hoy · con tormenta no se sale",
+  "parte.cifras.pista": "pista que necesita hoy: {hoy} · esta pista tiene {limite}",
+  /* De dónde sale el límite, a la vista: no es un número inventado. */
+  "parte.origen.demostrado": "demostrado en su certificación",
+  "parte.origen.norma": "el mínimo que exige la norma",
+  "parte.origen.visual": "el mínimo que exige la norma para volar mirando afuera",
+  "parte.origen.instrumentos": "el mínimo que exige la norma para su aproximación",
+  "parte.origen.manualEscuela": "su manual, con el margen de escuela",
+  "parte.origen.manualCertificacion": "su manual, con el margen de su certificación",
+  "parte.origen.tormenta": "a una tormenta no se entra",
+  /* Esperar un rato y volver a mirar. */
+  "parte.esperar": "Esperamos un rato",
+  "parte.esperamos.voz": "Esperamos un rato y volvemos a mirar el parte.",
+  "parte.sigueIgual": "Miramos otra vez: sigue igual",
+  "parte.sigueIgual.voz":
+    "Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.",
+  "parte.yaSePuede": "Miramos otra vez: ¡ya se puede!",
+  "parte.yaSePuede.voz": "Miramos otra vez y ya mejoró: ahora sí podemos salir.",
   "parte.salgoIgual.voz":
     "Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.",
 } as const;

@@ -17,10 +17,24 @@
  * instructora propone quedarse en tierra o esperar, y **quedarse se felicita
  * igual que un buen vuelo**: «hoy ganaste: decidiste bien». Pero no se
  * prohíbe nada: quien quiera salir, sale. Ver `flight/parte-de-salida.ts`.
+ *
+ * **Y la negativa va argumentada, con datos**: cada porqué lleva lo de hoy
+ * contra lo que aguanta el avión —un reloj con la marca del límite y la aguja
+ * de hoy pasándola, en todos los peldaños—, la palabra desde el segundo, las
+ * cifras desde el tercero y de dónde sale el límite: «demostrado en su
+ * certificación» o «el mínimo que exige la norma». Y esperar tiene su botón:
+ * se vuelve a mirar el parte al rato.
  */
 
-import type { Decision, Motivo, ParteDeUnCampo } from "../flight/parte-de-salida";
-import { t, type TranslationKey } from "../i18n";
+import {
+  comparar,
+  type Comparacion,
+  type Decision,
+  type Limites,
+  type Motivo,
+  type ParteDeUnCampo,
+} from "../flight/parte-de-salida";
+import { getLocale, t, type TranslationKey } from "../i18n";
 import { atisEnTexto } from "../world/meteo";
 import { armarPanel } from "./concha";
 import { mangaDeViento } from "./manga-de-viento";
@@ -34,6 +48,11 @@ export interface AccionesDelTiempo {
   readonly alSalir: (conTodoBien: boolean) => void;
   /** Al hangar, a elegir otro sitio u otro avión. */
   readonly alHangar: () => void;
+  /**
+   * **Esperar un rato** y volver a mirar el parte: el juego cierra la
+   * tarjeta, cuenta el rato, vuelve a pedir el tiempo y la abre otra vez.
+   */
+  readonly alEsperar: () => void;
 }
 
 /** Lo que se le da al abrirla. */
@@ -44,6 +63,13 @@ export interface ParteParaVer {
   readonly peldano: "dibujo" | "palabra" | "cifra" | "cabina";
   /** La declinación de cada campo, para el viento en magnéticos. */
   readonly declinacion?: (oaci: string) => number;
+  /** Lo que aguanta este avión, para dibujar lo de hoy contra su límite. */
+  readonly limites: Limites;
+  /**
+   * Si se abre **después de esperar**: `igual` si el parte no cambió lo que
+   * decide, `mejor` si ahora ya se puede. Ver `AccionesDelTiempo.alEsperar`.
+   */
+  readonly releido?: "igual" | "mejor";
 }
 
 const AMBAR = "parte--pasa";
@@ -128,13 +154,133 @@ function viento(p: ParteDeUnCampo): string {
     ${flecha}</svg>`;
 }
 
+/** La pista vista desde arriba, corta: el motivo de la pista que no alcanza. */
+const PISTA = `<svg viewBox="0 0 48 48" aria-hidden="true">
+  <rect x="17" y="4" width="14" height="40" rx="1.5" class="parte__pista"/>
+  <path d="M24 9 V16 M24 21 V28 M24 33 V40" stroke="#f4f2ea" stroke-width="1.4"/>
+  <path d="M8 44 H40" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+
 /** El dibujo de cada motivo, para la fila de porqués. */
 const DE_MOTIVO: Readonly<Record<Motivo, (p: ParteDeUnCampo) => string>> = {
   tormenta: (p) => cielo(p),
   visibilidad: (p) => visibilidad(p),
   techo: (p) => techo(p, 0),
   cruzado: (p) => viento(p),
+  pista: () => PISTA,
 };
+
+/** El reloj tiene media vuelta: de cero a la izquierda al tope a la derecha. */
+const RELOJ = { cx: 32, cy: 35, r: 26 } as const;
+
+/** Un punto del arco del reloj, para un valor de `0` a `tope`. */
+function enElReloj(v: number, tope: number, radio: number = RELOJ.r): [number, number] {
+  const f = Math.max(0, Math.min(1, v / tope));
+  const a = Math.PI * (1 - f);
+  return [RELOJ.cx + radio * Math.cos(a), RELOJ.cy - radio * Math.sin(a)];
+}
+
+/** Un trozo del arco, de `desde` a `hasta`. */
+function arco(desde: number, hasta: number, tope: number, clase: string): string {
+  if (hasta <= desde) return "";
+  const [x0, y0] = enElReloj(desde, tope);
+  const [x1, y1] = enElReloj(hasta, tope);
+  return `<path class="${clase}" d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${RELOJ.r} ${RELOJ.r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke-width="6"/>`;
+}
+
+/** El sello de lo probado y el libro de la norma: de dónde sale el límite, sin letras. */
+const SELLO = `<g class="parte__origen-dibujo"><circle cx="56" cy="8" r="6"/><path d="M53 8 l2 2 l4 -4" fill="none" stroke-width="1.6"/></g>`;
+const LIBRO = `<g class="parte__origen-dibujo"><path d="M50 3 h5 a1 1 0 0 1 1 1 v9 h-5 a1 1 0 0 0 -1 1 Z M62 3 h-5 a1 1 0 0 0 -1 1 v9 h5 a1 1 0 0 1 1 1 Z"/></g>`;
+
+/**
+ * **El reloj de lo de hoy contra lo que aguanta el avión**: media esfera con
+ * la zona buena en verde y la mala en ámbar, la marca del límite y la aguja de
+ * hoy. Es lo que se entiende sin leer: la aguja pasa la marca. En la tormenta
+ * no hay número, así que va el avión despegando, tachado.
+ *
+ * El tope de la esfera deja ver la aguja y la marca a la vez: por encima del
+ * límite, lo que pase de él con holgura; por debajo, el doble del límite.
+ */
+export function relojDelLimite(c: Comparacion): string {
+  if (c.unidad === null)
+    return `<svg viewBox="0 0 64 40" aria-hidden="true" class="parte__reloj">
+      <g transform="translate(16 2) scale(1.4)">${SALE.replace(/<\/?svg[^>]*>/g, "")}</g>
+      <path class="parte__tachado" d="M14 36 L50 4" stroke-width="4" stroke-linecap="round"/></svg>`;
+  const tope = c.malSiMas ? Math.max(c.limite * 1.6, c.hoy * 1.15) : c.limite * 2;
+  const bueno = c.malSiMas ? arco(0, c.limite, tope, "parte__zona-buena") : arco(c.limite, tope, tope, "parte__zona-buena");
+  const malo = c.malSiMas ? arco(c.limite, tope, tope, "parte__zona-mala") : arco(0, c.limite, tope, "parte__zona-mala");
+  const [mx0, my0] = enElReloj(c.limite, tope, RELOJ.r - 8);
+  const [mx1, my1] = enElReloj(c.limite, tope, RELOJ.r + 5);
+  const [ax, ay] = enElReloj(Math.min(c.hoy, tope), tope, RELOJ.r - 4);
+  const pasa = c.malSiMas ? c.hoy > c.limite : c.hoy < c.limite;
+  const origen = c.origen === "demostrado" ? SELLO : c.origen === "tormenta" ? "" : LIBRO;
+  return `<svg viewBox="0 0 64 40" aria-hidden="true" class="parte__reloj">
+    ${bueno}${malo}
+    <path class="parte__marca" d="M${mx0.toFixed(1)} ${my0.toFixed(1)} L${mx1.toFixed(1)} ${my1.toFixed(1)}" stroke-width="3" stroke-linecap="round"/>
+    <path class="parte__aguja${pasa ? " parte__aguja--pasa" : ""}" d="M${RELOJ.cx} ${RELOJ.cy} L${ax.toFixed(1)} ${ay.toFixed(1)}" stroke-width="2.6" stroke-linecap="round"/>
+    <circle class="parte__eje" cx="${RELOJ.cx}" cy="${RELOJ.cy}" r="3"/>
+    ${origen}</svg>`;
+}
+
+/** Una cifra del parte, en su unidad: nudos y pies enteros, la visibilidad en km o m. */
+export function cifraDelParte(v: number, unidad: Comparacion["unidad"], motivo: Motivo): string {
+  if (unidad === "kt") return `${Math.round(v)} kt`;
+  if (unidad === "ft") return `${Math.round(v / 100) * 100} ft`;
+  const ingles = getLocale() === "en";
+  if (unidad === "m" && motivo === "visibilidad") {
+    if (v < 1000) return `${Math.round(v / 50) * 50} m`;
+    const km = v < 5000 ? Math.round(v / 100) / 10 : Math.round(v / 1000);
+    return `${ingles ? String(km) : String(km).replace(".", ",")} km`;
+  }
+  // Los miles con su punto, o su coma en inglés, también con cuatro cifras.
+  if (unidad === "m")
+    return `${String(Math.round(v / 10) * 10).replace(/\B(?=(\d{3})+(?!\d))/g, ingles ? "," : ".")} m`;
+  return "";
+}
+
+/** De dónde sale el límite, en palabras. */
+function origenEnPalabras(c: Comparacion, motivo: Motivo, limites: Limites): string {
+  if (c.origen === "demostrado") return t("parte.origen.demostrado");
+  if (c.origen === "tormenta") return t("parte.origen.tormenta");
+  if (c.origen === "manual")
+    return t(limites.margen === "escuela" ? "parte.origen.manualEscuela" : "parte.origen.manualCertificacion");
+  if (motivo === "cruzado") return t("parte.origen.norma");
+  return t(limites.reglas === "visual" ? "parte.origen.visual" : "parte.origen.instrumentos");
+}
+
+/**
+ * **Un porqué, entero**: el dibujo del motivo y el reloj de hoy contra el
+ * límite en todos los peldaños; desde el de las palabras, la palabra y de
+ * dónde sale el límite; desde el de los números, las cifras.
+ */
+export function porqueDibujado(
+  p: ParteDeUnCampo,
+  motivo: Motivo,
+  limites: Limites,
+  peldano: ParteParaVer["peldano"],
+): string {
+  const c = comparar(p, motivo, limites);
+  const conLetras = peldano !== "dibujo";
+  const cifras = peldano === "cifra" || peldano === "cabina";
+  const reloj = c ? relojDelLimite(c) : "";
+  const palabra = conLetras ? `<b class="parte__porque-palabra">${t(`parte.palabra.${motivo}` as TranslationKey)}</b>` : "";
+  const numeros =
+    cifras && c
+      ? `<span class="parte__porque-cifras">${t(`parte.cifras.${motivo}` as TranslationKey, {
+          hoy: cifraDelParte(c.hoy, c.unidad, motivo),
+          limite: cifraDelParte(c.limite, c.unidad, motivo),
+        })}</span>`
+      : "";
+  const origen = conLetras && c ? `<span class="parte__porque-origen">${origenEnPalabras(c, motivo, limites)}</span>` : "";
+  return `<div class="parte__porque ${AMBAR}" data-motivo="${motivo}">
+      <span class="parte__porque-dibujo">${DE_MOTIVO[motivo](p)}</span>
+      <span class="parte__porque-reloj">${reloj}</span>
+      ${conLetras ? `<span class="parte__porque-texto">${palabra}${numeros}${origen}</span>` : ""}
+    </div>`;
+}
+
+/** El reloj de arena de esperar un rato. */
+const RATO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3 H18 M6 21 H18 M7 3 C7 9 17 9 17 12 C17 15 7 15 7 21 M17 3 C17 9 7 9 7 12 C7 15 17 15 17 21"
+  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 19.5 h5 l-2.5 -3 Z" fill="currentColor"/></svg>`;
 
 /** La estrella de quien decidió bien. */
 const ESTRELLA = `<svg viewBox="0 0 48 48" aria-hidden="true"><path class="parte__estrella"
@@ -261,16 +407,26 @@ export class TarjetaDelTiempo {
     if (v.decision.salir)
       return `
         <div class="parte__decision parte__decision--bien">
+          ${
+            v.releido === "mejor"
+              ? `<p class="parte__releido">${RATO}${conLetras ? `<span>${t("parte.yaSePuede")}</span>` : ""}</p>`
+              : ""
+          }
           <button type="button" class="parte__boton parte__boton--principal" data-parte-accion="salir"
                   aria-label="${t("parte.aVolar")}">${SALE}${conLetras ? `<span>${t("parte.aVolar")}</span>` : ""}</button>
         </div>`;
-    // Los porqués, en dibujo: cada motivo una vez, con el dibujo del primer campo que lo tiene.
+    /*
+     * **Los porqués, con sus datos**: cada motivo una vez, con lo de hoy
+     * contra lo que aguanta el avión y de dónde sale el límite. Es la
+     * negativa argumentada que pidió Enrique: «que se explique con datos al
+     * piloto, que sepa que es una negativa argumentada». Ver `porqueDibujado`.
+     */
     const vistos = new Set<string>();
     const porques = v.decision.motivos
       .filter((m) => (vistos.has(m.motivo) ? false : (vistos.add(m.motivo), true)))
       .map((m) => {
         const p = v.partes.find((x) => x.papel === m.papel)!;
-        return `<span class="parte__porque ${AMBAR}" data-motivo="${m.motivo}">${DE_MOTIVO[m.motivo](p)}</span>`;
+        return porqueDibujado(p, m.motivo, v.limites, v.peldano);
       })
       .join("");
     const frase = conFrases
@@ -278,13 +434,20 @@ export class TarjetaDelTiempo {
           `parte.propone.${v.decision.motivos[0]?.motivo ?? "cruzado"}` as TranslationKey,
         )}</p>`
       : "";
+    const igual =
+      v.releido === "igual"
+        ? `<p class="parte__releido">${RATO}${conLetras ? `<span>${t("parte.sigueIgual")}</span>` : ""}</p>`
+        : "";
     return `
       <div class="parte__decision parte__decision--no">
+        ${igual}
         <div class="parte__porques">${porques}</div>
         ${frase}
         <div class="parte__botones">
           <button type="button" class="parte__boton parte__boton--principal" data-parte-accion="quedarse"
                   aria-label="${t("parte.meQuedo")}">${QUIETO}${conLetras ? `<span>${t("parte.meQuedo")}</span>` : ""}</button>
+          <button type="button" class="parte__boton" data-parte-accion="esperar"
+                  aria-label="${t("parte.esperar")}">${RATO}${conLetras ? `<span>${t("parte.esperar")}</span>` : ""}</button>
           <button type="button" class="parte__boton" data-parte-accion="salir-igual"
                   aria-label="${t("parte.salgoIgual")}">${SALE}${conLetras ? `<span>${t("parte.salgoIgual")}</span>` : ""}</button>
         </div>
@@ -327,6 +490,9 @@ export class TarjetaDelTiempo {
       this.acciones.alQuedarse();
       const p = this.visto?.peldano;
       this.ganaste(p !== "dibujo", p === "cifra" || p === "cabina");
+    } else if (que === "esperar") {
+      this.cerrar();
+      this.acciones.alEsperar();
     } else if (que === "hangar") {
       this.acciones.alHangar();
     } else if (que === "cerrar") {

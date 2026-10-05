@@ -16,8 +16,10 @@ import torreCanarias from "../../data/voces/torre-canarias/manifiesto.json";
 import instructora from "../../data/voces/instructor/manifiesto.json";
 import { recetaDe, type Manifiesto } from "../audio/banco-de-voz";
 import {
+  calleDicha,
   FONETICO,
   matriculaDe,
+  metrosDichos,
   pistaEnPiezas,
   prefijoDe,
   rellenoDe,
@@ -272,5 +274,22 @@ describe("nuestra matrícula, dicha por la instructora", () => {
         yo.matricula,
       ).not.toBeNull();
     }
+  });
+});
+
+describe("la intersección y la pista que queda, como las dice la torre", () => {
+  it("nombra la calle con el alfabeto y las cifras una a una", () => {
+    expect(calleDicha("A")).toBe("Alfa");
+    expect(calleDicha("E-2")).toBe("Echo two");
+    expect(calleDicha("b9")).toBe("Bravo niner");
+    expect(calleDicha(null)).toBeNull();
+    expect(calleDicha("  ")).toBeNull();
+  });
+
+  it("redondea a la baja a la centena y dice los miles y los cientos", () => {
+    expect(metrosDichos(1234)).toBe("one thousand two hundred");
+    expect(metrosDichos(2948)).toBe("two thousand niner hundred");
+    expect(metrosDichos(3000)).toBe("three thousand");
+    expect(metrosDichos(807)).toBe("eight hundred");
   });
 });

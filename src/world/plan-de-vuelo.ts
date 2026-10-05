@@ -48,8 +48,12 @@ import {
   trueFromIndicated,
 } from "../flight/atmosphere";
 import {
-  paraEntrarYDespegar,
+  DIA_DE_TABLAS,
+  pistaNecesariaHoy,
   pistaQueHaceFalta,
+  porQueHoyMasPista,
+  remontaHastaLaCabecera,
+  type DiaDeDespegue,
   pistaQueNecesita,
 } from "../flight/carrera";
 import { radioDeGiro } from "../flight/cabe";
@@ -379,6 +383,38 @@ const MISMA_BOCA = 60;
 /** Y lo que se aparta de la pista, m: más allá está la paralela. */
 const RAQUETA_DE_LADO = 60;
 
+/**
+ * **Por dónde empieza el despegue.** Ver `PlanDeVuelo.comoSeSale`.
+ */
+export interface ComoSeSale {
+  /**
+   * `cabecera`: se entra por el principio de la pista; `interseccion`: se
+   * entra a media pista y se despega desde ahí, sin remontar; `remonte`: se
+   * rueda por la pista hacia atrás y se da la vuelta.
+   */
+  readonly desde: "cabecera" | "interseccion" | "remonte";
+  /** Si el remonte llega hasta el final de la pista; si no, es un trozo. */
+  readonly hastaElFinal: boolean;
+  /** La pista que queda por delante al soltar frenos, m. */
+  readonly porDelante: number;
+  /** La calle por la que se llega a la pista, si tiene nombre. */
+  readonly calle: string | null;
+  /** La pista que queda por delante desde donde se entra, m: la TORA de la intersección. */
+  readonly desdeLaEntrada: number;
+  /** La pista entera, m: la TORA desde la cabecera. */
+  readonly entera: number;
+  /** La que este avión necesita hoy, con su margen, m. Ver `pistaNecesariaHoy`. */
+  readonly necesitaHoy: number;
+  /** Por qué hoy necesita bastante más que en las tablas, si es así. */
+  readonly porQue: "calor" | "cola" | null;
+}
+
+/**
+ * Lo que tiene que quedar detrás de un remonte parcial para que compense no ir
+ * hasta el final, m. Ver `vueltaDelBackTaxi`.
+ */
+const TROZO_QUE_NO_COMPENSA = 300;
+
 /** Cómo se da la media vuelta del back-taxi. Ver `vueltaDelBackTaxi`. */
 interface VueltaDelBackTaxi {
   readonly forma: "apartada" | "centrada" | "raqueta";
@@ -389,6 +425,11 @@ interface VueltaDelBackTaxi {
   readonly radio: number;
   /** El apartadero, de la boca por la que se entra a la que devuelve a la pista. */
   readonly camino: readonly Punto[];
+  /**
+   * Si se remonta hasta el final de la pista o solo un trozo. Ver
+   * `remontaHastaLaCabecera` en `flight/carrera.ts`.
+   */
+  readonly hastaElFinal: boolean;
 }
 
 /**
@@ -592,6 +633,20 @@ const SALIDA_OCUPADA = 1000;
  * más que una ocupada. Ver la pasada de «todas» en `salidaPorDelanteQue`.
  */
 const VOLVER_POR_LA_PISTA = 2 * SALIDA_OCUPADA;
+
+/**
+ * **Y lo que cuesta de más una salida desde la que, para llegar al puesto, hay
+ * que volver a pisar una pista** —cruzarla o rodar por ella—, m.
+ *
+ * Diez kilómetros: más que cualquier pista entera y que las otras dos juntas,
+ * así que cualquier salida por delante que no cruce gana a todas las que
+ * cruzan; y si cruzan todas —un campo con la plataforma al otro lado de otra
+ * pista—, gana la primera, como siempre. Ver `vuelveAPisarUnaPista`.
+ */
+const CRUZAR_UNA_PISTA = 10 * SALIDA_OCUPADA;
+
+/** Cada cuánto se mira si la raya pisa una pista, m. Ver `vuelveAPisarUnaPista`. */
+const CADA_CUANTO_SE_MIRA_LA_PISTA = 5;
 
 /**
  * A partir de cuántos metros de la raya se considera que ya no vas por ella, m.
@@ -2658,6 +2713,50 @@ export class PlanDeVuelo {
     return this.salidasPorInterseccion() ? pistaQueHaceFalta(this.avion) : Infinity;
   }
 
+  /**
+   * **La pista que tiene que quedar por delante para despegar desde donde se
+   * entra, sin remontar**, m: la que este avión necesita **hoy**, con el aire,
+   * el viento y el suelo del día y el margen de su clase —ver
+   * `pistaNecesariaHoy` en `flight/carrera.ts`—, que es la cuenta que hace
+   * quien vuela antes de aceptar una intersección (FAA, AIM 4-3-10 b).
+   *
+   * Enrique lo precisó: no es una regla por tipo de avión, es lo que se hace
+   * en cada momento. La misma avioneta sale desde la calle una mañana fresca
+   * con viento de cara y remonta una tarde de calor con viento de cola.
+   *
+   * Con el suelo de siempre para la avioneta, seiscientos metros: por debajo
+   * de eso no se entra a una pista ni con el avión más pequeño de la flota, y
+   * los veredictos medidos en los aeródromos del juego siguen siendo los
+   * mismos. Ver `paraEntrarYDespegar`.
+   */
+  private pistaParaNoRemontar(): number {
+    const hoy = pistaNecesariaHoy(this.avion, this.diaDeHoy());
+    return esDeLinea(this.avion) ? hoy : Math.max(600, hoy);
+  }
+
+  /**
+   * **Hasta dónde remonta la avioneta cuando remonta un trozo**, m de pista
+   * por delante: el doble de la que necesita hoy, con los mil doscientos de
+   * siempre como suelo, que es la que se quiere al elegir intersección
+   * —`pistaQueHaceFalta`— contada con el día. Ver `remontaHastaLaCabecera`.
+   */
+  private pistaParaElTrozo(): number {
+    const quiere = this.pistaQueSeQuiere();
+    if (!Number.isFinite(quiere)) return quiere;
+    return Math.max(1200, 2 * pistaNecesariaHoy(this.avion, this.diaDeHoy()));
+  }
+
+  /**
+   * **El día de hoy para despegar**: el aire, el viento en la cabecera en uso
+   * y el suelo. Lo pone quien sabe del tiempo —el juego—; sin él, el día de
+   * tablas, que es con el que se mide en las pruebas.
+   */
+  diaDeDespegue: (() => DiaDeDespegue) | null = null;
+
+  private diaDeHoy(): DiaDeDespegue {
+    return this.diaDeDespegue?.() ?? DIA_DE_TABLAS;
+  }
+
   /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
   private alGrafo(p: Punto): number {
     let mejor = Infinity;
@@ -3584,6 +3683,7 @@ export class PlanDeVuelo {
       this.ponerRuta(null);
       this.destino = null;
       this.giroDelBackTaxi = null;
+      this.laSalidaDeHoy = null;
       // Volando no hay puerta asignada: la siguiente llegada se asigna sola.
       this.puerta.olvidar();
       return;
@@ -3789,6 +3889,31 @@ export class PlanDeVuelo {
       // Y si ya está girando hacia una calle, por la calle.
       { desdeFuera: true, desdeLaCalle: !porLaPistaAun },
     );
+    /*
+     * **Y la calle que cruza pista no se coge si todavía se puede seguir.**
+     *
+     * Una salida rápida nace en el eje, y a sus primeros metros
+     * `rodandoPorLaPista` da por metido en ella a quien pasa por delante de
+     * la boca rodando derecho: ahí no hay salida «por delante» que buscar y
+     * la raya sale de esa calle. En Gando, tomando por la 03L, la fase pasaba
+     * a «abandonando» justo en la boca de la que sale hacia la 03R —al revés
+     * de la plataforma—, a cinco metros de ella, y la raya volvía a cruzar
+     * las dos pistas por sus puntas norte. Ver `CRUZAR_UNA_PISTA`.
+     *
+     * Si quien está en esa boca sigue encima del asfalto de la pista y desde
+     * esa calle a casa hay que volver a pisar una, se mira si hay una salida
+     * por delante que no la pise; si la hay, se sigue rodando hasta ella, que
+     * es lo que hace quien todavía no ha girado.
+     */
+    if (
+      directa &&
+      !porLaPistaAun &&
+      this.encimaDeLaPista() &&
+      this.vuelveAPisarUnaPista(directa)
+    ) {
+      const otra = porLaSalida(this.salidaPorDelanteQue(true, meta, true));
+      if (otra?.ruta && !this.vuelveAPisarUnaPista(otra.ruta)) return otra;
+    }
     /*
      * Y si sale rodando por la pista, también sin ganchos: es la raya de
      * recién tocado, a setenta metros por segundo, que va por el eje de la
@@ -4243,7 +4368,7 @@ export class PlanDeVuelo {
     // entrar y despegar, que es lo que pasa en casi todos los aeródromos.
     // Salvo donde el AIP no deja salir por intersección: ver
     // `salidasPorInterseccion`.
-    if (!soloLaCabecera && mitad - along >= paraEntrarYDespegar(this.avion)) return null;
+    if (!soloLaCabecera && mitad - along >= this.pistaParaNoRemontar()) return null;
     const umbral = -mitad + HUECO_PARA_GIRAR;
     /*
      * **Y donde el AIP limita las intersecciones, a la cabecera y no a medio
@@ -4267,13 +4392,49 @@ export class PlanDeVuelo {
      * lo escribe así: «must accomplish back-track at the end of the runway».
      * Un lazo en la cabecera se entiende solo: es donde empieza la pista.
      */
-    const quiere = Infinity;
-    const aLaCabecera = mitad - quiere <= umbral + RADIO_CURVA;
+    /*
+     * **Pero hasta el final, el avión de línea; la avioneta, un trozo.**
+     *
+     * Con lo de arriba, en Mariscal Estigarribia por la 01 se remontaban dos
+     * kilómetros y novecientos con cualquier avión, también con la avioneta
+     * que despega en cuatrocientos metros. Enrique no tenía claro que eso
+     * fuera lo habitual, y no lo es: el de línea sale casi siempre con la
+     * pista entera, que es para la que tiene hecho su cálculo de despegue; la
+     * avioneta remonta hasta tener por delante la pista que se quiere y da la
+     * vuelta ahí. Ver `remontaHastaLaCabecera` en `flight/carrera.ts`, con sus
+     * fuentes.
+     *
+     * Y el lazo de la avioneta no queda «pegado a la entrada», que era la otra
+     * mitad de lo que no se entendía en Pilar: solo se remonta si desde la
+     * entrada no llega la pista de escuela, y entonces se va hasta la que se
+     * quiere, que es el doble. El trozo es de cientos de metros, no de cuatro.
+     * Donde el AIP limita las intersecciones a unas bocas, el sitio de dar la
+     * vuelta no es ninguna de ellas, así que ahí también se va al final.
+     */
+    const remontaEntera =
+      soloLaCabecera ||
+      !!this.aero.salidasPorInterseccion?.soloDesde?.length ||
+      remontaHastaLaCabecera(this.avion);
+    const seQuiere = remontaEntera ? Infinity : this.pistaParaElTrozo();
+    /*
+     * Y si el trozo que se dejaría detrás es corto, hasta el final igual: dar
+     * la vuelta a ciento ochenta metros de la punta —el bimotor de pistón en
+     * Encarnación— no ahorra nada y deja un lazo que no se entiende.
+     */
+    const aLaCabecera = mitad - seQuiere <= umbral + RADIO_CURVA + TROZO_QUE_NO_COMPENSA;
+    const quiere = aLaCabecera ? Infinity : seQuiere;
 
     // Con apartadero en la cabecera y la pista entera por delante, por él.
     const raqueta = aLaCabecera ? this.raquetaDeLaCabecera() : null;
     if (raqueta && along - raqueta.giro >= HUECO_PARA_GIRAR)
-      return { forma: "raqueta", giro: raqueta.giro, lado: 0, radio: 0, camino: raqueta.camino };
+      return {
+        forma: "raqueta",
+        giro: raqueta.giro,
+        lado: 0,
+        radio: 0,
+        camino: raqueta.camino,
+        hastaElFinal: true,
+      };
 
     /*
      * **La media vuelta acaba en el eje, no al lado.**
@@ -4337,7 +4498,14 @@ export class PlanDeVuelo {
      * con la pista que hay.
      */
     if (along - giro < HUECO_PARA_GIRAR + lado) return null;
-    return { forma, giro, lado, radio, camino: [] };
+    return {
+      forma,
+      giro,
+      lado,
+      radio,
+      camino: [],
+      hastaElFinal: giro <= umbral + radio + 1,
+    };
   }
 
   /** La vuelta por el apartadero, si se llega a él. Ver `vueltaDelBackTaxi`. */
@@ -4346,7 +4514,14 @@ export class PlanDeVuelo {
     raqueta: { giro: number; camino: Punto[] },
   ): VueltaDelBackTaxi | null {
     if (along - raqueta.giro < HUECO_PARA_GIRAR) return null;
-    return { forma: "raqueta", giro: raqueta.giro, lado: 0, radio: 0, camino: raqueta.camino };
+    return {
+      forma: "raqueta",
+      giro: raqueta.giro,
+      lado: 0,
+      radio: 0,
+      camino: raqueta.camino,
+      hastaElFinal: true,
+    };
   }
 
   /**
@@ -4486,7 +4661,9 @@ export class PlanDeVuelo {
    *
    * Medido: en Mariscal Estigarribia, por la 01, se entra en el metro 1208 del
    * eje y se remonta hasta treinta metros de la punta: dos kilómetros y
-   * novecientos de pista. Es lo largo de ese campo, no del dibujo.
+   * novecientos de pista. Es lo largo de ese campo, no del dibujo. **Y eso,
+   * con un avión de línea**: la avioneta remonta un trozo, hasta tener por
+   * delante la pista que se quiere. Ver `remontaHastaLaCabecera`.
    *
    * **Y la media vuelta se dibuja, no se pide.** Un vértice de ciento ochenta
    * grados no lo redondea nadie —`redondear` se queda con radio cero y la
@@ -4505,11 +4682,13 @@ export class PlanDeVuelo {
     llegaDeFrente = false,
   ): { puntos: Punto[]; arco: number | null } | null {
     this.giroDelBackTaxi = null;
+    this.remonteHastaElFinal = false;
     const vuelta = this.vueltaDelBackTaxi(along);
     if (!vuelta) return null;
     const { giro, lado, radio } = vuelta;
     const mitad = this.largoDePista / 2;
     this.giroDelBackTaxi = giro;
+    this.remonteHastaElFinal = vuelta.hastaElFinal;
 
     const [fx, fz] = delante(this.pista.heading);
     const [tx, tz] = traves(this.pista.heading);
@@ -4631,11 +4810,16 @@ export class PlanDeVuelo {
     const alEje = this.alEjeDesde(desde);
     if (!alEje) {
       this.giroDelBackTaxi = null;
+      this.laSalidaDeHoy = null;
       return null;
     }
     const { hastaElEje, ejeAbajo } = alEje;
+    // La calle por la que se llega, que es la que nombra la intersección. Se
+    // mira antes de cambiar de ruta: la de ahora es la que trajo hasta aquí.
+    const calle = this.ruta?.letras.at(-1) ?? null;
     // Y la vuelta entera, si desde aquí no hay pista para despegar.
     const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente);
+    this.laSalidaDeHoy = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle);
     const puntos: Punto[] = vuelta
       ? [...hastaElEje, ...vuelta.puntos]
       : [...hastaElEje, ejeAbajo];
@@ -4937,6 +5121,11 @@ export class PlanDeVuelo {
     soloHaciaDelante: boolean,
     /** A dónde se va de verdad; sin ella, al puesto de salida. */
     meta?: Punto,
+    /**
+     * Y si se busca aunque parezca que ya se está saliendo por una calle. Ver
+     * «la calle que cruza pista» en `rutaDeVuelta`.
+     */
+    aunqueSalga = false,
   ): Punto | null {
     const x = this.ultimaPos[0];
     const z = -this.ultimaPos[1];
@@ -4951,7 +5140,7 @@ export class PlanDeVuelo {
     if (Math.abs(aqui.across) > this.pista.width) return null;
     // Ni girando ya hacia una calle: quien está saliendo, sale. Ver
     // `rodandoPorLaPista`.
-    if (!this.rodandoPorLaPista()) return null;
+    if (!aunqueSalga && !this.rodandoPorLaPista()) return null;
 
     /*
      * **Y «por delante» es hacia donde mira el morro, no hacia donde mira la
@@ -5142,16 +5331,86 @@ export class PlanDeVuelo {
        */
       const vuelve =
         !soloHaciaDelante && hasta && this.vuelvePorLaPista(hasta, along, sentido);
+      /*
+       * **Y la primera útil es la que deja la pista hacia casa**, no la
+       * primera que hay.
+       *
+       * En Gando, tomando por la 03L, la primera boca por delante es una
+       * calle que sale hacia el este, hacia la 03R, y la plataforma está al
+       * oeste. Desde ahí no hay manera de volver sin pisar pista: la raya
+       * rodaba ciento cuarenta y cinco metros **por la 03R**, subía por la
+       * paralela del este, cruzaba las dos pistas por sus puntas norte y
+       * bajaba por la del oeste: 4,5 km de raya para un puesto al que,
+       * saliendo hacia el oeste, hay uno. Y al cruzar la punta de la 03L la
+       * fase volvía a «abandonando» con otro avión ya alineado en ella, que
+       * la torre había autorizado porque la pista estaba libre cuando se le
+       * dio. Medido con el banco del vuelo entero Fuerteventura–Gran Canaria:
+       * «dos encima de la pista» ciento cincuenta y seis muestras, a 3.092 m
+       * del umbral.
+       *
+       * Ningún piloto deja la pista hacia el lado contrario de su plataforma
+       * si puede dejarla hacia ella: cruzar una pista en uso pide una
+       * autorización expresa de la torre, y la otra pista de un campo con dos
+       * no es una calle. Se rueda un poco más por la pista que se acaba de
+       * usar —que es lo normal— y se sale por la primera que lleva a casa
+       * sin pisar otra.
+       */
+      const cruza = hasta !== null && this.vuelveAPisarUnaPista(hasta);
       const coste =
         adelante +
         (hasta?.ocupada ? SALIDA_OCUPADA : 0) +
-        (vuelve ? VOLVER_POR_LA_PISTA : 0);
+        (vuelve ? VOLVER_POR_LA_PISTA : 0) +
+        (cruza ? CRUZAR_UNA_PISTA : 0);
       if (coste < cerca) {
         cerca = coste;
         mejor = nudo;
       }
     }
     return mejor;
+  }
+
+  /** Si el avión está sobre el asfalto de la pista en uso, de punta a punta. */
+  private encimaDeLaPista(): boolean {
+    const { x, z, heading, width, length } = this.pista;
+    const aqui = enEjesDePista(this.ultimaPos[0], -this.ultimaPos[1], x, z, heading);
+    return Math.abs(aqui.across) <= width / 2 && Math.abs(aqui.along) <= length / 2;
+  }
+
+  /**
+   * Si una ruta que sale de la pista en uso **vuelve a pisar una pista**
+   * —esta misma o la otra de un campo con dos— después de haberla dejado:
+   * cruzarla o rodar por ella. Ver `CRUZAR_UNA_PISTA`.
+   *
+   * «Dejada» es a `FUERA_DE_LA_PISTA` del borde, donde se pinta la doble
+   * raya: una salida rápida va casi pegada al borde sus primeros metros y no
+   * puede contar como volver a ella. Y se mira cada pocos metros y no en los
+   * vértices, porque una calle que cruza una pista de cuarenta y cinco metros
+   * puede no tener ninguno encima del asfalto.
+   */
+  private vuelveAPisarUnaPista(ruta: Ruta): boolean {
+    const enPista = this.grafo.enPista;
+    if (!enPista) return false;
+    const { x, z, heading, width } = this.pista;
+    const fuera = width / 2 + FUERA_DE_LA_PISTA;
+    let dejada = false;
+    for (let i = 1; i < ruta.puntos.length; i++) {
+      const a = ruta.puntos[i - 1]!;
+      const b = ruta.puntos[i]!;
+      const n = Math.max(
+        1,
+        Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / CADA_CUANTO_SE_MIRA_LA_PISTA),
+      );
+      for (let k = 0; k <= n; k++) {
+        const q: Punto = [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n];
+        if (dejada) {
+          if (enPista(q)) return true;
+        } else if (
+          Math.abs(enEjesDePista(q[0], -q[1], x, z, heading).across) >= fuera
+        )
+          dejada = true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -5466,6 +5725,55 @@ export class PlanDeVuelo {
   /** Dónde toca girar en el back-taxi, para los bancos. Ver `sondas.ts`. */
   get dondeSeGira(): number | null {
     return this.giroDelBackTaxi;
+  }
+
+  /** Si el back-taxi de ahora llega hasta el final de la pista. */
+  private remonteHastaElFinal = false;
+
+  /**
+   * **Por dónde empieza este despegue**, para contarlo antes de entrar: desde
+   * la cabecera, desde una intersección o remontando —hasta el final o un
+   * trozo—. Lo pone `entradaEnPista` con el verde, y lo lee el juego para que
+   * la instructora y la radio digan lo que corresponde. Ver
+   * `contarPorDondeSeSale` en `game.ts` y `remontaHastaLaCabecera`.
+   */
+  get comoSeSale(): ComoSeSale | null {
+    return this.laSalidaDeHoy;
+  }
+
+  /** Ver `comoSeSale`. */
+  private laSalidaDeHoy: ComoSeSale | null = null;
+
+  /**
+   * De dónde sale el despegue entrando a `along` metros del centro de la
+   * pista. Una entrada a menos de `EN_LA_CABECERA` del principio de la pista
+   * es la de la cabecera: da la pista entera, o casi, y no es una
+   * intersección.
+   */
+  private comoSeSaleDesde(along: number, remonta: boolean, calle: string | null): ComoSeSale {
+    const mitad = this.largoDePista / 2;
+    const giro = this.giroDelBackTaxi;
+    const dia = this.diaDeHoy();
+    const comun = {
+      calle,
+      desdeLaEntrada: mitad - Math.max(-mitad, along),
+      entera: this.largoDePista,
+      necesitaHoy: pistaNecesariaHoy(this.avion, dia),
+      porQue: porQueHoyMasPista(this.avion, dia),
+    };
+    if (remonta && giro !== null)
+      return {
+        ...comun,
+        desde: "remonte",
+        hastaElFinal: this.remonteHastaElFinal,
+        porDelante: mitad - giro,
+      };
+    return {
+      ...comun,
+      desde: along + mitad > EN_LA_CABECERA ? "interseccion" : "cabecera",
+      hastaElFinal: false,
+      porDelante: comun.desdeLaEntrada,
+    };
   }
 
   /**

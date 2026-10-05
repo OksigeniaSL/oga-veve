@@ -120,7 +120,7 @@ entra por donde llega la calle, se rueda por la pista hasta el final y se da la
 vuelta allí. El lazo ya va donde de verdad se da la vuelta —en la cabecera, o
 en su ensanche si lo hay, ver `vueltaDelBackTaxi` en
 `src/world/plan-de-vuelo.ts`—, y ahora se cuenta una vez, con el verde y antes
-de entrar (`contarElRemonte` en `src/game.ts`). ElevenLabs sigue sin saldo
+de entrar (`contarPorDondeSeSale` en `src/game.ts`, antes `contarElRemonte`). ElevenLabs sigue sin saldo
 hasta el 6 de octubre, así que **no se ha grabado nada** y el juego funciona
 sin estas frases: lo que no está grabado no suena.
 
@@ -187,7 +187,80 @@ re-codificado y `node scripts/verificar-voces.mjs`.
 
 ## 3. Después de grabar
 
-Nada: `contarElRemonte` ya pide las dos voces **solo si su grabación está en
+Nada: `contarPorDondeSeSale` ya pide las dos voces **solo si su grabación está en
 el pack** (`instructor.vozDe`), así que en cuanto estén, suenan. Comprobarlo
 con el banco del vuelo entero saliendo de Encarnación con viento del norte
 (la 12 se remonta, y hay torre) y de Pilar (AFIS: solo la instructora).
+
+---
+
+# Pendiente: remontar o salir desde la intersección, según la cuenta del día
+
+Encargo del 5 de octubre de 2026, detrás del anterior. Remontar llegaba
+siempre hasta la cabecera, también con la avioneta: en Mariscal Estigarribia,
+por la 01, dos kilómetros y novecientos de pista hacia atrás con un avión que
+despega en cuatrocientos. Y Enrique precisó que no es una regla por tipo: es
+lo que se hace en cada momento. Quien vuela calcula la pista que necesita hoy
+(`pistaNecesariaHoy` en `src/flight/carrera.ts`: el aire de hoy, el viento en
+esa cabecera y el suelo, por el margen de su clase —1,33 de escuela la
+avioneta, 1,15 de la norma de certificación el de línea—) y la compara con la
+que queda desde la intersección. Si le da, sale desde ahí; si no, remonta: el
+de línea hasta el final, la avioneta un trozo. Y se cuenta, con el verde y
+antes de entrar (`contarPorDondeSeSale` en `src/game.ts`). **Nada grabado**:
+ElevenLabs sin saldo hasta el 6 de octubre.
+
+## Lo que ya se ve, sin grabar nada
+
+- **El lazo de la raya**, donde se da la vuelta: al fondo con el de línea, a
+  un trozo con la avioneta.
+- **La tarjeta de la media vuelta**, con su propio texto cuando es un trozo:
+  «Andá hasta la vuelta dibujada y girá ahí» (`vuelo.backTaxiUnTrecho`). La
+  de siempre, «Andá hasta el fondo…», está grabada pero no vale para un
+  trozo, así que ésta va con la voz del sistema hasta grabarla; en el
+  navegador sin voces se queda el dibujo y el texto.
+- **La radio, escrita en su tira**, de Taguató para arriba (ver abajo).
+
+## La instructora (tres peldaños de abajo)
+
+| clave | dice | cuándo |
+|---|---|---|
+| `vuelo.desdeLaInterseccion` | Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra | la cuenta da desde la intersección |
+| `vuelo.remontarUnTrecho` | Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar | la avioneta remonta un trozo |
+| `vuelo.remontarUnTrecho.calor` | Hoy hace calor y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta | lo mismo, cuando el calor alarga la cuenta una décima o más |
+| `vuelo.remontarUnTrecho.cola` | Hoy el viento viene de atrás y el avión necesita más pista: vamos un trecho por la pista y damos la vuelta | lo mismo, por el viento de cola |
+| `vuelo.remontar.calor` | Hoy hace calor y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá | remonta hasta el final, por el calor |
+| `vuelo.remontar.cola` | Hoy el viento viene de atrás y el avión necesita más pista: vamos por la pista hasta el final y damos la vuelta allá | lo mismo, por el viento de cola |
+| `vuelo.backTaxiUnTrecho` | Andá hasta la vuelta dibujada y girá ahí | la tarjeta de la fase de remontar, cuando es un trozo |
+
+Las siete salen con el resto de `vuelo.*`: `node scripts/frases-para-grabar.mjs`
+y `node scripts/voces-elevenlabs.mjs instructor`, con sus recetas de una pieza
+en `crudo/instructor/recetas.json`. `contarPorDondeSeSale` pide la del porqué
+solo si está grabada, y si no la de siempre; y cualquiera, **solo si su
+grabación está en el pack**.
+
+## La radio (de Taguató para arriba), escrita en su tira
+
+En inglés, como el resto de la radio de los peldaños de arriba. La fraseología
+es la de SERA (AMC1 SERA.14001, apéndice 1, 1.4.10 l a q) y la OACI (Doc 4444,
+12.3.4.7 n a p); la de España, en castellano, en el RD 1180/2018, anexo V,
+1.4.8 y 1.4.11, por si se graba la torre en castellano para los peldaños de
+abajo:
+
+| quién | en inglés (lo que sale en la tira) | en castellano (RD 1180/2018) | cuándo |
+|---|---|---|---|
+| torre | {matrícula}, advise able to depart from runway {pista}, intersection {calle} | {matrícula}, indique si está listo para despegar de la pista {pista}, intersección {calle} | con torre, si se entra por una intersección con nombre |
+| quien vuela | Affirm, {matrícula} | Afirmo, {matrícula} | la cuenta le da |
+| torre | {matrícula}, TORA runway {pista}, from intersection {calle}, {metros} metres | {matrícula}, TORA pista {pista}, desde intersección {calle}, {metros} metros | detrás del «affirm»; redondeado a la baja a la centena |
+| quien vuela | Negative, request backtrack, {matrícula} (el de línea: request full length) | Negativo, solicito regresar por pista, {matrícula} | la cuenta no le da |
+| torre | {matrícula}, backtrack runway {pista} | {matrícula}, regreso por pista {pista} | detrás. **Ésta es la única con voz enganchada**: `torre.backtrack` del apartado anterior |
+| quien vuela, con AFIS | {matrícula}, backtracking runway {pista} / departing from intersection {calle}, runway {pista} | — | un AFIS no ofrece ni autoriza: quien vuela dice lo que hace |
+
+Para darles voz hacen falta piezas nuevas en `TORRE_SOLO` («advise able to
+depart from runway», «intersection», «TORA runway», «from intersection»,
+«thousand», «hundred», «metres») y la calle en letras y cifras sueltas, que ya
+están. Las de quien vuela no tienen voz en el juego: van solo en la tira.
+
+Comprobarlo con el banco del vuelo entero saliendo de Mariscal Estigarribia
+con viento del sur (la 01: la avioneta remonta un trozo; el JAZ 90, la pista
+entera) y con viento del norte (la 19: la avioneta y el JAZ 90 salen desde la
+calle; el JAZ 120 pide la pista entera).

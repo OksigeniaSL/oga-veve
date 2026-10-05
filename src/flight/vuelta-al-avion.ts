@@ -129,7 +129,23 @@ export class VueltaAlAvion {
     this.clase = clase;
     this.cosas = cosas;
     this.fundaPuestaYa = cosas.some((c) => LLEVA_FUNDA.has(c));
-    this.calzosPuestosYa = cosas.includes("calzos");
+    /*
+     * **Y el de línea también los lleva puestos, aunque no los toque nadie de
+     * la cabina.** En el puesto de un aeropuerto un avión de línea está
+     * calzado, y se ve: los pone el personal de tierra al llegar —es la seña
+     * de «calzos puestos» del señalero— y los quita el mismo personal antes
+     * del remolque o del arranque. No están en su vuelta, que es la del manual
+     * de línea, porque no los quita quien vuela; pero están.
+     */
+    this.calzosPuestosYa = cosas.includes("calzos") || clase === "linea";
+  }
+
+  /**
+   * **Quién quita los calzos**: en la avioneta, quien hace la vuelta —o la
+   * instructora al arrancar—; en el de línea, siempre el personal de tierra.
+   */
+  get calzosDeTierra(): boolean {
+    return this.clase === "linea";
   }
 
   /** Si alguien la ha empezado: desde ahí es suya. */
@@ -213,4 +229,27 @@ export class VueltaAlAvion {
   quitarLaFunda(): void {
     this.fundaPuestaYa = false;
   }
+}
+
+/** Lo que dura la prueba de mandos de la vuelta, s: un tercio para cada mando. */
+export const DURA_LA_PRUEBA_DE_MANDOS = 4.5;
+
+/**
+ * **La prueba de mandos de la vuelta**, en el instante `t` desde que se tocó
+ * la cola: cuánto va cada superficie, de −1 a 1. Primero los alerones, uno
+ * arriba y otro abajo; luego la profundidad, arriba y abajo; y la dirección,
+ * a un lado y a otro. Es lo que se hace de verdad al mirar la cola —«Control
+ * Surfaces — CHECK freedom of movement»—: se mueve cada una hasta sus topes,
+ * de una en una, para ver que van libres. Fuera de la prueba, todo a cero.
+ */
+export function pruebaDeMandos(t: number): { alabeo: number; cabeceo: number; guinada: number } {
+  const quieto = { alabeo: 0, cabeceo: 0, guinada: 0 };
+  if (!(t >= 0 && t < DURA_LA_PRUEBA_DE_MANDOS)) return quieto;
+  const tramo = DURA_LA_PRUEBA_DE_MANDOS / 3;
+  const cual = Math.min(2, Math.floor(t / tramo));
+  // Una vuelta entera de seno en cada tramo: a un tope, al otro y al centro.
+  const v = Math.sin(((t - cual * tramo) / tramo) * Math.PI * 2);
+  if (cual === 0) return { ...quieto, alabeo: v };
+  if (cual === 1) return { ...quieto, cabeceo: v };
+  return { ...quieto, guinada: v };
 }

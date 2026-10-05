@@ -59,14 +59,27 @@ solo si algo pasa del límite de ese avión), con el primer motivo.
 
 | clave | es-PY | en |
 |---|---|---|
-| `parte.propone.tormenta` | «Hay tormenta encima del campo. Hoy mejor no salir, o esperar a que pase.» | «There's a thunderstorm over the field. Better not to go today, or wait for it to pass.» |
-| `parte.propone.visibilidad` | «Se ve muy poco para este avión. Hoy mejor quedarse, o esperar a que abra.» | «Visibility is too low for this plane. Better to stay today, or wait for it to clear.» |
-| `parte.propone.techo` | «Las nubes están muy bajas para este avión. Hoy mejor quedarse, o esperar a que suban.» | «The clouds are too low for this plane. Better to stay today, or wait for them to lift.» |
-| `parte.propone.cruzado` | «El viento de costado es más fuerte de lo que este avión sabe aguantar. Hoy mejor quedarse, o esperar a que afloje.» | «The crosswind is stronger than this plane is known to handle. Better to stay today, or wait for it to ease.» |
+| `parte.propone.tormenta` | «Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.» | «There's a thunderstorm over the field. Under a storm the wind changes all of a sudden, and nobody flies into a storm: better to stay, or wait for it to pass.» |
+| `parte.propone.visibilidad` | «Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.» | «Visibility today is below the minimum for this plane. Without seeing, we couldn't find the runway again if we needed to: better to stay, or wait for it to clear.» |
+| `parte.propone.techo` | «Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.» | «The clouds are lower than this plane's minimum. Up there we'd fly into them and wouldn't see the runway to come back: better to stay, or wait for them to lift.» |
+| `parte.propone.cruzado` | «Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.» | «Today's crosswind is stronger than the one this plane was tested with. With more crosswind than it was tested for, we don't know how it behaves on touchdown: better to stay, or wait for it to ease.» |
+| `parte.propone.pista` | «Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.» | «Today this plane needs more runway than there is, with the margin its manual asks for. No margin, no departure: better to stay, or wait for it to cool down or for the wind to change.» |
+| `parte.esperamos.voz` | «Esperamos un rato y volvemos a mirar el parte.» | «We'll wait a while and look at the report again.» |
+| `parte.sigueIgual.voz` | «Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.» | «We looked again and nothing has changed. We can wait a bit more, or stay: both are fine.» |
+| `parte.yaSePuede.voz` | «Miramos otra vez y ya mejoró: ahora sí podemos salir.» | «We looked again and it got better: now we can go.» |
 | `parte.ganaste` | «¡Hoy ganaste: decidiste bien!» | «You won today: good decision!» |
 | `parte.salgoIgual.voz` | «Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.» | «All right: we go, carefully. And if it's no good up there, we come back.» |
 
 `parte.ganaste` es también el texto de la tarjeta en los peldaños de frases: la
 misma clave para lo que se lee y lo que se oye, como en la frustrada.
 
-Total: **22 frases** de la instructora, en dos idiomas.
+Total: **26 frases** de la instructora, en dos idiomas.
+
+**Cambiadas el 5 de octubre** (sin grabar todavía, así que no hay audio que
+tirar): las cuatro `parte.propone.*` llevan ahora el porqué —Enrique: «que se
+explique con datos al piloto, que sepa que es una negativa argumentada»—, y
+hay una quinta, `parte.propone.pista`, para el día en que no le da ni la pista
+entera. Y las tres de esperar, que ahora tiene su botón y vuelve a mirar el
+parte al minuto (`esperarUnRato` y `volverAMirarElParte` en `src/game.ts`).
+Las palabras, cifras y fuentes de cada porqué (`parte.palabra.*`,
+`parte.cifras.*`, `parte.origen.*`) son solo texto de la tarjeta: no se dicen.

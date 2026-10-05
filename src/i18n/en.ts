@@ -325,6 +325,19 @@ export const EN: Dictionary = {
   "vuelo.autorizadoAfis": "The runway is free: enter when you are ready",
   "vuelo.backTaxi": "Backtrack to the far end, then turn around",
   "vuelo.remontar": "We'll taxi along the runway to the far end and turn around there",
+  "vuelo.remontarUnTrecho":
+    "We'll taxi back along the runway a little way and turn around: from there we have plenty to take off",
+  "vuelo.desdeLaInterseccion":
+    "We'll take off from here, without going to the end: the runway ahead is more than we need",
+  "vuelo.backTaxiUnTrecho": "Taxi back to the drawn turn and turn around there",
+  "vuelo.remontar.calor":
+    "It's hot today and the plane needs more runway: we'll taxi along the runway to the far end and turn around there",
+  "vuelo.remontar.cola":
+    "The wind is from behind today and the plane needs more runway: we'll taxi along the runway to the far end and turn around there",
+  "vuelo.remontarUnTrecho.calor":
+    "It's hot today and the plane needs more runway: we'll taxi back along the runway a little way and turn around",
+  "vuelo.remontarUnTrecho.cola":
+    "The wind is from behind today and the plane needs more runway: we'll taxi back along the runway a little way and turn around",
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
   "vuelo.noEstabilizada": "Not like this: go around and try again",
@@ -1313,13 +1326,39 @@ export const EN: Dictionary = {
   "parte.ganaste": "You won today: good decision!",
   "parte.sinMetar": "no METAR: the usual weather here",
   "parte.propone.tormenta":
-    "There's a thunderstorm over the field. Better not to go today, or wait for it to pass.",
+    "There's a thunderstorm over the field. Under a storm the wind changes all of a sudden, and nobody flies into a storm: better to stay, or wait for it to pass.",
   "parte.propone.visibilidad":
-    "Visibility is too low for this plane. Better to stay today, or wait for it to clear.",
+    "Visibility today is below the minimum for this plane. Without seeing, we couldn't find the runway again if we needed to: better to stay, or wait for it to clear.",
   "parte.propone.techo":
-    "The clouds are too low for this plane. Better to stay today, or wait for them to lift.",
+    "The clouds are lower than this plane's minimum. Up there we'd fly into them and wouldn't see the runway to come back: better to stay, or wait for them to lift.",
   "parte.propone.cruzado":
-    "The crosswind is stronger than this plane is known to handle. Better to stay today, or wait for it to ease.",
+    "Today's crosswind is stronger than the one this plane was tested with. With more crosswind than it was tested for, we don't know how it behaves on touchdown: better to stay, or wait for it to ease.",
+  "parte.propone.pista":
+    "Today this plane needs more runway than there is, with the margin its manual asks for. No margin, no departure: better to stay, or wait for it to cool down or for the wind to change.",
+  "parte.palabra.cruzado": "Crosswind",
+  "parte.palabra.visibilidad": "Poor visibility",
+  "parte.palabra.techo": "Low cloud",
+  "parte.palabra.tormenta": "Thunderstorm",
+  "parte.palabra.pista": "Runway too short",
+  "parte.cifras.cruzado": "crosswind today: {hoy} · this plane, tested up to {limite}",
+  "parte.cifras.visibilidad": "visibility today: {hoy} · this plane needs {limite}",
+  "parte.cifras.techo": "cloud base today {hoy} · this plane needs {limite}",
+  "parte.cifras.tormenta": "thunderstorm over the field today · no departing into a storm",
+  "parte.cifras.pista": "runway needed today: {hoy} · this runway has {limite}",
+  "parte.origen.demostrado": "demonstrated in its certification",
+  "parte.origen.norma": "the minimum the rules require",
+  "parte.origen.visual": "the minimum the rules require to fly by looking outside",
+  "parte.origen.instrumentos": "the minimum the rules require for its approach",
+  "parte.origen.manualEscuela": "its manual, with the training margin",
+  "parte.origen.manualCertificacion": "its manual, with its certification margin",
+  "parte.origen.tormenta": "nobody flies into a storm",
+  "parte.esperar": "We'll wait a while",
+  "parte.esperamos.voz": "We'll wait a while and look at the report again.",
+  "parte.sigueIgual": "We looked again: no change",
+  "parte.sigueIgual.voz":
+    "We looked again and nothing has changed. We can wait a bit more, or stay: both are fine.",
+  "parte.yaSePuede": "We looked again: now we can go!",
+  "parte.yaSePuede.voz": "We looked again and it got better: now we can go.",
   "parte.salgoIgual.voz":
     "All right: we go, carefully. And if it's no good up there, we come back.",
 };
