@@ -639,7 +639,7 @@ import {
 } from "./flight/sin-instructora";
 import { preguntarSiVuelaSinInstructora } from "./ui/pregunta-sin-instructora";
 import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
-import { BOCA, MEGAFONIA, anunciaLaFase } from "./audio/boca";
+import { BOCA, MEGAFONIA, anunciaElPuntoDeDescenso, anunciaLaFase } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
@@ -16727,6 +16727,8 @@ export class Game {
          * `audio/boca.ts`.
          */
         BOCA.retirar((c) => anunciaLaFase(c) && c !== clave);
+        // Y el «empezamos a bajar» que siguiera esperando, que es del camino.
+        BOCA.retirar((c) => anunciaElPuntoDeDescenso(c));
         // Y «motor a fondo» ya se dijo al soltar el gas. Ver `decirElGasSuelto`.
         const yaDicho = vista.fase === "despegando" && this.gasSueltoDicho;
         /*
@@ -20701,6 +20703,14 @@ export class Game {
     const yaExplicada = marcaNueva && this.cambiosExplicados.has(p.que);
     if (marcaNueva) this.cambiosExplicados.add(p.que);
     const habla = !como.calla && laInstructoraLoExplica(this.tier.avisos) && !yaExplicada;
+    /*
+     * **Y si la instructora pasa al paso siguiente, el «empezamos a bajar» que
+     * esperara turno ya no vale**: aguanta en la cola lo que dura su paso, no
+     * un reloj, y lo retira quien sabe que se ha pasado. Solo si este paso
+     * habla: uno que solo se ve no quita la voz al anterior. Ver
+     * `anunciaElPuntoDeDescenso` en `audio/boca.ts`.
+     */
+    if (habla && forma && p.que !== "bajar") BOCA.retirar((c) => anunciaElPuntoDeDescenso(c));
     const dice = habla
       ? (forma?.id ?? "sin voz")
       : yaExplicada
