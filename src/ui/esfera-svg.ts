@@ -177,6 +177,26 @@ function reflejo(): string {
  * rótulo. `data-dial` dice qué instrumento es, y por eso se puede contar desde
  * fuera cuáles lleva el cuadro.
  */
+/**
+ * **Qué explicación lleva cada esfera**, por su `data-dial`. Las de motor van
+ * numeradas —`motor-0`, `motor-1`— y se explican igual. Ver
+ * `ui/explicaciones-de-serie.ts`.
+ */
+export function explicaDelDial(id: string): string | null {
+  if (id.startsWith("motor")) return "motor";
+  const de: Readonly<Record<string, string>> = {
+    asi: "velocidad",
+    ai: "actitud",
+    alt: "altitud",
+    tc: "coordinador",
+    dg: "rumbo",
+    vsi: "variometro",
+    fuel: "combustible",
+    flaps: "flaps",
+  };
+  return de[id] ?? null;
+}
+
 export function esferaSvg(
   id: string,
   rotulo: string,
@@ -193,7 +213,17 @@ export function esferaSvg(
    */
   const escala = donde.radio / 50;
   return `
-    <g class="esfera" data-dial="${id}"
+    <g class="esfera" data-dial="${id}"${
+      explicaDelDial(id) ? ` data-explica="${explicaDelDial(id)}"` : ""
+    }${
+      /*
+       * Un reloj de vuelo o de motor es un instrumento entero: en la pantalla
+       * grande del teléfono, tocarlo es volver a las losas, como siempre. El
+       * depósito y los flaps son piezas, y se explican. Ver
+       * `ui/tocar-para-explicar.ts`.
+       */
+      id !== "fuel" && id !== "flaps" ? " data-explica-fondo" : ""
+    }
        transform="translate(${donde.x - donde.radio} ${donde.y - donde.radio}) scale(${escala})">
       ${empotrada()}
       ${cara}

@@ -27,12 +27,18 @@
 
 import { t } from "../i18n";
 import { Panel } from "./panel";
+import { LAMPARITA } from "./ventana-de-explicacion";
 
 export interface AccionesDePausa {
   seguir: () => void;
   reiniciar: () => void;
   ajustes: () => void;
   hangar: () => void;
+  /**
+   * El rincón de las curiosidades del vuelo, encima de la pausa: al cerrarlo
+   * se vuelve aquí. Opcional, para quien monte una pausa sin él.
+   */
+  curiosidades?: () => void;
 }
 
 export class PantallaDePausa {
@@ -93,6 +99,17 @@ export class PantallaDePausa {
             </svg>
             <span>${conLetras ? t("pausa.hangar") : ""}</span>
           </button>
+          <!--
+            **Y la lamparita: los porqués de un vuelo de pasaje** —las
+            persianas, las máscaras, el modo avión—, que en el vuelo no se
+            cuentan cada vez. Con la pausa puesta es cuando hay tiempo para
+            mirarlos. Ver ui/ventana-de-explicacion.ts y #196.
+          -->
+          <button type="button" class="pausa__puerta" data-pausa="curiosidades"
+                  aria-label="${t("explica.curiosidades")}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">${LAMPARITA}</svg>
+            <span>${conLetras ? t("explica.curiosidades") : ""}</span>
+          </button>
         </div>
       </div>
     `;
@@ -103,6 +120,7 @@ export class PantallaDePausa {
       else if (cual === "reiniciar") this.acciones.reiniciar();
       else if (cual === "ajustes") this.acciones.ajustes();
       else if (cual === "hangar") this.acciones.hangar();
+      else if (cual === "curiosidades") this.acciones.curiosidades?.();
       // Y tocar fuera del panel también sigue: es lo que espera cualquiera
       // que abrió esto sin querer, y el dedo de un chico se va donde se va.
       else if (e.target === root) this.acciones.seguir();

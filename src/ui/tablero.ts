@@ -60,6 +60,7 @@ import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { decima as n1, escribir, poner } from "./si-cambia";
+import { apareceEnPantalla } from "./explicaciones";
 
 /** Un punto de la carta, en píxeles desde el centro de la rosa. */
 type Punto2 = { dx: number; dy: number };
@@ -369,11 +370,19 @@ function tresPatas(ancho: number, alto: number): string {
  * en el avión, en la lámpara de la torre y en la tira de la radio—. Chapa
  * clara y letra negra grabada, distinta de la placa oscura del OACI del
  * destino. Ver `.placa-matricula` en la hoja.
+ *
+ * **Y lo dice en el dibujo: `data-se-reconoce`.** El banco del cuadro cuenta
+ * las palabras del primer peldaño, y estas letras las contaba —doce fallos,
+ * dos por avión—, porque no tenía cómo saber que esta forma se mira y no se
+ * lee. La marca es esa decisión escrita donde el banco la ve, no una
+ * excepción en el banco. Ver `verificar-cuadro.mjs`. Y tocada, se explica:
+ * qué es una matrícula y por qué la torre te llama así.
  */
 export function placaDeMatricula(matricula: string): string {
   const ancho = 30 + matricula.length * 14;
   return `
       <g class="tablero__matricula" data-hud="placa-matricula"
+         data-explica="matricula" data-se-reconoce
          transform="translate(14 ${ALTO_DEL_CUADRO - 32})">
         <rect width="${ancho}" height="27" rx="3" class="tablero__matricula-chapa" />
         <circle cx="6" cy="13.5" r="2" class="tablero__matricula-tornillo" />
@@ -452,6 +461,15 @@ export class Tablero {
   private ecos = "";
   /** Y el relieve, por lo mismo. Ver `relieveEnLaCarta`. */
   private relieve: readonly unknown[] | null = null;
+
+  /**
+   * **Si el cuadro se ve ahora mismo**: ni recogido ni detrás de la vista de
+   * cabina. Lo pone el HUD antes de cada dibujo. Hace falta para saber que un
+   * símbolo **ha salido en la pantalla** —el primer arco, el primer T/D—, que
+   * es cuando la instructora lo presenta: dibujado detrás de un cuadro
+   * recogido no ha salido en ninguna parte. Ver `seVe`.
+   */
+  aLaVista = true;
 
   /**
    * El dibujo entero. Se llama al montar el HUD y al cambiar de aeronave.
@@ -547,7 +565,7 @@ export class Tablero {
       <rect y="${corte}" width="${ANCHO_DEL_CUADRO}" height="${ALTO_DEL_CUADRO - corte}" class="tablero__fascia" />
       ${visera}
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
-      ${this.panelDeAvisos()}
+      ${this.panelDeAvisos(corte)}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
       ${placaDeMatricula(matriculaDe(a.id).matricula)}
@@ -583,13 +601,24 @@ export class Tablero {
    * la tarjeta grande, y que sean los mismos es media lección — quien
    * aprendió el dibujo en la tarjeta lo reconoce en la luz.
    */
-  private panelDeAvisos(): string {
+  private panelDeAvisos(corte: number): string {
     const ancho = ANCHO_DE_LUZ;
     const alto = ALTO_DE_LUZ;
+    /*
+     * **Y apagadas, en su primer hueco y no en lo alto del dibujo.**
+     *
+     * Escondidas se quedaban en `translate(8 8)`, que con la visera fina —la
+     * de las avionetas, que recorta el dibujo por arriba— cae **fuera de la
+     * caja**: TERRAIN, STALL y CABIN ALT, con su caja puesta aunque no se
+     * vean, se salían del cuadro y el banco lo contaba. No se veía nada, pero
+     * una pieza fuera de su caja es una pieza que mañana se ve donde no toca.
+     * Donde esperan es donde se encienden. Ver `huecosDeAviso`.
+     */
+    const reposo = huecosDeAviso(["reposo"], corte)[0] ?? { x: 8, y: 8 };
     return LUCES.map((l) => {
       return `
-        <g class="aviso-luz" data-luz="${l.id}" data-grado="${l.grado}"
-           transform="translate(8 8)" visibility="hidden">
+        <g class="aviso-luz" data-luz="${l.id}" data-grado="${l.grado}" data-explica="avisos"
+           transform="translate(${reposo.x} ${reposo.y})" visibility="hidden">
           <rect width="${ancho}" height="${alto}" rx="3" class="aviso-luz__caja" />
           <!--
             Y aquí NO va MARCA_ROTULO, que es la marca de rótulo que usa el
@@ -907,6 +936,16 @@ export class Tablero {
 
   get presente(): boolean {
     return this.raiz !== null;
+  }
+
+  /**
+   * **Esta pieza con explicación acaba de verse.** Se apunta en el registro
+   * de explicaciones, que lleva la cuenta de lo que falta presentar; ver
+   * `apareceEnPantalla` en `explicaciones.ts`. Cuesta una comparación por
+   * fotograma cuando ya está apuntada.
+   */
+  private seVe(id: string): void {
+    if (this.aLaVista) apareceEnPantalla(id);
   }
 
   update(d: DatosDelTablero, dt: number, dibujar = true): void {
@@ -1245,6 +1284,7 @@ export class Tablero {
       const puntos = p?.puntos ?? null;
       poner(g, "visibility", puntos === null ? "hidden" : "visible");
       if (puntos !== null) {
+        this.seVe("senda");
         const rombo = this.pieza('[data-cristal="senda-rombo"]');
         const paso = Number(rombo?.dataset.paso) || 20;
         const k = Math.max(-PUNTOS_A_FONDO, Math.min(PUNTOS_A_FONDO, puntos));
@@ -1738,6 +1778,7 @@ export class Tablero {
         const x = r * Math.sin(Math.PI / 6);
         const y = -r * Math.cos(Math.PI / 6);
         poner(arco, "visibility", "visible");
+        this.seVe("arco");
         poner(arco, "d", `M${n1(-x)} ${n1(y)} A${n1(r)} ${n1(r)} 0 0 1 ${n1(x)} ${n1(y)}`);
       }
     }
@@ -1967,13 +2008,17 @@ export class Tablero {
     if (tc) {
       const subida = this.familia === "linea" ? (plan?.subida ?? null) : null;
       poner(tc, "visibility", subida ? "visible" : "hidden");
-      if (subida) poner(tc, "transform", `translate(${n1(subida.dx)} ${n1(subida.dy)})`);
+      if (subida) {
+        this.seVe("tc");
+        poner(tc, "transform", `translate(${n1(subida.dx)} ${n1(subida.dy)})`);
+      }
     }
     // Y el nivel del plan, en magenta y con su «CRZ».
     this.texto("crz", plan?.crucero ? `CRZ ${plan.crucero}` : "");
     const td = this.pieza('[data-carta="td"]');
     if (td) {
       poner(td, "visibility", plan?.descenso ? "visible" : "hidden");
+      if (plan?.descenso) this.seVe("td");
       if (plan?.descenso)
         poner(
           td,
@@ -2055,6 +2100,7 @@ export class Tablero {
     poner(this.pieza('[data-cristal="rodaje"]'), "visibility", r ? "visible" : "hidden");
     poner(this.pieza('[data-cristal="gs"]'), "visibility", r ? "hidden" : "visible");
     if (!r) return;
+    this.seVe("gs-rodaje");
     const parte = parteDeLaBarra(r.nudos, r.escala);
     for (const relleno of this.todas<SVGElement>('[data-cristal="rodaje-relleno"]')) {
       poner(relleno, "width", n1(parte * Number(relleno.dataset.ancho)));

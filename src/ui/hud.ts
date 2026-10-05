@@ -74,6 +74,10 @@ import {
   esTelefonoApaisado,
 } from "./telefono";
 import { alPulsar, alPulsarDentro } from "./pulsar";
+import { ponerLasDeSerie } from "./explicaciones-de-serie";
+import { escucharLosToquesQueExplican } from "./tocar-para-explicar";
+// La ventana de las explicaciones se ofrece al registro al cargarse.
+import "./ventana-de-explicacion";
 import {
   alCambiarPantallaCompleta,
   alternarPantallaCompleta,
@@ -445,6 +449,8 @@ export class Hud {
   private velocidadesHandler: ((cual: "V1" | "Vr") => void) | null = null;
   /** Quién vigila el alto de la barra. Ver `medirLaBarra`. */
   private barraObservada: ResizeObserver | null = null;
+  /** Lo que mide el cuadro en la pantalla, para sus rótulos. Ver `medirLaUnidad`. */
+  private cuadroObservado: ResizeObserver | null = null;
   /**
    * Cuántos instrumentos enseña el HUD.
    *
@@ -827,7 +833,17 @@ export class Hud {
      * otro dedo no lo da nunca —el navegador lo cuenta como un gesto de dos
      * dedos—. Ver `ui/pulsar.ts`.
      */
-    const laRueda = "[data-mcp-rueda], [data-mcp-alt]";
+    /*
+     * **Y lo que se explica al tocarlo, tampoco.** La barra de la GS de rodar
+     * va dentro de su losa, y en la pantalla grande cada símbolo tiene su
+     * explicación: tocarlos abre la ventana, y si además pusieran grande la
+     * losa o volvieran a las losas, el mismo toque haría dos cosas. Los
+     * instrumentos enteros y el fondo de cada pantalla —`data-explica-fondo`—
+     * no: tocar la pantalla grande sigue siendo volver a las losas. Ver
+     * `ui/tocar-para-explicar.ts`.
+     */
+    const laRueda =
+      "[data-mcp-rueda], [data-mcp-alt], [data-explica]:not([data-explica-fondo])";
     alPulsarDentro(
       this.root,
       "[data-tel-grande]",
@@ -842,6 +858,14 @@ export class Hud {
       },
       laRueda,
     );
+    /*
+     * **Tocar una pieza del cuadro la explica**: qué es, para qué sirve y
+     * cómo funciona, con su dibujo y su voz. Sin quitarle el dedo a la mirada
+     * ni a los mandos. Ver `ui/tocar-para-explicar.ts` y
+     * `ui/explicaciones.ts`.
+     */
+    ponerLasDeSerie();
+    escucharLosToquesQueExplican(this.root);
     /*
      * Con su propio dedo, como todos los botones del vuelo: ver `ui/pulsar.ts`.
      * El cierre al usar lo de dentro sigue en el `click` que sube desde él.
@@ -974,6 +998,7 @@ export class Hud {
       dibujo.setAttribute("data-entera", dibujo.getAttribute("viewBox") ?? "");
     if (!cual) {
       dibujo.setAttribute("viewBox", dibujo.getAttribute("data-entera") ?? "");
+      this.escribirLaUnidad();
       return;
     }
     const caja = cajaDe(familiaDe(this.ficha), this.cuadroTel.queSePoneGrande(cual));
@@ -981,6 +1006,56 @@ export class Hud {
       "viewBox",
       `${caja.x - 4} ${BANDA.y - 4} ${caja.ancho + 8} ${BANDA.alto + 8}`,
     );
+    this.escribirLaUnidad();
+  }
+
+  /**
+   * **Ilumina en el cuadro la pieza que se está presentando**, unos segundos:
+   * el canal que está siempre cuando la instructora presenta algo nuevo. Ver
+   * `Game.presentarLoNuevo` y `.explica--presenta` en la hoja.
+   */
+  resaltarLoQueSeExplica(id: string, segundos = 6): void {
+    const piezas = this.root.querySelectorAll(`.cuadro [data-explica="${id}"]`);
+    for (const p of piezas) p.classList.add("explica--presenta");
+    setTimeout(() => {
+      for (const p of piezas) p.classList.remove("explica--presenta");
+    }, segundos * 1000);
+  }
+
+  /** Si se mira desde la cabina, donde el cuadro es el del avión. */
+  private enCabina(): boolean {
+    return this.root.classList.contains("hud--cabina");
+  }
+
+  /**
+   * **Cuántos píxeles de pantalla mide una unidad del cuadro**, escrito en el
+   * dibujo como `--px-por-unidad`.
+   *
+   * Lo leen los rótulos que tienen que leerse a tamaño real y no a tamaño de
+   * dibujo: el «T/D» y el «T/C» de la carta, y el «TCAS STBY» de la carta en
+   * tierra. Un rótulo de diecisiete unidades son catorce píxeles en el
+   * portátil y nueve en la pantalla grande del teléfono —«en la captura no se
+   * lee»—, así que la hoja les pone un mínimo en píxeles de pantalla dividido
+   * por esto. Se mide al pintar, al cambiar de tamaño y al poner grande una
+   * pantalla, que son las tres veces que cambia.
+   */
+  private escribirLaUnidad(): void {
+    const dibujo = this.root.querySelector<SVGSVGElement>('[data-hud="tablero"]');
+    if (!dibujo) return;
+    const ancho = dibujo.viewBox?.baseVal?.width ?? 0;
+    const mide = dibujo.getBoundingClientRect().width;
+    if (!(ancho > 0) || !(mide > 0)) return;
+    dibujo.style.setProperty("--px-por-unidad", (mide / ancho).toFixed(4));
+  }
+
+  private medirLaUnidad(): void {
+    this.escribirLaUnidad();
+    this.cuadroObservado?.disconnect();
+    if (typeof ResizeObserver === "undefined") return;
+    const dibujo = this.root.querySelector('[data-hud="tablero"]');
+    if (!dibujo) return;
+    this.cuadroObservado = new ResizeObserver(() => this.escribirLaUnidad());
+    this.cuadroObservado.observe(dibujo);
   }
 
   /**
@@ -2019,6 +2094,7 @@ export class Hud {
       this.tablero.proporcion.toFixed(4),
     );
     this.pictos.bind(this.root);
+    this.medirLaUnidad();
     this.medirLaBarra();
     this.senal.bind(this.root);
     this.tutor.bind(this.root);
@@ -3035,6 +3111,9 @@ export class Hud {
        * con sus luces de aviso, y ésas sí tienen que seguir vivas.
        */
       const telefono = ahoraEsTelefonoApaisado();
+      // Recogido o detrás de la cabina, lo que se dibuja no ha salido en la
+      // pantalla. Ver `Tablero.aLaVista`.
+      this.tablero.aLaVista = !this.cuadroBajado && !this.enCabina();
       this.tablero.update(datos, dt, !telefono || this.grande !== null);
       if (telefono && !this.cuadroBajado && this.grande === null)
         this.cuadroTel.update(datos);

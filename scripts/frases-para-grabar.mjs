@@ -77,6 +77,20 @@ const HABLADOS = [
    */
   ["ala.dice", "instructor", "lo que explica el esquema del ala"],
   /*
+   * **Y lo que explica tocar una pieza del cuadro**, con el rincón de las
+   * curiosidades del vuelo y lo que la instructora presenta la primera vez.
+   * Por lo mismo que el ala: la explicación es la ventana, y a los cuatro años
+   * la ventana se oye. Las palabras cortas y los nombres de los botones se
+   * leen y no se graban. Ver `PENDIENTE-VOCES-explicaciones.md`.
+   */
+  [
+    "explica",
+    "instructor",
+    "lo que explica tocar una pieza del cuadro",
+    // La palabra corta y los nombres de los botones se leen, no se dicen.
+    /\.corta$|^explica\.(oir|curiosidades)$/,
+  ],
+  /*
    * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
    *
    * Sus claves son `torre.canario.*` y empiezan por `torre.`, así que el grupo
@@ -632,8 +646,10 @@ let filas = [];
 /** Las claves que ya tienen voz asignada. Ver el bucle. */
 const yaPuestas = new Set();
 let total = 0;
-for (const [grupo, voz, para] of HABLADOS) {
+for (const [grupo, voz, para, salvo] of HABLADOS) {
   for (const [k, v] of es) {
+    // Lo del grupo que se lee y no se dice, si el grupo lo aparta.
+    if (salvo?.test(k)) continue;
     /*
      * El grupo se compara por **el principio de la clave**, no solo por el
      * primer trozo. `vuelo` coge todo `vuelo.*` como siempre, y `ala.dice`

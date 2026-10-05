@@ -193,7 +193,7 @@ function escalaDeLaSenda(x: number, cy: number, paso: number): string {
     .map((k) => `<circle cx="0" cy="${k * paso}" r="3.2" class="cr__senda-punto" />`)
     .join("");
   return `
-    <g data-cristal="senda" transform="translate(${x} ${cy})" visibility="hidden">
+    <g data-cristal="senda" data-explica="senda" transform="translate(${x} ${cy})" visibility="hidden">
       <rect x="-8" y="${-2.7 * paso}" width="16" height="${5.4 * paso}" rx="4" class="cr__senda-fondo" />
       ${puntos}
       <line x1="-7" y1="0" x2="7" y2="0" class="cr__senda-medio" />
@@ -251,6 +251,14 @@ function fma(x: number, ancho: number): string {
  * escondidas: el tablero enciende la que toca mientras dura el resalte. Una
  * punta con su rabo, magenta como la marca, centrada en `cx` y en la altura
  * de la marca. Ver `Tablero.resaltar` y `flight/lo-que-cambia.ts`.
+ *
+ * **Y en el lado de la cinta donde no hay cifras.** Iba pegada a la marca, a
+ * diecinueve unidades del borde, y ahí empiezan los números de la cinta de
+ * altitud: «la flecha magenta pisa un poco los números». Y no un poco por
+ * casualidad, sino siempre — la altura que se pide es un millar redondo y
+ * los millares van rotulados, así que la flecha caía justo encima de su
+ * propio número. Lo mismo en la de velocidad, por el otro lado. Va en la
+ * misma fila que la marca y en la franja libre de la cinta.
  */
 function flechasDeLaMarca(que: "spd" | "alt", cx: number): string {
   const sube = `M${cx} -9 l5.5 6 h-3.3 v6 h-4.4 v-6 h-3.3 Z`;
@@ -322,7 +330,7 @@ function horizonte(
     arco += `<line x1="${cx + Math.sin(a) * r}" y1="${cy - Math.cos(a) * r}" x2="${cx + Math.sin(a) * (r + r1)}" y2="${cy - Math.cos(a) * (r + r1)}" class="cr__alabeo" />`;
   }
   return `
-    <g transform="translate(${x} ${y})">
+    <g data-explica="actitud" data-explica-fondo transform="translate(${x} ${y})">
       <clipPath id="${yo}-act"><rect width="${w}" height="${h}" rx="4" /></clipPath>
       <g clip-path="url(#${yo}-act)">
         <g data-cristal="disco" data-cx="${cx}" data-cy="${cy}" data-porgrado="${porGrado}"
@@ -392,7 +400,7 @@ function cintaDeVelocidad(
       width="${clase.endsWith("blanco") ? 4 : 5}"
       height="${(hasta - desde) * c.asiMax * POR_NUDO}" class="${clase}" />`;
   return `
-    <g transform="translate(${x} ${y})">
+    <g data-explica="velocidad" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-ias"><rect width="${w}" height="${h}" /></clipPath>
       <g clip-path="url(#${yo}-ias)">
@@ -428,7 +436,7 @@ function cintaDeVelocidad(
               se fue la marca: el dibujo del cambio, que se lee sin cifras.
               Ver Tablero.resaltar.
             -->
-            ${flechasDeLaMarca("spd", w - 19)}
+            ${flechasDeLaMarca("spd", 12)}
           </g>
         </g>
         <rect data-tendencia="ias" data-medio="${h / 2}" data-porunidad="${POR_NUDO}"
@@ -538,7 +546,7 @@ function cintaDeAltitud(
     )
     .join("");
   return `
-    <g transform="translate(${x} ${y})">
+    <g data-explica="altitud" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-alt"><rect width="${w}" height="${h}" /></clipPath>
       <clipPath id="${yo}-tambor"><rect x="${w - 34}" y="${h / 2 - 16}" width="34" height="32" /></clipPath>
@@ -576,7 +584,7 @@ function cintaDeAltitud(
            visibility="hidden" transform="translate(0 ${h / 2})">
           <path data-desde="2" class="cr__bug" d="M0 -7 l9 0 l0 4 l-4 3 l4 3 l0 4 l-9 0 Z" />
           <path data-hasta="1" class="cr__raya-sel" d="M0 0 L${w} 0" />
-          ${flechasDeLaMarca("alt", 19)}
+          ${flechasDeLaMarca("alt", w - 12)}
         </g>
       </g>
       ${punteroDeCinta(w, h, false)}
@@ -684,7 +692,7 @@ function variometro(
     marcas += `<line x1="0" y1="${yy}" x2="${i % 2 === 0 ? 8 : 5}" y2="${yy}" class="cr__marca" />`;
   }
   return `
-    <g transform="translate(${x} ${y})">
+    <g data-explica="variometro" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       ${marcas}
       <text x="${w / 2}" y="11" ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">VS</text>
@@ -726,7 +734,7 @@ function cintaDeRumbo(
     }
   }
   return `
-    <g transform="translate(${x} ${y})">
+    <g data-explica="rumbo" data-explica-fondo transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-hdg"><rect width="${w}" height="${h}" /></clipPath>
       <g clip-path="url(#${yo}-hdg)">
@@ -781,7 +789,7 @@ function carta(cx: number, cy: number, r: number): string {
   const rombos = Array.from(
     { length: CUANTOS_OTROS },
     (_, i) => `
-      <g data-carta="otro-${i}" class="cr__trafico" visibility="hidden">
+      <g data-carta="otro-${i}" data-explica="tcas" class="cr__trafico" visibility="hidden">
         <path data-tcas="rombo" class="cr__rombo" d="M0 -6 L6 0 L0 6 L-6 0 Z" />
         <circle data-tcas="circulo" class="cr__ta" r="5.5" visibility="hidden" />
         <text data-tcas="altura" x="0" y="-10" ${MARCA_CIFRA}
@@ -840,7 +848,7 @@ function carta(cx: number, cy: number, r: number): string {
         círculo: «no se lee». Más grande, en negrita y con un filo oscuro que
         lo despega de la línea magenta que suele tener debajo.
       -->
-      <g data-carta="td" class="cr__td" visibility="hidden">
+      <g data-carta="td" data-explica="td" class="cr__td" visibility="hidden">
         <circle r="7" />
         <path d="M-4 -2.2 h3.4 l4.6 4.6" />
         <text x="11" y="-8" ${MARCA_ROTULO} class="cr__td-rotulo">T/D</text>
@@ -856,8 +864,8 @@ function carta(cx: number, cy: number, r: number): string {
         Boeing. Delante del avión y en verde. Si cae antes de la pista, se llega
         abajo con sitio; si cae después, no da. Lo coloca Tablero.laCarta.
       -->
-      <path data-carta="arco" class="cr__arco-altitud" visibility="hidden" d="M0 0" />
-      <g data-carta="tc" class="cr__td" visibility="hidden">
+      <path data-carta="arco" data-explica="arco" class="cr__arco-altitud" visibility="hidden" d="M0 0" />
+      <g data-carta="tc" data-explica="tc" class="cr__td" visibility="hidden">
         <circle r="7" />
         <path d="M-4 2.2 h3.4 l4.6 -4.6" />
         <text x="11" y="-8" ${MARCA_ROTULO} class="cr__td-rotulo">T/C</text>
@@ -928,7 +936,7 @@ function carta(cx: number, cy: number, r: number): string {
       cuando el TCAS está en ese modo. Dice la verdad de este juego: el TCAS II
       avisa y no da maniobras. Ver flight/tcas.ts.
     -->
-    <text data-carta="solo-ta" x="${cx - r + 4}" y="${cy + r}" ${MARCA_ROTULO}
+    <text data-carta="solo-ta" data-explica="tcas" x="${cx - r + 4}" y="${cy + r}" ${MARCA_ROTULO}
           class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>
     <!--
       Y en tierra, la GS de rodar en la esquina, debajo del viento: del tamaño
@@ -1099,7 +1107,7 @@ export function rosaDeRumbo(
     }
   }
   return `
-    <g transform="translate(${cx} ${cy})">
+    <g ${conAvion ? 'data-explica="rumbo" data-explica-fondo ' : ""}transform="translate(${cx} ${cy})">
       <circle cx="0" cy="0" r="${r + 3}" class="cr__rosa-caja" />
       <g data-cristal="rosa" data-radio="${r}">${carta}
         <g data-bug="rosa"><path class="cr__bug" d="M0 ${-r} l-6 -9 l12 0 Z" /></g>
@@ -1130,7 +1138,7 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     arcos += `<circle cx="${cx}" cy="${cy}" r="${r * f}" class="cr__arco-rango" />`;
   }
   return `
-    <rect data-fondo="nd" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
+    <rect data-fondo="nd" data-explica="carta" data-explica-fondo width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     ${arcos}
     ${rosaDeRumbo(cx, cy, r, false)}
     ${carta(cx, cy, r)}
@@ -1241,7 +1249,7 @@ export function reglaDeCombustible(
     ? { x: -10 - lado, y: h / 2 - lado / 2 }
     : { x: w / 2 - lado / 2, y: -lado - 6 };
   return `
-    <g data-cristal="combustible" data-largo="${largo}" data-tumbada="${tumbada ? 1 : 0}">
+    <g data-cristal="combustible" data-explica="combustible" data-largo="${largo}" data-tumbada="${tumbada ? 1 : 0}">
       <g transform="translate(${x} ${y})">
         <text x="${tumbada ? -10 : w / 2}" y="${tumbada ? h - 8 : -8}"
               ${MARCA_ROTULO} class="cr__rotulo"
@@ -1309,7 +1317,7 @@ export function pantallaDeMotores(
   const patas = patasDe(a);
   const yTren = alto - 26;
   return `
-    <rect data-fondo="eicas" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
+    <rect data-fondo="eicas" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     <text x="${ancho / 2}" y="20" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
@@ -1334,6 +1342,7 @@ function aireYCabina(ancho: number, y: number): string {
   return `
     <text x="${ancho * 0.28}" y="${y}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="end">OAT</text>
     <text data-cristal="oat" x="${ancho * 0.31}" y="${y}" ${MARCA_ROTULO} class="cr__aire"></text>
+    <g data-explica="presurizacion">
     <text x="${ancho * 0.72}" y="${y}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="end">CAB ALT</text>
     <!--
       La altura de la cabina, **con su rótulo y no antes**: salía desde el
@@ -1342,6 +1351,7 @@ function aireYCabina(ancho: number, y: number): string {
       las letras; ésta, igual. Nunca un número solo.
     -->
     <text data-cristal="cabina" x="${ancho * 0.75}" y="${y}" ${MARCA_ROTULO} class="cr__aire"></text>
+    </g>
   `;
 }
 
@@ -1453,7 +1463,7 @@ export function reglaDeFlaps(
         `<text x="${w + 5}" y="${d + 4}" ${MARCA_CIFRA} class="cr__rotulo">${cifra}</text>`;
   }
   return `
-    <g transform="translate(${x} ${y})">
+    <g data-explica="flaps" transform="translate(${x} ${y})">
       <text x="${tumbada ? -10 : w / 2}" y="${tumbada ? h - 8 : -8}"
             ${MARCA_ROTULO} class="cr__rotulo" text-anchor="${tumbada ? "end" : "middle"}">FLAP</text>
       <rect width="${w}" height="${h}" rx="2" class="cr__ventana" />
@@ -1505,7 +1515,7 @@ export function lucesDeTren(x: number, y: number, patas: number): string {
       // El hueco de la llanta: es lo que la vuelve una rueda y no un punto.
       `<circle cx="${cx}" cy="${R}" r="${R * 0.42}" class="cr__tren-buje" />`;
   }
-  return `<g data-cristal="tren" transform="translate(${x} ${y})">${luces}
+  return `<g data-cristal="tren" data-explica="tren" transform="translate(${x} ${y})">${luces}
     <text x="${patas * PASO + 4}" y="${R + 5}" ${MARCA_ROTULO} class="cr__rotulo">GEAR</text></g>`;
 }
 
@@ -1570,7 +1580,7 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
     )
     .join("");
   return `
-    <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
+    <rect data-fondo="motor" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
     ${diales}
     ${mandoDeMotor(16, yMando, ancho - 32, n)}
     ${relojes}
@@ -1611,7 +1621,7 @@ export function franjaDeMotor(
       </g>`;
   }
   return `
-    <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
+    <rect data-fondo="motor" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
     <text x="${ancho / 2}" y="16" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${barras}
     ${c.flaps.length > 1 ? reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34, c.flaps) : ""}
