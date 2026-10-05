@@ -1124,12 +1124,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * **Lo que lleva el piloto obediente**, si se pidió. Ver `OBEDIENTE`.
    *
-   * - `armado`: ya va hacia la final —del viento en cola en adelante, o
-   *   puesto en la final de otro campo—: desde ahí el gas no lo mueve el
-   *   guion. Una final que empieza en el fotograma en que el guion movía el
-   *   gas es una final que empieza «tocando el gas», y la ayuda no se engancha:
-   *   le pasó a la primera tirada del JAZ 120, que voló la final entera con
-   *   el gas que llevaba al ponerlo allí.
+   * - `armado`: ya está en la final del guion, o puesto en la final de otro
+   *   campo; con la final del juego, también —ver `obedecer`—. Desde ahí el
+   *   gas no lo mueve el guion. Una final que empieza en el fotograma en que
+   *   el guion movía el gas es una final que empieza «tocando el gas», y la
+   *   ayuda no se engancha: le pasó a la primera tirada del JAZ 120, que voló
+   *   la final entera con el gas que llevaba al ponerlo allí.
    * - `gas`: el gas del obediente desde que se armó, o `null`.
    * - `gasAjeno`: el gas se ha movido solo, y ya no se toca.
    * - `quitado`: se lo pidieron, y se quitó.
@@ -1153,7 +1153,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const NARIZ_UN_POQUITO = (1.5 * Math.PI) / 180;
   const obedecer = (mandos, gasDelJuego) => {
     const s = o.estado();
-    if (s.onGround || !obediente.armado) {
+    /*
+     * Armado en la final del guion o en la del juego, la que llegue antes: la
+     * ayuda se engancha con la del juego, y desde el viento en cola —como se
+     * hizo primero— el gas quedaba quieto en la base, y el JAZ 20 llegaba a
+     * los quinientos pies cien metros por encima de la senda.
+     */
+    if (s.onGround || !(obediente.armado || o.fase?.() === "final")) {
       obediente.gas = null;
       obediente.ultimoGas = null;
       return;
@@ -4603,7 +4609,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     if (etapa !== "final" && etapa !== "frenar" && recogida) recogida = null;
     /*
      * Y el obediente, igual: lo pedido en una final que se deja no vale para
-     * la siguiente. Se arma del viento en cola en adelante —ver `obediente`—.
+     * la siguiente. Se arma en la final —ver `obediente`—.
      */
     if (obedienteEnElBanco) {
       if (etapa === "subir" && aDonde < 3 && (obediente.nariz !== null || obediente.quitado)) {
@@ -4611,7 +4617,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         obediente.quitado = false;
         obediente.gasAjeno = false;
       }
-      obediente.armado = etapa === "final" || etapa === "frenar" || (etapa === "subir" && aDonde >= 3);
+      obediente.armado = etapa === "final" || etapa === "frenar";
     }
     topeDeInclinacion =
       etapa === "final" || (etapa === "subir" && aDonde >= 3)
