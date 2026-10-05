@@ -2353,6 +2353,20 @@
     "para": "lo que explica tocar una pieza del cuadro"
   },
   {
+    "id": "explica.bomberos.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
+    "id": "explica.bomberos-y-aviones.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.",
+    "para": "lo que explica tocar una pieza del cuadro"
+  },
+  {
     "id": "ventanilla.vos.lado.izquierda",
     "voz": "instructor",
     "idioma": "es-PY",

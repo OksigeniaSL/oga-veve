@@ -313,77 +313,79 @@
 313	explica.cinturon.texto	Aunque la luz del cinturón esté apagada, sentado se lleva puesto, flojito. A veces el aire se mueve de golpe sin avisar, con el cielo despejado, y el cinturón es lo que te deja en tu asiento.
 314	explica.mesitas.texto	Para despegar y para aterrizar, la mesita guardada y el respaldo derecho. Así nadie se golpea si el avión frena fuerte, y el pasillo hasta la salida queda libre por si hubiera que salir rápido.
 315	explica.modo-avion.texto	El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.
-316	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
-317	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
-318	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
-319	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
-320	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
-321	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
-322	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
-323	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
-324	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
-325	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
-326	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
-327	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
-328	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
-329	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
-330	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
-331	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
-332	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
-333	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
-334	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
-335	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
-336	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
-337	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
-338	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
-339	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
-340	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
-341	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
-342	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
-343	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
-344	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
-345	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
-346	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
-347	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
-348	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
-349	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
-350	matricula.nuestroAvion	Nuestro avión es
-351	matricula.asiNosLlama	Así nos llama la torre.
-352	fonetico.alfa	Alfa
-353	fonetico.bravo	Bravo
-354	fonetico.charlie	Charlie
-355	fonetico.delta	Delta
-356	fonetico.echo	Echo
-357	fonetico.foxtrot	Foxtrot
-358	fonetico.golf	Golf
-359	fonetico.hotel	Hotel
-360	fonetico.india	India
-361	fonetico.juliett	Juliett
-362	fonetico.kilo	Kilo
-363	fonetico.lima	Lima
-364	fonetico.mike	Mike
-365	fonetico.november	November
-366	fonetico.oscar	Oscar
-367	fonetico.papa	Papa
-368	fonetico.quebec	Quebec
-369	fonetico.romeo	Romeo
-370	fonetico.sierra	Sierra
-371	fonetico.tango	Tango
-372	fonetico.uniform	Uniform
-373	fonetico.victor	Victor
-374	fonetico.whiskey	Whiskey
-375	fonetico.xray	X-ray
-376	fonetico.yankee	Yankee
-377	fonetico.zulu	Zulu
-378	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-379	gafas.ganadas	¡Tus gafas de sol!
-380	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
-381	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
-382	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
-383	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
-384	vuelta.entera	¡Vuelta lista! El avión está para volar.
-385	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
-386	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
-387	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
-388	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
-389	parte.ganaste	¡Hoy ganaste: decidiste bien!
+316	explica.bomberos.texto	Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.
+317	explica.bomberos-y-aviones.texto	A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.
+318	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
+319	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
+320	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
+321	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
+322	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
+323	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
+324	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
+325	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
+326	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
+327	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
+328	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
+329	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
+330	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
+331	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
+332	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
+333	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
+334	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
+335	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
+336	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
+337	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
+338	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
+339	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
+340	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
+341	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
+342	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
+343	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
+344	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
+345	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
+346	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
+347	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
+348	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
+349	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
+350	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
+351	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+352	matricula.nuestroAvion	Nuestro avión es
+353	matricula.asiNosLlama	Así nos llama la torre.
+354	fonetico.alfa	Alfa
+355	fonetico.bravo	Bravo
+356	fonetico.charlie	Charlie
+357	fonetico.delta	Delta
+358	fonetico.echo	Echo
+359	fonetico.foxtrot	Foxtrot
+360	fonetico.golf	Golf
+361	fonetico.hotel	Hotel
+362	fonetico.india	India
+363	fonetico.juliett	Juliett
+364	fonetico.kilo	Kilo
+365	fonetico.lima	Lima
+366	fonetico.mike	Mike
+367	fonetico.november	November
+368	fonetico.oscar	Oscar
+369	fonetico.papa	Papa
+370	fonetico.quebec	Quebec
+371	fonetico.romeo	Romeo
+372	fonetico.sierra	Sierra
+373	fonetico.tango	Tango
+374	fonetico.uniform	Uniform
+375	fonetico.victor	Victor
+376	fonetico.whiskey	Whiskey
+377	fonetico.xray	X-ray
+378	fonetico.yankee	Yankee
+379	fonetico.zulu	Zulu
+380	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+381	gafas.ganadas	¡Tus gafas de sol!
+382	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
+383	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+384	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+385	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
+386	vuelta.entera	¡Vuelta lista! El avión está para volar.
+387	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+388	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
+389	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
+390	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
+391	parte.ganaste	¡Hoy ganaste: decidiste bien!
