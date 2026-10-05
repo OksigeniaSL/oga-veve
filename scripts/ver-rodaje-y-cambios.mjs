@@ -118,6 +118,15 @@ try {
       o.colocar(x, o.suelo(x, z) + 1200, z, (a.aproximacion ?? 70) * 1.6);
     });
     await page.waitForTimeout(3000);
+    // Primero en la cabina: el lienzo, recién cambiada la ventanilla.
+    await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+    await page.waitForTimeout(800);
+    await page.evaluate(() => globalThis.__oga.ponerVentanillaAlt(7000));
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: `${FOTOS}/${tramo}-cambio-alt-cabina.png` });
+    await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+    await page.waitForTimeout(3500);
+    // Y en el cuadro plano, otra ventanilla nueva.
     await page.evaluate(() => globalThis.__oga.ponerVentanillaAlt(9000));
     await page.waitForTimeout(150);
     const resalte = await page.evaluate(() => ({
@@ -132,10 +141,9 @@ try {
     if (resalte.flecha.length !== 1) fallos.push(`${tramo}: la marca no lleva su flecha`);
     if (resalte.tonos < 1) fallos.push(`${tramo}: el cambio no sonó`);
     await page.screenshot({ path: `${FOTOS}/${tramo}-cambio-alt.png` });
-    await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
-    await page.waitForTimeout(400);
-    await page.screenshot({ path: `${FOTOS}/${tramo}-cambio-alt-cabina.png` });
-    await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+    // Y pasado el latido, la flecha se queda hasta el final del resalte.
+    await page.waitForTimeout(3500);
+    await page.screenshot({ path: `${FOTOS}/${tramo}-cambio-alt-luego.png` });
     // Y el modo del FMA, al poner el automático: recuadrado sus diez segundos.
     await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
     await page.waitForTimeout(1200);

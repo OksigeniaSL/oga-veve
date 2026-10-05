@@ -858,7 +858,7 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       if (!r || r.edad >= DURA_EL_RESALTE || !columnas[i]) return;
       g.strokeStyle = TINTA;
       g.lineWidth = 1.5;
-      g.strokeRect(x0 + tercio * i + 5, 2, tercio - 10, 18);
+      g.strokeRect(x0 + tercio * i + 2, 2, tercio - 4, 18);
     });
     if (d.fma.piloto)
       escribir(g, "A/P", x0 + anchoAct / 2, 24, "600 11px " + FUENTE, PALETA.normal);

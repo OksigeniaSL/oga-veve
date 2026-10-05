@@ -239,7 +239,7 @@ function fma(x: number, ancho: number): string {
       -->
       ${COLUMNAS_DEL_FMA.map(
         (col, i) =>
-          `<rect data-fma-caja="${col}" x="${x + tercio * i + 4}" y="2" width="${tercio - 8}"
+          `<rect data-fma-caja="${col}" x="${x + tercio * i + 2}" y="2" width="${tercio - 4}"
                  height="18" rx="1.5" class="cr__fma-caja" visibility="hidden" />`,
       ).join("")}
     </g>
