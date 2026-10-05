@@ -306,6 +306,33 @@ describe("la torre te manda al aire porque el de delante no ha dejado la pista",
   });
 });
 
+describe("y si se aterriza con la orden puesta", () => {
+  /*
+   * La orden se levanta al tocar, y el juicio de la toma llega dos segundos
+   * después: sin apuntarlo, aterrizar contra la orden no tenía ninguna
+   * consecuencia. Ahora queda dicho con qué orden se tocó, para que el juego
+   * lo cuente con calma (punto 237). Ver `aterrizoContraLaOrden` en `game.ts`.
+   */
+  it("queda apuntado con qué orden se tocó, aunque la orden se levante", () => {
+    const s = enFinal(GANDO, 300, 15);
+    const { aproximacion } = montar(() => visto(GANDO, s));
+    aproximacion.ordenes = "nunca";
+    aproximacion.mandarIrsePorLaPistaOcupada(58, () => true);
+    const enTierra = { ...s, onGround: true } as FlightState;
+    paso(aproximacion, enTierra);
+    expect(aproximacion.mandanFrustrar).toBe(false);
+    expect(aproximacion.tocoConLaOrden).toBe("pistaOcupada");
+  });
+
+  it("y sin orden, nada", () => {
+    const s = enFinal(GANDO, 300, 15);
+    const { aproximacion } = montar(() => visto(GANDO, s));
+    aproximacion.ordenes = "nunca";
+    paso(aproximacion, { ...s, onGround: true } as FlightState);
+    expect(aproximacion.tocoConLaOrden).toBeNull();
+  });
+});
+
 /*
  * **Sin motor no hay frustrada.** Un avión que no puede subir no recibe la
  * orden de subir: ni el sorteo, ni los mínimos que mandan irse, ni la pista

@@ -35,7 +35,18 @@ import { HASTA, haciaElEste, MEDIO_NIVEL, nivelPara, UN_NIVEL } from "./nivel-de
 import { nivelQueAhorra } from "./nivel-que-ahorra";
 import type { AircraftConfig } from "./aircraft";
 import { airDensity, SEA_LEVEL_DENSITY, type Aire } from "./atmosphere";
-import { NUDO, velocidadQueToca } from "./escalera-de-velocidades";
+import { esDeChorro } from "./aircraft";
+import {
+  ALTITUD_DEL_TOPE,
+  APROXIMACION_DESDE,
+  CONFIGURADO_DESDE,
+  FINAL_DESDE,
+  FRENAR_ANTES,
+  NUDO,
+  TERMINAL_DESDE,
+  TOPE_BAJO_EL_100,
+  velocidadQueToca,
+} from "./escalera-de-velocidades";
 
 /** Una milla náutica, en metros. La misma que la de la carta. */
 export const MILLA = 1852;
@@ -1150,11 +1161,19 @@ export function segundosPorElPerfil(
   const falta = restante(r, i, x, z);
   if (falta <= 1) return 0;
   const sube = (1000 * PIE) / (MILLAS_POR_MIL_PIES_SUBIENDO * MILLA);
-  const baja = (1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA);
   const techo = Math.max(p.crucero, p.altitud);
+  /*
+   * La bajada, con sus tramos para frenar: la misma que sigue el automático y
+   * la que pone el punto de descenso. Ver `perfilDeLaBajada`.
+   */
+  const perfil = perfilDeLaBajada(
+    r.cotaDelUmbral,
+    velocidadesDeLaBajada(p.avion),
+    finalDeLaRuta(r),
+  );
   /** Dónde va el plan a `hecho` metros de aquí y a `queda` del umbral. */
   const enElPlan = (hecho: number, queda: number) => {
-    const bajada = r.cotaDelUmbral + queda * baja;
+    const bajada = altitudDelPerfil(perfil, queda);
     if (p.bajando)
       return { altitud: Math.min(p.altitud, bajada), subiendo: false, bajando: true };
     const subida = p.altitud < techo ? p.altitud + hecho * sube : techo;
@@ -1248,12 +1267,209 @@ export function distanciaDeDescenso(
   return (pies / 1000) * MILLAS_POR_MIL_PIES * MILLA * viento;
 }
 
+// ── La bajada con sus tramos para frenar ────────────────────────────────
+
+/**
+ * **Lo que se frena por cada milla nivelado y al ralentí**, nudos: la regla
+ * de la línea, «una milla por cada diez nudos», que se suma a la de tres
+ * millas por cada mil pies al planear la bajada. Un reactor limpio a unos
+ * doscientos veinte nudos, nivelado y al ralentí, pierde algo más de un nudo
+ * por segundo —su resistencia es la dieciseisava parte del peso y el
+ * ralentí empuja poco—, que son trece o catorce por milla: diez es la cuenta
+ * con margen.
+ */
+export const NUDOS_POR_MILLA_FRENANDO = 10;
+
+/** Por debajo de esta diferencia no se pone tramo para frenar, kt. */
+const POCO_QUE_FRENAR = 5;
+
+/**
+ * **Las velocidades de la bajada de un avión**, de la escalera, nudos: la de
+ * bajar arriba, el tope de los diez mil pies, la del área terminal y la de
+ * llegar configurado al punto de final. Ver `perfilDeLaBajada`.
+ */
+export interface VelocidadesDeLaBajada {
+  readonly arriba: number;
+  readonly bajoEl100: number;
+  readonly terminal: number;
+  readonly configurado: number;
+}
+
+/**
+ * Las de este avión, o `null` si su bajada no lleva tramos para frenar.
+ *
+ * **Solo los reactores**: son los que llevan un ordenador de vuelo que planea
+ * la bajada con sus tramos —ver `equipoDeSenda` en `perfil-vertical.ts`— y
+ * los que no frenan bajando. Un turbohélice o una avioneta, con la hélice
+ * haciendo de freno al ralentí, pierden la velocidad bajando por la misma
+ * senda, que es como se vuela en ellos.
+ */
+export function velocidadesDeLaBajada(a: AircraftConfig): VelocidadesDeLaBajada | null {
+  if (!esDeChorro(a)) return null;
+  const en = (altitud: number, restante: number) =>
+    velocidadQueToca(a, { altitud, restante, bajando: true, enFinal: false, subiendo: false }).kt;
+  return {
+    arriba: en(20000 * PIE, 200 * MILLA),
+    bajoEl100: Math.min(TOPE_BAJO_EL_100, en(8000 * PIE, 40 * MILLA)),
+    terminal: en(6000 * PIE, TERMINAL_DESDE - MILLA),
+    configurado: en(2000 * PIE, CONFIGURADO_DESDE - MILLA),
+  };
+}
+
+/** Un tramo del perfil de la bajada, del umbral hacia fuera. */
+export interface TramoDeLaBajada {
+  /** Desde dónde y hasta dónde, m desde el umbral. */
+  readonly desde: number;
+  readonly hasta: number;
+  /** La altitud en `desde`, m. */
+  readonly altitud: number;
+  /** Lo que sube por cada metro hacia fuera; cero, nivelado para frenar. */
+  readonly pendiente: number;
+  /** Si es un tramo para frenar. */
+  readonly frena: boolean;
+}
+
+/** El perfil entero: sus tramos seguidos desde el umbral. */
+export type PerfilDeLaBajada = readonly TramoDeLaBajada[];
+
+/**
+ * **El perfil de la bajada, con sus tramos para frenar**, del umbral hacia
+ * fuera.
+ *
+ * Era una recta de tres millas por cada mil pies desde el umbral hasta el
+ * crucero, y un ordenador de vuelo de verdad no baja así: un reactor limpio
+ * al ralentí por una senda de tres grados **no frena**, que es más o menos su
+ * planeo. Visto en el modelo completo: el reactor bajaba con aerofrenos a la
+ * marca del área terminal, volvía a acelerar por la senda y llegaba a las
+ * cinco millas a 224 nudos, donde ya no caben los flaps 2 y 3 (punto 213).
+ *
+ * Así que se construye como lo hace el de un Airbus o un Boeing, de la pista
+ * hacia atrás:
+ *
+ * - **La final**, con el ángulo de su senda (`anguloDeLaFinal`) hasta el punto
+ *   de final.
+ * - **Nivelado antes del punto de final**, frenando de la velocidad del área
+ *   terminal a la de llegar configurado, y como poco desde las doce millas:
+ *   el FCTM del 737 pide llegar a la altura del circuito a la de maniobra sin
+ *   flaps «about 12 miles from the runway» en una entrada directa.
+ * - **Nivelado al llegar a las treinta millas**, frenando de 250 a la del área
+ *   terminal: el mismo manual da como comprobación estar a diez mil pies
+ *   sobre el campo, a treinta millas y a 250 nudos.
+ * - **Nivelado a diez mil quinientos pies**, frenando de la de bajar a 250,
+ *   para cruzar los diez mil ya frenado: es el «SPD TRANS 250/10000» de la
+ *   página de descenso, con el tramo que el ordenador planea para cumplirlo.
+ *   Ver `FRENAR_ANTES` en `escalera-de-velocidades.ts`.
+ * - Y entre medias, la bajada de siempre: tres millas por cada mil pies,
+ *   estiradas con el viento (`aireSobreSuelo`).
+ *
+ * Cada tramo para frenar mide una milla por cada diez nudos que haya que
+ * perder: ver `NUDOS_POR_MILLA_FRENANDO`. Es la regla con la que se planea una
+ * bajada en la cabina —tres por mil, y una más por cada diez nudos—, y con ella
+ * el punto de descenso cae donde lo pondría quien la usa.
+ *
+ * Sin velocidades —los de hélice—, la recta de siempre con la final aparte.
+ */
+export function perfilDeLaBajada(
+  cotaDelUmbral: number,
+  v: VelocidadesDeLaBajada | null,
+  /** Dónde empieza la final: el punto de final de la carta, o cinco millas. */
+  finalDesde = FINAL_DESDE,
+  /** El ángulo de la senda de la final, grados. */
+  anguloDeLaFinal = 3,
+  aireSobreSuelo = 1,
+): PerfilDeLaBajada {
+  const bajada = ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA)) * aireSobreSuelo;
+  const tramos: TramoDeLaBajada[] = [];
+  let s = 0;
+  let h = cotaDelUmbral;
+  const poner = (hasta: number, pendiente: number, frena: boolean) => {
+    if (hasta <= s) return;
+    tramos.push({ desde: s, hasta, altitud: h, pendiente, frena });
+    h += (hasta - s) * pendiente;
+    s = hasta;
+  };
+  /** Lo que mide un tramo para frenar `kt` nudos, m: más largo con viento de cola. */
+  const frenando = (kt: number) =>
+    kt < POCO_QUE_FRENAR ? 0 : ((kt / NUDOS_POR_MILLA_FRENANDO) * MILLA) / aireSobreSuelo;
+
+  poner(Math.max(0, finalDesde), Math.tan((anguloDeLaFinal * Math.PI) / 180), false);
+  if (v) {
+    // Nivelado hasta el punto de final, frenando, y como poco desde las doce.
+    const aproximacion = frenando(v.terminal - v.configurado);
+    if (aproximacion > 0) poner(Math.max(s + aproximacion, APROXIMACION_DESDE), 0, true);
+    // La bajada hasta el área terminal, y nivelado en ella frenando.
+    const terminal = frenando(v.bajoEl100 - v.terminal);
+    if (terminal > 0) {
+      poner(Math.max(s, TERMINAL_DESDE - terminal), bajada, false);
+      poner(s + terminal, 0, true);
+    }
+    // Hasta diez mil quinientos pies, y nivelado frenando a 250.
+    const tope = ALTITUD_DEL_TOPE + FRENAR_ANTES / 2;
+    const alTope = frenando(v.arriba - v.bajoEl100);
+    if (alTope > 0 && h < tope) {
+      poner(s + (tope - h) / bajada, bajada, false);
+      poner(s + alTope, 0, true);
+    }
+  }
+  tramos.push({ desde: s, hasta: Infinity, altitud: h, pendiente: bajada, frena: false });
+  return tramos;
+}
+
+/**
+ * **Dónde empieza la final de una ruta**, m del umbral: su punto de final
+ * de la carta, o cinco millas si no lo lleva.
+ */
+export function finalDeLaRuta(r: Ruta): number {
+  const faf = r.fijos.findIndex((f) => f.papel === "faf");
+  return faf > 0 ? r.total - r.acumulado[faf]! : FINAL_DESDE;
+}
+
+/** El tramo del perfil en el que cae `falta`. */
+function tramoEn(p: PerfilDeLaBajada, falta: number): TramoDeLaBajada {
+  for (const t of p) if (falta < t.hasta) return t;
+  return p[p.length - 1]!;
+}
+
+/** **La altitud del perfil** a `falta` metros del umbral, m. */
+export function altitudDelPerfil(p: PerfilDeLaBajada, falta: number): number {
+  const t = tramoEn(p, Math.max(0, falta));
+  return t.altitud + (Math.max(0, falta) - t.desde) * t.pendiente;
+}
+
+/** Lo que baja el perfil por cada metro hacia el umbral a `falta` de él. */
+export function pendienteDelPerfil(p: PerfilDeLaBajada, falta: number): number {
+  return tramoEn(p, Math.max(0, falta)).pendiente;
+}
+
+/** Si a `falta` del umbral el perfil va nivelado para frenar. */
+export function frenaEnElPerfil(p: PerfilDeLaBajada, falta: number): boolean {
+  return tramoEn(p, Math.max(0, falta)).frena;
+}
+
+/**
+ * **A qué distancia del umbral el perfil está a esa altitud**, m: dónde se
+ * empieza a bajar desde ella. Ver `distanciaDeDescenso`.
+ */
+export function distanciaDelPerfil(p: PerfilDeLaBajada, altitud: number): number {
+  for (const t of p) {
+    const arriba = t.altitud + (t.hasta - t.desde) * t.pendiente;
+    if (altitud <= arriba || t.hasta === Infinity) {
+      if (t.pendiente <= 0) return t.desde;
+      return t.desde + Math.max(0, altitud - t.altitud) / t.pendiente;
+    }
+  }
+  return 0;
+}
+
 /**
  * La altitud de la senda de bajada a `falta` metros del umbral, m.
  *
  * La misma regla al revés: la bajada de tres grados, estirada desde el umbral
  * hacia atrás. Y nunca por debajo de lo que publica la carta para el siguiente
  * punto: esa altitud es la que libra el terreno, y se respeta hasta pasarlo.
+ *
+ * **Con perfil, la del perfil**, con sus tramos para frenar: ver
+ * `perfilDeLaBajada`. Sin él, la recta de siempre.
  */
 export function alturaDeLaSenda(
   r: Ruta,
@@ -1268,10 +1484,12 @@ export function alturaDeLaSenda(
   aireSobreSuelo = 1,
   /** Si se respeta lo publicado para el siguiente punto. Ver `ritmoParaElAutomatico`. */
   conLaCarta = true,
+  perfil: PerfilDeLaBajada | null = null,
 ): number {
-  const senda =
-    r.cotaDelUmbral +
-    (falta / (MILLAS_POR_MIL_PIES * MILLA)) * 1000 * PIE * aireSobreSuelo;
+  const senda = perfil
+    ? altitudDelPerfil(perfil, falta)
+    : r.cotaDelUmbral +
+      (falta / (MILLAS_POR_MIL_PIES * MILLA)) * 1000 * PIE * aireSobreSuelo;
   if (!conLaCarta) return senda;
   const siguiente = r.fijos[Math.max(1, Math.min(r.fijos.length - 1, activo))];
   return Math.max(senda, siguiente?.minima ?? -Infinity);
@@ -1525,6 +1743,13 @@ export class Seguimiento {
    * velocidad de ahora para todo. Ver `segundosPorElPerfil`.
    */
   private avion: AircraftConfig | null = null;
+  /**
+   * Las velocidades de su bajada, si es de los que la planean con tramos
+   * para frenar. Ver `perfilDeLaBajada`.
+   */
+  private velocidades: VelocidadesDeLaBajada | null = null;
+  /** El ángulo de la senda de la final en la pista del plan, grados. */
+  private anguloDeLaFinal = 3;
   /** La última vez que se contó la hora del perfil. Ver `horaDelPerfil`. */
   private contado: {
     readonly x: number;
@@ -1538,14 +1763,63 @@ export class Seguimiento {
   } | null = null;
 
   /** Pone un plan nuevo, o ninguno. */
-  poner(ruta: Ruta | null, crucero = 0, avion: AircraftConfig | null = null): void {
+  poner(
+    ruta: Ruta | null,
+    crucero = 0,
+    avion: AircraftConfig | null = null,
+    /** El ángulo de la senda de la final en su pista, grados. */
+    anguloDeLaFinal = 3,
+  ): void {
     this.ruta = ruta;
     this.activo = 1;
     this.yaBajando = false;
     this.crucero = crucero;
     this.avion = avion;
+    this.velocidades = avion ? velocidadesDeLaBajada(avion) : null;
+    this.anguloDeLaFinal = anguloDeLaFinal;
     this.contado = null;
     this.ultimo = null;
+  }
+
+
+  /**
+   * **La senda de la final de la pista del plan**, grados: la que publica su
+   * AIP. Ver `world/sendas-publicadas.ts`. Va aparte de `poner` porque es de
+   * la pista, no del plan, y un plan se pone sin saber todavía a qué pista.
+   */
+  ponerSendaDeLaFinal(grados: number): void {
+    this.anguloDeLaFinal = grados;
+  }
+
+  /**
+   * **El perfil de la bajada de este plan**, con sus tramos para frenar si el
+   * avión los lleva, y `null` si no hay avión: entonces la recta de siempre.
+   * Ver `perfilDeLaBajada`.
+   */
+  private perfil(r: Ruta): PerfilDeLaBajada | null {
+    if (!this.avion) return null;
+    return perfilDeLaBajada(
+      r.cotaDelUmbral,
+      this.velocidades,
+      finalDeLaRuta(r),
+      this.anguloDeLaFinal,
+      this.aireSobreSuelo,
+    );
+  }
+
+  /** Lo que baja la senda por metro a `falta` del umbral, con perfil o sin él. */
+  private pendienteEn(r: Ruta, falta: number): number {
+    const perfil = this.perfil(r);
+    return perfil
+      ? pendienteDelPerfil(perfil, falta)
+      : (1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA);
+  }
+
+  /** Si a `falta` del umbral el plan va nivelado para frenar. Para el banco y el cuadro. */
+  frenaAqui(falta: number): boolean {
+    const r = this.ruta;
+    const perfil = r ? this.perfil(r) : null;
+    return !!perfil && frenaEnElPerfil(perfil, falta);
   }
 
   get plan(): Ruta | null {
@@ -1583,7 +1857,14 @@ export class Seguimiento {
     if (!r || r.fijos.length < 2) return null;
     const faf = r.fijos.findIndex((f) => f.papel === "faf");
     const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
-    return alturaDeLaSenda(r, faf > 0 ? faf : r.fijos.length - 1, suelo);
+    return alturaDeLaSenda(
+      r,
+      faf > 0 ? faf : r.fijos.length - 1,
+      suelo,
+      this.aireSobreSuelo,
+      true,
+      this.perfil(r),
+    );
   }
 
   /**
@@ -1627,9 +1908,17 @@ export class Seguimiento {
     this.aireSobreSuelo = l.aire > 1 ? l.aire / suelo : 1;
     const desnivel = this.desde(l) - r.cotaDelUmbral;
     const hayQueBajar = desnivel > DESNIVEL_QUE_CUENTA;
-    const descenso = hayQueBajar
-      ? distanciaDeDescenso(desnivel, Math.max(l.aire, 1), suelo)
-      : null;
+    /*
+     * Con perfil, el punto de descenso es donde el perfil llega a la altura de
+     * la que se baja: tres por mil y una milla más por cada diez nudos que
+     * frenar. Ver `perfilDeLaBajada`.
+     */
+    const perfil = this.perfil(r);
+    const descenso = !hayQueBajar
+      ? null
+      : perfil
+        ? distanciaDelPerfil(perfil, this.desde(l))
+        : distanciaDeDescenso(desnivel, Math.max(l.aire, 1), suelo);
     let ahora = false;
     /*
      * **Y solo si el avión, de verdad, tiene algo que bajar.** La distancia
@@ -1766,6 +2055,8 @@ export class Seguimiento {
       this.activo,
       Math.max(falta, suelo),
       this.aireSobreSuelo,
+      true,
+      this.perfil(r),
     );
     /*
      * **Y si se va muy por encima de la senda, se baja a un ritmo, no de
@@ -1799,13 +2090,15 @@ export class Seguimiento {
     const faf = r.fijos.findIndex((f) => f.papel === "faf");
     const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
     const hasta = Math.max(falta, suelo);
-    const senda = alturaDeLaSenda(r, this.activo, hasta, this.aireSobreSuelo);
-    const libre = alturaDeLaSenda(r, this.activo, hasta, this.aireSobreSuelo, false);
-    // Sujeta por lo publicado para el siguiente punto, la senda va nivelada.
+    const perfil = this.perfil(r);
+    const senda = alturaDeLaSenda(r, this.activo, hasta, this.aireSobreSuelo, true, perfil);
+    const libre = alturaDeLaSenda(r, this.activo, hasta, this.aireSobreSuelo, false, perfil);
+    // Sujeta por lo publicado para el siguiente punto, la senda va nivelada; y
+    // en los tramos para frenar del perfil, también.
     const ritmo =
       senda > libre || falta <= suelo
         ? 0
-        : -Math.max(0, l.aire) * ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA));
+        : -Math.max(0, l.aire) * this.pendienteEn(r, hasta);
     return { metros: l.altitud - senda, ritmo };
   }
 
@@ -1846,9 +2139,10 @@ export class Seguimiento {
     const r = this.ruta;
     if (!r) return null;
     const falta = restante(r, this.activo, l.x, l.z);
+    const perfil = this.perfil(r);
     return {
-      altitud: alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, false),
-      ritmo: -Math.max(0, l.aire) * ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA)),
+      altitud: alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, false, perfil),
+      ritmo: -Math.max(0, l.aire) * this.pendienteEn(r, falta),
     };
   }
 
@@ -1877,9 +2171,10 @@ export class Seguimiento {
     const faf = r.fijos.findIndex((f) => f.papel === "faf");
     const suelo = faf > 0 ? r.total - r.acumulado[faf]! : 5 * MILLA;
     if (falta <= suelo) return 0;
-    const senda = alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo);
-    const libre = alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, false);
+    const perfil = this.perfil(r);
+    const senda = alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, true, perfil);
+    const libre = alturaDeLaSenda(r, this.activo, falta, this.aireSobreSuelo, false, perfil);
     if (senda > libre || senda < l.altitud - POR_DELANTE) return 0;
-    return -Math.max(0, l.aire) * ((1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA));
+    return -Math.max(0, l.aire) * this.pendienteEn(r, falta);
   }
 }

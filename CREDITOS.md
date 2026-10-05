@@ -101,6 +101,16 @@ Intelectual). No se copia ni se redibuja ninguna carta. Las coordenadas se
 comprobaron contra las distancias que imprime cada carta, y las erratas
 que salieron van contadas en el mismo fichero.
 
+Y **el ángulo de la senda de cada pista** —al que va reglado su PAPI y por el
+que baja su ILS o su aproximación RNP con guía vertical— sale de los
+apartados AD 2.14 y AD 2.19 de la ficha de cada aeródromo, y de sus cartas
+RNP, leídos el 5 de octubre de 2026: GCXO, GCTS, GCLP y GCLA de la enmienda
+AIRAC 09/26 (en vigor desde el 01-OCT-2026), GCRR de la 08/26, GCHI de la
+05/26, GCFV y GCGM de la enmienda 408/26 y LECU de la AIRAC 07/26. Son los
+3,7° de la 21 de Lanzarote, los 3,45° de la 19 de Fuerteventura, los 2,8° de
+la 09 de Cuatro Vientos, y tres grados en las demás. Ver
+`src/world/sendas-publicadas.ts`.
+
 ### El plan de vuelo y los datos de los campos: AIP Paraguay
 
 Los de Paraguay salen del AIP que publica la Dirección Nacional de Aeronáutica
@@ -111,6 +121,12 @@ codificación; la lista de aeródromos de cabotaje (AD 3), donde está Ayolas; y
 las listas ENR 4.1 (radioayudas) y ENR 4.3 (puntos significativos). Cada
 procedimiento lleva en `src/world/procedimientos-paraguay.ts` la carta de la
 que sale, y ahí está también lo que no entra y por qué.
+
+El ángulo del PAPI de Asunción, Guaraní y Encarnación, y el de la senda del
+ILS de la 23 de Guaraní —tres grados todos—, salen del eAIP de la DINAC en su
+edición del 24 de febrero de 2022, que es la que se pudo leer el 5 de octubre
+de 2026 (la de ahora no se pudo bajar ese día). Ver
+`src/world/sendas-publicadas.ts`.
 
 Además de los procedimientos, del AIP salen la pista de Pilar —sus dos
 umbrales, su cota y sus 1.200 × 18 m, que es la pista publicada aunque el

@@ -42,11 +42,17 @@ import {
   MILLA,
   PIE,
   alturaDeLaSenda,
+  finalDeLaRuta,
   libra,
+  perfilDeLaBajada,
   rutaDe,
+  velocidadesDeLaBajada,
   type Fijo,
+  type PerfilDeLaBajada,
   type Ruta,
 } from "../flight/ruta";
+import { FINAL_DESDE } from "../flight/escalera-de-velocidades";
+import { sendaDeLaCabecera } from "./sendas-publicadas";
 import { mirarDelante, type PistaConocida } from "../flight/terreno-delante";
 import { campoDeCasa, campoVecino } from "./campo-del-vuelo";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
@@ -76,6 +82,12 @@ const CAMPOS = SCENARIOS.filter(
     (e.pais === "es" || e.pais === "py") &&
     fs.existsSync(`data/terrain/${e.id}.bin`),
 );
+
+/** El reactor más grande de la flota, el que vuela el perfil con tramos para frenar. */
+const JAZ_120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
+
+/** Desde qué largo de pista se mira el perfil de un reactor, m. */
+const PISTA_DE_REACTOR = 1800;
 
 /** El nombre de un campo en los mensajes: su indicativo. */
 const nombre = (e: Scenario) => oaciDe(e) ?? e.id;
@@ -165,6 +177,8 @@ function sobreElRelieve(
   i: number,
   cota: (x: number, z: number) => number | null,
   ancho: (hecho: number, largo: number) => number,
+  /** El perfil de un reactor, con sus tramos para frenar. Ver `perfilDeLaBajada`. */
+  perfil: PerfilDeLaBajada | null = null,
 ): Peor {
   const a = r.fijos[i - 1]!;
   const b = r.fijos[i]!;
@@ -174,7 +188,7 @@ function sobreElRelieve(
   let peor: Peor = { margen: Infinity, donde: "" };
   for (let t = 0; t <= largo; t += 0.25 * MILLA) {
     const falta = r.total - r.acumulado[i - 1]! - t;
-    const altitud = alturaDeLaSenda(r, i, falta);
+    const altitud = alturaDeLaSenda(r, i, falta, 1, true, perfil);
     const w = ancho(t, largo);
     let alto = -Infinity;
     for (let k = -4; k <= 4; k++) {
@@ -201,6 +215,7 @@ function inicialEIntermedia(
   r: Ruta,
   cota: (x: number, z: number) => number | null,
   fafDeLaCarta: string | null,
+  perfil: PerfilDeLaBajada | null = null,
 ): { inicial: Peor | null; intermedia: Peor | null } {
   const iIF = r.fijos.findIndex((f) => f.papel === "if");
   const deLaCarta = r.fijos.findIndex((f) => f.nombre === fafDeLaCarta);
@@ -210,7 +225,7 @@ function inicialEIntermedia(
   const peorDe = (a: Peor | null, b: Peor) => (a && a.margen <= b.margen ? a : b);
   for (let i = 1; i < r.fijos.length; i++) {
     if (iIF > 0 && i <= iIF)
-      inicial = peorDe(inicial, sobreElRelieve(r, i, cota, () => 1.25 * MILLA));
+      inicial = peorDe(inicial, sobreElRelieve(r, i, cota, () => 1.25 * MILLA, perfil));
     else if (iIF >= 0 && iFAF > 0 && i > iIF && i <= iFAF) {
       const hastaElFAF = r.acumulado[iFAF]!;
       const desde = r.acumulado[i - 1]!;
@@ -221,7 +236,7 @@ function inicialEIntermedia(
           const queda = hastaElFAF - desde - t;
           const f = Math.max(0, Math.min(1, queda / (2 * MILLA)));
           return (0.475 + (1.25 - 0.475) * f) * MILLA;
-        }),
+        }, perfil),
       );
     }
   }
@@ -332,8 +347,11 @@ function primerAviso(
   r: Ruta,
   cota: (x: number, z: number) => number | null,
   pista: PistaConocida,
+  perfil: PerfilDeLaBajada | null = null,
 ): string | null {
-  for (const p of volar(r)) {
+  const altitud = (falta: number, activo: number) =>
+    alturaDeLaSenda(r, Math.min(r.fijos.length - 1, activo), Math.max(0, falta), 1, true, perfil);
+  for (const p of volar(r, altitud)) {
     const d = mirarDelante(p, cota, [pista]);
     if (d.aviso)
       return `${d.aviso} a ${(p.falta / MILLA).toFixed(1)} NM del umbral, ${Math.round(p.altitud)} m, ${d.segundos} s por delante`;
@@ -478,19 +496,20 @@ const FRUSTRADA_JUNTO_AL_MONTE: Readonly<Record<string, string>> = {
 };
 
 /**
- * **Las finales en las que el avisador de terreno habla**, con su porqué.
+ * **Las finales del circuito en las que el avisador de terreno habla**, con
+ * su porqué.
  *
- * Una: la 21 de Lanzarote, que por la senda de tres grados del juego pasa a
- * treinta y cinco metros de la loma que hay a una milla del umbral. Su PAPI
- * de verdad está a 3,7° (AD 2-GCRR, 14) por eso mismo, y el juego lleva una
- * sola senda para todas las pistas. Lo que dice el avisador es verdad: por
- * tres grados ahí se va bajo. Hasta que cada pista lleve su senda, se le pide
- * que sea solo la precaución, sin el «pull up», y en la última parte: la
- * misma final llegando por la aproximación y llegando por el circuito.
+ * Una: la 21 de Lanzarote, que por tres grados pasa a treinta y cinco metros
+ * de la loma que hay a una milla del umbral. Su PAPI de verdad está a 3,7°
+ * (AD 2-GCRR, 2.14) por eso mismo, y la aproximación ya baja por él: ver
+ * `sendas-publicadas.ts`, y volándola el avisador ya no dice nada. Lo que
+ * queda es el circuito dibujado, que entra en final a los tres grados de
+ * siempre: ahí se le pide que sea solo la precaución, sin el «pull up», y en
+ * la última parte.
  */
 const AVISA_EN_LA_FINAL: Readonly<Record<string, string>> = {
   "GCRR 21":
-    "Con tres grados se pasa a treinta y cinco metros de la loma de antes del umbral; su PAPI está a 3,7°.",
+    "El circuito entra en final a tres grados y pasa a treinta y cinco metros de la loma de antes del umbral; su PAPI está a 3,7°.",
 };
 
 describe("las aproximaciones de cada campo, sobre el relieve", () => {
@@ -521,15 +540,52 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
       it(`${dicho}: volando la aproximación, el aviso de terreno no salta`, () => {
         for (const rama of ramas(e, c)) {
           const r = rutaDeLaRama(rama, c);
-          const aviso = primerAviso(r, cota, pistaConocida(e, c));
+          // La final con la senda de su PAPI, como la vuela el juego. Ver
+          // `sendas-publicadas.ts`.
+          const perfil = perfilDeLaBajada(
+            c.cota,
+            null,
+            finalDeLaRuta(r),
+            sendaDeLaCabecera(oaciDe(e), c.nombre),
+          );
+          const aviso = primerAviso(r, cota, pistaConocida(e, c), perfil);
           const por = `${dicho} por ${rama.map((f) => f.nombre).join(" ")}`;
-          if (dicho in AVISA_EN_LA_FINAL) {
-            expect(aviso, por).toMatch(/^precaucion a [0-2]\.\d NM/);
-            continue;
-          }
           expect(aviso, por).toBeNull();
         }
       });
+
+      /*
+       * **Y con los tramos para frenar de un reactor**, que bajan antes a la
+       * altura del circuito y van nivelados hasta el punto de final: el perfil
+       * que sigue el automático del JAZ 90 y del JAZ 120. Ver
+       * `perfilDeLaBajada` en `flight/ruta.ts`.
+       */
+      if (c.largo >= PISTA_DE_REACTOR)
+        it(`${dicho}: con los tramos para frenar de un reactor, libra y no avisa`, () => {
+          const deLaCarta =
+            procedimientosDe(oaciDe(e))
+              ?.aproximaciones[c.nombre]?.ramas[0]?.find((p) => p.papel === "faf")?.nombre ?? null;
+          for (const rama of ramas(e, c)) {
+            const r = rutaDeLaRama(rama, c);
+            const faf = r.fijos.findIndex((f) => f.papel === "faf");
+            const perfil = perfilDeLaBajada(
+              c.cota,
+              velocidadesDeLaBajada(JAZ_120),
+              faf > 0 ? r.total - r.acumulado[faf]! : FINAL_DESDE,
+              sendaDeLaCabecera(oaciDe(e), c.nombre),
+            );
+            const { inicial, intermedia } = inicialEIntermedia(r, cota, deLaCarta, perfil);
+            if (inicial)
+              expect(inicial.margen, `${dicho}, inicial: ${inicial.donde}`).toBeGreaterThanOrEqual(INICIAL);
+            if (intermedia)
+              expect(intermedia.margen, `${dicho}, intermedia: ${intermedia.donde}`).toBeGreaterThanOrEqual(
+                INTERMEDIA,
+              );
+            const aviso = primerAviso(r, cota, pistaConocida(e, c), perfil);
+            const por = `${dicho} por ${rama.map((f) => f.nombre).join(" ")}`;
+            expect(aviso, por).toBeNull();
+          }
+        });
 
       it(`${dicho}: la frustrada sube por encima de su área`, () => {
         const peor = frustrada(e, c, cota);

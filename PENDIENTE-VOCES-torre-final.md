@@ -38,6 +38,25 @@ Voz `instructor`, castellano paraguayo con voseo. Unos 230 caracteres.
 |---|---|---|---|
 | `vuelo.cotaDeLaPista` | Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos | Look at the chart: next to the runway it says how high it is above the sea. What the altimeter reads minus that is how high we are above the runway, and that's what the minimums are set from | `game.ts`, `contarLaCotaDeLaPista`: en el peldaño de los números, una vez por tramo, al entrar en la zona de la torre de llegada, detrás de la tarjeta. **Sin el número a propósito**, para que valga en cualquier campo: el número lo lleva la tarjeta (`hud.cotaDeLaPista`), y la carta y el plano. Esta clave **no está** todavía en `src/i18n/`: se añade al grabar. |
 
+## Lo que falta: aterrizar sin autorización (tanda 13, punto 237)
+
+Quien aterriza con la orden de irse al aire puesta —la de la pista ocupada—
+lo oye de la torre después de tocar, con el avión ya frenando: que llame a la
+torre por teléfono al llegar. No hay frase del Doc 4444 para esto; es lo que
+se hace en España y en la OACI, y en la FAA es el aviso de Brasher. De
+Taguató para arriba, en fraseología y **escrita en la tira de la radio**
+desde ya; en los dos peldaños de abajo, en castellano, como la lámpara. Solo
+donde hay torre (un AFIS no da permisos). Se dice **solo con su grabación**;
+mientras tanto, la tira y la tarjeta de la instructora (ver
+`PENDIENTE-VOCES-final.md`, 3). Unos 330 caracteres.
+
+| voz | clave | texto | dónde se engancha |
+|---|---|---|---|
+| torre | `torre.landedWithoutClearance` | {matrícula}, landed without clearance, call the tower by telephone on arrival | `game.ts`, `aterrizoContraLaOrden`, de Taguató para arriba, en Paraguay. Receta con las piezas de la matrícula, como `torre.expediteVacating`. |
+| torre-canarias | `torre.canario.landedWithoutClearance` | lo mismo | lo mismo en Canarias |
+| torre | `torre.aterrizoSinPermiso` | {indicativo}, aterrizó sin autorización; llame a la torre por teléfono a su llegada | lo mismo, en Guyrami y Tukã, en Paraguay. Clave y texto ya en `src/i18n/`. |
+| torre-canarias | `torre.canario.aterrizoSinPermiso` | lo mismo | lo mismo en Canarias |
+
 ## Dónde se ve ya, mientras tanto
 
 - **La cota**: en la carta de la pantalla de navegación, debajo del punto

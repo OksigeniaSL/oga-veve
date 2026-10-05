@@ -44,7 +44,7 @@ export interface BocaDelTurno {
 /** Lo que se le pide al tráfico dibujado. Ver `world/trafico.ts`. */
 export interface DibujoDelTurno {
   anuncia(matricula: string, clave: string, puedeAterrizar?: boolean): void;
-  paso(dt: number): string[];
+  paso(dt: number, alLlegarSinPermiso?: (matricula: string) => boolean): string[];
   todaviaNo(matricula: string, clave: string): boolean;
   enFinal(matricula: string): number | null;
   /**
@@ -451,7 +451,20 @@ export class TurnoDePista {
     };
     const trafico = this.de.trafico();
     let alAire: Transmision | null = null;
-    const alAireYa = trafico?.paso(dt) ?? [];
+    /*
+     * **Y al que llega a la decisión sin su permiso con la pista libre, se le
+     * da ahora**, dicho si la frecuencia puede y callado si no. Ver
+     * `autorizarAlLlegar` en `flight/radio.ts`.
+     */
+    let autorizado: Transmision | null = null;
+    const tuya = this.laPistaEsTuya(ahora.fase);
+    const alLlegar = (m: string): boolean => {
+      const dado = this.de.radio.autorizarAlLlegar(m, momento, tuya);
+      if (dado === null) return false;
+      if (dado !== "callado") autorizado = dado;
+      return true;
+    };
+    const alAireYa = trafico?.paso(dt, alLlegar) ?? [];
     this.retirarLosQueNoEstan();
     for (const m of alAireYa) {
       const dice = this.de.radio.seFueAlAire(m, momento);
@@ -465,7 +478,7 @@ export class TurnoDePista {
         this.de.decirAOtro(dice);
       } else alAire = dice ?? alAire;
     }
-    const dice = this.de.radio.update(dt, momento) ?? alAire;
+    const dice = this.de.radio.update(dt, momento) ?? alAire ?? autorizado;
     if (dice)
       trafico?.anuncia(
         dice.de.matricula,

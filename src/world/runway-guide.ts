@@ -482,9 +482,15 @@ export class RunwayGuide {
      * cuenta la senda**. Ver `SENDA_DESDE` y `papiAdentro`.
      */
     sendaDesde: number = SENDA_DESDE,
+    /**
+     * El ángulo de la senda de esta pista, grados: la de su PAPI. Ver
+     * `sendas-publicadas.ts`. Los aros y el hilo van por ella, o el PAPI y los
+     * aros dirían cosas distintas en la 21 de Lanzarote.
+     */
+    angulo = 3,
   ) {
     this.sendaDesde = sendaDesde;
-    this.group = buildGuide(scenario, runwayElevation, ground, sendaDesde);
+    this.group = buildGuide(scenario, runwayElevation, ground, sendaDesde, angulo);
     this.faro =
       (this.group.getObjectByName("faro") as Mesh | undefined) ?? null;
 
@@ -1044,9 +1050,11 @@ function buildGuide(
   ground: GroundSampler,
   /** Desde dónde se cuenta la senda. Ver `SENDA_DESDE`. */
   sendaDesde: number,
+  angulo: number,
 ): Group {
   const group = new Group();
   group.name = "guia-pista";
+  const pendiente = Math.tan((angulo * Math.PI) / 180);
 
   const { runway } = scenario;
   // Hacia dónde se avanza volando este rumbo. Sale de `rumbo.ts` y no de una
@@ -1076,6 +1084,7 @@ function buildGuide(
       az,
       ground,
       sendaDesde,
+      pendiente,
     ),
   );
   group.add(
@@ -1087,6 +1096,7 @@ function buildGuide(
       az,
       ground,
       sendaDesde,
+      pendiente,
     ),
   );
 
@@ -1129,6 +1139,7 @@ function hiloDeLaSenda(
   az: number,
   ground: GroundSampler,
   sendaDesde: number,
+  pendiente: number,
 ): Points {
   const puntos: number[] = [];
   for (let d = FIRST_RING_DISTANCE; d > 30; d -= PASO_DEL_HILO) {
@@ -1138,7 +1149,7 @@ function hiloDeLaSenda(
     const suelo = ground(px, pz) + RING_TERRAIN_CLEARANCE;
     puntos.push(
       px,
-      Math.max(y + (d + sendaDesde) * Math.tan(GLIDE_SLOPE), suelo),
+      Math.max(y + (d + sendaDesde) * pendiente, suelo),
       pz,
     );
   }
@@ -1251,6 +1262,7 @@ function approachRings(
   az: number,
   ground: GroundSampler,
   sendaDesde: number,
+  pendiente: number,
 ): Group {
   const rings = new Group();
   rings.name = "aros";
@@ -1262,7 +1274,7 @@ function approachRings(
     const distance =
       LAST_RING_DISTANCE +
       (FIRST_RING_DISTANCE - LAST_RING_DISTANCE) * fraction;
-    const height = (distance + sendaDesde) * Math.tan(GLIDE_SLOPE);
+    const height = (distance + sendaDesde) * pendiente;
     /*
      * El radio, y por qué encoge.
      *

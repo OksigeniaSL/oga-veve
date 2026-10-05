@@ -124,6 +124,11 @@ export interface CampoDeLaAproximacion {
    */
   readonly senda: readonly [number, number] | null;
   /**
+   * **El ángulo de su senda**, grados: al que va reglado su PAPI. Tres en
+   * casi todas; 3,7 en la 21 de Lanzarote. Ver `world/sendas-publicadas.ts`.
+   */
+  readonly angulo?: number;
+  /**
    * **Si no tiene torre**: una pista particular o sin servicio. Ahí lo que
    * puede cruzarse es la vaca, y se ve. Ver `mirarSiMandanFrustrar`.
    */
@@ -263,6 +268,14 @@ export class LaAproximacion {
   porqueMandaron: PorQueMandaron = null;
 
   /**
+   * **Con qué orden puesta se tocó tierra**, si se tocó con una: la que se
+   * levanta al tocar. Lo mira el juego al juzgar la toma, que llega dos
+   * segundos después, cuando la orden ya no está. Ver `aterrizoContraLaOrden`
+   * en `game.ts`. Lo borra quien lo lee.
+   */
+  tocoConLaOrden: PorQueMandaron = null;
+
+  /**
    * Cómo se sortean las órdenes de irse al aire.
    *
    * `auto` es lo que se juega: una de cada cuatro aproximaciones. Las otras
@@ -337,6 +350,7 @@ export class LaAproximacion {
     this.laPistaSigueOcupada = null;
     this.mandanFrustrar = false;
     this.porqueMandaron = null;
+    this.tocoConLaOrden = null;
     this.yaLoMandaron = false;
     this.leToca = null;
     this.altoAlMandar = 0;
@@ -424,6 +438,14 @@ export class LaAproximacion {
        * describe nada y se retira.
        */
       if (s.onGround) {
+        /*
+         * Y se apunta con qué orden se tocó: el juicio de la toma llega dos
+         * segundos después y, sin esto, la orden ya no estaba. Por eso
+         * aterrizar contra la orden de la torre no tenía ninguna
+         * consecuencia —el percance de la pista ocupada que la esperaba no
+         * llegaba nunca—. Ver `aterrizoContraLaOrden` en `game.ts`.
+         */
+        this.tocoConLaOrden = this.porqueMandaron;
         this.levantarLaOrden();
         return;
       }
@@ -744,7 +766,7 @@ export class LaAproximacion {
     // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco
     // sirve: se mira hasta la valla y a partir de ahí se mira la pista.
     if (suelo < 150 || suelo > 6000) return;
-    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI);
+    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI, this.campo.angulo);
     if (blancas === this.papiEnPantalla) return;
     // La primera lectura no se anuncia si ya venís bien: la tarjeta es para
     // enseñar a corregir, no para felicitar a quien todavía no ha hecho nada.

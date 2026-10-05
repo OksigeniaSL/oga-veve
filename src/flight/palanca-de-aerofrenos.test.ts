@@ -54,6 +54,30 @@ describe("la palanca de los aerofrenos", () => {
     expect(p.palanca).toBe("recogida");
   });
 
+  /*
+   * La tarjeta del paso enseña la tecla para sacarlos bajando por encima del
+   * perfil, y un toque solo los armaba. En vuelo con el tren dentro va de
+   * abajo a fuera; armar es de la lista de aterrizaje, con el tren fuera.
+   */
+  it("en vuelo con el tren dentro, un toque los saca y otro los recoge", () => {
+    const p = palanca();
+    p.alternar(true);
+    expect(p.palanca).toBe("fuera");
+    expect(durante(p, 3, { ...EN_EL_AIRE, gas: 0 }).aerofrenos).toBe(1);
+    p.alternar(true);
+    expect(p.palanca).toBe("recogida");
+    // Y si estaba armada, también a fuera: es lo que se pide en la bajada.
+    p.ponerPalanca("armada");
+    p.alternar(true);
+    expect(p.palanca).toBe("fuera");
+  });
+
+  it("y con el tren fuera, el primer toque arma, que es la lista de aterrizaje", () => {
+    const p = palanca();
+    p.alternar(false);
+    expect(p.palanca).toBe("armada");
+  });
+
   it("y en el avión que no los lleva no hay palanca que mover", () => {
     const p = palanca({ aerofrenos: false, frenosDeTierra: false, autofreno: false });
     expect(p.alternar()).toBe(false);
