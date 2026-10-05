@@ -1372,6 +1372,18 @@ body {
   text-align: center;
 }
 
+/*
+ * La hombrera grande es un botón: tocada, explica qué son sus barras. Sin
+ * aspecto de botón, que lo que se enseña es la manga.
+ */
+.cuaderno__manga {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
 .cuaderno__manga svg {
   display: block;
   height: 132px;
@@ -1385,18 +1397,289 @@ body {
 }
 
 /*
- * Las cuentas, en fila y con la cifra grande encima de su palabra. Sin barras
- * de progreso ni porcentajes: lo que se enseña son **cosas hechas**.
+ * **La escalera de grados**: los ganados, enteros, y el siguiente con el
+ * borde a trazos, que es la meta. Cada uno se toca y explica de qué se
+ * responde con él. Ver `laEscalera` en `ui/cuaderno.ts`.
+ */
+.cuaderno__escalera {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cuaderno__escalon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: var(--tacto);
+  min-height: var(--tacto);
+  padding: 6px 8px;
+  border-radius: var(--r-s);
+  border: 1px solid var(--linea);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cuaderno__escalon svg {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+.cuaderno__escalon--meta {
+  border-style: dashed;
+  border-color: var(--linea-fuerte);
+  background: none;
+  opacity: 0.72;
+}
+
+/*
+ * **Volar sin instructora**: su dibujo, el interruptor y la lamparita de qué
+ * es. Con el candado, el interruptor no se mueve y debajo sale lo que falta.
+ */
+.cuaderno__sola {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 10px;
+  width: min(380px, 100%);
+  padding: 10px 12px;
+  border-radius: var(--r-m);
+  background: rgb(255 255 255 / 0.05);
+  border: 1px solid var(--linea);
+}
+
+.cuaderno__sola-boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: var(--tacto);
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cuaderno__sola-dibujo svg {
+  display: block;
+  height: 84px;
+  width: auto;
+  transition: opacity 160ms ease-out, filter 160ms ease-out;
+}
+
+/* Apagado, la instructora callada se ve apagada: ella vuela con vos. */
+.cuaderno__sola:not(.cuaderno__sola--puesta) .cuaderno__sola-dibujo svg {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+}
+
+/* La llave del interruptor: un carril y su bola, que va a la derecha puesta. */
+.cuaderno__sola-llave {
+  position: relative;
+  flex: none;
+  width: 58px;
+  height: 32px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.14);
+  border: 1px solid var(--linea-fuerte);
+  transition: background 160ms ease-out;
+}
+
+.cuaderno__sola--puesta .cuaderno__sola-llave {
+  background: var(--ok);
+}
+
+.cuaderno__sola-bola {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--tinta);
+  transition: transform 160ms ease-out;
+}
+
+.cuaderno__sola--puesta .cuaderno__sola-bola {
+  transform: translateX(26px);
+}
+
+.cuaderno__sola-bola .candado {
+  width: 18px;
+  height: 18px;
+}
+
+.candado__arco {
+  fill: none;
+  stroke: var(--barro);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.candado__cuerpo {
+  fill: var(--barro);
+}
+
+.candado__ojo {
+  stroke: var(--tinta);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.cuaderno__sola--cerrada .cuaderno__sola-boton {
+  cursor: help;
+}
+
+.cuaderno__sola-que {
+  display: grid;
+  place-items: center;
+  width: var(--tacto);
+  height: var(--tacto);
+  border-radius: 50%;
+  border: 1px solid var(--linea);
+  background: none;
+  color: var(--ocre-tinta);
+  cursor: pointer;
+}
+
+.cuaderno__sola-que svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.cuaderno__sola-texto {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.cuaderno__sola .cuaderno__falta-dibujo {
+  grid-column: 1 / -1;
+}
+
+/*
+ * **La instructora callada**, el dibujo del modo. Sus colores van aquí y no
+ * en el SVG porque sale en tres sitios —la pregunta, el cuaderno y la
+ * ventana de explicación— y tienen que ser los mismos.
+ */
+.instructora-callada .ic__cara,
+.instructora-callada .ic__mano {
+  fill: #e8b98f;
+}
+
+.instructora-callada .ic__pelo {
+  fill: #4a2c1d;
+}
+
+.instructora-callada .ic__casco {
+  fill: none;
+  stroke: #2b3a35;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.instructora-callada .ic__auricular {
+  fill: #2b3a35;
+}
+
+.instructora-callada .ic__micro,
+.instructora-callada .ic__boca,
+.instructora-callada .ic__nariz,
+.instructora-callada .ic__nudillos {
+  fill: none;
+  stroke: #2b3a35;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.instructora-callada .ic__nariz,
+.instructora-callada .ic__nudillos {
+  stroke: #a8693f;
+  stroke-width: 1.6;
+}
+
+/*
+ * **El dedo en los labios**, con su borde: sin él, del color de la cara, se
+ * leía como una nariz larga. El borde lo separa de la cara y la mano de
+ * debajo dice de dónde sale.
+ */
+.instructora-callada .ic__dedo-borde {
+  fill: none;
+  stroke: #8a5232;
+  stroke-width: 8.4;
+  stroke-linecap: round;
+}
+
+.instructora-callada .ic__dedo {
+  fill: none;
+  stroke: #f0c49c;
+  stroke-width: 5.4;
+  stroke-linecap: round;
+}
+
+.instructora-callada .ic__mano {
+  stroke: #8a5232;
+  stroke-width: 1.6;
+}
+
+.instructora-callada .ic__ojo {
+  fill: #2b3a35;
+}
+
+.instructora-callada .ic__escudo {
+  fill: var(--cabina-precaucion);
+}
+
+.instructora-callada .ic__exclama {
+  fill: none;
+  stroke: #1d1a14;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+/*
+ * **Las horas, en avioncitos**: los mismos del final del vuelo, en filas en
+ * el peldaño que no lee. La cifra, desde el de los números. Ver `ui/reloj.ts`.
+ */
+.cuaderno__horas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.cuaderno__horas .reloj--filas {
+  height: auto;
+  width: min(100%, 340px);
+}
+
+/*
+ * Las cuentas, en fila: el dibujo de lo que cuentan y, debajo, la cifra o
+ * sus puntos. Sin barras de progreso ni porcentajes: lo que se enseña son
+ * **cosas hechas**.
  */
 /*
- * Y cada cuenta en su baldosa, en una rejilla de cinco. Sueltas y envueltas,
+ * Y cada cuenta en su baldosa, en una rejilla de cuatro. Sueltas y envueltas,
  * en un teléfono salían tres arriba y dos abajo sin orden ni aire, con la
  * frase de lo que falta pegada debajo: «las cifras se amontonan». En baldosas
  * se lee cuál es cada una aunque se partan en dos filas.
  */
 .cuaderno__datos {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   width: 100%;
 }
@@ -1405,42 +1688,72 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
   padding: 8px 4px 9px;
   border-radius: var(--r-m);
   background: rgb(255 255 255 / 0.05);
 }
 
-/*
- * En estrecho, tres y dos, **con las dos de abajo centradas**: seis columnas,
- * cada baldosa ocupa dos y la cuarta empieza en la segunda. Con tres columnas
- * sin más, la segunda fila quedaba arrimada a la izquierda con un hueco al
- * lado, que es otra vez lo descentrado.
- */
+/* El dibujo de cada cuenta, de los de la tarjeta de señal. */
+.cuaderno__dibujo svg {
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+.cuaderno__puntos {
+  display: grid;
+  place-items: center;
+  min-height: 22px;
+}
+
+/* Los puntos que se cuentan con el dedo. Ver `enPuntos` en `ui/cuaderno.ts`. */
+.puntos {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.puntos__punto {
+  fill: var(--ocre-tinta);
+}
+
+/* Lo que falta: el punto vacío, que es una meta y no un reproche. */
+.puntos__punto--hueco {
+  fill: none;
+  stroke: var(--tinta-suave);
+  stroke-width: 1.4;
+}
+
+.puntos__estrella {
+  fill: var(--ocre);
+}
+
+.puntos__estrella--hueca {
+  fill: none;
+  stroke: var(--tinta-suave);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+/* En estrecho, dos y dos. */
 @media (max-width: 520px) {
   .cuaderno__datos {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .cuaderno__dato {
-    grid-column: span 2;
-  }
-
-  .cuaderno__dato:nth-child(4) {
-    grid-column: 2 / span 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /*
- * **Y en un teléfono tumbado, en dos columnas**: la hombrera con su grado a un
- * lado y las cuentas al otro. Una debajo de otra no cabían en 412 de alto y
- * «Cerrar» quedaba debajo de la barra de gestos; así cabe la página entera y
- * los vuelos, si los hay, siguen debajo rodando.
+ * **Y en un teléfono tumbado, en dos columnas**: la hombrera con su grado y
+ * su escalera a un lado, y el interruptor, las horas y las cuentas al otro.
+ * Una debajo de otra no cabían en 412 de alto y «Cerrar» quedaba debajo de la
+ * barra de gestos; así cabe la página entera y los sellos y los vuelos, si
+ * los hay, siguen debajo rodando.
  */
 @media (max-height: 460px) {
   .cuaderno__panel {
-    width: min(640px, 100%);
+    width: min(720px, 100%);
   }
 
   .cuaderno__panel .concha__cuerpo {
@@ -1468,22 +1781,35 @@ body {
     font-size: 24px;
   }
 
+  .cuaderno__escalera {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .cuaderno__escalon svg {
+    height: 30px;
+  }
+
+  .cuaderno__sola {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .cuaderno__horas {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
   .cuaderno__datos {
     grid-column: 2;
-    grid-row: 1 / span 2;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .cuaderno__dato {
-    grid-column: span 2;
-  }
-
-  .cuaderno__dato:nth-child(4) {
-    grid-column: 2 / span 2;
+    grid-row: 3;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .cuaderno__falta,
   .cuaderno__grado--vuelos,
+  .estampas,
   .bitacora {
     grid-column: 1 / -1;
   }
@@ -1493,6 +1819,14 @@ body {
   }
 }
 
+/*
+ * **En el peldaño que no lee, sin títulos ni glosas**: la página se lee en
+ * dibujos. Lo único escrito que queda es el nombre del panel, que es el del
+ * diálogo y está también en el dibujo de su cabecera.
+ */
+.cuaderno__panel--sin-letras .cuaderno__escalon {
+  padding: 6px;
+}
 /* ── Los vuelos del cuaderno ───────────────────────────────────────────────
 
    La bitácora se escribía desde el primer día y no se enseñaba en ninguna
@@ -1583,6 +1917,294 @@ body {
   text-align: center;
   color: var(--tinta-suave);
   font-size: 15px;
+}
+
+.cuaderno__falta p {
+  margin: 0 0 6px;
+}
+
+/*
+ * **Lo que falta, en dibujo**: la toma, la manga o la frustrada, con un punto
+ * vacío por cada una que falta. Se cuentan con el dedo sin saber leer.
+ */
+.cuaderno__falta-dibujo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.cuaderno__falta-una {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cuaderno__falta-una .cuaderno__dibujo svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cuaderno__falta-cifra {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+
+/* ── Los sellos del cuaderno ──────────────────────────────────────────────
+
+   Uno por campo, como en un pasaporte, sobre su papel: la tinta de cada sitio
+   necesita un fondo claro para parecer tinta, y un sello sobre el verde del
+   panel parecería un icono. Ver `ui/sellos.ts`. */
+.estampas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 12px;
+  border-radius: var(--r-m);
+  background: #f3ecd9;
+  align-self: stretch;
+}
+
+.estampas__una {
+  display: grid;
+  place-items: center;
+}
+
+.estampa {
+  display: block;
+  width: 100%;
+  max-width: 132px;
+  height: auto;
+  color: var(--tinta-estampa, #1d5fa6);
+  /* La tinta de un sello no es nunca del todo opaca. */
+  opacity: 0.88;
+}
+
+.estampa--py {
+  --tinta-estampa: #b3261e;
+}
+
+.estampa--canarias {
+  --tinta-estampa: #1d5fa6;
+}
+
+.estampa--madrid {
+  --tinta-estampa: #6d3a8c;
+}
+
+.estampa--inventado {
+  --tinta-estampa: #2c7a4b;
+}
+
+.estampa__borde {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.4;
+}
+
+.estampa__borde--trazos {
+  stroke-dasharray: 7 4;
+}
+
+.estampa__borde-fino {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+
+.estampa__codigo {
+  fill: currentColor;
+  font: 700 8.5px/1 var(--hud-fuente);
+  letter-spacing: 1.5px;
+}
+
+.estampa__silueta {
+  fill: currentColor;
+  fill-opacity: 0.18;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.estampa__rio {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.9;
+  stroke-opacity: 0.7;
+}
+
+/* El punto del campo: aquí estuviste. */
+.estampa__aqui {
+  fill: currentColor;
+}
+
+.estampa__aqui-aro {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+}
+
+.estampa__paisaje path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.estampa__paisaje .estampa__tinte {
+  fill: currentColor;
+  fill-opacity: 0.2;
+  stroke: none;
+}
+
+/* La pista, como se pinta: asfalto de tinta y la cifra en el color del papel. */
+.estampa__pista {
+  fill: currentColor;
+}
+
+.estampa__eje {
+  fill: none;
+  stroke: #f3ecd9;
+  stroke-width: 1.4;
+  stroke-dasharray: 4 3;
+}
+
+.estampa__numero {
+  fill: #f3ecd9;
+  font: 700 11px/1 var(--hud-fuente);
+}
+
+.estampa__numero--paralela {
+  font-size: 9px;
+}
+
+/* ── La pregunta del principio: ¿hoy sin instructora? ─────────────────────
+
+   Una tarjeta que se entiende sin leer: el dibujo de la instructora callada y
+   el visto y la cruz, grandes, del tamaño del dedo. Ver
+   `ui/pregunta-sin-instructora.ts`. */
+.pregunta-sola {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(10, 16, 13, 0.82);
+}
+
+.pregunta-sola[hidden] {
+  display: none;
+}
+
+.pregunta-sola__tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-height: 100%;
+  width: min(420px, 100%);
+  padding: 20px 22px;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--panel-verde);
+  border: 1px solid var(--linea);
+  box-shadow: var(--poso), var(--filo);
+  animation: concha-entra 160ms ease-out;
+}
+
+.pregunta-sola__dibujo svg {
+  display: block;
+  width: min(220px, 52vw);
+  max-height: 34vh;
+  height: auto;
+}
+
+.pregunta-sola__texto {
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+  color: var(--tinta);
+}
+
+/* Fuera de la vista donde no se lee, y dentro del documento: es el nombre del diálogo. */
+.pregunta-sola__texto--oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pregunta-sola__botones {
+  display: flex;
+  gap: 28px;
+}
+
+.pregunta-sola__boton {
+  display: grid;
+  place-items: center;
+  width: calc(var(--tacto) * 1.5);
+  height: calc(var(--tacto) * 1.5);
+  border-radius: 50%;
+  border: 2px solid var(--linea-fuerte);
+  cursor: pointer;
+}
+
+.pregunta-sola__boton--si {
+  background: var(--ok);
+  color: #10301a;
+}
+
+.pregunta-sola__boton--no {
+  background: var(--barro-claro);
+  color: var(--tinta);
+}
+
+.pregunta-sola__boton svg {
+  width: 60%;
+  height: 60%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sin-movimiento .pregunta-sola__tarjeta {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pregunta-sola__tarjeta {
+    animation: none;
+  }
+}
+
+/* En un teléfono tumbado, el dibujo a un lado y los botones al otro. */
+@media (max-height: 460px) {
+  .pregunta-sola__tarjeta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: min(560px, 100%);
+  }
+
+  .pregunta-sola__dibujo svg {
+    width: min(170px, 30vw);
+    max-height: 52vh;
+  }
+
+  .pregunta-sola__botones {
+    flex-direction: column;
+    gap: 16px;
+  }
 }
 
 .fin {
@@ -8545,6 +9167,14 @@ button.motor__tecla::after {
   fill: var(--tinta-suave);
   font-size: 11px;
   font-weight: 700;
+}
+
+/* El «más» dibujado de las horas en filas, donde no hay cifras. */
+.reloj__mas {
+  fill: none;
+  stroke: var(--tinta-suave);
+  stroke-width: 2.4;
+  stroke-linecap: round;
 }
 
 /* Con movimiento reducido, aparecen y ya está. */

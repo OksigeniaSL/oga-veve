@@ -35,6 +35,7 @@
  */
 
 import type { TranslationKey } from "../i18n";
+import { INSTRUCTORA_CALLADA } from "./instructora-callada";
 import {
   explicacionDe,
   registrarExplicacion,
@@ -170,6 +171,63 @@ const GALONES = `<svg viewBox="0 0 120 80" aria-hidden="true">
   <rect x="24" y="40" width="72" height="5" class="ex-f-oro" />
   <rect x="24" y="50" width="72" height="5" class="ex-f-oro" />
   <rect x="24" y="60" width="72" height="5" class="ex-f-oro" />
+</svg>`;
+
+/*
+ * ── Cada grado, con lo que quiere decir ───────────────────────────────
+ *
+ * El 131 lo pide así: «los galones que se ganan, con lo que significan». La
+ * manga de arriba explica las barras en general; estas, cada escalón: la
+ * manga de ese grado a la izquierda —la misma que pinta el cuaderno, con sus
+ * barras— y a la derecha **de qué se responde** con ella. No de qué se manda:
+ * los galones no son mando, son responsabilidad (AGENTS.md).
+ */
+
+/** La manga de un grado, con sus barras, en la mitad izquierda del lienzo. */
+const mangaDeGrado = (barras: number): string =>
+  `<path d="M6 8 h48 l-4 64 h-40 Z" class="ex-f-manga" />
+   ${Array.from(
+     { length: barras },
+     (_, i) => `<rect x="10" y="${60 - i * 10}" width="40" height="5" class="ex-f-oro" />`,
+   ).join("")}`;
+
+/** Una persona de dibujo: cabeza y hombros. `r` es el radio de la cabeza. */
+const persona = (cx: number, cy: number, r: number, clase = "ex-f-blanco"): string =>
+  `<circle cx="${cx}" cy="${cy}" r="${r}" class="${clase}" />
+   <path d="M${cx - r * 1.7} ${cy + r * 3.2} q0 ${-r * 2} ${r * 1.7} ${-r * 2} q${r * 1.7} 0 ${r * 1.7} ${r * 2} Z" class="${clase}" />`;
+
+/** Aprendiz: aprendés al lado de la instructora, que te dice qué toca. */
+const GRADO_APRENDIZ = `<svg viewBox="0 0 120 80" aria-hidden="true">
+  ${mangaDeGrado(1)}
+  ${persona(98, 30, 9, "ex-f-ambar")}
+  <path d="M86 24 a12 12 0 0 1 24 0" class="ex-s-blanco" />
+  ${persona(74, 42, 7, "ex-f-yo")}
+</svg>`;
+
+/** Piloto: el avión lo llevás vos, del puesto al puesto. */
+const GRADO_PILOTO = `<svg viewBox="0 0 120 80" aria-hidden="true">
+  ${mangaDeGrado(2)}
+  <path d="M64 66 H116" class="ex-s-blanco" />
+  <path d="M70 58 L104 30 L110 32 L84 58 Z M92 42 L84 34 L88 32 L98 38 Z" class="ex-f-yo" />
+</svg>`;
+
+/** Comandante: respondés por el avión y por todos los que van a bordo. */
+const GRADO_COMANDANTE = `<svg viewBox="0 0 120 80" aria-hidden="true">
+  ${mangaDeGrado(3)}
+  <path d="M64 30 Q90 4 116 30" class="ex-s-ambar ex-grueso" />
+  ${persona(72, 34, 7, "ex-f-yo")}
+  ${persona(90, 40, 4.4)}
+  ${persona(106, 40, 4.4)}
+  ${persona(98, 56, 4.4)}
+  ${persona(111, 56, 4.4)}
+</svg>`;
+
+/** Instructora: sabés tanto que podés enseñarle a otro. */
+const GRADO_INSTRUCTORA = `<svg viewBox="0 0 120 80" aria-hidden="true">
+  ${mangaDeGrado(4)}
+  ${persona(76, 30, 9, "ex-f-yo")}
+  <path d="M84 40 L100 32" class="ex-s-blanco" />
+  ${persona(104, 44, 6)}
 </svg>`;
 
 /* ── Los de la pantalla de navegación ─────────────────────────────────── */
@@ -386,13 +444,34 @@ const DEL_CUADRO = enRincon("cuadro", [
    * quieren decir que mandes: quieren decir que respondes.
    */
   { id: "galones", dibujo: { svg: GALONES }, ...claves("galones") },
+  /*
+   * **Y cada grado, con lo suyo**, que se abre tocando su manga en la
+   * escalera del cuaderno. Ver arriba, `GRADO_APRENDIZ`.
+   */
+  { id: "grado-aprendiz", dibujo: { svg: GRADO_APRENDIZ }, ...claves("grado-aprendiz") },
+  { id: "grado-piloto", dibujo: { svg: GRADO_PILOTO }, ...claves("grado-piloto") },
+  { id: "grado-comandante", dibujo: { svg: GRADO_COMANDANTE }, ...claves("grado-comandante") },
+  { id: "grado-instructora", dibujo: { svg: GRADO_INSTRUCTORA }, ...claves("grado-instructora") },
+  /*
+   * **Y volar sin instructora**, que se abre desde su interruptor: qué calla,
+   * qué no, y por qué hace falta ser comandante. Ver
+   * `flight/sin-instructora.ts`.
+   */
+  { id: "sin-instructora", dibujo: { svg: INSTRUCTORA_CALLADA }, ...claves("sin-instructora") },
 ]);
 
 /*
- * Los galones se abren desde el cuaderno y no desde el cuadro: no salen en
- * ningún rincón.
+ * Los galones, los grados y el modo sin instructora se abren desde el
+ * cuaderno y no desde el cuadro: no salen en ningún rincón.
  */
-const SIN_RINCON = new Set(["galones"]);
+const SIN_RINCON = new Set([
+  "galones",
+  "grado-aprendiz",
+  "grado-piloto",
+  "grado-comandante",
+  "grado-instructora",
+  "sin-instructora",
+]);
 
 const CURIOSIDADES = enRincon("curiosidades", [
   { id: "persianas", dibujo: { svg: PERSIANAS }, ...claves("persianas") },

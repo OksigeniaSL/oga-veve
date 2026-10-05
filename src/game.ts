@@ -624,6 +624,13 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
+import {
+  guardarSinInstructora,
+  leerSinInstructora,
+  puedeVolarSinInstructora,
+  suenaSinInstructora,
+} from "./flight/sin-instructora";
+import { preguntarSiVuelaSinInstructora } from "./ui/pregunta-sin-instructora";
 import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
 import { BOCA, MEGAFONIA, anunciaLaFase } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
@@ -3717,6 +3724,12 @@ export class Game {
   private cuadernoUI: CuadernoScreen | null = null;
   /** El grado que se tenía al empezar, para saber si se ha subido. */
   private gradoAlEmpezar: Grado = grado(leerCuaderno());
+  /**
+   * **Si se vuela sin instructora**: ella solo dice lo que es seguridad. Lo
+   * pone el interruptor del cuaderno, con el grado de comandante, y se
+   * confirma con la pregunta del principio. Ver `flight/sin-instructora.ts`.
+   */
+  private sinInstructora = false;
   /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
   private sinApuntar = 0;
   /**
@@ -5083,9 +5096,23 @@ export class Game {
      */
     const hueco = document.getElementById("cuaderno");
     if (hueco) {
-      this.cuadernoUI = new CuadernoScreen(hueco, this.cuaderno);
+      this.cuadernoUI = new CuadernoScreen(hueco, this.cuaderno, {
+        /*
+         * El peldaño de la escalera, para saber si las cuentas llevan cifra o
+         * solo dibujo: el cuaderno se abre volando y en el peldaño que no lee
+         * no puede ser una página de números. Ver `flight/escalera.ts`.
+         */
+        peldano: () => this.tier.avisos,
+        sinInstructora: () => this.sinInstructora,
+        alCambiarSinInstructora: (sin) => this.ponerSinInstructora(sin),
+      });
       this.hud.onCuaderno(() => this.cuadernoUI?.toggle());
     }
+    /*
+     * **Y la instructora, como la dejó quien vuela.** Se lee del perfil y solo
+     * vale con el grado: ver `leerSinInstructora`.
+     */
+    this.aplicarSinInstructora(leerSinInstructora(this.cuaderno));
 
     /*
      * Y la mezcla se entera de cuándo habla alguien, para agachar lo demás.
@@ -5197,7 +5224,14 @@ export class Game {
      */
     ponerVozDeLasExplicaciones({
       grabada: (clave) => this.instructor.vozDe(clave) !== null,
-      decir: (clave, texto) => this.instructor.decir(texto, clave, "urgente"),
+      /*
+       * **Lo que se abre con el dedo se contesta siempre**, también sin
+       * instructora; la presentación de la primera vez, que no la pidió
+       * nadie, pasa por su puerta y se calla. Ver `presentar` en
+       * `ui/explicaciones.ts`.
+       */
+      decir: (clave, texto) => this.instructor.decirLoPedido(texto, clave, "urgente"),
+      presentar: (clave, texto) => this.instructor.decir(texto, clave, "urgente"),
       callar: () => this.instructor.callar(),
     });
     ponerContextoDeLasExplicaciones(() => ({
@@ -6501,6 +6535,82 @@ export class Game {
      */
     this.agenda.luego(TARDA_EL_FINAL + VUELVE_SOLO, () => {
       if (this.percance === tipo) this.resetFlight();
+    });
+  }
+
+  /**
+   * **Pone o quita la instructora**, y lo guarda en el perfil.
+   *
+   * Lo llaman el interruptor del cuaderno y la pregunta del principio. Sin el
+   * grado no se pone, se pida como se pida: el candado es del cuaderno y no
+   * del botón que lo dibuja. Devuelve cómo queda.
+   */
+  ponerSinInstructora(sin: boolean): boolean {
+    const queda = sin && puedeVolarSinInstructora(this.cuaderno);
+    guardarSinInstructora(queda);
+    this.aplicarSinInstructora(queda);
+    return queda;
+  }
+
+  /** Si se vuela sin instructora ahora mismo. Para el cuaderno y los bancos. */
+  get vuelaSinInstructora(): boolean {
+    return this.sinInstructora;
+  }
+
+  /**
+   * **Para los bancos**: sin instructora aunque el cuaderno no tenga el grado,
+   * y sin tocar el perfil. Un banco que vuela sin instructora no puede pedir
+   * antes diez aterrizajes.
+   */
+  sinInstructoraParaBanco(sin: boolean): void {
+    this.aplicarSinInstructora(sin);
+  }
+
+  /** Lo que el modo sin instructora no dejó decir. Para los bancos. */
+  get calladasParaBanco(): readonly string[] {
+    return this.instructor.calladas;
+  }
+
+  /**
+   * Pone la puerta en la boca de la instructora, o la quita.
+   *
+   * La torre, la máquina, la comandante y la tripulación no la llevan: el
+   * encargo es que sigan igual, y cada una habla por su propia boca.
+   */
+  private aplicarSinInstructora(sin: boolean): void {
+    this.sinInstructora = sin;
+    this.instructor.callaSalvo = sin ? suenaSinInstructora : null;
+    this.cuadernoUI?.ponerCuaderno(this.cuaderno);
+  }
+
+  /**
+   * **Al empezar un vuelo sin instructora, se pregunta si se quiere así.**
+   *
+   * «Que pregunte si está desactivado al principio», con un dibujo y un sí y
+   * un no: quien juega puede ser el hermano pequeño con la tablet del mayor, y
+   * enterarse en la final de que nadie le va a decir qué toca es enterarse
+   * tarde. Lo llama `main.ts` al arrancar desde el hangar; con la dirección
+   * puesta —un banco, un enlace directo— no se pregunta, como no se pregunta
+   * quién vuela.
+   */
+  preguntarSiVuelaSinInstructora(): void {
+    if (!this.sinInstructora) return;
+    preguntarSiVuelaSinInstructora({
+      conTexto: canalesDe(this.tier.avisos).texto,
+      /*
+       * Lo dice ella misma y con su clave, aunque esté quitada: preguntar es
+       * contestar a quien acaba de entrar, no aconsejar. Solo si está
+       * grabada: una pregunta dicha por el robot del navegador —o callada en
+       * Brave para Linux— no aporta nada que el dibujo no diga ya.
+       */
+      decir: (clave) => {
+        if (this.instructor.vozDe(clave))
+          this.instructor.decirLoPedido(t(clave as TranslationKey), clave, "urgente");
+      },
+      callar: () => this.instructor.callar(),
+      alContestar: (sin) => {
+        if (!sin) this.ponerSinInstructora(false);
+      },
     });
   }
 
@@ -21998,7 +22108,8 @@ export class Game {
     if (!raiz) return;
     this.tarjetaDelAvion ??= new TarjetaDelAvion(raiz, {
       enVuelo: true,
-      decir: (texto, clave) => this.instructor.decir(texto, clave),
+      // Se abrió con el dedo: contesta también sin instructora.
+      decir: (texto, clave) => this.instructor.decirLoPedido(texto, clave),
     });
     this.tarjetaDelAvion.alternar(this.aircraft);
   }

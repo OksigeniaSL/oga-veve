@@ -655,6 +655,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Lo que la boca tiró y por qué. Ver `descartadas` en `boca.ts`. */
     descartadas: () => [...BOCA.descartadas],
     /**
+     * **Sin instructora**, aunque el cuaderno no tenga el grado y sin tocar
+     * el perfil: un banco no puede pedir antes diez aterrizajes. Ver
+     * `flight/sin-instructora.ts`.
+     */
+    sinInstructora: (sin: boolean) => juego.sinInstructoraParaBanco(sin),
+    /** Lo que el modo sin instructora no dejó decir, en orden. */
+    calladas: () => [...juego.calladasParaBanco],
+    /** Y la pregunta del principio, para mirarla. */
+    preguntarSinInstructora: () => {
+      juego.sinInstructoraParaBanco(true);
+      juego.preguntarSiVuelaSinInstructora();
+    },
+    /**
      * Quién tiene la palabra y qué espera turno, ahora mismo. Para las trazas
      * del banco: con `habladas` se sabe qué sonó; con esto, qué esperaba
      * mientras tanto y en qué orden.
