@@ -18,6 +18,9 @@
  * Las vistas:
  * - `la-palma` — la de la captura de Enrique: costa este, al norte del
  *   aeropuerto, a 1.800 ft y rumbo 195, con La Palma como casa;
+ * - `la-palma-caldera`, `la-palma-norte` y `la-palma-teide` — el relieve
+ *   lejano de La Palma: la Caldera desde el mar del este, el norte de la
+ *   isla desde fuera del mapa fino y el Teide visto desde ella;
  * - `la-palma-desde-tfn` — la misma, llegando desde Los Rodeos: La Palma es
  *   el vecino y el resto de la isla salía de la foto del horizonte;
  * - `teide` y `nieves` — las cumbres de Tenerife y Gran Canaria desde
@@ -46,6 +49,34 @@ const VISTAS = {
     sitio: [28.745, -17.715],
     altura: 549,
     rumbo: 195,
+  },
+  /*
+   * **Y el relieve lejano de La Palma**, que es lo que quedaba «a bloques»
+   * con la foto ya fina: la Caldera de Taburiente desde el mar del este, por
+   * fuera del mapa fino, y el Teide visto desde la isla, a ciento veinte
+   * kilómetros. Las dos salen del mapa lejano de casa. Ver `segmentosLejos`
+   * en `world/scenarios.ts`.
+   */
+  "la-palma-caldera": {
+    escenario: "la-palma",
+    origen: [28.626499, -17.7556],
+    sitio: [28.62, -17.66],
+    altura: 1200,
+    mira: [28.754, -17.885],
+  },
+  "la-palma-norte": {
+    escenario: "la-palma",
+    origen: [28.626499, -17.7556],
+    sitio: [28.86, -17.80],
+    altura: 1800,
+    mira: [28.70, -17.86],
+  },
+  "la-palma-teide": {
+    escenario: "la-palma",
+    origen: [28.626499, -17.7556],
+    sitio: [28.62, -17.70],
+    altura: 2500,
+    mira: [28.27269, -16.64227],
   },
   "la-palma-desde-tfn": {
     escenario: "tenerife-norte",
