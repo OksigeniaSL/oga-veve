@@ -22,6 +22,7 @@ import {
   suenaSinInstructora,
 } from "./sin-instructora";
 import { olvidar } from "../datos/guardado";
+import { alturaDelOtro, ladoDeLaHora } from "./informacion-de-trafico";
 
 describe("lo que sigue sonando sin instructora", () => {
   /*
@@ -136,6 +137,21 @@ describe("la lista no se queda vieja", () => {
     const deCabina = new Set(Object.values(CLAVE_DE_CABINA));
     const sueltos = [...CANTOS_QUE_SIGUEN].filter((k) => !deCabina.has(k));
     expect(sueltos).toEqual([]);
+  });
+
+  /*
+   * La información de tráfico de la instructora se monta en caliente —el lado
+   * por la hora del reloj y la altura del otro—, así que una combinación que
+   * faltara se callaría solo cuando el otro avión viniera justo por ahí.
+   */
+  it("y todas las informaciones de tráfico que puede montar, de cada lado y altura", () => {
+    const faltan: string[] = [];
+    for (let hora = 1; hora <= 12; hora++)
+      for (const relativa of [-600, 0, 600]) {
+        const k = `vuelo.otroAvion.${ladoDeLaHora(hora)}.${alturaDelOtro(relativa)}`;
+        if (!suenaSinInstructora(k)) faltan.push(k);
+      }
+    expect(faltan).toEqual([]);
   });
 
   it("y la cuenta del radioaltímetro no está: no pasa nunca por la instructora", () => {
