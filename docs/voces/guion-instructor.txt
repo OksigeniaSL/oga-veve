@@ -16,6 +16,11 @@ Mirá la pista: ¿la ves?
 Así no: andate y volvé a intentarlo
 Venís mal para bajar: gas y al aire, lo probamos otra vez
 Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo
+Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar
+Lo seguro es irnos al aire y volver a intentarlo
+Así no: nos vamos al aire y lo volvemos a intentar
+No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar
+La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos
 Tirá para arriba
 Ya despegamos: seguí
 Motor a fondo
@@ -61,6 +66,7 @@ Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a baj
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
+La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito
 La torre te deja volver a intentarlo
 La pista quedó libre: podés volver a bajar
 La pista ya está libre: volvé a intentarlo
@@ -86,6 +92,52 @@ Luces blancas: vas alto, bajá
 Venís lento: metéle gas
 Luces rojas: vas bajo, subí
 Dos rojas y dos blancas: vas bien
+Un poquito más de gas, hasta la marca rosa. La nariz, quieta.
+Un poquito menos de gas, hasta la marca rosa.
+Nariz un poquito abajo, hasta ver dos blancas y dos rojas.
+Nariz un poquito arriba, hasta ver dos blancas y dos rojas.
+Nariz un poquito abajo, hasta que el rombo quede en el medio.
+Nariz un poquito arriba, hasta que el rombo quede en el medio.
+Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.
+Nariz un poquito arriba, para bajar más suave.
+Sacá un poco los aerofrenos, hasta la marca rosa.
+Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.
+Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.
+Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.
+Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.
+Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.
+Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
+Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.
+Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
+Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.
+Bajamos muy de golpe: un toque de gas, para bajar más suave.
+Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.
+Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.
+Subimos hasta la raya de la altura, a la velocidad de la marca rosa.
+Ya podemos ir más rápido: más gas, hasta la marca rosa.
+Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.
+Ahora vamos más despacio: menos gas, hasta la marca rosa.
+Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.
+Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.
+La marca rosa cambió y ya vamos a esa velocidad: seguimos así.
+La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.
+Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.
+Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.
+Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.
+Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.
+Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.
+Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.
+Los primeros flaps, una muesca, y a la marca rosa.
+Otra muesca de flaps, y a la marca rosa.
+Los flaps de aterrizar, abajo del todo, y a la marca rosa.
+Sacá el tren, que ya vamos a aterrizar.
+Ya vamos a la marca rosa: aerofrenos adentro.
+Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.
+Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.
+Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.
+Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.
+La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.
+La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.
 Por ahí no se pasa: hay un edificio
 Frená
 Salí de la pista, que viene otro
@@ -110,6 +162,9 @@ Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el 
 Ya salimos de la pista: ahora sí, subí los flaps.
 Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
 Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
+Los aerofrenos, adentro: bajá la palanca.
+Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.
+Y el transpondedor: pongo el TCAS en espera.
 Metélo, el tren te frena
 Hay una tormenta delante: rodeála, no la cruces
 Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
@@ -145,6 +200,8 @@ Entraste sin la luz verde. La próxima, esperala
 Subí derecho por el eje
 Girá a la izquierda: volvemos a la pista
 Volá al lado de la pista, con ella a tu izquierda
+Girá a la derecha: volvemos a la pista
+Volá al lado de la pista, con ella a tu derecha
 Girá otra vez y empezá a bajar: ya vamos a aterrizar
 La pista estaba ocupada y te dijeron que no bajaras
 Le pasaste por encima al coche
@@ -184,6 +241,9 @@ Estás cayendo muy rápido
 Vas muy rápido
 Estás torcido
 Estás fuera del eje
+Vas alto
+Vas bajo
+Falta el tren o los flaps
 Ver el río
 Seguir el río
 Salir al mar

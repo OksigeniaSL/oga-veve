@@ -17,6 +17,11 @@ instructor	instructor/vuelo.minimos.ogg	es-PY	Mirá la pista: ¿la ves?	lo que t
 instructor	instructor/vuelo.noEstabilizada.ogg	es-PY	Así no: andate y volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.noEstabilizada~2.ogg	es-PY	Venís mal para bajar: gas y al aire, lo probamos otra vez	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.noEstabilizada~3.ogg	es-PY	Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.proponeIrse.ogg	es-PY	Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.proponeIrseSinPista.ogg	es-PY	Lo seguro es irnos al aire y volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.tomaLarga.ogg	es-PY	Así no: nos vamos al aire y lo volvemos a intentar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.tomaLargaSinPista.ogg	es-PY	No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aterrizasteContraLaOrden.ogg	es-PY	La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.rotar.ogg	es-PY	Tirá para arriba	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.comprometido.ogg	es-PY	Ya despegamos: seguí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
@@ -62,6 +67,7 @@ instructor	instructor/vuelo.masAltoQueElPlan.ogg	es-PY	Vamos más alto que el pl
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.sinPermisoEnLosMinimos.ogg	es-PY	La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podés volver a bajar	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.puedeVolverSinTorre.ogg	es-PY	La pista ya está libre: volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
@@ -87,6 +93,52 @@ instructor	instructor/vuelo.papiAlto.ogg	es-PY	Luces blancas: vas alto, bajá	lo
 instructor	instructor/vuelo.lentoYBajo.ogg	es-PY	Venís lento: metéle gas	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBajo.ogg	es-PY	Luces rojas: vas bajo, subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBien.ogg	es-PY	Dos rojas y dos blancas: vas bien	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.masGas.ogg	es-PY	Un poquito más de gas, hasta la marca rosa. La nariz, quieta.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.menosGas.ogg	es-PY	Un poquito menos de gas, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizAbajoPapi.ogg	es-PY	Nariz un poquito abajo, hasta ver dos blancas y dos rojas.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizArribaPapi.ogg	es-PY	Nariz un poquito arriba, hasta ver dos blancas y dos rojas.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizAbajoSenda.ogg	es-PY	Nariz un poquito abajo, hasta que el rombo quede en el medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizArribaSenda.ogg	es-PY	Nariz un poquito arriba, hasta que el rombo quede en el medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizArribaRitmo.ogg	es-PY	Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizArribaSuave.ogg	es-PY	Nariz un poquito arriba, para bajar más suave.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.aerofrenos.ogg	es-PY	Sacá un poco los aerofrenos, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.nivelarPerfil.ogg	es-PY	Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizAbajoPerfil.ogg	es-PY	Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.aerofrenosPerfil.ogg	es-PY	Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.masGasPerfil.ogg	es-PY	Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.menosGasPerfil.ogg	es-PY	Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.masGasPapi.ogg	es-PY	Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.masGasSenda.ogg	es-PY	Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.menosGasPapi.ogg	es-PY	Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.menosGasSenda.ogg	es-PY	Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.masGasSuave.ogg	es-PY	Bajamos muy de golpe: un toque de gas, para bajar más suave.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizAbajoMarca.ogg	es-PY	Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.consejo.narizArribaMarca.ogg	es-PY	Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.subir.ogg	es-PY	Subimos hasta la raya de la altura, a la velocidad de la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.acelerarGas.ogg	es-PY	Ya podemos ir más rápido: más gas, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.acelerarNariz.ogg	es-PY	Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.frenarGas.ogg	es-PY	Ahora vamos más despacio: menos gas, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.frenarAerofrenos.ogg	es-PY	Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.frenarNariz.ogg	es-PY	Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.mantener.ogg	es-PY	La marca rosa cambió y ya vamos a esa velocidad: seguimos así.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.marcaDelAutomatico.ogg	es-PY	La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.crucero.ogg	es-PY	Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.cruceroConAutomatico.ogg	es-PY	Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.cruceroConGases.ogg	es-PY	Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.bajar.ogg	es-PY	Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.bajarConAutomatico.ogg	es-PY	Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.nivelar.ogg	es-PY	Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.flaps1.ogg	es-PY	Los primeros flaps, una muesca, y a la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.flaps2.ogg	es-PY	Otra muesca de flaps, y a la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.flaps3.ogg	es-PY	Los flaps de aterrizar, abajo del todo, y a la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.tren.ogg	es-PY	Sacá el tren, que ya vamos a aterrizar.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.recogerAerofrenos.ogg	es-PY	Ya vamos a la marca rosa: aerofrenos adentro.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.senda.ogg	es-PY	Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.sendaConGases.ogg	es-PY	Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.sendaConAyuda.ogg	es-PY	Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.gasTuyo.ogg	es-PY	Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.cotaAlMar.ogg	es-PY	La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.paso.cotaEnAlto.ogg	es-PY	La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.bulto.ogg	es-PY	Por ahí no se pasa: hay un edificio	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.aterrizado.ogg	es-PY	Frená	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.abandonando.ogg	es-PY	Salí de la pista, que viene otro	lo que toca hacer ahora, en vuelo y en tierra
@@ -111,6 +163,9 @@ instructor	instructor/vuelo.flapsEnLaCarrera.ogg	es-PY	Los flaps, mejor al salir
 instructor	instructor/vuelo.flapsArribaAlSalir.ogg	es-PY	Ya salimos de la pista: ahora sí, subí los flaps.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despuesDelAterrizaje.ogg	es-PY	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alPuestoConFlaps.ogg	es-PY	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.despues.aerofrenos.ogg	es-PY	Los aerofrenos, adentro: bajá la palanca.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.despues.luces.ogg	es-PY	Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.despues.transpondedor.ogg	es-PY	Y el transpondedor: pongo el TCAS en espera.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.meteElTren.ogg	es-PY	Metélo, el tren te frena	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay una tormenta delante: rodeála, no la cruces	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.baches.ogg	es-PY	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.	lo que toca hacer ahora, en vuelo y en tierra
@@ -146,6 +201,8 @@ instructor	instructor/vuelo.sinPermiso.ogg	es-PY	Entraste sin la luz verde. La p
 instructor	instructor/circuito.subida.ogg	es-PY	Subí derecho por el eje	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.cruzado.ogg	es-PY	Girá a la izquierda: volvemos a la pista	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.encola.ogg	es-PY	Volá al lado de la pista, con ella a tu izquierda	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.cruzado.derecha.ogg	es-PY	Girá a la derecha: volvemos a la pista	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.encola.derecha.ogg	es-PY	Volá al lado de la pista, con ella a tu derecha	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.base.ogg	es-PY	Girá otra vez y empezá a bajar: ya vamos a aterrizar	los cuatro tramos del circuito de tráfico
 instructor	instructor/percance.ocupada.ogg	es-PY	La pista estaba ocupada y te dijeron que no bajaras	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.coche.ogg	es-PY	Le pasaste por encima al coche	lo que salió mal, en la pantalla de fin
@@ -185,6 +242,9 @@ instructor	instructor/motivo.cayendo.ogg	es-PY	Estás cayendo muy rápido	por qu
 instructor	instructor/motivo.rapido.ogg	es-PY	Vas muy rápido	por qué no se puede bajar así
 instructor	instructor/motivo.torcido.ogg	es-PY	Estás torcido	por qué no se puede bajar así
 instructor	instructor/motivo.descolocado.ogg	es-PY	Estás fuera del eje	por qué no se puede bajar así
+instructor	instructor/motivo.alto.ogg	es-PY	Vas alto	por qué no se puede bajar así
+instructor	instructor/motivo.bajo.ogg	es-PY	Vas bajo	por qué no se puede bajar así
+instructor	instructor/motivo.sinConfigurar.ogg	es-PY	Falta el tren o los flaps	por qué no se puede bajar así
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
@@ -272,6 +332,9 @@ comandante	comandante/ventanilla.trinidad.ogg	es-PY	Ahí están las ruinas de Tr
 comandante	comandante/comandante.bienvenida.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.crosscheck.ogg	es-PY	Tripulación, armar toboganes y verificación cruzada.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.despegue.ogg	es-PY	Tripulación, sentados para el despegue.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.despegue~2.ogg	es-PY	Tripulación, despegue inmediato.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.despegue~3.ogg	es-PY	Cabin crew, seats for take-off.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.despegue~4.ogg	es-PY	Cabin crew, prepare for take-off.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.crucero.ogg	es-PY	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.turbulencia.ogg	es-PY	Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.nivelMasTranquilo.ogg	es-PY	Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.	la megafonía de cabina, para el pasaje
