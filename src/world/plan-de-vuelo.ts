@@ -4477,17 +4477,16 @@ export class PlanDeVuelo {
    * Devuelve `null` cuando no hace falta, que es lo normal: si desde donde se
    * entra ya queda pista de sobra por delante, se entra y se despega.
    *
-   * **Hasta dónde se vuelve.** Hasta el primer sitio desde el que ya se puede
-   * despegar con la pista de una salida por intersección delante
-   * —`pistaQueHaceFalta`, que sale de lo que corre **este** avión—, y si
-   * el campo es más corto que eso, hasta el umbral. Ni un metro más: volver
-   * hasta la cabecera por costumbre es rodar de balde, y aquí lo que sobra de
-   * rodaje se paga en niños aburridos.
+   * **Hasta dónde se vuelve: hasta el final** (punto 234). Se volvía hasta el
+   * primer sitio desde el que ya se podía despegar —«ni un metro más», por no
+   * aburrir a nadie rodando—, y el lazo salía a media pista y a veces pegado
+   * a la entrada: «esto es lo que no se entiende: ese giro ahí en la pista».
+   * Remontar es ir a la cabecera, que es lo que dice la radio y lo que se
+   * entiende sin que nadie lo explique. Ver `vueltaDelBackTaxi`.
    *
-   * Medido: en Mariscal Estigarribia se entra en el metro 1208 del eje, se
-   * vuelven 650 —por debajo de `LO_MAXIMO_DE_IDA`, que es lo que aguanta la
-   * paciencia de quien tiene cuatro años— y quedan 1200 por delante, cuando el
-   * avión necesita 450.
+   * Medido: en Mariscal Estigarribia, por la 01, se entra en el metro 1208 del
+   * eje y se remonta hasta treinta metros de la punta: dos kilómetros y
+   * novecientos de pista. Es lo largo de ese campo, no del dibujo.
    *
    * **Y la media vuelta se dibuja, no se pide.** Un vértice de ciento ochenta
    * grados no lo redondea nadie —`redondear` se queda con radio cero y la
