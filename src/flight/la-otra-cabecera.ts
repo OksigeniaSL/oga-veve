@@ -38,7 +38,7 @@ import {
   vieneEnFinal,
 } from "../world/runway-guide";
 import { enEjesDePista } from "../world/rumbo";
-import { hastaElUmbralDeToma } from "../world/umbral-desplazado";
+import { hastaElUmbralDeToma, vistaDesdeLaOtraCabecera } from "../world/umbral-desplazado";
 
 /**
  * El viento de cola que aguanta un avión para aterrizar, nudos.
@@ -84,12 +84,7 @@ export function alReves<
     readonly desplazadoEnfrente?: number;
   },
 >(p: P): P {
-  return {
-    ...p,
-    heading: (p.heading + 180) % 360,
-    desplazado: p.desplazadoEnfrente ?? 0,
-    desplazadoEnfrente: p.desplazado ?? 0,
-  };
+  return vistaDesdeLaOtraCabecera(p);
 }
 
 /** Una pista como la miran los embudos de final. */

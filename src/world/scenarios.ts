@@ -19,6 +19,7 @@ import type { Aerodrome } from "./aerodrome";
  * tenían por dónde salir.
  */
 import { conPlataformasCosidas } from "./plataformas-cosidas";
+import { umbralPublicado } from "./umbrales-publicados";
 import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
@@ -177,6 +178,14 @@ export interface Scenario {
     desplazado?: number;
     /** Y los de la cabecera de la otra punta, que solo hacen falta para pintarla. */
     desplazadoEnfrente?: number;
+    /**
+     * Si aterrizando por la cabecera en uso la pista acaba en el umbral de
+     * enfrente y no en la punta del asfalto, como publica su AIP. Ver
+     * `world/umbrales-publicados.ts`.
+     */
+    acabaEnElOtroUmbral?: boolean;
+    /** Y lo mismo para quien aterriza por la otra punta. */
+    acabaEnElOtroUmbralEnfrente?: boolean;
   };
   /**
    * Declinación magnética del escenario: grados que hay que **sumar al rumbo
@@ -612,6 +621,13 @@ function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario["runway"] {
      */
     desplazado: salida[1].displacedM ?? 0,
     desplazadoEnfrente: llegada[1].displacedM ?? 0,
+    /*
+     * **Y hasta dónde se aterriza**, que no siempre es la punta: en La Palma
+     * cada cabecera acaba en el umbral de la otra. Lo dice el AIP y no el
+     * fichero: ver `umbrales-publicados.ts`.
+     */
+    acabaEnElOtroUmbral: !!umbralPublicado(aero.id, salida[0])?.hastaElOtroUmbral,
+    acabaEnElOtroUmbralEnfrente: !!umbralPublicado(aero.id, llegada[0])?.hastaElOtroUmbral,
   };
 }
 

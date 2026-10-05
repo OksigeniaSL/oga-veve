@@ -6,7 +6,7 @@
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "3082",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. · El umbral desplazado del 03, del AIP de España (AD 2-GCRR, AIRAC AMDT 08/26, 2.12): 90 m, donde OurAirports traía 86,9. Va marcado «manual»; lo vigila src/world/umbrales-publicados.test.ts."
   },
   "origin": {
     "lat": 28.945499,
@@ -48,9 +48,10 @@
           ],
           "elevM": 5.5,
           "headingTrue": 27,
-          "displacedM": 86.9,
+          "displacedM": 90,
           "papi": null,
-          "approachLights": null
+          "approachLights": null,
+          "manual": true
         }
       },
       "markings": null,

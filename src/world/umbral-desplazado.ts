@@ -35,6 +35,46 @@ export interface ConUmbralDesplazado {
   readonly desplazado?: number;
 }
 
+/**
+ * Lo que hace falta para saber **hasta dónde** se aterriza: la otra punta y
+ * si la pista para aterrizar acaba en su umbral. Ver `umbrales-publicados.ts`.
+ */
+export interface ConFinDeToma extends ConUmbralDesplazado {
+  /** El desplazado de la cabecera de enfrente, m. */
+  readonly desplazadoEnfrente?: number;
+  /**
+   * Si aterrizando por esta cabecera la pista acaba **en el umbral de
+   * enfrente** y no en la punta del asfalto: en La Palma, las dos; en
+   * Lanzarote, la 21.
+   */
+  readonly acabaEnElOtroUmbral?: boolean;
+}
+
+/**
+ * **La distancia de aterrizaje**, m: del umbral de aterrizaje al final de la
+ * pista para aterrizar. Es la LDA de la tabla 2.13 del AIP, sacada de la
+ * geometría. Donde no hay nada desplazado, el largo de la pista.
+ */
+export function paraAterrizarDe(pista: ConFinDeToma): number {
+  return hastaElUmbralDeToma(pista) + hastaElFinDeToma(pista);
+}
+
+/**
+ * Del centro de la pista al **final de la pista para aterrizar**, hacia
+ * delante, m: la punta del asfalto, o el umbral de enfrente si la pista acaba
+ * en él. Se pasa a `puntoDePista` como `hastaElUmbralDeToma`, con el signo al
+ * revés.
+ *
+ * Existe por La Palma: con sus dos umbrales desplazados, el último trozo de
+ * asfalto de cada cabecera es el primero de la otra —«the last 142 m of RWY 18
+ * are not usable for take-off and landing»—, y medir la pista que queda hasta
+ * la punta daba ciento cuarenta y dos metros que no se pueden usar para parar.
+ */
+export function hastaElFinDeToma(pista: ConFinDeToma): number {
+  if (!pista.acabaEnElOtroUmbral) return pista.length / 2;
+  return hastaElUmbralDeToma({ length: pista.length, desplazado: pista.desplazadoEnfrente });
+}
+
 /** Cuánto asfalto hay antes del umbral de aterrizaje en uso, m. */
 export function desplazadoDe(pista: ConUmbralDesplazado): number {
   const d = pista.desplazado ?? 0;
@@ -74,6 +114,33 @@ export interface PistaConSusUmbrales extends ConUmbralDesplazado {
   readonly heading: number;
   /** El desplazado de la cabecera de la otra punta, m. */
   readonly desplazadoEnfrente?: number;
+}
+
+/**
+ * **La misma pista vista desde la otra cabecera**, con lo de cada punta
+ * cambiado de sitio: el rumbo, los dos desplazados y dónde acaba cada una.
+ *
+ * Estaba escrito tres veces —en las sondas, en la otra cabecera y en una
+ * prueba— con solo los desplazados, y la de dónde acaba la pista se habría
+ * quedado mirando hacia el lado de antes.
+ */
+export function vistaDesdeLaOtraCabecera<
+  P extends {
+    readonly heading: number;
+    readonly desplazado?: number;
+    readonly desplazadoEnfrente?: number;
+    readonly acabaEnElOtroUmbral?: boolean;
+    readonly acabaEnElOtroUmbralEnfrente?: boolean;
+  },
+>(p: P): P {
+  return {
+    ...p,
+    heading: (p.heading + 180) % 360,
+    desplazado: p.desplazadoEnfrente ?? 0,
+    desplazadoEnfrente: p.desplazado ?? 0,
+    acabaEnElOtroUmbral: p.acabaEnElOtroUmbralEnfrente ?? false,
+    acabaEnElOtroUmbralEnfrente: p.acabaEnElOtroUmbral ?? false,
+  };
 }
 
 /**

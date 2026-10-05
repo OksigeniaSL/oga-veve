@@ -825,7 +825,9 @@ import {
 } from "./world/campo-del-vuelo";
 import {
   antesDelUmbralDeToma,
+  hastaElFinDeToma,
   hastaElUmbralDeToma,
+  paraAterrizarDe,
   sobreDondeSeToca,
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
@@ -20948,8 +20950,13 @@ export class Game {
       enLaPista: s.onGround && s.onRunway && alineado,
       sobreLaPista: s.position.y - this.cotaDelCampo(campo),
       pasado: along + desdeElCentro,
-      queda: pista.length / 2 - along,
-      paraAterrizar: pista.length / 2 + desdeElCentro,
+      /*
+       * Hasta el final de la pista **para aterrizar**, que en La Palma es el
+       * umbral de enfrente y no la punta del asfalto. Ver
+       * `umbral-desplazado.ts`.
+       */
+      queda: hastaElFinDeToma(pista) - along,
+      paraAterrizar: paraAterrizarDe(pista),
       porElSuelo: s.groundSpeed,
       aproximacion: this.aircraft.approachSpeed,
       reversa: this.input.controls.reversa > 0,
@@ -20991,7 +20998,12 @@ export class Game {
    * contra la pista que hay. Con la pista mojada, la rodadura de mojado.
    */
   private autofrenoParaLaPista(): "lo" | "med" | "max" {
-    const largo = this.laPistaDeAhora().length;
+    /*
+     * **Contra la distancia de aterrizaje, no contra el asfalto.** Era el largo
+     * de la pista, y en la 01 de Fuerteventura son mil metros de flechas que
+     * no se pueden usar para parar: 3.406 de asfalto contra 2.406 de LDA.
+     */
+    const largo = paraAterrizarDe(this.laPistaDeAhora());
     const mojada = this.lloviendo.clase !== "nada";
     for (const modo of ["lo", "med"] as const) {
       const hace =

@@ -195,11 +195,13 @@ describe("dónde se planta el PAPI", () => {
     const s = sitiarPapi(entrada, eje, ancho, largo, aero.visualAids);
     expect(s.origen).toBe("osm");
     const p = enPista(s.luces, entrada, eje);
-    // A 297 m del umbral, que no son los trescientos de la cuenta.
-    expect(p.every((l) => Math.abs(l.adentro - 297) < 2)).toBe(true);
+    // A 368 m de la punta: los 52 del umbral desplazado y 316 de él, que no
+    // son los trescientos de la cuenta. Medidos en la ortofoto del IGN y
+    // casados con el MEHT del AIP; ver la nota de `gcla.aero.json`.
+    expect(p.every((l) => Math.abs(l.adentro - 368) < 2)).toBe(true);
     // Y al costado izquierdo, que es el que se mira desde la aproximación.
     expect(p.every((l) => l.lado > 0)).toBe(true);
-    expect(p.map((l) => Math.round(l.lado))).toEqual([37, 46, 55, 63]);
+    expect(p.map((l) => Math.round(l.lado))).toEqual([37, 46, 54, 63]);
   });
 
   it("y no se lleva por delante el PAPI del umbral contrario", () => {
