@@ -59,6 +59,7 @@ import type { Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
+import { hoja, VUELTA_AL_AVION, type NombresDeLaHoja } from "./hoja";
 import {
   bandasInfladas,
   bocaRespectoAlMorro,
@@ -277,11 +278,8 @@ const ALTAVOZ: Record<AudioLevel["id"], string> = {
  * **Dar la vuelta al avión**: el avión visto desde arriba y la flecha que lo
  * rodea, que es lo que se hace a pie antes de cada vuelo.
  */
-const ICONO_VUELTA = `<svg viewBox="0 0 24 24" aria-hidden="true">
-  <path d="M12 6.5 v11 M7 11.5 h10 M10 16.5 h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-  <path d="M4.2 8 A9 9 0 1 1 6 18.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="2.4 2.2"/>
-  <path d="M2.4 6.2 L4.4 9.4 L7.2 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
+// Vive en `ui/hoja.ts` porque la línea del vuelo en el cuaderno la dibuja igual.
+const ICONO_VUELTA = VUELTA_AL_AVION;
 
 /** **El tiempo de hoy**: el sol asomando detrás de la nube, en su hoja. */
 const ICONO_PARTE = `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -334,11 +332,18 @@ const FLECHA_SEGUIR = `
 `;
 
 /**
- * La manga con sus galones.
+ * La manga con las barras del grado, y al lado la hoja de la instructora.
  *
  * No es una estrella y no es una medalla, y eso está elegido: una estrella es
  * la moneda de los juegos de móvil y trae consigo lo que trae, repetir hasta
- * sacar las tres. Esto es lo que lleva en la manga quien vuela.
+ * sacar las tres. Esto es lo que lleva en la manga quien vuela, y lo que le
+ * apunta la instructora.
+ *
+ * **Las barras son el grado, no el vuelo.** Esta manga llegó a dibujar seis,
+ * una por cada parte del vuelo bien hecha, y seis barras no las lleva ningún
+ * uniforme. Ahora lleva las del grado de quien juega —ver `barrasDe`— y lo
+ * que se gana en el vuelo se marca en la hoja, con un visto por parte. Ver
+ * `ui/hoja.ts`.
  *
  * **Y no es un chevrón.** El primer intento eran uves invertidas de diecisiete
  * píxeles apiladas al lado de la insignia, y a tamaño real de pantalla dos de
@@ -349,9 +354,9 @@ const FLECHA_SEGUIR = `
  * eran uno de más.
  *
  * Así que se dibuja la manga entera: el azul marino del uniforme —el único
- * sitio del juego con ese color, a propósito— con su puño, y las barras
- * apareciendo de abajo arriba. Una manga vacía no se enseña: hasta que no hay
- * un galón, no hay manga.
+ * sitio del juego con ese color, a propósito— con su puño y sus barras. Y en
+ * vuelo sale con el primer visto de la hoja: este rincón es de lo que el vuelo
+ * enciende, y hasta que no hay nada que marcar no hay nada que enseñar.
  */
 
 /**
@@ -663,6 +668,12 @@ export class Hud {
    */
   private vmax = Infinity;
   private galonesState: readonly Galon[] = [];
+  /** El grado de quien vuela: sus barras y la clave de su nombre. */
+  private gradoState = { barras: 1, clave: "grado.aprendiz" as TranslationKey };
+  /** Las partes de la hoja que ya están pintadas, para animar solo la nueva. */
+  private hojaPintada: readonly string[] = [];
+  /** Lo último que se pintó en la manga del HUD, para no rehacerla sin motivo. */
+  private mangaDelHud = "";
   private progressState: { done: number; total: number } | null = null;
   private soundState: {
     nivel: AudioLevel["id"];
@@ -1294,13 +1305,14 @@ export class Hud {
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
         <!--
-          Los galones del vuelo, apareciendo de uno en uno.
+          La manga del grado y la hoja de la instructora, con un visto por
+          cada parte del vuelo bien hecha, apareciendo de uno en uno.
 
-          Van al lado de la insignia porque es donde se lleva un galón: en la
-          manga, a la vista, sin ocupar sitio. Y **no hay huecos**: lo que
-          todavía no se ha ganado no se enseña apagado. Un hueco vacío es un
-          reproche y un galón que aparece es un premio, y a los cuatro años
-          esa diferencia es toda la diferencia.
+          Van al lado de la insignia porque es donde se lleva una manga: a la
+          vista, sin ocupar sitio. Y **no hay huecos**: lo que todavía no se
+          ha ganado no se enseña vacío ni tachado. Una fila vacía es un
+          reproche y un visto que aparece es un premio, y a los cuatro años
+          esa diferencia es toda la diferencia. Ver ui/hoja.ts.
         -->
         <div class="galones" data-hud="galones" hidden></div>
         <!--
@@ -1902,8 +1914,9 @@ export class Hud {
 
         Va dentro del HUD y no en una pantalla aparte porque no es un menú: es
         el último cuadro de lo que acabás de hacer, y lo que enseña es **la
-        manga con lo que te llevaste**. Sin cifras, sin «dos de seis» y sin
-        huecos apagados. Ver flight/reconocimiento.ts.
+        hoja de la instructora con lo que hiciste bien**, al lado de la manga
+        de tu grado. Sin cifras, sin «dos de seis» y sin filas vacías ni
+        tachadas. Ver flight/reconocimiento.ts y ui/hoja.ts.
       -->
       <!--
         V1, en grande y tenue.
@@ -1925,8 +1938,8 @@ export class Hud {
           <div class="fin__manga" data-hud="fin-manga"></div>
           <p class="fin__frase" data-hud="fin-frase"></p>
           <!--
-            Y las horas voladas, en avioncitos. Los galones dicen qué tal salió
-            este vuelo y se olvidan al siguiente; esto dice cuánto llevas, que
+            Y las horas voladas, en avioncitos. La hoja dice qué tal salió
+            este vuelo y se guarda en la bitácora; esto dice cuánto llevas, que
             es lo que hace volver mañana. Ver ui/reloj.ts.
           -->
           <div class="fin__reloj" data-hud="fin-reloj"></div>
@@ -3229,75 +3242,103 @@ export class Hud {
   }
 
   /**
-   * Los galones ganados en este vuelo.
+   * Lo ganado en este vuelo: las partes de la hoja que llevan su visto.
    *
-   * Se le da la lista entera y él añade los que falten: **los que ya estaban
-   * no se vuelven a dibujar**, porque el galón nuevo entra con su animación y
-   * rehacer la fila entera haría saltar a los cinco a la vez, que es
-   * exactamente lo contrario de «aparecen de uno en uno».
+   * Se le da la lista entera y él marca las que falten: **las que ya estaban
+   * no vuelven a entrar**, porque el visto nuevo entra con su animación y
+   * rehacer la hoja entera haría saltar a todos a la vez, que es exactamente
+   * lo contrario de «aparecen de uno en uno».
    */
   setGalones(lista: readonly Galon[]): void {
     this.galonesState = lista;
     this.paintGalones();
   }
 
+  /**
+   * **El grado de quien vuela**, que es lo que lleva la manga: sus barras y
+   * su nombre. Lo pone el juego al empezar cada vuelo y al subir de grado.
+   * Ver `barrasDe` en `flight/cuaderno.ts`.
+   */
+  ponerGrado(barras: number, clave: TranslationKey): void {
+    this.gradoState = { barras, clave };
+    this.paintGalones();
+  }
+
+  /** La manga del grado, con su nombre para quien no la ve. */
+  private mangaDelGrado(alto: number, animarDesde?: number): string {
+    const g = this.gradoState;
+    return dibujarManga(
+      g.barras,
+      alto,
+      t("manga.grado", { grado: t(g.clave) }),
+      animarDesde ?? g.barras,
+    );
+  }
+
   private paintGalones(): void {
     if (!this.galones) return;
     const lista = this.galonesState;
+    /*
+     * **Hasta que no hay un visto, no hay nada**, ni la manga: este rincón es
+     * de lo que el vuelo enciende, y en el teléfono comparte la fila de
+     * arriba con la misión, el automático y el cinturón. Con el primer visto
+     * sale la manga del grado —quién vuela— y al lado su hoja.
+     */
     this.galones.hidden = lista.length === 0;
     if (!lista.length) {
       this.galones.innerHTML = "";
+      this.hojaPintada = [];
+      this.mangaDelHud = "";
       return;
     }
-
-    const svg = this.galones.querySelector("svg");
-    const puestas = svg?.querySelectorAll(".manga__barra").length ?? 0;
+    let caja = this.galones.querySelector<HTMLElement>(".galones__manga");
+    let papel = this.galones.querySelector<HTMLElement>(".galones__hoja");
+    if (!caja || !papel) {
+      this.galones.innerHTML =
+        '<span class="galones__manga"></span><span class="galones__hoja"></span>';
+      caja = this.galones.querySelector<HTMLElement>(".galones__manga")!;
+      papel = this.galones.querySelector<HTMLElement>(".galones__hoja")!;
+      this.mangaDelHud = "";
+    }
     /*
-     * **Las barras que ya estaban no se vuelven a dibujar.**
-     *
-     * La que llega entra con su animación, y rehacer la manga entera haría
-     * saltar a las cinco a la vez, que es lo contrario de «aparecen de una en
-     * una». Al rehacer el HUD —cambio de idioma o de peldaño— sí se repinta
-     * todo, y ahí no hay animación que perder.
+     * La manga se rehace solo si cambia el grado o el idioma de su etiqueta, y
+     * **sin animación**: las barras del grado no se ganan en este vuelo, y
+     * verlas crecer con cada visto diría lo contrario.
      */
-    /*
-     * **Y se repinta entera, marcando cuáles ya estaban.**
-     *
-     * Antes se le pegaba la barra nueva al final y las demás se quedaban
-     * donde estaban. Eso solo vale mientras la separación no dependa de
-     * cuántas hay, y depende: de la quinta en adelante se juntan para caber.
-     * Ver `repartoDeBarras`.
-     */
-    this.galones.innerHTML = dibujarManga(
-      lista.length,
-      MANGA_ALTO,
-      t("galon.manga"),
-      svg ? Math.min(puestas, lista.length) : 0,
-    );
+    const clave = `${this.gradoState.barras}|${t(this.gradoState.clave)}`;
+    if (clave !== this.mangaDelHud) {
+      caja.innerHTML = this.mangaDelGrado(MANGA_ALTO);
+      this.mangaDelHud = clave;
+    }
+    papel.innerHTML = hoja(lista, { donde: "hud", yaEstaban: this.hojaPintada });
+    this.hojaPintada = lista;
   }
 
   /**
    * El final del vuelo, con lo que se llevó puesto.
    *
    * Se enseña al apagar el motor, que es cuando un vuelo termina de verdad.
-   * La manga va grande —es lo único que hay que mirar— y la frase solo aparece
-   * en los peldaños que leen: en Guyrami las barras **son** el mensaje.
+   * Van la manga del grado y la hoja de la instructora, grande —es lo que hay
+   * que mirar—, con los vistos entrando de uno en uno; la frase solo aparece
+   * en los peldaños que leen, y el nombre de cada parte de la hoja, también.
+   * En Guyrami el dibujo y el visto **son** el mensaje.
    */
   mostrarFinDeVuelo(
     lista: readonly Galon[],
     frase: string,
     planoConTraza = "",
     reloj = "",
+    conNombres: NombresDeLaHoja = frase ? "entero" : false,
   ): void {
     if (!this.fin) return;
     this.ponerPlano(planoConTraza);
     this.ponerReloj(reloj);
     const final = reconocer(lista);
-    const manga = pick(this.root, "fin-manga");
-    manga.hidden = !final.manga;
-    manga.innerHTML = final.manga
-      ? dibujarManga(lista.length, MANGA_ALTO, t("galon.manga"))
-      : "";
+    const caja = pick(this.root, "fin-manga");
+    caja.hidden = false;
+    caja.innerHTML = `<span class="fin__mi-manga">${this.mangaDelGrado(MANGA_ALTO)}</span>${
+      final.hoja ? hoja(lista, { donde: "fin", conNombres, yaEstaban: [] }) : ""
+    }`;
     const texto = pick(this.root, "fin-frase");
     texto.textContent = frase;
     texto.hidden = !frase;
@@ -3311,15 +3352,16 @@ export class Hud {
   /**
    * Y el final que más importa: **has subido de grado**.
    *
-   * Se enseña en la misma caja, con la hombrera del grado nuevo —no la de los
-   * galones del vuelo— y su nombre. Hasta hoy esto pasaba en silencio: se
-   * entraba al cuaderno un día cualquiera y ya ponía «Comandante», que es
-   * tirar a la basura el único momento del juego que de verdad significa algo.
+   * Se enseña en la misma caja, con la manga del grado nuevo y su nombre.
+   * Hasta hoy esto pasaba en silencio: se entraba al cuaderno un día
+   * cualquiera y ya ponía «Comandante», que es tirar a la basura el único
+   * momento del juego que de verdad significa algo.
    *
    * Va con la manga grande y sin cifras, como todo lo demás de esta pantalla:
-   * la barra nueva **es** el mensaje.
+   * la barra nueva, que entra creciendo, **es** el mensaje. `barrasAntes` son
+   * las del grado de antes, que ya estaban cosidas y no se animan.
    */
-  mostrarAscenso(barras: number, nombre: string, reloj = ""): void {
+  mostrarAscenso(barras: number, nombre: string, reloj = "", barrasAntes = 0): void {
     if (!this.fin) return;
     this.ponerReloj(reloj);
     // El ascenso se enseña solo: es el único momento del juego que pasa una
@@ -3327,7 +3369,12 @@ export class Hud {
     this.ponerPlano("");
     const manga = pick(this.root, "fin-manga");
     manga.hidden = false;
-    manga.innerHTML = dibujarManga(barras, MANGA_ALTO, t("galon.manga"));
+    manga.innerHTML = `<span class="fin__mi-manga">${dibujarManga(
+      barras,
+      MANGA_ALTO,
+      t("manga.grado", { grado: nombre || t(this.gradoState.clave) }),
+      barrasAntes,
+    )}</span>`;
     const texto = pick(this.root, "fin-frase");
     texto.textContent = nombre;
     texto.hidden = !nombre;
@@ -3345,9 +3392,9 @@ export class Hud {
    * **Misma caja y mismo botón que el final bueno**, y eso es deliberado: un
    * niño aprende un sitio, no dos. Lo que cambia es el dibujo —la avioneta con
    * la hélice torcida, el del coche con cara de circunstancias— y que aquí no
-   * hay manga que enseñar, porque el vuelo no llegó a su sitio.
+   * hay hoja que enseñar, porque el vuelo no llegó a su sitio.
    *
-   * Los galones ganados **no se tocan**: se quedan en su rincón del HUD. Ver
+   * Lo ganado **no se toca**: la hoja se queda en su rincón del HUD. Ver
    * `flight/percance.ts`.
    */
   mostrarPercance(dibujo: string, frase: string): void {
@@ -3416,7 +3463,7 @@ export class Hud {
     v1.classList.add("v1--suena");
   }
 
-  /** Y se quita. Otro vuelo, otra manga. */
+  /** Y se quita. Otro vuelo, otra hoja. */
   cerrarFinDeVuelo(): void {
     if (this.fin) this.fin.hidden = true;
     pick(this.root, "fin-frase").classList.remove("fin__frase--ascenso");

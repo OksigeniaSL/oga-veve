@@ -1,34 +1,49 @@
 /**
- * Los galones: seis por vuelo, ganados por partes y sin castigo.
+ * Lo que se gana en cada vuelo: las partes de la hoja de la instructora.
  *
  * Es lo que convierte un vuelo en un ejercicio con nota. El juego ya sabía
  * medirlo todo —el veredicto de la toma, los aros cruzados y perdidos, la
  * banda de velocidad, la salida de la pista— pero no lo **juntaba**: se
  * volaba, salía mejor o peor, y no quedaba nada.
  *
+ * ## Se llaman galones, y se dibujan como una hoja
+ *
+ * Nacieron como barras en la manga, una por parte, y llegaban a seis. Seis
+ * barras no las lleva ningún uniforme: las barras son el grado —ver `barrasDe`
+ * en `cuaderno.ts`— y lo que se evalúa en cada vuelo de una escuela de verdad
+ * es la hoja que rellena la instructora, una fila por ejercicio y un visto en
+ * cada uno hecho como se pide. Enrique: «Claro, que sea real». Así que esto
+ * cuenta lo mismo que contaba y se dibuja como esa hoja; ver `ui/hoja.ts`.
+ *
+ * **El nombre se queda.** Los nombres de estas partes viven guardados en la
+ * bitácora de cada aparato —`Vuelo.galones`— y cambiarlos aquí dejaría sin
+ * dibujo los vuelos de quien ya juega. Lo que cambia es lo que se dibuja y lo
+ * que se dice, no lo que se guarda.
+ *
  * ## Se ganan, no se pierden
  *
- * Seis galones que se encienden **durante** el vuelo, uno a uno, no una nota
- * al final. Encenderse mientras haces las cosas enseña qué las hizo bien; una
- * nota al aterrizar solo dice que algo salió regular.
+ * Seis partes que se marcan **durante** el vuelo, una a una, no una nota al
+ * final. Marcarse mientras haces las cosas enseña qué las hizo bien; una nota
+ * al aterrizar solo dice que algo salió regular.
  *
- * Y por eso, ganado es ganado: nada de aquí quita un galón puesto. Un vuelo
+ * Y por eso, ganado es ganado: nada de aquí quita un visto puesto. Un vuelo
  * puede empezar bien y torcerse, y a los cuatro años quitarle a alguien lo que
  * ya se había ganado no enseña nada — enseña a no intentarlo.
  *
  * ## Y no puede castigar
  *
- * Un galón que no se ha ganado **no se enseña apagado**: sencillamente todavía
- * no está. La diferencia parece pequeña y es toda: un hueco vacío es un
- * reproche, y un galón que aparece es un premio. Aquí eso se nota en que esta
- * clase no sabe cuántos galones hay en total. Solo sabe decir cuáles hay.
+ * Lo que no se ha ganado **no se enseña tachado ni vacío**: sencillamente
+ * todavía no está. La diferencia parece pequeña y es toda: una fila vacía es
+ * un reproche, y una fila que aparece con su visto es un premio. Aquí eso se
+ * nota en que esta clase no sabe cuántas partes hay en total. Solo sabe decir
+ * cuáles se han ganado.
  *
  * ## Nada de estrellas
  *
  * Tres estrellas de cinco es la moneda de los juegos de móvil y trae consigo
- * lo que trae: repetir hasta sacarlas. El galón es de la manga de un uniforme,
- * que es lo que se lleva quien vuela, y encaja con la escalera de tramos, que
- * ya son cuatro peldaños con nombre de ave.
+ * lo que trae: repetir hasta sacarlas. La hoja de evaluación es lo que se
+ * lleva quien aprende a volar, y lo que se encontrará el día que vuele de
+ * verdad.
  *
  * Esto no dibuja ni suena: dice qué se acaba de ganar y quien lo use decide
  * cómo se celebra.
@@ -39,14 +54,14 @@ import type { BandaDeVelocidad } from "./velocidad-de-aproximacion";
 import type { Fase } from "./vuelo";
 
 /**
- * Un galón por cada parte del vuelo que se puede hacer bien.
+ * Una parte del vuelo que se puede hacer bien, y que la hoja marca.
  *
- * Y uno de ellos —`frustrada`— por la parte que se hace bien **no haciéndola**.
+ * Y una de ellas —`frustrada`— es la parte que se hace bien **no haciéndola**.
  */
 export type Galon =
   "aproximacion" | "frustrada" | "toma" | "aros" | "velocidad" | "rodaje";
 
-/** El orden en que se llevan en la manga. El de las partes de un vuelo. */
+/** El orden en que van en la hoja. El de las partes de un vuelo. */
 export const GALONES: readonly Galon[] = [
   "aproximacion",
   "frustrada",
@@ -151,7 +166,7 @@ export class Galones {
   private rodando = 0;
   private fueraDeRaya = 0;
 
-  /** Los que se llevan puestos, en el orden de la manga. */
+  /** Los ganados, en el orden de la hoja. */
   get lista(): readonly Galon[] {
     return GALONES.filter((g) => this.ganados.includes(g));
   }

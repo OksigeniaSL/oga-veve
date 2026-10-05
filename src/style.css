@@ -1163,15 +1163,16 @@ body {
   border-color: var(--ocre);
 }
 
-/* Los galones del vuelo: la manga del uniforme, al lado de la insignia.
+/* La manga del grado y la hoja de la instructora, al lado de la insignia.
 
-   No hay huecos ni galones apagados. Lo que todavía no se ha ganado no se
-   enseña: un hueco vacío es un reproche y un galón que aparece es un premio,
+   No hay huecos ni filas apagadas. Lo que todavía no se ha ganado no se
+   enseña: un hueco vacío es un reproche y un visto que aparece es un premio,
    y a los cuatro años esa diferencia es toda la diferencia. Hasta que no hay
-   un galón, no hay ni manga. */
+   un visto, no hay ni manga ni hoja. Ver ui/hoja.ts. */
 .galones {
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--sombra);
@@ -1182,7 +1183,7 @@ body {
   display: none;
 }
 
-.galones svg {
+.galones__manga svg {
   display: block;
   /* Cuarenta y dos píxeles de alto. Los chevrones que había antes medían
      diecisiete y en una tablet no se veían. */
@@ -1199,10 +1200,9 @@ body {
   fill: #2c3a55;
 }
 
-/* Y las que ya estaban puestas no vuelven a entrar: la manga se repinta
-   entera cuando llega un galón nuevo —la separación depende de cuántos hay,
-   ver `repartoDeBarras`—, y sin esto saltarían todos a la vez, que es lo
-   contrario de «aparecen de uno en uno». */
+/* Y las que ya estaban cosidas no vuelven a entrar: en el ascenso solo crece
+   la barra nueva, y en el HUD ninguna, porque el grado no se gana en un
+   vuelo. */
 .manga__barra--ya {
   animation: none;
 }
@@ -1210,7 +1210,7 @@ body {
 .manga__barra {
   fill: #f2b05c;
   /* Entra creciendo desde el puño. Es lo único que anuncia que acabás de
-     ganar uno, porque la manga no lleva ni una palabra. */
+     subir de grado, porque la manga no lleva ni una palabra. */
   transform-origin: 50% 100%;
   animation: galon-entra 460ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
@@ -1248,6 +1248,194 @@ body {
   }
 }
 .sin-movimiento .manga__barra {
+  animation: none;
+}
+
+/* ── La hoja de la instructora ─────────────────────────────────────────────
+   Lo que se gana en cada vuelo: una tablilla con su pinza y una fila por
+   parte bien hecha, con su dibujo y su visto verde. Papel claro y tinta
+   oscura, que es como se ve una hoja de verdad y lo que la separa de la manga
+   azul marino, que es el grado. Ver ui/hoja.ts.
+
+   Sin filas vacías ni tachadas: lo que no se ha ganado todavía no está. */
+.hoja {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 7px 6px 4px;
+  border-radius: 6px;
+  background: #f1ede1;
+  color: #22302a;
+  box-shadow: var(--poso);
+}
+
+/* La pinza de la tablilla, arriba y en el medio. */
+.hoja__pinza {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 22px;
+  height: 7px;
+  transform: translateX(-50%);
+  border-radius: 3px;
+  background: var(--barro-calido);
+}
+
+.hoja__lista {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hoja__parte {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Entra como entra un sello en un papel: de un golpe y asentándose. */
+  animation: hoja-entra 420ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.hoja__parte--ya {
+  animation: none;
+}
+
+.hoja__dibujo {
+  position: relative;
+  display: block;
+  flex: none;
+}
+
+.hoja__dibujo > svg:first-child {
+  display: block;
+  /* Veintiocho: con la pinza y el papel queda del alto de la manga de al lado. */
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+}
+
+/* El visto, en la esquina de abajo del dibujo, como se marca en un papel. */
+.hoja__visto {
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  width: 13px;
+  height: 13px;
+}
+
+.hoja__visto circle {
+  fill: #2f8a3c;
+}
+
+.hoja__visto path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* La vuelta a medias va sin visto, y un poco más tenue: es lo que pasó. */
+.hoja__parte--sin-visto .hoja__dibujo {
+  opacity: 0.7;
+}
+
+.hoja__nombre {
+  font-size: 17px;
+  line-height: 1.15;
+  text-align: left;
+}
+
+@keyframes hoja-entra {
+  from {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* En el final del vuelo, la hoja grande y en columna, como una de verdad:
+   una fila debajo de otra, y los vistos entrando de uno en uno. */
+.hoja--fin {
+  padding: 16px 16px 12px;
+  border-radius: 8px;
+}
+
+.hoja--fin .hoja__pinza {
+  top: -6px;
+  width: 40px;
+  height: 12px;
+}
+
+.hoja--fin .hoja__lista {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hoja--fin .hoja__dibujo > svg:first-child {
+  width: 34px;
+  height: 34px;
+}
+
+.hoja--fin .hoja__visto {
+  width: 18px;
+  height: 18px;
+}
+
+.hoja--fin .hoja__parte:nth-child(2) {
+  animation-delay: 260ms;
+}
+.hoja--fin .hoja__parte:nth-child(3) {
+  animation-delay: 520ms;
+}
+.hoja--fin .hoja__parte:nth-child(4) {
+  animation-delay: 780ms;
+}
+.hoja--fin .hoja__parte:nth-child(5) {
+  animation-delay: 1040ms;
+}
+.hoja--fin .hoja__parte:nth-child(6) {
+  animation-delay: 1300ms;
+}
+
+/* En la línea de un vuelo del cuaderno, pequeña y en una fila. */
+.hoja--cuaderno {
+  padding: 5px 5px 3px;
+  cursor: pointer;
+}
+
+.hoja--cuaderno .hoja__pinza {
+  width: 16px;
+  height: 5px;
+  top: -3px;
+}
+
+.hoja--cuaderno .hoja__lista {
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.hoja--cuaderno .hoja__dibujo > svg:first-child {
+  width: 20px;
+  height: 20px;
+}
+
+.hoja--cuaderno .hoja__visto {
+  width: 10px;
+  height: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoja__parte {
+    animation: none;
+  }
+}
+.sin-movimiento .hoja__parte {
   animation: none;
 }
 
@@ -1887,12 +2075,10 @@ body {
   font-weight: 600;
 }
 
-/* Los galones que salieron de ese vuelo, con la misma barra de la manga y en
-   su mismo ocre: quien ya sabe contar las barras de la bocamanga las
-   reconoce aquí sin que nadie se lo diga. Ver `ui/manga.ts`. */
-.bitacora__galones {
-  color: var(--ocre);
-  letter-spacing: 1px;
+/* Y la hoja de ese vuelo al lado de lo que duró, centradas las dos: la hoja
+   es un dibujo y no un texto con su línea de base. Ver `hojaDelVuelo`. */
+.bitacora__pie {
+  align-items: center;
 }
 
 .cuaderno__cifra {
@@ -2302,6 +2488,35 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
   .fin .fin__panel > :not(.fin__plano) {
     grid-column: 2;
   }
+
+  /*
+   * Y la hoja en dos columnas, con la manga más baja: seis filas una debajo
+   * de otra miden casi trescientos píxeles, y en un teléfono apaisado no
+   * queda tanto alto ni con el plano al lado.
+   */
+  .fin .hoja--fin .hoja__lista {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    column-gap: 14px;
+    row-gap: 6px;
+  }
+
+  .fin .hoja--fin .hoja__dibujo > svg:first-child {
+    width: 28px;
+    height: 28px;
+  }
+
+  .fin .hoja--fin .hoja__nombre {
+    font-size: 15px;
+  }
+
+  .fin .fin__mi-manga svg {
+    height: 96px;
+  }
+
+  .fin .fin__manga:not(:has(.hoja)) .fin__mi-manga svg {
+    height: 128px;
+  }
 }
 
 .fin__panel {
@@ -2410,11 +2625,24 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
   height: 26px;
 }
 
-.fin__manga svg {
+/* La manga del grado y, al lado, la hoja del vuelo. */
+.fin__manga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.fin__mi-manga svg {
   display: block;
-  /* Cuatro veces la del HUD: aquí la manga no acompaña, es lo que se mira. */
-  height: 168px;
+  /* Tres veces la del HUD: aquí la manga no acompaña, es lo que se mira. */
+  height: 128px;
   width: auto;
+}
+
+/* Y sola, en el ascenso, del tamaño de antes: ahí es lo único que se mira. */
+.fin__manga:not(:has(.hoja)) .fin__mi-manga svg {
+  height: 168px;
 }
 
 .fin__manga[hidden] {
@@ -12123,6 +12351,12 @@ button.motor__tecla::after {
 .explica__medio > svg.ex-trazo,
 .explica--curiosidad .explica__medio > svg {
   width: min(60%, 180px);
+}
+
+/* Los puntos de la tarjeta del avión son iconos de trazo en su lienzo de 48,
+   como los de la tarjeta de señal. Ver `DEL_AVION`. */
+.explica__medio > svg.ex-avion {
+  width: min(50%, 160px);
 }
 
 .explica__video {

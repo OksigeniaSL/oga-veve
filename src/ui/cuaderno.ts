@@ -2,7 +2,7 @@
  * La página del cuaderno de vuelo: lo que llevas hecho y el grado que sale.
  *
  * Es lo que un niño le enseña a su padre, y por eso está pensada para eso: la
- * hombrera con sus galones ocupando media pantalla, el grado con su nombre, y
+ * manga con las barras del grado ocupando media pantalla, el grado con su nombre, y
  * debajo las cuentas — horas, despegues, aterrizajes, frustradas, aeródromos—.
  * Nada de porcentajes ni de barras de progreso: **cosas hechas**.
  *
@@ -14,7 +14,7 @@
  *
  * Un total no es un recuerdo: dice que hubo veinte aterrizajes y no dice
  * **cuál fue el tuyo**. Eso lo guardaba `flight/bitacora.ts` desde que se
- * escribió —fecha, campo, duración, galones y la traza del vuelo entero— y
+ * escribió —fecha, campo, duración, lo que se ganó y la traza del vuelo entero— y
  * **no se enseñaba en ninguna parte**: una funcionalidad terminada, con sus
  * topes medidos y sus 82,2 KB de presupuesto, esperando a que alguien la
  * enchufara.
@@ -41,6 +41,10 @@
  *   `sellos.ts`.
  * - **La escalera de grados**, cada uno con su explicación al tocarlo: qué
  *   quiere decir, en voz y dibujo. Ver `explicaciones-de-serie.ts`.
+ * - **Y en cada vuelo, la hoja de la instructora**: un visto por parte bien
+ *   hecha, y delante lo de antes de volar —la vuelta al avión, el día que se
+ *   decidió no salir, el despegue abortado—. Las barras son del grado y nada
+ *   más; ver `ui/hoja.ts`.
  * - **Y el interruptor de volar sin instructora**, con su candado y lo que
  *   falta mientras no se tiene el grado. Ver `flight/sin-instructora.ts`.
  *
@@ -74,6 +78,7 @@ import { armarPanel, CERRAR } from "./concha";
 import { abrirCuriosidades, abrirExplicacion } from "./explicaciones";
 import { LAMPARITA } from "./ventana-de-explicacion";
 import { manga as dibujarManga } from "./manga";
+import { hojaDelVuelo } from "./hoja";
 import { leerBitacora, type Vuelo } from "../flight/bitacora";
 import { nombreCorto, plano } from "./hangar";
 import { SCENARIOS } from "../world/scenarios";
@@ -113,14 +118,23 @@ function duracionDe(segundos: number): string {
  * La tarjeta de un vuelo.
  *
  * **Sin una sola palabra obligatoria.** El dibujo dice dónde y por dónde; la
- * cifra, cuánto duró; y las rayitas, qué galones salieron de ahí. Quien no lee
- * reconoce su vuelo por la forma de la raya —un circuito es un óvalo, una ida
- * y vuelta es un palo— y eso es lo que hace que quiera enseñarlo.
+ * cifra, cuánto duró; y la hoja de la instructora, qué salió bien. Quien no
+ * lee reconoce su vuelo por la forma de la raya —un circuito es un óvalo, una
+ * ida y vuelta es un palo— y eso es lo que hace que quiera enseñarlo.
+ *
+ * **La hoja ya no son rayitas.** Eran una barra por galón, con el tope en
+ * cuatro, y se leían como las barras de la manga: un vuelo «de comandante» y
+ * otro «de cadete». Las barras son del grado; lo de un vuelo son vistos, uno
+ * por parte, con su dibujo. Y delante, lo de antes de volar que guarda la
+ * bitácora en `Vuelo.antes`: la vuelta al avión, entera o a medias, y la
+ * decisión de quedarse o el despegue abortado, que llevan su visto como una
+ * toma. **Quedarse en tierra cuenta como un día bien decidido.** Ver
+ * `hojaDelVuelo`.
  *
  * La fecha va en el `title` y no pintada: es el único dato de los cuatro que
  * no le dice nada a quien no lee, y ocuparía el sitio del que sí.
  */
-function tarjetaDeVuelo(v: Vuelo): string {
+export function tarjetaDeVuelo(v: Vuelo): string {
   const esc = SCENARIOS.find((e) => e.id === v.escenario);
   if (!esc) return "";
   const cuando = new Date(v.fecha);
@@ -129,13 +143,7 @@ function tarjetaDeVuelo(v: Vuelo): string {
       <div class="bitacora__plano">${plano(esc, 0, v.traza, losOtrosCampos(v))}</div>
       <div class="bitacora__pie">
         <span class="bitacora__duracion">${duracionDe(v.segundos)}</span>
-        ${
-          v.galones.length
-            ? `<span class="bitacora__galones" aria-hidden="true">${"▮".repeat(
-                Math.min(4, v.galones.length),
-              )}</span>`
-            : ""
-        }
+        ${hojaDelVuelo(v)}
       </div>
     </li>`;
 }
@@ -271,6 +279,11 @@ export class CuadernoScreen {
        * quieren decir que respondes.
        */
       if (tocado?.closest?.(".cuaderno__manga")) abrirExplicacion("galones");
+      /*
+       * **Y la hoja de un vuelo, tocada, dice qué es**: lo que rellena la
+       * instructora, y que lo que falta no se tacha. Ver `ui/hoja.ts`.
+       */
+      if (tocado?.closest?.(".bitacora .hoja")) abrirExplicacion("hoja");
       /*
        * **Y cada escalón de la escalera, lo suyo**: de qué se responde con
        * ese grado. Ver `GRADO_APRENDIZ` en `explicaciones-de-serie.ts`.

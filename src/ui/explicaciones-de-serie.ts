@@ -35,7 +35,9 @@
  */
 
 import type { TranslationKey } from "../i18n";
+import { barrasDe, type Grado } from "../flight/cuaderno";
 import { INSTRUCTORA_CALLADA } from "./instructora-callada";
+import { dibujoDe, EXPLICACIONES_DEL_AVION } from "./explicaciones-del-avion";
 import {
   explicacionDe,
   registrarExplicacion,
@@ -165,6 +167,10 @@ const COORDINADOR = pantalla(`
   <circle cx="60" cy="72" r="4.6" class="ex-s-blanco ex-fino" />
 `);
 
+/**
+ * La manga de la comandante, con sus cuatro barras: la que se explica al
+ * tocar la manga del cuaderno, que es la de quien juega.
+ */
 const GALONES = `<svg viewBox="0 0 120 80" aria-hidden="true">
   <path d="M18 10 h84 l-6 62 h-72 Z" class="ex-f-manga" />
   <rect x="24" y="30" width="72" height="5" class="ex-f-oro" />
@@ -181,13 +187,18 @@ const GALONES = `<svg viewBox="0 0 120 80" aria-hidden="true">
  * manga de ese grado a la izquierda —la misma que pinta el cuaderno, con sus
  * barras— y a la derecha **de qué se responde** con ella. No de qué se manda:
  * los galones no son mando, son responsabilidad (AGENTS.md).
+ *
+ * **Con las barras de `barrasDe`, no con un número a mano.** Aquí iban una,
+ * dos, tres y cuatro —una por escalón— mientras el cuaderno ya pintaba una,
+ * tres, cuatro y cuatro: tocar la manga de la piloto, con sus tres barras,
+ * abría un dibujo con dos.
  */
 
 /** La manga de un grado, con sus barras, en la mitad izquierda del lienzo. */
-const mangaDeGrado = (barras: number): string =>
+const mangaDeGrado = (g: Grado): string =>
   `<path d="M6 8 h48 l-4 64 h-40 Z" class="ex-f-manga" />
    ${Array.from(
-     { length: barras },
+     { length: barrasDe(g) },
      (_, i) => `<rect x="10" y="${60 - i * 10}" width="40" height="5" class="ex-f-oro" />`,
    ).join("")}`;
 
@@ -198,7 +209,7 @@ const persona = (cx: number, cy: number, r: number, clase = "ex-f-blanco"): stri
 
 /** Aprendiz: aprendés al lado de la instructora, que te dice qué toca. */
 const GRADO_APRENDIZ = `<svg viewBox="0 0 120 80" aria-hidden="true">
-  ${mangaDeGrado(1)}
+  ${mangaDeGrado("aprendiz")}
   ${persona(98, 30, 9, "ex-f-ambar")}
   <path d="M86 24 a12 12 0 0 1 24 0" class="ex-s-blanco" />
   ${persona(74, 42, 7, "ex-f-yo")}
@@ -206,14 +217,14 @@ const GRADO_APRENDIZ = `<svg viewBox="0 0 120 80" aria-hidden="true">
 
 /** Piloto: el avión lo llevás vos, del puesto al puesto. */
 const GRADO_PILOTO = `<svg viewBox="0 0 120 80" aria-hidden="true">
-  ${mangaDeGrado(2)}
+  ${mangaDeGrado("piloto")}
   <path d="M64 66 H116" class="ex-s-blanco" />
   <path d="M70 58 L104 30 L110 32 L84 58 Z M92 42 L84 34 L88 32 L98 38 Z" class="ex-f-yo" />
 </svg>`;
 
 /** Comandante: respondés por el avión y por todos los que van a bordo. */
 const GRADO_COMANDANTE = `<svg viewBox="0 0 120 80" aria-hidden="true">
-  ${mangaDeGrado(3)}
+  ${mangaDeGrado("comandante")}
   <path d="M64 30 Q90 4 116 30" class="ex-s-ambar ex-grueso" />
   ${persona(72, 34, 7, "ex-f-yo")}
   ${persona(90, 40, 4.4)}
@@ -224,10 +235,27 @@ const GRADO_COMANDANTE = `<svg viewBox="0 0 120 80" aria-hidden="true">
 
 /** Instructora: sabés tanto que podés enseñarle a otro. */
 const GRADO_INSTRUCTORA = `<svg viewBox="0 0 120 80" aria-hidden="true">
-  ${mangaDeGrado(4)}
+  ${mangaDeGrado("instructora")}
   ${persona(76, 30, 9, "ex-f-yo")}
   <path d="M84 40 L100 32" class="ex-s-blanco" />
   ${persona(104, 44, 6)}
+</svg>`;
+
+/**
+ * **La hoja de la instructora**: la tablilla con su pinza y tres filas, cada
+ * una con su raya escrita y su visto verde. Es lo que se gana en cada vuelo,
+ * y no lleva barras: las barras son del grado. Ver `ui/hoja.ts`.
+ */
+const HOJA = `<svg viewBox="0 0 120 80" aria-hidden="true">
+  <rect x="34" y="6" width="52" height="70" rx="5" class="ex-f-blanco" />
+  <rect x="48" y="2" width="24" height="10" rx="3" class="ex-f-ambar" />
+  ${[24, 42, 60]
+    .map(
+      (y) => `<path d="M42 ${y + 4} h22" class="ex-s-gris ex-grueso" />
+    <circle cx="74" cy="${y + 4}" r="6" class="ex-f-verde" />
+    <path d="M70.8 ${y + 4.2} l2.2 2.2 l4 -4.4" class="ex-s-blanco" />`,
+    )
+    .join("")}
 </svg>`;
 
 /* ── Los de la pantalla de navegación ─────────────────────────────────── */
@@ -453,6 +481,12 @@ const DEL_CUADRO = enRincon("cuadro", [
   { id: "grado-comandante", dibujo: { svg: GRADO_COMANDANTE }, ...claves("grado-comandante") },
   { id: "grado-instructora", dibujo: { svg: GRADO_INSTRUCTORA }, ...claves("grado-instructora") },
   /*
+   * **Y la hoja de la instructora**, que es lo que se gana en cada vuelo: se
+   * abre tocando la hoja de un vuelo en el cuaderno. Las barras son del grado
+   * y la hoja, del vuelo; si el juego enseña las dos, explica las dos.
+   */
+  { id: "hoja", dibujo: { svg: HOJA }, ...claves("hoja") },
+  /*
    * **Y volar sin instructora**, que se abre desde su interruptor: qué calla,
    * qué no, y por qué hace falta ser comandante. Ver
    * `flight/sin-instructora.ts`.
@@ -466,6 +500,7 @@ const DEL_CUADRO = enRincon("cuadro", [
  */
 const SIN_RINCON = new Set([
   "galones",
+  "hoja",
   "grado-aprendiz",
   "grado-piloto",
   "grado-comandante",
@@ -483,8 +518,28 @@ const CURIOSIDADES = enRincon("curiosidades", [
   { id: "modo-avion", dibujo: { svg: MODO_AVION }, ...claves("modo-avion") },
 ]);
 
+/**
+ * **Los puntos de la tarjeta del avión en 3D**, en el mismo registro.
+ *
+ * La tarjeta los enseña en su globo, junto al punto, y así sigue. Pero hasta
+ * ahora vivían solo ahí: con su `id`, su dibujo, su texto y su voz preparados
+ * para el registro y sin apuntar en él, así que no se podían abrir por su `id`
+ * desde ningún otro sitio —un rincón, un enlace, una presentación de la
+ * instructora—. Se apuntan con su palabra corta, que es el título de la
+ * ventana, y sin rincón: se llega a ellos desde la tarjeta o por su `id`. Ver
+ * `ui/explicaciones-del-avion.ts`.
+ */
+const DEL_AVION: readonly Explicacion[] = EXPLICACIONES_DEL_AVION.map((e) => ({
+  id: e.id,
+  dibujo: { svg: dibujoDe(e, "ex-avion") },
+  corta: e.corta,
+  texto: e.texto,
+  voz: e.voz,
+  ...(e.video ? { video: { src: e.video } } : {}),
+}));
+
 /** Los `id` de las que trae el juego. Para las pruebas y para el banco. */
-export const DE_SERIE: readonly string[] = [...DEL_CUADRO, ...CURIOSIDADES].map(
+export const DE_SERIE: readonly string[] = [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_AVION].map(
   (e) => e.id,
 );
 
@@ -493,7 +548,7 @@ export const DE_SERIE: readonly string[] = [...DEL_CUADRO, ...CURIOSIDADES].map(
  * está —porque alguien la afinó después—, no se pisa.
  */
 export function ponerLasDeSerie(): void {
-  for (const e of [...DEL_CUADRO, ...CURIOSIDADES]) {
+  for (const e of [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_AVION]) {
     if (explicacionDe(e.id)) continue;
     registrarExplicacion(
       SIN_RINCON.has(e.id) ? { ...e, rincon: undefined } : e,

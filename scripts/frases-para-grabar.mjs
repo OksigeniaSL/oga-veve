@@ -46,7 +46,8 @@ const HABLADOS = [
   ["percance", "instructor", "lo que salió mal, en la pantalla de fin"],
   ["fin", "instructor", "el reconocimiento al terminar"],
   ["grado", "instructor", "los cuatro grados del cuaderno"],
-  ["galon", "instructor", "los galones que se ganan en el vuelo"],
+  // La palabra corta de cada parte se lee en la hoja y no se dice.
+  ["galon", "instructor", "lo que marca la hoja de la instructora en cada vuelo", /\.corta$/],
   ["tutor", "instructor", "los consejos de los primeros minutos"],
   /*
    * **Y por qué no se puede bajar así**, que es la mitad que faltaba.

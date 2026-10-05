@@ -1903,20 +1903,37 @@ export const ES_PY = {
   "leccion.despegue": "Despegar",
   "leccion.aterrizaje": "Aterrizar",
 
-  /*
-   * Los galones. Solo los ve quien usa lector de pantalla: en la pantalla un
-   * galón es un dibujo y no lleva ni una palabra, que para eso se inventó.
-   */
   "tactil.palanca": "Palanca",
   "tactil.timon": "Pedales del timón",
   "tactil.motor": "Motor",
-  "galon.manga": "Los galones de este vuelo",
-  "galon.aproximacion": "Galón de la aproximación",
-  "galon.toma": "Galón del aterrizaje",
-  "galon.aros": "Galón de los aros",
-  "galon.velocidad": "Galón de la velocidad",
-  "galon.rodaje": "Galón del rodaje",
-  "galon.frustrada": "Galón de la frustrada",
+  /*
+   * **La hoja de la instructora**: lo que se gana en cada vuelo, una fila por
+   * parte con su visto. Las claves siguen llamándose `galon` porque así se
+   * guardan en la bitácora de cada aparato; lo que dicen es lo que de verdad
+   * se evalúa. El nombre entero sale en el final del vuelo desde el peldaño
+   * de las cifras, la palabra corta en el de la palabra, y en Guyrami solo el
+   * dibujo y el visto. Ver `ui/hoja.ts`.
+   */
+  "galon.manga": "La hoja de la instructora",
+  "galon.aproximacion": "Aproximación estabilizada",
+  "galon.toma": "Aterrizaje",
+  "galon.aros": "Los aros",
+  "galon.velocidad": "La velocidad",
+  "galon.rodaje": "El rodaje",
+  "galon.frustrada": "Frustrada cuando tocaba",
+  "galon.aproximacion.corta": "Senda",
+  "galon.toma.corta": "Toma",
+  "galon.aros.corta": "Aros",
+  "galon.velocidad.corta": "Velocidad",
+  "galon.rodaje.corta": "Rodaje",
+  "galon.frustrada.corta": "Frustrada",
+  // Lo de antes de volar, en la línea de cada vuelo del cuaderno.
+  "hoja.vuelta": "Vuelta al avión, entera",
+  "hoja.vueltaAMedias": "Vuelta al avión, hasta la mitad",
+  "hoja.enTierra": "Hoy te quedaste en tierra: bien decidido",
+  "hoja.abortado": "Despegue abortado a tiempo: bien decidido",
+  // Las barras de la manga, que son el grado. Ver `ui/manga.ts`.
+  "manga.grado": "La manga de tu grado: {grado}",
 
   /*
    * **La tarjeta del avión**: la ficha, los puntos que se tocan y lo que
@@ -1958,6 +1975,18 @@ export const ES_PY = {
   "tarjeta.matricula.nombre": "Matrícula {matricula}",
   "tarjeta.pais.ZP": "Paraguay",
   "tarjeta.pais.EC": "España",
+  /*
+   * El nombre de los puntos que no tienen pieza propia en la tarjeta: el
+   * título de su explicación cuando se abre por su id. Los demás usan el de
+   * su pieza o su luz.
+   */
+  "tarjeta.corta.pitotMorro": "Tubos pitot",
+  "tarjeta.corta.motorPiston": "Motor de pistón",
+  "tarjeta.corta.motorRadial": "Motor radial",
+  "tarjeta.corta.turbohelice": "Turbohélice",
+  "tarjeta.corta.reactor": "Reactor",
+  "tarjeta.corta.trenFijo": "Tren fijo",
+  "tarjeta.corta.matricula": "Matrícula",
   "tarjeta.alerones":
     "Alerones. Cuando uno sube, el del otro lado baja: un ala sostiene más y la otra menos, y el avión se inclina para girar.",
   "tarjeta.profundidad":
@@ -2142,7 +2171,10 @@ export const ES_PY = {
     "Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.",
   "explica.galones.corta": "Galones",
   "explica.galones.texto":
-    "Las barras de la manga dicen cuánto aprendiste y cuánto te toca cuidar. Cuatro barras son las de la comandante, y no quieren decir que manda más: quieren decir que responde por todos los que van a bordo.",
+    "Las barras de la manga dicen tu grado, como en cualquier línea aérea: una, quien aprende; dos, la segunda oficial; tres, la primera oficial, que ya lleva el avión; y cuatro, la comandante. Cuatro barras no quieren decir que manda más: quieren decir que responde por todos los que van a bordo. Lo que hiciste bien en cada vuelo no va en la manga: lo marca la instructora en su hoja, con un visto.",
+  "explica.hoja.corta": "La hoja de la instructora",
+  "explica.hoja.texto":
+    "Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.",
 
   "explica.persianas.corta": "Las ventanillas",
   "explica.persianas.texto":
