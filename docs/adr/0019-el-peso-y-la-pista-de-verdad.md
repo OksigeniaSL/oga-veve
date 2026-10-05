@@ -1,4 +1,4 @@
-# 0019 — El peso que baja al quemar, y la pista con los márgenes de su norma
+# 0019 — El peso que baja al quemar, la pista con los márgenes de su norma y los bomberos
 
 Fecha: 2026-10-05
 Estado: aceptado · revierte «el peso, fijo» del ADR 0011 y la nota del peso
@@ -88,14 +88,57 @@ ahí la toma no pinta nada. El `pistaQueNecesita` de `suelo-del-trafico.ts` es
 un parámetro con el mismo nombre que viene del tipo de tráfico, no esta cuenta,
 y no cambia.
 
+### Y los bomberos
+
+Enrique, al ver la tabla: «pues aplica la regla de los bomberos y haz la tabla
+bien»; y después, «y se explica de algún modo, eso se tiene que saber, yo no
+tenía ni idea». `cabeEn` tiene un cuarto motivo, `bomberos`, detrás de los
+tres de la pista:
+
+- **La categoría del avión**, de 1 a 10, por su largo total y el ancho de su
+  fuselaje, con la tabla 9-1 del Anexo 14 de la OACI, volumen I (la misma que
+  la tabla 1 de EASA en AMC2 ADR.OPS.B.010(a)(2)). Las medidas, las de su tipo
+  en el Doc 9137, parte 1, apéndice 2: el 172 es de la 1, el 1900D de la 3, el
+  Embraer 170 de la 6 y el 747-100 de la 9 (`flight/bomberos.ts`).
+- **La del aeródromo**, la de su AIP, AD 2.6 (`world/bomberos-publicados.ts`):
+  9 en Los Rodeos, Tenerife Sur, Gran Canaria, Lanzarote y Fuerteventura; 7 en
+  La Palma, que da la 8 a petición; 5 en El Hierro y La Gomera; 4 en Cuatro
+  Vientos; 8 en Asunción, 7 en Guaraní y en Encarnación, 5 en Pedro Juan
+  Caballero, y ninguna en Concepción, Pilar, Mariscal Estigarribia, Ayolas ni
+  la granja.
+- **La regla de uso** es la del operador, Anexo 6, parte I, 4.1.5 y su
+  adjunto F, tabla F-1: en la salida y el destino, en principio la categoría
+  del avión o mejor; con una evaluación de riesgo, **una por debajo**, pero
+  nunca por debajo de la 4 en un avión de más de 27.000 kg. Del lado del
+  aeródromo, el Anexo 14 (9.2; EASA, AMC2 ADR.OPS.B.010(a)(2) a 3; OACI, Doc
+  9137, 2.1.3 y 2.1.4) deja dar una categoría por debajo de la de su avión más
+  grande si ese avión hace menos de 700 movimientos de pasaje en los tres meses
+  de más tráfico. Las dos rebajas son la misma, y es como vuela de verdad un
+  vuelo regular de pocos movimientos: el 787-9 de Air Europa, de la 9, va cada
+  día a Asunción, de la 8. Así que la regla es **la del avión o una menos, y
+  nunca menos de la 4 por encima de 27 toneladas**. EASA no da otra cifra:
+  AMC1 CAT.OP.MPA.107 pide la misma evaluación dentro del sistema de gestión.
+- **A quién**: a los de línea, que llevan pasaje de pago (Anexo 6, parte I).
+  La avioneta, el fumigador y el bimotor privado no tienen esta regla.
+- **Se ve y se explica.** En el hangar, el porqué lleva su dibujo —el camión
+  de bomberos al lado de un avión que le queda grande—, y tocarlo abre la
+  explicación `bomberos` (dibujo en los cuatro peldaños, la palabra desde el
+  segundo, el texto desde el tercero; y en la ficha de un destino, la palabra
+  y, desde las cifras, «categoría N · pide M»). En el rincón de las
+  curiosidades, `bomberos-y-aviones`, con el caso de La Gomera.
+
 ### Lo que cambia de veredicto
 
 | campo | avión | antes | ahora | por qué |
 |---|---|---|---|---|
-| Lanzarote | JAZ 120 | no | sí | 2.361 m de TORA pedida, 2.400 por la 03 |
-| La Gomera | JAZ 90 | no | sí | 1.439 de 1.500 |
-| Cuatro Vientos | JAZ 90 | no | sí | 1.439 de 1.500 |
+| Lanzarote | JAZ 120 | no | sí | 2.361 m de TORA pedida, 2.400 por la 03; bomberos 9 |
+| La Gomera | JAZ 90 | no | sí | 1.439 de 1.500; bomberos 5, una por debajo de su 6 |
+| Cuatro Vientos | JAZ 90 | no | no | la pista daría (1.439 de 1.500), los bomberos no: 4 de 5 |
 | Yvytu Rape | JAZ 40 | sí | no | 1.054 de 900 en hierba, con el 1,33 de escuela |
+| Guaraní | JAZ 120 | sí | no | bomberos 7 de 8 |
+| Mariscal Estigarribia | JAZ 60, 90, 120 | sí | no | sin bomberos |
+| Concepción y Ayolas | JAZ 60 y 90 | sí | no | sin bomberos |
+| Pilar | JAZ 60 | sí | no | sin bomberos |
 
 ## Lo que no
 
@@ -111,14 +154,19 @@ y no cambia.
   de vuelo, y queda en la lista.
 - **Las inercias se quedan las de la ficha.** El combustible es como mucho un
   quinto del avión y va en las alas.
-- **Lo que no es pista.** Por pista, un reactor de la clase del JAZ 90 cabe en
-  La Gomera y en Cuatro Vientos, y un Embraer 170 de verdad, a ese peso, también.
-  Pero hoy no opera ningún reactor de línea en ninguno de los dos: La Gomera la
-  vuela Binter con el ATR 72, y Cuatro Vientos es de aviación general, solo
-  visual (AIP de España, AD 2.2). Y los dos tienen una categoría de salvamento y
-  extinción de incendios por debajo de la de un avión de treinta metros —la 5 y
-  la 4, AD 2.6, contra la 6 de la OACI, Anexo 14, tabla 9-1—. Esas reglas no
-  están en este juego.
+- **Lo que no es pista ni bomberos.** Por pista y por bomberos, un reactor de la
+  clase del JAZ 90 —de la 6— cabe en La Gomera, que es de la 5: una por debajo,
+  que es lo que la norma deja con pocos vuelos. Hoy no lo vuela ningún reactor:
+  Binter va con el ATR 72, y sus reactores, los E195-E2, son de la 7 y pedirían
+  la 6. Lo que deja fuera a un regional de treinta metros es la demanda y la
+  flota de quien vuela allí, y eso no lo decide este juego. Cuatro Vientos es
+  además solo visual (AIP de España, AD 2.2), que tampoco se mira.
+- **Los escenarios inventados**, el valle y el Chaco, no tienen aeródromo ni
+  AIP, y en ellos la regla de los bomberos no se mira.
+- **La voz de la explicación de los bomberos en el hangar.** La voz de la
+  instructora la pone el vuelo; en el hangar todavía no hay, como en la tarjeta
+  del avión, y la explicación se ve y no se oye. La curiosidad, que se abre
+  desde el vuelo, sí habla en cuanto esté grabada (`PENDIENTE-VOCES-explicaciones.md`).
 - **El aire de la distancia de aterrizaje** sigue siendo la fineza por quince
   metros, unos cien, cuando en un manual son entre doscientos y trescientos. Con
   los márgenes nuevos sigue mandando el despegue en los seis, y por eso no se

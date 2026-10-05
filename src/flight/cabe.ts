@@ -13,7 +13,7 @@
  *
  * ## Qué es caber
  *
- * Tres cosas, y las tres tienen que darse:
+ * Cuatro cosas, y las cuatro tienen que darse:
  *
  * - **La pista es bastante larga, para despegar y para aterrizar.** Cada
  *   maniobra con su distancia publicada y su margen de verdad: la distancia
@@ -31,6 +31,11 @@
  *   mitad tiene que poder volver a la cabecera, y eso es un giro de ciento
  *   ochenta grados cuyo radio sale de su batalla. En una pista más estrecha que
  *   ese giro, el avión no cabe aunque la longitud le sobre.
+ * - **Los bomberos pueden atenderlo**, si lleva pasaje. Cada aeródromo tiene
+ *   bomberos para el avión más grande que recibe, y publica su categoría; un
+ *   avión de línea va adonde su categoría, o una menos, está cubierta. Lo
+ *   pidió Enrique al ver la tabla: «pues aplica la regla de los bomberos».
+ *   Ver `flight/bomberos.ts`.
  *
  * ## Con qué cabecera
  *
@@ -58,6 +63,8 @@ import { pistaQueNecesita } from "./carrera";
 import { GIRO_DE_MORRO } from "./fdm";
 import type { Superficie } from "../world/superficie";
 import { umbralPublicado } from "../world/umbrales-publicados";
+import { bomberosDe } from "../world/bomberos-publicados";
+import { categoriaQueAcepta } from "./bomberos";
 
 /** Lo que hace falta saber de un campo para decidir. */
 export interface Campo {
@@ -73,10 +80,16 @@ export interface Campo {
   readonly tora?: number;
   /** Y la mejor LDA, m: la pista para aterrizar. Sin ella, el largo. */
   readonly lda?: number;
+  /**
+   * La categoría de sus bomberos, de su AIP: 0 si no tiene. Sin ella —un
+   * escenario inventado, sin aeródromo—, la regla de los bomberos no se mira.
+   * Ver `world/bomberos-publicados.ts`.
+   */
+  readonly bomberos?: number;
 }
 
 /** Por qué no cabe, si no cabe. */
-export type PorQueNo = "corta" | "estrecha" | "no-da-la-vuelta";
+export type PorQueNo = "corta" | "estrecha" | "no-da-la-vuelta" | "bomberos";
 
 export interface Veredicto {
   readonly cabe: boolean;
@@ -136,6 +149,15 @@ export function cabeEn(a: AircraftConfig, campo: Campo): Veredicto {
       hay: campo.ancho,
     };
 
+  /*
+   * **Y los bomberos**, la última: primero lo que se ve —la pista—, y después
+   * lo que no se ve y también decide. Lo que pide es la categoría más baja que
+   * acepta el avión, y lo que hay, la del aeródromo. Ver `flight/bomberos.ts`.
+   */
+  const acepta = categoriaQueAcepta(a);
+  if (acepta !== null && campo.bomberos !== undefined && campo.bomberos < acepta)
+    return { cabe: false, porQueNo: "bomberos", necesita: acepta, hay: campo.bomberos };
+
   return { cabe: true, porQueNo: null, necesita: justa.necesita, hay: justa.hay };
 }
 
@@ -192,6 +214,8 @@ export function campoDe(escenario: Scenario): Campo {
     superficie: blanda ? "hierba" : "asfalto",
     tora: publicadas.length ? Math.max(...publicadas.map((u) => u.tora)) : largo,
     lda: publicadas.length ? Math.max(...publicadas.map((u) => u.lda)) : largo,
+    // Los bomberos, de su AIP. Sin aeródromo, no se miran.
+    ...(oaci ? { bomberos: bomberosDe(oaci) ?? 0 } : {}),
   };
 }
 

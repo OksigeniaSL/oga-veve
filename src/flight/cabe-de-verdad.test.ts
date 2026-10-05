@@ -112,10 +112,22 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
     expect(cabe("jaz-90", "el-hierro")).toBe(false);
   });
 
-  it("y en Paraguay, el de fuselaje ancho solo en las tres pistas de más de tres kilómetros", () => {
-    for (const campo of ["pettirossi", "guarani", "estigarribia"])
-      expect(cabe("jaz-120", campo), campo).toBe(true);
-    for (const campo of ["encarnacion", "concepcion", "ayolas", "pilar", "pedro-juan"])
+  it("y en Paraguay, el de fuselaje ancho solo en Asunción", () => {
+    /*
+     * Por pista, en las tres de más de tres kilómetros; por bomberos, solo en
+     * Asunción, que es de la 8 —la del 787-9 de Air Europa, que es de la 9—.
+     * Guaraní es de la 7 y Estigarribia no tiene. Ver `flight/bomberos.ts`.
+     */
+    expect(cabe("jaz-120", "pettirossi")).toBe(true);
+    for (const campo of [
+      "guarani",
+      "estigarribia",
+      "encarnacion",
+      "concepcion",
+      "ayolas",
+      "pilar",
+      "pedro-juan",
+    ])
       expect(cabe("jaz-120", campo), campo).toBe(false);
   });
 

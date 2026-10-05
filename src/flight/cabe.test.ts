@@ -76,11 +76,17 @@ describe("qué avión cabe dónde", () => {
   });
 
   it("pero sí en los campos grandes", () => {
+    /*
+     * Eran también Guaraní y Mariscal Estigarribia, que tienen pista de sobra;
+     * con la regla de los bomberos ya no: Guaraní es de la categoría 7 y
+     * Estigarribia no tiene, y un avión de la 9 pide la 8. Ver
+     * `flight/bomberos.ts`.
+     */
     for (const id of [
       "pettirossi",
-      "guarani",
       "tenerife-norte",
-      "estigarribia",
+      "tenerife-sur",
+      "gran-canaria",
     ]) {
       const e = SCENARIOS.find((x) => x.id === id)!;
       expect(cabeEn(grande, campoDe(e)).cabe, id).toBe(true);

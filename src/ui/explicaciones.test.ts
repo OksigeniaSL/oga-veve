@@ -134,6 +134,7 @@ describe("abrir y cerrar", () => {
       "cinturon",
       "mesitas",
       "modo-avion",
+      "bomberos-y-aviones",
     ]);
   });
 });

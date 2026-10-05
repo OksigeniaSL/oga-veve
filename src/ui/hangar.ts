@@ -29,6 +29,12 @@
  */
 
 import { TIERS, type Tier } from "../flight/tiers";
+import { canalesDe, type Peldano } from "../flight/escalera";
+import { abrirExplicacion } from "./explicaciones";
+import { ponerLasDeSerie } from "./explicaciones-de-serie";
+// La ventana de las explicaciones, que se apunta sola al cargarse: el hangar
+// abre la de los bomberos antes de que haya vuelo. Ver `abrirBomberos`.
+import "./ventana-de-explicacion";
 import type { Aerodrome } from "../world/aerodrome";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import {
@@ -767,6 +773,8 @@ function fichaDeDestino(
 function fichaDeDestinoQueNoCabe(
   sitio: Scenario,
   { destino, veredicto, propuesto }: DestinoQueNoCabe,
+  /** El peldaño de la escalera del tramo elegido: decide si hay cifras. */
+  peldano: Peldano,
 ): string {
   const campos = camposDeLaRuta(sitio, [destino]);
   const casa = campos[0]!;
@@ -776,10 +784,8 @@ function fichaDeDestinoQueNoCabe(
   const oaci = oaciDe(destino);
   const nombre = t(destino.nameKey as never);
   const m = (n: number): string => Math.round(n).toLocaleString(idioma());
-  const cuenta = t(
-    veredicto.porQueNo === "corta" ? "hangar.nocabe.largo" : "hangar.nocabe.ancho",
-    { pide: m(veredicto.necesita), hay: m(veredicto.hay) },
-  );
+  const cuenta = cuentaDeNoCabe(veredicto, peldano, m);
+  const bomberos = veredicto.porQueNo === "bomberos";
   const modelo = propuesto ? modeloPorId(propuesto.id) : undefined;
   const conQuien = propuesto
     ? `${FABRICANTE} ${modelo?.numero ?? ""} ${modelo?.nombre ?? propuesto.name}`
@@ -788,20 +794,32 @@ function fichaDeDestinoQueNoCabe(
   return `
     <button class="ficha ficha--sitio ficha--destino ficha--lejos" type="button"
             role="radio" aria-checked="false" tabindex="-1"
-            ${propuesto ? `data-destino-lejos="${destino.id}" data-con="${propuesto.id}"` : "disabled"}
+            ${
+              propuesto
+                ? `data-destino-lejos="${destino.id}" data-con="${propuesto.id}"`
+                : // Sin propuesta no se va a ningún sitio, pero el dibujo de
+                  // los bomberos se toca para que se explique: un botón
+                  // apagado no recibe el dedo.
+                  bomberos
+                  ? 'aria-disabled="true"'
+                  : "disabled"
+            }
             aria-label="${nombre} — ${porque} (${cuenta}).${
               propuesto ? ` ${t("hangar.nocabe.con", { avion: conQuien })}` : ""
             }"
             style="--cielo: ${cielo}; --suelo: ${suelo}">
       <span class="ficha__lienzo">${
         oaci ? `<span class="plano__ficha"><b>${oaci}</b></span>` : ""
-      }${plano(destino, ESCALA)}${dibujoDeNoCabe(veredicto.porQueNo)}</span>
+      }${plano(destino, ESCALA)}${
+        // El de los bomberos se toca y se explica. Ver `abrirBomberos`.
+        dibujoDeNoCabe(veredicto.porQueNo, bomberos)
+      }</span>
       <span class="ficha__pie">
         <span class="ficha__renglon">
           <span class="ficha__numero">${km.toLocaleString(idioma())} km</span>
         </span>
         <span class="ficha__nombre">${nombre}</span>
-        <span class="ficha__cuenta">${cuenta}</span>
+        ${cuenta ? `<span class="ficha__cuenta">${cuenta}</span>` : ""}
         ${
           propuesto
             ? `<span class="ficha__propuesta" aria-hidden="true">
@@ -860,7 +878,50 @@ const PORQUE = {
   corta: "hangar.nocabe.corta",
   estrecha: "hangar.nocabe.estrecha",
   "no-da-la-vuelta": "hangar.nocabe.no-da-la-vuelta",
+  bomberos: "hangar.nocabe.bomberos",
 } as const;
+
+/**
+ * **Lo que pide y lo que hay**, para quien lee, debajo del nombre del destino.
+ *
+ * La pista, en metros, como siempre. **Los bomberos, por la escalera**: en el
+ * peldaño del dibujo, nada —el camión ya lo dice—; desde el de la palabra, la
+ * palabra; desde el de las cifras, la categoría del aeropuerto y la más baja
+ * que acepta el avión. Vacío si no hay nada que escribir.
+ */
+function cuentaDeNoCabe(
+  veredicto: Veredicto,
+  peldano: Peldano,
+  m: (n: number) => string,
+): string {
+  if (veredicto.porQueNo === "bomberos") {
+    const canales = canalesDe(peldano);
+    if (!canales.texto) return "";
+    if (!canales.cifra) return t("explica.bomberos.corta");
+    return t("hangar.nocabe.categoria", {
+      hay: String(veredicto.hay),
+      pide: String(veredicto.necesita),
+    });
+  }
+  return t(
+    veredicto.porQueNo === "corta" ? "hangar.nocabe.largo" : "hangar.nocabe.ancho",
+    { pide: m(veredicto.necesita), hay: m(veredicto.hay) },
+  );
+}
+
+/**
+ * **La explicación de los bomberos**, abierta desde el hangar: con el peldaño
+ * del tramo elegido y en tierra, que es donde se está. Antes del primer vuelo
+ * las explicaciones de serie todavía no están apuntadas; se apuntan aquí, que
+ * apuntarlas otra vez no pisa nada. Ver `ponerLasDeSerie`.
+ *
+ * Aquí no habla nadie: la voz de la instructora la pone el vuelo, como en la
+ * tarjeta del avión. Se ve el dibujo y, desde la palabra, se lee.
+ */
+function abrirBomberos(peldano: Peldano): void {
+  ponerLasDeSerie();
+  abrirExplicacion("bomberos", { peldano, enTierra: true });
+}
 
 /**
  * El dibujo de «aquí no cabe», **uno por motivo**.
@@ -876,11 +937,18 @@ const PORQUE = {
  * - **estrecha**: el avión encima de la pista, con las alas asomando por los
  *   dos bordes;
  * - **no da la vuelta**: la media vuelta del final de la pista, que se sale
- *   por el borde antes de volver.
+ *   por el borde antes de volver;
+ * - **bomberos**: el camión de bomberos, pequeño, al lado de un avión que le
+ *   queda grande. Es el único que no sale de lo que pasaría visto desde
+ *   arriba, porque lo que falta no se ve: se dibuja quién falta.
  *
  * Es literalmente lo que pasaría, visto desde arriba.
  */
-function dibujoDeNoCabe(porque: PorQueNo | null): string {
+function dibujoDeNoCabe(
+  porque: PorQueNo | null,
+  /** Si al tocarlo se abre su explicación. Ver `abrirBomberos`. */
+  explica = false,
+): string {
   const pista = (y: number, alto: number, x0: number, x1: number): string => `
     <rect x="${x0}" y="${y}" width="${x1 - x0}" height="${alto}" rx="1.5"
           fill="#d8d5c8" opacity="0.85" />
@@ -892,7 +960,12 @@ function dibujoDeNoCabe(porque: PorQueNo | null): string {
       x - 4.2 * k
     } ${y - 2.4 * k}v${4.8 * k}" />`;
   const dibujo =
-    porque === "estrecha"
+    porque === "bomberos"
+      ? `${CAMION_DE_BOMBEROS}
+    <g fill="none" stroke="#dd923f" stroke-width="2.2" stroke-linecap="round">
+      ${avion(45, 17, 1.45)}
+    </g>`
+      : porque === "estrecha"
       ? `${pista(19.5, 5, 4, 60)}
     <g fill="none" stroke="#dd923f" stroke-width="2.4" stroke-linecap="round">
       ${avion(31, 22, 2)}
@@ -913,11 +986,30 @@ function dibujoDeNoCabe(porque: PorQueNo | null): string {
       <path d="M53 18.5l4.5 3.5-4.5 3.5" />
     </g>`;
   return `
-  <svg class="ficha__nocabe" viewBox="0 0 64 34" aria-hidden="true">
+  <svg class="ficha__nocabe${explica ? " ficha__nocabe--explica" : ""}" viewBox="0 0 64 34"
+       aria-hidden="true"${explica && porque ? ` data-explicar="${porque}"` : ""}>
     <rect x="0" y="0" width="64" height="34" rx="7" fill="#12190f"
           opacity="0.82" />${dibujo}
   </svg>`;
 }
+
+/**
+ * **El camión de bomberos de un aeropuerto**, de lado, en el lienzo del
+ * porqué: la cabina con su luz, la cisterna con su cañón de agua encima y las
+ * ruedas. En el rojo de los camiones y con trazo claro, que sobre el fondo
+ * oscuro se lea de un vistazo. Ver `dibujoDeNoCabe`.
+ */
+const CAMION_DE_BOMBEROS = `
+    <g stroke="#f0ede4" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+      <rect x="5" y="15" width="15" height="9" rx="1.2" fill="#c2412d" />
+      <path d="M20 24 V17.5 h4.6 l3 3.4 V24 Z" fill="#c2412d" />
+      <path d="M21.6 19 h2.6 l1.6 1.9" fill="none" />
+      <path d="M9 15 l3 -3.4 h3.6" fill="none" />
+      <path d="M15.6 11.6 q3.4 -2.6 7 -1.4" fill="none" stroke-dasharray="1.6 1.6" />
+      <path d="M22 16.4 h2" fill="none" />
+      <circle cx="9.5" cy="25" r="2.1" fill="#12190f" />
+      <circle cx="23.5" cy="25" r="2.1" fill="#12190f" />
+    </g>`;
 
 function fichaDeAvion(
   avion: AircraftConfig,
@@ -963,7 +1055,19 @@ function fichaDeAvion(
         <span class="ficha__dato">${FABRICANTE} ${modelo?.numero ?? ""}</span>
         <span class="ficha__nombre">${modelo?.nombre ?? avion.name}</span>
       </span>
-    </button>
+    </button>${
+      /*
+       * **Y el camión de los bomberos se toca**, y se explica. La ficha va
+       * apagada —un avión que no cabe no se elige— y un botón apagado no
+       * recibe el dedo, así que encima del dibujo va uno transparente que sí.
+       * «Y se explica de algún modo, eso se tiene que saber, yo no tenía ni
+       * idea», dijo Enrique. Ver `abrirBomberos`.
+       */
+      no && veredicto.porQueNo === "bomberos"
+        ? `<button class="ficha__porque" type="button" data-explicar="bomberos"
+            aria-label="${t("explica.bomberos.corta")}"></button>`
+        : ""
+    }
     <button class="ficha__de-cerca" type="button" data-de-cerca="${avion.id}"
             aria-label="${t("tarjeta.abrir")} — ${FABRICANTE} ${modelo?.numero ?? ""} ${
               modelo?.nombre ?? avion.name
@@ -1609,7 +1713,7 @@ export function abrirHangar(
               )
               .join("")}
             ${destinosQueNoCaben(sitio, avion)
-              .map((d) => fichaDeDestinoQueNoCabe(sitio, d))
+              .map((d) => fichaDeDestinoQueNoCabe(sitio, d, tramo.avisos))
               .join("")}
           </div>
         </section>`
@@ -1928,6 +2032,15 @@ export function abrirHangar(
     root.addEventListener("keydown", aplazarReposo);
 
     root.addEventListener("click", (event) => {
+      /*
+       * **Lo que se explica, antes que nada**: el camión de los bomberos de un
+       * destino va dentro de su ficha, y tocarlo explica en vez de elegir.
+       */
+      const explica = (event.target as HTMLElement | null)?.closest("[data-explicar]");
+      if (explica) {
+        if (explica.getAttribute("data-explicar") === "bomberos") abrirBomberos(tramo.avisos);
+        return;
+      }
       const boton = (event.target as HTMLElement | null)?.closest("button");
       if (!boton) return;
 

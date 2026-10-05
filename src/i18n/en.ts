@@ -710,8 +710,10 @@ export const EN: Dictionary = {
   "hangar.nocabe.corta": "the runway is too short for this aeroplane",
   "hangar.nocabe.estrecha": "the runway is too narrow for its wings",
   "hangar.nocabe.no-da-la-vuelta": "it cannot turn around on this runway",
+  "hangar.nocabe.bomberos": "this airport's fire crew can't cover this aeroplane",
   "hangar.nocabe.largo": "needs {pide} m, has {hay} m",
   "hangar.nocabe.ancho": "needs {pide} m wide, has {hay} m",
+  "hangar.nocabe.categoria": "category {hay} · needs {pide}",
   "hangar.nocabe.con": "Tap to fly there in the {avion}",
   "hangar.conque": "What are you flying?",
   "hangar.como": "Which pilot are you?",
@@ -1147,6 +1149,12 @@ export const EN: Dictionary = {
   "explica.modo-avion.corta": "Flight mode",
   "explica.modo-avion.texto":
     "Your phone, in flight mode. Its radio searching for a signal sneaks into the pilots' headsets as a buzz, right when they are listening to the tower. And up there there's no signal anyway: the phone drains its battery looking for one.",
+  "explica.bomberos.corta": "Fire crew",
+  "explica.bomberos.texto":
+    "Every airport has a fire crew ready for the biggest plane it receives: the longer and wider the plane, the more water, foam and fire trucks it takes. This plane is bigger than they can look after here, so it doesn't come: if something happened, there wouldn't be enough to help it properly. That's why every airport states its category, from 1 to 10, and every plane goes where it can be looked after.",
+  "explica.bomberos-y-aviones.corta": "Why only small planes?",
+  "explica.bomberos-y-aviones.texto":
+    "Only small planes go to some airports. Often it's because of the runway, and sometimes because of the fire crew. To La Gomera, in the Canary Islands, Binter flies the ATR, a twenty-seven-metre propeller plane. Binter also has forty-one-and-a-half-metre jets, and doesn't take them there: La Gomera's fire crew is category 5, ready for planes up to twenty-eight metres. An airport gets ready for the planes it receives, and so every plane goes where it can be looked after.",
   "tarjeta.abrir": "See the plane up close",
   "tarjeta.ficha.envergadura": "Wingtip to wingtip",
   "tarjeta.ficha.largo": "Nose to tail",

@@ -103,6 +103,24 @@ cualquier explicación del cuadro, con la lamparita.
 | `explica.cinturon.texto` | «Aunque la luz del cinturón esté apagada, sentado se lleva puesto, flojito. A veces el aire se mueve de golpe sin avisar, con el cielo despejado, y el cinturón es lo que te deja en tu asiento.» | «Even when the seat belt sign is off, keep it on loosely while you're seated. Sometimes the air moves suddenly without warning, with a clear sky, and the belt is what keeps you in your seat.» |
 | `explica.mesitas.texto` | «Para despegar y para aterrizar, la mesita guardada y el respaldo derecho. Así nadie se golpea si el avión frena fuerte, y el pasillo hasta la salida queda libre por si hubiera que salir rápido.» | «For take-off and landing, the table stowed and the seat back upright. That way nobody gets hurt if the plane brakes hard, and the aisle to the exit stays clear in case you need to get out fast.» |
 | `explica.modo-avion.texto` | «El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.» | «Your phone, in flight mode. Its radio searching for a signal sneaks into the pilots' headsets as a buzz, right when they are listening to the tower. And up there there's no signal anyway: the phone drains its battery looking for one.» |
+| `explica.bomberos-y-aviones.texto` | «A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.» | «Only small planes go to some airports. Often it's because of the runway, and sometimes because of the fire crew. To La Gomera, in the Canary Islands, Binter flies the ATR, a twenty-seven-metre propeller plane. Binter also has forty-one-and-a-half-metre jets, and doesn't take them there: La Gomera's fire crew is category 5, ready for planes up to twenty-eight metres. An airport gets ready for the planes it receives, and so every plane goes where it can be looked after.» |
+
+## 4 bis. Los bomberos, en el hangar
+
+Se dice al tocar el camión de bomberos en la ficha de un avión o de un destino
+que no se ofrece porque los bomberos de ese aeropuerto no alcanzan para él
+(«pues aplica la regla de los bomberos» y «y se explica de algún modo, eso se
+tiene que saber, yo no tenía ni idea», Enrique, 05-10-2026). Calma: es
+seguridad que se cuida, no un peligro. Ver `src/flight/bomberos.ts`.
+
+Ojo: en el hangar todavía no hay vuelo, y la voz de la instructora la pone el
+vuelo, así que **ahí se verá y no se oirá** aunque esté grabada, como pasa con
+la tarjeta del avión. La curiosidad de arriba, `explica.bomberos-y-aviones`,
+sí habla, que se abre desde el vuelo.
+
+| clave | es-PY | en |
+|---|---|---|
+| `explica.bomberos.texto` | «Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.» | «Every airport has a fire crew ready for the biggest plane it receives: the longer and wider the plane, the more water, foam and fire trucks it takes. This plane is bigger than they can look after here, so it doesn't come: if something happened, there wouldn't be enough to help it properly. That's why every airport states its category, from 1 to 10, and every plane goes where it can be looked after.» |
 
 ## 5. Los vídeos de Luna
 

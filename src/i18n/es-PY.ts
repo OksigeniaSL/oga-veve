@@ -1890,6 +1890,7 @@ export const ES_PY = {
   "hangar.nocabe.corta": "la pista es muy corta para este avión",
   "hangar.nocabe.estrecha": "la pista es muy angosta para sus alas",
   "hangar.nocabe.no-da-la-vuelta": "no puede dar la vuelta en esta pista",
+  "hangar.nocabe.bomberos": "los bomberos de este aeropuerto no alcanzan para este avión",
   /*
    * **Y la cuenta, que esta sí sale**: en la ficha de un destino al que el
    * avión no llega, debajo del dibujo, para quien lee. Lo que pide el avión y
@@ -1897,6 +1898,11 @@ export const ES_PY = {
    */
   "hangar.nocabe.largo": "pide {pide} m · hay {hay} m",
   "hangar.nocabe.ancho": "pide {pide} m de ancho · hay {hay} m",
+  /*
+   * Y la de los bomberos, desde el peldaño de las cifras: la categoría del
+   * aeropuerto y la más baja que acepta el avión. Ver `flight/bomberos.ts`.
+   */
+  "hangar.nocabe.categoria": "categoría {hay} · pide {pide}",
   // Para el lector de pantalla: tocar la ficha cambia de avión y va allí.
   "hangar.nocabe.con": "Tocá para ir con el {avion}",
   "hangar.conque": "¿Con qué volás?",
@@ -2227,6 +2233,25 @@ export const ES_PY = {
   "explica.modo-avion.corta": "Modo avión",
   "explica.modo-avion.texto":
     "El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.",
+  /*
+   * **Los bomberos del aeropuerto**: se abre tocando el camión en la ficha de
+   * un avión o de un destino que no se ofrece por eso. Enrique: «y se explica
+   * de algún modo, eso se tiene que saber, yo no tenía ni idea». Las
+   * categorías, del Anexo 14 de la OACI, tabla 9-1; ver `flight/bomberos.ts`.
+   * Sin asustar: es seguridad que se cuida.
+   */
+  "explica.bomberos.corta": "Bomberos",
+  "explica.bomberos.texto":
+    "Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.",
+  /*
+   * **Y la curiosidad**, con el caso de verdad: La Gomera es de la categoría 5
+   * (AIP de España, GCGM AD 2.6); el ATR 72 mide 27,2 m y es de la 5, y el
+   * E195-E2 de Binter, 41,5 m, de la 7, que pide al menos la 6. Ver
+   * `world/bomberos-publicados.ts`.
+   */
+  "explica.bomberos-y-aviones.corta": "¿Por qué aviones chicos?",
+  "explica.bomberos-y-aviones.texto":
+    "A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.",
   // ── Antes de volar: la vuelta al avión (punto 125) y el tiempo (punto 129) ──
   "vuelta.titulo": "La vuelta al avión",
   "vuelta.abrir": "Dar la vuelta al avión",
