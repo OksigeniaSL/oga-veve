@@ -34,7 +34,8 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import { cruzadoDemostrado } from "./viento-cruzado";
+import { margenDeSuClase } from "./carrera";
+import { CRUZADO_DEMOSTRADO, cruzadoDemostrado } from "./viento-cruzado";
 import type { Lluvia, Meteo } from "../world/meteo";
 
 /** Un pie, en metros. */
@@ -66,18 +67,33 @@ export const MINIMOS: Readonly<
 export interface Limites {
   /** Viento cruzado demostrado, nudos. */
   readonly cruzadoKt: number;
+  /**
+   * **De dónde sale ese viento cruzado**: `demostrado`, el que su manual dice
+   * que se probó en su certificación; `norma`, el mínimo que la norma le exige
+   * haber probado, cuando el manual no se ha podido leer. Ver
+   * `cruzadoDemostrado`.
+   */
+  readonly cruzadoDe: "demostrado" | "norma";
   /** Visibilidad mínima, m. */
   readonly visibilidadM: number;
   /** Techo mínimo sobre el campo, m. */
   readonly techoM: number;
+  /** Con qué reglas vuela, que es de donde salen sus mínimos. Ver `MINIMOS`. */
+  readonly reglas: AircraftConfig["reglasDeVuelo"];
+  /** El margen de su clase sobre la distancia de despegue. Ver `margenDeSuClase`. */
+  readonly margen: "escuela" | "certificacion";
 }
 
 export function limitesDe(a: AircraftConfig): Limites {
   const m = MINIMOS[a.reglasDeVuelo];
+  const cruzado = cruzadoDemostrado(a);
   return {
-    cruzadoKt: cruzadoDemostrado(a).kt,
+    cruzadoKt: cruzado.kt,
+    cruzadoDe: CRUZADO_DEMOSTRADO[a.id] ? "demostrado" : "norma",
     visibilidadM: m.visibilidad,
     techoM: m.techo,
+    reglas: a.reglasDeVuelo,
+    margen: margenDeSuClase(a).fuente,
   };
 }
 
@@ -91,10 +107,18 @@ export interface CampoDelParte {
   readonly rumbo: number;
   /** El tiempo de hoy en ese campo. */
   readonly meteo: Meteo;
+  /**
+   * **La pista de hoy**, solo en el de salida: la que hay entera y la que este
+   * avión necesita hoy para despegar con su margen. Ver `pistaNecesariaHoy`.
+   */
+  readonly pistaDeHoy?: { readonly hay: number; readonly necesita: number };
 }
 
-/** Por qué no conviene salir. */
-export type Motivo = "cruzado" | "tormenta" | "visibilidad" | "techo";
+/**
+ * Por qué no conviene salir. `pista`: hoy este avión no despega con margen
+ * ni con la pista entera —calor, cota o viento de cola—.
+ */
+export type Motivo = "cruzado" | "tormenta" | "visibilidad" | "techo" | "pista";
 
 /** El parte de un campo, ya leído contra un avión. */
 export interface ParteDeUnCampo {
@@ -147,6 +171,15 @@ export function parteDe(
   if (tormentaEncima) pasa.push("tormenta");
   if (m.visibilidadM < limites.visibilidadM) pasa.push("visibilidad");
   if (m.techoM !== null && m.techoM < limites.techoM) pasa.push("techo");
+  /*
+   * **Y si hoy no le da ni la pista entera**, otra negativa argumentada: la
+   * misma cuenta que decide si se sale desde la intersección
+   * —`pistaNecesariaHoy`— contra la pista de punta a punta. Delante del
+   * viento: tampoco se discute, pero con el fresco de la mañana o con el
+   * viento que cambia, se puede esperar.
+   */
+  const pistaDeHoy = papel === "salida" ? campo.pistaDeHoy : undefined;
+  if (pistaDeHoy && pistaDeHoy.necesita > pistaDeHoy.hay) pasa.push("pista");
   // Medio nudo de gracia: el parte da enteros y la cuenta del seno no.
   if (cruzadoKt > limites.cruzadoKt + 0.5) pasa.push("cruzado");
   return {
@@ -186,4 +219,111 @@ export function decidir(partes: readonly ParteDeUnCampo[]): Decision {
 /** El techo en pies sobre el campo, redondeado a la centena como lo da el parte. */
 export function techoEnPies(m: Meteo): number | null {
   return m.techoM === null ? null : Math.round(m.techoM / PIE / 100) * 100;
+}
+
+/**
+ * **Lo de hoy contra el límite**, para enseñarlo: la negativa argumentada.
+ *
+ * Enrique, al ver que el JAZ 25 se quedaba en tierra en Tenerife Norte por el
+ * viento de costado: «me parece correcto, que se vea que hay avionetas que
+ * tienen su limitación. Eso sí, que se explique con datos al piloto, que sepa
+ * que es una negativa argumentada». Así que cada motivo trae su número de hoy,
+ * el del límite y de dónde sale el límite, y la tarjeta los dibuja en un reloj
+ * con la marca del límite y la aguja de hoy pasándola.
+ */
+export interface Comparacion {
+  /** Lo que hay hoy, en `unidad`. */
+  readonly hoy: number;
+  /** Lo que aguanta el avión, en la misma unidad. */
+  readonly limite: number;
+  /** `kt`, `m`, `ft`; `null` en la tormenta, que no se mide: hay o no hay. */
+  readonly unidad: "kt" | "m" | "ft" | null;
+  /** Si lo malo es pasarse por arriba —viento, pista— o quedarse corto —visibilidad, techo—. */
+  readonly malSiMas: boolean;
+  /**
+   * De dónde sale el límite: `demostrado` en su certificación, `norma` (el
+   * mínimo que exige, o los mínimos de vuelo de la OACI y SERA), `manual` (su
+   * distancia de despegue con el margen de su clase) o `tormenta` (a una
+   * tormenta no se entra).
+   */
+  readonly origen: "demostrado" | "norma" | "manual" | "tormenta";
+}
+
+/**
+ * Lo de hoy contra el límite de un motivo, o `null` si en ese campo no hay
+ * nada que comparar.
+ *
+ * Las fuentes de cada límite, en una línea: el viento cruzado del manual de
+ * su avión de referencia, o el 0,2 de la pérdida de la 14 CFR 23.233 —ver
+ * `flight/viento-cruzado.ts`—; la visibilidad y el techo, los del vuelo
+ * visual (OACI, Anexo 2, 4.2; SERA.5005) o los de una aproximación de
+ * precisión de categoría I —ver `MINIMOS`—; la pista, `pistaNecesariaHoy`; y
+ * la tormenta, que no se despega ni se aterriza ante una (FAA, AC 00-24C,
+ * «Thunderstorms»: «don't land or takeoff in the face of an approaching
+ * thunderstorm»).
+ */
+export function comparar(
+  p: ParteDeUnCampo,
+  motivo: Motivo,
+  limites: Limites,
+): Comparacion | null {
+  const m = p.campo.meteo;
+  switch (motivo) {
+    case "cruzado":
+      return {
+        hoy: p.cruzadoKt,
+        limite: limites.cruzadoKt,
+        unidad: "kt",
+        malSiMas: true,
+        origen: limites.cruzadoDe,
+      };
+    case "visibilidad":
+      return {
+        hoy: m.visibilidadM,
+        limite: limites.visibilidadM,
+        unidad: "m",
+        malSiMas: false,
+        origen: "norma",
+      };
+    case "techo":
+      return m.techoM === null
+        ? null
+        : {
+            hoy: m.techoM / PIE,
+            limite: limites.techoM / PIE,
+            unidad: "ft",
+            malSiMas: false,
+            origen: "norma",
+          };
+    case "pista":
+      return p.campo.pistaDeHoy
+        ? {
+            hoy: p.campo.pistaDeHoy.necesita,
+            limite: p.campo.pistaDeHoy.hay,
+            unidad: "m",
+            malSiMas: true,
+            origen: "manual",
+          }
+        : null;
+    case "tormenta":
+      return {
+        hoy: p.tormentaEncima ? 1 : 0,
+        limite: 0,
+        unidad: null,
+        malSiMas: true,
+        origen: "tormenta",
+      };
+  }
+}
+
+/**
+ * **Cómo quedó el parte al volver a mirarlo** después de esperar un rato:
+ * `mejor` si ahora se sale, `igual` si sigue pasando lo mismo o menos, y
+ * `null` si apareció algo nuevo —entonces la tarjeta se enseña como la
+ * primera vez, con su propuesta—. Ver `Game.volverAMirarElParte`.
+ */
+export function alReleer(antes: Decision | null, ahora: Decision): "mejor" | "igual" | null {
+  if (ahora.salir) return "mejor";
+  const habia = new Set((antes?.motivos ?? []).map((m) => `${m.papel}:${m.motivo}`));
+  return ahora.motivos.every((m) => habia.has(`${m.papel}:${m.motivo}`)) ? "igual" : null;
 }

@@ -13615,20 +13615,91 @@ body.con-vuelta #tactil {
 
 .parte__porques {
   display: flex;
+  flex-direction: column;
   gap: 8px;
+  width: 100%;
+  max-width: 560px;
 }
 
+/*
+ * **Un porqué con sus datos**: el dibujo del motivo, el reloj de hoy contra el
+ * límite y, desde el segundo peldaño, la palabra, las cifras y de dónde sale
+ * el límite. Ver `porqueDibujado` en `ui/tarjeta-del-tiempo.ts`.
+ */
 .parte__porque {
-  width: 52px;
-  height: 52px;
-  padding: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
   border-radius: 12px;
   border: 2px solid;
 }
 
-.parte__porque svg {
+.parte__porque-dibujo {
+  flex: 0 0 44px;
+  height: 44px;
+}
+
+.parte__porque-dibujo svg {
   width: 100%;
   height: 100%;
+}
+
+.parte__porque-reloj {
+  flex: 0 0 80px;
+  height: 50px;
+}
+
+.parte__reloj {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.parte__zona-buena { stroke: #6fd38a; }
+.parte__zona-mala { stroke: #f0b030; }
+.parte__marca { stroke: #f4f2ea; }
+.parte__aguja { stroke: #f4f2ea; }
+.parte__aguja--pasa { stroke: #f6c862; }
+.parte__eje { fill: #f4f2ea; }
+.parte__tachado { stroke: #f6c862; }
+.parte__origen-dibujo { fill: none; stroke: #f4f2ea; stroke-width: 1.4; }
+
+.parte__porque-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: start;
+  color: var(--tinta);
+}
+
+.parte__porque-palabra {
+  color: #f6c862;
+}
+
+.parte__porque-cifras {
+  font: 13px/1.3 ui-monospace, monospace;
+  color: #8fd3ff;
+  overflow-wrap: anywhere;
+}
+
+.parte__porque-origen {
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+/* «Miramos otra vez»: el reloj de arena, y la palabra desde el segundo peldaño. */
+.parte__releido {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.parte__releido svg {
+  width: 28px;
+  height: 28px;
 }
 
 .parte__propone {
@@ -13731,8 +13802,30 @@ body.con-vuelta #tactil {
     font-size: 10.5px;
   }
 
-  .parte__porques {
-    display: none;
+  /*
+   * Los porqués se quedan, que son la negativa argumentada; van más chicos.
+   */
+  .parte__porque {
+    padding: 2px 6px;
+    gap: 6px;
+  }
+
+  .parte__porque-dibujo {
+    flex-basis: 30px;
+    height: 30px;
+  }
+
+  .parte__porque-reloj {
+    flex-basis: 56px;
+    height: 34px;
+  }
+
+  .parte__porque-cifras {
+    font-size: 10.5px;
+  }
+
+  .parte__porque-origen {
+    font-size: 10px;
   }
 
   .parte__propone {

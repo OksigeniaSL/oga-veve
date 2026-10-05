@@ -298,6 +298,9 @@ const EXPLICA_TRAS_LA_TORRE = 6;
  */
 const SEPARA_LA_RADIO = 4;
 
+/** El rato de esperar a que mejore el tiempo, s. Ver `esperarUnRato`. */
+const RATO_DE_ESPERA = 60;
+
 /** Lo que se queda la tarjeta de la explicación, s: hay tiempo para mirarla. */
 const SE_QUEDA_LA_EXPLICACION = 10;
 
@@ -689,7 +692,11 @@ import { Audio, yaHuboGesto, type AudioLevel, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
-import { rodaduraDeFrenada, type DiaDeDespegue } from "./flight/carrera";
+import {
+  pistaNecesariaHoy,
+  rodaduraDeFrenada,
+  type DiaDeDespegue,
+} from "./flight/carrera";
 import { TomaLarga } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI } from "./flight/palanca-de-aerofrenos";
@@ -1057,6 +1064,7 @@ import {
 import { AnemometroTapado, velocidadDeComprobar } from "./flight/anemometro-tapado";
 import {
   decidir,
+  alReleer,
   limitesDe,
   parteDe,
   type Decision,
@@ -3688,6 +3696,11 @@ export class Game {
   private parteDeHoy: { partes: ParteDeUnCampo[]; decision: Decision } | null = null;
   /** Si ya se abrió sola la tarjeta del tiempo en este vuelo. */
   private parteYaAbierto = false;
+  /**
+   * **Lo que queda del rato de esperar**, s, o `null` si no se espera. Ver
+   * `esperarUnRato`.
+   */
+  private esperandoElParte: number | null = null;
   /** Lo de antes de volar que va a la bitácora. Ver `Vuelo.antes`. */
   private decisionDeHoy: "en-tierra" | "abortado" | null = null;
   /** Reloj de la pantalla de la vuelta, para sus globos. */
@@ -22448,6 +22461,7 @@ export class Game {
       salir: this.parteDeHoy?.decision.salir ?? null,
       motivos: this.parteDeHoy?.decision.motivos ?? [],
       decision: this.decisionDeHoy,
+      esperando: this.esperandoElParte,
     };
   }
 
@@ -22476,6 +22490,13 @@ export class Game {
       if (this.relojDelParte <= 0 || !this.parteDeHoy) {
         this.relojDelParte = 2;
         this.parteDeHoy = this.leerElParte();
+      }
+      if (this.esperandoElParte !== null) {
+        this.esperandoElParte -= dt;
+        if (this.esperandoElParte <= 0) {
+          this.esperandoElParte = null;
+          void this.volverAMirarElParte();
+        }
       }
       /*
        * **Y si algo pasa del límite, la tarjeta sale sola**, una vez por
@@ -22534,6 +22555,8 @@ export class Game {
   private alArrancarAntesDeVolar(v: VueltaAlAvion): void {
     if (this.enLaVuelta) this.cerrarLaVuelta();
     if (this.tarjetaDelTiempo?.abierta) this.tarjetaDelTiempo.cerrar();
+    // Y quien arranca ya no espera: decidió salir.
+    this.esperandoElParte = null;
     const r = v.alArrancar(this.tier.avisos);
     // Quien decidió quedarse y después arranca, cambió de idea: la línea de
     // quedarse ya está en la bitácora, y este vuelo no la repite.
@@ -22631,6 +22654,7 @@ export class Game {
     this.fundasDe = null;
     this.parteDeHoy = null;
     this.parteYaAbierto = false;
+    this.esperandoElParte = null;
     this.decisionDeHoy = null;
     this.enElPuestoDesde = 0;
     this.motorAntes = false;
@@ -22790,6 +22814,13 @@ export class Game {
       const llegada = this.elCampo(this.destinoId);
       if (llegada.id === this.destinoId) campos.push({ papel: "llegada", esc: llegada.escenario });
     }
+    /*
+     * Y en el de salida, la pista que este avión necesita hoy contra la que
+     * hay entera: si no le da ni con la pista entera, es otra negativa
+     * argumentada. Es la misma cuenta que decide si se sale desde la
+     * intersección o se remonta. Ver `pistaNecesariaHoy`.
+     */
+    const necesita = pistaNecesariaHoy(this.aircraft, this.diaDeDespegue());
     const partes = campos.map(({ papel, esc }) =>
       parteDe(
         {
@@ -22797,6 +22828,7 @@ export class Game {
           pista: cabeceraEnUso(esc),
           rumbo: esc.runway.heading,
           meteo: esc.meteo ?? TIEMPO_DE_CASA,
+          ...(papel === "salida" ? { pistaDeHoy: { hay: esc.runway.length, necesita } } : {}),
         },
         papel,
         limites,
@@ -22814,7 +22846,7 @@ export class Game {
   private declinaciones = new Map<string, number>();
 
   /** Abre la tarjeta del tiempo de hoy, con la decisión. */
-  private abrirElParte(): void {
+  private abrirElParte(releido?: "igual" | "mejor"): void {
     const raiz = document.getElementById("tarjeta-del-tiempo");
     if (!raiz) return;
     this.tarjetaDelTiempo ??= new TarjetaDelTiempo(raiz, {
@@ -22825,18 +22857,77 @@ export class Game {
       },
       // Al hangar como lo hace el final del vuelo: sin escenario en la dirección.
       alHangar: () => window.location.assign(window.location.pathname),
+      alEsperar: () => this.esperarUnRato(),
     });
     if (this.enLaVuelta) this.cerrarLaVuelta();
+    // Abierta a mano, ya no se espera: se está mirando.
+    this.esperandoElParte = null;
     const parte = this.leerElParte();
     this.parteDeHoy = parte;
-    this.tarjetaDelTiempo.minimoDeTechoM = limitesDe(this.aircraft).techoM;
+    const limites = limitesDe(this.aircraft);
+    this.tarjetaDelTiempo.minimoDeTechoM = limites.techoM;
     this.tarjetaDelTiempo.abrir({
       ...parte,
       peldano: this.tier.avisos,
       declinacion: (oaci) => this.declinaciones.get(oaci) ?? 0,
+      limites,
+      ...(releido ? { releido } : {}),
     });
     const motivo = parte.decision.motivos[0]?.motivo;
-    if (motivo) this.instructor.decir(t(`parte.propone.${motivo}`), `parte.propone.${motivo}`);
+    if (releido === "mejor") this.instructor.decir(t("parte.yaSePuede.voz"), "parte.yaSePuede.voz");
+    else if (releido === "igual") this.instructor.decir(t("parte.sigueIgual.voz"), "parte.sigueIgual.voz");
+    else if (motivo) this.instructor.decir(t(`parte.propone.${motivo}`), `parte.propone.${motivo}`);
+  }
+
+  /**
+   * **Esperamos un rato**: la tarjeta se cierra, se cuenta el rato y se
+   * vuelve a mirar el parte. Antes, esperar iba solo en la frase —«o esperar
+   * a que afloje»— y no había forma de hacerlo: o te quedabas o salías.
+   *
+   * El rato es de un minuto, y no la media hora de verdad entre un METAR y
+   * el siguiente: es lo que aguanta mirando quien tiene cuatro años. Lo que
+   * sí es de verdad es lo que se mira después: se vuelve a pedir el parte y
+   * se decide con lo que diga. Con el tiempo de casa o puesto a mano no
+   * cambia, y la tarjeta lo dice —«sigue igual»—, que también es la verdad:
+   * esperar a veces sirve y a veces no.
+   */
+  private esperarUnRato(): void {
+    this.esperandoElParte = RATO_DE_ESPERA;
+    this.instructor.decir(t("parte.esperamos.voz"), "parte.esperamos.voz");
+  }
+
+  /**
+   * Vuelve a pedir el parte de los campos del vuelo —el de salida y el de
+   * llegada— y abre la tarjeta con lo que diga. Sin proxy, o con el tiempo
+   * puesto a mano, se relee lo que hay. Volar no espera a la red: si no
+   * contesta en su plazo, se queda lo que había. Ver `pedirMetar`.
+   */
+  private async volverAMirarElParte(): Promise<void> {
+    const antes = this.parteDeHoy?.decision ?? null;
+    const q = new URLSearchParams(window.location.search);
+    const proxy = q.get("meteo") ?? PROXY_METEO;
+    if (proxy && this.scenario.meteo?.fuente !== "mano") {
+      const ids = [this.elCampo().id, this.destinoId].filter(
+        (id): id is string => !!id,
+      );
+      await Promise.all(
+        ids.map(async (id) => {
+          const icao = this.campoPorId(id)?.escenario.aerodrome?.id;
+          if (!icao) return;
+          const meteo = await pedirMetar(icao, proxy);
+          if (meteo.fuente !== "metar") return;
+          if (id === this.scenario.id) {
+            this.hud.tiempo.poner(meteo);
+            this.ponerTiempo(meteo);
+          } else this.ponerTiempoDe(id, meteo);
+        }),
+      );
+    }
+    // Si mientras tanto se arrancó o se abrió otra cosa, ya no se enseña.
+    if (!this.enElPuesto() || this.input.controls.engineOn || this.hayPanelAbierto) return;
+    const parte = this.leerElParte();
+    this.parteDeHoy = parte;
+    this.abrirElParte(alReleer(antes, parte.decision) ?? undefined);
   }
 
   /**
