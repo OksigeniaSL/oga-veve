@@ -325,6 +325,11 @@ export const EN: Dictionary = {
   "vuelo.autorizadoAfis": "The runway is free: enter when you are ready",
   "vuelo.backTaxi": "Backtrack to the far end, then turn around",
   "vuelo.remontar": "We'll taxi along the runway to the far end and turn around there",
+  "vuelo.remontarUnTrecho":
+    "We'll taxi back along the runway a little way and turn around: from there we have plenty to take off",
+  "vuelo.desdeLaInterseccion":
+    "We'll take off from here, without going to the end: the runway ahead is more than we need",
+  "vuelo.backTaxiUnTrecho": "Taxi back to the drawn turn and turn around there",
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
   "vuelo.noEstabilizada": "Not like this: go around and try again",

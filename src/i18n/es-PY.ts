@@ -1126,9 +1126,20 @@ export const ES_PY = {
   /*
    * **Y antes de entrar, por qué el lazo de la raya está al fondo**: en los
    * campos sin calle hasta la cabecera se remonta la pista. Una vez por
-   * despegue, con el verde. Ver `contarElRemonte` en `game.ts`.
+   * despegue, con el verde. Ver `contarPorDondeSeSale` en `game.ts`.
    */
   "vuelo.remontar": "Vamos por la pista hasta el final y damos la vuelta allá",
+  /*
+   * **Y con la avioneta, un trozo o nada.** El de línea remonta hasta el final;
+   * la avioneta remonta solo lo que le hace falta, o sale desde la calle si la
+   * pista que queda le sobra. Ver `remontaHastaLaCabecera` en
+   * `flight/carrera.ts` y `contarPorDondeSeSale` en `game.ts`.
+   */
+  "vuelo.remontarUnTrecho":
+    "Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar",
+  "vuelo.desdeLaInterseccion":
+    "Salimos desde acá, sin ir hasta el final: la pista que queda nos sobra",
+  "vuelo.backTaxiUnTrecho": "Andá hasta la vuelta dibujada y girá ahí",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
   "vuelo.noEstabilizada": "Así no: andate y volvé a intentarlo",

@@ -81,7 +81,9 @@ import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
 import { Reversa, tiempoDeReversa } from "./flight/reversa";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
+  calleDicha,
   matriculaDe,
+  metrosDichos,
   pistaEnCastellano,
   pistaEnPiezas,
   rellenoDe,
@@ -10963,32 +10965,49 @@ export class Game {
   }
 
   /**
-   * **Remontar la pista, contado antes de entrar** (punto 234).
+   * **Por dónde se sale, contado antes de entrar**: remontando la pista
+   * (punto 234) o desde la intersección.
    *
    * En los campos sin calle hasta la cabecera se entra por donde llega la
-   * calle, se rueda por la pista hasta su final y se da la vuelta allí. La raya
-   * lo dibujaba —un lazo rojo al fondo, que es donde se va despacio— y nadie lo
-   * decía: «esto es lo que no se entiende: ese giro ahí en la pista», en Pilar
-   * con el turbohélice. Así que se dice una vez, con el verde y antes de
-   * entrar:
+   * calle, y de ahí depende el avión —ver `remontaHastaLaCabecera` en
+   * `flight/carrera.ts`—: el de línea rueda por la pista hasta su final y da
+   * la vuelta allí; la avioneta remonta un trozo, o sale desde la calle si la
+   * pista que queda le sobra. La raya lo dibuja —un lazo rojo, que es donde se
+   * va despacio—, y nadie lo decía: «esto es lo que no se entiende: ese giro
+   * ahí en la pista», en Pilar con el turbohélice. Así que se dice una vez,
+   * con el verde y antes de entrar:
    *
    * - **la instructora**, en los tres peldaños de abajo: «vamos por la pista
-   *   hasta el final y damos la vuelta allá». Solo con su grabación: sin ella
-   *   no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y se entiende igual con el
-   *   lazo al fondo y la tarjeta de la media vuelta al entrar;
+   *   hasta el final y damos la vuelta allá», «vamos un trecho por la pista y
+   *   damos la vuelta» o «salimos desde acá, sin ir hasta el final». Solo con
+   *   su grabación: sin ella no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y
+   *   se entiende igual con el lazo de la raya y la tarjeta de la media
+   *   vuelta al entrar;
    * - **la radio**, de Taguató para arriba y en fraseología, escrita en su
-   *   tira: «backtrack runway two zero», que es la orden de la OACI (Doc 4444,
-   *   12.3.4.7 p; «regreso por pista», RD 1180/2018, anexo V, 1.4.8). La voz,
-   *   cuando esté grabada su pieza. **Donde contesta un AFIS, no**: un AFIS no
-   *   da órdenes, y remontar lo decide quien vuela; ahí lo cuenta la
-   *   instructora. Y sin nadie en la radio, tampoco.
+   *   tira. Remontando, «backtrack runway two zero», que es la orden de la
+   *   OACI (Doc 4444, 12.3.4.7 p; «regreso por pista», RD 1180/2018, anexo V,
+   *   1.4.8), y es la misma para un trozo que hasta el final: dónde se da la
+   *   vuelta lo decide quien vuela. Desde la intersección, la pista que queda
+   *   desde ella: «TORA runway two zero, from intersection Alfa, one thousand
+   *   two hundred metres» (SERA, AMC1 SERA.14001, apéndice 1, 1.4.10 p),
+   *   redondeada hacia abajo a la centena, como se redondea la distancia que
+   *   da una torre (FAA, AIM 4-3-10 c). La voz, cuando estén grabadas sus
+   *   piezas. **Donde contesta un AFIS, no**: un AFIS no da órdenes, y por
+   *   dónde se sale lo decide quien vuela; ahí lo cuenta la instructora. Y
+   *   sin nadie en la radio, tampoco.
    */
-  private contarElRemonte(): void {
-    if (this.remonteContado || (this.plan?.dondeSeGira ?? null) === null) return;
+  private contarPorDondeSeSale(): void {
+    const sale = this.plan?.comoSeSale ?? null;
+    if (this.remonteContado || !sale || sale.desde === "cabecera") return;
     this.remonteContado = true;
     const campo = this.elCampo();
     const aero = campo.escenario.aerodrome;
-    const clave: TranslationKey = "vuelo.remontar";
+    const clave: TranslationKey =
+      sale.desde === "interseccion"
+        ? "vuelo.desdeLaInterseccion"
+        : sale.hastaElFinal
+          ? "vuelo.remontar"
+          : "vuelo.remontarUnTrecho";
     if (this.tier.avisos !== "cabina" && this.instructor.vozDe(clave))
       this.instructor.decir(t(clave), clave, "normal");
     const conCifras =
@@ -10997,6 +11016,16 @@ export class Game {
     const yo = this.miIndicativo;
     const pista = pistaEnPiezas(cabeceraEnUso(campo.escenario));
     if (!pista) return;
+    if (sale.desde === "interseccion") {
+      // Sin el nombre de la calle no hay frase: la intersección se nombra.
+      const calle = calleDicha(sale.calle);
+      if (!calle) return;
+      const texto =
+        `${yo.dicho}, TORA runway ${pista.dicho}, from intersection ${calle}, ` +
+        `${metrosDichos(sale.porDelante)} metres`;
+      this.hud.radio(texto, undefined, true);
+      return;
+    }
     const texto = `${yo.dicho}, backtrack runway ${pista.dicho}`;
     this.hud.radio(texto, undefined, true);
     const claveDeTorre = `${comoSeDiceAqui("torre.backtrack", hablaDe(aero?.id))}${pista.sufijo}`;
@@ -11005,7 +11034,7 @@ export class Game {
       this.torre.decir(texto, claveDeTorre, "mando", relleno);
   }
 
-  /** Si ya se contó el remonte de este despegue. Ver `contarElRemonte`. */
+  /** Si ya se contó por dónde se sale en este despegue. Ver `contarPorDondeSeSale`. */
   private remonteContado = false;
 
   /**
@@ -16590,12 +16619,21 @@ export class Game {
         : esAfis(aqui)
           ? guionAfis(vista.fase)
           : vista;
+      /*
+       * Y remontando un trozo, la tarjeta no dice «hasta el fondo», que la
+       * vuelta no está en el fondo: está donde la dibuja la raya. Ver
+       * `remontaHastaLaCabecera` en `flight/carrera.ts`.
+       */
+      const remontaUnTrecho =
+        vista.fase === "back-taxi" && this.plan?.comoSeSale?.hastaElFinal === false;
       const clave =
         this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
           ? "vuelo.enVueloAterrizando"
           : vista.fase === "en-vuelo" && this.haciaOtroCampo()
             ? "vuelo.enVueloDestino"
-            : guion.clave;
+            : remontaUnTrecho
+              ? "vuelo.backTaxiUnTrecho"
+              : guion.clave;
       const frase = t(clave as never);
 
       // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
@@ -16722,8 +16760,8 @@ export class Game {
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")
           this.avisar("success");
-        // Y si desde ahí se remonta la pista, se cuenta. Ver `contarElRemonte`.
-        if (vista.fase === "autorizado") this.contarElRemonte();
+        // Y por dónde se sale, si no es la cabecera. Ver `contarPorDondeSeSale`.
+        if (vista.fase === "autorizado") this.contarPorDondeSeSale();
       }
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.

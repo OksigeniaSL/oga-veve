@@ -28,6 +28,7 @@
 
 import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
 import { resistenciaDelTren } from "./tren";
+import { esDeLinea } from "./velocidades-en-tierra";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import {
   DECELERACION_DEL_AUTOFRENO,
@@ -96,24 +97,64 @@ export function carreraHastaVr(
 }
 
 /**
+ * **La distancia de despegue de la ficha**, m: de soltar frenos a pasar los
+ * quince metros (cincuenta pies), que es el número que publica cualquier
+ * manual de vuelo y el que se compara con la pista.
+ *
+ * Sale de la rodadura hasta la rotación por la proporción de los manuales
+ * —ver `pistaQueNecesita`—: un 172 rueda 265 m y despega en 500; un 747 a este
+ * peso rueda 1.800 y despega en 2.500. Es lo que falta después de rotar:
+ * separarse y subir los quince metros.
+ */
+export function distanciaDeDespegue(
+  a: AircraftConfig,
+  superficie: Superficie = "asfalto",
+  densidad: number = RHO,
+): number {
+  return carreraHastaVr(a, superficie, densidad) * 1.8;
+}
+
+/**
+ * **El margen con el que se acepta una pista para despegar**: la distancia de
+ * despegue de la ficha por 1,33.
+ *
+ * Es el factor de seguridad de despegue que la autoridad británica recomienda
+ * para el vuelo privado y de escuela —CAA, *Safety Sense Leaflet 7c*,
+ * «Aeroplane performance»: la distancia del manual, por sus factores de
+ * superficie y pendiente, y además por 1,33, no debe pasar de la TORA—, y es
+ * algo más exigente que el de los operadores: la norma europea pide a una
+ * avioneta de transporte comercial (clase de performance B) que la distancia
+ * de despegue sin factorizar, **por 1,25**, no pase de la TORA (Reglamento
+ * (UE) 965/2012, CAT.POL.A.305 b) 1)). Aquí se aprende a volar, así que se
+ * toma el de escuela.
+ *
+ * Y es la misma cuenta que antes iba escrita como «la rodadura por 2,4»: la
+ * rodadura por 1,8 es la distancia de despegue, y 1,8 × 1,33 son 2,39. El
+ * número ya estaba bien; lo que faltaba era decir de dónde sale.
+ */
+export const FACTOR_DE_ESCUELA = 1.33;
+
+/**
  * Pista que tiene que quedar por delante para entrar y despegar sin más, m.
+ *
+ * Es la distancia de despegue de la ficha con el margen de escuela —ver
+ * `FACTOR_DE_ESCUELA`—, que es la cuenta que hace un piloto antes de aceptar
+ * una salida desde una intersección: «la pista mínima que hace falta para
+ * despegar tiene que caber en la pista que queda desde esa intersección y en
+ * sus distancias declaradas reducidas» (FAA, AIM 4-3-10 b).
  *
  * Era una constante de seiscientos metros: la carrera del Pykasu con la mitad
  * de propina. Se queda como suelo —por debajo de eso no se entra a una pista
  * ni con el avión más pequeño de la flota, y todos los veredictos medidos en
  * los aeródromos del juego siguen siendo los mismos— y por encima manda lo que
- * corre este avión.
- *
- * El factor es 2,4 y no 1,5 porque la rodadura no es el despegue: falta rotar,
- * separarse y pasar los quince metros del final de la pista, y falta el margen
- * de un despegue mal hecho. Con el Pykasu —doscientos veinticinco de rodadura—
- * la cuenta da quinientos cuarenta, por debajo del suelo, así que **no cambia
- * nada de lo que ya estaba medido**. Con el JAZ 120 da casi seis mil, que es
- * tanto como decir que a ese avión no se le entra por una intersección nunca:
- * se hace el back-taxi hasta la cabecera, como en la vida real.
+ * corre este avión. Con el Pykasu la cuenta da quinientos cuarenta, por debajo
+ * del suelo, así que **no cambia nada de lo que ya estaba medido**. Con el
+ * JAZ 120 da tres mil quinientos, que es tanto como decir que a ese avión no
+ * se le entra por una intersección casi nunca: se hace el back-taxi hasta la
+ * cabecera, como en la vida real.
  */
 export function paraEntrarYDespegar(a: AircraftConfig): number {
-  return Math.max(600, carreraHastaVr(a) * 2.4);
+  return Math.max(600, distanciaDeDespegue(a) * FACTOR_DE_ESCUELA);
 }
 
 /**
@@ -126,6 +167,39 @@ export function paraEntrarYDespegar(a: AircraftConfig): number {
  */
 export function pistaQueHaceFalta(a: AircraftConfig): number {
   return Math.max(1200, carreraHastaVr(a) * 4.8);
+}
+
+/**
+ * **Si este avión, cuando tiene que remontar la pista, la remonta entera.**
+ *
+ * Remontar llegaba siempre hasta la cabecera, con cualquier avión: en Mariscal
+ * Estigarribia, por la 01, eran dos kilómetros y novecientos de pista hacia
+ * atrás con una avioneta que despega en cuatrocientos. Enrique no tenía claro
+ * que eso fuera lo habitual, y no lo es. Lo que se hace depende de la clase:
+ *
+ * - **Un avión de línea** —de turbina, con su tripulación y su pasaje, ver
+ *   `esDeLinea`— sale casi siempre con la pista entera. Su cálculo de despegue
+ *   se hace para la TORA completa, descontando lo que se gasta en alinearse
+ *   (CAT.POL.A.205 en el Reglamento (UE) 965/2012), y una salida desde una
+ *   intersección solo se hace si las distancias declaradas desde ahí lo
+ *   permiten y la dependencia la ofrece o la acepta (FAA, AIM 4-3-10 a y b; la
+ *   fraseología, en SERA, AMC1 SERA.14001, apéndice 1, 1.4.10 l a q). Si tiene
+ *   que remontar, remonta hasta el final, como hasta ahora.
+ * - **Una avioneta o un bimotor pequeño** —la clase B de performance— sale muy
+ *   a menudo desde una intersección, o remonta solo un trozo: se acepta la
+ *   pista que queda en cuanto la distancia de despegue de su ficha, con el
+ *   margen de escuela, cabe en ella (ver `paraEntrarYDespegar`). Nadie remonta
+ *   tres kilómetros con una avioneta que despega en cuatrocientos metros.
+ *
+ * Y dónde para el remonte parcial lo decide quien vuela: ni la OACI (Doc 4444,
+ * 7.9.1 a: el orden de salida se ajusta a «los tipos de aeronave y su
+ * performance relativa») ni SERA dicen hasta dónde. Aquí se para donde ya
+ * queda por delante la pista que se quiere al elegir intersección
+ * —`pistaQueHaceFalta`, el doble de la de escuela—, que es la misma vara con la
+ * que el plan elige por dónde entrar.
+ */
+export function remontaHastaLaCabecera(a: AircraftConfig): boolean {
+  return esDeLinea(a);
 }
 
 /**
@@ -343,7 +417,7 @@ export function pistaQueNecesita(
   superficie: Superficie = "asfalto",
 ): number {
   return Math.max(
-    carreraHastaVr(a, superficie) * 1.8,
+    distanciaDeDespegue(a, superficie),
     distanciaDeAterrizaje(a, superficie),
   );
 }

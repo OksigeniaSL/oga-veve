@@ -99,6 +99,55 @@ const POR_INICIAL = new Map<string, Letra>(
 // La equis del alfabeto se dice «x-ray», así que su inicial escrita es la X.
 POR_INICIAL.set("X", "xray");
 
+/** Las cifras como se dicen por radio, una a una. */
+const CIFRA_EN_RADIO = [
+  "zero",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "niner",
+] as const;
+
+/**
+ * **El nombre de una calle de rodaje, como se dice por radio**: «E-2» es
+ * «Echo two», y «A», «Alfa». Las letras con el alfabeto aeronáutico y las
+ * cifras una a una. `null` si no hay nombre que decir.
+ */
+export function calleDicha(ref: string | null | undefined): string | null {
+  const limpia = (ref ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!limpia) return null;
+  const piezas: string[] = [];
+  for (const c of limpia) {
+    const l = POR_INICIAL.get(c);
+    if (l) piezas.push(ESCRITA[l]);
+    else if (c >= "0" && c <= "9") piezas.push(CIFRA_EN_RADIO[Number(c)]!);
+  }
+  return piezas.length ? piezas.join(" ") : null;
+}
+
+/**
+ * **Una distancia en metros, como la dice una torre**: redondeada hacia abajo
+ * a la centena —una torre redondea siempre a la baja la pista que queda desde
+ * una intersección (FAA, AIM 4-3-10 c, a los cincuenta pies)— y dicha con
+ * «thousand» y «hundred», que es como se dicen los números redondos por radio
+ * (OACI, Anexo 10, vol. II, 5.2.1.4.1.2). 1.234 m son «one thousand two
+ * hundred».
+ */
+export function metrosDichos(metros: number): string {
+  const centenas = Math.max(0, Math.floor(metros / 100));
+  const miles = Math.floor(centenas / 10);
+  const cientos = centenas % 10;
+  const piezas: string[] = [];
+  if (miles > 0) piezas.push(`${miles >= 10 ? String(miles) : CIFRA_EN_RADIO[miles]!} thousand`);
+  if (cientos > 0) piezas.push(`${CIFRA_EN_RADIO[cientos]!} hundred`);
+  return piezas.length ? piezas.join(" ") : "zero";
+}
+
 /**
  * El prefijo de matrícula que le toca a un aeródromo, en letras.
  *
