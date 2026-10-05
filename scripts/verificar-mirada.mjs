@@ -146,10 +146,38 @@ async function abrir(ctx, quien) {
 
 /** Espera a que la comandante señale algo. Devuelve qué, o `null`. */
 async function esperarASenalar(page) {
+  /*
+   * **Y con el Teide al lado mientras se espera, no solo al abrir.**
+   *
+   * El avión se coloca al abrir con el Teide por el través, pero hasta que la
+   * comandante tiene hueco pasa más de un minuto. Desde el perfil de bajada
+   * con sus tramos para frenar (ola 1, T13b), a Los Rodeos–La Palma ya le
+   * toca bajar donde se coloca el avión: la comandante anuncia el descenso y
+   * la tripulación pide los cinturones, y cuando se callan el Teide está a
+   * 106° del morro, por detrás de lo que deja ver el cristal (`CAMPO_DEL_PASAJE`,
+   * hasta 100°), y lo demás queda lejos o delante. Medido con una sonda de
+   * `queSeVe`, hito por hito. En el teléfono pasaba lo mismo desde antes,
+   * porque esa parte llega más tarde. Así que, mientras se espera, cada vez
+   * que el Teide se queda atrás se vuelve a poner el avión a su lado.
+   */
+  const alLado = () =>
+    page.evaluate(() => {
+      const o = globalThis.__oga;
+      const j = o.juegoParaTrazas();
+      const teide = (j.hitosDelVuelo ?? []).find((h) => /teide/i.test(h.nombre));
+      if (!teide) return;
+      const s = j.flight.state;
+      const hacia = (Math.atan2(teide.x - s.position.x, -(teide.z - s.position.z)) * 180) / Math.PI;
+      const rumbo = (s.heading * 180) / Math.PI;
+      const rel = ((((hacia - rumbo) % 360) + 540) % 360) - 180;
+      if (Math.abs(rel) <= 95) return;
+      o.colocar(teide.x, s.position.y, teide.z - 28_000, s.airspeed, -Math.PI / 2);
+    });
   const hasta = Date.now() + ESPERA_A_QUE_HABLE * 1000;
   while (Date.now() < hasta) {
     const m = await page.evaluate(() => globalThis.__oga.mirada());
     if (m.senalado) return m.senalado;
+    await alLado();
     await pausa(1000);
   }
   return null;
