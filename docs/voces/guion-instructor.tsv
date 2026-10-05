@@ -367,3 +367,10 @@
 367	fonetico.zulu	Zulu
 368	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 369	gafas.ganadas	¡Tus gafas de sol!
+370	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
+371	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+372	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+373	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
+374	vuelta.entera	¡Vuelta lista! El avión está para volar.
+375	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+376	parte.ganaste	¡Hoy ganaste: decidiste bien!

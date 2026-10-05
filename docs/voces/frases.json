@@ -9719,5 +9719,54 @@
     "idioma": "es-PY",
     "texto": "¡Tus gafas de sol!",
     "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "pitot.noMarca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El anemómetro no marca: gas atrás y frená, con calma.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "pitot.abortado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "pitot.enElAire",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "vuelta.empezar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Antes de volar, damos la vuelta al avión. Tocá lo que brilla.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "vuelta.entera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Vuelta lista! El avión está para volar.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "parte.salgoIgual.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.",
+    "para": "se dice en src/game.ts"
+  },
+  {
+    "id": "parte.ganaste",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Hoy ganaste: decidiste bien!",
+    "para": "se dice en src/game.ts"
   }
 ]

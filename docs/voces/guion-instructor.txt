@@ -367,3 +367,10 @@ Yankee
 Zulu
 Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 ¡Tus gafas de sol!
+El anemómetro no marca: gas atrás y frená, con calma.
+¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
+¡Vuelta lista! El avión está para volar.
+Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+¡Hoy ganaste: decidiste bien!

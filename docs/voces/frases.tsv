@@ -1030,3 +1030,10 @@ torre-canarias	torre-canarias/torre.canario.solo.subir.5.ogg	es	suba a cinco mil
 torre-canarias	torre-canarias/torre.canario.solo.subir.6.ogg	es	suba a seis mil pies	la altura que autoriza el control, en pies por debajo de la transición
 instructor	instructor/hud.landedShort.ogg	es-PY	Bajaste antes de la barra blanca: las flechas son para rodar y despegar	se dice en src/game.ts
 instructor	instructor/gafas.ganadas.ogg	es-PY	¡Tus gafas de sol!	se dice en src/game.ts
+instructor	instructor/pitot.noMarca.ogg	es-PY	El anemómetro no marca: gas atrás y frená, con calma.	se dice en src/game.ts
+instructor	instructor/pitot.abortado.ogg	es-PY	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.	se dice en src/game.ts
+instructor	instructor/pitot.enElAire.ogg	es-PY	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.	se dice en src/game.ts
+instructor	instructor/vuelta.empezar.ogg	es-PY	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.	se dice en src/game.ts
+instructor	instructor/vuelta.entera.ogg	es-PY	¡Vuelta lista! El avión está para volar.	se dice en src/game.ts
+instructor	instructor/parte.salgoIgual.voz.ogg	es-PY	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.	se dice en src/game.ts
+instructor	instructor/parte.ganaste.ogg	es-PY	¡Hoy ganaste: decidiste bien!	se dice en src/game.ts
