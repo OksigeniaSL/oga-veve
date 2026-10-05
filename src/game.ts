@@ -149,6 +149,7 @@ import { Relampagos } from "./world/relampago";
 import {
   capaDelParte,
   type CapaDeNubes,
+  cuantoDentro,
   lluviaALaAltura,
 } from "./world/capa-de-nubes";
 import { crearJirones, type JironesEnElMundo } from "./world/jirones";
@@ -730,12 +731,14 @@ import { loQueSeDice } from "./audio/ventanilla";
 import {
   calorDelSuelo,
   capaDeMezcla,
+  causasDe,
+  constanciaDe,
   cuantoSeMueve,
   CAMPO_ABIERTO,
-  rachaEn,
   rugosidadDe,
   type Aire,
 } from "./flight/turbulencia";
+import { Rafagas } from "./flight/rafagas";
 import { esAguaDeCasa } from "./world/agua-de-casa";
 import { DE_CLASE, Estelas, type QuienVuela } from "./flight/estela";
 import {
@@ -11475,6 +11478,7 @@ export class Game {
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
+    this.doblarElAla(dt);
     this.atenderALaCabina(dt);
     this.seguirElViento(dt);
     this.mirarLaCabecera();
@@ -12498,18 +12502,37 @@ export class Game {
       tormenta: enLaTormenta,
       // Y la del camino de este vuelo. Ver `flight/turbulencia-del-vuelo.ts`.
       camino: this.turbulenciaDelVuelo.sacude(s0.y, this.flight.state.heightAboveGround),
+      /*
+       * Y la nube que se está cruzando, la misma que se pinta: se nota donde
+       * se ve. Solo cerca de la capa, que fuera de ella no hay nada que mirar.
+       */
+      dentroDeNube:
+        this.capaDeNubes &&
+        s0.y > this.capaDeNubes.base - 50 &&
+        s0.y < this.capaDeNubes.techo + 50
+          ? cuantoDentro(this.sky.densidadEn(s0.x, s0.y, s0.z))
+          : 0,
     };
-    // El campo de ráfagas lo lleva el viento del sitio, el mismo que el avión.
     const viento =
       this.vientoAqui?.aire ?? vientoComoVector(meteo ?? TIEMPO_DE_CASA);
-    const racha = rachaEn(aire, {
-      x: s0.x,
-      y: s0.y,
-      z: s0.z,
-      t: this.clock.elapsedTime,
-      vientoX: viento.x,
-      vientoZ: viento.z,
+    /*
+     * **Y cómo llega**: por tramos, con su fondo y sus baches sueltos, y con
+     * la fuerza que le corresponde al aire de aquí. Ver `flight/rafagas.ts`.
+     */
+    const sv = this.flight.state;
+    const racha = this.rafagas.paso(dt, {
+      sigma: cuantoSeMueve(aire),
+      constancia: constanciaDe(causasDe(aire)),
+      sobreElSuelo: sv.heightAboveGround,
+      enTierra: sv.onGround,
+      velocidad: sv.airspeed,
+      densidad: airDensity(s0.y, this.flight.aireDelDia()),
       envergadura: this.aircraft.wingSpan,
+      cuerda: this.aircraft.chord,
+      rumbo:
+        sv.velocity.x * sv.velocity.x + sv.velocity.z * sv.velocity.z > 1
+          ? Math.atan2(sv.velocity.x, -sv.velocity.z)
+          : sv.heading,
     });
     /*
      * **Y la estela del de delante**, que no es del aire sino de otro avión, y
@@ -13178,8 +13201,35 @@ export class Game {
       this.avionesDeLasIslas?.grupo,
     ])
       if (grupo) ponerTamanoMinimo(grupo.children, this.camera, alto);
+    // El ala que se dobla, con la cámara ya puesta. Ver `world/ala-que-se-dobla.ts`.
+    this.aircraftMesh.ala?.antesDePintar(this.camera);
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
+  }
+
+  /** Dónde estaba el avión la última vez que se dobló el ala: para ver si lo han movido. */
+  private readonly dondeElAla = new Vector3(Number.NaN, 0, 0);
+  /** Y de qué avión era esa ala: con otro modelo, se asienta otra vez. */
+  private alaDeAntes: unknown = null;
+
+  /**
+   * **El ala, con la carga que sostiene**: en el aire, el factor de carga del
+   * modelo de vuelo; en tierra, lo que ya sostiene con la velocidad. Y si al
+   * avión lo acaban de poner en otro sitio —un reinicio, una lección que
+   * empieza en el aire—, el ala ya doblada como le toca: un ala que llega
+   * oscilando de una punta a otra sin que haya pasado nada no es de ningún
+   * avión. Ver `world/ala-que-se-dobla.ts`.
+   */
+  private doblarElAla(dt: number): void {
+    const ala = this.aircraftMesh.ala;
+    if (!ala) return;
+    const s = this.flight.state;
+    const salto = this.dondeElAla.distanceTo(s.position);
+    if (ala !== this.alaDeAntes || !(salto < Math.max(100, 3 * s.velocity.length() * dt)))
+      ala.flexion.asentar(s.loadFactor);
+    else ala.paso(dt, s.loadFactor, s.onGround);
+    this.dondeElAla.copy(s.position);
+    this.alaDeAntes = ala;
   }
 
   /**
@@ -20594,6 +20644,19 @@ export class Game {
    * Ver `flight/turbulencia-del-vuelo.ts`.
    */
   private readonly turbulenciaDelVuelo = new TurbulenciaDelVuelo();
+  /** Cómo llega el aire que se cruza, bache a bache. Ver `flight/rafagas.ts`. */
+  private readonly rafagas = new Rafagas();
+
+  /** Las ráfagas de ahora, para los bancos: si hay racha y lo que sopla. */
+  get rafagasParaBanco(): { enRacha: boolean; cuanta: number; vertical: number; alabeo: number } {
+    const r = this.rafagas.ahora;
+    return {
+      enRacha: this.rafagas.enRacha,
+      cuanta: this.rafagas.cuanta,
+      vertical: r.y,
+      alabeo: r.alabeo,
+    };
+  }
   /**
    * Si el cartel lo encendió el anuncio de la turbulencia, con el pasaje
    * suelto: al pasar se vuelve a apagar. Si ya estaba puesto —la bajada—, se

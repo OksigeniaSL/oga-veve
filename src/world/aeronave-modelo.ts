@@ -55,6 +55,7 @@ import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { prepararFlaps } from "./flaps";
 import { prepararAerofrenos } from "./aerofrenos";
+import { prepararElAla } from "./ala-que-se-dobla";
 import { prepararPalancaDeAerofrenos } from "./palanca-de-aerofrenos";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
@@ -867,6 +868,12 @@ export async function cargarModelo(
      */
     // Y la placa con la matrícula, puesta arriba. Ver `placa-de-cabina.ts`.
     placa,
+    /*
+     * Y el ala que se dobla, en el avión que la dobla; antes de la luz, que
+     * tiene que encontrar también los materiales que se le ponen al ala. Ver
+     * `ala-que-se-dobla.ts`.
+     */
+    ala: prepararElAla(raiz, group, aircraft.alaQueSeDobla, luces.luces.puntos),
     luzDeCabina: luzDeCabina(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
