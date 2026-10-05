@@ -441,3 +441,36 @@ describe("la roja y la verde, en la punta del ala y no en la aleta", () => {
   }
 });
 
+
+/*
+ * ── Y los focos del JAZ 60, fuera de la góndola (punto 209) ────────────────
+ *
+ * El foco se buscaba en la franja de la raíz del ala, y en el JAZ 60 esa
+ * franja llega hasta el motor: el ala tiene una estación justo en el eje de la
+ * góndola, que era el punto más adelantado, y ahí iban los dos focos, dentro
+ * del motor. De frente no se veían. Van en el borde de ataque, entre el
+ * fuselaje y la góndola, como en un turbohélice de ala baja de su clase.
+ */
+describe("los focos del JAZ 60, a la vista de frente", () => {
+  it("ninguno dentro de su góndola, y en el borde de ataque", async () => {
+    const raiz = await modelo("jaz-60");
+    const a = AIRCRAFT.find((x) => x.id === "jaz-60")!;
+    const foco = crearLucesDePosicion(a, raiz).sitios.foco;
+    // La góndola de la derecha, la del foco de la derecha.
+    const gondola = new Box3();
+    const v = new Vector3();
+    raiz.traverse((o) => {
+      const pos = (o as Mesh).geometry?.getAttribute?.("position");
+      if (!pos || !/^gondola/.test(o.name)) return;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        if (v.x > 0) gondola.expandByPoint(v);
+      }
+    });
+    expect(gondola.isEmpty()).toBe(false);
+    // Por dentro de la góndola, mirando desde delante: a su lado y no en ella.
+    expect(foco.x).toBeLessThan(gondola.min.x);
+    // Y por fuera del fuselaje, que es lo que ocupa el centro.
+    expect(foco.x).toBeGreaterThan(1.2);
+  });
+});

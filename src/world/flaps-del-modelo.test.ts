@@ -252,7 +252,14 @@ describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
     "jaz-20": [1.3201, 1.1156, -1.0043],
     "jaz-25": [1.4993, 1.3391, -1.9311],
     "jaz-40": [1.4268, -0.3984, -0.7192],
-    "jaz-60": [3.1, -0.1968, -1.0479],
+    /*
+     * **Menos el JAZ 60, que salió de la góndola** (punto 209): x 3,1 es el
+     * eje del motor, y el foco estaba dentro de ella; de frente no se veía.
+     * Ahora va en el borde de ataque entre el fuselaje y el motor, a su sitio
+     * de siempre de la envergadura. Ver «Y fuera de las góndolas» en
+     * `puntasDe`.
+     */
+    "jaz-60": [2.375, -0.1258, -1.006],
     "jaz-90": [3.9753, -0.7022, -1.7613],
     "jaz-120": [9.3855, -0.9135, -7.0682],
   };
