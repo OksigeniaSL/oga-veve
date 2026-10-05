@@ -817,14 +817,23 @@ function fichaDeDestinoQueNoCabe(
 }
 
 /**
- * Los galones. Uno por peldaño, como en la manga de un uniforme.
+ * **Los peldaños, como escalones que suben.** Uno por peldaño.
  *
  * Es la única forma que se nos ocurrió de decir «este es el siguiente» sin
  * decir «este es el de mayores»: se cuentan, y contar hasta cuatro sí se sabe
  * a los cuatro años.
+ *
+ * Eran galones, «como en la manga de un uniforme», y desde que la manga lleva
+ * las barras de verdad del grado (1, 3, 4 y 4: ver `barrasDe`) dos barras en
+ * el hangar habrían sido un grado que no existe. Así que son lo que es un
+ * peldaño: escalones de una escalera, cada uno un poco más alto que el
+ * anterior, que se cuentan igual y no se confunden con una manga.
  */
-const galones = (n: number): string =>
-  `<span class="ficha__galones" aria-hidden="true">${"<i></i>".repeat(n)}</span>`;
+const peldanos = (n: number): string =>
+  `<span class="ficha__peldanos" aria-hidden="true">${Array.from(
+    { length: n },
+    (_, i) => `<i style="height:${6 + i * 4}px"></i>`,
+  ).join("")}</span>`;
 
 /**
  * La ficha de una aeronave: su retrato y su nombre entero.
@@ -988,7 +997,7 @@ function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
       <span class="ficha__pie">
         <!-- Dos filas, igual que las de sitio: en columna estrecha «Taguato
              Ruvicha» no cabe al lado de los galones. -->
-        ${galones(indice + 1)}
+        ${peldanos(indice + 1)}
         <span class="ficha__nombre">${tier.name}</span>
       </span>
     </button>`;

@@ -122,7 +122,7 @@ for (const [ancho, alto, nombre] of [
       .getBoundingClientRect();
     out.tapadosPorBarra = [];
     for (const el of document.querySelectorAll(
-      ".ficha__nombre, .ficha__galones",
+      ".ficha__nombre, .ficha__peldanos",
     )) {
       const r = el.getBoundingClientRect();
       if (r.bottom > barra.top + 1 && r.top < barra.bottom) {

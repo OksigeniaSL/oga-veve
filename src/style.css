@@ -7501,15 +7501,17 @@ button.motor__tecla::after {
 
 /* ── Los galones ─────────────────────────────────────────────────────── */
 
-.ficha__galones {
+/* Los peldaños, escalones que suben: ver `peldanos` en `ui/hangar.ts`. */
+.ficha__peldanos {
   display: flex;
-  gap: 3px;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
 }
 
-.ficha__galones i {
-  width: 5px;
-  height: 17px;
-  border-radius: 2px;
+.ficha__peldanos i {
+  width: 6px;
+  border-radius: 2px 2px 1px 1px;
   background: var(--ocre);
   box-shadow: var(--filo);
 }
