@@ -11893,6 +11893,19 @@ button.motor__tecla::after {
     padding: 8px 10px;
   }
 
+  /*
+   * Los puntos, algo más pequeños: en un visor de trescientos y pico píxeles
+   * de cuarenta tapaban medio avión. Treinta y cuatro es el punto de la
+   * palanca táctil, que ya se coge con el dedo.
+   */
+  .tav__punto {
+    left: -17px;
+    top: -17px;
+    width: 34px;
+    height: 34px;
+    padding: 5px;
+  }
+
   /* Las luces y el tamaño, en fila arriba: en columna no caben de alto. */
   .tav__mandos {
     top: 8px;
