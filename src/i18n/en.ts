@@ -1154,7 +1154,7 @@ export const EN: Dictionary = {
     "Every airport has a fire crew ready for the biggest plane it receives: the longer and wider the plane, the more water, foam and fire trucks it takes. This plane is bigger than they can look after here, so it doesn't come: if something happened, there wouldn't be enough to help it properly. That's why every airport states its category, from 1 to 10, and every plane goes where it can be looked after.",
   "explica.bomberos-y-aviones.corta": "Why only small planes?",
   "explica.bomberos-y-aviones.texto":
-    "Only small planes go to some airports. Often it's because of the runway, and sometimes because of the fire crew. To La Gomera, in the Canary Islands, Binter flies the ATR, a twenty-seven-metre propeller plane. Binter also has forty-one-and-a-half-metre jets, and doesn't take them there: La Gomera's fire crew is category 5, ready for planes up to twenty-eight metres. An airport gets ready for the planes it receives, and so every plane goes where it can be looked after.",
+    "Only small planes go to some airports. Often it's because of the runway, and sometimes because of the fire crew. To La Gomera, in the Canary Islands, Binter flies the ATR, a twenty-seven-metre propeller plane. Binter also has forty-one-and-a-half-metre jets —one is even called «La Gomera»— and doesn't take them there: La Gomera's fire crew is category 5, ready for planes up to twenty-eight metres, and those jets need at least 6. An airport gets ready for the planes it receives, and so every plane goes where it can be looked after.",
   "tarjeta.abrir": "See the plane up close",
   "tarjeta.ficha.envergadura": "Wingtip to wingtip",
   "tarjeta.ficha.largo": "Nose to tail",

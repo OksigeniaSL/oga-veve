@@ -2246,12 +2246,14 @@ export const ES_PY = {
   /*
    * **Y la curiosidad**, con el caso de verdad: La Gomera es de la categoría 5
    * (AIP de España, GCGM AD 2.6); el ATR 72 mide 27,2 m y es de la 5, y el
-   * E195-E2 de Binter, 41,5 m, de la 7, que pide al menos la 6. Ver
+   * E195-E2 de Binter, 41,5 m, de la 7, que pide al menos la 6. Uno de ellos
+   * se llama «La Gomera» (Diario de Avisos, diciembre de 2023) y no vuela
+   * allí: a La Gomera solo va Binter, con el ATR 72. Ver
    * `world/bomberos-publicados.ts`.
    */
   "explica.bomberos-y-aviones.corta": "¿Por qué aviones chicos?",
   "explica.bomberos-y-aviones.texto":
-    "A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.",
+    "A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.",
   // ── Antes de volar: la vuelta al avión (punto 125) y el tiempo (punto 129) ──
   "vuelta.titulo": "La vuelta al avión",
   "vuelta.abrir": "Dar la vuelta al avión",

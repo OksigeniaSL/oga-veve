@@ -52,7 +52,9 @@
  * transporte aéreo comercial. Una avioneta de escuela, un fumigador o un
  * bimotor privado no tienen esta regla —la parte II, la de la aviación
  * general, no la pide—, y por eso aterrizan en un campo de tierra sin
- * bomberos.
+ * bomberos. Tampoco es de los aviones del Estado, que el Anexo 6 no cubre: el
+ * servicio de pasaje de la Fuerza Aérea Paraguaya, el SETAM, va a Concepción
+ * —que no tiene bomberos— con un CASA 212 (Aviacionline, 2026).
  */
 
 import type { AircraftConfig } from "./aircraft";
