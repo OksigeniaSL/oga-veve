@@ -69,10 +69,22 @@ page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
 await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
+/*
+ * **Y con el tiempo de casa, no con el del día.** En el árbol principal hay
+ * un `.env` con el proxy del METAR, y el juego pedía el parte de verdad: el
+ * 5-oct-2026 Los Rodeos daba OVC003, la tarjeta del tiempo salía sola a
+ * proponer no salir —que es lo que tiene que hacer con trescientos pies de
+ * techo y una avioneta visual— y el banco, que no la contesta, se quedaba
+ * en el puesto. `&meteo=` vacío le dice al juego que no hay proxy, como en
+ * `verificar-vuelo-entero.mjs`; para el parte de verdad,
+ * `OGA_METEO_DE_VERDAD=1`.
+ */
+const METEO = process.env.OGA_METEO_DE_VERDAD ? "" : "&meteo=";
 await page.goto(
   `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}` +
     `&avion=${AVION}` +
-    (VIENTO ? `&viento=${VIENTO}` : ""),
+    (VIENTO ? `&viento=${VIENTO}` : "") +
+    METEO,
 );
 await page.waitForTimeout(16000);
 
