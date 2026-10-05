@@ -373,18 +373,20 @@ describe("el asiento de encima del ala", () => {
       expect(salida!.alto).toBeLessThan(1.2);
       // Y no es una ventanilla de la fila: ésa es la de siempre.
       expect(asiento.ventanilla.centro.z).not.toBeCloseTo(pasaje![lado].ventanilla.centro.z, 1);
-      // El asa y el letrero, enteros dentro de la pantalla de una tablet y
-      // sin nada del HUD encima.
+      /*
+       * Un trozo del asa y del letrero, sin nada del HUD encima: «no cabe
+       * entera, pero se puede poner un trozo, también del letrero». Pedirlos
+       * enteros abrió la vista hasta noventa y dos grados, un ojo de pez.
+       */
       const asoma = loQueAsomaDeLaSalida(asiento.ventanilla, salida!);
       expect(asoma.length).toBeGreaterThanOrEqual(6);
-      for (const p of asoma) expect(libreDelHud(asiento, p), lado).toBe(true);
-      /*
-       * Y el cristal entero, también sin HUD encima: a sesenta y cuatro grados
-       * la mitad de abajo —el ala, a lo que se viene— quedaba debajo de la
-       * barra de instrumentos. Por eso esta fila abre la vista, y solo ella.
-       */
-      for (const p of elCristalEntero(asiento.ventanilla))
-        expect(libreDelHud(asiento, p), lado).toBe(true);
+      const libres = asoma.filter((p) => libreDelHud(asiento, p)).length;
+      expect(libres * 2, lado).toBeGreaterThanOrEqual(asoma.length);
+      // Y el cristal, por lo menos la mitad sin HUD encima: es por donde se ve
+      // el ala, que es a lo que se viene.
+      const cristal = elCristalEntero(asiento.ventanilla);
+      const cristalLibre = cristal.filter((p) => libreDelHud(asiento, p)).length;
+      expect(cristalLibre * 2, lado).toBeGreaterThanOrEqual(cristal.length);
       expect(asiento.fov, lado).toBeGreaterThanOrEqual(Math.min(...ANGULOS_EN_LA_SALIDA));
       expect(asiento.fov, lado).toBeLessThanOrEqual(Math.max(...ANGULOS_EN_LA_SALIDA));
       expect(pasaje![lado].fov ?? FOV_DE_PASAJE, `${lado}, el de siempre`).toBe(FOV_DE_PASAJE);

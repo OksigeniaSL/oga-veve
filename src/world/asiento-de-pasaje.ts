@@ -712,15 +712,19 @@ export function libreDelHud(
  * **Y con el HUD medido de nuevo** (punto 254) no cabía: en una tablet con
  * dedo, entre las dos filas de botones de arriba y la barra con los pedales
  * de abajo queda el 58 % del alto, y el letrero, el asa, el cristal y el
- * horizonte piden sesenta y tres grados de alto. Sale noventa y dos y treinta
- * y dos y medio hacia la cola, a la misma altura de ojos. Abierto así se
- * nota en las esquinas, pero es la única vista que lo hace y lo que se
- * pidió ver queda donde no hay HUD; más cerrado, o el cristal pisaba la barra
- * o el letrero quedaba debajo de los botones.
+ * horizonte piden sesenta y tres grados de alto. Salía noventa y dos y treinta
+ * y dos y medio hacia la cola, a la misma altura de ojos.
+ *
+ * **Y noventa y dos era un ojo de pez** (5-oct-2026, captura de Enrique en
+ * Fuerteventura): la ventanilla de al lado salía enorme y estirada, y el
+ * respaldo y el techo, torcidos. Y no hacía falta tanto: lo que se pidió fue
+ * «no cabe entera, pero se puede poner un trozo, también del letrero». Así
+ * que la vista se queda entre sesenta y cuatro —la de las demás de pasaje— y
+ * setenta y dos, y basta con que asome la mitad del letrero y del asa.
  */
 const MIRAR_ABAJO_EN_LA_SALIDA = { desde: -14, hasta: 16, paso: 2 };
 const APUNTAR_ENCIMA_EN_LA_SALIDA = [0, 0.06, 0.12, 0.18, 0.24, 0.3];
-export const ANGULOS_EN_LA_SALIDA = [74, 77, 80, 84, 88, 92];
+export const ANGULOS_EN_LA_SALIDA = [64, 68, 72];
 
 /**
  * **Cuántos paneles bastan**: con tres levantados a la vista ya se ve lo que
@@ -1090,7 +1094,13 @@ function asientoSobreElAla(
              * horizonte de frente, por el cristal, que un ala sin horizonte no
              * dice dónde está. Ver `HUD`.
              */
-            const asoma = asomar.length > 0 && asomar.every((p) => libreDelHud(a, p)) ? 1 : 0;
+            // Un trozo basta: «no cabe entera, pero se puede poner un trozo,
+            // también del letrero». La mitad de sus puntos, sin HUD encima.
+            const asoma =
+              asomar.length > 0 &&
+              asomar.filter((p) => libreDelHud(a, p)).length * 2 >= asomar.length
+                ? 1
+                : 0;
             entero = marco.every((p) => libreDelHud(a, p));
             const s = cual === "izquierda" ? -1 : 1;
             lejos.set(s * Math.cos(atras * GRADO), 0, Math.sin(atras * GRADO));
@@ -1100,7 +1110,9 @@ function asientoSobreElAla(
             const deCanto = canto.filter((p) => libreDelHud(a, p)).length;
             // Y que la salida asome también con el subtítulo puesto.
             const conSubtitulo =
-              asoma && asomar.every((p) => libreDelHud(a, p, true)) ? 1 : 0;
+              asoma && asomar.filter((p) => libreDelHud(a, p, true)).length * 2 >= asomar.length
+                ? 1
+                : 0;
             // Y luego, lo menos girado hacia la cola, con la vista menos
             // abierta, más canto de la trampilla y los ojos más bajos.
             nota = [
