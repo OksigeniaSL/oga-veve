@@ -2840,6 +2840,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * leerse. Ver la comprobación de la lista.
    */
   let segundosFueraDeLaPista = 0;
+  /** Desde cuándo pide la lista recoger los flaps, s. */
+  let flapsPedidosHace = 0;
   /** Cuánta pista hay para aterrizar en la que se tocó, m. */
   let pistaParaTocar = 0;
   /** Dónde y cómo se tocó: del eje, pasado el umbral y a qué velocidad. */
@@ -5683,6 +5685,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       if (!s.onRunway && fase === "a-plataforma")
         rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
       if (fase === "a-plataforma" || fase === "en-puesto") segundosFueraDeLaPista += paso;
+      /*
+       * **Y los flaps, cuando la lista los pide**, dos segundos después, que
+       * es lo que hace quien la oye. Sin esto el banco no los recogía nunca,
+       * la lista esperaba sus veinte segundos de paciencia y en La Palma no
+       * cabía el punto siguiente antes de apagar.
+       */
+      {
+        const leida = o.listaTrasLaToma?.() ?? [];
+        const ultima = leida[leida.length - 1];
+        if (ultima?.punto === "flaps" && ultima.como === "pide") {
+          flapsPedidosHace += paso;
+          if (flapsPedidosHace >= 2) o.pedirFlaps?.(0);
+        }
+      }
       c.aileron = timon(s, ruta);
       /*
        * Y el largo de **la ruta que el juego trazó** para volver, que es el
@@ -6344,11 +6360,13 @@ const relojDeVerdad =
      * es lo suyo: el apagado manda. En Pilar se remonta la pista y se sale
      * directo a la plataforma, y en la granja el puesto está al lado: el
      * banco apagaba a los pocos segundos y la comprobación pedía dos puntos
-     * que no cabían. Con menos de medio minuto fuera de la pista, solo se
-     * mira el orden y el respiro de lo que sí se leyó.
+     * que no cabían. Con menos de cuarenta segundos fuera de la pista, solo
+     * se mira el orden y el respiro de lo que sí se leyó.
      */
     const fuera = vuelo.segundosFueraDeLaPista ?? Infinity;
-    const cabian = fuera >= 30;
+    // Seis antes de empezar, veinte de paciencia si lo pedido no se hace y
+    // cuatro de respiro: con menos de cuarenta, el segundo punto no cabe.
+    const cabian = fuera >= 40;
     comprobarSiVolo(
       "y después de aterrizar, la lista punto por punto y con su respiro",
       (lista.length >= 2 || (!cabian && lista.length <= 1)) &&
