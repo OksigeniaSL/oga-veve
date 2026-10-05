@@ -824,9 +824,11 @@ const VERTICE_DEL_AGUA = /* glsl */ `
  *
  * Así que se leen los tres nudos del triángulo en el que cae el punto, con
  * la misma diagonal que la malla —ver `buildFarMesh` y `buildTerrainMesh`—,
- * y la orilla que sale es la raya en la que la malla cruza el agua. Tres
- * lecturas sueltas en vez de una filtrada, medidas en
- * `scripts/verificar-rendimiento.mjs` con la tarjeta.
+ * y la orilla que sale es la raya en la que la malla cruza el agua. Son tres
+ * lecturas sueltas en vez de una filtrada, medidas con la tarjeta del
+ * portátil contra `main`, alternando las dos en el mismo navegador y en
+ * Fuerteventura, La Gomera, La Palma y Los Rodeos: el tiempo de GPU no se
+ * movió por encima de lo que se mueve entre dos tiradas iguales.
  */
 const GLSL_DE_LAS_ORILLAS = /* glsl */ `
   uniform float conOrillas;
