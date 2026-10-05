@@ -196,6 +196,67 @@ try {
       return { rafagas, ala };
     });
     console.log(`  coste CPU · ráfagas ${(c.rafagas * 1000).toFixed(1)} µs/fotograma · ala ${c.ala === null ? "—" : (c.ala * 1000).toFixed(1) + " µs/fotograma"}`);
+    // Y en la tarjeta: la escena con el ala doblándose y con los mismos
+    // materiales sin el trozo que la dobla, alternando, tres vueltas.
+    await page.evaluate((v) => globalThis.__oga.ponerVista(v), VISTA);
+    await page.waitForTimeout(3000);
+    const g = await page.evaluate(async () => {
+      const o = globalThis.__oga;
+      const j = o.juegoParaTrazas();
+      const pintor = o.pintor();
+      const gl = pintor.getContext();
+      const ext = gl.getExtension("EXT_disjoint_timer_query_webgl2");
+      if (!ext) return null;
+      const dobladas = [];
+      j.aircraftMesh.group.traverse((m) => {
+        if (!m.isMesh) return;
+        const mats = Array.isArray(m.material) ? m.material : [m.material];
+        if (mats.some((x) => x.customProgramCacheKey().includes("ala-que-se-dobla")))
+          dobladas.push({ m, con: m.material });
+      });
+      const sinTrozo = (x) => {
+        const c = x.clone();
+        c.onBeforeCompile = () => {};
+        c.customProgramCacheKey = () => "sin-doblar";
+        return c;
+      };
+      for (const d of dobladas)
+        d.sin = Array.isArray(d.con) ? d.con.map(sinTrozo) : sinTrozo(d.con);
+      const medir = async () => {
+        const qs = [];
+        for (let i = 0; i < 90; i++) {
+          const q = gl.createQuery();
+          gl.beginQuery(ext.TIME_ELAPSED_EXT, q);
+          pintor.render(j.scene, j.camera);
+          gl.endQuery(ext.TIME_ELAPSED_EXT);
+          qs.push(q);
+          await new Promise((r) => requestAnimationFrame(r));
+        }
+        for (let i = 0; i < 120 && !gl.getQueryParameter(qs[qs.length - 1], gl.QUERY_RESULT_AVAILABLE); i++)
+          await new Promise((r) => requestAnimationFrame(r));
+        const ms = [];
+        for (const q of qs) {
+          if (gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) ms.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6);
+          gl.deleteQuery(q);
+        }
+        ms.sort((a, b) => a - b);
+        return ms[Math.floor(ms.length / 2)] ?? null;
+      };
+      const vueltas = [];
+      for (let v = 0; v < 3; v++) {
+        for (const d of dobladas) d.m.material = d.sin;
+        const sin = await medir();
+        for (const d of dobladas) d.m.material = d.con;
+        const con = await medir();
+        vueltas.push({ sin, con });
+      }
+      return { piezas: dobladas.length, vueltas };
+    });
+    if (g)
+      console.log(
+        `  coste tarjeta · ${g.piezas} piezas · ` +
+          g.vueltas.map((v) => `sin ${v.sin?.toFixed(3)} / con ${v.con?.toFixed(3)} ms`).join(" · "),
+      );
   }
   // `OGA_SIN_ALA=1`: el ala sin doblar, para comparar.
   if (process.env.OGA_SIN_ALA === "1")
