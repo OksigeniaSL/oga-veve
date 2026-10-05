@@ -8,6 +8,7 @@ import {
   VueltaAlAvion,
 } from "./vuelta-al-avion";
 import { AnemometroTapado, velocidadDeComprobar } from "./anemometro-tapado";
+import { DURA_LA_PRUEBA_DE_MANDOS, pruebaDeMandos } from "./vuelta-al-avion";
 
 const claseDe = (id: string) => claseDeVuelta(modeloPorId(id)?.silueta);
 
@@ -146,5 +147,52 @@ describe("la funda olvidada: el anemómetro no marca en la carrera", () => {
     const t = new AnemometroTapado(10);
     for (let v = 0; v < 60; v += 1)
       expect(t.paso({ tapado: false, enTierra: v < 50, velocidad: v, gas: 1 })).toBeNull();
+  });
+});
+
+describe("los calzos del avión de línea: los pone y los quita el personal de tierra", () => {
+  const linea = () => new VueltaAlAvion("linea", LO_QUE_SE_MIRA.linea);
+
+  it("en el puesto está calzado, aunque los calzos no estén en su vuelta", () => {
+    const v = linea();
+    expect(v.cosas).not.toContain("calzos");
+    expect(v.calzosPuestos).toBe(true);
+    expect(v.calzosDeTierra).toBe(true);
+  });
+
+  it("al arrancar, el personal de tierra se los lleva, haya vuelta o no", () => {
+    const v = linea();
+    v.alArrancar("cifra");
+    expect(v.calzosPuestos).toBe(false);
+    const w = linea();
+    for (const c of w.cosas) w.tocar(c);
+    w.alArrancar("cabina");
+    expect(w.calzosPuestos).toBe(false);
+  });
+
+  it("en la avioneta los quita quien hace la vuelta, no el personal de tierra", () => {
+    const v = new VueltaAlAvion("avioneta", LO_QUE_SE_MIRA.avioneta);
+    expect(v.calzosDeTierra).toBe(false);
+  });
+});
+
+describe("la prueba de mandos de la vuelta", () => {
+  it("de uno en uno, hasta sus topes y de vuelta al centro: alerones, profundidad y dirección", () => {
+    const tramo = DURA_LA_PRUEBA_DE_MANDOS / 3;
+    const max = (k: "alabeo" | "cabeceo" | "guinada", desde: number) => {
+      let m = 0;
+      for (let t = desde; t < desde + tramo; t += 0.01) m = Math.max(m, Math.abs(pruebaDeMandos(t)[k]));
+      return m;
+    };
+    expect(max("alabeo", 0)).toBeGreaterThan(0.99);
+    expect(max("cabeceo", 0)).toBe(0);
+    expect(max("cabeceo", tramo)).toBeGreaterThan(0.99);
+    expect(max("guinada", 2 * tramo)).toBeGreaterThan(0.99);
+    expect(max("alabeo", 2 * tramo)).toBe(0);
+  });
+
+  it("fuera de la prueba, todo al centro", () => {
+    expect(pruebaDeMandos(-1)).toEqual({ alabeo: 0, cabeceo: 0, guinada: 0 });
+    expect(pruebaDeMandos(DURA_LA_PRUEBA_DE_MANDOS + 0.1)).toEqual({ alabeo: 0, cabeceo: 0, guinada: 0 });
   });
 });

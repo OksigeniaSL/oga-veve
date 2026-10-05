@@ -298,6 +298,15 @@ const EXPLICA_TRAS_LA_TORRE = 6;
  */
 const SEPARA_LA_RADIO = 4;
 
+/**
+ * **Lo que el juego espera del modelo para mover sus mandos**: alerones,
+ * profundidad y dirección, de −1 a 1. Lo expone la malla del avión cuando sus
+ * superficies vienen cortadas; ver `Game.moverLosMandos`.
+ */
+interface MandosDelModelo {
+  poner(m: { readonly alabeo: number; readonly cabeceo: number; readonly guinada: number }): void;
+}
+
 /** El rato de esperar a que mejore el tiempo, s. Ver `esperarUnRato`. */
 const RATO_DE_ESPERA = 60;
 
@@ -1058,6 +1067,8 @@ import { dibujarReloj, relojDe } from "./ui/reloj";
 import {
   claseDeVuelta,
   cosasDeLaVuelta,
+  DURA_LA_PRUEBA_DE_MANDOS,
+  pruebaDeMandos,
   VueltaAlAvion,
   type CosaDeLaVuelta,
 } from "./flight/vuelta-al-avion";
@@ -3687,6 +3698,11 @@ export class Game {
   private cosaQueSeMira: CosaDeLaVuelta | null = null;
   /** Segundos que quedan de la prueba de luces de la vuelta. */
   private pruebaDeLuces = 0;
+  /**
+   * Desde cuándo se mueven los mandos en la vuelta, s, o `null` si no. Ver
+   * `pruebaDeMandos` en `flight/vuelta-al-avion.ts`.
+   */
+  private pruebaDeMandosDesde: number | null = null;
   /** La funda olvidada en la carrera, si se olvidó. Ver `flight/anemometro-tapado.ts`. */
   private anemometro: AnemometroTapado | null = null;
   /** Si al volver a empezar hay que conservar la funda: el despegue se abortó por ella. */
@@ -13465,6 +13481,7 @@ export class Game {
      * tarda dos segundos en irse hacia la cola. Ver `world/reversas.ts`.
      */
     this.aircraftMesh.reversas?.poner(this.reversa.abierta);
+    this.moverLosMandos();
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
     this.aircraftMesh.aerofrenos?.poner(
       this.input.controls.aerofrenos ?? 0,
@@ -22456,6 +22473,7 @@ export class Game {
       empezada: v?.empezada ?? false,
       fundaPuesta: v?.fundaPuesta ?? false,
       calzosPuestos: v?.calzosPuestos ?? false,
+      calzosALaVista: this.fundasYCalzos?.calzosALaVista ?? 0,
       tapado: this.pitotTapado,
       abortando: this.anemometro?.abortando ?? false,
       salir: this.parteDeHoy?.decision.salir ?? null,
@@ -22561,7 +22579,8 @@ export class Game {
     // Quien decidió quedarse y después arranca, cambió de idea: la línea de
     // quedarse ya está en la bitácora, y este vuelo no la repite.
     if (this.decisionDeHoy === "en-tierra") this.decisionDeHoy = null;
-    this.fundasYCalzos?.recogerCalzos();
+    // En el de línea los saca el personal de tierra, a la vista. Ver `calzosDeTierra`.
+    this.fundasYCalzos?.recogerCalzos(v.calzosDeTierra);
     if (!v.fundaPuesta) this.fundasYCalzos?.quitarFundas(false);
     this.anemometro = r.fundaOlvidada
       ? new AnemometroTapado(velocidadDeComprobar(v.clase, this.aircraft))
@@ -22735,6 +22754,10 @@ export class Game {
     } else if (c === "luces") {
       this.pruebaDeLuces = 5;
       this.audio.chasquido("abre");
+    } else if (c === "superficies") {
+      // Y los mandos, que se mueven de verdad en el modelo. Ver `moverLosMandos`.
+      this.pruebaDeMandosDesde = this.relojDeLaVuelta;
+      this.audio.ruidoDeLaVuelta("mirar");
     } else if (c === "combustible") this.audio.ruidoDeLaVuelta("glup");
     else if (c === "puertas") this.audio.ruidoDeLaVuelta("cierre");
     else this.audio.ruidoDeLaVuelta("mirar");
@@ -22752,6 +22775,30 @@ export class Game {
       const sigue = this.vueltaAlAvion?.siguiente;
       if (this.enLaVuelta && sigue && this.cosaQueSeMira === c) this.irEnLaVuelta(sigue);
     });
+  }
+
+  /**
+   * **Los mandos de la cola, moviéndose en el modelo** al tocarlos en la vuelta.
+   *
+   * Tocar los timones movía solo el dibujo del globo, y el avión se quedaba
+   * quieto: lo que se mira de verdad en la vuelta es que se muevan libres, y
+   * eso hay que verlo en el avión. El modelo tiene que traer sus superficies
+   * cortadas y con bisagra —alerones, profundidad y dirección—, que es trabajo
+   * de la fábrica de modelos; aquí solo se les dice cuánto ir, de −1 a 1, con
+   * la coreografía de `pruebaDeMandos`.
+   *
+   * **El enganche**: si la malla trae `mandos` con un `poner({ alabeo,
+   * cabeceo, guinada })`, se usa; si no, no pasa nada y se mueve el dibujo,
+   * como hasta ahora. Fuera de la prueba se le da cero, para que vuelvan al
+   * centro.
+   */
+  private moverLosMandos(): void {
+    const mandos = (this.aircraftMesh as { mandos?: MandosDelModelo | null }).mandos;
+    if (!mandos) return;
+    const desde = this.pruebaDeMandosDesde;
+    const t = desde === null || !this.enLaVuelta ? -1 : this.relojDeLaVuelta - desde;
+    if (desde !== null && t >= DURA_LA_PRUEBA_DE_MANDOS) this.pruebaDeMandosDesde = null;
+    mandos.poner(pruebaDeMandos(t));
   }
 
   /** Vectores de trabajo de la vuelta: uno por fotograma sería basura. */

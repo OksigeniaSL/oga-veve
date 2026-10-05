@@ -188,9 +188,33 @@ export class FundasYCalzos {
     }
   }
 
-  /** Lo quita todo de golpe: al arrancar, quien está abajo se lo lleva. */
-  recogerCalzos(): void {
-    for (const c of this.calzos) c.visible = false;
+  /**
+   * Se lleva los calzos: al arrancar, quien está abajo se los lleva. De golpe
+   * en la avioneta, que es cosa de un momento; **animado** en el de línea,
+   * donde los saca el personal de tierra delante de quien mira: salen de
+   * debajo del avión hacia fuera y se van. Si no, el avión grande aparecía
+   * sin calzos sin que nadie los hubiera quitado.
+   */
+  recogerCalzos(animado = false): void {
+    for (const c of this.calzos) {
+      if (!c.visible) continue;
+      if (!animado) {
+        c.visible = false;
+        continue;
+      }
+      const lado = (c.userData.lado as number) ?? 1;
+      this.quitando.push({
+        que: c,
+        hacia: { x: -lado * 2.4, y: 0, z: 0 },
+        queda: 1.1,
+        sedesvanece: true,
+      });
+    }
+  }
+
+  /** Cuántos calzos se ven puestos. Para las pruebas y el banco. */
+  get calzosALaVista(): number {
+    return this.calzos.filter((c) => c.visible && !c.userData.apartado).length;
   }
 
   /** Un paso de las animaciones. No cuesta nada si no hay ninguna. */
