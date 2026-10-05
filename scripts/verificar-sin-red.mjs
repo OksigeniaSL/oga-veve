@@ -206,7 +206,9 @@ comprobar(
   "el manifiesto también está sin red",
   manifiesto !== null &&
     manifiesto.icons?.length >= 3 &&
-    manifiesto.display === "standalone",
+    // A pantalla completa desde dbeae2fa («el juego instalable a pantalla
+    // completa»); lo que se mira aquí es que se lea sin red, no cuál es.
+    (manifiesto.display === "fullscreen" || manifiesto.display === "standalone"),
   manifiesto
     ? `«${manifiesto.short_name}» · ${manifiesto.icons.length} iconos · ${manifiesto.display}`
     : "no se pudo leer",

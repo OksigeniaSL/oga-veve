@@ -152,9 +152,18 @@ for (const escenario of ESCENARIOS) {
   await page.goto(
     `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami` +
       (process.env.OGA_AVION ? `&avion=${process.env.OGA_AVION}` : "") +
+      /*
+       * Sin parte pedido, el tiempo de casa y no el del día: con el proxy del
+       * `.env`, el 5-oct-2026 Los Rodeos daba OVC003, la tarjeta del tiempo
+       * salía sola en el puesto a proponer no salir, el juego quedaba
+       * congelado detrás y el banco medía 1.111 fps de una escena quieta en
+       * el puesto, en el aire y en crucero. Ver `verificar-despegue.mjs`.
+       */
       (process.env.OGA_METAR
         ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
-        : ""),
+        : process.env.OGA_METEO_DE_VERDAD
+          ? ""
+          : "&meteo="),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 60000,
