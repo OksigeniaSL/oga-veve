@@ -118,3 +118,5 @@ reversa, y gasta más de un kilómetro de pista.
   desde los quince metros son unos trescientos. No cambia qué avión cabe en
   qué pista, porque en toda la flota manda el despegue, y por eso no se tocó.
 - **El peso que baja al quemar** (#91): la ficha aterriza siempre a su peso.
+  *Resuelto en el ADR 0019*, con una salvedad: con la Vref fija, aterrizar más
+  ligero no acorta la toma.

@@ -27,7 +27,7 @@
  * en uno largo, sí. Ver `nivelQueAhorra` y su prueba.
  */
 
-import { esDeChorro, type AircraftConfig } from "./aircraft";
+import { esDeChorro, masaDe, type AircraftConfig } from "./aircraft";
 import {
   AIRE_ESTANDAR,
   airDensity,
@@ -71,7 +71,7 @@ export function resistenciaNivelado(
 ): number {
   const rho = airDensity(altura, AIRE_ESTANDAR);
   const qS = 0.5 * rho * verdadera * verdadera * a.wingArea;
-  const cl = (a.mass * GRAVITY) / Math.max(1, qS);
+  const cl = (masaDe(a) * GRAVITY) / Math.max(1, qS);
   const ar = (a.wingSpan * a.wingSpan) / a.wingArea;
   const cd =
     a.aero.cd0 +
@@ -103,7 +103,7 @@ export function costeDelTramo(
   cotaDeSalida = 0,
   cotaDeLlegada = 0,
 ): CosteDelTramo {
-  const peso = a.mass * GRAVITY;
+  const peso = masaDe(a) * GRAVITY;
   const desde = cotaDeSalida + SOBRE_EL_CAMPO;
   const hasta = cotaDeLlegada + SOBRE_EL_CAMPO;
   let kilos = 0;

@@ -139,7 +139,8 @@ suelo a la velocidad de su tipo y la carrera pasa por V1.
   pronóstico de vientos en altura. Es el #35.
 - **El peso, fijo.** La masa es la de la ficha y no baja al quemar: un avión que
   quema un sexto de su peso debería perder a un 9 % menos de velocidad y
-  aterrizar más corto. Es el #91.
+  aterrizar más corto. Es el #91. *Resuelto en el ADR 0019: el avión pesa lo
+  que lleva.*
 
 ## Consecuencias
 

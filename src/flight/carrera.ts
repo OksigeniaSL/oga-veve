@@ -26,7 +26,13 @@
  * pruebas, y ahí no la podía usar el juego.
  */
 
-import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
+import {
+  conMasa,
+  esDeChorro,
+  loQueDaElMotor,
+  masaDe,
+  type AircraftConfig,
+} from "./aircraft";
 import { resistenciaDelTren } from "./tren";
 import { esDeLinea } from "./velocidades-en-tierra";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
@@ -79,7 +85,10 @@ export function carreraHastaVr(
   vientoDeFrente = 0,
 ): number {
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const peso = a.mass * G;
+  // **Con lo que pesa ahora**: un vuelo largo sale con más combustible, rueda
+  // más y necesita más pista. Ver `masaDe`.
+  const masa = masaDe(a);
+  const peso = masa * G;
   const cl = a.aero.cl0;
   // Rodando, el tren va fuera: el `cd0` de la ficha es el del avión limpio.
   // Ver `resistenciaDelTren`.
@@ -105,7 +114,7 @@ export function carreraHastaVr(
     const sustenta = Math.max(0, q) * cl;
     const empuje =
       a.maxThrust * motor * Math.max(0.2, 1 - Math.max(0, aire) / (2.4 * a.cruiseSpeed));
-    const acc = (empuje - q * cd - mu * Math.max(0, peso - sustenta)) / a.mass;
+    const acc = (empuje - q * cd - mu * Math.max(0, peso - sustenta)) / masa;
     if (acc <= 0) return Infinity;
     s += (v / acc) * dv;
   }
@@ -113,14 +122,13 @@ export function carreraHastaVr(
 }
 
 /**
- * **La distancia de despegue de la ficha**, m: de soltar frenos a pasar los
- * quince metros (cincuenta pies), que es el número que publica cualquier
- * manual de vuelo y el que se compara con la pista.
+ * **La distancia de despegue**, m: de soltar frenos a pasar los quince metros
+ * (cincuenta pies), que es el número que publica cualquier manual de vuelo y
+ * el que se compara con la pista, todavía sin márgenes.
  *
- * Sale de la rodadura hasta la rotación por la proporción de los manuales
- * —ver `pistaQueNecesita`—: un 172 rueda 265 m y despega en 500; un 747 a este
- * peso rueda 1.800 y despega en 2.500. Es lo que falta después de rotar:
- * separarse y subir los quince metros.
+ * Sale de la rodadura hasta la rotación por la proporción de su clase: ver
+ * `deRodarADespegar`. Es lo que falta después de rotar: separarse y subir los
+ * quince metros.
  */
 export function distanciaDeDespegue(
   a: AircraftConfig,
@@ -128,7 +136,7 @@ export function distanciaDeDespegue(
   densidad: number = RHO,
   vientoDeFrente = 0,
 ): number {
-  return carreraHastaVr(a, superficie, densidad, vientoDeFrente) * 1.8;
+  return carreraHastaVr(a, superficie, densidad, vientoDeFrente) * deRodarADespegar(a);
 }
 
 /**
@@ -142,6 +150,13 @@ export interface DiaDeDespegue {
   /** El viento de frente en la cabecera en uso, m/s; negativo es de cola. */
   readonly vientoDeFrente: number;
   readonly superficie: Superficie;
+  /**
+   * **Lo que pesa hoy el avión**, kg: su masa sin combustible más lo que lleve
+   * en los depósitos —ver `masaConCombustible`—. Sin ella, la de la ficha,
+   * que es la de su vuelo típico. Es la tercera cosa de «pesado, caliente,
+   * alto y corto», y la que más cambia de un vuelo a otro en un avión grande.
+   */
+  readonly masa?: number;
 }
 
 /** El día de tablas: nivel del mar, quince grados, sin viento y en asfalto. */
@@ -173,45 +188,47 @@ export function margenDeSuClase(a: AircraftConfig): {
 
 /**
  * **La pista que necesita este avión hoy**, m: la distancia de despegue con
- * el aire, el viento y el suelo del día, por el margen de su clase. Es la
- * cuenta que se hace antes de aceptar una pista o una intersección: «la
+ * el aire, el viento, el suelo y el peso del día, por el margen de su clase.
+ * Es la cuenta que se hace antes de aceptar una pista o una intersección: «la
  * pista mínima que hace falta para despegar tiene que caber» en la que queda
  * (FAA, AIM 4-3-10 b).
  *
- * **Con el peso de la ficha**, que es con el que vuela el motor de vuelo: el
- * combustible se cuenta, pero no aligera el avión. Una cuenta con otro peso
- * que el del avión que vuela diría que cabe y el avión no cabría.
+ * **Con el peso de hoy**, si el día lo trae: el que vuela el motor de vuelo,
+ * la masa sin combustible más lo que hay en los depósitos. Una cuenta con
+ * otro peso que el del avión que vuela diría que cabe y el avión no cabría.
  */
 export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE_TABLAS): number {
+  const avion = dia.masa === undefined ? a : conMasa(a, dia.masa);
   return (
-    carreraHastaVr(a, dia.superficie, dia.densidad, dia.vientoDeFrente) *
-    deRodarADespegarHoy(a) *
+    distanciaDeDespegue(avion, dia.superficie, dia.densidad, dia.vientoDeFrente) *
     margenDeSuClase(a).factor
   );
 }
 
 /**
- * **De la rodadura hasta la rotación a la distancia de despegue, por clase**,
- * para la cuenta del día.
+ * **De la rodadura hasta la rotación a la distancia de despegue, por clase.**
  *
- * `distanciaDeDespegue` usa 1,8 para todos, que es la cifra de una avioneta:
- * un 172 rueda 265 m hasta rotar y pasa los cincuenta pies a los 500, porque
- * sube despacio y su tramo en el aire es largo. Un reactor se separa enseguida
- * y sube mucho más empinado: un 747 a este peso rueda 1.800 y despega en 2.500
- * (1,39), que es lo que dice `pistaQueNecesita`. Con el 1,8 y el 1,15 de su
+ * Usaba 1,8 para todos, que es la cifra de una avioneta: un 172 rueda unos
+ * 290 m hasta rotar y pasa los cincuenta pies a los 500 —960 y 1.630 ft en el
+ * manual del 172S a su peso máximo, 1,7; otras tablas de la misma clase dan
+ * 1,9—, porque sube despacio y su tramo en el aire es largo. Un reactor se
+ * separa enseguida y sube mucho más empinado: un 747 a este peso rueda 1.800
+ * y despega en 2.500, 1,39. Con el 1,8 y el 1,15 de su
  * certificación, el JAZ 120 «necesitaba» 3.627 m en Los Rodeos a veinte
- * grados, la tarjeta del tiempo le proponía no salir por falta de pista y el
- * banco se quedaba en el puesto, por la pista por la que salían los 747 de
- * verdad (5-oct-2026).
+ * grados y la tarjeta del tiempo le proponía no salir por falta de pista, por
+ * la pista por la que salían los 747 de verdad (5-oct-2026).
  *
- * Solo aquí, de momento: `cabeEn` decide qué avión se ofrece en cada campo con
- * `pistaQueNecesita`, y ese 1,8 está haciendo de margen del aterrizaje que su
- * cuenta no lleva (la toma de un reactor no puede gastar más del 60 % de la
- * pista: CAT.POL.A.230). Corregirlo allí pide ponerle a la vez ese margen, y
- * cambia qué avión cabe dónde: está en la lista.
+ * Y en la regla de qué avión cabe en qué campo, ese 1,8 inflado estaba
+ * haciendo de margen del aterrizaje que la cuenta no llevaba. Ahora cada
+ * margen va en su sitio: ver `pistaQueNecesita`.
+ *
+ * **Los de hélice, turbohélice incluido, con el 1,8**: la proporción de un
+ * turbohélice de su clase no se ha encontrado publicada con su rodadura al
+ * lado —el Twin Otter da la distancia a cincuenta pies y no la rodadura—, y
+ * de las dos cifras que hay, la de la avioneta es la que pide más pista.
  */
-function deRodarADespegarHoy(a: AircraftConfig): number {
-  return a.sound.engine === "turbofan" ? 2500 / 1800 : 1.8;
+export function deRodarADespegar(a: AircraftConfig): number {
+  return esDeChorro(a) ? 2500 / 1800 : 1.8;
 }
 
 /**
@@ -482,7 +499,7 @@ export function velocidadDeToma(a: AircraftConfig): number {
 export function caidaSinMotor(a: AircraftConfig, velocidad: number): number {
   const v = Math.max(1, velocidad);
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const cl = (2 * a.mass * G) / (RHO * v * v * a.wingArea);
+  const cl = (2 * masaDe(a) * G) / (RHO * v * v * a.wingArea);
   /*
    * **Y la hélice al ralentí frena, que no es un detalle.**
    *
@@ -512,34 +529,68 @@ export function ascensoMaximo(a: AircraftConfig): number {
       ? Math.max(0.5, 1 - (0.3 * v) / a.cruiseSpeed)
       : Math.max(0.2, 1 - v / (2.4 * a.cruiseSpeed)));
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const cl = (2 * a.mass * G) / (RHO * v * v * a.wingArea);
+  const masa = masaDe(a);
+  const cl = (2 * masa * G) / (RHO * v * v * a.wingArea);
   const cd = a.aero.cd0 + (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
   const resistencia = 0.5 * RHO * v * v * a.wingArea * cd;
   return Math.max(
     2.5,
-    Math.min(14, ((empuje - resistencia) * v) / (a.mass * G)),
+    Math.min(14, ((empuje - resistencia) * v) / (masa * G)),
   );
 }
 
 /**
- * La pista que este avión necesita en este campo, en metros.
+ * **La parte de la pista de aterrizaje que se puede gastar**, por clase, con
+ * su norma: la distancia de aterrizaje, desde los cincuenta pies del umbral
+ * hasta pararse, tiene que caber en esa parte de la LDA.
  *
- * La mayor de las dos, con propina: se despega una vez y se aterriza otra, y no
- * sirve de nada caber en una si no se cabe en la otra.
+ * - **Reactor**: el 60 % (Reglamento (UE) 965/2012, CAT.POL.A.230 a 1).
+ * - **Turbohélice de transporte**: el 70 % (CAT.POL.A.230 a 2).
+ * - **Avioneta y bimotor de pistón**, la clase B de performance: el 70 %
+ *   (CAT.POL.A.330 a). Es también el factor de 1,43 que la autoridad
+ *   británica recomienda al vuelo privado sobre la distancia de aterrizaje del
+ *   manual (CAA, *Safety Sense Leaflet 7c*), que es la misma cuenta al revés.
  *
- * El factor de la de despegue no es prudencia: `carreraHastaVr` acaba **en la
- * rotación**, y desde ahí el avión todavía recorre un trecho antes de separarse
- * y otro antes de pasar los quince metros del final. La proporción entre esa
- * rodadura y la distancia de despegue publicada anda por 1,8 en los manuales
- * —un 172 rueda 265 m y despega en 500; un 747 a este peso rueda 1.800 y
- * despega en 2.500—, y ése es el número.
+ * Son las de la pista seca. Las de la mojada —un 15 % más de distancia,
+ * CAT.POL.A.235 y CAT.POL.A.335— no entran en la regla de qué avión cabe en
+ * qué campo, que se decide con la pista seca, como el despacho de un vuelo.
+ */
+export function parteDeLaLda(a: AircraftConfig): {
+  readonly parte: number;
+  readonly norma: "CAT.POL.A.230 a 1" | "CAT.POL.A.230 a 2" | "CAT.POL.A.330 a";
+} {
+  if (esDeChorro(a)) return { parte: 0.6, norma: "CAT.POL.A.230 a 1" };
+  if (esDeLinea(a)) return { parte: 0.7, norma: "CAT.POL.A.230 a 2" };
+  return { parte: 0.7, norma: "CAT.POL.A.330 a" };
+}
+
+/**
+ * **La pista que este avión necesita en un campo**, m, en las dos maniobras y
+ * con los márgenes de su clase: la TORA que pide para despegar y la LDA que
+ * pide para aterrizar. Se despega una vez y se aterriza otra, y no sirve de
+ * nada caber en una si no se cabe en la otra. Ver `cabeEn`.
+ *
+ * - **Despegar**: la distancia de despegue —la rodadura por la proporción de
+ *   su clase, `deRodarADespegar`— por el margen de su clase,
+ *   `margenDeSuClase`. Es `pistaNecesariaHoy` en un día de tablas.
+ * - **Aterrizar**: la distancia de aterrizaje partida por la parte de la LDA
+ *   que se puede gastar, `parteDeLaLda`.
+ *
+ * Era la mayor de las dos distancias **sin márgenes**, con la de despegue
+ * sacada con el 1,8 de una avioneta para todos. En los reactores ese 1,8
+ * inflado hacía de margen del aterrizaje, que la cuenta no llevaba; ahora
+ * cada margen es el de su norma y está en su sitio.
+ *
+ * Con la masa de la ficha, que es la del vuelo típico: qué avión se ofrece en
+ * un campo no puede depender de lo que quede en el depósito. Lo de cada día
+ * —el peso, el aire, el viento— lo cuenta `pistaNecesariaHoy`.
  */
 export function pistaQueNecesita(
   a: AircraftConfig,
   superficie: Superficie = "asfalto",
-): number {
-  return Math.max(
-    distanciaDeDespegue(a, superficie),
-    distanciaDeAterrizaje(a, superficie),
-  );
+): { readonly despegar: number; readonly aterrizar: number } {
+  return {
+    despegar: pistaNecesariaHoy(a, { ...DIA_DE_TABLAS, superficie }),
+    aterrizar: distanciaDeAterrizaje(a, superficie) / parteDeLaLda(a).parte,
+  };
 }

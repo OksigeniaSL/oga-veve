@@ -416,6 +416,20 @@ export interface FlightModel {
   /** Y el aire que tiene puesto, para que los relojes digan lo mismo que él. */
   aireDelDia(): Aire;
   /**
+   * **Lo que pesa el avión ahora**, kg: su masa sin combustible más lo que
+   * queda en los depósitos. Lo pone el juego cada fotograma desde el
+   * combustible —ver `masaConCombustible`—, y sin ponerlo el modelo vuela con
+   * la masa de la ficha.
+   *
+   * Existe porque la masa era la de la ficha y no bajaba al quemar (#91): un
+   * vuelo largo tiene que salir más pesado, correr más pista y aterrizar más
+   * ligero, «como se hace en el mundo real», que es lo que pidió Enrique.
+   * Opcional para los modelos de prueba, que no lo necesitan.
+   */
+  ponerMasa?(kg: number): void;
+  /** Y la que tiene puesta, kg. */
+  masaAhora?(): number;
+  /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *
    * Va aparte del viento del parte porque son dos cosas distintas: el viento es

@@ -121,27 +121,32 @@ describe("las tres fichas de la portada", () => {
 describe("los destinos que no caben", () => {
   const jaz = (id: string) => AIRCRAFT.find((a) => a.id === id)!;
 
-  it("con el JAZ 120 en Pettirossi salen los que le quedan cortos, con su porqué", () => {
+  it("con el JAZ 120 en Pettirossi salen los que no le valen, con su porqué", () => {
     /*
-     * Desde que de Asunción sale todo el país, el reactor grande llega a los
+     * Desde que de Asunción sale todo el país, el reactor grande llegaba a los
      * dos campos de más de tres kilómetros —Ciudad del Este y Mariscal
-     * Estigarribia— y a ninguno más. Los otros seis se ven apagados, Pilar y
-     * Ayolas incluidos.
+     * Estigarribia— y a ninguno más. **Con la regla de los bomberos, a
+     * ninguno**: Ciudad del Este es de la categoría 7 y Estigarribia no tiene,
+     * y un avión de la 9 pide la 8 como poco. Los ocho se ven apagados, con
+     * su porqué —la pista corta en seis, los bomberos en dos— y el avión que
+     * sí iría. Ningún 747 vuela dentro de Paraguay. Ver `flight/bomberos.ts`.
      */
     const grande = jaz("jaz-120");
-    expect(destinosPosibles(PETTIROSSI, grande).map((d) => d.id).sort()).toEqual([
-      "estigarribia",
-      "guarani",
-    ]);
+    expect(destinosPosibles(PETTIROSSI, grande).map((d) => d.id)).toEqual([]);
     const fuera = destinosQueNoCaben(PETTIROSSI, grande);
     expect(fuera.map((f) => f.destino.id).sort()).toEqual([
       "ayolas",
       "concepcion",
       "encarnacion",
+      "estigarribia",
+      "guarani",
       "pedro-juan",
       "pilar",
       "yvytu-rape",
     ]);
+    expect(
+      fuera.filter((f) => f.veredicto.porQueNo === "bomberos").map((f) => f.destino.id).sort(),
+    ).toEqual(["estigarribia", "guarani"]);
     for (const f of fuera) {
       expect(f.veredicto.cabe).toBe(false);
       expect(f.veredicto.porQueNo).not.toBeNull();

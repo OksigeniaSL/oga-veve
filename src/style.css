@@ -13293,6 +13293,32 @@ svg .ex-raya {
 }
 
 /*
+ * **El porqué de los bomberos se toca, y se explica.** La ficha de un avión
+ * que no cabe va apagada, y un botón apagado no recibe el dedo: encima va uno
+ * transparente, del tamaño de la ficha, que abre la explicación. El de mirarlo
+ * de cerca va después en la celda y queda por encima. Ver `abrirBomberos` en
+ * `ui/hangar.ts`.
+ */
+.ficha__porque {
+  grid-area: 1 / 1;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: help;
+}
+
+.ficha__nocabe--explica {
+  cursor: help;
+}
+
+.ficha--lejos[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/*
  * ── En el cuadro, lo que la abre ──
  *
  * El retrato de la placa y la matrícula, que se tocan, y su botón en la fila

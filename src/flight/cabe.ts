@@ -13,11 +13,16 @@
  *
  * ## Qué es caber
  *
- * Tres cosas, y las tres tienen que darse:
+ * Cuatro cosas, y las cuatro tienen que darse:
  *
- * - **La pista es bastante larga.** La mayor de la distancia de despegue y la
- *   de aterrizaje, que son distintas y no siempre manda la misma: el JAZ 120
- *   necesita más para salir y el JAZ 20 más para pararse. Ver `pistaQueNecesita`.
+ * - **La pista es bastante larga, para despegar y para aterrizar.** Cada
+ *   maniobra con su distancia publicada y su margen de verdad: la distancia
+ *   de despegue por el margen de su clase tiene que caber en la TORA, y la de
+ *   aterrizaje en el 60 % de la LDA en un reactor y en el 70 % en los demás
+ *   (Reglamento (UE) 965/2012, CAT.POL.A.230 y CAT.POL.A.330). Ver
+ *   `pistaQueNecesita`. Con las distancias declaradas de su AIP y no con el
+ *   largo del asfalto, que no siempre se puede usar entero: en Fuerteventura,
+ *   despegando por la 19, sobran mil metros que no son pista para eso.
  * - **La pista es bastante ancha.** Una pista tiene que dar para maniobrar con
  *   la envergadura que se lleva. Las anchuras normalizadas de OACI van por
  *   clave de referencia, y la regla de andar por casa que sale de ellas es que
@@ -26,13 +31,29 @@
  *   mitad tiene que poder volver a la cabecera, y eso es un giro de ciento
  *   ochenta grados cuyo radio sale de su batalla. En una pista más estrecha que
  *   ese giro, el avión no cabe aunque la longitud le sobre.
+ * - **Los bomberos pueden atenderlo**, si lleva pasaje. Cada aeródromo tiene
+ *   bomberos para el avión más grande que recibe, y publica su categoría; un
+ *   avión de línea va adonde su categoría, o una menos, está cubierta. Lo
+ *   pidió Enrique al ver la tabla: «pues aplica la regla de los bomberos».
+ *   Ver `flight/bomberos.ts`.
+ *
+ * ## Con qué cabecera
+ *
+ * Con la mejor de cada campo para cada maniobra, en aire en calma: es lo que
+ * pide la norma para despachar un vuelo —que la toma quepa en «la pista más
+ * favorable en aire en calma», CAT.POL.A.230 b 1— y es lo que dice si ese
+ * avión opera en ese campo. Qué cabecera da hoy el viento y si con ella cabe
+ * es la cuenta del día, que se hace antes de salir: ver `pistaNecesariaHoy`.
  *
  * ## Y lo que no se comprueba aquí
  *
- * La altitud del campo, la temperatura, el viento y la pendiente. Las cuatro
- * mueven la cuenta de verdad —es la lección de «pesado, caliente, alto y
- * corto»— y ninguna está todavía en el motor de vuelo. Cuando estén, entran
- * aquí y no en otro sitio.
+ * La altitud del campo, la temperatura, el viento, la pendiente y el peso de
+ * cada vuelo. Mueven la cuenta de verdad —es la lección de «pesado, caliente,
+ * alto y corto»—, pero cambian de un día a otro y de un vuelo a otro, y qué
+ * avión se ofrece en un campo no puede cambiar con ellos: se decide con la
+ * masa de la ficha, que es la del vuelo típico, al nivel del mar y en un día
+ * de tablas. Lo de cada día lo cuenta `pistaNecesariaHoy`, con el peso de lo
+ * que se lleva en los depósitos.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -41,6 +62,9 @@ import type { Scenario } from "../world/scenarios";
 import { pistaQueNecesita } from "./carrera";
 import { GIRO_DE_MORRO } from "./fdm";
 import type { Superficie } from "../world/superficie";
+import { umbralPublicado } from "../world/umbrales-publicados";
+import { bomberosDe } from "../world/bomberos-publicados";
+import { categoriaQueAcepta } from "./bomberos";
 
 /** Lo que hace falta saber de un campo para decidir. */
 export interface Campo {
@@ -49,10 +73,23 @@ export interface Campo {
   /** Y lo que mide de ancho. */
   readonly ancho: number;
   readonly superficie: Superficie;
+  /**
+   * La mejor TORA de sus cabeceras, m: la pista que se puede correr
+   * despegando. Sin ella, el largo: un campo que no sale en ningún AIP.
+   */
+  readonly tora?: number;
+  /** Y la mejor LDA, m: la pista para aterrizar. Sin ella, el largo. */
+  readonly lda?: number;
+  /**
+   * La categoría de sus bomberos, de su AIP: 0 si no tiene. Sin ella —un
+   * escenario inventado, sin aeródromo—, la regla de los bomberos no se mira.
+   * Ver `world/bomberos-publicados.ts`.
+   */
+  readonly bomberos?: number;
 }
 
 /** Por qué no cabe, si no cabe. */
-export type PorQueNo = "corta" | "estrecha" | "no-da-la-vuelta";
+export type PorQueNo = "corta" | "estrecha" | "no-da-la-vuelta" | "bomberos";
 
 export interface Veredicto {
   readonly cabe: boolean;
@@ -74,9 +111,20 @@ export function radioDeGiro(a: AircraftConfig): number {
 }
 
 export function cabeEn(a: AircraftConfig, campo: Campo): Veredicto {
-  const necesita = pistaQueNecesita(a, campo.superficie);
-  if (necesita > campo.largo)
-    return { cabe: false, porQueNo: "corta", necesita, hay: campo.largo };
+  const pide = pistaQueNecesita(a, campo.superficie);
+  /*
+   * Las dos maniobras, cada una contra su distancia declarada. Lo que se
+   * enseña —lo que necesita y lo que hay— es el de la que va más justa, que
+   * es la que decide: si no cabe, la que no cabe.
+   */
+  const despegar = { necesita: pide.despegar, hay: campo.tora ?? campo.largo };
+  const aterrizar = { necesita: pide.aterrizar, hay: campo.lda ?? campo.largo };
+  const justa =
+    despegar.necesita / despegar.hay >= aterrizar.necesita / aterrizar.hay
+      ? despegar
+      : aterrizar;
+  if (justa.necesita > justa.hay)
+    return { cabe: false, porQueNo: "corta", necesita: justa.necesita, hay: justa.hay };
 
   const anchoQuePide = a.wingSpan / 3;
   if (anchoQuePide > campo.ancho)
@@ -101,7 +149,16 @@ export function cabeEn(a: AircraftConfig, campo: Campo): Veredicto {
       hay: campo.ancho,
     };
 
-  return { cabe: true, porQueNo: null, necesita, hay: campo.largo };
+  /*
+   * **Y los bomberos**, la última: primero lo que se ve —la pista—, y después
+   * lo que no se ve y también decide. Lo que pide es la categoría más baja que
+   * acepta el avión, y lo que hay, la del aeródromo. Ver `flight/bomberos.ts`.
+   */
+  const acepta = categoriaQueAcepta(a);
+  if (acepta !== null && campo.bomberos !== undefined && campo.bomberos < acepta)
+    return { cabe: false, porQueNo: "bomberos", necesita: acepta, hay: campo.bomberos };
+
+  return { cabe: true, porQueNo: null, necesita: justa.necesita, hay: justa.hay };
 }
 
 /**
@@ -141,10 +198,24 @@ export function campoDe(escenario: Scenario): Campo {
   const blanda = /grass|dirt|gravel|earth|sand|ground/i.test(
     pista?.surface ?? "",
   );
+  /*
+   * Las distancias declaradas de sus cabeceras, del AIP: la mejor de cada
+   * una, que es la de la cabecera más favorable en aire en calma. Ver la
+   * cabecera de este fichero y `umbrales-publicados.ts`.
+   */
+  const oaci = escenario.aerodrome?.id ?? null;
+  const publicadas = Object.keys(pista?.thresholds ?? {})
+    .map((cabecera) => umbralPublicado(oaci, cabecera))
+    .filter((u): u is NonNullable<typeof u> => u !== null);
+  const largo = escenario.runway.length;
   return {
-    largo: escenario.runway.length,
+    largo,
     ancho: escenario.runway.width,
     superficie: blanda ? "hierba" : "asfalto",
+    tora: publicadas.length ? Math.max(...publicadas.map((u) => u.tora)) : largo,
+    lda: publicadas.length ? Math.max(...publicadas.map((u) => u.lda)) : largo,
+    // Los bomberos, de su AIP. Sin aeródromo, no se miran.
+    ...(oaci ? { bomberos: bomberosDe(oaci) ?? 0 } : {}),
   };
 }
 
@@ -167,14 +238,14 @@ export function elQueQuepa(
  * La regla de arriba —«si un avión no cabe en una pista, no se ofrece»— se
  * aplicaba al campo del que se sale y a ninguno más, o sea a la mitad del
  * vuelo. Desde Los Rodeos con el de fuselaje ancho, el juego cargaba La
- * Gomera (1.498 m), El Hierro (1.256) y La Palma (2.119), las pintaba en la
- * carta y dejaba poner rumbo a ellas — y ese avión necesita 2.562 metros para
- * pararse. No hay pilotaje que arregle eso, y la consecuencia no enseña nada
- * porque el error no fue de quien volaba.
+ * Gomera, El Hierro y La Palma, las pintaba en la carta y dejaba poner rumbo
+ * a ellas — y ese avión no cabe en ninguna de las tres: pide 2.361 m de TORA
+ * y la más larga, La Palma, tiene 2.200. No hay pilotaje que arregle eso, y la
+ * consecuencia no enseña nada porque el error no fue de quien volaba.
  *
  * Filtrado, desde Los Rodeos el grande tiene Tenerife Sur y Gran Canaria y la
- * avioneta las cinco, que es lo que pasa de verdad: a La Gomera va el
- * turbohélice y no el reactor, y por este mismo motivo.
+ * avioneta las cinco, que es lo que pasa de verdad: a La Gomera no va el
+ * de fuselaje ancho, y por este mismo motivo.
  */
 export function destinosParaEsteAvion<T extends Scenario>(
   a: AircraftConfig,

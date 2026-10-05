@@ -519,9 +519,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * eso, la regla puede estar diciendo que un JAZ 120 no cabe en El Hierro
        * mientras el avión despega tan ricamente. Ver `verificar-carrera.mjs`.
        */
-      carreraHastaVr: carreraHastaVr(juego.aircraft),
+      carreraHastaVr: carreraHastaVr(juego.avionConPeso()),
       /** Y lo que le cuesta pararse desde el umbral, m. */
-      aterrizajeEn: distanciaDeAterrizaje(juego.aircraft),
+      aterrizajeEn: distanciaDeAterrizaje(juego.avionConPeso()),
+      /**
+       * **Y lo que pesa ahora**, kg, con lo que hay en los depósitos, y sin
+       * nada en ellos. Las tres cuentas de aquí arriba y de aquí abajo van con
+       * este peso, que es el que vuela. Ver `masaConCombustible`.
+       */
+      masa: juego.masaDeAhora(),
+      masaSinCombustible: juego.aircraft.masaSinCombustible,
       /*
        * Y **la frenada sola**, sin el planeo: los metros de rodadura y la
        * velocidad a la que se posa.
@@ -534,7 +541,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * en rojo el día que la frenada se hizo realista — exigiendo la avería.
        * Ver `rodaduraDeFrenada` en `flight/carrera.ts`.
        */
-      frenadaEn: rodaduraDeFrenada(juego.aircraft),
+      frenadaEn: rodaduraDeFrenada(juego.avionConPeso()),
       tomaA: velocidadDeToma(juego.aircraft),
       /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
@@ -2158,7 +2165,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * tope de los flaps.
      */
     planeo: () => ({
-      ...planeoDe(juego.aircraft),
+      ...planeoDe(juego.avionConPeso()),
       vref: juego.aircraft.approachSpeed,
       // La de los flaps de aterrizaje, que es la que mira el piloto del banco
       // para sacarlos del todo. La placa entera, al lado.

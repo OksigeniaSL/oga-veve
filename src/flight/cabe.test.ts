@@ -76,11 +76,17 @@ describe("qué avión cabe dónde", () => {
   });
 
   it("pero sí en los campos grandes", () => {
+    /*
+     * Eran también Guaraní y Mariscal Estigarribia, que tienen pista de sobra;
+     * con la regla de los bomberos ya no: Guaraní es de la categoría 7 y
+     * Estigarribia no tiene, y un avión de la 9 pide la 8. Ver
+     * `flight/bomberos.ts`.
+     */
     for (const id of [
       "pettirossi",
-      "guarani",
       "tenerife-norte",
-      "estigarribia",
+      "tenerife-sur",
+      "gran-canaria",
     ]) {
       const e = SCENARIOS.find((x) => x.id === id)!;
       expect(cabeEn(grande, campoDe(e)).cabe, id).toBe(true);
@@ -123,7 +129,7 @@ describe("qué avión cabe dónde", () => {
     /*
      * **Y no es el orden del peso**, que es lo que uno escribiría de primeras y
      * es falso: el biplano pesa menos que el entrenador y necesita bastante
-     * menos pista que él —234 metros contra 406—, porque tiene más ala y más
+     * menos pista que él —311 metros contra 539—, porque tiene más ala y más
      * motor. Un fumigador está hecho para salir de un potrero.
      *
      * Lo que sí es cierto siempre es que el de fuselaje ancho pide más que
@@ -216,7 +222,7 @@ describe("los destinos también tienen que dar la talla", () => {
     const valen = destinosParaEsteAvion(ancho, deLosRodeos()).map((e) => e.id);
     expect(valen).toContain("tenerife-sur");
     expect(valen).toContain("gran-canaria");
-    // Las tres que no: 1.498, 1.256 y 2.119 metros contra los 2.562 que pide.
+    // Las tres que no: 1.500, 1.250 y 2.200 m de TORA contra los 2.361 que pide.
     expect(valen).not.toContain("la-gomera");
     expect(valen).not.toContain("el-hierro");
     expect(valen).not.toContain("la-palma");

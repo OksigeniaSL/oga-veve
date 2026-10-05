@@ -45,8 +45,10 @@ import {
   resistenciaDeOnda,
 } from "./limites";
 import {
+  conMasa,
   esDeChorro,
   loQueDaElMotor,
+  masaDe,
   tieneReversa,
   type AircraftConfig,
 } from "./aircraft";
@@ -348,7 +350,14 @@ export class CoefficientFlightModel implements FlightModel {
 
   readonly state: FlightState;
 
-  private readonly aircraft: AircraftConfig;
+  /**
+   * El avión **con lo que pesa ahora**: la ficha con la masa que le pone
+   * `ponerMasa`. Todo lo que pregunta por el peso —el que sostiene el ala, el
+   * que acelera, el que frenan las ruedas— lo lee de aquí con `masaDe`.
+   */
+  private aircraft: AircraftConfig;
+  /** La ficha tal cual, de la que salen las copias con peso. */
+  private readonly ficha: AircraftConfig;
   private readonly ground: GroundSampler;
 
   /** Segundos que lleva el ala pasada de ángulo. Ver la nota de la pérdida. */
@@ -378,6 +387,7 @@ export class CoefficientFlightModel implements FlightModel {
 
   constructor(options: FdmOptions) {
     this.aircraft = options.aircraft;
+    this.ficha = options.aircraft;
     this.ground = options.ground;
     this.layers =
       typeof options.assist === "number" || options.assist === undefined
@@ -512,6 +522,27 @@ export class CoefficientFlightModel implements FlightModel {
     return this.aire;
   }
 
+  /**
+   * **Lo que pesa ahora**, kg: la masa sin combustible más lo que queda en los
+   * depósitos. Ver `ponerMasa` en `model.ts`.
+   *
+   * Cambia la masa y nada más: las inercias se quedan las de la ficha. El
+   * combustible es, como mucho, un quinto del avión y va en las alas, a la
+   * altura del centro de gravedad; lo que se notaría con los depósitos llenos
+   * es algo más de inercia de alabeo y de guiñada, y eso no se cuenta.
+   *
+   * Y no se rehace por menos de medio kilo: el fotograma de un avión de línea
+   * quema décimas.
+   */
+  ponerMasa(kg: number): void {
+    if (Math.abs(kg - masaDe(this.aircraft)) < 0.5) return;
+    this.aircraft = conMasa(this.ficha, kg);
+  }
+
+  masaAhora(): number {
+    return masaDe(this.aircraft);
+  }
+
   ponerViento(x: number, z: number): void {
     this.vientoDelParte.x = x;
     this.vientoDelParte.z = z;
@@ -555,7 +586,7 @@ export class CoefficientFlightModel implements FlightModel {
   private alfaDeEquilibrio(velocidad: number, altura: number): number {
     const ac = this.aircraft;
     const qS = 0.5 * airDensity(altura, this.aire) * velocidad * velocidad * ac.wingArea;
-    const cl = (ac.mass * GRAVITY) / Math.max(1, qS);
+    const cl = (masaDe(ac) * GRAVITY) / Math.max(1, qS);
     return clamp((cl - ac.aero.cl0) / ac.aero.clAlpha, -0.05, ac.aero.alphaStall * 0.85);
   }
 
@@ -730,7 +761,7 @@ export class CoefficientFlightModel implements FlightModel {
       const q = 0.5 * densidad * v * v * ac.wingArea;
       return (
         ROZAMIENTO[this.superficie] *
-          Math.max(0, ac.mass * GRAVITY - q * ac.aero.cl0) +
+          Math.max(0, masaDe(ac) * GRAVITY - q * ac.aero.cl0) +
         q * cd
       );
     };
@@ -747,7 +778,7 @@ export class CoefficientFlightModel implements FlightModel {
     if (!(lleno > 0)) return 1;
     return Math.max(
       0,
-      Math.min(1, (frenaA(ahora) + ac.mass * acelera) / lleno),
+      Math.min(1, (frenaA(ahora) + masaDe(ac) * acelera) / lleno),
     );
   }
 
@@ -1296,13 +1327,13 @@ export class CoefficientFlightModel implements FlightModel {
       .multiplyScalar(forceX)
       .addScaledVector(this.right, forceY)
       .addScaledVector(this.down, forceZ);
-    this.force.y -= ac.mass * GRAVITY;
+    this.force.y -= masaDe(ac) * GRAVITY;
 
     // Factor de carga: lo que siente el piloto, sin contar gravedad ni
     // empuje. Es la componente de la fuerza aerodinámica hacia su cabeza.
-    s.loadFactor = -forceZ / (ac.mass * GRAVITY);
+    s.loadFactor = -forceZ / (masaDe(ac) * GRAVITY);
 
-    s.velocity.addScaledVector(this.force, dt / ac.mass);
+    s.velocity.addScaledVector(this.force, dt / masaDe(ac));
     s.position.addScaledVector(s.velocity, dt);
 
     // ── Rotación ───────────────────────────────────────────────────────
@@ -1448,7 +1479,7 @@ export class CoefficientFlightModel implements FlightModel {
      */
     const longitudinal = s.velocity.dot(this.forward);
     const rapidez = Math.abs(longitudinal);
-    const apoyado = Math.max(0, ac.mass * GRAVITY - this.apoyoDelAire);
+    const apoyado = Math.max(0, masaDe(ac) * GRAVITY - this.apoyoDelAire);
     const mu = coeficienteDeFrenado(
       ac.frenos,
       this.superficie,
@@ -1482,14 +1513,14 @@ export class CoefficientFlightModel implements FlightModel {
       const porElAire =
         this.rapidezEnTierra !== null ? (this.rapidezEnTierra - rapidez) / dt : 0;
       const sinFreno =
-        porElAire + (ROZAMIENTO[this.superficie] * apoyado + reversa) / ac.mass;
-      const aFondo = sinFreno + (mu * apoyado) / ac.mass;
+        porElAire + (ROZAMIENTO[this.superficie] * apoyado + reversa) / masaDe(ac);
+      const aFondo = sinFreno + (mu * apoyado) / masaDe(ac);
       freno = Math.max(freno, frenoDelAutofreno(objetivo, sinFreno, aFondo));
     }
     this.frenoDeAhora = freno;
     const frena =
       ((ROZAMIENTO[this.superficie] + mu * freno) * apoyado + reversa) /
-      ac.mass;
+      masaDe(ac);
     s.velocity.addScaledVector(
       this.forward,
       -Math.sign(longitudinal) * Math.min(rapidez, frena * dt),
@@ -1589,7 +1620,7 @@ export class CoefficientFlightModel implements FlightModel {
     const s = this.state;
     const ac = this.aircraft;
     const cabeceo = Math.asin(clamp(this.forward.y, -1, 1));
-    const peso = ac.mass * GRAVITY;
+    const peso = masaDe(ac) * GRAVITY;
     const apoyado = Math.max(0, peso - sustentacion);
     const brazo = ac.batalla * CARGA_EN_EL_MORRO;
     let par = -apoyado * brazo;
@@ -1965,7 +1996,7 @@ export function empujeQueSostiene(a: AircraftConfig, p: ParaSostener): number {
   const rho = airDensity(p.altura, aire);
   const v = Math.max(1, p.verdadera);
   const qS = 0.5 * rho * v * v * a.wingArea;
-  const peso = a.mass * GRAVITY;
+  const peso = masaDe(a) * GRAVITY;
   const cl = (peso * Math.cos(p.pendiente)) / Math.max(1, qS);
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
   const cd =

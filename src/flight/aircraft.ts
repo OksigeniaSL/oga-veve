@@ -447,6 +447,32 @@ export interface Presurizacion {
 /** Un psi, en pascales: los manuales de presurización van en psi. */
 export const PSI = 6894.757;
 
+/**
+ * **Lo que pesa este avión ahora**, kg: el de la copia con su combustible, o
+ * el de la ficha si es la ficha. Es la masa que acelera, la que sostiene el
+ * ala y la que frenan las ruedas. Ver `masaDeAhora`.
+ */
+export function masaDe(a: {
+  readonly mass: number;
+  readonly masaDeAhora?: number;
+}): number {
+  return a.masaDeAhora ?? a.mass;
+}
+
+/**
+ * **Este avión con esta masa**: la misma ficha, que pesa `masa` kilos.
+ *
+ * Es una copia y no la ficha, así que no sirve para comparar por identidad
+ * —`elQueQuepa` y la tarjeta lo hacen con las de la flota—: es para las
+ * cuentas de física, que leen la masa con `masaDe`. Con la masa de la ficha
+ * devuelve la ficha misma.
+ */
+export function conMasa(a: AircraftConfig, masa: number): AircraftConfig {
+  const deLaFicha = !(masa > 0) || Math.abs(masa - a.mass) < 0.5;
+  if (deLaFicha && a.masaDeAhora === undefined) return a;
+  return { ...a, masaDeAhora: deLaFicha ? a.mass : masa };
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -454,8 +480,47 @@ export interface AircraftConfig {
   /** Descripción corta, clave de i18n. */
   descriptionKey: string;
 
-  /** Masa total, kg. */
+  /**
+   * **La masa de la ficha**, kg: con la que se midieron sus prestaciones y la
+   * de despegue de un vuelo típico del juego. Es la que decide en qué campo
+   * cabe —ver `cabeEn`— y la que dimensiona lo que no cambia en vuelo: el
+   * tren, los depósitos, si lleva pasaje.
+   *
+   * **La del avión que vuela es otra**: la de sin combustible más lo que lleve
+   * en los depósitos, que baja al quemarlo. Ver `masaSinCombustible` y
+   * `masaDe`.
+   */
   mass: number;
+  /**
+   * **La masa sin combustible**, kg: el avión en orden de operaciones —con su
+   * tripulación— y su carga, que es el pasaje con su equipaje, la bodega o lo
+   * que lleve la tolva. Lo que pesa el avión que vuela es esto más lo que haya
+   * en los depósitos. Ver `masaConCombustible` en `combustible.ts`.
+   *
+   * Pedido por Enrique, sobre cuánta pista hace falta: «como se hace en el
+   * mundo real, según tipo de avión, peso, viento, etc., en cada momento».
+   * La masa era la de la ficha y no bajaba al quemar (#91).
+   *
+   * **Cómo se ha elegido la carga**: la que deja el vuelo típico del juego
+   * —la mediana de lo que se carga en todas sus rutas— con la masa de la
+   * ficha, que es con la que se midió todo lo demás; o menos, si con esa
+   * **algún vuelo pasaría del peso máximo al despegue de su clase** o la masa
+   * sin combustible de la máxima de su clase donde se ha podido leer. Así
+   * salen el JAZ 20, el JAZ 40 y el JAZ 60, entre un 5 y un 7 % por debajo de
+   * su ficha en su vuelo típico. Cada ficha dice qué carga es. Lo comprueba
+   * `peso.test.ts`.
+   */
+  masaSinCombustible: number;
+  /**
+   * **Lo que pesa ahora**, kg, si no es lo de la ficha. Solo lo llevan las
+   * copias que hace `conMasa` —las del modelo de vuelo y las cuentas del día—;
+   * las fichas de la flota, nunca. Se lee con `masaDe`.
+   *
+   * Va aparte y no encima de `mass` porque hay cosas que no adelgazan al
+   * quemar: el tren se dimensiona con el peso de la ficha —ver
+   * `resistenciaDelTren`— y los depósitos también.
+   */
+  readonly masaDeAhora?: number;
   /** Superficie alar, m². */
   wingArea: number;
   /** Envergadura, m. */
@@ -1010,6 +1075,15 @@ export const PYKASU: AircraftConfig = {
   name: nombreEntero(FLOTA[0]!),
   descriptionKey: "aircraft.pykasu.description",
   mass: 1100,
+  /*
+   * **743 kg de avión y 221 de gente**: el peso en vacío estándar del 172R
+   * —1.639 lb en su manual de vuelo— con la instructora, quien vuela y una
+   * criatura detrás. Con más, el vuelo más largo que tiene en el juego
+   * —Estigarribia a Pettirossi, 147 kg de combustible— pasaría de las 2.450 lb
+   * de su peso máximo, que es lo que le pasa a un 172 de verdad: con cuatro
+   * adultos no se llenan los depósitos.
+   */
+  masaSinCombustible: 964,
   wingArea: 16.2,
   wingSpan: 11.0,
   chord: 1.5,
@@ -1153,6 +1227,13 @@ export const MAINUMBY: AircraftConfig = {
   name: nombreEntero(FLOTA[1]!),
   descriptionKey: "aircraft.mainumby.description",
   mass: 1500,
+  /*
+   * El biplano con su piloto y la tolva. Su peso en vacío no se ha podido
+   * leer en una fuente, así que no se reparte: es la carga con la que su vuelo
+   * típico sale con la masa de la ficha, muy por debajo de las 4.500 lb del
+   * Ag Cat. Lo que lleva la tolva no se suelta en este juego.
+   */
+  masaSinCombustible: 1315,
   wingArea: 24.0,
   wingSpan: 12.5,
   chord: 1.7,
@@ -1309,6 +1390,13 @@ export const PANAMBI: AircraftConfig = {
   name: nombreEntero(FLOTA[2]!),
   descriptionKey: "aircraft.panambi.description",
   mass: 2000,
+  /*
+   * **Las 4.000 lb de masa máxima sin combustible del Seneca II**, la cabina
+   * llena: su ficha de tipo, la FAA A7SO, lo dice al revés —«all weight in
+   * excess of 4000 lb must be fuel»—. Con el vuelo más largo del juego queda
+   * en 2.042 kg, debajo de sus 4.570 lb al despegue.
+   */
+  masaSinCombustible: 1814,
   wingArea: 19.0,
   wingSpan: 11.9,
   chord: 1.6,
@@ -1461,6 +1549,12 @@ export const ARASUNU: AircraftConfig = {
   name: nombreEntero(FLOTA[3]!),
   descriptionKey: "aircraft.arasunu.description",
   mass: 5600,
+  /*
+   * La carga con la que el vuelo más largo que tiene en el juego —de
+   * Pettirossi a Estigarribia, 784 kg de combustible— despega justo con las
+   * 12.500 lb del Twin Otter, que es su peso. Su vuelo típico sale a 5,3 t.
+   */
+  masaSinCombustible: 4886,
   wingArea: 39.0,
   wingSpan: 19.8,
   chord: 2.0,
@@ -1637,6 +1731,15 @@ export const ARAI: AircraftConfig = {
   name: nombreEntero(FLOTA[4]!),
   descriptionKey: "aircraft.arai.description",
   mass: 30000,
+  /*
+   * **20.700 kg de avión en orden de operaciones y 5.400 de pasaje**: el BOW
+   * del manual de aeropuertos del Embraer 170 (APM-170, tabla 2.1) y unas
+   * cincuenta y siete personas con su maleta: la masa estándar de un adulto
+   * en Europa, 84 kg (Reglamento (UE) 965/2012, CAT.POL.MAB.100), y unos
+   * once de bodega cada una. Por debajo de sus 30.140 kg de masa máxima sin
+   * combustible.
+   */
+  masaSinCombustible: 26100,
   wingArea: 72.0,
   wingSpan: 26.0,
   chord: 3.0,
@@ -1910,6 +2013,15 @@ export const YVAGA: AircraftConfig = {
   name: nombreEntero(FLOTA[5]!),
   descriptionKey: "aircraft.yvaga.description",
   mass: 255826,
+  /*
+   * **El 747 de un chárter lleno.** Con esto su vuelo típico sale con el peso
+   * de la ficha, que es el de aproximación de la CR-2144 —564.000 lb, el
+   * máximo al aterrizaje del 747-100—, y aterriza por debajo de él; la
+   * diferencia con su avión vacío de clase son unas setenta toneladas de
+   * pasaje y bodega. El vuelo más largo que tiene en el juego despega a 272 t,
+   * lejos de sus 735.000 lb.
+   */
+  masaSinCombustible: 231600,
   wingArea: 511,
   wingSpan: 59.64,
   chord: 8.32,

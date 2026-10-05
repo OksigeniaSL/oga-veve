@@ -40,7 +40,7 @@
  * Que frenar, caber y aterrizar no digan tres cosas distintas.
  */
 
-import { tieneReversa, type AircraftConfig } from "./aircraft";
+import { masaDe, tieneReversa, type AircraftConfig } from "./aircraft";
 import { GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { resistenciaDelTren } from "./tren";
@@ -268,7 +268,9 @@ export function deceleracionRodando(
 ): number {
   const v = Math.max(0, velocidad);
   const rho = suelo.densidad ?? SEA_LEVEL_DENSITY;
-  const peso = ac.mass * GRAVITY;
+  // Lo que pesa ahora, con lo que quede en los depósitos. Ver `masaDe`.
+  const masa = masaDe(ac);
+  const peso = masa * GRAVITY;
   const q = 0.5 * rho * v * v * ac.wingArea;
   const cl = sustentacionRodando(ac, m.flaps, m.frenosDeTierra);
   const alargamiento = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
@@ -287,7 +289,7 @@ export function deceleracionRodando(
     tieneReversa(ac) && v > REVERSA_HASTA
       ? Math.max(0, Math.min(1, m.reversa)) * ac.maxThrust * REVERSA_DA
       : 0;
-  return (q * cd + ruedas + reversa) / ac.mass;
+  return (q * cd + ruedas + reversa) / masa;
 }
 
 /**

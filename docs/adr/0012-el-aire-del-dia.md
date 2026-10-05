@@ -130,7 +130,8 @@ Dos arreglos en el modelo que hacían falta para eso:
   mitad de «de alta a baja, ojo con la caja». El altímetro de
   `flight/altimetro.ts` corrige por presión y no por temperatura. Es una
   lección de instrumento, no de física, y va aparte.
-- **El peso que baja al quemar**, que sigue en el #91, y **el viento en
+- **El peso que baja al quemar**, que sigue en el #91 (*resuelto en el ADR
+  0019*), y **el viento en
   altura**, en el #35.
 
 ## Consecuencias

@@ -33,7 +33,7 @@ import { jalonar } from "./luces-de-rodadura";
 import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea, ANCHO_RODADURA } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
-import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
+import { conMasa, velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
   DE_TRANSPORTE,
   RECTA_LARGA,
@@ -54,7 +54,7 @@ import {
   porQueHoyMasPista,
   remontaHastaLaCabecera,
   type DiaDeDespegue,
-  pistaQueNecesita,
+  distanciaDeDespegue,
 } from "../flight/carrera";
 import { radioDeGiro } from "../flight/cabe";
 import { DE_LADO_RODANDO } from "../flight/fdm";
@@ -2755,6 +2755,17 @@ export class PlanDeVuelo {
 
   private diaDeHoy(): DiaDeDespegue {
     return this.diaDeDespegue?.() ?? DIA_DE_TABLAS;
+  }
+
+  /** La distancia de despegue de hoy, sin márgenes, m. Ver `paso`. */
+  private distanciaDeDespegueDeHoy(): number {
+    const dia = this.diaDeHoy();
+    return distanciaDeDespegue(
+      dia.masa === undefined ? this.avion : conMasa(this.avion, dia.masa),
+      dia.superficie,
+      dia.densidad,
+      dia.vientoDeFrente,
+    );
   }
 
   /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
@@ -5920,7 +5931,15 @@ export class PlanDeVuelo {
         Math.abs(along) < this.pista.length / 2 + 3,
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
-      pistaQueNecesita: pistaQueNecesita(this.avion),
+      /*
+       * **La distancia de despegue de hoy, sin márgenes**: con menos pista por
+       * delante este avión no se va del suelo, se haga lo que se haga. Era la
+       * mayor de la de despegue y la de aterrizaje —la regla de qué avión cabe
+       * en un campo—, y aquí la de aterrizaje no pinta nada: se está saliendo.
+       * Con el aire, el viento y el peso del día, que es como corre. Ver
+       * `pistaQueNecesita` en `flight/vuelo.ts`.
+       */
+      pistaQueNecesita: this.distanciaDeDespegueDeHoy(),
       /*
        * Por encima de esto el avión vuela, esté a la altura que esté. Ver
        * «Rozar el monte no es llegar» en `vuelo.ts`.

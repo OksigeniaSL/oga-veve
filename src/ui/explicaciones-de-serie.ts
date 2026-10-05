@@ -372,6 +372,21 @@ const MODO_AVION = trazo(`
   <path d="M12 6 v9 M8.2 11.2 l3.8 -1.6 l3.8 1.6 M10 15.6 l2 -0.8 l2 0.8" />
 `);
 
+/**
+ * **El camión de bomberos de un aeropuerto**, de lado: la cisterna con su
+ * cañón de agua, la cabina y las ruedas. El mismo que sale en el hangar cuando
+ * un avión no se ofrece por sus bomberos. Ver `flight/bomberos.ts`.
+ */
+const BOMBEROS = trazo(`
+  <rect x="2" y="9.6" width="12.4" height="7.6" rx="1" />
+  <path d="M14.4 17.2 V11.2 h3.8 l3.2 3.4 v2.6 Z" />
+  <path d="M16 12.8 h2 l1.4 1.6" />
+  <path d="M5.4 9.6 l2.4 -3 h3" />
+  <path d="M11 6.6 q3 -2.4 6.2 -1.4" stroke-dasharray="1.2 1.4" />
+  <circle cx="6" cy="18.4" r="1.9" />
+  <circle cx="17.6" cy="18.4" r="1.9" />
+`);
+
 /* ── La tabla ──────────────────────────────────────────────────────────── */
 
 /** La frase de cada explicación, armada de su `id` para que no se descuadre. */
@@ -516,7 +531,22 @@ const CURIOSIDADES = enRincon("curiosidades", [
   { id: "cinturon", dibujo: { svg: CINTURON }, ...claves("cinturon") },
   { id: "mesitas", dibujo: { svg: MESITAS }, ...claves("mesitas") },
   { id: "modo-avion", dibujo: { svg: MODO_AVION }, ...claves("modo-avion") },
+  /*
+   * **Por qué a algunos aeropuertos solo van aviones chicos**, con el caso de
+   * La Gomera: la pista, y a veces los bomberos. Ver `flight/bomberos.ts`.
+   */
+  { id: "bomberos-y-aviones", dibujo: { svg: BOMBEROS }, ...claves("bomberos-y-aviones") },
 ]);
+
+/**
+ * **Las del hangar**, sin rincón: se abren tocando el porqué de un avión o de
+ * un destino que no se ofrece. Hoy, la de los bomberos —«y se explica de algún
+ * modo, eso se tiene que saber, yo no tenía ni idea», dijo Enrique al ver la
+ * regla—. Ver `abrirBomberos` en `ui/hangar.ts`.
+ */
+const DEL_HANGAR: readonly Explicacion[] = [
+  { id: "bomberos", dibujo: { svg: BOMBEROS }, ...claves("bomberos") },
+];
 
 /**
  * **Los puntos de la tarjeta del avión en 3D**, en el mismo registro.
@@ -539,16 +569,19 @@ const DEL_AVION: readonly Explicacion[] = EXPLICACIONES_DEL_AVION.map((e) => ({
 }));
 
 /** Los `id` de las que trae el juego. Para las pruebas y para el banco. */
-export const DE_SERIE: readonly string[] = [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_AVION].map(
-  (e) => e.id,
-);
+export const DE_SERIE: readonly string[] = [
+  ...DEL_CUADRO,
+  ...CURIOSIDADES,
+  ...DEL_HANGAR,
+  ...DEL_AVION,
+].map((e) => e.id);
 
 /**
  * **Apunta las de serie.** Se puede llamar las veces que haga falta: si una ya
  * está —porque alguien la afinó después—, no se pisa.
  */
 export function ponerLasDeSerie(): void {
-  for (const e of [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_AVION]) {
+  for (const e of [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_HANGAR, ...DEL_AVION]) {
     if (explicacionDe(e.id)) continue;
     registrarExplicacion(
       SIN_RINCON.has(e.id) ? { ...e, rincon: undefined } : e,

@@ -149,6 +149,18 @@ export function loQueCabe(avion: AircraftConfig): number {
 }
 
 /**
+ * **Lo que pesa el avión con estos kilos en los depósitos**, kg: su masa sin
+ * combustible —el avión, la tripulación y su carga— más lo que lleve.
+ *
+ * Es la que vuela el modelo de vuelo y con la que se cuenta la pista de hoy:
+ * un vuelo largo sale más pesado y necesita más pista, y se aterriza más
+ * ligero que se despegó. Ver `masaSinCombustible` en la ficha.
+ */
+export function masaConCombustible(avion: AircraftConfig, kilos: number): number {
+  return avion.masaSinCombustible + Math.max(0, Number.isFinite(kilos) ? kilos : 0);
+}
+
+/**
  * Cuánto se tarda en recorrer una distancia, en segundos, a su crucero.
  *
  * Con un suelo, porque **un vuelo nunca es solo crucero**: rodar hasta la
