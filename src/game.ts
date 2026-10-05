@@ -813,6 +813,7 @@ import {
   type Aviso,
   type Lectura,
 } from "./flight/avisos-de-altura";
+import { escalonesDeLaRecogida, laRecogidaDe } from "./flight/recogida";
 import {
   canalesDe,
   cantaLaCabina,
@@ -1201,12 +1202,12 @@ const SE_QUEDA_EL_DESCENSO = 6;
  */
 const SE_QUEDA_EL_PASO = SE_QUEDA_EL_DESCENSO;
 
-/**
- * **Desde qué altura de ruedas lleva el gas al ralentí** la ayuda de la final
- * de Guyrami, m: treinta pies, que es donde los gases automáticos de un 737
- * pasan a `RETARD` y cierran las palancas para la recogida.
+/*
+ * **Desde qué altura de ruedas va el gas al ralentí** en la recogida: ya no es
+ * un número para todos —eran treinta pies, los de los gases automáticos de un
+ * 737, con el comentario de al lado hablando de veinte—, sino el de cada clase
+ * de avión, con su manual. Ver `laRecogidaDe` en `flight/recogida.ts`.
  */
-const RETARD = 30 * 0.3048;
 
 /**
  * **A qué ritmo baja el gas el `RETARD`**, por segundo: del gas de la final
@@ -1214,6 +1215,17 @@ const RETARD = 30 * 0.3048;
  * `sostenerLaVelocidadDeLaFinal`.
  */
 const RITMO_DEL_RETARD = 0.35;
+
+/**
+ * **Cuándo una recogida ya no baja**, m/s de subida: tres décimas de bajada.
+ * Pedida la nariz, si el avión deja de bajar por encima de la altura del gas
+ * —quien levanta de más se queda flotando—, el gas sobra ya, y lo quita la
+ * ayuda: el aviso de 20 ft del A320 «es un recordatorio, no una orden», y se
+ * retrasa o se adelanta según lo que haga el avión. Sin esto, el JAZ 90 con
+ * la nariz a nivel en un banco de mesa flotaba siete kilómetros con el gas de
+ * la final puesto. Ver `flight/recogida.ts`.
+ */
+const YA_NO_BAJA = -0.3;
 
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
@@ -1394,7 +1406,7 @@ const GAS_EN_LA_RECOGIDA = 0.15;
  * no describe nada. Ver `alTocarTierra`.
  */
 const DEL_AIRE =
-  /^vuelo\.(?:quitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube)(?:[~@].*)?$/;
+  /^vuelo\.(?:quitaElGas|narizEnLaRecogida|narizYQuitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube)(?:[~@].*)?$/;
 
 /**
  * Cuánto antes de la pista se deja de avisar del terreno, m.
@@ -3168,7 +3180,9 @@ export class Game {
     this.avisadoDeLaPasada = false;
     this.avisosDeAltura.reiniciar();
     this.alturaEnGrande.reiniciar();
-    this.laRecogida.reiniciar();
+    this.laRecogida.avisos.reiniciar();
+    this.narizPedida = false;
+    this.enRetard = false;
     this.maquina.callar();
     this.antesAlUmbral = Infinity;
     this.terrenoDicho = null;
@@ -3458,12 +3472,21 @@ export class Game {
     como: string;
   }[] = [];
   /**
-   * El momento de la recogida, para la instructora: treinta pies, donde los
-   * gases de un reactor pasan a `RETARD`. Era a veinte, y con la boca de la
-   * final ocupada «quitá el gas» llegaba con las ruedas en el suelo. Ver
-   * `acompanarLaRecogida`.
+   * Los momentos de la recogida, para la instructora: la nariz y el gas, a
+   * las alturas de la clase de este avión —ver `flight/recogida.ts`—, y de
+   * qué avión son, que el avión se puede cambiar. Ver `acompanarLaRecogida`.
    */
-  private laRecogida = new AvisosDeAltura([{ metros: RETARD, dice: "ahora" }]);
+  private laRecogida = { de: "", avisos: new AvisosDeAltura([]) };
+  /** Si en esta aproximación ya se pidió la nariz. Ver `YA_NO_BAJA`. */
+  private narizPedida = false;
+  /** Si los gases o la ayuda de la final ya están en `RETARD`. */
+  private enRetard = false;
+  /**
+   * **Lo que se pidió en cada recogida**, para el banco: la nariz, el gas o
+   * los dos. Es lo que obedece el piloto obediente de
+   * `verificar-vuelo-entero.mjs`. Solo en desarrollo.
+   */
+  readonly pedidosDeLaRecogida: { nariz: boolean; gas: boolean; que: string }[] = [];
   /** Lo que marcaba el radioaltímetro en el último fotograma, m. */
   private radioAltura: number | null = null;
   /**
@@ -6280,26 +6303,65 @@ export class Game {
   }
 
   /**
-   * **La recogida, acompañada: «quitá el gas», y nada más.**
+   * **La recogida, acompañada: la nariz un poquito arriba y el gas fuera.**
    *
-   * En los últimos veinte pies ya no hay velocidad que corregir ni senda que
-   * seguir: se deja de volar y se posa. Lo único que se puede hacer mal es
-   * llegar con gas, que hace flotar el avión por encima de la pista y se la
-   * come. Es la altura a la que los reactores que lo llevan cantan *retard*.
+   * En los últimos pies ya no hay velocidad que corregir ni senda que seguir:
+   * se deja de volar y se posa. Y eso se hace con **dos** cosas, no con una:
+   * levantar un poco la nariz para que el avión deje de bajar la senda entera,
+   * y quitar el gas para que no flote y se coma la pista. Aquí solo se decía
+   * la segunda —«quitá el gas»—, y en Guyrami, donde el gas lo lleva la ayuda,
+   * ni eso: quien hacía exactamente lo que le decían tocaba con la bajada de la
+   * senda, a cinco metros por segundo con el JAZ 120. Medido con el piloto
+   * obediente de `verificar-vuelo-entero.mjs` (`OGA_OBEDIENTE=1`).
    *
-   * Y es **lo único** que se dice ahí abajo, y eso es lo que arregla: con el
-   * mínimo de velocidad bajando, la instructora pedía «metéle gas», se metía
-   * gas y enseguida sonaba «bajás muy rápido». «Si estoy tomando tierra, ¿qué
-   * se supone que tengo que hacer?» Ver `bandaDeVelocidad`, que se calla por
-   * debajo de la recogida, y `RECOGIDA` en `flight/avisos-de-actitud.ts`.
+   * Las alturas son las de la clase de cada avión —treinta y veinte pies en el
+   * de mandos eléctricos, veinte en el de cables, quince en los de hélice—, con
+   * su manual: ver `flight/recogida.ts`. Donde el manual junta la nariz y el
+   * gas, se piden juntos y en una frase; donde no —el JAZ 90, que recoge a
+   * treinta y quita el gas a veinte—, cada cosa en su altura. Un suceso, una
+   * voz.
+   *
+   * **Y ojo con la boca**, que ya pasó: con un solo número para todos, estuvo
+   * a veinte pies, y con la boca de la final ocupada «quitá el gas» llegaba
+   * con las ruedas en el suelo; por eso se subió a treinta. Ahora vuelve a
+   * veinte y a quince, que es lo de cada manual, así que la tarjeta sale en el
+   * momento —es el canal que no espera— y la voz va en `mando`, que no la echa
+   * un consejo. Si vuelve a llegar tarde, lo que se mueve es la cola, no la
+   * altura.
+   *
+   * Y el gas solo se pide a quien lo lleva: con la ayuda de la final o los
+   * gases del avión, el gas lo quitan ellos —es su `RETARD`—, y a quien juega
+   * se le pide la nariz y nada más.
+   *
+   * Sigue siendo **lo único** que se dice ahí abajo, y eso es lo que arregló la
+   * primera versión: con el mínimo de velocidad bajando, la instructora pedía
+   * «metéle gas», se metía gas y enseguida sonaba «bajás muy rápido». «Si estoy
+   * tomando tierra, ¿qué se supone que tengo que hacer?» Ver
+   * `bandaDeVelocidad`, que se calla por debajo de la recogida, y `RECOGIDA` en
+   * `flight/avisos-de-actitud.ts`.
    *
    * Una vez por aproximación, con la misma máquina que la cuenta: al cruzar
-   * los veinte pies bajando, en la zona de la pista.
+   * cada altura bajando, en la zona de la pista.
    */
   private acompanarLaRecogida(l: Lectura): void {
-    if (!this.laRecogida.paso(l)) return;
-    // Con la ayuda de la final, el gas lo cierra ella: es su RETARD.
-    if (this.gasDeLaFinal !== null) return;
+    const r = laRecogidaDe(this.aircraft);
+    if (this.laRecogida.de !== this.aircraft.id)
+      this.laRecogida = {
+        de: this.aircraft.id,
+        avisos: new AvisosDeAltura(escalonesDeLaRecogida(r)),
+      };
+    const s = this.flight.state;
+    // Lejos por encima de la recogida, o en tierra: una aproximación nueva.
+    if (s.onGround || s.heightAboveGround - this.aircraft.gearHeight > r.nariz * 3)
+      this.narizPedida = false;
+    const paso = this.laRecogida.avisos.paso(l);
+    if (!paso) return;
+    /*
+     * La nariz, **también sin motor**: un planeo se recoge igual, y es cuando
+     * más falta hace —ver `flight/sin-motor.ts`—.
+     */
+    const nariz = paso.dice !== "gas";
+    if (nariz) this.narizPedida = true;
     const c = this.input.controls;
     /*
      * **Y en el avión con frenos de tierra, cualquier gas es gas.** Suben solos
@@ -6312,15 +6374,48 @@ export class Game {
     const sobra = this.input.palancaDeAerofrenos.hayPalanca
       ? GAS_AL_RALENTI
       : GAS_EN_LA_RECOGIDA;
-    if (!c.engineOn || c.throttle <= sobra || this.sinMotor) return;
+    // Con la ayuda de la final, el gas lo cierra ella: es su RETARD.
+    const gas =
+      paso.dice !== "nariz" &&
+      this.gasDeLaFinal === null &&
+      c.engineOn &&
+      c.throttle > sobra &&
+      !this.sinMotor;
+    if (!nariz && !gas) return;
+    if (import.meta.env.DEV)
+      this.pedidosDeLaRecogida.push({
+        nariz,
+        gas,
+        que: nariz && gas ? "nariz y gas" : nariz ? "nariz" : "gas",
+      });
+    if (!nariz) {
+      // El gas solo, como siempre: la tarjeta de la toma y «quitá el gas».
+      this.hud.senal.mostrar(
+        "toma",
+        this.rotulo("vuelo.quitaElGas", "palabra.sinGas"),
+        null,
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+      // En `mando`: llega tarde o no llega, y no la echa de la cola un consejo.
+      this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas", "mando");
+      return;
+    }
+    const clave: TranslationKey = gas ? "vuelo.narizYQuitaElGas" : "vuelo.narizEnLaRecogida";
     this.hud.senal.mostrar(
-      "toma",
-      this.rotulo("vuelo.quitaElGas", "palabra.sinGas"),
+      "nariz-arriba",
+      this.rotulo(clave, gas ? "palabra.narizYSinGas" : "palabra.narizArriba"),
       null,
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
-    // En `mando`: llega tarde o no llega, y no la echa de la cola un consejo.
-    this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas", "mando");
+    /*
+     * **Y la voz, solo con su grabación**: en el Brave de Enrique no hay voces
+     * del sistema, y una frase sin grabar es silencio —ver
+     * `PENDIENTE-VOCES-final.md`—. Mientras tanto la nariz la cuenta la
+     * tarjeta, con su dibujo; y el gas, si se pide, la frase de siempre, que
+     * sí está grabada: lo que ya sonaba no se calla.
+     */
+    if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, "mando");
+    else if (gas) this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas", "mando");
   }
 
   /**
@@ -8860,7 +8955,9 @@ export class Game {
     // Una cuenta atrás a medias de un vuelo que ya no existe.
     this.avisosDeAltura.reiniciar();
     this.alturaEnGrande.reiniciar();
-    this.laRecogida.reiniciar();
+    this.laRecogida.avisos.reiniciar();
+    this.narizPedida = false;
+    this.enRetard = false;
     this.maquina.callar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
@@ -19577,12 +19674,11 @@ export class Game {
     /*
      * **Los gases solos, sin el automático**: los de la final de Guyrami. El
      * FMA de un Boeing escribe el modo de los gases aunque el A/P esté
-     * suelto, y a treinta pies, `RETARD`: las palancas al ralentí para la
-     * recogida. Ver `sostenerLaVelocidadDeLaFinal`.
+     * suelto, y en la recogida, `RETARD`: las palancas al ralentí, a la
+     * altura de su clase. Ver `sostenerLaVelocidadDeLaFinal`.
      */
     if (!this.pilotoPuesto && this.gasesPuestos) {
-      const s = this.flight.state;
-      const retard = !s.onGround && s.heightAboveGround - this.aircraft.gearHeight < RETARD;
+      const retard = !this.flight.state.onGround && this.enRetard;
       return { gases: retard ? "RETARD" : "SPD", lateral: "", vertical: "", piloto: false };
     }
     if (!this.pilotoPuesto) return null;
@@ -21117,6 +21213,7 @@ export class Game {
       if (this.gasDeLaFinal && s.onGround) this.input.servoDelGas(0);
       if (this.gasDeLaFinal) this.soltarElGasDeLaFinal(false);
       if (!s.onGround) this.gasDeLaFinalDado = false;
+      this.enRetard = false;
       return;
     }
     if (this.gasDeLaFinal === null) {
@@ -21151,14 +21248,23 @@ export class Game {
     const toca = this.laVelocidadQueToca();
     const ruedas = s.heightAboveGround - this.aircraft.gearHeight;
     /*
+     * **El `RETARD`, a la altura de su clase** —ver `flight/recogida.ts`—, o
+     * antes si, pedida ya la nariz, el avión ha dejado de bajar: ver
+     * `YA_NO_BAJA`. Y una vez puesto, se queda hasta tocar: unas palancas que
+     * vuelven a subir en plena recogida son un avión que se va.
+     */
+    this.enRetard ||=
+      ruedas < laRecogidaDe(this.aircraft).gas ||
+      (this.narizPedida && s.verticalSpeed > YA_NO_BAJA);
+    /*
      * **El `RETARD`, de verdad al ralentí antes de tocar.** Con el ritmo de
      * siempre de los gases —doce centésimas por segundo— las palancas tardaban
      * cuatro o cinco segundos en llegar abajo desde el gas de la final, y la
-     * recogida desde los treinta pies dura menos: se tocaba con gas y los
-     * frenos de tierra no subían. El de Boeing las lleva al ralentí en la
-     * recogida, para tocar con ellas atrás: aquí, en dos segundos.
+     * recogida dura menos: se tocaba con gas y los frenos de tierra no subían.
+     * El de Boeing las lleva al ralentí en la recogida, para tocar con ellas
+     * atrás: aquí, en dos segundos.
      */
-    if (ruedas < RETARD) {
+    if (this.enRetard) {
       this.input.servoDelGas(Math.max(0, this.input.controls.throttle - RITMO_DEL_RETARD * dt));
       return;
     }
@@ -21176,7 +21282,7 @@ export class Game {
             }
           : {}),
       },
-      ruedas < RETARD ? "IDLE" : "SPD",
+      "SPD",
       toca.kt * NUDO,
       dt,
       this.memoriaDelGasDeLaFinal,

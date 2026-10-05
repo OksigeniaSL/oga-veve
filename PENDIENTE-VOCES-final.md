@@ -63,6 +63,25 @@ en los peldaños que leen y el tono de atención. Unos 260 caracteres.
 | instructor | `vuelo.tomaLargaSinPista` | No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar | Not enough runway to stop: we go around and try again | Lo mismo, rodando sin pista para parar mientras todavía se puede subir. |
 | instructor | `vuelo.aterrizasteContraLaOrden` | La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos | The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here | `game.ts`, `aterrizoContraLaOrden`: después de aterrizar con la orden de la pista ocupada puesta, detrás de la torre (seis segundos), una vez; no en el peldaño de cabina. |
 
+## 3b. La recogida: la nariz, y el gas a la altura de cada avión
+
+Encargo del 5 de octubre de 2026. Quien hacía exactamente lo que le decían en
+Guyrami tocaba fuerte: la ayuda de la final cortaba el gas a treinta pies y
+nadie pedía levantar la nariz. Ahora se pide la recogida entera, a la altura
+de la clase de cada avión —ver `src/flight/recogida.ts`—: treinta pies la
+nariz y veinte el gas en el JAZ 90 (A320), veinte las dos cosas en el JAZ 120
+(737 FCTM) y quince en los de hélice (FAA, AFH cap. 9). Las claves y los
+textos **ya están** en `src/i18n/es-PY.ts` y `en.ts` (el guaraní, quieto), y
+el código las pide **solo con su grabación** (`this.instructor.vozDe(clave)`):
+mientras tanto lo cuenta la tarjeta con el dibujo de la nariz arriba, y si
+además se pide el gas suena el «Quitá el gas» de siempre, que sí está grabado.
+Unos 70 caracteres.
+
+| voz | clave | es-PY | en | dónde se engancha |
+|---|---|---|---|---|
+| instructor | `vuelo.narizEnLaRecogida` | La nariz un poquito arriba | A little nose up | `game.ts`, `acompanarLaRecogida`: al cruzar bajando la altura de la nariz de su clase, una vez por aproximación, cuando el gas lo lleva otra mano (la ayuda de la final de Guyrami, los gases del avión) o cuando la nariz va antes que el gas (JAZ 90). En `mando`, como «quitá el gas». |
+| instructor | `vuelo.narizYQuitaElGas` | La nariz un poquito arriba, y quitá el gas | A little nose up, and throttle to idle | Lo mismo, cuando la nariz y el gas van a la vez (JAZ 120 y los de hélice) y quien vuela lleva el gas puesto. Sustituye a `vuelo.quitaElGas` en ese momento; hasta grabarla, suena esa. |
+
 ## 4. Grabar
 
 ```bash

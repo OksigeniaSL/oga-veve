@@ -672,6 +672,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     v1: () => juego.hud.sondaDeV1,
     /** Por dónde salió cada canto de cabina. Ver `cantados` en `game.ts`. */
     cantados: () => [...juego.cantados],
+    /**
+     * Lo que se pidió en cada recogida —la nariz, el gas o los dos—, que es lo
+     * que obedece el piloto obediente. Ver `pedidosDeLaRecogida` en `game.ts`.
+     */
+    pedidosDeLaRecogida: () => [...juego.pedidosDeLaRecogida],
     /** Lo que la boca tiró y por qué. Ver `descartadas` en `boca.ts`. */
     descartadas: () => [...BOCA.descartadas],
     /**

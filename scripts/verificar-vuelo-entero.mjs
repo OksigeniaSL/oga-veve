@@ -173,6 +173,44 @@ const BAMBOLEO = (process.env.OGA_BAMBOLEO ?? "")
   .split(",")
   .map(Number)
   .filter((n) => Number.isFinite(n) && n > 0);
+/**
+ * **Y un piloto que hace lo que le dicen, y nada más, si se pide**:
+ * `OGA_OBEDIENTE=1`, solo en Guyrami.
+ *
+ * El piloto de siempre sabe aterrizar: recoge solo, a su altura y con su
+ * gas. Así el banco no veía lo que le pasa a quien hace **exactamente** lo
+ * que le dicen la instructora y la tarjeta: en Guyrami la ayuda de la final
+ * cortaba el gas a treinta pies, nadie pedía levantar la nariz, y el JAZ 120
+ * tocaba a unos cinco metros por segundo. Quien obedece tocaba fuerte.
+ *
+ * Con esto, en la final el piloto lleva la senda —es lo único que se le pide
+ * al niño en Guyrami: el gas lo lleva la ayuda— y en lo demás obedece:
+ *
+ * - **El gas no lo toca**, y si se mueve solo —la ayuda o los gases del
+ *   avión—, lo deja moverse. Lo quita solo cuando se lo piden.
+ * - **No recoge por su cuenta.** Cuando se lo piden, levanta la nariz un
+ *   poquito —grado y medio de trayectoria— y la sostiene ahí hasta tocar,
+ *   con la mano del modelo sencillo (`mandoParaSubir`), que es la que pone la
+ *   trayectoria en Guyrami. Lo que el manual de Boeing pide es cabeceo, «2° -
+ *   3°» —ver `flight/recogida.ts`—, y en ese modelo el cabeceo es la
+ *   trayectoria más lo que se ve de palanca: medido en un banco de mesa, grado
+ *   y medio de trayectoria son +2,4° de cabeceo en los dos reactores, el medio
+ *   de la horquilla; dos grados eran +3,0°, el borde, y el JAZ 90 flotaba
+ *   hasta los 682 m.
+ * - Reacciona al instante: lo que se mide es lo que se pide, no los reflejos.
+ *
+ * Lo que se pide lo apunta el juego al dar la tarjeta —ver
+ * `pedidosDeLaRecogida` en `game.ts`—; sin eso, como antes de existir la
+ * petición, no se pide nada y no se hace nada.
+ */
+const OBEDIENTE = process.env.OGA_OBEDIENTE === "1";
+if (OBEDIENTE && TRAMO !== "guyrami") {
+  console.log(
+    "\n  ✗ OGA_OBEDIENTE es para Guyrami: es el peldaño donde el gas lo lleva la ayuda\n" +
+      "    y la nariz la pone la mano del modelo sencillo.\n",
+  );
+  process.exit(2);
+}
 if (DESTINO !== null && !/^[a-z-]+$/.test(DESTINO)) {
   console.log(`\n  ✗ «${DESTINO}» no es un campo.\n`);
   process.exit(2);
@@ -623,7 +661,7 @@ const conMegafonia = await page
   .catch(() => true);
 const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -1083,8 +1121,108 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let palancaMedia = null;
   let relojDeLaMedia = null;
+  /**
+   * **Lo que lleva el piloto obediente**, si se pidió. Ver `OBEDIENTE`.
+   *
+   * - `armado`: ya está en la final del guion, o puesto en la final de otro
+   *   campo; con la final del juego, también —ver `obedecer`—. Desde ahí el
+   *   gas no lo mueve el guion. Una final que empieza en el fotograma en que
+   *   el guion movía el gas es una final que empieza «tocando el gas», y la
+   *   ayuda no se engancha: le pasó a la primera tirada del JAZ 120, que voló
+   *   la final entera con el gas que llevaba al ponerlo allí.
+   * - `gas`: el gas del obediente desde que se armó, o `null`.
+   * - `gasAjeno`: el gas se ha movido solo, y ya no se toca.
+   * - `quitado`: se lo pidieron, y se quitó.
+   * - `nariz`: la trayectoria que se sostiene desde que pidieron levantar la
+   *   nariz, rad, o `null`.
+   * - `vistos`: cuántos pedidos se han atendido.
+   * - `atendidos`: qué se pidió y a qué altura de ruedas, para el parte.
+   * - `ultimoGas`: el gas escrito en el fotograma anterior.
+   * - `suma` y `reloj`: lo que la mano lleva sumado de subida que falta, m/s,
+   *   y cuándo se sumó por última vez. Ver `obedecer`.
+   */
+  const obediente = {
+    armado: false,
+    gas: null,
+    gasAjeno: false,
+    quitado: false,
+    nariz: null,
+    vistos: 0,
+    atendidos: [],
+    ultimoGas: null,
+    suma: 0,
+    reloj: null,
+  };
+  /** Cuánto levanta la nariz el obediente: grado y medio de trayectoria. */
+  const NARIZ_UN_POQUITO = (1.5 * Math.PI) / 180;
+  const obedecer = (mandos, gasDelJuego) => {
+    const s = o.estado();
+    /*
+     * Armado en la final del guion o en la del juego, la que llegue antes: la
+     * ayuda se engancha con la del juego, y desde el viento en cola —como se
+     * hizo primero— el gas quedaba quieto en la base, y el JAZ 20 llegaba a
+     * los quinientos pies cien metros por encima de la senda.
+     */
+    if (s.onGround || !(obediente.armado || o.fase?.() === "final")) {
+      obediente.gas = null;
+      obediente.ultimoGas = null;
+      return;
+    }
+    // Se queda con el gas que hay: el que se ve en la palanca al armarse.
+    if (obediente.gas === null) obediente.gas = gasDelJuego;
+    /*
+     * El gas, quieto: si se movió desde lo que se escribió el fotograma
+     * anterior, lo mueve otra mano —la ayuda de la final, los gases del
+     * avión— y no se pelea con ella. Escribirle encima es tocarlo, y tocarlo
+     * suelta la ayuda: es justo lo que hace el piloto de siempre.
+     */
+    if (obediente.ultimoGas !== null && Math.abs(gasDelJuego - obediente.ultimoGas) > 1e-4)
+      obediente.gasAjeno = true;
+    const pedidos = o.pedidosDeLaRecogida?.() ?? [];
+    for (; obediente.vistos < pedidos.length; obediente.vistos++) {
+      const p = pedidos[obediente.vistos];
+      const ruedas = s.heightAboveGround - (o.avion?.().tren ?? 0);
+      obediente.atendidos.push(
+        `${p.que} a ${Math.round(ruedas / 0.3048)} ft bajando ${(-s.verticalSpeed).toFixed(1)} m/s`,
+      );
+      if (p.nariz && obediente.nariz === null) {
+        const v = Math.max(1, s.airspeed);
+        const ahora = Math.asin(Math.max(-1, Math.min(1, s.verticalSpeed / v)));
+        obediente.nariz = Math.min(0, ahora + NARIZ_UN_POQUITO);
+      }
+      if (p.gas) obediente.quitado = true;
+    }
+    if (obediente.quitado) obediente.gas = 0;
+    else if (obediente.gasAjeno) obediente.gas = gasDelJuego;
+    mandos.throttle = obediente.gas;
+    c.throttle = obediente.gas;
+    /*
+     * La nariz, con la mano de Guyrami: la trayectoria pedida, y lo que le
+     * falta de subida sumado poco a poco, que es lo que hace esa mano para
+     * que el aire no se lleve lo que se sostiene —`subidaQueFalta` en
+     * `flight/mano.ts`, a uno por segundo y con tope de tres—. Sin eso, una
+     * térmica bajando en la recogida se sumaba entera al toque.
+     */
+    if (obediente.nariz !== null && o.mandoParaSubir) {
+      const ahora = o.reloj();
+      const dt =
+        obediente.reloj === null ? 0 : Math.max(0, Math.min(0.1, ahora - obediente.reloj));
+      obediente.reloj = ahora;
+      const ritmo = Math.max(1, s.airspeed) * Math.sin(obediente.nariz);
+      const pide = o.mandoParaSubir(ritmo + obediente.suma);
+      if (typeof pide === "number") {
+        mandos.elevator = Math.max(-1, Math.min(1, pide));
+        const falta = ritmo - s.verticalSpeed;
+        if (Math.abs(mandos.elevator) < 1 || mandos.elevator * falta < 0)
+          obediente.suma = Math.max(-3, Math.min(3, obediente.suma + falta * dt));
+      }
+    }
+    obediente.ultimoGas = mandos.throttle;
+  };
   o.pilotar((mandos) => {
+    const gasDelJuego = mandos.throttle;
     Object.assign(mandos, c);
+    if (obedienteEnElBanco) obedecer(mandos, gasDelJuego);
     volarLaSenda(mandos);
     recoger(mandos);
     /*
@@ -1100,7 +1238,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * segundo. Es lo mismo que ya le pasó al automático del juego, y se arregla
      * igual: diciendo quién lleva los mandos. Ver `ControlInputs.automatico`.
      */
-    mandos.automatico = senda !== null || recogida !== null;
+    mandos.automatico = senda !== null || recogida !== null || obediente.nariz !== null;
     if (!recogida && senda !== null) {
       const ahora = o.reloj();
       const dt =
@@ -1680,6 +1818,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     // plantaba en −0,36 y el JAZ 90 bajaba a tres donde la senda pide cuatro.
     sendaSencilla = Math.max(-25, Math.min(25, sendaSencilla + falta * dt));
     return Math.max(-0.8, Math.min(0.8, falta * 0.06 + sendaSencilla * 0.03));
+  };
+
+  /**
+   * **La senda como la lleva un niño en Guyrami: con la mano.** Ver
+   * `OBEDIENTE`. La mano del modelo sencillo pide una trayectoria y busca la
+   * palanca que la da —`mandoParaSubir`—, hasta el tope, y no el ocho décimas
+   * de la ley de este banco. Con ese tope, y la ayuda sosteniendo la Vref más
+   * cinco con el gas, el JAZ 20 no bajaba la senda de tres grados: llegaba a
+   * los quinientos pies 53 m por encima. La trayectoria que se pide es la de
+   * la ley de arriba: la de la senda más lo que falta de altura.
+   */
+  const porLaSendaConLaMano = (s, objetivo, dt) => {
+    const quiere = Math.max(
+      -CAIDA_MAXIMA,
+      Math.min(3, -porElSuelo(s) * SENDA + (objetivo - alto(s)) * 0.15),
+    );
+    const pide = o.mandoParaSubir?.(quiere);
+    return typeof pide === "number"
+      ? Math.max(-1, Math.min(1, pide))
+      : porLaSendaSencilla(s, objetivo, dt);
   };
 
   const palancaPorVelocidad = (s, objetivo, extra = 0) =>
@@ -4492,6 +4650,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * acabó tocando.
      */
     if (etapa !== "final" && etapa !== "frenar" && recogida) recogida = null;
+    /*
+     * Y el obediente, igual: lo pedido en una final que se deja no vale para
+     * la siguiente. Se arma en la final —ver `obediente`—.
+     */
+    if (obedienteEnElBanco) {
+      if (etapa === "subir" && aDonde < 3 && (obediente.nariz !== null || obediente.quitado)) {
+        obediente.nariz = null;
+        obediente.suma = 0;
+        obediente.reloj = null;
+        obediente.quitado = false;
+        obediente.gasAjeno = false;
+      }
+      obediente.armado = etapa === "final" || etapa === "frenar";
+    }
     topeDeInclinacion =
       etapa === "final" || (etapa === "subir" && aDonde >= 3)
         ? TOPE_DE_INCLINACION_EN_LA_BASE
@@ -4790,6 +4962,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const alli = u.suelo;
       const aproximacion = o.avion().aproximacion;
       const enLaSenda = alli + (DESDE + 250) * SENDA + (suyas.tren ?? 0);
+      // El obediente, armado antes de ponerlo en la final: ver `obediente`.
+      if (obedienteEnElBanco) obediente.armado = true;
       o.colocar(f.x, enLaSenda, f.z, aproximacion + 3, f.h);
       /*
        * **Y un reactor llega a los cuatro kilómetros estabilizado, como uno de
@@ -5295,6 +5469,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         Math.min(15, caidaDeSenda * SEGUNDOS_DE_RECOGIDA),
       );
       if (
+        // El obediente no recoge por su cuenta: ver `OBEDIENTE`.
+        !obedienteEnElBanco &&
         !recogida &&
         !s.onGround &&
         ruedas <= alturaDeRecogida &&
@@ -5408,7 +5584,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * debajo, la senda se recupera con gas y no con la palanca.
          */
         c.elevator = SENCILLO
-          ? porLaSendaSencilla(s, objetivo, paso)
+          ? obedienteEnElBanco
+            ? porLaSendaConLaMano(s, objetivo, paso)
+            : porLaSendaSencilla(s, objetivo, paso)
           : aLaAltura(s, objetivo, vref);
         /*
          * Y un reactor, con el morro del automático por la misma senda: la
@@ -6073,6 +6251,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
     pistaParaTocar: Math.round(pistaParaTocar),
     caidaAlTocar: caidaAlTocar === null ? null : +caidaAlTocar.toFixed(2),
+    obediente: obedienteEnElBanco
+      ? {
+          atendidos: obediente.atendidos,
+          gasAjeno: obediente.gasAjeno,
+          // Quién llevó el gas de la final: lo apunta el juego. Ver `apuntarCanto`.
+          gasDeLaFinal: (o.cantados?.() ?? [])
+            .filter((x) => x.startsWith("gas de la final"))
+            .map((x) => x.replace(/ \[.*$/, "")),
+        }
+      : null,
     enLaPuerta,
     empezoLaRecogida,
     rodajeMasRapido: +rodajeMasRapido.toFixed(1),
@@ -6168,7 +6356,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -7631,6 +7819,20 @@ comprobarSiVolo(
       : "no llegó a tocar",
     "los reactores tocan a unos 4 m/s de descenso, sin recogida",
   );
+  /*
+   * **Y quien hace lo que le dicen, toca bien.** Ver `OBEDIENTE`: entre uno
+   * y dos metros por segundo, que es tocar con recogida y sin flotar.
+   */
+  if (vuelo.obediente) {
+    const ob = vuelo.obediente;
+    comprobarSiVolo(
+      "obediente: haciendo lo que le dicen, toca a entre uno y dos metros por segundo",
+      vuelo.toco > 0 && caida !== null && caida >= 1 && caida <= 2,
+      `a ${caida ?? "?"} m/s, ${d} m pasado el umbral · le pidieron: ${ob.atendidos.join(", ") || "nada"}` +
+        ` · el gas: ${ob.gasDeLaFinal.join(" → ") || "suyo"}${ob.gasAjeno ? " (lo movió otra mano y no lo tocó)" : ""}`,
+      "en Guyrami la ayuda cortaba el gas a 30 ft, nadie pedía la nariz y el JAZ 120 tocaba a unos 5 m/s",
+    );
+  }
 }
 
 /*

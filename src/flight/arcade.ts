@@ -164,6 +164,13 @@ export const MOTOR_QUE_SOSTIENE = 0.55;
  */
 const SUBE_SOLO = 0.36;
 
+/**
+ * **Desde cuánta velocidad sobrante se presta la subida entera**, m/s: un
+ * metro por segundo. Por debajo, en proporción, para que al acabarse lo que
+ * sobra la palanca no pierda la mano de golpe. Ver `loQuePresta`.
+ */
+const SOBRA_QUE_PRESTA = 1;
+
 /** Cuánta holgura se permite para considerar que las ruedas siguen tocando, m. */
 const PEGADO_AL_SUELO = 1;
 
@@ -408,8 +415,31 @@ export class ArcadeFlightModel implements FlightModel {
     if (bite <= 0.01) return 0;
     const sube = ascensoMaximo(this.aircraft);
     const motor = this.ritmoDelMotor(gas);
-    const porPalanca = sube * (0.4 + 0.6 * gas);
-    return clamp((ritmo / bite - motor) / Math.max(0.01, porPalanca), -1, 1);
+    const falta = ritmo / bite - motor;
+    // Tirando, con lo que se presta mientras sobra velocidad: ver `loQuePresta`.
+    const porPalanca = sube * (0.4 + 0.6 * gas) + (falta > 0 ? this.loQuePresta(gas) : 0);
+    return clamp(falta / Math.max(0.01, porPalanca), -1, 1);
+  }
+
+  /**
+   * **Lo que va el avión por encima de lo que sostiene su gas**, m/s, en el
+   * último paso: lo que hay para gastar en una recogida. Ver `loQuePresta`.
+   */
+  private sobra = 0;
+
+  /**
+   * **La subida de más que da la palanca a fondo pagándola con velocidad**,
+   * m/s: lo que el gas le quita a la palanca —ver `mando` en `step`—, entero
+   * mientras sobre al menos `SOBRA_QUE_PRESTA` de velocidad y nada cuando ya
+   * no sobra. Es la recogida al ralentí de un avión de verdad.
+   */
+  private loQuePresta(gas: number): number {
+    return (
+      ascensoMaximo(this.aircraft) *
+      0.6 *
+      (1 - clamp01(gas)) *
+      clamp01(this.sobra / SOBRA_QUE_PRESTA)
+    );
   }
 
   // ── Lo que cuesta lo sacado ───────────────────────────────────────────
@@ -655,6 +685,7 @@ export class ArcadeFlightModel implements FlightModel {
     this.guinada = 0;
     this.speed = initial.airspeed;
     this.climb = 0;
+    this.sobra = 0;
     this.porElAire = 0;
     this.cargaDelAire = 0;
     this.bank = 0;
@@ -1104,6 +1135,8 @@ export class ArcadeFlightModel implements FlightModel {
       this.frenoDeAhora = this.state.onGround ? clamp01(controls.brakes) : 0;
       this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
     }
+    // Lo que va por encima de lo que sostiene el gas: ver `loQuePresta`.
+    this.sobra = this.state.onGround ? 0 : Math.max(0, this.speed - target * blando);
     // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
     // siempre y nunca llega, y lo que se ve en pantalla es un avión que
     // repta eternamente después de frenar. Un avión parado está parado.
@@ -1350,8 +1383,40 @@ export class ArcadeFlightModel implements FlightModel {
      * puede alargar mucho el planeo —eso es lo que hace un piloto— pero no
      * cancelarlo. Sigue sin poder caerse nadie: aquí no hay pérdida ni rotura.
      */
+    /*
+     * **Pero un rato sí, pagándolo con la velocidad que sobra: es la recogida.**
+     *
+     * El tope de arriba dice que sin motor no se vuela recto, y es verdad
+     * *sostenido*; no lo es un momento. Un avión de verdad recoge al ralentí:
+     * levanta el morro, el ala sostiene de más y el avión deja de bajar
+     * gastando velocidad —la energía que lleva encima—, y por eso se cruza el
+     * umbral a la Vref con cinco nudos de margen. Sin esto el modelo no podía
+     * recoger al ralentí más que con el JAZ 90: medido en un banco de mesa con
+     * la ayuda de la final cortando el gas a treinta pies y la nariz arriba,
+     * el JAZ 120 tocaba a 4,1 m/s, el JAZ 60 a 4,9 y el JAZ 20 a 3,5 —con su
+     * caída al ralentí por encima de lo que da la palanca sin motor—. O sea,
+     * que quien hacía exactamente lo que le decían tocaba fuerte.
+     *
+     * Así que lo que el gas le quita a la palanca **se le presta** mientras el
+     * avión vaya más deprisa de lo que su gas sostiene —recién quitado—, y
+     * cada metro por segundo de subida prestado se paga con la cuenta de la
+     * energía, `dV/dt = −g·w/V`. Ido el sobrante, vuelve a mandar el tope:
+     * se puede alargar el planeo y recoger, pero no quedarse colgado. Y con el
+     * gas quieto la velocidad ya está en lo suyo y no hay nada que prestar,
+     * así que en crucero, en la subida y en una final con el gas puesto esto
+     * no cambia nada.
+     */
+    const prestado =
+      controls.elevator > 0 && !this.state.onGround
+        ? controls.elevator * this.loQuePresta(gas)
+        : 0;
     const mando =
-      controls.elevator * ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas);
+      controls.elevator * ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas) + prestado;
+    if (prestado > 0)
+      this.speed = Math.max(
+        1,
+        this.speed - ((GRAVITY * prestado * bite) / Math.max(1, this.speed)) * step,
+      );
     /*
      * Y el bache del aire, que se suma a lo que pide el mando.
      *
@@ -1444,6 +1509,24 @@ export class ArcadeFlightModel implements FlightModel {
       s.position.y = wheelLevel;
       s.onGround = true;
       if (this.climb < 0) this.climb = 0;
+      /*
+       * **Y con las ruedas en el suelo, el aire ya no lleva al avión.**
+       *
+       * El bache se apagaba en el paso siguiente, pero después de restarlo de
+       * la subida —`delPiloto` en `step`—: con el aire bajando al tocar, la
+       * subida puesta a cero menos un bache negativo daba una subida
+       * positiva, el avión se despegaba un milímetro, el aire volvía a
+       * bajarlo, y así un fotograma sí y otro no. Medido en Pettirossi a las
+       * cuatro de la tarde con `verificar-llegadas.mjs`: posado a 14 m/s con
+       * el freno a fondo, nueve segundos rodando con las ruedas en el aire la
+       * mitad de los fotogramas, acelerando hasta 19,6 m/s —en el aire no
+       * frena nada— y el coche del sígame, que solo sale con el avión en el
+       * suelo, encendiéndose y apagándose. Con −0,1 m/s de aire bastaba: de
+       * catorce metros por segundo a doce y medio en ocho segundos, en vez de
+       * pararse en cuatro.
+       */
+      this.porElAire = 0;
+      this.cargaDelAire = 0;
       // En tierra el avión se endereza solo: aquí no hay puntas de ala que
       // apoyar ni nada que romper.
       this.bank *= Math.max(0, 1 - dt * 6);
