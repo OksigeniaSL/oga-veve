@@ -870,6 +870,12 @@ export class Hud {
      * Con su propio dedo, como todos los botones del vuelo: ver `ui/pulsar.ts`.
      * El cierre al usar lo de dentro sigue en el `click` que sube desde él.
      */
+    /*
+     * **La tarjeta del avión**: el retrato de la placa, la matrícula del
+     * cuadro y, en el teléfono, su botón del menú. Con su propio dedo, como
+     * todo lo que se toca volando. Ver `ui/tarjeta-del-avion.ts`.
+     */
+    alPulsarDentro(this.root, "[data-tarjeta-avion]", () => this.tarjetaHandler?.());
     alPulsarDentro(this.root, '[data-hud="menu"]', () =>
       this.abrirMenu(!this.root.classList.contains("hud--menu")),
     );
@@ -1430,6 +1436,22 @@ export class Hud {
           tenía su propia copia de la lista. Ver #70.
         -->
         ${botonesDeLosPaneles()}
+        <!--
+          **La tarjeta del avión**, con su botón. Se abre también tocando el
+          retrato o la matrícula del cuadro, pero la matrícula en una tablet
+          mide doce píxeles de alto, el retrato solo lo llevan las avionetas y
+          el cuadro del teléfono no lleva ninguno de los dos. Un mando que no
+          se encuentra no existe. Ver ui/tarjeta-del-avion.ts.
+        -->
+        <button class="sonido tarjeta-avion-boton" type="button" data-tarjeta-avion=""
+                aria-label="${t("tarjeta.abrir")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 7.2 l1 3.2 4.4 1.6 v1.2 l-4.4-.8 -.4 2.8 1.4 1 v.9 l-2-.5 -2 .5 v-.9
+                     l1.4-1 -.4-2.8 -4.4.8 v-1.2 l4.4-1.6 Z" fill="currentColor" />
+            <path d="M4.2 9.4 A8.6 8.6 0 0 1 19.6 8 M19.8 14.6 A8.6 8.6 0 0 1 4.4 16"
+                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
@@ -4110,6 +4132,12 @@ export class Hud {
 
   onVentanillaAlt(fn: (pasos: number) => void): void {
     this.ventanillaHandler = fn;
+  }
+
+  /** Quién abre la tarjeta del avión. Ver `ui/tarjeta-del-avion.ts`. */
+  private tarjetaHandler: (() => void) | null = null;
+  onTarjetaDelAvion(fn: () => void): void {
+    this.tarjetaHandler = fn;
   }
 
   /** Quién se entera de que han tocado el interruptor del cinturón. */

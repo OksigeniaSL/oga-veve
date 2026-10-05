@@ -142,6 +142,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
   (globalThis as { __oga?: unknown }).__oga = {
     estado: () => juego.flight.state,
+    /**
+     * La tarjeta del avión: abrirla o cerrarla como al tocar la placa, y
+     * cuánto ha pintado su visor. Lo usa `verificar-rendimiento.mjs` para
+     * medir el vuelo con ella abierta y cerrada.
+     */
+    tarjetaDelAvion: () => ({
+      abierta: juego.tarjeta?.abierta ?? false,
+      pintadas: juego.tarjeta?.pintadas ?? 0,
+    }),
+    alternarTarjeta: () => juego.abrirLaTarjeta(),
     fase: () => juego.faseAnunciada,
     // Los mandos, para poder pilotar desde una comprobación sin pasar por el
     // teclado: cada tecla enviada desde fuera cuesta un viaje de ida y vuelta

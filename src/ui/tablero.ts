@@ -375,14 +375,16 @@ function tresPatas(ancho: number, alto: number): string {
  * las palabras del primer peldaño, y estas letras las contaba —doce fallos,
  * dos por avión—, porque no tenía cómo saber que esta forma se mira y no se
  * lee. La marca es esa decisión escrita donde el banco la ve, no una
- * excepción en el banco. Ver `verificar-cuadro.mjs`. Y tocada, se explica:
- * qué es una matrícula y por qué la torre te llama así.
+ * excepción en el banco. Ver `verificar-cuadro.mjs`. Y tocada, abre la
+ * tarjeta del avión, que la explica con su chapa y su bandera junto al resto
+ * del avión: dos ventanas para un mismo toque taparían una a la otra. Ver
+ * `ui/tarjeta-del-avion.ts`.
  */
 export function placaDeMatricula(matricula: string): string {
   const ancho = 30 + matricula.length * 14;
   return `
-      <g class="tablero__matricula" data-hud="placa-matricula"
-         data-explica="matricula" data-se-reconoce
+      <g class="tablero__matricula" data-hud="placa-matricula" data-tarjeta-avion=""
+         data-se-reconoce
          transform="translate(14 ${ALTO_DEL_CUADRO - 32})">
         <rect width="${ancho}" height="27" rx="3" class="tablero__matricula-chapa" />
         <circle cx="6" cy="13.5" r="2" class="tablero__matricula-tornillo" />
@@ -844,6 +846,12 @@ export class Tablero {
    *
    * Si la imagen no llega, la placa se queda con su marco, que es lo que
    * había.
+   *
+   * **Y se toca**: abre la tarjeta del avión, en 3D y en vivo. Enrique, de
+   * este mismo retrato: «no quedó mal, pero podría llevar datos técnicos y
+   * detalles que lo hagan interesante». La placa de la matrícula la abre
+   * también, que es la que llevan las tres familias. Ver
+   * `ui/tarjeta-del-avion.ts`.
    */
   private retrato(a: AircraftConfig, ancho: number): string {
     const lado = 4;
@@ -851,7 +859,7 @@ export class Tablero {
     const h = (w * TAMANO_DE_RETRATO.alto) / TAMANO_DE_RETRATO.ancho;
     return `<image href="${retratoDe(a.id)}" x="${lado}" y="${BANDA.alto / 2 - h / 2}"
       width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"
-      class="tablero__retrato" />`;
+      class="tablero__retrato" data-tarjeta-avion="" />`;
   }
 
   /** Familia de cristal: horizonte a la izquierda, mapa con motor a la derecha. */

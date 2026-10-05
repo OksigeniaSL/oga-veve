@@ -323,6 +323,25 @@ export function ponerLaLuzDelDia(alturaDelSol: number): void {
   LUZ_DEL_DIA.value = t * t * (3 - 2 * t);
 }
 
+/**
+ * **Pinta algo como si fuera de noche**, y deja el sol donde estaba.
+ *
+ * Lo usa la tarjeta del avión, que enciende las luces para enseñar por qué se
+ * encienden: de día, en el mundo, una de navegación es un punto de dos
+ * píxeles —que es lo que pasa de verdad—, y en la tarjeta sería un botón que
+ * no enciende nada. El valor es de todos, así que se pone, se pinta y se
+ * devuelve en el mismo instante: el mundo no llega a verlo.
+ */
+export function deNoche<T>(pintar: () => T): T {
+  const antes = LUZ_DEL_DIA.value;
+  LUZ_DEL_DIA.value = 0;
+  try {
+    return pintar();
+  } finally {
+    LUZ_DEL_DIA.value = antes;
+  }
+}
+
 type Clase = keyof typeof TAMANO;
 
 /** Los colores, en el orden en que se ven en la norma. */

@@ -59,6 +59,14 @@
  * Si el juego trae bandadas, se mide además un tercer sitio, **mirando a la
  * más cercana**, que es el peor caso de lo que cuestan: con el aeródromo
  * detrás y las aves llenando el cuadro. Ver `world/bandadas.ts`.
+ *
+ * ## Y con la tarjeta del avión abierta
+ *
+ * `OGA_TARJETA=1` mide además, en el aire, **con la tarjeta del avión
+ * abierta**: quieta —que es como está casi siempre: no se repinta si nada
+ * cambia— y girándola con el dedo, que es su peor caso, pintando a cada
+ * fotograma. Es un segundo dibujo en otro contexto, y la regla de AGENTS.md
+ * es medirlo antes de darlo por bueno. Ver `ui/visor-del-avion.ts`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -89,6 +97,7 @@ const server = await createServer({
 await server.listen();
 const BASE = baseDe(server, PUERTO);
 const CON_GPU = process.env.OGA_GPU === "1";
+const CON_TARJETA = process.env.OGA_TARJETA === "1";
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   /*
@@ -147,6 +156,13 @@ for (const escenario of ESCENARIOS) {
   for (const sitio of [
     "puesto",
     "aire",
+    /*
+     * **La tarjeta justo después del aire, en el mismo sitio**, para que la
+     * diferencia sea la tarjeta y nada más. Medida al final, detrás de la
+     * nube y de la bandada, salía a 45 ms contra los 22 del aire... y la
+     * bandada, sin tarjeta, a 42: lo que se medía era el orden.
+     */
+    ...(CON_TARJETA ? ["tarjeta", "girando"] : []),
     ...(hayCapa ? ["nube"] : []),
     ...(hayBandadas ? ["bandada"] : []),
   ]) {
@@ -171,6 +187,21 @@ for (const escenario of ESCENARIOS) {
       });
       await page.waitForTimeout(1500);
     }
+    if (sitio === "tarjeta") {
+      // En el aire otra vez, y la tarjeta abierta como al tocar la placa.
+      await page.evaluate(() => {
+        const o = globalThis.__oga;
+        const r = o.pista();
+        o.colocar(r.x, o.suelo(r.x, r.z) + 250, r.z, 30);
+        if (!o.tarjetaDelAvion().abierta) o.alternarTarjeta();
+      });
+      await page.waitForFunction(
+        () => !!document.querySelector("#tarjeta-avion .tav--3d"),
+        null,
+        { timeout: 60000 },
+      );
+      await page.waitForTimeout(1500);
+    }
     if (sitio === "aire") {
       // Sobre el aeródromo y a la altura del circuito, que es donde se ve
       // todo a la vez: el aeropuerto, el pueblo y el monte.
@@ -186,8 +217,20 @@ for (const escenario of ESCENARIOS) {
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: veces });
       // Un respiro para que se estabilice antes de contar.
       await page.waitForTimeout(1200);
-      const medida = await page.evaluate(async ({ ms, conGpu }) => {
+      const medida = await page.evaluate(async ({ ms, conGpu, girando }) => {
         const tiempos = [];
+        /*
+         * **Girándola con el dedo**: un dedo de mentira que aprieta en el
+         * lienzo y se mueve cuatro píxeles por fotograma. Es el peor caso: la
+         * tarjeta pinta a cada fotograma mientras se arrastra.
+         */
+        const lienzo = girando ? document.querySelector('[data-tarjeta="lienzo"]') : null;
+        let x = 200;
+        if (lienzo)
+          lienzo.dispatchEvent(
+            new PointerEvent("pointerdown", { bubbles: true, pointerId: 77, clientX: x, clientY: 200, button: 0, pointerType: "touch" }),
+          );
+        const antes = globalThis.__oga.tarjetaDelAvion?.().pintadas ?? 0;
         /*
          * El reloj de la tarjeta: cada `render` entre dos marcas. Los
          * resultados llegan unos cuadros tarde, así que se recogen al final y
@@ -216,6 +259,12 @@ for (const escenario of ESCENARIOS) {
           const paso = (t) => {
             tiempos.push(t - previo);
             previo = t;
+            if (lienzo) {
+              x += 4;
+              window.dispatchEvent(
+                new PointerEvent("pointermove", { pointerId: 77, clientX: x, clientY: 200, pointerType: "touch" }),
+              );
+            }
             if (t < fin) requestAnimationFrame(paso);
             else listo();
           };
@@ -236,19 +285,28 @@ for (const escenario of ESCENARIOS) {
           ms.sort((a, b) => a - b);
           gpu = ms.length ? ms[Math.floor(ms.length / 2)] : null;
         }
+        if (lienzo)
+          window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 77, pointerType: "touch" }));
+        const pintadas = (globalThis.__oga.tarjetaDelAvion?.().pintadas ?? 0) - antes;
         tiempos.sort((a, b) => a - b);
         const en = (p) => tiempos[Math.floor(tiempos.length * p)] ?? 0;
         return {
+          pintadas,
           mediana: en(0.5),
           p95: en(0.95),
           cuadros: tiempos.length,
           gpu,
           ...globalThis.__oga.coste(),
         };
-      }, { ms: MIDE, conGpu: CON_GPU });
+      }, { ms: MIDE, conGpu: CON_GPU, girando: sitio === "girando" });
       filas.push({ escenario, sitio, veces, nombre, ...medida });
     }
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    if (sitio === "girando")
+      await page.evaluate(() => {
+        const o = globalThis.__oga;
+        if (o.tarjetaDelAvion().abierta) o.alternarTarjeta();
+      });
   }
   await page.close();
 }
@@ -272,6 +330,9 @@ for (const f of filas) {
       `${f.llamadas} dibujos · ${(f.triangulos / 1000).toFixed(0)}k △` +
       (f.gpu !== null && f.gpu !== undefined ? ` · GPU ${f.gpu.toFixed(2)} ms` : "") +
       (f.aves ? ` · aves ${f.aves.cerca}+${f.aves.lejos}` : "") +
+      (f.sitio === "tarjeta" || f.sitio === "girando"
+        ? ` · tarjeta ${Math.round((f.pintadas * 1000) / MIDE)}/s`
+        : "") +
       (exige ? `  ← ${f.nombre}` : ""),
   );
 }
