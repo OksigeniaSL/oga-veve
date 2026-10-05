@@ -77,6 +77,7 @@ import {
   queSeDiceSinMotor,
 } from "./flight/sin-motor";
 import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
+import { Reversa, tiempoDeReversa } from "./flight/reversa";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -3326,6 +3327,8 @@ export class Game {
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
   aircraft: AircraftConfig;
+  /** La reversa de este avión: lo que tarda en abrirse y cuándo empuja. Ver `flight/reversa.ts`. */
+  private readonly reversa: Reversa;
   scenario: Scenario;
   flight: FlightModel;
   private tier: Tier = rememberedTier();
@@ -4284,6 +4287,7 @@ export class Game {
     this.noCaben = options.noCaben ?? [];
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
+    this.reversa = new Reversa(tiempoDeReversa(this.aircraft));
 
     /*
      * El dedo sobre la cabina: mirar qué mando hay debajo y pulsarlo al soltar.
@@ -11572,6 +11576,15 @@ export class Game {
       if (!this.pilotoPuesto) mandos = this.sostenerElNivel(dt, mandos);
       if (this.hayInstrumentoAbierto && !this.pilotoPuesto && !this.nivelada)
         mandos = this.mantenerElVueloRecto(mandos);
+      /*
+       * **Y la reversa empuja cuando está abierta**, no al apretar: el chorro
+       * se da la vuelta cuando el manguito ha dejado a la vista la cascada,
+       * un par de segundos después. Los mandos siguen diciendo lo que se pide
+       * —el REV del cuadro, la toma larga—; al modelo de vuelo le llega lo
+       * que empuja. Ver `flight/reversa.ts`.
+       */
+      const reversa = this.reversa.paso(dt, mandos.reversa);
+      if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       this.flight.step(dt, mandos);
       this.mirarSiChocaConAlgo();
     }
@@ -13043,6 +13056,11 @@ export class Game {
      * vuelo o arriba del todo con los de tierra fuera. Ver
      * `flight/palanca-de-aerofrenos.ts` y `world/aerofrenos.ts`.
      */
+    /*
+     * Y las reversas, **donde están** y no donde está la palanca: el manguito
+     * tarda dos segundos en irse hacia la cola. Ver `world/reversas.ts`.
+     */
+    this.aircraftMesh.reversas?.poner(this.reversa.abierta);
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
     this.aircraftMesh.aerofrenos?.poner(
       this.input.controls.aerofrenos ?? 0,
@@ -16872,8 +16890,18 @@ export class Game {
      * todo en un fotograma. Una hélice de verdad arranca despacio, se para
      * despacio y, apagada, está quieta.
      */
+    /*
+     * **Y con la palanca en reversa, la hélice se embala.** En un turbohélice
+     * la reversa es la propia hélice: las palas pasan de paso y el motor sube
+     * de potencia para empujar al revés. El cambio de paso no se distingue con
+     * la hélice girando; lo que se ve —y se oye— es el disco. Tres cuartos de
+     * lo que da hacia delante, que es el orden de una reversa a fondo. Ver
+     * `flight/reversa.ts`.
+     */
+    const haciaAtras =
+      this.aircraft.sound.engine === "turboprop" ? this.reversa.empuje * 0.75 : 0;
     const quiere = this.input.controls.engineOn
-      ? 6 + this.input.controls.throttle * 96
+      ? 6 + Math.max(this.input.controls.throttle, haciaAtras) * 96
       : 0;
     const prisa = quiere > this.giroDeHelice ? 1.4 : 0.6;
     this.giroDeHelice +=

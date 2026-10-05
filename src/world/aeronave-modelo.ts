@@ -55,6 +55,7 @@ import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { prepararFlaps } from "./flaps";
 import { prepararAerofrenos } from "./aerofrenos";
+import { prepararReversas } from "./reversas";
 import { prepararElAla } from "./ala-que-se-dobla";
 import { prepararPalancaDeAerofrenos } from "./palanca-de-aerofrenos";
 import { encenderRelojes } from "./relojes-cabina";
@@ -861,6 +862,9 @@ export async function cargarModelo(
     // palanca en el pedestal. Ver `aerofrenos.ts` y `palanca-de-aerofrenos.ts`.
     aerofrenos: prepararAerofrenos(raiz),
     palancaDeAerofrenos: prepararPalancaDeAerofrenos(raiz),
+    // Y las reversas, en los turbofanes: el manguito que se va hacia la cola.
+    // Ver `reversas.ts`.
+    reversas: prepararReversas(raiz),
     /*
      * Y la luz de dentro, **la última**: lo de arriba cambia los materiales
      * de los relojes y de los mandos, y la luz tiene que ver los que quedan.
