@@ -1590,6 +1590,20 @@
     }
   },
   {
+    "id": "vuelo.narizEnLaRecogida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La nariz un poquito arriba",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.narizYQuitaElGas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La nariz un poquito arriba, y quitá el gas",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.sinInstructora.pregunta",
     "voz": "instructor",
     "idioma": "es-PY",
