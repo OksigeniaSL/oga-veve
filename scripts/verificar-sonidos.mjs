@@ -76,8 +76,17 @@ async function abrir(escenario, avion, metar = METAR) {
   await page.waitForFunction(() => globalThis.__oga?.estado?.() && globalThis.__oga.ruidos?.(), null, {
     timeout: 120000,
   });
-  // El primer gesto, que es lo que despierta el audio en un navegador.
-  await page.mouse.click(450, 560);
+  /*
+   * El primer gesto, que es lo que despierta el audio en un navegador. **En el
+   * cielo, no en el cuadro**: desde la ola 2 un toque corto sobre una pieza del
+   * cuadro abre su explicación, y la ventana congela el vuelo mientras está
+   * abierta. El clic iba a (450, 560), encima de los instrumentos, y todo el
+   * banco medía un juego parado: 8 de 25, con todos los ruidos en silencio
+   * (encontrado por bisección el 6-oct-2026: lo rompió a6cc8f3b, y medido
+   * con una sonda: pausado y con el mundo callado). Escape no sirve para
+   * cerrarla: en el juego abre la pausa.
+   */
+  await page.mouse.click(450, 160);
   await page.waitForFunction(() => globalThis.__oga.sonido().contexto === "running", null, {
     timeout: 20000,
   });
