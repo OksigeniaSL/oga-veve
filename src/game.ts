@@ -12028,6 +12028,25 @@ export class Game {
     // Con lo que lleva sacado: en el modelo sencillo, con tren y flaps hace
     // falta más gas. Ver `gasPara` en `arcade.ts`.
     this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls);
+    /*
+     * **Y un ejercicio, con el gas que sostiene su velocidad a nivel**, en el
+     * modelo completo: el `gasPara` de ese modelo es una recta a ojo pensada
+     * para una final que baja, y a nivel se iba de largo. Medido en el banco
+     * del planeo con la avioneta de Tukã: empezaba a 70 nudos y a los catorce
+     * segundos, cuando se para el motor, iba a 93, con todo ese sobrante para
+     * gastar antes de la pista. Ver `gasQueSostiene`.
+     */
+    if (colocacion && this.tier.model !== "simple") {
+      const sostiene = gasQueSostiene(this.avionConPeso(), {
+        altura: this.flight.state.position.y,
+        verdadera: entrada,
+        aire: this.flight.aireDelDia(),
+        flaps: 0,
+        tren: this.input.controls.tren,
+        pendiente: 0,
+      });
+      if (sostiene !== null) this.input.controls.throttle = sostiene;
+    }
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.runwayGuide.reset(this.flight.state.position);

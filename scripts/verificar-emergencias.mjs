@@ -535,7 +535,8 @@ try {
     comprobar(
       "la torre contesta el MAYDAY",
       dice(r.torre, "mayday"),
-      r.torre.filter((k) => /mayday/i.test(k)).join(" · ") || "no",
+      r.torre.filter((k) => /mayday/i.test(k)).join(" · ") ||
+        `no · ${r.descartadas.filter((k) => /mayday|torre/i.test(String(k))).slice(0, 4).join(" · ") || "nada descartado de la torre"}`,
     );
     comprobar(
       "vuelve a la pista de casa, con los bomberos del aeródromo esperando",
