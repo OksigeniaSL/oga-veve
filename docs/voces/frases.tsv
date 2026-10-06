@@ -258,6 +258,31 @@ instructor	instructor/motivo.descolocado.ogg	es-PY	Estás fuera del eje	por qué
 instructor	instructor/motivo.alto.ogg	es-PY	Vas alto	por qué no se puede bajar así
 instructor	instructor/motivo.bajo.ogg	es-PY	Vas bajo	por qué no se puede bajar así
 instructor	instructor/motivo.sinConfigurar.ogg	es-PY	Falta el tren o los flaps	por qué no se puede bajar así
+instructor	instructor/ejercicio.planeo.antes.ogg	es-PY	Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.antes-de-v1.antes.ogg	es-PY	Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.despues-de-v1.antes.ogg	es-PY	Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.un-motor.antes.ogg	es-PY	Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.simulador.antes.ogg	es-PY	Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.despresurizacion.antes.ogg	es-PY	Hoy practicamos la cabina sin aire. En un ratito se va a ir la presión, a propósito: suena un aviso y caen las máscaras. Primero la máscara, y bajamos rápido hasta donde se respira. Es un procedimiento, y lo hacemos con calma	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.paramos.ogg	es-PY	Falló un motor antes de V1: gas atrás y frenos, paramos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.seguimos.ogg	es-PY	Falló un motor, y ya pasamos V1: seguimos volando	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.enVuelo.ogg	es-PY	Se paró un motor. El avión sigue volando con el otro	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pieDerecho.ogg	es-PY	Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pieIzquierdo.ogg	es-PY	Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.velocidad.ogg	es-PY	Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bandera.ogg	es-PY	Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.banderaSola.ogg	es-PY	La hélice del motor parado ya se puso sola en bandera. Le corto el combustible	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.cortar.ogg	es-PY	Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.declarar.ogg	es-PY	Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bomberos.ogg	es-PY	¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bomberosUno.ogg	es-PY	¿Ves el camión junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bomberosFrenos.ogg	es-PY	Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bien.ogg	es-PY	Ejercicio hecho: volaste el procedimiento como en un simulador de verdad	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bienDespresurizacion.ogg	es-PY	Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.bienParado.ogg	es-PY	Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.paradoTrasV1.ogg	es-PY	Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.seguidoAntesDeV1.ogg	es-PY	Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.otraVez.ogg	es-PY	El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
@@ -608,6 +633,8 @@ cabina	cabina/cabina.obstacleAhead.ogg	en	obstacle ahead	hay un edificio delante
 cabina	cabina/cabina.goAround.ogg	en	going around. good decision	te fuiste al aire: bien hecho
 cabina	cabina/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avión
 cabina	cabina/cabina.goAroundOrder.ogg	en	go around	la orden de irse al aire
+cabina	cabina/cabina.engineFailure.ogg	en	engine failure	un motor se ha parado
+cabina	cabina/cabina.stop.ogg	en	stop	antes de V1: se para el despegue
 cabina	cabina/cabina.airspeedLow.ogg	en	airspeed low	vas lento para la configuración
 cabina	cabina/cabina.twentyFiveHundred.ogg	en	twenty five hundred	cuenta de la toma: el radar empieza a ver el suelo
 cabina	cabina/cabina.oneThousand.ogg	en	one thousand	cuenta de la toma, en pies
@@ -730,6 +757,7 @@ torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, ante
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
+torre	torre/torre.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia
 torre	torre/torre.solo.birdsOnFinal.ogg	en	caution, flock of birds on final	aves en la final; detrás, a cuántos pies
 torre	torre/torre.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número
 torre	torre/torre.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número
@@ -895,6 +923,7 @@ torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la auto
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.birdsOnFinal.ogg	en	caution, birds on final	aves en la final; detrás, a cuántos pies, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número, en Canarias

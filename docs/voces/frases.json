@@ -1961,6 +1961,381 @@
     "para": "por qué no se puede bajar así"
   },
   {
+    "id": "ejercicio.planeo.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.antes-de-v1.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos un despegue que se para. Antes de ve uno va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.despues-de-v1.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos un motor que falla pasada ve uno. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.un-motor.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.simulador.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.despresurizacion.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos la cabina sin aire. En un ratito se va a ir la presión, a propósito: suena un aviso y caen las máscaras. Primero la máscara, y bajamos rápido hasta donde se respira. Es un procedimiento, y lo hacemos con calma",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos la cabina sin aire. En un ratito se va a ir la presión, a propósito: suena un aviso y caen las máscaras. Primero la máscara, y bajamos rápido hasta donde se respira. Es un procedimiento, y lo hacemos con calma.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.paramos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Falló un motor antes de V1: gas atrás y frenos, paramos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Falló un motor antes de ve uno: gas atrás y frenos, paramos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.seguimos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Falló un motor, y ya pasamos V1: seguimos volando",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Falló un motor, y ya pasamos ve uno: seguimos volando.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.enVuelo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se paró un motor. El avión sigue volando con el otro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Se paró un motor. El avión sigue volando con el otro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pieDerecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pieIzquierdo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.velocidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bandera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.banderaSola",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La hélice del motor parado ya se puso sola en bandera. Le corto el combustible",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "La hélice del motor parado ya se puso sola en bandera. Le corto el combustible.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cortar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.declarar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bomberos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bomberosUno",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves el camión junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Ves el camión junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bomberosFrenos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: volaste el procedimiento como en un simulador de verdad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ejercicio hecho: volaste el procedimiento como en un simulador de verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bienDespresurizacion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.bienParado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.paradoTrasV1",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Paraste, y te alcanzó la pista. Pasada ve uno lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.seguidoAntesDeV1",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Volviste bien. Antes de ve uno todavía queda pista, y lo seguro es parar. La próxima, paramos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.otraVez",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -6011,6 +6386,20 @@
     "para": "la orden de irse al aire"
   },
   {
+    "id": "cabina.engineFailure",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "engine failure",
+    "para": "un motor se ha parado"
+  },
+  {
+    "id": "cabina.stop",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "stop",
+    "para": "antes de V1: se para el despegue"
+  },
+  {
     "id": "cabina.airspeedLow",
     "voz": "cabina",
     "idioma": "en",
@@ -6863,6 +7252,13 @@
     "idioma": "en",
     "texto": "roger, Mayday",
     "para": "la torre oyó la llamada de socorro"
+  },
+  {
+    "id": "torre.solo.rogerPanPan",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "roger, Pan Pan",
+    "para": "la torre oyó la llamada de urgencia"
   },
   {
     "id": "torre.solo.birdsOnFinal",
@@ -8018,6 +8414,13 @@
     "idioma": "en",
     "texto": "roger, Mayday",
     "para": "la torre oyó la llamada de socorro, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.rogerPanPan",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "roger, Pan Pan",
+    "para": "la torre oyó la llamada de urgencia, en Canarias"
   },
   {
     "id": "torre.canario.solo.birdsOnFinal",

@@ -88,6 +88,13 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    */
   "roger MAYDAY": "torre.mayday",
   /*
+   * **Y la de una urgencia**, «roger PAN PAN» —el cuatrimotor que pierde un
+   * motor: le quedan tres, algo va mal y hay tiempo—, entra aquí como
+   * `torre.panpan` con su toma, que está pedida en `frases-para-grabar.mjs`.
+   * Hasta entonces la respuesta se lee en la tira de la radio. Ver
+   * `declararPanPan` en `game.ts`.
+   */
+  /*
    * Y a quien se pasó la salida: abandone por la próxima disponible. Ver
    * `decirSalPorLaSiguiente` en `game.ts`.
    */
@@ -405,8 +412,18 @@ export function noSePierde(
   urgencia: string,
 ): boolean {
   if (!clave || urgencia === "baja") return false;
-  return DE_LA_LAMPARA.test(clave) || LA_RUTA.test(clave);
+  return DE_LA_LAMPARA.test(clave) || LA_RUTA.test(clave) || LA_EMERGENCIA.test(clave);
 }
+
+/**
+ * **Y la respuesta a una emergencia**, «roger MAYDAY» o «roger PAN PAN»: es
+ * para ti, y es lo que dice que la torre te oyó y que desde ahí la frecuencia
+ * es tuya. Caducaba como una orden cualquiera: en el descenso de emergencia
+ * llega a la vez que el aviso de la cabina y la explicación de la
+ * instructora, esperaba detrás y se caía sin sonar. Dicha unos segundos tarde
+ * sigue siendo verdad. Ver `declararMayday` en `game.ts`.
+ */
+const LA_EMERGENCIA = /^torre\.(?:[a-z]+\.)?(?:mayday|panpan)(?:@|$)/;
 
 /** La autorización de la ruta, antes de rodar. Ver `autorizarLaRuta` en `game.ts`. */
 const LA_RUTA = /^torre\.(?:[a-z]+\.)?(?:destino|clearedTo)(?:@|$)/;

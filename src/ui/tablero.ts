@@ -24,7 +24,7 @@
  * y ese parecido es el hallazgo que se lleva quien aprende aquí.
  */
 
-import type { AircraftConfig } from "../flight/aircraft";
+import { esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import type { FlightState } from "../flight/model";
 import { SixPack } from "./six-pack";
 import {
@@ -330,6 +330,7 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   freno: "freno",
   combustible: "combustible",
   cabina: "mascara",
+  motor: "motor-parado",
 };
 
 /**
@@ -352,6 +353,15 @@ function tresPatas(ancho: number, alto: number): string {
       `<circle cx="${cx}" cy="${alto - r - 1.5}" r="${r}" class="aviso-luz__rueda" />`;
   }
   return patas;
+}
+
+/**
+ * El dibujo de una luz en este avión: el motor dormido de un reactor es su
+ * fan quieto, no una hélice. Ver `REACTOR_PARADO` en `senal.ts`.
+ */
+function dibujoDeLuz(id: string, chorro: boolean): DibujoDeSenal {
+  const dibujo = DIBUJO_DE_LUZ[id] ?? "fuera";
+  return chorro && dibujo === "motor-parado" ? "reactor-parado" : dibujo;
 }
 
 /**
@@ -567,7 +577,7 @@ export class Tablero {
       <rect y="${corte}" width="${ANCHO_DEL_CUADRO}" height="${ALTO_DEL_CUADRO - corte}" class="tablero__fascia" />
       ${visera}
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
-      ${this.panelDeAvisos(corte)}
+      ${this.panelDeAvisos(corte, esDeChorro(a))}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
       ${placaDeMatricula(matriculaDe(a.id).matricula)}
@@ -603,7 +613,7 @@ export class Tablero {
    * la tarjeta grande, y que sean los mismos es media lección — quien
    * aprendió el dibujo en la tarjeta lo reconoce en la luz.
    */
-  private panelDeAvisos(corte: number): string {
+  private panelDeAvisos(corte: number, chorro = false): string {
     const ancho = ANCHO_DE_LUZ;
     const alto = ALTO_DE_LUZ;
     /*
@@ -647,9 +657,9 @@ export class Tablero {
           <g data-hasta="1" class="aviso-luz__dibujo">${
             l.id === "tren"
               ? tresPatas(ancho, alto)
-              : dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", ancho / 2 - 9, 1, 18)
+              : dibujoEn(dibujoDeLuz(l.id, chorro), ancho / 2 - 9, 1, 18)
           }</g>
-          <g data-desde="2">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", 3, 3, 14)}</g>
+          <g data-desde="2">${dibujoEn(dibujoDeLuz(l.id, chorro), 3, 3, 14)}</g>
           <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="4"
                 class="aviso-luz__palabra" text-anchor="middle">${l.cabina}</text>
           <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="2" data-hasta="3"

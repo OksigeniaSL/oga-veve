@@ -43,6 +43,7 @@ import { PALETA } from "../ui/paleta";
 import { AVISO_DE_CABINA } from "../flight/despresurizacion";
 import { anillosDe, type Eco } from "../flight/tormentas";
 import { bienPuesta } from "../flight/altimetro";
+import type { MensajeDeMotor } from "../flight/practica";
 import { temperaturaExterior, type Aire } from "../flight/atmosphere";
 
 /**
@@ -201,6 +202,12 @@ export interface DatosDeCabina {
    */
   readonly motores: readonly number[];
   readonly rotuloDeMotor: string;
+  /**
+   * **Los mensajes del EICAS** de un motor parado, en su orden: el de
+   * precaución y lo que se ha hecho con él. Vacío casi siempre, que es lo
+   * que tiene que estar un EICAS. Ver `listaDelMotor` en `flight/practica.ts`.
+   */
+  readonly mensajesDeMotor?: readonly MensajeDeMotor[];
   /** Flaps, 0 a 1. Van en el EICAS, debajo de los motores. */
   readonly flaps: number;
   /**
@@ -2188,62 +2195,98 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * mueve al momento y la aguja tarda tres segundos en alcanzarlo.
    */
   const yMando = cy + r + 44;
-  escribir(g, "MANDO", ANCHO / 2, yMando - 12, "500 11px " + FUENTE, TENUE);
-  for (let i = 0; i < n; i++) {
-    const ancho = Math.min(paso - 22, 86);
-    const bx = 14 + paso * (i + 0.5) - ancho / 2;
-    ventana(g, bx, yMando, ancho, 10);
-    g.fillStyle = PALETA.objetivo;
-    g.fillRect(bx, yMando, ancho * clamp01(d.motores[i] ?? 0), 10);
-  }
+  /*
+   * **Y los mensajes, cuando un motor se para**, en el sitio del mando y del
+   * aire de fuera: el de precaución en ámbar y, debajo, lo que se ha hecho
+   * con él. Es donde los pone un EICAS de verdad —debajo de las agujas, que
+   * son las que dicen cuál— y el resto del tiempo no hay nada que poner.
+   * Ver `listaDelMotor` en `flight/practica.ts`.
+   */
+  const mensajes = d.mensajesDeMotor ?? [];
+  if (mensajes.length > 0) pintarMensajes(g, yMando - 22, mensajes);
+  else {
+    escribir(g, "MANDO", ANCHO / 2, yMando - 12, "500 11px " + FUENTE, TENUE);
+    for (let i = 0; i < n; i++) {
+      const ancho = Math.min(paso - 22, 86);
+      const bx = 14 + paso * (i + 0.5) - ancho / 2;
+      ventana(g, bx, yMando, ancho, 10);
+      g.fillStyle = PALETA.objetivo;
+      g.fillRect(bx, yMando, ancho * clamp01(d.motores[i] ?? 0), 10);
+    }
 
-  /*
-   * **La temperatura de fuera y la altura de la cabina.**
-   *
-   * Pedidas las dos: «no veo temperatura exterior, ni presurización de
-   * cabina». Y las dos son de las que enseñan sin proponérselo — que a diez
-   * mil metros hace cincuenta bajo cero, y que la cabina **también sube**,
-   * aunque mucho menos, que es por lo que duelen los oídos al bajar.
-   *
-   * Los rótulos en inglés de cabina y sin traducir, como IAS o ALT: OAT es
-   * *outside air temperature* y CAB ALT es la altitud de cabina, y así es
-   * como están escritos en el avión que van a ver algún día.
-   */
-  const yAire = yMando + 34;
-  const oat = Math.round(temperaturaExterior(d.altura, d.aire));
-  escribir(g, "OAT", ANCHO * 0.28, yAire, "500 11px " + FUENTE, TENUE, "right");
-  escribir(
-    g,
-    `${oat > 0 ? "+" : ""}${oat}°C`,
-    ANCHO * 0.31,
-    yAire,
-    "600 15px " + FUENTE,
-    TINTA,
-    "left",
-  );
-  escribir(g, "CAB ALT", ANCHO * 0.72, yAire, "500 11px " + FUENTE, TENUE, "right");
-  /*
-   * La altura de la cabina, con su rótulo y no antes: por ser cifra salía
-   * desde el primer peldaño, y en Guyrami era un número suelto que no decía
-   * de qué era. Igual que en el cuadro plano. Nunca un número solo.
-   */
-  if (peldanoDeAhora >= LETRAS_DESDE)
-  escribir(
-    g,
-    `${Math.round(d.cabina / 0.3048 / 50) * 50}`,
-    ANCHO * 0.75,
-    yAire,
-    "600 15px " + FUENTE,
-    // En rojo por encima de diez mil pies, como el EICAS de verdad.
-    d.cabina > AVISO_DE_CABINA ? PALETA.limite : TINTA,
-    "left",
-  );
+    /*
+     * **La temperatura de fuera y la altura de la cabina.**
+     *
+     * Pedidas las dos: «no veo temperatura exterior, ni presurización de
+     * cabina». Y las dos son de las que enseñan sin proponérselo — que a diez
+     * mil metros hace cincuenta bajo cero, y que la cabina **también sube**,
+     * aunque mucho menos, que es por lo que duelen los oídos al bajar.
+     *
+     * Los rótulos en inglés de cabina y sin traducir, como IAS o ALT: OAT es
+     * *outside air temperature* y CAB ALT es la altitud de cabina, y así es
+     * como están escritos en el avión que van a ver algún día.
+     */
+    const yAire = yMando + 34;
+    const oat = Math.round(temperaturaExterior(d.altura, d.aire));
+    escribir(g, "OAT", ANCHO * 0.28, yAire, "500 11px " + FUENTE, TENUE, "right");
+    escribir(
+      g,
+      `${oat > 0 ? "+" : ""}${oat}°C`,
+      ANCHO * 0.31,
+      yAire,
+      "600 15px " + FUENTE,
+      TINTA,
+      "left",
+    );
+    escribir(g, "CAB ALT", ANCHO * 0.72, yAire, "500 11px " + FUENTE, TENUE, "right");
+    /*
+     * La altura de la cabina, con su rótulo y no antes: por ser cifra salía
+     * desde el primer peldaño, y en Guyrami era un número suelto que no decía
+     * de qué era. Igual que en el cuadro plano. Nunca un número solo.
+     */
+    if (peldanoDeAhora >= LETRAS_DESDE)
+      escribir(
+        g,
+        `${Math.round(d.cabina / 0.3048 / 50) * 50}`,
+        ANCHO * 0.75,
+        yAire,
+        "600 15px " + FUENTE,
+        // En rojo por encima de diez mil pies, como el EICAS de verdad.
+        d.cabina > AVISO_DE_CABINA ? PALETA.limite : TINTA,
+        "left",
+      );
+  }
 
   reglaDeCombustible(g, 48, ALTO - 100, ANCHO - 160, 14, d.combustible);
   if (d.cuadro.flaps.length > 1)
     reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps, d.cuadro.flaps);
   lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);
   g.restore();
+}
+
+/**
+ * Los mensajes del EICAS, de izquierda a derecha y de arriba abajo: el de
+ * precaución en ámbar, y cada cosa hecha en blanco con su marca verde. Con la
+ * letra de las cifras de la pantalla, que es la que se lee de un vistazo.
+ */
+function pintarMensajes(
+  g: CanvasRenderingContext2D,
+  y: number,
+  mensajes: readonly MensajeDeMotor[],
+): void {
+  g.fillStyle = "#05070a";
+  g.fillRect(14, y, ANCHO - 28, 16 * Math.min(4, mensajes.length) + 10);
+  mensajes.slice(0, 4).forEach((m, i) => {
+    const color =
+      m.clase === "precaucion"
+        ? PALETA.precaucion
+        : m.clase === "hecho"
+          ? TINTA
+          : PALETA.auxiliar;
+    escribir(g, m.texto, 24, y + 17 + i * 16, "600 14px " + FUENTE, color, "left");
+    if (m.clase === "hecho")
+      escribir(g, "✓", ANCHO - 26, y + 17 + i * 16, "700 14px " + FUENTE, PALETA.normal, "right");
+  });
 }
 
 function clamp01(v: number): number {

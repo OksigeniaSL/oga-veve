@@ -181,7 +181,9 @@ export interface AhoraMismo {
    */
   readonly sinMotor?: boolean;
   /**
-   * **Si se tiene prioridad**: con un MAYDAY o un «minimum fuel» puesto. A
+   * **Si se tiene prioridad**: con un MAYDAY o un «minimum fuel» puesto, o
+   * con la emergencia declarada de un ejercicio con un motor parado —ver
+   * `flight/practica.ts`—. A
    * ése no se le inventa una frustrada —la de una de cada cuatro, la que
    * sale del sorteo—; solo se le manda al aire si la pista está ocupada de
    * verdad, o si su propia aproximación no está para seguir. Gando lo hizo

@@ -187,6 +187,41 @@ const LAS_EMERGENCIAS = [
   "vuelo.tormenta",
 ] as const;
 
+/**
+ * **Y los ejercicios de emergencia**, que son las emergencias de arriba
+ * practicadas: lo que va a pasar antes de que pase —nunca por sorpresa—, lo
+ * que se hace cuando pasa —parar, seguir, el pie del lado bueno, la velocidad
+ * de un motor, el motor asegurado— y el cierre, que nunca es un reproche y
+ * enseña la decisión: parar antes de V1 es ganar, seguir después también.
+ *
+ * Lo que no está es lo que explica sin que haga falta para volar: los
+ * bomberos que se ven esperando y por qué se avisa a la torre. Ver
+ * `flight/ejercicios.ts`.
+ */
+const LOS_EJERCICIOS = [
+  "ejercicio.planeo.antes",
+  "ejercicio.antes-de-v1.antes",
+  "ejercicio.despues-de-v1.antes",
+  "ejercicio.un-motor.antes",
+  "ejercicio.simulador.antes",
+  "ejercicio.despresurizacion.antes",
+  "ejercicio.paramos",
+  "ejercicio.seguimos",
+  "ejercicio.enVuelo",
+  "ejercicio.pieDerecho",
+  "ejercicio.pieIzquierdo",
+  "ejercicio.velocidad",
+  "ejercicio.bandera",
+  "ejercicio.banderaSola",
+  "ejercicio.cortar",
+  "ejercicio.bien",
+  "ejercicio.bienParado",
+  "ejercicio.paradoTrasV1",
+  "ejercicio.seguidoAntesDeV1",
+  "ejercicio.bienDespresurizacion",
+  "ejercicio.otraVez",
+] as const;
+
 export const SEGURIDAD: ReadonlySet<string> = new Set<string>([
   ...EL_SUELO,
   ...LA_ENERGIA,
@@ -194,6 +229,7 @@ export const SEGURIDAD: ReadonlySet<string> = new Set<string>([
   ...LA_TORRE,
   ...LA_FRUSTRADA,
   ...LAS_EMERGENCIAS,
+  ...LOS_EJERCICIOS,
 ]);
 
 /**

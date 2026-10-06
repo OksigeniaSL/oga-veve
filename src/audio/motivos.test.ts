@@ -63,7 +63,9 @@ describe("los motivos", () => {
       .filter(([, m]) => m.manda)
       .map(([nombre]) => nombre)
       .sort();
-    expect(mandan).toEqual(["attention", "peligro", "perdida"]);
+    // La campanada de precaución de un motor parado también: es un aviso de
+    // la máquina, y lo que diga la instructora va detrás, no encima.
+    expect(mandan).toEqual(["attention", "peligro", "perdida", "precaucion"]);
   });
 
   it("la concha suena por debajo de todo lo que vuela", () => {

@@ -16,6 +16,7 @@
 
 import type { Quaternion, Vector3 } from "three";
 import type { Aire } from "./atmosphere";
+import type { EstadoDelMotor } from "./motores";
 
 /** Posición de los mandos, en intención de piloto, no en deflexión física. */
 export interface ControlInputs {
@@ -558,4 +559,15 @@ export interface FlightModel {
    * `flight/frenada.ts`—. Lo dice el juego con el tiempo que hace.
    */
   ponerPistaMojada?(mojada: boolean): void;
+
+  /**
+   * **Los motores uno a uno**: cómo está cada uno, pararlo y asegurarlo.
+   *
+   * Opcionales porque solo el modelo de coeficientes los lleva: el sencillo
+   * de Guyrami no tiene pares ni guiñada que sujetar, y en ese peldaño no hay
+   * averías que practicar. Ver `flight/motores.ts` y `flight/ejercicios.ts`.
+   */
+  motoresAhora?(): readonly EstadoDelMotor[];
+  pararMotor?(i: number): void;
+  asegurarMotor?(i: number): void;
 }

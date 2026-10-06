@@ -58,6 +58,13 @@ const HABLADOS = [
    * una orden sin motivo no enseña nada: enseña a obedecer.
    */
   ["motivo", "instructor", "por qué no se puede bajar así"],
+  /*
+   * **Y los ejercicios de emergencia**: la presentación antes, lo que se hace
+   * durante y el cierre. Sin ellos, en el navegador de Enrique —sin voces del
+   * sistema— el ejercicio sería mudo justo en lo que más importa, que es la
+   * calma. Ver `src/flight/ejercicios.ts`.
+   */
+  ["ejercicio", "instructor", "los ejercicios de emergencia: antes, durante y después"],
   ["mission", "instructor", "las misiones"],
   /*
    * Aquí estaba «la cuenta de la toma, en casa»: la instructora contando en
@@ -257,6 +264,13 @@ const CABINA = [
    * grabación. Ver `CLAVE_DE_CABINA` en `src/audio/cabina.ts`.
    */
   ["cabina.goAroundOrder", "go around", "la orden de irse al aire"],
+  /*
+   * **Los de un motor que falla en el despegue**, que son de la tripulación:
+   * quien lo ve lo canta, y antes de V1 se manda parar. Ver `fallaElMotor` en
+   * `src/game.ts` y el ADR 0014.
+   */
+  ["cabina.engineFailure", "engine failure", "un motor se ha parado"],
+  ["cabina.stop", "stop", "antes de V1: se para el despegue"],
   // Y el aviso de velocidad baja, que el juego pedía sin toma.
   ["cabina.airspeedLow", "airspeed low", "vas lento para la configuración"],
   /*
@@ -431,6 +445,8 @@ const TORRE_SOLO = [
   ["torre.solo.runwayInUse", "runway in use", "la pista en uso, antes de su número"],
   ["torre.solo.goAroundSolo", "go around", "al aire, sin más: el porqué va detrás"],
   ["torre.solo.rogerMayday", "roger, Mayday", "la torre oyó la llamada de socorro"],
+  // Y la de urgencia, que es la del cuatrimotor con un motor parado.
+  ["torre.solo.rogerPanPan", "roger, Pan Pan", "la torre oyó la llamada de urgencia"],
   /*
    * **Y lo que dice un AFIS**, que informa y no autoriza: la pista libre u
    * ocupada detrás de su número, y «no reported traffic» detrás de la pista
@@ -1257,6 +1273,19 @@ for (const f of filas) {
   const dicho = EN_CALMA[f.id];
   if (!dicho) continue;
   f.dicho = dicho;
+  f.ajustes = AJUSTES_EN_CALMA;
+}
+/*
+ * **Y todo lo de los ejercicios de emergencia, en calma.** Es el marco entero
+ * del #90: la calma es el contenido, y la primera vez que alguien oiga que se
+ * ha parado un motor tiene que oírlo de alguien que no se asusta. «V1» se lee
+ * «ve uno», que es como lo dice en castellano quien vuela; escrito, el
+ * sintetizador lo deletrea. Ver `src/flight/ejercicios.ts`.
+ */
+for (const f of filas) {
+  if (!f.id.startsWith("ejercicio.")) continue;
+  const texto = f.texto.replaceAll("V1", "ve uno");
+  f.dicho = /[.!?]$/.test(texto) ? texto : `${texto}.`;
   f.ajustes = AJUSTES_EN_CALMA;
 }
 

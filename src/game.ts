@@ -85,6 +85,28 @@ import {
   MANDOS_AL_CENTRO,
   type PosicionDeLosMandos,
 } from "./world/superficies-de-mando";
+import { seOfrece, type Ejercicio } from "./flight/ejercicios";
+import {
+  ladoDelMotor,
+  listaDelMotor,
+  Practica,
+  type Cierre,
+  type MensajeDeMotor,
+  type Suceso,
+} from "./flight/practica";
+import {
+  conUnMotor,
+  velocidadesDeDespegue,
+  type VelocidadesDeDespegue,
+} from "./flight/velocidades-de-despegue";
+import { agujaDelMotor, enMarcha } from "./flight/motores";
+import {
+  Bomberos,
+  camionesDeLaCategoria,
+  juntoAlAvion,
+  juntoALaPista,
+} from "./world/bomberos";
+import { BOMBEROS as BOMBEROS_PUBLICADOS } from "./world/bomberos-publicados";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   calleDicha,
@@ -446,6 +468,37 @@ const POR_ENCIMA_DEL_TEJADO = 3;
  * pantalla le quita el momento a las dos cosas.
  */
 const TARDA_EL_FINAL = 0.5;
+
+/**
+ * **El dibujo de cada ejercicio**, el mismo de su tarjeta en el hangar: el
+ * motor dormido, la mano de parar o la mano tachada de «ya no se para».
+ */
+const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
+  planeo: "motor-parado",
+  "antes-de-v1": "freno",
+  "despues-de-v1": "nopara",
+  "un-motor": "motor-parado",
+  simulador: "motor-parado",
+  // La máscara: la misma de su aviso. Ver `EJERCICIO_DE_DESPRESURIZACION`.
+  despresurizacion: EJERCICIO_DE_DESPRESURIZACION.dibujo,
+};
+
+/** Qué se dice al acabar, según cómo. Ver `Cierre` en `flight/practica.ts`. */
+const CIERRE_DEL_EJERCICIO: Readonly<
+  Record<Exclude<Cierre, "otraVez">, TranslationKey>
+> = {
+  parado: "ejercicio.bienParado",
+  paradoTrasV1: "ejercicio.paradoTrasV1",
+  vuelta: "ejercicio.bien",
+  seguidoAntesDeV1: "ejercicio.seguidoAntesDeV1",
+};
+
+/**
+ * **Y el de la despresurización, con lo suyo**: lo que se practicó no fue un
+ * motor sino la máscara y la bajada, y la felicitación dice eso. Ver
+ * `cerrarElEjercicio`.
+ */
+const CIERRE_DE_LA_DESPRESURIZACION: TranslationKey = "ejercicio.bienDespresurizacion";
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
 import { crearCiudad, type Ciudad } from "./world/ciudad";
@@ -625,7 +678,8 @@ import {
   separacionEnTierra,
   type Vista,
 } from "./world/plan-de-vuelo";
-import { comoDibujo } from "./ui/senal";
+import { comoDibujo, type DibujoDeSenal } from "./ui/senal";
+import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
 import {
@@ -757,6 +811,7 @@ import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/des
 import { CabinaPresurizada } from "./flight/cabina-presurizada";
 import {
   AVISO_DE_CABINA,
+  DONDE_SE_RESPIRA,
   DescensoDeEmergencia,
   EJERCICIO_DE_DESPRESURIZACION,
   alturaSegura,
@@ -1260,6 +1315,12 @@ export interface GameOptions {
   leccion?: Leccion;
   /** La misión elegida en el hangar, si se eligió una. */
   mision?: Mission | null;
+  /**
+   * **El ejercicio de emergencia de hoy**, si se eligió uno en el hangar.
+   * Nunca por sorpresa: sin ejercicio no se para ningún motor. Ver
+   * `flight/ejercicios.ts`.
+   */
+  ejercicio?: Ejercicio | null;
   /**
    * La ortofoto del escenario, si la hay.
    *
@@ -2684,7 +2745,75 @@ export class Game {
    */
   private sinMotor = false;
 
+  /**
+   * **El ejercicio en marcha**, si se eligió uno y vale en este peldaño y con
+   * este avión. Ver `flight/practica.ts` y `practicar`.
+   */
+  private practica: Practica | null = null;
+  /**
+   * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
+   * motor parado. Desde ahí la torre da prioridad —ver `conPrioridad`, que la
+   * suma a las del combustible y a la de sin motor— y la cabecera que se
+   * elija se autoriza al alinearse, como sin motor: ver `mirarLaOtraCabecera`.
+   */
+  private emergenciaDeclarada = false;
+  /** Lo que dice el EICAS del motor parado. Ver `listaDelMotor`. */
+  private mensajesDeMotor: readonly MensajeDeMotor[] = [];
+  /** Los bomberos del aeropuerto. Ver `world/bomberos.ts`. */
+  private readonly bomberos = new Bomberos();
+  /** Qué hicieron los bomberos hoy: esperar en la pista o mirar los frenos. */
+  private bomberosPor: "pista" | "frenos" | null = null;
+  /**
+   * **V1, Vr y V2 de este despegue**, con la pista y el aire de hoy. Ver
+   * `flight/velocidades-de-despegue.ts`.
+   */
+  private velocidadesDeHoy: VelocidadesDeDespegue | null = null;
+
   /** Si se vuela sin motor, para los bancos. */
+  /** El ejercicio de emergencia en marcha, para el banco. Ver `practicar`. */
+  get ejercicioParaBanco(): {
+    readonly id: string;
+    readonly fase: string;
+    readonly averia: unknown;
+    readonly motorParado: number | null;
+    readonly antesDeV1: boolean;
+    readonly asegurado: boolean;
+    readonly declarada: boolean;
+    readonly cierre: string | null;
+    readonly motores: readonly string[];
+    readonly velocidades: VelocidadesDeDespegue | null;
+    readonly bomberos: boolean;
+    readonly camiones: number;
+    readonly prioridad: boolean;
+    readonly mensajes: readonly string[];
+    readonly descenso: { readonly segundos: number | null; readonly terminado: boolean } | null;
+  } | null {
+    const p = this.practica;
+    if (!p) return null;
+    return {
+      id: p.ejercicio.id,
+      fase: p.fase,
+      averia: p.averia,
+      motorParado: p.motorParado,
+      antesDeV1: p.antesDeV1,
+      asegurado: p.aseguradoYa,
+      declarada: p.declaradaYa,
+      cierre: p.cierre,
+      motores: [...(this.flight.motoresAhora?.() ?? [])],
+      velocidades: this.velocidadesDeHoy,
+      bomberos: this.bomberos.puestos,
+      camiones: this.bomberos.cuantos,
+      prioridad: this.conPrioridad,
+      mensajes: this.mensajesDeMotor.map((m) => m.texto),
+      descenso: this.descensoDeEmergencia
+        ? {
+            segundos: this.descensoDeEmergencia.segundos,
+            terminado: this.descensoDeEmergencia.terminado,
+          }
+        : null,
+    };
+  }
+
   get sinMotorParaBanco(): boolean {
     return this.sinMotor;
   }
@@ -4489,6 +4618,17 @@ export class Game {
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
     this.reversa = new Reversa(tiempoDeReversa(this.aircraft));
+    /*
+     * **El ejercicio, solo donde toca.** El hangar ya no lo ofrece fuera de
+     * su peldaño ni con un avión que no tiene esa avería, y esto es el
+     * cinturón: `?ejercicio=` en la dirección llega por otro lado.
+     */
+    const ejercicio = options.ejercicio ?? null;
+    if (ejercicio && seOfrece(ejercicio, this.tier.id, this.aircraft))
+      this.practica = new Practica(ejercicio, this.aircraft, {
+        v1: this.aircraft.decisionSpeed,
+        vr: this.aircraft.rotationSpeed,
+      });
 
     /*
      * El dedo sobre la cabina: mirar qué mando hay debajo y pulsarlo al soltar.
@@ -4900,6 +5040,8 @@ export class Game {
     this.scene.add(this.jirones.grupo);
     this.gotas = crearGotasEnElParabrisas();
     this.scene.add(this.gotas.grupo);
+    // Los bomberos, escondidos hasta que haga falta. Ver `ponerLosBomberos`.
+    this.scene.add(this.bomberos.grupo);
     this.nieblaDeCasa = this.sky.fog.density;
     /*
      * **Las cinco y media de la tarde**, y no el mediodía.
@@ -5140,7 +5282,15 @@ export class Game {
      * El objeto se construye de todas formas porque hay código que lo reinicia
      * y lo consulta; lo que no entra en la escena es su geometría.
      */
-    if (this.leccion.id === "aterrizaje") {
+    /*
+     * **Y no en un ejercicio de emergencia**, aunque empiece en el aire como
+     * esta lección: los aros marcan la senda de tres grados de una final
+     * normal, y el planeo sin motor empieza más alto a propósito —alto se
+     * arregla, bajo no—. Con ellos, el juego pedía bajar a quien estaba
+     * guardando altura para llegar: «too high, come down» en pleno planeo.
+     * Lo que guía un ejercicio es el ejercicio, y el PAPI sigue en su sitio.
+     */
+    if (this.leccion.id === "aterrizaje" && !this.practica) {
       this.scene.add(this.runwayGuide.group);
       this.seVenLosAros = true;
     }
@@ -5259,6 +5409,7 @@ export class Game {
     });
     // Ver `buildFlightModel`: el primer modelo se construyó antes que esto.
     this.input.compensadorVivo = this.tier.model !== "simple";
+    this.input.ponerTimon(this.tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
 
     /*
      * El cuaderno de vuelo, si el HTML trae su hueco.
@@ -6751,9 +6902,26 @@ export class Game {
     this.input.controls.brakes = 1;
     this.input.releaseAll();
     this.avisar("error");
-    this.cantar("we have a problem", t("vuelo.roto"), "vuelo.roto");
+    /*
+     * **Y en un ejercicio, sale mal el ejercicio**, y nada más: nadie se hace
+     * daño en un simulador, y eso se dice tal cual. Ni «se rompió» ni el canto
+     * de un problema: la instructora, con calma, que se repite. Es la segunda
+     * regla del marco de las emergencias. Ver `flight/ejercicios.ts`.
+     */
+    const enEjercicio = this.practica !== null;
+    if (enEjercicio) this.decirDelEjercicio("ejercicio.otraVez", "mando");
+    else this.cantar("we have a problem", t("vuelo.roto"), "vuelo.roto");
     this.agenda.luego(TARDA_EL_FINAL, () => {
       if (this.percance !== tipo) return;
+      if (enEjercicio) {
+        this.hud.mostrarCierreDeEjercicio(
+          dibujoDeCierre("otraVez"),
+          this.tier.instruments === "none"
+            ? ""
+            : this.rotulo("ejercicio.otraVez", "palabra.otraVez"),
+        );
+        return;
+      }
       this.hud.mostrarPercance(
         dibujoDePercance(
           tipo,
@@ -8758,6 +8926,20 @@ export class Game {
      * falta.
      */
     if (this.leccion.arranque === "aire") {
+      /*
+       * **Un ejercicio se coloca donde se practica**: más lejos y más alto
+       * que la final de siempre. Ver `dondeEmpiezaElEjercicio`.
+       */
+      const colocacion = this.practica?.ejercicio.colocacion;
+      if (colocacion) {
+        const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
+        const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
+        const y = Math.max(
+          this.terrain.runwayElevation + alto,
+          this.terrain.sampleHeight(x, z) + SUELO_MINIMO,
+        );
+        return new Vector3(x, y, z);
+      }
       // Desde el umbral de aterrizar: con el umbral desplazado, la final
       // acaba pista adentro. Ver `umbral-desplazado.ts`.
       const [x, z] = puntoDePista(
@@ -8964,6 +9146,26 @@ export class Game {
     this.percance = null;
     // Y con el depósito lleno, otra vez con motor. Ver `quedarseSinMotor`.
     this.sinMotor = false;
+    /*
+     * **Y el ejercicio, otra vez desde el principio**: se repite, como en el
+     * simulador, con los motores en marcha, sin prioridad y sin bomberos. Y
+     * con las velocidades de esta pista y de este aire. Ver `practicar`.
+     */
+    this.emergenciaDeclarada = false;
+    this.mensajesDeMotor = [];
+    this.bomberos.quitar();
+    this.bomberosPor = null;
+    /*
+     * Las velocidades de hoy se cuentan al empezar la carrera, con la pista que
+     * queda por delante y lo que pesa el avión entonces: aquí el depósito
+     * todavía no se ha llenado para este tramo. Ver `contarLasVelocidades`.
+     */
+    this.velocidadesDeHoy = null;
+    this.practica?.reiniciar();
+    this.practica?.ponerVelocidades({
+      v1: this.aircraft.decisionSpeed,
+      vr: this.aircraft.rotationSpeed,
+    });
     this.laOtraCabecera.reiniciar();
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por este método.
@@ -11775,14 +11977,33 @@ export class Game {
      * se podía jugar con él. Los de tren fijo siguen como estaban: su final
      * está afinada así.
      */
-    const configurado = this.aircraft.trenRetractil;
-    const entrada = configurado
-      ? this.aircraft.approachSpeed * 1.1
-      : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
+    /*
+     * Salvo en un ejercicio, que empieza limpio —tren dentro y sin flaps—, a
+     * la velocidad de lo que se va a practicar: la de mejor planeo, o la del
+     * circuito para volar con un motor. Ver `dondeEmpiezaElEjercicio`.
+     */
+    const colocacion = this.practica?.ejercicio.colocacion;
+    const configurado = !colocacion && this.aircraft.trenRetractil;
+    const entrada =
+      colocacion === "planeo"
+        ? planeoDe(this.avionConPeso()).velocidad
+        : colocacion === "un-motor"
+          ? this.aircraft.velocidadDeCircuito
+          : colocacion === "crucero"
+            ? this.aircraft.cruiseSpeed
+            : configurado
+              ? this.aircraft.approachSpeed * 1.1
+              : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
     this.flight.reset({
       position: this.startPosition(),
       heading: MathUtils.degToRad(runway.heading),
       airspeed: entrada,
+      /*
+       * Arriba, en crucero, con el ala sosteniendo lo que pesa: sin esto nace
+       * con el morro en el horizonte y lo primero que hace es caerse, que no
+       * es lo que se viene a practicar. Ver `InitialConditions.equilibrado`.
+       */
+      ...(colocacion === "crucero" ? { equilibrado: true } : {}),
     });
     if (this.campoMontado !== this.scenario.id) this.montarElCampo(this.laCasa);
     /*
@@ -11798,6 +12019,11 @@ export class Game {
     this.cargaDeFlaps = FLAPS_SANOS;
     this.input.topeDeFlaps = 1;
     this.input.controls.engineOn = true;
+    if (colocacion) {
+      this.input.ponerElTrenDentro();
+      this.input.ponerPalancaDeFlaps(0);
+      this.input.controls.flaps = 0;
+    }
     /*
      * **El gas que sostiene la velocidad de aproximación, no un 0,45 mágico.**
      *
@@ -11821,6 +12047,25 @@ export class Game {
     // Con lo que lleva sacado: en el modelo sencillo, con tren y flaps hace
     // falta más gas. Ver `gasPara` en `arcade.ts`.
     this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls);
+    /*
+     * **Y un ejercicio, con el gas que sostiene su velocidad a nivel**, en el
+     * modelo completo: el `gasPara` de ese modelo es una recta a ojo pensada
+     * para una final que baja, y a nivel se iba de largo. Medido en el banco
+     * del planeo con la avioneta de Tukã: empezaba a 70 nudos y a los catorce
+     * segundos, cuando se para el motor, iba a 93, con todo ese sobrante para
+     * gastar antes de la pista. Ver `gasQueSostiene`.
+     */
+    if (colocacion && this.tier.model !== "simple") {
+      const sostiene = gasQueSostiene(this.avionConPeso(), {
+        altura: this.flight.state.position.y,
+        verdadera: entrada,
+        aire: this.flight.aireDelDia(),
+        flaps: 0,
+        tren: this.input.controls.tren,
+        pendiente: 0,
+      });
+      if (sostiene !== null) this.input.controls.throttle = sostiene;
+    }
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.runwayGuide.reset(this.flight.state.position);
@@ -12196,6 +12441,8 @@ export class Game {
     this.atenderALaCabina(dt);
     this.seguirElViento(dt);
     this.mirarLaCabecera();
+    // El ejercicio de emergencia, si lo hay. Ver `practicar`.
+    this.practicar(dt);
     this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
 
@@ -12799,6 +13046,12 @@ export class Game {
       cabinaAlta:
         this.aircraft.presurizacion !== null &&
         this.cabinaDelAvion.altitud > AVISO_DE_CABINA,
+      /*
+       * Y un motor parado, solo donde hay con qué decirlo: la luz ámbar del
+       * EICAS en los de pantallas. El bimotor de pistón no la lleva, y en él
+       * el motor parado se ve en su aguja. Ver `fallaElMotor`.
+       */
+      motorParado: this.mensajesDeMotor.length > 0,
     });
 
     /*
@@ -12909,7 +13162,7 @@ export class Game {
      * Vuelve sola al levantarse la orden —la pista vuelve a ser tuya y la
      * senda también—, que es lo que hace `levantarLaOrden`.
      */
-    if (this.leccion.id === "aterrizaje") {
+    if (this.leccion.id === "aterrizaje" && !this.practica) {
       const conSenda = !this.laAproximacion.mandanFrustrar;
       if (this.runwayGuide.group.visible !== conSenda) {
         this.runwayGuide.group.visible = conSenda;
@@ -13495,11 +13748,14 @@ export class Game {
     this.audio.ponerOido(oidoDe(this.vistaQueHay()));
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
     // que es donde la ponen los fabricantes.
+    const estados = this.flight.motoresAhora?.();
     this.audio.update(
       this.flight.state,
       this.input.controls,
       this.aircraft.aero.alphaStall * 0.85,
       TRAQUETEO[this.superficie],
+      // Con uno parado, se oye la parte que va. Ver `enMarcha` en `audio.ts`.
+      estados ? enMarcha(estados) / Math.max(1, estados.length) : 1,
     );
     // El mapa, si está abierto. Solo mueve la flecha: el mundo ya está pintado.
     /*
@@ -13564,14 +13820,10 @@ export class Game {
          * y en su orden; hoy todos dan lo mismo porque el modelo de vuelo lleva
          * un solo empuje, y el día que haya un motor parado esto ya lo enseña.
          */
-        motores: Array.from({ length: this.aircraft.motores }, () =>
-          regimen(
-            this.aircraft,
-            this.input.controls.throttle,
-            this.input.controls.engineOn,
-          ),
-        ),
+        motores: this.agujasDeLosMotores(),
         rotuloDeMotor: cuadroDe(this.aircraft).rotulo,
+        // Y lo que dice el EICAS de un motor parado. Ver `listaDelMotor`.
+        mensajesDeMotor: this.mensajesDeMotor,
         /*
          * Y dónde está la cabina, que no es donde está el avión. Ver
          * `flight/cabina-presurizada.ts`, y la pregunta que lo trajo: «¿qué
@@ -13768,13 +14020,7 @@ export class Game {
     this.aircraftMesh.luzDeCabina?.ponerSol(this.sky.sunDirection.y);
     this.aircraftMesh.relojes?.actualizar(
       {
-        motores: Array.from({ length: this.aircraft.motores }, () =>
-          regimen(
-            this.aircraft,
-            this.input.controls.throttle,
-            this.input.controls.engineOn,
-          ),
-        ),
+        motores: this.agujasDeLosMotores(),
         flaps: this.input.controls.flaps,
         peldano: peldanoDe(this.tier.instruments),
         /*
@@ -13837,7 +14083,9 @@ export class Game {
       this.input.controls.throttle,
       dt,
       this.input.controls.brakes,
-      this.aircraft.decisionSpeed,
+      // La V1 de esta pista y este aire, no la de la ficha: en una pista
+      // corta se decide antes. Ver `velocidadesDeDespegue`.
+      this.velocidadesDeHoy?.v1 ?? this.aircraft.decisionSpeed,
       this.runwayRemaining(),
       this.input.controls.engineOn,
       /*
@@ -13899,6 +14147,7 @@ export class Game {
          * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
          */
         perfil: this.perfilParaElCuadro(),
+        motores: this.agujasDeLosMotores(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -14407,7 +14656,7 @@ export class Game {
    * Ni pantalla roja, ni pitido, ni música: un fallo de motor se entrena
    * para que sea una maniobra y no un susto, y quien se acelera decide peor.
    */
-  private quedarseSinMotor(): void {
+  private quedarseSinMotor(porque = "fuel exhaustion"): void {
     this.sinMotor = true;
     this.laOtraCabecera.reiniciar();
     const s = this.flight.state;
@@ -14427,7 +14676,13 @@ export class Game {
       canalesDe(this.tier.avisos).cifra && dicho.rotulo
         ? `${dicho.rotulo} · ${Math.round(unidades.speed(planeo.velocidad))} ${unidades.speedLabel()}`
         : dicho.rotulo;
-    this.hud.senal.mostrar("combustible", rotulo, null, {
+    /*
+     * El dibujo, el de lo que ha pasado: el depósito vacío si fue el
+     * combustible, y el motor dormido si fue el ejercicio del planeo, que no se
+     * quedó sin combustible. Ver `fallaElMotor`.
+     */
+    const dibujo = porque === "fuel exhaustion" ? "combustible" : "motor-parado";
+    this.hud.senal.mostrar(dibujo, rotulo, null, {
       segundos: 10,
       prioridad: IMPORTANTE,
     });
@@ -14440,7 +14695,7 @@ export class Game {
      * calma, y lo que dice es qué hacer. Ver `audio/boca.ts`.
      */
     this.instructor.decir(dicho.texto, dicho.id, "urgente");
-    this.declararMayday();
+    this.declararMayday(porque);
   }
 
   /**
@@ -14479,10 +14734,17 @@ export class Game {
 
   /**
    * **Con poco combustible, se tiene prioridad**: el MAYDAY de la reserva, el
-   * «minimum fuel», o sin motor.
+   * «minimum fuel», o sin motor. Y con la emergencia que declara un ejercicio
+   * de motor parado —ver `declararLaEmergencia`—, y con el MAYDAY del descenso
+   * de emergencia, que es un MAYDAY como los demás: ver `avisarDeLaCabina`.
    */
   private get conPrioridad(): boolean {
-    return this.sinMotor || this.llamadaDicha !== "nada";
+    return (
+      this.sinMotor ||
+      this.llamadaDicha !== "nada" ||
+      this.emergenciaDeclarada ||
+      this.descensoDeEmergencia !== null
+    );
   }
 
   /**
@@ -14519,7 +14781,7 @@ export class Game {
     const montada = this.deTorre("torre.mayday", yo);
     if (!montada) return;
     this.hud.radio(
-      `MAYDAY MAYDAY MAYDAY, ${yo.dicho}, ${motivo} — ${montada.texto}`,
+      `MAYDAY MAYDAY MAYDAY, ${yo.dicho}, ${motivo}, squawking 7700 — ${montada.texto}`,
       9,
       true,
     );
@@ -14948,7 +15210,563 @@ export class Game {
 
   /** Si en el campo de ahora hay una torre que conteste: con lección de torre y con torre. */
   private hayTorreQueHable(): boolean {
-    return this.leccion.torre && !sinTorre(this.elCampo().escenario.aerodrome);
+    /*
+     * **Y en un ejercicio de emergencia, también**: los ejercicios empiezan
+     * en la pista o en el aire, sin la lámpara del rodaje, pero una emergencia
+     * se declara a la torre y la torre contesta. Sin esto, el MAYDAY de un
+     * ejercicio se quedaba sin respuesta en un campo con torre.
+     */
+    return (
+      (this.leccion.torre || this.practica !== null) &&
+      !sinTorre(this.elCampo().escenario.aerodrome)
+    );
+  }
+
+  // ── Los ejercicios de emergencia ──────────────────────────────────────
+  //
+  // Ver `flight/ejercicios.ts`, `flight/practica.ts` y el ADR 0014. Aquí solo
+  // se decide **quién dice y enseña cada cosa** en cada peldaño; qué toca y
+  // cuándo lo dice la práctica.
+
+  /**
+   * **Dónde empieza un ejercicio en el aire**, en su final: a cuántos metros
+   * del umbral y a qué altura sobre la pista.
+   *
+   * - `planeo`: a noventa segundos de planeo de la pista, y alto para llegar a
+   *   ella planeando con el motor parado cuando toque —con una fineza
+   *   que se consigue de verdad, el ochenta y cinco por ciento de la de la
+   *   ficha— y sesenta metros de sobra al cruzar el umbral. Un avión que
+   *   llega alto se arregla con flaps; uno que no llega, no.
+   * - `un-motor`: a dos minutos y medio de la pista a la velocidad del
+   *   circuito, en la senda de tres grados: tiempo para asegurar el motor,
+   *   declarar y configurar, y la pista delante.
+   * - `crucero`: a su altura de crucero, y tan lejos como para que quepa todo
+   *   lo que viene después con la pista delante —lo que se vuela antes de que
+   *   se vaya el aire, el descenso de emergencia, a unos diez grados, que es
+   *   lo empinado que baja un avión de línea con los aerofrenos fuera y a la
+   *   velocidad máxima, y desde los diez mil pies una bajada de tres grados
+   *   hasta la pista—. Así, al llegar a donde se respira, el aeropuerto más
+   *   cercano es el de casa y queda por delante.
+   */
+  private dondeEmpiezaElEjercicio(
+    colocacion: "planeo" | "un-motor" | "crucero",
+  ): { lejos: number; alto: number } {
+    if (colocacion === "un-motor") {
+      const lejos = this.aircraft.velocidadDeCircuito * 150;
+      return { lejos, alto: lejos * Math.tan((3 * Math.PI) / 180) };
+    }
+    if (colocacion === "crucero") {
+      const cota = this.terrain.runwayElevation;
+      const arriba = Math.max(this.aircraft.alturaDeCrucero, DONDE_SE_RESPIRA);
+      const cuando = this.practica?.averia.cuando;
+      const antes = this.aircraft.cruiseSpeed * (cuando?.en === "aire" ? cuando.segundos : 0);
+      const bajando = (arriba - DONDE_SE_RESPIRA) / Math.tan((10 * Math.PI) / 180);
+      const aterrizando = Math.max(0, DONDE_SE_RESPIRA - cota) / Math.tan((3 * Math.PI) / 180);
+      return { lejos: antes + bajando + aterrizando, alto: arriba - cota };
+    }
+    const planeo = planeoDe(this.avionConPeso());
+    const lejos = planeo.velocidad * 90;
+    // Lo que se vuela con motor hasta que se para, que acerca la pista.
+    const cuando = this.practica?.averia.cuando;
+    const conMotor = cuando?.en === "aire" ? cuando.segundos : 0;
+    const tras = lejos - planeo.velocidad * conMotor;
+    return { lejos, alto: tras / (planeo.fineza * 0.85) + 60 };
+  }
+
+  /**
+   * **Lo que marca la aguja de cada motor**: la de siempre en los que van, y
+   * la del molinete o nada en el parado. Es como se reconoce cuál se ha
+   * parado —en un bimotor de verdad no se adivina, se mira—, y la misma
+   * cuenta para las tres superficies que las pintan. Ver `agujaDelMotor`.
+   */
+  private agujasDeLosMotores(): number[] {
+    const va = regimen(
+      this.aircraft,
+      this.input.controls.throttle,
+      this.input.controls.engineOn,
+    );
+    const estados = this.flight.motoresAhora?.();
+    return Array.from({ length: this.aircraft.motores }, (_, i) =>
+      agujaDelMotor(estados?.[i] ?? "marcha", va),
+    );
+  }
+
+  /**
+   * **V1, Vr y V2 de este despegue**: con la pista que queda por delante —la
+   * de la intersección, si se sale de una—, el aire de hoy en este campo y lo
+   * que pesa el avión con el combustible que lleva. Ver el ADR 0019.
+   */
+  private lasVelocidadesDe(campo: CampoEnElMundo): VelocidadesDeDespegue {
+    const densidad = airDensity(
+      this.cotaDelCampo(campo),
+      this.flight.aireDelDia(),
+    );
+    const queda = this.runwayRemaining();
+    const pista = Number.isFinite(queda) ? queda : campo.pista.length;
+    return velocidadesDeDespegue(this.avionConPeso(), pista, densidad);
+  }
+
+  /**
+   * **Y se cuentan al empezar a correr**, una vez por despegue: antes, el
+   * depósito no tiene todavía lo de este tramo, y el avión no está en la
+   * pista de la que sale. Ver `lasVelocidadesDe`.
+   */
+  private contarLasVelocidades(): void {
+    const fase = this.vistaActual?.fase;
+    if (this.velocidadesDeHoy !== null || !this.flight.state.onGround) return;
+    if (fase !== "despegando" && fase !== "comprometido") return;
+    this.velocidadesDeHoy = this.lasVelocidadesDe(this.elCampo());
+    this.practica?.ponerVelocidades({
+      v1: this.velocidadesDeHoy.v1 ?? this.aircraft.decisionSpeed,
+      vr: this.velocidadesDeHoy.vr,
+    });
+  }
+
+  /**
+   * **Lo que dice la instructora en un ejercicio, solo con su frase
+   * grabada.** Lo que todavía no lo está se queda en el dibujo y en el texto
+   * de la tarjeta, y no pasa a la voz del navegador: muda en Brave para Linux
+   * y un robot en el resto, justo en lo que más importa de un ejercicio, que
+   * es la calma. En cuanto la frase tenga receta en el pack, suena sin tocar
+   * nada. Ver `PENDIENTE-VOCES-emergencias.md`.
+   */
+  private decirDelEjercicio(clave: TranslationKey, peso: Urgencia): void {
+    if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, peso);
+    else this.apuntarCanto(`${clave}: sin grabar, se calla`);
+  }
+
+  /**
+   * **Y un canto del ejercicio, por quien lo diría, solo si suena grabado**:
+   * en el peldaño de cabina, el inglés de la tripulación con su toma; en los
+   * de abajo, la instructora con la suya. Es el mismo reparto de `cantar`,
+   * preguntado antes de pedirlo. Ver `decirDelEjercicio`.
+   */
+  private cantarDelEjercicio(
+    ingles: string,
+    dicho: { readonly texto: string; readonly id: string },
+    urgencia: Urgencia,
+  ): void {
+    const deCabina = claveDeCabina(ingles);
+    const suena = cantaLaCabina(this.tier.avisos, "tripulacion")
+      ? deCabina
+        ? this.instructor.vozDe(deCabina) !== null
+        : this.instructor.vozDe(dicho.id) !== null
+      : this.instructor.vozDe(dicho.id) !== null;
+    if (suena) this.cantar(ingles, dicho.texto, dicho.id, urgencia);
+    else this.apuntarCanto(`${ingles} (${dicho.id}): sin grabar, se calla`);
+  }
+
+  /**
+   * **Un paso del ejercicio**: se le cuenta cómo va el vuelo y se hace lo que
+   * pida. Va después de mirar la cabecera, que es quien sabe si se está en
+   * final.
+   */
+  private practicar(dt: number): void {
+    this.bomberos.paso(dt);
+    this.contarLasVelocidades();
+    const p = this.practica;
+    if (!p) return;
+    /*
+     * **Y con la tarjeta del tiempo abierta, espera.** Lo primero que hace un
+     * ejercicio es contarse, y no se cuenta encima del parte —ni falla nada
+     * mientras se está leyendo si hoy se sale—: primero se decide, y después
+     * se practica. Ver `abrirElParte`.
+     */
+    if (this.tarjetaDelTiempo?.abierta) return;
+    this.sostenerLosMotores();
+    const s = this.flight.state;
+    const fase = this.vistaActual?.fase;
+    const alUmbral = Math.min(
+      this.enFinalPor.enUso ?? Infinity,
+      this.enFinalPor.otra ?? Infinity,
+    );
+    const sucesos = p.paso(
+      {
+        enElSuelo: s.onGround,
+        corriendo: fase === "despegando" || fase === "comprometido",
+        enPista: s.onRunway,
+        indicada: indicatedAirspeed(
+          s.airspeed,
+          s.position.y,
+          this.flight.aireDelDia(),
+        ),
+        sobreElCampo: s.position.y - this.cotaDelCampo(this.elCampo()),
+        vertical: s.verticalSpeed,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+        enFinal: alUmbral < 8000,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderLaPractica(suceso);
+  }
+
+  private atenderLaPractica(suceso: Suceso): void {
+    switch (suceso.que) {
+      case "presentar":
+        return this.presentarElEjercicio();
+      case "fallo":
+        if (suceso.averia === "presion") return this.fallaLaPresion();
+        return this.fallaElMotor(
+          suceso.motor,
+          suceso.antesDeV1,
+          suceso.enElSuelo,
+        );
+      case "velocidad":
+        return this.pedirLaVelocidadDeUnMotor();
+      case "asegurar":
+        return this.asegurarElMotor(suceso.motor);
+      case "declarar":
+        return this.declararLaEmergencia(suceso.socorro);
+      case "bomberos":
+        return this.ponerLosBomberos(suceso.donde);
+      case "cerrar":
+        return this.cerrarElEjercicio(suceso.como);
+    }
+  }
+
+  /**
+   * **Que el motor parado siga parado.** Un avión recolocado —el suelo que se
+   * moldea al empezar, el peldaño que cambia de modelo de vuelo— vuelve con
+   * todos los motores en marcha, y el ejercicio no ha terminado. Y sin
+   * ninguno, la llave no arranca nada: es un ejercicio, no se hace trampa con
+   * el contacto. Ver `quemarCombustible`, que hace lo mismo sin combustible.
+   */
+  private sostenerLosMotores(): void {
+    const p = this.practica;
+    if (!p || p.fase === "armada" || p.averia.que === "presion") return;
+    if (p.averia.que === "motores") {
+      if (p.fase === "fallo") this.input.controls.engineOn = false;
+      return;
+    }
+    const i = p.motorParado;
+    if (i === null) return;
+    if (this.flight.motoresAhora?.()[i] === "marcha") this.flight.pararMotor?.(i);
+    if (p.aseguradoYa) this.flight.asegurarMotor?.(i);
+  }
+
+  /**
+   * **Antes de empezar, qué va a pasar y qué se hace**, con calma. Es la
+   * primera regla del marco: nunca por sorpresa. La instructora lo cuenta en
+   * los cuatro peldaños —la voz es el canal de quien no lee—, el dibujo del
+   * ejercicio sale en la tarjeta y la frase, donde se lee.
+   */
+  private presentarElEjercicio(): void {
+    const e = this.practica?.ejercicio;
+    if (!e) return;
+    const clave = `ejercicio.${e.id}.antes` as TranslationKey;
+    this.hud.senal.mostrar(
+      DIBUJO_DEL_EJERCICIO[e.id],
+      this.rotulo(clave, "palabra.practica"),
+      null,
+      { segundos: 10, prioridad: IMPORTANTE },
+    );
+    this.decirDelEjercicio(clave, "mando");
+  }
+
+  /**
+   * **Se va el aire de la cabina**, que es el ejercicio de la
+   * despresurización: lo demás —el aviso, las máscaras, el descenso, el
+   * MAYDAY— lo lleva `despresurizar` paso a paso, con la calma de siempre.
+   * Aquí no se dice nada más: la presentación ya contó qué iba a pasar, y lo
+   * que pasa lo dice el avión.
+   */
+  private fallaLaPresion(): void {
+    const s = this.flight.state;
+    const sePuede = EJERCICIO_DE_DESPRESURIZACION.sePuedeDisparar({
+      enTierra: s.onGround,
+      altura: s.position.y,
+    });
+    if (!sePuede || !this.despresurizar())
+      this.apuntarCanto("despresurización: no se pudo disparar");
+  }
+
+  /**
+   * **Falla un motor**, o todos.
+   *
+   * Todos es el vuelo sin motor de siempre, con su planeo, su flecha y su
+   * MAYDAY: ver `quedarseSinMotor`.
+   *
+   * Uno es otra cosa, y en el orden de una cabina de verdad:
+   *
+   * 1. **La máquina**, al instante y donde la hay: la campanada de
+   *    precaución, el mensaje en la pantalla de motores y la luz ámbar con el
+   *    maestro. En el bimotor de pistón no hay nada de eso —de verdad no lo
+   *    hay—: se nota en los pies, en el oído y en las agujas.
+   * 2. **Detrás, la tripulación**: en el peldaño de cabina, el canto en
+   *    inglés —*engine failure*, o *stop* antes de V1—; en los de abajo, la
+   *    instructora en casa, con qué ha pasado y qué se hace. Detrás y no a la
+   *    vez: un suceso, una voz.
+   * 3. **Y el pie**, en los de abajo: qué pedal pisar, porque el avión tira
+   *    hacia el motor parado. Con su dibujo en los cuatro.
+   */
+  private fallaElMotor(
+    motor: number | null,
+    antesDeV1: boolean,
+    enElSuelo: boolean,
+  ): void {
+    if (motor === null) {
+      this.input.controls.engineOn = false;
+      this.quedarseSinMotor("engine failure");
+      return;
+    }
+    this.flight.pararMotor?.(motor);
+    const conPantallas = familiaDe(this.aircraft) !== "esferas";
+    if (conPantallas) {
+      this.avisar("precaucion");
+      this.mensajesDeMotor = listaDelMotor(this.aircraft, motor, false).slice(
+        0,
+        1,
+      );
+    }
+    // Lo que se dice va detrás de la campanada, no encima.
+    const tras = conPantallas ? 0.8 : 0;
+    if (enElSuelo && antesDeV1) {
+      const dicho = this.avisoCon("ejercicio.paramos", "palabra.frena");
+      this.hud.senal.mostrar("freno", dicho.rotulo, null, {
+        segundos: 8,
+        prioridad: URGENTE,
+      });
+      this.agenda.luego(tras, () => this.cantarDelEjercicio("stop", dicho, "urgente"));
+      return;
+    }
+    const clave = enElSuelo ? "ejercicio.seguimos" : "ejercicio.enVuelo";
+    const dicho = this.avisoCon(clave, "palabra.practica");
+    this.hud.senal.mostrar("motor-parado", dicho.rotulo, null, {
+      segundos: 5,
+      prioridad: IMPORTANTE,
+    });
+    // «Pie muerto, motor muerto»: se pisa el del otro lado.
+    const derecho = ladoDelMotor(this.aircraft, motor) === "izquierdo";
+    const pie: TranslationKey = derecho ? "ejercicio.pieDerecho" : "ejercicio.pieIzquierdo";
+    const explica = laInstructoraLoExplica(this.tier.avisos);
+    this.agenda.luego(tras, () => {
+      this.cantarDelEjercicio("engine failure", dicho, "mando");
+      if (explica) this.decirDelEjercicio(pie, "mando");
+    });
+    this.agenda.luego(tras + 4, () =>
+      this.hud.senal.mostrar(
+        derecho ? "pie-derecho" : "pie-izquierdo",
+        this.rotulo(
+          pie,
+          derecho ? "palabra.pieDerecho" : "palabra.pieIzquierdo",
+        ),
+        null,
+        { segundos: 8, prioridad: IMPORTANTE },
+      ),
+    );
+  }
+
+  /**
+   * **La velocidad de un motor**: la V2 en los de transporte y la línea azul
+   * en el bimotor de pistón, con su número donde se leen números. Ver
+   * `conUnMotor`.
+   */
+  private pedirLaVelocidadDeUnMotor(): void {
+    const u = conUnMotor(this.avionConPeso(), this.input.controls.flaps);
+    const unidades = UNIT_SYSTEMS[this.tier.units];
+    const dicho = this.avisoCon("ejercicio.velocidad", "palabra.practica");
+    const rotulo =
+      canalesDe(this.tier.avisos).cifra && dicho.rotulo
+        ? `${u.nombre} ${Math.round(unidades.speed(u.velocidad))} ${unidades.speedLabel()} · ${dicho.rotulo}`
+        : dicho.rotulo;
+    this.hud.senal.mostrar("velocidad", rotulo, null, {
+      segundos: 8,
+      prioridad: IMPORTANTE,
+    });
+    if (laInstructoraLoExplica(this.tier.avisos)) this.decirDelEjercicio("ejercicio.velocidad", "mando");
+  }
+
+  /**
+   * **La compañera asegura el motor parado**: la hélice en bandera donde la
+   * hay —a mano en el de pistón, sola en el turbohélice— y el combustible
+   * cortado en el reactor. En los peldaños de abajo lo dice mientras lo hace;
+   * en el de cabina lo escribe la pantalla de motores, cosa por cosa.
+   */
+  private asegurarElMotor(motor: number): void {
+    this.flight.asegurarMotor?.(motor);
+    this.mensajesDeMotor = listaDelMotor(this.aircraft, motor, true);
+    const clave =
+      this.aircraft.sound.engine === "turbofan"
+        ? "ejercicio.cortar"
+        : this.aircraft.motorParado.autoBandera
+          ? "ejercicio.banderaSola"
+          : "ejercicio.bandera";
+    if (laInstructoraLoExplica(this.tier.avisos)) {
+      this.decirDelEjercicio(clave, "mando");
+      return;
+    }
+    // Sin pantallas no hay dónde escribirlo: la tarjeta, con su nombre.
+    if (this.mensajesDeMotor.length === 0)
+      this.hud.senal.mostrar(
+        "motor-parado",
+        `PROP ${motor + 1} · FEATHER ✓`,
+        null,
+        { segundos: 6, prioridad: IMPORTANTE },
+      );
+  }
+
+  /**
+   * **Se declara la emergencia**, y eso cambia lo que hace todo el mundo en
+   * tierra. La llamada la hace quien vuela y en este juego nadie habla por
+   * quien vuela: se ve escrita en la tira de la radio, con el 7700 del
+   * transpondedor. La torre contesta con su voz, aparta el tráfico —ver
+   * `conPrioridad`— y avisa a los bomberos. Y en los peldaños de abajo la
+   * instructora cuenta qué se acaba de hacer y por qué.
+   *
+   * El MAYDAY es el de siempre —el mismo del vuelo sin motor y del descenso
+   * de emergencia, ver `declararMayday`—; el PAN PAN, el del cuatrimotor, va
+   * por `declararPanPan`.
+   */
+  private declararLaEmergencia(socorro: "mayday" | "panpan"): void {
+    this.emergenciaDeclarada = true;
+    if (socorro === "mayday") this.declararMayday("engine failure, returning");
+    else this.declararPanPan("engine failure, returning");
+    if (laInstructoraLoExplica(this.tier.avisos))
+      this.decirDelEjercicio("ejercicio.declarar", "normal");
+  }
+
+  /**
+   * **La llamada de urgencia y su respuesta**, de Taguató para arriba: PAN
+   * PAN, la del cuatrimotor que pierde un motor —le quedan tres, algo va mal
+   * y hay tiempo—, con el 7700 como el MAYDAY. Se lee en la tira de la radio;
+   * la respuesta de la torre se oye con su toma y, mientras no la tenga, se
+   * lee igual. Ver `declararMayday`.
+   */
+  private declararPanPan(motivo: string): void {
+    if (!this.hayTorreQueHable()) return;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras) return;
+    const yo = this.miIndicativo;
+    const montada = this.deTorre("torre.panpan", yo);
+    const contesta = montada?.texto ?? `${yo.dicho}, roger PAN PAN`;
+    this.hud.radio(
+      `PAN PAN, PAN PAN, PAN PAN, ${yo.dicho}, ${motivo}, squawking 7700 — ${contesta}`,
+      9,
+      true,
+    );
+    if (montada) this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+  }
+
+  /**
+   * **Los bomberos, donde tocan**: junto a la pista por la que se viene, o
+   * junto al avión parado tras un despegue abortado. Ver `world/bomberos.ts`.
+   *
+   * **Y son los de este aeródromo**: tantos camiones como da su categoría de
+   * bomberos publicada, y ninguno donde no hay servicio. Es la misma
+   * categoría que decide qué avión de línea va adónde —ver
+   * `world/bomberos-publicados.ts`—, así que lo que se ve esperando y lo que
+   * se explica en el hangar dicen lo mismo.
+   */
+  private ponerLosBomberos(donde: "pista" | "avion"): void {
+    const s = this.flight.state;
+    const categoria = this.categoriaDeBomberosAqui();
+    const cuantos = camionesDeLaCategoria(categoria);
+    if (cuantos === 0) {
+      this.apuntarCanto(`bomberos: este aeródromo no tiene (categoría ${categoria})`);
+      return;
+    }
+    const suelo = (x: number, z: number): number =>
+      this.terrain.sampleSurface(x, z);
+    /*
+     * La tarjeta, con el camión en los cuatro peldaños; la palabra desde el
+     * segundo y, desde el de las cifras, la categoría de este aeródromo, como
+     * la escribe el hangar.
+     */
+    const canales = canalesDe(this.tier.avisos);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cifra
+        ? t("palabra.bomberosCategoria", { n: String(categoria) })
+        : t("explica.bomberos.corta");
+    this.hud.senal.mostrar("bomberos", rotulo, null, { segundos: 6 });
+    if (donde === "avion") {
+      this.bomberos.poner(
+        juntoAlAvion(
+          { x: s.position.x, z: s.position.z, rumbo: s.heading },
+          suelo,
+          cuantos,
+        ),
+      );
+      this.bomberosPor = "frenos";
+      return;
+    }
+    const pista = this.elCampo().pista;
+    // Por la cabecera por la que se viene: la de uso o, con prioridad, la otra.
+    const { along } = enEjesDePista(
+      s.position.x,
+      s.position.z,
+      pista.x,
+      pista.z,
+      pista.heading,
+    );
+    const rumbo = along > 0 ? pista.heading + 180 : pista.heading;
+    const [fx, fz] = delante(rumbo);
+    this.bomberos.poner(
+      juntoALaPista(
+        {
+          x: pista.x - (fx * pista.length) / 2,
+          z: pista.z - (fz * pista.length) / 2,
+        },
+        rumbo,
+        pista.length,
+        pista.width,
+        suelo,
+        cuantos,
+      ),
+    );
+    this.bomberosPor = "pista";
+  }
+
+  /**
+   * **La categoría de bomberos del aeródromo de ahora**, la que publica su
+   * AIP; 0 sin servicio, y también donde no hay aeródromo ni AIP —los
+   * escenarios inventados—: ahí no se puede enseñar un servicio que nadie ha
+   * publicado.
+   */
+  private categoriaDeBomberosAqui(): number {
+    const oaci = this.elCampo().escenario.aerodrome?.id;
+    return (oaci ? BOMBEROS_PUBLICADOS[oaci]?.categoria : undefined) ?? 0;
+  }
+
+  /**
+   * **Y el final**, que nunca es un reproche. Hecho: la instructora lo
+   * celebra, y antes cuenta los camiones que se ven —lo que acaba de cambiar
+   * en tierra—; parar a tiempo cuenta en el cuaderno como una frustrada,
+   * porque renunciar a tiempo es ganar. A repetir: eso ya lo cuenta el
+   * percance, con la frase del ejercicio. Ver `sufrirPercance`.
+   */
+  private cerrarElEjercicio(como: Cierre): void {
+    if (como === "otraVez") return;
+    const clave =
+      this.practica?.ejercicio.id === "despresurizacion" && como === "vuelta"
+        ? CIERRE_DE_LA_DESPRESURIZACION
+        : CIERRE_DEL_EJERCICIO[como];
+    if (laInstructoraLoExplica(this.tier.avisos) && this.bomberosPor) {
+      // Uno o varios: se cuentan los que se ven. Ver `ponerLosBomberos`.
+      const b: TranslationKey =
+        this.bomberosPor === "frenos"
+          ? "ejercicio.bomberosFrenos"
+          : this.bomberos.cuantos === 1
+            ? "ejercicio.bomberosUno"
+            : "ejercicio.bomberos";
+      this.decirDelEjercicio(b, "normal");
+    }
+    this.decirDelEjercicio(clave, "normal");
+    this.avisar("achieved");
+    if (como === "parado")
+      this.apuntar({ frustradas: this.cuaderno.frustradas + 1 });
+    this.agenda.luego(TARDA_EL_FINAL + 2, () => {
+      if (this.practica?.cierre !== como) return;
+      this.hud.mostrarCierreDeEjercicio(
+        dibujoDeCierre(como),
+        this.tier.instruments === "none"
+          ? ""
+          : this.rotulo(clave, "palabra.bien"),
+        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+      );
+    });
   }
 
   /**
@@ -14983,7 +15801,9 @@ export class Game {
       alto,
       // El viento de cara en la de uso es el de cola en la otra.
       deColaEnLaOtra: meteo ? deFrente(campo.pista.heading, meteo) : 0,
-      sinMotor: this.sinMotor,
+      // Con una emergencia declarada, como sin motor: la cabecera que se
+      // elija, autorizada al alinearse. Ver `emergenciaDeclarada`.
+      sinMotor: this.sinMotor || this.emergenciaDeclarada,
     });
     if (!pasa) return;
     if (pasa.que === "autorizada")
@@ -22273,6 +23093,13 @@ export class Game {
     // Nace con lo que pesa el avión ahora, no con la ficha: cambiar de peldaño
     // en el aire no le quita el combustible. Ver `ponerMasa`.
     if (this.combustible > 0) modelo.ponerMasa?.(this.masaDeAhora());
+    /*
+     * Y el timón de este avión, para el pie de tecla en la carrera: solo en el
+     * modelo que tiene timón de aire. El sencillo gira con las ruedas, igual
+     * en todos. Ver `pieDeTecla` en `palanca-de-teclado.ts`.
+     */
+    // Al construir el primero todavía no hay mandos: ver el constructor.
+    this.input?.ponerTimon(tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
     /*
      * Y si el toque de flecha tiene compensador que mover: en el modelo
      * sencillo no lo hay. Ver `compensadorVivo` en `flight/input.ts`.

@@ -52,6 +52,7 @@ climb to
 runway in use
 go around
 roger, Mayday
+roger, Pan Pan
 caution, flock of birds on final
 free
 occupied
