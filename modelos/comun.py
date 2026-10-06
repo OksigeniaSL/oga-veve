@@ -132,6 +132,13 @@ COLORES = {
     # tenue, porque en una cabina de verdad la retroiluminación es blanca y
     # los colores (verde, ámbar, rojo) se reservan para lo que avisa.
     "retro": (0.93, 0.88, 0.76, 1.0),
+    # Las luces de aviso del guardasol, **apagadas**: el rojo del MASTER
+    # WARNING y el ámbar del MASTER CAUTION son cristales oscuros que solo se
+    # encienden cuando algo va mal. Encendidas de serie enseñarían que un
+    # avión vuela siempre con un aviso puesto, que es justo lo contrario de lo
+    # que significan. Ver `_avisos_del_guardasol`.
+    "aviso_rojo": (0.36, 0.05, 0.05, 1.0),
+    "aviso_ambar": (0.46, 0.29, 0.04, 1.0),
 }
 
 # El acabado de cada material del interior: rugosidad y metal. Todo lo que no
@@ -152,6 +159,8 @@ ACABADOS = {
     "tapiceria": (0.8, 0.0),
     "gris_linea": (0.65, 0.05),
     "boton": (0.4, 0.0),
+    "aviso_rojo": (0.18, 0.0),
+    "aviso_ambar": (0.18, 0.0),
 }
 
 # Lo que emite luz propia, y cuánta. **Es luz de verdad, no un truco**: una
@@ -962,32 +971,67 @@ def redondear(obj, radio=0.008, segmentos=2):
     return obj
 
 
-def _visera(medio_ancho, arriba, grosor, z_delante, z_labio, arco):
+def _visera(medio_ancho, arriba, cara_hasta, z_delante, z_labio, arco, ojo):
     """
-    La visera: una ceja con el borde redondo y en arco.
+    El guardasol: un labio fino, y por detrás nada que se vea.
 
-    Era una losa: un rectángulo negro con el canto vivo, que desde el asiento
-    se leía como una tapa puesta encima de una caja. En un avión de verdad la
-    visera tiene el labio redondeado —es lo que se agarra al entrar y lo que
-    no corta— y en planta es un arco que abraza al piloto, que es por lo que
-    se reconoce en una foto antes que ninguna otra cosa del panel.
+    **Era una losa negra de casi cuarenta centímetros de fondo**, plana y a la
+    altura del labio, y desde el asiento se veía entera por encima: en el JAZ
+    120 rodando por Tenerife Sur al atardecer, una mancha negra que tapaba
+    media pantalla por encima de los instrumentos. «Una de las cosas a mejorar
+    es el parabrisas de los aviones, se ven feos.»
 
-    **El arco se abre hacia delante en los extremos, no hacia el piloto en el
-    centro.** El labio está a sesenta y cinco centímetros de los ojos, y el
-    plano cercano de la cámara a sesenta: una visera que se acercara en el
-    centro se recortaría justo delante de la cara.
+    Un guardasol de verdad no se ve así porque **su tapa cae hacia el
+    parabrisas**: desde el asiento lo que asoma es el labio y su cara, con el
+    panel del automático, y justo por encima empieza el cristal. Es lo que
+    hace que por encima del morro se vea lo que se ve: 18° 26′ en un 747-400
+    (Boeing D6-58326-1, *747-400 Airplane Characteristics for Airport
+    Planning*, apartado 4.4, «Visibility from cockpit in static position») y
+    15° en un E-170/175 (Embraer, *Airport Planning Manual*, figura 4.5). Con
+    la losa plana se veían 11,7 en los dos.
 
-    Y la raya de arriba sigue donde estaba —`arriba` y `z_delante` son los de
-    la caja de antes—, que es la que mide `encuadreDeCabina` para decidir
-    cuánto se ve por el parabrisas.
+    Así que aquí la tapa baja desde el labio hasta el pie del parabrisas
+    **justo por debajo de la línea de los ojos que pasa rozando el labio**:
+    se queda escondida detrás de él, y lo que se ve por encima es el mundo.
+
+    - `arriba` es el canto de arriba del labio y `cara_hasta`, dónde acaba su
+      cara por abajo —el canto del panel—.
+    - `ojo` es `(y, z)` de los ojos: la tapa se mide desde ahí.
+
+    **El arco sigue abriéndose hacia delante en los extremos**, no hacia el
+    piloto en el centro: el labio está a sesenta centímetros de los ojos y el
+    plano cercano de la cámara también. Más corto que antes, porque el
+    encuadre mide la visera por su punto más alto en pantalla —ver
+    `conSuEncuadre`—, y los extremos del arco, más lejos, se ven más altos.
+
+    Y sigue llamándose `visera`, que es el nombre que busca el encuadre.
     """
-    g = grosor
-    yc, zc = arriba - g / 2, z_labio - g / 2
-    perfil_ = [(arriba - g * 0.45, z_delante), (arriba, z_delante + 0.015)]
-    for grados in (0, 30, 60, 90, 120, 150, 180):
+    ojo_y, ojo_z = ojo
+    r = min(0.02, (arriba - cara_hasta) * 0.45)
+    z_canto = z_labio - r
+    # La raya de los ojos que pasa rozando el labio, en el centro.
+    pendiente = (ojo_y - arriba) / max(ojo_z - z_canto, 1e-3)
+
+    def bajo_la_raya(z, margen):
+        return arriba - pendiente * (z_canto - z) - margen
+
+    # El pie, un centímetro por debajo de la raya, y la tapa recta hasta el
+    # labio: una recta entre dos puntos de debajo de la raya no la cruza.
+    pie = bajo_la_raya(z_delante, 0.012)
+    fondo = min(cara_hasta, pie) - 0.015
+    perfil_ = [(pie, z_delante)]
+    for grados in (0, 30, 60, 90):
         a = math.radians(grados)
-        perfil_.append((yc + g / 2 * math.cos(a), zc + g / 2 * math.sin(a)))
-    perfil_.append((arriba - g, z_delante + 0.03))
+        perfil_.append((arriba - r + r * math.cos(a), z_canto + r * math.sin(a)))
+    # La cara, de pie y un pelo metida hacia abajo, que es la que lleva el
+    # panel del automático y las luces de aviso.
+    perfil_.append((cara_hasta, z_labio - 0.004))
+    # **Y por debajo, de la cara al pie en línea recta**, bajando hacia el
+    # parabrisas: así su cara de abajo mira al suelo y no al piloto. Bajando
+    # en escalón justo detrás de la cara —el primer intento— el escalón se
+    # veía de frente y alargaba la cara ocho centímetros hacia abajo, encima
+    # del canto de arriba de las pantallas.
+    perfil_.append((fondo, z_delante))
     pasos = 16
     xs = [-medio_ancho + 2 * medio_ancho * i / pasos for i in range(pasos + 1)]
 
@@ -998,6 +1042,405 @@ def _visera(medio_ancho, arriba, grosor, z_delante, z_labio, arco):
         return y, z - arco * f
 
     return barrido("visera", perfil_, xs, "visera", curvar, suave=40)
+
+
+def _avisos_del_guardasol(xs, y, z, rojo_primero=True, ancho=0.042,
+                          alto=0.028):
+    """
+    El MASTER WARNING y el MASTER CAUTION de un puesto, en la cara del guardasol.
+
+    Son las dos luces que un piloto de transporte tiene a un palmo de la vista:
+    la roja dice «algo exige actuar ya», la ámbar «algo pide atención». Van en
+    el guardasol, delante de cada piloto, en el 747-400, en los E-Jets y en el
+    Beech 1900D. Aquí van **apagadas**, que es como se ven el vuelo entero si
+    todo va bien. Ver `aviso_rojo` en `COLORES`.
+
+    `xs` son los centros de las dos, en el orden en que se ponen.
+    """
+    piezas = []
+    mats = ("aviso_rojo", "aviso_ambar") if rojo_primero else (
+        "aviso_ambar", "aviso_rojo")
+    for x, mat in zip(xs, mats):
+        nombre = "aviso-warning" if mat == "aviso_rojo" else "aviso-caution"
+        lado = "i" if x < 0 else "d"
+        piezas.append(
+            marco(f"{nombre}-{lado}-marco", (x, y, z), ancho, alto, 0.005,
+                  0.004, "bisel")
+        )
+        piezas.append(
+            redondear(caja(f"{nombre}-{lado}", x - ancho / 2, x + ancho / 2,
+                           y - alto / 2, y + alto / 2, z - 0.004, z + 0.004,
+                           mat), radio=0.003, segmentos=1)
+        )
+    return piezas
+
+
+def _avisos_de_turbohelice(arriba, z_labio, ancho, puntos):
+    """
+    El guardasol de un turbohélice de transporte: los avisos y su panel.
+
+    En el Beech 1900D, delante de cada piloto, el MASTER WARNING rojo con el
+    MASTER CAUTION ámbar por dentro —hacia el centro del avión—, y en el centro
+    del guardasol el panel de avisos rojos, cada uno con su rótulo. Aquí el
+    piloto se sienta en el eje del modelo —ver `cabina`—, así que su pareja va
+    delante de él y el panel de avisos a su derecha, que es donde le queda el
+    centro de la cabina de verdad. Todo apagado: ver `_avisos_del_guardasol`.
+    """
+    y = arriba - 0.027
+    z = z_labio + 0.006
+    piezas = _avisos_del_guardasol([-0.03, 0.03], y, z, ancho=0.04,
+                                   alto=0.026)
+    x0, x1 = 0.17, min(0.42, ancho - 0.06)
+    piezas.append(
+        marco("panel-de-avisos-marco", ((x0 + x1) / 2, y, z), x1 - x0, 0.03,
+              0.006, 0.004, "bisel")
+    )
+    lentes = bmesh.new()
+    cuantas = 5
+    paso = (x1 - x0) / cuantas
+    for fila, dy in enumerate((0.0075, -0.0075)):
+        for k in range(cuantas):
+            x = x0 + paso * (k + 0.5)
+            bmesh.ops.create_cube(
+                lentes, size=1.0,
+                matrix=Matrix.Translation((x, y + dy, z + 0.001))
+                @ Matrix.Diagonal((paso * 0.86, 0.0125, 0.004, 1.0)),
+            )
+    piezas.append(_malla_de("panel-de-avisos", lentes, "aviso_rojo"))
+    puntos += [(x, y, z + 0.004) for x in (x0 - 0.004, x1 + 0.004)]
+    return piezas
+
+
+# ── El parabrisas por dentro ──────────────────────────────────────────────
+#
+# Desde el asiento el cristal no existe —se ve el mundo— y la chapa de fuera
+# tampoco, que va sin cara de atrás. Lo que enmarca el parabrisas es lo que
+# hay **dentro**: los montantes forrados, sus juntas contra el cristal, los
+# tornillos del marco, el travesaño de arriba y, fuera del cristal, el
+# limpiaparabrisas aparcado. Todo eso se describe en el guion de cada avión,
+# porque es de ese avión —un 747 no lleva el parabrisas de un 172—, y aquí
+# se construye con una sola regla.
+
+
+def _ojo_de(ojo_y, ojo_z):
+    return Vector((0.0, ojo_y, ojo_z))
+
+
+def _montante_en(bm, base, cima, ancho, fondo, ojo, abombado=0.12):
+    """
+    Un montante del parabrisas en `bm`: un prisma que **se ve de canto**.
+
+    Eran cajas de seis centímetros de frente por ocho de fondo, y desde el
+    asiento se veían el frente y un costado: «planchas grises lisas y
+    gruesas». Un montante de verdad está pensado al revés, desde el ojo del
+    piloto: sus costados van en la dirección en que se mira, así que lo único
+    que tapa es su cara, que es estrecha. Es lo que buscan las normas de
+    visibilidad de cabina —que los montantes resten lo menos posible a la
+    visión con los dos ojos—, y es lo que lo hace fino.
+
+    Aquí se hace igual: en cada punta, los dos costados apuntan al ojo, y la
+    cara de dentro se abomba un pelo hacia él, que es el forro.
+    """
+    eje = (cima - base).normalized()
+    secciones = []
+    for p in (base, cima):
+        u = (ojo - p).normalized()
+        a = eje.cross(u).normalized()
+        m = ancho / 2
+        secciones.append([
+            bm.verts.new(p + a * m),
+            bm.verts.new(p + u * (ancho * abombado)),
+            bm.verts.new(p - a * m),
+            bm.verts.new(p - a * m - u * fondo),
+            bm.verts.new(p + a * m - u * fondo),
+        ])
+    s0, s1 = secciones
+    n = len(s0)
+    for k in range(n):
+        bm.faces.new((s0[k], s0[(k + 1) % n], s1[(k + 1) % n], s1[k]))
+    bm.faces.new(list(reversed(s0)))
+    bm.faces.new(s1)
+
+
+def _junta_en(bm, base, cima, ancho, junta, ojo, hacia):
+    """
+    La junta de goma entre el montante y el cristal, a un costado de su cara.
+
+    Es la raya oscura que se ve en cualquier parabrisas por dentro, y lo que
+    dice que ahí acaba el marco y empieza el cristal: sin ella, el montante es
+    una barra puesta delante del mundo. `hacia` es +1 o −1, el costado.
+    """
+    eje = (cima - base).normalized()
+    vs = []
+    for p in (base, cima):
+        u = (ojo - p).normalized()
+        a = eje.cross(u).normalized() * hacia
+        dentro = p + a * (ancho / 2) - u * 0.004
+        vs.append((bm.verts.new(dentro), bm.verts.new(dentro + a * junta)))
+    (a0, a1), (b0, b1) = vs
+    bm.faces.new((a0, a1, b1, b0))
+
+
+def _malla_de(nombre, bm, material_, suave=None):
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    malla = bpy.data.meshes.new(nombre)
+    bm.to_mesh(malla)
+    bm.free()
+    if suave:
+        for p in malla.polygons:
+            p.use_smooth = True
+        if hasattr(malla, "set_sharp_from_angle"):
+            malla.set_sharp_from_angle(angle=math.radians(suave))
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    return pintar(obj, material_)
+
+
+def parabrisas_por_dentro(ojo_y, ojo_z, delante, sobre_el_morro, hacia_arriba,
+                          montantes, inclinacion=22.0, arco=0.03,
+                          limpias=False, brujula=False, techo=True,
+                          alfeizar=None, estrecha=0.94, capota=None):
+    """
+    El marco del parabrisas visto desde el asiento.
+
+    - `delante`: a cuánto de los ojos está el pie del parabrisas, m.
+    - `sobre_el_morro`: cuántos grados por debajo de los ojos queda el pie
+      —lo que se ve por encima del morro—. Los montantes nacen ahí, escondidos
+      detrás del labio del guardasol.
+    - `hacia_arriba`: a cuántos grados por encima de los ojos está el
+      travesaño de arriba —lo que se ve hacia arriba por el parabrisas—.
+    - `montantes`: lista de `(x, ancho, atras)`: dónde nace cada uno a lo
+      ancho, su cara y cuánto más cerca del piloto está su pie. Los de
+      delante (`atras` cero) llevan el travesaño entre los dos de los
+      extremos; los de las ventanillas de costado van más atrás y nacen en el
+      alféizar (`alfeizar`, la altura del canto de la ventanilla), que es
+      donde se apoyan.
+    - `inclinacion`: cuánto se tumba hacia el piloto, en grados desde la
+      vertical. **Menos que el cristal de verdad, y a propósito**: el plano
+      cercano de la cámara está a sesenta centímetros, y un montante con la
+      inclinación de un parabrisas de avioneta —sesenta grados— llega a la
+      altura de la vista a medio metro de la cara y se recorta. Se simplifica
+      la presentación, no lo que se enseña: el montante sigue en su sitio a
+      la altura del morro y de la vista, que es lo que se mira.
+    - `limpias`: el limpiaparabrisas del puesto, aparcado a lo largo del pie
+      del cristal, por fuera.
+    - `brujula`: la brújula de reserva colgada del centro del travesaño.
+    - `capota`: `(material, grados, largo[, medio_ancho])`, el lomo del morro
+      que se ve por el parabrisas en una avioneta —el capó, en un 172—, hasta
+      `grados` por debajo de los ojos y `largo` metros por delante del pie del
+      cristal; y su medio ancho, donde el morro es más estrecho que eso.
+      Ver más abajo.
+    - `estrecha`: cuánto se juntan arriba los montantes, como fracción de su
+      separación abajo: el morro se estrecha hacia el techo, y en un
+      parabrisas muy tumbado —el de un entrenador de ala alta— un montante
+      derecho asomaba por fuera de la chapa.
+
+    Todo en tres mallas —forro, gomas y tornillos— más el limpias y la
+    brújula: cada malla suelta es una llamada de dibujo en la tablet.
+    """
+    ojo = _ojo_de(ojo_y, ojo_z)
+    piezas = []
+    forro = bmesh.new()
+    gomas = bmesh.new()
+    puntos = []
+    t_morro = math.tan(math.radians(sobre_el_morro))
+    t_arriba = math.tan(math.radians(hacia_arriba))
+    t_inc = math.tan(math.radians(inclinacion))
+    fondo = 0.035
+    junta = 0.013
+
+    def puntas(x, atras):
+        d0 = delante - atras
+        # El pie, un centímetro y medio por debajo de la raya del morro: lo
+        # tapa el labio del guardasol. Los de costado, en su alféizar.
+        y0 = ojo_y - t_morro * d0 - 0.015
+        if atras > 0 and alfeizar is not None:
+            y0 = alfeizar
+        # Los de costado, de pie: tumbados hacia el piloto, a medio metro de la
+        # cara y a cuarenta grados del frente, entraban en el plano cercano de
+        # la cámara y se veía el corte, una cuña gris en la esquina.
+        t_i = t_inc if atras == 0 else 0.0
+        z0 = ojo_z - d0
+        # La cima, donde la raya de `hacia_arriba` corta el montante tumbado.
+        # Con las alturas medidas desde los ojos (h0 = y0 − ojo_y):
+        #   h1 = t_arriba·d1,   d1 = d0 − (h1 − h0)·t_inc
+        # y despejando:
+        #   h1 = t_arriba·(d0 + h0·t_inc) / (1 + t_arriba·t_inc)
+        h1 = t_arriba * (d0 + (y0 - ojo_y) * t_i) / (1 + t_arriba * t_i)
+        y1 = ojo_y + h1
+        d1 = d0 - (y1 - y0) * t_i
+        z1 = ojo_z - d1
+        # Y hacia dentro arriba: el morro se estrecha hacia el techo.
+        return Vector((x, y0, z0)), Vector((x * estrecha, y1, z1))
+
+    de_delante = []
+    for x, ancho, atras in montantes:
+        base, cima = puntas(x, atras)
+        _montante_en(forro, base, cima, ancho, fondo, ojo)
+        for hacia in (-1, 1):
+            _junta_en(gomas, base, cima, ancho, junta, ojo, hacia)
+        # Los tornillos del marco, en fila por la cara: los que sujetan el
+        # cristal a la estructura. Uno cada diez centímetros.
+        largo = (cima - base).length
+        n = max(2, int(largo / 0.10))
+        for i in range(1, n):
+            p = base.lerp(cima, i / n)
+            u = (ojo - p).normalized()
+            q = p + u * (ancho * 0.12 + 0.001)
+            puntos.append((q.x, q.y, q.z))
+        if atras == 0:
+            de_delante.append((x, base, cima, ancho))
+
+    # El travesaño de arriba, **en arco**: los paneles de un parabrisas de
+    # verdad no acaban en una regla, acaban en la curva del techo. Era una caja
+    # recta y plana, y se veía así: un listón puesto encima.
+    if techo and len(de_delante) >= 2:
+        de_delante.sort(key=lambda m: m[0])
+        izq, der = de_delante[0], de_delante[-1]
+        xa, xb = izq[2].x, der[2].x
+        y_c = (izq[2].y + der[2].y) / 2
+        z_c = (izq[2].z + der[2].z) / 2
+        alto_t = 0.05
+        pasos = 12
+        sec = []
+        for i in range(pasos + 1):
+            x = xa + (xb - xa) * i / pasos
+            f = 1 - ((2 * i / pasos) - 1) ** 2
+            p = Vector((x, y_c + arco * f + alto_t / 2, z_c))
+            u = (ojo - p).normalized()
+            v = Vector((0, 1, 0))
+            v = (v - u * v.dot(u)).normalized()
+            sec.append([
+                forro.verts.new(p + v * alto_t / 2),
+                forro.verts.new(p + u * 0.006),
+                forro.verts.new(p - v * alto_t / 2),
+                forro.verts.new(p - v * alto_t / 2 - u * fondo),
+                forro.verts.new(p + v * alto_t / 2 - u * fondo),
+            ])
+            # La junta de abajo, que es donde el cristal entra en el marco.
+            a0 = gomas.verts.new(p - v * alto_t / 2 - u * 0.004)
+            a1 = gomas.verts.new(p - v * (alto_t / 2 + junta) - u * 0.004)
+            sec[-1].append((a0, a1))
+            if 0 < i < pasos and i % 2 == 0:
+                q = p + u * 0.007
+                puntos.append((q.x, q.y, q.z))
+        for s0, s1 in zip(sec, sec[1:]):
+            for k in range(5):
+                forro.faces.new((s0[k], s0[(k + 1) % 5], s1[(k + 1) % 5],
+                                 s1[k]))
+            (a0, a1), (b0, b1) = s0[5], s1[5]
+            gomas.faces.new((a0, a1, b1, b0))
+        forro.faces.new(list(reversed(sec[0][:5])))
+        forro.faces.new(sec[-1][:5])
+
+        if brujula:
+            # **La brújula, colgada del centro del travesaño**, que es donde
+            # la lleva una avioneta: la lleva todo avión que vuela a la vista
+            # —es equipo obligatorio, 14 CFR 91.205(b)(3)— y es lo primero
+            # que se mira si se apaga todo lo demás. De tarjeta vertical, que
+            # gira como un direccional: por eso su cara es un `reloj_dg` y la
+            # enciende el mismo dibujo, y marca de verdad el rumbo.
+            y_t = y_c + arco
+            yb = y_t - 0.05
+            zb = z_c + 0.03
+            piezas.append(
+                redondear(caja("brujula-soporte", -0.008, 0.008, yb + 0.03,
+                               y_t + 0.01, zb - 0.02, zb - 0.005,
+                               "pomo"), radio=0.003, segmentos=1)
+            )
+            piezas.append(
+                redondear(caja("brujula-caja-negra", -0.038, 0.038, yb - 0.036,
+                               yb + 0.036, zb - 0.05, zb - 0.004, "pomo"),
+                          radio=0.01)
+            )
+            piezas += reloj("brujula", "dg", 0.027, (0.0, yb, zb), puntos)
+
+    if limpias and len(de_delante) >= 2:
+        # **El limpiaparabrisas, aparcado por fuera a lo largo del pie del
+        # cristal**, con el eje en la esquina de abajo del lado de fuera: es
+        # como descansan los de un avión de línea y los de un turbohélice de
+        # transporte. Dos dedos por encima de la raya del morro, que es lo que
+        # asoma por encima del guardasol: una raya oscura y fina. Con uno solo
+        # desaparecía detrás del labio en cuanto el cuerpo se hundía en el
+        # asiento con un bache —ver `Cuello` en `cameras/dentro.ts`—.
+        de_delante.sort(key=lambda m: m[0])
+        izq, der = de_delante[0], de_delante[-1]
+        base_i, base_d = izq[1], der[1]
+        largo_p = (base_d.x - base_i.x) - izq[3] - der[3]
+        d0 = ojo_z - base_i.z
+        y_l = ojo_y - t_morro * (d0 + 0.05) + 0.025
+        z_l = base_i.z - fondo - 0.02
+        x0 = base_i.x + izq[3] / 2 + 0.04
+        x1 = x0 + largo_p * 0.72
+        # El brazo y la escobilla, de un dedo de grueso los dos: a un metro de
+        # los ojos, más grueso se lee como una barra y no como un limpias.
+        brazo = caja("limpia-parabrisas", x0, x1, y_l - 0.001, y_l + 0.005,
+                     z_l - 0.005, z_l + 0.001, "pomo")
+        escobilla = caja("limpia-parabrisas-escobilla", x0 + 0.05, x1 - 0.01,
+                         y_l - 0.007, y_l - 0.001, z_l - 0.003, z_l + 0.004,
+                         "goma")
+        eje = cilindro("limpia-parabrisas-eje", 0.009, 0.02,
+                       (x0 - 0.004, y_l + 0.002, z_l - 0.008), "pomo",
+                       lados=10, giro=None)
+        piezas += [brazo, escobilla, eje]
+
+    if capota:
+        # **El borde de la capota**: lo que se ve de una avioneta por encima
+        # del guardasol es su morro —el capó del motor en un 172—, y no el
+        # mundo a ras del labio. Por fuera ese lomo está más alto que estos
+        # ojos y va sin cara de atrás, así que desde dentro no se dibuja: se
+        # veía el suelo, y encima las palas de la hélice parada flotando
+        # sobre el panel. Aquí se pone lo que se vería: el lomo, del pie del
+        # cristal hacia delante, hasta `grados` por debajo de los ojos —los
+        # mismos diez y pico que se veían antes por encima de la losa—, con
+        # su curva de lado a lado.
+        material_c, grados_c, largo_c = capota[:3]
+        t_c = math.tan(math.radians(grados_c))
+        d_a = delante + 0.01
+        d_b = delante + largo_c
+        # De lado a lado del parabrisas y algo más: más estrecha, por los
+        # costados asomaban las palas de la hélice parada.
+        x_a = (capota[3] if len(capota) > 3 else
+               max(abs(m[0]) for m in montantes if m[2] == 0) + 0.16)
+        filas, cols = 6, 10
+        bm = bmesh.new()
+        rej = []
+        for i in range(filas + 1):
+            f = i / filas
+            d = d_a + (d_b - d_a) * f
+            # Del pie, escondido tras el labio, al borde que se ve.
+            y_c0 = ojo_y - t_morro * d_a - 0.02
+            y_c1 = ojo_y - t_c * d_b
+            y_eje = y_c0 + (y_c1 - y_c0) * f
+            w = x_a * (1 - 0.12 * f)
+            fila = []
+            for j in range(cols + 1):
+                u = 2 * j / cols - 1
+                fila.append(bm.verts.new((u * w, y_eje - 0.025 * u * u,
+                                          ojo_z - d)))
+            rej.append(fila)
+        for a, b in zip(rej, rej[1:]):
+            for j in range(cols):
+                bm.faces.new((a[j], a[j + 1], b[j + 1], b[j]))
+        bm.normal_update()
+        for cara in bm.faces:
+            if cara.normal.y < 0:
+                cara.normal_flip()
+        malla = bpy.data.meshes.new("capota")
+        bm.to_mesh(malla)
+        bm.free()
+        for pol in malla.polygons:
+            pol.use_smooth = True
+        obj = bpy.data.objects.new("capota", malla)
+        bpy.context.collection.objects.link(obj)
+        piezas.append(pintar(obj, material_c))
+
+    piezas.insert(0, _malla_de("montantes-parabrisas", forro, "forro",
+                               suave=50))
+    piezas.insert(1, _malla_de("juntas-parabrisas", gomas, "goma"))
+    if puntos:
+        piezas.append(tornillos("tornillos-parabrisas", puntos, radio=0.0042))
+    return piezas
 
 
 def _costados(ancho, y_suelo, alto, panel_z, ojos_z, atras=0.40):
@@ -1263,7 +1706,8 @@ def _cuerno(x, y_suelo, panel_z, grande, y_centro=None, z_centro=None):
 
 def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
                        motores, relojes, pantallas, pantallas_en, mide="n1",
-                       mandos=("motor", "flaps", "freno"), ojo_y=None):
+                       mandos=("motor", "flaps", "freno"), ojo_y=None,
+                       parabrisas=None):
     """
     La cabina de un avión de línea, que no es la de una avioneta estirada.
 
@@ -1298,24 +1742,76 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # él las pantallas negras se recortan solas. Negro sobre negro era la
     # «caja con relojes» de la que venía la queja.
     puntos = []
+    # **El panel, de seis centímetros de fondo y no de catorce.** Lo tapaba la
+    # losa de la visera; con el guardasol nuevo, que esconde su tapa bajo la
+    # raya de los ojos, el canto de atrás de una caja honda asomaba por encima
+    # del labio como un listón gris.
     piezas.append(
         redondear(
             caja("panel", -borde, borde, y_suelo + 0.30, alto_panel,
-                 panel_z - 0.14, panel_z, "gris_linea"),
+                 panel_z - 0.06, panel_z, "gris_linea"),
             radio=0.012,
         )
     )
+    p = parabrisas or {}
+    # **El labio, a la altura que deja ver lo que se ve en su avión** por
+    # encima del morro: la cifra es del manual de aeropuertos de su clase y
+    # está en el guion de cada avión. Sin ella, donde estaba.
+    z_labio = panel_z + 0.12
+    if "sobre_el_morro" in p:
+        arriba = ojo_y - math.tan(math.radians(p["sobre_el_morro"])) * (
+            ojo_z - (z_labio - 0.02))
+    else:
+        arriba = alto_panel + 0.07
+    medio_visera = borde + 0.04
+    arco_visera = 0.03
+    # La cara acaba un centímetro por encima del canto del panel: está más
+    # cerca de los ojos que la caja de antes, y a ras del panel se comía el
+    # borde de arriba de las pantallas —el rumbo del HSI—.
     piezas.append(
-        _visera(borde + 0.04, alto_panel + 0.07, 0.07, panel_z - 0.26,
-                panel_z + 0.12, arco=0.10)
+        _visera(medio_visera, arriba, alto_panel + 0.012, panel_z - 0.26,
+                z_labio, arco_visera, (ojo_y, ojo_z))
     )
+
+    def en_la_cara(x):
+        """Dónde está la cara del labio a esa x: el arco la lleva hacia delante."""
+        return z_labio - arco_visera * (x / medio_visera) ** 2
     # El faldón de debajo del panel, para que no se vea el hueco hasta el suelo.
     piezas.append(
         caja("faldon", -borde, borde, y_suelo + 0.02, y_suelo + 0.30,
              panel_z - 0.10, panel_z - 0.04)
     )
     piezas += _costados(borde, y_suelo, alto_panel, panel_z, ojos_z, atras=0.6)
-    piezas += _mcp(alto_panel, panel_z + 0.12, puntos)
+    piezas += _mcp(arriba, z_labio, puntos)
+    # **Lo que lleva el guardasol de un avión de línea a cada lado del
+    # automático**: el panel de mando de las pantallas de cada piloto —el EFIS
+    # control panel del 747-400, el de las pantallas de los E-Jets— y, por
+    # fuera de él, el MASTER WARNING rojo y el MASTER CAUTION ámbar, a un
+    # palmo de la vista. Aquí había una franja negra lisa de lado a lado.
+    y_cara = arriba - 0.031
+    for lado in (-1, 1):
+        xc = lado * 0.30
+        zc = en_la_cara(xc)
+        piezas.append(
+            redondear(caja(f"efis-{lado}", xc - 0.06, xc + 0.06,
+                           y_cara - 0.017, y_cara + 0.017, zc - 0.02,
+                           zc + 0.008, "gris_linea"), radio=0.004)
+        )
+        for k, dx in enumerate((-0.03, 0.03)):
+            piezas.append(
+                redondear(cilindro(f"efis-{lado}-rueda-{k}", 0.008, 0.01,
+                                   (xc + dx, y_cara - 0.004, zc + 0.013),
+                                   "pomo", lados=12, giro=None), radio=0.002)
+            )
+        piezas.append(
+            caja(f"efis-{lado}-rotulo", xc - 0.045, xc + 0.045,
+                 y_cara + 0.009, y_cara + 0.012, zc + 0.008, zc + 0.009,
+                 "retro")
+        )
+        xs = [lado * 0.44, lado * 0.39]
+        zl = en_la_cara(lado * 0.415) + 0.006
+        piezas += _avisos_del_guardasol(xs if lado < 0 else xs[::-1],
+                                        y_cara, zl, rojo_primero=lado < 0)
 
     # 3. La columna de motores: **un reloj de régimen por motor**, encendido.
     #
@@ -1587,38 +2083,31 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
         bpy.context.collection.objects.link(obj)
         piezas.append(pintar(obj, mat))
 
-    # 6. Los montantes del parabrisas, que enmarcan el mundo.
+    # 6. El parabrisas, que enmarca el mundo.
     #
-    # **Con forma y con travesaño.** Eran dos vigas negras de sección
-    # cuadrada, y desde el asiento se leían como dos palos puestos delante de
-    # la cámara. Un montante de verdad es una pieza forrada, estrecha por
-    # delante —para tapar poco— y unida arriba al marco del techo: con el
-    # travesaño se lee como un parabrisas enmarcado y no como dos postes.
-    for lado in (-1, 1):
-        piezas.append(
-            redondear(
-                caja(
-                    f"montante-parabrisas-{lado}", lado * 0.42 - 0.03,
-                    lado * 0.42 + 0.03, alto_panel + 0.06, techo,
-                    panel_z - 0.34, panel_z - 0.26, "forro",
-                ),
-                radio=0.022,
-            )
+    # Eran dos cajas grises de seis por ocho centímetros y un listón recto
+    # encima, y se leían como lo que eran: «los montantes del parabrisas, como
+    # planchas grises lisas y gruesas» y «el marco de arriba, plano». Ahora es
+    # el parabrisas de su avión, descrito en su guion: los montantes finos
+    # vistos de canto, sus juntas y sus tornillos, el limpiaparabrisas y el
+    # travesaño en arco a la altura que deja ver su manual. Ver
+    # `parabrisas_por_dentro`.
+    if parabrisas:
+        lip = math.degrees(math.atan2(ojo_y - arriba, ojo_z - (z_labio - 0.02)))
+        piezas += parabrisas_por_dentro(
+            ojo_y, ojo_z, ojo_z - (panel_z - 0.27), lip,
+            p.get("hacia_arriba", 20.0), p["montantes"],
+            inclinacion=p.get("inclinacion", 22.0), arco=p.get("arco", 0.04),
+            limpias=p.get("limpias", False), brujula=p.get("brujula", False),
+            alfeizar=alto_panel - 0.02, estrecha=p.get("estrecha", 0.94),
         )
-    piezas.append(
-        redondear(
-            caja("marco-de-techo", -0.46, 0.46, techo - 0.05, techo,
-                 panel_z - 0.36, panel_z - 0.22, "forro"),
-            radio=0.02,
-        )
-    )
     if puntos:
         piezas.append(tornillos("tornillos", puntos))
     # Y la raya, que la necesita el volante. Ver `cabina`.
     return piezas, y_linea
 
 
-def _mcp(alto_panel, z_labio, puntos):
+def _mcp(arriba, z_labio, puntos):
     """
     El panel de modos de la visera: donde un Boeing guarda lo que se quiere.
 
@@ -1635,9 +2124,13 @@ def _mcp(alto_panel, z_labio, puntos):
     de los ojos que las pantallas, así que se ve más bajo de lo que está: con
     el canto de abajo a ras del panel tapaba el borde de arriba del PFD, las
     cifras de la cinta de velocidad incluidas.
+
+    Se mide desde `arriba`, el canto del labio, y no desde el panel: el labio
+    ya no está siempre a siete centímetros del panel, sino donde deja ver lo
+    que se ve por encima del morro de cada avión.
     """
     piezas = []
-    y0, y1 = alto_panel + 0.032, alto_panel + 0.066
+    y0, y1 = arriba - 0.046, arriba - 0.012
     z0, z1 = z_labio - 0.03, z_labio + 0.01
     piezas.append(
         redondear(caja("mcp", -0.22, 0.22, y0, y1, z0, z1, "gris_linea"),
@@ -1665,7 +2158,7 @@ def _mcp(alto_panel, z_labio, puntos):
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
            suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
            palancas=0, relojes=0, clase="avioneta", mando="cuerno",
-           mide="rpm", tren=False, flaps=True):
+           mide="rpm", tren=False, flaps=True, parabrisas=None):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -1717,6 +2210,12 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     `tren` y `flaps` dicen si el avión los lleva: donde no, ni su mando ni su
     reloj, por lo mismo que el tren fijo no lleva palanca — un mando que se
     pulsa y no mueve nada enseña que los mandos son decoración.
+
+    `parabrisas` es el parabrisas de **este** avión visto desde el asiento:
+    sus montantes, lo que se ve por encima del morro y hacia arriba según su
+    manual, si lleva limpiaparabrisas, brújula colgada o avisos en el
+    guardasol, y el lomo del morro que asoma por encima. Ver
+    `parabrisas_por_dentro`. Sin él, el panel y el guardasol sin marco.
 
     Dos nombres no son libres: **`asiento`**, porque `ojoDePiloto` lo busca por
     nombre, y **`g1000_display`**, que es lo que busca `pantallas-cabina.ts`.
@@ -1812,25 +2311,49 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         de_linea, y_linea = _cabina_de_reactor(
             ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas, palancas,
             relojes, pantallas, pantallas_en, mide, mandos,
-            ojo_y=y_respaldo + 0.10,
+            ojo_y=y_respaldo + 0.10, parabrisas=parabrisas,
         )
         piezas += de_linea
     # El panel, vertical y mirando al piloto, con la visera por encima: esa
     # visera es lo que en un avión de verdad hace que las pantallas se lean con
     # sol, y aquí además es lo que separa el panel del parabrisas.
     if not grande:
+        # De cinco centímetros de fondo, por lo mismo que en el de línea: con
+        # la tapa del guardasol escondida, el canto de atrás de una caja honda
+        # asomaba por encima del labio.
         piezas.append(
             redondear(
                 caja("panel", -ancho - 0.02, ancho + 0.02, y_suelo + 0.08,
-                     alto_panel, panel_z - 0.12, panel_z),
+                     alto_panel, panel_z - 0.05, panel_z),
                 radio=0.012,
             )
         )
+        # El guardasol, con el labio donde estaba —cuatro centímetros sobre el
+        # panel— y la tapa escondida bajo la raya de los ojos: lo que se ve
+        # por encima es el capó y el mundo. Ver `_visera`.
+        ojo_v = (y_respaldo + 0.10, ojos_z + 0.145)
+        arriba_v = alto_panel + 0.04
+        z_labio_v = panel_z + 0.08
         piezas.append(
-            _visera(ancho + 0.04, alto_panel + 0.04, 0.05, panel_z - 0.18,
-                    panel_z + 0.08, arco=0.06)
+            _visera(ancho + 0.04, arriba_v, alto_panel - 0.004,
+                    panel_z - 0.18, z_labio_v, 0.03, ojo_v)
         )
         piezas += _costados(ancho, y_suelo, alto_panel, panel_z, ojos_z)
+        p = parabrisas or {}
+        if p.get("avisos"):
+            piezas += _avisos_de_turbohelice(arriba_v, z_labio_v, ancho,
+                                             puntos)
+        if parabrisas:
+            lip = math.degrees(math.atan2(ojo_v[0] - arriba_v,
+                                          ojo_v[1] - (z_labio_v - 0.02)))
+            piezas += parabrisas_por_dentro(
+                ojo_v[0], ojo_v[1], ojo_v[1] - (panel_z - 0.19), lip,
+                p.get("hacia_arriba", 12.0), p["montantes"],
+                inclinacion=p.get("inclinacion", 20.0),
+                arco=p.get("arco", 0.03), limpias=p.get("limpias", False),
+                brujula=p.get("brujula", False), alfeizar=alto_panel - 0.02,
+                estrecha=p.get("estrecha", 0.94), capota=p.get("capota"),
+            )
     # ── **Un avión de pistón lleva relojes, no cristal** ──
     #
     # La familia la manda el motor y no el peldaño: los de pistón llevan seis

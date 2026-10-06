@@ -74,8 +74,14 @@ const DELANTE_MINIMO = 0.02;
 /**
  * Lo que no tapa aunque esté: una hélice girando se ve como un disco
  * translúcido, y a través de ella se mira. Ver `discoDeHelice`.
+ *
+ * **Y el limpiaparabrisas**, aparcado a lo largo del pie del cristal: es una
+ * raya de un centímetro justo por encima del guardasol, y por encima y por
+ * debajo de ella se ve el suelo. Contado como lo que tapa, bajaba el borde del
+ * ángulo muerto medio grado en los tres que lo llevan, y el coche del sígame
+ * se alejaba por una escobilla.
  */
-const NO_TAPA = /pala|blade|disco-de-helice/i;
+const NO_TAPA = /pala|blade|disco-de-helice|limpia-parabrisas/i;
 
 /**
  * Mide lo que se ve por delante de un avión ya montado.

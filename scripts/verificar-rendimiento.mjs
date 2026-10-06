@@ -60,6 +60,11 @@
  * más cercana**, que es el peor caso de lo que cuestan: con el aeródromo
  * detrás y las aves llenando el cuadro. Ver `world/bandadas.ts`.
  *
+ * ## Y desde el asiento
+ *
+ * `OGA_VISTA=cockpit` mide desde el asiento, que es donde se dibuja la
+ * cabina por dentro: el parabrisas, el guardasol y los relojes.
+ *
  * ## Y con la tarjeta del avión abierta
  *
  * `OGA_TARJETA=1` mide además, en el aire, **con la tarjeta del avión
@@ -177,6 +182,20 @@ for (const escenario of ESCENARIOS) {
     const dbg = gl.getExtension("WEBGL_debug_renderer_info");
     return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre";
   });
+  /*
+   * **Y desde la vista que se pida**: con `OGA_VISTA=cockpit`, desde el
+   * asiento. Lo que cuesta la cabina —el parabrisas, el guardasol, los
+   * relojes— solo se dibuja ahí, y medido desde la persecución sale gratis.
+   */
+  if (process.env.OGA_VISTA) {
+    const puesta = await page.evaluate(
+      (v) => globalThis.__oga.ponerVista(v),
+      process.env.OGA_VISTA,
+    );
+    if (puesta !== process.env.OGA_VISTA)
+      console.log(`  ✗ la vista ${process.env.OGA_VISTA} no se pudo poner: ${puesta}`);
+    await page.waitForTimeout(1500);
+  }
   const hayBandadas = await page.evaluate(
     () => typeof globalThis.__oga.mirarLaBandada === "function",
   );

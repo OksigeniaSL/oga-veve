@@ -130,9 +130,14 @@ export interface CuerpoHorneado {
 const DE_DENTRO =
   /^(tablero|tapiceria|boton|bisel|pomo|forro|subpanel|tornillo|visera|reloj_.*|g1000_display|mcp.*|marca)$/;
 
-/** Y por el nombre de la pieza, por si algún material se comparte. */
+/**
+ * Y por el nombre de la pieza, por si algún material se comparte: el lomo del
+ * morro visto desde el asiento va del color del casco o del capó, y las juntas
+ * del parabrisas, de la goma de las ruedas. Ver `parabrisas_por_dentro` en
+ * `modelos/comun.py`.
+ */
 const PIEZA_DE_DENTRO =
-  /asiento|panel|reloj|cuerno|boton|pomo|palanca|pedestal|mcp|bastidor|interruptores|marco-de-techo|suelo-cabina|alfeizar|forro|visera|tornillos|palas/;
+  /asiento|panel|reloj|cuerno|boton|pomo|palanca|pedestal|mcp|bastidor|interruptores|marco-de-techo|suelo-cabina|alfeizar|forro|visera|tornillos|palas|montantes-parabrisas|juntas-parabrisas|limpia-parabrisas|brujula|capota|efis|aviso-/;
 
 /**
  * Lo que va del color de la librea. Con el `remate` —las aletas y el filete

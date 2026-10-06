@@ -188,6 +188,20 @@ def construir():
         plazas=(-0.22, 0.22),
         pantallas_en=0.20,
         relojes=6,
+        # **El parabrisas de una pieza de un entrenador de ala alta**, el de
+        # un 172: sin barra en el centro, con los montantes de las puertas a
+        # los costados y la brújula colgada arriba en el centro, que es lo
+        # que lleva y donde la lleva.
+        # Juntos arriba, porque el de un 172 va muy tumbado, del capó al ala,
+        # y el techo de la cabina se estrecha: derechos, asomaban por fuera.
+        parabrisas=dict(
+            hacia_arriba=9.0,
+            arco=0.015,
+            estrecha=0.68,
+            montantes=[(-0.39, 0.05, 0.0), (0.39, 0.05, 0.0)],
+            brujula=True,
+            capota=("capo", 11.5, 0.48, 0.46),
+        ),
     )
     piezas += cab
     dentro_de(PIEL, cab)

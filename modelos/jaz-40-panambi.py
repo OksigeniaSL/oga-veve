@@ -172,6 +172,19 @@ def construir():
         palancas=2,
         relojes=8,
         suelo_atras=1.70,
+        # **El parabrisas de dos piezas de su clase**, el del PA-34 Seneca:
+        # dos paneles unidos en el centro por una tira de aluminio estrecha,
+        # que al piloto le queda a la derecha a lo que está su asiento del eje
+        # —30 cm—, y el montante de la puerta a la izquierda. Sin
+        # limpiaparabrisas, como un bimotor ligero, y con la brújula colgada
+        # arriba en el centro.
+        parabrisas=dict(
+            hacia_arriba=10.0,
+            arco=0.015,
+            montantes=[(-0.30, 0.05, 0.0), (0.30, 0.028, 0.0)],
+            brujula=True,
+            capota=("casco", 11.5, 0.55),
+        ),
     )
     # Y dos plazas atrás. No se pilotan desde ahí —`ojoDePiloto` se queda con
     # el asiento más adelantado— pero sin ellas la cabina de un avión de seis

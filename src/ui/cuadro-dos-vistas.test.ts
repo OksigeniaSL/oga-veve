@@ -198,7 +198,15 @@ function cifrasDe(e: Escala | null): string[] {
 
 // ── El modelo, leído del .glb ─────────────────────────────────────────
 
-/** Qué esferas trae el modelo, contadas por lo que miden. */
+/**
+ * Qué esferas trae el modelo **en el panel**, contadas por lo que miden.
+ *
+ * Sin la brújula, que no es del panel: cuelga del travesaño del parabrisas,
+ * como en cualquier avioneta, y es de tarjeta vertical, así que gira con el
+ * mismo dibujo que el direccional —su cara es un `reloj_dg`—. El cuadro
+ * plano lleva los seis de vuelo y los de motor; la brújula de reserva, no.
+ * Ver `parabrisas_por_dentro` en `modelos/comun.py`.
+ */
 function esferasDelModelo(id: string): Record<string, number> {
   // Un .glb es una cabecera de doce bytes y luego trozos: el primero es el
   // JSON, con su largo en los cuatro bytes de después de la cabecera.
@@ -206,13 +214,13 @@ function esferasDelModelo(id: string): Record<string, number> {
   const largo = new DataView(glb.buffer, glb.byteOffset).getUint32(12, true);
   const texto = new TextDecoder().decode(glb.subarray(20, 20 + largo));
   const json = JSON.parse(texto) as {
-    nodes?: { mesh?: number }[];
+    nodes?: { mesh?: number; name?: string }[];
     meshes: { primitives: { material?: number }[] }[];
     materials?: { name?: string }[];
   };
   const cuenta: Record<string, number> = {};
   for (const n of json.nodes ?? []) {
-    if (n.mesh === undefined) continue;
+    if (n.mesh === undefined || n.name === "brujula") continue;
     for (const p of json.meshes[n.mesh]!.primitives) {
       const nombre = json.materials?.[p.material ?? -1]?.name ?? "";
       if (!nombre.startsWith("reloj_")) continue;

@@ -190,6 +190,23 @@ def construir():
         relojes=10,
         mide="par",
         suelo_atras=1.60,
+        # **El parabrisas de un turbohélice de transporte de su clase**, el
+        # Beech 1900D: dos paneles con su montante en el centro, que le queda
+        # al piloto a la derecha a lo que está su asiento del eje —36 cm—, y
+        # el de la ventanilla de costado a la izquierda; detrás, las
+        # ventanillas. Lleva limpiaparabrisas, como cualquier turbohélice que
+        # vuela pasaje con lluvia, y en el guardasol sus avisos. Lo que se ve
+        # hacia arriba no está publicado para este avión: el travesaño va por
+        # encima de lo que cabe en la pantalla, que es lo que se ve.
+        parabrisas=dict(
+            hacia_arriba=16.0,
+            montantes=[(-0.36, 0.05, 0.0), (0.36, 0.05, 0.0),
+                       (-0.50, 0.045, 0.20), (0.50, 0.045, 0.20)],
+            estrecha=0.88,
+            limpias=True,
+            avisos=True,
+            capota=("casco", 11.5, 0.55),
+        ),
     )
     piezas += cab
     dentro_de(PIEL, cab)

@@ -470,9 +470,30 @@ describe("el encuadre de la cabina", () => {
   const avioneta = { visera: 0.02, lados: 0.4, abajo: 0.55 };
   it("deja la visera en el mismo sitio de la pantalla en cualquier avión", () => {
     const a = encuadreDeCabina(avioneta, 1.6);
-    const b = encuadreDeCabina({ ...avioneta, visera: 0.02 + (15 * Math.PI) / 180, abajo: 0.8 }, 1.6);
-    expect(grados(b.inclinacion - a.inclinacion)).toBeCloseTo(15);
+    const b = encuadreDeCabina({ ...avioneta, visera: 0.02 + (8 * Math.PI) / 180, abajo: 0.7 }, 1.6);
+    expect(grados(b.inclinacion - a.inclinacion)).toBeCloseTo(8);
     expect(a.fov).toBe(FOV_DE_CABINA);
+  });
+  /*
+   * **Salvo que eso suba el horizonte por encima del 22 %.** Por encima del
+   * morro de un 747-400 se ven 18° 26′ (Boeing D6-58326-1, 4.4): con el labio
+   * del guardasol en el 42 % de la pantalla, el horizonte se iba debajo de la
+   * fila de botones de arriba. Ahí manda el horizonte, y la visera baja: lo
+   * que se gana es pista.
+   */
+  it("con mucha vista por encima del morro, el horizonte no sube del 22 %", () => {
+    const dePoca = encuadreDeCabina({ ...avioneta, visera: (11 * Math.PI) / 180 }, 1.6);
+    const deMucha = encuadreDeCabina({ ...avioneta, visera: (18.4 * Math.PI) / 180 }, 1.6);
+    const horizonte = (e: { inclinacion: number; fov: number }) =>
+      0.5 - Math.tan(e.inclinacion) / (2 * Math.tan(((e.fov / 2) * Math.PI) / 180));
+    const visera = (e: { inclinacion: number; fov: number }, v: number) =>
+      0.5 + Math.tan(v - e.inclinacion) / (2 * Math.tan(((e.fov / 2) * Math.PI) / 180));
+    // El de poca vista, como siempre: la visera en el 42 % y el horizonte debajo del 22 %.
+    expect(visera(dePoca, (11 * Math.PI) / 180)).toBeCloseTo(0.42, 2);
+    expect(horizonte(dePoca)).toBeGreaterThan(0.22);
+    // El de mucha: el horizonte en el 22 % y la visera más abajo que el 42 %.
+    expect(horizonte(deMucha)).toBeCloseTo(0.22, 2);
+    expect(visera(deMucha, (18.4 * Math.PI) / 180)).toBeGreaterThan(0.48);
   });
   it("si los instrumentos no caben a lo ancho, abre el ángulo en vez de cortarlos", () => {
     const reactor = { visera: 0.05, lados: 1.0, abajo: 0.6 };
