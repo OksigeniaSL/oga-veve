@@ -125,7 +125,9 @@ describe("el parabrisas visto desde el asiento", () => {
         let abierto: number | null = null;
         for (let az = -60; az <= 60; az += 0.1) {
           const c = primero(grupo, ojo, az, 2);
-          const esMontante = c?.nombre === "montantes-parabrisas";
+          // El forro y los tornillos que lleva en la cara; la junta de goma
+          // no, que es el canto del cristal.
+          const esMontante = /^(montantes|tornillos)-parabrisas$/.test(c?.nombre ?? "");
           if (esMontante && abierto === null) abierto = az;
           if (!esMontante && abierto !== null) {
             tramos.push({ desde: abierto, hasta: az });
