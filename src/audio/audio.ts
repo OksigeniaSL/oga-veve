@@ -34,7 +34,14 @@ import {
   type Oido,
 } from "./ruidos";
 import { Enchufe, RuidosEnElAire, type Medida } from "./ruidos-en-el-aire";
-import { AGUDA, GRAVE, esTonoDeCabina, fuerzaDelTono } from "./tonos-de-cabina";
+import {
+  AGUDA,
+  GRAVE,
+  comoSeOyeLaTripulacion,
+  esTonoDeCabina,
+  fuerzaDelTono,
+  type PorAltavoz,
+} from "./tonos-de-cabina";
 import type { Volumen as Paso } from "../ui/ajustes";
 import {
   DE_FABRICA,
@@ -435,6 +442,13 @@ export class Audio {
    * cabina. Ver dónde se arma, justo después de la radio.
    */
   private entradaDeAltavoz: BiquadFilterNode | null = null;
+  /**
+   * Y la de la tripulación de cabina, que es el mismo altavoz con **la puerta
+   * de la cabina de mando** delante según desde dónde se oiga. Ver
+   * `comoSeOyeLaTripulacion` en `audio/tonos-de-cabina.ts`.
+   */
+  private entradaDeLaTripulacion: BiquadFilterNode | null = null;
+  private lejosDeLaTripulacion: GainNode | null = null;
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
   /**
@@ -604,7 +618,23 @@ export class Audio {
    * Lo pone el juego con la vista. Ver `oidoDe` en `audio/ruidos.ts`.
    */
   ponerOido(oido: Oido): void {
+    if (oido === this.oido) return;
     this.oido = oido;
+    this.ponerLaPuerta();
+  }
+
+  /**
+   * La puerta de la cabina de mando, delante de la voz de la tripulación: se
+   * cierra o se abre al cambiar de vista. Con un deslizamiento corto para que
+   * el cambio no chasque en mitad de una frase.
+   */
+  private ponerLaPuerta(): void {
+    const ctx = this.context;
+    if (!ctx || !this.entradaDeLaTripulacion || !this.lejosDeLaTripulacion) return;
+    const { fuerza, corte } = comoSeOyeLaTripulacion(this.oido);
+    const ahora = ctx.currentTime;
+    this.entradaDeLaTripulacion.frequency.setTargetAtTime(corte, ahora, 0.05);
+    this.lejosDeLaTripulacion.gain.setTargetAtTime(fuerza, ahora, 0.05);
   }
 
   /** El firme que hay debajo de las ruedas. Ver `world/firme.ts`. */
@@ -1136,6 +1166,21 @@ export class Audio {
     sinGraves.connect(sinAgudos).connect(bocina).connect(this.buses.voz);
     bocina.connect(pasillo).connect(rebote).connect(this.buses.voz);
     this.entradaDeAltavoz = sinGraves;
+    /*
+     * **Y la tripulación, por el mismo altavoz con la puerta delante.** Habla
+     * desde la cabina de pasaje: desde la de mando se oye a través de la
+     * puerta, más lejos y sin agudos. Ver `comoSeOyeLaTripulacion`.
+     */
+    const puerta = ctx.createBiquadFilter();
+    puerta.type = "lowpass";
+    puerta.Q.value = 0.7;
+    const lejos = ctx.createGain();
+    const comoAhora = comoSeOyeLaTripulacion(this.oido);
+    puerta.frequency.value = comoAhora.corte;
+    lejos.gain.value = comoAhora.fuerza;
+    puerta.connect(lejos).connect(sinGraves);
+    this.entradaDeLaTripulacion = puerta;
+    this.lejosDeLaTripulacion = lejos;
 
     const noise = this.noiseBuffer();
 
@@ -1538,9 +1583,10 @@ export class Audio {
     porRadio = false,
     /**
      * Si suena por el altavoz del techo: la megafonía de cabina. Ver dónde se
-     * arma su cadena.
+     * arma su cadena. `"desde-el-pasaje"` es la tripulación de cabina, que
+     * además lleva la puerta de la cabina de mando según la vista.
      */
-    porAltavoz = false,
+    porAltavoz: PorAltavoz = false,
     /**
      * Si la dice una caja del avión —la cuenta, el *terrain*, el *stall*—:
      * va por el bus de avisos, que es el que no baja del mínimo audible
@@ -1558,9 +1604,11 @@ export class Audio {
       fuente.connect(
         porRadio && this.entradaDeRadio
           ? this.entradaDeRadio
-          : porAltavoz && this.entradaDeAltavoz
-            ? this.entradaDeAltavoz
-            : this.bus(porLaCaja ? "avisos" : "voz"),
+          : porAltavoz === "desde-el-pasaje" && this.entradaDeLaTripulacion
+            ? this.entradaDeLaTripulacion
+            : porAltavoz && this.entradaDeAltavoz
+              ? this.entradaDeAltavoz
+              : this.bus(porLaCaja ? "avisos" : "voz"),
       );
       fuente.start(cuando);
       cuando += pieza.duration;

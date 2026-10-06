@@ -1028,6 +1028,27 @@ export const EN: Dictionary = {
     "And as it's a long flight, we also have coffee and tea.",
   "tripulacion.canario.cinturones":
     "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
+  /*
+   * Off the runway and taxiing in, what any cabin crew says. See
+   * `audio/anuncio-tras-la-toma.ts`.
+   */
+  "tripulacion.bienvenidos": "Ladies and gentlemen, welcome to {campo}.",
+  "tripulacion.bienvenidos.pettirossi": "Ladies and gentlemen, welcome to Asunción.",
+  "tripulacion.bienvenidos.guarani": "Ladies and gentlemen, welcome to Ciudad del Este.",
+  "tripulacion.bienvenidos.encarnacion": "Ladies and gentlemen, welcome to Encarnación.",
+  "tripulacion.bienvenidos.pedro-juan": "Ladies and gentlemen, welcome to Pedro Juan Caballero.",
+  "tripulacion.trasLaToma":
+    "Please remain seated with your seatbelt fastened until the aircraft has come to a complete stop and the seatbelt sign has been switched off. You may now use your mobile phones. Please take care when opening the overhead bins, as items may have moved during the flight. Thank you.",
+  "tripulacion.canario.bienvenidos": "Ladies and gentlemen, welcome to {campo}.",
+  "tripulacion.canario.bienvenidos.tenerife-norte": "Ladies and gentlemen, welcome to Tenerife North.",
+  "tripulacion.canario.bienvenidos.tenerife-sur": "Ladies and gentlemen, welcome to Tenerife South.",
+  "tripulacion.canario.bienvenidos.gran-canaria": "Ladies and gentlemen, welcome to Gran Canaria.",
+  "tripulacion.canario.bienvenidos.lanzarote": "Ladies and gentlemen, welcome to Lanzarote.",
+  "tripulacion.canario.bienvenidos.fuerteventura": "Ladies and gentlemen, welcome to Fuerteventura.",
+  "tripulacion.canario.bienvenidos.la-palma": "Ladies and gentlemen, welcome to La Palma.",
+  "tripulacion.canario.bienvenidos.la-gomera": "Ladies and gentlemen, welcome to La Gomera.",
+  "tripulacion.canario.trasLaToma":
+    "Please remain seated with your seatbelt fastened until the aircraft has come to a complete stop and the seatbelt sign has been switched off. You may now use your mobile phones. Please take care when opening the overhead bins, as items may have moved during the flight. Thank you.",
   "servicio.rotulo": "In-flight service",
 
   /*

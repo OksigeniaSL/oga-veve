@@ -5618,6 +5618,76 @@
     }
   },
   {
+    "id": "tripulacion.canario.bienvenidos.tenerife-norte",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Tenerife Norte.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.bienvenidos.tenerife-sur",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Tenerife Sur.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.bienvenidos.gran-canaria",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Gran Canaria.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.bienvenidos.lanzarote",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Lanzarote.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.bienvenidos.fuerteventura",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Fuerteventura.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.bienvenidos.la-palma",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a La Palma.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.bienvenidos.la-gomera",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a La Gomera.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.trasLaToma",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Por favor, permanezcan sentados y con el cinturón abrochado hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden utilizar sus teléfonos móviles. Tengan cuidado al abrir los compartimentos superiores, porque el equipaje puede haberse movido durante el vuelo. Muchas gracias.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.trasLaToma~2",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Les rogamos que sigan sentados, con el cinturón abrochado, hasta que el avión se pare del todo y se apague la señal. Desde ahora pueden encender el móvil. Abran los compartimentos con cuidado, que en el vuelo las maletas también viajan. Y antes de salir, miren en el bolsillo del asiento por si se dejan algo.",
+    "para": "la tripulación de cabina de Canarias, por megafonía · otra forma de decirlo"
+  },
+  {
+    "id": "tripulacion.canario.trasLaToma~3",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Por su seguridad, permanezcan sentados con el cinturón puesto hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el teléfono. Cuidado al abrir los compartimentos de arriba, y no olviden sus pertenencias. Muchas gracias y hasta pronto.",
+    "para": "la tripulación de cabina de Canarias, por megafonía · otra forma de decirlo"
+  },
+  {
     "id": "tripulacion.servicio.mango",
     "voz": "tripulacion",
     "idioma": "es-PY",
@@ -5687,6 +5757,55 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "tripulacion.bienvenidos.pettirossi",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Asunción.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.bienvenidos.guarani",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Ciudad del Este.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.bienvenidos.encarnacion",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Encarnación.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.bienvenidos.pedro-juan",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a Pedro Juan Caballero.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.trasLaToma",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Les pedimos que sigan sentados, con el cinturón abrochado, hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden usar sus celulares. Tengan cuidado al abrir los compartimientos de arriba, porque el equipaje se pudo mover durante el vuelo. Muchas gracias.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.trasLaToma~2",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Por su seguridad, sigan sentados y con el cinturón puesto hasta que el avión se pare del todo y se apague la señal. A partir de ahora pueden encender sus celulares. Abran los compartimientos despacito, que en el vuelo las valijas también viajan. Y antes de bajar, revisen el bolsillo del asiento para no olvidarse nada.",
+    "para": "la tripulación de cabina, por megafonía · otra forma de decirlo"
+  },
+  {
+    "id": "tripulacion.trasLaToma~3",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Quédense sentados con el cinturón abrochado, por favor, hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el celular. Cuidado al abrir los compartimientos de arriba, que algo se pudo correr con el vuelo. Y fíjense que no quede nada en el asiento. ¡Gracias, y que les vaya muy bien!",
+    "para": "la tripulación de cabina, por megafonía · otra forma de decirlo"
   },
   {
     "id": "torre.canario.solo.subirNivel",

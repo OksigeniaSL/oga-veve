@@ -12,7 +12,9 @@ import {
   LLAMA_DESDE,
   LLAMA_HASTA,
   LlamadasDelPasaje,
+  SIN_CORTE,
   TONOS_DE_CABINA,
+  comoSeOyeLaTripulacion,
   esTonoDeCabina,
   esperaTrasLaLlamada,
   fuerzaDelTono,
@@ -96,6 +98,13 @@ describe("la llamada va delante de la megafonía que la lleva", () => {
       expect(llamadaAntesDe(clave), clave).toBeNull();
   });
 
+  it("menos lo de después de aterrizar, que pide atención rodando: aguda y grave", () => {
+    for (const clave of ["tripulacion.llegada", "tripulacion.canario.llegada"])
+      expect(llamadaAntesDe(clave), clave).toBe("llamadaTripulacion");
+    // Y no sus piezas sueltas, que no son el anuncio.
+    expect(llamadaAntesDe("tripulacion.bienvenidos.pettirossi")).toBeNull();
+  });
+
   it("y la voz espera a que acabe su tono", () => {
     const dura = (t: "llamadaTripulacion" | "llamadaEmergencia") => {
       const m = MOTIVOS[t];
@@ -151,5 +160,24 @@ describe("el pasajero que llama, alguna vez en el servicio", () => {
     expect(cuandoLlama(() => 0.2, { servicioDicho: false })).toBeNull();
     expect(cuandoLlama(() => 0.2, { pasajeSuelto: false })).toBeNull();
     expect(cuandoLlama(() => 0.2, { bajando: true })).toBeNull();
+  });
+});
+
+describe("la voz de la tripulación desde cada vista", () => {
+  it("en el pasaje, a tope y sin cortar nada", () => {
+    expect(comoSeOyeLaTripulacion("pasaje")).toEqual({ fuerza: 1, corte: SIN_CORTE });
+  });
+
+  it("en la cabina de mando, por la puerta: más floja y sin agudos", () => {
+    const c = comoSeOyeLaTripulacion("cabina");
+    expect(c.fuerza).toBeLessThan(1);
+    expect(c.fuerza).toBeGreaterThan(0);
+    // Sin agudos, pero se entiende: la voz cabe en lo que deja pasar.
+    expect(c.corte).toBeLessThan(4000);
+    expect(c.corte).toBeGreaterThanOrEqual(1500);
+  });
+
+  it("y desde fuera, como hasta ahora: acompaña a la tira", () => {
+    expect(comoSeOyeLaTripulacion("fuera")).toEqual({ fuerza: 1, corte: SIN_CORTE });
   });
 });

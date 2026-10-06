@@ -76,6 +76,44 @@ export function fuerzaDelTono(tono: TonoDeCabina, oido: Oido): number {
 }
 
 /**
+ * **Cómo llega la voz de la tripulación de cabina a cada vista**: cuánto pega,
+ * de 0 a 1, y dónde corta los agudos, Hz.
+ *
+ * La tripulación habla desde el micrófono de la cabina de pasaje, y lo suyo
+ * suena por los altavoces del techo: en el pasaje, a tope. **En la cabina de
+ * mando, con la puerta cerrada, llega de lejos** —más flojo y sin agudos, que
+ * es lo que una puerta le quita a una voz—, igual que los tonos de arriba.
+ * Desde fuera, como hasta ahora: acompaña lo que ya está en pantalla, que es
+ * la tira de la megafonía.
+ *
+ * La comandante no pasa por aquí: habla desde la cabina de mando, sentada al
+ * lado, y desde ahí no está lejos de nadie.
+ */
+export function comoSeOyeLaTripulacion(oido: Oido): {
+  readonly fuerza: number;
+  readonly corte: number;
+} {
+  return oido === "cabina"
+    ? { fuerza: TRAS_LA_PUERTA, corte: CORTE_DE_LA_PUERTA }
+    : { fuerza: 1, corte: SIN_CORTE };
+}
+
+/**
+ * **Si una voz suena por el altavoz del techo, y desde dónde habla**: `false`
+ * es al lado o por radio; `true`, la megafonía dicha desde la cabina de mando
+ * —la comandante—; `"desde-el-pasaje"`, la tripulación de cabina, con la
+ * puerta delante según la vista.
+ */
+export type PorAltavoz = boolean | "desde-el-pasaje";
+
+/** Lo que deja pasar la puerta de la cabina de mando de una voz del pasaje. */
+export const TRAS_LA_PUERTA = 0.5;
+/** Y por encima de qué se lleva los agudos, Hz. */
+export const CORTE_DE_LA_PUERTA = 2000;
+/** Un corte por encima de lo que se oye: abierto. */
+export const SIN_CORTE = 20000;
+
+/**
  * **Qué llamada va delante de un anuncio de la megafonía**, o `null` si
  * ninguna.
  *
@@ -84,12 +122,28 @@ export function fuerzaDelTono(tono: TonoDeCabina, oido: Oido): number {
  * ella. Y el descenso de emergencia, detrás de la de emergencia. Lo que se le
  * dice al pasaje no lleva llamada: lo lleva el cartel. Se reconoce por la
  * clave, con sus formas y su habla detrás.
+ *
+ * **Menos el de después de aterrizar**, que es del pasaje y va detrás de la
+ * aguda y grave. Ahí el cartel no cambia —sigue encendido hasta el puesto— y
+ * no hay tono suyo que anuncie nada; y el sistema de cabina deja que cada
+ * compañía ponga un tono delante de los anuncios al pasaje, que es lo que se
+ * oye en muchos aviones antes de «señoras y señores, bienvenidos a…». La
+ * flota JAZ lo pone en éste: llega con el avión rodando y con medio pasaje
+ * pensando ya en levantarse, que es cuando más hace falta pedir atención.
  */
 export function llamadaAntesDe(clave: string): TonoDeCabina | null {
   const base = clave.replace(/[@~].*$/, "");
   if (base === "comandante.descensoDeEmergencia") return "llamadaEmergencia";
-  return A_LA_TRIPULACION.has(base) ? "llamadaTripulacion" : null;
+  return A_LA_TRIPULACION.has(base) || AL_PASAJE_CON_LLAMADA.has(base)
+    ? "llamadaTripulacion"
+    : null;
 }
+
+/** Los anuncios al pasaje que llevan la llamada delante. Ver `llamadaAntesDe`. */
+const AL_PASAJE_CON_LLAMADA: ReadonlySet<string> = new Set([
+  "tripulacion.llegada",
+  "tripulacion.canario.llegada",
+]);
 
 /** Los anuncios que se le dicen a la tripulación de cabina. */
 const A_LA_TRIPULACION: ReadonlySet<string> = new Set([

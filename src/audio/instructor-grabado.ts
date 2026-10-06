@@ -29,6 +29,7 @@ import type { AlSonar, Instructor } from "./instructor";
 import type { Urgencia } from "./boca";
 import { BOCA, Boca } from "./boca";
 import { ESPERA_A_SU_VOZ } from "./turnos";
+import type { PorAltavoz } from "./tonos-de-cabina";
 import {
   BASE,
   CACHE,
@@ -77,7 +78,7 @@ export interface Altavoz {
     piezas: readonly AudioBuffer[],
     alAcabar: () => void,
     porRadio?: boolean,
-    porAltavoz?: boolean,
+    porAltavoz?: PorAltavoz,
   ): (() => void) | null;
   /**
    * Si hay audio en este navegador. Sin él nunca sonará nada grabado, así que
@@ -222,9 +223,10 @@ export class InstructorGrabado implements Instructor {
     /**
      * Y si llega **por el altavoz del techo**: la comandante y la tripulación
      * de cabina. Ni radio ni al lado: la megafonía del pasaje, con su propio
-     * sonido. Ver `entradaDeAltavoz` en `audio.ts`.
+     * sonido. Ver `entradaDeAltavoz` en `audio.ts`. La tripulación, además,
+     * desde el pasaje: ver `PorAltavoz`.
      */
-    private readonly porAltavoz = false,
+    private readonly porAltavoz: PorAltavoz = false,
   ) {
     this.altavoz = altavoz;
     this.suplente = suplente;

@@ -745,6 +745,7 @@ import {
   segundosHastaTocar,
 } from "./audio/partes-de-la-comandante";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
+import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
   LlamadasDelPasaje,
   esperaTrasLaLlamada,
@@ -4204,7 +4205,11 @@ export class Game {
     MEGAFONIA,
     this.grabaciones,
     false,
-    true,
+    /*
+     * Por el altavoz del techo, y **desde el pasaje**: en la cabina de mando
+     * se le oye por la puerta. Ver `comoSeOyeLaTripulacion`.
+     */
+    "desde-el-pasaje",
   );
   /**
    * Las cuatro bocas del juego, para poder preguntarles desde fuera.
@@ -9535,6 +9540,20 @@ export class Game {
         ) as TranslationKey;
         return { clave, texto: t(clave) };
       }
+      case "tripulacion.llegada":
+        /*
+         * **Bienvenidos a donde se aterrizó**, con el habla de la tripulación,
+         * y el resto en una de sus formas grabadas. Ver
+         * `audio/anuncio-tras-la-toma.ts`.
+         */
+        return anuncioTrasLaToma(
+          this.hablaDeLaTripulacion(),
+          {
+            id: donde.id,
+            nombre: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
+          },
+          (id) => this.instructor.vozDe(id) !== null,
+        );
       default:
         break;
     }
@@ -20725,8 +20744,18 @@ export class Game {
         if (l.clave.startsWith("comandante.crosscheck")) this.crosscheckAcabado = true;
         return;
       }
+      /*
+       * **Y sin la radio hablando**: la llamada es un suceso y no se toca
+       * encima de la torre. Al dejar la pista la torre da el rodaje en el
+       * mismo momento del anuncio de la tripulación, y sin esto el tono podía
+       * sonar encima de la autorización, con la voz esperando detrás.
+       */
       const libre =
-        !this.comandante.hablando && !this.tripulacion.hablando && !this.instructor.hablando;
+        !this.comandante.hablando &&
+        !this.tripulacion.hablando &&
+        !this.instructor.hablando &&
+        !this.torre.hablando &&
+        !this.otroAvion.hablando;
       if (!l.ya && !(libre && this.instructor.estaLista(l.clave, l.relleno))) return;
       this.avisar(l.tono);
       l.sono = ahora;
@@ -20802,7 +20831,21 @@ export class Game {
       fase,
       flapsFuera: this.input.palancaDeFlaps > 0,
       aerofrenosFuera: this.input.aerofrenosAbiertos,
-      hablando: this.instructor.hablando || this.torre.hablando,
+      /*
+       * **Y con la megafonía hablando, también espera.** Al dejar la pista
+       * coincide con el anuncio de la tripulación, y un punto pedido encima
+       * se quedaría en la cola detrás de él —a la megafonía no la pisa
+       * nadie— hasta caducar sin oírse, con la lista ya en el siguiente.
+       * Cuenta también la llamada que ya sonó y lo que la megafonía tiene en
+       * cola.
+       */
+      hablando:
+        this.instructor.hablando ||
+        this.torre.hablando ||
+        this.comandante.hablando ||
+        this.tripulacion.hablando ||
+        this.llamadas.some((l) => l.sono !== null) ||
+        BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       dt,
     });
     if (!leido) return;

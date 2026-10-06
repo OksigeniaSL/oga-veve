@@ -132,9 +132,10 @@ describe("la megafonía de cabina", () => {
     expect(rodando).not.toContain("comandante.crosscheck");
   });
 
-  it("y en un vuelo sin bajar habla seis veces y ni una más", () => {
-    // Con auxiliares: toboganes, bienvenida, despegue, crucero, servicio y
-    // llegada. Sin descenso, porque aquí el avión no baja nunca.
+  it("y en un vuelo sin bajar habla siete veces y ni una más", () => {
+    // Con auxiliares: toboganes, bienvenida, despegue, crucero, servicio,
+    // llegada y, ya fuera de la pista, lo de la tripulación. Sin descenso,
+    // porque aquí el avión no baja nunca.
     const m = new Megafonia();
     let veces = 0;
     for (const fase of [
@@ -155,7 +156,7 @@ describe("la megafonía de cabina", () => {
     ] as Fase[]) {
       veces += correr(m, fase, 30, { conTripulacion: true }).length;
     }
-    expect(veces).toBe(6);
+    expect(veces).toBe(7);
   });
 
   it("un vuelo nuevo la vuelve a dejar hablar", () => {
@@ -605,5 +606,128 @@ describe("a lo que se le pasó el momento", () => {
     expect(seLePasoElMomento("comandante.descenso@x", "final")).toBe(false);
     expect(seLePasoElMomento("tripulacion.servicio", "en-vuelo")).toBe(false);
     expect(seLePasoElMomento(undefined, "rodando")).toBe(false);
+  });
+
+  /*
+   * Pedido y esperando su llamada o su turno, vale mientras se ruede de
+   * vuelta, también si el rodaje pasa pegado a la pista; volver a la carrera
+   * o llegar al puesto se lo lleva. Con las dos hablas.
+   */
+  it("lo de después de aterrizar, mientras se rueda a la terminal", () => {
+    for (const clave of ["tripulacion.llegada", "tripulacion.canario.llegada"]) {
+      expect(seLePasoElMomento(clave, "a-plataforma"), clave).toBe(false);
+      expect(seLePasoElMomento(clave, "abandonando"), clave).toBe(false);
+      expect(seLePasoElMomento(clave, "aterrizado"), clave).toBe(true);
+      expect(seLePasoElMomento(clave, "despegando"), clave).toBe(true);
+      expect(seLePasoElMomento(clave, "en-vuelo"), clave).toBe(true);
+      expect(seLePasoElMomento(clave, "en-puesto"), clave).toBe(true);
+    }
+  });
+});
+
+/*
+ * **Lo que dice la tripulación al dejar la pista**: «ya pueden usar el
+ * teléfono, sigan con el cinturón puesto». Lo que se mira es el momento —con
+ * la pista ya libre, rodando—, que sea una vez por toma, solo con auxiliares
+ * a bordo y nunca encima de otro anuncio. El texto, en
+ * `anuncio-tras-la-toma.test.ts`.
+ */
+describe("la tripulación al dejar la pista", () => {
+  const CON_AUXILIARES = { conTripulacion: true };
+  const TRAS = "tripulacion.llegada";
+
+  it("suena rodando a la terminal, con la pista ya libre", () => {
+    const m = new Megafonia();
+    expect(correr(m, "a-plataforma", 30, CON_AUXILIARES)).toContain(TRAS);
+  });
+
+  it("y no en la carrera ni saliendo todavía de la pista", () => {
+    const m = new Megafonia();
+    const dichos = [
+      ...correr(m, "aterrizado", 30, CON_AUXILIARES),
+      ...correr(m, "abandonando", 30, CON_AUXILIARES),
+    ];
+    expect(dichos).not.toContain(TRAS);
+    // La de la comandante, en cambio, ya salió: es la suya.
+    expect(dichos).toContain("comandante.llegada");
+  });
+
+  it("detrás de la llegada de la comandante, nunca delante", () => {
+    const m = new Megafonia();
+    const dichos = [
+      ...correr(m, "aterrizado", 10, CON_AUXILIARES),
+      ...correr(m, "abandonando", 2, CON_AUXILIARES),
+      ...correr(m, "a-plataforma", 40, CON_AUXILIARES),
+    ];
+    expect(dichos).toEqual(["comandante.llegada", TRAS]);
+  });
+
+  it("una sola vez, aunque el rodaje vuelva a pasar pegado a la pista", () => {
+    const m = new Megafonia();
+    const dichos = [
+      ...correr(m, "a-plataforma", 20, CON_AUXILIARES),
+      ...correr(m, "abandonando", 5, CON_AUXILIARES),
+      ...correr(m, "a-plataforma", 60, CON_AUXILIARES),
+    ];
+    expect(dichos.filter((d) => d === TRAS)).toHaveLength(1);
+  });
+
+  it("y en el puesto ya no: ahí se apaga la señal y se abren puertas", () => {
+    const m = new Megafonia();
+    expect(correr(m, "en-puesto", 60, CON_AUXILIARES)).not.toContain(TRAS);
+  });
+
+  it("solo con auxiliares a bordo: en el JAZ 60 no hay quién lo diga", () => {
+    const m = new Megafonia();
+    expect(correr(m, "a-plataforma", 60, { conTripulacion: false })).not.toContain(TRAS);
+  });
+
+  it("y tocar y volver a despegar no es dejar la pista", () => {
+    const m = new Megafonia();
+    const dichos = [
+      ...correr(m, "final", 10, CON_AUXILIARES),
+      ...correr(m, "aterrizado", 8, CON_AUXILIARES),
+      ...correr(m, "en-vuelo", 30, CON_AUXILIARES),
+    ];
+    expect(dichos).not.toContain(TRAS);
+  });
+
+  it("con otro anuncio sonando espera su hueco, y sale cuando lo hay", () => {
+    const m = new Megafonia();
+    expect(
+      correr(m, "a-plataforma", 30, { ...CON_AUXILIARES, megafoniaHablando: true }),
+    ).toEqual([]);
+    expect(correr(m, "a-plataforma", 5, CON_AUXILIARES)).toEqual([TRAS]);
+  });
+
+  it("y si el rodaje entero pasa sin hueco, ya no se dice", () => {
+    const m = new Megafonia();
+    // La comandante, todavía en la pista; y después, el rodaje sin un hueco.
+    expect(correr(m, "abandonando", 10, CON_AUXILIARES)).toEqual(["comandante.llegada"]);
+    correr(m, "a-plataforma", 100, { ...CON_AUXILIARES, megafoniaHablando: true });
+    expect(correr(m, "a-plataforma", 10, CON_AUXILIARES)).toEqual([]);
+  });
+
+  it("con la señal apagada a mano no se dice, que pide esperar a que se apague", () => {
+    const m = new Megafonia();
+    expect(
+      correr(m, "a-plataforma", 60, { ...CON_AUXILIARES, cartelPuesto: false }),
+    ).not.toContain(TRAS);
+  });
+
+  it("una vez por toma: en la siguiente vuelve a decirse", () => {
+    const m = new Megafonia();
+    const toma = () => [
+      ...correr(m, "final", 5, CON_AUXILIARES),
+      ...correr(m, "aterrizado", 5, CON_AUXILIARES),
+      ...correr(m, "abandonando", 2, CON_AUXILIARES),
+      ...correr(m, "a-plataforma", 40, CON_AUXILIARES),
+    ];
+    expect(toma().filter((d) => d === TRAS)).toHaveLength(1);
+    // Sale otra vez a la pista y despega: otra toma por delante.
+    correr(m, "abandonando", 5, CON_AUXILIARES);
+    correr(m, "aterrizado", 10, CON_AUXILIARES);
+    correr(m, "en-vuelo", 60, CON_AUXILIARES);
+    expect(toma().filter((d) => d === TRAS)).toHaveLength(1);
   });
 });

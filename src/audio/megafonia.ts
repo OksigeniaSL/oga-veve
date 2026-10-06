@@ -45,6 +45,10 @@
  * 7. A la vez, la tripulación: cinturones, respaldos y mesitas.
  * 8. Ya en la aproximación: tripulación, prepararse para el aterrizaje.
  * 9. Y al llegar, la despedida con el nombre del sitio.
+ * 10. Ya fuera de la pista, rodando, **la tripulación**: bienvenidos, sigan
+ *     sentados con el cinturón hasta que el avión pare y se apague la señal,
+ *     ya pueden usar el teléfono y cuidado al abrir los compartimentos. Ver
+ *     `audio/anuncio-tras-la-toma.ts`.
  *
  * ## Y la tripulación de cabina solo donde la hay
  *
@@ -86,6 +90,7 @@ export const ANUNCIOS = [
   "tripulacion.cinturones",
   "comandante.aproximacion",
   "comandante.llegada",
+  "tripulacion.llegada",
 ] as const;
 
 export type Anuncio = (typeof ANUNCIOS)[number];
@@ -101,6 +106,7 @@ const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
   "tripulacion.servicio",
   "tripulacion.cinturones",
   "comandante.aproximacion",
+  "tripulacion.llegada",
 ]);
 
 /**
@@ -190,6 +196,14 @@ const CUANDO: Record<Anuncio, readonly Fase[]> = {
   "tripulacion.cinturones": ["en-vuelo"],
   "comandante.aproximacion": ["en-vuelo"],
   "comandante.llegada": ["abandonando", "a-plataforma"],
+  /*
+   * **Y lo de la tripulación, con la pista ya libre.** No antes: en la carrera
+   * y saliendo todavía de la pista el avión está frenando y girando, y nadie
+   * se levanta a por el micrófono; y en el puesto ya no, que allí se apaga la
+   * señal y lo que toca es abrir puertas. Es lo que se oye en cualquier avión
+   * de línea rodando hacia la terminal. Ver `audio/anuncio-tras-la-toma.ts`.
+   */
+  "tripulacion.llegada": ["a-plataforma"],
 };
 
 /**
@@ -232,6 +246,17 @@ const VALE_MIENTRAS: Readonly<Record<string, readonly Fase[]>> = {
    * la torre se retiraba al entrar en ella, y no se volvía a pedir.
    */
   "comandante.despegue": ["autorizado", "back-taxi", "alineando", "despegando"],
+  /*
+   * **Y el de después de aterrizar, mientras se ruede de vuelta.** Pedido y
+   * esperando su llamada o su turno, si el rodaje pasa otra vez pegado a la
+   * pista —una calle paralela, un cruce— sigue valiendo, porque se sigue
+   * rodando a la terminal. Lo que no vale es volver a la carrera: quien ha
+   * aterrizado y vuelve a despegar no oye «sigan sentados hasta que el avión
+   * se detenga», ni tampoco quien ya llegó al puesto. Las dos hablas, porque
+   * la clave del anuncio lleva el habla dentro.
+   */
+  "tripulacion.llegada": ["abandonando", "a-plataforma"],
+  "tripulacion.canario.llegada": ["abandonando", "a-plataforma"],
 };
 
 /**
@@ -284,6 +309,13 @@ const VENTANA: Partial<Record<Anuncio, number>> = {
   "comandante.descenso": 60,
   "tripulacion.cinturones": 40,
   "comandante.aproximacion": 60,
+  /*
+   * **Y el de después de aterrizar, el rodaje de vuelta.** Al salir de la
+   * pista coinciden la torre con el rodaje, la instructora y la lista de
+   * después del aterrizaje, y con veinticinco segundos el anuncio se quedaba
+   * sin hueco. Hasta llegar al puesto sigue siendo verdad; llegado, se pasó.
+   */
+  "tripulacion.llegada": 90,
 };
 
 /**
@@ -486,6 +518,20 @@ export class Megafonia {
     this.descensoEmpezado = true;
   }
 
+  /**
+   * **Una toma nueva**: las ruedas acaban de tocar viniendo del aire.
+   *
+   * El anuncio de la tripulación al dejar la pista es de cada toma, no de cada
+   * vuelo: quien aterriza, sale, vuelve a la pista y despega otra vez sin
+   * pasar por el puesto tiene otra llegada por delante, y en ella se vuelve a
+   * decir. Lo rearma algo que pasa —tocar—, no un reloj.
+   */
+  private otraToma(): void {
+    this.dichos.delete("tripulacion.llegada");
+    this.listoDesde.delete("tripulacion.llegada");
+    this.haceQue.delete("tripulacion.llegada");
+  }
+
   /** Si ese anuncio ya se dijo en este vuelo. */
   yaDicho(anuncio: Anuncio): boolean {
     return this.dichos.has(anuncio);
@@ -526,6 +572,13 @@ export class Megafonia {
           this.hace("tripulacion.cinturones") >= ANTES_DE_LA_APROXIMACION &&
           m.sobreElCampo < EN_APROXIMACION
         );
+      /*
+       * Con la señal encendida, que es lo que el anuncio pide respetar: si
+       * quien vuela la apagó a mano rodando, «sigan sentados hasta que se
+       * apague» ya no es verdad y no se dice.
+       */
+      case "tripulacion.llegada":
+        return m.cartelPuesto ?? true;
       default:
         return true;
     }
@@ -561,10 +614,12 @@ export class Megafonia {
    * Un paso. Devuelve la clave que toca decir, o `null`.
    *
    * Se llama cada fotograma y contesta `null` casi siempre, que es lo propio de
-   * una megafonía: en un vuelo entero habla nueve veces.
+   * una megafonía: en un vuelo entero habla diez veces.
    */
   paso(dt: number, m: Momento): Anuncio | null {
     if (m.fase !== this.fase) {
+      if (m.fase === "aterrizado" && (this.fase === "final" || this.fase === "en-vuelo"))
+        this.otraToma();
       this.fase = m.fase;
       this.desde = 0;
     }

@@ -273,6 +273,27 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
     "Bienvenidos a Cuatro Vientos. De este campo salió el avión que cruzó el Atlántico y le puso el nombre al sitio. Gracias por acompañarnos.",
     "Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.",
   ],
+  /*
+   * **Y lo que dice la tripulación al dejar la pista**, que suena en cada
+   * aterrizaje con pasaje. Las tres formas dicen lo mismo y en el mismo orden
+   * —sentados con el cinturón hasta que pare y se apague la señal, el
+   * teléfono, los compartimentos y las cosas de cada uno—, que es lo que no
+   * cambia en ninguna compañía; lo que cambia es cómo lo dice cada
+   * tripulante. Cada una con el habla de su sitio. Ver
+   * `audio/anuncio-tras-la-toma.ts`.
+   *
+   * Sin grabar hasta que ElevenLabs tenga saldo: ver
+   * `PENDIENTE-VOCES-megafonia.md`. Y mientras no lo estén no entran en el
+   * sorteo, por lo mismo que las de sentarse para despegar.
+   */
+  "tripulacion.trasLaToma": [
+    "Por su seguridad, sigan sentados y con el cinturón puesto hasta que el avión se pare del todo y se apague la señal. A partir de ahora pueden encender sus celulares. Abran los compartimientos despacito, que en el vuelo las valijas también viajan. Y antes de bajar, revisen el bolsillo del asiento para no olvidarse nada.",
+    "Quédense sentados con el cinturón abrochado, por favor, hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el celular. Cuidado al abrir los compartimientos de arriba, que algo se pudo correr con el vuelo. Y fíjense que no quede nada en el asiento. ¡Gracias, y que les vaya muy bien!",
+  ],
+  "tripulacion.canario.trasLaToma": [
+    "Les rogamos que sigan sentados, con el cinturón abrochado, hasta que el avión se pare del todo y se apague la señal. Desde ahora pueden encender el móvil. Abran los compartimentos con cuidado, que en el vuelo las maletas también viajan. Y antes de salir, miren en el bolsillo del asiento por si se dejan algo.",
+    "Por su seguridad, permanezcan sentados con el cinturón puesto hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el teléfono. Cuidado al abrir los compartimentos de arriba, y no olviden sus pertenencias. Muchas gracias y hasta pronto.",
+  ],
   "vuelo.aroAlto": [
     "Venís un poco alto. Bajá el morro despacito",
     "Estás por encima. Soltá un poquito y vas a ir entrando",

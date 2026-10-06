@@ -35,5 +35,9 @@
   ],
   "tripulacion.canario.mascaras": [
     "tripulacion.canario.mascaras"
+  ],
+  "tripulacion.canario.llegada": [
+    "{bienvenidos}",
+    "{resto}"
   ]
 }
