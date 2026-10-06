@@ -29,5 +29,9 @@
   ],
   "tripulacion.mascaras": [
     "tripulacion.mascaras"
+  ],
+  "tripulacion.llegada": [
+    "{bienvenidos}",
+    "{resto}"
   ]
 }

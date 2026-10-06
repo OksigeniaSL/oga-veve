@@ -635,6 +635,43 @@ export const ES_PY = {
     "Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.",
   "tripulacion.canario.mascaras":
     "Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.",
+  /*
+   * **Y al dejar la pista, rodando a la terminal**, lo que dice cualquier
+   * tripulación: bienvenidos, sentados y con el cinturón hasta que el avión
+   * pare y se apague la señal, ya se puede usar el teléfono, cuidado con los
+   * compartimentos y que no se olvide nada. Ver
+   * `audio/anuncio-tras-la-toma.ts`, con las fuentes.
+   *
+   * Dos frases enteras: la bienvenida, una por campo —solo los campos donde
+   * cabe un avión con tripulación de cabina—, y el resto, igual en todos y con
+   * sus otras formas en `audio/variantes.ts`. La de reserva, con el hueco del
+   * nombre, para un campo nuevo que todavía no tenga la suya.
+   *
+   * En Paraguay, «celulares» y «compartimientos»; en Canarias, «móviles» y
+   * «compartimentos superiores», que es como se dice en cada sitio.
+   */
+  "tripulacion.bienvenidos": "Señoras y señores, bienvenidos a {campo}.",
+  "tripulacion.bienvenidos.pettirossi": "Señoras y señores, bienvenidos a Asunción.",
+  "tripulacion.bienvenidos.guarani": "Señoras y señores, bienvenidos a Ciudad del Este.",
+  "tripulacion.bienvenidos.encarnacion": "Señoras y señores, bienvenidos a Encarnación.",
+  "tripulacion.bienvenidos.pedro-juan":
+    "Señoras y señores, bienvenidos a Pedro Juan Caballero.",
+  "tripulacion.trasLaToma":
+    "Les pedimos que sigan sentados, con el cinturón abrochado, hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden usar sus celulares. Tengan cuidado al abrir los compartimientos de arriba, porque el equipaje se pudo mover durante el vuelo. Muchas gracias.",
+  "tripulacion.canario.bienvenidos": "Señoras y señores, bienvenidos a {campo}.",
+  "tripulacion.canario.bienvenidos.tenerife-norte":
+    "Señoras y señores, bienvenidos a Tenerife Norte.",
+  "tripulacion.canario.bienvenidos.tenerife-sur":
+    "Señoras y señores, bienvenidos a Tenerife Sur.",
+  "tripulacion.canario.bienvenidos.gran-canaria":
+    "Señoras y señores, bienvenidos a Gran Canaria.",
+  "tripulacion.canario.bienvenidos.lanzarote": "Señoras y señores, bienvenidos a Lanzarote.",
+  "tripulacion.canario.bienvenidos.fuerteventura":
+    "Señoras y señores, bienvenidos a Fuerteventura.",
+  "tripulacion.canario.bienvenidos.la-palma": "Señoras y señores, bienvenidos a La Palma.",
+  "tripulacion.canario.bienvenidos.la-gomera": "Señoras y señores, bienvenidos a La Gomera.",
+  "tripulacion.canario.trasLaToma":
+    "Por favor, permanezcan sentados y con el cinturón abrochado hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden utilizar sus teléfonos móviles. Tengan cuidado al abrir los compartimentos superiores, porque el equipaje puede haberse movido durante el vuelo. Muchas gracias.",
   // Y lo que pone la tarjeta del servicio debajo de la botella, desde el
   // peldaño que lee. En Guyrami va solo el dibujo.
   "servicio.rotulo": "Servicio a bordo",
