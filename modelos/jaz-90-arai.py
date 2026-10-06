@@ -238,6 +238,21 @@ def construir():
         clase="reactor",
         mide="n1",
         suelo_atras=1.80,
+        # **El parabrisas por dentro, con lo que se ve desde el asiento de un
+        # E-170/175**: 15° por encima del morro y 27,8° hacia arriba, con los
+        # ojos a 0,53 m del eje (Embraer, *Airport Planning Manual* del 175,
+        # figura 4.5, «Visibility from cockpit in static position»). Dos
+        # parabrisas delante y las ventanillas de costado, con su
+        # limpiaparabrisas. Algo menos tumbado que el cristal, para que la
+        # parte de arriba no entre en el plano cercano de la cámara.
+        parabrisas=dict(
+            sobre_el_morro=15.0,
+            hacia_arriba=27.8,
+            inclinacion=18.0,
+            montantes=[(-0.50, 0.05, 0.0), (0.50, 0.05, 0.0),
+                       (-0.65, 0.045, 0.30), (0.65, 0.045, 0.30)],
+            limpias=True,
+        ),
     )
     piezas += cab
     dentro_de(PIEL, cab)

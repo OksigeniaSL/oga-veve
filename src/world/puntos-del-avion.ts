@@ -296,9 +296,13 @@ export function puntosDelAvion(
  * las mallas de una avioneta y casi la mitad de las de un reactor, y todas
  * detrás de un parabrisas que en el modelo es opaco. Pintarlas en la tarjeta
  * serían llamadas de dibujo que no dejan ni un píxel; se esconden.
+ *
+ * Y el parabrisas por dentro —juntas, limpias, brújula, el lomo del morro
+ * visto desde el asiento y los avisos del guardasol—, que también va detrás
+ * del cristal opaco. Ver `parabrisas_por_dentro` en `modelos/comun.py`.
  */
 export const DE_DENTRO =
-  /^(alfeizar|asiento|boton-|cuerno|forro|panel|pomo|reloj-|subpanel|suelo-cabina|visera|bastidor|faldon|interruptores|marco-de-techo|mcp|montante|palanca|pantalla-|pedestal|rotulos-de-techo|tornillos)/;
+  /^(alfeizar|asiento|boton-|cuerno|forro|panel|pomo|reloj-|subpanel|suelo-cabina|visera|bastidor|faldon|interruptores|marco-de-techo|mcp|montante|palanca|pantalla-|pedestal|rotulos-de-techo|tornillos|juntas-parabrisas|limpia-parabrisas|brujula|capota|efis|aviso-)/;
 
 /** Esconde lo de dentro. Devuelve cuántas mallas quedan a la vista. */
 export function esconderLoDeDentro(raiz: Object3D): number {

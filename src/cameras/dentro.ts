@@ -43,6 +43,27 @@ const MIRANDO_AL_PANEL = (12 * Math.PI) / 180;
  */
 const VISERA_EN_PANTALLA = 0.42;
 
+/**
+ * **Y el horizonte, nunca más arriba del 22 % de la pantalla**, con el avión
+ * nivelado.
+ *
+ * La visera en el 42 % vale mientras la visera está donde estaba en todos:
+ * unos once grados por debajo de los ojos, y el horizonte cae así hacia el
+ * 23 %. Pero eso no es lo que se ve desde un avión de línea: por encima del
+ * morro de un 747-400 se ven 18° 26′ (Boeing D6-58326-1, apartado 4.4) y por
+ * encima del de un E-175, 15° (Embraer, manual de aeropuertos, figura 4.5).
+ * Con el guardasol a esa altura —el que pidió la captura del JAZ 120:
+ * «se ven feos»—, poner su labio en el 42 % subía el horizonte hasta el 11 %,
+ * debajo de la fila de botones de arriba.
+ *
+ * Así que manda lo que esté más arriba de los dos: la visera en su sitio de
+ * siempre o el horizonte en el suyo. En los aviones que ven poco por encima
+ * del morro no cambia nada; en los que ven mucho, la visera baja en la
+ * pantalla y lo que se gana es **pista**, que es lo que se quería: «el
+ * guardasol más fino deja ver más pista».
+ */
+const HORIZONTE_EN_PANTALLA = 0.22;
+
 /** Hasta dónde se abre el ángulo para que quepan los instrumentos, grados. */
 const FOV_MAXIMO = 78;
 
@@ -79,8 +100,10 @@ export function encuadreDeCabina(
   let salida = { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
   for (let fov = FOV_DE_CABINA; fov <= FOV_MAXIMO; fov += 0.5) {
     const t = Math.tan(((fov / 2) * Math.PI) / 180);
-    const inclinacion =
-      e.visera + Math.atan((1 - 2 * VISERA_EN_PANTALLA) * t);
+    const inclinacion = Math.min(
+      e.visera + Math.atan((1 - 2 * VISERA_EN_PANTALLA) * t),
+      Math.atan((1 - 2 * HORIZONTE_EN_PANTALLA) * t),
+    );
     salida = { inclinacion, fov };
     const abajo = 0.5 + Math.tan(e.abajo - inclinacion) / (2 * t);
     const cabeAbajo = abajo <= HASTA_EL_BORDE;

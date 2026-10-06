@@ -386,6 +386,21 @@ def construir():
         clase="reactor",
         mide="n1",
         suelo_atras=2.20,
+        # **El parabrisas por dentro, con lo que se ve desde el asiento de un
+        # 747-400**: 18° 26′ por encima del morro y 22° hacia arriba por el
+        # parabrisas, con los ojos a 0,53 m del eje del avión (Boeing
+        # D6-58326-1, *747-400 Airplane Characteristics for Airport
+        # Planning*, rev. F, apartado 4.4). Así que los montantes del
+        # parabrisas de su puesto le quedan a medio metro a cada lado —el del
+        # centro a su derecha, el de la ventanilla de costado a su izquierda—,
+        # y detrás los de las ventanillas de costado. Con su limpiaparabrisas.
+        parabrisas=dict(
+            sobre_el_morro=18.43,
+            hacia_arriba=22.0,
+            montantes=[(-0.50, 0.055, 0.0), (0.50, 0.055, 0.0),
+                       (-0.77, 0.05, 0.30), (0.77, 0.05, 0.30)],
+            limpias=True,
+        ),
     )
     piezas += cab
     dentro_de(PIEL, cab)

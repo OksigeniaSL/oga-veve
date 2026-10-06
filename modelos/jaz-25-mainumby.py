@@ -157,6 +157,18 @@ def construir():
     cab = cabina(
         ojos_z=-0.90, palancas=1, relojes=6, mando="palanca",
         alto_panel=0.42, y_suelo=-0.28, y_respaldo=0.32, flaps=False,
+        # **El parabrisas de la carlinga de un fumigador**: un panel plano
+        # delante, estrecho, entre dos montantes, y los de costado tumbados
+        # hacia atrás, para ver el cultivo por los lados. Con la brújula arriba
+        # en el centro, sobre el panel. Sin limpiaparabrisas.
+        parabrisas=dict(
+            hacia_arriba=10.0,
+            arco=0.015,
+            montantes=[(-0.22, 0.045, 0.0), (0.22, 0.045, 0.0),
+                       (-0.33, 0.04, 0.16), (0.33, 0.04, 0.16)],
+            brujula=True,
+            capota=("casco", 11.5, 0.55),
+        ),
     )
     piezas += cab
     dentro_de(PIEL, cab)
