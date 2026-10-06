@@ -5404,6 +5404,7 @@ export class Game {
     });
     // Ver `buildFlightModel`: el primer modelo se construyó antes que esto.
     this.input.compensadorVivo = this.tier.model !== "simple";
+    this.input.ponerTimon(this.tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
 
     /*
      * El cuaderno de vuelo, si el HTML trae su hueco.
@@ -23035,7 +23036,8 @@ export class Game {
      * modelo que tiene timón de aire. El sencillo gira con las ruedas, igual
      * en todos. Ver `pieDeTecla` en `palanca-de-teclado.ts`.
      */
-    this.input.ponerTimon(tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
+    // Al construir el primero todavía no hay mandos: ver el constructor.
+    this.input?.ponerTimon(tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
     /*
      * Y si el toque de flecha tiene compensador que mover: en el modelo
      * sencillo no lo hay. Ver `compensadorVivo` en `flight/input.ts`.
