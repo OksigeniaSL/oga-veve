@@ -294,6 +294,76 @@ const MOTOR = icono(`
   <rect x="4.4" y="21" width="7.5" height="1.7" rx="0.85" opacity="0.55" />
 `);
 
+/**
+ * **Un motor que se ha parado**: la hélice quieta, con las palas derechas en
+ * vez de los óvalos de girar, y dos zetas encima.
+ *
+ * Dormido y no roto, a propósito: el motor no ha explotado ni echa humo —eso
+ * sería el morbo que el marco de las emergencias deja fuera—, simplemente no
+ * empuja. A los siete años «se durmió» se entiende, y es verdad: está entero.
+ */
+const MOTOR_PARADO = icono(`
+  <rect x="10.9" y="3.2" width="2.2" height="17.6" rx="1.1" />
+  <circle cx="12" cy="12" r="2.6" />
+  <circle class="senal__hueco" cx="12" cy="12" r="1" />
+  <path d="M15.6 3.2 h4 l-4 4 h4 M18.4 9.4 h2.6 l-2.6 2.6 h2.6"
+        fill="none" stroke="currentColor" stroke-width="1.3"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
+ * Y el mismo motor dormido en un reactor: el fan quieto, más pequeño, y las
+ * dos zetas. Un reactor no tiene hélice que dibujar parada. Ver `REACTOR`.
+ */
+const REACTOR_PARADO = (() => {
+  const { aro, palas } = fan(10.4, 13.4, 8.6);
+  return icono(`${aro}${palas}
+    <path d="M16.6 2.6 h3.6 l-3.6 3.6 h3.6 M19.8 7.6 h2.4 l-2.4 2.4 h2.4"
+          fill="none" stroke="currentColor" stroke-width="1.3"
+          stroke-linecap="round" stroke-linejoin="round" />`);
+})();
+
+/**
+ * **El pedal que hay que pisar**: los dos pedales del timón, y el de ese lado
+ * lleno, bajado, con la flecha encima. El otro, solo el contorno.
+ *
+ * Es el gesto de un motor parado —el avión tira hacia el que no va y se
+ * sujeta con el pie del lado bueno— y no tenía dibujo porque hasta ahora los
+ * pedales eran el mando que nadie usaba.
+ */
+const pedal = (lado: "izquierdo" | "derecho"): string => {
+  const x = lado === "izquierdo" ? 3 : 13.4;
+  const otro = lado === "izquierdo" ? 13.4 : 3;
+  return icono(`
+    <rect x="${otro}" y="9" width="7.6" height="11" rx="1.6" fill="none"
+          stroke="currentColor" stroke-width="1.4" opacity="0.6" />
+    <rect x="${x}" y="12" width="7.6" height="10" rx="1.6" />
+    <path d="M${x + 3.8} 2.4 v5.6 M${x + 1.2} 5.6 l2.6 2.8 l2.6 -2.8"
+          fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round" />
+  `);
+};
+
+/**
+ * **Los bomberos del aeropuerto**: el camión, con su luz en el techo.
+ *
+ * Lo que se ve esperando junto a la pista cuando un avión vuelve con un motor
+ * parado, o cuando ha frenado muy fuerte. No es una alarma: es lo que cambia
+ * en tierra cuando se declara una emergencia, y se enseña así, quieto y
+ * esperando.
+ */
+const BOMBEROS = icono(`
+  <path d="M1.6 17.6 V10.4 a1 1 0 0 1 1-1 H14 V17.6 Z" />
+  <path d="M14.8 17.6 V9.4 H18.6 l3.4 4 V17.6 Z" />
+  <path class="senal__hueco" d="M16.2 10.8 H18 l2 2.4 H16.2 Z" />
+  <path d="M3 7.6 H12.6" stroke="currentColor" stroke-width="1.3" fill="none" />
+  <rect x="16" y="6.2" width="2.8" height="2" rx="0.6" />
+  <circle cx="5.4" cy="18.6" r="2.3" />
+  <circle cx="18" cy="18.6" r="2.3" />
+  <circle class="senal__hueco" cx="5.4" cy="18.6" r="0.9" />
+  <circle class="senal__hueco" cx="18" cy="18.6" r="0.9" />
+`);
+
 /** El ala: ya estás volando. */
 const ALA = icono(`
   <path d="M2 13.4 L11 12.4 V5.4 a1 1 0 0 1 2 0 v7 l9 1 v2.2 l-9 1 v3.4 l2.4 1.4 v1.2
@@ -1275,6 +1345,12 @@ export const DIBUJOS = {
   "media-vuelta": MEDIA_VUELTA,
   eje: EJE,
   motor: MOTOR,
+  "motor-parado": MOTOR_PARADO,
+  "reactor-parado": REACTOR_PARADO,
+  "pie-izquierdo": pedal("izquierdo"),
+  "pie-derecho": pedal("derecho"),
+  // Y sostener la velocidad de un motor es `velocidad`, la de la marca que toca.
+  bomberos: BOMBEROS,
   ala: ALA,
   senda: SENDA,
   descenso: DESCENSO,
@@ -1480,6 +1556,8 @@ export class Senal {
     if (dibujo === "helice") return "reactor";
     if (dibujo === "gas-mas") return "gas-mas-reactor";
     if (dibujo === "gas-menos") return "gas-menos-reactor";
+    // Y el motor dormido de un reactor es su fan quieto. Ver `REACTOR_PARADO`.
+    if (dibujo === "motor-parado") return "reactor-parado";
     return dibujo;
   }
   private raiz: HTMLElement | null = null;

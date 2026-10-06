@@ -16,6 +16,8 @@ import {
   PULSO_EN_LA_CARRERA,
   PulsoDeTecla,
   RECORRIDO_EN_LA_DUDA,
+  TIMON_DEL_PIE_DE_TECLA,
+  pieDeTecla,
   ToquesDeCabeceo,
   palancaEnLaDuda,
 } from "./palanca-de-teclado";
@@ -158,5 +160,25 @@ describe("el toque de pie en la carrera", () => {
     expect(p.paso(-1, 0.1, true)).toBe(-1);
     expect(p.paso(0, 0.15, true)).toBe(-1);
     expect(p.paso(0, 0.5, true)).toBe(0);
+  });
+});
+
+describe("el pie de tecla en la carrera, el mismo en toda la flota", () => {
+  it("entero con el timón de siempre; con más timón, la parte que da lo mismo", () => {
+    expect(pieDeTecla(0.028)).toBe(1);
+    expect(pieDeTecla(TIMON_DEL_PIE_DE_TECLA)).toBe(1);
+    // El JAZ 90, con el timón de un birreactor de línea.
+    expect(pieDeTecla(0.07) * 0.07).toBeCloseTo(TIMON_DEL_PIE_DE_TECLA, 9);
+  });
+
+  it("y mantenida, aprieta hasta el fondo: es el pie que sujeta un motor parado", () => {
+    const p = new PulsoDeTecla();
+    const corto = pieDeTecla(0.07);
+    expect(p.paso(1, 0, true, corto)).toBeCloseTo(corto, 9);
+    expect(p.paso(1, 0.9, true, corto)).toBeCloseTo(corto, 9);
+    expect(p.paso(1, 1.5, true, corto)).toBeGreaterThan(corto);
+    expect(p.paso(1, 2.1, true, corto)).toBe(1);
+    // Fuera de la carrera, la tecla es la de siempre.
+    expect(new PulsoDeTecla().paso(-1, 0, false, corto)).toBe(-1);
   });
 });

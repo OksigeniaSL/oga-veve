@@ -322,7 +322,7 @@ export class DescensoDeEmergencia {
 export const EJERCICIO_DE_DESPRESURIZACION = {
   id: "despresurizacion",
   /** El nombre, para el selector. Clave de i18n. */
-  clave: "ejercicio.despresurizacion",
+  clave: "hangar.ejercicio.despresurizacion",
   /** El dibujo, para quien no lee. Ver `DIBUJOS` en `ui/senal.ts`. */
   dibujo: "mascara",
   peldanos: ["taguato", "taguato-ruvicha"] as const satisfies readonly TierId[],

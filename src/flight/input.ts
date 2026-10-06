@@ -45,6 +45,7 @@ import {
   PulsoDeTecla,
   ToquesDeCabeceo,
   palancaEnLaDuda,
+  pieDeTecla,
 } from "./palanca-de-teclado";
 import {
   MANTENER,
@@ -388,6 +389,18 @@ export class InputManager {
   /** El toque de pie de las teclas de dirección en la carrera. Ver `PulsoDeTecla`. */
   private readonly pulsoDelVolante = new PulsoDeTecla();
   private readonly pulsoDelPedal = new PulsoDeTecla();
+  /** Cuánto pedal pide un pie de tecla corto en este avión. Ver `pieDeTecla`. */
+  private pieCorto = 1;
+
+  /**
+   * **El timón de este avión**, para que el pie de tecla en la carrera mueva
+   * lo mismo en toda la flota. Lo pone el juego con el modelo de vuelo; `null`
+   * en el sencillo, que no tiene timón de aire. Ver `pieDeTecla` en
+   * `palanca-de-teclado.ts`.
+   */
+  ponerTimon(cnRudder: number | null): void {
+    this.pieCorto = cnRudder === null ? 1 : pieDeTecla(cnRudder);
+  }
 
   /** Los toques de las flechas. Ver `flight/palanca-de-teclado.ts`. */
   private readonly toques = new ToquesDeCabeceo();
@@ -590,6 +603,18 @@ export class InputManager {
   ponerElTrenFuera(): void {
     this.trenPedido = true;
     this.controls.tren = 1;
+  }
+
+  /**
+   * **Y el tren dentro, de golpe**: un vuelo que empieza en el aire y limpio,
+   * como el ejercicio que se coloca lejos y alto antes de parar un motor. Igual
+   * que `ponerElTrenFuera`, no es un mando: es cómo está el avión al empezar.
+   * Solo en los que lo meten; en los demás, el tren está donde está siempre.
+   */
+  ponerElTrenDentro(): void {
+    if (!this.trenQueSeMete) return;
+    this.trenPedido = false;
+    this.controls.tren = 0;
   }
 
   /**
@@ -817,6 +842,7 @@ export class InputManager {
       this.axis("yawRight", "yawLeft"),
       ahora,
       enLaCarrera,
+      this.pieCorto,
     );
     const rollTarget = mandaQuienSeMueve(
       this.touchRoll + (manoAlabeo ? teclaAlabeo : teclaDeVolante),

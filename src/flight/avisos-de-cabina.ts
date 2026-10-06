@@ -101,6 +101,18 @@ export const LUCES: readonly Luz[] = [
     cabina: "GEAR",
     clave: "luz.tren",
   },
+  /*
+   * **Un motor parado**, en ámbar: precaución y no aviso. El avión vuela con
+   * el otro, y lo que pide la luz es atención, no prisa. En la cabina de
+   * pantallas es el mensaje del EICAS con su campanada; en el panel, esta luz
+   * con el maestro. Solo en los aviones que la llevan: ver `Game.fallaUnMotor`.
+   */
+  {
+    id: "motor",
+    grado: "precaucion",
+    cabina: "ENG FAIL",
+    clave: "luz.motor",
+  },
   {
     id: "combustible",
     grado: "precaucion",
@@ -159,6 +171,8 @@ export interface Estado {
    * `AVISO_DE_CABINA` en `despresurizacion.ts`.
    */
   readonly cabinaAlta: boolean;
+  /** Un motor parado, en un avión que tiene con qué decirlo. Ver `flight/motores.ts`. */
+  readonly motorParado?: boolean;
 }
 
 /**
@@ -179,6 +193,7 @@ export function encendidas(e: Estado): readonly Luz[] {
     piloto: e.pilotoSuelto,
     freno: e.frenoPuesto,
     cabina: e.cabinaAlta,
+    motor: e.motorParado === true,
   };
   return LUCES.filter((l) => puesto[l.id]);
 }

@@ -53,6 +53,7 @@ describe("el panel de avisos", () => {
       pilotoSuelto: true,
       frenoPuesto: true,
       cabinaAlta: true,
+      motorParado: true,
     });
     expect(todas.map((l) => l.id)).toEqual(LUCES.map((l) => l.id));
     // Y ningún aviso por detrás de una precaución.
@@ -104,6 +105,7 @@ describe("el panel de avisos", () => {
       pilotoSuelto: true,
       frenoPuesto: true,
       cabinaAlta: true,
+      motorParado: true,
     });
     expect(todas).toHaveLength(LUCES.length);
   });

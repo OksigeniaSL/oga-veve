@@ -38,6 +38,7 @@
     "retratos": "node scripts/hacer-retratos.mjs",
     "cambio-de-avion": "node scripts/verificar-cambio-de-avion.mjs",
     "circuito": "node scripts/verificar-circuito.mjs",
+    "emergencias": "node scripts/verificar-emergencias.mjs",
     "voces": "node scripts/verificar-voces.mjs",
     "botones": "node scripts/verificar-botones.mjs",
     "cuadro": "node scripts/verificar-cuadro.mjs",

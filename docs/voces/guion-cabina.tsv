@@ -25,13 +25,15 @@
 025	cabina.goAround	going around. good decision
 026	cabina.weHaveAProblem	we have a problem
 027	cabina.goAroundOrder	go around
-028	cabina.airspeedLow	airspeed low
-029	cabina.twentyFiveHundred	twenty five hundred
-030	cabina.oneThousand	one thousand
-031	cabina.fiveHundred	five hundred
-032	cabina.oneHundred	one hundred
-033	cabina.fifty	fifty
-034	cabina.forty	forty
-035	cabina.thirty	thirty
-036	cabina.twenty	twenty
-037	cabina.ten	ten
+028	cabina.engineFailure	engine failure
+029	cabina.stop	stop
+030	cabina.airspeedLow	airspeed low
+031	cabina.twentyFiveHundred	twenty five hundred
+032	cabina.oneThousand	one thousand
+033	cabina.fiveHundred	five hundred
+034	cabina.oneHundred	one hundred
+035	cabina.fifty	fifty
+036	cabina.forty	forty
+037	cabina.thirty	thirty
+038	cabina.twenty	twenty
+039	cabina.ten	ten

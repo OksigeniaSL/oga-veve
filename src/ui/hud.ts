@@ -2735,6 +2735,12 @@ export class Hud {
        * `flight/anemometro-tapado.ts`.
        */
       readonly pitotTapado?: boolean;
+      /**
+       * Y lo que marca cada motor, de 0 a 1, si no marcan todos lo mismo: con
+       * uno parado, su aguja cae. Sin esto, todas marcan el gas. Ver
+       * `agujasDeLosMotores` en `game.ts`.
+       */
+      readonly motores?: readonly number[];
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -3151,9 +3157,11 @@ export class Hud {
           : null,
         aire: mandos?.aire,
         cabina: mandos?.cabina,
-        motores: Array.from({ length: this.ficha.motores }, () =>
-          regimen(this.ficha, throttle, engineOn),
-        ),
+        motores:
+          mandos?.motores ??
+          Array.from({ length: this.ficha.motores }, () =>
+            regimen(this.ficha, throttle, engineOn),
+          ),
         flaps: mandos?.flaps ?? 0,
         // Lo más rápido que se puede ir con lo que está fuera: la banda
         // roja de la cinta baja hasta aquí. Ver `topeDeLoSacado`.
@@ -3403,6 +3411,30 @@ export class Hud {
     // Un percance no enseña la traza: lo que hay que mirar es el dibujo de lo
     // que pasó, y una raya al lado solo repartiría la atención.
     this.ponerPlano("");
+    const manga = pick(this.root, "fin-manga");
+    manga.hidden = false;
+    manga.innerHTML = dibujo;
+    const texto = pick(this.root, "fin-frase");
+    texto.textContent = frase;
+    texto.hidden = !frase;
+    const otra = pick(this.root, "fin-otra");
+    otra.setAttribute("aria-label", t("fin.otra"));
+    pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
+    this.fin.hidden = false;
+    this.root.classList.add("hud--fin");
+  }
+
+  /**
+   * **El final de un ejercicio de emergencia**, en la misma caja y con el
+   * mismo botón de volver a empezar: un simulador se repite. El dibujo dice
+   * cómo acabó —hecho, o a repetir— y la frase, que nunca es un reproche,
+   * qué se practicó. Con la raya de por dónde se fue, como un vuelo. Ver
+   * `flight/practica.ts`.
+   */
+  mostrarCierreDeEjercicio(dibujo: string, frase: string, planoConTraza = ""): void {
+    if (!this.fin) return;
+    this.ponerReloj("");
+    this.ponerPlano(planoConTraza);
     const manga = pick(this.root, "fin-manga");
     manga.hidden = false;
     manga.innerHTML = dibujo;

@@ -51,6 +51,11 @@ import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
+import {
+  ejerciciosPara,
+  seOfrece,
+  type Ejercicio,
+} from "../flight/ejercicios";
 import { missionsFor } from "../content/missions";
 import { objectiveTarget, type Mission } from "../missions/types";
 import {
@@ -88,6 +93,14 @@ export interface Eleccion {
    * lección no implica ninguna misión.
    */
   readonly mision: Mission | null;
+  /**
+   * **El ejercicio de emergencia**, si se eligió uno. Va aparte de la lección
+   * por lo mismo que la misión: la lección dice desde dónde se empieza —la
+   * pista o el aire— y el ejercicio, qué va a fallar. Elegir un ejercicio
+   * pone su lección y deja la vuelta al campo como destino, que una
+   * emergencia se practica en casa. Ver `flight/ejercicios.ts`.
+   */
+  readonly ejercicio: Ejercicio | null;
   /**
    * A dónde se va: el identificador de uno de los destinos del sitio, o el
    * del propio sitio para una vuelta al campo. Ver `destinosPosibles`.
@@ -1296,6 +1309,97 @@ function fichaDeLeccion(leccion: Leccion, elegida: boolean): string {
     </button>`;
 }
 
+/*
+ * ## Los ejercicios de emergencia, dibujados
+ *
+ * Cada uno dice su ejercicio sin una palabra, como las lecciones: el mismo
+ * avión en su sitio y lo que va a pasar. El motor dormido son dos zetas —no
+ * humo, no fuego: dormido, que es lo que es un motor parado—; parar es la
+ * mano; seguir es el avión subiendo con las zetas en un ala. Y la sesión de
+ * simulador lleva una interrogación: no se sabe qué va a fallar, que es de lo
+ * que va. Ver `flight/ejercicios.ts`.
+ */
+const ZETAS = (x: number, y: number): string =>
+  `<path class="ejercicio__zetas" transform="translate(${x} ${y})"
+     d="M0 0 h7 l-7 7 h7 M9 -7 h5 l-5 5 h5" />`;
+
+/** Planear: el avión bajando hacia la pista, con el motor dormido. */
+const EJ_PLANEO = escena(`
+  <path class="leccion__asfalto" d="M58 84 L90 52 h24 L90 84 Z" />
+  <path class="leccion__estela" d="M10 18 q34 16 76 36" stroke-dasharray="4 4" />
+  ${AVION("translate(38 30) rotate(26) scale(1.05)")}
+  ${ZETAS(52, 12)}
+`);
+
+/** Motor antes de V1: el avión en la pista, y la mano de parar. */
+const EJ_ANTES_DE_V1 = escena(`
+  <path class="leccion__asfalto" d="M18 84 L48 46 h26 L62 84 Z" />
+  ${AVION("translate(50 64) scale(1.2)")}
+  <path class="ejercicio__mano" transform="translate(76 12) scale(1.3)"
+        d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
+           a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
+           v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+`);
+
+/** Motor después de V1: el avión subiendo desde la pista con un ala dormida. */
+const EJ_DESPUES_DE_V1 = escena(`
+  <path class="leccion__asfalto" d="M0 84 L34 50 h26 L26 84 Z" />
+  <path class="leccion__estela" d="M22 72 q26-14 52-34" />
+  ${AVION("translate(84 26) rotate(-26) scale(1.05)")}
+  ${ZETAS(66, 12)}
+`);
+
+/** Volar con un motor: el avión en el aire, las zetas en un ala. */
+const EJ_UN_MOTOR = escena(`
+  <path class="leccion__loma" d="M0 62 q22-12 40-2 q18 10 34-4 q16-13 46 2 v26 H0 Z" />
+  ${AVION("translate(60 30) scale(1.3)")}
+  ${ZETAS(34, 14)}
+`);
+
+/** La sesión de simulador: el avión, y no se sabe qué. */
+const EJ_SIMULADOR = escena(`
+  <path class="leccion__asfalto" d="M0 84 L34 50 h26 L26 84 Z" />
+  <path class="leccion__estela" d="M22 72 q26-14 52-34" />
+  ${AVION("translate(84 30) rotate(-26) scale(1.05)")}
+  <text class="ejercicio__pregunta" x="36" y="34" text-anchor="middle">?</text>
+`);
+
+/**
+ * La cabina sin aire: el avión alto, bajando por una raya empinada, y la
+ * máscara colgando de su tubo, que es el dibujo del cartel de seguridad y el
+ * de su aviso en vuelo. Ver `MASCARA` en `senal.ts`.
+ */
+const EJ_DESPRESURIZACION = escena(`
+  <path class="leccion__loma" d="M0 66 q22-10 40-2 q18 8 34-3 q16-10 46 2 v21 H0 Z" />
+  <path class="leccion__estela" d="M30 16 q30 10 70 40" stroke-dasharray="4 4" />
+  ${AVION("translate(30 14) rotate(14) scale(1)")}
+  <path class="ejercicio__mascara" transform="translate(76 4) scale(1.6)"
+        d="M6.6 11.2 h10.8 l-1.7 7.2 a3.2 3.2 0 0 1 -3.1 2.5 h-1.2 a3.2 3.2 0 0 1 -3.1 -2.5 Z" />
+  <path class="ejercicio__tubo" transform="translate(76 4) scale(1.6)"
+        d="M12 11 V6.2 q0 -3 3 -3.2 h4.6" />
+`);
+
+const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  planeo: EJ_PLANEO,
+  "antes-de-v1": EJ_ANTES_DE_V1,
+  "despues-de-v1": EJ_DESPUES_DE_V1,
+  "un-motor": EJ_UN_MOTOR,
+  simulador: EJ_SIMULADOR,
+  despresurizacion: EJ_DESPRESURIZACION,
+};
+
+function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {
+  return `
+    <button class="ficha ficha--leccion ficha--ejercicio" type="button" role="radio"
+            aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
+            data-ejercicio="${e.id}">
+      <span class="ficha__lienzo ficha__lienzo--panel">${DIBUJOS_EJERCICIO[e.id]}</span>
+      <span class="ficha__pie">
+        <span class="ficha__nombre">${t(`hangar.ejercicio.${e.id}` as never)}</span>
+      </span>
+    </button>`;
+}
+
 /** El avión despegando del botón de despegar. */
 const DESPEGA = `
   <svg viewBox="0 0 48 32" aria-hidden="true">
@@ -1457,6 +1561,11 @@ const PASO_VOLVER = trazo('<path d="M15 5 8 12l7 7" />');
 const MARCA_TRAMOS = trazo(
   '<path d="M3 19 q7-3 11-8 t7-7" /><path d="M14 4h7v7" />',
 );
+/** El motor dormido: la marca del grupo de las emergencias. */
+const MARCA_EMERGENCIAS = trazo(
+  '<path d="M12 3v18" /><circle cx="12" cy="12" r="2.4" />' +
+    '<path d="M16 3h4l-4 4h4" />',
+);
 const MARCA_MISIONES = trazo(
   '<circle cx="5" cy="18" r="2.2" /><circle cx="19" cy="6" r="2.2" />' +
     '<path d="M7 17q5 1 6-4t6-6" stroke-dasharray="3 2.5" />',
@@ -1560,6 +1669,16 @@ export function abrirHangar(
   let leccion = inicial.leccion;
   let mision: Mission | null = null;
   /*
+   * **El ejercicio, que no se recuerda**: una emergencia se elige cada vez.
+   * Y deja de valer si se cambia a un peldaño o a un avión que no la tiene:
+   * el hangar no ofrece un motor parado a quien vuela un monomotor en
+   * Taguato, ni nada a Guyrami. Ver `sigueValiendo`.
+   */
+  let ejercicio: Ejercicio | null = null;
+  const sigueValiendo = (): void => {
+    if (ejercicio && !seOfrece(ejercicio, tramo.id, avion)) ejercicio = null;
+  };
+  /*
    * **El destino, recordado por sitio.** Cada aeropuerto tiene los suyos, así
    * que lo que se eligió en Gran Canaria no vale en Asunción. `null` es que no
    * se eligió nada, y entonces se propone uno: ver `destinoPorDefecto`.
@@ -1579,6 +1698,8 @@ export function abrirHangar(
       destinosPosibles(sitio, avion).some((d) => d.id === destinoElegido)
     )
       return destinoElegido!;
+    // Un ejercicio se practica en casa: la vuelta al campo.
+    if (ejercicio) return sitio.id;
     return destinoPorDefecto(sitio, avion, leccion, mision);
   };
   let pantalla: Pantalla = "inicio";
@@ -1736,8 +1857,15 @@ export function abrirHangar(
               MARCA_TRAMOS,
               t("hangar.tramos"),
               LECCIONES.map((l) =>
-                fichaDeLeccion(l, !mision && l.id === leccion.id),
+                fichaDeLeccion(l, !mision && !ejercicio && l.id === leccion.id),
               ).join(""),
+            )}
+            ${grupo(
+              MARCA_EMERGENCIAS,
+              t("hangar.emergencias"),
+              ejerciciosPara(tramo.id, avion)
+                .map((e) => fichaDeEjercicio(e, ejercicio?.id === e.id))
+                .join(""),
             )}
             ${grupo(
               MARCA_MISIONES,
@@ -1896,7 +2024,11 @@ export function abrirHangar(
             [
               "que",
               t("hangar.aque"),
-              mision ? t(mision.nameKey) : t(`leccion.${leccion.id}` as never),
+              mision
+                ? t(mision.nameKey)
+                : ejercicio
+                  ? t(`hangar.ejercicio.${ejercicio.id}` as never)
+                  : t(`leccion.${leccion.id}` as never),
               PASO_QUE,
             ],
             ["quien", t("hangar.como"), tramo.name, PASO_QUIEN],
@@ -2003,7 +2135,9 @@ export function abrirHangar(
         leccion = LECCIONES.find((x) => x.id === id) ?? leccion;
         // Elegir un tramo es elegir practicar, no viajar.
         mision = null;
+        ejercicio = null;
       }
+      sigueValiendo();
       pintar();
       // Sin esto, quien navega con teclado se queda tirado al principio del
       // documento cada vez que elige algo, porque el nodo que tenía el foco
@@ -2133,6 +2267,7 @@ export function abrirHangar(
         // esto es el cinturón: el teclado y los lectores llegan por otro lado.
         if (pedido && !cabeEn(pedido, campoDe(sitio)).cabe) return;
         avion = pedido ?? avion;
+        sigueValiendo();
         pantalla = "inicio";
         pintar();
         return;
@@ -2154,7 +2289,29 @@ export function abrirHangar(
         // Una misión empieza despegando, así que se vuela con la lección de
         // dar una vuelta: en la pista, con el motor en marcha y sin guías por
         // medio. Lo que guía en una misión es la misión.
-        if (mision) leccion = VUELTA;
+        if (mision) {
+          leccion = VUELTA;
+          ejercicio = null;
+        }
+        pantalla = "inicio";
+        pintar();
+        return;
+      }
+
+      /*
+       * **Un ejercicio de emergencia**: su lección —la pista o el aire— y
+       * ninguna misión. Lo que va a fallar lo cuenta la instructora al
+       * empezar, con calma: ver `presentarElEjercicio` en `game.ts`.
+       */
+      const idEjercicio = boton.getAttribute("data-ejercicio");
+      if (idEjercicio) {
+        ejercicio =
+          ejerciciosPara(tramo.id, avion).find((e) => e.id === idEjercicio) ??
+          null;
+        if (ejercicio) {
+          leccion = LECCIONES.find((l) => l.id === ejercicio!.leccion) ?? leccion;
+          mision = null;
+        }
         pantalla = "inicio";
         pintar();
         return;
@@ -2182,6 +2339,7 @@ export function abrirHangar(
           tier: tramo,
           leccion,
           mision,
+          ejercicio,
           aircraft: avion,
           destino: destinoDeAhora(),
         });

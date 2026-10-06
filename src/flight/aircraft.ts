@@ -473,6 +473,43 @@ export function conMasa(a: AircraftConfig, masa: number): AircraftConfig {
   return { ...a, masaDeAhora: deLaFicha ? a.mass : masa };
 }
 
+/**
+ * **Lo que frena un motor que se ha parado**, según lo que le quede delante.
+ *
+ * Un motor parado no es un motor que no está: sigue metido en la corriente y
+ * frena. Cuánto depende de qué hace con el aire:
+ *
+ * - **En molinete**, la hélice o el fan giran movidos por el viento. Una
+ *   hélice así, con las palas en paso fino, es un disco que se come el aire:
+ *   el manual de vuelo de la FAA para bimotores (*Airplane Flying Handbook*,
+ *   FAA-H-8083-3, capítulo de bimotores) cuenta que una hélice en molinete le
+ *   quita a un bimotor ligero del orden de doscientos pies por minuto de
+ *   subida con un motor, que es a menudo casi toda la que tiene. El fan de un
+ *   turbofán en molinete frena bastante menos: la cuenta de Torenbeek
+ *   (*Synthesis of Subsonic Airplane Design*, 1982, apéndice G), con la toma
+ *   y la tobera de su motor.
+ * - **En bandera**, las palas giradas de canto al viento y la hélice quieta:
+ *   casi nada. Por eso poner en bandera es de lo primero que se hace con un
+ *   motor parado en un bimotor de hélice, y por eso los turbohélices de línea
+ *   lo hacen solos.
+ *
+ * Una hélice de paso fijo —la de una avioneta de escuela, la de un
+ * fumigador— no se puede poner en bandera, y un fan tampoco: `bandera` es
+ * `null`.
+ */
+export interface MotorParado {
+  /** En molinete, m² por motor. */
+  readonly molinete: number;
+  /** En bandera, m² por motor, o `null` si ese motor no se puede poner. */
+  readonly bandera: number | null;
+  /**
+   * Si la hélice se pone en bandera sola al pararse el motor: la *autofeather*
+   * de los turbohélices de línea, armada para despegar. Ver `AUTOBANDERA` en
+   * `flight/motores.ts`.
+   */
+  readonly autoBandera: boolean;
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -559,6 +596,26 @@ export interface AircraftConfig {
    *   *Flight Controls — Normal Law — Pitch*) y la de los Embraer E2.
    */
   mandos: "convencionales" | "electricos";
+  /**
+   * **Dónde va cada motor**: su distancia al plano de simetría, en metros,
+   * de izquierda a derecha y negativa a la izquierda. `[0]` en un monomotor.
+   *
+   * Mientras todos empujan igual da lo mismo, porque se anulan. **Con uno
+   * parado es el número que manda**: el que queda empuja por un lado, el
+   * parado frena por el otro, y el avión guiña hacia el parado con un par que
+   * es ese empuje por esta distancia. Es lo que tiene que sujetar el timón, y
+   * de ahí sale la Vmc. Ver `flight/motores.ts`.
+   *
+   * No es un número libre: tiene que decir lo mismo que el modelo que se
+   * dibuja —`MOTOR`, `QUIEBRO` o `MOTORES` en `modelos/*.py`—, y lo comprueba
+   * `motores.test.ts` leyendo el guion de cada uno.
+   */
+  motoresA: readonly number[];
+  /**
+   * **Lo que frena un motor parado**, como área equivalente: `D = q·A`, m².
+   * Ver `MotorParado`.
+   */
+  motorParado: MotorParado;
   /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
   cruiseSpeed: number;
   /**
@@ -1105,6 +1162,13 @@ export const PYKASU: AircraftConfig = {
   // Cables y varillas, como toda avioneta de escuela: compensada, vuelve a su
   // velocidad. Ver `mandos`.
   mandos: "convencionales",
+  motoresA: [0],
+  /*
+   * La hélice de paso fijo de una avioneta de escuela, de un metro noventa: un
+   * disco que en molinete frena como el del bimotor, y que no se puede poner
+   * en bandera. Solo cuenta si algún día se para en el aire: ver `sin-motor.ts`.
+   */
+  motorParado: { molinete: 0.3, bandera: null, autoBandera: false },
   cruiseSpeed: 60,
   /*
    * Tres mil metros: un monomotor de escuela sin presurizar cruza entre dos mil
@@ -1241,6 +1305,9 @@ export const MAINUMBY: AircraftConfig = {
   maxThrust: 5200,
   motores: 1,
   mandos: "convencionales",
+  motoresA: [0],
+  // La hélice grande del radial, de paso fijo: más disco y ninguna bandera.
+  motorParado: { molinete: 0.5, bandera: null, autoBandera: false },
   cruiseSpeed: 55,
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
   // lo que sube es para ir de un campo a otro.
@@ -1410,6 +1477,17 @@ export const PANAMBI: AircraftConfig = {
   maxThrust: 5000,
   motores: 2,
   mandos: "convencionales",
+  // A dos metros cuarenta y cinco del eje, que es `MOTOR` en su modelo.
+  motoresA: [-2.45, 2.45],
+  /*
+   * **La hélice que se pone en bandera a mano**, que es la lección entera de
+   * un motor parado en un bimotor de pistón. Treinta y cinco decímetros
+   * cuadrados en molinete son los doscientos pies por minuto que cuenta el
+   * manual de la FAA a su velocidad de mejor subida con un motor —y a este
+   * avión, con uno, le sobran unos ciento setenta—; en bandera, una décima
+   * parte. O sea: en molinete no sube, en bandera sí.
+   */
+  motorParado: { molinete: 0.35, bandera: 0.03, autoBandera: false },
   cruiseSpeed: 80,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
@@ -1517,7 +1595,15 @@ export const PANAMBI: AircraftConfig = {
     clAileron: 0.043, // ~70 °/s a fondo, que es lo que rueda una ligera.
     cnBeta: 0.08,
     cnR: -0.13,
-    cnRudder: 0.03,
+    /*
+     * **El timón de un bimotor es el que sujeta un motor parado**, y de ahí
+     * sale su tamaño. Estaba en 0,03, lo de una avioneta de un motor, y con
+     * eso la Vmc salía a 72 nudos: por encima de su V1 y en su propia Vr, un
+     * avión que no se podría certificar. Los bimotores de seis plazas tienen
+     * la Vmc en los sesenta y pico —el Seneca II, 66— y el timón que la da es
+     * éste: 62 nudos. Ver `vmc` en `velocidades-de-despegue.ts`.
+     */
+    cnRudder: 0.04,
     cnAileron: -0.0025,
   },
 };
@@ -1566,6 +1652,15 @@ export const ARASUNU: AircraftConfig = {
   // Cables, como el Beech 1900D y el Twin Otter de su clase: ninguno de los
   // dos lleva mandos eléctricos. Ver `mandos`.
   mandos: "convencionales",
+  // A tres metros diez, que es `MOTOR` en su modelo.
+  motoresA: [-3.1, 3.1],
+  /*
+   * La hélice de dos metros sesenta y cuatro: el doble de disco que la del
+   * bimotor de pistón, y el doble de freno en molinete. Por eso un turbohélice
+   * de línea la pone en bandera **solo**: la *autofeather* va armada en cada
+   * despegue.
+   */
+  motorParado: { molinete: 0.72, bandera: 0.06, autoBandera: true },
   cruiseSpeed: 90,
   // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
   // un turbohélice regional presurizado.
@@ -1770,6 +1865,15 @@ export const ARAI: AircraftConfig = {
    * `mandos` y `flight/mano.ts`.
    */
   mandos: "electricos",
+  // Colgados en el quiebro del ala, a cuatro metros cuarenta: `QUIEBRO` en su
+  // modelo.
+  motoresA: [-4.4, 4.4],
+  /*
+   * Un fan en molinete, que no tiene bandera: la cuenta de Torenbeek con la
+   * toma y la tobera de un motor de esta clase —de metro y pico de diámetro—
+   * da una cuarta de metro cuadrado. Frena poco al lado de una hélice.
+   */
+  motorParado: { molinete: 0.25, bandera: null, autoBandera: false },
   cruiseSpeed: 220,
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
@@ -1962,7 +2066,16 @@ export const ARAI: AircraftConfig = {
     clAileron: 0.022, // ~40 °/s, que es lo que rueda un avión de línea.
     cnBeta: 0.1,
     cnR: -0.2,
-    cnRudder: 0.035,
+    /*
+     * **Y el timón de un birreactor de línea**, que no es el de una avioneta.
+     * En 0,035 la Vmc salía a 154 nudos, por encima de su Vr: con un motor
+     * parado en la carrera no habría habido velocidad a la que seguir recto, y
+     * ese avión no se certifica. Un reactor de esta clase tiene la Vmc por los
+     * ciento diez nudos —la de un 737 anda por ahí con el doble de empuje por
+     * motor—, y el timón que la da es el doble: el que se mide en ellos,
+     * seis o siete centésimas a fondo. Ver `vmc` en `velocidades-de-despegue.ts`.
+     */
+    cnRudder: 0.07,
     cnAileron: -0.002,
   },
 };
@@ -2052,6 +2165,11 @@ export const YVAGA: AircraftConfig = {
    * `flight/mano.ts`.
    */
   mandos: "convencionales",
+  // Los de dentro a diez sesenta y los de fuera a veinte cuarenta: `MOTORES`
+  // en su modelo.
+  motoresA: [-20.4, -10.6, 10.6, 20.4],
+  // La misma cuenta que el JAZ 90 con un fan de más de dos metros.
+  motorParado: { molinete: 0.85, bandera: null, autoBandera: false },
   cruiseSpeed: 230,
   /*
    * Diez mil setecientos: treinta y cinco mil pies, que es donde la CR-2144

@@ -16,6 +16,7 @@ import {
 } from "./bomberos";
 import { cabeEn, campoDe, destinosParaEsteAvion } from "./cabe";
 import { BOMBEROS, bomberosDe } from "../world/bomberos-publicados";
+import { camionesDeLaCategoria, juntoAlAvion, juntoALaPista } from "../world/bomberos";
 import { destinosDe, oaciDe, SCENARIOS, scenarioById } from "../world/scenarios";
 import { DE_SERIE, ponerLasDeSerie } from "../ui/explicaciones-de-serie";
 import { explicacionDe, explicacionesDe } from "../ui/explicaciones";
@@ -145,5 +146,29 @@ describe("y se explica", () => {
     expect(DE_SERIE).toContain("bomberos");
     expect(explicacionDe("bomberos")?.rincon).toBeUndefined();
     expect(explicacionesDe("curiosidades").map((e) => e.id)).toContain("bomberos-y-aviones");
+  });
+});
+
+describe("los camiones que salen en un ejercicio, los de su categoría", () => {
+  it("la tabla 9-2 del Anexo 14: uno hasta la 5, dos en la 6 y la 7, tres de la 8 a la 10", () => {
+    expect([0, 1, 4, 5, 6, 7, 8, 9, 10].map(camionesDeLaCategoria)).toEqual([
+      0, 1, 1, 1, 2, 2, 3, 3, 3,
+    ]);
+  });
+
+  it("y en cada aeródromo, los suyos: tres en Asunción, uno en El Hierro, ninguno en Concepción", () => {
+    const de = (oaci: string) => camionesDeLaCategoria(BOMBEROS[oaci]?.categoria ?? 0);
+    expect(de("SGAS")).toBe(3);
+    expect(de("GCHI")).toBe(1);
+    expect(de("GCLA")).toBe(2);
+    expect(de("SGCO")).toBe(0);
+    expect(de("SGOG")).toBe(0);
+  });
+
+  it("y se ponen tantos como salen, junto a la pista o junto al avión", () => {
+    const suelo = () => 0;
+    expect(juntoALaPista({ x: 0, z: 0 }, 90, 3000, 45, suelo, 1)).toHaveLength(1);
+    expect(juntoALaPista({ x: 0, z: 0 }, 90, 3000, 45, suelo, 3)).toHaveLength(3);
+    expect(juntoAlAvion({ x: 0, z: 0, rumbo: 0 }, suelo, 2)).toHaveLength(2);
   });
 });

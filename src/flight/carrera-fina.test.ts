@@ -12,7 +12,7 @@ import { CoefficientFlightModel } from "./fdm";
 import { ArcadeFlightModel } from "./arcade";
 import { neutralControls, type ControlInputs, type FlightModel } from "./model";
 import { GUYRAMI, TAGUATO_RUVICHA, TUKA, type Tier } from "./tiers";
-import { DEPRISA_EN_TIERRA, PulsoDeTecla } from "./palanca-de-teclado";
+import { DEPRISA_EN_TIERRA, PulsoDeTecla, pieDeTecla } from "./palanca-de-teclado";
 
 const DT = 1 / 60;
 const NUDO = 0.514444;
@@ -94,7 +94,9 @@ function rueda(
     const v = s.groundSpeed;
     p.mandos.throttle = Math.max(0, Math.min(1, 0.3 + 0.3 * (p.v0 - v)));
     const carrera = !sinPulso && s.onGround && v > DEPRISA_EN_TIERRA;
-    p.mandos.rudder = rampa(p.mandos.rudder, p.pedal.paso(k.timon ?? 0, p.reloj, carrera));
+    // Con el pie de tecla de este avión, como en `input.ts`: ver `pieDeTecla`.
+    const pie = p.modelo instanceof ArcadeFlightModel ? 1 : pieDeTecla(p.a.aero.cnRudder);
+    p.mandos.rudder = rampa(p.mandos.rudder, p.pedal.paso(k.timon ?? 0, p.reloj, carrera, pie));
     p.mandos.aileron = rampa(p.mandos.aileron, p.volante.paso(k.flecha ?? 0, p.reloj, carrera));
     p.modelo.step(DT, p.mandos);
     p.reloj += DT;

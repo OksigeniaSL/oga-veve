@@ -8893,6 +8893,55 @@ button.motor__tecla::after {
 }
 
 /*
+ * Y los de los ejercicios de emergencia, con los mismos trazos. El motor
+ * dormido, en el ocre de los avisos —precaución, no alarma—; la mano de parar
+ * y la interrogación del simulador, en la tinta de siempre.
+ */
+.ejercicio__zetas {
+  stroke: var(--ocre-tinta);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ejercicio__mano {
+  fill: var(--ocre-tinta);
+}
+
+/* Y la máscara de la cabina sin aire, en el mismo ocre, con su tubo. */
+.ejercicio__mascara {
+  fill: var(--ocre-tinta);
+}
+
+.ejercicio__tubo {
+  stroke: var(--ocre-tinta);
+  stroke-width: 1.2;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.ejercicio__pregunta {
+  fill: var(--ocre-tinta);
+  font-family: var(--hud-fuente);
+  font-size: 34px;
+  font-weight: 700;
+}
+
+/*
+ * Y el dibujo del final de un ejercicio, en el sitio de la manga y del tamaño
+ * del percance: en el verde de lo que salió bien —hecho, o a repetir, que en
+ * un simulador también es hacerlo bien—, nunca en rojo.
+ */
+.cierre {
+  display: block;
+  height: 168px;
+  width: auto;
+  color: var(--ok);
+  fill: var(--ok);
+}
+
+/*
  * ── El panel del tiempo ──────────────────────────────────────────────────
  *
  * Debajo del mapa y con su misma piel. Sin un solo número: lo que se mira para

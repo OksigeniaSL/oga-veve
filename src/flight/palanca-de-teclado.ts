@@ -216,25 +216,70 @@ export const PULSO_EN_LA_CARRERA = 0.3;
 export const DEPRISA_EN_TIERRA = 15;
 
 /**
- * **Una tecla de dirección con su toque de pie**: devuelve la tecla que manda
- * en este fotograma, −1, 0 o 1. Con `alarga` —en la carrera—, la tecla que se
- * suelta antes de `PULSO_EN_LA_CARRERA` sigue apretada hasta cumplirlo.
+ * **El timón que da entero un pie de tecla en la carrera**, como coeficiente
+ * de guiñada con el pedal a fondo: el del JAZ 120 y el del JAZ 40, el mayor de
+ * los timones con los que se afinó el toque de pie. Ver `carrera-fina.test.ts`.
+ *
+ * El JAZ 90 lleva casi el doble, 0,07, que es el de un birreactor de línea y
+ * el que hace falta para sujetar un motor parado por encima de su Vmc —ver
+ * `vmc` en `velocidades-de-despegue.ts` y el ADR 0014—. Con la tecla dando el
+ * pedal entero eso eran 0,7 g de lado a 127 nudos por la pista, y un piloto a
+ * toques que no volvía al eje. A esa velocidad un pie de verdad corrige el eje
+ * con poco pedal, así que en la carrera la tecla pide el pedal que en ese
+ * avión da lo que este timón da entero: el mismo toque de pie en toda la
+ * flota. Ver `pieDeTecla`.
+ */
+export const TIMON_DEL_PIE_DE_TECLA = 0.04;
+
+/**
+ * **Cuánto pedal pide un pie de tecla corto en la carrera**, de 0 a 1, en un
+ * avión con este timón (`cnRudder`). Entero en todos los que no pasan de
+ * `TIMON_DEL_PIE_DE_TECLA`, que son toda la flota menos el JAZ 90.
+ */
+export function pieDeTecla(cnRudder: number): number {
+  return cnRudder > TIMON_DEL_PIE_DE_TECLA ? TIMON_DEL_PIE_DE_TECLA / cnRudder : 1;
+}
+
+/**
+ * **Y mantenida, el pie aprieta hasta el fondo**, s: el primer segundo es una
+ * corrección de eje, y en el siguiente llega al pedal entero. Es lo que hace el
+ * pie que sujeta un motor parado en la carrera: apretar, y seguir apretando
+ * hasta que el avión va recto. Sin esto, con el teclado no habría pedal para
+ * la Vmc del JAZ 90.
+ */
+export const EL_PIE_APRIETA = 1;
+
+/**
+ * **Una tecla de dirección con su toque de pie**: devuelve lo que pide la
+ * tecla en este fotograma, de −1 a 1. Con `alarga` —en la carrera—, la tecla
+ * que se suelta antes de `PULSO_EN_LA_CARRERA` sigue apretada hasta cumplirlo;
+ * y con `corto` por debajo de uno, el pie empieza pidiendo esa parte del pedal
+ * y, mantenida, aprieta hasta el fondo. Ver `pieDeTecla` y `EL_PIE_APRIETA`.
  */
 export class PulsoDeTecla {
   private signo = 0;
   private desde = 0;
 
-  paso(tecla: number, ahora: number, alarga: boolean): number {
+  paso(tecla: number, ahora: number, alarga: boolean, corto = 1): number {
     const t = Math.sign(tecla);
     if (t !== 0) {
       if (t !== this.signo) {
         this.signo = t;
         this.desde = ahora;
       }
-      return t;
+      return t * this.cuanto(ahora, alarga, corto);
     }
-    if (this.signo !== 0 && alarga && ahora - this.desde < PULSO_EN_LA_CARRERA) return this.signo;
+    if (this.signo !== 0 && alarga && ahora - this.desde < PULSO_EN_LA_CARRERA)
+      return this.signo * this.cuanto(ahora, alarga, corto);
     this.signo = 0;
     return 0;
+  }
+
+  /** Lo que aprieta el pie, de `corto` a uno, según lo que lleva apretado. */
+  private cuanto(ahora: number, alarga: boolean, corto: number): number {
+    if (!alarga || corto >= 1) return 1;
+    const mantenida = ahora - this.desde - EL_PIE_APRIETA;
+    const crece = Math.min(1, Math.max(0, mantenida / EL_PIE_APRIETA));
+    return corto + (1 - corto) * crece;
   }
 }
