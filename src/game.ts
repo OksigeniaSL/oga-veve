@@ -8854,7 +8854,7 @@ export class Game {
    * turbulence»—. Se escriben siempre en la tira de la radio y suenan solo
    * con su grabación; si no la tienen, `null`, y suena la de siempre de
    * `HOLD_SHORT_POR`. «Caution wake turbulence» es la expresión de la OACI
-   * (Doc 4444, cap. 12) y la secuencia de salida es información, no una
+   * (Doc 4444, 12.3.4.19 e) y la secuencia de salida es información, no una
    * autorización. Ver `PENDIENTE-VOCES-tierra-2.md`.
    */
   private elPorqueEnRadio(por: EsperaPor, urgencia: Urgencia): string | null {

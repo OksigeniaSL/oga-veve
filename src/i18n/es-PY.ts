@@ -413,15 +413,16 @@ export const ES_PY = {
   /*
    * **Y tu número en la fila de salida**, detrás de la roja: «número dos para
    * la salida». Es información de secuencia, no una autorización —se espera
-   * igual a la verde—, y se da con su número como la secuencia del circuito
-   * (Doc 4444, cap. 12). Va suelta, detrás de la lámpara, y solo con su
+   * igual a la verde—, y se da con su número como la secuencia del circuito,
+   * «NUMBER … FOLLOW» (Doc 4444, 12.3.4.14 b; «NÚMERO… SIGA» en el RD
+   * 1180/2018, 1.4.15 b). Va suelta, detrás de la lámpara, y solo con su
    * grabación: ver `decirLaFila` en `game.ts` y `PENDIENTE-VOCES-tierra-2.md`.
    */
   "torre.numeroDos": "número dos para la salida",
   "torre.numeroTres": "número tres para la salida",
   "torre.canario.numeroDos": "número dos para la salida",
   "torre.canario.numeroTres": "número tres para la salida",
-  /** Lo que dice el dibujo de la fila, para quien no lo ve. Ver `ponerFilaDeSalida`. */
+  /** Lo que dice el dibujo de la fila, para quien no lo ve. Ver `setLuzDeTorre` en `ui/hud.ts`. */
   "hud.filaDeSalida": "Número {numero} para la salida",
   "hud.esperaLaEstela": "Esperamos la estela del avión que salió",
   "torre.canario.solo.subir": "suba a {n} mil pies",

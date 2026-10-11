@@ -309,8 +309,11 @@ ver `decirLaFila`, `explicarLaEspera` y `elPorqueEnRadio` en `src/game.ts`.
 | instructor | `vuelo.esperaLaEstela` | Esperamos un poquito: el avión que salió deja remolinos en el aire | peldaños de abajo, esperando la estela |
 
 La secuencia de salida es información, no una autorización: se espera igual a
-la verde. «Caution wake turbulence» es la expresión de la OACI (Doc 4444, cap.
-12). En castellano, la torre de España dice el número igual; si la DINAC R 4444
+la verde. «Caution wake turbulence» es la expresión de la OACI (Doc 4444,
+12.3.4.19 e), y el número se da como la secuencia del circuito, «NUMBER …
+FOLLOW» (12.3.4.14 b); en castellano, «PRECAUCIÓN ESTELA TURBULENTA» y
+«NÚMERO… SIGA» (RD 1180/2018, anexo de fraseología, 1.4.20 e y 1.4.15 b), así
+que la torre de España dice el número igual; si la DINAC R 4444
 lo dijera de otra manera, se cambia el texto de `torre.numeroDos` en
 `src/i18n/es-PY.ts` antes de grabar.
 
