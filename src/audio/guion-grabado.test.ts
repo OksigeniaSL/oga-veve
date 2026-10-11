@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { hayTexto } from "../i18n";
 import { recetaDe, type Manifiesto } from "./banco-de-voz";
 import {
+  HORAS_QUE_SE_DICEN,
   MAS_CALOR,
   MAS_FRIO,
   MINUTOS_QUE_SE_DICEN,
@@ -63,6 +64,9 @@ describe("el guion de la cabina, horneado", () => {
     const piezas = [
       ...MINUTOS_QUE_SE_DICEN.map(piezaDeMinutos),
       ...MINUTOS_QUE_SE_DICEN.map(piezaDeDuracion),
+      // Y pasada la hora, en horas: «una hora y cuarto», «dos horas».
+      ...HORAS_QUE_SE_DICEN.map(piezaDeMinutos),
+      ...HORAS_QUE_SE_DICEN.map(piezaDeDuracion),
       ...Array.from({ length: ULTIMO_NIVEL - PRIMER_NIVEL + 1 }, (_, i) =>
         piezaDeNivel(PRIMER_NIVEL + i),
       ),
@@ -149,6 +153,9 @@ describe("lo que se ve por la ventanilla, horneado", () => {
   const sitios: Hito[] = [
     ...DESTACADOS.map((d) => sitio(d.nombre, d.clase, d.clave)),
     sitio("un barco", "barco"),
+    // Y las dos estrellas de la noche, con su clave como las pone el cielo.
+    sitio("la Cruz del Sur", "cruz-del-sur", "cruz-del-sur"),
+    sitio("la Polar", "polar", "polar"),
   ];
 
   for (const [conPasaje, voz] of [

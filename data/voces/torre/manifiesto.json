@@ -271,6 +271,14 @@
       "ms": 540,
       "h": "80b549e984"
     },
+    "metros.hundred": {
+      "ms": 623,
+      "h": "bbf0512bf5"
+    },
+    "metros.thousand": {
+      "ms": 809,
+      "h": "b470eda2c9"
+    },
     "torre.numeroDos": {
       "ms": 1574,
       "h": "30683bcc08"
@@ -282,6 +290,10 @@
     "torre.solo.acelereAbandono": {
       "ms": 1763,
       "h": "3cecef1d73"
+    },
+    "torre.solo.adviseAbleToDepart": {
+      "ms": 2046,
+      "h": "1e62350dff"
     },
     "torre.solo.afisLibre": {
       "ms": 725,
@@ -343,6 +355,22 @@
       "ms": 688,
       "h": "a3202382c7"
     },
+    "torre.solo.contactApproach": {
+      "ms": 1018,
+      "h": "420609bbc9"
+    },
+    "torre.solo.contactControl": {
+      "ms": 1535,
+      "h": "b54bdbbd5b"
+    },
+    "torre.solo.contactDeparture": {
+      "ms": 1116,
+      "h": "6fcc10c682"
+    },
+    "torre.solo.contactTower": {
+      "ms": 954,
+      "h": "88e1164763"
+    },
     "torre.solo.departingTraffic": {
       "ms": 1184,
       "h": "8e116ae613"
@@ -354,6 +382,10 @@
     "torre.solo.free": {
       "ms": 539,
       "h": "61192bab44"
+    },
+    "torre.solo.fromIntersection": {
+      "ms": 1103,
+      "h": "0542e8ff87"
     },
     "torre.solo.goAround": {
       "ms": 1787,
@@ -383,6 +415,10 @@
       "ms": 902,
       "h": "e06d9655f7"
     },
+    "torre.solo.intersection": {
+      "ms": 950,
+      "h": "f630b9c8cb"
+    },
     "torre.solo.landedWithoutClearance": {
       "ms": 3707,
       "h": "a724a8a18f"
@@ -399,6 +435,14 @@
       "ms": 1441,
       "h": "3f84060139"
     },
+    "torre.solo.metres": {
+      "ms": 817,
+      "h": "62942781db"
+    },
+    "torre.solo.minimumFuel": {
+      "ms": 2303,
+      "h": "1a813fed47"
+    },
     "torre.solo.noReportedTraffic": {
       "ms": 1298,
       "h": "36171b6ec0"
@@ -406,6 +450,22 @@
     "torre.solo.occupied": {
       "ms": 769,
       "h": "dbfa6db571"
+    },
+    "torre.solo.pirep.fuerte": {
+      "ms": 2316,
+      "h": "fd17bed290"
+    },
+    "torre.solo.pirep.ligera": {
+      "ms": 2303,
+      "h": "354dfd4124"
+    },
+    "torre.solo.pirep.moderada": {
+      "ms": 2320,
+      "h": "789df64ac9"
+    },
+    "torre.solo.pirep.porDelante": {
+      "ms": 1174,
+      "h": "43f20dde65"
     },
     "torre.solo.pista": {
       "ms": 526,
@@ -438,6 +498,10 @@
     "torre.solo.subirNivel": {
       "ms": 1445,
       "h": "9ecba19149"
+    },
+    "torre.solo.toraRunway": {
+      "ms": 989,
+      "h": "e585d098ac"
     },
     "torre.solo.vacateNext": {
       "ms": 1388,
@@ -1706,6 +1770,207 @@
       "{r1}",
       "{r2}",
       "lado.center"
+    ],
+    "torre.solo.minimumFuel": [
+      "torre.solo.minimumFuel"
+    ],
+    "torre.minimumFuel": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.minimumFuel"
+    ],
+    "torre.ofreceInterseccion": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "torre.solo.intersection",
+      "{calle}"
+    ],
+    "torre.tora": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "torre.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.solo.metres"
+    ],
+    "torre.ofreceInterseccion.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.solo.intersection",
+      "{calle}"
+    ],
+    "torre.tora.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.solo.metres"
+    ],
+    "torre.ofreceInterseccion.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.solo.intersection",
+      "{calle}"
+    ],
+    "torre.tora.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.solo.metres"
+    ],
+    "torre.ofreceInterseccion.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.solo.intersection",
+      "{calle}"
+    ],
+    "torre.tora.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.solo.metres"
+    ],
+    "torre.pirep.ligera": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.pirep.ligera",
+      "{altura}",
+      "torre.solo.pirep.porDelante"
+    ],
+    "torre.pirep.moderada": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.pirep.moderada",
+      "{altura}",
+      "torre.solo.pirep.porDelante"
+    ],
+    "torre.pirep.fuerte": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.pirep.fuerte",
+      "{altura}",
+      "torre.solo.pirep.porDelante"
+    ],
+    "torre.solo.contactDeparture": [
+      "torre.solo.contactDeparture"
+    ],
+    "torre.solo.contactControl": [
+      "torre.solo.contactControl"
+    ],
+    "torre.solo.contactApproach": [
+      "torre.solo.contactApproach"
+    ],
+    "torre.solo.contactTower": [
+      "torre.solo.contactTower"
+    ],
+    "torre.contactDeparture": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.contactDeparture"
+    ],
+    "torre.contactControl": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.contactControl"
+    ],
+    "torre.contactApproach": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.contactApproach"
+    ],
+    "torre.contactTower": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.contactTower"
+    ],
+    "metros.thousand": [
+      "metros.thousand"
+    ],
+    "metros.hundred": [
+      "metros.hundred"
     ]
   }
 }

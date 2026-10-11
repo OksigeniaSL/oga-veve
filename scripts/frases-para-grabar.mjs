@@ -1623,7 +1623,6 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
    * demás de la ventana van con chispa: el TCAS cita su *traffic, traffic*, y
    * leído como alarma enseñaría lo contrario.
    */
-  "explica.tcas.texto",
   "explica.tcas.ra",
   "explica.avisos.texto",
   "explica.mascaras.texto",

@@ -93,6 +93,17 @@ describe("lo que dice la torre", () => {
     "torre.contactControl",
     "torre.contactApproach",
     "torre.contactTower",
+    /*
+     * Y la salida desde la intersección —la oferta y la pista que queda—,
+     * con la pista, la calle y los metros en sus huecos: las pide
+     * `contarPorDondeSeSale`. Y el aviso de turbulencia de otro avión,
+     * retransmitido con tu matrícula y su altura: lo pide `contarElPirep`.
+     */
+    "torre.ofreceInterseccion",
+    "torre.tora",
+    "torre.pirep.ligera",
+    "torre.pirep.moderada",
+    "torre.pirep.fuerte",
   ]);
 
   /*

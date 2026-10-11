@@ -171,14 +171,10 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen dos
  * pruebas de `cabina.test.ts`—, y estos son la excepción escrita: el juego ya
  * sabe cuándo decirlos y los pide solo si están en el pack. Cuando se graben,
- * salen de aquí; la prueba lo recuerda.
+ * salen de aquí; la prueba lo recuerda. Hoy no espera ninguno: los de la
+ * carrera de aterrizaje ya tienen la suya.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set([
-  "cabina.speedbrakesUp",
-  "cabina.speedbrakesNotUp",
-  "cabina.reversersNormal",
-  "cabina.sixtyKnots",
-]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * **Los cantos de la carrera de aterrizaje**, que no los dice cualquier

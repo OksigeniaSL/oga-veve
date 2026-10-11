@@ -1263,5 +1263,55 @@
     "torre.solo.pirep.fuerte",
     "{altura}",
     "torre.solo.pirep.porDelante"
+  ],
+  "torre.solo.contactDeparture": [
+    "torre.solo.contactDeparture"
+  ],
+  "torre.solo.contactControl": [
+    "torre.solo.contactControl"
+  ],
+  "torre.solo.contactApproach": [
+    "torre.solo.contactApproach"
+  ],
+  "torre.solo.contactTower": [
+    "torre.solo.contactTower"
+  ],
+  "torre.contactDeparture": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.contactDeparture"
+  ],
+  "torre.contactControl": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.contactControl"
+  ],
+  "torre.contactApproach": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.contactApproach"
+  ],
+  "torre.contactTower": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.contactTower"
+  ],
+  "metros.thousand": [
+    "metros.thousand"
+  ],
+  "metros.hundred": [
+    "metros.hundred"
   ]
 }

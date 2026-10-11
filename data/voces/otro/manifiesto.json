@@ -3,6 +3,70 @@
   "voz": "otro",
   "idioma": "es-PY",
   "piezas": {
+    "altura.nivel": {
+      "ms": 753,
+      "h": "322ab623a1"
+    },
+    "altura.pies.2": {
+      "ms": 1175,
+      "h": "ba3b9a2047"
+    },
+    "altura.pies.3": {
+      "ms": 1106,
+      "h": "bf9c14bf14"
+    },
+    "altura.pies.4": {
+      "ms": 1068,
+      "h": "98ac803a81"
+    },
+    "altura.pies.5": {
+      "ms": 1144,
+      "h": "793016d91d"
+    },
+    "altura.pies.6": {
+      "ms": 1132,
+      "h": "e087b0656b"
+    },
+    "cifra.0": {
+      "ms": 645,
+      "h": "6fe6d49c38"
+    },
+    "cifra.1": {
+      "ms": 693,
+      "h": "c9ec7c53f9"
+    },
+    "cifra.2": {
+      "ms": 720,
+      "h": "78a861c87d"
+    },
+    "cifra.3": {
+      "ms": 777,
+      "h": "7daa79911d"
+    },
+    "cifra.4": {
+      "ms": 631,
+      "h": "0521717fd0"
+    },
+    "cifra.5": {
+      "ms": 860,
+      "h": "aad1e56f06"
+    },
+    "cifra.6": {
+      "ms": 606,
+      "h": "2bd9d41c20"
+    },
+    "cifra.7": {
+      "ms": 935,
+      "h": "d3d7ffd294"
+    },
+    "cifra.8": {
+      "ms": 791,
+      "h": "32c800e345"
+    },
+    "cifra.9": {
+      "ms": 935,
+      "h": "aa55c01394"
+    },
     "fonetico.alfa": {
       "ms": 647,
       "h": "4ebebd43ca"
@@ -118,6 +182,18 @@
     "otro.solo.final": {
       "ms": 816,
       "h": "42c505e094"
+    },
+    "otro.solo.pirep.fuerte": {
+      "ms": 2348,
+      "h": "34f5ad69fb"
+    },
+    "otro.solo.pirep.ligera": {
+      "ms": 1812,
+      "h": "a47aed581d"
+    },
+    "otro.solo.pirep.moderada": {
+      "ms": 2170,
+      "h": "173a9f467e"
     },
     "otro.solo.pistaLibre": {
       "ms": 986,
@@ -262,6 +338,81 @@
       "{c4}",
       "{c5}",
       "otro.solo.pistaLibre"
+    ],
+    "otro.pirep.ligera": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.pirep.ligera",
+      "{altura}"
+    ],
+    "otro.pirep.moderada": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.pirep.moderada",
+      "{altura}"
+    ],
+    "otro.pirep.fuerte": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.pirep.fuerte",
+      "{altura}"
+    ],
+    "altura.nivel": [
+      "altura.nivel"
+    ],
+    "altura.pies.2": [
+      "altura.pies.2"
+    ],
+    "altura.pies.3": [
+      "altura.pies.3"
+    ],
+    "altura.pies.4": [
+      "altura.pies.4"
+    ],
+    "altura.pies.5": [
+      "altura.pies.5"
+    ],
+    "altura.pies.6": [
+      "altura.pies.6"
+    ],
+    "cifra.0": [
+      "cifra.0"
+    ],
+    "cifra.1": [
+      "cifra.1"
+    ],
+    "cifra.2": [
+      "cifra.2"
+    ],
+    "cifra.3": [
+      "cifra.3"
+    ],
+    "cifra.4": [
+      "cifra.4"
+    ],
+    "cifra.5": [
+      "cifra.5"
+    ],
+    "cifra.6": [
+      "cifra.6"
+    ],
+    "cifra.7": [
+      "cifra.7"
+    ],
+    "cifra.8": [
+      "cifra.8"
+    ],
+    "cifra.9": [
+      "cifra.9"
     ]
   }
 }

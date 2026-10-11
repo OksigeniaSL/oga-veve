@@ -1269,5 +1269,55 @@
     "torre.canario.solo.pirep.fuerte",
     "{altura}",
     "torre.canario.solo.pirep.porDelante"
+  ],
+  "torre.canario.solo.contactDeparture": [
+    "torre.canario.solo.contactDeparture"
+  ],
+  "torre.canario.solo.contactControl": [
+    "torre.canario.solo.contactControl"
+  ],
+  "torre.canario.solo.contactApproach": [
+    "torre.canario.solo.contactApproach"
+  ],
+  "torre.canario.solo.contactTower": [
+    "torre.canario.solo.contactTower"
+  ],
+  "torre.canario.contactDeparture": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.contactDeparture"
+  ],
+  "torre.canario.contactControl": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.contactControl"
+  ],
+  "torre.canario.contactApproach": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.contactApproach"
+  ],
+  "torre.canario.contactTower": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.contactTower"
+  ],
+  "metros.thousand": [
+    "metros.thousand"
+  ],
+  "metros.hundred": [
+    "metros.hundred"
   ]
 }

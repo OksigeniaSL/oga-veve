@@ -1065,9 +1065,6 @@
   "explica.tc.texto": [
     "explica.tc.texto"
   ],
-  "explica.tcas.texto": [
-    "explica.tcas.texto"
-  ],
   "explica.td.presenta": [
     "explica.td.presenta"
   ],
@@ -1632,5 +1629,29 @@
   ],
   "vuelo.pirep": [
     "vuelo.pirep"
+  ],
+  "vuelo.ra.sube": [
+    "vuelo.ra.sube"
+  ],
+  "vuelo.ra.baja": [
+    "vuelo.ra.baja"
+  ],
+  "vuelo.ra.nivela": [
+    "vuelo.ra.nivela"
+  ],
+  "vuelo.ra.vigila": [
+    "vuelo.ra.vigila"
+  ],
+  "vuelo.ra.libre": [
+    "vuelo.ra.libre"
+  ],
+  "vuelo.radio.otraFrecuencia": [
+    "vuelo.radio.otraFrecuencia"
+  ],
+  "vuelo.radio.otraVezLaTorre": [
+    "vuelo.radio.otraVezLaTorre"
+  ],
+  "explica.tcas.ra": [
+    "explica.tcas.ra"
   ]
 }

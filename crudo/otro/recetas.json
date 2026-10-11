@@ -159,5 +159,53 @@
     "{c5}",
     "otro.solo.pirep.fuerte",
     "{altura}"
+  ],
+  "altura.nivel": [
+    "altura.nivel"
+  ],
+  "altura.pies.2": [
+    "altura.pies.2"
+  ],
+  "altura.pies.3": [
+    "altura.pies.3"
+  ],
+  "altura.pies.4": [
+    "altura.pies.4"
+  ],
+  "altura.pies.5": [
+    "altura.pies.5"
+  ],
+  "altura.pies.6": [
+    "altura.pies.6"
+  ],
+  "cifra.0": [
+    "cifra.0"
+  ],
+  "cifra.1": [
+    "cifra.1"
+  ],
+  "cifra.2": [
+    "cifra.2"
+  ],
+  "cifra.3": [
+    "cifra.3"
+  ],
+  "cifra.4": [
+    "cifra.4"
+  ],
+  "cifra.5": [
+    "cifra.5"
+  ],
+  "cifra.6": [
+    "cifra.6"
+  ],
+  "cifra.7": [
+    "cifra.7"
+  ],
+  "cifra.8": [
+    "cifra.8"
+  ],
+  "cifra.9": [
+    "cifra.9"
   ]
 }

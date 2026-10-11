@@ -3076,21 +3076,6 @@
     }
   },
   {
-    "id": "explica.tcas.texto",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.",
-    "para": "lo que explica tocar una pieza del cuadro",
-    "ajustes": {
-      "stability": 0.85,
-      "similarity_boost": 0.75,
-      "style": 0,
-      "use_speaker_boost": false,
-      "speed": 0.95
-    },
-    "dicho": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el ti-cas avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: más diez es mil pies más arriba, y menos cero cinco, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el ti-cas está en ti-ei only y solo avisa."
-  },
-  {
     "id": "explica.tcas.ra",
     "voz": "instructor",
     "idioma": "es-PY",
