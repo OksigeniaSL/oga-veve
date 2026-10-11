@@ -262,6 +262,42 @@ describe("la protección de la inclinación", () => {
       }
   });
 
+  /*
+   * **Y el tope se cuenta**, una vez por apretón y una vez por vuelta sola a
+   * 33°: es el suceso que la instructora explica la primera vez. Ver
+   * `topesDeInclinacion` y `explicarLosMandos` en `game.ts`.
+   */
+  it("topar contra los 33° apretando cuenta una vez por apretón", () => {
+    const a = avion("jaz-20");
+    const v = empezar(a, GUYRAMI, maniobra(a));
+    expect(v.mano.topesDeInclinacion).toBe(0);
+    volar(v, 12, () => ({ teclaAlabeo: 1 }));
+    expect(v.mano.topesDeInclinacion).toBe(1);
+    volar(v, 1, () => ({}));
+    volar(v, 6, () => ({ teclaAlabeo: 1 }));
+    expect(v.mano.topesDeInclinacion).toBe(2);
+  });
+
+  it("y volver sola a 33° al soltar más inclinado también cuenta, una vez", () => {
+    const a = avion("jaz-90");
+    const v = empezar(a, TAGUATO_RUVICHA, maniobra(a));
+    v.gas = 1;
+    volar(v, 25, () => ({ teclaAlabeo: 1 }));
+    // Arriba se aprieta hasta 67° sin topar: el tope apretando no es el de 33.
+    expect(v.mano.topesDeInclinacion).toBe(0);
+    volar(v, 15, () => ({}));
+    expect(v.mano.topesDeInclinacion).toBe(1);
+  });
+
+  it("y sin protección no cuenta nada", () => {
+    const a = avion("jaz-20");
+    const v = empezar(a, TAGUATO_RUVICHA, maniobra(a));
+    v.gas = 1;
+    volar(v, 15, () => ({ teclaAlabeo: 1 }));
+    volar(v, 5, () => ({}));
+    expect(v.mano.topesDeInclinacion).toBe(0);
+  });
+
   it("el reactor llega hasta 67° apretando, y al soltar vuelve a 33° despacio", () => {
     const a = avion("jaz-90");
     const v = empezar(a, TAGUATO_RUVICHA, maniobra(a));

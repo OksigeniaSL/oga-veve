@@ -66,6 +66,11 @@ La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un p
 Bajás muy de golpe: levantá un poco la nariz
 Estás muy inclinado: enderezá las alas
 Se soltó el piloto automático
+Llegamos a la altura de la ventanilla y el avión se queda acá solo. Ahora el motor es velocidad: más motor, más rápido.
+En este avión el automático también lleva el motor: mirá cómo la palanca se mueve sola para ir a la velocidad de la marca rosa.
+Tocaste el motor: ahora la velocidad la llevás vos. El automático sigue con la altura.
+Soltamos el automático para aterrizar a mano. Seguí la senda, como venía él.
+El automático ya baja por la senda. En la ventanilla ponemos la altura de irse al aire, por si hay que subir: bajar, lo manda la senda.
 El piloto automático se conecta en el aire
 Empezamos a bajar: despacito, hasta la pista
 La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
@@ -77,6 +82,8 @@ Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a baj
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
+La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.
+Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos
 La torre te deja volver a intentarlo
 La pista quedó libre: podés volver a bajar
 La pista ya está libre: volvé a intentarlo
@@ -176,9 +183,17 @@ Los aerofrenos, adentro: bajá la palanca.
 Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.
 Y el transpondedor: pongo el TCAS en espera.
 Metélo, el tren te frena
+Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien
+Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar
+¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan
+No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan
+Ya vamos despacio: quitá la reversa
+Pisaste el freno: el autofreno se soltó y ahora frenás vos
 Hay una tormenta delante: rodeála, no la cruces
 Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
 Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
+Entramos en la reserva, pero tenemos de sobra para llegar: aterrizamos acá.
+Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.
 Se acabó el combustible: planeá hasta la pista
 No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
 Vamos lentos: bajá un poco la nariz
@@ -250,6 +265,12 @@ Tirá para arriba
 Frená
 Seguí la raya y salí de la pista
 Bajá el motor
+La palanca se queda donde la dejás: el avión sigue así. Para volar derecho, tocala dos veces.
+Muy bien: alas derechas y vuelo nivelado.
+Más no se inclina: treinta y tres grados es el tope. Así viajan tranquilos los pasajeros.
+Mando conectado: podés volar con él.
+Joystick conectado: podés volar con él.
+Abajo tenés los pedales del timón: en tierra, con ellos se dobla. Pisá el de la izquierda para ir a la izquierda.
 No se ve la pista
 Vas muy despacio
 Estás cayendo muy rápido
@@ -440,6 +461,35 @@ Whiskey
 X-ray
 Yankee
 Zulu
+Son ciento diez kilómetros por hora.
+Son ciento treinta kilómetros por hora.
+Son ciento cuarenta kilómetros por hora.
+Son ciento cincuenta kilómetros por hora.
+Son ciento sesenta kilómetros por hora.
+Son ciento setenta kilómetros por hora.
+Son ciento ochenta kilómetros por hora.
+Son ciento noventa kilómetros por hora.
+Son doscientos kilómetros por hora.
+Son doscientos diez kilómetros por hora.
+Son doscientos veinte kilómetros por hora.
+Son doscientos treinta kilómetros por hora.
+Son doscientos cuarenta kilómetros por hora.
+Son doscientos cincuenta kilómetros por hora.
+Son doscientos sesenta kilómetros por hora.
+Son doscientos setenta kilómetros por hora.
+Son doscientos ochenta kilómetros por hora.
+Son trescientos diez kilómetros por hora.
+Son trescientos cuarenta kilómetros por hora.
+Son trescientos cincuenta kilómetros por hora.
+Son trescientos sesenta kilómetros por hora.
+Son trescientos noventa kilómetros por hora.
+Son cuatrocientos diez kilómetros por hora.
+Son cuatrocientos veinte kilómetros por hora.
+Son cuatrocientos cuarenta kilómetros por hora.
+Son cuatrocientos sesenta kilómetros por hora.
+Son cuatrocientos ochenta kilómetros por hora.
+Son quinientos veinte kilómetros por hora.
+Son quinientos cuarenta kilómetros por hora.
 Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 ¡Tus gafas de sol!
 El anemómetro no marca: gas atrás y frená, con calma.

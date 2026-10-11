@@ -95,6 +95,7 @@ backtrack runway
 go around
 roger, Mayday
 roger, Pan Pan
+roger, minimum fuel, no delay expected
 caution, birds on final
 free
 occupied

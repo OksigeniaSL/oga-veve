@@ -53,6 +53,7 @@ import {
   PYKASU,
   conMasa,
   esDeChorro,
+  tieneReversa,
   velocidadDePerdida,
   type AircraftConfig,
 } from "./flight/aircraft";
@@ -763,7 +764,8 @@ import {
 } from "./flight/carrera";
 import { TomaLarga } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
-import { GAS_AL_RALENTI } from "./flight/palanca-de-aerofrenos";
+import { GAS_AL_RALENTI, type PosicionDeLaPalanca } from "./flight/palanca-de-aerofrenos";
+import { REVERSA_HASTA } from "./flight/frenada";
 import {
   MARGEN_DEL_PRIMER_PELDANO,
   NADA_RECORDADO,
@@ -1015,12 +1017,15 @@ import {
 } from "./flight/escalera-de-velocidades";
 import {
   CadenaDelVuelo,
+  CASI_EL_MAR,
+  CERCA_DEL_CRUCERO,
   comoSeDice,
   consejoDelPaso,
   type LecturaDelPaso,
   type Paso as PasoDeLaCadena,
 } from "./flight/siguiente-paso";
 import { gasQueSostiene, marcaDelGas } from "./flight/gas-que-toca";
+import { piezaDeVelocidad, velocidadDicha } from "./flight/velocidad-dicha";
 import {
   AvisadorDeAltitud,
   PIE as PIE_EN_METROS,
@@ -1484,6 +1489,27 @@ const GAS_EN_LA_RECOGIDA = 0.15;
  */
 const DEL_AIRE =
   /^vuelo\.(?:quitaElGas|narizEnLaRecogida|narizYQuitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube|terrenoDelante|consejo\.\w+|paso\.\w+)(?:[~@].*)?$/;
+
+/**
+ * **La carrera de aterrizaje**, en m/s y en segundos. Ver `contarLaCarrera`.
+ *
+ * Empieza al tocar corriendo —veinticinco metros por segundo, por debajo de
+ * la toma más lenta de la flota—, para no confundirla con el primer contacto
+ * del vuelo, parado en el puesto; y se acaba casi parado. Los paneles que
+ * salen en los seis primeros segundos han salido «al tocar», y al segundo y
+ * medio ya han tenido tiempo de salir: si no, es que no estaban armados.
+ */
+const EMPIEZA_LA_CARRERA = 25;
+const SE_ACABA_LA_CARRERA = 3;
+const AL_TOCAR = 6;
+const MIRA_LOS_PANELES = 1.5;
+
+/**
+ * **Cuánto gira la ayuda de rodaje en una curva**, del volante, de 0 a 1: un
+ * cuarto. Por debajo son las correcciones de ir por la raya. Ver
+ * `contarLosPedales`.
+ */
+const CURVA_DE_LA_AYUDA = 0.25;
 
 /**
  * Cuánto antes de la pista se deja de avisar del terreno, m.
@@ -6463,6 +6489,64 @@ export class Game {
   }
 
   /**
+   * **Un canto de la tripulación que puede no estar grabado todavía**, y que
+   * entonces no se pide.
+   *
+   * Es `cantar` con una puerta delante: en el peldaño de cabina, solo si el
+   * canto en inglés tiene su toma; en los de abajo, solo si la tiene la
+   * explicación de la instructora. Sin ella, `cantar` lo mandaría a la voz del
+   * navegador, que en el Brave de Enrique no existe: una frase nueva no puede
+   * quedarse muda. Los cantos que esperan su toma están en `ESPERAN_SU_TOMA`
+   * de `audio/cabina.ts`.
+   */
+  private cantarLoGrabado(
+    ingles: string,
+    clave?: TranslationKey,
+    urgencia: Urgencia = "normal",
+  ): void {
+    const deCabina = claveDeCabina(ingles);
+    const suena = cantaLaCabina(this.tier.avisos, "tripulacion")
+      ? deCabina !== null && this.instructor.vozDe(deCabina) !== null
+      : clave !== undefined && this.instructor.vozDe(clave) !== null;
+    if (!suena) {
+      this.apuntarCanto(`${ingles}: sin grabar, no se pide`);
+      return;
+    }
+    this.cantar(ingles, clave ? t(clave) : undefined, clave, urgencia);
+  }
+
+  /**
+   * **Una frase de la instructora, solo si está grabada.** Sin su toma no se
+   * pide: la diría la voz del navegador, y donde no la hay —el Brave de
+   * Enrique— es silencio. Lo que tenga que verse ya se ve en su tarjeta.
+   */
+  private decirLoGrabado(clave: TranslationKey, urgencia: Urgencia = "normal"): boolean {
+    if (!this.instructor.vozDe(clave)) {
+      this.apuntarCanto(`${clave}: sin grabar, no se pide`);
+      return false;
+    }
+    this.instructor.decir(t(clave), clave, urgencia);
+    return true;
+  }
+
+  /**
+   * **Una explicación, una vez por vuelo**, en los tres peldaños de abajo y
+   * con su grabación. En el de cabina ya no explica nadie: ver
+   * `laInstructoraLoExplica`. Se da por dicha cuando se dice, no cuando se
+   * calla por no estar grabada.
+   */
+  private explicarUnaVez(clave: TranslationKey, urgencia: Urgencia = "normal"): boolean {
+    if (!laInstructoraLoExplica(this.tier.avisos) || this.explicadoEnEsteVuelo.has(clave))
+      return false;
+    if (!this.decirLoGrabado(clave, urgencia)) return false;
+    this.explicadoEnEsteVuelo.add(clave);
+    return true;
+  }
+
+  /** Lo explicado en este vuelo. Ver `explicarUnaVez`. */
+  private readonly explicadoEnEsteVuelo = new Set<string>();
+
+  /**
    * **Un número de la cuenta**, por la voz de la máquina y en este instante.
    *
    * No pasa por `cantar` porque no tiene nada que repartir: la cuenta no sube
@@ -6504,7 +6588,127 @@ export class Game {
     BOCA.retirar((clave) => !!clave && DEL_AIRE.test(clave));
     // Una toma nueva: lo que se dice en la pista se vuelve a decir una vez.
     this.loDichoEnLaPista = NADA_DICHO_EN_LA_PISTA;
+    /*
+     * Y una carrera que contar, si esto es aterrizar: corriendo. Al empezar el
+     * vuelo en el puesto también se «toca» tierra, parado, y eso no es una
+     * toma.
+     */
+    const p = this.input.palancaDeAerofrenos;
+    this.carrera =
+      this.flight.state.groundSpeed > EMPIEZA_LA_CARRERA
+        ? {
+            t: 0,
+            palancaAlTocar: p.palanca,
+            deTierra: p.frenosDeTierraFuera,
+            sinFrenosMirado: false,
+            sinFrenosDicho: false,
+            abierta: this.reversa.abierta >= 0.99,
+            frenando: p.frenando,
+            ktAntes: Infinity,
+            setenta: false,
+            reversaDicha: false,
+            sueltos: p.soltadoConElPie,
+          }
+        : null;
   }
+
+  /**
+   * **La carrera de aterrizaje, contada**: lo que canta quien no vuela en un
+   * reactor —los paneles del ala, las reversas, el autofreno, los setenta
+   * nudos— y lo que explica la instructora en los peldaños de abajo.
+   *
+   * Los cantos son de la tripulación, así que suben por la escalera: en inglés
+   * en el peldaño de cabina y, en los de abajo, la explicación en casa en su
+   * lugar —`cantarLoGrabado`, un suceso y una voz—. Los cantos son los de la
+   * familia de Airbus, que es la del autofreno LO, MED y MAX de este juego.
+   * Cada cosa una vez por carrera, y solo con su grabación: sin ella se ve en
+   * el cuadro, que es lo que había.
+   */
+  private contarLaCarrera(dt: number): void {
+    const c = this.carrera;
+    const s = this.flight.state;
+    if (!c || !s.onGround) return;
+    // Parado, la carrera se acabó: lo que queda es rodar.
+    if (s.groundSpeed < SE_ACABA_LA_CARRERA) {
+      this.carrera = null;
+      return;
+    }
+    c.t += dt;
+    const p = this.input.palancaDeAerofrenos;
+    const explica = laInstructoraLoExplica(this.tier.avisos);
+    /*
+     * Los paneles del ala que salen al tocar, o poco después —armados y con el
+     * gas que llega al ralentí—. Más tarde ya no es «al tocar».
+     */
+    const fuera = p.frenosDeTierraFuera;
+    if (fuera && !c.deTierra && c.t < AL_TOCAR && !c.sinFrenosDicho)
+      this.cantarLoGrabado("spoilers", "vuelo.salenLosFrenosDeTierra", "mando");
+    c.deTierra = fuera;
+    /*
+     * Y los que no salen porque la palanca estaba recogida: el ala sigue
+     * llevando el avión y los frenos casi no muerden. Se mira pasado un
+     * momento, que es lo que tardan en salir.
+     */
+    if (!c.sinFrenosMirado && c.t > MIRA_LOS_PANELES) {
+      c.sinFrenosMirado = true;
+      if (
+        explica &&
+        this.aircraft.frenosDeTierra !== null &&
+        c.palancaAlTocar === "recogida" &&
+        !fuera
+      )
+        c.sinFrenosDicho = this.decirLoGrabado("vuelo.sinFrenosDeTierra", "mando");
+    }
+    // Las reversas, abiertas del todo: «reverse green».
+    const abierta = this.reversa.abierta >= 0.99;
+    if (abierta && !c.abierta) this.cantarLoGrabado("reverse green");
+    c.abierta = abierta;
+    // El autofreno que entra: «decel».
+    if (p.frenando && !c.frenando) this.cantarLoGrabado("decel");
+    c.frenando = p.frenando;
+    // Los setenta nudos, en el avión con autofreno: las reversas, a ralentí.
+    const kt =
+      indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS;
+    if (!c.setenta && p.hayAutofreno && c.ktAntes >= 70 && kt < 70) {
+      c.setenta = true;
+      this.cantarLoGrabado("seventy knots");
+    }
+    c.ktAntes = kt;
+    /*
+     * La reversa por debajo de donde frena —ver `REVERSA_HASTA`—, con la tecla
+     * todavía apretada: ahí ya no frena y levanta lo que haya del suelo.
+     */
+    if (
+      explica &&
+      !c.reversaDicha &&
+      tieneReversa(this.aircraft) &&
+      this.input.controls.reversa > 0 &&
+      s.groundSpeed < REVERSA_HASTA
+    ) {
+      c.reversaDicha = true;
+      this.decirLoGrabado("vuelo.quitaLaReversa");
+    }
+    // Y el autofreno que suelta el pie: ahora frena quien vuela.
+    if (p.soltadoConElPie > c.sueltos) {
+      c.sueltos = p.soltadoConElPie;
+      if (explica) this.decirLoGrabado("vuelo.autofrenoSuelto");
+    }
+  }
+
+  /** La carrera de aterrizaje de ahora, si se está en una. Ver `contarLaCarrera`. */
+  private carrera: {
+    t: number;
+    palancaAlTocar: PosicionDeLaPalanca;
+    deTierra: boolean;
+    sinFrenosMirado: boolean;
+    sinFrenosDicho: boolean;
+    abierta: boolean;
+    frenando: boolean;
+    ktAntes: number;
+    setenta: boolean;
+    reversaDicha: boolean;
+    sueltos: number;
+  } | null = null;
 
   /**
    * **La recogida, acompañada: la nariz un poquito arriba y el gas fuera.**
@@ -7736,7 +7940,20 @@ export class Game {
         // Y a partir de aquí la luz la lleva la torre.
         this.laTorreMandaEnLaLuz = true;
       }
-      const dicho = this.avisoCon("vuelo.mandanFrustrar", "palabra.alAire");
+      /*
+       * **Y si la torre ya nos había dejado aterrizar, el porqué de que lo
+       * quite**, que a los cuatro años es lo raro: «¿no me había dejado?». En
+       * lugar de la de siempre, con su grabación, y la tarjeta con la misma
+       * frase que la voz.
+       */
+      const anulado =
+        porque === "pistaOcupada" &&
+        this.permisoDeAterrizar === "oido" &&
+        this.instructor.vozDe("vuelo.permisoAnulado") !== null;
+      const dicho = this.avisoCon(
+        anulado ? "vuelo.permisoAnulado" : "vuelo.mandanFrustrar",
+        "palabra.alAire",
+      );
       this.hud.senal.mostrar("frustrada", dicho.rotulo, null, {
         segundos: Infinity,
         prioridad: URGENTE,
@@ -12451,6 +12668,7 @@ export class Game {
      */
     this.input.ponerAvion(this.pilotoDePruebas ? null : this.loQueVeLaMano());
     this.input.update(dt);
+    this.explicarLosMandos();
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
     // mando del jugador borraba la asistencia y los cuatro peldaños daban
@@ -12600,6 +12818,7 @@ export class Game {
     } else if (ya.heightAboveGround - this.aircraft.gearHeight > 30) {
       this.yaTocoTierra = false;
     }
+    this.contarLaCarrera(dt);
 
     /*
      * **Y el número en grande, que es otro peldaño.**
@@ -14704,14 +14923,20 @@ export class Game {
        * toca: a la pista, que se aterriza aquí. Lejos y con otro campo más
        * cerca, el desvío de siempre.
        *
-       * PENDIENTE-VOCES-automatico: `vuelo.reservaAqui` en lugar de «Andá a
-       * la pista» cuando esté grabada.
+       * Y en el aire, con su porqué —«tenemos de sobra para llegar»— en cuanto
+       * esté grabada; hasta entonces, «andá a la pista», que también es
+       * verdad. La tarjeta, con la misma frase que la voz.
        */
       const llegando = this.llegandoAlDestino();
-      if (!this.flight.state.onGround && !llegando) this.desviarConLaReserva();
+      const enElAire = !this.flight.state.onGround;
+      if (enElAire && !llegando) this.desviarConLaReserva();
       const aqui = llegando || this.desvioId === null;
       const dicho = this.avisoCon(
-        aqui ? "vuelo.enVueloAterrizando" : "vuelo.reserva",
+        !aqui
+          ? "vuelo.reserva"
+          : enElAire && this.instructor.vozDe("vuelo.reservaAqui")
+            ? "vuelo.reservaAqui"
+            : "vuelo.enVueloAterrizando",
         "palabra.reserva",
       );
       this.hud.senal.mostrar("combustible", dicho.rotulo, null, { segundos: 6 });
@@ -14858,15 +15083,28 @@ export class Game {
    * arriba, como el MAYDAY: no es una emergencia, es avisar a la torre de que
    * no se puede esperar.
    *
-   * PENDIENTE-VOCES-automatico: la respuesta de la torre,
-   * `torre.minimumFuel`, y `vuelo.reservaMinimo` de la instructora abajo.
+   * Y la torre contesta con su voz —«roger, minimum fuel, no delay
+   * expected»—, y detrás la instructora cuenta qué se ha dicho, en el único
+   * peldaño donde la llamada se hace y todavía se explica. Las dos, solo con
+   * su grabación: hasta entonces, la tira de la radio. Un AFIS no contesta
+   * nada, que no ordena a nadie: ver `EN_UN_AFIS`.
    */
   private declararCombustibleMinimo(): void {
     if (!this.hayTorreQueHable()) return;
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (!conCifras) return;
-    this.hud.radio(`${this.miIndicativo.dicho}, minimum fuel`, 9, true);
+    const yo = this.miIndicativo;
+    // La respuesta va escrita detrás, como la del MAYDAY: la tira es su canal.
+    const montada = this.deTorre("torre.minimumFuel", yo);
+    this.hud.radio(
+      `${yo.dicho}, minimum fuel${montada ? ` — ${montada.texto}` : ""}`,
+      9,
+      true,
+    );
+    if (montada && this.instructor.vozDe(montada.clave, montada.relleno))
+      this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+    if (laInstructoraLoExplica(this.tier.avisos)) this.decirLoGrabado("vuelo.reservaMinimo");
   }
 
   /**
@@ -16999,6 +17237,47 @@ export class Game {
   /** Si ya se dijo «motor a fondo» en esta entrada en pista. */
   private gasSueltoDicho = false;
 
+  /**
+   * **Los mandos, contados la primera vez que se usan en el vuelo**, en los
+   * tres peldaños de abajo y con su grabación: la palanca del dedo que se
+   * queda donde se deja, el doble toque que la centra, el tope de la
+   * inclinación protegida, el mando de juego que aparece y los pedales del
+   * timón. Lo que pasa lo apunta quien lo ve —`sucesosDeLosMandos` y
+   * `topesDeInclinacion`—; aquí solo se dice. Sin grabar, lo que hay es el
+   * dibujo y el movimiento de la palanca, como hasta ahora.
+   */
+  private explicarLosMandos(): void {
+    const enElAire = !this.flight.state.onGround;
+    for (const suceso of this.input.sucesosDeLosMandos()) {
+      if (suceso === "palancaQueSeQueda" && enElAire) this.explicarUnaVez("tutor.palancaSeQueda");
+      else if (suceso === "dobleToque" && enElAire) this.explicarUnaVez("tutor.dobleToque");
+      else if (suceso === "mandoConectado") this.explicarUnaVez("tutor.mandoConectado");
+      else if (suceso === "joystickConectado") this.explicarUnaVez("tutor.joystickConectado");
+      else if (suceso === "pedales") this.contarLosPedales();
+    }
+    const topes = this.input.mano.topesDeInclinacion;
+    if (topes !== this.topesDeInclinacionVistos) {
+      this.topesDeInclinacionVistos = topes;
+      if (enElAire) this.explicarUnaVez("tutor.inclinacionTope");
+    }
+  }
+
+  /** Los topes de inclinación ya mirados. Ver `explicarLosMandos`. */
+  private topesDeInclinacionVistos = 0;
+
+  /**
+   * **Los pedales del timón, contados en tierra**: «¿para qué es esa barra?».
+   * Una vez por vuelo, en lo primero que llegue: el dedo en la barra, o la
+   * primera curva del rodaje que gira la ayuda por quien no los toca —que es
+   * justo cuando sirve saber que existen—. Solo si se ven: con ratón no se
+   * pintan. Ver `tutor.pedales`.
+   */
+  private contarLosPedales(): void {
+    if (!this.flight.state.onGround || this.explicadoEnEsteVuelo.has("tutor.pedales")) return;
+    if (!this.input.pedalesALaVista) return;
+    this.explicarUnaVez("tutor.pedales");
+  }
+
   private asistirRodaje(dt: number): void {
     void dt;
     const fuerza = this.tier.assists.taxiAssist;
@@ -17036,6 +17315,9 @@ export class Game {
       return;
     const sugerido = this.plan.asistencia(s, suelo, anticipa);
     if (sugerido === 0) return;
+    // Una curva de verdad que la ayuda gira por quien no toca el timón.
+    if (Math.abs(sugerido) >= CURVA_DE_LA_AYUDA && Math.abs(pide.timon) < GIRA_QUIEN_JUEGA)
+      this.contarLosPedales();
 
     const c = this.input.controls;
     const mando = Math.abs(c.aileron);
@@ -19636,7 +19918,10 @@ export class Game {
    * sentido». Ahora, de Taguato para arriba y con el `G/S` escrito en el FMA;
    * si no, se queda en la del punto de final. Ver `ventanillaEnLaFinal`.
    *
-   * Una vez por aproximación; se rearma al dejar el tramo final.
+   * Una vez por aproximación; se rearma al dejar el tramo final. Y al
+   * cambiar, la instructora lo cuenta en el único peldaño donde cambia y
+   * todavía se explica, Taguató: la ventanilla subiendo con el avión bajando
+   * a la pista es justo lo que no se entiende sin decirlo.
    */
   private ponerLaFrustradaEnLaVentanilla(enElTramoFinal: boolean): void {
     if (!enElTramoFinal) {
@@ -19659,8 +19944,11 @@ export class Game {
       tope: topeDeLaVentanilla(this.aircraft),
     });
     if (pies === null) return;
+    const cambia = pies !== this.ventanillaAlt;
     this.ventanillaAlt = pies;
     this.frustradaEnLaVentanilla = true;
+    if (cambia && canalesDe(this.tier.avisos).cifra)
+      this.explicarUnaVez("vuelo.ventanillaFrustrada");
   }
 
   /**
@@ -19749,7 +20037,15 @@ export class Game {
    * enganchar con un objetivo distinto del vuelo actual es la forma más rápida
    * de asustar a quien va dentro.
    */
-  ponerPilotoAutomatico(puesto = !this.pilotoPuesto): void {
+  ponerPilotoAutomatico(
+    puesto = !this.pilotoPuesto,
+    /**
+     * Lo que explica la instructora detrás del «autopilot disconnect», si se
+     * suelta: «se soltó» cuando pasa sin querer; otra cosa cuando se suelta a
+     * propósito. Ver `conElPilotoAutomatico`.
+     */
+    explica: TranslationKey = "vuelo.pilotoSuelto",
+  ): void {
     // El modo que cambia por el botón se recuadra, sin tono. Ver `mirarLoQueCambia`.
     this.manoEnElAutomatico = this.relojDelJuego;
     /*
@@ -19799,12 +20095,7 @@ export class Game {
      * mirando; soltarse es lo que pasa sin querer.
      */
     if (!puesto && this.pilotoPuesto) {
-      this.cantar(
-        "autopilot disconnect",
-        t("vuelo.pilotoSuelto"),
-        "vuelo.pilotoSuelto",
-        "mando",
-      );
+      this.cantar("autopilot disconnect", t(explica), explica, "mando");
     }
     const s = this.flight.state;
     if (puesto) {
@@ -19823,7 +20114,8 @@ export class Game {
      * uno, y la pantalla de vuelo dice qué hace cada mano. Ver
      * `flight/gases-automaticos.ts`.
      *
-     * PENDIENTE-VOCES-automatico: `vuelo.gasesAutomaticos` al ponerlos.
+     * Y la primera vez en el vuelo, en los peldaños de abajo, la instructora
+     * lo cuenta: la palanca que se mueve sola es lo que más extraña.
      */
     /*
      * Y si el gas de la final de Guyrami era de los gases del avión, se quedan
@@ -19835,6 +20127,8 @@ export class Game {
       (puesto && llevaGasesAutomaticos(this.aircraft)) ||
       (!puesto && this.gasDeLaFinal === "gases");
     this.pintarQuienLlevaElGas();
+    if (puesto && llevaGasesAutomaticos(this.aircraft))
+      this.explicarUnaVez("vuelo.gasesAutomaticos");
     /*
      * **Y con ventanilla ALT, a la altura de la ventanilla.**
      *
@@ -20015,10 +20309,17 @@ export class Game {
        * los «one thousand» y «five hundred» del radioaltímetro para que su
        * aviso no pise ninguno.
        *
-       * PENDIENTE-VOCES-automatico: `vuelo.automaticoParaAterrizar`.
+       * Y lo que explica la instructora detrás no es «se soltó», que suena a
+       * que pasó sin querer: es que se suelta para aterrizar a mano. Con su
+       * grabación; sin ella, «se soltó», que también es verdad.
        */
       if (sobreLaPista < SUELTA_PARA_ATERRIZAR) {
-        this.ponerPilotoAutomatico(false);
+        this.ponerPilotoAutomatico(
+          false,
+          this.instructor.vozDe("vuelo.automaticoParaAterrizar")
+            ? "vuelo.automaticoParaAterrizar"
+            : "vuelo.pilotoSuelto",
+        );
         return c;
       }
       if (senda) {
@@ -20269,8 +20570,9 @@ export class Game {
    * palanca se queda donde la dejó el servo, que es donde la encuentra quien
    * la toca.
    *
-   * PENDIENTE-VOCES-automatico: `vuelo.gasesSueltos`, en los peldaños de
-   * abajo, la primera vez.
+   * Y en los peldaños de abajo, la primera vez, la instructora lo cuenta. Si
+   * a la vez se suelta el gas de la final de Guyrami, lo cuenta ese —ver
+   * `soltarElGasDeLaFinal`—: un suceso, una voz.
    */
   private soltarLosGases(): void {
     if (!this.gasesPuestos) return;
@@ -20278,7 +20580,12 @@ export class Game {
     this.objetivos = { ...this.objetivos, velocidad: null };
     this.pintarQuienLlevaElGas();
     this.avisar("attention");
+    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego)
+      this.explicarUnaVez("vuelo.gasesSueltos");
   }
+
+  /** Cuándo se soltó el gas de la final por tocarlo, en el reloj del juego. */
+  private gasDeLaFinalSueltoEn = -1;
 
   /**
    * **El dibujo de quién lleva el gas**, en la tarjeta del motor: el del
@@ -20502,9 +20809,19 @@ export class Game {
       this.nivelada = { memoria: memoriaNueva(), nivel };
       this.trimDeLaNivelada = c.trim;
       /*
-       * PENDIENTE-VOCES-automatico: `vuelo.niveladaAsistida` aquí, y
-       * `vuelo.automaticoArriba` si lo lleva.
+       * **Y la instructora lo cuenta, la primera vez**: el avión se queda solo
+       * y el motor pasa a ser velocidad. Solo por debajo del crucero: al
+       * llegar arriba lo cuenta el paso del crucero —ver `decirElPaso`—, y
+       * dos frases para el mismo suceso es lo que no se hace.
        */
+      const crucero = this.navegacion.plan
+        ? aLaVentanilla(this.navegacion.cruceroPlaneado)
+        : null;
+      if (
+        this.llevaVentanillaAlt &&
+        (crucero === null || nivel / PIE_EN_METROS < crucero - CERCA_DEL_CRUCERO)
+      )
+        this.explicarUnaVez("vuelo.niveladaAsistida");
       if (llevaPilotoAutomatico(this.aircraft)) this.hud.proponerPilotoAutomatico(true);
     }
     const aire = this.flight.aireDelDia();
@@ -21580,6 +21897,7 @@ export class Game {
   private reiniciarLoQueSuena(): void {
     this.loQueCambia.reiniciar();
     this.cambiosExplicados.clear();
+    this.explicadoEnEsteVuelo.clear();
     this.llamadas = [];
     this.llamadasDelPasaje.reiniciar();
     // Con `?.`: un vuelo puede rehacerse antes de que exista el HUD.
@@ -22039,11 +22357,39 @@ export class Game {
       if (habla && forma) this.cantar("gear down", forma.texto, forma.id);
       else if (canales.cabina) this.cantar("gear down");
     } else if (habla && forma) {
-      this.instructor.decir(forma.texto, forma.id);
+      const cifra = forma.id === como.nueva ? this.velocidadEnVoz(p) : null;
+      if (cifra)
+        this.instructor.decir(`${forma.texto} ${cifra.texto}`, forma.id, "normal", cifra.relleno);
+      else this.instructor.decir(forma.texto, forma.id);
     }
     const consejo = consejoDelPaso(p, como.mando);
     if (consejo && this.lecturaDelConsejo?.activo)
       this.consejero.anotar(consejo, this.lecturaDelConsejo);
+  }
+
+  /**
+   * **El número de la marca, dicho detrás del paso**, en el peldaño de las
+   * cifras: la pieza grabada con la cifra —«Son trescientos noventa
+   * kilómetros por hora.»— y su texto, o `null` si no se dice.
+   *
+   * Solo en los pasos cuyo objetivo es la velocidad —acelerar, frenar,
+   * mantener—, con la frase nueva del paso, que es la que lleva el hueco, y
+   * solo si la cifra está grabada: sin ella la frase va entera y sin número,
+   * que sigue en la tarjeta. Es la misma cifra que la tarjeta, a la decena:
+   * ver `velocidadDicha` y `flight/velocidad-dicha.ts`.
+   */
+  private velocidadEnVoz(
+    p: PasoDeLaCadena,
+  ): { texto: string; relleno: Record<string, string> } | null {
+    if (p.que !== "acelerar" && p.que !== "frenar" && p.que !== "mantener") return null;
+    if (!canalesDe(this.tier.avisos).cifra) return null;
+    const pieza = piezaDeVelocidad(p.objetivo.kt, this.tier.units);
+    if (!pieza || !this.instructor.vozDe(pieza)) return null;
+    const n = velocidadDicha(p.objetivo.kt, this.tier.units);
+    return {
+      texto: t("vuelo.paso.velocidad", { n: String(n) }),
+      relleno: { velocidad: pieza },
+    };
   }
 
   /**
@@ -22057,7 +22403,8 @@ export class Game {
     // La cota, sola: la velocidad no tiene que ver con ella.
     if (p.que === "cota" && p.objetivo.pies !== null)
       return `${Math.round(u.altitude(p.objetivo.pies * PIE_EN_METROS))} ${u.altitudeLabel()}`;
-    const partes = [`${Math.round(u.speed(p.objetivo.kt * NUDO))} ${u.speedLabel()}`];
+    // La velocidad, a la decena en km/h: la misma cifra que dice la voz.
+    const partes = [`${velocidadDicha(p.objetivo.kt, this.tier.units)} ${u.speedLabel()}`];
     if (p.objetivo.pies !== null)
       partes.push(
         `${Math.round(u.altitude(p.objetivo.pies * PIE_EN_METROS) / 10) * 10} ${u.altitudeLabel()}`,
@@ -22322,6 +22669,7 @@ export class Game {
     this.pintarQuienLlevaElGas();
     this.apuntarCanto(`gas de la final: suelto${porTocar ? " al tocarlo" : ""}`);
     if (!porTocar || this.flight.state.onGround) return;
+    this.gasDeLaFinalSueltoEn = this.relojDelJuego;
     this.avisar("attention");
     const canales = canalesDe(this.tier.avisos);
     const clave: TranslationKey = "vuelo.paso.gasTuyo";
@@ -22677,7 +23025,8 @@ export class Game {
    * es lo que hace el piloto que no vuela con la lista en un avión de dos. En
    * el de cabina, la lista es de quien vuela.
    *
-   * La voz que lo dice está por grabar: ver PENDIENTE-VOCES-aterrizaje.md.
+   * Y con voz, la que pide armarlos y la de la instructora al armarlos ella,
+   * en cuanto estén grabadas; hasta entonces, la tarjeta sola.
    */
   private atenderALaListaDeAterrizaje(): void {
     const p = this.input.palancaDeAerofrenos;
@@ -22748,8 +23097,11 @@ export class Game {
        * aviso de terreno, la frustrada— ésta no entra, y se vuelve a ofrecer en
        * cuanto quede sitio. No es un reloj: es la cola de las tarjetas.
        */
-      if (this.hud.senal.puesto.dibujo === "aerofrenos-armados")
+      if (this.hud.senal.puesto.dibujo === "aerofrenos-armados") {
         this.listaDeAterrizaje = { ...this.listaDeAterrizaje, pedida: true };
+        // Y con la tarjeta a la vista, la voz que la pide: una vez por vuelo.
+        this.explicarUnaVez("vuelo.armaLosAerofrenos");
+      }
       return;
     }
     if (
@@ -22765,6 +23117,7 @@ export class Game {
         null,
         { segundos: 4 },
       );
+      this.decirLoGrabado("vuelo.losArmeYo");
     }
   }
 
@@ -24520,16 +24873,24 @@ export class Game {
    * final, que es cuando hay calma: en la final hablan la torre, la máquina
    * y el permiso.
    *
-   * Por ahora con la tarjeta, que lleva el número en las unidades del
-   * peldaño; su voz está por grabar —sin el número, para que valga en
-   * cualquier campo— y no se pide muda. Ver `PENDIENTE-VOCES-torre-final.md`.
+   * La tarjeta lleva el número en las unidades del peldaño, y la voz lo cuenta
+   * sin él, para que valga en cualquier campo, con la carta y los mínimos.
    * Abajo no se cuenta, que no hay números; arriba ya se vuela con la carta.
+   *
+   * **Y la cota es una sola cosa, con una sola voz.** La cadena del «¿y ahora
+   * qué?» la cuenta detrás del punto de descenso —`vuelo.paso.cotaAlMar` y
+   * `vuelo.paso.cotaEnAlto`—, en los cuatro peldaños. Si ya la contó, aquí no
+   * se cuenta; y si se cuenta aquí antes —un tramo corto, donde se llega a la
+   * zona de la torre antes de empezar a bajar—, la cadena la da por dicha y ya
+   * no la repite. Sin la grabación de la de aquí, suena la de la cadena que
+   * toque, que dice lo mismo sin la carta y también es verdad.
    */
   private contarLaCotaDeLaPista(): void {
     if (this.tier.avisos !== "cifra" || this.cotaContada || !this.elDestino()) return;
     this.cotaContada = true;
     // Si ya la dijo la cadena al empezar a bajar, no se cuenta dos veces.
     if (this.cadena.yaDicho("cota")) return;
+    this.cadena.darPorDicho("cota");
     const cota = this.cotaDeLaPistaALaQueSeVa();
     const escrita =
       this.tier.units === "metric"
@@ -24538,6 +24899,12 @@ export class Game {
     this.hud.senal.mostrar("senda", t("hud.cotaDeLaPista", { cota: escrita }), null, {
       segundos: 9,
     });
+    const clave: TranslationKey = this.instructor.vozDe("vuelo.cotaDeLaPista")
+      ? "vuelo.cotaDeLaPista"
+      : cota < CASI_EL_MAR
+        ? "vuelo.paso.cotaAlMar"
+        : "vuelo.paso.cotaEnAlto";
+    this.decirLoGrabado(clave);
   }
 
   /** Si en este tramo ya se contó la cota de la pista de llegada. */

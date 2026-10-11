@@ -155,6 +155,29 @@ export const ES_PY = {
   "tutor.frenar": "Frená",
   "tutor.salir": "Seguí la raya y salí de la pista",
   "tutor.slow": "Bajá el motor",
+  /*
+   * **Los mandos, contados la primera vez que se usan**, en los tres peldaños
+   * de abajo: la palanca del dedo que se queda donde se deja, el doble toque
+   * que la centra, el tope de inclinación del avión protegido y el mando de
+   * juego que se conecta. Sin su grabación no se piden: lo que hay mientras es
+   * el dibujo y el movimiento de la palanca. Ver `explicarLosMandos` en
+   * `game.ts`.
+   */
+  "tutor.palancaSeQueda":
+    "La palanca se queda donde la dejás: el avión sigue así. Para volar derecho, tocala dos veces.",
+  "tutor.dobleToque": "Muy bien: alas derechas y vuelo nivelado.",
+  "tutor.inclinacionTope":
+    "Más no se inclina: treinta y tres grados es el tope. Así viajan tranquilos los pasajeros.",
+  "tutor.mandoConectado": "Mando conectado: podés volar con él.",
+  "tutor.joystickConectado": "Joystick conectado: podés volar con él.",
+  /*
+   * Y la barra alargada de abajo del teléfono, en tierra: «¿para qué es?».
+   * «Se dobla» y no «la rueda de adelante», porque vale para los seis: el
+   * fumigador lleva patín de cola y también dobla con los pedales. Ver
+   * `contarLosPedales` en `game.ts`.
+   */
+  "tutor.pedales":
+    "Abajo tenés los pedales del timón: en tierra, con ellos se dobla. Pisá el de la izquierda para ir a la izquierda.",
   "help.assist": "M — nivel de dificultad",
   "help.start": "Empujá el motor a tope y tirá suave cuando corra",
 
@@ -1364,6 +1387,30 @@ export const ES_PY = {
   "vuelo.muyInclinado": "Estás muy inclinado: enderezá las alas",
   "vuelo.pilotoSuelto": "Se soltó el piloto automático",
   /*
+   * **El automático y los gases, contados.** La nivelada de los peldaños de
+   * abajo al llegar a la ventanilla por debajo del crucero —arriba lo cuenta
+   * el paso del crucero—, los gases que van con el automático en un reactor,
+   * soltarlos tocando el motor y el automático que se suelta para aterrizar a
+   * mano, en vez del «se soltó» de cuando se suelta sin querer. Cada una, solo
+   * con su grabación. Ver `sostenerElNivel`, `ponerPilotoAutomatico` y
+   * `soltarLosGases` en `game.ts`.
+   */
+  "vuelo.niveladaAsistida":
+    "Llegamos a la altura de la ventanilla y el avión se queda acá solo. Ahora el motor es velocidad: más motor, más rápido.",
+  "vuelo.gasesAutomaticos":
+    "En este avión el automático también lleva el motor: mirá cómo la palanca se mueve sola para ir a la velocidad de la marca rosa.",
+  "vuelo.gasesSueltos":
+    "Tocaste el motor: ahora la velocidad la llevás vos. El automático sigue con la altura.",
+  "vuelo.automaticoParaAterrizar":
+    "Soltamos el automático para aterrizar a mano. Seguí la senda, como venía él.",
+  /*
+   * Y la ventanilla en la final, que solo cambia con el automático bajando por
+   * la senda: lo cuenta en Taguató, el único peldaño donde cambia y todavía se
+   * explica. Ver `ponerLaFrustradaEnLaVentanilla`.
+   */
+  "vuelo.ventanillaFrustrada":
+    "El automático ya baja por la senda. En la ventanilla ponemos la altura de irse al aire, por si hay que subir: bajar, lo manda la senda.",
+  /*
    * Al apretar el botón en tierra. No es un error de quien juega: un piloto
    * automático de verdad no engancha con peso en las ruedas. Ver
    * `sePuedeConectar`.
@@ -1404,18 +1451,28 @@ export const ES_PY = {
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   /*
+   * **Y por qué se quita un permiso ya dado**, que a los cuatro años es lo
+   * raro: «¿no me había dejado?». En lugar de la de arriba cuando el permiso se
+   * había oído. Ver `mandaronIrseAlAire` en `game.ts`.
+   */
+  "vuelo.permisoAnulado":
+    "La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.",
+  /*
    * Y a los mínimos sin el permiso de la torre, con la pista libre: el porqué
    * no es la pista. Ya no se dice —la torre no manda al aire por su propio
    * retraso: a los mínimos el permiso llega a la vista— y por eso no se
    * graba. Ver `HABLADOS` en `scripts/frases-para-grabar.mjs`.
    */
   /*
-   * La cota de la pista de llegada, en el peldaño de los números: solo en la
-   * tarjeta, con el número. Su voz está por grabar, sin él. Ver
+   * La cota de la pista de llegada, en el peldaño de los números: el número va
+   * en la tarjeta; la voz lo cuenta sin él, para que valga en cualquier campo,
+   * y con la carta y los mínimos, que es lo que se lee con ese número. Ver
    * `contarLaCotaDeLaPista` en `game.ts`.
    */
   "hud.cotaDeLaPista":
     "La pista a la que vamos está a {cota} sobre el mar: lo que marca el altímetro menos eso es lo alto que vas sobre ella",
+  "vuelo.cotaDeLaPista":
+    "Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos",
   "vuelo.sinPermisoEnLosMinimos":
     "La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
@@ -1573,6 +1630,14 @@ export const ES_PY = {
   "vuelo.paso.sendaConAyuda":
     "Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.",
   "vuelo.paso.gasTuyo": "Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.",
+  /*
+   * **Y el número de la marca, dicho en el peldaño de las cifras** (punto
+   * 115), detrás del paso de velocidad que lo pide: una frase entera por
+   * cifra, montada con su hueco como las alturas de la torre. Las cifras que
+   * se graban son las que el juego puede pedir: ver
+   * `flight/velocidad-dicha.ts`.
+   */
+  "vuelo.paso.velocidad": "Son {n} kilómetros por hora.",
   "palabra.crucero": "Crucero",
   "palabra.nivela": "Nivelá",
   "palabra.laSenda": "La senda",
@@ -1753,6 +1818,23 @@ export const ES_PY = {
   "palabra.transpondedor": "Transpondedor",
   "vuelo.meteElTren": "Metélo, el tren te frena",
   /*
+   * **El aterrizaje de un reactor, contado**: la lista de los aerofrenos y el
+   * autofreno —pedirla y, en los peldaños de abajo, armarlos ella—, los
+   * paneles que salen al tocar o que no salen por no estar armados, la
+   * reversa que ya no frena y el autofreno que se suelta con el pie. Detrás de
+   * la llamada de cabina cuando la hay, nunca a la vez. Ver
+   * `atenderALaListaDeAterrizaje` y `contarLaCarrera` en `game.ts`.
+   */
+  "vuelo.armaLosAerofrenos":
+    "Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien",
+  "vuelo.losArmeYo": "Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar",
+  "vuelo.salenLosFrenosDeTierra":
+    "¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan",
+  "vuelo.sinFrenosDeTierra":
+    "No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan",
+  "vuelo.quitaLaReversa": "Ya vamos despacio: quitá la reversa",
+  "vuelo.autofrenoSuelto": "Pisaste el freno: el autofreno se soltó y ahora frenás vos",
+  /*
    * **Y es una tormenta, no lluvia.** Solo se avisa de las células de núcleo
    * rojo —ver `seRodea`—, que son las de tormenta: la lluvia floja se cruza y
    * no se nombra. Decir «lluvia» aquí enseñaba justo lo que no es.
@@ -1778,6 +1860,16 @@ export const ES_PY = {
    */
   "vuelo.reserva":
     "Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha",
+  /*
+   * Y la reserva cuando el más cercano es el destino, o ya se está llegando:
+   * se aterriza aquí. Y el «minimum fuel» de Taguató, contado como lo que es:
+   * no es una emergencia, es avisar de que no se puede esperar (OACI, Anexo 6,
+   * parte I, 4.3.7.2.2). Ver `quemarCombustible` y `declararCombustibleMinimo`.
+   */
+  "vuelo.reservaAqui":
+    "Entramos en la reserva, pero tenemos de sobra para llegar: aterrizamos acá.",
+  "vuelo.reservaMinimo":
+    "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.",
   "palabra.reserva": "Combustible",
   "vuelo.sinCombustible": "Se acabó el combustible: planeá hasta la pista",
   "palabra.sinCombustible": "Sin combustible",

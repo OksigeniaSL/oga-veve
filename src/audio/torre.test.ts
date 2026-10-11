@@ -18,6 +18,7 @@ import {
   DICE_UN_AFIS,
   EN_UN_AFIS,
   enUnAfis,
+  ESPERAN_SU_TOMA,
   NOMBRA_LA_PISTA,
   PISTA_DETRAS,
 } from "./torre";
@@ -120,9 +121,27 @@ describe("lo que dice la torre", () => {
 
   it("y la tabla no apunta a grabaciones que no existen", () => {
     const hay = new Set(grabadas);
-    expect(Object.values(CLAVE_DE_TORRE).filter((c) => !hay.has(c))).toEqual(
-      [],
+    expect(
+      Object.values(CLAVE_DE_TORRE).filter((c) => !hay.has(c) && !ESPERAN_SU_TOMA.has(c)),
+    ).toEqual([]);
+  });
+
+  /*
+   * **Y las que esperan su toma, la esperan de verdad**, en las dos voces: en
+   * cuanto se graban salen de `ESPERAN_SU_TOMA`, que es una excepción y no un
+   * cajón.
+   */
+  it("y lo que espera su toma no está grabado en ninguna de las dos torres", () => {
+    const deCanarias = new Set(
+      Object.keys((canarias as { recetas: Record<string, unknown> }).recetas),
     );
+    const apuntadas = new Set(Object.values(CLAVE_DE_TORRE));
+    for (const c of ESPERAN_SU_TOMA) {
+      expect(apuntadas.has(c), c).toBe(true);
+      expect(grabadas, `${c} ya tiene toma: sácala de ESPERAN_SU_TOMA`).not.toContain(c);
+      const suya = c.replace("torre.", "torre.canario.");
+      expect(deCanarias.has(suya), `${suya} ya tiene toma`).toBe(false);
+    }
   });
 
   /*

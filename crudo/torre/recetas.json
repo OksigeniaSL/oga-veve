@@ -1112,5 +1112,16 @@
     "{r1}",
     "{r2}",
     "lado.center"
+  ],
+  "torre.solo.minimumFuel": [
+    "torre.solo.minimumFuel"
+  ],
+  "torre.minimumFuel": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.minimumFuel"
   ]
 }

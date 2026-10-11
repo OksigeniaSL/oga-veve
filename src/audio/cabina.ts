@@ -101,7 +101,8 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    * Entran aquí **con su toma**, no antes: esta tabla y el manifiesto cuadran
    * en las dos direcciones y lo exigen dos pruebas de `cabina.test.ts`. Una
    * clave sin grabación apunta a un audio que no existe; una grabación sin
-   * clave se baja a cada tablet para no sonar nunca.
+   * clave se baja a cada tablet para no sonar nunca. La única excepción va
+   * escrita en `ESPERAN_SU_TOMA`, y solo se pide con su grabación.
    *
    * `minimums` es el caso curioso: el juego lo decía desde hace tiempo y no
    * estaba en esta tabla, así que salía por la voz del navegador teniendo
@@ -138,7 +139,38 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    */
   "engine failure": "cabina.engineFailure",
   stop: "cabina.stop",
+  /*
+   * **Y la carrera de aterrizaje de los reactores**: lo que canta quien no
+   * vuela al tocar —los paneles del ala que salen, las reversas abiertas, el
+   * autofreno que entra y los setenta nudos de pasar las reversas a ralentí—.
+   * Son de la tripulación, así que suben por la escalera: en inglés en el
+   * peldaño de cabina y, en los de abajo, la instructora lo cuenta en casa.
+   * Ver `contarLaCarrera` en `game.ts`.
+   *
+   * Entran **antes que su toma**, y por eso están también en
+   * `ESPERAN_SU_TOMA`: el juego los pide solo cuando su grabación está en el
+   * pack —ver `cantarLoGrabado`—, nunca por la voz del navegador.
+   */
+  spoilers: "cabina.spoilers",
+  "reverse green": "cabina.reverseGreen",
+  decel: "cabina.decel",
+  "seventy knots": "cabina.seventyKnots",
 };
+
+/**
+ * **Los cantos de la tabla que todavía no tienen toma.**
+ *
+ * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen dos
+ * pruebas de `cabina.test.ts`—, y estos son la excepción escrita: el juego ya
+ * sabe cuándo decirlos y los pide solo si están en el pack. Cuando se graben,
+ * salen de aquí; la prueba lo recuerda.
+ */
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set([
+  "cabina.spoilers",
+  "cabina.reverseGreen",
+  "cabina.decel",
+  "cabina.seventyKnots",
+]);
 
 /**
  * **La cuenta del radioaltímetro**, número a número: lo único de la cabina

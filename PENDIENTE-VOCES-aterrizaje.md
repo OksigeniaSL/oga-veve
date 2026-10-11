@@ -1,71 +1,51 @@
 # Pendiente: grabar las voces del aterrizaje (aerofrenos, autofreno y reversa)
 
-La tanda del aterrizaje (palanca de aerofrenos de tres posiciones, frenos de
-tierra, autofreno, frenada calibrada y el tren tras despegar) se hizo el 2 de
-octubre de 2026. Ninguna de estas frases está metida en el juego como voz —ni
-la clave en `src/i18n/` como `vuelo.*`—: el juego funciona con lo que ya hay
-grabado y con tarjetas, y esto dice qué grabar y qué tocar después para que
-suenen. La lista de después del aterrizaje, punto por punto
-(`vuelo.despues.*`), se grabó el 11 de octubre de 2026.
+El código ya está hecho (11 de octubre de 2026): las claves, los textos en
+`es-PY` y `en`, las recetas y los enganches en `game.ts`
+(`atenderALaListaDeAterrizaje` y `contarLaCarrera`). Cada frase se pide **solo
+si su grabación está en el pack** —`decirLoGrabado`, `explicarUnaVez`,
+`cantarLoGrabado`—; hasta entonces suena lo que había y se ve la tarjeta. Falta
+grabar.
 
-Lo que ya suena sin grabar nada: el tren tras despegar usa las frases que
-había («Metélo, el tren te frena», `vuelo.meteElTren`, y «positive rate»,
-«gear up» en la cabina), ahora con margen en Guyrami y una segunda vez al
-cruzar los mil pies o acercarse a la VLE.
+## Lo que hay que grabar
 
-## La instructora
+La instructora (`instructor`), 470 caracteres:
 
-Voz `instructor` (castellano paraguayo con voseo, la de `docs/voces/voces.json`).
-Unos 560 caracteres.
-
-| Clave | es-PY | en | Cuándo |
-|---|---|---|---|
-| `vuelo.armaLosAerofrenos` | Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien | Before landing, arm the speed brakes and autobrake: they come out by themselves when we touch down | al entrar en final con el tren abajo y sin armar; hoy sale la tarjeta `hud.armaAerofrenos` sola (`atenderALaListaDeAterrizaje` en `game.ts`) |
-| `vuelo.losArmeYo` | Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar | I armed the speed brakes and autobrake, so we brake well when we touch down | en los tres peldaños de abajo, a 500 ft si seguían sin armar; hoy, tarjeta `hud.aerofrenosArmados` |
-| `vuelo.salenLosFrenosDeTierra` | ¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan | See that? The panels on the wing came up when we touched down: the wing stops holding the plane up and the wheels can brake | al salir los frenos de tierra, en los tres peldaños de abajo y detrás de la llamada de cabina (un suceso, una voz) |
-| `vuelo.sinFrenosDeTierra` | No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan | The speed brakes didn't come out because they weren't armed: brake gently, the wheels carry almost no weight at first | al tocar un reactor con la palanca recogida |
-| `vuelo.quitaLaReversa` | Ya vamos despacio: quitá la reversa | We're slow now: stow the reversers | con la reversa puesta por debajo de 30 kt (`REVERSA_HASTA`), donde ya no frena |
-| `vuelo.autofrenoSuelto` | Pisaste el freno: el autofreno se soltó y ahora frenás vos | You pressed the brakes: the autobrake let go, now you're braking | al desarmarse el autofreno con el pie mientras frenaba |
-
-## Las llamadas de cabina
-
-Las del piloto que no vuela en la carrera de aterrizaje de la familia de
-Airbus, que es la del autofreno LO/MED/MAX. Van en `CABINA` de
-`scripts/frases-para-grabar.mjs` (no se traducen) y, con su toma, en
-`CLAVE_DE_CABINA` de `src/audio/cabina.ts`. Suenan en los cuatro peldaños en
-los dos reactores —es lo que se oye en ese avión—, y en los de abajo la
-instructora explica detrás.
-
-| Clave | Texto | Cuándo |
+| Clave | Caracteres | Cuándo suena |
 |---|---|---|
-| `cabina.spoilers` | spoilers | al salir los frenos de tierra |
-| `cabina.reverseGreen` | reverse green | al abrirse las reversas en tierra |
-| `cabina.decel` | decel | al notarse la deceleración del autofreno (cuando entra) |
-| `cabina.seventyKnots` | seventy knots | a 70 kt en la carrera, para pasar las reversas a ralentí |
+| `vuelo.armaLosAerofrenos` | 92 | al salir la tarjeta de armarlos en la aproximación; una vez por vuelo, en los tres peldaños de abajo |
+| `vuelo.losArmeYo` | 68 | al armarlos ella a 500 ft, en los tres de abajo |
+| `vuelo.salenLosFrenosDeTierra` | 104 | al salir los paneles al tocar, en los tres de abajo: es la explicación en lugar de «spoilers» |
+| `vuelo.sinFrenosDeTierra` | 113 | tocando con la palanca recogida (grabar en calma: va en `EN_CALMA_COMO_SE_ESCRIBE`) |
+| `vuelo.quitaLaReversa` | 35 | con la tecla de la reversa apretada por debajo de `REVERSA_HASTA`, una vez por carrera |
+| `vuelo.autofrenoSuelto` | 58 | al soltar el pie el autofreno mientras frenaba |
+
+La cabina (`cabina`), 39 caracteres: `cabina.spoilers` (8), `cabina.reverseGreen`
+(13), `cabina.decel` (5) y `cabina.seventyKnots` (13). Son cantos de la
+tripulación, así que **suben por la escalera**: suenan en inglés solo en el
+peldaño de cabina, y en los de abajo explica la instructora —no a la vez—. Ver
+`flight/escalera.ts`.
+
+Antes de pagar los cuatro cantos, una duda de realismo que queda abierta: son
+las llamadas de la familia de Airbus, que es la del autofreno LO/MED/MAX del
+juego, pero el JAZ 90 es de la clase del E170 y el JAZ 120 de la del 747, y en
+un Boeing se canta otra cosa («speedbrakes up», «reversers normal», «sixty
+knots»). Si se cambian, se cambian en `CABINA` de
+`scripts/frases-para-grabar.mjs`, en `CLAVE_DE_CABINA` y `ESPERAN_SU_TOMA` de
+`src/audio/cabina.ts` y en `contarLaCarrera`.
 
 ## Después de grabar
 
-1. Añadir las claves `vuelo.*` a `src/i18n/es-PY.ts` y `src/i18n/en.ts`, junto
-   a `vuelo.meteElTren`, y las de cabina a `CABINA` en
-   `scripts/frases-para-grabar.mjs`.
-2. Como siempre:
+```bash
+node scripts/frases-para-grabar.mjs
+node scripts/voces-elevenlabs.mjs --cuanto instructor cabina
+node scripts/voces-elevenlabs.mjs instructor cabina
+```
 
-   ```bash
-   node scripts/frases-para-grabar.mjs
-   node scripts/voces-elevenlabs.mjs --cuanto instructor
-   node scripts/voces-elevenlabs.mjs instructor
-   ```
-
-   Receta en `crudo/instructor/recetas.json`, una toma por frase, hornear,
-   restaurar lo re-codificado que no sea nuevo y `node scripts/verificar-voces.mjs`.
-3. Engancharlas en `game.ts`:
-   - `atenderALaListaDeAterrizaje`: `this.instructor.decir(...)` con
-     `vuelo.armaLosAerofrenos` al mostrar la tarjeta y `vuelo.losArmeYo` al
-     armarlos ella.
-   - Los frenos de tierra al tocar: mirar `input.palancaDeAerofrenos.frenosDeTierraFuera`
-     al pasar de `false` a `true` en tierra → `cantar("spoilers", t("vuelo.salenLosFrenosDeTierra"), ...)`;
-     y tocar con la palanca recogida en un reactor → `vuelo.sinFrenosDeTierra`.
-   - La reversa: «reverse green» al abrirse; `vuelo.quitaLaReversa` por debajo
-     de `REVERSA_HASTA` con la tecla todavía apretada (una vez por carrera).
-   - El autofreno: «decel» cuando `frenando` pasa a `true`; `vuelo.autofrenoSuelto`
-     cuando se desarma con el pie.
+1. Las recetas de la instructora **ya están** en `crudo/instructor/recetas.json`
+   (la cabina no lleva recetas): el horneado de la instructora no pasa hasta
+   que estén todas sus tomas nuevas, también las de los demás pendientes.
+2. Hornear, restaurar lo re-codificado que no sea nuevo y
+   `node scripts/verificar-voces.mjs`.
+3. Sacar los cuatro cantos de `ESPERAN_SU_TOMA` en `src/audio/cabina.ts`; lo
+   pide `cabina.test.ts` en cuanto el manifiesto los trae.

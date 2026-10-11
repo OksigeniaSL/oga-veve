@@ -223,7 +223,7 @@ export const ENTRE_PASOS = 4;
  * dicen sus propios pasos —`subir`, `crucero`, `bajar`—, que llevan la marca
  * en su objetivo.
  */
-const PELDANOS_QUE_SE_DICEN: ReadonlySet<PeldanoDeVelocidad> = new Set<PeldanoDeVelocidad>([
+export const PELDANOS_QUE_SE_DICEN: ReadonlySet<PeldanoDeVelocidad> = new Set<PeldanoDeVelocidad>([
   "bajo-el-100",
   "subida",
   "terminal",
@@ -303,6 +303,16 @@ export class CadenaDelVuelo {
   /** Si ese escalón ya se alcanzó en este tramo. */
   yaDicho(escalon: string): boolean {
     return this.dichos.has(escalon);
+  }
+
+  /**
+   * **Un escalón contado por otro**, que la cadena ya no dice: la cota de la
+   * pista, si la cuenta la instructora al llegar a la zona de la torre antes
+   * del punto de descenso. Una cosa, una voz. Ver `contarLaCotaDeLaPista` en
+   * `game.ts`.
+   */
+  darPorDicho(escalon: string): void {
+    this.dichos.add(escalon);
   }
 
   /** Tramo nuevo: todo se vuelve a vivir. */
