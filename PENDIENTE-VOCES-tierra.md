@@ -1,32 +1,25 @@
-# Pendiente: el señalero y el gas a fondo, que no se oyen en su orden
+# Pendiente: el «¡Vuelo terminado!» en el banco, y el gas a fondo
 
 Grabado y horneado el 11 de octubre de 2026: `vuelo.cortaMotores`,
 `senalero.alto`, `.frenos`, `.calzos` y `vuelo.alineadoGasAFondo`. Ver el
 oyente de `gestoDelSenalero` y `decirElGasSuelto` en `src/game.ts`.
 
-## Lo que salió en el banco: en el puesto se caen las últimas
+## En el puesto: ya no se cae nada, y falta oír el «¡Vuelo terminado!»
 
-`verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-90 gran-canaria`, con
-`OGA_VOCES=fichero` (11 de octubre de 2026). El señalero hizo sus seis señas
-—adelante, despacio, alto, frenos, calzos, cortar— y se apagó con la de
-cortar, pero de la voz:
+Arreglado el 11 de octubre de 2026 (ver `cierraElVuelo` en
+`src/audio/turnos.ts` y `retirarLoDelPuesto` en `src/game.ts`): lo que cierra
+el vuelo no se echa de la cola ni caduca, y lo que se queda viejo lo retira
+la seña siguiente o el motor apagado. Los pedales no se pedían al llegar: lo
+que sonaba detrás era el tramo de vuelta, que el banco arranca al apagar. Y la
+lista de después de aterrizar no leía nada porque el banco volaba la llegada
+a ×3; ahora va a tiempo real (`scripts/reloj-del-banco.mjs`).
 
-- `senalero.calzos`, `vuelo.cortaMotores` y `vuelo.apagado` («¡Vuelo
-  terminado!») se cayeron con «no cabía en la cola» (601,7 s y 602,5 s);
-- en ese momento la boca estaba ocupada por la llegada de la tripulación
-  canaria (593,3–605,6 s), y detrás esperaba `tutor.pedales` —también nueva—,
-  que sonó a los 605,6 s, ya en la plataforma;
-- y la lista de después de aterrizar no leyó ningún punto, con 40 s fuera de
-  la pista: el banco lo da en rojo («la lista punto por punto y con su
-  respiro»).
-
-Antes de esta tanda nada de eso tenía toma y no pedía turno: lo que se oye
-ahora es la cola de cuatro plazas (`PLAZAS_DE_ESPERA` en `src/audio/boca.ts`)
-llena en el rodaje de llegada. Falta decidir quién cede: que las señas,
-que describen un instante, no esperen detrás de un anuncio largo; que el
-«¡Vuelo terminado!» no pueda caerse; o que los pedales no se expliquen en el
-rodaje de llegada. Y luego repetir el banco y mirar que suenan alto, frenos,
-calzos, cortar y solo después «¡Vuelo terminado!».
+En el mismo banco, después: «pará acá», «poné el freno» y la lista hasta las
+luces; lo del alto y los calzos se retiró con la seña siguiente y el «apagá
+el motor», al apagar. Lo que no se oye es el «¡Vuelo terminado!»: queda en la
+cola detrás de la lista y el banco arranca el tramo de vuelta a los tres
+segundos de apagar, que lo calla. Falta un vuelo que se quede en el puesto
+hasta que suene.
 
 ## Y lo que el banco no pasó
 
