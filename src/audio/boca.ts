@@ -166,7 +166,8 @@ export function cuantoAguanta(
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
     explicaLaOtraPunta(clave) ||
-    esDelDescenso(clave)
+    esDelDescenso(clave) ||
+    cuentaElPirep(clave)
     ? CADUCA_LA_ORDEN
     : // Un anuncio espera su hueco más que un aviso: ver `CADUCA_LA_MEGAFONIA`.
       esDeLaMegafonia(clave)
@@ -192,6 +193,27 @@ export function esDelDescenso(clave: string | undefined): boolean {
 
 const DEL_DESCENSO =
   /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
+
+/**
+ * **La turbulencia que avisó otro avión por radio**, el PIREP: el otro avión
+ * contándolo en la frecuencia, la torre retransmitiéndotelo y la instructora
+ * explicando lo que se oyó. Aguanta lo que una orden.
+ *
+ * Tenía los cuatro segundos de un aviso, y un PIREP no describe un instante:
+ * describe un trozo de cielo por delante, que sigue ahí minuto y medio
+ * después —ver `AVISA_ANTES` en `flight/turbulencia-del-vuelo.ts`—. Se pide
+ * en crucero, que es cuando la torre te pasa de nivel y el tráfico te cuenta
+ * quién va arriba, y caducaba esperando detrás de ellos: de Los Rodeos a
+ * Gando con el JAZ 90, «otro.pirep.moderada: caducó esperando», y la
+ * comandante anunciaba un aviso «de un avión que va adelante» que nadie había
+ * oído. Y el anuncio va detrás de la radio: ver `contarElPirep` en `game.ts`.
+ */
+export function cuentaElPirep(clave: string | undefined): boolean {
+  return !!clave && DEL_PIREP.test(clave);
+}
+
+const DEL_PIREP =
+  /^(?:(?:otro|torre)\.(?:[a-z]+\.)?pirep\.(?:ligera|moderada|fuerte)|vuelo\.pirep)(?:[@~]|$)/;
 
 /**
  * **La instructora en el punto de descenso**: «empezamos a bajar». Aguanta lo

@@ -15,6 +15,7 @@ import {
   CADUCA,
   CADUCA_LA_ORDEN,
   cuantoAguanta,
+  cuentaElPirep,
   explicaLaOtraPunta,
   MEGAFONIA,
   NO_REPETIR,
@@ -1481,5 +1482,45 @@ describe("lo que cierra el vuelo no se pierde", () => {
     expect(caducaAlApagar("vuelo.despues.transpondedor")).toBe(true);
     expect(caducaAlApagar("vuelo.alPuestoConFlaps")).toBe(false);
     expect(caducaAlApagar("vuelo.apagado")).toBe(false);
+  });
+});
+
+/*
+ * ── El PIREP ──────────────────────────────────────────────────────────────
+ *
+ * De Los Rodeos a Gando con el JAZ 90, medido con lo que pedía la boca: el
+ * PIREP del otro avión llegó con la torre hablando y otra orden suya en la
+ * cola, y a los 8,8 s «otro.pirep.moderada: caducó esperando»; la comandante
+ * anunció sola un aviso «de un avión que va adelante» que nadie había oído.
+ * Ver `cuentaElPirep`.
+ */
+describe("el PIREP aguanta lo que una orden", () => {
+  const PIREP = "otro.pirep.moderada@fonetico.echo-fonetico.charlie-altura.nivel cifra.1 cifra.8 cifra.0";
+
+  it("espera detrás de la torre, y suena antes que la comandante", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("climb"), "torre.canario.climbTo@yo");
+    b.pedir("mando", frase("subir"), "torre.canario.subir@yo");
+    b.pedir("normal", frase("pirep"), PIREP);
+    b.pedir("baja", frase("comandante"), "comandante.turbulencia.pirep");
+    reloj += 4400;
+    acabar["climb"]!();
+    reloj += 4400;
+    acabar["subir"]!();
+    expect(dicho).toEqual(["climb", "subir", "pirep"]);
+    acabar["pirep"]!();
+    expect(dicho.at(-1)).toBe("comandante");
+    expect(b.descartadas).toEqual([]);
+  });
+
+  it("los tres que lo cuentan: el otro avión, la torre y la instructora", () => {
+    expect(cuantoAguanta(PIREP)).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("torre.canario.pirep.fuerte@yo")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("vuelo.pirep")).toBe(CADUCA_LA_ORDEN);
+    expect(cuentaElPirep("otro.pirep.ligeraX")).toBe(false);
+    expect(cuentaElPirep("vuelo.pirepX")).toBe(false);
+    // Y un aviso de paso sigue con su reloj corto.
+    expect(cuantoAguanta("otro.final@c-a")).toBe(CADUCA);
   });
 });
