@@ -755,10 +755,10 @@ cabina	cabina/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avió
 cabina	cabina/cabina.goAroundOrder.ogg	en	go around	la orden de irse al aire
 cabina	cabina/cabina.engineFailure.ogg	en	engine failure	un motor se ha parado
 cabina	cabina/cabina.stop.ogg	en	stop	antes de V1: se para el despegue
-cabina	cabina/cabina.spoilers.ogg	en	spoilers	al tocar: salieron los paneles del ala
-cabina	cabina/cabina.reverseGreen.ogg	en	reverse green	al tocar: las reversas, abiertas
-cabina	cabina/cabina.decel.ogg	en	decel	al tocar: el autofreno frena
-cabina	cabina/cabina.seventyKnots.ogg	en	seventy knots	en la carrera: las reversas, a ralentí
+cabina	cabina/cabina.speedbrakesUp.ogg	en	speedbrakes up	al tocar: los aerofrenos, arriba
+cabina	cabina/cabina.speedbrakesNotUp.ogg	en	speedbrakes not up	al tocar: los aerofrenos no subieron
+cabina	cabina/cabina.reversersNormal.ogg	en	reversers normal	al tocar: las reversas, abiertas y en verde
+cabina	cabina/cabina.sixtyKnots.ogg	en	sixty knots	en la carrera: el anemómetro pasa por sesenta nudos
 cabina	cabina/cabina.airspeedLow.ogg	en	airspeed low	vas lento para la configuración
 cabina	cabina/cabina.twentyFiveHundred.ogg	en	twenty five hundred	cuenta de la toma: el radar empieza a ver el suelo
 cabina	cabina/cabina.oneThousand.ogg	en	one thousand	cuenta de la toma, en pies

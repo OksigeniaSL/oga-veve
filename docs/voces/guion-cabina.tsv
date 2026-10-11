@@ -34,10 +34,10 @@
 034	cabina.goAroundOrder	go around
 035	cabina.engineFailure	engine failure
 036	cabina.stop	stop
-037	cabina.spoilers	spoilers
-038	cabina.reverseGreen	reverse green
-039	cabina.decel	decel
-040	cabina.seventyKnots	seventy knots
+037	cabina.speedbrakesUp	speedbrakes up
+038	cabina.speedbrakesNotUp	speedbrakes not up
+039	cabina.reversersNormal	reversers normal
+040	cabina.sixtyKnots	sixty knots
 041	cabina.airspeedLow	airspeed low
 042	cabina.twentyFiveHundred	twenty five hundred
 043	cabina.oneThousand	one thousand

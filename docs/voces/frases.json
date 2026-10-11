@@ -7866,32 +7866,32 @@
     "para": "antes de V1: se para el despegue"
   },
   {
-    "id": "cabina.spoilers",
+    "id": "cabina.speedbrakesUp",
     "voz": "cabina",
     "idioma": "en",
-    "texto": "spoilers",
-    "para": "al tocar: salieron los paneles del ala"
+    "texto": "speedbrakes up",
+    "para": "al tocar: los aerofrenos, arriba"
   },
   {
-    "id": "cabina.reverseGreen",
+    "id": "cabina.speedbrakesNotUp",
     "voz": "cabina",
     "idioma": "en",
-    "texto": "reverse green",
-    "para": "al tocar: las reversas, abiertas"
+    "texto": "speedbrakes not up",
+    "para": "al tocar: los aerofrenos no subieron"
   },
   {
-    "id": "cabina.decel",
+    "id": "cabina.reversersNormal",
     "voz": "cabina",
     "idioma": "en",
-    "texto": "decel",
-    "para": "al tocar: el autofreno frena"
+    "texto": "reversers normal",
+    "para": "al tocar: las reversas, abiertas y en verde"
   },
   {
-    "id": "cabina.seventyKnots",
+    "id": "cabina.sixtyKnots",
     "voz": "cabina",
     "idioma": "en",
-    "texto": "seventy knots",
-    "para": "en la carrera: las reversas, a ralentí"
+    "texto": "sixty knots",
+    "para": "en la carrera: el anemómetro pasa por sesenta nudos"
   },
   {
     "id": "cabina.airspeedLow",

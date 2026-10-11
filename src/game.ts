@@ -6758,26 +6758,37 @@ export class Game {
    * entonces no se pide.
    *
    * Es `cantar` con una puerta delante: en el peldaño de cabina, solo si el
-   * canto en inglés tiene su toma; en los de abajo, solo si la tiene la
-   * explicación de la instructora. Sin ella, `cantar` lo mandaría a la voz del
-   * navegador, que en el Brave de Enrique no existe: una frase nueva no puede
-   * quedarse muda. Los cantos que esperan su toma están en `ESPERAN_SU_TOMA`
-   * de `audio/cabina.ts`.
+   * canto en inglés tiene su toma y lo dice la tripulación de este avión; en
+   * los de abajo, solo si la tiene la explicación de la instructora. Sin ella,
+   * `cantar` lo mandaría a la voz del navegador, que en el Brave de Enrique no
+   * existe: una frase nueva no puede quedarse muda. Los cantos que esperan su
+   * toma están en `ESPERAN_SU_TOMA` de `audio/cabina.ts`. Devuelve si se pidió.
    */
   private cantarLoGrabado(
     ingles: string,
     clave?: TranslationKey,
     urgencia: Urgencia = "normal",
-  ): void {
+  ): boolean {
     const deCabina = claveDeCabina(ingles);
-    const suena = cantaLaCabina(this.tier.avisos, "tripulacion")
+    const arriba = cantaLaCabina(this.tier.avisos, "tripulacion");
+    if (arriba && deCabina !== null && !loDiceElAvion(deCabina, this.aircraft)) {
+      this.apuntarCanto(`${ingles}: este avión no lo canta`);
+      return false;
+    }
+    // Abajo, un canto sin explicación no lo dice nadie: no es que falte toma.
+    if (!arriba && clave === undefined) {
+      this.apuntarCanto(`${ingles}: abajo no lo explica nadie`);
+      return false;
+    }
+    const suena = arriba
       ? deCabina !== null && this.instructor.vozDe(deCabina) !== null
       : clave !== undefined && this.instructor.vozDe(clave) !== null;
     if (!suena) {
       this.apuntarCanto(`${ingles}: sin grabar, no se pide`);
-      return;
+      return false;
     }
     this.cantar(ingles, clave ? t(clave) : undefined, clave, urgencia);
+    return true;
   }
 
   /**
@@ -6879,9 +6890,8 @@ export class Game {
             sinFrenosMirado: false,
             sinFrenosDicho: false,
             abierta: this.reversa.abierta >= 0.99,
-            frenando: p.frenando,
             ktAntes: Infinity,
-            setenta: false,
+            sesenta: false,
             reversaDicha: false,
             sueltos: p.soltadoConElPie,
           }
@@ -6889,14 +6899,23 @@ export class Game {
   }
 
   /**
-   * **La carrera de aterrizaje, contada**: lo que canta quien no vuela en un
-   * reactor —los paneles del ala, las reversas, el autofreno, los setenta
-   * nudos— y lo que explica la instructora en los peldaños de abajo.
+   * **La carrera de aterrizaje, contada**: lo que canta quien vigila al tocar
+   * —los aerofrenos arriba o no, las reversas en verde, los sesenta nudos— y
+   * lo que explica la instructora en los peldaños de abajo.
    *
    * Los cantos son de la tripulación, así que suben por la escalera: en inglés
    * en el peldaño de cabina y, en los de abajo, la explicación en casa en su
-   * lugar —`cantarLoGrabado`, un suceso y una voz—. Los cantos son los de la
-   * familia de Airbus, que es la del autofreno LO, MED y MAX de este juego.
+   * lugar —`cantarLoGrabado`, un suceso y una voz—. Son los del procedimiento
+   * normal de Boeing, *Landing Roll* (FCOM del 747-400; el texto exacto, por
+   * verificar), y solo los canta el avión de esa familia: el JAZ 120. El JAZ 90
+   * no canta nada hasta que se compruebe el de Embraer. Ver
+   * `cantosDeLaCarrera` en `flight/aircraft.ts`.
+   *
+   * Lo que no se canta: «no reverser», la reversa pedida que no se abre,
+   * porque aquí una reversa pedida se abre siempre. Y los de Airbus que había
+   * —«spoilers», «reverse green», «decel», «seventy knots»—, porque en la
+   * flota no hay ningún Airbus.
+   *
    * Cada cosa una vez por carrera, y solo con su grabación: sin ella se ve en
    * el cuadro, que es lo que había.
    */
@@ -6914,40 +6933,37 @@ export class Game {
     const explica = laInstructoraLoExplica(this.tier.avisos);
     /*
      * Los paneles del ala que salen al tocar, o poco después —armados y con el
-     * gas que llega al ralentí—. Más tarde ya no es «al tocar».
+     * gas que llega al ralentí—: «speedbrakes up». Más tarde ya no es «al
+     * tocar».
      */
     const fuera = p.frenosDeTierraFuera;
     if (fuera && !c.deTierra && c.t < AL_TOCAR && !c.sinFrenosDicho)
-      this.cantarLoGrabado("spoilers", "vuelo.salenLosFrenosDeTierra", "mando");
+      this.cantarLoGrabado("speedbrakes up", "vuelo.salenLosFrenosDeTierra", "mando");
     c.deTierra = fuera;
     /*
-     * Y los que no salen porque la palanca estaba recogida: el ala sigue
-     * llevando el avión y los frenos casi no muerden. Se mira pasado un
-     * momento, que es lo que tardan en salir.
+     * Y los que no salen: «speedbrakes not up». El ala sigue llevando el avión
+     * y los frenos casi no muerden. Se mira pasado un momento, que es lo que
+     * tardan en salir. La instructora lo explica solo si fue por la palanca
+     * recogida, que es lo que dice su frase; arriba, el canto vale para
+     * cualquier motivo.
      */
     if (!c.sinFrenosMirado && c.t > MIRA_LOS_PANELES) {
       c.sinFrenosMirado = true;
-      if (
-        explica &&
-        this.aircraft.frenosDeTierra !== null &&
-        c.palancaAlTocar === "recogida" &&
-        !fuera
-      )
-        c.sinFrenosDicho = this.decirLoGrabado("vuelo.sinFrenosDeTierra", "mando");
+      const porque: TranslationKey | undefined =
+        c.palancaAlTocar === "recogida" ? "vuelo.sinFrenosDeTierra" : undefined;
+      if (this.aircraft.frenosDeTierra !== null && !fuera && (porque || !explica))
+        c.sinFrenosDicho = this.cantarLoGrabado("speedbrakes not up", porque, "mando");
     }
-    // Las reversas, abiertas del todo: «reverse green».
+    // Las reversas, abiertas del todo: en verde, «reversers normal».
     const abierta = this.reversa.abierta >= 0.99;
-    if (abierta && !c.abierta) this.cantarLoGrabado("reverse green");
+    if (abierta && !c.abierta) this.cantarLoGrabado("reversers normal");
     c.abierta = abierta;
-    // El autofreno que entra: «decel».
-    if (p.frenando && !c.frenando) this.cantarLoGrabado("decel");
-    c.frenando = p.frenando;
-    // Los setenta nudos, en el avión con autofreno: las reversas, a ralentí.
+    // Los sesenta nudos del anemómetro.
     const kt =
       indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS;
-    if (!c.setenta && p.hayAutofreno && c.ktAntes >= 70 && kt < 70) {
-      c.setenta = true;
-      this.cantarLoGrabado("seventy knots");
+    if (!c.sesenta && c.ktAntes >= 60 && kt < 60) {
+      c.sesenta = true;
+      this.cantarLoGrabado("sixty knots");
     }
     c.ktAntes = kt;
     /*
@@ -6979,9 +6995,8 @@ export class Game {
     sinFrenosMirado: boolean;
     sinFrenosDicho: boolean;
     abierta: boolean;
-    frenando: boolean;
     ktAntes: number;
-    setenta: boolean;
+    sesenta: boolean;
     reversaDicha: boolean;
     sueltos: number;
   } | null = null;

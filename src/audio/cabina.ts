@@ -142,21 +142,27 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "engine failure": "cabina.engineFailure",
   stop: "cabina.stop",
   /*
-   * **Y la carrera de aterrizaje de los reactores**: lo que canta quien no
-   * vuela al tocar —los paneles del ala que salen, las reversas abiertas, el
-   * autofreno que entra y los setenta nudos de pasar las reversas a ralentí—.
-   * Son de la tripulación, así que suben por la escalera: en inglés en el
-   * peldaño de cabina y, en los de abajo, la instructora lo cuenta en casa.
-   * Ver `contarLaCarrera` en `game.ts`.
+   * **Y la carrera de aterrizaje**: lo que canta quien vigila (PM) al tocar,
+   * en el procedimiento normal de Boeing, *Landing Roll* —los aerofrenos
+   * arriba o no, las reversas en verde y los sesenta nudos—. Son de la
+   * tripulación, así que suben por la escalera: en inglés en el peldaño de
+   * cabina y, en los de abajo, la instructora lo cuenta en casa. Y solo en el
+   * avión de esa familia: ver `DE_LA_CARRERA` y `cantosDeLaCarrera` en
+   * `flight/aircraft.ts`.
    *
-   * Entran **antes que su toma**, y por eso están también en
-   * `ESPERAN_SU_TOMA`: el juego los pide solo cuando su grabación está en el
-   * pack —ver `cantarLoGrabado`—, nunca por la voz del navegador.
+   * Aquí estaban los de Airbus —«spoilers», «reverse green», «decel»,
+   * «seventy knots»—, y en la flota no hay ningún Airbus: el JAZ 90 es de la
+   * clase del E170 y el JAZ 120 de la del 747. Se quitaron sin grabarse.
+   *
+   * Fuente: el FCOM del 747-400, NP *Landing Roll Procedure*. **El texto
+   * exacto está por verificar.** «No reverser» —la reversa pedida que no se
+   * abre— no está, porque el juego no tiene reversas que fallen. Ver
+   * `contarLaCarrera` en `game.ts`.
    */
-  spoilers: "cabina.spoilers",
-  "reverse green": "cabina.reverseGreen",
-  decel: "cabina.decel",
-  "seventy knots": "cabina.seventyKnots",
+  "speedbrakes up": "cabina.speedbrakesUp",
+  "speedbrakes not up": "cabina.speedbrakesNotUp",
+  "reversers normal": "cabina.reversersNormal",
+  "sixty knots": "cabina.sixtyKnots",
 };
 
 /**
@@ -168,10 +174,23 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  * salen de aquí; la prueba lo recuerda.
  */
 export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set([
-  "cabina.spoilers",
-  "cabina.reverseGreen",
-  "cabina.decel",
-  "cabina.seventyKnots",
+  "cabina.speedbrakesUp",
+  "cabina.speedbrakesNotUp",
+  "cabina.reversersNormal",
+  "cabina.sixtyKnots",
+]);
+
+/**
+ * **Los cantos de la carrera de aterrizaje**, que no los dice cualquier
+ * tripulación: cada fabricante tiene los suyos. Los dice quien vuela un avión
+ * cuyo procedimiento los lleva —ver `cantosDeLaCarrera` en
+ * `flight/aircraft.ts`—, y en los demás no suena ninguno.
+ */
+export const DE_LA_CARRERA: ReadonlySet<string> = new Set([
+  "cabina.speedbrakesUp",
+  "cabina.speedbrakesNotUp",
+  "cabina.reversersNormal",
+  "cabina.sixtyKnots",
 ]);
 
 /**
@@ -277,6 +296,7 @@ export interface EquipoDeCabina {
   readonly avisosHablados: boolean;
   readonly tcas: string | null;
   readonly presurizacion?: { readonly avisoHablado: boolean } | null;
+  readonly cantosDeLaCarrera?: "boeing" | null;
 }
 
 /**
@@ -297,10 +317,12 @@ export function esDeUnaCaja(clave: string): boolean {
 /**
  * Si **este avión** tiene con qué decir este canto.
  *
- * Los de la tripulación, siempre. Los de las cajas, solo si las lleva. Ver
- * `DE_LOS_AVISADORES`.
+ * Los de la tripulación, siempre, menos los de la carrera de aterrizaje, que
+ * son de un procedimiento y no de todos: ver `DE_LA_CARRERA`. Los de las cajas,
+ * solo si las lleva. Ver `DE_LOS_AVISADORES`.
  */
 export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
+  if (DE_LA_CARRERA.has(clave)) return avion.cantosDeLaCarrera === "boeing";
   if (clave === "cabina.traffic") return avion.tcas !== null;
   // La maniobra, solo el TCAS II: el TCAS I solo avisa. Ver `daLaManiobra`.
   if (DEL_RA.has(clave)) return avion.tcas === "TCAS II";

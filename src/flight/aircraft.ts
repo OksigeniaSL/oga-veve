@@ -721,6 +721,26 @@ export interface AircraftConfig {
    */
   autofreno: boolean;
   /**
+   * **Qué cantos de la carrera de aterrizaje dice quien no vuela**, o `null`
+   * si ninguno.
+   *
+   * Los dice quien vigila (PM) al tocar, y cada fabricante tiene los suyos:
+   * no son de una caja, son del procedimiento de la tripulación, y suben por
+   * la escalera como «V one» o «gear up». Ver `contarLaCarrera` en `game.ts` y
+   * `DE_LA_CARRERA` en `audio/cabina.ts`.
+   *
+   * - `boeing`: los del procedimiento normal de Boeing, *Landing Roll* —
+   *   «speedbrakes up» o «speedbrakes not up», «reversers normal» y «sixty
+   *   knots»—. Los canta el JAZ 120, de la clase del 747. Fuente: el FCOM del
+   *   747-400, NP *Landing Roll Procedure*; **el texto exacto está por
+   *   verificar**.
+   * - `null` en los demás. En los de hélice no hay nada que cantar de esto, y
+   *   el JAZ 90, de la clase del E170, **no canta nada hasta que se compruebe
+   *   el procedimiento de Embraer**: unas llamadas de memoria, o las de otro
+   *   fabricante, serían enseñar algo que luego habría que desaprender.
+   */
+  cantosDeLaCarrera: "boeing" | null;
+  /**
    * **Qué TCAS lleva, si lleva alguno.** `null` si ninguno.
    *
    * El TCAS es el aparato que escucha los transpondedores de los aviones de
@@ -1189,6 +1209,7 @@ export const PYKASU: AircraftConfig = {
   frenos: { enSeco: 0.35, psi: 50, antideslizante: 0.5 },
   frenosDeTierra: null,
   autofreno: false,
+  cantosDeLaCarrera: null,
   tcas: null,
   avisosHablados: false,
   ventanillas: null,
@@ -1323,6 +1344,7 @@ export const MAINUMBY: AircraftConfig = {
   frenos: { enSeco: 0.3, psi: 50, antideslizante: 0.5 },
   frenosDeTierra: null,
   autofreno: false,
+  cantosDeLaCarrera: null,
   tcas: null,
   avisosHablados: false,
   ventanillas: null,
@@ -1501,6 +1523,7 @@ export const PANAMBI: AircraftConfig = {
   frenos: { enSeco: 0.35, psi: 55, antideslizante: 0.5 },
   frenosDeTierra: null,
   autofreno: false,
+  cantosDeLaCarrera: null,
   tcas: null,
   avisosHablados: false,
   ventanillas: null,
@@ -1685,6 +1708,7 @@ export const ARASUNU: AircraftConfig = {
   frenos: { enSeco: 0.38, psi: 100, antideslizante: 0.5 },
   frenosDeTierra: null,
   autofreno: false,
+  cantosDeLaCarrera: null,
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
   avisosHablados: true,
@@ -1904,6 +1928,8 @@ export const ARAI: AircraftConfig = {
   frenos: { enSeco: 0.45, psi: 170, antideslizante: 0.8 },
   frenosDeTierra: { resistencia: 0.07, sustentacion: 0.7 },
   autofreno: true,
+  // Por verificar el procedimiento de Embraer: hasta entonces, nada.
+  cantosDeLaCarrera: null,
   tcas: "TCAS II",
   avisosHablados: true,
   // Persiana de plástico, como cualquier reactor de pasillo único.
@@ -2199,6 +2225,8 @@ export const YVAGA: AircraftConfig = {
   frenos: { enSeco: 0.34, psi: 200, antideslizante: 0.8 },
   frenosDeTierra: { resistencia: 0.06, sustentacion: 0.7 },
   autofreno: true,
+  // Los del Landing Roll de Boeing, como un 747. Ver `cantosDeLaCarrera`.
+  cantosDeLaCarrera: "boeing",
   tcas: "TCAS II",
   avisosHablados: true,
   /*

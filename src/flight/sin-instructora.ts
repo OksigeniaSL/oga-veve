@@ -295,11 +295,11 @@ export const CANTOS_QUE_SIGUEN: ReadonlySet<string> = new Set<string>([
   // Y los de un motor que falla en el despegue: son de una emergencia.
   "cabina.engineFailure",
   "cabina.stop",
-  // Y los de la carrera de aterrizaje de los reactores, como V1 y rotate.
-  "cabina.spoilers",
-  "cabina.reverseGreen",
-  "cabina.decel",
-  "cabina.seventyKnots",
+  // Y los de la carrera de aterrizaje, como V1 y rotate.
+  "cabina.speedbrakesUp",
+  "cabina.speedbrakesNotUp",
+  "cabina.reversersNormal",
+  "cabina.sixtyKnots",
 ]);
 
 /**
