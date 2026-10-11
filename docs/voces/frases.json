@@ -252,6 +252,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.alineadoGasAFondo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estás alineado: gas a fondo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.enVuelo",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -462,6 +469,41 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.lucesDeNoche.deFrente",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá ese avión: la luz verde a tu izquierda y la roja a tu derecha. Eso quiere decir que viene hacia nosotros. Para eso llevan luces los aviones: para verse a tiempo.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.lucesDeNoche.seAleja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves esa luz blanca sola? Es la cola de otro avión: se está alejando de nosotros.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.lucesDeNoche.cruzaIzquierda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese avión nos enseña su luz roja: lo vemos por su lado izquierdo, y va pasando hacia tu izquierda.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.lucesDeNoche.cruzaDerecha",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese avión nos enseña su luz verde: lo vemos por su lado derecho, y va pasando hacia tu derecha.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.lucesDeNoche.regla",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "De noche, todos los aviones llevan las mismas luces: roja en la punta del ala izquierda, verde en la derecha y blanca atrás. Mirándolas se sabe hacia dónde va cada uno.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1360,6 +1402,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.cortaMotores",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Te hace la seña de cortar: apagá el motor",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.apagado",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1556,6 +1605,20 @@
     "idioma": "es-PY",
     "texto": "Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.pirep",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Escuchaste la radio? Otro avión avisó que más adelante se mueve. Los aviones se ayudan entre ellos: así la comandante puede avisar antes.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "vuelo.reserva",
@@ -1955,6 +2018,27 @@
     "idioma": "es-PY",
     "texto": "Girá otra vez y empezá a bajar: ya vamos a aterrizar",
     "para": "los cuatro tramos del circuito de tráfico"
+  },
+  {
+    "id": "senalero.alto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cruzó los bastones arriba: eso es parar",
+    "para": "lo que dice cada seña del señalero"
+  },
+  {
+    "id": "senalero.frenos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Levanta la mano y cierra el puño: poné el freno",
+    "para": "lo que dice cada seña del señalero"
+  },
+  {
+    "id": "senalero.calzos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Junta los bastones arriba: ya puso los calzos en las ruedas",
+    "para": "lo que dice cada seña del señalero"
   },
   {
     "id": "percance.ocupada",
@@ -4117,6 +4201,34 @@
     }
   },
   {
+    "id": "ventanilla.vos.cruz-del-sur",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.polar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "ventanilla.saludo",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -4593,6 +4705,34 @@
     }
   },
   {
+    "id": "ventanilla.cruz-del-sur",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y ahora, miren el cielo: esas cuatro estrellas en cruz son la Cruz del Sur. Si alargan el palo largo unas cuatro veces y media, llegan justo al sur. ¡Así se orientaban los navegantes, mucho antes del GPS!",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.polar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Miren hacia el norte: esa estrella sola, ni muy alta ni muy baja, es la Estrella Polar. No es la más brillante, pero es la más útil: casi no se mueve en toda la noche y marca el norte. Y está tan alta como lejos estamos del ecuador: aquí, unos veintiocho grados.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "comandante.bienvenida",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -4723,6 +4863,272 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.ligera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Vamos a pasar por una zona de turbulencia ligera: unos baches suaves, como un camino de tierra. Es normal, y el avión está hecho para esto. Se encendió la señal del cinturón: vuelvan a su asiento y abróchenselo, por favor.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.moderada",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Más adelante hay turbulencia moderada: el avión se va a mover bastante un rato. Es normal, y el avión está hecho para esto. La tripulación también se va a sentar. Vuelvan a su asiento, abróchense bien el cinturón y guarden lo que tengan en la mesita.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.fuerte",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Más adelante hay turbulencia fuerte. La vamos a pasar con calma: el avión está hecho para esto y nosotros sabemos cómo llevarlo. Siéntense ya y abróchense el cinturón bien ajustado. La tripulación también se sienta. Les aviso cuando pase.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "comandante.turbulencia.ahora.ligera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, estamos pasando por un poco de turbulencia. Es de la que no se ve en el radar: se llama turbulencia en aire claro, y es normal. Se encendió la señal: vuelvan a su asiento y abróchense el cinturón.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.ahora.moderada",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia moderada que no se veía venir: no sale en el radar. Es normal y el avión está hecho para esto. Vuelvan a su asiento y abróchense bien el cinturón. La tripulación se sienta también.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.ahora.fuerte",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia fuerte. Con calma: el avión está hecho para esto. Quédense sentados con el cinturón bien ajustado. Les aviso cuando pase.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "comandante.turbulencia.otraVez.ligera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, nos toca otro poquito de turbulencia, como la de antes. Ya saben: a su asiento, cinturón puesto, y seguimos el viaje tranquilos.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.otraVez.moderada",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, otra vez viene turbulencia, esta vez un poco más movida. Igual que antes: todos sentados y con el cinturón bien puesto. La tripulación también se sienta.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.otraVez.fuerte",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla otra vez la comandante. Viene un tramo de turbulencia fuerte. Lo pasamos con calma, como el anterior: siéntense ya, con el cinturón bien ajustado. Les aviso cuando pase.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "comandante.turbulencia.tormenta",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Hoy hay tormentas en el camino. El radar nos muestra dónde están y las vamos a rodear, pero el aire va a estar movido casi todo el vuelo. La señal del cinturón se queda encendida: quédense sentados y con el cinturón puesto.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.pirep",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Un avión que va adelante nos avisó por radio que más adelante hay turbulencia. Gracias a su aviso nos podemos preparar: vuelvan a su asiento y abróchense el cinturón. Los aviones nos ayudamos entre nosotros.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.paso",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, ya estamos tranquilos. Apagamos la señal del cinturón: pueden soltarse, pero si están sentados, déjenselo puestito.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.paso~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Listo, señores pasajeros: ya pasamos la zona movida. Se apaga la señal del cinturón. Gracias por la paciencia.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.turbulencia.pasoBajando",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, ya pasamos la turbulencia. La señal del cinturón sigue encendida porque ya empezamos a bajar.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.cinturon.porque",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Un consejo de la comandante: aunque la señal del cinturón esté apagada, mientras estén sentados déjenselo puesto, flojito. A veces la turbulencia llega sin avisar, y el cinturón es lo que los deja quietitos en su asiento.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.previsto.vuelo.h75",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar más o menos una hora y cuarto.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.previsto.vuelo.h90",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar más o menos una hora y media.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.previsto.vuelo.h105",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar más o menos una hora y cuarenta y cinco.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.previsto.vuelo.h120",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El vuelo va a durar más o menos dos horas.",
     "para": "la megafonía de cabina, para el pasaje",
     "ajustes": {
       "stability": 0.35,
@@ -4989,6 +5395,62 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.minutos.h75",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en más o menos una hora y cuarto.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.minutos.h90",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en más o menos una hora y media.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.minutos.h105",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en más o menos una hora y cuarenta y cinco.",
+    "para": "la megafonía de cabina, para el pasaje",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.minutos.h120",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a aterrizar en más o menos dos horas.",
     "para": "la megafonía de cabina, para el pasaje",
     "ajustes": {
       "stability": 0.35,
@@ -6877,6 +7339,20 @@
     "para": "la tripulación de cabina de Canarias, por megafonía"
   },
   {
+    "id": "tripulacion.canario.servicio.pausa",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, debido a la turbulencia interrumpimos un momento el servicio y la tripulación va a tomar asiento. En cuanto mejore, continuamos.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
+    "id": "tripulacion.canario.servicio.seguimos",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Ya se ha calmado: continuamos con el servicio. Muchas gracias por su paciencia.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
     "id": "tripulacion.canario.mascaras",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
@@ -7015,6 +7491,20 @@
     "voz": "tripulacion",
     "idioma": "es-PY",
     "texto": "Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.pausa",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, por la turbulencia paramos un ratito el servicio y la tripulación se va a sentar. En cuanto se calme, seguimos.",
+    "para": "la tripulación de cabina, por megafonía"
+  },
+  {
+    "id": "tripulacion.servicio.seguimos",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Ya se calmó: seguimos con el servicio. Muchas gracias por la paciencia.",
     "para": "la tripulación de cabina, por megafonía"
   },
   {
@@ -7887,6 +8377,139 @@
     "para": "y la deja"
   },
   {
+    "id": "otro.solo.pirep.ligera",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "for your information, light turbulence at",
+    "para": "avisa de turbulencia ligera; detrás, la altura, en el aviso de turbulencia"
+  },
+  {
+    "id": "otro.solo.pirep.moderada",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "for your information, moderate turbulence at",
+    "para": "avisa de turbulencia moderada; detrás, la altura, en el aviso de turbulencia"
+  },
+  {
+    "id": "otro.solo.pirep.fuerte",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "for your information, severe turbulence at",
+    "para": "avisa de turbulencia fuerte; detrás, la altura, en el aviso de turbulencia"
+  },
+  {
+    "id": "altura.nivel",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "flight level",
+    "para": "delante de las tres cifras de un nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "altura.pies.2",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "two thousand feet",
+    "para": "una altitud por debajo de la transición, en el aviso de turbulencia"
+  },
+  {
+    "id": "altura.pies.3",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "three thousand feet",
+    "para": "una altitud por debajo de la transición, en el aviso de turbulencia"
+  },
+  {
+    "id": "altura.pies.4",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "four thousand feet",
+    "para": "una altitud por debajo de la transición, en el aviso de turbulencia"
+  },
+  {
+    "id": "altura.pies.5",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "five thousand feet",
+    "para": "una altitud por debajo de la transición, en el aviso de turbulencia"
+  },
+  {
+    "id": "altura.pies.6",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "six thousand feet",
+    "para": "una altitud por debajo de la transición, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.0",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "zero",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.1",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "one",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.2",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "two",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.3",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "three",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.4",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "four",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.5",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "five",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.6",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "six",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.7",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "seven",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.8",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "eight",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
+    "id": "cifra.9",
+    "voz": "otro",
+    "idioma": "en",
+    "texto": "niner",
+    "para": "una cifra del nivel, en el aviso de turbulencia"
+  },
+  {
     "id": "fonetico.alfa",
     "voz": "torre",
     "idioma": "en",
@@ -8286,11 +8909,75 @@
     "para": "remontar la pista, antes de su número"
   },
   {
+    "id": "torre.solo.adviseAbleToDepart",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "advise able to depart from runway",
+    "para": "la torre ofrece salir desde la intersección; detrás, la pista"
+  },
+  {
+    "id": "torre.solo.intersection",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "intersection",
+    "para": "detrás de la pista, antes del nombre de la calle"
+  },
+  {
+    "id": "torre.solo.toraRunway",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "TORA runway",
+    "para": "la pista que queda desde la intersección, antes de su número",
+    "dicho": "Tora runway"
+  },
+  {
+    "id": "torre.solo.fromIntersection",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "from intersection",
+    "para": "detrás de la pista, antes de la calle"
+  },
+  {
+    "id": "torre.solo.metres",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "metres",
+    "para": "detrás de la pista que queda, en metros"
+  },
+  {
     "id": "torre.solo.goAroundSolo",
     "voz": "torre",
     "idioma": "en",
     "texto": "go around",
     "para": "al aire, sin más: el porqué va detrás"
+  },
+  {
+    "id": "torre.solo.pirep.ligera",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "caution, light turbulence reported at",
+    "para": "otro avión avisó de turbulencia ligera; detrás, la altura"
+  },
+  {
+    "id": "torre.solo.pirep.moderada",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "caution, moderate turbulence reported at",
+    "para": "otro avión avisó de turbulencia moderada; detrás, la altura"
+  },
+  {
+    "id": "torre.solo.pirep.fuerte",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "caution, severe turbulence reported at",
+    "para": "otro avión avisó de turbulencia fuerte; detrás, la altura"
+  },
+  {
+    "id": "torre.solo.pirep.porDelante",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "by preceding traffic",
+    "para": "quién avisó: el que va delante"
   },
   {
     "id": "torre.solo.rogerMayday",
@@ -8403,6 +9090,20 @@
     "idioma": "en",
     "texto": "variable",
     "para": "viento sin dirección fija"
+  },
+  {
+    "id": "metros.thousand",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "thousand",
+    "para": "los miles de la pista que queda, detrás de su cifra"
+  },
+  {
+    "id": "metros.hundred",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "hundred",
+    "para": "los cientos de la pista que queda, detrás de su cifra"
   },
   {
     "id": "trafico.traffic",
@@ -9553,11 +10254,75 @@
     "para": "remontar la pista, antes de su número, en Canarias"
   },
   {
+    "id": "torre.canario.solo.adviseAbleToDepart",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "advise able to depart from runway",
+    "para": "la torre ofrece salir desde la intersección; detrás, la pista, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.intersection",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "intersection",
+    "para": "detrás de la pista, antes del nombre de la calle, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.toraRunway",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "TORA runway",
+    "para": "la pista que queda desde la intersección, antes de su número, en Canarias",
+    "dicho": "Tora runway"
+  },
+  {
+    "id": "torre.canario.solo.fromIntersection",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "from intersection",
+    "para": "detrás de la pista, antes de la calle, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.metres",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "metres",
+    "para": "detrás de la pista que queda, en metros, en Canarias"
+  },
+  {
     "id": "torre.canario.solo.goAroundSolo",
     "voz": "torre-canarias",
     "idioma": "en",
     "texto": "go around",
     "para": "al aire, sin más: el porqué va detrás, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.pirep.ligera",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "caution, light turbulence reported at",
+    "para": "otro avión avisó de turbulencia ligera; detrás, la altura, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.pirep.moderada",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "caution, moderate turbulence reported at",
+    "para": "otro avión avisó de turbulencia moderada; detrás, la altura, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.pirep.fuerte",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "caution, severe turbulence reported at",
+    "para": "otro avión avisó de turbulencia fuerte; detrás, la altura, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.pirep.porDelante",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "by preceding traffic",
+    "para": "quién avisó: el que va delante, en Canarias"
   },
   {
     "id": "torre.canario.solo.rogerMayday",
@@ -9670,6 +10435,20 @@
     "idioma": "en",
     "texto": "variable",
     "para": "viento sin dirección fija, en Canarias"
+  },
+  {
+    "id": "metros.thousand",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "thousand",
+    "para": "los miles de la pista que queda, detrás de su cifra, en Canarias"
+  },
+  {
+    "id": "metros.hundred",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "hundred",
+    "para": "los cientos de la pista que queda, detrás de su cifra, en Canarias"
   },
   {
     "id": "trafico.traffic",

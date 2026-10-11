@@ -914,5 +914,80 @@
   ],
   "comandante.despegue~4": [
     "comandante.despegue~4"
+  ],
+  "comandante.previsto.vuelo.h75": [
+    "comandante.previsto.vuelo.h75"
+  ],
+  "comandante.previsto.vuelo.h90": [
+    "comandante.previsto.vuelo.h90"
+  ],
+  "comandante.previsto.vuelo.h105": [
+    "comandante.previsto.vuelo.h105"
+  ],
+  "comandante.previsto.vuelo.h120": [
+    "comandante.previsto.vuelo.h120"
+  ],
+  "comandante.minutos.h75": [
+    "comandante.minutos.h75"
+  ],
+  "comandante.minutos.h90": [
+    "comandante.minutos.h90"
+  ],
+  "comandante.minutos.h105": [
+    "comandante.minutos.h105"
+  ],
+  "comandante.minutos.h120": [
+    "comandante.minutos.h120"
+  ],
+  "ventanilla.cruz-del-sur": [
+    "ventanilla.cruz-del-sur"
+  ],
+  "ventanilla.polar": [
+    "ventanilla.polar"
+  ],
+  "comandante.turbulencia.ligera": [
+    "comandante.turbulencia.ligera"
+  ],
+  "comandante.turbulencia.moderada": [
+    "comandante.turbulencia.moderada"
+  ],
+  "comandante.turbulencia.fuerte": [
+    "comandante.turbulencia.fuerte"
+  ],
+  "comandante.turbulencia.ahora.ligera": [
+    "comandante.turbulencia.ahora.ligera"
+  ],
+  "comandante.turbulencia.ahora.moderada": [
+    "comandante.turbulencia.ahora.moderada"
+  ],
+  "comandante.turbulencia.ahora.fuerte": [
+    "comandante.turbulencia.ahora.fuerte"
+  ],
+  "comandante.turbulencia.otraVez.ligera": [
+    "comandante.turbulencia.otraVez.ligera"
+  ],
+  "comandante.turbulencia.otraVez.moderada": [
+    "comandante.turbulencia.otraVez.moderada"
+  ],
+  "comandante.turbulencia.otraVez.fuerte": [
+    "comandante.turbulencia.otraVez.fuerte"
+  ],
+  "comandante.turbulencia.tormenta": [
+    "comandante.turbulencia.tormenta"
+  ],
+  "comandante.turbulencia.pirep": [
+    "comandante.turbulencia.pirep"
+  ],
+  "comandante.turbulencia.paso": [
+    "comandante.turbulencia.paso"
+  ],
+  "comandante.turbulencia.paso~2": [
+    "comandante.turbulencia.paso~2"
+  ],
+  "comandante.turbulencia.pasoBajando": [
+    "comandante.turbulencia.pasoBajando"
+  ],
+  "comandante.cinturon.porque": [
+    "comandante.cinturon.porque"
   ]
 }

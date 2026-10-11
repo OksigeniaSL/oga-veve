@@ -38,6 +38,14 @@ export type Intensidad = "ligera" | "moderada" | "fuerte";
 /** Cómo llega: ver la cabecera. */
 export type ComoLlega = "prevista" | "sin-avisar" | "tormenta";
 
+/**
+ * **De dónde se sabe la que se sabe**: el parte del tiempo, el radar —las
+ * tormentas se ven en él— o el aviso por radio de otro avión que pasó antes,
+ * el PIREP. Los tres pasan de verdad y los tres se anuncian distinto: el del
+ * PIREP lo cuentan antes la radio y quien la oye. Ver `fuenteDe`.
+ */
+export type Fuente = "parte" | "radar" | "pirep";
+
 export interface Zona {
   /** Desde cuántos metros volados desde el despegue. */
   readonly desde: number;
@@ -51,7 +59,24 @@ export interface Zona {
    * la del frente o la tormenta, no.
    */
   readonly capa: { readonly de: number; readonly a: number } | null;
+  /**
+   * De dónde se sabe, si se sabe. Sin el dato —las zonas que pide un banco—,
+   * la de siempre: el parte, o el radar con tormenta. Ver `fuenteDe`.
+   */
+  readonly fuente?: Fuente;
 }
+
+/**
+ * De dónde se sabe esta zona: la suya si la trae; si no, el radar con
+ * tormenta y el parte en las demás. La de aire claro no se sabe: `null`.
+ */
+export function fuenteDe(z: Zona): Fuente | null {
+  if (z.como === "sin-avisar") return null;
+  return z.fuente ?? (z.como === "tormenta" ? "radar" : "parte");
+}
+
+/** De cada cuántas previstas, una la avisa otro avión: una de cada tres. */
+export const AVISA_OTRO_AVION = 1 / 3;
 
 /**
  * **Cuánto sacude cada grado**, σ_w en m/s, contra los niveles de
@@ -120,6 +145,7 @@ export function turbulenciaDelCamino(
         intensidad: tiempo.vientoKt >= 15 || azar() < 0.4 ? "moderada" : "ligera",
         como: "tormenta",
         capa: null,
+        fuente: "radar",
       },
     ];
   /*
@@ -159,13 +185,23 @@ export function turbulenciaDelCamino(
      * parte; la de aire claro, no, y es una capa alrededor del nivel de
      * crucero. Con viento entre montañas, casi siempre se sabe.
      */
-    const sinAvisar = azar() < (tiempo.montana && movido ? 0.25 : 0.45);
+    const umbral = tiempo.montana && movido ? 0.25 : 0.45;
+    const tirada = azar();
+    const sinAvisar = tirada < umbral;
+    /*
+     * **Y de la prevista, una de cada tres la avisa otro avión** por radio:
+     * el PIREP, que es como se sabe de verdad mucha de la que no sale en el
+     * parte. Sale de la misma tirada —lo que sobra por encima del umbral,
+     * repartido de cero a uno—, para no mover el sorteo de lo demás.
+     */
+    const pirep = !sinAvisar && (tirada - umbral) / (1 - umbral) < AVISA_OTRO_AVION;
     zonas.push({
       desde,
       hasta: desde + tramo,
       intensidad,
       como: sinAvisar ? "sin-avisar" : "prevista",
       capa: sinAvisar ? { de: camino.crucero - 600, a: camino.crucero + 300 } : null,
+      ...(sinAvisar ? {} : { fuente: pirep ? "pirep" : "parte" }),
     });
   }
   // En orden, y sin pisarse: la segunda empieza después de la primera.
@@ -257,6 +293,8 @@ export type SucesoDelCamino =
       readonly intensidad: Intensidad;
       /** Cuántas van en este vuelo, empezando por uno. */
       readonly vez: number;
+      /** De dónde se sabe, o `null` la de aire claro. Ver `fuenteDe`. */
+      readonly fuente: Fuente | null;
     }
   | { readonly que: "paso" };
 
@@ -344,7 +382,13 @@ export class TurbulenciaDelVuelo {
       this.porPasar = true;
       // Lo que ya se anunció no se vuelve a anunciar como racha nueva.
       this.rachaAnunciada = true;
-      return { que: "anunciar", como: z.como, intensidad: z.intensidad, vez: ++this.veces };
+      return {
+        que: "anunciar",
+        como: z.como,
+        intensidad: z.intensidad,
+        vez: ++this.veces,
+        fuente: fuenteDe(z),
+      };
     }
 
     // **La que no se sabe**: primero los baches, en seguida el anuncio.
@@ -364,6 +408,7 @@ export class TurbulenciaDelVuelo {
         como: "sin-avisar",
         intensidad: aqui?.intensidad ?? (m.movimiento >= SACUDE_CADA.moderada ? "moderada" : "ligera"),
         vez: ++this.veces,
+        fuente: null,
       };
     }
 

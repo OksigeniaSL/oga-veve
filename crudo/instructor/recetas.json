@@ -1593,5 +1593,44 @@
   ],
   "vuelo.paso.velocidad.540": [
     "vuelo.paso.velocidad.540"
+  ],
+  "vuelo.cortaMotores": [
+    "vuelo.cortaMotores"
+  ],
+  "vuelo.alineadoGasAFondo": [
+    "vuelo.alineadoGasAFondo"
+  ],
+  "senalero.alto": [
+    "senalero.alto"
+  ],
+  "senalero.frenos": [
+    "senalero.frenos"
+  ],
+  "senalero.calzos": [
+    "senalero.calzos"
+  ],
+  "ventanilla.vos.cruz-del-sur": [
+    "ventanilla.vos.cruz-del-sur"
+  ],
+  "ventanilla.vos.polar": [
+    "ventanilla.vos.polar"
+  ],
+  "vuelo.lucesDeNoche.deFrente": [
+    "vuelo.lucesDeNoche.deFrente"
+  ],
+  "vuelo.lucesDeNoche.seAleja": [
+    "vuelo.lucesDeNoche.seAleja"
+  ],
+  "vuelo.lucesDeNoche.cruzaIzquierda": [
+    "vuelo.lucesDeNoche.cruzaIzquierda"
+  ],
+  "vuelo.lucesDeNoche.cruzaDerecha": [
+    "vuelo.lucesDeNoche.cruzaDerecha"
+  ],
+  "vuelo.lucesDeNoche.regla": [
+    "vuelo.lucesDeNoche.regla"
+  ],
+  "vuelo.pirep": [
+    "vuelo.pirep"
   ]
 }

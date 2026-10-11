@@ -149,6 +149,42 @@ export function metrosDichos(metros: number): string {
 }
 
 /**
+ * **La misma calle, en piezas del pack de la torre**, para un hueco: «E-2»
+ * son `fonetico.echo cifra.2`. Las letras y las cifras ya están grabadas en
+ * las dos torres —son las de las matrículas y las pistas—. `null` si no hay
+ * nombre que decir, como `calleDicha`.
+ */
+export function calleEnPiezas(ref: string | null | undefined): string | null {
+  const limpia = (ref ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const piezas: string[] = [];
+  for (const c of limpia) {
+    const l = POR_INICIAL.get(c);
+    if (l) piezas.push(`fonetico.${l}`);
+    else if (c >= "0" && c <= "9") piezas.push(`cifra.${c}`);
+  }
+  return piezas.length ? piezas.join(" ") : null;
+}
+
+/**
+ * **Y los metros, en piezas**, con la misma cuenta que `metrosDichos`: las
+ * cifras de la torre y dos palabras, `metros.thousand` y `metros.hundred`,
+ * que se llaman igual en las dos torres porque van en un hueco y el hueco no
+ * sabe qué torre habla —como el viento—. `null` por encima de nueve mil
+ * novecientos, que ninguna pista del juego tiene y que se diría con dos
+ * cifras delante del «thousand».
+ */
+export function metrosEnPiezas(metros: number): string | null {
+  const centenas = Math.max(0, Math.floor(metros / 100));
+  const miles = Math.floor(centenas / 10);
+  const cientos = centenas % 10;
+  if (miles >= 10) return null;
+  const piezas: string[] = [];
+  if (miles > 0) piezas.push(`cifra.${miles}`, "metros.thousand");
+  if (cientos > 0) piezas.push(`cifra.${cientos}`, "metros.hundred");
+  return piezas.length ? piezas.join(" ") : null;
+}
+
+/**
  * El prefijo de matrícula que le toca a un aeródromo, en letras.
  *
  * `SGAS` → `ZP`. `GCXO` y `LECU` → `EC`. Sin indicativo, el del juego.

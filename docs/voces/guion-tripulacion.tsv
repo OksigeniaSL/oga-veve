@@ -6,11 +6,13 @@
 006	tripulacion.servicio.mbeju	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y mbejú de la Granja Óga. ¡Que lo disfruten!
 007	tripulacion.servicio.largo	Y como el viaje es largo, también tenemos café y té calentitos.
 008	tripulacion.cinturones	Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.
-009	tripulacion.mascaras	Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.
-010	tripulacion.bienvenidos.pettirossi	Señoras y señores, bienvenidos a Asunción.
-011	tripulacion.bienvenidos.guarani	Señoras y señores, bienvenidos a Ciudad del Este.
-012	tripulacion.bienvenidos.encarnacion	Señoras y señores, bienvenidos a Encarnación.
-013	tripulacion.bienvenidos.pedro-juan	Señoras y señores, bienvenidos a Pedro Juan Caballero.
-014	tripulacion.trasLaToma	Les pedimos que sigan sentados, con el cinturón abrochado, hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden usar sus celulares. Tengan cuidado al abrir los compartimientos de arriba, porque el equipaje se pudo mover durante el vuelo. Muchas gracias.
-015	tripulacion.trasLaToma~2	Por su seguridad, sigan sentados y con el cinturón puesto hasta que el avión se pare del todo y se apague la señal. A partir de ahora pueden encender sus celulares. Abran los compartimientos despacito, que en el vuelo las valijas también viajan. Y antes de bajar, revisen el bolsillo del asiento para no olvidarse nada.
-016	tripulacion.trasLaToma~3	Quédense sentados con el cinturón abrochado, por favor, hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el celular. Cuidado al abrir los compartimientos de arriba, que algo se pudo correr con el vuelo. Y fíjense que no quede nada en el asiento. ¡Gracias, y que les vaya muy bien!
+009	tripulacion.servicio.pausa	Señoras y señores, por la turbulencia paramos un ratito el servicio y la tripulación se va a sentar. En cuanto se calme, seguimos.
+010	tripulacion.servicio.seguimos	Ya se calmó: seguimos con el servicio. Muchas gracias por la paciencia.
+011	tripulacion.mascaras	Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.
+012	tripulacion.bienvenidos.pettirossi	Señoras y señores, bienvenidos a Asunción.
+013	tripulacion.bienvenidos.guarani	Señoras y señores, bienvenidos a Ciudad del Este.
+014	tripulacion.bienvenidos.encarnacion	Señoras y señores, bienvenidos a Encarnación.
+015	tripulacion.bienvenidos.pedro-juan	Señoras y señores, bienvenidos a Pedro Juan Caballero.
+016	tripulacion.trasLaToma	Les pedimos que sigan sentados, con el cinturón abrochado, hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden usar sus celulares. Tengan cuidado al abrir los compartimientos de arriba, porque el equipaje se pudo mover durante el vuelo. Muchas gracias.
+017	tripulacion.trasLaToma~2	Por su seguridad, sigan sentados y con el cinturón puesto hasta que el avión se pare del todo y se apague la señal. A partir de ahora pueden encender sus celulares. Abran los compartimientos despacito, que en el vuelo las valijas también viajan. Y antes de bajar, revisen el bolsillo del asiento para no olvidarse nada.
+018	tripulacion.trasLaToma~3	Quédense sentados con el cinturón abrochado, por favor, hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el celular. Cuidado al abrir los compartimientos de arriba, que algo se pudo correr con el vuelo. Y fíjense que no quede nada en el asiento. ¡Gracias, y que les vaya muy bien!

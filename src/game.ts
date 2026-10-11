@@ -111,8 +111,10 @@ import { BOMBEROS as BOMBEROS_PUBLICADOS } from "./world/bomberos-publicados";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   calleDicha,
+  calleEnPiezas,
   matriculaDe,
   metrosDichos,
+  metrosEnPiezas,
   pistaEnCastellano,
   pistaEnPiezas,
   rellenoDe,
@@ -892,9 +894,16 @@ import { CADUCA_LA_MEGAFONIA, Huecos, esDeLaMegafonia } from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
   turbulenciaDelCamino,
+  type Intensidad,
   type SucesoDelCamino,
   type Zona,
 } from "./flight/turbulencia-del-vuelo";
+import {
+  CINTURON_PORQUE,
+  GRADO_EN_RADIO,
+  anuncioDeTurbulencia,
+  pasoDeTurbulencia,
+} from "./audio/anuncio-de-turbulencia";
 import {
   enFaseDeTrabajo,
   LoQueSeVe,
@@ -8027,12 +8036,33 @@ export class Game {
         this.instructor.decir(t(cual), cual);
       }
       /*
-       * **Y la voz de apagar, con la seña de cortar y no antes.** Es la frase
-       * que había, «llegaste, apagá el motor», que antes sonaba al pararse a
-       * cuarenta y cinco metros del sitio. Ver `PENDIENTE-VOCES-tierra.md`:
-       * falta grabar la de solo apagar, y el «llegaste» para después.
+       * **Y qué quiere decir la seña**, en los tres peldaños de abajo y
+       * detrás de lo que hay que hacer: «cruzó los bastones arriba: eso es
+       * parar». Es la misma persona contando lo mismo, en el orden en que se
+       * entiende —primero qué hacer, luego por qué—; arriba la seña basta,
+       * que es como se lee en cualquier plataforma. Solo con su grabación:
+       * sin ella la seña y su tarjeta lo cuentan igual.
        */
-      if (cortar) this.instructor.decir(t("vuelo.enPuesto"), "vuelo.enPuesto");
+      const explica = `senalero.${gesto}`;
+      if (
+        laInstructoraLoExplica(this.tier.avisos) &&
+        (gesto === "alto" || gesto === "frenos" || gesto === "calzos") &&
+        this.instructor.vozDe(explica)
+      )
+        this.instructor.decir(t(explica as TranslationKey), explica, "normal");
+      /*
+       * **Y la voz de apagar, con la seña de cortar y no antes.** La de solo
+       * apagar —«te hace la seña de cortar: apagá el motor»— deja el
+       * «llegaste» para después de apagar, que es el orden de la OACI. Sin su
+       * grabación, la que había, «llegaste, apagá el motor», que también es
+       * verdad: se llegó y hay que apagar.
+       */
+      if (cortar) {
+        const cual = this.instructor.vozDe("vuelo.cortaMotores")
+          ? "vuelo.cortaMotores"
+          : "vuelo.enPuesto";
+        this.instructor.decir(t(cual), cual);
+      }
     });
 
     /*
@@ -10304,7 +10334,11 @@ export class Game {
           destino?.escenario.meteo ?? this.scenario.meteo ?? TIEMPO_DE_CASA;
         const campo =
           destino && destino.id !== this.salidaId ? destino.id : null;
-        return descensoPara(campo, segundos, meteo);
+        /*
+         * Pasada la hora, en horas y solo con su grabación. Ver
+         * `minutosQueSeDicen`.
+         */
+        return descensoPara(campo, segundos, meteo, (id) => this.instructor.vozDe(id) !== null);
       }
       case "tripulacion.servicio": {
         const habla = this.hablaDeLaTripulacion();
@@ -10417,6 +10451,8 @@ export class Game {
       forma,
       plan?.segundos ?? null,
       plan?.nivel ?? null,
+      // Pasada la hora, en horas y solo con su grabación.
+      (id) => this.instructor.vozDe(id) !== null,
     );
   }
 
@@ -12074,47 +12110,75 @@ export class Game {
     if (!pista) return;
     const calle = calleDicha(sale.calle);
     const rw = pista.dicho;
-    const lineas: string[] = [];
+    /*
+     * **Lo que dice la torre lleva su receta**, con la matrícula, la pista y
+     * la calle en sus huecos; lo que dice quien vuela, no: va solo en la tira,
+     * como todo lo que se dice desde esta cabina. Ver las recetas en
+     * `crudo/torre/recetas.json`.
+     */
+    const habla = hablaDe(aero?.id);
+    const relleno = { ...rellenoDe(yo), ...pista.relleno };
+    const deLaTorre = (
+      receta: string,
+      mas: Record<string, string | null> = {},
+    ): { clave?: string; relleno?: Record<string, string> } => {
+      if (Object.values(mas).some((v) => v === null)) return {};
+      return {
+        clave: `${comoSeDiceAqui(receta, habla)}${pista.sufijo}`,
+        relleno: { ...relleno, ...(mas as Record<string, string>) },
+      };
+    };
+    const lineas: { texto: string; clave?: string; relleno?: Record<string, string> }[] = [];
     if (esAfis(aero)) {
       // Quien vuela dice lo que va a hacer: un AFIS informa, no autoriza.
-      lineas.push(
-        sale.desde === "interseccion"
-          ? calle
-            ? `${yo.dicho}, departing from intersection ${calle}, runway ${rw}`
-            : `${yo.dicho}, intersection departure, runway ${rw}`
-          : `${yo.dicho}, backtracking runway ${rw}`,
-      );
+      lineas.push({
+        texto:
+          sale.desde === "interseccion"
+            ? calle
+              ? `${yo.dicho}, departing from intersection ${calle}, runway ${rw}`
+              : `${yo.dicho}, intersection departure, runway ${rw}`
+            : `${yo.dicho}, backtracking runway ${rw}`,
+      });
     } else {
       const remonta = sale.desde === "remonte";
       // La oferta, si la entrada es una intersección con nombre que decir.
       const ofrece = calle && sale.desdeLaEntrada < sale.entera - 150;
+      const enPiezas = { calle: calleEnPiezas(sale.calle) };
       if (ofrece)
-        lineas.push(`${yo.dicho}, advise able to depart from runway ${rw}, intersection ${calle}`);
+        lineas.push({
+          texto: `${yo.dicho}, advise able to depart from runway ${rw}, intersection ${calle}`,
+          ...deLaTorre("torre.ofreceInterseccion", enPiezas),
+        });
       if (remonta) {
         const pide = delinea ? "request full length" : "request backtrack";
-        lineas.push(ofrece ? `Negative, ${pide}, ${yo.dicho}` : `${yo.dicho}, ${pide}`);
-        lineas.push(`${yo.dicho}, backtrack runway ${rw}`);
+        lineas.push({ texto: ofrece ? `Negative, ${pide}, ${yo.dicho}` : `${yo.dicho}, ${pide}` });
+        lineas.push({ texto: `${yo.dicho}, backtrack runway ${rw}`, ...deLaTorre("torre.backtrack") });
       } else if (ofrece) {
-        lineas.push(`Affirm, ${yo.dicho}`);
-        lineas.push(
-          `${yo.dicho}, TORA runway ${rw}, from intersection ${calle}, ` +
+        lineas.push({ texto: `Affirm, ${yo.dicho}` });
+        lineas.push({
+          texto:
+            `${yo.dicho}, TORA runway ${rw}, from intersection ${calle}, ` +
             `${metrosDichos(sale.desdeLaEntrada)} metres`,
-        );
+          ...deLaTorre("torre.tora", {
+            ...enPiezas,
+            metros: metrosEnPiezas(sale.desdeLaEntrada),
+          }),
+        });
       }
     }
-    const relleno = { ...rellenoDe(yo), ...pista.relleno };
-    const claveDeTorre = `${comoSeDiceAqui("torre.backtrack", hablaDe(aero?.id))}${pista.sufijo}`;
-    lineas
-      .filter((l) => l)
-      .forEach((texto, i) => {
-        this.agenda.luego(i * SEPARA_LA_RADIO, () => {
-          if (this.flight.state.onGround === false) return;
-          this.hud.radio(texto, undefined, true);
-          // La voz de la torre, la que ya tiene sus piezas: «backtrack runway».
-          if (texto.endsWith(`backtrack runway ${rw}`) && this.instructor.vozDe(claveDeTorre, relleno))
-            this.torre.decir(texto, claveDeTorre, "mando", relleno);
-        });
+    lineas.forEach((l, i) => {
+      this.agenda.luego(i * SEPARA_LA_RADIO, () => {
+        if (this.flight.state.onGround === false) return;
+        this.hud.radio(l.texto, undefined, true);
+        /*
+         * Y con su voz **solo si está grabada**: sin ella, la tira. Una frase
+         * de la torre sin grabar se le pasaría a la voz del navegador, que en
+         * Brave para Linux es muda.
+         */
+        if (l.clave && this.instructor.vozDe(l.clave, l.relleno))
+          this.torre.decir(l.texto, l.clave, "mando", l.relleno);
       });
+    });
   }
 
   /** Si ya se contó por dónde se sale en este despegue. Ver `contarPorDondeSeSale`. */
@@ -17509,7 +17573,14 @@ export class Game {
     if (conduce && vista.fase === "alineando" && vista.mirandoLaPista) {
       if (this.gasSueltoDicho) return;
       this.gasSueltoDicho = true;
-      const clave = GUION.despegando.clave as TranslationKey;
+      /*
+       * «Ya estás alineado: gas a fondo», que dice por qué ahora; sin su
+       * grabación, «motor a fondo», la de la fase, que dice lo mismo sin el
+       * porqué. La tarjeta lleva la misma que la voz.
+       */
+      const clave: TranslationKey = this.instructor.vozDe("vuelo.alineadoGasAFondo")
+        ? "vuelo.alineadoGasAFondo"
+        : (GUION.despegando.clave as TranslationKey);
       this.hud.senal.mostrar(
         comoDibujo(GUION.despegando.icono),
         this.tier.instruments !== "none" ? t(clave) : "",
@@ -17770,7 +17841,14 @@ export class Game {
      * ese sitio, escrita a mano y grabada entera. Ver `audio/ventanilla.ts`.
      */
     const dicho = loQueSeDice(mirada, conGente, this.ventanilla.cuantos - 1);
-    if (dicho) {
+    /*
+     * **Y solo con su grabación.** Lo que se ve por la ventanilla es lo que
+     * menos urge de todo lo que suena, y una frase de sitio sin grabar —la
+     * Cruz del Sur, hasta que se grabe— se le pasaba entera a la voz del
+     * navegador, que en Brave para Linux es muda. Sin ella lo cuentan la
+     * tarjeta, su dibujo y su flecha, que salen igual.
+     */
+    if (dicho && this.instructor.vozDe(dicho.clave, dicho.relleno)) {
       const boca = conGente ? this.comandante : this.instructor;
       boca.decir(dicho.texto, dicho.clave, "baja", dicho.relleno);
     }
@@ -17946,8 +18024,10 @@ export class Game {
    *
    * La explicación es de la instructora, así que como `explicarElTrafico` va
    * en los tres peldaños de abajo y espera hueco: es una lección, no un
-   * aviso. Su voz todavía no está grabada —ver `PENDIENTE-VOCES-noche.md`—, y
-   * hasta entonces cuenta el dibujo, que es el canal que está siempre.
+   * aviso. Lo dice con la clave de lo que se ve —`vuelo.lucesDeNoche.*`—, y
+   * la primera vez de la partida, delante, la regla entera: roja a la
+   * izquierda, verde a la derecha y blanca atrás. Las dos solo con su
+   * grabación; sin ella cuenta el dibujo, que es el canal que está siempre.
    */
   private contarLasLucesDeNoche(dt: number): void {
     if (this.lucesDeNocheContadas) return;
@@ -18009,7 +18089,45 @@ export class Game {
       segundos: 9,
       prioridad: 0,
     });
+    /*
+     * **Y la voz, detrás de la radio si la hay**: la información de tráfico
+     * de ese mismo avión va en `mando` y pasa delante, y esto espera en la
+     * cola como cualquier lección. Un suceso, una voz.
+     */
+    const dice = {
+      "de-frente": "vuelo.lucesDeNoche.deFrente",
+      "se-aleja": "vuelo.lucesDeNoche.seAleja",
+      "cruza-izquierda": "vuelo.lucesDeNoche.cruzaIzquierda",
+      "cruza-derecha": "vuelo.lucesDeNoche.cruzaDerecha",
+    } as const satisfies Record<LoQueSeLeVe, TranslationKey>;
+    const suya = dice[elMasCerca.que];
+    const decirLaSuya = (): void => {
+      if (this.instructor.vozDe(suya)) this.instructor.decir(t(suya), suya);
+    };
+    /*
+     * Y la regla, la primera vez de la partida, delante. Lo de este avión se
+     * pide cuando ella acaba: pedido a la vez, esperaría los diez segundos de
+     * la regla y caducaría sin sonar.
+     */
+    const regla: TranslationKey = "vuelo.lucesDeNoche.regla";
+    if (!this.reglaDeLasLucesContada && this.instructor.vozDe(regla)) {
+      this.reglaDeLasLucesContada = true;
+      let siguio = false;
+      this.instructor.decir(t(regla), regla, "normal", undefined, (que) => {
+        if (que === "empieza" || siguio) return;
+        siguio = true;
+        decirLaSuya();
+      });
+      return;
+    }
+    decirLaSuya();
   }
+
+  /**
+   * Si ya se contó la regla de las luces en esta partida: se cuenta una vez,
+   * no una por vuelo. Ver `contarLasLucesDeNoche`.
+   */
+  private reglaDeLasLucesContada = false;
 
   /** Lo que se le vio a otro avión de noche en este vuelo, para el banco. */
   get lucesDeNocheParaBanco(): LoQueSeLeVe | null {
@@ -23623,6 +23741,10 @@ export class Game {
    */
   private repartirLaTurbulencia(): void {
     this.cartelPorLaTurbulencia = false;
+    // Y lo que se dice una vez por vuelo, para el vuelo nuevo.
+    this.servicioParado = false;
+    this.cinturonPorqueDicho = false;
+    this.pirepExplicado = false;
     if (this.turbulenciaPedida) {
       this.turbulenciaDelVuelo.empezar(this.turbulenciaPedida);
       return;
@@ -23664,26 +23786,251 @@ export class Game {
    *   cartel —el *ding*—, y luego llega.
    * - **Sin avisar**: primero los baches, en seguida el cartel —que se enciende
    *   solo, ver `cinturon.ts`— y el anuncio.
-   * - **Y al pasar**, se apaga el cartel si fue ella quien lo encendió.
+   * - **La que avisó otro avión**: la radio primero y la comandante detrás.
+   *   Ver `contarElPirep`.
+   * - **Y al pasar**, se apaga el cartel si fue ella quien lo encendió, y lo
+   *   dice; la primera vez del vuelo, con el consejo del cinturón detrás.
    *
-   * Lo dice con la frase que hay grabada, que todavía habla de «movimiento»;
-   * las de la palabra turbulencia, por grados, la segunda vez dicha de otro
-   * modo y el «ya estamos tranquilos» están en `PENDIENTE-VOCES-turbulencia.md`
-   * para grabarse. Sin pasaje no hay a quién anunciar: ahí la instructora
-   * cuenta los baches cuando se sienten. Ver `hablarDeLosBaches`.
+   * La frase, por su nombre: **turbulencia**, por grados y dicha de muchas
+   * maneras. Cada una suena el día que tiene su grabación; hasta entonces, la
+   * que hay grabada, que todavía habla de «movimiento». Ver
+   * `audio/anuncio-de-turbulencia.ts`. Sin pasaje no hay a quién anunciar: ahí
+   * la instructora cuenta los baches cuando se sienten. Ver
+   * `hablarDeLosBaches`.
    */
   private anunciarLaTurbulencia(suceso: SucesoDelCamino): void {
+    const grabada = (id: string) => this.instructor.vozDe(id) !== null;
     if (suceso.que === "paso") {
-      if (this.cartelPorLaTurbulencia && !this.megafonia.bajandoAlDestino)
-        this.dijoSoltarse = true;
+      const bajando = this.megafonia.bajandoAlDestino;
+      const seApaga = this.cartelPorLaTurbulencia && !bajando;
+      if (seApaga) this.dijoSoltarse = true;
       this.cartelPorLaTurbulencia = false;
+      /*
+       * **Y se dice**, si hay grabada una frase que sea verdad: que se apaga
+       * la señal porque la encendió ella, o que sigue encendida porque ya se
+       * baja. Con la señal puesta de antes no se dice nada: «apagamos la
+       * señal» sería mentira. La primera vez del vuelo, detrás, el consejo
+       * del cinturón; y la forma del «ya pasó» que no lo da ya.
+       */
+      const conConsejo =
+        seApaga && !this.cinturonPorqueDicho && grabada(CINTURON_PORQUE);
+      const forma = pasoDeTurbulencia({ bajando, seApaga, conConsejo }, grabada);
+      if (forma) {
+        this.comandante.decir(forma.texto, forma.id, "baja");
+        if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
+      }
+      if (forma && conConsejo) this.decirElPorqueDelCinturon();
+      /*
+       * Y el servicio que se paró, sigue, si no se está bajando ya: en la
+       * bajada la tripulación prepara el aterrizaje.
+       */
+      if (this.servicioParado && !bajando) this.decirLaTripulacion("tripulacion.servicio.seguimos");
+      this.servicioParado = false;
       return;
     }
-    if (this.cinturon.pasajeSuelto) this.cartelPorLaTurbulencia = true;
+    const pasajeSuelto = this.cinturon.pasajeSuelto;
+    if (pasajeSuelto) this.cartelPorLaTurbulencia = true;
     this.pidioAbrocharse = true;
-    const forma = unaForma("comandante.turbulencia");
-    this.comandante.decir(forma.texto, forma.id, "baja");
-    if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
+    /*
+     * La que avisó otro avión, la radio primero, en el mismo turno. Y si la
+     * radio todavía no tiene voz y solo se lee, la comandante espera a que
+     * se lea: su tira taparía la del otro avión.
+     */
+    const espera = suceso.fuente === "pirep" ? this.contarElPirep(suceso.intensidad) : 0;
+    /*
+     * **Y el servicio se para**, si ya se había ofrecido y el pasaje iba
+     * suelto: la tripulación lo dice cuando acaba la comandante —pedido a la
+     * vez, esperaría lo que dura su anuncio y podría caducar—, y al pasar,
+     * que sigue. Solo donde hay tripulación de cabina.
+     */
+    const parar =
+      pasajeSuelto &&
+      conTripulacion(this.aircraft.mass) &&
+      this.megafonia.yaDicho("tripulacion.servicio") &&
+      !this.servicioParado &&
+      this.instructor.vozDe(
+        comoSeDiceAqui("tripulacion.servicio.pausa", this.hablaDeLaTripulacion()),
+      ) !== null;
+    if (parar) this.servicioParado = true;
+    const forma = anuncioDeTurbulencia(suceso, grabada);
+    let pidioParar = false;
+    /*
+     * La tira, cuando empieza a hablar si va detrás de la radio —escrita en
+     * el acto taparía lo que dice el otro avión—, y si no, en el acto, como
+     * siempre.
+     */
+    const detras = suceso.fuente === "pirep";
+    const tira = detras ? this.tiraAlSonar(forma.texto, null) : null;
+    const anunciar = (): void => {
+      this.comandante.decir(forma.texto, forma.id, "baja", undefined, (que, porque) => {
+        tira?.(que, porque);
+        if (!parar || que === "empieza" || pidioParar) return;
+        pidioParar = true;
+        this.decirLaTripulacion("tripulacion.servicio.pausa");
+      });
+      if (!detras && this.tier.instruments !== "none") this.hud.radio(forma.texto);
+    };
+    if (espera > 0) this.agenda.luego(espera, anunciar);
+    else anunciar();
+  }
+
+  /**
+   * **La tira de la radio cuando empieza a sonar su voz**, y no al pedirla:
+   * lo que espera turno detrás de otra radio no tapa lo que esa otra está
+   * diciendo. Si no llega a sonar, se escribe igual, que la tira es el
+   * canal que está siempre. Una vez.
+   */
+  private tiraAlSonar(texto: string, paraTi: boolean | null): AlSonar {
+    let escrita = false;
+    return (que) => {
+      if (escrita || que === "acaba" || que === "cortada") return;
+      escrita = true;
+      if (this.tier.instruments !== "none") this.hud.radio(texto, undefined, paraTi);
+    };
+  }
+
+  /** Si la tripulación paró el servicio por la turbulencia. */
+  private servicioParado = false;
+  /** Si ya se dio el consejo del cinturón en este vuelo. */
+  private cinturonPorqueDicho = false;
+  /** Si ya se contó en este vuelo lo que avisó otro avión. Ver `contarElPirep`. */
+  private pirepExplicado = false;
+
+  /**
+   * **Lo que dice la tripulación de cabina, con el habla del sitio**, solo
+   * con su grabación. Devuelve si lo dijo.
+   */
+  private decirLaTripulacion(base: string): boolean {
+    const clave = comoSeDiceAqui(base, this.hablaDeLaTripulacion()) as TranslationKey;
+    if (!this.instructor.vozDe(clave)) return false;
+    // Su tira, cuando suena: va detrás de la comandante y no tapa la suya.
+    this.tripulacion.decir(t(clave), clave, "baja", undefined, this.tiraAlSonar(t(clave), null));
+    return true;
+  }
+
+  /**
+   * **El consejo del cinturón, con su porqué**: aunque la señal esté apagada,
+   * sentado se lleva puesto, porque a veces la turbulencia llega sin avisar.
+   * Una vez por vuelo y solo con su grabación: detrás del primer «ya pasó»,
+   * o en un crucero tranquilo si el vuelo no tiene turbulencia. Ver
+   * `aconsejarElCinturon`.
+   */
+  private decirElPorqueDelCinturon(): void {
+    this.cinturonPorqueDicho = true;
+    this.comandante.decir(
+      t(CINTURON_PORQUE),
+      CINTURON_PORQUE,
+      "baja",
+      undefined,
+      this.tiraAlSonar(t(CINTURON_PORQUE), null),
+    );
+  }
+
+  /**
+   * **El consejo del cinturón en un vuelo sin turbulencia**: en crucero, con
+   * la señal apagada y en un rato de calma, después del anuncio de crucero y
+   * del servicio. Lo que enseña es justo para el vuelo que va como una seda:
+   * que la de aire claro llega sin avisar. Con turbulencia en el camino se
+   * espera a que pase, que es cuando mejor se entiende. Se dice una vez; lo
+   * rearma el vuelo siguiente, no un reloj.
+   */
+  private aconsejarElCinturon(): void {
+    if (this.cinturonPorqueDicho || !conPasaje(this.aircraft.mass)) return;
+    if (this.faseDeAhora !== "en-vuelo" || this.cinturonPuesto) return;
+    if (this.turbulenciaDelVuelo.deEsteVuelo.length > 0) return;
+    if (this.megafonia.bajandoAlDestino || !this.megafonia.yaDicho("comandante.crucero")) return;
+    if (conTripulacion(this.aircraft.mass) && !this.megafonia.yaDicho("tripulacion.servicio"))
+      return;
+    if (!this.huecos.hayHueco || !this.instructor.vozDe(CINTURON_PORQUE)) return;
+    this.huecos.usar();
+    this.decirElPorqueDelCinturon();
+  }
+
+  /**
+   * **Lo que avisó otro avión por radio**, antes de que lo anuncie la
+   * comandante: el PIREP, que es como se sabe de verdad mucha de la
+   * turbulencia que no sale en el parte.
+   *
+   * 1. El otro avión lo cuenta en la frecuencia, si hay alguien en ella: «for
+   *    your information, moderate turbulence at flight level one two zero».
+   * 2. De Taguató para arriba, la torre te lo retransmite a ti: «caution,
+   *    moderate turbulence reported at flight level one two zero by preceding
+   *    traffic». En los dos peldaños de abajo no hay radio en inglés para ti, y
+   *    lo cuenta la instructora detrás de lo que se oyó —«¿escuchaste la
+   *    radio?»—, una vez por vuelo y solo si se oyó algo.
+   *
+   * La comandante va detrás, en el mismo turno: la radio y la instructora
+   * piden la palabra en `normal` y la megafonía espera a que acaben, que es el
+   * orden en que pasa. Cada frase solo con su grabación: sin ella se lee en
+   * la tira, y la de la instructora, que habla de lo que se oyó, no se dice.
+   * Ver `audio/turnos.ts`.
+   *
+   * Devuelve cuánto ocupa en la tira lo que solo se lee, s: lo que tiene que
+   * esperar la comandante para no taparlo.
+   */
+  private contarElPirep(intensidad: Intensidad): number {
+    const campo = this.elCampo().escenario;
+    const habla = hablaDe(campo.aerodrome?.id);
+    // A la altura que se va a cruzar, que es donde lo encontró el de delante.
+    const metros = this.navegacion.plan
+      ? this.navegacion.cruceroPlaneado
+      : this.flight.state.position.y;
+    const pies = Math.round(metros / PIE_EN_METROS / 1000) * 1000;
+    const altura = alturaEnRadio(pies, altitudDeTransicion(oaciDe(campo)));
+    const dicha = altura?.dicho ?? `${pies} feet`;
+    const grado = GRADO_EN_RADIO[intensidad];
+    const conLetra = this.tier.instruments !== "none";
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    const hayQuien =
+      (this.avionesDeRuta?.quienes().length ?? 0) > 0 ||
+      (this.islenos?.quienes().length ?? 0) > 0;
+    /*
+     * Lo de la instructora, cuando acaba la radio: pedido a la vez, esperaría
+     * lo que dura la frase del otro avión y caducaría. Y solo si sonó:
+     * «¿escuchaste la radio?» no se pregunta sobre una radio muda.
+     */
+    const explica: TranslationKey = "vuelo.pirep";
+    const loExplica =
+      !conCifras &&
+      !this.pirepExplicado &&
+      laInstructoraLoExplica(this.tier.avisos) &&
+      this.instructor.vozDe(explica) !== null;
+    /** Lo que ya ocupa en la tira lo que solo se lee, s. */
+    let leida = 0;
+    if (hayQuien) {
+      const otro = sortearIndicativo(campo.aerodrome?.id);
+      const texto = `${otro.dicho}, for your information, ${grado} turbulence at ${dicha}`;
+      const clave = `otro.pirep.${intensidad}`;
+      const relleno = { ...rellenoDe(otro), ...(altura ? { altura: altura.piezas } : {}) };
+      if (altura && this.instructor.vozDe(clave, relleno)) {
+        if (loExplica) this.pirepExplicado = true;
+        let explicado = false;
+        const tira = this.tiraAlSonar(texto, false);
+        this.otroAvion.decir(texto, clave, "normal", relleno, (que, porque) => {
+          tira(que, porque);
+          if (!loExplica || explicado || (que !== "acaba" && que !== "cortada")) return;
+          explicado = true;
+          this.instructor.decir(t(explica), explica, "normal");
+        });
+      } else if (conLetra) {
+        this.hud.radio(texto, undefined, false);
+        leida += SEPARA_LA_RADIO;
+      }
+    }
+    if (conCifras) {
+      const yo = this.miIndicativo;
+      const texto = `${yo.dicho}, caution, ${grado} turbulence reported at ${dicha} by preceding traffic`;
+      const clave = comoSeDiceAqui(`torre.pirep.${intensidad}`, habla);
+      const relleno = { ...rellenoDe(yo), ...(altura ? { altura: altura.piezas } : {}) };
+      if (altura && this.instructor.vozDe(clave, relleno))
+        this.torre.decir(texto, clave, "normal", relleno, this.tiraAlSonar(texto, true));
+      else if (conLetra) {
+        this.agenda.luego(leida, () => this.hud.radio(texto, undefined, true));
+        leida += SEPARA_LA_RADIO;
+      }
+    }
+    return leida;
   }
 
   /**
@@ -23728,6 +24075,7 @@ export class Game {
     });
     if (conGente) {
       if (suceso) this.anunciarLaTurbulencia(suceso);
+      else this.aconsejarElCinturon();
       return;
     }
     if (movimiento < YA_NO_SACUDE) this.bachesDichos = false;

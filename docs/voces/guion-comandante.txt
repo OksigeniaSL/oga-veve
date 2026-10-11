@@ -32,6 +32,8 @@ Esos cerros son Cerro Corá, un parque nacional. Ahí terminó, en mil ochocient
 Eso de abajo es el Chaco: más de la mitad del país, pero con muy poca gente. Un monte inmenso donde viven yaguaretés, tatús y osos hormigueros.
 Esa es Encarnación, la Perla del Sur, a orillas del Paraná. En verano tiene playas de río y el carnaval más famoso del país.
 Ahí están las ruinas de Trinidad, una misión jesuítica del siglo dieciocho. Es Patrimonio de la Humanidad, junto con la de Jesús, que está cerquita.
+Y ahora, miren el cielo: esas cuatro estrellas en cruz son la Cruz del Sur. Si alargan el palo largo unas cuatro veces y media, llegan justo al sur. ¡Así se orientaban los navegantes, mucho antes del GPS!
+Miren hacia el norte: esa estrella sola, ni muy alta ni muy baja, es la Estrella Polar. No es la más brillante, pero es la más útil: casi no se mueve en toda la noche y marca el norte. Y está tan alta como lejos estamos del ecuador: aquí, unos veintiocho grados.
 Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.
 Tripulación, armar toboganes y verificación cruzada.
 Tripulación, sentados para el despegue.
@@ -42,6 +44,25 @@ Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjen
 Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.
 Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.
 Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.
+Señores pasajeros, les habla la comandante. Vamos a pasar por una zona de turbulencia ligera: unos baches suaves, como un camino de tierra. Es normal, y el avión está hecho para esto. Se encendió la señal del cinturón: vuelvan a su asiento y abróchenselo, por favor.
+Señores pasajeros, les habla la comandante. Más adelante hay turbulencia moderada: el avión se va a mover bastante un rato. Es normal, y el avión está hecho para esto. La tripulación también se va a sentar. Vuelvan a su asiento, abróchense bien el cinturón y guarden lo que tengan en la mesita.
+Señores pasajeros, les habla la comandante. Más adelante hay turbulencia fuerte. La vamos a pasar con calma: el avión está hecho para esto y nosotros sabemos cómo llevarlo. Siéntense ya y abróchense el cinturón bien ajustado. La tripulación también se sienta. Les aviso cuando pase.
+Señores pasajeros, estamos pasando por un poco de turbulencia. Es de la que no se ve en el radar: se llama turbulencia en aire claro, y es normal. Se encendió la señal: vuelvan a su asiento y abróchense el cinturón.
+Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia moderada que no se veía venir: no sale en el radar. Es normal y el avión está hecho para esto. Vuelvan a su asiento y abróchense bien el cinturón. La tripulación se sienta también.
+Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia fuerte. Con calma: el avión está hecho para esto. Quédense sentados con el cinturón bien ajustado. Les aviso cuando pase.
+Señores pasajeros, nos toca otro poquito de turbulencia, como la de antes. Ya saben: a su asiento, cinturón puesto, y seguimos el viaje tranquilos.
+Señores pasajeros, otra vez viene turbulencia, esta vez un poco más movida. Igual que antes: todos sentados y con el cinturón bien puesto. La tripulación también se sienta.
+Señores pasajeros, les habla otra vez la comandante. Viene un tramo de turbulencia fuerte. Lo pasamos con calma, como el anterior: siéntense ya, con el cinturón bien ajustado. Les aviso cuando pase.
+Señores pasajeros, les habla la comandante. Hoy hay tormentas en el camino. El radar nos muestra dónde están y las vamos a rodear, pero el aire va a estar movido casi todo el vuelo. La señal del cinturón se queda encendida: quédense sentados y con el cinturón puesto.
+Señores pasajeros, les habla la comandante. Un avión que va adelante nos avisó por radio que más adelante hay turbulencia. Gracias a su aviso nos podemos preparar: vuelvan a su asiento y abróchense el cinturón. Los aviones nos ayudamos entre nosotros.
+Señores pasajeros, ya estamos tranquilos. Apagamos la señal del cinturón: pueden soltarse, pero si están sentados, déjenselo puestito.
+Listo, señores pasajeros: ya pasamos la zona movida. Se apaga la señal del cinturón. Gracias por la paciencia.
+Señores pasajeros, ya pasamos la turbulencia. La señal del cinturón sigue encendida porque ya empezamos a bajar.
+Un consejo de la comandante: aunque la señal del cinturón esté apagada, mientras estén sentados déjenselo puesto, flojito. A veces la turbulencia llega sin avisar, y el cinturón es lo que los deja quietitos en su asiento.
+El vuelo va a durar más o menos una hora y cuarto.
+El vuelo va a durar más o menos una hora y media.
+El vuelo va a durar más o menos una hora y cuarenta y cinco.
+El vuelo va a durar más o menos dos horas.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.
@@ -61,6 +82,10 @@ Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia 
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.
 Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.
+Vamos a aterrizar en más o menos una hora y cuarto.
+Vamos a aterrizar en más o menos una hora y media.
+Vamos a aterrizar en más o menos una hora y cuarenta y cinco.
+Vamos a aterrizar en más o menos dos horas.
 Allá el cielo está despejado.
 Allá hay algunas nubes.
 Allá está nublado.

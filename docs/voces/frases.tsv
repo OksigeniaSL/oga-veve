@@ -35,6 +35,7 @@ instructor	instructor/vuelo.aterrizasteContraLaOrden.ogg	es-PY	La torre nos hab�
 instructor	instructor/vuelo.rotar.ogg	es-PY	Tirá para arriba	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.comprometido.ogg	es-PY	Ya despegamos: seguí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alineadoGasAFondo.ogg	es-PY	Ya estás alineado: gas a fondo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVuelo.ogg	es-PY	Andá a dar una vuelta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVueloAterrizando.ogg	es-PY	Andá a la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVueloDestino.ogg	es-PY	Seguí la flecha: vamos al otro aeropuerto	lo que toca hacer ahora, en vuelo y en tierra
@@ -57,6 +58,11 @@ instructor	instructor/vuelo.radio.otraVezLaTorre.ogg	es-PY	Ya estamos cerca: vol
 instructor	instructor/vuelo.traficoArriba.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoAbajo.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoNivel.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.lucesDeNoche.deFrente.ogg	es-PY	Mirá ese avión: la luz verde a tu izquierda y la roja a tu derecha. Eso quiere decir que viene hacia nosotros. Para eso llevan luces los aviones: para verse a tiempo.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.lucesDeNoche.seAleja.ogg	es-PY	¿Ves esa luz blanca sola? Es la cola de otro avión: se está alejando de nosotros.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.lucesDeNoche.cruzaIzquierda.ogg	es-PY	Ese avión nos enseña su luz roja: lo vemos por su lado izquierdo, y va pasando hacia tu izquierda.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.lucesDeNoche.cruzaDerecha.ogg	es-PY	Ese avión nos enseña su luz verde: lo vemos por su lado derecho, y va pasando hacia tu derecha.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.lucesDeNoche.regla.ogg	es-PY	De noche, todos los aviones llevan las mismas luces: roja en la punta del ala izquierda, verde en la derecha y blanca atrás. Mirándolas se sabe hacia dónde va cada uno.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.otroAvion.delante.arriba.ogg	es-PY	Adelante y más arriba va otro avión. ¿Lo ves?	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.otroAvion.delante.nivel.ogg	es-PY	Adelante, a nuestra altura, va otro avión. ¿Lo ves?	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.otroAvion.delante.abajo.ogg	es-PY	Adelante y más abajo va otro avión. ¿Lo ves?	lo que toca hacer ahora, en vuelo y en tierra
@@ -172,6 +178,7 @@ instructor	instructor/vuelo.abandonandoSinTorre.ogg	es-PY	Sin apuro: salí de la
 instructor	instructor/vuelo.pistaLibre.ogg	es-PY	¡Pista libre! Bien hecho	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.aPlataforma.ogg	es-PY	Volvé a tu lugar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enPuesto.ogg	es-PY	Llegaste. Apagá el motor	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.cortaMotores.ogg	es-PY	Te hace la seña de cortar: apagá el motor	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.apagado.ogg	es-PY	¡Vuelo terminado!	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.fuera.ogg	es-PY	Volvé a la raya verde	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.roto.ogg	es-PY	Se rompió. Volvemos a empezar	lo que toca hacer ahora, en vuelo y en tierra
@@ -199,6 +206,7 @@ instructor	instructor/vuelo.quitaLaReversa.ogg	es-PY	Ya vamos despacio: quitá l
 instructor	instructor/vuelo.autofrenoSuelto.ogg	es-PY	Pisaste el freno: el autofreno se soltó y ahora frenás vos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay una tormenta delante: rodeála, no la cruces	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.baches.ogg	es-PY	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.pirep.ogg	es-PY	¿Escuchaste la radio? Otro avión avisó que más adelante se mueve. Los aviones se ayudan entre ellos: así la comandante puede avisar antes.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.reserva.ogg	es-PY	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.reservaAqui.ogg	es-PY	Entramos en la reserva, pero tenemos de sobra para llegar: aterrizamos acá.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.reservaMinimo.ogg	es-PY	Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.	lo que toca hacer ahora, en vuelo y en tierra
@@ -241,6 +249,9 @@ instructor	instructor/circuito.encola.ogg	es-PY	Volá al lado de la pista, con e
 instructor	instructor/circuito.cruzado.derecha.ogg	es-PY	Girá a la derecha: volvemos a la pista	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.encola.derecha.ogg	es-PY	Volá al lado de la pista, con ella a tu derecha	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.base.ogg	es-PY	Girá otra vez y empezá a bajar: ya vamos a aterrizar	los cuatro tramos del circuito de tráfico
+instructor	instructor/senalero.alto.ogg	es-PY	Cruzó los bastones arriba: eso es parar	lo que dice cada seña del señalero
+instructor	instructor/senalero.frenos.ogg	es-PY	Levanta la mano y cierra el puño: poné el freno	lo que dice cada seña del señalero
+instructor	instructor/senalero.calzos.ogg	es-PY	Junta los bastones arriba: ya puso los calzos en las ruedas	lo que dice cada seña del señalero
 instructor	instructor/percance.ocupada.ogg	es-PY	La pista estaba ocupada y te dijeron que no bajaras	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.coche.ogg	es-PY	Le pasaste por encima al coche	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.edificio.ogg	es-PY	Chocaste con un edificio	lo que salió mal, en la pantalla de fin
@@ -442,6 +453,8 @@ instructor	instructor/ventanilla.vos.cerro-cora.ogg	es-PY	Esos cerros son Cerro 
 instructor	instructor/ventanilla.vos.chaco.ogg	es-PY	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.	lo que se ve por la ventanilla, dicho al lado en la avioneta
 instructor	instructor/ventanilla.vos.encarnacion.ogg	es-PY	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.	lo que se ve por la ventanilla, dicho al lado en la avioneta
 instructor	instructor/ventanilla.vos.trinidad.ogg	es-PY	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.	lo que se ve por la ventanilla, dicho al lado en la avioneta
+instructor	instructor/ventanilla.vos.cruz-del-sur.ogg	es-PY	Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.	lo que se ve por la ventanilla, dicho al lado en la avioneta
+instructor	instructor/ventanilla.vos.polar.ogg	es-PY	¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.	lo que se ve por la ventanilla, dicho al lado en la avioneta
 comandante	comandante/ventanilla.saludo.ogg	es-PY	Hola de nuevo, les habla la comandante.	lo que se ve por la ventanilla, por la megafonía
 comandante	comandante/ventanilla.lado.izquierda.ogg	es-PY	Los que van del lado izquierdo, miren por la ventanilla.	lo que se ve por la ventanilla, por la megafonía
 comandante	comandante/ventanilla.lado.izquierda~2.ogg	es-PY	Asómense a las ventanillas de la izquierda.	lo que se ve por la ventanilla, por la megafonía · otra forma de decirlo
@@ -476,6 +489,8 @@ comandante	comandante/ventanilla.cerro-cora.ogg	es-PY	Esos cerros son Cerro Cor�
 comandante	comandante/ventanilla.chaco.ogg	es-PY	Eso de abajo es el Chaco: más de la mitad del país, pero con muy poca gente. Un monte inmenso donde viven yaguaretés, tatús y osos hormigueros.	lo que se ve por la ventanilla, por la megafonía
 comandante	comandante/ventanilla.encarnacion.ogg	es-PY	Esa es Encarnación, la Perla del Sur, a orillas del Paraná. En verano tiene playas de río y el carnaval más famoso del país.	lo que se ve por la ventanilla, por la megafonía
 comandante	comandante/ventanilla.trinidad.ogg	es-PY	Ahí están las ruinas de Trinidad, una misión jesuítica del siglo dieciocho. Es Patrimonio de la Humanidad, junto con la de Jesús, que está cerquita.	lo que se ve por la ventanilla, por la megafonía
+comandante	comandante/ventanilla.cruz-del-sur.ogg	es-PY	Y ahora, miren el cielo: esas cuatro estrellas en cruz son la Cruz del Sur. Si alargan el palo largo unas cuatro veces y media, llegan justo al sur. ¡Así se orientaban los navegantes, mucho antes del GPS!	lo que se ve por la ventanilla, por la megafonía
+comandante	comandante/ventanilla.polar.ogg	es-PY	Miren hacia el norte: esa estrella sola, ni muy alta ni muy baja, es la Estrella Polar. No es la más brillante, pero es la más útil: casi no se mueve en toda la noche y marca el norte. Y está tan alta como lejos estamos del ecuador: aquí, unos veintiocho grados.	lo que se ve por la ventanilla, por la megafonía
 comandante	comandante/comandante.bienvenida.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.crosscheck.ogg	es-PY	Tripulación, armar toboganes y verificación cruzada.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.despegue.ogg	es-PY	Tripulación, sentados para el despegue.	la megafonía de cabina, para el pasaje
@@ -486,6 +501,25 @@ comandante	comandante/comandante.crucero.ogg	es-PY	Ya estamos arriba. Pueden sol
 comandante	comandante/comandante.turbulencia.ogg	es-PY	Señores pasajeros, vamos a pasar por una zona con algo de movimiento. Es normal y el avión está hecho para esto. Por favor, vuelvan a su asiento y abróchense el cinturón.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.nivelMasTranquilo.ogg	es-PY	Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.bachesEnTodos.ogg	es-PY	Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.ligera.ogg	es-PY	Señores pasajeros, les habla la comandante. Vamos a pasar por una zona de turbulencia ligera: unos baches suaves, como un camino de tierra. Es normal, y el avión está hecho para esto. Se encendió la señal del cinturón: vuelvan a su asiento y abróchenselo, por favor.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.moderada.ogg	es-PY	Señores pasajeros, les habla la comandante. Más adelante hay turbulencia moderada: el avión se va a mover bastante un rato. Es normal, y el avión está hecho para esto. La tripulación también se va a sentar. Vuelvan a su asiento, abróchense bien el cinturón y guarden lo que tengan en la mesita.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.fuerte.ogg	es-PY	Señores pasajeros, les habla la comandante. Más adelante hay turbulencia fuerte. La vamos a pasar con calma: el avión está hecho para esto y nosotros sabemos cómo llevarlo. Siéntense ya y abróchense el cinturón bien ajustado. La tripulación también se sienta. Les aviso cuando pase.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.ahora.ligera.ogg	es-PY	Señores pasajeros, estamos pasando por un poco de turbulencia. Es de la que no se ve en el radar: se llama turbulencia en aire claro, y es normal. Se encendió la señal: vuelvan a su asiento y abróchense el cinturón.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.ahora.moderada.ogg	es-PY	Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia moderada que no se veía venir: no sale en el radar. Es normal y el avión está hecho para esto. Vuelvan a su asiento y abróchense bien el cinturón. La tripulación se sienta también.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.ahora.fuerte.ogg	es-PY	Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia fuerte. Con calma: el avión está hecho para esto. Quédense sentados con el cinturón bien ajustado. Les aviso cuando pase.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.otraVez.ligera.ogg	es-PY	Señores pasajeros, nos toca otro poquito de turbulencia, como la de antes. Ya saben: a su asiento, cinturón puesto, y seguimos el viaje tranquilos.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.otraVez.moderada.ogg	es-PY	Señores pasajeros, otra vez viene turbulencia, esta vez un poco más movida. Igual que antes: todos sentados y con el cinturón bien puesto. La tripulación también se sienta.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.otraVez.fuerte.ogg	es-PY	Señores pasajeros, les habla otra vez la comandante. Viene un tramo de turbulencia fuerte. Lo pasamos con calma, como el anterior: siéntense ya, con el cinturón bien ajustado. Les aviso cuando pase.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.tormenta.ogg	es-PY	Señores pasajeros, les habla la comandante. Hoy hay tormentas en el camino. El radar nos muestra dónde están y las vamos a rodear, pero el aire va a estar movido casi todo el vuelo. La señal del cinturón se queda encendida: quédense sentados y con el cinturón puesto.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.pirep.ogg	es-PY	Señores pasajeros, les habla la comandante. Un avión que va adelante nos avisó por radio que más adelante hay turbulencia. Gracias a su aviso nos podemos preparar: vuelvan a su asiento y abróchense el cinturón. Los aviones nos ayudamos entre nosotros.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.paso.ogg	es-PY	Señores pasajeros, ya estamos tranquilos. Apagamos la señal del cinturón: pueden soltarse, pero si están sentados, déjenselo puestito.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.turbulencia.paso~2.ogg	es-PY	Listo, señores pasajeros: ya pasamos la zona movida. Se apaga la señal del cinturón. Gracias por la paciencia.	la megafonía de cabina, para el pasaje · otra forma de decirlo
+comandante	comandante/comandante.turbulencia.pasoBajando.ogg	es-PY	Señores pasajeros, ya pasamos la turbulencia. La señal del cinturón sigue encendida porque ya empezamos a bajar.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.cinturon.porque.ogg	es-PY	Un consejo de la comandante: aunque la señal del cinturón esté apagada, mientras estén sentados déjenselo puesto, flojito. A veces la turbulencia llega sin avisar, y el cinturón es lo que los deja quietitos en su asiento.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.previsto.vuelo.h75.ogg	es-PY	El vuelo va a durar más o menos una hora y cuarto.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.previsto.vuelo.h90.ogg	es-PY	El vuelo va a durar más o menos una hora y media.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.previsto.vuelo.h105.ogg	es-PY	El vuelo va a durar más o menos una hora y cuarenta y cinco.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.previsto.vuelo.h120.ogg	es-PY	El vuelo va a durar más o menos dos horas.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.vuelta.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar para volver al aeropuerto.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.pettirossi.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia Asunción.	la megafonía de cabina, para el pasaje
@@ -505,6 +539,10 @@ comandante	comandante/comandante.descenso.hacia.fuerteventura.ogg	es-PY	Señores
 comandante	comandante/comandante.descenso.hacia.la-palma.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Palma.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.el-hierro.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia El Hierro.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.hacia.la-gomera.ogg	es-PY	Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.minutos.h75.ogg	es-PY	Vamos a aterrizar en más o menos una hora y cuarto.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.minutos.h90.ogg	es-PY	Vamos a aterrizar en más o menos una hora y media.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.minutos.h105.ogg	es-PY	Vamos a aterrizar en más o menos una hora y cuarenta y cinco.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.minutos.h120.ogg	es-PY	Vamos a aterrizar en más o menos dos horas.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.cielo.despejado.ogg	es-PY	Allá el cielo está despejado.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.cielo.nubes.ogg	es-PY	Allá hay algunas nubes.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.cielo.nublado.ogg	es-PY	Allá está nublado.	la megafonía de cabina, para el pasaje
@@ -644,6 +682,8 @@ tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.banana.pa
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.mani.paraguay.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y manises tostados; un sabor de Paraguay, de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.largo.ogg	es-PY	Y como el viaje es largo, también tenemos café y té.	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.cinturones.ogg	es-PY	Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.pausa.ogg	es-PY	Señoras y señores, debido a la turbulencia interrumpimos un momento el servicio y la tripulación va a tomar asiento. En cuanto mejore, continuamos.	la tripulación de cabina de Canarias, por megafonía
+tripulacion-canarias	tripulacion-canarias/tripulacion.canario.servicio.seguimos.ogg	es-PY	Ya se ha calmado: continuamos con el servicio. Muchas gracias por su paciencia.	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.mascaras.ogg	es-PY	Señoras y señores: tiren de la mascarilla hacia ustedes, colóquensela sobre la nariz y la boca y respiren con normalidad. Pónganse primero la suya y luego ayuden a quien lo necesite. Vamos a bajar a una altura donde se respira bien.	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.bienvenidos.tenerife-norte.ogg	es-PY	Señoras y señores, bienvenidos a Tenerife Norte.	la tripulación de cabina de Canarias, por megafonía
 tripulacion-canarias	tripulacion-canarias/tripulacion.canario.bienvenidos.tenerife-sur.ogg	es-PY	Señoras y señores, bienvenidos a Tenerife Sur.	la tripulación de cabina de Canarias, por megafonía
@@ -663,6 +703,8 @@ tripulacion	tripulacion/tripulacion.servicio.chipa.ogg	es-PY	Señoras y señores
 tripulacion	tripulacion/tripulacion.servicio.mbeju.ogg	es-PY	Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua fresca, y mbejú de la Granja Óga. ¡Que lo disfruten!	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.servicio.largo.ogg	es-PY	Y como el viaje es largo, también tenemos café y té calentitos.	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.cinturones.ogg	es-PY	Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.pausa.ogg	es-PY	Señoras y señores, por la turbulencia paramos un ratito el servicio y la tripulación se va a sentar. En cuanto se calme, seguimos.	la tripulación de cabina, por megafonía
+tripulacion	tripulacion/tripulacion.servicio.seguimos.ogg	es-PY	Ya se calmó: seguimos con el servicio. Muchas gracias por la paciencia.	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.mascaras.ogg	es-PY	Señoras y señores: tiren de la máscara hacia ustedes, pónganla sobre la nariz y la boca y respiren normal. Primero la suya, y después ayuden a los demás. Vamos a bajar a una altura donde se respira bien.	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.bienvenidos.pettirossi.ogg	es-PY	Señoras y señores, bienvenidos a Asunción.	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.bienvenidos.guarani.ogg	es-PY	Señoras y señores, bienvenidos a Ciudad del Este.	la tripulación de cabina, por megafonía
@@ -786,6 +828,25 @@ otro	otro/otro.solo.rodando.ogg	es	rodando a la cabecera	sale del puesto
 otro	otro/otro.solo.enCola.ogg	es	viento en cola	entra en el circuito
 otro	otro/otro.solo.final.ogg	es	en final	ya viene a la pista
 otro	otro/otro.solo.pistaLibre.ogg	es	pista libre	y la deja
+otro	otro/otro.solo.pirep.ligera.ogg	en	for your information, light turbulence at	avisa de turbulencia ligera; detrás, la altura, en el aviso de turbulencia
+otro	otro/otro.solo.pirep.moderada.ogg	en	for your information, moderate turbulence at	avisa de turbulencia moderada; detrás, la altura, en el aviso de turbulencia
+otro	otro/otro.solo.pirep.fuerte.ogg	en	for your information, severe turbulence at	avisa de turbulencia fuerte; detrás, la altura, en el aviso de turbulencia
+otro	otro/altura.nivel.ogg	en	flight level	delante de las tres cifras de un nivel, en el aviso de turbulencia
+otro	otro/altura.pies.2.ogg	en	two thousand feet	una altitud por debajo de la transición, en el aviso de turbulencia
+otro	otro/altura.pies.3.ogg	en	three thousand feet	una altitud por debajo de la transición, en el aviso de turbulencia
+otro	otro/altura.pies.4.ogg	en	four thousand feet	una altitud por debajo de la transición, en el aviso de turbulencia
+otro	otro/altura.pies.5.ogg	en	five thousand feet	una altitud por debajo de la transición, en el aviso de turbulencia
+otro	otro/altura.pies.6.ogg	en	six thousand feet	una altitud por debajo de la transición, en el aviso de turbulencia
+otro	otro/cifra.0.ogg	en	zero	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.1.ogg	en	one	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.2.ogg	en	two	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.3.ogg	en	three	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.4.ogg	en	four	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.5.ogg	en	five	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.6.ogg	en	six	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.7.ogg	en	seven	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.8.ogg	en	eight	una cifra del nivel, en el aviso de turbulencia
+otro	otro/cifra.9.ogg	en	niner	una cifra del nivel, en el aviso de turbulencia
 torre	torre/fonetico.alfa.ogg	en	Alfa	una letra de la matrícula
 torre	torre/fonetico.bravo.ogg	en	Bravo	una letra de la matrícula
 torre	torre/fonetico.charlie.ogg	en	Charlie	una letra de la matrícula
@@ -843,7 +904,16 @@ torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del d
 torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
 torre	torre/torre.solo.backtrackRunway.ogg	en	backtrack runway	remontar la pista, antes de su número
+torre	torre/torre.solo.adviseAbleToDepart.ogg	en	advise able to depart from runway	la torre ofrece salir desde la intersección; detrás, la pista
+torre	torre/torre.solo.intersection.ogg	en	intersection	detrás de la pista, antes del nombre de la calle
+torre	torre/torre.solo.toraRunway.ogg	en	TORA runway	la pista que queda desde la intersección, antes de su número
+torre	torre/torre.solo.fromIntersection.ogg	en	from intersection	detrás de la pista, antes de la calle
+torre	torre/torre.solo.metres.ogg	en	metres	detrás de la pista que queda, en metros
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
+torre	torre/torre.solo.pirep.ligera.ogg	en	caution, light turbulence reported at	otro avión avisó de turbulencia ligera; detrás, la altura
+torre	torre/torre.solo.pirep.moderada.ogg	en	caution, moderate turbulence reported at	otro avión avisó de turbulencia moderada; detrás, la altura
+torre	torre/torre.solo.pirep.fuerte.ogg	en	caution, severe turbulence reported at	otro avión avisó de turbulencia fuerte; detrás, la altura
+torre	torre/torre.solo.pirep.porDelante.ogg	en	by preceding traffic	quién avisó: el que va delante
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
 torre	torre/torre.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia
 torre	torre/torre.solo.contactDeparture.ogg	en	contact departure	dejás la zona de la torre: te habla salida
@@ -860,6 +930,8 @@ torre	torre/viento.degrees.ogg	en	degrees	detrás de la dirección del viento
 torre	torre/viento.knots.ogg	en	knots	detrás de la fuerza del viento
 torre	torre/viento.calm.ogg	en	calm	sin viento: «wind calm»
 torre	torre/viento.variable.ogg	en	variable	viento sin dirección fija
+torre	torre/metros.thousand.ogg	en	thousand	los miles de la pista que queda, detrás de su cifra
+torre	torre/metros.hundred.ogg	en	hundred	los cientos de la pista que queda, detrás de su cifra
 torre	torre/trafico.traffic.ogg	en	traffic	información de tráfico: empieza así
 torre	torre/trafico.hora.1.ogg	en	one o'clock	dónde está el otro, en la hora del reloj
 torre	torre/trafico.hora.2.ogg	en	two o'clock	dónde está el otro, en la hora del reloj
@@ -1024,7 +1096,16 @@ torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la 
 torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.backtrackRunway.ogg	en	backtrack runway	remontar la pista, antes de su número, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.adviseAbleToDepart.ogg	en	advise able to depart from runway	la torre ofrece salir desde la intersección; detrás, la pista, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.intersection.ogg	en	intersection	detrás de la pista, antes del nombre de la calle, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.toraRunway.ogg	en	TORA runway	la pista que queda desde la intersección, antes de su número, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.fromIntersection.ogg	en	from intersection	detrás de la pista, antes de la calle, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.metres.ogg	en	metres	detrás de la pista que queda, en metros, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.pirep.ligera.ogg	en	caution, light turbulence reported at	otro avión avisó de turbulencia ligera; detrás, la altura, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.pirep.moderada.ogg	en	caution, moderate turbulence reported at	otro avión avisó de turbulencia moderada; detrás, la altura, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.pirep.fuerte.ogg	en	caution, severe turbulence reported at	otro avión avisó de turbulencia fuerte; detrás, la altura, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.pirep.porDelante.ogg	en	by preceding traffic	quién avisó: el que va delante, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.contactDeparture.ogg	en	contact departure	dejás la zona de la torre: te habla salida, en Canarias
@@ -1041,6 +1122,8 @@ torre-canarias	torre-canarias/viento.degrees.ogg	en	degrees	detrás de la direcc
 torre-canarias	torre-canarias/viento.knots.ogg	en	knots	detrás de la fuerza del viento, en Canarias
 torre-canarias	torre-canarias/viento.calm.ogg	en	calm	sin viento: «wind calm», en Canarias
 torre-canarias	torre-canarias/viento.variable.ogg	en	variable	viento sin dirección fija, en Canarias
+torre-canarias	torre-canarias/metros.thousand.ogg	en	thousand	los miles de la pista que queda, detrás de su cifra, en Canarias
+torre-canarias	torre-canarias/metros.hundred.ogg	en	hundred	los cientos de la pista que queda, detrás de su cifra, en Canarias
 torre-canarias	torre-canarias/trafico.traffic.ogg	en	traffic	información de tráfico: empieza así, en Canarias
 torre-canarias	torre-canarias/trafico.hora.1.ogg	en	one o'clock	dónde está el otro, en la hora del reloj, en Canarias
 torre-canarias	torre-canarias/trafico.hora.2.ogg	en	two o'clock	dónde está el otro, en la hora del reloj, en Canarias

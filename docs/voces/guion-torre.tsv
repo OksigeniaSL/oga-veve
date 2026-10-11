@@ -58,95 +58,106 @@
 058	torre.solo.climbTo	climb to
 059	torre.solo.runwayInUse	runway in use
 060	torre.solo.backtrackRunway	backtrack runway
-061	torre.solo.goAroundSolo	go around
-062	torre.solo.rogerMayday	roger, Mayday
-063	torre.solo.rogerPanPan	roger, Pan Pan
-064	torre.solo.contactDeparture	contact departure
-065	torre.solo.contactControl	contact Asunción control
-066	torre.solo.contactApproach	contact approach
-067	torre.solo.contactTower	contact tower
-068	torre.solo.minimumFuel	roger, minimum fuel, no delay expected
-069	torre.solo.birdsOnFinal	caution, flock of birds on final
-070	torre.solo.free	free
-071	torre.solo.occupied	occupied
-072	torre.solo.noReportedTraffic	no reported traffic
-073	viento.wind	wind
-074	viento.degrees	degrees
-075	viento.knots	knots
-076	viento.calm	calm
-077	viento.variable	variable
-078	trafico.traffic	traffic
-079	trafico.hora.1	one o'clock
-080	trafico.hora.2	two o'clock
-081	trafico.hora.3	three o'clock
-082	trafico.hora.4	four o'clock
-083	trafico.hora.5	five o'clock
-084	trafico.hora.6	six o'clock
-085	trafico.hora.7	seven o'clock
-086	trafico.hora.8	eight o'clock
-087	trafico.hora.9	nine o'clock
-088	trafico.hora.10	ten o'clock
-089	trafico.hora.11	eleven o'clock
-090	trafico.hora.12	twelve o'clock
-091	trafico.millas.1	one mile
-092	trafico.millas.2	two miles
-093	trafico.millas.3	three miles
-094	trafico.millas.4	four miles
-095	trafico.millas.5	five miles
-096	trafico.millas.6	six miles
-097	trafico.pies.3	three hundred feet
-098	trafico.pies.4	four hundred feet
-099	trafico.pies.5	five hundred feet
-100	trafico.pies.6	six hundred feet
-101	trafico.pies.7	seven hundred feet
-102	trafico.pies.8	eight hundred feet
-103	trafico.pies.9	niner hundred feet
-104	trafico.pies.10	one thousand feet
-105	trafico.pies.11	one thousand one hundred feet
-106	trafico.pies.12	one thousand two hundred feet
-107	trafico.above	above
-108	trafico.below	below
-109	trafico.sameLevel	same level
-110	altura.nivel	flight level
-111	altura.pies.2	two thousand feet
-112	altura.pies.3	three thousand feet
-113	altura.pies.4	four thousand feet
-114	altura.pies.5	five thousand feet
-115	altura.pies.6	six thousand feet
-116	torre.solo.pista	pista
-117	torre.solo.autorizadoDespegar	autorizado a despegar
-118	torre.solo.autorizadoParaAterrizar	autorizado para aterrizar
-119	torre.solo.mantengaFuera	mantenga fuera de pista
-120	torre.solo.acelereAbandono	acelere abandono de pista
-121	torre.solo.aterrizoSinPermiso	aterrizó sin autorización; llame a la torre por teléfono a su llegada
-122	torre.solo.autorizadoA	autorizado a
-123	torre.solo.idaAlAire	ida al aire
-124	cifra.es.0	cero
-125	cifra.es.1	uno
-126	cifra.es.2	dos
-127	cifra.es.3	tres
-128	cifra.es.4	cuatro
-129	cifra.es.5	cinco
-130	cifra.es.6	seis
-131	cifra.es.7	siete
-132	cifra.es.8	ocho
-133	cifra.es.9	nueve
-134	lado.es.izquierda	izquierda
-135	lado.es.derecha	derecha
-136	lado.es.central	central
-137	torre.solo.afisLibre	pista libre
-138	torre.solo.afisOcupada	pista ocupada
-139	torre.solo.afisSinTrafico	sin tráfico conocido
-140	torre.solo.afisTraficoAterriza	tráfico aterrizando
-141	torre.solo.afisTraficoDespega	tráfico despegando
-142	destino.pettirossi	Asunción
-143	destino.guarani	Guaraní
-144	destino.encarnacion	Encarnación
-145	destino.yvytu-rape	Yvytu Rape
-146	destino.concepcion	Concepción
-147	destino.pedro-juan	Pedro Juan Caballero
-148	destino.estigarribia	Mariscal Estigarribia
-149	destino.ayolas	Ayolas
-150	destino.pilar	Pilar
-151	torre.solo.subir.2	ascienda a dos mil pies
-152	torre.solo.subir.3	ascienda a tres mil pies
+061	torre.solo.adviseAbleToDepart	advise able to depart from runway
+062	torre.solo.intersection	intersection
+063	torre.solo.toraRunway	TORA runway
+064	torre.solo.fromIntersection	from intersection
+065	torre.solo.metres	metres
+066	torre.solo.goAroundSolo	go around
+067	torre.solo.pirep.ligera	caution, light turbulence reported at
+068	torre.solo.pirep.moderada	caution, moderate turbulence reported at
+069	torre.solo.pirep.fuerte	caution, severe turbulence reported at
+070	torre.solo.pirep.porDelante	by preceding traffic
+071	torre.solo.rogerMayday	roger, Mayday
+072	torre.solo.rogerPanPan	roger, Pan Pan
+073	torre.solo.contactDeparture	contact departure
+074	torre.solo.contactControl	contact Asunción control
+075	torre.solo.contactApproach	contact approach
+076	torre.solo.contactTower	contact tower
+077	torre.solo.minimumFuel	roger, minimum fuel, no delay expected
+078	torre.solo.birdsOnFinal	caution, flock of birds on final
+079	torre.solo.free	free
+080	torre.solo.occupied	occupied
+081	torre.solo.noReportedTraffic	no reported traffic
+082	viento.wind	wind
+083	viento.degrees	degrees
+084	viento.knots	knots
+085	viento.calm	calm
+086	viento.variable	variable
+087	metros.thousand	thousand
+088	metros.hundred	hundred
+089	trafico.traffic	traffic
+090	trafico.hora.1	one o'clock
+091	trafico.hora.2	two o'clock
+092	trafico.hora.3	three o'clock
+093	trafico.hora.4	four o'clock
+094	trafico.hora.5	five o'clock
+095	trafico.hora.6	six o'clock
+096	trafico.hora.7	seven o'clock
+097	trafico.hora.8	eight o'clock
+098	trafico.hora.9	nine o'clock
+099	trafico.hora.10	ten o'clock
+100	trafico.hora.11	eleven o'clock
+101	trafico.hora.12	twelve o'clock
+102	trafico.millas.1	one mile
+103	trafico.millas.2	two miles
+104	trafico.millas.3	three miles
+105	trafico.millas.4	four miles
+106	trafico.millas.5	five miles
+107	trafico.millas.6	six miles
+108	trafico.pies.3	three hundred feet
+109	trafico.pies.4	four hundred feet
+110	trafico.pies.5	five hundred feet
+111	trafico.pies.6	six hundred feet
+112	trafico.pies.7	seven hundred feet
+113	trafico.pies.8	eight hundred feet
+114	trafico.pies.9	niner hundred feet
+115	trafico.pies.10	one thousand feet
+116	trafico.pies.11	one thousand one hundred feet
+117	trafico.pies.12	one thousand two hundred feet
+118	trafico.above	above
+119	trafico.below	below
+120	trafico.sameLevel	same level
+121	altura.nivel	flight level
+122	altura.pies.2	two thousand feet
+123	altura.pies.3	three thousand feet
+124	altura.pies.4	four thousand feet
+125	altura.pies.5	five thousand feet
+126	altura.pies.6	six thousand feet
+127	torre.solo.pista	pista
+128	torre.solo.autorizadoDespegar	autorizado a despegar
+129	torre.solo.autorizadoParaAterrizar	autorizado para aterrizar
+130	torre.solo.mantengaFuera	mantenga fuera de pista
+131	torre.solo.acelereAbandono	acelere abandono de pista
+132	torre.solo.aterrizoSinPermiso	aterrizó sin autorización; llame a la torre por teléfono a su llegada
+133	torre.solo.autorizadoA	autorizado a
+134	torre.solo.idaAlAire	ida al aire
+135	cifra.es.0	cero
+136	cifra.es.1	uno
+137	cifra.es.2	dos
+138	cifra.es.3	tres
+139	cifra.es.4	cuatro
+140	cifra.es.5	cinco
+141	cifra.es.6	seis
+142	cifra.es.7	siete
+143	cifra.es.8	ocho
+144	cifra.es.9	nueve
+145	lado.es.izquierda	izquierda
+146	lado.es.derecha	derecha
+147	lado.es.central	central
+148	torre.solo.afisLibre	pista libre
+149	torre.solo.afisOcupada	pista ocupada
+150	torre.solo.afisSinTrafico	sin tráfico conocido
+151	torre.solo.afisTraficoAterriza	tráfico aterrizando
+152	torre.solo.afisTraficoDespega	tráfico despegando
+153	destino.pettirossi	Asunción
+154	destino.guarani	Guaraní
+155	destino.encarnacion	Encarnación
+156	destino.yvytu-rape	Yvytu Rape
+157	destino.concepcion	Concepción
+158	destino.pedro-juan	Pedro Juan Caballero
+159	destino.estigarribia	Mariscal Estigarribia
+160	destino.ayolas	Ayolas
+161	destino.pilar	Pilar
+162	torre.solo.subir.2	ascienda a dos mil pies
+163	torre.solo.subir.3	ascienda a tres mil pies

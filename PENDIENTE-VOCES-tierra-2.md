@@ -1,39 +1,40 @@
-# Pendiente: la radio de la salida desde la intersección, con voz
+# Pendiente: la radio de la salida desde la intersección, por grabar y por oír
 
-Lo de tierra de las tandas 9 y 14 y del punto 257 se grabó el 11 de octubre de
-2026 y ya suena: la prisa de la torre en la pista («expedite vacating»,
-«acelere abandono de pista»), remontar la pista («backtrack runway» y lo que
-cuenta la instructora, con su porqué), salir desde la intersección, el número
-en la fila de salida y la estela. Queda la radio de la intersección, que hoy se
-lee en la tira y no se oye.
+## 1. Grabar las piezas de la torre (14 piezas, 188 caracteres)
 
-## La radio de la intersección (de Taguató para arriba)
+Ya está en el juego, sin grabar: de Taguató para arriba, la oferta de la torre
+—«{matrícula}, advise able to depart from runway {pista}, intersection
+{calle}»— y la pista que queda —«{matrícula}, TORA runway {pista}, from
+intersection {calle}, {metros} metres»— se dicen con su voz en cuanto sus
+piezas están en el pack. Hasta entonces se leen en la tira, como ahora; lo de
+quien vuela («affirm», «negative, request backtrack») va solo en la tira, como
+todo lo que se dice desde esta cabina. Ver `contarPorDondeSeSale` en
+`src/game.ts` y `calleEnPiezas` y `metrosEnPiezas` en `src/flight/matricula.ts`.
 
-En inglés, como el resto de la radio de los peldaños de arriba. La fraseología
-es la de SERA (AMC1 SERA.14001, apéndice 1, 1.4.10 l a q) y la OACI (Doc 4444,
-12.3.4.7 n a p); la de España, en castellano, en el RD 1180/2018, anexo V,
-1.4.8 y 1.4.11, por si se graba la torre en castellano para los peldaños de
-abajo. Se escribe en la tira desde `contarPorDondeSeSale` en `src/game.ts`.
+En las dos torres, `torre` y `torre-canarias` (en la de Canarias, con
+`torre.canario.solo.*`), 7 piezas y 94 caracteres cada una:
 
-| quién | en inglés (lo que sale en la tira) | en castellano (RD 1180/2018) | cuándo |
-|---|---|---|---|
-| torre | {matrícula}, advise able to depart from runway {pista}, intersection {calle} | {matrícula}, indique si está listo para despegar de la pista {pista}, intersección {calle} | con torre, si se entra por una intersección con nombre |
-| quien vuela | Affirm, {matrícula} | Afirmo, {matrícula} | la cuenta le da |
-| torre | {matrícula}, TORA runway {pista}, from intersection {calle}, {metros} metres | {matrícula}, TORA pista {pista}, desde intersección {calle}, {metros} metros | detrás del «affirm»; redondeado a la baja a la centena |
-| quien vuela | Negative, request backtrack, {matrícula} (el de línea: request full length) | Negativo, solicito regresar por pista, {matrícula} | la cuenta no le da |
-| quien vuela, con AFIS | {matrícula}, backtracking runway {pista} / departing from intersection {calle}, runway {pista} | — | un AFIS no ofrece ni autoriza: quien vuela dice lo que hace |
+| pieza | texto | caracteres |
+|---|---|---|
+| `torre.solo.adviseAbleToDepart` | advise able to depart from runway | 33 |
+| `torre.solo.intersection` | intersection | 12 |
+| `torre.solo.toraRunway` | TORA runway (se le da a leer «Tora runway»: por radio es una palabra) | 11 |
+| `torre.solo.fromIntersection` | from intersection | 17 |
+| `torre.solo.metres` | metres | 6 |
+| `metros.thousand` | thousand | 8 |
+| `metros.hundred` | hundred | 7 |
 
-La única con voz es «backtrack runway» de la torre (`torre.backtrack`). Para
-darles voz a las otras de la torre hacen falta piezas nuevas en `TORRE_SOLO`
-(«advise able to depart from runway», «intersection», «TORA runway», «from
-intersection», «thousand», «hundred», «metres») y la calle en letras y cifras
-sueltas, que ya están. Las de quien vuela no tienen voz en el juego: van solo
-en la tira.
+`metros.*` se llama igual en las dos torres porque va en un hueco, como el
+viento. Las recetas —`torre.ofreceInterseccion` y `torre.tora`, con `.L`, `.R`
+y `.C`, y sus `torre.canario.*`— ya están en `crudo/torre/recetas.json` y
+`crudo/torre-canarias/recetas.json`, y las filas en `docs/voces/frases.json`.
+Así que: `node scripts/voces-elevenlabs.mjs torre` y `… torre-canarias`,
+hornear, restaurar lo re-codificado y `node scripts/verificar-voces.mjs`.
 
-## Y comprobarlo en el banco, que no se ha hecho
+## 2. Y oírlo en el banco, que no se ha hecho
 
-Lo grabado el 11 de octubre se comprobó con `verificar-voces` y las pruebas,
-pero no con el banco del vuelo entero en el navegador:
+Lo de tierra grabado el 11 de octubre se comprobó con `verificar-voces` y las
+pruebas, pero no con el banco del vuelo entero en el navegador:
 
 - parar el avión en la pista después de «salí de la pista»: la torre mete
   prisa una vez, y no otra si se vuelve a parar;
@@ -41,5 +42,7 @@ pero no con el banco del vuelo entero en el navegador:
   de Pilar (AFIS: solo la instructora);
 - salir de Mariscal Estigarribia con viento del sur (la 01: la avioneta
   remonta un trozo; el JAZ 90, la pista entera) y del norte (la 19: la
-  avioneta y el JAZ 90 salen desde la calle; el JAZ 120 pide la pista entera);
+  avioneta y el JAZ 90 salen desde la calle; el JAZ 120 pide la pista entera),
+  y con las piezas de arriba grabadas, que la oferta y la TORA suenan con la
+  voz de la torre, en su orden y detrás de nada;
 - Tenerife Sur con `OGA_FILA_DE_SALIDA=1`: el número en la fila y la estela.

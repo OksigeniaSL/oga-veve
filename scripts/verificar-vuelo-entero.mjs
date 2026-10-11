@@ -549,8 +549,21 @@ await page
  * `flight/turbulencia-del-vuelo.ts`.
  */
 const TURBULENCIA = process.env.OGA_TURBULENCIA ?? null;
+/*
+ * Y de dónde se sabe la prevista, si se pide: `OGA_TURBULENCIA_FUENTE=pirep`
+ * la hace avisar por otro avión, con la radio delante de la comandante. Ver
+ * `contarElPirep` en `src/game.ts`.
+ */
+const FUENTE = process.env.OGA_TURBULENCIA_FUENTE ?? null;
 const ZONA_PEDIDA = TURBULENCIA
-  ? { desde: 20000, hasta: 30000, intensidad: "moderada", como: TURBULENCIA, capa: null }
+  ? {
+      desde: 20000,
+      hasta: 30000,
+      intensidad: "moderada",
+      como: TURBULENCIA,
+      capa: null,
+      ...(FUENTE ? { fuente: FUENTE } : {}),
+    }
   : null;
 if (ZONA_PEDIDA)
   await page.evaluate((z) => globalThis.__oga?.ponerTurbulencia?.([z]), ZONA_PEDIDA);
