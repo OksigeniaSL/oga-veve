@@ -2576,8 +2576,6 @@ export const ES_PY = {
   "explica.carta.tierra":
     "En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice TCAS STBY: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.",
   "explica.tcas.corta": "Otro avión",
-  "explica.tcas.texto":
-    "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.",
   "explica.tcas.ra":
     "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.",
   "explica.arco.corta": "Arco verde",

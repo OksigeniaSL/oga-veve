@@ -11,12 +11,13 @@
 import { describe, expect, it } from "vitest";
 import manifiesto from "../../data/voces/cabina/manifiesto.json";
 import fuenteDelJuego from "../game.ts?raw";
-import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU } from "../flight/aircraft";
+import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU, YVAGA } from "../flight/aircraft";
 import { LA_CUENTA } from "../flight/avisos-de-altura";
 import { CANTOS_DEL_CONSEJO } from "../flight/consejo-de-la-bajada";
 import {
   CLAVE_DE_CABINA,
   claveDeCabina,
+  DE_LA_CARRERA,
   DE_LOS_AVISADORES,
   esDeUnaCaja,
   ESPERAN_SU_TOMA,
@@ -262,6 +263,22 @@ describe("los cantos de cada avión", () => {
 
   it("y los de la tripulación los canta cualquiera", () => {
     for (const a of AIRCRAFT) expect(loDiceElAvion("cabina.vr", a)).toBe(true);
+  });
+
+  /*
+   * **Menos los de la carrera de aterrizaje**, que son de un procedimiento:
+   * los de Boeing, en el JAZ 120, y en nadie más. El JAZ 90 espera a que se
+   * compruebe el de Embraer, y en la flota no hay ningún Airbus.
+   */
+  it("y los de la carrera, solo el avión de esa familia: el JAZ 120", () => {
+    for (const a of AIRCRAFT)
+      for (const clave of DE_LA_CARRERA) {
+        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(a.id === YVAGA.id);
+        // De la tripulación: suben por la escalera.
+        expect(esDeUnaCaja(clave), clave).toBe(false);
+      }
+    expect(loDiceElAvion("cabina.sixtyKnots", ARAI)).toBe(false);
+    expect(Object.values(CLAVE_DE_CABINA)).toEqual(expect.arrayContaining([...DE_LA_CARRERA]));
   });
 
   it("y todo lo de los avisadores está grabado", () => {

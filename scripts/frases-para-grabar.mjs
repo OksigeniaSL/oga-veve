@@ -336,16 +336,17 @@ const CABINA = [
   ["cabina.engineFailure", "engine failure", "un motor se ha parado"],
   ["cabina.stop", "stop", "antes de V1: se para el despegue"],
   /*
-   * **Y la carrera de aterrizaje de los reactores**, lo que canta quien no
-   * vuela: los paneles del ala al salir, las reversas abiertas, el autofreno
-   * que entra y los setenta nudos de pasar las reversas a ralentí. Ver
-   * `contarLaCarrera` en `src/game.ts` y `ESPERAN_SU_TOMA` en
-   * `src/audio/cabina.ts`, de donde salen al grabarse.
+   * **Y la carrera de aterrizaje**, lo que canta quien vigila al tocar en el
+   * procedimiento normal de Boeing, *Landing Roll* (FCOM del 747-400; el
+   * texto exacto, por verificar): los aerofrenos arriba o no, las reversas en
+   * verde y los sesenta nudos. Solo en el JAZ 120. Ver `contarLaCarrera` en
+   * `src/game.ts` y `DE_LA_CARRERA` en `src/audio/cabina.ts`. Aquí estaban
+   * los de Airbus, y en la flota no hay ningún Airbus.
    */
-  ["cabina.spoilers", "spoilers", "al tocar: salieron los paneles del ala"],
-  ["cabina.reverseGreen", "reverse green", "al tocar: las reversas, abiertas"],
-  ["cabina.decel", "decel", "al tocar: el autofreno frena"],
-  ["cabina.seventyKnots", "seventy knots", "en la carrera: las reversas, a ralentí"],
+  ["cabina.speedbrakesUp", "speedbrakes up", "al tocar: los aerofrenos, arriba"],
+  ["cabina.speedbrakesNotUp", "speedbrakes not up", "al tocar: los aerofrenos no subieron"],
+  ["cabina.reversersNormal", "reversers normal", "al tocar: las reversas, abiertas y en verde"],
+  ["cabina.sixtyKnots", "sixty knots", "en la carrera: el anemómetro pasa por sesenta nudos"],
   // Y el aviso de velocidad baja, que el juego pedía sin toma.
   ["cabina.airspeedLow", "airspeed low", "vas lento para la configuración"],
   /*
@@ -1622,7 +1623,6 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
    * demás de la ventana van con chispa: el TCAS cita su *traffic, traffic*, y
    * leído como alarma enseñaría lo contrario.
    */
-  "explica.tcas.texto",
   "explica.tcas.ra",
   "explica.avisos.texto",
   "explica.mascaras.texto",

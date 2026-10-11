@@ -111,8 +111,12 @@ reversa, y gasta más de un kilómetro de pista.
 ## Lo que no
 
 - **Las voces**: armar los aerofrenos y el autofreno, la explicación de los
-  frenos de tierra al tocar y las llamadas de cabina («spoilers», «reverse
-  green», «decel») están por grabar. Ver `PENDIENTE-VOCES-aterrizaje.md`.
+  frenos de tierra al tocar y las llamadas de cabina estaban por grabar.
+  *Grabadas el 11 de octubre de 2026*, con una corrección: las llamadas eran
+  las de Airbus («spoilers», «reverse green», «decel») y en la flota no hay
+  ningún Airbus. Las que se grabaron son las del *Landing Roll* de Boeing, y
+  solo las canta el JAZ 120; el JAZ 90 espera a que se compruebe el
+  procedimiento de Embraer. Ver `PENDIENTE-VOCES-aterrizaje.md`.
 - **El aire de la distancia de aterrizaje**, `enPlaneoDesdeElUmbral`, sigue
   siendo la fineza por quince metros —unos cien—, cuando en un manual el aire
   desde los quince metros son unos trescientos. No cambia qué avión cabe en

@@ -67,6 +67,10 @@
       "ms": 9607,
       "h": "4dad1d72d0"
     },
+    "tripulacion.canario.servicio.pausa": {
+      "ms": 9107,
+      "h": "bdae03d613"
+    },
     "tripulacion.canario.servicio.pina": {
       "ms": 10507,
       "h": "2894da5a22"
@@ -74,6 +78,10 @@
     "tripulacion.canario.servicio.pina.paraguay": {
       "ms": 10307,
       "h": "4701971fd6"
+    },
+    "tripulacion.canario.servicio.seguimos": {
+      "ms": 4507,
+      "h": "06a55e5098"
     },
     "tripulacion.canario.trasLaToma": {
       "ms": 20907,
@@ -159,6 +167,12 @@
     ],
     "tripulacion.canario.trasLaToma~3": [
       "tripulacion.canario.trasLaToma~3"
+    ],
+    "tripulacion.canario.servicio.pausa": [
+      "tripulacion.canario.servicio.pausa"
+    ],
+    "tripulacion.canario.servicio.seguimos": [
+      "tripulacion.canario.servicio.seguimos"
     ]
   }
 }

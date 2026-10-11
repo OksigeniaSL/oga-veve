@@ -34,10 +34,10 @@ we have a problem
 go around
 engine failure
 stop
-spoilers
-reverse green
-decel
-seventy knots
+speedbrakes up
+speedbrakes not up
+reversers normal
+sixty knots
 airspeed low
 twenty five hundred
 one thousand

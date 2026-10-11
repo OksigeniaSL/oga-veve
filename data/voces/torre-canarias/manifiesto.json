@@ -267,6 +267,14 @@
       "ms": 404,
       "h": "e208ebd716"
     },
+    "metros.hundred": {
+      "ms": 587,
+      "h": "7d7c95e545"
+    },
+    "metros.thousand": {
+      "ms": 522,
+      "h": "e1b66a2ccc"
+    },
     "torre.canario.numeroDos": {
       "ms": 1298,
       "h": "89133b154a"
@@ -278,6 +286,10 @@
     "torre.canario.solo.acelereAbandono": {
       "ms": 1214,
       "h": "3e01eb6cf4"
+    },
+    "torre.canario.solo.adviseAbleToDepart": {
+      "ms": 1962,
+      "h": "2b37d1fc42"
     },
     "torre.canario.solo.afisLibre": {
       "ms": 711,
@@ -339,6 +351,22 @@
       "ms": 720,
       "h": "29848ea220"
     },
+    "torre.canario.solo.contactApproach": {
+      "ms": 1073,
+      "h": "625cc2724a"
+    },
+    "torre.canario.solo.contactControl": {
+      "ms": 1323,
+      "h": "e3b4b5ea38"
+    },
+    "torre.canario.solo.contactDeparture": {
+      "ms": 1303,
+      "h": "ee3b646a75"
+    },
+    "torre.canario.solo.contactTower": {
+      "ms": 953,
+      "h": "79ee463226"
+    },
     "torre.canario.solo.departingTraffic": {
       "ms": 992,
       "h": "5a3cad9c43"
@@ -350,6 +378,10 @@
     "torre.canario.solo.free": {
       "ms": 657,
       "h": "907b764253"
+    },
+    "torre.canario.solo.fromIntersection": {
+      "ms": 973,
+      "h": "abea73ebff"
     },
     "torre.canario.solo.goAround": {
       "ms": 1421,
@@ -375,6 +407,10 @@
       "ms": 2514,
       "h": "097da02ffb"
     },
+    "torre.canario.solo.intersection": {
+      "ms": 842,
+      "h": "fb9a70b211"
+    },
     "torre.canario.solo.landedWithoutClearance": {
       "ms": 2956,
       "h": "866a966f8e"
@@ -391,6 +427,14 @@
       "ms": 1091,
       "h": "86738fffff"
     },
+    "torre.canario.solo.metres": {
+      "ms": 599,
+      "h": "0d1f5903e8"
+    },
+    "torre.canario.solo.minimumFuel": {
+      "ms": 2498,
+      "h": "8b8bdd59a9"
+    },
     "torre.canario.solo.motorYAlAire": {
       "ms": 939,
       "h": "cb3c53d5a5"
@@ -402,6 +446,22 @@
     "torre.canario.solo.occupied": {
       "ms": 686,
       "h": "80129b7743"
+    },
+    "torre.canario.solo.pirep.fuerte": {
+      "ms": 2205,
+      "h": "478e93ed0a"
+    },
+    "torre.canario.solo.pirep.ligera": {
+      "ms": 1861,
+      "h": "16a87817c5"
+    },
+    "torre.canario.solo.pirep.moderada": {
+      "ms": 1917,
+      "h": "60370b1090"
+    },
+    "torre.canario.solo.pirep.porDelante": {
+      "ms": 1089,
+      "h": "5aeb88bab2"
     },
     "torre.canario.solo.pista": {
       "ms": 935,
@@ -446,6 +506,10 @@
     "torre.canario.solo.subirNivel": {
       "ms": 1048,
       "h": "59606c759f"
+    },
+    "torre.canario.solo.toraRunway": {
+      "ms": 805,
+      "h": "0428c7f289"
     },
     "torre.canario.solo.vacateNext": {
       "ms": 1241,
@@ -1720,6 +1784,207 @@
       "{r1}",
       "{r2}",
       "lado.center"
+    ],
+    "torre.canario.solo.minimumFuel": [
+      "torre.canario.solo.minimumFuel"
+    ],
+    "torre.canario.minimumFuel": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.minimumFuel"
+    ],
+    "torre.canario.ofreceInterseccion": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.intersection",
+      "{calle}"
+    ],
+    "torre.canario.tora": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "torre.canario.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.canario.solo.metres"
+    ],
+    "torre.canario.ofreceInterseccion.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.canario.solo.intersection",
+      "{calle}"
+    ],
+    "torre.canario.tora.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.canario.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.canario.solo.metres"
+    ],
+    "torre.canario.ofreceInterseccion.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.canario.solo.intersection",
+      "{calle}"
+    ],
+    "torre.canario.tora.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.canario.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.canario.solo.metres"
+    ],
+    "torre.canario.ofreceInterseccion.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.adviseAbleToDepart",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.canario.solo.intersection",
+      "{calle}"
+    ],
+    "torre.canario.tora.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.toraRunway",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.canario.solo.fromIntersection",
+      "{calle}",
+      "{metros}",
+      "torre.canario.solo.metres"
+    ],
+    "torre.canario.pirep.ligera": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pirep.ligera",
+      "{altura}",
+      "torre.canario.solo.pirep.porDelante"
+    ],
+    "torre.canario.pirep.moderada": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pirep.moderada",
+      "{altura}",
+      "torre.canario.solo.pirep.porDelante"
+    ],
+    "torre.canario.pirep.fuerte": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pirep.fuerte",
+      "{altura}",
+      "torre.canario.solo.pirep.porDelante"
+    ],
+    "torre.canario.solo.contactDeparture": [
+      "torre.canario.solo.contactDeparture"
+    ],
+    "torre.canario.solo.contactControl": [
+      "torre.canario.solo.contactControl"
+    ],
+    "torre.canario.solo.contactApproach": [
+      "torre.canario.solo.contactApproach"
+    ],
+    "torre.canario.solo.contactTower": [
+      "torre.canario.solo.contactTower"
+    ],
+    "torre.canario.contactDeparture": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.contactDeparture"
+    ],
+    "torre.canario.contactControl": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.contactControl"
+    ],
+    "torre.canario.contactApproach": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.contactApproach"
+    ],
+    "torre.canario.contactTower": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.contactTower"
+    ],
+    "metros.thousand": [
+      "metros.thousand"
+    ],
+    "metros.hundred": [
+      "metros.hundred"
     ]
   }
 }

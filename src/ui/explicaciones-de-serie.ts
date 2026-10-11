@@ -444,11 +444,11 @@ const DEL_CUADRO = enRincon("cuadro", [
     dibujo: { svg: TCAS },
     ...claves("tcas"),
     /*
-     * **Con el cuadrado rojo, que ya existe.** La de antes —`explica.tcas.texto`,
-     * grabada— decía que aquí el TCAS «está en TA ONLY y solo avisa», y desde
-     * que los reactores dan la maniobra eso ya no es verdad. Su sustituta va
-     * por otra clave para que la grabación vieja no la diga: hasta que se
-     * grabe, la ventana se lee y no se oye. Ver `PENDIENTE-VOCES-radar.md`.
+     * **Con el cuadrado rojo, que ya existe.** La de antes, `explica.tcas.texto`,
+     * decía que aquí el TCAS «está en TA ONLY y solo avisa», y desde que los
+     * reactores dan la maniobra eso ya no es verdad. Su sustituta fue por otra
+     * clave para que la grabación vieja no la dijera mientras no tenía la suya;
+     * ya la tiene, y la vieja se retiró del diccionario y del pack.
      */
     texto: "explica.tcas.ra",
     enTierra: { texto: "explica.carta.tierra" },

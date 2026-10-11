@@ -115,6 +115,10 @@
       "ms": 5507,
       "h": "94090e127e"
     },
+    "comandante.cinturon.porque": {
+      "ms": 12107,
+      "h": "2a76ff0b8f"
+    },
     "comandante.crosscheck": {
       "ms": 2865,
       "h": "e2eddbd702"
@@ -687,6 +691,22 @@
       "ms": 2113,
       "h": "8a75fa03cd"
     },
+    "comandante.minutos.h105": {
+      "ms": 2639,
+      "h": "dae823b8bd"
+    },
+    "comandante.minutos.h120": {
+      "ms": 2091,
+      "h": "c1729ba6ef"
+    },
+    "comandante.minutos.h75": {
+      "ms": 2310,
+      "h": "4106d05b9b"
+    },
+    "comandante.minutos.h90": {
+      "ms": 2417,
+      "h": "5df51208ec"
+    },
     "comandante.nivelMasTranquilo": {
       "ms": 7107,
       "h": "9dccd7cb4c"
@@ -854,6 +874,22 @@
     "comandante.previsto.vuelo.60": {
       "ms": 2089,
       "h": "7f3cf7ebc0"
+    },
+    "comandante.previsto.vuelo.h105": {
+      "ms": 2922,
+      "h": "e7b426831a"
+    },
+    "comandante.previsto.vuelo.h120": {
+      "ms": 1912,
+      "h": "93782360c4"
+    },
+    "comandante.previsto.vuelo.h75": {
+      "ms": 2333,
+      "h": "4d7d276818"
+    },
+    "comandante.previsto.vuelo.h90": {
+      "ms": 2367,
+      "h": "663b43ec5b"
     },
     "comandante.temperatura.0": {
       "ms": 1801,
@@ -1059,9 +1095,65 @@
       "ms": 2483,
       "h": "4d2d7288d2"
     },
+    "comandante.turbulencia.ahora.fuerte": {
+      "ms": 11307,
+      "h": "061517aa18"
+    },
+    "comandante.turbulencia.ahora.ligera": {
+      "ms": 12407,
+      "h": "2626974df0"
+    },
+    "comandante.turbulencia.ahora.moderada": {
+      "ms": 14507,
+      "h": "10d7c276c3"
+    },
+    "comandante.turbulencia.fuerte": {
+      "ms": 18807,
+      "h": "59a953a26e"
+    },
+    "comandante.turbulencia.ligera": {
+      "ms": 14207,
+      "h": "e09e9aca5a"
+    },
+    "comandante.turbulencia.moderada": {
+      "ms": 15607,
+      "h": "11d6a7221f"
+    },
     "comandante.turbulencia": {
       "ms": 9107,
       "h": "9c5d448d16"
+    },
+    "comandante.turbulencia.otraVez.fuerte": {
+      "ms": 12407,
+      "h": "e5cccd789b"
+    },
+    "comandante.turbulencia.otraVez.ligera": {
+      "ms": 7907,
+      "h": "6bba81dbad"
+    },
+    "comandante.turbulencia.otraVez.moderada": {
+      "ms": 9907,
+      "h": "8aa33df0fb"
+    },
+    "comandante.turbulencia.paso": {
+      "ms": 7907,
+      "h": "edb07d54ca"
+    },
+    "comandante.turbulencia.pasoBajando": {
+      "ms": 6007,
+      "h": "a7fe2a2d83"
+    },
+    "comandante.turbulencia.paso~2": {
+      "ms": 6107,
+      "h": "29d9460fcd"
+    },
+    "comandante.turbulencia.pirep": {
+      "ms": 13807,
+      "h": "f85c66726e"
+    },
+    "comandante.turbulencia.tormenta": {
+      "ms": 14807,
+      "h": "6633dceac2"
     },
     "comandante.yaSeRespira": {
       "ms": 9507,
@@ -1090,6 +1182,10 @@
     "ventanilla.chaco": {
       "ms": 8407,
       "h": "ac95e2c102"
+    },
+    "ventanilla.cruz-del-sur": {
+      "ms": 12307,
+      "h": "7e44870fe3"
     },
     "ventanilla.encarnacion": {
       "ms": 6807,
@@ -1154,6 +1250,10 @@
     "ventanilla.orotava": {
       "ms": 9307,
       "h": "82c92908f7"
+    },
+    "ventanilla.polar": {
+      "ms": 14207,
+      "h": "4fa4577f47"
     },
     "ventanilla.rio-paraguay": {
       "ms": 8707,
@@ -2120,6 +2220,81 @@
     ],
     "comandante.despegue~4": [
       "comandante.despegue~4"
+    ],
+    "comandante.previsto.vuelo.h75": [
+      "comandante.previsto.vuelo.h75"
+    ],
+    "comandante.previsto.vuelo.h90": [
+      "comandante.previsto.vuelo.h90"
+    ],
+    "comandante.previsto.vuelo.h105": [
+      "comandante.previsto.vuelo.h105"
+    ],
+    "comandante.previsto.vuelo.h120": [
+      "comandante.previsto.vuelo.h120"
+    ],
+    "comandante.minutos.h75": [
+      "comandante.minutos.h75"
+    ],
+    "comandante.minutos.h90": [
+      "comandante.minutos.h90"
+    ],
+    "comandante.minutos.h105": [
+      "comandante.minutos.h105"
+    ],
+    "comandante.minutos.h120": [
+      "comandante.minutos.h120"
+    ],
+    "ventanilla.cruz-del-sur": [
+      "ventanilla.cruz-del-sur"
+    ],
+    "ventanilla.polar": [
+      "ventanilla.polar"
+    ],
+    "comandante.turbulencia.ligera": [
+      "comandante.turbulencia.ligera"
+    ],
+    "comandante.turbulencia.moderada": [
+      "comandante.turbulencia.moderada"
+    ],
+    "comandante.turbulencia.fuerte": [
+      "comandante.turbulencia.fuerte"
+    ],
+    "comandante.turbulencia.ahora.ligera": [
+      "comandante.turbulencia.ahora.ligera"
+    ],
+    "comandante.turbulencia.ahora.moderada": [
+      "comandante.turbulencia.ahora.moderada"
+    ],
+    "comandante.turbulencia.ahora.fuerte": [
+      "comandante.turbulencia.ahora.fuerte"
+    ],
+    "comandante.turbulencia.otraVez.ligera": [
+      "comandante.turbulencia.otraVez.ligera"
+    ],
+    "comandante.turbulencia.otraVez.moderada": [
+      "comandante.turbulencia.otraVez.moderada"
+    ],
+    "comandante.turbulencia.otraVez.fuerte": [
+      "comandante.turbulencia.otraVez.fuerte"
+    ],
+    "comandante.turbulencia.tormenta": [
+      "comandante.turbulencia.tormenta"
+    ],
+    "comandante.turbulencia.pirep": [
+      "comandante.turbulencia.pirep"
+    ],
+    "comandante.turbulencia.paso": [
+      "comandante.turbulencia.paso"
+    ],
+    "comandante.turbulencia.paso~2": [
+      "comandante.turbulencia.paso~2"
+    ],
+    "comandante.turbulencia.pasoBajando": [
+      "comandante.turbulencia.pasoBajando"
+    ],
+    "comandante.cinturon.porque": [
+      "comandante.cinturon.porque"
     ]
   }
 }

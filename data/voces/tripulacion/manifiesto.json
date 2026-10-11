@@ -51,9 +51,17 @@
       "ms": 9407,
       "h": "f238fcc2ad"
     },
+    "tripulacion.servicio.pausa": {
+      "ms": 8807,
+      "h": "f75fa76381"
+    },
     "tripulacion.servicio.pina": {
       "ms": 10507,
       "h": "8718edc821"
+    },
+    "tripulacion.servicio.seguimos": {
+      "ms": 5107,
+      "h": "f0cb57fa41"
     },
     "tripulacion.trasLaToma": {
       "ms": 20907,
@@ -124,6 +132,12 @@
     ],
     "tripulacion.trasLaToma~3": [
       "tripulacion.trasLaToma~3"
+    ],
+    "tripulacion.servicio.pausa": [
+      "tripulacion.servicio.pausa"
+    ],
+    "tripulacion.servicio.seguimos": [
+      "tripulacion.servicio.seguimos"
     ]
   }
 }

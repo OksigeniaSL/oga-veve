@@ -1,51 +1,41 @@
-# Pendiente: grabar las voces del aterrizaje (aerofrenos, autofreno y reversa)
+# Pendiente: los cantos de la carrera de aterrizaje, por verificar
 
-El código ya está hecho (11 de octubre de 2026): las claves, los textos en
-`es-PY` y `en`, las recetas y los enganches en `game.ts`
-(`atenderALaListaDeAterrizaje` y `contarLaCarrera`). Cada frase se pide **solo
-si su grabación está en el pack** —`decirLoGrabado`, `explicarUnaVez`,
-`cantarLoGrabado`—; hasta entonces suena lo que había y se ve la tarjeta. Falta
-grabar.
+Grabado y horneado el 11 de octubre de 2026: las seis frases de la
+instructora (armar los aerofrenos, los frenos de tierra que salen o no, la
+reversa que ya no frena y el autofreno que se suelta) y los cantos de la
+carrera. Lo que queda es comprobar las fuentes y lo que no se hizo.
 
-## Lo que hay que grabar
+## Los cantos son los de Boeing, y solo en el JAZ 120
 
-La instructora (`instructor`), 470 caracteres:
+Las llamadas que había eran las de Airbus —«spoilers», «reverse green»,
+«decel», «seventy knots»— y en la flota no hay ningún Airbus: el JAZ 90 es de
+la clase del E170 y el JAZ 120 de la del 747. Se quitaron sin grabarse.
 
-| Clave | Caracteres | Cuándo suena |
-|---|---|---|
-| `vuelo.armaLosAerofrenos` | 92 | al salir la tarjeta de armarlos en la aproximación; una vez por vuelo, en los tres peldaños de abajo |
-| `vuelo.losArmeYo` | 68 | al armarlos ella a 500 ft, en los tres de abajo |
-| `vuelo.salenLosFrenosDeTierra` | 104 | al salir los paneles al tocar, en los tres de abajo: es la explicación en lugar de «spoilers» |
-| `vuelo.sinFrenosDeTierra` | 113 | tocando con la palanca recogida (grabar en calma: va en `EN_CALMA_COMO_SE_ESCRIBE`) |
-| `vuelo.quitaLaReversa` | 35 | con la tecla de la reversa apretada por debajo de `REVERSA_HASTA`, una vez por carrera |
-| `vuelo.autofrenoSuelto` | 58 | al soltar el pie el autofreno mientras frenaba |
+Ahora el JAZ 120 canta las del procedimiento normal de Boeing, *Landing Roll*,
+que dice quien vigila (PM) al tocar: «speedbrakes up» con los aerofrenos
+arriba, «speedbrakes not up» si no han subido al segundo y medio, «reversers
+normal» con las reversas abiertas del todo y «sixty knots» al pasar el
+anemómetro por sesenta. Ver `cantosDeLaCarrera` en `src/flight/aircraft.ts`,
+`DE_LA_CARRERA` en `src/audio/cabina.ts` y `contarLaCarrera` en `src/game.ts`.
 
-La cabina (`cabina`), 39 caracteres: `cabina.spoilers` (8), `cabina.reverseGreen`
-(13), `cabina.decel` (5) y `cabina.seventyKnots` (13). Son cantos de la
-tripulación, así que **suben por la escalera**: suenan en inglés solo en el
-peldaño de cabina, y en los de abajo explica la instructora —no a la vez—. Ver
-`flight/escalera.ts`.
+## Por verificar
 
-Antes de pagar los cuatro cantos, una duda de realismo que queda abierta: son
-las llamadas de la familia de Airbus, que es la del autofreno LO/MED/MAX del
-juego, pero el JAZ 90 es de la clase del E170 y el JAZ 120 de la del 747, y en
-un Boeing se canta otra cosa («speedbrakes up», «reversers normal», «sixty
-knots»). Si se cambian, se cambian en `CABINA` de
-`scripts/frases-para-grabar.mjs`, en `CLAVE_DE_CABINA` y `ESPERAN_SU_TOMA` de
-`src/audio/cabina.ts` y en `contarLaCarrera`.
+- **El texto exacto de Boeing.** Fuente: el FCOM del 747-400, NP *Landing Roll
+  Procedure*; las cuatro frases están puestas de memoria y marcadas así en el
+  código. Si cambia alguna, se cambia en `CABINA` de
+  `scripts/frases-para-grabar.mjs` y en `CLAVE_DE_CABINA`, y se regraba.
+- **El procedimiento de Embraer para el JAZ 90.** Hasta comprobarlo no canta
+  nada en la carrera (`cantosDeLaCarrera: null`). Si lleva cantos, entran
+  como otro valor de `cantosDeLaCarrera`, con sus tomas.
 
-## Después de grabar
+## Lo que no se hizo
 
-```bash
-node scripts/frases-para-grabar.mjs
-node scripts/voces-elevenlabs.mjs --cuanto instructor cabina
-node scripts/voces-elevenlabs.mjs instructor cabina
-```
-
-1. Las recetas de la instructora **ya están** en `crudo/instructor/recetas.json`
-   (la cabina no lleva recetas): el horneado de la instructora no pasa hasta
-   que estén todas sus tomas nuevas, también las de los demás pendientes.
-2. Hornear, restaurar lo re-codificado que no sea nuevo y
-   `node scripts/verificar-voces.mjs`.
-3. Sacar los cuatro cantos de `ESPERAN_SU_TOMA` en `src/audio/cabina.ts`; lo
-   pide `cabina.test.ts` en cuanto el manifiesto los trae.
+- **«No reverser»** («no reverser engine number…» o «no reversers»), la
+  reversa pedida que no se abre: aquí una reversa pedida se abre siempre
+  —ver `src/flight/reversa.ts`—, así que no hay caso que cantar. Entra el día
+  que el juego tenga reversas que fallen.
+- **Oír la carrera en el peldaño de cabina con el JAZ 120**: los bancos de esta
+  tanda no la volaron. Con la voz, al tocar tiene que oírse «speedbrakes up»,
+  luego «reversers normal» si se mete la reversa y «sixty knots»; y con el
+  JAZ 90, nada. Abajo sí se oyó: en Guyrami con el JAZ 90, «los armé yo» a
+  500 ft y, al tocar, la explicación de los paneles en lugar del canto.

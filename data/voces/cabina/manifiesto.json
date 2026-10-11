@@ -27,6 +27,18 @@
       "ms": 1506,
       "h": "0da1be9208"
     },
+    "cabina.clearOfConflict": {
+      "ms": 1131,
+      "h": "7628ef2d18"
+    },
+    "cabina.climbClimb": {
+      "ms": 963,
+      "h": "7f7b4cd3a4"
+    },
+    "cabina.descendDescend": {
+      "ms": 1074,
+      "h": "29d15f179f"
+    },
     "cabina.engineFailure": {
       "ms": 978,
       "h": "0bb51aaa6d"
@@ -63,9 +75,17 @@
       "ms": 697,
       "h": "ff2113f906"
     },
+    "cabina.levelOff": {
+      "ms": 1279,
+      "h": "d35f002e54"
+    },
     "cabina.minimums": {
       "ms": 742,
       "h": "72917f6584"
+    },
+    "cabina.monitorVerticalSpeed": {
+      "ms": 1252,
+      "h": "fd7ed144b3"
     },
     "cabina.obstacleAhead": {
       "ms": 949,
@@ -87,13 +107,29 @@
       "ms": 955,
       "h": "29a7fef697"
     },
+    "cabina.reversersNormal": {
+      "ms": 1062,
+      "h": "f95db8b1f4"
+    },
     "cabina.sinkRate": {
       "ms": 742,
       "h": "550da55e76"
     },
+    "cabina.sixtyKnots": {
+      "ms": 833,
+      "h": "730d94f3ce"
+    },
     "cabina.slowDown": {
       "ms": 1105,
       "h": "75508138f9"
+    },
+    "cabina.speedbrakesNotUp": {
+      "ms": 1050,
+      "h": "470c16bb7d"
+    },
+    "cabina.speedbrakesUp": {
+      "ms": 1121,
+      "h": "abc5a5d08d"
     },
     "cabina.stall": {
       "ms": 751,
@@ -187,6 +223,15 @@
     "cabina.cautionTerrain": [
       "cabina.cautionTerrain"
     ],
+    "cabina.clearOfConflict": [
+      "cabina.clearOfConflict"
+    ],
+    "cabina.climbClimb": [
+      "cabina.climbClimb"
+    ],
+    "cabina.descendDescend": [
+      "cabina.descendDescend"
+    ],
     "cabina.engineFailure": [
       "cabina.engineFailure"
     ],
@@ -214,8 +259,14 @@
     "cabina.goAroundOrder": [
       "cabina.goAroundOrder"
     ],
+    "cabina.levelOff": [
+      "cabina.levelOff"
+    ],
     "cabina.minimums": [
       "cabina.minimums"
+    ],
+    "cabina.monitorVerticalSpeed": [
+      "cabina.monitorVerticalSpeed"
     ],
     "cabina.obstacleAhead": [
       "cabina.obstacleAhead"
@@ -232,11 +283,23 @@
     "cabina.positiveRate": [
       "cabina.positiveRate"
     ],
+    "cabina.reversersNormal": [
+      "cabina.reversersNormal"
+    ],
     "cabina.sinkRate": [
       "cabina.sinkRate"
     ],
+    "cabina.sixtyKnots": [
+      "cabina.sixtyKnots"
+    ],
     "cabina.slowDown": [
       "cabina.slowDown"
+    ],
+    "cabina.speedbrakesNotUp": [
+      "cabina.speedbrakesNotUp"
+    ],
+    "cabina.speedbrakesUp": [
+      "cabina.speedbrakesUp"
     ],
     "cabina.stall": [
       "cabina.stall"

@@ -313,6 +313,31 @@ const REPARTO = [
   ["instructor", "vuelo.masAltoQueElPlan", "instructor"],
   ["comandante", "comandante.nivelMasTranquilo", "comandante"],
   ["comandante", "comandante.bachesEnTodos", "comandante"],
+  /*
+   * **Y la turbulencia, una de cada boca**: la comandante que la anuncia, la
+   * tripulación de cada sitio que para el servicio, y el aviso de otro avión
+   * —el PIREP— dicho por él y retransmitido por las dos torres, con la altura
+   * en su hueco. Ver `contarElPirep` en `game.ts`.
+   */
+  ["comandante", "comandante.turbulencia.moderada", "comandante"],
+  ["comandante", "comandante.turbulencia.paso", "comandante"],
+  ["tripulacion", "tripulacion.servicio.pausa", "tripulacion"],
+  ["tripulacion", "tripulacion.canario.servicio.pausa", "tripulacion-canarias"],
+  ["otro", "otro.pirep.moderada", "otro", { altura: "altura.nivel cifra.1 cifra.2 cifra.0" }],
+  ["torre", "torre.pirep.moderada", "torre", { altura: "altura.nivel cifra.1 cifra.2 cifra.0" }],
+  [
+    "torre",
+    "torre.canario.pirep.moderada",
+    "torre-canarias",
+    { altura: "altura.pies.5" },
+  ],
+  ["instructor", "vuelo.pirep", "instructor"],
+  /*
+   * **Y el relevo de frecuencia**, con tu matrícula delante, en las dos
+   * torres: lo pide `relevoDeFrecuencia` al cambiar de dependencia.
+   */
+  ["torre", "torre.contactDeparture", "torre"],
+  ["torre", "torre.canario.contactDeparture", "torre-canarias"],
 ];
 
 const server = await createServer({
@@ -508,13 +533,15 @@ comprobar(
 
 for (const [quien, clave, pack, cuarto] of REPARTO) {
   /*
-   * El cuarto elemento es de dos clases. En la torre y en «nuestro avión» es
-   * lo que falta **además** del indicativo (la hora, las millas y la altura
-   * del tráfico), y se junta con él; en la comandante y la tripulación es el
-   * relleno entero de su receta.
+   * El cuarto elemento es de dos clases. En la torre, en el otro avión y en
+   * «nuestro avión» es lo que falta **además** del indicativo (la hora, las
+   * millas y la altura del tráfico), y se junta con él; en la comandante y la
+   * tripulación es el relleno entero de su receta.
    */
   const conIndicativo =
-    clave.startsWith("torre.") || clave === "vuelo.nuestroAvion";
+    clave.startsWith("torre.") ||
+    clave.startsWith("otro.") ||
+    clave === "vuelo.nuestroAvion";
   const extra = conIndicativo ? cuarto : undefined;
   const suRelleno = conIndicativo ? undefined : cuarto;
   if (pack === null) {
@@ -535,7 +562,7 @@ for (const [quien, clave, pack, cuarto] of REPARTO) {
       suRelleno
         ? suRelleno
         : clave.startsWith("otro.")
-        ? indicativo.relleno
+        ? { ...indicativo.relleno, ...(extra ?? {}) }
         : clave.startsWith("torre.") || extra
           ? // La lámpara también lleva hueco desde que te llama por tu
             // matrícula, y `deTorre` trae el indicativo y la pista: sobra lo de

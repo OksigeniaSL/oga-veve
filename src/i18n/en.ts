@@ -1298,8 +1298,6 @@ export const EN: Dictionary = {
   "explica.carta.tierra":
     "On the ground the traffic radar rests; what's on the runway, the tower tells you. That's why the screen says TCAS STBY: the system is waiting. It starts working at the holding point, before entering the runway, and meanwhile whatever is taxiing you look at out of the window.",
   "explica.tcas.corta": "Another plane",
-  "explica.tcas.texto":
-    "Each diamond is another plane flying near your altitude. Hollow, it's around; filled, it's close. If it turns into an amber circle, TCAS warns you —traffic, traffic— and you look for it outside. The number is hundreds of feet: +10 is a thousand feet above, and −05 five hundred below. The little arrow says whether it is climbing or descending. Airliners also have a red square that tells you whether to climb or descend; here TCAS is in TA ONLY and only warns.",
   "explica.tcas.ra":
     "Each diamond is another plane flying near your altitude. Hollow, it's around; filled, it's close. If it turns into an amber circle, TCAS warns you —traffic, traffic— and you look for it outside. The number is hundreds of feet: +10 is a thousand feet above, and −05 five hundred below. The little arrow says whether it is climbing or descending. And in the jets, if the other plane really closes in, it turns into a red square: TCAS tells you whether to climb or descend —climb, climb— and the green band on the vertical speed indicator tells you how much.",
   "explica.arco.corta": "Green arc",
