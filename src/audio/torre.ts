@@ -102,6 +102,13 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    */
   "roger PAN PAN": "torre.panpan",
   /*
+   * **Y la respuesta a «minimum fuel»**, que no es una emergencia: la torre
+   * dice que lo ha oído y si se espera demora (Doc 4444, «ROGER [NO DELAY
+   * EXPECTED]»). Entra antes que su toma —ver `ESPERAN_SU_TOMA`— y se pide
+   * solo con ella. Ver `declararCombustibleMinimo` en `game.ts`.
+   */
+  "roger, minimum fuel, no delay expected": "torre.minimumFuel",
+  /*
    * Y a quien se pasó la salida: abandone por la próxima disponible. Ver
    * `decirSalPorLaSiguiente` en `game.ts`.
    */
@@ -190,7 +197,19 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   "torre.holdShortNumberTwo": "torre.afisInUseDeparting",
   "torre.holdShortNumberThree": "torre.afisInUseDeparting",
   "torre.holdShortWake": "torre.afisInUseDeparting",
+  // Ni promete que no habrá demora: no ordena a nadie para que no la haya.
+  "torre.minimumFuel": null,
 };
+
+/**
+ * **Las frases de la tabla que todavía no tienen toma.**
+ *
+ * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen las
+ * pruebas de `torre.test.ts`—, y estas son la excepción escrita: el juego ya
+ * sabe cuándo decirlas y las pide solo si su grabación está en el pack. Cuando
+ * se graben, salen de aquí; la prueba lo recuerda.
+ */
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set(["torre.minimumFuel"]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

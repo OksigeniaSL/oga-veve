@@ -73,388 +73,438 @@
 073	vuelo.bajasRapido	Bajás muy de golpe: levantá un poco la nariz
 074	vuelo.muyInclinado	Estás muy inclinado: enderezá las alas
 075	vuelo.pilotoSuelto	Se soltó el piloto automático
-076	vuelo.pilotoEnTierra	El piloto automático se conecta en el aire
-077	vuelo.empezamosABajar	Empezamos a bajar: despacito, hasta la pista
-078	vuelo.alturaDeLaTorre	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
-079	vuelo.alturaDeLaTorreRaya	La torre nos dice hasta dónde subir: hasta la raya de la cinta.
-080	vuelo.otraAlturaDeLaTorre	La torre nos deja subir otro poco. Ya puse la altura nueva.
-081	vuelo.tonoDeAltitudCerca	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
-082	vuelo.tonoDeAltitudFuera	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
-083	vuelo.masAltoQueElPlan	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
-084	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
-085	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
-086	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
-087	vuelo.puedeVolver	La torre te deja volver a intentarlo
-088	vuelo.puedeVolver~2	La pista quedó libre: podés volver a bajar
-089	vuelo.puedeVolverSinTorre	La pista ya está libre: volvé a intentarlo
-090	vuelo.puedeAterrizar	La torre te deja aterrizar
-091	vuelo.puedeAterrizarSinTorre	Ahora sí: podés aterrizar
-092	vuelo.puedeAterrizarAfis	La pista está libre: si venís bien, aterrizá
-093	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
-094	vuelo.frustrada~2	Muy bien: irse al aire también es volar bien
-095	vuelo.frustrada~3	Eso estuvo bien. Damos otra vuelta y volvemos
-096	vuelo.aroAlto	Venís un poco alto. Bajá suave
-097	vuelo.aroAlto~2	Venís un poco alto. Bajá el morro despacito
-098	vuelo.aroAlto~3	Estás por encima. Soltá un poquito y vas a ir entrando
-099	vuelo.aroAlto~4	Un poco alto para la pista: bajá suave
-100	vuelo.aroBajo	Venís un poco bajo. Subí suave
-101	vuelo.aroBajo~2	Venís bajo. Tirá un poquito y un toque de motor
-102	vuelo.aroBajo~3	Estás por debajo: subí despacio, sin pasarte
-103	vuelo.aroBajo~4	Un poco bajo para la pista: levantá suave
-104	vuelo.corregido	¡Eso es! Así venís bien
-105	vuelo.corregido~2	Muy bien, así venís
-106	vuelo.corregido~3	Eso. Ahora entrás derechito
-107	vuelo.corregido~4	Perfecto, quedate así
-108	vuelo.papiAlto	Luces blancas: vas alto, bajá
-109	vuelo.lentoYBajo	Venís lento: metéle gas
-110	vuelo.papiBajo	Luces rojas: vas bajo, subí
-111	vuelo.papiBien	Dos rojas y dos blancas: vas bien
-112	vuelo.consejo.masGas	Un poquito más de gas, hasta la marca rosa. La nariz, quieta.
-113	vuelo.consejo.menosGas	Un poquito menos de gas, hasta la marca rosa.
-114	vuelo.consejo.narizAbajoPapi	Nariz un poquito abajo, hasta ver dos blancas y dos rojas.
-115	vuelo.consejo.narizArribaPapi	Nariz un poquito arriba, hasta ver dos blancas y dos rojas.
-116	vuelo.consejo.narizAbajoSenda	Nariz un poquito abajo, hasta que el rombo quede en el medio.
-117	vuelo.consejo.narizArribaSenda	Nariz un poquito arriba, hasta que el rombo quede en el medio.
-118	vuelo.consejo.narizArribaRitmo	Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.
-119	vuelo.consejo.narizArribaSuave	Nariz un poquito arriba, para bajar más suave.
-120	vuelo.consejo.aerofrenos	Sacá un poco los aerofrenos, hasta la marca rosa.
-121	vuelo.consejo.nivelarPerfil	Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.
-122	vuelo.consejo.narizAbajoPerfil	Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.
-123	vuelo.consejo.aerofrenosPerfil	Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.
-124	vuelo.consejo.masGasPerfil	Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.
-125	vuelo.consejo.menosGasPerfil	Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.
-126	vuelo.consejo.masGasPapi	Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
-127	vuelo.consejo.masGasSenda	Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.
-128	vuelo.consejo.menosGasPapi	Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
-129	vuelo.consejo.menosGasSenda	Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.
-130	vuelo.consejo.masGasSuave	Bajamos muy de golpe: un toque de gas, para bajar más suave.
-131	vuelo.consejo.narizAbajoMarca	Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.
-132	vuelo.consejo.narizArribaMarca	Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.
-133	vuelo.paso.subir	Subimos hasta la raya de la altura, a la velocidad de la marca rosa.
-134	vuelo.paso.acelerarGas	Ya podemos ir más rápido: más gas, hasta la marca rosa.
-135	vuelo.paso.acelerarNariz	Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.
-136	vuelo.paso.frenarGas	Ahora vamos más despacio: menos gas, hasta la marca rosa.
-137	vuelo.paso.frenarAerofrenos	Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.
-138	vuelo.paso.frenarNariz	Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.
-139	vuelo.paso.mantener	La marca rosa cambió y ya vamos a esa velocidad: seguimos así.
-140	vuelo.paso.marcaDelAutomatico	La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.
-141	vuelo.paso.crucero	Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.
-142	vuelo.paso.cruceroConAutomatico	Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.
-143	vuelo.paso.cruceroConGases	Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.
-144	vuelo.paso.bajar	Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.
-145	vuelo.paso.bajarConAutomatico	Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.
-146	vuelo.paso.nivelar	Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.
-147	vuelo.paso.flaps1	Los primeros flaps, una muesca, y a la marca rosa.
-148	vuelo.paso.flaps2	Otra muesca de flaps, y a la marca rosa.
-149	vuelo.paso.flaps3	Los flaps de aterrizar, abajo del todo, y a la marca rosa.
-150	vuelo.paso.tren	Sacá el tren, que ya vamos a aterrizar.
-151	vuelo.paso.recogerAerofrenos	Ya vamos a la marca rosa: aerofrenos adentro.
-152	vuelo.paso.senda	Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.
-153	vuelo.paso.sendaConGases	Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.
-154	vuelo.paso.sendaConAyuda	Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.
-155	vuelo.paso.gasTuyo	Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.
-156	vuelo.paso.cotaAlMar	La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.
-157	vuelo.paso.cotaEnAlto	La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.
-158	vuelo.bulto	Por ahí no se pasa: hay un edificio
-159	vuelo.aterrizado	Frená
-160	vuelo.abandonando	Salí de la pista, que viene otro
-161	vuelo.abandonandoSinPrisa	Sin apuro: salí de la pista y volvé a casa
-162	vuelo.abandonandoConLaBici	Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
-163	vuelo.abandonandoSinTorre	Sin apuro: salí de la pista y andá a la plataforma
-164	vuelo.pistaLibre	¡Pista libre! Bien hecho
-165	vuelo.aPlataforma	Volvé a tu lugar
-166	vuelo.enPuesto	Llegaste. Apagá el motor
-167	vuelo.apagado	¡Vuelo terminado!
-168	vuelo.fuera	Volvé a la raya verde
-169	vuelo.roto	Se rompió. Volvemos a empezar
-170	vuelo.rapido	Vas muy rápido
-171	vuelo.sobrevelocidad	Muy rápido: bajá el motor
-172	vuelo.sobrevelocidadAire	Muy rápido para esta altura
-173	vuelo.trenPasado	Muy rápido con el tren fuera: metélo
-174	vuelo.flapsPasados	Muy rápido con los flaps: recogélos
-175	vuelo.pediFlaps	Bajá los flaps para frenar
-176	vuelo.alivioDeFlaps	Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.
-177	vuelo.flapsTocados	Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.
-178	vuelo.flapsEnLaCarrera	Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.
-179	vuelo.flapsArribaAlSalir	Ya salimos de la pista: ahora sí, subí los flaps.
-180	vuelo.despuesDelAterrizaje	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
-181	vuelo.alPuestoConFlaps	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
-182	vuelo.despues.aerofrenos	Los aerofrenos, adentro: bajá la palanca.
-183	vuelo.despues.luces	Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.
-184	vuelo.despues.transpondedor	Y el transpondedor: pongo el TCAS en espera.
-185	vuelo.meteElTren	Metélo, el tren te frena
-186	vuelo.tormenta	Hay una tormenta delante: rodeála, no la cruces
-187	vuelo.baches	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
-188	vuelo.reserva	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
-189	vuelo.sinCombustible	Se acabó el combustible: planeá hasta la pista
-190	vuelo.sinMotor	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
-191	vuelo.planeoLento	Vamos lentos: bajá un poco la nariz
-192	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
-193	vuelo.aire.frio	Afuera ya hace cero grados. Cada mil metros que subimos, unos seis grados y medio menos: allá arriba hace como cincuenta bajo cero.
-194	vuelo.aire.crucero	Ya estamos en crucero. Acá arriba el aire es finito: el avión frena menos y gasta menos combustible. Por eso los aviones vuelan tan alto.
-195	vuelo.aire.cruceroConCifras	Mirá la velocidad: el reloj marca menos de lo que vamos de verdad, porque acá arriba el aire es finito. Y con menos aire se frena menos y se gasta menos: por eso los aviones vuelan tan alto.
-196	vuelo.aire.bolsa	La cabina también sube, pero despacito: ahora va como a mil quinientos metros, aunque el avión esté mucho más alto. Por eso una bolsa de papitas cerrada abajo, acá arriba se infla.
-197	vuelo.aire.oidos	Empezamos a bajar, y la cabina también baja. Si se te tapan los oídos, tragá saliva o bostezá, que se destapan. Y una botella cerrada allá arriba, abajo llega aplastada.
-198	vuelo.cabinaSinPresion	Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.
-199	vuelo.cabinaSinPresionConTren	Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.
-200	vuelo.primeroLaTuya.segundos	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.
-201	vuelo.primeroLaTuya.minuto	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.
-202	vuelo.primeroLaTuya.minutos	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.
-203	vuelo.yaSeRespira	Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con calma. Así lo practican los pilotos de verdad.
-204	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
-205	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
-206	vuelo.calor	Hace calor: vamos a necesitar más pista para despegar
-207	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
-208	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
-209	vuelo.sacaElTren	Sacá el tren
-210	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
-211	vuelo.despacio	Más despacio
-212	vuelo.alto	Pará acá
-213	vuelo.teLoPasaste	Te pasaste. Frená y volvé
-214	vuelo.yaPodesTocar	Ya podés tocar
-215	vuelo.quitaElGas	Quitá el gas
-216	vuelo.narizEnLaRecogida	La nariz un poquito arriba
-217	vuelo.narizYQuitaElGas	La nariz un poquito arriba, y quitá el gas
-218	vuelo.sinInstructora.pregunta	Hoy volás sin mí. ¿Lo querés así?
-219	vuelo.sinInstructora.si	Dale. Si hay peligro, te aviso.
-220	vuelo.sinInstructora.no	Bueno: hoy te acompaño.
-221	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
-222	circuito.subida	Subí derecho por el eje
-223	circuito.cruzado	Girá a la izquierda: volvemos a la pista
-224	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
-225	circuito.cruzado.derecha	Girá a la derecha: volvemos a la pista
-226	circuito.encola.derecha	Volá al lado de la pista, con ella a tu derecha
-227	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
-228	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
-229	percance.coche	Le pasaste por encima al coche
-230	percance.edificio	Chocaste con un edificio
-231	percance.fuera	Tocaste tierra fuera de la pista
-232	percance.golpe	Llegaste dando un golpe
-233	percance.pasada	Te pasaste del final de la pista
-234	percance.sinpermiso	Entraste en la pista sin la luz verde
-235	percance.sintren	Tocaste tierra sin sacar el tren
-236	fin.horas	Lo que llevás volado
-237	fin.llegaste	¡Llegaste! Ya estás en casa
-238	fin.bien	¡Buen vuelo!
-239	fin.muyBien	¡Gran vuelo!
-240	fin.otra	Otro vuelo
-241	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
-242	grado.aprendiz	Aprendiz
-243	grado.piloto	Piloto
-244	grado.comandante	Comandante
-245	grado.instructora	Instructora
-246	galon.manga	La hoja de la instructora
-247	galon.aproximacion	Aproximación estabilizada
-248	galon.toma	Aterrizaje
-249	galon.aros	Los aros
-250	galon.velocidad	La velocidad
-251	galon.rodaje	El rodaje
-252	galon.frustrada	Frustrada cuando tocaba
-253	tutor.throttle	Dale motor
-254	tutor.speed	Esperá a que corra
-255	tutor.pull	Tirá para arriba
-256	tutor.flying	¡Estás volando!
-257	tutor.frenar	Frená
-258	tutor.salir	Seguí la raya y salí de la pista
-259	tutor.slow	Bajá el motor
-260	motivo.sinPista	No se ve la pista
-261	motivo.lento	Vas muy despacio
-262	motivo.cayendo	Estás cayendo muy rápido
-263	motivo.rapido	Vas muy rápido
-264	motivo.torcido	Estás torcido
-265	motivo.descolocado	Estás fuera del eje
-266	motivo.alto	Vas alto
-267	motivo.bajo	Vas bajo
-268	motivo.sinConfigurar	Falta el tren o los flaps
-269	ejercicio.planeo.antes	Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista
-270	ejercicio.antes-de-v1.antes	Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar
-271	ejercicio.despues-de-v1.antes	Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar
-272	ejercicio.un-motor.antes	Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos
-273	ejercicio.simulador.antes	Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses
-274	ejercicio.despresurizacion.antes	Hoy practicamos la cabina sin aire. En un ratito se va a ir la presión, a propósito: suena un aviso y caen las máscaras. Primero la máscara, y bajamos rápido hasta donde se respira. Es un procedimiento, y lo hacemos con calma
-275	ejercicio.paramos	Falló un motor antes de V1: gas atrás y frenos, paramos
-276	ejercicio.seguimos	Falló un motor, y ya pasamos V1: seguimos volando
-277	ejercicio.enVuelo	Se paró un motor. El avión sigue volando con el otro
-278	ejercicio.pieDerecho	Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho
-279	ejercicio.pieIzquierdo	Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo
-280	ejercicio.velocidad	Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube
-281	ejercicio.bandera	Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos
-282	ejercicio.banderaSola	La hélice del motor parado ya se puso sola en bandera. Le corto el combustible
-283	ejercicio.cortar	Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado
-284	ejercicio.declarar	Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad
-285	ejercicio.bomberos	¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal
-286	ejercicio.bomberosUno	¿Ves el camión junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal
-287	ejercicio.bomberosFrenos	Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal
-288	ejercicio.bien	Ejercicio hecho: volaste el procedimiento como en un simulador de verdad
-289	ejercicio.bienDespresurizacion	Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador
-290	ejercicio.bienParado	Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar
-291	ejercicio.paradoTrasV1	Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos
-292	ejercicio.seguidoAntesDeV1	Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos
-293	ejercicio.otraVez	El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez
-294	mission.rio.name	Ver el río
-295	mission.rioabajo.name	Seguir el río
-296	mission.mar.name	Salir al mar
-297	mission.anaga.name	A Anaga
-298	mission.cumbre.name	A la cumbre
-299	mission.lomas.name	A las lomas
-300	mission.first.name	Tu primer vuelo
-301	mission.valley.name	La vuelta al valle
-302	mission.transfer.name	El traslado
-303	mission.step	¡Bien! Seguí
-304	mission.done	¡Misión cumplida!
-305	mission.none	Vuelo libre
-306	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-307	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-308	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-309	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
-310	explica.velocidad.texto	IAS es la velocidad del aire que pasa por el ala, en nudos. El ala sostiene al avión solo si el aire pasa rápido: si vas muy despacio deja de sostener, y si vas muy rápido el avión sufre. Lo bueno es quedarse en el verde. Se mide con un tubito que mira para adelante: el pitot.
-311	explica.altitud.texto	ALT es la altitud: a cuántos pies sobre el mar vas. Mil pies son unos trescientos metros. El altímetro no mira el suelo: mide cuánto pesa el aire que tenés encima, que arriba pesa menos. Por eso hay que ponerle la presión del día. La marca rosa es la altura que le pediste al avión.
-312	explica.rumbo.texto	HDG es el rumbo: para dónde apunta la nariz del avión, en grados, como en una brújula. El norte es 360, el este 90, el sur 180 y el oeste 270. Las pistas se llaman por su rumbo: la pista 03 apunta a 30 grados.
-313	explica.actitud.texto	Es el horizonte artificial. Lo azul es el cielo y lo marrón, la tierra; el avioncito amarillo del medio sos vos. Si el azul baja, la nariz sube; si se inclina, estás virando. Sirve para volar derecho aunque afuera no se vea nada, dentro de una nube.
-314	explica.variometro.texto	V/S dice si el avión sube o baja, y qué tan rápido, en pies por minuto. Arriba es subir, abajo es bajar, y en el medio el avión va nivelado.
-315	explica.coordinador.texto	El avioncito se inclina cuando virás, y dice qué tan rápido gira el avión. La bolita de abajo dice si el viraje va limpio: si se va para un lado, se la vuelve al medio con el pedal de ese lado.
-316	explica.motor.texto	Cuánta fuerza hace el motor. En los de hélice se mide en vueltas por minuto, RPM; en los reactores, en lo rápido que gira el ventilador de adelante, N1. Más motor es ir más rápido o subir; menos motor, ir más despacio o bajar. En un reactor la aguja tarda unos segundos en llegar a lo que pediste: un motor grande no se apura.
-317	explica.flaps.texto	Los flaps son la parte de atrás del ala, que sale para abajo. Hacen el ala más grande y más curva, y así sostiene al avión yendo más despacio. Se sacan para despegar y para aterrizar, y en el crucero se guardan, porque también frenan.
-318	explica.tren.texto	Las luces del tren. Verde quiere decir rueda abajo y trabada, lista para tocar el suelo. Después de despegar las ruedas se guardan, porque afuera frenan el aire. Antes de aterrizar siempre se mira: tres verdes.
-319	explica.combustible.texto	Cuánto combustible queda. En casi todos los aviones va dentro de las alas. La franja ámbar es la reserva: lo que se guarda siempre por si hay que esperar o ir a otro aeropuerto. Para llegar, nunca se cuenta con la reserva.
-320	explica.presurizacion.texto	Allá arriba el aire es tan finito que no alcanza para respirar bien. Por eso el avión mete aire en la cabina y la infla un poco, como un globo: adentro es como estar en un cerro alto, a dos mil cuatrocientos metros como mucho, aunque afuera vayas a más de diez mil. CAB ALT dice a qué altura está la cabina.
-321	explica.avisos.texto	Se encienden cuando algo pide que lo mires. Ámbar quiere decir cuidado; rojo, que hay que hacer algo ya. Y siempre en el mismo orden: primero se vuela el avión, después se mira qué pasa.
-322	explica.matricula.texto	Es el nombre del avión, como la chapa de un auto. Las primeras letras dicen de qué país es: ZP es Paraguay. La torre te llama por estas letras, cada una con su palabra de radio: Zulu, Papa… Por eso va a la vista, para saber que te hablan a vos.
-323	explica.carta.texto	Es la pantalla del mapa. El triángulo amarillo sos vos, y lo de arriba es lo que tenés adelante. La línea rosa es el camino del plan de vuelo. Los rombos son otros aviones: el TCAS solo te enseña a los que vuelan cerca de tu altura. Los que van mucho más arriba o más abajo no salen, aunque los veas por la ventanilla.
-324	explica.carta.tierra	En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice TCAS STBY: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.
-325	explica.tcas.texto	Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.
-326	explica.tcas.ra	Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.
-327	explica.arco.texto	Este arco verde dice dónde vas a llegar a la altura que pediste, si seguís subiendo o bajando como ahora. Si cae antes de la pista, llegás abajo con tiempo; si cae después, no te da: hay que bajar más rápido o empezar antes.
-328	explica.arco.presenta	¿Ves el arco verde en el mapa? Ahí vamos a llegar a la altura que pedimos.
-329	explica.td.texto	T/D quiere decir top of descent, lo alto de la bajada: acá empezamos a bajar. Desde este círculo verde, bajando tranquilos, se llega a la pista a la altura justa.
-330	explica.td.presenta	Mirá el círculo verde en el mapa: acá empezamos a bajar.
-331	explica.tc.texto	T/C quiere decir top of climb, lo alto de la subida: acá terminamos de subir. Desde este círculo verde el avión va nivelado, en el crucero, hasta el T/D.
-332	explica.tc.presenta	Ese círculo verde del mapa es donde terminamos de subir.
-333	explica.senda.texto	El rombo dice dónde está la senda, la rampa invisible que baja hasta la pista. Si el rombo está abajo, vas alto: bajá un poco más. Si está arriba, vas bajo. Se vuela hacia el rombo, hasta tenerlo en el medio.
-334	explica.senda.presenta	Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.
-335	explica.gs-rodaje.texto	GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.
-336	explica.gs-rodaje.presenta	Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.
-337	explica.grado-aprendiz.texto	Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.
-338	explica.grado-piloto.texto	Piloto es quien ya despega y aterriza. El avión lo llevás vos, del puesto al puesto, y la instructora te ayuda cuando hace falta.
-339	explica.grado-comandante.texto	Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.
-340	explica.grado-instructora.texto	Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.
-341	explica.sin-instructora.texto	Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.
-342	explica.galones.texto	Las barras de la manga dicen tu grado, como en cualquier línea aérea: una, quien aprende; dos, la segunda oficial; tres, la primera oficial, que ya lleva el avión; y cuatro, la comandante. Cuatro barras no quieren decir que manda más: quieren decir que responde por todos los que van a bordo. Lo que hiciste bien en cada vuelo no va en la manga: lo marca la instructora en su hoja, con un visto.
-343	explica.hoja.texto	Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.
-344	explica.persianas.texto	Para despegar y para aterrizar, las persianas de las ventanillas van subidas, y de noche se bajan las luces de la cabina. Así se ve afuera si pasa algo, y los ojos ya están acostumbrados a la luz de afuera si hubiera que salir. En algunos aviones nuevos, la tripulación aclara todas las ventanillas a la vez.
-345	explica.video-seguridad.texto	Antes de despegar, la tripulación enseña dónde están las salidas, cómo se abrocha el cinturón, el chaleco y las máscaras. Aunque vueles seguido, se mira siempre: cada avión es distinto, y la salida más cerca puede estar detrás tuyo.
-346	explica.mascaras.texto	Si la cabina pierde el aire, caen máscaras del techo. Primero te ponés la tuya y después ayudás a quien está al lado, aunque sea un niño: sin aire no podrías ayudar a nadie. El oxígeno sale aunque la bolsita no se infle, y el avión baja enseguida adonde se respira bien.
-347	explica.no-fumar.texto	En el avión no se fuma, tampoco con cigarrillo electrónico, y menos en el baño: un fuego en el aire es de lo más peligroso que hay. Por eso los baños tienen detector de humo.
-348	explica.cinturon.texto	Aunque la luz del cinturón esté apagada, sentado se lleva puesto, flojito. A veces el aire se mueve de golpe sin avisar, con el cielo despejado, y el cinturón es lo que te deja en tu asiento.
-349	explica.mesitas.texto	Para despegar y para aterrizar, la mesita guardada y el respaldo derecho. Así nadie se golpea si el avión frena fuerte, y el pasillo hasta la salida queda libre por si hubiera que salir rápido.
-350	explica.modo-avion.texto	El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.
-351	explica.bomberos.texto	Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.
-352	explica.bomberos-y-aviones.texto	A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.
-353	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
-354	vuelta.entera	¡Vuelta lista! El avión está para volar.
-355	vuelta.pitot.voz	Esta funda roja tapa el pitot mientras el avión está guardado. Hay que sacarla: sin ella fuera, el avión no sabe a qué velocidad va.
-356	vuelta.sondas.voz	Estas son las sondas que miden la velocidad. Se les saca la funda y se mira que estén sanas y limpias.
-357	vuelta.superficies.voz	Los timones de la cola tienen que moverse libres, sin nada que los trabe.
-358	vuelta.calzos.voz	Los calzos son las cuñas que no dejan rodar al avión. Se sacan, y se mira que la rueda esté bien inflada.
-359	vuelta.frenos.voz	En cada rueda se mira la goma y el freno. Este pernito, mientras asome, dice que al freno todavía le queda.
-360	vuelta.combustible.voz	Por esta boca se mira cuánto combustible hay. Y con el vasito se saca un poco de abajo: tiene que salir azul y sin agua.
-361	vuelta.aceite.voz	Con la varilla se mira el aceite del motor: tiene que llegar entre las dos rayas.
-362	vuelta.helice.voz	La hélice se mira sin tocarla de más: que no tenga mellas ni golpes. Y nunca se para uno delante de ella.
-363	vuelta.motores.voz	Se mira la boca del motor y la salida de atrás: que no haya nada adentro, ni un pájaro ni un trapo.
-364	vuelta.puertas.voz	Las puertas y las tapas que no se usan tienen que estar bien cerradas antes de salir.
-365	vuelta.luces.voz	Se prenden las luces y se mira que anden todas: la roja a la izquierda, la verde a la derecha y la blanca atrás.
-366	parte.propone.tormenta	Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.
-367	parte.propone.visibilidad	Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.
-368	parte.propone.techo	Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.
-369	parte.propone.cruzado	Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.
-370	parte.propone.pista	Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.
-371	tarjeta.voz.alerones	Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.
-372	tarjeta.voz.profundidad	Este es el timón de profundidad, en la cola. Si tirás de la palanca, la cola baja y la nariz sube.
-373	tarjeta.voz.timon	Este es el timón de dirección. Con los pedales, la cola va para un lado y la nariz mira para el otro.
-374	tarjeta.voz.flaps	Estos son los flaps. Al bajarlos, el ala se hace más curva y más grande, y sostiene al avión aunque vaya más despacio. Se usan para despegar y para aterrizar.
-375	tarjeta.voz.aerofrenos	Estos son los aerofrenos. Se levantan encima del ala para frenar en el aire, y al tocar la pista, para que el avión apoye las ruedas y frene mejor.
-376	tarjeta.voz.pitot	Este tubito es el pitot. El aire entra por la punta, y cuanto más rápido volás, más fuerte empuja: así sabe el avión a qué velocidad va.
-377	tarjeta.voz.pitotMorro	Estos tubitos a los lados de la nariz son los pitot, uno para cada piloto. El aire entra de frente, y cuanto más rápido volás, más empuja: así se mide la velocidad.
-378	tarjeta.voz.motorPiston	Acá está el motor. Hace girar la hélice, y la hélice, que tiene palas como alas chiquitas, tira del avión hacia adelante.
-379	tarjeta.voz.motorRadial	Este es un motor radial: los cilindros van en círculo, como los rayos de una estrella. Hace girar la hélice, y la hélice tira del avión.
-380	tarjeta.voz.turbohelice	Este es un turbohélice: adentro tiene una turbina, como la de un reactor, pero en vez de soplar, hace girar la hélice.
-381	tarjeta.voz.reactor	Esto es un reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. Y el que más empuja es el ventilador grande de adelante.
-382	tarjeta.voz.tren	Este es el tren de aterrizaje. Sale para aterrizar, y después de despegar se guarda adentro: así el aire pasa mejor y el avión va más rápido.
-383	tarjeta.voz.trenFijo	Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.
-384	tarjeta.voz.luces	Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
-385	tarjeta.voz.luzBaliza	La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.
-386	tarjeta.voz.luzEstrobos	Estos destellos blancos se encienden al entrar en la pista y en todo el vuelo, para que los demás aviones te vean desde lejos.
-387	tarjeta.voz.luzAterrizaje	Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.
-388	tarjeta.voz.matricula	La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.
-389	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
-390	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
-391	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
-392	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
-393	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
-394	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
-395	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
-396	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
-397	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
-398	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
-399	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
-400	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
-401	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
-402	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
-403	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
-404	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
-405	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
-406	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
-407	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
-408	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
-409	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
-410	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
-411	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
-412	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
-413	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
-414	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
-415	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
-416	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
-417	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
-418	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
-419	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
-420	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
-421	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
-422	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
-423	matricula.nuestroAvion	Nuestro avión es
-424	matricula.asiNosLlama	Así nos llama la torre.
-425	fonetico.alfa	Alfa
-426	fonetico.bravo	Bravo
-427	fonetico.charlie	Charlie
-428	fonetico.delta	Delta
-429	fonetico.echo	Echo
-430	fonetico.foxtrot	Foxtrot
-431	fonetico.golf	Golf
-432	fonetico.hotel	Hotel
-433	fonetico.india	India
-434	fonetico.juliett	Juliett
-435	fonetico.kilo	Kilo
-436	fonetico.lima	Lima
-437	fonetico.mike	Mike
-438	fonetico.november	November
-439	fonetico.oscar	Oscar
-440	fonetico.papa	Papa
-441	fonetico.quebec	Quebec
-442	fonetico.romeo	Romeo
-443	fonetico.sierra	Sierra
-444	fonetico.tango	Tango
-445	fonetico.uniform	Uniform
-446	fonetico.victor	Victor
-447	fonetico.whiskey	Whiskey
-448	fonetico.xray	X-ray
-449	fonetico.yankee	Yankee
-450	fonetico.zulu	Zulu
-451	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-452	gafas.ganadas	¡Tus gafas de sol!
-453	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
-454	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
-455	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
-456	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
-457	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
-458	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
-459	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
-460	parte.ganaste	¡Hoy ganaste: decidiste bien!
+076	vuelo.niveladaAsistida	Llegamos a la altura de la ventanilla y el avión se queda acá solo. Ahora el motor es velocidad: más motor, más rápido.
+077	vuelo.gasesAutomaticos	En este avión el automático también lleva el motor: mirá cómo la palanca se mueve sola para ir a la velocidad de la marca rosa.
+078	vuelo.gasesSueltos	Tocaste el motor: ahora la velocidad la llevás vos. El automático sigue con la altura.
+079	vuelo.automaticoParaAterrizar	Soltamos el automático para aterrizar a mano. Seguí la senda, como venía él.
+080	vuelo.ventanillaFrustrada	El automático ya baja por la senda. En la ventanilla ponemos la altura de irse al aire, por si hay que subir: bajar, lo manda la senda.
+081	vuelo.pilotoEnTierra	El piloto automático se conecta en el aire
+082	vuelo.empezamosABajar	Empezamos a bajar: despacito, hasta la pista
+083	vuelo.alturaDeLaTorre	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
+084	vuelo.alturaDeLaTorreRaya	La torre nos dice hasta dónde subir: hasta la raya de la cinta.
+085	vuelo.otraAlturaDeLaTorre	La torre nos deja subir otro poco. Ya puse la altura nueva.
+086	vuelo.tonoDeAltitudCerca	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
+087	vuelo.tonoDeAltitudFuera	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
+088	vuelo.masAltoQueElPlan	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
+089	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
+090	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
+091	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
+092	vuelo.permisoAnulado	La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.
+093	vuelo.cotaDeLaPista	Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos
+094	vuelo.puedeVolver	La torre te deja volver a intentarlo
+095	vuelo.puedeVolver~2	La pista quedó libre: podés volver a bajar
+096	vuelo.puedeVolverSinTorre	La pista ya está libre: volvé a intentarlo
+097	vuelo.puedeAterrizar	La torre te deja aterrizar
+098	vuelo.puedeAterrizarSinTorre	Ahora sí: podés aterrizar
+099	vuelo.puedeAterrizarAfis	La pista está libre: si venís bien, aterrizá
+100	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
+101	vuelo.frustrada~2	Muy bien: irse al aire también es volar bien
+102	vuelo.frustrada~3	Eso estuvo bien. Damos otra vuelta y volvemos
+103	vuelo.aroAlto	Venís un poco alto. Bajá suave
+104	vuelo.aroAlto~2	Venís un poco alto. Bajá el morro despacito
+105	vuelo.aroAlto~3	Estás por encima. Soltá un poquito y vas a ir entrando
+106	vuelo.aroAlto~4	Un poco alto para la pista: bajá suave
+107	vuelo.aroBajo	Venís un poco bajo. Subí suave
+108	vuelo.aroBajo~2	Venís bajo. Tirá un poquito y un toque de motor
+109	vuelo.aroBajo~3	Estás por debajo: subí despacio, sin pasarte
+110	vuelo.aroBajo~4	Un poco bajo para la pista: levantá suave
+111	vuelo.corregido	¡Eso es! Así venís bien
+112	vuelo.corregido~2	Muy bien, así venís
+113	vuelo.corregido~3	Eso. Ahora entrás derechito
+114	vuelo.corregido~4	Perfecto, quedate así
+115	vuelo.papiAlto	Luces blancas: vas alto, bajá
+116	vuelo.lentoYBajo	Venís lento: metéle gas
+117	vuelo.papiBajo	Luces rojas: vas bajo, subí
+118	vuelo.papiBien	Dos rojas y dos blancas: vas bien
+119	vuelo.consejo.masGas	Un poquito más de gas, hasta la marca rosa. La nariz, quieta.
+120	vuelo.consejo.menosGas	Un poquito menos de gas, hasta la marca rosa.
+121	vuelo.consejo.narizAbajoPapi	Nariz un poquito abajo, hasta ver dos blancas y dos rojas.
+122	vuelo.consejo.narizArribaPapi	Nariz un poquito arriba, hasta ver dos blancas y dos rojas.
+123	vuelo.consejo.narizAbajoSenda	Nariz un poquito abajo, hasta que el rombo quede en el medio.
+124	vuelo.consejo.narizArribaSenda	Nariz un poquito arriba, hasta que el rombo quede en el medio.
+125	vuelo.consejo.narizArribaRitmo	Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.
+126	vuelo.consejo.narizArribaSuave	Nariz un poquito arriba, para bajar más suave.
+127	vuelo.consejo.aerofrenos	Sacá un poco los aerofrenos, hasta la marca rosa.
+128	vuelo.consejo.nivelarPerfil	Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.
+129	vuelo.consejo.narizAbajoPerfil	Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.
+130	vuelo.consejo.aerofrenosPerfil	Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.
+131	vuelo.consejo.masGasPerfil	Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.
+132	vuelo.consejo.menosGasPerfil	Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.
+133	vuelo.consejo.masGasPapi	Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
+134	vuelo.consejo.masGasSenda	Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.
+135	vuelo.consejo.menosGasPapi	Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
+136	vuelo.consejo.menosGasSenda	Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.
+137	vuelo.consejo.masGasSuave	Bajamos muy de golpe: un toque de gas, para bajar más suave.
+138	vuelo.consejo.narizAbajoMarca	Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.
+139	vuelo.consejo.narizArribaMarca	Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.
+140	vuelo.paso.subir	Subimos hasta la raya de la altura, a la velocidad de la marca rosa.
+141	vuelo.paso.acelerarGas	Ya podemos ir más rápido: más gas, hasta la marca rosa.
+142	vuelo.paso.acelerarNariz	Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.
+143	vuelo.paso.frenarGas	Ahora vamos más despacio: menos gas, hasta la marca rosa.
+144	vuelo.paso.frenarAerofrenos	Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.
+145	vuelo.paso.frenarNariz	Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.
+146	vuelo.paso.mantener	La marca rosa cambió y ya vamos a esa velocidad: seguimos así.
+147	vuelo.paso.marcaDelAutomatico	La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.
+148	vuelo.paso.crucero	Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.
+149	vuelo.paso.cruceroConAutomatico	Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.
+150	vuelo.paso.cruceroConGases	Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.
+151	vuelo.paso.bajar	Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.
+152	vuelo.paso.bajarConAutomatico	Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.
+153	vuelo.paso.nivelar	Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.
+154	vuelo.paso.flaps1	Los primeros flaps, una muesca, y a la marca rosa.
+155	vuelo.paso.flaps2	Otra muesca de flaps, y a la marca rosa.
+156	vuelo.paso.flaps3	Los flaps de aterrizar, abajo del todo, y a la marca rosa.
+157	vuelo.paso.tren	Sacá el tren, que ya vamos a aterrizar.
+158	vuelo.paso.recogerAerofrenos	Ya vamos a la marca rosa: aerofrenos adentro.
+159	vuelo.paso.senda	Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.
+160	vuelo.paso.sendaConGases	Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.
+161	vuelo.paso.sendaConAyuda	Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.
+162	vuelo.paso.gasTuyo	Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.
+163	vuelo.paso.cotaAlMar	La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.
+164	vuelo.paso.cotaEnAlto	La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.
+165	vuelo.bulto	Por ahí no se pasa: hay un edificio
+166	vuelo.aterrizado	Frená
+167	vuelo.abandonando	Salí de la pista, que viene otro
+168	vuelo.abandonandoSinPrisa	Sin apuro: salí de la pista y volvé a casa
+169	vuelo.abandonandoConLaBici	Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici
+170	vuelo.abandonandoSinTorre	Sin apuro: salí de la pista y andá a la plataforma
+171	vuelo.pistaLibre	¡Pista libre! Bien hecho
+172	vuelo.aPlataforma	Volvé a tu lugar
+173	vuelo.enPuesto	Llegaste. Apagá el motor
+174	vuelo.apagado	¡Vuelo terminado!
+175	vuelo.fuera	Volvé a la raya verde
+176	vuelo.roto	Se rompió. Volvemos a empezar
+177	vuelo.rapido	Vas muy rápido
+178	vuelo.sobrevelocidad	Muy rápido: bajá el motor
+179	vuelo.sobrevelocidadAire	Muy rápido para esta altura
+180	vuelo.trenPasado	Muy rápido con el tren fuera: metélo
+181	vuelo.flapsPasados	Muy rápido con los flaps: recogélos
+182	vuelo.pediFlaps	Bajá los flaps para frenar
+183	vuelo.alivioDeFlaps	Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.
+184	vuelo.flapsTocados	Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.
+185	vuelo.flapsEnLaCarrera	Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.
+186	vuelo.flapsArribaAlSalir	Ya salimos de la pista: ahora sí, subí los flaps.
+187	vuelo.despuesDelAterrizaje	Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.
+188	vuelo.alPuestoConFlaps	Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.
+189	vuelo.despues.aerofrenos	Los aerofrenos, adentro: bajá la palanca.
+190	vuelo.despues.luces	Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.
+191	vuelo.despues.transpondedor	Y el transpondedor: pongo el TCAS en espera.
+192	vuelo.meteElTren	Metélo, el tren te frena
+193	vuelo.armaLosAerofrenos	Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien
+194	vuelo.losArmeYo	Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar
+195	vuelo.salenLosFrenosDeTierra	¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan
+196	vuelo.sinFrenosDeTierra	No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan
+197	vuelo.quitaLaReversa	Ya vamos despacio: quitá la reversa
+198	vuelo.autofrenoSuelto	Pisaste el freno: el autofreno se soltó y ahora frenás vos
+199	vuelo.tormenta	Hay una tormenta delante: rodeála, no la cruces
+200	vuelo.baches	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
+201	vuelo.reserva	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
+202	vuelo.reservaAqui	Entramos en la reserva, pero tenemos de sobra para llegar: aterrizamos acá.
+203	vuelo.reservaMinimo	Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.
+204	vuelo.sinCombustible	Se acabó el combustible: planeá hasta la pista
+205	vuelo.sinMotor	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
+206	vuelo.planeoLento	Vamos lentos: bajá un poco la nariz
+207	vuelo.planeoRapido	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
+208	vuelo.aire.frio	Afuera ya hace cero grados. Cada mil metros que subimos, unos seis grados y medio menos: allá arriba hace como cincuenta bajo cero.
+209	vuelo.aire.crucero	Ya estamos en crucero. Acá arriba el aire es finito: el avión frena menos y gasta menos combustible. Por eso los aviones vuelan tan alto.
+210	vuelo.aire.cruceroConCifras	Mirá la velocidad: el reloj marca menos de lo que vamos de verdad, porque acá arriba el aire es finito. Y con menos aire se frena menos y se gasta menos: por eso los aviones vuelan tan alto.
+211	vuelo.aire.bolsa	La cabina también sube, pero despacito: ahora va como a mil quinientos metros, aunque el avión esté mucho más alto. Por eso una bolsa de papitas cerrada abajo, acá arriba se infla.
+212	vuelo.aire.oidos	Empezamos a bajar, y la cabina también baja. Si se te tapan los oídos, tragá saliva o bostezá, que se destapan. Y una botella cerrada allá arriba, abajo llega aplastada.
+213	vuelo.cabinaSinPresion	Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, aerofrenos afuera y nariz abajo.
+214	vuelo.cabinaSinPresionConTren	Se fue la presión de la cabina. Con calma: primero la máscara, y bajamos rápido a donde se respira. Gas al mínimo, tren afuera y nariz abajo.
+215	vuelo.primeroLaTuya.segundos	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos segundos para pensar bien: medio minuto o menos. Con la tuya puesta, ya podés ayudar.
+216	vuelo.primeroLaTuya.minuto	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, queda más o menos un minuto para pensar bien. Con la tuya puesta, ya podés ayudar.
+217	vuelo.primeroLaTuya.minutos	Cayeron las máscaras. Primero la tuya, porque a esta altura, sin oxígeno, quedan unos pocos minutos para pensar bien. Con la tuya puesta, ya podés ayudar.
+218	vuelo.yaSeRespira	Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con calma. Así lo practican los pilotos de verdad.
+219	vuelo.laOtraPunta	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
+220	vuelo.salidaSiguiente	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
+221	vuelo.calor	Hace calor: vamos a necesitar más pista para despegar
+222	vuelo.alAireOtraPunta	Por esa punta no: andate al aire y volvé por la otra
+223	vuelo.alAireVientoDeCola	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
+224	vuelo.sacaElTren	Sacá el tren
+225	vuelo.trenEnElSuelo	Con el avión en el suelo, el tren no se mete
+226	vuelo.despacio	Más despacio
+227	vuelo.alto	Pará acá
+228	vuelo.teLoPasaste	Te pasaste. Frená y volvé
+229	vuelo.yaPodesTocar	Ya podés tocar
+230	vuelo.quitaElGas	Quitá el gas
+231	vuelo.narizEnLaRecogida	La nariz un poquito arriba
+232	vuelo.narizYQuitaElGas	La nariz un poquito arriba, y quitá el gas
+233	vuelo.sinInstructora.pregunta	Hoy volás sin mí. ¿Lo querés así?
+234	vuelo.sinInstructora.si	Dale. Si hay peligro, te aviso.
+235	vuelo.sinInstructora.no	Bueno: hoy te acompaño.
+236	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
+237	circuito.subida	Subí derecho por el eje
+238	circuito.cruzado	Girá a la izquierda: volvemos a la pista
+239	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
+240	circuito.cruzado.derecha	Girá a la derecha: volvemos a la pista
+241	circuito.encola.derecha	Volá al lado de la pista, con ella a tu derecha
+242	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
+243	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
+244	percance.coche	Le pasaste por encima al coche
+245	percance.edificio	Chocaste con un edificio
+246	percance.fuera	Tocaste tierra fuera de la pista
+247	percance.golpe	Llegaste dando un golpe
+248	percance.pasada	Te pasaste del final de la pista
+249	percance.sinpermiso	Entraste en la pista sin la luz verde
+250	percance.sintren	Tocaste tierra sin sacar el tren
+251	fin.horas	Lo que llevás volado
+252	fin.llegaste	¡Llegaste! Ya estás en casa
+253	fin.bien	¡Buen vuelo!
+254	fin.muyBien	¡Gran vuelo!
+255	fin.otra	Otro vuelo
+256	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
+257	grado.aprendiz	Aprendiz
+258	grado.piloto	Piloto
+259	grado.comandante	Comandante
+260	grado.instructora	Instructora
+261	galon.manga	La hoja de la instructora
+262	galon.aproximacion	Aproximación estabilizada
+263	galon.toma	Aterrizaje
+264	galon.aros	Los aros
+265	galon.velocidad	La velocidad
+266	galon.rodaje	El rodaje
+267	galon.frustrada	Frustrada cuando tocaba
+268	tutor.throttle	Dale motor
+269	tutor.speed	Esperá a que corra
+270	tutor.pull	Tirá para arriba
+271	tutor.flying	¡Estás volando!
+272	tutor.frenar	Frená
+273	tutor.salir	Seguí la raya y salí de la pista
+274	tutor.slow	Bajá el motor
+275	tutor.palancaSeQueda	La palanca se queda donde la dejás: el avión sigue así. Para volar derecho, tocala dos veces.
+276	tutor.dobleToque	Muy bien: alas derechas y vuelo nivelado.
+277	tutor.inclinacionTope	Más no se inclina: treinta y tres grados es el tope. Así viajan tranquilos los pasajeros.
+278	tutor.mandoConectado	Mando conectado: podés volar con él.
+279	tutor.joystickConectado	Joystick conectado: podés volar con él.
+280	tutor.pedales	Abajo tenés los pedales del timón: en tierra, con ellos se dobla. Pisá el de la izquierda para ir a la izquierda.
+281	motivo.sinPista	No se ve la pista
+282	motivo.lento	Vas muy despacio
+283	motivo.cayendo	Estás cayendo muy rápido
+284	motivo.rapido	Vas muy rápido
+285	motivo.torcido	Estás torcido
+286	motivo.descolocado	Estás fuera del eje
+287	motivo.alto	Vas alto
+288	motivo.bajo	Vas bajo
+289	motivo.sinConfigurar	Falta el tren o los flaps
+290	ejercicio.planeo.antes	Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista
+291	ejercicio.antes-de-v1.antes	Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar
+292	ejercicio.despues-de-v1.antes	Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar
+293	ejercicio.un-motor.antes	Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos
+294	ejercicio.simulador.antes	Sesión de simulador: algo va a fallar, y no te digo qué ni cuándo. Volá el avión y hacé el procedimiento, como los pilotos de línea cada seis meses
+295	ejercicio.despresurizacion.antes	Hoy practicamos la cabina sin aire. En un ratito se va a ir la presión, a propósito: suena un aviso y caen las máscaras. Primero la máscara, y bajamos rápido hasta donde se respira. Es un procedimiento, y lo hacemos con calma
+296	ejercicio.paramos	Falló un motor antes de V1: gas atrás y frenos, paramos
+297	ejercicio.seguimos	Falló un motor, y ya pasamos V1: seguimos volando
+298	ejercicio.enVuelo	Se paró un motor. El avión sigue volando con el otro
+299	ejercicio.pieDerecho	Se paró el izquierdo y el avión tira a la izquierda: pisá el pedal derecho
+300	ejercicio.pieIzquierdo	Se paró el derecho y el avión tira a la derecha: pisá el pedal izquierdo
+301	ejercicio.velocidad	Con la nariz, sostené esta velocidad. Con un motor se sube despacio, pero se sube
+302	ejercicio.bandera	Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos
+303	ejercicio.banderaSola	La hélice del motor parado ya se puso sola en bandera. Le corto el combustible
+304	ejercicio.cortar	Ya tenemos altura. Le corto el combustible al motor parado: queda asegurado
+305	ejercicio.declarar	Avisamos a la torre con la palabra de emergencia y ponemos siete siete cero cero en el transpondedor. Así todos saben que volvemos, y nos dan prioridad
+306	ejercicio.bomberos	¿Ves los camiones junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal
+307	ejercicio.bomberosUno	¿Ves el camión junto a la pista? Son los bomberos del aeropuerto. Esperan siempre que un avión vuelve con una emergencia: es lo normal
+308	ejercicio.bomberosFrenos	Vienen los bomberos a mirar los frenos: frenar tan fuerte los calienta mucho. Es lo normal
+309	ejercicio.bien	Ejercicio hecho: volaste el procedimiento como en un simulador de verdad
+310	ejercicio.bienDespresurizacion	Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador
+311	ejercicio.bienParado	Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también es ganar
+312	ejercicio.paradoTrasV1	Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos
+313	ejercicio.seguidoAntesDeV1	Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos
+314	ejercicio.otraVez	El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez
+315	mission.rio.name	Ver el río
+316	mission.rioabajo.name	Seguir el río
+317	mission.mar.name	Salir al mar
+318	mission.anaga.name	A Anaga
+319	mission.cumbre.name	A la cumbre
+320	mission.lomas.name	A las lomas
+321	mission.first.name	Tu primer vuelo
+322	mission.valley.name	La vuelta al valle
+323	mission.transfer.name	El traslado
+324	mission.step	¡Bien! Seguí
+325	mission.done	¡Misión cumplida!
+326	mission.none	Vuelo libre
+327	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+328	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+329	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+330	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+331	explica.velocidad.texto	IAS es la velocidad del aire que pasa por el ala, en nudos. El ala sostiene al avión solo si el aire pasa rápido: si vas muy despacio deja de sostener, y si vas muy rápido el avión sufre. Lo bueno es quedarse en el verde. Se mide con un tubito que mira para adelante: el pitot.
+332	explica.altitud.texto	ALT es la altitud: a cuántos pies sobre el mar vas. Mil pies son unos trescientos metros. El altímetro no mira el suelo: mide cuánto pesa el aire que tenés encima, que arriba pesa menos. Por eso hay que ponerle la presión del día. La marca rosa es la altura que le pediste al avión.
+333	explica.rumbo.texto	HDG es el rumbo: para dónde apunta la nariz del avión, en grados, como en una brújula. El norte es 360, el este 90, el sur 180 y el oeste 270. Las pistas se llaman por su rumbo: la pista 03 apunta a 30 grados.
+334	explica.actitud.texto	Es el horizonte artificial. Lo azul es el cielo y lo marrón, la tierra; el avioncito amarillo del medio sos vos. Si el azul baja, la nariz sube; si se inclina, estás virando. Sirve para volar derecho aunque afuera no se vea nada, dentro de una nube.
+335	explica.variometro.texto	V/S dice si el avión sube o baja, y qué tan rápido, en pies por minuto. Arriba es subir, abajo es bajar, y en el medio el avión va nivelado.
+336	explica.coordinador.texto	El avioncito se inclina cuando virás, y dice qué tan rápido gira el avión. La bolita de abajo dice si el viraje va limpio: si se va para un lado, se la vuelve al medio con el pedal de ese lado.
+337	explica.motor.texto	Cuánta fuerza hace el motor. En los de hélice se mide en vueltas por minuto, RPM; en los reactores, en lo rápido que gira el ventilador de adelante, N1. Más motor es ir más rápido o subir; menos motor, ir más despacio o bajar. En un reactor la aguja tarda unos segundos en llegar a lo que pediste: un motor grande no se apura.
+338	explica.flaps.texto	Los flaps son la parte de atrás del ala, que sale para abajo. Hacen el ala más grande y más curva, y así sostiene al avión yendo más despacio. Se sacan para despegar y para aterrizar, y en el crucero se guardan, porque también frenan.
+339	explica.tren.texto	Las luces del tren. Verde quiere decir rueda abajo y trabada, lista para tocar el suelo. Después de despegar las ruedas se guardan, porque afuera frenan el aire. Antes de aterrizar siempre se mira: tres verdes.
+340	explica.combustible.texto	Cuánto combustible queda. En casi todos los aviones va dentro de las alas. La franja ámbar es la reserva: lo que se guarda siempre por si hay que esperar o ir a otro aeropuerto. Para llegar, nunca se cuenta con la reserva.
+341	explica.presurizacion.texto	Allá arriba el aire es tan finito que no alcanza para respirar bien. Por eso el avión mete aire en la cabina y la infla un poco, como un globo: adentro es como estar en un cerro alto, a dos mil cuatrocientos metros como mucho, aunque afuera vayas a más de diez mil. CAB ALT dice a qué altura está la cabina.
+342	explica.avisos.texto	Se encienden cuando algo pide que lo mires. Ámbar quiere decir cuidado; rojo, que hay que hacer algo ya. Y siempre en el mismo orden: primero se vuela el avión, después se mira qué pasa.
+343	explica.matricula.texto	Es el nombre del avión, como la chapa de un auto. Las primeras letras dicen de qué país es: ZP es Paraguay. La torre te llama por estas letras, cada una con su palabra de radio: Zulu, Papa… Por eso va a la vista, para saber que te hablan a vos.
+344	explica.carta.texto	Es la pantalla del mapa. El triángulo amarillo sos vos, y lo de arriba es lo que tenés adelante. La línea rosa es el camino del plan de vuelo. Los rombos son otros aviones: el TCAS solo te enseña a los que vuelan cerca de tu altura. Los que van mucho más arriba o más abajo no salen, aunque los veas por la ventanilla.
+345	explica.carta.tierra	En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice TCAS STBY: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.
+346	explica.tcas.texto	Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.
+347	explica.tcas.ra	Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.
+348	explica.arco.texto	Este arco verde dice dónde vas a llegar a la altura que pediste, si seguís subiendo o bajando como ahora. Si cae antes de la pista, llegás abajo con tiempo; si cae después, no te da: hay que bajar más rápido o empezar antes.
+349	explica.arco.presenta	¿Ves el arco verde en el mapa? Ahí vamos a llegar a la altura que pedimos.
+350	explica.td.texto	T/D quiere decir top of descent, lo alto de la bajada: acá empezamos a bajar. Desde este círculo verde, bajando tranquilos, se llega a la pista a la altura justa.
+351	explica.td.presenta	Mirá el círculo verde en el mapa: acá empezamos a bajar.
+352	explica.tc.texto	T/C quiere decir top of climb, lo alto de la subida: acá terminamos de subir. Desde este círculo verde el avión va nivelado, en el crucero, hasta el T/D.
+353	explica.tc.presenta	Ese círculo verde del mapa es donde terminamos de subir.
+354	explica.senda.texto	El rombo dice dónde está la senda, la rampa invisible que baja hasta la pista. Si el rombo está abajo, vas alto: bajá un poco más. Si está arriba, vas bajo. Se vuela hacia el rombo, hasta tenerlo en el medio.
+355	explica.senda.presenta	Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.
+356	explica.gs-rodaje.texto	GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.
+357	explica.gs-rodaje.presenta	Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.
+358	explica.grado-aprendiz.texto	Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.
+359	explica.grado-piloto.texto	Piloto es quien ya despega y aterriza. El avión lo llevás vos, del puesto al puesto, y la instructora te ayuda cuando hace falta.
+360	explica.grado-comandante.texto	Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.
+361	explica.grado-instructora.texto	Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.
+362	explica.sin-instructora.texto	Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.
+363	explica.galones.texto	Las barras de la manga dicen tu grado, como en cualquier línea aérea: una, quien aprende; dos, la segunda oficial; tres, la primera oficial, que ya lleva el avión; y cuatro, la comandante. Cuatro barras no quieren decir que manda más: quieren decir que responde por todos los que van a bordo. Lo que hiciste bien en cada vuelo no va en la manga: lo marca la instructora en su hoja, con un visto.
+364	explica.hoja.texto	Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.
+365	explica.persianas.texto	Para despegar y para aterrizar, las persianas de las ventanillas van subidas, y de noche se bajan las luces de la cabina. Así se ve afuera si pasa algo, y los ojos ya están acostumbrados a la luz de afuera si hubiera que salir. En algunos aviones nuevos, la tripulación aclara todas las ventanillas a la vez.
+366	explica.video-seguridad.texto	Antes de despegar, la tripulación enseña dónde están las salidas, cómo se abrocha el cinturón, el chaleco y las máscaras. Aunque vueles seguido, se mira siempre: cada avión es distinto, y la salida más cerca puede estar detrás tuyo.
+367	explica.mascaras.texto	Si la cabina pierde el aire, caen máscaras del techo. Primero te ponés la tuya y después ayudás a quien está al lado, aunque sea un niño: sin aire no podrías ayudar a nadie. El oxígeno sale aunque la bolsita no se infle, y el avión baja enseguida adonde se respira bien.
+368	explica.no-fumar.texto	En el avión no se fuma, tampoco con cigarrillo electrónico, y menos en el baño: un fuego en el aire es de lo más peligroso que hay. Por eso los baños tienen detector de humo.
+369	explica.cinturon.texto	Aunque la luz del cinturón esté apagada, sentado se lleva puesto, flojito. A veces el aire se mueve de golpe sin avisar, con el cielo despejado, y el cinturón es lo que te deja en tu asiento.
+370	explica.mesitas.texto	Para despegar y para aterrizar, la mesita guardada y el respaldo derecho. Así nadie se golpea si el avión frena fuerte, y el pasillo hasta la salida queda libre por si hubiera que salir rápido.
+371	explica.modo-avion.texto	El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.
+372	explica.bomberos.texto	Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.
+373	explica.bomberos-y-aviones.texto	A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.
+374	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
+375	vuelta.entera	¡Vuelta lista! El avión está para volar.
+376	vuelta.pitot.voz	Esta funda roja tapa el pitot mientras el avión está guardado. Hay que sacarla: sin ella fuera, el avión no sabe a qué velocidad va.
+377	vuelta.sondas.voz	Estas son las sondas que miden la velocidad. Se les saca la funda y se mira que estén sanas y limpias.
+378	vuelta.superficies.voz	Los timones de la cola tienen que moverse libres, sin nada que los trabe.
+379	vuelta.calzos.voz	Los calzos son las cuñas que no dejan rodar al avión. Se sacan, y se mira que la rueda esté bien inflada.
+380	vuelta.frenos.voz	En cada rueda se mira la goma y el freno. Este pernito, mientras asome, dice que al freno todavía le queda.
+381	vuelta.combustible.voz	Por esta boca se mira cuánto combustible hay. Y con el vasito se saca un poco de abajo: tiene que salir azul y sin agua.
+382	vuelta.aceite.voz	Con la varilla se mira el aceite del motor: tiene que llegar entre las dos rayas.
+383	vuelta.helice.voz	La hélice se mira sin tocarla de más: que no tenga mellas ni golpes. Y nunca se para uno delante de ella.
+384	vuelta.motores.voz	Se mira la boca del motor y la salida de atrás: que no haya nada adentro, ni un pájaro ni un trapo.
+385	vuelta.puertas.voz	Las puertas y las tapas que no se usan tienen que estar bien cerradas antes de salir.
+386	vuelta.luces.voz	Se prenden las luces y se mira que anden todas: la roja a la izquierda, la verde a la derecha y la blanca atrás.
+387	parte.propone.tormenta	Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.
+388	parte.propone.visibilidad	Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.
+389	parte.propone.techo	Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.
+390	parte.propone.cruzado	Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.
+391	parte.propone.pista	Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.
+392	tarjeta.voz.alerones	Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.
+393	tarjeta.voz.profundidad	Este es el timón de profundidad, en la cola. Si tirás de la palanca, la cola baja y la nariz sube.
+394	tarjeta.voz.timon	Este es el timón de dirección. Con los pedales, la cola va para un lado y la nariz mira para el otro.
+395	tarjeta.voz.flaps	Estos son los flaps. Al bajarlos, el ala se hace más curva y más grande, y sostiene al avión aunque vaya más despacio. Se usan para despegar y para aterrizar.
+396	tarjeta.voz.aerofrenos	Estos son los aerofrenos. Se levantan encima del ala para frenar en el aire, y al tocar la pista, para que el avión apoye las ruedas y frene mejor.
+397	tarjeta.voz.pitot	Este tubito es el pitot. El aire entra por la punta, y cuanto más rápido volás, más fuerte empuja: así sabe el avión a qué velocidad va.
+398	tarjeta.voz.pitotMorro	Estos tubitos a los lados de la nariz son los pitot, uno para cada piloto. El aire entra de frente, y cuanto más rápido volás, más empuja: así se mide la velocidad.
+399	tarjeta.voz.motorPiston	Acá está el motor. Hace girar la hélice, y la hélice, que tiene palas como alas chiquitas, tira del avión hacia adelante.
+400	tarjeta.voz.motorRadial	Este es un motor radial: los cilindros van en círculo, como los rayos de una estrella. Hace girar la hélice, y la hélice tira del avión.
+401	tarjeta.voz.turbohelice	Este es un turbohélice: adentro tiene una turbina, como la de un reactor, pero en vez de soplar, hace girar la hélice.
+402	tarjeta.voz.reactor	Esto es un reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. Y el que más empuja es el ventilador grande de adelante.
+403	tarjeta.voz.tren	Este es el tren de aterrizaje. Sale para aterrizar, y después de despegar se guarda adentro: así el aire pasa mejor y el avión va más rápido.
+404	tarjeta.voz.trenFijo	Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.
+405	tarjeta.voz.luces	Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
+406	tarjeta.voz.luzBaliza	La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.
+407	tarjeta.voz.luzEstrobos	Estos destellos blancos se encienden al entrar en la pista y en todo el vuelo, para que los demás aviones te vean desde lejos.
+408	tarjeta.voz.luzAterrizaje	Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.
+409	tarjeta.voz.matricula	La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.
+410	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
+411	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
+412	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
+413	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
+414	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
+415	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
+416	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
+417	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
+418	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
+419	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
+420	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
+421	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
+422	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
+423	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
+424	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
+425	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
+426	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
+427	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
+428	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
+429	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
+430	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
+431	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
+432	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
+433	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
+434	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
+435	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
+436	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
+437	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
+438	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
+439	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
+440	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
+441	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
+442	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
+443	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+444	matricula.nuestroAvion	Nuestro avión es
+445	matricula.asiNosLlama	Así nos llama la torre.
+446	fonetico.alfa	Alfa
+447	fonetico.bravo	Bravo
+448	fonetico.charlie	Charlie
+449	fonetico.delta	Delta
+450	fonetico.echo	Echo
+451	fonetico.foxtrot	Foxtrot
+452	fonetico.golf	Golf
+453	fonetico.hotel	Hotel
+454	fonetico.india	India
+455	fonetico.juliett	Juliett
+456	fonetico.kilo	Kilo
+457	fonetico.lima	Lima
+458	fonetico.mike	Mike
+459	fonetico.november	November
+460	fonetico.oscar	Oscar
+461	fonetico.papa	Papa
+462	fonetico.quebec	Quebec
+463	fonetico.romeo	Romeo
+464	fonetico.sierra	Sierra
+465	fonetico.tango	Tango
+466	fonetico.uniform	Uniform
+467	fonetico.victor	Victor
+468	fonetico.whiskey	Whiskey
+469	fonetico.xray	X-ray
+470	fonetico.yankee	Yankee
+471	fonetico.zulu	Zulu
+472	vuelo.paso.velocidad.110	Son ciento diez kilómetros por hora.
+473	vuelo.paso.velocidad.130	Son ciento treinta kilómetros por hora.
+474	vuelo.paso.velocidad.140	Son ciento cuarenta kilómetros por hora.
+475	vuelo.paso.velocidad.150	Son ciento cincuenta kilómetros por hora.
+476	vuelo.paso.velocidad.160	Son ciento sesenta kilómetros por hora.
+477	vuelo.paso.velocidad.170	Son ciento setenta kilómetros por hora.
+478	vuelo.paso.velocidad.180	Son ciento ochenta kilómetros por hora.
+479	vuelo.paso.velocidad.190	Son ciento noventa kilómetros por hora.
+480	vuelo.paso.velocidad.200	Son doscientos kilómetros por hora.
+481	vuelo.paso.velocidad.210	Son doscientos diez kilómetros por hora.
+482	vuelo.paso.velocidad.220	Son doscientos veinte kilómetros por hora.
+483	vuelo.paso.velocidad.230	Son doscientos treinta kilómetros por hora.
+484	vuelo.paso.velocidad.240	Son doscientos cuarenta kilómetros por hora.
+485	vuelo.paso.velocidad.250	Son doscientos cincuenta kilómetros por hora.
+486	vuelo.paso.velocidad.260	Son doscientos sesenta kilómetros por hora.
+487	vuelo.paso.velocidad.270	Son doscientos setenta kilómetros por hora.
+488	vuelo.paso.velocidad.280	Son doscientos ochenta kilómetros por hora.
+489	vuelo.paso.velocidad.310	Son trescientos diez kilómetros por hora.
+490	vuelo.paso.velocidad.340	Son trescientos cuarenta kilómetros por hora.
+491	vuelo.paso.velocidad.350	Son trescientos cincuenta kilómetros por hora.
+492	vuelo.paso.velocidad.360	Son trescientos sesenta kilómetros por hora.
+493	vuelo.paso.velocidad.390	Son trescientos noventa kilómetros por hora.
+494	vuelo.paso.velocidad.410	Son cuatrocientos diez kilómetros por hora.
+495	vuelo.paso.velocidad.420	Son cuatrocientos veinte kilómetros por hora.
+496	vuelo.paso.velocidad.440	Son cuatrocientos cuarenta kilómetros por hora.
+497	vuelo.paso.velocidad.460	Son cuatrocientos sesenta kilómetros por hora.
+498	vuelo.paso.velocidad.480	Son cuatrocientos ochenta kilómetros por hora.
+499	vuelo.paso.velocidad.520	Son quinientos veinte kilómetros por hora.
+500	vuelo.paso.velocidad.540	Son quinientos cuarenta kilómetros por hora.
+501	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+502	gafas.ganadas	¡Tus gafas de sol!
+503	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
+504	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+505	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+506	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+507	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
+508	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
+509	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
+510	parte.ganaste	¡Hoy ganaste: decidiste bien!

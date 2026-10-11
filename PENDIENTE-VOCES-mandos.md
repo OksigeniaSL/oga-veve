@@ -1,61 +1,40 @@
-# Voces pendientes — mandos (tanda 7a)
+# Pendiente: las voces de los mandos
 
-ElevenLabs no tiene saldo hasta el 6 de octubre. Nada de esto está en el
-código: los mandos nuevos funcionan sin voz, con el dibujo y el movimiento de
-la palanca. Cuando haya saldo, grabar por el camino de siempre
-(`frases-para-grabar` → `voces-elevenlabs` → receta → hornear →
-`verificar-voces`) y enganchar cada frase donde se dice.
+El código ya está hecho (11 de octubre de 2026): claves, textos en `es-PY` y
+`en`, recetas y enganches. Lo que pasa lo apuntan `flight/input.ts`
+(`sucesosDeLosMandos`) y `flight/mano.ts` (`topesDeInclinacion`), y lo dice
+`explicarLosMandos` en `game.ts`: la primera vez en el vuelo, en los tres
+peldaños de abajo y **solo si la frase está grabada**. Hasta entonces, el
+dibujo y el movimiento de la palanca. Falta grabar.
 
-Voz: la instructora. Peldaños: los tres de abajo (en el de arriba no hace falta
-explicarlo). Registro de aviso, nunca de alarma.
+## Lo que hay que grabar
 
-## 1. La palanca que se queda (dedo y teclado)
+La instructora (`instructor`), 298 caracteres:
 
-La primera vez en el vuelo que se suelta la palanca del dedo —o la flecha— con
-el avión inclinado o subiendo/bajando, y se queda así.
+| Clave | Caracteres | Cuándo suena |
+|---|---|---|
+| `tutor.palancaSeQueda` | 93 | al levantar el dedo de la palanca en el aire con ella fuera del centro |
+| `tutor.dobleToque` | 41 | al centrarla con dos golpecitos |
+| `tutor.inclinacionTope` | 89 | al volver solo a 33° por haber soltado más inclinado, o al apretar la tecla contra los 33° en los peldaños de abajo |
+| `tutor.mandoConectado` | 36 | al aparecer un mando de juego |
+| `tutor.joystickConectado` | 39 | al aparecer el joystick |
 
-- es-PY: «La palanca se queda donde la dejás: el avión sigue así. Para volar
-  derecho, tocala dos veces.»
-- en: «The stick stays where you leave it, and so does the plane. Tap it twice
-  to fly straight again.»
+**Con teclado, la palanca que se queda no se cuenta**: la frase acaba en
+«tocala dos veces», que es el doble toque de la pantalla, y con teclado no
+existe. Si hace falta, es otra frase.
 
-Enganche: `ManoQueSostiene` (`src/flight/mano.ts`), al primer fotograma en que
-la mano lleva un eje con la meta puesta por el dedo y el dedo ya no está; en
-teclado, al soltar la flecha con `|consigna| > imán`.
+**Y el dibujo del mando en el HUD**, que iría con la frase al conectarlo, no
+está hecho: esto es la voz.
 
-## 2. El doble toque
+## Después de grabar
 
-Al centrar con dos golpecitos, la primera vez.
+```bash
+node scripts/frases-para-grabar.mjs
+node scripts/voces-elevenlabs.mjs --cuanto instructor
+node scripts/voces-elevenlabs.mjs instructor
+```
 
-- es-PY: «Muy bien: alas derechas y vuelo nivelado.»
-- en: «Wings level, flying level.»
-
-Enganche: `bindPalancaDeMando` en `src/flight/input.ts`, cuando
-`DobleToque.bajar` devuelve verdadero.
-
-## 3. La protección de inclinación
-
-Cuando el avión protegido (reactores, y todos en Guyrami y Tukã) vuelve solo a
-33° porque se soltó más inclinado, o porque se pidió más con la tecla en los
-peldaños de abajo.
-
-- es-PY: «Más no se inclina: treinta y tres grados es el tope. Así viajan
-  tranquilos los pasajeros.»
-- en: «That's as far as it banks: thirty-three degrees. That keeps the
-  passengers comfortable.»
-
-Enganche: `pasoDelAlabeo` en `src/flight/mano.ts`, cuando la consigna llega al
-tope protegido con la tecla apretada o cuando se pone la meta de vuelta a 33°.
-
-## 4. Mando o joystick conectado
-
-Al conectar un mando de juego o el joystick (evento `gamepadconnected`). Un
-tono y el dibujo del mando en el HUD irían con la frase.
-
-- es-PY: «Mando conectado: podés volar con él.» / «Joystick conectado: podés
-  volar con él.»
-- en: «Gamepad connected: you can fly with it.» / «Joystick connected: you can
-  fly with it.»
-
-Enganche: no existe todavía; iría en `InputManager` (`readGamepad` ve
-`aparato` por primera vez) con una acción nueva hacia el juego.
+Las recetas **ya están** en `crudo/instructor/recetas.json`: hornear (no pasa
+hasta que estén todas las tomas nuevas de la instructora), restaurar lo
+re-codificado que no sea nuevo y `node scripts/verificar-voces.mjs`. No hay
+que tocar código.

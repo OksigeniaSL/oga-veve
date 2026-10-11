@@ -244,6 +244,31 @@ describe("el autofreno", () => {
     expect(gas.modo).toBe("off");
   });
 
+  /*
+   * **Y lo que suelta el pie se cuenta**, que es lo que la instructora explica
+   * —«pisaste el freno: ahora frenás vos»—; lo que suelta el gas, no. Ver
+   * `contarLaCarrera` en `game.ts`.
+   */
+  it("cuenta las veces que el pie lo suelta frenando, y no las del gas", () => {
+    const p = palanca();
+    p.ponerPalanca("armada");
+    p.ponerAutofreno("med");
+    durante(p, 3, AL_TOCAR);
+    expect(p.soltadoConElPie).toBe(0);
+    durante(p, 0.1, { ...AL_TOCAR, pie: 1 });
+    expect(p.soltadoConElPie).toBe(1);
+    // Ya suelto, seguir pisando no lo cuenta otra vez.
+    durante(p, 1, { ...AL_TOCAR, pie: 1 });
+    expect(p.soltadoConElPie).toBe(1);
+
+    const gas = palanca();
+    gas.ponerPalanca("armada");
+    gas.ponerAutofreno("lo");
+    durante(gas, 5, AL_TOCAR);
+    durante(gas, 0.1, { ...AL_TOCAR, gas: 0.4 });
+    expect(gas.soltadoConElPie).toBe(0);
+  });
+
   it("pisar el freno rodando hacia la pista con MAX armado no lo quita", () => {
     const p = palanca();
     p.ponerAutofreno("max");

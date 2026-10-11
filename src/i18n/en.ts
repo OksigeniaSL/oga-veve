@@ -159,6 +159,15 @@ export const EN: Dictionary = {
   "tutor.frenar": "Brake",
   "tutor.salir": "Follow the line off the runway",
   "tutor.slow": "Ease the power",
+  "tutor.palancaSeQueda":
+    "The stick stays where you leave it, and so does the plane. Tap it twice to fly straight again.",
+  "tutor.dobleToque": "Wings level, flying level.",
+  "tutor.inclinacionTope":
+    "That's as far as it banks: thirty-three degrees. That keeps the passengers comfortable.",
+  "tutor.mandoConectado": "Gamepad connected: you can fly with it.",
+  "tutor.joystickConectado": "Joystick connected: you can fly with it.",
+  "tutor.pedales":
+    "Down there are the rudder pedals: on the ground, they steer the plane. Press the left one to go left.",
   "help.assist": "M — difficulty tier",
   "help.start": "Throttle all the way up, then ease back when she runs",
 
@@ -428,6 +437,16 @@ export const EN: Dictionary = {
   "vuelo.bajasRapido": "Sink rate. Ease off",
   "vuelo.muyInclinado": "Bank angle. Level off",
   "vuelo.pilotoSuelto": "Autopilot disconnected",
+  "vuelo.niveladaAsistida":
+    "We reached the height in the window and the plane stays here by itself. Now power means speed: more power, faster.",
+  "vuelo.gasesAutomaticos":
+    "In this plane the autopilot also handles the engines: watch the lever move by itself to keep the speed of the pink mark.",
+  "vuelo.gasesSueltos":
+    "You moved the throttle: now the speed is yours. The autopilot still holds the height.",
+  "vuelo.automaticoParaAterrizar":
+    "We switch the autopilot off to land by hand. Follow the path, the way it was flying.",
+  "vuelo.ventanillaFrustrada":
+    "The autopilot is on the glide path now. In the window we set the go-around altitude, in case we have to climb: the path does the descending.",
   "vuelo.pilotoEnTierra": "The autopilot engages in the air",
   "vuelo.empezamosABajar": "Top of descent: we start down now, nice and easy",
   "comandante.nivelMasTranquilo":
@@ -446,8 +465,12 @@ export const EN: Dictionary = {
     "We're higher than the plan: there's more to come down, so we'll start down earlier.",
   "palabra.aBajar": "Descend",
   "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
+  "vuelo.permisoAnulado":
+    "The tower had cleared us to land, but a plane got onto the runway. With the runway occupied we don't land: we climb and come back round the circuit.",
   "hud.cotaDeLaPista":
     "The runway we're heading to is {cota} above sea level: what the altimeter reads minus that is how high you are above it",
+  "vuelo.cotaDeLaPista":
+    "Look at the chart: next to the runway it says how high it is above the sea. What the altimeter reads minus that is how high we are above the runway, and that's what the minimums are set from",
   "vuelo.sinPermisoEnLosMinimos":
     "The tower didn't clear you to land. No clearance, no landing: go around and rejoin the circuit",
   "percance.ocupada": "The runway was occupied and you were told to go around",
@@ -537,6 +560,7 @@ export const EN: Dictionary = {
   "vuelo.paso.sendaConAyuda":
     "We're on final. I'll hold the power for the pink mark: you fly the nose along the glide path.",
   "vuelo.paso.gasTuyo": "You moved the throttle: now the speed is yours, to the pink mark.",
+  "vuelo.paso.velocidad": "That's {n} kilometres per hour.",
   "palabra.crucero": "Cruise",
   "palabra.nivela": "Level off",
   "palabra.laSenda": "Glide path",
@@ -625,12 +649,24 @@ export const EN: Dictionary = {
   "palabra.transpondedor": "Transponder",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Gear up — it is slowing you down",
+  "vuelo.armaLosAerofrenos":
+    "Before landing, arm the speed brakes and autobrake: they come out by themselves when we touch down",
+  "vuelo.losArmeYo": "I armed the speed brakes and autobrake, so we brake well when we touch down",
+  "vuelo.salenLosFrenosDeTierra":
+    "See that? The panels on the wing came up when we touched down: the wing stops holding the plane up and the wheels can brake",
+  "vuelo.sinFrenosDeTierra":
+    "The speed brakes didn't come out because they weren't armed: brake gently, the wheels carry almost no weight at first",
+  "vuelo.quitaLaReversa": "We're slow now: stow the reversers",
+  "vuelo.autofrenoSuelto": "You pressed the brakes: the autobrake let go, now you're braking",
   "vuelo.tormenta": "Storm ahead: go around it, don't fly through",
   "palabra.tormenta": "Storm",
   "vuelo.baches":
     "It's getting bumpy: that's the air, like waves on water. The plane is built for this. Keep flying, calmly.",
   "vuelo.reserva":
     "Into reserve fuel. Stay calm: we are going to the nearest airport, follow the arrow",
+  "vuelo.reservaAqui": "We're into the reserve, but we have plenty to get there: we land here.",
+  "vuelo.reservaMinimo":
+    "We're getting short, so we tell the tower: minimum fuel. It's not an emergency: it tells them we can't wait.",
   "palabra.reserva": "Fuel",
   "vuelo.sinCombustible": "Out of fuel: glide to the runway",
   "palabra.sinCombustible": "No fuel",

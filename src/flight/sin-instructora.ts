@@ -108,6 +108,10 @@ const LA_ENERGIA = [
   "vuelo.muyInclinado",
   // El automático que se suelta solo: desde ese instante vuela la mano.
   "vuelo.pilotoSuelto",
+  // Y el que se suelta a propósito para aterrizar, que dice lo mismo.
+  "vuelo.automaticoParaAterrizar",
+  // Y el autofreno que suelta el pie: desde ahí frena quien vuela.
+  "vuelo.autofrenoSuelto",
 ] as const;
 
 const EL_TRAFICO = [
@@ -144,6 +148,8 @@ const EL_TRAFICO = [
 const LA_TORRE = [
   // La torre manda irse y no se está cumpliendo, o se bajó contra su orden.
   "vuelo.mandanFrustrar",
+  // La misma orden con el permiso ya oído: en su lugar, con su porqué.
+  "vuelo.permisoAnulado",
   "vuelo.sinPermisoEnLosMinimos",
   "vuelo.aterrizasteContraLaOrden",
   // Se entró en la pista con la roja.
@@ -194,6 +200,8 @@ const LAS_EMERGENCIAS = [
   "vuelo.planeoRapido",
   "vuelo.sinCombustible",
   "vuelo.reserva",
+  // La reserva llegando al destino: el mismo aviso, aterrizando aquí.
+  "vuelo.reservaAqui",
   "vuelo.cabinaSinPresion",
   "vuelo.cabinaSinPresionConTren",
   "vuelo.primeroLaTuya.segundos",
@@ -287,6 +295,11 @@ export const CANTOS_QUE_SIGUEN: ReadonlySet<string> = new Set<string>([
   // Y los de un motor que falla en el despegue: son de una emergencia.
   "cabina.engineFailure",
   "cabina.stop",
+  // Y los de la carrera de aterrizaje de los reactores, como V1 y rotate.
+  "cabina.spoilers",
+  "cabina.reverseGreen",
+  "cabina.decel",
+  "cabina.seventyKnots",
 ]);
 
 /**

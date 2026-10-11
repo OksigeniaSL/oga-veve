@@ -19,6 +19,7 @@ import {
   claveDeCabina,
   DE_LOS_AVISADORES,
   esDeUnaCaja,
+  ESPERAN_SU_TOMA,
   loDiceElAvion,
   VOZ_DEL_RA,
 } from "./cabina";
@@ -28,14 +29,14 @@ import {
  * `cantar`, sacados del propio `game.ts`. Se lee el primer argumento de cada
  * llamada hasta su coma, que puede ser un literal o un ternario con dos.
  */
-function loQueCantaElJuego(): string[] {
+function loQueCantaElJuego(por = "this.cantar("): string[] {
   const salida: string[] = [];
   let desde = 0;
   for (;;) {
-    const i = fuenteDelJuego.indexOf("this.cantar(", desde);
+    const i = fuenteDelJuego.indexOf(por, desde);
     if (i < 0) break;
     desde = i + 1;
-    let j = i + "this.cantar(".length;
+    let j = i + por.length;
     let hondo = 0;
     let en: string | null = null;
     let primero = "";
@@ -78,9 +79,31 @@ describe("los cantos de cabina", () => {
 
   it("y la tabla no apunta a grabaciones que no existen", () => {
     const hay = new Set(grabadas);
-    expect(Object.values(CLAVE_DE_CABINA).filter((c) => !hay.has(c))).toEqual(
-      [],
-    );
+    expect(
+      Object.values(CLAVE_DE_CABINA).filter(
+        (c) => !hay.has(c) && !ESPERAN_SU_TOMA.has(c),
+      ),
+    ).toEqual([]);
+  });
+
+  /*
+   * **Y las que esperan su toma, la esperan de verdad**: en cuanto se graban
+   * salen de `ESPERAN_SU_TOMA`, que es una excepción y no un cajón. Y el
+   * juego las pide solo por `cantarLoGrabado`, que mira antes si están en el
+   * pack: por `cantar`, en el peldaño de cabina, sin toma las diría la voz del
+   * navegador —y en el Brave de Enrique, nadie—.
+   */
+  it("y lo que espera su toma no está grabado, y solo se pide si lo está", () => {
+    const hay = new Set(grabadas);
+    const apuntadas = new Set(Object.values(CLAVE_DE_CABINA));
+    for (const c of ESPERAN_SU_TOMA) {
+      expect(hay.has(c), `${c} ya tiene toma: sácala de ESPERAN_SU_TOMA`).toBe(false);
+      expect(apuntadas.has(c), c).toBe(true);
+    }
+    const porCantar = loQueCantaElJuego().map(claveDeCabina);
+    for (const c of ESPERAN_SU_TOMA) expect(porCantar, c).not.toContain(c);
+    const porLoGrabado = loQueCantaElJuego("this.cantarLoGrabado(").map(claveDeCabina);
+    for (const c of ESPERAN_SU_TOMA) expect(porLoGrabado, c).toContain(c);
   });
 
   it("reconoce la llamada tal y como la pide el juego", () => {
@@ -164,6 +187,7 @@ describe("los cantos de cabina", () => {
     ]);
     const pedidos = [
       ...loQueCantaElJuego(),
+      ...loQueCantaElJuego("this.cantarLoGrabado("),
       ...LA_CUENTA.map((e) => e.dice),
       // Y los del consejero de la bajada, que se piden desde su módulo.
       ...CANTOS_DEL_CONSEJO,

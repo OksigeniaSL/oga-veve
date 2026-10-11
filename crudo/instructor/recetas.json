@@ -1282,10 +1282,12 @@
     "vuelo.narizYQuitaElGas"
   ],
   "vuelo.paso.acelerarGas": [
-    "vuelo.paso.acelerarGas"
+    "vuelo.paso.acelerarGas",
+    "{velocidad?}"
   ],
   "vuelo.paso.acelerarNariz": [
-    "vuelo.paso.acelerarNariz"
+    "vuelo.paso.acelerarNariz",
+    "{velocidad?}"
   ],
   "vuelo.paso.bajar": [
     "vuelo.paso.bajar"
@@ -1318,22 +1320,27 @@
     "vuelo.paso.flaps3"
   ],
   "vuelo.paso.frenarAerofrenos": [
-    "vuelo.paso.frenarAerofrenos"
+    "vuelo.paso.frenarAerofrenos",
+    "{velocidad?}"
   ],
   "vuelo.paso.frenarGas": [
-    "vuelo.paso.frenarGas"
+    "vuelo.paso.frenarGas",
+    "{velocidad?}"
   ],
   "vuelo.paso.frenarNariz": [
-    "vuelo.paso.frenarNariz"
+    "vuelo.paso.frenarNariz",
+    "{velocidad?}"
   ],
   "vuelo.paso.gasTuyo": [
     "vuelo.paso.gasTuyo"
   ],
   "vuelo.paso.mantener": [
-    "vuelo.paso.mantener"
+    "vuelo.paso.mantener",
+    "{velocidad?}"
   ],
   "vuelo.paso.marcaDelAutomatico": [
-    "vuelo.paso.marcaDelAutomatico"
+    "vuelo.paso.marcaDelAutomatico",
+    "{velocidad?}"
   ],
   "vuelo.paso.nivelar": [
     "vuelo.paso.nivelar"
@@ -1436,5 +1443,155 @@
   ],
   "vuelta.superficies.voz": [
     "vuelta.superficies.voz"
+  ],
+  "vuelo.armaLosAerofrenos": [
+    "vuelo.armaLosAerofrenos"
+  ],
+  "vuelo.losArmeYo": [
+    "vuelo.losArmeYo"
+  ],
+  "vuelo.salenLosFrenosDeTierra": [
+    "vuelo.salenLosFrenosDeTierra"
+  ],
+  "vuelo.sinFrenosDeTierra": [
+    "vuelo.sinFrenosDeTierra"
+  ],
+  "vuelo.quitaLaReversa": [
+    "vuelo.quitaLaReversa"
+  ],
+  "vuelo.autofrenoSuelto": [
+    "vuelo.autofrenoSuelto"
+  ],
+  "vuelo.niveladaAsistida": [
+    "vuelo.niveladaAsistida"
+  ],
+  "vuelo.gasesAutomaticos": [
+    "vuelo.gasesAutomaticos"
+  ],
+  "vuelo.gasesSueltos": [
+    "vuelo.gasesSueltos"
+  ],
+  "vuelo.automaticoParaAterrizar": [
+    "vuelo.automaticoParaAterrizar"
+  ],
+  "vuelo.reservaAqui": [
+    "vuelo.reservaAqui"
+  ],
+  "vuelo.reservaMinimo": [
+    "vuelo.reservaMinimo"
+  ],
+  "vuelo.ventanillaFrustrada": [
+    "vuelo.ventanillaFrustrada"
+  ],
+  "vuelo.permisoAnulado": [
+    "vuelo.permisoAnulado"
+  ],
+  "vuelo.cotaDeLaPista": [
+    "vuelo.cotaDeLaPista"
+  ],
+  "tutor.palancaSeQueda": [
+    "tutor.palancaSeQueda"
+  ],
+  "tutor.dobleToque": [
+    "tutor.dobleToque"
+  ],
+  "tutor.inclinacionTope": [
+    "tutor.inclinacionTope"
+  ],
+  "tutor.mandoConectado": [
+    "tutor.mandoConectado"
+  ],
+  "tutor.joystickConectado": [
+    "tutor.joystickConectado"
+  ],
+  "tutor.pedales": [
+    "tutor.pedales"
+  ],
+  "vuelo.paso.velocidad.110": [
+    "vuelo.paso.velocidad.110"
+  ],
+  "vuelo.paso.velocidad.130": [
+    "vuelo.paso.velocidad.130"
+  ],
+  "vuelo.paso.velocidad.140": [
+    "vuelo.paso.velocidad.140"
+  ],
+  "vuelo.paso.velocidad.150": [
+    "vuelo.paso.velocidad.150"
+  ],
+  "vuelo.paso.velocidad.160": [
+    "vuelo.paso.velocidad.160"
+  ],
+  "vuelo.paso.velocidad.170": [
+    "vuelo.paso.velocidad.170"
+  ],
+  "vuelo.paso.velocidad.180": [
+    "vuelo.paso.velocidad.180"
+  ],
+  "vuelo.paso.velocidad.190": [
+    "vuelo.paso.velocidad.190"
+  ],
+  "vuelo.paso.velocidad.200": [
+    "vuelo.paso.velocidad.200"
+  ],
+  "vuelo.paso.velocidad.210": [
+    "vuelo.paso.velocidad.210"
+  ],
+  "vuelo.paso.velocidad.220": [
+    "vuelo.paso.velocidad.220"
+  ],
+  "vuelo.paso.velocidad.230": [
+    "vuelo.paso.velocidad.230"
+  ],
+  "vuelo.paso.velocidad.240": [
+    "vuelo.paso.velocidad.240"
+  ],
+  "vuelo.paso.velocidad.250": [
+    "vuelo.paso.velocidad.250"
+  ],
+  "vuelo.paso.velocidad.260": [
+    "vuelo.paso.velocidad.260"
+  ],
+  "vuelo.paso.velocidad.270": [
+    "vuelo.paso.velocidad.270"
+  ],
+  "vuelo.paso.velocidad.280": [
+    "vuelo.paso.velocidad.280"
+  ],
+  "vuelo.paso.velocidad.310": [
+    "vuelo.paso.velocidad.310"
+  ],
+  "vuelo.paso.velocidad.340": [
+    "vuelo.paso.velocidad.340"
+  ],
+  "vuelo.paso.velocidad.350": [
+    "vuelo.paso.velocidad.350"
+  ],
+  "vuelo.paso.velocidad.360": [
+    "vuelo.paso.velocidad.360"
+  ],
+  "vuelo.paso.velocidad.390": [
+    "vuelo.paso.velocidad.390"
+  ],
+  "vuelo.paso.velocidad.410": [
+    "vuelo.paso.velocidad.410"
+  ],
+  "vuelo.paso.velocidad.420": [
+    "vuelo.paso.velocidad.420"
+  ],
+  "vuelo.paso.velocidad.440": [
+    "vuelo.paso.velocidad.440"
+  ],
+  "vuelo.paso.velocidad.460": [
+    "vuelo.paso.velocidad.460"
+  ],
+  "vuelo.paso.velocidad.480": [
+    "vuelo.paso.velocidad.480"
+  ],
+  "vuelo.paso.velocidad.520": [
+    "vuelo.paso.velocidad.520"
+  ],
+  "vuelo.paso.velocidad.540": [
+    "vuelo.paso.velocidad.540"
   ]
 }

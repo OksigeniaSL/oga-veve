@@ -330,6 +330,17 @@ const CABINA = [
    */
   ["cabina.engineFailure", "engine failure", "un motor se ha parado"],
   ["cabina.stop", "stop", "antes de V1: se para el despegue"],
+  /*
+   * **Y la carrera de aterrizaje de los reactores**, lo que canta quien no
+   * vuela: los paneles del ala al salir, las reversas abiertas, el autofreno
+   * que entra y los setenta nudos de pasar las reversas a ralentí. Ver
+   * `contarLaCarrera` en `src/game.ts` y `ESPERAN_SU_TOMA` en
+   * `src/audio/cabina.ts`, de donde salen al grabarse.
+   */
+  ["cabina.spoilers", "spoilers", "al tocar: salieron los paneles del ala"],
+  ["cabina.reverseGreen", "reverse green", "al tocar: las reversas, abiertas"],
+  ["cabina.decel", "decel", "al tocar: el autofreno frena"],
+  ["cabina.seventyKnots", "seventy knots", "en la carrera: las reversas, a ralentí"],
   // Y el aviso de velocidad baja, que el juego pedía sin toma.
   ["cabina.airspeedLow", "airspeed low", "vas lento para la configuración"],
   /*
@@ -563,6 +574,15 @@ const TORRE_SOLO = [
   ["torre.solo.contactControl", "contact Asunción control", "lejos del campo: te habla el control en ruta"],
   ["torre.solo.contactApproach", "contact approach", "cerca del campo al que vas: te habla aproximación"],
   ["torre.solo.contactTower", "contact tower", "entrás en la zona de la torre: te habla ella otra vez"],
+  /*
+   * Y la de «minimum fuel», que no es una emergencia: la torre lo ha oído y
+   * dice si espera demora. Ver `declararCombustibleMinimo` en `src/game.ts`.
+   */
+  [
+    "torre.solo.minimumFuel",
+    "roger, minimum fuel, no delay expected",
+    "la torre oyó «minimum fuel»: sin demora",
+  ],
   /*
    * **Y lo que dice un AFIS**, que informa y no autoriza: la pista libre u
    * ocupada detrás de su número, y «no reported traffic» detrás de la pista
@@ -1181,6 +1201,47 @@ for (const [plantilla, prefijo, numeros, para] of CON_NUMERO) {
 }
 
 /*
+ * **Y el número de la marca rosa, en la voz de la instructora**: «Son
+ * trescientos noventa kilómetros por hora.», detrás del paso de velocidad del
+ * peldaño de las cifras. Una frase entera por cifra, como los trozos de la
+ * comandante, y solo las cifras que el juego puede pedir: salen de
+ * `KMH_QUE_SE_DICEN`, que la prueba de `src/flight/velocidad-dicha.test.ts`
+ * saca de la escalera de los seis aviones. Ver `decirElPaso` en `src/game.ts`.
+ */
+const velocidades = readFileSync("src/flight/velocidad-dicha.ts", "utf8");
+const KMH = (() => {
+  const m = /KMH_QUE_SE_DICEN\s*=\s*\[([^\]]*)\]/.exec(velocidades);
+  if (!m) throw new Error("no encuentro KMH_QUE_SE_DICEN");
+  return m[1].split(",").map((x) => Number(x.trim())).filter((n) => n > 0);
+})();
+/** Las centenas, en masculino: «doscientos kilómetros». */
+const CENTENAS = ["", "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos",
+  "seiscientos", "setecientos", "ochocientos", "novecientos"];
+/** Un número hasta novecientos noventa y nueve, en letras y en masculino. */
+function enLetrasConCientos(n) {
+  if (n < 100) return enLetras(n);
+  if (n === 100) return "cien";
+  const resto = n % 100;
+  const centena = CENTENAS[Math.floor(n / 100)];
+  return resto === 0 ? centena : `${centena} ${enLetras(resto)}`;
+}
+{
+  const plantilla = es.get("vuelo.paso.velocidad");
+  if (!plantilla) throw new Error("falta la plantilla vuelo.paso.velocidad en es-PY");
+  for (const n of KMH) {
+    const texto = plantilla.replace("{n}", enLetrasConCientos(n));
+    filas.push({
+      id: `vuelo.paso.velocidad.${n}`,
+      voz: "instructor",
+      idioma: "es-PY",
+      texto,
+      para: "el número de la marca rosa, detrás del paso de velocidad, en Taguató",
+    });
+    total += texto.length;
+  }
+}
+
+/*
  * **Y la autorización de altitud en castellano**: «ascienda a tres mil pies»,
  * «suba a…» en Canarias. Una frase entera por millar, como los niveles de la
  * comandante, y en la voz de cada torre; pero solo **hasta la transición de
@@ -1453,6 +1514,18 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
   "explica.tcas.ra",
   "explica.avisos.texto",
   "explica.mascaras.texto",
+  /*
+   * Y las de ahora que cuentan algo que no puede sonar a alarma: lo que va
+   * detrás del «autopilot disconnect» al soltarlo para aterrizar, el permiso
+   * que la torre quita con la pista ocupada —irse al aire no es una
+   * emergencia—, la reserva y el combustible mínimo, y los frenos que no
+   * salieron al tocar.
+   */
+  "vuelo.automaticoParaAterrizar",
+  "vuelo.permisoAnulado",
+  "vuelo.reservaAqui",
+  "vuelo.reservaMinimo",
+  "vuelo.sinFrenosDeTierra",
 ]);
 for (const f of filas) {
   if (!EN_CALMA_COMO_SE_ESCRIBE.has(f.id)) continue;

@@ -743,6 +743,16 @@ export class ManoQueSostiene {
   );
   readonly cabeceo: Eje = ejeNuevo(new Consigna());
 
+  /**
+   * **Cuántas veces ha topado la inclinación protegida** en el vuelo: vuelta
+   * sola a 33° al soltar más inclinado, o la tecla apretada contra los 33° en
+   * los peldaños de abajo. Subir este número es el suceso; lo cuenta la
+   * instructora la primera vez. Ver `explicarLosMandos` en `game.ts`.
+   */
+  topesDeInclinacion = 0;
+  /** Si la tecla de ahora ya topó, para contarlo una vez por apretón. */
+  private topeApretado = false;
+
   /** Lo que pide la mano a los mandos en este fotograma. */
   aileron = 0;
   elevator = 0;
@@ -1085,6 +1095,7 @@ export class ManoQueSostiene {
     const iman = imanDeAlabeo(ve.peldanoBajo, ve.flaps);
     const paso = (desde: number): number => toqueDeAlabeo(desde, ve.flaps);
     this.teclaYToques(eje, dt, tecla, pide.toqueAlabeo, paso, iman, true);
+    if (tecla === 0) this.topeApretado = false;
     if (tecla !== 0) {
       // Tranquilo al apretar, y decidido si se mantiene. Ver `ritmoApretando`.
       let ritmo = ritmoApretando(eje.apretada, tranquilo, decidido);
@@ -1096,6 +1107,17 @@ export class ManoQueSostiene {
           Math.max(Math.min(tranquilo, AL_CENTRO_MINIMO), AL_CENTRO_POR_GRADO * Math.abs(c.valor)),
         );
       c.mover(dt, tecla, ritmo, -topeApretando, topeApretando);
+      // Apretando contra los 33° de los peldaños de abajo: más no se inclina.
+      if (
+        conProteccion &&
+        topeApretando === INCLINACION_PROTEGIDA &&
+        !this.topeApretado &&
+        Math.sign(c.valor) === tecla &&
+        Math.abs(c.valor) >= INCLINACION_PROTEGIDA - 0.1 * RAD
+      ) {
+        this.topeApretado = true;
+        this.topesDeInclinacion++;
+      }
     } else if (eje.frenando) {
       /*
        * **Soltada la tecla, el ala se para donde está.** La consigna va
@@ -1125,6 +1147,7 @@ export class ManoQueSostiene {
       else if (Math.abs(c.valor) > topeSuelto) {
         eje.meta = Math.sign(c.valor) * topeSuelto;
         eje.prisa = false;
+        if (conProteccion && topeSuelto === INCLINACION_PROTEGIDA) this.topesDeInclinacion++;
       }
       const rango = Math.max(topeSuelto, Math.abs(c.valor));
       if (eje.meta !== null) c.hacia(dt, eje.meta, eje.prisa ? decidido : tranquilo, -rango, rango);

@@ -99,6 +99,7 @@ contact departure
 contact Canarias control
 contact approach
 contact tower
+roger, minimum fuel, no delay expected
 caution, birds on final
 free
 occupied

@@ -609,6 +609,48 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.niveladaAsistida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Llegamos a la altura de la ventanilla y el avión se queda acá solo. Ahora el motor es velocidad: más motor, más rápido.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.gasesAutomaticos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En este avión el automático también lleva el motor: mirá cómo la palanca se mueve sola para ir a la velocidad de la marca rosa.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.gasesSueltos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tocaste el motor: ahora la velocidad la llevás vos. El automático sigue con la altura.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.automaticoParaAterrizar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Soltamos el automático para aterrizar a mano. Seguí la senda, como venía él.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ventanillaFrustrada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El automático ya baja por la senda. En la ventanilla ponemos la altura de irse al aire, por si hay que subir: bajar, lo manda la senda.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.pilotoEnTierra",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -700,6 +742,27 @@
     "idioma": "es-PY",
     "texto": "No podés bajar: metele gas y volvé a subir",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.permisoAnulado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.cotaDeLaPista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.puedeVolver",
@@ -1431,6 +1494,56 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.armaLosAerofrenos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.losArmeYo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.salenLosFrenosDeTierra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sinFrenosDeTierra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.quitaLaReversa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya vamos despacio: quitá la reversa",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.autofrenoSuelto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pisaste el freno: el autofreno se soltó y ahora frenás vos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.tormenta",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1450,6 +1563,34 @@
     "idioma": "es-PY",
     "texto": "Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.reservaAqui",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Entramos en la reserva, pero tenemos de sobra para llegar: aterrizamos acá.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.reservaMinimo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.sinCombustible",
@@ -2037,6 +2178,48 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Bajá el motor",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
+    "id": "tutor.palancaSeQueda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La palanca se queda donde la dejás: el avión sigue así. Para volar derecho, tocala dos veces.",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
+    "id": "tutor.dobleToque",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Muy bien: alas derechas y vuelo nivelado.",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
+    "id": "tutor.inclinacionTope",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Más no se inclina: treinta y tres grados es el tope. Así viajan tranquilos los pasajeros.",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
+    "id": "tutor.mandoConectado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mando conectado: podés volar con él.",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
+    "id": "tutor.joystickConectado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Joystick conectado: podés volar con él.",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
+    "id": "tutor.pedales",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Abajo tenés los pedales del timón: en tierra, con ellos se dobla. Pisá el de la izquierda para ir a la izquierda.",
     "para": "los consejos de los primeros minutos"
   },
   {
@@ -7193,6 +7376,34 @@
     "para": "antes de V1: se para el despegue"
   },
   {
+    "id": "cabina.spoilers",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "spoilers",
+    "para": "al tocar: salieron los paneles del ala"
+  },
+  {
+    "id": "cabina.reverseGreen",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "reverse green",
+    "para": "al tocar: las reversas, abiertas"
+  },
+  {
+    "id": "cabina.decel",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "decel",
+    "para": "al tocar: el autofreno frena"
+  },
+  {
+    "id": "cabina.seventyKnots",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "seventy knots",
+    "para": "en la carrera: las reversas, a ralentí"
+  },
+  {
     "id": "cabina.airspeedLow",
     "voz": "cabina",
     "idioma": "en",
@@ -8122,6 +8333,13 @@
     "idioma": "en",
     "texto": "contact tower",
     "para": "entrás en la zona de la torre: te habla ella otra vez"
+  },
+  {
+    "id": "torre.solo.minimumFuel",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "roger, minimum fuel, no delay expected",
+    "para": "la torre oyó «minimum fuel»: sin demora"
   },
   {
     "id": "torre.solo.birdsOnFinal",
@@ -9382,6 +9600,13 @@
     "idioma": "en",
     "texto": "contact tower",
     "para": "entrás en la zona de la torre: te habla ella otra vez, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.minimumFuel",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "roger, minimum fuel, no delay expected",
+    "para": "la torre oyó «minimum fuel»: sin demora, en Canarias"
   },
   {
     "id": "torre.canario.solo.birdsOnFinal",
@@ -11223,6 +11448,209 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "vuelo.paso.velocidad.110",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento diez kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.130",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento treinta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.140",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento cuarenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.150",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento cincuenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.160",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento sesenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.170",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento setenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.180",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento ochenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.190",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son ciento noventa kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.200",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.210",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos diez kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.220",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos veinte kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.230",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos treinta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.240",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos cuarenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.250",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos cincuenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.260",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos sesenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.270",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos setenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.280",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos ochenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.310",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos diez kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.340",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos cuarenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.350",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos cincuenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.360",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos sesenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.390",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos noventa kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.410",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son cuatrocientos diez kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.420",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son cuatrocientos veinte kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.440",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son cuatrocientos cuarenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.460",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son cuatrocientos sesenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.480",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son cuatrocientos ochenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.520",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son quinientos veinte kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.540",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son quinientos cuarenta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
   },
   {
     "id": "torre.solo.subir.2",

@@ -182,6 +182,8 @@ export class PalancaDeAerofrenos {
   private desdeQueSalieron = 0;
   /** Si el autofreno está frenando ahora. */
   private _frenando = false;
+  /** Cuántas veces lo ha soltado el pie mientras frenaba. Ver `soltadoConElPie`. */
+  private _soltadoConElPie = 0;
   private enVuelo = 0;
   private enTierra = 0;
 
@@ -223,6 +225,16 @@ export class PalancaDeAerofrenos {
   /** Si el autofreno está frenando ahora mismo, y no solo armado. */
   get frenando(): boolean {
     return this._frenando;
+  }
+
+  /**
+   * **Cuántas veces el pie ha soltado el autofreno mientras frenaba**, en
+   * todo el vuelo. Lo mira el juego para contarlo: subir este número es el
+   * suceso, y un número no se pierde entre dos fotogramas como un aviso. Ver
+   * `contarLaCarrera` en `game.ts`.
+   */
+  get soltadoConElPie(): number {
+    return this._soltadoConElPie;
   }
 
   /** Si los frenos de tierra están fuera. */
@@ -339,6 +351,7 @@ export class PalancaDeAerofrenos {
       if (e.pie > 0.5 && this._frenando) {
         this._frenando = false;
         this._modo = "off";
+        this._soltadoConElPie++;
       } else if (
         this.deTierra &&
         this.desdeQueSalieron >= ESPERA_DEL_AUTOFRENO[this._modo]

@@ -65,6 +65,7 @@ contact departure
 contact Asunción control
 contact approach
 contact tower
+roger, minimum fuel, no delay expected
 caution, flock of birds on final
 free
 occupied

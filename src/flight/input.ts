@@ -171,6 +171,28 @@ export interface InputActions {
  */
 export { DETENTES, siguienteDetente } from "./flaps";
 
+/**
+ * **Lo que pasa con los mandos y la instructora cuenta la primera vez**: la
+ * palanca del dedo que se suelta fuera del centro y se queda, el doble toque
+ * que la centra, el dedo en los pedales del timón y el mando de juego o el
+ * joystick que aparecen. El tope de la inclinación protegida lo cuenta la
+ * mano: ver `ManoQueSostiene.topesDeInclinacion`. Ver `explicarLosMandos` en
+ * `game.ts`.
+ */
+export type SucesoDeLosMandos =
+  | "palancaQueSeQueda"
+  | "dobleToque"
+  | "pedales"
+  | "mandoConectado"
+  | "joystickConectado";
+
+/**
+ * Cuánto fuera del centro, de 0 a 1, tiene que quedarse la palanca del dedo al
+ * soltarla para que el avión siga inclinado, subiendo o bajando: el doble de
+ * la zona muerta del dedo, que es lo que ya se nota en el avión.
+ */
+const SE_QUEDA_FUERA = 0.15;
+
 export class InputManager {
   readonly controls: ControlInputs = { ...neutralControls(), throttle: 0 };
 
@@ -183,6 +205,32 @@ export class InputManager {
    * el vuelo recto de los instrumentos: ver `flight/vuelo-recto.ts`.
    */
   readonly mueve = { cabeceo: false, alabeo: false, timon: false };
+
+  /** Lo que ha pasado con los mandos desde que se miró. Ver `sucesosDeLosMandos`. */
+  private readonly sucesos: SucesoDeLosMandos[] = [];
+
+  /**
+   * **Lo que ha pasado con los mandos**, una vez cada cosa: se vacía al
+   * leerlo. Lo lee el juego en cada paso.
+   */
+  sucesosDeLosMandos(): SucesoDeLosMandos[] {
+    return this.sucesos.splice(0);
+  }
+
+  /** Un suceso más, sin que se amontonen si nadie los lee: en el menú, por ejemplo. */
+  private apuntar(suceso: SucesoDeLosMandos): void {
+    if (this.sucesos.length >= 16) this.sucesos.shift();
+    this.sucesos.push(suceso);
+  }
+
+  /**
+   * **Si los pedales del timón se ven**: hay barra y se juega con el dedo, que
+   * con ratón los mandos de la pantalla no se pintan —ver `.tactil` en
+   * `style.css`, que va por la misma pregunta—. Se pregunta al montar la
+   * barra y no midiéndola: medir el DOM en cada fotograma de rodaje obliga al
+   * navegador a rehacer la página.
+   */
+  pedalesALaVista = false;
 
   /**
    * **Y cuánto**, de −1 a 1: la petición de este fotograma en cada eje, antes
@@ -1285,7 +1333,13 @@ export class InputManager {
       this.mandoDeAhora = null;
       return null;
     }
+    const antes = this.mandoDeAhora;
     this.mandoDeAhora = leerMando(pad, this.gasDelHotas);
+    // Uno que aparece: lo cuenta la instructora, la primera vez.
+    if (antes?.aparato !== this.mandoDeAhora.aparato)
+      this.apuntar(
+        this.mandoDeAhora.aparato === "hotas-x" ? "joystickConectado" : "mandoConectado",
+      );
     return this.mandoDeAhora;
   }
 
@@ -1330,7 +1384,9 @@ export class InputManager {
     });
 
     if (stick) this.bindPalancaDeMando(stick);
-    if (rudder)
+    if (rudder) {
+      this.pedalesALaVista =
+        typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
       bindPad(
         rudder,
         (x) => {
@@ -1338,6 +1394,11 @@ export class InputManager {
         },
         { redondo: false },
       );
+      // El dedo en los pedales: «¿para qué es?». Ver `contarLosPedales`.
+      rudder.addEventListener("pointerdown", () => this.apuntar("pedales"), {
+        passive: true,
+      });
+    }
     if (throttle) {
       // Con memoria: la palanca se queda donde la dejas al levantar el dedo,
       // como una palanca de gases de verdad. Antes compartía el
@@ -1429,6 +1490,7 @@ export class InputManager {
         // donde va la mano, que vuelve con su ritmo. Ver `ManoQueSostiene.centrar`.
         this.gestoDoble = true;
         this.mano.centrar();
+        this.apuntar("dobleToque");
         return;
       }
       this.gestoDoble = false;
@@ -1455,6 +1517,17 @@ export class InputManager {
       if (event.pointerId !== this.dedoDelMando) return;
       this.dedoDelMando = null;
       this.dobleToque.subir(ahoraEnSegundos());
+      /*
+       * La palanca del aire, soltada fuera del centro: se queda ahí y el avión
+       * sigue inclinado, subiendo o bajando. Lo que extraña la primera vez.
+       */
+      if (
+        this.palancaEnElAire &&
+        !this.gestoDoble &&
+        (Math.abs(this.palancaDelDedo.x) > SE_QUEDA_FUERA ||
+          Math.abs(this.palancaDelDedo.y) > SE_QUEDA_FUERA)
+      )
+        this.apuntar("palancaQueSeQueda");
       // El volante, con muelle; la palanca del aire, se queda.
       if (!this.palancaEnElAire) {
         this.touchRoll = 0;

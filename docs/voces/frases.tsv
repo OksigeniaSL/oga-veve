@@ -74,6 +74,11 @@ instructor	instructor/vuelo.aves.enUve.ogg	es-PY	¡Mirá, pájaros volando en V!
 instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy de golpe: levantá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado: enderezá las alas	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.niveladaAsistida.ogg	es-PY	Llegamos a la altura de la ventanilla y el avión se queda acá solo. Ahora el motor es velocidad: más motor, más rápido.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.gasesAutomaticos.ogg	es-PY	En este avión el automático también lleva el motor: mirá cómo la palanca se mueve sola para ir a la velocidad de la marca rosa.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.gasesSueltos.ogg	es-PY	Tocaste el motor: ahora la velocidad la llevás vos. El automático sigue con la altura.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.automaticoParaAterrizar.ogg	es-PY	Soltamos el automático para aterrizar a mano. Seguí la senda, como venía él.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ventanillaFrustrada.ogg	es-PY	El automático ya baja por la senda. En la ventanilla ponemos la altura de irse al aire, por si hay que subir: bajar, lo manda la senda.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoEnTierra.ogg	es-PY	El piloto automático se conecta en el aire	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.empezamosABajar.ogg	es-PY	Empezamos a bajar: despacito, hasta la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alturaDeLaTorre.ogg	es-PY	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.	lo que toca hacer ahora, en vuelo y en tierra
@@ -85,6 +90,8 @@ instructor	instructor/vuelo.masAltoQueElPlan.ogg	es-PY	Vamos más alto que el pl
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.permisoAnulado.ogg	es-PY	La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.cotaDeLaPista.ogg	es-PY	Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podés volver a bajar	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.puedeVolverSinTorre.ogg	es-PY	La pista ya está libre: volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
@@ -184,9 +191,17 @@ instructor	instructor/vuelo.despues.aerofrenos.ogg	es-PY	Los aerofrenos, adentro
 instructor	instructor/vuelo.despues.luces.ogg	es-PY	Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despues.transpondedor.ogg	es-PY	Y el transpondedor: pongo el TCAS en espera.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.meteElTren.ogg	es-PY	Metélo, el tren te frena	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.armaLosAerofrenos.ogg	es-PY	Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.losArmeYo.ogg	es-PY	Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.salenLosFrenosDeTierra.ogg	es-PY	¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sinFrenosDeTierra.ogg	es-PY	No salieron los aerofrenos porque no estaban armados: frená con calma, que al principio las ruedas casi no cargan	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.quitaLaReversa.ogg	es-PY	Ya vamos despacio: quitá la reversa	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.autofrenoSuelto.ogg	es-PY	Pisaste el freno: el autofreno se soltó y ahora frenás vos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay una tormenta delante: rodeála, no la cruces	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.baches.ogg	es-PY	Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.reserva.ogg	es-PY	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.reservaAqui.ogg	es-PY	Entramos en la reserva, pero tenemos de sobra para llegar: aterrizamos acá.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.reservaMinimo.ogg	es-PY	Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinCombustible.ogg	es-PY	Se acabó el combustible: planeá hasta la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinMotor.ogg	es-PY	No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.planeoLento.ogg	es-PY	Vamos lentos: bajá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
@@ -258,6 +273,12 @@ instructor	instructor/tutor.flying.ogg	es-PY	¡Estás volando!	los consejos de l
 instructor	instructor/tutor.frenar.ogg	es-PY	Frená	los consejos de los primeros minutos
 instructor	instructor/tutor.salir.ogg	es-PY	Seguí la raya y salí de la pista	los consejos de los primeros minutos
 instructor	instructor/tutor.slow.ogg	es-PY	Bajá el motor	los consejos de los primeros minutos
+instructor	instructor/tutor.palancaSeQueda.ogg	es-PY	La palanca se queda donde la dejás: el avión sigue así. Para volar derecho, tocala dos veces.	los consejos de los primeros minutos
+instructor	instructor/tutor.dobleToque.ogg	es-PY	Muy bien: alas derechas y vuelo nivelado.	los consejos de los primeros minutos
+instructor	instructor/tutor.inclinacionTope.ogg	es-PY	Más no se inclina: treinta y tres grados es el tope. Así viajan tranquilos los pasajeros.	los consejos de los primeros minutos
+instructor	instructor/tutor.mandoConectado.ogg	es-PY	Mando conectado: podés volar con él.	los consejos de los primeros minutos
+instructor	instructor/tutor.joystickConectado.ogg	es-PY	Joystick conectado: podés volar con él.	los consejos de los primeros minutos
+instructor	instructor/tutor.pedales.ogg	es-PY	Abajo tenés los pedales del timón: en tierra, con ellos se dobla. Pisá el de la izquierda para ir a la izquierda.	los consejos de los primeros minutos
 instructor	instructor/motivo.sinPista.ogg	es-PY	No se ve la pista	por qué no se puede bajar así
 instructor	instructor/motivo.lento.ogg	es-PY	Vas muy despacio	por qué no se puede bajar así
 instructor	instructor/motivo.cayendo.ogg	es-PY	Estás cayendo muy rápido	por qué no se puede bajar así
@@ -692,6 +713,10 @@ cabina	cabina/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avió
 cabina	cabina/cabina.goAroundOrder.ogg	en	go around	la orden de irse al aire
 cabina	cabina/cabina.engineFailure.ogg	en	engine failure	un motor se ha parado
 cabina	cabina/cabina.stop.ogg	en	stop	antes de V1: se para el despegue
+cabina	cabina/cabina.spoilers.ogg	en	spoilers	al tocar: salieron los paneles del ala
+cabina	cabina/cabina.reverseGreen.ogg	en	reverse green	al tocar: las reversas, abiertas
+cabina	cabina/cabina.decel.ogg	en	decel	al tocar: el autofreno frena
+cabina	cabina/cabina.seventyKnots.ogg	en	seventy knots	en la carrera: las reversas, a ralentí
 cabina	cabina/cabina.airspeedLow.ogg	en	airspeed low	vas lento para la configuración
 cabina	cabina/cabina.twentyFiveHundred.ogg	en	twenty five hundred	cuenta de la toma: el radar empieza a ver el suelo
 cabina	cabina/cabina.oneThousand.ogg	en	one thousand	cuenta de la toma, en pies
@@ -825,6 +850,7 @@ torre	torre/torre.solo.contactDeparture.ogg	en	contact departure	dejás la zona 
 torre	torre/torre.solo.contactControl.ogg	en	contact Asunción control	lejos del campo: te habla el control en ruta
 torre	torre/torre.solo.contactApproach.ogg	en	contact approach	cerca del campo al que vas: te habla aproximación
 torre	torre/torre.solo.contactTower.ogg	en	contact tower	entrás en la zona de la torre: te habla ella otra vez
+torre	torre/torre.solo.minimumFuel.ogg	en	roger, minimum fuel, no delay expected	la torre oyó «minimum fuel»: sin demora
 torre	torre/torre.solo.birdsOnFinal.ogg	en	caution, flock of birds on final	aves en la final; detrás, a cuántos pies
 torre	torre/torre.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número
 torre	torre/torre.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número
@@ -1005,6 +1031,7 @@ torre-canarias	torre-canarias/torre.canario.solo.contactDeparture.ogg	en	contact
 torre-canarias	torre-canarias/torre.canario.solo.contactControl.ogg	en	contact Canarias control	lejos del campo: te habla el control en ruta, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.contactApproach.ogg	en	contact approach	cerca del campo al que vas: te habla aproximación, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.contactTower.ogg	en	contact tower	entrás en la zona de la torre: te habla ella otra vez, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.minimumFuel.ogg	en	roger, minimum fuel, no delay expected	la torre oyó «minimum fuel»: sin demora, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.birdsOnFinal.ogg	en	caution, birds on final	aves en la final; detrás, a cuántos pies, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número, en Canarias
@@ -1160,6 +1187,35 @@ comandante	comandante/comandante.temperatura.menos2.ogg	es-PY	La temperatura es 
 comandante	comandante/comandante.temperatura.menos3.ogg	es-PY	La temperatura es de tres grados bajo cero.	la temperatura del destino, bajo cero
 comandante	comandante/comandante.temperatura.menos4.ogg	es-PY	La temperatura es de cuatro grados bajo cero.	la temperatura del destino, bajo cero
 comandante	comandante/comandante.temperatura.menos5.ogg	es-PY	La temperatura es de cinco grados bajo cero.	la temperatura del destino, bajo cero
+instructor	instructor/vuelo.paso.velocidad.110.ogg	es-PY	Son ciento diez kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.130.ogg	es-PY	Son ciento treinta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.140.ogg	es-PY	Son ciento cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.150.ogg	es-PY	Son ciento cincuenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.160.ogg	es-PY	Son ciento sesenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.170.ogg	es-PY	Son ciento setenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.180.ogg	es-PY	Son ciento ochenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.190.ogg	es-PY	Son ciento noventa kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.200.ogg	es-PY	Son doscientos kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.210.ogg	es-PY	Son doscientos diez kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.220.ogg	es-PY	Son doscientos veinte kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.230.ogg	es-PY	Son doscientos treinta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.240.ogg	es-PY	Son doscientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.250.ogg	es-PY	Son doscientos cincuenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.260.ogg	es-PY	Son doscientos sesenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.270.ogg	es-PY	Son doscientos setenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.280.ogg	es-PY	Son doscientos ochenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.310.ogg	es-PY	Son trescientos diez kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.340.ogg	es-PY	Son trescientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.350.ogg	es-PY	Son trescientos cincuenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.360.ogg	es-PY	Son trescientos sesenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.390.ogg	es-PY	Son trescientos noventa kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.410.ogg	es-PY	Son cuatrocientos diez kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.420.ogg	es-PY	Son cuatrocientos veinte kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.440.ogg	es-PY	Son cuatrocientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.460.ogg	es-PY	Son cuatrocientos sesenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.480.ogg	es-PY	Son cuatrocientos ochenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.520.ogg	es-PY	Son quinientos veinte kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.540.ogg	es-PY	Son quinientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 torre	torre/torre.solo.subir.2.ogg	es	ascienda a dos mil pies	la altura que autoriza el control, en pies por debajo de la transición
 torre	torre/torre.solo.subir.3.ogg	es	ascienda a tres mil pies	la altura que autoriza el control, en pies por debajo de la transición
 torre-canarias	torre-canarias/torre.canario.solo.subir.2.ogg	es	suba a dos mil pies	la altura que autoriza el control, en pies por debajo de la transición
