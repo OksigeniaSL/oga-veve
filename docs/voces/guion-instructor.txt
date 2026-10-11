@@ -46,6 +46,13 @@ Mirá adelante: hay otro avión cerca
 Mirá a tu izquierda: hay otro avión cerca
 Mirá a tu derecha: hay otro avión cerca
 Hay otro avión cerca, detrás de vos
+La caja nos pide subir para apartarnos del otro avión: subí con calma, hasta la franja verde.
+La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde.
+La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.
+La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.
+Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.
+Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.
+Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.
 Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
 Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
 Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
@@ -316,6 +323,7 @@ Es el nombre del avión, como la chapa de un auto. Las primeras letras dicen de 
 Es la pantalla del mapa. El triángulo amarillo sos vos, y lo de arriba es lo que tenés adelante. La línea rosa es el camino del plan de vuelo. Los rombos son otros aviones: el TCAS solo te enseña a los que vuelan cerca de tu altura. Los que van mucho más arriba o más abajo no salen, aunque los veas por la ventanilla.
 En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice TCAS STBY: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.
 Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.
+Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.
 Este arco verde dice dónde vas a llegar a la altura que pediste, si seguís subiendo o bajando como ahora. Si cae antes de la pista, llegás abajo con tiempo; si cae después, no te da: hay que bajar más rápido o empezar antes.
 ¿Ves el arco verde en el mapa? Ahí vamos a llegar a la altura que pedimos.
 T/D quiere decir top of descent, lo alto de la bajada: acá empezamos a bajar. Desde este círculo verde, bajando tranquilos, se llega a la pista a la altura justa.

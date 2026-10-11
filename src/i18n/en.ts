@@ -315,6 +315,14 @@ export const EN: Dictionary = {
   "tcas.arriba": "Traffic {donde}, {cuanto} above",
   "tcas.abajo": "Traffic {donde}, {cuanto} below",
   "tcas.nivel": "Traffic {donde}, same level",
+  "palabra.ra.sube": "Climb",
+  "palabra.ra.baja": "Descend",
+  "palabra.ra.nivela": "Level off",
+  "palabra.ra.vigila": "Steady",
+  "tcas.ra.sube": "Climb: {ritmo} or more, up to the green band",
+  "tcas.ra.baja": "Descend: {ritmo} or more, down to the green band",
+  "tcas.ra.nivela": "Level off: vertical speed needle to zero",
+  "tcas.ra.vigila": "Keep it steady: vertical speed needle out of the red",
   "palabra.rapido": "Too fast",
   "palabra.fuera": "Off",
   "palabra.corto": "Short",
@@ -381,6 +389,18 @@ export const EN: Dictionary = {
   "vuelo.trafico.izquierda": "Look to your left: there's another plane nearby",
   "vuelo.trafico.derecha": "Look to your right: there's another plane nearby",
   "vuelo.trafico.detras": "There's another plane nearby, behind you",
+  "vuelo.ra.sube":
+    "The box asks us to climb away from the other plane: climb gently, up to the green band.",
+  "vuelo.ra.baja":
+    "The box asks us to descend away from the other plane: descend gently, down to the green band.",
+  "vuelo.ra.nivela":
+    "The box asks us to stop climbing and descending: level off gently, with the needle on the green band.",
+  "vuelo.ra.vigila":
+    "The box says we're fine like this: keep going as you are, and keep the needle out of the red.",
+  "vuelo.ra.libre": "It's over: the other plane is moving away. We gently go back to our altitude.",
+  "vuelo.radio.otraFrecuencia":
+    "We've left the airport's zone: another controller talks to us now, and we no longer hear the tower.",
+  "vuelo.radio.otraVezLaTorre": "We're close now: we hear the tower again, and this airport's planes.",
   "vuelo.traficoArriba":
     "That diamond on the screen is another plane. It's higher than us: it's no bother",
   "vuelo.traficoAbajo":
@@ -1175,6 +1195,8 @@ export const EN: Dictionary = {
   "explica.tcas.corta": "Another plane",
   "explica.tcas.texto":
     "Each diamond is another plane flying near your altitude. Hollow, it's around; filled, it's close. If it turns into an amber circle, TCAS warns you —traffic, traffic— and you look for it outside. The number is hundreds of feet: +10 is a thousand feet above, and −05 five hundred below. The little arrow says whether it is climbing or descending. Airliners also have a red square that tells you whether to climb or descend; here TCAS is in TA ONLY and only warns.",
+  "explica.tcas.ra":
+    "Each diamond is another plane flying near your altitude. Hollow, it's around; filled, it's close. If it turns into an amber circle, TCAS warns you —traffic, traffic— and you look for it outside. The number is hundreds of feet: +10 is a thousand feet above, and −05 five hundred below. The little arrow says whether it is climbing or descending. And in the jets, if the other plane really closes in, it turns into a red square: TCAS tells you whether to climb or descend —climb, climb— and the green band on the vertical speed indicator tells you how much.",
   "explica.arco.corta": "Green arc",
   "explica.arco.texto":
     "This green arc shows where you will reach the altitude you asked for, if you keep climbing or descending like now. If it falls before the runway, you get down with time to spare; if it falls after, you won't make it: descend faster or start earlier.",

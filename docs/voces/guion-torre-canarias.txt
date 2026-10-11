@@ -95,6 +95,10 @@ backtrack runway
 go around
 roger, Mayday
 roger, Pan Pan
+contact departure
+contact Canarias control
+contact approach
+contact tower
 caution, birds on final
 free
 occupied

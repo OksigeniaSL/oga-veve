@@ -274,6 +274,22 @@ const CABINA = [
    * `src/flight/tcas.ts`.
    */
   ["cabina.traffic", "traffic, traffic", "otro avión cerca: mirá dónde dice la pantalla"],
+  /*
+   * **Y la maniobra del TCAS II, el RA**, con las palabras de la versión 7.1:
+   * las cuatro órdenes y el final. La misma voz plana que «traffic, traffic»:
+   * una caja que pide algo, no una alarma. No van en `CLAVE_DE_CABINA`: se
+   * piden por la orden del TCAS y solo con la toma puesta. Ver `VOZ_DEL_RA`
+   * en `src/audio/cabina.ts` y `src/flight/tcas.ts`.
+   */
+  ["cabina.climbClimb", "climb, climb", "el TCAS pide subir para apartarse del otro"],
+  ["cabina.descendDescend", "descend, descend", "el TCAS pide bajar para apartarse del otro"],
+  [
+    "cabina.monitorVerticalSpeed",
+    "monitor vertical speed",
+    "el TCAS pide no cambiar el ritmo: fuera de lo rojo del variómetro",
+  ],
+  ["cabina.levelOff", "level off, level off", "el TCAS pide dejar de subir o de bajar"],
+  ["cabina.clearOfConflict", "clear of conflict", "el otro ya se aleja: se acabó la maniobra"],
   [
     "cabina.autopilotDisconnect",
     "autopilot disconnect",
@@ -535,6 +551,18 @@ const TORRE_SOLO = [
   ["torre.solo.rogerMayday", "roger, Mayday", "la torre oyó la llamada de socorro"],
   // Y la de urgencia, que es la del cuatrimotor con un motor parado.
   ["torre.solo.rogerPanPan", "roger, Pan Pan", "la torre oyó la llamada de urgencia"],
+  /*
+   * **Y el relevo de frecuencia**: a quien sale de la zona de la torre se le
+   * pasa a salida, de salida a control, de control a aproximación y de ahí
+   * otra vez a la torre del campo al que se llega. «Contact» y la dependencia,
+   * con tu indicativo delante, que va en la receta. **Sin la frecuencia en
+   * cifras**, a propósito: las de verdad cambian, y decir unas inventadas
+   * sería enseñar algo que no es. Ver `relevoDeFrecuencia` en `src/game.ts`.
+   */
+  ["torre.solo.contactDeparture", "contact departure", "dejás la zona de la torre: te habla salida"],
+  ["torre.solo.contactControl", "contact Asunción control", "lejos del campo: te habla el control en ruta"],
+  ["torre.solo.contactApproach", "contact approach", "cerca del campo al que vas: te habla aproximación"],
+  ["torre.solo.contactTower", "contact tower", "entrás en la zona de la torre: te habla ella otra vez"],
   /*
    * **Y lo que dice un AFIS**, que informa y no autoriza: la pista libre u
    * ocupada detrás de su número, y «no reported traffic» detrás de la pista
@@ -1040,6 +1068,8 @@ for (const [palabra, cifra] of CIFRAS) {
  */
 const EN_CANARIAS_SE_DICE = {
   "torre.solo.birdsOnFinal": "caution, birds on final",
+  // Y el control en ruta de allí, que es el de Canarias.
+  "torre.solo.contactControl": "contact Canarias control",
 };
 for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA]) {
   const suyo = EN_CANARIAS_SE_DICE[id] ?? texto;
@@ -1400,6 +1430,16 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
   "vuelo.consejo.masGasSuave",
   // Detrás de *caution terrain*, como la de debajo detrás de *too low*.
   "vuelo.terrenoDelante",
+  /*
+   * Y la maniobra del TCAS explicada detrás de su caja: la primera orden de
+   * un TCAS que se oye tiene que tener detrás a alguien que no se acelera.
+   * Ver `Game.ordenDelTcas`.
+   */
+  "vuelo.ra.sube",
+  "vuelo.ra.baja",
+  "vuelo.ra.nivela",
+  "vuelo.ra.vigila",
+  "vuelo.ra.libre",
   // El pitot tapado: parar en la carrera, el aplauso y volar sin anemómetro.
   "pitot.noMarca",
   "pitot.abortado",
@@ -1410,6 +1450,7 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
    * leído como alarma enseñaría lo contrario.
    */
   "explica.tcas.texto",
+  "explica.tcas.ra",
   "explica.avisos.texto",
   "explica.mascaras.texto",
 ]);

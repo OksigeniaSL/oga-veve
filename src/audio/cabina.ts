@@ -22,6 +22,8 @@
  * horneada, publicada y tirada.
  */
 
+import type { Orden } from "../flight/tcas";
+
 /** De lo que dice la cabina a la clave con la que está grabado. */
 export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   // La carrera de despegue.
@@ -185,7 +187,8 @@ export const DE_LA_CUENTA: ReadonlySet<string> = new Set([
  * radioaltímetro que la cante. Ver `Game.cantar` y `avisosHablados` en
  * `flight/aircraft.ts`.
  *
- * El TCAS va aparte porque tiene su propio equipo —ver `tcas` en la ficha—.
+ * El TCAS va aparte porque tiene su propio equipo —ver `tcas` en la ficha—, y
+ * su maniobra, más aparte todavía: solo la da el TCAS II. Ver `VOZ_DEL_RA`.
  */
 export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   // El radioaltímetro, en la toma: su cuenta y la altura de decisión.
@@ -204,6 +207,30 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   "cabina.airspeedLow",
   "cabina.autopilotDisconnect",
 ]);
+
+/**
+ * **Las voces del RA del TCAS II**: la maniobra que pide la caja y el «clear
+ * of conflict» del final. Ver `Orden` en `flight/tcas.ts`.
+ *
+ * Van aparte de `CLAVE_DE_CABINA`, y por dos motivos. Aquella tabla tiene que
+ * cuadrar con el manifiesto en las dos direcciones —una clave sin grabación
+ * apunta a un audio que no existe—, y éstas se escribieron **antes** de
+ * grabarse. Y el juego no las pide por su texto en inglés sino por la orden
+ * que da el TCAS, así que no hay texto que traducir a clave.
+ *
+ * Mientras no estén en el pack no suenan, y no las dice nadie en su lugar: el
+ * cuadrado rojo, la franja del variómetro y la tarjeta están siempre. Ver
+ * `Game.ordenDelTcas` y `PENDIENTE-VOCES-radar.md`.
+ */
+export const VOZ_DEL_RA: Readonly<Record<Orden | "libre", string>> = {
+  climb: "cabina.climbClimb",
+  descend: "cabina.descendDescend",
+  levelOff: "cabina.levelOff",
+  monitor: "cabina.monitorVerticalSpeed",
+  libre: "cabina.clearOfConflict",
+};
+
+const DEL_RA: ReadonlySet<string> = new Set(Object.values(VOZ_DEL_RA));
 
 /**
  * **El aviso de altitud de cabina**, que va aparte de los demás avisadores:
@@ -230,7 +257,8 @@ export function esDeUnaCaja(clave: string): boolean {
   return (
     DE_LOS_AVISADORES.has(clave) ||
     DE_LA_PRESURIZACION.has(clave) ||
-    clave === "cabina.traffic"
+    clave === "cabina.traffic" ||
+    DEL_RA.has(clave)
   );
 }
 
@@ -242,6 +270,8 @@ export function esDeUnaCaja(clave: string): boolean {
  */
 export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
   if (clave === "cabina.traffic") return avion.tcas !== null;
+  // La maniobra, solo el TCAS II: el TCAS I solo avisa. Ver `daLaManiobra`.
+  if (DEL_RA.has(clave)) return avion.tcas === "TCAS II";
   if (DE_LA_PRESURIZACION.has(clave)) return avion.presurizacion?.avisoHablado === true;
   if (DE_LOS_AVISADORES.has(clave)) return avion.avisosHablados;
   return true;

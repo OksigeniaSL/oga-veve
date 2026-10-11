@@ -804,7 +804,9 @@ const FIGURA: Record<string, string> = {
  * luz está en su lado del dibujo, y la flecha dice hacia dónde.
  */
 const NOCHE = `<rect class="senal__noche" x="0.5" y="0.5" width="23" height="23" rx="3.5" />`;
-const PERFIL = `<path class="senal__silueta" d="M2 12.8 Q2.4 10.6 5.2 10.4 H16.2 L19.8 5.6 H22 L21.2 10.4 Q22.4 10.9 22.4 12.3 Q21.9 14 19.3 14.1 H5.2 Q2.6 14 2 12.8 Z" />`;
+/** Un avión de línea de perfil y nivelado, el morro a la izquierda. */
+const PERFIL_NIVELADO = "M2 12.8 Q2.4 10.6 5.2 10.4 H16.2 L19.8 5.6 H22 L21.2 10.4 Q22.4 10.9 22.4 12.3 Q21.9 14 19.3 14.1 H5.2 Q2.6 14 2 12.8 Z";
+const PERFIL = `<path class="senal__silueta" d="${PERFIL_NIVELADO}" />`;
 const cruzando = (luz: "roja" | "verde", derecha: boolean): string =>
   icono(`${NOCHE}<g${derecha ? ' transform="matrix(-1 0 0 1 24 0)"' : ""}>
     ${PERFIL}
@@ -949,6 +951,70 @@ const NARIZ_ABAJO = icono(`
           stroke-linejoin="round" />
   </g>
 `);
+
+/**
+ * **La maniobra del TCAS, el RA**: el variómetro con su franja, tu avión y el
+ * otro.
+ *
+ * Es la misma lección que la pantalla de vuelo en pequeño, y por eso en todos
+ * los peldaños —en Guyrami no hay variómetro en pantalla, y la tarjeta es la
+ * única franja que se ve—: a la izquierda, el variómetro con lo rojo que no se
+ * puede volar y lo verde a donde ir; a la derecha, tu avión de perfil y
+ * nivelado —el de la tarjeta de las luces de noche—, con la flecha de lo que
+ * se pide, y el otro como lo pinta la carta, **un cuadrado
+ * rojo**, del lado del que hay que apartarse. Sin letras: «el rojo está
+ * abajo, la flecha va arriba» se entiende a los cuatro años. Ver
+ * `Game.ordenDelTcas` y `flight/tcas.ts`.
+ *
+ * La franja es de dibujo y no de cifra: con el cero en medio y los dos mil
+ * pies por minuto en los topes, que es donde caen las de verdad.
+ */
+const RA_ARRIBA = 2.4;
+const RA_ABAJO = 21.6;
+const RA_CERO = 12;
+/** De ft/min a la altura de la barra del dibujo. */
+const enLaBarra = (fpm: number): number =>
+  +(RA_CERO - (Math.max(-2000, Math.min(2000, fpm)) / 2000) * (RA_ABAJO - RA_CERO)).toFixed(2);
+const tramoDeBarra = (clase: string, desde: number, hasta: number): string => {
+  const a = Math.min(enLaBarra(desde), enLaBarra(hasta));
+  const b = Math.max(enLaBarra(desde), enLaBarra(hasta));
+  return `<rect class="${clase}" x="2.2" y="${a}" width="4" height="${+(b - a).toFixed(2)}" />`;
+};
+const maniobra = (
+  rojo: readonly [number, number],
+  verde: readonly [number, number] | null,
+  otroAbajo: boolean,
+  flecha: "arriba" | "abajo" | "nivel" | null,
+): string =>
+  icono(`
+    ${tramoDeBarra("senal__ra-rojo", rojo[0], rojo[1])}
+    ${verde ? tramoDeBarra("senal__ra-verde", verde[0], verde[1]) : ""}
+    <rect x="2.2" y="${RA_ARRIBA}" width="4" height="${RA_ABAJO - RA_ARRIBA}" rx="0.6"
+          fill="none" stroke="currentColor" stroke-width="0.9" />
+    <path d="M1.2 ${RA_CERO} H7.2" stroke="currentColor" stroke-width="1" />
+    <path transform="matrix(-0.55 0 0 0.55 21.21 6.58)" d="${PERFIL_NIVELADO}" />
+    ${
+      flecha === "arriba"
+        ? `<path d="M14 8.4 V2.8 M11.8 5 L14 2.4 L16.2 5" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`
+        : flecha === "abajo"
+          ? `<path d="M14 15.6 V21.2 M11.8 19 L14 21.6 L16.2 19" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`
+          : flecha === "nivel"
+            ? `<path d="M9 17.6 H16.6 M15 16 L16.8 17.6 L15 19.2" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />`
+            : ""
+    }
+    <rect class="senal__ra-rojo" x="18.4" y="${otroAbajo ? 18.2 : 1.8}" width="4" height="4" />
+  `);
+const RA = {
+  "ra-sube": maniobra([-2000, 1500], [1500, 2000], true, "arriba"),
+  "ra-baja": maniobra([-1500, 2000], [-2000, -1500], false, "abajo"),
+  "ra-nivela-sube": maniobra([-2000, 0], [0, 300], true, "nivel"),
+  "ra-nivela-baja": maniobra([0, 2000], [-300, 0], false, "nivel"),
+  "ra-vigila-sube": maniobra([-2000, 0], null, true, null),
+  "ra-vigila-baja": maniobra([0, 2000], null, false, null),
+} as const;
 
 /**
  * El back-taxi: **la pista, y la flecha que baja, da la vuelta y sube**.
@@ -1486,6 +1552,7 @@ export const DIBUJOS = {
   "luces-cruza-derecha": cruzando("verde", true),
   ...TRAFICO,
   ...CERCANO,
+  ...RA,
 } as const;
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */

@@ -18,7 +18,9 @@ import {
   CLAVE_DE_CABINA,
   claveDeCabina,
   DE_LOS_AVISADORES,
+  esDeUnaCaja,
   loDiceElAvion,
+  VOZ_DEL_RA,
 } from "./cabina";
 
 /**
@@ -63,7 +65,14 @@ describe("los cantos de cabina", () => {
   );
 
   it("cada grabación de cabina la pide alguien", () => {
-    const apuntadas = new Set(Object.values(CLAVE_DE_CABINA));
+    /*
+     * Por su texto en inglés o, las del RA, por la orden del TCAS: ésas se
+     * piden por clave y con la toma puesta. Ver `VOZ_DEL_RA`.
+     */
+    const apuntadas = new Set([
+      ...Object.values(CLAVE_DE_CABINA),
+      ...Object.values(VOZ_DEL_RA),
+    ]);
     expect(grabadas.filter((c) => !apuntadas.has(c))).toEqual([]);
   });
 
@@ -216,6 +225,15 @@ describe("los cantos de cada avión", () => {
   it("y el «traffic, traffic» lo canta quien lleva TCAS, y nadie más", () => {
     for (const a of AIRCRAFT)
       expect(loDiceElAvion("cabina.traffic", a), a.id).toBe(a.tcas !== null);
+  });
+
+  it("y la maniobra del RA, solo el TCAS II: el TCAS I solo avisa", () => {
+    for (const a of AIRCRAFT)
+      for (const clave of Object.values(VOZ_DEL_RA)) {
+        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(a.tcas === "TCAS II");
+        // Y es de una caja: suena en los cuatro peldaños, con su voz de máquina.
+        expect(esDeUnaCaja(clave), clave).toBe(true);
+      }
   });
 
   it("y los de la tripulación los canta cualquiera", () => {

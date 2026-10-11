@@ -17,10 +17,9 @@
  * se miraron al escribirlas:
  *
  * - **El TCAS**: rombo hueco, otro tráfico; rombo lleno, tráfico cerca;
- *   círculo ámbar, aviso de tráfico. El cuadrado rojo existe —es el aviso de
- *   maniobra, el RA— y este juego no lo da, porque trabaja en TA ONLY. La
- *   explicación lo dice así en vez de callarlo o de inventarle un color. Ver
- *   la cabecera de `flight/tcas.ts`.
+ *   círculo ámbar, aviso de tráfico; cuadrado rojo, la maniobra, el RA, que
+ *   solo da el TCAS II de los reactores. La explicación lo dice así, sin
+ *   inventarle a nadie un color. Ver la cabecera de `flight/tcas.ts`.
  * - **La senda**: el rombo dice dónde está la senda, no dónde estás tú. Rombo
  *   abajo es que vas alto, y se baja «hacia el rombo». Es lo que se enseña en
  *   cualquier escuela, y es al revés de lo que parece.
@@ -273,15 +272,20 @@ const CARTA = pantalla(`
   ${YO}
 `);
 
+/*
+ * Los cuatro símbolos de la figura 2 del folleto de la FAA, en su orden: rombo
+ * hueco, rombo lleno, círculo ámbar del aviso y cuadrado rojo de la maniobra.
+ */
 const TCAS = pantalla(`
-  <path d="M20 26 l8 -8 l8 8 l-8 8 Z" class="ex-s-cian ex-grueso" />
-  <path d="M52 26 l8 -8 l8 8 l-8 8 Z" class="ex-f-cian" />
-  <circle cx="92" cy="26" r="8" class="ex-f-ambar" />
-  <text x="28" y="54" class="ex-cifra ex-f-cian" text-anchor="middle">+10</text>
-  <path d="M44 54 v-9 M41 48 l3 -4 l3 4" class="ex-s-cian" />
-  <text x="60" y="54" class="ex-cifra ex-f-cian" text-anchor="middle">-05</text>
-  <text x="92" y="54" class="ex-cifra ex-f-ambar" text-anchor="middle">+02</text>
-  <path d="M108 45 v9 M105 51 l3 4 l3 -4" class="ex-s-ambar" />
+  <path d="M10 26 l8 -8 l8 8 l-8 8 Z" class="ex-s-cian ex-grueso" />
+  <path d="M38 26 l8 -8 l8 8 l-8 8 Z" class="ex-f-cian" />
+  <circle cx="74" cy="26" r="8" class="ex-f-ambar" />
+  <rect x="94" y="18" width="16" height="16" class="ex-f-rojo" />
+  <text x="17" y="54" class="ex-cifra ex-f-cian" text-anchor="middle">+10</text>
+  <path d="M31 54 v-9 M28 48 l3 -4 l3 4" class="ex-s-cian" />
+  <text x="46" y="54" class="ex-cifra ex-f-cian" text-anchor="middle">-05</text>
+  <text x="74" y="54" class="ex-cifra ex-f-ambar" text-anchor="middle">+02</text>
+  <text x="102" y="54" class="ex-cifra ex-f-rojo" text-anchor="middle">-01</text>
   ${YO}
 `);
 
@@ -439,6 +443,14 @@ const DEL_CUADRO = enRincon("cuadro", [
     rotulo: "TCAS",
     dibujo: { svg: TCAS },
     ...claves("tcas"),
+    /*
+     * **Con el cuadrado rojo, que ya existe.** La de antes —`explica.tcas.texto`,
+     * grabada— decía que aquí el TCAS «está en TA ONLY y solo avisa», y desde
+     * que los reactores dan la maniobra eso ya no es verdad. Su sustituta va
+     * por otra clave para que la grabación vieja no la diga: hasta que se
+     * grabe, la ventana se lee y no se oye. Ver `PENDIENTE-VOCES-radar.md`.
+     */
+    texto: "explica.tcas.ra",
     enTierra: { texto: "explica.carta.tierra" },
   },
   {

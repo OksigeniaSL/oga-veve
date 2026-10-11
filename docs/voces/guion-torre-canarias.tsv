@@ -95,55 +95,59 @@
 095	torre.canario.solo.goAroundSolo	go around
 096	torre.canario.solo.rogerMayday	roger, Mayday
 097	torre.canario.solo.rogerPanPan	roger, Pan Pan
-098	torre.canario.solo.birdsOnFinal	caution, birds on final
-099	torre.canario.solo.free	free
-100	torre.canario.solo.occupied	occupied
-101	torre.canario.solo.noReportedTraffic	no reported traffic
-102	viento.wind	wind
-103	viento.degrees	degrees
-104	viento.knots	knots
-105	viento.calm	calm
-106	viento.variable	variable
-107	trafico.traffic	traffic
-108	trafico.hora.1	one o'clock
-109	trafico.hora.2	two o'clock
-110	trafico.hora.3	three o'clock
-111	trafico.hora.4	four o'clock
-112	trafico.hora.5	five o'clock
-113	trafico.hora.6	six o'clock
-114	trafico.hora.7	seven o'clock
-115	trafico.hora.8	eight o'clock
-116	trafico.hora.9	nine o'clock
-117	trafico.hora.10	ten o'clock
-118	trafico.hora.11	eleven o'clock
-119	trafico.hora.12	twelve o'clock
-120	trafico.millas.1	one mile
-121	trafico.millas.2	two miles
-122	trafico.millas.3	three miles
-123	trafico.millas.4	four miles
-124	trafico.millas.5	five miles
-125	trafico.millas.6	six miles
-126	trafico.pies.3	three hundred feet
-127	trafico.pies.4	four hundred feet
-128	trafico.pies.5	five hundred feet
-129	trafico.pies.6	six hundred feet
-130	trafico.pies.7	seven hundred feet
-131	trafico.pies.8	eight hundred feet
-132	trafico.pies.9	niner hundred feet
-133	trafico.pies.10	one thousand feet
-134	trafico.pies.11	one thousand one hundred feet
-135	trafico.pies.12	one thousand two hundred feet
-136	trafico.above	above
-137	trafico.below	below
-138	trafico.sameLevel	same level
-139	altura.nivel	flight level
-140	altura.pies.2	two thousand feet
-141	altura.pies.3	three thousand feet
-142	altura.pies.4	four thousand feet
-143	altura.pies.5	five thousand feet
-144	altura.pies.6	six thousand feet
-145	torre.canario.solo.subir.2	suba a dos mil pies
-146	torre.canario.solo.subir.3	suba a tres mil pies
-147	torre.canario.solo.subir.4	suba a cuatro mil pies
-148	torre.canario.solo.subir.5	suba a cinco mil pies
-149	torre.canario.solo.subir.6	suba a seis mil pies
+098	torre.canario.solo.contactDeparture	contact departure
+099	torre.canario.solo.contactControl	contact Canarias control
+100	torre.canario.solo.contactApproach	contact approach
+101	torre.canario.solo.contactTower	contact tower
+102	torre.canario.solo.birdsOnFinal	caution, birds on final
+103	torre.canario.solo.free	free
+104	torre.canario.solo.occupied	occupied
+105	torre.canario.solo.noReportedTraffic	no reported traffic
+106	viento.wind	wind
+107	viento.degrees	degrees
+108	viento.knots	knots
+109	viento.calm	calm
+110	viento.variable	variable
+111	trafico.traffic	traffic
+112	trafico.hora.1	one o'clock
+113	trafico.hora.2	two o'clock
+114	trafico.hora.3	three o'clock
+115	trafico.hora.4	four o'clock
+116	trafico.hora.5	five o'clock
+117	trafico.hora.6	six o'clock
+118	trafico.hora.7	seven o'clock
+119	trafico.hora.8	eight o'clock
+120	trafico.hora.9	nine o'clock
+121	trafico.hora.10	ten o'clock
+122	trafico.hora.11	eleven o'clock
+123	trafico.hora.12	twelve o'clock
+124	trafico.millas.1	one mile
+125	trafico.millas.2	two miles
+126	trafico.millas.3	three miles
+127	trafico.millas.4	four miles
+128	trafico.millas.5	five miles
+129	trafico.millas.6	six miles
+130	trafico.pies.3	three hundred feet
+131	trafico.pies.4	four hundred feet
+132	trafico.pies.5	five hundred feet
+133	trafico.pies.6	six hundred feet
+134	trafico.pies.7	seven hundred feet
+135	trafico.pies.8	eight hundred feet
+136	trafico.pies.9	niner hundred feet
+137	trafico.pies.10	one thousand feet
+138	trafico.pies.11	one thousand one hundred feet
+139	trafico.pies.12	one thousand two hundred feet
+140	trafico.above	above
+141	trafico.below	below
+142	trafico.sameLevel	same level
+143	altura.nivel	flight level
+144	altura.pies.2	two thousand feet
+145	altura.pies.3	three thousand feet
+146	altura.pies.4	four thousand feet
+147	altura.pies.5	five thousand feet
+148	altura.pies.6	six thousand feet
+149	torre.canario.solo.subir.2	suba a dos mil pies
+150	torre.canario.solo.subir.3	suba a tres mil pies
+151	torre.canario.solo.subir.4	suba a cuatro mil pies
+152	torre.canario.solo.subir.5	suba a cinco mil pies
+153	torre.canario.solo.subir.6	suba a seis mil pies

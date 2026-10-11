@@ -5897,9 +5897,9 @@ button.motor__tecla::after {
  *
  * Las formas y los colores de cualquier cabina, que no se inventan: rombo
  * hueco en cian para el que anda por ahí, rombo lleno para el que está a
- * menos de seis millas y mil doscientos pies, y círculo ámbar para el que da
- * aviso. La etiqueta y la flecha van del color de su símbolo. Cian y no
- * blanco porque el símbolo propio de esta carta es amarillo y la pista blanca:
+ * menos de seis millas y mil doscientos pies, círculo ámbar para el que da
+ * aviso y cuadrado rojo para el que pide maniobra. La etiqueta y la flecha
+ * van del color de su símbolo. Cian y no blanco porque el símbolo propio de esta carta es amarillo y la pista blanca:
  * el tráfico tiene que ser de otro color que las dos. Ver `flight/tcas.ts`.
  */
 .cr__rombo {
@@ -5937,6 +5937,31 @@ button.motor__tecla::after {
 
 .cr__trafico--aviso .cr__tcas-flecha {
   stroke: var(--cabina-precaucion);
+}
+
+/*
+ * Y el cuadrado rojo del RA, con su etiqueta y su flecha en rojo: es el que
+ * obliga a maniobrar. Ver `Clase` en `flight/tcas.ts`.
+ */
+.cr__ra {
+  fill: var(--cabina-limite);
+}
+
+/* La franja del RA en el variómetro. Ver `Tablero.franjaDelRa`. */
+.cr__ra-rojo {
+  fill: var(--cabina-limite);
+}
+
+.cr__ra-verde {
+  fill: var(--cabina-normal);
+}
+
+.cr__trafico--resolucion .cr__tcas-altura {
+  fill: var(--cabina-limite);
+}
+
+.cr__trafico--resolucion .cr__tcas-flecha {
+  stroke: var(--cabina-limite);
 }
 
 .cr__solo-ta {
@@ -8620,6 +8645,23 @@ button.motor__tecla::after {
 
 .senal__luz-roja {
   fill: #ff4a3d;
+}
+
+/*
+ * La franja del RA y el cuadrado del otro, en la tarjeta: los colores de la
+ * cabina, con el filo de tinta para que se lean sobre el fondo de la tarjeta.
+ * Ver `maniobra` en `ui/senal.ts`.
+ */
+.senal__ra-rojo {
+  fill: var(--cabina-limite);
+  stroke: var(--tinta);
+  stroke-width: 0.5;
+}
+
+.senal__ra-verde {
+  fill: var(--cabina-normal);
+  stroke: var(--tinta);
+  stroke-width: 0.5;
 }
 
 .senal__luz-verde {

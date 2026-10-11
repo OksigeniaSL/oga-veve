@@ -55,7 +55,14 @@ import {
   MARCA_CON_SU_APARATO,
   MARCA_ROTULO,
 } from "./familia";
-import { CUANTOS_FIJOS, CUANTOS_OTROS, rodajeEnTierra } from "./cristal";
+import {
+  CUANTOS_FIJOS,
+  CUANTOS_OTROS,
+  franjaEnElVariometro,
+  rodajeEnTierra,
+  TRAMOS_ROJOS,
+} from "./cristal";
+import type { Franja } from "../flight/tcas";
 import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
@@ -260,6 +267,12 @@ export interface DatosDelTablero {
    * `flight/perfil-vertical.ts`.
    */
   readonly perfil?: PerfilEnElCuadro | null;
+  /**
+   * **La franja del RA en el variómetro**, mientras el TCAS pide maniobra:
+   * rojo lo que no se puede volar y verde a donde llevar la aguja. `null`
+   * sin maniobra. Ver `Franja` en `flight/tcas.ts`.
+   */
+  readonly ra?: Franja | null;
 }
 
 /**
@@ -1142,6 +1155,7 @@ export class Tablero {
     }
 
     this.vsi(d.fpm);
+    this.franjaDelRa(d.ra ?? null);
     this.senda(d.perfil ?? null);
     this.tendencias(d);
     this.bugs(d, dt, rumbo);
@@ -1288,6 +1302,34 @@ export class Tablero {
     const max = Number(g.dataset.max);
     const f = Math.max(-1, Math.min(1, fpm / max));
     poner(g, "transform", `translate(0 ${n1(-f * ampl)})`);
+  }
+
+  /**
+   * **La franja del RA**: se enciende con la maniobra y se apaga con ella. Las
+   * piezas están puestas —ver `variometro` en `cristal.ts`— y aquí solo se
+   * mueven. Ver `Franja` en `flight/tcas.ts`.
+   */
+  private franjaDelRa(f: Franja | null): void {
+    const g = this.pieza('[data-cristal="vsi-ra"]');
+    if (!g) return;
+    poner(g, "visibility", f ? "visible" : "hidden");
+    if (!f) return;
+    const ampl = Number(g.dataset.ampl);
+    const max = Number(g.dataset.max);
+    const medio = Number(g.dataset.medio);
+    const tramo = (el: SVGElement | HTMLElement | null, t: readonly [number, number] | null | undefined) => {
+      if (!el) return;
+      if (!t) {
+        poner(el, "height", "0");
+        return;
+      }
+      const [arriba, abajo] = franjaEnElVariometro(t, max, medio, ampl);
+      poner(el, "y", n1(arriba));
+      poner(el, "height", n1(Math.max(1, abajo - arriba)));
+    };
+    for (let i = 0; i < TRAMOS_ROJOS; i++)
+      tramo(this.pieza(`[data-cristal="vsi-rojo-${i}"]`), f.rojo[i]);
+    tramo(this.pieza('[data-cristal="vsi-verde"]'), f.verde);
   }
 
   /**
@@ -1807,8 +1849,8 @@ export class Tablero {
     );
     /*
      * **Los tráficos, con el símbolo del TCAS.** Rombo hueco para el que anda
-     * por ahí, lleno para el que está cerca y círculo ámbar para el que
-     * avisa; encima o debajo, su altura en centenas de pies, y a la derecha la
+     * por ahí, lleno para el que está cerca, círculo ámbar para el que avisa
+     * y cuadrado rojo para el de la maniobra; encima o debajo, su altura en centenas de pies, y a la derecha la
      * flecha si sube o baja deprisa. Las piezas están puestas —ver `carta` en
      * `cristal.ts`— y aquí solo se encienden. Lo que es cada uno lo decide
      * `flight/tcas.ts`, y dónde va, `ui/carta.ts`.
@@ -1834,15 +1876,21 @@ export class Tablero {
       poner(pieza, "transform", `translate(${n1(o.dx)} ${n1(o.dy)})`);
       poner(pieza, "class", `cr__trafico cr__trafico--${o.clase}`);
       const aviso = o.clase === "aviso";
+      const maniobra = o.clase === "resolucion";
       poner(
         this.pieza(`${otro} [data-tcas="rombo"]`),
         "visibility",
-        aviso ? "hidden" : "inherit",
+        aviso || maniobra ? "hidden" : "inherit",
       );
       poner(
         this.pieza(`${otro} [data-tcas="circulo"]`),
         "visibility",
         aviso ? "inherit" : "hidden",
+      );
+      poner(
+        this.pieza(`${otro} [data-tcas="cuadrado"]`),
+        "visibility",
+        maniobra ? "inherit" : "hidden",
       );
       const altura = this.pieza(`${otro} [data-tcas="altura"]`);
       if (altura) {

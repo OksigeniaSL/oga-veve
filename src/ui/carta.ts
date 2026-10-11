@@ -236,8 +236,9 @@ export interface Mapa {
 
   /**
    * **Lo que la pantalla escribe del modo del TCAS**: «TCAS STBY» en espera,
-   * «TA ONLY» trabajando sin maniobras, y la banda si no es la normal. `null`
-   * si no hay nada que escribir. Ver `modoEnPantalla` en `flight/tcas.ts`.
+   * «TA ONLY» trabajando sin maniobras —en el punto de espera—, nada en TA/RA,
+   * y la banda si no es la normal. `null` si no hay nada que escribir. Ver
+   * `modoEnPantalla` en `flight/tcas.ts`.
    */
   readonly modoTcas?: string | null;
 
@@ -383,7 +384,7 @@ export function cotaEscrita(metros: number): string {
 export interface Otro {
   readonly x: number;
   readonly z: number;
-  /** Otro, cerca o con aviso. Ver `Clase` en `flight/tcas.ts`. */
+  /** Otro, cerca, con aviso o con maniobra. Ver `Clase` en `flight/tcas.ts`. */
   readonly clase: Clase;
   /** Su altura menos la mía, m. */
   readonly relativa: number;
@@ -419,8 +420,8 @@ export interface OtroEnLaCarta {
   /**
    * Si está fuera del rango y va pegado al borde.
    *
-   * Solo pasa con los que tienen aviso, que son los que no pueden dejar de
-   * verse: el TCAS pinta **medio símbolo** en el canto de la pantalla, en su
+   * Solo pasa con los que tienen aviso o maniobra, que son los que no pueden
+   * dejar de verse: el TCAS pinta **medio símbolo** en el canto de la pantalla, en su
    * marcación, hasta que el piloto abre el rango o el tráfico entra. El medio
    * sale solo, porque la carta se recorta al círculo y el símbolo va
    * centrado justo en el canto.
@@ -443,8 +444,11 @@ export function etiquetaDeAltura(relativaMetros: number): string {
   return `${relativaMetros > 0 ? "+" : "-"}${String(cientos).padStart(2, "0")}`;
 }
 
-/** Qué se pinta antes cuando no caben todos: primero lo que avisa. */
-const ORDEN: Record<Clase, number> = { aviso: 0, cerca: 1, otro: 2 };
+/**
+ * Qué se pinta antes cuando no caben todos: primero la maniobra, luego lo que
+ * avisa.
+ */
+const ORDEN: Record<Clase, number> = { resolucion: 0, aviso: 1, cerca: 2, otro: 3 };
 
 /**
  * Lo que hay que dibujar en la carta, ya resuelto en píxeles.
@@ -464,11 +468,11 @@ export interface Dibujo {
     hasta: { dx: number; dy: number };
   } | null;
   /**
-   * Los tráficos que se pintan, **ya ordenados**: primero los que avisan,
-   * luego los cercanos y luego el resto, cada grupo del más cercano al más
-   * lejano. Así, si una superficie tiene sitio para menos de los que hay, se
-   * queda sin los que menos importan. Y solo los que caen dentro del disco,
-   * más los que avisan, que se pegan al borde.
+   * Los tráficos que se pintan, **ya ordenados**: primero el de la maniobra,
+   * luego los que avisan, los cercanos y el resto, cada grupo del más cercano
+   * al más lejano. Así, si una superficie tiene sitio para menos de los que
+   * hay, se queda sin los que menos importan. Y solo los que caen dentro del
+   * disco, más los que avisan, que se pegan al borde.
    */
   readonly otros: readonly OtroEnLaCarta[];
 
@@ -852,10 +856,10 @@ function rutaEnLaCarta(
  * Los tráficos del TCAS, en píxeles y en el orden en que importan.
  *
  * Los que caen fuera del disco no se pintan —no se verían, y ocuparían el
- * sitio de uno que sí—, salvo los que tienen aviso, que se pegan al canto en
- * su marcación: medio círculo ámbar asomando es lo que enseña un TCAS de
- * verdad cuando el que avisa está más lejos que el rango. Ver
- * `OtroEnLaCarta.alBorde`.
+ * sitio de uno que sí—, salvo los que tienen aviso o maniobra, que se pegan al
+ * canto en su marcación: medio círculo ámbar —o medio cuadrado rojo—
+ * asomando es lo que enseña un TCAS de verdad cuando el que avisa está más
+ * lejos que el rango. Ver `OtroEnLaCarta.alBorde`.
  */
 function traficoEnLaCarta(
   m: Mapa,
@@ -867,7 +871,7 @@ function traficoEnLaCarta(
     const p = aqui(o);
     const d = Math.hypot(p.dx, p.dy);
     const dentro = d <= r;
-    if (!dentro && o.clase !== "aviso") continue;
+    if (!dentro && o.clase !== "aviso" && o.clase !== "resolucion") continue;
     puestos.push({
       d,
       o: {

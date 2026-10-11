@@ -678,6 +678,29 @@ export function hayQueMoverElTrozo(
   return Math.abs(valor - base) * POR_PIE > margen;
 }
 
+/**
+ * **Dónde cae un tramo de ritmos en el variómetro**: de qué alto a qué alto,
+ * en las unidades de quien pinta, con `medio` el cero y `ampl` lo que mide
+ * medio variómetro. Lo que se sale se recorta al tope, que es donde acaba la
+ * escala. Lo usan el cuadro plano y el lienzo de la cabina: la franja del RA
+ * tiene que caer en el mismo sitio en los dos. Ver `Franja` en
+ * `flight/tcas.ts`.
+ */
+export function franjaEnElVariometro(
+  tramo: readonly [number, number],
+  vsiMax: number,
+  medio: number,
+  ampl: number,
+): [number, number] {
+  const y = (fpm: number) => medio - Math.max(-1, Math.min(1, fpm / vsiMax)) * ampl;
+  const a = y(tramo[1]);
+  const b = y(tramo[0]);
+  return [Math.min(a, b), Math.max(a, b)];
+}
+
+/** Cuántos tramos rojos caben a la vez en el variómetro. Ver `Franja`. */
+export const TRAMOS_ROJOS = 2;
+
 /** El variómetro: una franja al borde de la cinta de altitud. */
 function variometro(
   x: number,
@@ -705,6 +728,20 @@ function variometro(
         hasta que la aguja llegue a ella. Es el ritmo requerido de las
         pantallas de vuelo con perfil vertical. Ver Tablero.senda.
       -->
+      <!--
+        **La franja del RA**: rojo lo que no se puede volar y verde a donde
+        llevar la aguja, pegadas al borde de dentro y debajo de la aguja,
+        mientras el TCAS pide maniobra. Ver Tablero.franjaDelRa y flight/tcas.ts.
+      -->
+      <g data-cristal="vsi-ra" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}"
+         data-medio="${h / 2}" visibility="hidden">
+        ${Array.from(
+          { length: TRAMOS_ROJOS },
+          (_, i) =>
+            `<rect data-cristal="vsi-rojo-${i}" class="cr__ra-rojo" x="${w - 7}" width="7" y="0" height="0" />`,
+        ).join("")}
+        <rect data-cristal="vsi-verde" class="cr__ra-verde" x="${w - 7}" width="7" y="0" height="0" />
+      </g>
       <g data-cristal="vsi-objetivo" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}"
          visibility="hidden">
         <path class="cr__bug" d="M0 ${h / 2 - 5} l8 5 l-8 5 Z" />
@@ -777,9 +814,9 @@ function carta(cx: number, cy: number, r: number): string {
   // Un recorte al círculo de la rosa: una pista que asome por fuera deja de
   // ser una carta y pasa a ser una mancha.
   /*
-   * **Cada tráfico, con las cuatro piezas de un símbolo de TCAS**: el rombo
-   * —hueco o lleno—, el círculo del aviso, la altura relativa y la flecha de
-   * si sube o baja. Todas quietas; `Tablero.laCarta` enciende las que tocan.
+   * **Cada tráfico, con las piezas de un símbolo de TCAS**: el rombo —hueco o
+   * lleno—, el círculo del aviso, el cuadrado rojo de la maniobra, la altura
+   * relativa y la flecha de si sube o baja. Todas quietas; `Tablero.laCarta` enciende las que tocan.
    * Son las formas de la figura 2 del folleto de la FAA, que son las de
    * cualquier cabina: quien las aprenda aquí las va a reconocer allí.
    *
@@ -792,6 +829,8 @@ function carta(cx: number, cy: number, r: number): string {
       <g data-carta="otro-${i}" data-explica="tcas" class="cr__trafico" visibility="hidden">
         <path data-tcas="rombo" class="cr__rombo" d="M0 -6 L6 0 L0 6 L-6 0 Z" />
         <circle data-tcas="circulo" class="cr__ta" r="5.5" visibility="hidden" />
+        <rect data-tcas="cuadrado" class="cr__ra" x="-5.5" y="-5.5" width="11" height="11"
+              visibility="hidden" />
         <text data-tcas="altura" x="0" y="-10" ${MARCA_CIFRA}
               class="cr__tcas-altura" text-anchor="middle"></text>
         <path data-tcas="flecha" class="cr__tcas-flecha" visibility="hidden"
@@ -933,8 +972,8 @@ function carta(cx: number, cy: number, r: number): string {
     <!--
       **TA ONLY**, en la esquina de abajo a la izquierda y en cian, que es
       donde y como lo escribe la pantalla de navegación de un avión de línea
-      cuando el TCAS está en ese modo. Dice la verdad de este juego: el TCAS II
-      avisa y no da maniobras. Ver flight/tcas.ts.
+      cuando el TCAS está en ese modo: en el punto de espera, antes de pasarlo
+      a TA/RA al entrar en la pista. Ver flight/tcas.ts.
     -->
     <text data-carta="solo-ta" data-explica="tcas" x="${cx - r + 4}" y="${cy + r}" ${MARCA_ROTULO}
           class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>

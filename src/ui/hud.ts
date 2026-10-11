@@ -2748,6 +2748,8 @@ export class Hud {
       readonly cotaDeLaPista?: DatosDelTablero["cotaDeLaPista"];
       /** La senda a la vista. Ver `DatosDelTablero.perfil`. */
       readonly perfil?: DatosDelTablero["perfil"];
+      /** La franja del RA en el variómetro. Ver `DatosDelTablero.ra`. */
+      readonly ra?: DatosDelTablero["ra"];
       /** En tierra, la GS de rodar. Ver `DatosDelTablero.rodaje`. */
       readonly rodaje?: DatosDelTablero["rodaje"];
       /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
@@ -3218,6 +3220,7 @@ export class Hud {
         minimos: mandos?.minimos ?? null,
         cotaDeLaPista: mandos?.cotaDeLaPista ?? null,
         perfil: mandos?.perfil ?? null,
+        ra: mandos?.ra ?? null,
         rodaje: mandos?.rodaje ?? null,
         resaltes: mandos?.resaltes ?? null,
       };

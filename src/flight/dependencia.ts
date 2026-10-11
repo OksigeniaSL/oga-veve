@@ -22,10 +22,10 @@
  * su torre y sus aviones—, que es como funciona de verdad en los aeródromos
  * pequeños, y la simplificación es de presentación: lo que se oye en las dos
  * es lo mismo, el tráfico del campo. Lo que no hace es seguir oyéndola fuera
- * de la zona. Salida, control y aproximación no tienen todavía voces propias
- * —el relevo de frecuencia se graba cuando haya saldo, ver
- * `PENDIENTE-VOCES-radar.md`—, así que fuera de la zona del campo, por ahora,
- * la radio de los demás calla.
+ * de la zona. Salida, control y aproximación no tienen tráfico propio que se
+ * oiga: fuera de la zona del campo la radio de los demás calla, y lo que se
+ * dice es **el relevo**, «contact departure» al salir y «contact tower» al
+ * volver, con la voz de la torre del sitio. Ver `Game.relevoDeFrecuencia`.
  *
  * ## Dónde acaba la zona de la torre
  *

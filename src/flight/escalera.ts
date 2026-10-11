@@ -24,10 +24,10 @@
  * arriba se cantan en inglés. Las otras las dice **una caja del avión**: el
  * radioaltímetro con su cuenta, el avisador de proximidad al terreno con su
  * *terrain* y su *sink rate*, el de pérdida, el TCAS con su *traffic,
- * traffic*. Esas no se traducen ni se retiran: **en el avión que las lleva
- * suenan con su voz de máquina en los cuatro peldaños**, porque es lo que
- * suena en ese avión, y es lo que se va a oír tal cual el día que se suba a
- * uno de verdad.
+ * traffic* y, el que da maniobras, su *climb, climb*. Esas no se traducen ni
+ * se retiran: **en el avión que las lleva suenan con su voz de máquina en los
+ * cuatro peldaños**, porque es lo que suena en ese avión, y es lo que se va a
+ * oír tal cual el día que se suba a uno de verdad.
  *
  * Se decidió en dos veces, oyéndolo jugar. Primero con la cuenta: «va
  * marcando la distancia hasta one hundred y luego va de 10 en 10», y «me lo

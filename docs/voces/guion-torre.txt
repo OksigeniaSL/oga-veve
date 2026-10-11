@@ -61,6 +61,10 @@ backtrack runway
 go around
 roger, Mayday
 roger, Pan Pan
+contact departure
+contact Asunción control
+contact approach
+contact tower
 caution, flock of birds on final
 free
 occupied
