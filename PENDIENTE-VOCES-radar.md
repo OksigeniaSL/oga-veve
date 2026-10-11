@@ -1,81 +1,106 @@
-# Pendiente: voces del radar y de la radio (tanda 6c)
+# Pendiente: voces del radar y de la radio
 
-El 02-10-2026 ElevenLabs no tiene saldo hasta el 6 de octubre. Esta rama
-**no mete en el código ninguna frase nueva**: todo lo que se oye sale de
-piezas ya grabadas. Lo de aquí es lo que falta para dar el paso siguiente, y
-ninguna de estas claves existe todavía en `src/i18n/` ni en las recetas.
+El código ya está: el RA entero del TCAS II —umbrales, sentido, cuadrado rojo,
+franja del variómetro, tarjeta y TA/RA al entrar en la pista— y el relevo de
+frecuencia. Lo visual sale ya. **Las voces nuevas se piden solo si su toma está
+en el pack**, así que hasta que se graben no suena ninguna y no las dice nadie
+en su lugar. Lo que falta es grabarlas y engancharlas.
 
-Cuando se graben: pedirlas en `scripts/frases-para-grabar.mjs`, grabar con
-`node scripts/voces-elevenlabs.mjs <voz>`, añadir la receta **después** de
-grabar (una receta que nombra una pieza que no existe rompe el horneado),
-hornear, restaurar lo re-codificado y pasar `node scripts/verificar-voces.mjs`.
-Y solo entonces el código.
+## Lo que hay que grabar: 21 tomas, 1 329 caracteres
 
-## 1. El relevo de frecuencia (punto 4 del encargo)
+Todas están ya en `scripts/frases-para-grabar.mjs` y en `docs/voces/`.
 
-Hoy, fuera de la zona de la torre —diez millas y cuatro mil pies sobre el
-campo, ver `src/flight/dependencia.ts`— la frecuencia del campo **deja de
-oírse** y no suena nada en su lugar: salida, control y aproximación no tienen
-voz. Lo real es que el relevo se dice. Por voz y por campo, con su indicativo
-delante como todas las de la torre (`{c1}`…`{c5}` es la matrícula en el
-alfabeto, igual que en `torre.climbTo`):
+**Cabina** (la voz de la caja, la de «traffic, traffic»; sin recetas), 87:
 
-| voz | clave | es-PY (lámpara, peldaños de abajo) | en (fraseología, de Taguató arriba) | receta |
-|---|---|---|---|---|
-| torre | `torre.solo.contactDeparture` | — | «contact departure» | `["torre.solo.contactDeparture"]` |
-| torre | `torre.contactDeparture` | — | «{indicativo}, contact departure» | `["{c1}","{c2}","{c3}","{c4}","{c5}","torre.solo.contactDeparture"]` |
-| torre | `torre.solo.contactControl` | — | «contact Asunción control» | `["torre.solo.contactControl"]` |
-| torre | `torre.solo.contactApproach` | — | «contact approach» | `["torre.solo.contactApproach"]` |
-| torre | `torre.solo.contactTower` | — | «contact tower» | `["torre.solo.contactTower"]` |
-| torre-canarias | `torre.canario.solo.contactDeparture` | — | «contact departure» | `["torre.canario.solo.contactDeparture"]` |
-| torre-canarias | `torre.canario.solo.contactControl` | — | «contact Canarias control» | `["torre.canario.solo.contactControl"]` |
-| torre-canarias | `torre.canario.solo.contactApproach` | — | «contact approach» | `["torre.canario.solo.contactApproach"]` |
-| torre-canarias | `torre.canario.solo.contactTower` | — | «contact tower» | `["torre.canario.solo.contactTower"]` |
-
-Las cuatro con indicativo (`torre.contactX`, `torre.canario.contactX`) se
-montan igual que `torre.contactDeparture`. Sin frecuencia en cifras a
-propósito: «contact departure one two zero decimal seven» pide inventarse
-frecuencias que no son las de verdad, y las de verdad cambian.
-
-Y la instructora, en los peldaños que no leen fraseología, una vez por vuelo
-y detrás de la torre —un suceso, una voz—:
-
-| voz | clave | es-PY | en |
-|---|---|---|---|
-| instructor | `vuelo.radio.otraFrecuencia` | «Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.» | «We've left the airport's zone: another controller talks to us now, and we no longer hear the tower.» |
-| instructor | `vuelo.radio.otraVezLaTorre` | «Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.» | «We're close now: we hear the tower again, and this airport's planes.» |
-
-Dónde engancharlas: en `Game.oirLaRadio`, donde cambia la dependencia
-(`this.dependencia`), que ya distingue tierra, torre, salida, control y
-aproximación.
-
-## 2. El aviso de resolución, el RA (punto 3 del encargo)
-
-El TCAS II de este juego trabaja en **TA ONLY** (ver la cabecera de
-`src/flight/tcas.ts`). El RA de verdad pide tres cosas a la vez, y sin
-cualquiera de ellas enseñaría una orden a medias: el **cuadrado rojo** en la
-carta, la **franja roja y verde** en el variómetro, y la **voz**. Las voces son
-de la caja, la de la máquina (`crudo/cabina/`, la misma voz que «traffic,
-traffic»), y suenan igual en los cuatro peldaños:
-
-| voz | clave | texto |
+| clave | texto | car. |
 |---|---|---|
-| cabina | `cabina.climbClimb` | «climb, climb» |
-| cabina | `cabina.descendDescend` | «descend, descend» |
-| cabina | `cabina.monitorVerticalSpeed` | «monitor vertical speed» |
-| cabina | `cabina.levelOff` | «level off, level off» |
-| cabina | `cabina.clearOfConflict` | «clear of conflict» |
+| `cabina.climbClimb` | climb, climb | 12 |
+| `cabina.descendDescend` | descend, descend | 16 |
+| `cabina.monitorVerticalSpeed` | monitor vertical speed | 22 |
+| `cabina.levelOff` | level off, level off | 20 |
+| `cabina.clearOfConflict` | clear of conflict | 17 |
 
-Y la explicación de la instructora detrás, en los tres peldaños de abajo:
+**Instructora**, 1 102 (las cinco del RA y la de la ventana, en calma: ya lo
+pide la lista):
 
-| voz | clave | es-PY | en |
-|---|---|---|---|
-| instructor | `vuelo.ra.sube` | «La caja nos pide subir para apartarnos del otro: subí con calma, hasta la franja verde.» | «The box asks us to climb away from the other plane: climb gently, up to the green band.» |
-| instructor | `vuelo.ra.baja` | «La caja nos pide bajar para apartarnos del otro: bajá con calma, hasta la franja verde.» | «The box asks us to descend away from the other plane: descend gently, down to the green band.» |
-| instructor | `vuelo.ra.libre` | «Ya pasó: volvemos a la altura que teníamos.» | «It's over: we go back to our altitude.» |
+| clave | texto | car. |
+|---|---|---|
+| `vuelo.ra.sube` | La caja nos pide subir para apartarnos del otro avión: subí con calma, hasta la franja verde. | 93 |
+| `vuelo.ra.baja` | La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde. | 93 |
+| `vuelo.ra.nivela` | La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde. | 94 |
+| `vuelo.ra.vigila` | La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo. | 83 |
+| `vuelo.ra.libre` | Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos. | 77 |
+| `vuelo.radio.otraFrecuencia` | Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos. | 100 |
+| `vuelo.radio.otraVezLaTorre` | Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto. | 80 |
+| `explica.tcas.ra` | la explicación del TCAS con el cuadrado rojo (ver `es-PY.ts`) | 482 |
 
-La cabina no lleva `recetas.json`: cada toma es su propia frase. Con las
-voces grabadas, el RA se construye entero —sensibilidad con los umbrales de
-RA de la tabla 2 de la FAA, el sentido de la maniobra, el cuadrado rojo en
-`ui/carta.ts` y en el lienzo, la franja del variómetro— y entonces el modo
-pasa a TA/RA al entrar en la pista, como en un avión de verdad.
+**Torre** y **torre de Canarias**, 70 cada una (las piezas; el indicativo va en
+la receta):
+
+| clave | texto | car. |
+|---|---|---|
+| `torre.solo.contactDeparture` | contact departure | 17 |
+| `torre.solo.contactControl` | contact Asunción control | 24 |
+| `torre.solo.contactApproach` | contact approach | 16 |
+| `torre.solo.contactTower` | contact tower | 13 |
+| `torre.canario.solo.contactDeparture` | contact departure | 17 |
+| `torre.canario.solo.contactControl` | contact Canarias control | 24 |
+| `torre.canario.solo.contactApproach` | contact approach | 16 |
+| `torre.canario.solo.contactTower` | contact tower | 13 |
+
+## Después de grabar
+
+1. `node scripts/voces-elevenlabs.mjs <voz>` con `cabina`, `instructor`,
+   `torre` y `torre-canarias`.
+2. Las recetas, **después** de grabar (una receta que nombra una pieza que no
+   existe rompe el horneado):
+   - `crudo/instructor/recetas.json`: las ocho, cada una ella misma
+     (`"vuelo.ra.sube": ["vuelo.ra.sube"]`).
+   - `crudo/torre/recetas.json`: las cuatro piezas, cada una ella misma, y las
+     cuatro con indicativo, como `torre.expediteVacating`:
+     `"torre.contactDeparture": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.contactDeparture"]`,
+     y lo mismo `contactControl`, `contactApproach` y `contactTower`.
+   - `crudo/torre-canarias/recetas.json`: igual, con `torre.canario.`.
+3. Hornear, restaurar lo re-codificado y `node scripts/verificar-voces.mjs`.
+   Conviene añadir a su lista `torre.contactDeparture` y
+   `torre.canario.contactDeparture`, como está `torre.climbTo`.
+4. **En el código no hay que tocar nada para que suenen.** Las de la caja se
+   piden por la orden del TCAS (`VOZ_DEL_RA` en `src/audio/cabina.ts`, que ya
+   cuenta en la prueba de que cada toma de cabina la pide alguien); las del
+   relevo, por su clave (ya están en la lista de `src/audio/torre.test.ts`);
+   las de la instructora, con `vozDe`.
+5. Retirar la explicación vieja, `explica.tcas.texto`, que decía «acá el TCAS
+   está en TA ONLY y solo avisa» y ya no es verdad: la ventana usa
+   `explica.tcas.ra` desde ya, y hasta que se grabe se lee y no se oye. Fuera
+   de `es-PY.ts` y `en.ts`, de `EN_CALMA_COMO_SE_ESCRIBE`
+   en `frases-para-grabar.mjs`, de `crudo/instructor/recetas.json`, su toma en
+   `crudo/instructor/` y del pack.
+6. Oírlo: `node scripts/verificar-radar.mjs` pone a uno de frente al reactor y
+   comprueba el RA entero. Con la voz, en los tres peldaños de abajo tiene que
+   oírse la caja —«climb, climb» o «descend, descend»— y detrás, nunca a la
+   vez, la instructora; «level off» al aflojar y «clear of conflict» al
+   alejarse. En el de cabina, la caja sola.
+
+## Lo que el RA de este juego no hace, y qué tomas pediría
+
+Fuera de este encargo; queda escrito en la cabecera de `src/flight/tcas.ts`.
+
+- Reforzar la orden si el otro maniobra hacia nosotros: «increase climb»,
+  «increase descent».
+- Invertirla: «climb, climb NOW», «descend, descend NOW».
+- Decir «crossing» cuando el sentido cruza la altura del otro («climb,
+  crossing climb») y «maintain vertical speed, maintain» cuando ya se sube o
+  baja a más de mil quinientos: hoy esos casos dicen «climb, climb» o
+  «descend, descend», que piden lo mismo con otras palabras.
+- Coordinarse con el TCAS del otro, y más de un tráfico a la vez.
+
+## Por verificar
+
+De memoria y marcado así en el código: la franja verde de 1 500 a 2 000 ft/min
+al subir o bajar; el ancho del verde al nivelar (0 a 200 ft/min, de
+presentación); los límites preventivos de 0, 500, 1 000 y 2 000 ft/min; la
+redacción exacta de la preferencia por no cruzar; y el paso automático a TA ONLY
+mientras avisa el terreno. Comprobados: la tabla de umbrales (FAA, y Muñoz y
+otros, 2013, con el HMD), la respuesta de cinco segundos y un cuarto de g a
+1 500 ft/min (OACI Doc 9863, FAA AC 20-151C), los mil pies sin RA y los mil cien
+sin bajar (EUROCONTROL en SKYbrary), y «level off» a cero (EUROCONTROL 2012).

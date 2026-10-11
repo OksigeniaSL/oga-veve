@@ -47,6 +47,13 @@ instructor	instructor/vuelo.trafico.delante.ogg	es-PY	Mirá adelante: hay otro a
 instructor	instructor/vuelo.trafico.izquierda.ogg	es-PY	Mirá a tu izquierda: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.derecha.ogg	es-PY	Mirá a tu derecha: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.detras.ogg	es-PY	Hay otro avión cerca, detrás de vos	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.sube.ogg	es-PY	La caja nos pide subir para apartarnos del otro avión: subí con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.baja.ogg	es-PY	La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.nivela.ogg	es-PY	La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.vigila.ogg	es-PY	La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.libre.ogg	es-PY	Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.radio.otraFrecuencia.ogg	es-PY	Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.radio.otraVezLaTorre.ogg	es-PY	Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoArriba.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoAbajo.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoNivel.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando	lo que toca hacer ahora, en vuelo y en tierra
@@ -317,6 +324,7 @@ instructor	instructor/explica.matricula.texto.ogg	es-PY	Es el nombre del avión,
 instructor	instructor/explica.carta.texto.ogg	es-PY	Es la pantalla del mapa. El triángulo amarillo sos vos, y lo de arriba es lo que tenés adelante. La línea rosa es el camino del plan de vuelo. Los rombos son otros aviones: el TCAS solo te enseña a los que vuelan cerca de tu altura. Los que van mucho más arriba o más abajo no salen, aunque los veas por la ventanilla.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.carta.tierra.ogg	es-PY	En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice TCAS STBY: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.tcas.texto.ogg	es-PY	Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.	lo que explica tocar una pieza del cuadro
+instructor	instructor/explica.tcas.ra.ogg	es-PY	Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.arco.texto.ogg	es-PY	Este arco verde dice dónde vas a llegar a la altura que pediste, si seguís subiendo o bajando como ahora. Si cae antes de la pista, llegás abajo con tiempo; si cae después, no te da: hay que bajar más rápido o empezar antes.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.arco.presenta.ogg	es-PY	¿Ves el arco verde en el mapa? Ahí vamos a llegar a la altura que pedimos.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.td.texto.ogg	es-PY	T/D quiere decir top of descent, lo alto de la bajada: acá empezamos a bajar. Desde este círculo verde, bajando tranquilos, se llega a la pista a la altura justa.	lo que explica tocar una pieza del cuadro
@@ -667,6 +675,11 @@ cabina	cabina/cabina.sinkRate.ogg	en	sink rate	bajás muy rápido para lo bajo q
 cabina	cabina/cabina.bankAngle.ogg	en	bank angle	el avión va demasiado inclinado
 cabina	cabina/cabina.stall.ogg	en	stall, stall	el ala dejó de sustentar
 cabina	cabina/cabina.traffic.ogg	en	traffic, traffic	otro avión cerca: mirá dónde dice la pantalla
+cabina	cabina/cabina.climbClimb.ogg	en	climb, climb	el TCAS pide subir para apartarse del otro
+cabina	cabina/cabina.descendDescend.ogg	en	descend, descend	el TCAS pide bajar para apartarse del otro
+cabina	cabina/cabina.monitorVerticalSpeed.ogg	en	monitor vertical speed	el TCAS pide no cambiar el ritmo: fuera de lo rojo del variómetro
+cabina	cabina/cabina.levelOff.ogg	en	level off, level off	el TCAS pide dejar de subir o de bajar
+cabina	cabina/cabina.clearOfConflict.ogg	en	clear of conflict	el otro ya se aleja: se acabó la maniobra
 cabina	cabina/cabina.autopilotDisconnect.ogg	en	autopilot disconnect	el piloto automático se soltó y los mandos son tuyos otra vez
 cabina	cabina/cabina.minimums.ogg	en	minimums	la altura de decisión: o la ves, o te vas
 cabina	cabina/cabina.cabin.ogg	en	cabin	la cabina pasó de diez mil pies: se fue el aire
@@ -808,6 +821,10 @@ torre	torre/torre.solo.backtrackRunway.ogg	en	backtrack runway	remontar la pista
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
 torre	torre/torre.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia
+torre	torre/torre.solo.contactDeparture.ogg	en	contact departure	dejás la zona de la torre: te habla salida
+torre	torre/torre.solo.contactControl.ogg	en	contact Asunción control	lejos del campo: te habla el control en ruta
+torre	torre/torre.solo.contactApproach.ogg	en	contact approach	cerca del campo al que vas: te habla aproximación
+torre	torre/torre.solo.contactTower.ogg	en	contact tower	entrás en la zona de la torre: te habla ella otra vez
 torre	torre/torre.solo.birdsOnFinal.ogg	en	caution, flock of birds on final	aves en la final; detrás, a cuántos pies
 torre	torre/torre.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número
 torre	torre/torre.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número
@@ -984,6 +1001,10 @@ torre-canarias	torre-canarias/torre.canario.solo.backtrackRunway.ogg	en	backtrac
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.contactDeparture.ogg	en	contact departure	dejás la zona de la torre: te habla salida, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.contactControl.ogg	en	contact Canarias control	lejos del campo: te habla el control en ruta, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.contactApproach.ogg	en	contact approach	cerca del campo al que vas: te habla aproximación, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.contactTower.ogg	en	contact tower	entrás en la zona de la torre: te habla ella otra vez, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.birdsOnFinal.ogg	en	caution, birds on final	aves en la final; detrás, a cuántos pies, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número, en Canarias

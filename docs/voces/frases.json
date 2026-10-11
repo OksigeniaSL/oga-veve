@@ -360,6 +360,90 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.ra.sube",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide subir para apartarnos del otro avión: subí con calma, hasta la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.baja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.nivela",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.vigila",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.libre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.radio.otraFrecuencia",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.radio.otraVezLaTorre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.traficoArriba",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2738,6 +2822,21 @@
       "speed": 0.95
     },
     "dicho": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el ti-cas avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: más diez es mil pies más arriba, y menos cero cinco, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el ti-cas está en ti-ei only y solo avisa."
+  },
+  {
+    "id": "explica.tcas.ra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.",
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    },
+    "dicho": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el ti-cas avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: más diez es mil pies más arriba, y menos cero cinco, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el ti-cas te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde."
   },
   {
     "id": "explica.arco.texto",
@@ -6975,6 +7074,41 @@
     "para": "otro avión cerca: mirá dónde dice la pantalla"
   },
   {
+    "id": "cabina.climbClimb",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "climb, climb",
+    "para": "el TCAS pide subir para apartarse del otro"
+  },
+  {
+    "id": "cabina.descendDescend",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "descend, descend",
+    "para": "el TCAS pide bajar para apartarse del otro"
+  },
+  {
+    "id": "cabina.monitorVerticalSpeed",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "monitor vertical speed",
+    "para": "el TCAS pide no cambiar el ritmo: fuera de lo rojo del variómetro"
+  },
+  {
+    "id": "cabina.levelOff",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "level off, level off",
+    "para": "el TCAS pide dejar de subir o de bajar"
+  },
+  {
+    "id": "cabina.clearOfConflict",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "clear of conflict",
+    "para": "el otro ya se aleja: se acabó la maniobra"
+  },
+  {
     "id": "cabina.autopilotDisconnect",
     "voz": "cabina",
     "idioma": "en",
@@ -7960,6 +8094,34 @@
     "idioma": "en",
     "texto": "roger, Pan Pan",
     "para": "la torre oyó la llamada de urgencia"
+  },
+  {
+    "id": "torre.solo.contactDeparture",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "contact departure",
+    "para": "dejás la zona de la torre: te habla salida"
+  },
+  {
+    "id": "torre.solo.contactControl",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "contact Asunción control",
+    "para": "lejos del campo: te habla el control en ruta"
+  },
+  {
+    "id": "torre.solo.contactApproach",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "contact approach",
+    "para": "cerca del campo al que vas: te habla aproximación"
+  },
+  {
+    "id": "torre.solo.contactTower",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "contact tower",
+    "para": "entrás en la zona de la torre: te habla ella otra vez"
   },
   {
     "id": "torre.solo.birdsOnFinal",
@@ -9192,6 +9354,34 @@
     "idioma": "en",
     "texto": "roger, Pan Pan",
     "para": "la torre oyó la llamada de urgencia, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.contactDeparture",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "contact departure",
+    "para": "dejás la zona de la torre: te habla salida, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.contactControl",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "contact Canarias control",
+    "para": "lejos del campo: te habla el control en ruta, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.contactApproach",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "contact approach",
+    "para": "cerca del campo al que vas: te habla aproximación, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.contactTower",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "contact tower",
+    "para": "entrás en la zona de la torre: te habla ella otra vez, en Canarias"
   },
   {
     "id": "torre.canario.solo.birdsOnFinal",

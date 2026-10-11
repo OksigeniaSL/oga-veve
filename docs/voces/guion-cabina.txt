@@ -17,6 +17,11 @@ sink rate
 bank angle
 stall, stall
 traffic, traffic
+climb, climb
+descend, descend
+monitor vertical speed
+level off, level off
+clear of conflict
 autopilot disconnect
 minimums
 cabin
