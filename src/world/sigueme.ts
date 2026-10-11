@@ -610,6 +610,14 @@ export class Sigueme {
      * vuelta en cuanto entraba en la pista y se ponía a guiar al revés.
      */
     avanceDelAvion?: number,
+    /**
+     * **Hasta qué metro de la ruta puede ir**, si hay que esperar a uno que
+     * viene de frente por una calle que tiene él: el coche espera ahí con el
+     * avión detrás, en vez de llevarlo hasta el morro del otro. Un sígame
+     * guía por un camino que el control de tierra ya tiene libre. Ver
+     * `paradaDelSigueme` en `plan-de-vuelo.ts`.
+     */
+    hastaAqui = Infinity,
   ): void {
     if (!activo || this.ruta.length < 2 || this.largo < ADELANTO) {
       this.grupo.visible = false;
@@ -664,7 +672,7 @@ export class Sigueme {
     const enLaSalida = esperaEn
       ? this.enLaRuta(esperaEn) + pideElAvion - ADELANTO
       : -Infinity;
-    const objetivo = Math.min(Math.max(guiando, enLaSalida), hastaDondeLlega);
+    const objetivo = Math.min(Math.max(guiando, enLaSalida), hastaDondeLlega, hastaAqui);
     this.esperandoEnLaSalida = enLaSalida > guiando;
     // Primer fotograma con esta ruta: se planta donde toca en vez de correr
     // hasta allí desde el kilómetro cero.

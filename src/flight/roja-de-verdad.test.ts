@@ -29,8 +29,15 @@ const TORRE_TARDA = 2.2;
  * La roja más larga que se admite, s: dos minutos y medio largos. Es lo que tarda
  * un reactor que acaba de cantar final en bajar, frenar y dejar la pista, con
  * el hueco de la radio encima.
+ *
+ * **Y diez segundos más** por el que llega y tiene su salida tapada por otro
+ * que espera en la doble raya de esa misma calle: sigue hasta la siguiente,
+ * como se lo diría la torre, y ocupa la pista ese trozo más. Medido en Guaraní,
+ * una de ciento veinte: 165 s. Antes pasaba por encima del que esperaba —a un
+ * metro de su eje— y la roja salía más corta. Ver `rehacerLaLlegada` en
+ * `world/trafico.ts`.
  */
-const LA_MAS_LARGA = 160;
+const LA_MAS_LARGA = 170;
 
 function dados(semilla: number): () => number {
   let x = semilla >>> 0;

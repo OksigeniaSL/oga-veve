@@ -5300,6 +5300,7 @@ export class Game {
       this.plan.ocupados = () => this.paradosEnLasCalles(false);
       this.plan.enCola = () => this.paradosEnLasCalles(true);
       this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
+      this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
       this.plan.diaDeDespegue = () => this.diaDeDespegue();
     }
     /*
@@ -11092,6 +11093,11 @@ export class Game {
       separacion: separacionEnTierra(this.aircraft.wingSpan),
       porDondeVa,
       esperandoLaPista: this.faseDeAhora === "esperando",
+      /*
+       * Y la raya entera que te queda: por ella no se mete de frente nadie
+       * que no esté ya dentro. Ver `repartirLosTramos` en `world/trafico.ts`.
+       */
+      ruta: this.plan?.rutaReservada() ?? [],
     };
   }
 
@@ -11450,6 +11456,7 @@ export class Game {
     this.plan.ocupados = () => this.paradosEnLasCalles(false);
     this.plan.enCola = () => this.paradosEnLasCalles(true);
     this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
+    this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
     this.plan.diaDeDespegue = () => this.diaDeDespegue();
     // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
     this.scene.add(this.plan.grupo);
@@ -17171,6 +17178,8 @@ export class Game {
         (x, z) => this.terrain.sampleSurface(x, z),
         espera,
         enBiciEnElPuesto ? undefined : this.plan?.avanceEnLaRuta,
+        // Y no más allá de donde se le da paso a uno que viene de frente.
+        enBiciEnElPuesto ? Infinity : (this.plan?.paradaDelSigueme ?? Infinity),
       );
 
       /*

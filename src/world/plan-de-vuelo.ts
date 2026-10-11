@@ -73,6 +73,11 @@ import {
 import { delante, enEjesDePista, puntoDePista, traves } from "./rumbo";
 import { hastaElUmbralDeToma } from "./umbral-desplazado";
 import {
+  porDelanteDe,
+  tramoDeFrente,
+  type QuienTieneElTramo,
+} from "./tramo-de-frente";
+import {
   GUION,
   PARADO,
   Vuelo,
@@ -347,6 +352,50 @@ const MIRANDO_A_LA_RAYA = (10 * Math.PI) / 180;
  * `vueltaPorLaPista`.
  */
 const FRENADA_DE_RODAJE = 1;
+
+/**
+ * **Lo que se queda antes de la calle de otro** quien le da paso, m, además
+ * de la separación de ala, que ya cuenta dónde empieza la calle. Ver
+ * `paradaPorElTramo`.
+ */
+const ANTES_DEL_TRAMO = 5;
+
+/**
+ * **Lo que se aparta el coche del sígame del camino del que pasa**, m, al
+ * esperar con quien guía: la semiala del más grande del tráfico y el margen de
+ * ala. El coche no tiene alas que meter; el que pasa, sí. Ver
+ * `paradaDelSigueme`.
+ */
+const EL_COCHE_SE_APARTA = 17 + 7.5;
+
+/**
+ * **A cuánto de donde se espera se dice que se da paso**, m de raya: a la
+ * vista de la calle del otro y con tiempo de pararse sin clavarse. Antes es
+ * hablar de algo que todavía no se ve; ver `dandoPasoA`.
+ */
+const SE_DICE_AL_ACERCARSE = 150;
+
+/**
+ * **Cada cuántos metros de raya se le da al tráfico la que te queda**: menos
+ * que media calle, así que entre dos puntos no se pierde ninguna. Ver
+ * `rutaReservada`.
+ */
+const PASO_DE_LA_RESERVA = 8;
+
+/**
+ * **Las fases en las que tu raya es un camino que has pedido rodar**, y por
+ * eso nadie se mete de frente en ella: rodando a la pista, y de vuelta desde
+ * que tocas. En el puesto, antes de arrancar, no: un avión que todavía no ha
+ * pedido rodar no tiene la calle para él, y reservársela tendría al tráfico
+ * esperando a alguien que a lo mejor tarda minutos. Ver `rutaReservada`.
+ */
+const RUEDA_POR_SU_RAYA: ReadonlySet<Fase> = new Set<Fase>([
+  "rodando",
+  "esperando",
+  "aterrizado",
+  "abandonando",
+  "a-plataforma",
+]);
 const FIN_PARA_LA_VUELTA = 10;
 const BORDE_DE_LA_VUELTA = 2;
 
@@ -1623,6 +1672,15 @@ export class PlanDeVuelo {
    * `hastaElDeDelante`.
    */
   colaQueHay: () => readonly Punto[] = () => this.enCola();
+
+  /**
+   * **Los caminos por delante de los que tienen una calle de tu raya**, en
+   * los ejes del mundo: los que ya rodaban por ella, de frente, cuando tu raya
+   * apareció. Hasta que la dejen, tu raya se corta antes y se espera ahí. Lo
+   * pone quien sabe del tráfico, como `ocupados`. Ver `tramosQueTienen` en
+   * `trafico.ts` y `paradaPorElTramo`.
+   */
+  tramosDeOtros: () => readonly QuienTieneElTramo[] = () => [];
 
   /**
    * El de la cola detrás del que se está parado ahora, en los ejes del
@@ -3456,7 +3514,8 @@ export class PlanDeVuelo {
     const hechos = this.recorridos;
     if (ruta.length < 2 || hechos.length !== ruta.length || metros <= 0) return [];
     const puntos: { x: number; z: number }[] = [];
-    const hasta = this.avance + metros;
+    // Y no más allá de donde se espera a otro: por ahí no se va a pasar.
+    const hasta = Math.min(this.avance + metros, this.paradaPorElTramo());
     for (let d = this.avance + paso; d <= hasta; d += paso) {
       let i = 1;
       while (i < ruta.length - 1 && hechos[i]! < d) i++;
@@ -3468,6 +3527,123 @@ export class PlanDeVuelo {
       puntos.push({ x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t });
     }
     return puntos;
+  }
+
+  /**
+   * **La raya que te queda por delante, entera**, en los ejes del mundo y un
+   * punto cada pocos metros, desde donde vas: el camino que el control te ha
+   * dado. Es la que no pisa de frente nadie del tráfico que no esté ya en
+   * ella. Vacía si no estás rodando por tu raya. Ver `RUEDA_POR_SU_RAYA` y
+   * `repartirLosTramos` en `trafico.ts`.
+   */
+  rutaReservada(): readonly { x: number; z: number }[] {
+    const fase = this.faseAnterior;
+    if (!fase || !RUEDA_POR_SU_RAYA.has(fase)) return [];
+    if (this.destino !== "espera" && this.destino !== "puesto") return [];
+    // La pide el tráfico varias veces por fotograma: se rehace al avanzar.
+    const c = this.reservada;
+    if (c && c.ruta === this.rutaMundo && Math.abs(c.avance - this.avance) < 1)
+      return c.puntos;
+    const puntos = this.porDelanteDeLaRaya(PASO_DE_LA_RESERVA);
+    this.reservada = { ruta: this.rutaMundo, avance: this.avance, puntos };
+    return puntos;
+  }
+
+  private reservada: {
+    ruta: readonly Punto[];
+    avance: number;
+    puntos: { x: number; z: number }[];
+  } | null = null;
+
+  /** La raya de ahora desde lo recorrido hasta su final, un punto cada `paso`. */
+  private porDelanteDeLaRaya(paso: number): { x: number; z: number }[] {
+    const ruta = this.rutaMundo;
+    if (ruta.length < 2) return [];
+    return porDelanteDe(
+      ruta.map(([x, z]) => ({ x, z })),
+      this.avance,
+      Infinity,
+      paso,
+    );
+  }
+
+  /**
+   * **Dónde se para tu raya por una calle que tiene otro**, m de ruta, y dónde
+   * espera el coche del sígame; `Infinity` si no hay ninguna. Se calcula una
+   * vez por reparto de tramos —la lista llega igual entre uno y otro— y por
+   * cada par de metros que se avanza.
+   */
+  private paradaCalculada: {
+    de: readonly QuienTieneElTramo[];
+    ruta: readonly Punto[];
+    avance: number;
+    avion: number;
+    coche: number;
+    quien: QuienTieneElTramo | null;
+  } | null = null;
+
+  private paradasPorElTramo(): {
+    avion: number;
+    coche: number;
+    quien: QuienTieneElTramo | null;
+  } {
+    const nada = { avion: Infinity, coche: Infinity, quien: null };
+    if (this.destino !== "espera" && this.destino !== "puesto") return nada;
+    const suyos = this.tramosDeOtros();
+    const ruta = this.rutaMundo;
+    if (!suyos.length || ruta.length < 2) return nada;
+    const c = this.paradaCalculada;
+    if (c && c.de === suyos && c.ruta === ruta && Math.abs(c.avance - this.avance) < 2)
+      return c;
+    const delante = this.porDelanteDeLaRaya(PASO_DE_LA_RESERVA / 2);
+    const separacion = separacionEnTierra(this.avion.wingSpan);
+    let avion = Infinity;
+    let coche = Infinity;
+    let quien: QuienTieneElTramo | null = null;
+    for (const suyo of suyos) {
+      const t = tramoDeFrente(delante, suyo.porDelante, separacion);
+      if (t && this.avance + t.entra - ANTES_DEL_TRAMO < avion) {
+        avion = this.avance + t.entra - ANTES_DEL_TRAMO;
+        quien = suyo;
+      }
+      const tc = tramoDeFrente(delante, suyo.porDelante, EL_COCHE_SE_APARTA);
+      if (tc) coche = Math.min(coche, this.avance + tc.entra - ANTES_DEL_TRAMO);
+    }
+    // El coche no espera más atrás que el avión: va delante de él.
+    coche = Math.max(coche, avion);
+    this.paradaCalculada = { de: suyos, ruta, avance: this.avance, avion, coche, quien };
+    return { avion, coche, quien };
+  }
+
+  /**
+   * **Hasta dónde puede rodar el avión por su raya ahora**, m de ruta: antes
+   * de la calle de otro que viene de frente y la tiene. Ahí la raya se corta
+   * —se pinta hasta ahí, como las luces de eje que solo se encienden por
+   * delante de quien tiene el camino libre— y la velocidad que se sugiere
+   * llega a cero. `Infinity` si nada lo impide.
+   */
+  private paradaPorElTramo(): number {
+    return this.paradasPorElTramo().avion;
+  }
+
+  /**
+   * **Hasta dónde llega el coche del sígame**, m de ruta, si hay que esperar
+   * a uno que viene de frente: antes de su camino, a lo que se aparta un
+   * coche, que es menos que lo que se aparta el avión. Así espera delante del
+   * avión parado y no debajo de su morro. `Infinity` si no hay que esperar.
+   */
+  get paradaDelSigueme(): number {
+    return this.paradasPorElTramo().coche;
+  }
+
+  /**
+   * **A quién se le da paso ahora**, si la raya se corta por uno que viene de
+   * frente y la parada ya está cerca: es cuando se dice, como lo diría el
+   * control de tierra al ver que te acercás a esa calle. `null` si no.
+   */
+  get dandoPasoA(): QuienTieneElTramo | null {
+    const p = this.paradasPorElTramo();
+    return p.avion - this.avance < SE_DICE_AL_ACERCARSE ? p.quien : null;
   }
 
   /** La ruta **sin redondear**, tal y como la da el buscador. Para medirla. */
@@ -6167,7 +6343,19 @@ export class PlanDeVuelo {
     return Math.min(
       this.velocidades[i - 1]! + (this.velocidades[i]! - this.velocidades[i - 1]!) * t,
       this.hastaElDeDelante(),
+      this.antesDelTramo(),
     );
+  }
+
+  /**
+   * **Y antes de la calle de otro que viene de frente**, parado a tiempo: la
+   * velocidad a la que se puede ir para pararse donde se corta la raya. Ver
+   * `paradaPorElTramo`.
+   */
+  private antesDelTramo(): number {
+    const queda = this.paradaPorElTramo() - this.avance;
+    if (!Number.isFinite(queda)) return Infinity;
+    return Math.sqrt(2 * FRENADA_DE_RODAJE * Math.max(0, queda));
   }
 
   /**
@@ -6597,8 +6785,16 @@ export class PlanDeVuelo {
    * un trozo de lo que viene, para saber hacia dónde; dada la vuelta, el resto.
    */
   private hastaDondeSePinta(): number {
-    if (this.giroDelBackTaxi === null) return Infinity;
-    return this.finDeLaMediaVuelta + VER_DESPUES_DE_LA_VUELTA;
+    /*
+     * **Y hasta donde se espera a otro, si viene de frente por una calle que
+     * tiene él.** Las luces de eje que guían de verdad —el «follow the
+     * greens»— se encienden por tramos y solo por delante de quien tiene el
+     * camino libre: lo que se ve encendido es por donde se puede ir ya. Ver
+     * `paradaPorElTramo`.
+     */
+    const espera = this.paradaPorElTramo();
+    if (this.giroDelBackTaxi === null) return espera;
+    return Math.min(espera, this.finDeLaMediaVuelta + VER_DESPUES_DE_LA_VUELTA);
   }
 
   /**
