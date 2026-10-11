@@ -106,6 +106,22 @@ const TU_AVION = `<svg class="tu-avion" viewBox="0 0 24 24" aria-hidden="true">
 </svg>`;
 
 /**
+ * **Otro avión**, el mismo dibujo que el tuyo en el color de lo que no es
+ * tuyo: los que salen antes que vos en la fila. Ver `setLuzDeTorre`.
+ */
+const OTRO_AVION = `<svg class="otro-avion" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 2.5 13.5 9.5 22 11.4v2l-8.4-1.2L13 19l2.6 1.6v1.2L12 21l-3.6.8v-1.2L11 19l-.6-6.8L2 13.4v-2l8.5-1.9Z" />
+</svg>`;
+
+/**
+ * **El remolino que deja detrás**, para la espera por su estela: el avión que
+ * salió y, detrás, su torbellino. Ver `setLuzDeTorre`.
+ */
+const REMOLINO = `<svg class="remolino" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 12a1 1 0 0 1 2 0a3 3 0 0 1-6 0a5 5 0 0 1 10 0a7 7 0 0 1-14 0a9 9 0 0 1 18 0" />
+</svg>`;
+
+/**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
  * cualquier cabina del mundo, y aprenderlos es parte de lo que el juego
  * enseña sin proponérselo.
@@ -1355,6 +1371,14 @@ export class Hud {
             los cuatro peldaños: la placa es una forma que se reconoce antes
             de saber leerla, como el OACI del destino.
           -->
+          <!--
+            **Y los que salen antes que vos**, dibujados delante del tuyo: uno
+            por avión de la fila. «Hay dos aviones por salir, bien, pero
+            tardan un montón y el radar no lo está diciendo»: en tierra el TCAS
+            no pinta a nadie, así que la fila la cuenta la torre, y la tarjeta
+            la dibuja para quien no lee.
+          -->
+          <span class="torre__fila" data-hud="torre-fila" hidden></span>
           <span class="torre__quien">${TU_AVION}<span class="placa-matricula">${this.miMatricula}</span></span>
           <span class="torre__texto" data-hud="torre-texto"></span>
         </div>
@@ -3898,6 +3922,18 @@ export class Hud {
      * en la roja se nombra ahí; vacía donde el idioma no la dice.
      */
     pista = "",
+    /**
+     * **Cuántos salen antes que vos** en la fila de salida, con la roja del
+     * punto de espera. Se dibujan delante de tu avión y, donde hay letras, se
+     * escribe tu número: «número dos para la salida». Ver `salenAntes` en
+     * `flight/turno-de-pista.ts`.
+     */
+    delante = 0,
+    /**
+     * **Y si se espera la estela de la salida de delante**: se dibuja el que
+     * salió con su remolino detrás. Ver `esperaPorEstela`.
+     */
+    estela = false,
   ): void {
     const caja = this.torre;
     if (!caja) return;
@@ -3914,6 +3950,31 @@ export class Hud {
       "--torre-ancho",
       caja.hidden ? "0px" : `${caja.offsetWidth + 14}px`,
     );
+    const enLaRoja = luz === "roja" && rojaDice !== "alAire";
+    const enLaFila = enLaRoja ? delante : 0;
+    const porLaEstela = enLaRoja && enLaFila === 0 && estela;
+    const fila = caja.querySelector<HTMLElement>('[data-hud="torre-fila"]');
+    const cual = `${enLaFila}:${porLaEstela}`;
+    if (fila && fila.dataset.cual !== cual) {
+      fila.dataset.cual = cual;
+      fila.hidden = enLaFila === 0 && !porLaEstela;
+      fila.innerHTML = porLaEstela ? OTRO_AVION + REMOLINO : OTRO_AVION.repeat(enLaFila);
+      const dice = porLaEstela
+        ? t("hud.esperaLaEstela")
+        : enLaFila
+          ? t("hud.filaDeSalida", { numero: String(enLaFila + 1) })
+          : "";
+      if (dice) {
+        fila.setAttribute("aria-label", dice);
+        fila.title = dice;
+      } else {
+        fila.removeAttribute("aria-label");
+        fila.removeAttribute("title");
+      }
+    }
+    // Tu número, escrito detrás de la orden: «número dos para la salida».
+    const tuNumero =
+      enLaFila === 1 ? "torre.numeroDos" : enLaFila >= 2 ? "torre.numeroTres" : null;
     const texto = caja.querySelector('[data-hud="torre-texto"]');
     if (texto)
       texto.textContent =
@@ -3937,7 +3998,10 @@ export class Hud {
                   pista,
                 ]
                   .filter(Boolean)
-                  .join(" ")
+                  .join(" ") +
+                (tuNumero
+                  ? `, ${t(comoSeDiceAqui(tuNumero, this.habla) as TranslationKey)}`
+                  : "")
               : "";
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
     // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es

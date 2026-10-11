@@ -410,6 +410,21 @@ export const ES_PY = {
    * todas partes (SERA.14035, al que remite el RCA en 10.5.2.1.3).
    */
   "torre.canario.subir": "{indicativo}, suba a {altura}",
+  /*
+   * **Y tu número en la fila de salida**, detrás de la roja: «número dos para
+   * la salida». Es información de secuencia, no una autorización —se espera
+   * igual a la verde—, y se da con su número como la secuencia del circuito,
+   * «NUMBER … FOLLOW» (Doc 4444, 12.3.4.14 b; «NÚMERO… SIGA» en el RD
+   * 1180/2018, 1.4.15 b). Va suelta, detrás de la lámpara, y solo con su
+   * grabación: ver `decirLaFila` en `game.ts` y `PENDIENTE-VOCES-tierra-2.md`.
+   */
+  "torre.numeroDos": "número dos para la salida",
+  "torre.numeroTres": "número tres para la salida",
+  "torre.canario.numeroDos": "número dos para la salida",
+  "torre.canario.numeroTres": "número tres para la salida",
+  /** Lo que dice el dibujo de la fila, para quien no lo ve. Ver `setLuzDeTorre` en `ui/hud.ts`. */
+  "hud.filaDeSalida": "Número {numero} para la salida",
+  "hud.esperaLaEstela": "Esperamos la estela del avión que salió",
   "torre.canario.solo.subir": "suba a {n} mil pies",
   "torre.canario.solo.subirNivel": "suba a nivel de vuelo",
 
@@ -1146,6 +1161,15 @@ export const ES_PY = {
    */
   "vuelo.esperaQueAterrice": "Esperamos: viene un avión a aterrizar",
   "vuelo.esperaQueDespegue": "Esperamos: primero sale el avión que está en la pista",
+  /*
+   * **Y en la fila de salida**, que es otro porqué: el de delante no está en
+   * la pista, espera en su doble raya desde antes que vos, y sale antes. Y
+   * detrás de uno grande, sus dos minutos de estela. Sin grabar: ver
+   * `PENDIENTE-VOCES-tierra-2.md`; hasta entonces lo cuenta la tarjeta.
+   */
+  "vuelo.esperaTurnoDeSalida": "Esperamos nuestro turno: primero sale el avión que llegó antes",
+  "vuelo.esperaLaEstela":
+    "Esperamos un poquito: el avión que salió deja remolinos en el aire",
   "vuelo.autorizado": "¡Luz verde! Entrá a la pista",
   /*
    * **Y en la pista de casa, sin torre ni lámpara**: se para y se mira antes

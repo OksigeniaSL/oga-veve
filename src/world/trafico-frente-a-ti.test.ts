@@ -380,7 +380,7 @@ function rodarHastaLaVerde(
     : Infinity;
   for (const [m, { queda, tipo: id }] of alEntrar) {
     const tipo = tipos.find((k) => k.id === id);
-    if (tipo && queda < Math.min(tipo.carrera * PISTA_POR_DELANTE, loMas) - 60)
+    if (tipo && queda < Math.min(tipo.pistaQuePide * PISTA_POR_DELANTE, loMas) - 60)
       sinPista.add(`${m} (${id}) con ${Math.round(queda)} m, cuando podía con ${Math.round(loMas)}`);
   }
   const atascado = entro

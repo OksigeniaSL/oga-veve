@@ -149,6 +149,13 @@ const pelada = (clave) =>
  * dice con su nombre. Ver `CALLADAS` y `flight/dependencia.ts`.
  */
 const { CALLADAS, CUANTOS } = await server.ssrLoadModule("/src/flight/radio.ts");
+const { TIPOS } = await server.ssrLoadModule("/src/world/trafico.ts");
+/**
+ * **Y cómo despega cada uno que sale**: por dónde va de su camino de salida
+ * en cada muestra. «Se vio salir muy despacio, como si estuviera rodando», en
+ * Tenerife Sur. Ver «las salidas» más abajo.
+ */
+const salidas = new Map();
 const fasesOidas = new Map();
 const relojAlEmpezar = await page.evaluate(() => globalThis.__oga.reloj());
 const hasta = Date.now() + RATO * 1000;
@@ -192,7 +199,25 @@ while (Date.now() < hasta) {
     ),
     t: globalThis.__oga.reloj(),
     nombrados: globalThis.__oga.nombrados(),
+    dentro: globalThis.__oga.traficoPorDentro(),
   }));
+  for (const d of m.dentro) {
+    if (d.camino !== "salida" || d.despega === null || d.espera === null) continue;
+    const a = m.trafico.find((x) => x.matricula === d.matricula);
+    if (!a) continue;
+    const lista = salidas.get(d.matricula) ?? [];
+    lista.push({
+      t: m.t,
+      r: d.recorrido,
+      despega: d.despega,
+      espera: d.espera,
+      x: a.x,
+      z: a.z,
+      tipo: d.tipo,
+      enLaPista: a.enLaPista,
+    });
+    salidas.set(d.matricula, lista);
+  }
   for (const matricula of m.frecuencia) estuvieron.add(matricula);
   /*
    * **Y quién la hizo, y cuándo**, que no es lo mismo que cuándo sonó. La
@@ -433,6 +458,68 @@ comprobar(
   sitiosMedidos === sitios.length,
   `${sitiosMedidos} de ${sitios.length}`,
   "una comprobación que no se ejecuta no es una comprobación que pasa",
+);
+
+/*
+ * **Y las salidas, como las de su tipo.** De su «cleared for take-off» al
+ * aire —entrar, alinearse y correr, o correr si ya esperaba alineado— ronda
+ * el minuto; al dejar el suelo va a su Vr y no a paso de calle; y la pista
+ * queda libre al pasar su final (Doc 4444, 7.9). Se mide desde la llamada,
+ * que la frecuencia apunta al hacerla —ver `hechas`—, y no desde la doble
+ * raya: el que recibe «line up and wait» sale de ella y espera alineado lo
+ * que haga falta, y eso es la espera de la torre, no su carrera. La primera
+ * tirada lo medía desde la doble raya y dio 91 s a dos reactores que habían
+ * esperado alineados. En las muestras del banco, cada dos segundos de juego
+ * a ×8: el tiempo, con esa holgura. Antes del arreglo, el reactor tardaba
+ * setenta y tres segundos de alinearse a despegar. Ver `TIPOS` y
+ * `enSuCarrera` en `world/trafico.ts`.
+ */
+const medidas = [];
+for (const [matricula, lista] of salidas) {
+  const autorizado = hechas.find(
+    (h) => h.clave === "torre.clearedTakeoff" && h.quien === matricula,
+  );
+  const enElAire = lista.find((p) => p.r >= p.despega);
+  if (!autorizado || !enElAire || enElAire.t <= autorizado.t) continue;
+  const enTierra = lista.filter((p) => p.r < p.despega && p.t >= autorizado.t);
+  const a = enTierra.at(-2);
+  const b = enTierra.at(-1);
+  const v = a && b && b.t > a.t ? Math.hypot(b.x - a.x, b.z - a.z) / (b.t - a.t) : null;
+  const libre = lista.find((p) => p.t > enElAire.t && !p.enLaPista);
+  const tipo = TIPOS[enElAire.tipo];
+  medidas.push({
+    matricula,
+    tipo: enElAire.tipo,
+    tarda: enElAire.t - autorizado.t,
+    libre: libre ? libre.t - autorizado.t : null,
+    v,
+    rota: tipo?.rota ?? null,
+  });
+}
+comprobar(
+  "y las salidas despegan como su tipo: de su autorización al aire, en torno al minuto",
+  medidas.length > 0 &&
+    medidas.every(
+      (x) =>
+        x.tarda >= 20 &&
+        x.tarda <= 78 &&
+        (x.libre === null || x.libre <= 120) &&
+        x.v !== null &&
+        x.rota !== null &&
+        x.v >= 0.75 * x.rota,
+    ),
+  medidas.length
+    ? medidas
+        .map(
+          (x) =>
+            `${x.matricula} (${x.tipo}) al aire a los ${x.tarda.toFixed(0)} s` +
+            (x.libre !== null ? `, pista libre a los ${x.libre.toFixed(0)}` : "") +
+            `, ${x.v === null ? "?" : Math.round(x.v / 0.5144)} kt antes de irse` +
+            (x.rota ? ` (Vr ${Math.round(x.rota / 0.5144)} kt)` : ""),
+        )
+        .join(" · ")
+    : "ninguna salida vista entera desde su autorización",
+  "«se vio salir muy despacio, como si estuviera rodando»",
 );
 
 const enElOrigen = visto.filter((v) =>

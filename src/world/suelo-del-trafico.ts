@@ -194,12 +194,14 @@ const PASA_A_TU_LADO = 17 + 18 + 7.5;
 const FILA_DE_SALIDA = 120;
 
 /**
- * **La pista que necesita por delante el que sale, en carreras de su tipo.**
+ * **La pista que necesita por delante el que sale, en distancias de despegue
+ * de su tipo.**
  *
- * La carrera de `TIPOS` es la de despegue; lo que se pide para salir por una
- * intersección es esa carrera con su margen, el mismo veinte por ciento y pico
- * que se suma en cualquier cálculo de pista requerida. Con menos, por la boca
- * de la cabecera. Ver `salida`.
+ * Es `pistaQuePide` en `TIPOS`, la distancia de despegue de su ficha, y no la
+ * carrera que se le ve correr, que es más corta: lo que se pide para salir
+ * por una intersección es esa distancia con su margen, el mismo veinte por
+ * ciento y pico que se suma en cualquier cálculo de pista requerida. Con
+ * menos, por la boca de la cabecera. Ver `salida`.
  */
 export const PISTA_POR_DELANTE = 1.25;
 

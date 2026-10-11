@@ -264,3 +264,120 @@ Comprobarlo con el banco del vuelo entero saliendo de Mariscal Estigarribia
 con viento del sur (la 01: la avioneta remonta un trozo; el JAZ 90, la pista
 entera) y con viento del norte (la 19: la avioneta y el JAZ 90 salen desde la
 calle; el JAZ 120 pide la pista entera).
+
+---
+
+# Pendiente: tu número en la fila de salida, y la estela (punto 257)
+
+Encargo del 11 de octubre de 2026. Enrique, con el JAZ 60 en el punto de
+espera B de Tenerife Sur y dos aviones por salir: «tardan un montón y el radar
+no lo está diciendo» y, al final, «nada, me dejaron salir a mí antes». Ahora
+sale primero el que esperaba antes (Doc 4444, 7.9), detrás de una salida de
+estela media un avión ligero espera sus dos minutos (Doc 4444, 5.8.3.1), y la
+espera **la cuenta la torre**: en tierra el TCAS no pinta a nadie. **Nada
+grabado**: el juego funciona sin estas frases.
+
+## Lo que ya se ve y se oye, sin grabar nada
+
+- **La tarjeta de la torre dibuja la fila**: un avión gris por cada uno que
+  sale antes que vos, delante del tuyo, y donde hay letras, detrás de la
+  orden, «número dos para la salida» (`hud.filaDeSalida` para quien no ve).
+- **La roja de siempre**, «mantenga fuera de pista», con su voz.
+- **De Taguató para arriba, la radio escrita en su tira**, con su número; y en
+  voz, hasta que se grabe, la de siempre que también es verdad: «hold short
+  of the runway, departing traffic» (o a secas, por la estela).
+- **Cuando el de delante entra en la pista**, la instructora en los peldaños
+  de abajo: «Esperamos: primero sale el avión que está en la pista», que ya
+  está grabada.
+
+## Lo que falta
+
+Todas se piden **solo si su grabación está en el pack** (`instructor.vozDe`);
+ver `decirLaFila`, `explicarLaEspera` y `elPorqueEnRadio` en `src/game.ts`.
+
+| voz | clave | dice | cuándo |
+|---|---|---|---|
+| torre | `torre.numeroDos` | número dos para la salida | detrás de la roja, en los cuatro peldaños, con uno delante en la fila (Paraguay) |
+| torre | `torre.numeroTres` | número tres para la salida | lo mismo, con dos delante |
+| torre-canarias | `torre.canario.numeroDos` | número dos para la salida | lo mismo en Canarias |
+| torre-canarias | `torre.canario.numeroTres` | número tres para la salida | lo mismo en Canarias |
+| torre | `torre.holdShortNumberTwo` | {matrícula}, hold short of the runway, number two for departure | de Taguató para arriba, con uno delante |
+| torre | `torre.holdShortNumberThree` | {matrícula}, hold short of the runway, number three for departure | lo mismo, con dos delante |
+| torre | `torre.holdShortWake` | {matrícula}, hold short of the runway, caution wake turbulence | de Taguató para arriba, esperando la estela de la salida de delante |
+| torre-canarias | `torre.canario.holdShortNumberTwo`, `…NumberThree`, `…Wake` | lo mismo | lo mismo en Canarias |
+| instructor | `vuelo.esperaTurnoDeSalida` | Esperamos nuestro turno: primero sale el avión que llegó antes | peldaños de abajo, con alguien delante en la fila |
+| instructor | `vuelo.esperaLaEstela` | Esperamos un poquito: el avión que salió deja remolinos en el aire | peldaños de abajo, esperando la estela |
+
+La secuencia de salida es información, no una autorización: se espera igual a
+la verde. «Caution wake turbulence» es la expresión de la OACI (Doc 4444,
+12.3.4.19 e), y el número se da como la secuencia del circuito, «NUMBER …
+FOLLOW» (12.3.4.14 b); en castellano, «PRECAUCIÓN ESTELA TURBULENTA» y
+«NÚMERO… SIGA» (RD 1180/2018, anexo de fraseología, 1.4.20 e y 1.4.15 b), así
+que la torre de España dice el número igual; si la DINAC R 4444
+lo dijera de otra manera, se cambia el texto de `torre.numeroDos` en
+`src/i18n/es-PY.ts` antes de grabar.
+
+## 1. Grabar las piezas
+
+En `scripts/frases-para-grabar.mjs`:
+
+- en `LAMPARA_SOLO`, para las dos voces de torre, las cuatro de castellano
+  **con su clave entera** (van sueltas, sin matrícula):
+
+  ```js
+  [voz, voz === "torre" ? "torre.numeroDos" : "torre.canario.numeroDos",
+    "número dos para la salida", EN_ESPERA],
+  [voz, voz === "torre" ? "torre.numeroTres" : "torre.canario.numeroTres",
+    "número tres para la salida", EN_ESPERA],
+  ```
+
+- en `TORRE_SOLO`, detrás de `torre.solo.holdShort`:
+
+  ```js
+  ["torre.solo.holdShortNumberTwo", "hold short of the runway, number two for departure",
+    "pará en la doble raya: sale uno antes que vos"],
+  ["torre.solo.holdShortNumberThree", "hold short of the runway, number three for departure",
+    "pará en la doble raya: salen dos antes que vos"],
+  ["torre.solo.holdShortWake", "hold short of the runway, caution wake turbulence",
+    "pará en la doble raya: el que salió deja estela"],
+  ```
+
+  (la lista genera también las de `torre.canario.solo.*`; comprobarlo como
+  con `vacateNext`);
+
+- las dos de la instructora salen con el resto de `vuelo.*`.
+
+Y luego, como siempre:
+
+```bash
+node scripts/frases-para-grabar.mjs
+node scripts/voces-elevenlabs.mjs --cuanto torre
+node scripts/voces-elevenlabs.mjs torre
+node scripts/voces-elevenlabs.mjs --cuanto torre-canarias
+node scripts/voces-elevenlabs.mjs torre-canarias
+node scripts/voces-elevenlabs.mjs instructor
+```
+
+## 2. Las recetas
+
+En `crudo/torre/recetas.json`:
+
+```json
+"torre.holdShortNumberTwo": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.holdShortNumberTwo"],
+"torre.holdShortNumberThree": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.holdShortNumberThree"],
+"torre.holdShortWake": ["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", "torre.solo.holdShortWake"]
+```
+
+Y las mismas con `torre.canario.` en `crudo/torre-canarias/recetas.json`. Las
+dos de la instructora, de una pieza en `crudo/instructor/recetas.json`.
+Hornear el pack, restaurar lo re-codificado y `node scripts/verificar-voces.mjs`.
+
+## 3. Después de grabar
+
+- Añadir las tres en inglés a `CLAVE_DE_TORRE` en `src/audio/torre.ts` y
+  cambiar `HOLD_SHORT_POR.fila` y `.estela` en `src/flight/turno-de-pista.ts`
+  por ellas; entonces `elPorqueEnRadio` puede pedirlas por `porRadio`. La tabla
+  no las lleva hasta entonces porque su prueba exige que todo lo que nombra
+  esté grabado.
+- Comprobarlo con el banco del vuelo entero en Tenerife Sur con
+  `OGA_FILA_DE_SALIDA=1`.

@@ -218,6 +218,21 @@ export interface Momento {
    * `flight/turno-de-pista.ts`.
    */
   readonly calleOcupada?: "saliendo" | "volviendo" | null;
+  /**
+   * **Los que salen antes que vos**, en orden, mientras esperás en la doble
+   * raya: los que ya esperaban listos en la suya cuando llegaste. Lo sabe el
+   * dibujo; ver `delanteEnLaSalida` en `world/trafico.ts`.
+   *
+   * La torre te daba la salida a vos por delante de ellos, siempre: con la
+   * fase de esperar callada, al que esperaba su «cleared for take-off» no se
+   * le podía decir, y la pista libre era tuya. En Tenerife Sur, con el JAZ 60
+   * en el punto de espera B y dos aviones por salir: «nada, me dejaron salir
+   * a mí antes». Las salidas se autorizan en el orden en que están listas
+   * (Doc 4444, 7.9), así que al primero de la fila se le da la suya en cuanto
+   * se puede, sin la espera de una llamada cualquiera, y habla aunque la fase
+   * calle, como el de la única calle. Ver `update`.
+   */
+  readonly delanteEnLaFila?: readonly string[];
 }
 
 /** Lo que se oye: quién, qué, y de quién es la matrícula que se nombra. */
@@ -638,6 +653,32 @@ export class Frecuencia {
     );
   }
 
+  /**
+   * **Si ese avión va a salir**: ya rueda hacia la pista —su «rodando» se
+   * dijo— y todavía no le han dado la salida ni la pista. Es el que puede
+   * estar delante de vos en la fila. Ver `salenAntes` en
+   * `flight/turno-de-pista.ts`.
+   */
+  vaASalir(matricula: string): boolean {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    return !!a && enLaCalle(a.guion, a.paso);
+  }
+
+  /**
+   * **Para el banco: uno que todavía no ha dicho nada sale a rodar ya**, con
+   * el guion de quien sale y sin esperar su turno. Devuelve su matrícula, o
+   * `null` si todos van por la mitad de su vuelo. Es lo que deja ver la fila
+   * de salida en un vuelo entero sin esperar a que el sorteo la dé: ver
+   * `OGA_FILA_DE_SALIDA` en `scripts/verificar-vuelo-entero.mjs`.
+   */
+  sacarARodar(): string | null {
+    const a = this.aviones.find((x) => x.paso === 0);
+    if (!a) return null;
+    a.guion = "sale";
+    a.falta = 0;
+    return a.indicativo.matricula;
+  }
+
   /** El que está en la calle, si hay alguno. Ver `enLaCalle`. */
   quienEstaEnLaCalle(): string | null {
     return (
@@ -961,8 +1002,24 @@ export class Frecuencia {
        * haya ido. Sigue sin dársela si la tiene otro. Ver `enLaCalle`.
        */
       const deLaCalle = !!m.calleOcupada && enLaCalle(a.guion, a.paso);
+      // El primero de la fila de salida, por delante de vos: ver `delanteEnLaFila`.
+      const primeroDeLaFila = m.delanteEnLaFila?.[0] === a.indicativo.matricula;
+      /*
+       * **Y el que espera alineado, con vos detrás, sale en cuanto puede.**
+       * Su «line up and wait» se le dio por algo —uno que aterriza, la estela
+       * de otro—, y eso lo mira `todaviaNo`; lo que no tiene sentido es que,
+       * resuelto, se quede en el eje lo que tarda una llamada cualquiera,
+       * hasta setenta y cinco segundos, con la fila esperando. Medido en
+       * Tenerife Sur: de su autorización a irse al aire, hasta cien segundos.
+       */
+      const alineadoConFila =
+        !!m.esperandoLaPista &&
+        toca === "torre.clearedTakeoff" &&
+        laPistaQueTiene(a.guion, a.paso) === "torre.lineUpWait";
       const apura =
-        deLaCalle && m.calleOcupada === "saliendo" && DAN_LA_PISTA.has(toca);
+        (deLaCalle && m.calleOcupada === "saliendo" && DAN_LA_PISTA.has(toca)) ||
+        (primeroDeLaFila && DAN_LA_PISTA.has(toca)) ||
+        alineadoConFila;
       if (a.falta > 0 && !apura) continue;
       /*
        * **Y en el punto de espera, también el que va a cantar final.** Con el
@@ -987,7 +1044,8 @@ export class Frecuencia {
         soloLosDeLaPista &&
         !laPistaQueOcupa(a.guion, a.paso) &&
         !cantaFinal &&
-        !(deLaCalle && m.calleOcupada === "saliendo")
+        !(deLaCalle && m.calleOcupada === "saliendo") &&
+        !primeroDeLaFila
       )
         continue;
       /*
