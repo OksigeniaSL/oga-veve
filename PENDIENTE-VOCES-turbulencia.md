@@ -1,91 +1,36 @@
-# Pendiente: grabar las voces de la turbulencia
+# Pendiente: oír la turbulencia, y el PIREP que se pierde
 
-Ya está en el juego, sin grabar: la palabra **turbulencia**, nunca
-«movimiento», dicha de muchas maneras y todas normales. Cada frase se pide solo
-si su toma está en el pack, y hasta entonces suena lo que ya hay grabado y es
-verdad:
+Grabado y horneado el 11 de octubre de 2026: las quince de la comandante (las
+tres de grado fuerte, en calma), `vuelo.pirep` de la instructora, la pausa y la
+vuelta del servicio de las dos tripulaciones, y las piezas de radio del otro
+avión y de las dos torres. `verificar-voces.mjs` comprueba ya una de cada boca
+—la comandante, las dos tripulaciones, el otro avión y las dos torres con la
+altura en su hueco, y la instructora— y pasa entero. Las piezas de la altura
+del otro avión (`altura.*`, `cifra.*`) llevan su propia receta: sin ella no se
+bajaban con el pack y el PIREP no se montaba nunca.
 
-- **El anuncio**: la clave sale del suceso —por grados; la de aire claro, «ahora»;
-  la segunda vez del vuelo, «otra vez»; con tormenta, la suya; y la que avisó
-  otro avión, la del PIREP—. Ver `src/audio/anuncio-de-turbulencia.ts`. Sin su
-  toma, `comandante.turbulencia`, la de «algo de movimiento», como hasta ahora.
-- **Al pasar**: «ya estamos tranquilos» con la señal que se apaga (en dos
-  formas, `paso` y `paso~2`), o «sigue encendida porque ya empezamos a bajar».
-  Con la señal puesta de antes no se dice nada, porque sería mentira. Sin toma,
-  el cartel que se apaga con su *ding*, como hasta ahora.
-- **El consejo del cinturón** (`comandante.cinturon.porque`), una vez por vuelo:
-  detrás del primer «ya pasó» —con la forma `paso~2`, que no lo da ya— o, en un
-  vuelo sin turbulencia, en un rato de calma del crucero. Sin toma, nada.
-- **El servicio**: si ya se había ofrecido y el pasaje iba suelto, la tripulación
-  lo para detrás de la comandante y al pasar sigue, con el habla de su sitio.
-  Sin toma, nada.
-- **El PIREP**: una de cada tres previstas la avisa otro avión
-  (`Zona.fuente`, en `src/flight/turbulencia-del-vuelo.ts`). Si hay alguien en
-  la frecuencia lo cuenta él; de Taguató para arriba la torre te lo retransmite;
-  en los dos peldaños de abajo, detrás de lo que se oyó, la instructora; y luego
-  Jazlyn. Todo por el mismo turno, y la tira de cada uno cuando empieza a
-  sonar. Ver `contarElPirep` en `src/game.ts`. Sin toma, la radio se lee en la
-  tira, la instructora no pregunta por una radio que no sonó y Jazlyn dice la de
-  siempre.
+## Lo que salió en el banco
 
-## 1. Grabar (47 frases, 4.226 caracteres)
+`verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-90 gran-canaria` con
+`OGA_CRUCERO=300 OGA_TURBULENCIA=prevista OGA_TURBULENCIA_FUENTE=pirep` y
+`OGA_VOCES=fichero` (11 de octubre de 2026): la turbulencia se anunció a
+7,1 km de una zona que empezaba a 20, y `comandante.turbulencia.pirep` sonó
+entera (371,5–385,2 s). Pero **la radio del otro avión no**:
+`otro.pirep.moderada` esperaba detrás de la torre canaria (366,4–370,6 s) y se
+cayó con «caducó esperando» a los 371,5 s, justo cuando entró Jazlyn. Sin la
+radio, la instructora no explicó nada —está hecho así: no pregunta por una
+radio que no sonó— y el orden radio, instructora, Jazlyn no se oyó. Falta ver
+si el PIREP tiene que esperar más que un aviso, como la megafonía
+(`CADUCA_LA_MEGAFONIA` en `src/audio/turnos.ts`), o si la comandante tiene que
+esperar a que suene. Ver `contarElPirep` en `src/game.ts`.
 
-**Comandante** (15 frases, 3.122 caracteres). Con chispa, como todo lo suyo;
-las tres de grado fuerte, en calma (`EN_CALMA_COMO_SE_ESCRIBE`): firmes, no
-alarmadas.
+## Lo que falta oír
 
-| clave | caracteres |
-|---|---|
-| `comandante.turbulencia.ligera` | 266 |
-| `comandante.turbulencia.moderada` | 294 |
-| `comandante.turbulencia.fuerte` (en calma) | 282 |
-| `comandante.turbulencia.ahora.ligera` | 215 |
-| `comandante.turbulencia.ahora.moderada` | 256 |
-| `comandante.turbulencia.ahora.fuerte` (en calma) | 197 |
-| `comandante.turbulencia.otraVez.ligera` | 147 |
-| `comandante.turbulencia.otraVez.moderada` | 172 |
-| `comandante.turbulencia.otraVez.fuerte` (en calma) | 198 |
-| `comandante.turbulencia.tormenta` | 267 |
-| `comandante.turbulencia.pirep` | 251 |
-| `comandante.turbulencia.paso` | 134 |
-| `comandante.turbulencia.paso~2` | 110 |
-| `comandante.turbulencia.pasoBajando` | 112 |
-| `comandante.cinturon.porque` | 221 |
-
-**Instructora** (1 frase, 138 caracteres, con chispa): `vuelo.pirep`.
-
-**Tripulación**: `tripulacion.servicio.pausa` (130) y `.seguimos` (71), 201
-caracteres; y la de Canarias, `tripulacion.canario.servicio.pausa` (147) y
-`.seguimos` (79), 226 caracteres.
-
-**Otro avión** (19 piezas, 269 caracteres, en inglés): `otro.solo.pirep.ligera`
-(41), `.moderada` (44) y `.fuerte` (42); y para la altura, que hasta ahora solo
-tenían las torres, `altura.nivel` (12), `altura.pies.2` a `.6` (89) y `cifra.0`
-a `cifra.9` (41).
-
-**Torre** y **torre de Canarias** (4 piezas cada una, 135 caracteres cada una):
-`torre.solo.pirep.ligera` (37), `.moderada` (40), `.fuerte` (38) y
-`torre.solo.pirep.porDelante` (20); en Canarias, `torre.canario.solo.pirep.*`.
-
-Los textos, en `src/i18n/es-PY.ts` y `en.ts` (la segunda forma del «ya pasó»,
-en `src/audio/variantes.ts`); las piezas de radio, en `TORRE_SOLO` y
-`OTRO_EN_INGLES` de `scripts/frases-para-grabar.mjs`; las filas, en
-`docs/voces/frases.json`, y las recetas, en `crudo/<voz>/recetas.json`: una
-toma por frase, y las de radio montadas —`otro.pirep.*` con el indicativo y
-`{altura}`; `torre.pirep.*` y `torre.canario.pirep.*` con tu matrícula,
-`{altura}` y «by preceding traffic»—. Así que grabar las siete voces con
-`node scripts/voces-elevenlabs.mjs <voz>`, hornear (falla mientras falte alguna
-toma de su voz), restaurar lo re-codificado y `node scripts/verificar-voces.mjs`.
-
-## 2. Después de grabar
-
-- Añadir a `REPARTO` de `scripts/verificar-voces.mjs` una de cada boca —la
-  comandante, la tripulación de los dos sitios, el otro avión y las dos torres
-  con su relleno— para que salgan de su pack.
-- `npx vitest run src/flight/turbulencia-del-vuelo.test.ts src/audio/anuncio-de-turbulencia.test.ts`.
-- Oírlo: un vuelo entero del JAZ 90 con
-  `OGA_CRUCERO=300 OGA_TURBULENCIA=prevista` (y otro con `sin-avisar`, y otro
-  con `OGA_TURBULENCIA_FUENTE=pirep`, en Taguató y en Guyrami) y
-  `OGA_VOCES=fichero`: que suena la frase nueva y en su orden —la radio, la
-  instructora o la torre, Jazlyn y la tripulación—, y al pasar, el «ya pasó» y
-  el consejo.
+- Un vuelo entero del JAZ 90 con `OGA_CRUCERO=300 OGA_TURBULENCIA=prevista`,
+  otro con `sin-avisar` y otro con `OGA_TURBULENCIA_FUENTE=pirep` en Taguató,
+  donde la torre lo retransmite; y repetir el de Guyrami cuando se arregle lo
+  de arriba.
+- Al pasar, el «ya pasó» y el consejo del cinturón. En este vuelo no tocaba:
+  se anunció en la subida, con la señal puesta desde el despegue, y con la
+  señal puesta de antes no se dice nada. Hace falta una zona que llegue con el
+  pasaje suelto, en crucero.
