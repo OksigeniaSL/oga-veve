@@ -41,6 +41,7 @@ instructor	instructor/vuelo.enVueloDestino.ogg	es-PY	Seguí la flecha: vamos al 
 instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo: subí un poco	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoSube.ogg	es-PY	El suelo está cerca: subí	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.terrenoDelante.ogg	es-PY	Adelante hay una montaña más alta que nosotros: subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.perdida.ogg	es-PY	Pérdida. Bajá el morro	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.delante.ogg	es-PY	Mirá adelante: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.izquierda.ogg	es-PY	Mirá a tu izquierda: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
@@ -77,7 +78,6 @@ instructor	instructor/vuelo.masAltoQueElPlan.ogg	es-PY	Vamos más alto que el pl
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
-instructor	instructor/vuelo.sinPermisoEnLosMinimos.ogg	es-PY	La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podés volver a bajar	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.puedeVolverSinTorre.ogg	es-PY	La pista ya está libre: volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
@@ -343,6 +343,42 @@ instructor	instructor/explica.mesitas.texto.ogg	es-PY	Para despegar y para aterr
 instructor	instructor/explica.modo-avion.texto.ogg	es-PY	El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.bomberos.texto.ogg	es-PY	Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.	lo que explica tocar una pieza del cuadro
 instructor	instructor/explica.bomberos-y-aviones.texto.ogg	es-PY	A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.	lo que explica tocar una pieza del cuadro
+instructor	instructor/vuelta.empezar.ogg	es-PY	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.entera.ogg	es-PY	¡Vuelta lista! El avión está para volar.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.pitot.voz.ogg	es-PY	Esta funda roja tapa el pitot mientras el avión está guardado. Hay que sacarla: sin ella fuera, el avión no sabe a qué velocidad va.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.sondas.voz.ogg	es-PY	Estas son las sondas que miden la velocidad. Se les saca la funda y se mira que estén sanas y limpias.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.superficies.voz.ogg	es-PY	Los timones de la cola tienen que moverse libres, sin nada que los trabe.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.calzos.voz.ogg	es-PY	Los calzos son las cuñas que no dejan rodar al avión. Se sacan, y se mira que la rueda esté bien inflada.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.frenos.voz.ogg	es-PY	En cada rueda se mira la goma y el freno. Este pernito, mientras asome, dice que al freno todavía le queda.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.combustible.voz.ogg	es-PY	Por esta boca se mira cuánto combustible hay. Y con el vasito se saca un poco de abajo: tiene que salir azul y sin agua.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.aceite.voz.ogg	es-PY	Con la varilla se mira el aceite del motor: tiene que llegar entre las dos rayas.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.helice.voz.ogg	es-PY	La hélice se mira sin tocarla de más: que no tenga mellas ni golpes. Y nunca se para uno delante de ella.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.motores.voz.ogg	es-PY	Se mira la boca del motor y la salida de atrás: que no haya nada adentro, ni un pájaro ni un trapo.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.puertas.voz.ogg	es-PY	Las puertas y las tapas que no se usan tienen que estar bien cerradas antes de salir.	la vuelta al avión antes de volar
+instructor	instructor/vuelta.luces.voz.ogg	es-PY	Se prenden las luces y se mira que anden todas: la roja a la izquierda, la verde a la derecha y la blanca atrás.	la vuelta al avión antes de volar
+instructor	instructor/parte.propone.tormenta.ogg	es-PY	Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.	por qué hoy mejor no salir, con el parte
+instructor	instructor/parte.propone.visibilidad.ogg	es-PY	Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.	por qué hoy mejor no salir, con el parte
+instructor	instructor/parte.propone.techo.ogg	es-PY	Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.	por qué hoy mejor no salir, con el parte
+instructor	instructor/parte.propone.cruzado.ogg	es-PY	Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.	por qué hoy mejor no salir, con el parte
+instructor	instructor/parte.propone.pista.ogg	es-PY	Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.	por qué hoy mejor no salir, con el parte
+instructor	instructor/tarjeta.voz.alerones.ogg	es-PY	Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.profundidad.ogg	es-PY	Este es el timón de profundidad, en la cola. Si tirás de la palanca, la cola baja y la nariz sube.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.timon.ogg	es-PY	Este es el timón de dirección. Con los pedales, la cola va para un lado y la nariz mira para el otro.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.flaps.ogg	es-PY	Estos son los flaps. Al bajarlos, el ala se hace más curva y más grande, y sostiene al avión aunque vaya más despacio. Se usan para despegar y para aterrizar.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.aerofrenos.ogg	es-PY	Estos son los aerofrenos. Se levantan encima del ala para frenar en el aire, y al tocar la pista, para que el avión apoye las ruedas y frene mejor.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.pitot.ogg	es-PY	Este tubito es el pitot. El aire entra por la punta, y cuanto más rápido volás, más fuerte empuja: así sabe el avión a qué velocidad va.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.pitotMorro.ogg	es-PY	Estos tubitos a los lados de la nariz son los pitot, uno para cada piloto. El aire entra de frente, y cuanto más rápido volás, más empuja: así se mide la velocidad.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.motorPiston.ogg	es-PY	Acá está el motor. Hace girar la hélice, y la hélice, que tiene palas como alas chiquitas, tira del avión hacia adelante.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.motorRadial.ogg	es-PY	Este es un motor radial: los cilindros van en círculo, como los rayos de una estrella. Hace girar la hélice, y la hélice tira del avión.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.turbohelice.ogg	es-PY	Este es un turbohélice: adentro tiene una turbina, como la de un reactor, pero en vez de soplar, hace girar la hélice.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.reactor.ogg	es-PY	Esto es un reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. Y el que más empuja es el ventilador grande de adelante.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.tren.ogg	es-PY	Este es el tren de aterrizaje. Sale para aterrizar, y después de despegar se guarda adentro: así el aire pasa mejor y el avión va más rápido.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.trenFijo.ogg	es-PY	Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.luces.ogg	es-PY	Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.luzBaliza.ogg	es-PY	La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.luzEstrobos.ogg	es-PY	Estos destellos blancos se encienden al entrar en la pista y en todo el vuelo, para que los demás aviones te vean desde lejos.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.luzAterrizaje.ogg	es-PY	Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.	lo que explica cada punto de la tarjeta del avión
+instructor	instructor/tarjeta.voz.matricula.ogg	es-PY	La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.	lo que explica cada punto de la tarjeta del avión
 instructor	instructor/ventanilla.vos.lado.izquierda.ogg	es-PY	Mirá por la ventanilla, a tu izquierda.	lo que se ve por la ventanilla, dicho al lado en la avioneta
 instructor	instructor/ventanilla.vos.lado.izquierda~2.ogg	es-PY	Fijate por tu ventanilla, a la izquierda.	lo que se ve por la ventanilla, dicho al lado en la avioneta · otra forma de decirlo
 instructor	instructor/ventanilla.vos.lado.derecha.ogg	es-PY	Mirá por la ventanilla, a tu derecha.	lo que se ve por la ventanilla, dicho al lado en la avioneta
@@ -615,6 +651,8 @@ torre	torre/torre.numeroTres.ogg	es-PY	número tres para la salida	la lámpara d
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
+cabina	cabina/cabina.cautionTerrain.ogg	en	caution terrain, caution terrain	el avisador de terreno ve una ladera por delante: precaución
+cabina	cabina/cabina.terrainAheadPullUp.ogg	en	terrain ahead, pull up	el avisador de terreno ve una ladera por delante: aviso
 cabina	cabina/cabina.tooLow.ogg	en	too low	vas bajo sobre el terreno
 cabina	cabina/cabina.tooFast.ogg	en	too fast	veredicto de toma rápida
 cabina	cabina/cabina.offTheRunway.ogg	en	off the runway	tomaste fuera de la pista
@@ -754,13 +792,19 @@ torre	torre/torre.solo.clearedTakeoff.ogg	en	cleared for take-off	el permiso
 torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
 torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
+torre	torre/torre.solo.holdShortNumberTwo.ogg	en	hold short of the runway, number two for departure	pará en la doble raya: sale uno antes que vos
+torre	torre/torre.solo.holdShortNumberThree.ogg	en	hold short of the runway, number three for departure	pará en la doble raya: salen dos antes que vos
+torre	torre/torre.solo.holdShortWake.ogg	en	hold short of the runway, caution wake turbulence	pará en la doble raya: el que salió deja estela
 torre	torre/torre.solo.vacateNext.ogg	en	vacate next available	te pasaste la salida: dejá la pista por la próxima
+torre	torre/torre.solo.expediteVacating.ogg	en	expedite vacating	parado en la pista después de oír que había que dejarla: con prisa
+torre	torre/torre.solo.landedWithoutClearance.ogg	en	landed without clearance, call the tower by telephone on arrival	aterrizó con la orden de irse al aire: que llame a la torre
 torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
 torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
+torre	torre/torre.solo.backtrackRunway.ogg	en	backtrack runway	remontar la pista, antes de su número
 torre	torre/torre.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás
 torre	torre/torre.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro
 torre	torre/torre.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia
@@ -815,6 +859,8 @@ torre	torre/torre.solo.pista.ogg	es	pista	la pista que nombra la verde, antes de
 torre	torre/torre.solo.autorizadoDespegar.ogg	es	autorizado a despegar	la lámpara verde en el punto de espera: autorizado a despegar
 torre	torre/torre.solo.autorizadoParaAterrizar.ogg	es	autorizado para aterrizar	la lámpara verde con el avión en el aire: autorizado para aterrizar
 torre	torre/torre.solo.mantengaFuera.ogg	es	mantenga fuera de pista	la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista
+torre	torre/torre.solo.acelereAbandono.ogg	es	acelere abandono de pista	parado en la pista después de oír que había que dejarla: con prisa
+torre	torre/torre.solo.aterrizoSinPermiso.ogg	es	aterrizó sin autorización; llame a la torre por teléfono a su llegada	aterrizó con la orden de irse al aire: que llame a la torre
 torre	torre/torre.solo.autorizadoA.ogg	es	autorizado a	a dónde se va, antes de rodar; el campo va detrás
 torre	torre/torre.solo.idaAlAire.ogg	es	ida al aire	la lámpara roja en el aire: la orden de irse al aire
 torre	torre/cifra.es.0.ogg	es	cero	una cifra de la pista, en castellano
@@ -834,6 +880,8 @@ torre-canarias	torre-canarias/torre.canario.solo.pista.ogg	es	pista	la pista que
 torre-canarias	torre-canarias/torre.canario.solo.autorizadoDespegar.ogg	es	autorizado a despegar	la lámpara verde en el punto de espera: autorizado a despegar
 torre-canarias	torre-canarias/torre.canario.solo.autorizadoParaAterrizar.ogg	es	autorizado para aterrizar	la lámpara verde con el avión en el aire: autorizado para aterrizar
 torre-canarias	torre-canarias/torre.canario.solo.mantengaFuera.ogg	es	mantenga fuera de pista	la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista
+torre-canarias	torre-canarias/torre.canario.solo.acelereAbandono.ogg	es	acelere abandono de pista	parado en la pista después de oír que había que dejarla: con prisa
+torre-canarias	torre-canarias/torre.canario.solo.aterrizoSinPermiso.ogg	es	aterrizó sin autorización; llame a la torre por teléfono a su llegada	aterrizó con la orden de irse al aire: que llame a la torre
 torre-canarias	torre-canarias/torre.canario.solo.autorizadoA.ogg	es	autorizado a	a dónde se va, antes de rodar; el campo va detrás
 torre-canarias	torre-canarias/torre.canario.solo.motorYAlAire.ogg	es	motor y al aire	la lámpara roja en el aire: la orden de irse al aire
 torre-canarias	torre-canarias/cifra.es.0.ogg	es	cero	una cifra de la pista, en castellano
@@ -920,13 +968,19 @@ torre-canarias	torre-canarias/torre.canario.solo.clearedTakeoff.ogg	en	cleared f
 torre-canarias	torre-canarias/torre.canario.solo.clearedLand.ogg	en	cleared to land	el de llegada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.holdShortNumberTwo.ogg	en	hold short of the runway, number two for departure	pará en la doble raya: sale uno antes que vos, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.holdShortNumberThree.ogg	en	hold short of the runway, number three for departure	pará en la doble raya: salen dos antes que vos, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.holdShortWake.ogg	en	hold short of the runway, caution wake turbulence	pará en la doble raya: el que salió deja estela, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.vacateNext.ogg	en	vacate next available	te pasaste la salida: dejá la pista por la próxima, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.expediteVacating.ogg	en	expedite vacating	parado en la pista después de oír que había que dejarla: con prisa, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.landedWithoutClearance.ogg	en	landed without clearance, call the tower by telephone on arrival	aterrizó con la orden de irse al aire: que llame a la torre, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.backtrackRunway.ogg	en	backtrack runway	remontar la pista, antes de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAroundSolo.ogg	en	go around	al aire, sin más: el porqué va detrás, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerMayday.ogg	en	roger, Mayday	la torre oyó la llamada de socorro, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.rogerPanPan.ogg	en	roger, Pan Pan	la torre oyó la llamada de urgencia, en Canarias
@@ -1097,8 +1151,6 @@ instructor	instructor/gafas.ganadas.ogg	es-PY	¡Tus gafas de sol!	se dice en src
 instructor	instructor/pitot.noMarca.ogg	es-PY	El anemómetro no marca: gas atrás y frená, con calma.	se dice en src/game.ts
 instructor	instructor/pitot.abortado.ogg	es-PY	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.	se dice en src/game.ts
 instructor	instructor/pitot.enElAire.ogg	es-PY	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.	se dice en src/game.ts
-instructor	instructor/vuelta.empezar.ogg	es-PY	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.	se dice en src/game.ts
-instructor	instructor/vuelta.entera.ogg	es-PY	¡Vuelta lista! El avión está para volar.	se dice en src/game.ts
 instructor	instructor/parte.salgoIgual.voz.ogg	es-PY	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.	se dice en src/game.ts
 instructor	instructor/parte.yaSePuede.voz.ogg	es-PY	Miramos otra vez y ya mejoró: ahora sí podemos salir.	se dice en src/game.ts
 instructor	instructor/parte.sigueIgual.voz.ogg	es-PY	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.	se dice en src/game.ts

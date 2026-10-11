@@ -23,9 +23,17 @@
       "ms": 2873,
       "h": "013c255422"
     },
+    "circuito.cruzado.derecha": {
+      "ms": 1945,
+      "h": "6a3b5c3155"
+    },
     "circuito.cruzado": {
       "ms": 2021,
       "h": "2ff1426860"
+    },
+    "circuito.encola.derecha": {
+      "ms": 2969,
+      "h": "f8b35c4a25"
     },
     "circuito.encola": {
       "ms": 2748,
@@ -34,6 +42,274 @@
     "circuito.subida": {
       "ms": 1269,
       "h": "b5f75ca278"
+    },
+    "ejercicio.antes-de-v1.antes": {
+      "ms": 8907,
+      "h": "861ce1c808"
+    },
+    "ejercicio.bandera": {
+      "ms": 4207,
+      "h": "33f87b0168"
+    },
+    "ejercicio.banderaSola": {
+      "ms": 4207,
+      "h": "742fa605ab"
+    },
+    "ejercicio.bien": {
+      "ms": 4307,
+      "h": "2130e66635"
+    },
+    "ejercicio.bienDespresurizacion": {
+      "ms": 8707,
+      "h": "c8512064c8"
+    },
+    "ejercicio.bienParado": {
+      "ms": 4607,
+      "h": "306aec357c"
+    },
+    "ejercicio.bomberos": {
+      "ms": 7007,
+      "h": "2a5e36e199"
+    },
+    "ejercicio.bomberosFrenos": {
+      "ms": 5207,
+      "h": "167f6a7c13"
+    },
+    "ejercicio.bomberosUno": {
+      "ms": 6807,
+      "h": "481c51a184"
+    },
+    "ejercicio.cortar": {
+      "ms": 4207,
+      "h": "3d31b756e9"
+    },
+    "ejercicio.declarar": {
+      "ms": 8507,
+      "h": "6d1a2f8639"
+    },
+    "ejercicio.despresurizacion.antes": {
+      "ms": 12907,
+      "h": "3d93350931"
+    },
+    "ejercicio.despues-de-v1.antes": {
+      "ms": 7707,
+      "h": "a473bfe443"
+    },
+    "ejercicio.enVuelo": {
+      "ms": 2902,
+      "h": "90d4602450"
+    },
+    "ejercicio.otraVez": {
+      "ms": 5507,
+      "h": "4faebff6b1"
+    },
+    "ejercicio.paradoTrasV1": {
+      "ms": 7007,
+      "h": "622181cb90"
+    },
+    "ejercicio.paramos": {
+      "ms": 3407,
+      "h": "3aa7632d9c"
+    },
+    "ejercicio.pieDerecho": {
+      "ms": 3707,
+      "h": "f78bacbc60"
+    },
+    "ejercicio.pieIzquierdo": {
+      "ms": 3707,
+      "h": "262c9960f2"
+    },
+    "ejercicio.planeo.antes": {
+      "ms": 8107,
+      "h": "be30a83078"
+    },
+    "ejercicio.seguidoAntesDeV1": {
+      "ms": 5307,
+      "h": "da317964cf"
+    },
+    "ejercicio.seguimos": {
+      "ms": 2998,
+      "h": "d571133961"
+    },
+    "ejercicio.simulador.antes": {
+      "ms": 8107,
+      "h": "8f7c2c5391"
+    },
+    "ejercicio.un-motor.antes": {
+      "ms": 9207,
+      "h": "3360c162de"
+    },
+    "ejercicio.velocidad": {
+      "ms": 4407,
+      "h": "e0d219cab4"
+    },
+    "explica.actitud.texto": {
+      "ms": 14007,
+      "h": "a310eea366"
+    },
+    "explica.altitud.texto": {
+      "ms": 14607,
+      "h": "42043d71f1"
+    },
+    "explica.arco.presenta": {
+      "ms": 4207,
+      "h": "f4dfe3e8b9"
+    },
+    "explica.arco.texto": {
+      "ms": 12507,
+      "h": "f1796ab6d4"
+    },
+    "explica.avisos.texto": {
+      "ms": 10207,
+      "h": "28d0fa2d76"
+    },
+    "explica.bomberos-y-aviones.texto": {
+      "ms": 31507,
+      "h": "4712596b5c"
+    },
+    "explica.bomberos.texto": {
+      "ms": 22807,
+      "h": "8715092211"
+    },
+    "explica.carta.texto": {
+      "ms": 18007,
+      "h": "f573420db8"
+    },
+    "explica.carta.tierra": {
+      "ms": 14207,
+      "h": "570da1bc68"
+    },
+    "explica.cinturon.texto": {
+      "ms": 10007,
+      "h": "26d103e0d1"
+    },
+    "explica.combustible.texto": {
+      "ms": 12207,
+      "h": "4e8e8a3a04"
+    },
+    "explica.coordinador.texto": {
+      "ms": 10107,
+      "h": "590ab79e52"
+    },
+    "explica.flaps.texto": {
+      "ms": 12407,
+      "h": "42b661d160"
+    },
+    "explica.galones.texto": {
+      "ms": 20707,
+      "h": "a211ccaa44"
+    },
+    "explica.grado-aprendiz.texto": {
+      "ms": 8607,
+      "h": "49d77c6da7"
+    },
+    "explica.grado-comandante.texto": {
+      "ms": 14107,
+      "h": "204d90459f"
+    },
+    "explica.grado-instructora.texto": {
+      "ms": 7007,
+      "h": "52aa8f6023"
+    },
+    "explica.grado-piloto.texto": {
+      "ms": 6707,
+      "h": "1e4c0d0503"
+    },
+    "explica.gs-rodaje.presenta": {
+      "ms": 4607,
+      "h": "20ce308492"
+    },
+    "explica.gs-rodaje.texto": {
+      "ms": 13207,
+      "h": "b6901c0c29"
+    },
+    "explica.hoja.texto": {
+      "ms": 19707,
+      "h": "e7d25e0d77"
+    },
+    "explica.mascaras.texto": {
+      "ms": 14607,
+      "h": "181aa9e89b"
+    },
+    "explica.matricula.texto": {
+      "ms": 14207,
+      "h": "c727e516ce"
+    },
+    "explica.mesitas.texto": {
+      "ms": 10207,
+      "h": "a94883df40"
+    },
+    "explica.modo-avion.texto": {
+      "ms": 11707,
+      "h": "22c68b4db4"
+    },
+    "explica.motor.texto": {
+      "ms": 19107,
+      "h": "6d51b71e71"
+    },
+    "explica.no-fumar.texto": {
+      "ms": 9007,
+      "h": "524f7b624e"
+    },
+    "explica.persianas.texto": {
+      "ms": 16907,
+      "h": "25a4129477"
+    },
+    "explica.presurizacion.texto": {
+      "ms": 16206,
+      "h": "2acecc7fe2"
+    },
+    "explica.rumbo.texto": {
+      "ms": 14907,
+      "h": "3547a8dfcb"
+    },
+    "explica.senda.presenta": {
+      "ms": 4707,
+      "h": "1986d7845f"
+    },
+    "explica.senda.texto": {
+      "ms": 11007,
+      "h": "161db4c4ce"
+    },
+    "explica.sin-instructora.texto": {
+      "ms": 15007,
+      "h": "ef9a1ef96e"
+    },
+    "explica.tc.presenta": {
+      "ms": 3607,
+      "h": "f396ce60bb"
+    },
+    "explica.tc.texto": {
+      "ms": 8607,
+      "h": "cffb6a5cd1"
+    },
+    "explica.tcas.texto": {
+      "ms": 30707,
+      "h": "6c2006a3df"
+    },
+    "explica.td.presenta": {
+      "ms": 3207,
+      "h": "00de4750c9"
+    },
+    "explica.td.texto": {
+      "ms": 9007,
+      "h": "9a5280c0d5"
+    },
+    "explica.tren.texto": {
+      "ms": 13407,
+      "h": "b1e3401867"
+    },
+    "explica.variometro.texto": {
+      "ms": 7607,
+      "h": "ee3acc150b"
+    },
+    "explica.velocidad.texto": {
+      "ms": 16107,
+      "h": "0216c52ab6"
+    },
+    "explica.video-seguridad.texto": {
+      "ms": 12607,
+      "h": "fd4d257390"
     },
     "fin.bien": {
       "ms": 925,
@@ -168,32 +444,32 @@
       "h": "582fe199ae"
     },
     "galon.aproximacion": {
-      "ms": 1416,
-      "h": "92da0e1245"
+      "ms": 1569,
+      "h": "9a960a826e"
     },
     "galon.aros": {
-      "ms": 938,
-      "h": "70e330ab33"
+      "ms": 629,
+      "h": "3a6dd9edfc"
     },
     "galon.frustrada": {
-      "ms": 1139,
-      "h": "f0fba6cc90"
+      "ms": 1286,
+      "h": "a188854a05"
     },
     "galon.manga": {
-      "ms": 1371,
-      "h": "dc2a1e8ded"
+      "ms": 1340,
+      "h": "14227e67e9"
     },
     "galon.rodaje": {
-      "ms": 1190,
-      "h": "be477a700d"
+      "ms": 790,
+      "h": "a094781b94"
     },
     "galon.toma": {
-      "ms": 1275,
-      "h": "ab2a35fe14"
+      "ms": 744,
+      "h": "bbcb70b473"
     },
     "galon.velocidad": {
-      "ms": 966,
-      "h": "f2c4ec5330"
+      "ms": 1037,
+      "h": "2f2fec4d37"
     },
     "grado.aprendiz": {
       "ms": 830,
@@ -275,6 +551,14 @@
       "ms": 1057,
       "h": "8cba38644b"
     },
+    "motivo.alto": {
+      "ms": 801,
+      "h": "e9e432493d"
+    },
+    "motivo.bajo": {
+      "ms": 985,
+      "h": "2c443f98ca"
+    },
     "motivo.cayendo": {
       "ms": 1239,
       "h": "758fd10e42"
@@ -291,6 +575,10 @@
       "ms": 1097,
       "h": "ff900598c7"
     },
+    "motivo.sinConfigurar": {
+      "ms": 1234,
+      "h": "50fb897d64"
+    },
     "motivo.sinPista": {
       "ms": 917,
       "h": "6c7ad79e3a"
@@ -298,6 +586,46 @@
     "motivo.torcido": {
       "ms": 1072,
       "h": "ab6dba7022"
+    },
+    "parte.esperamos.voz": {
+      "ms": 2255,
+      "h": "b5ebc7d9cd"
+    },
+    "parte.ganaste": {
+      "ms": 2033,
+      "h": "10cfb14804"
+    },
+    "parte.propone.cruzado": {
+      "ms": 11107,
+      "h": "1a4ebbd4ec"
+    },
+    "parte.propone.pista": {
+      "ms": 8807,
+      "h": "9c5f334ec1"
+    },
+    "parte.propone.techo": {
+      "ms": 8507,
+      "h": "c847aa71da"
+    },
+    "parte.propone.tormenta": {
+      "ms": 8607,
+      "h": "2dfadce7af"
+    },
+    "parte.propone.visibilidad": {
+      "ms": 8307,
+      "h": "f1ec490922"
+    },
+    "parte.salgoIgual.voz": {
+      "ms": 4107,
+      "h": "d956462423"
+    },
+    "parte.sigueIgual.voz": {
+      "ms": 6007,
+      "h": "b0b7bf578f"
+    },
+    "parte.yaSePuede.voz": {
+      "ms": 2745,
+      "h": "8720c0c014"
     },
     "percance.coche": {
       "ms": 1705,
@@ -330,6 +658,90 @@
     "percance.sintren": {
       "ms": 1836,
       "h": "e1588edaf3"
+    },
+    "pitot.abortado": {
+      "ms": 4907,
+      "h": "a81fa0b30e"
+    },
+    "pitot.enElAire": {
+      "ms": 5607,
+      "h": "02403d9ba6"
+    },
+    "pitot.noMarca": {
+      "ms": 3407,
+      "h": "a9cc2fbff5"
+    },
+    "tarjeta.voz.aerofrenos": {
+      "ms": 8807,
+      "h": "e2bb467c50"
+    },
+    "tarjeta.voz.alerones": {
+      "ms": 6807,
+      "h": "60ab50e6ba"
+    },
+    "tarjeta.voz.flaps": {
+      "ms": 9407,
+      "h": "b9e642ed32"
+    },
+    "tarjeta.voz.luces": {
+      "ms": 8607,
+      "h": "e365e5db0e"
+    },
+    "tarjeta.voz.luzAterrizaje": {
+      "ms": 8807,
+      "h": "05d4aa60f1"
+    },
+    "tarjeta.voz.luzBaliza": {
+      "ms": 7107,
+      "h": "be78047c27"
+    },
+    "tarjeta.voz.luzEstrobos": {
+      "ms": 7407,
+      "h": "dd796909de"
+    },
+    "tarjeta.voz.matricula": {
+      "ms": 9407,
+      "h": "808122a13f"
+    },
+    "tarjeta.voz.motorPiston": {
+      "ms": 6407,
+      "h": "10a9ae4c86"
+    },
+    "tarjeta.voz.motorRadial": {
+      "ms": 7607,
+      "h": "6311dbc277"
+    },
+    "tarjeta.voz.pitot": {
+      "ms": 8207,
+      "h": "3e4e884f7c"
+    },
+    "tarjeta.voz.pitotMorro": {
+      "ms": 9507,
+      "h": "38523a62d7"
+    },
+    "tarjeta.voz.profundidad": {
+      "ms": 5307,
+      "h": "f66f9a6d46"
+    },
+    "tarjeta.voz.reactor": {
+      "ms": 9507,
+      "h": "0e6aa5250c"
+    },
+    "tarjeta.voz.timon": {
+      "ms": 5107,
+      "h": "81563418da"
+    },
+    "tarjeta.voz.tren": {
+      "ms": 7507,
+      "h": "3451947393"
+    },
+    "tarjeta.voz.trenFijo": {
+      "ms": 6307,
+      "h": "d07fb1386f"
+    },
+    "tarjeta.voz.turbohelice": {
+      "ms": 6707,
+      "h": "f543397a06"
     },
     "tutor.flying": {
       "ms": 1158,
@@ -611,6 +1023,10 @@
       "ms": 733,
       "h": "4f08f7302e"
     },
+    "vuelo.aterrizasteContraLaOrden": {
+      "ms": 7107,
+      "h": "6d0bae9353"
+    },
     "vuelo.autorizado": {
       "ms": 1591,
       "h": "a1ecdf1f92"
@@ -639,6 +1055,10 @@
       "ms": 1795,
       "h": "9bf3877fb3"
     },
+    "vuelo.backTaxiUnTrecho": {
+      "ms": 1989,
+      "h": "2195967083"
+    },
     "vuelo.bajasRapido": {
       "ms": 2840,
       "h": "683ce97ae6"
@@ -663,6 +1083,90 @@
       "ms": 2567,
       "h": "73a81c4900"
     },
+    "vuelo.consejo.aerofrenos": {
+      "ms": 2478,
+      "h": "91922ad8c4"
+    },
+    "vuelo.consejo.aerofrenosPerfil": {
+      "ms": 6507,
+      "h": "d77014290b"
+    },
+    "vuelo.consejo.masGas": {
+      "ms": 3407,
+      "h": "04e36003f9"
+    },
+    "vuelo.consejo.masGasPapi": {
+      "ms": 6407,
+      "h": "221fc5ba64"
+    },
+    "vuelo.consejo.masGasPerfil": {
+      "ms": 5707,
+      "h": "f8b0421522"
+    },
+    "vuelo.consejo.masGasSenda": {
+      "ms": 4207,
+      "h": "834f6f1857"
+    },
+    "vuelo.consejo.masGasSuave": {
+      "ms": 3207,
+      "h": "c173a71476"
+    },
+    "vuelo.consejo.menosGas": {
+      "ms": 2272,
+      "h": "31b16898d4"
+    },
+    "vuelo.consejo.menosGasPapi": {
+      "ms": 5607,
+      "h": "dd613d21a3"
+    },
+    "vuelo.consejo.menosGasPerfil": {
+      "ms": 5207,
+      "h": "8e0aeb6fc6"
+    },
+    "vuelo.consejo.menosGasSenda": {
+      "ms": 4807,
+      "h": "f6964e9176"
+    },
+    "vuelo.consejo.narizAbajoMarca": {
+      "ms": 3307,
+      "h": "ffe8e929c6"
+    },
+    "vuelo.consejo.narizAbajoPapi": {
+      "ms": 3207,
+      "h": "3530c5cf31"
+    },
+    "vuelo.consejo.narizAbajoPerfil": {
+      "ms": 4607,
+      "h": "b03f426463"
+    },
+    "vuelo.consejo.narizAbajoSenda": {
+      "ms": 3507,
+      "h": "144ff9048b"
+    },
+    "vuelo.consejo.narizArribaMarca": {
+      "ms": 3207,
+      "h": "4554d735ff"
+    },
+    "vuelo.consejo.narizArribaPapi": {
+      "ms": 3107,
+      "h": "27d50e21a4"
+    },
+    "vuelo.consejo.narizArribaRitmo": {
+      "ms": 4307,
+      "h": "56c95e0479"
+    },
+    "vuelo.consejo.narizArribaSenda": {
+      "ms": 3207,
+      "h": "4090a3077e"
+    },
+    "vuelo.consejo.narizArribaSuave": {
+      "ms": 2333,
+      "h": "62ce77fe6e"
+    },
+    "vuelo.consejo.nivelarPerfil": {
+      "ms": 5907,
+      "h": "1af4896918"
+    },
     "vuelo.corregido": {
       "ms": 2641,
       "h": "7639bd6e47"
@@ -679,6 +1183,10 @@
       "ms": 1189,
       "h": "6e25df24d6"
     },
+    "vuelo.desdeLaInterseccion": {
+      "ms": 4307,
+      "h": "895ea6a512"
+    },
     "vuelo.despacio": {
       "ms": 885,
       "h": "c34546c72b"
@@ -686,6 +1194,18 @@
     "vuelo.despegando": {
       "ms": 932,
       "h": "0a31beeb28"
+    },
+    "vuelo.despues.aerofrenos": {
+      "ms": 2170,
+      "h": "2c9cf77c0c"
+    },
+    "vuelo.despues.luces": {
+      "ms": 3707,
+      "h": "81831e81c2"
+    },
+    "vuelo.despues.transpondedor": {
+      "ms": 2725,
+      "h": "06d1f82f7b"
     },
     "vuelo.despuesDelAterrizaje": {
       "ms": 6207,
@@ -711,6 +1231,10 @@
       "ms": 2561,
       "h": "574a0f12dc"
     },
+    "vuelo.esperaLaEstela": {
+      "ms": 3607,
+      "h": "5adb75ae63"
+    },
     "vuelo.esperaQueAterrice": {
       "ms": 2266,
       "h": "020664015a"
@@ -718,6 +1242,10 @@
     "vuelo.esperaQueDespegue": {
       "ms": 2555,
       "h": "10d21dcc2d"
+    },
+    "vuelo.esperaTurnoDeSalida": {
+      "ms": 3307,
+      "h": "36928279e8"
     },
     "vuelo.esperando": {
       "ms": 1569,
@@ -807,6 +1335,14 @@
       "ms": 2231,
       "h": "930ab20260"
     },
+    "vuelo.narizEnLaRecogida": {
+      "ms": 1206,
+      "h": "92691bf019"
+    },
+    "vuelo.narizYQuitaElGas": {
+      "ms": 2341,
+      "h": "abd842db68"
+    },
     "vuelo.noEstabilizada": {
       "ms": 2930,
       "h": "161e875215"
@@ -883,6 +1419,106 @@
       "ms": 2080,
       "h": "4823b7a72b"
     },
+    "vuelo.paso.acelerarGas": {
+      "ms": 2968,
+      "h": "068e7f3ad5"
+    },
+    "vuelo.paso.acelerarNariz": {
+      "ms": 3707,
+      "h": "cb2a32e0f5"
+    },
+    "vuelo.paso.bajar": {
+      "ms": 4107,
+      "h": "5c7c8a773f"
+    },
+    "vuelo.paso.bajarConAutomatico": {
+      "ms": 8107,
+      "h": "dea912847b"
+    },
+    "vuelo.paso.cotaAlMar": {
+      "ms": 6207,
+      "h": "9973ac6146"
+    },
+    "vuelo.paso.cotaEnAlto": {
+      "ms": 7707,
+      "h": "62afa2773d"
+    },
+    "vuelo.paso.crucero": {
+      "ms": 5107,
+      "h": "bab7881f81"
+    },
+    "vuelo.paso.cruceroConAutomatico": {
+      "ms": 6907,
+      "h": "9c810df506"
+    },
+    "vuelo.paso.cruceroConGases": {
+      "ms": 5607,
+      "h": "fa33184cdc"
+    },
+    "vuelo.paso.flaps1": {
+      "ms": 3207,
+      "h": "51e0ada733"
+    },
+    "vuelo.paso.flaps2": {
+      "ms": 2514,
+      "h": "f5e2c9b4f9"
+    },
+    "vuelo.paso.flaps3": {
+      "ms": 3207,
+      "h": "1ae1e3be9c"
+    },
+    "vuelo.paso.frenarAerofrenos": {
+      "ms": 4407,
+      "h": "bcc9f366f8"
+    },
+    "vuelo.paso.frenarGas": {
+      "ms": 3207,
+      "h": "be03f161af"
+    },
+    "vuelo.paso.frenarNariz": {
+      "ms": 5007,
+      "h": "66c9eb4c5c"
+    },
+    "vuelo.paso.gasTuyo": {
+      "ms": 4207,
+      "h": "82ba0486ab"
+    },
+    "vuelo.paso.mantener": {
+      "ms": 3607,
+      "h": "d0ebd7538b"
+    },
+    "vuelo.paso.marcaDelAutomatico": {
+      "ms": 5007,
+      "h": "9e19edde34"
+    },
+    "vuelo.paso.nivelar": {
+      "ms": 4607,
+      "h": "092c012bf1"
+    },
+    "vuelo.paso.recogerAerofrenos": {
+      "ms": 2613,
+      "h": "ac6363fb3f"
+    },
+    "vuelo.paso.senda": {
+      "ms": 4107,
+      "h": "b116e8e85f"
+    },
+    "vuelo.paso.sendaConAyuda": {
+      "ms": 4707,
+      "h": "50358cf0a2"
+    },
+    "vuelo.paso.sendaConGases": {
+      "ms": 5207,
+      "h": "19890324a1"
+    },
+    "vuelo.paso.subir": {
+      "ms": 3607,
+      "h": "474a285ddb"
+    },
+    "vuelo.paso.tren": {
+      "ms": 1961,
+      "h": "5591adaef0"
+    },
     "vuelo.pediFlaps": {
       "ms": 1614,
       "h": "7a2a7f0d9c"
@@ -923,6 +1559,14 @@
       "ms": 10907,
       "h": "6d927695c4"
     },
+    "vuelo.proponeIrse": {
+      "ms": 4307,
+      "h": "3d57f84baa"
+    },
+    "vuelo.proponeIrseSinPista": {
+      "ms": 2339,
+      "h": "142a41336a"
+    },
     "vuelo.puedeAterrizar": {
       "ms": 1223,
       "h": "22305fb12c"
@@ -955,6 +1599,30 @@
       "ms": 1068,
       "h": "236cd05800"
     },
+    "vuelo.remontar.calor": {
+      "ms": 5707,
+      "h": "a2f48fe088"
+    },
+    "vuelo.remontar.cola": {
+      "ms": 5807,
+      "h": "8ea405c91b"
+    },
+    "vuelo.remontar": {
+      "ms": 3107,
+      "h": "87106515f2"
+    },
+    "vuelo.remontarUnTrecho.calor": {
+      "ms": 4807,
+      "h": "64481d32f5"
+    },
+    "vuelo.remontarUnTrecho.cola": {
+      "ms": 5707,
+      "h": "bf794ba100"
+    },
+    "vuelo.remontarUnTrecho": {
+      "ms": 4307,
+      "h": "677ab87148"
+    },
     "vuelo.reserva": {
       "ms": 4407,
       "h": "681d9e005b"
@@ -982,6 +1650,18 @@
     "vuelo.sinCombustible": {
       "ms": 2625,
       "h": "7b7fd78cbf"
+    },
+    "vuelo.sinInstructora.no": {
+      "ms": 1816,
+      "h": "cbe2489cd3"
+    },
+    "vuelo.sinInstructora.pregunta": {
+      "ms": 1934,
+      "h": "e76e123ee9"
+    },
+    "vuelo.sinInstructora.si": {
+      "ms": 2102,
+      "h": "4bec7c1083"
     },
     "vuelo.sinMotor": {
       "ms": 5107,
@@ -1011,9 +1691,21 @@
       "ms": 1398,
       "h": "6fe8db60ac"
     },
+    "vuelo.terrenoDelante": {
+      "ms": 2899,
+      "h": "3ecc6b5424"
+    },
     "vuelo.terrenoSube": {
       "ms": 1651,
       "h": "615532abce"
+    },
+    "vuelo.tomaLarga": {
+      "ms": 2575,
+      "h": "e2b0fd81c3"
+    },
+    "vuelo.tomaLargaSinPista": {
+      "ms": 4007,
+      "h": "bdbaccec0a"
     },
     "vuelo.tonoDeAltitudCerca": {
       "ms": 4207,
@@ -1070,6 +1762,58 @@
     "vuelo.yaSeRespira": {
       "ms": 7107,
       "h": "c8de708b29"
+    },
+    "vuelta.aceite.voz": {
+      "ms": 3907,
+      "h": "ecf351b53f"
+    },
+    "vuelta.calzos.voz": {
+      "ms": 5607,
+      "h": "3500ef0fee"
+    },
+    "vuelta.combustible.voz": {
+      "ms": 6407,
+      "h": "749a71429a"
+    },
+    "vuelta.empezar": {
+      "ms": 3107,
+      "h": "55b91da3af"
+    },
+    "vuelta.entera": {
+      "ms": 2041,
+      "h": "5f2e87fb8b"
+    },
+    "vuelta.frenos.voz": {
+      "ms": 5907,
+      "h": "c829b6eaea"
+    },
+    "vuelta.helice.voz": {
+      "ms": 6007,
+      "h": "0e36b246a4"
+    },
+    "vuelta.luces.voz": {
+      "ms": 5807,
+      "h": "8a0f8b80ef"
+    },
+    "vuelta.motores.voz": {
+      "ms": 5307,
+      "h": "d35da4b1f2"
+    },
+    "vuelta.pitot.voz": {
+      "ms": 7207,
+      "h": "d1c867a4e5"
+    },
+    "vuelta.puertas.voz": {
+      "ms": 4407,
+      "h": "d375e79f4a"
+    },
+    "vuelta.sondas.voz": {
+      "ms": 5407,
+      "h": "47bd23940a"
+    },
+    "vuelta.superficies.voz": {
+      "ms": 3807,
+      "h": "53c9f04d16"
     }
   },
   "recetas": {
@@ -1952,6 +2696,564 @@
     ],
     "vuelo.aves.enUve": [
       "vuelo.aves.enUve"
+    ],
+    "circuito.cruzado.derecha": [
+      "circuito.cruzado.derecha"
+    ],
+    "circuito.encola.derecha": [
+      "circuito.encola.derecha"
+    ],
+    "ejercicio.antes-de-v1.antes": [
+      "ejercicio.antes-de-v1.antes"
+    ],
+    "ejercicio.bandera": [
+      "ejercicio.bandera"
+    ],
+    "ejercicio.banderaSola": [
+      "ejercicio.banderaSola"
+    ],
+    "ejercicio.bien": [
+      "ejercicio.bien"
+    ],
+    "ejercicio.bienDespresurizacion": [
+      "ejercicio.bienDespresurizacion"
+    ],
+    "ejercicio.bienParado": [
+      "ejercicio.bienParado"
+    ],
+    "ejercicio.bomberos": [
+      "ejercicio.bomberos"
+    ],
+    "ejercicio.bomberosFrenos": [
+      "ejercicio.bomberosFrenos"
+    ],
+    "ejercicio.bomberosUno": [
+      "ejercicio.bomberosUno"
+    ],
+    "ejercicio.cortar": [
+      "ejercicio.cortar"
+    ],
+    "ejercicio.declarar": [
+      "ejercicio.declarar"
+    ],
+    "ejercicio.despresurizacion.antes": [
+      "ejercicio.despresurizacion.antes"
+    ],
+    "ejercicio.despues-de-v1.antes": [
+      "ejercicio.despues-de-v1.antes"
+    ],
+    "ejercicio.enVuelo": [
+      "ejercicio.enVuelo"
+    ],
+    "ejercicio.otraVez": [
+      "ejercicio.otraVez"
+    ],
+    "ejercicio.paradoTrasV1": [
+      "ejercicio.paradoTrasV1"
+    ],
+    "ejercicio.paramos": [
+      "ejercicio.paramos"
+    ],
+    "ejercicio.pieDerecho": [
+      "ejercicio.pieDerecho"
+    ],
+    "ejercicio.pieIzquierdo": [
+      "ejercicio.pieIzquierdo"
+    ],
+    "ejercicio.planeo.antes": [
+      "ejercicio.planeo.antes"
+    ],
+    "ejercicio.seguidoAntesDeV1": [
+      "ejercicio.seguidoAntesDeV1"
+    ],
+    "ejercicio.seguimos": [
+      "ejercicio.seguimos"
+    ],
+    "ejercicio.simulador.antes": [
+      "ejercicio.simulador.antes"
+    ],
+    "ejercicio.un-motor.antes": [
+      "ejercicio.un-motor.antes"
+    ],
+    "ejercicio.velocidad": [
+      "ejercicio.velocidad"
+    ],
+    "explica.actitud.texto": [
+      "explica.actitud.texto"
+    ],
+    "explica.altitud.texto": [
+      "explica.altitud.texto"
+    ],
+    "explica.arco.presenta": [
+      "explica.arco.presenta"
+    ],
+    "explica.arco.texto": [
+      "explica.arco.texto"
+    ],
+    "explica.avisos.texto": [
+      "explica.avisos.texto"
+    ],
+    "explica.bomberos-y-aviones.texto": [
+      "explica.bomberos-y-aviones.texto"
+    ],
+    "explica.bomberos.texto": [
+      "explica.bomberos.texto"
+    ],
+    "explica.carta.texto": [
+      "explica.carta.texto"
+    ],
+    "explica.carta.tierra": [
+      "explica.carta.tierra"
+    ],
+    "explica.cinturon.texto": [
+      "explica.cinturon.texto"
+    ],
+    "explica.combustible.texto": [
+      "explica.combustible.texto"
+    ],
+    "explica.coordinador.texto": [
+      "explica.coordinador.texto"
+    ],
+    "explica.flaps.texto": [
+      "explica.flaps.texto"
+    ],
+    "explica.galones.texto": [
+      "explica.galones.texto"
+    ],
+    "explica.grado-aprendiz.texto": [
+      "explica.grado-aprendiz.texto"
+    ],
+    "explica.grado-comandante.texto": [
+      "explica.grado-comandante.texto"
+    ],
+    "explica.grado-instructora.texto": [
+      "explica.grado-instructora.texto"
+    ],
+    "explica.grado-piloto.texto": [
+      "explica.grado-piloto.texto"
+    ],
+    "explica.gs-rodaje.presenta": [
+      "explica.gs-rodaje.presenta"
+    ],
+    "explica.gs-rodaje.texto": [
+      "explica.gs-rodaje.texto"
+    ],
+    "explica.hoja.texto": [
+      "explica.hoja.texto"
+    ],
+    "explica.mascaras.texto": [
+      "explica.mascaras.texto"
+    ],
+    "explica.matricula.texto": [
+      "explica.matricula.texto"
+    ],
+    "explica.mesitas.texto": [
+      "explica.mesitas.texto"
+    ],
+    "explica.modo-avion.texto": [
+      "explica.modo-avion.texto"
+    ],
+    "explica.motor.texto": [
+      "explica.motor.texto"
+    ],
+    "explica.no-fumar.texto": [
+      "explica.no-fumar.texto"
+    ],
+    "explica.persianas.texto": [
+      "explica.persianas.texto"
+    ],
+    "explica.presurizacion.texto": [
+      "explica.presurizacion.texto"
+    ],
+    "explica.rumbo.texto": [
+      "explica.rumbo.texto"
+    ],
+    "explica.senda.presenta": [
+      "explica.senda.presenta"
+    ],
+    "explica.senda.texto": [
+      "explica.senda.texto"
+    ],
+    "explica.sin-instructora.texto": [
+      "explica.sin-instructora.texto"
+    ],
+    "explica.tc.presenta": [
+      "explica.tc.presenta"
+    ],
+    "explica.tc.texto": [
+      "explica.tc.texto"
+    ],
+    "explica.tcas.texto": [
+      "explica.tcas.texto"
+    ],
+    "explica.td.presenta": [
+      "explica.td.presenta"
+    ],
+    "explica.td.texto": [
+      "explica.td.texto"
+    ],
+    "explica.tren.texto": [
+      "explica.tren.texto"
+    ],
+    "explica.variometro.texto": [
+      "explica.variometro.texto"
+    ],
+    "explica.velocidad.texto": [
+      "explica.velocidad.texto"
+    ],
+    "explica.video-seguridad.texto": [
+      "explica.video-seguridad.texto"
+    ],
+    "motivo.alto": [
+      "motivo.alto"
+    ],
+    "motivo.bajo": [
+      "motivo.bajo"
+    ],
+    "motivo.sinConfigurar": [
+      "motivo.sinConfigurar"
+    ],
+    "parte.esperamos.voz": [
+      "parte.esperamos.voz"
+    ],
+    "parte.ganaste": [
+      "parte.ganaste"
+    ],
+    "parte.propone.cruzado": [
+      "parte.propone.cruzado"
+    ],
+    "parte.propone.pista": [
+      "parte.propone.pista"
+    ],
+    "parte.propone.techo": [
+      "parte.propone.techo"
+    ],
+    "parte.propone.tormenta": [
+      "parte.propone.tormenta"
+    ],
+    "parte.propone.visibilidad": [
+      "parte.propone.visibilidad"
+    ],
+    "parte.salgoIgual.voz": [
+      "parte.salgoIgual.voz"
+    ],
+    "parte.sigueIgual.voz": [
+      "parte.sigueIgual.voz"
+    ],
+    "parte.yaSePuede.voz": [
+      "parte.yaSePuede.voz"
+    ],
+    "pitot.abortado": [
+      "pitot.abortado"
+    ],
+    "pitot.enElAire": [
+      "pitot.enElAire"
+    ],
+    "pitot.noMarca": [
+      "pitot.noMarca"
+    ],
+    "tarjeta.voz.aerofrenos": [
+      "tarjeta.voz.aerofrenos"
+    ],
+    "tarjeta.voz.alerones": [
+      "tarjeta.voz.alerones"
+    ],
+    "tarjeta.voz.flaps": [
+      "tarjeta.voz.flaps"
+    ],
+    "tarjeta.voz.luces": [
+      "tarjeta.voz.luces"
+    ],
+    "tarjeta.voz.luzAterrizaje": [
+      "tarjeta.voz.luzAterrizaje"
+    ],
+    "tarjeta.voz.luzBaliza": [
+      "tarjeta.voz.luzBaliza"
+    ],
+    "tarjeta.voz.luzEstrobos": [
+      "tarjeta.voz.luzEstrobos"
+    ],
+    "tarjeta.voz.matricula": [
+      "tarjeta.voz.matricula"
+    ],
+    "tarjeta.voz.motorPiston": [
+      "tarjeta.voz.motorPiston"
+    ],
+    "tarjeta.voz.motorRadial": [
+      "tarjeta.voz.motorRadial"
+    ],
+    "tarjeta.voz.pitot": [
+      "tarjeta.voz.pitot"
+    ],
+    "tarjeta.voz.pitotMorro": [
+      "tarjeta.voz.pitotMorro"
+    ],
+    "tarjeta.voz.profundidad": [
+      "tarjeta.voz.profundidad"
+    ],
+    "tarjeta.voz.reactor": [
+      "tarjeta.voz.reactor"
+    ],
+    "tarjeta.voz.timon": [
+      "tarjeta.voz.timon"
+    ],
+    "tarjeta.voz.tren": [
+      "tarjeta.voz.tren"
+    ],
+    "tarjeta.voz.trenFijo": [
+      "tarjeta.voz.trenFijo"
+    ],
+    "tarjeta.voz.turbohelice": [
+      "tarjeta.voz.turbohelice"
+    ],
+    "vuelo.aterrizasteContraLaOrden": [
+      "vuelo.aterrizasteContraLaOrden"
+    ],
+    "vuelo.backTaxiUnTrecho": [
+      "vuelo.backTaxiUnTrecho"
+    ],
+    "vuelo.consejo.aerofrenos": [
+      "vuelo.consejo.aerofrenos"
+    ],
+    "vuelo.consejo.aerofrenosPerfil": [
+      "vuelo.consejo.aerofrenosPerfil"
+    ],
+    "vuelo.consejo.masGas": [
+      "vuelo.consejo.masGas"
+    ],
+    "vuelo.consejo.masGasPapi": [
+      "vuelo.consejo.masGasPapi"
+    ],
+    "vuelo.consejo.masGasPerfil": [
+      "vuelo.consejo.masGasPerfil"
+    ],
+    "vuelo.consejo.masGasSenda": [
+      "vuelo.consejo.masGasSenda"
+    ],
+    "vuelo.consejo.masGasSuave": [
+      "vuelo.consejo.masGasSuave"
+    ],
+    "vuelo.consejo.menosGas": [
+      "vuelo.consejo.menosGas"
+    ],
+    "vuelo.consejo.menosGasPapi": [
+      "vuelo.consejo.menosGasPapi"
+    ],
+    "vuelo.consejo.menosGasPerfil": [
+      "vuelo.consejo.menosGasPerfil"
+    ],
+    "vuelo.consejo.menosGasSenda": [
+      "vuelo.consejo.menosGasSenda"
+    ],
+    "vuelo.consejo.narizAbajoMarca": [
+      "vuelo.consejo.narizAbajoMarca"
+    ],
+    "vuelo.consejo.narizAbajoPapi": [
+      "vuelo.consejo.narizAbajoPapi"
+    ],
+    "vuelo.consejo.narizAbajoPerfil": [
+      "vuelo.consejo.narizAbajoPerfil"
+    ],
+    "vuelo.consejo.narizAbajoSenda": [
+      "vuelo.consejo.narizAbajoSenda"
+    ],
+    "vuelo.consejo.narizArribaMarca": [
+      "vuelo.consejo.narizArribaMarca"
+    ],
+    "vuelo.consejo.narizArribaPapi": [
+      "vuelo.consejo.narizArribaPapi"
+    ],
+    "vuelo.consejo.narizArribaRitmo": [
+      "vuelo.consejo.narizArribaRitmo"
+    ],
+    "vuelo.consejo.narizArribaSenda": [
+      "vuelo.consejo.narizArribaSenda"
+    ],
+    "vuelo.consejo.narizArribaSuave": [
+      "vuelo.consejo.narizArribaSuave"
+    ],
+    "vuelo.consejo.nivelarPerfil": [
+      "vuelo.consejo.nivelarPerfil"
+    ],
+    "vuelo.desdeLaInterseccion": [
+      "vuelo.desdeLaInterseccion"
+    ],
+    "vuelo.despues.aerofrenos": [
+      "vuelo.despues.aerofrenos"
+    ],
+    "vuelo.despues.luces": [
+      "vuelo.despues.luces"
+    ],
+    "vuelo.despues.transpondedor": [
+      "vuelo.despues.transpondedor"
+    ],
+    "vuelo.esperaLaEstela": [
+      "vuelo.esperaLaEstela"
+    ],
+    "vuelo.esperaTurnoDeSalida": [
+      "vuelo.esperaTurnoDeSalida"
+    ],
+    "vuelo.narizEnLaRecogida": [
+      "vuelo.narizEnLaRecogida"
+    ],
+    "vuelo.narizYQuitaElGas": [
+      "vuelo.narizYQuitaElGas"
+    ],
+    "vuelo.paso.acelerarGas": [
+      "vuelo.paso.acelerarGas"
+    ],
+    "vuelo.paso.acelerarNariz": [
+      "vuelo.paso.acelerarNariz"
+    ],
+    "vuelo.paso.bajar": [
+      "vuelo.paso.bajar"
+    ],
+    "vuelo.paso.bajarConAutomatico": [
+      "vuelo.paso.bajarConAutomatico"
+    ],
+    "vuelo.paso.cotaAlMar": [
+      "vuelo.paso.cotaAlMar"
+    ],
+    "vuelo.paso.cotaEnAlto": [
+      "vuelo.paso.cotaEnAlto"
+    ],
+    "vuelo.paso.crucero": [
+      "vuelo.paso.crucero"
+    ],
+    "vuelo.paso.cruceroConAutomatico": [
+      "vuelo.paso.cruceroConAutomatico"
+    ],
+    "vuelo.paso.cruceroConGases": [
+      "vuelo.paso.cruceroConGases"
+    ],
+    "vuelo.paso.flaps1": [
+      "vuelo.paso.flaps1"
+    ],
+    "vuelo.paso.flaps2": [
+      "vuelo.paso.flaps2"
+    ],
+    "vuelo.paso.flaps3": [
+      "vuelo.paso.flaps3"
+    ],
+    "vuelo.paso.frenarAerofrenos": [
+      "vuelo.paso.frenarAerofrenos"
+    ],
+    "vuelo.paso.frenarGas": [
+      "vuelo.paso.frenarGas"
+    ],
+    "vuelo.paso.frenarNariz": [
+      "vuelo.paso.frenarNariz"
+    ],
+    "vuelo.paso.gasTuyo": [
+      "vuelo.paso.gasTuyo"
+    ],
+    "vuelo.paso.mantener": [
+      "vuelo.paso.mantener"
+    ],
+    "vuelo.paso.marcaDelAutomatico": [
+      "vuelo.paso.marcaDelAutomatico"
+    ],
+    "vuelo.paso.nivelar": [
+      "vuelo.paso.nivelar"
+    ],
+    "vuelo.paso.recogerAerofrenos": [
+      "vuelo.paso.recogerAerofrenos"
+    ],
+    "vuelo.paso.senda": [
+      "vuelo.paso.senda"
+    ],
+    "vuelo.paso.sendaConAyuda": [
+      "vuelo.paso.sendaConAyuda"
+    ],
+    "vuelo.paso.sendaConGases": [
+      "vuelo.paso.sendaConGases"
+    ],
+    "vuelo.paso.subir": [
+      "vuelo.paso.subir"
+    ],
+    "vuelo.paso.tren": [
+      "vuelo.paso.tren"
+    ],
+    "vuelo.proponeIrse": [
+      "vuelo.proponeIrse"
+    ],
+    "vuelo.proponeIrseSinPista": [
+      "vuelo.proponeIrseSinPista"
+    ],
+    "vuelo.remontar.calor": [
+      "vuelo.remontar.calor"
+    ],
+    "vuelo.remontar.cola": [
+      "vuelo.remontar.cola"
+    ],
+    "vuelo.remontar": [
+      "vuelo.remontar"
+    ],
+    "vuelo.remontarUnTrecho.calor": [
+      "vuelo.remontarUnTrecho.calor"
+    ],
+    "vuelo.remontarUnTrecho.cola": [
+      "vuelo.remontarUnTrecho.cola"
+    ],
+    "vuelo.remontarUnTrecho": [
+      "vuelo.remontarUnTrecho"
+    ],
+    "vuelo.sinInstructora.no": [
+      "vuelo.sinInstructora.no"
+    ],
+    "vuelo.sinInstructora.pregunta": [
+      "vuelo.sinInstructora.pregunta"
+    ],
+    "vuelo.sinInstructora.si": [
+      "vuelo.sinInstructora.si"
+    ],
+    "vuelo.terrenoDelante": [
+      "vuelo.terrenoDelante"
+    ],
+    "vuelo.tomaLarga": [
+      "vuelo.tomaLarga"
+    ],
+    "vuelo.tomaLargaSinPista": [
+      "vuelo.tomaLargaSinPista"
+    ],
+    "vuelta.aceite.voz": [
+      "vuelta.aceite.voz"
+    ],
+    "vuelta.calzos.voz": [
+      "vuelta.calzos.voz"
+    ],
+    "vuelta.combustible.voz": [
+      "vuelta.combustible.voz"
+    ],
+    "vuelta.empezar": [
+      "vuelta.empezar"
+    ],
+    "vuelta.entera": [
+      "vuelta.entera"
+    ],
+    "vuelta.frenos.voz": [
+      "vuelta.frenos.voz"
+    ],
+    "vuelta.helice.voz": [
+      "vuelta.helice.voz"
+    ],
+    "vuelta.luces.voz": [
+      "vuelta.luces.voz"
+    ],
+    "vuelta.motores.voz": [
+      "vuelta.motores.voz"
+    ],
+    "vuelta.pitot.voz": [
+      "vuelta.pitot.voz"
+    ],
+    "vuelta.puertas.voz": [
+      "vuelta.puertas.voz"
+    ],
+    "vuelta.sondas.voz": [
+      "vuelta.sondas.voz"
+    ],
+    "vuelta.superficies.voz": [
+      "vuelta.superficies.voz"
     ]
   }
 }

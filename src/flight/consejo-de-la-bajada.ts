@@ -769,9 +769,8 @@ export interface Forma {
  */
 export interface Frase {
   /**
-   * **La frase nueva**, que nombra la acción y el objetivo. Sin grabar
-   * todavía: ver `PENDIENTE-VOCES-bajada.md`. Se dice en cuanto tiene su
-   * grabación; hasta entonces, `grabada`.
+   * **La frase nueva**, que nombra la acción y el objetivo. Se dice si
+   * tiene su grabación; si no, una de `grabadas`.
    */
   readonly nueva: string | null;
   /**

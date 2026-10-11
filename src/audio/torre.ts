@@ -47,6 +47,14 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   "hold short of the runway, landing traffic": "torre.holdShortLanding",
   "hold short of the runway, departing traffic": "torre.holdShortDeparting",
   /*
+   * Y en la fila de salida, con tu número (Doc 4444, 12.3.4.14 b), o detrás de
+   * una salida que deja estela (12.3.4.19 e). La secuencia es información, no
+   * una autorización: se espera igual a la verde. Ver `elPorqueEnRadio`.
+   */
+  "hold short of the runway, number two for departure": "torre.holdShortNumberTwo",
+  "hold short of the runway, number three for departure": "torre.holdShortNumberThree",
+  "hold short of the runway, caution wake turbulence": "torre.holdShortWake",
+  /*
    * **Y ésta todavía no la dice nadie, y se dice aquí para que se vea.**
    *
    * «Line up and wait» es entrar en pista y esperar ahí al permiso de
@@ -88,17 +96,22 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    */
   "roger MAYDAY": "torre.mayday",
   /*
-   * **Y la de una urgencia**, «roger PAN PAN» —el cuatrimotor que pierde un
-   * motor: le quedan tres, algo va mal y hay tiempo—, entra aquí como
-   * `torre.panpan` con su toma, que está pedida en `frases-para-grabar.mjs`.
-   * Hasta entonces la respuesta se lee en la tira de la radio. Ver
+   * **Y la de una urgencia**, «roger PAN PAN»: el cuatrimotor que pierde un
+   * motor, al que le quedan tres —algo va mal y hay tiempo—. Ver
    * `declararPanPan` en `game.ts`.
    */
+  "roger PAN PAN": "torre.panpan",
   /*
    * Y a quien se pasó la salida: abandone por la próxima disponible. Ver
    * `decirSalPorLaSiguiente` en `game.ts`.
    */
   "vacate next available": "torre.vacateNext",
+  /*
+   * Y a quien se quedó parado en la pista después de oír que había que
+   * dejarla: la prisa, una vez por toma (Doc 4444, 12.3.4.24). Ver
+   * `meterPrisaParaSalir` en `game.ts`.
+   */
+  "expedite vacating": "torre.expediteVacating",
 };
 
 /**
@@ -167,7 +180,16 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   // Un AFIS no da permisos, así que tampoco manda al aire por no tenerlo.
   "torre.goAroundSinPermiso": null,
   "torre.vacateNext": null,
+  // Ni mete prisa: quien vuela decide cuándo deja la pista.
+  "torre.expediteVacating": null,
   "torre.clearedTo": null,
+  /*
+   * Y la espera con su porqué es la pista en uso con el tráfico: un AFIS no
+   * reparte turnos ni avisa de estela, informa de quién sale.
+   */
+  "torre.holdShortNumberTwo": "torre.afisInUseDeparting",
+  "torre.holdShortNumberThree": "torre.afisInUseDeparting",
+  "torre.holdShortWake": "torre.afisInUseDeparting",
 };
 
 /**
@@ -309,9 +331,13 @@ export function esDeLaLampara(
  * Y lo que dice un AFIS en su lugar, en castellano —`afisLibre`,
  * `afisSinTrafico`…— y en fraseología —`afisFree`, `afisNoTraffic`…—: es lo
  * mismo que la lámpara, dicho como lo dice quien informa. Ver `DICE_UN_AFIS`.
+ *
+ * Y tu número en la fila de salida, que va detrás de la roja —«número dos
+ * para la salida», «number two for departure»— y con la verde ya no es
+ * verdad: el que iba delante salió.
  */
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?|numeroDos|numeroTres|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión para que se quede

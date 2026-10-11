@@ -33,5 +33,26 @@
   "tripulacion.llegada": [
     "{bienvenidos}",
     "{resto}"
+  ],
+  "tripulacion.bienvenidos.encarnacion": [
+    "tripulacion.bienvenidos.encarnacion"
+  ],
+  "tripulacion.bienvenidos.guarani": [
+    "tripulacion.bienvenidos.guarani"
+  ],
+  "tripulacion.bienvenidos.pedro-juan": [
+    "tripulacion.bienvenidos.pedro-juan"
+  ],
+  "tripulacion.bienvenidos.pettirossi": [
+    "tripulacion.bienvenidos.pettirossi"
+  ],
+  "tripulacion.trasLaToma": [
+    "tripulacion.trasLaToma"
+  ],
+  "tripulacion.trasLaToma~2": [
+    "tripulacion.trasLaToma~2"
+  ],
+  "tripulacion.trasLaToma~3": [
+    "tripulacion.trasLaToma~3"
   ]
 }

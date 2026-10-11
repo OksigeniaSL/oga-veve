@@ -5,6 +5,8 @@ pista
 autorizado a despegar
 autorizado para aterrizar
 mantenga fuera de pista
+acelere abandono de pista
+aterrizó sin autorización; llame a la torre por teléfono a su llegada
 autorizado a
 motor y al aire
 cero
@@ -77,13 +79,19 @@ cleared for take-off
 cleared to land
 go around, runway occupied
 hold short of the runway
+hold short of the runway, number two for departure
+hold short of the runway, number three for departure
+hold short of the runway, caution wake turbulence
 vacate next available
+expedite vacating
+landed without clearance, call the tower by telephone on arrival
 landing traffic
 departing traffic
 line up and wait
 cleared to
 climb to
 runway in use
+backtrack runway
 go around
 roger, Mayday
 roger, Pan Pan

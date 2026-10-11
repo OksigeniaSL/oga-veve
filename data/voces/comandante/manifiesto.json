@@ -207,6 +207,18 @@
       "ms": 1830,
       "h": "3bf549be45"
     },
+    "comandante.despegue~2": {
+      "ms": 1832,
+      "h": "57ba29b4cb"
+    },
+    "comandante.despegue~3": {
+      "ms": 1930,
+      "h": "ef3ff2eae6"
+    },
+    "comandante.despegue~4": {
+      "ms": 1433,
+      "h": "d218ecc5fa"
+    },
     "comandante.llegada.ayolas": {
       "ms": 9507,
       "h": "286d20c253"
@@ -2099,6 +2111,15 @@
     ],
     "comandante.yaSeRespira": [
       "comandante.yaSeRespira"
+    ],
+    "comandante.despegue~2": [
+      "comandante.despegue~2"
+    ],
+    "comandante.despegue~3": [
+      "comandante.despegue~3"
+    ],
+    "comandante.despegue~4": [
+      "comandante.despegue~4"
     ]
   }
 }

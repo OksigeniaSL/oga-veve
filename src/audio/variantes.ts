@@ -82,13 +82,11 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
    * despegue inmediato» —la favorita de Enrique—, y en inglés, que es como la
    * dicen muchas tripulaciones de habla castellana, «cabin crew, seats for
    * take-off» y «cabin crew, prepare for take-off». La de `i18n`, «sentados
-   * para el despegue», es la primera y la única grabada.
+   * para el despegue», es la primera.
    *
-   * Sin grabar hasta el 6 de octubre, que ElevenLabs no tiene saldo: ver
-   * `PENDIENTE-VOCES-megafonia.md`. Y mientras no lo estén **no entran en el
-   * sorteo**: la voz del navegador es muda en Brave para Linux, y un sorteo
-   * que cae en una sin grabar es un anuncio que no suena. Ver `conPieza` en
-   * `unaForma`.
+   * Y una forma sin grabar **no entra en el sorteo**: la voz del navegador
+   * es muda en Brave para Linux, y un sorteo que cae en una sin grabar es un
+   * anuncio que no suena. Ver `conPieza` en `unaForma`.
    */
   "comandante.despegue": [
     "Tripulación, despegue inmediato.",
@@ -282,9 +280,8 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
    * tripulante. Cada una con el habla de su sitio. Ver
    * `audio/anuncio-tras-la-toma.ts`.
    *
-   * Sin grabar hasta que ElevenLabs tenga saldo: ver
-   * `PENDIENTE-VOCES-megafonia.md`. Y mientras no lo estén no entran en el
-   * sorteo, por lo mismo que las de sentarse para despegar.
+   * Y una forma sin grabar no entra en el sorteo, por lo mismo que las de
+   * sentarse para despegar.
    */
   "tripulacion.trasLaToma": [
     "Por su seguridad, sigan sentados y con el cinturón puesto hasta que el avión se pare del todo y se apague la señal. A partir de ahora pueden encender sus celulares. Abran los compartimientos despacito, que en el vuelo las valijas también viajan. Y antes de bajar, revisen el bolsillo del asiento para no olvidarse nada.",

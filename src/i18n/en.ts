@@ -375,6 +375,7 @@ export const EN: Dictionary = {
   "vuelo.final": "Come down gently",
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Terrain. Pull up",
+  "vuelo.terrenoDelante": "There is a mountain ahead, higher than us: climb",
   "vuelo.perdida": "Stall. Lower the nose",
   "vuelo.trafico.delante": "Look ahead: there's another plane nearby",
   "vuelo.trafico.izquierda": "Look to your left: there's another plane nearby",
@@ -1122,8 +1123,8 @@ export const EN: Dictionary = {
 
   /*
    * Tapping a piece of the panel explains it, and the corner of flight
-   * curiosities. See `ui/explicaciones-de-serie.ts`. The voice is not
-   * recorded yet; see `PENDIENTE-VOCES-explicaciones.md`.
+   * curiosities. See `ui/explicaciones-de-serie.ts`. Only the recorded
+   * voice says them: they never fall back to the browser's voice.
    */
   "explica.oir": "Listen again",
   "explica.curiosidades": "Flight curiosities",

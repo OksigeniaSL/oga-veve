@@ -271,6 +271,18 @@
       "ms": 540,
       "h": "80b549e984"
     },
+    "torre.numeroDos": {
+      "ms": 1574,
+      "h": "30683bcc08"
+    },
+    "torre.numeroTres": {
+      "ms": 1635,
+      "h": "fd4f2c6b20"
+    },
+    "torre.solo.acelereAbandono": {
+      "ms": 1763,
+      "h": "3cecef1d73"
+    },
     "torre.solo.afisLibre": {
       "ms": 725,
       "h": "e48b0bf03f"
@@ -291,6 +303,10 @@
       "ms": 1160,
       "h": "034e58cd9e"
     },
+    "torre.solo.aterrizoSinPermiso": {
+      "ms": 4407,
+      "h": "7a597ccc13"
+    },
     "torre.solo.autorizadoA": {
       "ms": 991,
       "h": "b36a4b9910"
@@ -302,6 +318,10 @@
     "torre.solo.autorizadoParaAterrizar": {
       "ms": 1571,
       "h": "070716f611"
+    },
+    "torre.solo.backtrackRunway": {
+      "ms": 1145,
+      "h": "2205b4fbf9"
     },
     "torre.solo.birdsOnFinal": {
       "ms": 1912,
@@ -327,6 +347,10 @@
       "ms": 1184,
       "h": "8e116ae613"
     },
+    "torre.solo.expediteVacating": {
+      "ms": 1353,
+      "h": "57d10ded35"
+    },
     "torre.solo.free": {
       "ms": 539,
       "h": "61192bab44"
@@ -343,9 +367,25 @@
       "ms": 1366,
       "h": "78a4fc5afe"
     },
+    "torre.solo.holdShortNumberThree": {
+      "ms": 2747,
+      "h": "49acaaf503"
+    },
+    "torre.solo.holdShortNumberTwo": {
+      "ms": 2598,
+      "h": "e16b34d425"
+    },
+    "torre.solo.holdShortWake": {
+      "ms": 2873,
+      "h": "5bc5f57f34"
+    },
     "torre.solo.idaAlAire": {
       "ms": 902,
       "h": "e06d9655f7"
+    },
+    "torre.solo.landedWithoutClearance": {
+      "ms": 3707,
+      "h": "a724a8a18f"
     },
     "torre.solo.landingTraffic": {
       "ms": 1013,
@@ -374,6 +414,10 @@
     "torre.solo.rogerMayday": {
       "ms": 1086,
       "h": "0524247a69"
+    },
+    "torre.solo.rogerPanPan": {
+      "ms": 1062,
+      "h": "db38671781"
     },
     "torre.solo.runway": {
       "ms": 556,
@@ -1546,6 +1590,122 @@
       "{c4}",
       "{c5}",
       "torre.solo.goAroundSolo"
+    ],
+    "torre.numeroDos": [
+      "torre.numeroDos"
+    ],
+    "torre.numeroTres": [
+      "torre.numeroTres"
+    ],
+    "torre.solo.rogerPanPan": [
+      "torre.solo.rogerPanPan"
+    ],
+    "torre.panpan": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.rogerPanPan"
+    ],
+    "torre.holdShortNumberTwo": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdShortNumberTwo"
+    ],
+    "torre.holdShortNumberThree": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdShortNumberThree"
+    ],
+    "torre.holdShortWake": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdShortWake"
+    ],
+    "torre.expediteVacating": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.expediteVacating"
+    ],
+    "torre.acelereAbandono": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.acelereAbandono"
+    ],
+    "torre.landedWithoutClearance": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.landedWithoutClearance"
+    ],
+    "torre.aterrizoSinPermiso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.aterrizoSinPermiso"
+    ],
+    "torre.backtrack": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.backtrackRunway",
+      "{r1}",
+      "{r2}"
+    ],
+    "torre.backtrack.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.backtrackRunway",
+      "{r1}",
+      "{r2}",
+      "lado.left"
+    ],
+    "torre.backtrack.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.backtrackRunway",
+      "{r1}",
+      "{r2}",
+      "lado.right"
+    ],
+    "torre.backtrack.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.backtrackRunway",
+      "{r1}",
+      "{r2}",
+      "lado.center"
     ]
   }
 }

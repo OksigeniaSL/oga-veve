@@ -3,11 +3,15 @@
 Encargo del 2 de octubre de 2026, con dos fallos vistos por Enrique en la
 versión publicada (Gran Canaria, JAZ 120, Guyrami, de noche): la ventanilla
 ALT que subía de 2.100 a 3.000 en la final, y un avión en la pista sin que
-nadie mandara frustrar. ElevenLabs está sin saldo hasta el 6 de octubre, así
-que **esta rama no mete en el código ninguna clave nueva**: lo de abajo se
-graba primero, se le pone su receta y **entonces** se engancha en el sitio que
-se dice. Engancharlo antes sería meter una frase muda: en el Brave de Enrique
-(Linux) no hay voces del sistema y una clave sin grabar es silencio.
+nadie mandara frustrar. Lo de abajo **no está en el código**: se graba primero,
+se le pone su receta y **entonces** se engancha en el sitio que se dice.
+Engancharlo antes sería meter una frase muda: en el Brave de Enrique (Linux)
+no hay voces del sistema y una clave sin grabar es silencio.
+
+La toma larga, aterrizar contra la orden y la recogida (`vuelo.tomaLarga`,
+`vuelo.tomaLargaSinPista`, `vuelo.aterrizasteContraLaOrden`,
+`vuelo.narizEnLaRecogida`, `vuelo.narizYQuitaElGas`) se grabaron el 11 de
+octubre de 2026.
 
 ## 1. La ventanilla en la final
 
@@ -19,7 +23,6 @@ Así que la frase que estaba pedida en `PENDIENTE-VOCES-automatico.md`
 (`vuelo.ventanillaFrustrada`, «en los tres peldaños de abajo») **se queda en
 un solo peldaño, Taguato**, que es el único donde la ventanilla cambia y la
 instructora todavía explica; y el texto dice quién baja, que es el automático.
-Sustituye a la fila de aquel fichero.
 
 | voz | clave | es-PY | en | dónde se engancha |
 |---|---|---|---|---|
@@ -49,40 +52,7 @@ captura estaba en la tuya. Si algún día se dibuja tráfico en la paralela, har
 falta una frase que lo cuente («ese avión está en la otra pista: la nuestra
 está libre»), y no antes.
 
-## 3. La toma larga y aterrizar contra la orden (tanda 13, puntos 206 y 237)
-
-Encargo del 5 de octubre de 2026. Las claves y sus textos **ya están** en
-`src/i18n/es-PY.ts` y `en.ts` (el guaraní, quieto: cae al castellano), y el
-código ya las pide **solo con su grabación** (`this.instructor.vozDe(clave)`):
-mientras tanto lo cuenta la tarjeta de la frustrada, con su dibujo, su texto
-en los peldaños que leen y el tono de atención. Unos 260 caracteres.
-
-| voz | clave | es-PY | en | dónde se engancha |
-|---|---|---|---|---|
-| instructor | `vuelo.tomaLarga` | Así no: nos vamos al aire y lo volvemos a intentar | Not like this: we go around and try again | `game.ts`, `mirarLaTomaLarga`: flotando o tocando pasada la zona de toma, una vez por toma, en los tres peldaños de abajo. Ver `src/flight/toma-larga.ts`. |
-| instructor | `vuelo.tomaLargaSinPista` | No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar | Not enough runway to stop: we go around and try again | Lo mismo, rodando sin pista para parar mientras todavía se puede subir. |
-| instructor | `vuelo.aterrizasteContraLaOrden` | La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos | The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here | `game.ts`, `aterrizoContraLaOrden`: después de aterrizar con la orden de la pista ocupada puesta, detrás de la torre (seis segundos), una vez; no en el peldaño de cabina. |
-
-## 3b. La recogida: la nariz, y el gas a la altura de cada avión
-
-Encargo del 5 de octubre de 2026. Quien hacía exactamente lo que le decían en
-Guyrami tocaba fuerte: la ayuda de la final cortaba el gas a treinta pies y
-nadie pedía levantar la nariz. Ahora se pide la recogida entera, a la altura
-de la clase de cada avión —ver `src/flight/recogida.ts`—: treinta pies la
-nariz y veinte el gas en el JAZ 90 (A320), veinte las dos cosas en el JAZ 120
-(737 FCTM) y quince en los de hélice (FAA, AFH cap. 9). Las claves y los
-textos **ya están** en `src/i18n/es-PY.ts` y `en.ts` (el guaraní, quieto), y
-el código las pide **solo con su grabación** (`this.instructor.vozDe(clave)`):
-mientras tanto lo cuenta la tarjeta con el dibujo de la nariz arriba, y si
-además se pide el gas suena el «Quitá el gas» de siempre, que sí está grabado.
-Unos 70 caracteres.
-
-| voz | clave | es-PY | en | dónde se engancha |
-|---|---|---|---|---|
-| instructor | `vuelo.narizEnLaRecogida` | La nariz un poquito arriba | A little nose up | `game.ts`, `acompanarLaRecogida`: al cruzar bajando la altura de la nariz de su clase, una vez por aproximación, cuando el gas lo lleva otra mano (la ayuda de la final de Guyrami, los gases del avión) o cuando la nariz va antes que el gas (JAZ 90). En `mando`, como «quitá el gas». |
-| instructor | `vuelo.narizYQuitaElGas` | La nariz un poquito arriba, y quitá el gas | A little nose up, and throttle to idle | Lo mismo, cuando la nariz y el gas van a la vez (JAZ 120 y los de hélice) y quien vuela lleva el gas puesto. Sustituye a `vuelo.quitaElGas` en ese momento; hasta grabarla, suena esa. |
-
-## 4. Grabar
+## 3. Grabar
 
 ```bash
 # Primero las claves y los textos en src/i18n/es-PY.ts y en.ts (el guaraní,
@@ -94,5 +64,5 @@ node scripts/voces-elevenlabs.mjs instructor
 
 Después de grabar, nunca antes, la receta de cada clave en
 `crudo/instructor/recetas.json` (`d[clave] = [clave]`), hornear, restaurar lo
-re-codificado y pasar `node scripts/verificar-voces.mjs`. Y solo entonces el
-código.
+re-codificado que no sea nuevo y pasar `node scripts/verificar-voces.mjs`. Y
+solo entonces el código.

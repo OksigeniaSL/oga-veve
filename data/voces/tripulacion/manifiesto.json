@@ -3,6 +3,22 @@
   "voz": "tripulacion",
   "idioma": "es-PY",
   "piezas": {
+    "tripulacion.bienvenidos.encarnacion": {
+      "ms": 2274,
+      "h": "a861845118"
+    },
+    "tripulacion.bienvenidos.guarani": {
+      "ms": 2728,
+      "h": "c87f9b3ae9"
+    },
+    "tripulacion.bienvenidos.pedro-juan": {
+      "ms": 2754,
+      "h": "f65ff3e66f"
+    },
+    "tripulacion.bienvenidos.pettirossi": {
+      "ms": 2096,
+      "h": "cfa1f65d85"
+    },
     "tripulacion.cinturones": {
       "ms": 11007,
       "h": "7b97ca60db"
@@ -38,6 +54,18 @@
     "tripulacion.servicio.pina": {
       "ms": 10507,
       "h": "8718edc821"
+    },
+    "tripulacion.trasLaToma": {
+      "ms": 20907,
+      "h": "4b49927f25"
+    },
+    "tripulacion.trasLaToma~2": {
+      "ms": 23407,
+      "h": "11873db162"
+    },
+    "tripulacion.trasLaToma~3": {
+      "ms": 22407,
+      "h": "37f5190fb3"
     }
   },
   "recetas": {
@@ -71,6 +99,31 @@
     ],
     "tripulacion.mascaras": [
       "tripulacion.mascaras"
+    ],
+    "tripulacion.llegada": [
+      "{bienvenidos}",
+      "{resto}"
+    ],
+    "tripulacion.bienvenidos.encarnacion": [
+      "tripulacion.bienvenidos.encarnacion"
+    ],
+    "tripulacion.bienvenidos.guarani": [
+      "tripulacion.bienvenidos.guarani"
+    ],
+    "tripulacion.bienvenidos.pedro-juan": [
+      "tripulacion.bienvenidos.pedro-juan"
+    ],
+    "tripulacion.bienvenidos.pettirossi": [
+      "tripulacion.bienvenidos.pettirossi"
+    ],
+    "tripulacion.trasLaToma": [
+      "tripulacion.trasLaToma"
+    ],
+    "tripulacion.trasLaToma~2": [
+      "tripulacion.trasLaToma~2"
+    ],
+    "tripulacion.trasLaToma~3": [
+      "tripulacion.trasLaToma~3"
     ]
   }
 }

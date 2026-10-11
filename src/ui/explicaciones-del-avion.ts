@@ -53,7 +53,7 @@ export interface ExplicacionDelAvion {
    * Lo que dice la instructora.
    *
    * Una clave del diccionario como todas las de voz: la grabación se busca por
-   * ella y, mientras no está grabada, no suena. Ver `PENDIENTE-VOCES-tarjeta.md`.
+   * ella y, sin grabación, no suena.
    */
   readonly voz: TranslationKey;
   /**

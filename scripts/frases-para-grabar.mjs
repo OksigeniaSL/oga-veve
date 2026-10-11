@@ -41,7 +41,18 @@ const SALIDA = process.argv[2] ?? "docs/voces";
  * mientras se vuela**, que es lo que alguien de cuatro años no puede leer.
  */
 const HABLADOS = [
-  ["vuelo", "instructor", "lo que toca hacer ahora, en vuelo y en tierra"],
+  [
+    "vuelo",
+    "instructor",
+    "lo que toca hacer ahora, en vuelo y en tierra",
+    /*
+     * Menos la orden de irse al aire sin permiso a los mínimos, que la torre
+     * ya no da: a los mínimos el permiso llega a la vista. La clave se queda
+     * en el diccionario y no la pide nadie, así que grabarla sería pagar por
+     * una frase muda.
+     */
+    /^vuelo\.sinPermisoEnLosMinimos$/,
+  ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   ["percance", "instructor", "lo que salió mal, en la pantalla de fin"],
   ["fin", "instructor", "el reconocimiento al terminar"],
@@ -89,7 +100,7 @@ const HABLADOS = [
    * curiosidades del vuelo y lo que la instructora presenta la primera vez.
    * Por lo mismo que el ala: la explicación es la ventana, y a los cuatro años
    * la ventana se oye. Las palabras cortas y los nombres de los botones se
-   * leen y no se graban. Ver `PENDIENTE-VOCES-explicaciones.md`.
+   * leen y no se graban. Ver `src/ui/explicaciones.ts`.
    */
   [
     "explica",
@@ -98,6 +109,22 @@ const HABLADOS = [
     // La palabra corta y los nombres de los botones se leen, no se dicen.
     /\.corta$|^explica\.(oir|curiosidades)$/,
   ],
+  /*
+   * **Y lo que se cuenta antes de volar y al tocar el avión**: cada sitio de
+   * la vuelta al avión, por qué hoy mejor no salir y cada punto de la tarjeta
+   * del avión. Se piden con la clave montada —`vuelta.${cosa}.voz`,
+   * `parte.propone.${motivo}`—, y el lector de `.decir(` de más abajo no ve
+   * una clave a medio escribir: se quedaban fuera de la lista sin decir nada.
+   * El nombre y el globo de cada sitio de la vuelta se leen y no se dicen.
+   */
+  [
+    "vuelta",
+    "instructor",
+    "la vuelta al avión antes de volar",
+    /\.(nombre|globo)$|^vuelta\.(titulo|abrir|volver|seguir|lista)$/,
+  ],
+  ["parte.propone", "instructor", "por qué hoy mejor no salir, con el parte"],
+  ["tarjeta.voz", "instructor", "lo que explica cada punto de la tarjeta del avión"],
   /*
    * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
    *
@@ -164,6 +191,22 @@ const CABINA = [
     "cabina.terrainPullUp",
     "terrain, pull up",
     "aviso de terreno, el más urgente",
+  ],
+  /*
+   * **Y los dos del avisador que mira delante** (FLTA), que no son el de
+   * debajo: la precaución, unos cuarenta o sesenta segundos antes de la
+   * ladera, y el aviso, unos veinte o treinta. «Too low» es otro modo del
+   * avisador y enseñaría otra cosa. Ver `flight/terreno-delante.ts`.
+   */
+  [
+    "cabina.cautionTerrain",
+    "caution terrain, caution terrain",
+    "el avisador de terreno ve una ladera por delante: precaución",
+  ],
+  [
+    "cabina.terrainAheadPullUp",
+    "terrain ahead, pull up",
+    "el avisador de terreno ve una ladera por delante: aviso",
   ],
   ["cabina.tooLow", "too low", "vas bajo sobre el terreno"],
   ["cabina.tooFast", "too fast", "veredicto de toma rápida"],
@@ -407,6 +450,27 @@ const TORRE_SOLO = [
   ],
   ["torre.solo.holdShort", "hold short of the runway", "pará en la doble raya"],
   /*
+   * **Y con tu número en la fila de salida, o con la estela del que salió.**
+   * La secuencia es información y no una autorización (Doc 4444, 12.3.4.14 b),
+   * y «caution wake turbulence» es la expresión de la OACI (12.3.4.19 e). Ver
+   * `elPorqueEnRadio` en `src/game.ts`.
+   */
+  [
+    "torre.solo.holdShortNumberTwo",
+    "hold short of the runway, number two for departure",
+    "pará en la doble raya: sale uno antes que vos",
+  ],
+  [
+    "torre.solo.holdShortNumberThree",
+    "hold short of the runway, number three for departure",
+    "pará en la doble raya: salen dos antes que vos",
+  ],
+  [
+    "torre.solo.holdShortWake",
+    "hold short of the runway, caution wake turbulence",
+    "pará en la doble raya: el que salió deja estela",
+  ],
+  /*
    * **Y a quien se pasó la salida**: abandone por la próxima disponible. La
    * raya ya se rehacía sola por la siguiente; faltaba que la torre lo dijera
    * como se dice. Ver `decirSalPorLaSiguiente` en `src/game.ts`.
@@ -415,6 +479,25 @@ const TORRE_SOLO = [
     "torre.solo.vacateNext",
     "vacate next available",
     "te pasaste la salida: dejá la pista por la próxima",
+  ],
+  /*
+   * **Y a quien se queda parado en la pista** después de oír que había que
+   * dejarla: la prisa, una vez por toma (Doc 4444, 12.3.4.24). Ver
+   * `meterPrisaParaSalir` en `src/game.ts`.
+   */
+  [
+    "torre.solo.expediteVacating",
+    "expedite vacating",
+    "parado en la pista después de oír que había que dejarla: con prisa",
+  ],
+  /*
+   * **Y a quien aterrizó con la orden de irse al aire puesta**: que llame a la
+   * torre por teléfono al llegar. Ver `aterrizoContraLaOrden` en `src/game.ts`.
+   */
+  [
+    "torre.solo.landedWithoutClearance",
+    "landed without clearance, call the tower by telephone on arrival",
+    "aterrizó con la orden de irse al aire: que llame a la torre",
   ],
   /*
    * **Y el porqué de la espera**, detrás de la orden: la información de
@@ -443,6 +526,11 @@ const TORRE_SOLO = [
    * `src/flight/la-otra-cabecera.ts` y `src/flight/sin-motor.ts`.
    */
   ["torre.solo.runwayInUse", "runway in use", "la pista en uso, antes de su número"],
+  /*
+   * Y remontar la pista (Doc 4444, 12.3.4.7 p), con su número detrás, en los
+   * campos sin calle hasta la cabecera. Ver `contarPorDondeSeSale`.
+   */
+  ["torre.solo.backtrackRunway", "backtrack runway", "remontar la pista, antes de su número"],
   ["torre.solo.goAroundSolo", "go around", "al aire, sin más: el porqué va detrás"],
   ["torre.solo.rogerMayday", "roger, Mayday", "la torre oyó la llamada de socorro"],
   // Y la de urgencia, que es la del cuatrimotor con un motor parado.
@@ -828,6 +916,23 @@ const LAMPARA_SOLO = [
       [voz, `${solo}.autorizadoDespegar`, "autorizado a despegar", EN_TIERRA],
       [voz, `${solo}.autorizadoParaAterrizar`, "autorizado para aterrizar", EN_EL_AIRE],
       [voz, `${solo}.mantengaFuera`, "mantenga fuera de pista", EN_ESPERA],
+      /*
+       * Y lo que se dice después de aterrizar, en castellano como la lámpara:
+       * la prisa por dejar la pista (RD 1180/2018, 1.4.21 c) y a quien bajó
+       * contra la orden de irse al aire. La matrícula va delante, en la receta.
+       */
+      [
+        voz,
+        `${solo}.acelereAbandono`,
+        "acelere abandono de pista",
+        "parado en la pista después de oír que había que dejarla: con prisa",
+      ],
+      [
+        voz,
+        `${solo}.aterrizoSinPermiso`,
+        "aterrizó sin autorización; llame a la torre por teléfono a su llegada",
+        "aterrizó con la orden de irse al aire: que llame a la torre",
+      ],
       [voz, `${solo}.autorizadoA`, "autorizado a", A_DONDE],
       // Y la orden de irse al aire, que cambia de palabras con el reglamento:
       // «ida al aire» en Paraguay, «motor y al aire» en España.
@@ -1276,6 +1381,44 @@ for (const f of filas) {
   f.ajustes = AJUSTES_EN_CALMA;
 }
 /*
+ * **Y las que ya se escriben con las palabras de la calma**, que solo piden
+ * los ajustes y un punto al final si no lo llevan. Van aparte para no copiar
+ * aquí su texto entero, que se quedaría viejo el día que cambie el del
+ * diccionario.
+ */
+const EN_CALMA_COMO_SE_ESCRIBE = new Set([
+  /*
+   * Los consejos de la bajada que suenan detrás de una caja —*airspeed low*
+   * con lo lento, *sink rate* con lo que se hunde—: son la explicación de la
+   * alarma, como `vuelo.bajasRapido`, a la que sustituyen. Ver `cantoDe` en
+   * `src/flight/consejo-de-la-bajada.ts`.
+   */
+  "vuelo.consejo.masGas",
+  "vuelo.consejo.narizAbajoMarca",
+  "vuelo.consejo.narizArribaRitmo",
+  "vuelo.consejo.narizArribaSuave",
+  "vuelo.consejo.masGasSuave",
+  // Detrás de *caution terrain*, como la de debajo detrás de *too low*.
+  "vuelo.terrenoDelante",
+  // El pitot tapado: parar en la carrera, el aplauso y volar sin anemómetro.
+  "pitot.noMarca",
+  "pitot.abortado",
+  "pitot.enElAire",
+  /*
+   * Y las explicaciones que cuentan una alarma o la cabina sin aire, que las
+   * demás de la ventana van con chispa: el TCAS cita su *traffic, traffic*, y
+   * leído como alarma enseñaría lo contrario.
+   */
+  "explica.tcas.texto",
+  "explica.avisos.texto",
+  "explica.mascaras.texto",
+]);
+for (const f of filas) {
+  if (!EN_CALMA_COMO_SE_ESCRIBE.has(f.id)) continue;
+  if (!/[.!?]$/.test(f.texto)) f.dicho = `${f.texto}.`;
+  f.ajustes = AJUSTES_EN_CALMA;
+}
+/*
  * **Y todo lo de los ejercicios de emergencia, en calma.** Es el marco entero
  * del #90: la calma es el contenido, y la primera vez que alguien oiga que se
  * ha parado un motor tiene que oírlo de alguien que no se asusta. «V1» se lee
@@ -1301,6 +1444,51 @@ const ASI_SE_LEE = {
 for (const f of filas) {
   const dicho = ASI_SE_LEE[f.id];
   if (dicho) f.dicho = dicho;
+}
+/*
+ * **Y los rótulos de cabina, como se dicen en una cabina.** Las explicaciones
+ * los nombran —IAS, HDG, T/D, TCAS— y una voz castellana los deletrea en
+ * castellano, «i, a, ese», o los lee como palabra. No se traducen nunca: se
+ * dicen letra a letra en inglés o como los dice quien vuela —«ti-di», «en
+ * uan», *heading*—, que es lo que se va a oír el día que se suba a uno. Y los
+ * números del TCAS, como se leen en la pantalla: «más diez», «menos cero
+ * cinco». El texto escrito no cambia: esto es solo lo que se le da a leer.
+ */
+const SIGLAS = [
+  ["TCAS STBY", "ti-cas standby"],
+  ["TA ONLY", "ti-ei only"],
+  ["CAB ALT", "cab alt"],
+  ["TCAS", "ti-cas"],
+  ["IAS", "ai-ei-es"],
+  ["HDG", "heading"],
+  ["ALT", "alt"],
+  ["V/S", "vi-es"],
+  ["T/D", "ti-di"],
+  ["T/C", "ti-si"],
+  ["GS", "yi-es"],
+  ["N1", "en uan"],
+  ["RPM", "ar-pi-em"],
+  ["ZP", "zeta pe"],
+];
+const NUMEROS_QUE_SE_LEEN = [
+  ["+10", "más diez"],
+  ["−05", "menos cero cinco"],
+  ["la pista 03", "la pista cero tres"],
+];
+const conSiglas = (texto) => {
+  let dicho = texto;
+  for (const [sigla, asi] of SIGLAS)
+    dicho = dicho.replace(
+      new RegExp(`(?<![\\w/])${sigla.replace("/", "\\/")}(?![\\w/])`, "g"),
+      asi,
+    );
+  for (const [escrito, asi] of NUMEROS_QUE_SE_LEEN) dicho = dicho.replaceAll(escrito, asi);
+  return dicho;
+};
+for (const f of filas) {
+  if (!f.id.startsWith("explica.") && f.id !== "vuelo.despues.transpondedor") continue;
+  const dicho = conSiglas(f.dicho ?? f.texto);
+  if (dicho !== (f.dicho ?? f.texto)) f.dicho = dicho;
 }
 
 /*
@@ -1338,9 +1526,16 @@ const AJUSTES_CON_CHISPA = {
  * lección dicha con voz de aviso es un sermón. Ver
  * `src/flight/lecciones-del-aire.ts`.
  */
-const CON_CHISPA = (id) => id.startsWith("ventanilla.") || id.startsWith("vuelo.aire.");
+/*
+ * Y las explicaciones de la ventana —tocar una pieza del cuadro, los grados,
+ * las curiosidades—, que son largas y se cuentan igual: con ganas, no al ritmo
+ * de una orden de vuelo. Las que cuentan una alarma ya van en calma, y esas se
+ * quedan así.
+ */
+const CON_CHISPA = (id) =>
+  id.startsWith("ventanilla.") || id.startsWith("vuelo.aire.") || id.startsWith("explica.");
 for (const f of filas) {
-  if (!CON_CHISPA(f.id)) continue;
+  if (!CON_CHISPA(f.id) || f.ajustes) continue;
   f.ajustes = AJUSTES_CON_CHISPA;
   if (f.texto.length < 30)
     console.log(`\n  ¡Ojo! ${f.id} es muy corta para grabarla suelta: «${f.texto}»`);

@@ -40,43 +40,43 @@
 040	vuelo.final	Bajá suavecito
 041	vuelo.terrenoBajo	Vas muy bajo: subí un poco
 042	vuelo.terrenoSube	El suelo está cerca: subí
-043	vuelo.perdida	Pérdida. Bajá el morro
-044	vuelo.trafico.delante	Mirá adelante: hay otro avión cerca
-045	vuelo.trafico.izquierda	Mirá a tu izquierda: hay otro avión cerca
-046	vuelo.trafico.derecha	Mirá a tu derecha: hay otro avión cerca
-047	vuelo.trafico.detras	Hay otro avión cerca, detrás de vos
-048	vuelo.traficoArriba	Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
-049	vuelo.traficoAbajo	Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
-050	vuelo.traficoNivel	Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
-051	vuelo.otroAvion.delante.arriba	Adelante y más arriba va otro avión. ¿Lo ves?
-052	vuelo.otroAvion.delante.nivel	Adelante, a nuestra altura, va otro avión. ¿Lo ves?
-053	vuelo.otroAvion.delante.abajo	Adelante y más abajo va otro avión. ¿Lo ves?
-054	vuelo.otroAvion.derecha.arriba	Arriba a la derecha va otro avión. ¿Lo ves?
-055	vuelo.otroAvion.derecha.nivel	A la derecha, a nuestra altura, va otro avión. ¿Lo ves?
-056	vuelo.otroAvion.derecha.abajo	Abajo a la derecha va otro avión. ¿Lo ves?
-057	vuelo.otroAvion.izquierda.arriba	Arriba a la izquierda va otro avión. ¿Lo ves?
-058	vuelo.otroAvion.izquierda.nivel	A la izquierda, a nuestra altura, va otro avión. ¿Lo ves?
-059	vuelo.otroAvion.izquierda.abajo	Abajo a la izquierda va otro avión. ¿Lo ves?
-060	vuelo.otroAvion.detras.arriba	Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada
-061	vuelo.otroAvion.detras.nivel	Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada
-062	vuelo.otroAvion.detras.abajo	Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada
-063	vuelo.aves.porQueSubir	La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo
-064	vuelo.aves.enUve	¡Mirá, pájaros volando en V! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos
-065	vuelo.bajasRapido	Bajás muy de golpe: levantá un poco la nariz
-066	vuelo.muyInclinado	Estás muy inclinado: enderezá las alas
-067	vuelo.pilotoSuelto	Se soltó el piloto automático
-068	vuelo.pilotoEnTierra	El piloto automático se conecta en el aire
-069	vuelo.empezamosABajar	Empezamos a bajar: despacito, hasta la pista
-070	vuelo.alturaDeLaTorre	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
-071	vuelo.alturaDeLaTorreRaya	La torre nos dice hasta dónde subir: hasta la raya de la cinta.
-072	vuelo.otraAlturaDeLaTorre	La torre nos deja subir otro poco. Ya puse la altura nueva.
-073	vuelo.tonoDeAltitudCerca	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
-074	vuelo.tonoDeAltitudFuera	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
-075	vuelo.masAltoQueElPlan	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
-076	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
-077	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
-078	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
-079	vuelo.sinPermisoEnLosMinimos	La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito
+043	vuelo.terrenoDelante	Adelante hay una montaña más alta que nosotros: subí
+044	vuelo.perdida	Pérdida. Bajá el morro
+045	vuelo.trafico.delante	Mirá adelante: hay otro avión cerca
+046	vuelo.trafico.izquierda	Mirá a tu izquierda: hay otro avión cerca
+047	vuelo.trafico.derecha	Mirá a tu derecha: hay otro avión cerca
+048	vuelo.trafico.detras	Hay otro avión cerca, detrás de vos
+049	vuelo.traficoArriba	Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
+050	vuelo.traficoAbajo	Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
+051	vuelo.traficoNivel	Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
+052	vuelo.otroAvion.delante.arriba	Adelante y más arriba va otro avión. ¿Lo ves?
+053	vuelo.otroAvion.delante.nivel	Adelante, a nuestra altura, va otro avión. ¿Lo ves?
+054	vuelo.otroAvion.delante.abajo	Adelante y más abajo va otro avión. ¿Lo ves?
+055	vuelo.otroAvion.derecha.arriba	Arriba a la derecha va otro avión. ¿Lo ves?
+056	vuelo.otroAvion.derecha.nivel	A la derecha, a nuestra altura, va otro avión. ¿Lo ves?
+057	vuelo.otroAvion.derecha.abajo	Abajo a la derecha va otro avión. ¿Lo ves?
+058	vuelo.otroAvion.izquierda.arriba	Arriba a la izquierda va otro avión. ¿Lo ves?
+059	vuelo.otroAvion.izquierda.nivel	A la izquierda, a nuestra altura, va otro avión. ¿Lo ves?
+060	vuelo.otroAvion.izquierda.abajo	Abajo a la izquierda va otro avión. ¿Lo ves?
+061	vuelo.otroAvion.detras.arriba	Detrás de nosotros, más arriba, va otro avión. No hace falta hacer nada
+062	vuelo.otroAvion.detras.nivel	Detrás de nosotros, a nuestra altura, va otro avión. No hace falta hacer nada
+063	vuelo.otroAvion.detras.abajo	Detrás de nosotros, más abajo, va otro avión. No hace falta hacer nada
+064	vuelo.aves.porQueSubir	La torre avisa que hay pájaros en la final. Si ves alguno de frente, subí un poquito: cuando se asustan, los pájaros se tiran para abajo
+065	vuelo.aves.enUve	¡Mirá, pájaros volando en V! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos
+066	vuelo.bajasRapido	Bajás muy de golpe: levantá un poco la nariz
+067	vuelo.muyInclinado	Estás muy inclinado: enderezá las alas
+068	vuelo.pilotoSuelto	Se soltó el piloto automático
+069	vuelo.pilotoEnTierra	El piloto automático se conecta en el aire
+070	vuelo.empezamosABajar	Empezamos a bajar: despacito, hasta la pista
+071	vuelo.alturaDeLaTorre	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
+072	vuelo.alturaDeLaTorreRaya	La torre nos dice hasta dónde subir: hasta la raya de la cinta.
+073	vuelo.otraAlturaDeLaTorre	La torre nos deja subir otro poco. Ya puse la altura nueva.
+074	vuelo.tonoDeAltitudCerca	Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
+075	vuelo.tonoDeAltitudFuera	Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
+076	vuelo.masAltoQueElPlan	Vamos más alto que el plan: hay más para bajar, así que vamos a empezar a bajar antes.
+077	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
+078	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
+079	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
 080	vuelo.puedeVolver	La torre te deja volver a intentarlo
 081	vuelo.puedeVolver~2	La pista quedó libre: podés volver a bajar
 082	vuelo.puedeVolverSinTorre	La pista ya está libre: volvé a intentarlo
@@ -342,77 +342,111 @@
 342	explica.modo-avion.texto	El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.
 343	explica.bomberos.texto	Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.
 344	explica.bomberos-y-aviones.texto	A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.
-345	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
-346	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
-347	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
-348	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
-349	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
-350	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
-351	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
-352	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
-353	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
-354	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
-355	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
-356	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
-357	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
-358	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
-359	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
-360	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
-361	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
-362	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
-363	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
-364	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
-365	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
-366	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
-367	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
-368	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
-369	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
-370	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
-371	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
-372	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
-373	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
-374	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
-375	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
-376	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
-377	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
-378	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
-379	matricula.nuestroAvion	Nuestro avión es
-380	matricula.asiNosLlama	Así nos llama la torre.
-381	fonetico.alfa	Alfa
-382	fonetico.bravo	Bravo
-383	fonetico.charlie	Charlie
-384	fonetico.delta	Delta
-385	fonetico.echo	Echo
-386	fonetico.foxtrot	Foxtrot
-387	fonetico.golf	Golf
-388	fonetico.hotel	Hotel
-389	fonetico.india	India
-390	fonetico.juliett	Juliett
-391	fonetico.kilo	Kilo
-392	fonetico.lima	Lima
-393	fonetico.mike	Mike
-394	fonetico.november	November
-395	fonetico.oscar	Oscar
-396	fonetico.papa	Papa
-397	fonetico.quebec	Quebec
-398	fonetico.romeo	Romeo
-399	fonetico.sierra	Sierra
-400	fonetico.tango	Tango
-401	fonetico.uniform	Uniform
-402	fonetico.victor	Victor
-403	fonetico.whiskey	Whiskey
-404	fonetico.xray	X-ray
-405	fonetico.yankee	Yankee
-406	fonetico.zulu	Zulu
-407	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-408	gafas.ganadas	¡Tus gafas de sol!
-409	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
-410	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
-411	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
-412	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
-413	vuelta.entera	¡Vuelta lista! El avión está para volar.
-414	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
-415	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
-416	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
-417	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
-418	parte.ganaste	¡Hoy ganaste: decidiste bien!
+345	vuelta.empezar	Antes de volar, damos la vuelta al avión. Tocá lo que brilla.
+346	vuelta.entera	¡Vuelta lista! El avión está para volar.
+347	vuelta.pitot.voz	Esta funda roja tapa el pitot mientras el avión está guardado. Hay que sacarla: sin ella fuera, el avión no sabe a qué velocidad va.
+348	vuelta.sondas.voz	Estas son las sondas que miden la velocidad. Se les saca la funda y se mira que estén sanas y limpias.
+349	vuelta.superficies.voz	Los timones de la cola tienen que moverse libres, sin nada que los trabe.
+350	vuelta.calzos.voz	Los calzos son las cuñas que no dejan rodar al avión. Se sacan, y se mira que la rueda esté bien inflada.
+351	vuelta.frenos.voz	En cada rueda se mira la goma y el freno. Este pernito, mientras asome, dice que al freno todavía le queda.
+352	vuelta.combustible.voz	Por esta boca se mira cuánto combustible hay. Y con el vasito se saca un poco de abajo: tiene que salir azul y sin agua.
+353	vuelta.aceite.voz	Con la varilla se mira el aceite del motor: tiene que llegar entre las dos rayas.
+354	vuelta.helice.voz	La hélice se mira sin tocarla de más: que no tenga mellas ni golpes. Y nunca se para uno delante de ella.
+355	vuelta.motores.voz	Se mira la boca del motor y la salida de atrás: que no haya nada adentro, ni un pájaro ni un trapo.
+356	vuelta.puertas.voz	Las puertas y las tapas que no se usan tienen que estar bien cerradas antes de salir.
+357	vuelta.luces.voz	Se prenden las luces y se mira que anden todas: la roja a la izquierda, la verde a la derecha y la blanca atrás.
+358	parte.propone.tormenta	Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.
+359	parte.propone.visibilidad	Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.
+360	parte.propone.techo	Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.
+361	parte.propone.cruzado	Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.
+362	parte.propone.pista	Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.
+363	tarjeta.voz.alerones	Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.
+364	tarjeta.voz.profundidad	Este es el timón de profundidad, en la cola. Si tirás de la palanca, la cola baja y la nariz sube.
+365	tarjeta.voz.timon	Este es el timón de dirección. Con los pedales, la cola va para un lado y la nariz mira para el otro.
+366	tarjeta.voz.flaps	Estos son los flaps. Al bajarlos, el ala se hace más curva y más grande, y sostiene al avión aunque vaya más despacio. Se usan para despegar y para aterrizar.
+367	tarjeta.voz.aerofrenos	Estos son los aerofrenos. Se levantan encima del ala para frenar en el aire, y al tocar la pista, para que el avión apoye las ruedas y frene mejor.
+368	tarjeta.voz.pitot	Este tubito es el pitot. El aire entra por la punta, y cuanto más rápido volás, más fuerte empuja: así sabe el avión a qué velocidad va.
+369	tarjeta.voz.pitotMorro	Estos tubitos a los lados de la nariz son los pitot, uno para cada piloto. El aire entra de frente, y cuanto más rápido volás, más empuja: así se mide la velocidad.
+370	tarjeta.voz.motorPiston	Acá está el motor. Hace girar la hélice, y la hélice, que tiene palas como alas chiquitas, tira del avión hacia adelante.
+371	tarjeta.voz.motorRadial	Este es un motor radial: los cilindros van en círculo, como los rayos de una estrella. Hace girar la hélice, y la hélice tira del avión.
+372	tarjeta.voz.turbohelice	Este es un turbohélice: adentro tiene una turbina, como la de un reactor, pero en vez de soplar, hace girar la hélice.
+373	tarjeta.voz.reactor	Esto es un reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. Y el que más empuja es el ventilador grande de adelante.
+374	tarjeta.voz.tren	Este es el tren de aterrizaje. Sale para aterrizar, y después de despegar se guarda adentro: así el aire pasa mejor y el avión va más rápido.
+375	tarjeta.voz.trenFijo	Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.
+376	tarjeta.voz.luces	Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
+377	tarjeta.voz.luzBaliza	La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.
+378	tarjeta.voz.luzEstrobos	Estos destellos blancos se encienden al entrar en la pista y en todo el vuelo, para que los demás aviones te vean desde lejos.
+379	tarjeta.voz.luzAterrizaje	Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.
+380	tarjeta.voz.matricula	La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.
+381	ventanilla.vos.lado.izquierda	Mirá por la ventanilla, a tu izquierda.
+382	ventanilla.vos.lado.izquierda~2	Fijate por tu ventanilla, a la izquierda.
+383	ventanilla.vos.lado.derecha	Mirá por la ventanilla, a tu derecha.
+384	ventanilla.vos.lado.derecha~2	Fijate por tu ventanilla, a la derecha.
+385	ventanilla.vos.teide	¿Ves esa montaña enorme? Es el Teide, la más alta de toda España. ¡Y es un volcán!
+386	ventanilla.vos.canadas	Mirá abajo, al pie del Teide: eso es Las Cañadas, un cráter gigante. Y esas rocas raras son los Roques de García.
+387	ventanilla.vos.anaga	Esas montañas verdes y arrugadas son Anaga. Ahí crece la laurisilva, un bosque que ya existía hace millones de años.
+388	ventanilla.vos.orotava	Ese valle que baja al mar es La Orotava. Se formó cuando un pedazo gigante de la isla se fue al mar.
+389	ventanilla.vos.gigantes	Mirá esos acantilados: son Los Gigantes. Paredes de roca que caen derechito al mar.
+390	ventanilla.vos.garajonay	Esa isla es La Gomera. Lo verde de arriba es el Garajonay, un bosque que toma agua de las nubes.
+391	ventanilla.vos.taburiente	Esa es La Palma. Arriba de todo, en el Roque de los Muchachos, hay telescopios gigantes para mirar las estrellas.
+392	ventanilla.vos.tajogaite	¿Ves esa montaña negra? Es el Tajogaite, un volcán que nació en dos mil veintiuno. ¡Estuvo casi tres meses echando lava!
+393	ventanilla.vos.hierro	Esa es El Hierro, la más chiquita de las siete islas grandes. Hace mucho, el mundo se medía desde ahí.
+394	ventanilla.vos.nieves	Arriba de Gran Canaria está el Pico de las Nieves. Antes guardaban nieve ahí, en pozos, para tener hielo en verano.
+395	ventanilla.vos.las-palmas	Esa es Las Palmas de Gran Canaria, la ciudad más grande de las islas. ¡Tiene la playa en medio de la ciudad!
+396	ventanilla.vos.maspalomas	¿Ves eso dorado? Son las dunas de Maspalomas: un desierto chiquito al lado del mar.
+397	ventanilla.vos.fuerteventura	Esa isla larga es Fuerteventura, la más viejita de todas las Canarias. ¡Tiene unos veinte millones de años!
+398	ventanilla.vos.lobos	Ese islote es Lobos. Se llama así por las focas que vivían ahí: los lobos marinos.
+399	ventanilla.vos.timanfaya	Esas montañas rojas y negras son Timanfaya: volcanes que estuvieron seis años echando fuego. ¡El suelo todavía está caliente!
+400	ventanilla.vos.barco	Mirá allá abajo: un barco, con la raya blanca que va dejando en el agua.
+401	ventanilla.vos.avion	Mirá: otro avión. Mirar afuera es lo primero que hace un piloto, para ver a los demás.
+402	ventanilla.vos.rio-paraguay	Ese río es el Paraguay, el que le da el nombre a nuestro país. Del otro lado empieza el Chaco.
+403	ventanilla.vos.asuncion	Esa es Asunción, la capital. Es una de las ciudades más antiguas de Sudamérica.
+404	ventanilla.vos.ypacarai	Ese lago es el Ypacaraí, el de la canción. ¿La conocés?
+405	ventanilla.vos.ypoa	Ese es el lago Ypoá, el más grande del Paraguay. Ahí viven un montón de pájaros.
+406	ventanilla.vos.rio-parana	Ese río enorme es el Paraná. En toda Sudamérica, solo el Amazonas es más largo.
+407	ventanilla.vos.yacyreta	Esa raya larga en el río es la represa de Yacyretá. Con la fuerza del agua hace luz para las casas.
+408	ventanilla.vos.itaipu	Allá está Itaipú, una represa gigante. Hace luz para Paraguay y para Brasil.
+409	ventanilla.vos.iguazu	Por allá están las Cataratas del Iguazú. ¡Son casi trescientos saltos de agua!
+410	ventanilla.vos.triple-frontera	Ahí se juntan dos ríos y tres países: Paraguay, Argentina y Brasil.
+411	ventanilla.vos.cerro-cora	Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en mil ochocientos setenta.
+412	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
+413	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
+414	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+415	matricula.nuestroAvion	Nuestro avión es
+416	matricula.asiNosLlama	Así nos llama la torre.
+417	fonetico.alfa	Alfa
+418	fonetico.bravo	Bravo
+419	fonetico.charlie	Charlie
+420	fonetico.delta	Delta
+421	fonetico.echo	Echo
+422	fonetico.foxtrot	Foxtrot
+423	fonetico.golf	Golf
+424	fonetico.hotel	Hotel
+425	fonetico.india	India
+426	fonetico.juliett	Juliett
+427	fonetico.kilo	Kilo
+428	fonetico.lima	Lima
+429	fonetico.mike	Mike
+430	fonetico.november	November
+431	fonetico.oscar	Oscar
+432	fonetico.papa	Papa
+433	fonetico.quebec	Quebec
+434	fonetico.romeo	Romeo
+435	fonetico.sierra	Sierra
+436	fonetico.tango	Tango
+437	fonetico.uniform	Uniform
+438	fonetico.victor	Victor
+439	fonetico.whiskey	Whiskey
+440	fonetico.xray	X-ray
+441	fonetico.yankee	Yankee
+442	fonetico.zulu	Zulu
+443	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+444	gafas.ganadas	¡Tus gafas de sol!
+445	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
+446	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+447	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+448	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+449	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
+450	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
+451	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
+452	parte.ganaste	¡Hoy ganaste: decidiste bien!

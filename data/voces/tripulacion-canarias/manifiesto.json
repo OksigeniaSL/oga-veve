@@ -3,6 +3,34 @@
   "voz": "tripulacion-canarias",
   "idioma": "es-PY",
   "piezas": {
+    "tripulacion.canario.bienvenidos.fuerteventura": {
+      "ms": 2470,
+      "h": "4e8992c02e"
+    },
+    "tripulacion.canario.bienvenidos.gran-canaria": {
+      "ms": 2277,
+      "h": "ff226e67fe"
+    },
+    "tripulacion.canario.bienvenidos.la-gomera": {
+      "ms": 2262,
+      "h": "253324ec0f"
+    },
+    "tripulacion.canario.bienvenidos.la-palma": {
+      "ms": 1854,
+      "h": "e65fc94f69"
+    },
+    "tripulacion.canario.bienvenidos.lanzarote": {
+      "ms": 2651,
+      "h": "1cb3f8f0d4"
+    },
+    "tripulacion.canario.bienvenidos.tenerife-norte": {
+      "ms": 2643,
+      "h": "3c3c85a193"
+    },
+    "tripulacion.canario.bienvenidos.tenerife-sur": {
+      "ms": 2568,
+      "h": "26a326d37c"
+    },
     "tripulacion.canario.cinturones": {
       "ms": 9407,
       "h": "5ba2b508a9"
@@ -46,6 +74,18 @@
     "tripulacion.canario.servicio.pina.paraguay": {
       "ms": 10307,
       "h": "4701971fd6"
+    },
+    "tripulacion.canario.trasLaToma": {
+      "ms": 20907,
+      "h": "a7437ff799"
+    },
+    "tripulacion.canario.trasLaToma~2": {
+      "ms": 21307,
+      "h": "6107a8218a"
+    },
+    "tripulacion.canario.trasLaToma~3": {
+      "ms": 17907,
+      "h": "085b9cb892"
     }
   },
   "recetas": {
@@ -85,6 +125,40 @@
     ],
     "tripulacion.canario.mascaras": [
       "tripulacion.canario.mascaras"
+    ],
+    "tripulacion.canario.llegada": [
+      "{bienvenidos}",
+      "{resto}"
+    ],
+    "tripulacion.canario.bienvenidos.fuerteventura": [
+      "tripulacion.canario.bienvenidos.fuerteventura"
+    ],
+    "tripulacion.canario.bienvenidos.gran-canaria": [
+      "tripulacion.canario.bienvenidos.gran-canaria"
+    ],
+    "tripulacion.canario.bienvenidos.la-gomera": [
+      "tripulacion.canario.bienvenidos.la-gomera"
+    ],
+    "tripulacion.canario.bienvenidos.la-palma": [
+      "tripulacion.canario.bienvenidos.la-palma"
+    ],
+    "tripulacion.canario.bienvenidos.lanzarote": [
+      "tripulacion.canario.bienvenidos.lanzarote"
+    ],
+    "tripulacion.canario.bienvenidos.tenerife-norte": [
+      "tripulacion.canario.bienvenidos.tenerife-norte"
+    ],
+    "tripulacion.canario.bienvenidos.tenerife-sur": [
+      "tripulacion.canario.bienvenidos.tenerife-sur"
+    ],
+    "tripulacion.canario.trasLaToma": [
+      "tripulacion.canario.trasLaToma"
+    ],
+    "tripulacion.canario.trasLaToma~2": [
+      "tripulacion.canario.trasLaToma~2"
+    ],
+    "tripulacion.canario.trasLaToma~3": [
+      "tripulacion.canario.trasLaToma~3"
     ]
   }
 }

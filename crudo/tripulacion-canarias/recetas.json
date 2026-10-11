@@ -39,5 +39,35 @@
   "tripulacion.canario.llegada": [
     "{bienvenidos}",
     "{resto}"
+  ],
+  "tripulacion.canario.bienvenidos.fuerteventura": [
+    "tripulacion.canario.bienvenidos.fuerteventura"
+  ],
+  "tripulacion.canario.bienvenidos.gran-canaria": [
+    "tripulacion.canario.bienvenidos.gran-canaria"
+  ],
+  "tripulacion.canario.bienvenidos.la-gomera": [
+    "tripulacion.canario.bienvenidos.la-gomera"
+  ],
+  "tripulacion.canario.bienvenidos.la-palma": [
+    "tripulacion.canario.bienvenidos.la-palma"
+  ],
+  "tripulacion.canario.bienvenidos.lanzarote": [
+    "tripulacion.canario.bienvenidos.lanzarote"
+  ],
+  "tripulacion.canario.bienvenidos.tenerife-norte": [
+    "tripulacion.canario.bienvenidos.tenerife-norte"
+  ],
+  "tripulacion.canario.bienvenidos.tenerife-sur": [
+    "tripulacion.canario.bienvenidos.tenerife-sur"
+  ],
+  "tripulacion.canario.trasLaToma": [
+    "tripulacion.canario.trasLaToma"
+  ],
+  "tripulacion.canario.trasLaToma~2": [
+    "tripulacion.canario.trasLaToma~2"
+  ],
+  "tripulacion.canario.trasLaToma~3": [
+    "tripulacion.canario.trasLaToma~3"
   ]
 }

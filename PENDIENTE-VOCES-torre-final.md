@@ -1,61 +1,23 @@
-# Pendiente: las voces de la torre en la final (el permiso a tiempo y la cota de la pista)
+# Pendiente: la cota de la pista, dicha por la instructora
 
-Encargo del 3 de octubre de 2026 (tanda 8): el permiso para aterrizar llegaba
-tardísimo —Enrique lo oyó en La Palma con el avión en la cabecera y la máquina
-contando «one hundred»—, y la cota de la pista de destino no estaba en ninguna
-parte. ElevenLabs está sin saldo hasta el 6 de octubre, así que **no se ha
-grabado nada** y el juego funciona sin estas frases: cada una tiene ya su
-canal visual, y ninguna se pide muda.
-
-## Lo que ya suena, sin grabar nada
-
-- ~~**La orden de irse al aire sin permiso a los mínimos**~~, que ya no se da
-  (tanda 10, ver `PENDIENTE-VOCES-frustrada.md`). Era, con la pista libre:
-  la lámpara roja del aire con su castellano de siempre —«ida al aire» en
-  casa, «motor y al aire» en Canarias— en los cuatro peldaños, y de Taguató
-  para arriba su fraseología, **«{matrícula}, go around» a secas**. Esa no
-  estaba como frase, pero sí sus piezas: es la matrícula y el
-  `torre.solo.goAroundSolo` que ya usa `torre.goAroundEnUso`. Se ha añadido
-  la receta `torre.goAroundSinPermiso` (y `torre.canario.goAroundSinPermiso`)
-  en `crudo/<voz>/recetas.json` y en el manifiesto horneado de las dos voces
-  de torre, sin tocar ningún audio. En el peldaño de cabina, el «go around» de
-  quien vuela, que ya estaba.
-- **El permiso**, que es el de siempre: la lámpara en castellano y, de
-  Taguató para arriba, «cleared to land» con el viento. Lo que cambia es
-  cuándo se pide: en la final de la torre, a cinco millas, y no a mil pies
-  (`src/flight/final-de-la-torre.ts`).
+Encargo del 3 de octubre de 2026 (tanda 8): la cota de la pista de destino no
+estaba en ninguna parte. Ya se ve; falta que la instructora lo cuente en el
+peldaño de los números. Lo que la torre dice a quien aterriza contra la orden
+de irse al aire (`torre.landedWithoutClearance`, `torre.aterrizoSinPermiso`) se
+grabó el 11 de octubre de 2026.
 
 ## Lo que falta: la instructora
 
 Voz `instructor`, castellano paraguayo con voseo. Unos 230 caracteres.
 
-> **Ya no**: `vuelo.sinPermisoEnLosMinimos`. La torre no manda al aire por no
-> haberse oído el permiso con la pista libre —era mandarte al aire por su
-> propio retraso—; a los mínimos lo da a la vista. Ver
-> `PENDIENTE-VOCES-frustrada.md`.
-
 | clave | es-PY | en | dónde se engancha |
 |---|---|---|---|
 | `vuelo.cotaDeLaPista` | Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos | Look at the chart: next to the runway it says how high it is above the sea. What the altimeter reads minus that is how high we are above the runway, and that's what the minimums are set from | `game.ts`, `contarLaCotaDeLaPista`: en el peldaño de los números, una vez por tramo, al entrar en la zona de la torre de llegada, detrás de la tarjeta. **Sin el número a propósito**, para que valga en cualquier campo: el número lo lleva la tarjeta (`hud.cotaDeLaPista`), y la carta y el plano. Esta clave **no está** todavía en `src/i18n/`: se añade al grabar. |
 
-## Lo que falta: aterrizar sin autorización (tanda 13, punto 237)
-
-Quien aterriza con la orden de irse al aire puesta —la de la pista ocupada—
-lo oye de la torre después de tocar, con el avión ya frenando: que llame a la
-torre por teléfono al llegar. No hay frase del Doc 4444 para esto; es lo que
-se hace en España y en la OACI, y en la FAA es el aviso de Brasher. De
-Taguató para arriba, en fraseología y **escrita en la tira de la radio**
-desde ya; en los dos peldaños de abajo, en castellano, como la lámpara. Solo
-donde hay torre (un AFIS no da permisos). Se dice **solo con su grabación**;
-mientras tanto, la tira y la tarjeta de la instructora (ver
-`PENDIENTE-VOCES-final.md`, 3). Unos 330 caracteres.
-
-| voz | clave | texto | dónde se engancha |
-|---|---|---|---|
-| torre | `torre.landedWithoutClearance` | {matrícula}, landed without clearance, call the tower by telephone on arrival | `game.ts`, `aterrizoContraLaOrden`, de Taguató para arriba, en Paraguay. Receta con las piezas de la matrícula, como `torre.expediteVacating`. |
-| torre-canarias | `torre.canario.landedWithoutClearance` | lo mismo | lo mismo en Canarias |
-| torre | `torre.aterrizoSinPermiso` | {indicativo}, aterrizó sin autorización; llame a la torre por teléfono a su llegada | lo mismo, en Guyrami y Tukã, en Paraguay. Clave y texto ya en `src/i18n/`. |
-| torre-canarias | `torre.canario.aterrizoSinPermiso` | lo mismo | lo mismo en Canarias |
+Ojo antes de engancharla: la cadena del «¿y ahora qué?» ya cuenta la cota
+detrás del punto de descenso (`vuelo.paso.cotaAlMar` y `vuelo.paso.cotaEnAlto`,
+grabadas). Las dos en el mismo tramo serían dos voces para lo mismo: hay que
+decidir cuál dice qué, o si esta sobra.
 
 ## Dónde se ve ya, mientras tanto
 
@@ -81,7 +43,6 @@ node scripts/voces-elevenlabs.mjs --cuanto instructor
 node scripts/voces-elevenlabs.mjs instructor
 ```
 
-Después de grabar, nunca antes, la receta de cada clave en
-`crudo/instructor/recetas.json` (`d[clave] = [clave]`), hornear, restaurar lo
-re-codificado y pasar `node scripts/verificar-voces.mjs`. Y solo entonces el
-código de la columna de la derecha.
+Después de grabar, nunca antes, la receta en `crudo/instructor/recetas.json`
+(`d[clave] = [clave]`), hornear, restaurar lo re-codificado que no sea nuevo y
+pasar `node scripts/verificar-voces.mjs`. Y solo entonces el código.

@@ -1,6 +1,8 @@
 V one
 rotate
 terrain, pull up
+caution terrain, caution terrain
+terrain ahead, pull up
 too low
 too fast
 off the runway

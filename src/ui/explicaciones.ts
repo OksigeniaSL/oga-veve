@@ -28,14 +28,13 @@
  * quien juega no la saca de la escalera: en Guyrami no se lee, y una ventana
  * que obliga a leer está mal aunque se haya pedido.
  *
- * ## La voz que todavía no está grabada, calla
+ * ## La voz que no está grabada, calla
  *
  * Las frases se graban por clave —ver `audio/banco-de-voz.ts`— y lo que no
  * está grabado el juego lo suele pasar a la voz del navegador, que en Brave
  * para Linux no existe y en el resto suena a robot leyendo un párrafo. Aquí
  * no: **o suena la grabación, o no suena nada**, y lo que se ve —el dibujo y
- * el texto— se queda igual. Las claves pendientes están en
- * `PENDIENTE-VOCES-explicaciones.md`.
+ * el texto— se queda igual.
  *
  * ## Y la primera vez, la instructora lo presenta
  *

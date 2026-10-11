@@ -79,6 +79,8 @@ const EL_SUELO = [
   // El suelo se acerca, con caja o sin ella: detrás de *terrain* o en su lugar.
   "vuelo.terrenoBajo",
   "vuelo.terrenoSube",
+  // Y lo que ve por delante el avisador, detrás de *caution terrain*.
+  "vuelo.terrenoDelante",
   // Un edificio delante: por ahí no se pasa.
   "vuelo.bulto",
 ] as const;
@@ -90,6 +92,18 @@ const LA_ENERGIA = [
   "vuelo.lentoYBajo",
   // Hundiéndose de golpe cerca del suelo, detrás de *sink rate*.
   "vuelo.bajasRapido",
+  /*
+   * Y los consejos de la bajada que dicen lo mismo con su objetivo, detrás de
+   * las mismas dos cajas: lento, detrás de *airspeed low*, y hundiéndose,
+   * detrás de *sink rate*. Sustituyen a las dos de arriba en cuanto están
+   * grabados, y sin apuntarlos aquí esa explicación se callaría. Ver `cantoDe`
+   * en `consejo-de-la-bajada.ts`.
+   */
+  "vuelo.consejo.masGas",
+  "vuelo.consejo.narizAbajoMarca",
+  "vuelo.consejo.narizArribaRitmo",
+  "vuelo.consejo.narizArribaSuave",
+  "vuelo.consejo.masGasSuave",
   // Demasiado inclinado, detrás de *bank angle*.
   "vuelo.muyInclinado",
   // El automático que se suelta solo: desde ese instante vuela la mano.
@@ -118,6 +132,9 @@ const EL_TRAFICO = [
   // Por qué no se entra: hay otro en la pista o llegando a ella.
   "vuelo.esperaQueAterrice",
   "vuelo.esperaQueDespegue",
+  // O sale antes el que llegó antes, o el que salió deja remolinos.
+  "vuelo.esperaTurnoDeSalida",
+  "vuelo.esperaLaEstela",
   // Salir de la pista **porque viene otro**. Sin otro detrás, es consejo.
   "vuelo.abandonando",
   // Pájaros en la final: si se ve uno de frente, subir.
@@ -255,6 +272,8 @@ export const CANTOS_QUE_SIGUEN: ReadonlySet<string> = new Set<string>([
   "cabina.goAroundOrder",
   "cabina.goAround",
   "cabina.terrainPullUp",
+  "cabina.cautionTerrain",
+  "cabina.terrainAheadPullUp",
   "cabina.tooLow",
   "cabina.tooLowClimb",
   "cabina.obstacleAhead",
@@ -265,6 +284,9 @@ export const CANTOS_QUE_SIGUEN: ReadonlySet<string> = new Set<string>([
   "cabina.traffic",
   "cabina.autopilotDisconnect",
   "cabina.cabin",
+  // Y los de un motor que falla en el despegue: son de una emergencia.
+  "cabina.engineFailure",
+  "cabina.stop",
 ]);
 
 /**
