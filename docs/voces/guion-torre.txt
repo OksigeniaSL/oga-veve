@@ -1,4 +1,6 @@
 ascienda a nivel de vuelo
+número dos para la salida
+número tres para la salida
 Alfa
 Bravo
 Charlie

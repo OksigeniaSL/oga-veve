@@ -6,6 +6,8 @@ instructor	instructor/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca h
 instructor	instructor/vuelo.esperando.ogg	es-PY	Pará del todo y esperá la luz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperaQueAterrice.ogg	es-PY	Esperamos: viene un avión a aterrizar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperaQueDespegue.ogg	es-PY	Esperamos: primero sale el avión que está en la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.esperaTurnoDeSalida.ogg	es-PY	Esperamos nuestro turno: primero sale el avión que llegó antes	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.esperaLaEstela.ogg	es-PY	Esperamos un poquito: el avión que salió deja remolinos en el aire	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.autorizado.ogg	es-PY	¡Luz verde! Entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperandoMirando.ogg	es-PY	Pará y mirá: la manga, los animales y la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.autorizadoSinTorre.ogg	es-PY	Todo libre: entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
@@ -604,8 +606,12 @@ tripulacion	tripulacion/tripulacion.bienvenidos.pedro-juan.ogg	es-PY	Señoras y 
 tripulacion	tripulacion/tripulacion.trasLaToma.ogg	es-PY	Les pedimos que sigan sentados, con el cinturón abrochado, hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden usar sus celulares. Tengan cuidado al abrir los compartimientos de arriba, porque el equipaje se pudo mover durante el vuelo. Muchas gracias.	la tripulación de cabina, por megafonía
 tripulacion	tripulacion/tripulacion.trasLaToma~2.ogg	es-PY	Por su seguridad, sigan sentados y con el cinturón puesto hasta que el avión se pare del todo y se apague la señal. A partir de ahora pueden encender sus celulares. Abran los compartimientos despacito, que en el vuelo las valijas también viajan. Y antes de bajar, revisen el bolsillo del asiento para no olvidarse nada.	la tripulación de cabina, por megafonía · otra forma de decirlo
 tripulacion	tripulacion/tripulacion.trasLaToma~3.ogg	es-PY	Quédense sentados con el cinturón abrochado, por favor, hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el celular. Cuidado al abrir los compartimientos de arriba, que algo se pudo correr con el vuelo. Y fíjense que no quede nada en el asiento. ¡Gracias, y que les vaya muy bien!	la tripulación de cabina, por megafonía · otra forma de decirlo
+torre-canarias	torre-canarias/torre.canario.numeroDos.ogg	es-PY	número dos para la salida	la torre de Canarias, que no vosea
+torre-canarias	torre-canarias/torre.canario.numeroTres.ogg	es-PY	número tres para la salida	la torre de Canarias, que no vosea
 torre-canarias	torre-canarias/torre.canario.solo.subirNivel.ogg	es-PY	suba a nivel de vuelo	la torre de Canarias, que no vosea
 torre	torre/torre.solo.subirNivel.ogg	es-PY	ascienda a nivel de vuelo	la lámpara de la torre, dicha en casa
+torre	torre/torre.numeroDos.ogg	es-PY	número dos para la salida	la lámpara de la torre, dicha en casa
+torre	torre/torre.numeroTres.ogg	es-PY	número tres para la salida	la lámpara de la torre, dicha en casa
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente

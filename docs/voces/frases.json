@@ -49,6 +49,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.esperaTurnoDeSalida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esperamos nuestro turno: primero sale el avión que llegó antes",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.esperaLaEstela",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esperamos un poquito: el avión que salió deja remolinos en el aire",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.autorizado",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -6183,6 +6197,20 @@
     "para": "la tripulación de cabina, por megafonía · otra forma de decirlo"
   },
   {
+    "id": "torre.canario.numeroDos",
+    "voz": "torre-canarias",
+    "idioma": "es-PY",
+    "texto": "número dos para la salida",
+    "para": "la torre de Canarias, que no vosea"
+  },
+  {
+    "id": "torre.canario.numeroTres",
+    "voz": "torre-canarias",
+    "idioma": "es-PY",
+    "texto": "número tres para la salida",
+    "para": "la torre de Canarias, que no vosea"
+  },
+  {
     "id": "torre.canario.solo.subirNivel",
     "voz": "torre-canarias",
     "idioma": "es-PY",
@@ -6194,6 +6222,20 @@
     "voz": "torre",
     "idioma": "es-PY",
     "texto": "ascienda a nivel de vuelo",
+    "para": "la lámpara de la torre, dicha en casa"
+  },
+  {
+    "id": "torre.numeroDos",
+    "voz": "torre",
+    "idioma": "es-PY",
+    "texto": "número dos para la salida",
+    "para": "la lámpara de la torre, dicha en casa"
+  },
+  {
+    "id": "torre.numeroTres",
+    "voz": "torre",
+    "idioma": "es-PY",
+    "texto": "número tres para la salida",
     "para": "la lámpara de la torre, dicha en casa"
   },
   {

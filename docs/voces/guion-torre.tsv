@@ -1,137 +1,139 @@
 001	torre.solo.subirNivel	ascienda a nivel de vuelo
-002	fonetico.alfa	Alfa
-003	fonetico.bravo	Bravo
-004	fonetico.charlie	Charlie
-005	fonetico.delta	Delta
-006	fonetico.echo	Echo
-007	fonetico.foxtrot	Foxtrot
-008	fonetico.golf	Golf
-009	fonetico.hotel	Hotel
-010	fonetico.india	India
-011	fonetico.juliett	Juliett
-012	fonetico.kilo	Kilo
-013	fonetico.lima	Lima
-014	fonetico.mike	Mike
-015	fonetico.november	November
-016	fonetico.oscar	Oscar
-017	fonetico.papa	Papa
-018	fonetico.quebec	Quebec
-019	fonetico.romeo	Romeo
-020	fonetico.sierra	Sierra
-021	fonetico.tango	Tango
-022	fonetico.uniform	Uniform
-023	fonetico.victor	Victor
-024	fonetico.whiskey	Whiskey
-025	fonetico.xray	X-ray
-026	fonetico.yankee	Yankee
-027	fonetico.zulu	Zulu
-028	cifra.0	zero
-029	cifra.1	one
-030	cifra.2	two
-031	cifra.3	three
-032	cifra.4	four
-033	cifra.5	five
-034	cifra.6	six
-035	cifra.7	seven
-036	cifra.8	eight
-037	cifra.9	niner
-038	torre.solo.runway	runway
-039	lado.left	left
-040	lado.right	right
-041	lado.center	center
-042	torre.solo.clearedTakeoff	cleared for take-off
-043	torre.solo.clearedLand	cleared to land
-044	torre.solo.goAround	go around, runway occupied
-045	torre.solo.holdShort	hold short of the runway
-046	torre.solo.vacateNext	vacate next available
-047	torre.solo.landingTraffic	landing traffic
-048	torre.solo.departingTraffic	departing traffic
-049	torre.solo.lineUpWait	line up and wait
-050	torre.solo.clearedTo	cleared to
-051	torre.solo.climbTo	climb to
-052	torre.solo.runwayInUse	runway in use
-053	torre.solo.goAroundSolo	go around
-054	torre.solo.rogerMayday	roger, Mayday
-055	torre.solo.rogerPanPan	roger, Pan Pan
-056	torre.solo.birdsOnFinal	caution, flock of birds on final
-057	torre.solo.free	free
-058	torre.solo.occupied	occupied
-059	torre.solo.noReportedTraffic	no reported traffic
-060	viento.wind	wind
-061	viento.degrees	degrees
-062	viento.knots	knots
-063	viento.calm	calm
-064	viento.variable	variable
-065	trafico.traffic	traffic
-066	trafico.hora.1	one o'clock
-067	trafico.hora.2	two o'clock
-068	trafico.hora.3	three o'clock
-069	trafico.hora.4	four o'clock
-070	trafico.hora.5	five o'clock
-071	trafico.hora.6	six o'clock
-072	trafico.hora.7	seven o'clock
-073	trafico.hora.8	eight o'clock
-074	trafico.hora.9	nine o'clock
-075	trafico.hora.10	ten o'clock
-076	trafico.hora.11	eleven o'clock
-077	trafico.hora.12	twelve o'clock
-078	trafico.millas.1	one mile
-079	trafico.millas.2	two miles
-080	trafico.millas.3	three miles
-081	trafico.millas.4	four miles
-082	trafico.millas.5	five miles
-083	trafico.millas.6	six miles
-084	trafico.pies.3	three hundred feet
-085	trafico.pies.4	four hundred feet
-086	trafico.pies.5	five hundred feet
-087	trafico.pies.6	six hundred feet
-088	trafico.pies.7	seven hundred feet
-089	trafico.pies.8	eight hundred feet
-090	trafico.pies.9	niner hundred feet
-091	trafico.pies.10	one thousand feet
-092	trafico.pies.11	one thousand one hundred feet
-093	trafico.pies.12	one thousand two hundred feet
-094	trafico.above	above
-095	trafico.below	below
-096	trafico.sameLevel	same level
-097	altura.nivel	flight level
-098	altura.pies.2	two thousand feet
-099	altura.pies.3	three thousand feet
-100	altura.pies.4	four thousand feet
-101	altura.pies.5	five thousand feet
-102	altura.pies.6	six thousand feet
-103	torre.solo.pista	pista
-104	torre.solo.autorizadoDespegar	autorizado a despegar
-105	torre.solo.autorizadoParaAterrizar	autorizado para aterrizar
-106	torre.solo.mantengaFuera	mantenga fuera de pista
-107	torre.solo.autorizadoA	autorizado a
-108	torre.solo.idaAlAire	ida al aire
-109	cifra.es.0	cero
-110	cifra.es.1	uno
-111	cifra.es.2	dos
-112	cifra.es.3	tres
-113	cifra.es.4	cuatro
-114	cifra.es.5	cinco
-115	cifra.es.6	seis
-116	cifra.es.7	siete
-117	cifra.es.8	ocho
-118	cifra.es.9	nueve
-119	lado.es.izquierda	izquierda
-120	lado.es.derecha	derecha
-121	lado.es.central	central
-122	torre.solo.afisLibre	pista libre
-123	torre.solo.afisOcupada	pista ocupada
-124	torre.solo.afisSinTrafico	sin tráfico conocido
-125	torre.solo.afisTraficoAterriza	tráfico aterrizando
-126	torre.solo.afisTraficoDespega	tráfico despegando
-127	destino.pettirossi	Asunción
-128	destino.guarani	Guaraní
-129	destino.encarnacion	Encarnación
-130	destino.yvytu-rape	Yvytu Rape
-131	destino.concepcion	Concepción
-132	destino.pedro-juan	Pedro Juan Caballero
-133	destino.estigarribia	Mariscal Estigarribia
-134	destino.ayolas	Ayolas
-135	destino.pilar	Pilar
-136	torre.solo.subir.2	ascienda a dos mil pies
-137	torre.solo.subir.3	ascienda a tres mil pies
+002	torre.numeroDos	número dos para la salida
+003	torre.numeroTres	número tres para la salida
+004	fonetico.alfa	Alfa
+005	fonetico.bravo	Bravo
+006	fonetico.charlie	Charlie
+007	fonetico.delta	Delta
+008	fonetico.echo	Echo
+009	fonetico.foxtrot	Foxtrot
+010	fonetico.golf	Golf
+011	fonetico.hotel	Hotel
+012	fonetico.india	India
+013	fonetico.juliett	Juliett
+014	fonetico.kilo	Kilo
+015	fonetico.lima	Lima
+016	fonetico.mike	Mike
+017	fonetico.november	November
+018	fonetico.oscar	Oscar
+019	fonetico.papa	Papa
+020	fonetico.quebec	Quebec
+021	fonetico.romeo	Romeo
+022	fonetico.sierra	Sierra
+023	fonetico.tango	Tango
+024	fonetico.uniform	Uniform
+025	fonetico.victor	Victor
+026	fonetico.whiskey	Whiskey
+027	fonetico.xray	X-ray
+028	fonetico.yankee	Yankee
+029	fonetico.zulu	Zulu
+030	cifra.0	zero
+031	cifra.1	one
+032	cifra.2	two
+033	cifra.3	three
+034	cifra.4	four
+035	cifra.5	five
+036	cifra.6	six
+037	cifra.7	seven
+038	cifra.8	eight
+039	cifra.9	niner
+040	torre.solo.runway	runway
+041	lado.left	left
+042	lado.right	right
+043	lado.center	center
+044	torre.solo.clearedTakeoff	cleared for take-off
+045	torre.solo.clearedLand	cleared to land
+046	torre.solo.goAround	go around, runway occupied
+047	torre.solo.holdShort	hold short of the runway
+048	torre.solo.vacateNext	vacate next available
+049	torre.solo.landingTraffic	landing traffic
+050	torre.solo.departingTraffic	departing traffic
+051	torre.solo.lineUpWait	line up and wait
+052	torre.solo.clearedTo	cleared to
+053	torre.solo.climbTo	climb to
+054	torre.solo.runwayInUse	runway in use
+055	torre.solo.goAroundSolo	go around
+056	torre.solo.rogerMayday	roger, Mayday
+057	torre.solo.rogerPanPan	roger, Pan Pan
+058	torre.solo.birdsOnFinal	caution, flock of birds on final
+059	torre.solo.free	free
+060	torre.solo.occupied	occupied
+061	torre.solo.noReportedTraffic	no reported traffic
+062	viento.wind	wind
+063	viento.degrees	degrees
+064	viento.knots	knots
+065	viento.calm	calm
+066	viento.variable	variable
+067	trafico.traffic	traffic
+068	trafico.hora.1	one o'clock
+069	trafico.hora.2	two o'clock
+070	trafico.hora.3	three o'clock
+071	trafico.hora.4	four o'clock
+072	trafico.hora.5	five o'clock
+073	trafico.hora.6	six o'clock
+074	trafico.hora.7	seven o'clock
+075	trafico.hora.8	eight o'clock
+076	trafico.hora.9	nine o'clock
+077	trafico.hora.10	ten o'clock
+078	trafico.hora.11	eleven o'clock
+079	trafico.hora.12	twelve o'clock
+080	trafico.millas.1	one mile
+081	trafico.millas.2	two miles
+082	trafico.millas.3	three miles
+083	trafico.millas.4	four miles
+084	trafico.millas.5	five miles
+085	trafico.millas.6	six miles
+086	trafico.pies.3	three hundred feet
+087	trafico.pies.4	four hundred feet
+088	trafico.pies.5	five hundred feet
+089	trafico.pies.6	six hundred feet
+090	trafico.pies.7	seven hundred feet
+091	trafico.pies.8	eight hundred feet
+092	trafico.pies.9	niner hundred feet
+093	trafico.pies.10	one thousand feet
+094	trafico.pies.11	one thousand one hundred feet
+095	trafico.pies.12	one thousand two hundred feet
+096	trafico.above	above
+097	trafico.below	below
+098	trafico.sameLevel	same level
+099	altura.nivel	flight level
+100	altura.pies.2	two thousand feet
+101	altura.pies.3	three thousand feet
+102	altura.pies.4	four thousand feet
+103	altura.pies.5	five thousand feet
+104	altura.pies.6	six thousand feet
+105	torre.solo.pista	pista
+106	torre.solo.autorizadoDespegar	autorizado a despegar
+107	torre.solo.autorizadoParaAterrizar	autorizado para aterrizar
+108	torre.solo.mantengaFuera	mantenga fuera de pista
+109	torre.solo.autorizadoA	autorizado a
+110	torre.solo.idaAlAire	ida al aire
+111	cifra.es.0	cero
+112	cifra.es.1	uno
+113	cifra.es.2	dos
+114	cifra.es.3	tres
+115	cifra.es.4	cuatro
+116	cifra.es.5	cinco
+117	cifra.es.6	seis
+118	cifra.es.7	siete
+119	cifra.es.8	ocho
+120	cifra.es.9	nueve
+121	lado.es.izquierda	izquierda
+122	lado.es.derecha	derecha
+123	lado.es.central	central
+124	torre.solo.afisLibre	pista libre
+125	torre.solo.afisOcupada	pista ocupada
+126	torre.solo.afisSinTrafico	sin tráfico conocido
+127	torre.solo.afisTraficoAterriza	tráfico aterrizando
+128	torre.solo.afisTraficoDespega	tráfico despegando
+129	destino.pettirossi	Asunción
+130	destino.guarani	Guaraní
+131	destino.encarnacion	Encarnación
+132	destino.yvytu-rape	Yvytu Rape
+133	destino.concepcion	Concepción
+134	destino.pedro-juan	Pedro Juan Caballero
+135	destino.estigarribia	Mariscal Estigarribia
+136	destino.ayolas	Ayolas
+137	destino.pilar	Pilar
+138	torre.solo.subir.2	ascienda a dos mil pies
+139	torre.solo.subir.3	ascienda a tres mil pies
