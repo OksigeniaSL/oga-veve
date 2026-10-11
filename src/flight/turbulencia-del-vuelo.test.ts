@@ -11,6 +11,7 @@ import {
   PRIMERO_LOS_BACHES,
   SACUDE_CADA,
   TurbulenciaDelVuelo,
+  fuenteDe,
   sacudeEnElCamino,
   turbulenciaDelCamino,
   type MomentoDelCamino,
@@ -89,6 +90,23 @@ describe("la turbulencia del camino tiene la variedad de lo real", () => {
     for (let i = 0; i < 200; i++)
       for (const z of turbulenciaDelCamino(ALISIO, CAMINO, dados(i + 1))) comos.add(z.como);
     expect([...comos].sort()).toEqual(["prevista", "sin-avisar"]);
+  });
+
+  it("y de la prevista, una de cada tres la avisa otro avión por radio", () => {
+    let previstas = 0;
+    let pireps = 0;
+    for (let i = 0; i < 2000; i++)
+      for (const z of turbulenciaDelCamino(ALISIO, CAMINO, dados(i + 1))) {
+        // La de aire claro no se sabe: no tiene de dónde.
+        if (z.como === "sin-avisar") expect(fuenteDe(z)).toBeNull();
+        if (z.como !== "prevista") continue;
+        previstas++;
+        if (fuenteDe(z) === "pirep") pireps++;
+      }
+    expect(pireps / previstas).toBeGreaterThan(0.28);
+    expect(pireps / previstas).toBeLessThan(0.39);
+    // Y la de la tormenta se sabe por el radar.
+    expect(fuenteDe(turbulenciaDelCamino(TORMENTA, CAMINO, dados(1))[0]!)).toBe("radar");
   });
 
   it("y cada grado sacude lo que su nombre dice, y la ligera enciende el cartel", () => {
@@ -185,6 +203,25 @@ describe("el anuncio, atado a la turbulencia de verdad", () => {
       pasajeSuelto: seg > 120,
     }));
     expect(pasado).toEqual([]);
+  });
+
+  it("y el anuncio dice de dónde se sabe: la de un banco, del parte", () => {
+    const t = new TurbulenciaDelVuelo();
+    t.empezar([
+      { desde: 120 * 200, hasta: 120 * 260, intensidad: "ligera", como: "prevista", capa: null },
+      {
+        desde: 120 * 500,
+        hasta: 120 * 560,
+        intensidad: "moderada",
+        como: "prevista",
+        capa: null,
+        fuente: "pirep",
+      },
+    ]);
+    const fuentes = volar(t, 700, () => ({}))
+      .map((p) => p.suceso)
+      .flatMap((s) => (s.que === "anunciar" ? [s.fuente] : []));
+    expect(fuentes).toEqual(["parte", "pirep"]);
   });
 
   it("y la segunda vez en el mismo vuelo cuenta como segunda", () => {

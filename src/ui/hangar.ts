@@ -30,7 +30,8 @@
 
 import { TIERS, type Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
-import { abrirExplicacion } from "./explicaciones";
+import { abrirExplicacion, ponerVozDeLasExplicaciones } from "./explicaciones";
+import { VozDelHangar } from "../audio/voz-del-hangar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 // La ventana de las explicaciones, que se apunta sola al cargarse: el hangar
 // abre la de los bomberos antes de que haya vuelo. Ver `abrirBomberos`.
@@ -928,8 +929,8 @@ function cuentaDeNoCabe(
  * las explicaciones de serie todavía no están apuntadas; se apuntan aquí, que
  * apuntarlas otra vez no pisa nada. Ver `ponerLasDeSerie`.
  *
- * Aquí no habla nadie: la voz de la instructora la pone el vuelo, como en la
- * tarjeta del avión. Se ve el dibujo y, desde la palabra, se lee.
+ * Y se oye: la dice la instructora del hangar, que se despierta con el primer
+ * gesto, como los globos de la tarjeta del avión. Ver `audio/voz-del-hangar.ts`.
  */
 function abrirBomberos(peldano: Peldano): void {
   ponerLasDeSerie();
@@ -1718,10 +1719,26 @@ export function abrirHangar(
    * no la abre no tiene por qué pagarlos. Ver `ui/tarjeta-del-avion.ts`.
    */
   let tarjeta: TarjetaDelAvion | null = null;
+  /*
+   * **Y la voz de la instructora, también aquí**: los globos de la tarjeta y
+   * el camión de los bomberos se leían y no se oían, y aquí se juega sin saber
+   * leer. Se despierta con el primer gesto, que es cuando el navegador deja
+   * sonar, y solo dice lo que está grabado. Ver `audio/voz-del-hangar.ts`.
+   */
+  const voz = new VozDelHangar();
+  const despertar = (): void => voz.despertar();
+  window.addEventListener("pointerdown", despertar, true);
+  window.addEventListener("keydown", despertar, true);
+  ponerVozDeLasExplicaciones(voz.paraLasExplicaciones);
+  if (import.meta.env.DEV)
+    (globalThis as { __ogaVozDelHangar?: VozDelHangar }).__ogaVozDelHangar = voz;
   const abrirTarjeta = (a: AircraftConfig): void => {
     const raiz = document.getElementById("tarjeta-avion");
     if (!raiz) return;
-    tarjeta ??= new TarjetaDelAvion(raiz, { enVuelo: false });
+    tarjeta ??= new TarjetaDelAvion(raiz, {
+      enVuelo: false,
+      decir: (texto, clave) => voz.decir(clave, texto),
+    });
     tarjeta.abrir(a);
   };
 
@@ -2332,6 +2349,11 @@ export function abrirHangar(
         apuntarReciente(sitio.id);
         // La tarjeta suelta su tarjeta gráfica: el vuelo monta la suya.
         tarjeta?.soltar();
+        // Y la voz del hangar, su sonido: el vuelo monta el suyo.
+        window.removeEventListener("pointerdown", despertar, true);
+        window.removeEventListener("keydown", despertar, true);
+        ponerVozDeLasExplicaciones(null);
+        voz.soltar();
         root.hidden = true;
         root.innerHTML = "";
         resolve({

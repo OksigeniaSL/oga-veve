@@ -6,7 +6,9 @@ import { describe, expect, it } from "vitest";
 import { hayTexto } from "../i18n";
 import { TIEMPO_DE_CASA, type Meteo } from "../world/meteo";
 import { MILLA, PIE, cruceroDelPlan, rutaDe, type Fijo } from "../flight/ruta";
+import { EN } from "../i18n/en";
 import {
+  HORAS_QUE_SE_DICEN,
   MAS_CALOR,
   MAS_FRIO,
   MINUTOS_QUE_SE_DICEN,
@@ -17,7 +19,9 @@ import {
   minutosDichos,
   minutosQueSeDicen,
   nivelDicho,
+  piezaDeDuracion,
   piezaDeGrados,
+  piezaDeMinutos,
   segundosHastaTocar,
 } from "./partes-de-la-comandante";
 
@@ -32,9 +36,9 @@ describe("los minutos, como se dicen", () => {
     expect(minutosDichos(23 * 60)).toBe(25);
   });
 
-  it("y nunca uno que no esté grabado", () => {
-    for (let s = 0; s < 3 * 3600; s += 17)
-      expect(MINUTOS_QUE_SE_DICEN).toContain(minutosDichos(s));
+  it("y nunca uno que no tenga su frase", () => {
+    const todas: readonly number[] = [...MINUTOS_QUE_SE_DICEN, ...HORAS_QUE_SE_DICEN];
+    for (let s = 0; s < 3 * 3600; s += 17) expect(todas).toContain(minutosDichos(s));
   });
 
   it("y cuánto falta sale de la distancia y la velocidad", () => {
@@ -184,10 +188,45 @@ describe("la bienvenida con el plan", () => {
     expect(b.texto).toContain("13 mil pies");
   });
 
-  it("y más allá de lo grabado no se dice: una hora y cuarto no son «unos sesenta»", () => {
-    // Al JAZ 60 le pasa yendo a Pedro Juan o al Chaco. Ver `minutosQueSeDicen`.
-    expect(minutosQueSeDicen(61 * 60)).toBe(60);
+  it("pasada la hora, en horas: una hora y cuarto no son «unos sesenta»", () => {
+    // Al JAZ 60 le pasa yendo a Pedro Juan. Ver `HORAS_QUE_SE_DICEN`.
+    const todo = () => true;
+    expect(minutosQueSeDicen(61 * 60, piezaDeDuracion, todo)).toBe(60);
+    expect(minutosQueSeDicen(69 * 60, piezaDeDuracion, todo)).toBe(75);
+    expect(minutosQueSeDicen(96 * 60, piezaDeDuracion, todo)).toBe(90);
+    expect(minutosQueSeDicen(106 * 60, piezaDeDuracion, todo)).toBe(105);
+    expect(minutosQueSeDicen(127 * 60, piezaDeDuracion, todo)).toBe(120);
+    expect(piezaDeDuracion(90)).toBe("comandante.previsto.vuelo.h90");
+    expect(piezaDeMinutos(75)).toBe("comandante.minutos.h75");
+    expect(piezaDeMinutos(60)).toBe("comandante.minutos.60");
+    const b = bienvenidaConPlan(forma, 96 * 60, 13, todo);
+    expect(b.relleno.vuelo).toBe("comandante.previsto.vuelo.h90");
+    expect(b.texto).toContain("una hora y media");
+    expect(b.texto).not.toContain("minutos");
+    const d = descensoPara("pettirossi", 75 * 60, TIEMPO_DE_CASA, todo);
+    expect(d.relleno.minutos).toBe("comandante.minutos.h75");
+    expect(d.texto).toContain("una hora y cuarto");
+  });
+
+  it("y cada duración en horas tiene su frase entera, en castellano y en inglés", () => {
+    for (const n of HORAS_QUE_SE_DICEN)
+      for (const pieza of [piezaDeDuracion(n), piezaDeMinutos(n)]) {
+        expect(hayTexto(pieza), pieza).toBe(true);
+        expect(EN[pieza as keyof typeof EN], pieza).toBeTruthy();
+      }
+  });
+
+  it("y sin su grabación, o más allá de la última, no se dice", () => {
+    /*
+     * Una frase que el juego pide y nadie grabó la dice la voz del
+     * navegador, muda en Brave para Linux, y se lleva el anuncio entero:
+     * mejor la bienvenida sin plan, como antes. Ver `minutosQueSeDicen`.
+     */
     expect(minutosQueSeDicen(75 * 60)).toBeNull();
+    expect(minutosQueSeDicen(75 * 60, piezaDeDuracion, () => false)).toBeNull();
+    // Las de minutos están grabadas desde siempre y no se preguntan.
+    expect(minutosQueSeDicen(20 * 60, piezaDeDuracion, () => false)).toBe(20);
+    expect(minutosQueSeDicen(130 * 60, piezaDeDuracion, () => true)).toBeNull();
     expect(bienvenidaConPlan(forma, 75 * 60, 13)).toEqual({
       clave: forma.id,
       relleno: {},
@@ -196,6 +235,7 @@ describe("la bienvenida con el plan", () => {
     const d = descensoPara("pettirossi", 75 * 60, TIEMPO_DE_CASA);
     expect(d.relleno.minutos).toBeUndefined();
     expect(d.texto).not.toContain("minutos");
+    expect(d.texto).not.toContain("hora");
   });
 
   it("y en una vuelta al campo no se inventa un plan", () => {

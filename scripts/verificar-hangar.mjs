@@ -199,6 +199,74 @@ for (const [ancho, alto, nombre] of [
       `  ${x.sel.padEnd(22)} ${x.tam.toFixed(0)}px  ${r.toFixed(2)}:1  ${r >= exige ? "✓" : `✗ necesita ${exige}`}`,
     );
   }
+  /*
+   * **Y la voz de la instructora en el hangar**, una vez: se abre la tarjeta
+   * del avión, se toca un punto y su globo tiene que sonar con su grabación
+   * —la voz «instructor» del pack, no la del navegador—. Se juega sin saber
+   * leer, y el globo es la explicación. Ver `audio/voz-del-hangar.ts`.
+   */
+  if (nombre === "escritorio") {
+    await page.evaluate(() => document.querySelector(".hangar")?.scrollTo(0, 0));
+    await page.click('[data-pantalla="conque"]');
+    await page.waitForSelector("[data-de-cerca]", { timeout: 20000 });
+    await page.click("[data-de-cerca]");
+    await page.waitForSelector(".tav__punto", { timeout: 60000 });
+    await page.click(".tav__punto");
+    const oido = await page
+      .waitForFunction(
+        () => {
+          const v = globalThis.__ogaVozDelHangar;
+          return v && v.vocesUsadas.has("instructor")
+            ? { pedidas: [...v.historial], voces: [...v.vocesUsadas] }
+            : null;
+        },
+        undefined,
+        { timeout: 30000 },
+      )
+      .then((h) => h.jsonValue())
+      .catch(async () =>
+        page.evaluate(() => {
+          const v = globalThis.__ogaVozDelHangar;
+          return { pedidas: v ? [...v.historial] : [], voces: v ? [...v.vocesUsadas] : [], nada: true };
+        }),
+      );
+    const bien = !oido.nada && oido.pedidas.some((c) => c.startsWith("tarjeta.voz."));
+    console.log(
+      `  la tarjeta del avión habla en el hangar: ${bien ? "sí ✓" : "no ✗"} · ` +
+        `pedidas ${JSON.stringify(oido.pedidas)} · voces ${JSON.stringify(oido.voces)}`,
+    );
+    /*
+     * Y el camión de los bomberos: en Guaraní el JAZ 120 no cabe por ellos
+     * —su categoría es la 7 y el avión pide la 8—, y tocar el camión de su
+     * ficha abre la explicación, que también tiene que sonar.
+     */
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(500);
+    await page.click('[data-pantalla="inicio"]');
+    await page.click('[data-pantalla="donde"]');
+    await page.click('[data-sitio="guarani"]');
+    await page.waitForTimeout(300);
+    if (await page.$('[data-pantalla="conque"]')) await page.click('[data-pantalla="conque"]');
+    const camion = await page.waitForSelector('[data-explicar="bomberos"]', { timeout: 20000 }).catch(() => null);
+    if (camion) await camion.click();
+    const bomberos = await page
+      .waitForFunction(
+        () => {
+          const v = globalThis.__ogaVozDelHangar;
+          const pedidas = v ? [...v.historial] : [];
+          return pedidas.some((c) => c.startsWith("explica.bomberos")) ? pedidas : null;
+        },
+        undefined,
+        { timeout: 30000 },
+      )
+      .then((h) => h.jsonValue())
+      .catch(() => null);
+    console.log(
+      `  los bomberos se explican con voz en el hangar: ${bomberos ? "sí ✓" : "no ✗"}` +
+        `${camion ? "" : " · no se encontró el camión en la ficha"}` +
+        `${bomberos ? ` · pedidas ${JSON.stringify(bomberos)}` : ""}`,
+    );
+  }
   await page.close();
 }
 

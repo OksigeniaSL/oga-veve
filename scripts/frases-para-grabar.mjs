@@ -54,6 +54,11 @@ const HABLADOS = [
     /^vuelo\.sinPermisoEnLosMinimos$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
+  /*
+   * Y qué quiere decir cada seña del señalero, detrás de la seña y en los
+   * peldaños de abajo. Ver el oyente de `gestoDelSenalero` en `src/game.ts`.
+   */
+  ["senalero", "instructor", "lo que dice cada seña del señalero"],
   ["percance", "instructor", "lo que salió mal, en la pantalla de fin"],
   ["fin", "instructor", "el reconocimiento al terminar"],
   ["grado", "instructor", "los cuatro grados del cuaderno"],
@@ -531,7 +536,52 @@ const TORRE_SOLO = [
    * campos sin calle hasta la cabecera. Ver `contarPorDondeSeSale`.
    */
   ["torre.solo.backtrackRunway", "backtrack runway", "remontar la pista, antes de su número"],
+  /*
+   * **Y la salida desde la intersección**: la torre la ofrece —«advise able to
+   * depart from runway one niner, intersection Alfa»— y, si la cuenta le da a
+   * quien vuela, le da la pista que queda —«TORA runway one niner, from
+   * intersection Alfa, two thousand niner hundred metres»— (AMC1 SERA.14001,
+   * apéndice 1, 1.4.10 o y p; Doc 4444, 12.3.4.7 n a p). La calle va en un
+   * hueco con el alfabeto y las cifras, y los metros con `METROS_EN_RADIO`.
+   * Ver `contarPorDondeSeSale` en `src/game.ts`.
+   */
+  [
+    "torre.solo.adviseAbleToDepart",
+    "advise able to depart from runway",
+    "la torre ofrece salir desde la intersección; detrás, la pista",
+  ],
+  ["torre.solo.intersection", "intersection", "detrás de la pista, antes del nombre de la calle"],
+  [
+    "torre.solo.toraRunway",
+    "TORA runway",
+    "la pista que queda desde la intersección, antes de su número",
+  ],
+  ["torre.solo.fromIntersection", "from intersection", "detrás de la pista, antes de la calle"],
+  ["torre.solo.metres", "metres", "detrás de la pista que queda, en metros"],
   ["torre.solo.goAroundSolo", "go around", "al aire, sin más: el porqué va detrás"],
+  /*
+   * **Y el aviso de turbulencia de otro avión, retransmitido** a quien viene
+   * detrás: «caution, moderate turbulence reported at flight level one two
+   * zero by preceding traffic». La altura va en un hueco, con las piezas de
+   * `ALTURA`. Los grados son los tres de la OACI; «fuerte» en el juego es la
+   * severa. Ver `contarElPirep` en `src/game.ts`.
+   */
+  [
+    "torre.solo.pirep.ligera",
+    "caution, light turbulence reported at",
+    "otro avión avisó de turbulencia ligera; detrás, la altura",
+  ],
+  [
+    "torre.solo.pirep.moderada",
+    "caution, moderate turbulence reported at",
+    "otro avión avisó de turbulencia moderada; detrás, la altura",
+  ],
+  [
+    "torre.solo.pirep.fuerte",
+    "caution, severe turbulence reported at",
+    "otro avión avisó de turbulencia fuerte; detrás, la altura",
+  ],
+  ["torre.solo.pirep.porDelante", "by preceding traffic", "quién avisó: el que va delante"],
   ["torre.solo.rogerMayday", "roger, Mayday", "la torre oyó la llamada de socorro"],
   // Y la de urgencia, que es la del cuatrimotor con un motor parado.
   ["torre.solo.rogerPanPan", "roger, Pan Pan", "la torre oyó la llamada de urgencia"],
@@ -558,6 +608,17 @@ const TORRE_SOLO = [
     "no reported traffic",
     "un AFIS: sin tráfico conocido, detrás de la pista en uso",
   ],
+];
+
+const METROS_EN_RADIO = [
+  /*
+   * **Y los metros de la pista que queda**, «two thousand niner hundred»: la
+   * cifra de la torre y estas dos palabras. Van en un hueco, así que se
+   * llaman igual en las dos torres, como el viento. Ver `metrosEnPiezas` en
+   * `src/flight/matricula.ts`.
+   */
+  ["metros.thousand", "thousand", "los miles de la pista que queda, detrás de su cifra"],
+  ["metros.hundred", "hundred", "los cientos de la pista que queda, detrás de su cifra"],
 ];
 
 /**
@@ -688,6 +749,31 @@ const OTRO_SOLO = [
   ["otro.solo.enCola", "viento en cola", "entra en el circuito"],
   ["otro.solo.final", "en final", "ya viene a la pista"],
   ["otro.solo.pistaLibre", "pista libre", "y la deja"],
+];
+
+/*
+ * **Y el aviso de turbulencia del otro avión, en inglés**: «for your
+ * information, moderate turbulence at flight level one two zero», que es como
+ * se dice en cualquier frecuencia del mundo. Detrás va la altura, y para ella
+ * el otro avión necesita las piezas de `ALTURA` y las cifras, que hasta ahora
+ * solo tenían las torres. Ver `contarElPirep` en `src/game.ts`.
+ */
+const OTRO_EN_INGLES = [
+  [
+    "otro.solo.pirep.ligera",
+    "for your information, light turbulence at",
+    "avisa de turbulencia ligera; detrás, la altura",
+  ],
+  [
+    "otro.solo.pirep.moderada",
+    "for your information, moderate turbulence at",
+    "avisa de turbulencia moderada; detrás, la altura",
+  ],
+  [
+    "otro.solo.pirep.fuerte",
+    "for your information, severe turbulence at",
+    "avisa de turbulencia fuerte; detrás, la altura",
+  ],
 ];
 
 /*
@@ -826,6 +912,20 @@ for (const [id, texto, para] of OTRO_SOLO) {
   filas.push({ id, voz: "otro", idioma: "es", texto, para });
   total += texto.length;
 }
+for (const [id, texto, para] of [...OTRO_EN_INGLES, ...ALTURA]) {
+  filas.push({ id, voz: "otro", idioma: "en", texto, para: `${para}, en el aviso de turbulencia` });
+  total += texto.length;
+}
+for (const [palabra, cifra] of CIFRAS) {
+  filas.push({
+    id: `cifra.${cifra}`,
+    voz: "otro",
+    idioma: "en",
+    texto: palabra,
+    para: "una cifra del nivel, en el aviso de turbulencia",
+  });
+  total += palabra.length;
+}
 /*
  * **Y la torre también monta.** El alfabeto y las cifras, para poder llamar a
  * cada uno por su matrícula y nombrar la pista en uso. Es inglés aeronáutico y
@@ -852,7 +952,13 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA]) {
+for (const [id, texto, para] of [
+  ...TORRE_SOLO,
+  ...VIENTO,
+  ...METROS_EN_RADIO,
+  ...TRAFICO,
+  ...ALTURA,
+]) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
@@ -1041,7 +1147,13 @@ for (const [palabra, cifra] of CIFRAS) {
 const EN_CANARIAS_SE_DICE = {
   "torre.solo.birdsOnFinal": "caution, birds on final",
 };
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO, ...ALTURA]) {
+for (const [id, texto, para] of [
+  ...TORRE_SOLO,
+  ...VIENTO,
+  ...METROS_EN_RADIO,
+  ...TRAFICO,
+  ...ALTURA,
+]) {
   const suyo = EN_CANARIAS_SE_DICE[id] ?? texto;
   filas.push({
     // Las claves llevan el habla en medio para no pisarse con las de casa.
@@ -1412,6 +1524,15 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
   "explica.tcas.texto",
   "explica.avisos.texto",
   "explica.mascaras.texto",
+  /*
+   * Y la turbulencia de grado fuerte, que la comandante cuenta firme y no
+   * alarmada: la calma es la forma que tiene la seguridad de funcionar. Las
+   * demás de la turbulencia van con chispa, como todo lo suyo. Ver
+   * `src/audio/anuncio-de-turbulencia.ts`.
+   */
+  "comandante.turbulencia.fuerte",
+  "comandante.turbulencia.ahora.fuerte",
+  "comandante.turbulencia.otraVez.fuerte",
 ]);
 for (const f of filas) {
   if (!EN_CALMA_COMO_SE_ESCRIBE.has(f.id)) continue;
@@ -1440,6 +1561,12 @@ for (const f of filas) {
 const ASI_SE_LEE = {
   "vuelo.aves.enUve":
     "¡Mirá, pájaros volando en ve! Cada uno va en el aire que sube junto a la punta del ala del de adelante. Los aviones hacemos al revés: ese remolino lo esquivamos.",
+  /*
+   * Y la TORA, que por radio se dice como palabra —«tora»— y no letra a
+   * letra: escrita en mayúsculas, una voz inglesa la deletrea.
+   */
+  "torre.solo.toraRunway": "Tora runway",
+  "torre.canario.solo.toraRunway": "Tora runway",
 };
 for (const f of filas) {
   const dicho = ASI_SE_LEE[f.id];
@@ -1532,8 +1659,16 @@ const AJUSTES_CON_CHISPA = {
  * de una orden de vuelo. Las que cuentan una alarma ya van en calma, y esas se
  * quedan así.
  */
+/*
+ * Y lo que cuenta la instructora del aviso de otro avión: que los aviones se
+ * ayudan entre ellos es algo bonito, no una orden. Ver `contarElPirep` en
+ * `src/game.ts`.
+ */
 const CON_CHISPA = (id) =>
-  id.startsWith("ventanilla.") || id.startsWith("vuelo.aire.") || id.startsWith("explica.");
+  id.startsWith("ventanilla.") ||
+  id.startsWith("vuelo.aire.") ||
+  id.startsWith("explica.") ||
+  id === "vuelo.pirep";
 for (const f of filas) {
   if (!CON_CHISPA(f.id) || f.ajustes) continue;
   f.ajustes = AJUSTES_CON_CHISPA;

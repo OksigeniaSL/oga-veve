@@ -369,6 +369,7 @@ export const EN: Dictionary = {
   "vuelo.rotar": "Pull up and fly",
   "vuelo.comprometido": "We're flying now — keep going",
   "vuelo.despegando": "Full power",
+  "vuelo.alineadoGasAFondo": "You're lined up: full power",
   "vuelo.enVuelo": "Go for a fly",
   "vuelo.enVueloAterrizando": "Head for the runway",
   "vuelo.enVueloDestino": "Follow the arrow to the next airport",
@@ -387,6 +388,16 @@ export const EN: Dictionary = {
     "That diamond on the screen is another plane. It's lower than us: it's no bother",
   "vuelo.traficoNivel":
     "That diamond on the screen is another plane. It's at our height, but far away: we keep an eye on it",
+  "vuelo.lucesDeNoche.deFrente":
+    "Look at that plane: green light on your left, red on your right. That means it's coming towards us. That's what a plane's lights are for: to be seen in time.",
+  "vuelo.lucesDeNoche.seAleja":
+    "See that single white light? It's another plane's tail: it's moving away from us.",
+  "vuelo.lucesDeNoche.cruzaIzquierda":
+    "That plane is showing us its red light: we're seeing its left side, and it's passing towards your left.",
+  "vuelo.lucesDeNoche.cruzaDerecha":
+    "That plane is showing us its green light: we're seeing its right side, and it's passing towards your right.",
+  "vuelo.lucesDeNoche.regla":
+    "At night every plane carries the same lights: red on the left wingtip, green on the right and white at the back. Looking at them tells you where each one is going.",
   "vuelo.otroAvion.delante.arriba": "Ahead and higher there's another plane. Can you see it?",
   "vuelo.otroAvion.delante.nivel": "Ahead, at our height, there's another plane. Can you see it?",
   "vuelo.otroAvion.delante.abajo": "Ahead and lower there's another plane. Can you see it?",
@@ -414,6 +425,34 @@ export const EN: Dictionary = {
     "Ladies and gentlemen, this is your captain. Because of the bumps we asked air traffic control for another level, and we've climbed for a smoother ride.",
   "comandante.bachesEnTodos":
     "Ladies and gentlemen, this is your captain. We checked other levels with air traffic control, but it's bumpy at all of them. That's normal: please keep your seat belts fastened.",
+  "comandante.turbulencia.ligera":
+    "Ladies and gentlemen, this is your captain. We're about to go through some light turbulence: a few gentle bumps, like a dirt road. It's perfectly normal, and the aircraft is built for it. The seatbelt sign is on: please return to your seat and fasten your seatbelt.",
+  "comandante.turbulencia.moderada":
+    "Ladies and gentlemen, this is your captain. There's moderate turbulence ahead, so it will get quite bumpy for a while. That's normal, and the aircraft is built for it. The cabin crew will be taking their seats too. Please return to your seat, fasten your seatbelt securely and put away anything on your tray table.",
+  "comandante.turbulencia.fuerte":
+    "Ladies and gentlemen, this is your captain. There's strong turbulence ahead. We'll go through it calmly: the aircraft is built for this and we know how to fly it. Please be seated now and fasten your seatbelt tightly. The cabin crew will be seated too. I'll let you know when we're through it.",
+  "comandante.turbulencia.ahora.ligera":
+    "Ladies and gentlemen, we're going through a little turbulence. It's the kind you can't see on the radar, called clear-air turbulence, and it's normal. The seatbelt sign is on: please return to your seat and fasten your seatbelt.",
+  "comandante.turbulencia.ahora.moderada":
+    "Ladies and gentlemen, this is your captain. We're going through some moderate turbulence that we couldn't see coming: it doesn't show on the radar. It's normal, and the aircraft is built for it. Please return to your seat and fasten your seatbelt securely. The cabin crew will be seated too.",
+  "comandante.turbulencia.ahora.fuerte":
+    "Ladies and gentlemen, this is your captain. We're going through strong turbulence. Stay calm: the aircraft is built for this. Please remain seated with your seatbelt tightly fastened. I'll let you know when we're through it.",
+  "comandante.turbulencia.otraVez.ligera":
+    "Ladies and gentlemen, we've got a little more turbulence coming, like before. You know the drill: back to your seat, seatbelt on, and we'll carry on smoothly.",
+  "comandante.turbulencia.otraVez.moderada":
+    "Ladies and gentlemen, more turbulence is coming, a bit bumpier this time. Same as before: everyone seated with seatbelts securely fastened. The cabin crew will be seated too.",
+  "comandante.turbulencia.otraVez.fuerte":
+    "Ladies and gentlemen, it's your captain again. A stretch of strong turbulence is coming. We'll go through it calmly, like the last one: please be seated now, with your seatbelt tightly fastened. I'll let you know when we're through it.",
+  "comandante.turbulencia.tormenta":
+    "Ladies and gentlemen, this is your captain. There are storms along our route today. The radar shows us where they are and we'll fly around them, but the air will be bumpy for most of the flight. The seatbelt sign will stay on: please remain seated with your seatbelt fastened.",
+  "comandante.turbulencia.pirep":
+    "Ladies and gentlemen, this is your captain. An aircraft ahead of us has let us know by radio that there's turbulence further on. Thanks to that report we can get ready: please return to your seat and fasten your seatbelt. Pilots look out for each other.",
+  "comandante.turbulencia.paso":
+    "Ladies and gentlemen, we're through it and it's smooth again. We're switching off the seatbelt sign: you're free to move about, but while you're seated, please keep it fastened.",
+  "comandante.turbulencia.pasoBajando":
+    "Ladies and gentlemen, we're through the turbulence. The seatbelt sign stays on because we've started our descent.",
+  "comandante.cinturon.porque":
+    "A tip from your captain: even when the seatbelt sign is off, keep your seatbelt loosely fastened while you're seated. Sometimes turbulence comes without warning, and your seatbelt is what keeps you safely in your seat.",
   "vuelo.alturaDeLaTorre":
     "The tower gave us how high to climb. I set it in the altitude window, in magenta: we climb up to there and stay.",
   "vuelo.alturaDeLaTorreRaya": "The tower tells us how high to climb: up to the line on the tape.",
@@ -578,6 +617,7 @@ export const EN: Dictionary = {
   "vuelo.pistaLibre": "Runway clear! Well done",
   "vuelo.aPlataforma": "Head back to your stand",
   "vuelo.enPuesto": "You made it. Shut the engine down",
+  "vuelo.cortaMotores": "That's the cut-engines signal: shut the engine down",
   "vuelo.apagado": "Flight complete!",
   "vuelo.fuera": "Back to the green line",
   "vuelo.roto": "We have a problem",
@@ -609,6 +649,8 @@ export const EN: Dictionary = {
   "palabra.tormenta": "Storm",
   "vuelo.baches":
     "It's getting bumpy: that's the air, like waves on water. The plane is built for this. Keep flying, calmly.",
+  "vuelo.pirep":
+    "Did you hear the radio? Another plane reported bumpy air ahead. Planes help each other out: that way the captain can warn everyone in advance.",
   "vuelo.reserva":
     "Into reserve fuel. Stay calm: we are going to the nearest airport, follow the arrow",
   "palabra.reserva": "Fuel",
@@ -666,6 +708,9 @@ export const EN: Dictionary = {
   "palabra.aerofrenos": "Speed brakes",
   "vuelo.despacio": "Slow down",
   "vuelo.alto": "Stop here",
+  "senalero.alto": "Wands crossed overhead: that means stop",
+  "senalero.frenos": "Hand up, fist closed: set the parking brake",
+  "senalero.calzos": "Wands together overhead: the chocks are in",
   "vuelo.teLoPasaste": "You went past. Brake and come back",
   "vuelo.yaPodesTocar": "You can touch down now",
   "vuelo.quitaElGas": "Throttle to idle",
@@ -932,6 +977,10 @@ export const EN: Dictionary = {
     "That's Encarnación, the Pearl of the South, on the banks of the Paraná. In summer it has river beaches and the most famous carnival in the country.",
   "ventanilla.trinidad":
     "Those are the ruins of Trinidad, an eighteenth-century Jesuit mission. It's a World Heritage Site, together with Jesús, just nearby.",
+  "ventanilla.cruz-del-sur":
+    "Now look at the sky: those four stars in a cross are the Southern Cross. Stretch the long bar about four and a half times and you reach due south. That's how sailors found their way, long before GPS!",
+  "ventanilla.polar":
+    "Look north: that lonely star, not too high and not too low, is the Pole Star. It isn't the brightest, but it's the most useful: it hardly moves all night and it marks north. And it sits as high as we are far from the equator: here, about twenty-eight degrees.",
   /* The same, said by the instructor sitting beside you in a light aircraft. */
   "ventanilla.vos.lado.izquierda": "Look out of the window, to your left.",
   "ventanilla.vos.lado.derecha": "Look out of the window, to your right.",
@@ -995,6 +1044,10 @@ export const EN: Dictionary = {
     "That's Encarnación. In summer it has beaches on the river and a very famous carnival.",
   "ventanilla.vos.trinidad":
     "Those are the ruins of Trinidad: a very old Jesuit mission, a World Heritage Site.",
+  "ventanilla.vos.cruz-del-sur":
+    "Look at those four stars in a cross: that's the Southern Cross. Stretch the long bar four and a half times and you're pointing south.",
+  "ventanilla.vos.polar":
+    "See that lonely star to the north? That's the Pole Star. It hardly moves: all night long it marks north.",
 
   /*
    * El guion de la cabina: el plan y el descenso de la comandante, y la
@@ -1003,6 +1056,10 @@ export const EN: Dictionary = {
    */
   "comandante.previsto.vuelo": "The flight will take about {n} minutes.",
   "comandante.previsto.nivel": "We'll be flying at {n} thousand feet.",
+  "comandante.previsto.vuelo.h75": "The flight will take about an hour and a quarter.",
+  "comandante.previsto.vuelo.h90": "The flight will take about an hour and a half.",
+  "comandante.previsto.vuelo.h105": "The flight will take about an hour and forty-five minutes.",
+  "comandante.previsto.vuelo.h120": "The flight will take about two hours.",
   "comandante.descenso.hacia":
     "Ladies and gentlemen, this is your captain again. We're starting our descent.",
   "comandante.descenso.vuelta":
@@ -1042,6 +1099,10 @@ export const EN: Dictionary = {
   "comandante.descenso.hacia.la-gomera":
     "Ladies and gentlemen, this is your captain again. We're starting our descent into La Gomera.",
   "comandante.minutos": "We'll be landing in about {n} minutes.",
+  "comandante.minutos.h75": "We'll be landing in about an hour and a quarter.",
+  "comandante.minutos.h90": "We'll be landing in about an hour and a half.",
+  "comandante.minutos.h105": "We'll be landing in about an hour and forty-five minutes.",
+  "comandante.minutos.h120": "We'll be landing in about two hours.",
   "comandante.cielo.despejado": "The sky there is clear.",
   "comandante.cielo.nubes": "There are a few clouds there.",
   "comandante.cielo.nublado": "It's cloudy there.",
@@ -1074,6 +1135,10 @@ export const EN: Dictionary = {
     "And as it's a long flight, we also have hot coffee and tea.",
   "tripulacion.cinturones":
     "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
+  "tripulacion.servicio.pausa":
+    "Ladies and gentlemen, due to the turbulence we're pausing the service for a little while, and the cabin crew will take their seats. We'll carry on as soon as it settles.",
+  "tripulacion.servicio.seguimos":
+    "It's settled down: we're resuming the service. Thank you very much for your patience.",
   "tripulacion.mascaras":
     "Ladies and gentlemen: pull the mask towards you, place it over your nose and mouth and breathe normally. Put on your own first, then help others. We are descending to an altitude where the air is breathable.",
   "tripulacion.canario.mascaras":
@@ -1098,6 +1163,10 @@ export const EN: Dictionary = {
     "And as it's a long flight, we also have coffee and tea.",
   "tripulacion.canario.cinturones":
     "Ladies and gentlemen, the seatbelt sign is on. Please fasten your seatbelt, bring your seat back upright and stow your tray table. Thank you.",
+  "tripulacion.canario.servicio.pausa":
+    "Ladies and gentlemen, due to the turbulence we're pausing the service for a little while, and the cabin crew will take their seats. We'll carry on as soon as it settles.",
+  "tripulacion.canario.servicio.seguimos":
+    "It's settled down: we're resuming the service. Thank you very much for your patience.",
   /*
    * Off the runway and taxiing in, what any cabin crew says. See
    * `audio/anuncio-tras-la-toma.ts`.

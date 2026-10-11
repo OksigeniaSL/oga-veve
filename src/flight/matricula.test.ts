@@ -17,9 +17,11 @@ import instructora from "../../data/voces/instructor/manifiesto.json";
 import { recetaDe, type Manifiesto } from "../audio/banco-de-voz";
 import {
   calleDicha,
+  calleEnPiezas,
   FONETICO,
   matriculaDe,
   metrosDichos,
+  metrosEnPiezas,
   pistaEnPiezas,
   prefijoDe,
   rellenoDe,
@@ -291,5 +293,75 @@ describe("la intersección y la pista que queda, como las dice la torre", () => 
     expect(metrosDichos(2948)).toBe("two thousand niner hundred");
     expect(metrosDichos(3000)).toBe("three thousand");
     expect(metrosDichos(807)).toBe("eight hundred");
+  });
+
+  it("y lo mismo en piezas de la torre, para su hueco", () => {
+    expect(calleEnPiezas("E-2")).toBe("fonetico.echo cifra.2");
+    expect(calleEnPiezas("b9")).toBe("fonetico.bravo cifra.9");
+    expect(calleEnPiezas(null)).toBeNull();
+    expect(metrosEnPiezas(2948)).toBe("cifra.2 metros.thousand cifra.9 metros.hundred");
+    expect(metrosEnPiezas(3000)).toBe("cifra.3 metros.thousand");
+    expect(metrosEnPiezas(807)).toBe("cifra.8 metros.hundred");
+    expect(metrosEnPiezas(40)).toBeNull();
+  });
+
+  /*
+   * **Y las recetas montan con esos huecos**, en las dos torres. Las piezas
+   * nuevas todavía no están grabadas, así que el manifiesto se hace aquí con
+   * las piezas que nombran las recetas: lo que se comprueba es que los huecos
+   * se llaman como los rellena el juego —`{calle}`, `{metros}`, la pista y la
+   * matrícula— y que la frase sale en el orden de la fraseología.
+   */
+  it("y las recetas de la torre montan la oferta y la TORA con esos huecos", () => {
+    const fs = (
+      globalThis as unknown as { process: { getBuiltinModule(n: string): unknown } }
+    ).process.getBuiltinModule("node:fs") as { readFileSync(r: string, c: string): string };
+    for (const [voz, k] of [
+      ["torre", "torre"],
+      ["torre-canarias", "torre.canario"],
+    ] as const) {
+      const recetas = JSON.parse(fs.readFileSync(`crudo/${voz}/recetas.json`, "utf8")) as Record<
+        string,
+        string[]
+      >;
+      const piezas: Record<string, { ms: number }> = {};
+      for (const r of Object.values(recetas))
+        for (const p of r) if (!p.startsWith("{")) piezas[p] = { ms: 100 };
+      for (const p of [
+        ...FONETICO.map((l) => `fonetico.${l}`),
+        ...Array.from({ length: 10 }, (_, i) => `cifra.${i}`),
+        "metros.thousand",
+        "metros.hundred",
+      ])
+        piezas[p] = { ms: 100 };
+      const m: Manifiesto = { version: 1, voz, idioma: "en", piezas, recetas };
+      const pista = pistaEnPiezas("19")!;
+      const relleno = {
+        ...rellenoDe(sortearIndicativo("SGAS", fijo(0))),
+        ...pista.relleno,
+        calle: calleEnPiezas("A")!,
+        metros: metrosEnPiezas(2948)!,
+      };
+      expect(recetaDe(m, `${k}.ofreceInterseccion`, relleno)?.slice(5)).toEqual([
+        `${k}.solo.adviseAbleToDepart`,
+        "cifra.1",
+        "cifra.9",
+        `${k}.solo.intersection`,
+        "fonetico.alfa",
+      ]);
+      expect(recetaDe(m, `${k}.tora`, relleno)?.slice(5)).toEqual([
+        `${k}.solo.toraRunway`,
+        "cifra.1",
+        "cifra.9",
+        `${k}.solo.fromIntersection`,
+        "fonetico.alfa",
+        "cifra.2",
+        "metros.thousand",
+        "cifra.9",
+        "metros.hundred",
+        `${k}.solo.metres`,
+      ]);
+      expect(recetaDe(m, `${k}.tora.L`, relleno)).toContain("lado.left");
+    }
   });
 });

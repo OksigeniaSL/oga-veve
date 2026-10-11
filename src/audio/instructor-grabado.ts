@@ -822,6 +822,14 @@ export class InstructorGrabado implements Instructor {
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,
+    /**
+     * **Si se baja todo de fondo**, o solo los manifiestos. Sin el fondo, cada
+     * pieza se trae cuando una frase la pide —ver `estaLista`—, que es lo que
+     * quiere el hangar: tres o cuatro explicaciones no justifican bajar y
+     * descodificar quinientas tomas que el vuelo va a bajar después igual.
+     * Ver `audio/voz-del-hangar.ts`.
+     */
+    conFondo = true,
   ): Promise<number> {
     const b = this.banco;
     // Una vez: el primer gesto y el arranque con gesto ya hecho llaman los dos.
@@ -864,6 +872,7 @@ export class InstructorGrabado implements Instructor {
     );
     for (const m of manifiestos) if (m) b.manifiestos.push(m);
     b.estado = "bajando";
+    if (!conFondo) return b.piezas.size;
     /*
      * **Y las piezas, de fondo y de seis en seis**, en el orden de las voces.
      * Lo que se necesita ya no espera a este turno: se pide aparte, por

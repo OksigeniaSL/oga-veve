@@ -23,7 +23,8 @@
  *
  * Nadie dice por megafonía «vamos a aterrizar en diecisiete minutos»: dice
  * «en unos quince». Los minutos van de cinco en cinco a partir de cinco, que
- * es como se cuentan, y los grados y los pies al entero. Así además hay una
+ * es como se cuentan; pasada la hora, de cuarto en cuarto y en horas —«una
+ * hora y media»—, y los grados y los pies al entero. Así además hay una
  * cantidad finita de trozos que grabar.
  *
  * Sin three.js ni audio, para poder comprobarlo sin navegador.
@@ -33,33 +34,76 @@ import { hayTexto, t, type TranslationKey } from "../i18n";
 import type { Meteo } from "../world/meteo";
 import { HASTA } from "../flight/nivel-de-crucero";
 
-/** Los minutos que se dicen: los pocos de una bajada corta y de cinco en cinco. */
+/**
+ * Los minutos que se dicen **en minutos**: los pocos de una bajada corta y de
+ * cinco en cinco hasta la hora. Son las que se montan con la plantilla —«unos
+ * {n} minutos»— en `scripts/frases-para-grabar.mjs`.
+ */
 export const MINUTOS_QUE_SE_DICEN = [
   2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60,
 ] as const;
 
+/**
+ * **Y pasada la hora, en horas**, en minutos y de cuarto en cuarto: «una hora
+ * y cuarto», «una hora y media», «una hora y cuarenta y cinco», «dos horas».
+ *
+ * Es como lo dice una comandante de verdad: nadie anuncia por megafonía
+ * «unos noventa minutos». Y hace falta, porque la duración se cuenta con su
+ * subida y su bajada —ver `segundosPorElPerfil`— y con eso el JAZ 60 pasa de
+ * la hora en las rutas largas de Paraguay: de Pedro Juan a Guaraní, unos
+ * setenta y tres minutos sin viento y casi noventa con treinta nudos de
+ * cara. Con dos horas sobra para todo lo que el juego le puede pedir a un
+ * avión con pasaje.
+ *
+ * Cada una es **una frase entera con su número dentro**, como las de los
+ * minutos, pero escrita a mano en el diccionario —`comandante.previsto.vuelo.h75`,
+ * `comandante.minutos.h75`…—, porque «una hora y cuarto» no sale de rellenar
+ * «unos {n} minutos». Ver `piezaDeDuracion`.
+ */
+export const HORAS_QUE_SE_DICEN = [75, 90, 105, 120] as const;
+
+/** Todo lo que se dice, en minutos y en orden: las dos listas juntas. */
+const LO_QUE_SE_DICE: readonly number[] = [...MINUTOS_QUE_SE_DICEN, ...HORAS_QUE_SE_DICEN];
+
+/** Si esos minutos se dicen en horas. Ver `HORAS_QUE_SE_DICEN`. */
+export const seDiceEnHoras = (n: number): boolean =>
+  n > MINUTOS_QUE_SE_DICEN[MINUTOS_QUE_SE_DICEN.length - 1]!;
+
 /** Los minutos, redondeados como se dicen. `segundos` es lo que falta. */
 export function minutosDichos(segundos: number): number {
   const min = segundos / 60;
-  let mejor: number = MINUTOS_QUE_SE_DICEN[0];
-  for (const m of MINUTOS_QUE_SE_DICEN)
+  let mejor: number = LO_QUE_SE_DICE[0]!;
+  for (const m of LO_QUE_SE_DICE)
     if (Math.abs(m - min) < Math.abs(mejor - min)) mejor = m;
   return mejor;
 }
 
 /**
- * **Los minutos que se dicen, o `null` si pasan de lo grabado.**
+ * **Los minutos que se dicen, o `null` si no se pueden decir a su altura.**
  *
- * Lo grabado acaba en sesenta, y `minutosDichos` redondea al más cercano: un
- * vuelo de hora y tres cuartos salía «unos sesenta minutos». Con la duración
- * contada con su subida y su bajada —ver `segundosPorElPerfil`— eso le pasa
- * al JAZ 60 en las rutas largas de Paraguay: a Pedro Juan, al Chaco. Un
- * número que no puede sonar a su altura no se dice; las piezas que faltan
- * están en `PENDIENTE-VOCES-sueltos.md`.
+ * Lo grabado acababa en sesenta, y `minutosDichos` redondeaba al más cercano:
+ * un vuelo de hora y tres cuartos salía «unos sesenta minutos». Ahora, pasada
+ * la hora, se dice en horas —ver `HORAS_QUE_SE_DICEN`—, y más allá de la
+ * última, nada: un número que no puede sonar a su altura no se dice.
+ *
+ * `grabada` dice si la pieza de esa duración tiene ya su grabación, por su
+ * nombre. **Solo se pregunta por las de horas**, que son nuevas: las de
+ * minutos están en el pack desde que existe el plan, y preguntar por ellas
+ * con el pack todavía bajando dejaría la bienvenida sin plan para nada. Sin
+ * `grabada`, las de horas no se dicen: una frase que el juego pide y nadie
+ * grabó la dice la voz del navegador, que en Brave para Linux es muda, y se
+ * lleva por delante el anuncio entero.
  */
-export function minutosQueSeDicen(segundos: number): number | null {
-  const ultimo = MINUTOS_QUE_SE_DICEN[MINUTOS_QUE_SE_DICEN.length - 1]!;
-  return segundos / 60 > ultimo + 2.5 ? null : minutosDichos(segundos);
+export function minutosQueSeDicen(
+  segundos: number,
+  pieza: (n: number) => string = piezaDeDuracion,
+  grabada: (pieza: string) => boolean = () => false,
+): number | null {
+  const ultimo = HORAS_QUE_SE_DICEN[HORAS_QUE_SE_DICEN.length - 1]!;
+  if (segundos / 60 > ultimo + 7.5) return null;
+  const n = minutosDichos(segundos);
+  if (seDiceEnHoras(n) && !grabada(pieza(n))) return null;
+  return n;
 }
 
 /*
@@ -143,10 +187,15 @@ export function cieloDe(m: Meteo): Cielo {
   return tapa >= 0.75 ? "nublado" : "nubes";
 }
 
-/** La pieza de cada cosa, que es como se llama su grabación. */
-export const piezaDeMinutos = (n: number): string => `comandante.minutos.${n}`;
+/**
+ * La pieza de cada cosa, que es como se llama su grabación. Las de horas
+ * llevan una `h` delante del número —`comandante.minutos.h90`, «una hora y
+ * media»— porque son otra frase, escrita a mano. Ver `HORAS_QUE_SE_DICEN`.
+ */
+export const piezaDeMinutos = (n: number): string =>
+  `comandante.minutos.${seDiceEnHoras(n) ? "h" : ""}${n}`;
 export const piezaDeDuracion = (n: number): string =>
-  `comandante.previsto.vuelo.${n}`;
+  `comandante.previsto.vuelo.${seDiceEnHoras(n) ? "h" : ""}${n}`;
 export const piezaDeNivel = (n: number): string =>
   `comandante.previsto.nivel.${n}`;
 export const piezaDeCielo = (c: Cielo): string => `comandante.cielo.${c}`;
@@ -173,6 +222,18 @@ function textoDe(clave: TranslationKey, n: number): string {
 }
 
 /**
+ * El texto de una duración: con la plantilla si va en minutos, y la frase
+ * entera de su pieza si va en horas. Ver `HORAS_QUE_SE_DICEN`.
+ */
+function textoDeLaDuracion(
+  plantilla: TranslationKey,
+  pieza: (n: number) => string,
+  n: number,
+): string {
+  return seDiceEnHoras(n) ? t(pieza(n) as TranslationKey) : textoDe(plantilla, n);
+}
+
+/**
  * La bienvenida con el plan: la de siempre de este destino, y detrás cuánto
  * se tarda y a qué altura se va.
  *
@@ -185,8 +246,13 @@ export function bienvenidaConPlan(
   bienvenida: { readonly id: string; readonly texto: string },
   segundosPrevistos: number | null,
   nivelMiles: number | null,
+  /** Si una pieza tiene su grabación. Ver `minutosQueSeDicen`. */
+  grabada?: (pieza: string) => boolean,
 ): AnuncioMontado {
-  const min = segundosPrevistos === null ? null : minutosQueSeDicen(segundosPrevistos);
+  const min =
+    segundosPrevistos === null
+      ? null
+      : minutosQueSeDicen(segundosPrevistos, piezaDeDuracion, grabada);
   if (min === null || nivelMiles === null)
     return { clave: bienvenida.id, relleno: {}, texto: bienvenida.texto };
   return {
@@ -198,7 +264,7 @@ export function bienvenidaConPlan(
     },
     texto: [
       bienvenida.texto,
-      textoDe("comandante.previsto.vuelo", min),
+      textoDeLaDuracion("comandante.previsto.vuelo", piezaDeDuracion, min),
       textoDe("comandante.previsto.nivel", nivelMiles),
     ].join(" "),
   };
@@ -220,6 +286,8 @@ export function descensoPara(
   campo: string | null,
   segundos: number | null,
   meteo: Meteo,
+  /** Si una pieza tiene su grabación. Ver `minutosQueSeDicen`. */
+  grabada?: (pieza: string) => boolean,
 ): AnuncioMontado {
   const suya = campo ? `comandante.descenso.hacia.${campo}` : null;
   const hacia: TranslationKey =
@@ -236,10 +304,11 @@ export function descensoPara(
     temperatura: piezaDeGrados(grados),
   };
   const textos = [t(hacia)];
-  const min = segundos === null ? null : minutosQueSeDicen(segundos);
+  const min =
+    segundos === null ? null : minutosQueSeDicen(segundos, piezaDeMinutos, grabada);
   if (min !== null) {
     relleno.minutos = piezaDeMinutos(min);
-    textos.push(textoDe("comandante.minutos", min));
+    textos.push(textoDeLaDuracion("comandante.minutos", piezaDeMinutos, min));
   }
   textos.push(t(piezaDeCielo(cielo) as TranslationKey));
   textos.push(

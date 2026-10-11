@@ -95,6 +95,16 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
   ],
 
   /*
+   * **Y el «ya pasó» de la turbulencia**, que en un vuelo movido sale dos o
+   * tres veces. La segunda forma no da el consejo del cinturón: es la que va
+   * cuando detrás viene `comandante.cinturon.porque`, para no decirlo dos
+   * veces seguidas. Ver `pasoDeTurbulencia` en `audio/anuncio-de-turbulencia.ts`.
+   */
+  "comandante.turbulencia.paso": [
+    "Listo, señores pasajeros: ya pasamos la zona movida. Se apaga la señal del cinturón. Gracias por la paciencia.",
+  ],
+
+  /*
    * **Y los avisos de senda**, que salen varias veces en cada aproximación.
    * Son los que más cansan de oír repetidos, y los que menos se pueden callar:
    * si no se dicen, no se aprende a corregir.

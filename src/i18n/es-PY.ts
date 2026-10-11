@@ -490,6 +490,42 @@ export const ES_PY = {
     "Señores pasajeros, les habla la comandante. Por los baches le pedimos otro nivel a control, y subimos para ir más cómodos.",
   "comandante.bachesEnTodos":
     "Señores pasajeros, les habla la comandante. Probamos otras alturas con control, pero hay baches en todos los niveles. Es normal: sigan con el cinturón puesto.",
+  /*
+   * **Y la turbulencia, por su nombre y dicha de muchas maneras**, todas
+   * normales, para que se aprenda que es normal: por grados, la que no se
+   * veía venir, la segunda vez del vuelo, la de la tormenta, la que avisó
+   * otro avión, y al pasar. Ninguna grita ni dice «peligro»; las de grado
+   * fuerte se graban en calma. Cada una suena el día que tiene su grabación,
+   * y hasta entonces la de arriba. Ver `audio/anuncio-de-turbulencia.ts`.
+   */
+  "comandante.turbulencia.ligera":
+    "Señores pasajeros, les habla la comandante. Vamos a pasar por una zona de turbulencia ligera: unos baches suaves, como un camino de tierra. Es normal, y el avión está hecho para esto. Se encendió la señal del cinturón: vuelvan a su asiento y abróchenselo, por favor.",
+  "comandante.turbulencia.moderada":
+    "Señores pasajeros, les habla la comandante. Más adelante hay turbulencia moderada: el avión se va a mover bastante un rato. Es normal, y el avión está hecho para esto. La tripulación también se va a sentar. Vuelvan a su asiento, abróchense bien el cinturón y guarden lo que tengan en la mesita.",
+  "comandante.turbulencia.fuerte":
+    "Señores pasajeros, les habla la comandante. Más adelante hay turbulencia fuerte. La vamos a pasar con calma: el avión está hecho para esto y nosotros sabemos cómo llevarlo. Siéntense ya y abróchense el cinturón bien ajustado. La tripulación también se sienta. Les aviso cuando pase.",
+  "comandante.turbulencia.ahora.ligera":
+    "Señores pasajeros, estamos pasando por un poco de turbulencia. Es de la que no se ve en el radar: se llama turbulencia en aire claro, y es normal. Se encendió la señal: vuelvan a su asiento y abróchense el cinturón.",
+  "comandante.turbulencia.ahora.moderada":
+    "Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia moderada que no se veía venir: no sale en el radar. Es normal y el avión está hecho para esto. Vuelvan a su asiento y abróchense bien el cinturón. La tripulación se sienta también.",
+  "comandante.turbulencia.ahora.fuerte":
+    "Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia fuerte. Con calma: el avión está hecho para esto. Quédense sentados con el cinturón bien ajustado. Les aviso cuando pase.",
+  "comandante.turbulencia.otraVez.ligera":
+    "Señores pasajeros, nos toca otro poquito de turbulencia, como la de antes. Ya saben: a su asiento, cinturón puesto, y seguimos el viaje tranquilos.",
+  "comandante.turbulencia.otraVez.moderada":
+    "Señores pasajeros, otra vez viene turbulencia, esta vez un poco más movida. Igual que antes: todos sentados y con el cinturón bien puesto. La tripulación también se sienta.",
+  "comandante.turbulencia.otraVez.fuerte":
+    "Señores pasajeros, les habla otra vez la comandante. Viene un tramo de turbulencia fuerte. Lo pasamos con calma, como el anterior: siéntense ya, con el cinturón bien ajustado. Les aviso cuando pase.",
+  "comandante.turbulencia.tormenta":
+    "Señores pasajeros, les habla la comandante. Hoy hay tormentas en el camino. El radar nos muestra dónde están y las vamos a rodear, pero el aire va a estar movido casi todo el vuelo. La señal del cinturón se queda encendida: quédense sentados y con el cinturón puesto.",
+  "comandante.turbulencia.pirep":
+    "Señores pasajeros, les habla la comandante. Un avión que va adelante nos avisó por radio que más adelante hay turbulencia. Gracias a su aviso nos podemos preparar: vuelvan a su asiento y abróchense el cinturón. Los aviones nos ayudamos entre nosotros.",
+  "comandante.turbulencia.paso":
+    "Señores pasajeros, ya estamos tranquilos. Apagamos la señal del cinturón: pueden soltarse, pero si están sentados, déjenselo puestito.",
+  "comandante.turbulencia.pasoBajando":
+    "Señores pasajeros, ya pasamos la turbulencia. La señal del cinturón sigue encendida porque ya empezamos a bajar.",
+  "comandante.cinturon.porque":
+    "Un consejo de la comandante: aunque la señal del cinturón esté apagada, mientras estén sentados déjenselo puesto, flojito. A veces la turbulencia llega sin avisar, y el cinturón es lo que los deja quietitos en su asiento.",
 
   /*
    * ── **Y el plan, detrás de la bienvenida** ──────────────────────────────
@@ -502,6 +538,16 @@ export const ES_PY = {
    */
   "comandante.previsto.vuelo": "El vuelo va a durar unos {n} minutos.",
   "comandante.previsto.nivel": "Vamos a volar a {n} mil pies.",
+  /*
+   * **Y pasada la hora, en horas**, como lo dice una comandante de verdad:
+   * nadie anuncia «unos noventa minutos». Escritas enteras porque no salen
+   * de rellenar la plantilla. Ver `HORAS_QUE_SE_DICEN`.
+   */
+  "comandante.previsto.vuelo.h75": "El vuelo va a durar más o menos una hora y cuarto.",
+  "comandante.previsto.vuelo.h90": "El vuelo va a durar más o menos una hora y media.",
+  "comandante.previsto.vuelo.h105":
+    "El vuelo va a durar más o menos una hora y cuarenta y cinco.",
+  "comandante.previsto.vuelo.h120": "El vuelo va a durar más o menos dos horas.",
 
   /*
    * ── **El descenso, en su sitio y con lo que se cuenta** ─────────────────
@@ -552,6 +598,11 @@ export const ES_PY = {
   "comandante.descenso.hacia.la-gomera":
     "Señores pasajeros, les habla nuevamente la comandante. Empezamos a bajar hacia La Gomera.",
   "comandante.minutos": "Vamos a aterrizar en unos {n} minutos.",
+  // Y lo mismo pasada la hora, si la bajada empieza tan lejos. Ver arriba.
+  "comandante.minutos.h75": "Vamos a aterrizar en más o menos una hora y cuarto.",
+  "comandante.minutos.h90": "Vamos a aterrizar en más o menos una hora y media.",
+  "comandante.minutos.h105": "Vamos a aterrizar en más o menos una hora y cuarenta y cinco.",
+  "comandante.minutos.h120": "Vamos a aterrizar en más o menos dos horas.",
   "comandante.cielo.despejado": "Allá el cielo está despejado.",
   "comandante.cielo.nubes": "Allá hay algunas nubes.",
   "comandante.cielo.nublado": "Allá está nublado.",
@@ -621,6 +672,14 @@ export const ES_PY = {
     "Y como el viaje es largo, también tenemos café y té calentitos.",
   "tripulacion.cinturones":
     "Señoras y señores, se encendió la señal de cinturones. Abróchense el cinturón, pongan el respaldo derechito y guarden la mesita, por favor. Muchas gracias.",
+  /*
+   * Y el servicio que se para por la turbulencia y sigue al pasar, detrás de
+   * la comandante. Solo con su grabación. Ver `anunciarLaTurbulencia`.
+   */
+  "tripulacion.servicio.pausa":
+    "Señoras y señores, por la turbulencia paramos un ratito el servicio y la tripulación se va a sentar. En cuanto se calme, seguimos.",
+  "tripulacion.servicio.seguimos":
+    "Ya se calmó: seguimos con el servicio. Muchas gracias por la paciencia.",
   "tripulacion.canario.servicio.mango":
     "Señoras y señores, en unos minutos pasamos por el pasillo con el servicio a bordo: agua, y mango deshidratado de la Granja Óga. ¡Que lo disfruten!",
   "tripulacion.canario.servicio.pina":
@@ -641,6 +700,10 @@ export const ES_PY = {
     "Y como el viaje es largo, también tenemos café y té.",
   "tripulacion.canario.cinturones":
     "Señoras y señores, se ha encendido la señal de cinturones. Por favor, abróchense el cinturón, pongan el respaldo recto y recojan la mesita. Muchas gracias.",
+  "tripulacion.canario.servicio.pausa":
+    "Señoras y señores, debido a la turbulencia interrumpimos un momento el servicio y la tripulación va a tomar asiento. En cuanto mejore, continuamos.",
+  "tripulacion.canario.servicio.seguimos":
+    "Ya se ha calmado: continuamos con el servicio. Muchas gracias por su paciencia.",
   /*
    * **Las máscaras**, que caen solas: lo que dice cualquier tripulación, con
    * «primero la suya» dentro. Al pasaje, de usted. En Canarias, «mascarilla»,
@@ -797,8 +860,8 @@ export const ES_PY = {
   "hito.avion.vos": "Mirá, a la {lado}: otro avión.",
   /*
    * Y lo que se señala del cielo de noche, que se escribe en la tarjeta
-   * desde el segundo peldaño. La frase hablada todavía no está grabada: ver
-   * `PENDIENTE-VOCES-noche.md`.
+   * desde el segundo peldaño. Lo que se dice va con las demás de la
+   * ventanilla: `ventanilla.cruz-del-sur` y `ventanilla.polar`.
    */
   "hito.cruzDelSur": "Cruz del Sur",
   "hito.polar": "Estrella Polar",
@@ -895,6 +958,20 @@ export const ES_PY = {
     "Esa es Encarnación, la Perla del Sur, a orillas del Paraná. En verano tiene playas de río y el carnaval más famoso del país.",
   "ventanilla.trinidad":
     "Ahí están las ruinas de Trinidad, una misión jesuítica del siglo dieciocho. Es Patrimonio de la Humanidad, junto con la de Jesús, que está cerquita.",
+  /*
+   * **Y las dos estrellas que se enseñan de noche.** La Cruz solo se señala en
+   * Paraguay y la Polar solo en Canarias —desde Paraguay está bajo el
+   * horizonte toda la noche—, así que cada una va en el registro de su sitio:
+   * la Cruz en paraguayo y la Polar sin voseo ni paraguayismos, como las de
+   * Canarias. Las cuentas están comprobadas contra PyEphem: el palo de Gácrux
+   * a Ácrux prolongado cuatro veces y media cae a menos de tres grados del
+   * polo sur del cielo, y la Polar está a la altura de la latitud con menos de
+   * un grado de diferencia. Ver `world/cielo-de-noche.test.ts`.
+   */
+  "ventanilla.cruz-del-sur":
+    "Y ahora, miren el cielo: esas cuatro estrellas en cruz son la Cruz del Sur. Si alargan el palo largo unas cuatro veces y media, llegan justo al sur. ¡Así se orientaban los navegantes, mucho antes del GPS!",
+  "ventanilla.polar":
+    "Miren hacia el norte: esa estrella sola, ni muy alta ni muy baja, es la Estrella Polar. No es la más brillante, pero es la más útil: casi no se mueve en toda la noche y marca el norte. Y está tan alta como lejos estamos del ecuador: aquí, unos veintiocho grados.",
 
   /*
    * **Y lo mismo, dicho por la instructora en la avioneta**: de vos, más
@@ -967,6 +1044,11 @@ export const ES_PY = {
     "Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.",
   "ventanilla.vos.trinidad":
     "Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.",
+  // Y las dos estrellas, de vos en los dos sitios: la instructora vosea siempre.
+  "ventanilla.vos.cruz-del-sur":
+    "Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.",
+  "ventanilla.vos.polar":
+    "¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.",
   /*
    * **Y la llegada dice dónde has llegado.**
    *
@@ -1266,6 +1348,12 @@ export const ES_PY = {
    */
   "vuelo.comprometido": "Ya despegamos: seguí",
   "vuelo.despegando": "Motor a fondo",
+  /*
+   * Y lo mismo cuando lo dice al soltar el gas en Guyrami, ya alineado: es el
+   * momento de verdad de dar todo el motor. Solo con su grabación; sin ella,
+   * la de arriba. Ver `decirElGasSuelto`.
+   */
+  "vuelo.alineadoGasAFondo": "Ya estás alineado: gas a fondo",
   "vuelo.enVuelo": "Andá a dar una vuelta",
   "vuelo.enVueloAterrizando": "Andá a la pista",
   "vuelo.enVueloDestino": "Seguí la flecha: vamos al otro aeropuerto",
@@ -1307,6 +1395,23 @@ export const ES_PY = {
     "Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta",
   "vuelo.traficoNivel":
     "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
+  /*
+   * **Y las luces de otro avión de noche**, contadas con calma la primera vez
+   * del vuelo que se le ven a uno de delante. La clave la elige
+   * `queLucesSeLeVen` y lo que se ve lo pinta su tarjeta; esto es lo que dice
+   * la instructora, solo con su grabación. La regla entera va la primera vez
+   * de la partida, delante. Ver `contarLasLucesDeNoche`.
+   */
+  "vuelo.lucesDeNoche.deFrente":
+    "Mirá ese avión: la luz verde a tu izquierda y la roja a tu derecha. Eso quiere decir que viene hacia nosotros. Para eso llevan luces los aviones: para verse a tiempo.",
+  "vuelo.lucesDeNoche.seAleja":
+    "¿Ves esa luz blanca sola? Es la cola de otro avión: se está alejando de nosotros.",
+  "vuelo.lucesDeNoche.cruzaIzquierda":
+    "Ese avión nos enseña su luz roja: lo vemos por su lado izquierdo, y va pasando hacia tu izquierda.",
+  "vuelo.lucesDeNoche.cruzaDerecha":
+    "Ese avión nos enseña su luz verde: lo vemos por su lado derecho, y va pasando hacia tu derecha.",
+  "vuelo.lucesDeNoche.regla":
+    "De noche, todos los aviones llevan las mismas luces: roja en la punta del ala izquierda, verde en la derecha y blanca atrás. Mirándolas se sabe hacia dónde va cada uno.",
   /*
    * **La información de tráfico, dicha en casa.** Es lo que en los peldaños
    * de arriba dice la torre —«traffic, two o'clock, one thousand feet
@@ -1698,6 +1803,12 @@ export const ES_PY = {
   "vuelo.pistaLibre": "¡Pista libre! Bien hecho",
   "vuelo.aPlataforma": "Volvé a tu lugar",
   "vuelo.enPuesto": "Llegaste. Apagá el motor",
+  /*
+   * **La seña de cortar motores, sola.** «Llegaste» va después de apagar: en
+   * el orden de la OACI primero se corta y luego se termina. Solo con su
+   * grabación; sin ella, la de arriba. Ver el oyente de `gestoDelSenalero`.
+   */
+  "vuelo.cortaMotores": "Te hace la seña de cortar: apagá el motor",
   "vuelo.apagado": "¡Vuelo terminado!",
   "vuelo.fuera": "Volvé a la raya verde",
   "vuelo.roto": "Se rompió. Volvemos a empezar",
@@ -1767,6 +1878,13 @@ export const ES_PY = {
    */
   "vuelo.baches":
     "Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.",
+  /*
+   * Y el aviso de otro avión por radio, contado en los dos peldaños de abajo
+   * detrás de la radio, que va en inglés: lo que se oyó y para qué sirve.
+   * Solo con su grabación. Ver `contarElPirep` en `game.ts`.
+   */
+  "vuelo.pirep":
+    "¿Escuchaste la radio? Otro avión avisó que más adelante se mueve. Los aviones se ayudan entre ellos: así la comandante puede avisar antes.",
   /*
    * El combustible, en sus dos escalones. El primero no es una emergencia y
    * no se escribe como tal: entrar en la reserva es el momento de decidir, y
@@ -1873,6 +1991,15 @@ export const ES_PY = {
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.
   "vuelo.alto": "Pará acá",
+  /*
+   * **Y qué quiere decir cada seña del señalero**, contado en los tres
+   * peldaños de abajo detrás de la seña: las de la OACI (Anexo 2, apéndice
+   * 1), que son las que se van a ver en cualquier plataforma del mundo. Arriba
+   * la seña basta. Solo con su grabación.
+   */
+  "senalero.alto": "Cruzó los bastones arriba: eso es parar",
+  "senalero.frenos": "Levanta la mano y cierra el puño: poné el freno",
+  "senalero.calzos": "Junta los bastones arriba: ya puso los calzos en las ruedas",
   "vuelo.teLoPasaste": "Te pasaste. Frená y volvé",
   "vuelo.yaPodesTocar": "Ya podés tocar",
   /*
@@ -2213,9 +2340,9 @@ export const ES_PY = {
     "La matrícula es la cédula del avión: no hay otro en el mundo que se llame igual. ZP quiere decir Paraguay; EC, España. Por radio se dice letra por letra.",
 
   /*
-   * Y lo que dice la instructora al tocar cada punto: lo mismo, contado. En
-   * el vuelo suena; en el hangar, que todavía no monta voz, el globo se lee.
-   * Ver `PENDIENTE-VOCES-tarjeta.md`.
+   * Y lo que dice la instructora al tocar cada punto: lo mismo, contado. Suena
+   * en el vuelo y en el hangar, después del primer gesto. Ver
+   * `audio/voz-del-hangar.ts`.
    */
   "tarjeta.voz.alerones":
     "Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.",

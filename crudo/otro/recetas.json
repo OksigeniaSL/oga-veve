@@ -132,5 +132,32 @@
     "{c4}",
     "{c5}",
     "otro.solo.pistaLibre"
+  ],
+  "otro.pirep.ligera": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.pirep.ligera",
+    "{altura}"
+  ],
+  "otro.pirep.moderada": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.pirep.moderada",
+    "{altura}"
+  ],
+  "otro.pirep.fuerte": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.pirep.fuerte",
+    "{altura}"
   ]
 }

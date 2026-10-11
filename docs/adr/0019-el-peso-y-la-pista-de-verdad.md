@@ -126,6 +126,16 @@ tres de la pista:
   segundo, el texto desde el tercero; y en la ficha de un destino, la palabra
   y, desde las cifras, «categoría N · pide M»). En el rincón de las
   curiosidades, `bomberos-y-aviones`, con el caso de La Gomera.
+- **Y se oye, también en el hangar.** La explicación la dice la instructora,
+  con su grabación, en el hangar igual que en el vuelo: se juega sin saber
+  leer, y el texto nunca es el único canal. El hangar no tiene el motor de
+  audio del vuelo, así que monta una voz propia y pequeña
+  (`audio/voz-del-hangar.ts`): se despierta con el primer gesto —antes el
+  navegador no deja sonar nada—, baja solo el manifiesto de la instructora y
+  cada toma cuando se pide, de la misma caché que usa el vuelo, y al salir se
+  calla y suelta su contexto de audio. Dice lo mismo que la tarjeta del avión
+  —el globo de cada punto— y solo lo grabado: lo que no lo está se queda en
+  el dibujo y el texto.
 
 ### Lo que cambia de veredicto
 
@@ -163,10 +173,10 @@ tres de la pista:
   además solo visual (AIP de España, AD 2.2), que tampoco se mira.
 - **Los escenarios inventados**, el valle y el Chaco, no tienen aeródromo ni
   AIP, y en ellos la regla de los bomberos no se mira.
-- **La voz de la explicación de los bomberos en el hangar.** La voz de la
-  instructora la pone el vuelo; en el hangar todavía no hay, como en la tarjeta
-  del avión, y la explicación se ve y no se oye. La curiosidad, que se abre
-  desde el vuelo, sí habla: está grabada desde el 11 de octubre de 2026.
+- **La voz del hangar antes del primer gesto.** Hasta que alguien toca la
+  pantalla el navegador no deja sonar nada, así que lo que se abra solo —hoy,
+  nada— se verá sin oírse. La explicación de los bomberos y los globos de la
+  tarjeta se abren con el dedo, y ese dedo es el primer gesto.
 - **El aire de la distancia de aterrizaje** sigue siendo la fineza por quince
   metros, unos cien, cuando en un manual son entre doscientos y trescientos. Con
   los márgenes nuevos sigue mandando el despegue en los seis, y por eso no se
