@@ -10,7 +10,7 @@
  * mudo lo que con el reloj de verdad suena. Es la trampa de siempre de este
  * banco; ver la memoria sobre la regla de medir.
  *
- * Dos ventanas, por eso, van a tiempo real:
+ * Tres ventanas, por eso, van a tiempo real:
  *
  * - **La carrera**, de la verde al aire. La torre dice ahí su autorización
  *   con la fraseología y el viento —dieciocho segundos largos de Taguató para
@@ -28,6 +28,18 @@
  *   tiempo real, detrás del crosscheck quedan cuarenta segundos de rodaje y
  *   la bienvenida suena entera antes de la doble raya. Ver
  *   `src/audio/bienvenida-en-gando.test.ts`.
+ *
+ * - **Y en los aviones con megafonía, la tierra al llegar**: de dejar la pista
+ *   a apagar en el puesto. Ahí hablan la comandante y la tripulación dando la
+ *   bienvenida, la instructora lee la lista de después del aterrizaje punto
+ *   por punto, esperando a que nadie hable, y la frecuencia de allí espera el
+ *   canal libre. Medido de Los Rodeos a Gando con el JAZ 90: cuarenta
+ *   segundos de rodaje de vuelta, que a ×3 eran trece de pared, y los dos
+ *   anuncios ocupaban unos veinte; la lista no leía ni un punto y en Gando no
+ *   se oía ni se veía a nadie —el tráfico de allí aparece cuando habla—, con
+ *   el código de hoy y con el de antes de grabar las frases nuevas. Con esta
+ *   ventana a tiempo real, el mismo vuelo leyó la lista entera y oyó el
+ *   tráfico de allí.
  *
  * En un avión sin megafonía el rodaje sigue acelerado: no hay nadie con una
  * ventana que perder, y es tiempo de banco.
@@ -50,6 +62,9 @@ export const EN_TIERRA_ANTES_DE_SALIR = Object.freeze([
   "esperando",
 ]);
 
+/** Y las de tierra al llegar, de dejar la pista al puesto. */
+export const EN_TIERRA_AL_LLEGAR = Object.freeze(["abandonando", "a-plataforma", "en-puesto"]);
+
 /**
  * Si esa fase se vuela a tiempo real. `conMegafonia` es si el avión lleva
  * pasaje y comandante que le hable: ver `conPasaje` en `audio/megafonia.ts`.
@@ -57,7 +72,8 @@ export const EN_TIERRA_ANTES_DE_SALIR = Object.freeze([
 export function aTiempoReal(fase, conMegafonia) {
   return (
     DE_LA_CARRERA.includes(fase) ||
-    (conMegafonia && EN_TIERRA_ANTES_DE_SALIR.includes(fase))
+    (conMegafonia &&
+      (EN_TIERRA_ANTES_DE_SALIR.includes(fase) || EN_TIERRA_AL_LLEGAR.includes(fase)))
   );
 }
 
@@ -66,7 +82,7 @@ export function aTiempoReal(fase, conMegafonia) {
  * puede importar módulos del banco.
  */
 export function fasesATiempoReal(conMegafonia) {
-  return [...DE_LA_CARRERA, ...EN_TIERRA_ANTES_DE_SALIR].filter((f) =>
+  return [...DE_LA_CARRERA, ...EN_TIERRA_ANTES_DE_SALIR, ...EN_TIERRA_AL_LLEGAR].filter((f) =>
     aTiempoReal(f, conMegafonia),
   );
 }
