@@ -6522,7 +6522,16 @@ export class Game {
    */
   private decirLoGrabado(clave: TranslationKey, urgencia: Urgencia = "normal"): boolean {
     if (!this.instructor.vozDe(clave)) {
-      this.apuntarCanto(`${clave}: sin grabar, no se pide`);
+      /*
+       * Apuntado una vez por vuelo: hay sucesos que se repiten en cada
+       * fotograma —una curva del rodaje entera—, y el registro de cantos que
+       * leen los bancos se llenaba solo con esto. Medido en el vuelo entero:
+       * «tutor.pedales: sin grabar» tapaba el V1 y el «rotate».
+       */
+      if (!this.calladasSinGrabar.has(clave)) {
+        this.calladasSinGrabar.add(clave);
+        this.apuntarCanto(`${clave}: sin grabar, no se pide`);
+      }
       return false;
     }
     this.instructor.decir(t(clave), clave, urgencia);
@@ -6545,6 +6554,8 @@ export class Game {
 
   /** Lo explicado en este vuelo. Ver `explicarUnaVez`. */
   private readonly explicadoEnEsteVuelo = new Set<string>();
+  /** Lo que no se pidió por no estar grabado, ya apuntado. Ver `decirLoGrabado`. */
+  private readonly calladasSinGrabar = new Set<string>();
 
   /**
    * **Un número de la cuenta**, por la voz de la máquina y en este instante.
@@ -21898,6 +21909,7 @@ export class Game {
     this.loQueCambia.reiniciar();
     this.cambiosExplicados.clear();
     this.explicadoEnEsteVuelo.clear();
+    this.calladasSinGrabar.clear();
     this.llamadas = [];
     this.llamadasDelPasaje.reiniciar();
     // Con `?.`: un vuelo puede rehacerse antes de que exista el HUD.

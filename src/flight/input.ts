@@ -223,16 +223,14 @@ export class InputManager {
     this.sucesos.push(suceso);
   }
 
-  /** La barra de los pedales del timón, si la hay. */
-  private pedalesEl: HTMLElement | null = null;
-
   /**
-   * **Si los pedales del timón se ven**: solo con dedo, que con ratón los
-   * mandos de la pantalla no se pintan —ver `.tactil` en `style.css`—.
+   * **Si los pedales del timón se ven**: hay barra y se juega con el dedo, que
+   * con ratón los mandos de la pantalla no se pintan —ver `.tactil` en
+   * `style.css`, que va por la misma pregunta—. Se pregunta al montar la
+   * barra y no midiéndola: medir el DOM en cada fotograma de rodaje obliga al
+   * navegador a rehacer la página.
    */
-  get pedalesALaVista(): boolean {
-    return (this.pedalesEl?.getClientRects().length ?? 0) > 0;
-  }
+  pedalesALaVista = false;
 
   /**
    * **Y cuánto**, de −1 a 1: la petición de este fotograma en cada eje, antes
@@ -1387,7 +1385,8 @@ export class InputManager {
 
     if (stick) this.bindPalancaDeMando(stick);
     if (rudder) {
-      this.pedalesEl = rudder;
+      this.pedalesALaVista =
+        typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
       bindPad(
         rudder,
         (x) => {
