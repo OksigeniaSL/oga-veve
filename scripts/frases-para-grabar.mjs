@@ -539,6 +539,16 @@ const TORRE_SOLO = [
    */
   ["torre.solo.landingTraffic", "landing traffic", "se espera: uno viene a aterrizar"],
   ["torre.solo.departingTraffic", "departing traffic", "se espera: uno sale antes"],
+  /*
+   * **Y dar paso a uno que viene de frente por tu calle**, con quién detrás:
+   * «give way to departing traffic», con la pieza de arriba. Ver
+   * `decirQueDasPaso` en `src/game.ts` y `PENDIENTE-VOCES-rodaje-trafico.md`.
+   */
+  [
+    "torre.solo.giveWay",
+    "give way to",
+    "dale paso al que viene de frente por tu calle; detrás, quién",
+  ],
   ["torre.solo.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
   /*
    * El principio de la autorización; el límite —el campo— va en un hueco,

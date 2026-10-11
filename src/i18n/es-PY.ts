@@ -2097,6 +2097,13 @@ export const ES_PY = {
     "Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima",
   "palabra.salidaSiguiente": "La próxima",
   /*
+   * Darle paso a uno que viene de frente por la calle de tu raya: la raya se
+   * corta antes de esa calle y se espera ahí. Lo que diría el control de
+   * tierra —«give way»—, contado en casa. Ver `decirQueDasPaso`.
+   */
+  "vuelo.dasPaso":
+    "Paramos acá: por esa calle viene otro avión de frente, y por una calle pasa uno por vez. Lo dejamos pasar y seguimos",
+  /*
    * «Caliente y alto», antes de despegar y solo cuando pesa: la voz lo dice
    * sin números y la tarjeta los pone. Dice **pista para despegar** y no
    * que la pista se alargue, que es lo que se entendería: lo que se alarga

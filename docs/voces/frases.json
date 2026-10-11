@@ -1850,6 +1850,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.dasPaso",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Paramos acá: por esa calle viene otro avión de frente, y por una calle pasa uno por vez. Lo dejamos pasar y seguimos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.calor",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -8859,6 +8866,13 @@
     "para": "se espera: uno sale antes"
   },
   {
+    "id": "torre.solo.giveWay",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "give way to",
+    "para": "dale paso al que viene de frente por tu calle; detrás, quién"
+  },
+  {
     "id": "torre.solo.lineUpWait",
     "voz": "torre",
     "idioma": "en",
@@ -10202,6 +10216,13 @@
     "idioma": "en",
     "texto": "departing traffic",
     "para": "se espera: uno sale antes, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.giveWay",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "give way to",
+    "para": "dale paso al que viene de frente por tu calle; detrás, quién, en Canarias"
   },
   {
     "id": "torre.canario.solo.lineUpWait",

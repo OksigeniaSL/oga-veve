@@ -142,6 +142,8 @@ function rodarHastaLaVerde(
       separacion,
       porDondeVa,
       esperandoLaPista: fase === "esperando",
+      // Y la raya entera que te queda, como en el juego. Ver `repartirLosTramos`.
+      ruta: plan.rutaReservada(),
     };
   };
   const radio = new Frecuencia(dados(semilla), aero.id);
@@ -181,6 +183,7 @@ function rodarHastaLaVerde(
   plan.ocupados = () => parados(false);
   plan.enCola = () => parados(true);
   plan.colaQueHay = () => parados(true, true);
+  plan.tramosDeOtros = () => trafico.tramosQueTienen();
   const turno = new TurnoDePista({
     radio,
     boca: { retirar: () => {}, espera: () => false, esperaAlguna: () => false },

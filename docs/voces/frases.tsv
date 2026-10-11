@@ -227,6 +227,7 @@ instructor	instructor/vuelo.primeroLaTuya.minutos.ogg	es-PY	Cayeron las máscara
 instructor	instructor/vuelo.yaSeRespira.ogg	es-PY	Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con calma. Así lo practican los pilotos de verdad.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.laOtraPunta.ogg	es-PY	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.salidaSiguiente.ogg	es-PY	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.dasPaso.ogg	es-PY	Paramos acá: por esa calle viene otro avión de frente, y por una calle pasa uno por vez. Lo dejamos pasar y seguimos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.calor.ogg	es-PY	Hace calor: vamos a necesitar más pista para despegar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alAireOtraPunta.ogg	es-PY	Por esa punta no: andate al aire y volvé por la otra	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alAireVientoDeCola.ogg	es-PY	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
@@ -898,6 +899,7 @@ torre	torre/torre.solo.expediteVacating.ogg	en	expedite vacating	parado en la pi
 torre	torre/torre.solo.landedWithoutClearance.ogg	en	landed without clearance, call the tower by telephone on arrival	aterrizó con la orden de irse al aire: que llame a la torre
 torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
+torre	torre/torre.solo.giveWay.ogg	en	give way to	dale paso al que viene de frente por tu calle; detrás, quién
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
 torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura
@@ -1090,6 +1092,7 @@ torre-canarias	torre-canarias/torre.canario.solo.expediteVacating.ogg	en	expedit
 torre-canarias	torre-canarias/torre.canario.solo.landedWithoutClearance.ogg	en	landed without clearance, call the tower by telephone on arrival	aterrizó con la orden de irse al aire: que llame a la torre, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.giveWay.ogg	en	give way to	dale paso al que viene de frente por tu calle; detrás, quién, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura, en Canarias

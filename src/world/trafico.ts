@@ -77,6 +77,12 @@ import {
 } from "./circuito";
 import { desplazadoDe } from "./umbral-desplazado";
 import {
+  PASO_DEL_TRAMO,
+  porDelanteDe,
+  tramoDeFrente,
+  type QuienTieneElTramo,
+} from "./tramo-de-frente";
+import {
   ESPERA_ENTRE_VUELOS,
   ESPERA_MAXIMA,
   RESPUESTA_MAXIMA,
@@ -1170,6 +1176,27 @@ const MIRA_POR_DELANTE = 24;
 const PASO_DE_LA_MIRADA = 2;
 
 /**
+ * **Cada cuánto se reparten los tramos de frente**, s. Rodando a paso de
+ * calle son dos metros entre una mirada y la siguiente, menos que lo que se
+ * deja antes del tramo; y mirar cada fotograma los caminos enteros de todos
+ * contra todos sería pagar por nada. Ver `repartirLosTramos`.
+ */
+const MIRA_LOS_TRAMOS = 0.25;
+
+/**
+ * **Lo que se queda antes del tramo quien espera fuera**, m, además de la
+ * separación de ala, que ya está contada en dónde empieza el tramo. Ver
+ * `tramoDeFrente` en `tramo-de-frente.ts`.
+ */
+const ANTES_DEL_TRAMO = PASO_DEL_TRAMO + 2;
+
+/**
+ * Lo que se dejan entre puntas de ala dos del tráfico que se cruzan, m: el
+ * de la clave C de la OACI, como `MARGEN_ENTRE_ALAS` en `plan-de-vuelo.ts`.
+ */
+const MARGEN_DE_ALA = 7.5;
+
+/**
  * Con qué frena el tráfico al ceder, m/s²: una frenada de calle, sin clavarse.
  * A siete metros por segundo se para en dieciséis.
  */
@@ -1312,6 +1339,15 @@ export interface EnTierra {
    * `PACIENCIA_CON_QUIEN_JUEGA`.
    */
   readonly esperandoLaPista: boolean;
+  /**
+   * **Y la raya que tiene por delante, entera**: de donde está hasta donde
+   * acaba, en puntos cada pocos metros. Es el camino que el control le ha
+   * dado —el que sigue el coche del sígame, el de las luces verdes—, y por él
+   * no se mete de frente nadie que no esté ya dentro. Sin ella, o vacía, no
+   * reserva nada: un avión parado en su puesto no ha pedido rodar. Ver
+   * `repartirLosTramos`.
+   */
+  readonly ruta?: readonly EnElPlano[];
 }
 
 /**
@@ -1365,6 +1401,28 @@ interface Volando {
    * va antes en la fila de salida: ver `delanteEnLaSalida`.
    */
   listoDesde: number | null;
+  /**
+   * **Su camino de tierra por delante**, en puntos: de donde está a donde se
+   * para —su puesto, su doble raya o el eje—. Se rehace al repartir los
+   * tramos, y entre medias es la misma lista. Ver `repartirLosTramos`.
+   */
+  porDelante: EnElPlano[];
+  /**
+   * **Hasta qué metro de su camino puede rodar** sin meterse en un tramo que
+   * otro va a recorrer de frente y tiene antes que él; `Infinity` si nada se
+   * lo impide. Ver `repartirLosTramos`.
+   */
+  hastaElTramo: number;
+  /**
+   * **Contigo, si vuestros caminos van de frente por la misma calle**: si
+   * espera fuera a que pases, si pasa él porque ya estaba dentro, o si os
+   * encontrasteis los dos dentro. `null` si no os cruzáis de frente. Se
+   * decide una vez, al aparecer el cruce, y vale hasta que deja de haberlo:
+   * quien ha cedido el tramo no lo recupera por moverse el otro.
+   */
+  frenteATi: "espera" | "pasa" | "frente" | null;
+  /** Segundos que lleva parado fuera de un tramo, esperando. */
+  aguarda: number;
 }
 
 /** Un tres sesenta de espera. Ver `tresSesentaDesde`. */
@@ -1502,6 +1560,15 @@ export interface Trafico {
    */
   esperanPorTi(): string[];
   /**
+   * **Los caminos por delante de los que tienen un tramo de tu raya**: los
+   * que ya estaban dentro de una calle que tu raya recorre de frente cuando
+   * el cruce apareció. Ahí el que espera fuera eres tú, y tu raya se corta
+   * antes de esa calle hasta que la dejen. La misma lista mientras no se
+   * vuelvan a repartir los tramos. Ver `repartirLosTramos` y
+   * `paradaPorElTramo` en `plan-de-vuelo.ts`.
+   */
+  tramosQueTienen(): readonly QuienTieneElTramo[];
+  /**
    * **Los que salen antes que tú**, en orden: los que esperan listos en su
    * doble raya desde antes de que tú llegaras a la tuya —o todos los que
    * esperan, si todavía no has llegado—. Es la fila de salida, y a quien
@@ -1557,6 +1624,10 @@ export interface Trafico {
     cedido: number;
     quieto: number;
     alto: number;
+    /** Contigo, si os cruzáis de frente. Ver `frenteATi`. */
+    frenteATi: "espera" | "pasa" | "frente" | null;
+    /** Segundos esperando fuera de un tramo. Ver `hastaElTramo`. */
+    aguarda: number;
   }[];
   /**
    * **Todos fuera.** Lo pide volver a empezar: la frecuencia empieza de cero
@@ -1636,7 +1707,11 @@ export function crearTrafico(
   };
 
   /** Los caminos de un tipo con quien juega donde está ahora, sin guardar. */
-  const trazarAhora = (tipo: TipoDeTrafico): Caminos | null => {
+  const trazarAhora = (
+    tipo: TipoDeTrafico,
+    /** Por dónde no salir de la pista, si no son solo los tuyos. */
+    ocupados?: OcupadosEnElMundo,
+  ): Caminos | null => {
     const esc = conTipos ? escalaDeCircuito(tipo.aproximacion) : escala;
     const forma = opciones.forma?.(esc) ?? { mano, altura };
     const suelo = opciones.tierra?.() ?? null;
@@ -1646,10 +1721,13 @@ export function crearTrafico(
       forma.mano,
       esc,
       forma.altura,
-      suelo ? { ...suelo, tipo } : null,
+      suelo ? { ...suelo, tipo, ...(ocupados ? { ocupados } : {}) } : null,
       tipo.subeAlAire,
     );
   };
+
+  /** La envergadura del más grande de los tipos de aquí, m. */
+  const elMasAncho = Math.max(...tipos.map((t) => t.envergadura));
 
   /**
    * **Al tomar tierra, la salida de la pista se vuelve a elegir**, con tu
@@ -1664,28 +1742,73 @@ export function crearTrafico(
    *
    * El camino hasta la toma es el mismo —sale de la pista y del tipo, no de
    * ti—, así que lo recorrido sigue valiendo y el avión no se mueve.
+   *
+   * **Y lo mismo con los demás del tráfico.** En Los Rodeos, por la 12, el
+   * que aterrizaba salía por la E3 con otro esperando en su doble raya: no
+   * había por dónde pasar, el que esperaba no podía entrar en una pista
+   * ocupada y el que la ocupaba no la dejaba. Se sale por otra si la hay; ahí
+   * cuenta dónde se va a parar cada uno: la doble raya del que sale y el
+   * puesto del que llega. Dónde está ahora el que rueda, no: en lo que tarda
+   * éste en frenar, aquél ya está en otro sitio, y de él se encarga
+   * `repartirLosTramos`.
    */
-  const rehacerLaLlegada = (quien: Volando): void => {
+  const rehacerLaLlegada = (
+    quien: Volando,
+    /** Y alguien más que ya está en su camino. Ver `repartirLosTramos`. */
+    tambien: readonly EnElPlano[] = [],
+  ): void => {
     const viejo = quien.caminos;
-    if (!viejo?.enTierra || !opciones.quienJuega?.()?.enTierra) return;
+    if (!viejo?.enTierra) return;
+    const tuyos = opciones.quienJuega?.()?.enTierra ? opciones.tierra?.()?.ocupados : undefined;
+    /** Cada sitio por el que no pasar, con lo que hay que apartarse de él. */
+    const sitios: { p: EnElPlano; radio: number }[] = (tuyos?.puntos ?? []).map((p) => ({
+      p,
+      radio: tuyos!.radio,
+    }));
+    const deUno = (b: TipoDeTrafico) => (quien.tipo.envergadura + b.envergadura) / 2 + MARGEN_DE_ALA;
+    for (const b of aviones.values()) {
+      const c = b.caminos;
+      if (b === quien || !c || !porTierra(b)) continue;
+      const tope = b.marca.tope;
+      const para =
+        b.marca.camino === c.llegada
+          ? largoDe(c.llegada)
+          : tope !== undefined && b.recorrido <= tope + 0.5
+            ? tope
+            : null;
+      const p = para === null ? null : porElCamino(b.marca.camino, para)?.sitio;
+      if (p) sitios.push({ p, radio: deUno(b.tipo) });
+    }
+    for (const p of tambien)
+      sitios.push({ p, radio: (quien.tipo.envergadura + elMasAncho) / 2 + MARGEN_DE_ALA });
     /*
-     * Y solo si la que lleva pasa por encima de ti: trazar otra vez cuesta una
-     * búsqueda de caminos, y casi nunca hace falta.
+     * Y solo los que la que lleva pisa de verdad: trazar otra vez cuesta una
+     * búsqueda de caminos, y casi nunca hace falta. Y con el ala de cada uno:
+     * apartarse de una avioneta como de un reactor era coger una salida un
+     * kilómetro más allá, con la pista ocupada todo ese rato.
      */
-    const ocupados = opciones.tierra?.()?.ocupados;
-    if (!ocupados?.puntos.length) return;
-    let pasaPorTi = false;
+    const pisa = new Set<number>();
     const largo = largoDe(viejo.llegada);
-    for (let m = viejo.toca; m <= largo && !pasaPorTi; m += 10) {
+    for (let m = viejo.toca; m <= largo; m += 10) {
       const p = porElCamino(viejo.llegada, m)?.sitio;
       if (!p) break;
-      pasaPorTi = ocupados.puntos.some(
-        (q) => Math.hypot(q.x - p.x, q.z - p.z) < ocupados.radio,
-      );
+      sitios.forEach((q, k) => {
+        if (Math.hypot(q.p.x - p.x, q.p.z - p.z) < q.radio) pisa.add(k);
+      });
     }
-    if (!pasaPorTi) return;
-    const nuevo = trazarAhora(quien.tipo);
+    if (!pisa.size) return;
+    const puntos = sitios.filter((_, k) => pisa.has(k)).map((q) => q.p);
+    const radio = Math.max(...sitios.filter((_, k) => pisa.has(k)).map((q) => q.radio));
+    const nuevo = trazarAhora(quien.tipo, { puntos, radio });
     if (!nuevo?.enTierra || Math.abs(nuevo.toca - viejo.toca) > 0.5) return;
+    /*
+     * Y sin moverlo: corriendo ya por la pista, solo vale una salida a la que
+     * se llega por el mismo eje desde donde está. Una que obligue a dar la
+     * vuelta más atrás de él lo haría saltar.
+     */
+    const aqui = porElCamino(viejo.llegada, quien.recorrido)?.sitio;
+    const alli = porElCamino(nuevo.llegada, quien.recorrido)?.sitio;
+    if (!aqui || !alli || Math.hypot(aqui.x - alli.x, aqui.z - alli.z) > 1) return;
     quien.caminos = nuevo;
     quien.marca = { ...quien.marca, camino: nuevo.llegada };
   };
@@ -2021,6 +2144,203 @@ export function crearTrafico(
   };
 
   /**
+   * **Y lo mismo con los demás del tráfico**, m: no se acerca a menos de la
+   * separación de ala de ninguno que esté en el suelo, si avanzar le acerca.
+   * Rodaban unos a través de otros —el segundo de la fila se metía dentro del
+   * que esperaba en la doble raya— porque cada uno solo miraba a quien juega.
+   * Es la misma cuenta que `cedeA`, sin mirar por dónde va a pasar el otro:
+   * eso lo reparte `repartirLosTramos`.
+   */
+  const cedeALosOtros = (
+    quien: Volando,
+    quiere: number,
+    velocidad: number,
+    dt: number,
+  ): number => {
+    const otros: { x: number; z: number; separacion: number }[] = [];
+    for (const b of aviones.values()) {
+      if (b === quien || !porTierra(b)) continue;
+      otros.push({
+        x: b.grupo.position.x,
+        z: b.grupo.position.z,
+        separacion: (quien.tipo.envergadura + b.tipo.envergadura) / 2 + MARGEN_DE_ALA,
+      });
+    }
+    if (!otros.length) return quiere;
+    const camino = quien.marca.camino;
+    const r = quien.recorrido;
+    const aqui = porElCamino(camino, r)?.sitio;
+    if (!aqui) return quiere;
+    const ahora = otros.map((q) => Math.hypot(q.x - aqui.x, q.z - aqui.z));
+    const largo = largoDe(camino);
+    const mira = Math.max(
+      MIRA_POR_DELANTE,
+      quiere + (velocidad * velocidad) / (2 * FRENA_AL_CEDER) + PASO_DE_LA_MIRADA,
+    );
+    for (let s = PASO_DE_LA_MIRADA; s <= mira && r + s <= largo; s += PASO_DE_LA_MIRADA) {
+      const p = porElCamino(camino, r + s)!.sitio;
+      for (let k = 0; k < otros.length; k++) {
+        const q = otros[k]!;
+        const d = Math.hypot(q.x - p.x, q.z - p.z);
+        if (d >= q.separacion || d >= ahora[k]! - 0.01) continue;
+        return antesDe(Math.max(0, s - PASO_DE_LA_MIRADA), quiere, dt);
+      }
+    }
+    return quiere;
+  };
+
+  /**
+   * **Lo que puede avanzar para pararse a `libre` metros**, de los `quiere`
+   * de este paso: frenando como se frena al ceder, sin clavarse.
+   */
+  const antesDe = (libre: number, quiere: number, dt: number): number =>
+    libre <= 0 ? 0 : Math.min(quiere, libre, Math.sqrt(2 * FRENA_AL_CEDER * libre) * dt);
+
+  /**
+   * **Hasta qué metro de su camino rueda por las calles ahora**: su tope si
+   * lo tiene —la doble raya, el eje de «line up and wait»—, el eje si sale y
+   * su puesto si llega. Más allá no va a ir de momento, y no reserva nada.
+   */
+  const hastaDondeRueda = (quien: Volando): number => {
+    const c = quien.caminos;
+    const t = c?.enTierra;
+    if (!c || !t) return quien.recorrido;
+    const tope = quien.marca.tope ?? Infinity;
+    if (quien.marca.camino === c.salida) return Math.min(tope, t.eje);
+    return Math.min(tope, largoDe(quien.marca.camino));
+  };
+
+  /**
+   * **Si acaba de tomar tierra y corre todavía por la pista** hacia la boca de
+   * su salida. Ése no se para por nadie que ruede: tiene que dejar la pista,
+   * y la pista no se deja quieto. Ver `repartirLosTramos`.
+   */
+  const corriendoPorLaPista = (q: Volando): boolean => {
+    const c = q.caminos;
+    return (
+      !!c?.enTierra && q.marca.camino === c.llegada && q.recorrido >= c.toca && !porLasCalles(q)
+    );
+  };
+
+  /**
+   * **Quién tiene cada tramo**, entre dos del tráfico que se lo cruzan de
+   * frente: la matrícula del que pasa, por la pareja. Ver `repartirLosTramos`.
+   */
+  const tramoDe = new Map<string, string>();
+  /** Cuándo toca volver a repartir, s del reloj del tráfico. */
+  let proximoReparto = 0;
+  /** Los caminos de los que tienen un tramo de tu raya. Ver `tramosQueTienen`. */
+  let losQueTienen: readonly QuienTieneElTramo[] = [];
+
+  /**
+   * **Quién pasa y quién espera fuera**, en cada calle que dos van a recorrer
+   * de frente. Es lo que hace el control de tierra —«hold short», «give way»—
+   * y lo que hacen las luces de eje que solo se encienden por delante de quien
+   * tiene el camino libre: el tramo es de uno, y el otro espera fuera, a la
+   * separación de ala, a que lo deje. Ver `tramo-de-frente.ts`.
+   *
+   * - **Contigo**: tu raya es un camino que el control te ha dado —el que te
+   *   enseña el coche del sígame—, así que quien no está ya dentro de ella no
+   *   entra. Si cuando aparece el cruce él ya está dentro —tu raya se acaba de
+   *   trazar con él rodando por ella—, pasa él, y tu raya se corta antes de
+   *   esa calle: ver `tramosQueTienen`.
+   * - **Entre ellos**: el que ya está dentro pasa; si no lo está ninguno, el
+   *   que tiene la calle más cerca. Y antes que nadie, el que acaba de
+   *   aterrizar y corre por la pista hacia su salida: la pista se deja, no se
+   *   espera en ella. Si el otro ya está dentro de su camino, se le busca otra
+   *   salida por delante —«siga hasta la próxima»—, y si no la hay, el otro
+   *   se queda quieto donde está.
+   *
+   * Y lo decidido no se vuelve a decidir mientras haya cruce: el que esperaba
+   * fuera, cuando el otro pasa por delante de él, puede quedar a menos de la
+   * separación de un trozo de su raya, y no por eso ha entrado.
+   */
+  const repartirLosTramos = (tu: EnTierra | null): void => {
+    const enCalles: [string, Volando][] = [];
+    for (const [m, q] of aviones) {
+      q.hastaElTramo = Infinity;
+      if (q.tresSesenta || !(porLasCalles(q) || corriendoPorLaPista(q))) {
+        q.porDelante = [];
+        q.frenteATi = null;
+        continue;
+      }
+      q.porDelante = porDelanteDe(q.marca.camino, q.recorrido, hastaDondeRueda(q));
+      enCalles.push([m, q]);
+    }
+    const tienen: QuienTieneElTramo[] = [];
+    const tuRuta = tu?.ruta ?? [];
+    for (const [m, q] of enCalles) {
+      // El que corre por la pista no se cuenta contigo: su salida ya te esquiva.
+      const suyo =
+        tu && tuRuta.length > 1 && !corriendoPorLaPista(q)
+          ? tramoDeFrente(q.porDelante, tuRuta, tu.separacion)
+          : null;
+      if (!suyo) {
+        q.frenteATi = null;
+        continue;
+      }
+      if (q.frenteATi === null) {
+        const tuyo = tramoDeFrente(tuRuta, q.porDelante, tu!.separacion);
+        q.frenteATi = !suyo.dentro ? "espera" : tuyo?.dentro ? "frente" : "pasa";
+      }
+      if (q.frenteATi === "espera")
+        q.hastaElTramo = Math.min(
+          q.hastaElTramo,
+          q.recorrido + suyo.entra - ANTES_DEL_TRAMO,
+        );
+      else if (q.frenteATi === "pasa")
+        tienen.push({
+          matricula: m,
+          sale: q.marca.camino === q.caminos?.salida,
+          porDelante: q.porDelante,
+        });
+    }
+    const vistos = new Set<string>();
+    for (let i = 0; i < enCalles.length; i++)
+      for (let j = i + 1; j < enCalles.length; j++) {
+        const [ma, a] = enCalles[i]!;
+        const [mb, b] = enCalles[j]!;
+        const separacion = (a.tipo.envergadura + b.tipo.envergadura) / 2 + MARGEN_DE_ALA;
+        const deA = tramoDeFrente(a.porDelante, b.porDelante, separacion);
+        const deB = tramoDeFrente(b.porDelante, a.porDelante, separacion);
+        const par = [ma, mb].sort().join("|");
+        if (!deA || !deB) {
+          tramoDe.delete(par);
+          continue;
+        }
+        vistos.add(par);
+        let pasa = tramoDe.get(par);
+        if (pasa === undefined) {
+          const corre = corriendoPorLaPista(a) ? a : corriendoPorLaPista(b) ? b : null;
+          pasa =
+            corre !== null
+              ? corre === a
+                ? ma
+                : mb
+              : deA.dentro !== deB.dentro
+                ? deA.dentro
+                  ? ma
+                  : mb
+                : deA.entra <= deB.entra
+                  ? ma
+                  : mb;
+          tramoDe.set(par, pasa);
+          const otro = corre === a ? b : a;
+          const delOtro = corre === a ? deB : deA;
+          if (corre && delOtro.dentro)
+            rehacerLaLlegada(corre, [{ x: otro.grupo.position.x, z: otro.grupo.position.z }]);
+        }
+        const [cede, suyo] = pasa === ma ? [b, deB] : [a, deA];
+        cede.hastaElTramo = Math.min(
+          cede.hastaElTramo,
+          cede.recorrido + suyo.entra - ANTES_DEL_TRAMO,
+        );
+      }
+    for (const par of [...tramoDe.keys()]) if (!vistos.has(par)) tramoDe.delete(par);
+    losQueTienen = tienen;
+  };
+
+  /**
    * Si el sitio de una marca cae **encima de quien juega**: un avión que
    * todavía no se ve no puede aparecer ahí. Ver `noCabeTodavia`.
    */
@@ -2140,6 +2460,8 @@ export function crearTrafico(
     grupo.remove(quien.grupo);
     quien.luces.dispose();
     aviones.delete(matricula);
+    for (const par of [...tramoDe.keys()])
+      if (par.split("|").includes(matricula)) tramoDe.delete(par);
   };
 
   /*
@@ -2388,6 +2710,25 @@ export function crearTrafico(
      */
     if (marca && encimaDeTi(porElCamino(marca.camino, marca.metros)?.sitio))
       return true;
+    /*
+     * **Ni encima de otro del tráfico que está en el suelo.** El que sale
+     * aparece en el puesto de su tipo, y el que acababa de llegar podía estar
+     * aparcado en el de al lado —en Los Rodeos hay puestos a diez metros uno
+     * de otro en los datos—: aparecía uno metido en el otro. Espera a que
+     * quepa, como contigo.
+     */
+    const aparece = marca ? porElCamino(marca.camino, marca.metros)?.sitio : undefined;
+    const suTipo = tipoDe(matricula);
+    if (
+      aparece &&
+      [...aviones.values()].some(
+        (b) =>
+          porTierra(b) &&
+          Math.hypot(b.grupo.position.x - aparece.x, b.grupo.position.z - aparece.z) <
+            (b.tipo.envergadura + suTipo.envergadura) / 2 + MARGEN_DE_ALA,
+      )
+    )
+      return true;
     if (clave !== "otro.enCola" && clave !== "otro.final") return false;
     if (!c || !marca) return false;
     const donde = porElCamino(marca.camino, marca.metros)?.sitio;
@@ -2541,6 +2882,10 @@ export function crearTrafico(
           cruzo: null,
           cedido: 0,
           listoDesde: null,
+          porDelante: [],
+          hastaElTramo: Infinity,
+          frenteATi: null,
+          aguarda: 0,
         };
         aviones.set(matricula, quien);
       }
@@ -2574,6 +2919,10 @@ export function crearTrafico(
       const tuEnTierra = tu?.enTierra ?? null;
       if (tuEnTierra?.esperandoLaPista) tuEsperasDesde ??= reloj;
       else tuEsperasDesde = null;
+      if (reloj >= proximoReparto) {
+        proximoReparto = reloj + MIRA_LOS_TRAMOS;
+        repartirLosTramos(tuEnTierra);
+      }
       for (const [matricula, quien] of aviones) {
         const c = quien.caminos;
         const antes = quien.recorrido;
@@ -2595,17 +2944,40 @@ export function crearTrafico(
             }
           }
           quien.cedido = 0;
+          quien.aguarda = 0;
         } else {
           /*
            * **Y por las calles, cediéndote el paso.** Ver `cedeA`.
            */
           const velocidad = velocidadDe(quien);
           const quiere = velocidad * dt;
-          const puede =
-            tuEnTierra && porLasCalles(quien)
-              ? cedeA(quien, tuEnTierra, quiere, velocidad, dt)
-              : quiere;
-          quien.cedido = puede < quiere - 1e-6 ? quien.cedido + dt : 0;
+          let puede = quiere;
+          let porElTramo = quiere;
+          if (porLasCalles(quien)) {
+            puede = tuEnTierra ? cedeA(quien, tuEnTierra, quiere, velocidad, dt) : quiere;
+            /*
+             * **Y fuera del tramo que no es suyo**, y sin echarse encima de
+             * los demás. Esperar fuera no cuenta para la paciencia contigo:
+             * no es un tapón, es su turno. Ver `repartirLosTramos`.
+             */
+            /*
+             * Menos el que todavía deja la pista: la pista se deja, no se
+             * espera en ella. Si el que espera en su doble raya está en su
+             * calle —en un campo de una sola salida—, parándose ahí ni él
+             * dejaba la pista ni el otro podía entrar, y la frecuencia se
+             * quedaba esperando a los dos. Eso lo tiene que evitar la torre
+             * antes, al dejar rodar, y no esto.
+             */
+            const dejandoLaPista = aterrizando(quien);
+            if (!dejandoLaPista)
+              porElTramo = antesDe(quien.hastaElTramo - quien.recorrido, quiere, dt);
+            const porLosOtros = dejandoLaPista
+              ? quiere
+              : cedeALosOtros(quien, quiere, velocidad, dt);
+            quien.cedido = puede < quiere - 1e-6 ? quien.cedido + dt : 0;
+            puede = Math.min(puede, porElTramo, porLosOtros);
+          } else quien.cedido = 0;
+          quien.aguarda = porElTramo < quiere - 1e-6 ? quien.aguarda + dt : 0;
           quien.recorrido = Math.min(antes + puede, tope);
           /*
            * **Y en la esquina de la base, si girando no le queda su hueco,
@@ -2906,6 +3278,9 @@ export function crearTrafico(
       const { matricula, estela, hora } = laUltimaSalida;
       return { matricula, estela, hace: reloj - hora };
     },
+    tramosQueTienen() {
+      return losQueTienen;
+    },
     esperanPorTi() {
       const quienes: string[] = [];
       for (const [matricula, quien] of aviones)
@@ -2953,6 +3328,8 @@ export function crearTrafico(
           cedido: +quien.cedido.toFixed(1),
           quieto: +quien.quieto.toFixed(1),
           alto: Math.round(quien.grupo.position.y - cota),
+          frenteATi: quien.frenteATi,
+          aguarda: +quien.aguarda.toFixed(1),
         };
       });
     },
@@ -2984,6 +3361,8 @@ export function crearTrafico(
       for (const [matricula, quien] of aviones) quitar(matricula, quien);
       laUltimaSalida = null;
       tuEsperasDesde = null;
+      tramoDe.clear();
+      losQueTienen = [];
     },
     dispose() {
       desmontado = true;
