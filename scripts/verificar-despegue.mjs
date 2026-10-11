@@ -474,6 +474,16 @@ comprobar(
 
 // ── La torre ──────────────────────────────────────────────────────────────
 
+/*
+ * **Y si la roja es por alguien, se espera a que se vaya.** Con el tráfico
+ * del campo puede haber uno que aterriza, uno que salía antes que tú en la
+ * fila o la estela del que acaba de salir, y entonces la verde tarda lo que
+ * tarda de verdad: minutos. La primera tirada después de la fila de salida
+ * —Tenerife Sur, JAZ 60— dio «nunca dio verde» a los quince segundos sin decir
+ * por quién. Ahora se apunta el porqué y, si lo hay, se corre el reloj hasta
+ * que se vaya; lo que se sigue exigiendo es que la torre autorice al parar,
+ * en doce segundos, cuando no hay nadie.
+ */
 const torre = await page.evaluate(async () => {
   const o = globalThis.__oga;
   const c = o.controles();
@@ -481,25 +491,36 @@ const torre = await page.evaluate(async () => {
   c.brakes = 1;
   let verde = null;
   let vistas = "";
-  for (let i = 0; i < 60; i++) {
+  const porques = new Set();
+  const t0 = o.reloj();
+  let corrido = false;
+  for (let i = 0; i < 240; i++) {
     await new Promise((r) => setTimeout(r, 250));
     // La clase del verde vive en la caja, no en la bombilla.
     const caja = document.querySelector('[data-hud="torre"]');
     const clases = caja?.className ?? "";
     vistas = clases;
+    const por = o.porQueEsperas?.();
+    if (por) porques.add(`${por.porque}${por.numero ? ` (número ${por.numero})` : ""} ${por.matricula ?? ""}`);
     if (clases.includes("torre--verde")) {
-      verde = i * 0.25;
+      verde = o.reloj() - t0;
       break;
     }
+    // A los quince segundos con alguien por medio, el reloj corrido.
+    if (i === 60 && porques.size && !corrido) corrido = o.acelerar(8) > 1;
+    if (i >= 60 && !porques.size) break;
   }
-  return { verde, fase: o.fase(), luz: vistas };
+  o.acelerar(1);
+  return { verde, fase: o.fase(), luz: vistas, porques: [...porques] };
 });
+const porAlguien = torre.porques.length > 0;
 comprobar(
   "parando en la doble raya, la torre acaba autorizando",
-  torre.verde !== null && torre.verde < 12,
-  torre.verde === null
+  torre.verde !== null && (torre.verde < 12 || porAlguien),
+  (torre.verde === null
     ? `nunca dio verde (fase «${torre.fase}», lámpara «${torre.luz}»)`
-    : `verde a los ${torre.verde.toFixed(1)} s`,
+    : `verde a los ${torre.verde.toFixed(1)} s de juego`) +
+    (porAlguien ? ` · esperando por ${torre.porques.join(", ")}` : " · sin nadie por medio"),
   "la torre miraba si habías llegado, no si estabas parado: se cruzaba a toda velocidad",
 );
 

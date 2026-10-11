@@ -183,6 +183,21 @@ export const USAN_LA_CALLE: Readonly<Record<string, "saliendo" | "volviendo">> =
  */
 export type PorQueEsperas = "aterriza" | "despega" | "fila" | "estela";
 
+/**
+ * **Lo que esperas en la roja detrás de uno de la fila antes de dejar de
+ * esperarle**, s.
+ *
+ * Es un candado entre dos sistemas —el dibujo dice quién está listo, la
+ * frecuencia le da la salida—, y todo candado lleva su red: si por lo que sea
+ * la frecuencia no llegara a darle la suya, la roja sería para siempre. Tres
+ * minutos: más que lo más largo medido de autorizarle detrás de uno que
+ * aterriza —ciento cincuenta segundos, en Tenerife Sur— y mucho menos que la
+ * paciencia de quien espera. Pasados, la torre te da la salida a ti, como
+ * cambiaría el orden una de verdad con uno que no está listo (Doc 4444,
+ * 7.9.1).
+ */
+export const PACIENCIA_EN_LA_FILA = 180;
+
 /** Por qué se espera y por quién, si se sabe. Ver `porQueEsperasDe`. */
 export interface EsperaPor {
   readonly porque: PorQueEsperas;
@@ -379,9 +394,34 @@ export class TurnoDePista {
    * apagaría.
    */
   get salenAntes(): string[] {
+    return this.enLaFila.filter(
+      (m) => (this.esperandoTrasDe.get(m) ?? 0) <= PACIENCIA_EN_LA_FILA,
+    );
+  }
+
+  /** Los de la fila sin la red de `PACIENCIA_EN_LA_FILA`. */
+  private get enLaFila(): string[] {
     if (!this.conTorre) return [];
     const delante = this.de.trafico()?.delanteEnLaSalida?.() ?? [];
     return delante.filter((m) => this.de.radio.vaASalir(m));
+  }
+
+  /**
+   * **Cuánto llevas esperando en la roja detrás de cada uno de la fila**, s.
+   * Ver `PACIENCIA_EN_LA_FILA`.
+   */
+  private readonly esperandoTrasDe = new Map<string, number>();
+
+  /** Lo que se lleva esperando detrás de cada uno, en cada paso. */
+  private contarLaFila(dt: number, fase: string): void {
+    if (fase !== "esperando") {
+      this.esperandoTrasDe.clear();
+      return;
+    }
+    const fila = this.enLaFila;
+    for (const m of [...this.esperandoTrasDe.keys()])
+      if (!fila.includes(m)) this.esperandoTrasDe.delete(m);
+    for (const m of fila) this.esperandoTrasDe.set(m, (this.esperandoTrasDe.get(m) ?? 0) + dt);
   }
 
   /**
@@ -521,6 +561,7 @@ export class TurnoDePista {
     dt: number,
     ahora: Omit<Momento, "esperandoLaPista">,
   ): Transmision | null {
+    this.contarLaFila(dt, ahora.fase);
     const momento: Momento = {
       ...ahora,
       esperandoLaPista: this.esperandoLaPista(ahora.fase),
@@ -962,5 +1003,6 @@ export class TurnoDePista {
     this.aterrizajeSinAutorizar = false;
     this.enFinal = false;
     this.ocupadaDicha = false;
+    this.esperandoTrasDe.clear();
   }
 }

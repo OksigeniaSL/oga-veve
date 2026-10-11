@@ -8388,6 +8388,18 @@ button.motor__tecla::after {
   opacity: 0.55;
 }
 
+/* Y su remolino, detrás, cuando se espera su estela. */
+.remolino {
+  width: 1.2em;
+  height: 1.2em;
+  flex: none;
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .torre--verde .torre__luz {
     animation: none;

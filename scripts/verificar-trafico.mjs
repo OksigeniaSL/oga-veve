@@ -206,7 +206,16 @@ while (Date.now() < hasta) {
     const a = m.trafico.find((x) => x.matricula === d.matricula);
     if (!a) continue;
     const lista = salidas.get(d.matricula) ?? [];
-    lista.push({ t: m.t, r: d.recorrido, despega: d.despega, espera: d.espera, x: a.x, z: a.z, tipo: d.tipo });
+    lista.push({
+      t: m.t,
+      r: d.recorrido,
+      despega: d.despega,
+      espera: d.espera,
+      x: a.x,
+      z: a.z,
+      tipo: d.tipo,
+      enLaPista: a.enLaPista,
+    });
     salidas.set(d.matricula, lista);
   }
   for (const matricula of m.frecuencia) estuvieron.add(matricula);
@@ -452,48 +461,64 @@ comprobar(
 );
 
 /*
- * **Y las salidas, como las de su tipo.** De la doble raya al aire —entrar,
- * alinearse y correr— ronda el minuto, y al dejar el suelo va a su Vr y no a
- * paso de calle. Se mide en las muestras del banco, cada dos segundos de
- * juego a ×8: el tiempo, con esa holgura. Antes del arreglo, el reactor
- * tardaba setenta y tres segundos de alinearse a despegar. Ver `TIPOS` y
+ * **Y las salidas, como las de su tipo.** De su «cleared for take-off» al
+ * aire —entrar, alinearse y correr, o correr si ya esperaba alineado— ronda
+ * el minuto; al dejar el suelo va a su Vr y no a paso de calle; y la pista
+ * queda libre al pasar su final (Doc 4444, 7.9). Se mide desde la llamada,
+ * que la frecuencia apunta al hacerla —ver `hechas`—, y no desde la doble
+ * raya: el que recibe «line up and wait» sale de ella y espera alineado lo
+ * que haga falta, y eso es la espera de la torre, no su carrera. La primera
+ * tirada lo medía desde la doble raya y dio 91 s a dos reactores que habían
+ * esperado alineados. En las muestras del banco, cada dos segundos de juego
+ * a ×8: el tiempo, con esa holgura. Antes del arreglo, el reactor tardaba
+ * setenta y tres segundos de alinearse a despegar. Ver `TIPOS` y
  * `enSuCarrera` en `world/trafico.ts`.
  */
 const medidas = [];
 for (const [matricula, lista] of salidas) {
-  // La última muestra en su doble raya o antes, y la primera ya en el aire.
-  const enLaRaya = lista.filter((p) => p.r <= p.espera + 1.5).at(-1);
+  const autorizado = hechas.find(
+    (h) => h.clave === "torre.clearedTakeoff" && h.quien === matricula,
+  );
   const enElAire = lista.find((p) => p.r >= p.despega);
-  if (!enLaRaya || !enElAire || enElAire.t <= enLaRaya.t) continue;
-  const enTierra = lista.filter((p) => p.r < p.despega && p.t > enLaRaya.t);
+  if (!autorizado || !enElAire || enElAire.t <= autorizado.t) continue;
+  const enTierra = lista.filter((p) => p.r < p.despega && p.t >= autorizado.t);
   const a = enTierra.at(-2);
   const b = enTierra.at(-1);
   const v = a && b && b.t > a.t ? Math.hypot(b.x - a.x, b.z - a.z) / (b.t - a.t) : null;
+  const libre = lista.find((p) => p.t > enElAire.t && !p.enLaPista);
   const tipo = TIPOS[enElAire.tipo];
   medidas.push({
     matricula,
     tipo: enElAire.tipo,
-    tarda: enElAire.t - enLaRaya.t,
+    tarda: enElAire.t - autorizado.t,
+    libre: libre ? libre.t - autorizado.t : null,
     v,
     rota: tipo?.rota ?? null,
   });
 }
 comprobar(
-  "y las salidas despegan como su tipo: de la doble raya al aire, en torno al minuto",
+  "y las salidas despegan como su tipo: de su autorización al aire, en torno al minuto",
   medidas.length > 0 &&
     medidas.every(
-      (x) => x.tarda >= 30 && x.tarda <= 90 && x.v !== null && x.rota !== null && x.v >= 0.75 * x.rota,
+      (x) =>
+        x.tarda >= 20 &&
+        x.tarda <= 78 &&
+        (x.libre === null || x.libre <= 120) &&
+        x.v !== null &&
+        x.rota !== null &&
+        x.v >= 0.75 * x.rota,
     ),
   medidas.length
     ? medidas
         .map(
           (x) =>
-            `${x.matricula} (${x.tipo}) ${x.tarda.toFixed(0)} s, ` +
-            `${x.v === null ? "?" : Math.round(x.v / 0.5144)} kt antes de irse` +
+            `${x.matricula} (${x.tipo}) al aire a los ${x.tarda.toFixed(0)} s` +
+            (x.libre !== null ? `, pista libre a los ${x.libre.toFixed(0)}` : "") +
+            `, ${x.v === null ? "?" : Math.round(x.v / 0.5144)} kt antes de irse` +
             (x.rota ? ` (Vr ${Math.round(x.rota / 0.5144)} kt)` : ""),
         )
         .join(" · ")
-    : "ninguna salida vista entera",
+    : "ninguna salida vista entera desde su autorización",
   "«se vio salir muy despacio, como si estuviera rodando»",
 );
 

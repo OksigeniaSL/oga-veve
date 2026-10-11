@@ -279,6 +279,7 @@ export const EN: Dictionary = {
   "torre.canario.numeroDos": "number two for departure",
   "torre.canario.numeroTres": "number three for departure",
   "hud.filaDeSalida": "Number {numero} for departure",
+  "hud.esperaLaEstela": "Waiting for the wake of the plane that just left",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",

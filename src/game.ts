@@ -8556,6 +8556,10 @@ export class Game {
       luz === "roja" && rojaDice === "esperar" && !enElAire
         ? this.turno.salenAntes.length
         : 0,
+      // Y la estela del que salió, si es lo que se espera.
+      luz === "roja" && rojaDice === "esperar" && !enElAire && !afis
+        ? this.turno.esperaPorEstela !== null
+        : false,
     );
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
     if (cual === this.ultimaLuzDeTorre) {

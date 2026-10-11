@@ -423,6 +423,7 @@ export const ES_PY = {
   "torre.canario.numeroTres": "número tres para la salida",
   /** Lo que dice el dibujo de la fila, para quien no lo ve. Ver `ponerFilaDeSalida`. */
   "hud.filaDeSalida": "Número {numero} para la salida",
+  "hud.esperaLaEstela": "Esperamos la estela del avión que salió",
   "torre.canario.solo.subir": "suba a {n} mil pies",
   "torre.canario.solo.subirNivel": "suba a nivel de vuelo",
 

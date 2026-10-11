@@ -114,6 +114,14 @@ const OTRO_AVION = `<svg class="otro-avion" viewBox="0 0 24 24" aria-hidden="tru
 </svg>`;
 
 /**
+ * **El remolino que deja detrás**, para la espera por su estela: el avión que
+ * salió y, detrás, su torbellino. Ver `setLuzDeTorre`.
+ */
+const REMOLINO = `<svg class="remolino" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 12a1 1 0 0 1 2 0a3 3 0 0 1-6 0a5 5 0 0 1 10 0a7 7 0 0 1-14 0a9 9 0 0 1 18 0" />
+</svg>`;
+
+/**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
  * cualquier cabina del mundo, y aprenderlos es parte de lo que el juego
  * enseña sin proponérselo.
@@ -3921,6 +3929,11 @@ export class Hud {
      * `flight/turno-de-pista.ts`.
      */
     delante = 0,
+    /**
+     * **Y si se espera la estela de la salida de delante**: se dibuja el que
+     * salió con su remolino detrás. Ver `esperaPorEstela`.
+     */
+    estela = false,
   ): void {
     const caja = this.torre;
     if (!caja) return;
@@ -3937,13 +3950,21 @@ export class Hud {
       "--torre-ancho",
       caja.hidden ? "0px" : `${caja.offsetWidth + 14}px`,
     );
-    const enLaFila = luz === "roja" && rojaDice !== "alAire" ? delante : 0;
+    const enLaRoja = luz === "roja" && rojaDice !== "alAire";
+    const enLaFila = enLaRoja ? delante : 0;
+    const porLaEstela = enLaRoja && enLaFila === 0 && estela;
     const fila = caja.querySelector<HTMLElement>('[data-hud="torre-fila"]');
-    if (fila && fila.childElementCount !== enLaFila) {
-      fila.hidden = enLaFila === 0;
-      fila.innerHTML = OTRO_AVION.repeat(enLaFila);
-      if (enLaFila) {
-        const dice = t("hud.filaDeSalida", { numero: String(enLaFila + 1) });
+    const cual = `${enLaFila}:${porLaEstela}`;
+    if (fila && fila.dataset.cual !== cual) {
+      fila.dataset.cual = cual;
+      fila.hidden = enLaFila === 0 && !porLaEstela;
+      fila.innerHTML = porLaEstela ? OTRO_AVION + REMOLINO : OTRO_AVION.repeat(enLaFila);
+      const dice = porLaEstela
+        ? t("hud.esperaLaEstela")
+        : enLaFila
+          ? t("hud.filaDeSalida", { numero: String(enLaFila + 1) })
+          : "";
+      if (dice) {
         fila.setAttribute("aria-label", dice);
         fila.title = dice;
       } else {
