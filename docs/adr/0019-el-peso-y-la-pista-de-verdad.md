@@ -166,7 +166,7 @@ tres de la pista:
 - **La voz de la explicación de los bomberos en el hangar.** La voz de la
   instructora la pone el vuelo; en el hangar todavía no hay, como en la tarjeta
   del avión, y la explicación se ve y no se oye. La curiosidad, que se abre
-  desde el vuelo, sí habla en cuanto esté grabada (`PENDIENTE-VOCES-explicaciones.md`).
+  desde el vuelo, sí habla: está grabada desde el 11 de octubre de 2026.
 - **El aire de la distancia de aterrizaje** sigue siendo la fineza por quince
   metros, unos cien, cuando en un manual son entre doscientos y trescientos. Con
   los márgenes nuevos sigue mandando el despegue en los seis, y por eso no se

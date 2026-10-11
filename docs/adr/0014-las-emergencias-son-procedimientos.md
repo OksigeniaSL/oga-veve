@@ -147,7 +147,8 @@ lo del tramo.
   en Brave para Linux es muda y en el resto es un robot —justo en lo que más
   importa de un ejercicio, la calma—. Los cantos de cabina y el PAN PAN no
   entran en sus tablas —`CLAVE_DE_CABINA`, `CLAVE_DE_TORRE`— hasta tener toma,
-  que es la regla de esas tablas. Ver `PENDIENTE-VOCES-emergencias.md`.
+  que es la regla de esas tablas. Se grabaron el 11 de octubre de 2026, y
+  entraron con su toma.
 - **Sin instructora** —el modo del grado de comandante— las emergencias siguen
   sonando, porque son seguridad: la presentación, lo que se hace y el cierre
   están en la lista de `flight/sin-instructora.ts`. Se callan las que explican
