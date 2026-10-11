@@ -67,7 +67,7 @@ import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { decima as n1, escribir, poner } from "./si-cambia";
-import { apareceEnPantalla } from "./explicaciones";
+import { apareceEnPantalla, pasaElTiempoDelCuadro } from "./explicaciones";
 
 /** Un punto de la carta, en píxeles desde el centro de la rosa. */
 type Punto2 = { dx: number; dy: number };
@@ -980,6 +980,7 @@ export class Tablero {
   }
 
   update(d: DatosDelTablero, dt: number, dibujar = true): void {
+    pasaElTiempoDelCuadro(dt);
     const raiz = this.raiz;
     const c = this.cuadro;
     if (!raiz || !c) return;

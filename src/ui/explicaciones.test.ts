@@ -29,6 +29,8 @@ import {
   registrarExplicacion,
   repetirLaVoz,
   siguienteQuePresentar,
+  sigueEnPantalla,
+  pasaElTiempoDelCuadro,
   type ComoSeEnsena,
   type Explicacion,
 } from "./explicaciones";
@@ -253,6 +255,22 @@ describe("la primera vez, presentada", () => {
     // Y si vuelve a salir, ya no.
     apareceEnPantalla("td");
     expect(siguienteQuePresentar()).toBeNull();
+  });
+
+  it("lo que salió y ya no se ve, no está a la vista: el arco verde que se fue de la rosa", () => {
+    registrarExplicacion(T);
+    expect(sigueEnPantalla("td")).toBe(false);
+    apareceEnPantalla("td");
+    expect(sigueEnPantalla("td")).toBe(true);
+    // El cuadro sigue pintando y ya no lo marca: se fue.
+    pasaElTiempoDelCuadro(1);
+    expect(sigueEnPantalla("td")).toBe(true);
+    pasaElTiempoDelCuadro(1);
+    expect(sigueEnPantalla("td")).toBe(false);
+    // Sigue pendiente de presentar, para cuando vuelva a salir.
+    expect(siguienteQuePresentar()?.id).toBe("td");
+    apareceEnPantalla("td");
+    expect(sigueEnPantalla("td")).toBe(true);
   });
 
   it("lo que no tiene frase de presentación no se presenta", () => {

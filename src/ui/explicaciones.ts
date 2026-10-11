@@ -412,9 +412,37 @@ const presentadas = new Set<string>();
  * desde el bucle del dibujo.
  */
 export function apareceEnPantalla(id: string): void {
+  vistaPorUltimaVez.set(id, relojDelCuadro);
   if (presentadas.has(id) || salidos.includes(id)) return;
   salidos.push(id);
 }
+
+/**
+ * **Y si sigue a la vista ahora mismo.** Lo que salió se presenta cuando hay
+ * calma, y la calma puede llegar cuando ya no está: el arco verde salió al
+ * empezar a subir y la instructora lo presentó un rato después, con el arco
+ * ya más allá de la rosa y sin pintar. Enrique: «¿Ves el arco verde en el
+ * mapa?… Pero no hay arco verde en el mapa». Lo que no se ve no se presenta:
+ * espera a volver a salir.
+ *
+ * Con el reloj del cuadro y no con fotogramas: el cuadro no repinta cada
+ * pieza en cada fotograma, y recogido no repinta ninguna —y entonces nada
+ * está a la vista, que es verdad—.
+ */
+export function sigueEnPantalla(id: string): boolean {
+  const vista = vistaPorUltimaVez.get(id);
+  return vista !== undefined && relojDelCuadro - vista <= SIGUE_A_LA_VISTA;
+}
+
+/** El reloj del cuadro: lo adelanta `Tablero.update`, se dibuje o no. */
+export function pasaElTiempoDelCuadro(dt: number): void {
+  relojDelCuadro += dt;
+}
+
+/** Cuánto vale haberlo visto por última vez para darlo por a la vista, s. */
+const SIGUE_A_LA_VISTA = 1.5;
+let relojDelCuadro = 0;
+const vistaPorUltimaVez = new Map<string, number>();
 
 /**
  * **La siguiente que falta presentar**, de las que ya salieron y llevan su
@@ -470,6 +498,8 @@ export function olvidarTodo(): void {
   registro.clear();
   salidos.length = 0;
   presentadas.clear();
+  vistaPorUltimaVez.clear();
+  relojDelCuadro = 0;
   voz = null;
   pantalla = null;
   pantallaPorDefecto = null;

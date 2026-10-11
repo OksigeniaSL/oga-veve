@@ -628,6 +628,7 @@ import {
   ponerVozDeLasExplicaciones,
   presentar,
   siguienteQuePresentar,
+  sigueEnPantalla,
   type Explicacion,
 } from "./ui/explicaciones";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
@@ -18012,6 +18013,8 @@ export class Game {
    * de la pantalla de navegación, en el aire y alto.
    */
   private esMomentoDePresentar(e: Explicacion): boolean {
+    // Y que se vea ahora: lo que ya se fue de la pantalla no se presenta.
+    if (!sigueEnPantalla(e.id)) return false;
     const s = this.flight.state;
     if (e.id === "gs-rodaje")
       return s.onGround && s.groundSpeed > 1 && s.groundSpeed < 12;
