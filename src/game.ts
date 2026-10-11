@@ -890,7 +890,13 @@ import {
   sigueValiendo,
   type LeccionDelAire,
 } from "./flight/lecciones-del-aire";
-import { CADUCA_LA_MEGAFONIA, Huecos, esDeLaMegafonia } from "./audio/turnos";
+import {
+  CADUCA_LA_MEGAFONIA,
+  Huecos,
+  caducaAlApagar,
+  cuentaLaSena,
+  esDeLaMegafonia,
+} from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
   turbulenciaDelCamino,
@@ -6815,6 +6821,22 @@ export class Game {
   }
 
   /**
+   * **Lo de la llegada al puesto que se quedó viejo esperando turno, fuera de
+   * la cola.** Lo que cierra el vuelo no caduca con el reloj —ver
+   * `cierraElVuelo` en `audio/turnos.ts`—, así que lo retira quien sabe que
+   * ya no vale: la seña siguiente, la de antes; el motor apagado, la de
+   * cortarlo y la lista de después del aterrizaje.
+   *
+   * Sin esto, lo que se pidió en los diez segundos de las cuatro señas sonaba
+   * entero y en fila después, contando el pasado: «poné el freno» con los
+   * calzos ya puestos y «apagá el motor» con el motor ya apagado, y «¡vuelo
+   * terminado!» al final de todo. Un suceso, una voz: la de lo que pasa.
+   */
+  private retirarLoDelPuesto(yaNoVale: (clave: string | undefined) => boolean): void {
+    BOCA.retirar((c) => yaNoVale(c));
+  }
+
+  /**
    * **Una explicación, una vez por vuelo**, en los tres peldaños de abajo y
    * con su grabación. En el de cabina ya no explica nadie: ver
    * `laInstructoraLoExplica`. Se da por dicha cuando se dice, no cuando se
@@ -8043,6 +8065,8 @@ export class Game {
      * doble raya la reconoce aquí.
      */
     this.hechos.on("gestoDelSenalero", ({ gesto }) => {
+      // Lo que contaba la seña de antes y espera turno ya no es lo que se ve.
+      this.retirarLoDelPuesto(cuentaLaSena);
       // La tarjeta, y la voz de las de parar. Ver `tarjetaDelSenalero`.
       const parando = this.tarjetaDelSenalero(gesto);
       const cortar = gesto === "cortar";
@@ -18756,7 +18780,11 @@ export class Game {
       }
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.
-      if (vista.fase === "apagado") this.terminarElVuelo();
+      if (vista.fase === "apagado") {
+        // Y lo que pedía llegar y apagar, si todavía espera, ya está hecho.
+        this.retirarLoDelPuesto(caducaAlApagar);
+        this.terminarElVuelo();
+      }
     } else if (
       vista.rapido &&
       // Si la velocidad la lleva el juego, ir rápido no es cosa de nadie a

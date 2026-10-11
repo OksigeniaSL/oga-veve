@@ -78,7 +78,7 @@
  */
 
 import { esElAvisoDeAves, esLaInformacionDeTrafico, noSePierde } from "./torre";
-import { CADUCA_LA_MEGAFONIA, esDeLaMegafonia, pesoDe } from "./turnos";
+import { CADUCA_LA_MEGAFONIA, cierraElVuelo, esDeLaMegafonia, pesoDe } from "./turnos";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
@@ -143,6 +143,12 @@ export const CADUCA_LA_ORDEN = 12000;
  * `noSePierde` en `audio/torre.ts`: una autorización que no se pudo decir se
  * dice en cuanto se pueda, y solo deja de esperar cuando alguien que sabe que
  * ya no vale la retira —la luz que cambia, la final que se deja—.
+ *
+ * **Ni lo que cierra el vuelo**, por lo mismo: ver `cierraElVuelo` en
+ * `audio/turnos.ts`. Las señas del señalero duran dos segundos y medio y el
+ * anuncio de la tripulación al llegar, más de diez: con el reloj de un aviso,
+ * lo que contaban caducaba detrás de ella. Lo que se queda viejo lo retira
+ * quien lo sabe.
  */
 export function cuantoAguanta(
   clave: string | undefined,
@@ -150,6 +156,7 @@ export function cuantoAguanta(
 ): number {
   if (
     noSePierde(clave, urgencia) ||
+    cierraElVuelo(clave) ||
     anunciaLaFase(clave) ||
     anunciaElPuntoDeDescenso(clave) ||
     esElAvisoDeAves(clave) ||
@@ -801,6 +808,8 @@ export class Boca {
          * Lo tira su propio reloj si espera demasiado. Ver `turnos.ts`.
          */
         if (esDeLaMegafonia(c.clave)) continue;
+        // Ni lo que cierra el vuelo: ver `cierraElVuelo` en `turnos.ts`.
+        if (cierraElVuelo(c.clave)) continue;
         this.tirar(i, "la barrió un urgente");
       }
       this.reloj.cancelar();
@@ -901,6 +910,15 @@ export class Boca {
        * crece como mucho en uno.
        */
       if (esDeLaMegafonia(a.clave)) continue;
+      /*
+       * **Ni lo que cierra el vuelo**: el señalero, apagar el motor, «¡vuelo
+       * terminado!», la lista de después del aterrizaje, el «bien hecho» de
+       * un ejercicio. Pasan pegados al final, y con la cola llena se caía el
+       * último que llegaba —«vuelo.apagado: no cabía en la cola»—. Lo que se
+       * cae es lo que menos importa: lo de los demás, y de lo de la
+       * instructora, lo que explica un mando. Ver `turnos.ts`.
+       */
+      if (cierraElVuelo(a.clave)) continue;
       if (peor < 0) {
         peor = i;
         continue;

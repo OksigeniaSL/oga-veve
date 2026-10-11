@@ -18,6 +18,8 @@ describe("quién habla primero", () => {
       pesoDe("vuelo.terrenoSube", "urgente"),
       pesoDe("torre.aterrizar@z-p", "mando"),
       pesoDe("vuelo.final", "normal"),
+      // Y de la instructora, lo que explica un mando cede ante lo que pasa.
+      pesoDe("tutor.pedales", "normal"),
       pesoDe("comandante.descenso", "baja"),
       pesoDe("otro.final@c-a", "baja"),
     ];
