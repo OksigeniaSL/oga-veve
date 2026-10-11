@@ -119,6 +119,15 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    * `meterPrisaParaSalir` en `game.ts`.
    */
   "expedite vacating": "torre.expediteVacating",
+  /*
+   * **Y a quien rueda hacia una calle por la que viene de frente uno que va a
+   * despegar**: dele paso (Doc 4444, fraseología de rodaje, «GIVE WAY TO
+   * (description and position of other aircraft)» —el párrafo, por
+   * verificar—). La raya se corta antes de esa calle y se espera ahí. Ver
+   * `decirQueDasPaso` en `game.ts` y `repartirLosTramos` en
+   * `world/trafico.ts`.
+   */
+  "give way to departing traffic": "torre.giveWayDeparting",
 };
 
 /**
@@ -199,6 +208,8 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   "torre.holdShortWake": "torre.afisInUseDeparting",
   // Ni promete que no habrá demora: no ordena a nadie para que no la haya.
   "torre.minimumFuel": null,
+  // Ni reparte las calles: quien rueda mira y da paso.
+  "torre.giveWayDeparting": null,
 };
 
 /**
@@ -207,10 +218,12 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen las
  * pruebas de `torre.test.ts`—, y estas son la excepción escrita: el juego ya
  * sabe cuándo decirlas y las pide solo si su grabación está en el pack. Cuando
- * se graben, salen de aquí; la prueba lo recuerda. Hoy no espera ninguna: la
- * respuesta a «minimum fuel» ya tiene la suya.
+ * se graben, salen de aquí; la prueba lo recuerda. Espera el «give way» a quien
+ * rueda de frente hacia uno que sale: ver `PENDIENTE-VOCES-rodaje-trafico.md`.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
+  "torre.giveWayDeparting",
+]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

@@ -11962,6 +11962,41 @@ export class Game {
   }
 
   /**
+   * **«Give way»: se le da paso a uno que viene de frente** por una calle de
+   * tu raya, y la raya se corta antes de ella. Ver `paradaPorElTramo` en
+   * `world/plan-de-vuelo.ts`.
+   *
+   * Una vez por avión al que se le da paso, al acercarse a donde se espera.
+   * De Taguató para arriba lo dice la torre en fraseología, escrito en la tira
+   * de la radio siempre y con voz solo con su toma —«give way to departing
+   * traffic»—; si el que viene no sale, no hay frase grabada que sea verdad y
+   * lo cuentan la raya cortada y el avión que pasa. Abajo, la instructora en
+   * casa y con calma, también solo grabada: darle paso a otro no es un
+   * peligro, es como se rueda. Un AFIS no reparte calles: no dice nada.
+   */
+  private decirQueDasPaso(): void {
+    const a = this.plan?.dandoPasoA;
+    if (!a || this.pasoDadoA.has(a.matricula)) return;
+    this.pasoDadoA.add(a.matricula);
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras) {
+      if (laInstructoraLoExplica(this.tier.avisos)) this.decirLoGrabado("vuelo.dasPaso");
+      return;
+    }
+    if (!a.sale || !this.hayTorreQueHable() || this.esAfisAqui()) return;
+    const montada = this.deTorre("torre.giveWayDeparting", this.miIndicativo);
+    if (!montada) return;
+    this.hud.radio(montada.texto, undefined, true);
+    if (this.instructor.vozDe(montada.clave, montada.relleno))
+      this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+    else this.apuntarCanto(`${montada.clave}: sin grabar, no se pide`);
+  }
+
+  /** A quién se le dijo ya que se le da paso, en esta carrera en tierra. */
+  private readonly pasoDadoA = new Set<string>();
+
+  /**
    * **Se aterrizó con la orden de irse al aire puesta**, la de la pista
    * ocupada. Lo que pasa de verdad, en calma y en su orden (punto 237):
    *
@@ -18294,7 +18329,10 @@ export class Game {
       if (!this.salidasDichas.dicha) this.decirSalPorLaSiguiente();
       this.salidasDichas.dicha = true;
     }
+    // Y si se le da paso a uno que viene de frente, también. Ver `decirQueDasPaso`.
+    this.decirQueDasPaso();
     if (!this.flight.state.onGround) {
+      this.pasoDadoA.clear();
       this.salidasDichas.dicha = false;
       this.remonteContado = false;
       this.calorDicho = false;

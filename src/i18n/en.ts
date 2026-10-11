@@ -754,6 +754,8 @@ export const EN: Dictionary = {
   "vuelo.salidaSiguiente":
     "You missed the exit. No problem: keep rolling to the next one",
   "palabra.salidaSiguiente": "Next one",
+  "vuelo.dasPaso":
+    "We stop here: another plane is coming the other way down that taxiway, and only one goes through at a time. We let it pass and carry on",
   "vuelo.nuestroAvion": "Our plane is {indicativo}. That is what the tower calls us",
   "vuelo.alAireOtraPunta": "Not from that end: go around and come back to the other one",
   "vuelo.alAireVientoDeCola":
