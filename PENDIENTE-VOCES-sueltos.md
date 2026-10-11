@@ -1,52 +1,41 @@
-# Pendiente: voces de la tanda 7f (sueltos)
+# Pendiente: grabar las duraciones de más de una hora
 
-El 02-10-2026 ElevenLabs no tiene saldo hasta el 6 de octubre. Esta rama
-**no mete en el código ninguna frase nueva**: la duración que anuncia la
-comandante sale de las piezas ya grabadas (`comandante.previsto.vuelo.N` y
-`comandante.minutos.N`, de 2 a 5 y de cinco en cinco hasta 60).
+Ya está en el juego, sin grabar: pasada la hora, la comandante dice la duración
+en horas, como una de verdad —«una hora y cuarto», «una hora y media», «una hora
+y cuarenta y cinco», «dos horas»—, en la bienvenida y en el «vamos a aterrizar
+en…» del descenso. Ver `HORAS_QUE_SE_DICEN` en
+`src/audio/partes-de-la-comandante.ts`. Cubre todo lo que el juego puede pedir a
+un avión con pasaje: el JAZ 60 de Pedro Juan a Guaraní son unos 73 minutos sin
+viento y 88 con treinta nudos de cara.
 
-Cuando se graben: pedirlas en `scripts/frases-para-grabar.mjs`, grabar con
-`node scripts/voces-elevenlabs.mjs comandante`, hornear, restaurar lo
-re-codificado y pasar `node scripts/verificar-voces.mjs`. Y solo entonces el
-código.
+**Hasta que se graben no suena nada nuevo**: cada pieza de horas se pide solo si
+está en el pack, y sin ella la bienvenida sale sin el plan y el descenso sin los
+minutos, como hasta ahora. Las de minutos, hasta sesenta, siguen igual.
 
-## Las duraciones de más de una hora
+## 1. Grabar (comandante, 8 frases, 406 caracteres)
 
-La duración del vuelo ya se cuenta con su subida, su crucero y su bajada
-(`segundosPorElPerfil` en `src/flight/ruta.ts`), y con eso el JAZ 60 pasa de
-la hora en las rutas largas de Paraguay. Medido con el plan del juego, sin
-viento:
-
-| tramo | JAZ 60 |
-|---|---|
-| Pettirossi → Encarnación | 64 min |
-| Guaraní → Pettirossi | 64 min |
-| Guaraní → Pedro Juan | 68 min |
-| Pettirossi → Pedro Juan | 72 min |
-| Pedro Juan → Guaraní | 72 min |
-| Estigarribia → Pettirossi | 96 min |
-| Pettirossi → Estigarribia | 106 min |
-
-Lo grabado acaba en sesenta, y hasta ahora `minutosDichos` redondeaba al más
-cercano: «unos sesenta minutos» para hora y tres cuartos. Ahora, más allá de
-lo grabado, **la bienvenida sale sin el plan** (sin duración ni nivel, porque
-la receta `comandante.bienvenidaConPlan` lleva los dos huecos obligatorios) y
-el anuncio del descenso sin los minutos. Ver `minutosQueSeDicen` en
-`src/audio/partes-de-la-comandante.ts`.
-
-Lo que falta, en la voz de la comandante y con la misma frase de siempre:
-
-| clave | es-PY | en |
+| clave | texto | caracteres |
 |---|---|---|
-| `comandante.previsto.vuelo.65` … `.110`, de cinco en cinco | «El vuelo va a durar unos {n} minutos.» | «The flight will take about {n} minutes.» |
+| `comandante.previsto.vuelo.h75` | El vuelo va a durar más o menos una hora y cuarto. | 50 |
+| `comandante.previsto.vuelo.h90` | El vuelo va a durar más o menos una hora y media. | 49 |
+| `comandante.previsto.vuelo.h105` | El vuelo va a durar más o menos una hora y cuarenta y cinco. | 60 |
+| `comandante.previsto.vuelo.h120` | El vuelo va a durar más o menos dos horas. | 42 |
+| `comandante.minutos.h75` | Vamos a aterrizar en más o menos una hora y cuarto. | 51 |
+| `comandante.minutos.h90` | Vamos a aterrizar en más o menos una hora y media. | 50 |
+| `comandante.minutos.h105` | Vamos a aterrizar en más o menos una hora y cuarenta y cinco. | 61 |
+| `comandante.minutos.h120` | Vamos a aterrizar en más o menos dos horas. | 43 |
 
-O, mejor dicho como lo dice una comandante de verdad, en horas: «El vuelo va a
-durar una hora y cuarto», «una hora y media», «una hora y cuarenta y cinco».
-Eso pide claves nuevas (`comandante.previsto.vuelo.h75`, …) con su texto en
-`es-PY.ts` y `en.ts`; la decisión es de Enrique.
+Los textos, en `src/i18n/es-PY.ts` y `en.ts`; las filas, ya en
+`docs/voces/frases.json`; las recetas, ya en `crudo/comandante/recetas.json`
+—una toma por frase—. Así que: `node scripts/voces-elevenlabs.mjs comandante`,
+hornear (falla mientras falte alguna de estas tomas: es lo que tiene que pasar),
+restaurar lo re-codificado y `node scripts/verificar-voces.mjs`.
 
-Al grabarlas: `MINUTOS_QUE_SE_DICEN` es de las dos frases —la duración y el
-«vamos a aterrizar en unos {n} minutos» del descenso—, así que o se graban
-también `comandante.minutos.65` … `.110` o se separan las dos listas. Y la
-prueba «y más allá de lo grabado no se dice» de
-`partes-de-la-comandante.test.ts` pasa a pedir otro tope.
+## 2. Después de grabar
+
+- En `src/audio/guion-grabado.test.ts`, «la comandante tiene todos los trozos
+  con número»: añadir `HORAS_QUE_SE_DICEN` con `piezaDeMinutos` y
+  `piezaDeDuracion`, como los minutos.
+- Oírlo: un vuelo del JAZ 60 de Pedro Juan a Guaraní con
+  `OGA_VOCES=fichero` en `verificar-vuelo-entero.mjs`, y mirar que la bienvenida
+  sale con `comandante.previsto.vuelo.h75`.

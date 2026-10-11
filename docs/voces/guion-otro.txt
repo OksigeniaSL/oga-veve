@@ -29,3 +29,22 @@ rodando a la cabecera
 viento en cola
 en final
 pista libre
+for your information, light turbulence at
+for your information, moderate turbulence at
+for your information, severe turbulence at
+flight level
+two thousand feet
+three thousand feet
+four thousand feet
+five thousand feet
+six thousand feet
+zero
+one
+two
+three
+four
+five
+six
+seven
+eight
+niner

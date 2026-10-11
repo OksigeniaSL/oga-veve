@@ -34,6 +34,7 @@ La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella
 Tirá para arriba
 Ya despegamos: seguí
 Motor a fondo
+Ya estás alineado: gas a fondo
 Andá a dar una vuelta
 Andá a la pista
 Seguí la flecha: vamos al otro aeropuerto
@@ -49,6 +50,11 @@ Hay otro avión cerca, detrás de vos
 Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
 Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
 Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
+Mirá ese avión: la luz verde a tu izquierda y la roja a tu derecha. Eso quiere decir que viene hacia nosotros. Para eso llevan luces los aviones: para verse a tiempo.
+¿Ves esa luz blanca sola? Es la cola de otro avión: se está alejando de nosotros.
+Ese avión nos enseña su luz roja: lo vemos por su lado izquierdo, y va pasando hacia tu izquierda.
+Ese avión nos enseña su luz verde: lo vemos por su lado derecho, y va pasando hacia tu derecha.
+De noche, todos los aviones llevan las mismas luces: roja en la punta del ala izquierda, verde en la derecha y blanca atrás. Mirándolas se sabe hacia dónde va cada uno.
 Adelante y más arriba va otro avión. ¿Lo ves?
 Adelante, a nuestra altura, va otro avión. ¿Lo ves?
 Adelante y más abajo va otro avión. ¿Lo ves?
@@ -157,6 +163,7 @@ Sin apuro: salí de la pista y andá a la plataforma
 ¡Pista libre! Bien hecho
 Volvé a tu lugar
 Llegaste. Apagá el motor
+Te hace la seña de cortar: apagá el motor
 ¡Vuelo terminado!
 Volvé a la raya verde
 Se rompió. Volvemos a empezar
@@ -178,6 +185,7 @@ Y el transpondedor: pongo el TCAS en espera.
 Metélo, el tren te frena
 Hay una tormenta delante: rodeála, no la cruces
 Se mueve un poco: son baches del aire, como las olas en el agua. El avión está hecho para esto. Seguí volando con calma.
+¿Escuchaste la radio? Otro avión avisó que más adelante se mueve. Los aviones se ayudan entre ellos: así la comandante puede avisar antes.
 Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
 Se acabó el combustible: planeá hasta la pista
 No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
@@ -218,6 +226,9 @@ Volá al lado de la pista, con ella a tu izquierda
 Girá a la derecha: volvemos a la pista
 Volá al lado de la pista, con ella a tu derecha
 Girá otra vez y empezá a bajar: ya vamos a aterrizar
+Cruzó los bastones arriba: eso es parar
+Levanta la mano y cierra el puño: poné el freno
+Junta los bastones arriba: ya puso los calzos en las ruedas
 La pista estaba ocupada y te dijeron que no bajaras
 Le pasaste por encima al coche
 Chocaste con un edificio
@@ -412,6 +423,8 @@ Esos cerros son Cerro Corá. Ahí terminó una guerra muy grande, hace mucho, en
 Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
 Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
 Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
+Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.
+¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.
 Nuestro avión es
 Así nos llama la torre.
 Alfa

@@ -92,7 +92,16 @@ cleared to
 climb to
 runway in use
 backtrack runway
+advise able to depart from runway
+intersection
+TORA runway
+from intersection
+metres
 go around
+caution, light turbulence reported at
+caution, moderate turbulence reported at
+caution, severe turbulence reported at
+by preceding traffic
 roger, Mayday
 roger, Pan Pan
 caution, birds on final
@@ -104,6 +113,8 @@ degrees
 knots
 calm
 variable
+thousand
+hundred
 traffic
 one o'clock
 two o'clock
