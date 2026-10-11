@@ -82,6 +82,7 @@ import {
   RESPUESTA_MAXIMA,
 } from "../flight/radio";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
+import type { CategoriaDeEstela } from "../flight/estela";
 import {
   desfaseDe,
   equipoDe,
@@ -289,8 +290,39 @@ export interface TipoDeTrafico {
   readonly toca: number;
   /** Lo que tarda en frenar hasta velocidad de rodaje, m. */
   readonly frena: number;
-  /** Carrera de despegue, m. */
+  /**
+   * **La carrera de despegue**, m: de alinearse a tener las ruedas en el
+   * aire. No se escribe a mano: sale de `rota` y `hastaRotar`, que son los
+   * números de la ficha, con la rotación detrás. Ver `carreraDe`.
+   */
   readonly carrera: number;
+  /** **La velocidad de rotación**, Vr, m/s: donde el morro empieza a subir. */
+  readonly rota: number;
+  /**
+   * **Lo que tarda de soltar frenos a Vr**, s, con el empuje de despegue. Es
+   * lo que se ve desde el punto de espera, y lo que estaba mal: ver
+   * `aceleracionDe`.
+   */
+  readonly hastaRotar: number;
+  /**
+   * **La distancia de despegue de su ficha**, m: la que pide a la pista, con
+   * su margen, para salir por una intersección. Es la que antes se usaba
+   * también como carrera; ver `PISTA_POR_DELANTE` en `suelo-del-trafico.ts`.
+   */
+  readonly pistaQuePide: number;
+  /** **Lo que sube recién despegado**, m/s. Ver `pendienteDeSalida`. */
+  readonly subeAlDespegar: number;
+  /**
+   * **El cabeceo**, grados: el de las ruedas dejando el suelo y el de la
+   * subida. Ver `cabeceoDe`.
+   */
+  readonly cabeceoAlDespegar: number;
+  readonly cabeceoSubiendo: number;
+  /**
+   * **Su categoría de estela**, la de la OACI por la masa máxima al despegue:
+   * ver `categoriaDeEstela` en `flight/estela.ts`.
+   */
+  readonly estela: CategoriaDeEstela;
   /** La pista más corta en la que opera, m. */
   readonly pistaMinima: number;
   /**
@@ -300,6 +332,75 @@ export interface TipoDeTrafico {
   readonly subeAlAire: number;
 }
 
+/**
+ * **De Vr a las ruedas en el aire**, s: el morro sube a su ritmo de rotación
+ * —unos tres grados por segundo, el de los manuales de los reactores de
+ * línea— hasta el cabeceo de despegue, y en esos segundos el avión sigue
+ * acelerando, a la mitad que antes porque el ala ya tira de él.
+ */
+export const ROTACION = 3;
+
+/**
+ * **A cuánto entra en la carrera quien se alinea rodando**, m/s: casi parado,
+ * que es como se alinea uno antes de meter gas. Ver `velocidadDe`.
+ */
+const AL_ALINEARSE = 2;
+
+/**
+ * **Lo que frena al acercarse al eje**, m: los últimos metros de la calle se
+ * hacen despacio, que es como se gira para alinearse. Sin esto entraba a paso
+ * de calle y en el eje se plantaba de golpe.
+ */
+const ARRIMANDOSE = 20;
+
+/**
+ * **La aceleración de su carrera**, m/s²: la que le lleva de cero a Vr en lo
+ * que dice su ficha.
+ *
+ * Aceleraba como no acelera ningún avión: la velocidad crecía **con la
+ * distancia**, y así se arranca a cuatro metros por segundo y se sigue a paso
+ * de calle diez o quince segundos antes de que se note nada. El reactor
+ * tardaba setenta y tres segundos en irse al aire, y Enrique lo vio desde el
+ * punto de espera B de Tenerife Sur: «se vio salir muy despacio, como si
+ * estuviera rodando». Un avión de verdad mete todo el empuje de golpe y lo
+ * que crece con el tiempo es la velocidad, casi a ritmo constante: el empuje
+ * baja un poco al correr y el aire frena un poco más, y las dos cosas casi se
+ * compensan en la carrera.
+ */
+export function aceleracionDe(t: Pick<TipoDeTrafico, "rota" | "hastaRotar">): number {
+  return t.rota / Math.max(1, t.hastaRotar);
+}
+
+/** **La velocidad con la que deja el suelo**, m/s: Vr y lo que gana rotando. */
+export function velocidadDeDespegue(
+  t: Pick<TipoDeTrafico, "rota" | "hastaRotar">,
+): number {
+  return t.rota + (aceleracionDe(t) / 2) * ROTACION;
+}
+
+/**
+ * **Los metros hasta Vr**, y los de la carrera entera hasta despegar: la
+ * cuenta de una aceleración constante —la mitad de Vr por lo que se tarda en
+ * llegar— y la rotación detrás.
+ */
+export function hastaVrDe(t: Pick<TipoDeTrafico, "rota" | "hastaRotar">): number {
+  return (t.rota * t.hastaRotar) / 2;
+}
+export function carreraDe(t: Pick<TipoDeTrafico, "rota" | "hastaRotar">): number {
+  const a = aceleracionDe(t);
+  return hastaVrDe(t) + t.rota * ROTACION + (a / 4) * ROTACION * ROTACION;
+}
+
+/** Un tipo con la carrera que sale de sus números. Ver `carreraDe`. */
+function conSuCarrera(t: Omit<TipoDeTrafico, "carrera">): TipoDeTrafico {
+  return { ...t, carrera: Math.round(carreraDe(t)) };
+}
+
+/** Un nudo, m/s. */
+const KT = 0.514444;
+/** Un pie por minuto, m/s. */
+const FPM = 0.3048 / 60;
+
 /*
  * Los números, de fichas públicas de tipos de verdad y redondeados, que es lo
  * que distingue uno de otro a la vista:
@@ -308,10 +409,31 @@ export interface TipoDeTrafico {
  *   ciento cincuenta metros y frena en otros doscientos; despega en trescientos.
  * - bimotor ligero (la clase del Baron): 90 kt, ochocientos metros de pista.
  * - turbohélice regional de ala alta (la clase del ATR 72, el que une las
- *   islas): 110 kt, toca a trescientos y frena en seiscientos; despega en mil
- *   cien y opera en pistas de mil doscientos, como El Hierro y La Gomera.
+ *   islas): 110 kt, toca a trescientos y frena en seiscientos; pide mil cien
+ *   de pista y opera en pistas de mil doscientos, como El Hierro y La Gomera.
  * - reactor de pasaje (la clase del A320): 135 kt, toca a cuatrocientos y
- *   frena en mil; despega en mil ochocientos.
+ *   frena en mil; pide mil ochocientos de pista.
+ *
+ * **Y cómo despega cada uno**, que es lo que se ve desde el punto de espera.
+ * La Vr y lo que tarda en llegar a ella con el empuje de despegue:
+ *
+ * - el A320, a 140 kt con un peso de los de cada día, en unos treinta
+ *   segundos: dos CFM56-5B de 27.000 libras al despegue, con el empuje
+ *   reducido de casi todas las salidas y lo que pierde al correr, empujan
+ *   setenta toneladas a algo más de dos metros por segundo cada segundo.
+ *   Rota a tres grados por segundo hasta unos nueve, que es lo que deja el
+ *   margen de la cola —el A320 la toca hacia los doce—, y sube con el morro
+ *   a quince grados, unos dos mil pies por minuto con ese empuje reducido;
+ *   la carrera hasta el aire, unos mil trescientos metros;
+ * - el ATR 72, a 108 kt y en menos: dos PW127 de 2.475 caballos sobre veinte
+ *   toneladas tiran más por kilo que los reactores a esa velocidad, y llega en
+ *   unos veintitrés segundos y ochocientos metros; sube a unos mil trescientos
+ *   pies por minuto;
+ * - el Baron, a 85 kt en unos dieciocho segundos, y sube a mil setecientos
+ *   pies por minuto con los dos motores (su manual);
+ * - el C172S, a los 55 kt de rotar de su manual en unos dieciséis segundos
+ *   —los trescientos metros largos de carrera del manual—, y sube a los
+ *   setecientos treinta pies por minuto de Vy a nivel del mar.
  *
  * Y **lo que sube al irse al aire**, que es lo que hace que una frustrada se
  * vea como una frustrada. El manual de vuelo del 737 dice que el empuje de
@@ -320,52 +442,80 @@ export interface TipoDeTrafico {
  * bimotor, algo menos; la avioneta, unos seiscientos, por debajo de los
  * setecientos treinta a Vy del manual de un C172S a nivel del mar, porque
  * sube recogiendo los flaps.
+ *
+ * La estela, por la masa máxima al despegue (Doc 4444, 4.9.1): ligeras la
+ * avioneta y el bimotor, de menos de siete toneladas; medias el ATR y el
+ * A320. Ninguno del tráfico es pesado.
  */
 export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
-  avioneta: {
+  avioneta: conSuCarrera({
     id: "avioneta",
     silueta: "ala-alta",
     envergadura: 11,
     aproximacion: 33,
     toca: 150,
     frena: 200,
-    carrera: 300,
+    rota: 55 * KT,
+    hastaRotar: 16,
+    pistaQuePide: 300,
+    subeAlDespegar: 730 * FPM,
+    cabeceoAlDespegar: 6,
+    cabeceoSubiendo: 8,
+    estela: "ligera",
     pistaMinima: 0,
     subeAlAire: 3, // 600 ft/min
-  },
-  bimotor: {
+  }),
+  bimotor: conSuCarrera({
     id: "bimotor",
     silueta: "bimotor-ala-baja",
     envergadura: 11.5,
     aproximacion: 46,
     toca: 250,
     frena: 350,
-    carrera: 550,
+    rota: 85 * KT,
+    hastaRotar: 18,
+    pistaQuePide: 550,
+    subeAlDespegar: 1700 * FPM,
+    cabeceoAlDespegar: 6,
+    cabeceoSubiendo: 9,
+    estela: "ligera",
     pistaMinima: 800,
     subeAlAire: 5, // 1.000 ft/min
-  },
-  turbohelice: {
+  }),
+  turbohelice: conSuCarrera({
     id: "turbohelice",
     silueta: "cola-en-t",
     envergadura: 27,
     aproximacion: 57,
     toca: 300,
     frena: 600,
-    carrera: 1100,
+    rota: 108 * KT,
+    hastaRotar: 23,
+    pistaQuePide: 1100,
+    subeAlDespegar: 1300 * FPM,
+    cabeceoAlDespegar: 6,
+    cabeceoSubiendo: 9,
+    estela: "media",
     pistaMinima: 1200,
     subeAlAire: 6, // 1.200 ft/min
-  },
-  reactor: {
+  }),
+  reactor: conSuCarrera({
     id: "reactor",
     silueta: "reactor",
     envergadura: 34,
     aproximacion: 69,
     toca: 400,
     frena: 1000,
-    carrera: 1800,
+    rota: 140 * KT,
+    hastaRotar: 30,
+    pistaQuePide: 1800,
+    subeAlDespegar: 2000 * FPM,
+    cabeceoAlDespegar: 9,
+    cabeceoSubiendo: 15,
+    estela: "media",
     pistaMinima: 1800,
     subeAlAire: 7.6, // 1.500 ft/min
-  },
+  }),
 };
 
 /**
@@ -484,6 +634,79 @@ const NADIE: string[] = [];
  * devuelve a la toma a media carrera, porque la frase espera a que salga.
  */
 const FRENANDO = 0.5;
+
+/**
+ * **Lo que acelera recién despegado**, m/s²: de la velocidad de despegue a la
+ * de su circuito, con el tren y los flaps recogiéndose.
+ */
+const ACELERA_SUBIENDO = 0.6;
+
+/**
+ * **A cuánto va el que sale**, m/s, a `desdeElEje` metros del punto donde se
+ * alinea —negativo, todavía en la calle— y con `vuela` de velocidad de su
+ * circuito.
+ *
+ * Rueda a paso de calle, frena para girar y alinearse, y corre su carrera con
+ * la aceleración de su tipo: la velocidad crece con el tiempo, no con la
+ * distancia, así que con la distancia crece como su raíz. De Vr a despegar,
+ * la mitad de esa aceleración, y en el aire hasta la de su circuito. Ver
+ * `aceleracionDe`.
+ */
+export function enSuCarrera(
+  tipo: TipoDeTrafico,
+  desdeElEje: number,
+  vuela: number,
+): number {
+  if (desdeElEje < -ARRIMANDOSE) return RUEDA_A;
+  if (desdeElEje < 0)
+    return AL_ALINEARSE + (RUEDA_A - AL_ALINEARSE) * (-desdeElEje / ARRIMANDOSE);
+  const a = aceleracionDe(tipo);
+  const hastaVr = hastaVrDe(tipo);
+  if (desdeElEje < hastaVr)
+    return Math.sqrt(AL_ALINEARSE * AL_ALINEARSE + 2 * a * desdeElEje);
+  if (desdeElEje < tipo.carrera)
+    return Math.sqrt(tipo.rota * tipo.rota + a * (desdeElEje - hastaVr));
+  const despega = velocidadDeDespegue(tipo);
+  const subiendo = Math.sqrt(
+    despega * despega + 2 * ACELERA_SUBIENDO * (desdeElEje - tipo.carrera),
+  );
+  return Math.min(Math.max(vuela, despega), subiendo);
+}
+
+/**
+ * **Lo que tarda en correr su carrera**, s: de alinearse a despegar. Ver
+ * `enSuCarrera`.
+ */
+export function tiempoDeCarrera(tipo: TipoDeTrafico): number {
+  const a = aceleracionDe(tipo);
+  return (tipo.rota - AL_ALINEARSE) / a + ROTACION;
+}
+
+/**
+ * **El cabeceo del que sale**, rad, a `desdeElEje` metros de donde se alinea:
+ * plano hasta Vr, el morro arriba rotando hasta el de despegar, y en el aire
+ * hasta el de su subida en unos segundos.
+ *
+ * Subía plano, como un ascensor: el avión dejaba el suelo con las ruedas a la
+ * altura del morro y seguía así hasta perderse. Lo que se ve de una salida
+ * desde el punto de espera es justo esto, el morro que sube antes que las
+ * ruedas.
+ */
+export function cabeceoDe(tipo: TipoDeTrafico, desdeElEje: number): number {
+  const hastaVr = hastaVrDe(tipo);
+  if (desdeElEje <= hastaVr) return 0;
+  const grados = Math.PI / 180;
+  if (desdeElEje < tipo.carrera) {
+    const f = (desdeElEje - hastaVr) / Math.max(1, tipo.carrera - hastaVr);
+    return tipo.cabeceoAlDespegar * f * grados;
+  }
+  // Unos tres segundos de vuelo hasta el cabeceo de la subida.
+  const f = Math.min(1, (desdeElEje - tipo.carrera) / (velocidadDeDespegue(tipo) * ROTACION));
+  return (
+    (tipo.cabeceoAlDespegar + (tipo.cabeceoSubiendo - tipo.cabeceoAlDespegar) * f) *
+    grados
+  );
+}
 
 /** Los caminos de este aeródromo, con los dos finales de una llegada. */
 export function trazar(
@@ -665,7 +888,7 @@ export function trazar(
     const sale = tierra.suelo.salida(
       tierra.evitar,
       tierra.porDondeVas,
-      t.carrera * PISTA_POR_DELANTE,
+      t.pistaQuePide * PISTA_POR_DELANTE,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -679,12 +902,25 @@ export function trazar(
        * Y se va: no se queda colgado en la esquina del circuito esperando a
        * que alguien lo vuelva a nombrar. Sigue subiendo en el rumbo de la
        * pista hasta perderse, y ahí se retira.
+       *
+       * **Y sube como su tipo**, no en una recta hasta la altura del
+       * circuito: así el reactor salía a un ocho por ciento, la mitad de lo
+       * que sube un A320 recién despegado. Nunca por debajo de lo de antes,
+       * que es lo que pide el terreno: ver `pendienteDeSalida`.
        */
-      const lejisimos: Sitio = {
+      const sube = pendienteDeSalida(t, vuela);
+      const conSuSubida = (p: Sitio): Sitio => ({
+        ...p,
+        y: Math.max(
+          p.y,
+          despegue.y + sube * Math.hypot(p.x - despegue.x, p.z - despegue.z),
+        ),
+      });
+      const lejisimos: Sitio = conSuSubida({
         x: arriba.x + adelante.x * 6000,
         y: arriba.y + 500,
         z: arriba.z + adelante.z * 6000,
-      };
+      });
       const pasaArriba =
         (arriba.x - despegue.x) * adelante.x +
           (arriba.z - despegue.z) * adelante.z >
@@ -692,7 +928,7 @@ export function trazar(
       salidaDelCampo = [
         ...rodando,
         despegue,
-        ...(pasaArriba ? [arriba] : []),
+        ...(pasaArriba ? [conSuSubida(arriba)] : []),
         lejisimos,
       ];
       hastaLaEspera = sale.espera;
@@ -841,6 +1077,17 @@ export function alAireDesde(marca: Marca, sitio: Sitio): Marca {
  */
 export function pendienteDeFrustrada(subeAlAire: number, vuela: number): number {
   return Math.min(0.15, subeAlAire / Math.max(1, vuela));
+}
+
+/**
+ * **La pendiente de una salida**, en tanto por uno: lo que sube su tipo recién
+ * despegado entre lo que vuela al subir, que es la velocidad de su circuito.
+ */
+export function pendienteDeSalida(
+  tipo: Pick<TipoDeTrafico, "subeAlDespegar">,
+  vuela: number,
+): number {
+  return tipo.subeAlDespegar / Math.max(1, vuela);
 }
 
 /**
@@ -1670,13 +1917,8 @@ export function crearTrafico(
       const alTocar = t.tipo.aproximacion * 0.85;
       return alTocar + (RUEDA_A * 1.5 - alTocar) * f;
     }
-    if (c && t && t.despega > 0 && m.camino === c.salida) {
-      if (r < t.eje) return RUEDA_A;
-      if (r < t.despega) {
-        const f = (r - t.eje) / Math.max(1, t.despega - t.eje);
-        return 4 + (t.tipo.aproximacion * 1.1 - 4) * f;
-      }
-    }
+    if (c && t && t.despega > 0 && m.camino === c.salida)
+      return enSuCarrera(t.tipo, r - t.eje, m.velocidad);
     return m.velocidad;
   };
 
@@ -2074,12 +2316,6 @@ export function crearTrafico(
     return false;
   };
 
-  /** Lo que tarda un tipo en correr su despegue, s. Ver `velocidadDe`. */
-  const tiempoDeCarrera = (tipo: TipoDeTrafico): number => {
-    const alVolar = tipo.aproximacion * 1.1;
-    return (tipo.carrera / Math.max(1, alVolar - 4)) * Math.log(alVolar / 4);
-  };
-
   /**
    * **Si viene alguien antes de que quien sale haya dejado la pista.** Lo
    * que tarda en entrar, alinearse y correr su despegue, y lo que vuela
@@ -2088,7 +2324,7 @@ export function crearTrafico(
    */
   const llegaAntesDeQueSalga = (tipo: TipoDeTrafico, clave: string): boolean => {
     const hastaElFinal =
-      Math.max(0, runway.length - tipo.carrera) / (tipo.aproximacion * 1.1);
+      Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo);
     const hueco =
       ENTRAR_Y_ALINEARSE +
       tiempoDeCarrera(tipo) +
@@ -2250,6 +2486,8 @@ export function crearTrafico(
       if (!quien) {
         const g = new Group();
         g.name = "trafico-avion";
+        // El rumbo primero y el cabeceo sobre él: ver `cabeceoDelQueSale`.
+        g.rotation.order = "YXZ";
         g.add(cuerpo(tipo, matricula));
         const luces = lucesDe(tipo, matricula);
         g.add(luces.puntos);
@@ -2704,4 +2942,28 @@ function colocar(quien: Volando): void {
    * porque el fallo fue confundir dos números que se parecen.
    */
   quien.grupo.rotation.y = giroDelModelo(donde.rumbo);
+  const cabeceo = cabeceoDelQueSale(quien);
+  quien.grupo.rotation.x = cabeceo;
+  /*
+   * Y rota sobre las ruedas de atrás, no sobre su centro: el morro sube y la
+   * cola baja, y las ruedas siguen en el asfalto.
+   */
+  if (cabeceo > 0)
+    quien.grupo.position.y += Math.sin(cabeceo) * quien.tipo.envergadura * RUEDAS_DETRAS;
+}
+
+/**
+ * **Dónde van las ruedas de atrás**, por detrás del centro del avión, en
+ * envergaduras: un poco por detrás del ala, que es donde las lleva un avión
+ * con rueda de morro.
+ */
+const RUEDAS_DETRAS = 0.06;
+
+/** El cabeceo de quien corre o sube por el camino de salida, rad. Ver `cabeceoDe`. */
+function cabeceoDelQueSale(quien: Volando): number {
+  const c = quien.caminos;
+  const t = c?.enTierra;
+  if (!c || !t || t.despega <= 0 || quien.tresSesenta) return 0;
+  if (quien.marca.camino !== c.salida) return 0;
+  return cabeceoDe(t.tipo, quien.recorrido - t.eje);
 }

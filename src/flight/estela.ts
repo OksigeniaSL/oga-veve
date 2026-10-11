@@ -84,6 +84,48 @@ export const DE_CLASE: Readonly<
   cuatrimotor: { masa: 285000, envergadura: 60 },
 };
 
+/**
+ * **Las categorías de estela de la OACI**, por la masa máxima certificada al
+ * despegue (Doc 4444, 4.9.1): pesada desde 136 toneladas, ligera hasta siete,
+ * y media entre las dos. Es lo que decide cuánto se separa una salida de la de
+ * delante. Ver `separacionDeSalida`.
+ */
+export type CategoriaDeEstela = "ligera" | "media" | "pesada";
+
+/** Por encima de esto, pesada, kg. */
+const PESADA_DESDE = 136000;
+/** Y hasta esto, ligera, kg. */
+const LIGERA_HASTA = 7000;
+
+/**
+ * La categoría de un avión por su masa, kg. De la flota se mira la de su
+ * ficha, que en todos queda lejos de la raya de su categoría.
+ */
+export function categoriaDeEstela(masa: number): CategoriaDeEstela {
+  if (masa >= PESADA_DESDE) return "pesada";
+  return masa > LIGERA_HASTA ? "media" : "ligera";
+}
+
+/**
+ * **Lo que espera una salida detrás de otra por su estela**, s.
+ *
+ * Dos minutos para una ligera o una media detrás de una pesada, y para una
+ * ligera detrás de una media, saliendo de la misma pista (Doc 4444, 5.8.3.1).
+ * Contados desde que el de delante se va al aire, que es cuando empieza a
+ * dejarla. Entre iguales, o el grande detrás del pequeño, nada por estela: lo
+ * que separa es que el de delante haya dejado la pista.
+ */
+export const DOS_MINUTOS_DE_ESTELA = 120;
+
+export function separacionDeSalida(
+  delante: CategoriaDeEstela,
+  detras: CategoriaDeEstela,
+): number {
+  if (delante === "pesada" && detras !== "pesada") return DOS_MINUTOS_DE_ESTELA;
+  if (delante === "media" && detras === "ligera") return DOS_MINUTOS_DE_ESTELA;
+  return 0;
+}
+
 /** Quien deja estela: un avión con su peso y su ala. */
 export interface QuienVuela {
   readonly id: string;
