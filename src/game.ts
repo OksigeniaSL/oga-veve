@@ -22017,8 +22017,15 @@ export class Game {
      * un reloj, y lo retira quien sabe que se ha pasado. Solo si este paso
      * habla: uno que solo se ve no quita la voz al anterior. Ver
      * `anunciaElPuntoDeDescenso` en `audio/boca.ts`.
+     *
+     * Y la cota tampoco lo retira: sale segundos después del punto de
+     * descenso, es un dato y no un paso que deje atrás el bajar. Mientras la
+     * cota no tuvo voz grabada no retiraba nada; en cuanto la tuvo, se llevaba
+     * por delante el «empezamos a bajar» que esperaba turno (banco de
+     * escalones, Tenerife Norte → La Palma, 11-10-2026).
      */
-    if (habla && forma && p.que !== "bajar") BOCA.retirar((c) => anunciaElPuntoDeDescenso(c));
+    if (habla && forma && p.que !== "bajar" && p.que !== "cota")
+      BOCA.retirar((c) => anunciaElPuntoDeDescenso(c));
     const dice = habla
       ? (forma?.id ?? "sin voz")
       : yaExplicada
