@@ -217,14 +217,21 @@ export const HOLD_SHORT_POR: Readonly<Record<PorQueEsperas, string>> = {
   aterriza: "hold short of the runway, landing traffic",
   despega: "hold short of the runway, departing traffic",
   /*
-   * En la fila, lo que se dice con su número —«number two for departure»—
-   * está sin grabar; hasta entonces suena esto, que también es verdad: delante
-   * hay tráfico que sale. Ver `decirLaFila` en `game.ts`.
+   * En la fila, con tu número: el dos es el de uno delante, y con dos delante
+   * lo pone `holdShortEnLaFila`. Es información, no una autorización (Doc
+   * 4444, 12.3.4.14 b).
    */
-  fila: "hold short of the runway, departing traffic",
-  // Y por la estela, la orden a secas: el porqué sin grabar va en la tira.
-  estela: "hold short of the runway",
+  fila: "hold short of the runway, number two for departure",
+  // Y detrás de una salida que deja estela (Doc 4444, 12.3.4.19 e).
+  estela: "hold short of the runway, caution wake turbulence",
 };
+
+/** La espera de la fila con tu número: dos con uno delante, tres con dos. */
+export function holdShortEnLaFila(numero = 2): string {
+  return numero >= 3
+    ? "hold short of the runway, number three for departure"
+    : HOLD_SHORT_POR.fila;
+}
 
 /**
  * Y cómo lo cuenta la instructora en los peldaños de abajo, en una línea

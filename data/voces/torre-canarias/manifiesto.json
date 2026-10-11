@@ -267,6 +267,18 @@
       "ms": 404,
       "h": "e208ebd716"
     },
+    "torre.canario.numeroDos": {
+      "ms": 1298,
+      "h": "89133b154a"
+    },
+    "torre.canario.numeroTres": {
+      "ms": 1405,
+      "h": "71e30a3464"
+    },
+    "torre.canario.solo.acelereAbandono": {
+      "ms": 1214,
+      "h": "3e01eb6cf4"
+    },
     "torre.canario.solo.afisLibre": {
       "ms": 711,
       "h": "68bb38bdac"
@@ -287,6 +299,10 @@
       "ms": 1101,
       "h": "ec77ac4589"
     },
+    "torre.canario.solo.aterrizoSinPermiso": {
+      "ms": 4107,
+      "h": "8695124791"
+    },
     "torre.canario.solo.autorizadoA": {
       "ms": 961,
       "h": "e92f809c28"
@@ -298,6 +314,10 @@
     "torre.canario.solo.autorizadoParaAterrizar": {
       "ms": 1394,
       "h": "fffd41be7d"
+    },
+    "torre.canario.solo.backtrackRunway": {
+      "ms": 1184,
+      "h": "387754b82d"
     },
     "torre.canario.solo.birdsOnFinal": {
       "ms": 1319,
@@ -323,6 +343,10 @@
       "ms": 992,
       "h": "5a3cad9c43"
     },
+    "torre.canario.solo.expediteVacating": {
+      "ms": 1182,
+      "h": "b676836cca"
+    },
     "torre.canario.solo.free": {
       "ms": 657,
       "h": "907b764253"
@@ -338,6 +362,22 @@
     "torre.canario.solo.holdShort": {
       "ms": 1006,
       "h": "d12108b901"
+    },
+    "torre.canario.solo.holdShortNumberThree": {
+      "ms": 2664,
+      "h": "e4dc5d6f9a"
+    },
+    "torre.canario.solo.holdShortNumberTwo": {
+      "ms": 2493,
+      "h": "7c21bce985"
+    },
+    "torre.canario.solo.holdShortWake": {
+      "ms": 2514,
+      "h": "097da02ffb"
+    },
+    "torre.canario.solo.landedWithoutClearance": {
+      "ms": 2956,
+      "h": "866a966f8e"
     },
     "torre.canario.solo.landingTraffic": {
       "ms": 913,
@@ -370,6 +410,10 @@
     "torre.canario.solo.rogerMayday": {
       "ms": 949,
       "h": "f35cab6522"
+    },
+    "torre.canario.solo.rogerPanPan": {
+      "ms": 1258,
+      "h": "a9f3581b70"
     },
     "torre.canario.solo.runway": {
       "ms": 1121,
@@ -1560,6 +1604,122 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.goAroundSolo"
+    ],
+    "torre.canario.numeroDos": [
+      "torre.canario.numeroDos"
+    ],
+    "torre.canario.numeroTres": [
+      "torre.canario.numeroTres"
+    ],
+    "torre.canario.solo.rogerPanPan": [
+      "torre.canario.solo.rogerPanPan"
+    ],
+    "torre.canario.panpan": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.rogerPanPan"
+    ],
+    "torre.canario.holdShortNumberTwo": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.holdShortNumberTwo"
+    ],
+    "torre.canario.holdShortNumberThree": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.holdShortNumberThree"
+    ],
+    "torre.canario.holdShortWake": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.holdShortWake"
+    ],
+    "torre.canario.expediteVacating": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.expediteVacating"
+    ],
+    "torre.canario.acelereAbandono": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.acelereAbandono"
+    ],
+    "torre.canario.landedWithoutClearance": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.landedWithoutClearance"
+    ],
+    "torre.canario.aterrizoSinPermiso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.aterrizoSinPermiso"
+    ],
+    "torre.canario.backtrack": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.backtrackRunway",
+      "{r1}",
+      "{r2}"
+    ],
+    "torre.canario.backtrack.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.backtrackRunway",
+      "{r1}",
+      "{r2}",
+      "lado.left"
+    ],
+    "torre.canario.backtrack.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.backtrackRunway",
+      "{r1}",
+      "{r2}",
+      "lado.right"
+    ],
+    "torre.canario.backtrack.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.backtrackRunway",
+      "{r1}",
+      "{r2}",
+      "lado.center"
     ]
   }
 }

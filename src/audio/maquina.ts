@@ -53,9 +53,13 @@ import { DE_LA_CUENTA } from "./cabina";
 export const PRIORIDAD: Readonly<Record<string, number>> = {
   "cabina.stall": 90,
   "cabina.terrainPullUp": 80,
+  // Y el aviso de lo que ve por delante, que es el mismo «sube».
+  "cabina.terrainAheadPullUp": 80,
   // La cabina sin aire, justo detrás del terreno: los dos son de ahora mismo.
   "cabina.cabin": 75,
   "cabina.tooLow": 70,
+  // Y su precaución, por detrás de ir bajo ahora mismo: la ladera está a un minuto.
+  "cabina.cautionTerrain": 65,
   "cabina.minimums": 60,
   "cabina.sinkRate": 50,
   "cabina.airspeedLow": 45,

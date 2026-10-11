@@ -23,6 +23,14 @@
       "ms": 780,
       "h": "c04fd0079d"
     },
+    "cabina.cautionTerrain": {
+      "ms": 1506,
+      "h": "0da1be9208"
+    },
+    "cabina.engineFailure": {
+      "ms": 978,
+      "h": "0bb51aaa6d"
+    },
     "cabina.fifty": {
       "ms": 657,
       "h": "63d5319beb"
@@ -91,9 +99,17 @@
       "ms": 751,
       "h": "5edb554f27"
     },
+    "cabina.stop": {
+      "ms": 691,
+      "h": "cb4b9464e8"
+    },
     "cabina.ten": {
       "ms": 1464,
       "h": "042e61712e"
+    },
+    "cabina.terrainAheadPullUp": {
+      "ms": 1215,
+      "h": "e7a8b5715c"
     },
     "cabina.terrainPullUp": {
       "ms": 1411,
@@ -168,6 +184,12 @@
     "cabina.cabin": [
       "cabina.cabin"
     ],
+    "cabina.cautionTerrain": [
+      "cabina.cautionTerrain"
+    ],
+    "cabina.engineFailure": [
+      "cabina.engineFailure"
+    ],
     "cabina.fifty": [
       "cabina.fifty"
     ],
@@ -219,8 +241,14 @@
     "cabina.stall": [
       "cabina.stall"
     ],
+    "cabina.stop": [
+      "cabina.stop"
+    ],
     "cabina.ten": [
       "cabina.ten"
+    ],
+    "cabina.terrainAheadPullUp": [
+      "cabina.terrainAheadPullUp"
     ],
     "cabina.terrainPullUp": [
       "cabina.terrainPullUp"

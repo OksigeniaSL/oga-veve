@@ -327,8 +327,7 @@ export const ES_PY = {
    * Y a quien aterrizó con la orden de irse al aire puesta, después de tocar:
    * que llame a la torre por teléfono al llegar, que es lo que se hace en
    * España y en la OACI (no hay frase del Doc 4444 para esto; en la FAA es el
-   * aviso de Brasher). Sin grabar: ver `aterrizoContraLaOrden` en `game.ts`
-   * y `PENDIENTE-VOCES-torre-final.md`.
+   * aviso de Brasher). Ver `aterrizoContraLaOrden` en `game.ts`.
    */
   "torre.aterrizoSinPermiso":
     "{indicativo}, aterrizó sin autorización; llame a la torre por teléfono a su llegada",
@@ -416,7 +415,7 @@ export const ES_PY = {
    * igual a la verde—, y se da con su número como la secuencia del circuito,
    * «NUMBER … FOLLOW» (Doc 4444, 12.3.4.14 b; «NÚMERO… SIGA» en el RD
    * 1180/2018, 1.4.15 b). Va suelta, detrás de la lámpara, y solo con su
-   * grabación: ver `decirLaFila` en `game.ts` y `PENDIENTE-VOCES-tierra-2.md`.
+   * grabación: ver `decirLaFila` en `game.ts`.
    */
   "torre.numeroDos": "número dos para la salida",
   "torre.numeroTres": "número tres para la salida",
@@ -1164,8 +1163,8 @@ export const ES_PY = {
   /*
    * **Y en la fila de salida**, que es otro porqué: el de delante no está en
    * la pista, espera en su doble raya desde antes que vos, y sale antes. Y
-   * detrás de uno grande, sus dos minutos de estela. Sin grabar: ver
-   * `PENDIENTE-VOCES-tierra-2.md`; hasta entonces lo cuenta la tarjeta.
+   * detrás de uno grande, sus dos minutos de estela. Solo con su grabación;
+   * sin ella lo cuenta la tarjeta.
    */
   "vuelo.esperaTurnoDeSalida": "Esperamos nuestro turno: primero sale el avión que llegó antes",
   "vuelo.esperaLaEstela":
@@ -1231,7 +1230,7 @@ export const ES_PY = {
   /*
    * **La instructora propone irse al aire**, no lo manda: a los quinientos
    * pies la aproximación no viene bien, o a los mínimos no se ve la pista.
-   * Decide quien vuela. Sin grabar: ver `PENDIENTE-VOCES-frustrada.md`.
+   * Decide quien vuela. Ver `proponenIrseAlAire` en `game.ts`.
    */
   "vuelo.proponeIrse": "Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar",
   "vuelo.proponeIrseSinPista":
@@ -1239,8 +1238,7 @@ export const ES_PY = {
   /*
    * **La toma larga**: flotando o tocando pasada la zona de toma, o sin
    * pista para parar, mientras todavía se puede subir. La instructora lo
-   * propone, a tiempo y en calma. Sin grabar: ver `PENDIENTE-VOCES-final.md`
-   * y `flight/toma-larga.ts`.
+   * propone, a tiempo y en calma. Ver `flight/toma-larga.ts`.
    */
   "vuelo.tomaLarga": "Así no: nos vamos al aire y lo volvemos a intentar",
   "vuelo.tomaLargaSinPista":
@@ -1281,6 +1279,8 @@ export const ES_PY = {
    */
   "vuelo.terrenoBajo": "Vas muy bajo: subí un poco",
   "vuelo.terrenoSube": "El suelo está cerca: subí",
+  // Y detrás de *caution terrain*: lo que ve por delante el avisador.
+  "vuelo.terrenoDelante": "Adelante hay una montaña más alta que nosotros: subí",
   "vuelo.perdida": "Pérdida. Bajá el morro",
   /*
    * **El aviso de tráfico del TCAS, dicho en casa.** Es lo que en el peldaño
@@ -1405,8 +1405,9 @@ export const ES_PY = {
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   /*
    * Y a los mínimos sin el permiso de la torre, con la pista libre: el porqué
-   * no es la pista. De momento solo en la tarjeta; la voz, cuando se grabe
-   * (ver `PENDIENTE-VOCES-torre-final.md`).
+   * no es la pista. Ya no se dice —la torre no manda al aire por su propio
+   * retraso: a los mínimos el permiso llega a la vista— y por eso no se
+   * graba. Ver `HABLADOS` en `scripts/frases-para-grabar.mjs`.
    */
   /*
    * La cota de la pista de llegada, en el peldaño de los números: solo en la
@@ -1450,9 +1451,8 @@ export const ES_PY = {
    * **Y por la derecha, donde el campo lo publica así**: La Gomera por la 09,
    * La Palma por la 36, Tenerife Sur por la 07… siempre del lado del mar.
    * Con la frase de la izquierda, la frustrada de La Gomera mandaba girar
-   * hacia la isla. Sin grabar todavía: hasta que lo esté, la instructora
-   * calla en esos dos tramos y hablan el dibujo y la raya. Ver
-   * `PENDIENTE-VOCES-terreno.md`.
+   * hacia la isla. La instructora las dice solo con su grabación: sin
+   * ella hablan el dibujo y la raya. Ver `tramoDeCircuito` en `game.ts`.
    */
   "circuito.cruzado.derecha": "Girá a la derecha: volvemos a la pista",
   "circuito.encola.derecha": "Volá al lado de la pista, con ella a tu derecha",
@@ -1471,9 +1471,9 @@ export const ES_PY = {
    * Los decide uno solo, `flight/consejo-de-la-bajada.ts`, que espera a que el
    * avión responda antes de volver a corregir.
    *
-   * Sin grabar todavía: ver `PENDIENTE-VOCES-bajada.md`. Hasta que lo estén,
-   * se dice la grabada que nombra el mismo mando y la tarjeta enseña esa misma
-   * frase; éstas salen solas en cuanto tienen su grabación.
+   * Se dicen solo con su grabación; sin ella, la grabada que nombra el mismo
+   * mando, y la tarjeta enseña esa misma frase. Ver `decirElConsejo` en
+   * `game.ts`.
    */
   "vuelo.consejo.masGas": "Un poquito más de gas, hasta la marca rosa. La nariz, quieta.",
   "vuelo.consejo.menosGas": "Un poquito menos de gas, hasta la marca rosa.",
@@ -1491,7 +1491,7 @@ export const ES_PY = {
    * encima y sin poder bajar más deprisa se sacan los aerofrenos, que es el
    * «DRAG REQUIRED» de Boeing. Y **las del avión de cables** sin gases
    * automáticos, que lleva la senda con el gas y la velocidad con el morro
-   * (ADR 0017). Sin grabar: ver `PENDIENTE-VOCES-llegada.md`.
+   * (ADR 0017).
    */
   "vuelo.consejo.nivelarPerfil":
     "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.",
@@ -1526,10 +1526,10 @@ export const ES_PY = {
    * `flight/siguiente-paso.ts`: subir, acelerar o frenar a la marca nueva, el
    * crucero, bajar, nivelar, los flaps por su orden, el tren y la senda.
    *
-   * Sin grabar todavía: ver `PENDIENTE-VOCES-escalones.md`. Hasta que lo
-   * estén, se dice la grabada que pide lo mismo —«Bajá el motor», «Bajá los
-   * flaps para frenar», «Sacá el tren», «Empezamos a bajar»— y, si ninguna
-   * sirve, el paso se ve en la tarjeta y en la cabina y la voz calla.
+   * Se dicen solo con su grabación; sin ella, la grabada que pide lo mismo
+   * —«Bajá el motor», «Bajá los flaps para frenar», «Sacá el tren»,
+   * «Empezamos a bajar»— y, si ninguna sirve, el paso se ve en la tarjeta
+   * y en la cabina y la voz calla.
    */
   "vuelo.paso.subir": "Subimos hasta la raya de la altura, a la velocidad de la marca rosa.",
   "vuelo.paso.acelerarGas": "Ya podemos ir más rápido: más gas, hasta la marca rosa.",
@@ -1579,8 +1579,7 @@ export const ES_PY = {
   /*
    * **La cota de la pista, empezada la bajada**: «¿cuánto tengo que bajar?».
    * Sin el número, para que valga en cualquier campo: el número va debajo de
-   * la cinta de altitud y en la tarjeta. Sin grabar: ver
-   * `PENDIENTE-VOCES-llegada.md`.
+   * la cinta de altitud y en la tarjeta.
    */
   "vuelo.paso.cotaAlMar":
     "La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.",
@@ -1745,8 +1744,7 @@ export const ES_PY = {
    * tecla lo pide la instructora y lo hace quien vuela; las luces y el
    * transpondedor los hace ella y lo dice al hacerlo. Uno detrás de otro, cada
    * uno hecho antes de pedir el siguiente. Ver `ListaDeDespuesDeAterrizar` en
-   * `flight/despues-de-aterrizar.ts`. Sin grabar todavía: ver
-   * `PENDIENTE-VOCES-aterrizaje.md`.
+   * `flight/despues-de-aterrizar.ts`.
    */
   "vuelo.despues.aerofrenos": "Los aerofrenos, adentro: bajá la palanca.",
   "vuelo.despues.luces": "Las luces las hago yo: apago las de aterrizaje y dejo la de rodaje.",
@@ -2215,9 +2213,9 @@ export const ES_PY = {
     "La matrícula es la cédula del avión: no hay otro en el mundo que se llame igual. ZP quiere decir Paraguay; EC, España. Por radio se dice letra por letra.",
 
   /*
-   * Y lo que dice la instructora al tocar cada punto: lo mismo, contado. Sin
-   * grabar todavía —ver `PENDIENTE-VOCES-tarjeta.md`—, y hasta que lo estén
-   * no suenan: el globo se lee.
+   * Y lo que dice la instructora al tocar cada punto: lo mismo, contado. En
+   * el vuelo suena; en el hangar, que todavía no monta voz, el globo se lee.
+   * Ver `PENDIENTE-VOCES-tarjeta.md`.
    */
   "tarjeta.voz.alerones":
     "Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.",
@@ -2265,9 +2263,9 @@ export const ES_PY = {
    * `ui/explicaciones-de-serie.ts`.
    *
    * La palabra corta sale desde el segundo peldaño y el texto entero desde el
-   * tercero; en el primero, el dibujo y la voz. **La voz todavía no está
-   * grabada** —ver `PENDIENTE-VOCES-explicaciones.md`— y hasta que lo esté no
-   * suena: estas claves no pasan a la voz del navegador. Lo que dicen es lo
+   * tercero; en el primero, el dibujo y la voz. **La voz es solo la
+   * grabada**: estas claves no pasan a la voz del navegador, y la que no
+   * tenga su toma se calla. Lo que dicen es lo
    * real, simplificado: quien aprenda aquí qué es el T/D lo tiene que leer
    * igual en una cabina de verdad.
    */

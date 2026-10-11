@@ -1,39 +1,41 @@
 001	cabina.v1	V one
 002	cabina.vr	rotate
 003	cabina.terrainPullUp	terrain, pull up
-004	cabina.tooLow	too low
-005	cabina.tooFast	too fast
-006	cabina.offTheRunway	off the runway
-007	cabina.airspeed	airspeed
-008	cabina.fourHundred	four hundred
-009	cabina.threeHundred	three hundred
-010	cabina.twoHundred	two hundred
-011	cabina.positiveRate	positive rate
-012	cabina.gearUp	gear up
-013	cabina.gearDown	gear down
-014	cabina.sinkRate	sink rate
-015	cabina.bankAngle	bank angle
-016	cabina.stall	stall, stall
-017	cabina.traffic	traffic, traffic
-018	cabina.autopilotDisconnect	autopilot disconnect
-019	cabina.minimums	minimums
-020	cabina.cabin	cabin
-021	cabina.slowDown	slow down
-022	cabina.tooHighComeDown	too high, come down
-023	cabina.tooLowClimb	too low, climb
-024	cabina.obstacleAhead	obstacle ahead
-025	cabina.goAround	going around. good decision
-026	cabina.weHaveAProblem	we have a problem
-027	cabina.goAroundOrder	go around
-028	cabina.engineFailure	engine failure
-029	cabina.stop	stop
-030	cabina.airspeedLow	airspeed low
-031	cabina.twentyFiveHundred	twenty five hundred
-032	cabina.oneThousand	one thousand
-033	cabina.fiveHundred	five hundred
-034	cabina.oneHundred	one hundred
-035	cabina.fifty	fifty
-036	cabina.forty	forty
-037	cabina.thirty	thirty
-038	cabina.twenty	twenty
-039	cabina.ten	ten
+004	cabina.cautionTerrain	caution terrain, caution terrain
+005	cabina.terrainAheadPullUp	terrain ahead, pull up
+006	cabina.tooLow	too low
+007	cabina.tooFast	too fast
+008	cabina.offTheRunway	off the runway
+009	cabina.airspeed	airspeed
+010	cabina.fourHundred	four hundred
+011	cabina.threeHundred	three hundred
+012	cabina.twoHundred	two hundred
+013	cabina.positiveRate	positive rate
+014	cabina.gearUp	gear up
+015	cabina.gearDown	gear down
+016	cabina.sinkRate	sink rate
+017	cabina.bankAngle	bank angle
+018	cabina.stall	stall, stall
+019	cabina.traffic	traffic, traffic
+020	cabina.autopilotDisconnect	autopilot disconnect
+021	cabina.minimums	minimums
+022	cabina.cabin	cabin
+023	cabina.slowDown	slow down
+024	cabina.tooHighComeDown	too high, come down
+025	cabina.tooLowClimb	too low, climb
+026	cabina.obstacleAhead	obstacle ahead
+027	cabina.goAround	going around. good decision
+028	cabina.weHaveAProblem	we have a problem
+029	cabina.goAroundOrder	go around
+030	cabina.engineFailure	engine failure
+031	cabina.stop	stop
+032	cabina.airspeedLow	airspeed low
+033	cabina.twentyFiveHundred	twenty five hundred
+034	cabina.oneThousand	one thousand
+035	cabina.fiveHundred	five hundred
+036	cabina.oneHundred	one hundred
+037	cabina.fifty	fifty
+038	cabina.forty	forty
+039	cabina.thirty	thirty
+040	cabina.twenty	twenty
+041	cabina.ten	ten

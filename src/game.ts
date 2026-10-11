@@ -651,6 +651,7 @@ import {
   alLevantarLaOrden,
   EXPLICA_LA_ESPERA,
   HOLD_SHORT_POR,
+  holdShortEnLaFila,
   TurnoDePista,
   type EsperaPor,
   type PorQueEsperas,
@@ -1475,9 +1476,14 @@ const GAS_EN_LA_RECOGIDA = 0.15;
 /**
  * Lo que la instructora dice de la final y de la recogida: al tocar tierra ya
  * no describe nada. Ver `alTocarTierra`.
+ *
+ * Con los consejos de la bajada y los pasos de la cadena, que dicen lo mismo
+ * que las de aquí con su objetivo —«un poquito más de gas, hasta la marca
+ * rosa» por «venís lento: metéle gas»— y las sustituyen en cuanto tienen su
+ * grabación. Ver `decirElConsejo` y `decirElPaso`.
  */
 const DEL_AIRE =
-  /^vuelo\.(?:quitaElGas|narizEnLaRecogida|narizYQuitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube)(?:[~@].*)?$/;
+  /^vuelo\.(?:quitaElGas|narizEnLaRecogida|narizYQuitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube|terrenoDelante|consejo\.\w+|paso\.\w+)(?:[~@].*)?$/;
 
 /**
  * Cuánto antes de la pista se deja de avisar del terreno, m.
@@ -6607,10 +6613,9 @@ export class Game {
     );
     /*
      * **Y la voz, solo con su grabación**: en el Brave de Enrique no hay voces
-     * del sistema, y una frase sin grabar es silencio —ver
-     * `PENDIENTE-VOCES-final.md`—. Mientras tanto la nariz la cuenta la
-     * tarjeta, con su dibujo; y el gas, si se pide, la frase de siempre, que
-     * sí está grabada: lo que ya sonaba no se calla.
+     * del sistema, y una frase sin grabar es silencio. Sin ella la nariz la
+     * cuenta la tarjeta, con su dibujo; y el gas, si se pide, la frase de
+     * siempre, que sí está grabada: lo que ya sonaba no se calla.
      */
     if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, "mando");
     else if (gas) this.instructor.decir(t("vuelo.quitaElGas"), "vuelo.quitaElGas", "mando");
@@ -7645,8 +7650,7 @@ export class Game {
        *
        * **Y la de la derecha, solo grabada.** Sin toma saldría por la voz del
        * navegador, que en muchas tabletas no suena: mejor callar ese tramo y
-       * que lo digan el dibujo y la raya que decir el lado contrario. Se
-       * graban el 6 de octubre; ver `PENDIENTE-VOCES-terreno.md`.
+       * que lo digan el dibujo y la raya que decir el lado contrario.
        */
       if (!conLado || this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
     });
@@ -7768,9 +7772,9 @@ export class Game {
      * se va, se felicita como cualquier frustrada. En el de cabina la decisión
      * es de quien vuela y no se dice nada: lo que suena es lo del avión.
      *
-     * La frase nueva está por grabar —ver `PENDIENTE-VOCES-frustrada.md`—:
-     * hasta entonces se ve, con su dibujo y su porqué, y la voz calla, que
-     * una frase sin grabar es muda en el navegador de quien más juega.
+     * Y la voz, solo con su grabación: sin ella se ve, con su dibujo y su
+     * porqué, que una frase sin grabar es muda en el navegador de quien
+     * más juega.
      */
     this.hechos.on("proponenIrseAlAire", ({ motivo }) => {
       this.apuntarCanto(`propone irse: ${motivo}`);
@@ -8820,9 +8824,8 @@ export class Game {
    * tierra el TCAS no pinta a nadie —es lo de verdad—, así que lo cuenta
    * quien reparte los turnos. Es información, no una autorización: la verde
    * llega igual cuando te toca. Solo con su grabación —una frase sin grabar
-   * es muda en el Brave de Enrique—; hasta entonces lo dice la tarjeta, con
-   * los aviones de delante dibujados y el número escrito. Ver
-   * `PENDIENTE-VOCES-tierra-2.md`.
+   * es muda en el Brave de Enrique—; sin ella lo dice la tarjeta, con los
+   * aviones de delante dibujados y el número escrito.
    */
   private decirLaFila(por: EsperaPor): void {
     const base = (por.numero ?? 2) >= 3 ? "torre.numeroTres" : "torre.numeroDos";
@@ -8848,32 +8851,20 @@ export class Game {
   }
 
   /**
-   * **El porqué en fraseología, si tiene la suya**, de Taguató para arriba:
-   * la fila con su número —«hold short of the runway, number two for
-   * departure»— y la estela —«hold short of the runway, caution wake
-   * turbulence»—. Se escriben siempre en la tira de la radio y suenan solo
-   * con su grabación; si no la tienen, `null`, y suena la de siempre de
-   * `HOLD_SHORT_POR`. «Caution wake turbulence» es la expresión de la OACI
-   * (Doc 4444, 12.3.4.19 e) y la secuencia de salida es información, no una
-   * autorización. Ver `PENDIENTE-VOCES-tierra-2.md`.
+   * **El porqué en fraseología de la fila y de la estela**, de Taguató para
+   * arriba, dicho y escrito también en la tira de la radio: la fila con su
+   * número —«hold short of the runway, number two for departure»— y la
+   * estela —«hold short of the runway, caution wake turbulence»—. La
+   * secuencia de salida es información, no una autorización (Doc 4444,
+   * 12.3.4.14 b), y «caution wake turbulence» es la expresión de la OACI
+   * (12.3.4.19 e). `null` si se espera por otra cosa: eso va por
+   * `HOLD_SHORT_POR`, sin tira.
    */
   private elPorqueEnRadio(por: EsperaPor, urgencia: Urgencia): string | null {
     if (por.porque !== "fila" && por.porque !== "estela") return null;
-    const yo = this.miIndicativo;
-    const habla = hablaDe(this.elCampo().escenario.aerodrome?.id);
-    const relleno = rellenoDe(yo);
-    const [base, dice] =
-      por.porque === "estela"
-        ? ["torre.holdShortWake", "hold short of the runway, caution wake turbulence"]
-        : (por.numero ?? 2) >= 3
-          ? ["torre.holdShortNumberThree", "hold short of the runway, number three for departure"]
-          : ["torre.holdShortNumberTwo", "hold short of the runway, number two for departure"];
-    const clave = comoSeDiceAqui(base, habla);
-    const texto = `${yo.dicho}, ${dice}`;
-    this.hud.radio(texto, undefined, true);
-    if (!this.instructor.vozDe(clave, relleno)) return null;
-    this.torre.decir(texto, clave, urgencia, relleno);
-    return clave;
+    const dice =
+      por.porque === "fila" ? holdShortEnLaFila(por.numero) : HOLD_SHORT_POR.estela;
+    return this.porRadio(dice, urgencia, undefined, true);
   }
 
   /**
@@ -9920,10 +9911,9 @@ export class Game {
         campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
       },
       /*
-       * **Y las formas de sentarse para despegar, solo las grabadas.** Están
-       * escritas y sin grabar hasta el 6 de octubre: mientras tanto suena la
-       * de siempre, y cada una entra en el sorteo el día que tenga su pieza.
-       * Ver `PENDIENTE-VOCES-megafonia.md`.
+       * **Y las formas de sentarse para despegar, solo las grabadas.** Cada
+       * una entra en el sorteo el día que tiene su pieza: una forma escrita
+       * y sin grabar no se sortea. Ver `unaForma` en `audio/variantes.ts`.
        */
       anuncio === "comandante.despegue" ? (id) => this.instructor.vozDe(id) !== null : undefined,
     );
@@ -11430,9 +11420,8 @@ export class Game {
    *    manda irse, uno se va, porque ella ve lo que desde la cabina no se ve.
    *    En el peldaño de cabina no: ahí no hay quien lo explique.
    *
-   * Nada se rompe ni se pinta de rojo. Las dos frases están sin grabar —ver
-   * `PENDIENTE-VOCES-torre-final.md` y `PENDIENTE-VOCES-final.md`— y suenan
-   * solo con su grabación; mientras tanto lo cuentan la tira de la radio y la
+   * Nada se rompe ni se pinta de rojo. Las dos frases suenan solo con su
+   * grabación; sin ella lo cuentan la tira de la radio y la
    * tarjeta de la frustrada, con su dibujo y el tono de atención.
    */
   private aterrizoContraLaOrden(): void {
@@ -11488,29 +11477,20 @@ export class Game {
    * De Taguató para arriba, en fraseología: «{matrícula}, expedite vacating»
    * (Doc 4444, 12.3.4.24), escrito en la tira de la radio. En los dos de
    * abajo, en castellano, como la lámpara: «{matrícula}, acelere abandono de
-   * pista». **Y solo con su grabación**: sin ella la frase sería muda en el
-   * navegador de quien más juega, y lo que queda es lo que se ve —la tira, y
-   * la tarjeta de salir de la pista, que sigue puesta—.
-   *
-   * La fraseología va montada aquí y no en `CLAVE_DE_TORRE` porque aquella
-   * tabla solo apunta a lo que ya está grabado, y lo comprueba su prueba. Al
-   * grabarla, va a la tabla y esto pasa a `porRadio`. Ver
-   * `PENDIENTE-VOCES-tierra-2.md`.
+   * pista». La de castellano, **solo con su grabación**: sin ella la frase
+   * sería muda en el navegador de quien más juega, y lo que queda es lo que
+   * se ve —la tarjeta de salir de la pista, que sigue puesta—.
    */
   private meterPrisaParaSalir(): void {
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) {
+      this.porRadio("expedite vacating", "mando", undefined, true);
+      return;
+    }
     const yo = this.miIndicativo;
     const habla = hablaDe(this.elCampo().escenario.aerodrome?.id);
     const relleno = rellenoDe(yo);
-    if (conCifras) {
-      const clave = comoSeDiceAqui("torre.expediteVacating", habla);
-      const texto = `${yo.dicho}, expedite vacating`;
-      this.hud.radio(texto, undefined, true);
-      if (this.instructor.vozDe(clave, relleno))
-        this.torre.decir(texto, clave, "mando", relleno);
-      return;
-    }
     const clave = comoSeDiceAqui("torre.acelereAbandono", habla) as TranslationKey;
     if (this.instructor.vozDe(clave, relleno))
       this.torre.decir(t(clave, { indicativo: yo.dicho }), clave, "mando", relleno);
@@ -11536,7 +11516,7 @@ export class Game {
    *   por la pista y damos la vuelta» o «vamos por la pista hasta el final», y
    *   con el porqué cuando el día lo cambia: «hoy hace calor» o «hoy el viento
    *   viene de atrás, y el avión necesita más pista». Solo con su grabación:
-   *   sin ella no suena —ver `PENDIENTE-VOCES-tierra-2.md`—, y se entiende
+   *   sin ella no suena, y se entiende
    *   igual con el lazo de la raya y la tarjeta de la media vuelta.
    * - **De Taguató para arriba, la radio**, escrita en su tira y en la
    *   fraseología de SERA (AMC1 SERA.14001, apéndice 1, 1.4.10) y de la OACI
@@ -13326,11 +13306,16 @@ export class Game {
       gravedadDelSuelo(terreno) > gravedadDelSuelo(this.terrenoDicho);
     if (terreno && terreno !== this.terrenoDicho && puedeAvisar) {
       this.terrenoDicho = terreno;
+      // Lo que se dice y lo que se lee, lo mismo.
+      const cual =
+        terreno === "sube"
+          ? "vuelo.terrenoSube"
+          : terreno === "monte"
+            ? "vuelo.terrenoDelante"
+            : "vuelo.terrenoBajo";
       this.hud.senal.mostrar(
         "terreno",
-        terreno === "sube"
-          ? this.rotulo("vuelo.terrenoSube", "palabra.subi")
-          : this.rotulo("vuelo.terrenoBajo", "palabra.subi"),
+        this.rotulo(cual, "palabra.subi"),
         null,
         // Por debajo del aviso de bulto: los dos saltan a la vez volando bajo
         // sobre la ciudad, y el que dice qué hacer es el que nombra el bulto.
@@ -13349,22 +13334,23 @@ export class Game {
        */
       this.avisar(terreno === "sube" ? "peligro" : "attention");
       // En inglés aeronáutico, como el resto de la voz de cabina.
-      const cual =
-        terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo";
-      if (terreno === "monte") {
+      if (terreno === "monte")
         /*
-         * **La precaución de delante, en ámbar y con calma.** Su canto de
-         * verdad es «caution terrain», y no está grabado: hasta el 6 de
-         * octubre la caja no lo dice —«too low» es otro aviso y enseñaría
-         * otra cosa— y en los peldaños de abajo lo cuenta la instructora,
-         * que es la explicación que iría detrás. Ver `PENDIENTE-VOCES-terreno.md`.
+         * **La precaución de delante, en ámbar y con calma**: «caution
+         * terrain», que no interrumpe —la ladera está a un minuto—, y en los
+         * peldaños de abajo la instructora detrás. «Too low» es otro aviso y
+         * enseñaría otra cosa.
          */
-        const explica = laInstructoraLoExplica(this.tier.avisos);
-        this.apuntarCanto(`caution terrain→${explica ? cual : "NADA"} (sin toma de cabina)`);
-        if (explica) this.instructor.decir(t(cual), cual, "mando");
-      } else
+        this.cantar("caution terrain", t(cual), cual);
+      // Y si el «sube» lo pide lo que ve por delante, la caja lo dice como lo
+      // dice ese modo: «terrain ahead».
+      else
         this.cantar(
-          terreno === "sube" ? "terrain, pull up" : "too low",
+          terreno !== "sube"
+            ? "too low"
+            : this.delante?.aviso === "aviso"
+              ? "terrain ahead, pull up"
+              : "terrain, pull up",
           t(cual),
           cual,
           // El único aviso que **interrumpe** en vez de informar. Ver `peligro`.
@@ -15448,7 +15434,7 @@ export class Game {
    * de la tarjeta, y no pasa a la voz del navegador: muda en Brave para Linux
    * y un robot en el resto, justo en lo que más importa de un ejercicio, que
    * es la calma. En cuanto la frase tenga receta en el pack, suena sin tocar
-   * nada. Ver `PENDIENTE-VOCES-emergencias.md`.
+   * nada. Ver `src/flight/ejercicios.ts`.
    */
   private decirDelEjercicio(clave: TranslationKey, peso: Urgencia): void {
     if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, peso);
@@ -17323,8 +17309,7 @@ export class Game {
    * - **La pieza se ilumina en su sitio**, que es el canal que está siempre.
    * - Sale la tarjeta con su dibujo —y la palabra o la frase, según el
    *   peldaño—, y tocarla abre la explicación entera.
-   * - Y la voz, cuando tenga su grabación. Hasta entonces calla. Ver
-   *   `PENDIENTE-VOCES-explicaciones.md`.
+   * - Y la voz, solo con su grabación: sin ella calla.
    *
    * Es una lección, no un aviso: espera hueco como `contarLasLucesDeNoche` y
    * cede la tarjeta a cualquier cosa que importe más. Lo que sale, la cuenta
@@ -20372,7 +20357,7 @@ export class Game {
      * los primeros flaps— lo dice la cadena del «¿y ahora qué?», con la marca
      * nueva en su objetivo: ver `seguirLaCadena`. Sustituye a las
      * `vuelo.velocidadTerminal` y `vuelo.velocidadAproximacion` que esperaban
-     * aquí: ver `PENDIENTE-VOCES-escalones.md`.
+     * aquí, y que ya no se graban.
      */
     this.velocidadDeAhora = v;
     this.velocidadDeAhoraEn = this.relojDelJuego;
@@ -21410,7 +21395,7 @@ export class Game {
    * enseña **esa misma**: si no, el cartel diría una cosa y la instructora
    * otra. Si no hay ninguna grabada que sirva, la tarjeta lleva la nueva y la
    * voz se calla: una frase sin grabar es muda en el navegador de quien más
-   * juega. Ver `PENDIENTE-VOCES-bajada.md`.
+   * juega.
    *
    * `ingles` es lo que suena en el peldaño de cabina, o la caja que acaba de
    * cantar y a la que esto explica. Ver `cantoDe` y `cantar`.
@@ -21847,7 +21832,7 @@ export class Game {
      * grabación; en el de cabina, la de la lista entera al leer el primero,
      * que es la grabada y la que dice de quién es cada cosa. Lo que no está
      * grabado se ve y no se oye: una frase sin grabar es muda en el navegador
-     * de quien más juega. Ver `PENDIENTE-VOCES-aterrizaje.md`.
+     * de quien más juega.
      */
     const lista = this.listaTrasLaToma?.lista.leidos ?? [];
     const clave: TranslationKey | null = canales.cabina
@@ -21939,7 +21924,7 @@ export class Game {
    *   la grabada que pide lo mismo, y la tarjeta enseña esa misma —si no, el
    *   cartel diría una cosa y la instructora otra—. Sin ninguna que sirva, la
    *   voz calla: una frase sin grabar es muda en el navegador de quien más
-   *   juega. Ver `PENDIENTE-VOCES-escalones.md`.
+   *   juega.
    * - **En el peldaño de cabina no explica nadie**, como en el resto del
    *   juego: ahí se lee la cabina. Solo el tren se canta, «gear down», que es
    *   lo que dice quien vuela en una de verdad y está grabado.
@@ -22340,7 +22325,7 @@ export class Game {
       null,
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
-    // Sin grabar todavía: se ve, y la voz calla. Ver PENDIENTE-VOCES-escalones.
+    // Sin su grabación se ve, y la voz calla.
     if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
   }
 
@@ -22846,7 +22831,7 @@ export class Game {
       { segundos: SE_QUEDA_EL_PERMISO, prioridad: URGENTE },
     );
     this.avisar("attention");
-    // Sin grabar todavía, muda: lo dice la tarjeta. Ver PENDIENTE-VOCES-final.md.
+    // Sin su grabación, muda: lo dice la tarjeta.
     if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, "urgente");
   }
 
@@ -23657,7 +23642,7 @@ export class Game {
    * Abre o cierra la tarjeta del avión que se vuela.
    *
    * Lo que cuenta lo dice la instructora, por su vía de siempre y con su
-   * clave: lo grabado suena y lo que no, no. Ver `PENDIENTE-VOCES-tarjeta.md`.
+   * clave: lo grabado suena y lo que no, no.
    */
   abrirLaTarjeta(): void {
     const raiz = document.getElementById("tarjeta-avion");

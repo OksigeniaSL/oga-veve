@@ -878,5 +878,563 @@
   ],
   "vuelo.aves.enUve": [
     "vuelo.aves.enUve"
+  ],
+  "circuito.cruzado.derecha": [
+    "circuito.cruzado.derecha"
+  ],
+  "circuito.encola.derecha": [
+    "circuito.encola.derecha"
+  ],
+  "ejercicio.antes-de-v1.antes": [
+    "ejercicio.antes-de-v1.antes"
+  ],
+  "ejercicio.bandera": [
+    "ejercicio.bandera"
+  ],
+  "ejercicio.banderaSola": [
+    "ejercicio.banderaSola"
+  ],
+  "ejercicio.bien": [
+    "ejercicio.bien"
+  ],
+  "ejercicio.bienDespresurizacion": [
+    "ejercicio.bienDespresurizacion"
+  ],
+  "ejercicio.bienParado": [
+    "ejercicio.bienParado"
+  ],
+  "ejercicio.bomberos": [
+    "ejercicio.bomberos"
+  ],
+  "ejercicio.bomberosFrenos": [
+    "ejercicio.bomberosFrenos"
+  ],
+  "ejercicio.bomberosUno": [
+    "ejercicio.bomberosUno"
+  ],
+  "ejercicio.cortar": [
+    "ejercicio.cortar"
+  ],
+  "ejercicio.declarar": [
+    "ejercicio.declarar"
+  ],
+  "ejercicio.despresurizacion.antes": [
+    "ejercicio.despresurizacion.antes"
+  ],
+  "ejercicio.despues-de-v1.antes": [
+    "ejercicio.despues-de-v1.antes"
+  ],
+  "ejercicio.enVuelo": [
+    "ejercicio.enVuelo"
+  ],
+  "ejercicio.otraVez": [
+    "ejercicio.otraVez"
+  ],
+  "ejercicio.paradoTrasV1": [
+    "ejercicio.paradoTrasV1"
+  ],
+  "ejercicio.paramos": [
+    "ejercicio.paramos"
+  ],
+  "ejercicio.pieDerecho": [
+    "ejercicio.pieDerecho"
+  ],
+  "ejercicio.pieIzquierdo": [
+    "ejercicio.pieIzquierdo"
+  ],
+  "ejercicio.planeo.antes": [
+    "ejercicio.planeo.antes"
+  ],
+  "ejercicio.seguidoAntesDeV1": [
+    "ejercicio.seguidoAntesDeV1"
+  ],
+  "ejercicio.seguimos": [
+    "ejercicio.seguimos"
+  ],
+  "ejercicio.simulador.antes": [
+    "ejercicio.simulador.antes"
+  ],
+  "ejercicio.un-motor.antes": [
+    "ejercicio.un-motor.antes"
+  ],
+  "ejercicio.velocidad": [
+    "ejercicio.velocidad"
+  ],
+  "explica.actitud.texto": [
+    "explica.actitud.texto"
+  ],
+  "explica.altitud.texto": [
+    "explica.altitud.texto"
+  ],
+  "explica.arco.presenta": [
+    "explica.arco.presenta"
+  ],
+  "explica.arco.texto": [
+    "explica.arco.texto"
+  ],
+  "explica.avisos.texto": [
+    "explica.avisos.texto"
+  ],
+  "explica.bomberos-y-aviones.texto": [
+    "explica.bomberos-y-aviones.texto"
+  ],
+  "explica.bomberos.texto": [
+    "explica.bomberos.texto"
+  ],
+  "explica.carta.texto": [
+    "explica.carta.texto"
+  ],
+  "explica.carta.tierra": [
+    "explica.carta.tierra"
+  ],
+  "explica.cinturon.texto": [
+    "explica.cinturon.texto"
+  ],
+  "explica.combustible.texto": [
+    "explica.combustible.texto"
+  ],
+  "explica.coordinador.texto": [
+    "explica.coordinador.texto"
+  ],
+  "explica.flaps.texto": [
+    "explica.flaps.texto"
+  ],
+  "explica.galones.texto": [
+    "explica.galones.texto"
+  ],
+  "explica.grado-aprendiz.texto": [
+    "explica.grado-aprendiz.texto"
+  ],
+  "explica.grado-comandante.texto": [
+    "explica.grado-comandante.texto"
+  ],
+  "explica.grado-instructora.texto": [
+    "explica.grado-instructora.texto"
+  ],
+  "explica.grado-piloto.texto": [
+    "explica.grado-piloto.texto"
+  ],
+  "explica.gs-rodaje.presenta": [
+    "explica.gs-rodaje.presenta"
+  ],
+  "explica.gs-rodaje.texto": [
+    "explica.gs-rodaje.texto"
+  ],
+  "explica.hoja.texto": [
+    "explica.hoja.texto"
+  ],
+  "explica.mascaras.texto": [
+    "explica.mascaras.texto"
+  ],
+  "explica.matricula.texto": [
+    "explica.matricula.texto"
+  ],
+  "explica.mesitas.texto": [
+    "explica.mesitas.texto"
+  ],
+  "explica.modo-avion.texto": [
+    "explica.modo-avion.texto"
+  ],
+  "explica.motor.texto": [
+    "explica.motor.texto"
+  ],
+  "explica.no-fumar.texto": [
+    "explica.no-fumar.texto"
+  ],
+  "explica.persianas.texto": [
+    "explica.persianas.texto"
+  ],
+  "explica.presurizacion.texto": [
+    "explica.presurizacion.texto"
+  ],
+  "explica.rumbo.texto": [
+    "explica.rumbo.texto"
+  ],
+  "explica.senda.presenta": [
+    "explica.senda.presenta"
+  ],
+  "explica.senda.texto": [
+    "explica.senda.texto"
+  ],
+  "explica.sin-instructora.texto": [
+    "explica.sin-instructora.texto"
+  ],
+  "explica.tc.presenta": [
+    "explica.tc.presenta"
+  ],
+  "explica.tc.texto": [
+    "explica.tc.texto"
+  ],
+  "explica.tcas.texto": [
+    "explica.tcas.texto"
+  ],
+  "explica.td.presenta": [
+    "explica.td.presenta"
+  ],
+  "explica.td.texto": [
+    "explica.td.texto"
+  ],
+  "explica.tren.texto": [
+    "explica.tren.texto"
+  ],
+  "explica.variometro.texto": [
+    "explica.variometro.texto"
+  ],
+  "explica.velocidad.texto": [
+    "explica.velocidad.texto"
+  ],
+  "explica.video-seguridad.texto": [
+    "explica.video-seguridad.texto"
+  ],
+  "motivo.alto": [
+    "motivo.alto"
+  ],
+  "motivo.bajo": [
+    "motivo.bajo"
+  ],
+  "motivo.sinConfigurar": [
+    "motivo.sinConfigurar"
+  ],
+  "parte.esperamos.voz": [
+    "parte.esperamos.voz"
+  ],
+  "parte.ganaste": [
+    "parte.ganaste"
+  ],
+  "parte.propone.cruzado": [
+    "parte.propone.cruzado"
+  ],
+  "parte.propone.pista": [
+    "parte.propone.pista"
+  ],
+  "parte.propone.techo": [
+    "parte.propone.techo"
+  ],
+  "parte.propone.tormenta": [
+    "parte.propone.tormenta"
+  ],
+  "parte.propone.visibilidad": [
+    "parte.propone.visibilidad"
+  ],
+  "parte.salgoIgual.voz": [
+    "parte.salgoIgual.voz"
+  ],
+  "parte.sigueIgual.voz": [
+    "parte.sigueIgual.voz"
+  ],
+  "parte.yaSePuede.voz": [
+    "parte.yaSePuede.voz"
+  ],
+  "pitot.abortado": [
+    "pitot.abortado"
+  ],
+  "pitot.enElAire": [
+    "pitot.enElAire"
+  ],
+  "pitot.noMarca": [
+    "pitot.noMarca"
+  ],
+  "tarjeta.voz.aerofrenos": [
+    "tarjeta.voz.aerofrenos"
+  ],
+  "tarjeta.voz.alerones": [
+    "tarjeta.voz.alerones"
+  ],
+  "tarjeta.voz.flaps": [
+    "tarjeta.voz.flaps"
+  ],
+  "tarjeta.voz.luces": [
+    "tarjeta.voz.luces"
+  ],
+  "tarjeta.voz.luzAterrizaje": [
+    "tarjeta.voz.luzAterrizaje"
+  ],
+  "tarjeta.voz.luzBaliza": [
+    "tarjeta.voz.luzBaliza"
+  ],
+  "tarjeta.voz.luzEstrobos": [
+    "tarjeta.voz.luzEstrobos"
+  ],
+  "tarjeta.voz.matricula": [
+    "tarjeta.voz.matricula"
+  ],
+  "tarjeta.voz.motorPiston": [
+    "tarjeta.voz.motorPiston"
+  ],
+  "tarjeta.voz.motorRadial": [
+    "tarjeta.voz.motorRadial"
+  ],
+  "tarjeta.voz.pitot": [
+    "tarjeta.voz.pitot"
+  ],
+  "tarjeta.voz.pitotMorro": [
+    "tarjeta.voz.pitotMorro"
+  ],
+  "tarjeta.voz.profundidad": [
+    "tarjeta.voz.profundidad"
+  ],
+  "tarjeta.voz.reactor": [
+    "tarjeta.voz.reactor"
+  ],
+  "tarjeta.voz.timon": [
+    "tarjeta.voz.timon"
+  ],
+  "tarjeta.voz.tren": [
+    "tarjeta.voz.tren"
+  ],
+  "tarjeta.voz.trenFijo": [
+    "tarjeta.voz.trenFijo"
+  ],
+  "tarjeta.voz.turbohelice": [
+    "tarjeta.voz.turbohelice"
+  ],
+  "vuelo.aterrizasteContraLaOrden": [
+    "vuelo.aterrizasteContraLaOrden"
+  ],
+  "vuelo.backTaxiUnTrecho": [
+    "vuelo.backTaxiUnTrecho"
+  ],
+  "vuelo.consejo.aerofrenos": [
+    "vuelo.consejo.aerofrenos"
+  ],
+  "vuelo.consejo.aerofrenosPerfil": [
+    "vuelo.consejo.aerofrenosPerfil"
+  ],
+  "vuelo.consejo.masGas": [
+    "vuelo.consejo.masGas"
+  ],
+  "vuelo.consejo.masGasPapi": [
+    "vuelo.consejo.masGasPapi"
+  ],
+  "vuelo.consejo.masGasPerfil": [
+    "vuelo.consejo.masGasPerfil"
+  ],
+  "vuelo.consejo.masGasSenda": [
+    "vuelo.consejo.masGasSenda"
+  ],
+  "vuelo.consejo.masGasSuave": [
+    "vuelo.consejo.masGasSuave"
+  ],
+  "vuelo.consejo.menosGas": [
+    "vuelo.consejo.menosGas"
+  ],
+  "vuelo.consejo.menosGasPapi": [
+    "vuelo.consejo.menosGasPapi"
+  ],
+  "vuelo.consejo.menosGasPerfil": [
+    "vuelo.consejo.menosGasPerfil"
+  ],
+  "vuelo.consejo.menosGasSenda": [
+    "vuelo.consejo.menosGasSenda"
+  ],
+  "vuelo.consejo.narizAbajoMarca": [
+    "vuelo.consejo.narizAbajoMarca"
+  ],
+  "vuelo.consejo.narizAbajoPapi": [
+    "vuelo.consejo.narizAbajoPapi"
+  ],
+  "vuelo.consejo.narizAbajoPerfil": [
+    "vuelo.consejo.narizAbajoPerfil"
+  ],
+  "vuelo.consejo.narizAbajoSenda": [
+    "vuelo.consejo.narizAbajoSenda"
+  ],
+  "vuelo.consejo.narizArribaMarca": [
+    "vuelo.consejo.narizArribaMarca"
+  ],
+  "vuelo.consejo.narizArribaPapi": [
+    "vuelo.consejo.narizArribaPapi"
+  ],
+  "vuelo.consejo.narizArribaRitmo": [
+    "vuelo.consejo.narizArribaRitmo"
+  ],
+  "vuelo.consejo.narizArribaSenda": [
+    "vuelo.consejo.narizArribaSenda"
+  ],
+  "vuelo.consejo.narizArribaSuave": [
+    "vuelo.consejo.narizArribaSuave"
+  ],
+  "vuelo.consejo.nivelarPerfil": [
+    "vuelo.consejo.nivelarPerfil"
+  ],
+  "vuelo.desdeLaInterseccion": [
+    "vuelo.desdeLaInterseccion"
+  ],
+  "vuelo.despues.aerofrenos": [
+    "vuelo.despues.aerofrenos"
+  ],
+  "vuelo.despues.luces": [
+    "vuelo.despues.luces"
+  ],
+  "vuelo.despues.transpondedor": [
+    "vuelo.despues.transpondedor"
+  ],
+  "vuelo.esperaLaEstela": [
+    "vuelo.esperaLaEstela"
+  ],
+  "vuelo.esperaTurnoDeSalida": [
+    "vuelo.esperaTurnoDeSalida"
+  ],
+  "vuelo.narizEnLaRecogida": [
+    "vuelo.narizEnLaRecogida"
+  ],
+  "vuelo.narizYQuitaElGas": [
+    "vuelo.narizYQuitaElGas"
+  ],
+  "vuelo.paso.acelerarGas": [
+    "vuelo.paso.acelerarGas"
+  ],
+  "vuelo.paso.acelerarNariz": [
+    "vuelo.paso.acelerarNariz"
+  ],
+  "vuelo.paso.bajar": [
+    "vuelo.paso.bajar"
+  ],
+  "vuelo.paso.bajarConAutomatico": [
+    "vuelo.paso.bajarConAutomatico"
+  ],
+  "vuelo.paso.cotaAlMar": [
+    "vuelo.paso.cotaAlMar"
+  ],
+  "vuelo.paso.cotaEnAlto": [
+    "vuelo.paso.cotaEnAlto"
+  ],
+  "vuelo.paso.crucero": [
+    "vuelo.paso.crucero"
+  ],
+  "vuelo.paso.cruceroConAutomatico": [
+    "vuelo.paso.cruceroConAutomatico"
+  ],
+  "vuelo.paso.cruceroConGases": [
+    "vuelo.paso.cruceroConGases"
+  ],
+  "vuelo.paso.flaps1": [
+    "vuelo.paso.flaps1"
+  ],
+  "vuelo.paso.flaps2": [
+    "vuelo.paso.flaps2"
+  ],
+  "vuelo.paso.flaps3": [
+    "vuelo.paso.flaps3"
+  ],
+  "vuelo.paso.frenarAerofrenos": [
+    "vuelo.paso.frenarAerofrenos"
+  ],
+  "vuelo.paso.frenarGas": [
+    "vuelo.paso.frenarGas"
+  ],
+  "vuelo.paso.frenarNariz": [
+    "vuelo.paso.frenarNariz"
+  ],
+  "vuelo.paso.gasTuyo": [
+    "vuelo.paso.gasTuyo"
+  ],
+  "vuelo.paso.mantener": [
+    "vuelo.paso.mantener"
+  ],
+  "vuelo.paso.marcaDelAutomatico": [
+    "vuelo.paso.marcaDelAutomatico"
+  ],
+  "vuelo.paso.nivelar": [
+    "vuelo.paso.nivelar"
+  ],
+  "vuelo.paso.recogerAerofrenos": [
+    "vuelo.paso.recogerAerofrenos"
+  ],
+  "vuelo.paso.senda": [
+    "vuelo.paso.senda"
+  ],
+  "vuelo.paso.sendaConAyuda": [
+    "vuelo.paso.sendaConAyuda"
+  ],
+  "vuelo.paso.sendaConGases": [
+    "vuelo.paso.sendaConGases"
+  ],
+  "vuelo.paso.subir": [
+    "vuelo.paso.subir"
+  ],
+  "vuelo.paso.tren": [
+    "vuelo.paso.tren"
+  ],
+  "vuelo.proponeIrse": [
+    "vuelo.proponeIrse"
+  ],
+  "vuelo.proponeIrseSinPista": [
+    "vuelo.proponeIrseSinPista"
+  ],
+  "vuelo.remontar.calor": [
+    "vuelo.remontar.calor"
+  ],
+  "vuelo.remontar.cola": [
+    "vuelo.remontar.cola"
+  ],
+  "vuelo.remontar": [
+    "vuelo.remontar"
+  ],
+  "vuelo.remontarUnTrecho.calor": [
+    "vuelo.remontarUnTrecho.calor"
+  ],
+  "vuelo.remontarUnTrecho.cola": [
+    "vuelo.remontarUnTrecho.cola"
+  ],
+  "vuelo.remontarUnTrecho": [
+    "vuelo.remontarUnTrecho"
+  ],
+  "vuelo.sinInstructora.no": [
+    "vuelo.sinInstructora.no"
+  ],
+  "vuelo.sinInstructora.pregunta": [
+    "vuelo.sinInstructora.pregunta"
+  ],
+  "vuelo.sinInstructora.si": [
+    "vuelo.sinInstructora.si"
+  ],
+  "vuelo.terrenoDelante": [
+    "vuelo.terrenoDelante"
+  ],
+  "vuelo.tomaLarga": [
+    "vuelo.tomaLarga"
+  ],
+  "vuelo.tomaLargaSinPista": [
+    "vuelo.tomaLargaSinPista"
+  ],
+  "vuelta.aceite.voz": [
+    "vuelta.aceite.voz"
+  ],
+  "vuelta.calzos.voz": [
+    "vuelta.calzos.voz"
+  ],
+  "vuelta.combustible.voz": [
+    "vuelta.combustible.voz"
+  ],
+  "vuelta.empezar": [
+    "vuelta.empezar"
+  ],
+  "vuelta.entera": [
+    "vuelta.entera"
+  ],
+  "vuelta.frenos.voz": [
+    "vuelta.frenos.voz"
+  ],
+  "vuelta.helice.voz": [
+    "vuelta.helice.voz"
+  ],
+  "vuelta.luces.voz": [
+    "vuelta.luces.voz"
+  ],
+  "vuelta.motores.voz": [
+    "vuelta.motores.voz"
+  ],
+  "vuelta.pitot.voz": [
+    "vuelta.pitot.voz"
+  ],
+  "vuelta.puertas.voz": [
+    "vuelta.puertas.voz"
+  ],
+  "vuelta.sondas.voz": [
+    "vuelta.sondas.voz"
+  ],
+  "vuelta.superficies.voz": [
+    "vuelta.superficies.voz"
   ]
 }

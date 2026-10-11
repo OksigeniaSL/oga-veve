@@ -497,6 +497,8 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   ["vuelo.terrenoSube", "vuelo.papiBajo"],
   ["vuelo.terrenoBajo", "vuelo.aroBajo"],
   ["vuelo.terrenoBajo", "vuelo.papiBajo"],
+  ["vuelo.terrenoDelante", "vuelo.aroBajo"],
+  ["vuelo.terrenoDelante", "vuelo.papiBajo"],
   // Y en una frustrada, lo que hay que hacer es irse: que la senda diga que
   // venías bajo ya no describe nada.
   ["vuelo.mandanFrustrar", "vuelo.papiBajo"],

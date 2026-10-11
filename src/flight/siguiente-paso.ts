@@ -546,9 +546,8 @@ export interface ComoVa {
 /** Lo que se dice y se dibuja con un paso. */
 export interface FraseDelPaso {
   /**
-   * **La frase nueva**, que nombra la acción y el objetivo. Sin grabar
-   * todavía: ver `PENDIENTE-VOCES-escalones.md`. Se dice en cuanto tenga su
-   * grabación; hasta entonces, `grabada`.
+   * **La frase nueva**, que nombra la acción y el objetivo. Se dice si
+   * tiene su grabación; si no, `grabada`.
    */
   readonly nueva: string;
   /**

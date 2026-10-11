@@ -48,6 +48,13 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   ten: "cabina.ten",
   // Los avisos que no se pueden desoír.
   "terrain, pull up": "cabina.terrainPullUp",
+  /*
+   * Y los del avisador que mira delante (FLTA), que no son el de debajo: la
+   * precaución, en ámbar, con la ladera a cuarenta o sesenta segundos, y el
+   * aviso, con ella a veinte o treinta. Ver `flight/terreno-delante.ts`.
+   */
+  "caution terrain": "cabina.cautionTerrain",
+  "terrain ahead, pull up": "cabina.terrainAheadPullUp",
   "too low": "cabina.tooLow",
   "too low, climb": "cabina.tooLowClimb",
   "too high, come down": "cabina.tooHighComeDown",
@@ -125,12 +132,12 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    */
   cabin: "cabina.cabin",
   /*
-   * **Y los dos de un motor que falla en el despegue** —*engine failure* y,
-   * antes de V1, *stop*— entran aquí con su toma: esta tabla no apunta a
-   * grabaciones que no existen. Están pedidos en `frases-para-grabar.mjs`
-   * (`cabina.engineFailure` y `cabina.stop`) y, hasta tenerlos, no suenan:
-   * se quedan en la tarjeta. Ver `cantarDelEjercicio` en `game.ts`.
+   * **Y los dos de un motor que falla en el despegue**: *engine failure*, que
+   * lo canta quien lo ve, y antes de V1 *stop*, que manda parar. Ver
+   * `cantarDelEjercicio` en `game.ts` y el ADR 0014.
    */
+  "engine failure": "cabina.engineFailure",
+  stop: "cabina.stop",
 };
 
 /**
@@ -186,6 +193,9 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   "cabina.minimums",
   // El avisador de terreno, con sus cuatro modos que el juego calcula.
   "cabina.terrainPullUp",
+  // Y lo que ve por delante: su precaución y su aviso.
+  "cabina.cautionTerrain",
+  "cabina.terrainAheadPullUp",
   "cabina.tooLow",
   "cabina.sinkRate",
   "cabina.bankAngle",

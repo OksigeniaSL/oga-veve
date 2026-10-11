@@ -310,6 +310,21 @@
     }
   },
   {
+    "id": "vuelo.terrenoDelante",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Adelante hay una montaña más alta que nosotros: subí",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Adelante hay una montaña más alta que nosotros: subí.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "vuelo.perdida",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -603,13 +618,6 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
-    "id": "vuelo.sinPermisoEnLosMinimos",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "La torre no te dio permiso para aterrizar. Sin permiso no se aterriza: subí y volvé por el circuito",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
-  },
-  {
     "id": "vuelo.puedeVolver",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -789,7 +797,14 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Un poquito más de gas, hasta la marca rosa. La nariz, quieta.",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.consejo.menosGas",
@@ -831,14 +846,28 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.consejo.narizArribaSuave",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Nariz un poquito arriba, para bajar más suave.",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.consejo.aerofrenos",
@@ -915,14 +944,28 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Bajamos muy de golpe: un toque de gas, para bajar más suave.",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.consejo.narizAbajoMarca",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.consejo.narizArribaMarca",
@@ -1293,7 +1336,8 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Y el transpondedor: pongo el TCAS en espera.",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Y el transpondedor: pongo el ti-cas en espera."
   },
   {
     "id": "vuelo.meteElTren",
@@ -2466,294 +2510,853 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "IAS es la velocidad del aire que pasa por el ala, en nudos. El ala sostiene al avión solo si el aire pasa rápido: si vas muy despacio deja de sostener, y si vas muy rápido el avión sufre. Lo bueno es quedarse en el verde. Se mide con un tubito que mira para adelante: el pitot.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "ai-ei-es es la velocidad del aire que pasa por el ala, en nudos. El ala sostiene al avión solo si el aire pasa rápido: si vas muy despacio deja de sostener, y si vas muy rápido el avión sufre. Lo bueno es quedarse en el verde. Se mide con un tubito que mira para adelante: el pitot.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.altitud.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "ALT es la altitud: a cuántos pies sobre el mar vas. Mil pies son unos trescientos metros. El altímetro no mira el suelo: mide cuánto pesa el aire que tenés encima, que arriba pesa menos. Por eso hay que ponerle la presión del día. La marca rosa es la altura que le pediste al avión.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "alt es la altitud: a cuántos pies sobre el mar vas. Mil pies son unos trescientos metros. El altímetro no mira el suelo: mide cuánto pesa el aire que tenés encima, que arriba pesa menos. Por eso hay que ponerle la presión del día. La marca rosa es la altura que le pediste al avión.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.rumbo.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "HDG es el rumbo: para dónde apunta la nariz del avión, en grados, como en una brújula. El norte es 360, el este 90, el sur 180 y el oeste 270. Las pistas se llaman por su rumbo: la pista 03 apunta a 30 grados.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "heading es el rumbo: para dónde apunta la nariz del avión, en grados, como en una brújula. El norte es 360, el este 90, el sur 180 y el oeste 270. Las pistas se llaman por su rumbo: la pista cero tres apunta a 30 grados.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.actitud.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Es el horizonte artificial. Lo azul es el cielo y lo marrón, la tierra; el avioncito amarillo del medio sos vos. Si el azul baja, la nariz sube; si se inclina, estás virando. Sirve para volar derecho aunque afuera no se vea nada, dentro de una nube.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.variometro.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "V/S dice si el avión sube o baja, y qué tan rápido, en pies por minuto. Arriba es subir, abajo es bajar, y en el medio el avión va nivelado.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "vi-es dice si el avión sube o baja, y qué tan rápido, en pies por minuto. Arriba es subir, abajo es bajar, y en el medio el avión va nivelado.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.coordinador.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "El avioncito se inclina cuando virás, y dice qué tan rápido gira el avión. La bolita de abajo dice si el viraje va limpio: si se va para un lado, se la vuelve al medio con el pedal de ese lado.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.motor.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Cuánta fuerza hace el motor. En los de hélice se mide en vueltas por minuto, RPM; en los reactores, en lo rápido que gira el ventilador de adelante, N1. Más motor es ir más rápido o subir; menos motor, ir más despacio o bajar. En un reactor la aguja tarda unos segundos en llegar a lo que pediste: un motor grande no se apura.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "Cuánta fuerza hace el motor. En los de hélice se mide en vueltas por minuto, ar-pi-em; en los reactores, en lo rápido que gira el ventilador de adelante, en uan. Más motor es ir más rápido o subir; menos motor, ir más despacio o bajar. En un reactor la aguja tarda unos segundos en llegar a lo que pediste: un motor grande no se apura.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.flaps.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Los flaps son la parte de atrás del ala, que sale para abajo. Hacen el ala más grande y más curva, y así sostiene al avión yendo más despacio. Se sacan para despegar y para aterrizar, y en el crucero se guardan, porque también frenan.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.tren.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Las luces del tren. Verde quiere decir rueda abajo y trabada, lista para tocar el suelo. Después de despegar las ruedas se guardan, porque afuera frenan el aire. Antes de aterrizar siempre se mira: tres verdes.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.combustible.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Cuánto combustible queda. En casi todos los aviones va dentro de las alas. La franja ámbar es la reserva: lo que se guarda siempre por si hay que esperar o ir a otro aeropuerto. Para llegar, nunca se cuenta con la reserva.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.presurizacion.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Allá arriba el aire es tan finito que no alcanza para respirar bien. Por eso el avión mete aire en la cabina y la infla un poco, como un globo: adentro es como estar en un cerro alto, a dos mil cuatrocientos metros como mucho, aunque afuera vayas a más de diez mil. CAB ALT dice a qué altura está la cabina.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "Allá arriba el aire es tan finito que no alcanza para respirar bien. Por eso el avión mete aire en la cabina y la infla un poco, como un globo: adentro es como estar en un cerro alto, a dos mil cuatrocientos metros como mucho, aunque afuera vayas a más de diez mil. cab alt dice a qué altura está la cabina.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.avisos.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Se encienden cuando algo pide que lo mires. Ámbar quiere decir cuidado; rojo, que hay que hacer algo ya. Y siempre en el mismo orden: primero se vuela el avión, después se mira qué pasa.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "explica.matricula.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Es el nombre del avión, como la chapa de un auto. Las primeras letras dicen de qué país es: ZP es Paraguay. La torre te llama por estas letras, cada una con su palabra de radio: Zulu, Papa… Por eso va a la vista, para saber que te hablan a vos.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "Es el nombre del avión, como la chapa de un auto. Las primeras letras dicen de qué país es: zeta pe es Paraguay. La torre te llama por estas letras, cada una con su palabra de radio: Zulu, Papa… Por eso va a la vista, para saber que te hablan a vos.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.carta.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Es la pantalla del mapa. El triángulo amarillo sos vos, y lo de arriba es lo que tenés adelante. La línea rosa es el camino del plan de vuelo. Los rombos son otros aviones: el TCAS solo te enseña a los que vuelan cerca de tu altura. Los que van mucho más arriba o más abajo no salen, aunque los veas por la ventanilla.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "Es la pantalla del mapa. El triángulo amarillo sos vos, y lo de arriba es lo que tenés adelante. La línea rosa es el camino del plan de vuelo. Los rombos son otros aviones: el ti-cas solo te enseña a los que vuelan cerca de tu altura. Los que van mucho más arriba o más abajo no salen, aunque los veas por la ventanilla.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.carta.tierra",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice TCAS STBY: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "En el suelo el radar de tráfico descansa; lo que hay en la pista te lo dice la torre. Por eso la pantalla dice ti-cas standby: el equipo espera. Se pone a trabajar en el punto de espera, antes de entrar a la pista, y mientras tanto lo que rueda se mira por la ventanilla.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.tcas.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    },
+    "dicho": "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el ti-cas avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: más diez es mil pies más arriba, y menos cero cinco, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el ti-cas está en ti-ei only y solo avisa."
   },
   {
     "id": "explica.arco.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Este arco verde dice dónde vas a llegar a la altura que pediste, si seguís subiendo o bajando como ahora. Si cae antes de la pista, llegás abajo con tiempo; si cae después, no te da: hay que bajar más rápido o empezar antes.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.arco.presenta",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "¿Ves el arco verde en el mapa? Ahí vamos a llegar a la altura que pedimos.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.td.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "T/D quiere decir top of descent, lo alto de la bajada: acá empezamos a bajar. Desde este círculo verde, bajando tranquilos, se llega a la pista a la altura justa.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "ti-di quiere decir top of descent, lo alto de la bajada: acá empezamos a bajar. Desde este círculo verde, bajando tranquilos, se llega a la pista a la altura justa.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.td.presenta",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Mirá el círculo verde en el mapa: acá empezamos a bajar.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.tc.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "T/C quiere decir top of climb, lo alto de la subida: acá terminamos de subir. Desde este círculo verde el avión va nivelado, en el crucero, hasta el T/D.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "ti-si quiere decir top of climb, lo alto de la subida: acá terminamos de subir. Desde este círculo verde el avión va nivelado, en el crucero, hasta el ti-di.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.tc.presenta",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Ese círculo verde del mapa es donde terminamos de subir.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.senda.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "El rombo dice dónde está la senda, la rampa invisible que baja hasta la pista. Si el rombo está abajo, vas alto: bajá un poco más. Si está arriba, vas bajo. Se vuela hacia el rombo, hasta tenerlo en el medio.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.senda.presenta",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.gs-rodaje.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "dicho": "yi-es es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.gs-rodaje.presenta",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.grado-aprendiz.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.grado-piloto.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Piloto es quien ya despega y aterriza. El avión lo llevás vos, del puesto al puesto, y la instructora te ayuda cuando hace falta.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.grado-comandante.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Comandante no quiere decir que mandás: quiere decir que respondés por el avión y por todos los que van a bordo. Para llegar hay que haberse ido al aire alguna vez, porque saber cuándo no aterrizar es lo que cuida a todos. Por eso, con este grado podés volar sin instructora.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.grado-instructora.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Instructora es quien sabe tanto que puede enseñarle a otro. Responde por su avión y, además, por lo que aprende quien vuela a su lado.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.sin-instructora.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Volás sin instructora porque ya sabés cuidarte. Ella se queda callada y solo habla si hay peligro: el suelo cerca, otro avión, una pérdida, una orden de la torre o una frustrada que hace falta. La torre y la voz del avión siguen igual. Para elegirlo hay que ser comandante.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.galones.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Las barras de la manga dicen tu grado, como en cualquier línea aérea: una, quien aprende; dos, la segunda oficial; tres, la primera oficial, que ya lleva el avión; y cuatro, la comandante. Cuatro barras no quieren decir que manda más: quieren decir que responde por todos los que van a bordo. Lo que hiciste bien en cada vuelo no va en la manga: lo marca la instructora en su hoja, con un visto.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.hoja.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.persianas.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Para despegar y para aterrizar, las persianas de las ventanillas van subidas, y de noche se bajan las luces de la cabina. Así se ve afuera si pasa algo, y los ojos ya están acostumbrados a la luz de afuera si hubiera que salir. En algunos aviones nuevos, la tripulación aclara todas las ventanillas a la vez.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.video-seguridad.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Antes de despegar, la tripulación enseña dónde están las salidas, cómo se abrocha el cinturón, el chaleco y las máscaras. Aunque vueles seguido, se mira siempre: cada avión es distinto, y la salida más cerca puede estar detrás tuyo.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.mascaras.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Si la cabina pierde el aire, caen máscaras del techo. Primero te ponés la tuya y después ayudás a quien está al lado, aunque sea un niño: sin aire no podrías ayudar a nadie. El oxígeno sale aunque la bolsita no se infle, y el avión baja enseguida adonde se respira bien.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "explica.no-fumar.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "En el avión no se fuma, tampoco con cigarrillo electrónico, y menos en el baño: un fuego en el aire es de lo más peligroso que hay. Por eso los baños tienen detector de humo.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.cinturon.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Aunque la luz del cinturón esté apagada, sentado se lleva puesto, flojito. A veces el aire se mueve de golpe sin avisar, con el cielo despejado, y el cinturón es lo que te deja en tu asiento.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.mesitas.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Para despegar y para aterrizar, la mesita guardada y el respaldo derecho. Así nadie se golpea si el avión frena fuerte, y el pasillo hasta la salida queda libre por si hubiera que salir rápido.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.modo-avion.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "El celular, en modo avión. Su radio buscando señal se cuela en los auriculares de los pilotos como un zumbido, justo cuando escuchan a la torre. Y allá arriba no hay señal: el celular gasta la batería buscándola.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.bomberos.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Cada aeropuerto tiene bomberos preparados para el avión más grande que recibe: cuanto más largo y más ancho es el avión, más agua, más espuma y más camiones hacen falta. Este avión es más grande de lo que pueden atender acá, así que no viene: si algo pasara, no habría con qué ayudarlo bien. Por eso cada aeropuerto dice su categoría, del 1 al 10, y cada avión va adonde lo pueden cuidar.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   },
   {
     "id": "explica.bomberos-y-aviones.texto",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "A algunos aeropuertos solo van aviones chicos. Muchas veces es por la pista, y a veces por los bomberos. A La Gomera, en Canarias, Binter va con el ATR, un avión de hélice de veintisiete metros. Binter tiene también reactores de cuarenta y un metros y medio —uno hasta se llama «La Gomera»—, y no los lleva allí: los bomberos de La Gomera son de la categoría 5, preparados para aviones de hasta veintiocho metros, y esos reactores piden por lo menos la 6. Un aeropuerto se prepara para los aviones que recibe, y así cada avión va adonde lo pueden cuidar.",
-    "para": "lo que explica tocar una pieza del cuadro"
+    "para": "lo que explica tocar una pieza del cuadro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelta.empezar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Antes de volar, damos la vuelta al avión. Tocá lo que brilla.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.entera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Vuelta lista! El avión está para volar.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.pitot.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta funda roja tapa el pitot mientras el avión está guardado. Hay que sacarla: sin ella fuera, el avión no sabe a qué velocidad va.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.sondas.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estas son las sondas que miden la velocidad. Se les saca la funda y se mira que estén sanas y limpias.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.superficies.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los timones de la cola tienen que moverse libres, sin nada que los trabe.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.calzos.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los calzos son las cuñas que no dejan rodar al avión. Se sacan, y se mira que la rueda esté bien inflada.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.frenos.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En cada rueda se mira la goma y el freno. Este pernito, mientras asome, dice que al freno todavía le queda.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.combustible.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Por esta boca se mira cuánto combustible hay. Y con el vasito se saca un poco de abajo: tiene que salir azul y sin agua.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.aceite.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con la varilla se mira el aceite del motor: tiene que llegar entre las dos rayas.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.helice.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La hélice se mira sin tocarla de más: que no tenga mellas ni golpes. Y nunca se para uno delante de ella.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.motores.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se mira la boca del motor y la salida de atrás: que no haya nada adentro, ni un pájaro ni un trapo.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.puertas.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Las puertas y las tapas que no se usan tienen que estar bien cerradas antes de salir.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "vuelta.luces.voz",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se prenden las luces y se mira que anden todas: la roja a la izquierda, la verde a la derecha y la blanca atrás.",
+    "para": "la vuelta al avión antes de volar"
+  },
+  {
+    "id": "parte.propone.tormenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hay tormenta encima del campo. Debajo de una tormenta el viento cambia de golpe, y a una tormenta no se entra: mejor quedarnos, o esperar a que pase.",
+    "para": "por qué hoy mejor no salir, con el parte"
+  },
+  {
+    "id": "parte.propone.visibilidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy se ve menos de lo mínimo para este avión. Sin ver, no podríamos volver a encontrar la pista si hiciera falta: mejor quedarnos, o esperar a que abra.",
+    "para": "por qué hoy mejor no salir, con el parte"
+  },
+  {
+    "id": "parte.propone.techo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Las nubes están más bajas que el mínimo de este avión. Allá arriba nos meteríamos en ellas y no veríamos la pista para volver: mejor quedarnos, o esperar a que suban.",
+    "para": "por qué hoy mejor no salir, con el parte"
+  },
+  {
+    "id": "parte.propone.cruzado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy el viento de costado es más fuerte que el que se probó en este avión. Con más viento de costado del que se probó, no sabemos cómo se porta al tocar el suelo: mejor quedarnos, o esperar a que afloje.",
+    "para": "por qué hoy mejor no salir, con el parte"
+  },
+  {
+    "id": "parte.propone.pista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy este avión necesita más pista de la que hay, con el margen que pide su manual. Sin margen no se sale: mejor quedarnos, o esperar a que refresque o cambie el viento.",
+    "para": "por qué hoy mejor no salir, con el parte"
+  },
+  {
+    "id": "tarjeta.voz.alerones",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estos son los alerones. Cuando movés la palanca a un costado, uno sube y el otro baja, y el avión se inclina para girar.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.profundidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el timón de profundidad, en la cola. Si tirás de la palanca, la cola baja y la nariz sube.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.timon",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el timón de dirección. Con los pedales, la cola va para un lado y la nariz mira para el otro.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.flaps",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estos son los flaps. Al bajarlos, el ala se hace más curva y más grande, y sostiene al avión aunque vaya más despacio. Se usan para despegar y para aterrizar.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.aerofrenos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estos son los aerofrenos. Se levantan encima del ala para frenar en el aire, y al tocar la pista, para que el avión apoye las ruedas y frene mejor.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.pitot",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este tubito es el pitot. El aire entra por la punta, y cuanto más rápido volás, más fuerte empuja: así sabe el avión a qué velocidad va.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.pitotMorro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estos tubitos a los lados de la nariz son los pitot, uno para cada piloto. El aire entra de frente, y cuanto más rápido volás, más empuja: así se mide la velocidad.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.motorPiston",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Acá está el motor. Hace girar la hélice, y la hélice, que tiene palas como alas chiquitas, tira del avión hacia adelante.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.motorRadial",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es un motor radial: los cilindros van en círculo, como los rayos de una estrella. Hace girar la hélice, y la hélice tira del avión.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.turbohelice",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es un turbohélice: adentro tiene una turbina, como la de un reactor, pero en vez de soplar, hace girar la hélice.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.reactor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto es un reactor. Traga aire por adelante, quema combustible y lo suelta por atrás muy rápido. Y el que más empuja es el ventilador grande de adelante.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.tren",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el tren de aterrizaje. Sale para aterrizar, y después de despegar se guarda adentro: así el aire pasa mejor y el avión va más rápido.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.trenFijo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.luces",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.luzBaliza",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.luzEstrobos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estos destellos blancos se encienden al entrar en la pista y en todo el vuelo, para que los demás aviones te vean desde lejos.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.luzAterrizaje",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
+  },
+  {
+    "id": "tarjeta.voz.matricula",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.",
+    "para": "lo que explica cada punto de la tarjeta del avión"
   },
   {
     "id": "ventanilla.vos.lado.izquierda",
@@ -6260,6 +6863,20 @@
     "para": "aviso de terreno, el más urgente"
   },
   {
+    "id": "cabina.cautionTerrain",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "caution terrain, caution terrain",
+    "para": "el avisador de terreno ve una ladera por delante: precaución"
+  },
+  {
+    "id": "cabina.terrainAheadPullUp",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "terrain ahead, pull up",
+    "para": "el avisador de terreno ve una ladera por delante: aviso"
+  },
+  {
     "id": "cabina.tooLow",
     "voz": "cabina",
     "idioma": "en",
@@ -7233,11 +7850,46 @@
     "para": "pará en la doble raya"
   },
   {
+    "id": "torre.solo.holdShortNumberTwo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "hold short of the runway, number two for departure",
+    "para": "pará en la doble raya: sale uno antes que vos"
+  },
+  {
+    "id": "torre.solo.holdShortNumberThree",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "hold short of the runway, number three for departure",
+    "para": "pará en la doble raya: salen dos antes que vos"
+  },
+  {
+    "id": "torre.solo.holdShortWake",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "hold short of the runway, caution wake turbulence",
+    "para": "pará en la doble raya: el que salió deja estela"
+  },
+  {
     "id": "torre.solo.vacateNext",
     "voz": "torre",
     "idioma": "en",
     "texto": "vacate next available",
     "para": "te pasaste la salida: dejá la pista por la próxima"
+  },
+  {
+    "id": "torre.solo.expediteVacating",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "expedite vacating",
+    "para": "parado en la pista después de oír que había que dejarla: con prisa"
+  },
+  {
+    "id": "torre.solo.landedWithoutClearance",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "landed without clearance, call the tower by telephone on arrival",
+    "para": "aterrizó con la orden de irse al aire: que llame a la torre"
   },
   {
     "id": "torre.solo.landingTraffic",
@@ -7280,6 +7932,13 @@
     "idioma": "en",
     "texto": "runway in use",
     "para": "la pista en uso, antes de su número"
+  },
+  {
+    "id": "torre.solo.backtrackRunway",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "backtrack runway",
+    "para": "remontar la pista, antes de su número"
   },
   {
     "id": "torre.solo.goAroundSolo",
@@ -7660,6 +8319,20 @@
     "para": "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista"
   },
   {
+    "id": "torre.solo.acelereAbandono",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "acelere abandono de pista",
+    "para": "parado en la pista después de oír que había que dejarla: con prisa"
+  },
+  {
+    "id": "torre.solo.aterrizoSinPermiso",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "aterrizó sin autorización; llame a la torre por teléfono a su llegada",
+    "para": "aterrizó con la orden de irse al aire: que llame a la torre"
+  },
+  {
     "id": "torre.solo.autorizadoA",
     "voz": "torre",
     "idioma": "es",
@@ -7791,6 +8464,20 @@
     "idioma": "es",
     "texto": "mantenga fuera de pista",
     "para": "la lámpara roja en el punto de espera: no entrar; detrás, las cifras de la pista"
+  },
+  {
+    "id": "torre.canario.solo.acelereAbandono",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "acelere abandono de pista",
+    "para": "parado en la pista después de oír que había que dejarla: con prisa"
+  },
+  {
+    "id": "torre.canario.solo.aterrizoSinPermiso",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "aterrizó sin autorización; llame a la torre por teléfono a su llegada",
+    "para": "aterrizó con la orden de irse al aire: que llame a la torre"
   },
   {
     "id": "torre.canario.solo.autorizadoA",
@@ -8395,11 +9082,46 @@
     "para": "pará en la doble raya, en Canarias"
   },
   {
+    "id": "torre.canario.solo.holdShortNumberTwo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "hold short of the runway, number two for departure",
+    "para": "pará en la doble raya: sale uno antes que vos, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.holdShortNumberThree",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "hold short of the runway, number three for departure",
+    "para": "pará en la doble raya: salen dos antes que vos, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.holdShortWake",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "hold short of the runway, caution wake turbulence",
+    "para": "pará en la doble raya: el que salió deja estela, en Canarias"
+  },
+  {
     "id": "torre.canario.solo.vacateNext",
     "voz": "torre-canarias",
     "idioma": "en",
     "texto": "vacate next available",
     "para": "te pasaste la salida: dejá la pista por la próxima, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.expediteVacating",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "expedite vacating",
+    "para": "parado en la pista después de oír que había que dejarla: con prisa, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.landedWithoutClearance",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "landed without clearance, call the tower by telephone on arrival",
+    "para": "aterrizó con la orden de irse al aire: que llame a la torre, en Canarias"
   },
   {
     "id": "torre.canario.solo.landingTraffic",
@@ -8442,6 +9164,13 @@
     "idioma": "en",
     "texto": "runway in use",
     "para": "la pista en uso, antes de su número, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.backtrackRunway",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "backtrack runway",
+    "para": "remontar la pista, antes de su número, en Canarias"
   },
   {
     "id": "torre.canario.solo.goAroundSolo",
@@ -10373,35 +11102,42 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "El anemómetro no marca: gas atrás y frená, con calma.",
-    "para": "se dice en src/game.ts"
+    "para": "se dice en src/game.ts",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "pitot.abortado",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.",
-    "para": "se dice en src/game.ts"
+    "para": "se dice en src/game.ts",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "pitot.enElAire",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.",
-    "para": "se dice en src/game.ts"
-  },
-  {
-    "id": "vuelta.empezar",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Antes de volar, damos la vuelta al avión. Tocá lo que brilla.",
-    "para": "se dice en src/game.ts"
-  },
-  {
-    "id": "vuelta.entera",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "¡Vuelta lista! El avión está para volar.",
-    "para": "se dice en src/game.ts"
+    "para": "se dice en src/game.ts",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "parte.salgoIgual.voz",

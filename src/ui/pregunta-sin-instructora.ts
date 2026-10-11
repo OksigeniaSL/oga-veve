@@ -5,7 +5,7 @@
  * que se entiende sin leer —la instructora con el dedo en los labios, y el
  * escudo que dice que de lo peligroso avisa igual— y dos botones que tampoco
  * hay que leer: el visto verde y la cruz. La palabra va debajo, para quien ya
- * lee; la voz, cuando esté grabada. Ver `PENDIENTE-VOCES-autonomo.md`.
+ * lee; y la voz de la instructora, que la pregunta con su grabación.
  *
  * Congela el vuelo mientras está, como cualquier pantalla que se lee: la
  * pregunta se hace en el puesto, con el motor parado, y no puede quedarse
