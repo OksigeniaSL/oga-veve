@@ -1,7 +1,7 @@
 /**
  * **El banco vuela a tiempo real donde las voces tienen una ventana**: la
- * carrera, siempre, y el rodaje de salida donde hay megafonía. Ver
- * `reloj-del-banco.mjs`.
+ * carrera, siempre, y donde hay megafonía, el rodaje de salida y el de
+ * llegada. Ver `reloj-del-banco.mjs`.
  */
 import { describe, expect, it } from "vitest";
 import { aTiempoReal, fasesATiempoReal } from "./reloj-del-banco.mjs";
@@ -24,10 +24,23 @@ describe("el reloj del banco del vuelo entero", () => {
       expect(aTiempoReal(fase, true)).toBe(true);
   });
 
+  /*
+   * De Los Rodeos a Gando con el JAZ 90, a ×3: cuarenta segundos de rodaje de
+   * vuelta en trece de pared, con los dos anuncios de la llegada ocupando
+   * unos veinte. La lista de después del aterrizaje no leyó ningún punto y la
+   * frecuencia de Gando no encontró el canal libre.
+   */
+  it("y con megafonía, también de dejar la pista al puesto: la ventana de la llegada", () => {
+    for (const fase of ["abandonando", "a-plataforma", "en-puesto"]) {
+      expect(aTiempoReal(fase, true)).toBe(true);
+      expect(aTiempoReal(fase, false)).toBe(false);
+    }
+  });
+
   it("sin megafonía el rodaje sigue acelerado, y en el aire nadie va a uno", () => {
     expect(aTiempoReal("rodando", false)).toBe(false);
     expect(aTiempoReal("esperando", false)).toBe(false);
-    for (const fase of ["en-vuelo", "final", "aterrizado", "abandonando", "a-plataforma"]) {
+    for (const fase of ["en-vuelo", "final", "aterrizado"]) {
       expect(aTiempoReal(fase, true)).toBe(false);
       expect(aTiempoReal(fase, false)).toBe(false);
     }
@@ -35,6 +48,8 @@ describe("el reloj del banco del vuelo entero", () => {
 
   it("y la tabla que va a la página dice lo mismo", () => {
     expect(fasesATiempoReal(true)).toContain("rodando");
+    expect(fasesATiempoReal(true)).toContain("a-plataforma");
+    expect(fasesATiempoReal(false)).not.toContain("a-plataforma");
     expect(fasesATiempoReal(false)).not.toContain("rodando");
     expect(fasesATiempoReal(false)).toContain("despegando");
   });

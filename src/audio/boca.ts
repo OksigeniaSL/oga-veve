@@ -78,7 +78,7 @@
  */
 
 import { esElAvisoDeAves, esLaInformacionDeTrafico, noSePierde } from "./torre";
-import { CADUCA_LA_MEGAFONIA, esDeLaMegafonia, pesoDe } from "./turnos";
+import { CADUCA_LA_MEGAFONIA, cierraElVuelo, esDeLaMegafonia, pesoDe } from "./turnos";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
@@ -143,6 +143,12 @@ export const CADUCA_LA_ORDEN = 12000;
  * `noSePierde` en `audio/torre.ts`: una autorización que no se pudo decir se
  * dice en cuanto se pueda, y solo deja de esperar cuando alguien que sabe que
  * ya no vale la retira —la luz que cambia, la final que se deja—.
+ *
+ * **Ni lo que cierra el vuelo**, por lo mismo: ver `cierraElVuelo` en
+ * `audio/turnos.ts`. Las señas del señalero duran dos segundos y medio y el
+ * anuncio de la tripulación al llegar, más de diez: con el reloj de un aviso,
+ * lo que contaban caducaba detrás de ella. Lo que se queda viejo lo retira
+ * quien lo sabe.
  */
 export function cuantoAguanta(
   clave: string | undefined,
@@ -150,6 +156,7 @@ export function cuantoAguanta(
 ): number {
   if (
     noSePierde(clave, urgencia) ||
+    cierraElVuelo(clave) ||
     anunciaLaFase(clave) ||
     anunciaElPuntoDeDescenso(clave) ||
     esElAvisoDeAves(clave) ||
@@ -159,7 +166,8 @@ export function cuantoAguanta(
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
     explicaLaOtraPunta(clave) ||
-    esDelDescenso(clave)
+    esDelDescenso(clave) ||
+    cuentaElPirep(clave)
     ? CADUCA_LA_ORDEN
     : // Un anuncio espera su hueco más que un aviso: ver `CADUCA_LA_MEGAFONIA`.
       esDeLaMegafonia(clave)
@@ -185,6 +193,27 @@ export function esDelDescenso(clave: string | undefined): boolean {
 
 const DEL_DESCENSO =
   /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
+
+/**
+ * **La turbulencia que avisó otro avión por radio**, el PIREP: el otro avión
+ * contándolo en la frecuencia, la torre retransmitiéndotelo y la instructora
+ * explicando lo que se oyó. Aguanta lo que una orden.
+ *
+ * Tenía los cuatro segundos de un aviso, y un PIREP no describe un instante:
+ * describe un trozo de cielo por delante, que sigue ahí minuto y medio
+ * después —ver `AVISA_ANTES` en `flight/turbulencia-del-vuelo.ts`—. Se pide
+ * en crucero, que es cuando la torre te pasa de nivel y el tráfico te cuenta
+ * quién va arriba, y caducaba esperando detrás de ellos: de Los Rodeos a
+ * Gando con el JAZ 90, «otro.pirep.moderada: caducó esperando», y la
+ * comandante anunciaba un aviso «de un avión que va adelante» que nadie había
+ * oído. Y el anuncio va detrás de la radio: ver `contarElPirep` en `game.ts`.
+ */
+export function cuentaElPirep(clave: string | undefined): boolean {
+  return !!clave && DEL_PIREP.test(clave);
+}
+
+const DEL_PIREP =
+  /^(?:(?:otro|torre)\.(?:[a-z]+\.)?pirep\.(?:ligera|moderada|fuerte)|vuelo\.pirep)(?:[@~]|$)/;
 
 /**
  * **La instructora en el punto de descenso**: «empezamos a bajar». Aguanta lo
@@ -801,6 +830,8 @@ export class Boca {
          * Lo tira su propio reloj si espera demasiado. Ver `turnos.ts`.
          */
         if (esDeLaMegafonia(c.clave)) continue;
+        // Ni lo que cierra el vuelo: ver `cierraElVuelo` en `turnos.ts`.
+        if (cierraElVuelo(c.clave)) continue;
         this.tirar(i, "la barrió un urgente");
       }
       this.reloj.cancelar();
@@ -901,6 +932,15 @@ export class Boca {
        * crece como mucho en uno.
        */
       if (esDeLaMegafonia(a.clave)) continue;
+      /*
+       * **Ni lo que cierra el vuelo**: el señalero, apagar el motor, «¡vuelo
+       * terminado!», la lista de después del aterrizaje, el «bien hecho» de
+       * un ejercicio. Pasan pegados al final, y con la cola llena se caía el
+       * último que llegaba —«vuelo.apagado: no cabía en la cola»—. Lo que se
+       * cae es lo que menos importa: lo de los demás, y de lo de la
+       * instructora, lo que explica un mando. Ver `turnos.ts`.
+       */
+      if (cierraElVuelo(a.clave)) continue;
       if (peor < 0) {
         peor = i;
         continue;

@@ -334,6 +334,20 @@ const EXPLICA_TRAS_LA_TORRE = 6;
  */
 const SEPARA_LA_RADIO = 4;
 
+/**
+ * **Lo más que espera la comandante a la radio del PIREP para anunciar la
+ * turbulencia**, s de juego: la red de la cadena. Ver `contarElPirep`.
+ *
+ * La radio acaba o se cae sola —caduca a los doce segundos de esperar
+ * turno—, pero lo que la boca olvida al callar no avisa a nadie, y una
+ * turbulencia que se anuncia antes de llegar no puede quedarse sin anunciar
+ * por eso. Un minuto: el aviso sale minuto y medio antes de la zona —ver
+ * `AVISA_ANTES` en `flight/turbulencia-del-vuelo.ts`—, así que el anuncio
+ * sigue llegando antes que ella. Y si la red salta con la radio todavía en la
+ * cola, el peso sigue poniendo la radio delante de la megafonía.
+ */
+const ESPERA_A_LA_RADIO_DEL_PIREP = 60;
+
 /** El rato de esperar a que mejore el tiempo, s. Ver `esperarUnRato`. */
 const RATO_DE_ESPERA = 60;
 
@@ -891,7 +905,13 @@ import {
   sigueValiendo,
   type LeccionDelAire,
 } from "./flight/lecciones-del-aire";
-import { CADUCA_LA_MEGAFONIA, Huecos, esDeLaMegafonia } from "./audio/turnos";
+import {
+  CADUCA_LA_MEGAFONIA,
+  Huecos,
+  caducaAlApagar,
+  cuentaLaSena,
+  esDeLaMegafonia,
+} from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
   turbulenciaDelCamino,
@@ -6816,6 +6836,22 @@ export class Game {
   }
 
   /**
+   * **Lo de la llegada al puesto que se quedó viejo esperando turno, fuera de
+   * la cola.** Lo que cierra el vuelo no caduca con el reloj —ver
+   * `cierraElVuelo` en `audio/turnos.ts`—, así que lo retira quien sabe que
+   * ya no vale: la seña siguiente, la de antes; el motor apagado, la de
+   * cortarlo y la lista de después del aterrizaje.
+   *
+   * Sin esto, lo que se pidió en los diez segundos de las cuatro señas sonaba
+   * entero y en fila después, contando el pasado: «poné el freno» con los
+   * calzos ya puestos y «apagá el motor» con el motor ya apagado, y «¡vuelo
+   * terminado!» al final de todo. Un suceso, una voz: la de lo que pasa.
+   */
+  private retirarLoDelPuesto(yaNoVale: (clave: string | undefined) => boolean): void {
+    BOCA.retirar((c) => yaNoVale(c));
+  }
+
+  /**
    * **Una explicación, una vez por vuelo**, en los tres peldaños de abajo y
    * con su grabación. En el de cabina ya no explica nadie: ver
    * `laInstructoraLoExplica`. Se da por dicha cuando se dice, no cuando se
@@ -8044,6 +8080,8 @@ export class Game {
      * doble raya la reconoce aquí.
      */
     this.hechos.on("gestoDelSenalero", ({ gesto }) => {
+      // Lo que contaba la seña de antes y espera turno ya no es lo que se ve.
+      this.retirarLoDelPuesto(cuentaLaSena);
       // La tarjeta, y la voz de las de parar. Ver `tarjetaDelSenalero`.
       const parando = this.tarjetaDelSenalero(gesto);
       const cortar = gesto === "cortar";
@@ -18759,7 +18797,11 @@ export class Game {
       }
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.
-      if (vista.fase === "apagado") this.terminarElVuelo();
+      if (vista.fase === "apagado") {
+        // Y lo que pedía llegar y apagar, si todavía espera, ya está hecho.
+        this.retirarLoDelPuesto(caducaAlApagar);
+        this.terminarElVuelo();
+      }
     } else if (
       vista.rapido &&
       // Si la velocidad la lleva el juego, ir rápido no es cosa de nadie a
@@ -23850,12 +23892,6 @@ export class Game {
     if (pasajeSuelto) this.cartelPorLaTurbulencia = true;
     this.pidioAbrocharse = true;
     /*
-     * La que avisó otro avión, la radio primero, en el mismo turno. Y si la
-     * radio todavía no tiene voz y solo se lee, la comandante espera a que
-     * se lea: su tira taparía la del otro avión.
-     */
-    const espera = suceso.fuente === "pirep" ? this.contarElPirep(suceso.intensidad) : 0;
-    /*
      * **Y el servicio se para**, si ya se había ofrecido y el pasaje iba
      * suelto: la tripulación lo dice cuando acaba la comandante —pedido a la
      * vez, esperaría lo que dura su anuncio y podría caducar—, y al pasar,
@@ -23888,7 +23924,23 @@ export class Game {
       });
       if (!detras && this.tier.instruments !== "none") this.hud.radio(forma.texto);
     };
-    if (espera > 0) this.agenda.luego(espera, anunciar);
+    /*
+     * **La que avisó otro avión, la radio primero, y la comandante cuando la
+     * radio acaba.** Su anuncio dice «un avión que va adelante nos avisó por
+     * radio», y se apoya en que se haya oído.
+     *
+     * Se pedían a la vez, fiando el orden al peso de cada una en la cola: la
+     * radio pasa delante de la megafonía. Y el peso solo ordena lo que sigue
+     * en la cola: con los cuatro segundos de un aviso, el PIREP caducaba
+     * esperando detrás de la torre —medido de Los Rodeos a Gando con el JAZ
+     * 90, «otro.pirep.moderada: caducó esperando»— y la comandante anunciaba
+     * sola un aviso que nadie había oído, y la instructora no lo explicaba.
+     * Ahora el PIREP aguanta lo que una orden —ver `cuentaElPirep` en
+     * `audio/boca.ts`— y el anuncio se pide cuando la radio ya ha sonado o
+     * ya no va a sonar. Si solo se lee, la comandante espera a que se lea: su
+     * tira taparía la del otro avión.
+     */
+    if (detras) this.contarElPirep(suceso.intensidad, anunciar);
     else anunciar();
   }
 
@@ -23977,16 +24029,16 @@ export class Game {
    *    lo cuenta la instructora detrás de lo que se oyó —«¿escuchaste la
    *    radio?»—, una vez por vuelo y solo si se oyó algo.
    *
-   * La comandante va detrás, en el mismo turno: la radio y la instructora
-   * piden la palabra en `normal` y la megafonía espera a que acaben, que es el
-   * orden en que pasa. Cada frase solo con su grabación: sin ella se lee en
-   * la tira, y la de la instructora, que habla de lo que se oyó, no se dice.
-   * Ver `audio/turnos.ts`.
-   *
-   * Devuelve cuánto ocupa en la tira lo que solo se lee, s: lo que tiene que
-   * esperar la comandante para no taparlo.
+   * **La comandante va detrás**: `despues` se llama cuando la radio ya ha
+   * sonado o ya no va a sonar —acabada, cortada, sin voz o caída de la cola—,
+   * y la instructora, que se pide en ese mismo instante con más peso que la
+   * megafonía, va antes que ella. Si lo de la radio solo se lee, `despues`
+   * espera lo que ocupa en la tira, para no taparlo. Y con su red: ver
+   * `ESPERA_A_LA_RADIO_DEL_PIREP`. Cada frase solo con su grabación: sin ella
+   * se lee en la tira, y la de la instructora, que habla de lo que se oyó, no
+   * se dice. Ver `audio/turnos.ts`.
    */
-  private contarElPirep(intensidad: Intensidad): number {
+  private contarElPirep(intensidad: Intensidad, despues: () => void): void {
     const campo = this.elCampo().escenario;
     const habla = hablaDe(campo.aerodrome?.id);
     // A la altura que se va a cruzar, que es donde lo encontró el de delante.
@@ -24016,6 +24068,32 @@ export class Game {
       this.instructor.vozDe(explica) !== null;
     /** Lo que ya ocupa en la tira lo que solo se lee, s. */
     let leida = 0;
+    /** Las frases con voz pedidas que todavía no han sonado ni se han caído. */
+    let porSonar = 0;
+    /** Mientras se piden: una que se cae en el acto no suelta a la comandante. */
+    let pidiendo = true;
+    let soltada = false;
+    /** La comandante, una vez: la pide quien acaba el último, o la red. */
+    const soltar = (): void => {
+      if (soltada) return;
+      soltada = true;
+      despues();
+    };
+    /*
+     * Lo que avisa cada frase con voz al acabar, y cuándo cuenta como hecha:
+     * sonó entera o cortada, no tenía con qué sonar o se cayó sin sonar.
+     */
+    const alAcabar = (tira: AlSonar, ademas?: AlSonar): AlSonar => {
+      porSonar++;
+      let hecha = false;
+      return (que, porque) => {
+        tira(que, porque);
+        ademas?.(que, porque);
+        if (hecha || que === "empieza") return;
+        hecha = true;
+        if (--porSonar === 0 && !pidiendo) soltar();
+      };
+    };
     if (hayQuien) {
       const otro = sortearIndicativo(campo.aerodrome?.id);
       const texto = `${otro.dicho}, for your information, ${grado} turbulence at ${dicha}`;
@@ -24024,13 +24102,19 @@ export class Game {
       if (altura && this.instructor.vozDe(clave, relleno)) {
         if (loExplica) this.pirepExplicado = true;
         let explicado = false;
-        const tira = this.tiraAlSonar(texto, false);
-        this.otroAvion.decir(texto, clave, "normal", relleno, (que, porque) => {
-          tira(que, porque);
+        // La de la instructora, antes que la comandante: se pide primero.
+        const explicar: AlSonar = (que) => {
           if (!loExplica || explicado || (que !== "acaba" && que !== "cortada")) return;
           explicado = true;
           this.instructor.decir(t(explica), explica, "normal");
-        });
+        };
+        this.otroAvion.decir(
+          texto,
+          clave,
+          "normal",
+          relleno,
+          alAcabar(this.tiraAlSonar(texto, false), explicar),
+        );
       } else if (conLetra) {
         this.hud.radio(texto, undefined, false);
         leida += SEPARA_LA_RADIO;
@@ -24042,13 +24126,24 @@ export class Game {
       const clave = comoSeDiceAqui(`torre.pirep.${intensidad}`, habla);
       const relleno = { ...rellenoDe(yo), ...(altura ? { altura: altura.piezas } : {}) };
       if (altura && this.instructor.vozDe(clave, relleno))
-        this.torre.decir(texto, clave, "normal", relleno, this.tiraAlSonar(texto, true));
+        this.torre.decir(texto, clave, "normal", relleno, alAcabar(this.tiraAlSonar(texto, true)));
       else if (conLetra) {
         this.agenda.luego(leida, () => this.hud.radio(texto, undefined, true));
         leida += SEPARA_LA_RADIO;
       }
     }
-    return leida;
+    /*
+     * Sin nada con voz por sonar, la comandante espera a que se lea lo que
+     * solo se lee. Con voz, la llama la última que acabe; y la red, por si no
+     * acaba nunca.
+     */
+    pidiendo = false;
+    if (porSonar === 0) {
+      if (leida > 0) this.agenda.luego(leida, soltar);
+      else soltar();
+      return;
+    }
+    this.agenda.luego(ESPERA_A_LA_RADIO_DEL_PIREP, soltar);
   }
 
   /**

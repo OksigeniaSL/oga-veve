@@ -413,6 +413,21 @@ try {
         const ej = o.ejercicio();
         if (ej?.cierre) {
           await espera(1500);
+          /*
+           * **Y lo que cierra el ejercicio, hasta que suene.** Se miraba a
+           * segundo y medio del cierre, y desde que los bomberos tienen su
+           * grabación el «bien hecho» va detrás de ellos: medido en Gando
+           * con el de antes de V1, los bomberos sonaron a los dos segundos,
+           * duraron seis y el «bien parado» llegó a los siete. El banco daba
+           * por callado lo que estaba esperando turno. Se espera mientras
+           * siga en la cola —ya no se cae: ver `cierraElVuelo` en
+           * `src/audio/turnos.ts`—, con veinte segundos de tope.
+           */
+          for (let seg = 0; seg < 20; seg++) {
+            const boca = o.bocaAhora?.();
+            if (!boca?.espera.some((c) => /^ejercicio\./.test(c))) break;
+            await espera(1000);
+          }
           break;
         }
       }

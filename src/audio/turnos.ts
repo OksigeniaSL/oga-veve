@@ -33,6 +33,10 @@
  *    sigue ahí —las aves, el tráfico— espera lo que haga falta y lo retira
  *    quien sabe que dejó de ser verdad.
  * 4. **La instructora** (`normal`): lo que enseña ahora mismo.
+ *    - **Y lo que explica un mando la primera vez que se usa** —los pedales,
+ *      la palanca que se queda—, que es suyo y puede esperar a otro rato:
+ *      cede ante lo que pasa ahora, y de lo suyo es lo primero que se cae de
+ *      una cola llena. Ver `explicaUnMando`.
  * 5. **La megafonía**: la comandante y la tripulación. Habla cuando no habla
  *    nadie —ver `audio/megafonia.ts`— y una vez que habla **no la pisa nadie**:
  *    la radio del tráfico y la instructora esperan a que acabe. Y si tiene que
@@ -47,6 +51,9 @@
  *
  * Los pesos de la cola salen de aquí —`pesoDe`— y la boca los usa sin saber
  * de quién es cada frase. Ver `audio/boca.ts`.
+ *
+ * **Y lo que cierra el vuelo no se cae de la cola**, pese lo que pese: ver
+ * `cierraElVuelo`.
  */
 
 import type { Urgencia } from "./boca";
@@ -74,16 +81,104 @@ const DE_LA_MEGAFONIA = /^(?:(?:comandante|tripulacion)\.|ventanilla(?:@|$))/;
  * peso —el descenso de emergencia va en `mando`— se queda con ese peso.
  */
 export function pesoDe(clave: string | undefined, urgencia: Urgencia): number {
-  if (urgencia === "baja") return esDeLaMegafonia(clave) ? 1 : 0;
+  if (urgencia === "baja") return esDeLaMegafonia(clave) ? PESO_DE_LA_MEGAFONIA : PESO.baja;
+  if (urgencia === "normal" && explicaUnMando(clave)) return PESO_DE_EXPLICAR_UN_MANDO;
   return PESO[urgencia];
 }
 
 const PESO: Record<Urgencia, number> = {
   baja: 0,
-  normal: 2,
-  mando: 3,
-  urgente: 4,
+  normal: 3,
+  mando: 4,
+  urgente: 5,
 };
+
+/** La megafonía: por encima de la frecuencia de los demás. Ver la cabecera. */
+const PESO_DE_LA_MEGAFONIA = 1;
+
+/** Y lo que explica un mando: por debajo de lo que pasa ahora. Ver `explicaUnMando`. */
+const PESO_DE_EXPLICAR_UN_MANDO = 2;
+
+/**
+ * **La instructora explicando un mando la primera vez que se usa en el
+ * vuelo**: los pedales del timón, la palanca que se queda donde se deja, el
+ * doble toque que la centra, el tope de la inclinación, el mando de juego que
+ * aparece. Ver `explicarLosMandos` en `game.ts`.
+ *
+ * Es de la instructora, pero no es lo que pasa ahora: es una lección que
+ * vale lo mismo dentro de un rato. Pesaba lo que cualquier frase suya, y
+ * entre iguales la cola es una cola: pedida antes, hablaba antes que lo que
+ * cuenta lo que pasa —la seña del señalero, la orden de la torre, la fase— y,
+ * con la cola llena, lo que se caía era lo que llegaba detrás. Así que cede:
+ * habla después de lo que pasa, y antes que la megafonía, que es como habla
+ * ella. Y en una cola llena es lo primero suyo que se cae.
+ *
+ * «tutor.pedales» no se pide al llegar: lo que se oía detrás del señalero en
+ * el banco del vuelo entero era el rodaje del tramo de vuelta, que el banco
+ * arranca en cuanto se apaga —el vuelo nuevo explica los pedales otra vez—.
+ */
+export function explicaUnMando(clave: string | undefined): boolean {
+  return !!clave && EXPLICA_UN_MANDO.test(clave);
+}
+
+const EXPLICA_UN_MANDO =
+  /^tutor\.(?:pedales|palancaSeQueda|dobleToque|inclinacionTope|mandoConectado|joystickConectado)(?:[@~]|$)/;
+
+/**
+ * **Lo que cierra el vuelo**, que no se cae de una cola llena.
+ *
+ * La llegada al puesto —el señalero y lo que sus señas quieren decir, apagar
+ * el motor, «¡vuelo terminado!»—, la lista de después del aterrizaje con los
+ * flaps que se quedaron fuera, y la felicitación al acabar un ejercicio. Son
+ * el final de lo que se ha volado, y pasan pegados: al llegar al puesto, el
+ * alto, los frenos, los calzos y el corte son cuatro señas en diez segundos,
+ * y cada una pide su frase. Con la cola llena se caía la que llegaba, que es
+ * siempre la última. Medido llegando a Gando con el JAZ 90 y la tripulación
+ * dando la bienvenida: en la cola, «pará acá», lo que quiere decir el alto,
+ * lo de los frenos y los flaps fuera; y «senalero.calzos»,
+ * «vuelo.cortaMotores» y «vuelo.apagado: no cabía en la cola». El vuelo
+ * acababa sin que nadie dijera que había acabado.
+ *
+ * **Y las gafas de sol**, que se ganan con el primer aterrizaje que cuenta y
+ * se dicen una vez en la vida: se pedían al tocar, detrás de «frená» y de los
+ * frenos de tierra, que son seis segundos de cabina, y con los cuatro de un
+ * aviso «gafas.ganadas: caducó esperando» en los dos vuelos medidos a Gando.
+ *
+ * Así que no se echa, como no se echa una autorización: si no cabe, la cola
+ * crece una plaza. Y lo que se queda viejo antes de sonar no lo tira un
+ * reloj sino quien sabe que ya no vale —la seña siguiente, el motor
+ * apagado—. Ver `retirarLoDelPuesto` en `game.ts`.
+ */
+export function cierraElVuelo(clave: string | undefined): boolean {
+  return !!clave && CIERRA_EL_VUELO.test(clave);
+}
+
+const CIERRA_EL_VUELO =
+  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:bien|bienParado|bienDespresurizacion|paradoTrasV1|seguidoAntesDeV1|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas)(?:[@~]|$)/;
+
+/**
+ * **Lo que cuenta una seña del señalero**: la voz de las de parar y lo que
+ * quiere decir cada una. Vale mientras se vea esa seña; con la siguiente, lo
+ * que todavía esperaba turno se retira. Ver `retirarLoDelPuesto` en `game.ts`.
+ */
+export function cuentaLaSena(clave: string | undefined): boolean {
+  return !!clave && CUENTA_LA_SENA.test(clave);
+}
+
+const CUENTA_LA_SENA = /^(?:senalero\.\w+|vuelo\.(?:alto|despacio))$/;
+
+/**
+ * **Y lo que deja de valer al apagar el motor en el puesto**: las señas, la de
+ * cortar con ellas, y la lista de después del aterrizaje. Apagado, lo que
+ * queda por decir es que el vuelo terminó.
+ */
+export function caducaAlApagar(clave: string | undefined): boolean {
+  return (
+    cuentaLaSena(clave) ||
+    (!!clave &&
+      /^vuelo\.(?:cortaMotores|flapsArribaAlSalir|despuesDelAterrizaje|despues\.\w+)$/.test(clave))
+  );
+}
 
 /**
  * **Cuánto aguanta en la cola un anuncio de la megafonía**, ms.

@@ -15,13 +15,14 @@ import {
   CADUCA,
   CADUCA_LA_ORDEN,
   cuantoAguanta,
+  cuentaElPirep,
   explicaLaOtraPunta,
   MEGAFONIA,
   NO_REPETIR,
   RIÑEN,
   SILENCIO,
 } from "./boca";
-import { CADUCA_LA_MEGAFONIA } from "./turnos";
+import { CADUCA_LA_MEGAFONIA, caducaAlApagar, cierraElVuelo, cuentaLaSena } from "./turnos";
 import { esLaInformacionDeTrafico } from "./torre";
 
 let reloj = 0;
@@ -1343,5 +1344,183 @@ describe("la fase se cuenta aunque la torre hable antes", () => {
     expect(anunciaLaFase("vuelo.enVueloDestino")).toBe(true);
     expect(anunciaLaFase("vuelo.rapido")).toBe(false);
     expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
+  });
+});
+
+/*
+ * ── Lo que cierra el vuelo ────────────────────────────────────────────────
+ *
+ * Llegando a Gando con el JAZ 90, en el banco del vuelo entero: la
+ * tripulación daba la bienvenida mientras el avión llegaba al puesto, y las
+ * cuatro señas del señalero —alto, frenos, calzos, cortar— pedían cada una su
+ * frase. Con la cola llena se caía lo que llegaba: «senalero.calzos»,
+ * «vuelo.cortaMotores» y «vuelo.apagado: no cabía en la cola». Ver
+ * `cierraElVuelo` en `turnos.ts`.
+ */
+describe("lo que cierra el vuelo no se pierde", () => {
+  /** La llegada al puesto tal como se pidió en el banco, con la tripulación hablando. */
+  function llegandoAlPuesto() {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("baja", frase("tripulación"), "tripulacion.canario.llegada@bienvenidos");
+    for (const c of [
+      "vuelo.alto",
+      "senalero.alto",
+      "senalero.frenos",
+      "vuelo.alPuestoConFlaps",
+      "senalero.calzos",
+      "vuelo.cortaMotores",
+      "vuelo.apagado",
+    ])
+      b.pedir("normal", frase(c), c);
+    return { b, dicho, acabar };
+  }
+
+  it("no se cae de una cola llena: la cola crece", () => {
+    const { b } = llegandoAlPuesto();
+    expect(b.descartadas).toEqual([]);
+    expect(b.cuantasEsperan).toBe(7);
+    expect(b.espera("vuelo.apagado")).toBe(true);
+  });
+
+  it("y no caduca con el reloj: lo que se queda viejo lo retira quien lo sabe", () => {
+    const { b, dicho, acabar } = llegandoAlPuesto();
+    reloj += 3 * CADUCA_LA_ORDEN;
+    // Cada seña retira la de antes, y el motor apagado lo que pedía llegar y apagar.
+    b.retirar((c) => cuentaLaSena(c));
+    b.retirar((c) => caducaAlApagar(c));
+    acabar["tripulación"]!();
+    while (b.ocupada) acabar[dicho.at(-1)!]!();
+    // Lo que queda es lo que sigue siendo verdad, y el vuelo termina dicho.
+    expect(dicho).toEqual(["tripulación", "vuelo.alPuestoConFlaps", "vuelo.apagado"]);
+    expect(b.descartadas.map(sinHora).filter((d) => !d.endsWith("ya no es verdad"))).toEqual(
+      [],
+    );
+  });
+
+  it("y la seña siguiente retira lo que contaba la de antes, no lo que suena", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("pará acá"), "vuelo.alto");
+    b.pedir("normal", frase("alto"), "senalero.alto");
+    b.pedir("normal", frase("frenos"), "senalero.frenos");
+    // Llegan los calzos: lo del alto y lo de los frenos ya no es lo que se ve.
+    b.retirar((c) => cuentaLaSena(c));
+    b.pedir("normal", frase("calzos"), "senalero.calzos");
+    acabar["pará acá"]!();
+    expect(dicho).toEqual(["pará acá", "calzos"]);
+  });
+
+  it("y las gafas, que se ganan una vez, esperan detrás de la cabina y se dicen", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("frenos de tierra"), "vuelo.salenLosFrenosDeTierra");
+    b.pedir("normal", frase("gafas"), "gafas.ganadas");
+    // Seis segundos de cabina: con el reloj de un aviso, caducaban.
+    reloj += 6100;
+    acabar["frenos de tierra"]!();
+    expect(dicho).toEqual(["frenos de tierra", "gafas"]);
+  });
+
+  it("ni la barre un aviso urgente", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("normal", frase("bien"), "ejercicio.bien");
+    b.pedir("urgente", frase("terreno"), "vuelo.terrenoSube");
+    acabar["terreno"]!();
+    expect(dicho).toEqual(["hablando", "terreno", "bien"]);
+  });
+
+  it("y lo que explica un mando cede ante él, aunque se pidiera antes", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("normal", frase("pedales"), "tutor.pedales");
+    b.pedir("normal", frase("terminado"), "vuelo.apagado");
+    acabar["hablando"]!();
+    expect(dicho).toEqual(["hablando", "terminado"]);
+    acabar["terminado"]!();
+    expect(dicho).toEqual(["hablando", "terminado", "pedales"]);
+  });
+
+  it("y con la cola llena, de lo de la instructora, lo primero que se cae es eso", () => {
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("normal", frase("pedales"), "tutor.pedales");
+    for (const c of ["vuelo.aPlataforma", "vuelo.raya", "vuelo.despacio", "vuelo.rodando"])
+      b.pedir("normal", frase(c), c);
+    // Se cae la explicación, no lo que acaba de pasar.
+    expect(b.descartadas.map(sinHora)).toEqual(["tutor.pedales: no cabía en la cola"]);
+    expect(b.espera("vuelo.rodando")).toBe(true);
+  });
+
+  it("las claves: el puesto, el señalero, la lista y el «bien hecho»; no un aviso cualquiera", () => {
+    for (const c of [
+      "vuelo.apagado",
+      "vuelo.enPuesto",
+      "vuelo.cortaMotores",
+      "vuelo.alto",
+      "senalero.calzos",
+      "vuelo.flapsArribaAlSalir",
+      "vuelo.despues.luces",
+      "vuelo.despuesDelAterrizaje",
+      "vuelo.alPuestoConFlaps",
+      "ejercicio.bien",
+      "ejercicio.bienDespresurizacion",
+      "ejercicio.bomberosUno",
+      "gafas.ganadas",
+    ])
+      expect(cierraElVuelo(c), c).toBe(true);
+    for (const c of ["vuelo.despacio", "vuelo.rapido", "tutor.pedales", "ejercicio.paramos", "ejercicio.cortar"])
+      expect(cierraElVuelo(c), c).toBe(false);
+    expect(cuantoAguanta("senalero.calzos")).toBe(Infinity);
+    expect(cuantoAguanta("vuelo.cortaMotores")).toBe(Infinity);
+    // Al apagar se retira lo que pedía apagar; lo que enseña de los flaps se queda.
+    expect(caducaAlApagar("vuelo.cortaMotores")).toBe(true);
+    expect(caducaAlApagar("vuelo.despues.transpondedor")).toBe(true);
+    expect(caducaAlApagar("vuelo.alPuestoConFlaps")).toBe(false);
+    expect(caducaAlApagar("vuelo.apagado")).toBe(false);
+  });
+});
+
+/*
+ * ── El PIREP ──────────────────────────────────────────────────────────────
+ *
+ * De Los Rodeos a Gando con el JAZ 90, medido con lo que pedía la boca: el
+ * PIREP del otro avión llegó con la torre hablando y otra orden suya en la
+ * cola, y a los 8,8 s «otro.pirep.moderada: caducó esperando»; la comandante
+ * anunció sola un aviso «de un avión que va adelante» que nadie había oído.
+ * Ver `cuentaElPirep`.
+ */
+describe("el PIREP aguanta lo que una orden", () => {
+  const PIREP = "otro.pirep.moderada@fonetico.echo-fonetico.charlie-altura.nivel cifra.1 cifra.8 cifra.0";
+
+  it("espera detrás de la torre, y suena antes que la comandante", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("climb"), "torre.canario.climbTo@yo");
+    b.pedir("mando", frase("subir"), "torre.canario.subir@yo");
+    b.pedir("normal", frase("pirep"), PIREP);
+    b.pedir("baja", frase("comandante"), "comandante.turbulencia.pirep");
+    reloj += 4400;
+    acabar["climb"]!();
+    reloj += 4400;
+    acabar["subir"]!();
+    expect(dicho).toEqual(["climb", "subir", "pirep"]);
+    acabar["pirep"]!();
+    expect(dicho.at(-1)).toBe("comandante");
+    expect(b.descartadas).toEqual([]);
+  });
+
+  it("los tres que lo cuentan: el otro avión, la torre y la instructora", () => {
+    expect(cuantoAguanta(PIREP)).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("torre.canario.pirep.fuerte@yo")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("vuelo.pirep")).toBe(CADUCA_LA_ORDEN);
+    expect(cuentaElPirep("otro.pirep.ligeraX")).toBe(false);
+    expect(cuentaElPirep("vuelo.pirepX")).toBe(false);
+    // Y un aviso de paso sigue con su reloj corto.
+    expect(cuantoAguanta("otro.final@c-a")).toBe(CADUCA);
   });
 });

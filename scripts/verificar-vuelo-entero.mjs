@@ -3376,7 +3376,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * **Y donde hay megafonía, también el rodaje de salida.** Es la ventana
      * de Jazlyn —el crosscheck y la bienvenida—, y a ×3 el rodaje de Gran
      * Canaria cabía en veintiún segundos de pared: la bienvenida se quedaba
-     * detrás de la torre y se retiraba al empezar la carrera. Las fases que
+     * detrás de la torre y se retiraba al empezar la carrera. **Y el de
+     * llegada**, de dejar la pista al puesto: con los anuncios de la llegada
+     * ocupando la ventana entera, la lista de después del aterrizaje no leía
+     * ningún punto y la frecuencia de allí no hablaba nunca. Las fases que
      * van a uno están en `scripts/reloj-del-banco.mjs`, con su prueba.
      */
     /*
