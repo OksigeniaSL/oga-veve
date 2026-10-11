@@ -60,7 +60,8 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
 };
 import { luzDeTren } from "../flight/tren";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
-import { RODAR } from "../ui/cristal";
+import { franjaEnElVariometro, RODAR } from "../ui/cristal";
+import type { Franja } from "../flight/tcas";
 import {
   COLUMNAS_DEL_FMA,
   DURA_EL_RESALTE,
@@ -375,6 +376,12 @@ export interface DatosDeCabina {
    * Ver `DatosDelTablero.perfil` y `flight/perfil-vertical.ts`.
    */
   readonly perfil?: PerfilEnElCuadro | null;
+  /**
+   * **La franja del RA en el variómetro**, la misma que el cuadro plano: lo
+   * rojo que no se puede volar y lo verde a donde llevar la aguja, mientras
+   * el TCAS pide maniobra. Ver `Franja` en `flight/tcas.ts`.
+   */
+  readonly ra?: Franja | null;
 }
 
 /**
@@ -1588,6 +1595,20 @@ function variometro(
     -1,
     Math.min(1, (d.vertical * PIES_POR_MINUTO) / d.cuadro.vsiMax),
   );
+  /*
+   * **La franja del RA**, la del cuadro plano: rojo lo que no se puede volar
+   * y verde a donde llevar la aguja, pegadas al borde de la ventana y debajo
+   * de la aguja. Ver `franjaEnElVariometro` en `ui/cristal.ts`.
+   */
+  if (d.ra) {
+    const tramo = (t: readonly [number, number], color: string) => {
+      const [arriba, abajo] = franjaEnElVariometro(t, d.cuadro.vsiMax, medio, ampl);
+      g.fillStyle = color;
+      g.fillRect(x + w - 7, arriba, 7, Math.max(1, abajo - arriba));
+    };
+    for (const t of d.ra.rojo) tramo(t, PALETA.limite);
+    if (d.ra.verde) tramo(d.ra.verde, PALETA.normal);
+  }
   /*
    * **La marca del ritmo**, la del cuadro plano: magenta, con la misma escala
    * que la aguja. Ver `variometro` en `ui/cristal.ts`.
@@ -2805,7 +2826,7 @@ function pintarLaCarta(
    *
    * Rombo hueco en cian para el que anda por ahí; lleno, para el que está a
    * menos de seis millas y mil doscientos pies; círculo ámbar para el que da
-   * aviso. Encima o debajo, su altura en centenas de pies —«+05», «-12»— y a
+   * aviso, y cuadrado rojo para el que pide maniobra. Encima o debajo, su altura en centenas de pies —«+05», «-12»— y a
    * la derecha una flecha si sube o baja a más de quinientos pies por minuto.
    *
    * Eran rombos huecos y nada más, con el argumento de que «lo que hay que
@@ -2820,8 +2841,13 @@ function pintarLaCarta(
     const x = cx + p.dx;
     const y = cy + p.dy;
     const aviso = p.clase === "aviso";
-    const color = aviso ? PRECAUCION : AUXILIAR;
-    if (aviso) {
+    const maniobra = p.clase === "resolucion";
+    const color = maniobra ? PALETA.limite : aviso ? PRECAUCION : AUXILIAR;
+    if (maniobra) {
+      // El cuadrado rojo del RA. Ver `Clase` en `flight/tcas.ts`.
+      g.fillStyle = PALETA.limite;
+      g.fillRect(x - 5.5, y - 5.5, 11, 11);
+    } else if (aviso) {
       g.fillStyle = PRECAUCION;
       g.beginPath();
       g.arc(x, y, 5.5, 0, Math.PI * 2);
@@ -2943,9 +2969,9 @@ function pintarLaCarta(
 
   /*
    * **El modo del TCAS**, encima de las millas y en cian: «TA ONLY» cuando
-   * avisa y no da maniobras, que es lo que hace el de este juego, y «TCAS
-   * STBY» con el equipo en espera, en tierra. Lo mismo que el cuadro plano;
-   * ver `modoEnPantalla` en `flight/tcas.ts`.
+   * avisa y no da maniobras —en el punto de espera—, y «TCAS STBY» con el
+   * equipo en espera, en tierra. En TA/RA, nada. Lo mismo que el cuadro
+   * plano; ver `modoEnPantalla` en `flight/tcas.ts`.
    */
   if (dibujo.modoTcas)
     escribir(g, dibujo.modoTcas, 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");

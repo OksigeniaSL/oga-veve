@@ -155,9 +155,13 @@ import {
   Tcas,
   bandaPara,
   modoEnPantalla,
+  RITMO_DE_LA_MANIOBRA,
   type AvisoDeTrafico,
   type Banda,
+  type CambioDelRa,
+  type Franja,
   type Intruso,
+  type Resolucion,
 } from "./flight/tcas";
 import {
   alturaDelOtro,
@@ -394,6 +398,61 @@ const TCAS_EN_TIERRA = new Set<Fase>([
   "comprometido",
   "aterrizado",
 ]);
+
+/**
+ * **Y las de tierra en que el TCAS II ya da maniobras**, en TA/RA: desde que
+ * se entra en la pista hasta dejarla. En el punto de espera, TA ONLY; al
+ * entrar en la pista se pasa a TA/RA, que es el paso de cualquier lista de
+ * una cabina de línea, y en el aire sigue así. Pegado al suelo no hay
+ * maniobra de todos modos —el TCAS no la da por debajo de mil pies—, pero el
+ * selector está donde tiene que estar y la carta deja de decir TA ONLY. Ver
+ * `Propio.resuelve` en `flight/tcas.ts`.
+ */
+const TCAS_TA_RA_EN_TIERRA = new Set<Fase>([
+  "back-taxi",
+  "alineando",
+  "despegando",
+  "comprometido",
+  "aterrizado",
+]);
+
+/**
+ * Cuánto se queda la tarjeta de la maniobra del TCAS, s, si nadie la quita
+ * antes. La quita el «clear of conflict», que es cuando deja de ser verdad;
+ * esto es el tope por si el RA se retira sin decir nada.
+ */
+const SE_QUEDA_EL_RA = 60;
+
+/** La tarjeta de cada maniobra: su variómetro, tu avión y el otro. */
+function dibujoDelRa(r: Resolucion): DibujoDeSenal {
+  if (r.orden === "climb") return "ra-sube";
+  if (r.orden === "descend") return "ra-baja";
+  return r.orden === "levelOff" ? `ra-nivela-${r.sentido}` : `ra-vigila-${r.sentido}`;
+}
+
+/** La palabra de la tarjeta de cada maniobra. Ver `Game.ordenDelTcas`. */
+const PALABRA_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
+  climb: "palabra.ra.sube",
+  descend: "palabra.ra.baja",
+  levelOff: "palabra.ra.nivela",
+  monitor: "palabra.ra.vigila",
+};
+
+/** Y su frase, desde el peldaño de las cifras. */
+const FRASE_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
+  climb: "tcas.ra.sube",
+  descend: "tcas.ra.baja",
+  levelOff: "tcas.ra.nivela",
+  monitor: "tcas.ra.vigila",
+};
+
+/** Lo que explica la instructora detrás de cada voz de la caja. */
+const EXPLICACION_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
+  climb: "vuelo.ra.sube",
+  descend: "vuelo.ra.baja",
+  levelOff: "vuelo.ra.nivela",
+  monitor: "vuelo.ra.vigila",
+};
 
 /**
  * **Las fases en que estás encima de la pista**, con las ruedas en el suelo:
@@ -715,7 +774,7 @@ import {
 import { preguntarSiVuelaSinInstructora } from "./ui/pregunta-sin-instructora";
 import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
 import { BOCA, MEGAFONIA, anunciaElPuntoDeDescenso, anunciaLaFase } from "./audio/boca";
-import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
+import { claveDeCabina, esDeUnaCaja, loDiceElAvion, VOZ_DEL_RA } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
   GUION,
@@ -2288,7 +2347,7 @@ export class Game {
         /*
          * **En el aire, siempre; en tierra, desde el punto de espera.**
          *
-         * Es cuando se pasa el selector del TCAS de espera a TA/RA: al
+         * Es cuando se pasa el selector del TCAS de espera a TA ONLY: al
          * acercarse al punto de espera de la pista de salida, y no antes, que
          * rodando por la plataforma solo serviría para molestar a los demás.
          * Y es cuando más falta hace mirar la pantalla: el plan europeo contra
@@ -2304,10 +2363,19 @@ export class Game {
          * se vuelve a poner en espera.
          */
         pantalla: !s.onGround || TCAS_EN_TIERRA.has(this.faseDeAhora as Fase),
+        /*
+         * **Y TA/RA desde que se entra en la pista**: en el punto de espera,
+         * TA ONLY; en la pista y en el aire, con maniobra. Ver
+         * `TCAS_TA_RA_EN_TIERRA`.
+         */
+        resuelve: !s.onGround || TCAS_TA_RA_EN_TIERRA.has(this.faseDeAhora as Fase),
+        vertical: s.verticalSpeed,
         terrenoAvisando: this.terrenoAhora !== null,
       },
       intrusos,
     );
+    // La maniobra, antes que el aviso de tráfico: si llegan juntos, manda ella.
+    for (const c of this.tcas.cambiosDelRa) this.ordenDelTcas(c);
     for (const a of avisos) {
       /*
        * **Y si ese avión ya se contó en esta pasada, la instructora no lo
@@ -2327,6 +2395,12 @@ export class Game {
       const yaContado = this.informacionDeTrafico.yaInformado(a.id);
       // El «traffic, traffic» ya lo cuenta: la radio no lo repite después.
       this.contadoPorOtro(a.id);
+      /*
+       * Y si con el aviso llega ya la maniobra contra el mismo, el aviso
+       * sobra: un TCAS que salta directo al RA dice la orden, no las dos
+       * cosas, y la tarjeta y la voz ya son las de la maniobra.
+       */
+      if (this.tcas.resolucion?.id === a.id) continue;
       this.avisarDelTrafico(a, yaContado);
     }
     this.explicarElTrafico();
@@ -2562,7 +2636,7 @@ export class Game {
       null;
     for (const b of this.tcas.enPantalla) {
       // El que ya avisa se cuenta con su aviso. Ver `avisarDelTrafico`.
-      if (b.clase === "aviso") continue;
+      if (b.clase === "aviso" || b.clase === "resolucion") continue;
       const d = Math.hypot(b.x - s.position.x, b.z - s.position.z);
       if (!elMasCerca || d < elMasCerca.d)
         elMasCerca = { relativa: b.relativa, d, cerca: b.clase === "cerca" };
@@ -2638,6 +2712,101 @@ export class Game {
     );
   }
 
+  /** La tarjeta de la maniobra que hay puesta, para quitarla al acabar. */
+  private tarjetaDelRa: DibujoDeSenal | null = null;
+
+  /**
+   * **La maniobra del TCAS, el RA**: una orden nueva, el «clear of conflict»
+   * o una retirada callada. Ver `CambioDelRa` en `flight/tcas.ts`.
+   *
+   * Como el aviso de tráfico, por los tres canales y ninguno solo:
+   *
+   * - **El dibujo**, en los cuatro peldaños y siempre: el cuadrado rojo en la
+   *   carta y la franja del variómetro, que pinta el cuadro con lo que pide el
+   *   TCAS, y la tarjeta con su variómetro en pequeño, tu avión y la flecha.
+   * - **La palabra**: «Subí» en el segundo; la frase con su número, desde el
+   *   tercero.
+   * - **La voz**: la de la caja, en los cuatro peldaños y en el instante, y
+   *   detrás la instructora en los tres de abajo. Ver `decirLaManiobra`.
+   *
+   * **Y sin tono de alarma**: un RA de verdad no lleva sirena, solo la voz.
+   */
+  private ordenDelTcas(c: CambioDelRa): void {
+    const r = c.resolucion;
+    this.apuntarCanto(`RA ${c.que}: ${r.orden} ${r.sentido} contra ${r.id}`);
+    if (c.que !== "orden") {
+      if (this.tarjetaDelRa) this.hud.senal.caducar(this.tarjetaDelRa);
+      this.tarjetaDelRa = null;
+      if (c.que === "libre") this.decirLaManiobra(VOZ_DEL_RA.libre, "vuelo.ra.libre");
+      return;
+    }
+    const dibujo = dibujoDelRa(r);
+    const canales = canalesDe(this.tier.avisos);
+    const corta = PALABRA_DEL_RA[r.orden];
+    const larga = FRASE_DEL_RA[r.orden];
+    const clave = claveDelAviso(this.tier.avisos, larga, corta) as TranslationKey | null;
+    const rotulo = clave
+      ? t(clave, { ritmo: canales.corto ? "" : this.ritmoDeLaManiobra() })
+      : "";
+    if (this.tarjetaDelRa && this.tarjetaDelRa !== dibujo) this.hud.senal.caducar(this.tarjetaDelRa);
+    this.hud.senal.mostrar(dibujo, rotulo, null, {
+      segundos: SE_QUEDA_EL_RA,
+      prioridad: URGENTE,
+    });
+    this.tarjetaDelRa = dibujo;
+    this.decirLaManiobra(VOZ_DEL_RA[r.orden], EXPLICACION_DEL_RA[r.orden]);
+  }
+
+  /**
+   * **La voz de la maniobra**: la caja, y detrás la instructora en los tres
+   * peldaños de abajo. Solo con la grabación puesta, las dos.
+   *
+   * No pasa por `cantar` porque éstas no se piden por su texto en inglés sino
+   * por la orden del TCAS, y porque mientras no estén grabadas no las puede
+   * decir nadie en su lugar: la voz del navegador, en el Brave de Linux, es
+   * silencio, y la instructora no tiene una frase que sea verdad para una
+   * orden de subir que no sea la suya. Así que sin toma no se piden, y
+   * quedan el cuadrado, la franja y la tarjeta. Ver `VOZ_DEL_RA` en
+   * `audio/cabina.ts`.
+   *
+   * Con la toma de la caja y sin la de la instructora, suena la caja sola; con
+   * la de la instructora y sin la de la caja, la explicación sola, que sigue
+   * siendo verdad. Un suceso, una voz: la explicación va detrás de la caja y
+   * se cae si a la caja la corta otro aviso.
+   */
+  private decirLaManiobra(deLaCaja: string, explica: TranslationKey): void {
+    if (!loDiceElAvion(deLaCaja, this.aircraft)) return;
+    const conExplicacion =
+      laInstructoraLoExplica(this.tier.avisos) && this.instructor.vozDe(explica) !== null;
+    const explicar = conExplicacion
+      ? () => {
+          this.apuntarCanto(`${deLaCaja}: lo explica ${explica}`);
+          this.instructor.decir(t(explica), explica, "mando");
+        }
+      : undefined;
+    if (this.instructor.vozDe(deLaCaja)) {
+      const como = this.maquina.decir(deLaCaja, explicar);
+      this.apuntarCanto(`${deLaCaja}→máquina: ${como}`);
+      if (como !== "no") return;
+    } else this.apuntarCanto(`${deLaCaja}: sin toma, no se pide`);
+    explicar?.();
+  }
+
+  /**
+   * El ritmo de subir o bajar **en pies por minuto, en todos los peldaños**:
+   * es la cifra que marca el variómetro con la franja —el del cuadro, que va
+   * en pies como todo instrumento de verdad—, y la que se escribe es la que
+   * marca el instrumento.
+   */
+  private ritmoDeLaManiobra(): string {
+    return `${RITMO_DE_LA_MANIOBRA} ${t("units.fpm")}`;
+  }
+
+  /** La franja del variómetro, mientras haya maniobra. Ver `Franja`. */
+  private franjaDelRa(): Franja | null {
+    return this.tcas.resolucion?.franja ?? null;
+  }
+
   /**
    * «Tráfico a las dos, 150 m por encima.» En pies donde la cabina va en
    * pies, como todo lo demás: la cifra que se escribe es la que marca el
@@ -2674,7 +2843,12 @@ export class Game {
         this.aircraft.tcas,
         this.tcas.enMarcha,
         this.bandaDelTcas,
+        this.tcas.conManiobra,
       ),
+      // Y la maniobra: la puesta y cuántas se han dado. Ver `ordenDelTcas`.
+      conManiobra: this.tcas.conManiobra,
+      resolucion: this.tcas.resolucion,
+      resoluciones: this.tcas.resolucionesDadas,
     };
   }
 
@@ -3369,6 +3543,10 @@ export class Game {
     this.estelas.vaciar();
     this.tcas.reiniciar();
     this.bandaDelTcas = "NORM";
+    // Y la maniobra y el relevo, de cero: otro vuelo.
+    this.tarjetaDelRa = null;
+    this.relevoContado = { fuera: false, dentro: false };
+    this.dependenciaDelRelevo = null;
     this.informacionDeTrafico.reiniciar();
     // Otro vuelo, otra final: las aves de la de antes se fueron.
     this.avesEnLaFinal.reiniciar();
@@ -3750,6 +3928,84 @@ export class Game {
   /** La dependencia de ahora, para el banco. */
   get dependenciaParaBanco(): Dependencia | null {
     return this.dependencia;
+  }
+
+  /** Lo que la instructora ya contó del relevo en este vuelo: salir y volver. */
+  private relevoContado = { fuera: false, dentro: false };
+  /** La dependencia de este vuelo en el paso anterior. Ver `relevoDeFrecuencia`. */
+  private dependenciaDelRelevo: Dependencia | null = null;
+
+  /**
+   * **El relevo de frecuencia**: al cambiar de dependencia en el aire, quien
+   * deja de hablarte te pasa al siguiente.
+   *
+   * Fuera de la zona de la torre la frecuencia del campo dejaba de oírse y no
+   * sonaba nada en su lugar, como si salida, control y aproximación no
+   * existieran. Lo real es que el relevo se dice:
+   *
+   * - **De Taguató para arriba, en fraseología**, con tu indicativo delante
+   *   como toda frase de la torre: «…, contact departure» al dejar su zona,
+   *   «contact Asunción control» —o «Canarias control»— lejos del campo,
+   *   «contact approach» cerca del de llegada y «contact tower» al entrar en
+   *   su zona. Escrito en la tira de la radio siempre; con voz, **solo con su
+   *   grabación**, que la del navegador en el Brave de Linux es silencio. Lo
+   *   dice la voz de la torre del sitio, que hace de todas las dependencias:
+   *   la simplificación es de quién habla, no de lo que se dice. Sin la
+   *   frecuencia en cifras, a propósito: las de verdad cambian, y unas
+   *   inventadas enseñarían algo que no es.
+   * - **En los dos de abajo, que no leen fraseología**, la instructora lo
+   *   cuenta en casa una vez por vuelo al salir de la zona y otra al volver a
+   *   oír a la torre; también solo con su grabación.
+   *
+   * Donde no hay torre que hable, o contesta un AFIS, no hay relevo que dar.
+   * Ver `flight/dependencia.ts`.
+   */
+  private relevoDeFrecuencia(antes: Dependencia, ahora: Dependencia): void {
+    if (this.flight.state.onGround) return;
+    // A la torre se vuelve desde fuera; tierra y torre son aquí una frecuencia.
+    if (seOyeElCampo(ahora) && (ahora !== "torre" || seOyeElCampo(antes))) return;
+    const campo = this.elCampoMontado().escenario.aerodrome;
+    if (!this.hayTorreQueHable() || esAfis(campo)) return;
+    const habla = hablaDe(campo?.id);
+    const pieza =
+      ahora === "salida"
+        ? "contactDeparture"
+        : ahora === "control"
+          ? "contactControl"
+          : ahora === "aproximacion"
+            ? "contactApproach"
+            : "contactTower";
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    this.apuntarCanto(`relevo: ${antes}→${ahora}`);
+    if (conCifras) {
+      const yo = this.miIndicativo;
+      const relleno = rellenoDe(yo);
+      const clave = comoSeDiceAqui(`torre.${pieza}`, habla);
+      const dice: Record<typeof pieza, string> = {
+        contactDeparture: "contact departure",
+        contactControl:
+          habla === "canario" ? "contact Canarias control" : "contact Asunción control",
+        contactApproach: "contact approach",
+        contactTower: "contact tower",
+      };
+      const texto = `${yo.dicho}, ${dice[pieza]}`;
+      this.hud.radio(texto, undefined, true);
+      if (this.instructor.vozDe(clave, relleno))
+        this.torre.decir(texto, clave, "mando", relleno);
+      return;
+    }
+    const vuelve = ahora === "torre";
+    // Al salir, solo al dejar la torre: de salida a control ya no hay nada nuevo.
+    if (!vuelve && !seOyeElCampo(antes)) return;
+    if (vuelve ? this.relevoContado.dentro : this.relevoContado.fuera) return;
+    const clave: TranslationKey = vuelve
+      ? "vuelo.radio.otraVezLaTorre"
+      : "vuelo.radio.otraFrecuencia";
+    if (!this.instructor.vozDe(clave)) return;
+    if (vuelve) this.relevoContado.dentro = true;
+    else this.relevoContado.fuera = true;
+    this.instructor.decir(t(clave), clave);
   }
   /**
    * **Y lo que cuenta la radio del tráfico que se acerca**, lleve el avión
@@ -9359,6 +9615,10 @@ export class Game {
     this.estelas.vaciar();
     this.tcas.reiniciar();
     this.bandaDelTcas = "NORM";
+    // Y la maniobra y el relevo, de cero: otro vuelo.
+    this.tarjetaDelRa = null;
+    this.relevoContado = { fuera: false, dentro: false };
+    this.dependenciaDelRelevo = null;
     this.informacionDeTrafico.reiniciar();
     // Otro vuelo, otra final: las aves de la de antes se fueron.
     this.avesEnLaFinal.reiniciar();
@@ -10188,6 +10448,15 @@ export class Game {
       // Y fuera de su zona, el permiso de esa torre ya no es de nadie.
       if (this.permisoDeAterrizar === "oido") this.permisoDeAterrizar = null;
     }
+    /*
+     * Y al cambiar de dependencia, el relevo, que se dice. Con la de este
+     * vuelo y no con `antes`, que viene del anterior: un vuelo que empieza en
+     * el aire no ha dejado ninguna frecuencia. Ver `relevoDeFrecuencia`.
+     */
+    const previa = this.dependenciaDelRelevo;
+    this.dependenciaDelRelevo = this.dependencia;
+    if (previa !== null && previa !== this.dependencia)
+      this.relevoDeFrecuencia(previa, this.dependencia);
     // Llegando a la zona de la torre de allí, la cota de su pista. Ver
     // `contarLaCotaDeLaPista`.
     if (
@@ -14005,6 +14274,8 @@ export class Game {
         cotaDeLaPista: this.cotaParaLaCinta(),
         // Y la senda, la marca del ritmo y el arco: los del cuadro plano.
         perfil: this.perfilParaElCuadro(),
+        // Y la franja del RA en el variómetro: la del cuadro plano.
+        ra: this.franjaDelRa(),
         // Y en tierra, la GS de rodar: la del cuadro plano.
         rodaje: this.rodajeParaElCuadro(),
         // Y lo que acaba de cambiar, resaltado: lo del cuadro plano.
@@ -14253,6 +14524,12 @@ export class Game {
          * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
          */
         perfil: this.perfilParaElCuadro(),
+        /*
+         * **Y la franja del RA**, mientras el TCAS pide maniobra: rojo lo que
+         * no se puede volar y verde a donde llevar la aguja. Ver
+         * `ordenDelTcas`.
+         */
+        ra: this.franjaDelRa(),
         motores: this.agujasDeLosMotores(),
       },
     );
@@ -24409,15 +24686,16 @@ export class Game {
        */
       otros: this.aircraft.tcas ? this.traficoParaLaCarta() : [],
       /*
-       * Y el modo: «TA ONLY» trabajando, «TCAS STBY» en espera —rodando por
-       * la plataforma, que es cuando una carta vacía con aviones en el cielo
-       * hay que poder entenderla—, y la banda si no es la normal. Ver
-       * `modoEnPantalla` en `flight/tcas.ts`.
+       * Y el modo: «TA ONLY» en el punto de espera, nada en TA/RA, «TCAS
+       * STBY» en espera —rodando por la plataforma, que es cuando una carta
+       * vacía con aviones en el cielo hay que poder entenderla—, y la banda
+       * si no es la normal. Ver `modoEnPantalla` en `flight/tcas.ts`.
        */
       modoTcas: modoEnPantalla(
         this.aircraft.tcas,
         this.tcas.enMarcha,
         this.bandaDelTcas,
+        this.tcas.conManiobra,
       ),
       /*
        * **Y el aeropuerto de destino, si esta ruta lleva a otro.**
@@ -24608,6 +24886,7 @@ export class Game {
       tendencia: b.tendencia,
       abreElRango:
         b.clase === "aviso" ||
+        b.clase === "resolucion" ||
         (s.onGround &&
           this.llegandoAhora.has(b.id) &&
           Math.hypot(b.x - s.position.x, b.z - s.position.z) <= ocho),

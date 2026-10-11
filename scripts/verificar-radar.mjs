@@ -276,6 +276,94 @@ try {
     }
     await page.evaluate(() => globalThis.__oga.intrusosDePrueba(null));
     /*
+     * **Y la maniobra, el RA**, que solo da el TCAS II: uno de frente y a la
+     * misma altura, a una milla y pico, y se espera a que la pida. Tan cerca
+     * porque el avión colocado sube o baja solo: a dos millas, con el
+     * automático subiendo a la ventanilla, en quince segundos ya se ha
+     * apartado más de lo que pide el RA y con razón no lo da. En el
+     * reactor tiene que salir entera —el cuadrado rojo en la carta y en la
+     * pantalla de la cabina, la franja en el variómetro, la tarjeta— y la
+     * carta ya no dice TA ONLY; en el turbohélice, nada de eso: su TCAS I solo
+     * avisa. Ver `flight/tcas.ts`.
+     */
+    {
+      const colocarDeFrente = (pie) => {
+        const o = globalThis.__oga;
+        const p = o.pista();
+        o.colocar(p.x - 30000, 14000 * pie, p.z - 30000, 100, (302 * Math.PI) / 180);
+        const a = (302 * Math.PI) / 180;
+        o.intrusosDePrueba([
+          {
+            id: "prueba:de-frente",
+            x: p.x - 30000 + Math.sin(a) * 1.2 * 1852,
+            y: 14000 * pie,
+            z: p.z - 30000 - Math.cos(a) * 1.2 * 1852,
+          },
+        ]);
+      };
+      await page.evaluate(colocarDeFrente, PIE);
+      await page.waitForFunction(() => globalThis.__oga.tcas().resolucion !== null, null, {
+        timeout: 15000,
+      }).catch(() => {});
+      await page.waitForTimeout(400);
+      const ra = await page.evaluate(() => {
+        const o = globalThis.__oga;
+        const tcas = o.tcas();
+        const visible = (el) => !!el && el.getAttribute("visibility") === "visible";
+        const cuadrados = [...document.querySelectorAll('[data-carta^="otro-"]')].filter(
+          (el) =>
+            visible(el) &&
+            el.getAttribute("class")?.includes("cr__trafico--resolucion") &&
+            el.querySelector('[data-tcas="cuadrado"]')?.getAttribute("visibility") === "inherit",
+        ).length;
+        const franja = document.querySelector('[data-cristal="vsi-ra"]');
+        const tarjeta = document.querySelector('[data-hud="senal"]');
+        return {
+          orden: tcas.resolucion?.orden ?? null,
+          dadas: tcas.resoluciones,
+          visto: o.tcasComoVeA?.("prueba:de-frente") ?? null,
+          conManiobra: tcas.conManiobra,
+          modo: tcas.modo,
+          cuadrados,
+          franja: franja ? visible(franja) : null,
+          tarjeta: !!tarjeta && !tarjeta.hidden && !!tarjeta.querySelector(".senal__ra-rojo"),
+          hayCabina: !!o.pantallas(),
+        };
+      });
+      // Y desde dentro, en la pantalla de navegación del lienzo.
+      ra.enCabina = false;
+      if (ra.hayCabina) {
+        await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+        await page.waitForTimeout(1200);
+        ra.enCabina = await page.evaluate(() =>
+          (globalThis.__oga.cartaDeCabina()?.otros ?? []).some((p) => p.clase === "resolucion"),
+        );
+        if (FOTOS) await page.screenshot({ path: `${FOTOS}/${avion}-ra-cabina.png` });
+        await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+      }
+      const conRa = avion === "jaz-90";
+      comprobar(
+        conRa
+          ? `${avion}: de frente, el RA entero —orden, cuadrado, franja y tarjeta— y sin TA ONLY`
+          : `${avion}: de frente, su TCAS I avisa y no da maniobra`,
+        conRa
+          ? ra.orden !== null &&
+              ra.conManiobra &&
+              !/TA ONLY/.test(ra.modo ?? "") &&
+              ra.cuadrados === 1 &&
+              ra.franja === true &&
+              ra.tarjeta &&
+              (!ra.hayCabina || ra.enCabina)
+          : ra.orden === null && ra.cuadrados === 0 && ra.franja !== true && !ra.tarjeta,
+        `orden ${ra.orden} (${ra.dadas} dadas${ra.visto ? `, a ${ra.visto.millas} NM y ${ra.visto.pies} ft` : ""}) · TA/RA ${ra.conManiobra} · modo ${ra.modo} · cuadrados ${ra.cuadrados} · franja ${ra.franja} · tarjeta ${ra.tarjeta} · cabina ${ra.hayCabina ? ra.enCabina : "sin pantallas"}`,
+      );
+      if (FOTOS) {
+        await page.screenshot({ path: `${FOTOS}/${avion}-ra-cuadro.png` });
+        await fotoDeLaCarta(page, `${FOTOS}/${avion}-ra-carta.png`);
+      }
+      await page.evaluate(() => globalThis.__oga.intrusosDePrueba(null));
+    }
+    /*
      * **Y a veinticuatro mil pies no se oye el campo de salida** (la 132): ni
      * su tráfico pidiendo rodar ni su torre hablándole a otro. Se vuela un
      * rato largo —el reloj corrido— lejos y alto, y se cuenta lo que dijo la

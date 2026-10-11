@@ -63,8 +63,8 @@ export interface TraficoEnElMapa {
   readonly clase: Clase;
 }
 
-/** Qué se pinta encima cuando dos caen juntos: lo que avisa. */
-const IMPORTA: Record<Clase, number> = { otro: 0, cerca: 1, aviso: 2 };
+/** Qué se pinta encima cuando dos caen juntos: lo que avisa, y la maniobra. */
+const IMPORTA: Record<Clase, number> = { otro: 0, cerca: 1, aviso: 2, resolucion: 3 };
 
 /**
  * **Dónde cae un punto del mundo en el plano**, con el norte arriba: el este
@@ -724,8 +724,8 @@ export class Mapa {
 
   /**
    * **Los otros aviones, los mismos que pinta la carta**, con sus mismos
-   * símbolos: rombo hueco, rombo lleno el cercano y círculo ámbar el que
-   * avisa. Ver `flight/tcas.ts`.
+   * símbolos: rombo hueco, rombo lleno el cercano, círculo ámbar el que
+   * avisa y cuadrado rojo el de la maniobra. Ver `flight/tcas.ts`.
    *
    * La lista es la del TCAS y no la del mundo, por lo mismo que en la carta:
    * lo que se enseña de los demás es lo que el avión sabe de ellos, y un
@@ -749,6 +749,15 @@ export class Mapa {
       if (x < 0 || x > LADO || y < 0 || y > LADO) continue;
       g.lineWidth = 3.4;
       g.strokeStyle = "rgba(20, 28, 34, 0.85)";
+      // El de la maniobra, el cuadrado rojo de la carta. Ver `flight/tcas.ts`.
+      if (o.clase === "resolucion") {
+        g.beginPath();
+        g.rect(x - 5.5, y - 5.5, 11, 11);
+        g.stroke();
+        g.fillStyle = "#ff3b30";
+        g.fill();
+        continue;
+      }
       if (o.clase === "aviso") {
         g.beginPath();
         g.arc(x, y, 6, 0, Math.PI * 2);

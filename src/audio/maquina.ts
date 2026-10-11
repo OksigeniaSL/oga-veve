@@ -26,9 +26,10 @@
  *   número sería justo lo contrario de la regla de las tres eses.
  * - **Entre avisos, manda el más importante**, en el orden de las cajas de
  *   verdad: la pérdida, el terreno, los mínimos, el ritmo de bajada, el
- *   alabeo, el tráfico. El que manda más corta al que suena; el que manda
- *   menos espera **una plaza** y poco rato, porque un aviso que describe algo
- *   de hace tres segundos ya no describe nada. Ver `PRIORIDAD` y `CADUCA`.
+ *   alabeo, la maniobra del TCAS, el tráfico. El que manda más corta al que
+ *   suena; el que manda menos espera **una plaza** y poco rato, porque un
+ *   aviso que describe algo de hace tres segundos ya no describe nada. Ver
+ *   `PRIORIDAD` y `CADUCA`.
  *
  * ## Y detrás, la instructora
  *
@@ -64,7 +65,19 @@ export const PRIORIDAD: Readonly<Record<string, number>> = {
   "cabina.sinkRate": 50,
   "cabina.airspeedLow": 45,
   "cabina.bankAngle": 40,
+  /*
+   * **La maniobra del TCAS**, por detrás de todo lo del avisador de terreno
+   * —que manda sobre el TCAS en cualquier cabina, y mientras suena no hay
+   * maniobra— y por delante de su propio aviso de tráfico: una orden de subir
+   * corta al «traffic, traffic» que la precede. El «clear of conflict», justo
+   * por encima del aviso. Ver `VOZ_DEL_RA` en `audio/cabina.ts`.
+   */
+  "cabina.climbClimb": 35,
+  "cabina.descendDescend": 35,
+  "cabina.levelOff": 35,
+  "cabina.monitorVerticalSpeed": 35,
   "cabina.autopilotDisconnect": 30,
+  "cabina.clearOfConflict": 22,
   "cabina.traffic": 20,
 };
 

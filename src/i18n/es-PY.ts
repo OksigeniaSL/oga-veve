@@ -1142,6 +1142,20 @@ export const ES_PY = {
   "tcas.arriba": "Tráfico {donde}, {cuanto} por encima",
   "tcas.abajo": "Tráfico {donde}, {cuanto} por debajo",
   "tcas.nivel": "Tráfico {donde}, a tu misma altura",
+  /*
+   * **La maniobra del TCAS, en la tarjeta**: una palabra en el peldaño de la
+   * palabra y, desde el de las cifras, la frase con su número, que es el de
+   * la franja verde del variómetro. Con calma y sin «¡»: es una orden, no una
+   * alarma. Ver `Game.ordenDelTcas` y `flight/tcas.ts`.
+   */
+  "palabra.ra.sube": "Subí",
+  "palabra.ra.baja": "Bajá",
+  "palabra.ra.nivela": "Nivelá",
+  "palabra.ra.vigila": "Así",
+  "tcas.ra.sube": "Subí: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.baja": "Bajá: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.nivela": "Nivelá: la aguja del variómetro, a cero",
+  "tcas.ra.vigila": "Seguí así: la aguja del variómetro, fuera de lo rojo",
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
@@ -1293,6 +1307,32 @@ export const ES_PY = {
   "vuelo.trafico.izquierda": "Mirá a tu izquierda: hay otro avión cerca",
   "vuelo.trafico.derecha": "Mirá a tu derecha: hay otro avión cerca",
   "vuelo.trafico.detras": "Hay otro avión cerca, detrás de vos",
+  /*
+   * **Y la maniobra, explicada detrás de la caja.** En los tres peldaños de
+   * abajo, después de «climb, climb» o «level off» y nunca a la vez, la
+   * instructora cuenta qué ha pedido y qué se hace, con calma: la primera vez
+   * que se oye una orden de un TCAS tiene que oírse detrás a alguien que no se
+   * asusta. Ver `Game.ordenDelTcas`.
+   */
+  "vuelo.ra.sube":
+    "La caja nos pide subir para apartarnos del otro avión: subí con calma, hasta la franja verde.",
+  "vuelo.ra.baja":
+    "La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde.",
+  "vuelo.ra.nivela":
+    "La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.",
+  "vuelo.ra.vigila":
+    "La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.",
+  "vuelo.ra.libre": "Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.",
+  /*
+   * **El relevo de frecuencia, contado en casa**, en los peldaños que no leen
+   * fraseología: una vez por vuelo al salir de la zona de la torre y otra al
+   * volver a entrar en la del campo al que se va. Ver `relevoDeFrecuencia` en
+   * `game.ts` y `flight/dependencia.ts`.
+   */
+  "vuelo.radio.otraFrecuencia":
+    "Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.",
+  "vuelo.radio.otraVezLaTorre":
+    "Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.",
   /*
    * **Y qué es un rombo, la primera vez que sale uno.** No es un aviso —un
    * TCAS no avisa de quien no se acerca— sino la explicación de un dibujo
@@ -2319,6 +2359,8 @@ export const ES_PY = {
   "explica.tcas.corta": "Otro avión",
   "explica.tcas.texto":
     "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. En los aviones de línea hay también un cuadrado rojo que te dice si subir o bajar; acá el TCAS está en TA ONLY y solo avisa.",
+  "explica.tcas.ra":
+    "Cada rombo es otro avión que vuela cerca de tu altura. Hueco, anda por ahí; lleno, está cerca. Si se vuelve un círculo ámbar, el TCAS avisa —traffic, traffic— y hay que buscarlo afuera. El número son cientos de pies: +10 es mil pies más arriba, y −05, quinientos más abajo. La flechita dice si sube o baja. Y en los reactores, si el otro se acerca de verdad, se vuelve un cuadrado rojo: el TCAS te dice si subir o bajar —climb, climb—, y la franja verde del variómetro, hasta dónde.",
   "explica.arco.corta": "Arco verde",
   "explica.arco.texto":
     "Este arco verde dice dónde vas a llegar a la altura que pediste, si seguís subiendo o bajando como ahora. Si cae antes de la pista, llegás abajo con tiempo; si cae después, no te da: hay que bajar más rápido o empezar antes.",

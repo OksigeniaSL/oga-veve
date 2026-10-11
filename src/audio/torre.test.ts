@@ -82,6 +82,16 @@ describe("lo que dice la torre", () => {
     "torre.backtrack",
     "torre.landedWithoutClearance",
     "torre.aterrizoSinPermiso",
+    /*
+     * Y el relevo de frecuencia, con tu matrícula delante: lo pide
+     * `relevoDeFrecuencia` por su clave al cambiar de dependencia. Entran aquí
+     * antes de grabarse para que, el día que se graben, la prueba no pida
+     * tocar nada. Ver `flight/dependencia.ts`.
+     */
+    "torre.contactDeparture",
+    "torre.contactControl",
+    "torre.contactApproach",
+    "torre.contactTower",
   ]);
 
   /*
