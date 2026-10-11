@@ -1251,6 +1251,10 @@
       "ms": 9507,
       "h": "67b1a57148"
     },
+    "vuelo.dasPaso": {
+      "ms": 7707,
+      "h": "0a0432f7f5"
+    },
     "vuelo.desdeLaInterseccion": {
       "ms": 4307,
       "h": "895ea6a512"
@@ -2681,6 +2685,9 @@
     ],
     "vuelo.salidaSiguiente": [
       "vuelo.salidaSiguiente"
+    ],
+    "vuelo.dasPaso": [
+      "vuelo.dasPaso"
     ],
     "vuelo.calor": [
       "vuelo.calor"

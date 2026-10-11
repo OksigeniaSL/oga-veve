@@ -218,12 +218,10 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen las
  * pruebas de `torre.test.ts`—, y estas son la excepción escrita: el juego ya
  * sabe cuándo decirlas y las pide solo si su grabación está en el pack. Cuando
- * se graben, salen de aquí; la prueba lo recuerda. Espera el «give way» a quien
- * rueda de frente hacia uno que sale: ver `PENDIENTE-VOCES-rodaje-trafico.md`.
+ * se graben, salen de aquí; la prueba lo recuerda. Hoy no espera ninguna: el
+ * «give way» se grabó el 11-10-2026.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
-  "torre.giveWayDeparting",
-]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

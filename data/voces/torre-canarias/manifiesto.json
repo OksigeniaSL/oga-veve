@@ -383,6 +383,10 @@
       "ms": 973,
       "h": "abea73ebff"
     },
+    "torre.canario.solo.giveWay": {
+      "ms": 881,
+      "h": "09c585a3c3"
+    },
     "torre.canario.solo.goAround": {
       "ms": 1421,
       "h": "d88fc00073"
@@ -1985,6 +1989,18 @@
     ],
     "metros.hundred": [
       "metros.hundred"
+    ],
+    "torre.canario.solo.giveWay": [
+      "torre.canario.solo.giveWay"
+    ],
+    "torre.canario.giveWayDeparting": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.giveWay",
+      "torre.canario.solo.departingTraffic"
     ]
   }
 }

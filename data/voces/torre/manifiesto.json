@@ -387,6 +387,10 @@
       "ms": 1103,
       "h": "0542e8ff87"
     },
+    "torre.solo.giveWay": {
+      "ms": 875,
+      "h": "d25a359a04"
+    },
     "torre.solo.goAround": {
       "ms": 1787,
       "h": "4c7eb1da6b"
@@ -1971,6 +1975,18 @@
     ],
     "metros.hundred": [
       "metros.hundred"
+    ],
+    "torre.solo.giveWay": [
+      "torre.solo.giveWay"
+    ],
+    "torre.giveWayDeparting": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.giveWay",
+      "torre.solo.departingTraffic"
     ]
   }
 }

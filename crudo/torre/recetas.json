@@ -1313,5 +1313,17 @@
   ],
   "metros.hundred": [
     "metros.hundred"
+  ],
+  "torre.solo.giveWay": [
+    "torre.solo.giveWay"
+  ],
+  "torre.giveWayDeparting": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.giveWay",
+    "torre.solo.departingTraffic"
   ]
 }

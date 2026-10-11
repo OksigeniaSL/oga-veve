@@ -1319,5 +1319,17 @@
   ],
   "metros.hundred": [
     "metros.hundred"
+  ],
+  "torre.canario.solo.giveWay": [
+    "torre.canario.solo.giveWay"
+  ],
+  "torre.canario.giveWayDeparting": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.giveWay",
+    "torre.canario.solo.departingTraffic"
   ]
 }
