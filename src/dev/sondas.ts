@@ -847,6 +847,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     pistaEsTuya: () => juego.laPistaEsTuyaParaBanco,
     /**
+     * **Los que salen antes que tú** en la fila de salida, en orden. Ver
+     * `salenAntes` en `flight/turno-de-pista.ts`.
+     */
+    salenAntes: () => juego.salenAntesParaBanco,
+    /** Por qué se espera en la roja, y por quién. Ver `porQueEsperasDe`. */
+    porQueEsperas: () => juego.porQueEsperasParaBanco,
+    /** Que uno de la frecuencia salga ya a rodar. Ver `sacarARodar`. */
+    sacarARodar: () => juego.sacarARodarParaBanco(),
+    /** La última salida del tráfico, para su estela. Ver `ultimaSalida`. */
+    ultimaSalida: () => juego.trafico?.ultimaSalida() ?? null,
+    /**
      * Si se está en la final de la torre, la que empieza a millas del umbral y
      * desde la que se pide tu permiso. Ver `flight/final-de-la-torre.ts`.
      */

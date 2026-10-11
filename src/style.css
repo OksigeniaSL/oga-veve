@@ -8364,6 +8364,30 @@ button.motor__tecla::after {
   padding-right: 14px;
 }
 
+/*
+ * **Los que salen antes que vos**, delante de tu avión y en el color de lo
+ * que no es tuyo: uno por avión de la fila. Se cuentan sin saber contar.
+ */
+.torre__fila {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  font-size: 0.8em;
+}
+
+.torre__fila[hidden] {
+  display: none;
+}
+
+.otro-avion {
+  width: 1.4em;
+  height: 1.4em;
+  flex: none;
+  fill: var(--tinta);
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .torre--verde .torre__luz {
     animation: none;

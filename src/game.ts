@@ -653,6 +653,7 @@ import {
   HOLD_SHORT_POR,
   TurnoDePista,
   type EsperaPor,
+  type PorQueEsperas,
 } from "./flight/turno-de-pista";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
@@ -852,7 +853,12 @@ import {
 } from "./flight/turbulencia";
 import { Rafagas } from "./flight/rafagas";
 import { esAguaDeCasa } from "./world/agua-de-casa";
-import { DE_CLASE, Estelas, type QuienVuela } from "./flight/estela";
+import {
+  categoriaDeEstela,
+  DE_CLASE,
+  Estelas,
+  type QuienVuela,
+} from "./flight/estela";
 import {
   InstructorGrabado,
   nuevoBancoDeVoces,
@@ -4412,6 +4418,8 @@ export class Game {
     },
     alto: () =>
       this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
+    // La de la ficha: ver `categoriaDeEstela` en `flight/estela.ts`.
+    miEstela: () => categoriaDeEstela(this.aircraft.mass),
     decirAOtro: (dice) => this.decirleAOtro(dice),
     autorizarte: () => this.autorizarElAterrizaje(),
     mandarteAlAire: (alto, sigue) =>
@@ -8219,6 +8227,24 @@ export class Game {
     return this.radio.ocupanLaPista;
   }
 
+  /** Los que salen antes que tú, para el banco. Ver `salenAntes`. */
+  get salenAntesParaBanco(): string[] {
+    return this.turno.salenAntes;
+  }
+
+  /** Por qué se espera, y por quién, para el banco. Ver `porQueEsperasDe`. */
+  get porQueEsperasParaBanco(): EsperaPor | null {
+    return this.turno.porQueEsperasDe;
+  }
+
+  /**
+   * **Para el banco: que uno de la frecuencia salga ya a rodar**, y ver la
+   * fila de salida sin esperar a que el sorteo la dé. Ver `sacarARodar`.
+   */
+  sacarARodarParaBanco(): string | null {
+    return this.radio.sacarARodar();
+  }
+
   /**
    * Una llamada de la torre montada entera: a quién, con qué pista y cómo
    * suena.
@@ -8526,6 +8552,10 @@ export class Game {
       this.conLaPista(this.miIndicativo.dicho, verde ? pistaEs : null, "escrito"),
       enElAire,
       verde ? "" : this.laPista(pistaEs, "escrito"),
+      // Y los que salen antes que vos, dibujados. Ver `salenAntes`.
+      luz === "roja" && rojaDice === "esperar" && !enElAire
+        ? this.turno.salenAntes.length
+        : 0,
     );
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
     if (cual === this.ultimaLuzDeTorre) {
@@ -8572,7 +8602,11 @@ export class Game {
       afis && luz === "roja" && rojaDice === "esperar"
         ? this.turno.traficoConocidoDe
         : null;
-    const trafico = conocido?.porque ?? null;
+    // La fila y la estela, para un AFIS, son tráfico que sale: no reparte turnos.
+    const trafico =
+      conocido?.porque === "fila" || conocido?.porque === "estela"
+        ? "despega"
+        : (conocido?.porque ?? null);
     const base: string | null = afis
       ? luz === "verde"
         ? enElAire
@@ -8674,10 +8708,12 @@ export class Game {
      * En los peldaños de abajo lo cuenta la instructora, en una línea y con
      * calma; en los de arriba lo dice la torre en la fraseología, más abajo.
      */
+    // Y tu número en la fila, en la voz de la lámpara. Ver `decirLaFila`.
+    if (porQueDe?.porque === "fila" && !afis) this.decirLaFila(porQueDe);
     if (porQueDe && !conCifras) {
-      const explica = EXPLICA_LA_ESPERA[porQueDe.porque];
-      this.instructor.decir(t(explica), explica);
-      this.esperarQueSeOiga(explica, porQueDe);
+      const explica = this.explicarLaEspera(porQueDe.porque);
+      if (explica) this.esperarQueSeOiga(explica, porQueDe);
+      if (explica) this.yaContadoAlSalir(porQueDe);
     }
 
     /*
@@ -8751,10 +8787,89 @@ export class Game {
       );
       if (dicha && conocido) this.esperarQueSeOiga(dicha, conocido);
     } else if (conCifras) {
-      const dicha = this.porRadio(enRadio, urgencia);
+      const dicha =
+        (porQueDe && this.elPorqueEnRadio(porQueDe, urgencia)) ||
+        this.porRadio(enRadio, urgencia);
       if (dicha && porQueDe) this.esperarQueSeOiga(dicha, porQueDe);
+      if (dicha && porQueDe) this.yaContadoAlSalir(porQueDe);
     }
     return !!clave;
+  }
+
+  /**
+   * **El de la fila ya se contó, también cuando entre en la pista.** Dicho
+   * «número dos» por él, que segundos después vuelva a sonar «departing
+   * traffic» por el mismo avión al verle entrar no informa de nada: un
+   * suceso, una voz. Solo si se dijo; si no, el porqué de la pista sí cuenta.
+   */
+  private yaContadoAlSalir(por: EsperaPor): void {
+    if (por.porque === "fila")
+      this.porQuesExplicados.add(esperaPorQuien({ ...por, porque: "despega" }));
+  }
+
+  /**
+   * **Tu número en la fila de salida**, en castellano y con la voz de la
+   * lámpara, justo detrás de la roja: «número dos para la salida».
+   *
+   * Enrique, en el punto de espera B de Tenerife Sur: «hay dos aviones por
+   * salir, bien, pero tardan un montón y el radar no lo está diciendo». En
+   * tierra el TCAS no pinta a nadie —es lo de verdad—, así que lo cuenta
+   * quien reparte los turnos. Es información, no una autorización: la verde
+   * llega igual cuando te toca. Solo con su grabación —una frase sin grabar
+   * es muda en el Brave de Enrique—; hasta entonces lo dice la tarjeta, con
+   * los aviones de delante dibujados y el número escrito. Ver
+   * `PENDIENTE-VOCES-tierra-2.md`.
+   */
+  private decirLaFila(por: EsperaPor): void {
+    const base = (por.numero ?? 2) >= 3 ? "torre.numeroTres" : "torre.numeroDos";
+    const clave = comoSeDiceAqui(
+      base,
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
+    ) as TranslationKey;
+    if (this.instructor.vozDe(clave)) this.torre.decir(t(clave), clave, "mando");
+  }
+
+  /**
+   * **El porqué en la voz de la instructora**, en los peldaños de abajo: la
+   * clave con la que espera turno, o `null` si no se dijo. Los de la fila y
+   * la estela, solo con su grabación; sin ella lo cuenta la tarjeta. Ver
+   * `EXPLICA_LA_ESPERA`.
+   */
+  private explicarLaEspera(porque: PorQueEsperas): string | null {
+    const explica = EXPLICA_LA_ESPERA[porque];
+    const nueva = porque === "fila" || porque === "estela";
+    if (nueva && !this.instructor.vozDe(explica)) return null;
+    this.instructor.decir(t(explica), explica);
+    return explica;
+  }
+
+  /**
+   * **El porqué en fraseología, si tiene la suya**, de Taguató para arriba:
+   * la fila con su número —«hold short of the runway, number two for
+   * departure»— y la estela —«hold short of the runway, caution wake
+   * turbulence»—. Se escriben siempre en la tira de la radio y suenan solo
+   * con su grabación; si no la tienen, `null`, y suena la de siempre de
+   * `HOLD_SHORT_POR`. «Caution wake turbulence» es la expresión de la OACI
+   * (Doc 4444, cap. 12) y la secuencia de salida es información, no una
+   * autorización. Ver `PENDIENTE-VOCES-tierra-2.md`.
+   */
+  private elPorqueEnRadio(por: EsperaPor, urgencia: Urgencia): string | null {
+    if (por.porque !== "fila" && por.porque !== "estela") return null;
+    const yo = this.miIndicativo;
+    const habla = hablaDe(this.elCampo().escenario.aerodrome?.id);
+    const relleno = rellenoDe(yo);
+    const [base, dice] =
+      por.porque === "estela"
+        ? ["torre.holdShortWake", "hold short of the runway, caution wake turbulence"]
+        : (por.numero ?? 2) >= 3
+          ? ["torre.holdShortNumberThree", "hold short of the runway, number three for departure"]
+          : ["torre.holdShortNumberTwo", "hold short of the runway, number two for departure"];
+    const clave = comoSeDiceAqui(base, habla);
+    const texto = `${yo.dicho}, ${dice}`;
+    this.hud.radio(texto, undefined, true);
+    if (!this.instructor.vozDe(clave, relleno)) return null;
+    this.torre.decir(texto, clave, urgencia, relleno);
+    return clave;
   }
 
   /**
@@ -8884,13 +8999,14 @@ export class Game {
           ? "torre.afisInUseLanding"
           : "torre.afisInUseDeparting",
       );
-    else if (conCifras) dicha = this.porRadio(HOLD_SHORT_POR[porQue]);
-    else {
-      const explica = EXPLICA_LA_ESPERA[porQue];
-      this.instructor.decir(t(explica), explica);
-      dicha = explica;
-    }
+    else if (conCifras)
+      dicha =
+        this.elPorqueEnRadio(de, "mando") ?? this.porRadio(HOLD_SHORT_POR[porQue]);
+    else dicha = this.explicarLaEspera(porQue);
+    // Y tu número, si es la fila. Ver `decirLaFila`.
+    if (porQue === "fila" && !this.esAfisAqui()) this.decirLaFila(de);
     if (dicha) this.esperarQueSeOiga(dicha, de, veces);
+    if (dicha) this.yaContadoAlSalir(de);
   }
 
   /**

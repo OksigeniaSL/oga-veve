@@ -23,6 +23,7 @@ import {
   esTuPermisoDeAterrizar,
 } from "../audio/torre";
 import { ALTURA_DE_DECISION, type PorQueMandaron } from "./minimos";
+import { separacionDeSalida, type CategoriaDeEstela } from "./estela";
 import {
   laQueSeDice,
   PISTA_TUYA,
@@ -63,6 +64,13 @@ export interface DibujoDelTurno {
    * `world/trafico.ts`.
    */
   esperanPorTi?(): string[];
+  /**
+   * Los dibujados que esperan su salida desde antes que tú, en orden. Sin
+   * esto, nadie. Ver `delanteEnLaSalida` en `world/trafico.ts`.
+   */
+  delanteEnLaSalida?(): string[];
+  /** La última salida de los dibujados, para su estela. Ver `ultimaSalida`. */
+  ultimaSalida?(): { matricula: string; estela: CategoriaDeEstela; hace: number } | null;
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -86,6 +94,11 @@ export interface AlrededorDelTurno {
   calleUnica?(): boolean;
   /** Metros de tu avión al umbral de aterrizar del campo de ahora. */
   alUmbral(): number;
+  /**
+   * **La categoría de estela de tu avión.** Sin esto, la más pesada, que no
+   * espera a nadie: ver `esperaPorEstela`.
+   */
+  miEstela?(): CategoriaDeEstela;
   /** Tu altura sobre la pista, m. */
   alto(): number;
   /**
@@ -168,12 +181,17 @@ export const USAN_LA_CALLE: Readonly<Record<string, "saliendo" | "volviendo">> =
  * viene a aterrizar —autorizado, o cantando final— o uno alineado en la pista
  * esperando su despegue.
  */
-export type PorQueEsperas = "aterriza" | "despega";
+export type PorQueEsperas = "aterriza" | "despega" | "fila" | "estela";
 
 /** Por qué se espera y por quién, si se sabe. Ver `porQueEsperasDe`. */
 export interface EsperaPor {
   readonly porque: PorQueEsperas;
   readonly matricula: string | null;
+  /**
+   * En la fila de salida, **qué número eres**: dos con uno delante, tres con
+   * dos. Ver `salenAntes`.
+   */
+  readonly numero?: number;
 }
 
 /**
@@ -183,6 +201,14 @@ export interface EsperaPor {
 export const HOLD_SHORT_POR: Readonly<Record<PorQueEsperas, string>> = {
   aterriza: "hold short of the runway, landing traffic",
   despega: "hold short of the runway, departing traffic",
+  /*
+   * En la fila, lo que se dice con su número —«number two for departure»—
+   * está sin grabar; hasta entonces suena esto, que también es verdad: delante
+   * hay tráfico que sale. Ver `decirLaFila` en `game.ts`.
+   */
+  fila: "hold short of the runway, departing traffic",
+  // Y por la estela, la orden a secas: el porqué sin grabar va en la tira.
+  estela: "hold short of the runway",
 };
 
 /**
@@ -193,6 +219,8 @@ export const HOLD_SHORT_POR: Readonly<Record<PorQueEsperas, string>> = {
 export const EXPLICA_LA_ESPERA = {
   aterriza: "vuelo.esperaQueAterrice",
   despega: "vuelo.esperaQueDespegue",
+  fila: "vuelo.esperaTurnoDeSalida",
+  estela: "vuelo.esperaLaEstela",
 } as const satisfies Record<PorQueEsperas, string>;
 
 /**
@@ -310,6 +338,13 @@ export class TurnoDePista {
          */
         this.ocupadaEnElDibujo ||
         /*
+         * **Y los que esperaban su salida antes que tú salen antes.** Ver
+         * `salenAntes`.
+         */
+        this.salenAntes.length > 0 ||
+        // Y detrás de uno más grande, sus dos minutos de estela.
+        this.esperaPorEstela !== null ||
+        /*
          * **Y en una sola calle, el que ya está en ella va primero.** Espera
          * en la misma doble raya que vos, así que hasta que no entra en la
          * pista y se va no hay sitio para otro. Ver `USAN_LA_CALLE`.
@@ -324,6 +359,42 @@ export class TurnoDePista {
           this.de.radio.alguienEnLaCalle &&
           !this.teEsperanEnLaCalle))
     );
+  }
+
+  /**
+   * **Los que salen antes que tú**, en orden: los dibujados que esperaban
+   * listos en su doble raya cuando llegaste a la tuya y a los que la
+   * frecuencia todavía no ha dado la salida.
+   *
+   * Con la tuya en la roja, la frecuencia no podía darles la suya —la fase de
+   * esperar calla la radio— y en cuanto la pista quedaba libre la verde era
+   * para ti: en Tenerife Sur, con el JAZ 60 en el punto de espera B y dos por
+   * salir, «nada, me dejaron salir a mí antes». Las salidas se autorizan en
+   * el orden en que están listas (Doc 4444, 7.9); ahora el primero de la fila
+   * habla aunque la fase calle —ver `delanteEnLaFila` en `flight/radio.ts`— y
+   * tú esperas tu número.
+   *
+   * Solo los que la frecuencia tiene todavía por salir: un dibujo sin vuelo en
+   * la radio no recibiría nunca su salida, y con él delante la roja no se
+   * apagaría.
+   */
+  get salenAntes(): string[] {
+    if (!this.conTorre) return [];
+    const delante = this.de.trafico()?.delanteEnLaSalida?.() ?? [];
+    return delante.filter((m) => this.de.radio.vaASalir(m));
+  }
+
+  /**
+   * **La salida de delante cuya estela todavía se espera**: su matrícula, o
+   * `null`. Dos minutos detrás de una más pesada, contados desde que se fue al
+   * aire (Doc 4444, 5.8.3.1). Ver `separacionDeSalida`.
+   */
+  get esperaPorEstela(): string | null {
+    if (!this.conTorre || !this.de.miEstela) return null;
+    const ultima = this.de.trafico()?.ultimaSalida?.();
+    if (!ultima) return null;
+    const espera = separacionDeSalida(ultima.estela, this.de.miEstela());
+    return ultima.hace < espera ? ultima.matricula : null;
   }
 
   /** Si hay alguien de la calle parado detrás de ti. Ver `pistaDeOtros`. */
@@ -361,6 +432,10 @@ export class TurnoDePista {
     if (aterriza) return { porque: "aterriza", matricula: aterriza.matricula };
     const alineado = ocupan.find((o) => o.orden === "torre.lineUpWait");
     if (alineado) return { porque: "despega", matricula: alineado.matricula };
+    // Y el primero de la fila de salida, con tu número. Ver `salenAntes`.
+    const fila = this.salenAntes;
+    if (fila.length)
+      return { porque: "fila", matricula: fila[0] ?? null, numero: fila.length + 1 };
     // Y quien espera detrás de ti en la calle única no va primero: ver
     // `teEsperanEnLaCalle`.
     if (
@@ -372,6 +447,8 @@ export class TurnoDePista {
     // Encima sin tenerla es el que ya corre su despegue. Ver `pistaDeOtros`.
     const encima = this.de.trafico()?.ocupanLaPista?.() ?? [];
     if (encima.length) return { porque: "despega", matricula: encima[0] ?? null };
+    const estela = this.esperaPorEstela;
+    if (estela) return { porque: "estela", matricula: estela };
     return null;
   }
 
@@ -448,6 +525,7 @@ export class TurnoDePista {
       ...ahora,
       esperandoLaPista: this.esperandoLaPista(ahora.fase),
       calleOcupada: this.conCalleUnica ? (USAN_LA_CALLE[ahora.fase] ?? null) : null,
+      delanteEnLaFila: ahora.fase === "esperando" ? this.salenAntes : undefined,
     };
     const trafico = this.de.trafico();
     let alAire: Transmision | null = null;

@@ -82,7 +82,7 @@ import {
   RESPUESTA_MAXIMA,
 } from "../flight/radio";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
-import type { CategoriaDeEstela } from "../flight/estela";
+import { separacionDeSalida, type CategoriaDeEstela } from "../flight/estela";
 import {
   desfaseDe,
   equipoDe,
@@ -1359,6 +1359,12 @@ interface Volando {
    * de un cruce por el que vas a pasar. Ver `cedeA`.
    */
   cedido: number;
+  /**
+   * **Desde cuándo espera listo en su doble raya**, s del reloj del tráfico:
+   * parado en ella, esperando la salida. `null` si no. Es lo que decide quién
+   * va antes en la fila de salida: ver `delanteEnLaSalida`.
+   */
+  listoDesde: number | null;
 }
 
 /** Un tres sesenta de espera. Ver `tresSesentaDesde`. */
@@ -1495,6 +1501,21 @@ export interface Trafico {
    * `flight/turno-de-pista.ts`.
    */
   esperanPorTi(): string[];
+  /**
+   * **Los que salen antes que tú**, en orden: los que esperan listos en su
+   * doble raya desde antes de que tú llegaras a la tuya —o todos los que
+   * esperan, si todavía no has llegado—. Es la fila de salida, y a quien
+   * espera antes se le da la salida antes (Doc 4444, 7.9: las salidas se
+   * autorizan en el orden en que están listas). Ver `salenAntes` en
+   * `flight/turno-de-pista.ts`.
+   */
+  delanteEnLaSalida(): string[];
+  /**
+   * **La última salida de las dibujadas**: su categoría de estela y cuánto
+   * hace que se fue al aire, s. Para separar por estela a quien sale detrás.
+   * Ver `separacionDeSalida` en `flight/estela.ts`.
+   */
+  ultimaSalida(): { matricula: string; estela: CategoriaDeEstela; hace: number } | null;
   /** Cuántos se ven, y dónde. Para el banco y para la carta. */
   quienes(): {
     matricula: string;
@@ -2231,6 +2252,19 @@ export function crearTrafico(
   let tuHora: number | null = null;
 
   /**
+   * **Desde cuándo esperas en tu doble raya**, s del reloj del tráfico, o
+   * `null` si no esperas. Ver `delanteEnLaSalida`.
+   */
+  let tuEsperasDesde: number | null = null;
+
+  /**
+   * **La última que se fue al aire**: quién, de qué estela y cuándo. Ver
+   * `ultimaSalida`.
+   */
+  let laUltimaSalida: { matricula: string; estela: CategoriaDeEstela; hora: number } | null =
+    null;
+
+  /**
    * **Lo que se le da a quien juega para despegar**, s: si está encima de la
    * pista sin haber llegado volando, es que sale, y el que viene no cruza el
    * umbral hasta este rato después.
@@ -2506,6 +2540,7 @@ export function crearTrafico(
           tresSesenta: null,
           cruzo: null,
           cedido: 0,
+          listoDesde: null,
         };
         aviones.set(matricula, quien);
       }
@@ -2537,6 +2572,8 @@ export function crearTrafico(
       if (tu?.alUmbral != null) tuHora = reloj + tu.alUmbral;
       else if (!tu?.enLaPista) tuHora = null;
       const tuEnTierra = tu?.enTierra ?? null;
+      if (tuEnTierra?.esperandoLaPista) tuEsperasDesde ??= reloj;
+      else tuEsperasDesde = null;
       for (const [matricula, quien] of aviones) {
         const c = quien.caminos;
         const antes = quien.recorrido;
@@ -2661,6 +2698,23 @@ export function crearTrafico(
           quien.cruzo = reloj;
           rehacerLaLlegada(quien);
         }
+        /*
+         * **Y en la fila de salida**: desde cuándo espera listo en su doble
+         * raya, y cuándo se fue al aire el último, para su estela.
+         */
+        const enTierraSale = c?.enTierra && quien.marca.camino === c.salida ? c : null;
+        quien.listoDesde =
+          enTierraSale &&
+          quien.recorrido >= enTierraSale.espera - 1 &&
+          quien.recorrido <= enTierraSale.espera + 0.5
+            ? (quien.listoDesde ?? reloj)
+            : null;
+        if (
+          enTierraSale?.enTierra &&
+          antes < enTierraSale.enTierra.despega &&
+          quien.recorrido >= enTierraSale.enTierra.despega
+        )
+          laUltimaSalida = { matricula, estela: quien.tipo.estela, hora: reloj };
         if (
           c &&
           quien.marca.camino === c.sinPermiso &&
@@ -2762,6 +2816,22 @@ export function crearTrafico(
           llegaAntesDeQueSalga(quien?.tipo ?? tipoDe(matricula), clave)
         )
           return true;
+        /*
+         * **Y detrás de una salida más grande, sus dos minutos de estela**
+         * antes de despegar (Doc 4444, 5.8.3.1). Alinearse sí puede: lo que
+         * se separa es el despegue. Ver `separacionDeSalida`.
+         */
+        if (
+          clave === "torre.clearedTakeoff" &&
+          laUltimaSalida &&
+          laUltimaSalida.matricula !== matricula &&
+          reloj - laUltimaSalida.hora <
+            separacionDeSalida(
+              laUltimaSalida.estela,
+              (quien?.tipo ?? tipoDe(matricula)).estela,
+            )
+        )
+          return true;
       }
       if (!quien) return noCabeTodavia(matricula, clave);
       // Viento en cola y final, cuando haya vuelto al circuito. Ver `sinSaltar`.
@@ -2820,6 +2890,21 @@ export function crearTrafico(
     },
     dibujado(matricula) {
       return aviones.has(matricula);
+    },
+    delanteEnLaSalida() {
+      return [...aviones]
+        .filter(
+          ([, q]) =>
+            q.listoDesde !== null &&
+            (tuEsperasDesde === null || q.listoDesde <= tuEsperasDesde),
+        )
+        .sort(([, a], [, b]) => a.listoDesde! - b.listoDesde!)
+        .map(([m]) => m);
+    },
+    ultimaSalida() {
+      if (!laUltimaSalida) return null;
+      const { matricula, estela, hora } = laUltimaSalida;
+      return { matricula, estela, hace: reloj - hora };
     },
     esperanPorTi() {
       const quienes: string[] = [];
@@ -2897,6 +2982,8 @@ export function crearTrafico(
     },
     vaciar() {
       for (const [matricula, quien] of aviones) quitar(matricula, quien);
+      laUltimaSalida = null;
+      tuEsperasDesde = null;
     },
     dispose() {
       desmontado = true;

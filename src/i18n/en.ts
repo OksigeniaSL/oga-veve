@@ -273,6 +273,12 @@ export const EN: Dictionary = {
   // Ver `alturaEnRadio` en `flight/autorizacion-de-altitud.ts`.
   "torre.subir": "{indicativo}, climb to {altura}",
   "torre.canario.subir": "{indicativo}, climb to {altura}",
+  // Tu número en la fila de salida. Ver `torre.numeroDos` en `es-PY.ts`.
+  "torre.numeroDos": "number two for departure",
+  "torre.numeroTres": "number three for departure",
+  "torre.canario.numeroDos": "number two for departure",
+  "torre.canario.numeroTres": "number three for departure",
+  "hud.filaDeSalida": "Number {numero} for departure",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",
@@ -318,6 +324,8 @@ export const EN: Dictionary = {
   "vuelo.esperando": "Stop completely and wait for the light",
   "vuelo.esperaQueAterrice": "We wait: a plane is coming in to land",
   "vuelo.esperaQueDespegue": "We wait: the plane on the runway goes first",
+  "vuelo.esperaTurnoDeSalida": "We wait our turn: the plane that got here first goes first",
+  "vuelo.esperaLaEstela": "We wait a little: the plane that just left leaves swirls in the air",
   "vuelo.autorizado": "Green light! Enter the runway",
   "vuelo.esperandoMirando": "Stop and look: the windsock, the animals and the runway",
   "vuelo.autorizadoSinTorre": "All clear: enter the runway",

@@ -149,6 +149,13 @@ const pelada = (clave) =>
  * dice con su nombre. Ver `CALLADAS` y `flight/dependencia.ts`.
  */
 const { CALLADAS, CUANTOS } = await server.ssrLoadModule("/src/flight/radio.ts");
+const { TIPOS } = await server.ssrLoadModule("/src/world/trafico.ts");
+/**
+ * **Y cómo despega cada uno que sale**: por dónde va de su camino de salida
+ * en cada muestra. «Se vio salir muy despacio, como si estuviera rodando», en
+ * Tenerife Sur. Ver «las salidas» más abajo.
+ */
+const salidas = new Map();
 const fasesOidas = new Map();
 const relojAlEmpezar = await page.evaluate(() => globalThis.__oga.reloj());
 const hasta = Date.now() + RATO * 1000;
@@ -192,7 +199,16 @@ while (Date.now() < hasta) {
     ),
     t: globalThis.__oga.reloj(),
     nombrados: globalThis.__oga.nombrados(),
+    dentro: globalThis.__oga.traficoPorDentro(),
   }));
+  for (const d of m.dentro) {
+    if (d.camino !== "salida" || d.despega === null || d.espera === null) continue;
+    const a = m.trafico.find((x) => x.matricula === d.matricula);
+    if (!a) continue;
+    const lista = salidas.get(d.matricula) ?? [];
+    lista.push({ t: m.t, r: d.recorrido, despega: d.despega, espera: d.espera, x: a.x, z: a.z, tipo: d.tipo });
+    salidas.set(d.matricula, lista);
+  }
   for (const matricula of m.frecuencia) estuvieron.add(matricula);
   /*
    * **Y quién la hizo, y cuándo**, que no es lo mismo que cuándo sonó. La
@@ -433,6 +449,52 @@ comprobar(
   sitiosMedidos === sitios.length,
   `${sitiosMedidos} de ${sitios.length}`,
   "una comprobación que no se ejecuta no es una comprobación que pasa",
+);
+
+/*
+ * **Y las salidas, como las de su tipo.** De la doble raya al aire —entrar,
+ * alinearse y correr— ronda el minuto, y al dejar el suelo va a su Vr y no a
+ * paso de calle. Se mide en las muestras del banco, cada dos segundos de
+ * juego a ×8: el tiempo, con esa holgura. Antes del arreglo, el reactor
+ * tardaba setenta y tres segundos de alinearse a despegar. Ver `TIPOS` y
+ * `enSuCarrera` en `world/trafico.ts`.
+ */
+const medidas = [];
+for (const [matricula, lista] of salidas) {
+  // La última muestra en su doble raya o antes, y la primera ya en el aire.
+  const enLaRaya = lista.filter((p) => p.r <= p.espera + 1.5).at(-1);
+  const enElAire = lista.find((p) => p.r >= p.despega);
+  if (!enLaRaya || !enElAire || enElAire.t <= enLaRaya.t) continue;
+  const enTierra = lista.filter((p) => p.r < p.despega && p.t > enLaRaya.t);
+  const a = enTierra.at(-2);
+  const b = enTierra.at(-1);
+  const v = a && b && b.t > a.t ? Math.hypot(b.x - a.x, b.z - a.z) / (b.t - a.t) : null;
+  const tipo = TIPOS[enElAire.tipo];
+  medidas.push({
+    matricula,
+    tipo: enElAire.tipo,
+    tarda: enElAire.t - enLaRaya.t,
+    v,
+    rota: tipo?.rota ?? null,
+  });
+}
+comprobar(
+  "y las salidas despegan como su tipo: de la doble raya al aire, en torno al minuto",
+  medidas.length > 0 &&
+    medidas.every(
+      (x) => x.tarda >= 30 && x.tarda <= 90 && x.v !== null && x.rota !== null && x.v >= 0.75 * x.rota,
+    ),
+  medidas.length
+    ? medidas
+        .map(
+          (x) =>
+            `${x.matricula} (${x.tipo}) ${x.tarda.toFixed(0)} s, ` +
+            `${x.v === null ? "?" : Math.round(x.v / 0.5144)} kt antes de irse` +
+            (x.rota ? ` (Vr ${Math.round(x.rota / 0.5144)} kt)` : ""),
+        )
+        .join(" · ")
+    : "ninguna salida vista entera",
+  "«se vio salir muy despacio, como si estuviera rodando»",
 );
 
 const enElOrigen = visto.filter((v) =>

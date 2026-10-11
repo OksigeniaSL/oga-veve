@@ -661,8 +661,15 @@ const conMegafonia = await page
   .catch(() => true);
 const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida]) => {
   const o = globalThis.__oga;
+  /*
+   * **Y con `OGA_FILA_DE_SALIDA=1`, uno de la frecuencia sale a rodar ya**,
+   * antes que tú: si llega a su doble raya antes de que llegues a la tuya,
+   * va delante en la fila y tiene que salir antes; si llega después, detrás.
+   * Ver `sacarARodar` en `flight/radio.ts`.
+   */
+  const filaPuesta = filaPedida ? (o.sacarARodar?.() ?? null) : null;
   /*
    * **Sin órdenes de irse al aire.**
    *
@@ -2783,6 +2790,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let rojaMasLarga = 0;
   let rojaMasLargaDonde = "";
   /**
+   * **Y la fila de salida.** «Nada, me dejaron salir a mí antes», en Tenerife
+   * Sur: la torre dio la verde a quien juega con otro esperando su salida
+   * desde antes. Se apuntan los que van delante mientras se espera en la roja
+   * y, al ponerse verde, se mira que todos se hayan ido al aire; y que la
+   * tarjeta los dibuje. Y lo que añaden a la roja —una salida por cada uno y
+   * los dos minutos de estela detrás de uno más grande— se le permite a la
+   * más larga. Ver `salenAntes` en `flight/turno-de-pista.ts`.
+   */
+  const fila = {
+    puesta: filaPuesta,
+    porDelante: new Set(),
+    maxDelante: 0,
+    estela: false,
+    colados: [],
+    muestras: 0,
+    dibujada: 0,
+    numero: null,
+    comprobada: false,
+  };
+  /**
    * **Y el tráfico que viene de frente.** «Un avión de frente y ni aviso ni
    * radar ni nada. ¿Cómo le han permitido a ese piloto kamikaze aterrizar?»
    * Por cada avión dibujado, su último sitio, para sacar hacia dónde va.
@@ -3831,12 +3858,33 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       if (enElDestino && aterrizaConAfis && o.lamparaEncendida?.()) lamparaEnUnAfis++;
       if (fase === "esperando") {
+        const delante = o.salenAntes?.() ?? [];
+        for (const m of delante) fila.porDelante.add(m);
+        fila.maxDelante = Math.max(fila.maxDelante, delante.length);
+        const por = o.porQueEsperas?.();
+        if (por?.porque === "estela") fila.estela = true;
+        if (por?.porque === "fila") fila.numero ??= por.numero ?? null;
+        if (delante.length) {
+          fila.muestras++;
+          const dibujados =
+            document.querySelector('[data-hud="torre-fila"]')?.childElementCount ?? 0;
+          if (dibujados === delante.length) fila.dibujada++;
+        }
         rojaDesde ??= t;
         if (t - rojaDesde > rojaMasLarga) {
           rojaMasLarga = t - rojaDesde;
           rojaMasLargaDonde = `a los ${Math.round(rojaDesde)} s: ${(o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", ") || "nadie en la pista"}`;
         }
       } else rojaDesde = null;
+      if (fase === "autorizado" && fila.porDelante.size && !fila.comprobada) {
+        fila.comprobada = true;
+        const dentro = o.traficoPorDentro?.() ?? [];
+        for (const m of fila.porDelante) {
+          const d = dentro.find((q) => q.matricula === m);
+          if (d && !(d.camino === "salida" && d.despega !== null && d.recorrido >= d.despega))
+            fila.colados.push(`${m} ${d.camino} a ${d.recorrido} m (despega a ${d.despega})`);
+        }
+      }
       /*
        * De frente es acercándose con rumbos casi opuestos **y por la misma
        * línea**: que, siguiendo los dos como van, se crucen a menos de
@@ -6048,6 +6096,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     esperandoPorAlguien,
     rojaMasLarga,
     rojaMasLargaDonde,
+    fila: { ...fila, porDelante: [...fila.porDelante] },
     deFrente,
     deFrenteDonde,
     radar,
@@ -6356,7 +6405,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE, process.env.OGA_FILA_DE_SALIDA === "1"]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -7180,14 +7229,49 @@ comprobar(
  * pista: uno o dos minutos. Ver `roja-de-verdad.test.ts`, que lo mide con
  * cuatrocientas frecuencias; esto lo mide en un vuelo de verdad.
  */
+/*
+ * **Y con fila, lo suyo de más**: una salida por cada uno de delante —de
+ * autorizarle a pasar el final de la pista, minuto y medio— y los dos minutos
+ * de estela detrás de una salida más grande (Doc 4444, 5.8.3.1).
+ */
+const rojaPermitida =
+  170 + 90 * (vuelo.fila?.maxDelante ?? 0) + (vuelo.fila?.estela ? 120 : 0);
 comprobar(
   "y ninguna roja dura más de lo que dura de verdad",
-  (vuelo.rojaMasLarga ?? 0) < 170,
-  vuelo.rojaMasLarga
+  (vuelo.rojaMasLarga ?? 0) < rojaPermitida,
+  (vuelo.rojaMasLarga
     ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s ${vuelo.rojaMasLargaDonde}`
-    : "no hubo roja",
+    : "no hubo roja") + ` · se permiten ${rojaPermitida} s`,
   "«me tiene esperando por ese avión un buen rato, ¿me dejará salir?»: la roja no se apagaba nunca",
 );
+
+/*
+ * **Y en la fila de salida, sale primero el que esperaba antes**, y la
+ * tarjeta los dibuja. Ver `fila` arriba.
+ */
+{
+  const f = vuelo.fila ?? {};
+  const delante = f.porDelante ?? [];
+  comprobar(
+    "y en la fila de salida sale primero el que esperaba antes",
+    (f.colados ?? []).length === 0,
+    (delante.length
+      ? `${delante.length} delante (${delante.join(", ")}), número ${f.numero ?? "?"}` +
+        ` · la tarjeta los dibujó en ${f.dibujada} de ${f.muestras} muestras` +
+        (f.estela ? " · con espera de estela" : "")
+      : "nadie delante en la fila") +
+      (f.puesta ? ` · puesto a rodar ${f.puesta}` : "") +
+      ((f.colados ?? []).length ? ` · verde con ${f.colados.join("; ")}` : ""),
+    "«nada, me dejaron salir a mí antes»: la verde con otro esperando su salida desde antes",
+  );
+  if (delante.length)
+    comprobar(
+      "y la tarjeta de la torre dibuja la fila",
+      f.muestras > 0 && f.dibujada >= f.muestras * 0.9,
+      `${f.dibujada} de ${f.muestras} muestras`,
+      "en tierra el TCAS no pinta a nadie: la fila la cuenta la torre, y la tarjeta la dibuja",
+    );
+}
 
 /*
  * **Y nadie viene de frente**, ni en la salida ni en la final: una pista en
