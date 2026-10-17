@@ -441,6 +441,13 @@ const TCAS_TA_RA_EN_TIERRA = new Set<Fase>([
 const SE_QUEDA_EL_RA = 60;
 
 /**
+ * Cuánto se queda la tarjeta del mando que se acaba de conectar, s. Cinco: lo
+ * justo para verla y volver a lo que se estaba haciendo. Ver
+ * `Game.mostrarElMando`.
+ */
+const SE_QUEDA_EL_MANDO = 5;
+
+/**
  * La tarjeta de cada maniobra: su variómetro, tu avión y el otro.
  *
  * Las de cruzar, mantener e invertir llevan la de subir o bajar de su
@@ -17747,10 +17754,15 @@ export class Game {
     for (const suceso of this.input.sucesosDeLosMandos()) {
       if (suceso === "palancaQueSeQueda" && enElAire) this.explicarUnaVez("tutor.palancaSeQueda");
       else if (suceso === "dobleToque" && enElAire) this.explicarUnaVez("tutor.dobleToque");
-      else if (suceso === "mandoConectado") this.explicarUnaVez("tutor.mandoConectado");
-      else if (suceso === "joystickConectado") this.explicarUnaVez("tutor.joystickConectado");
-      else if (suceso === "pedales") this.contarLosPedales();
+      else if (suceso === "mandoConectado") {
+        this.mandoPorMostrar = "consola";
+        this.explicarUnaVez("tutor.mandoConectado");
+      } else if (suceso === "joystickConectado") {
+        this.mandoPorMostrar = "hotas-x";
+        this.explicarUnaVez("tutor.joystickConectado");
+      } else if (suceso === "pedales") this.contarLosPedales();
     }
+    this.mostrarElMando();
     const topes = this.input.mano.topesDeInclinacion;
     if (topes !== this.topesDeInclinacionVistos) {
       this.topesDeInclinacionVistos = topes;
@@ -17760,6 +17772,35 @@ export class Game {
 
   /** Los topes de inclinación ya mirados. Ver `explicarLosMandos`. */
   private topesDeInclinacionVistos = 0;
+
+  /**
+   * **El dibujo del mando que se acaba de conectar**, en la tarjeta: el de
+   * consola o el joystick de vuelo, según lo que el juego ha reconocido por su
+   * nombre —ver `flight/mandos-fisicos.ts`—. El dibujo en los cuatro peldaños,
+   * y la palabra o la frase desde el segundo, como cualquier aviso.
+   *
+   * Cada vez que se conecta, y no una por vuelo como la voz: es la respuesta a
+   * «¿lo ha visto?», que se pregunta igual la segunda vez. Espera a que la
+   * tarjeta no lleve nada que importe más; y si tapa una orden que espera a
+   * que hagas algo —«arrancá el motor»—, ésa vuelve sola al apagarse ésta. Ver
+   * `SE_QUEDAN` en `flight/vuelo.ts`.
+   */
+  private mostrarElMando(): void {
+    const aparato = this.mandoPorMostrar;
+    if (!aparato || this.hud.senal.puesto.prioridad > 0) return;
+    this.mandoPorMostrar = null;
+    const joystick = aparato === "hotas-x";
+    const dicho = this.avisoCon(
+      joystick ? "tutor.joystickConectado" : "tutor.mandoConectado",
+      joystick ? "palabra.joystick" : "palabra.mando",
+    );
+    this.hud.senal.mostrar(joystick ? "mando-joystick" : "mando-consola", dicho.rotulo, null, {
+      segundos: SE_QUEDA_EL_MANDO,
+    });
+  }
+
+  /** El mando conectado que falta enseñar en la tarjeta. Ver `mostrarElMando`. */
+  private mandoPorMostrar: "consola" | "hotas-x" | null = null;
 
   /**
    * **Los pedales del timón, contados en tierra**: «¿para qué es esa barra?».

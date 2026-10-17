@@ -166,6 +166,8 @@ export const EN: Dictionary = {
     "That's as far as it banks: thirty-three degrees. That keeps the passengers comfortable.",
   "tutor.mandoConectado": "Gamepad connected: you can fly with it.",
   "tutor.joystickConectado": "Joystick connected: you can fly with it.",
+  "palabra.mando": "Gamepad",
+  "palabra.joystick": "Joystick",
   "tutor.pedales":
     "Down there are the rudder pedals: on the ground, they steer the plane. Press the left one to go left.",
   "help.assist": "M — difficulty tier",

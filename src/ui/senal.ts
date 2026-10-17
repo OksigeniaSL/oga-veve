@@ -1405,6 +1405,34 @@ const AVES_SUBI = icono(`
 `);
 
 /**
+ * **El mando que se acaba de conectar, y cuál es**: el de consola o el
+ * joystick de vuelo. Es la respuesta, sin leer, a «¿lo ha visto?»: el juego
+ * reconoce el aparato por su nombre y lee cada uno con su reparto —ver
+ * `flight/mandos-fisicos.ts`—, y lo que se ve es eso mismo.
+ *
+ * - **El de consola**, de frente: el cuerpo con sus dos asas, la cruceta a la
+ *   izquierda y los botones a la derecha, que es como lo dibuja cualquiera.
+ * - **El joystick**, de lado: la base, el mango de pie con su gatillo y, a la
+ *   izquierda, la palanca de gases, que es lo que tiene un HOTAS y no tiene
+ *   un mando de consola —el nombre lo dice: *hands on throttle and stick*—.
+ */
+const MANDO_DE_CONSOLA = icono(`
+  <path d="M7 7h10a4.5 4.5 0 0 1 4.4 3.6l1.1 5.6a2.6 2.6 0 0 1-4.5 2.2L15.6 16H8.4L6 18.4
+           a2.6 2.6 0 0 1-4.5-2.2l1.1-5.6A4.5 4.5 0 0 1 7 7Z" />
+  <path class="senal__hueco" d="M6.3 9.6h1.4v1.3H9v1.4H7.7v1.3H6.3v-1.3H5v-1.4h1.3Z" />
+  <circle class="senal__hueco" cx="16.2" cy="12.4" r="1" />
+  <circle class="senal__hueco" cx="18.3" cy="10.5" r="1" />
+`);
+const MANDO_JOYSTICK = icono(`
+  <rect x="1" y="17.6" width="22" height="4.4" rx="1.2" />
+  <rect x="14.3" y="12" width="1.6" height="6" />
+  <rect x="12.6" y="2.6" width="5" height="10" rx="2.4" />
+  <rect x="11.4" y="6.2" width="1.6" height="2.6" rx="0.6" />
+  <rect x="3" y="14.4" width="5.4" height="3.6" rx="0.8" />
+  <rect x="4.6" y="8" width="2.2" height="6.8" rx="1.1" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -1414,6 +1442,8 @@ const AVES_SUBI = icono(`
  */
 export const DIBUJOS = {
   llave: LLAVE,
+  "mando-consola": MANDO_DE_CONSOLA,
+  "mando-joystick": MANDO_JOYSTICK,
   "pitot-tapado": PITOT_TAPADO,
   helice: HELICE,
   reactor: REACTOR,

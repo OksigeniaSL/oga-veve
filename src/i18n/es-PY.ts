@@ -171,6 +171,12 @@ export const ES_PY = {
   "tutor.mandoConectado": "Mando conectado: podés volar con él.",
   "tutor.joystickConectado": "Joystick conectado: podés volar con él.",
   /*
+   * **Y la palabra de la tarjeta del mando**, con su dibujo: el de consola o
+   * el joystick. Ver `Game.mostrarElMando`.
+   */
+  "palabra.mando": "Mando",
+  "palabra.joystick": "Joystick",
+  /*
    * Y la barra alargada de abajo del teléfono, en tierra: «¿para qué es?».
    * «Se dobla» y no «la rueda de adelante», porque vale para los seis: el
    * fumigador lleva patín de cola y también dobla con los pedales. Ver
