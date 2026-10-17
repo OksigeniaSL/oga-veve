@@ -1157,6 +1157,18 @@ export class Hud {
    * nace sin la clase: sin esto, cambiar de idioma con el cuadro bajado lo
    * subía solo.
    */
+  /**
+   * **Recoge el cuadro un rato, o lo devuelve como estaba**, sin guardarlo
+   * como lo elegido: el modo inicio lo recoge mientras dura —un primer vuelo
+   * es el avión, el cielo y un mando— y al acabar lo deja como lo tenía quien
+   * juega. Devuelve cómo estaba. Ver `Game.empezarElInicio`.
+   */
+  recogerElCuadro(recogido: boolean): boolean {
+    const antes = this.cuadroBajado;
+    this.ponerCuadroBajado(recogido);
+    return antes;
+  }
+
   private ponerCuadroBajado(bajado: boolean): void {
     this.cuadroBajado = bajado;
     // Recogido, se recoge entero: la pantalla grande también.

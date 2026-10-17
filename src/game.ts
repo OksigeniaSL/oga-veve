@@ -448,6 +448,16 @@ const SE_QUEDA_EL_RA = 60;
 const SE_QUEDA_EL_MANDO = 5;
 
 /**
+ * **Lo que se tarda en leer una frase en voz alta**, s: cuando la escena del
+ * modo inicio no tiene voz, quien está al lado del niño se la lee, y la
+ * siguiente no puede pisarla. A unas dieciocho letras por segundo, que es leer
+ * despacio para alguien; entre dos y seis segundos.
+ */
+function tiempoDeLectura(texto: string): number {
+  return Math.min(6, Math.max(2, texto.length / 18));
+}
+
+/**
  * La tarjeta de cada maniobra: su variómetro, tu avión y el otro.
  *
  * Las de cruzar, mantener e invertir llevan la de subir o bajar de su
@@ -761,6 +771,7 @@ import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
   elegirComandante,
+  elegirHijo,
   elegirOtroAvion,
   elegirTorre,
   elegirTripulacion,
@@ -831,6 +842,9 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
+import { Inicio, type Linea, type PasoId } from "./flight/inicio";
+import { PantallaDelInicio } from "./ui/inicio";
+import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
 import {
   guardarSinInstructora,
@@ -1557,6 +1571,18 @@ export interface GameOptions {
    * enseñar, que descubran, que vean ríos, bosques, ciudades?».
    */
   ortofotoMedia?: Ortofoto;
+
+  /**
+   * **El modo inicio**: el primer vuelo, paso a paso y con el mundo esperando.
+   * Ver `flight/inicio.ts` y `empezarElInicio`.
+   */
+  inicio?: boolean;
+
+  /**
+   * El peldaño de este vuelo, si no es el recordado: el modo inicio va en
+   * Guyrami sin cambiar el que tenga guardado quien juega.
+   */
+  tramo?: Tier;
 }
 
 /**
@@ -4718,6 +4744,32 @@ export class Game {
     "desde-el-pasaje",
   );
   /**
+   * **Y las dos del modo inicio: Jazlyn y su hijo**, en la cabina, uno al lado
+   * del otro. Ella con la voz de la comandante, pero **sin megafonía**: aquí no
+   * le habla al pasaje, le habla a su hijo, que va sentado a su lado. Él, con
+   * la suya, que es otra voz del pack. Por la boca de todos, que en una cabina
+   * de dos no hablan dos a la vez. Ver `flight/inicio.ts`.
+   */
+  private readonly mama: InstructorGrabado = new InstructorGrabado(
+    this.audio,
+    elegirComandante(this.vozDelSistema, this.torre, this.otroAvion),
+    BOCA,
+    this.grabaciones,
+  );
+  private readonly hijo: InstructorGrabado = new InstructorGrabado(
+    this.audio,
+    elegirHijo(this.vozDelSistema, this.torre, this.otroAvion, this.comandante),
+    BOCA,
+    this.grabaciones,
+  );
+  /** El modo inicio, mientras dure. Ver `empezarElInicio`. */
+  private inicio: Inicio | null = null;
+  private pantallaDelInicio: PantallaDelInicio | null = null;
+  /** Si este vuelo es el del modo inicio, aunque ya se haya acabado. */
+  private conInicio = false;
+  /** Si el mundo espera a que se haga lo que pide el modo inicio. */
+  private inicioCongelado = false;
+  /**
    * Las cuatro bocas del juego, para poder preguntarles desde fuera.
    *
    * Existe por el fallo que arregló este cableado: la torre, el otro avión y
@@ -4733,6 +4785,8 @@ export class Game {
       otro: this.otroAvion,
       comandante: this.comandante,
       tripulacion: this.tripulacion,
+      mama: this.mama,
+      hijo: this.hijo,
     };
   }
 
@@ -4970,6 +5024,9 @@ export class Game {
      * no se entera de que el trozo cambió. Ver `world/curvatura.ts`.
      */
     instalarCurvatura(options.curvatura ?? CURVAR_EL_DIBUJO);
+    // El peldaño de este vuelo, antes de que nada lo mire. Ver `GameOptions.tramo`.
+    if (options.tramo) this.tier = options.tramo;
+    this.conInicio = options.inicio === true;
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.pavimento = this.scenario.aerodrome
@@ -6139,8 +6196,14 @@ export class Game {
      * Con el dedo, los mandos ya dicen lo que hacen: cada uno lleva su dibujo
      * dentro. Ver `index.html`.
      */
+    /*
+     * **Y con el modo inicio, no**: lo sustituye. Enseñar las teclas jugando
+     * con ellas es justo lo que hace, y abrir encima un teclado dibujado sería
+     * pedirle a alguien de cuatro años que mire dos cosas a la vez. La
+     * pantalla sigue en su botón para quien la quiera. Ver `flight/inicio.ts`.
+     */
     const conTeclado = matchMedia("(pointer: fine)").matches;
-    if (conTeclado && this.keyScreen && !leerTexto("teclas-vistas")) {
+    if (conTeclado && this.keyScreen && !leerTexto("teclas-vistas") && !this.conInicio) {
       ponerTexto("teclas-vistas", "1");
       this.keyScreen.show();
     }
@@ -6174,7 +6237,8 @@ export class Game {
     this.onResize();
     this.resetFlight();
     this.abrirVentanaDePruebas();
-    this.hud.flash(`${t("help.start")} · ${t("help.assist")}`, 8);
+    if (this.conInicio) this.empezarElInicio();
+    else this.hud.flash(`${t("help.start")} · ${t("help.assist")}`, 8);
 
     /*
      * **Y si no hay voz, se dice.**
@@ -6226,6 +6290,222 @@ export class Game {
       );
       if (this.tier.instruments !== "none") this.hud.flash(t("hud.sinVoz"), 8);
     });
+  }
+
+  /**
+   * **El modo inicio**: el primer vuelo, paso a paso. Ver `flight/inicio.ts`,
+   * que es la secuencia, y `ui/inicio.ts`, que la dibuja.
+   *
+   * Empieza alineado en la cabecera —es la lección de dar una vuelta— pero
+   * **con el motor parado**, porque arrancar es el primer gesto de todos. Y
+   * mientras dura, la instructora se calla: la escena es de Jazlyn y su hijo,
+   * y dos voces enseñando lo mismo es lo que no se hace. Lo demás del juego
+   * sigue como está.
+   *
+   * Y apunta que ya se vio, y que la pantalla de las teclas tampoco hace falta
+   * abrirla sola: este modo la sustituye como primera experiencia. Ver
+   * `main.ts`.
+   */
+  private empezarElInicio(desde?: PasoId): void {
+    try {
+      ponerTexto("inicio-visto", "1");
+      ponerTexto("teclas-vistas", "1");
+    } catch {
+      // Sin almacenamiento se juega igual.
+    }
+    this.mama.callar();
+    this.hijo.callar();
+    this.input.cerrarGas();
+    this.input.controls.engineOn = false;
+    this.inicio = new Inicio(this.vozDelInicio, {
+      primerSello: this.cuaderno.aerodromos.length === 0,
+      ...(desde ? { desde } : {}),
+    });
+    this.inicioCongelado = true;
+    this.instructor.callaSalvo = () => false;
+    document.documentElement.classList.add("con-inicio");
+    const raiz = document.getElementById("inicio");
+    if (!this.pantallaDelInicio && raiz)
+      this.pantallaDelInicio = new PantallaDelInicio(
+        raiz,
+        document.getElementById("inicio-velo"),
+        () => ({
+          teclaDe: (accion) => this.input.preferredKey(accion),
+          chorro: esDeChorro(this.aircraft),
+        }),
+        {
+          arrancar: () => this.toggleEngine(),
+          seguir: () => this.inicio?.seguir(),
+        },
+        () => this.hud.altoDeArriba,
+      );
+    this.ladoDelInicio = 0;
+    /*
+     * **Y el cuadro, recogido mientras dura**: un primer vuelo es el avión, el
+     * cielo y el mando que se tiene en la mano, y la tarjeta y el avión
+     * necesitan la pantalla. Al acabar vuelve como estaba.
+     */
+    if (this.cuadroAntesDelInicio === null)
+      this.cuadroAntesDelInicio = this.hud.recogerElCuadro(true);
+    this.pintarElInicio();
+    this.encuadrarSobreElCuadro();
+  }
+
+  /** Cómo tenía el cuadro quien juega antes del modo inicio. */
+  private cuadroAntesDelInicio: boolean | null = null;
+
+  /**
+   * **Por dónde habla el modo inicio**: ella o él, cada uno con su boca. Y
+   * cuándo ha acabado de hablar: si sonó, al acabar; si no sonó —sin
+   * grabación y sin voz del navegador, que es Brave en Linux—, después del
+   * rato que se tarda en leerla, que entonces el subtítulo es lo que queda.
+   */
+  private readonly vozDelInicio = {
+    decir: (linea: Linea, alAcabar: (esperaMas: number) => void): void => {
+      const boca = linea.quien === "mama" ? this.mama : this.hijo;
+      const texto = t(linea.clave as TranslationKey);
+      let acabado = false;
+      const acabar = (sono: boolean): void => {
+        if (acabado) return;
+        acabado = true;
+        alAcabar(sono ? 0 : tiempoDeLectura(texto));
+      };
+      boca.decir(texto, linea.clave, "normal", undefined, (que) => {
+        if (que === "acaba" || que === "cortada") acabar(true);
+        else if (que === "no-suena" || que === "se-cae") acabar(false);
+      });
+    },
+    callar: (): void => {
+      this.mama.callar();
+      this.hijo.callar();
+      BOCA.retirar((clave) => !!clave?.startsWith("inicio."));
+    },
+  };
+
+  /**
+   * **Un paso del modo inicio**: lo que lee del avión y de quien juega, si el
+   * mundo espera, y lo que sostiene la mano de la mamá —el gas en cuanto se
+   * empuja, el morro en la rotación, las alas al enderezar—. La mano escribe
+   * en los mandos, como cualquier otra ayuda de este juego.
+   */
+  private atenderAlInicio(dt: number): void {
+    const inicio = this.inicio;
+    if (!inicio) return;
+    const s = this.flight.state;
+    const c = this.input.controls;
+    const i = this.input.intento;
+    // Al final, cualquier mando sigue volando: el botón no se alcanza con un joystick.
+    if (
+      inicio.estado.puedeSeguir &&
+      (Math.abs(i.cabeceo) > 0.5 || Math.abs(i.alabeo) > 0.5 || i.gas !== 0)
+    )
+      inicio.seguir();
+    const salida = inicio.paso(dt, {
+      motor: c.engineOn,
+      gas: c.throttle,
+      intento: i,
+      velocidad: s.airspeed,
+      vr: this.aircraft.rotationSpeed,
+      altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      enTierra: s.onGround,
+      alabeo: bankAngleOf(s.orientation),
+      mando: this.input.ultimoMando,
+    });
+    this.inicioCongelado = salida.congelado;
+    const a = salida.ayuda;
+    if (a.gas !== null && c.throttle < a.gas) this.input.servoDelGas(a.gas);
+    if (a.cabeceo !== null) c.elevator = Math.max(c.elevator, a.cabeceo);
+    if (a.centrar) this.input.mano.centrar();
+    // El mundo callado mientras espera: el motor y el aire, no las voces.
+    this.audio.callarElMundo(salida.congelado);
+    // Y nadie más dando consejos encima. Ver `Tutor.silenciar`.
+    this.hud.tutor.silenciar(true);
+    if (inicio.estado.paso === "fin") this.apuntarElSitio();
+    if (inicio.estado.terminado) this.acabarElInicio();
+    else this.pintarElInicio();
+  }
+
+  /**
+   * **Con el mundo quieto**, solo se mira: el teclado, el dedo y el mando de
+   * juego, que solo se entera de algo si se le pregunta. Nada se mueve. Ver
+   * `InputManager.mirarSinMover`.
+   */
+  private esperarAlInicio(dt: number): void {
+    this.input.mirarSinMover();
+    this.atenderAlInicio(dt);
+    /*
+     * **Y el mundo quieto se sigue pintando bien**: el avión en su sitio, la
+     * cámara detrás y el cielo encima, como con un percance —ver `unPaso`—.
+     * Sin esto, el modo inicio, que empieza quieto, se quedaba con la cámara
+     * donde nace: dentro del avión.
+     */
+    this.syncAircraftMesh(dt);
+    this.updateCamera(dt);
+    updateSky(this.sky, this.camera.position);
+    this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
+  }
+
+  /** Hacia dónde está inclinado el avión, para el dibujo de enderezar. */
+  private ladoDelInicio: -1 | 0 | 1 = 0;
+
+  private pintarElInicio(): void {
+    const inicio = this.inicio;
+    const pantalla = this.pantallaDelInicio;
+    if (!inicio || !pantalla) return;
+    const e = inicio.estado;
+    /*
+     * El lado se mira solo con el ala de verdad inclinada: pasando por el
+     * cero, el dibujo cambiaría de flecha a cada fotograma.
+     */
+    const alabeo = bankAngleOf(this.flight.state.orientation);
+    if (Math.abs(alabeo) > (3 * Math.PI) / 180) this.ladoDelInicio = alabeo < 0 ? -1 : 1;
+    pantalla.pintar({
+      gesto: e.gesto,
+      mando: this.input.ultimoMando,
+      lado: this.ladoDelInicio,
+      linea: e.linea
+        ? { quien: e.linea.quien, clave: e.linea.clave, texto: t(e.linea.clave as TranslationKey) }
+        : null,
+      congelado: this.inicioCongelado,
+      fin:
+        e.paso === "fin"
+          ? {
+              sello: selloDe(this.scenario, t(this.scenario.nameKey as TranslationKey)),
+              puedeSeguir: e.puedeSeguir,
+            }
+          : null,
+    });
+  }
+
+  /** Se acabó la escena: el vuelo sigue, ya sin la tarjeta y sin la mano de la mamá. */
+  private acabarElInicio(): void {
+    this.inicio = null;
+    this.inicioCongelado = false;
+    this.pantallaDelInicio?.quitar();
+    this.pantallaDelInicio = null;
+    document.documentElement.classList.remove("con-inicio");
+    if (this.cuadroAntesDelInicio !== null) this.hud.recogerElCuadro(this.cuadroAntesDelInicio);
+    this.cuadroAntesDelInicio = null;
+    this.encuadrarSobreElCuadro();
+    // La instructora, como la tuviera quien juega. Ver `aplicarSinInstructora`.
+    this.aplicarSinInstructora(this.sinInstructora);
+    this.hud.tutor.silenciar(false);
+    this.audio.callarElMundo(false);
+  }
+
+  /** Lo que mira el banco del modo inicio. Ver `scripts/verificar-inicio.mjs`. */
+  get inicioParaBanco(): {
+    readonly conInicio: boolean;
+    readonly estado: Inicio["estado"] | null;
+    readonly congelado: boolean;
+    readonly mando: string;
+  } {
+    return {
+      conInicio: this.conInicio,
+      estado: this.inicio?.estado ?? null,
+      congelado: this.inicioCongelado,
+      mando: this.input.ultimoMando,
+    };
   }
 
   /** La ventana de pruebas de desarrollo. Vive en `src/dev/sondas.ts`. */
@@ -10091,6 +10371,23 @@ export class Game {
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
+    /*
+     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
+     * había empezado —saludando o esperando la llave—, sigue donde iba: el
+     * suelo se asienta unos segundos después de abrir y recoloca el avión con
+     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
+     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
+     */
+    if (this.inicio) {
+      const paso = this.inicio.estado.paso;
+      if (paso === "hola" || paso === "motor") {
+        this.input.cerrarGas();
+        this.input.controls.engineOn = false;
+        this.inicioCongelado = true;
+        // El reinicio vació la boca, y con ella la frase que esperaba turno.
+        this.inicio.retomarLaVoz();
+      } else this.empezarElInicio("motor");
+    }
   }
 
   /**
@@ -13048,8 +13345,14 @@ export class Game {
      * `LO_QUE_VALE_UN_CUADRO`.
      */
     const caben = Math.max(1, Math.floor(LO_QUE_VALE_UN_CUADRO / real));
-    for (let i = 0; i < Math.min(this.aceleracion, caben); i++)
-      this.unPaso(real);
+    /*
+     * **Con el modo inicio esperando, el mundo no da ni un paso**: se mira lo
+     * que hace quien juega y se pinta el mismo mundo. Ver `esperarAlInicio`.
+     */
+    if (this.inicioCongelado) this.esperarAlInicio(real);
+    else
+      for (let i = 0; i < Math.min(this.aceleracion, caben); i++)
+        this.unPaso(real);
     this.pintar();
     this.medidor.update(real);
   };
@@ -13259,6 +13562,12 @@ export class Game {
     // exactamente el mismo número.
     const gasAntesDelBanco = this.input.controls.throttle;
     this.pilotoDePruebas?.(this.input.controls);
+    /*
+     * **El modo inicio, detrás de quien pilota y antes de las superficies**:
+     * qué paso toca, si el mundo espera y lo que sostiene la mano de la mamá.
+     * Ver `atenderAlInicio`.
+     */
+    this.atenderAlInicio(dt);
     // Lo que pide quien pilota, antes de las ayudas de rodaje: es lo que se
     // ve en tierra. Ver `mandosDelPiloto`.
     this.mandosDelPiloto = {
@@ -17885,6 +18194,15 @@ export class Game {
    * `SE_QUEDAN` en `flight/vuelo.ts`.
    */
   private mostrarElMando(): void {
+    /*
+     * Con el modo inicio, el mando que se conecta ya sale dibujado en su
+     * tarjeta, moviéndose como hay que moverlo: otra tarjeta encima diría lo
+     * mismo dos veces. Ver `ui/inicio.ts`.
+     */
+    if (this.inicio) {
+      this.mandoPorMostrar = null;
+      return;
+    }
     const aparato = this.mandoPorMostrar;
     if (!aparato || this.hud.senal.puesto.prioridad > 0) return;
     this.mandoPorMostrar = null;
@@ -26002,7 +26320,11 @@ export class Game {
      * encima del fuselaje. El centro que vale es el de la franja que queda
      * entre lo de arriba y lo de abajo.
      */
-    const arriba = this.hud.altoDeArriba;
+    /*
+     * Y con el modo inicio, lo de arriba llega hasta su tarjeta: el avión
+     * se encuadra debajo, que es lo que se le pide mirar. Ver `ui/inicio.ts`.
+     */
+    const arriba = Math.max(this.hud.altoDeArriba, this.pantallaDelInicio?.abajo ?? 0);
     const abajo = alto - this.hud.altoDelCuadro;
     const corrimiento = propio ? 0 : (arriba - (alto - abajo)) / 2;
     // La franja libre, de −1 a 1, para dejar a la vista lo señalado sin que

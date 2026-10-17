@@ -2834,4 +2834,74 @@ export const ES_PY = {
   "parte.yaSePuede.voz": "Miramos otra vez y ya mejoró: ahora sí podemos salir.",
   "parte.salgoIgual.voz":
     "Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.",
+  /*
+   * **El modo inicio: Jazlyn le enseña a volar a su hijo.** Él pregunta y ella
+   * enseña, paso a paso, con el avión esperando en cada uno. Ella con la voz de
+   * la comandante, pero al lado, no por la megafonía; él, con la suya. Ver
+   * `src/flight/inicio.ts`. Ninguna de las de ella baja de treinta letras: con
+   * chispa, una frase muy corta se inventa lo que falta (docs/voces/LEEME.md).
+   */
+  "inicio.modo.nombre": "Aprendé con Jazlyn",
+  "inicio.modo.mama": "Jazlyn",
+  "inicio.modo.hijo": "Su hijo",
+  "inicio.modo.seguir": "Seguir volando",
+  "inicio.modo.llave": "Arrancar el motor",
+  "inicio.hijo.hola": "Mamá, mamá, ¿hoy me enseñás a volar?",
+  "inicio.mama.hola":
+    "¡Hoy pilotás vos, mi amor! Yo voy acá, a tu lado. El avión te espera en cada paso, y si algo no sale, lo probamos otra vez.",
+  "inicio.hijo.motor": "¿Y cómo se prende el avión, mamá?",
+  "inicio.mama.motor": "Primero, el motor. Apretá la llave que brilla y escuchá cómo se despierta.",
+  "inicio.mama.motor.otra1": "Buscá la llavecita que se mueve, mi vida. Apretala una vez, sin miedo.",
+  "inicio.mama.motor.otra2":
+    "El motor se prende con la llave. Hacé como el dibujo: un toquecito, y listo.",
+  "inicio.hijo.motor.bien": "¡Se prendió! ¡Mirá cómo suena, mamá!",
+  "inicio.mama.motor.bien": "¡Eso! Ese ruido es la hélice dando vueltas. Ya tenemos motor.",
+  "inicio.hijo.gas": "¿Y ahora cómo hacemos para que corra?",
+  "inicio.mama.gas":
+    "Con el gas. Hacé como el dibujo y dale todo el gas: así la hélice tira con todas sus fuerzas.",
+  "inicio.mama.gas.otra1":
+    "El gas es el motor con la flechita para arriba. Dale, empujalo hasta arriba del todo.",
+  "inicio.mama.gas.otra2":
+    "Mirá el dibujo que brilla: ese es el gas. Dale más, mi amor, que el avión está esperando.",
+  "inicio.mama.gas.bien": "¡Muy bien! Yo te sostengo el gas. Mirá cómo corremos por la pista.",
+  "inicio.hijo.carrera": "¡Mamá, vamos rapidísimo! ¿Cuándo volamos?",
+  "inicio.mama.carrera":
+    "Todavía no. Un avión necesita mucha velocidad para que el aire lo levante. Yo te aviso.",
+  "inicio.mama.despegar": "¡Ahora! Para despegar, apretá la flecha de subir.",
+  "inicio.mama.despegar.otra1":
+    "La flecha que apunta para arriba, la que brilla. Apretala y el avión levanta la nariz.",
+  "inicio.mama.despegar.otra2": "La de subir, mi amor, la que mira al cielo. Probá otra vez, sin apuro.",
+  "inicio.hijo.despegar.bien": "¡Estamos volando! ¡Mirá qué chiquitito se ve todo!",
+  "inicio.mama.despegar.bien":
+    "¡Despegaste! Así lo hace un avión de verdad: primero corre, y después levanta la nariz.",
+  "inicio.hijo.izquierda": "¿Y cómo hago para doblar, mamá?",
+  "inicio.mama.izquierda":
+    "Los aviones no doblan como un auto: viran inclinando las alas. Apretá la flecha de la izquierda.",
+  "inicio.mama.izquierda.otra1":
+    "La flecha de la izquierda, mi vida, la que brilla en el dibujo. Apretala y mirá el ala.",
+  "inicio.mama.izquierda.otra2":
+    "Hacé como el dibujo: la flecha que va para la izquierda, y el ala de ese lado baja.",
+  "inicio.mama.masRato1": "¡Así! Un poquito más: dejala apretada hasta que el ala baje bien.",
+  "inicio.mama.masRato2": "Vas bien. Mantenela un ratito más, que el avión se inclina despacito.",
+  "inicio.mama.izquierda.bien": "¡Eso! ¿Ves cómo baja el ala de ese lado? Así se vira.",
+  "inicio.hijo.derecha": "¡Ahora quiero para el otro lado!",
+  "inicio.mama.derecha": "¡Dale! Ahora la flecha de la derecha, la que brilla.",
+  "inicio.mama.derecha.otra1":
+    "La flecha de la derecha, mi amor, la del otro lado. Apretala y mirá cómo cambia el ala.",
+  "inicio.mama.derecha.otra2":
+    "Hacé como el dibujo: la flecha que va para la derecha, y el avión vira para allá.",
+  "inicio.mama.derecha.bien": "¡Perfecto! A la izquierda y a la derecha: ya sabés virar.",
+  "inicio.hijo.nivelar": "Mamá, ¿y cómo hago para ir derechito?",
+  "inicio.mama.nivelar":
+    "Enderezamos las alas. Hacé como el dibujo, despacito, hasta que el avión quede derecho como una mesa.",
+  "inicio.mama.nivelar.otra1":
+    "Despacito, mi vida, hasta que las dos alas queden iguales, como tus brazos abiertos.",
+  "inicio.mama.nivelar.otra2":
+    "Mirá el dibujo: un poquito para el otro lado, y soltá cuando el avión quede derecho.",
+  "inicio.mama.nivelar.bien": "¡Derechito! Las alas parejas: así se vuela tranquilo.",
+  "inicio.hijo.fin": "¡Mamá, mamá, mirá! ¡Volé yo solito!",
+  "inicio.mama.fin":
+    "¡Volaste vos, mi amor! Te ganaste tu primer sello del cuaderno. Ahora seguí volando, que el cielo es tuyo.",
+  "inicio.mama.finOtra":
+    "¡Qué lindo vuelo, mi amor! Tu sello de este campo ya está en el cuaderno. Ahora seguí volando, que el cielo es tuyo.",
 } as const;

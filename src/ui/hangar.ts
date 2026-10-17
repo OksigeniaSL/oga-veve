@@ -51,6 +51,7 @@ import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
+import { caraDentro } from "./inicio";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import {
   ejerciciosPara,
@@ -107,6 +108,12 @@ export interface Eleccion {
    * del propio sitio para una vuelta al campo. Ver `destinosPosibles`.
    */
   readonly destino: string;
+  /**
+   * **El modo inicio**: el primer vuelo, paso a paso, con Jazlyn. Es su
+   * propio vuelo —el sitio, el avión y el peldaño los pone él— y no cambia
+   * nada de lo elegido. Ver `flight/inicio.ts` y `main.ts`.
+   */
+  readonly inicio?: boolean;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -1174,6 +1181,34 @@ const LEC_ATERRIZAJE = escena(`
   ${AVION("translate(34 30) rotate(24) scale(1.05)")}
 `);
 
+/**
+ * **Aprender con Jazlyn**: la avioneta despegando, como la de despegar, y la
+ * cara de Jazlyn en la esquina, con su gorra y sus gafas. Es lo que dice sin
+ * una palabra con quién se va a volar. Ver `ui/inicio.ts`.
+ */
+const LEC_INICIO = escena(`
+  <path class="leccion__asfalto" d="M0 84 L34 50 h26 L26 84 Z" />
+  <path class="leccion__estela" d="M22 72 q26-14 52-34" />
+  ${AVION("translate(86 26) rotate(-26) scale(1.05)")}
+  ${caraDentro("mama", 4, 4, 34)}
+  ${caraDentro("hijo", 30, 14, 24)}
+`);
+
+/**
+ * La ficha del modo inicio. **No es una lección más del grupo**: no se elige
+ * y se despega después, sino que se toca y se vuela, con su sitio, su avión y
+ * su peldaño. Por eso va fuera del grupo de radio, delante de todo.
+ */
+function fichaDelInicio(): string {
+  return `
+    <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo>
+      <span class="ficha__lienzo ficha__lienzo--panel">${LEC_INICIO}</span>
+      <span class="ficha__pie">
+        <span class="ficha__nombre">${t("inicio.modo.nombre")}</span>
+      </span>
+    </button>`;
+}
+
 const DIBUJOS_LECCION: Record<string, string> = {
   vuelta: LEC_VUELTA,
   rodaje: LEC_RODAJE,
@@ -1869,6 +1904,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
+          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio()}</div>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
@@ -2344,7 +2380,11 @@ export function abrirHangar(
         return;
       }
 
-      if (boton.hasAttribute("data-despegar")) {
+      /*
+       * **Y el modo inicio, que se toca y se vuela**: ver `fichaDelInicio`.
+       */
+      const conInicio = boton.hasAttribute("data-inicio-modo");
+      if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
         // La tarjeta suelta su tarjeta gráfica: el vuelo monta la suya.
@@ -2364,6 +2404,7 @@ export function abrirHangar(
           ejercicio,
           aircraft: avion,
           destino: destinoDeAhora(),
+          ...(conInicio ? { inicio: true } : {}),
         });
       }
     });

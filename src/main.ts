@@ -86,6 +86,18 @@ import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
+import { GUYRAMI } from "./flight/tiers";
+import { VUELTA } from "./flight/lecciones";
+import {
+  AVION_DEL_INICIO,
+  inicioGrabado,
+  SITIO_DEL_INICIO,
+  VOZ_DE,
+} from "./flight/inicio";
+import { manifiestoDe } from "./audio/instructor-grabado";
+import { recetaDe, type Manifiesto } from "./audio/banco-de-voz";
+import { TIEMPO_DE_CASA } from "./world/meteo";
+import { leerCuaderno } from "./flight/cuaderno";
 
 /** La sesión de la pestaña, si el navegador la da. Ver `leerRearranque`. */
 function sesionDeLaPestana(): Storage | null {
@@ -171,7 +183,16 @@ const params = new URLSearchParams(location.search);
  */
 const rearranque = leerRearranque(sesionDeLaPestana());
 const pedido = rearranque?.escenario ?? params.get("escenario");
-const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
+/*
+ * **El modo inicio**, el primer vuelo paso a paso: `?inicio=1` lo abre sin
+ * pasar por el hangar, para probarlo y para su banco. Ver `flight/inicio.ts`.
+ */
+let conInicio = params.has("inicio") && !rearranque;
+const directo = conInicio
+  ? SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO)
+  : pedido
+    ? SCENARIOS.find((s) => s.id === pedido)
+    : undefined;
 
 let escenario = directo;
 // `?tramo=guyrami` entra directo en ese peldaño; lo resuelve `rememberedTier`,
@@ -260,6 +281,22 @@ let destino: string | undefined = rearranque
  * Ver `ui/anadir-a-inicio.ts`.
  */
 const quitarLoDeInicio = escenario ? () => {} : ensenarAnadirAInicio();
+/*
+ * **Si el modo inicio ya tiene voz**, preguntado al pack mientras se elige
+ * piloto: son dos ficheros pequeños, el manifiesto de Jazlyn y el de su hijo.
+ * Ver `inicioGrabado` y más abajo, al decidir la primera experiencia.
+ */
+const yaTieneVoz: Promise<boolean> = escenario
+  ? Promise.resolve(false)
+  : Promise.all([manifiestoDe(VOZ_DE.mama), manifiestoDe(VOZ_DE.hijo)])
+      .then(([mama, hijo]) => {
+        const de: Record<string, Manifiesto | null> = {
+          [VOZ_DE.mama]: mama,
+          [VOZ_DE.hijo]: hijo,
+        };
+        return inicioGrabado((voz, clave) => recetaDe(de[voz] ?? null, clave) !== null);
+      })
+      .catch(() => false);
 if (!escenario) {
   const pilotosRoot = document.querySelector<HTMLElement>("#pilotos");
   if (pilotosRoot) await elegirPiloto(pilotosRoot);
@@ -280,6 +317,28 @@ if (!escenario) {
    * la flota.
    */
   avion = AIRCRAFT.find((a) => a.id === leerTexto("aeronave")) ?? AIRCRAFT[0]!;
+  /*
+   * **Y quien vuela por primera vez, al modo inicio, si ya tiene voz.**
+   *
+   * Sustituye a la pantalla de las teclas como primera experiencia: enseñar
+   * los mandos jugando con ellos, con Jazlyn al lado, en vez de un teclado
+   * dibujado que hay que mirar. **Pero solo con sus frases grabadas en el
+   * pack**, y eso lo decide el pack y no una bandera: un modo guiado sin voz,
+   * para quien no lee y en un navegador sin voces del sistema —Brave en
+   * Linux—, no guía a nadie. Mientras tanto, está en el hangar para quien lo
+   * quiera, y la primera vez sigue siendo lo de siempre.
+   *
+   * La primera vez de **este piloto**: no ha despegado nunca —lo dice su
+   * cuaderno, que se guarda por perfil— y no ha visto el modo. No vale la
+   * marca de la pantalla de las teclas: con el dedo esa pantalla no se abre,
+   * y en una tablet todos los pilotos parecerían nuevos.
+   */
+  const cuaderno = leerCuaderno();
+  const nuevo = cuaderno.despegues === 0 && cuaderno.segundos === 0;
+  if (nuevo && !leerTexto("inicio-visto") && (await yaTieneVoz)) {
+    conInicio = true;
+    escenario = SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO);
+  }
 }
 
 const recordado =
@@ -309,9 +368,32 @@ if (!escenario) {
   // Y se recuerda en el propio hangar, al tocarlo: guardar aquí también lo
   // propuesto lo congelaría como si alguien lo hubiera elegido.
   destino = elegido.destino;
-  rememberTier(tramo);
-  ponerTexto("aeronave", avion.id);
-  recordarLeccion(leccion);
+  /*
+   * El modo inicio es su propio vuelo —su sitio, su avión y su peldaño— y no
+   * cambia lo que quien juega tenía elegido: ver `conInicio` más abajo.
+   */
+  if (elegido.inicio) {
+    conInicio = true;
+    escenario = SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO) ?? escenario;
+  } else {
+    rememberTier(tramo);
+    ponerTexto("aeronave", avion.id);
+    recordarLeccion(leccion);
+  }
+}
+
+/*
+ * **Lo que vuela el modo inicio**, venga de donde venga: el Chaco, la avioneta
+ * de escuela y el peldaño de los pequeños, alineado en la pista y sin misión.
+ * Ver `SITIO_DEL_INICIO`.
+ */
+if (conInicio) {
+  avion = AIRCRAFT.find((a) => a.id === AVION_DEL_INICIO) ?? AIRCRAFT[0]!;
+  tramo = GUYRAMI;
+  leccion = VUELTA;
+  mision = null;
+  ejercicio = null;
+  destino = escenario?.id;
 }
 
 /*
@@ -430,7 +512,16 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
   await Promise.all([
   conMiga("relieve", conRelieve(escenario)),
   conMiga("ciudad", cargarCiudad(escenario.id)),
-  conMiga("tiempo", tiempoPedido(escenario)),
+  conMiga(
+    "tiempo",
+    /*
+     * El primer vuelo, con un día tranquilo: sin viento ni nubes. Es lo que
+     * elige un instructor de verdad para la primera clase.
+     */
+    conInicio
+      ? Promise.resolve({ ...TIEMPO_DE_CASA, vientoDe: null, vientoKt: 0, fuente: "mano" as const })
+      : tiempoPedido(escenario),
+  ),
   /*
    * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
    *
@@ -500,10 +591,13 @@ escenario = conViento(
   meteo,
 );
 
-try {
-  ponerTexto("escenario", escenario.id);
-} catch {
-  // Sin almacenamiento se juega igual, solo que no se recuerda.
+// El modo inicio es su propio vuelo: no se recuerda como el sitio elegido.
+if (!conInicio) {
+  try {
+    ponerTexto("escenario", escenario.id);
+  } catch {
+    // Sin almacenamiento se juega igual, solo que no se recuerda.
+  }
 }
 
 miga("antes del juego");
@@ -536,6 +630,7 @@ const game = new Game({
    * entera. Ver `world/curvatura.ts`.
    */
   ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
+  ...(conInicio ? { inicio: true, tramo: GUYRAMI } : {}),
 });
 miga("juego creado");
 /*
@@ -543,7 +638,7 @@ miga("juego creado");
  * dirección puesta no, por lo mismo que no se pregunta quién vuela: es un
  * banco o un enlace directo. Ver `Game.preguntarSiVuelaSinInstructora`.
  */
-if (!directo) game.preguntarSiVuelaSinInstructora();
+if (!directo && !conInicio) game.preguntarSiVuelaSinInstructora();
 
 /*
  * **Y lo que falta, con el juego ya en marcha**: los dos anillos y las fotos

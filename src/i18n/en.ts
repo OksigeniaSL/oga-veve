@@ -1622,4 +1622,66 @@ export const EN: Dictionary = {
   "parte.yaSePuede.voz": "We looked again and it got better: now we can go.",
   "parte.salgoIgual.voz":
     "All right: we go, carefully. And if it's no good up there, we come back.",
+  "inicio.modo.nombre": "Learn with Jazlyn",
+  "inicio.modo.mama": "Jazlyn",
+  "inicio.modo.hijo": "Her son",
+  "inicio.modo.seguir": "Keep flying",
+  "inicio.modo.llave": "Start the engine",
+  "inicio.hijo.hola": "Mum, Mum, will you teach me to fly today?",
+  "inicio.mama.hola":
+    "Today you're the pilot, my love! I'm right here beside you. The plane waits for you at every step, and if something doesn't work, we just try again.",
+  "inicio.hijo.motor": "How do you switch the plane on, Mum?",
+  "inicio.mama.motor": "First, the engine. Press the shining key and listen to it wake up.",
+  "inicio.mama.motor.otra1": "Find the little key that's moving, sweetheart. Press it once, don't be scared.",
+  "inicio.mama.motor.otra2":
+    "The engine starts with the key. Do what the picture shows: one little tap, and that's it.",
+  "inicio.hijo.motor.bien": "It's on! Listen to it, Mum!",
+  "inicio.mama.motor.bien": "That's it! That noise is the propeller spinning. Now we have an engine.",
+  "inicio.hijo.gas": "And now how do we make it go?",
+  "inicio.mama.gas":
+    "With the throttle. Do what the picture shows and give it full power: then the propeller pulls with all its strength.",
+  "inicio.mama.gas.otra1":
+    "The throttle is the engine with the little arrow pointing up. Go on, push it all the way up.",
+  "inicio.mama.gas.otra2":
+    "Look at the shining picture: that's the throttle. A bit more, my love, the plane is waiting.",
+  "inicio.mama.gas.bien": "Very good! I'll hold the throttle for you. Look how fast we're going down the runway.",
+  "inicio.hijo.carrera": "Mum, we're going super fast! When do we fly?",
+  "inicio.mama.carrera": "Not yet. A plane needs lots of speed before the air can lift it. I'll tell you when.",
+  "inicio.mama.despegar": "Now! To take off, press the up arrow.",
+  "inicio.mama.despegar.otra1":
+    "The arrow pointing up, the shining one. Press it and the plane lifts its nose.",
+  "inicio.mama.despegar.otra2": "The up one, my love, the one pointing at the sky. Try again, no rush.",
+  "inicio.hijo.despegar.bien": "We're flying! Look how tiny everything is!",
+  "inicio.mama.despegar.bien":
+    "You took off! That's how a real plane does it: first it runs, then it lifts its nose.",
+  "inicio.hijo.izquierda": "And how do I turn, Mum?",
+  "inicio.mama.izquierda":
+    "Planes don't turn like a car: they turn by tilting their wings. Press the left arrow.",
+  "inicio.mama.izquierda.otra1":
+    "The left arrow, sweetheart, the one shining in the picture. Press it and watch the wing.",
+  "inicio.mama.izquierda.otra2":
+    "Do what the picture shows: the arrow that points left, and the wing on that side goes down.",
+  "inicio.mama.masRato1": "That's it! A little more: keep it pressed until the wing goes down.",
+  "inicio.mama.masRato2": "You're doing well. Hold it a little longer, the plane tilts slowly.",
+  "inicio.mama.izquierda.bien": "Yes! See how the wing on that side goes down? That's how you turn.",
+  "inicio.hijo.derecha": "Now I want to go the other way!",
+  "inicio.mama.derecha": "Go on! Now the right arrow, the shining one.",
+  "inicio.mama.derecha.otra1":
+    "The right arrow, my love, the one on the other side. Press it and watch the wing change.",
+  "inicio.mama.derecha.otra2":
+    "Do what the picture shows: the arrow that points right, and the plane turns that way.",
+  "inicio.mama.derecha.bien": "Perfect! Left and right: now you know how to turn.",
+  "inicio.hijo.nivelar": "Mum, how do I make it go straight?",
+  "inicio.mama.nivelar":
+    "We level the wings. Do what the picture shows, gently, until the plane is flat like a table.",
+  "inicio.mama.nivelar.otra1":
+    "Gently, sweetheart, until both wings are even, like your arms held out.",
+  "inicio.mama.nivelar.otra2":
+    "Look at the picture: a little bit the other way, and let go when the plane is straight.",
+  "inicio.mama.nivelar.bien": "Nice and straight! Wings level: that's how you fly calmly.",
+  "inicio.hijo.fin": "Mum, Mum, look! I flew all by myself!",
+  "inicio.mama.fin":
+    "You flew, my love! You've earned your first stamp for your logbook. Now keep flying, the sky is yours.",
+  "inicio.mama.finOtra":
+    "What a lovely flight, my love! Your stamp from this field is already in your logbook. Now keep flying, the sky is yours.",
 };
