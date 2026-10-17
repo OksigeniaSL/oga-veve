@@ -139,8 +139,9 @@ ficha de Jazlyn, en «¿A qué jugás?»— y en la dirección, con `?inicio=1`.
 ## Consecuencias
 
 - Hay **una voz más** que bajar, `ara`, y treinta frases más de la
-  comandante. Cómo se graban está en `docs/voces/LEEME.md`, como las demás.
-- El modo se prueba con `scripts/verificar-inicio.mjs`: la escena entera con
-  teclado, con dedo y con los dos mandos de juego de mentira, y la tarjeta en
-  las pantallas donde se juega.
+  comandante. Están las cuarenta en el pack, así que el modo ya es la primera
+  experiencia; falta oírlas en el juego: `PENDIENTE-VOCES-inicio.md`.
+- El modo se prueba con `scripts/verificar-inicio.mjs`: que un piloto nuevo
+  entra solo en él, la escena entera con teclado, con dedo y con los dos mandos
+  de juego de mentira, y la tarjeta en las pantallas donde se juega.
 - El HOTAS X sigue sin probarse con el aparato de verdad.

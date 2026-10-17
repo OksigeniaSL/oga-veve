@@ -11,6 +11,9 @@
  *
  * ## Qué mira
  *
+ * - **Que es la primera experiencia**: un piloto nuevo, sin `?inicio=1`, entra
+ *   solo en el modo inicio, porque las frases de Jazlyn y de Ara están en el
+ *   pack. Si falta una, va al hangar y el banco lo dice.
  * - **Que el mundo espera**: en cada paso que pide algo, el avión no se mueve
  *   ni un palmo mientras no se hace, y la escena sigue viva —el reloj de la
  *   secuencia corre—, que un juego colgado también está quieto.
@@ -28,14 +31,15 @@
  *   pulgares ni la columna de la derecha; de pie, escondida tras el cartel de
  *   girar.
  *
- * Sin voces —el banco no las tiene, como el Brave de Enrique—, así que la
- * escena va al ritmo de leer los subtítulos: es la prueba de que sin grabar
- * también se puede seguir.
+ * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—: lo
+ * que suena es lo que hay en el pack, y lo que no sonara iría al ritmo de leer
+ * los subtítulos, que es la prueba de que sin grabar también se puede seguir.
  *
  * Uso: `node scripts/verificar-inicio.mjs [teclado,dedo,consola,joystick]`
  *   `OGA_GPU=1` con la tarjeta de verdad; `OGA_FOTOS=carpeta` saca capturas
  *   de cuatro pasos, con el renderer en el nombre; `OGA_SIN_TAMANOS=1` se
- *   salta las pantallas.
+ *   salta las pantallas. Con `OGA_SIN_TAMANOS=1` y `""` de mandos, solo mira
+ *   si es la primera experiencia: un minuto, para después de grabar.
  */
 import { mkdirSync } from "node:fs";
 import { chromium, devices } from "playwright";
@@ -679,7 +683,51 @@ async function enLasPantallas() {
   }
 }
 
+/**
+ * **Y que un piloto nuevo entra solo en el modo inicio**, sin `?inicio=1`:
+ * se abre el juego como lo abre cualquiera, se crea un piloto y se mira a
+ * dónde va. Con las frases de Jazlyn y de Ara en el pack va al modo inicio;
+ * si falta una sola, al hangar, que es lo que dice `inicioGrabado`. Así el
+ * banco ve si el modo es de verdad la primera experiencia, y no solo si
+ * funciona cuando se le pide.
+ */
+async function comoPrimeraExperiencia() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
+  try {
+    await page.goto(`${BASE}/?hora=12`);
+    await page.click("[data-nuevo]", { timeout: 120_000 });
+    await page.click("[data-crear]");
+    const donde = await page
+      .waitForFunction(
+        () => {
+          if (globalThis.__oga?.inicio?.()?.conInicio) return "inicio";
+          const hangar = document.querySelector("#hangar");
+          return hangar && !hangar.hidden && hangar.childElementCount > 0 ? "hangar" : null;
+        },
+        null,
+        { timeout: 120_000 },
+      )
+      .then((h) => h.jsonValue())
+      .catch(() => "ninguno");
+    comprobar(
+      "un piloto nuevo entra solo en el modo inicio, que ya tiene voz",
+      donde === "inicio",
+      donde === "hangar"
+        ? "fue al hangar: le falta alguna frase en el pack"
+        : `fue a ${donde}${errores.length ? ` · ${errores.join(" · ")}` : ""}`,
+    );
+  } catch (e) {
+    comprobar("un piloto nuevo entra solo en el modo inicio, que ya tiene voz", false, String(e).slice(0, 120));
+  } finally {
+    await ctx.close();
+  }
+}
+
 try {
+  await comoPrimeraExperiencia();
   if (!process.env.OGA_SIN_TAMANOS) await enLasPantallas();
   for (const cual of CUALES) await unaVuelta(cual);
 } finally {
