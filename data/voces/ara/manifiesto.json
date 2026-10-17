@@ -78,6 +78,98 @@
     "inicio.ara.nivelar": {
       "ms": 2617,
       "h": "710bea479d"
+    },
+    "inicio.ara.pasaje.bostezo": {
+      "ms": 3707,
+      "h": "2dc8ccba05"
+    },
+    "inicio.ara.pasaje.carrera": {
+      "ms": 5207,
+      "h": "8d7657988d"
+    },
+    "inicio.ara.pasaje.cinturon": {
+      "ms": 3907,
+      "h": "1224d1211a"
+    },
+    "inicio.ara.pasaje.comandante": {
+      "ms": 4707,
+      "h": "4ff89ec617"
+    },
+    "inicio.ara.pasaje.despegue": {
+      "ms": 4407,
+      "h": "b418ed98e1"
+    },
+    "inicio.ara.pasaje.espera": {
+      "ms": 2978,
+      "h": "fcd00049f5"
+    },
+    "inicio.ara.pasaje.fin": {
+      "ms": 5507,
+      "h": "905d36870a"
+    },
+    "inicio.ara.pasaje.flaps": {
+      "ms": 4507,
+      "h": "07cdea2512"
+    },
+    "inicio.ara.pasaje.garajonay": {
+      "ms": 3707,
+      "h": "6bab4bd1ca"
+    },
+    "inicio.ara.pasaje.isla": {
+      "ms": 4107,
+      "h": "501eca347f"
+    },
+    "inicio.ara.pasaje.loVeo": {
+      "ms": 3807,
+      "h": "cd1e41c6a7"
+    },
+    "inicio.ara.pasaje.motores": {
+      "ms": 5707,
+      "h": "8cad8f7903"
+    },
+    "inicio.ara.pasaje.niebla": {
+      "ms": 4607,
+      "h": "6d8df98572"
+    },
+    "inicio.ara.pasaje.nubes": {
+      "ms": 5907,
+      "h": "0b3abc0009"
+    },
+    "inicio.ara.pasaje.nubesAbajo": {
+      "ms": 5807,
+      "h": "95a636135e"
+    },
+    "inicio.ara.pasaje.oidos": {
+      "ms": 3407,
+      "h": "a58cdc2d04"
+    },
+    "inicio.ara.pasaje.orotava": {
+      "ms": 3907,
+      "h": "1001c977fd"
+    },
+    "inicio.ara.pasaje.puertas": {
+      "ms": 3107,
+      "h": "95d492a05c"
+    },
+    "inicio.ara.pasaje.servicio": {
+      "ms": 4007,
+      "h": "d2f97c1c00"
+    },
+    "inicio.ara.pasaje.teide": {
+      "ms": 5307,
+      "h": "c2fd2c4f14"
+    },
+    "inicio.ara.pasaje.toma": {
+      "ms": 4107,
+      "h": "9f4c02efd5"
+    },
+    "inicio.ara.pasaje.ventanilla": {
+      "ms": 5707,
+      "h": "b7708d4bed"
+    },
+    "inicio.ara.pasaje.volando": {
+      "ms": 4407,
+      "h": "7ea7f39696"
     }
   },
   "recetas": {
@@ -137,6 +229,75 @@
     ],
     "inicio.ara.nivelar": [
       "inicio.ara.nivelar"
+    ],
+    "inicio.ara.pasaje.bostezo": [
+      "inicio.ara.pasaje.bostezo"
+    ],
+    "inicio.ara.pasaje.carrera": [
+      "inicio.ara.pasaje.carrera"
+    ],
+    "inicio.ara.pasaje.cinturon": [
+      "inicio.ara.pasaje.cinturon"
+    ],
+    "inicio.ara.pasaje.comandante": [
+      "inicio.ara.pasaje.comandante"
+    ],
+    "inicio.ara.pasaje.despegue": [
+      "inicio.ara.pasaje.despegue"
+    ],
+    "inicio.ara.pasaje.espera": [
+      "inicio.ara.pasaje.espera"
+    ],
+    "inicio.ara.pasaje.fin": [
+      "inicio.ara.pasaje.fin"
+    ],
+    "inicio.ara.pasaje.flaps": [
+      "inicio.ara.pasaje.flaps"
+    ],
+    "inicio.ara.pasaje.garajonay": [
+      "inicio.ara.pasaje.garajonay"
+    ],
+    "inicio.ara.pasaje.isla": [
+      "inicio.ara.pasaje.isla"
+    ],
+    "inicio.ara.pasaje.loVeo": [
+      "inicio.ara.pasaje.loVeo"
+    ],
+    "inicio.ara.pasaje.motores": [
+      "inicio.ara.pasaje.motores"
+    ],
+    "inicio.ara.pasaje.niebla": [
+      "inicio.ara.pasaje.niebla"
+    ],
+    "inicio.ara.pasaje.nubes": [
+      "inicio.ara.pasaje.nubes"
+    ],
+    "inicio.ara.pasaje.nubesAbajo": [
+      "inicio.ara.pasaje.nubesAbajo"
+    ],
+    "inicio.ara.pasaje.oidos": [
+      "inicio.ara.pasaje.oidos"
+    ],
+    "inicio.ara.pasaje.orotava": [
+      "inicio.ara.pasaje.orotava"
+    ],
+    "inicio.ara.pasaje.puertas": [
+      "inicio.ara.pasaje.puertas"
+    ],
+    "inicio.ara.pasaje.servicio": [
+      "inicio.ara.pasaje.servicio"
+    ],
+    "inicio.ara.pasaje.teide": [
+      "inicio.ara.pasaje.teide"
+    ],
+    "inicio.ara.pasaje.toma": [
+      "inicio.ara.pasaje.toma"
+    ],
+    "inicio.ara.pasaje.ventanilla": [
+      "inicio.ara.pasaje.ventanilla"
+    ],
+    "inicio.ara.pasaje.volando": [
+      "inicio.ara.pasaje.volando"
     ]
   }
 }

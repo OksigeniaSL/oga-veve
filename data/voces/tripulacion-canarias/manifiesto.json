@@ -3,6 +3,14 @@
   "voz": "tripulacion-canarias",
   "idioma": "es-PY",
   "piezas": {
+    "inicio.tripulacion.pasaje.cinturon": {
+      "ms": 7007,
+      "h": "283c89fe2e"
+    },
+    "inicio.tripulacion.pasaje.oidos": {
+      "ms": 11007,
+      "h": "b8ad5e84f8"
+    },
     "tripulacion.canario.bienvenidos.fuerteventura": {
       "ms": 2470,
       "h": "4e8992c02e"
@@ -173,6 +181,12 @@
     ],
     "tripulacion.canario.servicio.seguimos": [
       "tripulacion.canario.servicio.seguimos"
+    ],
+    "inicio.tripulacion.pasaje.cinturon": [
+      "inicio.tripulacion.pasaje.cinturon"
+    ],
+    "inicio.tripulacion.pasaje.oidos": [
+      "inicio.tripulacion.pasaje.oidos"
     ]
   }
 }

@@ -1367,6 +1367,18 @@
       "ms": 4607,
       "h": "c03cf7c824"
     },
+    "inicio.mama.pasaje.espera": {
+      "ms": 6307,
+      "h": "6a4ffb5db9"
+    },
+    "inicio.mama.pasaje.nubes": {
+      "ms": 11707,
+      "h": "62a2073de8"
+    },
+    "inicio.mama.pasaje.reversa": {
+      "ms": 9907,
+      "h": "a598794221"
+    },
     "ventanilla.anaga": {
       "ms": 9907,
       "h": "e799e61c7b"
@@ -2844,6 +2856,15 @@
     ],
     "inicio.mama.aterrizar.frenar.otra1": [
       "inicio.mama.aterrizar.frenar.otra1"
+    ],
+    "inicio.mama.pasaje.nubes": [
+      "inicio.mama.pasaje.nubes"
+    ],
+    "inicio.mama.pasaje.espera": [
+      "inicio.mama.pasaje.espera"
+    ],
+    "inicio.mama.pasaje.reversa": [
+      "inicio.mama.pasaje.reversa"
     ]
   }
 }
