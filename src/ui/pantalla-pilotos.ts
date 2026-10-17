@@ -11,7 +11,7 @@
  * es una pantalla; «este es el tuyo, ¿lo cambiás?» es un avión.
  */
 
-import { getLocale, LOCALES, LOCALE_NAMES, setLocale, t } from "../i18n";
+import { detectLocale, getLocale, LOCALES, LOCALE_NAMES, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import {
   CUANTOS_PERFILES,
@@ -225,6 +225,14 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
       const elegir = el.closest("[data-elegir]")?.getAttribute("data-elegir");
       if (elegir) {
         elegirPerfil(elegir);
+        /*
+         * **Y con su idioma.** El idioma se guarda por piloto, y al arrancar
+         * se pone el del último que voló; elegir a otro no lo cambiaba hasta
+         * recargar, y se volaba en el idioma del anterior. Enrique: «al
+         * empezar un vuelo se escuchó a Jaz hablando primero en inglés, y
+         * tras un par de recargas se corrigió».
+         */
+        setLocale(detectLocale());
         root.hidden = true;
         listo();
         return;
@@ -261,7 +269,14 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
         return;
       }
       if (el.closest("[data-crear]")) {
+        /*
+         * El nuevo **hereda el idioma con que se estaba jugando**: sin idioma
+         * guardado tomaba el del navegador, que puede ser otro —el inglés de
+         * un sistema en inglés— en una casa que juega en castellano.
+         */
+        const idioma = getLocale();
         crearPerfil(propuesta.bicho, propuesta.color);
+        setLocale(idioma);
         root.hidden = true;
         listo();
       }
