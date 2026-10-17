@@ -1633,6 +1633,8 @@ const DEL_AIRE =
  */
 const EMPIEZA_LA_CARRERA = 25;
 const SE_ACABA_LA_CARRERA = 3;
+/** A qué velocidad, m/s, se celebran las gafas: la de rodar, con la carrera ya hecha. */
+const SE_CELEBRAN_LAS_GAFAS = 15;
 const AL_TOCAR = 6;
 const MIRA_LOS_PANELES = 1.5;
 
@@ -8184,13 +8186,8 @@ export class Game {
      * una sola vez. Ver `flight/gafas.ts` y #2.
      */
     this.hechos.on("ganasteLasGafas", () => {
-      this.hud.senal.mostrar("gafas", t("gafas.ganadas"), null, {
-        segundos: SE_QUEDA_EL_ARO * 2,
-        prioridad: IMPORTANTE,
-      });
-      this.avisar("achieved");
-      this.instructor.decir(t("gafas.ganadas"), "gafas.ganadas");
       this.llevarLasGafas(leerGafas());
+      this.gafasPorCelebrar = true;
     });
 
     this.hechos.on("loCorregiste", () => {
@@ -11636,6 +11633,30 @@ export class Game {
    * otras deja al juego diciendo dos cosas distintas sobre lo mismo — el
    * botón encendido y el mundo sin teñir.
    */
+  /**
+   * **Las gafas se celebran con el avión ya despacio**, no al tocar. Se
+   * ganan en el instante de la toma, y celebrarlo ahí —el dibujo, las cuatro
+   * notas y la voz— metía la voz de la instructora en mitad de la carrera,
+   * delante de lo que se canta en ella: el «sixty knots» del JAZ 90 caducó
+   * esperando detrás de «gafas.ganadas» (banco del vuelo entero, 17-10-2026).
+   * Primero se frena; el premio, a velocidad de rodar.
+   */
+  private celebrarLasGafasSiToca(): void {
+    if (!this.gafasPorCelebrar) return;
+    const s = this.flight.state;
+    if (s.onGround && s.groundSpeed >= SE_CELEBRAN_LAS_GAFAS) return;
+    this.gafasPorCelebrar = false;
+    this.hud.senal.mostrar("gafas", t("gafas.ganadas"), null, {
+      segundos: SE_QUEDA_EL_ARO * 2,
+      prioridad: IMPORTANTE,
+    });
+    this.avisar("achieved");
+    this.instructor.decir(t("gafas.ganadas"), "gafas.ganadas");
+  }
+
+  /** Las gafas ganadas en esta toma, a la espera de celebrarlas. */
+  private gafasPorCelebrar = false;
+
   private llevarLasGafas(gafas: Gafas): void {
     this.gafas = gafas;
     this.hud.setGafas(gafas.ganadas, gafas.puestas);
@@ -13305,6 +13326,7 @@ export class Game {
       this.yaTocoTierra = false;
     }
     this.contarLaCarrera(dt);
+    this.celebrarLasGafasSiToca();
 
     /*
      * **Y el número en grande, que es otro peldaño.**
