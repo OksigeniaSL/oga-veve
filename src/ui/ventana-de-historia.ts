@@ -227,6 +227,13 @@ export function alSonarLaHistoria(
 const OBSTACULOS =
   '[data-hud], button, [role="button"], .tarjeta, .concha, .pad, .volumen, .rincon, .tutor';
 
+/**
+ * El ancho de placa, en píxeles de pantalla, desde el que la foto se pone
+ * ahí: en un portátil la placa mide 180, y en la tablet de siete pulgadas,
+ * con el cuadro encogido, setenta, que es un sello y no una foto.
+ */
+const PLACA_QUE_SE_VE = 110;
+
 /** Cuánto dura el fundido al quitarla, ms; lo mismo que en la hoja. */
 const FUNDIDO = 600;
 
@@ -341,8 +348,17 @@ export class VentanaDeHistoria implements PonerYQuitar {
     }
   }
 
+  /**
+   * Primero la placa, si se ve de un tamaño en el que una foto es una foto;
+   * si no, la esquina; y si tampoco cabe, la placa aunque sea pequeña —en la
+   * tablet de siete pulgadas el cuadro entero se encoge—, que es mejor que
+   * nada y no tapa nada.
+   */
   private poner(foto: FotoDeLaHistoria): void {
-    if (!this.enLaPlaca(foto)) this.enLaEsquina(foto);
+    if (!this.enLaPlaca(foto, PLACA_QUE_SE_VE)) {
+      this.enLaEsquina(foto);
+      if (!this.dondeQuedo) this.enLaPlaca(foto, 40);
+    }
     this.ultimo = `${foto.clave}: ${this.dondeQuedo?.donde ?? "no cabe sin tapar"}`;
   }
 
@@ -351,7 +367,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
    * cuadro abierto, dentro de la pantalla. Si está recogido, la foto va a la
    * esquina como en los demás.
    */
-  private enLaPlaca(foto: FotoDeLaHistoria): boolean {
+  private enLaPlaca(foto: FotoDeLaHistoria, minimo: number): boolean {
     const raiz = this.raiz;
     const grupo = raiz?.querySelector<SVGGElement>('[data-historia="placa"]');
     const cuadro = raiz?.querySelector<HTMLElement>('[data-hud="cuadro"]');
@@ -361,7 +377,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
       return false;
     const imagen = grupo.querySelector<SVGImageElement>('[data-historia="foto"]');
     const r = (imagen ?? grupo).getBoundingClientRect();
-    if (r.width < 40 || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth)
+    if (r.width < minimo || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth)
       return false;
     imagen?.setAttribute("href", foto.url);
     imagen?.setAttribute("aria-label", foto.alt);
