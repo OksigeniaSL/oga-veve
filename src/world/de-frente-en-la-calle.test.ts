@@ -467,20 +467,31 @@ describe("la regla: dónde se mete un camino en la calle de otro que va de frent
   });
 });
 
-describe("de vuelta al puesto en Los Rodeos, con el JAZ 120 y uno que sale", () => {
-  const tfn = SCENARIOS.find((e) => e.id === "tenerife-norte")!;
-  const por12 = conViento(tfn, { ...TIEMPO_DE_CASA, vientoDe: 110, vientoKt: 15 });
-  const jaz120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
+/*
+ * **El caso de Enrique ya no se da en Los Rodeos, y no por esta regla.** El
+ * que salía rodaba por la R hacia la E3, y la E3 no es una salida que su AIP
+ * deje: ahora entra por la E-1, la cabecera de la 12, y rueda por la R hacia
+ * el oeste igual que tú. Medido: por la 12, ningún frente a frente con la
+ * regla ni sin ella. Ver `salida-del-trafico.test.ts`.
+ *
+ * El mismo frente a frente, con la misma firma —veinticuatro segundos
+ * parados, el coche dentro del otro y uno retirado—, sale en Guaraní por la
+ * 05 con el JAZ 90, que es donde se mira ahora.
+ */
+describe("de vuelta al puesto en Guaraní, con el JAZ 90 y uno que sale", () => {
+  const guarani = SCENARIOS.find((e) => e.id === "guarani")!;
+  const por05 = conViento(guarani, { ...TIEMPO_DE_CASA, vientoDe: 0, vientoKt: 15 });
+  const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
 
   it("sin la regla sale lo que vio Enrique: de frente, el coche dentro y el otro retirado", () => {
-    const m = vueltaConUnoQueSale(por12, jaz120, "EC-AAX", 60, false);
+    const m = vueltaConUnoQueSale(por05, jaz90, "EC-AAX", 40, false);
     expect(m.deFrente).toBeGreaterThan(PARADOS_DE_FRENTE);
     expect(m.coche).not.toBe("");
     expect(m.retirados.length).toBeGreaterThan(0);
   });
 
-  it("con la regla, el que sale espera fuera de la R y pasa después", () => {
-    const m = vueltaConUnoQueSale(por12, jaz120, "EC-AAX", 60);
+  it("con la regla, el que sale espera fuera de tu calle y pasa después", () => {
+    const m = vueltaConUnoQueSale(por05, jaz90, "EC-AAX", 40);
     expect(m.deFrente).toBe(0);
     expect(m.coche).toBe("");
     expect(m.retirados).toEqual([]);
@@ -490,11 +501,11 @@ describe("de vuelta al puesto en Los Rodeos, con el JAZ 120 y uno que sale", () 
     expect(m.llego).toBe(true);
   });
 
-  it("y si ya rodaba por la R cuando se traza tu raya, pasa él y tu raya espera", () => {
+  it("y si ya rodaba por tu calle cuando se traza tu raya, pasa él y tu raya espera", () => {
     const repartos = new Set<string>();
     const mal: string[] = [];
     for (const anuncio of [10, 15, 20, 25]) {
-      const m = vueltaConUnoQueSale(por12, jaz120, "EC-AAX", anuncio);
+      const m = vueltaConUnoQueSale(por05, jaz90, "EC-AAX", anuncio);
       for (const r of m.repartos) repartos.add(r);
       if (m.deFrente > PARADOS_DE_FRENTE || m.coche || m.contacto || m.retirados.length || !m.llego)
         mal.push(`anuncio ${anuncio}: ${JSON.stringify({ ...m, repartos: [...m.repartos] })}`);
@@ -512,12 +523,20 @@ describe("de vuelta al puesto en Los Rodeos, con el JAZ 120 y uno que sale", () 
  * rodar a cada rato: ninguno se mete en el otro, ninguno se retira por
  * atasco, y los dos acaban lo suyo.
  */
-describe("y entre los del tráfico, en Los Rodeos", () => {
-  const tfn = SCENARIOS.find((e) => e.id === "tenerife-norte")!;
-
-  for (const viento of [110, 290]) {
-    it(`por la ${viento === 110 ? 12 : 30}: el que llega y el que sale no se meten uno en otro`, () => {
-      const esc = conViento(tfn, { ...TIEMPO_DE_CASA, vientoDe: viento, vientoKt: 15 });
+/*
+ * Por la 12 de Los Rodeos ya no se cruzan: el que sale entra por la E-1 y
+ * rueda hacia el oeste, como el que llega a su puesto. Se miran la 30 y las
+ * dos de Guaraní, donde sí se cruzan.
+ */
+describe("y entre los del tráfico", () => {
+  for (const [id, viento, nombre] of [
+    ["tenerife-norte", 290, "Los Rodeos por la 30"],
+    ["guarani", 0, "Guaraní por la 05"],
+    ["guarani", 180, "Guaraní por la 23"],
+  ] as const) {
+    it(`${nombre}: el que llega y el que sale no se meten uno en otro`, () => {
+      const campo = SCENARIOS.find((e) => e.id === id)!;
+      const esc = conViento(campo, { ...TIEMPO_DE_CASA, vientoDe: viento, vientoKt: 15 });
       const aero = esc.aerodrome as Aerodrome;
       const pista = esc.runway;
       const cota = aero.elevationM ?? 0;

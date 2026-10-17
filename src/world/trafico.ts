@@ -55,8 +55,8 @@ import {
   fabricarTurbohelice,
   LIBREAS_DE_LAS_ISLAS,
 } from "./aviones-de-las-islas";
+import { FACTOR_DE_ESCUELA, MARGEN_DE_CERTIFICACION } from "../flight/carrera";
 import {
-  PISTA_POR_DELANTE,
   type EnElPlano,
   type OcupadosEnElMundo,
   type SueloDelTrafico,
@@ -272,6 +272,12 @@ export interface Caminos {
     readonly eje: number;
     readonly despega: number;
     readonly tipo: TipoDeTrafico;
+    /**
+     * Los metros de pista que remonta el que sale antes de dar la vuelta y
+     * alinearse: cero si entra y despega. Ver `salida` en
+     * `suelo-del-trafico.ts`.
+     */
+    readonly remonta?: number;
   } | null;
 }
 
@@ -313,7 +319,7 @@ export interface TipoDeTrafico {
   /**
    * **La distancia de despegue de su ficha**, m: la que pide a la pista, con
    * su margen, para salir por una intersección. Es la que antes se usaba
-   * también como carrera; ver `PISTA_POR_DELANTE` en `suelo-del-trafico.ts`.
+   * también como carrera; ver `pistaQuePideConSuMargen`.
    */
   readonly pistaQuePide: number;
   /** **Lo que sube recién despegado**, m/s. Ver `pendienteDeSalida`. */
@@ -523,6 +529,21 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
     subeAlAire: 7.6, // 1.500 ft/min
   }),
 };
+
+/**
+ * **La pista que pide por delante para despegar**, m: la distancia de
+ * despegue de su ficha por el margen de su clase, el mismo que pide la regla
+ * de qué avión cabe en qué campo —ver `margenDeSuClase` en
+ * `flight/carrera.ts`—. El turbohélice y el reactor son de línea, de la
+ * clase A, con el 1,15 de su certificación (CS 25.113 a 2); la avioneta y el
+ * bimotor de pistón, de la B, con el 1,33 de escuela. Es lo que tiene que
+ * quedar por delante desde la boca por la que entra, o remonta. Era un 1,25
+ * para todos, sin fuente.
+ */
+export function pistaQuePideConSuMargen(t: TipoDeTrafico): number {
+  const deLinea = t.id === "turbohelice" || t.id === "reactor";
+  return t.pistaQuePide * (deLinea ? MARGEN_DE_CERTIFICACION : FACTOR_DE_ESCUELA);
+}
 
 /**
  * **Qué tráfico opera en este campo**, por su código OACI, y en qué
@@ -894,7 +915,7 @@ export function trazar(
     const sale = tierra.suelo.salida(
       tierra.evitar,
       tierra.porDondeVas,
-      t.pistaQuePide * PISTA_POR_DELANTE,
+      pistaQuePideConSuMargen(t),
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -944,6 +965,7 @@ export function trazar(
         eje: sale.eje,
         despega: sale.eje + t.carrera,
         tipo: t,
+        remonta: sale.remonta,
       };
     }
   }
@@ -2677,11 +2699,28 @@ export function crearTrafico(
    * que tarda en entrar, alinearse y correr su despegue, y lo que vuela
    * después hasta pasar el final de la pista —ver `encimaDeLaPista`—; y si
    * va a esperar alineado, lo que puede tardar la torre en darle la salida.
+   *
+   * **Y lo que remonta**, si remonta: es pista ocupada a paso de calle, un
+   * minuto o dos en un campo sin calle hasta la cabecera. Ver `salida` en
+   * `suelo-del-trafico.ts`.
    */
-  const llegaAntesDeQueSalga = (tipo: TipoDeTrafico, clave: string): boolean => {
+  const loQueLeQuedaPorRemontar = (quien: Volando | undefined, matricula: string): number => {
+    const c = quien?.caminos ?? caminosDe(tipoDe(matricula));
+    const t = c?.enTierra;
+    if (!c || !t?.remonta) return 0;
+    if (!quien || quien.marca.camino !== c.salida) return t.remonta;
+    return Math.max(0, Math.min(t.remonta, t.eje - quien.recorrido));
+  };
+
+  const llegaAntesDeQueSalga = (
+    tipo: TipoDeTrafico,
+    clave: string,
+    remonta = 0,
+  ): boolean => {
     const hastaElFinal =
       Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo);
     const hueco =
+      remonta / RUEDA_A +
       ENTRAR_Y_ALINEARSE +
       tiempoDeCarrera(tipo) +
       hastaElFinal +
@@ -3185,7 +3224,11 @@ export function crearTrafico(
         if (pistaOcupadaPorOtro(matricula)) return true;
         if (
           clave !== "torre.clearedLand" &&
-          llegaAntesDeQueSalga(quien?.tipo ?? tipoDe(matricula), clave)
+          llegaAntesDeQueSalga(
+            quien?.tipo ?? tipoDe(matricula),
+            clave,
+            loQueLeQuedaPorRemontar(quien, matricula),
+          )
         )
           return true;
         /*

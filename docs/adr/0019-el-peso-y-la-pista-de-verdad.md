@@ -85,8 +85,17 @@ cuánta pista hace falta:
 `flight/vuelo.ts`, que usaba `pistaQueNecesita` para reconocer que alguien está
 despegando de verdad, pasa a usar la distancia de despegue de hoy sin márgenes:
 ahí la toma no pinta nada. El `pistaQueNecesita` de `suelo-del-trafico.ts` es
-un parámetro con el mismo nombre que viene del tipo de tráfico, no esta cuenta,
-y no cambia.
+un parámetro con el mismo nombre que viene del tipo de tráfico, no esta cuenta.
+
+**Y el tráfico, con el mismo margen** (17 de octubre de 2026). Pedía la
+distancia de despegue de su tipo por un 1,25 sin fuente, y desde cualquier
+calle: en Los Rodeos el reactor salía por la E3, que su AIP no deja, con
+1.570 m por delante. Ahora pide la de su tipo por el margen de su clase —1,15
+el turbohélice y el reactor, 1,33 la avioneta y el bimotor—, solo sale de una
+intersección si el AIP la deja y con la TORA que publica desde ahí (AD 2.13:
+«12 INT E-2», 2.546 m; «30 INT E-4», 1.906), y si ninguna entrada le da su
+pista, remonta hasta el principio y da la vuelta allí. Ver
+`pistaQuePideConSuMargen` en `trafico.ts` y `salidas-por-interseccion.ts`.
 
 ### Y los bomberos
 

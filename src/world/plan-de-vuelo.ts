@@ -73,6 +73,11 @@ import {
 import { delante, enEjesDePista, puntoDePista, traves } from "./rumbo";
 import { hastaElUmbralDeToma } from "./umbral-desplazado";
 import {
+  cabeceraPorRumbo,
+  calleDeLaBoca,
+  desdeLaInterseccion,
+} from "./salidas-por-interseccion";
+import {
   porDelanteDe,
   tramoDeFrente,
   type QuienTieneElTramo,
@@ -2711,45 +2716,27 @@ export class PlanDeVuelo {
     const regla = this.aero.salidasPorInterseccion;
     if (!regla) return true;
     if (!regla.permitidas) return false;
-    if (!regla.soloDesde?.length) return true;
+    if (!regla.soloDesde?.length && !regla.tora) return true;
     return this.bocasPermitidas().some((a) => Math.abs(a - along) < MISMA_BOCA);
   }
 
   /**
    * Dónde están, a lo largo del eje, las bocas de las calles desde las que el
-   * AIP deja salir por intersección. La calle de una boca es la primera con
-   * nombre que se encuentra saliendo de ella: en La Gomera los dos ramales
-   * que llegan a la pista no lo llevan, y la A empieza unos metros más allá.
+   * AIP deja salir por intersección **por la cabecera de ahora**. La calle de
+   * una boca es la primera con nombre que se encuentra saliendo de ella: ver
+   * `calleDeLaBoca`. Y la regla, la misma que mira el tráfico: ver
+   * `desdeLaInterseccion` en `salidas-por-interseccion.ts`.
    */
   private bocasPermitidas(): number[] {
     if (this.bocasPermitidasGuardadas) return this.bocasPermitidasGuardadas;
-    const nombre = (ref: string | null | undefined) =>
-      (ref ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const permitidas = new Set(
-      (this.aero.salidasPorInterseccion?.soloDesde ?? []).map(nombre),
-    );
+    const cabecera = cabeceraPorRumbo(this.aero, this.pista.heading);
     const bocas: number[] = [];
     this.grafo.nudos.forEach((nudo, i) => {
       const tramos = (this.grafo.desde[i] ?? []).map((k) => this.grafo.tramos[k]!);
       if (!tramos.some((t) => t.pista) || !tramos.some((t) => !t.pista)) return;
       if (!this.enLaPista(nudo)) return;
-      // La calle con nombre más cercana, por calles y sin irse lejos.
-      const vistos = new Set([i]);
-      let frente = [i];
-      let calle = "";
-      for (let paso = 0; paso < 4 && !calle && frente.length; paso++) {
-        const siguiente: number[] = [];
-        for (const n of frente)
-          for (const k of this.grafo.desde[n] ?? []) {
-            const t = this.grafo.tramos[k]!;
-            if (t.pista) continue;
-            if (!calle && nombre(t.ref)) calle = nombre(t.ref);
-            const otro = t.a === n ? t.b : t.a;
-            if (!vistos.has(otro)) vistos.add(otro), siguiente.push(otro);
-          }
-        frente = siguiente;
-      }
-      if (!permitidas.has(calle)) return;
+      const calle = calleDeLaBoca(this.grafo, i);
+      if (!calle || !desdeLaInterseccion(this.aero, cabecera, calle).permitida) return;
       bocas.push(
         enEjesDePista(nudo[0], -nudo[1], this.pista.x, this.pista.z, this.pista.heading)
           .along,

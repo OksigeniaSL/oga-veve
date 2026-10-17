@@ -167,6 +167,13 @@ export interface Aerodrome {
      * E-2 y la E-4; en La Gomera, la A.
      */
     readonly soloDesde?: readonly string[];
+    /**
+     * **La TORA que publica desde cada intersección**, m, por cabecera y por
+     * calle: las filas «12 INT E-2» de su AD 2.13. Si está, solo se sale por
+     * intersección desde las que tienen cifra para la cabecera en uso, y con
+     * esa cifra. Ver `desdeLaInterseccion` en `salidas-por-interseccion.ts`.
+     */
+    readonly tora?: Readonly<Record<string, Readonly<Record<string, number>>>>;
     /** La frase del AIP, tal cual, y de dónde. */
     readonly fuente: string;
   };

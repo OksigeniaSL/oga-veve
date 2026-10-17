@@ -26,8 +26,8 @@ import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { cabeEn, campoDe } from "../flight/cabe";
 import { SCENARIOS, conViento, type Scenario } from "./scenarios";
 import { TIEMPO_DE_CASA } from "./meteo";
-import { PISTA_POR_DELANTE, sueloDelTrafico } from "./suelo-del-trafico";
-import { crearTrafico, tiposDelCampo, type EnTierra } from "./trafico";
+import { sueloDelTrafico } from "./suelo-del-trafico";
+import { crearTrafico, pistaQuePideConSuMargen, tiposDelCampo, type EnTierra } from "./trafico";
 import { Frecuencia } from "../flight/radio";
 import { TurnoDePista } from "../flight/turno-de-pista";
 import { enEjesDePista } from "./rumbo";
@@ -368,11 +368,10 @@ function rodarHastaLaVerde(
   trafico.dispose();
   const tipos = tiposDelCampo(aero.id, pista.length, sinTorre(aero));
   /*
-   * Lo más que puede dejar una salida que se pueda rodar: la boca más cerca
-   * de la cabecera a la que se llega por las calles. Si ni ésa le da su pista
-   * —El Hierro para el turbohélice—, de ahí: el de verdad remontaría, y eso
-   * el tráfico no lo sabe hacer. Lo que se mira es que no salga de una que
-   * deja menos.
+   * Lo más que puede dejar una salida que se pueda rodar: la que remonta
+   * hasta el principio de la pista, que es lo que hace el tráfico cuando
+   * ninguna boca le da su pista —El Hierro para el turbohélice—. Lo que se
+   * mira es que no salga de una que deja menos de lo que pide.
    */
   const mejor = suelo?.salida(undefined, undefined, Infinity);
   const loMas = mejor
@@ -383,7 +382,7 @@ function rodarHastaLaVerde(
     : Infinity;
   for (const [m, { queda, tipo: id }] of alEntrar) {
     const tipo = tipos.find((k) => k.id === id);
-    if (tipo && queda < Math.min(tipo.pistaQuePide * PISTA_POR_DELANTE, loMas) - 60)
+    if (tipo && queda < Math.min(pistaQuePideConSuMargen(tipo), loMas) - 60)
       sinPista.add(`${m} (${id}) con ${Math.round(queda)} m, cuando podía con ${Math.round(loMas)}`);
   }
   const atascado = entro
