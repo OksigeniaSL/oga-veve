@@ -62,14 +62,15 @@ import type { Urgencia } from "./boca";
  * **Si esta frase es de la megafonía**: la comandante, la tripulación y lo que
  * la comandante señala por la ventanilla. Se reconoce por la clave, que es lo
  * único que ve la boca: `ventanilla` a secas es la de la comandante y
- * `ventanilla.vos` la de la instructora en una avioneta. Ver
- * `audio/ventanilla.ts`.
+ * `ventanilla.vos` la de la instructora en una avioneta. Y lo mismo con la
+ * historia que va detrás: `ventanilla.historia` sale por la megafonía y
+ * `ventanilla.vos.historia`, no. Ver `audio/ventanilla.ts`.
  */
 export function esDeLaMegafonia(clave: string | undefined): boolean {
   return !!clave && DE_LA_MEGAFONIA.test(clave);
 }
 
-const DE_LA_MEGAFONIA = /^(?:(?:comandante|tripulacion)\.|ventanilla(?:@|$))/;
+const DE_LA_MEGAFONIA = /^(?:(?:comandante|tripulacion)\.|ventanilla(?:\.historia)?(?:@|$))/;
 
 /**
  * El peso con que espera turno una frase: manda el más alto, y entre iguales

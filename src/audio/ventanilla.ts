@@ -29,6 +29,16 @@
  * La comandante habló por última vez para lo del cinturón, y lo primero que
  * dice una de verdad al volver a coger el micrófono es quién habla. Solo la
  * primera vez del vuelo: la segunda ya se sabe.
+ *
+ * ## Y detrás, su historia
+ *
+ * Lo que se ve dice qué es: «ese gigante es el Teide». Pedido después: que
+ * Jazlyn cuente **también su historia**, verdadera y con fuente —el Garoé
+ * que bebía de la niebla, Cabeza de Vaca cargando las canoas para rodear el
+ * Iguazú—. Va en **otra frase, justo detrás**, con la misma voz: ver
+ * `laHistoria`. Otra frase y no un trozo más de la misma porque así lo que
+ * es para ti —la torre, el tráfico— se cuela entre las dos en vez de esperar
+ * medio minuto de paisaje, y porque cada una se oye una vez y entera.
  */
 
 import { hayTexto, t, type TranslationKey } from "../i18n";
@@ -76,4 +86,21 @@ export function loQueSeDice(
       que: cuerpo,
     },
   };
+}
+
+/**
+ * **La historia de lo que se acaba de señalar**, o `null` si no tiene.
+ *
+ * `ventanilla.historia.<clave>` con pasaje y `ventanilla.vos.historia.<clave>`
+ * en avioneta, con su receta de una pieza: `ventanilla.historia` es de la
+ * megafonía —ver `esDeLaMegafonia`— y la de la instructora, no. Solo la
+ * tienen los sitios cuya historia está escrita **y apuntada con su fuente**
+ * en `docs/historias/fuentes.md`; lo comprueba `historias.test.ts`.
+ */
+export function laHistoria(mirada: Mirada, conPasaje: boolean): LoQueSeDice | null {
+  const que = mirada.hito.clave ?? mirada.hito.clase;
+  const prefijo = conPasaje ? "ventanilla.historia" : "ventanilla.vos.historia";
+  const cuerpo = `${prefijo}.${que}`;
+  if (!hayTexto(cuerpo)) return null;
+  return { texto: t(cuerpo), clave: prefijo, relleno: { historia: cuerpo } };
 }

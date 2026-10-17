@@ -10,6 +10,9 @@ rutas, y nada más. El porqué está en el ADR 0013.
 - **A mano**: qué sitios entran, cuánto merece cada uno (`peso`, de 1 a 3),
   desde cuánto se distingue (`alcance`, en metros) y su frase, que vive en el
   diccionario como `ventanilla.<clave>` y `ventanilla.vos.<clave>`.
+- **Y su historia, si la tiene**: lo que se cuenta justo detrás de la frase del
+  sitio, `ventanilla.historia.<clave>` y `ventanilla.vos.historia.<clave>`,
+  con la fuente de cada hecho en `docs/historias/fuentes.md`.
 - **No a mano**: dónde está cada cosa y su cota. Salen de OpenStreetMap, con
   el elemento anotado en `de` —`osm node/6447099369` es el Teide—, y los
   puntos de los ríos, de la misma línea de Natural Earth que dibuja el plano

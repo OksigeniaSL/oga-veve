@@ -82,6 +82,27 @@ saludo. Ver `src/audio/ventanilla.ts` y `AJUSTES_CON_CHISPA` en
   está donde el relieve la tiene, y `src/audio/guion-grabado.test.ts` si falta
   la toma.
 
+## Ampliación (octubre de 2026): y detrás, su historia
+
+Pedido después, con el mismo criterio: que Jazlyn cuente **también la
+historia** de lo que señala, verdadera y con fuente —el Garoé que bebía de la
+niebla, las canoas que Cabeza de Vaca cargó para rodear el Iguazú, los ángeles
+músicos de Trinidad—.
+
+No es otro mecanismo: es una frase más del mismo. Cuando acaba la frase del
+sitio, la misma voz pide la suya —`ventanilla.historia.<clave>` por la
+megafonía, `ventanilla.vos.historia.<clave>` en avioneta—, y solo si el sitio
+la tiene, está grabada y no ha empezado una fase de trabajo mientras tanto. Va
+en **otra frase y no en otro trozo de la misma** para que lo que es para ti —la
+torre, el tráfico— se cuele entre las dos en vez de esperar medio minuto de
+paisaje. Ver `laHistoria` en `src/audio/ventanilla.ts` y `contarLaHistoria` en
+`src/game.ts`.
+
+La fuente de cada hecho está en `docs/historias/fuentes.md`, y
+`src/audio/historias.test.ts` falla si una historia no la tiene. Con ellas
+entró un sitio nuevo, el cerro Tres Kandú: de Asunción a Ciudad del Este, una
+hora de crucero, no se contaba nada.
+
 ## Referencias
 
 - ADR 0008 — lo que se ve por la ventanilla: el porqué de señalar el paisaje.

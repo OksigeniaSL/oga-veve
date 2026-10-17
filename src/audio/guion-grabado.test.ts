@@ -26,7 +26,7 @@ import {
   type Cielo,
 } from "./partes-de-la-comandante";
 import { productosDe, servicioPara } from "./servicio-a-bordo";
-import { loQueSeDice } from "./ventanilla";
+import { laHistoria, loQueSeDice } from "./ventanilla";
 import type { Hito } from "../world/hitos";
 import { DESTACADOS } from "../world/lo-destacado";
 
@@ -183,6 +183,33 @@ describe("lo que se ve por la ventanilla, horneado", () => {
                 `${voz}: ${hito.nombre} · ${Object.values(dicho.relleno).join(" + ")}`,
               );
           }
+      expect(faltan).toEqual([]);
+    });
+
+  /*
+   * **Y la historia que va detrás**, en la misma voz que el sitio: una
+   * historia sin grabar se le pasaría a la voz del navegador, que en Brave
+   * para Linux es muda, y el juego ni la pide. Ver `laHistoria`.
+   */
+  for (const [conPasaje, voz] of [
+    [true, "comandante"],
+    [false, "instructor"],
+  ] as const)
+    it(`y la historia de cada sitio que la tiene, en la voz de la ${voz}`, () => {
+      const m = manifiesto(voz);
+      const faltan: string[] = [];
+      let cuantas = 0;
+      for (const hito of sitios) {
+        const historia = laHistoria(
+          { hito, lado: "derecha", distancia: 10_000, desdeElMorro: 60 },
+          conPasaje,
+        );
+        if (!historia) continue;
+        cuantas++;
+        if (!recetaDe(m, historia.clave, historia.relleno))
+          faltan.push(`${voz}: ${historia.relleno.historia}`);
+      }
+      expect(cuantas).toBeGreaterThan(20);
       expect(faltan).toEqual([]);
     });
 

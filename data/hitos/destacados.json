@@ -346,6 +346,17 @@
       "ele": null,
       "de": "osm relation/8740149",
       "puntos": [[-27.13179, -55.70261]]
+    },
+    {
+      "clave": "tres-kandu",
+      "nombre": "Cerro Tres Kandú",
+      "clase": "montana",
+      "zona": "paraguay",
+      "peso": 2,
+      "alcance": 70000,
+      "ele": 842,
+      "de": "osm node/4350935698; la cota, 842 m, la del artículo «Cerro Tres Kandú» de Wikipedia, que OpenStreetMap no trae",
+      "puntos": [[-25.89691, -56.16943]]
     }
   ]
 }
