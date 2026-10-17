@@ -57,6 +57,7 @@
  * | 6, en la base de gases        | flaps una muesca abajo                |
  * | 7, en la base de gases        | tren: subir o bajar                   |
  * | 8, en la base de gases        | reversa, mientras se aprieta          |
+ * | ST, en la base de gases       | el motor: arrancar o apagar           |
  *
  * El freno en el gatillo es lo que hacen casi todos los simuladores con este
  * joystick, que no trae pedales; el compensador en la seta es el interruptor
@@ -70,7 +71,25 @@
  * derecho gas e izquierdo freno, A freno, cruceta arriba y abajo
  * compensador, y ahora **LB y RB los flaps** —una muesca arriba y abajo—,
  * **Y el tren** y **X los aerofrenos**.
+ *
+ * ## Y la llave, en el botón de empezar
+ *
+ * **Con un mando en la mano no había forma de arrancar el motor**: la llave
+ * era la I del teclado o la tarjeta que se toca, y quien vuela con el mando no
+ * tiene ninguna de las dos a mano. Ahora es el botón de empezar —el de las
+ * tres rayas en un mando de consola, el ST en la base de gases del HOTAS X—,
+ * que es el noveno en los dos repartos. Arrancar es empezar, y es el botón que
+ * cualquiera busca para eso. Y no tiene peligro en el aire: la llave solo
+ * responde parado en el suelo (ver `toggleEngine` en `game.ts`). Lo pidió el
+ * modo inicio, que enseña a arrancar con el mando que se tenga en la mano.
  */
+
+/**
+ * **Con qué se está jugando**: el teclado —o el ratón, que es un ordenador—,
+ * el dedo en la pantalla, un mando de consola o un joystick de vuelo. Lo
+ * apunta `InputManager.ultimoMando` y lo dibuja el modo inicio.
+ */
+export type Mando = "teclado" | "dedo" | "consola" | "joystick";
 
 /** Lo que se lee de un mando: lo mínimo de `Gamepad`, para poder probarlo. */
 export interface MandoLeible {
@@ -99,6 +118,8 @@ export interface LecturaDelMando {
   readonly tren: boolean;
   readonly aerofrenos: boolean;
   readonly reversa: boolean;
+  /** El botón de empezar: la llave del motor. Ver la cabecera. */
+  readonly motor: boolean;
 }
 
 /** La zona muerta de las palancas de consola, que tiemblan. */
@@ -191,6 +212,8 @@ function leerConsola(m: MandoLeible): LecturaDelMando {
     tren: boton(m, 3),
     aerofrenos: boton(m, 2),
     reversa: false,
+    // El de las tres rayas, «menú» o «start»: el noveno del reparto estándar.
+    motor: boton(m, 9),
   };
 }
 
@@ -213,7 +236,15 @@ function leerHotasX(m: MandoLeible, gas: GasDelHotas): LecturaDelMando {
   return {
     aparato: "hotas-x",
     roll: z(0),
-    pitch: -z(1),
+    /*
+     * **Atrás es morro arriba**, como en cualquier avión con palanca. Estaba
+     * con el signo del mando de consola —donde arriba es morro arriba, como la
+     * flecha— y así el joystick subía empujando hacia delante, al revés de lo
+     * que dice la tabla de la cabecera y de lo que hace la palanca de un avión
+     * de verdad. Un joystick por USB da −1 con la palanca adelante y +1 con la
+     * palanca atrás, así que el eje va tal cual.
+     */
+    pitch: z(1),
     rudder: Math.abs(giro) >= Math.abs(otro) ? giro : otro,
     throttle: Math.max(0, Math.min(1, (1 + GAS_HACIA_DELANTE * palancaDeGas) / 2)),
     brakes: boton(m, 0),
@@ -224,5 +255,42 @@ function leerHotasX(m: MandoLeible, gas: GasDelHotas): LecturaDelMando {
     flapsAbajo: boton(m, 5),
     tren: boton(m, 6),
     reversa: boton(m, 7),
+    // El ST de la base de gases, que es el décimo del aparato: ver la cabecera.
+    motor: boton(m, 9),
   };
 }
+
+/**
+ * **Si alguien está usando el mando**: un botón que se acaba de apretar o una
+ * palanca que se ha ido de donde estaba.
+ *
+ * No vale mirar si está fuera del centro: la palanca de gases del HOTAS se
+ * queda donde se deja, así que un joystick enchufado y quieto estaría
+ * «usándose» siempre. Lo que cuenta es el cambio: los botones contra el
+ * fotograma anterior, y los ejes contra **donde estaban la última vez que se
+ * usó**, que una palanca movida despacio cambia poco de un fotograma al otro.
+ * Lo mira el modo inicio para dibujar el mando que se tiene en la mano: ver
+ * `InputManager.ultimoMando`.
+ */
+export function seEstaUsando(
+  antes: { readonly botones: readonly boolean[]; readonly ejes: readonly number[] } | null,
+  ahora: Pick<MandoLeible, "axes" | "buttons">,
+): boolean {
+  // Uno que aparece se está usando: el navegador no enseña ningún mando hasta
+  // que alguien aprieta un botón o mueve una palanca.
+  if (!antes) return true;
+  for (let i = 0; i < ahora.buttons.length; i++)
+    if (ahora.buttons[i]?.pressed && !antes.botones[i]) return true;
+  for (let i = 0; i < ahora.axes.length; i++) {
+    const a = antes.ejes[i] ?? 0;
+    const b = ahora.axes[i] ?? 0;
+    if (Number.isFinite(a) && Number.isFinite(b) && Math.abs(b - a) > SE_MUEVE) return true;
+  }
+  return false;
+}
+
+/**
+ * Lo que tiene que irse un eje para contar como uso: más que el temblor de una
+ * palanca de consola suelta, menos que un gesto.
+ */
+const SE_MUEVE = 0.2;

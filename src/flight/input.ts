@@ -30,7 +30,13 @@ import {
   separarEjes,
 } from "./palanca-de-mando";
 import { ManoQueSostiene, type LoQuePide, type LoQueVeLaMano } from "./mano";
-import { GasDelHotas, leerMando, type LecturaDelMando } from "./mandos-fisicos";
+import {
+  GasDelHotas,
+  leerMando,
+  seEstaUsando,
+  type LecturaDelMando,
+  type Mando,
+} from "./mandos-fisicos";
 import {
   DETENTES,
   TARDAN_LOS_FLAPS,
@@ -206,6 +212,37 @@ export class InputManager {
    */
   readonly mueve = { cabeceo: false, alabeo: false, timon: false };
 
+  /**
+   * **Lo que pide quien juega en este fotograma**, venga de la tecla, del dedo
+   * o del mando, con el signo de cada eje y antes de que nada se mueva.
+   *
+   * Es la pregunta del modo inicio —«¿está haciendo lo que se le pide?»—, y
+   * tiene que poder contestarse **con el mundo quieto**: ahí no se mueve el
+   * gas ni la mano, y lo único que hay es la intención. Ver `mirarSinMover`
+   * y `flight/inicio.ts`.
+   */
+  readonly intento: { cabeceo: number; alabeo: number; gas: number; centrar: boolean } = {
+    cabeceo: 0,
+    alabeo: 0,
+    gas: 0,
+    centrar: false,
+  };
+
+  /**
+   * **Con qué se está jugando**: lo último que se tocó. El teclado o el ratón
+   * —que es un ordenador—, el dedo, o el mando de juego que se movió, de
+   * consola o joystick. Empieza por lo que dice el aparato: con el dedo, el
+   * dedo. Lo mira el modo inicio para dibujar el mando que se tiene en la
+   * mano, y cambia el dibujo en cuanto se cambia de mando.
+   */
+  ultimoMando: Mando =
+    typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches
+      ? "dedo"
+      : "teclado";
+
+  /** Los botones del mando en la lectura anterior y sus ejes al usarlo. Ver `seEstaUsando`. */
+  private usoDelMando: { botones: boolean[]; ejes: number[] } | null = null;
+
   /** Lo que ha pasado con los mandos desde que se miró. Ver `sucesosDeLosMandos`. */
   private readonly sucesos: SucesoDeLosMandos[] = [];
 
@@ -276,7 +313,13 @@ export class InputManager {
   /** Qué reparto tiene el mando conectado y cuál es su palanca de gases. */
   private readonly gasDelHotas = new GasDelHotas();
   /** Los botones del mando en el fotograma anterior, para ver el golpe. */
-  private botonesAntes = { flapsArriba: false, flapsAbajo: false, tren: false, aerofrenos: false };
+  private botonesAntes = {
+    flapsArriba: false,
+    flapsAbajo: false,
+    tren: false,
+    aerofrenos: false,
+    motor: false,
+  };
   /** El mando de juego de este fotograma, si hay. */
   private mandoDeAhora: LecturaDelMando | null = null;
 
@@ -834,6 +877,8 @@ export class InputManager {
 
   update(dt: number): void {
     const gamepad = this.readGamepad();
+    // La intención, antes de mover nada: ver `intento`.
+    this.leerElIntento(gamepad);
     const ahora = ahoraEnSegundos();
     const teclaAlabeo = this.axis("rollRight", "rollLeft");
     const teclaCabeceo = this.axis("pitchUp", "pitchDown");
@@ -1115,6 +1160,48 @@ export class InputManager {
       : 1;
   }
 
+  /**
+   * **Mirar los mandos sin mover nada**: con el mundo quieto en el modo
+   * inicio. Se lee el mando de juego —que solo se entera de algo si se le
+   * pregunta— y sus botones de un golpe, que la llave del motor también está
+   * ahí, y se apunta la intención. Ni el gas, ni la mano, ni la palanca se
+   * mueven: el mundo espera. Ver `flight/inicio.ts`.
+   */
+  mirarSinMover(): void {
+    const gamepad = this.readGamepad();
+    if (gamepad) this.botonesDelMando(gamepad);
+    this.leerElIntento(gamepad);
+  }
+
+  /** Lo que pide cada mando ahora mismo, sumado. Ver `intento`. */
+  private leerElIntento(gamepad: LecturaDelMando | null): void {
+    const dedo = this.dedoDelMando !== null ? this.palancaDelDedo : null;
+    // Con la regla de siempre: manda quien se mueve. Ver `mandaQuienSeMueve`.
+    this.intento.cabeceo = clamp(
+      this.signoDeCabeceo *
+        mandaQuienSeMueve(this.axis("pitchUp", "pitchDown") + (dedo ? -dedo.y : 0), gamepad?.pitch),
+      -1,
+      1,
+    );
+    this.intento.alabeo = clamp(
+      mandaQuienSeMueve(this.axis("rollRight", "rollLeft") + (dedo ? dedo.x : 0), gamepad?.roll),
+      -1,
+      1,
+    );
+    // El gas: la tecla y los botones empujan; la palanca del dedo y la del
+    // mando, si van a otro sitio que el gas que hay.
+    let gas = this.axis("throttleUp", "throttleDown") + this.buttonThrottle;
+    const ahora = this.controls.throttle;
+    if (this.touchThrottle !== null && Math.abs(this.touchThrottle - ahora) > 0.02)
+      gas += Math.sign(this.touchThrottle - ahora);
+    if (gamepad?.throttle !== undefined) {
+      const antes = this.gasDelMando ?? ahora;
+      if (Math.abs(gamepad.throttle - antes) > 0.02) gas += Math.sign(gamepad.throttle - antes);
+    }
+    this.intento.gas = Math.sign(gas);
+    this.intento.centrar = this.gestoDoble && this.dedoDelMando !== null;
+  }
+
   /** Invertir o no el cabeceo. Ver `ui/ajustes.ts`. */
   ponerSignoDeCabeceo(signo: number): void {
     this.signoDeCabeceo = signo < 0 ? -1 : 1;
@@ -1154,6 +1241,7 @@ export class InputManager {
      * enfocado.
      */
     if (leTocaAlDeLaPantalla(event.target)) return;
+    this.ultimoMando = "teclado";
     // Las flechas hacen scroll de la página si no se les para los pies.
     if (event.code.startsWith("Arrow") || event.code === "Space")
       event.preventDefault();
@@ -1331,10 +1419,23 @@ export class InputManager {
     if (!pad) {
       this.gasDelHotas.olvidar();
       this.mandoDeAhora = null;
+      this.usoDelMando = null;
       return null;
     }
     const antes = this.mandoDeAhora;
     this.mandoDeAhora = leerMando(pad, this.gasDelHotas);
+    /*
+     * **Y si se está usando, es el mando de ahora**: ver `ultimoMando`. Los
+     * ejes se recuerdan donde estaban al usarlo, y los botones, del fotograma
+     * anterior. Ver `seEstaUsando`.
+     */
+    const usado = seEstaUsando(this.usoDelMando, pad);
+    const botones = Array.from(pad.buttons, (b) => b.pressed);
+    if (usado || !this.usoDelMando) {
+      this.usoDelMando = { botones, ejes: Array.from(pad.axes) };
+      if (usado)
+        this.ultimoMando = this.mandoDeAhora.aparato === "hotas-x" ? "joystick" : "consola";
+    } else this.usoDelMando.botones = botones;
     // Uno que aparece: lo cuenta la instructora, la primera vez.
     if (antes?.aparato !== this.mandoDeAhora.aparato)
       this.apuntar(
@@ -1353,6 +1454,12 @@ export class InputManager {
     if (m.flapsAbajo && !antes.flapsAbajo) this.flapsUnaMuesca(1);
     if (m.tren && !antes.tren) this.alternarTren();
     if (m.aerofrenos && !antes.aerofrenos) this.alternarAerofrenos();
+    // La llave, en el botón de empezar. Ver `flight/mandos-fisicos.ts`.
+    if (m.motor && !antes.motor) {
+      this.noteGesture();
+      this.actions.toggleEngine();
+    }
+    antes.motor = m.motor;
     antes.flapsArriba = m.flapsArriba;
     antes.flapsAbajo = m.flapsAbajo;
     antes.tren = m.tren;
@@ -1379,9 +1486,16 @@ export class InputManager {
      * y no una palabra. Se quedó uno.
      */
 
-    window.addEventListener("pointerdown", () => this.noteGesture(), {
-      passive: true,
-    });
+    window.addEventListener(
+      "pointerdown",
+      (event) => {
+        this.noteGesture();
+        // El dedo es el dedo; el ratón, un ordenador, que se juega con teclado.
+        if (event.pointerType === "touch" || event.pointerType === "pen") this.ultimoMando = "dedo";
+        else if (event.pointerType === "mouse") this.ultimoMando = "teclado";
+      },
+      { passive: true },
+    );
 
     if (stick) this.bindPalancaDeMando(stick);
     if (rudder) {
