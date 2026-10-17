@@ -24,6 +24,13 @@
  *   con otras palabras, con el mundo todavía quieto.
  * - **Que se vuela entero**: se arranca, se rueda, se despega en la Vr, se vira
  *   a un lado y al otro y se endereza.
+ * - **Que a Jazlyn le da tiempo**: la carrera no pasa de Vr mientras se habla
+ *   de ella, el «¡ahora!» suena en la Vr y no antes de que acabe «todavía
+ *   no…» —medido con lo que sonó y con lo que dura su grabación—, y el avión
+ *   se va del suelo antes de la mitad de la pista.
+ * - **Y que la conversación no la corta nadie**: en toda la escena solo
+ *   suenan Jazlyn y Ara; ni la radio, ni la megafonía, ni la máquina, y nadie
+ *   más pide turno.
  * - **Y que acaba con el sello del Chaco** en la tarjeta y en el cuaderno, y
  *   al seguir volando la tarjeta se va y el avión vuela.
  * - **Y dónde cae la tarjeta**, en el portátil, la tablet, el teléfono
@@ -41,7 +48,7 @@
  *   salta las pantallas. Con `OGA_SIN_TAMANOS=1` y `""` de mandos, solo mira
  *   si es la primera experiencia: un minuto, para después de grabar.
  */
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
@@ -150,6 +157,23 @@ async function foto(page, nombre) {
   console.log(`  📷 ${ruta}  —  ${r}`);
 }
 
+/**
+ * **Cuánto dura cada frase de la escena grabada**, ms: la suma de las piezas
+ * de su receta en el manifiesto de su voz. Es con lo que se mide, oyendo de
+ * verdad, si una frase empezó antes de que acabara la anterior.
+ */
+const DURA = (() => {
+  const dura = new Map();
+  for (const voz of ["comandante", "ara"]) {
+    const m = JSON.parse(readFileSync(`data/voces/${voz}/manifiesto.json`, "utf8"));
+    for (const [clave, receta] of Object.entries(m.recetas)) {
+      if (!clave.startsWith("inicio.")) continue;
+      dura.set(clave, receta.reduce((s, p) => s + (m.piezas[p]?.ms ?? 0), 0));
+    }
+  }
+  return dura;
+})();
+
 /** Lo que se ve de la escena, de una vez. */
 const leer = (page) =>
   page.evaluate(() => {
@@ -161,6 +185,7 @@ const leer = (page) =>
       inicio: i ?? null,
       dibujo: d ? { mando: d.dataset.mando, gesto: d.dataset.gesto } : null,
       pos: p ? { x: p.x, y: p.y, z: p.z } : null,
+      velocidad: o?.estado ? o.estado().airspeed : 0,
       altura: o?.estado ? o.estado().heightAboveGround : 0,
       alabeo: o?.actitud ? o.actitud().alabeo : 0,
       enTierra: o?.estado ? o.estado().onGround : true,
@@ -428,6 +453,18 @@ async function unaVuelta(cual) {
   let seguido = false;
   const t0 = Date.now();
   const fotos = new Set();
+  /*
+   * **La carrera**: lo más rápido que se fue mientras se hablaba de ella, a
+   * qué velocidad se dijo «¡ahora!», dónde se empezó a rodar y dónde se fue
+   * del suelo. Y al final, la conversación entera tal como sonó.
+   */
+  const vr = await page.evaluate(() => globalThis.__oga.avion().rotacion);
+  const pista = await page.evaluate(() => globalThis.__oga.pista());
+  let masRapidoHablando = 0;
+  let enElAhora = null;
+  let salida = null;
+  let despegue = null;
+  let conversacion = null;
 
   while (Date.now() - t0 < TOPE_S * 1000) {
     const v = await leer(page);
@@ -442,6 +479,11 @@ async function unaVuelta(cual) {
       break;
     }
     if (!vistos.has(e.paso)) vistos.set(e.paso, (Date.now() - t0) / 1000);
+    if (!salida && v.enTierra && v.velocidad > 0.5) salida = v.pos;
+    const deLaCarrera = e.paso === "carrera" || (e.paso === "gas" && e.fase === "bien");
+    if (deLaCarrera && e.hablando) masRapidoHablando = Math.max(masRapidoHablando, v.velocidad);
+    if (e.paso === "despegar" && enElAhora === null) enElAhora = v.velocidad;
+    if (salida && !despegue && !v.enTierra) despegue = v.pos;
     altura = Math.max(altura, v.altura);
     alabeoMin = Math.min(alabeoMin, v.alabeo);
     alabeoMax = Math.max(alabeoMax, v.alabeo);
@@ -500,6 +542,13 @@ async function unaVuelta(cual) {
         await pausa(150);
         continue;
       }
+      if (!conversacion)
+        conversacion = await page.evaluate(() => ({
+          habladas: globalThis.__oga.habladas(),
+          descartadas: globalThis.__oga.descartadas(),
+          maquina: globalThis.__oga.maquina?.() ?? [],
+          registro: globalThis.__oga.inicio?.()?.registro ?? null,
+        }));
       if (!sello) {
         sello = await page.evaluate(() => {
           const s = document.querySelector("#inicio .inicio__sello svg");
@@ -562,6 +611,7 @@ async function unaVuelta(cual) {
       error ? `${error.otraVez} vez · ${error.linea} · quieto: ${error.quieto}` : "no se probó",
     );
   comprobar(et("se despega"), altura > 15, `${altura.toFixed(0)} m sobre el suelo`);
+  comprobarLaCarrera(et, { vr, pista, masRapidoHablando, enElAhora, salida, despegue, conversacion });
   comprobar(
     et("se vira a un lado y al otro, y se endereza"),
     alabeoMin <= -9 * GRADO && alabeoMax >= 9 * GRADO && enderezo,
@@ -597,6 +647,86 @@ async function unaVuelta(cual) {
     );
   comprobar(et("sin errores"), errores.length === 0, errores[0] ?? "limpio");
   await ctx.close();
+}
+
+/**
+ * **La carrera y la conversación**: que Jazlyn acaba de explicar antes de la
+ * Vr, que «¡ahora!» suena en la Vr y con la frase de antes acabada, que el
+ * avión se va del suelo con pista de sobra, y que en toda la escena no habla
+ * nadie más que ella y Ara. Ver `SOSTIENE_POR_DEBAJO` y `oirLaRadio`.
+ *
+ * Cada comprobación pide además que se haya podido medir: lo más rápido que
+ * se fue hablando tiene que ser una velocidad de carrera, y la conversación,
+ * más de diez frases oídas. Un «no pasa» con el instrumento ciego no vale.
+ */
+function comprobarLaCarrera(et, c) {
+  const { vr, pista, masRapidoHablando, enElAhora, salida, despegue, conversacion } = c;
+  comprobar(
+    et("la carrera no pasa de Vr mientras Jazlyn habla"),
+    masRapidoHablando > vr * 0.6 && masRapidoHablando <= vr,
+    `lo más rápido hablando: ${masRapidoHablando.toFixed(1)} m/s · Vr ${vr} m/s`,
+  );
+  comprobar(
+    et("«¡ahora!» suena en la Vr"),
+    enElAhora !== null && enElAhora >= vr - 0.05 && enElAhora < vr + 1,
+    enElAhora === null ? "no se vio" : `a ${enElAhora.toFixed(1)} m/s · Vr ${vr} m/s`,
+  );
+
+  const leida = (l) => {
+    const m = /^(-?[\d.]+)s ([^\s:]+)/.exec(l);
+    return m ? { t: Number(m[1]), clave: m[2] } : null;
+  };
+  const habladas = (conversacion?.habladas ?? []).map(leida).filter(Boolean);
+  const carrera = habladas.filter((h) => h.clave === "inicio.mama.carrera").at(-1);
+  const ahora = carrera && habladas.find((h) => h.clave === "inicio.mama.despegar" && h.t > carrera.t);
+  const dura = (DURA.get("inicio.mama.carrera") ?? 0) / 1000;
+  /*
+   * Y lo que apunta la escena de cada frase —cuándo se pidió, cuándo acabó y
+   * si se cortó—, que dice lo mismo sin depender de la duración del manifiesto.
+   */
+  const registro = conversacion?.registro ?? null;
+  const delRegistro = (clave) => registro?.filter((r) => r.clave === clave).at(-1);
+  const rc = delRegistro("inicio.mama.carrera");
+  const ra = delRegistro("inicio.mama.despegar");
+  const porElRegistro = !!rc && !!ra && !rc.cortada && rc.hasta !== null && ra.desde >= rc.hasta;
+  comprobar(
+    et("«¡ahora!» no sale hasta que acaba la frase de la carrera"),
+    !!carrera && !!ahora && ahora.t - carrera.t >= dura - 0.1 && porElRegistro,
+    carrera && ahora
+      ? `«todavía no…» a ${carrera.t.toFixed(1)} s y dura ${dura.toFixed(1)} s; «¡ahora!» a ${ahora.t.toFixed(1)} s` +
+          (rc ? ` · ${rc.cortada ? "cortada" : "entera"}` : " · sin registro")
+      : `sin oírlas:${carrera ? "" : " falta «todavía no…»"}${ahora ? "" : " falta «¡ahora!»"}`,
+  );
+
+  const ajenas = [
+    ...(conversacion?.habladas ?? []),
+    ...(conversacion?.descartadas ?? []).map((d) => `${d} (se cayó)`),
+    ...(conversacion?.maquina ?? []).map((m) => `${m} (máquina)`),
+  ].filter((l) => !/^\S+s inicio\./.test(l));
+  comprobar(
+    et("en toda la escena no habla nadie más: ni radio, ni megafonía, ni cabina"),
+    !!conversacion && habladas.length > 10 && ajenas.length === 0,
+    !conversacion
+      ? "no llegó al final"
+      : ajenas.length
+        ? `${ajenas.length}: ${ajenas.slice(0, 4).join(" · ")}`
+        : `${habladas.length} frases, todas de la escena`,
+  );
+
+  if (!salida || !despegue || !pista) {
+    comprobar(et("se va del suelo con pista de sobra"), false, "no se vio la carrera entera");
+    return;
+  }
+  const h = (pista.heading * Math.PI) / 180;
+  const sobreElEje = (p) => (p.x - pista.x) * Math.sin(h) - (p.z - pista.z) * Math.cos(h);
+  const sentido = Math.sign(sobreElEje(despegue) - sobreElEje(salida)) || 1;
+  const rodados = Math.abs(sobreElEje(despegue) - sobreElEje(salida));
+  const queda = pista.length / 2 - sentido * sobreElEje(despegue);
+  comprobar(
+    et("se va del suelo con pista de sobra: antes de la mitad"),
+    queda >= pista.length / 2,
+    `rodó ${rodados.toFixed(0)} m · quedaban ${queda.toFixed(0)} de ${pista.length} m`,
+  );
 }
 
 /** Virar a la derecha con la tecla, para el cambio de mando. */

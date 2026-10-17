@@ -10,16 +10,25 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { Vector3 } from "three";
 import { ES_PY } from "../i18n/es-PY";
 import { EN } from "../i18n/en";
+import { Boca, SILENCIO, type Urgencia } from "../audio/boca";
+import { ArcadeFlightModel } from "./arcade";
+import { PYKASU } from "./aircraft";
+import { neutralControls } from "./model";
+import COMANDANTE from "../../data/voces/comandante/manifiesto.json";
+import ARA from "../../data/voces/ara/manifiesto.json";
 import {
   ALTURA_PARA_VIRAR,
   ENFRIA_EL_ERROR,
+  esDeLaEscena,
   ESPERA_SIN_HACER,
   GUION_DEL_INICIO,
   Inicio,
   inicioGrabado,
   LINEAS_DEL_INICIO,
+  PISTA_QUE_SE_GUARDA,
   SIN_INTENTO,
   VOZ_DE,
   type Intento,
@@ -63,6 +72,9 @@ function enLaCabecera(): { -readonly [K in keyof Lectura]: Lectura[K] } {
     enTierra: true,
     alabeo: 0,
     mando: "teclado",
+    pistaQueQueda: 1400,
+    // Como en el modelo sencillo: rodando, el gas es la fracción de la punta del suelo.
+    gasQueSostiene: (v) => v / 37.2,
   };
 }
 
@@ -70,7 +82,10 @@ const con = (i: Partial<Intento>): Intento => ({ ...SIN_INTENTO, ...i });
 
 /** Unos segundos de secuencia con el avión como esté. */
 function pasar(inicio: Inicio, l: Lectura, segundos: number): SalidaDelInicio {
-  let s: SalidaDelInicio = { congelado: false, ayuda: { gas: null, cabeceo: null, centrar: false } };
+  let s: SalidaDelInicio = {
+    congelado: false,
+    ayuda: { gas: null, gasTope: null, cabeceo: null, centrar: false },
+  };
   for (let t = 0; t < segundos; t += DT) s = inicio.paso(DT, l);
   return s;
 }
@@ -194,7 +209,7 @@ describe("cada paso espera su gesto", () => {
     expect(s.ayuda.gas).toBeGreaterThan(0.85);
   });
 
-  it("y en la Vr el mundo se para, aunque quedara algo por decir, a esperar la flecha de subir", () => {
+  it("y en la Vr, con la carrera ya explicada, el mundo se para a esperar la flecha de subir", () => {
     const inicio = new Inicio(vozQueApunta().voz, { primerSello: true });
     const l = enLaCabecera();
     l.motor = true;
@@ -374,7 +389,7 @@ describe("el final", () => {
     const s = inicio.paso(DT, l);
     expect(inicio.estado.terminado).toBe(true);
     expect(s.congelado).toBe(false);
-    expect(s.ayuda).toEqual({ gas: null, cabeceo: null, centrar: false });
+    expect(s.ayuda).toEqual({ gas: null, gasTope: null, cabeceo: null, centrar: false });
   });
 
   it("y si no es el primer sello del cuaderno, no dice que lo sea", () => {
@@ -457,5 +472,272 @@ describe("la escena no se cuelga", () => {
     inicio.retomarLaVoz();
     pasar(inicio, l, 1);
     expect(dichas.map((d) => d.clave)).toEqual(["inicio.ara.hola", "inicio.ara.hola"]);
+  });
+});
+
+/**
+ * **Lo que dura cada frase grabada**, s: la suma de las piezas de su receta
+ * en el manifiesto de su voz. Con esto la carrera se prueba con el tiempo que
+ * de verdad tarda Jazlyn en explicarla.
+ */
+function loQueDura(l: Linea): number {
+  const m = (l.quien === "mama" ? COMANDANTE : ARA) as unknown as {
+    recetas: Record<string, string[]>;
+    piezas: Record<string, { ms: number }>;
+  };
+  const receta = m.recetas[l.clave];
+  expect(receta, l.clave).toBeTruthy();
+  return receta!.reduce((s, p) => s + (m.piezas[p]?.ms ?? 0), 0) / 1000;
+}
+
+/**
+ * **Una voz que tarda lo que tarda**, con el silencio de la boca entre una
+ * frase y la siguiente —ver `SILENCIO`—. `cuanto` dice lo que dura cada
+ * frase; `null`, que se queda colgada y no avisa nunca.
+ */
+function vozQueTarda(cuanto: (l: Linea) => number | null): {
+  voz: ConstructorParameters<typeof Inicio>[0];
+  /** Avisa de lo que ha acabado a esta hora de escena. */
+  paso(t: number): void;
+} {
+  let ahora = 0;
+  let libreDesde = 0;
+  let pendientes: { acaba: number; avisar: (s: number) => void }[] = [];
+  return {
+    voz: {
+      decir: (l, alAcabar) => {
+        const dura = cuanto(l);
+        if (dura === null) return;
+        const empieza = Math.max(ahora, libreDesde);
+        libreDesde = empieza + dura + SILENCIO / 1000;
+        pendientes.push({ acaba: empieza + dura, avisar: alAcabar });
+      },
+      callar: () => {
+        pendientes = [];
+        libreDesde = ahora + SILENCIO / 1000;
+      },
+    },
+    paso: (t) => {
+      ahora = t;
+      const ya = pendientes.filter((p) => p.acaba <= t);
+      pendientes = pendientes.filter((p) => p.acaba > t);
+      for (const p of ya) p.avisar(0);
+    },
+  };
+}
+
+/** Lo que se mide de una carrera de verdad. Ver `correrLaCarrera`. */
+interface Carrera {
+  /** Lo más rápido que se fue mientras se hablaba de la carrera, m/s. */
+  readonly masRapidoHablando: number;
+  /** Y a qué velocidad se pasó a «¡ahora!», m/s. */
+  readonly enElAhora: number;
+  /** Metros rodados hasta el «¡ahora!», y hasta los quince metros de altura. */
+  readonly hastaElAhora: number;
+  readonly hastaQuince: number;
+  /** Lo que quedaba de pista al pasar a «¡ahora!», m. */
+  readonly quedabaEnElAhora: number;
+  readonly registro: Inicio["registro"];
+}
+
+/**
+ * **La carrera, con el JAZ 20 de verdad**: el modelo de vuelo del peldaño de
+ * los pequeños, en la cabecera de los 1.400 metros del Chaco, con el motor en
+ * marcha. Se empuja el gas una vez, la mano lo lleva, y se aprieta la flecha
+ * de subir en cuanto se pide. Lo que la mano escribe en los mandos es lo
+ * mismo que escribe `atenderAlInicio` en `game.ts`.
+ */
+function correrLaCarrera(voz: ReturnType<typeof vozQueTarda>, pista = 1400): Carrera {
+  const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
+  m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
+  m.setOnRunway(true);
+  const c = { ...neutralControls(), engineOn: true, throttle: 0 };
+  const inicio = new Inicio(voz.voz, { primerSello: true, desde: "gas" });
+  let empujado = false;
+  let tirado = false;
+  let masRapidoHablando = 0;
+  let enElAhora = NaN;
+  let hastaElAhora = NaN;
+  let quedabaEnElAhora = NaN;
+  let hastaQuince = NaN;
+  for (let t = 0; t < 120 && Number.isNaN(hastaQuince); t += DT) {
+    voz.paso(t);
+    const s = m.state;
+    const rodados = Math.hypot(s.position.x, s.position.z);
+    const e = inicio.estado;
+    let intento = SIN_INTENTO;
+    if (e.paso === "gas" && e.fase === "espera" && !empujado) {
+      intento = con({ gas: 1 });
+      empujado = true;
+    }
+    if (e.paso === "despegar" && e.fase === "espera" && !tirado) {
+      intento = con({ cabeceo: 1 });
+      tirado = true;
+    }
+    const salida = inicio.paso(DT, {
+      motor: true,
+      gas: c.throttle,
+      intento,
+      velocidad: s.airspeed,
+      vr: PYKASU.rotationSpeed,
+      altura: Math.max(0, s.heightAboveGround - PYKASU.gearHeight),
+      enTierra: s.onGround,
+      alabeo: 0,
+      mando: "teclado",
+      pistaQueQueda: pista - rodados,
+      gasQueSostiene: (v) => m.gasParaRodar(v),
+    });
+    const ahora = inicio.estado;
+    if ((ahora.paso === "gas" || ahora.paso === "carrera") && ahora.hablando)
+      masRapidoHablando = Math.max(masRapidoHablando, s.airspeed);
+    if (ahora.paso === "despegar" && Number.isNaN(enElAhora)) {
+      enElAhora = s.airspeed;
+      hastaElAhora = rodados;
+      quedabaEnElAhora = pista - rodados;
+    }
+    if (s.heightAboveGround - PYKASU.gearHeight >= 15) hastaQuince = rodados;
+    const a = salida.ayuda;
+    if (a.gas !== null && c.throttle < a.gas) c.throttle = a.gas;
+    if (a.gasTope !== null && c.throttle > a.gasTope) c.throttle = a.gasTope;
+    c.elevator = a.cabeceo ?? 0;
+    if (!salida.congelado) m.step(DT, c);
+  }
+  return {
+    masRapidoHablando,
+    enElAhora,
+    hastaElAhora,
+    hastaQuince,
+    quedabaEnElAhora,
+    registro: inicio.registro,
+  };
+}
+
+/** Lo que el registro de la escena dice de una frase: la última vez que se dijo. */
+const dicha = (r: Inicio["registro"], clave: string) =>
+  r.filter((d) => d.clave === clave).at(-1);
+
+describe("la carrera, con tiempo para explicarla", () => {
+  it("con lo que duran las grabaciones, no pasa de Vr mientras Jazlyn habla", () => {
+    const c = correrLaCarrera(vozQueTarda(loQueDura));
+    // Hablando se llega cerca —es una carrera de verdad— y no se pasa.
+    expect(c.masRapidoHablando).toBeGreaterThan(PYKASU.rotationSpeed - 3);
+    expect(c.masRapidoHablando).toBeLessThan(PYKASU.rotationSpeed);
+  });
+
+  it("y «¡ahora!» va después, con lo de antes entero, y en la Vr", () => {
+    const c = correrLaCarrera(vozQueTarda(loQueDura));
+    const todavia = dicha(c.registro, "inicio.mama.carrera");
+    const ahora = dicha(c.registro, "inicio.mama.despegar");
+    expect(todavia?.cortada).toBe(false);
+    expect(todavia?.hasta).not.toBeNull();
+    expect(ahora!.desde).toBeGreaterThanOrEqual(todavia!.hasta!);
+    // Lo de antes, también entero y en orden.
+    expect(c.registro.map((d) => d.clave).slice(2, 6)).toEqual([
+      "inicio.mama.gas.bien",
+      "inicio.ara.carrera",
+      "inicio.mama.carrera",
+      "inicio.mama.despegar",
+    ]);
+    expect(c.registro.slice(2, 5).every((d) => !d.cortada)).toBe(true);
+    expect(c.enElAhora).toBeGreaterThanOrEqual(PYKASU.rotationSpeed);
+    expect(c.enElAhora).toBeLessThan(PYKASU.rotationSpeed + 0.5);
+  });
+
+  it("y cabe en la pista del Chaco: a quince metros antes de la mitad", () => {
+    const c = correrLaCarrera(vozQueTarda(loQueDura));
+    expect(c.hastaElAhora).toBeLessThan(400);
+    expect(c.hastaQuince).toBeLessThan(700);
+  });
+
+  it("sin voz, con el rato de leer cada frase, tampoco pasa de Vr ni de la mitad", () => {
+    // El de `tiempoDeLectura` en `game.ts`: un segundo por dieciocho letras, de dos a seis.
+    const leer = (l: Linea): number =>
+      Math.min(6, Math.max(2, (ES_PY[l.clave as keyof typeof ES_PY] as string).length / 18));
+    const c = correrLaCarrera(vozQueTarda(leer));
+    expect(c.masRapidoHablando).toBeLessThan(PYKASU.rotationSpeed);
+    expect(dicha(c.registro, "inicio.mama.carrera")?.cortada).toBe(false);
+    expect(c.hastaQuince).toBeLessThan(700);
+  });
+
+  it("y si la voz se cuelga, manda la pista: se despega guardando la que hace falta", () => {
+    // «Todavía no…» no avisa nunca de que acabó.
+    const c = correrLaCarrera(
+      vozQueTarda((l) => (l.clave === "inicio.mama.carrera" ? null : loQueDura(l))),
+    );
+    expect(c.masRapidoHablando).toBeLessThan(PYKASU.rotationSpeed + 0.5);
+    expect(c.quedabaEnElAhora).toBeGreaterThan(PISTA_QUE_SE_GUARDA - 50);
+    expect(c.quedabaEnElAhora).toBeLessThanOrEqual(PISTA_QUE_SE_GUARDA);
+    expect(c.hastaQuince).toBeLessThan(1400 - 300);
+  });
+});
+
+describe("la escena tiene la boca", () => {
+  /**
+   * Lo que pide la radio en un campo con tráfico: el otro avión, la torre a
+   * otro, la torre a vos, lo urgente, la megafonía y un canto de cabina, que
+   * va sin clave.
+   */
+  const RADIO: readonly (readonly [Urgencia, string | undefined])[] = [
+    ["baja", "otro.buenosDias@fonetico.zulu-fonetico.papa"],
+    ["baja", "torre.holdShort@fonetico.zulu-fonetico.papa"],
+    ["mando", "torre.clearedTakeoff"],
+    ["urgente", "torre.goAround"],
+    ["baja", "comandante.bienvenida"],
+    ["normal", undefined],
+  ];
+
+  it("en el modo inicio ninguna radio pide turno ni corta una frase de la escena", () => {
+    // La boca de verdad, con un reloj de mentira, reservada como la reserva `empezarElInicio`.
+    let t = 0;
+    const boca = new Boca({ ahora: () => t, cancelar: () => {} });
+    boca.reservar(esDeLaEscena);
+    let cortes = 0;
+    let acabar: (() => void) | null = null;
+    boca.pedir(
+      "normal",
+      (listo) => {
+        acabar = () => listo();
+        return () => void cortes++;
+      },
+      "inicio.mama.carrera",
+    );
+    expect(boca.ocupada).toBe(true);
+    const suenan: (string | undefined)[] = [];
+    for (const [urgencia, clave] of RADIO) boca.pedir(urgencia, () => void suenan.push(clave), clave);
+    // Ni espera turno, ni corta, ni suena: ni con la frase sonando…
+    expect(boca.cuantasEsperan).toBe(0);
+    expect(cortes).toBe(0);
+    expect(boca.ocupada).toBe(true);
+    t += 3000;
+    acabar!();
+    // …ni en el hueco entre dos frases de la escena.
+    t += 2000;
+    for (const [urgencia, clave] of RADIO) boca.pedir(urgencia, () => void suenan.push(clave), clave);
+    expect(suenan).toEqual([]);
+    expect(boca.ocupada).toBe(false);
+    // Y la escena sí: la siguiente frase suena.
+    boca.pedir("normal", () => {}, "inicio.mama.despegar");
+    expect(boca.habladas.map((h) => h.clave)).toEqual([
+      "inicio.mama.carrera",
+      "inicio.mama.despegar",
+    ]);
+  });
+
+  it("lo que esperaba turno al empezar la escena se cae, y acabada, la boca es de todos", () => {
+    let t = 0;
+    const boca = new Boca({ ahora: () => t, cancelar: () => {} });
+    let acabar: (() => void) | null = null;
+    boca.pedir("mando", (listo) => void (acabar = () => listo()), "torre.atis");
+    boca.pedir("baja", () => {}, "otro.enFinal");
+    expect(boca.cuantasEsperan).toBe(1);
+    boca.reservar(esDeLaEscena);
+    expect(boca.cuantasEsperan).toBe(0);
+    // Lo que sonaba, acaba: no se corta a nadie.
+    expect(boca.ocupada).toBe(true);
+    acabar!();
+    boca.reservar(null);
+    t += 5000;
+    boca.pedir("baja", () => {}, "otro.buenosDias");
+    expect(boca.habladas.at(-1)?.clave).toBe("otro.buenosDias");
   });
 });

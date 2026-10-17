@@ -123,6 +123,40 @@ que se pedía antes de que acabe de pedirse, lo que quedaba se calla. Y sin
 voz, la siguiente espera el rato de leer la anterior en voz alta: el subtítulo
 es lo que queda para quien acompañe al niño.
 
+**Y la conversación no la corta nadie.** Enrique lo probó: «las radios de
+otros pilotos cortan la conversación». El Chaco no tiene aeródromo, y su
+frecuencia sonaba igual —el «buenos días» de otro avión, la torre mandándole
+esperar— sin un solo avión a la vista, metiéndose entre la pregunta de Ara y
+la respuesta de Jazlyn. Así que en el vuelo del modo inicio **no hay
+frecuencia**: es la primera lección de alguien, en un campo del Chaco, y van
+solos, como en la granja. Y de red, mientras dura la escena **la boca es
+suya** (`reservar` en `audio/boca.ts`): ni la radio, ni la megafonía, ni los
+cantos de cabina piden turno, tampoco lo urgente. La máquina no pasa por la
+boca, y el JAZ 20 no la lleva.
+
+### La carrera, con tiempo para explicarla
+
+Del gas a la Vr el JAZ 20 tarda 13,75 s en este peldaño y rueda 226 m; lo
+que se dice en ese rato —«¡muy bien! Yo te sostengo el gas…», «¡mamá, vamos
+rapidísimo!», «todavía no… yo te aviso»— son 11,5 s de grabación con sus
+silencios: unos 14,5. La Vr llegaba a mitad de «yo te aviso» y el «¡ahora!»
+lo cortaba: «a mamá no le da tiempo de explicar que un avión necesita
+velocidad».
+
+Jazlyn lleva el gas, así que hace lo que haría una instructora con doble
+mando: **no deja que el avión llegue a la rotación hasta que acaba de
+explicarla**. La mano va aflojando el gas al acercarse y deja el avión
+rodando un metro por segundo por debajo de la Vr; al acabar la frase, gas a
+fondo, y en un segundo y poco la Vr y el «¡ahora!», con el mundo esperando la
+flecha (`SOSTIENE_POR_DEBAJO` en `flight/inicio.ts`). Lo que suelta la mano
+es que acabe la frase —sin voz, el rato de leerla—, no un reloj. Medido con
+las grabaciones: el «¡ahora!» a los 16,1 s del gas, con 288 m rodados, y los
+quince metros de altura a los 450, en una pista de 1.400.
+
+Y la pista manda sobre la frase: si quedan 600 m o menos, se despega aunque
+no haya acabado de hablar (`PISTA_QUE_SE_GUARDA`). Con una frase colgada, el
+«¡ahora!» llega a los 827 m y los quince metros a los 989.
+
 ### Cuándo es la primera experiencia
 
 **Solo cuando sus frases están grabadas en el pack, y eso lo decide el pack**,
@@ -143,5 +177,8 @@ ficha de Jazlyn, en «¿A qué jugás?»— y en la dirección, con `?inicio=1`.
   experiencia; falta oírlas en el juego: `PENDIENTE-VOCES-inicio.md`.
 - El modo se prueba con `scripts/verificar-inicio.mjs`: que un piloto nuevo
   entra solo en él, la escena entera con teclado, con dedo y con los dos mandos
-  de juego de mentira, y la tarjeta en las pantallas donde se juega.
+  de juego de mentira, y la tarjeta en las pantallas donde se juega. Y, con
+  las voces del pack, que la carrera no pasa de Vr mientras se habla de ella,
+  que el «¡ahora!» no pisa al «todavía no» y que en toda la escena no habla
+  nadie más.
 - El HOTAS X sigue sin probarse con el aparato de verdad.

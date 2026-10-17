@@ -475,6 +475,9 @@ export interface AlPedir {
  */
 const EN_EL_ACTO = 50;
 
+/** Por qué se cae lo que no es de quien tiene la boca reservada. Ver `reservar`. */
+const RESERVADA = "la boca es de la escena";
+
 /** Cada cuánto se mira si una frase que esperaba a su voz ya está lista, ms. */
 const MIRAR_SI_ESTA_LISTA = 200;
 
@@ -700,6 +703,15 @@ export class Boca {
    * demasiado tiempo. Es lo correcto — ver la cabecera.
    */
   pedir(urgencia: Urgencia, hacer: Hablar, clave?: string, al: AlPedir = {}): void {
+    /*
+     * **Y si la boca es de una escena, lo que no es de ella no pide turno**,
+     * pese lo que pese: ni espera, ni corta. Ver `reservar`.
+     */
+    if (this.reservadaPara && !this.reservadaPara(clave)) {
+      this.apuntarDescarte(clave, RESERVADA);
+      al.alCaer?.(RESERVADA);
+      return;
+    }
     const ahora = this.reloj.ahora();
     const urgente = urgencia === "urgente";
     /*
@@ -1196,6 +1208,35 @@ export class Boca {
     readonly a: (clave: string | undefined) => boolean;
     readonly cuando: number;
   } | null = null;
+
+  /**
+   * **De quién es la boca, si es de alguien**: lo que no pase esto no pide
+   * turno. `null` la devuelve a todos.
+   *
+   * Es para el modo inicio, que es una conversación —Jazlyn y Ara, lado a
+   * lado— y no un aviso: Enrique lo probó y «las radios de otros pilotos
+   * cortan la conversación». En una cabina con alguien aprendiendo, una
+   * frase a medias es peor que ninguna, y una radio colándose entre la
+   * pregunta y la respuesta parte la escena en dos. La radio de ese vuelo ya
+   * está callada en su raíz —ver `oirLaRadio` en `game.ts`—; esto es la red
+   * de debajo para cualquier otra voz que se pudiera colar —la megafonía,
+   * los cantos de cabina, lo urgente—, y va aquí, en la puerta de la boca,
+   * porque es el único sitio por el que pasan todas.
+   *
+   * Lo que ya esperaba turno y no es de quien reserva, se cae: con la boca
+   * reservada no le iba a tocar. Lo que suena, acaba: no se corta a nadie.
+   * La máquina no pasa por aquí —`audio/maquina.ts`—, y es a propósito: en
+   * un avión que la lleva suena encima de quien sea, y el de la escena no la
+   * lleva.
+   */
+  reservar(para: ((clave: string | undefined) => boolean) | null): void {
+    this.reservadaPara = para;
+    if (!para) return;
+    for (let i = this.cola.length - 1; i >= 0; i--)
+      if (!para(this.cola[i]!.clave)) this.tirar(i, RESERVADA);
+  }
+
+  private reservadaPara: ((clave: string | undefined) => boolean) | null = null;
 
   /** Vuelo nuevo: se olvida hasta lo que ya había dicho. */
   empezarDeCero(): void {

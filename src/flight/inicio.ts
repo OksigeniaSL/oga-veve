@@ -33,7 +33,12 @@
  * - **Un suceso, una voz**, y la escena en orden: una frase detrás de otra,
  *   nunca dos a la vez. La de la frase anterior se espera; si quien juega ya
  *   hizo lo que se le pedía, lo que quedaba por decir se calla, que ya no es
- *   verdad.
+ *   verdad. Y mientras dura la escena la boca es suya: nadie más pide turno.
+ *   Ver `esDeLaEscena`.
+ * - **Lo que se explica, se acaba de explicar.** La carrera no llega a la Vr
+ *   mientras Jazlyn cuenta por qué hace falta correr: la mano que lleva el
+ *   gas la sostiene justo por debajo, y el «¡ahora!» llega con la frase
+ *   acabada. Ver `SOSTIENE_POR_DEBAJO`.
  * - **Lo que se enseña es real.** Se despega corriendo y levantando la nariz,
  *   se vira inclinando las alas, se endereza con el mando del otro lado. Y el
  *   sello del final es el del campo de donde se despegó, el mismo que da el
@@ -105,28 +110,63 @@ export interface Lectura {
   /** Rad, positivo con el ala derecha abajo. */
   readonly alabeo: number;
   readonly mando: Mando;
+  /** Los metros de pista que quedan por delante, o `Infinity` fuera de ella. */
+  readonly pistaQueQueda: number;
+  /**
+   * El gas que, rodando, deja el avión a esa velocidad, m/s: el del modelo de
+   * vuelo, que es quien sabe cuánto empuja cada palanca. Ver
+   * `SOSTIENE_POR_DEBAJO`.
+   */
+  readonly gasQueSostiene: (velocidad: number) => number;
 }
 
 /** Lo que sostiene la mano de la mamá. Ver la cabecera. */
 export interface Ayuda {
   /** El gas por debajo del cual no se deja bajar, o `null`. */
   readonly gas: number | null;
+  /** Y por encima del cual no se deja subir, o `null`. Ver `SOSTIENE_POR_DEBAJO`. */
+  readonly gasTope: number | null;
   /** La profundidad mínima, morro arriba, o `null`. */
   readonly cabeceo: number | null;
   /** Llevar la palanca al centro: alas niveladas y vuelo nivelado. */
   readonly centrar: boolean;
 }
 
-const SIN_AYUDA: Ayuda = { gas: null, cabeceo: null, centrar: false };
+const SIN_AYUDA: Ayuda = { gas: null, gasTope: null, cabeceo: null, centrar: false };
 
 /**
  * Por dónde habla la secuencia. `alAcabar` recibe cuántos segundos más hay
  * que esperar antes de la frase siguiente: cero si sonó, y el rato de leerla
- * si no sonó —sin voz, el subtítulo es lo que queda—.
+ * si no sonó —sin voz, el subtítulo es lo que queda—. Y `cortada`, si la calló
+ * alguien que no es la escena: no debería pasar nunca, y por eso se apunta.
+ * Ver `registro`.
  */
 export interface VozDelInicio {
-  decir(linea: Linea, alAcabar: (esperaMas: number) => void): void;
+  decir(linea: Linea, alAcabar: (esperaMas: number, cortada?: boolean) => void): void;
   callar(): void;
+}
+
+/**
+ * **Si una frase es de la escena**: lo que dicen Jazlyn y Ara. Mientras dura,
+ * la boca es suya y nadie más pide turno —ni la radio, ni la megafonía, ni
+ * los cantos de cabina—. Ver `reservar` en `audio/boca.ts`.
+ */
+export function esDeLaEscena(clave: string | undefined): boolean {
+  return !!clave && clave.startsWith("inicio.");
+}
+
+/** Lo que la escena apunta de cada frase: cuándo empezó, cuándo acabó y si se cortó. */
+export interface FraseDicha {
+  readonly clave: string;
+  /** Segundos de escena. */
+  readonly desde: number;
+  /** Y cuándo acabó, o `null` si todavía suena. */
+  hasta: number | null;
+  /**
+   * Si no acabó: la calló la escena —se hizo antes lo que se pedía— o alguien
+   * de fuera, que es lo que no puede pasar.
+   */
+  cortada: boolean;
 }
 
 /** Lo que sale de cada paso: lo que el juego tiene que hacer y dibujar. */
@@ -215,6 +255,54 @@ const MORRO_DEL_DESPEGUE = 0.6;
  */
 const RED_DE_ALTURA = 20;
 const MORRO_DE_LA_RED = 0.45;
+
+/**
+ * **Lo justo por debajo de la Vr a lo que la mano sostiene la carrera**
+ * mientras Jazlyn acaba de explicarla, m/s. Un metro por segundo, dos nudos.
+ *
+ * Es lo que pidió Enrique al probarlo: «al despegar, a mamá no le da tiempo
+ * de explicar que un avión necesita velocidad porque llegan a V1 antes de
+ * terminar la frase». Medido: del gas a la Vr el JAZ 20 tarda trece segundos
+ * y tres cuartos en este peldaño, y lo que se dice en ese rato —«¡muy bien!
+ * Yo te sostengo el gas…», «¡mamá, vamos rapidísimo!», «todavía no… yo te
+ * aviso»— son 11,5 segundos de grabación, y con lo que tarda en empezar la
+ * primera y los silencios de la boca, catorce y medio. La Vr llegaba a mitad
+ * de «yo te aviso» y lo cortaba el «¡ahora!».
+ *
+ * Así que ella hace lo que haría una instructora con doble mando: el gas lo
+ * lleva ella —«yo te sostengo el gas»— y no deja que el avión llegue a la
+ * rotación hasta que ha acabado de explicarla. Al acabar, gas a fondo, y en
+ * un segundo y poco la Vr, el «¡ahora!» y el mundo esperando la flecha. Lo
+ * que suelta la mano es que acabe la frase, no un reloj: sin voz, el rato de
+ * leerla —ver `vozDelInicio` en `game.ts`—.
+ *
+ * Se eligió esto y no empezar la conversación antes porque no hay antes: la
+ * carrera empieza con el gas, y hasta el gas el mundo está quieto.
+ */
+export const SOSTIENE_POR_DEBAJO = 1;
+
+/**
+ * Desde cuánto antes de ahí empieza a aflojar, m/s: tres. La mano no frena
+ * en seco, va soltando gas a medida que se acerca, y el avión llega a la
+ * velocidad sostenida sin pasarse.
+ */
+const AFLOJA_DESDE = 3;
+
+/**
+ * **Y la pista que se guarda**, m: si queda menos, se despega aunque no haya
+ * acabado de hablar. Es la red por si la frase se queda colgada —una
+ * grabación que no baja se espera hasta veinticinco segundos, ver
+ * `ESPERA_A_SU_VOZ`—: lo primero es la seguridad, y una carrera sostenida no
+ * se come la pista.
+ *
+ * Seiscientos. Desde la Vr, con la mano sosteniendo el morro, el JAZ 20 se va
+ * del suelo en el acto y pasa los quince metros a los 162 de rodar; desde la
+ * velocidad sostenida hasta la Vr son un segundo y unos treinta metros más.
+ * Seiscientos son eso con más del doble de margen, y en el Chaco dejan
+ * sostener casi ochocientos metros: con «todavía no…» colgada, el «¡ahora!»
+ * llega a los 827 y los quince metros, a los 989.
+ */
+export const PISTA_QUE_SE_GUARDA = 600;
 
 /** Lo que se pide para dar un intento por hecho: medio mando no es un roce. */
 const UMBRAL = 0.3;
@@ -440,6 +528,9 @@ export class Inicio {
   private puedeHablarEn = 0;
   private cuantas = 0;
   private ultima: Linea | null = null;
+  /** Lo dicho, con su hora. Ver `registro`. */
+  private readonly dichas: FraseDicha[] = [];
+  private dichaAhora: FraseDicha | null = null;
 
   constructor(
     private readonly voz: VozDelInicio,
@@ -509,6 +600,7 @@ export class Inicio {
     this.cola = [];
     if (this.sonando !== null) {
       this.sonando = null;
+      this.acabarLaDicha(true);
       this.voz.callar();
     }
     this.puedeHablarEn = this.reloj + ENTRE_FRASES;
@@ -517,6 +609,7 @@ export class Inicio {
   private atenderLaVoz(): void {
     if (this.sonando !== null && this.reloj - this.sonandoDesde > TOPE_DE_UNA_FRASE) {
       this.sonando = null;
+      this.acabarLaDicha(false);
       this.puedeHablarEn = this.reloj;
     }
     if (this.sonando !== null || this.reloj < this.puedeHablarEn) return;
@@ -526,11 +619,33 @@ export class Inicio {
     this.sonando = id;
     this.sonandoDesde = this.reloj;
     this.ultima = linea;
-    this.voz.decir(linea, (esperaMas) => {
+    this.dichaAhora = { clave: linea.clave, desde: this.reloj, hasta: null, cortada: false };
+    this.dichas.push(this.dichaAhora);
+    if (this.dichas.length > 200) this.dichas.shift();
+    this.voz.decir(linea, (esperaMas, cortada = false) => {
       if (this.sonando !== id) return;
       this.sonando = null;
+      this.acabarLaDicha(cortada);
       this.puedeHablarEn = this.reloj + ENTRE_FRASES + Math.max(0, esperaMas);
     });
+  }
+
+  private acabarLaDicha(cortada: boolean): void {
+    const d = this.dichaAhora;
+    this.dichaAhora = null;
+    if (!d) return;
+    d.hasta = this.reloj;
+    d.cortada = cortada;
+  }
+
+  /**
+   * **Lo que se ha dicho, en orden y con su hora de escena**: cuándo empezó
+   * cada frase, cuándo acabó y si se cortó. Es con lo que se comprueba desde
+   * fuera que el «¡ahora!» no pisa al «todavía no» y que nadie le corta una
+   * frase a la escena. Ver `scripts/verificar-inicio.mjs`.
+   */
+  get registro(): readonly Readonly<FraseDicha>[] {
+    return this.dichas.map((d) => ({ ...d }));
   }
 
   /**
@@ -539,7 +654,10 @@ export class Inicio {
    * detrás, como estaba.
    */
   retomarLaVoz(): void {
-    if (this.sonando !== null && this.ultima) this.cola.unshift(this.ultima);
+    if (this.sonando !== null && this.ultima) {
+      this.cola.unshift(this.ultima);
+      this.acabarLaDicha(true);
+    }
     this.sonando = null;
     this.puedeHablarEn = this.reloj;
   }
@@ -613,16 +731,23 @@ export class Inicio {
     }
 
     /*
-     * **La Vr no espera a que se acabe de hablar.** Rodando con todo el gas,
-     * el avión llega a su velocidad cuando llega: lo que quedaba de la
-     * carrera se calla y el mundo se para ahí mismo, que es donde toca tirar.
+     * **En la Vr, y con la explicación acabada, «¡ahora!»**: el mundo se para
+     * ahí mismo, que es donde toca tirar.
+     *
+     * No esperaba a que se acabara de hablar: la Vr llegaba cuando llegaba,
+     * lo que quedaba se callaba, y lo que se cortaba era justo «…yo te
+     * aviso». Ahora la mano sostiene la carrera por debajo hasta que acaba
+     * —ver `SOSTIENE_POR_DEBAJO`—, así que llegar a la Vr ya es haber
+     * acabado. Salvo que se acabe la pista: entonces manda la pista, y lo que
+     * quedaba por decir se calla.
      */
     if (
       (def.id === "carrera" || (def.id === "gas" && this.fase === "bien")) &&
-      l.velocidad >= l.vr
+      l.velocidad >= l.vr &&
+      (this.callada || l.pistaQueQueda <= PISTA_QUE_SE_GUARDA)
     ) {
       this.indice = GUION_DEL_INICIO.findIndex((p) => p.id === "despegar") - 1;
-      this.siguiente(true);
+      this.siguiente(!this.callada);
       return;
     }
 
@@ -795,6 +920,25 @@ export class Inicio {
       this.gasDeLaMano = Math.min(1, this.gasDeLaMano + dt / RAMPA_DEL_GAS);
       gas = this.gasDeLaMano;
     }
+    /*
+     * **Y mientras se habla de la carrera, la carrera no llega a la Vr.** Ver
+     * `SOSTIENE_POR_DEBAJO`: la mano va aflojando el gas al acercarse y deja
+     * el avión rodando justo por debajo; al acabar de hablar lo vuelve a
+     * llevar a fondo, que es donde lo tenía.
+     */
+    let gasTope: number | null = null;
+    if (
+      gas !== null &&
+      l.enTierra &&
+      this.hablandoDeLaCarrera &&
+      l.pistaQueQueda > PISTA_QUE_SE_GUARDA
+    ) {
+      const tope = l.vr - SOSTIENE_POR_DEBAJO;
+      const sostiene = Math.min(1, Math.max(0, l.gasQueSostiene(tope)));
+      const lejos = Math.min(1, Math.max(0, (tope - l.velocidad) / AFLOJA_DESDE));
+      gasTope = sostiene + (1 - sostiene) * lejos;
+      gas = Math.min(gas, gasTope);
+    }
     let cabeceo: number | null = null;
     if (this.rotando && (l.enTierra || l.altura < YA_VUELA * 2)) cabeceo = MORRO_DEL_DESPEGUE;
     else if (this.rotando) this.rotando = false;
@@ -803,6 +947,17 @@ export class Inicio {
       cabeceo = Math.max(cabeceo ?? 0, MORRO_DE_LA_RED);
     const centrar = this.centrarPedido;
     this.centrarPedido = false;
-    return { gas, cabeceo, centrar };
+    return { gas, gasTope, cabeceo, centrar };
+  }
+
+  /**
+   * **Si se está hablando de la carrera**: desde que la mano tiene el gas
+   * —«¡muy bien! Yo te sostengo el gas…»— hasta que Jazlyn acaba «…yo te
+   * aviso», con su silencio detrás. Ver `SOSTIENE_POR_DEBAJO`.
+   */
+  private get hablandoDeLaCarrera(): boolean {
+    const id = this.def.id;
+    if (id === "gas") return this.fase === "hace" || this.fase === "bien";
+    return id === "carrera" && !this.callada;
   }
 }
