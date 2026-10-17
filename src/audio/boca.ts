@@ -980,13 +980,24 @@ export class Boca {
         c.desde = ahora;
       }
     }
-    // Lo caducado no se dice: contar el pasado es peor que callarse.
-    for (let i = this.cola.length - 1; i >= 0; i--) {
-      const c = this.cola[i]!;
-      if (c.lista) continue;
-      if (sueltaLaPista(c.clave, c.urgencia)) continue;
-      if (ahora - c.desde > cuantoAguanta(c.clave, c.urgencia))
-        this.tirar(i, "caducó esperando");
+    /*
+     * Lo caducado no se dice: contar el pasado es peor que callarse.
+     *
+     * **Primero se juntan y después se tiran**, no tirando mientras se
+     * recorre: quien pidió una frase se entera de que se cae —`alCaer`— y
+     * puede pedir otra o retirar las suyas en ese momento, y la cola encoge
+     * debajo del índice. Pasó en el banco del radar con el JAZ 60: «Cannot
+     * read properties of undefined (reading 'lista')» (17-10-2026).
+     */
+    const caducadas = this.cola.filter(
+      (c) =>
+        !c.lista &&
+        !sueltaLaPista(c.clave, c.urgencia) &&
+        ahora - c.desde > cuantoAguanta(c.clave, c.urgencia),
+    );
+    for (const c of caducadas) {
+      const i = this.cola.indexOf(c);
+      if (i >= 0) this.tirar(i, "caducó esperando");
     }
     let mejor = -1;
     for (let i = 0; i < this.cola.length; i++) {

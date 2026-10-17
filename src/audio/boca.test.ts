@@ -743,6 +743,21 @@ describe("lo que espera a su voz", () => {
     expect(caidas).toEqual(["ya no es verdad"]);
   });
 
+  it("y si al caerse una, quien la pidió retira otras, la cola no se rompe", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "vuelo.uno");
+    // Tres que esperan; al caducar la última, su dueño retira las otras dos.
+    b.pedir("normal", frase("a"), "vuelo.a");
+    b.pedir("normal", frase("b"), "vuelo.b");
+    b.pedir("normal", frase("c"), "vuelo.c", {
+      alCaer: () => b.retirar((k) => k === "vuelo.a" || k === "vuelo.b"),
+    });
+    reloj = 600000;
+    expect(() => acabar["hablando"]!()).not.toThrow();
+    expect(dicho).toEqual(["hablando"]);
+  });
+
   it("lo que no tenía con qué sonar no deja silencio ni cuenta como oído", () => {
     const { b } = conReloj();
     const { dicho, frase } = coro();
