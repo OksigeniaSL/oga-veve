@@ -1159,6 +1159,94 @@
       "ms": 9507,
       "h": "8ec74176a0"
     },
+    "inicio.mama.aterrizar.aros": {
+      "ms": 7507,
+      "h": "84f471f071"
+    },
+    "inicio.mama.aterrizar.fin": {
+      "ms": 4807,
+      "h": "b6405b0993"
+    },
+    "inicio.mama.aterrizar.finOtra": {
+      "ms": 6407,
+      "h": "d9381a4a77"
+    },
+    "inicio.mama.aterrizar.frenar.bien": {
+      "ms": 4107,
+      "h": "5571e7be6d"
+    },
+    "inicio.mama.aterrizar.frenar": {
+      "ms": 4407,
+      "h": "544f118b12"
+    },
+    "inicio.mama.aterrizar.frenar.otra1": {
+      "ms": 4807,
+      "h": "461a6abf20"
+    },
+    "inicio.mama.aterrizar.frenar.otra2": {
+      "ms": 4607,
+      "h": "30431a3bd2"
+    },
+    "inicio.mama.aterrizar.gas.bien": {
+      "ms": 4807,
+      "h": "d034979396"
+    },
+    "inicio.mama.aterrizar.gas": {
+      "ms": 4307,
+      "h": "f474035fc7"
+    },
+    "inicio.mama.aterrizar.gas.otra1": {
+      "ms": 5407,
+      "h": "ec6fe31dd0"
+    },
+    "inicio.mama.aterrizar.gas.otra2": {
+      "ms": 4607,
+      "h": "a89e06c009"
+    },
+    "inicio.mama.aterrizar.gas.yo": {
+      "ms": 4407,
+      "h": "c4dc2516bc"
+    },
+    "inicio.mama.aterrizar.hola": {
+      "ms": 5907,
+      "h": "b2efd2d1c0"
+    },
+    "inicio.mama.aterrizar.nariz.bien": {
+      "ms": 4807,
+      "h": "5fd12eea15"
+    },
+    "inicio.mama.aterrizar.nariz": {
+      "ms": 5107,
+      "h": "fe9445e35e"
+    },
+    "inicio.mama.aterrizar.nariz.otra1": {
+      "ms": 4807,
+      "h": "d48171f62a"
+    },
+    "inicio.mama.aterrizar.nariz.otra2": {
+      "ms": 4407,
+      "h": "7418c3d11c"
+    },
+    "inicio.mama.aterrizar.nariz.yo": {
+      "ms": 4607,
+      "h": "561a09e16c"
+    },
+    "inicio.mama.aterrizar.recogida.bien": {
+      "ms": 4907,
+      "h": "03d74f312a"
+    },
+    "inicio.mama.aterrizar.recogida": {
+      "ms": 2766,
+      "h": "816f21a8c2"
+    },
+    "inicio.mama.aterrizar.recogida.yo": {
+      "ms": 4207,
+      "h": "f7f14379fe"
+    },
+    "inicio.mama.aterrizar.senda": {
+      "ms": 5607,
+      "h": "fb04b8ba7b"
+    },
     "inicio.mama.carrera": {
       "ms": 5107,
       "h": "a0b383ad07"
@@ -2690,6 +2778,72 @@
     ],
     "ventanilla.historia": [
       "{historia}"
+    ],
+    "inicio.mama.aterrizar.nariz.bien": [
+      "inicio.mama.aterrizar.nariz.bien"
+    ],
+    "inicio.mama.aterrizar.recogida": [
+      "inicio.mama.aterrizar.recogida"
+    ],
+    "inicio.mama.aterrizar.senda": [
+      "inicio.mama.aterrizar.senda"
+    ],
+    "inicio.mama.aterrizar.gas.yo": [
+      "inicio.mama.aterrizar.gas.yo"
+    ],
+    "inicio.mama.aterrizar.gas.otra2": [
+      "inicio.mama.aterrizar.gas.otra2"
+    ],
+    "inicio.mama.aterrizar.frenar.bien": [
+      "inicio.mama.aterrizar.frenar.bien"
+    ],
+    "inicio.mama.aterrizar.nariz": [
+      "inicio.mama.aterrizar.nariz"
+    ],
+    "inicio.mama.aterrizar.recogida.yo": [
+      "inicio.mama.aterrizar.recogida.yo"
+    ],
+    "inicio.mama.aterrizar.hola": [
+      "inicio.mama.aterrizar.hola"
+    ],
+    "inicio.mama.aterrizar.finOtra": [
+      "inicio.mama.aterrizar.finOtra"
+    ],
+    "inicio.mama.aterrizar.recogida.bien": [
+      "inicio.mama.aterrizar.recogida.bien"
+    ],
+    "inicio.mama.aterrizar.frenar": [
+      "inicio.mama.aterrizar.frenar"
+    ],
+    "inicio.mama.aterrizar.gas.otra1": [
+      "inicio.mama.aterrizar.gas.otra1"
+    ],
+    "inicio.mama.aterrizar.gas": [
+      "inicio.mama.aterrizar.gas"
+    ],
+    "inicio.mama.aterrizar.frenar.otra2": [
+      "inicio.mama.aterrizar.frenar.otra2"
+    ],
+    "inicio.mama.aterrizar.nariz.yo": [
+      "inicio.mama.aterrizar.nariz.yo"
+    ],
+    "inicio.mama.aterrizar.fin": [
+      "inicio.mama.aterrizar.fin"
+    ],
+    "inicio.mama.aterrizar.aros": [
+      "inicio.mama.aterrizar.aros"
+    ],
+    "inicio.mama.aterrizar.gas.bien": [
+      "inicio.mama.aterrizar.gas.bien"
+    ],
+    "inicio.mama.aterrizar.nariz.otra2": [
+      "inicio.mama.aterrizar.nariz.otra2"
+    ],
+    "inicio.mama.aterrizar.nariz.otra1": [
+      "inicio.mama.aterrizar.nariz.otra1"
+    ],
+    "inicio.mama.aterrizar.frenar.otra1": [
+      "inicio.mama.aterrizar.frenar.otra1"
     ]
   }
 }

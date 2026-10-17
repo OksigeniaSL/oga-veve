@@ -3,6 +3,42 @@
   "voz": "ara",
   "idioma": "es-PY",
   "piezas": {
+    "inicio.ara.aterrizar.aros": {
+      "ms": 2581,
+      "h": "036c6be34f"
+    },
+    "inicio.ara.aterrizar.fin": {
+      "ms": 3307,
+      "h": "c9d20a572a"
+    },
+    "inicio.ara.aterrizar.frenar": {
+      "ms": 2236,
+      "h": "7d0818ea8c"
+    },
+    "inicio.ara.aterrizar.gas": {
+      "ms": 2097,
+      "h": "e7435348aa"
+    },
+    "inicio.ara.aterrizar.hola": {
+      "ms": 2656,
+      "h": "f7d92cfd34"
+    },
+    "inicio.ara.aterrizar.nariz.bien": {
+      "ms": 2832,
+      "h": "bd6d6038e1"
+    },
+    "inicio.ara.aterrizar.nariz": {
+      "ms": 2450,
+      "h": "f126778e6a"
+    },
+    "inicio.ara.aterrizar.senda": {
+      "ms": 2876,
+      "h": "8309f3e90b"
+    },
+    "inicio.ara.aterrizar.toque": {
+      "ms": 2822,
+      "h": "0100a6f27f"
+    },
     "inicio.ara.carrera": {
       "ms": 2768,
       "h": "46957c7682"
@@ -45,6 +81,33 @@
     }
   },
   "recetas": {
+    "inicio.ara.aterrizar.aros": [
+      "inicio.ara.aterrizar.aros"
+    ],
+    "inicio.ara.aterrizar.fin": [
+      "inicio.ara.aterrizar.fin"
+    ],
+    "inicio.ara.aterrizar.frenar": [
+      "inicio.ara.aterrizar.frenar"
+    ],
+    "inicio.ara.aterrizar.gas": [
+      "inicio.ara.aterrizar.gas"
+    ],
+    "inicio.ara.aterrizar.hola": [
+      "inicio.ara.aterrizar.hola"
+    ],
+    "inicio.ara.aterrizar.nariz.bien": [
+      "inicio.ara.aterrizar.nariz.bien"
+    ],
+    "inicio.ara.aterrizar.nariz": [
+      "inicio.ara.aterrizar.nariz"
+    ],
+    "inicio.ara.aterrizar.senda": [
+      "inicio.ara.aterrizar.senda"
+    ],
+    "inicio.ara.aterrizar.toque": [
+      "inicio.ara.aterrizar.toque"
+    ],
     "inicio.ara.carrera": [
       "inicio.ara.carrera"
     ],

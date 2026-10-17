@@ -44,12 +44,7 @@ function pedidasConPuerta(): string[] {
  * torre —ver `ESPERAN_SU_TOMA` en `audio/torre.ts`—; en cuanto tienen receta
  * salen de aquí, y la prueba lo recuerda.
  */
-const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set([
-  // La vuelta y la ida al aire por el que tapa tu salida: ver `PENDIENTE-VOCES-torre-alarga.md`.
-  "vuelo.vueltaPorTuSalida",
-  "vuelo.vueltaHecha",
-  "vuelo.alAirePorTuSalida",
-]);
+const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 describe("lo que se pide con su grabación, en la lista de grabar", () => {
   const recetas = leer<Record<string, string[]>>("crudo/instructor/recetas.json");

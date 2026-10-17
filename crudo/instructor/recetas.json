@@ -1761,5 +1761,17 @@
   ],
   "ventanilla.vos.historia": [
     "{historia}"
+  ],
+  "vuelo.vueltaPorTuSalida": [
+    "vuelo.vueltaPorTuSalida"
+  ],
+  "vuelo.vueltaHecha": [
+    "vuelo.vueltaHecha"
+  ],
+  "vuelo.alAirePorTuSalida": [
+    "vuelo.alAirePorTuSalida"
+  ],
+  "vuelo.proponeIrseSalidaTapada": [
+    "vuelo.proponeIrseSalidaTapada"
   ]
 }

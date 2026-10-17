@@ -1346,5 +1346,28 @@
     "{c5}",
     "torre.solo.goAroundSolo",
     "torre.solo.departingTraffic"
+  ],
+  "torre.solo.orbit": [
+    "torre.solo.orbit"
+  ],
+  "torre.orbitLeft": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.orbit",
+    "lado.left",
+    "torre.solo.departingTraffic"
+  ],
+  "torre.orbitRight": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.orbit",
+    "lado.right",
+    "torre.solo.departingTraffic"
   ]
 }

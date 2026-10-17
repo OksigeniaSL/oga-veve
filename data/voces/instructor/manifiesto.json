@@ -1099,6 +1099,10 @@
       "ms": 2603,
       "h": "9473a8f7da"
     },
+    "vuelo.alAirePorTuSalida": {
+      "ms": 6607,
+      "h": "a51478f2d4"
+    },
     "vuelo.alAireVientoDeCola": {
       "ms": 4307,
       "h": "fb76606a92"
@@ -1899,6 +1903,10 @@
       "ms": 4307,
       "h": "3d57f84baa"
     },
+    "vuelo.proponeIrseSalidaTapada": {
+      "ms": 8107,
+      "h": "8277081fa1"
+    },
     "vuelo.proponeIrseSinPista": {
       "ms": 2339,
       "h": "142a41336a"
@@ -2174,6 +2182,14 @@
     "vuelo.ventanillaFrustrada": {
       "ms": 6907,
       "h": "9c3075734c"
+    },
+    "vuelo.vueltaHecha": {
+      "ms": 2355,
+      "h": "5f45ab6a4a"
+    },
+    "vuelo.vueltaPorTuSalida": {
+      "ms": 8407,
+      "h": "78fd5c7388"
     },
     "vuelo.yaPodesTocar": {
       "ms": 933,
@@ -3999,6 +4015,18 @@
     ],
     "ventanilla.vos.historia": [
       "{historia}"
+    ],
+    "vuelo.vueltaPorTuSalida": [
+      "vuelo.vueltaPorTuSalida"
+    ],
+    "vuelo.vueltaHecha": [
+      "vuelo.vueltaHecha"
+    ],
+    "vuelo.alAirePorTuSalida": [
+      "vuelo.alAirePorTuSalida"
+    ],
+    "vuelo.proponeIrseSalidaTapada": [
+      "vuelo.proponeIrseSalidaTapada"
     ]
   }
 }

@@ -459,6 +459,10 @@
       "ms": 769,
       "h": "dbfa6db571"
     },
+    "torre.solo.orbit": {
+      "ms": 568,
+      "h": "c37ef70f5d"
+    },
     "torre.solo.pirep.fuerte": {
       "ms": 2316,
       "h": "fd17bed290"
@@ -2011,6 +2015,29 @@
       "{c4}",
       "{c5}",
       "torre.solo.goAroundSolo",
+      "torre.solo.departingTraffic"
+    ],
+    "torre.solo.orbit": [
+      "torre.solo.orbit"
+    ],
+    "torre.orbitLeft": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.orbit",
+      "lado.left",
+      "torre.solo.departingTraffic"
+    ],
+    "torre.orbitRight": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.orbit",
+      "lado.right",
       "torre.solo.departingTraffic"
     ]
   }
