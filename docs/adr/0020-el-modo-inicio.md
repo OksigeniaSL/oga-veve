@@ -312,3 +312,167 @@ aterrizado allí. Ahora la de casa va siempre (`pistasDelVuelo` en `game.ts`).
 - La escena dura unos dos minutos y medio. Entre la nariz y la pista hay dos
   ratos callados de unos veinticinco segundos, volando los aros: si con las
   voces se hacen largos, lo que se mueve es `DESDE_LOS_AROS` y `DESDE_LA_SENDA`.
+
+## La tercera escena: el primer vuelo de pasaje de Ara
+
+Fecha: 2026-10-17
+
+### Contexto
+
+Punto 123 de la lista de Enrique: «mi primer vuelo, modo pasajero». La otra
+primera vez, la que casi todo el mundo tiene antes que la de pilotar:
+**subirse a un avión de línea**. Ara va de pasaje junto a la ventanilla y
+Jazlyn es la comandante, en la cabina de mando, hablando por la megafonía. No
+se toca ningún mando: es mirar y escuchar. Y con la calma de la tercera
+consecuencia del AGENTS.md: es el primer avión de alguien, y lo que aprenda a
+sentir aquí se lo lleva puesto el día que se suba a uno.
+
+### Decisión
+
+**El vuelo: de Los Rodeos a La Palma, en el JAZ 90.** Es un reactor regional
+de su clase, y entre las islas vuelan turbohélices y reactores regionales. Se
+eligió el tramo por lo que hay que contar por la ventanilla: el valle de La
+Orotava, el Teide asomando por encima del mar de nubes y La Gomera, **los tres
+por la izquierda**, que es donde va Ara, y los tres con su historia —medido con
+`lo-que-se-ve-en-ruta.test.ts` antes de elegir; de Gran Canaria a Tenerife o
+de Tenerife Sur a Gran Canaria salía menos—. El día es el de siempre del norte
+de Tenerife: el alisio del nordeste y su capa de estratocúmulos, puesta a siete
+décimas —el mar de nubes de un día de verano, sin llegar a tapar lo de debajo,
+ver `TAPA_LA_VISTA`—, sin turbulencia en el camino, que es lo más corriente con
+buen tiempo, y de día. Puesto a mano en `main.ts`: la escena es la misma
+cualquier día. En el peldaño de los pequeños, que es el de quien viaja por
+primera vez, y desde un puesto, como empieza cualquier vuelo.
+
+Es un vuelo de verdad, y por eso dura lo que dura uno: unos treinta y cinco
+minutos de puesto a puesto, medidos en el banco. Un salto entre islas casi no
+tiene crucero —el punto de descenso llega al poco de nivelar—, y la escena lo
+sabe: el cartel del cinturón se apaga en cuanto se nivela, el servicio va
+pegado detrás, y lo de la ventanilla se cuenta subiendo, arriba y bajando,
+hasta que se prepara la cabina para aterrizar.
+
+**El avión lo lleva su tripulación**, `src/flight/vuelo-de-linea.ts`: la
+comandante y su primer oficial, del puesto al puesto, con los mandos y no
+moviendo el avión. Piden un ritmo de subida y una inclinación, y el modelo de
+vuelo dice qué palanca da cada cosa —`mandoParaSubir` y `mandoParaInclinar`,
+los de la mano de Jazlyn en la segunda escena—; la velocidad, con el gas. Lo
+que vuela es **lo que pinta el juego**: la raya verde en el suelo, la ruta del
+plan con su salida publicada, la senda del plan bajando, y en la final el
+localizador y la senda de la pista, que son los mismos que sigue el
+automático. Así el avión hace lo que hace con esos mandos y suena como suena,
+y la cabina presurizada, el cartel del cinturón, las persianas y la máquina de
+fases se enteran de todo sin trucos. Rueda despacio y frena con tiempo, espera
+el permiso de la torre en la doble raya —el de la máquina de fases, el mismo
+que recibe quien juega—, sube a unos dos mil setecientos pies por minuto y a
+doscientos cincuenta nudos por debajo de diez mil pies, vira como mucho a
+veinticinco grados y nunca por debajo de ciento veinte metros, saca los flaps
+por escalones, el tren a unos doce kilómetros, arma los aerofrenos y el
+autofreno, recoge a la altura de su manual con el gas saliendo con la altura,
+y frena con la reversa hasta sesenta y cinco nudos.
+
+Y no hace nada antes de lo que en un avión de verdad espera a la cabina de
+pasaje: **no arranca** hasta que se arman los toboganes —eso se dice con las
+puertas cerradas—, **no rueda** con los motores sin asentar y **no entra en
+pista** hasta «tripulación, sentados para el despegue». Son los permisos de la
+escena, `PermisosDeLaEscena`, y la espera tiene su red: si la frase se queda
+colgada, a los setenta y cinco segundos se entra igual (`RED_DE_LA_ESPERA`).
+
+**La secuencia**, `GUION_DEL_PASAJE` en `src/flight/inicio-pasaje.ts`, en el
+orden de un vuelo de verdad: el asiento y la ventanilla; la bienvenida a bordo
+de la tripulación y el cinturón, «bajito y bien ajustado»; los toboganes y las
+puertas; los motores; el rodaje y la bienvenida de la comandante con el plan;
+la espera antes de la pista; «sentados para el despegue»; el empuje de la
+carrera; volar; las nubes; el cartel apagado y el servicio; lo que se ve por la
+ventanilla; la bajada, los oídos y la isla de llegada; preparar la cabina; los
+flaps; la toma; las dos llegadas; y en el puesto, con los motores parados, el
+final. Cada momento espera a que no hable nadie y a que el avión esté donde
+toca; **el que se pasa de su momento se salta**, que una exclamación de la
+carrera no se dice volando. Con la misma cola de frases que las otras dos
+escenas —`conversacion.ts`—, así que nada se pisa.
+
+**Quién contesta, y cómo.** La comandante no le contesta a un pasajero por la
+megafonía, y aquí no lo hace. Ara habla bajito con quien va a su lado, y lo
+que contesta sus preguntas es lo que se oye de verdad en un avión: **anuncios
+para todo el pasaje**. Ara pregunta por qué se paran antes de la pista, y la
+comandante cuenta que siempre se espera el permiso de la torre; pregunta de
+qué están hechas las nubes, y la comandante, ya pasados los diez mil pies —por
+debajo, la cabina de mando no habla de nada que no sea volar—, lo cuenta «para
+quienes vuelan hoy por primera vez», que es algo que hacen las comandantes de
+verdad; se le tapan los oídos, y la tripulación cuenta en la bajada por qué y
+qué se hace; oye rugir los motores al tocar, y en la llegada la comandante
+cuenta que era para frenar. Siempre la pregunta antes y el anuncio después,
+en su momento. Y las nubes, lo que se ve: si la subida atraviesa una, Ara
+pregunta con la ventanilla blanca; si pasa entre ellas, al dejarlas abajo.
+
+Para Ara, Jazlyn es su mamá, como en las otras dos escenas: «¡Es mamá! Ella es
+la comandante, allá adelante en la cabina». Ara no la ve; la oye por el
+altavoz del techo.
+
+**Lo que ya había, tal cual.** Los anuncios de la megafonía los monta el juego
+como en cualquier vuelo con pasaje —con el campo, el plan, el tiempo de allá y
+el producto de la granja de hoy—, con la misma boca y la misma llamada de
+cabina delante de lo que se le dice a la tripulación; lo que se ve por la
+ventanilla lo elige `LoQueSeVe`, con su cabina estéril y su capa de nubes, y
+se monta con su lado, su saludo y su historia. La escena solo decide
+**cuándo**. Ara dice algo de lo que se señala solo si va por su lado: lo del
+otro lado lo cuenta la comandante igual, que le habla a todo el pasaje.
+
+**Desde el asiento, lo que se oye en el asiento.** La megafonía, la cabina de
+pasaje y sus tonos —el del cinturón y las llamadas—, los motores, el tren y la
+reversa. **No** las cajas de la cabina de mando —la cuenta del radioaltímetro,
+«minimums», los avisos—, que suenan por el altavoz de una cabina con la puerta
+cerrada y el pasaje no las oye nunca; ni la radio, ni la instructora, que en
+ese vuelo no va; ni los tonos del juego para quien pilota. La boca es de la
+escena, como en las otras dos, y deja pasar los anuncios y lo de la ventanilla
+solo mientras la escena los está diciendo (`clavesDeLaEscena`).
+
+**Sin leer y sin tocar nada.** La vista es la del asiento de Ara, la
+ventanilla izquierda —el asiento de siempre y no el de la fila de la salida:
+en esa fila no se sientan niños—. Sin relojes, ni mandos, ni torre en la
+pantalla: se queda la tarjeta de la escena, el cartel del cinturón y el menú
+con el sonido y la pausa. La tarjeta dibuja **qué mirar** —la ventanilla, el
+ala, el motor, las nubes o el cinturón, con lo que hay que mirar latiendo— y
+quién habla: Ara; Jazlyn con un altavoz pequeño en la esquina; y la
+tripulación, a la que no se ve, con el altavoz del techo y sin cara inventada.
+La llave no responde, ni la cámara cambia: los motores son de la tripulación,
+y el sitio, el de Ara.
+
+**El sello, de visita.** Ara no ha pilotado, así que no se apunta ni el
+despegue, ni el aterrizaje, ni las horas, ni las gafas, ni los galones, ni el
+final de vuelo de quien pilota. Lo que se lleva es **el sello de La Palma**,
+como el de un pasaporte, en una lista aparte del cuaderno —`deViaje`— que da
+sello y no grado: el grado pide campos volados. Al final, el sello a la vista
+y un botón: **volver al hangar**, que un avión de línea traído de pasajero no
+se sigue volando.
+
+**Cómo se abre**: con su ficha, «Viajá con Jazlyn» —y no «Volá de pasajero»,
+que diría si Ara es niño o niña—, al lado de las otras dos en «¿A qué jugás?»,
+y con `?inicio=3`. **No es la primera experiencia**: esa sigue siendo el
+despegue.
+
+**Las voces, sin grabar.** Veintiocho frases nuevas —veintitrés de Ara, tres
+de Jazlyn y dos de la tripulación de Canarias, que el vuelo es en Canarias y
+la tripulación habla como se habla en su base—, a la lista de grabar detrás
+de las de las otras dos escenas: `PENDIENTE-VOCES-inicio-3.md`. Mientras tanto,
+subtítulos y dibujos, al ritmo de leerlos.
+
+### Consecuencias
+
+- La tripulación se prueba en `vuelo-de-linea.test.ts`, que vuela el JAZ 90
+  con el modelo de Guyrami del puesto al puesto sobre un mundo de mentira: que
+  rueda despacio y por la raya, no entra en pista sin permiso, despega en la
+  Vr y por el eje, no vira pegado al suelo, sube y baja como un avión de línea,
+  toca suave en la zona de toma y para en su puesto. Y la escena, en
+  `inicio-pasaje.test.ts`, con una tripulación de mentira: el orden, que nada
+  se pisa, los permisos, que la respuesta va después de la pregunta, lo de la
+  ventanilla y que nada dice si Ara es niño o niña.
+- En el navegador, `scripts/verificar-inicio-3.mjs` vuela la escena entera con
+  el reloj del juego acelerado, desde el hangar y con `?inicio=3`, y en un
+  teléfono apaisado. Medido: se despega a menos de un metro del eje y se toca
+  a unos sesenta centímetros por segundo, sin percance, sin una frase encima
+  de otra y sin nadie más hablando.
+- La llegada a La Palma, si se pasa la salida rápida, remonta la pista hasta
+  el final y vuelve por ella, que es lo que pinta la raya: un par de minutos
+  más de rodaje.
+- Hay ratos callados largos, sobre todo bajando: son los de un vuelo de
+  verdad. Si con las voces se hacen largos, lo que se mueve es el guion, no el
+  vuelo.

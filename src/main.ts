@@ -87,7 +87,12 @@ import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { GUYRAMI } from "./flight/tiers";
-import { ATERRIZAJE, VUELTA } from "./flight/lecciones";
+import { ATERRIZAJE, DESPEGUE, VUELTA } from "./flight/lecciones";
+import {
+  AVION_DEL_PASAJE,
+  DESTINO_DEL_PASAJE,
+  SITIO_DEL_PASAJE,
+} from "./flight/inicio-pasaje";
 import {
   AVION_DEL_INICIO,
   escenaPedida,
@@ -189,12 +194,17 @@ const pedido = rearranque?.escenario ?? params.get("escenario");
  * **El modo inicio**, el primer vuelo paso a paso: `?inicio=1` lo abre sin
  * pasar por el hangar, para probarlo y para su banco. Ver `flight/inicio.ts`.
  * Y `?inicio=2`, la segunda escena: aterrizar con Jazlyn. Ver
- * `flight/inicio-aterrizar.ts`.
+ * `flight/inicio-aterrizar.ts`. Y `?inicio=3`, la tercera: el primer vuelo de
+ * pasaje de Ara, ver `flight/inicio-pasaje.ts`.
  */
+/** Dónde se vuela cada escena: las dos de Jazlyn en el Chaco, la de pasaje en Los Rodeos. */
+function sitioDeLaEscena(e: EscenaDelInicio): string {
+  return e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
+}
 let conInicio = params.has("inicio") && !rearranque;
 let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
 const directo = conInicio
-  ? SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO)
+  ? SCENARIOS.find((s) => s.id === sitioDeLaEscena(escenaDelInicio))
   : pedido
     ? SCENARIOS.find((s) => s.id === pedido)
     : undefined;
@@ -382,7 +392,7 @@ if (!escenario) {
   if (elegido.inicio) {
     conInicio = true;
     escenaDelInicio = elegido.inicio;
-    escenario = SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO) ?? escenario;
+    escenario = SCENARIOS.find((s) => s.id === sitioDeLaEscena(escenaDelInicio)) ?? escenario;
   } else {
     rememberTier(tramo);
     ponerTexto("aeronave", avion.id);
@@ -403,6 +413,17 @@ if (conInicio) {
   mision = null;
   ejercicio = null;
   destino = escenario?.id;
+  /*
+   * **Y la de pasaje, un vuelo de línea de verdad**: de Los Rodeos a La Palma
+   * en el JAZ 90, desde el puesto —como empieza cualquier vuelo, ver
+   * `DESPEGUE`—, con su destino y en el peldaño de los pequeños, que es el
+   * de quien viaja por primera vez. Ver `flight/inicio-pasaje.ts`.
+   */
+  if (escenaDelInicio === "pasaje") {
+    avion = AIRCRAFT.find((a) => a.id === AVION_DEL_PASAJE) ?? avion;
+    leccion = DESPEGUE;
+    destino = DESTINO_DEL_PASAJE;
+  }
 }
 
 /*
@@ -527,9 +548,19 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
      * El primer vuelo, con un día tranquilo: sin viento ni nubes. Es lo que
      * elige un instructor de verdad para la primera clase.
      */
-    conInicio
-      ? Promise.resolve({ ...TIEMPO_DE_CASA, vientoDe: null, vientoKt: 0, fuente: "mano" as const })
-      : tiempoPedido(escenario),
+    conInicio && escenaDelInicio === "pasaje"
+      ? /*
+         * **De pasaje, el día de siempre del norte de Tenerife**: el alisio
+         * del nordeste y su mar de nubes, que se atraviesa al subir —tapando
+         * casi todo, como el de un día de verano, pero sin llegar a tapar lo
+         * de debajo: ver `TAPA_LA_VISTA`—. Puesto a mano, que no se pide el
+         * parte de nadie: la escena es la misma cualquier día, y los demás
+         * campos se quedan con su tiempo típico. Ver `vientoDeCasa`.
+         */
+        Promise.resolve({ ...vientoDeCasa(escenario.vientoDominante), tapadura: 0.7, fuente: "mano" as const })
+      : conInicio
+        ? Promise.resolve({ ...TIEMPO_DE_CASA, vientoDe: null, vientoKt: 0, fuente: "mano" as const })
+        : tiempoPedido(escenario),
   ),
   /*
    * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.

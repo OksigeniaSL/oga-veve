@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import type { Accion } from "../flight/keymap";
 import type { Gesto, Mando } from "../flight/inicio";
-import { caraDe, dibujoDelGesto, mandoQueSenala, type ConQueTeclas } from "./inicio";
+import { caraDe, dibujoDeMirar, dibujoDelGesto, mandoQueSenala, type ConQueTeclas } from "./inicio";
 
 /** Las teclas de fábrica, con la mano derecha. */
 const DE_FABRICA: Record<string, string> = {
@@ -195,5 +195,37 @@ describe("quién habla", () => {
     expect(caraDe("mama")).toContain("cara__gorra");
     expect(caraDe("ara")).not.toContain("cara__gafas");
     expect(caraDe("ara")).not.toContain("cara__gorra");
+  });
+});
+
+/*
+ * **La escena de pasaje**: no se pide ningún gesto, se dice qué mirar. Y quien
+ * habla por la megafonía se reconoce: la comandante con su altavoz pequeño, y
+ * la tripulación —a la que no se ve— con el altavoz del techo y sin cara. Ver
+ * `flight/inicio-pasaje.ts`.
+ */
+describe("de pasaje: qué mirar y quién habla por la megafonía", () => {
+  it("cada cosa que mirar es otro dibujo, y dice cuál es", () => {
+    const cosas = ["ventanilla", "ala", "motor", "nubes", "cinturon"] as const;
+    const dibujos = cosas.map((m) => dibujoDeMirar(m));
+    expect(new Set(dibujos).size).toBe(cosas.length);
+    cosas.forEach((m, i) => expect(dibujos[i]).toContain(`data-mirar="${m}"`));
+    // Y lo que hay que mirar late; lo demás, quieto.
+    for (const d of dibujos) expect(veces(d, "dib__late")).toBe(1);
+  });
+
+  it("la comandante por la megafonía lleva su cara y el altavoz; al lado, sin él", () => {
+    const alLado = caraDe("mama");
+    const porElAltavoz = caraDe("mama", true);
+    expect(alLado).not.toContain("cara__chapa");
+    expect(porElAltavoz).toContain("cara__chapa");
+    expect(porElAltavoz).toContain("cara__gorra");
+  });
+
+  it("y la tripulación, el altavoz del techo y ninguna cara inventada", () => {
+    const t = caraDe("tripulacion", true);
+    expect(t).toContain("cara__altavoz");
+    expect(t).not.toContain("cara__piel");
+    expect(t).not.toContain("cara__chapa");
   });
 });

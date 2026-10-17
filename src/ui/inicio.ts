@@ -32,6 +32,7 @@
 import type { Accion } from "../flight/keymap";
 import { nombreDeTecla } from "../flight/keymap";
 import type { Gesto, Mando, Quien } from "../flight/inicio";
+import type { QueMirar } from "../flight/inicio-pasaje";
 import { t } from "../i18n";
 import { motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS } from "./senal";
@@ -80,10 +81,79 @@ const CARAS: Readonly<Record<Quien, string>> = {
       <circle class="cara__mejilla" cx="17.4" cy="31.4" r="1.8" />
       <circle class="cara__mejilla" cx="30.6" cy="31.4" r="1.8" />
       <path class="cara__trazo" d="M20.6 32.8 q3.4 3.6 6.8 0" />`,
+  /*
+   * **La tripulación de cabina no tiene cara: tiene altavoz.** Desde el
+   * asiento no se la ve hablar —se la oye por el techo—, y dibujarle una cara
+   * sería inventarse a alguien. El altavoz con sus ondas es lo que se ve y se
+   * oye de verdad. Ver `flight/inicio-pasaje.ts`.
+   */
+  tripulacion: `
+      <circle class="cara__fondo" cx="24" cy="24" r="23" />
+      <path class="cara__altavoz" d="M11 19.5 h6.5 l9-7.5 v24 l-9-7.5 h-6.5 Z" />
+      <path class="cara__ondas" d="M30.5 18.5 q3.6 5.5 0 11 M34.5 14.5 q6.6 9.5 0 19" />`,
 };
 
-export function caraDe(quien: Quien): string {
-  return `<svg class="inicio__cara inicio__cara--${quien}" viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}</svg>`;
+/**
+ * **El altavoz pequeño, en la esquina de la cara de quien habla por la
+ * megafonía**: la comandante desde la cabina de mando. Es ella —su gorra, sus
+ * gafas— y se la oye por el techo, no sentada al lado como en las otras dos
+ * escenas.
+ */
+const POR_EL_ALTAVOZ = `
+      <circle class="cara__chapa" cx="38" cy="38" r="9.5" />
+      <path class="cara__altavoz" d="M32.5 35.8 h3 l4.2-3.4 v11.2 l-4.2-3.4 h-3 Z" />
+      <path class="cara__ondas cara__ondas--chicas" d="M41.6 35 q1.7 3 0 6" />`;
+
+export function caraDe(quien: Quien, megafonia = false): string {
+  const altavoz = megafonia && quien !== "tripulacion" ? POR_EL_ALTAVOZ : "";
+  return `<svg class="inicio__cara inicio__cara--${quien}" viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}${altavoz}</svg>`;
+}
+
+// ── Qué mirar ────────────────────────────────────────────────────────────
+
+/**
+ * **La ventanilla del avión, dibujada**: el marco redondeado, el cielo, el
+ * suelo, el ala entrando por abajo con su motor colgado. Es lo que se tiene
+ * delante en la escena de pasaje —ver `world/asiento-de-pasaje.ts`—, y el
+ * dibujo dice qué parte mirar sin una palabra: lo que hay que mirar late.
+ */
+function ventanillaCon(late: "cielo" | "ala" | "motor" | "nubes"): string {
+  const parte = (de: typeof late, clase: string, d: string): string =>
+    `<g class="${late === de ? "dib__late" : ""}"><path class="${clase}${late === de ? " dib__parte--activa" : ""}" d="${d}" /></g>`;
+  return `
+    <svg class="dib dib--mirar" viewBox="0 0 64 64" aria-hidden="true">
+      <rect class="dib__cuerpo" x="9" y="2" width="46" height="60" rx="21" />
+      <rect class="mirar__cielo" x="14" y="7" width="36" height="50" rx="16" />
+      <path class="mirar__suelo" d="M14 41 H50 V45 q0 12-16 12 h-4 q-16 0-16-12 Z" />
+      ${parte("nubes", "mirar__nube", "M18 29 a4.5 4.5 0 0 1 6.5-4.5 a6 6 0 0 1 11 1.5 a4 4 0 0 1 1.5 7.5 h-17 a3.4 3.4 0 0 1-2-4.5 Z")}
+      ${parte("ala", "mirar__ala", "M14 45 L50 37.5 V42 L14 54 Z")}
+      ${parte("motor", "mirar__motor", "M21 48.5 h12 a3.6 3.6 0 0 1 0 7.2 h-12 a3.6 3.6 0 0 1 0-7.2 Z")}
+      ${late === "cielo" ? `<g class="dib__late"><circle class="dib__parte--activa" cx="40" cy="18" r="4" /></g>` : ""}
+    </svg>`;
+}
+
+/** **El cinturón**: las dos cintas y la hebilla, cerrándose. */
+const EL_CINTURON = `
+    <svg class="dib dib--mirar" viewBox="0 0 64 64" aria-hidden="true">
+      <rect class="mirar__cinta" x="2" y="27" width="28" height="11" rx="2" />
+      <rect class="mirar__cinta" x="34" y="27" width="28" height="11" rx="2" />
+      <g class="dib__late">
+        <rect class="dib__parte dib__parte--activa" x="22" y="22" width="20" height="21" rx="4" />
+        <rect class="dib__hueco" x="27" y="27" width="10" height="11" rx="2" />
+      </g>
+    </svg>`;
+
+/**
+ * **Qué mirar**, dibujado: la ventanilla con el ala, el motor o las nubes
+ * latiendo, o el cinturón. Lleva lo que pide en un atributo, que es como lo
+ * encuentran las pruebas y el banco.
+ */
+export function dibujoDeMirar(mira: QueMirar): string {
+  const dibujo =
+    mira === "cinturon"
+      ? EL_CINTURON
+      : ventanillaCon(mira === "ventanilla" ? "cielo" : mira);
+  return `<span class="inicio__mirar" data-mirar="${mira}">${dibujo}</span>`;
 }
 
 /**
@@ -499,10 +569,22 @@ export interface VistaDelInicio {
   readonly gesto: Gesto | null;
   readonly mando: Mando;
   readonly lado: Lado;
-  readonly linea: { readonly quien: Quien; readonly clave: string; readonly texto: string } | null;
+  readonly linea: {
+    readonly quien: Quien;
+    readonly clave: string;
+    readonly texto: string;
+    /** Si se dice por la megafonía: la cara lleva su altavoz. */
+    readonly megafonia?: boolean;
+  } | null;
   readonly congelado: boolean;
-  /** El sello del final, en SVG, y si ya se puede seguir. */
-  readonly fin: { readonly sello: string; readonly puedeSeguir: boolean } | null;
+  /**
+   * El sello del final, en SVG, y si ya se puede seguir. Con `volver`, el
+   * botón no es seguir volando sino volver al hangar: de pasaje no se sigue
+   * volando el avión de otro.
+   */
+  readonly fin: { readonly sello: string; readonly puedeSeguir: boolean; readonly volver?: boolean } | null;
+  /** Qué mirar, en la escena de pasaje, cuando no hay gesto que pedir. */
+  readonly mira?: QueMirar | null;
 }
 
 /**
@@ -605,16 +687,24 @@ export class PantallaDelInicio {
       if (this.velo) this.velo.hidden = !v.congelado;
     }
 
-    const dicho = v.linea ? `${v.linea.quien}|${v.linea.clave}` : "";
+    const dicho = v.linea ? `${v.linea.quien}|${v.linea.clave}|${v.linea.texto}` : "";
     if (dicho !== this.dicho) {
       this.dicho = dicho;
-      this.cara.innerHTML = v.linea ? caraDe(v.linea.quien) : "";
+      this.cara.innerHTML = v.linea ? caraDe(v.linea.quien, v.linea.megafonia) : "";
       // Quién habla, también para quien no ve la cara.
       if (v.linea) {
         this.cara.setAttribute("role", "img");
         this.cara.setAttribute(
           "aria-label",
-          t(v.linea.quien === "mama" ? "inicio.modo.mama" : "inicio.modo.ara"),
+          t(
+            v.linea.quien === "tripulacion"
+              ? "inicio.modo.tripulacion"
+              : v.linea.quien === "ara"
+                ? "inicio.modo.ara"
+                : v.linea.megafonia
+                  ? "inicio.modo.megafonia"
+                  : "inicio.modo.mama",
+          ),
         );
       } else {
         this.cara.removeAttribute("role");
@@ -625,11 +715,21 @@ export class PantallaDelInicio {
     }
 
     const o = this.teclas();
-    const dibujo = v.gesto ? `${v.gesto}|${v.mando}|${v.lado}|${o.chorro}|${o.teclaDe("pitchUp")}` : "";
+    const mira = v.gesto ? null : (v.mira ?? null);
+    const dibujo = v.gesto
+      ? `${v.gesto}|${v.mando}|${v.lado}|${o.chorro}|${o.teclaDe("pitchUp")}`
+      : mira
+        ? `mirar|${mira}`
+        : "";
     if (dibujo !== this.dibujado) {
       this.dibujado = dibujo;
-      this.hueco.innerHTML = v.gesto ? dibujoDelGesto(v.gesto, v.mando, v.lado, o) : "";
-      this.hueco.hidden = !v.gesto;
+      this.hueco.innerHTML = v.gesto
+        ? dibujoDelGesto(v.gesto, v.mando, v.lado, o)
+        : mira
+          ? dibujoDeMirar(mira)
+          : "";
+      this.hueco.hidden = !v.gesto && !mira;
+      this.raiz.dataset.mirar = mira ?? "";
       this.raiz.dataset.mando = v.mando;
       this.raiz.dataset.gesto = v.gesto ?? "";
       this.senalado = mandoQueSenala(v.gesto, v.mando);
@@ -654,13 +754,20 @@ export class PantallaDelInicio {
       this.fin.hidden = !v.fin;
       this.tarjeta.classList.toggle("inicio__tarjeta--fin", !!v.fin);
       if (v.fin && !antes) {
+        /*
+         * De pasaje, **volver al hangar**, con su dibujo: el arco del hangar
+         * con el avión dentro. Seguir volando un avión de línea que se acaba
+         * de traer de pasajero no es algo que se pueda hacer.
+         */
+        const icono = v.fin.volver
+          ? `<path d="M6 30 V16 Q24 1 42 16 V30 H36 V19 Q24 9 12 19 V30 Z" />
+             <path d="M15 27 L24 24.5 L27 21 L28.6 21.5 L27 25 L32 24 L33 25.6 L27.5 27.6 L16 28.6 Z" />`
+          : `<path d="M9 19 L27 13 L33 6 L36 7 L33 14 L42 12 L44 15 L34 19 L26 22 L11 22 Z" />`;
         this.fin.innerHTML = `
           <div class="inicio__sello">${v.fin.sello}</div>
           <button class="inicio__seguir" type="button" data-inicio="seguir" hidden>
-            <svg viewBox="0 0 48 32" aria-hidden="true">
-              <path d="M9 19 L27 13 L33 6 L36 7 L33 14 L42 12 L44 15 L34 19 L26 22 L11 22 Z" />
-            </svg>
-            <span>${t("inicio.modo.seguir")}</span>
+            <svg viewBox="0 0 48 32" aria-hidden="true">${icono}</svg>
+            <span>${t(v.fin.volver ? "inicio.modo.volver" : "inicio.modo.seguir")}</span>
           </button>`;
       }
       this.medir();

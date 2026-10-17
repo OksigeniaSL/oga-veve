@@ -83,15 +83,18 @@ export type Gesto =
   | "frenar";
 
 /**
- * **Las dos escenas del modo inicio**: aprender a despegar, la primera, y a
- * aterrizar. Ver `inicio-aterrizar.ts`. `?inicio=1` abre la primera e
- * `?inicio=2`, la segunda.
+ * **Las tres escenas del modo inicio**: aprender a despegar, la primera; a
+ * aterrizar, la segunda —ver `inicio-aterrizar.ts`—, y la tercera, volar de
+ * pasaje en un avión de línea, mirando por la ventanilla —ver
+ * `inicio-pasaje.ts`—. `?inicio=1` abre la primera, `?inicio=2` la segunda
+ * e `?inicio=3` la tercera.
  */
-export type EscenaDelInicio = "despegar" | "aterrizar";
+export type EscenaDelInicio = "despegar" | "aterrizar" | "pasaje";
 
-/** Qué escena pide un `?inicio=` de la dirección: el 2, aterrizar; lo demás, despegar. */
+/** Qué escena pide un `?inicio=` de la dirección: el 2, aterrizar; el 3, de pasaje; lo demás, despegar. */
 export function escenaPedida(valor: string | null): EscenaDelInicio {
-  return valor?.trim() === "2" ? "aterrizar" : "despegar";
+  const v = valor?.trim();
+  return v === "2" ? "aterrizar" : v === "3" ? "pasaje" : "despegar";
 }
 
 export type PasoId =
@@ -472,10 +475,16 @@ export const LINEAS_DEL_INICIO: readonly Linea[] = (() => {
   return todas;
 })();
 
-/** La voz de cada quien en el pack: Jazlyn es la comandante; Ara, una voz nueva. */
+/**
+ * La voz de cada quien en el pack: Jazlyn es la comandante; Ara, una voz
+ * nueva; y la tripulación de cabina, la de Canarias, que es donde vuela la
+ * escena de pasaje —de Los Rodeos a La Palma, ver `inicio-pasaje.ts`— y la
+ * tripulación habla como se habla en su base.
+ */
 export const VOZ_DE: Readonly<Record<Quien, string>> = {
   mama: "comandante",
   ara: "ara",
+  tripulacion: "tripulacion-canarias",
 };
 
 /**

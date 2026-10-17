@@ -1465,3 +1465,31 @@ ara	ara/inicio.ara.aterrizar.senda.ogg	es-PY	¡Mamá, la pista se hace cada vez 
 ara	ara/inicio.ara.aterrizar.toque.ogg	es-PY	¡Tocamos el suelo, mamá! ¡Ni se sintió!	el modo inicio, aterrizar: Ara pregunta
 ara	ara/inicio.ara.aterrizar.frenar.ogg	es-PY	¿Y ahora cómo paramos el avión, mamá?	el modo inicio, aterrizar: Ara pregunta
 ara	ara/inicio.ara.aterrizar.fin.ogg	es-PY	¡Lo hicimos, mamá! ¡Aterrizamos en la pista!	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.pasaje.ventanilla.ogg	es-PY	¡Me tocó la ventanilla! Desde acá se ve el ala del avión, y el motor.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.cinturon.ogg	es-PY	¡Clic! Ya me abroché el cinturón, bajito y bien ajustado.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.puertas.ogg	es-PY	Cerraron la puerta del avión. ¡Ya nos vamos!	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.motores.ogg	es-PY	¡Escuchá! Se prendieron los motores: suenan como un secador gigante.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.comandante.ogg	es-PY	¡Es mamá! Ella es la comandante, allá adelante en la cabina.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.espera.ogg	es-PY	¿Por qué paramos acá, antes de la pista?	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.despegue.ogg	es-PY	¡Ahora sí que vamos a despegar! Miro bien por la ventanilla.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.carrera.ogg	es-PY	¡Uy, cómo empuja! Me aprieta contra el asiento, ¡y vamos rapidísimo!	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.volando.ogg	es-PY	¡Estamos volando! Las casas y los autos se ven chiquititos.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.nubes.ogg	es-PY	¡Todo blanco! Estamos adentro de una nube. ¿De qué estará hecha?	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.nubesAbajo.ogg	es-PY	¡Ya pasamos las nubes! Ahora las vemos desde arriba. ¿De qué estarán hechas?	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.niebla.ogg	es-PY	¡De agua! Entonces una nube es como la niebla, pero allá arriba.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.servicio.ogg	es-PY	¡Nos traen algo rico para comer! Yo quiero probar un poquito.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.teide.ogg	es-PY	¡Lo veo! Es enorme, y la punta sale por encima de las nubes.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.garajonay.ogg	es-PY	¿Hablar silbando? ¡Yo también quiero aprender a silbar así!	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.orotava.ogg	es-PY	¡Qué valle tan grande! Baja desde la montaña hasta el mar.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.loVeo.ogg	es-PY	¡Lo veo! Desde acá arriba se ve todo chiquitito.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.oidos.ogg	es-PY	Se me tapan un poco los oídos… ¿por qué será?	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.bostezo.ogg	es-PY	¡Bostecé bien grande, y se me destaparon los oídos!	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.isla.ogg	es-PY	¡Ya se ve la isla adonde vamos! ¡Qué montañas tan altas tiene!	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.flaps.ogg	es-PY	¡Mirá el ala! Le está saliendo un pedazo para atrás y para abajo.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.toma.ogg	es-PY	¡Tocamos el suelo! ¡Y cómo rugen los motores ahora!	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.fin.ogg	es-PY	¡Llegamos a La Palma! Ahora le cuento a mamá todo lo que vi por la ventanilla.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+comandante	comandante/inicio.mama.pasaje.espera.ogg	es-PY	Señores pasajeros, enseguida despegamos. Antes de entrar en la pista, siempre esperamos el permiso de la torre de control.	el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía
+comandante	comandante/inicio.mama.pasaje.nubes.ogg	es-PY	Señores pasajeros, les habla la comandante. Para quienes vuelan hoy por primera vez: las nubes que pasamos al subir están hechas de agua, de millones de gotitas tan chiquitas y livianas que el aire las sostiene.	el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía
+comandante	comandante/inicio.mama.pasaje.reversa.ogg	es-PY	Y para quienes volaron hoy por primera vez: ese ruido fuerte de los motores al aterrizar era para frenar. Los motores echan el aire hacia adelante, y eso frena el avión.	el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía
+tripulacion-canarias	tripulacion-canarias/inicio.tripulacion.pasaje.cinturon.ogg	es-PY	Señoras y señores, bienvenidos a bordo. Por favor, tomen asiento y abróchense el cinturón: bajito y bien ajustado.	el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía
+tripulacion-canarias	tripulacion-canarias/inicio.tripulacion.pasaje.oidos.ogg	es-PY	Señoras y señores, si al bajar se les tapan los oídos, es normal: va cambiando la presión del aire. Tragar saliva o bostezar ayuda a destaparlos.	el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía

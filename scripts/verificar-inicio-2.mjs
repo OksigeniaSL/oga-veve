@@ -634,9 +634,13 @@ async function desdeElHangar() {
         alto: Math.round(b.getBoundingClientRect().height),
       })),
     );
+    /*
+     * Y detrás, desde la tercera escena, la de viajar de pasaje: ver
+     * `verificar-inicio-3.mjs`.
+     */
     comprobar(
-      "hangar: las dos fichas de Jazlyn, aprender y aterrizar, una al lado de la otra",
-      fichas.length === 2 && fichas[0].cual === "despegar" && fichas[1].cual === "aterrizar" && fichas.every((f) => f.alto >= 44),
+      "hangar: las fichas de Jazlyn, aprender y aterrizar, una al lado de la otra",
+      fichas.length >= 2 && fichas[0].cual === "despegar" && fichas[1].cual === "aterrizar" && fichas.every((f) => f.alto >= 44),
       fichas.map((f) => `${f.cual}: «${f.nombre}» ${f.alto} px`).join(" · "),
     );
     await page.click('[data-inicio-modo="aterrizar"]');

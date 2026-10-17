@@ -8943,6 +8943,23 @@ button.motor__tecla::after {
   fill: rgba(0, 0, 0, 0.14);
 }
 
+/* La ventanilla de la escena de pasaje: el marco, el mar, una nube y el ala. */
+.leccion__marco {
+  fill: #e6e0d2;
+}
+
+.leccion__mar {
+  fill: #2f6f9a;
+}
+
+.leccion__nube {
+  fill: #f7f7f2;
+}
+
+.leccion__ala {
+  fill: #c9ccc8;
+}
+
 .leccion__asfalto {
   fill: #3a3d3c;
 }
@@ -15075,6 +15092,99 @@ body.con-vuelta #tactil {
 :root.con-inicio .hud .tutor,
 :root.con-inicio .hud [data-hud="hint"] {
   visibility: hidden !important;
+}
+
+/* ── Y de pasaje, nada de pilotar ──
+   En el asiento de la ventanilla no hay relojes, ni mandos, ni torre: los
+   lleva la tripulación. Se quedan la tarjeta de la escena, el cartel del
+   cinturón —que es de la cabina de pasaje—, la luz de quien llama, el
+   trayecto del vuelo, y el menú con el sonido y la pausa. Ver
+   `flight/inicio-pasaje.ts`. Ocultos sin dejar de ocupar su sitio, como
+   arriba. */
+:root.con-pasaje .hud .hud__izquierda,
+:root.con-pasaje .hud .hud__derecha,
+:root.con-pasaje .tactil,
+:root.con-pasaje .hud [data-hud="antes"],
+:root.con-pasaje .hud [data-hud="badge"],
+:root.con-pasaje .hud [data-hud="galones"],
+:root.con-pasaje .hud [data-hud="camara"],
+:root.con-pasaje .hud [data-hud="cuadro"],
+:root.con-pasaje .hud [data-hud="cuadro-tel"],
+:root.con-pasaje .hud [data-hud="cuadro-tirador"],
+:root.con-pasaje .hud [data-hud="pictos"],
+:root.con-pasaje .hud [data-hud="home"],
+:root.con-pasaje .hud [data-hud="torre"],
+:root.con-pasaje .hud [data-hud="radio"],
+:root.con-pasaje .hud [data-hud="warning"],
+:root.con-pasaje .hud [data-hud="piloto-auto"],
+:root.con-pasaje .hud [data-hud="placa-matricula"],
+:root.con-pasaje .hud [data-hud="viento"],
+:root.con-pasaje .hud [data-hud="gafas"],
+:root.con-pasaje .hud [data-hud="gira"],
+:root.con-pasaje .hud [data-hud="cinturon-mando"],
+:root.con-pasaje .hud [data-hud="reversa"],
+:root.con-pasaje .hud [data-hud="trim"] {
+  visibility: hidden !important;
+  /*
+   * Y transparentes y sin tocarse: dentro del tablero hay piezas que se
+   * encienden con su propio `visibility` —el MCP de la visera— y asomaban por
+   * debajo del borde aunque el cuadro estuviera oculto.
+   */
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Las caras de la escena de pasaje: el altavoz de la tripulación, y el
+   pequeño en la esquina de Jazlyn cuando habla por la megafonía. */
+.inicio__cara--tripulacion .cara__fondo {
+  fill: #8fb3a4;
+}
+.cara__altavoz {
+  fill: #2a1c14;
+}
+.cara__ondas {
+  fill: none;
+  stroke: #2a1c14;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.cara__ondas--chicas {
+  stroke-width: 1.4;
+}
+.cara__chapa {
+  fill: #f6ead9;
+  stroke: #2a1c14;
+  stroke-width: 1;
+}
+
+/* Qué mirar: la ventanilla dibujada, con lo que hay que mirar latiendo. */
+.inicio__mirar {
+  display: grid;
+  place-items: center;
+}
+.dib--mirar {
+  width: 76px;
+  height: 76px;
+}
+.mirar__cielo {
+  fill: #6aa7c9;
+}
+.mirar__suelo {
+  fill: #2f6f9a;
+}
+.mirar__nube {
+  fill: #f7f7f2;
+}
+.mirar__ala,
+.mirar__motor {
+  fill: #c9ccc8;
+}
+.mirar__cinta {
+  fill: #6f8378;
+}
+/* Y lo que hay que mirar, en ocre: por encima de su color de siempre. */
+.dib--mirar .dib__parte--activa {
+  fill: var(--ocre);
 }
 
 /*

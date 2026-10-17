@@ -22,13 +22,31 @@
  * escena, que se la da quien la lleva.
  */
 
-/** Quién habla en una escena del modo inicio. */
-export type Quien = "mama" | "ara";
+/**
+ * Quién habla en una escena del modo inicio: Jazlyn, Ara y, en la tercera
+ * —de pasaje, ver `inicio-pasaje.ts`—, la tripulación de cabina por la
+ * megafonía, con la voz que ya tiene en los vuelos con pasaje.
+ */
+export type Quien = "mama" | "ara" | "tripulacion";
 
 /** Una frase de la escena: quién la dice y su clave del diccionario. */
 export interface Linea {
   readonly quien: Quien;
   readonly clave: string;
+  /**
+   * **Si se dice por la megafonía**: la comandante desde la cabina de mando,
+   * o la tripulación, por el altavoz del techo. En las dos primeras escenas
+   * Jazlyn va sentada al lado de Ara y no la lleva; en la de pasaje, sí.
+   */
+  readonly megafonia?: boolean;
+  /**
+   * **El texto ya montado**, si no es el del diccionario tal cual: lo que se
+   * ve por la ventanilla, que lleva delante el lado y el saludo. Ver
+   * `loQueSeDice` en `audio/ventanilla.ts`.
+   */
+  readonly texto?: string;
+  /** Y las piezas de su receta en el pack. Ver `recetaDe`. */
+  readonly relleno?: Readonly<Record<string, string>>;
 }
 
 /**
