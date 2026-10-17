@@ -382,8 +382,22 @@ async function unaVuelta(cual) {
    * cambia. Más adelante se vira con una tecla y vuelve el teclado; y al
    * enderezar con el mando, otra vez el mando.
    */
+  const cambios = [];
+  let ultimoDibujo = null;
   if (cual === "consola" || cual === "joystick") {
-    await page.waitForFunction(() => !!document.querySelector("#inicio [data-mando]") || globalThis.__oga.inicio().estado?.paso === "motor", null, { timeout: 60_000 }).catch(() => {});
+    /*
+     * El dibujo de antes de enchufar se apunta aquí, antes de enchufar: si
+     * no, la primera lectura del bucle ya lo ve con el mando y el cambio no
+     * se ve nunca.
+     */
+    await page
+      .waitForFunction(() => !!document.querySelector("#inicio [data-mando]"), null, { timeout: 90_000 })
+      .catch(() => {});
+    const antes = await leer(page);
+    if (antes.dibujo?.mando) {
+      cambios.push(antes.dibujo.mando);
+      ultimoDibujo = antes.dibujo.mando;
+    }
     await enchufar(page, cual);
   }
 
@@ -395,8 +409,6 @@ async function unaVuelta(cual) {
   let alabeoMin = 0;
   let alabeoMax = 0;
   let enderezo = false;
-  let cambios = [];
-  let ultimoDibujo = null;
   let sello = null;
   let seguido = false;
   const t0 = Date.now();
