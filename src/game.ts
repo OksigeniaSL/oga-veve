@@ -3858,7 +3858,15 @@ export class Game {
      */
     if (this.pistasHechas && this.pistasDeEscenario === this.scenario)
       return this.pistasHechas;
-    const casa = this.scenario.aerodrome ? [this.scenario.runway] : [];
+    /*
+     * **Y la de casa siempre, también donde no hay aeródromo.** Iba solo con
+     * aeródromo, y el Chaco y el Valle —los campos para empezar, sin aeródromo
+     * extraído— tienen su pista igual: posarse en el medio de la del Chaco,
+     * a treinta centímetros por segundo, salía «tocaste tierra fuera de la
+     * pista». Lo destapó la escena de aterrizar del modo inicio, que es la
+     * primera que aterriza allí. Ver `scripts/verificar-inicio-2.mjs`.
+     */
+    const casa = [this.scenario.runway];
     this.pistasDeEscenario = this.scenario;
     this.pistasHechas = [...casa, ...this.vecinos.map((v) => v.campo.pista)];
     return this.pistasHechas;
