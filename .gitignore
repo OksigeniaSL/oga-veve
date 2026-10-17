@@ -9,6 +9,10 @@ dist/
 # `scripts/ortofoto-a-teselas.mjs` y van al servidor de la web, no al repositorio.
 # Puede ser una carpeta o un enlace a ella. Ver el ADR 0018.
 /data/teselas
+# Los libros de consulta para las historias de Jazlyn: fuentes con derechos,
+# solo para leer y escribir nuestros textos a partir de los hechos. Nunca al
+# repositorio ni a la web.
+/data/libros
 .DS_Store
 # ── Entornos / secrets ─────────────────────────────────────────────────
 .env
