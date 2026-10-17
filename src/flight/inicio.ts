@@ -9,8 +9,8 @@
  *
  * ## Qué hace
  *
- * Una escena: Jazlyn, la comandante, le enseña a volar a su hijo pequeño. Él
- * pregunta y ella le enseña. Cada paso pide **una** cosa —arrancar, dar gas,
+ * Una escena: Jazlyn, la comandante, le enseña a volar a Ara. Ara pregunta y
+ * ella le enseña. Cada paso pide **una** cosa —arrancar, dar gas,
  * despegar con la flecha de subir, virar a un lado y al otro, enderezar— y el
  * mundo **se queda quieto** hasta que la hace. En cuanto la hace, se mueve.
  *
@@ -48,7 +48,7 @@ import type { Mando } from "./mandos-fisicos";
 export type { Mando };
 
 /** Quién habla en la escena. */
-export type Quien = "mama" | "hijo";
+export type Quien = "mama" | "ara";
 
 /** Lo que se pide hacer, y por tanto lo que se dibuja. */
 export type Gesto = "motor" | "gas" | "subir" | "izquierda" | "derecha" | "nivelar";
@@ -235,11 +235,11 @@ const ALTURA_MINIMA_PARA_VIRAR = 25;
 // ── El guion ─────────────────────────────────────────────────────────────
 
 const m = (clave: string): Linea => ({ quien: "mama", clave: `inicio.mama.${clave}` });
-const h = (clave: string): Linea => ({ quien: "hijo", clave: `inicio.hijo.${clave}` });
+const a = (clave: string): Linea => ({ quien: "ara", clave: `inicio.ara.${clave}` });
 
 interface DefPaso {
   readonly id: PasoId;
-  /** Lo que se dice al empezar: la pregunta del hijo y lo que pide ella. */
+  /** Lo que se dice al empezar: la pregunta de Ara y lo que pide ella. */
   readonly entra: readonly Linea[];
   /** Lo que se pide hacer; `null` es mirar. */
   readonly gesto: Gesto | null;
@@ -262,7 +262,7 @@ interface DefPaso {
 export const GUION_DEL_INICIO: readonly DefPaso[] = [
   {
     id: "hola",
-    entra: [h("hola"), m("hola")],
+    entra: [a("hola"), m("hola")],
     gesto: null,
     congela: true,
     otraVez: [],
@@ -270,15 +270,15 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
   },
   {
     id: "motor",
-    entra: [h("motor"), m("motor")],
+    entra: [a("motor"), m("motor")],
     gesto: "motor",
     congela: true,
     otraVez: [m("motor.otra1"), m("motor.otra2")],
-    bien: [h("motor.bien"), m("motor.bien")],
+    bien: [a("motor.bien"), m("motor.bien")],
   },
   {
     id: "gas",
-    entra: [h("gas"), m("gas")],
+    entra: [a("gas"), m("gas")],
     gesto: "gas",
     congela: true,
     otraVez: [m("gas.otra1"), m("gas.otra2")],
@@ -286,7 +286,7 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
   },
   {
     id: "carrera",
-    entra: [h("carrera"), m("carrera")],
+    entra: [a("carrera"), m("carrera")],
     gesto: null,
     congela: false,
     otraVez: [],
@@ -298,7 +298,7 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
     gesto: "subir",
     congela: true,
     otraVez: [m("despegar.otra1"), m("despegar.otra2")],
-    bien: [h("despegar.bien"), m("despegar.bien")],
+    bien: [a("despegar.bien"), m("despegar.bien")],
   },
   {
     id: "subida",
@@ -310,7 +310,7 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
   },
   {
     id: "izquierda",
-    entra: [h("izquierda"), m("izquierda")],
+    entra: [a("izquierda"), m("izquierda")],
     gesto: "izquierda",
     congela: true,
     otraVez: [m("izquierda.otra1"), m("izquierda.otra2")],
@@ -318,7 +318,7 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
   },
   {
     id: "derecha",
-    entra: [h("derecha"), m("derecha")],
+    entra: [a("derecha"), m("derecha")],
     gesto: "derecha",
     congela: true,
     otraVez: [m("derecha.otra1"), m("derecha.otra2")],
@@ -326,7 +326,7 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
   },
   {
     id: "nivelar",
-    entra: [h("nivelar"), m("nivelar")],
+    entra: [a("nivelar"), m("nivelar")],
     gesto: "nivelar",
     congela: true,
     otraVez: [m("nivelar.otra1"), m("nivelar.otra2")],
@@ -334,7 +334,7 @@ export const GUION_DEL_INICIO: readonly DefPaso[] = [
   },
   {
     id: "fin",
-    entra: [h("fin")],
+    entra: [a("fin")],
     gesto: null,
     congela: true,
     otraVez: [],
@@ -369,10 +369,10 @@ export const LINEAS_DEL_INICIO: readonly Linea[] = (() => {
   return todas;
 })();
 
-/** La voz de cada uno en el pack: ella es la comandante; él, una voz nueva. */
+/** La voz de cada quien en el pack: Jazlyn es la comandante; Ara, una voz nueva. */
 export const VOZ_DE: Readonly<Record<Quien, string>> = {
   mama: "comandante",
-  hijo: "hijo",
+  ara: "ara",
 };
 
 /**

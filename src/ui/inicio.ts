@@ -55,9 +55,10 @@ export type Lado = -1 | 0 | 1;
 
 /**
  * **Jazlyn, con su gorra de comandante y sus gafas de sol**, que son las del
- * juego: ver `flight/gafas.ts`. Y **su hijo**, más pequeño y sin gorra. Dos
+ * juego: ver `flight/gafas.ts`. Y **Ara**, de cara más redonda y sin gorra. Dos
  * caras que se distinguen de un vistazo, que es lo que hace falta para saber
- * quién habla sin leer el nombre.
+ * quién habla sin leer el nombre. La de Ara no dice si es niño o niña, como
+ * su voz y su nombre: quien juega se pone en su sitio, sea quien sea.
  */
 const CARAS: Readonly<Record<Quien, string>> = {
   mama: `
@@ -70,7 +71,7 @@ const CARAS: Readonly<Record<Quien, string>> = {
       <rect class="cara__gafas" x="25.2" y="24.6" width="7.2" height="5" rx="2.2" />
       <path class="cara__trazo" d="M22.8 26.4 h2.4" />
       <path class="cara__trazo" d="M20.4 34.2 q3.6 2.8 7.2 0" />`,
-  hijo: `
+  ara: `
       <circle class="cara__fondo" cx="24" cy="24" r="23" />
       <ellipse class="cara__piel" cx="24" cy="28" rx="10.4" ry="10.6" />
       <path class="cara__pelo" d="M13.2 25 q0.6-11 10.8-11 q10.2 0 10.8 11 q-4.6-5-10.8-5 q-6.2 0-10.8 5 Z" />
@@ -504,7 +505,7 @@ export class PantallaDelInicio {
         this.cara.setAttribute("role", "img");
         this.cara.setAttribute(
           "aria-label",
-          t(v.linea.quien === "mama" ? "inicio.modo.mama" : "inicio.modo.hijo"),
+          t(v.linea.quien === "mama" ? "inicio.modo.mama" : "inicio.modo.ara"),
         );
       } else {
         this.cara.removeAttribute("role");

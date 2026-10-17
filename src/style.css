@@ -14254,7 +14254,7 @@ body.con-vuelta #tactil {
 
 /* ── El modo inicio ───────────────────────────────────────────────────────
  *
- * Jazlyn le enseña a volar a su hijo, paso a paso. Ver `src/ui/inicio.ts`.
+ * Jazlyn le enseña a volar a Ara, paso a paso. Ver `src/ui/inicio.ts`.
  *
  * La tarjeta va arriba en el centro, debajo de la barra de botones: abajo
  * viven los mandos de los pulgares, que son justo lo que hay que tocar, y la
@@ -14334,7 +14334,7 @@ body.con-vuelta #tactil {
 .cara__fondo {
   fill: var(--ocre);
 }
-.inicio__cara--hijo .cara__fondo {
+.inicio__cara--ara .cara__fondo {
   fill: #6aa7c9;
 }
 .cara__piel {

@@ -1549,17 +1549,17 @@ if (sinGrupo.length)
   console.log(`\n  ${sinGrupo.length} se dicen sin estar en ningún grupo: ${sinGrupo.join(", ")}`);
 
 /*
- * **Y el modo inicio: Jazlyn le enseña a volar a su hijo.** Ella con la voz de
- * la comandante, pero hablándole a él, sentado a su lado —en el juego suena
- * sin megafonía—; él, con una voz nueva, la de un niño pequeño, que se elige
- * el día de grabar. Van **al final de la lista** a propósito: los guiones van
+ * **Y el modo inicio: Jazlyn le enseña a volar a Ara.** Jazlyn con la voz de
+ * la comandante, pero hablándole a Ara, en el asiento de al lado —en el juego
+ * suena sin megafonía—; Ara, con una voz propia, blanca, que no dice si es
+ * niño o niña. Van **al final de la lista** a propósito: los guiones van
  * numerados para casar lo que vuelve del estudio, y metidas en medio
  * renumerarían trescientas frases de la comandante ya grabadas. Ver
  * `src/flight/inicio.ts` y `PENDIENTE-VOCES-inicio.md`.
  */
 const DEL_INICIO = [
-  ["inicio.mama.", "comandante", "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado"],
-  ["inicio.hijo.", "hijo", "el modo inicio: el hijo de Jazlyn pregunta"],
+  ["inicio.mama.", "comandante", "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado"],
+  ["inicio.ara.", "ara", "el modo inicio: Ara pregunta"],
 ];
 for (const [prefijo, voz, para] of DEL_INICIO) {
   for (const [k, v] of es) {
@@ -1869,7 +1869,7 @@ const AJUSTES_CON_CHISPA = {
 const CON_CHISPA = (id) =>
   /*
    * Y la escena del modo inicio, entera: una madre con desparpajo enseñándole
-   * a volar a su hijo, y él preguntando con ganas. Ni una orden de vuelo ni
+   * a volar a Ara, y Ara preguntando con ganas. Ni una orden de vuelo ni
    * un aviso: es lo contrario de una voz quieta.
    */
   id.startsWith("inicio.") ||

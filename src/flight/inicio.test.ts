@@ -89,11 +89,28 @@ describe("el guion", () => {
     }
   });
 
-  it("ella con la voz de la comandante y él con la suya, y él pregunta antes de que ella enseñe", () => {
+  /*
+   * **Ara no es niño ni niña**, ni en lo que dice ni en lo que se dice de Ara:
+   * así quien juega se pone en su sitio, sea quien sea. Lo que mira es lo que
+   * más fácil se cuela —«hijo», «solito», «campeón», «her son»—; un «y listo»
+   * que habla del gesto, no de Ara, se queda.
+   */
+  it("y nada de la escena dice si Ara es niño o niña", () => {
+    const conGenero = /\b(hij[oa]s?|niñ[oa]s?|nen[ea]s?|solit[oa]s?|campe[oó]na?)\b/i;
+    const withGender = /\b(son|daughter|boy|girl|his|him|he|she)\b/i;
+    const claves = Object.keys(ES_PY).filter((k) => k.startsWith("inicio."));
+    expect(claves.length).toBeGreaterThan(LINEAS_DEL_INICIO.length);
+    for (const k of claves) {
+      expect(ES_PY[k as keyof typeof ES_PY], k).not.toMatch(conGenero);
+      expect(EN[k as keyof typeof EN] ?? "", k).not.toMatch(withGender);
+    }
+  });
+
+  it("Jazlyn con la voz de la comandante y Ara con la suya, y Ara pregunta antes de que ella enseñe", () => {
     expect(VOZ_DE.mama).toBe("comandante");
-    expect(VOZ_DE.hijo).toBe("hijo");
+    expect(VOZ_DE.ara).toBe("ara");
     for (const p of GUION_DEL_INICIO) {
-      const i = p.entra.findIndex((l) => l.quien === "hijo");
+      const i = p.entra.findIndex((l) => l.quien === "ara");
       const j = p.entra.findIndex((l) => l.quien === "mama");
       if (i >= 0 && j >= 0) expect(i, p.id).toBeLessThan(j);
     }
@@ -110,7 +127,7 @@ describe("el guion", () => {
   it("es primera experiencia solo con todas sus frases grabadas, las de los dos", () => {
     expect(inicioGrabado(() => true)).toBe(true);
     expect(inicioGrabado(() => false)).toBe(false);
-    // Con ella grabada y él no, todavía no.
+    // Con Jazlyn grabada y Ara no, todavía no.
     expect(inicioGrabado((voz) => voz === "comandante")).toBe(false);
     // Y una sola que falte basta para que no.
     const falta = LINEAS_DEL_INICIO.at(-1)!.clave;
@@ -130,9 +147,9 @@ describe("cada paso espera su gesto", () => {
     expect(s.congelado).toBe(true);
     expect(inicio.estado.gesto).toBe("motor");
     expect(v.dichas.map((d) => d.clave)).toEqual([
-      "inicio.hijo.hola",
+      "inicio.ara.hola",
       "inicio.mama.hola",
-      "inicio.hijo.motor",
+      "inicio.ara.motor",
       "inicio.mama.motor",
     ]);
   });
@@ -348,7 +365,7 @@ describe("el final", () => {
     expect(inicio.estado.congelado).toBe(true);
     pasar(inicio, l, 3);
     const claves = v.dichas.map((d) => d.clave);
-    expect(claves.slice(-2)).toEqual(["inicio.hijo.fin", "inicio.mama.fin"]);
+    expect(claves.slice(-2)).toEqual(["inicio.ara.fin", "inicio.mama.fin"]);
     expect(inicio.estado.puedeSeguir).toBe(true);
     // Sin tocar «seguir», se queda: es su momento.
     pasar(inicio, l, 20);
@@ -393,18 +410,18 @@ describe("la voz, en orden", () => {
     );
     const l = enLaCabecera();
     inicio.paso(DT, l);
-    // Pregunta él; ella no habla hasta que él acaba.
-    expect(dichas.map((d) => d.clave)).toEqual(["inicio.hijo.motor"]);
+    // Pregunta Ara; Jazlyn no habla hasta que Ara acaba.
+    expect(dichas.map((d) => d.clave)).toEqual(["inicio.ara.motor"]);
     pasar(inicio, l, 2);
     expect(dichas.length).toBe(1);
     acabar!(0);
     pasar(inicio, l, 1);
-    expect(dichas.map((d) => d.clave)).toEqual(["inicio.hijo.motor", "inicio.mama.motor"]);
+    expect(dichas.map((d) => d.clave)).toEqual(["inicio.ara.motor", "inicio.mama.motor"]);
     // Y arranca a media frase: se calla y se felicita.
     l.motor = true;
     pasar(inicio, l, 1);
     expect(calladas).toBeGreaterThan(0);
-    expect(dichas.at(-1)!.clave).toBe("inicio.hijo.motor.bien");
+    expect(dichas.at(-1)!.clave).toBe("inicio.ara.motor.bien");
   });
 
   it("sin voz, el subtítulo se deja leer antes de la siguiente", () => {
@@ -439,6 +456,6 @@ describe("la escena no se cuelga", () => {
     pasar(inicio, l, 1);
     inicio.retomarLaVoz();
     pasar(inicio, l, 1);
-    expect(dichas.map((d) => d.clave)).toEqual(["inicio.hijo.hola", "inicio.hijo.hola"]);
+    expect(dichas.map((d) => d.clave)).toEqual(["inicio.ara.hola", "inicio.ara.hola"]);
   });
 });

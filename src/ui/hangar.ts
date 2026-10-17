@@ -1183,15 +1183,16 @@ const LEC_ATERRIZAJE = escena(`
 
 /**
  * **Aprender con Jazlyn**: la avioneta despegando, como la de despegar, y la
- * cara de Jazlyn en la esquina, con su gorra y sus gafas. Es lo que dice sin
- * una palabra con quién se va a volar. Ver `ui/inicio.ts`.
+ * cara de Jazlyn en la esquina, con su gorra y sus gafas, y la de Ara a su
+ * lado. Es lo que dice sin una palabra con quién se va a volar. Ver
+ * `ui/inicio.ts`.
  */
 const LEC_INICIO = escena(`
   <path class="leccion__asfalto" d="M0 84 L34 50 h26 L26 84 Z" />
   <path class="leccion__estela" d="M22 72 q26-14 52-34" />
   ${AVION("translate(86 26) rotate(-26) scale(1.05)")}
   ${caraDentro("mama", 4, 4, 34)}
-  ${caraDentro("hijo", 30, 14, 24)}
+  ${caraDentro("ara", 30, 14, 24)}
 `);
 
 /**

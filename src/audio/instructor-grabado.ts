@@ -819,8 +819,9 @@ export class InstructorGrabado implements Instructor {
       // `tripulacion.canario.*` no se pisa con la de casa.
       "tripulacion",
       "tripulacion-canarias",
-      // El hijo de Jazlyn, en el modo inicio. Ver `flight/inicio.ts`.
-      "hijo",
+      // Ara, que aprende a volar con Jazlyn en el modo inicio. Ver
+      // `flight/inicio.ts`.
+      "ara",
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,

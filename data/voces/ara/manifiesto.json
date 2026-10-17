@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "voz": "ara",
+  "idioma": "es-PY",
+  "piezas": {
+    "inicio.ara.carrera": {
+      "ms": 2768,
+      "h": "46957c7682"
+    },
+    "inicio.ara.derecha": {
+      "ms": 2163,
+      "h": "5900180a1e"
+    },
+    "inicio.ara.despegar.bien": {
+      "ms": 3807,
+      "h": "a34297b86d"
+    },
+    "inicio.ara.fin": {
+      "ms": 3807,
+      "h": "85ca766e8e"
+    },
+    "inicio.ara.gas": {
+      "ms": 2239,
+      "h": "4f625100a8"
+    },
+    "inicio.ara.hola": {
+      "ms": 2717,
+      "h": "746302940d"
+    },
+    "inicio.ara.izquierda": {
+      "ms": 1952,
+      "h": "aa03bf564c"
+    },
+    "inicio.ara.motor.bien": {
+      "ms": 2681,
+      "h": "11bbd0f87b"
+    },
+    "inicio.ara.motor": {
+      "ms": 1993,
+      "h": "a4269b17ef"
+    },
+    "inicio.ara.nivelar": {
+      "ms": 2617,
+      "h": "710bea479d"
+    }
+  },
+  "recetas": {
+    "inicio.ara.carrera": [
+      "inicio.ara.carrera"
+    ],
+    "inicio.ara.derecha": [
+      "inicio.ara.derecha"
+    ],
+    "inicio.ara.despegar.bien": [
+      "inicio.ara.despegar.bien"
+    ],
+    "inicio.ara.fin": [
+      "inicio.ara.fin"
+    ],
+    "inicio.ara.gas": [
+      "inicio.ara.gas"
+    ],
+    "inicio.ara.hola": [
+      "inicio.ara.hola"
+    ],
+    "inicio.ara.izquierda": [
+      "inicio.ara.izquierda"
+    ],
+    "inicio.ara.motor.bien": [
+      "inicio.ara.motor.bien"
+    ],
+    "inicio.ara.motor": [
+      "inicio.ara.motor"
+    ],
+    "inicio.ara.nivelar": [
+      "inicio.ara.nivelar"
+    ]
+  }
+}

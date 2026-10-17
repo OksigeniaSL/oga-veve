@@ -771,7 +771,7 @@ import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
   elegirComandante,
-  elegirHijo,
+  elegirAra,
   elegirOtroAvion,
   elegirTorre,
   elegirTripulacion,
@@ -4744,9 +4744,9 @@ export class Game {
     "desde-el-pasaje",
   );
   /**
-   * **Y las dos del modo inicio: Jazlyn y su hijo**, en la cabina, uno al lado
-   * del otro. Ella con la voz de la comandante, pero **sin megafonía**: aquí no
-   * le habla al pasaje, le habla a su hijo, que va sentado a su lado. Él, con
+   * **Y las dos del modo inicio: Jazlyn y Ara**, en la cabina, lado a lado.
+   * Jazlyn con la voz de la comandante, pero **sin megafonía**: aquí no le
+   * habla al pasaje, le habla a Ara, que va en el asiento de al lado. Ara, con
    * la suya, que es otra voz del pack. Por la boca de todos, que en una cabina
    * de dos no hablan dos a la vez. Ver `flight/inicio.ts`.
    */
@@ -4756,9 +4756,9 @@ export class Game {
     BOCA,
     this.grabaciones,
   );
-  private readonly hijo: InstructorGrabado = new InstructorGrabado(
+  private readonly ara: InstructorGrabado = new InstructorGrabado(
     this.audio,
-    elegirHijo(this.vozDelSistema, this.torre, this.otroAvion, this.comandante),
+    elegirAra(this.vozDelSistema, this.torre, this.otroAvion, this.comandante),
     BOCA,
     this.grabaciones,
   );
@@ -4786,7 +4786,7 @@ export class Game {
       comandante: this.comandante,
       tripulacion: this.tripulacion,
       mama: this.mama,
-      hijo: this.hijo,
+      ara: this.ara,
     };
   }
 
@@ -6298,7 +6298,7 @@ export class Game {
    *
    * Empieza alineado en la cabecera —es la lección de dar una vuelta— pero
    * **con el motor parado**, porque arrancar es el primer gesto de todos. Y
-   * mientras dura, la instructora se calla: la escena es de Jazlyn y su hijo,
+   * mientras dura, la instructora se calla: la escena es de Jazlyn y Ara,
    * y dos voces enseñando lo mismo es lo que no se hace. Lo demás del juego
    * sigue como está.
    *
@@ -6314,7 +6314,7 @@ export class Game {
       // Sin almacenamiento se juega igual.
     }
     this.mama.callar();
-    this.hijo.callar();
+    this.ara.callar();
     this.input.cerrarGas();
     this.input.controls.engineOn = false;
     this.inicio = new Inicio(this.vozDelInicio, {
@@ -6355,14 +6355,14 @@ export class Game {
   private cuadroAntesDelInicio: boolean | null = null;
 
   /**
-   * **Por dónde habla el modo inicio**: ella o él, cada uno con su boca. Y
+   * **Por dónde habla el modo inicio**: Jazlyn o Ara, cada quien con su boca. Y
    * cuándo ha acabado de hablar: si sonó, al acabar; si no sonó —sin
    * grabación y sin voz del navegador, que es Brave en Linux—, después del
    * rato que se tarda en leerla, que entonces el subtítulo es lo que queda.
    */
   private readonly vozDelInicio = {
     decir: (linea: Linea, alAcabar: (esperaMas: number) => void): void => {
-      const boca = linea.quien === "mama" ? this.mama : this.hijo;
+      const boca = linea.quien === "mama" ? this.mama : this.ara;
       const texto = t(linea.clave as TranslationKey);
       let acabado = false;
       const acabar = (sono: boolean): void => {
@@ -6377,7 +6377,7 @@ export class Game {
     },
     callar: (): void => {
       this.mama.callar();
-      this.hijo.callar();
+      this.ara.callar();
       BOCA.retirar((clave) => !!clave?.startsWith("inicio."));
     },
   };
