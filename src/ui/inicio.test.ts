@@ -135,10 +135,10 @@ describe("lo que pasa en el avión, al lado", () => {
 });
 
 describe("quién habla", () => {
-  it("Jazlyn con su gorra y sus gafas, y su hijo sin ellas", () => {
+  it("Jazlyn con su gorra y sus gafas, y Ara sin ellas", () => {
     expect(caraDe("mama")).toContain("cara__gafas");
     expect(caraDe("mama")).toContain("cara__gorra");
-    expect(caraDe("hijo")).not.toContain("cara__gafas");
-    expect(caraDe("hijo")).not.toContain("cara__gorra");
+    expect(caraDe("ara")).not.toContain("cara__gafas");
+    expect(caraDe("ara")).not.toContain("cara__gorra");
   });
 });

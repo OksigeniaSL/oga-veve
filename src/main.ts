@@ -283,16 +283,16 @@ let destino: string | undefined = rearranque
 const quitarLoDeInicio = escenario ? () => {} : ensenarAnadirAInicio();
 /*
  * **Si el modo inicio ya tiene voz**, preguntado al pack mientras se elige
- * piloto: son dos ficheros pequeños, el manifiesto de Jazlyn y el de su hijo.
+ * piloto: son dos ficheros pequeños, el manifiesto de Jazlyn y el de Ara.
  * Ver `inicioGrabado` y más abajo, al decidir la primera experiencia.
  */
 const yaTieneVoz: Promise<boolean> = escenario
   ? Promise.resolve(false)
-  : Promise.all([manifiestoDe(VOZ_DE.mama), manifiestoDe(VOZ_DE.hijo)])
-      .then(([mama, hijo]) => {
+  : Promise.all([manifiestoDe(VOZ_DE.mama), manifiestoDe(VOZ_DE.ara)])
+      .then(([mama, ara]) => {
         const de: Record<string, Manifiesto | null> = {
           [VOZ_DE.mama]: mama,
-          [VOZ_DE.hijo]: hijo,
+          [VOZ_DE.ara]: ara,
         };
         return inicioGrabado((voz, clave) => recetaDe(de[voz] ?? null, clave) !== null);
       })

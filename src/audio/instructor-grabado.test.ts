@@ -430,8 +430,8 @@ describe("todas las voces", () => {
       // Y la tripulación de cabina, con el habla de cada sitio.
       "tripulacion",
       "tripulacion-canarias",
-      // Y el hijo de Jazlyn, del modo inicio. Ver `flight/inicio.ts`.
-      "hijo",
+      // Y Ara, del modo inicio. Ver `flight/inicio.ts`.
+      "ara",
     ]);
   });
 

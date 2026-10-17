@@ -1,7 +1,7 @@
 /**
  * **El modo inicio, de punta a punta, con cada mando.** Ver `src/flight/inicio.ts`.
  *
- * Es el primer vuelo de quien no ha volado nunca: Jazlyn le enseña a su hijo,
+ * Es el primer vuelo de quien no ha volado nunca: Jazlyn le enseña a Ara,
  * paso a paso, y el mundo espera en cada paso a que se haga lo que se pide.
  * Las pruebas de unidad prueban la secuencia con un avión de mentira; esto la
  * vuela de verdad, en el navegador, **con los mandos de verdad**: teclas que

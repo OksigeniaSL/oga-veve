@@ -576,12 +576,12 @@ export function elegirComandante(...cogidas: Instructor[]): Instructor {
 }
 
 /**
- * **Y la del hijo de Jazlyn**, en el modo inicio: un niño pequeño que
- * pregunta. Más agudo y un pelo más rápido que nadie, y sin radio ni altavoz:
- * va sentado al lado. Solo suena así mientras su voz no esté grabada —ver
+ * **Y la de Ara**, en el modo inicio: quien aprende a volar con Jazlyn y
+ * pregunta. Más aguda y un pelo más rápida que ninguna, y sin radio ni
+ * altavoz: suena desde el asiento de al lado. Solo suena así mientras su voz no esté grabada —ver
  * `docs/voces/` y `PENDIENTE-VOCES-inicio.md`—, y en Brave para Linux, ni así.
  */
-export function elegirHijo(...cogidas: Instructor[]): Instructor {
+export function elegirAra(...cogidas: Instructor[]): Instructor {
   if (typeof speechSynthesis === "undefined") return MUDO;
   return new VozDelNavegador({
     rate: 1.06,

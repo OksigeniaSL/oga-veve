@@ -23,7 +23,7 @@ enseñando a su hijo». Y después: «también habrá quien juegue con joystick�
 
 ### Una escena, paso a paso, con el mundo esperando
 
-Jazlyn, la comandante, le enseña a volar a su hijo pequeño: él pregunta y ella
+Jazlyn, la comandante, le enseña a volar a **Ara**: Ara pregunta y ella
 enseña. Nueve pasos y siete gestos, en este orden —`GUION_DEL_INICIO` en
 `src/flight/inicio.ts`—:
 
@@ -54,6 +54,13 @@ basta y ella lo lleva hasta arriba y lo sostiene hasta el final de la escena
 el avión sin motor—; al enderezar, en cuanto se empieza, ella termina de
 llevar la palanca al centro. Es lo que hace una instructora con doble mando el
 primer día, y es lo que ya hace la de la final de Guyrami con el gas.
+
+### Ara, ni niño ni niña
+
+Quien aprende se llama **Ara** y no es niño ni niña: su voz es blanca, su
+nombre no lo dice, su cara tampoco, y nada de lo que dice o se dice de Ara
+lleva género —«¡Volé yo, sin ayuda!», no «yo solito»—. Así quien juega se
+pone en su sitio, sea quien sea. Lo vigila una prueba de `inicio.test.ts`.
 
 ### Dónde, y con qué
 
@@ -105,11 +112,11 @@ cosas fuera de él, en `src/flight/mandos-fisicos.ts`:
 
 ### La voz
 
-Ella habla con **la voz de la comandante**, pero **sin megafonía**: aquí no le
-habla al pasaje, le habla a su hijo, sentado a su lado. Él, con **una voz
-nueva del pack, `hijo`**, que se elige el día de grabar. Mientras dura la
-escena **la instructora se calla**, y también la tarjeta de la señal y el
-tutor: un suceso, una voz, y también un dibujo.
+Jazlyn habla con **la voz de la comandante**, pero **sin megafonía**: aquí no
+le habla al pasaje, le habla a Ara, en el asiento de al lado. Ara, con **una
+voz nueva del pack, `ara`**. Mientras dura la escena **la instructora se
+calla**, y también la tarjeta de la señal y el tutor: un suceso, una voz, y
+también un dibujo.
 
 Las frases van una detrás de otra, nunca dos a la vez; si quien juega hace lo
 que se pedía antes de que acabe de pedirse, lo que quedaba se calla. Y sin
@@ -131,10 +138,8 @@ ficha de Jazlyn, en «¿A qué jugás?»— y en la dirección, con `?inicio=1`.
 
 ## Consecuencias
 
-- Hay **una voz más** que grabar y que bajar, `hijo`, y treinta frases más de
-  la comandante. Lo que hay que hacer para grabarlas está en
-  `PENDIENTE-VOCES-inicio.md`. Hasta entonces su manifiesto está vacío, que es
-  lo que hace que el juego no lo pida en balde.
+- Hay **una voz más** que bajar, `ara`, y treinta frases más de la
+  comandante. Cómo se graban está en `docs/voces/LEEME.md`, como las demás.
 - El modo se prueba con `scripts/verificar-inicio.mjs`: la escena entera con
   teclado, con dedo y con los dos mandos de juego de mentira, y la tarjeta en
   las pantallas donde se juega.

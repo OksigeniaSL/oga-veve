@@ -12750,7 +12750,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Hoy pilotás vos, mi amor! Yo voy acá, a tu lado. El avión te espera en cada paso, y si algo no sale, lo probamos otra vez.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12764,7 +12764,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Primero, el motor. Apretá la llave que brilla y escuchá cómo se despierta.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12778,7 +12778,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Buscá la llavecita que se mueve, mi vida. Apretala una vez, sin miedo.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12792,7 +12792,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "El motor se prende con la llave. Hacé como el dibujo: un toquecito, y listo.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12806,7 +12806,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Eso! Ese ruido es la hélice dando vueltas. Ya tenemos motor.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12820,7 +12820,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Con el gas. Hacé como el dibujo y dale todo el gas: así la hélice tira con todas sus fuerzas.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12834,7 +12834,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "El gas es el motor con la flechita para arriba. Dale, empujalo hasta arriba del todo.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12848,7 +12848,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Mirá el dibujo que brilla: ese es el gas. Dale más, mi amor, que el avión está esperando.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12862,7 +12862,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Muy bien! Yo te sostengo el gas. Mirá cómo corremos por la pista.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12876,7 +12876,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Todavía no. Un avión necesita mucha velocidad para que el aire lo levante. Yo te aviso.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12890,7 +12890,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Ahora! Para despegar, apretá la flecha de subir.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12904,7 +12904,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "La flecha que apunta para arriba, la que brilla. Apretala y el avión levanta la nariz.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12918,7 +12918,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "La de subir, mi amor, la que mira al cielo. Probá otra vez, sin apuro.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12932,7 +12932,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Despegaste! Así lo hace un avión de verdad: primero corre, y después levanta la nariz.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12946,7 +12946,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Los aviones no doblan como un auto: viran inclinando las alas. Apretá la flecha de la izquierda.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12960,7 +12960,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "La flecha de la izquierda, mi vida, la que brilla en el dibujo. Apretala y mirá el ala.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12974,7 +12974,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Hacé como el dibujo: la flecha que va para la izquierda, y el ala de ese lado baja.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -12988,7 +12988,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Así! Un poquito más: dejala apretada hasta que el ala baje bien.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13002,7 +13002,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Vas bien. Mantenela un ratito más, que el avión se inclina despacito.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13016,7 +13016,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Eso! ¿Ves cómo baja el ala de ese lado? Así se vira.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13030,7 +13030,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Dale! Ahora la flecha de la derecha, la que brilla.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13044,7 +13044,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "La flecha de la derecha, mi amor, la del otro lado. Apretala y mirá cómo cambia el ala.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13058,7 +13058,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Hacé como el dibujo: la flecha que va para la derecha, y el avión vira para allá.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13072,7 +13072,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Perfecto! A la izquierda y a la derecha: ya sabés virar.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13086,7 +13086,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Enderezamos las alas. Hacé como el dibujo, despacito, hasta que el avión quede derecho como una mesa.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13100,7 +13100,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Despacito, mi vida, hasta que las dos alas queden iguales, como tus brazos abiertos.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13114,7 +13114,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Mirá el dibujo: un poquito para el otro lado, y soltá cuando el avión quede derecho.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13128,7 +13128,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Derechito! Las alas parejas: así se vuela tranquilo.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13142,7 +13142,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Volaste vos, mi amor! Te ganaste tu primer sello del cuaderno. Ahora seguí volando, que el cielo es tuyo.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13156,7 +13156,7 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "¡Qué lindo vuelo, mi amor! Tu sello de este campo ya está en el cuaderno. Ahora seguí volando, que el cielo es tuyo.",
-    "para": "el modo inicio: Jazlyn le enseña a volar a su hijo, a su lado",
+    "para": "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13166,11 +13166,11 @@
     }
   },
   {
-    "id": "inicio.hijo.hola",
-    "voz": "hijo",
+    "id": "inicio.ara.hola",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "Mamá, mamá, ¿hoy me enseñás a volar?",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13180,11 +13180,11 @@
     }
   },
   {
-    "id": "inicio.hijo.motor",
-    "voz": "hijo",
+    "id": "inicio.ara.motor",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¿Y cómo se prende el avión, mamá?",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13194,11 +13194,11 @@
     }
   },
   {
-    "id": "inicio.hijo.motor.bien",
-    "voz": "hijo",
+    "id": "inicio.ara.motor.bien",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¡Se prendió! ¡Mirá cómo suena, mamá!",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13208,11 +13208,11 @@
     }
   },
   {
-    "id": "inicio.hijo.gas",
-    "voz": "hijo",
+    "id": "inicio.ara.gas",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¿Y ahora cómo hacemos para que corra?",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13222,11 +13222,11 @@
     }
   },
   {
-    "id": "inicio.hijo.carrera",
-    "voz": "hijo",
+    "id": "inicio.ara.carrera",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¡Mamá, vamos rapidísimo! ¿Cuándo volamos?",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13236,11 +13236,11 @@
     }
   },
   {
-    "id": "inicio.hijo.despegar.bien",
-    "voz": "hijo",
+    "id": "inicio.ara.despegar.bien",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¡Estamos volando! ¡Mirá qué chiquitito se ve todo!",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13250,11 +13250,11 @@
     }
   },
   {
-    "id": "inicio.hijo.izquierda",
-    "voz": "hijo",
+    "id": "inicio.ara.izquierda",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¿Y cómo hago para doblar, mamá?",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13264,11 +13264,11 @@
     }
   },
   {
-    "id": "inicio.hijo.derecha",
-    "voz": "hijo",
+    "id": "inicio.ara.derecha",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "¡Ahora quiero para el otro lado!",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13278,11 +13278,11 @@
     }
   },
   {
-    "id": "inicio.hijo.nivelar",
-    "voz": "hijo",
+    "id": "inicio.ara.nivelar",
+    "voz": "ara",
     "idioma": "es-PY",
     "texto": "Mamá, ¿y cómo hago para ir derechito?",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
@@ -13292,11 +13292,11 @@
     }
   },
   {
-    "id": "inicio.hijo.fin",
-    "voz": "hijo",
+    "id": "inicio.ara.fin",
+    "voz": "ara",
     "idioma": "es-PY",
-    "texto": "¡Mamá, mamá, mirá! ¡Volé yo solito!",
-    "para": "el modo inicio: el hijo de Jazlyn pregunta",
+    "texto": "¡Mamá, mamá, mirá! ¡Volé yo, sin ayuda!",
+    "para": "el modo inicio: Ara pregunta",
     "ajustes": {
       "stability": 0.35,
       "similarity_boost": 0.8,
