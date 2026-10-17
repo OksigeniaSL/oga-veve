@@ -302,9 +302,20 @@ try {
         ]);
       };
       await page.evaluate(colocarDeFrente, PIE);
-      await page.waitForFunction(() => globalThis.__oga.tcas().resolucion !== null, null, {
-        timeout: 15000,
-      }).catch(() => {});
+      /*
+       * **Y se espera la de éste, no una cualquiera.** Los ocho de antes van
+       * quinientos pies por encima, y el de delante puede dejar puesta una
+       * maniobra —una preventiva, o la de bajar en que se convierte— que se
+       * retira en el ciclo siguiente, cuando ya no está. Esperando a «hay
+       * maniobra», la espera volvía en el acto con la vieja, se medía al
+       * retirarse y salía «orden null» a 1,2 millas: la regla de medir, no el
+       * TCAS.
+       */
+      await page.waitForFunction(
+        () => globalThis.__oga.tcas().resolucion?.id === "prueba:de-frente",
+        null,
+        { timeout: 15000 },
+      ).catch(() => {});
       await page.waitForTimeout(400);
       const ra = await page.evaluate(() => {
         const o = globalThis.__oga;

@@ -167,6 +167,13 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   page.on("requestfailed", (r) => pendientes.delete(r.url().replace(/^https?:\/\/[^/]+/, "")));
   await page.addInitScript(() => {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
+    /*
+     * Y un mando de juego de mentira, apagado hasta que se mida su tarjeta:
+     * el navegador sin ventana no tiene ninguno. Ver «la tarjeta del mando»,
+     * más abajo.
+     */
+    globalThis.__padFalso = null;
+    navigator.getGamepads = () => (globalThis.__padFalso ? [globalThis.__padFalso] : []);
   });
   /*
    * **Con el tiempo de casa, no con el del día.** Con el proxy del `.env`, el
@@ -1023,6 +1030,79 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         "la lámpara y la orden se leen juntas: «esperá a la luz» y la luz",
       );
   }
+
+  /*
+   * **Y la tarjeta del mando que se conecta**, con el dibujo del aparato que se
+   * reconoce: el HOTAS X en el reactor y el de consola en la avioneta, que así
+   * se miran los dos dibujos. Se enchufa uno de mentira y se mira lo que se
+   * miraría jugando: que sale su dibujo, entero en la pantalla, por delante y
+   * sin pisar el cuadro ni la columna de los mandos. Ver `Game.mostrarElMando`.
+   */
+  const mando = await page.evaluate(async (hotas) => {
+    const pisa = (a, b) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+    globalThis.__padFalso = {
+      id: hotas
+        ? "T.Flight Hotas X (Vendor: 044f Product: b108)"
+        : "Xbox 360 Controller (XInput STANDARD GAMEPAD)",
+      index: 0,
+      connected: true,
+      mapping: hotas ? "" : "standard",
+      timestamp: performance.now(),
+      axes: hotas ? [0, 0, 0, 0, 0, 0, 0] : [0, 0, 0, 0],
+      buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+    };
+    const quiero = hotas ? "mando-joystick" : "mando-consola";
+    let sale = false;
+    for (let i = 0; i < 40 && !sale; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      sale = globalThis.__oga.tarjeta().dibujo === quiero;
+    }
+    const senal = document.querySelector('[data-hud="senal"]');
+    const c = senal.getBoundingClientRect();
+    const dentro =
+      c.width > 2 && c.left >= 0 && c.top >= 0 && c.right <= innerWidth && c.bottom <= innerHeight;
+    const antes = senal.style.pointerEvents;
+    senal.style.pointerEvents = "auto";
+    const p = document.elementFromPoint(c.left + c.width / 2, c.top + c.height / 2);
+    senal.style.pointerEvents = antes;
+    const delante = !!p && (p === senal || senal.contains(p));
+    const dibujo = !!senal.querySelector('[data-hud="senal-dibujo"] svg');
+    const losas = document.querySelector('[data-hud="cuadro-tel"]');
+    const cuadro =
+      losas && losas.getBoundingClientRect().height > 0
+        ? losas
+        : document.querySelector('[data-hud="tablero"]');
+    const pisados = [cuadro, ...document.querySelectorAll(".hud__derecha > *")]
+      .filter(
+        (o) =>
+          o &&
+          !o.closest("[hidden]") &&
+          o.getBoundingClientRect().height > 2 &&
+          pisa(c, o.getBoundingClientRect()),
+      )
+      .map((o) => o.dataset.hud ?? String(o.className).slice(0, 24));
+    const texto = senal.querySelector('[data-hud="senal-texto"]')?.textContent ?? "";
+    globalThis.__padFalso = null;
+    return { sale, dentro, delante, dibujo, pisados, texto };
+  }, juego.avion !== "jaz-20");
+  comprobar(
+    `${donde}: al conectar un mando sale su dibujo, entero, por delante y sin pisar nada`,
+    mando.sale && mando.dibujo && mando.dentro && mando.delante && mando.pisados.length === 0,
+    !mando.sale
+      ? "no sale la tarjeta del mando"
+      : !mando.dibujo
+        ? "la tarjeta sale sin dibujo"
+        : !mando.dentro
+          ? "se sale de la pantalla"
+          : !mando.delante
+            ? "tapada"
+            : mando.pisados.length
+              ? `pisa ${mando.pisados.join(", ")}`
+              : `«${mando.texto || "solo el dibujo"}»`,
+    "«¿lo ha visto?»: el mando se reconoce por su nombre, y eso se enseña sin leer",
+  );
 
   /*
    * **Y el panel del final, con un vuelo detrás.** Sin vuelo no hay plano del

@@ -967,28 +967,31 @@ const NARIZ_ABAJO = icono(`
  * `Game.ordenDelTcas` y `flight/tcas.ts`.
  *
  * La franja es de dibujo y no de cifra: con el cero en medio y los dos mil
- * pies por minuto en los topes, que es donde caen las de verdad.
+ * pies por minuto en los topes, que es donde caen las de verdad. La del
+ * refuerzo, que pide dos mil quinientos, va con los topes en tres mil: lo
+ * verde se queda arriba del todo, y la flecha doble dice «más».
  */
 const RA_ARRIBA = 2.4;
 const RA_ABAJO = 21.6;
 const RA_CERO = 12;
-/** De ft/min a la altura de la barra del dibujo. */
-const enLaBarra = (fpm: number): number =>
-  +(RA_CERO - (Math.max(-2000, Math.min(2000, fpm)) / 2000) * (RA_ABAJO - RA_CERO)).toFixed(2);
-const tramoDeBarra = (clase: string, desde: number, hasta: number): string => {
-  const a = Math.min(enLaBarra(desde), enLaBarra(hasta));
-  const b = Math.max(enLaBarra(desde), enLaBarra(hasta));
+/** De ft/min a la altura de la barra del dibujo, con `tope` en los extremos. */
+const enLaBarra = (fpm: number, tope: number): number =>
+  +(RA_CERO - (Math.max(-tope, Math.min(tope, fpm)) / tope) * (RA_ABAJO - RA_CERO)).toFixed(2);
+const tramoDeBarra = (clase: string, desde: number, hasta: number, tope: number): string => {
+  const a = Math.min(enLaBarra(desde, tope), enLaBarra(hasta, tope));
+  const b = Math.max(enLaBarra(desde, tope), enLaBarra(hasta, tope));
   return `<rect class="${clase}" x="2.2" y="${a}" width="4" height="${+(b - a).toFixed(2)}" />`;
 };
 const maniobra = (
   rojo: readonly [number, number],
   verde: readonly [number, number] | null,
   otroAbajo: boolean,
-  flecha: "arriba" | "abajo" | "nivel" | null,
+  flecha: "arriba" | "abajo" | "nivel" | "arriba-mas" | "abajo-mas" | null,
+  tope = 2000,
 ): string =>
   icono(`
-    ${tramoDeBarra("senal__ra-rojo", rojo[0], rojo[1])}
-    ${verde ? tramoDeBarra("senal__ra-verde", verde[0], verde[1]) : ""}
+    ${tramoDeBarra("senal__ra-rojo", rojo[0], rojo[1], tope)}
+    ${verde ? tramoDeBarra("senal__ra-verde", verde[0], verde[1], tope) : ""}
     <rect x="2.2" y="${RA_ARRIBA}" width="4" height="${RA_ABAJO - RA_ARRIBA}" rx="0.6"
           fill="none" stroke="currentColor" stroke-width="0.9" />
     <path d="M1.2 ${RA_CERO} H7.2" stroke="currentColor" stroke-width="1" />
@@ -1000,6 +1003,14 @@ const maniobra = (
         : flecha === "abajo"
           ? `<path d="M14 15.6 V21.2 M11.8 19 L14 21.6 L16.2 19" fill="none" stroke="currentColor"
                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`
+          : flecha === "arriba-mas"
+            ? `<path d="M14 8.4 V2.8 M11.8 5 L14 2.4 L16.2 5 M11.8 8 L14 5.4 L16.2 8" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round" />`
+          : flecha === "abajo-mas"
+            ? `<path d="M14 15.6 V21.2 M11.8 19 L14 21.6 L16.2 19 M11.8 16 L14 18.6 L16.2 16"
+                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round" />`
           : flecha === "nivel"
             ? `<path d="M9 17.6 H16.6 M15 16 L16.8 17.6 L15 19.2" fill="none" stroke="currentColor"
                      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />`
@@ -1010,6 +1021,9 @@ const maniobra = (
 const RA = {
   "ra-sube": maniobra([-2000, 1500], [1500, 2000], true, "arriba"),
   "ra-baja": maniobra([-1500, 2000], [-2000, -1500], false, "abajo"),
+  // El refuerzo, a dos mil quinientos: ver `reforzarOInvertir` en `flight/tcas.ts`.
+  "ra-sube-mas": maniobra([-3000, 2500], [2500, 3000], true, "arriba-mas", 3000),
+  "ra-baja-mas": maniobra([-2500, 3000], [-3000, -2500], false, "abajo-mas", 3000),
   "ra-nivela-sube": maniobra([-2000, 0], [0, 300], true, "nivel"),
   "ra-nivela-baja": maniobra([0, 2000], [-300, 0], false, "nivel"),
   "ra-vigila-sube": maniobra([-2000, 0], null, true, null),
@@ -1391,6 +1405,34 @@ const AVES_SUBI = icono(`
 `);
 
 /**
+ * **El mando que se acaba de conectar, y cuál es**: el de consola o el
+ * joystick de vuelo. Es la respuesta, sin leer, a «¿lo ha visto?»: el juego
+ * reconoce el aparato por su nombre y lee cada uno con su reparto —ver
+ * `flight/mandos-fisicos.ts`—, y lo que se ve es eso mismo.
+ *
+ * - **El de consola**, de frente: el cuerpo con sus dos asas, la cruceta a la
+ *   izquierda y los botones a la derecha, que es como lo dibuja cualquiera.
+ * - **El joystick**, de lado: la base, el mango de pie con su gatillo y, a la
+ *   izquierda, la palanca de gases, que es lo que tiene un HOTAS y no tiene
+ *   un mando de consola —el nombre lo dice: *hands on throttle and stick*—.
+ */
+const MANDO_DE_CONSOLA = icono(`
+  <path d="M7 7h10a4.5 4.5 0 0 1 4.4 3.6l1.1 5.6a2.6 2.6 0 0 1-4.5 2.2L15.6 16H8.4L6 18.4
+           a2.6 2.6 0 0 1-4.5-2.2l1.1-5.6A4.5 4.5 0 0 1 7 7Z" />
+  <path class="senal__hueco" d="M6.3 9.6h1.4v1.3H9v1.4H7.7v1.3H6.3v-1.3H5v-1.4h1.3Z" />
+  <circle class="senal__hueco" cx="16.2" cy="12.4" r="1" />
+  <circle class="senal__hueco" cx="18.3" cy="10.5" r="1" />
+`);
+const MANDO_JOYSTICK = icono(`
+  <rect x="1" y="17.6" width="22" height="4.4" rx="1.2" />
+  <rect x="14.3" y="12" width="1.6" height="6" />
+  <rect x="12.6" y="2.6" width="5" height="10" rx="2.4" />
+  <rect x="11.4" y="6.2" width="1.6" height="2.6" rx="0.6" />
+  <rect x="3" y="14.4" width="5.4" height="3.6" rx="0.8" />
+  <rect x="4.6" y="8" width="2.2" height="6.8" rx="1.1" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -1400,6 +1442,8 @@ const AVES_SUBI = icono(`
  */
 export const DIBUJOS = {
   llave: LLAVE,
+  "mando-consola": MANDO_DE_CONSOLA,
+  "mando-joystick": MANDO_JOYSTICK,
   "pitot-tapado": PITOT_TAPADO,
   helice: HELICE,
   reactor: REACTOR,

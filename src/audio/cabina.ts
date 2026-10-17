@@ -154,10 +154,19 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    * «seventy knots»—, y en la flota no hay ningún Airbus: el JAZ 90 es de la
    * clase del E170 y el JAZ 120 de la del 747. Se quitaron sin grabarse.
    *
-   * Fuente: el FCOM del 747-400, NP *Landing Roll Procedure*. **El texto
-   * exacto está por verificar.** «No reverser» —la reversa pedida que no se
-   * abre— no está, porque el juego no tiene reversas que fallen. Ver
+   * Fuente: el FCOM del 747-400, NP *Landing Roll Procedure*, que no se ha
+   * leído: **el texto exacto del 747 sigue por verificar**. Lo que sí se ha
+   * leído es la cita del FCOM de Boeing —del 737— en el informe del NTSB
+   * DCA11IA047 (Chicago Midway, 2011): quien vigila dice «SPEED BRAKES UP» o
+   * «SPEED BRAKES NOT UP»; y el mismo informe dice que ese FCOM **no** pedía
+   * cantar las reversas. «Reversers normal» y «sixty knots» quedan, pues, por
+   * verificar en el del 747. «No reverser» —la reversa pedida que no se abre—
+   * no está, porque el juego no tiene reversas que fallen. Ver
    * `contarLaCarrera` en `game.ts`.
+   *
+   * Y el JAZ 90, de la clase del E170, solo dice «sixty knots», que es la
+   * única que canta quien vigila en la carrera de los E-Jets: ver `EMBRAER`
+   * más abajo.
    */
   "speedbrakes up": "cabina.speedbrakesUp",
   "speedbrakes not up": "cabina.speedbrakesNotUp",
@@ -177,17 +186,34 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
 export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
- * **Los cantos de la carrera de aterrizaje**, que no los dice cualquier
- * tripulación: cada fabricante tiene los suyos. Los dice quien vuela un avión
- * cuyo procedimiento los lleva —ver `cantosDeLaCarrera` en
+ * **Los cantos de la carrera de aterrizaje de cada familia**: no los dice
+ * cualquier tripulación, cada fabricante tiene los suyos. Los dice quien vuela
+ * un avión cuyo procedimiento los lleva —ver `cantosDeLaCarrera` en
  * `flight/aircraft.ts`—, y en los demás no suena ninguno.
+ *
+ * - **Boeing**, el *Landing Roll* del FCOM: los aerofrenos arriba o no, las
+ *   reversas en verde y los sesenta nudos. Ver `CLAVE_DE_CABINA`.
+ * - **Embraer**, los E-Jets: al tocar, quien vigila **mira** los aerofrenos y
+ *   las reversas sin cantarlos, y a los sesenta nudos canta «60 kts», que es
+ *   cuando quien vuela lleva la reversa al mínimo (y la cierra a los treinta).
+ *   Fuente: el resumen de formación del E190 de Christoph Regli (Helvetic
+ *   Airways, 16-09-2025, flite.ch), que remite al SOPM; leído en el documento.
+ *   **El SOPM de Embraer no se ha podido leer**: lo que diga, por verificar.
  */
-export const DE_LA_CARRERA: ReadonlySet<string> = new Set([
-  "cabina.speedbrakesUp",
-  "cabina.speedbrakesNotUp",
-  "cabina.reversersNormal",
-  "cabina.sixtyKnots",
-]);
+export const CANTOS_DE_LA_CARRERA: Readonly<Record<"boeing" | "embraer", ReadonlySet<string>>> = {
+  boeing: new Set([
+    "cabina.speedbrakesUp",
+    "cabina.speedbrakesNotUp",
+    "cabina.reversersNormal",
+    "cabina.sixtyKnots",
+  ]),
+  embraer: new Set(["cabina.sixtyKnots"]),
+};
+
+/** Todos los de la carrera, de cualquier familia. Ver `CANTOS_DE_LA_CARRERA`. */
+export const DE_LA_CARRERA: ReadonlySet<string> = new Set(
+  Object.values(CANTOS_DE_LA_CARRERA).flatMap((c) => [...c]),
+);
 
 /**
  * **La cuenta del radioaltímetro**, número a número: lo único de la cabina
@@ -268,10 +294,23 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
  * Mientras no estén en el pack no suenan, y no las dice nadie en su lugar: el
  * cuadrado rojo, la franja del variómetro y la tarjeta están siempre. Ver
  * `Game.ordenDelTcas` y `PENDIENTE-VOCES-radar.md`.
+ *
+ * **Y las del RA completo** —cruzar, mantener, reforzar e invertir— entraron
+ * igual, antes que su toma: la tabla 4 del folleto de la FAA, versión 7.1. Lo
+ * que falta para oírlas, en `PENDIENTE-VOCES-cabina-2.md`. «Maintain vertical
+ * speed, maintain» es la misma en los dos sentidos.
  */
 export const VOZ_DEL_RA: Readonly<Record<Orden | "libre", string>> = {
   climb: "cabina.climbClimb",
   descend: "cabina.descendDescend",
+  crossingClimb: "cabina.climbCrossingClimb",
+  crossingDescend: "cabina.descendCrossingDescend",
+  maintain: "cabina.maintainVerticalSpeed",
+  crossingMaintain: "cabina.maintainCrossingMaintain",
+  increaseClimb: "cabina.increaseClimb",
+  increaseDescent: "cabina.increaseDescent",
+  climbNow: "cabina.climbClimbNow",
+  descendNow: "cabina.descendDescendNow",
   levelOff: "cabina.levelOff",
   monitor: "cabina.monitorVerticalSpeed",
   libre: "cabina.clearOfConflict",
@@ -292,7 +331,7 @@ export interface EquipoDeCabina {
   readonly avisosHablados: boolean;
   readonly tcas: string | null;
   readonly presurizacion?: { readonly avisoHablado: boolean } | null;
-  readonly cantosDeLaCarrera?: "boeing" | null;
+  readonly cantosDeLaCarrera?: "boeing" | "embraer" | null;
 }
 
 /**
@@ -318,7 +357,8 @@ export function esDeUnaCaja(clave: string): boolean {
  * solo si las lleva. Ver `DE_LOS_AVISADORES`.
  */
 export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
-  if (DE_LA_CARRERA.has(clave)) return avion.cantosDeLaCarrera === "boeing";
+  if (DE_LA_CARRERA.has(clave))
+    return !!avion.cantosDeLaCarrera && CANTOS_DE_LA_CARRERA[avion.cantosDeLaCarrera].has(clave);
   if (clave === "cabina.traffic") return avion.tcas !== null;
   // La maniobra, solo el TCAS II: el TCAS I solo avisa. Ver `daLaManiobra`.
   if (DEL_RA.has(clave)) return avion.tcas === "TCAS II";

@@ -51,6 +51,14 @@ La caja nos pide subir para apartarnos del otro avión: subí con calma, hasta l
 La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde.
 La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.
 La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.
+La caja nos pide subir y pasar por la altura del otro avión, que va a quedar abajo: subí con calma, hasta la franja verde.
+La caja nos pide bajar y pasar por la altura del otro avión, que va a quedar arriba: bajá con calma, hasta la franja verde.
+La caja nos pide seguir como vamos, sin aflojar: la aguja, en la franja verde.
+La caja nos pide seguir como vamos, sin aflojar: vamos a pasar por la altura del otro avión. La aguja, en la franja verde.
+La caja nos pide subir más rápido: un poco más de nariz arriba, hasta la nueva franja verde.
+La caja nos pide bajar más rápido: un poco más de nariz abajo, hasta la nueva franja verde.
+La caja cambió la orden: ahora hay que subir. Subí ya, con calma, hasta la franja verde.
+La caja cambió la orden: ahora hay que bajar. Bajá ya, con calma, hasta la franja verde.
 Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.
 Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.
 Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.

@@ -52,18 +52,38 @@
  *   acercamiento, prefiriendo la que no cruza la altura del otro. Ver
  *   `elegirSentido`.
  * - **Cuánto**: si con lo que ya se hace basta, se pide que no se cambie
- *   —«monitor vertical speed»—; si basta con nivelar, «level off»; y si no,
- *   subir o bajar. Ver `ordenPara`.
+ *   —«monitor vertical speed»—; si basta con nivelar, «level off»; si ya se
+ *   sube o se baja a mil quinientos o más, que no se afloje —«maintain
+ *   vertical speed, maintain»—; y si no, subir o bajar. Y si el sentido pasa
+ *   por la altura del otro, la orden lo dice: «climb, crossing climb». Ver
+ *   `ordenPara`.
+ * - **Y lo que cambia por el camino**: si el otro maniobra hacia nosotros y lo
+ *   pedido ya no basta, se refuerza —una preventiva pasa a «climb, climb»;
+ *   una de subir, a «increase climb», a dos mil quinientos— o, si ni así, se
+ *   invierte una vez —«climb, climb NOW»—. Ver `reforzarOInvertir`.
  * - **Y cuándo se acaba**: al quedar asegurada la separación, la orden de
  *   subir o bajar se afloja a nivelar, y al alejarse el otro, «clear of
  *   conflict». Ver `Tcas.resolver`.
  *
- * Lo que este RA **no** hace, y queda escrito en `PENDIENTE-VOCES-radar.md`:
- * reforzar la orden si el otro maniobra hacia nosotros («increase climb»),
- * invertirla («climb, climb NOW»), coordinarse con el TCAS del otro y decir
- * «crossing» cuando el sentido cruza su altura. Un RA contra un solo tráfico,
- * que es casi todo RA de verdad: si aparece un segundo con el primero puesto,
- * se le avisa de tráfico y se espera.
+ * Los anuncios y sus franjas son los de las tablas 3 y 4 del folleto de la
+ * FAA, leídas en el documento; la inversión a mil quinientos y en dos segundos
+ * y medio, del folleto de EUROCONTROL *TCAS II version 7.1 — Overview for
+ * pilots* (2012) y de su *ACAS II Bulletin* 13, *Reversing to resolve* (2011),
+ * leído en la copia de IFALPA (12ATSBL05). Lo que no está en ellos va marcado
+ * «por verificar» donde se usa.
+ *
+ * Lo que este RA **no** hace, y queda escrito en `PENDIENTE-VOCES-cabina-2.md`:
+ *
+ * - **Coordinarse con el TCAS del otro.** Dos TCAS II se reparten los sentidos
+ *   por el enlace Mode S, y el otro maniobra al revés que tú. Aquí el tráfico
+ *   no lleva TCAS ni maniobra por él: su vuelo lo lleva `world/trafico.ts`, y
+ *   una orden coordinada que el otro no cumple enseñaría algo falso.
+ * - **Más de un tráfico a la vez.** Un RA contra un solo tráfico, que es casi
+ *   todo RA de verdad: si aparece un segundo con el primero puesto, se le
+ *   avisa de tráfico y se espera. Las órdenes de varios —«don't climb» y
+ *   «don't descend» juntas— piden otra franja y otra tarjeta.
+ * - **Volver a reforzar una aflojada.** Una de subir aflojada a «level off» se
+ *   queda así hasta el final, aunque el otro vuelva a acercarse.
  *
  * El TCAS I del turbohélice no tiene nada de esto: solo avisa.
  *
@@ -325,9 +345,24 @@ export function distanciaDeCruce(
 export type Sentido = "sube" | "baja";
 
 /**
- * **Lo que pide la maniobra**, con el nombre de la voz que lo dice:
+ * **Lo que pide la maniobra**, con el nombre de la voz que lo dice. Los
+ * anuncios son los de la versión 7.1 en la tabla 4 del folleto de la FAA, y
+ * los ritmos, los de su tabla 3:
  *
- * - `climb`, `descend`: subir o bajar a mil quinientos pies por minuto.
+ * - `climb`, `descend`: subir o bajar a mil quinientos pies por minuto, con lo
+ *   verde hasta dos mil. «Climb, climb»; «descend, descend».
+ * - `crossingClimb`, `crossingDescend`: lo mismo, pero el sentido pasa por la
+ *   altura del otro. «Climb, crossing climb; climb, crossing climb»: la
+ *   palabra solo avisa de que se va a cruzar su altura, y se vuela igual. Ver
+ *   `cruzaSuAltura`.
+ * - `maintain`, `crossingMaintain`: ya se sube o se baja a mil quinientos o
+ *   más y basta con no aflojar, con lo verde hasta cuatro mil cuatrocientos.
+ *   «Maintain vertical speed, maintain», igual en los dos sentidos, y
+ *   «maintain vertical speed, crossing maintain» si se cruza su altura.
+ * - `increaseClimb`, `increaseDescent`: **el refuerzo**, a dos mil quinientos.
+ *   «Increase climb, increase climb». Solo detrás de una de subir o bajar.
+ * - `climbNow`, `descendNow`: **la inversión**, el sentido al revés a mil
+ *   quinientos, una vez por encuentro. «Climb, climb NOW; climb, climb NOW».
  * - `levelOff`: dejar de subir o de bajar, a cero. Es la de la versión 7.1, que
  *   sustituyó a «adjust vertical speed» porque se respondía subiendo más; sale
  *   de entrada o al aflojar una de subir o bajar (EUROCONTROL, *TCAS II
@@ -335,7 +370,49 @@ export type Sentido = "sube" | "baja";
  * - `monitor`: con lo que se hace ya basta, y lo que se pide es no meterse en
  *   lo rojo. Es la maniobra preventiva: no pide mover nada.
  */
-export type Orden = "climb" | "descend" | "levelOff" | "monitor";
+export type Orden =
+  | "climb"
+  | "descend"
+  | "crossingClimb"
+  | "crossingDescend"
+  | "maintain"
+  | "crossingMaintain"
+  | "increaseClimb"
+  | "increaseDescent"
+  | "climbNow"
+  | "descendNow"
+  | "levelOff"
+  | "monitor";
+
+/**
+ * Si la orden pide subir o bajar —es **positiva**, en la palabra del
+ * folleto—, y no solo quedarse fuera de lo rojo.
+ */
+export function esPositiva(orden: Orden): boolean {
+  return orden !== "levelOff" && orden !== "monitor";
+}
+
+/** Si es de las que vienen detrás, con su respuesta más corta. Ver `RESPUESTA_A_LA_SEGUNDA`. */
+function esDeLasDeDetras(orden: Orden): boolean {
+  return (
+    orden === "increaseClimb" ||
+    orden === "increaseDescent" ||
+    orden === "climbNow" ||
+    orden === "descendNow"
+  );
+}
+
+/**
+ * **El ritmo que pide la orden**, en pies por minuto y sin signo: el que se
+ * escribe en la tarjeta. `null` en las que no piden uno —mantener lo que se
+ * lleva, o quedarse fuera de lo rojo—.
+ */
+export function ritmoQuePide(orden: Orden): number | null {
+  if (orden === "increaseClimb" || orden === "increaseDescent") return RITMO_DEL_REFUERZO;
+  if (orden === "maintain" || orden === "crossingMaintain" || orden === "monitor") return null;
+  if (orden === "levelOff") return 0;
+  return RITMO_DE_LA_MANIOBRA;
+}
 
 /**
  * **La franja del variómetro**, en pies por minuto: lo rojo, los ritmos que no
@@ -360,7 +437,8 @@ export interface Resolucion {
 /** Lo que cambia del RA en un paso. Ver `Tcas.cambiosDelRa`. */
 export interface CambioDelRa {
   /**
-   * `orden`: una nueva, de entrada o al aflojar. `libre`: el otro ya se aleja,
+   * `orden`: una nueva, de entrada, al aflojar, al reforzar o al invertir.
+   * `libre`: el otro ya se aleja,
    * «clear of conflict». `retirada`: se quita sin decir nada, porque el TCAS
    * deja de dar maniobras —por debajo de mil pies, con el terreno avisando, el
    * otro posado o perdido—.
@@ -385,6 +463,48 @@ export const RITMO_DE_LA_MANIOBRA = 1500;
 const RITMO = RITMO_DE_LA_MANIOBRA / 60;
 
 /**
+ * **Y las que vienen detrás** —el refuerzo y la inversión— se esperan antes y
+ * más fuertes: a los dos segundos y medio, con 0,35 g. Folleto de la FAA, en
+ * la nota de la versión 7.0 («0.35 g … within 2.5 seconds for subsequent
+ * RAs») y en lo que se espera del piloto («1/3 g within 2 1/2 seconds», para
+ * «an increase or reversal RA»).
+ */
+export const RESPUESTA_A_LA_SEGUNDA = 2.5;
+const ACELERACION_A_LA_SEGUNDA = (0.35 * 9.80665) / PIE;
+
+/**
+ * El ritmo del refuerzo, ft/min: dos mil quinientos. El folleto de la FAA lo
+ * pone en su figura 19 —de los mil quinientos de «descend» a dos mil
+ * quinientos— y el boletín 13 de EUROCONTROL, en su tercer suceso.
+ */
+export const RITMO_DEL_REFUERZO = 2500;
+
+/**
+ * Hasta dónde llega lo verde de mantener, ft/min: cuatro mil cuatrocientos.
+ * Es el tope de la tabla 3 para «maintain climb» y «maintain descend», y el
+ * folleto lo explica: hay variómetros que no pintan más, así que la versión
+ * 7.0 no da ninguna de mantener por encima y ensaya el menor de los dos, el
+ * ritmo propio o éste.
+ */
+export const TOPE_DE_MANTENER = 4400;
+
+/**
+ * Por debajo de esto, sobre el suelo, no se refuerza la bajada, ft: mil
+ * cuatrocientos cincuenta. Folleto de la FAA, junto a los mil cien de no
+ * pedir bajar y los mil de no dar RA.
+ */
+export const SIN_REFUERZO_DE_BAJADA_POR_DEBAJO = 1450;
+
+/**
+ * **Desde cuánto se cruza su altura**, ft: la orden de subir es *crossing* si
+ * ahora se va al menos cien pies por debajo del otro, y la de bajar, cien por
+ * encima. El folleto de la FAA solo dice que el sentido pasa por la altura del
+ * otro; los cien pies son la definición de RA de cruce del Anexo 10 de la
+ * OACI, volumen IV, **de memoria y por verificar**. Ver `cruzaSuAltura`.
+ */
+export const CRUZA_DESDE = 100;
+
+/**
  * Por debajo de esto, sobre el suelo, no hay RA, ft. Mil, con cien de
  * tolerancia (EUROCONTROL, en SKYbrary, *TCAS II RA at Very Low Altitude*).
  * Uno puesto se aguanta hasta `SE_RETIRA_POR_DEBAJO`, que es esa tolerancia:
@@ -403,29 +523,74 @@ export const SIN_BAJAR_POR_DEBAJO = 1100;
 
 /**
  * **Lo que se ha movido en vertical en `t` segundos** quien empieza a
- * `vo` ft/s y, pasado `RESPUESTA`, acelera con un cuarto de g hasta
- * `objetivo` ft/s. ft.
+ * `vo` ft/s y, pasados `retardo` segundos —`RESPUESTA` si no se dice—,
+ * acelera con `aceleracion` —un cuarto de g— hasta `objetivo` ft/s. ft.
  */
 export function desplazamientoConManiobra(
   vo: number,
   objetivo: number,
   t: number,
+  retardo = RESPUESTA,
+  aceleracion = ACELERACION,
 ): number {
-  const antes = Math.min(t, RESPUESTA);
+  const antes = Math.min(t, Math.max(0, retardo));
   const d = vo * antes;
   const resto = t - antes;
   if (resto <= 0) return d;
   const dv = objetivo - vo;
   const s = Math.sign(dv);
-  const acelerando = Math.abs(dv) / ACELERACION;
+  const acelerando = Math.abs(dv) / aceleracion;
   if (resto <= acelerando)
-    return d + vo * resto + 0.5 * s * ACELERACION * resto * resto;
+    return d + vo * resto + 0.5 * s * aceleracion * resto * resto;
   return (
     d +
     vo * acelerando +
-    0.5 * s * ACELERACION * acelerando * acelerando +
+    0.5 * s * aceleracion * acelerando * acelerando +
     objetivo * (resto - acelerando)
   );
+}
+
+/**
+ * **Cuánto queda entre los dos al máximo acercamiento**, del lado de la
+ * maniobra, ft: positivo si se queda donde se quería —por encima del otro al
+ * subir, por debajo al bajar—, negativo si no. Con el piloto de
+ * `desplazamientoConManiobra` y el otro siguiendo como va.
+ *
+ * `a` es su altura menos la mía; `vo`, `vi` y `objetivo`, ft/s; `t`, los
+ * segundos hasta el máximo acercamiento.
+ */
+export function separacionAlCruce(
+  sentido: Sentido,
+  a: number,
+  vo: number,
+  vi: number,
+  t: number,
+  objetivo: number,
+  retardo = RESPUESTA,
+  aceleracion = ACELERACION,
+): number {
+  const mio = desplazamientoConManiobra(vo, objetivo, t, retardo, aceleracion);
+  const suyo = a + vi * t;
+  return sentido === "sube" ? mio - suyo : suyo - mio;
+}
+
+/**
+ * El ritmo que se ensaya para elegir el sentido, ft/s: mil quinientos, o el
+ * que ya se lleve si es más, hasta el tope de mantener. Ver `TOPE_DE_MANTENER`.
+ */
+function ritmoEnsayado(sentido: Sentido, vo: number): number {
+  const tope = TOPE_DE_MANTENER / 60;
+  return sentido === "sube"
+    ? Math.min(Math.max(vo, RITMO), tope)
+    : Math.max(Math.min(vo, -RITMO), -tope);
+}
+
+/**
+ * **Si ese sentido pasa por la altura del otro**: subir con él por encima, o
+ * bajar con él por debajo, por al menos `CRUZA_DESDE`.
+ */
+export function cruzaSuAltura(sentido: Sentido, a: number): boolean {
+  return sentido === "sube" ? a >= CRUZA_DESDE : a <= -CRUZA_DESDE;
 }
 
 /**
@@ -436,9 +601,11 @@ export function desplazamientoConManiobra(
  * se mira cuánto queda entre los dos en el punto de máximo acercamiento:
  * gana la que deja más. **Salvo que la que no cruza su altura ya llegue a
  * ALIM**, que entonces gana ella aunque la otra deje más: cruzar la altura de
- * un avión que se acerca es lo último que se le pide a nadie (folleto de la
- * FAA, la selección del sentido; de memoria, por verificar la redacción
- * exacta). Y pegado al suelo, nunca bajar. Ver `SIN_BAJAR_POR_DEBAJO`.
+ * un avión que se acerca es lo último que se le pide a nadie. Está así en el
+ * folleto de la FAA, comprobado: «If the non-altitude crossing sense provides
+ * at least ALIM feet of separation at CPA, this sense will be selected even if
+ * the altitude crossing sense provides greater separation». Y pegado al
+ * suelo, nunca bajar. Ver `SIN_BAJAR_POR_DEBAJO`.
  *
  * `a` es su altura menos la mía, ft; `vo` y `vi` los ritmos, mío y suyo,
  * ft/s; `t`, los segundos hasta el máximo acercamiento.
@@ -452,10 +619,8 @@ export function elegirSentido(
   sobreElSueloPies: number,
 ): Sentido {
   if (sobreElSueloPies < SIN_BAJAR_POR_DEBAJO) return "sube";
-  const subiendo =
-    -a + desplazamientoConManiobra(vo, Math.max(vo, RITMO), t) - vi * t;
-  const bajando =
-    a + vi * t - desplazamientoConManiobra(vo, Math.min(vo, -RITMO), t);
+  const subiendo = separacionAlCruce("sube", a, vo, vi, t, ritmoEnsayado("sube", vo));
+  const bajando = separacionAlCruce("baja", a, vo, vi, t, ritmoEnsayado("baja", vo));
   // Subir cruza si el otro está por encima; bajar, si está por debajo.
   const sinCruzar: Sentido | null = a > 0 ? "baja" : a < 0 ? "sube" : null;
   if (sinCruzar && (sinCruzar === "sube" ? subiendo : bajando) >= alim)
@@ -480,8 +645,8 @@ export function ritmoQueBasta(
 
 /**
  * Los límites de la maniobra preventiva, ft/min: no bajar —o no subir— más
- * deprisa que esto. Son los de la familia de «don't descend» del TCAS II
- * (de memoria, por verificar contra la tabla de RA del folleto de la FAA).
+ * deprisa que esto. Son los de «do not descend» y «do not climb» de la tabla 3
+ * del folleto de la FAA: cero, quinientos, mil y dos mil, comprobados.
  */
 const LIMITES_PREVENTIVOS = [2000, 1000, 500, 0] as const;
 
@@ -489,14 +654,22 @@ const LIMITES_PREVENTIVOS = [2000, 1000, 500, 0] as const;
 const FONDO = 9999;
 
 /**
- * Lo verde de mil quinientos a dos mil al subir o bajar (de memoria, por
- * verificar contra una pantalla de vuelo concreta), y de cero a doscientos
- * hacia el lado que aparta al nivelar: el folleto de EUROCONTROL solo dice
- * «0 ft/min» y advierte de que sus pantallas son genéricas, así que el ancho
- * es de presentación.
+ * Lo verde de mil quinientos a dos mil al subir o bajar, que es lo de la
+ * tabla 3 del folleto de la FAA para «climb» y «crossing climb», comprobado;
+ * y de cero a doscientos hacia el lado que aparta al nivelar: el folleto de
+ * EUROCONTROL solo dice «0 ft/min» y advierte de que sus pantallas son
+ * genéricas, así que el ancho es de presentación.
  */
 const VERDE_HASTA = 2000;
 const VERDE_AL_NIVELAR = 200;
+
+/**
+ * Y lo verde del refuerzo, de dos mil quinientos a tres mil. Los dos mil
+ * quinientos están en el folleto de la FAA; **el tope de arriba no** —la
+ * tabla 3 es solo de las órdenes de entrada—, así que es de presentación, el
+ * mismo ancho que el de subir, y **por verificar**.
+ */
+const VERDE_DEL_REFUERZO_HASTA = 3000;
 
 /**
  * **Qué se pide, y con qué franja**, para ese sentido.
@@ -507,14 +680,20 @@ const VERDE_AL_NIVELAR = 200;
  *   hace ya basta: `monitor`, con lo rojo desde el límite preventivo más
  *   holgado que sigue bastando.
  * - Si basta con no bajar pero ahora se baja de más: `levelOff`, a cero.
+ * - Si hace falta subir y ya se sube a mil quinientos o más: `maintain`, que
+ *   no se afloje. Es la que hay en la tabla 3 para quien ya va así; pedirle
+ *   «climb» con lo verde hasta dos mil a quien sube a tres mil sería pedirle
+ *   que subiera menos.
  * - Y si hace falta subir: `climb`, a mil quinientos.
  *
- * Bajando, lo mismo del revés.
+ * Y si subir pasa por la altura del otro —`cruza`, ver `cruzaSuAltura`—, las
+ * dos de subir son las de *crossing*. Bajando, todo lo mismo del revés.
  */
 export function ordenPara(
   sentido: Sentido,
   vo: number,
   basta: number,
+  cruza = false,
 ): { readonly orden: Orden; readonly franja: Franja } {
   const s = sentido === "sube" ? 1 : -1;
   // Todo en «hacia arriba» del sentido: subiendo como viene, bajando del revés.
@@ -529,12 +708,37 @@ export function ordenPara(
       };
     return { orden: "levelOff", franja: franjaAlNivelar(sentido) };
   }
+  if (voF >= RITMO_DE_LA_MANIOBRA)
+    return { orden: cruza ? "crossingMaintain" : "maintain", franja: franjaDe("maintain", sentido) };
+  const orden: Orden =
+    sentido === "sube"
+      ? cruza
+        ? "crossingClimb"
+        : "climb"
+      : cruza
+        ? "crossingDescend"
+        : "descend";
+  return { orden, franja: franjaDe(orden, sentido) };
+}
+
+/**
+ * **La franja de una orden positiva** —las de subir o bajar, mantener,
+ * reforzar e invertir— en su sentido: lo rojo hasta el ritmo que se pide y lo
+ * verde de ahí hasta su tope. Las de nivelar y la preventiva llevan la suya:
+ * ver `franjaAlNivelar` y `ordenPara`.
+ */
+export function franjaDe(orden: Orden, sentido: Sentido): Franja {
+  const s = sentido === "sube" ? 1 : -1;
+  if (orden === "levelOff") return franjaAlNivelar(sentido);
+  const [desde, hasta] =
+    orden === "increaseClimb" || orden === "increaseDescent"
+      ? [RITMO_DEL_REFUERZO, VERDE_DEL_REFUERZO_HASTA]
+      : orden === "maintain" || orden === "crossingMaintain"
+        ? [RITMO_DE_LA_MANIOBRA, TOPE_DE_MANTENER]
+        : [RITMO_DE_LA_MANIOBRA, VERDE_HASTA];
   return {
-    orden: sentido === "sube" ? "climb" : "descend",
-    franja: {
-      rojo: [tramoDelSentido(s, -FONDO, RITMO_DE_LA_MANIOBRA)],
-      verde: tramoDelSentido(s, RITMO_DE_LA_MANIOBRA, VERDE_HASTA),
-    },
+    rojo: [tramoDelSentido(s, -FONDO, desde)],
+    verde: tramoDelSentido(s, desde, hasta),
   };
 }
 
@@ -554,6 +758,145 @@ export function franjaAlNivelar(sentido: Sentido): Franja {
     rojo: [tramoDelSentido(s, -FONDO, 0)],
     verde: tramoDelSentido(s, 0, VERDE_AL_NIVELAR),
   };
+}
+
+/** Lo que hace falta saber para reforzar o invertir una orden puesta. */
+export interface OrdenPuesta {
+  readonly orden: Orden;
+  readonly sentido: Sentido;
+  /** Su altura menos la mía, ft. */
+  readonly a: number;
+  /** Mi ritmo y el suyo, ft/s. */
+  readonly vo: number;
+  readonly vi: number;
+  /** Segundos hasta el máximo acercamiento. */
+  readonly t: number;
+  /** La separación que se busca, ft. Ver `UmbralesDeResolucion`. */
+  readonly alim: number;
+  /** Radioaltímetro, ft. */
+  readonly sobreElSuelo: number;
+  /** Segundos desde que se dio la orden puesta. */
+  readonly desdeLaOrden: number;
+  /** Si ya se invirtió una vez en este encuentro. */
+  readonly invertida: boolean;
+}
+
+/**
+ * **Si lo pedido ya no basta, qué se pide ahora**: el refuerzo, la inversión
+ * o nada.
+ *
+ * Es lo de *Strengthening Advisories* y *Sense Reversals* del folleto de la
+ * FAA: si el otro maniobra de forma que lo pedido deja de dar ALIM al máximo
+ * acercamiento, una de subir o bajar se refuerza a dos mil quinientos o se
+ * invierte. Aquí, en este orden:
+ *
+ * 1. **Si lo pedido basta**, nada. Se ensaya como lo ensaya el TCAS: con el
+ *    piloto que todavía no ha tenido tiempo de responder respondiendo a su
+ *    hora, y con el que ya lo tuvo, desde lo que hace ahora.
+ * 2. **Si reforzar basta, se refuerza.** Solo una de subir o bajar —«an
+ *    Increase Climb/Descent RA can only be issued after a Climb/Descend RA»—,
+ *    una vez, y la de bajar no por debajo de `SIN_REFUERZO_DE_BAJADA_POR_DEBAJO`.
+ *    Detrás de «maintain» también: es de subir o bajar, pero el folleto no lo
+ *    nombra, **por verificar**.
+ * 3. **Si no, y el sentido contrario basta, se invierte**: a mil quinientos,
+ *    una sola vez por encuentro —«only one sense reversal can occur per
+ *    conflict», boletín 13—, y nunca hacia abajo por debajo de
+ *    `SIN_BAJAR_POR_DEBAJO`. La inversión no dice *crossing*: su anuncio es
+ *    otro, «climb, climb NOW».
+ * 4. **Y si nada basta, se refuerza igual** si deja más que lo de ahora: lo
+ *    mejor que hay, aunque no llegue.
+ *
+ * Lo de la versión 7.1 que reconoce «la persecución vertical» —los dos a menos
+ * de cien pies, uno sin responder— cae dentro del paso 3: el otro bajando
+ * contigo hace que bajar no baste y subir sí.
+ *
+ * Y también refuerza si quien no responde es uno mismo: lo pedido, ensayado
+ * desde lo que se hace ahora, deja de bastar. El folleto solo nombra al otro
+ * que maniobra; que el TCAS lo haga igual con el propio piloto quieto queda
+ * **por verificar**.
+ *
+ * Las preventivas de entrada —«monitor vertical speed», «level off»— no se
+ * refuerzan a dos mil quinientos: pasan a la de subir o bajar. Ver dentro.
+ */
+export function reforzarOInvertir(
+  p: OrdenPuesta,
+): { readonly orden: Orden; readonly sentido: Sentido } | null {
+  const s = p.sentido === "sube" ? 1 : -1;
+  if (!esPositiva(p.orden)) {
+    /*
+     * **Una preventiva que deja de bastar pasa a ser de subir o bajar**, en su
+     * sentido: «A VSL is strengthened by changing to a more restrictive VSL or
+     * to a positive Climb or Descend RA», en el folleto de la FAA. Aquí, sin
+     * el paso por una más estrecha: directamente a la positiva, la que daría
+     * `ordenPara` ahora. Y la de bajar, no pegado al suelo.
+     *
+     * Y con la misma cuenta con que nació: deja de bastar cuando nivelado ya
+     * no se llega a ALIM —`ritmoQueBasta` pide subir, o bajar—, que es lo
+     * contrario de lo que la hizo preventiva. Ensayada con los cinco segundos
+     * de respuesta, una «level off» a quien baja deprisa pasaba a «climb» al
+     * segundo siguiente sin que hubiera cambiado nada.
+     */
+    const basta = s * ritmoQueBasta(p.sentido, p.a, p.vi, p.t, p.alim);
+    if (basta <= 0) return null;
+    if (p.sentido === "baja" && p.sobreElSuelo < SIN_BAJAR_POR_DEBAJO) return null;
+    const { orden } = ordenPara(p.sentido, p.vo, s * basta, cruzaSuAltura(p.sentido, p.a));
+    return { orden, sentido: p.sentido };
+  }
+  const deDetras = esDeLasDeDetras(p.orden);
+  const objetivo =
+    p.orden === "increaseClimb" || p.orden === "increaseDescent"
+      ? (s * RITMO_DEL_REFUERZO) / 60
+      : p.orden === "maintain" || p.orden === "crossingMaintain"
+        ? ritmoEnsayado(p.sentido, p.vo)
+        : (s * RITMO_DE_LA_MANIOBRA) / 60;
+  const ahora = separacionAlCruce(
+    p.sentido,
+    p.a,
+    p.vo,
+    p.vi,
+    p.t,
+    objetivo,
+    (deDetras ? RESPUESTA_A_LA_SEGUNDA : RESPUESTA) - p.desdeLaOrden,
+    deDetras ? ACELERACION_A_LA_SEGUNDA : ACELERACION,
+  );
+  if (ahora >= p.alim) return null;
+  const yaReforzada = p.orden === "increaseClimb" || p.orden === "increaseDescent";
+  const reforzada =
+    !yaReforzada && (p.sentido === "sube" || p.sobreElSuelo >= SIN_REFUERZO_DE_BAJADA_POR_DEBAJO)
+      ? separacionAlCruce(
+          p.sentido,
+          p.a,
+          p.vo,
+          p.vi,
+          p.t,
+          (s * RITMO_DEL_REFUERZO) / 60,
+          RESPUESTA_A_LA_SEGUNDA,
+          ACELERACION_A_LA_SEGUNDA,
+        )
+      : null;
+  const reforzar = {
+    orden: (p.sentido === "sube" ? "increaseClimb" : "increaseDescent") as Orden,
+    sentido: p.sentido,
+  };
+  if (reforzada !== null && reforzada >= p.alim) return reforzar;
+  const otro: Sentido = p.sentido === "sube" ? "baja" : "sube";
+  const invertida =
+    !p.invertida && (otro === "sube" || p.sobreElSuelo >= SIN_BAJAR_POR_DEBAJO)
+      ? separacionAlCruce(
+          otro,
+          p.a,
+          p.vo,
+          p.vi,
+          p.t,
+          (-s * RITMO_DE_LA_MANIOBRA) / 60,
+          RESPUESTA_A_LA_SEGUNDA,
+          ACELERACION_A_LA_SEGUNDA,
+        )
+      : null;
+  if (invertida !== null && invertida >= p.alim)
+    return { orden: otro === "sube" ? "climbNow" : "descendNow", sentido: otro };
+  if (reforzada !== null && reforzada > ahora) return reforzar;
+  return null;
 }
 
 /**
@@ -808,11 +1151,14 @@ export class Tcas {
   /** La maniobra puesta, si hay una. Ver `resolver`. */
   private ra: Resolucion | null = null;
   /**
-   * Si la de ahora ya no se va a aflojar: una de subir o bajar se afloja a
-   * nivelar una vez, y la de nivelar y la preventiva ya nacen así. Ver
-   * `resolver`.
+   * Si la de ahora ya no va a cambiar: una de subir o bajar se afloja a
+   * nivelar una vez, y ésa se queda hasta el final. Ver `resolver`.
    */
   private aflojada = false;
+  /** Segundos desde que se dio la orden puesta. Ver `reforzarOInvertir`. */
+  private desdeLaOrden = 0;
+  /** Si ya se invirtió en este encuentro: una vez, como mucho. */
+  private invertida = false;
   /** Lo que ha cambiado del RA en este paso. Ver `cambiosDelRa`. */
   private cambios: CambioDelRa[] = [];
   /** Si da maniobras: TCAS II, en marcha y con el selector en TA/RA. */
@@ -886,6 +1232,7 @@ export class Tcas {
     // Y la maniobra, sin decir nada: el vuelo en que estaba ya no existe.
     this.ra = null;
     this.aflojada = false;
+    this.invertida = false;
     this.cambios = [];
   }
 
@@ -1032,12 +1379,14 @@ export class Tcas {
    *   `ordenPara`.
    * - Con uno puesto, contra ése y nadie más: si ya se aleja y no la pide,
    *   «clear of conflict»; si la separación ya está asegurada nivelando, la
-   *   de subir o bajar se afloja a `levelOff`, una vez; y si se deja de poder
-   *   dar maniobras —por debajo de mil pies, el terreno sonando, el otro
-   *   posado o perdido—, se retira sin decir nada.
+   *   de subir o bajar se afloja a `levelOff`, una vez; si lo pedido ya no
+   *   basta, se refuerza o se invierte —ver `reforzarOInvertir`—; y si se
+   *   deja de poder dar maniobras —por debajo de mil pies, el terreno sonando,
+   *   el otro posado o perdido—, se retira sin decir nada.
    *
    * Se quita solo con lo que cambia de verdad: que el otro se aleje, que se
-   * baje, que suene el terreno. No hay reloj que rearme ni que retire.
+   * baje, que suene el terreno. No hay reloj que rearme ni que retire: el de
+   * `desdeLaOrden` solo dice si al piloto le ha dado tiempo a responder.
    */
   private resolver(
     yo: Propio,
@@ -1082,17 +1431,37 @@ export class Tcas {
         return;
       }
       if (this.aflojada) return;
-      const basta = ritmoQueBasta(puesta.sentido, g.a, g.vIntruso, hastaElCruce(g), u.alim);
+      this.desdeLaOrden += CICLO;
+      const t = hastaElCruce(g);
+      const basta = ritmoQueBasta(puesta.sentido, g.a, g.vIntruso, t, u.alim);
       const nivelarBasta = puesta.sentido === "sube" ? basta <= 0 : basta >= 0;
-      const yaNoSeBaja =
-        puesta.orden === "descend" && sobreElSuelo < SIN_BAJAR_POR_DEBAJO;
-      if (nivelarBasta || yaNoSeBaja) {
+      // Cualquier orden de bajar, también reforzada o invertida.
+      const yaNoSeBaja = puesta.sentido === "baja" && sobreElSuelo < SIN_BAJAR_POR_DEBAJO;
+      // Se afloja lo que pide subir o bajar; la preventiva ya nace floja.
+      if (esPositiva(puesta.orden) && (nivelarBasta || yaNoSeBaja)) {
         this.aflojada = true;
         this.poner({
           ...puesta,
           orden: "levelOff",
           franja: franjaAlNivelar(puesta.sentido),
         });
+        return;
+      }
+      const otra = reforzarOInvertir({
+        orden: puesta.orden,
+        sentido: puesta.sentido,
+        a: g.a,
+        vo,
+        vi: g.vIntruso,
+        t,
+        alim: u.alim,
+        sobreElSuelo,
+        desdeLaOrden: this.desdeLaOrden,
+        invertida: this.invertida,
+      });
+      if (otra) {
+        if (otra.sentido !== puesta.sentido) this.invertida = true;
+        this.poner({ id: puesta.id, ...otra, franja: franjaDe(otra.orden, otra.sentido) });
       }
       return;
     }
@@ -1109,14 +1478,18 @@ export class Tcas {
       sentido,
       vo,
       ritmoQueBasta(sentido, g.a, g.vIntruso, t, u.alim),
+      cruzaSuAltura(sentido, g.a),
     );
-    this.aflojada = orden !== "climb" && orden !== "descend";
+    // Ninguna nace aflojada: la preventiva también puede pasar a positiva.
+    this.aflojada = false;
+    this.invertida = false;
     this.resolucionesDadas += 1;
     this.poner({ id, sentido, orden, franja });
   }
 
   private poner(r: Resolucion): void {
     this.ra = r;
+    this.desdeLaOrden = 0;
     this.cambios.push({ que: "orden", resolucion: r });
   }
 
@@ -1125,6 +1498,7 @@ export class Tcas {
     if (!r) return;
     this.ra = null;
     this.aflojada = false;
+    this.invertida = false;
     this.cambios.push({ que, resolucion: r });
   }
 

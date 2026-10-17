@@ -171,6 +171,12 @@ export const ES_PY = {
   "tutor.mandoConectado": "Mando conectado: podés volar con él.",
   "tutor.joystickConectado": "Joystick conectado: podés volar con él.",
   /*
+   * **Y la palabra de la tarjeta del mando**, con su dibujo: el de consola o
+   * el joystick. Ver `Game.mostrarElMando`.
+   */
+  "palabra.mando": "Mando",
+  "palabra.joystick": "Joystick",
+  /*
    * Y la barra alargada de abajo del teléfono, en tierra: «¿para qué es?».
    * «Se dobla» y no «la rueda de adelante», porque vale para los seis: el
    * fumigador lleva patín de cola y también dobla con los pedales. Ver
@@ -1261,6 +1267,24 @@ export const ES_PY = {
   "tcas.ra.baja": "Bajá: {ritmo} o más, hasta la franja verde",
   "tcas.ra.nivela": "Nivelá: la aguja del variómetro, a cero",
   "tcas.ra.vigila": "Seguí así: la aguja del variómetro, fuera de lo rojo",
+  /*
+   * **Y el RA completo**: cruzar su altura, mantener lo que se lleva, reforzar
+   * e invertir, con las mismas reglas. Ver `Orden` en `flight/tcas.ts`.
+   */
+  "palabra.ra.subeMas": "Subí más",
+  "palabra.ra.bajaMas": "Bajá más",
+  "palabra.ra.ahoraSube": "Ahora subí",
+  "palabra.ra.ahoraBaja": "Ahora bajá",
+  "palabra.ra.mantiene": "Mantené",
+  "tcas.ra.cruzaSube": "Subí, cruzando su altura: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.cruzaBaja": "Bajá, cruzando su altura: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.mantiene": "Mantené el ritmo: la aguja del variómetro, en la franja verde",
+  "tcas.ra.mantieneCruzando":
+    "Mantené el ritmo, cruzando su altura: la aguja del variómetro, en la franja verde",
+  "tcas.ra.subeMas": "Subí más rápido: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.bajaMas": "Bajá más rápido: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.ahoraSube": "Ahora subí, ya: {ritmo} o más, hasta la franja verde",
+  "tcas.ra.ahoraBaja": "Ahora bajá, ya: {ritmo} o más, hasta la franja verde",
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
@@ -1433,6 +1457,27 @@ export const ES_PY = {
     "La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.",
   "vuelo.ra.vigila":
     "La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.",
+  /*
+   * Y las del RA completo, con la misma calma: la palabra rara que dice la
+   * caja —*crossing*, *maintain*, *increase*, *NOW*— contada en casa. Esperan
+   * su toma: ver `PENDIENTE-VOCES-cabina-2.md`.
+   */
+  "vuelo.ra.cruzaSube":
+    "La caja nos pide subir y pasar por la altura del otro avión, que va a quedar abajo: subí con calma, hasta la franja verde.",
+  "vuelo.ra.cruzaBaja":
+    "La caja nos pide bajar y pasar por la altura del otro avión, que va a quedar arriba: bajá con calma, hasta la franja verde.",
+  "vuelo.ra.mantiene":
+    "La caja nos pide seguir como vamos, sin aflojar: la aguja, en la franja verde.",
+  "vuelo.ra.mantieneCruzando":
+    "La caja nos pide seguir como vamos, sin aflojar: vamos a pasar por la altura del otro avión. La aguja, en la franja verde.",
+  "vuelo.ra.subeMas":
+    "La caja nos pide subir más rápido: un poco más de nariz arriba, hasta la nueva franja verde.",
+  "vuelo.ra.bajaMas":
+    "La caja nos pide bajar más rápido: un poco más de nariz abajo, hasta la nueva franja verde.",
+  "vuelo.ra.ahoraSube":
+    "La caja cambió la orden: ahora hay que subir. Subí ya, con calma, hasta la franja verde.",
+  "vuelo.ra.ahoraBaja":
+    "La caja cambió la orden: ahora hay que bajar. Bajá ya, con calma, hasta la franja verde.",
   "vuelo.ra.libre": "Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.",
   /*
    * **El relevo de frecuencia, contado en casa**, en los peldaños que no leen

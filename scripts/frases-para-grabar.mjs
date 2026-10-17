@@ -295,6 +295,52 @@ const CABINA = [
   ],
   ["cabina.levelOff", "level off, level off", "el TCAS pide dejar de subir o de bajar"],
   ["cabina.clearOfConflict", "clear of conflict", "el otro ya se aleja: se acabó la maniobra"],
+  /*
+   * **Y el RA completo**, con las palabras de la tabla 4 del folleto de la FAA
+   * para la versión 7.1: cruzar la altura del otro, mantener lo que se lleva,
+   * reforzar e invertir. Las de cruzar y las de invertir se dicen dos veces,
+   * como las dice la caja; el «NOW» de la inversión, con su golpe, pero
+   * escrito en minúsculas: en mayúsculas una voz inglesa puede deletrearlo,
+   * que es lo que pasó con TORA. Ver
+   * `reforzarOInvertir` en `src/flight/tcas.ts` y
+   * `PENDIENTE-VOCES-cabina-2.md`.
+   */
+  [
+    "cabina.climbCrossingClimb",
+    "climb, crossing climb; climb, crossing climb",
+    "el TCAS pide subir pasando por la altura del otro",
+  ],
+  [
+    "cabina.descendCrossingDescend",
+    "descend, crossing descend; descend, crossing descend",
+    "el TCAS pide bajar pasando por la altura del otro",
+  ],
+  [
+    "cabina.maintainVerticalSpeed",
+    "maintain vertical speed, maintain",
+    "el TCAS pide no aflojar: seguir subiendo o bajando como se va",
+  ],
+  [
+    "cabina.maintainCrossingMaintain",
+    "maintain vertical speed, crossing maintain",
+    "el TCAS pide no aflojar, pasando por la altura del otro",
+  ],
+  ["cabina.increaseClimb", "increase climb, increase climb", "el TCAS pide subir más rápido"],
+  [
+    "cabina.increaseDescent",
+    "increase descent, increase descent",
+    "el TCAS pide bajar más rápido",
+  ],
+  [
+    "cabina.climbClimbNow",
+    "climb, climb now; climb, climb now",
+    "el TCAS cambia la orden: ahora, subir, y ya",
+  ],
+  [
+    "cabina.descendDescendNow",
+    "descend, descend now; descend, descend now",
+    "el TCAS cambia la orden: ahora, bajar, y ya",
+  ],
   [
     "cabina.autopilotDisconnect",
     "autopilot disconnect",
@@ -339,9 +385,11 @@ const CABINA = [
    * **Y la carrera de aterrizaje**, lo que canta quien vigila al tocar en el
    * procedimiento normal de Boeing, *Landing Roll* (FCOM del 747-400; el
    * texto exacto, por verificar): los aerofrenos arriba o no, las reversas en
-   * verde y los sesenta nudos. Solo en el JAZ 120. Ver `contarLaCarrera` en
-   * `src/game.ts` y `DE_LA_CARRERA` en `src/audio/cabina.ts`. Aquí estaban
-   * los de Airbus, y en la flota no hay ningún Airbus.
+   * verde y los sesenta nudos. En el JAZ 120; y «sixty knots», también en el
+   * JAZ 90, que es lo único que se canta en la carrera de los E-Jets. Ver
+   * `contarLaCarrera` en `src/game.ts` y `CANTOS_DE_LA_CARRERA` en
+   * `src/audio/cabina.ts`. Aquí estaban los de Airbus, y en la flota no hay
+   * ningún Airbus.
    */
   ["cabina.speedbrakesUp", "speedbrakes up", "al tocar: los aerofrenos, arriba"],
   ["cabina.speedbrakesNotUp", "speedbrakes not up", "al tocar: los aerofrenos no subieron"],
@@ -1624,6 +1672,15 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
   "vuelo.ra.nivela",
   "vuelo.ra.vigila",
   "vuelo.ra.libre",
+  // Y las del RA completo: cruzar, mantener, reforzar e invertir.
+  "vuelo.ra.cruzaSube",
+  "vuelo.ra.cruzaBaja",
+  "vuelo.ra.mantiene",
+  "vuelo.ra.mantieneCruzando",
+  "vuelo.ra.subeMas",
+  "vuelo.ra.bajaMas",
+  "vuelo.ra.ahoraSube",
+  "vuelo.ra.ahoraBaja",
   // El pitot tapado: parar en la carrera, el aplauso y volar sin anemómetro.
   "pitot.noMarca",
   "pitot.abortado",

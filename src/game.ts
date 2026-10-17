@@ -158,7 +158,7 @@ import {
   Tcas,
   bandaPara,
   modoEnPantalla,
-  RITMO_DE_LA_MANIOBRA,
+  ritmoQuePide,
   type AvisoDeTrafico,
   type Banda,
   type CambioDelRa,
@@ -440,17 +440,40 @@ const TCAS_TA_RA_EN_TIERRA = new Set<Fase>([
  */
 const SE_QUEDA_EL_RA = 60;
 
-/** La tarjeta de cada maniobra: su variómetro, tu avión y el otro. */
+/**
+ * Cuánto se queda la tarjeta del mando que se acaba de conectar, s. Cinco: lo
+ * justo para verla y volver a lo que se estaba haciendo. Ver
+ * `Game.mostrarElMando`.
+ */
+const SE_QUEDA_EL_MANDO = 5;
+
+/**
+ * La tarjeta de cada maniobra: su variómetro, tu avión y el otro.
+ *
+ * Las de cruzar, mantener e invertir llevan la de subir o bajar de su
+ * sentido: lo que hay que hacer con la aguja es lo mismo, y lo que cambia lo
+ * dicen la palabra y la caja. El refuerzo lleva la suya, con la flecha doble.
+ */
 function dibujoDelRa(r: Resolucion): DibujoDeSenal {
-  if (r.orden === "climb") return "ra-sube";
-  if (r.orden === "descend") return "ra-baja";
-  return r.orden === "levelOff" ? `ra-nivela-${r.sentido}` : `ra-vigila-${r.sentido}`;
+  if (r.orden === "levelOff") return `ra-nivela-${r.sentido}`;
+  if (r.orden === "monitor") return `ra-vigila-${r.sentido}`;
+  if (r.orden === "increaseClimb") return "ra-sube-mas";
+  if (r.orden === "increaseDescent") return "ra-baja-mas";
+  return r.sentido === "sube" ? "ra-sube" : "ra-baja";
 }
 
 /** La palabra de la tarjeta de cada maniobra. Ver `Game.ordenDelTcas`. */
 const PALABRA_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
   climb: "palabra.ra.sube",
   descend: "palabra.ra.baja",
+  crossingClimb: "palabra.ra.sube",
+  crossingDescend: "palabra.ra.baja",
+  maintain: "palabra.ra.mantiene",
+  crossingMaintain: "palabra.ra.mantiene",
+  increaseClimb: "palabra.ra.subeMas",
+  increaseDescent: "palabra.ra.bajaMas",
+  climbNow: "palabra.ra.ahoraSube",
+  descendNow: "palabra.ra.ahoraBaja",
   levelOff: "palabra.ra.nivela",
   monitor: "palabra.ra.vigila",
 };
@@ -459,14 +482,34 @@ const PALABRA_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
 const FRASE_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
   climb: "tcas.ra.sube",
   descend: "tcas.ra.baja",
+  crossingClimb: "tcas.ra.cruzaSube",
+  crossingDescend: "tcas.ra.cruzaBaja",
+  maintain: "tcas.ra.mantiene",
+  crossingMaintain: "tcas.ra.mantieneCruzando",
+  increaseClimb: "tcas.ra.subeMas",
+  increaseDescent: "tcas.ra.bajaMas",
+  climbNow: "tcas.ra.ahoraSube",
+  descendNow: "tcas.ra.ahoraBaja",
   levelOff: "tcas.ra.nivela",
   monitor: "tcas.ra.vigila",
 };
 
-/** Lo que explica la instructora detrás de cada voz de la caja. */
+/**
+ * Lo que explica la instructora detrás de cada voz de la caja. Las de cruzar,
+ * mantener, reforzar e invertir esperan su toma: hasta entonces suena la caja
+ * sola. Ver `decirLaManiobra` y `PENDIENTE-VOCES-cabina-2.md`.
+ */
 const EXPLICACION_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
   climb: "vuelo.ra.sube",
   descend: "vuelo.ra.baja",
+  crossingClimb: "vuelo.ra.cruzaSube",
+  crossingDescend: "vuelo.ra.cruzaBaja",
+  maintain: "vuelo.ra.mantiene",
+  crossingMaintain: "vuelo.ra.mantieneCruzando",
+  increaseClimb: "vuelo.ra.subeMas",
+  increaseDescent: "vuelo.ra.bajaMas",
+  climbNow: "vuelo.ra.ahoraSube",
+  descendNow: "vuelo.ra.ahoraBaja",
   levelOff: "vuelo.ra.nivela",
   monitor: "vuelo.ra.vigila",
 };
@@ -2802,7 +2845,7 @@ export class Game {
     const larga = FRASE_DEL_RA[r.orden];
     const clave = claveDelAviso(this.tier.avisos, larga, corta) as TranslationKey | null;
     const rotulo = clave
-      ? t(clave, { ritmo: canales.corto ? "" : this.ritmoDeLaManiobra() })
+      ? t(clave, { ritmo: canales.corto ? "" : this.ritmoDeLaManiobra(r) })
       : "";
     if (this.tarjetaDelRa && this.tarjetaDelRa !== dibujo) this.hud.senal.caducar(this.tarjetaDelRa);
     this.hud.senal.mostrar(dibujo, rotulo, null, {
@@ -2854,8 +2897,9 @@ export class Game {
    * en pies como todo instrumento de verdad—, y la que se escribe es la que
    * marca el instrumento.
    */
-  private ritmoDeLaManiobra(): string {
-    return `${RITMO_DE_LA_MANIOBRA} ${t("units.fpm")}`;
+  private ritmoDeLaManiobra(r: Resolucion): string {
+    const ritmo = ritmoQuePide(r.orden);
+    return ritmo === null ? "" : `${ritmo} ${t("units.fpm")}`;
   }
 
   /** La franja del variómetro, mientras haya maniobra. Ver `Franja`. */
@@ -6943,11 +6987,13 @@ export class Game {
    *
    * Los cantos son de la tripulación, así que suben por la escalera: en inglés
    * en el peldaño de cabina y, en los de abajo, la explicación en casa en su
-   * lugar —`cantarLoGrabado`, un suceso y una voz—. Son los del procedimiento
-   * normal de Boeing, *Landing Roll* (FCOM del 747-400; el texto exacto, por
-   * verificar), y solo los canta el avión de esa familia: el JAZ 120. El JAZ 90
-   * no canta nada hasta que se compruebe el de Embraer. Ver
-   * `cantosDeLaCarrera` en `flight/aircraft.ts`.
+   * lugar —`cantarLoGrabado`, un suceso y una voz—. Cada familia canta los
+   * suyos: el JAZ 120, los del procedimiento normal de Boeing, *Landing Roll*
+   * (FCOM del 747-400; el texto exacto, por verificar); el JAZ 90, de la clase
+   * del E170, solo «sixty knots», que es lo único que se canta en la carrera
+   * de los E-Jets (el SOPM de Embraer, por verificar). Ver
+   * `cantosDeLaCarrera` en `flight/aircraft.ts` y `CANTOS_DE_LA_CARRERA` en
+   * `audio/cabina.ts`.
    *
    * Lo que no se canta: «no reverser», la reversa pedida que no se abre,
    * porque aquí una reversa pedida se abre siempre. Y los de Airbus que había
@@ -17708,10 +17754,15 @@ export class Game {
     for (const suceso of this.input.sucesosDeLosMandos()) {
       if (suceso === "palancaQueSeQueda" && enElAire) this.explicarUnaVez("tutor.palancaSeQueda");
       else if (suceso === "dobleToque" && enElAire) this.explicarUnaVez("tutor.dobleToque");
-      else if (suceso === "mandoConectado") this.explicarUnaVez("tutor.mandoConectado");
-      else if (suceso === "joystickConectado") this.explicarUnaVez("tutor.joystickConectado");
-      else if (suceso === "pedales") this.contarLosPedales();
+      else if (suceso === "mandoConectado") {
+        this.mandoPorMostrar = "consola";
+        this.explicarUnaVez("tutor.mandoConectado");
+      } else if (suceso === "joystickConectado") {
+        this.mandoPorMostrar = "hotas-x";
+        this.explicarUnaVez("tutor.joystickConectado");
+      } else if (suceso === "pedales") this.contarLosPedales();
     }
+    this.mostrarElMando();
     const topes = this.input.mano.topesDeInclinacion;
     if (topes !== this.topesDeInclinacionVistos) {
       this.topesDeInclinacionVistos = topes;
@@ -17721,6 +17772,35 @@ export class Game {
 
   /** Los topes de inclinación ya mirados. Ver `explicarLosMandos`. */
   private topesDeInclinacionVistos = 0;
+
+  /**
+   * **El dibujo del mando que se acaba de conectar**, en la tarjeta: el de
+   * consola o el joystick de vuelo, según lo que el juego ha reconocido por su
+   * nombre —ver `flight/mandos-fisicos.ts`—. El dibujo en los cuatro peldaños,
+   * y la palabra o la frase desde el segundo, como cualquier aviso.
+   *
+   * Cada vez que se conecta, y no una por vuelo como la voz: es la respuesta a
+   * «¿lo ha visto?», que se pregunta igual la segunda vez. Espera a que la
+   * tarjeta no lleve nada que importe más; y si tapa una orden que espera a
+   * que hagas algo —«arrancá el motor»—, ésa vuelve sola al apagarse ésta. Ver
+   * `SE_QUEDAN` en `flight/vuelo.ts`.
+   */
+  private mostrarElMando(): void {
+    const aparato = this.mandoPorMostrar;
+    if (!aparato || this.hud.senal.puesto.prioridad > 0) return;
+    this.mandoPorMostrar = null;
+    const joystick = aparato === "hotas-x";
+    const dicho = this.avisoCon(
+      joystick ? "tutor.joystickConectado" : "tutor.mandoConectado",
+      joystick ? "palabra.joystick" : "palabra.mando",
+    );
+    this.hud.senal.mostrar(joystick ? "mando-joystick" : "mando-consola", dicho.rotulo, null, {
+      segundos: SE_QUEDA_EL_MANDO,
+    });
+  }
+
+  /** El mando conectado que falta enseñar en la tarjeta. Ver `mostrarElMando`. */
+  private mandoPorMostrar: "consola" | "hotas-x" | null = null;
 
   /**
    * **Los pedales del timón, contados en tierra**: «¿para qué es esa barra?».

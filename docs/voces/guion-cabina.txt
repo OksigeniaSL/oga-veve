@@ -22,6 +22,14 @@ descend, descend
 monitor vertical speed
 level off, level off
 clear of conflict
+climb, crossing climb; climb, crossing climb
+descend, crossing descend; descend, crossing descend
+maintain vertical speed, maintain
+maintain vertical speed, crossing maintain
+increase climb, increase climb
+increase descent, increase descent
+climb, climb now; climb, climb now
+descend, descend now; descend, descend now
 autopilot disconnect
 minimums
 cabin
