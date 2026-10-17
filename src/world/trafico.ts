@@ -423,8 +423,9 @@ const FPM = 0.3048 / 60;
  *   ciento cincuenta metros y frena en otros doscientos; despega en trescientos.
  * - bimotor ligero (la clase del Baron): 90 kt, ochocientos metros de pista.
  * - turbohélice regional de ala alta (la clase del ATR 72, el que une las
- *   islas): 110 kt, toca a trescientos y frena en seiscientos; pide mil cien
- *   de pista y opera en pistas de mil doscientos, como El Hierro y La Gomera.
+ *   islas): 110 kt, toca a trescientos y frena en seiscientos; con su margen
+ *   pide mil ciento cincuenta y seis de pista —ver `pistaQuePide` en
+ *   `TIPOS`— y opera en pistas de mil doscientos, como El Hierro y La Gomera.
  * - reactor de pasaje (la clase del A320): 135 kt, toca a cuatrocientos y
  *   frena en mil; pide mil ochocientos de pista.
  *
@@ -505,7 +506,24 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
     frena: 600,
     rota: 108 * KT,
     hastaRotar: 23,
-    pistaQuePide: 1100,
+    /*
+     * **La de un salto entre islas, no la del peso máximo.** Pedía 1.100, que
+     * con su margen eran 1.265 m: los 1.279 de la ficha de ATR al peso
+     * máximo, y El Hierro tiene 1.250 (AIP) y allí operan ATR 72 de verdad.
+     * Un salto entre islas no sale al peso máximo: de Los Rodeos a El Hierro
+     * hay unas noventa millas, y el más largo de Canarias, de Lanzarote a La
+     * Palma, no llega a doscientas treinta. La ficha del ATR 72-600 da la
+     * distancia de despegue al peso de **300 NM con el pasaje completo**, ISA
+     * y a nivel del mar: **1.156 m** (ATR, «Factsheets - ATR 72-600», 2020;
+     * al peso máximo, 22.800 kg, 1.279 m). Esa distancia ya es la
+     * certificada, así que va aquí dividida por el margen que le pone
+     * `pistaQuePideConSuMargen`: 1.005 × 1,15 = 1.156. Por verificar: la masa
+     * de ese despegue, que la ficha no da —con la masa en vacío típica,
+     * 13.450 kg, el pasaje completo y el combustible de 300 NM con reservas,
+     * en torno a 21.500 kg—, y lo que añaden los 22 °C de un día de El Hierro
+     * sobre la ISA, que dice su manual de vuelo.
+     */
+    pistaQuePide: 1005,
     subeAlDespegar: 1300 * FPM,
     cabeceoAlDespegar: 6,
     cabeceoSubiendo: 9,
