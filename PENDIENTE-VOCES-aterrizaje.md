@@ -54,6 +54,15 @@ nada nuevo que grabar.
   JAZ 90, solo «sixty knots». Abajo sí se oyó: en Guyrami con el JAZ 90, «los
   armé yo» a 500 ft y, al tocar, la explicación de los paneles en lugar del
   canto.
+- **Y los sesenta nudos del JAZ 90 se pidieron y no sonaron** (17-10-2026,
+  vuelo entero en Tenerife Norte, Taguató Ruvicha): «speedbrakes up: este
+  avión no lo canta» al tocar, que es lo que tiene que pasar, y «sixty
+  knots→cabina.sixtyKnots» a 63 kt; pero la boca estaba diciendo
+  `gafas.ganadas`, el canto esperó y caducó, y detrás entró
+  `vuelo.abandonando`. Es la misma cola llena de la toma que ya se vio con los
+  calzos: un canto de la tripulación va en `normal` y espera detrás de un
+  elogio. Al JAZ 120 le pasaría igual. Queda por decidir quién cede; no se
+  ha tocado.
 - **La explicación de los sesenta nudos** en los peldaños de abajo: no hay,
   ni en el JAZ 120 ni en el JAZ 90, como antes. Sería una frase nueva —lo que
   hace quien vuela a esa velocidad, la reversa al mínimo— y lo de la reversa
