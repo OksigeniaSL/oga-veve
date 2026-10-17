@@ -233,6 +233,15 @@ export interface Momento {
    * calle, como el de la única calle. Ver `update`.
    */
   readonly delanteEnLaFila?: readonly string[];
+  /**
+   * **Los que la torre no deja moverse todavía**: el que va a salir y no
+   * rueda porque su doble raya está en la calle por la que deja la pista uno
+   * que aterriza, y el que va a llegar y no entra en el circuito porque esa
+   * calle la tiene uno que sale. Esperan sin perder el turno, como quien
+   * espera la pista, y lo que no sea eso lo dicen los demás. Lo decide
+   * `retenidos` en `flight/turno-de-pista.ts`, con su red.
+   */
+  readonly retenidos?: ReadonlySet<string>;
 }
 
 /** Lo que se oye: quién, qué, y de quién es la matrícula que se nombra. */
@@ -679,6 +688,17 @@ export class Frecuencia {
     return a.indicativo.matricula;
   }
 
+  /**
+   * **Lo que va a decir ese avión cuando le toque**, y si es lo primero de su
+   * vuelo: antes de eso no está en el mundo. `null` si no está en la
+   * frecuencia. Ver `retenidos` en `flight/turno-de-pista.ts`.
+   */
+  loQueToca(matricula: string): { clave: string; primera: boolean } | null {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    const paso = a ? GUIONES[a.guion][a.paso] : undefined;
+    return a && paso ? { clave: paso.clave, primera: a.paso === 0 } : null;
+  }
+
   /** El que está en la calle, si hay alguno. Ver `enLaCalle`. */
   quienEstaEnLaCalle(): string | null {
     return (
@@ -750,14 +770,21 @@ export class Frecuencia {
      * calle no hay por dónde rodearle. La torre hace lo que se hace con una
      * salida y una llegada: despega él antes de que llegues. Ver
      * `Momento.calleOcupada`.
+     *
+     * **O los de esa lista**: los que esperan en una doble raya que está en
+     * tu salida de la pista, en un campo con más calles. Ver `enTuSalida` en
+     * `world/trafico.ts`.
      */
-    laCalle = false,
+    laCalle: boolean | readonly string[] = false,
   ): Transmision[] {
     const dichas: Transmision[] = [];
     for (const a of this.aviones) {
       if (a.indicativo.matricula === respetar) continue;
       const ocupa = laPistaQueOcupa(a.guion, a.paso);
-      const enCalle = !ocupa && laCalle && enLaCalle(a.guion, a.paso);
+      const deLaCalle =
+        laCalle === true ||
+        (Array.isArray(laCalle) && laCalle.includes(a.indicativo.matricula));
+      const enCalle = !ocupa && deLaCalle && enLaCalle(a.guion, a.paso);
       const clave = ocupa
         ? PARA_QUITARSELA[ocupa]
         : enCalle
@@ -1054,6 +1081,12 @@ export class Frecuencia {
        * `Momento.calleOcupada`.
        */
       if (m.calleOcupada && toca === EMPIEZA_A_RODAR) continue;
+      /*
+       * **Ni rueda hacia una doble raya que está en la salida de uno que
+       * aterriza, ni entra en el circuito uno que saldría por la doble raya
+       * de otro que rueda.** Ver `Momento.retenidos`.
+       */
+      if (m.retenidos?.has(a.indicativo.matricula)) continue;
       /*
        * **Y saliendo vos, nadie canta final.** El que aterriza deja la pista
        * por la única calle y rueda por ella hasta su puesto, o sea de frente

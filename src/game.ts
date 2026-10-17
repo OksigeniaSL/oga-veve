@@ -487,6 +487,12 @@ const ENCIMA_DE_LA_PISTA = new Set<string>([
 ]);
 
 /**
+ * **Las fases en que vuelves por tu salida de la pista**: de tocar a llegar a
+ * la plataforma. Ver `saleDeLaPista` en `tuLlegada`.
+ */
+const VUELVES_POR_TU_SALIDA = new Set<string>(["aterrizado", "abandonando", "a-plataforma"]);
+
+/**
  * Las fases de entrar en la pista y correr, en las que «motor a fondo» ya
  * dicho al soltar el gas sigue valiendo. Ver `decirElGasSuelto`.
  */
@@ -834,6 +840,7 @@ import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
 import {
+  distanciaDeAterrizaje,
   pistaNecesariaHoy,
   rodaduraDeFrenada,
   type DiaDeDespegue,
@@ -11095,12 +11102,28 @@ export class Game {
       (fase === "final" || enLaFinalDelPlan || this.enLaFinalDeLaTorre) && !s.onGround
         ? distanciaAlUmbral(this.elCampo(), s.position.x, s.position.z) / velocidad
         : deLejos;
+    /*
+     * **Y por dónde vas a dejar la pista**, si vienes a aterrizar aquí o
+     * acabas de hacerlo: volando, la salida que cogería cualquiera que frena
+     * donde frena tu avión; en el suelo, tu raya. Con esto la torre no deja
+     * rodar hacia una doble raya que está en tu camino. Ver
+     * `quienDejaLaPistaPorSuRaya` en `world/trafico.ts`.
+     */
+    const aterrizandoAqui = s.onGround
+      ? VUELVES_POR_TU_SALIDA.has(fase)
+      : alUmbral !== null && alUmbral > 0;
     return {
       alUmbral: alUmbral !== null && alUmbral > 0 ? alUmbral : null,
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,
       enTierra: s.onGround ? this.tuSitioEnTierra() : null,
+      saleDeLaPista: aterrizandoAqui
+        ? {
+            porDonde: s.onGround ? (this.plan?.rutaReservada() ?? []) : [],
+            frenaEn: distanciaDeAterrizaje(this.aircraft),
+          }
+        : null,
     };
   }
 

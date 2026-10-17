@@ -196,7 +196,7 @@ const APARTE_DE_TI = 80;
  * se tocan; es lo que se vio en Los Rodeos, con la raya verde llevando al
  * avión de quien juega contra uno que esperaba en su doble raya.
  */
-const PASA_A_TU_LADO = 17 + 18 + 7.5;
+export const PASA_A_TU_LADO = 17 + 18 + 7.5;
 
 /**
  * **Lo que mide la fila de salida**, m, contado hacia atrás desde tu doble

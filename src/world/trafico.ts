@@ -57,6 +57,7 @@ import {
 } from "./aviones-de-las-islas";
 import { FACTOR_DE_ESCUELA, MARGEN_DE_CERTIFICACION } from "../flight/carrera";
 import {
+  PASA_A_TU_LADO,
   type EnElPlano,
   type OcupadosEnElMundo,
   type SueloDelTrafico,
@@ -1239,6 +1240,21 @@ const FRENA_AL_CEDER = 1.5;
 const PACIENCIA_CON_QUIEN_JUEGA = 30;
 
 /**
+ * **Lo que aguanta parado uno que ya ha dejado la pista, por otro del
+ * tráfico que no le deja llegar a su puesto**, s.
+ *
+ * El que llega aparca en los mismos puestos de los que sale el que se va, y
+ * en la plataforma podían quedarse los dos mirándose: el que llega sin poder
+ * acabar de aparcar porque el otro estaba al lado de su camino, y el otro sin
+ * poder salir porque el que llegaba estaba al lado del suyo. Se medía en
+ * Concepción, con la torre reteniendo al que salía mientras el otro
+ * aterrizaba. Lo de verdad es que el que llega aparca donde le dicen y se
+ * apaga; aquí, como con `QUIETO`, se le da por aparcado y se retira el
+ * dibujo. Un minuto: más que lo que tarda en pasar uno junto a otro.
+ */
+const ATASCO_ENTRE_ELLOS = 60;
+
+/**
  * Cómo se olvida a quien espera parado en una marca con tope —en el punto de
  * espera o alineado—: mucho más despacio que a los demás, porque está
  * esperando una orden que llegará. Pero se olvida: sin esto, uno cuyo vuelo se
@@ -1311,6 +1327,16 @@ const SOBRE_EL_RELIEVE = 250;
  */
 const ENTRAR_Y_ALINEARSE = 20;
 
+/** Cómo se nombra a quien juega donde se espera una matrícula. */
+export const TU = "quien-juega";
+
+/**
+ * **Lo que se deja de margen al dejar rodar a uno que sale por delante de
+ * quien llega**, s: si con esto todavía no se ha ido cuando el otro cruza el
+ * umbral, no se le deja rodar. Ver `tiempoParaIrse`.
+ */
+const MARGEN_PARA_IRSE = 30;
+
 /**
  * **Quién juega, visto desde el tráfico**: si viene a aterrizar en esta pista
  * y cuándo llega, y si está encima de ella. Lo pone el juego; sin él, el
@@ -1336,6 +1362,17 @@ export interface QuienJuega {
    * como a un avión más de las calles. Ver `cedeA`.
    */
   readonly enTierra?: EnTierra | null;
+  /**
+   * **Y por dónde va a dejar la pista**, si viene a aterrizar aquí o acaba de
+   * hacerlo y todavía rueda hacia su puesto. `porDonde` es su raya por
+   * delante, si ya la tiene; volando todavía no hay raya, y su salida se
+   * busca como la de cualquiera que aterriza, frenando en `frenaEn` metros
+   * desde el umbral. `null` si no aterriza. Ver `quienDejaLaPistaPorSuRaya`.
+   */
+  readonly saleDeLaPista?: {
+    readonly porDonde: readonly EnElPlano[];
+    readonly frenaEn: number;
+  } | null;
 }
 
 /** Quien juega, rodando o parado en el suelo, visto desde el tráfico. */
@@ -1445,6 +1482,11 @@ interface Volando {
   frenteATi: "espera" | "pasa" | "frente" | null;
   /** Segundos que lleva parado fuera de un tramo, esperando. */
   aguarda: number;
+  /**
+   * Segundos que lleva sin poder avanzar por otro del tráfico que tiene
+   * delante. Ver `ATASCO_ENTRE_ELLOS`.
+   */
+  atascado: number;
 }
 
 /** Un tres sesenta de espera. Ver `tresSesentaDesde`. */
@@ -1590,6 +1632,34 @@ export interface Trafico {
    * `paradaPorElTramo` en `plan-de-vuelo.ts`.
    */
   tramosQueTienen(): readonly QuienTieneElTramo[];
+  /**
+   * **Si la torre no le deja rodar todavía al que va a salir**: la matrícula
+   * de uno que aterriza y va a dejar la pista por la doble raya en la que él
+   * esperaría —`TU` si eres tú—, o `null` si puede rodar.
+   *
+   * En los campos de una sola salida —Concepción, Pilar, Mariscal
+   * Estigarribia— la doble raya del que sale está en la calle por la que deja
+   * la pista el que aterriza. Si llega a ella antes, ni entra en la pista, que
+   * es del otro, ni el otro la deja, que está él; y a los setenta y cinco
+   * segundos la raya de quien juega dejaba de esperarle y pasaba a su lado.
+   * Lo de verdad es que la torre no le deja rodar hasta que el otro ha pasado:
+   * «hold position», o le da la pista antes si le da tiempo a irse. Ver
+   * `tiempoParaIrse` y `retenidos` en `flight/turno-de-pista.ts`.
+   */
+  quienDejaLaPistaPorSuRaya(matricula: string): string | null;
+  /**
+   * **Y lo mismo al revés**: si al que va a llegar, antes de su primera
+   * llamada, le tapa la salida uno que ya rueda hacia una doble raya que está
+   * en ella. La matrícula de ése, o `null`. Ver `quienDejaLaPistaPorSuRaya`.
+   */
+  quienTapaSuSalida(matricula: string): string | null;
+  /**
+   * **Los que ruedan o esperan en una doble raya que está en tu salida de la
+   * pista y todavía pueden irse antes de que llegues**: a ésos la torre les
+   * da la pista antes que a ti, como al de la única calle. Ver `alSerTuya` y
+   * `despejarTuSalida` en `flight/turno-de-pista.ts`.
+   */
+  enTuSalida(): string[];
   /**
    * **Los que salen antes que tú**, en orden: los que esperan listos en su
    * doble raya desde antes de que tú llegaras a la tuya —o todos los que
@@ -2363,6 +2433,119 @@ export function crearTrafico(
   };
 
   /**
+   * **La doble raya en la que espera el que sale con esos caminos**, o `null`
+   * si no tiene calles.
+   */
+  const rayaDe = (c: Caminos | null): Sitio | null =>
+    c?.enTierra && c.enTierra.despega > 0
+      ? (porElCamino(c.salida, c.espera)?.sitio ?? null)
+      : null;
+
+  /** Si una doble raya cae en un camino, a menos de lo que se pasa al lado. */
+  const enElCamino = (raya: EnElPlano, camino: readonly EnElPlano[]): boolean =>
+    camino.some((q) => Math.hypot(q.x - raya.x, q.z - raya.z) < PASA_A_TU_LADO);
+
+  /**
+   * **Por dónde deja la pista uno del tráfico que aterriza**, de donde está
+   * hasta su puesto: lo que le queda de la llegada desde la toma.
+   */
+  const suSalidaDeLaPista = (quien: Volando): EnElPlano[] => {
+    const c = quien.caminos;
+    if (!c?.enTierra) return [];
+    return porDelanteDe(c.llegada, Math.max(c.toca, quien.recorrido), Infinity);
+  };
+
+  /** Tu salida prevista volando, por los metros en que frenarás. Ver `tuSalida`. */
+  const tuSalidaPrevista = new Map<number, EnElPlano[]>();
+
+  /**
+   * **Por dónde vas a dejar la pista**: tu raya si ya la tienes y, si no,
+   * la salida que cogería cualquiera que frena donde vas a frenar. Vacía si
+   * no vienes a aterrizar. Ver `QuienJuega.saleDeLaPista`.
+   */
+  const tuSalida = (): readonly EnElPlano[] => {
+    const tu = opciones.quienJuega?.()?.saleDeLaPista;
+    if (!tu) return [];
+    if (tu.porDonde.length > 1) return tu.porDonde;
+    const metros = Math.round(tu.frenaEn / 50) * 50;
+    let prevista = tuSalidaPrevista.get(metros);
+    if (!prevista) {
+      const camino = opciones.tierra?.()?.suelo.llegada(metros)?.camino ?? [];
+      prevista = camino.length > 1 ? porDelanteDe(camino, 0, Infinity) : [];
+      tuSalidaPrevista.set(metros, prevista);
+    }
+    return prevista;
+  };
+
+  /**
+   * **Lo que tarda en irse el que sale si se le deja rodar ahora**, s: hasta
+   * su doble raya —rodando, y como poco lo que tarda la frecuencia en darle
+   * la salida después de su «rodando», que es una llamada más—, lo que
+   * remonte, entrar y alinearse, su carrera y lo que vuela hasta pasar el
+   * final de la pista, con su margen. Si quien aterriza cruza el umbral
+   * antes, el que sale se lo encontraría en su doble raya sin que nadie le
+   * pudiera dar la pista: no se le deja rodar. Ver `llegaAntesDeQueSalga`.
+   */
+  const tiempoParaIrse = (tipo: TipoDeTrafico, c: Caminos): number =>
+    Math.max(c.espera / RUEDA_A, ESPERA_MAXIMA) + hastaIrseDesdeLaRaya(tipo, c, 0);
+
+  /**
+   * **Lo que tarda en irse desde su doble raya**, s, con `remontado` metros
+   * del remonte ya hechos: el resto del remonte, entrar, alinearse, correr y
+   * volar hasta el final de la pista, con su margen.
+   */
+  const hastaIrseDesdeLaRaya = (tipo: TipoDeTrafico, c: Caminos, remontado: number): number =>
+    Math.max(0, (c.enTierra?.remonta ?? 0) - remontado) / RUEDA_A +
+    ENTRAR_Y_ALINEARSE +
+    tiempoDeCarrera(tipo) +
+    Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo) +
+    MARGEN_PARA_IRSE;
+
+  /** Ver `Trafico.quienDejaLaPistaPorSuRaya`. */
+  const quienDejaLaPistaPorSuRaya = (matricula: string): string | null => {
+    const tipo = aviones.get(matricula)?.tipo ?? tipoDe(matricula);
+    const c = aviones.get(matricula)?.caminos ?? caminosDe(tipo);
+    const raya = rayaDe(c);
+    if (!c || !raya) return null;
+    const plazo = tiempoParaIrse(tipo, c);
+    /*
+     * **Tú**: volando, si cruzas el umbral antes de que le dé tiempo a irse;
+     * en el suelo, mientras te quede por delante pasar por su doble raya.
+     */
+    const tu = opciones.quienJuega?.();
+    if (tu?.saleDeLaPista) {
+      const aTiempo = tu.enTierra || (tu.alUmbral !== null && tu.alUmbral < plazo);
+      if (aTiempo && enElCamino(raya, tuSalida())) return TU;
+    }
+    /*
+     * **Y cualquiera de los del tráfico que aterriza**, igual, y hasta que
+     * haya pasado por todo lo que él va a rodar, no solo por su doble raya:
+     * el que llega aparca en los mismos puestos de los que sale el otro, y
+     * soltado al pasar la raya se encontraban los dos en la plataforma, uno
+     * esperando a que el otro se apartara. Medido en Concepción, con dos
+     * avionetas: ninguno se movía ya.
+     */
+    const suCalle = porDelanteDe(c.salida, 0, c.espera);
+    for (const [m, b] of aviones) {
+      if (m === matricula || !b.caminos?.enTierra || !llegando(b)) continue;
+      if (dandoLaVuelta(b)) continue;
+      const metros = metrosAlUmbral(b);
+      const enElSuelo = b.recorrido >= b.caminos.toca;
+      const aTiempo = enElSuelo || (metros !== null && metros / b.marca.velocidad < plazo);
+      if (!aTiempo) continue;
+      const suya = suSalidaDeLaPista(b);
+      if (enElCamino(raya, suya) || suCalle.some((p) => enElCamino(p, suya))) return m;
+    }
+    return null;
+  };
+
+  /** Si va a despegar y todavía no se ha alineado: rueda o espera en su doble raya. */
+  const haciaSuRaya = (b: Volando): boolean => {
+    const c = b.caminos;
+    return !!c?.enTierra && b.marca.camino === c.salida && b.recorrido < c.enTierra.eje - 1;
+  };
+
+  /**
    * Si el sitio de una marca cae **encima de quien juega**: un avión que
    * todavía no se ve no puede aparecer ahí. Ver `noCabeTodavia`.
    */
@@ -2925,6 +3108,7 @@ export function crearTrafico(
           hastaElTramo: Infinity,
           frenteATi: null,
           aguarda: 0,
+          atascado: 0,
         };
         aviones.set(matricula, quien);
       }
@@ -3014,8 +3198,12 @@ export function crearTrafico(
               ? quiere
               : cedeALosOtros(quien, quiere, velocidad, dt);
             quien.cedido = puede < quiere - 1e-6 ? quien.cedido + dt : 0;
+            quien.atascado = porLosOtros < 1e-6 && quiere > 1e-6 ? quien.atascado + dt : 0;
             puede = Math.min(puede, porElTramo, porLosOtros);
-          } else quien.cedido = 0;
+          } else {
+            quien.cedido = 0;
+            quien.atascado = 0;
+          }
           quien.aguarda = porElTramo < quiere - 1e-6 ? quien.aguarda + dt : 0;
           quien.recorrido = Math.min(antes + puede, tope);
           /*
@@ -3096,7 +3284,17 @@ export function crearTrafico(
          */
         const harto =
           quien.cedido > PACIENCIA_CON_QUIEN_JUEGA && !tuEnTierra?.esperandoLaPista;
-        if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO || harto) {
+        /*
+         * **Y la de dos del tráfico que se esperan el uno al otro en la
+         * plataforma**: el que llegó y ya dejó la pista se da por aparcado.
+         * Ver `ATASCO_ENTRE_ELLOS`.
+         */
+        const aparcado =
+          quien.atascado > ATASCO_ENTRE_ELLOS &&
+          !!c &&
+          quien.marca.camino === c.llegada &&
+          quien.recorrido >= c.fuera;
+        if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO || harto || aparcado) {
           quitar(matricula, quien);
           continue;
         }
@@ -3323,6 +3521,37 @@ export function crearTrafico(
     },
     tramosQueTienen() {
       return losQueTienen;
+    },
+    quienDejaLaPistaPorSuRaya,
+    quienTapaSuSalida(matricula) {
+      const yo = aviones.get(matricula);
+      const c = yo?.caminos ?? caminosDe(tipoDe(matricula));
+      if (!c?.enTierra) return null;
+      const salida = yo ? suSalidaDeLaPista(yo) : porDelanteDe(c.llegada, c.toca, Infinity);
+      for (const [m, b] of aviones) {
+        if (m === matricula || !haciaSuRaya(b)) continue;
+        const raya = rayaDe(b.caminos);
+        if (raya && enElCamino(raya, salida)) return m;
+      }
+      return null;
+    },
+    enTuSalida() {
+      const tuya = tuSalida();
+      if (tuya.length < 2) return [];
+      const alUmbral = opciones.quienJuega?.()?.alUmbral ?? null;
+      const quienes: string[] = [];
+      for (const [m, b] of aviones) {
+        const c = b.caminos;
+        if (!c || !haciaSuRaya(b)) continue;
+        const raya = rayaDe(c);
+        if (!raya || !enElCamino(raya, tuya)) continue;
+        // Y solo si le da tiempo a irse antes de que llegues: si no, no.
+        const hastaLaRaya = Math.max(0, c.espera - b.recorrido) / RUEDA_A;
+        const remontado = Math.max(0, b.recorrido - c.espera);
+        const leHace = hastaLaRaya + hastaIrseDesdeLaRaya(b.tipo, c, remontado);
+        if (alUmbral === null || alUmbral > leHace) quienes.push(m);
+      }
+      return quienes;
     },
     esperanPorTi() {
       const quienes: string[] = [];
