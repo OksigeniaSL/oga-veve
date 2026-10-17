@@ -12038,6 +12038,11 @@ export class Game {
   private decirQueDasPaso(): void {
     const a = this.plan?.dandoPasoA;
     if (!a || this.pasoDadoA.has(a.matricula)) return;
+    /*
+     * El que recula para dejarte la calle no pasa él: se aparta y pasas tú.
+     * «Lo dejamos pasar» no sería verdad. Ver `recula` en `world/trafico.ts`.
+     */
+    if (a.recula) return;
     this.pasoDadoA.add(a.matricula);
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
@@ -12056,6 +12061,46 @@ export class Game {
 
   /** A quién se le dijo ya que se le da paso, en esta carrera en tierra. */
   private readonly pasoDadoA = new Set<string>();
+
+  /**
+   * **Y al revés: la torre para al otro para que pases tú**, con su
+   * indicativo. Saliendo, el que iba a meterse de frente en tu calle espera
+   * fuera de tu raya —ver `repartirLosTramos` en `world/trafico.ts`—, y eso
+   * de verdad no pasa solo: se lo dice la torre. Con lo grabado que es verdad,
+   * que es «give way to departing traffic»: el que sale eres tú. Volviendo a
+   * tu puesto no hay pieza que lo sea —«landing traffic» es el que todavía
+   * vuela, no el que ya rueda—, y no se dice nada: lo cuentan su avión parado
+   * y la barra que no se te enciende.
+   *
+   * Una vez por avión, de Taguató para arriba y solo con su voz grabada,
+   * escrito en la tira de la radio. Un AFIS no reparte calles.
+   */
+  private decirQueTeDanPaso(): void {
+    const trafico = this.trafico;
+    if (!trafico || !this.flight.state.onGround) return;
+    if (this.faseDeAhora !== "rodando" && this.faseDeAhora !== "arrancando") return;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras || !this.hayTorreQueHable() || this.esAfisAqui()) return;
+    for (const m of trafico.teCedenElPaso()) {
+      if (this.pasoDadoPor.has(m)) continue;
+      this.pasoDadoPor.add(m);
+      const suyo = this.radio.indicativoDe(m);
+      if (!suyo) continue;
+      const montada = this.deTorre("torre.giveWayDeparting", suyo);
+      if (!montada) continue;
+      this.nombrar(montada.clave, m);
+      this.hud.radio(montada.texto, undefined, false);
+      if (this.instructor.vozDe(montada.clave, montada.relleno))
+        this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+      else this.apuntarCanto(`${montada.clave}: sin grabar, no se pide`);
+      // Una por vez: un suceso, una voz.
+      return;
+    }
+  }
+
+  /** A quién se le dijo ya que te dé paso a ti, en esta carrera en tierra. */
+  private readonly pasoDadoPor = new Set<string>();
 
   /**
    * **Se aterrizó con la orden de irse al aire puesta**, la de la pista
@@ -18392,8 +18437,11 @@ export class Game {
     }
     // Y si se le da paso a uno que viene de frente, también. Ver `decirQueDasPaso`.
     this.decirQueDasPaso();
+    // Y si es al revés, la torre se lo dice a él. Ver `decirQueTeDanPaso`.
+    this.decirQueTeDanPaso();
     if (!this.flight.state.onGround) {
       this.pasoDadoA.clear();
+      this.pasoDadoPor.clear();
       this.salidasDichas.dicha = false;
       this.remonteContado = false;
       this.calorDicho = false;

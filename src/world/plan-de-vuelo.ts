@@ -19,6 +19,7 @@
 import {
   BufferGeometry,
   Color,
+  DoubleSide,
   Float32BufferAttribute,
   Group,
   Mesh,
@@ -209,6 +210,27 @@ const enLineal = (hex: number): readonly [number, number, number] => {
 const VERDE = enLineal(0x2fd36b);
 const AMBAR = enLineal(0xe8b13a);
 const ROJO = enLineal(0xc94a3d);
+
+/**
+ * **La barra de parada**: una fila de luces rojas de lado a lado de la calle
+ * donde se corta tu raya por uno que viene de frente y tiene ese tramo.
+ *
+ * Es lo de verdad: donde se guía con las luces de eje —el «follow the
+ * greens»—, delante de quien tiene que esperar no se apagan las verdes sin
+ * más, se enciende una barra roja que dice «aquí se para» (OACI, Anexo 14,
+ * vol. I, cap. 5, «Barras de parada»: luces rojas empotradas a lo ancho de
+ * la calle, a no más de tres metros una de otra, que se ven desde quien se
+ * acerca; el número del apartado, por verificar). La raya cortada sola
+ * dejaba la pregunta abierta —¿se acabó el camino?—; la barra la contesta, y
+ * se ve igual en los cuatro peldaños, sin leer nada. Ver `ponerLaBarra`.
+ */
+const BARRA_CADA = 3;
+
+/** El rojo de la barra: el de las luces de parada, más vivo que el de la raya. */
+const ROJO_DE_LA_BARRA = enLineal(0xff3a22);
+
+/** Lo que se deja entre el morro y la barra al pararse, m. */
+const MORRO_A_LA_BARRA = 4;
 
 /**
  * La velocidad de rodaje en recta de un avión de línea, m/s: veinte nudos.
@@ -6688,6 +6710,8 @@ export class PlanDeVuelo {
    * nada, y son unos cientos de números por vez.
    */
   private encender(): void {
+    // La barra de parada, aunque no haya luces que encender. Ver `ponerLaBarra`.
+    this.ponerLaBarra();
     const luces = this.luces;
     if (!luces) return;
     const avance = this.avance;
@@ -6727,6 +6751,117 @@ export class PlanDeVuelo {
     // La diana es el final de la raya: con la raya a medias, no se pone.
     const diana = this.grupo.getObjectByName("diana");
     if (diana) diana.visible = hasta === Infinity;
+  }
+
+  /** La barra de parada puesta, y a cuántos metros de ruta. Ver `BARRA_CADA`. */
+  private barraDeParada: { grupo: Group; donde: number } | null = null;
+
+  /**
+   * **Pone la barra roja de parada donde se corta tu raya**, delante del morro
+   * del avión parado, y la quita cuando el tramo vuelve a estar libre. Ver
+   * `BARRA_CADA` y `paradaPorElTramo`.
+   *
+   * La parada es donde se detiene el avión, contado en su centro; la barra va
+   * delante de su morro, que es donde la vería un piloto al pararse.
+   */
+  private ponerLaBarra(): void {
+    const parada = this.paradaPorElTramo();
+    const ruta = this.rutaMundo;
+    const hechos = this.recorridos;
+    const total = hechos[hechos.length - 1] ?? 0;
+    const donde = Math.min(total, parada + this.avion.batalla + MORRO_A_LA_BARRA);
+    const hay =
+      Number.isFinite(parada) && parada >= this.avance - 1 && ruta.length > 1 && hechos.length === ruta.length;
+    const ya = this.barraDeParada;
+    if (ya && (!hay || Math.abs(ya.donde - donde) > 0.5 || ya.grupo.parent !== this.grupo)) {
+      this.grupo.remove(ya.grupo);
+      for (const hijo of ya.grupo.children) {
+        const m = hijo as Mesh;
+        m.geometry?.dispose();
+        (m.material as { dispose?: () => void })?.dispose?.();
+      }
+      this.barraDeParada = null;
+    }
+    if (!hay || this.barraDeParada) return;
+    // Dónde cae y hacia dónde va la raya ahí.
+    let i = 1;
+    while (i < ruta.length - 1 && hechos[i]! < donde) i++;
+    const a = ruta[i - 1]!;
+    const b = ruta[i]!;
+    const largo = Math.max(1e-6, hechos[i]! - hechos[i - 1]!);
+    const t = Math.max(0, Math.min(1, (donde - hechos[i - 1]!) / largo));
+    const cx = a[0] + (b[0] - a[0]) * t;
+    const cz = a[1] + (b[1] - a[1]) * t;
+    const d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    // De lado a lado: la perpendicular a la raya.
+    const lx = -(b[1] - a[1]) / d;
+    const lz = (b[0] - a[0]) / d;
+    const n = Math.max(2, Math.floor(ANCHO_RODADURA / BARRA_CADA) + 1);
+    const LADOS = 8;
+    const pos: number[] = [];
+    const indices: number[] = [];
+    const brillo: number[] = [];
+    for (let k = 0; k < n; k++) {
+      const off = -ANCHO_RODADURA / 2 + (k * ANCHO_RODADURA) / (n - 1);
+      const x = cx + lx * off;
+      const z = cz + lz * off;
+      const y = this.cota(x, z) + ALTURA + 0.03;
+      const base = pos.length / 3;
+      pos.push(x, y, z);
+      for (let j = 0; j < LADOS; j++) {
+        const ang = (j / LADOS) * Math.PI * 2;
+        pos.push(x + Math.cos(ang) * RADIO_DE_LUZ, y, z + Math.sin(ang) * RADIO_DE_LUZ);
+        indices.push(base, base + 1 + ((j + 1) % LADOS), base + 1 + j);
+      }
+      brillo.push(x, y + 0.2, z);
+    }
+    const color = new Color(...ROJO_DE_LA_BARRA);
+    const geo = new BufferGeometry();
+    geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
+    geo.setIndex(indices);
+    const discos = new Mesh(
+      geo,
+      new MeshBasicMaterial({
+        color,
+        side: DoubleSide,
+        transparent: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -6,
+        polygonOffsetUnits: -6,
+      }),
+    );
+    const geoBrillo = new BufferGeometry();
+    geoBrillo.setAttribute("position", new Float32BufferAttribute(brillo, 3));
+    const brillos = new Points(
+      geoBrillo,
+      new PointsMaterial({
+        color,
+        size: LUZ_EN_PANTALLA,
+        sizeAttenuation: false,
+        transparent: true,
+        depthWrite: false,
+        map: laRedonda(),
+      }),
+    );
+    const grupo = new Group();
+    grupo.name = "barra-de-parada";
+    grupo.add(discos, brillos);
+    this.grupo.add(grupo);
+    this.barraDeParada = { grupo, donde };
+  }
+
+  /** Si se ve ahora la barra roja de parada, para el banco y las pruebas. */
+  get barraDeParadaPuesta(): boolean {
+    return !!this.barraDeParada && this.barraDeParada.grupo.parent === this.grupo;
+  }
+
+  /**
+   * Dónde se corta tu raya por uno que viene de frente, m de ruta, o
+   * `Infinity`: para el banco y las pruebas. Ver `paradaPorElTramo`.
+   */
+  get paradaDeTuRaya(): number {
+    return this.paradaPorElTramo();
   }
 
   /**

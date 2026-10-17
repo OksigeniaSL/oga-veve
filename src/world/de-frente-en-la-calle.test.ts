@@ -119,6 +119,12 @@ interface Medida {
   repartos: Set<string>;
   /** Si se llegó a rodar, para saber que hubo con quién cruzarse. */
   rodo: boolean;
+  /** Si se vio la barra roja de parada con la raya cortada por otro. */
+  barra: boolean;
+  /** Y si se vio sin nadie que la cortara, que no puede ser. */
+  barraSinCorte: string;
+  /** Si el tráfico esperó fuera de tu raya y lo dijo el dibujo a la torre. */
+  teCedio: boolean;
 }
 
 /**
@@ -242,6 +248,9 @@ function vueltaConUnoQueSale(
     llego: false,
     repartos: new Set(),
     rodo: false,
+    barra: false,
+    barraSinCorte: "",
+    teCedio: false,
   };
   const detalle =
     ENTORNO.OGA_CASO ===
@@ -306,6 +315,12 @@ function vueltaConUnoQueSale(
     }
     const vista = plan.paso(estado(), alto, true, PASO);
     fase = vista.fase;
+    // La barra roja de parada: con la raya cortada, y solo entonces.
+    const cortada = Number.isFinite(plan.paradaDeTuRaya);
+    if (plan.barraDeParadaPuesta) {
+      if (cortada) medida.barra = true;
+      else if (!medida.barraSinCorte) medida.barraSinCorte = `t=${t.toFixed(1)} en «${fase}»`;
+    }
     trafico.paso(PASO);
     if (fase === "en-puesto" || fase === "apagado") {
       medida.llego = true;
@@ -370,6 +385,7 @@ function vueltaConUnoQueSale(
         comoIba.delete(m);
         antes.delete(m);
       }
+    if (trafico.teCedenElPaso().includes(matricula)) medida.teCedio = true;
     if (frenando || t < 0) continue;
     medida.rodo = true;
     // El piloto: hace lo que pide la raya, y parado si pide parar.
@@ -492,6 +508,8 @@ describe("de vuelta al puesto en Guaraní, con el JAZ 90 y uno que sale", () => 
 
   it("con la regla, el que sale espera fuera de tu calle y pasa después", () => {
     const m = vueltaConUnoQueSale(por05, jaz90, "EC-AAX", 40);
+    // Y el dibujo se lo cuenta a la torre, que es quien se lo dice a él.
+    expect(m.teCedio).toBe(true);
     expect(m.deFrente).toBe(0);
     expect(m.coche).toBe("");
     expect(m.retirados).toEqual([]);
@@ -509,6 +527,8 @@ describe("de vuelta al puesto en Guaraní, con el JAZ 90 y uno que sale", () => 
       for (const r of m.repartos) repartos.add(r);
       if (m.deFrente > PARADOS_DE_FRENTE || m.coche || m.contacto || m.retirados.length || !m.llego)
         mal.push(`anuncio ${anuncio}: ${JSON.stringify({ ...m, repartos: [...m.repartos] })}`);
+      if (m.repartos.has("pasa") && !m.barra) mal.push(`anuncio ${anuncio}: raya cortada sin barra roja`);
+      if (m.barraSinCorte) mal.push(`anuncio ${anuncio}: barra roja sin corte, ${m.barraSinCorte}`);
     }
     expect(mal).toEqual([]);
     expect(repartos.has("pasa")).toBe(true);
@@ -660,6 +680,7 @@ describe("y en cada campo con calles, por las dos cabeceras", () => {
           if (m.coche) mal.push(`${donde}: el coche ${m.coche}`);
           for (const r of m.retirados) mal.push(`${donde}: retirado por atasco ${r}`);
           if (!m.llego) mal.push(`${donde}: no llegó al puesto`);
+          if (m.barraSinCorte) mal.push(`${donde}: barra roja sin corte, ${m.barraSinCorte}`);
         }
       }
       expect(mal).toEqual([]);

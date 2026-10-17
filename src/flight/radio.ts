@@ -699,6 +699,11 @@ export class Frecuencia {
     return a && paso ? { clave: paso.clave, primera: a.paso === 0 } : null;
   }
 
+  /** El indicativo de ese avión, si está en la frecuencia. */
+  indicativoDe(matricula: string): Indicativo | null {
+    return this.aviones.find((x) => x.indicativo.matricula === matricula)?.indicativo ?? null;
+  }
+
   /** El que está en la calle, si hay alguno. Ver `enLaCalle`. */
   quienEstaEnLaCalle(): string | null {
     return (
