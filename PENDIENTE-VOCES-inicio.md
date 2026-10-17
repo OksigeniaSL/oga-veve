@@ -11,7 +11,7 @@ cuarenta frases están en el pack**, y eso lo mira el propio juego
 
 - **30 de Jazlyn**, con la voz `comandante` que ya existe: `inicio.mama.*`, al
   final de `docs/voces/guion-comandante.txt` (filas 326 a 355 del `.tsv`).
-  Unos 2.900 caracteres.
+  Unos 2.390 caracteres.
 - **10 de su hijo**, con una voz nueva, `hijo`: `docs/voces/guion-hijo.txt`.
   368 caracteres.
 
