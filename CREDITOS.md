@@ -480,6 +480,82 @@ cada uno —SEO/BirdLife, Animal Diversity Web, WCS Paraguay, el Atlas de Guyra,
 Transport Canada, la FAA, la OACI, la prensa de Canarias y de Paraguay— está
 escrita junto a su dato en `src/world/aves.ts`.
 
+### Las fotos de las historias de la ventanilla
+
+Mientras la comandante —o la instructora, en avioneta— cuenta la historia de
+lo que se ve por la ventanilla, sale una foto de eso mismo: en una ventana de
+cristal al lado del cuadro o, en las avionetas, en la placa del retrato. Son
+veinticinco, una por historia, y **todas vienen de Wikimedia Commons** con su
+licencia escrita en la ficha: dominio público, CC0, CC BY o CC BY-SA. Se
+comprobaron una a una el 17 de octubre de 2026 leyendo su página; las que
+Commons trajo de Flickr o de iNaturalist llevan además la revisión de licencia
+de Commons (FlickreviewR, iNaturalistReviewBot o un revisor de confianza).
+
+Lo que se les hizo es lo mismo en todas: **recortadas a 3:2**, con el encuadre
+que se dice en cada fila, **reducidas a 480 × 320** —el doble de lo que miden
+en pantalla— y guardadas en WebP con calidad 74, que las deja por debajo de
+sesenta kilobytes. Una, la del Tajogaite, lleva además un 12 % más de
+contraste. **Las que salen de una foto CC BY-SA siguen bajo CC BY-SA**, en la
+misma versión: son obra derivada de la de su autor y no pasan a Apache-2.0 con
+el código.
+
+El crédito va también **a la vista**: las CC BY y CC BY-SA llevan su firma
+—autor y licencia— en pequeño sobre la propia foto mientras se ve, y la
+pantalla de créditos del juego remite a esta lista. Las de dominio público y
+CC0 no la piden. Ver `src/ui/fotos-de-las-historias.ts`, y
+`fotos-de-las-historias.test.ts`, que no deja entrar una foto que no esté en
+esta tabla con su autor, su licencia y su página.
+
+| Fichero | Historia | Autor | Licencia | Página en Commons | Cambios |
+| --- | --- | --- | --- | --- | --- |
+| `src/assets/historias/teide.webp` | El Teide desde un avión, sobre las nubes | Greenx | Dominio público | <https://commons.wikimedia.org/wiki/File:Teide_from_east.jpg> | recortada alrededor del Teide, 480 × 320, WebP |
+| `src/assets/historias/canadas.webp` | Tajinastes rojos delante del Teide | Dorian Cols | CC BY 2.0 | <https://commons.wikimedia.org/wiki/File:Echium_Wildpretii_at_The_Teide.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/anaga.webp` | Las montañas de Anaga | FrDr | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Parque_Rural_de_Anaga_-_Reserva_de_la_Biosfera_Macizo_de_Anaga_06.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/orotava.webp` | Alexander von Humboldt, óleo de 1843 | Joseph Karl Stieler | Dominio público | <https://commons.wikimedia.org/wiki/File:Stieler,_Joseph_Karl_-_Alexander_von_Humboldt_-_1843.jpg> | recortada a la cabeza y el busto, 480 × 320, WebP |
+| `src/assets/historias/gigantes.webp` | Un calderón tropical frente a Tenerife | Gustavo A. Pérez | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:Caladeron_Tropical_-_Globicephala_macrorhynchus.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/garajonay.webp` | Un gomero hablando en silbo | Akalvin | CC BY-SA 3.0 | <https://commons.wikimedia.org/wiki/File:El_Silbo.jpg> | recortada a medio cuerpo, 480 × 320, WebP |
+| `src/assets/historias/taburiente.webp` | El telescopio William Herschel, en el Roque de los Muchachos | Whyistheskyblue1 | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:William_Herschel_Telescope_and_Comet_Tsuchinshan–ATLAS.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/tajogaite.webp` | Las fajanas nuevas junto al faro de Punta Lava, diciembre de 2021 | Mike Peel (www.mikepeel.net) | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:At_La_Palma_2021_0839.jpg> | recortada a 3:2, 480 × 320, un 12 % más de contraste, WebP |
+| `src/assets/historias/hierro.webp` | El Garoé de hoy, el til plantado en 1949 | Josefir Instantes | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:Árbol_Garoé_desde_el_suelo.jpg> | recortada al tronco y las hojas, 480 × 320, WebP |
+| `src/assets/historias/nieves.webp` | Cuevas talladas de Risco Caído | Sino Yu | CC0 | <https://commons.wikimedia.org/wiki/File:Risco_Caído_20191231_134919.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/las-palmas.webp` | La réplica de la Pinta en Baiona | Zarateman | CC0 | <https://commons.wikimedia.org/wiki/File:Baiona_-_Museo-Réplica_de_la_Carabela_Pinta_1.JPG> | recortada al barco, 480 × 320, WebP |
+| `src/assets/historias/timanfaya.webp` | El géiser del Islote de Hilario | Andreas Tusche | Dominio público | <https://commons.wikimedia.org/wiki/File:Lanzarote_Timanfaya_Geysir.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/rio-paraguay.webp` | El río Paraguay y sus meandros viejos a la altura de Puerto Antequera, satélite CBERS-4 | Coordenação-Geral de Observação da Terra/INPE | CC BY-SA 2.0 | <https://commons.wikimedia.org/wiki/File:Around_Puerto_Antequera.jpg> | recortada al tramo del río, 480 × 320, WebP |
+| `src/assets/historias/asuncion.webp` | Raíces de mandioca recién arrancadas | Geossegawa | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Uprooted_cassava_01.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/ypacarai.webp` | Una canoa en el lago Ypacaraí, desde Areguá | Leandro Neumann Ciuffo | CC BY 2.0 | <https://commons.wikimedia.org/wiki/File:Lago_Ypacarai.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/ypoa.webp` | Una isla flotante del lago Ypoá | Paolo Mendoza | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:Rivera_Del_Lago_Ypoa.jpg> | recortada alrededor de la isla, 480 × 320, WebP |
+| `src/assets/historias/yacyreta.webp` | La luna sobre la represa de Yacyretá | german ramirez | CC0 | <https://commons.wikimedia.org/wiki/File:Luna_en_yacyreta.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/itaipu.webp` | El muro de Itaipú con sus tuberías de turbina | queulat00 | CC BY 2.0 | <https://commons.wikimedia.org/wiki/File:249_turbinas_itaipu_(6975012271).jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/iguazu.webp` | Las cataratas del Iguazú | Martin St-Amant | CC BY 3.0 | <https://commons.wikimedia.org/wiki/File:Iguazu_Décembre_2007_-_Panorama_8.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/triple-frontera.webp` | El hito paraguayo de las Tres Fronteras, visto desde Foz do Iguaçu | SamirNosteb, Diego HC | CC BY-SA 3.0 | <https://commons.wikimedia.org/wiki/File:Hito_de_las_Tres_Fronteras_PARAGUAY.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/cerro-cora.webp` | Un tapir, *Tapirus terrestris* | Mark Bolnik | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Tapirus_terrestris_136722113.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/chaco.webp` | El tronco de botella de un samuhú, *Ceiba chodatii* | Xemenendura | CC BY-SA 3.0 | <https://commons.wikimedia.org/wiki/File:Ceiba_chodatii_Marbella.JPG> | recortada al tronco, 480 × 320, WebP |
+| `src/assets/historias/encarnacion.webp` | El puente San Roque González de Santa Cruz | Horacio Cambeiro | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Puente_Internacional_San_Roque_Gonzalez_de_Santa_Cruz.jpg> | recortada a 3:2, 480 × 320, WebP |
+| `src/assets/historias/trinidad.webp` | Ángeles músicos del friso de la iglesia de Trinidad | Falk2 | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:J37_761_Engelfries.jpg> | recortada a tres ángeles del friso, 480 × 320, WebP |
+| `src/assets/historias/cruz-del-sur.webp` | La Cruz del Sur | Yulanlu97 | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:The_Crux_from_Southeastern_Queensland.jpg> | recortada a la cruz, 480 × 320, WebP |
+
+Lo que se miró y **no** entró, con su motivo:
+
+- **El samuhú de iNaturalist** (Salta y Santiago del Estero, en su monte de
+  verdad): sus fichas de Commons no llevan revisión de licencia y la de
+  iNaturalist no se pudo comprobar. Va el de Marbella, que es la misma especie
+  y foto propia de su autor; el encuadre deja fuera el rótulo de un comercio.
+- **El grabado del Garoé de Manesson Mallet** (1683, dominio público): cuenta
+  justo la leyenda, pero dibuja a los bimbaches como los dibujaba Europa
+  entonces, y las historias no llevan estereotipos —ver
+  `docs/historias/fuentes.md`—. Va el árbol de hoy.
+- **El Teide desde la ventanilla con el ala de una compañía**: se ve la marca
+  en el winglet. Va otro desde un avión, sin marca.
+- **Otro Garoé, «Árbol Garoé.JPG»**: su ficha dice «lugar de importancia
+  comunitaria de Garoé», no el árbol, y no está en la categoría del árbol. Va
+  una que sí lo está.
+- **Las fotos de la ISS «View of Paraguay»** para los meandros: sus
+  coordenadas caen en Brasil, así que no se puede decir qué río son. Va la del
+  INPE, que nombra el río y el sitio.
+- **Las imágenes de Copernicus y de la ESA con licencia «Attribution»** para el
+  Tajogaite: no es ninguna de las cuatro que se aceptan aquí. Va la foto de
+  Mike Peel de las fajanas, que es lo que cuenta la historia.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

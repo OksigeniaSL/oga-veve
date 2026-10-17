@@ -240,6 +240,8 @@ export const EN: Dictionary = {
     "Aerial imagery of Spain: PNOA © Instituto Geográfico Nacional de España, CC BY 4.0 · scne.es.",
   "credits.ortoPy":
     "Aerial imagery of Paraguay: EOxCloudless (cloudless.eox.at) by EOX IT Services GmbH — contains modified Copernicus Sentinel data, 2020.",
+  "credits.fotosHistorias":
+    "Photos for the window stories: Wikimedia Commons. Each one carries its author and licence —CC BY, CC BY-SA, CC0 or public domain— and the full list is in CREDITOS.md, alongside the game's code.",
   "credits.engine": "Flight model: {model}",
   "credits.licence":
     "Code free under Apache-2.0. Content and brands, © Oksigenia SL.",
@@ -1127,6 +1129,32 @@ export const EN: Dictionary = {
     "Inside its church there are angels carved in stone, playing music: harp, organ, trumpets and flute. They've been there for more than two hundred and fifty years.",
   "ventanilla.historia.cruz-del-sur":
     "More than four hundred years ago, Father José de Acosta wrote that these four stars were called the Crucero, and that sailors used the star at the foot of the cross to measure how far south they were.",
+  /* The alt text of the photo shown while the story is told. */
+  "historia.foto.teide": "Mount Teide rising above the clouds",
+  "historia.foto.canadas": "Red tajinastes in flower in front of Mount Teide",
+  "historia.foto.anaga": "The green mountains of Anaga",
+  "historia.foto.orotava": "Alexander von Humboldt, painted in 1843",
+  "historia.foto.gigantes": "A pilot whale swimming off Tenerife",
+  "historia.foto.garajonay": "A man from La Gomera speaking in Silbo",
+  "historia.foto.taburiente": "A telescope on La Palma, with a comet in the sky",
+  "historia.foto.tajogaite": "The new land of the Tajogaite lava deltas, by the sea",
+  "historia.foto.hierro": "The Garoé tree, on El Hierro",
+  "historia.foto.nieves": "Caves carved into the rock at Risco Caído",
+  "historia.foto.las-palmas": "A replica of the caravel Pinta",
+  "historia.foto.timanfaya": "A jet of steam coming out of the ground at Timanfaya",
+  "historia.foto.rio-paraguay": "The Paraguay River and its old bends, seen from a satellite",
+  "historia.foto.asuncion": "Cassava roots fresh out of the ground",
+  "historia.foto.ypacarai": "A boat on Lake Ypacaraí",
+  "historia.foto.ypoa": "A floating island on Lake Ypoá",
+  "historia.foto.yacyreta": "The moon over the Yacyretá dam, at night",
+  "historia.foto.itaipu": "The Itaipú dam",
+  "historia.foto.iguazu": "The Iguazú falls",
+  "historia.foto.triple-frontera": "The Paraguayan marker at the Triple Frontier, red, white and blue",
+  "historia.foto.cerro-cora": "A tapir, with its little trunk",
+  "historia.foto.chaco": "The bottle-shaped trunk of a samuhú tree",
+  "historia.foto.encarnacion": "The bridge between Encarnación and Posadas",
+  "historia.foto.trinidad": "Musician angels carved in stone at Trinidad",
+  "historia.foto.cruz-del-sur": "The Southern Cross in the night sky",
   /* The same, said by the instructor sitting beside you in a light aircraft. */
   "ventanilla.vos.lado.izquierda": "Look out of the window, to your left.",
   "ventanilla.vos.lado.derecha": "Look out of the window, to your right.",

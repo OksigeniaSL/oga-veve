@@ -13460,6 +13460,157 @@ svg .ex-raya {
   cursor: pointer;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * La foto de la historia, mientras se cuenta.
+ * Ver src/ui/ventana-de-historia.ts y src/ui/fotos-de-las-historias.ts.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/*
+ * **La ventana de cristal**, al lado del cuadro. Su sitio lo mide el juego
+ * —ver `dondeCabeLaVentana`— y lo escribe en las tres variables.
+ *
+ * El cristal es el marco: translúcido, con el filo de luz arriba y un reflejo
+ * en diagonal sobre la foto. Sin `backdrop-filter`, que desenfoca el mundo en
+ * cada fotograma y en una tablet cuesta lo que aquí no compra, como en el mapa.
+ *
+ * Va **debajo de todo el HUD** —`z-index: -1` dentro de él, que sigue encima
+ * del mundo— y no recoge dedos: si mientras está puesta se enciende un aviso
+ * o crece la columna de mandos, sale encima lo que dice qué hacer, y el dedo
+ * llega a su mando.
+ */
+.historia {
+  position: fixed;
+  z-index: -1;
+  left: var(--historia-x, 16px);
+  top: var(--historia-y, 50%);
+  width: var(--historia-ancho, 240px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px;
+  border-radius: 15px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.08) 45%, rgb(255 255 255 / 0.16)),
+    rgb(26 36 32 / 0.3);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    inset 0 -1px 0 rgb(0 0 0 / 0.25),
+    var(--poso);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.historia--puesta {
+  opacity: 1;
+  transform: none;
+}
+
+.historia[hidden] {
+  display: none;
+}
+
+.historia__marco {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--barro);
+}
+
+.historia__foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* El reflejo del cristal: una franja clara en diagonal y un filo por dentro. */
+.historia__marco::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    rgb(255 255 255 / 0.3) 0%,
+    rgb(255 255 255 / 0.08) 24%,
+    transparent 25%,
+    transparent 72%,
+    rgb(255 255 255 / 0.05) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16);
+  pointer-events: none;
+}
+
+/*
+ * La firma: quién hizo la foto y con qué licencia, que es lo que piden CC BY
+ * y CC BY-SA mientras se ve. Pequeña, abajo y sobre una sombra para que se lea
+ * en cualquier foto; no hace falta leerla para entender la foto.
+ */
+.historia__firma {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 8px 4px;
+  font: 600 10px/1.25 var(--hud-fuente);
+  color: rgb(255 255 255 / 0.9);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.7);
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.55));
+}
+
+.historia__firma:empty {
+  display: none;
+}
+
+/*
+ * **Y en la placa de las avionetas**, en el sitio del retrato. Deja pasar el
+ * dedo al retrato de debajo, que abre la tarjeta del avión.
+ */
+.tablero__historia {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.tablero__historia--puesta {
+  opacity: 1;
+}
+
+.tablero__historia-fondo {
+  fill: rgb(0 0 0 / 0.5);
+}
+
+.tablero__historia-firma {
+  fill: rgb(255 255 255 / 0.92);
+  font-family: var(--hud-fuente);
+  font-weight: 600;
+}
+
+.tablero__historia-marco {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.22);
+  stroke-width: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .historia,
+  .tablero__historia {
+    transition: none;
+    transform: none;
+  }
+}
+.sin-movimiento .historia,
+.sin-movimiento .tablero__historia {
+  transition: none;
+  transform: none;
+}
+
 
 /* ══════════════════════════════════════════════════════════════════════
  * Antes de volar: la vuelta al avión y el tiempo de hoy.

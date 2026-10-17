@@ -11,7 +11,12 @@
  * Así que se vuela. Se pone el avión en crucero al norte del Teide mirando al
  * sur —donde hay hitos de sobra— y se mira el contador.
  *
- *   node scripts/verificar-ventanilla.mjs
+ * Y detrás de lo señalado, su historia y **su foto**: mientras suena, la foto
+ * sale al lado del cuadro —o en la placa, en las avionetas— y al acabar se va.
+ * Se mira cada medio segundo qué foto hay puesta y dónde, y se exige que haya
+ * salido alguna y que se haya ido. Ver `ui/ventana-de-historia.ts`.
+ *
+ *   node scripts/verificar-ventanilla.mjs [avion]
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
@@ -35,7 +40,10 @@ const page = await navegador.newPage({
 const errores = [];
 page.on('pageerror', (e) => errores.push(e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&leccion=vuelta`);
+const AVION = process.argv[2] ?? null;
+await page.goto(
+  `${BASE}/?escenario=tenerife-norte&hora=12&leccion=vuelta${AVION ? `&avion=${AVION}` : ""}`,
+);
 await page.waitForTimeout(25000);
 
 /*
@@ -53,16 +61,33 @@ await page.evaluate(() =>
   globalThis.__oga.colocar(0, 2500, -25000, 70, Math.PI),
 );
 
+/*
+ * Y mientras, las fotos: cuál sale, dónde y si se va. Se sigue mirando hasta
+ * que una haya salido y se haya ido, o hasta los dos minutos: con dos sitios
+ * señalados la historia del primero puede estar aún sonando.
+ */
 const hasta = Date.now() + 120000;
 let cuantos = 0;
+const fotos = [];
+let puesta = null;
+let seFue = false;
 while (Date.now() < hasta) {
-  await page.waitForTimeout(3000);
-  cuantos = await page.evaluate(() => globalThis.__oga.ventanilla());
-  if (cuantos >= 2) break;
+  await page.waitForTimeout(500);
+  const ahora = await page.evaluate(() => ({
+    cuantos: globalThis.__oga.ventanilla(),
+    foto: globalThis.__oga.historia(),
+  }));
+  cuantos = ahora.cuantos;
+  if (ahora.foto.sitio && ahora.foto.sitio !== puesta)
+    fotos.push(`${ahora.foto.sitio} (${ahora.foto.donde})`);
+  if (puesta && !ahora.foto.sitio) seFue = true;
+  puesta = ahora.foto.sitio;
+  if (cuantos >= 2 && fotos.length && seFue) break;
 }
 
 const fase = await page.evaluate(() => globalThis.__oga.fase());
 console.log(`hitos señalados: ${cuantos} · fase: ${fase}`);
+console.log(`fotos de las historias: ${fotos.join(", ") || "ninguna"} · ${seFue ? "y se fue al acabar" : "no se fue"}`);
 
 /*
  * **Y el plano se abre con ellos dentro.**
@@ -104,4 +129,8 @@ if (cuantos < 1) {
   console.log('✖ La comandante no señaló nada en dos minutos de crucero.');
   process.exit(1);
 }
-console.log('✓ Señala lo que se ve.');
+if (!fotos.length || !seFue) {
+  console.log('✖ La foto de la historia no salió mientras se contaba, o no se fue al acabar.');
+  process.exit(1);
+}
+console.log('✓ Señala lo que se ve, y la foto de su historia sale y se va.');

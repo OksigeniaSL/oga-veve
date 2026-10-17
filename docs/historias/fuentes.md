@@ -20,6 +20,11 @@ Las reglas con las que se escribieron:
 - **Lo dudoso no entra.** Lo que se descartó por no poder sostenerlo está al
   final, con el motivo.
 
+Y mientras suena, **su foto**: una por historia, de Wikimedia Commons, con su
+autor, su licencia y lo que se le hizo apuntados en «Las fotos de las historias
+de la ventanilla», en `CREDITOS.md`. La foto enseña lo que la historia cuenta
+—el tapir, el hito paraguayo, los ángeles del friso—, no algo parecido.
+
 Los libros que se citan:
 
 - **Schmidl y Cabeza de Vaca**: *The Conquest of the River Plate (1535-1555)*,
