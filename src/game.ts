@@ -1010,6 +1010,8 @@ import {
 import type { Hito, Mirada } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
 import { laHistoria, loQueSeDice, type LoQueSeDice } from "./audio/ventanilla";
+import { precargarLaFoto } from "./ui/fotos-de-las-historias";
+import { alSonarLaHistoria } from "./ui/ventana-de-historia";
 import {
   calorDelSuelo,
   capaDeMezcla,
@@ -18699,6 +18701,11 @@ export class Game {
       const historia = laHistoria(mirada, conGente);
       const conHistoria =
         historia && this.instructor.vozDe(historia.clave, historia.relleno) ? historia : null;
+      /*
+       * Y su foto, pedida ya: la historia empieza cuando acaba esta frase, y
+       * para entonces tiene que estar bajada. Ver `precargarLaFoto`.
+       */
+      if (conHistoria?.sitio) precargarLaFoto(conHistoria.sitio);
       boca.decir(
         dicho.texto,
         dicho.clave,
@@ -18774,7 +18781,18 @@ export class Game {
     if (enFaseDeTrabajo(this.momentoDeMirar())) return;
     if (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) return;
     this.huecos.usar();
-    boca.decir(historia.texto, historia.clave, "baja", historia.relleno);
+    /*
+     * **Y mientras suena, su foto**: el Garoé, el tapir, los ángeles de
+     * Trinidad. Sale cuando empieza a sonar y se va cuando acaba; ver
+     * `ui/ventana-de-historia.ts`.
+     */
+    boca.decir(
+      historia.texto,
+      historia.clave,
+      "baja",
+      historia.relleno,
+      historia.sitio ? alSonarLaHistoria(this.hud.historia, historia.sitio) : undefined,
+    );
   }
 
   /**

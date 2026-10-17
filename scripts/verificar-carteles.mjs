@@ -1105,6 +1105,70 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   );
 
   /*
+   * **Y la foto de la historia de la ventanilla**, puesta a mano con la firma
+   * más larga que hay —la del INPE, en dos líneas—. Sale al lado del cuadro si
+   * cabe sin tapar nada, en la placa de las avionetas si el cuadro está
+   * abierto, y si no cabe no sale. Lo que se mira es que cuando sale no pisa
+   * nada: ni con las cajas de lo que se ve, ni tocando en nueve puntos de la
+   * foto —que deja pasar el dedo— y mirando qué hay debajo, que tiene que ser
+   * el mundo. Ver `ui/ventana-de-historia.ts`.
+   */
+  const historia = await page.evaluate(async () => {
+    globalThis.__oga.historia("rio-paraguay");
+    await new Promise((r) => setTimeout(r, 1500));
+    const estado = globalThis.__oga.historia();
+    if (!estado.donde) return { donde: null };
+    const c = estado.caja;
+    const dentro = c.left >= 0 && c.top >= 0 && c.right <= innerWidth && c.bottom <= innerHeight;
+    if (estado.donde === "placa") {
+      globalThis.__oga.historia(null);
+      return { donde: "placa", dentro, pisados: [], caja: c };
+    }
+    const ventana = document.querySelector('[data-hud="historia"]');
+    const pisa = (a, b) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+    const pantalla = innerWidth * innerHeight;
+    const pisados = new Set();
+    for (const el of document.querySelectorAll(
+      'button, input, a[href], [role="button"], [data-hud], .tarjeta, .pad, .concha, .volumen, .cuadro',
+    )) {
+      if (el === ventana || ventana.contains(el) || el.closest("[hidden]")) continue;
+      const s = getComputedStyle(el);
+      if (s.display === "none" || s.visibility === "hidden" || Number(s.opacity) <= 0.05) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.width * r.height > pantalla * 0.5) continue;
+      if (pisa(c, r)) pisados.add(el.dataset?.hud ?? String(el.className?.baseVal ?? el.className).slice(0, 24));
+    }
+    // Y lo que de verdad está debajo: con la foto dejando pasar el dedo, el
+    // mundo o un velo de pantalla entera, nada más.
+    for (const fx of [0.15, 0.5, 0.85])
+      for (const fy of [0.15, 0.5, 0.85]) {
+        const p = document.elementFromPoint(c.left + (c.right - c.left) * fx, c.top + (c.bottom - c.top) * fy);
+        if (!p || p.tagName === "CANVAS") continue;
+        const r = p.getBoundingClientRect();
+        if (r.width * r.height > pantalla * 0.5) continue;
+        pisados.add(`debajo ${p.dataset?.hud ?? String(p.className?.baseVal ?? p.className).slice(0, 24)}`);
+      }
+    const abajo = c.top >= innerHeight * 0.35;
+    globalThis.__oga.historia(null);
+    return { donde: "esquina", dentro, abajo, pisados: [...pisados], caja: c };
+  });
+  comprobar(
+    `${donde}: la foto de la historia no pisa nada`,
+    !historia.donde ||
+      (historia.dentro && historia.pisados.length === 0 && historia.abajo !== false),
+    !historia.donde
+      ? "no sale: no cabe sin tapar"
+      : `${historia.donde} ${Math.round(historia.caja.left)},${Math.round(historia.caja.top)} → ` +
+          `${Math.round(historia.caja.right)},${Math.round(historia.caja.bottom)}` +
+          (historia.pisados.length ? ` · pisa ${historia.pisados.join(", ")}` : "") +
+          (historia.dentro ? "" : " · se sale") +
+          (historia.abajo === false ? " · demasiado arriba" : ""),
+    "«en la esquina de abajo, al lado del cuadro»; si no cabe sin tapar, no sale",
+  );
+
+  /*
    * **Y el panel del final, con un vuelo detrás.** Sin vuelo no hay plano del
    * recorrido y el panel cabe siempre; con él, en un teléfono apaisado «Otro
    * vuelo» quedaba por debajo del borde y la barra del timón encima. Se

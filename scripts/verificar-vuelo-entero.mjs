@@ -2968,6 +2968,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let ventanillaAntes = null;
   let ventanillaConOtroPlan = null;
   const historiaDeLaVentanilla = [];
+  // Las fotos de las historias que salieron, y si se fueron. Ver más abajo.
+  const fotosDeLaHistoria = [];
+  let fotoPuesta = null;
   /**
    * **Y la pista es de uno por vez, y las llegadas van en fila.** Se veían
    * dos o tres aviones entrando a la vez en la pista, uno encima del otro en
@@ -3679,6 +3682,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           );
           ventanillaAntes = ahora;
         }
+      }
+      {
+        /*
+         * **Y la foto de la historia de lo que se señala**: cuál sale, dónde y
+         * cuándo se va. Sale mientras suena la historia y nada más; ver
+         * `ui/ventana-de-historia.ts`.
+         */
+        const foto = o.historia?.() ?? null;
+        if (foto?.sitio && foto.sitio !== fotoPuesta)
+          fotosDeLaHistoria.push({ sitio: foto.sitio, donde: foto.donde, desde: t, hasta: null });
+        if (fotoPuesta && foto?.sitio !== fotoPuesta) {
+          const ultima = fotosDeLaHistoria.findLast((f) => f.sitio === fotoPuesta && f.hasta === null);
+          if (ultima) ultima.hasta = t;
+        }
+        fotoPuesta = foto?.sitio ?? null;
       }
       if (etapa === "final" && !s.onGround && (!destino || enElDestino)) {
         const j = o.juegoParaTrazas?.();
@@ -6265,6 +6283,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     ventanillaEnFinal,
     ventanillaQueSube,
     ventanillaConOtroPlan,
+    fotosDeLaHistoria,
     dosEnLaPista,
     dosEnLaPistaDonde,
     sinHueco,
@@ -7144,6 +7163,32 @@ else if (vuelo.ventanillaConOtroPlan)
     ok: true,
     sinMedir: true,
     detalle: `no se midió: ${vuelo.ventanillaConOtroPlan}`,
+  });
+
+/*
+ * **Y la foto de la historia sale mientras se cuenta, y se va.** Solo si en
+ * este vuelo se contó alguna: en un vuelo de campo a campo que no cruza, a
+ * menudo no se señala nada. Ver `ui/ventana-de-historia.ts`.
+ */
+if (vuelo.fotosDeLaHistoria?.length)
+  comprobar(
+    "y la foto de cada historia sale mientras se cuenta y se va al acabar",
+    vuelo.fotosDeLaHistoria.every((f) => f.hasta !== null),
+    vuelo.fotosDeLaHistoria
+      .map(
+        (f) =>
+          `${f.sitio} en la ${f.donde} a los ${f.desde.toFixed(0)} s` +
+          (f.hasta !== null ? `, ${(f.hasta - f.desde).toFixed(0)} s puesta` : ", no se fue"),
+      )
+      .join(" · "),
+    "«una ventana… mientras Jazlyn cuenta»: ni antes ni después",
+  );
+else
+  resultados.push({
+    nombre: "y la foto de cada historia sale mientras se cuenta y se va al acabar",
+    ok: true,
+    sinMedir: true,
+    detalle: "no se midió: en este vuelo no se contó ninguna historia",
   });
 
 /*

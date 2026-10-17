@@ -215,6 +215,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * Teide». Ver `flight/lo-que-se-ve.ts`.
      */
     ventanilla: () => juego.hitosSenalados,
+    /**
+     * **La foto de la historia**: con un sitio la pone, con `null` la quita y
+     * sin nada dice cuál hay y dónde quedó —placa o esquina, y su caja en
+     * píxeles de pantalla—. Los bancos la ponen a mano para medirla sin
+     * esperar a que la comandante la cuente. Ver `ui/ventana-de-historia.ts`.
+     */
+    historia: (sitio?: string | null) => {
+      if (sitio) juego.hud.historia.mostrar(sitio);
+      else if (sitio === null) juego.hud.historia.quitar();
+      return juego.hud.historia.estado;
+    },
     /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
     cotaCruda: (x: number, z: number) =>
       juego.teselas?.medidaDirecta(x, z) ?? null,

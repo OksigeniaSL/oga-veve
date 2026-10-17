@@ -72,6 +72,14 @@
  * cambia— y girándola con el dedo, que es su peor caso, pintando a cada
  * fotograma. Es un segundo dibujo en otro contexto, y la regla de AGENTS.md
  * es medirlo antes de darlo por bueno. Ver `ui/visor-del-avion.ts`.
+ *
+ * ## Y con la foto de la historia puesta
+ *
+ * `OGA_HISTORIA=1` mide además, en el aire y en el mismo sitio que «aire»,
+ * **con la foto de la historia de la ventanilla abierta**: la ventana de
+ * cristal al lado del cuadro, o la placa en las avionetas. Es una imagen y un
+ * marco encima del mundo, sin desenfoque, y la regla es la misma: se mide.
+ * Ver `ui/ventana-de-historia.ts`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -103,6 +111,7 @@ await server.listen();
 const BASE = baseDe(server, PUERTO);
 const CON_GPU = process.env.OGA_GPU === "1";
 const CON_TARJETA = process.env.OGA_TARJETA === "1";
+const CON_HISTORIA = process.env.OGA_HISTORIA === "1";
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   /*
@@ -218,6 +227,11 @@ for (const escenario of ESCENARIOS) {
      * bandada, sin tarjeta, a 42: lo que se medía era el orden.
      */
     ...(CON_TARJETA ? ["tarjeta", "girando"] : []),
+    /*
+     * **La foto de la historia, también justo después del aire**, por lo
+     * mismo: que la diferencia sea la foto.
+     */
+    ...(CON_HISTORIA ? ["historia"] : []),
     ...(hayCapa ? ["nube"] : []),
     ...(hayBandadas ? ["bandada"] : []),
   ]) {
@@ -256,6 +270,19 @@ for (const escenario of ESCENARIOS) {
         { timeout: 60000 },
       );
       await page.waitForTimeout(1500);
+    }
+    if (sitio === "historia") {
+      // En el aire otra vez, en el sitio de «aire», y la foto puesta.
+      const donde = await page.evaluate(async () => {
+        const o = globalThis.__oga;
+        const r = o.pista();
+        o.colocar(r.x, o.suelo(r.x, r.z) + 250, r.z, 30);
+        o.historia("gigantes");
+        await new Promise((listo) => setTimeout(listo, 1500));
+        return o.historia().donde;
+      });
+      if (!donde) console.log(`  ✗ ${escenario}: la foto de la historia no salió en 1280×720`);
+      await page.waitForTimeout(500);
     }
     if (sitio === "crucero") {
       await page.evaluate(() => {
@@ -407,6 +434,7 @@ for (const escenario of ESCENARIOS) {
       });
     }
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    if (sitio === "historia") await page.evaluate(() => globalThis.__oga.historia(null));
     if (sitio === "girando")
       await page.evaluate(() => {
         const o = globalThis.__oga;
@@ -429,7 +457,7 @@ for (const f of filas) {
   const bien = !exige || f.mediana <= CUADRO_MAXIMO;
   if (!bien) fallos++;
   console.log(
-    `  ${bien ? "✓" : "✗"} ${f.escenario.padEnd(15)} ${f.sitio.padEnd(7)} ` +
+    `  ${bien ? "✓" : "✗"} ${f.escenario.padEnd(15)} ${f.sitio.padEnd(8)} ` +
       `×${f.veces} ${String(Math.round(fps)).padStart(3)} fps · ` +
       `mediana ${f.mediana.toFixed(1)} ms · p95 ${f.p95.toFixed(1)} ms · ` +
       `${f.llamadas} dibujos · ${(f.triangulos / 1000).toFixed(0)}k △` +

@@ -51,6 +51,11 @@ export interface LoQueSeDice {
   /** La receta del pack: `ventanilla` o `ventanilla.vos`. */
   readonly clave: string;
   readonly relleno: Readonly<Record<string, string>>;
+  /**
+   * El sitio del que habla, por su clave: lo lleva la historia para que la
+   * ventana sepa qué foto poner mientras suena. Ver `ui/fotos-de-las-historias.ts`.
+   */
+  readonly sitio?: string;
 }
 
 /**
@@ -102,5 +107,5 @@ export function laHistoria(mirada: Mirada, conPasaje: boolean): LoQueSeDice | nu
   const prefijo = conPasaje ? "ventanilla.historia" : "ventanilla.vos.historia";
   const cuerpo = `${prefijo}.${que}`;
   if (!hayTexto(cuerpo)) return null;
-  return { texto: t(cuerpo), clave: prefijo, relleno: { historia: cuerpo } };
+  return { texto: t(cuerpo), clave: prefijo, relleno: { historia: cuerpo }, sitio: que };
 }

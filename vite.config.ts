@@ -230,8 +230,15 @@ export default defineConfig({
      * dirección correcta: pedir permiso para algo que no hace falta es hacer
      * más débil la política de todo el sitio.
      */
+    /*
+     * **Y las fotos de las historias, tampoco.** Hoy pesan todas más de cuatro
+     * kilobytes, pero una más pequeña entraría como `data:` dentro del
+     * JavaScript del juego, que es lo que se precarga entero en la primera
+     * visita: justo lo contrario de bajarla solo cuando se cuenta su
+     * historia. Ver `ui/fotos-de-las-historias.ts`.
+     */
     assetsInlineLimit: (ruta: string) =>
-      ruta.endsWith(".json") ? false : undefined,
+      ruta.endsWith(".json") || /[\\/]assets[\\/]historias[\\/]/.test(ruta) ? false : undefined,
     // three.js son ~600 KB min. Va en su propio chunk para que el navegador
     // lo cachee entre despliegues: el motor cambia mucho menos que el juego.
     rollupOptions: {
