@@ -35,9 +35,25 @@
       "ms": 963,
       "h": "7f7b4cd3a4"
     },
+    "cabina.climbClimbNow": {
+      "ms": 1853,
+      "h": "350f111bc1"
+    },
+    "cabina.climbCrossingClimb": {
+      "ms": 2272,
+      "h": "69e1da422e"
+    },
+    "cabina.descendCrossingDescend": {
+      "ms": 2810,
+      "h": "2a68815e08"
+    },
     "cabina.descendDescend": {
       "ms": 1074,
       "h": "29d15f179f"
+    },
+    "cabina.descendDescendNow": {
+      "ms": 1909,
+      "h": "8858f62e17"
     },
     "cabina.engineFailure": {
       "ms": 978,
@@ -75,9 +91,25 @@
       "ms": 697,
       "h": "ff2113f906"
     },
+    "cabina.increaseClimb": {
+      "ms": 1524,
+      "h": "9bf01440b8"
+    },
+    "cabina.increaseDescent": {
+      "ms": 1937,
+      "h": "ef50615487"
+    },
     "cabina.levelOff": {
       "ms": 1279,
       "h": "d35f002e54"
+    },
+    "cabina.maintainCrossingMaintain": {
+      "ms": 2222,
+      "h": "3caeeacecd"
+    },
+    "cabina.maintainVerticalSpeed": {
+      "ms": 1776,
+      "h": "ab0cf3b79a"
     },
     "cabina.minimums": {
       "ms": 742,
@@ -229,8 +261,20 @@
     "cabina.climbClimb": [
       "cabina.climbClimb"
     ],
+    "cabina.climbClimbNow": [
+      "cabina.climbClimbNow"
+    ],
+    "cabina.climbCrossingClimb": [
+      "cabina.climbCrossingClimb"
+    ],
+    "cabina.descendCrossingDescend": [
+      "cabina.descendCrossingDescend"
+    ],
     "cabina.descendDescend": [
       "cabina.descendDescend"
+    ],
+    "cabina.descendDescendNow": [
+      "cabina.descendDescendNow"
     ],
     "cabina.engineFailure": [
       "cabina.engineFailure"
@@ -259,8 +303,20 @@
     "cabina.goAroundOrder": [
       "cabina.goAroundOrder"
     ],
+    "cabina.increaseClimb": [
+      "cabina.increaseClimb"
+    ],
+    "cabina.increaseDescent": [
+      "cabina.increaseDescent"
+    ],
     "cabina.levelOff": [
       "cabina.levelOff"
+    ],
+    "cabina.maintainCrossingMaintain": [
+      "cabina.maintainCrossingMaintain"
+    ],
+    "cabina.maintainVerticalSpeed": [
+      "cabina.maintainVerticalSpeed"
     ],
     "cabina.minimums": [
       "cabina.minimums"

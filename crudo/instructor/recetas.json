@@ -1656,5 +1656,29 @@
   ],
   "explica.tcas.ra": [
     "explica.tcas.ra"
+  ],
+  "vuelo.ra.cruzaSube": [
+    "vuelo.ra.cruzaSube"
+  ],
+  "vuelo.ra.cruzaBaja": [
+    "vuelo.ra.cruzaBaja"
+  ],
+  "vuelo.ra.mantiene": [
+    "vuelo.ra.mantiene"
+  ],
+  "vuelo.ra.mantieneCruzando": [
+    "vuelo.ra.mantieneCruzando"
+  ],
+  "vuelo.ra.subeMas": [
+    "vuelo.ra.subeMas"
+  ],
+  "vuelo.ra.bajaMas": [
+    "vuelo.ra.bajaMas"
+  ],
+  "vuelo.ra.ahoraSube": [
+    "vuelo.ra.ahoraSube"
+  ],
+  "vuelo.ra.ahoraBaja": [
+    "vuelo.ra.ahoraBaja"
   ]
 }

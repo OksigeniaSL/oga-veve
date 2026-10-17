@@ -1831,13 +1831,41 @@
       "ms": 1845,
       "h": "c1edff268c"
     },
+    "vuelo.ra.ahoraBaja": {
+      "ms": 5007,
+      "h": "6f3aa1fd92"
+    },
+    "vuelo.ra.ahoraSube": {
+      "ms": 4907,
+      "h": "8b9c785e06"
+    },
     "vuelo.ra.baja": {
       "ms": 4907,
       "h": "0cf851ac2b"
     },
+    "vuelo.ra.bajaMas": {
+      "ms": 5207,
+      "h": "295637c482"
+    },
+    "vuelo.ra.cruzaBaja": {
+      "ms": 6407,
+      "h": "a49039475f"
+    },
+    "vuelo.ra.cruzaSube": {
+      "ms": 6307,
+      "h": "b4ddcf8f0d"
+    },
     "vuelo.ra.libre": {
       "ms": 4107,
       "h": "f3b7e4c3f5"
+    },
+    "vuelo.ra.mantiene": {
+      "ms": 4307,
+      "h": "bc4c80c0de"
+    },
+    "vuelo.ra.mantieneCruzando": {
+      "ms": 6407,
+      "h": "6d66543029"
     },
     "vuelo.ra.nivela": {
       "ms": 5307,
@@ -1846,6 +1874,10 @@
     "vuelo.ra.sube": {
       "ms": 5007,
       "h": "488974a501"
+    },
+    "vuelo.ra.subeMas": {
+      "ms": 4907,
+      "h": "2a65e048c9"
     },
     "vuelo.ra.vigila": {
       "ms": 4607,
@@ -3758,6 +3790,30 @@
     ],
     "explica.tcas.ra": [
       "explica.tcas.ra"
+    ],
+    "vuelo.ra.cruzaSube": [
+      "vuelo.ra.cruzaSube"
+    ],
+    "vuelo.ra.cruzaBaja": [
+      "vuelo.ra.cruzaBaja"
+    ],
+    "vuelo.ra.mantiene": [
+      "vuelo.ra.mantiene"
+    ],
+    "vuelo.ra.mantieneCruzando": [
+      "vuelo.ra.mantieneCruzando"
+    ],
+    "vuelo.ra.subeMas": [
+      "vuelo.ra.subeMas"
+    ],
+    "vuelo.ra.bajaMas": [
+      "vuelo.ra.bajaMas"
+    ],
+    "vuelo.ra.ahoraSube": [
+      "vuelo.ra.ahoraSube"
+    ],
+    "vuelo.ra.ahoraBaja": [
+      "vuelo.ra.ahoraBaja"
     ]
   }
 }
