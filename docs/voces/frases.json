@@ -210,6 +210,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.proponeIrseSalidaTapada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hay un avión esperando para salir justo por donde vamos a dejar la pista. Si querés, nos vamos al aire, lo dejamos salir y volvemos con calma",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.tomaLarga",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -910,6 +917,27 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "vuelo.vueltaPorTuSalida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos pide dar una vuelta entera: hay un avión esperando para salir justo por donde vamos a dejar la pista. Damos la vuelta, sale él, y volvemos.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.vueltaHecha",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vuelta entera. Ahora sí, volvemos a la pista.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.alAirePorTuSalida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hay un avión esperando para salir justo por donde vamos a dejar la pista. Subimos, sale él, y volvemos por el circuito.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.cotaDeLaPista",
@@ -9783,6 +9811,13 @@
     "para": "esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué"
   },
   {
+    "id": "torre.solo.orbit",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "orbit",
+    "para": "date una vuelta entera para esperar; detrás, hacia qué lado y el porqué"
+  },
+  {
     "id": "torre.solo.clearedTo",
     "voz": "torre",
     "idioma": "en",
@@ -11140,6 +11175,13 @@
     "idioma": "en",
     "texto": "hold position",
     "para": "esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.orbit",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "orbit",
+    "para": "date una vuelta entera para esperar; detrás, hacia qué lado y el porqué, en Canarias"
   },
   {
     "id": "torre.canario.solo.clearedTo",

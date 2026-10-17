@@ -2017,6 +2017,15 @@
       "{c5}",
       "torre.canario.solo.holdPosition",
       "torre.canario.solo.landingTraffic"
+    ],
+    "torre.canario.goAroundDeparting": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.goAroundSolo",
+      "torre.canario.solo.departingTraffic"
     ]
   }
 }

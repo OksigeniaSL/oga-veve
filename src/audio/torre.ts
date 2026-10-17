@@ -145,6 +145,18 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    * no se dice. Ver `RETENIDO` en `flight/radio.ts`.
    */
   "hold position, landing traffic": "torre.holdPosition",
+  /*
+   * **Y a ti, cuando el que va a salir tapa tu salida de la pista** y no se
+   * iría antes de que llegues: una vuelta para esperar —«ORBIT RIGHT (o
+   * LEFT)», hacia fuera del circuito— o, si ya no hay sitio, irse al aire,
+   * con el porqué detrás, «departing traffic» (Doc 4444, 12.3.4, demorar
+   * aeronaves y aproximación frustrada; el párrafo, por verificar). La vuelta
+   * espera su toma —ver `ESPERAN_SU_TOMA`—; irse al aire se monta con piezas
+   * ya grabadas. Ver `flight/salida-tapada.ts`.
+   */
+  "orbit left, departing traffic": "torre.orbitLeft",
+  "orbit right, departing traffic": "torre.orbitRight",
+  "go around, departing traffic": "torre.goAroundDeparting",
 };
 
 /**
@@ -241,6 +253,14 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
    * `flight/radio.ts`.
    */
   "torre.holdPosition": "torre.afisInUseLanding",
+  /*
+   * Ni te pide una vuelta ni te manda al aire por el que sale: te cuenta que
+   * sale —«runway in use…, departing traffic»— y decide quien vuela. Ver
+   * `contarteTuSalida` en `game.ts`.
+   */
+  "torre.orbitLeft": null,
+  "torre.orbitRight": null,
+  "torre.goAroundDeparting": null,
 };
 
 /**
@@ -250,10 +270,14 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * pruebas de `torre.test.ts`—, y estas son la excepción escrita: el juego ya
  * sabe cuándo decirlas y las pide solo si su grabación está en el pack. Cuando
  * se graben, salen de aquí; la prueba lo recuerda. El «give way» se grabó el
- * 11-10-2026; espera el «hold position» al que la torre no deja salir de su
- * puesto.
+ * 11-10-2026 y el «hold position» el 17-10-2026; espera la vuelta que la
+ * torre te pide cuando el que sale tapa tu salida.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
+  // Ver `PENDIENTE-VOCES-torre-alarga.md`.
+  "torre.orbitLeft",
+  "torre.orbitRight",
+]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

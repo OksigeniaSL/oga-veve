@@ -1038,6 +1038,24 @@ const RA = {
  * punta apunta hacia arriba porque el despegue es hacia allá; lo de bajar es
  * el trámite.
  */
+/**
+ * **Una vuelta entera**: el avión en el centro y la flecha que da toda la
+ * vuelta a su alrededor, hacia el lado que se pide. Es lo que la torre te
+ * pide para esperar en el aire —«orbit»— mientras sale otro. Un círculo con
+ * su flecha se entiende sin leer: gira hasta volver a donde empezaste. Ver
+ * `flight/salida-tapada.ts`.
+ */
+const vueltaEntera = (izquierda: boolean): string =>
+  icono(`
+  <g${izquierda ? ' transform="translate(24 0) scale(-1 1)"' : ""}>
+    <path d="M12 3.5 a8.5 8.5 0 1 1 -7.4 4.3" fill="none" stroke="currentColor"
+          stroke-width="2.4" stroke-linecap="round" />
+    <path d="M6.2 5 L6.5 8.9 L2.7 6.7 Z" />
+    <path transform="translate(12 12) scale(0.42) translate(-12 -12)"
+          d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />
+  </g>
+`);
+
 const MEDIA_VUELTA = icono(`
   <path d="M4.6 2 h14.8 v20 H4.6 Z" opacity="0.26" />
   <path d="M9 4 v11 q0 4 3 4 q3 0 3-4 V9.6" fill="none" stroke="currentColor"
@@ -1453,6 +1471,8 @@ export const DIBUJOS = {
   nopara: NO_PARAR,
   verde: VERDE,
   "media-vuelta": MEDIA_VUELTA,
+  "vuelta-derecha": vueltaEntera(false),
+  "vuelta-izquierda": vueltaEntera(true),
   eje: EJE,
   motor: MOTOR,
   "motor-parado": MOTOR_PARADO,

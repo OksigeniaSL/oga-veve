@@ -29,6 +29,7 @@ instructor	instructor/vuelo.noEstabilizada~2.ogg	es-PY	Venís mal para bajar: ga
 instructor	instructor/vuelo.noEstabilizada~3.ogg	es-PY	Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.proponeIrse.ogg	es-PY	Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.proponeIrseSinPista.ogg	es-PY	Lo seguro es irnos al aire y volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.proponeIrseSalidaTapada.ogg	es-PY	Hay un avión esperando para salir justo por donde vamos a dejar la pista. Si querés, nos vamos al aire, lo dejamos salir y volvemos con calma	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.tomaLarga.ogg	es-PY	Así no: nos vamos al aire y lo volvemos a intentar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.tomaLargaSinPista.ogg	es-PY	No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.aterrizasteContraLaOrden.ogg	es-PY	La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos	lo que toca hacer ahora, en vuelo y en tierra
@@ -105,6 +106,9 @@ instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volv
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.permisoAnulado.ogg	es-PY	La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.vueltaPorTuSalida.ogg	es-PY	La torre nos pide dar una vuelta entera: hay un avión esperando para salir justo por donde vamos a dejar la pista. Damos la vuelta, sale él, y volvemos.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.vueltaHecha.ogg	es-PY	Vuelta entera. Ahora sí, volvemos a la pista.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alAirePorTuSalida.ogg	es-PY	Hay un avión esperando para salir justo por donde vamos a dejar la pista. Subimos, sale él, y volvemos por el circuito.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.cotaDeLaPista.ogg	es-PY	Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podés volver a bajar	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
@@ -970,6 +974,7 @@ torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno 
 torre	torre/torre.solo.giveWay.ogg	en	give way to	dale paso al que viene de frente por tu calle; detrás, quién
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.holdPosition.ogg	en	hold position	esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué
+torre	torre/torre.solo.orbit.ogg	en	orbit	date una vuelta entera para esperar; detrás, hacia qué lado y el porqué
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
 torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
@@ -1164,6 +1169,7 @@ torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departi
 torre-canarias	torre-canarias/torre.canario.solo.giveWay.ogg	en	give way to	dale paso al que viene de frente por tu calle; detrás, quién, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.holdPosition.ogg	en	hold position	esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.orbit.ogg	en	orbit	date una vuelta entera para esperar; detrás, hacia qué lado y el porqué, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias

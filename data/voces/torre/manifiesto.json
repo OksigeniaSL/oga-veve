@@ -2003,6 +2003,15 @@
       "{c5}",
       "torre.solo.holdPosition",
       "torre.solo.landingTraffic"
+    ],
+    "torre.goAroundDeparting": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAroundSolo",
+      "torre.solo.departingTraffic"
     ]
   }
 }

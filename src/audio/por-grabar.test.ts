@@ -37,6 +37,20 @@ function pedidasConPuerta(): string[] {
   return [...salida];
 }
 
+/**
+ * **Las que esperan su toma**, ya en la lista de grabar y todavía sin receta:
+ * una receta que nombra una pieza que no se ha grabado rompe el horneado, así
+ * que la receta se pone al grabarla. Es la excepción escrita, como la de la
+ * torre —ver `ESPERAN_SU_TOMA` en `audio/torre.ts`—; en cuanto tienen receta
+ * salen de aquí, y la prueba lo recuerda.
+ */
+const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set([
+  // La vuelta y la ida al aire por el que tapa tu salida: ver `PENDIENTE-VOCES-torre-alarga.md`.
+  "vuelo.vueltaPorTuSalida",
+  "vuelo.vueltaHecha",
+  "vuelo.alAirePorTuSalida",
+]);
+
 describe("lo que se pide con su grabación, en la lista de grabar", () => {
   const recetas = leer<Record<string, string[]>>("crudo/instructor/recetas.json");
   const frases = leer<{ id: string; voz: string }[]>("docs/voces/frases.json");
@@ -57,8 +71,17 @@ describe("lo que se pide con su grabación, en la lista de grabar", () => {
   it("cada una tiene su texto, su receta y su fila con la voz de la instructora", () => {
     for (const clave of pedidasConPuerta()) {
       expect(hayTexto(clave), `${clave}: sin texto`).toBe(true);
-      expect(recetas[clave], `${clave}: sin receta`).toBeDefined();
+      if (!ESPERAN_SU_TOMA.has(clave))
+        expect(recetas[clave], `${clave}: sin receta`).toBeDefined();
       expect(deLaInstructora.has(clave), `${clave}: no está en frases.json`).toBe(true);
+    }
+  });
+
+  it("y las que esperan su toma, la esperan de verdad: con receta, salen de la lista", () => {
+    const pedidas = new Set(pedidasConPuerta());
+    for (const clave of ESPERAN_SU_TOMA) {
+      expect(pedidas.has(clave), `${clave}: nadie la pide`).toBe(true);
+      expect(recetas[clave], `${clave} ya tiene receta: sácala de ESPERAN_SU_TOMA`).toBeUndefined();
     }
   });
 

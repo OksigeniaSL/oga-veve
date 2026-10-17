@@ -136,12 +136,14 @@ export interface Hechos {
    * - `otraCabecera`: se viene por la punta que no está en uso. `motivo` dice
    *   si además el viento de cola pasa del límite. Ver
    *   `flight/la-otra-cabecera.ts`.
+   * - `salidaTapada`: la torre. Uno que va a salir espera en tu salida de la
+   *   pista y no se iría a tiempo. Ver `flight/salida-tapada.ts`.
    *
    * Ir alto, bajo o rápido no es orden de nadie: lo propone la instructora.
    * Ver `proponenIrseAlAire` y `PorQueMandaron` en `flight/minimos.ts`.
    */
   mandaronIrseAlAire: {
-    readonly porque: "pistaOcupada" | "otraCabecera";
+    readonly porque: "pistaOcupada" | "otraCabecera" | "salidaTapada";
     readonly motivo?: string;
   };
   /**
@@ -160,15 +162,17 @@ export interface Hechos {
    * aterrizar. Ver `alLevantarLaOrden` en `flight/turno-de-pista.ts`.
    */
   pistaLibreOtraVez: {
-    readonly porque: "pistaOcupada" | "otraCabecera" | null;
+    readonly porque: "pistaOcupada" | "otraCabecera" | "salidaTapada" | null;
   };
 }
 
 /**
  * Por qué propone la instructora irse al aire: lo que falla en la puerta de
- * los quinientos pies, o la pista que no se ve a los mínimos.
+ * los quinientos pies, la pista que no se ve a los mínimos, o, donde contesta
+ * un AFIS, uno que va a salir esperando en la calle por la que dejaríamos la
+ * pista. Ver `flight/salida-tapada.ts`.
  */
-export type MotivoDeIrse = MotivoDeLaPuerta | "sinPista";
+export type MotivoDeIrse = MotivoDeLaPuerta | "sinPista" | "salidaTapada";
 
 /** Quien escucha un hecho. No devuelve nada: enterarse no contesta. */
 type Oyente<T> = (datos: T) => void;

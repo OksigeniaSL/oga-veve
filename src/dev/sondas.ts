@@ -873,6 +873,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     sacarARodar: () => juego.sacarARodarParaBanco(),
     /** La retención más larga de la torre, s. Ver `retenidos` en `turno-de-pista.ts`. */
     retencionMasLarga: () => juego.retencionMasLargaParaBanco,
+    /** Lo pedido por el que tapa tu salida. Ver `flight/salida-tapada.ts`. */
+    porTuSalida: () => juego.porTuSalidaParaBanco,
     /** La última salida del tráfico, para su estela. Ver `ultimaSalida`. */
     ultimaSalida: () => juego.trafico?.ultimaSalida() ?? null,
     /**

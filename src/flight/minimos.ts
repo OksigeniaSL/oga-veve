@@ -171,6 +171,9 @@ export class Minimos {
  *   sin torre, la vaca en la zona de toma—.
  * - `otraCabecera`: la torre, porque se viene por la punta que no está en
  *   uso. Ver `flight/la-otra-cabecera.ts`.
+ * - `salidaTapada`: la torre, porque uno que va a salir espera en la calle
+ *   por la que dejarías la pista y no se iría antes de que llegues, y ya no
+ *   hay sitio para una vuelta. Ver `flight/salida-tapada.ts`.
  *
  * Había dos más y se quitaron, porque ninguna torre las da:
  *
@@ -183,7 +186,7 @@ export class Minimos {
  *   libre**: era la torre mandándote al aire por su propio retraso. Ver
  *   `paso` en `flight/turno-de-pista.ts`.
  */
-export type PorQueMandaron = "pistaOcupada" | "otraCabecera" | null;
+export type PorQueMandaron = "pistaOcupada" | "otraCabecera" | "salidaTapada" | null;
 
 // ── La puerta de la aproximación estabilizada ──────────────────────────
 
