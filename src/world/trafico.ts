@@ -1356,6 +1356,13 @@ export const TU = "quien-juega";
 const MARGEN_PARA_IRSE = 30;
 
 /**
+ * Cada cuántos metros se mira la salida de la pista de uno que aterriza al
+ * buscar dobles rayas en ella: menos que lo que se pasa al lado, y sin mirar
+ * cada fotograma cientos de puntos por nada. Ver `quienDejaLaPistaPorSuRaya`.
+ */
+const CADA_EN_LA_SALIDA = 8;
+
+/**
  * **Quién juega, visto desde el tráfico**: si viene a aterrizar en esta pista
  * y cuándo llega, y si está encima de ella. Lo pone el juego; sin él, el
  * tráfico se turna solo entre los suyos. Ver `quienJuega` en
@@ -2528,7 +2535,7 @@ export function crearTrafico(
   const suSalidaDeLaPista = (quien: Volando): EnElPlano[] => {
     const c = quien.caminos;
     if (!c?.enTierra) return [];
-    return porDelanteDe(c.llegada, Math.max(c.toca, quien.recorrido), Infinity);
+    return porDelanteDe(c.llegada, Math.max(c.toca, quien.recorrido), Infinity, CADA_EN_LA_SALIDA);
   };
 
   /** Tu salida prevista volando, por los metros en que frenarás. Ver `tuSalida`. */
@@ -2547,7 +2554,7 @@ export function crearTrafico(
     let prevista = tuSalidaPrevista.get(metros);
     if (!prevista) {
       const camino = opciones.tierra?.()?.suelo.llegada(metros)?.camino ?? [];
-      prevista = camino.length > 1 ? porDelanteDe(camino, 0, Infinity) : [];
+      prevista = camino.length > 1 ? porDelanteDe(camino, 0, Infinity, CADA_EN_LA_SALIDA) : [];
       tuSalidaPrevista.set(metros, prevista);
     }
     return prevista;
@@ -2601,7 +2608,8 @@ export function crearTrafico(
      * esperando a que el otro se apartara. Medido en Concepción, con dos
      * avionetas: ninguno se movía ya.
      */
-    const suCalle = porDelanteDe(c.salida, 0, c.espera);
+    // Cada veinte metros basta: lo que se mira es si se pasa a cuarenta.
+    const suCalle = porDelanteDe(c.salida, 0, c.espera, PASA_A_TU_LADO / 2);
     for (const [m, b] of aviones) {
       if (m === matricula || !b.caminos?.enTierra || !llegando(b)) continue;
       if (dandoLaVuelta(b)) continue;
