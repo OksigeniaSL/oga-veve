@@ -74,6 +74,20 @@ export const PRIORIDAD: Readonly<Record<string, number>> = {
    */
   "cabina.climbClimb": 35,
   "cabina.descendDescend": 35,
+  "cabina.climbCrossingClimb": 35,
+  "cabina.descendCrossingDescend": 35,
+  "cabina.maintainVerticalSpeed": 35,
+  "cabina.maintainCrossingMaintain": 35,
+  /*
+   * Y el refuerzo y la inversión, un punto por encima: llegan cuando la
+   * primera orden ya no basta y se esperan respondidos en dos segundos y
+   * medio, así que cortan a la que suena en vez de esperar a que acabe. Ver
+   * `reforzarOInvertir` en `flight/tcas.ts`.
+   */
+  "cabina.increaseClimb": 36,
+  "cabina.increaseDescent": 36,
+  "cabina.climbClimbNow": 36,
+  "cabina.descendDescendNow": 36,
   "cabina.levelOff": 35,
   "cabina.monitorVerticalSpeed": 35,
   "cabina.autopilotDisconnect": 30,

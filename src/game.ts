@@ -158,7 +158,7 @@ import {
   Tcas,
   bandaPara,
   modoEnPantalla,
-  RITMO_DE_LA_MANIOBRA,
+  ritmoQuePide,
   type AvisoDeTrafico,
   type Banda,
   type CambioDelRa,
@@ -440,17 +440,33 @@ const TCAS_TA_RA_EN_TIERRA = new Set<Fase>([
  */
 const SE_QUEDA_EL_RA = 60;
 
-/** La tarjeta de cada maniobra: su variómetro, tu avión y el otro. */
+/**
+ * La tarjeta de cada maniobra: su variómetro, tu avión y el otro.
+ *
+ * Las de cruzar, mantener e invertir llevan la de subir o bajar de su
+ * sentido: lo que hay que hacer con la aguja es lo mismo, y lo que cambia lo
+ * dicen la palabra y la caja. El refuerzo lleva la suya, con la flecha doble.
+ */
 function dibujoDelRa(r: Resolucion): DibujoDeSenal {
-  if (r.orden === "climb") return "ra-sube";
-  if (r.orden === "descend") return "ra-baja";
-  return r.orden === "levelOff" ? `ra-nivela-${r.sentido}` : `ra-vigila-${r.sentido}`;
+  if (r.orden === "levelOff") return `ra-nivela-${r.sentido}`;
+  if (r.orden === "monitor") return `ra-vigila-${r.sentido}`;
+  if (r.orden === "increaseClimb") return "ra-sube-mas";
+  if (r.orden === "increaseDescent") return "ra-baja-mas";
+  return r.sentido === "sube" ? "ra-sube" : "ra-baja";
 }
 
 /** La palabra de la tarjeta de cada maniobra. Ver `Game.ordenDelTcas`. */
 const PALABRA_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
   climb: "palabra.ra.sube",
   descend: "palabra.ra.baja",
+  crossingClimb: "palabra.ra.sube",
+  crossingDescend: "palabra.ra.baja",
+  maintain: "palabra.ra.mantiene",
+  crossingMaintain: "palabra.ra.mantiene",
+  increaseClimb: "palabra.ra.subeMas",
+  increaseDescent: "palabra.ra.bajaMas",
+  climbNow: "palabra.ra.ahoraSube",
+  descendNow: "palabra.ra.ahoraBaja",
   levelOff: "palabra.ra.nivela",
   monitor: "palabra.ra.vigila",
 };
@@ -459,14 +475,34 @@ const PALABRA_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
 const FRASE_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
   climb: "tcas.ra.sube",
   descend: "tcas.ra.baja",
+  crossingClimb: "tcas.ra.cruzaSube",
+  crossingDescend: "tcas.ra.cruzaBaja",
+  maintain: "tcas.ra.mantiene",
+  crossingMaintain: "tcas.ra.mantieneCruzando",
+  increaseClimb: "tcas.ra.subeMas",
+  increaseDescent: "tcas.ra.bajaMas",
+  climbNow: "tcas.ra.ahoraSube",
+  descendNow: "tcas.ra.ahoraBaja",
   levelOff: "tcas.ra.nivela",
   monitor: "tcas.ra.vigila",
 };
 
-/** Lo que explica la instructora detrás de cada voz de la caja. */
+/**
+ * Lo que explica la instructora detrás de cada voz de la caja. Las de cruzar,
+ * mantener, reforzar e invertir esperan su toma: hasta entonces suena la caja
+ * sola. Ver `decirLaManiobra` y `PENDIENTE-VOCES-cabina-2.md`.
+ */
 const EXPLICACION_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> = {
   climb: "vuelo.ra.sube",
   descend: "vuelo.ra.baja",
+  crossingClimb: "vuelo.ra.cruzaSube",
+  crossingDescend: "vuelo.ra.cruzaBaja",
+  maintain: "vuelo.ra.mantiene",
+  crossingMaintain: "vuelo.ra.mantieneCruzando",
+  increaseClimb: "vuelo.ra.subeMas",
+  increaseDescent: "vuelo.ra.bajaMas",
+  climbNow: "vuelo.ra.ahoraSube",
+  descendNow: "vuelo.ra.ahoraBaja",
   levelOff: "vuelo.ra.nivela",
   monitor: "vuelo.ra.vigila",
 };
@@ -2802,7 +2838,7 @@ export class Game {
     const larga = FRASE_DEL_RA[r.orden];
     const clave = claveDelAviso(this.tier.avisos, larga, corta) as TranslationKey | null;
     const rotulo = clave
-      ? t(clave, { ritmo: canales.corto ? "" : this.ritmoDeLaManiobra() })
+      ? t(clave, { ritmo: canales.corto ? "" : this.ritmoDeLaManiobra(r) })
       : "";
     if (this.tarjetaDelRa && this.tarjetaDelRa !== dibujo) this.hud.senal.caducar(this.tarjetaDelRa);
     this.hud.senal.mostrar(dibujo, rotulo, null, {
@@ -2854,8 +2890,9 @@ export class Game {
    * en pies como todo instrumento de verdad—, y la que se escribe es la que
    * marca el instrumento.
    */
-  private ritmoDeLaManiobra(): string {
-    return `${RITMO_DE_LA_MANIOBRA} ${t("units.fpm")}`;
+  private ritmoDeLaManiobra(r: Resolucion): string {
+    const ritmo = ritmoQuePide(r.orden);
+    return ritmo === null ? "" : `${ritmo} ${t("units.fpm")}`;
   }
 
   /** La franja del variómetro, mientras haya maniobra. Ver `Franja`. */

@@ -19,6 +19,7 @@ descend»— y detrás, nunca a la vez, la instructora; «level off» al aflojar
 «contact departure» al salir de la zona de la torre en los peldaños con
 cifras, y la instructora en los de abajo.
 
-Lo que el RA no hace —reforzar, invertir, «crossing», coordinarse— y lo que
-está de memoria y por verificar está escrito en la cabecera de
-`src/flight/tcas.ts`.
+El RA completo —cruzar, mantener, reforzar e invertir— ya está en el código y
+espera sus voces: ver `PENDIENTE-VOCES-cabina-2.md`. Lo que sigue sin hacer
+—coordinarse, más de un tráfico— y lo que queda por verificar está escrito en
+la cabecera de `src/flight/tcas.ts`.

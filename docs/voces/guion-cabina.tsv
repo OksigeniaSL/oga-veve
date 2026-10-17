@@ -22,29 +22,37 @@
 022	cabina.monitorVerticalSpeed	monitor vertical speed
 023	cabina.levelOff	level off, level off
 024	cabina.clearOfConflict	clear of conflict
-025	cabina.autopilotDisconnect	autopilot disconnect
-026	cabina.minimums	minimums
-027	cabina.cabin	cabin
-028	cabina.slowDown	slow down
-029	cabina.tooHighComeDown	too high, come down
-030	cabina.tooLowClimb	too low, climb
-031	cabina.obstacleAhead	obstacle ahead
-032	cabina.goAround	going around. good decision
-033	cabina.weHaveAProblem	we have a problem
-034	cabina.goAroundOrder	go around
-035	cabina.engineFailure	engine failure
-036	cabina.stop	stop
-037	cabina.speedbrakesUp	speedbrakes up
-038	cabina.speedbrakesNotUp	speedbrakes not up
-039	cabina.reversersNormal	reversers normal
-040	cabina.sixtyKnots	sixty knots
-041	cabina.airspeedLow	airspeed low
-042	cabina.twentyFiveHundred	twenty five hundred
-043	cabina.oneThousand	one thousand
-044	cabina.fiveHundred	five hundred
-045	cabina.oneHundred	one hundred
-046	cabina.fifty	fifty
-047	cabina.forty	forty
-048	cabina.thirty	thirty
-049	cabina.twenty	twenty
-050	cabina.ten	ten
+025	cabina.climbCrossingClimb	climb, crossing climb; climb, crossing climb
+026	cabina.descendCrossingDescend	descend, crossing descend; descend, crossing descend
+027	cabina.maintainVerticalSpeed	maintain vertical speed, maintain
+028	cabina.maintainCrossingMaintain	maintain vertical speed, crossing maintain
+029	cabina.increaseClimb	increase climb, increase climb
+030	cabina.increaseDescent	increase descent, increase descent
+031	cabina.climbClimbNow	climb, climb now; climb, climb now
+032	cabina.descendDescendNow	descend, descend now; descend, descend now
+033	cabina.autopilotDisconnect	autopilot disconnect
+034	cabina.minimums	minimums
+035	cabina.cabin	cabin
+036	cabina.slowDown	slow down
+037	cabina.tooHighComeDown	too high, come down
+038	cabina.tooLowClimb	too low, climb
+039	cabina.obstacleAhead	obstacle ahead
+040	cabina.goAround	going around. good decision
+041	cabina.weHaveAProblem	we have a problem
+042	cabina.goAroundOrder	go around
+043	cabina.engineFailure	engine failure
+044	cabina.stop	stop
+045	cabina.speedbrakesUp	speedbrakes up
+046	cabina.speedbrakesNotUp	speedbrakes not up
+047	cabina.reversersNormal	reversers normal
+048	cabina.sixtyKnots	sixty knots
+049	cabina.airspeedLow	airspeed low
+050	cabina.twentyFiveHundred	twenty five hundred
+051	cabina.oneThousand	one thousand
+052	cabina.fiveHundred	five hundred
+053	cabina.oneHundred	one hundred
+054	cabina.fifty	fifty
+055	cabina.forty	forty
+056	cabina.thirty	thirty
+057	cabina.twenty	twenty
+058	cabina.ten	ten

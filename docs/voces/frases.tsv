@@ -52,6 +52,14 @@ instructor	instructor/vuelo.ra.sube.ogg	es-PY	La caja nos pide subir para aparta
 instructor	instructor/vuelo.ra.baja.ogg	es-PY	La caja nos pide bajar para apartarnos del otro avión: bajá con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.ra.nivela.ogg	es-PY	La caja nos pide dejar de subir y de bajar: nivelá con calma, con la aguja en la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.ra.vigila.ogg	es-PY	La caja nos dice que así vamos bien: seguí como vas, sin llevar la aguja a lo rojo.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.cruzaSube.ogg	es-PY	La caja nos pide subir y pasar por la altura del otro avión, que va a quedar abajo: subí con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.cruzaBaja.ogg	es-PY	La caja nos pide bajar y pasar por la altura del otro avión, que va a quedar arriba: bajá con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.mantiene.ogg	es-PY	La caja nos pide seguir como vamos, sin aflojar: la aguja, en la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.mantieneCruzando.ogg	es-PY	La caja nos pide seguir como vamos, sin aflojar: vamos a pasar por la altura del otro avión. La aguja, en la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.subeMas.ogg	es-PY	La caja nos pide subir más rápido: un poco más de nariz arriba, hasta la nueva franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.bajaMas.ogg	es-PY	La caja nos pide bajar más rápido: un poco más de nariz abajo, hasta la nueva franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.ahoraSube.ogg	es-PY	La caja cambió la orden: ahora hay que subir. Subí ya, con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.ra.ahoraBaja.ogg	es-PY	La caja cambió la orden: ahora hay que bajar. Bajá ya, con calma, hasta la franja verde.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.ra.libre.ogg	es-PY	Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.radio.otraFrecuencia.ogg	es-PY	Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.radio.otraVezLaTorre.ogg	es-PY	Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.	lo que toca hacer ahora, en vuelo y en tierra
@@ -743,6 +751,14 @@ cabina	cabina/cabina.descendDescend.ogg	en	descend, descend	el TCAS pide bajar p
 cabina	cabina/cabina.monitorVerticalSpeed.ogg	en	monitor vertical speed	el TCAS pide no cambiar el ritmo: fuera de lo rojo del variómetro
 cabina	cabina/cabina.levelOff.ogg	en	level off, level off	el TCAS pide dejar de subir o de bajar
 cabina	cabina/cabina.clearOfConflict.ogg	en	clear of conflict	el otro ya se aleja: se acabó la maniobra
+cabina	cabina/cabina.climbCrossingClimb.ogg	en	climb, crossing climb; climb, crossing climb	el TCAS pide subir pasando por la altura del otro
+cabina	cabina/cabina.descendCrossingDescend.ogg	en	descend, crossing descend; descend, crossing descend	el TCAS pide bajar pasando por la altura del otro
+cabina	cabina/cabina.maintainVerticalSpeed.ogg	en	maintain vertical speed, maintain	el TCAS pide no aflojar: seguir subiendo o bajando como se va
+cabina	cabina/cabina.maintainCrossingMaintain.ogg	en	maintain vertical speed, crossing maintain	el TCAS pide no aflojar, pasando por la altura del otro
+cabina	cabina/cabina.increaseClimb.ogg	en	increase climb, increase climb	el TCAS pide subir más rápido
+cabina	cabina/cabina.increaseDescent.ogg	en	increase descent, increase descent	el TCAS pide bajar más rápido
+cabina	cabina/cabina.climbClimbNow.ogg	en	climb, climb now; climb, climb now	el TCAS cambia la orden: ahora, subir, y ya
+cabina	cabina/cabina.descendDescendNow.ogg	en	descend, descend now; descend, descend now	el TCAS cambia la orden: ahora, bajar, y ya
 cabina	cabina/cabina.autopilotDisconnect.ogg	en	autopilot disconnect	el piloto automático se soltó y los mandos son tuyos otra vez
 cabina	cabina/cabina.minimums.ogg	en	minimums	la altura de decisión: o la ves, o te vas
 cabina	cabina/cabina.cabin.ogg	en	cabin	la cabina pasó de diez mil pies: se fue el aire

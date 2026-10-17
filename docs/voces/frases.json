@@ -423,6 +423,118 @@
     }
   },
   {
+    "id": "vuelo.ra.cruzaSube",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide subir y pasar por la altura del otro avión, que va a quedar abajo: subí con calma, hasta la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.cruzaBaja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide bajar y pasar por la altura del otro avión, que va a quedar arriba: bajá con calma, hasta la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.mantiene",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide seguir como vamos, sin aflojar: la aguja, en la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.mantieneCruzando",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide seguir como vamos, sin aflojar: vamos a pasar por la altura del otro avión. La aguja, en la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.subeMas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide subir más rápido: un poco más de nariz arriba, hasta la nueva franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.bajaMas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja nos pide bajar más rápido: un poco más de nariz abajo, hasta la nueva franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.ahoraSube",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja cambió la orden: ahora hay que subir. Subí ya, con calma, hasta la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.ra.ahoraBaja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La caja cambió la orden: ahora hay que bajar. Bajá ya, con calma, hasta la franja verde.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "vuelo.ra.libre",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -7772,6 +7884,62 @@
     "idioma": "en",
     "texto": "clear of conflict",
     "para": "el otro ya se aleja: se acabó la maniobra"
+  },
+  {
+    "id": "cabina.climbCrossingClimb",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "climb, crossing climb; climb, crossing climb",
+    "para": "el TCAS pide subir pasando por la altura del otro"
+  },
+  {
+    "id": "cabina.descendCrossingDescend",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "descend, crossing descend; descend, crossing descend",
+    "para": "el TCAS pide bajar pasando por la altura del otro"
+  },
+  {
+    "id": "cabina.maintainVerticalSpeed",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "maintain vertical speed, maintain",
+    "para": "el TCAS pide no aflojar: seguir subiendo o bajando como se va"
+  },
+  {
+    "id": "cabina.maintainCrossingMaintain",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "maintain vertical speed, crossing maintain",
+    "para": "el TCAS pide no aflojar, pasando por la altura del otro"
+  },
+  {
+    "id": "cabina.increaseClimb",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "increase climb, increase climb",
+    "para": "el TCAS pide subir más rápido"
+  },
+  {
+    "id": "cabina.increaseDescent",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "increase descent, increase descent",
+    "para": "el TCAS pide bajar más rápido"
+  },
+  {
+    "id": "cabina.climbClimbNow",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "climb, climb now; climb, climb now",
+    "para": "el TCAS cambia la orden: ahora, subir, y ya"
+  },
+  {
+    "id": "cabina.descendDescendNow",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "descend, descend now; descend, descend now",
+    "para": "el TCAS cambia la orden: ahora, bajar, y ya"
   },
   {
     "id": "cabina.autopilotDisconnect",

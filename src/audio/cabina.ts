@@ -268,10 +268,23 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
  * Mientras no estén en el pack no suenan, y no las dice nadie en su lugar: el
  * cuadrado rojo, la franja del variómetro y la tarjeta están siempre. Ver
  * `Game.ordenDelTcas` y `PENDIENTE-VOCES-radar.md`.
+ *
+ * **Y las del RA completo** —cruzar, mantener, reforzar e invertir— entraron
+ * igual, antes que su toma: la tabla 4 del folleto de la FAA, versión 7.1. Lo
+ * que falta para oírlas, en `PENDIENTE-VOCES-cabina-2.md`. «Maintain vertical
+ * speed, maintain» es la misma en los dos sentidos.
  */
 export const VOZ_DEL_RA: Readonly<Record<Orden | "libre", string>> = {
   climb: "cabina.climbClimb",
   descend: "cabina.descendDescend",
+  crossingClimb: "cabina.climbCrossingClimb",
+  crossingDescend: "cabina.descendCrossingDescend",
+  maintain: "cabina.maintainVerticalSpeed",
+  crossingMaintain: "cabina.maintainCrossingMaintain",
+  increaseClimb: "cabina.increaseClimb",
+  increaseDescent: "cabina.increaseDescent",
+  climbNow: "cabina.climbClimbNow",
+  descendNow: "cabina.descendDescendNow",
   levelOff: "cabina.levelOff",
   monitor: "cabina.monitorVerticalSpeed",
   libre: "cabina.clearOfConflict",

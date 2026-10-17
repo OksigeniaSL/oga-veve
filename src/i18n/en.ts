@@ -332,6 +332,20 @@ export const EN: Dictionary = {
   "tcas.ra.baja": "Descend: {ritmo} or more, down to the green band",
   "tcas.ra.nivela": "Level off: vertical speed needle to zero",
   "tcas.ra.vigila": "Keep it steady: vertical speed needle out of the red",
+  "palabra.ra.subeMas": "Climb more",
+  "palabra.ra.bajaMas": "Descend more",
+  "palabra.ra.ahoraSube": "Now climb",
+  "palabra.ra.ahoraBaja": "Now descend",
+  "palabra.ra.mantiene": "Maintain",
+  "tcas.ra.cruzaSube": "Climb, crossing its altitude: {ritmo} or more, up to the green band",
+  "tcas.ra.cruzaBaja": "Descend, crossing its altitude: {ritmo} or more, down to the green band",
+  "tcas.ra.mantiene": "Maintain the rate: vertical speed needle on the green band",
+  "tcas.ra.mantieneCruzando":
+    "Maintain the rate, crossing its altitude: vertical speed needle on the green band",
+  "tcas.ra.subeMas": "Climb faster: {ritmo} or more, up to the green band",
+  "tcas.ra.bajaMas": "Descend faster: {ritmo} or more, down to the green band",
+  "tcas.ra.ahoraSube": "Now climb, right away: {ritmo} or more, up to the green band",
+  "tcas.ra.ahoraBaja": "Now descend, right away: {ritmo} or more, down to the green band",
   "palabra.rapido": "Too fast",
   "palabra.fuera": "Off",
   "palabra.corto": "Short",
@@ -407,6 +421,22 @@ export const EN: Dictionary = {
     "The box asks us to stop climbing and descending: level off gently, with the needle on the green band.",
   "vuelo.ra.vigila":
     "The box says we're fine like this: keep going as you are, and keep the needle out of the red.",
+  "vuelo.ra.cruzaSube":
+    "The box asks us to climb through the other plane's altitude, and it will end up below us: climb gently, up to the green band.",
+  "vuelo.ra.cruzaBaja":
+    "The box asks us to descend through the other plane's altitude, and it will end up above us: descend gently, down to the green band.",
+  "vuelo.ra.mantiene":
+    "The box asks us to keep going as we are, without easing off: the needle on the green band.",
+  "vuelo.ra.mantieneCruzando":
+    "The box asks us to keep going as we are, without easing off: we'll pass through the other plane's altitude. The needle on the green band.",
+  "vuelo.ra.subeMas":
+    "The box asks us to climb faster: a little more nose up, up to the new green band.",
+  "vuelo.ra.bajaMas":
+    "The box asks us to descend faster: a little more nose down, down to the new green band.",
+  "vuelo.ra.ahoraSube":
+    "The box changed the order: now we need to climb. Climb now, gently, up to the green band.",
+  "vuelo.ra.ahoraBaja":
+    "The box changed the order: now we need to descend. Descend now, gently, down to the green band.",
   "vuelo.ra.libre": "It's over: the other plane is moving away. We gently go back to our altitude.",
   "vuelo.radio.otraFrecuencia":
     "We've left the airport's zone: another controller talks to us now, and we no longer hear the tower.",

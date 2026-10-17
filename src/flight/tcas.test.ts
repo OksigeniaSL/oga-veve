@@ -9,17 +9,27 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
   CALLADO_POR_DEBAJO,
+  CRUZA_DESDE,
   bandaPara,
+  cruzaSuAltura,
   daLaManiobra,
   distanciaDeCruce,
   elegirSentido,
+  esPositiva,
+  franjaDe,
   modoEnPantalla,
   ordenPara,
   pideResolucion,
+  reforzarOInvertir,
   ritmoQueBasta,
+  ritmoQuePide,
+  RESPUESTA_A_LA_SEGUNDA,
   RITMO_DE_LA_MANIOBRA,
+  RITMO_DEL_REFUERZO,
   SIN_BAJAR_POR_DEBAJO,
+  SIN_REFUERZO_DE_BAJADA_POR_DEBAJO,
   SIN_RA_POR_DEBAJO,
+  TOPE_DE_MANTENER,
   Tcas,
   horaDelReloj,
   pideAviso,
@@ -27,7 +37,10 @@ import {
   type CambioDelRa,
   type EquipoTcas,
   type Intruso,
+  type Orden,
+  type OrdenPuesta,
   type Propio,
+  type Resolucion,
 } from "./tcas";
 
 const PIE = 0.3048;
@@ -657,8 +670,17 @@ describe("el RA volando", () => {
     expect(tcas.resolucionesDadas).toBe(1);
   });
 
-  it("y sin obedecer no se afloja, pero también se acaba al cruzarse", () => {
-    expect(loQueDijo(encuentroConRa({ obedece: false }).cambios)).toEqual(["climb", "libre"]);
+  it("y sin obedecer no se afloja: se refuerza, y también se acaba al cruzarse", () => {
+    /*
+     * Quien no sube con «climb, climb» deja de llegar a ALIM, y la caja pide
+     * más: «increase climb». Ver `reforzarOInvertir`, donde queda dicho que
+     * esto, con el propio piloto quieto, está por verificar.
+     */
+    expect(loQueDijo(encuentroConRa({ obedece: false }).cambios)).toEqual([
+      "climb",
+      "increaseClimb",
+      "libre",
+    ]);
   });
 
   it("el de la maniobra se pinta con el cuadrado rojo", () => {
@@ -710,5 +732,337 @@ describe("el RA volando", () => {
     }
     expect(tas).toBe(1);
     expect(ras).toBe(0);
+  });
+});
+
+/*
+ * ── El RA completo: cruzar, mantener, reforzar e invertir ──────────────────
+ *
+ * Contra las tablas 3 y 4 del folleto de la FAA (versión 7.1) y el boletín 13
+ * de EUROCONTROL: cada anuncio con su franja, y las secuencias que se ven en
+ * los sucesos de verdad —«descend», «increase descent», «climb, climb NOW»—.
+ */
+describe("cada orden del RA, con su franja", () => {
+  it("cruzando su altura, «crossing»: el mismo ritmo y la misma franja que subir", () => {
+    const basta = ritmoQueBasta("sube", 300, -20, 25, 350);
+    const sube = ordenPara("sube", 0, basta, true);
+    expect(sube.orden).toBe("crossingClimb");
+    expect(sube.franja).toEqual(ordenPara("sube", 0, basta).franja);
+    expect(sube.franja.verde).toEqual([1500, 2000]);
+    const baja = ordenPara("baja", 0, ritmoQueBasta("baja", -300, 20, 25, 350), true);
+    expect(baja.orden).toBe("crossingDescend");
+    expect(baja.franja.verde).toEqual([-2000, -1500]);
+  });
+
+  it("y se cruza su altura con el otro a cien pies o más del lado al que se va", () => {
+    expect(CRUZA_DESDE).toBe(100);
+    expect(cruzaSuAltura("sube", 100)).toBe(true);
+    expect(cruzaSuAltura("sube", 50)).toBe(false);
+    expect(cruzaSuAltura("sube", -300)).toBe(false);
+    expect(cruzaSuAltura("baja", -100)).toBe(true);
+    expect(cruzaSuAltura("baja", 300)).toBe(false);
+  });
+
+  it("quien ya sube a 1500 o más: «maintain», con lo verde hasta 4400", () => {
+    const basta = ritmoQueBasta("sube", 0, 0, 25, 350);
+    const { orden, franja } = ordenPara("sube", 2000 / 60, basta);
+    expect(orden).toBe("maintain");
+    expect(TOPE_DE_MANTENER).toBe(4400);
+    expect(franja.verde).toEqual([1500, 4400]);
+    expect(franja.rojo[0]![1]).toBe(1500);
+    // Y bajando, del revés; cruzando, la suya.
+    expect(ordenPara("baja", -2000 / 60, -basta).franja.verde).toEqual([-4400, -1500]);
+    expect(ordenPara("sube", 2000 / 60, basta, true).orden).toBe("crossingMaintain");
+    // A 1400 todavía no: ésa es la de subir.
+    expect(ordenPara("sube", 1400 / 60, basta).orden).toBe("climb");
+  });
+
+  it("el refuerzo, a 2500: lo rojo hasta ahí y lo verde por encima", () => {
+    expect(RITMO_DEL_REFUERZO).toBe(2500);
+    const sube = franjaDe("increaseClimb", "sube");
+    expect(sube.rojo[0]![1]).toBe(2500);
+    expect(sube.verde![0]).toBe(2500);
+    const baja = franjaDe("increaseDescent", "baja");
+    expect(baja.rojo[0]![0]).toBe(-2500);
+    expect(baja.verde![1]).toBe(-2500);
+  });
+
+  it("la inversión, a 1500 como la de subir o bajar", () => {
+    expect(franjaDe("climbNow", "sube")).toEqual(franjaDe("climb", "sube"));
+    expect(franjaDe("descendNow", "baja")).toEqual(franjaDe("descend", "baja"));
+  });
+
+  it("y el ritmo que se escribe en la tarjeta, el de cada una", () => {
+    const pide: [Orden, number | null][] = [
+      ["climb", 1500],
+      ["crossingDescend", 1500],
+      ["climbNow", 1500],
+      ["increaseClimb", 2500],
+      ["increaseDescent", 2500],
+      ["maintain", null],
+      ["crossingMaintain", null],
+      ["monitor", null],
+      ["levelOff", 0],
+    ];
+    for (const [orden, ritmo] of pide) expect(ritmoQuePide(orden), orden).toBe(ritmo);
+    expect(esPositiva("increaseDescent")).toBe(true);
+    expect(esPositiva("monitor")).toBe(false);
+    expect(esPositiva("levelOff")).toBe(false);
+  });
+});
+
+describe("reforzar o invertir: qué se pide cuando lo pedido ya no basta", () => {
+  /** Subiendo a 1500 contra uno a la misma altura y a veinte segundos. */
+  const subiendo: OrdenPuesta = {
+    orden: "climb",
+    sentido: "sube",
+    a: 0,
+    vo: 1500 / 60,
+    vi: 0,
+    t: 20,
+    alim: 350,
+    sobreElSuelo: 8000,
+    desdeLaOrden: 8,
+    invertida: false,
+  };
+  const con = (cambio: Partial<OrdenPuesta>) => reforzarOInvertir({ ...subiendo, ...cambio });
+
+  it("si basta, nada", () => {
+    expect(con({})).toBeNull();
+  });
+
+  it("si el otro sube hacia nosotros y reforzar basta: «increase climb»", () => {
+    expect(con({ vi: 1000 / 60 })).toEqual({ orden: "increaseClimb", sentido: "sube" });
+  });
+
+  it("si sube más deprisa que eso, reforzar no basta: «descend, descend NOW»", () => {
+    expect(con({ vi: 1500 / 60 })).toEqual({ orden: "descendNow", sentido: "baja" });
+  });
+
+  it("una sola inversión por encuentro: la segunda vez, lo mejor que hay es reforzar", () => {
+    expect(con({ vi: 1500 / 60, invertida: true })).toEqual({
+      orden: "increaseClimb",
+      sentido: "sube",
+    });
+  });
+
+  it("bajando, lo mismo: «increase descent»", () => {
+    expect(con({ orden: "descend", sentido: "baja", vo: -1500 / 60, vi: -800 / 60 })).toEqual({
+      orden: "increaseDescent",
+      sentido: "baja",
+    });
+  });
+
+  it("y por debajo de 1450 ft no se refuerza la bajada: se invierte", () => {
+    expect(SIN_REFUERZO_DE_BAJADA_POR_DEBAJO).toBe(1450);
+    expect(
+      con({ orden: "descend", sentido: "baja", vo: -1500 / 60, vi: -800 / 60, sobreElSuelo: 1400 }),
+    ).toEqual({ orden: "climbNow", sentido: "sube" });
+  });
+
+  it("ni se invierte hacia abajo por debajo de 1100 ft: se refuerza la subida", () => {
+    expect(con({ vi: 1500 / 60, sobreElSuelo: 1050 })).toEqual({
+      orden: "increaseClimb",
+      sentido: "sube",
+    });
+  });
+
+  it("una preventiva que deja de bastar pasa a subir o bajar, no a reforzar", () => {
+    expect(con({ orden: "monitor", a: -400, vo: 0, vi: 1000 / 60 })).toEqual({
+      orden: "climb",
+      sentido: "sube",
+    });
+    expect(con({ orden: "monitor", a: -400, vo: 0, vi: 0 })).toBeNull();
+    expect(con({ orden: "levelOff", sentido: "baja", a: 400, vo: 0, vi: -1500 / 60 })).toEqual({
+      orden: "descend",
+      sentido: "baja",
+    });
+  });
+
+  it("y se ensaya como el TCAS: la de entrada, con sus cinco segundos; el refuerzo, con 2,5", () => {
+    expect(RESPUESTA_A_LA_SEGUNDA).toBe(2.5);
+    // Recién dada la orden, el piloto todavía tiene sus cinco segundos: basta.
+    expect(con({ vo: 0, t: 25, desdeLaOrden: 0 })).toBeNull();
+    // Diez segundos después, sin haber respondido, ya no: se refuerza.
+    expect(con({ vo: 0, t: 15, desdeLaOrden: 10 })).toEqual({
+      orden: "increaseClimb",
+      sentido: "sube",
+    });
+  });
+});
+
+/**
+ * Un encuentro de frente con el selector en TA/RA, más libre que
+ * `encuentroConRa`: cada avión con su ritmo de salida, y el otro con un ritmo
+ * que puede cambiar cuando ya hay maniobra —`suRitmo` recibe los segundos
+ * desde la primera, o −1 si todavía no hay—, que es como se refuerza y se
+ * invierte un RA de verdad. El piloto obedece cada orden con su respuesta: a
+ * los cinco segundos con un cuarto de g, o a los dos y medio con 0,35 g las de
+ * detrás. Devuelve lo que dijo el RA, con su franja, y los pies que quedaron
+ * al cruzarse: positivos, yo por encima.
+ */
+function encuentroCompleto(
+  opciones: {
+    pies?: number;
+    diferencia?: number;
+    miRitmo?: number;
+    suRitmo?: (desdeLaPrimera: number) => number;
+    obedece?: boolean;
+  } = {},
+) {
+  const { pies = 8000, diferencia = 0, miRitmo = 0, suRitmo = () => 0, obedece = true } = opciones;
+  const tcas = new Tcas();
+  const v = 250 * NUDO;
+  const dt = 0.1;
+  const millas = 10;
+  let miAltura = pies * PIE;
+  let mio = (miRitmo * PIE) / 60;
+  let suAltura = (pies + diferencia) * PIE;
+  let ordenAntes: Orden | null = null;
+  let desdeLaOrden = 0;
+  let primera: number | null = null;
+  let alCruce = Infinity;
+  let piesAlCruce = NaN;
+  const dichas: Resolucion[] = [];
+  const cambios: CambioDelRa[] = [];
+  for (let t = 0; t < (millas * MILLA) / (2 * v) + 40; t += dt) {
+    const miZ = -v * t;
+    const suZ = -millas * MILLA + v * t;
+    const ra = tcas.resolucion;
+    if (ra && primera === null) primera = t;
+    if ((ra?.orden ?? null) !== ordenAntes) {
+      ordenAntes = ra?.orden ?? null;
+      desdeLaOrden = 0;
+    }
+    if (ra && obedece) {
+      desdeLaOrden += dt;
+      const s = ra.sentido === "sube" ? 1 : -1;
+      const ahora = (mio / PIE) * 60;
+      const objetivo =
+        ra.orden === "levelOff"
+          ? 0
+          : ra.orden === "monitor"
+            ? ahora
+            : ra.orden === "increaseClimb" || ra.orden === "increaseDescent"
+              ? s * 2750
+              : ra.orden === "maintain" || ra.orden === "crossingMaintain"
+                ? s * Math.max(s * ahora, 1600)
+                : s * 1750;
+      const deDetras = ["increaseClimb", "increaseDescent", "climbNow", "descendNow"].includes(
+        ra.orden,
+      );
+      if (desdeLaOrden > (deDetras ? 2.5 : 5)) {
+        const paso = (deDetras ? 0.35 : 0.25) * 9.80665 * dt;
+        mio += Math.max(-paso, Math.min(paso, (objetivo * PIE) / 60 - mio));
+      }
+    }
+    miAltura += mio * dt;
+    suAltura += ((suRitmo(primera === null ? -1 : t - primera) * PIE) / 60) * dt;
+    tcas.paso(
+      dt,
+      "TCAS II",
+      { ...yo(miZ, pies), y: miAltura, sobreElSuelo: miAltura, vertical: mio, resuelve: true },
+      [{ id: "el-otro", x: 30, y: suAltura, z: suZ }],
+    );
+    const distancia = Math.abs(miZ - suZ);
+    if (distancia < alCruce) {
+      alCruce = distancia;
+      piesAlCruce = (miAltura - suAltura) / PIE;
+    }
+    for (const c of tcas.cambiosDelRa) {
+      cambios.push(c);
+      if (c.que === "orden") dichas.push(c.resolucion);
+    }
+  }
+  return { cambios, dichas, piesAlCruce };
+}
+
+describe("el RA completo, volando", () => {
+  // El otro, por encima y bajando: a los 47 s, cuando salta, va a 300 ft.
+  const bajandoDesdeArriba = (fpm: number) => ({
+    diferencia: 300 + (fpm * 47) / 60,
+    suRitmo: () => -fpm,
+  });
+
+  it("con el otro arriba y bajando, subir cruzando su altura: «climb, crossing climb»", () => {
+    const { cambios, piesAlCruce } = encuentroCompleto(bajandoDesdeArriba(1200));
+    expect(loQueDijo(cambios)).toEqual(["crossingClimb", "levelOff", "libre"]);
+    // Y queda por encima, con ALIM: lo que se buscaba al cruzar.
+    expect(piesAlCruce).toBeGreaterThan(350);
+  });
+
+  it("y si bajando él ya pasa de largo sin que hagamos nada, preventiva", () => {
+    expect(loQueDijo(encuentroCompleto(bajandoDesdeArriba(2000)).cambios)).toEqual([
+      "monitor",
+      "libre",
+    ]);
+  });
+
+  it("subiendo ya a 2000 ft/min: «maintain vertical speed, maintain»", () => {
+    const { cambios, dichas } = encuentroCompleto({ miRitmo: 2000, diferencia: 1600 });
+    expect(loQueDijo(cambios)).toEqual(["maintain", "levelOff", "libre"]);
+    expect(dichas[0]!.franja.verde).toEqual([1500, 4400]);
+  });
+
+  it("y si así se cruza su altura: «maintain vertical speed, crossing maintain»", () => {
+    const { cambios, piesAlCruce } = encuentroCompleto({ miRitmo: 2000, diferencia: 1750 });
+    expect(loQueDijo(cambios)).toEqual(["crossingMaintain", "levelOff", "libre"]);
+    expect(piesAlCruce).toBeGreaterThan(350);
+  });
+
+  it("el otro sube hacia nosotros: «climb», «increase climb», y la franja de 2500", () => {
+    const { cambios, dichas, piesAlCruce } = encuentroCompleto({
+      suRitmo: (desde) => (desde > 2 ? 1000 : 0),
+    });
+    expect(loQueDijo(cambios)).toEqual(["climb", "increaseClimb", "levelOff", "libre"]);
+    expect(dichas[1]!.franja).toEqual(franjaDe("increaseClimb", "sube"));
+    expect(piesAlCruce).toBeGreaterThan(300);
+  });
+
+  it("y bajando, como en la figura 19 del folleto: «descend», «increase descent»", () => {
+    const { cambios, piesAlCruce } = encuentroCompleto({
+      diferencia: 300,
+      suRitmo: (desde) => (desde > 2 ? -1500 : 0),
+    });
+    expect(loQueDijo(cambios)).toEqual(["descend", "increaseDescent", "levelOff", "libre"]);
+    expect(piesAlCruce).toBeLessThan(-300);
+  });
+
+  it("si sube más deprisa que lo que se le saca, se invierte: «descend, descend NOW»", () => {
+    const { cambios, dichas, piesAlCruce } = encuentroCompleto({
+      suRitmo: (desde) => (desde > 2 ? 1500 : 0),
+    });
+    expect(loQueDijo(cambios)).toEqual(["climb", "descendNow", "levelOff", "libre"]);
+    expect(dichas[1]!.sentido).toBe("baja");
+    expect(dichas[1]!.franja).toEqual(franjaDe("descend", "baja"));
+    expect(piesAlCruce).toBeLessThan(-350);
+  });
+
+  it("y el del boletín 13: preventiva, «descend» y «climb, climb NOW» cuando el otro se tira", () => {
+    /*
+     * El tercer suceso del boletín: el pequeño, arriba, ve al grande y se
+     * tira para abajo; el grande, que bajaba con su «descend», acaba subiendo
+     * con «climb, climb NOW». Aquí la de entrada es la preventiva de no subir
+     * —el otro, arriba y nivelado—, y hay una sola inversión.
+     */
+    const { cambios, piesAlCruce } = encuentroCompleto({
+      diferencia: 500,
+      suRitmo: (desde) => (desde > 3 ? -3000 : 0),
+    });
+    const dijo = loQueDijo(cambios);
+    expect(dijo).toEqual(["monitor", "descend", "climbNow", "levelOff", "libre"]);
+    expect(dijo.filter((o) => o === "climbNow" || o === "descendNow")).toHaveLength(1);
+    expect(piesAlCruce).toBeGreaterThan(350);
+  });
+
+  it("cada orden de subir o bajar sale con la franja que le toca", () => {
+    for (const { dichas } of [
+      encuentroCompleto(bajandoDesdeArriba(1200)),
+      encuentroCompleto({ suRitmo: (desde) => (desde > 2 ? 1000 : 0) }),
+      encuentroCompleto({ suRitmo: (desde) => (desde > 2 ? 1500 : 0) }),
+      encuentroCompleto({ miRitmo: 2000, diferencia: 1750 }),
+    ])
+      for (const r of dichas)
+        if (esPositiva(r.orden)) expect(r.franja, r.orden).toEqual(franjaDe(r.orden, r.sentido));
   });
 });
