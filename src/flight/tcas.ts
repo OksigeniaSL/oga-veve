@@ -829,20 +829,17 @@ export function reforzarOInvertir(
      * to a positive Climb or Descend RA», en el folleto de la FAA. Aquí, sin
      * el paso por una más estrecha: directamente a la positiva, la que daría
      * `ordenPara` ahora. Y la de bajar, no pegado al suelo.
+     *
+     * Y con la misma cuenta con que nació: deja de bastar cuando nivelado ya
+     * no se llega a ALIM —`ritmoQueBasta` pide subir, o bajar—, que es lo
+     * contrario de lo que la hizo preventiva. Ensayada con los cinco segundos
+     * de respuesta, una «level off» a quien baja deprisa pasaba a «climb» al
+     * segundo siguiente sin que hubiera cambiado nada.
      */
-    const ahora = separacionAlCruce(
-      p.sentido,
-      p.a,
-      p.vo,
-      p.vi,
-      p.t,
-      p.orden === "levelOff" ? 0 : p.vo,
-      RESPUESTA - p.desdeLaOrden,
-    );
-    if (ahora >= p.alim) return null;
+    const basta = s * ritmoQueBasta(p.sentido, p.a, p.vi, p.t, p.alim);
+    if (basta <= 0) return null;
     if (p.sentido === "baja" && p.sobreElSuelo < SIN_BAJAR_POR_DEBAJO) return null;
-    const basta = Math.max(1, s * ritmoQueBasta(p.sentido, p.a, p.vi, p.t, p.alim)) * s;
-    const { orden } = ordenPara(p.sentido, p.vo, basta, cruzaSuAltura(p.sentido, p.a));
+    const { orden } = ordenPara(p.sentido, p.vo, s * basta, cruzaSuAltura(p.sentido, p.a));
     return { orden, sentido: p.sentido };
   }
   const deDetras = esDeLasDeDetras(p.orden);

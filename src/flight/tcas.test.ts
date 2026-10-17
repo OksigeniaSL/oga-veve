@@ -873,6 +873,11 @@ describe("reforzar o invertir: qué se pide cuando lo pedido ya no basta", () =>
       sentido: "sube",
     });
     expect(con({ orden: "monitor", a: -400, vo: 0, vi: 0 })).toBeNull();
+    // Ni la «level off» a quien baja deprisa, un segundo después y sin que
+    // nada cambie: nivelado sigue bastando, que es por lo que nació así.
+    expect(
+      con({ orden: "levelOff", a: -500, vo: -2500 / 60, vi: 0, t: 25, desdeLaOrden: 1 }),
+    ).toBeNull();
     expect(con({ orden: "levelOff", sentido: "baja", a: 400, vo: 0, vi: -1500 / 60 })).toEqual({
       orden: "descend",
       sentido: "baja",
