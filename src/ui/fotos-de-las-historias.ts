@@ -30,7 +30,7 @@
  *
  * ## Se bajan cuando hacen falta
  *
- * No van en la precarga del trabajador de servicio —son 740 KB entre las
+ * No van en la precarga del trabajador de servicio —son 676 KB entre las
  * veinticinco y la mayoría no se ve en un vuelo—: entran por
  * `import.meta.glob` como URL, así que Vite les pone la huella en el nombre y
  * el trabajador de servicio las guarda la primera vez que se piden, como las
