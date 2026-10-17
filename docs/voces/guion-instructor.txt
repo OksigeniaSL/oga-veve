@@ -28,6 +28,7 @@ Venís mal para bajar: gas y al aire, lo probamos otra vez
 Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo
 Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar
 Lo seguro es irnos al aire y volver a intentarlo
+Hay un avión esperando para salir justo por donde vamos a dejar la pista. Si querés, nos vamos al aire, lo dejamos salir y volvemos con calma
 Así no: nos vamos al aire y lo volvemos a intentar
 No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar
 La torre nos había mandado al aire. Cuando la torre manda irse, uno se va: ella ve lo que nosotros desde acá no vemos
@@ -104,6 +105,9 @@ Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
 La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.
+La torre nos pide dar una vuelta entera: hay un avión esperando para salir justo por donde vamos a dejar la pista. Damos la vuelta, sale él, y volvemos.
+Vuelta entera. Ahora sí, volvemos a la pista.
+Hay un avión esperando para salir justo por donde vamos a dejar la pista. Subimos, sale él, y volvemos por el circuito.
 Mirá la carta: al lado de la pista dice a cuánto está sobre el mar. Lo que marca el altímetro menos eso es lo alto que vamos sobre la pista, y con eso se ponen los mínimos
 La torre te deja volver a intentarlo
 La pista quedó libre: podés volver a bajar

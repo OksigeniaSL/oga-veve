@@ -1375,6 +1375,8 @@ export const ES_PY = {
   // La verde en vuelo: tu permiso para aterrizar. Ver `autorizarElAterrizaje`.
   "palabra.aterriza": "¡Aterrizá!",
   "palabra.alAire": "¡Al aire!",
+  // La vuelta entera que pide la torre para que salga otro. Ver `darteUnaVuelta`.
+  "palabra.vuelta": "¡Una vuelta!",
   "palabra.laPista": "¿La pista?",
   "palabra.cuidado": "¡Cuidado!",
   "palabra.mira": "¡Mirá!",
@@ -1514,6 +1516,14 @@ export const ES_PY = {
   "vuelo.proponeIrse": "Así no viene bien. Si querés, nos vamos al aire y la volvemos a intentar",
   "vuelo.proponeIrseSinPista":
     "Lo seguro es irnos al aire y volver a intentarlo",
+  /*
+   * Y donde contesta un AFIS, con uno que va a salir esperando en la calle
+   * por la que dejaríamos la pista: el AFIS lo cuenta, no manda, y ella lo
+   * propone. Lleva el porqué dentro, que la voz es el canal. Ver
+   * `flight/salida-tapada.ts`.
+   */
+  "vuelo.proponeIrseSalidaTapada":
+    "Hay un avión esperando para salir justo por donde vamos a dejar la pista. Si querés, nos vamos al aire, lo dejamos salir y volvemos con calma",
   /*
    * **La toma larga**: flotando o tocando pasada la zona de toma, o sin
    * pista para parar, mientras todavía se puede subir. La instructora lo
@@ -1783,6 +1793,18 @@ export const ES_PY = {
    */
   "vuelo.permisoAnulado":
     "La torre nos había dejado aterrizar, pero entró un avión en la pista. Con la pista ocupada no se aterriza: subimos y volvemos por el circuito.",
+  /*
+   * **Y el que va a salir tapa la calle por la que dejaríamos la pista**: la
+   * torre nos pide una vuelta entera para que salga él, o, si ya no hay
+   * sitio, nos manda al aire. Esperar en el aire no es un castigo: es lo que
+   * se hace para que la pista sea de uno por vez. Ver
+   * `flight/salida-tapada.ts`.
+   */
+  "vuelo.vueltaPorTuSalida":
+    "La torre nos pide dar una vuelta entera: hay un avión esperando para salir justo por donde vamos a dejar la pista. Damos la vuelta, sale él, y volvemos.",
+  "vuelo.vueltaHecha": "Vuelta entera. Ahora sí, volvemos a la pista.",
+  "vuelo.alAirePorTuSalida":
+    "Hay un avión esperando para salir justo por donde vamos a dejar la pista. Subimos, sale él, y volvemos por el circuito.",
   /*
    * Y a los mínimos sin el permiso de la torre, con la pista libre: el porqué
    * no es la pista. Ya no se dice —la torre no manda al aire por su propio

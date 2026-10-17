@@ -611,6 +611,19 @@ const TORRE_SOLO = [
     "esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué",
   ],
   /*
+   * **Y a ti, una vuelta para esperar**, cuando el que va a salir tapa tu
+   * salida de la pista y no se iría antes de que llegues: «orbit», con el
+   * lado detrás —«left», «right», que ya están— y el porqué —«departing
+   * traffic», también—. Doc 4444, 12.3.4, demorar aeronaves: «ORBIT (RIGHT,
+   * or LEFT)»; el párrafo, por verificar. Ver `src/flight/salida-tapada.ts` y
+   * `PENDIENTE-VOCES-torre-alarga.md`.
+   */
+  [
+    "torre.solo.orbit",
+    "orbit",
+    "date una vuelta entera para esperar; detrás, hacia qué lado y el porqué",
+  ],
+  /*
    * El principio de la autorización; el límite —el campo— va en un hueco,
    * porque cambia con cada ruta. Ver `DESTINOS_EN_RADIO` más abajo.
    */

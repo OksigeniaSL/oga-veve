@@ -2790,6 +2790,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let habladasVistas = 0;
   /** Cuántas veces la torre te mandó al aire por la pista ocupada, y se fue. */
   let frustradasPorLaPista = 0;
+  /**
+   * **Y las de la torre por el que tapa tu salida**: uno que va a salir
+   * espera en la calle por la que dejarías la pista y no se iría a tiempo.
+   * El piloto las obedece como las de la pista ocupada; la vuelta que se le
+   * pide antes no la sabe dar, y entonces el juego le manda al aire. Ver
+   * `src/flight/salida-tapada.ts`.
+   */
+  let frustradasPorTuSalida = 0;
   /** Y cuántas se fue porque el juego ya había dado la frustrada. */
   let frustradasPorElJuego = 0;
   let yaTeLaDieron = false;
@@ -4713,9 +4721,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       etapa === "final" &&
       !s.onGround &&
       o.ordenDeFrustrar?.() &&
-      o.porQueMandaron?.() === "pistaOcupada"
+      (o.porQueMandaron?.() === "pistaOcupada" || o.porQueMandaron?.() === "salidaTapada")
     ) {
-      frustradasPorLaPista++;
+      if (o.porQueMandaron?.() === "salidaTapada") frustradasPorTuSalida++;
+      else frustradasPorLaPista++;
       // El de la cabecera en uso, no el nominal: ver `rumboDeSalida`.
       rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
       aDonde = 1;
@@ -6260,6 +6269,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     paradoEnTuCalle,
     rodoElDeLlegar,
     retencionMasLarga: o.retencionMasLarga?.() ?? null,
+    porTuSalida: o.porTuSalida?.() ?? null,
+    frustradasPorTuSalida,
     retuvoAlli:
       retencionAlCruzar !== null && (o.retencionMasLarga?.() ?? 0) > retencionAlCruzar,
     ventanillaEnFinal,
@@ -7189,7 +7200,17 @@ if (vuelo.filaAlLlegar)
       vuelo.paradoEnTuCalle ?? "nadie parado a menos de 25 m de ti al dejar la pista",
       `${vuelo.filaAlLlegar} ${vuelo.rodoElDeLlegar ? "rodó" : "no llegó a rodar en el vuelo"}`,
       `retención más larga ${Math.round(vuelo.retencionMasLarga ?? 0)} s`,
-    ].join(" · "),
+      /*
+       * Y lo que se te pidió por el que tapa tu salida: vueltas e idas al
+       * aire con torre, avisos y propuestas con un AFIS. Ver
+       * `src/flight/salida-tapada.ts`.
+       */
+      vuelo.porTuSalida
+        ? `por tu salida: ${vuelo.porTuSalida.vueltas} vuelta(s), ${vuelo.porTuSalida.alAire} al aire, ${vuelo.porTuSalida.avisos} aviso(s), ${vuelo.porTuSalida.propuestas} propuesta(s); ${vuelo.frustradasPorTuSalida ?? 0} frustrada(s) obedecida(s)`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
     "«el que sale llega a su doble raya, en tu calle, mientras aterrizas»",
   );
 

@@ -25,6 +25,18 @@ import {
 import { ALTURA_DE_DECISION, type PorQueMandaron } from "./minimos";
 import { separacionDeSalida, type CategoriaDeEstela } from "./estela";
 import {
+  giradoEntre,
+  RED_DE_LA_SALIDA,
+  remedioParaTuSalida,
+  seVaAntes,
+  TOPE_DE_LA_VUELTA,
+  VUELTA_DESDE_EN_FINAL,
+  VUELTA_HECHA,
+  type RemedioDeTuSalida,
+  type TuLlegadaALaPista,
+} from "./salida-tapada";
+import { TU, type QuienTapaTuSalida } from "../world/trafico";
+import {
   EMPIEZA_A_RODAR,
   laQueSeDice,
   PISTA_TUYA,
@@ -88,6 +100,16 @@ export interface DibujoDelTurno {
   remonta?(matricula: string): number;
   /** Los que esperan en una doble raya de tu salida. Ver `enTuSalida`. */
   enTuSalida?(): string[];
+  /**
+   * Y todos los de tu salida, les dé tiempo o no, con lo que tardan. Sin
+   * esto, nadie. Ver `tapanTuSalida` en `world/trafico.ts`.
+   */
+  tapanTuSalida?(): readonly QuienTapaTuSalida[];
+  /**
+   * Y si a uno de ésos se le puede dar la salida ya, sin contarte a ti. Sin
+   * esto, no. Ver `puedeSalirSinEsperarte` en `world/trafico.ts`.
+   */
+  puedeSalirSinEsperarte?(matricula: string): boolean;
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -118,6 +140,11 @@ export interface AlrededorDelTurno {
   miEstela?(): CategoriaDeEstela;
   /** Tu altura sobre la pista, m. */
   alto(): number;
+  /**
+   * Si estás en el suelo. Sin esto, se mira la altura: a menos de un metro.
+   * Ver `mirarTuSalida` y `retenidos`.
+   */
+  enTierra?(): boolean;
   /**
    * La torre le dice a otro lo que le quita la pista. Devuelve con qué clave
    * espera turno en la boca —ver `turnoDe`—, o `null` si no se pudo montar.
@@ -177,6 +204,37 @@ export interface AlrededorDelTurno {
    * esto, no. Ver `RETENIDO` en `flight/radio.ts`.
    */
   sabeRetener?(matricula: string): boolean;
+  /**
+   * **Si quien contesta aquí es un AFIS**, que informa y no manda. Sin esto,
+   * una torre. Ver `Aerodrome.afis`.
+   */
+  afis?(): boolean;
+  /**
+   * **Tu llegada como la ve la torre**: cuánto te falta para el umbral, por
+   * dónde vienes y a qué altura, o `null` si no vienes a aterrizar aquí. Con
+   * el circuito, no solo con la final: es lo que deja ver con tiempo a quien
+   * tapa tu salida. Sin esto, no se mira. Ver `flight/salida-tapada.ts`.
+   */
+  tuLlegada?(): TuLlegadaALaPista | null;
+  /** Tu rumbo, rad: para saber si la vuelta que se te pidió está dada. */
+  rumbo?(): number;
+  /**
+   * **La torre te pide una vuelta entera** porque el de tu salida no se
+   * iría antes de que llegues. Sin esto no se pide.
+   */
+  darteUnaVuelta?(porQuien: string): void;
+  /** Y la vuelta se acabó: dada, o dejada de esperar. Ver `TOPE_DE_LA_VUELTA`. */
+  acabarTuVuelta?(dada: boolean): void;
+  /**
+   * **La torre te manda al aire** porque el de tu salida no se iría a tiempo
+   * y ya no hay sitio para una vuelta; `sigue` dice si todavía está por
+   * irse. Sin esto no se manda.
+   */
+  mandarteAlAirePorTuSalida?(alto: number, porQuien: string, sigue: () => boolean): void;
+  /** **Un AFIS te cuenta quién hay en tu salida**: tráfico que sale. */
+  contarteTuSalida?(porQuien: string): void;
+  /** Y en la final, la instructora propone irse al aire, con calma. */
+  proponerteIrtePorTuSalida?(porQuien: string): void;
 }
 
 /**
@@ -234,6 +292,11 @@ export const PACIENCIA_EN_LA_FILA = 180;
  * Pasados, se le deja ir, que es lo que haría una torre con uno que no se
  * mueve; lo de después lo reparte el suelo. Ver `repartirLosTramos` en
  * `world/trafico.ts`.
+ *
+ * **Y se cuenta por quien retiene**, no por el reloj de quien espera: el
+ * retenido por uno del tráfico y después por ti empieza otra cuenta contigo.
+ * Y contigo ya en el suelo, rodando hacia su doble raya, no corre: soltarle
+ * entonces es encontrártelo ahí. Ver `retenidos`.
  */
 export const RETENCION_MAXIMA = 420;
 
@@ -319,7 +382,12 @@ export function alLevantarLaOrden(
    * que toca es volver por el circuito a la buena. Ver
    * `flight/la-otra-cabecera.ts`.
    */
-  if (porque === "pistaOcupada" || porque === "otraCabecera" || fase !== "final")
+  if (
+    porque === "pistaOcupada" ||
+    porque === "otraCabecera" ||
+    porque === "salidaTapada" ||
+    fase !== "final"
+  )
     return "volver";
   return "aterrizar";
 }
@@ -362,10 +430,57 @@ export class TurnoDePista {
    * **Cuánto lleva retenido cada uno**, s, mientras dure lo que lo retiene.
    * Ver `retenidos`.
    */
-  private readonly retenidoDesde = new Map<string, { clave: string; lleva: number }>();
+  private readonly retenidoDesde = new Map<
+    string,
+    { clave: string; porQuien: string; lleva: number }
+  >();
 
   /** La retención más larga vista en este vuelo, s: para el banco. */
   retencionMasLarga = 0;
+
+  /**
+   * **Lo que la torre te ha pedido por el que tapa tu salida**, mientras
+   * dura: la vuelta, con lo girado, o la orden de irse al aire. Ver
+   * `mirarTuSalida`.
+   */
+  private tapada: {
+    readonly por: string;
+    readonly como: Exclude<RemedioDeTuSalida, "aviso">;
+    girado: number;
+    rumbo: number | null;
+    lleva: number;
+  } | null = null;
+
+  /**
+   * **Cuántas vueltas se te han pedido en esta llegada, y cuánto te ha
+   * retrasado todo esto**, s: la red de verdad, que no es de un avión sino
+   * tuya. Con salidas nuevas que ruedan mientras das la vuelta, una por cada
+   * una era no aterrizar nunca: medido en Encarnación, seis vueltas y dos
+   * frustradas en cuarenta minutos. Se vuelve a cero al tocar tierra.
+   */
+  private vueltasEnEstaLlegada = 0;
+  private retrasoEnEstaLlegada = 0;
+
+  /** A quién ya te contó un AFIS, y por quién propuso irse la instructora. */
+  private readonly contadoDe = new Set<string>();
+  private readonly propuestoPor = new Set<string>();
+
+  /** El reloj de la frecuencia, s, y cuándo se miró tu salida por última vez. */
+  private reloj = 0;
+  private relojDeTuSalida = 0;
+
+  /** Lo que se te ha pedido por tu salida en este vuelo, para el banco. */
+  readonly porTuSalida: { vueltas: number; alAire: number; avisos: number; propuestas: number } = {
+    vueltas: 0,
+    alAire: 0,
+    avisos: 0,
+    propuestas: 0,
+  };
+
+  /** Si ahora mismo te tienen dando una vuelta por tu salida. */
+  get dandoLaVuelta(): boolean {
+    return this.tapada?.como === "vuelta";
+  }
 
   /**
    * **A quién no deja moverse la torre todavía**, por la salida de la pista
@@ -398,10 +513,26 @@ export class TurnoDePista {
             : null;
       if (!porQuien) continue;
       ahora.add(m);
-      // Por la misma llamada: otra llamada es otro vuelo, y cuenta de cero.
+      /*
+       * Por la misma llamada y por el mismo: otra llamada es otro vuelo, y
+       * otro que aterriza es otra espera, y cuentan de cero. La red es por lo
+       * que retiene, no por el reloj de quien espera: retenido por uno del
+       * tráfico y después por ti, se le soltaba a los siete minutos de lo
+       * primero, contigo ya rodando hacia su doble raya. Medido en Pilar: uno
+       * suelto a medio minuto de pasar a su lado.
+       */
       const antes = this.retenidoDesde.get(m);
-      const lleva = (antes?.clave === toca.clave ? antes.lleva : 0) + dt;
-      this.retenidoDesde.set(m, { clave: toca.clave, lleva });
+      const mismo = antes?.clave === toca.clave && antes.porQuien === porQuien;
+      /*
+       * **Y contigo ya en el suelo, no corre**: vas a pasar por su doble
+       * raya, rodando, y soltarle es encontrártelo ahí. La red es para el que
+       * aterriza y se queda quieto en la pista; si eres tú quien se para, él
+       * espera en su puesto, que no tapa a nadie, y sale en cuanto pases.
+       * Ver `RETENCION_MAXIMA`.
+       */
+      const corre = !(porQuien === TU && this.enTierra);
+      const lleva = (mismo ? antes.lleva : 0) + (corre ? dt : 0);
+      this.retenidoDesde.set(m, { clave: toca.clave, porQuien, lleva });
       if (lleva > RETENCION_MAXIMA) continue;
       this.retencionMasLarga = Math.max(this.retencionMasLarga, lleva);
       retenidos.add(m);
@@ -423,6 +554,11 @@ export class TurnoDePista {
     de.radio.remonta = (m) => (de.trafico()?.remonta?.(m) ?? 0) > 0;
     // Y si hay con qué decirle al retenido que espere: ver `RETENIDO`.
     de.radio.sabeRetener = (m) => de.sabeRetener?.(m) ?? false;
+  }
+
+  /** Si estás en el suelo. Ver `AlrededorDelTurno.enTierra`. */
+  private get enTierra(): boolean {
+    return this.de.enTierra?.() ?? this.de.alto() < 1;
   }
 
   /** Si aquí hay torre que te turne la pista. */
@@ -667,6 +803,7 @@ export class TurnoDePista {
     dt: number,
     ahora: Omit<Momento, "esperandoLaPista">,
   ): Transmision | null {
+    this.reloj += dt;
     this.contarLaFila(dt, ahora.fase);
     const momento: Momento = {
       ...ahora,
@@ -864,6 +1001,193 @@ export class TurnoDePista {
   }
 
   /**
+   * **El que tapa tu salida, visto con tiempo.** Ver `flight/salida-tapada.ts`.
+   *
+   * En cada paso, mientras vienes a aterrizar —por el circuito o por la
+   * final—, se mira a los que ruedan o esperan en una doble raya de tu salida:
+   *
+   * - **si le da tiempo a irse antes que tú**, la torre le da la pista en
+   *   cuanto está libre, también contigo en el viento en cola: no espera a
+   *   que entres en final para dársela, que entonces ya no le da tiempo. En
+   *   la final lo hace `despejarTuSalida`, como antes;
+   * - **si no**, te retrasa a ti —una vuelta— o, si ya no hay sitio, te manda
+   *   al aire, y le da la pista a él en cuanto queda libre. Un AFIS te lo
+   *   cuenta, y en la final la instructora propone irse.
+   *
+   * Una cosa por vez: mientras dura lo pedido no se pide otra. Y con su red.
+   */
+  private mirarTuSalida(fase: string): void {
+    const dt = this.reloj - this.relojDeTuSalida;
+    this.relojDeTuSalida = this.reloj;
+    const trafico = this.de.trafico();
+    if (!trafico?.tapanTuSalida || this.de.privado() || !this.de.torre()) {
+      this.tapada = null;
+      return;
+    }
+    // Solo los que la frecuencia tiene: a uno sin vuelo no se le da la pista.
+    const tapan = trafico
+      .tapanTuSalida()
+      .filter((q) => this.de.radio.indicativoDe(q.matricula) !== null);
+    const llegada = this.de.tuLlegada?.() ?? null;
+    if (this.tapada) {
+      this.seguirConTuSalida(dt, tapan, llegada);
+      return;
+    }
+    if (this.enTierra) {
+      this.vueltasEnEstaLlegada = 0;
+      this.retrasoEnEstaLlegada = 0;
+    }
+    if (!llegada) return;
+    const quien = this.de.afis?.() ? "afis" : "torre";
+    for (const q of tapan) {
+      if (seVaAntes(llegada, q)) {
+        if (fase !== "final") this.darleLaPista(q);
+        continue;
+      }
+      // Pasada la red, ya no se te retrasa más: se aterriza.
+      if (this.retrasoEnEstaLlegada > RED_DE_LA_SALIDA) continue;
+      const remedio = remedioParaTuSalida(llegada, q, quien, this.vueltasEnEstaLlegada);
+      if (remedio === "aviso") {
+        this.avisarDeTuSalida(q.matricula, llegada);
+        continue;
+      }
+      if (remedio === "vuelta" && this.de.darteUnaVuelta) {
+        this.tapada = {
+          por: q.matricula,
+          como: "vuelta",
+          girado: 0,
+          rumbo: this.de.rumbo?.() ?? null,
+          lleva: 0,
+        };
+        this.porTuSalida.vueltas++;
+        /*
+         * Tu permiso, si lo había, deja de valer: «orbit» es no aterrizar
+         * todavía. Se pide otra vez al volver a la final. Ver `pedirAterrizaje`.
+         */
+        if (this.aterrizajeSinAutorizar || this.enFinal) this.de.retirarteElPermiso?.();
+        this.aterrizajeSinAutorizar = false;
+        this.de.darteUnaVuelta(q.matricula);
+        return;
+      }
+      if (remedio === "alAire" && this.de.mandarteAlAirePorTuSalida && !this.de.mandanFrustrar?.()) {
+        this.tapada = { por: q.matricula, como: "alAire", girado: 0, rumbo: null, lleva: 0 };
+        this.porTuSalida.alAire++;
+        this.aterrizajeSinAutorizar = false;
+        this.despejeSinDecir = null;
+        this.alAireEnEstaFinal = true;
+        const por = q.matricula;
+        this.de.mandarteAlAirePorTuSalida(llegada.alto, por, () => this.sigueSinIrse(por));
+        return;
+      }
+    }
+  }
+
+  /** Lo pedido por tu salida, mientras dura. Ver `mirarTuSalida`. */
+  private seguirConTuSalida(
+    dt: number,
+    tapan: readonly QuienTapaTuSalida[],
+    llegada: TuLlegadaALaPista | null,
+  ): void {
+    const t = this.tapada!;
+    t.lleva += dt;
+    this.retrasoEnEstaLlegada += dt;
+    if (t.como === "vuelta") {
+      const rumbo = this.de.rumbo?.();
+      if (rumbo !== undefined) {
+        if (t.rumbo !== null) t.girado += giradoEntre(t.rumbo, rumbo);
+        t.rumbo = rumbo;
+      }
+      const dada = t.girado >= VUELTA_HECHA;
+      /*
+       * **Y quien no la da y sigue hacia la pista**, ya en la final corta,
+       * ya no la va a dar: se deja de esperar y se mira otra vez, que desde
+       * ahí lo que queda es irse al aire. Sin esto la vuelta pedida tapaba
+       * lo de después hasta tocar.
+       */
+      const sinDarla =
+        llegada?.donde === "final" &&
+        llegada.segundos < VUELTA_DESDE_EN_FINAL &&
+        t.girado < VUELTA_HECHA / 4;
+      if (dada || sinDarla || t.lleva > TOPE_DE_LA_VUELTA) {
+        this.vueltasEnEstaLlegada++;
+        this.tapada = null;
+        this.de.acabarTuVuelta?.(dada);
+        return;
+      }
+    } else if (!this.de.mandanFrustrar?.()) {
+      // La orden se levantó —subiendo, alejándote o tocando—: lo de después, de cero.
+      this.tapada = null;
+      return;
+    }
+    const suyo = tapan.find((q) => q.matricula === t.por);
+    if (suyo) this.darleLaPista(suyo);
+  }
+
+  /**
+   * **Si el que tapaba tu salida todavía no se ha ido**: sigue con su salida
+   * por delante en la frecuencia, o está encima de la pista. Es lo que
+   * sostiene la orden de irse al aire: se levanta cuando sale. Ver
+   * `mandarIrsePorTuSalida` en `flight/la-aproximacion.ts`.
+   */
+  private sigueSinIrse(matricula: string): boolean {
+    const trafico = this.de.trafico();
+    if (trafico?.dibujado && !trafico.dibujado(matricula)) return false;
+    return (
+      this.de.radio.vaASalir(matricula) ||
+      (trafico?.ocupanLaPista?.() ?? []).includes(matricula)
+    );
+  }
+
+  /**
+   * **Un AFIS te cuenta quién hay en tu salida**, una vez por avión, y en la
+   * final la instructora propone irse al aire. No le da la pista a nadie: si
+   * te vas, tu llegada vuelve a estar lejos y él sale, que es lo que haría
+   * quien lo oye. Ver `seVaAntes`.
+   */
+  private avisarDeTuSalida(matricula: string, llegada: TuLlegadaALaPista): void {
+    if (!this.contadoDe.has(matricula) && this.de.contarteTuSalida) {
+      this.contadoDe.add(matricula);
+      this.porTuSalida.avisos++;
+      this.de.contarteTuSalida(matricula);
+    }
+    if (
+      llegada.donde === "final" &&
+      !this.propuestoPor.has(matricula) &&
+      this.de.proponerteIrtePorTuSalida
+    ) {
+      this.propuestoPor.add(matricula);
+      this.porTuSalida.propuestas++;
+      this.de.proponerteIrtePorTuSalida(matricula);
+    }
+  }
+
+  /**
+   * **La pista al que tapa tu salida, en cuanto está libre**: con él ya en
+   * su doble raya, sin nadie que aterrice por medio ni corriendo por ella, sin
+   * otro del tráfico que llegue antes de que se haya ido y con la estela de la
+   * salida de delante pasada (Doc 4444, 5.8.3.1); a ti no se te cuenta, que
+   * para eso te retrasan. Si hay uno alineado esperando, primero ése: la
+   * pista es de uno por vez. Ver `puedeSalirSinEsperarte` en
+   * `world/trafico.ts`.
+   */
+  private darleLaPista(q: QuienTapaTuSalida): void {
+    if (this.numeroDos) return;
+    const radio = this.de.radio;
+    const ocupan = radio.ocupanLaPista;
+    // Con uno que aterriza por medio, se espera a que la deje.
+    if (ocupan.some((o) => o.orden !== "torre.lineUpWait")) return;
+    const alineado = ocupan[0]?.matricula ?? null;
+    if (!alineado && !radio.vaASalir(q.matricula)) return;
+    const trafico = this.de.trafico();
+    if (!trafico?.puedeSalirSinEsperarte?.(alineado ?? q.matricula)) return;
+    const dichas = radio.despejarLaPista(null, alineado ? false : [q.matricula]);
+    for (const dice of dichas)
+      trafico.anuncia(dice.de.matricula, dice.clave, radio.puedeAterrizar(dice.de.matricula));
+    const dice = laQueSeDice(dichas);
+    if (dice) this.de.decirAOtro(dice);
+  }
+
+  /**
    * Entraste en final: tu autorización para aterrizar, **cuando toque**. Ver
    * `paso`.
    */
@@ -888,6 +1212,8 @@ export class TurnoDePista {
    * autorización para una final que ya no existe no se dice.
    */
   paso(fase: string): void {
+    // Antes que nada, quien tapa tu salida: lo que se decida ahí manda. Ver `mirarTuSalida`.
+    this.mirarTuSalida(fase);
     if (fase === "final") this.despejarTuSalida();
     if (fase !== "final") {
       /*
@@ -1062,6 +1388,13 @@ export class TurnoDePista {
       }
       return;
     }
+    /*
+     * **Y dando la vuelta que te pidieron, todavía no.** Es para que salga el
+     * de tu salida: autorizarte en medio sería dársela a dos. Se queda pedido
+     * y se da al volver, si toca. Lo de arriba sí vale: con la pista ocupada
+     * a la decisión, al aire, hayas dado la vuelta o no. Ver `mirarTuSalida`.
+     */
+    if (this.tapada?.como === "vuelta") return;
     this.despejeSinDecir = null;
     this.aterrizajeSinAutorizar = false;
     /*
@@ -1154,5 +1487,14 @@ export class TurnoDePista {
     this.esperandoTrasDe.clear();
     this.retenidoDesde.clear();
     this.retencionMasLarga = 0;
+    this.tapada = null;
+    this.vueltasEnEstaLlegada = 0;
+    this.retrasoEnEstaLlegada = 0;
+    this.contadoDe.clear();
+    this.propuestoPor.clear();
+    this.porTuSalida.vueltas = 0;
+    this.porTuSalida.alAire = 0;
+    this.porTuSalida.avisos = 0;
+    this.porTuSalida.propuestas = 0;
   }
 }

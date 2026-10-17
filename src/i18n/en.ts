@@ -318,6 +318,7 @@ export const EN: Dictionary = {
   "palabra.volve": "Try again!",
   "palabra.aterriza": "Land!",
   "palabra.alAire": "Go around!",
+  "palabra.vuelta": "Orbit!",
   "palabra.laPista": "Runway?",
   "palabra.cuidado": "Careful!",
   "palabra.mira": "Look!",
@@ -395,6 +396,8 @@ export const EN: Dictionary = {
   "motivo.sinConfigurar": "Gear or flaps not set",
   "vuelo.proponeIrse": "This one isn't coming right. If you like, we go around and try again",
   "vuelo.proponeIrseSinPista": "The safe thing is to go around and try again",
+  "vuelo.proponeIrseSalidaTapada":
+    "There's a plane waiting to take off right where we'd leave the runway. If you like, we go around, let it go, and come back calmly",
   "vuelo.tomaLarga": "Not like this: we go around and try again",
   "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
   "vuelo.aterrizasteContraLaOrden":
@@ -536,6 +539,11 @@ export const EN: Dictionary = {
     "We're higher than the plan: there's more to come down, so we'll start down earlier.",
   "palabra.aBajar": "Descend",
   "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
+  "vuelo.vueltaPorTuSalida":
+    "The tower asks us for a full turn: a plane is waiting to take off right where we'll leave the runway. We go round, it takes off, and we come back.",
+  "vuelo.vueltaHecha": "Full turn done. Now we head back to the runway.",
+  "vuelo.alAirePorTuSalida":
+    "A plane is waiting to take off right where we'd leave the runway. We climb, it takes off, and we come back round the circuit.",
   "vuelo.permisoAnulado":
     "The tower had cleared us to land, but a plane got onto the runway. With the runway occupied we don't land: we climb and come back round the circuit.",
   "hud.cotaDeLaPista":

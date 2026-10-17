@@ -137,9 +137,14 @@ import {
   crearCircuito,
   escalaDeCircuito,
   formaDelCircuito,
+  loQueQuedaDeCircuito,
   manoPublicada,
+  verticesDelCircuito,
   type Circuito,
+  type Mano,
+  type PuntoDeCircuito,
 } from "./world/circuito";
+import { TOPE_DE_LA_VUELTA, type TuLlegadaALaPista } from "./flight/salida-tapada";
 import { FLOTA, modeloPorId } from "./flight/flota";
 import { cabeEn, campoDe } from "./flight/cabe";
 import {
@@ -1251,6 +1256,7 @@ import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
 import { laForma, unaForma } from "./audio/variantes";
 import {
+  ALTO_PARA_EL_CIRCUITO,
   LaAproximacion,
   type CampoDeLaAproximacion,
 } from "./flight/la-aproximacion";
@@ -4844,6 +4850,7 @@ export class Game {
     },
     alto: () =>
       this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
+    enTierra: () => this.flight.state.onGround,
     // La de la ficha: ver `categoriaDeEstela` en `flight/estela.ts`.
     miEstela: () => categoriaDeEstela(this.aircraft.mass),
     decirAOtro: (dice) => this.decirleAOtro(dice),
@@ -4856,6 +4863,19 @@ export class Game {
     permisoSinOir: () => this.permisoSinOir,
     darteElPermisoYa: () => this.darElPermisoYa(),
     sabeRetener: (m) => this.sabeRetenerA(m),
+    // Y el que tapa tu salida: ver `flight/salida-tapada.ts`.
+    afis: () => this.esAfisAqui(),
+    tuLlegada: () => this.tuLlegadaParaLaTorre(),
+    rumbo: () => this.flight.state.heading,
+    darteUnaVuelta: (por) => this.pedirteUnaVuelta(por),
+    acabarTuVuelta: (dada) => this.acabarTuVuelta(dada),
+    mandarteAlAirePorTuSalida: (alto, por, sigue) => {
+      this.nombrar("torre.goAroundDeparting", por);
+      this.laAproximacion.mandarIrsePorTuSalida(alto, sigue);
+    },
+    contarteTuSalida: (por) => this.contarTuSalida(por),
+    proponerteIrtePorTuSalida: () =>
+      this.hechos.emit("proponenIrseAlAire", { motivo: "salidaTapada" }),
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -6952,7 +6972,8 @@ export class Game {
      */
     const conLaOrden = this.laAproximacion.tocoConLaOrden;
     this.laAproximacion.tocoConLaOrden = null;
-    if (conLaOrden === "pistaOcupada") this.aterrizoContraLaOrden();
+    if (conLaOrden === "pistaOcupada" || conLaOrden === "salidaTapada")
+      this.aterrizoContraLaOrden();
     if (veredicto === "fuera") this.sufrirPercance("fuera");
     /*
      * **Y sin tren, que es un aterrizaje de panza y no un aterrizaje.**
@@ -8610,6 +8631,28 @@ export class Game {
           this.instructor.decir(dicho.texto, dicho.id, "mando");
         return;
       }
+      /*
+       * **Por el que tapa tu salida.** La torre enciende la roja del aire y
+       * lo dice en fraseología —«go around, departing traffic»—; la tarjeta
+       * y, en los peldaños de abajo, la instructora cuentan el porqué: uno
+       * espera para salir justo por donde dejarías la pista. Con el tono de
+       * atención: irse es la maniobra buena. Ver `flight/salida-tapada.ts`.
+       */
+      if (porque === "salidaTapada") {
+        if (this.hayTorreQueHable()) {
+          this.luzDeTorre("roja", "alAire", "salida");
+          this.laTorreMandaEnLaLuz = true;
+        }
+        const dicho = this.avisoCon("vuelo.alAirePorTuSalida", "palabra.alAire");
+        this.hud.senal.mostrar("frustrada", dicho.rotulo, null, {
+          segundos: Infinity,
+          prioridad: URGENTE,
+        });
+        this.avisar("attention");
+        if (laInstructoraLoExplica(this.tier.avisos))
+          this.decirLoGrabado("vuelo.alAirePorTuSalida", "mando");
+        return;
+      }
       if (porque === "pistaOcupada") {
         /*
          * Vaca o lámpara según el campo **al que se viene**, y la vaca en su
@@ -8697,14 +8740,25 @@ export class Game {
       this.apuntarCanto(`propone irse: ${motivo}`);
       if (this.tier.avisos === "cabina") return;
       const clave: TranslationKey =
-        motivo === "sinPista" ? "vuelo.proponeIrseSinPista" : "vuelo.proponeIrse";
-      const porQue = t(`motivo.${motivo}` as TranslationKey);
+        motivo === "sinPista"
+          ? "vuelo.proponeIrseSinPista"
+          : motivo === "salidaTapada"
+            ? "vuelo.proponeIrseSalidaTapada"
+            : "vuelo.proponeIrse";
+      /*
+       * La del que tapa tu salida lleva el porqué dentro, que la voz es el
+       * canal: no se escribe dos veces. Ver `contarTuSalida`.
+       */
+      const larga =
+        motivo === "salidaTapada"
+          ? t(clave)
+          : `${t(`motivo.${motivo}` as TranslationKey)}. ${t(clave)}`;
       this.hud.senal.mostrar(
         "frustrada",
         canalesDe(this.tier.avisos).texto
           ? canalesDe(this.tier.avisos).corto
             ? t("palabra.alAire")
-            : `${porQue}. ${t(clave)}`
+            : larga
           : "",
         null,
         { segundos: SE_QUEDA_EL_PERMISO, prioridad: IMPORTANTE },
@@ -9188,6 +9242,22 @@ export class Game {
   }
 
   /**
+   * **Lo que se te ha pedido en este campo por el que tapa tu salida**:
+   * vueltas, idas al aire, avisos de un AFIS y propuestas de irse, y si
+   * ahora mismo estás dando una vuelta. Para el banco. Ver
+   * `flight/salida-tapada.ts`.
+   */
+  get porTuSalidaParaBanco(): {
+    vueltas: number;
+    alAire: number;
+    avisos: number;
+    propuestas: number;
+    dandoLaVuelta: boolean;
+  } {
+    return { ...this.turno.porTuSalida, dandoLaVuelta: this.turno.dandoLaVuelta };
+  }
+
+  /**
    * Una llamada de la torre montada entera: a quién, con qué pista y cómo
    * suena.
    *
@@ -9447,7 +9517,7 @@ export class Game {
      * Y por qué al aire, para la fraseología: la pista ocupada, o que se viene
      * por la cabecera que no está en uso —ver `flight/la-otra-cabecera.ts`—.
      */
-    alAirePor: "ocupada" | "enUso" = "ocupada",
+    alAirePor: "ocupada" | "enUso" | "salida" = "ocupada",
     /**
      * Y quien necesita saber si sonó la frase de la lámpara: tu permiso para
      * aterrizar. Ver `alSonarElPermiso`.
@@ -9568,7 +9638,7 @@ export class Game {
           ? "torre.afisLibreEnFinal"
           : "torre.afisLibre"
         : rojaDice === "alAire"
-          ? alAirePor === "enUso"
+          ? alAirePor !== "ocupada"
             ? null
             : "torre.afisOcupada"
           : trafico === "aterriza"
@@ -9700,7 +9770,9 @@ export class Game {
         : rojaDice === "alAire"
           ? alAirePor === "enUso"
             ? "go around, runway in use"
-            : "go around, runway occupied"
+            : alAirePor === "salida"
+              ? "go around, departing traffic"
+              : "go around, runway occupied"
           : porQue
             ? HOLD_SHORT_POR[porQue]
             : "hold short of the runway";
@@ -11311,6 +11383,7 @@ export class Game {
     // El del campo en el que se está, y solo si allí hay con quién compartir
     // la frecuencia. Ver `montarElCampo`.
     this.calleUnicaDelCampo = () => false;
+    this.circuitoDeLaTorre = null;
     const campo = this.elCampoMontado();
     const aero = campo.escenario.aerodrome;
     if (!aero) return;
@@ -11357,6 +11430,14 @@ export class Game {
         velocidadDeCircuito,
       );
     const deTu = forma(escala, this.aircraft.velocidadDeCircuito);
+    // Y tu circuito para la torre, aunque no se dibuje. Ver `circuitoDeLaTorre`.
+    this.circuitoDeLaTorre = {
+      vertices: verticesDelCircuito(campo.pista, cota, deTu.mano, escala, deTu.altura),
+      escala,
+      mano: deTu.mano,
+      altura: deTu.altura,
+      campo: campo.id,
+    };
     /*
      * **Por las calles del aeródromo, y en la pista en uso**, la misma que
      * todo lo tuyo: el tráfico no tiene pista propia. Se piden al hablar el
@@ -11507,11 +11588,21 @@ export class Game {
      * rodar hacia una doble raya que está en tu camino. Ver
      * `quienDejaLaPistaPorSuRaya` en `world/trafico.ts`.
      */
+    /*
+     * **Y la torre te ve también en el circuito**, no solo en la final: con
+     * eso no deja rodar hacia tu salida a quien no se iría antes, y sabe por
+     * dónde la dejarás. Volando el viento en cola, la final todavía no la ve
+     * el tráfico —ni su fila, ni sus vueltas— y eso no cambia. Ver
+     * `QuienJuega.llegada` y `tuCircuitoParaLaTorre`.
+     */
+    const enLaFinal = alUmbral !== null && alUmbral > 0 ? alUmbral : null;
+    const llegada = enLaFinal ?? (this.sinMotor ? null : this.tuCircuitoParaLaTorre());
     const aterrizandoAqui = s.onGround
       ? VUELVES_POR_TU_SALIDA.has(fase)
-      : alUmbral !== null && alUmbral > 0;
+      : llegada !== null;
     return {
-      alUmbral: alUmbral !== null && alUmbral > 0 ? alUmbral : null,
+      alUmbral: enLaFinal,
+      llegada,
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,
@@ -11602,6 +11693,57 @@ export class Game {
    * en `flight/turno-de-pista.ts`.
    */
   private calleUnicaDelCampo: () => boolean = () => false;
+
+  /**
+   * **Tu circuito, como lo ve la torre**: sus vértices para este avión y este
+   * campo, se dibuje el hilo ocre o no —en los peldaños de arriba no se
+   * dibuja, y la torre te sigue viendo en él—. Lo pone `ponerTrafico`, que es
+   * quien monta la frecuencia del campo. Ver `tuLlegadaParaLaTorre`.
+   */
+  private circuitoDeLaTorre: {
+    readonly vertices: readonly PuntoDeCircuito[];
+    readonly escala: number;
+    readonly mano: Mano;
+    readonly altura: number;
+    readonly campo: string;
+  } | null = null;
+
+  /**
+   * **Lo que te queda de circuito, en segundos**, si lo vuelas volviendo a
+   * este campo: de donde estás, por la línea quebrada, hasta la entrada en
+   * final y de ahí al umbral. `null` si no estás en él, si vas a otro campo o
+   * si estás en el suelo. Ver `loQueQuedaDeCircuito`.
+   */
+  private tuCircuitoParaLaTorre(): number | null {
+    const c = this.circuitoDeLaTorre;
+    const s = this.flight.state;
+    if (!c || s.onGround || this.haciaOtroCampo()) return null;
+    const campo = this.elCampo();
+    if (campo.id !== c.campo) return null;
+    const alto = s.position.y - this.cotaDelCampo(campo);
+    if (alto < ALTO_PARA_EL_CIRCUITO || alto > 2 * c.altura) return null;
+    const queda = loQueQuedaDeCircuito(c.vertices, s.position.x, s.position.z, c.escala);
+    const ultimo = c.vertices[c.vertices.length - 1];
+    if (!queda || !ultimo) return null;
+    const metros = queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z);
+    return metros / Math.max(15, s.groundSpeed);
+  }
+
+  /**
+   * **Tu llegada como la ve la torre**, para ver con tiempo a quien tapa tu
+   * salida: por la final si la vuelas —la de la torre o la del plan—, y si
+   * no, por el circuito. Con prioridad o sin motor, nada: a ése no se le
+   * retrasa por nadie, se le deja la pista. Ver `flight/salida-tapada.ts`.
+   */
+  private tuLlegadaParaLaTorre(): TuLlegadaALaPista | null {
+    const s = this.flight.state;
+    if (s.onGround || this.conPrioridad || this.sinMotor) return null;
+    const alto = s.position.y - this.cotaDelCampo(this.elCampo());
+    const alUmbral = this.tuLlegada().alUmbral;
+    if (alUmbral !== null) return { segundos: alUmbral, donde: "final", alto };
+    const circuito = this.tuCircuitoParaLaTorre();
+    return circuito !== null ? { segundos: circuito, donde: "circuito", alto } : null;
+  }
 
   /**
    * Dónde hay aviones del tráfico parados, o a punto de parar, en las calles
@@ -12483,6 +12625,86 @@ export class Game {
 
   /** A quién se le dijo ya que se le da paso, en esta carrera en tierra. */
   private readonly pasoDadoA = new Set<string>();
+
+  /**
+   * **La torre te pide una vuelta entera** porque el que va a salir tapa la
+   * calle por la que dejarías la pista y no se iría antes de que llegues. Ver
+   * `flight/salida-tapada.ts`.
+   *
+   * Hacia fuera del circuito —por la derecha si se vuela por la izquierda—,
+   * que es por donde no hay nadie en la base. La tarjeta con su dibujo en los
+   * cuatro peldaños, quieta hasta que la vuelta está dada; en los de abajo lo
+   * cuenta la instructora, y de Taguató para arriba lo dice la torre en su
+   * fraseología, «orbit right, departing traffic», escrita en la tira de la
+   * radio. Las dos voces, solo con su toma: hasta que la tengan, lo dicen la
+   * tarjeta y la tira. Como `decirQueDasPaso`.
+   */
+  private pedirteUnaVuelta(porQuien: string): void {
+    this.apuntarCanto(`vuelta por ${porQuien}`);
+    const derecha = (this.circuitoDeLaTorre?.mano ?? "izquierda") === "izquierda";
+    const dicho = this.avisoCon("vuelo.vueltaPorTuSalida", "palabra.vuelta");
+    this.hud.senal.mostrar(derecha ? "vuelta-derecha" : "vuelta-izquierda", dicho.rotulo, null, {
+      segundos: TOPE_DE_LA_VUELTA,
+      prioridad: IMPORTANTE,
+    });
+    this.avisar("attention");
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras) {
+      if (laInstructoraLoExplica(this.tier.avisos))
+        this.decirLoGrabado("vuelo.vueltaPorTuSalida", "mando");
+      return;
+    }
+    const montada = this.deTorre(derecha ? "torre.orbitRight" : "torre.orbitLeft", this.miIndicativo);
+    if (!montada) return;
+    this.nombrar(montada.clave, porQuien);
+    this.hud.radio(montada.texto, undefined, true);
+    if (this.instructor.vozDe(montada.clave, montada.relleno))
+      this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+    else this.apuntarCanto(`${montada.clave}: sin grabar, no se pide`);
+  }
+
+  /**
+   * **La vuelta se acabó**: dada, y entonces se dice —«ahora sí, volvemos»—,
+   * o dejada de esperar, y entonces solo se quita la tarjeta. Una espera en
+   * el aire tiene que saberse cuándo acaba. Ver `TOPE_DE_LA_VUELTA`.
+   */
+  private acabarTuVuelta(dada: boolean): void {
+    this.hud.senal.caducar("vuelta-derecha");
+    this.hud.senal.caducar("vuelta-izquierda");
+    this.apuntarCanto(dada ? "vuelta dada" : "vuelta sin dar: se deja de esperar");
+    if (!dada) return;
+    const hecha = this.avisoCon("vuelo.vueltaHecha", "palabra.volve");
+    this.hud.senal.mostrar("toma", hecha.rotulo, null, {
+      segundos: SE_QUEDA_EL_PERMISO,
+      prioridad: IMPORTANTE,
+    });
+    this.avisar("success");
+    if (laInstructoraLoExplica(this.tier.avisos)) this.decirLoGrabado("vuelo.vueltaHecha");
+  }
+
+  /**
+   * **Donde contesta un AFIS, quién hay en tu salida**: un AFIS no te pide
+   * vueltas ni te manda al aire, te cuenta el tráfico que sale y decide quien
+   * vuela. En castellano en los cuatro peldaños —«tráfico despegando», con
+   * tu indicativo— y, de Taguató para arriba, en su fraseología, «runway in
+   * use…, departing traffic». Las dos ya grabadas. La propuesta de irse, en la
+   * final, la hace la instructora: ver `proponenIrseAlAire`.
+   */
+  private contarTuSalida(porQuien: string): void {
+    if (!this.hayTorreQueHable() || !this.esAfisAqui()) return;
+    const yo = this.miIndicativo;
+    const clave = comoSeDiceAqui(
+      "torre.afisTraficoDespega",
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
+    ) as TranslationKey;
+    this.nombrar(clave, porQuien);
+    if (this.instructor.vozDe(clave, rellenoDe(yo)))
+      this.torre.decir(t(clave, { indicativo: yo.dicho }), clave, "mando", rellenoDe(yo));
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) this.porRadioClave("torre.afisInUseDeparting", "mando", undefined, true);
+  }
 
   /**
    * **Y al revés: la torre para al otro para que pases tú**, con su

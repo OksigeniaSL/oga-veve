@@ -66,7 +66,7 @@ const UNA_DE_CADA = 0.25;
 const SUBIR_PARA_IRSE = 60;
 
 /** Desde qué altura sobre la pista empieza a contar el circuito, m. */
-const ALTO_PARA_EL_CIRCUITO = 60;
+export const ALTO_PARA_EL_CIRCUITO = 60;
 
 /**
  * Y hasta cuál, que es la que faltaba.
@@ -563,6 +563,23 @@ export class LaAproximacion {
     this.porqueMandaron = "pistaOcupada";
     this.altoAlMandar = alto;
     this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
+  }
+
+  /**
+   * **La torre te manda al aire porque el que va a salir tapa tu salida** de
+   * la pista y no se iría antes de que llegues, y ya no hay sitio para una
+   * vuelta. Por la misma puerta que las demás —la lámpara roja, el circuito
+   * para volver—, y se levanta como la de la pista ocupada: cuando él se ha
+   * ido, subiendo o alejándote. Ver `flight/salida-tapada.ts`.
+   */
+  mandarIrsePorTuSalida(alto: number, sigueSinIrse: () => boolean): void {
+    if (this.mandanFrustrar || this.ahora?.sinMotor) return;
+    this.laPistaSigueOcupada = sigueSinIrse;
+    this.yaLoMandaron = true;
+    this.mandanFrustrar = true;
+    this.porqueMandaron = "salidaTapada";
+    this.altoAlMandar = alto;
+    this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "salidaTapada" });
   }
 
   /**

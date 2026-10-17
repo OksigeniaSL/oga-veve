@@ -547,6 +547,46 @@ export function verticesDelCircuito(
   ];
 }
 
+/**
+ * **Lo que te queda de circuito hasta la entrada en final**, m, y en qué
+ * tramo vas, o `null` si andas lejos de él: el punto más cercano de la línea
+ * quebrada, como `tramoEn`, y de ahí lo que falta por ella hasta el último
+ * vértice. Con eso la torre sabe cuándo llegas aunque todavía no estés en la
+ * final. Ver `tuLlegadaParaLaTorre` en `game.ts` y `flight/salida-tapada.ts`.
+ */
+export function loQueQuedaDeCircuito(
+  vertices: readonly PuntoDeCircuito[],
+  x: number,
+  z: number,
+  escala = 1,
+): { tramo: TramoDeCircuito; metros: number } | null {
+  const ancho = EN_EL_CIRCUITO * escala;
+  let menor = ancho * ancho;
+  let mejor: { tramo: TramoDeCircuito; metros: number } | null = null;
+  for (let i = 1; i < vertices.length; i++) {
+    const a = vertices[i - 1]!;
+    const b = vertices[i]!;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const largo2 = dx * dx + dz * dz;
+    if (largo2 < 1) continue;
+    const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / largo2));
+    const d = (x - (a.x + dx * t)) ** 2 + (z - (a.z + dz * t)) ** 2;
+    if (d >= menor) continue;
+    const tramo = TRAMOS[i - 1];
+    if (!tramo) continue;
+    menor = d;
+    let metros = Math.sqrt(largo2) * (1 - t);
+    for (let k = i + 1; k < vertices.length; k++) {
+      const p = vertices[k - 1]!;
+      const q = vertices[k]!;
+      metros += Math.hypot(q.x - p.x, q.z - p.z);
+    }
+    mejor = { tramo, metros };
+  }
+  return mejor;
+}
+
 export interface Circuito {
   readonly grupo: Group;
   /** Los cinco vértices, por si alguien —el banco— quiere medirlos. */
