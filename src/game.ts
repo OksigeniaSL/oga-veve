@@ -11100,14 +11100,15 @@ export class Game {
      */
     this.moverLasAves(dt);
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
-    // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír.
+    // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír, y
+    // tampoco donde no hay aeródromo: ver `sinTorre`.
     /*
-     * **Ni en el vuelo del modo inicio**: es la primera lección de alguien, en
-     * un campo del Chaco, y van solos, como en la granja. La frecuencia del
-     * campo sonaba igual —el «buenos días» de otro avión, la torre
-     * mandándole esperar— sin un solo avión a la vista, y partía la
+     * **Ni en el vuelo del modo inicio**: es la primera lección de alguien, y
+     * van solos, como en la granja. La frecuencia del campo partía la
      * conversación de Jazlyn y Ara: «las radios de otros pilotos cortan la
-     * conversación». Ver `flight/inicio.ts`.
+     * conversación». En el Chaco, donde se da hoy, ya la calla `sinTorre`,
+     * porque allí no hay aeródromo; esto es para que siga callada si la
+     * escena se muda a un campo con torre. Ver `flight/inicio.ts`.
      */
     if (!sinTorre(this.elCampoMontado().escenario.aerodrome) && !this.conInicio)
       this.oirElCampo(dt);

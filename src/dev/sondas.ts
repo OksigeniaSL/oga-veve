@@ -2112,13 +2112,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** El OACI del aeródromo que se tiene debajo. */
     aerodromoDeAhora: () => juego.campoParaBanco()?.aerodromo?.id ?? null,
     /**
-     * Si ese campo tiene frecuencia: uno sin torre —el privado, o Ayolas— no
-     * tiene quien conteste, ni tráfico que se oiga, ni a nadie volando su
-     * circuito. Ver `ponerTrafico` y `sinTorre`.
+     * Si ese campo tiene frecuencia: uno sin torre —el privado, Ayolas, o una
+     * pista sin aeródromo— no tiene quien conteste, ni tráfico que se oiga, ni
+     * a nadie volando su circuito. Ver `ponerTrafico` y `sinTorre`.
      */
     conFrecuencia: (id?: string) => {
       const campo = juego.campoParaBanco(id);
-      return !!campo?.escenario.aerodrome && !sinTorre(campo.escenario.aerodrome);
+      return !!campo && !sinTorre(campo.escenario.aerodrome);
     },
     /**
      * Si en ese campo contesta un AFIS, que informa y no autoriza: allí no hay

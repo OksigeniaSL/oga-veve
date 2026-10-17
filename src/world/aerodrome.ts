@@ -273,11 +273,19 @@ export interface Aerodrome {
  * para que las dos razones no se tengan que acordar en cada sitio: la
  * primera vez que hizo falta la segunda había catorce preguntas por
  * `privado` repartidas por el juego.
+ *
+ * **Y donde no hay aeródromo, tampoco hay torre.** Los escenarios inventados
+ * —el valle y el Chaco— tienen una pista en medio del campo y nada más: ni
+ * fichero, ni AIP, ni nadie en la radio. Esta pregunta decía que sí había
+ * torre, porque solo miraba las dos razones de un aeródromo que existe, y en
+ * los vuelos del Chaco sonaba la frecuencia de un campo —el «buenos días» de
+ * otro avión, la torre mandándole esperar— sin un solo avión a la vista. El
+ * banco ya lo sabía: su `conFrecuencia` preguntaba aparte si había aeródromo.
  */
 export function sinTorre(
   aero: Pick<Aerodrome, "privado" | "sinTorre"> | null | undefined,
 ): boolean {
-  return !!aero && (aero.privado === true || aero.sinTorre === true);
+  return !aero || aero.privado === true || aero.sinTorre === true;
 }
 
 /**
