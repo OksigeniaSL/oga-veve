@@ -30,6 +30,7 @@ import {
   LINEAS_DEL_INICIO,
   PISTA_QUE_SE_GUARDA,
   SIN_INTENTO,
+  SUBE_AL_SOLTAR,
   VOZ_DE,
   type Intento,
   type Lectura,
@@ -537,6 +538,12 @@ interface Carrera {
   readonly hastaQuince: number;
   /** Lo que quedaba de pista al pasar a «¡ahora!», m. */
   readonly quedabaEnElAhora: number;
+  /** El gas más bajo al que la mano sostuvo la carrera. */
+  readonly gasSostenido: number;
+  /** Lo más deprisa que subió el gas pasado el paso del gas, por segundo. */
+  readonly subidaMasBrusca: number;
+  /** Y el gas a los quince metros. */
+  readonly gasEnQuince: number;
   readonly registro: Inicio["registro"];
 }
 
@@ -560,6 +567,9 @@ function correrLaCarrera(voz: ReturnType<typeof vozQueTarda>, pista = 1400): Car
   let hastaElAhora = NaN;
   let quedabaEnElAhora = NaN;
   let hastaQuince = NaN;
+  let gasSostenido = 1;
+  let subidaMasBrusca = 0;
+  let gasEnQuince = NaN;
   for (let t = 0; t < 120 && Number.isNaN(hastaQuince); t += DT) {
     voz.paso(t);
     const s = m.state;
@@ -595,10 +605,18 @@ function correrLaCarrera(voz: ReturnType<typeof vozQueTarda>, pista = 1400): Car
       hastaElAhora = rodados;
       quedabaEnElAhora = pista - rodados;
     }
-    if (s.heightAboveGround - PYKASU.gearHeight >= 15) hastaQuince = rodados;
+    if (s.heightAboveGround - PYKASU.gearHeight >= 15) {
+      hastaQuince = rodados;
+      gasEnQuince = c.throttle;
+    }
     const a = salida.ayuda;
+    const antes = c.throttle;
     if (a.gas !== null && c.throttle < a.gas) c.throttle = a.gas;
     if (a.gasTope !== null && c.throttle > a.gasTope) c.throttle = a.gasTope;
+    if (ahora.paso !== "gas") {
+      subidaMasBrusca = Math.max(subidaMasBrusca, (c.throttle - antes) / DT);
+      gasSostenido = Math.min(gasSostenido, c.throttle);
+    }
     c.elevator = a.cabeceo ?? 0;
     if (!salida.congelado) m.step(DT, c);
   }
@@ -608,6 +626,9 @@ function correrLaCarrera(voz: ReturnType<typeof vozQueTarda>, pista = 1400): Car
     hastaElAhora,
     hastaQuince,
     quedabaEnElAhora,
+    gasSostenido,
+    subidaMasBrusca,
+    gasEnQuince,
     registro: inicio.registro,
   };
 }
@@ -647,6 +668,22 @@ describe("la carrera, con tiempo para explicarla", () => {
     const c = correrLaCarrera(vozQueTarda(loQueDura));
     expect(c.hastaElAhora).toBeLessThan(400);
     expect(c.hastaQuince).toBeLessThan(700);
+  });
+
+  /*
+   * El gas pasaba de golpe de lo sostenido a fondo en cuanto acababa «…yo te
+   * aviso», y el motor pegaba un salto. La mano lo sube como lo subiría una
+   * mano. Ver `SUBE_AL_SOLTAR`.
+   */
+  it("al acabar de explicarla, el gas sube con la mano, no de golpe, y llega a fondo", () => {
+    const c = correrLaCarrera(vozQueTarda(loQueDura));
+    // Se sostuvo de verdad por debajo del fondo…
+    expect(c.gasSostenido).toBeLessThan(0.9);
+    // …y de ahí arriba, nunca más deprisa que la mano.
+    expect(c.subidaMasBrusca).toBeLessThanOrEqual(SUBE_AL_SOLTAR + 1e-6);
+    expect(c.subidaMasBrusca).toBeGreaterThan(SUBE_AL_SOLTAR * 0.9);
+    // Y antes de irse del suelo, a fondo.
+    expect(c.gasEnQuince).toBe(1);
   });
 
   it("sin voz, con el rato de leer cada frase, tampoco pasa de Vr ni de la mitad", () => {

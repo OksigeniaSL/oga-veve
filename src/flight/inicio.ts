@@ -240,6 +240,22 @@ const DERECHAS_UN_RATO = 0.4;
 /** Lo que tarda la mano de la mamá en llevar el gas arriba, s. */
 const RAMPA_DEL_GAS = 1.2;
 
+/**
+ * **Y lo que sube el gas por segundo al soltar la carrera sostenida**, de lo
+ * sostenido a fondo. Ver `SOSTIENE_POR_DEBAJO`.
+ *
+ * Pasaba de golpe: la mano tenía el gas en torno a 0,76 y, al acabar «…yo te
+ * aviso», en el fotograma siguiente estaba a fondo, y el motor pegaba un
+ * salto que se oía. Una mano no hace eso: empuja la palanca, y el motor sube
+ * con ella. Un cuarto de recorrido por segundo —el recorrido entero en
+ * cuatro— es empujar con suavidad y no de un golpe, que es como se da la
+ * potencia de despegue; desde lo sostenido es un segundo: corto, y se oye
+ * subir. Medido con el JAZ 20 en el Chaco: la Vr llega cuatro décimas más
+ * tarde que con el salto, el «¡ahora!» con ella, y los quince metros de
+ * altura, diez metros de pista más allá, a los 460 de 1.400.
+ */
+export const SUBE_AL_SOLTAR = 0.25;
+
 /** Gas que da el paso por hecho. */
 const GAS_HECHO = 0.85;
 
@@ -271,8 +287,9 @@ const MORRO_DE_LA_RED = 0.45;
  *
  * Así que ella hace lo que haría una instructora con doble mando: el gas lo
  * lleva ella —«yo te sostengo el gas»— y no deja que el avión llegue a la
- * rotación hasta que ha acabado de explicarla. Al acabar, gas a fondo, y en
- * un segundo y poco la Vr, el «¡ahora!» y el mundo esperando la flecha. Lo
+ * rotación hasta que ha acabado de explicarla. Al acabar, la mano lo lleva a
+ * fondo —ver `SUBE_AL_SOLTAR`—, y en un par de segundos la Vr, el «¡ahora!» y
+ * el mundo esperando la flecha. Lo
  * que suelta la mano es que acabe la frase, no un reloj: sin voz, el rato de
  * leerla —ver `vozDelInicio` en `game.ts`—.
  *
@@ -297,10 +314,11 @@ const AFLOJA_DESDE = 3;
  *
  * Seiscientos. Desde la Vr, con la mano sosteniendo el morro, el JAZ 20 se va
  * del suelo en el acto y pasa los quince metros a los 162 de rodar; desde la
- * velocidad sostenida hasta la Vr son un segundo y unos treinta metros más.
- * Seiscientos son eso con más del doble de margen, y en el Chaco dejan
- * sostener casi ochocientos metros: con «todavía no…» colgada, el «¡ahora!»
- * llega a los 827 y los quince metros, a los 989.
+ * velocidad sostenida hasta la Vr, con la mano subiendo el gas, son segundo
+ * y medio y unos cuarenta metros más. Seiscientos son eso con más del doble
+ * de margen, y en el Chaco dejan sostener casi ochocientos metros: con
+ * «todavía no…» colgada, el «¡ahora!» llega a los 842 y los quince metros, a
+ * los 1.003.
  */
 export const PISTA_QUE_SE_GUARDA = 600;
 
@@ -917,7 +935,10 @@ export class Inicio {
      */
     let gas: number | null = null;
     if (despues && this.gasDeLaMano !== null && l.motor && def.id !== "fin") {
-      this.gasDeLaMano = Math.min(1, this.gasDeLaMano + dt / RAMPA_DEL_GAS);
+      // Empujado por quien juega, la mano lo acaba de llevar; al soltar la
+      // carrera, lo sube como lo subiría una mano. Ver `SUBE_AL_SOLTAR`.
+      const ritmo = def.id === "gas" ? 1 / RAMPA_DEL_GAS : SUBE_AL_SOLTAR;
+      this.gasDeLaMano = Math.min(1, this.gasDeLaMano + dt * ritmo);
       gas = this.gasDeLaMano;
     }
     /*
@@ -938,6 +959,13 @@ export class Inicio {
       const lejos = Math.min(1, Math.max(0, (tope - l.velocidad) / AFLOJA_DESDE));
       gasTope = sostiene + (1 - sostiene) * lejos;
       gas = Math.min(gas, gasTope);
+      /*
+       * **Y la mano se queda donde aflojó.** Tenía el gas a fondo por dentro y
+       * solo el tope lo bajaba, así que al quitarse el tope volvía a fondo en
+       * un fotograma. Ahora lo que suelta la mano es su sitio de verdad, y al
+       * acabar de hablar sube desde ahí.
+       */
+      this.gasDeLaMano = gas;
     }
     let cabeceo: number | null = null;
     if (this.rotando && (l.enTierra || l.altura < YA_VUELA * 2)) cabeceo = MORRO_DEL_DESPEGUE;
