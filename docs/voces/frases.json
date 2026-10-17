@@ -14046,5 +14046,439 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.mama.aterrizar.hola",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Hoy aterrizás vos, mi amor! En el aire el avión no se puede quedar quieto, así que yo lo llevo mientras te enseño.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.gas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos un poquito rápido para aterrizar. Hacé como el dibujo y dale un poquito menos de gas.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.gas.otra1",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El gas, mi vida, un poquito para abajo: así el motor afloja y el avión va más despacio.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.gas.otra2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Mirá el dibujo que brilla: es el gas. Un toquecito para abajo, sin apuro.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.gas.bien",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Eso! ¿Escuchás cómo se calma el motor? Ya vamos a la velocidad justa para aterrizar.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.gas.yo",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esta vez el gas lo bajo yo, mirá la palanca: un poquito nomás, y el motor se calma.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.nariz",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Con la nariz. Bajala un poquito, como en el dibujo, que apunte a la pista por adentro de los aros.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.nariz.otra1",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La nariz un poquito para abajo, mi amor, que mire la pista. El avión va por adentro de los aros.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.nariz.otra2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Hacé como el dibujo: un toquecito para abajo, y la nariz apunta a la pista.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.nariz.bien",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Porque vamos justito por el caminito! Así se baja a una pista: despacito y derecho.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.nariz.yo",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esta vez la nariz la bajo yo, mirá: un poquito nomás, y apunta a la pista.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.aros",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Son para aprender: dibujan el caminito para bajar a la pista. En los aeropuertos, ese caminito lo marcan unas luces al lado de la pista.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.senda",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Es que ya llegamos. Cuando estemos bajito, yo saco el gas y vos levantás la nariz, suave, para posarnos.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.recogida",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Ahora! Levantá la nariz un poquito, suave, suave.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.recogida.bien",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizaste! Primero las ruedas de atrás, suavecito, como lo hace un avión de verdad.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.recogida.yo",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizamos! Esta vez la nariz la levanté yo. La próxima, la levantás vos.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.frenar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Con el freno, como en un auto. Apretá el freno del dibujo y yo te ayudo a parar.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.frenar.otra1",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El freno, mi vida, el dibujo que brilla. Apretalo y el avión se va parando.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.frenar.otra2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Buscá el freno en el dibujo y apretalo una vez, sin miedo. La pista es larga.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.frenar.bien",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Muy bien! Mirá cómo frenamos, despacito y por el medio de la pista.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.fin",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizaste, mi amor! Te ganaste tu primer sello del cuaderno. Cuando quieras, volamos otra vez.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.aterrizar.finOtra",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "¡Qué lindo aterrizaje, mi amor! El sello de este campo ya está en tu cuaderno. Cuando quieras, volamos otra vez.",
+    "para": "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.hola",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Mamá, ¿hoy me enseñás a aterrizar?",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.gas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Y qué es lo primero que hacemos, mamá?",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.nariz",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Y cómo hacemos para bajar hasta la pista?",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.nariz.bien",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mamá, mirá! ¡Los aros se ponen verdes!",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.aros",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Mamá, ¿y por qué hay aros en el cielo?",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.senda",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mamá, la pista se hace cada vez más grande!",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.toque",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Tocamos el suelo, mamá! ¡Ni se sintió!",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.frenar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Y ahora cómo paramos el avión, mamá?",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.aterrizar.fin",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Lo hicimos, mamá! ¡Aterrizamos en la pista!",
+    "para": "el modo inicio, aterrizar: Ara pregunta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
