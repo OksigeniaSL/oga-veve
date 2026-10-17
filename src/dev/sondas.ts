@@ -599,6 +599,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     gafas: () => leerGafas(),
     /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
     tarjeta: () => juego.hud.senal.puesto,
+    /**
+     * El modo inicio: el paso, la fase, si el mundo espera, la última frase y
+     * con qué mando se dibuja. Ver `scripts/verificar-inicio.mjs`.
+     */
+    inicio: () => juego.inicioParaBanco,
     /*
      * Cómo anda la voz del instructor: cuántas piezas grabadas tiene
      * cargadas y qué fue lo último que se le pidió decir.

@@ -289,6 +289,13 @@
   </head>
   <body>
     <canvas id="lienzo"></canvas>
+    <!--
+      El velo del modo inicio: oscurece un poco el mundo mientras espera a que
+      se haga lo que se pide. Va pegado al lienzo y debajo del HUD y de los
+      mandos de los pulgares, que son justo lo que hay que tocar. Ver
+      src/ui/inicio.ts.
+    -->
+    <div id="inicio-velo" class="inicio-velo" hidden></div>
 
     <!--
       El HUD NO es una región viva. Sus cifras cambian sesenta veces por
@@ -428,6 +435,13 @@
         <span class="pad__punto"></span>
       </div>
     </div>
+
+    <!--
+      El modo inicio: Jazlyn le enseña a volar a su hijo, paso a paso. La
+      tarjeta va encima del vuelo y de los mandos; el dedo que señala, encima
+      del mando de verdad. Ver src/ui/inicio.ts y src/flight/inicio.ts.
+    -->
+    <div id="inicio" class="inicio" hidden></div>
 
     <!--
       El hangar: la pantalla de elegir a dónde y con quién. Va antes que nada

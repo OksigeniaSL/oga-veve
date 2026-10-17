@@ -819,6 +819,8 @@ export class InstructorGrabado implements Instructor {
       // `tripulacion.canario.*` no se pisa con la de casa.
       "tripulacion",
       "tripulacion-canarias",
+      // El hijo de Jazlyn, en el modo inicio. Ver `flight/inicio.ts`.
+      "hijo",
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,
@@ -940,6 +942,22 @@ export class InstructorGrabado implements Instructor {
 }
 
 /** Qué dice el navegador que puede tocar. */
+/**
+ * **El manifiesto de una voz**, sin bajar sus piezas: lo que hace falta para
+ * saber qué tiene grabado. Con la misma red y el mismo respaldo que el pack.
+ * Lo pregunta el arranque antes de que exista el juego, para decidir si el
+ * modo inicio ya tiene voz. Ver `main.ts` e `inicioGrabado`.
+ */
+export async function manifiestoDe(voz: string, base = BASE): Promise<Manifiesto | null> {
+  if (!elegirFormato(miraSiPuede)) return null;
+  try {
+    const crudo = await traer(`${base}/${voz}/manifiesto.json`, false);
+    return crudo ? leerManifiesto(JSON.parse(new TextDecoder().decode(crudo))) : null;
+  } catch {
+    return null;
+  }
+}
+
 function miraSiPuede(mime: string): string {
   try {
     return document.createElement("audio").canPlayType(mime) ?? "";

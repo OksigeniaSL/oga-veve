@@ -1,7 +1,7 @@
 # Las voces del juego
 
-Ocho voces, seiscientas veintisiete frases y unos treinta y dos mil
-caracteres. Esto dice **qué se graba, con qué voz, cómo vuelve y qué se le
+Nueve voces —cuántas frases y caracteres lleva cada una lo dice el guion al
+acabar—. Esto dice **qué se graba, con qué voz, cómo vuelve y qué se le
 hace después**.
 
 La lista la genera el propio juego, así que nunca se queda vieja:
@@ -19,7 +19,7 @@ Escribe en esta carpeta:
 | `guion-<voz>.txt` | **solo el texto**, una frase por línea: es lo que se pega en el estudio |
 | `guion-<voz>.tsv` | el mismo guion numerado, para casar los audios que vuelven              |
 
-## Las ocho voces
+## Las nueve voces
 
 | voz                | idioma                                  | frases | cómo suena                                                      | por qué                                                                                                                                                                                                                                                                                                |
 | ------------------ | --------------------------------------- | ------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -31,6 +31,7 @@ Escribe en esta carpeta:
 | **otro**           | castellano paraguayo                    | 5      | otra persona, otro timbre                                       | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
 | **tripulacion** | castellano paraguayo | 8 | **Derlis**: hombre joven, cálido y atento, por el altavoz del techo | La tripulación de cabina de los vuelos de Paraguay: el servicio a bordo con lo de la granja —fruta deshidratada, maní, chipa, mbejú— y los cinturones al empezar a bajar. Solo en los aviones que llevan auxiliares: del JAZ 90 para arriba. Le habla al pasaje de usted, como cualquier tripulación. Ver `src/audio/servicio-a-bordo.ts`. |
 | **tripulacion-canarias** | castellano canario | 10 | **Idaira**: mujer canaria, serena y amable, por el altavoz del techo | Lo mismo en los vuelos entre islas, con el habla de allí: «plátano» y «manises», y a veces «un sabor de Paraguay». Claves `tripulacion.canario.*`, que no se pisan con las de casa. |
+| **hijo** | castellano paraguayo | 10 | **el hijo de Jazlyn**: un niño pequeño, curioso y alegre, sentado a su lado | Solo en el modo inicio, donde Jazlyn le enseña a volar: él pregunta y ella enseña. Ella habla ahí con la voz de la comandante pero **sin megafonía**: le habla a él, no al pasaje (`inicio.mama.*`, en la voz `comandante`). La voz del niño **todavía no está elegida**: se elige con Enrique el día de grabar, y por eso no tiene identificador en `voces.json`. Ver `src/flight/inicio.ts` y `PENDIENTE-VOCES-inicio.md`. |
 
 Tres cosas que no cambian:
 

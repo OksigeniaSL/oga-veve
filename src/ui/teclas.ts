@@ -41,6 +41,18 @@ const FLECHA_ABA = flecha("M12 21 L4 11 H9 V4 H15 V11 H20 Z");
 const FLECHA_IZQ = flecha("M3 12 L13 4 V9 H21 V15 H13 V20 Z");
 const FLECHA_DER = flecha("M21 12 L11 20 V15 H3 V9 H11 V4 Z");
 
+/**
+ * Las cuatro flechas, para quien dibuja teclas fuera de esta pantalla: el modo
+ * inicio enseña las mismas, que una flecha de subir que cambia de pinta según
+ * dónde se mire ya no es la misma flecha. Ver `ui/inicio.ts`.
+ */
+export const FLECHAS = {
+  arriba: FLECHA_ARR,
+  abajo: FLECHA_ABA,
+  izquierda: FLECHA_IZQ,
+  derecha: FLECHA_DER,
+} as const;
+
 /*
  * El motor con su flecha vive en `pictogramas.ts`, que es de donde lo sacan
  * también los botones del motor del HUD. Estaban dibujados dos veces y solo

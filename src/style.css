@@ -14251,3 +14251,705 @@ body.con-vuelta #tactil {
     height: 64px;
   }
 }
+
+/* ── El modo inicio ───────────────────────────────────────────────────────
+ *
+ * Jazlyn le enseña a volar a su hijo, paso a paso. Ver `src/ui/inicio.ts`.
+ *
+ * La tarjeta va arriba en el centro, debajo de la barra de botones: abajo
+ * viven los mandos de los pulgares, que son justo lo que hay que tocar, y la
+ * esquina de la derecha es de los pictogramas. Es de barro, como todo lo que
+ * lleva texto encima: opaca, para que el contraste no dependa del cielo.
+ */
+
+.inicio-velo {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* Un poco de sombra encima del mundo quieto: se ve que espera a propósito. */
+  background: rgba(14, 22, 18, 0.3);
+}
+
+.inicio-velo[hidden],
+.inicio[hidden],
+.inicio__fin[hidden],
+.inicio__hueco[hidden],
+.inicio__dedo[hidden],
+.inicio__seguir[hidden] {
+  display: none;
+}
+
+.inicio {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.inicio__tarjeta {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--inicio-arriba, 64px) + 10px);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: min(560px, calc(100vw - 32px));
+  padding: 12px 16px 14px;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  font-family: var(--hud-fuente);
+}
+
+/*
+ * Con el dedo, entre las dos columnas: ni la palanca ni el gas debajo, ni la
+ * tarjeta del destino de arriba a la derecha. En el teléfono pequeño de
+ * verdad —780 de ancho— ésa empieza a 182 píxeles del borde, y la mitad de la
+ * pantalla es lo que cabe. Lo mide `verificar-inicio.mjs`.
+ */
+@media (pointer: coarse) {
+  .inicio__tarjeta {
+    width: min(520px, 50vw);
+  }
+}
+
+.inicio__quien {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.inicio__cara {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex: none;
+}
+
+.inicio__cara-hueco {
+  flex: none;
+}
+
+.cara__fondo {
+  fill: var(--ocre);
+}
+.inicio__cara--hijo .cara__fondo {
+  fill: #6aa7c9;
+}
+.cara__piel {
+  fill: #c98f62;
+}
+.cara__pelo {
+  fill: #2a1c14;
+}
+.cara__gorra {
+  fill: #1f3550;
+}
+.cara__insignia {
+  fill: #f2c14e;
+}
+.cara__gafas {
+  fill: #1a1a1a;
+}
+.cara__ojo {
+  fill: #2a1c14;
+}
+.cara__mejilla {
+  fill: #e0877a;
+  opacity: 0.6;
+}
+.cara__trazo {
+  fill: none;
+  stroke: #2a1c14;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.inicio__dice {
+  margin: 0;
+  font-size: var(--voz-glosa);
+  line-height: 1.3;
+  color: var(--tinta);
+}
+
+.inicio__hueco {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.inicio__mando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  --tecla: 56px;
+}
+
+.inicio__dibujo {
+  display: grid;
+  place-items: center;
+}
+
+/* Las teclas son las de la pantalla de teclas: `.tecla` en esta hoja. */
+.inicio__flechas {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.inicio__fila {
+  display: flex;
+  gap: 6px;
+}
+
+.inicio__tecla--apagada {
+  opacity: 0.38;
+  filter: saturate(0.4);
+}
+
+.inicio__tecla--late {
+  animation: inicio-late 1.1s ease-in-out infinite;
+}
+
+@keyframes inicio-late {
+  50% {
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.38),
+      0 0 0 #96551f,
+      0 0 0 7px rgba(221, 146, 63, 0.35);
+  }
+}
+
+/* Lo que pasa en el avión: tenue, que es la consecuencia y no el mando. */
+.inicio__pasa {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex: none;
+  fill: var(--tinta-suave);
+}
+
+.inicio__pasa svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--tinta-suave);
+}
+
+.pasa__suelo {
+  fill: none;
+  stroke: var(--linea-fuerte);
+  stroke-width: 2;
+}
+
+.pasa__endereza {
+  transform-box: view-box;
+  transform-origin: 32px 36px;
+  animation: pasa-endereza 1.8s ease-in-out infinite;
+}
+.pasa__endereza--desde-izquierda {
+  --desde: -22deg;
+}
+.pasa__endereza--desde-derecha {
+  --desde: 22deg;
+}
+
+@keyframes pasa-endereza {
+  0%,
+  15% {
+    transform: rotate(var(--desde));
+  }
+  70%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* ── Los mandos dibujados ── */
+
+.dib {
+  display: block;
+  height: 120px;
+  width: auto;
+  overflow: visible;
+}
+
+.dib__pad {
+  fill: rgba(228, 226, 218, 0.1);
+  stroke: rgba(228, 226, 218, 0.4);
+  stroke-width: 2;
+}
+
+.dib__punto {
+  fill: var(--ocre);
+}
+
+.dedo__mano {
+  fill: #f6ead9;
+  stroke: #3a2a1e;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.dib__cuerpo {
+  fill: #33453c;
+  stroke: rgba(228, 226, 218, 0.28);
+  stroke-width: 2;
+}
+
+.dib__hueco {
+  fill: rgba(0, 0, 0, 0.38);
+}
+
+.dib__parte {
+  fill: #6f8378;
+}
+
+.dib__parte--activa {
+  fill: var(--ocre);
+}
+
+.dib__boton {
+  fill: #53675d;
+}
+
+.dib__rayas {
+  fill: none;
+  stroke: #1a1206;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.dib__flecha {
+  fill: var(--ocre-tinta);
+  animation: inicio-flecha 1.1s ease-in-out infinite;
+}
+
+@keyframes inicio-flecha {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/*
+ * El mando que se mueve: la palanca, el gas o el punto de la pantalla, de
+ * donde está a donde hay que llevarlo, y vuelta. Cada uno dice cuánto con
+ * `--dx` y `--dy`, en unidades de su dibujo.
+ */
+.dib__mueve {
+  animation: dib-mueve 1.6s ease-in-out infinite;
+  --x0: 0px;
+  --y0: 0px;
+  --dx: 0px;
+  --dy: 0px;
+}
+.dib__mueve--arriba {
+  --dy: -28px;
+}
+.dib__mueve--izquierda {
+  --dx: -28px;
+}
+.dib__mueve--derecha {
+  --dx: 28px;
+}
+.dib__mueve--gas {
+  --dy: -62px;
+}
+.dib__mueve--gases {
+  --dy: -46px;
+}
+.dib__mueve--corto.dib__mueve--arriba {
+  --dy: -9px;
+}
+.dib__mueve--corto.dib__mueve--izquierda {
+  --dx: -9px;
+}
+.dib__mueve--corto.dib__mueve--derecha {
+  --dx: 9px;
+}
+/* Enderezar: del lado inclinado al centro. */
+.dib__mueve--centro.dib__mueve--desde-izquierda {
+  --x0: -28px;
+}
+.dib__mueve--centro.dib__mueve--desde-derecha {
+  --x0: 28px;
+}
+.dib__mueve--corto.dib__mueve--centro.dib__mueve--desde-izquierda {
+  --x0: -9px;
+}
+.dib__mueve--corto.dib__mueve--centro.dib__mueve--desde-derecha {
+  --x0: 9px;
+}
+
+@keyframes dib-mueve {
+  0%,
+  12% {
+    transform: translate(var(--x0), var(--y0));
+  }
+  55%,
+  85% {
+    transform: translate(calc(var(--x0) + var(--dx)), calc(var(--y0) + var(--dy)));
+  }
+  100% {
+    transform: translate(var(--x0), var(--y0));
+  }
+}
+/* Enderezar no vuelve: se queda en el centro y empieza otra vez. */
+.dib__mueve--centro {
+  animation-name: dib-endereza;
+}
+
+@keyframes dib-endereza {
+  0%,
+  15% {
+    transform: translate(var(--x0), var(--y0));
+  }
+  65%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* El gatillo que se aprieta y el botón que late. */
+.dib__aprieta--si {
+  animation: dib-aprieta 1.1s ease-in-out infinite;
+}
+
+@keyframes dib-aprieta {
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+.dib__late {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dib-late 1.1s ease-in-out infinite;
+}
+
+@keyframes dib-late {
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+/* La palanca del joystick: hacia uno para subir, a un lado para virar. */
+.dib__mango {
+  transform-box: view-box;
+  transform-origin: 170px 122px;
+}
+.dib__mango--atras {
+  animation: mango-atras 1.6s ease-in-out infinite;
+}
+.dib__mango--izquierda {
+  --giro: -16deg;
+  animation: mango-gira 1.6s ease-in-out infinite;
+}
+.dib__mango--derecha {
+  --giro: 16deg;
+  animation: mango-gira 1.6s ease-in-out infinite;
+}
+.dib__mango--endereza-desde-izquierda {
+  --giro: -16deg;
+  animation: mango-endereza 1.8s ease-in-out infinite;
+}
+.dib__mango--endereza-desde-derecha {
+  --giro: 16deg;
+  animation: mango-endereza 1.8s ease-in-out infinite;
+}
+
+@keyframes mango-atras {
+  55%,
+  85% {
+    transform: translateY(12px) scale(1.06);
+  }
+}
+
+@keyframes mango-gira {
+  55%,
+  85% {
+    transform: rotate(var(--giro));
+  }
+}
+
+@keyframes mango-endereza {
+  0%,
+  15% {
+    transform: rotate(var(--giro));
+  }
+  65%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* ── La llave, que con el dedo se toca en el propio dibujo ── */
+
+.inicio__llave {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border-radius: var(--r-l);
+  border: 3px solid var(--ocre);
+  background: var(--barro-claro);
+  color: var(--tinta);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: senal-llama 1.8s ease-in-out infinite;
+}
+
+.inicio__llave > svg:first-child {
+  width: 64px;
+  height: 64px;
+  fill: var(--ocre);
+}
+
+.inicio__toque {
+  position: absolute;
+  right: -10px;
+  bottom: -14px;
+  width: 40px;
+  height: 44px;
+  animation: inicio-toque 1.1s ease-in-out infinite;
+}
+
+@keyframes inicio-toque {
+  50% {
+    transform: translate(-6px, -6px) scale(0.92);
+  }
+}
+
+.inicio__llave:focus-visible,
+.inicio__seguir:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 3px;
+}
+
+/* ── El dedo de encima, sobre el mando de verdad de la pantalla ── */
+
+.inicio__dedo {
+  position: absolute;
+  width: 46px;
+  height: 50px;
+  margin-left: -23px;
+  margin-top: -6px;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+  --recorrido: 40px;
+}
+
+.inicio__dedo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inicio__dedo--arriba {
+  animation: dedo-va 1.6s ease-in-out infinite;
+  --vx: 0px;
+  --vy: calc(-1 * var(--recorrido));
+}
+.inicio__dedo--izquierda {
+  animation: dedo-va 1.6s ease-in-out infinite;
+  --vx: calc(-1 * var(--recorrido));
+  --vy: 0px;
+}
+.inicio__dedo--derecha {
+  animation: dedo-va 1.6s ease-in-out infinite;
+  --vx: var(--recorrido);
+  --vy: 0px;
+}
+.inicio__dedo--centro {
+  animation: dedo-vuelve 1.8s ease-in-out infinite;
+}
+.inicio__dedo--desde-izquierda {
+  --vx: calc(-1 * var(--recorrido));
+}
+.inicio__dedo--desde-derecha {
+  --vx: var(--recorrido);
+}
+
+@keyframes dedo-va {
+  0%,
+  12% {
+    transform: translate(0, 0);
+  }
+  55%,
+  85% {
+    transform: translate(var(--vx), var(--vy));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes dedo-vuelve {
+  0%,
+  15% {
+    transform: translate(var(--vx), 0);
+  }
+  65%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* ── El final: el sello y seguir volando ── */
+
+.inicio__fin {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.inicio__sello {
+  width: 140px;
+  padding: 6px;
+  border-radius: var(--r-m);
+  /* El papel del cuaderno, que es donde se estampa. */
+  background: #f3ead6;
+  animation: inicio-estampa 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.inicio__sello .estampa {
+  max-width: none;
+}
+
+@keyframes inicio-estampa {
+  from {
+    transform: scale(1.8) rotate(-14deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.inicio__seguir {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tacto);
+  padding: 8px 22px 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 3px 0 #96551f,
+    var(--poso);
+  color: #1a1206;
+  font: inherit;
+  font-size: var(--voz-glosa);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.inicio__seguir svg {
+  width: 40px;
+  height: 28px;
+  fill: #1a1206;
+}
+
+/* ── Mientras dura, nadie más pide nada ──
+   La tarjeta de la señal y el tutor dirían lo mismo con otro dibujo: un
+   suceso, una voz, y también un dibujo. Se esconden sin dejar de ocupar su
+   sitio, que el HUD mide con ellos. */
+:root.con-inicio .hud .senal,
+:root.con-inicio .hud .tutor,
+:root.con-inicio .hud [data-hud="hint"] {
+  visibility: hidden !important;
+}
+
+/*
+ * **Pantallas bajas: el teléfono apaisado.** La tarjeta, en una fila: el
+ * dibujo a la izquierda y quien habla a la derecha. Apilada se comía cuatro
+ * décimas de los trescientos sesenta píxeles de alto, y el avión, encuadrado
+ * debajo, acababa detrás de los pedales. Lo que pasa en el avión se queda,
+ * más pequeño: es la mitad de la lección.
+ */
+@media (max-height: 500px) {
+  .inicio__tarjeta {
+    top: calc(var(--inicio-arriba, 52px) + 6px);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 10px;
+    align-items: center;
+    padding: 6px 12px 6px 8px;
+  }
+  .inicio__hueco {
+    grid-column: 1;
+    grid-row: 1;
+    margin-top: 0;
+  }
+  .inicio__quien {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 36px;
+    gap: 8px;
+  }
+  .inicio__fin {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    gap: 6px;
+  }
+  .inicio__cara {
+    width: 34px;
+    height: 34px;
+  }
+  .inicio__dice {
+    font-size: 14px;
+    line-height: 1.22;
+  }
+  .inicio__mando {
+    --tecla: 30px;
+    gap: 6px;
+  }
+  .inicio__flechas,
+  .inicio__fila {
+    gap: 3px;
+  }
+  .dib {
+    height: 72px;
+  }
+  .inicio__llave {
+    width: 72px;
+    height: 72px;
+  }
+  .inicio__llave > svg:first-child {
+    width: 42px;
+    height: 42px;
+  }
+  .inicio__pasa {
+    width: 36px;
+    height: 36px;
+  }
+  .inicio__sello {
+    width: 86px;
+  }
+}
+
+/* De pie y con el dedo manda el cartel de girar: ver `.gira`. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .inicio,
+  .inicio-velo {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inicio *,
+  .inicio__dedo {
+    animation: none !important;
+  }
+}
+.sin-movimiento .inicio *,
+.sin-movimiento .inicio__dedo {
+  animation: none !important;
+}

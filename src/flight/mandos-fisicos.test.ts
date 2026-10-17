@@ -8,7 +8,13 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { GasDelHotas, esHotasX, leerMando, type MandoLeible } from "./mandos-fisicos";
+import {
+  GasDelHotas,
+  esHotasX,
+  leerMando,
+  seEstaUsando,
+  type MandoLeible,
+} from "./mandos-fisicos";
 
 const suelto = { pressed: false, value: 0 };
 const apretado = { pressed: true, value: 1 };
@@ -57,7 +63,11 @@ describe("el HOTAS X en Linux: siete ejes, la seta en el 5 y el 6", () => {
     const l = leerMando(mando(LINUX, [0.6, 0.5, 1, -0.7, 0, 0, 0]));
     expect(l.aparato).toBe("hotas-x");
     expect(l.roll).toBeGreaterThan(0.5);
-    expect(l.pitch).toBeLessThan(-0.4);
+    // La palanca atrás —+0,5 en el eje, como da cualquier joystick por USB— es
+    // morro arriba, como en un avión: la tabla de la cabecera lo decía así y
+    // el signo estaba al revés.
+    expect(l.pitch).toBeGreaterThan(0.4);
+    expect(leerMando(mando(LINUX, [0, -0.6, 1, 0, 0, 0, 0])).pitch).toBeLessThan(-0.4);
     expect(l.rudder).toBeLessThan(-0.5);
     expect(l.throttle).toBeCloseTo(0, 6);
   });
@@ -90,6 +100,41 @@ describe("el HOTAS X en Linux: siete ejes, la seta en el 5 y el 6", () => {
     expect(l.tren).toBe(true);
     expect(l.reversa).toBe(true);
     expect(l.flapsAbajo).toBe(false);
+  });
+
+  it("y el ST de la base, la llave del motor", () => {
+    expect(leerMando(mando(LINUX, [0, 0, 1, 0, 0, 0, 0], [9])).motor).toBe(true);
+    expect(leerMando(mando(LINUX, [0, 0, 1, 0, 0, 0, 0])).motor).toBe(false);
+  });
+});
+
+describe("la llave en el mando de consola", () => {
+  it("el botón de empezar, el noveno, arranca", () => {
+    expect(leerMando(mando("Xbox", [0, 0, 0, 0], [9], "standard")).motor).toBe(true);
+    expect(leerMando(mando("Xbox", [0, 0, 0, 0], [0], "standard")).motor).toBe(false);
+  });
+});
+
+describe("si se está usando el mando", () => {
+  const quieto = { botones: Array.from({ length: 17 }, () => false), ejes: [0, 0, 1, 0, 0, 0, 0] };
+
+  it("uno que aparece se está usando", () => {
+    expect(seEstaUsando(null, mando(LINUX, [0, 0, 1, 0, 0, 0, 0]))).toBe(true);
+  });
+
+  it("enchufado y quieto, no; y la palanca de gases lejos del centro tampoco, si no se mueve", () => {
+    expect(seEstaUsando(quieto, mando(LINUX, [0, 0, 1, 0, 0, 0, 0]))).toBe(false);
+  });
+
+  it("un botón que se aprieta o una palanca que se va, sí", () => {
+    expect(seEstaUsando(quieto, mando(LINUX, [0, 0, 1, 0, 0, 0, 0], [3]))).toBe(true);
+    expect(seEstaUsando(quieto, mando(LINUX, [0, 0.5, 1, 0, 0, 0, 0]))).toBe(true);
+    expect(seEstaUsando(quieto, mando(LINUX, [0, 0, 0.5, 0, 0, 0, 0]))).toBe(true);
+  });
+
+  it("y un botón que se queda apretado no cuenta dos veces", () => {
+    const conElTres = { ...quieto, botones: quieto.botones.map((_, i) => i === 3) };
+    expect(seEstaUsando(conElTres, mando(LINUX, [0, 0, 1, 0, 0, 0, 0], [3]))).toBe(false);
   });
 });
 

@@ -576,6 +576,21 @@ export function elegirComandante(...cogidas: Instructor[]): Instructor {
 }
 
 /**
+ * **Y la del hijo de Jazlyn**, en el modo inicio: un niño pequeño que
+ * pregunta. Más agudo y un pelo más rápido que nadie, y sin radio ni altavoz:
+ * va sentado al lado. Solo suena así mientras su voz no esté grabada —ver
+ * `docs/voces/` y `PENDIENTE-VOCES-inicio.md`—, y en Brave para Linux, ni así.
+ */
+export function elegirHijo(...cogidas: Instructor[]): Instructor {
+  if (typeof speechSynthesis === "undefined") return MUDO;
+  return new VozDelNavegador({
+    rate: 1.06,
+    pitch: 1.45,
+    cogidas: () => cogidas.map(suVoz),
+  });
+}
+
+/**
  * Y la de la tripulación de cabina, que habla por el mismo altavoz que la
  * comandante y tiene que distinguirse de ella de oído.
  *
