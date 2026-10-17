@@ -24,6 +24,12 @@ import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 import { construirGrafo, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
 import { desplazadoDe } from "./umbral-desplazado";
+import { umbralPublicado } from "./umbrales-publicados";
+import {
+  cabeceraPorRumbo,
+  calleDeLaBoca,
+  desdeLaInterseccion,
+} from "./salidas-por-interseccion";
 
 /** Un punto del mundo en el plano. */
 export interface EnElPlano {
@@ -87,14 +93,20 @@ export interface SueloDelTrafico {
      */
     porDondeVas?: readonly EnElPlano[],
     /**
-     * La pista que tiene que quedarle por delante para despegar, m. Sin ella,
-     * cualquiera de las bocas de `BOCAS_DE_SALIDA`. Ver `PISTA_POR_DELANTE`.
+     * La pista que tiene que quedarle por delante para despegar, m: la de su
+     * tipo con el margen de su clase. Sin ella, cualquiera de las bocas de
+     * `BOCAS_DE_SALIDA`. Ver `pistaQuePideConSuMargen` en `trafico.ts`.
      */
     pistaQueNecesita?: number,
   ): {
     readonly camino: readonly EnElPlano[];
     readonly espera: number;
     readonly eje: number;
+    /**
+     * **Los metros de pista que remonta** antes de dar la media vuelta y
+     * alinearse: cero si entra y despega desde ahí. Ver `remontando`.
+     */
+    readonly remonta: number;
   } | null;
   /**
    * **Si entre la plataforma y la pista no hay más que una calle**: todo lo
@@ -184,7 +196,7 @@ const APARTE_DE_TI = 80;
  * se tocan; es lo que se vio en Los Rodeos, con la raya verde llevando al
  * avión de quien juega contra uno que esperaba en su doble raya.
  */
-const PASA_A_TU_LADO = 17 + 18 + 7.5;
+export const PASA_A_TU_LADO = 17 + 18 + 7.5;
 
 /**
  * **Lo que mide la fila de salida**, m, contado hacia atrás desde tu doble
@@ -194,16 +206,25 @@ const PASA_A_TU_LADO = 17 + 18 + 7.5;
 const FILA_DE_SALIDA = 120;
 
 /**
- * **La pista que necesita por delante el que sale, en distancias de despegue
- * de su tipo.**
- *
- * Es `pistaQuePide` en `TIPOS`, la distancia de despegue de su ficha, y no la
- * carrera que se le ve correr, que es más corta: lo que se pide para salir
- * por una intersección es esa distancia con su margen, el mismo veinte por
- * ciento y pico que se suma en cualquier cálculo de pista requerida. Con
- * menos, por la boca de la cabecera. Ver `salida`.
+ * **Hasta dónde una entrada sigue siendo la de la cabecera**, m desde el
+ * principio de la pista: la misma que `EN_LA_CABECERA` en el plan de tierra.
+ * Entrando ahí se tiene la pista entera, o casi, y no es una intersección:
+ * la regla del AIP de las intersecciones no la mira.
  */
-export const PISTA_POR_DELANTE = 1.25;
+const EN_LA_CABECERA = 150;
+
+/**
+ * **Lo más detrás del umbral que puede estar la boca de la cabecera**, m.
+ *
+ * En Los Rodeos la E-1 llega al asfalto treinta y siete metros antes del
+ * umbral de la 12, y la E-5 noventa y cuatro pasado el de la 30, sobre la
+ * prolongación pavimentada de la pista. Las bocas se buscaban solo entre los
+ * dos umbrales, así que **las dos cabeceras se quedaban sin entrada** y el
+ * reactor del tráfico salía por la E3, a media pista. Detrás del umbral de
+ * salida y sobre el asfalto de la pista, una calle es la entrada de la
+ * cabecera: se entra y se rueda hasta el umbral.
+ */
+const DETRAS_DEL_UMBRAL = 200;
 
 /** Los puestos que no caen encima de quien juega; si no queda ninguno, todos. */
 function lejosDe(
@@ -261,6 +282,69 @@ export function sueloDelTrafico(
     if (calles.length) bocas.push({ nudo: i, along, calles });
   });
   if (!bocas.length) return null;
+
+  /*
+   * **Y las del que sale**, que son las mismas más las de detrás del umbral
+   * de salida que caen sobre el asfalto de la pista. Ver `DETRAS_DEL_UMBRAL`.
+   */
+  const bocasDeSalida = [...bocas];
+  grafo.nudos.forEach((n, i) => {
+    const { along, across } = ejes(alMundo(n));
+    if (Math.abs(across) > ancho / 2) return;
+    if (along >= -mitad - 5 || along < -mitad - DETRAS_DEL_UMBRAL) return;
+    const tramos = (grafo.desde[i] ?? []).map((t) => grafo.tramos[t]!);
+    const calles = tramos.filter((t) => !t.pista);
+    if (calles.length && tramos.some((t) => t.pista)) bocasDeSalida.push({ nudo: i, along, calles });
+  });
+
+  /*
+   * **La cabecera por la que se sale, y lo que dice su AIP.** La TORA es la
+   * publicada si la hay —en Fuerteventura por la 19 se pierden los mil metros
+   * del final— y, si no, la pista entera.
+   */
+  const cabecera = cabeceraPorRumbo(aero, pista.heading);
+  const toraDeLaCabecera = umbralPublicado(aero.id, cabecera)?.tora ?? pista.length;
+  /**
+   * **La pista que se tiene por delante entrando por esa boca**, m, y si se
+   * puede despegar desde ella: la de la cabecera entrando por la cabecera, y
+   * desde una intersección solo si el AIP la deja y con la TORA que publica
+   * desde ahí. Cero si el AIP no la deja: desde ahí se entra a remontar,
+   * no a despegar. Ver `desdeLaInterseccion`.
+   */
+  const pistaDesde = (boca: { nudo: number; along: number }): number => {
+    if (boca.along + mitad <= EN_LA_CABECERA) return toraDeLaCabecera;
+    const aip = desdeLaInterseccion(aero, cabecera, calleDeLaBoca(grafo, boca.nudo));
+    if (!aip.permitida) return 0;
+    return Math.min(aip.tora ?? mitad - boca.along, toraDeLaCabecera);
+  };
+  /** Un punto de la pista, a `along` del centro y `lado` metros a la derecha del eje. */
+  const enLaPista = (along: number, lado: number): EnElPlano => ({
+    x: pista.x + fx * along - fz * lado,
+    z: pista.z + fz * along + fx * lado,
+  });
+  /**
+   * **La media vuelta del que remonta**, al principio de la pista: de lo que
+   * queda de eje de espaldas al despegue a alineado sobre él, mirando hacia
+   * donde se despega.
+   *
+   * Se rueda por el eje hasta cerca del final, se abre a un lado y se da la
+   * vuelta en el ancho de la pista, y se vuelve al eje: es lo que hace un
+   * avión de verdad donde no hay apartadero, y lo que manda el AIP de La
+   * Palma —«must accomplish back-track at the end of the runway»—. El radio
+   * es lo que cabe con las ruedas dentro, sin pasar de veinte metros, que es
+   * lo que gira un reactor regional con la rueda de morro.
+   */
+  const mediaVuelta = (): { puntos: EnElPlano[]; alineado: number } => {
+    const r = Math.max(8, Math.min(20, ancho / 2 - 3));
+    const centro = -mitad + r + 2;
+    const puntos: EnElPlano[] = [enLaPista(centro + 2 * r, 0)];
+    for (let k = 0; k <= 8; k++) {
+      const a = (k * Math.PI) / 8;
+      puntos.push(enLaPista(centro - r * Math.sin(a), -r * Math.cos(a)));
+    }
+    puntos.push(enLaPista(centro + 2 * r, 0));
+    return { puntos, alineado: centro + 2 * r + 10 };
+  };
 
   const puestos = (aero.parkingPositions ?? []).map((p) => p.xy);
 
@@ -436,9 +520,11 @@ export function sueloDelTrafico(
        * Ahora el tráfico ve a quien juega —ver `cedeA` en `trafico.ts`— y la
        * fila se hace sola, también contigo delante.
        *
-       * **Y nunca con menos pista de la que necesita su tipo.** Una boca a
-       * mitad de pista es una salida por intersección, y un reactor no sale
-       * con ochocientos metros por delante. Ver `PISTA_POR_DELANTE`.
+       * **Y nunca con menos pista de la que necesita su tipo**, ni desde una
+       * intersección que su AIP no deja. Una boca a mitad de pista es una
+       * salida por intersección: en Los Rodeos solo desde la E-2 por la 12 y
+       * la E-4 por la 30, y un reactor no sale con mil quinientos metros por
+       * delante cuando pide dos mil. Ver `pistaDesde`.
        *
        * Lo único que se sigue evitando es esperar **encima de la calle por la
        * que vas a pasar** camino de otra doble raya: eso no es una fila, es un
@@ -446,24 +532,28 @@ export function sueloDelTrafico(
        * es la fila, y ahí sí se espera.
        */
       void evitar;
-      const deCabecera = [...bocas].sort((a, b) => a.along - b.along);
+      const deCabecera = [...bocasDeSalida].sort((a, b) => a.along - b.along);
       const fin = porDondeVas?.[porDondeVas.length - 1];
       const deTuCalle = (porDondeVas ?? []).filter(
         (e) => !fin || dist(e, fin) > PASA_A_TU_LADO + FILA_DE_SALIDA,
       );
       /*
        * Por orden de pista por delante: la primera que se puede rodar y le da
-       * su pista. Si ninguna se la da —la calle más cerca de la cabecera no
-       * se puede rodar, o el campo es más corto que eso, como El Hierro para
-       * el turbohélice—, la que más deja de las que se pueden rodar, que es
-       * lo que había: el de verdad remontaría la pista, y eso el tráfico no lo
-       * sabe hacer. Nunca, por no tener la ideal, una que deja menos.
+       * su pista. **Y si ninguna se la da, remonta**: entra por la que más
+       * cerca queda de la cabecera de las que se pueden rodar, rueda por la
+       * pista hasta su principio y da la vuelta allí. Era lo que el tráfico no
+       * sabía hacer, y salía desde donde entrara con la pista que quedase: el
+       * turbohélice de La Gomera con cuatrocientos metros por la 09, cuando
+       * pide mil doscientos; el reactor de La Palma desde media pista, donde
+       * el AIP no deja salir por intersección a nadie. Ningún avión despega
+       * con menos pista de la que necesita.
        */
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
-      let sinSuPista: ReturnType<SueloDelTrafico["salida"]> = null;
+      let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
+      let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
       for (const boca of deCabecera.slice(0, BOCAS_DE_SALIDA)) {
-        const daSuPista = mitad - boca.along >= pistaQueNecesita;
-        if (!daSuPista && sinSuPista) continue;
+        const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
+        if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;
         const ruta = rutaConPuesto(nudo, "punto", evitar)?.puntos;
         if (!ruta) continue;
@@ -473,28 +563,39 @@ export function sueloDelTrafico(
         if (pisaLaPista(hecha.hastaLaRaya, 0, Infinity, ejes, ancho, mitad))
           continue;
         const entrada = enElEje(boca.along);
-        // Y ya en el eje, unos metros hacia donde se despega: alineado.
-        const alineado = enElEje(boca.along + 30);
         // De la raya a la pista, por lo que queda de calle, no en diagonal.
         const hastaElEje = [...hecha.resto, entrada];
-        const camino = [...hecha.hastaLaRaya, ...hastaElEje.slice(1), alineado];
         const espera = largo(hecha.hastaLaRaya);
-        const salida = {
-          camino,
-          espera,
-          eje: espera + largo(hastaElEje) + 30,
-        };
         const raya = hecha.hastaLaRaya[hecha.hastaLaRaya.length - 1]!;
         const encimaDeTuCalle = deTuCalle.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
-        if (!daSuPista) {
-          if (!encimaDeTuCalle) sinSuPista = salida;
+        if (daSuPista) {
+          // Y ya en el eje, unos metros hacia donde se despega: alineado; y
+          // entrando por detrás del umbral, en el umbral.
+          const alineado = enElEje(Math.max(boca.along + 30, -mitad + 5));
+          const camino = [...hecha.hastaLaRaya, ...hastaElEje.slice(1), alineado];
+          const salida = {
+            camino,
+            espera,
+            eje: espera + largo(hastaElEje) + dist(entrada, alineado),
+            remonta: 0,
+          };
+          if (!encimaDeTuCalle) return salida;
           deReserva ??= salida;
           continue;
         }
-        if (!encimaDeTuCalle) return salida;
-        deReserva ??= salida;
+        const vuelta = mediaVuelta();
+        const alineado = enElEje(vuelta.alineado);
+        const porLaPista = [entrada, ...vuelta.puntos, alineado];
+        const salida = {
+          camino: [...hecha.hastaLaRaya, ...hastaElEje.slice(1), ...vuelta.puntos, alineado],
+          espera,
+          eje: espera + largo(hastaElEje) + largo(porLaPista),
+          remonta: Math.max(0, boca.along - (vuelta.alineado - 10)),
+        };
+        if (!encimaDeTuCalle) remonte = salida;
+        else remonteEncima ??= salida;
       }
-      return sinSuPista ?? deReserva;
+      return deReserva ?? remonte ?? remonteEncima;
     },
 
     unaSolaCalle() {
@@ -569,9 +670,16 @@ function cortarEnLaRaya(
   ancho: number,
   mitad: number,
 ): { hastaLaRaya: EnElPlano[]; resto: EnElPlano[] } | null {
+  /*
+   * **Por el eje**, que es por donde va la pista en el grafo, y no «cerca de
+   * la pista»: una salida rápida se aparta del eje en un ángulo tan cerrado
+   * que su raya pasa cien metros dentro de la franja. En Los Rodeos la E-2,
+   * la que el AIP deja para salir por la 12, se daba por «rodar por la pista
+   * desde otra boca» y no valía nunca.
+   */
   const sobreLaPista = (p: EnElPlano): boolean => {
     const e = ejes(p);
-    return Math.abs(e.across) < ancho / 2 + 5 && Math.abs(e.along) <= mitad;
+    return Math.abs(e.across) < FUERA_DEL_EJE && Math.abs(e.along) <= mitad;
   };
   const aparte = ancho / 2 + DOBLE_RAYA;
   let porLaPista = 0;

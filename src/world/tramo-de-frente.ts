@@ -59,6 +59,12 @@ export interface QuienTieneElTramo {
   readonly matricula: string;
   readonly sale: boolean;
   readonly porDelante: readonly EnElPlano[];
+  /**
+   * Si no pasa: está dentro de tu calle de frente contigo y **recula** para
+   * dejártela —ver `recula` en `trafico.ts`—. Mientras tanto se le espera,
+   * pero no se le «da paso»: cuando se aparta, pasas tú.
+   */
+  readonly recula?: boolean;
 }
 
 /** Dónde se mete un camino en un tramo de frente con otro. */

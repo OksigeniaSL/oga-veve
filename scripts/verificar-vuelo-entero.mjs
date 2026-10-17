@@ -684,6 +684,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const filaPuesta = filaPedida ? (o.sacarARodar?.() ?? null) : null;
   /*
+   * **Y con destino, otro que sale allí al llegar** (266): uno de aquella
+   * frecuencia sale a rodar en cuanto se cruza a su final. En los campos de
+   * una sola salida —Concepción, Pilar, Mariscal Estigarribia— su doble raya
+   * está en tu salida de la pista, y la torre no le deja rodar hasta que has
+   * pasado. Se mira que al dejar la pista no haya nadie parado en tu calle y
+   * que la retención no pase de su red. Ver `quienDejaLaPistaPorSuRaya` en
+   * `world/trafico.ts`.
+   */
+  let filaAlLlegar = null;
+  let paradoEnTuCalle = null;
+  let rodoElDeLlegar = false;
+  const paradosDesde = new Map();
+  /** La retención de la torre al cruzar al destino, para saber si allí retuvo a alguien. */
+  let retencionAlCruzar = null;
+  /*
    * **Sin órdenes de irse al aire.**
    *
    * Una de cada cuatro aproximaciones trae orden de frustrar, y el piloto de
@@ -3549,6 +3564,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
+    if (filaAlLlegar) {
+      const tu = o.estado();
+      const cota = o.cotaDePistaDeAhora?.(tu.position.x, tu.position.z) ?? 0;
+      for (const a of o.trafico?.() ?? []) {
+        if (a.matricula === filaAlLlegar) rodoElDeLlegar = true;
+        if (a.y - cota > 5 || a.enLaPista) {
+          paradosDesde.delete(a.matricula);
+          continue;
+        }
+        const antes = paradosDesde.get(a.matricula);
+        if (!antes || Math.hypot(a.x - antes.x, a.z - antes.z) > 0.3)
+          paradosDesde.set(a.matricula, { x: a.x, z: a.z, t });
+        const quieto = t - (paradosDesde.get(a.matricula)?.t ?? t);
+        const d = Math.hypot(a.x - tu.position.x, a.z - tu.position.z);
+        if (
+          (fase === "abandonando" || fase === "a-plataforma") &&
+          tu.groundSpeed > 0.5 &&
+          quieto > 3 &&
+          d < 25 &&
+          !paradoEnTuCalle
+        )
+          paradoEnTuCalle = `${a.matricula} parado ${quieto.toFixed(0)} s a ${d.toFixed(1)} m de ti en «${fase}», a los ${t.toFixed(0)} s`;
+      }
+    }
     medirElViraje(s, paso);
     // La senda del automático solo vale en la final de un reactor, y se
     // vuelve a poner en cada vuelta mientras dure. Ver `volarLaSenda`.
@@ -5076,6 +5115,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       cantadosAlCruzar = (o.cantados?.() ?? []).length;
       // La frecuencia de allí empieza de cero: lo que se dio aquí, aquí se queda.
       conPermisoOido.clear();
+      retencionAlCruzar = o.retencionMasLarga?.() ?? 0;
+      if (filaPedida) filaAlLlegar = o.sacarARodar?.() ?? null;
       pista = pistaAhora();
       rumboPista = (pista.heading * Math.PI) / 180;
       umbral = finalAhora(0);
@@ -6215,6 +6256,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     enTuPistaSinOrdenDonde,
     alCostadoDeTuPista,
     pistaOcupadaPuesta,
+    filaAlLlegar,
+    paradoEnTuCalle,
+    rodoElDeLlegar,
+    retencionMasLarga: o.retencionMasLarga?.() ?? null,
+    retuvoAlli:
+      retencionAlCruzar !== null && (o.retencionMasLarga?.() ?? 0) > retencionAlCruzar,
     ventanillaEnFinal,
     ventanillaQueSube,
     ventanillaConOtroPlan,
@@ -7126,6 +7173,25 @@ comprobar(
     .join(" · "),
   "«tengo un avión en la pista y nadie me dice que frustre, ya lo hago yo»",
 );
+
+/*
+ * **Y al dejar la pista, nadie parado en tu calle** (266). Con destino y
+ * `OGA_FILA_DE_SALIDA=1`, uno de allí sale a rodar al cruzar a su final; en
+ * un campo de una sola salida su doble raya está en tu calle, y la torre no
+ * le deja rodar hasta que has pasado. Y la retención, con su red: nadie más
+ * de siete minutos. Ver `retenidos` en `flight/turno-de-pista.ts`.
+ */
+if (vuelo.filaAlLlegar)
+  comprobarSiVolo(
+    "y al dejar la pista nadie parado en tu calle, ni retenido más de su red",
+    !vuelo.paradoEnTuCalle && (vuelo.retencionMasLarga ?? 0) <= 420.5,
+    [
+      vuelo.paradoEnTuCalle ?? "nadie parado a menos de 25 m de ti al dejar la pista",
+      `${vuelo.filaAlLlegar} ${vuelo.rodoElDeLlegar ? "rodó" : "no llegó a rodar en el vuelo"}`,
+      `retención más larga ${Math.round(vuelo.retencionMasLarga ?? 0)} s`,
+    ].join(" · "),
+    "«el que sale llega a su doble raya, en tu calle, mientras aterrizas»",
+  );
 
 /*
  * **Y uno por vez en la pista, y las llegadas en fila.** Se veían en la carta
@@ -8576,6 +8642,25 @@ if (DESTINO) {
    * hablándole—, y un aeropuerto con torre donde en todo lo que dura llegar,
    * aterrizar y aparcar no suena nadie es una frecuencia que no se montó.
    */
+  /*
+   * **Salvo que el silencio sea la torre reteniendo a alguien** (266): en un
+   * campo de una sola salida el que va a salir no rueda mientras aterrizas y
+   * dejas la pista, y en lo que dura la llegada puede no decir nada nadie.
+   * Eso es una frecuencia montada y callada a propósito: no se pudo medir lo
+   * que se oye, y se dice así.
+   */
+  else if (
+    (a.traficoVisto ?? 0) === 0 &&
+    (a.frecuenciaOidaCuantas ?? 0) === 0 &&
+    vuelo.retuvoAlli
+  )
+    resultados.push({
+      nombre: "y el tráfico que se oye vuela allí",
+      ok: true,
+      sinMedir: true,
+      detalle: `no se midió: la torre retuvo allí a quien iba a salir (${Math.round(vuelo.retencionMasLarga ?? 0)} s) y nadie más habló`,
+      porque: "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
+    });
   else if ((a.traficoVisto ?? 0) === 0 && (a.frecuenciaOidaCuantas ?? 0) === 0)
     comprobar(
       "y el tráfico que se oye vuela allí",

@@ -182,9 +182,15 @@ export function margenDeSuClase(a: AircraftConfig): {
   readonly fuente: "escuela" | "certificacion";
 } {
   return esDeLinea(a)
-    ? { factor: 1.15, fuente: "certificacion" }
+    ? { factor: MARGEN_DE_CERTIFICACION, fuente: "certificacion" }
     : { factor: FACTOR_DE_ESCUELA, fuente: "escuela" };
 }
+
+/**
+ * El margen de los de línea sobre su distancia de despegue con todos los
+ * motores: CS 25.113 a 2 y 14 CFR 25.113 a 2. Ver `margenDeSuClase`.
+ */
+export const MARGEN_DE_CERTIFICACION = 1.15;
 
 /**
  * **La pista que necesita este avión hoy**, m: la distancia de despegue con

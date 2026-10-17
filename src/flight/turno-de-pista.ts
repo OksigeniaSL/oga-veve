@@ -25,6 +25,7 @@ import {
 import { ALTURA_DE_DECISION, type PorQueMandaron } from "./minimos";
 import { separacionDeSalida, type CategoriaDeEstela } from "./estela";
 import {
+  EMPIEZA_A_RODAR,
   laQueSeDice,
   PISTA_TUYA,
   type Frecuencia,
@@ -71,6 +72,16 @@ export interface DibujoDelTurno {
   delanteEnLaSalida?(): string[];
   /** La última salida de los dibujados, para su estela. Ver `ultimaSalida`. */
   ultimaSalida?(): { matricula: string; estela: CategoriaDeEstela; hace: number } | null;
+  /**
+   * Quién aterriza por la doble raya del que va a salir, si no se le deja
+   * rodar. Sin esto, nadie. Ver `quienDejaLaPistaPorSuRaya` en
+   * `world/trafico.ts`.
+   */
+  quienDejaLaPistaPorSuRaya?(matricula: string): string | null;
+  /** Y quién le tapa la salida al que va a llegar. Ver `quienTapaSuSalida`. */
+  quienTapaSuSalida?(matricula: string): string | null;
+  /** Los que esperan en una doble raya de tu salida. Ver `enTuSalida`. */
+  enTuSalida?(): string[];
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -198,6 +209,26 @@ export type PorQueEsperas = "aterriza" | "despega" | "fila" | "estela";
  */
 export const PACIENCIA_EN_LA_FILA = 180;
 
+/**
+ * **Lo más que la torre retiene a uno en su puesto, o fuera del circuito,
+ * por la salida de otro**, s. Ver `retenidos`.
+ *
+ * Es un candado entre la frecuencia y el dibujo, y lleva su red: si quien
+ * aterriza se queda parado en su salida, o el que rueda no llega nunca a
+ * irse, el otro no puede esperar para siempre. Siete minutos: más que lo más
+ * largo de verdad —tú entrando en la final del plan a dos minutos y medio
+ * del umbral, frenando, dejando la pista y rodando hasta pasar la doble raya,
+ * y uno del tráfico que aterriza detrás de ti y aparca—, medido en Concepción
+ * en cinco; y la frecuencia sigue hablando mientras tanto.
+ * Pasados, se le deja ir, que es lo que haría una torre con uno que no se
+ * mueve; lo de después lo reparte el suelo. Ver `repartirLosTramos` en
+ * `world/trafico.ts`.
+ */
+export const RETENCION_MAXIMA = 420;
+
+/** Las llamadas con las que uno que llega entra en la frecuencia. */
+const ENTRA_A_ATERRIZAR: ReadonlySet<string> = new Set(["otro.enCola", "otro.final"]);
+
 /** Por qué se espera y por quién, si se sabe. Ver `porQueEsperasDe`. */
 export interface EsperaPor {
   readonly porque: PorQueEsperas;
@@ -315,6 +346,59 @@ export class TurnoDePista {
 
   /** Si en esta final ya se te mandó al aire desde aquí. Ver `paso`. */
   private alAireEnEstaFinal = false;
+
+  /**
+   * **Cuánto lleva retenido cada uno**, s, mientras dure lo que lo retiene.
+   * Ver `retenidos`.
+   */
+  private readonly retenidoDesde = new Map<string, { clave: string; lleva: number }>();
+
+  /** La retención más larga vista en este vuelo, s: para el banco. */
+  retencionMasLarga = 0;
+
+  /**
+   * **A quién no deja moverse la torre todavía**, por la salida de la pista
+   * de otro: el que va a salir, mientras uno que aterriza tiene que pasar por
+   * su doble raya —tú o uno del tráfico—; y el que va a llegar, mientras uno
+   * que sale rueda hacia una doble raya que está en su salida.
+   *
+   * Es lo que hace una torre de verdad en un campo de una sola salida:
+   * «hold position» al que sale, hasta que el que aterriza ha pasado, o le da
+   * la pista antes si le da tiempo a irse —ver `tiempoParaIrse` en
+   * `world/trafico.ts`—. Y con su red: nadie se queda retenido más de
+   * `RETENCION_MAXIMA`.
+   */
+  private retenidos(dt: number): ReadonlySet<string> {
+    const trafico = this.de.trafico();
+    const retenidos = new Set<string>();
+    if (!trafico || this.de.privado()) {
+      this.retenidoDesde.clear();
+      return retenidos;
+    }
+    const ahora = new Set<string>();
+    for (const m of this.de.radio.matriculas) {
+      const toca = this.de.radio.loQueToca(m);
+      if (!toca) continue;
+      const porQuien =
+        toca.clave === EMPIEZA_A_RODAR
+          ? trafico.quienDejaLaPistaPorSuRaya?.(m)
+          : toca.primera && ENTRA_A_ATERRIZAR.has(toca.clave)
+            ? trafico.quienTapaSuSalida?.(m)
+            : null;
+      if (!porQuien) continue;
+      ahora.add(m);
+      // Por la misma llamada: otra llamada es otro vuelo, y cuenta de cero.
+      const antes = this.retenidoDesde.get(m);
+      const lleva = (antes?.clave === toca.clave ? antes.lleva : 0) + dt;
+      this.retenidoDesde.set(m, { clave: toca.clave, lleva });
+      if (lleva > RETENCION_MAXIMA) continue;
+      this.retencionMasLarga = Math.max(this.retencionMasLarga, lleva);
+      retenidos.add(m);
+    }
+    for (const m of [...this.retenidoDesde.keys()])
+      if (!ahora.has(m)) this.retenidoDesde.delete(m);
+    return retenidos;
+  }
 
   constructor(private readonly de: AlrededorDelTurno) {
     /*
@@ -574,6 +658,7 @@ export class TurnoDePista {
       esperandoLaPista: this.esperandoLaPista(ahora.fase),
       calleOcupada: this.conCalleUnica ? (USAN_LA_CALLE[ahora.fase] ?? null) : null,
       delanteEnLaFila: ahora.fase === "esperando" ? this.salenAntes : undefined,
+      retenidos: this.retenidos(dt),
     };
     const trafico = this.de.trafico();
     let alAire: Transmision | null = null;
@@ -710,7 +795,15 @@ export class TurnoDePista {
      * Con otro encima espera en su doble raya sin perder el turno, que es lo
      * que se hace de verdad: la pista es de uno por vez.
      */
-    const laCalle = this.conCalleUnica && !this.ocupadaEnElDibujo;
+    /*
+     * **Y lo mismo con el que espera en una doble raya de tu salida**, en un
+     * campo con más calles: está donde vas a dejar la pista, y o se va antes
+     * o no la dejas. Ver `enTuSalida` en `world/trafico.ts`.
+     */
+    const enTuSalida = this.de.trafico()?.enTuSalida?.() ?? [];
+    const laCalle = this.ocupadaEnElDibujo
+      ? false
+      : this.conCalleUnica || (this.conTorre && enTuSalida);
     const dichas = this.de.radio.despejarLaPista(this.numeroDos, laCalle);
     const trafico = this.de.trafico();
     for (const dice of dichas)
@@ -721,6 +814,34 @@ export class TurnoDePista {
       );
     const dice = laQueSeDice(dichas);
     if (dice) this.despejeSinDecir = this.de.decirAOtro(dice);
+  }
+
+  /**
+   * **Y al que espera en una doble raya de tu salida, la pista en cuanto
+   * esté libre**, mientras le dé tiempo a irse antes de que llegues.
+   *
+   * Al darte la pista se le da también —ver `alSerTuya`—, pero solo si en
+   * ese momento nadie la ocupa: en Pilar, con otro todavía corriendo su
+   * despegue al entrar tú en final, el de la doble raya se quedaba en ella
+   * toda tu toma, y al dejar la pista pasabas a su lado. Se le da en cuanto
+   * se puede, como al primero de la fila, y si ya no le da tiempo no se le
+   * da: ver `enTuSalida` en `world/trafico.ts`.
+   */
+  private despejarTuSalida(): void {
+    if (!this.conTorre || this.numeroDos || this.ocupadaEnElDibujo) return;
+    const trafico = this.de.trafico();
+    const pendientes = (trafico?.enTuSalida?.() ?? []).filter((m) =>
+      this.de.radio.vaASalir(m),
+    );
+    if (!pendientes.length) return;
+    const dichas = this.de.radio.despejarLaPista(null, pendientes);
+    for (const dice of dichas)
+      trafico?.anuncia(dice.de.matricula, dice.clave, this.de.radio.puedeAterrizar(dice.de.matricula));
+    const dice = laQueSeDice(dichas);
+    if (!dice) return;
+    const clave = this.de.decirAOtro(dice);
+    // Y tu permiso, si todavía no se dio, detrás del suyo.
+    if (this.aterrizajeSinAutorizar) this.despejeSinDecir = clave;
   }
 
   /**
@@ -748,6 +869,7 @@ export class TurnoDePista {
    * autorización para una final que ya no existe no se dice.
    */
   paso(fase: string): void {
+    if (fase === "final") this.despejarTuSalida();
     if (fase !== "final") {
       /*
        * **Y si ya se pidió y todavía espera turno en la boca, tampoco.** Con
@@ -1011,5 +1133,7 @@ export class TurnoDePista {
     this.enFinal = false;
     this.ocupadaDicha = false;
     this.esperandoTrasDe.clear();
+    this.retenidoDesde.clear();
+    this.retencionMasLarga = 0;
   }
 }
