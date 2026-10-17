@@ -253,10 +253,7 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * 11-10-2026; espera el «hold position» al que la torre no deja salir de su
  * puesto.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
-  // Ver `PENDIENTE-VOCES-torre-trafico.md`.
-  "torre.holdPosition",
-]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

@@ -1331,5 +1331,17 @@
     "{c5}",
     "torre.canario.solo.giveWay",
     "torre.canario.solo.departingTraffic"
+  ],
+  "torre.canario.solo.holdPosition": [
+    "torre.canario.solo.holdPosition"
+  ],
+  "torre.canario.holdPosition": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.holdPosition",
+    "torre.canario.solo.landingTraffic"
   ]
 }

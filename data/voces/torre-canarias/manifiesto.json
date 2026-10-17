@@ -395,6 +395,10 @@
       "ms": 807,
       "h": "8fb096530a"
     },
+    "torre.canario.solo.holdPosition": {
+      "ms": 799,
+      "h": "85b4e093c6"
+    },
     "torre.canario.solo.holdShort": {
       "ms": 1006,
       "h": "d12108b901"
@@ -2001,6 +2005,18 @@
       "{c5}",
       "torre.canario.solo.giveWay",
       "torre.canario.solo.departingTraffic"
+    ],
+    "torre.canario.solo.holdPosition": [
+      "torre.canario.solo.holdPosition"
+    ],
+    "torre.canario.holdPosition": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.holdPosition",
+      "torre.canario.solo.landingTraffic"
     ]
   }
 }

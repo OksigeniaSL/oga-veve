@@ -1325,5 +1325,17 @@
     "{c5}",
     "torre.solo.giveWay",
     "torre.solo.departingTraffic"
+  ],
+  "torre.solo.holdPosition": [
+    "torre.solo.holdPosition"
+  ],
+  "torre.holdPosition": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.holdPosition",
+    "torre.solo.landingTraffic"
   ]
 }

@@ -399,6 +399,10 @@
       "ms": 799,
       "h": "622d8d3807"
     },
+    "torre.solo.holdPosition": {
+      "ms": 910,
+      "h": "8350d368d1"
+    },
     "torre.solo.holdShort": {
       "ms": 1366,
       "h": "78a4fc5afe"
@@ -1987,6 +1991,18 @@
       "{c5}",
       "torre.solo.giveWay",
       "torre.solo.departingTraffic"
+    ],
+    "torre.solo.holdPosition": [
+      "torre.solo.holdPosition"
+    ],
+    "torre.holdPosition": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdPosition",
+      "torre.solo.landingTraffic"
     ]
   }
 }

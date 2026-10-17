@@ -8,8 +8,8 @@
  *   mientras la remonta.
  * - El que la torre no deja salir de su puesto no llamaba. Ahora llama y se le
  *   contesta que espere, una vez por retención y solo con voz grabada: un
- *   AFIS le da la pista en uso y el tráfico que aterriza, que está grabado; el
- *   «hold position» de una torre espera su toma.
+ *   AFIS le da la pista en uso y el tráfico que aterriza, y una torre, «hold
+ *   position, landing traffic». Las dos, grabadas.
  *
  * Ver `remonta` y `RETENIDO` en `flight/radio.ts`, y `AL_QUE_REMONTA` en
  * `audio/torre.ts`.
@@ -122,10 +122,11 @@ describe("al que la torre no deja salir de su puesto", () => {
     ).not.toBeNull();
   });
 
-  it("y el «hold position» de una torre espera su toma", () => {
+  it("y el «hold position» de una torre, grabado el 17-10-2026, se monta en las dos torres", () => {
     expect(claveDeTorre("hold position, landing traffic")).toBe(RETENIDO);
-    expect(ESPERAN_SU_TOMA.has(RETENIDO)).toBe(true);
-    expect(recetaDe(manifiesto as Manifiesto, RETENIDO, YO)).toBeNull();
+    expect(ESPERAN_SU_TOMA.has(RETENIDO)).toBe(false);
+    expect(recetaDe(manifiesto as Manifiesto, RETENIDO, YO)).not.toBeNull();
+    expect(recetaDe(canarias as Manifiesto, "torre.canario.holdPosition", YO)).not.toBeNull();
   });
 
   it("con voz: llama, se le contesta que espere, y sin pasar de paso en su guion", () => {
