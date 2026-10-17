@@ -842,7 +842,7 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
-import { Inicio, type Linea, type PasoId } from "./flight/inicio";
+import { esDeLaEscena, Inicio, type Linea, type PasoId } from "./flight/inicio";
 import { PantallaDelInicio } from "./ui/inicio";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
@@ -6323,6 +6323,13 @@ export class Game {
     });
     this.inicioCongelado = true;
     this.instructor.callaSalvo = () => false;
+    /*
+     * **Y la boca, de la escena**: mientras Jazlyn y Ara hablan, nadie más
+     * pide turno —ni la radio, ni la megafonía, ni los cantos de cabina—, que
+     * una conversación con alguien aprendiendo no se corta. Ver `reservar` en
+     * `audio/boca.ts`.
+     */
+    BOCA.reservar(esDeLaEscena);
     document.documentElement.classList.add("con-inicio");
     const raiz = document.getElementById("inicio");
     if (!this.pantallaDelInicio && raiz)
@@ -6361,17 +6368,19 @@ export class Game {
    * rato que se tarda en leerla, que entonces el subtítulo es lo que queda.
    */
   private readonly vozDelInicio = {
-    decir: (linea: Linea, alAcabar: (esperaMas: number) => void): void => {
+    decir: (linea: Linea, alAcabar: (esperaMas: number, cortada?: boolean) => void): void => {
       const boca = linea.quien === "mama" ? this.mama : this.ara;
       const texto = t(linea.clave as TranslationKey);
       let acabado = false;
-      const acabar = (sono: boolean): void => {
+      const acabar = (sono: boolean, cortada = false): void => {
         if (acabado) return;
         acabado = true;
-        alAcabar(sono ? 0 : tiempoDeLectura(texto));
+        alAcabar(sono ? 0 : tiempoDeLectura(texto), cortada);
       };
       boca.decir(texto, linea.clave, "normal", undefined, (que) => {
-        if (que === "acaba" || que === "cortada") acabar(true);
+        if (que === "acaba") acabar(true);
+        // Cortada por la escena no llega: ella ya no la espera. Ver `Inicio.callar`.
+        else if (que === "cortada") acabar(true, true);
         else if (que === "no-suena" || que === "se-cae") acabar(false);
       });
     },
@@ -6410,10 +6419,14 @@ export class Game {
       enTierra: s.onGround,
       alabeo: bankAngleOf(s.orientation),
       mando: this.input.ultimoMando,
+      pistaQueQueda: this.runwayRemaining(),
+      gasQueSostiene: (v) => this.flight.gasParaRodar(v),
     });
     this.inicioCongelado = salida.congelado;
     const a = salida.ayuda;
     if (a.gas !== null && c.throttle < a.gas) this.input.servoDelGas(a.gas);
+    // Y el que no deja pasar, mientras se explica la carrera. Ver `SOSTIENE_POR_DEBAJO`.
+    if (a.gasTope !== null && c.throttle > a.gasTope) this.input.servoDelGas(a.gasTope);
     if (a.cabeceo !== null) c.elevator = Math.max(c.elevator, a.cabeceo);
     if (a.centrar) this.input.mano.centrar();
     // El mundo callado mientras espera: el motor y el aire, no las voces.
@@ -6481,6 +6494,7 @@ export class Game {
   private acabarElInicio(): void {
     this.inicio = null;
     this.inicioCongelado = false;
+    BOCA.reservar(null);
     this.pantallaDelInicio?.quitar();
     this.pantallaDelInicio = null;
     document.documentElement.classList.remove("con-inicio");
@@ -6497,12 +6511,14 @@ export class Game {
   get inicioParaBanco(): {
     readonly conInicio: boolean;
     readonly estado: Inicio["estado"] | null;
+    readonly registro: Inicio["registro"] | null;
     readonly congelado: boolean;
     readonly mando: string;
   } {
     return {
       conInicio: this.conInicio,
       estado: this.inicio?.estado ?? null,
+      registro: this.inicio?.registro ?? null,
       congelado: this.inicioCongelado,
       mando: this.input.ultimoMando,
     };
@@ -11085,7 +11101,16 @@ export class Game {
     this.moverLasAves(dt);
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
     // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír.
-    if (!sinTorre(this.elCampoMontado().escenario.aerodrome)) this.oirElCampo(dt);
+    /*
+     * **Ni en el vuelo del modo inicio**: es la primera lección de alguien, en
+     * un campo del Chaco, y van solos, como en la granja. La frecuencia del
+     * campo sonaba igual —el «buenos días» de otro avión, la torre
+     * mandándole esperar— sin un solo avión a la vista, y partía la
+     * conversación de Jazlyn y Ara: «las radios de otros pilotos cortan la
+     * conversación». Ver `flight/inicio.ts`.
+     */
+    if (!sinTorre(this.elCampoMontado().escenario.aerodrome) && !this.conInicio)
+      this.oirElCampo(dt);
     /*
      * **Y el TCAS, con todos ya en su sitio**, también en un campo sin torre:
      * un transpondedor no deja de contestar porque no haya quien hable.
