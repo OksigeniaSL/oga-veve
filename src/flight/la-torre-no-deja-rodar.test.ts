@@ -23,7 +23,7 @@
  *   dos, y nadie queda retenido más de `RETENCION_MAXIMA`.
  */
 import { describe, expect, it } from "vitest";
-import { Frecuencia } from "./radio";
+import { Frecuencia, RETENIDO, type Transmision } from "./radio";
 import { PISTA_TUYA } from "./radio";
 import { TurnoDePista, RETENCION_MAXIMA, type DibujoDelTurno } from "./turno-de-pista";
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
@@ -87,6 +87,10 @@ interface Medida {
   rodo: boolean;
   /** La retención más larga, s. */
   retenido: number;
+  /** Cuántas veces se le dijo a alguien que esperara en su puesto. Ver `RETENIDO`. */
+  retenciones: number;
+  /** Y si alguno se movió de su puesto después de oírlo, antes de llamar otra vez. */
+  seMovio: string;
 }
 
 /**
@@ -99,6 +103,8 @@ function aterrizarConUnoQueSale(
   antes: number,
   semilla: number,
   conLaRegla = true,
+  /** Si hay voz para decirle al retenido que espere: ver `RETENIDO`. */
+  conLaLlamada = false,
 ): Medida {
   const aero = esc.aerodrome as Aerodrome;
   const pista = esc.runway;
@@ -216,7 +222,24 @@ function aterrizarConUnoQueSale(
     decirAOtro: () => null,
     autorizarte: () => {},
     mandarteAlAire: () => {},
+    sabeRetener: () => conLaLlamada,
   });
+  /** Los que oyeron que esperen en su puesto, y dónde estaban. */
+  const enSuPuesto = new Map<string, { x: number; z: number }>();
+  const oido = (dice: Transmision | null, t: number): void => {
+    for (const q of trafico.quienes()) {
+      const donde = enSuPuesto.get(q.matricula);
+      if (donde && Math.hypot(q.x - donde.x, q.z - donde.z) > 0.5 && !medida.seMovio)
+        medida.seMovio = `${q.matricula} se movió ${Math.hypot(q.x - donde.x, q.z - donde.z).toFixed(1)} m de su puesto, t=${t.toFixed(0)} s`;
+    }
+    if (!dice) return;
+    if (dice.clave === RETENIDO) {
+      medida.retenciones++;
+      const q = trafico.quienes().find((x) => x.matricula === dice.de.matricula);
+      if (q) enSuPuesto.set(q.matricula, { x: q.x, z: q.z });
+      else medida.seMovio ||= `${dice.de.matricula} oyó que esperara sin estar en el mundo`;
+    } else if (!dice.enSuPuesto) enSuPuesto.delete(dice.de.matricula);
+  };
 
   const estado = () =>
     ({
@@ -238,7 +261,15 @@ function aterrizarConUnoQueSale(
       })(),
     }) as never;
 
-  const medida: Medida = { alLado: "", llego: false, despego: false, rodo: false, retenido: 0 };
+  const medida: Medida = {
+    alLado: "",
+    llego: false,
+    despego: false,
+    rodo: false,
+    retenido: 0,
+    retenciones: 0,
+    seMovio: "",
+  };
   let sale: string | null = null;
   let faseAntes = "";
   const quietoDesde = new Map<string, { x: number; z: number; t: number }>();
@@ -276,7 +307,7 @@ function aterrizarConUnoQueSale(
        * Y con el vuelo acabado, la frecuencia sigue: el que sale tiene que
        * salir, no quedarse esperándote.
        */
-      turno.oir(PASO, { fase: "apagado", deDia: true, instructorHablando: false });
+      oido(turno.oir(PASO, { fase: "apagado", deDia: true, instructorHablando: false }), t);
       if (sale && trafico.dibujado(sale)) medida.rodo = true;
       if (sale && trafico.quienes().some((q) => q.matricula === sale && q.y - cota > 20))
         medida.despego = true;
@@ -295,7 +326,7 @@ function aterrizarConUnoQueSale(
     if (PISTA_TUYA.has(fase) && !PISTA_TUYA.has(faseAntes)) turno.alSerTuya(fase);
     faseAntes = fase;
     turno.paso(fase);
-    turno.oir(PASO, { fase, deDia: true, instructorHablando: false });
+    oido(turno.oir(PASO, { fase, deDia: true, instructorHablando: false }), t);
     if (sale && trafico.dibujado(sale)) medida.rodo = true;
     if (sale && trafico.quienes().some((q) => q.matricula === sale && q.y - cota > 20))
       medida.despego = true;
@@ -307,7 +338,12 @@ function aterrizarConUnoQueSale(
     }
     // Lo parado de los del tráfico en el suelo, y si pasas a su lado.
     for (const q of trafico.quienes()) {
-      if (q.y - cota > 5 || q.enLaPista) {
+      /*
+       * El que la torre tiene en su puesto está aparcado, no en tu calle: se
+       * pasa a su lado como al lado de cualquier puesto de la plataforma. Que
+       * no se mueve de ahí lo mira `oido`.
+       */
+      if (q.y - cota > 5 || q.enLaPista || enSuPuesto.has(q.matricula)) {
         quietoDesde.delete(q.matricula);
         continue;
       }
@@ -427,6 +463,32 @@ describe("y la torre no le deja rodar hasta que pasas", () => {
       // Y salió alguien de verdad, retenido lo más lo que aguanta la red.
       expect(rodaron).toBeGreaterThan(0);
       expect(retenido).toBeLessThanOrEqual(RETENCION_MAXIMA + PASO);
+    }, 240_000);
+
+  /*
+   * **Y con voz para decírselo, llama y se le dice que espere**: se le pone
+   * en su puesto y de ahí no se mueve hasta que le sueltan y vuelve a llamar.
+   * Lo demás, igual: nadie parado en tu calle, llegas, y el que sale sale.
+   * Ver `RETENIDO` en `flight/radio.ts`.
+   */
+  for (const id of DE_UNA_SALIDA)
+    it(`${id}: con voz, el retenido llama, oye que espere en su puesto, y espera ahí`, () => {
+      const mal: string[] = [];
+      let retenciones = 0;
+      for (const esc of cabeceras(SCENARIOS.find((e) => e.id === id)!))
+        for (const antes of [150, 100, 60]) {
+          const avion = elMasGrande(esc);
+          const m = aterrizarConUnoQueSale(esc, avion, antes, 1, true, true);
+          const donde = `${id} ${Math.round(esc.runway.heading)}° ${avion.id}, sale ${antes} s antes de tu toma`;
+          retenciones += m.retenciones;
+          if (m.alLado) mal.push(`${donde}: ${m.alLado}`);
+          if (!m.llego) mal.push(`${donde}: no llegaste al puesto`);
+          if (!m.despego) mal.push(`${donde}: el que salía no llegó a despegar`);
+          if (m.seMovio) mal.push(`${donde}: ${m.seMovio}`);
+          if (m.retenido > RETENCION_MAXIMA + PASO) mal.push(`${donde}: retenido ${m.retenido} s`);
+        }
+      expect(mal).toEqual([]);
+      expect(retenciones).toBeGreaterThan(0);
     }, 240_000);
 });
 

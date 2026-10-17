@@ -28,6 +28,7 @@ import {
   EMPIEZA_A_RODAR,
   laQueSeDice,
   PISTA_TUYA,
+  RETENIDO,
   type Frecuencia,
   type Momento,
   type Transmision,
@@ -80,6 +81,11 @@ export interface DibujoDelTurno {
   quienDejaLaPistaPorSuRaya?(matricula: string): string | null;
   /** Y quién le tapa la salida al que va a llegar. Ver `quienTapaSuSalida`. */
   quienTapaSuSalida?(matricula: string): string | null;
+  /**
+   * Lo que le queda por remontar de pista al que sale, m. Sin esto, nada.
+   * Ver `remonta` en `world/trafico.ts`.
+   */
+  remonta?(matricula: string): number;
   /** Los que esperan en una doble raya de tu salida. Ver `enTuSalida`. */
   enTuSalida?(): string[];
 }
@@ -166,6 +172,11 @@ export interface AlrededorDelTurno {
    * Sin esto se da por que no.
    */
   mandanFrustrar?(): boolean;
+  /**
+   * Si hay voz grabada para decirle a ese avión que espere en su puesto. Sin
+   * esto, no. Ver `RETENIDO` en `flight/radio.ts`.
+   */
+  sabeRetener?(matricula: string): boolean;
 }
 
 /**
@@ -408,6 +419,10 @@ export class TurnoDePista {
      */
     de.radio.todaviaNo = (m, clave) =>
       de.trafico()?.todaviaNo(m, clave) ?? false;
+    // Y si el que sale remonta la pista: ver `remonta` en `flight/radio.ts`.
+    de.radio.remonta = (m) => (de.trafico()?.remonta?.(m) ?? 0) > 0;
+    // Y si hay con qué decirle al retenido que espere: ver `RETENIDO`.
+    de.radio.sabeRetener = (m) => de.sabeRetener?.(m) ?? false;
   }
 
   /** Si aquí hay torre que te turne la pista. */
@@ -690,10 +705,14 @@ export class TurnoDePista {
       } else alAire = dice ?? alAire;
     }
     const dice = this.de.radio.update(dt, momento) ?? alAire ?? autorizado;
+    /*
+     * Y al que la torre retiene, en su puesto y quieto: la marca de su
+     * «rodando» lo sacaría a rodar. Ver `RETENIDO` en `flight/radio.ts`.
+     */
     if (dice)
       trafico?.anuncia(
         dice.de.matricula,
-        dice.clave,
+        dice.enSuPuesto ? RETENIDO : dice.clave,
         this.de.radio.puedeAterrizar(dice.de.matricula),
       );
     /*

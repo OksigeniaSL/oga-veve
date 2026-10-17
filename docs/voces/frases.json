@@ -9048,6 +9048,13 @@
     "para": "entrá y esperá en el eje"
   },
   {
+    "id": "torre.solo.holdPosition",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "hold position",
+    "para": "esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué"
+  },
+  {
     "id": "torre.solo.clearedTo",
     "voz": "torre",
     "idioma": "en",
@@ -10398,6 +10405,13 @@
     "idioma": "en",
     "texto": "line up and wait",
     "para": "entrá y esperá en el eje, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.holdPosition",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "hold position",
+    "para": "esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué, en Canarias"
   },
   {
     "id": "torre.canario.solo.clearedTo",

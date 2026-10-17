@@ -87,6 +87,7 @@ import {
   ESPERA_ENTRE_VUELOS,
   ESPERA_MAXIMA,
   RESPUESTA_MAXIMA,
+  RETENIDO,
 } from "../flight/radio";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
 import { separacionDeSalida, type CategoriaDeEstela } from "../flight/estela";
@@ -1011,6 +1012,12 @@ export function trazar(
     // Rodando a la cabecera: llega al punto de espera justo al hablar.
     "otro.buenosDias": rodando(salidaDelCampo, 0, hastaLaEspera),
     "otro.rodando": rodando(salidaDelCampo, 0, hastaLaEspera),
+    /*
+     * Y el que la torre no deja salir: en su puesto, con el tope en el
+     * puesto. Al soltarle, su «rodando» le pone el de la doble raya y rueda
+     * desde donde está. Ver `RETENIDO` y `enSuPuesto`.
+     */
+    [RETENIDO]: rodando(salidaDelCampo, 0, 0),
     // «Line up and wait»: se mete en la pista y ahí se queda.
     "torre.lineUpWait": rodando(salidaDelCampo, hastaLaEspera, hastaElEje),
     // Autorizado a despegar: desde el eje, y ya a velocidad de vuelo.
@@ -1691,6 +1698,13 @@ export interface Trafico {
    * en ella. La matrícula de ése, o `null`. Ver `quienDejaLaPistaPorSuRaya`.
    */
   quienTapaSuSalida(matricula: string): string | null;
+  /**
+   * **Lo que le queda por remontar de pista al que sale**, m: cero si entra
+   * y despega desde donde entra. Con eso la torre le dice «backtrack runway»
+   * y no «line up and wait». Ver `loQueLeQuedaPorRemontar` y `remonta` en
+   * `flight/radio.ts`.
+   */
+  remonta(matricula: string): number;
   /**
    * **Los que ruedan o esperan en una doble raya que está en tu salida de la
    * pista y todavía pueden irse antes de que llegues**: a ésos la torre les
@@ -2626,7 +2640,23 @@ export function crearTrafico(
   /** Si va a despegar y todavía no se ha alineado: rueda o espera en su doble raya. */
   const haciaSuRaya = (b: Volando): boolean => {
     const c = b.caminos;
-    return !!c?.enTierra && b.marca.camino === c.salida && b.recorrido < c.enTierra.eje - 1;
+    return (
+      !!c?.enTierra &&
+      b.marca.camino === c.salida &&
+      b.recorrido < c.enTierra.eje - 1 &&
+      !enSuPuesto(b)
+    );
+  };
+
+  /**
+   * **Si la torre lo tiene en su puesto**: con la marca de `RETENIDO`, el tope
+   * en el puesto. No va hacia ninguna doble raya, ni hace cola en ninguna: está
+   * aparcado con el motor en marcha esperando que le suelten, y eso es lo que
+   * cuenta de él. Ver `RETENIDO` en `flight/radio.ts`.
+   */
+  const enSuPuesto = (b: Volando): boolean => {
+    const c = b.caminos;
+    return !!c && b.marca.camino === c.salida && b.marca.tope === 0;
   };
 
   /**
@@ -2661,6 +2691,8 @@ export function crearTrafico(
       const eje =
         c.enTierra?.eje || c.marcas["torre.lineUpWait"]?.tope || c.espera;
       const despega = c.enTierra?.despega || eje;
+      // En su puesto esperando que le suelten: parado y con el motor en marcha.
+      if (enSuPuesto(quien)) return "esperando";
       if (r < c.espera - 0.5) return "rodando";
       if (r < eje - 0.5) return quien.avanza ? "entrando" : "esperando";
       // En el eje y parado, esperando el permiso: ahí manda el tope.
@@ -3588,10 +3620,12 @@ export function crearTrafico(
       for (const quien of aviones.values()) {
         const c = quien.caminos;
         if (!c?.enTierra) continue;
+        // El que la torre tiene en su puesto ocupa su puesto, como uno aparcado.
+        const quieto = enSuPuesto(quien);
         const sale =
-          quien.marca.camino === c.salida && quien.recorrido < c.enTierra.despega;
+          !quieto && quien.marca.camino === c.salida && quien.recorrido < c.enTierra.despega;
         const llega =
-          quien.marca.camino === c.llegada && quien.recorrido >= c.toca;
+          quieto || (quien.marca.camino === c.llegada && quien.recorrido >= c.toca);
         if (sale || llega)
           puntos.push({
             x: quien.grupo.position.x,
@@ -3629,6 +3663,9 @@ export function crearTrafico(
       for (const [m, q] of aviones)
         if (q.frenteATi === "espera" && q.aguarda > 0) quienes.push(m);
       return quienes;
+    },
+    remonta(matricula) {
+      return loQueLeQuedaPorRemontar(aviones.get(matricula), matricula);
     },
     quienTapaSuSalida(matricula) {
       const yo = aviones.get(matricula);
