@@ -8826,6 +8826,15 @@ export class Game {
   }
 
   /**
+   * **La retención más larga de la torre en este vuelo**, s: lo más que tuvo
+   * a uno en su puesto o fuera del circuito por la salida de otro. Para el
+   * banco. Ver `retenidos` en `flight/turno-de-pista.ts`.
+   */
+  get retencionMasLargaParaBanco(): number {
+    return this.turno.retencionMasLarga;
+  }
+
+  /**
    * Una llamada de la torre montada entera: a quién, con qué pista y cómo
    * suena.
    *
