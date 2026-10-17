@@ -267,17 +267,22 @@ describe("los cantos de cada avión", () => {
 
   /*
    * **Menos los de la carrera de aterrizaje**, que son de un procedimiento:
-   * los de Boeing, en el JAZ 120, y en nadie más. El JAZ 90 espera a que se
-   * compruebe el de Embraer, y en la flota no hay ningún Airbus.
+   * los de Boeing, en el JAZ 120, y en nadie más; los de Embraer —solo
+   * «sixty knots»—, en el JAZ 90. En la flota no hay ningún Airbus.
    */
-  it("y los de la carrera, solo el avión de esa familia: el JAZ 120", () => {
+  it("y los de la carrera, solo el avión de esa familia: Boeing el JAZ 120, Embraer el JAZ 90", () => {
+    const deEmbraer = new Set(["cabina.sixtyKnots"]);
     for (const a of AIRCRAFT)
       for (const clave of DE_LA_CARRERA) {
-        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(a.id === YVAGA.id);
+        const canta = a.id === YVAGA.id || (a.id === ARAI.id && deEmbraer.has(clave));
+        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(canta);
         // De la tripulación: suben por la escalera.
         expect(esDeUnaCaja(clave), clave).toBe(false);
       }
-    expect(loDiceElAvion("cabina.sixtyKnots", ARAI)).toBe(false);
+    // Los aerofrenos y las reversas, el E-Jet los mira sin cantarlos.
+    expect(loDiceElAvion("cabina.speedbrakesUp", ARAI)).toBe(false);
+    expect(loDiceElAvion("cabina.reversersNormal", ARAI)).toBe(false);
+    expect(loDiceElAvion("cabina.sixtyKnots", ARAI)).toBe(true);
     expect(Object.values(CLAVE_DE_CABINA)).toEqual(expect.arrayContaining([...DE_LA_CARRERA]));
   });
 

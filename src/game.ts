@@ -6980,11 +6980,13 @@ export class Game {
    *
    * Los cantos son de la tripulación, así que suben por la escalera: en inglés
    * en el peldaño de cabina y, en los de abajo, la explicación en casa en su
-   * lugar —`cantarLoGrabado`, un suceso y una voz—. Son los del procedimiento
-   * normal de Boeing, *Landing Roll* (FCOM del 747-400; el texto exacto, por
-   * verificar), y solo los canta el avión de esa familia: el JAZ 120. El JAZ 90
-   * no canta nada hasta que se compruebe el de Embraer. Ver
-   * `cantosDeLaCarrera` en `flight/aircraft.ts`.
+   * lugar —`cantarLoGrabado`, un suceso y una voz—. Cada familia canta los
+   * suyos: el JAZ 120, los del procedimiento normal de Boeing, *Landing Roll*
+   * (FCOM del 747-400; el texto exacto, por verificar); el JAZ 90, de la clase
+   * del E170, solo «sixty knots», que es lo único que se canta en la carrera
+   * de los E-Jets (el SOPM de Embraer, por verificar). Ver
+   * `cantosDeLaCarrera` en `flight/aircraft.ts` y `CANTOS_DE_LA_CARRERA` en
+   * `audio/cabina.ts`.
    *
    * Lo que no se canta: «no reverser», la reversa pedida que no se abre,
    * porque aquí una reversa pedida se abre siempre. Y los de Airbus que había

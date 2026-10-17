@@ -733,13 +733,17 @@ export interface AircraftConfig {
    *   «speedbrakes up» o «speedbrakes not up», «reversers normal» y «sixty
    *   knots»—. Los canta el JAZ 120, de la clase del 747. Fuente: el FCOM del
    *   747-400, NP *Landing Roll Procedure*; **el texto exacto está por
-   *   verificar**.
-   * - `null` en los demás. En los de hélice no hay nada que cantar de esto, y
-   *   el JAZ 90, de la clase del E170, **no canta nada hasta que se compruebe
-   *   el procedimiento de Embraer**: unas llamadas de memoria, o las de otro
-   *   fabricante, serían enseñar algo que luego habría que desaprender.
+   *   verificar**, salvo los aerofrenos, que el NTSB cita del FCOM del 737.
+   * - `embraer`: los de los E-Jets, que en la carrera solo cantan «sixty
+   *   knots»: los aerofrenos y las reversas se miran sin decirlos. Los canta
+   *   el JAZ 90, de la clase del E170. Fuente: un resumen de formación del
+   *   E190 que remite al SOPM; el SOPM de Embraer, **por verificar**. Ver
+   *   `CANTOS_DE_LA_CARRERA` en `audio/cabina.ts`.
+   * - `null` en los demás. En los de hélice no hay nada que cantar de esto:
+   *   unas llamadas de memoria, o las de otro fabricante, serían enseñar algo
+   *   que luego habría que desaprender.
    */
-  cantosDeLaCarrera: "boeing" | null;
+  cantosDeLaCarrera: "boeing" | "embraer" | null;
   /**
    * **Qué TCAS lleva, si lleva alguno.** `null` si ninguno.
    *
@@ -1928,8 +1932,8 @@ export const ARAI: AircraftConfig = {
   frenos: { enSeco: 0.45, psi: 170, antideslizante: 0.8 },
   frenosDeTierra: { resistencia: 0.07, sustentacion: 0.7 },
   autofreno: true,
-  // Por verificar el procedimiento de Embraer: hasta entonces, nada.
-  cantosDeLaCarrera: null,
+  // Los de los E-Jets: solo «sixty knots». Ver `cantosDeLaCarrera`.
+  cantosDeLaCarrera: "embraer",
   tcas: "TCAS II",
   avisosHablados: true,
   // Persiana de plástico, como cualquier reactor de pasillo único.

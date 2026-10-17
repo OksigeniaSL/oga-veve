@@ -385,9 +385,11 @@ const CABINA = [
    * **Y la carrera de aterrizaje**, lo que canta quien vigila al tocar en el
    * procedimiento normal de Boeing, *Landing Roll* (FCOM del 747-400; el
    * texto exacto, por verificar): los aerofrenos arriba o no, las reversas en
-   * verde y los sesenta nudos. Solo en el JAZ 120. Ver `contarLaCarrera` en
-   * `src/game.ts` y `DE_LA_CARRERA` en `src/audio/cabina.ts`. Aquí estaban
-   * los de Airbus, y en la flota no hay ningún Airbus.
+   * verde y los sesenta nudos. En el JAZ 120; y «sixty knots», también en el
+   * JAZ 90, que es lo único que se canta en la carrera de los E-Jets. Ver
+   * `contarLaCarrera` en `src/game.ts` y `CANTOS_DE_LA_CARRERA` en
+   * `src/audio/cabina.ts`. Aquí estaban los de Airbus, y en la flota no hay
+   * ningún Airbus.
    */
   ["cabina.speedbrakesUp", "speedbrakes up", "al tocar: los aerofrenos, arriba"],
   ["cabina.speedbrakesNotUp", "speedbrakes not up", "al tocar: los aerofrenos no subieron"],
