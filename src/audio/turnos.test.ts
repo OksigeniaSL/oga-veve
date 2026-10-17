@@ -33,6 +33,10 @@ describe("quién habla primero", () => {
     expect(esDeLaMegafonia("ventanilla@saludo-teide")).toBe(true);
     expect(esDeLaMegafonia("ventanilla")).toBe(true);
     expect(esDeLaMegafonia("ventanilla.vos@teide")).toBe(false);
+    // Y la historia que va detrás, igual: la de la comandante sí, la de la avioneta no.
+    expect(esDeLaMegafonia("ventanilla.historia@ventanilla.historia.teide")).toBe(true);
+    expect(esDeLaMegafonia("ventanilla.vos.historia@ventanilla.vos.historia.teide")).toBe(false);
+    expect(esDeLaMegafonia("ventanilla.historial")).toBe(false);
     expect(esDeLaMegafonia("vuelo.aire.oidos")).toBe(false);
     expect(esDeLaMegafonia(undefined)).toBe(false);
   });

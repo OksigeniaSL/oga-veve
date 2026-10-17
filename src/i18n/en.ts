@@ -1067,10 +1067,66 @@ export const EN: Dictionary = {
     "That's Encarnación, the Pearl of the South, on the banks of the Paraná. In summer it has river beaches and the most famous carnival in the country.",
   "ventanilla.trinidad":
     "Those are the ruins of Trinidad, an eighteenth-century Jesuit mission. It's a World Heritage Site, together with Jesús, just nearby.",
+  "ventanilla.tres-kandu":
+    "Those hills are the Ybytyruzú, and the highest is Tres Kandú: eight hundred and forty-two metres, the highest point in Paraguay.",
   "ventanilla.cruz-del-sur":
     "Now look at the sky: those four stars in a cross are the Southern Cross. Stretch the long bar about four and a half times and you reach due south. That's how sailors found their way, long before GPS!",
   "ventanilla.polar":
     "Look north: that lonely star, not too high and not too low, is the Pole Star. It isn't the brightest, but it's the most useful: it hardly moves all night and it marks north. And it sits as high as we are far from the equator: here, about twenty-eight degrees.",
+  /*
+   * And right behind, its story: something about the place that can't be
+   * seen from up here. Every fact has its source in docs/historias/fuentes.md.
+   */
+  "ventanilla.historia.teide":
+    "And something you can't see: measured from the ocean floor, Teide is about seven thousand five hundred metres tall. It's the third-highest volcano in the world, after two in Hawaii.",
+  "ventanilla.historia.canadas":
+    "In spring, Las Cañadas fill with red tajinastes: towers of flowers that can be taller than a person, and that only grow in the Canary Islands. And higher up, among the stones, lives the Teide violet.",
+  "ventanilla.historia.anaga":
+    "Anaga has been a Biosphere Reserve since twenty fifteen: it's one of the places in Europe with the most plants and animals that live nowhere else in the world.",
+  "ventanilla.historia.orotava":
+    "In seventeen ninety-nine the scientist Alexander von Humboldt came through this valley. He climbed Teide and noticed that the plants change with height, as if the mountain had floors.",
+  "ventanilla.historia.gigantes":
+    "In the sea opposite, pilot whales live all year round: big, dark relatives of dolphins. There are very few places in the world where they stay like that.",
+  "ventanilla.historia.garajonay":
+    "And on La Gomera you can talk by whistling: it's the Silbo Gomero, which carries from one side of a ravine to the other and can be heard kilometres away. Children on the island learn it at school.",
+  "ventanilla.historia.taburiente":
+    "So that those telescopes can see well, La Palma has a law that looks after the sky: the street lamps shine down at the ground, not up. That's why you can see so many stars there at night.",
+  "ventanilla.historia.tajogaite":
+    "When the lava reached the sea, the island grew: two pieces of brand-new land were born along the coast, the Tajogaite fajanas. They're younger than many of the children on board.",
+  "ventanilla.historia.hierro":
+    "The ancient people of El Hierro, the Bimbaches, drank water from a tree, the Garoé: its leaves caught the mist and the water fell drop by drop. Even Magellan's sailors heard about it, in fifteen nineteen.",
+  "ventanilla.historia.nieves":
+    "The centre of the island is a World Heritage Site. There, at Risco Caído, the ancient Canarians carved a cave where the sun shines in through a hole, and its light moves across the wall with the seasons.",
+  "ventanilla.historia.las-palmas":
+    "In fourteen ninety-two, on his way to America, Christopher Columbus stopped on Gran Canaria to fit a new rudder on the Pinta, one of his three ships.",
+  "ventanilla.historia.timanfaya":
+    "The ground there is still so hot that if they pour water into a hole, it shoots up like a geyser. And at the restaurant on the mountain, they grill the food with the volcano's heat.",
+  "ventanilla.historia.rio-paraguay":
+    "Look at the river's bends, and at those horseshoe-shaped lakes beside it: they're old bends. The water eats away the outer bank of every curve, until one day the river takes a shortcut and the bend is left on its own.",
+  "ventanilla.historia.asuncion":
+    "When the first European ships arrived, almost five hundred years ago, the Guaraní people here were already growing maize, cassava, sweet potato and peanuts. One of those travellers wrote that in four years he hadn't eaten such good bread.",
+  "ventanilla.historia.ypacarai":
+    "The music of that song was written by a Paraguayan, Demetrio Ortiz. And the words were written by an Argentine poet, Zulema de Mirkin, who had never seen the lake: she was inspired by his guitar.",
+  "ventanilla.historia.ypoa":
+    "Lake Ypoá has floating islands: mats of plants so thick that little trees even grow on top. Over the years, some of them are joining up with the solid ground.",
+  "ventanilla.historia.yacyreta":
+    "In Guaraní, Yacyretá means land of the moon: jasy is the moon. That was the name of an island in the river, and the dam took its name from it.",
+  "ventanilla.historia.itaipu":
+    "In Guaraní, Itaipú means the stone that sounds: that was the name of an island in the river, near where the dam was built. Its first turbine began to turn in nineteen eighty-four.",
+  "ventanilla.historia.iguazu":
+    "In Guaraní, Iguazú means big water. In fifteen forty-two Álvar Núñez Cabeza de Vaca reached it on his way to Asunción, and had to carry his canoes on foot to get around the falls.",
+  "ventanilla.historia.triple-frontera":
+    "On each bank there's a landmark painted in the colours of its flag: sky blue and white in Argentina, green and yellow in Brazil, and red, white and blue in Paraguay.",
+  "ventanilla.historia.cerro-cora":
+    "In the forests of Cerro Corá the mboreví still lives, the tapir: the biggest land animal in South America, with a little trunk for a nose.",
+  "ventanilla.historia.chaco":
+    "In the Chaco grows the samuhú, the bottle tree: a tree with a trunk as fat as a bottle, which stores water for the dry months.",
+  "ventanilla.historia.encarnacion":
+    "Encarnación was born in sixteen fifteen as a mission village, founded by Roque González de Santa Cruz, a priest born in Asunción. Today the bridge that joins it to Posadas, in Argentina, bears his name.",
+  "ventanilla.historia.trinidad":
+    "Inside its church there are angels carved in stone, playing music: harp, organ, trumpets and flute. They've been there for more than two hundred and fifty years.",
+  "ventanilla.historia.cruz-del-sur":
+    "More than four hundred years ago, Father José de Acosta wrote that these four stars were called the Crucero, and that sailors used the star at the foot of the cross to measure how far south they were.",
   /* The same, said by the instructor sitting beside you in a light aircraft. */
   "ventanilla.vos.lado.izquierda": "Look out of the window, to your left.",
   "ventanilla.vos.lado.derecha": "Look out of the window, to your right.",
@@ -1134,10 +1190,63 @@ export const EN: Dictionary = {
     "That's Encarnación. In summer it has beaches on the river and a very famous carnival.",
   "ventanilla.vos.trinidad":
     "Those are the ruins of Trinidad: a very old Jesuit mission, a World Heritage Site.",
+  "ventanilla.vos.tres-kandu":
+    "Those hills are the Ybytyruzú. That's Tres Kandú, the highest point in all of Paraguay!",
   "ventanilla.vos.cruz-del-sur":
     "Look at those four stars in a cross: that's the Southern Cross. Stretch the long bar four and a half times and you're pointing south.",
   "ventanilla.vos.polar":
     "See that lonely star to the north? That's the Pole Star. It hardly moves: all night long it marks north.",
+  /* And its story, said by the instructor: shorter, to whoever sits beside her. */
+  "ventanilla.vos.historia.teide":
+    "Did you know? Measured from the bottom of the sea, Teide is seven thousand five hundred metres tall. It's one of the tallest volcanoes in the world!",
+  "ventanilla.vos.historia.canadas":
+    "In spring, red tajinastes grow down there: towers of flowers that can be taller than you. They only grow in the Canary Islands!",
+  "ventanilla.vos.historia.anaga":
+    "Plants and little animals live in Anaga that don't exist anywhere else in the world. Only there!",
+  "ventanilla.vos.historia.orotava":
+    "A long time ago a scientist called Humboldt came through this valley. He climbed Teide and realised that plants change with height, like the floors of a house.",
+  "ventanilla.vos.historia.gigantes":
+    "Pilot whales live in that sea all year round: big, dark cousins of dolphins.",
+  "ventanilla.vos.historia.garajonay":
+    "On La Gomera people talk by whistling, from one ravine to another: the Silbo Gomero. Kids learn it at school!",
+  "ventanilla.vos.historia.taburiente":
+    "So the telescopes can see well, the street lamps on La Palma shine downwards, not at the sky. There's a law to look after the stars!",
+  "ventanilla.vos.historia.tajogaite":
+    "When the lava reached the sea, the island grew: two pieces of brand-new land were born by the coast!",
+  "ventanilla.vos.historia.hierro":
+    "On El Hierro there was a tree that gave water: the Garoé. Its leaves caught the mist, and the water fell drop by drop.",
+  "ventanilla.vos.historia.nieves":
+    "The ancient Canarians made a cave where the sun shines in through a hole. Depending on the time of year, the light lands on a different part of the wall!",
+  "ventanilla.vos.historia.las-palmas":
+    "Christopher Columbus stopped on this island before crossing to America, to fix the rudder of one of his ships, the Pinta.",
+  "ventanilla.vos.historia.timanfaya":
+    "At Timanfaya the ground is so hot that they cook food with the volcano's heat. And if they pour water into a hole, it shoots straight up!",
+  "ventanilla.vos.historia.rio-paraguay":
+    "See those horseshoe-shaped lakes beside the river? They're old bends the river left behind when it took a shortcut.",
+  "ventanilla.vos.historia.asuncion":
+    "When the first ships from Europe arrived, the Guaraní people here were already growing maize, cassava, sweet potato and peanuts.",
+  "ventanilla.vos.historia.ypacarai":
+    "The words of that song were written by a poet who had never seen the lake. She was inspired by listening to the guitar!",
+  "ventanilla.vos.historia.ypoa":
+    "Lake Ypoá has floating islands! They're mats of plants, and little trees even grow on top.",
+  "ventanilla.vos.historia.yacyreta":
+    "Do you know what Yacyretá means in Guaraní? Land of the moon: jasy is the moon.",
+  "ventanilla.vos.historia.itaipu":
+    "Itaipú means the stone that sounds, in Guaraní. That was the name of an island in the river.",
+  "ventanilla.vos.historia.iguazu":
+    "Iguazú means big water, in Guaraní. Long ago, some travellers had to carry their canoes on foot to get past the falls.",
+  "ventanilla.vos.historia.triple-frontera":
+    "On each bank there's a column painted in the colours of its flag. Three banks, three flags!",
+  "ventanilla.vos.historia.cerro-cora":
+    "The mboreví lives in those forests, the tapir: the biggest land animal in South America, with a little trunk!",
+  "ventanilla.vos.historia.chaco":
+    "In the Chaco there's a tree with a fat belly like a bottle: the samuhú. It keeps water inside for when it doesn't rain!",
+  "ventanilla.vos.historia.encarnacion":
+    "Encarnación started more than four hundred years ago, as a mission village. And a long bridge joins it to Argentina!",
+  "ventanilla.vos.historia.trinidad":
+    "In the church at Trinidad there are stone angels playing the harp, the organ and the flute. A stone orchestra!",
+  "ventanilla.vos.historia.cruz-del-sur":
+    "Long ago, these stars were called the Crucero, and sailors used them to know how far south they were.",
 
   /*
    * El guion de la cabina: el plan y el descenso de la comandante, y la

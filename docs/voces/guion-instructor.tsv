@@ -460,72 +460,98 @@
 460	ventanilla.vos.chaco	Abajo está el Chaco: un monte enorme donde viven yaguaretés, tatús y osos hormigueros.
 461	ventanilla.vos.encarnacion	Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.
 462	ventanilla.vos.trinidad	Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.
-463	ventanilla.vos.cruz-del-sur	Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.
-464	ventanilla.vos.polar	¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.
-465	matricula.nuestroAvion	Nuestro avión es
-466	matricula.asiNosLlama	Así nos llama la torre.
-467	fonetico.alfa	Alfa
-468	fonetico.bravo	Bravo
-469	fonetico.charlie	Charlie
-470	fonetico.delta	Delta
-471	fonetico.echo	Echo
-472	fonetico.foxtrot	Foxtrot
-473	fonetico.golf	Golf
-474	fonetico.hotel	Hotel
-475	fonetico.india	India
-476	fonetico.juliett	Juliett
-477	fonetico.kilo	Kilo
-478	fonetico.lima	Lima
-479	fonetico.mike	Mike
-480	fonetico.november	November
-481	fonetico.oscar	Oscar
-482	fonetico.papa	Papa
-483	fonetico.quebec	Quebec
-484	fonetico.romeo	Romeo
-485	fonetico.sierra	Sierra
-486	fonetico.tango	Tango
-487	fonetico.uniform	Uniform
-488	fonetico.victor	Victor
-489	fonetico.whiskey	Whiskey
-490	fonetico.xray	X-ray
-491	fonetico.yankee	Yankee
-492	fonetico.zulu	Zulu
-493	vuelo.paso.velocidad.110	Son ciento diez kilómetros por hora.
-494	vuelo.paso.velocidad.130	Son ciento treinta kilómetros por hora.
-495	vuelo.paso.velocidad.140	Son ciento cuarenta kilómetros por hora.
-496	vuelo.paso.velocidad.150	Son ciento cincuenta kilómetros por hora.
-497	vuelo.paso.velocidad.160	Son ciento sesenta kilómetros por hora.
-498	vuelo.paso.velocidad.170	Son ciento setenta kilómetros por hora.
-499	vuelo.paso.velocidad.180	Son ciento ochenta kilómetros por hora.
-500	vuelo.paso.velocidad.190	Son ciento noventa kilómetros por hora.
-501	vuelo.paso.velocidad.200	Son doscientos kilómetros por hora.
-502	vuelo.paso.velocidad.210	Son doscientos diez kilómetros por hora.
-503	vuelo.paso.velocidad.220	Son doscientos veinte kilómetros por hora.
-504	vuelo.paso.velocidad.230	Son doscientos treinta kilómetros por hora.
-505	vuelo.paso.velocidad.240	Son doscientos cuarenta kilómetros por hora.
-506	vuelo.paso.velocidad.250	Son doscientos cincuenta kilómetros por hora.
-507	vuelo.paso.velocidad.260	Son doscientos sesenta kilómetros por hora.
-508	vuelo.paso.velocidad.270	Son doscientos setenta kilómetros por hora.
-509	vuelo.paso.velocidad.280	Son doscientos ochenta kilómetros por hora.
-510	vuelo.paso.velocidad.310	Son trescientos diez kilómetros por hora.
-511	vuelo.paso.velocidad.340	Son trescientos cuarenta kilómetros por hora.
-512	vuelo.paso.velocidad.350	Son trescientos cincuenta kilómetros por hora.
-513	vuelo.paso.velocidad.360	Son trescientos sesenta kilómetros por hora.
-514	vuelo.paso.velocidad.390	Son trescientos noventa kilómetros por hora.
-515	vuelo.paso.velocidad.410	Son cuatrocientos diez kilómetros por hora.
-516	vuelo.paso.velocidad.420	Son cuatrocientos veinte kilómetros por hora.
-517	vuelo.paso.velocidad.440	Son cuatrocientos cuarenta kilómetros por hora.
-518	vuelo.paso.velocidad.460	Son cuatrocientos sesenta kilómetros por hora.
-519	vuelo.paso.velocidad.480	Son cuatrocientos ochenta kilómetros por hora.
-520	vuelo.paso.velocidad.520	Son quinientos veinte kilómetros por hora.
-521	vuelo.paso.velocidad.540	Son quinientos cuarenta kilómetros por hora.
-522	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-523	gafas.ganadas	¡Tus gafas de sol!
-524	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
-525	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
-526	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
-527	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
-528	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
-529	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
-530	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
-531	parte.ganaste	¡Hoy ganaste: decidiste bien!
+463	ventanilla.vos.tres-kandu	Esos cerros son el Ybytyruzú. Ahí está el Tres Kandú, ¡el punto más alto de todo el Paraguay!
+464	ventanilla.vos.cruz-del-sur	Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.
+465	ventanilla.vos.polar	¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.
+466	ventanilla.vos.historia.teide	¿Sabías que, medido desde el fondo del mar, el Teide tiene siete mil quinientos metros? ¡Es de los volcanes más altos del mundo!
+467	ventanilla.vos.historia.canadas	En primavera, ahí salen los tajinastes rojos: torres de flores que pueden ser más altas que vos. ¡Solo crecen en Canarias!
+468	ventanilla.vos.historia.anaga	En Anaga viven plantas y animalitos que no existen en ningún otro lugar del mundo. ¡Solamente ahí!
+469	ventanilla.vos.historia.orotava	Por este valle pasó hace mucho un sabio, Humboldt. Subió al Teide y se dio cuenta de que las plantas cambian con la altura, como los pisos de una casa.
+470	ventanilla.vos.historia.gigantes	En ese mar viven todo el año los calderones: unos primos grandotes y oscuros de los delfines.
+471	ventanilla.vos.historia.garajonay	En La Gomera la gente habla silbando, de un barranco a otro: el silbo gomero. ¡Los chicos lo aprenden en la escuela!
+472	ventanilla.vos.historia.taburiente	Para que los telescopios vean bien, en La Palma las farolas alumbran para abajo, no para el cielo. ¡Hay una ley para cuidar las estrellas!
+473	ventanilla.vos.historia.tajogaite	Cuando la lava llegó al mar, la isla creció: ¡nacieron dos pedazos de tierra nueva junto a la costa!
+474	ventanilla.vos.historia.hierro	En El Hierro había un árbol que daba agua: el Garoé. Sus hojas atrapaban la niebla, y el agua caía gota a gota.
+475	ventanilla.vos.historia.nieves	Los antiguos canarios hicieron una cueva donde el sol entra por un agujero. ¡Según la época del año, la luz cae en otro lugar de la pared!
+476	ventanilla.vos.historia.las-palmas	Cristóbal Colón paró en esta isla antes de cruzar a América, para arreglar el timón de uno de sus barcos, la Pinta.
+477	ventanilla.vos.historia.timanfaya	En Timanfaya el suelo está tan caliente que cocinan la comida con el calor del volcán. ¡Y si echan agua en un agujero, sale disparada para arriba!
+478	ventanilla.vos.historia.rio-paraguay	¿Ves esas lagunas con forma de herradura al lado del río? Son curvas viejas que el río dejó cuando cortó camino.
+479	ventanilla.vos.historia.asuncion	Cuando llegaron los primeros barcos de Europa, los guaraníes de acá ya sembraban maíz, mandioca, batata y maní.
+480	ventanilla.vos.historia.ypacarai	La letra de esa canción la escribió una poeta que nunca había visto el lago. ¡Se inspiró escuchando la guitarra!
+481	ventanilla.vos.historia.ypoa	¡En el Ypoá hay islas que flotan! Son colchones de plantas, y encima hasta crecen arbolitos.
+482	ventanilla.vos.historia.yacyreta	¿Sabés qué quiere decir Yacyretá en guaraní? Tierra de la luna: yasy es la luna.
+483	ventanilla.vos.historia.itaipu	Itaipú quiere decir piedra que suena, en guaraní. Así se llamaba una isla del río.
+484	ventanilla.vos.historia.iguazu	Iguazú quiere decir agua grande, en guaraní. Hace mucho, unos viajeros tuvieron que cargar sus canoas a pie para pasar las cataratas.
+485	ventanilla.vos.historia.triple-frontera	En cada orilla hay una columna pintada con los colores de su bandera. ¡Tres orillas, tres banderas!
+486	ventanilla.vos.historia.cerro-cora	En esos montes vive el mboreví, el tapir: ¡el animal de tierra más grande de Sudamérica, con una trompita!
+487	ventanilla.vos.historia.chaco	En el Chaco hay un árbol con la panza gorda como una botella: el samuhú. ¡Guarda agua adentro para cuando no llueve!
+488	ventanilla.vos.historia.encarnacion	Encarnación empezó hace más de cuatrocientos años, como un pueblo de las misiones. ¡Y un puente largo la une con Argentina!
+489	ventanilla.vos.historia.trinidad	En la iglesia de Trinidad hay ángeles de piedra tocando el arpa, el órgano y la flauta. ¡Una orquesta de piedra!
+490	ventanilla.vos.historia.cruz-del-sur	Hace mucho, a estas estrellas las llamaban el Crucero, y los marineros las usaban para saber qué tan al sur estaban.
+491	matricula.nuestroAvion	Nuestro avión es
+492	matricula.asiNosLlama	Así nos llama la torre.
+493	fonetico.alfa	Alfa
+494	fonetico.bravo	Bravo
+495	fonetico.charlie	Charlie
+496	fonetico.delta	Delta
+497	fonetico.echo	Echo
+498	fonetico.foxtrot	Foxtrot
+499	fonetico.golf	Golf
+500	fonetico.hotel	Hotel
+501	fonetico.india	India
+502	fonetico.juliett	Juliett
+503	fonetico.kilo	Kilo
+504	fonetico.lima	Lima
+505	fonetico.mike	Mike
+506	fonetico.november	November
+507	fonetico.oscar	Oscar
+508	fonetico.papa	Papa
+509	fonetico.quebec	Quebec
+510	fonetico.romeo	Romeo
+511	fonetico.sierra	Sierra
+512	fonetico.tango	Tango
+513	fonetico.uniform	Uniform
+514	fonetico.victor	Victor
+515	fonetico.whiskey	Whiskey
+516	fonetico.xray	X-ray
+517	fonetico.yankee	Yankee
+518	fonetico.zulu	Zulu
+519	vuelo.paso.velocidad.110	Son ciento diez kilómetros por hora.
+520	vuelo.paso.velocidad.130	Son ciento treinta kilómetros por hora.
+521	vuelo.paso.velocidad.140	Son ciento cuarenta kilómetros por hora.
+522	vuelo.paso.velocidad.150	Son ciento cincuenta kilómetros por hora.
+523	vuelo.paso.velocidad.160	Son ciento sesenta kilómetros por hora.
+524	vuelo.paso.velocidad.170	Son ciento setenta kilómetros por hora.
+525	vuelo.paso.velocidad.180	Son ciento ochenta kilómetros por hora.
+526	vuelo.paso.velocidad.190	Son ciento noventa kilómetros por hora.
+527	vuelo.paso.velocidad.200	Son doscientos kilómetros por hora.
+528	vuelo.paso.velocidad.210	Son doscientos diez kilómetros por hora.
+529	vuelo.paso.velocidad.220	Son doscientos veinte kilómetros por hora.
+530	vuelo.paso.velocidad.230	Son doscientos treinta kilómetros por hora.
+531	vuelo.paso.velocidad.240	Son doscientos cuarenta kilómetros por hora.
+532	vuelo.paso.velocidad.250	Son doscientos cincuenta kilómetros por hora.
+533	vuelo.paso.velocidad.260	Son doscientos sesenta kilómetros por hora.
+534	vuelo.paso.velocidad.270	Son doscientos setenta kilómetros por hora.
+535	vuelo.paso.velocidad.280	Son doscientos ochenta kilómetros por hora.
+536	vuelo.paso.velocidad.310	Son trescientos diez kilómetros por hora.
+537	vuelo.paso.velocidad.340	Son trescientos cuarenta kilómetros por hora.
+538	vuelo.paso.velocidad.350	Son trescientos cincuenta kilómetros por hora.
+539	vuelo.paso.velocidad.360	Son trescientos sesenta kilómetros por hora.
+540	vuelo.paso.velocidad.390	Son trescientos noventa kilómetros por hora.
+541	vuelo.paso.velocidad.410	Son cuatrocientos diez kilómetros por hora.
+542	vuelo.paso.velocidad.420	Son cuatrocientos veinte kilómetros por hora.
+543	vuelo.paso.velocidad.440	Son cuatrocientos cuarenta kilómetros por hora.
+544	vuelo.paso.velocidad.460	Son cuatrocientos sesenta kilómetros por hora.
+545	vuelo.paso.velocidad.480	Son cuatrocientos ochenta kilómetros por hora.
+546	vuelo.paso.velocidad.520	Son quinientos veinte kilómetros por hora.
+547	vuelo.paso.velocidad.540	Son quinientos cuarenta kilómetros por hora.
+548	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+549	gafas.ganadas	¡Tus gafas de sol!
+550	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
+551	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+552	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+553	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+554	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
+555	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
+556	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
+557	parte.ganaste	¡Hoy ganaste: decidiste bien!

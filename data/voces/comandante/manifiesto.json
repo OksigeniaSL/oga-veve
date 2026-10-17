@@ -1327,6 +1327,106 @@
       "ms": 8407,
       "h": "6db2c7f008"
     },
+    "ventanilla.historia.anaga": {
+      "ms": 8407,
+      "h": "14d4ec5f0b"
+    },
+    "ventanilla.historia.asuncion": {
+      "ms": 13107,
+      "h": "097272e920"
+    },
+    "ventanilla.historia.canadas": {
+      "ms": 11107,
+      "h": "dca905053a"
+    },
+    "ventanilla.historia.cerro-cora": {
+      "ms": 7207,
+      "h": "9a76d231d6"
+    },
+    "ventanilla.historia.chaco": {
+      "ms": 7007,
+      "h": "3ca398d908"
+    },
+    "ventanilla.historia.cruz-del-sur": {
+      "ms": 10307,
+      "h": "8e25177b8d"
+    },
+    "ventanilla.historia.encarnacion": {
+      "ms": 12507,
+      "h": "ed1c406c69"
+    },
+    "ventanilla.historia.garajonay": {
+      "ms": 9507,
+      "h": "c2c16cf03b"
+    },
+    "ventanilla.historia.gigantes": {
+      "ms": 8607,
+      "h": "ffbc15303e"
+    },
+    "ventanilla.historia.hierro": {
+      "ms": 12107,
+      "h": "30f9f294ea"
+    },
+    "ventanilla.historia.iguazu": {
+      "ms": 11007,
+      "h": "309a84b732"
+    },
+    "ventanilla.historia.itaipu": {
+      "ms": 11207,
+      "h": "1af3ccb016"
+    },
+    "ventanilla.historia.las-palmas": {
+      "ms": 8007,
+      "h": "fa55d093c7"
+    },
+    "ventanilla.historia.nieves": {
+      "ms": 12207,
+      "h": "2552377534"
+    },
+    "ventanilla.historia.orotava": {
+      "ms": 10207,
+      "h": "f6c2a94b0e"
+    },
+    "ventanilla.historia.rio-paraguay": {
+      "ms": 12207,
+      "h": "f5ae8d2270"
+    },
+    "ventanilla.historia.taburiente": {
+      "ms": 9907,
+      "h": "7c212501ba"
+    },
+    "ventanilla.historia.tajogaite": {
+      "ms": 9307,
+      "h": "1ca72cfd59"
+    },
+    "ventanilla.historia.teide": {
+      "ms": 8607,
+      "h": "cf70927237"
+    },
+    "ventanilla.historia.timanfaya": {
+      "ms": 9407,
+      "h": "0661c31570"
+    },
+    "ventanilla.historia.trinidad": {
+      "ms": 9607,
+      "h": "777b0c11ba"
+    },
+    "ventanilla.historia.triple-frontera": {
+      "ms": 8407,
+      "h": "3ade1bee6a"
+    },
+    "ventanilla.historia.yacyreta": {
+      "ms": 8807,
+      "h": "ff5a0c7d2b"
+    },
+    "ventanilla.historia.ypacarai": {
+      "ms": 11507,
+      "h": "4d98243815"
+    },
+    "ventanilla.historia.ypoa": {
+      "ms": 8607,
+      "h": "a41a496106"
+    },
     "ventanilla.iguazu": {
       "ms": 8107,
       "h": "8880ac8c8a"
@@ -1402,6 +1502,10 @@
     "ventanilla.timanfaya": {
       "ms": 10107,
       "h": "1240f2fa64"
+    },
+    "ventanilla.tres-kandu": {
+      "ms": 7607,
+      "h": "a39ba69724"
     },
     "ventanilla.trinidad": {
       "ms": 7507,
@@ -2505,6 +2609,87 @@
     ],
     "inicio.mama.nivelar.otra2": [
       "inicio.mama.nivelar.otra2"
+    ],
+    "ventanilla.historia.anaga": [
+      "ventanilla.historia.anaga"
+    ],
+    "ventanilla.historia.asuncion": [
+      "ventanilla.historia.asuncion"
+    ],
+    "ventanilla.historia.canadas": [
+      "ventanilla.historia.canadas"
+    ],
+    "ventanilla.historia.cerro-cora": [
+      "ventanilla.historia.cerro-cora"
+    ],
+    "ventanilla.historia.chaco": [
+      "ventanilla.historia.chaco"
+    ],
+    "ventanilla.historia.cruz-del-sur": [
+      "ventanilla.historia.cruz-del-sur"
+    ],
+    "ventanilla.historia.encarnacion": [
+      "ventanilla.historia.encarnacion"
+    ],
+    "ventanilla.historia.garajonay": [
+      "ventanilla.historia.garajonay"
+    ],
+    "ventanilla.historia.gigantes": [
+      "ventanilla.historia.gigantes"
+    ],
+    "ventanilla.historia.hierro": [
+      "ventanilla.historia.hierro"
+    ],
+    "ventanilla.historia.iguazu": [
+      "ventanilla.historia.iguazu"
+    ],
+    "ventanilla.historia.itaipu": [
+      "ventanilla.historia.itaipu"
+    ],
+    "ventanilla.historia.las-palmas": [
+      "ventanilla.historia.las-palmas"
+    ],
+    "ventanilla.historia.nieves": [
+      "ventanilla.historia.nieves"
+    ],
+    "ventanilla.historia.orotava": [
+      "ventanilla.historia.orotava"
+    ],
+    "ventanilla.historia.rio-paraguay": [
+      "ventanilla.historia.rio-paraguay"
+    ],
+    "ventanilla.historia.taburiente": [
+      "ventanilla.historia.taburiente"
+    ],
+    "ventanilla.historia.tajogaite": [
+      "ventanilla.historia.tajogaite"
+    ],
+    "ventanilla.historia.teide": [
+      "ventanilla.historia.teide"
+    ],
+    "ventanilla.historia.timanfaya": [
+      "ventanilla.historia.timanfaya"
+    ],
+    "ventanilla.historia.trinidad": [
+      "ventanilla.historia.trinidad"
+    ],
+    "ventanilla.historia.triple-frontera": [
+      "ventanilla.historia.triple-frontera"
+    ],
+    "ventanilla.historia.yacyreta": [
+      "ventanilla.historia.yacyreta"
+    ],
+    "ventanilla.historia.ypacarai": [
+      "ventanilla.historia.ypacarai"
+    ],
+    "ventanilla.historia.ypoa": [
+      "ventanilla.historia.ypoa"
+    ],
+    "ventanilla.tres-kandu": [
+      "ventanilla.tres-kandu"
+    ],
+    "ventanilla.historia": [
+      "{historia}"
     ]
   }
 }

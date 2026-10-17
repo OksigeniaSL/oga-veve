@@ -997,7 +997,7 @@ import {
 } from "./flight/lo-que-se-ve";
 import type { Hito, Mirada } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
-import { loQueSeDice } from "./audio/ventanilla";
+import { laHistoria, loQueSeDice, type LoQueSeDice } from "./audio/ventanilla";
 import {
   calorDelSuelo,
   capaDeMezcla,
@@ -18495,7 +18495,29 @@ export class Game {
      */
     if (dicho && this.instructor.vozDe(dicho.clave, dicho.relleno)) {
       const boca = conGente ? this.comandante : this.instructor;
-      boca.decir(dicho.texto, dicho.clave, "baja", dicho.relleno);
+      /*
+       * **Y detrás, su historia**, si la tiene y está grabada: el Garoé que
+       * bebía de la niebla, las canoas cargadas para rodear el Iguazú. Se
+       * pide cuando acaba la frase del sitio —no a la vez: un suceso, una
+       * voz— y con la misma boca, así que lo que es para ti y espera turno
+       * pasa antes. Si la frase del sitio se corta o se cae, la historia no
+       * se cuenta: sin decir qué es, no se entiende de qué habla. Ver
+       * `contarLaHistoria`.
+       */
+      const historia = laHistoria(mirada, conGente);
+      const conHistoria =
+        historia && this.instructor.vozDe(historia.clave, historia.relleno) ? historia : null;
+      boca.decir(
+        dicho.texto,
+        dicho.clave,
+        "baja",
+        dicho.relleno,
+        conHistoria
+          ? (que) => {
+              if (que === "acaba") this.contarLaHistoria(boca, conHistoria);
+            }
+          : undefined,
+      );
     }
 
     const canales = canalesDe(this.tier.avisos);
@@ -18545,6 +18567,22 @@ export class Game {
       },
     );
     this.dejarloALaVista();
+  }
+
+  /**
+   * **La historia de lo que se acaba de señalar**, justo detrás de su frase.
+   *
+   * Con las mismas reglas que lo que se ve: fuera de las fases de trabajo
+   * —si mientras sonaba la frase del sitio empezó la bajada, ya no toca— y
+   * nunca en un descenso de emergencia. Y gasta su hueco, como cualquier
+   * cosa que esperaba uno: la lección del aire que venga después espera su
+   * rato desde aquí, y no desde la frase del sitio. Ver `Huecos`.
+   */
+  private contarLaHistoria(boca: Instructor, historia: LoQueSeDice): void {
+    if (enFaseDeTrabajo(this.momentoDeMirar())) return;
+    if (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) return;
+    this.huecos.usar();
+    boca.decir(historia.texto, historia.clave, "baja", historia.relleno);
   }
 
   /**

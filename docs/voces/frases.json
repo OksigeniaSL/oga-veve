@@ -4305,6 +4305,20 @@
     }
   },
   {
+    "id": "ventanilla.vos.tres-kandu",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esos cerros son el Ybytyruzú. Ahí está el Tres Kandú, ¡el punto más alto de todo el Paraguay!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "ventanilla.vos.cruz-del-sur",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -4323,6 +4337,356 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.teide",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Sabías que, medido desde el fondo del mar, el Teide tiene siete mil quinientos metros? ¡Es de los volcanes más altos del mundo!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.canadas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En primavera, ahí salen los tajinastes rojos: torres de flores que pueden ser más altas que vos. ¡Solo crecen en Canarias!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.anaga",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En Anaga viven plantas y animalitos que no existen en ningún otro lugar del mundo. ¡Solamente ahí!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.orotava",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Por este valle pasó hace mucho un sabio, Humboldt. Subió al Teide y se dio cuenta de que las plantas cambian con la altura, como los pisos de una casa.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.gigantes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En ese mar viven todo el año los calderones: unos primos grandotes y oscuros de los delfines.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.garajonay",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En La Gomera la gente habla silbando, de un barranco a otro: el silbo gomero. ¡Los chicos lo aprenden en la escuela!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.taburiente",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Para que los telescopios vean bien, en La Palma las farolas alumbran para abajo, no para el cielo. ¡Hay una ley para cuidar las estrellas!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.tajogaite",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cuando la lava llegó al mar, la isla creció: ¡nacieron dos pedazos de tierra nueva junto a la costa!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.hierro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En El Hierro había un árbol que daba agua: el Garoé. Sus hojas atrapaban la niebla, y el agua caía gota a gota.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.nieves",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los antiguos canarios hicieron una cueva donde el sol entra por un agujero. ¡Según la época del año, la luz cae en otro lugar de la pared!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.las-palmas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cristóbal Colón paró en esta isla antes de cruzar a América, para arreglar el timón de uno de sus barcos, la Pinta.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.timanfaya",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En Timanfaya el suelo está tan caliente que cocinan la comida con el calor del volcán. ¡Y si echan agua en un agujero, sale disparada para arriba!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.rio-paraguay",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Ves esas lagunas con forma de herradura al lado del río? Son curvas viejas que el río dejó cuando cortó camino.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.asuncion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cuando llegaron los primeros barcos de Europa, los guaraníes de acá ya sembraban maíz, mandioca, batata y maní.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.ypacarai",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La letra de esa canción la escribió una poeta que nunca había visto el lago. ¡Se inspiró escuchando la guitarra!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.ypoa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡En el Ypoá hay islas que flotan! Son colchones de plantas, y encima hasta crecen arbolitos.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.yacyreta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Sabés qué quiere decir Yacyretá en guaraní? Tierra de la luna: yasy es la luna.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.itaipu",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Itaipú quiere decir piedra que suena, en guaraní. Así se llamaba una isla del río.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.iguazu",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Iguazú quiere decir agua grande, en guaraní. Hace mucho, unos viajeros tuvieron que cargar sus canoas a pie para pasar las cataratas.",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.triple-frontera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En cada orilla hay una columna pintada con los colores de su bandera. ¡Tres orillas, tres banderas!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.cerro-cora",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En esos montes vive el mboreví, el tapir: ¡el animal de tierra más grande de Sudamérica, con una trompita!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.chaco",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En el Chaco hay un árbol con la panza gorda como una botella: el samuhú. ¡Guarda agua adentro para cuando no llueve!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.encarnacion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Encarnación empezó hace más de cuatrocientos años, como un pueblo de las misiones. ¡Y un puente largo la une con Argentina!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.trinidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En la iglesia de Trinidad hay ángeles de piedra tocando el arpa, el órgano y la flauta. ¡Una orquesta de piedra!",
+    "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.vos.historia.cruz-del-sur",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hace mucho, a estas estrellas las llamaban el Crucero, y los marineros las usaban para saber qué tan al sur estaban.",
     "para": "lo que se ve por la ventanilla, dicho al lado en la avioneta",
     "ajustes": {
       "stability": 0.35,
@@ -4809,6 +5173,20 @@
     }
   },
   {
+    "id": "ventanilla.tres-kandu",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Esos cerros son el Ybytyruzú, y el más alto es el Tres Kandú: ochocientos cuarenta y dos metros, el punto más alto del Paraguay.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "ventanilla.cruz-del-sur",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -4827,6 +5205,356 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Miren hacia el norte: esa estrella sola, ni muy alta ni muy baja, es la Estrella Polar. No es la más brillante, pero es la más útil: casi no se mueve en toda la noche y marca el norte. Y está tan alta como lejos estamos del ecuador: aquí, unos veintiocho grados.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.teide",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y algo que no se ve: medido desde el fondo del mar, el Teide tiene unos siete mil quinientos metros. Es el tercer volcán más alto del mundo, después de dos de Hawái.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.canadas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En primavera, Las Cañadas se llenan de tajinastes rojos: torres de flores que pueden ser más altas que una persona, y que solo crecen en Canarias. Y entre las piedras, más arriba, vive la violeta del Teide.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.anaga",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Anaga es Reserva de la Biosfera desde dos mil quince: es uno de los lugares de Europa con más plantas y animales que no viven en ninguna otra parte del mundo.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.orotava",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En mil setecientos noventa y nueve pasó por este valle el sabio Alexander von Humboldt. Subió al Teide y se fijó en que las plantas cambian con la altura, como si la montaña tuviera pisos.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.gigantes",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En el mar de enfrente viven todo el año los calderones, unos parientes grandes y oscuros de los delfines. Hay muy pocos sitios en el mundo donde se queden a vivir así.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.garajonay",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y en La Gomera se puede hablar silbando: es el silbo gomero, que cruza los barrancos de un lado a otro y se oye a kilómetros. Los niños de la isla lo aprenden en la escuela.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.taburiente",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Para que esos telescopios vean bien, La Palma tiene una ley que cuida el cielo: las farolas alumbran hacia el suelo y no hacia arriba. Por eso allí, de noche, se ven tantísimas estrellas.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.tajogaite",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Cuando la lava llegó al mar, la isla creció: nacieron dos trozos de tierra nueva junto a la costa, las fajanas del Tajogaite. Son más jóvenes que muchos de los niños que van a bordo.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.hierro",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Los antiguos herreños, los bimbaches, bebían el agua de un árbol, el Garoé: sus hojas atrapaban la niebla y el agua caía gota a gota. Hasta los marineros de Magallanes oyeron hablar de él, en mil quinientos diecinueve.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.nieves",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "El centro de la isla es Patrimonio de la Humanidad. Allí, en Risco Caído, los antiguos canarios tallaron una cueva en la que el sol entra por un agujero, y su luz va cambiando de sitio en la pared con las estaciones.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.las-palmas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En mil cuatrocientos noventa y dos, camino de América, Cristóbal Colón paró en Gran Canaria para ponerle un timón nuevo a la Pinta, uno de sus tres barcos.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.timanfaya",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Allí el suelo sigue tan caliente que, si echan agua en un agujero, sale disparada hacia arriba como un géiser. Y en el restaurante de la montaña asan la comida con el calor del volcán.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.rio-paraguay",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Fíjense en las curvas del río y en las lagunas con forma de herradura que tiene al lado: son curvas viejas. El agua se come la orilla de afuera de cada curva, hasta que un día el río corta camino y la curva se queda sola.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.asuncion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Cuando llegaron los primeros barcos europeos, hace casi quinientos años, los guaraníes de esta zona ya sembraban maíz, mandioca, batata y maní. Uno de aquellos viajeros escribió que en cuatro años no había comido un pan tan bueno.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.ypacarai",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "La música de esa canción la compuso un paraguayo, Demetrio Ortiz. Y la letra la escribió una poeta argentina, Zulema de Mirkin, sin haber visto nunca el lago: se inspiró en la guitarra de él.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.ypoa",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En el Ypoá hay islas que flotan: colchones de plantas tan gruesos que hasta crecen arbolitos encima. Con los años, algunas se van pegando a la tierra firme.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.yacyreta",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Yacyretá, en guaraní, quiere decir tierra de la luna: yasy es la luna. Así se llamaba una isla del río, y de ella tomó el nombre la represa.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.itaipu",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Itaipú, en guaraní, quiere decir piedra que suena: así se llamaba una isla del río, cerca de donde se levantó la represa. Su primera turbina empezó a girar en mil novecientos ochenta y cuatro.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.iguazu",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Iguazú, en guaraní, quiere decir agua grande. En mil quinientos cuarenta y dos llegó hasta ahí Álvar Núñez Cabeza de Vaca, camino de Asunción, y tuvo que cargar sus canoas a pie para rodear las cataratas.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.triple-frontera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En cada orilla hay un hito pintado con los colores de su bandera: celeste y blanco en Argentina, verde y amarillo en Brasil, y rojo, blanco y azul en Paraguay.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.cerro-cora",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En los montes de Cerro Corá todavía vive el mboreví, el tapir: el animal de tierra más grande de Sudamérica, con una trompita en la nariz.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.chaco",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "En el Chaco crece el samuhú, el palo borracho: un árbol de tronco gordo como una botella, que guarda agua para los meses secos.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.encarnacion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Encarnación nació en mil seiscientos quince como un pueblo de las misiones, fundado por Roque González de Santa Cruz, un sacerdote nacido en Asunción. Hoy lleva su nombre el puente que la une con Posadas, en Argentina.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.trinidad",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Dentro de su iglesia hay ángeles tallados en piedra que tocan música: arpa, órgano, trompetas y flauta. Llevan ahí más de doscientos cincuenta años.",
+    "para": "lo que se ve por la ventanilla, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "ventanilla.historia.cruz-del-sur",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Hace más de cuatrocientos años, el padre José de Acosta escribió que a estas cuatro estrellas las llamaban el Crucero, y que los marineros, con la del pie de la cruz, medían qué tan al sur estaban.",
     "para": "lo que se ve por la ventanilla, por la megafonía",
     "ajustes": {
       "stability": 0.35,

@@ -988,6 +988,13 @@ export const ES_PY = {
   "ventanilla.trinidad":
     "Ahí están las ruinas de Trinidad, una misión jesuítica del siglo dieciocho. Es Patrimonio de la Humanidad, junto con la de Jesús, que está cerquita.",
   /*
+   * El Ybytyruzú, que es lo único que se ve en una hora de Asunción a Ciudad
+   * del Este o de Encarnación a Asunción: lo demás queda en la cabina estéril
+   * de los dos campos. La cota, la de su cumbre.
+   */
+  "ventanilla.tres-kandu":
+    "Esos cerros son el Ybytyruzú, y el más alto es el Tres Kandú: ochocientos cuarenta y dos metros, el punto más alto del Paraguay.",
+  /*
    * **Y las dos estrellas que se enseñan de noche.** La Cruz solo se señala en
    * Paraguay y la Polar solo en Canarias —desde Paraguay está bajo el
    * horizonte toda la noche—, así que cada una va en el registro de su sitio:
@@ -1001,6 +1008,79 @@ export const ES_PY = {
     "Y ahora, miren el cielo: esas cuatro estrellas en cruz son la Cruz del Sur. Si alargan el palo largo unas cuatro veces y media, llegan justo al sur. ¡Así se orientaban los navegantes, mucho antes del GPS!",
   "ventanilla.polar":
     "Miren hacia el norte: esa estrella sola, ni muy alta ni muy baja, es la Estrella Polar. No es la más brillante, pero es la más útil: casi no se mueve en toda la noche y marca el norte. Y está tan alta como lejos estamos del ecuador: aquí, unos veintiocho grados.",
+  /*
+   * ── **Y detrás, su historia** ───────────────────────────────────────────
+   *
+   * Lo que se ve dice qué es; esto cuenta algo de ello que no se ve desde
+   * arriba: quién vivía allí, qué pasó, por qué se llama así. Va justo
+   * detrás de la frase del sitio, en su propia frase y con la misma voz —ver
+   * `laHistoria` en `audio/ventanilla.ts`—, y solo para lo que se acaba de
+   * señalar, que es lo que se tiene delante de los ojos.
+   *
+   * **Cada hecho tiene su fuente**, apuntada en `docs/historias/fuentes.md`:
+   * la página de la UNESCO, del IAC o del MITECO, la Wikipedia con lo que
+   * cita, o los libros —los Comentarios de Cabeza de Vaca, el viaje de
+   * Schmidl, Pigafetta, Acosta—. Contado con nuestras palabras: ninguna frase
+   * copiada. Y contado para quien tiene cuatro años y para quien tiene
+   * catorce: sin la violencia de la conquista, sin accidentes y sin
+   * estereotipos de los guaraníes ni de los antiguos canarios, que salen como
+   * lo que eran: los que sembraban, los que sacaban agua de la niebla.
+   *
+   * Las de Canarias sin voseo ni paraguayismos, y las de Paraguay en
+   * paraguayo; todas de usted, como lo demás de la comandante.
+   */
+  // Canarias.
+  "ventanilla.historia.teide":
+    "Y algo que no se ve: medido desde el fondo del mar, el Teide tiene unos siete mil quinientos metros. Es el tercer volcán más alto del mundo, después de dos de Hawái.",
+  "ventanilla.historia.canadas":
+    "En primavera, Las Cañadas se llenan de tajinastes rojos: torres de flores que pueden ser más altas que una persona, y que solo crecen en Canarias. Y entre las piedras, más arriba, vive la violeta del Teide.",
+  "ventanilla.historia.anaga":
+    "Anaga es Reserva de la Biosfera desde dos mil quince: es uno de los lugares de Europa con más plantas y animales que no viven en ninguna otra parte del mundo.",
+  "ventanilla.historia.orotava":
+    "En mil setecientos noventa y nueve pasó por este valle el sabio Alexander von Humboldt. Subió al Teide y se fijó en que las plantas cambian con la altura, como si la montaña tuviera pisos.",
+  "ventanilla.historia.gigantes":
+    "En el mar de enfrente viven todo el año los calderones, unos parientes grandes y oscuros de los delfines. Hay muy pocos sitios en el mundo donde se queden a vivir así.",
+  "ventanilla.historia.garajonay":
+    "Y en La Gomera se puede hablar silbando: es el silbo gomero, que cruza los barrancos de un lado a otro y se oye a kilómetros. Los niños de la isla lo aprenden en la escuela.",
+  "ventanilla.historia.taburiente":
+    "Para que esos telescopios vean bien, La Palma tiene una ley que cuida el cielo: las farolas alumbran hacia el suelo y no hacia arriba. Por eso allí, de noche, se ven tantísimas estrellas.",
+  "ventanilla.historia.tajogaite":
+    "Cuando la lava llegó al mar, la isla creció: nacieron dos trozos de tierra nueva junto a la costa, las fajanas del Tajogaite. Son más jóvenes que muchos de los niños que van a bordo.",
+  "ventanilla.historia.hierro":
+    "Los antiguos herreños, los bimbaches, bebían el agua de un árbol, el Garoé: sus hojas atrapaban la niebla y el agua caía gota a gota. Hasta los marineros de Magallanes oyeron hablar de él, en mil quinientos diecinueve.",
+  "ventanilla.historia.nieves":
+    "El centro de la isla es Patrimonio de la Humanidad. Allí, en Risco Caído, los antiguos canarios tallaron una cueva en la que el sol entra por un agujero, y su luz va cambiando de sitio en la pared con las estaciones.",
+  "ventanilla.historia.las-palmas":
+    "En mil cuatrocientos noventa y dos, camino de América, Cristóbal Colón paró en Gran Canaria para ponerle un timón nuevo a la Pinta, uno de sus tres barcos.",
+  "ventanilla.historia.timanfaya":
+    "Allí el suelo sigue tan caliente que, si echan agua en un agujero, sale disparada hacia arriba como un géiser. Y en el restaurante de la montaña asan la comida con el calor del volcán.",
+  // Paraguay.
+  "ventanilla.historia.rio-paraguay":
+    "Fíjense en las curvas del río y en las lagunas con forma de herradura que tiene al lado: son curvas viejas. El agua se come la orilla de afuera de cada curva, hasta que un día el río corta camino y la curva se queda sola.",
+  "ventanilla.historia.asuncion":
+    "Cuando llegaron los primeros barcos europeos, hace casi quinientos años, los guaraníes de esta zona ya sembraban maíz, mandioca, batata y maní. Uno de aquellos viajeros escribió que en cuatro años no había comido un pan tan bueno.",
+  "ventanilla.historia.ypacarai":
+    "La música de esa canción la compuso un paraguayo, Demetrio Ortiz. Y la letra la escribió una poeta argentina, Zulema de Mirkin, sin haber visto nunca el lago: se inspiró en la guitarra de él.",
+  "ventanilla.historia.ypoa":
+    "En el Ypoá hay islas que flotan: colchones de plantas tan gruesos que hasta crecen arbolitos encima. Con los años, algunas se van pegando a la tierra firme.",
+  "ventanilla.historia.yacyreta":
+    "Yacyretá, en guaraní, quiere decir tierra de la luna: yasy es la luna. Así se llamaba una isla del río, y de ella tomó el nombre la represa.",
+  "ventanilla.historia.itaipu":
+    "Itaipú, en guaraní, quiere decir piedra que suena: así se llamaba una isla del río, cerca de donde se levantó la represa. Su primera turbina empezó a girar en mil novecientos ochenta y cuatro.",
+  "ventanilla.historia.iguazu":
+    "Iguazú, en guaraní, quiere decir agua grande. En mil quinientos cuarenta y dos llegó hasta ahí Álvar Núñez Cabeza de Vaca, camino de Asunción, y tuvo que cargar sus canoas a pie para rodear las cataratas.",
+  "ventanilla.historia.triple-frontera":
+    "En cada orilla hay un hito pintado con los colores de su bandera: celeste y blanco en Argentina, verde y amarillo en Brasil, y rojo, blanco y azul en Paraguay.",
+  "ventanilla.historia.cerro-cora":
+    "En los montes de Cerro Corá todavía vive el mboreví, el tapir: el animal de tierra más grande de Sudamérica, con una trompita en la nariz.",
+  "ventanilla.historia.chaco":
+    "En el Chaco crece el samuhú, el palo borracho: un árbol de tronco gordo como una botella, que guarda agua para los meses secos.",
+  "ventanilla.historia.encarnacion":
+    "Encarnación nació en mil seiscientos quince como un pueblo de las misiones, fundado por Roque González de Santa Cruz, un sacerdote nacido en Asunción. Hoy lleva su nombre el puente que la une con Posadas, en Argentina.",
+  "ventanilla.historia.trinidad":
+    "Dentro de su iglesia hay ángeles tallados en piedra que tocan música: arpa, órgano, trompetas y flauta. Llevan ahí más de doscientos cincuenta años.",
+  "ventanilla.historia.cruz-del-sur":
+    "Hace más de cuatrocientos años, el padre José de Acosta escribió que a estas cuatro estrellas las llamaban el Crucero, y que los marineros, con la del pie de la cruz, medían qué tan al sur estaban.",
 
   /*
    * **Y lo mismo, dicho por la instructora en la avioneta**: de vos, más
@@ -1073,11 +1153,67 @@ export const ES_PY = {
     "Esa es Encarnación. En verano tiene playas en el río y un carnaval muy famoso.",
   "ventanilla.vos.trinidad":
     "Ahí están las ruinas de Trinidad: una misión jesuítica viejísima, Patrimonio de la Humanidad.",
+  "ventanilla.vos.tres-kandu":
+    "Esos cerros son el Ybytyruzú. Ahí está el Tres Kandú, ¡el punto más alto de todo el Paraguay!",
   // Y las dos estrellas, de vos en los dos sitios: la instructora vosea siempre.
   "ventanilla.vos.cruz-del-sur":
     "Mirá esas cuatro estrellas en cruz: es la Cruz del Sur. Si alargás el palo largo cuatro veces y media, apuntás al sur.",
   "ventanilla.vos.polar":
     "¿Ves esa estrella sola, hacia el norte? Es la Polar. Casi no se mueve: toda la noche marca el norte.",
+  /*
+   * **Y detrás, su historia, de vos**: la misma que cuenta la comandante,
+   * más corta y a quien va al lado. Las fuentes, en `docs/historias/fuentes.md`.
+   */
+  "ventanilla.vos.historia.teide":
+    "¿Sabías que, medido desde el fondo del mar, el Teide tiene siete mil quinientos metros? ¡Es de los volcanes más altos del mundo!",
+  "ventanilla.vos.historia.canadas":
+    "En primavera, ahí salen los tajinastes rojos: torres de flores que pueden ser más altas que vos. ¡Solo crecen en Canarias!",
+  "ventanilla.vos.historia.anaga":
+    "En Anaga viven plantas y animalitos que no existen en ningún otro lugar del mundo. ¡Solamente ahí!",
+  "ventanilla.vos.historia.orotava":
+    "Por este valle pasó hace mucho un sabio, Humboldt. Subió al Teide y se dio cuenta de que las plantas cambian con la altura, como los pisos de una casa.",
+  "ventanilla.vos.historia.gigantes":
+    "En ese mar viven todo el año los calderones: unos primos grandotes y oscuros de los delfines.",
+  "ventanilla.vos.historia.garajonay":
+    "En La Gomera la gente habla silbando, de un barranco a otro: el silbo gomero. ¡Los chicos lo aprenden en la escuela!",
+  "ventanilla.vos.historia.taburiente":
+    "Para que los telescopios vean bien, en La Palma las farolas alumbran para abajo, no para el cielo. ¡Hay una ley para cuidar las estrellas!",
+  "ventanilla.vos.historia.tajogaite":
+    "Cuando la lava llegó al mar, la isla creció: ¡nacieron dos pedazos de tierra nueva junto a la costa!",
+  "ventanilla.vos.historia.hierro":
+    "En El Hierro había un árbol que daba agua: el Garoé. Sus hojas atrapaban la niebla, y el agua caía gota a gota.",
+  "ventanilla.vos.historia.nieves":
+    "Los antiguos canarios hicieron una cueva donde el sol entra por un agujero. ¡Según la época del año, la luz cae en otro lugar de la pared!",
+  "ventanilla.vos.historia.las-palmas":
+    "Cristóbal Colón paró en esta isla antes de cruzar a América, para arreglar el timón de uno de sus barcos, la Pinta.",
+  "ventanilla.vos.historia.timanfaya":
+    "En Timanfaya el suelo está tan caliente que cocinan la comida con el calor del volcán. ¡Y si echan agua en un agujero, sale disparada para arriba!",
+  "ventanilla.vos.historia.rio-paraguay":
+    "¿Ves esas lagunas con forma de herradura al lado del río? Son curvas viejas que el río dejó cuando cortó camino.",
+  "ventanilla.vos.historia.asuncion":
+    "Cuando llegaron los primeros barcos de Europa, los guaraníes de acá ya sembraban maíz, mandioca, batata y maní.",
+  "ventanilla.vos.historia.ypacarai":
+    "La letra de esa canción la escribió una poeta que nunca había visto el lago. ¡Se inspiró escuchando la guitarra!",
+  "ventanilla.vos.historia.ypoa":
+    "¡En el Ypoá hay islas que flotan! Son colchones de plantas, y encima hasta crecen arbolitos.",
+  "ventanilla.vos.historia.yacyreta":
+    "¿Sabés qué quiere decir Yacyretá en guaraní? Tierra de la luna: yasy es la luna.",
+  "ventanilla.vos.historia.itaipu":
+    "Itaipú quiere decir piedra que suena, en guaraní. Así se llamaba una isla del río.",
+  "ventanilla.vos.historia.iguazu":
+    "Iguazú quiere decir agua grande, en guaraní. Hace mucho, unos viajeros tuvieron que cargar sus canoas a pie para pasar las cataratas.",
+  "ventanilla.vos.historia.triple-frontera":
+    "En cada orilla hay una columna pintada con los colores de su bandera. ¡Tres orillas, tres banderas!",
+  "ventanilla.vos.historia.cerro-cora":
+    "En esos montes vive el mboreví, el tapir: ¡el animal de tierra más grande de Sudamérica, con una trompita!",
+  "ventanilla.vos.historia.chaco":
+    "En el Chaco hay un árbol con la panza gorda como una botella: el samuhú. ¡Guarda agua adentro para cuando no llueve!",
+  "ventanilla.vos.historia.encarnacion":
+    "Encarnación empezó hace más de cuatrocientos años, como un pueblo de las misiones. ¡Y un puente largo la une con Argentina!",
+  "ventanilla.vos.historia.trinidad":
+    "En la iglesia de Trinidad hay ángeles de piedra tocando el arpa, el órgano y la flauta. ¡Una orquesta de piedra!",
+  "ventanilla.vos.historia.cruz-del-sur":
+    "Hace mucho, a estas estrellas las llamaban el Crucero, y los marineros las usaban para saber qué tan al sur estaban.",
   /*
    * **Y la llegada dice dónde has llegado.**
    *

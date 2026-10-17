@@ -27,7 +27,7 @@ import {
   LoQueSeVe,
 } from "./lo-que-se-ve";
 import { conPasaje } from "../audio/megafonia";
-import { loQueSeDice } from "../audio/ventanilla";
+import { laHistoria, loQueSeDice } from "../audio/ventanilla";
 import { desplazarAerodromo } from "../world/aerodromo-desplazado";
 import { campoDeCasa, campoVecino } from "../world/campo-del-vuelo";
 import { dondeCae } from "../world/entre-aerodromos";
@@ -50,6 +50,8 @@ interface Dicho {
   readonly nombre: string;
   readonly lado: string;
   readonly texto: string;
+  /** La historia que va detrás, si el sitio la tiene: su clave. */
+  readonly historia: string | null;
 }
 
 /**
@@ -109,9 +111,11 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
     });
     habla = Math.max(0, habla - dt);
     if (!mirada) continue;
-    // Lo que tarda en decirlo: nadie habla encima, ni ella misma.
-    habla = 14;
     const dicho = loQueSeDice(mirada, conGente, ventanilla.cuantos - 1);
+    const historia = laHistoria(mirada, conGente);
+    // Lo que tarda en decirlo, con su historia detrás: nadie habla encima, ni
+    // ella misma.
+    habla = historia ? 28 : 14;
     dichos.push({
       minuto: `${Math.floor(t / 60)}:${String(Math.round(t % 60)).padStart(2, "0")}`,
       km: Math.round(s / 1000),
@@ -120,6 +124,7 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
       nombre: mirada.hito.nombre,
       lado: mirada.lado,
       texto: dicho?.texto ?? "",
+      historia: historia?.relleno.historia ?? null,
     });
   }
   if (entorno?.OGA_VENTANILLA) {
@@ -130,7 +135,8 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
           .map(
             (x) =>
               `  ${x.minuto} · km ${x.km} · ${x.pies} ft · a ${x.alCampo} km del campo · ` +
-              `${x.lado}: ${x.nombre}\n      «${x.texto}»`,
+              `${x.lado}: ${x.nombre}\n      «${x.texto}»` +
+              (x.historia ? `\n      y detrás: ${x.historia}` : ""),
           )
           .join("\n"),
     );
@@ -170,6 +176,18 @@ describe("de Los Rodeos a La Palma, lo que se ve", () => {
   });
 
   /*
+   * **Y detrás del Teide, su historia**, contada por la megafonía: la del
+   * sitio que se acaba de señalar, que es el que se tiene delante. Ninguna
+   * historia sale sola: va pegada a lo que se vio.
+   */
+  it("y detrás de lo que se ve, su historia: la del Teide, por la megafonía", () => {
+    const teide = vuelo.dichos.find((d) => d.nombre === "Teide")!;
+    expect(teide.historia).toBe("ventanilla.historia.teide");
+    for (const d of vuelo.dichos)
+      if (d.historia) expect(d.historia).toMatch(/^ventanilla\.historia\./);
+  });
+
+  /*
    * **La queja, tal cual.** Sobre el mar al norte del Puerto de la Cruz, a
    * diez mil pies y rumbo a La Palma: Candelaria queda al otro lado de la
    * Dorsal y no se ve; el Teide, que es más alto que el avión, sí.
@@ -192,6 +210,11 @@ describe("de Asunción a Pilar, lo que se ve", () => {
     expect(vuelo.dichos.map((d) => d.nombre)).toContain("Río Paraguay");
   });
 
+  it("y detrás, la historia de sus curvas viejas", () => {
+    const rio = vuelo.dichos.find((d) => d.nombre === "Río Paraguay")!;
+    expect(rio.historia).toBe("ventanilla.historia.rio-paraguay");
+  });
+
   it("sin repetir y fuera de la cabina estéril", () => {
     const nombres = vuelo.dichos.map((d) => d.nombre);
     expect(new Set(nombres).size).toBe(nombres.length);
@@ -205,6 +228,27 @@ describe("y en avioneta, la instructora", () => {
   it("cuenta de vos y fuera del circuito", () => {
     expect(vuelo.conGente).toBe(false);
     for (const d of vuelo.dichos) expect(d.texto).toMatch(/Mirá|Fijate/);
+    fueraDeLaCabinaEsteril(vuelo.dichos, vuelo.conGente);
+  });
+
+  it("y la historia también la cuenta ella, de vos", () => {
+    const conHistoria = vuelo.dichos.filter((d) => d.historia);
+    expect(conHistoria.length).toBeGreaterThan(0);
+    for (const d of conHistoria) expect(d.historia).toMatch(/^ventanilla\.vos\.historia\./);
+  });
+});
+
+/*
+ * **El Ybytyruzú, que se puso por esto**: de Asunción a Ciudad del Este, una
+ * hora con el JAZ 60, no se contaba nada —lo que hay cerca de los dos campos
+ * cae en la cabina estéril—. El Tres Kandú, el punto más alto del país, se ve
+ * a la derecha a mitad de camino.
+ */
+describe("de Asunción a Ciudad del Este, el Ybytyruzú", () => {
+  const vuelo = volar("pettirossi", "guarani", "jaz-60", ["pettirossi", "guarani"]);
+
+  it("se ve, y fuera de la cabina estéril", () => {
+    expect(vuelo.dichos.map((d) => d.nombre)).toContain("Cerro Tres Kandú");
     fueraDeLaCabinaEsteril(vuelo.dichos, vuelo.conGente);
   });
 });

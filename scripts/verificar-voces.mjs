@@ -278,6 +278,26 @@ const REPARTO = [
     { lado: "ventanilla.vos.lado.derecha", que: "ventanilla.vos.ypacarai" },
   ],
   /*
+   * **Y la historia que va detrás**: la del Garoé y la del Iguazú por la
+   * megafonía, y la de la instructora de vos, cada una de su pack. Y el
+   * Ybytyruzú, que es un sitio nuevo. Ver `laHistoria` en
+   * `audio/ventanilla.ts`.
+   */
+  ["comandante", "ventanilla.historia", "comandante", { historia: "ventanilla.historia.hierro" }],
+  ["comandante", "ventanilla.historia", "comandante", { historia: "ventanilla.historia.iguazu" }],
+  [
+    "instructor",
+    "ventanilla.vos.historia",
+    "instructor",
+    { historia: "ventanilla.vos.historia.chaco" },
+  ],
+  [
+    "comandante",
+    "ventanilla",
+    "comandante",
+    { lado: "ventanilla.lado.derecha", que: "ventanilla.tres-kandu" },
+  ],
+  /*
    * **Y la altura, por escalones**: el control autoriza «ascienda a…» —«suba
    * a…» en Canarias— y «climb to…», en las dos torres, en pies por debajo de
    * la transición y en nivel por encima; la instructora cuenta la ventanilla
