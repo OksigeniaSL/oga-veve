@@ -52,6 +52,7 @@ import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { caraDentro } from "./inicio";
+import type { EscenaDelInicio } from "../flight/inicio";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import {
   ejerciciosPara,
@@ -109,11 +110,12 @@ export interface Eleccion {
    */
   readonly destino: string;
   /**
-   * **El modo inicio**: el primer vuelo, paso a paso, con Jazlyn. Es su
-   * propio vuelo —el sitio, el avión y el peldaño los pone él— y no cambia
-   * nada de lo elegido. Ver `flight/inicio.ts` y `main.ts`.
+   * **El modo inicio**: el primer vuelo, paso a paso, con Jazlyn —`despegar`—,
+   * o la segunda escena, aterrizar con ella. Es su propio vuelo —el sitio, el
+   * avión y el peldaño los pone él— y no cambia nada de lo elegido. Ver
+   * `flight/inicio.ts`, `flight/inicio-aterrizar.ts` y `main.ts`.
    */
-  readonly inicio?: boolean;
+  readonly inicio?: EscenaDelInicio;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -1196,16 +1198,32 @@ const LEC_INICIO = escena(`
 `);
 
 /**
- * La ficha del modo inicio. **No es una lección más del grupo**: no se elige
- * y se despega después, sino que se toca y se vuela, con su sitio, su avión y
- * su peldaño. Por eso va fuera del grupo de radio, delante de todo.
+ * **Aterrizar con Jazlyn**: la avioneta bajando a la pista con su senda, como
+ * la de aterrizar, y las mismas dos caras en la esquina. Al lado de la de
+ * aprender, que se lee como «lo mismo, pero ahora bajando». Ver
+ * `flight/inicio-aterrizar.ts`.
  */
-function fichaDelInicio(): string {
+const LEC_INICIO_ATERRIZAR = escena(`
+  <path class="leccion__asfalto" d="M52 84 L86 50 h26 L78 84 Z" />
+  <path class="leccion__estela" d="M40 30 q22 12 46 26" />
+  ${AVION("translate(58 38) rotate(24) scale(1.05)")}
+  ${caraDentro("mama", 4, 4, 34)}
+  ${caraDentro("ara", 30, 14, 24)}
+`);
+
+/**
+ * Las fichas del modo inicio. **No son lecciones más del grupo**: no se eligen
+ * y se despega después, sino que se tocan y se vuelan, con su sitio, su avión
+ * y su peldaño. Por eso van fuera del grupo de radio, delante de todo: la de
+ * aprender a volar y, al lado, la de aterrizar.
+ */
+function fichaDelInicio(cual: EscenaDelInicio): string {
+  const aterrizar = cual === "aterrizar";
   return `
-    <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo>
-      <span class="ficha__lienzo ficha__lienzo--panel">${LEC_INICIO}</span>
+    <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo="${cual}">
+      <span class="ficha__lienzo ficha__lienzo--panel">${aterrizar ? LEC_INICIO_ATERRIZAR : LEC_INICIO}</span>
       <span class="ficha__pie">
-        <span class="ficha__nombre">${t("inicio.modo.nombre")}</span>
+        <span class="ficha__nombre">${t(aterrizar ? "inicio.modo.aterrizar" : "inicio.modo.nombre")}</span>
       </span>
     </button>`;
 }
@@ -1905,7 +1923,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
-          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio()}</div>
+          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}</div>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
@@ -2385,6 +2403,8 @@ export function abrirHangar(
        * **Y el modo inicio, que se toca y se vuela**: ver `fichaDelInicio`.
        */
       const conInicio = boton.hasAttribute("data-inicio-modo");
+      const escenaDelInicio: EscenaDelInicio =
+        boton.getAttribute("data-inicio-modo") === "aterrizar" ? "aterrizar" : "despegar";
       if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
@@ -2405,7 +2425,7 @@ export function abrirHangar(
           ejercicio,
           aircraft: avion,
           destino: destinoDeAhora(),
-          ...(conInicio ? { inicio: true } : {}),
+          ...(conInicio ? { inicio: escenaDelInicio } : {}),
         });
       }
     });

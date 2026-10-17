@@ -843,7 +843,19 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
-import { esDeLaEscena, Inicio, type Linea, type PasoId } from "./flight/inicio";
+import {
+  esDeLaEscena,
+  Inicio,
+  type EscenaDelInicio,
+  type Linea,
+  type PasoId,
+} from "./flight/inicio";
+import {
+  enLosMandos,
+  InicioDeAterrizar,
+  type LecturaDeAterrizar,
+  type PasoDeAterrizar,
+} from "./flight/inicio-aterrizar";
 import { PantallaDelInicio } from "./ui/inicio";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
@@ -1574,10 +1586,11 @@ export interface GameOptions {
   ortofotoMedia?: Ortofoto;
 
   /**
-   * **El modo inicio**: el primer vuelo, paso a paso y con el mundo esperando.
-   * Ver `flight/inicio.ts` y `empezarElInicio`.
+   * **El modo inicio**: el primer vuelo, paso a paso y con el mundo esperando
+   * —`despegar`—, o la segunda escena, aterrizar con Jazlyn. Ver
+   * `flight/inicio.ts`, `flight/inicio-aterrizar.ts` y `empezarElInicio`.
    */
-  inicio?: boolean;
+  inicio?: EscenaDelInicio;
 
   /**
    * El peldaño de este vuelo, si no es el recordado: el modo inicio va en
@@ -2170,7 +2183,8 @@ export class Game {
   private moverLasAves(dt: number): void {
     this.bandadas.paso(this.relojDeRuta, this.flight.state.position);
     for (const f of this.faunaDeLosCampos) f.paso(this.relojDeRuta);
-    this.vigilarLasAves(dt);
+    // Sin aves en la final de la escena de aterrizar: ver `manoDeJazlyn`.
+    if (!this.manoDeJazlyn) this.vigilarLasAves(dt);
     this.mirarLasUves();
   }
 
@@ -4771,11 +4785,31 @@ export class Game {
     BOCA,
     this.grabaciones,
   );
-  /** El modo inicio, mientras dure. Ver `empezarElInicio`. */
-  private inicio: Inicio | null = null;
+  /** El modo inicio, mientras dure: el despegue o el aterrizaje. Ver `empezarElInicio`. */
+  private inicio: Inicio | InicioDeAterrizar | null = null;
   private pantallaDelInicio: PantallaDelInicio | null = null;
   /** Si este vuelo es el del modo inicio, aunque ya se haya acabado. */
   private conInicio = false;
+  /** Y cuál de las dos escenas. */
+  private escenaDelInicio: EscenaDelInicio = "despegar";
+  /**
+   * **Si el avión lo lleva la mano de Jazlyn**: la escena de aterrizar,
+   * mientras dura. Ahí ella es la instructora y nadie más toca los mandos ni
+   * decide por la aproximación —ni la ayuda del gas de la final, ni la
+   * nivelada, ni la orden de irse al aire, ni la toma larga—. Ver
+   * `flight/inicio-aterrizar.ts`.
+   */
+  private get manoDeJazlyn(): boolean {
+    return this.inicio instanceof InicioDeAterrizar;
+  }
+  /** Lo último que leyó la escena de aterrizar, y cómo se tocó: para el banco. */
+  private lecturaDelAterrizaje: LecturaDeAterrizar | null = null;
+  private tomaDelAterrizaje: {
+    readonly alUmbral: number;
+    readonly lado: number;
+    readonly caida: number;
+    readonly velocidad: number;
+  } | null = null;
   /** Si el mundo espera a que se haga lo que pide el modo inicio. */
   private inicioCongelado = false;
   /**
@@ -5036,7 +5070,8 @@ export class Game {
     instalarCurvatura(options.curvatura ?? CURVAR_EL_DIBUJO);
     // El peldaño de este vuelo, antes de que nada lo mire. Ver `GameOptions.tramo`.
     if (options.tramo) this.tier = options.tramo;
-    this.conInicio = options.inicio === true;
+    this.conInicio = options.inicio !== undefined;
+    this.escenaDelInicio = options.inicio ?? "despegar";
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.pavimento = this.scenario.aerodrome
@@ -6315,23 +6350,43 @@ export class Game {
    * Y apunta que ya se vio, y que la pantalla de las teclas tampoco hace falta
    * abrirla sola: este modo la sustituye como primera experiencia. Ver
    * `main.ts`.
+   *
+   * **La de aterrizar empieza ya volando**, en la final de la lección de
+   * aterrizar —ver `reiniciarEnFinal`—, con el motor en marcha y el gas que
+   * sostiene su velocidad de entrada, y el mundo sin parar: en el aire, el
+   * avión lo lleva la mano de Jazlyn. Ver `flight/inicio-aterrizar.ts`.
    */
-  private empezarElInicio(desde?: PasoId): void {
+  private empezarElInicio(desde?: PasoId | PasoDeAterrizar): void {
+    const aterrizar = this.escenaDelInicio === "aterrizar";
     try {
-      ponerTexto("inicio-visto", "1");
+      // La primera experiencia es la del despegue: aterrizar no la da por vista.
+      if (!aterrizar) ponerTexto("inicio-visto", "1");
       ponerTexto("teclas-vistas", "1");
     } catch {
       // Sin almacenamiento se juega igual.
     }
     this.mama.callar();
     this.ara.callar();
-    this.input.cerrarGas();
-    this.input.controls.engineOn = false;
-    this.inicio = new Inicio(this.vozDelInicio, {
-      primerSello: this.cuaderno.aerodromos.length === 0,
-      ...(desde ? { desde } : {}),
-    });
-    this.inicioCongelado = true;
+    const primerSello = this.cuaderno.aerodromos.length === 0;
+    if (aterrizar) {
+      this.inicio = new InicioDeAterrizar(this.vozDelInicio, {
+        primerSello,
+        ...(desde ? { desde: desde as PasoDeAterrizar } : {}),
+      });
+      this.inicioCongelado = false;
+      this.tomaDelAterrizaje = null;
+      // El gas de la final es de su mano: la ayuda del peldaño no se engancha.
+      this.soltarElGasDeLaFinal(false);
+      this.gasDeLaFinalDado = true;
+    } else {
+      this.input.cerrarGas();
+      this.input.controls.engineOn = false;
+      this.inicio = new Inicio(this.vozDelInicio, {
+        primerSello,
+        ...(desde ? { desde: desde as PasoId } : {}),
+      });
+      this.inicioCongelado = true;
+    }
     this.instructor.callaSalvo = () => false;
     /*
      * **Y la boca, de la escena**: mientras Jazlyn y Ara hablan, nadie más
@@ -6353,8 +6408,11 @@ export class Game {
         {
           arrancar: () => this.toggleEngine(),
           seguir: () => this.inicio?.seguir(),
+          // El freno dibujado, como el de la cabina: un toque de pie.
+          frenar: () => this.input.pisarElFreno(),
         },
         () => this.hud.altoDeArriba,
+        t(aterrizar ? "inicio.modo.aterrizar" : "inicio.modo.nombre"),
       );
     this.ladoDelInicio = 0;
     /*
@@ -6410,8 +6468,6 @@ export class Game {
   private atenderAlInicio(dt: number): void {
     const inicio = this.inicio;
     if (!inicio) return;
-    const s = this.flight.state;
-    const c = this.input.controls;
     const i = this.input.intento;
     // Al final, cualquier mando sigue volando: el botón no se alcanza con un joystick.
     if (
@@ -6419,6 +6475,29 @@ export class Game {
       (Math.abs(i.cabeceo) > 0.5 || Math.abs(i.alabeo) > 0.5 || i.gas !== 0)
     )
       inicio.seguir();
+    const congelado =
+      inicio instanceof InicioDeAterrizar
+        ? this.atenderAlAterrizaje(inicio, dt)
+        : this.atenderAlDespegue(inicio, dt);
+    this.inicioCongelado = congelado;
+    // El mundo callado mientras espera: el motor y el aire, no las voces.
+    this.audio.callarElMundo(congelado);
+    // Y nadie más dando consejos encima. Ver `Tutor.silenciar`.
+    this.hud.tutor.silenciar(true);
+    if (inicio.estado.paso === "fin") this.apuntarElSitio();
+    if (inicio.estado.terminado) this.acabarElInicio();
+    else this.pintarElInicio();
+  }
+
+  /**
+   * **Un paso de la escena del despegue**, y lo que sostiene la mano de la
+   * mamá: el gas en cuanto se empuja, el morro en la rotación, las alas al
+   * enderezar. Devuelve si el mundo espera.
+   */
+  private atenderAlDespegue(inicio: Inicio, dt: number): boolean {
+    const s = this.flight.state;
+    const c = this.input.controls;
+    const i = this.input.intento;
     const salida = inicio.paso(dt, {
       motor: c.engineOn,
       gas: c.throttle,
@@ -6432,20 +6511,76 @@ export class Game {
       pistaQueQueda: this.runwayRemaining(),
       gasQueSostiene: (v) => this.flight.gasParaRodar(v),
     });
-    this.inicioCongelado = salida.congelado;
     const a = salida.ayuda;
     if (a.gas !== null && c.throttle < a.gas) this.input.servoDelGas(a.gas);
     // Y el que no deja pasar, mientras se explica la carrera. Ver `SOSTIENE_POR_DEBAJO`.
     if (a.gasTope !== null && c.throttle > a.gasTope) this.input.servoDelGas(a.gasTope);
     if (a.cabeceo !== null) c.elevator = Math.max(c.elevator, a.cabeceo);
     if (a.centrar) this.input.mano.centrar();
-    // El mundo callado mientras espera: el motor y el aire, no las voces.
-    this.audio.callarElMundo(salida.congelado);
-    // Y nadie más dando consejos encima. Ver `Tutor.silenciar`.
-    this.hud.tutor.silenciar(true);
-    if (inicio.estado.paso === "fin") this.apuntarElSitio();
-    if (inicio.estado.terminado) this.acabarElInicio();
-    else this.pintarElInicio();
+    return salida.congelado;
+  }
+
+  /**
+   * **Un paso de la escena de aterrizar**: lo que lee del avión, de la pista y
+   * de la senda de los aros, y lo que pide la mano de Jazlyn, puesto en los
+   * mandos. Devuelve si el mundo espera, que solo pasa en el suelo.
+   *
+   * La senda es la de los aros y el rombo: tres grados —los de su pista—
+   * desde las luces del PAPI o desde donde irían. Pero contada **por el eje,
+   * y en cero pasado su origen**: medida en línea recta desde las luces, al
+   * pasarlas volvía a subir, y la mano habría tirado del avión hacia arriba
+   * justo en la recogida. Ver `sendaDelGs`.
+   */
+  private atenderAlAterrizaje(inicio: InicioDeAterrizar, dt: number): boolean {
+    const s = this.flight.state;
+    const c = this.input.controls;
+    const pista = this.laPistaDeAhora();
+    const p = s.position;
+    const aqui = enEjesDePista(p.x, p.z, pista.x, pista.z, pista.heading);
+    const a = this.campoParaLaAproximacion();
+    const o = this.origenDeLaSenda();
+    const origen = enEjesDePista(o.x, o.z, pista.x, pista.z, pista.heading);
+    const angulo = ((a.angulo ?? SENDA_DE_SIEMPRE) * Math.PI) / 180;
+    const giro = s.heading - (pista.heading * Math.PI) / 180;
+    const lectura: LecturaDeAterrizar = {
+      motor: c.engineOn,
+      gas: c.throttle,
+      intento: this.input.intento,
+      velocidad: s.airspeed,
+      altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      enTierra: s.onGround,
+      alabeo: bankAngleOf(s.orientation),
+      mando: this.input.ultimoMando,
+      alUmbral: -aqui.along - hastaElUmbralDeToma(pista),
+      lado: aqui.across,
+      rumbo: Math.atan2(Math.sin(giro), Math.cos(giro)),
+      sobreLaSenda: p.y - (a.cota + Math.max(0, origen.along - aqui.along) * Math.tan(angulo)),
+      ritmoDeLaSenda: -s.groundSpeed * Math.tan(angulo),
+      pistaQueQueda: this.runwayRemaining(),
+      // Con lo que lleve sacado, que es como lo cuenta el modelo. Ver `gasPara`.
+      gasDeLaFinal: this.flight.gasPara(this.aircraft.approachSpeed, {
+        flaps: c.flaps,
+        tren: c.tren,
+      }),
+      alturaDeLaRecogida: laRecogidaDe(this.aircraft).nariz,
+    };
+    const enElAire = !s.onGround;
+    const salida = inicio.paso(dt, lectura);
+    this.lecturaDelAterrizaje = lectura;
+    const m = enLosMandos(salida.mano, this.flight);
+    if (m.throttle !== null) this.input.servoDelGas(m.throttle);
+    if (m.elevator !== null) c.elevator = m.elevator;
+    if (m.aileron !== null) c.aileron = m.aileron;
+    if (m.brakes !== null) c.brakes = Math.max(c.brakes, m.brakes);
+    // Y cómo se tocó, para el banco: la primera vez que las ruedas pisan.
+    if (inicio.estado.tocado && !this.tomaDelAterrizaje && !enElAire)
+      this.tomaDelAterrizaje = {
+        alUmbral: lectura.alUmbral,
+        lado: lectura.lado,
+        caida: s.touchdownSinkRate,
+        velocidad: s.airspeed,
+      };
+    return salida.congelado;
   }
 
   /**
@@ -6517,20 +6652,36 @@ export class Game {
     this.audio.callarElMundo(false);
   }
 
-  /** Lo que mira el banco del modo inicio. Ver `scripts/verificar-inicio.mjs`. */
+  /**
+   * Lo que mira el banco del modo inicio. Ver `scripts/verificar-inicio.mjs` y,
+   * para aterrizar, `scripts/verificar-inicio-2.mjs`, que mira además lo que
+   * leyó la escena —la senda, el eje, la pista— y cómo se tocó.
+   */
   get inicioParaBanco(): {
     readonly conInicio: boolean;
-    readonly estado: Inicio["estado"] | null;
+    readonly escena: EscenaDelInicio;
+    readonly estado: Inicio["estado"] | InicioDeAterrizar["estado"] | null;
     readonly registro: Inicio["registro"] | null;
     readonly congelado: boolean;
     readonly mando: string;
+    readonly lectura: LecturaDeAterrizar | null;
+    readonly toma: Game["tomaDelAterrizaje"];
+    readonly cuaderno: { readonly aterrizajes: number; readonly percances: number; readonly frustradas: number };
   } {
     return {
       conInicio: this.conInicio,
+      escena: this.escenaDelInicio,
       estado: this.inicio?.estado ?? null,
       registro: this.inicio?.registro ?? null,
       congelado: this.inicioCongelado,
       mando: this.input.ultimoMando,
+      lectura: this.lecturaDelAterrizaje,
+      toma: this.tomaDelAterrizaje,
+      cuaderno: {
+        aterrizajes: this.cuaderno.aterrizajes,
+        percances: this.cuaderno.percances,
+        frustradas: this.cuaderno.frustradas,
+      },
     };
   }
 
@@ -10425,7 +10576,22 @@ export class Game {
      * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
      * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
      */
-    if (this.inicio) {
+    this.retomarElInicio();
+  }
+
+  /**
+   * **El modo inicio tras un reinicio**: ver la nota de arriba. Lo llaman los
+   * dos caminos de reinicio, este y `reiniciarEnFinal`.
+   *
+   * Y la de aterrizar, igual: si el reinicio llega saludando —el suelo que se
+   * asienta al abrir—, sigue donde iba; si no, otra vez desde el gas, que el
+   * avión vuelve a empezar la final.
+   */
+  private retomarElInicio(): void {
+    if (this.inicio instanceof InicioDeAterrizar) {
+      if (this.inicio.estado.paso === "hola") this.inicio.retomarLaVoz();
+      else this.empezarElInicio("gas");
+    } else if (this.inicio) {
       const paso = this.inicio.estado.paso;
       if (paso === "hola" || paso === "motor") {
         this.input.cerrarGas();
@@ -12028,7 +12194,13 @@ export class Game {
    * Primero se frena; el premio, a velocidad de rodar.
    */
   private celebrarLasGafasSiToca(): void {
-    if (!this.gafasPorCelebrar) return;
+    /*
+     * **Y con una escena del modo inicio en marcha, al acabarla**: ganadas en
+     * la toma de la escena de aterrizar, la voz de la instructora se caería
+     * —la boca es de Jazlyn y Ara— y la tarjeta no se vería. Un premio que
+     * pasa una sola vez se celebra entero, después.
+     */
+    if (!this.gafasPorCelebrar || this.inicio) return;
     const s = this.flight.state;
     if (s.onGround && s.groundSpeed >= SE_CELEBRAN_LAS_GAFAS) return;
     this.gafasPorCelebrar = false;
@@ -13350,6 +13522,8 @@ export class Game {
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
+    // Y la escena de aterrizar, si estaba en marcha: ver `retomarElInicio`.
+    this.retomarElInicio();
   }
 
   /**
@@ -14137,7 +14311,8 @@ export class Game {
 
     this.atenderAlTren();
     this.atenderALaListaDeAterrizaje();
-    this.mirarLaTomaLarga(dt);
+    // Con la mano de Jazlyn no hay toma larga: la toma la asegura ella.
+    if (!this.manoDeJazlyn) this.mirarLaTomaLarga(dt);
 
     /*
      * **El aviso de terreno**, que es el que salva.
@@ -14440,7 +14615,8 @@ export class Game {
       }
     }
 
-    const renuncio = this.frustrada.paso(cerca);
+    // Ni frustradas en la escena de aterrizar: ver `manoDeJazlyn`.
+    const renuncio = !this.manoDeJazlyn && this.frustrada.paso(cerca);
     if (renuncio) {
       // Y si te lo habían mandado, la orden se levanta: la pista vuelve a ser
       // tuya y la vaca se va, que para eso se hace la pasada.
@@ -14685,21 +14861,28 @@ export class Game {
           );
       }
     }
-    this.laAproximacion.paso({
-      estado: this.flight.state,
-      acercandose,
-      circuito: this.circuito,
-      faseDeAhora: this.faseDeAhora,
-      // Sobre el campo al que se viene: ver `techoSobre`.
-      techoDeNubes: this.techoSobre(this.elCampo()),
-      terrenoDicho: this.terrenoDicho,
-      vueloTerminado: this.vueloTerminado,
-      haciaOtroCampo: this.haciaOtroCampo(),
-      sinMotor: this.sinMotor,
-      conPrioridad: this.conPrioridad,
-      enLaFinalDeLaTorre: this.enLaFinalDeLaTorre,
-      enLaPuerta: this.loQueSeMiraEnLaPuerta(),
-    });
+    /*
+     * **Y la aproximación no decide nada con la mano de Jazlyn**: ni manda
+     * irse al aire ni propone hacerlo. En esa escena la instructora es ella, y
+     * lo que se enseña es posarse. Ver `flight/inicio-aterrizar.ts`.
+     */
+    if (!this.manoDeJazlyn) {
+      this.laAproximacion.paso({
+        estado: this.flight.state,
+        acercandose,
+        circuito: this.circuito,
+        faseDeAhora: this.faseDeAhora,
+        // Sobre el campo al que se viene: ver `techoSobre`.
+        techoDeNubes: this.techoSobre(this.elCampo()),
+        terrenoDicho: this.terrenoDicho,
+        vueloTerminado: this.vueloTerminado,
+        haciaOtroCampo: this.haciaOtroCampo(),
+        sinMotor: this.sinMotor,
+        conPrioridad: this.conPrioridad,
+        enLaFinalDeLaTorre: this.enLaFinalDeLaTorre,
+        enLaPuerta: this.loQueSeMiraEnLaPuerta(),
+      });
+    }
     /*
      * **El aire, que no está quieto.**
      *
@@ -18293,7 +18476,8 @@ export class Game {
   private asistirRodaje(dt: number): void {
     void dt;
     const fuerza = this.tier.assists.taxiAssist;
-    if (!this.plan || fuerza <= 0) return;
+    // En la carrera de la escena de aterrizar, el volante es de su mano.
+    if (!this.plan || fuerza <= 0 || this.manoDeJazlyn) return;
     const s = this.flight.state;
     if (!s.onGround) return;
 
@@ -21894,7 +22078,8 @@ export class Game {
    */
   private sostenerElNivel(dt: number, c: ControlInputs): ControlInputs {
     const s = this.flight.state;
-    const nivel = this.tier.nivelada ? this.nivelQueSeSostiene() : null;
+    // Con la mano de Jazlyn, la profundidad es suya: la senda no se nivela.
+    const nivel = this.tier.nivelada && !this.manoDeJazlyn ? this.nivelQueSeSostiene() : null;
     const tocan =
       this.input.mueve.cabeceo ||
       // La profundidad de la mano no es un toque: es la mano sosteniendo.
@@ -23674,6 +23859,8 @@ export class Game {
    * teclado— movió el gas en este fotograma.
    */
   private sostenerLaVelocidadDeLaFinal(dt: number, tocoElGas: boolean): void {
+    // Con la mano de Jazlyn, el gas es suyo. Ver `manoDeJazlyn`.
+    if (this.manoDeJazlyn) return;
     const s = this.flight.state;
     const enLaFinal = !s.onGround && this.laVelocidadQueToca().peldano === "final";
     if (!enLaFinal) {

@@ -182,3 +182,133 @@ ficha de Jazlyn, en «¿A qué jugás?»— y en la dirección, con `?inicio=1`.
   que el «¡ahora!» no pisa al «todavía no» y que en toda la escena no habla
   nadie más.
 - El HOTAS X sigue sin probarse con el aparato de verdad.
+
+## La segunda escena: aterrizar con Jazlyn
+
+Fecha: 2026-10-17
+
+### Contexto
+
+La primera escena gustó —«Lindísimo», «estoy emocionado escuchando a mamá
+enseñando»— y Enrique pidió la segunda: **Ara aprende a aterrizar con
+Jazlyn**, con el mismo tono, los mismos personajes y el mismo mecanismo. Con
+una condición que cambia el mecanismo por dentro: **en el aire el mundo no
+puede pararse como en tierra**. La primera paraba el avión en el aire para
+virar; eso es un truco, y un avión que se queda quieto en el aire es justo lo
+que no hay que aprender.
+
+### Decisión
+
+**Una final larga, ya en el aire.** La de la lección de aterrizar —a 3,6 km
+del umbral, sobre la senda de los aros— en el Chaco, con el JAZ 20, en
+Guyrami y sin viento: el mismo vuelo de la primera, pero llegando. Ocho pasos
+y cuatro gestos, en el orden en que aterriza una avioneta de escuela
+(`GUION_DE_ATERRIZAR` en `src/flight/inicio-aterrizar.ts`):
+
+1. el saludo, y por qué el avión lo lleva ella mientras habla;
+2. **un poquito menos de gas**: se entra algo rápido —35 m/s para una
+   aproximación de 33— y en la final se vuela a la velocidad de aproximación;
+3. **la nariz un poquito abajo**, apuntando a la pista por dentro de los
+   aros: desde ahí la nariz es de quien juega;
+4. la senda, mirando: a mitad, qué son los aros —para aprender; en un
+   aeropuerto ese caminito lo marcan unas luces, el PAPI—, y cerca de la
+   pista, lo que va a pasar;
+5. **la recogida**: «¡ahora!, levantá la nariz un poquito, suave», a la
+   altura de su manual —quince pies en los de hélice, ver
+   `flight/recogida.ts`—, con el gas fuera, que lo saca ella;
+6. tocar, primero las ruedas de atrás;
+7. **frenar**, en el suelo, y parar en la pista;
+8. la felicitación y el sello.
+
+**En el aire, la mano de Jazlyn lleva el avión mientras espera el gesto.**
+Es su mano y no un truco: lo que hace una instructora con doble mando. Lleva
+el avión por la senda de los aros —la del rombo y la del automático, contada
+por el eje y en cero pasadas las luces— y por el eje de la pista, con calma:
+nunca corrige más de metro y medio por segundo ni inclina más de doce
+grados. Pide a la profundidad un ritmo de subida y al alerón una
+inclinación, y el modelo de vuelo dice qué palanca da cada cosa
+(`enLosMandos`). Y **solo cede lo que se hace bien**:
+
+- pedido el gas, lo lleva ella a la velocidad de la final y de ahí no se
+  mueve, ni para arriba ni para abajo;
+- pedida la nariz, es de quien juega, dentro de un pasillo alrededor de la
+  senda —un cuarto de la altura, de metro y medio a ocho— que se estrecha
+  al acercarse al suelo; lo que se sale, no se cede;
+- el alabeo no se pide, y no se cede nunca: el avión va por el eje.
+
+**La final manda sobre el gesto**, como la pista mandaba sobre la frase en
+la carrera. Si el gas no llega antes de 2.200 m del umbral o la nariz antes de
+1.200, lo hace ella y lo cuenta —«esta vez el gas lo bajo yo, mirá la
+palanca»—, sin drama: la próxima lo hacés vos. Medido con las frases al ritmo
+de leerlas, que es lo más despacio que va la escena: el gas se pide hacia los
+3.000 m y quedan dos «otra vez» antes de su sitio; la nariz, hecho el gas por
+ella, hacia los 1.700, y queda una.
+
+**La recogida no espera a nadie.** Se pide tres segundos antes de su altura,
+cortando lo que se estuviera diciendo —no corta nada: lo de la senda acaba
+muy por encima—, y la mano recoge siempre: en cuanto bajar menos que la senda
+es lo suyo, pide de lo que baja la senda a casi nada al tocar, y saca el gas
+con la altura, al ralentí al tocar, que es lo que dice el manual. La nariz de
+quien juega no se suma a nada: hace empezar la recogida un metro más arriba y
+acabar más suave. Medido con el JAZ 20 en Guyrami: sola toca a 0,6-0,7 m/s y
+con la nariz de quien juega a 0,3, a unos 350 m del umbral de una pista de
+1.400, y se para con más de 600 por delante. Si no tiró, lo cuenta ella:
+«esta vez la nariz la levanté yo».
+
+**En el suelo sí espera**: el freno, con el mundo quieto, como la Vr de la
+primera. Pedido el freno, frena su mano hasta parar. Y si al rodar quedan
+menos de 500 m de pista antes de pedirlo, se pide ya (`PISTA_PARA_FRENAR`).
+
+**Ni frustradas, ni vaca, ni percances, ni nadie más hablando.** Mientras
+dura la escena el avión lo lleva ella (`manoDeJazlyn` en `game.ts`): no se
+engancha la ayuda del gas de la final de Guyrami, ni la nivelada, ni la
+ayuda de rodaje; la aproximación no manda ni propone irse al aire, no hay toma
+larga ni aves en la final, y la boca es de la escena como en la primera. En
+el Chaco tampoco hay vaca: no es aeródromo.
+
+**El sello es el del Chaco**, el que da el cuaderno por aterrizar allí: el
+aterrizaje entra en el cuaderno como cualquier otro, con el «primer sello» o
+«ya está en tu cuaderno» según toque. Si en esta toma se ganan las gafas de
+sol —el primer aterrizaje que cuenta—, se celebran al acabar la escena: con
+la boca de la escena, la voz de la instructora se caía.
+
+**Cómo se abre**: con su ficha, «Aterrizá con Jazlyn», al lado de la de
+aprender en «¿A qué jugás?», y con `?inicio=2`. **No es la primera
+experiencia**: esa sigue siendo el despegue, y `inicioGrabado` solo mira las
+frases de la primera escena.
+
+**Las voces, sin grabar.** Son treinta y una —veintidós de Jazlyn, nueve de
+Ara— y van a la lista de grabar detrás de las de la primera, para no
+renumerar lo grabado: `PENDIENTE-VOCES-inicio-2.md`. Mientras tanto, la escena
+guía con los dibujos y los subtítulos, al ritmo de leerlos.
+
+**Y la conversación, compartida.** La cola de frases de la primera escena
+salió a `src/flight/conversacion.ts`, y las dos hablan con ella: dos copias de
+la misma cola son dos sitios donde un día se corta a alguien.
+
+### Lo que destapó
+
+**En el Chaco y en el Valle, aterrizar era «fuera de pista».** La lista de
+pistas del vuelo solo metía la de casa si el campo tenía aeródromo extraído,
+y esos dos —los campos para empezar— no lo tienen: posarse en el medio de la
+pista del Chaco a treinta centímetros por segundo salía percance. Nadie había
+aterrizado allí. Ahora la de casa va siempre (`pistasDelVuelo` en `game.ts`).
+
+### Consecuencias
+
+- Treinta y una frases más por grabar, y un gesto nuevo del modo inicio en
+  cada mando: menos gas, la nariz abajo y el freno, con su dibujo para el
+  teclado, el dedo —que señala también el botón rojo del freno—, el mando de
+  consola —el gatillo del gas apenas apretado— y el HOTAS X.
+- La secuencia se prueba en `inicio-aterrizar.test.ts`, que vuela la final
+  entera con el modelo de Guyrami y tres pilotos —quien hace lo que se le
+  pide, quien no hace nada y quien aprieta de todo— y mira que se toque
+  dentro de la pista, despacio, por el eje, y que se pare en ella.
+- Y en el navegador, `scripts/verificar-inicio-2.mjs`: la escena entera con
+  teclado, dedo, mando de consola y HOTAS X, que en el aire el mundo no se
+  para ni un fotograma, que la mano lo lleva, el error con otras palabras, la
+  toma, el cuaderno sin percance ni frustrada, que no habla nadie más, el sello
+  y la ficha del hangar.
+- La escena dura unos dos minutos y medio. Entre la nariz y la pista hay dos
+  ratos callados de unos veinticinco segundos, volando los aros: si con las
+  voces se hacen largos, lo que se mueve es `DESDE_LOS_AROS` y `DESDE_LA_SENDA`.

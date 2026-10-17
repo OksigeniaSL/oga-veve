@@ -1793,4 +1793,58 @@ export const EN: Dictionary = {
     "You flew, my love! You've earned your first stamp for your logbook. Now keep flying, the sky is yours.",
   "inicio.mama.finOtra":
     "What a lovely flight, my love! Your stamp from this field is already in your logbook. Now keep flying, the sky is yours.",
+  "inicio.modo.aterrizar": "Land with Jazlyn",
+  "inicio.modo.freno": "Brake",
+  "inicio.ara.aterrizar.hola": "Mum, will you teach me to land today?",
+  "inicio.mama.aterrizar.hola":
+    "Today you're landing, my love! In the air a plane can't just stand still, so I'll fly it while I teach you.",
+  "inicio.ara.aterrizar.gas": "So what's the first thing we do, Mum?",
+  "inicio.mama.aterrizar.gas":
+    "We're a little fast for landing. Do what the picture shows and give it a little less throttle.",
+  "inicio.mama.aterrizar.gas.otra1":
+    "The throttle, sweetheart, down a little: the engine eases off and the plane slows down.",
+  "inicio.mama.aterrizar.gas.otra2":
+    "Look at the shining picture: that's the throttle. One little tap down, no rush.",
+  "inicio.mama.aterrizar.gas.bien":
+    "That's it! Hear the engine calming down? Now we're at just the right speed to land.",
+  "inicio.mama.aterrizar.gas.yo":
+    "This time I'll bring the throttle back, watch the lever: just a little, and the engine calms down.",
+  "inicio.ara.aterrizar.nariz": "And how do we get down to the runway?",
+  "inicio.mama.aterrizar.nariz":
+    "With the nose. Lower it a little, like in the picture, so it points at the runway through the hoops.",
+  "inicio.mama.aterrizar.nariz.otra1":
+    "The nose down a little, my love, looking at the runway. The plane goes through the hoops.",
+  "inicio.mama.aterrizar.nariz.otra2":
+    "Do what the picture shows: one little tap down, and the nose points at the runway.",
+  "inicio.ara.aterrizar.nariz.bien": "Mum, look! The hoops are turning green!",
+  "inicio.mama.aterrizar.nariz.bien":
+    "Because we're right on the little path! That's how you come down to a runway: gently and straight.",
+  "inicio.mama.aterrizar.nariz.yo":
+    "This time I'll lower the nose, watch: just a little, and it points at the runway.",
+  "inicio.ara.aterrizar.aros": "Mum, why are there hoops in the sky?",
+  "inicio.mama.aterrizar.aros":
+    "They're for learning: they draw the little path down to the runway. At airports, that path is shown by lights beside the runway.",
+  "inicio.ara.aterrizar.senda": "Mum, the runway keeps getting bigger and bigger!",
+  "inicio.mama.aterrizar.senda":
+    "That's because we're nearly there. When we're down low, I'll take the throttle off and you lift the nose, gently, so we settle.",
+  "inicio.mama.aterrizar.recogida": "Now! Lift the nose a little, gently, gently.",
+  "inicio.ara.aterrizar.toque": "We touched the ground, Mum! I didn't even feel it!",
+  "inicio.mama.aterrizar.recogida.bien":
+    "You landed! The back wheels first, nice and soft, just like a real plane.",
+  "inicio.mama.aterrizar.recogida.yo":
+    "We've landed! This time I lifted the nose. Next time, you lift it.",
+  "inicio.ara.aterrizar.frenar": "And now how do we stop the plane, Mum?",
+  "inicio.mama.aterrizar.frenar":
+    "With the brake, like in a car. Press the brake in the picture and I'll help you stop.",
+  "inicio.mama.aterrizar.frenar.otra1":
+    "The brake, sweetheart, the shining picture. Press it and the plane slows to a stop.",
+  "inicio.mama.aterrizar.frenar.otra2":
+    "Find the brake in the picture and press it once, don't be scared. The runway is long.",
+  "inicio.mama.aterrizar.frenar.bien":
+    "Very good! Look how we're braking, gently and right down the middle of the runway.",
+  "inicio.ara.aterrizar.fin": "We did it, Mum! We landed on the runway!",
+  "inicio.mama.aterrizar.fin":
+    "You landed, my love! You've earned your first stamp for your logbook. Whenever you like, we'll fly again.",
+  "inicio.mama.aterrizar.finOtra":
+    "What a lovely landing, my love! This field's stamp is already in your logbook. Whenever you like, we'll fly again.",
 };

@@ -3041,4 +3041,65 @@ export const ES_PY = {
     "¡Volaste vos, mi amor! Te ganaste tu primer sello del cuaderno. Ahora seguí volando, que el cielo es tuyo.",
   "inicio.mama.finOtra":
     "¡Qué lindo vuelo, mi amor! Tu sello de este campo ya está en el cuaderno. Ahora seguí volando, que el cielo es tuyo.",
+  /*
+   * **La segunda escena: Ara aprende a aterrizar con Jazlyn.** Los mismos dos
+   * y el mismo tono, ya en el aire y en la final del Chaco. En el aire el
+   * mundo no se para: mientras espera el gesto, el avión lo lleva su mano, y
+   * si la final no da para más, lo hace ella y lo dice. Ver
+   * `src/flight/inicio-aterrizar.ts`. Tampoco aquí baja nada de treinta letras.
+   */
+  "inicio.modo.aterrizar": "Aterrizá con Jazlyn",
+  "inicio.modo.freno": "Frenar",
+  "inicio.ara.aterrizar.hola": "Mamá, ¿hoy me enseñás a aterrizar?",
+  "inicio.mama.aterrizar.hola":
+    "¡Hoy aterrizás vos, mi amor! En el aire el avión no se puede quedar quieto, así que yo lo llevo mientras te enseño.",
+  "inicio.ara.aterrizar.gas": "¿Y qué es lo primero que hacemos, mamá?",
+  "inicio.mama.aterrizar.gas":
+    "Vamos un poquito rápido para aterrizar. Hacé como el dibujo y dale un poquito menos de gas.",
+  "inicio.mama.aterrizar.gas.otra1":
+    "El gas, mi vida, un poquito para abajo: así el motor afloja y el avión va más despacio.",
+  "inicio.mama.aterrizar.gas.otra2":
+    "Mirá el dibujo que brilla: es el gas. Un toquecito para abajo, sin apuro.",
+  "inicio.mama.aterrizar.gas.bien":
+    "¡Eso! ¿Escuchás cómo se calma el motor? Ya vamos a la velocidad justa para aterrizar.",
+  "inicio.mama.aterrizar.gas.yo":
+    "Esta vez el gas lo bajo yo, mirá la palanca: un poquito nomás, y el motor se calma.",
+  "inicio.ara.aterrizar.nariz": "¿Y cómo hacemos para bajar hasta la pista?",
+  "inicio.mama.aterrizar.nariz":
+    "Con la nariz. Bajala un poquito, como en el dibujo, que apunte a la pista por adentro de los aros.",
+  "inicio.mama.aterrizar.nariz.otra1":
+    "La nariz un poquito para abajo, mi amor, que mire la pista. El avión va por adentro de los aros.",
+  "inicio.mama.aterrizar.nariz.otra2":
+    "Hacé como el dibujo: un toquecito para abajo, y la nariz apunta a la pista.",
+  "inicio.ara.aterrizar.nariz.bien": "¡Mamá, mirá! ¡Los aros se ponen verdes!",
+  "inicio.mama.aterrizar.nariz.bien":
+    "¡Porque vamos justito por el caminito! Así se baja a una pista: despacito y derecho.",
+  "inicio.mama.aterrizar.nariz.yo":
+    "Esta vez la nariz la bajo yo, mirá: un poquito nomás, y apunta a la pista.",
+  "inicio.ara.aterrizar.aros": "Mamá, ¿y por qué hay aros en el cielo?",
+  "inicio.mama.aterrizar.aros":
+    "Son para aprender: dibujan el caminito para bajar a la pista. En los aeropuertos, ese caminito lo marcan unas luces al lado de la pista.",
+  "inicio.ara.aterrizar.senda": "¡Mamá, la pista se hace cada vez más grande!",
+  "inicio.mama.aterrizar.senda":
+    "Es que ya llegamos. Cuando estemos bajito, yo saco el gas y vos levantás la nariz, suave, para posarnos.",
+  "inicio.mama.aterrizar.recogida": "¡Ahora! Levantá la nariz un poquito, suave, suave.",
+  "inicio.ara.aterrizar.toque": "¡Tocamos el suelo, mamá! ¡Ni se sintió!",
+  "inicio.mama.aterrizar.recogida.bien":
+    "¡Aterrizaste! Primero las ruedas de atrás, suavecito, como lo hace un avión de verdad.",
+  "inicio.mama.aterrizar.recogida.yo":
+    "¡Aterrizamos! Esta vez la nariz la levanté yo. La próxima, la levantás vos.",
+  "inicio.ara.aterrizar.frenar": "¿Y ahora cómo paramos el avión, mamá?",
+  "inicio.mama.aterrizar.frenar":
+    "Con el freno, como en un auto. Apretá el freno del dibujo y yo te ayudo a parar.",
+  "inicio.mama.aterrizar.frenar.otra1":
+    "El freno, mi vida, el dibujo que brilla. Apretalo y el avión se va parando.",
+  "inicio.mama.aterrizar.frenar.otra2":
+    "Buscá el freno en el dibujo y apretalo una vez, sin miedo. La pista es larga.",
+  "inicio.mama.aterrizar.frenar.bien":
+    "¡Muy bien! Mirá cómo frenamos, despacito y por el medio de la pista.",
+  "inicio.ara.aterrizar.fin": "¡Lo hicimos, mamá! ¡Aterrizamos en la pista!",
+  "inicio.mama.aterrizar.fin":
+    "¡Aterrizaste, mi amor! Te ganaste tu primer sello del cuaderno. Cuando quieras, volamos otra vez.",
+  "inicio.mama.aterrizar.finOtra":
+    "¡Qué lindo aterrizaje, mi amor! El sello de este campo ya está en tu cuaderno. Cuando quieras, volamos otra vez.",
 } as const;

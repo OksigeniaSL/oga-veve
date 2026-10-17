@@ -13,6 +13,8 @@ import { caraDe, dibujoDelGesto, mandoQueSenala, type ConQueTeclas } from "./ini
 const DE_FABRICA: Record<string, string> = {
   engine: "KeyI",
   throttleUp: "+",
+  throttleDown: "-",
+  brakes: "KeyB",
   pitchUp: "ArrowUp",
   pitchDown: "ArrowDown",
   rollLeft: "ArrowLeft",
@@ -23,7 +25,18 @@ const teclas: ConQueTeclas = {
   chorro: false,
 };
 
-const GESTOS: readonly Gesto[] = ["motor", "gas", "subir", "izquierda", "derecha", "nivelar"];
+/** Los del despegue, y los del aterrizaje. Ver `flight/inicio-aterrizar.ts`. */
+const GESTOS: readonly Gesto[] = [
+  "motor",
+  "gas",
+  "subir",
+  "izquierda",
+  "derecha",
+  "nivelar",
+  "menosGas",
+  "bajar",
+  "frenar",
+];
 const MANDOS: readonly Mando[] = ["teclado", "dedo", "consola", "joystick"];
 
 /** Cuántas veces sale un trozo en un texto. */
@@ -82,6 +95,44 @@ describe("con teclado, la tecla de verdad, latiendo", () => {
     expect(inclinadoIzquierda).toMatch(/inicio__tecla--late">[\s\S]*?class="tecla__letra">→</);
     const inclinadoDerecha = dibujoDelGesto("nivelar", "teclado", 1, teclas);
     expect(inclinadoDerecha).toMatch(/inicio__tecla--late">[\s\S]*?class="tecla__letra">←</);
+  });
+});
+
+describe("los gestos de aterrizar", () => {
+  it("con teclado: el menos con el motor, la flecha de bajar y el freno en su tecla", () => {
+    const menos = dibujoDelGesto("menosGas", "teclado", 0, teclas);
+    expect(menos).toContain('class="tecla__letra">-<');
+    expect(veces(menos, "inicio__tecla--late")).toBe(1);
+    const bajar = dibujoDelGesto("bajar", "teclado", 0, teclas);
+    expect(veces(bajar, 'class="tecla ')).toBe(4);
+    expect(bajar).toMatch(/inicio__tecla--late">[\s\S]*?class="tecla__letra">↓</);
+    expect(dibujoDelGesto("frenar", "teclado", 0, teclas)).toContain('class="tecla__letra">B<');
+  });
+
+  it("el freno se toca en el dibujo con cualquier mando, como la llave", () => {
+    for (const m of ["teclado", "dedo", "consola", "joystick"] as const)
+      expect(dibujoDelGesto("frenar", m, 0, teclas), m).toContain('data-inicio="freno"');
+    expect(dibujoDelGesto("bajar", "teclado", 0, teclas)).not.toContain("data-inicio=");
+  });
+
+  it("con el dedo: el gas baja desde la mitad, la palanca baja, y el dedo de encima va al freno rojo", () => {
+    expect(dibujoDelGesto("menosGas", "dedo", 0, teclas)).toContain("dib__mueve--gas-menos");
+    expect(dibujoDelGesto("bajar", "dedo", 0, teclas)).toContain("dib__mueve--abajo");
+    expect(mandoQueSenala("menosGas", "dedo")).toBe("throttle");
+    expect(mandoQueSenala("bajar", "dedo")).toBe("stick");
+    expect(mandoQueSenala("frenar", "dedo")).toBe("freno");
+    expect(mandoQueSenala("frenar", "teclado")).toBeNull();
+  });
+
+  it("con los mandos de juego: el gatillo apenas, la palanca adelante y el freno en su gatillo", () => {
+    const menos = dibujoDelGesto("menosGas", "consola", 0, teclas);
+    expect(menos).toContain("dib__aprieta--poco");
+    expect(menos).not.toContain("dib__aprieta--si");
+    expect(dibujoDelGesto("bajar", "consola", 0, teclas)).toContain("dib__mueve--abajo");
+    expect(dibujoDelGesto("frenar", "consola", 0, teclas)).toContain("dib__aprieta--si");
+    expect(dibujoDelGesto("menosGas", "joystick", 0, teclas)).toContain("dib__mueve--gases-menos");
+    expect(dibujoDelGesto("bajar", "joystick", 0, teclas)).toContain("dib__mango--adelante");
+    expect(dibujoDelGesto("frenar", "joystick", 0, teclas)).toContain("dib__late");
   });
 });
 

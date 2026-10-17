@@ -48,15 +48,51 @@
 const GRADO = Math.PI / 180;
 
 import type { Mando } from "./mandos-fisicos";
+import {
+  Conversacion,
+  type FraseDicha,
+  type Linea,
+  type Quien,
+  type VozDelInicio,
+} from "./conversacion";
 
 /** Con qué se juega: lo que se dibuja para pedir cada gesto. Ver `mandos-fisicos.ts`. */
 export type { Mando };
 
-/** Quién habla en la escena. */
-export type Quien = "mama" | "ara";
+/*
+ * La conversación —quién habla, en qué orden, lo dicho con su hora— la
+ * comparten las dos escenas. Ver `conversacion.ts`.
+ */
+export type { FraseDicha, Linea, Quien, VozDelInicio } from "./conversacion";
+export { ENTRE_FRASES, TOPE_DE_UNA_FRASE } from "./conversacion";
 
-/** Lo que se pide hacer, y por tanto lo que se dibuja. */
-export type Gesto = "motor" | "gas" | "subir" | "izquierda" | "derecha" | "nivelar";
+/**
+ * Lo que se pide hacer, y por tanto lo que se dibuja. Los seis primeros son
+ * del despegue; `menosGas`, `bajar` y `frenar`, del aterrizaje —ver
+ * `inicio-aterrizar.ts`—, que vuelve a pedir `subir` en la recogida.
+ */
+export type Gesto =
+  | "motor"
+  | "gas"
+  | "subir"
+  | "izquierda"
+  | "derecha"
+  | "nivelar"
+  | "menosGas"
+  | "bajar"
+  | "frenar";
+
+/**
+ * **Las dos escenas del modo inicio**: aprender a despegar, la primera, y a
+ * aterrizar. Ver `inicio-aterrizar.ts`. `?inicio=1` abre la primera e
+ * `?inicio=2`, la segunda.
+ */
+export type EscenaDelInicio = "despegar" | "aterrizar";
+
+/** Qué escena pide un `?inicio=` de la dirección: el 2, aterrizar; lo demás, despegar. */
+export function escenaPedida(valor: string | null): EscenaDelInicio {
+  return valor?.trim() === "2" ? "aterrizar" : "despegar";
+}
 
 export type PasoId =
   | "hola"
@@ -69,12 +105,6 @@ export type PasoId =
   | "derecha"
   | "nivelar"
   | "fin";
-
-/** Una frase de la escena: quién la dice y su clave del diccionario. */
-export interface Linea {
-  readonly quien: Quien;
-  readonly clave: string;
-}
 
 /**
  * **Lo que quien juega está pidiendo en este fotograma**, venga de donde
@@ -90,9 +120,14 @@ export interface Intento {
   readonly gas: number;
   /** Dos golpecitos en la palanca del dedo: al centro. */
   readonly centrar: boolean;
+  /**
+   * Si pisa el freno: la tecla, el botón de la pantalla o el del mando. Lo
+   * pide el aterrizaje; ver `inicio-aterrizar.ts`.
+   */
+  readonly frenar: boolean;
 }
 
-export const SIN_INTENTO: Intento = { cabeceo: 0, alabeo: 0, gas: 0, centrar: false };
+export const SIN_INTENTO: Intento = { cabeceo: 0, alabeo: 0, gas: 0, centrar: false, frenar: false };
 
 /** Lo que la secuencia necesita saber del avión y de quien juega. */
 export interface Lectura {
@@ -135,38 +170,12 @@ export interface Ayuda {
 const SIN_AYUDA: Ayuda = { gas: null, gasTope: null, cabeceo: null, centrar: false };
 
 /**
- * Por dónde habla la secuencia. `alAcabar` recibe cuántos segundos más hay
- * que esperar antes de la frase siguiente: cero si sonó, y el rato de leerla
- * si no sonó —sin voz, el subtítulo es lo que queda—. Y `cortada`, si la calló
- * alguien que no es la escena: no debería pasar nunca, y por eso se apunta.
- * Ver `registro`.
- */
-export interface VozDelInicio {
-  decir(linea: Linea, alAcabar: (esperaMas: number, cortada?: boolean) => void): void;
-  callar(): void;
-}
-
-/**
  * **Si una frase es de la escena**: lo que dicen Jazlyn y Ara. Mientras dura,
  * la boca es suya y nadie más pide turno —ni la radio, ni la megafonía, ni
  * los cantos de cabina—. Ver `reservar` en `audio/boca.ts`.
  */
 export function esDeLaEscena(clave: string | undefined): boolean {
   return !!clave && clave.startsWith("inicio.");
-}
-
-/** Lo que la escena apunta de cada frase: cuándo empezó, cuándo acabó y si se cortó. */
-export interface FraseDicha {
-  readonly clave: string;
-  /** Segundos de escena. */
-  readonly desde: number;
-  /** Y cuándo acabó, o `null` si todavía suena. */
-  hasta: number | null;
-  /**
-   * Si no acabó: la calló la escena —se hizo antes lo que se pedía— o alguien
-   * de fuera, que es lo que no puede pasar.
-   */
-  cortada: boolean;
 }
 
 /** Lo que sale de cada paso: lo que el juego tiene que hacer y dibujar. */
@@ -202,18 +211,6 @@ export const AVION_DEL_INICIO = "jaz-20";
  * desde que se terminó de decir: nadie puede hacer algo antes de oír qué.
  */
 export const ESPERA_SIN_HACER = 9;
-
-/** Lo que se calla entre una frase y la siguiente, s: dos frases no son una. */
-export const ENTRE_FRASES = 0.35;
-
-/**
- * **Y lo más que se espera a que una frase avise de que acabó**, s. Una frase
- * espera su grabación hasta veinticinco segundos —ver `ESPERA_A_SU_VOZ`— y se
- * lee en seis como mucho; si pasado esto no ha avisado, es que la boca la tiró
- * sin decirlo —un reinicio la vacía— y la escena no se puede quedar colgada
- * esperándola.
- */
-export const TOPE_DE_UNA_FRASE = 35;
 
 /**
  * Y lo que tiene que pasar entre dos «esa no», s. Un niño que aporrea el
@@ -539,19 +536,11 @@ export class Inicio {
   private acabado = false;
   private seguirPedido = false;
 
-  /** Las frases que esperan, la que suena y cuándo puede sonar la siguiente. */
-  private cola: Linea[] = [];
-  private sonando: number | null = null;
-  private sonandoDesde = 0;
-  private puedeHablarEn = 0;
-  private cuantas = 0;
-  private ultima: Linea | null = null;
-  /** Lo dicho, con su hora. Ver `registro`. */
-  private readonly dichas: FraseDicha[] = [];
-  private dichaAhora: FraseDicha | null = null;
+  /** Quién dice qué y cuándo. Ver `conversacion.ts`. */
+  private readonly charla: Conversacion;
 
   constructor(
-    private readonly voz: VozDelInicio,
+    voz: VozDelInicio,
     private readonly opciones: {
       /** Si este será el primer sello del cuaderno: cambia lo que dice al final. */
       readonly primerSello: boolean;
@@ -559,6 +548,7 @@ export class Inicio {
       readonly desde?: PasoId;
     },
   ) {
+    this.charla = new Conversacion(voz, () => this.reloj);
     const desde = opciones.desde ?? "hola";
     this.entrar(Math.max(0, GUION_DEL_INICIO.findIndex((p) => p.id === desde)));
   }
@@ -574,7 +564,7 @@ export class Inicio {
       fase: this.fase,
       congelado: this.congelado,
       gesto: this.acabado ? null : def.gesto,
-      linea: this.ultima,
+      linea: this.charla.ultima,
       otraVez: this.reintentos,
       puedeSeguir: def.id === "fin" && this.fase === "espera",
       terminado: this.acabado,
@@ -600,60 +590,21 @@ export class Inicio {
     this.reloj += dt;
     this.enFase += dt;
     if (this.acabado) return { congelado: false, ayuda: SIN_AYUDA };
-    this.atenderLaVoz();
+    this.charla.atender();
     this.mirar(dt, l);
-    this.atenderLaVoz();
+    this.charla.atender();
     return { congelado: this.congelado, ayuda: this.ayuda(dt, l) };
   }
 
   // ── La voz ─────────────────────────────────────────────────────────────
 
   private decir(lineas: readonly Linea[], cortar = false): void {
-    if (cortar) this.callar();
-    this.cola.push(...lineas);
+    this.charla.decir(lineas, cortar);
   }
 
   /** Lo que quedaba por decir ya no es verdad: fuera. */
   private callar(): void {
-    this.cola = [];
-    if (this.sonando !== null) {
-      this.sonando = null;
-      this.acabarLaDicha(true);
-      this.voz.callar();
-    }
-    this.puedeHablarEn = this.reloj + ENTRE_FRASES;
-  }
-
-  private atenderLaVoz(): void {
-    if (this.sonando !== null && this.reloj - this.sonandoDesde > TOPE_DE_UNA_FRASE) {
-      this.sonando = null;
-      this.acabarLaDicha(false);
-      this.puedeHablarEn = this.reloj;
-    }
-    if (this.sonando !== null || this.reloj < this.puedeHablarEn) return;
-    const linea = this.cola.shift();
-    if (!linea) return;
-    const id = ++this.cuantas;
-    this.sonando = id;
-    this.sonandoDesde = this.reloj;
-    this.ultima = linea;
-    this.dichaAhora = { clave: linea.clave, desde: this.reloj, hasta: null, cortada: false };
-    this.dichas.push(this.dichaAhora);
-    if (this.dichas.length > 200) this.dichas.shift();
-    this.voz.decir(linea, (esperaMas, cortada = false) => {
-      if (this.sonando !== id) return;
-      this.sonando = null;
-      this.acabarLaDicha(cortada);
-      this.puedeHablarEn = this.reloj + ENTRE_FRASES + Math.max(0, esperaMas);
-    });
-  }
-
-  private acabarLaDicha(cortada: boolean): void {
-    const d = this.dichaAhora;
-    this.dichaAhora = null;
-    if (!d) return;
-    d.hasta = this.reloj;
-    d.cortada = cortada;
+    this.charla.callar();
   }
 
   /**
@@ -663,7 +614,7 @@ export class Inicio {
    * frase a la escena. Ver `scripts/verificar-inicio.mjs`.
    */
   get registro(): readonly Readonly<FraseDicha>[] {
-    return this.dichas.map((d) => ({ ...d }));
+    return this.charla.registro;
   }
 
   /**
@@ -672,17 +623,12 @@ export class Inicio {
    * detrás, como estaba.
    */
   retomarLaVoz(): void {
-    if (this.sonando !== null && this.ultima) {
-      this.cola.unshift(this.ultima);
-      this.acabarLaDicha(true);
-    }
-    this.sonando = null;
-    this.puedeHablarEn = this.reloj;
+    this.charla.retomar();
   }
 
   /** Nadie habla ni espera turno: lo dicho, dicho está. */
   private get callada(): boolean {
-    return this.sonando === null && this.cola.length === 0 && this.reloj >= this.puedeHablarEn;
+    return this.charla.callada;
   }
 
   // ── Los pasos ──────────────────────────────────────────────────────────
