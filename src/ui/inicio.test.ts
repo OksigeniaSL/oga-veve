@@ -88,9 +88,13 @@ describe("con teclado, la tecla de verdad, latiendo", () => {
 describe("con el dedo", () => {
   it("la llave se toca en el propio dibujo", () => {
     expect(dibujoDelGesto("motor", "dedo", 0, teclas)).toContain('data-inicio="llave"');
-    // Y con los demás mandos no: la llave es su tecla o su botón.
+    // Y con los demás mandos también: su tecla o su botón valen, y un clic en
+    // la llave que brilla, también. «Le hago clic pero no se despierta la llave.»
     for (const m of ["teclado", "consola", "joystick"] as const)
-      expect(dibujoDelGesto("motor", m, 0, teclas)).not.toContain('data-inicio="llave"');
+      expect(dibujoDelGesto("motor", m, 0, teclas)).toContain('data-inicio="llave"');
+    // Y solo la llave: los demás gestos no son botones.
+    for (const m of ["teclado", "consola", "joystick"] as const)
+      expect(dibujoDelGesto("gas", m, 0, teclas)).not.toContain('data-inicio="llave"');
   });
 
   it("el dedo de encima señala la palanca para volar y el gas para el gas", () => {

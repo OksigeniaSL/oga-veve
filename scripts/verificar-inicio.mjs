@@ -218,7 +218,18 @@ function acciones(page, cdp, cual) {
   };
 
   const teclado = {
-    motor: () => page.keyboard.press("KeyI"),
+    /*
+     * La llave, **con el ratón** sobre su dibujo, como lo hizo Enrique: «le
+     * hago clic pero no se despierta la llave». La I ya la prueban los bancos
+     * de siempre; lo que este tiene que ver es que el dibujo que brilla
+     * también se toca.
+     */
+    motor: async () => {
+      const r = await caja('[data-inicio="llave"]');
+      if (!r) return false;
+      await page.mouse.click(r.x + r.w / 2, r.y + r.h / 2);
+      return true;
+    },
     gas: async () => {
       await page.keyboard.down("Equal");
       await pausa(150);

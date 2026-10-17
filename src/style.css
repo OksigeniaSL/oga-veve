@@ -14724,6 +14724,18 @@ body.con-vuelta #tactil {
   }
 }
 
+/* La llave de teclado o de mando, tocable: el dibujo de siempre, sin marco de botón. */
+.inicio__pulsable {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.inicio__pulsable:focus-visible,
 .inicio__llave:focus-visible,
 .inicio__seguir:focus-visible {
   outline: 3px solid var(--ocre);

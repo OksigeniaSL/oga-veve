@@ -379,9 +379,21 @@ export function dibujoDelGesto(gesto: Gesto, mando: Mando, lado: Lado, o: ConQue
         : mando === "consola"
           ? conConsola(gesto, lado)
           : conJoystick(gesto, lado);
+  /*
+   * **Y la llave se puede tocar con cualquier mando.** Con el dedo ya es el
+   * propio botón; con teclado o mando el dibujo era solo un dibujo, y un clic
+   * en la llave que brilla —«apretala una vez, sin miedo»— no hacía nada.
+   * Enrique, con el ratón: «le hago clic pero no se despierta la llave». La
+   * I o el botón de empezar siguen valiendo igual.
+   */
+  const pulsable = gesto === "motor" && mando !== "dedo";
+  const hueco = pulsable
+    ? `<button class="inicio__dibujo inicio__pulsable" type="button" data-inicio="llave"
+               aria-label="${t("inicio.modo.llave")}">${dibujo}</button>`
+    : `<span class="inicio__dibujo">${dibujo}</span>`;
   return `
     <span class="inicio__mando inicio__mando--${mando}" data-mando="${mando}" data-gesto="${gesto}">
-      <span class="inicio__dibujo">${dibujo}</span>
+      ${hueco}
       ${loQuePasa(gesto, lado, o.chorro)}
     </span>`;
 }
