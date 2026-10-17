@@ -34,7 +34,12 @@ const navegador = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
 });
 const page = await navegador.newPage({
-  viewport: { width: 1100, height: 700 },
+  /*
+   * Un portátil de 1280 × 720, que es donde la foto de la historia cabe al
+   * lado del cuadro de un reactor. Con 1100 de ancho el cuadro no deja hueco
+   * a los lados y la foto, como debe, no sale.
+   */
+  viewport: { width: 1280, height: 720 },
   locale: 'es-PY',
 });
 const errores = [];
@@ -45,6 +50,14 @@ await page.goto(
   `${BASE}/?escenario=tenerife-norte&hora=12&leccion=vuelta${AVION ? `&avion=${AVION}` : ""}`,
 );
 await page.waitForTimeout(25000);
+/*
+ * **Una tecla de verdad**, que es lo que despierta la voz: el pack de voz y
+ * el audio esperan al primer gesto, como en cualquier navegador. Sin él no
+ * suena nada, y sin la frase del sitio no hay historia ni foto que mirar. Una
+ * tecla que el juego no usa, y no un toque en la pantalla: tocar el mundo
+ * puede abrir la explicación de lo tocado, que para el vuelo mientras se lee.
+ */
+await page.keyboard.press('F8');
 
 /*
  * Veinticinco kilómetros al norte del aeródromo, sobre el mar, a dos mil
@@ -56,10 +69,23 @@ await page.waitForTimeout(25000);
  * —ver `enFaseDeTrabajo`— eso es casi el circuito: en treinta segundos el
  * avión entraba en los ocho kilómetros del campo y la instructora callaba, que
  * es lo que tiene que hacer.
+ *
+ * **Y con pasaje, por encima de los diez mil pies**: por debajo, la cabina
+ * estéril no deja a la comandante hablar de paisaje —ver `DIEZ_MIL_PIES` en
+ * `flight/lo-que-se-ve.ts`—, así que un reactor se pone a cuatro mil
+ * trescientos metros, a su velocidad y con el automático guardando la altura.
+ * Y rumbo oeste y no sur: el pasaje mira por las ventanillas de los lados, y
+ * con el morro hacia el Teide no lo ve nadie. Volando hacia el oeste al norte
+ * de la isla, el valle de La Orotava y el Teide quedan a la izquierda.
  */
-await page.evaluate(() =>
-  globalThis.__oga.colocar(0, 2500, -25000, 70, Math.PI),
-);
+await page.evaluate(() => {
+  const o = globalThis.__oga;
+  if (o.avion?.().conPasaje) {
+    o.colocar(0, 4300, -30000, 140, 1.5 * Math.PI);
+    o.ponerVentanillaAlt?.(4300 / 0.3048);
+    o.pilotoAutomatico?.(true);
+  } else o.colocar(0, 2500, -25000, 70, Math.PI);
+});
 
 /*
  * Y mientras, las fotos: cuál sale, dónde y si se va. Se sigue mirando hasta
@@ -88,6 +114,18 @@ while (Date.now() < hasta) {
 const fase = await page.evaluate(() => globalThis.__oga.fase());
 console.log(`hitos señalados: ${cuantos} · fase: ${fase}`);
 console.log(`fotos de las historias: ${fotos.join(", ") || "ninguna"} · ${seFue ? "y se fue al acabar" : "no se fue"}`);
+if (!fotos.length) {
+  // Y por qué no: lo último que se le pidió a la ventana y lo que sonó.
+  const porque = await page.evaluate(() => ({
+    ultimo: globalThis.__oga.historia().ultimo,
+    habladas: globalThis.__oga.habladas().slice(-6),
+    megafonia: globalThis.__oga.megafonia?.().slice(-6) ?? [],
+    descartadas: globalThis.__oga.descartadas().slice(-4),
+  }));
+  console.log(`  la ventana: ${porque.ultimo ?? "no se le pidió nada"}`);
+  console.log(`  sonó: ${[...porque.habladas, ...porque.megafonia].join(" | ") || "nada"}`);
+  console.log(`  se cayó: ${porque.descartadas.map((d) => JSON.stringify(d)).join(" | ") || "nada"}`);
+}
 
 /*
  * **Y el plano se abre con ellos dentro.**

@@ -241,6 +241,11 @@ export class VentanaDeHistoria implements PonerYQuitar {
   private vez = 0;
   /** Dónde quedó, para las sondas y los bancos. */
   private dondeQuedo: { donde: "placa" | "esquina"; caja: Caja } | null = null;
+  /**
+   * Lo que pasó la última vez que se pidió una, para que un banco que no la
+   * ve pueda decir por qué: no cabía, no bajó la imagen o no tiene foto.
+   */
+  private ultimo: string | null = null;
 
   static markup(): string {
     return `
@@ -267,16 +272,23 @@ export class VentanaDeHistoria implements PonerYQuitar {
   }
 
   /** Qué está puesto y dónde: lo leen las sondas y los bancos. */
-  get estado(): { sitio: string | null; donde: "placa" | "esquina" | null; caja: Caja | null } {
+  get estado(): {
+    sitio: string | null;
+    donde: "placa" | "esquina" | null;
+    caja: Caja | null;
+    ultimo: string | null;
+  } {
     return {
       sitio: this.dondeQuedo ? this.sitio : null,
       donde: this.dondeQuedo?.donde ?? null,
       caja: this.dondeQuedo?.caja ?? null,
+      ultimo: this.ultimo,
     };
   }
 
   mostrar(sitio: string): void {
     const foto = fotoDeLaHistoria(sitio);
+    this.ultimo = `${sitio}: ${foto ? "pedida" : "sin foto"}`;
     if (!foto || !this.raiz) return;
     if (this.sitio === sitio && this.dondeQuedo) return;
     this.quitarYa();
@@ -296,7 +308,9 @@ export class VentanaDeHistoria implements PonerYQuitar {
         if (vez === this.vez) this.poner(foto);
       })
       .catch(() => {
-        if (vez === this.vez) this.sitio = null;
+        if (vez !== this.vez) return;
+        this.sitio = null;
+        this.ultimo = `${sitio}: la imagen no llegó`;
       });
   }
 
@@ -328,8 +342,8 @@ export class VentanaDeHistoria implements PonerYQuitar {
   }
 
   private poner(foto: FotoDeLaHistoria): void {
-    if (this.enLaPlaca(foto)) return;
-    this.enLaEsquina(foto);
+    if (!this.enLaPlaca(foto)) this.enLaEsquina(foto);
+    this.ultimo = `${foto.clave}: ${this.dondeQuedo?.donde ?? "no cabe sin tapar"}`;
   }
 
   /**
