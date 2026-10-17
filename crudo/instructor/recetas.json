@@ -1680,5 +1680,86 @@
   ],
   "vuelo.ra.ahoraBaja": [
     "vuelo.ra.ahoraBaja"
+  ],
+  "ventanilla.vos.historia.anaga": [
+    "ventanilla.vos.historia.anaga"
+  ],
+  "ventanilla.vos.historia.asuncion": [
+    "ventanilla.vos.historia.asuncion"
+  ],
+  "ventanilla.vos.historia.canadas": [
+    "ventanilla.vos.historia.canadas"
+  ],
+  "ventanilla.vos.historia.cerro-cora": [
+    "ventanilla.vos.historia.cerro-cora"
+  ],
+  "ventanilla.vos.historia.chaco": [
+    "ventanilla.vos.historia.chaco"
+  ],
+  "ventanilla.vos.historia.cruz-del-sur": [
+    "ventanilla.vos.historia.cruz-del-sur"
+  ],
+  "ventanilla.vos.historia.encarnacion": [
+    "ventanilla.vos.historia.encarnacion"
+  ],
+  "ventanilla.vos.historia.garajonay": [
+    "ventanilla.vos.historia.garajonay"
+  ],
+  "ventanilla.vos.historia.gigantes": [
+    "ventanilla.vos.historia.gigantes"
+  ],
+  "ventanilla.vos.historia.hierro": [
+    "ventanilla.vos.historia.hierro"
+  ],
+  "ventanilla.vos.historia.iguazu": [
+    "ventanilla.vos.historia.iguazu"
+  ],
+  "ventanilla.vos.historia.itaipu": [
+    "ventanilla.vos.historia.itaipu"
+  ],
+  "ventanilla.vos.historia.las-palmas": [
+    "ventanilla.vos.historia.las-palmas"
+  ],
+  "ventanilla.vos.historia.nieves": [
+    "ventanilla.vos.historia.nieves"
+  ],
+  "ventanilla.vos.historia.orotava": [
+    "ventanilla.vos.historia.orotava"
+  ],
+  "ventanilla.vos.historia.rio-paraguay": [
+    "ventanilla.vos.historia.rio-paraguay"
+  ],
+  "ventanilla.vos.historia.taburiente": [
+    "ventanilla.vos.historia.taburiente"
+  ],
+  "ventanilla.vos.historia.tajogaite": [
+    "ventanilla.vos.historia.tajogaite"
+  ],
+  "ventanilla.vos.historia.teide": [
+    "ventanilla.vos.historia.teide"
+  ],
+  "ventanilla.vos.historia.timanfaya": [
+    "ventanilla.vos.historia.timanfaya"
+  ],
+  "ventanilla.vos.historia.trinidad": [
+    "ventanilla.vos.historia.trinidad"
+  ],
+  "ventanilla.vos.historia.triple-frontera": [
+    "ventanilla.vos.historia.triple-frontera"
+  ],
+  "ventanilla.vos.historia.yacyreta": [
+    "ventanilla.vos.historia.yacyreta"
+  ],
+  "ventanilla.vos.historia.ypacarai": [
+    "ventanilla.vos.historia.ypacarai"
+  ],
+  "ventanilla.vos.historia.ypoa": [
+    "ventanilla.vos.historia.ypoa"
+  ],
+  "ventanilla.vos.tres-kandu": [
+    "ventanilla.vos.tres-kandu"
+  ],
+  "ventanilla.vos.historia": [
+    "{historia}"
   ]
 }
