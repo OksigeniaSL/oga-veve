@@ -194,9 +194,31 @@ describe("y en cada campo, con su AIP y la pista que pide cada tipo", () => {
 describe("el margen es el de su clase, como en el hangar", () => {
   it("de línea con el 1,15 de su certificación; avioneta y bimotor con el 1,33 de escuela", () => {
     expect(pistaQuePideConSuMargen(TIPOS.reactor)).toBeCloseTo(1800 * 1.15, 6);
-    expect(pistaQuePideConSuMargen(TIPOS.turbohelice)).toBeCloseTo(1100 * 1.15, 6);
+    expect(pistaQuePideConSuMargen(TIPOS.turbohelice)).toBeCloseTo(1005 * 1.15, 6);
     expect(pistaQuePideConSuMargen(TIPOS.avioneta)).toBeCloseTo(300 * 1.33, 6);
     expect(pistaQuePideConSuMargen(TIPOS.bimotor)).toBeCloseTo(550 * 1.33, 6);
+  });
+
+  /*
+   * **Y el turbohélice cabe donde opera de verdad.** Pedía 1.265 m —los del
+   * ATR 72 al peso máximo— y El Hierro tiene 1.250 en su AIP. Un salto entre
+   * islas no sale al peso máximo: con la ficha de ATR al peso de 300 NM con
+   * el pasaje completo, 1.156 m. Ver `pistaQuePide` en `TIPOS`.
+   */
+  it("y el turbohélice cabe en El Hierro y La Gomera por las dos cabeceras: lo de la ficha de ATR para un salto entre islas", () => {
+    const pide = pistaQuePideConSuMargen(TIPOS.turbohelice);
+    expect(pide).toBeCloseTo(1156, 0);
+    for (const [oaci, cabeceras] of [
+      ["GCHI", ["16", "34"]],
+      ["GCGM", ["09", "27"]],
+    ] as const)
+      for (const cabecera of cabeceras) {
+        const tora = umbralPublicado(oaci, cabecera)?.tora;
+        expect(tora, `${oaci} ${cabecera}`).toBeDefined();
+        expect(pide, `${oaci} ${cabecera}`).toBeLessThanOrEqual(tora!);
+      }
+    // Y sigue sin caber en menos de lo que opera: mil doscientos.
+    expect(TIPOS.turbohelice.pistaMinima).toBe(1200);
   });
 
   it("y con él, el reactor no cabe desde la E-4 por la 30 (1.906 m) y sí desde la E-2 por la 12 (2.546 m)", () => {

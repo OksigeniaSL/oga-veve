@@ -128,6 +128,23 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    * `world/trafico.ts`.
    */
   "give way to departing traffic": "torre.giveWayDeparting",
+  /*
+   * **Y al tráfico que remonta la pista para salir**: «backtrack runway» y su
+   * número (Doc 4444, 12.3.4.7 p). Se oía «line up and wait», que es entrar y
+   * esperar en el eje, y el que remonta entra, rueda por la pista hasta la
+   * cabecera y da la media vuelta. Es la misma receta que te dicen a ti al
+   * remontar —ver `contarPorDondeSeSale` en `game.ts`—, con su indicativo.
+   * Ver `AL_QUE_REMONTA`.
+   */
+  "backtrack runway": "torre.backtrack",
+  /*
+   * **Y al que la torre no deja salir de su puesto** mientras aterriza uno que
+   * dejará la pista por su doble raya: «hold position» (Doc 4444, fraseología
+   * de rodaje; el párrafo, por verificar), con el porqué detrás, como el «hold
+   * short» de la roja. Espera su toma —ver `ESPERAN_SU_TOMA`— y hasta entonces
+   * no se dice. Ver `RETENIDO` en `flight/radio.ts`.
+   */
+  "hold position, landing traffic": "torre.holdPosition",
 };
 
 /**
@@ -210,6 +227,20 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   "torre.minimumFuel": null,
   // Ni reparte las calles: quien rueda mira y da paso.
   "torre.giveWayDeparting": null,
+  /*
+   * Ni da la pista para remontarla, que es lo mismo que entrar al eje: quien
+   * vuela dice lo que hace, y eso no está grabado con su voz. Ver
+   * `contarPorDondeSeSale` en `game.ts`, donde lo dice quien juega.
+   */
+  "torre.backtrack": null,
+  /*
+   * **Y al que quiere salir de su puesto con uno aterrizando, lo que hay**:
+   * la pista en uso y el tráfico que aterriza, que es lo que da un AFIS a
+   * quien va a rodar. No le para; con eso, quien vuela espera. Es la pieza
+   * grabada que es verdad para retenerlo. Ver `RETENIDO` en
+   * `flight/radio.ts`.
+   */
+  "torre.holdPosition": "torre.afisInUseLanding",
 };
 
 /**
@@ -218,10 +249,14 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen las
  * pruebas de `torre.test.ts`—, y estas son la excepción escrita: el juego ya
  * sabe cuándo decirlas y las pide solo si su grabación está en el pack. Cuando
- * se graben, salen de aquí; la prueba lo recuerda. Hoy no espera ninguna: el
- * «give way» se grabó el 11-10-2026.
+ * se graben, salen de aquí; la prueba lo recuerda. El «give way» se grabó el
+ * 11-10-2026; espera el «hold position» al que la torre no deja salir de su
+ * puesto.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
+  // Ver `PENDIENTE-VOCES-torre-trafico.md`.
+  "torre.holdPosition",
+]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice
@@ -264,7 +299,21 @@ export const PISTA_EN_USO_DELANTE: ReadonlySet<string> = new Set([
 export const PISTA_DETRAS: ReadonlySet<string> = new Set([
   "torre.pistaEnUso",
   "torre.goAroundEnUso",
+  // «Backtrack runway three four»: la orden nombra la pista y el número va detrás.
+  "torre.backtrack",
 ]);
+
+/**
+ * **Lo que se le dice al que remonta en vez de lo que pide la frecuencia.**
+ *
+ * La frecuencia piensa en órdenes que dan y sujetan la pista, y para ella el
+ * que remonta tiene la pista como el que espera en el eje: con «line up and
+ * wait». Lo que cambia es **lo que se dice**, y se traduce al decirlo, como lo
+ * de un AFIS. Ver `deTorre` en `game.ts` y `remonta` en `flight/radio.ts`.
+ */
+export const AL_QUE_REMONTA: Readonly<Record<string, string>> = {
+  "torre.lineUpWait": "torre.backtrack",
+};
 
 /**
  * Cuáles de esas órdenes **nombran la pista**, y por tanto llevan su lado.
@@ -443,8 +492,9 @@ const FRASEOLOGIA_DE_ATERRIZAR =
 const PERMISO_DE_ATERRIZAR =
   /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:clearedLand|aterrizar|afisLibreEnFinal|afisFree)(?:\.[LCR])?(?:@|$)/;
 
+// Y «backtrack», que es «line up and wait» dicho al que remonta: ver `AL_QUE_REMONTA`.
 const DA_LA_PISTA =
-  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedLand|afisFree)(?:\.[LCR])?(?:@|$)/;
+  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|backtrack|clearedLand|afisFree)(?:\.[LCR])?(?:@|$)/;
 
 /**
  * **Lo que no se pierde esperando turno en la boca**: lo que la torre te da

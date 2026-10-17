@@ -74,13 +74,12 @@ describe("lo que dice la torre", () => {
     "torre.climbTo",
     /*
      * Y lo que se pide por su clave, con tu matrícula en sus huecos: la prisa
-     * por dejar la pista en castellano —la de fraseología está en la tabla—,
-     * remontar la pista con su número y lo que se dice a quien aterrizó con la
-     * orden de irse al aire. Ver `meterPrisaParaSalir`, `contarPorDondeSeSale`
-     * y `aterrizoContraLaOrden` en `game.ts`.
+     * por dejar la pista en castellano —la de fraseología está en la tabla— y
+     * lo que se dice a quien aterrizó con la orden de irse al aire. Ver
+     * `meterPrisaParaSalir` y `aterrizoContraLaOrden` en `game.ts`. Remontar
+     * la pista ya está en la tabla: se le dice también al tráfico.
      */
     "torre.acelereAbandono",
-    "torre.backtrack",
     "torre.landedWithoutClearance",
     "torre.aterrizoSinPermiso",
     /*

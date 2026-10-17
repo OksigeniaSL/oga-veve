@@ -157,6 +157,24 @@ const SE_SALUDA_EN = "otro.rodando";
 export const EMPIEZA_A_RODAR = SE_SALUDA_EN;
 
 /**
+ * **Lo que se le dice al que la torre no deja salir de su puesto**: «hold
+ * position», y el porqué detrás, que siempre es uno que aterriza. Ver
+ * `Momento.retenidos`.
+ *
+ * El retenido no llamaba: esperaba callado en su puesto, y la frecuencia
+ * enmudecía justo cuando la torre estaba haciendo algo. Ahora llama como
+ * siempre —su «rodando»— y se le contesta que espere, una vez por retención,
+ * sin pasar de paso en su guion: suelto, vuelve a llamar y sigue. Se dice
+ * como orden de torre y se traduce al decirlo: un AFIS no retiene a nadie, le
+ * da la pista en uso y el tráfico que aterriza, y quien vuela espera. Ver
+ * `EN_UN_AFIS` en `audio/torre.ts`.
+ *
+ * **Solo con su voz**: sin nada grabado que sea verdad, ni llama ni se le
+ * contesta, como antes. Ver `sabeRetener`.
+ */
+export const RETENIDO = "torre.holdPosition";
+
+/**
  * Si un avión **está en la calle**: salió de su puesto a rodar —su «rodando»
  * ya se dijo— y todavía no ha entrado en la pista. Es el que espera en la
  * doble raya, o va hacia ella.
@@ -268,6 +286,12 @@ export interface Transmision {
    * es la torre dándosela a dos. Ver `laQueSeDice`.
    */
   readonly quitaPermiso?: boolean;
+  /**
+   * Si se dice **esperando en su puesto**: la llamada del retenido y lo que
+   * le contesta la torre. El dibujo lo pone en su puesto y ahí lo deja, no en
+   * la marca de su llamada, que lo sacaría a rodar. Ver `RETENIDO`.
+   */
+  readonly enSuPuesto?: boolean;
 }
 
 /**
@@ -517,6 +541,11 @@ interface EnLaFrecuencia {
   falta: number;
   /** Si todavía no ha dicho nada: es quien puede dar los buenos días. */
   estrena: boolean;
+  /**
+   * Si la torre le retiene en su puesto: ya llamó y espera que le contesten,
+   * o ya oyó que espere. Ver `RETENIDO`.
+   */
+  retenido?: "llamo" | "oyo";
 }
 
 export class Frecuencia {
@@ -741,6 +770,28 @@ export class Frecuencia {
    * estar donde dicen, y no pierde el turno: habla en cuanto llega.
    */
   todaviaNo: (matricula: string, clave: string) => boolean = () => false;
+
+  /**
+   * **Si el avión dibujado de esa matrícula remonta la pista para salir**: no
+   * le da su pista ninguna entrada y entra por la más cercana a la cabecera,
+   * rueda por ella y da la media vuelta. Lo pone el juego, que es quien lo
+   * dibuja; sin nadie dibujado, nadie remonta. Ver `remonta` en
+   * `world/trafico.ts`.
+   *
+   * Lo que cambia es el guion: el que remonta no sale con un «cleared for
+   * take-off» en su doble raya, porque desde ahí no se despega. Se le da la
+   * pista para remontarla —en la frecuencia es la orden que la sujeta, la del
+   * guion de la espera, y se le dice «backtrack runway»— y la salida cuando
+   * se ha dado la vuelta. Ver `update`.
+   */
+  remonta: (matricula: string) => boolean = () => false;
+
+  /**
+   * **Si la torre de aquí tiene con qué decirle a uno que espere en su
+   * puesto**: con su voz grabada, que sin ella no se dice. Lo pone el juego,
+   * que es quien sabe qué hay grabado; sin eso, no. Ver `RETENIDO`.
+   */
+  sabeRetener: (matricula: string) => boolean = () => false;
 
   /**
    * **Te van a dar la pista: antes se le quita a quien la tenga.**
@@ -990,7 +1041,12 @@ export class Frecuencia {
    */
   update(dt: number, m: Momento): Transmision | null {
     this.canal -= dt;
-    for (const a of this.aviones) a.falta -= dt;
+    for (const a of this.aviones) {
+      a.falta -= dt;
+      // Suelto, lo que oyó deja de valer: ver `RETENIDO`.
+      if (a.retenido === "oyo" && !m.retenidos?.has(a.indicativo.matricula))
+        a.retenido = undefined;
+    }
     if (this.canal > 0) return null;
     if (m.instructorHablando || m.canalOcupado) return null;
     /*
@@ -1025,6 +1081,22 @@ export class Frecuencia {
     const pistaTuya = PISTA_TUYA.has(m.fase);
     let quien: EnLaFrecuencia | null = null;
     for (const a of this.aviones) {
+      /*
+       * **Y el que remonta, por el guion de la espera.** Su «cleared for
+       * take-off» le llegaba en la doble raya y soltaba la pista en la
+       * frecuencia mientras él la remontaba a paso de calle, uno o dos
+       * minutos. Lo de verdad es darle la pista para remontarla —«backtrack
+       * runway», que la sujeta como «line up and wait»— y la salida cuando
+       * se ha dado la vuelta. Los dos guiones son el mismo hasta ahí, así que
+       * se cambia sin mover el paso. Ver `remonta`.
+       */
+      if (
+        a.guion === "sale" &&
+        GUIONES.sale[a.paso]?.clave === "torre.clearedTakeoff" &&
+        GUIONES.espera[a.paso]?.clave === "torre.lineUpWait" &&
+        this.remonta(a.indicativo.matricula)
+      )
+        a.guion = "espera";
       const toca = GUIONES[a.guion][a.paso]!.clave;
       /*
        * **Y con la única calle, el que está en ella sale sin hacerse
@@ -1090,8 +1162,20 @@ export class Frecuencia {
        * **Ni rueda hacia una doble raya que está en la salida de uno que
        * aterriza, ni entra en el circuito uno que saldría por la doble raya
        * de otro que rueda.** Ver `Momento.retenidos`.
+       *
+       * Y el que iba a salir, si hay con qué decírselo, llama y oye que
+       * espere, una vez por retención: ver `RETENIDO`. Lo que oyó deja de
+       * valer al soltarle, y entonces llama otra vez, ya para rodar.
        */
-      if (m.retenidos?.has(a.indicativo.matricula)) continue;
+      const retenido = !!m.retenidos?.has(a.indicativo.matricula);
+      if (
+        retenido &&
+        a.retenido !== "llamo" &&
+        (toca !== EMPIEZA_A_RODAR ||
+          a.retenido === "oyo" ||
+          !this.sabeRetener(a.indicativo.matricula))
+      )
+        continue;
       /*
        * **Y saliendo vos, nadie canta final.** El que aterriza deja la pista
        * por la única calle y rueda por ella hasta su puesto, o sea de frente
@@ -1136,6 +1220,8 @@ export class Frecuencia {
       if (!quien || a.falta < quien.falta) quien = a;
     }
     if (!quien) return null;
+    if (quien.retenido === "llamo" || m.retenidos?.has(quien.indicativo.matricula))
+      return this.retener(quien, m);
 
     const paso = GUIONES[quien.guion][quien.paso]!;
     /*
@@ -1155,6 +1241,32 @@ export class Frecuencia {
     };
     quien.estrena = false;
     this.avanzar(quien);
+    this.canal = HUECO_DEL_CANAL;
+    this.dicho = dice;
+    return dice;
+  }
+
+  /**
+   * **El que la torre no deja salir de su puesto: su llamada, y lo que se le
+   * contesta.** Sin pasar de paso: su «rodando» sigue siendo lo que le toca,
+   * y lo dirá otra vez cuando le suelten. Ver `RETENIDO`.
+   */
+  private retener(a: EnLaFrecuencia, m: Momento): Transmision {
+    let dice: Transmision;
+    if (a.retenido === "llamo") {
+      dice = { voz: "torre", clave: RETENIDO, de: a.indicativo, respuesta: true, enSuPuesto: true };
+      a.retenido = "oyo";
+      // Y se le deja estar: lo suyo vuelve cuando le suelten, no antes.
+      a.falta = ESPERA_MINIMA + this.azar() * (ESPERA_MAXIMA - ESPERA_MINIMA);
+    } else {
+      const paso = GUIONES[a.guion][a.paso]!;
+      const clave =
+        paso.clave === SE_SALUDA_EN && m.deDia && a.estrena ? CON_SALUDO : paso.clave;
+      dice = { voz: paso.voz, clave, de: a.indicativo, respuesta: false, enSuPuesto: true };
+      a.estrena = false;
+      a.retenido = "llamo";
+      a.falta = RESPUESTA_MINIMA + this.azar() * (RESPUESTA_MAXIMA - RESPUESTA_MINIMA);
+    }
     this.canal = HUECO_DEL_CANAL;
     this.dicho = dice;
     return dice;
@@ -1200,6 +1312,7 @@ export class Frecuencia {
       paso: 0,
       falta: 0,
       estrena: true,
+      retenido: undefined,
     };
   }
 }

@@ -61,6 +61,7 @@ import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
 import type { LoQueVeLaMano } from "./flight/mano";
 import {
+  AL_QUE_REMONTA,
   claveDeTorre,
   DICE_LA_TORRE,
   DICE_UN_AFIS,
@@ -778,7 +779,7 @@ import {
   type AlSonar,
   type Instructor,
 } from "./audio/instructor";
-import { Frecuencia, PISTA_TUYA, type Transmision } from "./flight/radio";
+import { Frecuencia, PISTA_TUYA, RETENIDO, type Transmision } from "./flight/radio";
 import {
   dependenciaDe,
   seOyeElCampo,
@@ -4854,6 +4855,7 @@ export class Game {
     retirarteElPermiso: () => this.retirarElPermisoSinOir(),
     permisoSinOir: () => this.permisoSinOir,
     darteElPermisoYa: () => this.darElPermisoYa(),
+    sabeRetener: (m) => this.sabeRetenerA(m),
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -9112,6 +9114,18 @@ export class Game {
     return turnoDe(montada.clave, montada.relleno) ?? null;
   }
 
+  /**
+   * **Si hay voz grabada para decirle a ese avión que espere en su puesto**:
+   * el «hold position» de una torre, o lo que da un AFIS —la pista en uso y
+   * el tráfico que aterriza—. Sin ella no se le retiene de viva voz: ver
+   * `RETENIDO` en `flight/radio.ts`.
+   */
+  private sabeRetenerA(matricula: string): boolean {
+    const suyo = this.radio.indicativoDe(matricula);
+    const montada = suyo ? this.deTorre(RETENIDO, suyo) : null;
+    return !!montada && this.instructor.vozDe(montada.clave, montada.relleno) !== null;
+  }
+
   /** Si en el campo de ahora contesta un AFIS. Ver `Aerodrome.afis`. */
   private esAfisAqui(): boolean {
     return esAfis(this.elCampo().escenario.aerodrome);
@@ -9200,6 +9214,15 @@ export class Game {
       if (!suya) return null;
       base = suya;
     }
+    /*
+     * **Y al que remonta la pista, «backtrack runway»** donde la frecuencia
+     * pide «line up and wait»: entra, rueda por ella hasta la cabecera y da
+     * la media vuelta. Después del AFIS, que no se la da a nadie. Ver
+     * `AL_QUE_REMONTA`.
+     */
+    const alQueRemonta = AL_QUE_REMONTA[base];
+    if (alQueRemonta && (this.trafico?.remonta(quien.matricula) ?? 0) > 0)
+      base = alQueRemonta;
     const orden = DICE_LA_TORRE[base];
     if (!orden) return null;
     // El límite de la autorización va detrás de la orden, como se dice.
@@ -11100,14 +11123,15 @@ export class Game {
      */
     this.moverLasAves(dt);
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
-    // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír.
+    // `montarElCampo`. Y donde no hay torre no hay frecuencia que oír, y
+    // tampoco donde no hay aeródromo: ver `sinTorre`.
     /*
-     * **Ni en el vuelo del modo inicio**: es la primera lección de alguien, en
-     * un campo del Chaco, y van solos, como en la granja. La frecuencia del
-     * campo sonaba igual —el «buenos días» de otro avión, la torre
-     * mandándole esperar— sin un solo avión a la vista, y partía la
+     * **Ni en el vuelo del modo inicio**: es la primera lección de alguien, y
+     * van solos, como en la granja. La frecuencia del campo partía la
      * conversación de Jazlyn y Ara: «las radios de otros pilotos cortan la
-     * conversación». Ver `flight/inicio.ts`.
+     * conversación». En el Chaco, donde se da hoy, ya la calla `sinTorre`,
+     * porque allí no hay aeródromo; esto es para que siga callada si la
+     * escena se muda a un campo con torre. Ver `flight/inicio.ts`.
      */
     if (!sinTorre(this.elCampoMontado().escenario.aerodrome) && !this.conInicio)
       this.oirElCampo(dt);

@@ -599,6 +599,18 @@ const TORRE_SOLO = [
   ],
   ["torre.solo.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
   /*
+   * **Y al que la torre no deja salir de su puesto** mientras aterriza uno que
+   * dejará la pista por su doble raya: «hold position», con el porqué detrás
+   * —«landing traffic», que ya está—. Doc 4444, fraseología de rodaje; el
+   * párrafo, por verificar. Ver `RETENIDO` en `src/flight/radio.ts` y
+   * `PENDIENTE-VOCES-torre-trafico.md`.
+   */
+  [
+    "torre.solo.holdPosition",
+    "hold position",
+    "esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué",
+  ],
+  /*
    * El principio de la autorización; el límite —el campo— va en un hueco,
    * porque cambia con cada ruta. Ver `DESTINOS_EN_RADIO` más abajo.
    */

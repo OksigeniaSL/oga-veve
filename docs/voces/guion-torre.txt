@@ -55,6 +55,7 @@ landing traffic
 departing traffic
 give way to
 line up and wait
+hold position
 cleared to
 climb to
 runway in use

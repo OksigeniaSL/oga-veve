@@ -917,6 +917,7 @@ torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno vien
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.giveWay.ogg	en	give way to	dale paso al que viene de frente por tu calle; detrás, quién
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+torre	torre/torre.solo.holdPosition.ogg	en	hold position	esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
 torre	torre/torre.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura
 torre	torre/torre.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número
@@ -1110,6 +1111,7 @@ torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing t
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.giveWay.ogg	en	give way to	dale paso al que viene de frente por tu calle; detrás, quién, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.holdPosition.ogg	en	hold position	esperá en tu puesto: uno aterriza y va a dejar la pista por tu doble raya; detrás, el porqué, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.climbTo.ogg	en	climb to	la autorización de altitud, antes de la altura, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.runwayInUse.ogg	en	runway in use	la pista en uso, antes de su número, en Canarias
