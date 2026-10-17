@@ -1212,18 +1212,36 @@ const LEC_INICIO_ATERRIZAR = escena(`
 `);
 
 /**
+ * **Viajar con Jazlyn**: la ventanilla de un avión de línea, con el ala y una
+ * nube, y las mismas dos caras en la esquina. Es la tercera escena, de pasaje:
+ * Ara mira por la ventanilla y Jazlyn es la comandante. Ver
+ * `flight/inicio-pasaje.ts`.
+ */
+const LEC_INICIO_PASAJE = escena(`
+  <rect class="leccion__marco" x="60" y="5" width="44" height="74" rx="20" />
+  <rect class="panel__cielo" x="66" y="11" width="32" height="62" rx="15" />
+  <path class="leccion__mar" d="M66 50 H98 V58 q0 15-15 15 h-2 q-15 0-15-15 Z" />
+  <path class="leccion__nube" d="M70 36 a5 5 0 0 1 7-4 a6.5 6.5 0 0 1 12 1.5 a4.5 4.5 0 0 1 2 8.5 h-19 a3.8 3.8 0 0 1-2-6 Z" />
+  <path class="leccion__ala" d="M66 60 L98 52 V56.5 L66 68 Z" />
+  ${caraDentro("mama", 4, 4, 34)}
+  ${caraDentro("ara", 30, 14, 24)}
+`);
+
+/**
  * Las fichas del modo inicio. **No son lecciones más del grupo**: no se eligen
  * y se despega después, sino que se tocan y se vuelan, con su sitio, su avión
  * y su peldaño. Por eso van fuera del grupo de radio, delante de todo: la de
  * aprender a volar y, al lado, la de aterrizar.
  */
 function fichaDelInicio(cual: EscenaDelInicio): string {
-  const aterrizar = cual === "aterrizar";
+  const dibujo = cual === "aterrizar" ? LEC_INICIO_ATERRIZAR : cual === "pasaje" ? LEC_INICIO_PASAJE : LEC_INICIO;
+  const nombre =
+    cual === "aterrizar" ? "inicio.modo.aterrizar" : cual === "pasaje" ? "inicio.modo.pasaje" : "inicio.modo.nombre";
   return `
     <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo="${cual}">
-      <span class="ficha__lienzo ficha__lienzo--panel">${aterrizar ? LEC_INICIO_ATERRIZAR : LEC_INICIO}</span>
+      <span class="ficha__lienzo ficha__lienzo--panel">${dibujo}</span>
       <span class="ficha__pie">
-        <span class="ficha__nombre">${t(aterrizar ? "inicio.modo.aterrizar" : "inicio.modo.nombre")}</span>
+        <span class="ficha__nombre">${t(nombre)}</span>
       </span>
     </button>`;
 }
@@ -1923,7 +1941,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
-          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}</div>
+          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}</div>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
@@ -2403,8 +2421,9 @@ export function abrirHangar(
        * **Y el modo inicio, que se toca y se vuela**: ver `fichaDelInicio`.
        */
       const conInicio = boton.hasAttribute("data-inicio-modo");
+      const modo = boton.getAttribute("data-inicio-modo");
       const escenaDelInicio: EscenaDelInicio =
-        boton.getAttribute("data-inicio-modo") === "aterrizar" ? "aterrizar" : "despegar";
+        modo === "aterrizar" ? "aterrizar" : modo === "pasaje" ? "pasaje" : "despegar";
       if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);

@@ -856,6 +856,18 @@ import {
   type LecturaDeAterrizar,
   type PasoDeAterrizar,
 } from "./flight/inicio-aterrizar";
+import {
+  esAnuncioDeSiempre,
+  LADO_DE_ARA,
+  VueloDePasaje,
+  type LecturaDelPasaje,
+} from "./flight/inicio-pasaje";
+import {
+  enLosMandosDeLinea,
+  VueloDeLinea,
+  type LecturaDeLinea,
+  type ManosDeLinea,
+} from "./flight/vuelo-de-linea";
 import { PantallaDelInicio } from "./ui/inicio";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
@@ -943,6 +955,7 @@ import {
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import {
+  ANUNCIOS,
   Megafonia,
   conPasaje,
   conTripulacion,
@@ -1323,6 +1336,18 @@ import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
+
+/**
+ * **Lo que se oye desde un asiento de pasaje**: los tonos de la cabina de
+ * pasaje —el del cinturón y las llamadas—, que son los de un avión de verdad.
+ * Ver `avisar`.
+ */
+const SUENAN_EN_EL_PASAJE: ReadonlySet<Cue> = new Set<Cue>([
+  "cinturon",
+  "llamadaPasajero",
+  "llamadaTripulacion",
+  "llamadaEmergencia",
+]);
 
 /**
  * **A qué altura sobre la pista se suelta el automático en la final**, m:
@@ -2924,6 +2949,8 @@ export class Game {
    * se cae si a la caja la corta otro aviso.
    */
   private decirLaManiobra(deLaCaja: string, explica: TranslationKey): void {
+    // Lo de las cajas suena en la cabina de mando, no en el pasaje. Ver `dePasaje`.
+    if (this.dePasaje) return;
     if (!loDiceElAvion(deLaCaja, this.aircraft)) return;
     const conExplicacion =
       laInstructoraLoExplica(this.tier.avisos) && this.instructor.vozDe(explica) !== null;
@@ -4785,8 +4812,34 @@ export class Game {
     BOCA,
     this.grabaciones,
   );
-  /** El modo inicio, mientras dure: el despegue o el aterrizaje. Ver `empezarElInicio`. */
-  private inicio: Inicio | InicioDeAterrizar | null = null;
+  /**
+   * El modo inicio, mientras dure: el despegue, el aterrizaje o el vuelo de
+   * pasaje. Ver `empezarElInicio`.
+   */
+  private inicio: Inicio | InicioDeAterrizar | VueloDePasaje | null = null;
+  /**
+   * **La tripulación de la escena de pasaje**: Jazlyn y su primer oficial,
+   * llevando el avión del puesto al puesto. Ver `flight/vuelo-de-linea.ts`.
+   */
+  private tripulacionDeLinea: VueloDeLinea | null = null;
+  /** Lo último que leyó y lo último que hizo, para el banco. */
+  private lecturaDeLinea: LecturaDeLinea | null = null;
+  private manosDeLinea: ManosDeLinea | null = null;
+  /**
+   * **Lo que se dijo de verdad en la escena de pasaje**, por frase: los
+   * anuncios de siempre se montan al decirlos —con el plan, el campo y el
+   * tiempo de hoy— y el subtítulo tiene que ser lo que se montó.
+   */
+  private readonly textoDeLaEscena = new WeakMap<Linea, string>();
+  /**
+   * **Las claves que la escena de pasaje tiene en la boca**: los anuncios de
+   * siempre y lo de la ventanilla, que no empiezan por `inicio.` y que con la
+   * boca de la escena reservada no pasarían. Ver `esDeLaEscena`.
+   */
+  private readonly clavesDeLaEscena = new Map<string, number>();
+  /** La altitud de cabina de antes, para saber lo que baja. Ver `lecturaDelPasaje`. */
+  private cabinaAntes: number | null = null;
+  private ritmoDeCabina = 0;
   private pantallaDelInicio: PantallaDelInicio | null = null;
   /** Si este vuelo es el del modo inicio, aunque ya se haya acabado. */
   private conInicio = false;
@@ -4798,9 +4851,22 @@ export class Game {
    * decide por la aproximación —ni la ayuda del gas de la final, ni la
    * nivelada, ni la orden de irse al aire, ni la toma larga—. Ver
    * `flight/inicio-aterrizar.ts`.
+   *
+   * Y la de pasaje, de punta a punta: ahí la llevan ella y su primer oficial,
+   * desde la cabina de mando. Ver `flight/vuelo-de-linea.ts`.
    */
   private get manoDeJazlyn(): boolean {
-    return this.inicio instanceof InicioDeAterrizar;
+    return this.inicio instanceof InicioDeAterrizar || this.inicio instanceof VueloDePasaje;
+  }
+
+  /**
+   * **Si este vuelo es el de pasaje**, entero: desde el asiento de la
+   * ventanilla no se oye lo que solo suena en la cabina de mando —las cajas,
+   * la radio, los tonos del juego— y lo que se apunta en el cuaderno no es de
+   * pilotaje, que Ara no pilota. Ver `flight/inicio-pasaje.ts`.
+   */
+  private get dePasaje(): boolean {
+    return this.conInicio && this.escenaDelInicio === "pasaje";
   }
   /** Lo último que leyó la escena de aterrizar, y cómo se tocó: para el banco. */
   private lecturaDelAterrizaje: LecturaDeAterrizar | null = null;
@@ -6358,9 +6424,10 @@ export class Game {
    */
   private empezarElInicio(desde?: PasoId | PasoDeAterrizar): void {
     const aterrizar = this.escenaDelInicio === "aterrizar";
+    const pasaje = this.escenaDelInicio === "pasaje";
     try {
-      // La primera experiencia es la del despegue: aterrizar no la da por vista.
-      if (!aterrizar) ponerTexto("inicio-visto", "1");
+      // La primera experiencia es la del despegue: las otras dos no la dan por vista.
+      if (this.escenaDelInicio === "despegar") ponerTexto("inicio-visto", "1");
       ponerTexto("teclas-vistas", "1");
     } catch {
       // Sin almacenamiento se juega igual.
@@ -6368,7 +6435,41 @@ export class Game {
     this.mama.callar();
     this.ara.callar();
     const primerSello = this.cuaderno.aerodromos.length === 0;
-    if (aterrizar) {
+    if (pasaje) {
+      /*
+       * **De pasaje, en el puesto y sentado en la ventanilla**: los motores
+       * parados, el avión en su puesto de Los Rodeos y la vista desde el
+       * asiento de Ara. El avión lo lleva su tripulación —ver
+       * `flight/vuelo-de-linea.ts`— y la escena dice qué toca y cuándo.
+       */
+      this.inicio = new VueloDePasaje(this.vozDelInicio, { lado: LADO_DE_ARA });
+      this.tripulacionDeLinea = new VueloDeLinea({
+        vr: this.aircraft.rotationSpeed,
+        vref: this.aircraft.approachSpeed,
+        alturaDeLaRecogida: laRecogidaDe(this.aircraft).nariz,
+        reversa: tieneReversa(this.aircraft),
+        trenQueSeMete: this.input.hayPalancaDeTren,
+      });
+      this.inicioCongelado = false;
+      this.input.cerrarGas();
+      this.input.controls.engineOn = false;
+      // El gas de la final es de la tripulación: la ayuda del peldaño no se engancha.
+      this.soltarElGasDeLaFinal(false);
+      this.gasDeLaFinalDado = true;
+      // Desde el asiento, sin tocar la vista recordada de quien juega.
+      this.cameraMode = LADO_DE_ARA === "izquierda" ? "pasaje-izquierda" : "pasaje-derecha";
+      this.clavesDeLaEscena.clear();
+      this.cabinaAntes = null;
+      this.ritmoDeCabina = 0;
+      this.comandante.callar();
+      this.tripulacion.callar();
+      /*
+       * Y un día sin turbulencia en el camino, que es lo más corriente con buen
+       * tiempo: la del aire de abajo, la del alisio rozando la isla, se nota
+       * igual al subir. Ver `turbulenciaDelCamino`.
+       */
+      this.turbulenciaPedida = [];
+    } else if (aterrizar) {
       this.inicio = new InicioDeAterrizar(this.vozDelInicio, {
         primerSello,
         ...(desde ? { desde: desde as PasoDeAterrizar } : {}),
@@ -6393,9 +6494,17 @@ export class Game {
      * pide turno —ni la radio, ni la megafonía, ni los cantos de cabina—, que
      * una conversación con alguien aprendiendo no se corta. Ver `reservar` en
      * `audio/boca.ts`.
+     *
+     * **Y de pasaje, también la megafonía de siempre, pero dicha por la
+     * escena**: los anuncios y lo de la ventanilla no empiezan por `inicio.`,
+     * así que pasan los que la escena tiene en la boca en ese momento y ni uno
+     * más. Ver `clavesDeLaEscena`.
      */
-    BOCA.reservar(esDeLaEscena);
+    BOCA.reservar(
+      pasaje ? (c) => esDeLaEscena(c) || (!!c && this.clavesDeLaEscena.has(c)) : esDeLaEscena,
+    );
     document.documentElement.classList.add("con-inicio");
+    document.documentElement.classList.toggle("con-pasaje", pasaje);
     const raiz = document.getElementById("inicio");
     if (!this.pantallaDelInicio && raiz)
       this.pantallaDelInicio = new PantallaDelInicio(
@@ -6412,7 +6521,7 @@ export class Game {
           frenar: () => this.input.pisarElFreno(),
         },
         () => this.hud.altoDeArriba,
-        t(aterrizar ? "inicio.modo.aterrizar" : "inicio.modo.nombre"),
+        t(pasaje ? "inicio.modo.pasaje" : aterrizar ? "inicio.modo.aterrizar" : "inicio.modo.nombre"),
       );
     this.ladoDelInicio = 0;
     /*
@@ -6437,15 +6546,32 @@ export class Game {
    */
   private readonly vozDelInicio = {
     decir: (linea: Linea, alAcabar: (esperaMas: number, cortada?: boolean) => void): void => {
-      const boca = linea.quien === "mama" ? this.mama : this.ara;
-      const texto = t(linea.clave as TranslationKey);
-      let acabado = false;
-      const acabar = (sono: boolean, cortada = false): void => {
-        if (acabado) return;
-        acabado = true;
-        alAcabar(sono ? 0 : tiempoDeLectura(texto), cortada);
-      };
-      boca.decir(texto, linea.clave, "normal", undefined, (que) => {
+      /*
+       * **Un anuncio de la megafonía de siempre**, en la escena de pasaje: lo
+       * monta el juego como en cualquier vuelo con pasaje. Ver
+       * `decirElAnuncioDeLaEscena`.
+       */
+      if (esAnuncioDeSiempre(linea.clave) && (ANUNCIOS as readonly string[]).includes(linea.clave)) {
+        this.decirElAnuncioDeLaEscena(linea, alAcabar);
+        return;
+      }
+      /*
+       * Ara, con su voz y a su lado; la tripulación, por el altavoz del techo;
+       * y Jazlyn, al lado en las dos primeras escenas y por la megafonía, desde
+       * la cabina de mando, en la de pasaje.
+       */
+      const boca =
+        linea.quien === "ara"
+          ? this.ara
+          : linea.quien === "tripulacion"
+            ? this.tripulacion
+            : linea.megafonia
+              ? this.comandante
+              : this.mama;
+      const texto = linea.texto ?? t(linea.clave as TranslationKey);
+      this.textoDeLaEscena.set(linea, texto);
+      const acabar = this.alAcabarLaFrase(linea.clave, texto, alAcabar);
+      boca.decir(texto, linea.clave, "normal", linea.relleno, (que) => {
         if (que === "acaba") acabar(true);
         // Cortada por la escena no llega: ella ya no la espera. Ver `Inicio.callar`.
         else if (que === "cortada") acabar(true, true);
@@ -6455,9 +6581,72 @@ export class Game {
     callar: (): void => {
       this.mama.callar();
       this.ara.callar();
-      BOCA.retirar((clave) => !!clave?.startsWith("inicio."));
+      if (this.inicio instanceof VueloDePasaje) {
+        this.comandante.callar();
+        this.tripulacion.callar();
+      }
+      BOCA.retirar((clave) => !!clave?.startsWith("inicio.") || (!!clave && this.clavesDeLaEscena.has(clave)));
+      this.clavesDeLaEscena.clear();
     },
   };
+
+  /**
+   * **Lo que se hace al acabar una frase de la escena**: avisarla —con el
+   * rato de leerla si no sonó— y soltar su clave de la boca. Y antes, ponerla
+   * en la boca: con la boca de la escena reservada, una clave que no empieza
+   * por `inicio.` solo pasa mientras la escena la está diciendo. Ver
+   * `clavesDeLaEscena`.
+   */
+  private alAcabarLaFrase(
+    clave: string,
+    texto: string,
+    alAcabar: (esperaMas: number, cortada?: boolean) => void,
+  ): (sono: boolean, cortada?: boolean) => void {
+    this.clavesDeLaEscena.set(clave, (this.clavesDeLaEscena.get(clave) ?? 0) + 1);
+    let acabado = false;
+    return (sono: boolean, cortada = false): void => {
+      if (acabado) return;
+      acabado = true;
+      const quedan = (this.clavesDeLaEscena.get(clave) ?? 1) - 1;
+      if (quedan > 0) this.clavesDeLaEscena.set(clave, quedan);
+      else this.clavesDeLaEscena.delete(clave);
+      alAcabar(sono ? 0 : tiempoDeLectura(texto), cortada);
+    };
+  }
+
+  /**
+   * **Un anuncio de la megafonía, dicho por la escena de pasaje.** Lo mismo que
+   * `decirPorMegafonia` —el mismo texto montado con el campo, el plan y el
+   * tiempo de hoy, la misma boca y la misma llamada de cabina delante de lo que
+   * se le dice a la tripulación, y los mismos sucesos del cartel del
+   * cinturón—, pero cuando lo decide la escena y avisando al acabar, que la
+   * escena no dice lo siguiente hasta entonces.
+   */
+  private decirElAnuncioDeLaEscena(
+    linea: Linea,
+    alAcabar: (esperaMas: number, cortada?: boolean) => void,
+  ): void {
+    const anuncio = linea.clave as Anuncio;
+    if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
+    if (anuncio === "comandante.descenso") this.pidioAbrocharse = true;
+    const dicho = this.loQueDiceLaMegafonia(anuncio);
+    this.textoDeLaEscena.set(linea, dicho.texto);
+    const boca = anuncio.startsWith("tripulacion.") ? this.tripulacion : this.comandante;
+    const acabar = this.alAcabarLaFrase(dicho.clave, dicho.texto, alAcabar);
+    this.conSuLlamada(
+      dicho.clave,
+      () =>
+        boca.decir(dicho.texto, dicho.clave, "normal", dicho.relleno, (que) => {
+          if (que === "acaba") acabar(true);
+          else if (que === "cortada") acabar(true, true);
+          else if (que === "no-suena" || que === "se-cae") acabar(false);
+        }),
+      dicho.relleno,
+      false,
+      // Si se le pasó el momento antes de su llamada, no se dice: la escena sigue.
+      () => acabar(false),
+    );
+  }
 
   /**
    * **Un paso del modo inicio**: lo que lee del avión y de quien juega, si el
@@ -6475,6 +6664,10 @@ export class Game {
       (Math.abs(i.cabeceo) > 0.5 || Math.abs(i.alabeo) > 0.5 || i.gas !== 0)
     )
       inicio.seguir();
+    if (inicio instanceof VueloDePasaje) {
+      this.atenderALaEscenaDePasaje(inicio, dt);
+      return;
+    }
     const congelado =
       inicio instanceof InicioDeAterrizar
         ? this.atenderAlAterrizaje(inicio, dt)
@@ -6487,6 +6680,185 @@ export class Game {
     if (inicio.estado.paso === "fin") this.apuntarElSitio();
     if (inicio.estado.terminado) this.acabarElInicio();
     else this.pintarElInicio();
+  }
+
+  /**
+   * **Un paso de la escena de pasaje**: lo que lee la escena, lo que deja
+   * hacer a la tripulación y lo que hacen sus manos, puesto en los mandos con
+   * los mismos mandos que quien juega. El mundo no espera nunca: es un vuelo
+   * de verdad, y nadie toca nada. Ver `flight/inicio-pasaje.ts` y
+   * `flight/vuelo-de-linea.ts`.
+   */
+  private atenderALaEscenaDePasaje(escena: VueloDePasaje, dt: number): void {
+    const tripulacion = this.tripulacionDeLinea;
+    if (!tripulacion) return;
+    this.inicioCongelado = false;
+    this.hud.tutor.silenciar(true);
+    const s = this.flight.state;
+    const c = this.input.controls;
+    // Lo que baja la cabina presurizada, que es lo que notan los oídos.
+    const cabina = this.cabinaDelAvion.altitud;
+    if (this.cabinaAntes !== null && dt > 0)
+      this.ritmoDeCabina += ((cabina - this.cabinaAntes) / dt - this.ritmoDeCabina) * Math.min(1, dt / 3);
+    this.cabinaAntes = cabina;
+    const linea = this.lecturaDeLaTripulacion();
+    const e = tripulacion.estado;
+    const capa = this.capaDeNubes;
+    const lectura: LecturaDelPasaje = {
+      tramo: e.tramo,
+      enTramo: e.enTramo,
+      motor: c.engineOn,
+      enTierra: s.onGround,
+      porElSuelo: s.groundSpeed,
+      altura: linea.altura,
+      altitud: s.position.y,
+      vertical: s.verticalSpeed,
+      autorizado: linea.autorizado,
+      flaps: c.flaps,
+      nubes: capa && capa.tapadura > 0 ? { base: capa.base, techo: capa.techo } : null,
+      enNube:
+        capa && s.position.y > capa.base - 50 && s.position.y < capa.techo + 50
+          ? cuantoDentro(this.sky.densidadEn(s.position.x, s.position.y, s.position.z))
+          : 0,
+      cabina: this.ritmoDeCabina,
+      faltaParaTocar: linea.faltaParaTocar,
+    };
+    const permisos = escena.paso(dt, lectura);
+    const manos = tripulacion.paso(dt, linea, permisos);
+    this.lecturaDeLinea = linea;
+    this.manosDeLinea = manos;
+    this.ponerLasManosDeLinea(manos);
+    /*
+     * **Al final, el sello del campo de llegada, de visita**: Ara no ha
+     * pilotado, así que no es un aterrizaje ni un despegue del cuaderno. Ver
+     * `apuntarElViaje`.
+     */
+    if (escena.estado.momento === "fin") this.apuntarElViaje();
+    /*
+     * Y el botón del final vuelve al hangar: un avión de línea que se acaba de
+     * traer de pasajero no se sigue volando.
+     */
+    if (escena.estado.terminado) {
+      this.acabarElInicio();
+      window.location.assign(window.location.pathname);
+      return;
+    }
+    this.pintarElInicio();
+  }
+
+  /**
+   * **Lo que lee la tripulación de la escena de pasaje**: el avión, la raya del
+   * suelo, la pista en uso, el tramo de la ruta, la altura que pide el plan y
+   * la final por el localizador y la senda, que son los mismos que siguen el
+   * automático y la pantalla de navegación. Ver `conElPilotoAutomatico`.
+   */
+  private lecturaDeLaTripulacion(): LecturaDeLinea {
+    const s = this.flight.state;
+    const c = this.input.controls;
+    const pista = this.laPistaDeAhora();
+    const ejes = enEjesDePista(s.position.x, s.position.z, pista.x, pista.z, pista.heading);
+    const ruta = this.navegacion.plan;
+    const i = this.navegacion.indice;
+    const desde = ruta?.fijos[i - 1];
+    const hasta = ruta?.fijos[i];
+    const lectura = this.lecturaDeRuta();
+    const crucero = this.navegacion.cruceroPlaneado;
+    const bajando = this.navegacion.bajando;
+    const senda = bajando ? this.navegacion.alturaParaElAutomatico(lectura) : null;
+    const enLaFinal = !s.onGround && !!ruta && this.navegacion.enElTramoFinal(lectura);
+    const cota = this.cotaDeLaPistaAqui();
+    const progreso = this.navegacion.progreso;
+    return {
+      enTierra: s.onGround,
+      enPista: s.onRunway,
+      x: s.position.x,
+      z: s.position.z,
+      rumbo: s.heading,
+      velocidad: s.airspeed,
+      porElSuelo: s.groundSpeed,
+      altitud: s.position.y,
+      altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      vertical: s.verticalSpeed,
+      motor: c.engineOn,
+      flaps: c.flaps,
+      tren: c.tren,
+      fase: this.faseDeAhora as Fase,
+      autorizado: this.plan?.autorizado ?? false,
+      raya: s.onGround ? this.rayaParaLaTripulacion() : [],
+      pista: {
+        rumbo: (pista.heading * Math.PI) / 180,
+        lado: ejes.across,
+        queda: this.runwayRemaining(),
+      },
+      tramo: desde && hasta ? { desde, hasta, recta: hasta.recta === true } : null,
+      /*
+       * Sin plan puesto todavía —en el suelo, antes de despegar—, la altura
+       * de crucero no vale cero: se sube a la del plan cuando esté, y hasta
+       * entonces a mil metros sobre el campo.
+       */
+      alturaPedida: senda ?? (crucero > 0 ? crucero : cota + 1000),
+      ritmoPedido: senda !== null ? (this.navegacion.ritmoParaElAutomatico(lectura) ?? 0) : 0,
+      faltaParaTocar: progreso?.restante ?? Infinity,
+      enLaFinal,
+      localizador: enLaFinal ? this.rumboDelLocalizador() : null,
+      senda: enLaFinal ? this.sendaDelGs() : null,
+      cotaDelCampo: cota,
+    };
+  }
+
+  /**
+   * **La raya del plan, en puntos con nombre**, la misma mientras el plan no
+   * pinte otra: la tripulación lleva por dónde va sobre ella, y una raya nueva
+   * en cada fotograma la haría empezar de cero cada vez. Ver `SeguirLaRaya`.
+   */
+  private rayaParaLaTripulacion(): readonly { readonly x: number; readonly z: number }[] {
+    const de = this.plan?.rutaVisible() ?? [];
+    if (this.rayaDeLaTripulacion?.de !== de)
+      this.rayaDeLaTripulacion = { de, a: de.map(([x, z]) => ({ x, z })) };
+    return this.rayaDeLaTripulacion.a;
+  }
+
+  private rayaDeLaTripulacion: {
+    readonly de: readonly (readonly [number, number])[];
+    readonly a: readonly { readonly x: number; readonly z: number }[];
+  } | null = null;
+
+  /**
+   * **Las manos de la tripulación en los mandos**, por los mismos caminos que
+   * las de quien juega: el motor, el gas por su servo, las palancas de flaps,
+   * tren, aerofrenos y autofreno, y lo demás escrito en los mandos detrás de
+   * quien pilota y antes del modelo de vuelo, como cualquier ayuda. Ver
+   * `enLosMandosDeLinea`.
+   */
+  private ponerLasManosDeLinea(m: ManosDeLinea): void {
+    const s = this.flight.state;
+    const c = this.input.controls;
+    /*
+     * El motor, con su arranque y su parada de siempre —el sonido, el cartel y
+     * la máquina de fases—, y solo parado en el suelo, que es donde se puede.
+     */
+    if (m.motor !== c.engineOn && s.onGround && s.groundSpeed <= 2) this.arrancarOParar(m.motor);
+    this.input.ponerPalancaDeFlaps(m.flaps);
+    if (this.input.hayPalancaDeTren && this.input.trenQueSePide !== m.tren) this.input.alternarTren();
+    const palanca = this.input.palancaDeAerofrenos;
+    if (palanca.hayPalanca) {
+      if (m.armados && palanca.palanca === "recogida" && c.tren > 0.99) palanca.ponerPalanca("armada");
+      if (!m.armados && palanca.palanca !== "recogida") palanca.ponerPalanca("recogida");
+    }
+    if (palanca.hayAutofreno) {
+      const modo = m.autofreno === 2 ? "med" : m.autofreno === 1 ? "lo" : "off";
+      if (palanca.modo !== modo) palanca.ponerAutofreno(modo);
+    }
+    const mandos = enLosMandosDeLinea(m, this.flight, {
+      porElSuelo: s.groundSpeed,
+      sacado: { flaps: c.flaps, tren: c.tren },
+    });
+    this.input.servoDelGas(mandos.throttle);
+    c.elevator = mandos.elevator ?? 0;
+    c.aileron = mandos.aileron ?? 0;
+    c.rudder = mandos.rudder ?? 0;
+    c.brakes = mandos.brakes;
+    c.reversa = mandos.reversa;
   }
 
   /**
@@ -6610,13 +6982,48 @@ export class Game {
     const inicio = this.inicio;
     const pantalla = this.pantallaDelInicio;
     if (!inicio || !pantalla) return;
-    const e = inicio.estado;
     /*
      * El lado se mira solo con el ala de verdad inclinada: pasando por el
      * cero, el dibujo cambiaría de flecha a cada fotograma.
      */
     const alabeo = bankAngleOf(this.flight.state.orientation);
     if (Math.abs(alabeo) > (3 * Math.PI) / 180) this.ladoDelInicio = alabeo < 0 ? -1 : 1;
+    /*
+     * **De pasaje**: quien habla —con el altavoz si es por la megafonía—, lo
+     * que se dijo de verdad —los anuncios se montan al decirlos—, qué mirar, y
+     * al final el sello del campo de llegada, con el botón de volver al
+     * hangar.
+     */
+    if (inicio instanceof VueloDePasaje) {
+      const p = inicio.estado;
+      // El sello del campo al que se llegó, que es donde se está.
+      const destino = this.elCampoDeAhora();
+      pantalla.pintar({
+        gesto: null,
+        mando: this.input.ultimoMando,
+        lado: 0,
+        linea: p.linea
+          ? {
+              quien: p.linea.quien,
+              clave: p.linea.clave,
+              texto: this.textoDeLaEscena.get(p.linea) ?? p.linea.texto ?? t(p.linea.clave as TranslationKey),
+              megafonia: p.linea.megafonia === true,
+            }
+          : null,
+        congelado: false,
+        mira: p.mira,
+        fin:
+          p.momento === "fin"
+            ? {
+                sello: selloDe(destino, t(destino.nameKey as TranslationKey)),
+                puedeSeguir: p.puedeSeguir,
+                volver: true,
+              }
+            : null,
+      });
+      return;
+    }
+    const e = inicio.estado;
     pantalla.pintar({
       gesto: e.gesto,
       mando: this.input.ultimoMando,
@@ -6638,11 +7045,12 @@ export class Game {
   /** Se acabó la escena: el vuelo sigue, ya sin la tarjeta y sin la mano de la mamá. */
   private acabarElInicio(): void {
     this.inicio = null;
+    this.tripulacionDeLinea = null;
     this.inicioCongelado = false;
     BOCA.reservar(null);
     this.pantallaDelInicio?.quitar();
     this.pantallaDelInicio = null;
-    document.documentElement.classList.remove("con-inicio");
+    document.documentElement.classList.remove("con-inicio", "con-pasaje");
     if (this.cuadroAntesDelInicio !== null) this.hud.recogerElCuadro(this.cuadroAntesDelInicio);
     this.cuadroAntesDelInicio = null;
     this.encuadrarSobreElCuadro();
@@ -6660,18 +7068,35 @@ export class Game {
   get inicioParaBanco(): {
     readonly conInicio: boolean;
     readonly escena: EscenaDelInicio;
-    readonly estado: Inicio["estado"] | InicioDeAterrizar["estado"] | null;
+    readonly estado: Inicio["estado"] | InicioDeAterrizar["estado"] | VueloDePasaje["estado"] | null;
     readonly registro: Inicio["registro"] | null;
     readonly congelado: boolean;
     readonly mando: string;
     readonly lectura: LecturaDeAterrizar | null;
     readonly toma: Game["tomaDelAterrizaje"];
-    readonly cuaderno: { readonly aterrizajes: number; readonly percances: number; readonly frustradas: number };
+    readonly cuaderno: {
+      readonly aterrizajes: number;
+      readonly despegues: number;
+      readonly percances: number;
+      readonly frustradas: number;
+      readonly segundos: number;
+      readonly aerodromos: readonly string[];
+      readonly deViaje: readonly string[];
+    };
+    /** De pasaje: lo que hace la tripulación, lo que lee y lo que tiene en las manos. */
+    readonly tripulacion: VueloDeLinea["estado"] | null;
+    readonly lecturaDeLinea: LecturaDeLinea | null;
+    readonly manos: ManosDeLinea | null;
+    /** Y la vista, el subtítulo de ahora y si la cabina de pasaje se oye desde el asiento. */
+    readonly vista: string;
+    readonly texto: string | null;
   } {
+    const e = this.inicio?.estado;
+    const linea = e?.linea ?? null;
     return {
       conInicio: this.conInicio,
       escena: this.escenaDelInicio,
-      estado: this.inicio?.estado ?? null,
+      estado: e ?? null,
       registro: this.inicio?.registro ?? null,
       congelado: this.inicioCongelado,
       mando: this.input.ultimoMando,
@@ -6679,9 +7104,18 @@ export class Game {
       toma: this.tomaDelAterrizaje,
       cuaderno: {
         aterrizajes: this.cuaderno.aterrizajes,
+        despegues: this.cuaderno.despegues,
         percances: this.cuaderno.percances,
         frustradas: this.cuaderno.frustradas,
+        segundos: this.cuaderno.segundos,
+        aerodromos: this.cuaderno.aerodromos,
+        deViaje: this.cuaderno.deViaje,
       },
+      tripulacion: this.tripulacionDeLinea?.estado ?? null,
+      lecturaDeLinea: this.lecturaDeLinea,
+      manos: this.manosDeLinea,
+      vista: this.vistaQueHay(),
+      texto: linea ? (this.textoDeLaEscena.get(linea) ?? linea.texto ?? t(linea.clave as TranslationKey)) : null,
     };
   }
 
@@ -7156,7 +7590,7 @@ export class Game {
        * de verdad —en la pista, sin percance, sin golpe—. Colgarlo del galón
        * habría sido tener dos definiciones de aterrizar bien.
        */
-      if (lasGana(veredicto) && ganarGafas()) {
+      if (!this.dePasaje && lasGana(veredicto) && ganarGafas()) {
         this.hechos.emit("ganasteLasGafas", {});
       }
     }
@@ -7198,6 +7632,13 @@ export class Game {
      */
     urgencia: Urgencia = "normal",
   ): void {
+    /*
+     * **Desde el asiento de pasaje no se oye la cabina de mando**: ni las cajas
+     * —«terrain», la cuenta del radioaltímetro— ni la instructora, que en ese
+     * vuelo no va. Suenan por el altavoz de la cabina de mando, con la puerta
+     * cerrada, y el pasaje no las oye nunca. Ver `flight/inicio-pasaje.ts`.
+     */
+    if (this.dePasaje) return;
     const deCabina = claveDeCabina(ingles);
     /*
      * **Una caja del avión: la máquina, si el avión la lleva.**
@@ -7390,6 +7831,8 @@ export class Game {
    * la máquina está diciendo un aviso, el número se pierde, y está bien.
    */
   private cantarLaCuenta(aviso: Aviso): void {
+    // La cuenta suena en la cabina de mando: desde el pasaje no se oye.
+    if (this.dePasaje) return;
     const clave = claveDeCabina(aviso.dice);
     const como =
       clave && loDiceElAvion(clave, this.aircraft)
@@ -8096,6 +8539,13 @@ export class Game {
    * hechas y no por no fallar. Ver `flight/cuaderno.ts`.
    */
   private apuntar(cambio: Partial<Cuaderno>): void {
+    /*
+     * **De pasaje no se apunta nada de pilotaje**: ni el despegue, ni el
+     * aterrizaje, ni las horas, ni el vuelo completo. Ara no ha pilotado, y un
+     * cuaderno de vuelo es lo que se ha volado a los mandos. Lo único que se
+     * lleva es el sello del campo de llegada, de visita: ver `apuntarElViaje`.
+     */
+    if (this.dePasaje) return;
     this.cuaderno = { ...this.cuaderno, ...cambio };
     guardarCuaderno(this.cuaderno);
     this.cuadernoUI?.ponerCuaderno(this.cuaderno);
@@ -8109,6 +8559,22 @@ export class Game {
    * Rodeos viniendo de Gran Canaria no contaba como sitio nuevo, y el grado
    * que pide haber visitado dos aeródromos no se podía ganar volando a otro.
    */
+  /**
+   * **El sello del campo de llegada de la escena de pasaje**, de visita: entra
+   * en los sellos del cuaderno y no en el grado, que pide campos volados. Ver
+   * `Cuaderno.deViaje`.
+   */
+  private apuntarElViaje(): void {
+    // El campo donde se está, que es al que se llegó: el destino, a esas
+    // alturas, ya es la vuelta a casa. Ver `elCampoDeAhora`.
+    const llegada = this.elCampoDeAhora();
+    const id = llegada.aerodrome?.id ?? llegada.id;
+    if (this.cuaderno.deViaje.includes(id)) return;
+    this.cuaderno = { ...this.cuaderno, deViaje: [...this.cuaderno.deViaje, id] };
+    guardarCuaderno(this.cuaderno);
+    this.cuadernoUI?.ponerCuaderno(this.cuaderno);
+  }
+
   private apuntarElSitio(): void {
     const campo = this.elCampo().escenario;
     const id = campo.aerodrome?.id ?? campo.id;
@@ -8117,7 +8583,12 @@ export class Game {
   }
 
   terminarElVuelo(): void {
-    if (this.vueloTerminado) return;
+    /*
+     * De pasaje no hay final de vuelo de quien pilota —ni su hoja, ni su
+     * bitácora, ni su panel—: el final es el de la escena. Ver
+     * `atenderALaEscenaDePasaje`.
+     */
+    if (this.vueloTerminado || this.dePasaje) return;
     this.vueloTerminado = true;
     this.apuntar({ completos: this.cuaderno.completos + 1 });
     /*
@@ -10275,6 +10746,8 @@ export class Game {
    * entrena aparte, no algo que se hace con una tecla sin querer.
    */
   private toggleEngine(): void {
+    // De pasaje, los motores son de la tripulación: la tecla no hace nada.
+    if (this.dePasaje) return;
     const s = this.flight.state;
     const c = this.input.controls;
     /*
@@ -10303,7 +10776,17 @@ export class Game {
       this.hud.flash(t("hud.engineBusy"));
       return;
     }
-    c.engineOn = !c.engineOn;
+    this.arrancarOParar(!c.engineOn);
+  }
+
+  /**
+   * **El motor en marcha o parado, con todo lo que trae**: el cartel, otro
+   * tramo si toca y el repostaje al parar en un campo. Lo usan la llave de
+   * quien juega y la tripulación de la escena de pasaje.
+   */
+  private arrancarOParar(encendido: boolean): void {
+    const c = this.input.controls;
+    c.engineOn = encendido;
     this.hud.flash(t(c.engineOn ? "hud.engineOn" : "hud.engineOff"));
     // Arrancar después de haber volado y apagado es otro vuelo, y también
     // después de un vuelo que ya se dio por terminado. Ver `empezarOtroTramo`.
@@ -10588,6 +11071,19 @@ export class Game {
    * avión vuelve a empezar la final.
    */
   private retomarElInicio(): void {
+    /*
+     * **De pasaje**, si el reinicio llega con el avión todavía en el puesto y
+     * los motores parados —el suelo que se asienta al abrir—, se sigue donde
+     * iba; si no, otra vez desde el asiento, que el avión vuelve a su puesto.
+     */
+    if (this.inicio instanceof VueloDePasaje) {
+      const tramo = this.tripulacionDeLinea?.estado.tramo;
+      this.input.cerrarGas();
+      this.input.controls.engineOn = false;
+      if (tramo === "puerta") this.inicio.retomarLaVoz();
+      else this.empezarElInicio();
+      return;
+    }
     if (this.inicio instanceof InicioDeAterrizar) {
       if (this.inicio.estado.paso === "hola") this.inicio.retomarLaVoz();
       else this.empezarElInicio("gas");
@@ -10615,6 +11111,12 @@ export class Game {
     const q = new URLSearchParams(location.search).get("hora");
     const h = q === null ? NaN : Number(q);
     if (Number.isFinite(h)) return h;
+    /*
+     * **De pasaje, de día**: el primer vuelo de alguien es para mirar por la
+     * ventanilla, y de noche no se ve el Teide. Es el horario de ese vuelo,
+     * como los que salen siempre a la misma hora.
+     */
+    if (this.dePasaje) return HORA_BUENA;
     /*
      * **Y si no se pide ninguna, la que es de verdad donde se está volando.**
      *
@@ -11203,7 +11705,12 @@ export class Game {
     // que espera a los toboganes. Ver `atenderALasLlamadas`.
     this.atenderALasLlamadas();
     this.decirLaFaseDelPuesto();
-    const anuncio = this.megafonia.paso(dt, {
+    /*
+     * **De pasaje, los anuncios los dice la escena**, cada uno en su momento y
+     * sin pisar a Ara: la megafonía de siempre no decide nada en ese vuelo.
+     * Ver `decirElAnuncioDeLaEscena`.
+     */
+    const anuncio = this.dePasaje ? null : this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       conTripulacion: conTripulacion(this.aircraft.mass),
@@ -18047,6 +18554,8 @@ export class Game {
     toma: Aterrizaje,
     frustrada: boolean,
   ): void {
+    // De pasaje no se gana nada de pilotaje: no se pilotó.
+    if (this.dePasaje) return;
     const ganado = this.galones.paso(
       {
         fase: this.vistaActual?.fase ?? "en-vuelo",
@@ -18653,6 +19162,31 @@ export class Game {
 
   private mirarPorLaVentanilla(dt: number): void {
     const conGente = conPasaje(this.aircraft.mass);
+    /*
+     * **De pasaje, lo que se ve se le da a la escena**, que lo dice cuando no
+     * habla nadie y con Ara mirando por su lado. Lo elige lo de siempre
+     * —`LoQueSeVe`, con su cabina estéril y su capa de nubes—, y se monta igual
+     * que en cualquier vuelo con pasaje: el lado, el saludo de la primera vez y
+     * la historia detrás. Ver `flight/inicio-pasaje.ts`.
+     */
+    if (this.inicio instanceof VueloDePasaje) {
+      const escena = this.inicio;
+      const mirada = this.ventanilla.paso(
+        dt,
+        { ...this.momentoDeMirar(), alguienHabla: !escena.puedeSenalar },
+        () => this.loQueSeMueve(),
+      );
+      if (!mirada) return;
+      const dicho = loQueSeDice(mirada, conGente, this.ventanilla.cuantos - 1);
+      if (!dicho) return;
+      escena.senalar({
+        que: mirada.hito.clave ?? mirada.hito.clase,
+        lado: mirada.lado,
+        dicho,
+        historia: laHistoria(mirada, conGente),
+      });
+      return;
+    }
     const momento = this.momentoDeMirar();
     /*
      * **Y en cuanto empieza el trabajo, la cámara deja de ofrecerse.** Girarse
@@ -23156,6 +23690,8 @@ export class Game {
     ya: boolean;
     desde: number;
     sono: number | null;
+    /** Lo que se hace si se le pasa el momento: la escena de pasaje sigue. */
+    alCaer?: (() => void) | undefined;
   }[] = [];
   /** Los pasajeros que llaman durante el servicio. Ver `LlamadasDelPasaje`. */
   private readonly llamadasDelPasaje = new LlamadasDelPasaje();
@@ -23253,13 +23789,15 @@ export class Game {
     decir: () => void,
     relleno?: Readonly<Record<string, string>>,
     ya = false,
+    /** Y si se le pasa el momento antes de sonar la llamada. */
+    alCaer?: () => void,
   ): void {
     const tono = llamadaAntesDe(clave);
     if (!tono) {
       decir();
       return;
     }
-    this.llamadas.push({ tono, clave, relleno, decir, ya, desde: this.relojDelJuego, sono: null });
+    this.llamadas.push({ tono, clave, relleno, decir, ya, desde: this.relojDelJuego, sono: null, alCaer });
     this.atenderALasLlamadas();
   }
 
@@ -23280,6 +23818,7 @@ export class Game {
       if (caduca) {
         this.llamadas.shift();
         if (l.clave.startsWith("comandante.crosscheck")) this.crosscheckAcabado = true;
+        l.alCaer?.();
         return;
       }
       /*
@@ -25092,6 +25631,8 @@ export class Game {
   }
 
   private cycleCamera(): void {
+    // De pasaje, la vista es la del asiento de Ara: ver `empezarElInicio`.
+    if (this.dePasaje && this.inicio) return;
     // Las de pasaje, solo en el avión que lo lleva. Ver `vistasDe`.
     this.cameraMode = siguienteVista(this.cameraMode, this.hayPasaje, this.haySobreElAla);
     recordarVista(this.cameraMode);
@@ -25117,6 +25658,13 @@ export class Game {
    * llamada de siempre — el apunte se borra del paquete.
    */
   private avisar(que: Cue): void {
+    /*
+     * **Desde el asiento de pasaje, solo los tonos de la cabina de pasaje**: el
+     * del cinturón y las llamadas. Los del juego —logro, atención, V1, el aro—
+     * son para quien pilota, y en un avión de verdad no suena nada así en el
+     * pasaje. Ver `audio/tonos-de-cabina.ts`.
+     */
+    if (this.dePasaje && !SUENAN_EN_EL_PASAJE.has(que)) return;
     if (import.meta.env.DEV)
       this.loQueSono.push({ que, cuando: Math.round(this.clock.elapsedTime) });
     this.audio.cue(que);

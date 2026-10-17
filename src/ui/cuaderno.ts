@@ -55,6 +55,7 @@
 import { t } from "../i18n";
 import {
   barrasDe,
+  camposConSello,
   grado,
   GRADOS,
   loQueFalta,
@@ -488,7 +489,8 @@ export class CuadernoScreen {
    * no se pinta nada: una sección vacía dice que falta algo. Ver `sellos.ts`.
    */
   private losSellos(conTexto: boolean): string {
-    const campos = camposDeLosSellos(this.cuaderno.aerodromos);
+    // Los volados y los de pasaje: un sello es haber estado. Ver `camposConSello`.
+    const campos = camposDeLosSellos(camposConSello(this.cuaderno));
     if (!campos.length) return "";
     return `
       ${conTexto ? `<h3 class="cuaderno__grado cuaderno__grado--vuelos">${t("cuaderno.sellos")}</h3>` : ""}

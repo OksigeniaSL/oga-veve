@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   CUADERNO_VACIO,
   barrasDe,
+  camposConSello,
   grado,
   loQueFalta,
   type Cuaderno,
@@ -83,5 +84,31 @@ describe("lo que falta", () => {
         con({ aterrizajes: 30, aerodromos: ["a", "b", "c"], frustradas: 3 }),
       ),
     ).toBe(null);
+  });
+});
+
+/*
+ * **Los sellos de visita**: la escena de pasaje del modo inicio deja el sello
+ * del campo de llegada —se estuvo allí— y no cuenta para el grado, que pide
+ * campos volados. Ver `Cuaderno.deViaje`.
+ */
+describe("los sellos de visita", () => {
+  it("dan sello y no grado", () => {
+    const c = con({ aterrizajes: 3, deViaje: ["GCLA"] });
+    expect(camposConSello(c)).toEqual(["GCLA"]);
+    expect(grado(c)).toBe("aprendiz");
+    expect(loQueFalta(c)?.falta.aerodromos).toBe(1);
+  });
+
+  it("y un campo volado y visitado sale una vez, primero el volado", () => {
+    expect(camposConSello(con({ aerodromos: ["GCXO", "GCLA"], deViaje: ["GCLA", "GCLP"] }))).toEqual([
+      "GCXO",
+      "GCLA",
+      "GCLP",
+    ]);
+  });
+
+  it("y un cuaderno de antes, sin visitas, se lee igual", () => {
+    expect(CUADERNO_VACIO.deViaje).toEqual([]);
   });
 });

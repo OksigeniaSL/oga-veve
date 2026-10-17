@@ -3102,4 +3102,60 @@ export const ES_PY = {
     "¡Aterrizaste, mi amor! Te ganaste tu primer sello del cuaderno. Cuando quieras, volamos otra vez.",
   "inicio.mama.aterrizar.finOtra":
     "¡Qué lindo aterrizaje, mi amor! El sello de este campo ya está en tu cuaderno. Cuando quieras, volamos otra vez.",
+  /*
+   * **La tercera escena: el primer vuelo de pasaje de Ara**, de Los Rodeos a
+   * La Palma en el JAZ 90, con Jazlyn de comandante en la cabina de mando y
+   * hablando por la megafonía. Ara va en la ventanilla y habla bajito con
+   * quien va a su lado: lo suyo, con voseo y con la ilusión de la primera
+   * vez. Lo que contesta sus preguntas son anuncios para todo el pasaje, de
+   * usted y sin paraguayismos, que el vuelo es en Canarias: la comandante no
+   * le contesta a un pasajero por la megafonía. Ver
+   * `src/flight/inicio-pasaje.ts`. Nada baja de treinta letras.
+   */
+  "inicio.modo.pasaje": "Viajá con Jazlyn",
+  "inicio.modo.tripulacion": "La tripulación, por la megafonía",
+  "inicio.modo.megafonia": "Jazlyn, por la megafonía",
+  "inicio.modo.volver": "Volver al hangar",
+  "inicio.ara.pasaje.ventanilla": "¡Me tocó la ventanilla! Desde acá se ve el ala del avión, y el motor.",
+  "inicio.tripulacion.pasaje.cinturon":
+    "Señoras y señores, bienvenidos a bordo. Por favor, tomen asiento y abróchense el cinturón: bajito y bien ajustado.",
+  "inicio.ara.pasaje.cinturon": "¡Clic! Ya me abroché el cinturón, bajito y bien ajustado.",
+  "inicio.ara.pasaje.puertas": "Cerraron la puerta del avión. ¡Ya nos vamos!",
+  "inicio.ara.pasaje.motores": "¡Escuchá! Se prendieron los motores: suenan como un secador gigante.",
+  "inicio.ara.pasaje.comandante": "¡Es mamá! Ella es la comandante, allá adelante en la cabina.",
+  "inicio.ara.pasaje.espera": "¿Por qué paramos acá, antes de la pista?",
+  "inicio.mama.pasaje.espera":
+    "Señores pasajeros, enseguida despegamos. Antes de entrar en la pista, siempre esperamos el permiso de la torre de control.",
+  "inicio.ara.pasaje.despegue": "¡Ahora sí que vamos a despegar! Miro bien por la ventanilla.",
+  "inicio.ara.pasaje.carrera": "¡Uy, cómo empuja! Me aprieta contra el asiento, ¡y vamos rapidísimo!",
+  "inicio.ara.pasaje.volando": "¡Estamos volando! Las casas y los autos se ven chiquititos.",
+  "inicio.ara.pasaje.nubes": "¡Todo blanco! Estamos adentro de una nube. ¿De qué estará hecha?",
+  "inicio.ara.pasaje.nubesAbajo": "¡Ya pasamos las nubes! Ahora las vemos desde arriba. ¿De qué estarán hechas?",
+  /*
+   * Las gotitas de una nube no flotan: caen, pero tan despacio —unos
+   * centímetros por segundo— que cualquier corriente de aire las sostiene.
+   * Por eso «el aire las sostiene» y no «flotan».
+   */
+  "inicio.mama.pasaje.nubes":
+    "Señores pasajeros, les habla la comandante. Para quienes vuelan hoy por primera vez: las nubes que pasamos al subir están hechas de agua, de millones de gotitas tan chiquitas y livianas que el aire las sostiene.",
+  "inicio.ara.pasaje.niebla": "¡De agua! Entonces una nube es como la niebla, pero allá arriba.",
+  "inicio.ara.pasaje.servicio": "¡Nos traen algo rico para comer! Yo quiero probar un poquito.",
+  "inicio.ara.pasaje.teide": "¡Lo veo! Es enorme, y la punta sale por encima de las nubes.",
+  "inicio.ara.pasaje.garajonay": "¿Hablar silbando? ¡Yo también quiero aprender a silbar así!",
+  "inicio.ara.pasaje.orotava": "¡Qué valle tan grande! Baja desde la montaña hasta el mar.",
+  "inicio.ara.pasaje.loVeo": "¡Lo veo! Desde acá arriba se ve todo chiquitito.",
+  "inicio.ara.pasaje.oidos": "Se me tapan un poco los oídos… ¿por qué será?",
+  "inicio.tripulacion.pasaje.oidos":
+    "Señoras y señores, si al bajar se les tapan los oídos, es normal: va cambiando la presión del aire. Tragar saliva o bostezar ayuda a destaparlos.",
+  "inicio.ara.pasaje.bostezo": "¡Bostecé bien grande, y se me destaparon los oídos!",
+  "inicio.ara.pasaje.isla": "¡Ya se ve la isla adonde vamos! ¡Qué montañas tan altas tiene!",
+  "inicio.ara.pasaje.flaps": "¡Mirá el ala! Le está saliendo un pedazo para atrás y para abajo.",
+  "inicio.ara.pasaje.toma": "¡Tocamos el suelo! ¡Y cómo rugen los motores ahora!",
+  /*
+   * La reversa de un reactor desvía hacia delante el aire del ventilador: el
+   * ruido fuerte después de tocar es ese aire frenando. Ver `flight/reversa.ts`.
+   */
+  "inicio.mama.pasaje.reversa":
+    "Y para quienes volaron hoy por primera vez: ese ruido fuerte de los motores al aterrizar era para frenar. Los motores echan el aire hacia adelante, y eso frena el avión.",
+  "inicio.ara.pasaje.fin": "¡Llegamos a La Palma! Ahora le cuento a mamá todo lo que vi por la ventanilla.",
 } as const;

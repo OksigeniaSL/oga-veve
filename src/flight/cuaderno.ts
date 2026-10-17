@@ -50,6 +50,13 @@ export interface Cuaderno {
   readonly percances: number;
   /** Los aeródromos en los que se ha volado, por su identificador. */
   readonly aerodromos: readonly string[];
+  /**
+   * **Los aeródromos a los que se ha llegado de pasaje**: la tercera escena
+   * del modo inicio, ver `flight/inicio-pasaje.ts`. Dan su sello, como el
+   * de un pasaporte —se estuvo allí—, y **no cuentan para el grado**, que pide
+   * aeródromos volados: de pasaje no se pilota. Por eso van aparte.
+   */
+  readonly deViaje: readonly string[];
 }
 
 export const CUADERNO_VACIO: Cuaderno = {
@@ -60,6 +67,7 @@ export const CUADERNO_VACIO: Cuaderno = {
   completos: 0,
   percances: 0,
   aerodromos: [],
+  deViaje: [],
 };
 
 /** Los grados, de menos a más. El orden **es** la escalera. */
@@ -71,6 +79,14 @@ export const GRADOS = [
 ] as const;
 
 export type Grado = (typeof GRADOS)[number];
+
+/**
+ * **Los campos con sello**: los volados y los de pasaje, una vez cada uno y en
+ * el orden en que se ganaron —primero los volados—. Ver `ui/sellos.ts`.
+ */
+export function camposConSello(c: Pick<Cuaderno, "aerodromos" | "deViaje">): readonly string[] {
+  return [...new Set([...c.aerodromos, ...c.deViaje])];
+}
 
 /**
  * Qué hace falta para cada grado.
@@ -182,6 +198,9 @@ export function leerCuaderno(): Cuaderno {
       percances: n(d.percances),
       aerodromos: Array.isArray(d.aerodromos)
         ? [...new Set(d.aerodromos.filter((x) => typeof x === "string"))]
+        : [],
+      deViaje: Array.isArray(d.deViaje)
+        ? [...new Set(d.deViaje.filter((x) => typeof x === "string"))]
         : [],
     };
   } catch {

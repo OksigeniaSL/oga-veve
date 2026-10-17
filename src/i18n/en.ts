@@ -1847,4 +1847,41 @@ export const EN: Dictionary = {
     "You landed, my love! You've earned your first stamp for your logbook. Whenever you like, we'll fly again.",
   "inicio.mama.aterrizar.finOtra":
     "What a lovely landing, my love! This field's stamp is already in your logbook. Whenever you like, we'll fly again.",
+  "inicio.modo.pasaje": "Travel with Jazlyn",
+  "inicio.modo.tripulacion": "The cabin crew, over the PA",
+  "inicio.modo.megafonia": "Jazlyn, over the PA",
+  "inicio.modo.volver": "Back to the hangar",
+  "inicio.ara.pasaje.ventanilla": "I got the window seat! From here I can see the plane's wing, and the engine.",
+  "inicio.tripulacion.pasaje.cinturon":
+    "Ladies and gentlemen, welcome aboard. Please take your seats and fasten your seat belts: low and tight.",
+  "inicio.ara.pasaje.cinturon": "Click! My seat belt's done up, nice and low and tight.",
+  "inicio.ara.pasaje.puertas": "They've closed the plane's door. We're off!",
+  "inicio.ara.pasaje.motores": "Listen! The engines have started: they sound like a giant hair dryer.",
+  "inicio.ara.pasaje.comandante": "That's Mum! The captain, way up front in the cockpit.",
+  "inicio.ara.pasaje.espera": "Why have we stopped here, before the runway?",
+  "inicio.mama.pasaje.espera":
+    "Ladies and gentlemen, we'll be taking off shortly. Before entering the runway, we always wait for permission from the control tower.",
+  "inicio.ara.pasaje.despegue": "Now we're really taking off! I'm watching out the window.",
+  "inicio.ara.pasaje.carrera": "Whoa, what a push! It's pressing me into my seat, and we're going super fast!",
+  "inicio.ara.pasaje.volando": "We're flying! The houses and cars look teeny-tiny.",
+  "inicio.ara.pasaje.nubes": "Everything's white! We're inside a cloud. What's it made of?",
+  "inicio.ara.pasaje.nubesAbajo": "We've gone past the clouds! Now we can see them from above. What are they made of?",
+  "inicio.mama.pasaje.nubes":
+    "Ladies and gentlemen, this is your captain speaking. For those of you flying for the first time today: the clouds we went through on the way up are made of water, millions of droplets so tiny and light that the air holds them up.",
+  "inicio.ara.pasaje.niebla": "Water! So a cloud is like fog, only way up high.",
+  "inicio.ara.pasaje.servicio": "They're bringing something yummy to eat! I want to try a little bit.",
+  "inicio.ara.pasaje.teide": "I can see it! It's huge, and the top sticks out above the clouds.",
+  "inicio.ara.pasaje.garajonay": "Talking by whistling? I want to learn to whistle like that too!",
+  "inicio.ara.pasaje.orotava": "What a big valley! It goes all the way from the mountain down to the sea.",
+  "inicio.ara.pasaje.loVeo": "I can see it! From up here everything looks tiny.",
+  "inicio.ara.pasaje.oidos": "My ears feel a bit blocked... I wonder why?",
+  "inicio.tripulacion.pasaje.oidos":
+    "Ladies and gentlemen, if your ears feel blocked as we descend, that's normal: the air pressure is changing. Swallowing or yawning helps to clear them.",
+  "inicio.ara.pasaje.bostezo": "I did a great big yawn, and my ears popped!",
+  "inicio.ara.pasaje.isla": "I can see the island we're going to! What tall mountains it has!",
+  "inicio.ara.pasaje.flaps": "Look at the wing! A piece is sliding out backwards and down.",
+  "inicio.ara.pasaje.toma": "We touched the ground! And listen to the engines roar now!",
+  "inicio.mama.pasaje.reversa":
+    "And for those of you who flew for the first time today: that loud engine noise when we landed was for braking. The engines push the air forwards, and that slows the plane down.",
+  "inicio.ara.pasaje.fin": "We made it to La Palma! Now I'll tell Mum everything I saw out the window.",
 };
