@@ -14561,6 +14561,22 @@ body.con-vuelta #tactil {
 .dib__mueve--gases {
   --dy: -46px;
 }
+/* Y para quitar gas o bajar la nariz, hacia abajo: el gas sale de la mitad, que
+   es por donde anda en una final. Ver `inicio-aterrizar.ts`. */
+.dib__mueve--abajo {
+  --dy: 28px;
+}
+.dib__mueve--corto.dib__mueve--abajo {
+  --dy: 9px;
+}
+.dib__mueve--gas-menos {
+  --y0: -44px;
+  --dy: 24px;
+}
+.dib__mueve--gases-menos {
+  --y0: -40px;
+  --dy: 22px;
+}
 .dib__mueve--corto.dib__mueve--arriba {
   --dy: -9px;
 }
@@ -14624,6 +14640,17 @@ body.con-vuelta #tactil {
   }
 }
 
+/* Apenas: el gatillo del gas apretado poquito es poco gas. */
+.dib__aprieta--poco {
+  animation: dib-aprieta-poco 1.1s ease-in-out infinite;
+}
+
+@keyframes dib-aprieta-poco {
+  50% {
+    transform: translateY(1.5px);
+  }
+}
+
 .dib__late {
   transform-box: fill-box;
   transform-origin: center;
@@ -14643,6 +14670,10 @@ body.con-vuelta #tactil {
 }
 .dib__mango--atras {
   animation: mango-atras 1.6s ease-in-out infinite;
+}
+/* Y hacia delante, lejos de quien mira, para bajar la nariz. */
+.dib__mango--adelante {
+  animation: mango-adelante 1.6s ease-in-out infinite;
 }
 .dib__mango--izquierda {
   --giro: -16deg;
@@ -14665,6 +14696,13 @@ body.con-vuelta #tactil {
   55%,
   85% {
     transform: translateY(12px) scale(1.06);
+  }
+}
+
+@keyframes mango-adelante {
+  55%,
+  85% {
+    transform: translateY(-10px) scale(0.95);
   }
 }
 
@@ -14777,6 +14815,15 @@ body.con-vuelta #tactil {
 }
 .inicio__dedo--centro {
   animation: dedo-vuelve 1.8s ease-in-out infinite;
+}
+.inicio__dedo--abajo {
+  animation: dedo-va 1.6s ease-in-out infinite;
+  --vx: 0px;
+  --vy: var(--recorrido);
+}
+/* El freno se pisa: el dedo toca, sin ir a ninguna parte. */
+.inicio__dedo--toca {
+  animation: inicio-toque 1.1s ease-in-out infinite;
 }
 .inicio__dedo--desde-izquierda {
   --vx: calc(-1 * var(--recorrido));

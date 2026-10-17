@@ -1569,13 +1569,22 @@ if (sinGrupo.length)
  * renumerarían trescientas frases de la comandante ya grabadas. Ver
  * `src/flight/inicio.ts` y `PENDIENTE-VOCES-inicio.md`.
  */
+/*
+ * **Y la segunda escena, aterrizar con Jazlyn**, detrás de la primera por lo
+ * mismo: lo ya grabado no se renumera. Las mismas dos voces, con sus claves
+ * `inicio.*.aterrizar.*`. Ver `src/flight/inicio-aterrizar.ts` y
+ * `PENDIENTE-VOCES-inicio-2.md`.
+ */
+const DE_ATERRIZAR = /^inicio\.(?:mama|ara)\.aterrizar\./;
 const DEL_INICIO = [
-  ["inicio.mama.", "comandante", "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado"],
-  ["inicio.ara.", "ara", "el modo inicio: Ara pregunta"],
+  ["inicio.mama.", "comandante", "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado", DE_ATERRIZAR],
+  ["inicio.ara.", "ara", "el modo inicio: Ara pregunta", DE_ATERRIZAR],
+  ["inicio.mama.aterrizar.", "comandante", "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado"],
+  ["inicio.ara.aterrizar.", "ara", "el modo inicio, aterrizar: Ara pregunta"],
 ];
-for (const [prefijo, voz, para] of DEL_INICIO) {
+for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
-    if (!k.startsWith(prefijo) || filas.some((f) => f.id === k)) continue;
+    if (!k.startsWith(prefijo) || salvo?.test(k) || filas.some((f) => f.id === k)) continue;
     filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
   }

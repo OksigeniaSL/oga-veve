@@ -221,11 +221,18 @@ export class InputManager {
    * gas ni la mano, y lo único que hay es la intención. Ver `mirarSinMover`
    * y `flight/inicio.ts`.
    */
-  readonly intento: { cabeceo: number; alabeo: number; gas: number; centrar: boolean } = {
+  readonly intento: {
+    cabeceo: number;
+    alabeo: number;
+    gas: number;
+    centrar: boolean;
+    frenar: boolean;
+  } = {
     cabeceo: 0,
     alabeo: 0,
     gas: 0,
     centrar: false,
+    frenar: false,
   };
 
   /**
@@ -1200,6 +1207,8 @@ export class InputManager {
     }
     this.intento.gas = Math.sign(gas);
     this.intento.centrar = this.gestoDoble && this.dedoDelMando !== null;
+    // Y el freno, venga de donde venga: el pie es el pie. Ver `braking` en `update`.
+    this.intento.frenar = this.touchBrakes || this.held("brakes") || (gamepad?.brakes ?? false);
   }
 
   /** Invertir o no el cabeceo. Ver `ui/ajustes.ts`. */

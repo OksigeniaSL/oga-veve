@@ -33,7 +33,7 @@ import type { Accion } from "../flight/keymap";
 import { nombreDeTecla } from "../flight/keymap";
 import type { Gesto, Mando, Quien } from "../flight/inicio";
 import { t } from "../i18n";
-import { motorMas } from "./pictogramas";
+import { motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS } from "./senal";
 import { FLECHAS } from "./teclas";
 
@@ -112,14 +112,14 @@ function tecla(glifo: string, letra: string, encendida: boolean): string {
  * buena por dónde está; una flecha suelta en medio de la nada no se sabe en
  * qué parte del teclado buscarla.
  */
-function lasFlechas(cual: "arriba" | "izquierda" | "derecha", o: ConQueTeclas): string {
+function lasFlechas(cual: "arriba" | "abajo" | "izquierda" | "derecha", o: ConQueTeclas): string {
   const letra = (a: Accion): string => nombreDeTecla(o.teclaDe(a));
   return `
     <span class="inicio__flechas">
       <span class="inicio__fila">${tecla(FLECHAS.arriba, letra("pitchUp"), cual === "arriba")}</span>
       <span class="inicio__fila">
         ${tecla(FLECHAS.izquierda, letra("rollLeft"), cual === "izquierda")}
-        ${tecla(FLECHAS.abajo, letra("pitchDown"), false)}
+        ${tecla(FLECHAS.abajo, letra("pitchDown"), cual === "abajo")}
         ${tecla(FLECHAS.derecha, letra("rollRight"), cual === "derecha")}
       </span>
     </span>`;
@@ -131,8 +131,13 @@ function conTeclado(gesto: Gesto, lado: Lado, o: ConQueTeclas): string {
       return tecla(DIBUJOS.llave, nombreDeTecla(o.teclaDe("engine")), true);
     case "gas":
       return tecla(motorMas(o.chorro), nombreDeTecla(o.teclaDe("throttleUp")), true);
+    // El motor con su flecha para abajo, en la tecla del menos: la misma que lleva el botón.
+    case "menosGas":
+      return tecla(motorMenos(o.chorro), nombreDeTecla(o.teclaDe("throttleDown")), true);
     case "subir":
       return lasFlechas("arriba", o);
+    case "bajar":
+      return lasFlechas("abajo", o);
     case "izquierda":
       return lasFlechas("izquierda", o);
     case "derecha":
@@ -140,6 +145,9 @@ function conTeclado(gesto: Gesto, lado: Lado, o: ConQueTeclas): string {
     case "nivelar":
       // Del lado contrario al que está inclinado.
       return lasFlechas(lado < 0 ? "derecha" : "izquierda", o);
+    // El freno con el dibujo del botón que frena: el avión y la barra donde se para.
+    case "frenar":
+      return tecla(DIBUJOS.freno, nombreDeTecla(o.teclaDe("brakes")), true);
   }
 }
 
@@ -154,14 +162,32 @@ export const MANO_QUE_SENALA = `
      l0.6-0.2 c2.6-0.9 4.6 0.6 4.8 2.8 c2.4-0.6 4.2 0.9 4.2 3 v7.4 c0 6.4-4.4 10.8-10.6 10.8
      h-3.6 c-4.6 0-7.4-2.6-9.4-6.6 l-5-9.4 c-1.6-3.2 2.2-5.8 4.8-3.2 l2.4 2.6 Z" />`;
 
-/** Hacia dónde se mueve cada gesto con el dedo, en el dibujo. */
+/** Hacia dónde se mueve cada gesto con el dedo, en el dibujo. El freno se toca. */
 const DIRECCION: Readonly<Record<Exclude<Gesto, "motor">, string>> = {
   gas: "arriba",
+  menosGas: "abajo",
   subir: "arriba",
+  bajar: "abajo",
   izquierda: "izquierda",
   derecha: "derecha",
   nivelar: "centro",
+  frenar: "toca",
 };
+
+/**
+ * **Un mando que se toca en el propio dibujo**: la llave para arrancar y el
+ * freno para parar. Con el dedo no hay otra forma más directa: el dibujo que
+ * pide la cosa **es** la cosa. Ver `conElDedo`.
+ */
+function botonQueSeToca(gesto: "motor" | "frenar"): string {
+  const llave = gesto === "motor";
+  return `
+      <button class="inicio__llave" type="button" data-inicio="${llave ? "llave" : "freno"}"
+              aria-label="${t(llave ? "inicio.modo.llave" : "inicio.modo.freno")}">
+        ${llave ? DIBUJOS.llave : DIBUJOS.freno}
+        <svg class="inicio__toque" viewBox="-24 -6 48 52" aria-hidden="true">${MANO_QUE_SENALA}</svg>
+      </button>`;
+}
 
 /** La flecha de un gesto, para poner al lado del mando que se mueve. */
 function flechaHacia(dir: string, x: number, y: number): string {
@@ -171,33 +197,36 @@ function flechaHacia(dir: string, x: number, y: number): string {
 }
 
 function conElDedo(gesto: Gesto, lado: Lado): string {
-  if (gesto === "motor") {
-    /*
-     * **La llave se toca en el dibujo**, como en la tarjeta de «arrancá el
-     * motor» de siempre: con el dedo no hay otra forma de arrancar, y que la
-     * instrucción y el mando sean el mismo objeto es lo más directo que hay.
-     */
-    return `
-      <button class="inicio__llave" type="button" data-inicio="llave"
-              aria-label="${t("inicio.modo.llave")}">
-        ${DIBUJOS.llave}
-        <svg class="inicio__toque" viewBox="-24 -6 48 52" aria-hidden="true">${MANO_QUE_SENALA}</svg>
-      </button>`;
-  }
+  /*
+   * **La llave se toca en el dibujo**, como en la tarjeta de «arrancá el
+   * motor» de siempre: con el dedo no hay otra forma de arrancar, y que la
+   * instrucción y el mando sean el mismo objeto es lo más directo que hay. Y
+   * el freno igual: el botón rojo de la pantalla frena, y el dibujo también.
+   */
+  if (gesto === "motor" || gesto === "frenar") return botonQueSeToca(gesto);
   const dir = DIRECCION[gesto];
-  if (gesto === "gas") {
+  if (gesto === "gas" || gesto === "menosGas") {
+    // Menos gas: el punto, que está por la mitad, baja un poco.
+    const menos = gesto === "menosGas";
     return `
       <svg class="dib dib--dedo" viewBox="0 0 120 120" aria-hidden="true">
         <rect class="dib__pad" x="44" y="6" width="32" height="108" rx="16" />
-        <g class="dib__mueve dib__mueve--gas">
+        <g class="dib__mueve dib__mueve--${menos ? "gas-menos" : "gas"}">
           <circle class="dib__punto" cx="60" cy="96" r="13" />
           <g transform="translate(62 98) scale(0.9)">${MANO_QUE_SENALA}</g>
         </g>
-        ${flechaHacia("arriba", 98, 50)}
+        ${menos ? flechaHacia("abajo", 98, 78) : flechaHacia("arriba", 98, 50)}
       </svg>`;
   }
   // Para enderezar, el punto sale del lado al que está inclinado y vuelve al centro.
   const desde = gesto === "nivelar" ? (lado < 0 ? "izquierda" : "derecha") : "centro";
+  const dondeLaFlecha: Readonly<Record<string, readonly [number, number]>> = {
+    arriba: [60, 20],
+    abajo: [60, 100],
+    izquierda: [18, 60],
+    derecha: [102, 60],
+  };
+  const flecha = dondeLaFlecha[dir];
   return `
     <svg class="dib dib--dedo" viewBox="0 0 120 120" aria-hidden="true">
       <circle class="dib__pad" cx="60" cy="60" r="52" />
@@ -205,7 +234,7 @@ function conElDedo(gesto: Gesto, lado: Lado): string {
         <circle class="dib__punto" cx="60" cy="60" r="14" />
         <g transform="translate(62 62) scale(0.9)">${MANO_QUE_SENALA}</g>
       </g>
-      ${gesto === "nivelar" ? "" : flechaHacia(dir, dir === "arriba" ? 60 : dir === "izquierda" ? 18 : 102, dir === "arriba" ? 20 : 60)}
+      ${gesto === "nivelar" || !flecha ? "" : flechaHacia(dir, flecha[0], flecha[1])}
     </svg>`;
 }
 
@@ -216,29 +245,46 @@ function conElDedo(gesto: Gesto, lado: Lado): string {
  * sus dos asas, la palanca izquierda arriba, la cruceta debajo, los cuatro
  * botones a la derecha y los dos gatillos asomando por encima. Lo que manda
  * en este juego —ver `flight/mandos-fisicos.ts`—: la palanca izquierda vuela,
- * el gatillo derecho es el gas y el botón de empezar, el de las tres rayas, la
- * llave.
+ * el gatillo derecho es el gas, el izquierdo el freno y el botón de empezar,
+ * el de las tres rayas, la llave.
+ *
+ * **Menos gas, con el gatillo apenas apretado**: el gatillo es el gas, y
+ * suelto se queda donde estaba —ver `leerConsola`—; apretarlo poquito es pedir
+ * poco gas. Por eso se dibuja apretándose apenas, sin la flecha del de dar.
  */
 function conConsola(gesto: Gesto, lado: Lado): string {
   const activo = (si: boolean): string => (si ? " dib__parte--activa" : "");
-  const palanca = gesto === "subir" || gesto === "izquierda" || gesto === "derecha" || gesto === "nivelar";
+  const palanca =
+    gesto === "subir" ||
+    gesto === "bajar" ||
+    gesto === "izquierda" ||
+    gesto === "derecha" ||
+    gesto === "nivelar";
   const dir = gesto === "motor" ? "" : DIRECCION[gesto];
   const desde = gesto === "nivelar" ? (lado < 0 ? "izquierda" : "derecha") : "centro";
+  const gas = gesto === "gas" || gesto === "menosGas";
   const flecha =
     gesto === "subir"
       ? flechaHacia("arriba", 72, 18)
-      : gesto === "izquierda"
-        ? flechaHacia("izquierda", 32, 62)
-        : gesto === "derecha"
-          ? flechaHacia("derecha", 112, 62)
-          : gesto === "gas"
-            ? flechaHacia("abajo", 178, -4)
-            : "";
+      : gesto === "bajar"
+        ? flechaHacia("abajo", 40, 100)
+        : gesto === "izquierda"
+          ? flechaHacia("izquierda", 32, 62)
+          : gesto === "derecha"
+            ? flechaHacia("derecha", 112, 62)
+            : gesto === "gas"
+              ? flechaHacia("abajo", 178, -4)
+              : gesto === "frenar"
+                ? flechaHacia("abajo", 62, -4)
+                : "";
+  const aprieta = gesto === "gas" ? " dib__aprieta--si" : gesto === "menosGas" ? " dib__aprieta--poco" : "";
   return `
     <svg class="dib dib--consola" viewBox="0 -24 240 174" aria-hidden="true">
-      <path class="dib__parte dib__gatillo" d="M44 32 q4-20 26-22 h14 q8 0 8 10 v8 Z" />
-      <g class="dib__aprieta${gesto === "gas" ? " dib__aprieta--si" : ""}">
-        <path class="dib__parte dib__gatillo${activo(gesto === "gas")}" d="M196 32 q-4-20 -26-22 h-14 q-8 0 -8 10 v8 Z" />
+      <g class="dib__aprieta${gesto === "frenar" ? " dib__aprieta--si" : ""}">
+        <path class="dib__parte dib__gatillo${activo(gesto === "frenar")}" d="M44 32 q4-20 26-22 h14 q8 0 8 10 v8 Z" />
+      </g>
+      <g class="dib__aprieta${aprieta}">
+        <path class="dib__parte dib__gatillo${activo(gas)}" d="M196 32 q-4-20 -26-22 h-14 q-8 0 -8 10 v8 Z" />
       </g>
       <path class="dib__cuerpo" d="M64 26 h112 c26 0 40 14 46 40 l10 46 c4 20-18 32-32 18 l-22-24 h-116
         l-22 24 c-14 14-36 2-32-18 l10-46 c6-26 20-40 46-40 Z" />
@@ -269,38 +315,48 @@ function conConsola(gesto: Gesto, lado: Lado): string {
  * asiento. Hacia delante es hacia arriba en el dibujo, que es lejos de quien
  * mira. La de gases se empuja hacia delante para dar gas; la de mando se tira
  * hacia uno para subir —como en cualquier avión con palanca— y se inclina a
- * un lado o al otro para virar. Y la llave en el ST de la base de gases. Ver
- * `flight/mandos-fisicos.ts`.
+ * un lado o al otro para virar. Y la llave en el ST de la base de gases, y el
+ * freno en el gatillo del mango, el del índice. Ver `flight/mandos-fisicos.ts`.
  */
 function conJoystick(gesto: Gesto, lado: Lado): string {
   const activo = (si: boolean): string => (si ? " dib__parte--activa" : "");
   const mango =
     gesto === "subir"
       ? "dib__mango--atras"
-      : gesto === "izquierda"
-        ? "dib__mango--izquierda"
-        : gesto === "derecha"
-          ? "dib__mango--derecha"
-          : gesto === "nivelar"
-            ? `dib__mango--endereza-desde-${lado < 0 ? "izquierda" : "derecha"}`
-            : "";
+      : gesto === "bajar"
+        ? "dib__mango--adelante"
+        : gesto === "izquierda"
+          ? "dib__mango--izquierda"
+          : gesto === "derecha"
+            ? "dib__mango--derecha"
+            : gesto === "nivelar"
+              ? `dib__mango--endereza-desde-${lado < 0 ? "izquierda" : "derecha"}`
+              : "";
   const usaMango = mango !== "";
   const flecha =
     gesto === "gas"
       ? flechaHacia("arriba", 28, 46)
-      : gesto === "subir"
-        ? flechaHacia("abajo", 216, 74)
-        : gesto === "izquierda"
-          ? flechaHacia("izquierda", 128, 56)
-          : gesto === "derecha"
-            ? flechaHacia("derecha", 214, 56)
-            : "";
+      : gesto === "menosGas"
+        ? flechaHacia("abajo", 28, 74)
+        : gesto === "subir"
+          ? flechaHacia("abajo", 216, 74)
+          : gesto === "bajar"
+            ? flechaHacia("arriba", 216, 40)
+            : gesto === "izquierda"
+              ? flechaHacia("izquierda", 128, 56)
+              : gesto === "derecha"
+                ? flechaHacia("derecha", 214, 56)
+                : gesto === "frenar"
+                  ? flechaHacia("derecha", 134, 64)
+                  : "";
+  // La palanca de gases sube desde el ralentí; para quitar, baja desde la mitad.
+  const gases = gesto === "gas" ? " dib__mueve--gases" : gesto === "menosGas" ? " dib__mueve--gases-menos" : "";
   return `
     <svg class="dib dib--joystick" viewBox="0 0 240 150" aria-hidden="true">
       <rect class="dib__cuerpo" x="14" y="98" width="88" height="40" rx="10" />
       <rect class="dib__hueco" x="52" y="34" width="14" height="74" rx="7" />
-      <g class="dib__mueve${gesto === "gas" ? " dib__mueve--gases" : ""}">
-        <rect class="dib__parte${activo(gesto === "gas")}" x="36" y="86" width="46" height="24" rx="9" />
+      <g class="dib__mueve${gases}">
+        <rect class="dib__parte${activo(gesto === "gas" || gesto === "menosGas")}" x="36" y="86" width="46" height="24" rx="9" />
       </g>
       <g class="${gesto === "motor" ? "dib__late" : ""}">
         <rect class="dib__parte${activo(gesto === "motor")}" x="74" y="114" width="20" height="14" rx="4" />
@@ -309,7 +365,9 @@ function conJoystick(gesto: Gesto, lado: Lado): string {
       <g class="dib__mango ${mango}">
         <rect class="dib__parte${activo(usaMango)}" x="158" y="28" width="24" height="98" rx="11" />
         <rect class="dib__hueco" x="162" y="34" width="16" height="12" rx="4" />
-        <rect class="dib__hueco" x="152" y="56" width="8" height="16" rx="3" />
+        <g class="${gesto === "frenar" ? "dib__late" : ""}">
+          <rect class="${gesto === "frenar" ? "dib__parte dib__parte--activa" : "dib__hueco"}" x="152" y="56" width="8" height="16" rx="3" />
+        </g>
       </g>
       ${flecha}
     </svg>`;
@@ -341,12 +399,24 @@ function loQuePasa(gesto: Gesto, lado: Lado, chorro: boolean): string {
       return `<span class="inicio__pasa inicio__pasa--motor">${chorro ? DIBUJOS.reactor : DIBUJOS.helice}</span>`;
     case "gas":
       return `<span class="inicio__pasa inicio__pasa--gas">${motorMas(chorro)}</span>`;
+    case "menosGas":
+      return `<span class="inicio__pasa inicio__pasa--gas">${motorMenos(chorro)}</span>`;
     case "subir":
       return `
         <svg class="inicio__pasa" viewBox="0 0 64 64" aria-hidden="true">
           <path class="pasa__suelo" d="M2 58 H62" />
           <g transform="rotate(-18 32 34)">${AVION_DE_LADO}</g>
         </svg>`;
+    // La nariz un poco abajo, mirando la pista que espera delante.
+    case "bajar":
+      return `
+        <svg class="inicio__pasa" viewBox="0 0 64 64" aria-hidden="true">
+          <path class="pasa__suelo" d="M34 58 H62" />
+          <g transform="rotate(12 32 30)">${AVION_DE_LADO}</g>
+        </svg>`;
+    // El avión y la barra donde se para: el dibujo del botón que frena.
+    case "frenar":
+      return `<span class="inicio__pasa inicio__pasa--freno">${DIBUJOS.freno}</span>`;
     case "izquierda":
     case "derecha": {
       const grados = gesto === "izquierda" ? -22 : 22;
@@ -384,12 +454,14 @@ export function dibujoDelGesto(gesto: Gesto, mando: Mando, lado: Lado, o: ConQue
    * propio botón; con teclado o mando el dibujo era solo un dibujo, y un clic
    * en la llave que brilla —«apretala una vez, sin miedo»— no hacía nada.
    * Enrique, con el ratón: «le hago clic pero no se despierta la llave». La
-   * I o el botón de empezar siguen valiendo igual.
+   * I o el botón de empezar siguen valiendo igual. Y el freno, por lo mismo:
+   * un dibujo que brilla y pide «apretalo» se aprieta.
    */
-  const pulsable = gesto === "motor" && mando !== "dedo";
+  const pulsable = (gesto === "motor" || gesto === "frenar") && mando !== "dedo";
+  const llave = gesto === "motor";
   const hueco = pulsable
-    ? `<button class="inicio__dibujo inicio__pulsable" type="button" data-inicio="llave"
-               aria-label="${t("inicio.modo.llave")}">${dibujo}</button>`
+    ? `<button class="inicio__dibujo inicio__pulsable" type="button" data-inicio="${llave ? "llave" : "freno"}"
+               aria-label="${t(llave ? "inicio.modo.llave" : "inicio.modo.freno")}">${dibujo}</button>`
     : `<span class="inicio__dibujo">${dibujo}</span>`;
   return `
     <span class="inicio__mando inicio__mando--${mando}" data-mando="${mando}" data-gesto="${gesto}">
@@ -400,12 +472,25 @@ export function dibujoDelGesto(gesto: Gesto, mando: Mando, lado: Lado, o: ConQue
 
 /**
  * **A qué mando de la pantalla señala el dedo de encima**, con el dedo: la
- * palanca para volar y el gas para el gas. La llave no: se toca en el dibujo.
+ * palanca para volar, el gas para el gas y el botón rojo para frenar. La
+ * llave no: se toca en el dibujo.
  */
-export function mandoQueSenala(gesto: Gesto | null, mando: Mando): "stick" | "throttle" | null {
+export function mandoQueSenala(
+  gesto: Gesto | null,
+  mando: Mando,
+): "stick" | "throttle" | "freno" | null {
   if (mando !== "dedo" || !gesto || gesto === "motor") return null;
-  return gesto === "gas" ? "throttle" : "stick";
+  if (gesto === "frenar") return "freno";
+  return gesto === "gas" || gesto === "menosGas" ? "throttle" : "stick";
 }
+
+/** Dónde está en la pantalla cada mando al que se señala. Ver `colocarElDedo`. */
+const DONDE_ESTA: Readonly<Record<"stick" | "throttle" | "freno", string>> = {
+  stick: '#tactil [data-touch="stick"]',
+  throttle: '#tactil [data-touch="throttle"]',
+  // El botón rojo del freno, que sale en el suelo: ver `brakes-touch` en `ui/hud.ts`.
+  freno: '[data-hud="brakes-touch"]',
+};
 
 // ── La pantalla ──────────────────────────────────────────────────────────
 
@@ -436,7 +521,11 @@ export class PantallaDelInicio {
   private dibujado = "";
   private dicho = "";
   private finPuesto = "";
-  private senalado: string | null = null;
+  private senalado: ReturnType<typeof mandoQueSenala> = null;
+  /** Si lo que se señala en el gas es quitarlo: el dedo empieza arriba y baja. */
+  private quitaGas = false;
+  /** Para volver a buscar un mando que todavía no está: el freno sale al tocar suelo. */
+  private buscandoElMando = 0;
   private quieto: boolean | null = null;
   private abajoDeLaTarjeta = 0;
 
@@ -459,15 +548,22 @@ export class PantallaDelInicio {
     private readonly raiz: HTMLElement,
     private readonly velo: HTMLElement | null,
     private readonly teclas: () => ConQueTeclas,
-    acciones: { readonly arrancar: () => void; readonly seguir: () => void },
+    acciones: {
+      readonly arrancar: () => void;
+      readonly seguir: () => void;
+      /** El freno dibujado, que también se toca. Ver `dibujoDelGesto`. */
+      readonly frenar?: () => void;
+    },
     /**
      * Hasta dónde baja la barra de botones del HUD, px de pantalla: la tarjeta
      * va justo debajo. Ver `Hud.altoDeArriba`.
      */
     private readonly arriba: () => number = () => 64,
+    /** El nombre de la escena, para quien no ve la tarjeta: aprender o aterrizar. */
+    nombre: string = t("inicio.modo.nombre"),
   ) {
     raiz.innerHTML = `
-      <div class="inicio__tarjeta" role="group" aria-label="${t("inicio.modo.nombre")}">
+      <div class="inicio__tarjeta" role="group" aria-label="${nombre}">
         <div class="inicio__quien">
           <span class="inicio__cara-hueco"></span>
           <p class="inicio__dice" role="status" aria-live="polite"></p>
@@ -488,6 +584,7 @@ export class PantallaDelInicio {
       const boton = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-inicio]");
       if (!boton) return;
       if (boton.dataset.inicio === "llave") acciones.arrancar();
+      if (boton.dataset.inicio === "freno") acciones.frenar?.();
       if (boton.dataset.inicio === "seguir") acciones.seguir();
     });
     window.addEventListener("resize", this.alCambiarDeTamano);
@@ -536,9 +633,17 @@ export class PantallaDelInicio {
       this.raiz.dataset.mando = v.mando;
       this.raiz.dataset.gesto = v.gesto ?? "";
       this.senalado = mandoQueSenala(v.gesto, v.mando);
+      this.quitaGas = v.gesto === "menosGas";
       const dir = v.gesto && v.gesto !== "motor" ? DIRECCION[v.gesto] : "";
       const desde = v.gesto === "nivelar" ? ` inicio__dedo--desde-${v.lado < 0 ? "izquierda" : "derecha"}` : "";
       this.dedo.className = `inicio__dedo inicio__dedo--${dir}${desde}`;
+      this.colocarElDedo();
+    } else if (this.senalado && this.dedo.hidden && ++this.buscandoElMando % 30 === 0) {
+      /*
+       * **Y si el mando todavía no estaba, se vuelve a buscar** de vez en
+       * cuando: el botón del freno sale al tocar el suelo, y puede llegar un
+       * fotograma después de pedirlo.
+       */
       this.colocarElDedo();
     }
 
@@ -575,16 +680,34 @@ export class PantallaDelInicio {
     if (arriba > 0) this.raiz.style.setProperty("--inicio-arriba", `${Math.round(arriba)}px`);
     this.medir();
     const cual = this.senalado;
-    const pad = cual
-      ? document.querySelector<HTMLElement>(`#tactil [data-touch="${cual}"]`)
-      : null;
+    const pad = cual ? document.querySelector<HTMLElement>(DONDE_ESTA[cual]) : null;
     const r = pad?.getBoundingClientRect();
-    const visible = !!r && r.width > 4 && r.height > 4 && getComputedStyle(pad!).visibility !== "hidden";
+    const visible =
+      !!r &&
+      r.width > 4 &&
+      r.height > 4 &&
+      !pad!.closest("[hidden]") &&
+      getComputedStyle(pad!).visibility !== "hidden";
     this.dedo.hidden = !visible;
     if (!visible || !r) return;
-    const recorrido = cual === "throttle" ? r.height * 0.55 : Math.min(r.width, r.height) * 0.28;
+    /*
+     * En el gas, el dedo sale de abajo para dar y de la mitad para quitar, que
+     * es por donde anda el gas de una final; en la palanca, del centro; y en
+     * el freno, encima, tocando.
+     */
+    const gas = cual === "throttle";
+    const recorrido = gas ? r.height * (this.quitaGas ? 0.25 : 0.55) : Math.min(r.width, r.height) * 0.28;
+    // Para quitar, encima del punto del gas, que es lo que se arrastra.
+    const punto = gas && this.quitaGas ? pad!.querySelector(".pad__punto")?.getBoundingClientRect() : null;
+    const top = gas
+      ? this.quitaGas
+        ? punto && punto.height > 2
+          ? punto.top + punto.height / 2
+          : r.top + r.height * 0.45
+        : r.bottom - r.height * 0.2
+      : r.top + r.height / 2;
     this.dedo.style.left = `${r.left + r.width / 2}px`;
-    this.dedo.style.top = `${cual === "throttle" ? r.bottom - r.height * 0.2 : r.top + r.height / 2}px`;
+    this.dedo.style.top = `${top}px`;
     this.dedo.style.setProperty("--recorrido", `${recorrido.toFixed(0)}px`);
   }
 

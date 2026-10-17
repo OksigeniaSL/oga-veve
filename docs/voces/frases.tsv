@@ -1428,3 +1428,34 @@ ara	ara/inicio.ara.izquierda.ogg	es-PY	¿Y cómo hago para doblar, mamá?	el mod
 ara	ara/inicio.ara.derecha.ogg	es-PY	¡Ahora quiero para el otro lado!	el modo inicio: Ara pregunta
 ara	ara/inicio.ara.nivelar.ogg	es-PY	Mamá, ¿y cómo hago para ir derechito?	el modo inicio: Ara pregunta
 ara	ara/inicio.ara.fin.ogg	es-PY	¡Mamá, mamá, mirá! ¡Volé yo, sin ayuda!	el modo inicio: Ara pregunta
+comandante	comandante/inicio.mama.aterrizar.hola.ogg	es-PY	¡Hoy aterrizás vos, mi amor! En el aire el avión no se puede quedar quieto, así que yo lo llevo mientras te enseño.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.gas.ogg	es-PY	Vamos un poquito rápido para aterrizar. Hacé como el dibujo y dale un poquito menos de gas.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.gas.otra1.ogg	es-PY	El gas, mi vida, un poquito para abajo: así el motor afloja y el avión va más despacio.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.gas.otra2.ogg	es-PY	Mirá el dibujo que brilla: es el gas. Un toquecito para abajo, sin apuro.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.gas.bien.ogg	es-PY	¡Eso! ¿Escuchás cómo se calma el motor? Ya vamos a la velocidad justa para aterrizar.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.gas.yo.ogg	es-PY	Esta vez el gas lo bajo yo, mirá la palanca: un poquito nomás, y el motor se calma.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.nariz.ogg	es-PY	Con la nariz. Bajala un poquito, como en el dibujo, que apunte a la pista por adentro de los aros.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.nariz.otra1.ogg	es-PY	La nariz un poquito para abajo, mi amor, que mire la pista. El avión va por adentro de los aros.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.nariz.otra2.ogg	es-PY	Hacé como el dibujo: un toquecito para abajo, y la nariz apunta a la pista.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.nariz.bien.ogg	es-PY	¡Porque vamos justito por el caminito! Así se baja a una pista: despacito y derecho.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.nariz.yo.ogg	es-PY	Esta vez la nariz la bajo yo, mirá: un poquito nomás, y apunta a la pista.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.aros.ogg	es-PY	Son para aprender: dibujan el caminito para bajar a la pista. En los aeropuertos, ese caminito lo marcan unas luces al lado de la pista.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.senda.ogg	es-PY	Es que ya llegamos. Cuando estemos bajito, yo saco el gas y vos levantás la nariz, suave, para posarnos.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.recogida.ogg	es-PY	¡Ahora! Levantá la nariz un poquito, suave, suave.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.recogida.bien.ogg	es-PY	¡Aterrizaste! Primero las ruedas de atrás, suavecito, como lo hace un avión de verdad.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.recogida.yo.ogg	es-PY	¡Aterrizamos! Esta vez la nariz la levanté yo. La próxima, la levantás vos.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.frenar.ogg	es-PY	Con el freno, como en un auto. Apretá el freno del dibujo y yo te ayudo a parar.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.frenar.otra1.ogg	es-PY	El freno, mi vida, el dibujo que brilla. Apretalo y el avión se va parando.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.frenar.otra2.ogg	es-PY	Buscá el freno en el dibujo y apretalo una vez, sin miedo. La pista es larga.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.frenar.bien.ogg	es-PY	¡Muy bien! Mirá cómo frenamos, despacito y por el medio de la pista.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.fin.ogg	es-PY	¡Aterrizaste, mi amor! Te ganaste tu primer sello del cuaderno. Cuando quieras, volamos otra vez.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+comandante	comandante/inicio.mama.aterrizar.finOtra.ogg	es-PY	¡Qué lindo aterrizaje, mi amor! El sello de este campo ya está en tu cuaderno. Cuando quieras, volamos otra vez.	el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado
+ara	ara/inicio.ara.aterrizar.hola.ogg	es-PY	Mamá, ¿hoy me enseñás a aterrizar?	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.gas.ogg	es-PY	¿Y qué es lo primero que hacemos, mamá?	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.nariz.ogg	es-PY	¿Y cómo hacemos para bajar hasta la pista?	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.nariz.bien.ogg	es-PY	¡Mamá, mirá! ¡Los aros se ponen verdes!	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.aros.ogg	es-PY	Mamá, ¿y por qué hay aros en el cielo?	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.senda.ogg	es-PY	¡Mamá, la pista se hace cada vez más grande!	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.toque.ogg	es-PY	¡Tocamos el suelo, mamá! ¡Ni se sintió!	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.frenar.ogg	es-PY	¿Y ahora cómo paramos el avión, mamá?	el modo inicio, aterrizar: Ara pregunta
+ara	ara/inicio.ara.aterrizar.fin.ogg	es-PY	¡Lo hicimos, mamá! ¡Aterrizamos en la pista!	el modo inicio, aterrizar: Ara pregunta

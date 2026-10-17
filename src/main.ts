@@ -87,12 +87,14 @@ import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { GUYRAMI } from "./flight/tiers";
-import { VUELTA } from "./flight/lecciones";
+import { ATERRIZAJE, VUELTA } from "./flight/lecciones";
 import {
   AVION_DEL_INICIO,
+  escenaPedida,
   inicioGrabado,
   SITIO_DEL_INICIO,
   VOZ_DE,
+  type EscenaDelInicio,
 } from "./flight/inicio";
 import { manifiestoDe } from "./audio/instructor-grabado";
 import { recetaDe, type Manifiesto } from "./audio/banco-de-voz";
@@ -186,8 +188,11 @@ const pedido = rearranque?.escenario ?? params.get("escenario");
 /*
  * **El modo inicio**, el primer vuelo paso a paso: `?inicio=1` lo abre sin
  * pasar por el hangar, para probarlo y para su banco. Ver `flight/inicio.ts`.
+ * Y `?inicio=2`, la segunda escena: aterrizar con Jazlyn. Ver
+ * `flight/inicio-aterrizar.ts`.
  */
 let conInicio = params.has("inicio") && !rearranque;
+let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
 const directo = conInicio
   ? SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO)
   : pedido
@@ -337,6 +342,8 @@ if (!escenario) {
   const nuevo = cuaderno.despegues === 0 && cuaderno.segundos === 0;
   if (nuevo && !leerTexto("inicio-visto") && (await yaTieneVoz)) {
     conInicio = true;
+    // La primera experiencia es la del despegue, la primera escena.
+    escenaDelInicio = "despegar";
     escenario = SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO);
   }
 }
@@ -374,6 +381,7 @@ if (!escenario) {
    */
   if (elegido.inicio) {
     conInicio = true;
+    escenaDelInicio = elegido.inicio;
     escenario = SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO) ?? escenario;
   } else {
     rememberTier(tramo);
@@ -384,13 +392,14 @@ if (!escenario) {
 
 /*
  * **Lo que vuela el modo inicio**, venga de donde venga: el Chaco, la avioneta
- * de escuela y el peldaño de los pequeños, alineado en la pista y sin misión.
- * Ver `SITIO_DEL_INICIO`.
+ * de escuela y el peldaño de los pequeños, sin misión. La primera escena,
+ * alineado en la pista; la de aterrizar, en la final de la lección de
+ * aterrizar, que es donde empieza eso. Ver `SITIO_DEL_INICIO`.
  */
 if (conInicio) {
   avion = AIRCRAFT.find((a) => a.id === AVION_DEL_INICIO) ?? AIRCRAFT[0]!;
   tramo = GUYRAMI;
-  leccion = VUELTA;
+  leccion = escenaDelInicio === "aterrizar" ? ATERRIZAJE : VUELTA;
   mision = null;
   ejercicio = null;
   destino = escenario?.id;
@@ -630,7 +639,7 @@ const game = new Game({
    * entera. Ver `world/curvatura.ts`.
    */
   ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
-  ...(conInicio ? { inicio: true, tramo: GUYRAMI } : {}),
+  ...(conInicio ? { inicio: escenaDelInicio, tramo: GUYRAMI } : {}),
 });
 miga("juego creado");
 /*
