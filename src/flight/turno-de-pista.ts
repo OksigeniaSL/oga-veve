@@ -1076,7 +1076,16 @@ export class TurnoDePista {
         this.despejeSinDecir = null;
         this.alAireEnEstaFinal = true;
         const por = q.matricula;
-        this.de.mandarteAlAirePorTuSalida(llegada.alto, por, () => this.sigueSinIrse(por));
+        /*
+         * La orden se levanta cuando él se ha ido, y con su red: si no llega
+         * a irse —un aterrizaje detrás de otro—, a los siete minutos se
+         * levanta igual, que una orden puesta para siempre es un juego colgado.
+         */
+        const sigue = (): boolean =>
+          this.tapada?.como === "alAire" &&
+          this.tapada.lleva < RED_DE_LA_SALIDA &&
+          this.sigueSinIrse(por);
+        this.de.mandarteAlAirePorTuSalida(llegada.alto, por, sigue);
         return;
       }
     }
