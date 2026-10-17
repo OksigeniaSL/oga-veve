@@ -1575,12 +1575,24 @@ if (sinGrupo.length)
  * `inicio.*.aterrizar.*`. Ver `src/flight/inicio-aterrizar.ts` y
  * `PENDIENTE-VOCES-inicio-2.md`.
  */
-const DE_ATERRIZAR = /^inicio\.(?:mama|ara)\.aterrizar\./;
+/*
+ * **Y la tercera, el primer vuelo de pasaje de Ara**, detrás de las dos, por
+ * lo mismo. Tres voces: Ara, en voz baja junto a la ventanilla; la
+ * comandante, por la megafonía desde la cabina de mando, y la tripulación de
+ * cabina de Canarias, que el vuelo es de Los Rodeos a La Palma y la
+ * tripulación habla como se habla donde tiene su base —ver
+ * `hablaDeLaTripulacion` en `src/game.ts`—. Claves `inicio.*.pasaje.*`. Ver
+ * `src/flight/inicio-pasaje.ts` y `PENDIENTE-VOCES-inicio-3.md`.
+ */
+const DE_OTRA_ESCENA = /^inicio\.(?:mama|ara)\.(?:aterrizar|pasaje)\./;
 const DEL_INICIO = [
-  ["inicio.mama.", "comandante", "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado", DE_ATERRIZAR],
-  ["inicio.ara.", "ara", "el modo inicio: Ara pregunta", DE_ATERRIZAR],
+  ["inicio.mama.", "comandante", "el modo inicio: Jazlyn le enseña a volar a Ara, a su lado", DE_OTRA_ESCENA],
+  ["inicio.ara.", "ara", "el modo inicio: Ara pregunta", DE_OTRA_ESCENA],
   ["inicio.mama.aterrizar.", "comandante", "el modo inicio, aterrizar: Jazlyn le enseña a aterrizar a Ara, a su lado"],
   ["inicio.ara.aterrizar.", "ara", "el modo inicio, aterrizar: Ara pregunta"],
+  ["inicio.ara.pasaje.", "ara", "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla"],
+  ["inicio.mama.pasaje.", "comandante", "el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía"],
+  ["inicio.tripulacion.pasaje.", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía"],
 ];
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {

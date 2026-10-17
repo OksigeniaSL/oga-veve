@@ -14480,5 +14480,397 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.ara.pasaje.ventanilla",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Me tocó la ventanilla! Desde acá se ve el ala del avión, y el motor.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.cinturon",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Clic! Ya me abroché el cinturón, bajito y bien ajustado.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.puertas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Cerraron la puerta del avión. ¡Ya nos vamos!",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.motores",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Escuchá! Se prendieron los motores: suenan como un secador gigante.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.comandante",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Es mamá! Ella es la comandante, allá adelante en la cabina.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.espera",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Por qué paramos acá, antes de la pista?",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.despegue",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ahora sí que vamos a despegar! Miro bien por la ventanilla.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.carrera",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Uy, cómo empuja! Me aprieta contra el asiento, ¡y vamos rapidísimo!",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.volando",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Estamos volando! Las casas y los autos se ven chiquititos.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.nubes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Todo blanco! Estamos adentro de una nube. ¿De qué estará hecha?",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.nubesAbajo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ya pasamos las nubes! Ahora las vemos desde arriba. ¿De qué estarán hechas?",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.niebla",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡De agua! Entonces una nube es como la niebla, pero allá arriba.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.servicio",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Nos traen algo rico para comer! Yo quiero probar un poquito.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.teide",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Lo veo! Es enorme, y la punta sale por encima de las nubes.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.garajonay",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Hablar silbando? ¡Yo también quiero aprender a silbar así!",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.orotava",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Qué valle tan grande! Baja desde la montaña hasta el mar.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.loVeo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Lo veo! Desde acá arriba se ve todo chiquitito.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.oidos",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Se me tapan un poco los oídos… ¿por qué será?",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.bostezo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Bostecé bien grande, y se me destaparon los oídos!",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.isla",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ya se ve la isla adonde vamos! ¡Qué montañas tan altas tiene!",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.flaps",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá el ala! Le está saliendo un pedazo para atrás y para abajo.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.toma",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Tocamos el suelo! ¡Y cómo rugen los motores ahora!",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.fin",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Llegamos a La Palma! Ahora le cuento a mamá todo lo que vi por la ventanilla.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.espera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, enseguida despegamos. Antes de entrar en la pista, siempre esperamos el permiso de la torre de control.",
+    "para": "el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.nubes",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Para quienes vuelan hoy por primera vez: las nubes que pasamos al subir están hechas de agua, de millones de gotitas tan chiquitas y livianas que el aire las sostiene.",
+    "para": "el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.reversa",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para quienes volaron hoy por primera vez: ese ruido fuerte de los motores al aterrizar era para frenar. Los motores echan el aire hacia adelante, y eso frena el avión.",
+    "para": "el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cinturon",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a bordo. Por favor, tomen asiento y abróchense el cinturón: bajito y bien ajustado.",
+    "para": "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.oidos",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, si al bajar se les tapan los oídos, es normal: va cambiando la presión del aire. Tragar saliva o bostezar ayuda a destaparlos.",
+    "para": "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
