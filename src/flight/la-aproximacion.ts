@@ -133,6 +133,13 @@ export interface CampoDeLaAproximacion {
    * puede cruzarse es la vaca, y se ve. Ver `mirarSiMandanFrustrar`.
    */
   readonly sinTorre?: boolean;
+  /**
+   * **Si ni siquiera es un aeródromo**: el Chaco y el Valle de la Cordillera,
+   * los campos para empezar. Sin torre, pero tampoco la vaca: Enrique, al
+   * preguntárselo (17-10-2026), «sin vaca ahí». La vaca se queda en los campos
+   * de hierba que lo son, como la granja y Ayolas.
+   */
+  readonly sinAerodromo?: boolean;
 }
 
 /** Lo que no cambia en todo un vuelo. */
@@ -520,6 +527,8 @@ export class LaAproximacion {
      * donde no hay torre, que se ve cruzar.
      */
     if (this.ordenes === "auto" && !this.campo.sinTorre) return;
+    // Y donde se empieza, ni la vaca: ver `sinAerodromo`.
+    if (this.ordenes === "auto" && this.campo.sinAerodromo) return;
     if (this.ordenes === "auto") {
       this.leToca ??= Math.random() <= UNA_DE_CADA;
       if (!this.leToca) return;

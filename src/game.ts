@@ -18059,6 +18059,7 @@ export class Game {
           : null,
       angulo: this.sendaDe(campo),
       sinTorre: sinTorre(campo.escenario.aerodrome),
+      sinAerodromo: !campo.escenario.aerodrome,
     };
   }
 

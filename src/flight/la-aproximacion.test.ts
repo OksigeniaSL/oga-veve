@@ -11,7 +11,7 @@
  * Canaria— sin navegador: un estado de vuelo puesto a mano y el campo de allí.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Vector3 } from "three";
 import { LaAproximacion, type CampoDeLaAproximacion } from "./la-aproximacion";
 import type { FlightState } from "./model";
@@ -139,6 +139,22 @@ describe("la aproximación en el campo de llegada", () => {
     paso(aproximacion, s);
     expect(dicho).toContain("frustrar:pistaOcupada");
     expect(aproximacion.mandanFrustrar).toBe(true);
+  });
+
+  it("la vaca cruza en un campo de hierba sin torre, y no donde ni siquiera hay aeródromo", () => {
+    const azar = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const s = enFinal(LOS_RODEOS, 2000, 110);
+      const hierba = montar(() => ({ ...visto(LOS_RODEOS, s), sinTorre: true }));
+      paso(hierba.aproximacion, s);
+      expect(hierba.dicho).toContain("frustrar:pistaOcupada");
+      // El Chaco y el Valle: para empezar, «sin vaca ahí».
+      const llano = montar(() => ({ ...visto(LOS_RODEOS, s), sinTorre: true, sinAerodromo: true }));
+      paso(llano.aproximacion, s);
+      expect(llano.dicho).not.toContain("frustrar:pistaOcupada");
+    } finally {
+      azar.mockRestore();
+    }
   });
 
   it("y el PAPI de allí se explica, contado desde sus luces", () => {
