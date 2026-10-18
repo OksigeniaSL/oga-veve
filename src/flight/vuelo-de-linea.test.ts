@@ -76,6 +76,9 @@ interface Vuelo {
   readonly maxBajada: number;
   readonly crucero: number;
   readonly entroSinPermiso: boolean;
+  /** Cuándo se alineó, y lo que rodó alineada antes de tener el permiso de dar gas, m. */
+  readonly alineadoA: number;
+  readonly rodoAlineada: number;
   readonly maxLadoEnFinal: number;
   readonly parado: { x: number; z: number } | null;
   readonly t: number;
@@ -115,6 +118,8 @@ function volar(): Vuelo {
   let maxLadoEnFinal = 0;
   let volo = false;
   let frenosDeTierra = 0;
+  let alineadoA = Infinity;
+  let rodoAlineada = 0;
   let t = 0;
   for (; t < 3600; t += DT) {
     const s = m.state;
@@ -184,7 +189,9 @@ function volar(): Vuelo {
       senda: enLaFinal ? { altitud: TAN * Math.max(0, alUmbral + 300), ritmo: -s.groundSpeed * TAN } : null,
       cotaDelCampo: 0,
     };
-    const permisos = { arrancar: t > 2, rodar: true, entrar: autorizado && enLaEspera > 9 };
+    const permisos = { arrancar: t > 2, rodar: true, entrar: autorizado && enLaEspera > 9, despegar: t > alineadoA + 4 };
+    if (tripulacion.estado.alineado && alineadoA === Infinity) alineadoA = t;
+    if (tripulacion.estado.alineado && !permisos.despegar) rodoAlineada += s.groundSpeed * DT;
     const manos = tripulacion.paso(DT, l, permisos);
     const e = tripulacion.estado;
     if (tramos[tramos.length - 1]?.tramo !== e.tramo) tramos.push({ tramo: e.tramo, t });
@@ -243,6 +250,8 @@ function volar(): Vuelo {
     maxBajada,
     crucero,
     entroSinPermiso,
+    alineadoA,
+    rodoAlineada,
     maxLadoEnFinal,
     parado: s.groundSpeed < 0.5 ? { x: s.position.x, z: s.position.z } : null,
     t,
@@ -333,6 +342,13 @@ describe("del puesto al puesto con el JAZ 90 de Guyrami", () => {
 
   it("no entra en la pista sin el permiso de la torre", () => {
     expect(vuelo.entroSinPermiso).toBe(false);
+  });
+
+  it("y alineada, espera parada a la cabina para dar gas", () => {
+    const carrera = vuelo.tramos.find((x) => x.tramo === "carrera")!;
+    expect(vuelo.alineadoA).toBeLessThan(Infinity);
+    expect(carrera.t).toBeGreaterThanOrEqual(vuelo.alineadoA + 4);
+    expect(vuelo.rodoAlineada).toBeLessThan(3);
   });
 
   it("despega en la Vr, por el eje y con pista de sobra", () => {

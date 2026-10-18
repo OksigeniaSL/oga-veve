@@ -90,15 +90,16 @@ export type TramoDeLinea =
   | "apagado";
 
 /**
- * **Lo que deja hacer la escena**: las tres cosas que en un avión de verdad
- * esperan a la cabina de pasaje. Arrancar, con las puertas cerradas y los
- * toboganes armados; rodar, con los motores asentados; y entrar en pista, con
- * la tripulación de cabina sentada.
+ * **Lo que deja hacer la escena**: lo que en un avión de verdad espera a la
+ * cabina de pasaje. Arrancar, con las puertas cerradas y los toboganes
+ * armados; rodar, con los motores asentados; entrar en pista, con la
+ * tripulación de cabina sentada; y dar gas, con la cabina lista.
  */
 export interface PermisosDeLaEscena {
   readonly arrancar: boolean;
   readonly rodar: boolean;
   readonly entrar: boolean;
+  readonly despegar: boolean;
 }
 
 /** Lo que la tripulación lee del avión, del plan y de la pista en cada paso. Todo en SI. */
@@ -391,6 +392,8 @@ export interface EstadoDeLinea {
   readonly tocado: boolean;
   /** Cómo se tocó: lo que bajaba, m/s. */
   readonly caidaAlTocar: number | null;
+  /** Si está alineada en la pista, esperando para dar gas. */
+  readonly alineado: boolean;
 }
 
 export class VueloDeLinea {
@@ -405,6 +408,8 @@ export class VueloDeLinea {
   private subidaPedida = 0;
   /** Lo que lleva el avión fuera del puesto, m: para no apagar antes de salir. */
   private rodado = 0;
+  /** Si, entrando, ya está alineada en la pista. Ver `estaAlineado`. */
+  private alineado = false;
 
   constructor(private readonly ficha: FichaDeLinea) {}
 
@@ -414,6 +419,7 @@ export class VueloDeLinea {
       enTramo: this.enTramo,
       tocado: this.tocado,
       caidaAlTocar: this.caidaAlTocar,
+      alineado: this.tramo === "entrando" && this.alineado,
     };
   }
 
@@ -462,15 +468,9 @@ export class VueloDeLinea {
         if (l.autorizado && p.entrar) this.pasarA("entrando");
         return;
       case "entrando":
-        // En la pista, alineado y con lo que la raya pedía rodado: a correr.
-        if (
-          l.enPista &&
-          l.fase !== "back-taxi" &&
-          Math.abs(diferencia(l.rumbo, l.pista.rumbo)) < 4 * GRADO &&
-          Math.abs(l.pista.lado) < 4 &&
-          this.quedaDeRaya(l) <= RAYA_QUE_SOBRA
-        )
-          this.pasarA("carrera");
+        // En la pista, alineado y con lo que la raya pedía rodado: a correr, con la cabina lista.
+        this.alineado = this.estaAlineado(l);
+        if (this.alineado && p.despegar) this.pasarA("carrera");
         return;
       case "carrera":
         if (!l.enTierra && l.altura > 15) this.pasarA("subida");
@@ -587,6 +587,17 @@ export class VueloDeLinea {
     };
   }
 
+  /** En la pista, por el eje, mirando hacia donde se despega y con la raya rodada. */
+  private estaAlineado(l: LecturaDeLinea): boolean {
+    return (
+      l.enPista &&
+      l.fase !== "back-taxi" &&
+      Math.abs(diferencia(l.rumbo, l.pista.rumbo)) < 4 * GRADO &&
+      Math.abs(l.pista.lado) < 4 &&
+      this.quedaDeRaya(l) <= RAYA_QUE_SOBRA
+    );
+  }
+
   /** Lo que queda de la raya de ahora, m: cero si no hay. */
   private quedaDeRaya(l: LecturaDeLinea): number {
     this.raya.poner(l.raya, l.x, l.z);
@@ -617,6 +628,8 @@ export class VueloDeLinea {
    * Despacio, que es girar un avión grande sobre el asfalto.
    */
   private entrar(l: LecturaDeLinea): ManosDeLinea {
+    // Alineado, parado con los frenos hasta dar gas. Ver `PermisosDeLaEscena.despegar`.
+    if (this.alineado) return { ...this.parado(), flaps: 1 / 3 };
     /*
      * La raya manda mientras le quede camino: si la entrada es por el medio y
      * hay que remontar la pista hasta la cabecera —el back-taxi—, la raya va

@@ -24,7 +24,8 @@
  * - **Que nada se pisa y no habla nadie más**: ni la radio, ni las cajas de la
  *   cabina de mando, ni la instructora. Lo que la boca tiró de otros, se
  *   cuenta aparte: se tiró porque la boca era de la escena.
- * - **Que lo de la ventanilla se dice**, con su historia, y Ara contesta.
+ * - **Que lo de la ventanilla se dice**, con su historia, y Ara contesta. El
+ *   Teide, sin falta: es lo más bonito de la ruta.
  * - **Que se dibuja qué mirar** —el ala, el cinturón, el motor, las nubes, la
  *   ventanilla—.
  * - **Que el cuaderno no apunta nada de pilotaje** y sí el sello de La Palma,
@@ -32,10 +33,13 @@
  * - **Y que en un teléfono apaisado**, con el dedo, la tarjeta cabe y no hay
  *   mandos de pilotar.
  *
- * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique— y
- * sin grabar todavía las frases nuevas: cada una espera el rato de leerla.
- * Con el reloj del juego acelerado —`OGA_VECES`, doce por defecto—, que el
- * vuelo entero son unos treinta y cinco minutos.
+ * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—,
+ * con las tomas del pack: cada frase dura lo que dura su grabación, y **todo
+ * lo que dice la escena tiene que haberse oído**. Con el reloj del juego
+ * acelerado —`OGA_VECES`, doce por defecto—, que el vuelo entero son unos
+ * treinta y cinco minutos; mientras habla la escena el juego va a su ritmo,
+ * que lo que se oye no se acelera (ver `frame` en `game.ts`), así que el banco
+ * tarda unos diez minutos.
  *
  * Uso: `node scripts/verificar-inicio-3.mjs`
  *   `OGA_GPU=1` con la tarjeta de verdad; `OGA_FOTOS=carpeta` saca capturas
@@ -53,7 +57,7 @@ const FOTOS = process.env.OGA_FOTOS ?? null;
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });
 const VECES = Number(process.env.OGA_VECES ?? 12);
 /** Tope de pared: el vuelo son unos treinta y cinco minutos de reloj del juego. */
-const TOPE_S = Number(process.env.OGA_TOPE ?? 900);
+const TOPE_S = Number(process.env.OGA_TOPE ?? 1800);
 
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -216,9 +220,11 @@ async function elVuelo() {
     if (v.mirar) miradas.add(v.mirar);
     if (v.cara) caras.add(v.cara.replace(/^.*inicio__cara--/, ""));
     // ── Lo que se mira mientras pasa ──
-    if (arrancoCon === null && v.motor) arrancoCon = (i.registro ?? []).some((d) => d.clave === "comandante.crosscheck" && d.hasta !== null);
+    // Oída: que sonó o se esperó el rato de leerla, no que se pidió. Ver `Conversacion.oida`.
+    const oida = (clave) => (i.registro ?? []).some((d) => d.clave === clave && (d.como === "sono" || d.como === "muda"));
+    if (arrancoCon === null && v.motor) arrancoCon = oida("comandante.crosscheck");
     if (entroEnPista === null && v.enPista && v.fase !== "back-taxi" && tramo !== "frenando")
-      entroEnPista = (i.registro ?? []).some((d) => d.clave.startsWith("comandante.despegue") && d.hasta !== null);
+      entroEnPista = oida("comandante.despegue");
     if (tramo === "carrera" && v.enTierra && i.lecturaDeLinea)
       masDeLadoEnLaCarrera = Math.max(masDeLadoEnLaCarrera, Math.abs(i.lecturaDeLinea.pista.lado));
     // ── Las fotos ──
@@ -297,6 +303,27 @@ async function elVuelo() {
     registro.length > 30 && pisadas === 0 && registro.every((d) => !d.cortada),
     `${registro.length} frases · ${pisadas} pisadas · ${registro.filter((d) => d.cortada).length} cortadas`,
   );
+  /*
+   * **Y todo lo que dice la escena se oye**: con las tomas en el pack, cada
+   * frase acaba sonando entera. Una que acaba sin sonar es una que se tiró por
+   * el camino —la boca reservada, una receta que no se reconoce— o que la
+   * escena dio por perdida.
+   */
+  const sinOir = registro.filter((d) => d.como !== "sono");
+  comprobar(
+    "y todo lo que dice la escena se oye entero, de su toma",
+    registro.length > 30 && sinOir.length === 0,
+    sinOir.length
+      ? `${sinOir.length} sin oír: ${sinOir
+          .slice(0, 5)
+          .map((d) => {
+            // Y por qué, si la boca la tiró: lo apunta en `descartadas`.
+            const tirada = (conversacion?.descartadas ?? []).find((x) => String(x).replace(/^\S+s /, "").startsWith(d.clave));
+            return `${d.clave} (${d.como}${tirada ? `: ${String(tirada).replace(/^.*: /, "")}` : ""})`;
+          })
+          .join(" · ")}`
+      : `${registro.length} frases, todas oídas`,
+  );
   const ajenas = (conversacion?.habladas ?? []).filter((l) => !DE_LA_ESCENA.test(l.replace(/^\S+s /, "")));
   const maquina = conversacion?.maquina ?? [];
   const tiradas = (conversacion?.descartadas ?? []).filter((d) => !DE_LA_ESCENA.test(String(d).replace(/^\S+s /, "")));
@@ -311,8 +338,8 @@ async function elVuelo() {
   const historias = registro.filter((d) => d.clave === "ventanilla.historia").length;
   const deAra = registro.filter((d) => /^inicio\.ara\.pasaje\.(teide|garajonay|orotava|loVeo)$/.test(d.clave)).map((d) => d.clave.split(".").pop());
   comprobar(
-    "lo de la ventanilla se dice, con su historia, y Ara contesta lo que ve por su lado",
-    ventanillas >= 2 && historias >= 1 && deAra.includes("teide"),
+    "lo de la ventanilla se dice —el Teide, el que más—, con su historia, y Ara contesta lo que ve por su lado",
+    ventanillas >= 2 && historias >= 1 && !!e?.senalados?.includes("teide") && deAra.includes("teide"),
     `${ventanillas} sitios · ${historias} historias · ${e?.senalados?.join(", ")} · Ara: ${deAra.join(", ")}`,
   );
   comprobar(

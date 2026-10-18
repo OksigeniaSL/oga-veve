@@ -555,9 +555,14 @@ export class Inicio {
       readonly primerSello: boolean;
       /** Por dónde se empieza: el saludo, o directamente el motor al repetir. */
       readonly desde?: PasoId;
+      /**
+       * El reloj de la voz, s: el de pared mientras se juega. Ver
+       * `TOPE_DE_UNA_FRASE` en `conversacion.ts`. Sin decir, el de la escena.
+       */
+      readonly pared?: () => number;
     },
   ) {
-    this.charla = new Conversacion(voz, () => this.reloj);
+    this.charla = new Conversacion(voz, () => this.reloj, () => this.opciones.pared?.() ?? this.reloj);
     const desde = opciones.desde ?? "hola";
     this.entrar(Math.max(0, GUION_DEL_INICIO.findIndex((p) => p.id === desde)));
   }

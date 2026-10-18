@@ -85,7 +85,9 @@
  * audio. Lo engancha `game.ts` y lo dibuja `ui/inicio.ts`.
  */
 
+import { seLePasoElMomento } from "../audio/megafonia";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
+import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
 
 /** Diez mil pies, m: por debajo, la cabina de mando no habla de nada que no sea volar. */
@@ -152,6 +154,13 @@ export interface LecturaDelPasaje {
   readonly cabina: number;
   /** Lo que falta por la ruta hasta tocar, m. */
   readonly faltaParaTocar: number;
+  /** Si la tripulación ya está alineada en la pista, esperando para dar gas. */
+  readonly alineado?: boolean;
+  /**
+   * **La fase del vuelo, la del juego**: la que decide si un anuncio de tierra
+   * todavía vale o ya se le pasó el momento. Ver `seLePasoElMomento`.
+   */
+  readonly fase?: Fase;
 }
 
 /**
@@ -211,11 +220,29 @@ const VE_LA_ISLA = 45000;
  */
 const SE_NOTAN_LOS_OIDOS = -0.6;
 /**
- * **Y la red de la espera**, s: si la escena no ha dicho «sentados para el
- * despegue» en este rato —una boca que se quedó colgada—, se entra igual. Lo
- * primero es no dejar a nadie parado en la doble raya para siempre.
+ * **Y la red de la espera**, s de reloj de pared: si «sentados para el
+ * despegue» no se ha oído en este rato —una boca que se quedó colgada—, se
+ * entra igual. Lo primero es no dejar a nadie parado en la doble raya para
+ * siempre. De pared y no de vuelo, porque lo que se espera es una voz: medida
+ * con el reloj del vuelo, con el del juego acelerado doce veces se cumplía a
+ * los seis segundos, y la tripulación entraba en la pista antes de que sonara
+ * el anuncio. Medido en el banco con las tomas grabadas.
  */
 export const RED_DE_LA_ESPERA = 75;
+
+/**
+ * **Y la de un anuncio que espera su fase**, s de pared: si la fase del juego
+ * no llega a la de un anuncio en este rato, se pide igual —y la boca lo
+ * tirará—. La escena no se queda parada esperando una fase que no viene.
+ */
+export const RED_DEL_ANUNCIO = 15;
+
+/**
+ * **Y la de la cabecera**, s de pared: alineados, lo que espera la tripulación
+ * a que Ara acabe lo que está diciendo antes de dar gas, como mucho. Ver
+ * `PermisosDeLaEscena.despegar`.
+ */
+export const RED_DE_LA_CABECERA = 20;
 
 // ── El guion ─────────────────────────────────────────────────────────────
 
@@ -319,9 +346,16 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     mira: "ventanilla",
   },
   {
+    /*
+     * **El empuje, en cuanto se nota**: al dar gas, que es cuando aprieta
+     * contra el asiento. Se decía a mitad de carrera, con ocho segundos hasta
+     * irse del suelo, y la toma dura cinco: con cualquier cosa que tardara un
+     * poco ya no cabía. Y vale un poco después de despegar, que se sigue
+     * empujando.
+     */
     id: "carrera",
-    cuando: (l) => l.tramo === "carrera" && l.porElSuelo > 35,
-    caduca: (l) => !l.enTierra,
+    cuando: (l) => l.tramo === "carrera" && l.porElSuelo > 8,
+    caduca: (l) => !l.enTierra && l.altura > 150,
     lineas: [ara("carrera")],
   },
   {
@@ -493,7 +527,9 @@ export class VueloDePasaje {
   private mira: QueMirar | null = null;
   private miraDesde = 0;
   private callada = 0;
+  /** Cuándo se paró en la doble raya y cuándo se alineó, en el reloj de pared. */
   private enLaEsperaDesde: number | null = null;
+  private alineadoDesde: number | null = null;
   private readonly porSenalar: Senalado[] = [];
   private readonly senalados: string[] = [];
 
@@ -502,9 +538,20 @@ export class VueloDePasaje {
     private readonly opciones: {
       /** El lado de la ventanilla de Ara. */
       readonly lado?: "izquierda" | "derecha";
+      /**
+       * **El reloj de las voces**, s: el de pared mientras se juega. Lo que
+       * espera a que algo suene se mide con él, que una grabación dura lo que
+       * dura aunque el reloj del juego vaya acelerado. Sin decir, el de la
+       * escena. Ver `TOPE_DE_UNA_FRASE`.
+       */
+      readonly pared?: () => number;
     } = {},
   ) {
-    this.charla = new Conversacion(voz, () => this.reloj);
+    this.charla = new Conversacion(voz, () => this.reloj, () => this.pared());
+  }
+
+  private pared(): number {
+    return this.opciones.pared?.() ?? this.reloj;
   }
 
   private get def(): DefMomento {
@@ -618,7 +665,7 @@ export class VueloDePasaje {
      */
     if (this.dicho("aproximacion") || l.tramo === "final" || l.enTierra) this.porSenalar.length = 0;
     if (!this.charla.callada) return;
-    if (!def.cuando(l, this)) {
+    if (!def.cuando(l, this) || this.esperaSuFase(def, l)) {
       /*
        * Lo señalado por la ventanilla, en los huecos de lo que no ha llegado.
        * Menos en el del servicio, que va pegado al cartel apagado: un crucero
@@ -672,26 +719,62 @@ export class VueloDePasaje {
    * tripulación de cabina sentada. Ver `PermisosDeLaEscena`.
    */
   private permisos(l: LecturaDelPasaje): PermisosDeLaEscena {
-    if (l.tramo === "esperando") this.enLaEsperaDesde ??= this.reloj;
-    const enLaEspera = this.enLaEsperaDesde === null ? 0 : this.reloj - this.enLaEsperaDesde;
-    // Una vez dados, se quedan: lo que ya se hizo no se deshace.
+    const ahora = this.pared();
+    if (l.tramo === "esperando") this.enLaEsperaDesde ??= ahora;
+    if (l.tramo === "entrando" && l.alineado) this.alineadoDesde ??= ahora;
+    const enLaEspera = this.enLaEsperaDesde === null ? 0 : ahora - this.enLaEsperaDesde;
+    const alineado = this.alineadoDesde === null ? 0 : ahora - this.alineadoDesde;
+    /*
+     * Una vez dados, se quedan: lo que ya se hizo no se deshace. Y **lo que
+     * espera a una frase espera a que se haya oído**, no a que se haya pedido
+     * ni a que la escena la diera por perdida: ver `Conversacion.oida`.
+     */
     this.dados = {
-      arrancar: this.dados.arrancar || this.acabadaLaFrase("comandante.crosscheck") || this.saltado("puertas"),
+      arrancar: this.dados.arrancar || this.charla.oida("comandante.crosscheck") || this.saltado("puertas"),
       rodar: this.dados.rodar || (this.dicho("motores") && this.charla.callada),
-      entrar:
-        this.dados.entrar || this.acabadaLaFrase("comandante.despegue") || enLaEspera >= RED_DE_LA_ESPERA,
+      entrar: this.dados.entrar || this.charla.oida("comandante.despegue") || enLaEspera >= RED_DE_LA_ESPERA,
+      /*
+       * **Y no se da gas con Ara a media frase**: alineados, la tripulación
+       * espera a que acabe lo que se está diciendo —«¡ahora sí que vamos a
+       * despegar!»—, que es lo que hace que «¡cómo empuja!» llegue con el
+       * empuje. Como un «alineado y espere» de la torre: unos segundos.
+       */
+      despegar:
+        this.dados.despegar ||
+        (this.dicho("despegue") && this.charla.callada) ||
+        this.saltado("despegue") ||
+        alineado >= RED_DE_LA_CABECERA,
     };
     return this.dados;
   }
 
-  private dados: PermisosDeLaEscena = { arrancar: false, rodar: false, entrar: false };
+  /**
+   * **Y un anuncio de tierra se pide cuando el juego dice que vale**, que es
+   * quien lo tira si no. La bienvenida se pedía en cuanto la tripulación
+   * echaba a rodar, y para el juego eso todavía era «arrancando» —la fase
+   * cambia con medio segundo de histéresis y con el avión pasando de dos
+   * metros por segundo—: la boca la tiraba en el acto, «ya no es verdad», y
+   * no sonaba. Medido en el banco con las tomas grabadas. Así que se espera a
+   * la fase del juego, con su red: ver `RED_DEL_ANUNCIO`.
+   */
+  private esperaSuFase(def: DefMomento, l: LecturaDelPasaje): boolean {
+    const fase = l.fase;
+    const aDestiempo =
+      fase !== undefined &&
+      (def.segun?.(l) ?? def.lineas).some((x) => x.megafonia && seLePasoElMomento(x.clave, fase));
+    if (!aDestiempo) {
+      this.aDestiempoDesde = null;
+      return false;
+    }
+    this.aDestiempoDesde ??= this.pared();
+    return this.pared() - this.aDestiempoDesde < RED_DEL_ANUNCIO;
+  }
+
+  private aDestiempoDesde: number | null = null;
+
+  private dados: PermisosDeLaEscena = { arrancar: false, rodar: false, entrar: false, despegar: false };
 
   private saltado(id: MomentoDelPasaje): boolean {
     return this.saltados.includes(id);
-  }
-
-  /** Si esa frase ya se dijo entera, o se calló: lo de después ya puede pasar. */
-  private acabadaLaFrase(clave: string): boolean {
-    return this.charla.registro.some((d) => d.clave === clave && d.hasta !== null);
   }
 }
