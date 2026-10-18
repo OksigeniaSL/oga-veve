@@ -15553,6 +15553,202 @@
     }
   },
   {
+    "id": "inicio.ara.pasaje.kitGracias",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Gracias! ¿Jugamos? Tocá la mochilita y elegimos uno de los juegos.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.elegir",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Hay dos juegos: armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.empezar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Me ayudás a armar el avión? Agarrá cada pieza y llevala a su lugar.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.ala",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡El ala! Empuja el aire para abajo, y el aire la empuja para arriba: así nos sostiene.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.motor",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡El motor! Traga aire por adelante y lo echa para atrás con mucha fuerza: así el avión va para adelante.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.cola",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡La cola! Lleva al avión derechito, como las plumas de una flecha, y su timón le mueve la nariz a los costados.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.ruedas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Las ruedas! Son para correr por la pista y para aterrizar. Volando, se guardan adentro del avión.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.ayuda",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Casi! Esa pieza va en otro lugar del avión: mirá el que brilla.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.piezas.fin",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.camino.empezar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Salimos del uno, en Tenerife. Tocá los números en orden y dibujamos el camino del avión.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.camino.teide",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Dos, el Teide! Es el volcán más alto de España, y asoma por encima de las nubes.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.camino.gomera",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Tres, La Gomera! Es una isla redondita, donde todavía se habla silbando.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.camino.palma",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Cuatro, La Palma! Ahí aterrizamos. Ya dibujamos todo el camino de nuestro vuelo.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.camino.ayuda",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Ese número viene después. Primero tocá el que brilla.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "inicio.mama.pasaje.espera",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -15991,6 +16187,48 @@
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡Hasta pronto, y gracias por volar con nosotros! Ahora ya sabes un montón de cosas de los aviones.",
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.kitAqui",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.kitRato",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.",
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.kitGuardar",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.",
     "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
     "ajustes": {
       "stability": 0.35,

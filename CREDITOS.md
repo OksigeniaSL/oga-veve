@@ -569,6 +569,11 @@ fotos, ni iconos de terceros, ni imágenes generadas. Las islas del mapa del
 camino van en su sitio con las coordenadas de cada una. Lo que cuentan, y de
 dónde sale, en el ADR 0020.
 
+**Y el kit de viaje de Ara**, en la misma escena —la mochilita, el avión con
+sus piezas y el mapa de las islas con el camino del vuelo—, igual: dibujado
+en el código, en `src/ui/kit-de-viaje.ts`, con los colores de la ventanita y
+las islas con sus coordenadas. Nada traído de fuera.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

@@ -634,3 +634,129 @@ caracteres—, en
 - Las ventanas de los tramos de la bajada están medidas en esta ruta: si un
   día cambia el plan de Los Rodeos a La Palma, se miden otra vez con
   `OGA_PASAJE=1` en la prueba del vuelo medido.
+
+### El kit de viaje y el hilo musical
+
+Fecha: 2026-10-18
+
+Punto 275 de la lista de Enrique, en dos peticiones. La primera: «a los
+niños suelen darles algo para que se entretengan durante el vuelo […] se le
+pone un juego que tenga que resolver en la pantalla y que tenga sentido
+educativo también», y que se diga así: «volar es apasionante, pero los vuelos
+duran un ratito». La segunda: «hilo musical, en los vuelos a veces ponen algo
+de música ambiente».
+
+**El kit, cuándo.** Lo trae la tripulante, en persona, en el tramo largo y
+tranquilo del vuelo: la bajada, pasado lo último que la comandante señala
+por la ventanilla y con más de cinco minutos por delante sin megafonía —medido
+con la bajada del banco, hacia los 84 km de La Palma—. Es un momento del
+guion, `kit`, entre los oídos y la isla de llegada: «¡Mira lo que te traigo:
+tu kit de viaje!», «volar es apasionante, pero los vuelos duran un ratito», y
+Ara da las gracias e invita a jugar. Desde ahí, abajo a la derecha, la
+mochilita, que late hasta que se abre. Es lo que hacen las aerolíneas con
+quien viaja con pocos años, y se dice como es.
+
+**Los juegos**, dos —`flight/kit-de-viaje.ts`, dibujados en
+`ui/kit-de-viaje.ts`—:
+
+- **Armá el avión**: el ala, el motor, la cola y las ruedas, arrastradas a su
+  hueco en el dibujo del avión —el hueco tiene la forma de la pieza—. Al
+  encajar, Ara dice para qué sirve, y es lo de verdad: el ala empuja el aire
+  hacia abajo y el aire la empuja hacia arriba (regla 4: nada de caminos más
+  largos); el motor echa el aire hacia atrás y eso empuja el avión; la cola
+  lo lleva derecho como las plumas de una flecha y su timón le mueve la nariz
+  a los lados; las ruedas son para la pista y se guardan al volar.
+- **El camino del avión**: el mapa de las islas con sus coordenadas, y los
+  números del vuelo de hoy —1 Los Rodeos, 2 el Teide, 3 La Gomera, 4 La
+  Palma— que se tocan en orden para dibujar el camino. El camino pasa al norte
+  del Teide y de La Gomera, que se ven por la izquierda, como desde la
+  ventanilla de Ara; y lo que dice Ara de cada sitio es verdad: el Teide es la
+  cumbre más alta de España, y en La Gomera se habla todavía silbando.
+
+El tercero que se pensó, buscar en la ventanilla lo que se nombra, se quedó
+fuera: la escena entera ya lo hace con la ventanilla de verdad, y dos juegos
+bien hechos valen más que tres a medias.
+
+**Se gana siempre.** Una pieza soltada en otro sitio vuelve a la bandeja y su
+hueco se ilumina, con un «¡casi!» sin regaño; un número de más adelante deja
+brillar el que va; y si pasa un rato sin acertar, también brilla lo que toca,
+la primera vez sin palabras. A la segunda que una pieza no encuentra su
+hueco, tocarla la lleva sola. Se juega arrastrando, con dos toques —la pieza
+y su hueco— o con el teclado, que lleva cada pieza a su sitio. Sin leer: el
+hueco tiene la forma, lo que toca brilla, y Ara dice qué hacer.
+
+**El vuelo manda.** El kit se cierra cuando se quiera y el juego se queda
+donde estaba. Mientras habla la megafonía **se pausa** —se apaga y se ve el
+altavoz encima—, que lo que se dice para todos va primero; y desde que se
+prepara la cabina para aterrizar no se juega: la tripulante pide guardarlo
+en el bolsillo del asiento, como se recoge todo para aterrizar de verdad, y
+el kit se recoge y ya no se abre.
+
+**Y la escena, con el kit en las manos, no cuenta encima.** Lo que va en el
+guion y lo de la ventanilla se dicen igual; lo que se cuenta cuando viene a
+cuento —las charlas— espera mientras se juega, que una explicación encima de
+un juego es ruido. Con su red: un kit abierto que nadie toca en 45 segundos
+no cuenta como jugando, y la escena vuelve a hablar. Lo que dicen los juegos
+va por la misma conversación que todo, una frase detrás de otra; y lo que un
+juego tenía en la cola sin decir se calla al cerrarlo o al cambiar de juego.
+
+**Dónde.** Debajo de la tarjeta de la escena, del ancho que cabe entero en
+la proporción de sus dibujos y sin pisar el volumen —en la tablet del aula
+va a media altura a la izquierda—. En el teléfono apaisado, con el kit
+abierto, la tarjeta sube arriba del todo para dejarle sitio, y los números
+del camino crecen para el dedo.
+
+**El hilo musical** —`audio/hilo-musical.ts`— suena al embarcar, con el
+avión en el puesto y los motores parados, y al llegar al puesto con los
+motores apagados; y se calla, para todo ese rato, en cuanto habla la
+megafonía o suena una llamada a la tripulación, que es lo que pasa cuando la
+tripulación coge el micrófono. Por el **altavoz del techo**, con el filtro de
+la megafonía —un altavoz que no da graves, su bocina y el rebote del
+pasillo—, armado por la misma función que el de las voces, pero hacia el bus
+de la música: dieciocho decibelios por debajo de la voz y diez más mientras
+alguien habla. Va con el volumen de todo lo demás, que no hay otro. La de
+Paraguay en los vuelos de Paraguay y la de Canarias en los de Canarias,
+según el habla del aeródromo; y solo donde hay pasaje, también en los vuelos
+de línea de quien pilota, que desde la cabina de mando la oye tras la puerta.
+Espera dos segundos en el rato antes de sonar, y lo que la megafonía ya decía
+al abrirse el rato no lo acaba: se espera a que calle. Así, en un vuelo de
+quien pilota —donde el «armar toboganes» se pide al segundo de estar en el
+puesto— no asoma para callarse enseguida, y la que se oye es la de la llegada;
+y al apagar los motores con la tripulación despidiéndose todavía, suena en
+cuanto termina. En la escena, el embarque dura un poco más que antes —ocho
+segundos callados entre lo primero de Ara y la bienvenida— para que se oiga.
+
+Las piezas son de Oksigenia, con licencia de uso de su proveedor, y vienen de
+noventa segundos con su fundido final. `scripts/hacer-musica.mjs` las deja en
+**una vuelta sin salto**: busca, por las notas y por el pulso, dónde se parece
+el final al principio, afina el punto a la muestra y los cruza en dos
+segundos y medio. Quedan vueltas de 75 y 77 segundos, igualadas con las voces
+con una ganancia fija —no con `loudnorm`, que la cambia por el camino—, en
+mono, en Opus y en AAC: unos 450 KB la que se baja. Llevan medio segundo de
+más a cada lado para que el silencio que un códec mete al empezar no caiga
+dentro del bucle. Entran por `import`, con la huella en el nombre: no van en
+la precarga, se bajan la primera vez que suenan y las guarda el trabajador de
+servicio.
+
+**Las voces, sin grabar**: diecisiete frases nuevas, 1.427 caracteres —catorce
+de Ara y tres de la tripulante—, en `PENDIENTE-VOCES-inicio-3.md`.
+
+#### Consecuencias
+
+- `kit-de-viaje.test.ts` juega los dos juegos con quien acierta, con quien se
+  equivoca y con quien toca a lo loco —cincuenta semillas cada uno—, y en
+  todos se acaba ganando; y prueba dejarlo, la pausa y el recogerlo.
+  `inicio-pasaje.test.ts` lo juega dentro del vuelo medido: que llega en un
+  tramo tranquilo, que se juegan los dos enteros sin que ninguna charla
+  empiece encima, que se pausa con la megafonía y que se recoge antes de la
+  final. `hilo-musical.test.ts`, cuándo suena, cuál, por qué altavoz y que
+  se calla.
+- El banco del navegador juega los dos con el dedo —las piezas arrastradas
+  con toques de verdad— en el teléfono, la tablet y el portátil, mira que el
+  kit cabe sin tapar la tarjeta ni los botones, y en el vuelo entero abre el
+  kit, dibuja el camino, lo deja abierto y mira que la aproximación lo pausa
+  y la tripulante lo recoge; y que la música suena en el embarque por el
+  techo, se calla con la bienvenida y vuelve en el puesto.
+- Con un kit en las manos, las charlas de la bajada se juntan al cerrarlo, y
+  alguna puede quedarse sin decir: es lo que pasa en un vuelo de verdad con
+  un juego delante, y lo que tiene su momento se dice igual.

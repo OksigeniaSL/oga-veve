@@ -19,6 +19,17 @@ para quienes vuelan por primera vez y lo que Ara nota por el camino—:
 De la tripulación, 7 son de la demostración por la megafonía (998
 caracteres) y 17 de la tripulante en persona (2.004).
 
+Y detrás, **el kit de viaje** (punto 275, 18-10-2026): la tripulante se lo
+trae a Ara en la bajada con dos juegos dentro, y lo que dice Ara mientras se
+juega. **Diecisiete frases más, 1.427 caracteres**:
+
+| Voz | Frases | Caracteres |
+|---|---:|---:|
+| `ara` | 14 | 1.128 |
+| `tripulacion-canarias` | 3 | 299 |
+
+Con eso, lo que falta de la escena son **84 frases y 7.765 caracteres**.
+
 Están en `scripts/frases-para-grabar.mjs` —al final de cada voz, sin
 renumerar nada ya grabado— y en `docs/voces/`. Mientras no se graben, la
 escena va con los subtítulos, los dibujos y la ventanita, y cada frase espera
@@ -47,6 +58,42 @@ Jazlyn», o con `?inicio=3`.
   otra vez! Aquí tienes agua y algo rico»—. Se graba **sin** el tono de
   anuncio: el altavoz lo pone el juego cuando hace falta, y aquí no hace
   falta. Que no diga si Ara es niño o niña.
+
+- **El kit de viaje**, Ara: `inicio.ara.pasaje.kitGracias` y
+  `inicio.ara.pasaje.kit.*`. Es Ara jugando con quien va a su lado, de vos y
+  con ganas: «¿Me ayudás a armar el avión?», «¡Dos, el Teide!». Lo de cada
+  pieza —el ala, el motor, la cola, las ruedas— es una explicación corta y
+  contenta, no una lección; y las dos ayudas —«¡Casi! Esa pieza va en otro
+  lugar», «Ese número viene después»— **sin pizca de regaño**: es el juego
+  ayudando, no corrigiendo. Con chispa, como todo lo de Ara.
+- **El kit de viaje**, la tripulante en persona:
+  `inicio.tripulacion.pasaje.cerca.kitAqui`, `.kitRato` y `.kitGuardar`. La
+  misma voz cálida de lo demás de cerca, con el tú de Canarias: trae el kit
+  con cariño —«volar es apasionante, pero los vuelos duran un ratito»— y
+  antes de aterrizar pide guardarlo sin prisa.
+
+| Clave | Caracteres |
+|---|---:|
+| `inicio.tripulacion.pasaje.cerca.kitAqui` | 102 |
+| `inicio.tripulacion.pasaje.cerca.kitRato` | 107 |
+| `inicio.ara.pasaje.kitGracias` | 67 |
+| `inicio.ara.pasaje.kit.elegir` | 82 |
+| `inicio.ara.pasaje.kit.piezas.empezar` | 68 |
+| `inicio.ara.pasaje.kit.piezas.ala` | 86 |
+| `inicio.ara.pasaje.kit.piezas.motor` | 104 |
+| `inicio.ara.pasaje.kit.piezas.cola` | 111 |
+| `inicio.ara.pasaje.kit.piezas.ruedas` | 98 |
+| `inicio.ara.pasaje.kit.piezas.ayuda` | 64 |
+| `inicio.ara.pasaje.kit.piezas.fin` | 72 |
+| `inicio.ara.pasaje.kit.camino.empezar` | 88 |
+| `inicio.ara.pasaje.kit.camino.teide` | 81 |
+| `inicio.ara.pasaje.kit.camino.gomera` | 73 |
+| `inicio.ara.pasaje.kit.camino.palma` | 81 |
+| `inicio.ara.pasaje.kit.camino.ayuda` | 53 |
+| `inicio.tripulacion.pasaje.cerca.kitGuardar` | 90 |
+
+Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
+nombre de cada pieza y de cada parada— son de la pantalla y no se graban.
 
 ## Cómo
 
