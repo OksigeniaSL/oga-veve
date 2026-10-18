@@ -143,6 +143,14 @@
       "ms": 4407,
       "h": "b418ed98e1"
     },
+    "inicio.ara.pasaje.despertarse": {
+      "ms": 5807,
+      "h": "408e1dd9e4"
+    },
+    "inicio.ara.pasaje.dormirse": {
+      "ms": 5207,
+      "h": "47d3ebdaa6"
+    },
     "inicio.ara.pasaje.espera": {
       "ms": 2978,
       "h": "fcd00049f5"
@@ -517,6 +525,12 @@
     ],
     "inicio.ara.pasaje.despegue": [
       "inicio.ara.pasaje.despegue"
+    ],
+    "inicio.ara.pasaje.despertarse": [
+      "inicio.ara.pasaje.despertarse"
+    ],
+    "inicio.ara.pasaje.dormirse": [
+      "inicio.ara.pasaje.dormirse"
     ],
     "inicio.ara.pasaje.espera": [
       "inicio.ara.pasaje.espera"

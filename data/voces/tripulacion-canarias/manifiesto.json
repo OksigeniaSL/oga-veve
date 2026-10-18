@@ -15,6 +15,10 @@
       "ms": 5207,
       "h": "51317c2974"
     },
+    "inicio.tripulacion.pasaje.cerca.despertar": {
+      "ms": 8607,
+      "h": "c3bf25e096"
+    },
     "inicio.tripulacion.pasaje.cerca.estrellas": {
       "ms": 8807,
       "h": "c93b3d83fc"
@@ -397,6 +401,9 @@
     ],
     "inicio.tripulacion.pasaje.cerca.visibilidad": [
       "inicio.tripulacion.pasaje.cerca.visibilidad"
+    ],
+    "inicio.tripulacion.pasaje.cerca.despertar": [
+      "inicio.tripulacion.pasaje.cerca.despertar"
     ]
   }
 }
