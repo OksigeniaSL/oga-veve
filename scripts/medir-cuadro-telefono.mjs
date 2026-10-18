@@ -18,6 +18,15 @@
  * Además del tiempo de cuadro saca, del propio Chrome, cuánto se va en
  * guion, estilo y maquetación: eso dice **por dónde** se va el tiempo.
  *
+ * ## Y los casos que hay desde las losas
+ *
+ * Desde que el teléfono enseña las losas, «abierto» ya no es el cuadro
+ * entero: son cuatro losas. El cuadro entero sale **en grande**, al tocar una
+ * losa —una sola pantalla a todo lo ancho—, y desde la cabina lo que se pinta
+ * son las pantallas del avión en 3D. `OGA_CASOS` dice cuáles se alternan, por
+ * defecto los cuatro: `recogido,abierto,grande-actitud,cabina`. Y
+ * `grande-rumbo` y `grande-motor` ponen grande la otra pantalla.
+ *
  * Uso: `node scripts/medir-cuadro-telefono.mjs [avión…]`
  *   `OGA_TRAMO=guyrami` mide en otro peldaño (por defecto, el de arriba).
  *   `OGA_VUELTAS=3` cuántas veces se alterna.
@@ -32,6 +41,10 @@ const AVIONES = process.argv.slice(2).length
   : ["jaz-20", "jaz-60", "jaz-90"];
 const TRAMO = process.env.OGA_TRAMO ?? "taguato-ruvicha";
 const VUELTAS = Number(process.env.OGA_VUELTAS ?? 3);
+const CASOS = (process.env.OGA_CASOS ?? "recogido,abierto,grande-actitud,cabina")
+  .split(",")
+  .map((c) => c.trim())
+  .filter(Boolean);
 const MIDE = 5000;
 const [ANCHO, ALTO] = (process.env.OGA_VISTA ?? "915x412").split("x").map(Number);
 /**
@@ -75,7 +88,7 @@ const navegador = await chromium.launch({
  * cuestan; esas sumas se solapan —un «Paint» va dentro de su ciclo—, así que
  * se leen como tamaños relativos.
  */
-async function trazar(cdp, abierto) {
+async function trazar(cdp, caso) {
   const eventos = [];
   const recoger = (d) => eventos.push(...d.value);
   cdp.on("Tracing.dataCollected", recoger);
@@ -105,7 +118,7 @@ async function trazar(cdp, abierto) {
   const cuanto = Number(process.env.OGA_TRAZA);
   if (cuanto > 1) {
     const top = [...suma.entries()].sort((a, b) => b[1] - a[1]).slice(0, cuanto);
-    console.log(`    traza ${abierto ? "abierto" : "recogido"} (${cuadros} cuadros):`);
+    console.log(`    traza ${caso} (${cuadros} cuadros):`);
     for (const [n, ms] of top)
       console.log(`      ${n.padEnd(34)} ${(ms / Math.max(1, cuadros)).toFixed(2)} ms/cuadro`);
   }
@@ -179,6 +192,38 @@ try {
             new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
           );
       }, abierto);
+    /**
+     * Cada caso desde cero: fuera de lo grande y de la cabina, y de ahí al
+     * que toca. Lo grande se pone tocando su losa, como con el dedo.
+     */
+    const ponerCaso = async (caso) => {
+      await page.evaluate(() => {
+        const o = globalThis.__oga;
+        const cuadro = document.querySelector('[data-hud="cuadro"]');
+        if (cuadro?.classList.contains("cuadro--grande"))
+          document
+            .querySelector('[data-hud="tablero"]')
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+        if (o.vista() !== "chase") o.ponerVista("chase");
+      });
+      await ponerAbierto(caso !== "recogido" && caso !== "cabina");
+      if (caso.startsWith("grande"))
+        await page.evaluate((cual) => {
+          document
+            .querySelector(`[data-tel-grande="${cual}"]`)
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+        }, caso.split("-")[1] ?? "actitud");
+      if (caso === "cabina")
+        await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+    };
+    /** Lo que se ve de verdad, para no dar por medido un caso que no se puso. */
+    const casoDeVerdad = () =>
+      page.evaluate(() => {
+        const cuadro = document.querySelector('[data-hud="cuadro"]');
+        if (globalThis.__oga.vista() === "cockpit") return "cabina";
+        if (cuadro?.classList.contains("cuadro--grande")) return "grande";
+        return cuadro?.classList.contains("cuadro--bajado") ? "recogido" : "abierto";
+      });
 
     const metricas = async () => {
       const { metrics } = await cdp.send("Performance.getMetrics");
@@ -222,8 +267,8 @@ try {
       await page.addStyleTag({ content: process.env.OGA_CSS });
 
     for (let v = 0; v < VUELTAS; v++) {
-      for (const abierto of [false, true]) {
-        await ponerAbierto(abierto);
+      for (const caso of CASOS) {
+        await ponerCaso(caso);
         await alAire();
         await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
         await page.waitForTimeout(1500);
@@ -248,19 +293,16 @@ try {
           return { mediana: en(0.5), p95: en(0.95), fps: (n * 1000) / total, n };
         }, MIDE);
         const despues = await metricas();
-        const traza = process.env.OGA_TRAZA ? await trazar(cdp, abierto) : null;
+        const traza = process.env.OGA_TRAZA ? await trazar(cdp, caso) : null;
         await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
         const porCuadro = (k) => ((despues[k] - antes[k]) * 1000) / medida.n;
-        const abiertoDeVerdad = await page.evaluate(
-          () =>
-            !document
-              .querySelector('[data-hud="cuadro"]')
-              ?.classList.contains("cuadro--bajado"),
-        );
+        const visto = await casoDeVerdad();
+        if (!caso.startsWith(visto))
+          console.log(`  ${avion}: se pidió «${caso}» y se ve «${visto}»`);
         filas.push({
           avion,
           vuelta: v,
-          abierto: abiertoDeVerdad,
+          caso: caso.startsWith(visto) ? caso : `${caso}?`,
           ...medida,
           guion: porCuadro("guion"),
           estilo: porCuadro("estilo"),
@@ -270,7 +312,7 @@ try {
         });
         const f = filas[filas.length - 1];
         console.log(
-          `  ${avion} ${TRAMO} v${v} ${f.abierto ? "abierto " : "recogido"} ` +
+          `  ${avion} ${TRAMO} v${v} ${f.caso.padEnd(14)} ` +
             `${f.fps.toFixed(1)} fps · mediana ${f.mediana.toFixed(1)} · p95 ${f.p95.toFixed(1)} ms · ` +
             `por cuadro: guion ${f.guion.toFixed(1)} estilo ${f.estilo.toFixed(1)} ` +
             `maqueta ${f.maqueta.toFixed(1)} tarea ${f.tarea.toFixed(1)} ms` +
@@ -291,11 +333,11 @@ const mediana = (xs) => {
   return s[Math.floor(s.length / 2)] ?? 0;
 };
 for (const avion of AVIONES) {
-  for (const abierto of [false, true]) {
-    const fs = filas.filter((f) => f.avion === avion && f.abierto === abierto);
+  for (const caso of CASOS) {
+    const fs = filas.filter((f) => f.avion === avion && f.caso === caso);
     if (!fs.length) continue;
     console.log(
-      `  ${avion.padEnd(8)} ${abierto ? "abierto " : "recogido"} ` +
+      `  ${avion.padEnd(8)} ${caso.padEnd(14)} ` +
         `${mediana(fs.map((f) => f.fps)).toFixed(1)} fps · ` +
         `mediana ${mediana(fs.map((f) => f.mediana)).toFixed(1)} ms · ` +
         `p95 ${mediana(fs.map((f) => f.p95)).toFixed(1)} ms · ` +
@@ -307,7 +349,7 @@ for (const avion of AVIONES) {
     const tz = fs.map((f) => f.traza).filter(Boolean);
     if (tz.length)
       console.log(
-        `  ${"".padEnd(8)} ${abierto ? "abierto " : "recogido"} CPU del hilo ` +
+        `  ${"".padEnd(8)} ${caso.padEnd(14)} CPU del hilo ` +
           `${mediana(tz.map((x) => x.cpu)).toFixed(2)} ms/cuadro · ` +
           `js ${mediana(tz.map((x) => x.js)).toFixed(2)} · ` +
           `pintar ${mediana(tz.map((x) => x.pintar)).toFixed(2)} · ` +
