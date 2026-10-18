@@ -51,6 +51,7 @@ import {
   type Object3D,
 } from "three";
 import { FOV_DE_PASAJE } from "../cameras/pasaje";
+import { asientoDeAra, type AsientoDeAra } from "./asiento-de-ara";
 import {
   elCantoDeLaTrampilla,
   elCristalEntero,
@@ -154,6 +155,16 @@ export interface Pasaje extends ParDeAsientos {
    * la que se mira desde la fila de la salida: se esconden y se enseñan juntas.
    */
   readonly ventanillas: { visible: boolean };
+  /**
+   * **El asiento de Ara** en la escena de pasaje, de cada lado: el de la
+   * ventanilla desde la que se ven el ala y el motor. `null` si el avión no
+   * lleva motor debajo del ala. Se mide la primera vez que se pide. Ver
+   * `asiento-de-ara.ts`.
+   */
+  readonly deAra: {
+    readonly izquierda: AsientoDeAra | null;
+    readonly derecha: AsientoDeAra | null;
+  };
 }
 
 const GRADO = Math.PI / 180;
@@ -497,6 +508,15 @@ export function medirElPasaje(raiz: Object3D, grupo: Object3D): Pasaje | null {
   let derecha: AsientoDePasaje | undefined;
   let alaIzquierda: AsientoDePasaje | undefined;
   let alaDerecha: AsientoDePasaje | undefined;
+  let araIzquierda: AsientoDeAra | null | undefined;
+  let araDerecha: AsientoDeAra | null | undefined;
+  const deAra = (cual: "izquierda" | "derecha"): AsientoDeAra | null =>
+    asientoDeAra(
+      filas[cual].map((m) => ventanillaDe(m, cual)),
+      cual,
+      raiz,
+      grupo,
+    );
   return {
     get izquierda() {
       return (izquierda ??= lado("izquierda"));
@@ -515,6 +535,16 @@ export function medirElPasaje(raiz: Object3D, grupo: Object3D): Pasaje | null {
         }
       : null,
     ventanillas: lasLosas([ventanillas, ventanita]),
+    deAra: {
+      get izquierda() {
+        if (araIzquierda === undefined) araIzquierda = deAra("izquierda");
+        return araIzquierda;
+      },
+      get derecha() {
+        if (araDerecha === undefined) araDerecha = deAra("derecha");
+        return araDerecha;
+      },
+    },
   };
 }
 

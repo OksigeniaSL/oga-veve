@@ -72,13 +72,49 @@ export class CamaraDePasaje implements CameraRig {
     readonly sobreElAla = false,
   ) {}
 
+  /**
+   * **Por dónde va la cabeza en la escena de pasaje**: los ojos, la guiñada y
+   * el cabeceo de ahora, camino del asiento que pide la escena. Ver
+   * `asientoDeLaEscena` en `tipos.ts`.
+   */
+  private laCabeza: { ojo: Vector3; guinada: number; cabeceo: number } | null = null;
+
+  /**
+   * **La cabeza de Ara**, hacia la pose que se pide: se acerca al cristal y
+   * gira hacia abajo en un segundo y pico, como se mueve un niño que quiere
+   * ver más, y vuelve igual. Con movimiento reducido, sin camino: ya está.
+   */
+  private haciaLaPose(asiento: AsientoDePasaje, dt: number, ctx: Contexto): AsientoDePasaje {
+    const c = this.laCabeza;
+    if (!c || ctx.movimientoReducido) {
+      this.laCabeza = {
+        ojo: new Vector3(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z),
+        guinada: asiento.guinada,
+        cabeceo: asiento.cabeceo,
+      };
+    } else {
+      const k = 1 - Math.exp(-dt * 2.4);
+      c.ojo.lerp(this.aux.set(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z), k);
+      c.guinada += (asiento.guinada - c.guinada) * k;
+      c.cabeceo += (asiento.cabeceo - c.cabeceo) * k;
+    }
+    const h = this.laCabeza!;
+    return { ...asiento, ojo: h.ojo, guinada: h.guinada, cabeceo: h.cabeceo };
+  }
+
+  private readonly aux = new Vector3();
+
   update(
     camera: PerspectiveCamera,
     state: FlightState,
     dt: number,
     ctx: Contexto,
   ): void {
-    const asiento = asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla);
+    const escena = ctx.asientoDeLaEscena;
+    if (!escena) this.laCabeza = null;
+    const asiento = escena
+      ? this.haciaLaPose(escena, dt, ctx)
+      : asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla);
     const cabeza = this.cuello.paso(state, dt, ctx, true);
     if (asiento) {
       this.offset.set(asiento.ojo.x, asiento.ojo.y + cabeza, asiento.ojo.z);
@@ -108,6 +144,6 @@ export class CamaraDePasaje implements CameraRig {
    * siempre. El paso de uno a otro lo suaviza el juego, como entre vistas.
    */
   fovDeseado(_state: FlightState, ctx: Contexto): number {
-    return asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla)?.fov ?? FOV_DE_PASAJE;
+    return (ctx.asientoDeLaEscena ?? asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla))?.fov ?? FOV_DE_PASAJE;
   }
 }

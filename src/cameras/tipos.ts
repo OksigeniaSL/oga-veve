@@ -100,6 +100,13 @@ export interface Contexto {
    * se acerca en tierra, y baja mientras están fuera. Ver `CamaraDeFuera`.
    */
   readonly frenosDeTierra?: number | null;
+  /**
+   * **El asiento de la escena de pasaje**, si lo hay: el de Ara, con la pose
+   * de ahora —sentada o pegada al cristal—. La vista de pasaje lo usa en vez
+   * del de siempre, y va hacia él despacio, como se mueve una cabeza. Ver
+   * `world/asiento-de-ara.ts`.
+   */
+  readonly asientoDeLaEscena?: AsientoDePasaje | null;
 }
 
 /** Lo que la vista de pasaje necesita de un asiento. */
