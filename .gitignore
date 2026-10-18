@@ -13,6 +13,9 @@ dist/
 # solo para leer y escribir nuestros textos a partir de los hechos. Nunca al
 # repositorio ni a la web.
 /data/libros
+# Los justificantes de licencia de lo que se compra (la música): llevan datos
+# personales y no van al repositorio. Su sitio es la carpeta de operaciones.
+/crudo/**/*.pdf
 .DS_Store
 # ── Entornos / secrets ─────────────────────────────────────────────────
 .env
