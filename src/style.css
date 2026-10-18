@@ -12859,6 +12859,78 @@ svg .ex-raya {
     filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 9px var(--cabina-simbolo));
   }
 }
+
+/*
+ * **El aro que señala algo del mundo** mientras la instructora lo nombra: el
+ * PAPI, que desde fuera son cuatro puntos en un paisaje. Blanco con filo
+ * oscuro, que se lea sobre el cielo y sobre la tierra, y la flecha bajando
+ * hacia él desde arriba. Late como lo que se presenta en el cuadro; con
+ * «Movimiento: reducido», quieto. Ver `ui/aro-en-el-mundo.ts`.
+ */
+.aro-del-mundo {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.aro-del-mundo[hidden] {
+  display: none;
+}
+
+.aro-del-mundo__aro {
+  position: absolute;
+  inset: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgba(5, 7, 10, 0.55),
+    inset 0 0 0 2px rgba(5, 7, 10, 0.55),
+    0 0 12px var(--cabina-simbolo);
+  animation: aro-del-mundo 1.1s ease-in-out infinite;
+}
+
+.aro-del-mundo__flecha {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  fill: #fff;
+  stroke: rgba(5, 7, 10, 0.7);
+  stroke-width: 1.5;
+  animation: aro-del-mundo-flecha 1.1s ease-in-out infinite;
+}
+
+@keyframes aro-del-mundo {
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+@keyframes aro-del-mundo-flecha {
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+.sin-movimiento .aro-del-mundo__aro,
+.sin-movimiento .aro-del-mundo__flecha {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aro-del-mundo__aro,
+  .aro-del-mundo__flecha {
+    animation: none;
+  }
+}
 /*
  * ── La tarjeta del avión ────────────────────────────────────────────────
  *

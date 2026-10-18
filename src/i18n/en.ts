@@ -449,11 +449,11 @@ export const EN: Dictionary = {
     "We've left the airport's zone: another controller talks to us now, and we no longer hear the tower.",
   "vuelo.radio.otraVezLaTorre": "We're close now: we hear the tower again, and this airport's planes.",
   "vuelo.traficoArriba":
-    "That diamond on the screen is another plane. It's higher than us: it's no bother",
+    "That diamond on the map is another plane. It's higher than us: it's no bother",
   "vuelo.traficoAbajo":
-    "That diamond on the screen is another plane. It's lower than us: it's no bother",
+    "That diamond on the map is another plane. It's lower than us: it's no bother",
   "vuelo.traficoNivel":
-    "That diamond on the screen is another plane. It's at our height, but far away: we keep an eye on it",
+    "That diamond on the map is another plane. It's at our height, but far away: we keep an eye on it",
   "vuelo.lucesDeNoche.deFrente":
     "Look at that plane: green light on your left, red on your right. That means it's coming towards us. That's what a plane's lights are for: to be seen in time.",
   "vuelo.lucesDeNoche.seAleja":
@@ -531,7 +531,8 @@ export const EN: Dictionary = {
     "A tip from your captain: even when the seatbelt sign is off, keep your seatbelt loosely fastened while you're seated. Sometimes turbulence comes without warning, and your seatbelt is what keeps you safely in your seat.",
   "vuelo.alturaDeLaTorre":
     "The tower gave us how high to climb. I set it in the altitude window, in magenta: we climb up to there and stay.",
-  "vuelo.alturaDeLaTorreRaya": "The tower tells us how high to climb: up to the line on the tape.",
+  "vuelo.alturaDeLaTorreRaya":
+    "The tower tells us how high to climb: up to the line on the altitude.",
   "vuelo.otraAlturaDeLaTorre": "The tower lets us climb a bit more. The new altitude is already set.",
   "vuelo.tonoDeAltitudCerca":
     "That tone means we're nearly at the ALT window altitude. That's where we level off.",
@@ -574,53 +575,84 @@ export const EN: Dictionary = {
   "vuelo.lentoYBajo": "You are slow: add power",
   "vuelo.papiBajo": "Reds: you are low, climb",
   "vuelo.papiBien": "Two red, two white: on the glide path",
-  "vuelo.consejo.masGas": "A little more power, up to the pink mark. Keep the nose still.",
-  "vuelo.consejo.menosGas": "A little less power, down to the pink mark.",
-  "vuelo.consejo.narizAbajoPapi": "Nose a little down, until you see two white and two red.",
-  "vuelo.consejo.narizArribaPapi": "Nose a little up, until you see two white and two red.",
-  "vuelo.consejo.narizAbajoSenda": "Nose a little down, until the diamond is in the middle.",
-  "vuelo.consejo.narizArribaSenda": "Nose a little up, until the diamond is in the middle.",
+  "vuelo.consejo.masGas":
+    "A little more power, up to the pink mark on the speed. Keep the nose still.",
+  "vuelo.consejo.menosGas": "A little less power, down to the pink mark on the speed.",
+  "vuelo.consejo.narizAbajoPapi":
+    "Nose a little down, until you see two white and two red on the four lights beside the runway.",
+  "vuelo.consejo.narizArribaPapi":
+    "Nose a little up, until you see two white and two red on the four lights beside the runway.",
+  "vuelo.consejo.narizAbajoSenda":
+    "Nose a little down, until the pink diamond, the one next to the altitude, is in the middle.",
+  "vuelo.consejo.narizArribaSenda":
+    "Nose a little up, until the pink diamond, the one next to the altitude, is in the middle.",
   "vuelo.consejo.narizArribaRitmo":
     "Nose a little up: we come down softer, to the pink mark on the vertical speed.",
   "vuelo.consejo.narizArribaSuave": "Nose a little up, to come down softer.",
-  "vuelo.consejo.aerofrenos": "A little speed brake, down to the pink mark.",
+  "vuelo.consejo.aerofrenos": "A little speed brake, down to the pink mark on the speed.",
+  "vuelo.consejo.aerofrenos.sinVer": "A little speed brake, to slow down.",
   "vuelo.consejo.nivelarPerfil":
-    "We're a little below the profile: come down softer, or level off a moment, until the diamond reaches the middle.",
+    "We're a little below the profile: come down softer, or level off a moment, until the pink diamond, the one next to the altitude, reaches the middle.",
+  "vuelo.consejo.nivelarPerfil.sinVer":
+    "We're a little below the profile: come down softer, or level off a moment.",
   "vuelo.consejo.narizAbajoPerfil":
-    "We're above the profile: nose a little down, until the diamond reaches the middle.",
+    "We're above the profile: nose a little down, until the pink diamond, the one next to the altitude, reaches the middle.",
   "vuelo.consejo.aerofrenosPerfil":
-    "We're above the profile and the plane is already coming down as fast as it can: speed brakes out, until the diamond reaches the middle.",
+    "We're above the profile and the plane is already coming down as fast as it can: speed brakes out, until the pink diamond, the one next to the altitude, reaches the middle.",
+  "vuelo.consejo.aerofrenosPerfil.sinVer":
+    "We're above the profile and the plane is already coming down as fast as it can: speed brakes out.",
   "vuelo.consejo.masGasPerfil":
-    "We're a little below the profile: a touch of power, to come down softer, until the diamond reaches the middle.",
+    "We're a little below the profile: a touch of power, to come down softer, until the pink diamond, the one next to the altitude, reaches the middle.",
+  "vuelo.consejo.masGasPerfil.sinVer":
+    "We're a little below the profile: a touch of power, to come down softer.",
   "vuelo.consejo.menosGasPerfil":
-    "We're above the profile: a little less power, to come down more, until the diamond reaches the middle.",
+    "We're above the profile: a little less power, to come down more, until the pink diamond, the one next to the altitude, reaches the middle.",
+  "vuelo.consejo.menosGasPerfil.sinVer":
+    "We're above the profile: a little less power, to come down more.",
   "vuelo.consejo.masGasPapi":
-    "A little low for the runway: a touch of power, nose still, until you see two white and two red.",
+    "A little low for the runway: a touch of power, nose still, until you see two white and two red on the four lights beside the runway.",
   "vuelo.consejo.masGasSenda":
-    "A little low: a touch of power, nose still, until the diamond is in the middle.",
+    "A little low: a touch of power, nose still, until the pink diamond, the one next to the altitude, is in the middle.",
+  "vuelo.consejo.masGasSenda.sinVer": "A little low: a touch of power, nose still.",
   "vuelo.consejo.menosGasPapi":
-    "A little high for the runway: a little less power, nose still, until you see two white and two red.",
+    "A little high for the runway: a little less power, nose still, until you see two white and two red on the four lights beside the runway.",
   "vuelo.consejo.menosGasSenda":
-    "A little high: a little less power, nose still, until the diamond is in the middle.",
-  "vuelo.consejo.masGasSuave": "We're coming down too steeply: a touch of power, to come down softer.",
-  "vuelo.consejo.narizAbajoMarca": "We're slow: nose a touch down, up to the pink mark.",
-  "vuelo.consejo.narizArribaMarca": "We're fast: nose a touch up, down to the pink mark.",
+    "A little high: a little less power, nose still, until the pink diamond, the one next to the altitude, is in the middle.",
+  "vuelo.consejo.menosGasSenda.sinVer": "A little high: a little less power, nose still.",
+  "vuelo.consejo.masGasSuave":
+    "We're coming down too steeply: a touch of power, to come down softer.",
+  "vuelo.consejo.narizAbajoMarca":
+    "We're slow: nose a touch down, up to the pink mark on the speed.",
+  "vuelo.consejo.narizArribaMarca":
+    "We're fast: nose a touch up, down to the pink mark on the speed.",
+  "vuelo.consejo.narizArribaMarca.sinVer": "We're fast: nose a touch up.",
   "palabra.masGas": "More power",
   "palabra.menosGas": "Less power",
   "palabra.narizArriba": "Nose up",
   "palabra.narizAbajo": "Nose down",
   "vuelo.paso.subir": "We climb up to the height line, at the speed of the pink mark.",
-  "vuelo.paso.acelerarGas": "Now we can go faster: more power, up to the pink mark.",
-  "vuelo.paso.acelerarNariz": "Now we can go faster: nose a little down, up to the pink mark.",
-  "vuelo.paso.frenarGas": "Now we slow down: less power, down to the pink mark.",
-  "vuelo.paso.frenarAerofrenos": "Now we slow down: a little speed brake, down to the pink mark.",
+  "vuelo.paso.subir.sinVer": "Now we climb up to our height.",
+  "vuelo.paso.acelerarGas": "Now we can go faster: more power, up to the pink mark on the speed.",
+  "vuelo.paso.acelerarGas.sinVer": "Now we can go faster: more power.",
+  "vuelo.paso.acelerarNariz":
+    "Now we can go faster: nose a little down, up to the pink mark on the speed.",
+  "vuelo.paso.acelerarNariz.sinVer": "Now we can go faster: nose a little down.",
+  "vuelo.paso.frenarGas": "Now we slow down: less power, down to the pink mark on the speed.",
+  "vuelo.paso.frenarAerofrenos":
+    "Now we slow down: a little speed brake, down to the pink mark on the speed.",
+  "vuelo.paso.frenarAerofrenos.sinVer": "Now we slow down: a little speed brake.",
   "vuelo.paso.frenarNariz":
-    "Now we slow down: nose a little up, which slows us, down to the pink mark.",
-  "vuelo.paso.mantener": "The pink mark changed and we're already at that speed: we keep it like this.",
+    "Now we slow down: nose a little up, which slows us, down to the pink mark on the speed.",
+  "vuelo.paso.frenarNariz.sinVer": "Now we slow down: nose a little up, which slows us.",
+  "vuelo.paso.mantener":
+    "The pink mark on the speed moved, and we're right there already: we keep it like this.",
   "vuelo.paso.marcaDelAutomatico":
-    "The pink mark changed: the autopilot takes the engines there. Watch the lever move.",
+    "The pink mark on the speed moved: the autopilot takes the engines there. Watch the lever move.",
+  "vuelo.paso.marcaDelAutomatico.sinVer":
+    "Our speed changed: the autopilot handles the engines by itself. Watch the lever move.",
   "vuelo.paso.crucero":
-    "We're up: cruise power, to the mark on the engine. That takes us to the pink mark.",
+    "We're up: cruise power, to the mark on the engine. That takes us to the speed of the pink mark.",
+  "vuelo.paso.crucero.sinVer": "We're up: cruise power, to the mark on the engine.",
   "vuelo.paso.cruceroConAutomatico":
     "We're up: cruise power, to the mark on the engine. And if you like, switch on the autopilot: it's the button that's pulsing.",
   "vuelo.paso.cruceroConGases":
@@ -629,18 +661,27 @@ export const EN: Dictionary = {
   "vuelo.paso.bajarConAutomatico":
     "We start down. The autopilot follows the path down to the height line: you check the speed stays on the pink mark.",
   "vuelo.paso.nivelar":
-    "We've reached the line: we stay here, level, until the glide path comes to meet us.",
-  "vuelo.paso.flaps1": "First flaps, one notch, and to the pink mark.",
-  "vuelo.paso.flaps2": "Another notch of flaps, and to the pink mark.",
-  "vuelo.paso.flaps3": "Landing flaps, all the way down, and to the pink mark.",
+    "We've reached the height line: we stay here, level, until the glide path comes to meet us.",
+  "vuelo.paso.nivelar.sinVer":
+    "We're at our height: we stay here, level, until the glide path comes to meet us.",
+  "vuelo.paso.flaps1": "First flaps, one notch, and to the pink mark on the speed.",
+  "vuelo.paso.flaps2": "Another notch of flaps, and to the pink mark on the speed.",
+  "vuelo.paso.flaps3": "Landing flaps, all the way down, and to the pink mark on the speed.",
   "vuelo.paso.tren": "Gear down: we're about to land.",
-  "vuelo.paso.recogerAerofrenos": "We're at the pink mark: speed brakes in.",
+  "vuelo.paso.recogerAerofrenos": "We're at the pink mark on the speed: speed brakes in.",
+  "vuelo.paso.recogerAerofrenos.sinVer": "We're at the right speed: speed brakes in.",
   "vuelo.paso.senda": "We're on final: nose along the glide path, and the speed on the pink mark.",
+  "vuelo.paso.senda.sinVer": "We're on final: nose along the glide path.",
   "vuelo.paso.sendaConGases":
-    "We're on final. The plane holds the power for the pink mark: you fly the nose along the glide path.",
+    "We're on final. The plane holds the power, for the pink mark on the speed: you fly the nose along the glide path.",
+  "vuelo.paso.sendaConGases.sinVer":
+    "We're on final. The plane holds the power: you fly the nose along the glide path.",
   "vuelo.paso.sendaConAyuda":
-    "We're on final. I'll hold the power for the pink mark: you fly the nose along the glide path.",
+    "We're on final. I'll hold the power, for the pink mark on the speed: you fly the nose along the glide path.",
+  "vuelo.paso.sendaConAyuda.sinVer":
+    "We're on final. I'll hold the power: you fly the nose along the glide path.",
   "vuelo.paso.gasTuyo": "You moved the throttle: now the speed is yours, to the pink mark.",
+  "vuelo.paso.gasTuyo.sinVer": "You moved the throttle: now the speed is yours.",
   "vuelo.paso.velocidad": "That's {n} kilometres per hour.",
   "palabra.crucero": "Cruise",
   "palabra.nivela": "Level off",
@@ -648,7 +689,7 @@ export const EN: Dictionary = {
   "vuelo.paso.cotaAlMar":
     "The runway we're going to is almost at sea level: what the altimeter shows is nearly all we still have to come down.",
   "vuelo.paso.cotaEnAlto":
-    "The runway we're going to is higher than the sea: what we still have to come down is what the altimeter shows minus the runway's number, the one under the tape.",
+    "The runway we're going to is higher than the sea: what we still have to come down is what the altimeter shows minus the runway's number, the one under the altitude.",
   "palabra.pista": "Runway",
   "palabra.asi": "Steady",
   "palabra.aerofrenosAdentro": "Speed brakes in",
@@ -1496,7 +1537,7 @@ export const EN: Dictionary = {
   "explica.senda.texto":
     "The diamond shows where the glide path is, the invisible ramp down to the runway. If the diamond is low, you are high: come down a bit more. If it is high, you are low. You fly towards the diamond until it sits in the middle.",
   "explica.senda.presenta":
-    "There's the glide path diamond. If we keep it in the middle, we're heading nicely for the runway.",
+    "There's the pink glide path diamond, next to the altitude. If we keep it in the middle, we're heading nicely for the runway.",
   "explica.gs-rodaje.corta": "Taxi",
   "explica.gs-rodaje.texto":
     "GS is the speed over the ground. While taxiing, this bar shows how fast you're going, and the pink mark how far to fill it: before a turn it drops, because turns are taken slowly. Green means you're fine; amber, that you need to brake.",

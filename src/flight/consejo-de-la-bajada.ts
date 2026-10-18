@@ -43,6 +43,7 @@
  */
 
 import type { Senda, Velocidad } from "./perfil-vertical";
+import { SIN_VER } from "./lo-que-se-nombra";
 
 export type { Senda, Velocidad } from "./perfil-vertical";
 
@@ -751,6 +752,8 @@ function claseDe(l: Lectura): string {
  *   avión que lo lleva —ver `equipoDeSenda`—.
  * - `aro`: los aros de la lección de aterrizar, en casa.
  * - `ritmo`: la marca del ritmo en el variómetro.
+ * - `nada`: nada a lo que apuntar **que se vea ahora**: se dice la acción sin
+ *   el «hasta». Ver `flight/lo-que-se-nombra.ts`.
  */
 export type Objetivo = "marca" | "papi" | "senda" | "aro" | "ritmo" | "nada";
 
@@ -807,6 +810,25 @@ export function fraseDe(
 ): Frase {
   const perfil = modo === "bajada";
   const luces = objetivo === "papi";
+  /*
+   * **Y lo que no se ve, no se nombra** (272, 273): sin el rombo ni las luces a
+   * la vista —`objetivo` «nada»—, la misma frase sin el «hasta», que es su
+   * `SIN_VER`. Lo decide quien la dice, que sabe qué hay en la pantalla; ver
+   * `decirElConsejo` en `game.ts` y `flight/lo-que-se-nombra.ts`.
+   */
+  const porLaSenda = (delPerfil: string, conLuces: string, conRombo: string): string =>
+    perfil
+      ? objetivo === "senda"
+        ? delPerfil
+        : (SIN_VER[delPerfil] ?? delPerfil)
+      : luces
+        ? conLuces
+        : objetivo === "senda"
+          ? conRombo
+          : (SIN_VER[conRombo] ?? conRombo);
+  /** La del perfil o la de la final, si se ve con qué apuntar; si no, `null`. */
+  const siSeVe = (delPerfil: string, conLuces: string, conRombo: string): string | null =>
+    objetivo === "senda" || luces ? porLaSenda(delPerfil, conLuces, conRombo) : null;
   switch (c.accion) {
     /*
      * **La marca, solo donde hay marca.** La cinta de los de cristal la lleva
@@ -822,11 +844,11 @@ export function fraseDe(
        */
       if (c.motivo === "bajo")
         return {
-          nueva: perfil
-            ? "vuelo.consejo.masGasPerfil"
-            : luces
-              ? "vuelo.consejo.masGasPapi"
-              : "vuelo.consejo.masGasSenda",
+          nueva: porLaSenda(
+            "vuelo.consejo.masGasPerfil",
+            "vuelo.consejo.masGasPapi",
+            "vuelo.consejo.masGasSenda",
+          ),
           grabadas: [],
           corta: "palabra.masGas",
         };
@@ -840,11 +862,11 @@ export function fraseDe(
     case "menosGas":
       if (c.motivo === "alto")
         return {
-          nueva: perfil
-            ? "vuelo.consejo.menosGasPerfil"
-            : luces
-              ? "vuelo.consejo.menosGasPapi"
-              : "vuelo.consejo.menosGasSenda",
+          nueva: porLaSenda(
+            "vuelo.consejo.menosGasPerfil",
+            "vuelo.consejo.menosGasPapi",
+            "vuelo.consejo.menosGasSenda",
+          ),
           grabadas: [UNA("tutor.slow")],
           corta: "palabra.menosGas",
         };
@@ -856,11 +878,19 @@ export function fraseDe(
     case "frenar":
       // Los aerofrenos del perfil: el «DRAG REQUIRED». Ver `queHacer`.
       if (c.motivo === "alto" && frena === "aerofrenos")
-        return { nueva: "vuelo.consejo.aerofrenosPerfil", grabadas: [], corta: "palabra.aerofrenos" };
+        return {
+          nueva:
+            objetivo === "senda"
+              ? "vuelo.consejo.aerofrenosPerfil"
+              : "vuelo.consejo.aerofrenosPerfil.sinVer",
+          grabadas: [],
+          corta: "palabra.aerofrenos",
+        };
       return frena === "flaps"
         ? { nueva: null, grabadas: [UNA("vuelo.pediFlaps")], corta: "palabra.flaps" }
         : {
-            nueva: objetivo === "marca" ? "vuelo.consejo.aerofrenos" : null,
+            nueva:
+              objetivo === "marca" ? "vuelo.consejo.aerofrenos" : "vuelo.consejo.aerofrenos.sinVer",
             grabadas: [],
             corta: "palabra.aerofrenos",
           };
@@ -870,7 +900,14 @@ export function fraseDe(
      * ve y no se oye.
      */
     case "nivelar":
-      return { nueva: "vuelo.consejo.nivelarPerfil", grabadas: [], corta: "palabra.nivela" };
+      return {
+        nueva:
+          objetivo === "senda"
+            ? "vuelo.consejo.nivelarPerfil"
+            : "vuelo.consejo.nivelarPerfil.sinVer",
+        grabadas: [],
+        corta: "palabra.nivela",
+      };
     case "narizAbajo": {
       if (objetivo === "aro")
         return {
@@ -884,12 +921,14 @@ export function fraseDe(
       return {
         nueva:
           c.motivo === "lento"
-            ? "vuelo.consejo.narizAbajoMarca"
-            : perfil
-              ? "vuelo.consejo.narizAbajoPerfil"
-              : luces
-                ? "vuelo.consejo.narizAbajoPapi"
-                : "vuelo.consejo.narizAbajoSenda",
+            ? objetivo === "marca"
+              ? "vuelo.consejo.narizAbajoMarca"
+              : null
+            : siSeVe(
+                "vuelo.consejo.narizAbajoPerfil",
+                "vuelo.consejo.narizAbajoPapi",
+                "vuelo.consejo.narizAbajoSenda",
+              ),
         grabadas,
         corta: "palabra.narizAbajo",
       };
@@ -897,10 +936,24 @@ export function fraseDe(
     case "narizArriba": {
       // Rápido en el de cables: con el morro la velocidad.
       if (c.motivo === "rapido")
-        return { nueva: "vuelo.consejo.narizArribaMarca", grabadas: [], corta: "palabra.narizArriba" };
+        return {
+          nueva:
+            objetivo === "marca"
+              ? "vuelo.consejo.narizArribaMarca"
+              : "vuelo.consejo.narizArribaMarca.sinVer",
+          grabadas: [],
+          corta: "palabra.narizArriba",
+        };
       // En el perfil no se sube: se baja más suave. Ver `nivelar`.
       if (perfil && c.motivo !== "hundiendose")
-        return { nueva: "vuelo.consejo.nivelarPerfil", grabadas: [], corta: "palabra.nivela" };
+        return {
+          nueva:
+            objetivo === "senda"
+              ? "vuelo.consejo.nivelarPerfil"
+              : "vuelo.consejo.nivelarPerfil.sinVer",
+          grabadas: [],
+          corta: "palabra.nivela",
+        };
       if (c.motivo === "hundiendose")
         return {
           nueva: objetivo === "ritmo" ? "vuelo.consejo.narizArribaRitmo" : "vuelo.consejo.narizArribaSuave",
@@ -914,7 +967,12 @@ export function fraseDe(
           corta: "palabra.narizArriba",
         };
       return {
-        nueva: objetivo === "papi" ? "vuelo.consejo.narizArribaPapi" : "vuelo.consejo.narizArribaSenda",
+        nueva:
+          objetivo === "papi"
+            ? "vuelo.consejo.narizArribaPapi"
+            : objetivo === "senda"
+              ? "vuelo.consejo.narizArribaSenda"
+              : null,
         grabadas: [UNA("vuelo.aroBajo", 3)],
         corta: "palabra.narizArriba",
       };

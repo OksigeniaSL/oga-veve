@@ -87,6 +87,7 @@ import {
   seOfrecePantallaCompleta,
 } from "./pantalla-completa";
 import { avisaLaPerdida } from "../flight/avisos-de-actitud";
+import { DURA_EL_SENALADO, type Pieza } from "../flight/lo-que-se-nombra";
 /**
  * Cuánto hay que arrastrar el dedo por la rueda de la ventanilla ALT para un
  * millar, en píxeles de pantalla: dieciocho, lo que se mueve un pulgar sin
@@ -392,6 +393,25 @@ const ESTO_ES_TACTIL =
 function cuadroElegido(): boolean {
   return (leerTexto("cuadro-bajado") ?? (esTelefono() ? "1" : "0")) === "1";
 }
+
+/**
+ * **Lo del HUD que tapa el mundo**, para `tapaElPunto`: las barras de arriba,
+ * los carteles de la radio, de la torre y del aviso, la tarjeta, el tutor,
+ * los pictogramas, el cuadro y sus losas, la tarjeta de adónde se va.
+ */
+const LO_QUE_TAPA = [
+  ".hud__arriba",
+  ".hud__vistas",
+  '[data-hud="radio"]',
+  '[data-hud="torre"]',
+  '[data-hud="warning"]',
+  '[data-hud="senal"]',
+  '[data-hud="tutor"]',
+  '[data-hud="pictos"]',
+  '[data-hud="cuadro"]',
+  '[data-hud="cuadro-tel"]',
+  '[data-hud="home"]',
+].join(",");
 
 export class Hud {
   readonly tutor = new Tutor();
@@ -1082,6 +1102,62 @@ export class Hud {
     }, segundos * 1000);
   }
 
+  /**
+   * **Hace latir lo que acaba de nombrar la instructora**, en el cuadro plano,
+   * en las losas del teléfono y en la palanca del gas: lo mismo que se hace
+   * con lo que se presenta, sobre las piezas marcadas con `data-nombra`. Ver
+   * `flight/lo-que-se-nombra.ts`.
+   */
+  senalarLaPieza(pieza: Pieza, segundos = DURA_EL_SENALADO): void {
+    for (const p of this.root.querySelectorAll(`[data-nombra="${pieza}"]`)) {
+      /*
+       * **Y si ya latía, vuelve a empezar**: nombrada otra vez, late otra vez
+       * entera, y el reloj de la vez anterior no la apaga a medias.
+       */
+      const antes = this.senalando.get(p);
+      if (antes !== undefined) clearTimeout(antes);
+      p.classList.remove("explica--presenta");
+      void p.getBoundingClientRect();
+      p.classList.add("explica--presenta");
+      this.senalando.set(
+        p,
+        setTimeout(() => {
+          p.classList.remove("explica--presenta");
+          this.senalando.delete(p);
+        }, segundos * 1000),
+      );
+    }
+  }
+
+  /** Lo que late por haberlo nombrado, con el reloj que lo apaga. */
+  private readonly senalando = new Map<Element, ReturnType<typeof setTimeout>>();
+
+  /**
+   * **Si la marca del motor se ve ahora**: puesta, y con la palanca del gas a
+   * la vista. Ver `ponerGasDeNivel`.
+   */
+  seVeLaMarcaDelMotor(): boolean {
+    const m = this.root.querySelector<HTMLElement>('[data-hud="gas-nivel"]');
+    return !!m && !m.hidden && m.getClientRects().length > 0;
+  }
+
+  /**
+   * **Si algo del HUD tapa ese punto de la pantalla**, en píxeles de
+   * pantalla: los carteles, el cuadro y las barras que van encima del mundo.
+   * Lo pregunta quien va a nombrar algo de fuera —las luces del PAPI—, que
+   * detrás del cartel de la radio no se ven aunque la cámara las tenga
+   * delante. Se mide solo cuando se pregunta: cada medida es una pasada de
+   * maquetado. Ver `flight/lo-que-se-nombra.ts`.
+   */
+  tapaElPunto(x: number, y: number): boolean {
+    for (const el of this.root.querySelectorAll(LO_QUE_TAPA)) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)
+        return true;
+    }
+    return false;
+  }
+
   /** Si se mira desde la cabina, donde el cuadro es el del avión. */
   private enCabina(): boolean {
     return this.root.classList.contains("hud--cabina");
@@ -1616,7 +1692,7 @@ export class Hud {
               Y la marca del gas que **sostiene el nivel**, en el peldaño donde
               eso existe. Ver ponerGasDeNivel.
             -->
-            <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div><span class="motor__nivel" data-hud="gas-nivel" hidden></span></div>
+            <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div><span class="motor__nivel" data-hud="gas-nivel" data-nombra="motor" hidden></span></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
                     aria-label="${t("hud.throttleUp")}">${pictos ? motorMas(chorro) : "+"}</button>
           </div>
@@ -3256,6 +3332,8 @@ export class Hud {
       // Recogido o detrás de la cabina, lo que se dibuja no ha salido en la
       // pantalla. Ver `Tablero.aLaVista`.
       this.tablero.aLaVista = !this.cuadroBajado && !this.enCabina();
+      // Y en el teléfono con una en grande, solo esa: lo demás se recorta.
+      this.tablero.soloLaPantalla = telefono && this.grande !== null ? this.grande : null;
       this.tablero.update(datos, dt, !telefono || this.grande !== null);
       if (telefono && !this.cuadroBajado && this.grande === null)
         this.cuadroTel.update(datos);

@@ -63,9 +63,9 @@ La caja cambió la orden: ahora hay que bajar. Bajá ya, con calma, hasta la fra
 Ya pasó: el otro avión se aleja. Volvemos con calma a la altura que teníamos.
 Ya salimos de la zona del aeropuerto: ahora nos habla otro controlador, y a la torre ya no la oímos.
 Ya estamos cerca: volvemos a oír a la torre, y a los aviones de este aeropuerto.
-Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
-Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
-Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
+Ese rombo del mapa es otro avión. Va más alto que nosotros: no nos molesta
+Ese rombo del mapa es otro avión. Va más bajo que nosotros: no nos molesta
+Ese rombo del mapa es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
 Mirá ese avión: la luz verde a tu izquierda y la roja a tu derecha. Eso quiere decir que viene hacia nosotros. Para eso llevan luces los aviones: para verse a tiempo.
 ¿Ves esa luz blanca sola? Es la cola de otro avión: se está alejando de nosotros.
 Ese avión nos enseña su luz roja: lo vemos por su lado izquierdo, y va pasando hacia tu izquierda.
@@ -96,7 +96,7 @@ El automático ya baja por la senda. En la ventanilla ponemos la altura de irse 
 El piloto automático se conecta en el aire
 Empezamos a bajar: despacito, hasta la pista
 La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.
-La torre nos dice hasta dónde subir: hasta la raya de la cinta.
+La torre nos dice hasta dónde subir: hasta la raya de la altura.
 La torre nos deja subir otro poco. Ya puse la altura nueva.
 Ese tono avisa que ya casi llegamos a la altura de la ventanilla. Ahí se nivela.
 Ese tono avisa que nos fuimos de la altura de la ventanilla. Volvé despacito.
@@ -134,52 +134,73 @@ Luces blancas: vas alto, bajá
 Venís lento: metéle gas
 Luces rojas: vas bajo, subí
 Dos rojas y dos blancas: vas bien
-Un poquito más de gas, hasta la marca rosa. La nariz, quieta.
-Un poquito menos de gas, hasta la marca rosa.
-Nariz un poquito abajo, hasta ver dos blancas y dos rojas.
-Nariz un poquito arriba, hasta ver dos blancas y dos rojas.
-Nariz un poquito abajo, hasta que el rombo quede en el medio.
-Nariz un poquito arriba, hasta que el rombo quede en el medio.
+Un poquito más de gas, hasta la marca rosa de la velocidad. La nariz, quieta.
+Un poquito menos de gas, hasta la marca rosa de la velocidad.
+Nariz un poquito abajo, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.
+Nariz un poquito arriba, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.
+Nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.
+Nariz un poquito arriba, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.
 Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.
 Nariz un poquito arriba, para bajar más suave.
-Sacá un poco los aerofrenos, hasta la marca rosa.
-Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.
-Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.
-Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.
-Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.
-Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.
-Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
-Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.
-Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.
-Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.
+Sacá un poco los aerofrenos, hasta la marca rosa de la velocidad.
+Sacá un poco los aerofrenos, para ir más despacio.
+Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.
+Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento.
+Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.
+Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.
+Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos.
+Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.
+Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave.
+Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.
+Vamos por encima del perfil: un poquito menos de gas, para bajar más.
+Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.
+Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.
+Un poco bajo: un toque de gas, la nariz quieta.
+Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.
+Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.
+Un poco alto: un poquito menos de gas, la nariz quieta.
 Bajamos muy de golpe: un toque de gas, para bajar más suave.
-Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.
-Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.
+Vamos lentos: la nariz un pelín abajo, hasta la marca rosa de la velocidad.
+Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa de la velocidad.
+Vamos rápidos: la nariz un pelín arriba.
 Subimos hasta la raya de la altura, a la velocidad de la marca rosa.
-Ya podemos ir más rápido: más gas, hasta la marca rosa.
-Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.
-Ahora vamos más despacio: menos gas, hasta la marca rosa.
-Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.
-Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.
-La marca rosa cambió y ya vamos a esa velocidad: seguimos así.
-La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.
-Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.
+Ahora subimos hasta la altura que nos toca.
+Ya podemos ir más rápido: más gas, hasta la marca rosa de la velocidad.
+Ya podemos ir más rápido: más gas.
+Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa de la velocidad.
+Ya podemos ir más rápido: la nariz un poquito abajo.
+Ahora vamos más despacio: menos gas, hasta la marca rosa de la velocidad.
+Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa de la velocidad.
+Ahora vamos más despacio: un poco de aerofrenos.
+Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa de la velocidad.
+Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos.
+La marca rosa de la velocidad se movió, y ya vamos justo ahí: seguimos así.
+La marca rosa de la velocidad se movió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.
+Cambió la velocidad que toca: el automático lleva el motor solo. Mirá cómo se mueve la palanca.
+Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la velocidad de la marca rosa.
+Ya estamos arriba: gas de crucero, hasta la marca del motor.
 Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.
 Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.
 Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.
 Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.
-Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.
-Los primeros flaps, una muesca, y a la marca rosa.
-Otra muesca de flaps, y a la marca rosa.
-Los flaps de aterrizar, abajo del todo, y a la marca rosa.
+Llegamos a la raya de la altura: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.
+Llegamos a la altura que toca: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.
+Los primeros flaps, una muesca, y a la marca rosa de la velocidad.
+Otra muesca de flaps, y a la marca rosa de la velocidad.
+Los flaps de aterrizar, abajo del todo, y a la marca rosa de la velocidad.
 Sacá el tren, que ya vamos a aterrizar.
-Ya vamos a la marca rosa: aerofrenos adentro.
+Ya vamos a la marca rosa de la velocidad: aerofrenos adentro.
+Ya vamos a la velocidad que toca: aerofrenos adentro.
 Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.
-Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.
-Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.
+Ya estamos en la final: la nariz por la senda.
+Ya estamos en la final. El avión lleva el motor, para ir a la marca rosa de la velocidad: vos llevá la nariz por la senda.
+Ya estamos en la final. El avión lleva el motor: vos llevá la nariz por la senda.
+Ya estamos en la final. Yo te llevo el motor, para ir a la marca rosa de la velocidad: vos llevá la nariz por la senda.
+Ya estamos en la final. Yo te llevo el motor: vos llevá la nariz por la senda.
 Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.
+Tocaste el motor: ahora la velocidad la llevás vos.
 La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.
-La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.
+La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la altura.
 Por ahí no se pasa: hay un edificio
 Frená
 Salí de la pista, que viene otro
@@ -375,7 +396,7 @@ Mirá el círculo verde en el mapa: acá empezamos a bajar.
 T/C quiere decir top of climb, lo alto de la subida: acá terminamos de subir. Desde este círculo verde el avión va nivelado, en el crucero, hasta el T/D.
 Ese círculo verde del mapa es donde terminamos de subir.
 El rombo dice dónde está la senda, la rampa invisible que baja hasta la pista. Si el rombo está abajo, vas alto: bajá un poco más. Si está arriba, vas bajo. Se vuela hacia el rombo, hasta tenerlo en el medio.
-Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.
+Apareció el rombo rosa de la senda, al lado de la altura. Si lo tenemos en el medio, vamos bien hacia la pista.
 GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.
 Esta barra dice qué tan rápido rodamos. Llenala hasta la marca rosa, nada más.
 Aprendiz es el primer grado. Estás aprendiendo, y la instructora vuela a tu lado y te dice qué toca. Equivocarse también es aprender: cada vuelo cuenta.

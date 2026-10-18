@@ -54,6 +54,7 @@ import {
 } from "./familia";
 import { DIBUJOS } from "./senal";
 import { decima, escribir, poner } from "./si-cambia";
+import { seVeEnPantalla } from "./explicaciones";
 import type { DatosDelTablero } from "./tablero";
 
 /** El dibujo de rodar, el del cuadro plano, para la losa de la GS. Ver `RODAR`. */
@@ -155,7 +156,7 @@ export class CuadroDelTelefono {
                aria-hidden="true" data-tel-vuelo>
             <rect width="100" height="10" rx="2" class="tel__fondo-banda" />
             ${banda}
-            <rect data-tel="spd" x="-2" y="0" width="4" height="10" class="tel__marca" visibility="hidden" />
+            <rect data-tel="spd" data-nombra="marca" x="-2" y="0" width="4" height="10" class="tel__marca" visibility="hidden" />
             <rect data-tel="aguja" x="-1" y="-1" width="2" height="12" class="tel__aguja" />
           </svg>
           <svg class="tel__banda" viewBox="0 0 100 10" preserveAspectRatio="none"
@@ -285,6 +286,15 @@ export class CuadroDelTelefono {
     const marca = this.pieza("spd");
     poner(marca, "visibility", spd ? "visible" : "hidden");
     if (spd) poner(marca, "x", decima(enLaEscala(c.anemometro, spd.kt) * 100 - 2));
+    /*
+     * **Y lo que se ve de lo que nombra la instructora**: las losas solo se
+     * pintan a la vista —ver `Hud.update`—, así que pintada es vista. La
+     * marca, en vuelo: en tierra la losa es la de rodar. La banda es el
+     * anemómetro entero, así que la marca cae siempre dentro. Ver
+     * `flight/lo-que-se-nombra.ts`.
+     */
+    if (spd && r === null) seVeEnPantalla("marca");
+    seVeEnPantalla("altimetro");
 
     // La altitud, de veinte en veinte pies como el tambor: un cuatro que
     // baila entre 2403 y 2408 no deja leer la cifra.

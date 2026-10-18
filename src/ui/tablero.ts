@@ -67,7 +67,8 @@ import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { decima as n1, escribir, poner } from "./si-cambia";
-import { apareceEnPantalla, pasaElTiempoDelCuadro } from "./explicaciones";
+import { apareceEnPantalla, pasaElTiempoDelCuadro, seVeEnPantalla } from "./explicaciones";
+import type { Pieza } from "../flight/lo-que-se-nombra";
 
 /** Un punto de la carta, en píxeles desde el centro de la rosa. */
 type Punto2 = { dx: number; dy: number };
@@ -495,6 +496,13 @@ export class Tablero {
    * recogido no ha salido en ninguna parte. Ver `seVe`.
    */
   aLaVista = true;
+
+  /**
+   * **Y de qué pantalla**, cuando en el teléfono se pone una sola en grande:
+   * el dibujo se recorta a ella y lo demás no sale, aunque se pinte. `null`,
+   * el cuadro entero. Lo pone el HUD; ver `ponerGrande`.
+   */
+  soloLaPantalla: "actitud" | "rumbo" | "motor" | null = null;
 
   /**
    * El dibujo entero. Se llama al montar el HUD y al cambiar de aeronave.
@@ -1014,6 +1022,19 @@ export class Tablero {
     if (this.aLaVista) apareceEnPantalla(id);
   }
 
+  /**
+   * **Y esta pieza, de las que nombra la instructora, se ve ahora**: el
+   * rombo, la marca rosa, la raya de la altura… Solo con el cuadro a la vista
+   * y, en el teléfono con una pantalla en grande, si es de esa. Ver
+   * `flight/lo-que-se-nombra.ts`.
+   */
+  private seVePieza(p: Pieza): void {
+    if (!this.aLaVista) return;
+    const de = p === "carta" || p === "trafico" ? "rumbo" : "actitud";
+    if (this.soloLaPantalla !== null && this.soloLaPantalla !== de) return;
+    seVeEnPantalla(p);
+  }
+
   update(d: DatosDelTablero, dt: number, dibujar = true): void {
     pasaElTiempoDelCuadro(dt);
     const raiz = this.raiz;
@@ -1144,6 +1165,7 @@ export class Tablero {
 
     this.texto("ias", String(Math.round(d.nudos)));
     this.altitud(d.pies, d.fpm);
+    this.seVePieza("altimetro");
     this.texto("hdg", pad3(Math.round(rumbo) % 360));
     this.texto("nd-rumbo", pad3(Math.round(rumbo) % 360));
     // Las de apoyo, a su ritmo: ver `CIFRAS_POR_SEGUNDO`.
@@ -1381,6 +1403,7 @@ export class Tablero {
       poner(g, "visibility", puntos === null ? "hidden" : "visible");
       if (puntos !== null) {
         this.seVe("senda");
+        this.seVePieza("rombo");
         const rombo = this.pieza('[data-cristal="senda-rombo"]');
         const paso = Number(rombo?.dataset.paso) || 20;
         const k = Math.max(-PUNTOS_A_FONDO, Math.min(PUNTOS_A_FONDO, puntos));
@@ -1396,6 +1419,7 @@ export class Tablero {
       const fpm = p?.ritmoFpm ?? null;
       poner(v, "visibility", fpm === null ? "hidden" : "visible");
       if (fpm !== null) {
+        this.seVePieza("ritmo");
         const ampl = Number(v.dataset.ampl);
         const max = Number(v.dataset.max);
         const f = Math.max(-1, Math.min(1, fpm / max));
@@ -1496,6 +1520,14 @@ export class Tablero {
       : "---";
     escribir(this.pieza('[data-mcp="spd"]'), enMcp);
     ponV("spd", spd ? spd.kt : NaN);
+    /*
+     * **La marca rosa se ve si cae dentro de la ventana de la cinta.** Fuera
+     * de ella se recorta, como en la de verdad, y «hasta la marca rosa» sería
+     * nombrar algo que no está. Ver `flight/lo-que-se-nombra.ts`.
+     */
+    const ventanaIas = Number(this.pieza('[data-tira="ias"]')?.dataset.medio);
+    if (spd && Math.abs(d.nudos - spd.kt) * POR_NUDO < ventanaIas - 8)
+      this.seVePieza("marca");
     poner(this.pieza('[data-cristal="spd-sel-caja"]'), "visibility", spd ? "visible" : "hidden");
     escribir(this.pieza('[data-cristal="spd-sel"]'), spd ? enMcp : "");
     this.fma(d.fma ?? null);
@@ -1555,9 +1587,11 @@ export class Tablero {
       poner(g, "transform", `translate(0 ${n1(-(cota ?? 0) * Number(g.dataset.porunidad))})`);
     for (const g of this.todas<SVGElement>('[data-cristal="cota-pista"]'))
       poner(g, "visibility", cota === null ? "hidden" : "visible");
-    if (cota !== null)
+    if (cota !== null) {
+      this.seVePieza("cota");
       for (const t of this.todas<SVGElement>('[data-cristal="cota-pista-cifra"]'))
         escribir(t, String(cota));
+    }
   }
 
   /** **El FMA**: lo que hace cada mano. Ver `fma` en `ui/cristal.ts`. */
@@ -1604,6 +1638,7 @@ export class Tablero {
       poner(bug, "transform", `translate(0 ${n1(y)})`);
     }
     poner(caja, "visibility", "visible");
+    this.seVePieza("raya");
     escribir(this.pieza('[data-cristal="alt-sel"]'), String(v.pies));
     const quieto = this.raiz?.closest(".sin-movimiento") !== null;
     const fuera = v.alerta === "fuera";
@@ -1829,6 +1864,7 @@ export class Tablero {
   private laCarta(d: DatosDelTablero, cifras: boolean): void {
     const grupo = this.pieza('[data-carta="grupo"]');
     if (!grupo) return;
+    this.seVePieza("carta");
     // El radio de **su** rosa, la del mapa: la primera de la página es la del
     // horizonte en el de cristal, y con ella la carta salía a otra escala.
     const radio = Number(grupo.getAttribute("data-radio")) || 120;
@@ -1909,6 +1945,7 @@ export class Tablero {
         continue;
       }
       poner(pieza, "visibility", "visible");
+      this.seVePieza("trafico");
       poner(pieza, "transform", `translate(${n1(o.dx)} ${n1(o.dy)})`);
       poner(pieza, "class", `cr__trafico cr__trafico--${o.clase}`);
       const aviso = o.clase === "aviso";

@@ -545,3 +545,87 @@ describe("sin instructora", () => {
     expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
   });
 });
+
+/*
+ * **Lo que se nombra, solo si se ve, y señalado** (272, 273): la puerta está
+ * en la boca, como la de sin instructora, para que ninguna frase que nombre el
+ * rombo o el PAPI se cuele por un sitio que se olvidó de mirar. Ver
+ * `flight/lo-que-se-nombra.ts`.
+ */
+describe("lo que se nombra", () => {
+  /** Una puerta de mentira: `vuelo.coja` nombra algo que se ve si `seVe`. */
+  const puerta = () => {
+    const p = {
+      seVe: true,
+      senaladas: [] as (string | undefined)[],
+      nombraLoQueNoSeVe: (clave: string | undefined) => clave === "vuelo.coja" && !p.seVe,
+      senalar: (clave: string | undefined) => {
+        p.senaladas.push(clave);
+      },
+    };
+    return p;
+  };
+
+  it("lo que nombra algo que no se ve no suena, y se cae diciendo por qué", () => {
+    const suplente = new Suplente();
+    const i = new InstructorGrabado(new Grabadora(), suplente, bocaDePrueba());
+    const p = puerta();
+    p.seVe = false;
+    i.loNombrado = p;
+    const oido: string[] = [];
+    i.decir("Seguí la calle", "vuelo.coja", "normal", undefined, (q, porque) =>
+      oido.push(`${q}:${porque}`),
+    );
+    expect(suplente.dichas).toEqual([]);
+    expect(oido).toEqual(["se-cae:no-se-ve"]);
+    expect(i.noSeVeia).toEqual(["vuelo.coja"]);
+    expect(p.senaladas).toEqual([]);
+    // Y lo que no nombra nada pasa como siempre.
+    i.decir("Seguí la raya verde", "vuelo.rodando");
+    expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
+  });
+
+  it("lo que suena se señala al empezar: grabado o por el navegador", async () => {
+    const { instructor, altavoz } = await conPack();
+    const p = puerta();
+    instructor.loNombrado = p;
+    instructor.decir("Seguí la calle", "vuelo.coja");
+    expect(altavoz.tocadas).toHaveLength(1);
+    expect(p.senaladas).toEqual(["vuelo.coja"]);
+
+    const suplente = new Suplente();
+    const i = new InstructorGrabado(new Grabadora(), suplente, bocaDePrueba());
+    const q = puerta();
+    i.loNombrado = q;
+    i.decir("Seguí la calle", "vuelo.coja");
+    expect(suplente.dichas).toEqual(["Seguí la calle"]);
+    expect(q.senaladas).toEqual(["vuelo.coja"]);
+  });
+
+  it("y se mira cuando le toca, no al pedirla: si se fue de la vista en la cola, no suena", async () => {
+    const { instructor, altavoz } = await conPack();
+    const p = puerta();
+    instructor.loNombrado = p;
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    instructor.decir("Seguí la calle", "vuelo.coja");
+    // Esperando turno, lo que nombra deja de verse.
+    p.seVe = false;
+    altavoz.terminar();
+    expect(altavoz.tocadas).toHaveLength(1);
+    expect(instructor.noSeVeia).toEqual(["vuelo.coja"]);
+  });
+
+  it("y al revés: lo que aparece con el mismo suceso que la pide, suena", async () => {
+    const { instructor, altavoz } = await conPack();
+    const p = puerta();
+    p.seVe = false;
+    instructor.loNombrado = p;
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    instructor.decir("Seguí la calle", "vuelo.coja");
+    // La raya de la altura se pinta cuando la torre la da: ya está al tocarle.
+    p.seVe = true;
+    altavoz.terminar();
+    expect(altavoz.tocadas).toHaveLength(2);
+    expect(p.senaladas).toEqual(["vuelo.rodando", "vuelo.coja"]);
+  });
+});

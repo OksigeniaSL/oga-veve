@@ -6251,6 +6251,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     // Y lo que el modo sin instructora no la dejó decir. Ver `OGA_SIN_INSTRUCTORA`.
     calladas: o.calladas?.() ?? [],
     /*
+     * Y lo que la puerta de lo nombrado paró por no verse, y cuántos consejos
+     * de la bajada nombraron qué. Ver `flight/lo-que-se-nombra.ts`.
+     */
+    noSeVeia: o.juegoParaTrazas?.()?.loNombradoParaBanco?.noSeVeia ?? [],
+    consejos: (o.cantados?.() ?? []).filter((c) => /^(consejo|paso )/.test(c)).map((c) => c.split(" [")[0]),
+    /*
      * **Y la voz de la máquina, que no pasa por ninguna boca**: la cuenta y
      * los avisos de las cajas. Con la cuenta, cada número con lo que marcaba
      * el radioaltímetro al pedirlo. Ver `audio/maquina.ts`.
@@ -6860,6 +6866,19 @@ if (CON_MODELO.has(AVION)) {
  * el avión llevaba 730 m recorridos y 5,7 m de altura, o sea **0,8 %**. Ver
  * #169.
  */
+/*
+ * **Lo que nombra la instructora, a la vista** (272, 273): quien habla elige
+ * la frase que solo nombra lo que se ve —el rombo, la marca rosa, las luces
+ * del PAPI—, y la puerta de la boca no para ninguna por no verse.
+ */
+comprobar(
+  "la instructora no nombra lo que no se ve",
+  (vuelo.noSeVeia ?? []).length === 0,
+  `${(vuelo.noSeVeia ?? []).join(", ") || "nada parado"} · ${(vuelo.consejos ?? []).length} consejos y pasos`,
+  "nombrar el PAPI sin la pista en la pantalla es lo del 273",
+);
+for (const c of vuelo.consejos ?? []) console.log(`      ${c}`);
+
 comprobar(
   "y sube de verdad después de rotar",
   vuelo.pendiente !== null && vuelo.pendiente >= 3,

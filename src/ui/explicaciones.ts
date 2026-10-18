@@ -429,12 +429,25 @@ export function apareceEnPantalla(id: string): void {
  * pieza en cada fotograma, y recogido no repinta ninguna —y entonces nada
  * está a la vista, que es verdad—.
  */
+/**
+ * **Y esta pieza se ve ahora**, sin más: lo que nombra la instructora —el
+ * rombo, la marca rosa, el mapa— y que no se presenta. El mismo reloj y la
+ * misma cuenta que `apareceEnPantalla`, para que «a la vista» quiera decir lo
+ * mismo en todo el juego. Ver `flight/lo-que-se-nombra.ts`.
+ */
+export function seVeEnPantalla(id: string): void {
+  vistaPorUltimaVez.set(id, relojDelCuadro);
+}
+
 export function sigueEnPantalla(id: string): boolean {
   const vista = vistaPorUltimaVez.get(id);
   return vista !== undefined && relojDelCuadro - vista <= SIGUE_A_LA_VISTA;
 }
 
-/** El reloj del cuadro: lo adelanta `Tablero.update`, se dibuje o no. */
+/**
+ * El reloj del cuadro: lo adelanta `Tablero.update`, se dibuje o no. Lo que
+ * pinta la pantalla de la cabina se apunta con este mismo reloj.
+ */
 export function pasaElTiempoDelCuadro(dt: number): void {
   relojDelCuadro += dt;
 }
