@@ -263,6 +263,70 @@
       "ms": 14907,
       "h": "3547a8dfcb"
     },
+    "explica.sello.chipa-volandera.texto": {
+      "ms": 7007,
+      "h": "aeb842e1ae"
+    },
+    "explica.sello.cien-horas.texto": {
+      "ms": 7707,
+      "h": "01c7798087"
+    },
+    "explica.sello.jasy.texto": {
+      "ms": 7407,
+      "h": "fcd5a14c8f"
+    },
+    "explica.sello.karumbe.texto": {
+      "ms": 7207,
+      "h": "45dd7b8070"
+    },
+    "explica.sello.mainumby.texto": {
+      "ms": 9207,
+      "h": "c53154a8dd"
+    },
+    "explica.sello.manos-de-seda.texto": {
+      "ms": 9307,
+      "h": "0044eaf803"
+    },
+    "explica.sello.mbarete.texto": {
+      "ms": 7807,
+      "h": "3fc70d414f"
+    },
+    "explica.sello.nanduti.texto": {
+      "ms": 9807,
+      "h": "fdaaf2dfae"
+    },
+    "explica.sello.pettirossi.texto": {
+      "ms": 9207,
+      "h": "ffa1fe422b"
+    },
+    "explica.sello.planeador.texto": {
+      "ms": 9307,
+      "h": "c0a3aaad8f"
+    },
+    "explica.sello.primer-solo.texto": {
+      "ms": 6707,
+      "h": "5fa9905bb0"
+    },
+    "explica.sello.ruta-jesuitica.texto": {
+      "ms": 8407,
+      "h": "dd8154baf6"
+    },
+    "explica.sello.tajamar.texto": {
+      "ms": 9307,
+      "h": "ceb1bbb61a"
+    },
+    "explica.sello.transchaco.texto": {
+      "ms": 9307,
+      "h": "212290435d"
+    },
+    "explica.sello.tres-toques.texto": {
+      "ms": 7907,
+      "h": "e17792f1f2"
+    },
+    "explica.sello.veve.texto": {
+      "ms": 5207,
+      "h": "d22c0e516f"
+    },
     "explica.senda.presenta": {
       "ms": 5707,
       "h": "4260d310de"
@@ -4174,6 +4238,54 @@
     ],
     "vuelo.paso.gasTuyo.sinVer": [
       "vuelo.paso.gasTuyo.sinVer"
+    ],
+    "explica.sello.mainumby.texto": [
+      "explica.sello.mainumby.texto"
+    ],
+    "explica.sello.manos-de-seda.texto": [
+      "explica.sello.manos-de-seda.texto"
+    ],
+    "explica.sello.veve.texto": [
+      "explica.sello.veve.texto"
+    ],
+    "explica.sello.primer-solo.texto": [
+      "explica.sello.primer-solo.texto"
+    ],
+    "explica.sello.chipa-volandera.texto": [
+      "explica.sello.chipa-volandera.texto"
+    ],
+    "explica.sello.planeador.texto": [
+      "explica.sello.planeador.texto"
+    ],
+    "explica.sello.karumbe.texto": [
+      "explica.sello.karumbe.texto"
+    ],
+    "explica.sello.pettirossi.texto": [
+      "explica.sello.pettirossi.texto"
+    ],
+    "explica.sello.ruta-jesuitica.texto": [
+      "explica.sello.ruta-jesuitica.texto"
+    ],
+    "explica.sello.cien-horas.texto": [
+      "explica.sello.cien-horas.texto"
+    ],
+    "explica.sello.tajamar.texto": [
+      "explica.sello.tajamar.texto"
+    ],
+    "explica.sello.tres-toques.texto": [
+      "explica.sello.tres-toques.texto"
+    ],
+    "explica.sello.jasy.texto": [
+      "explica.sello.jasy.texto"
+    ],
+    "explica.sello.nanduti.texto": [
+      "explica.sello.nanduti.texto"
+    ],
+    "explica.sello.transchaco.texto": [
+      "explica.sello.transchaco.texto"
+    ],
+    "explica.sello.mbarete.texto": [
+      "explica.sello.mbarete.texto"
     ]
   }
 }
