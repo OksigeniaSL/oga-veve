@@ -250,7 +250,8 @@ describe("nunca la misma dos vuelos seguidos", () => {
   });
 
   it("con una sola forma que cabe, se dice esa aunque repita: mejor repetir que callar", () => {
-    const { forma } = laBienvenida(vuelo({ grabada: grabadaHoy, ultima: "clasica" }));
+    // Con el pack de antes de grabar lo nuevo, que es cuando solo cabe la clásica.
+    const { forma } = laBienvenida(vuelo({ grabada: sinLoNuevo, ultima: "clasica" }));
     expect(forma).toBe("clasica");
   });
 });

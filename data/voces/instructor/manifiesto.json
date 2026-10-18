@@ -135,6 +135,58 @@
       "ms": 8107,
       "h": "8f7c2c5391"
     },
+    "ejercicio.tormenta.adentro": {
+      "ms": 10107,
+      "h": "2e640b8cb3"
+    },
+    "ejercicio.tormenta.antes": {
+      "ms": 10207,
+      "h": "53c3e60173"
+    },
+    "ejercicio.tormenta.asiVa": {
+      "ms": 4907,
+      "h": "d5ee66db37"
+    },
+    "ejercicio.tormenta.avisamos": {
+      "ms": 10207,
+      "h": "603e2c28ef"
+    },
+    "ejercicio.tormenta.bien": {
+      "ms": 5807,
+      "h": "f302a80718"
+    },
+    "ejercicio.tormenta.bienCerca": {
+      "ms": 7607,
+      "h": "1f5e97f204"
+    },
+    "ejercicio.tormenta.masDerecha": {
+      "ms": 4207,
+      "h": "44668fc780"
+    },
+    "ejercicio.tormenta.masIzquierda": {
+      "ms": 4107,
+      "h": "806a0d79d9"
+    },
+    "ejercicio.tormenta.porQue": {
+      "ms": 10507,
+      "h": "0219b85905"
+    },
+    "ejercicio.tormenta.radar": {
+      "ms": 12507,
+      "h": "29dc976702"
+    },
+    "ejercicio.tormenta.rayoEnElAvion": {
+      "ms": 10707,
+      "h": "45f51c2dd1"
+    },
+    "ejercicio.tormenta.rayoLejos": {
+      "ms": 11507,
+      "h": "5408050eb0"
+    },
+    "ejercicio.tormenta.salimos": {
+      "ms": 9407,
+      "h": "144af44616"
+    },
     "ejercicio.un-motor.antes": {
       "ms": 9207,
       "h": "3360c162de"
@@ -4286,6 +4338,45 @@
     ],
     "explica.sello.mbarete.texto": [
       "explica.sello.mbarete.texto"
+    ],
+    "ejercicio.tormenta.bien": [
+      "ejercicio.tormenta.bien"
+    ],
+    "ejercicio.tormenta.masIzquierda": [
+      "ejercicio.tormenta.masIzquierda"
+    ],
+    "ejercicio.tormenta.bienCerca": [
+      "ejercicio.tormenta.bienCerca"
+    ],
+    "ejercicio.tormenta.rayoLejos": [
+      "ejercicio.tormenta.rayoLejos"
+    ],
+    "ejercicio.tormenta.salimos": [
+      "ejercicio.tormenta.salimos"
+    ],
+    "ejercicio.tormenta.adentro": [
+      "ejercicio.tormenta.adentro"
+    ],
+    "ejercicio.tormenta.radar": [
+      "ejercicio.tormenta.radar"
+    ],
+    "ejercicio.tormenta.antes": [
+      "ejercicio.tormenta.antes"
+    ],
+    "ejercicio.tormenta.rayoEnElAvion": [
+      "ejercicio.tormenta.rayoEnElAvion"
+    ],
+    "ejercicio.tormenta.avisamos": [
+      "ejercicio.tormenta.avisamos"
+    ],
+    "ejercicio.tormenta.masDerecha": [
+      "ejercicio.tormenta.masDerecha"
+    ],
+    "ejercicio.tormenta.porQue": [
+      "ejercicio.tormenta.porQue"
+    ],
+    "ejercicio.tormenta.asiVa": [
+      "ejercicio.tormenta.asiVa"
     ]
   }
 }

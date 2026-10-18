@@ -1255,5 +1255,194 @@
   ],
   "inicio.mama.pasaje.bajando": [
     "inicio.mama.pasaje.bajando"
+  ],
+  "comandante.bienvenida.saludo.pasajeros.dias": [
+    "comandante.bienvenida.saludo.pasajeros.dias"
+  ],
+  "comandante.bienvenida.saludo.pasajeros.tardes": [
+    "comandante.bienvenida.saludo.pasajeros.tardes"
+  ],
+  "comandante.bienvenida.saludo.pasajeros.noches": [
+    "comandante.bienvenida.saludo.pasajeros.noches"
+  ],
+  "comandante.bienvenida.saludo.cabina.dias": [
+    "comandante.bienvenida.saludo.cabina.dias"
+  ],
+  "comandante.bienvenida.saludo.cabina.tardes": [
+    "comandante.bienvenida.saludo.cabina.tardes"
+  ],
+  "comandante.bienvenida.saludo.cabina.noches": [
+    "comandante.bienvenida.saludo.cabina.noches"
+  ],
+  "comandante.bienvenida.saludo.chicos.dias": [
+    "comandante.bienvenida.saludo.chicos.dias"
+  ],
+  "comandante.bienvenida.saludo.chicos.tardes": [
+    "comandante.bienvenida.saludo.chicos.tardes"
+  ],
+  "comandante.bienvenida.saludo.chicos.noches": [
+    "comandante.bienvenida.saludo.chicos.noches"
+  ],
+  "comandante.bienvenida.gracia.1": [
+    "comandante.bienvenida.gracia.1"
+  ],
+  "comandante.bienvenida.gracia.2": [
+    "comandante.bienvenida.gracia.2"
+  ],
+  "comandante.bienvenida.gracia.3": [
+    "comandante.bienvenida.gracia.3"
+  ],
+  "comandante.bienvenida.a.local": [
+    "comandante.bienvenida.a.local"
+  ],
+  "comandante.bienvenida.a.pettirossi": [
+    "comandante.bienvenida.a.pettirossi"
+  ],
+  "comandante.bienvenida.a.guarani": [
+    "comandante.bienvenida.a.guarani"
+  ],
+  "comandante.bienvenida.a.encarnacion": [
+    "comandante.bienvenida.a.encarnacion"
+  ],
+  "comandante.bienvenida.a.concepcion": [
+    "comandante.bienvenida.a.concepcion"
+  ],
+  "comandante.bienvenida.a.pedro-juan": [
+    "comandante.bienvenida.a.pedro-juan"
+  ],
+  "comandante.bienvenida.a.estigarribia": [
+    "comandante.bienvenida.a.estigarribia"
+  ],
+  "comandante.bienvenida.a.ayolas": [
+    "comandante.bienvenida.a.ayolas"
+  ],
+  "comandante.bienvenida.a.pilar": [
+    "comandante.bienvenida.a.pilar"
+  ],
+  "comandante.bienvenida.a.yvytu-rape": [
+    "comandante.bienvenida.a.yvytu-rape"
+  ],
+  "comandante.bienvenida.a.tenerife-norte": [
+    "comandante.bienvenida.a.tenerife-norte"
+  ],
+  "comandante.bienvenida.a.tenerife-sur": [
+    "comandante.bienvenida.a.tenerife-sur"
+  ],
+  "comandante.bienvenida.a.gran-canaria": [
+    "comandante.bienvenida.a.gran-canaria"
+  ],
+  "comandante.bienvenida.a.lanzarote": [
+    "comandante.bienvenida.a.lanzarote"
+  ],
+  "comandante.bienvenida.a.fuerteventura": [
+    "comandante.bienvenida.a.fuerteventura"
+  ],
+  "comandante.bienvenida.a.la-palma": [
+    "comandante.bienvenida.a.la-palma"
+  ],
+  "comandante.bienvenida.a.el-hierro": [
+    "comandante.bienvenida.a.el-hierro"
+  ],
+  "comandante.bienvenida.a.la-gomera": [
+    "comandante.bienvenida.a.la-gomera"
+  ],
+  "comandante.bienvenida.detalle.local": [
+    "comandante.bienvenida.detalle.local"
+  ],
+  "comandante.bienvenida.detalle.pettirossi": [
+    "comandante.bienvenida.detalle.pettirossi"
+  ],
+  "comandante.bienvenida.detalle.guarani": [
+    "comandante.bienvenida.detalle.guarani"
+  ],
+  "comandante.bienvenida.detalle.encarnacion": [
+    "comandante.bienvenida.detalle.encarnacion"
+  ],
+  "comandante.bienvenida.detalle.concepcion": [
+    "comandante.bienvenida.detalle.concepcion"
+  ],
+  "comandante.bienvenida.detalle.pedro-juan": [
+    "comandante.bienvenida.detalle.pedro-juan"
+  ],
+  "comandante.bienvenida.detalle.estigarribia": [
+    "comandante.bienvenida.detalle.estigarribia"
+  ],
+  "comandante.bienvenida.detalle.ayolas": [
+    "comandante.bienvenida.detalle.ayolas"
+  ],
+  "comandante.bienvenida.detalle.pilar": [
+    "comandante.bienvenida.detalle.pilar"
+  ],
+  "comandante.bienvenida.detalle.yvytu-rape": [
+    "comandante.bienvenida.detalle.yvytu-rape"
+  ],
+  "comandante.bienvenida.detalle.tenerife-norte": [
+    "comandante.bienvenida.detalle.tenerife-norte"
+  ],
+  "comandante.bienvenida.detalle.tenerife-sur": [
+    "comandante.bienvenida.detalle.tenerife-sur"
+  ],
+  "comandante.bienvenida.detalle.gran-canaria": [
+    "comandante.bienvenida.detalle.gran-canaria"
+  ],
+  "comandante.bienvenida.detalle.lanzarote": [
+    "comandante.bienvenida.detalle.lanzarote"
+  ],
+  "comandante.bienvenida.detalle.fuerteventura": [
+    "comandante.bienvenida.detalle.fuerteventura"
+  ],
+  "comandante.bienvenida.detalle.la-palma": [
+    "comandante.bienvenida.detalle.la-palma"
+  ],
+  "comandante.bienvenida.detalle.el-hierro": [
+    "comandante.bienvenida.detalle.el-hierro"
+  ],
+  "comandante.bienvenida.detalle.la-gomera": [
+    "comandante.bienvenida.detalle.la-gomera"
+  ],
+  "comandante.bienvenida.cierre.disfruten": [
+    "comandante.bienvenida.cierre.disfruten"
+  ],
+  "comandante.bienvenida.cierre.gracias": [
+    "comandante.bienvenida.cierre.gracias"
+  ],
+  "comandante.bienvenida.cierre.acomodense": [
+    "comandante.bienvenida.cierre.acomodense"
+  ],
+  "comandante.mitad.camino": [
+    "comandante.mitad.camino"
+  ],
+  "comandante.mitad.viaje": [
+    "comandante.mitad.viaje"
+  ],
+  "comandante.mitad.parte": [
+    "comandante.mitad.parte"
+  ],
+  "comandante.chicos.primeraVez": [
+    "comandante.chicos.primeraVez"
+  ],
+  "comandante.chicos.tripulacion": [
+    "comandante.chicos.tripulacion"
+  ],
+  "comandante.chicos.aterrizar": [
+    "comandante.chicos.aterrizar"
+  ],
+  "comandante.curiosidad.alas": [
+    "comandante.curiosidad.alas"
+  ],
+  "comandante.curiosidad.rayas": [
+    "comandante.curiosidad.rayas"
+  ],
+  "comandante.curiosidad.ventanilla": [
+    "comandante.curiosidad.ventanilla"
+  ],
+  "comandante.curiosidad.ingles": [
+    "comandante.curiosidad.ingles"
+  ],
+  "comandante.curiosidad.llave": [
+    "comandante.curiosidad.llave"
+  ],
+  "comandante.curiosidad.viento": [
+    "comandante.curiosidad.viento"
   ]
 }

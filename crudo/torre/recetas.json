@@ -1369,5 +1369,27 @@
     "torre.solo.orbit",
     "lado.right",
     "torre.solo.departingTraffic"
+  ],
+  "torre.solo.desvioDerecha": [
+    "torre.solo.desvioDerecha"
+  ],
+  "torre.desvioDerecha": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.desvioDerecha"
+  ],
+  "torre.solo.desvioIzquierda": [
+    "torre.solo.desvioIzquierda"
+  ],
+  "torre.desvioIzquierda": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.desvioIzquierda"
   ]
 }

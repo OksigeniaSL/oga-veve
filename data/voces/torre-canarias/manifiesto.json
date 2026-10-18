@@ -371,6 +371,14 @@
       "ms": 992,
       "h": "5a3cad9c43"
     },
+    "torre.canario.solo.desvioDerecha": {
+      "ms": 3107,
+      "h": "3ab5bf50d3"
+    },
+    "torre.canario.solo.desvioIzquierda": {
+      "ms": 3407,
+      "h": "22180ebaa7"
+    },
     "torre.canario.solo.expediteVacating": {
       "ms": 1182,
       "h": "b676836cca"
@@ -2053,6 +2061,28 @@
       "torre.canario.solo.orbit",
       "lado.right",
       "torre.canario.solo.departingTraffic"
+    ],
+    "torre.canario.solo.desvioDerecha": [
+      "torre.canario.solo.desvioDerecha"
+    ],
+    "torre.canario.desvioDerecha": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.desvioDerecha"
+    ],
+    "torre.canario.solo.desvioIzquierda": [
+      "torre.canario.solo.desvioIzquierda"
+    ],
+    "torre.canario.desvioIzquierda": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.desvioIzquierda"
     ]
   }
 }

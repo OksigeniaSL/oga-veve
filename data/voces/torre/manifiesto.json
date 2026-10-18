@@ -375,6 +375,14 @@
       "ms": 1184,
       "h": "8e116ae613"
     },
+    "torre.solo.desvioDerecha": {
+      "ms": 3107,
+      "h": "65faa0c249"
+    },
+    "torre.solo.desvioIzquierda": {
+      "ms": 3407,
+      "h": "fc9a7950f1"
+    },
     "torre.solo.expediteVacating": {
       "ms": 1353,
       "h": "57d10ded35"
@@ -2039,6 +2047,28 @@
       "torre.solo.orbit",
       "lado.right",
       "torre.solo.departingTraffic"
+    ],
+    "torre.solo.desvioDerecha": [
+      "torre.solo.desvioDerecha"
+    ],
+    "torre.desvioDerecha": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.desvioDerecha"
+    ],
+    "torre.solo.desvioIzquierda": [
+      "torre.solo.desvioIzquierda"
+    ],
+    "torre.desvioIzquierda": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.desvioIzquierda"
     ]
   }
 }

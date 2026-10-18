@@ -15,13 +15,169 @@
       "ms": 8307,
       "h": "659b291cb5"
     },
+    "comandante.bienvenida.a.ayolas": {
+      "ms": 2093,
+      "h": "2138c5a2d6"
+    },
+    "comandante.bienvenida.a.concepcion": {
+      "ms": 2452,
+      "h": "a5132bd771"
+    },
+    "comandante.bienvenida.a.el-hierro": {
+      "ms": 2233,
+      "h": "3429b38458"
+    },
+    "comandante.bienvenida.a.encarnacion": {
+      "ms": 2472,
+      "h": "4bf20e97b6"
+    },
+    "comandante.bienvenida.a.estigarribia": {
+      "ms": 2735,
+      "h": "8590d14c28"
+    },
+    "comandante.bienvenida.a.fuerteventura": {
+      "ms": 2473,
+      "h": "3a42b12eff"
+    },
+    "comandante.bienvenida.a.gran-canaria": {
+      "ms": 2456,
+      "h": "4dbc29e474"
+    },
+    "comandante.bienvenida.a.guarani": {
+      "ms": 2659,
+      "h": "43ba1d75d7"
+    },
+    "comandante.bienvenida.a.la-gomera": {
+      "ms": 2393,
+      "h": "f7ce502a21"
+    },
+    "comandante.bienvenida.a.la-palma": {
+      "ms": 2153,
+      "h": "797197370b"
+    },
+    "comandante.bienvenida.a.lanzarote": {
+      "ms": 2326,
+      "h": "ee036bcf1b"
+    },
+    "comandante.bienvenida.a.local": {
+      "ms": 4507,
+      "h": "cb035389a1"
+    },
+    "comandante.bienvenida.a.pedro-juan": {
+      "ms": 2652,
+      "h": "26ef5e7ba5"
+    },
+    "comandante.bienvenida.a.pettirossi": {
+      "ms": 2152,
+      "h": "8984ccb6d0"
+    },
+    "comandante.bienvenida.a.pilar": {
+      "ms": 1966,
+      "h": "0f955badac"
+    },
+    "comandante.bienvenida.a.tenerife-norte": {
+      "ms": 2611,
+      "h": "ec60f28c55"
+    },
+    "comandante.bienvenida.a.tenerife-sur": {
+      "ms": 2483,
+      "h": "171b02ccee"
+    },
+    "comandante.bienvenida.a.yvytu-rape": {
+      "ms": 3907,
+      "h": "f43da82e52"
+    },
     "comandante.bienvenida.ayolas": {
       "ms": 5507,
       "h": "679f0d6090"
     },
+    "comandante.bienvenida.cierre.acomodense": {
+      "ms": 2276,
+      "h": "508760b56b"
+    },
+    "comandante.bienvenida.cierre.disfruten": {
+      "ms": 2865,
+      "h": "9051546d62"
+    },
+    "comandante.bienvenida.cierre.gracias": {
+      "ms": 3107,
+      "h": "34e79b0fb7"
+    },
     "comandante.bienvenida.concepcion": {
       "ms": 5607,
       "h": "8936659d56"
+    },
+    "comandante.bienvenida.detalle.ayolas": {
+      "ms": 4807,
+      "h": "af0129ac0a"
+    },
+    "comandante.bienvenida.detalle.concepcion": {
+      "ms": 5107,
+      "h": "a866c48b1d"
+    },
+    "comandante.bienvenida.detalle.el-hierro": {
+      "ms": 5507,
+      "h": "89627cd41e"
+    },
+    "comandante.bienvenida.detalle.encarnacion": {
+      "ms": 5407,
+      "h": "de12a2e4a6"
+    },
+    "comandante.bienvenida.detalle.estigarribia": {
+      "ms": 4207,
+      "h": "17d47845c9"
+    },
+    "comandante.bienvenida.detalle.fuerteventura": {
+      "ms": 4407,
+      "h": "c55028f184"
+    },
+    "comandante.bienvenida.detalle.gran-canaria": {
+      "ms": 5507,
+      "h": "98347755ee"
+    },
+    "comandante.bienvenida.detalle.guarani": {
+      "ms": 5307,
+      "h": "9c6e0a238f"
+    },
+    "comandante.bienvenida.detalle.la-gomera": {
+      "ms": 4507,
+      "h": "ac5ca7552e"
+    },
+    "comandante.bienvenida.detalle.la-palma": {
+      "ms": 4107,
+      "h": "8274fdf657"
+    },
+    "comandante.bienvenida.detalle.lanzarote": {
+      "ms": 4007,
+      "h": "ccea19ef5b"
+    },
+    "comandante.bienvenida.detalle.local": {
+      "ms": 6307,
+      "h": "7ca00f740f"
+    },
+    "comandante.bienvenida.detalle.pedro-juan": {
+      "ms": 4607,
+      "h": "1b95e198d9"
+    },
+    "comandante.bienvenida.detalle.pettirossi": {
+      "ms": 5207,
+      "h": "b7d2c2fead"
+    },
+    "comandante.bienvenida.detalle.pilar": {
+      "ms": 4507,
+      "h": "12f754b67a"
+    },
+    "comandante.bienvenida.detalle.tenerife-norte": {
+      "ms": 3607,
+      "h": "0ea683cee2"
+    },
+    "comandante.bienvenida.detalle.tenerife-sur": {
+      "ms": 4207,
+      "h": "1e08912a8f"
+    },
+    "comandante.bienvenida.detalle.yvytu-rape": {
+      "ms": 4607,
+      "h": "0b11009723"
     },
     "comandante.bienvenida.el-hierro": {
       "ms": 6007,
@@ -38,6 +194,18 @@
     "comandante.bienvenida.fuerteventura": {
       "ms": 5507,
       "h": "2b5353a369"
+    },
+    "comandante.bienvenida.gracia.1": {
+      "ms": 5707,
+      "h": "ea6739282d"
+    },
+    "comandante.bienvenida.gracia.2": {
+      "ms": 6907,
+      "h": "4a3b08c3af"
+    },
+    "comandante.bienvenida.gracia.3": {
+      "ms": 6507,
+      "h": "c87a4c132b"
     },
     "comandante.bienvenida.gran-canaria": {
       "ms": 5207,
@@ -79,6 +247,42 @@
       "ms": 5707,
       "h": "8a2c7af304"
     },
+    "comandante.bienvenida.saludo.cabina.dias": {
+      "ms": 4607,
+      "h": "f30fc7650b"
+    },
+    "comandante.bienvenida.saludo.cabina.noches": {
+      "ms": 4107,
+      "h": "59174e6a33"
+    },
+    "comandante.bienvenida.saludo.cabina.tardes": {
+      "ms": 3907,
+      "h": "54aae0aa49"
+    },
+    "comandante.bienvenida.saludo.chicos.dias": {
+      "ms": 4907,
+      "h": "25b8fcdb8f"
+    },
+    "comandante.bienvenida.saludo.chicos.noches": {
+      "ms": 4407,
+      "h": "68f0837524"
+    },
+    "comandante.bienvenida.saludo.chicos.tardes": {
+      "ms": 4907,
+      "h": "0430ccd812"
+    },
+    "comandante.bienvenida.saludo.pasajeros.dias": {
+      "ms": 3307,
+      "h": "92852a1a2c"
+    },
+    "comandante.bienvenida.saludo.pasajeros.noches": {
+      "ms": 3807,
+      "h": "443a21b4dc"
+    },
+    "comandante.bienvenida.saludo.pasajeros.tardes": {
+      "ms": 3807,
+      "h": "e3b8baa097"
+    },
     "comandante.bienvenida.tenerife-norte": {
       "ms": 5707,
       "h": "8809db33d0"
@@ -90,6 +294,18 @@
     "comandante.bienvenida.yvytu-rape": {
       "ms": 7307,
       "h": "84f0266a5e"
+    },
+    "comandante.chicos.aterrizar": {
+      "ms": 10807,
+      "h": "1543ed6488"
+    },
+    "comandante.chicos.primeraVez": {
+      "ms": 10807,
+      "h": "64634b1d55"
+    },
+    "comandante.chicos.tripulacion": {
+      "ms": 9507,
+      "h": "312c8b283c"
     },
     "comandante.cielo.despejado": {
       "ms": 1327,
@@ -126,6 +342,30 @@
     "comandante.crucero": {
       "ms": 4807,
       "h": "a02acf2272"
+    },
+    "comandante.curiosidad.alas": {
+      "ms": 11707,
+      "h": "efd53a49b0"
+    },
+    "comandante.curiosidad.ingles": {
+      "ms": 10807,
+      "h": "c8d4ca1e33"
+    },
+    "comandante.curiosidad.llave": {
+      "ms": 9007,
+      "h": "667717a70e"
+    },
+    "comandante.curiosidad.rayas": {
+      "ms": 12207,
+      "h": "1ab17a92c6"
+    },
+    "comandante.curiosidad.ventanilla": {
+      "ms": 10307,
+      "h": "b1b95cab07"
+    },
+    "comandante.curiosidad.viento": {
+      "ms": 9907,
+      "h": "e0d3ab6dda"
     },
     "comandante.descenso.hacia.ayolas": {
       "ms": 4407,
@@ -706,6 +946,18 @@
     "comandante.minutos.h90": {
       "ms": 2417,
       "h": "5df51208ec"
+    },
+    "comandante.mitad.camino": {
+      "ms": 5107,
+      "h": "289a0d252e"
+    },
+    "comandante.mitad.parte": {
+      "ms": 2272,
+      "h": "53ce129038"
+    },
+    "comandante.mitad.viaje": {
+      "ms": 5507,
+      "h": "5263053fd7"
     },
     "comandante.nivelMasTranquilo": {
       "ms": 7107,
@@ -2897,6 +3149,195 @@
     ],
     "inicio.mama.pasaje.bajando": [
       "inicio.mama.pasaje.bajando"
+    ],
+    "comandante.bienvenida.saludo.pasajeros.dias": [
+      "comandante.bienvenida.saludo.pasajeros.dias"
+    ],
+    "comandante.bienvenida.saludo.pasajeros.tardes": [
+      "comandante.bienvenida.saludo.pasajeros.tardes"
+    ],
+    "comandante.bienvenida.saludo.pasajeros.noches": [
+      "comandante.bienvenida.saludo.pasajeros.noches"
+    ],
+    "comandante.bienvenida.saludo.cabina.dias": [
+      "comandante.bienvenida.saludo.cabina.dias"
+    ],
+    "comandante.bienvenida.saludo.cabina.tardes": [
+      "comandante.bienvenida.saludo.cabina.tardes"
+    ],
+    "comandante.bienvenida.saludo.cabina.noches": [
+      "comandante.bienvenida.saludo.cabina.noches"
+    ],
+    "comandante.bienvenida.saludo.chicos.dias": [
+      "comandante.bienvenida.saludo.chicos.dias"
+    ],
+    "comandante.bienvenida.saludo.chicos.tardes": [
+      "comandante.bienvenida.saludo.chicos.tardes"
+    ],
+    "comandante.bienvenida.saludo.chicos.noches": [
+      "comandante.bienvenida.saludo.chicos.noches"
+    ],
+    "comandante.bienvenida.gracia.1": [
+      "comandante.bienvenida.gracia.1"
+    ],
+    "comandante.bienvenida.gracia.2": [
+      "comandante.bienvenida.gracia.2"
+    ],
+    "comandante.bienvenida.gracia.3": [
+      "comandante.bienvenida.gracia.3"
+    ],
+    "comandante.bienvenida.a.local": [
+      "comandante.bienvenida.a.local"
+    ],
+    "comandante.bienvenida.a.pettirossi": [
+      "comandante.bienvenida.a.pettirossi"
+    ],
+    "comandante.bienvenida.a.guarani": [
+      "comandante.bienvenida.a.guarani"
+    ],
+    "comandante.bienvenida.a.encarnacion": [
+      "comandante.bienvenida.a.encarnacion"
+    ],
+    "comandante.bienvenida.a.concepcion": [
+      "comandante.bienvenida.a.concepcion"
+    ],
+    "comandante.bienvenida.a.pedro-juan": [
+      "comandante.bienvenida.a.pedro-juan"
+    ],
+    "comandante.bienvenida.a.estigarribia": [
+      "comandante.bienvenida.a.estigarribia"
+    ],
+    "comandante.bienvenida.a.ayolas": [
+      "comandante.bienvenida.a.ayolas"
+    ],
+    "comandante.bienvenida.a.pilar": [
+      "comandante.bienvenida.a.pilar"
+    ],
+    "comandante.bienvenida.a.yvytu-rape": [
+      "comandante.bienvenida.a.yvytu-rape"
+    ],
+    "comandante.bienvenida.a.tenerife-norte": [
+      "comandante.bienvenida.a.tenerife-norte"
+    ],
+    "comandante.bienvenida.a.tenerife-sur": [
+      "comandante.bienvenida.a.tenerife-sur"
+    ],
+    "comandante.bienvenida.a.gran-canaria": [
+      "comandante.bienvenida.a.gran-canaria"
+    ],
+    "comandante.bienvenida.a.lanzarote": [
+      "comandante.bienvenida.a.lanzarote"
+    ],
+    "comandante.bienvenida.a.fuerteventura": [
+      "comandante.bienvenida.a.fuerteventura"
+    ],
+    "comandante.bienvenida.a.la-palma": [
+      "comandante.bienvenida.a.la-palma"
+    ],
+    "comandante.bienvenida.a.el-hierro": [
+      "comandante.bienvenida.a.el-hierro"
+    ],
+    "comandante.bienvenida.a.la-gomera": [
+      "comandante.bienvenida.a.la-gomera"
+    ],
+    "comandante.bienvenida.detalle.local": [
+      "comandante.bienvenida.detalle.local"
+    ],
+    "comandante.bienvenida.detalle.pettirossi": [
+      "comandante.bienvenida.detalle.pettirossi"
+    ],
+    "comandante.bienvenida.detalle.guarani": [
+      "comandante.bienvenida.detalle.guarani"
+    ],
+    "comandante.bienvenida.detalle.encarnacion": [
+      "comandante.bienvenida.detalle.encarnacion"
+    ],
+    "comandante.bienvenida.detalle.concepcion": [
+      "comandante.bienvenida.detalle.concepcion"
+    ],
+    "comandante.bienvenida.detalle.pedro-juan": [
+      "comandante.bienvenida.detalle.pedro-juan"
+    ],
+    "comandante.bienvenida.detalle.estigarribia": [
+      "comandante.bienvenida.detalle.estigarribia"
+    ],
+    "comandante.bienvenida.detalle.ayolas": [
+      "comandante.bienvenida.detalle.ayolas"
+    ],
+    "comandante.bienvenida.detalle.pilar": [
+      "comandante.bienvenida.detalle.pilar"
+    ],
+    "comandante.bienvenida.detalle.yvytu-rape": [
+      "comandante.bienvenida.detalle.yvytu-rape"
+    ],
+    "comandante.bienvenida.detalle.tenerife-norte": [
+      "comandante.bienvenida.detalle.tenerife-norte"
+    ],
+    "comandante.bienvenida.detalle.tenerife-sur": [
+      "comandante.bienvenida.detalle.tenerife-sur"
+    ],
+    "comandante.bienvenida.detalle.gran-canaria": [
+      "comandante.bienvenida.detalle.gran-canaria"
+    ],
+    "comandante.bienvenida.detalle.lanzarote": [
+      "comandante.bienvenida.detalle.lanzarote"
+    ],
+    "comandante.bienvenida.detalle.fuerteventura": [
+      "comandante.bienvenida.detalle.fuerteventura"
+    ],
+    "comandante.bienvenida.detalle.la-palma": [
+      "comandante.bienvenida.detalle.la-palma"
+    ],
+    "comandante.bienvenida.detalle.el-hierro": [
+      "comandante.bienvenida.detalle.el-hierro"
+    ],
+    "comandante.bienvenida.detalle.la-gomera": [
+      "comandante.bienvenida.detalle.la-gomera"
+    ],
+    "comandante.bienvenida.cierre.disfruten": [
+      "comandante.bienvenida.cierre.disfruten"
+    ],
+    "comandante.bienvenida.cierre.gracias": [
+      "comandante.bienvenida.cierre.gracias"
+    ],
+    "comandante.bienvenida.cierre.acomodense": [
+      "comandante.bienvenida.cierre.acomodense"
+    ],
+    "comandante.mitad.camino": [
+      "comandante.mitad.camino"
+    ],
+    "comandante.mitad.viaje": [
+      "comandante.mitad.viaje"
+    ],
+    "comandante.mitad.parte": [
+      "comandante.mitad.parte"
+    ],
+    "comandante.chicos.primeraVez": [
+      "comandante.chicos.primeraVez"
+    ],
+    "comandante.chicos.tripulacion": [
+      "comandante.chicos.tripulacion"
+    ],
+    "comandante.chicos.aterrizar": [
+      "comandante.chicos.aterrizar"
+    ],
+    "comandante.curiosidad.alas": [
+      "comandante.curiosidad.alas"
+    ],
+    "comandante.curiosidad.rayas": [
+      "comandante.curiosidad.rayas"
+    ],
+    "comandante.curiosidad.ventanilla": [
+      "comandante.curiosidad.ventanilla"
+    ],
+    "comandante.curiosidad.ingles": [
+      "comandante.curiosidad.ingles"
+    ],
+    "comandante.curiosidad.llave": [
+      "comandante.curiosidad.llave"
+    ],
+    "comandante.curiosidad.viento": [
+      "comandante.curiosidad.viento"
     ]
   }
 }

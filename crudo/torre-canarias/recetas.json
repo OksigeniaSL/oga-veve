@@ -1375,5 +1375,27 @@
     "torre.canario.solo.orbit",
     "lado.right",
     "torre.canario.solo.departingTraffic"
+  ],
+  "torre.canario.solo.desvioDerecha": [
+    "torre.canario.solo.desvioDerecha"
+  ],
+  "torre.canario.desvioDerecha": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.desvioDerecha"
+  ],
+  "torre.canario.solo.desvioIzquierda": [
+    "torre.canario.solo.desvioIzquierda"
+  ],
+  "torre.canario.desvioIzquierda": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.desvioIzquierda"
   ]
 }

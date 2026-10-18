@@ -286,11 +286,7 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * 11-10-2026 y el «hold position» el 17-10-2026; esperan el desvío que
  * aprueba el control en el ejercicio de la tormenta.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
-  // El desvío por la tormenta, del ejercicio: ver `PENDIENTE-VOCES-tormenta.md`.
-  "torre.desvioDerecha",
-  "torre.desvioIzquierda",
-]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice
