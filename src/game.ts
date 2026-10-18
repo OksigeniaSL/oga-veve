@@ -100,6 +100,7 @@ import {
   BASE as BASE_DE_LA_TORMENTA,
   CIMA as CIMA_DE_LA_TORMENTA,
   pasoPorEsteRumbo,
+  TOLERANCIA as TOLERANCIA_DEL_RODEO,
   type CierreDeTormenta,
   type Lado,
   type SucesoDeTormenta,
@@ -652,6 +653,47 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
  * respiro. Se repite, como en un simulador: no hace falta tocar nada.
  */
 const OTRA_VEZ_TRAS_LA_TORMENTA = 14;
+
+/**
+ * **Lo que espera una frase del ejercicio de la tormenta a que la boca quede
+ * libre**, s de pared. Pasado esto se pide igual, y espera en la cola de la
+ * boca lo que una orden de la torre. Ver `soltarLoDeLaTormenta`.
+ */
+const HUECO_DE_LA_TORMENTA = 3;
+
+/**
+ * Y lo más que se espera a saber cómo acabó una, s de pared: la red por si su
+ * boca no avisa nunca. La frase más larga del ejercicio dura unos quince.
+ */
+const TOPE_DE_UNA_FRASE_DE_LA_TORMENTA = 40;
+
+/** El respiro entre el «vamos otra vez» oído y volver a empezar, s. */
+const RESPIRO_TRAS_LA_TORMENTA = 2;
+
+/** Una frase del ejercicio de la tormenta esperando su turno. Ver `decirDeLaTormenta`. */
+interface FraseDeLaTormenta {
+  /**
+   * La que se dice y, detrás, las que la sustituyen si nombra lo que no se
+   * ve cuando le toca. Ver `conSuSinVer` en `flight/lo-que-se-nombra.ts`.
+   */
+  readonly claves: readonly (string | null | undefined)[];
+  readonly peso: Urgencia;
+  /** O lo que dice el control, ya montado: va en el mismo turno. */
+  readonly torre?: { readonly clave: string; readonly relleno: Record<string, string>; readonly texto: string };
+  /** Las de la misma familia se sustituyen: hablan de lo mismo, y vale la última. */
+  readonly familia?: string;
+  /** Si todavía vale cuando le toca. Sin esto, siempre. */
+  readonly vale?: () => boolean;
+  /** Lo que se hace al soltarla: su tarjeta, su rayo, su tira de radio. */
+  readonly alSoltar?: () => void;
+  /** Y al acabar: `oida` si sonó entera. */
+  readonly alAcabar?: (oida: boolean) => void;
+  readonly intentos: number;
+  /** Desde cuándo espera, s de pared. */
+  readonly desde: number;
+  /** De qué intento del ejercicio es: lo de uno anterior ya no se vuelve a pedir. */
+  readonly intento: number;
+}
 
 /**
  * **Cada cuánto se enciende la tormenta por dentro**, s, como poco y como
@@ -12201,10 +12243,7 @@ export class Game {
        * ella, y apagarlo con la tormenta delante sería decir lo contrario de
        * lo que se enseña. Ver `atenderALaTormenta`.
        */
-      turbulenciaPorPasar:
-        this.turbulenciaDelVuelo.porPasarTodavia ||
-        this.tormenta?.fase === "delante" ||
-        this.tormenta?.fase === "dentro",
+      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia || this.tormentaPorDelante,
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La
@@ -14900,7 +14939,14 @@ export class Game {
      * de pasaje, con las tomas grabadas, «¡cómo empuja!» llegaba volando y el
      * Teide pasaba de largo. Mientras habla, a su ritmo. Ver `acelerar`.
      */
-    const veces = this.inicio?.estado.hablando ? 1 : Math.min(this.aceleracion, caben);
+    /*
+     * Y lo mismo con lo que cuenta el ejercicio de la tormenta: con el vuelo a
+     * ocho veces, mientras sonaba la presentación pasaba minuto y medio de
+     * vuelo y se llegaba a la nube con la explicación sin empezar. Ver
+     * `soltarLoDeLaTormenta`.
+     */
+    const veces =
+      this.inicio?.estado.hablando || this.laTormentaHabla ? 1 : Math.min(this.aceleracion, caben);
     /*
      * **Con el modo inicio esperando, el mundo no da ni un paso**: se mira lo
      * que hace quien juega y se pinta el mismo mundo. Ver `esperarAlInicio`.
@@ -18676,6 +18722,10 @@ export class Game {
     this.comoSeRodeo = null;
     this.hastaElProximoRelampago = RELAMPAGUEA_CADA[0];
     this.mojarseEnLaTormenta(0);
+    // Y lo que esperaba decirse del intento de antes, fuera: es otro.
+    this.porDecirDeLaTormenta = [];
+    this.laTormentaHabla = null;
+    this.intentoDeLaTormenta++;
   }
 
   /** Hacia dónde va el avión de verdad, que con viento no es hacia donde mira. */
@@ -18695,6 +18745,7 @@ export class Game {
     this.relampaguearLaTormenta(dt);
     // Como los de avería: no se cuenta nada encima del parte.
     if (this.tarjetaDelTiempo?.abierta) return;
+    this.soltarLoDeLaTormenta();
     const s = this.flight.state;
     this.mojarseEnLaTormenta(
       s.position.y < CIMA_DE_LA_LLUVIA
@@ -18731,96 +18782,297 @@ export class Game {
     return { n: String(m.n), u: m.unidad };
   }
 
+  /**
+   * **Lo que el ejercicio de la tormenta tiene que decir, en su orden y de uno
+   * en uno**, y cuándo se suelta cada cosa a su boca.
+   *
+   * Se pedía todo a la boca en cuanto pasaba, con los cuatro segundos de un
+   * aviso, y con las tomas grabadas se perdía lo importante. Medido en el banco
+   * de la tormenta, con el reloj de pared al lado:
+   *
+   * - la presentación dura once segundos, la explicación se pedía detrás y
+   *   **caducaba esperando** —«ejercicio.tormenta.radar: caducó esperando»— en
+   *   cuanto la torre tomaba la palabra con el desvío;
+   * - el «girá más» y el «así» **no cabían en la cola**, llena de lo que
+   *   esperaba detrás de la presentación;
+   * - y el rayo de lejos caducaba detrás de la fase y de la torre.
+   *
+   * Con el reloj del juego acelerado del banco se veía antes, pero no era cosa
+   * del banco: lo que el ejercicio cuenta va **detrás de lo anterior que el
+   * ejercicio ya contó**, no a la hora que marca un reloj. Así que aquí se
+   * espera a que lo anterior haya sonado —o se haya caído, o no tenga toma—, y
+   * la boca libre, y solo entonces se pide lo siguiente. Lo que ya no vale
+   * cuando le toca —el «girá más» con el rumbo ya bueno, el rayo de lejos con
+   * la tormenta encima— se deja; lo que se cae por el camino se vuelve a pedir.
+   * Ver `soltarLoDeLaTormenta`.
+   */
+  private porDecirDeLaTormenta: FraseDeLaTormenta[] = [];
+  /** La frase del ejercicio que está en la boca, si hay una, y desde cuándo (pared). */
+  private laTormentaHabla: { clave: string; desde: number } | null = null;
+  /**
+   * **Cuántas veces se ha empezado el ejercicio.** Al volver a empezar, la
+   * boca corta lo que sonaba del intento de antes, y su aviso de «cortada»
+   * llegaba después: se volvía a pedir dentro del intento nuevo, y la
+   * explicación de antes tapaba la de ahora —«repetida»—. Medido en el banco
+   * de la tormenta con las tomas. Lo que avisa de otro intento no cuenta.
+   */
+  private intentoDeLaTormenta = 0;
+
+  /**
+   * Pide una frase del ejercicio de la tormenta. Con `familia`, la nueva
+   * sustituye a la que espere de la misma: el «girá más» y el «así» hablan del
+   * rumbo de ahora, y el de hace un rato ya no.
+   */
+  private decirDeLaTormenta(f: Omit<FraseDeLaTormenta, "intentos" | "desde" | "intento">): void {
+    if (f.familia)
+      this.porDecirDeLaTormenta = this.porDecirDeLaTormenta.filter((p) => p.familia !== f.familia);
+    this.porDecirDeLaTormenta.push({
+      ...f,
+      intentos: 0,
+      desde: this.relojDePared,
+      intento: this.intentoDeLaTormenta,
+    });
+  }
+
+  /**
+   * **Suelta lo siguiente que espera**, si toca: lo anterior ya sonó y la boca
+   * está libre —o lleva esperando su hueco más de `HUECO_DE_LA_TORMENTA`, y
+   * entonces se pide igual, que aguanta lo que una orden: ver `esDeLaTormenta`
+   * en `audio/boca.ts`—. Todo con el reloj de pared, que es el de las voces.
+   */
+  private soltarLoDeLaTormenta(): void {
+    const ahora = this.relojDePared;
+    if (this.laTormentaHabla) {
+      // La red: una frase no se queda colgada para siempre si su boca calla.
+      if (ahora - this.laTormentaHabla.desde < TOPE_DE_UNA_FRASE_DE_LA_TORMENTA) return;
+      this.apuntarCanto(`${this.laTormentaHabla.clave}: sin noticias, se sigue`);
+      this.laTormentaHabla = null;
+    }
+    while (this.porDecirDeLaTormenta.length) {
+      const f = this.porDecirDeLaTormenta[0]!;
+      if (f.vale && !f.vale()) {
+        this.porDecirDeLaTormenta.shift();
+        this.apuntarCanto(`${f.claves[0]}: ya no vale, no se pide`);
+        continue;
+      }
+      if (BOCA.ocupada && ahora - f.desde < HUECO_DE_LA_TORMENTA) return;
+      this.porDecirDeLaTormenta.shift();
+      f.alSoltar?.();
+      if (this.soltarUnaDeLaTormenta(f)) return;
+    }
+  }
+
+  /** Pide una a su boca; `false` si no había nada que decir con voz. */
+  private soltarUnaDeLaTormenta(f: FraseDeLaTormenta): boolean {
+    const acaba = (oida: boolean): void => f.alAcabar?.(oida);
+    const alSonar = (clave: string): AlSonar => (que) => {
+      if (que === "empieza") return;
+      // Lo de un intento anterior no toca nada de este. Ver `intentoDeLaTormenta`.
+      if (f.intento !== this.intentoDeLaTormenta) return;
+      if (this.laTormentaHabla?.clave === clave) this.laTormentaHabla = null;
+      /*
+       * **Y lo que se cae por el camino, otra vez**, delante de lo demás: la
+       * explicación no puede perderse. Dos veces como mucho, y solo si sigue
+       * valiendo.
+       */
+      if ((que === "se-cae" || que === "cortada") && f.intentos < 2 && (f.vale?.() ?? true)) {
+        this.porDecirDeLaTormenta.unshift({ ...f, intentos: f.intentos + 1, desde: this.relojDePared });
+        this.apuntarCanto(`${clave}: ${que}, se vuelve a pedir`);
+        return;
+      }
+      acaba(que === "acaba");
+    };
+    if (f.torre) {
+      const m = f.torre;
+      if (!this.instructor.vozDe(m.clave, m.relleno)) {
+        this.apuntarCanto(`${m.clave}: sin grabar, se lee`);
+        acaba(false);
+        return false;
+      }
+      this.laTormentaHabla = { clave: m.clave, desde: this.relojDePared };
+      this.torre.decir(m.texto, m.clave, "mando", m.relleno, alSonar(m.clave));
+      return true;
+    }
+    /*
+     * La que se puede decir **cuando le toca**, no cuando se pidió: la que
+     * nombra el radar, solo con la carta a la vista; si no, la misma sin
+     * nombrarla. Ver `SIN_VER` en `flight/lo-que-se-nombra.ts`.
+     */
+    const clave = laQueSePuedeDecir(f.claves, this.seVe) as TranslationKey | null;
+    if (!clave) {
+      acaba(false);
+      return false;
+    }
+    if (!this.instructor.vozDe(clave)) {
+      this.apuntarCanto(`${clave}: sin grabar, se calla`);
+      acaba(false);
+      return false;
+    }
+    this.laTormentaHabla = { clave, desde: this.relojDePared };
+    this.instructor.decir(t(clave), clave, f.peso, undefined, alSonar(clave));
+    return true;
+  }
+
+  /** Si con el rumbo de ahora se pasa a su margen del rojo. Ver `pasoPorEsteRumbo`. */
+  private pasaConMargen(): boolean {
+    const t = this.tormenta;
+    if (!t) return false;
+    const s = this.flight.state;
+    return (
+      pasoPorEsteRumbo(s.position.x, s.position.z, this.rumboDeLaTrayectoria(), t.escena.celda)
+        .margen >=
+      MARGEN_DE_RODEO * TOLERANCIA_DEL_RODEO
+    );
+  }
+
+  /** La tormenta, todavía por rodear: delante, dentro o recién salida. */
+  private get tormentaPorDelante(): boolean {
+    const f = this.tormenta?.fase;
+    return f === "delante" || f === "dentro" || f === "fuera";
+  }
+
   private atenderALaTormenta(suceso: SucesoDeTormenta): void {
     const explica = laInstructoraLoExplica(this.tier.avisos);
+    const fase = (...fases: string[]) => (): boolean => fases.includes(this.tormenta?.fase ?? "");
     switch (suceso.que) {
-      case "presentar":
+      case "presentar": {
         // El cartel, ya: cerca de una tormenta el aire se mueve.
         this.cinturon.ponerMando("puesto");
-        return this.presentarElEjercicio();
+        // La tarjeta de siempre de un ejercicio; la voz, por su turno.
+        const e = this.tormenta!.ejercicio;
+        const clave = `ejercicio.${e.id}.antes` as TranslationKey;
+        this.hud.senal.mostrar(
+          DIBUJO_DEL_EJERCICIO[e.id],
+          this.rotulo(clave, "palabra.practica"),
+          null,
+          { segundos: 10, prioridad: IMPORTANTE },
+        );
+        this.decirDeLaTormenta({ claves: [clave], peso: "mando" });
+        return;
+      }
       case "explicar": {
         const derecha = suceso.lado === "derecha";
         const lejos = this.distanciaDeLaTormenta(MARGEN_DE_RODEO);
-        this.hud.senal.mostrar(
-          derecha ? "vuelta-derecha" : "vuelta-izquierda",
-          this.rotuloDeLaTormenta("palabra.rodeala", () =>
-            t(
-              derecha ? "tormenta.rotulo.rodearDerecha" : "tormenta.rotulo.rodearIzquierda",
-              lejos,
+        if (!explica) {
+          this.hud.senal.mostrar(
+            derecha ? "vuelta-derecha" : "vuelta-izquierda",
+            this.rotuloDeLaTormenta("palabra.rodeala", () =>
+              t(derecha ? "tormenta.rotulo.rodearDerecha" : "tormenta.rotulo.rodearIzquierda", lejos),
             ),
-          ),
-          null,
-          { segundos: 12, prioridad: IMPORTANTE },
-        );
-        if (!explica) return;
+            null,
+            { segundos: 12, prioridad: IMPORTANTE },
+          );
+          return;
+        }
         /*
-         * Con los números, con el radar y las veinte millas; si el radar no
-         * está a la vista, lo mismo sin nombrarlo. Ver `lo-que-se-nombra.ts`.
+         * Con los números, con el radar y las veinte millas; y si el radar no
+         * está a la vista cuando le toca, lo mismo sin nombrarlo. La tarjeta,
+         * con la voz: es lo que se mira mientras se oye.
          */
-        const clave = canalesDe(this.tier.avisos).cifra
-          ? laQueSePuedeDecir(
-              ["ejercicio.tormenta.radar", "ejercicio.tormenta.porQue"],
-              this.seVe,
-            )
-          : "ejercicio.tormenta.porQue";
-        if (clave) this.decirDelEjercicio(clave as TranslationKey, "normal");
+        this.decirDeLaTormenta({
+          claves: canalesDe(this.tier.avisos).cifra
+            ? conSuSinVer("ejercicio.tormenta.radar")
+            : ["ejercicio.tormenta.porQue"],
+          peso: "mando",
+          vale: fase("delante"),
+          alSoltar: () =>
+            this.hud.senal.mostrar(
+              derecha ? "vuelta-derecha" : "vuelta-izquierda",
+              this.rotuloDeLaTormenta("palabra.rodeala", () =>
+                t(derecha ? "tormenta.rotulo.rodearDerecha" : "tormenta.rotulo.rodearIzquierda", lejos),
+              ),
+              null,
+              { segundos: 14, prioridad: IMPORTANTE },
+            ),
+        });
         return;
       }
       case "avisar":
         return this.avisarDelRodeo(suceso.lado);
       case "girar": {
         const derecha = suceso.lado === "derecha";
-        const s = this.flight.state;
-        const ahora = this.distanciaDeLaTormenta(
-          pasoPorEsteRumbo(
-            s.position.x,
-            s.position.z,
-            this.rumboDeLaTrayectoria(),
-            this.tormenta!.escena.celda,
-          ).margen,
-        );
-        this.hud.senal.mostrar(
-          derecha ? "vuelta-derecha" : "vuelta-izquierda",
-          this.rotuloDeLaTormenta("palabra.masLejos", () => t("tormenta.rotulo.masLejos", ahora)),
-          null,
-          { segundos: 8, prioridad: IMPORTANTE },
-        );
-        if (explica)
-          this.decirDelEjercicio(
-            derecha ? "ejercicio.tormenta.masDerecha" : "ejercicio.tormenta.masIzquierda",
-            "normal",
+        const tarjeta = (): void => {
+          const s = this.flight.state;
+          const ahora = this.distanciaDeLaTormenta(
+            pasoPorEsteRumbo(
+              s.position.x,
+              s.position.z,
+              this.rumboDeLaTrayectoria(),
+              this.tormenta!.escena.celda,
+            ).margen,
           );
+          this.hud.senal.mostrar(
+            derecha ? "vuelta-derecha" : "vuelta-izquierda",
+            this.rotuloDeLaTormenta("palabra.masLejos", () => t("tormenta.rotulo.masLejos", ahora)),
+            null,
+            { segundos: 8, prioridad: IMPORTANTE },
+          );
+        };
+        if (!explica) return tarjeta();
+        this.decirDeLaTormenta({
+          claves: [derecha ? "ejercicio.tormenta.masDerecha" : "ejercicio.tormenta.masIzquierda"],
+          peso: "normal",
+          familia: "rumbo",
+          // Si cuando le toca ya va bien, no se le pide girar más.
+          vale: () => fase("delante")() && !this.pasaConMargen(),
+          alSoltar: tarjeta,
+        });
         return;
       }
       case "asiVa": {
-        const pasa = this.distanciaDeLaTormenta(suceso.margen);
-        this.hud.senal.mostrar(
-          "corregido",
-          this.rotuloDeLaTormenta("palabra.asi", () => t("tormenta.rotulo.asiVa", pasa)),
-          null,
-          { segundos: 6 },
-        );
-        this.avisar("success");
-        if (explica) this.decirDelEjercicio("ejercicio.tormenta.asiVa", "normal");
+        const tarjeta = (): void => {
+          const pasa = this.distanciaDeLaTormenta(suceso.margen);
+          this.hud.senal.mostrar(
+            "corregido",
+            this.rotuloDeLaTormenta("palabra.asi", () => t("tormenta.rotulo.asiVa", pasa)),
+            null,
+            { segundos: 6 },
+          );
+          this.avisar("success");
+        };
+        if (!explica) return tarjeta();
+        this.decirDeLaTormenta({
+          claves: ["ejercicio.tormenta.asiVa"],
+          peso: "normal",
+          familia: "rumbo",
+          // Y el «así», solo si sigue yendo así.
+          vale: () => fase("delante")() && this.pasaConMargen(),
+          alSoltar: tarjeta,
+        });
         return;
       }
-      case "rayoLejos":
-        this.caeUnRayo(false);
-        this.hud.senal.mostrar(
-          "tormenta",
-          this.rotuloDeLaTormenta("palabra.rayo", () => t("tormenta.rotulo.rayoLejos")),
-          null,
-          { segundos: 7 },
-        );
-        if (explica) this.decirDelEjercicio("ejercicio.tormenta.rayoLejos", "normal");
+      case "rayoLejos": {
+        /*
+         * **El rayo, cuando le toca a su frase**: se ve y en seguida se oye
+         * «¿viste el destello?». Con la nube todavía por delante o al lado; si
+         * ya se entró, de lo que se habla es de lo de dentro.
+         */
+        const cae = (): void => {
+          this.caeUnRayo(false);
+          this.hud.senal.mostrar(
+            "tormenta",
+            this.rotuloDeLaTormenta("palabra.rayo", () => t("tormenta.rotulo.rayoLejos")),
+            null,
+            { segundos: 7 },
+          );
+        };
+        if (!explica) return cae();
+        this.decirDeLaTormenta({
+          claves: ["ejercicio.tormenta.rayoLejos"],
+          peso: "normal",
+          vale: fase("delante"),
+          alSoltar: cae,
+        });
         return;
+      }
       case "entra":
         /*
          * **Dentro, lo que se hace**: el cartel, alas derechas y seguir
          * derecho —dar la vuelta dentro es más tiempo dentro—. Lo que sacude,
          * llueve y graniza lo pone la célula, sin que nadie lo pida. En los
          * cuatro peldaños: es el momento del ejercicio en que hace falta oír a
-         * alguien que no se acelera.
+         * alguien que no se acelera. Y delante de lo que esperara de fuera,
+         * que ya no vale.
          */
         this.cinturon.ponerMando("puesto");
         this.hud.senal.mostrar(
@@ -18829,9 +19081,10 @@ export class Game {
           null,
           { segundos: 10, prioridad: IMPORTANTE },
         );
-        this.decirDelEjercicio("ejercicio.tormenta.adentro", "mando");
+        this.decirDeLaTormenta({ claves: ["ejercicio.tormenta.adentro"], peso: "mando" });
         return;
       case "rayoEnElAvion":
+        // El golpe, ya: es un suceso. La explicación, detrás de lo que se esté contando.
         this.caeUnRayo(true);
         this.hud.senal.mostrar(
           "corregido",
@@ -18839,11 +19092,10 @@ export class Game {
           null,
           { segundos: 8, prioridad: IMPORTANTE },
         );
-        // Detrás del golpe, no encima: un suceso, una voz.
-        this.agenda.luego(1.2, () => {
-          const fase = this.tormenta?.fase;
-          if (fase === "dentro" || fase === "fuera")
-            this.decirDelEjercicio("ejercicio.tormenta.rayoEnElAvion", "mando");
+        this.decirDeLaTormenta({
+          claves: ["ejercicio.tormenta.rayoEnElAvion"],
+          peso: "mando",
+          vale: fase("dentro", "fuera"),
         });
         return;
       case "sale": {
@@ -18851,6 +19103,7 @@ export class Game {
          * **Y otra vez**, sin castigo: se cuenta qué pasó y por qué no se
          * entra, y se vuelve a empezar solo, como en un simulador. Sin tocar
          * nada: a los cuatro años no se busca un botón para volver a probar.
+         * Cuando se haya oído: lo que espera a una voz espera a que suene.
          */
         this.hud.senal.mostrar(
           "media-vuelta",
@@ -18858,11 +19111,16 @@ export class Game {
           null,
           { segundos: OTRA_VEZ_TRAS_LA_TORMENTA, prioridad: IMPORTANTE },
         );
-        this.decirDelEjercicio("ejercicio.tormenta.salimos", "mando");
         const esta = this.tormenta;
-        this.agenda.luego(OTRA_VEZ_TRAS_LA_TORMENTA, () => {
-          if (this.tormenta === esta && esta?.fase === "fuera" && !this.percance)
-            this.resetFlight();
+        this.decirDeLaTormenta({
+          claves: ["ejercicio.tormenta.salimos"],
+          peso: "mando",
+          alAcabar: (oida) =>
+            // Oída, un respiro; sin voz, el rato de leer la tarjeta.
+            this.agenda.luego(oida ? RESPIRO_TRAS_LA_TORMENTA : OTRA_VEZ_TRAS_LA_TORMENTA, () => {
+              if (this.tormenta === esta && esta?.fase === "fuera" && !this.percance)
+                this.resetFlight();
+            }),
         });
         return;
       }
@@ -18870,7 +19128,8 @@ export class Game {
         /*
          * **Rodeada**: la fiesta, en los cuatro peldaños. Con margen, el
          * elogio entero; más cerca, que la rodeó sin entrar —bien— y la
-         * próxima más lejos. Ninguno es un reproche.
+         * próxima más lejos. Ninguno es un reproche. Y lo que esperara de
+         * antes —el «girá más», el rayo— ya no toca.
          */
         this.comoSeRodeo = suceso.conMargen ? "rodeada" : "rodeadaCerca";
         const pasa = this.distanciaDeLaTormenta(suceso.margen);
@@ -18886,10 +19145,12 @@ export class Game {
           { segundos: 10, prioridad: IMPORTANTE },
         );
         this.avisar("achieved");
-        this.decirDelEjercicio(
-          suceso.conMargen ? "ejercicio.tormenta.bien" : "ejercicio.tormenta.bienCerca",
-          "normal",
-        );
+        this.decirDeLaTormenta({
+          claves: [suceso.conMargen ? "ejercicio.tormenta.bien" : "ejercicio.tormenta.bienCerca"],
+          peso: "normal",
+        });
+        // El cartel, otra vez de quien lo decide siempre: la tormenta ya queda atrás.
+        this.cinturon.ponerMando("auto");
         // Y se avisa al control, que lo pidió: ya lejos del mal tiempo.
         if (this.conCifrasEnRadio() && this.hayTorreQueHable())
           this.hud.radio(`${this.miIndicativo.dicho}, clear of weather`, 6, true);
@@ -18911,12 +19172,14 @@ export class Game {
    *
    * De Taguató para arriba, con su fraseología en la tira de la radio: quien
    * vuela pide el desvío, y el control lo aprueba y le pide que avise al
-   * dejar atrás el mal tiempo. La respuesta del control se oye cuando tenga su
-   * toma; mientras, se lee. En los peldaños de abajo, la instructora cuenta
-   * qué se hace y por qué.
+   * dejar atrás el mal tiempo. Va **en su turno**, detrás de la explicación
+   * —primero se sabe por dónde, después se pide—, y la tira sale cuando habla
+   * el control. En los peldaños de abajo, la instructora cuenta qué se hace y
+   * por qué.
    */
   private avisarDelRodeo(lado: Lado): void {
     this.cinturon.ponerMando("puesto");
+    const delante = (): boolean => this.tormenta?.fase === "delante";
     if (this.conCifrasEnRadio() && this.hayTorreQueHable()) {
       const yo = this.miIndicativo;
       const millas = Math.round(MARGEN_DE_RODEO / MILLA);
@@ -18929,13 +19192,23 @@ export class Game {
       const contesta =
         montada?.texto ??
         `${yo.dicho}, deviation ${hacia} of route approved, advise clear of weather`;
-      this.hud.radio(`${pide} — ${contesta}`, 10, true);
-      if (montada && this.instructor.vozDe(montada.clave, montada.relleno))
-        this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
-      else this.apuntarCanto(`${montada?.clave ?? "torre.desvio"}: sin grabar, se lee`);
+      const tira = (): void => this.hud.radio(`${pide} — ${contesta}`, 10, true);
+      if (montada)
+        this.decirDeLaTormenta({
+          claves: [],
+          peso: "mando",
+          torre: montada,
+          vale: delante,
+          alSoltar: tira,
+        });
+      else tira();
     }
     if (laInstructoraLoExplica(this.tier.avisos))
-      this.decirDelEjercicio("ejercicio.tormenta.avisamos", "normal");
+      this.decirDeLaTormenta({
+        claves: ["ejercicio.tormenta.avisamos"],
+        peso: "normal",
+        vale: delante,
+      });
   }
 
   /**
@@ -19053,7 +19326,7 @@ export class Game {
     if (como === "otraVez") return;
     const clave: TranslationKey =
       como === "rodeada" ? "ejercicio.tormenta.bien" : "ejercicio.tormenta.bienCerca";
-    this.decirDelEjercicio("ejercicio.bien", "normal");
+    this.decirDeLaTormenta({ claves: ["ejercicio.bien"], peso: "normal" });
     this.avisar("achieved");
     this.agenda.luego(TARDA_EL_FINAL + 2, () => {
       if (this.tormenta?.cierre !== como) return;
@@ -20467,6 +20740,11 @@ export class Game {
       alguienHabla:
         // Y en un descenso de emergencia no se mira el paisaje: se baja.
         (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) ||
+        /*
+         * Ni con la tormenta del ejercicio por rodear: medido con las tomas,
+         * la comandante señalaba el Ypoá entre el desvío y el rayo.
+         */
+        this.tormentaPorDelante ||
         !this.huecos.hayHueco,
     };
   }
@@ -25586,7 +25864,13 @@ export class Game {
       servicioDicho: this.megafonia.yaDicho("tripulacion.servicio"),
       bajando: this.megafonia.bajandoAlDestino,
       cartelPuesto: this.cinturonPuesto,
-      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia,
+      /*
+       * **Y con la tormenta del ejercicio por rodear, nada que contar**: la
+       * cabina está a lo suyo, que es rodearla, y lo que se oye es eso. Con
+       * las tomas grabadas, un dato de crucero se metía entre la explicación
+       * y el rayo.
+       */
+      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia || this.tormentaPorDelante,
       // La cabina estéril, mirada solo en crucero: fuera de él ya no toca nada.
       enFaseDeTrabajo: enCrucero ? enFaseDeTrabajo(this.momentoDeMirar()) : true,
       enEmergencia: enEmergencia || this.sinMotor,
