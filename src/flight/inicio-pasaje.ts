@@ -1468,6 +1468,7 @@ export class VueloDePasaje {
     this.kit.paso(dt, {
       megafonia: this.megafoniaSuena || this.dicho("aproximacion"),
       callada: this.charla.callada,
+      pared: this.pared(),
     });
     /*
      * Lo que un juego quería decir y no le llegó el turno se calla con él: al

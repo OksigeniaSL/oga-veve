@@ -21,9 +21,11 @@ import {
   LO_QUE_HAY,
   PARADAS,
   PARA_QUE_SIRVE,
+  NO_SE_REPITE,
   PIEZAS,
   type Pieza,
 } from "./kit-de-viaje";
+import { NO_REPETIR } from "../audio/boca";
 
 /** Un azar con semilla, para que lo que falla se pueda repetir. */
 function azar(semilla: number): () => number {
@@ -262,6 +264,52 @@ describe("el kit", () => {
     expect(k.ocupaAAra).toBe(false);
     k.tocado();
     expect(k.ocupaAAra).toBe(true);
+  });
+});
+
+describe("lo que la boca tiraría por repetido, el kit no lo pide", () => {
+  /** Cuándo pidió el kit cada vez la frase de empezar, quieto y con la escena acelerada `x` veces. */
+  function vecesDeEmpezar(x: number, segundos: number): number[] {
+    const k = new KitDeViaje();
+    k.dar();
+    k.abrir();
+    k.elegir("piezas");
+    const veces: number[] = [];
+    for (let t = 0; t < segundos; t += 0.5) {
+      const pared = t / x;
+      k.paso(0.5, { megafonia: false, callada: true, pared });
+      for (const l of k.tomarLoQueDecir())
+        if (l.clave === DICHO_DE_LAS_PIEZAS.empezar.clave) veces.push(pared);
+    }
+    return veces;
+  }
+
+  it("deja más que la boca entre dos veces la misma frase", () => {
+    expect(NO_SE_REPITE * 1000).toBeGreaterThan(NO_REPETIR);
+  });
+
+  it("quieto, el recordatorio vuelve, pero nunca antes de que la boca lo deje sonar", () => {
+    for (const x of [1, 4, 12]) {
+      const veces = vecesDeEmpezar(x, 240 * x);
+      expect(veces.length, `×${x}`).toBeGreaterThan(1);
+      for (let i = 1; i < veces.length; i++)
+        expect(veces[i]! - veces[i - 1]!, `×${x}`).toBeGreaterThanOrEqual(NO_SE_REPITE);
+    }
+  });
+
+  it("y al volver a abrir el juego enseguida, no se repite lo de empezar", () => {
+    const k = new KitDeViaje();
+    k.dar();
+    k.abrir();
+    k.tomarLoQueDecir();
+    k.elegir("piezas");
+    k.paso(0.5, { megafonia: false, callada: true, pared: 1 });
+    expect(claves(k.tomarLoQueDecir())).toContain(DICHO_DE_LAS_PIEZAS.empezar.clave);
+    k.cerrar();
+    k.abrir();
+    k.elegir("piezas");
+    k.paso(0.5, { megafonia: false, callada: true, pared: 6 });
+    expect(claves(k.tomarLoQueDecir())).not.toContain(DICHO_DE_LAS_PIEZAS.empezar.clave);
   });
 });
 

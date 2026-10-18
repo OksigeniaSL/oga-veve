@@ -355,6 +355,22 @@ export class JuegoDelCamino extends Juego<Parada> {
 const SE_QUEDA_EL_FINAL = 8;
 
 /**
+ * **Lo menos entre dos veces la misma frase**, s del reloj de la voz.
+ *
+ * La boca no repite una frase antes de veinticinco segundos —`NO_REPETIR` en
+ * `audio/boca.ts`— y la tira como «repetida» sin que suene ni se lea. El kit
+ * la volvía a pedir antes: el «¿me ayudás a armar el avión?» de recordatorio
+ * llegaba a los veinticuatro segundos del de abrir el juego, y al volver a
+ * abrirlo enseguida, otra vez. Así que el kit no la pide: lo que brilla para
+ * ayudar sigue brillando, que la voz no es nunca el único canal.
+ *
+ * Con el reloj de la voz y no con el de la escena, porque la boca cuenta en
+ * el de pared, y con el juego acelerado —el de los bancos— veinticinco
+ * segundos de escena son tres de pared.
+ */
+export const NO_SE_REPITE = 30;
+
+/**
  * **Y cuánto sin tocar nada para darlo por olvidado**, s: un kit abierto que
  * nadie toca no es alguien jugando, y la escena vuelve a contar lo suyo.
  * Una espera sin salida es un vuelo callado: ver `ocupaAAra`.
@@ -387,6 +403,10 @@ export class KitDeViaje {
   private readonly hechos = new Set<JuegoDelKit>();
   private terminadoDesde: number | null = null;
   private reloj = 0;
+  /** El reloj de la voz, s. Ver `NO_SE_REPITE`. */
+  private pared = 0;
+  /** Cuándo se pidió cada frase por última vez, en el reloj de la voz. */
+  private readonly pedidaEn = new Map<string, number>();
   private tocadoA = 0;
   private readonly porDecir: Linea[] = [];
   /** Si la conversación de la escena está callada: ver `hayHueco`. */
@@ -502,8 +522,12 @@ export class KitDeViaje {
    * reloj de la ayuda. Y un juego terminado se queda a la vista su rato y
    * vuelve a elegir.
    */
-  paso(dt: number, s: { readonly megafonia: boolean; readonly callada: boolean }): void {
+  paso(
+    dt: number,
+    s: { readonly megafonia: boolean; readonly callada: boolean; readonly pared?: number },
+  ): void {
     this.reloj += dt;
+    this.pared = s.pared ?? this.reloj;
     this.pausado = this.abierto && s.megafonia;
     this.callada = s.callada;
     if (!this.abierto || this.pausado || !this.actual) return;
@@ -529,7 +553,12 @@ export class KitDeViaje {
   /** **Lo que el kit quiere decir**, en orden: lo suyo y lo del juego. */
   tomarLoQueDecir(): Linea[] {
     if (!this.abierto) return [];
-    return [...this.porDecir.splice(0), ...(this.actual?.tomarLoQueDecir() ?? [])];
+    return [...this.porDecir.splice(0), ...(this.actual?.tomarLoQueDecir() ?? [])].filter((l) => {
+      const antes = this.pedidaEn.get(l.clave);
+      if (antes !== undefined && this.pared - antes < NO_SE_REPITE) return false;
+      this.pedidaEn.set(l.clave, this.pared);
+      return true;
+    });
   }
 }
 
