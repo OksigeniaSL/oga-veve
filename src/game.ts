@@ -13076,10 +13076,16 @@ export class Game {
     }
     selloCelebrado(cual);
     this.sellosCelebrados.push({ sello: cual, enTierra: s.onGround, porElSuelo: s.groundSpeed });
-    this.hud.senal.mostrar(`sello-${cual}`, nombreDelSello(cual), null, {
-      segundos: SE_QUEDA_EL_ARO * 2,
-      prioridad: IMPORTANTE,
-    });
+    /*
+     * El nombre, desde el peldaño de la palabra, como cualquier rótulo de la
+     * tarjeta: en el que no lee, el dibujo es el mensaje entero.
+     */
+    this.hud.senal.mostrar(
+      `sello-${cual}`,
+      canalesDe(this.tier.avisos).texto ? nombreDelSello(cual) : "",
+      null,
+      { segundos: SE_QUEDA_EL_ARO * 2, prioridad: IMPORTANTE },
+    );
     this.avisar("achieved");
     const clave = claveDelSello(cual);
     if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);

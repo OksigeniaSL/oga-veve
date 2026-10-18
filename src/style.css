@@ -2299,11 +2299,15 @@ body {
   padding: 0;
 }
 
+/* Seis por fila, que es la de escuela entera: una altura, una fila, quepa
+   en la tablet o en el teléfono. Las de cinco quedan centradas. */
 .album__sitio {
   display: grid;
   justify-items: center;
   align-content: start;
-  width: 84px;
+  flex: 0 0 calc((100% - 5 * 6px) / 6);
+  max-width: 84px;
+  min-width: 0;
 }
 
 /* El sello se toca para oír qué es: un botón sin pinta de botón, del tamaño
@@ -2336,8 +2340,9 @@ body {
    opaca. La forma del aro dice lo mismo para quien no distingue colores. */
 .album .sello-nombrado {
   display: block;
-  width: 72px;
-  height: 72px;
+  width: 100%;
+  max-width: 72px;
+  height: auto;
   opacity: 0.9;
 }
 
@@ -2355,8 +2360,9 @@ body {
 
 .album__vacio {
   display: block;
-  width: 72px;
-  height: 72px;
+  width: calc(100% - 4px);
+  max-width: 72px;
+  height: auto;
   margin: 2px;
   color: rgba(80, 64, 40, 0.32);
 }
@@ -2370,18 +2376,7 @@ body {
   text-align: center;
 }
 
-/* En un teléfono, un poco más chicos: que quepa una fila entera de escuela. */
 @media (max-width: 520px) {
-  .album__sitio {
-    width: 64px;
-  }
-
-  .album .sello-nombrado,
-  .album__vacio {
-    width: 56px;
-    height: 56px;
-  }
-
   .album__nombre {
     font-size: 11px;
   }
