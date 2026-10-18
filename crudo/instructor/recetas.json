@@ -1773,5 +1773,68 @@
   ],
   "vuelo.proponeIrseSalidaTapada": [
     "vuelo.proponeIrseSalidaTapada"
+  ],
+  "vuelo.consejo.masGasSenda.sinVer": [
+    "vuelo.consejo.masGasSenda.sinVer"
+  ],
+  "vuelo.consejo.menosGasSenda.sinVer": [
+    "vuelo.consejo.menosGasSenda.sinVer"
+  ],
+  "vuelo.consejo.nivelarPerfil.sinVer": [
+    "vuelo.consejo.nivelarPerfil.sinVer"
+  ],
+  "vuelo.consejo.aerofrenosPerfil.sinVer": [
+    "vuelo.consejo.aerofrenosPerfil.sinVer"
+  ],
+  "vuelo.consejo.masGasPerfil.sinVer": [
+    "vuelo.consejo.masGasPerfil.sinVer"
+  ],
+  "vuelo.consejo.menosGasPerfil.sinVer": [
+    "vuelo.consejo.menosGasPerfil.sinVer"
+  ],
+  "vuelo.consejo.aerofrenos.sinVer": [
+    "vuelo.consejo.aerofrenos.sinVer"
+  ],
+  "vuelo.consejo.narizArribaMarca.sinVer": [
+    "vuelo.consejo.narizArribaMarca.sinVer"
+  ],
+  "vuelo.paso.subir.sinVer": [
+    "vuelo.paso.subir.sinVer"
+  ],
+  "vuelo.paso.acelerarGas.sinVer": [
+    "vuelo.paso.acelerarGas.sinVer"
+  ],
+  "vuelo.paso.acelerarNariz.sinVer": [
+    "vuelo.paso.acelerarNariz.sinVer"
+  ],
+  "vuelo.paso.frenarAerofrenos.sinVer": [
+    "vuelo.paso.frenarAerofrenos.sinVer"
+  ],
+  "vuelo.paso.frenarNariz.sinVer": [
+    "vuelo.paso.frenarNariz.sinVer"
+  ],
+  "vuelo.paso.marcaDelAutomatico.sinVer": [
+    "vuelo.paso.marcaDelAutomatico.sinVer"
+  ],
+  "vuelo.paso.crucero.sinVer": [
+    "vuelo.paso.crucero.sinVer"
+  ],
+  "vuelo.paso.nivelar.sinVer": [
+    "vuelo.paso.nivelar.sinVer"
+  ],
+  "vuelo.paso.recogerAerofrenos.sinVer": [
+    "vuelo.paso.recogerAerofrenos.sinVer"
+  ],
+  "vuelo.paso.senda.sinVer": [
+    "vuelo.paso.senda.sinVer"
+  ],
+  "vuelo.paso.sendaConGases.sinVer": [
+    "vuelo.paso.sendaConGases.sinVer"
+  ],
+  "vuelo.paso.sendaConAyuda.sinVer": [
+    "vuelo.paso.sendaConAyuda.sinVer"
+  ],
+  "vuelo.paso.gasTuyo.sinVer": [
+    "vuelo.paso.gasTuyo.sinVer"
   ]
 }

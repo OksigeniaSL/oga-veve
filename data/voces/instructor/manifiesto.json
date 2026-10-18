@@ -264,8 +264,8 @@
       "h": "3547a8dfcb"
     },
     "explica.senda.presenta": {
-      "ms": 4707,
-      "h": "1986d7845f"
+      "ms": 5707,
+      "h": "4260d310de"
     },
     "explica.senda.texto": {
       "ms": 11007,
@@ -1132,8 +1132,8 @@
       "h": "8ac049826b"
     },
     "vuelo.alturaDeLaTorreRaya": {
-      "ms": 3207,
-      "h": "9c384d7927"
+      "ms": 3707,
+      "h": "6419ac7e0d"
     },
     "vuelo.apagado": {
       "ms": 971,
@@ -1252,88 +1252,120 @@
       "h": "73a81c4900"
     },
     "vuelo.consejo.aerofrenos": {
-      "ms": 2478,
-      "h": "91922ad8c4"
+      "ms": 3507,
+      "h": "9afae3ee0b"
+    },
+    "vuelo.consejo.aerofrenos.sinVer": {
+      "ms": 2847,
+      "h": "6b8fbf7433"
     },
     "vuelo.consejo.aerofrenosPerfil": {
-      "ms": 6507,
-      "h": "d77014290b"
+      "ms": 7807,
+      "h": "6a69fc9dde"
+    },
+    "vuelo.consejo.aerofrenosPerfil.sinVer": {
+      "ms": 4607,
+      "h": "0e00719d0f"
     },
     "vuelo.consejo.masGas": {
-      "ms": 3407,
-      "h": "04e36003f9"
+      "ms": 4407,
+      "h": "1d7f0f31dd"
     },
     "vuelo.consejo.masGasPapi": {
-      "ms": 6407,
-      "h": "221fc5ba64"
+      "ms": 8407,
+      "h": "b18f068536"
     },
     "vuelo.consejo.masGasPerfil": {
-      "ms": 5707,
-      "h": "f8b0421522"
+      "ms": 8107,
+      "h": "18a9045dab"
+    },
+    "vuelo.consejo.masGasPerfil.sinVer": {
+      "ms": 4207,
+      "h": "48628bb885"
     },
     "vuelo.consejo.masGasSenda": {
-      "ms": 4207,
-      "h": "834f6f1857"
+      "ms": 6907,
+      "h": "510ae2f18c"
+    },
+    "vuelo.consejo.masGasSenda.sinVer": {
+      "ms": 2909,
+      "h": "7579a367ec"
     },
     "vuelo.consejo.masGasSuave": {
       "ms": 3207,
       "h": "c173a71476"
     },
     "vuelo.consejo.menosGas": {
-      "ms": 2272,
-      "h": "31b16898d4"
+      "ms": 3207,
+      "h": "bc042aa39a"
     },
     "vuelo.consejo.menosGasPapi": {
-      "ms": 5607,
-      "h": "dd613d21a3"
+      "ms": 7407,
+      "h": "0a45ad0473"
     },
     "vuelo.consejo.menosGasPerfil": {
-      "ms": 5207,
-      "h": "8e0aeb6fc6"
+      "ms": 7107,
+      "h": "8fc5500cf2"
+    },
+    "vuelo.consejo.menosGasPerfil.sinVer": {
+      "ms": 3607,
+      "h": "91484d5974"
     },
     "vuelo.consejo.menosGasSenda": {
-      "ms": 4807,
-      "h": "f6964e9176"
+      "ms": 6607,
+      "h": "04c33d16cd"
+    },
+    "vuelo.consejo.menosGasSenda.sinVer": {
+      "ms": 3207,
+      "h": "d02150d24f"
     },
     "vuelo.consejo.narizAbajoMarca": {
-      "ms": 3307,
-      "h": "ffe8e929c6"
+      "ms": 4307,
+      "h": "16a2bb6f0a"
     },
     "vuelo.consejo.narizAbajoPapi": {
-      "ms": 3207,
-      "h": "3530c5cf31"
+      "ms": 5407,
+      "h": "e718ed1c95"
     },
     "vuelo.consejo.narizAbajoPerfil": {
-      "ms": 4607,
-      "h": "b03f426463"
+      "ms": 6707,
+      "h": "e33bbfdc2f"
     },
     "vuelo.consejo.narizAbajoSenda": {
-      "ms": 3507,
-      "h": "144ff9048b"
+      "ms": 5307,
+      "h": "9cebdad046"
     },
     "vuelo.consejo.narizArribaMarca": {
-      "ms": 3207,
-      "h": "4554d735ff"
+      "ms": 4207,
+      "h": "81612b4fc6"
+    },
+    "vuelo.consejo.narizArribaMarca.sinVer": {
+      "ms": 1785,
+      "h": "c984241647"
     },
     "vuelo.consejo.narizArribaPapi": {
-      "ms": 3107,
-      "h": "27d50e21a4"
+      "ms": 5607,
+      "h": "fbaf666e1b"
     },
     "vuelo.consejo.narizArribaRitmo": {
       "ms": 4307,
       "h": "56c95e0479"
     },
     "vuelo.consejo.narizArribaSenda": {
-      "ms": 3207,
-      "h": "4090a3077e"
+      "ms": 5307,
+      "h": "f9c89e4f20"
     },
     "vuelo.consejo.narizArribaSuave": {
       "ms": 2333,
       "h": "62ce77fe6e"
     },
     "vuelo.consejo.nivelarPerfil": {
-      "ms": 5907,
-      "h": "1af4896918"
+      "ms": 7907,
+      "h": "dbf248df07"
+    },
+    "vuelo.consejo.nivelarPerfil.sinVer": {
+      "ms": 4307,
+      "h": "a8497e6bc9"
     },
     "vuelo.corregido": {
       "ms": 2641,
@@ -1636,12 +1668,20 @@
       "h": "4823b7a72b"
     },
     "vuelo.paso.acelerarGas": {
-      "ms": 2968,
-      "h": "068e7f3ad5"
+      "ms": 3507,
+      "h": "2f64b8914c"
+    },
+    "vuelo.paso.acelerarGas.sinVer": {
+      "ms": 1849,
+      "h": "670a42be3a"
     },
     "vuelo.paso.acelerarNariz": {
-      "ms": 3707,
-      "h": "cb2a32e0f5"
+      "ms": 4807,
+      "h": "b7c25ee8d8"
+    },
+    "vuelo.paso.acelerarNariz.sinVer": {
+      "ms": 2596,
+      "h": "9ad5abb4ac"
     },
     "vuelo.paso.bajar": {
       "ms": 4107,
@@ -1657,11 +1697,15 @@
     },
     "vuelo.paso.cotaEnAlto": {
       "ms": 7707,
-      "h": "62afa2773d"
+      "h": "518263ab95"
     },
     "vuelo.paso.crucero": {
-      "ms": 5107,
-      "h": "bab7881f81"
+      "ms": 5407,
+      "h": "4ff994a60c"
+    },
+    "vuelo.paso.crucero.sinVer": {
+      "ms": 3002,
+      "h": "60ae22de17"
     },
     "vuelo.paso.cruceroConAutomatico": {
       "ms": 6907,
@@ -1672,64 +1716,104 @@
       "h": "fa33184cdc"
     },
     "vuelo.paso.flaps1": {
-      "ms": 3207,
-      "h": "51e0ada733"
+      "ms": 3907,
+      "h": "0c734fb28e"
     },
     "vuelo.paso.flaps2": {
-      "ms": 2514,
-      "h": "f5e2c9b4f9"
+      "ms": 3107,
+      "h": "bbaf05dd66"
     },
     "vuelo.paso.flaps3": {
-      "ms": 3207,
-      "h": "1ae1e3be9c"
+      "ms": 4507,
+      "h": "18422d4449"
     },
     "vuelo.paso.frenarAerofrenos": {
-      "ms": 4407,
-      "h": "bcc9f366f8"
+      "ms": 4907,
+      "h": "5759fe0fe2"
+    },
+    "vuelo.paso.frenarAerofrenos.sinVer": {
+      "ms": 2614,
+      "h": "bb3a94ac72"
     },
     "vuelo.paso.frenarGas": {
-      "ms": 3207,
-      "h": "be03f161af"
+      "ms": 4407,
+      "h": "acccafa509"
     },
     "vuelo.paso.frenarNariz": {
-      "ms": 5007,
-      "h": "66c9eb4c5c"
+      "ms": 5807,
+      "h": "d99421f48b"
+    },
+    "vuelo.paso.frenarNariz.sinVer": {
+      "ms": 4207,
+      "h": "9db1a5ea3c"
     },
     "vuelo.paso.gasTuyo": {
       "ms": 4207,
       "h": "82ba0486ab"
     },
+    "vuelo.paso.gasTuyo.sinVer": {
+      "ms": 2917,
+      "h": "2c7bfd1945"
+    },
     "vuelo.paso.mantener": {
-      "ms": 3607,
-      "h": "d0ebd7538b"
+      "ms": 4307,
+      "h": "ec9369f3f1"
     },
     "vuelo.paso.marcaDelAutomatico": {
-      "ms": 5007,
-      "h": "9e19edde34"
+      "ms": 5807,
+      "h": "fd73f5720e"
+    },
+    "vuelo.paso.marcaDelAutomatico.sinVer": {
+      "ms": 5207,
+      "h": "d873cfc9c5"
     },
     "vuelo.paso.nivelar": {
-      "ms": 4607,
-      "h": "092c012bf1"
+      "ms": 4907,
+      "h": "298daf7bcf"
+    },
+    "vuelo.paso.nivelar.sinVer": {
+      "ms": 5207,
+      "h": "40a694b8e2"
     },
     "vuelo.paso.recogerAerofrenos": {
-      "ms": 2613,
-      "h": "ac6363fb3f"
+      "ms": 3507,
+      "h": "aa38d85f21"
+    },
+    "vuelo.paso.recogerAerofrenos.sinVer": {
+      "ms": 2934,
+      "h": "11dd4bd290"
     },
     "vuelo.paso.senda": {
       "ms": 4107,
       "h": "b116e8e85f"
     },
+    "vuelo.paso.senda.sinVer": {
+      "ms": 2240,
+      "h": "45976e8448"
+    },
     "vuelo.paso.sendaConAyuda": {
-      "ms": 4707,
-      "h": "50358cf0a2"
+      "ms": 6407,
+      "h": "5c41f39a00"
+    },
+    "vuelo.paso.sendaConAyuda.sinVer": {
+      "ms": 4107,
+      "h": "45049b5442"
     },
     "vuelo.paso.sendaConGases": {
-      "ms": 5207,
-      "h": "19890324a1"
+      "ms": 6707,
+      "h": "92107a648a"
+    },
+    "vuelo.paso.sendaConGases.sinVer": {
+      "ms": 4207,
+      "h": "2621230179"
     },
     "vuelo.paso.subir": {
       "ms": 3607,
       "h": "474a285ddb"
+    },
+    "vuelo.paso.subir.sinVer": {
+      "ms": 2133,
+      "h": "3389a6ce9d"
     },
     "vuelo.paso.tren": {
       "ms": 1961,
@@ -2160,16 +2244,16 @@
       "h": "ab5f4a6619"
     },
     "vuelo.traficoAbajo": {
-      "ms": 4107,
-      "h": "c1eca5c8f9"
+      "ms": 4207,
+      "h": "083efccbc9"
     },
     "vuelo.traficoArriba": {
       "ms": 4207,
-      "h": "3273d2235b"
+      "h": "dbd5d11e05"
     },
     "vuelo.traficoNivel": {
-      "ms": 4807,
-      "h": "4d9d99b2b6"
+      "ms": 4607,
+      "h": "9ee87a3102"
     },
     "vuelo.trenEnElSuelo": {
       "ms": 2564,
@@ -4027,6 +4111,69 @@
     ],
     "vuelo.proponeIrseSalidaTapada": [
       "vuelo.proponeIrseSalidaTapada"
+    ],
+    "vuelo.consejo.masGasSenda.sinVer": [
+      "vuelo.consejo.masGasSenda.sinVer"
+    ],
+    "vuelo.consejo.menosGasSenda.sinVer": [
+      "vuelo.consejo.menosGasSenda.sinVer"
+    ],
+    "vuelo.consejo.nivelarPerfil.sinVer": [
+      "vuelo.consejo.nivelarPerfil.sinVer"
+    ],
+    "vuelo.consejo.aerofrenosPerfil.sinVer": [
+      "vuelo.consejo.aerofrenosPerfil.sinVer"
+    ],
+    "vuelo.consejo.masGasPerfil.sinVer": [
+      "vuelo.consejo.masGasPerfil.sinVer"
+    ],
+    "vuelo.consejo.menosGasPerfil.sinVer": [
+      "vuelo.consejo.menosGasPerfil.sinVer"
+    ],
+    "vuelo.consejo.aerofrenos.sinVer": [
+      "vuelo.consejo.aerofrenos.sinVer"
+    ],
+    "vuelo.consejo.narizArribaMarca.sinVer": [
+      "vuelo.consejo.narizArribaMarca.sinVer"
+    ],
+    "vuelo.paso.subir.sinVer": [
+      "vuelo.paso.subir.sinVer"
+    ],
+    "vuelo.paso.acelerarGas.sinVer": [
+      "vuelo.paso.acelerarGas.sinVer"
+    ],
+    "vuelo.paso.acelerarNariz.sinVer": [
+      "vuelo.paso.acelerarNariz.sinVer"
+    ],
+    "vuelo.paso.frenarAerofrenos.sinVer": [
+      "vuelo.paso.frenarAerofrenos.sinVer"
+    ],
+    "vuelo.paso.frenarNariz.sinVer": [
+      "vuelo.paso.frenarNariz.sinVer"
+    ],
+    "vuelo.paso.marcaDelAutomatico.sinVer": [
+      "vuelo.paso.marcaDelAutomatico.sinVer"
+    ],
+    "vuelo.paso.crucero.sinVer": [
+      "vuelo.paso.crucero.sinVer"
+    ],
+    "vuelo.paso.nivelar.sinVer": [
+      "vuelo.paso.nivelar.sinVer"
+    ],
+    "vuelo.paso.recogerAerofrenos.sinVer": [
+      "vuelo.paso.recogerAerofrenos.sinVer"
+    ],
+    "vuelo.paso.senda.sinVer": [
+      "vuelo.paso.senda.sinVer"
+    ],
+    "vuelo.paso.sendaConGases.sinVer": [
+      "vuelo.paso.sendaConGases.sinVer"
+    ],
+    "vuelo.paso.sendaConAyuda.sinVer": [
+      "vuelo.paso.sendaConAyuda.sinVer"
+    ],
+    "vuelo.paso.gasTuyo.sinVer": [
+      "vuelo.paso.gasTuyo.sinVer"
     ]
   }
 }
