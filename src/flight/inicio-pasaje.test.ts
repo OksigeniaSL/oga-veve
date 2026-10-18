@@ -380,7 +380,7 @@ describe("el guion", () => {
   it("la tripulante, en persona: con el tú de Canarias, sin voseo y sin decir niño o niña", () => {
     const voseo = /\b(vos|mirá|escuchá|tenés|querés|sabés|podés|sentís)\b/i;
     const alQueOye =
-      /\b(hij[oa]s?|niñ[oa]s?|nen[ea]s?|guap[oa]s?|campe[oó]na?|list[oa]s?|tranquil[oa]s?|nervios[oa]s?|content[oa]s?|asustad[oa]s?|sentad[oa]s?|solit[oa]s?|pequeñ[oa]s?|chiquit[oa]s?|precios[oa]s?|bonit[oa]s?|valient[ea]s?|mi rey|mi reina)\b/i;
+      /\b(hij[oa]s?|niñ[oa]s?|nen[ea]s?|guap[oa]s?|campe[oó]na?|list[oa]s?|tranquil[oa]s?|nervios[oa]s?|content[oa]s?|asustad[oa]s?|sentad[oa]s?|solit[oa]s?|pequeñ[oa]s?|chiquit[oa]s?|precios[oa]s?|bonit[oa]s?|valient[ea]s?|dormid[oa]s?|dormilon[a]?|tapad[oa]s?|mi rey|mi reina)\b/i;
     const deCerca = LINEAS_DEL_PASAJE.filter(esDeCerca);
     expect(deCerca.length).toBeGreaterThanOrEqual(10);
     for (const l of deCerca) {
@@ -400,7 +400,7 @@ describe("el guion", () => {
    */
   it("y nada de lo que dice Ara, ni de lo que se dice de Ara, dice si es niño o niña", () => {
     const conGenero =
-      /\b(hij[oa]s?|niñ[oa]s?|nen[ea]s?|solit[oa]s?|campe[oó]na?|list[oa]s?|tranquil[oa]s?|atent[oa]s?|asustad[oa]s?|cansad[oa]s?|nervios[oa]s?|content[oa]s?|orgullos[oa]s?|chiquit[oa]s?|sentad[oa]s?|abrochad[oa]s?|emocionad[oa]s?|pasajer[oa]|viajer[oa]|aviador[a]?|pilot[oa]s?|primeriz[oa]s?)\b/i;
+      /\b(hij[oa]s?|niñ[oa]s?|nen[ea]s?|solit[oa]s?|campe[oó]na?|list[oa]s?|tranquil[oa]s?|atent[oa]s?|asustad[oa]s?|cansad[oa]s?|nervios[oa]s?|content[oa]s?|orgullos[oa]s?|chiquit[oa]s?|sentad[oa]s?|abrochad[oa]s?|emocionad[oa]s?|pasajer[oa]|viajer[oa]|aviador[a]?|pilot[oa]s?|primeriz[oa]s?|dormid[oa]s?|despiert[oa]s?|tapad[oa]s?)\b/i;
     const withGender = /\b(son|daughter|boy|girl|his|him|he|she|her|hers|himself|herself|lad|lass|buddy|champ|princess)\b/i;
     const claves = Object.keys(ES_PY).filter((k) => k.startsWith("inicio.") && k.includes(".pasaje."));
     expect(claves.length).toBeGreaterThanOrEqual(LINEAS_DEL_PASAJE.length);
@@ -848,8 +848,10 @@ class VueloMedido {
   alabeo = 0;
   falta = 198000;
   sobreElMar = false;
+  /** Lo que dura el crucero, s: el medido, y uno largo para ver despertar a Ara para bajar. */
+  crucero = 58;
 
-  private pasar(t: TramoDeLinea): void {
+  protected pasar(t: TramoDeLinea): void {
     this.tramo = t;
     this.enTramo = 0;
   }
@@ -918,7 +920,7 @@ class VueloMedido {
       case "crucero":
         this.alabeo = 0;
         this.falta = Math.max(131700, this.falta - this.porElSuelo * dt);
-        if (t >= 58) {
+        if (t >= this.crucero) {
           this.falta = 131700;
           this.pasar("bajada");
         }
@@ -1045,11 +1047,10 @@ interface Medido {
 }
 
 /** Vuela la escena entera con el vuelo medido y las voces que duran lo que duran. */
-function volarElMedido(): Medido {
+function volarElMedido(vuelo: VueloMedido = new VueloMedido()): Medido {
   let t = 0;
   const v = vozQueTarda(loQueDura, () => t);
   const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
-  const vuelo = new VueloMedido();
   const porVer = [...LO_QUE_SE_VIO];
   const tramos: { t: number; tramo: TramoDeLinea }[] = [];
   const ventanita: NonNullable<Medido["ventanita"]> = [];
@@ -1336,6 +1337,154 @@ function jugadorQueAcierta(juego: "piezas" | "camino", cada = 4): (escena: Vuelo
     }
   };
 }
+
+// ── La siesta de Ara ─────────────────────────────────────────────────────
+
+/**
+ * **El vuelo medido, con lo que falta para nivelar y para bajar**: lo que el
+ * juego le da a la escena para que Ara pueda dormirse —ver `ratosDelVuelo` en
+ * `game.ts`—. Con `soloEnCrucero`, la subida no lo dice —sin `hastaElCrucero`
+ * Ara no se duerme subiendo—, y con un crucero largo se ve despertar a Ara
+ * para bajar.
+ */
+class VueloMedidoConRatos extends VueloMedido {
+  constructor(
+    crucero = 58,
+    private readonly soloEnCrucero = false,
+  ) {
+    super();
+    this.crucero = crucero;
+  }
+
+  override get lectura(): LecturaDelPasaje {
+    const base = super.lectura;
+    if (this.tramo === "subida") {
+      const hastaElCrucero = Math.max(0, 5785 - this.altitud) / 11.6;
+      return this.soloEnCrucero ? base : { ...base, hastaElCrucero, hastaLaBajada: hastaElCrucero + this.crucero };
+    }
+    if (this.tramo === "crucero") return { ...base, hastaLaBajada: Math.max(0, this.crucero - this.enTramo) };
+    return base;
+  }
+}
+
+/** Las claves de seguridad que no se pueden perder: la demostración, el cinturón y la bajada. */
+const DE_SEGURIDAD = [
+  "inicio.tripulacion.pasaje.demo.intro",
+  "inicio.tripulacion.pasaje.demo.cinturon",
+  "inicio.tripulacion.pasaje.demo.salidas",
+  "inicio.tripulacion.pasaje.demo.mascaras",
+  "inicio.tripulacion.pasaje.demo.chaleco",
+  "inicio.tripulacion.pasaje.demo.tarjeta",
+  "inicio.tripulacion.pasaje.demo.aparatos",
+  "inicio.tripulacion.pasaje.cerca.revision",
+  "comandante.crucero",
+  "comandante.descenso",
+  "tripulacion.cinturones",
+  "inicio.tripulacion.pasaje.oidos",
+  "inicio.tripulacion.pasaje.cerca.aterrizaje",
+];
+
+describe("la siesta de Ara: arriba y sin nada que contar, se duerme un rato", () => {
+  const m = volarElMedido(new VueloMedidoConRatos());
+  const e = m.escena.estado;
+  const r = m.escena.registro;
+  const s = e.siestas[0];
+  const cuando = (clave: string): number => r.find((d) => d.clave === clave)?.desde ?? NaN;
+  const empiezaA = (tramo: TramoDeLinea): number => m.tramos.find((x) => x.tramo === tramo)?.t ?? NaN;
+
+  it("se duerme una vez, arriba, subiendo por encima del mar de nubes", () => {
+    if (entorno?.OGA_PASAJE)
+      console.log(
+        `siestas: ${e.siestas.map((x) => `${x.desde.toFixed(0)}–${x.hasta?.toFixed(0)}${x.paraBajar ? " para bajar" : ""}`).join(" ")}` +
+          ` · arriba a los ${empiezaA("crucero").toFixed(0)} · bajada a los ${empiezaA("bajada").toFixed(0)}`,
+      );
+    expect(e.siestas).toHaveLength(1);
+    expect(s!.desde).toBeGreaterThan(empiezaA("subida"));
+    expect(s!.hasta).not.toBeNull();
+    // Y lo que dura merece el fundido: un rato largo, no medio minuto.
+    expect(s!.hasta! - s!.desde).toBeGreaterThanOrEqual(40);
+    expect(e.durmiendo).toBe(false);
+  });
+
+  it("bosteza y lo dice antes de cerrar los ojos; durmiendo y al despertar, el mapa de la ruta en la ventanita", () => {
+    const bostezo = r.find((d) => d.clave === "inicio.ara.pasaje.dormirse");
+    expect(bostezo?.hasta).not.toBeNull();
+    expect(bostezo!.hasta!).toBeLessThanOrEqual(s!.desde + 1e-6);
+    const despierta = r.find((d) => d.clave === "inicio.ara.pasaje.despertarse");
+    expect(despierta?.desde).toBeGreaterThanOrEqual(s!.hasta! - 1e-6);
+    expect(LINEAS_DEL_PASAJE.find((l) => l.clave === "inicio.ara.pasaje.despertarse")?.dibujo).toBe("ruta");
+    // La ventanita pone el mapa en cuanto Ara se duerme, y lo tiene hasta después de despertar.
+    const ventanita = m.ventanita ?? [];
+    const enLa = (t: number): string | null => [...ventanita].reverse().find((v) => v.t <= t)?.dibujo ?? null;
+    expect(enLa(s!.desde + 0.5)).toBe("ruta");
+    expect(enLa((s!.desde + s!.hasta!) / 2)).toBe("ruta");
+    expect(enLa(s!.hasta! + 1)).toBe("ruta");
+  });
+
+  it("durmiendo, no se dice nada: ni el guion, ni lo señalado, ni las charlas", () => {
+    const enLaSiesta = r.filter((d) => d.desde > s!.desde + 1e-6 && d.desde < s!.hasta! - 1e-6);
+    expect(enLaSiesta.map((d) => d.clave)).toEqual([]);
+  });
+
+  it("y se despierta antes de lo que hay que oír: el «ya estamos arriba», con lo del cinturón", () => {
+    expect(s!.paraBajar).toBe(false);
+    expect(s!.hasta!).toBeLessThan(cuando("comandante.crucero"));
+    expect(cuando("inicio.ara.pasaje.despertarse")).toBeLessThan(cuando("comandante.crucero"));
+    // Y antes de empezar a bajar, que bajando no se duerme: lo de los oídos.
+    expect(s!.hasta!).toBeLessThan(empiezaA("bajada"));
+  });
+
+  it("nada de seguridad se pierde, ni se dice durmiendo; y el guion pasa entero y en orden", () => {
+    for (const c of DE_SEGURIDAD) {
+      const d = r.find((x) => x.clave === c);
+      expect(d, c).toBeDefined();
+      expect(d!.desde > s!.desde && d!.desde < s!.hasta!, c).toBe(false);
+    }
+    expect(e.saltados).toEqual([]);
+    expect(e.dichos).toEqual(GUION_DEL_PASAJE.map((x) => x.id).filter((x) => x !== "fin"));
+    expect(e.terminado).toBe(true);
+  });
+
+  it("y sin rato largo callado: lo que se pasa durmiendo no cuenta como silencio", () => {
+    // Los silencios en el aire, sin lo que Ara pasó durmiendo.
+    const largos = silencios(m).filter((x) => {
+      if (!(x.tramo === "subida" || x.tramo === "crucero" || x.tramo === "bajada")) return false;
+      const durmiendo = Math.max(0, Math.min(x.desde + x.largo, s!.hasta!) - Math.max(x.desde, s!.desde));
+      return x.largo - durmiendo > CALLADO_COMO_MUCHO;
+    });
+    expect(largos.map((x) => `${x.largo.toFixed(0)} s desde ${x.desde.toFixed(0)} (${x.tramo})`)).toEqual([]);
+  });
+});
+
+describe("y con un crucero largo, despierta a Ara la tripulante para bajar", () => {
+  const m = volarElMedido(new VueloMedidoConRatos(420, true));
+  const e = m.escena.estado;
+  const r = m.escena.registro;
+  const s = e.siestas[0];
+  const cuando = (clave: string): number => r.find((d) => d.clave === clave)?.desde ?? NaN;
+  const bajada = m.tramos.find((x) => x.tramo === "bajada")?.t ?? NaN;
+
+  it("se duerme en el crucero, después del servicio, y se despierta antes de bajar", () => {
+    expect(e.siestas).toHaveLength(1);
+    expect(s!.paraBajar).toBe(true);
+    expect(s!.desde).toBeGreaterThan(cuando("inicio.ara.pasaje.nubesSostiene"));
+    expect(s!.hasta!).toBeLessThan(bajada);
+  });
+
+  it("por lo que es: el cinturón y los oídos; y después, lo de siempre al bajar", () => {
+    const despertar = cuando("inicio.tripulacion.pasaje.cerca.despertar");
+    expect(despertar).toBeGreaterThanOrEqual(s!.hasta! - 1e-6);
+    expect(despertar).toBeLessThan(cuando("inicio.ara.pasaje.despertarse"));
+    expect(cuando("inicio.ara.pasaje.despertarse")).toBeLessThan(cuando("comandante.descenso"));
+    expect(cuando("comandante.descenso")).toBeLessThan(cuando("inicio.ara.pasaje.oidos"));
+    for (const c of DE_SEGURIDAD) expect(r.some((x) => x.clave === c), c).toBe(true);
+    expect(e.saltados).toEqual([]);
+  });
+
+  it("y sin los números del juego, Ara no se duerme: sin saber cuándo llega lo siguiente, no se puede despertar a tiempo", () => {
+    expect(volarElMedido().escena.estado.siestas).toEqual([]);
+  });
+});
 
 describe("el kit de viaje, en el vuelo", () => {
   const m = volarElMedido();

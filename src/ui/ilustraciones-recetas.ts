@@ -71,6 +71,7 @@ const ENTERA_GRANDE = [5, 0, 2389, 1792] as const;
  * - **el largo radio y el helicóptero**, por fuera y por dentro: no son de la
  *   flota —ver `flight/flota.ts`— y ninguna historia de Jazlyn habla de ellos.
  *   Inventarles un sitio sería enseñar un avión que en el juego no hay.
+
  */
 export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   // ── La escena de pasaje, en la ventanita ──────────────────────────────
@@ -96,6 +97,28 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     hueco: "ventanita",
     // Lo que sobra va de arriba, que es pared: abajo están las rodillas en el asiento.
     recorte: [0, 72, 1024, 683],
+    conAra: true,
+  },
+  /*
+   * **El sueño de Ara** (punto 304): Ara durmiendo en la ventanilla, con la
+   * manta y el cinturón por encima de la manta —que es como lo pide la
+   * tripulación, para verlo sin despertar a nadie—, y después soñando con un
+   * avión sobre las islas. Recortadas a lo justo para que la cara se vea en
+   * pequeño: sobra lo de los lados y, en la primera, los pies. Ver
+   * `ui/siesta.ts`.
+   */
+  "ara-durmiendo": {
+    original: "ara-durmiendo.png",
+    hueco: "ventanita",
+    recorte: [300, 150, 720, 480],
+    porque: "a Ara con la ventanilla y el cinturón, sin los asientos de delante ni los pies, para que la cara se vea en pequeño",
+    conAra: true,
+  },
+  "ara-sonando": {
+    original: "ara-sonando.png",
+    hueco: "ventanita",
+    recorte: [169, 25, 855, 570],
+    porque: "al sueño y a la cara de Ara, sin la ventanilla de la izquierda, para que se vean en pequeño",
     conAra: true,
   },
   "pasaje-comandante": {

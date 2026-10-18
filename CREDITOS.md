@@ -52,7 +52,7 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres; y las siete islas Canarias enteras en teselas por niveles, de z11 a z16, que se bajan según se miran. Ver abajo | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
 | [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los nueve escenarios paraguayos, en cuatro encuadres; y Paraguay en teselas por niveles —el país entero a z11 y los pasillos de las rutas y los campos hasta z14—. Ver abajo | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
-| [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado; y los puntos del río Paraguay y del Paraná que se señalan por la ventanilla | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
+| [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado; los puntos del río Paraguay y del Paraná que se señalan por la ventanilla; y las costas de La Palma, La Gomera, El Hierro y Tenerife en el mapa de la ruta de la escena de pasaje (`src/ui/mapa-de-la-ruta.ts`) | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
 | [AIP España](https://aip.enaire.es/AIP/) — ENAIRE, AIRAC AMDT 08/26 (en vigor desde el 03-SEP-2026)                                                                           | Los puntos del plan de vuelo en Canarias: salidas (SID), aproximaciones RNP y rutas de salida de La Gomera de los ocho aeropuertos de las islas, con sus nombres y coordenadas publicados. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 | [AIP Paraguay](https://www.dinac.gov.py/v3/index.php/ais/aip-paraguay) — DINAC, AMDT AIRAC 01/2026 | Los puntos del plan de vuelo en Paraguay: aproximaciones RNP de Asunción, Guaraní, Encarnación, Mariscal Estigarribia y Pedro Juan Caballero, y salidas de Asunción y Guaraní; y las cotas y la pista de Pilar, la plataforma de Ayolas y el servicio de radio de cada campo. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 | [IFISA, *AFIS phraseology*](https://ifisa.info/wp-content/uploads/2016/06/IFISA-AFIS-phraseology.docx) (2016) y [AIC 05/10 de España](https://aip.enaire.es/aip/contenido_AIC/I/Le_Circ_2010_I_05_en.pdf) | Lo que dice por radio un AFIS, que informa y no autoriza: «runway in use», «no reported traffic», «runway free». Ver abajo | **Expresiones de uso y hechos**: se toman las frases estándar, no se copia el documento |
@@ -582,7 +582,8 @@ las islas con sus coordenadas. Nada traído de fuera.
 
 Son los dibujos de cuento del juego, todos de la misma colección: Jazlyn a los
 mandos de cada avión de la flota, cada avión por fuera con los colores de la
-casa, la cara de Jazlyn, y la cabina de pasaje del primer vuelo de Ara. Como
+casa, la cara de Jazlyn, la cabina de pasaje del primer vuelo de Ara y Ara
+durmiendo y soñando en ese vuelo. Como
 el resto del arte original, son contenido de Oksigenia SL y no van con el
 código bajo Apache-2.0: ver `LICENSE-CONTENIDO.md`.
 
@@ -597,8 +598,9 @@ Antes de entrar se miró cada una de cerca. **Una comandante lleva cuatro
 barras y quien va a su derecha, tres**: lo que no cuadraba se recortó hasta
 dejarlo fuera, y así se dice en su fila. Se quedaron sin usar el largo radio y
 el helicóptero, por fuera y por dentro, que no son de la flota; dos retratos
-casi fotográficos que no van con los demás; y la cabina de tres y tres
-asientos, que es la de otro avión.
+casi fotográficos que no van con los demás; la cabina de tres y tres
+asientos, que es la de otro avión; y las versiones cuadradas de Ara durmiendo
+y soñando, que no tienen hueco.
 
 | Fichero | Original | Dónde sale | Cambios |
 | --- | --- | --- | --- |
@@ -607,6 +609,8 @@ asientos, que es la de otro avión.
 | `src/assets/ilustraciones/pasaje-tripulante.webp` | `tripulante-ara.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 480 × 320 |
 | `src/assets/ilustraciones/pasaje-ara-ventanilla.webp` | `ara-ventanilla.jpg` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 480 × 320 |
 | `src/assets/ilustraciones/pasaje-comandante.webp` | `jazlyn-cabina-dibujo.jpg` | La ventanita de «Viajá con Jazlyn» | recortada por encima de los hombros: en el dibujo lleva tres barras, que son las de primera oficial, y Jazlyn es la comandante, que lleva cuatro; 480 × 320 |
+| `src/assets/ilustraciones/ara-durmiendo.webp` | `ara-durmiendo.png` | El sueño de Ara en «Viajá con Jazlyn», mientras el vuelo pasa deprisa | recortada a Ara con la ventanilla y el cinturón, sin los asientos de delante ni los pies, para que la cara se vea en pequeño; 480 × 320 |
+| `src/assets/ilustraciones/ara-sonando.webp` | `ara-sonando.png` | El sueño de Ara en «Viajá con Jazlyn», mientras el vuelo pasa deprisa | recortada al sueño y a la cara de Ara, sin la ventanilla de la izquierda, para que se vean en pequeño; 480 × 320 |
 | `src/assets/ilustraciones/fuera-jaz-20.webp` | `fuera-jaz20.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-25.webp` | `fuera-jaz25.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-40.webp` | `fuera-jaz40.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |

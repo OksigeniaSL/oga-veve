@@ -104,6 +104,23 @@
  * al salir por debajo de las nubes, el Teide la primera vez que se nombra, el
  * tren visto desde abajo al salir y el señalero hasta parar el avión.
  *
+ * ## Y si no hay nada que contar, Ara se duerme
+ *
+ * Enrique voló la escena entera (punto 304): «esto tarda, y en un avión
+ * aguantan porque no les queda otra, pero en casa se aburren». Así que arriba,
+ * con un rato largo por delante sin nada que contar, Ara bosteza, la pantalla
+ * se funde a Ara durmiendo y soñando, con el mapa de la ruta en la ventanita,
+ * el vuelo pasa deprisa —de verdad: el avión sigue su ruta, ver `frame` en
+ * `game.ts`— y Ara se despierta antes de lo que hay que oír. Para bajar, nunca
+ * durmiendo: al bajar se notan los oídos, y quien duerme traga menos. Ver
+ * `puedeDormirse` y `ui/siesta.ts`.
+ *
+ * Medido en el banco el 18-10-2026, el crucero de este vuelo dura un minuto y
+ * va lleno —el «ya estamos arriba», el servicio y la tripulante con las
+ * nubes—: entre islas casi no hay crucero. El rato callado de verdad es lo
+ * alto de la subida, por encima del mar de nubes, y ahí es donde cabe la
+ * siesta.
+ *
  * ## Quién contesta, y cómo
  *
  * **La comandante no le contesta a un pasajero por la megafonía**, y aquí no
@@ -398,6 +415,20 @@ export interface LecturaDelPasaje {
   readonly visibilidad?: number;
   /** Si el señalero ya le hace señas al avión en el puesto de llegada. */
   readonly senalero?: boolean;
+  /**
+   * **Lo que falta para llegar arriba**, s de vuelo: hasta nivelar en la
+   * altitud del plan, con la captura del automático. Lo cuenta el juego con
+   * la ley de la tripulación —ver `segundosHastaElCrucero`—. Sin esto, Ara no
+   * se duerme: sin saber cuándo llega lo siguiente, no se puede despertar a
+   * Ara a tiempo. Ver `puedeDormirse`.
+   */
+  readonly hastaElCrucero?: number;
+  /**
+   * **Y lo que falta para empezar a bajar**, s de vuelo: hasta el punto de
+   * descenso del plan, a la velocidad de ahora. Lo mismo: sin esto, no hay
+   * siesta.
+   */
+  readonly hastaLaBajada?: number;
 }
 
 /**
@@ -534,6 +565,27 @@ const BAJANDO = {
 } as const;
 /** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
 const CALLA_ANTES_DEL_KIT = 10;
+/**
+ * **La siesta de Ara** (punto 304): los números. Ver `puedeDormirse`.
+ *
+ * - `CALLA_PARA_DORMIRSE`, s de silencio con nada a punto de contarse: el
+ *   «rato largo sin nada que contar». Más que lo que esperan las
+ *   explicaciones —de catorce a dieciocho—, que se dicen antes; menos que lo
+ *   que espera lo que se mira cuando no pasa nada —el mar de nubes, cuarenta—,
+ *   que es justo lo que el sueño viene a quitar.
+ * - `SIESTA_MINIMA`, s de vuelo durmiendo, como poco: por menos no se funde la
+ *   pantalla, que un fundido para medio minuto es más rato que el que se ahorra.
+ * - `DESPIERTA_ANTES`, s antes de lo siguiente que hay que oír —el «ya estamos
+ *   arriba» de la comandante, que lleva lo del cinturón—: lo que tarda Ara en
+ *   desperezarse y decirlo. Y `DESPIERTA_ANTES_DE_BAJAR`, más, que antes de la
+ *   bajada despierta a Ara la tripulante, y habla ella primero.
+ * - `LO_QUE_DURA_EL_BOSTEZO`, s: lo que dice Ara antes de cerrar los ojos.
+ */
+const CALLA_PARA_DORMIRSE = 20;
+const SIESTA_MINIMA = 40;
+const DESPIERTA_ANTES = 10;
+const DESPIERTA_ANTES_DE_BAJAR = 22;
+const LO_QUE_DURA_EL_BOSTEZO = 8;
 /** Lo que se queda el dibujo de la ventanita después de la última frase, s. */
 const SE_QUEDA_LA_VENTANITA = 2.5;
 /**
@@ -616,6 +668,15 @@ const ilustrada = (l: Linea, i: IlustracionDelPasaje): Linea => ({ ...l, dibujo:
 const conLaTripulante = (l: Linea): Linea => ilustrada(l, "pasaje-tripulante");
 /** La comandante por la megafonía, en su cabina por encima de las nubes. */
 const desdeLaCabina = (l: Linea): Linea => ilustrada(l, "pasaje-comandante");
+/**
+ * **La siesta**: lo que dice Ara al cerrar los ojos y al abrirlos —con el
+ * mapa de la ruta en la ventanita, el que se vio mientras dormía—, y la
+ * tripulante que despierta a Ara para bajar, por lo que es: el cinturón y la
+ * bajada. Ver `puedeDormirse`.
+ */
+const SE_DUERME = ara("dormirse");
+const SE_DESPIERTA = con(ara("despertarse"), "ruta");
+const LA_DESPIERTAN = conLaTripulante(tripulante("despertar"));
 /**
  * **Si el cartel del cinturón está apagado**, por lo que se ha dicho: lo apaga
  * la comandante al llegar arriba —«pueden soltarse el cinturón»— y se enciende
@@ -1525,6 +1586,8 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   // Y el kit: lo que se dice en los juegos, y guardarlo para aterrizar.
   LINEAS_DEL_KIT.forEach(poner);
   poner(tripulante(KIT_GUARDADO));
+  // Y la siesta: el bostezo, la tripulante que despierta a Ara para bajar y el despertar.
+  [SE_DUERME, LA_DESPIERTAN, SE_DESPIERTA].forEach(poner);
   return todas;
 })();
 
@@ -1605,6 +1668,21 @@ export interface EstadoDelPasaje {
   readonly megafonia: boolean;
   /** **El kit de viaje**, y sus juegos. Ver `kit-de-viaje.ts`. */
   readonly kit: EstadoDelKit;
+  /**
+   * **Si Ara duerme ahora**, y sus siestas, de cuándo a cuándo en s de
+   * escena: mientras duerme no se cuenta nada, y el juego funde la pantalla y
+   * deja pasar el vuelo deprisa. Ver `puedeDormirse`.
+   */
+  readonly durmiendo: boolean;
+  readonly siestas: readonly Siesta[];
+}
+
+/** Una siesta de Ara, s de escena; `hasta` es `null` mientras dura. */
+export interface Siesta {
+  readonly desde: number;
+  readonly hasta: number | null;
+  /** Si despertó para bajar: entonces despierta a Ara la tripulante. */
+  readonly paraBajar: boolean;
 }
 
 /** Cuánto se queda el dibujo de mirar después de decirlo, s. */
@@ -1654,6 +1732,11 @@ export class VueloDePasaje {
   readonly kit = new KitDeViaje();
   private kitAbierto = false;
   private juegoDelKit: KitDeViaje["juegoDeAhora"] = null;
+  /** **La siesta de Ara**: la de ahora, si duerme, y todas. Ver `puedeDormirse`. */
+  private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean } | null = null;
+  private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean }[] = [];
+  /** Si lo último que se pidió es el bostezo: al acabar, Ara cierra los ojos. */
+  private bostezando = false;
 
   constructor(
     voz: VozDelInicio,
@@ -1765,7 +1848,14 @@ export class VueloDePasaje {
       dibujo: this.dibujo,
       megafonia: this.megafoniaSuena,
       kit: this.kit.estado,
+      durmiendo: this.durmiendo,
+      siestas: this.siestas.map((s) => ({ ...s })),
     };
+  }
+
+  /** **Si Ara duerme ahora.** Lo mira el juego en cada fotograma: ver `frame` en `game.ts`. */
+  get durmiendo(): boolean {
+    return this.siestaDeAhora !== null;
   }
 
   /**
@@ -1801,6 +1891,9 @@ export class VueloDePasaje {
   get puedeSenalar(): boolean {
     return (
       !this.contestacion &&
+      // Ni con Ara cerrando los ojos o durmiendo: lo que no ve, no se le señala.
+      !this.bostezando &&
+      !this.durmiendo &&
       (this.dicho("arriba") || this.dicho("nubesRespuesta")) &&
       !this.dicho("aproximacion") &&
       this.charla.callada &&
@@ -1875,6 +1968,12 @@ export class VueloDePasaje {
     }
     const seQueda = this.dibujo !== null && HASTA_LA_SIGUIENTE.has(this.dibujo);
     if (this.charla.callada && this.callada > SE_QUEDA_LA_VENTANITA && !seQueda) this.dibujo = null;
+    /*
+     * **Y con Ara durmiendo, el mapa de la ruta**, con el avión avanzando: es
+     * como se ve que el vuelo sigue mientras pasa deprisa. Y al despertar se
+     * queda con lo que dice Ara. Ver `ui/siesta.ts`.
+     */
+    if (this.siestaDeAhora) this.dibujo = "ruta";
   }
 
   /**
@@ -1958,7 +2057,23 @@ export class VueloDePasaje {
      * mejor se ve: la cabina estéril de abajo la guarda `LoQueSeVe`.
      */
     if (this.dicho("aproximacion") || l.tramo === "final" || l.enTierra) this.porSenalar.length = 0;
+    // Con Ara durmiendo no se cuenta nada: solo se mira si toca despertar. Ver `atenderALaSiesta`.
+    if (this.siestaDeAhora) {
+      this.atenderALaSiesta(l);
+      return;
+    }
     if (!this.charla.callada) return;
+    /*
+     * Acabado el bostezo, Ara cierra los ojos, si sigue sin haber nada que
+     * contar: si mientras bostezaba llegó lo siguiente, no se duerme.
+     */
+    if (this.bostezando) {
+      this.bostezando = false;
+      if (this.puedeDormirse(l, true)) {
+        this.dormirse();
+        return;
+      }
+    }
     // Lo que Ara contesta a lo señalado, si se oyó lo que contesta. Ver `decirLoSenalado`.
     if (this.contestacion) {
       const c = this.contestacion;
@@ -1987,6 +2102,11 @@ export class VueloDePasaje {
       if (charla) {
         this.charlasDichas.push(charla.def.id);
         this.decirDe(charla.def, l, charla.vista);
+        return;
+      }
+      // Y si no hay nada que contar en un buen rato, Ara bosteza. Ver `puedeDormirse`.
+      if (this.puedeDormirse(l)) {
+        this.bostezar();
         return;
       }
       this.volverALaVentanilla();
@@ -2076,6 +2196,108 @@ export class VueloDePasaje {
       return { def: c, ...(vista ? { vista } : {}) };
     }
     return undefined;
+  }
+
+  /**
+   * **Cuánto falta para lo siguiente que Ara tiene que oír**, s de vuelo,
+   * y si es la bajada: lo que se puede dormir. Solo se sabe para dos momentos
+   * del guion, que son los que llegan con el vuelo y no con lo que se dice:
+   * el «ya estamos arriba» —al nivelar, más lo que espera nivelado— y el
+   * empezar a bajar. Con cualquier otro por decir, o sin los dos números del
+   * juego, `null`: no se duerme.
+   */
+  private ratoTranquilo(l: LecturaDelPasaje): { readonly segundos: number; readonly paraBajar: boolean } | null {
+    const bajada = l.hastaLaBajada;
+    if (bajada === undefined || !volando(l) || bajando(l.tramo)) return null;
+    let guion: number;
+    if (this.def.id === "arriba") {
+      if (l.tramo === "crucero") guion = Math.max(0, ARRIBA_Y_NIVELADO - l.enTramo);
+      else if (l.hastaElCrucero === undefined) return null;
+      else guion = l.hastaElCrucero + ARRIBA_Y_NIVELADO;
+    } else if (this.def.id === "bajada") guion = Infinity;
+    else return null;
+    return guion < bajada ? { segundos: guion, paraBajar: false } : { segundos: bajada, paraBajar: true };
+  }
+
+  /**
+   * **Si Ara se duerme ahora** (punto 304 de la lista de Enrique). Lo pidió
+   * al volar la escena entera: «la idea era que el niño no se aburra
+   * esperando a aterrizar; esto tarda, y en un avión aguantan porque no les
+   * queda otra, pero en casa se aburren. Que haga como que se duerme, un
+   * fundido, rapidillo, y luego despierta y ha pasado un rato».
+   *
+   * Y se duerme como se duerme en un avión: **arriba y sin nada que mirar**,
+   * con el ruidito de los motores. Así que hace falta todo esto:
+   *
+   * - **Arriba**, antes de bajar: pasados los diez mil pies y fuera de las
+   *   nubes, subiendo o en crucero. **Bajando, nunca**: durmiendo se traga menos
+   *   saliva, y al bajar es cuando la presión de la cabina empuja los oídos.
+   *   Es lo que aconsejan los médicos —no dormirse para despegar ni para
+   *   aterrizar—, y por eso la tripulación despierta a quien duerme.
+   * - **Un rato largo sin nada que contar**: nadie hablando desde hace
+   *   `CALLA_PARA_DORMIRSE`, nada del guion a punto, nada señalado esperando
+   *   y ninguna charla que venga a cuento ya.
+   * - **Sin el kit en las manos**: quien está jugando no se aburre.
+   * - **Y con rato por delante**: lo que falta para lo siguiente que hay que
+   *   oír Ara —ver `ratoTranquilo`— da para el bostezo, una siesta que
+   *   merezca el fundido y despertarse a tiempo. **Lo que hay que oír sí o sí
+   *   no se lo come el sueño**: el «ya estamos arriba» lleva lo del cinturón
+   *   puesto mientras se va sentado, y empezar a bajar es lo de los oídos;
+   *   para los dos se despierta antes.
+   *
+   * Una vez por vuelo. Lo que se habría contado mientras duerme no se cuenta
+   * después fuera de su momento: lo señalado no se señala —Ara no lo ve— y
+   * lo que se cuenta cuando viene a cuento solo se cuenta si sigue viniendo.
+   *
+   * Con `trasElBostezo`, al acabar de bostezar: el silencio ya no cuenta, que
+   * acaba de hablar Ara.
+   */
+  private puedeDormirse(l: LecturaDelPasaje, trasElBostezo = false): boolean {
+    if (this.siestas.length > 0 || this.acabado) return false;
+    if (!volando(l) || l.tramo === "bajada" || l.altitud < DIEZ_MIL_PIES || l.enNube >= DENTRO_DE_LA_NUBE) return false;
+    if (!trasElBostezo && this.callada < CALLA_PARA_DORMIRSE) return false;
+    if (this.porSenalar.length > 0 || this.contestacion || this.kit.estaAbierto || this.kit.ocupaAAra) return false;
+    if (this.def.cuando(l, this)) return false;
+    const rato = this.ratoTranquilo(l);
+    if (!rato) return false;
+    const despierta = rato.paraBajar ? DESPIERTA_ANTES_DE_BAJAR : DESPIERTA_ANTES;
+    return rato.segundos >= (trasElBostezo ? 0 : LO_QUE_DURA_EL_BOSTEZO) + SIESTA_MINIMA + despierta;
+  }
+
+  /** **Ara bosteza** y lo dice, mirando por la ventanilla: al acabar, cierra los ojos. */
+  private bostezar(): void {
+    this.ponerPlano("ventanilla");
+    this.bostezando = true;
+    this.mira = null;
+    this.charla.decir([SE_DUERME]);
+  }
+
+  /** **Y se duerme**: desde aquí, la escena calla y el juego funde la pantalla. */
+  private dormirse(): void {
+    const s = { desde: this.reloj, hasta: null, paraBajar: false };
+    this.siestaDeAhora = s;
+    this.siestas.push(s);
+    this.mira = null;
+  }
+
+  /**
+   * **Mientras Ara duerme**, solo se mira si toca despertar: un poco antes de
+   * lo siguiente que hay que oír —ver `DESPIERTA_ANTES`—, o ya si llega antes
+   * de lo contado o si el vuelo hace otra cosa. Lo que se le dice al
+   * despertar, por qué se despierta: por su cuenta, arriba; y para bajar, con la
+   * tripulante al lado diciéndole lo del cinturón y los oídos, que enlaza con
+   * lo que cuenta la megafonía al empezar a bajar. Ver el momento `oidos`.
+   */
+  private atenderALaSiesta(l: LecturaDelPasaje): void {
+    const s = this.siestaDeAhora;
+    if (!s) return;
+    const rato = this.ratoTranquilo(l);
+    const antes = rato?.paraBajar ? DESPIERTA_ANTES_DE_BAJAR : DESPIERTA_ANTES;
+    if (rato && rato.segundos > antes && !this.def.cuando(l, this)) return;
+    s.hasta = this.reloj;
+    s.paraBajar = rato ? rato.paraBajar : bajando(l.tramo) || this.def.id === "bajada";
+    this.siestaDeAhora = null;
+    this.charla.decir(s.paraBajar ? [LA_DESPIERTAN, SE_DESPIERTA] : [SE_DESPIERTA]);
   }
 
   /**

@@ -145,7 +145,7 @@ describe("las ilustraciones", () => {
   it("y nada de lo que se escribe de ellas dice si Ara es niño o niña", () => {
     // Con letras de verdad alrededor, no `\b`: la de JavaScript no sabe que «é» y «ñ» son letras.
     const conGenero =
-      /(?<!\p{L})(hij[oa]s?|niñ[oa]s?|nen[ea]s?|chic[oa]s?|varón|solit[oa]s?|content[oa]s?|chiquit[oa]s?|sentad[oa]s?|pegad[oa]s?|arrodillad[oa]s?|asomad[oa]s?|abrochad[oa]s?|emocionad[oa]s?|pasajer[oa]|viajer[oa]|él|ella)(?!\p{L})/iu;
+      /(?<!\p{L})(hij[oa]s?|niñ[oa]s?|nen[ea]s?|chic[oa]s?|varón|solit[oa]s?|content[oa]s?|chiquit[oa]s?|sentad[oa]s?|pegad[oa]s?|arrodillad[oa]s?|asomad[oa]s?|abrochad[oa]s?|emocionad[oa]s?|dormid[oa]s?|despiert[oa]s?|tapad[oa]s?|pasajer[oa]|viajer[oa]|él|ella)(?!\p{L})/iu;
     const withGender = /\b(son|daughter|boy|girl|his|him|he|she|her|hers|himself|herself|lad|lass)\b/i;
     for (const clave of claves) {
       const k = claveDelAlt(clave) as keyof typeof ES_PY & keyof typeof EN;
@@ -159,6 +159,8 @@ describe("las ilustraciones", () => {
       "pasaje-lleno",
       "pasaje-tripulante",
       "pasaje-ara-ventanilla",
+      "ara-durmiendo",
+      "ara-sonando",
     ]);
   });
 

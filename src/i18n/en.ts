@@ -1369,6 +1369,8 @@ export const EN: Dictionary = {
   "ilustracion.pasaje-tripulante": "The flight attendant talking to Ara, next to the seat",
   "ilustracion.pasaje-ara-ventanilla": "Ara, face against the window, looking at the wing and engine",
   "ilustracion.pasaje-comandante": "Captain Jazlyn in the cockpit, above the clouds",
+  "ilustracion.ara-durmiendo": "Ara asleep by the window, with the blanket and the seat belt over it",
+  "ilustracion.ara-sonando": "Ara smiling in a dream of a plane flying over the islands",
   "ilustracion.fuera-jaz-20": "The JAZ 20 flying over the river and the forest",
   "ilustracion.fuera-jaz-25": "The JAZ 25 flying low over a crop field",
   "ilustracion.fuera-jaz-40": "The JAZ 40 flying over a lake among the hills",
@@ -2348,6 +2350,11 @@ export const EN: Dictionary = {
     "Look down: clouds and more clouds, like a sea of cotton wool! That's why they call it a sea of clouds.",
   "inicio.ara.pasaje.sigueLaNube":
     "We're still inside the cloud and the plane is moving a little. But I know it's normal, and my seat belt is on!",
+  "inicio.ara.pasaje.dormirse": "Aaah, the hum of the engine makes me so sleepy! I'm going to close my eyes for a bit.",
+  "inicio.tripulacion.pasaje.cerca.despertar":
+    "Wake up, we're about to start going down: seat belt nice and snug. When you sleep you swallow less, and on the way down your ears feel it.",
+  "inicio.ara.pasaje.despertarse": "Oops, I fell asleep for a bit! And meanwhile, the plane kept flying along its route.",
+  "inicio.siesta": "Ara naps for a bit and dreams, while the plane keeps flying its route.",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

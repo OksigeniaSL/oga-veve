@@ -1664,7 +1664,19 @@ const DE_LO_QUE_SE_VE = [
   ["inicio.tripulacion.pasaje.cerca.techoHoy", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante dice la base de hoy y lo que falta hasta el mar"],
   ["inicio.tripulacion.pasaje.cerca.visibilidad", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante explica la visibilidad"],
 ];
-const LO_QUE_SE_VE = new Set(DE_LO_QUE_SE_VE.map(([k]) => k));
+/*
+ * **Y la siesta de Ara** (punto 304), por lo mismo y detrás: arriba y sin
+ * nada que contar, Ara bosteza y se duerme; se despierta antes de lo que hay
+ * que oír, y para bajar despierta a Ara la tripulante en persona —sin chispa,
+ * como todo lo que dice cara a cara—. Ver `puedeDormirse` en
+ * `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LA_SIESTA = [
+  ["inicio.ara.pasaje.dormirse", "ara", "el modo inicio, de pasaje: Ara bosteza y se duerme un ratito, arriba"],
+  ["inicio.ara.pasaje.despertarse", "ara", "el modo inicio, de pasaje: Ara se despierta, y el avión siguió su camino"],
+  ["inicio.tripulacion.pasaje.cerca.despertar", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante despierta a Ara para bajar, por el cinturón y los oídos"],
+];
+const LO_QUE_SE_VE = new Set([...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA].map(([k]) => k));
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
     if (!k.startsWith(prefijo) || salvo?.test(k) || LO_QUE_SE_VE.has(k) || filas.some((f) => f.id === k)) continue;
@@ -1763,8 +1775,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa: al final de cada voz. Ver `DE_LO_QUE_SE_VE`.
-for (const [id, voz, para] of DE_LO_QUE_SE_VE) {
+// Y lo que se ve, cuando pasa, y la siesta: al final de cada voz. Ver `DE_LO_QUE_SE_VE` y `DE_LA_SIESTA`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
