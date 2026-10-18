@@ -68,6 +68,12 @@ try {
     locale: "es-PY",
   });
   page.on("pageerror", (e) => console.log("ERROR:", e.message));
+  // La traza, en vivo con `OGA_TRAZA`: un banco largo se sigue mientras vuela.
+  if (process.env.OGA_TRAZA)
+    page.on("console", (m) => {
+      const texto = m.text();
+      if (texto.startsWith("tormenta│")) console.log(`    ${texto.slice(9)}`);
+    });
   await page.addInitScript(() => {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
     /*
@@ -87,6 +93,27 @@ try {
       `&ejercicio=tormenta&teselas=0`,
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, { timeout: 90000 });
+  /*
+   * **Con las voces de verdad.** El pack se baja después del primer gesto,
+   * como en el juego: sin el toque, todo salía «sin grabar» y lo que se medía
+   * era una conversación muda, sin turnos que repartir ni frases que caduquen
+   * —y por eso daba en verde lo que con las tomas se perdía—. Se espera al
+   * pack entero, como `verificar-voces.mjs`.
+   *
+   * Con una tecla que no hace nada, Mayúsculas, y no con un toque: en
+   * Guyrami con el JAZ 60, un toque en la pantalla abrió la explicación del
+   * horizonte, que congela el vuelo, y el banco esperó media hora a un avión
+   * parado.
+   */
+  await page.keyboard.press("Shift");
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, { timeout: 90000 })
+    .catch(() => {});
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().pack ?? "listo") === "listo", null, {
+      timeout: 120000,
+    })
+    .catch(() => {});
   await page.waitForTimeout(12000);
 
   const tarjeta = await page.evaluate(() => {
@@ -181,12 +208,17 @@ try {
          * **Otra vez desde el principio**, como el botón del final: el mundo
          * ya está asentado, y lo que empezó mientras cargaba no cuenta.
          */
-        // Lo dicho hasta aquí no cuenta; lo de desde el principio, entero.
+        /*
+         * Lo dicho hasta aquí no cuenta; lo de desde el principio, entero. Se
+         * cuenta justo al volver a empezar —sin fotogramas en medio—: lo que el
+         * ejercicio del arranque tenía en la boca no es de este intento.
+         */
+        o.reiniciar();
         const antes = {
           instructor: o.dichoTodo().instructor.length,
           cantados: o.cantados().length,
+          habladas: o.habladasTotal(),
         };
-        o.reiniciar();
         await espera(300);
         o.acelerar?.(8);
         const t0 = o.reloj();
@@ -279,6 +311,7 @@ try {
                 `rumbo ${Math.round((s.heading * 180) / Math.PI)}° · ${Math.round(s.position.y)} m · ` +
                 `${Math.round(s.airspeed)} m/s · lo más cerca del rojo ${(tt.loMasCerca / 1000).toFixed(1)} km`,
             );
+            console.log(`tormenta│${traza[traza.length - 1]} · pared ${Math.round(performance.now() / 1000)}s · boca ${JSON.stringify(o.bocaAhora())}`);
           }
           if (modo === "rodear") {
             /*
@@ -322,6 +355,10 @@ try {
           torre: todo.torre ?? [],
           cantados: o.cantados().slice(antes.cantados),
           radio: [...globalThis.__radioDelBanco],
+          // Lo que sonó, en orden y con su hora, y lo que la boca tiró y por qué.
+          // Solo las de este intento: `habladas` guarda las últimas trescientas.
+          habladas: o.habladas().slice(-(o.habladasTotal() - antes.habladas) || o.habladas().length),
+          descartadas: o.descartadas(),
         };
       },
       { modo: MODO, tope: TOPE },
@@ -407,6 +444,8 @@ try {
       console.log(`    instructor: ${r.instructor.join(" · ")}`);
       console.log(`    callados: ${r.cantados.join(" · ")}`);
       console.log(`    radio: ${r.radio.join(" | ")}`);
+      console.log(`    sonó: ${r.habladas.join(" · ")}`);
+      console.log(`    tirado: ${r.descartadas.join(" · ")}`);
     }
     console.log(
       `\n  ${MODO} · ${ESCENARIO} · ${AVION} · ${TRAMO} · ${Math.round(r.reloj)} s de reloj`,

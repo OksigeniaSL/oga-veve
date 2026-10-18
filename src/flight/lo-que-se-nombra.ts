@@ -207,6 +207,12 @@ export const SIN_VER: Readonly<Record<string, string>> = {
   "vuelo.paso.sendaConGases": "vuelo.paso.sendaConGases.sinVer",
   "vuelo.paso.sendaConAyuda": "vuelo.paso.sendaConAyuda.sinVer",
   "vuelo.paso.gasTuyo": "vuelo.paso.gasTuyo.sinVer",
+  /*
+   * Y el porqué de la tormenta con el radar, sin el radar: la misma lección
+   * —qué hay dentro, por qué no se entra, por el lado del viento— sin los
+   * colores de la pantalla. Ya grabada: es la de los peldaños de abajo.
+   */
+  "ejercicio.tormenta.radar": "ejercicio.tormenta.porQue",
 };
 
 /** Lo que nombra esta frase; nada si no nombra ninguna pieza. */

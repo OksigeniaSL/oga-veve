@@ -167,7 +167,8 @@ export function cuantoAguanta(
     explicaLaEspera(clave) ||
     explicaLaOtraPunta(clave) ||
     esDelDescenso(clave) ||
-    cuentaElPirep(clave)
+    cuentaElPirep(clave) ||
+    esDeLaTormenta(clave)
     ? CADUCA_LA_ORDEN
     : // Un anuncio espera su hueco más que un aviso: ver `CADUCA_LA_MEGAFONIA`.
       esDeLaMegafonia(clave)
@@ -193,6 +194,22 @@ export function esDelDescenso(clave: string | undefined): boolean {
 
 const DEL_DESCENSO =
   /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
+
+/**
+ * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por
+ * qué no se entra, lo de dentro y el rayo que no hace nada. Aguanta lo que
+ * una orden de la torre.
+ *
+ * Con los cuatro segundos de un aviso se perdía la explicación entera. Medido
+ * con las tomas grabadas en el banco de la tormenta: la presentación dura
+ * once segundos, la explicación se pedía detrás y «ejercicio.tormenta.radar:
+ * caducó esperando» en cuanto la torre tomaba la palabra con el desvío. Y
+ * llegan de una en una —ver `decirDeLaTormenta` en `game.ts`—, así que no
+ * llenan la cola.
+ */
+export function esDeLaTormenta(clave: string | undefined): boolean {
+  return !!clave && clave.startsWith("ejercicio.tormenta.");
+}
 
 /**
  * **La turbulencia que avisó otro avión por radio**, el PIREP: el otro avión

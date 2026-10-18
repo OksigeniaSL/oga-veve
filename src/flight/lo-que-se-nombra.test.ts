@@ -136,6 +136,12 @@ describe("si no se ve, se dice la alternativa", () => {
     }
   });
 
+  it("la tormenta con el radar, solo con la carta a la vista; si no, la de sin radar", () => {
+    const tormenta = conSuSinVer("ejercicio.tormenta.radar");
+    expect(laQueSePuedeDecir(tormenta, soloSeVe("carta"))).toBe("ejercicio.tormenta.radar");
+    expect(laQueSePuedeDecir(tormenta, NADA_SE_VE)).toBe("ejercicio.tormenta.porQue");
+  });
+
   it("la que nombra el objetivo, si se ve; si no, la misma sin él", () => {
     expect(laQueSePuedeDecir(conSuSinVer("vuelo.paso.acelerarGas"), TODO_SE_VE)).toBe(
       "vuelo.paso.acelerarGas",
