@@ -15963,280 +15963,140 @@
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡Hola! Déjame ver ese cinturón… ¡perfecto, así se lleva! Y la cortinilla, siempre subida para despegar.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.persiana",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Así vemos bien fuera si pasa algo. Y de noche apagamos las luces de la cabina, para que los ojos ya estén hechos a lo de fuera.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.hola",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡Hola otra vez! Aquí tienes agua y algo rico. Te vi mirando las nubes por la ventanilla: ¿es tu primer vuelo?",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.nubes1",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡De verdad! Una nube son millones de gotitas de agua, tan chiquititas que no se ven una a una, y el aire las sostiene.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.nubes2",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Y muy arriba, donde hace mucho frío, son cristalitos de hielo. Se ven blancas porque las gotitas desparraman toda la luz del sol.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.nubes3",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Cuando las cruzamos, todo se ve blanco, el avión se mueve un poquito y a veces se moja la ventanilla. No pasa nada: el avión está hecho para eso.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.frio",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¿Sabes qué? Fuera, tan alto, hace un frío de congelador, bajo cero. Aquí dentro metemos aire de fuera y lo calentamos, para ir a gusto.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.motor1",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¿Ves el motor, ahí debajo del ala? Delante tiene un ventilador gigante que se traga muchísimo aire.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.motor2",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Dentro, el aire se aprieta, se calienta con el combustible y sale por detrás a toda velocidad. Eso empuja el avión hacia delante.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.islas1",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¿Sabes que las islas Canarias salieron del fondo del mar? Son volcanes que fueron creciendo, durante millones de años, hasta asomar.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.islas2",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "La Palma, adonde vamos, es de las más jovencitas, y tiene unas montañas altísimas.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.ruta",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¿Y cómo sabe el avión el camino? La comandante y el copiloto llevan el mapa en una pantalla, y hablan por radio con la torre de control.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.papi",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Al lado de la pista hay cuatro lucecitas. Si se ven dos blancas y dos rojas, el avión baja justo por su camino.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.bano",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡Claro que hay! Pero ahora, con la luz del cinturón encendida, mejor esperamos a aterrizar.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.estrellas",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¿Sabes qué hay arriba de todo en La Palma? Unos telescopios enormes para mirar las estrellas: el cielo de la isla es de los más limpios del mundo.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.aterrizaje",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Ya vamos a aterrizar: cinturón bien abrochado, respaldo derecho y la cortinilla arriba. ¡Lo estás haciendo genial!",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.adios",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡Hasta pronto, y gracias por volar con nosotros! Ahora ya sabes un montón de cosas de los aviones.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.kitAqui",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.kitRato",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "inicio.tripulacion.pasaje.cerca.kitGuardar",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
     "texto": "Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.",
-    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
+    "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
     "id": "explica.sello.veve.texto",

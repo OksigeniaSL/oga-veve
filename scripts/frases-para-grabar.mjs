@@ -2053,8 +2053,15 @@ const CON_CHISPA = (id) =>
    * Y la escena del modo inicio, entera: una madre con desparpajo enseñándole
    * a volar a Ara, y Ara preguntando con ganas. Ni una orden de vuelo ni
    * un aviso: es lo contrario de una voz quieta.
+   *
+   * **Menos la tripulante cuando habla en persona.** Con la chispa —poca
+   * estabilidad y mucho estilo— titubeaba, se cortaba y sonaba insegura, «como
+   * que no esté segura de lo que dice» (Enrique, 18-10). Por megafonía esos
+   * cortecitos pasan, porque así suenan las de verdad, y la demostración se
+   * queda como está; cara a cara con un niño, no. Una tripulante es una
+   * profesional tranquila y segura: va con los ajustes de su voz.
    */
-  id.startsWith("inicio.") ||
+  (id.startsWith("inicio.") && !id.startsWith("inicio.tripulacion.pasaje.cerca.")) ||
   id.startsWith("ventanilla.") ||
   id.startsWith("vuelo.aire.") ||
   id.startsWith("explica.") ||
