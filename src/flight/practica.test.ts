@@ -41,17 +41,34 @@ function durante(p: Practica, l: Lectura, segundos: number): Suceso[] {
 
 const cuales = (s: readonly Suceso[]) => s.map((x) => x.que);
 
+/** Los de avería: la tormenta va aparte, ver su `describe`. */
+const deAveria = (ids: readonly string[]): string[] => ids.filter((id) => id !== "tormenta");
+
 describe("los ejercicios que se ofrecen", () => {
-  it("en Guyrami, ninguno", () => {
-    for (const a of AIRCRAFT) expect(ejerciciosPara("guyrami", a)).toEqual([]);
+  it("en Guyrami, ninguna avería", () => {
+    for (const a of AIRCRAFT)
+      expect(deAveria(ejerciciosPara("guyrami", a).map((e) => e.id))).toEqual([]);
   });
 
   it("en Tukã, solo el planeo, avisado", () => {
     for (const a of AIRCRAFT) {
-      const ids = ejerciciosPara("tuka", a).map((e) => e.id);
+      const ids = deAveria(ejerciciosPara("tuka", a).map((e) => e.id));
       expect(ids).toEqual(["planeo"]);
     }
     expect(esAvisado(ejercicioPorId("planeo")!)).toBe(true);
+  });
+
+  it("y la tormenta, en los cuatro peldaños y solo con radar meteorológico", () => {
+    const tormenta = ejercicioPorId("tormenta")!;
+    expect(tormenta.peldanos).toEqual(["guyrami", "tuka", "taguato", "taguato-ruvicha"]);
+    expect(tormenta.averias).toEqual([]);
+    expect(tormenta.escena).toBe("tormenta");
+    expect(esAvisado(tormenta)).toBe(true);
+    // Los de turbina, que son los que lo llevan; la avioneta y el pistón, no.
+    for (const a of [ARASUNU, ARAI, YVAGA])
+      expect(ejerciciosPara("guyrami", a).map((e) => e.id)).toEqual(["tormenta"]);
+    for (const a of [PYKASU, PANAMBI])
+      expect(ejerciciosPara("taguato", a).some((e) => e.id === "tormenta")).toBe(false);
   });
 
   it("en Taguato, V1 y el motor parado en vuelo, pero solo con más de un motor", () => {

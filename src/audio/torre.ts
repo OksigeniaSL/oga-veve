@@ -157,6 +157,19 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   "orbit left, departing traffic": "torre.orbitLeft",
   "orbit right, departing traffic": "torre.orbitRight",
   "go around, departing traffic": "torre.goAroundDeparting",
+  /*
+   * **Y el desvío por una tormenta**, en el ejercicio de la tormenta: quien
+   * vuela lo pide —«request weather deviation up to two zero miles right of
+   * route», que se lee en la tira— y el control lo aprueba y le pide que
+   * avise al dejar atrás el mal tiempo. Es la fraseología de la FAA (JO
+   * 7110.65BB, 2-6-4 i.5: «DEVIATION (restrictions if necessary) APPROVED,
+   * ADVISE CLEAR OF WEATHER»); la OACI la tiene solo por enlace de datos
+   * —«CLEARED TO DEVIATE UP TO… OF ROUTE», Doc 4444, apéndice 5— y de viva voz
+   * en el capítulo 15, «WEATHER DEVIATION REQUIRED», sin la respuesta escrita.
+   * Esperan su toma: ver `ESPERAN_SU_TOMA` y `avisarDelRodeo` en `game.ts`.
+   */
+  "deviation right of route approved, advise clear of weather": "torre.desvioDerecha",
+  "deviation left of route approved, advise clear of weather": "torre.desvioIzquierda",
 };
 
 /**
@@ -270,10 +283,14 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * pruebas de `torre.test.ts`—, y estas son la excepción escrita: el juego ya
  * sabe cuándo decirlas y las pide solo si su grabación está en el pack. Cuando
  * se graben, salen de aquí; la prueba lo recuerda. El «give way» se grabó el
- * 11-10-2026 y el «hold position» el 17-10-2026; espera la vuelta que la
- * torre te pide cuando el que sale tapa tu salida.
+ * 11-10-2026 y el «hold position» el 17-10-2026; esperan el desvío que
+ * aprueba el control en el ejercicio de la tormenta.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
+  // El desvío por la tormenta, del ejercicio: ver `PENDIENTE-VOCES-tormenta.md`.
+  "torre.desvioDerecha",
+  "torre.desvioIzquierda",
+]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

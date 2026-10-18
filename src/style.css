@@ -9135,6 +9135,38 @@ button.motor__tecla::after {
 }
 
 /*
+ * Y la tormenta: la nube blanca con la base gris del agua, el yunque algo
+ * más claro y lejano, la lluvia en la tinta y el rayo en el ocre de los
+ * avisos —precaución, no alarma—.
+ */
+.ejercicio__nube {
+  fill: #eef0f2;
+}
+
+.ejercicio__yunque {
+  fill: #dfe4ea;
+}
+
+.ejercicio__base {
+  fill: #6c7480;
+}
+
+.ejercicio__lluvia {
+  stroke: #9fb3c6;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.ejercicio__rayo {
+  stroke: var(--ocre-tinta);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/*
  * Y el dibujo del final de un ejercicio, en el sitio de la manga y del tamaño
  * del percance: en el verde de lo que salió bien —hecho, o a repetir, que en
  * un simulador también es hacerlo bien—, nunca en rojo.

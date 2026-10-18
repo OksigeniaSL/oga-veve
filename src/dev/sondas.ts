@@ -2201,6 +2201,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     ejercicio: () => juego.ejercicioParaBanco,
     /**
+     * El ejercicio de la tormenta: cómo va, lo más cerca que se pasó del rojo
+     * y cómo acabó, con la célula y lo que llueve dentro. Ver
+     * `flight/practica-de-tormenta.ts`.
+     */
+    tormenta: () => juego.tormentaParaBanco,
+    /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
+    verLaTormenta: (si: boolean) => juego.verLaTormentaParaBanco(si),
+    /** Un rayo de la tormenta ya: de lejos, o en el avión. */
+    rayoDeLaTormenta: (enElAvion = false) => juego.rayoParaBanco(enElAvion),
+    /**
      * El planeo de este avión —velocidad indicada, m/s, y fineza— con las dos
      * que el piloto del banco necesita para posarse: la de aproximación y el
      * tope de los flaps.

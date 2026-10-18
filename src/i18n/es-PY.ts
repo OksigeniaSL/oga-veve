@@ -2578,6 +2578,7 @@ export const ES_PY = {
   "hangar.ejercicio.despues-de-v1": "Motor después de V1",
   "hangar.ejercicio.un-motor": "Volar con un motor",
   "hangar.ejercicio.simulador": "Sesión de simulador",
+  "hangar.ejercicio.tormenta": "Rodear una tormenta",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -2652,6 +2653,62 @@ export const ES_PY = {
   "ejercicio.otraVez":
     "El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez",
   "palabra.otraVez": "Otra vez",
+
+  /*
+   * ── **El ejercicio de la tormenta** ─────────────────────────────────────
+   *
+   * No es una emergencia: es no entrar en una nube de tormenta. Se rodea de
+   * lejos —veinte millas del rojo del radar—, por el lado del viento; si se
+   * entra, se cuenta con calma qué pasa y se repite; y un rayo que toca el
+   * avión no le hace nada. Las fuentes, en `flight/practica-de-tormenta.ts`.
+   *
+   * La presentación, lo de dentro y el final, en los cuatro peldaños; lo demás,
+   * en los tres de abajo, que en el de cabina lo dicen la radio y el radar.
+   * Todo en calma: ver `PENDIENTE-VOCES-tormenta.md`.
+   */
+  "ejercicio.tormenta.antes":
+    "Hoy volamos con una tormenta. ¿Ves esa nube enorme allá adelante, alta como una torre? Es una tormenta, y a una tormenta no se entra: la vamos a rodear de lejos, con calma",
+  "ejercicio.tormenta.porQue":
+    "Adentro de esa nube el aire sube y baja muy fuerte, llueve mucho y puede caer granizo. Por eso no se entra. Girá a la derecha, del lado de donde viene el viento, y dejala bien lejos",
+  // Con los números: nombra el radar, así que solo con la carta a la vista.
+  "ejercicio.tormenta.radar":
+    "En el radar se ve: el rojo y el magenta son lo más fuerte, y ahí no se entra. A una tormenta así se la deja a veinte millas, unos treinta y siete kilómetros. Girá a la derecha, del lado del viento, lejos del yunque",
+  "ejercicio.tormenta.avisamos":
+    "Le avisamos al control que vamos a rodear la tormenta, y prendemos el cartel del cinturón: cerca de una tormenta el aire se mueve, y con el cinturón puesto un salto no te levanta del asiento",
+  "ejercicio.tormenta.masDerecha":
+    "Girá un poco más a la derecha: así todavía pasamos muy cerca de la tormenta",
+  "ejercicio.tormenta.masIzquierda":
+    "Girá un poco más a la izquierda: así todavía pasamos muy cerca de la tormenta",
+  "ejercicio.tormenta.asiVa":
+    "¡Así! Con este rumbo la dejamos lejos. Seguí derecho hasta que la tormenta quede atrás",
+  "ejercicio.tormenta.rayoLejos":
+    "¿Viste el destello adentro de la nube? Fue un rayo. Las tormentas tienen muchos, y desde lejos no nos hacen nada. Y si algún día un rayo toca un avión, tampoco: el avión está hecho para eso",
+  "ejercicio.tormenta.adentro":
+    "Entramos en la tormenta: por eso se sacude, llueve fuerte y suena el granizo. Con calma: cinturón puesto, alas derechas, y seguí derecho, que es el camino más corto para salir",
+  "ejercicio.tormenta.rayoEnElAvion":
+    "Nos tocó un rayo, y no pasa nada. Casi toda la electricidad corre por la chapa de afuera del avión y sigue de largo: está hecho para eso. A cada avión de línea le pasa una o dos veces por año",
+  "ejercicio.tormenta.salimos":
+    "Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio",
+  "ejercicio.tormenta.bien":
+    "¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa",
+  "ejercicio.tormenta.bienCerca":
+    "La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas",
+  // La palabra de cada tarjeta, en el peldaño de la palabra.
+  "palabra.rodeala": "Rodeala",
+  "palabra.masLejos": "Más lejos",
+  "palabra.rayo": "Un rayo",
+  "palabra.derecho": "Derecho",
+  // Y la frase corta, con sus números, de Taguató para arriba.
+  "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
+  "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",
+  "tormenta.rotulo.masLejos": "Así pasás a {n} {u} del rojo: girá más",
+  "tormenta.rotulo.asiVa": "¡Así! Pasás a {n} {u} del rojo",
+  "tormenta.rotulo.rayoLejos": "Un rayo en la tormenta: de lejos no hace nada",
+  "tormenta.rotulo.adentro": "Adentro: cinturón, alas derechas y seguí derecho",
+  "tormenta.rotulo.rayoEnElAvion": "Un rayo tocó el avión: no pasa nada",
+  "tormenta.rotulo.salimos": "Afuera. A una tormenta no se entra: otra vez",
+  "tormenta.rotulo.bien": "¡Rodeada! Pasaste a {n} {u} del rojo",
+  "tormenta.rotulo.bienCerca": "Rodeada a {n} {u} del rojo: la próxima, a {m} {u}",
 
   "tactil.palanca": "Palanca",
   "tactil.timon": "Pedales del timón",

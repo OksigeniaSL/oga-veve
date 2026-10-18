@@ -80,7 +80,13 @@ const HABLADOS = [
    * sistema— el ejercicio sería mudo justo en lo que más importa, que es la
    * calma. Ver `src/flight/ejercicios.ts`.
    */
-  ["ejercicio", "instructor", "los ejercicios de emergencia: antes, durante y después"],
+  [
+    "ejercicio",
+    "instructor",
+    "los ejercicios de emergencia: antes, durante y después",
+    // La tormenta va al final de la lista: ver `DE_LA_TORMENTA`.
+    /^ejercicio\.tormenta\./,
+  ],
   ["mission", "instructor", "las misiones"],
   /*
    * Aquí estaba «la cuenta de la toma, en casa»: la instructora contando en
@@ -1641,6 +1647,57 @@ for (const [k, v] of es) {
 }
 
 /*
+ * **Y el ejercicio de la tormenta**, también al final y por lo mismo que los
+ * sellos: sus claves empiezan por `ejercicio.` y, metidas con las de los
+ * ejercicios de emergencia, renumerarían las frases de la instructora ya
+ * grabadas. Todas van en calma, como cualquier `ejercicio.` —ver el bucle de
+ * más abajo—, y las que cuentan el rayo y lo que sacude, además, en
+ * `EN_CALMA_COMO_SE_ESCRIBE`, que es donde se busca.
+ *
+ * Y la respuesta del control al desvío, en las dos torres: la pieza de
+ * «deviation right of route approved, advise clear of weather», que va detrás
+ * de la matrícula en la receta `torre.desvioDerecha` —y la de la izquierda—.
+ * Ver `src/flight/practica-de-tormenta.ts`, `avisarDelRodeo` en
+ * `src/game.ts` y `PENDIENTE-VOCES-tormenta.md`.
+ */
+const DE_LA_TORMENTA = /^ejercicio\.tormenta\./;
+for (const [k, v] of es) {
+  if (!DE_LA_TORMENTA.test(k) || filas.some((f) => f.id === k)) continue;
+  filas.push({
+    id: k,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto: v,
+    para: "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+  });
+  total += v.length;
+}
+const DESVIO_POR_LA_TORMENTA = [
+  [
+    "torre.solo.desvioDerecha",
+    "deviation right of route approved, advise clear of weather",
+    "el control aprueba el desvío por la derecha de la tormenta",
+  ],
+  [
+    "torre.solo.desvioIzquierda",
+    "deviation left of route approved, advise clear of weather",
+    "el control aprueba el desvío por la izquierda de la tormenta",
+  ],
+];
+for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
+  for (const voz of ["torre", "torre-canarias"]) {
+    filas.push({
+      id: voz === "torre" ? id : id.replace("torre.", "torre.canario."),
+      voz,
+      idioma: "en",
+      texto,
+      para,
+    });
+    total += texto.length;
+  }
+}
+
+/*
  * **Y fuera lo que no se graba: lo que se monta.**
  *
  * Las frases con hueco —«{indicativo}, en final»— no son frases: son recetas.
@@ -1806,6 +1863,15 @@ const EN_CALMA_COMO_SE_ESCRIBE = new Set([
   "comandante.turbulencia.fuerte",
   "comandante.turbulencia.ahora.fuerte",
   "comandante.turbulencia.otraVez.fuerte",
+  /*
+   * Y en el ejercicio de la tormenta, lo que cuenta el rayo y lo que sacude:
+   * para muchos, el primer rayo y la primera turbulencia que oyen contar. Ya
+   * irían en calma por ser `ejercicio.`; aquí, para que se encuentren.
+   */
+  "ejercicio.tormenta.rayoLejos",
+  "ejercicio.tormenta.adentro",
+  "ejercicio.tormenta.rayoEnElAvion",
+  "ejercicio.tormenta.salimos",
 ]);
 for (const f of filas) {
   if (!EN_CALMA_COMO_SE_ESCRIBE.has(f.id)) continue;

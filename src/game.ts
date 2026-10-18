@@ -91,6 +91,21 @@ import {
 } from "./world/superficies-de-mando";
 import { seOfrece, type Ejercicio } from "./flight/ejercicios";
 import {
+  colocacionDeLaTormenta,
+  escenaDeLaTormenta,
+  margenEnUnidades,
+  MARGEN_DE_RODEO,
+  PracticaDeTormenta,
+  radioDelEco,
+  BASE as BASE_DE_LA_TORMENTA,
+  CIMA as CIMA_DE_LA_TORMENTA,
+  pasoPorEsteRumbo,
+  type CierreDeTormenta,
+  type Lado,
+  type SucesoDeTormenta,
+} from "./flight/practica-de-tormenta";
+import { crearCumulonimbo, type CumulonimboEnElMundo } from "./world/cumulonimbo";
+import {
   ladoDelMotor,
   listaDelMotor,
   Practica,
@@ -192,7 +207,7 @@ import { estrellasQueSeSenalan } from "./world/hitos-del-cielo";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
-import { Relampagos } from "./world/relampago";
+import { ENTRE_RAYOS, luzDelRelampago, Relampagos } from "./world/relampago";
 import {
   capaDelParte,
   type CapaDeNubes,
@@ -627,7 +642,32 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   simulador: "motor-parado",
   // La máscara: la misma de su aviso. Ver `EJERCICIO_DE_DESPRESURIZACION`.
   despresurizacion: EJERCICIO_DE_DESPRESURIZACION.dibujo,
+  // La nube con su rayo: la misma del aviso de tormenta del radar.
+  tormenta: "tormenta",
 };
+
+/**
+ * **Lo que tarda en volver a empezar** el ejercicio de la tormenta después de
+ * salir de ella, s: lo que dura contar qué pasó y por qué no se entra, y un
+ * respiro. Se repite, como en un simulador: no hace falta tocar nada.
+ */
+const OTRA_VEZ_TRAS_LA_TORMENTA = 14;
+
+/**
+ * **Cada cuánto se enciende la tormenta por dentro**, s, como poco y como
+ * mucho. Un cumulonimbo maduro relampaguea a menudo, y desde lejos es lo que
+ * dice que está vivo; nunca más de uno por `ENTRE_RAYOS`, que es la regla de
+ * los destellos. Ver `world/relampago.ts`.
+ */
+const RELAMPAGUEA_CADA: readonly [number, number] = [6, 16];
+
+/**
+ * **Hasta dónde llueve dentro de la tormenta**, m: hasta la cima del
+ * cumulonimbo. Dentro de la torre cae agua a cualquier altura de las que vuela
+ * la flota; por encima de la nube, nada. Ver `CIMA` en
+ * `flight/practica-de-tormenta.ts`.
+ */
+const CIMA_DE_LA_LLUVIA = CIMA_DE_LA_TORMENTA;
 
 /** Qué se dice al acabar, según cómo. Ver `Cierre` en `flight/practica.ts`. */
 const CIERRE_DEL_EJERCICIO: Readonly<
@@ -3172,6 +3212,34 @@ export class Game {
    */
   private practica: Practica | null = null;
   /**
+   * **El ejercicio de la tormenta en marcha**, si es ése el que se eligió: no
+   * es una avería, y lo lleva su propia práctica. Ver
+   * `flight/practica-de-tormenta.ts` y `practicarLaTormenta`.
+   */
+  private tormenta: PracticaDeTormenta | null = null;
+  /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
+  private cumulonimbo: CumulonimboEnElMundo | null = null;
+  /**
+   * Desde cuándo alumbra el último rayo de la tormenta, s; si cae en ella, y
+   * si lleva cinta —el relámpago que se queda dentro de la nube no la lleva—.
+   */
+  private rayoDeLaTormenta: { t: number; enLaNube: boolean; conCinta: boolean } | null = null;
+  /** Lo que falta para que la tormenta se encienda sola por dentro, s. */
+  private hastaElProximoRelampago = RELAMPAGUEA_CADA[0];
+  /** Lo que llueve dentro de la tormenta, si se está dentro. Ver `mojarseEnLaTormenta`. */
+  private lluviaDeLaTormenta: { clase: Lluvia; fuerza: number } | null = null;
+  /** Lo que se dijo al rodearla: con margen o cerca. Ver `atenderALaTormenta`. */
+  private comoSeRodeo: CierreDeTormenta | null = null;
+
+  /**
+   * **El ejercicio de hoy**, sea de los de avería o la tormenta: para todo lo
+   * que es igual en los dos —dónde se empieza, la senda que no se pinta, la
+   * torre que contesta, el «otra vez»—.
+   */
+  private get ejercicioDeHoy(): Ejercicio | null {
+    return this.practica?.ejercicio ?? this.tormenta?.ejercicio ?? null;
+  }
+  /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
    * motor parado. Desde ahí la torre da prioridad —ver `conPrioridad`, que la
    * suma a las del combustible y a la de sin motor— y la cabecera que se
@@ -5250,11 +5318,25 @@ export class Game {
      * cinturón: `?ejercicio=` en la dirección llega por otro lado.
      */
     const ejercicio = options.ejercicio ?? null;
-    if (ejercicio && seOfrece(ejercicio, this.tier.id, this.aircraft))
-      this.practica = new Practica(ejercicio, this.aircraft, {
-        v1: this.aircraft.decisionSpeed,
-        vr: this.aircraft.rotationSpeed,
-      });
+    if (ejercicio && seOfrece(ejercicio, this.tier.id, this.aircraft)) {
+      /*
+       * **La tormenta no es una avería**: la lleva su propia práctica, con la
+       * tormenta puesta en medio del camino a casa. Ver `ponerLaTormenta`.
+       */
+      if (ejercicio.escena === "tormenta") {
+        const { runway } = this.scenario;
+        const lejos = colocacionDeLaTormenta(this.aircraft).tormenta;
+        const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
+        this.tormenta = new PracticaDeTormenta(
+          ejercicio,
+          escenaDeLaTormenta({ x, z }, MathUtils.degToRad(runway.heading)),
+        );
+      } else
+        this.practica = new Practica(ejercicio, this.aircraft, {
+          v1: this.aircraft.decisionSpeed,
+          vr: this.aircraft.rotationSpeed,
+        });
+    }
 
     /*
      * El dedo sobre la cabina: mirar qué mando hay debajo y pulsarlo al soltar.
@@ -5360,6 +5442,16 @@ export class Game {
       this.scenario.size,
       this.scenario.seed,
     );
+    /*
+     * **Y la del ejercicio, si es el de la tormenta**: una célula más, la
+     * misma para todo. La pinta el radar, sacude, graniza en su núcleo y
+     * llueve dentro, igual que las del parte: lo que se ve, lo que se oye y lo
+     * que pinta el instrumento salen del mismo sitio. Ver `ponerLaTormenta`.
+     */
+    if (this.tormenta) {
+      this.celdas = [...this.celdas, this.tormenta.escena.celda];
+      this.ponerLaTormenta(this.tormenta);
+    }
     /*
      * **Y el otro aeropuerto, si esta ruta lleva a alguno.**
      *
@@ -5919,7 +6011,7 @@ export class Game {
      * guardando altura para llegar: «too high, come down» en pleno planeo.
      * Lo que guía un ejercicio es el ejercicio, y el PAPI sigue en su sitio.
      */
-    if (this.leccion.id === "aterrizaje" && !this.practica) {
+    if (this.leccion.id === "aterrizaje" && !this.ejercicioDeHoy) {
       this.scene.add(this.runwayGuide.group);
       this.seVenLosAros = true;
     }
@@ -7470,6 +7562,7 @@ export class Game {
     this.rodadura?.dispose();
     this.terrain.dispose();
     this.aroDelPapi.dispose();
+    this.cumulonimbo?.dispose();
     this.renderer.dispose();
   }
 
@@ -8544,7 +8637,7 @@ export class Game {
      * de un problema: la instructora, con calma, que se repite. Es la segunda
      * regla del marco de las emergencias. Ver `flight/ejercicios.ts`.
      */
-    const enEjercicio = this.practica !== null;
+    const enEjercicio = this.ejercicioDeHoy !== null;
     if (enEjercicio) this.decirDelEjercicio("ejercicio.otraVez", "mando");
     else this.cantar("we have a problem", t("vuelo.roto"), "vuelo.roto");
     this.agenda.luego(TARDA_EL_FINAL, () => {
@@ -10806,7 +10899,7 @@ export class Game {
        * **Un ejercicio se coloca donde se practica**: más lejos y más alto
        * que la final de siempre. Ver `dondeEmpiezaElEjercicio`.
        */
-      const colocacion = this.practica?.ejercicio.colocacion;
+      const colocacion = this.ejercicioDeHoy?.colocacion;
       if (colocacion) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -11050,6 +11143,7 @@ export class Game {
      */
     this.velocidadesDeHoy = null;
     this.practica?.reiniciar();
+    this.otraVezLaTormenta();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -11306,6 +11400,12 @@ export class Game {
      * como los que salen siempre a la misma hora.
      */
     if (this.dePasaje) return HORA_BUENA;
+    /*
+     * **Y la tormenta, de tarde**: la tormenta de verano es la de la tarde,
+     * cuando el suelo ya calentó el aire —el #49—, y de noche el ejercicio no
+     * se podría ver venir, que es la mitad de la lección.
+     */
+    if (this.tormenta) return HORA_BUENA;
     /*
      * **Y si no se pide ninguna, la que es de verdad donde se está volando.**
      *
@@ -11924,8 +12024,16 @@ export class Game {
         this.llamadas.length > 0 ||
         BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       cartelPuesto: this.cinturonPuesto,
-      // Y sin «pueden soltarse» con una turbulencia anunciada por delante.
-      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia,
+      /*
+       * Y sin «pueden soltarse» con una turbulencia anunciada por delante, ni
+       * con la tormenta del ejercicio por rodear: el cartel se encendió por
+       * ella, y apagarlo con la tormenta delante sería decir lo contrario de
+       * lo que se enseña. Ver `atenderALaTormenta`.
+       */
+      turbulenciaPorPasar:
+        this.turbulenciaDelVuelo.porPasarTodavia ||
+        this.tormenta?.fase === "delante" ||
+        this.tormenta?.fase === "dentro",
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La
@@ -14255,12 +14363,20 @@ export class Game {
      * cumulonimbo, que es una torre: en tormenta, donde el radar pinta la
      * célula llueve a cualquier altura. Ver `lluviaALaAltura`.
      */
+    /*
+     * Y dentro de la tormenta del ejercicio, toda la suya: llueve dentro del
+     * eco y a cualquier altura de la torre. Ver `mojarseEnLaTormenta`.
+     */
+    const deLaTormenta = this.lluviaDeLaTormenta;
     const aqui = (x: number, y: number, z: number): number =>
-      lluviaALaAltura(
-        y,
-        this.capaDeNubes,
-        this.lloviendo.clase === "tormenta" && ecoEn(this.celdas, x, z) >= 0.18,
-      );
+      deLaTormenta
+        ? 1
+        : lluviaALaAltura(
+            y,
+            this.capaDeNubes,
+            this.lloviendo.clase === "tormenta" && ecoEn(this.celdas, x, z) >= 0.18,
+          );
+    const llueve = deLaTormenta ?? this.lloviendo;
     const caeDondeElOjo = aqui(ojo.x, ojo.y, ojo.z);
     const alumbra = this.lluvia.paso(dt, {
       camara: ojo,
@@ -14292,11 +14408,11 @@ export class Game {
      */
     const s = this.flight.state;
     const cuanta =
-      this.lloviendo.clase === "nada"
+      llueve.clase === "nada"
         ? 0
-        : this.lloviendo.clase === "llovizna"
+        : llueve.clase === "llovizna"
           ? 0.35
-          : 0.55 + 0.45 * this.lloviendo.fuerza;
+          : 0.55 + 0.45 * llueve.fuerza;
     this.gotas.paso(dt, {
       camara: this.camera,
       mojado: Math.min(
@@ -14333,8 +14449,8 @@ export class Game {
     this.luzDelRayo = luz;
     const llueveEncima = aqui(s.position.x, s.position.y, s.position.z);
     this.audio.ponerLluvia(
-      this.lloviendo.clase,
-      this.lloviendo.fuerza,
+      llueve.clase,
+      llueve.fuerza,
       this.flight.state.airspeed,
       // Y encima de las nubes no se oye llover, que tampoco llueve.
       llueveEncima,
@@ -14434,14 +14550,14 @@ export class Game {
      * la velocidad de lo que se va a practicar: la de mejor planeo, o la del
      * circuito para volar con un motor. Ver `dondeEmpiezaElEjercicio`.
      */
-    const colocacion = this.practica?.ejercicio.colocacion;
+    const colocacion = this.ejercicioDeHoy?.colocacion;
     const configurado = !colocacion && this.aircraft.trenRetractil;
     const entrada =
       colocacion === "planeo"
         ? planeoDe(this.avionConPeso()).velocidad
         : colocacion === "un-motor"
           ? this.aircraft.velocidadDeCircuito
-          : colocacion === "crucero"
+          : colocacion === "crucero" || colocacion === "tormenta"
             ? this.aircraft.cruiseSpeed
             : configurado
               ? this.aircraft.approachSpeed * 1.1
@@ -14455,7 +14571,7 @@ export class Game {
        * con el morro en el horizonte y lo primero que hace es caerse, que no
        * es lo que se viene a practicar. Ver `InitialConditions.equilibrado`.
        */
-      ...(colocacion === "crucero" ? { equilibrado: true } : {}),
+      ...(colocacion === "crucero" || colocacion === "tormenta" ? { equilibrado: true } : {}),
     });
     if (this.campoMontado !== this.scenario.id) this.montarElCampo(this.laCasa);
     /*
@@ -14922,6 +15038,8 @@ export class Game {
     this.mirarLaCabecera();
     // El ejercicio de emergencia, si lo hay. Ver `practicar`.
     this.practicar(dt);
+    // Y el de la tormenta. Ver `practicarLaTormenta`.
+    this.practicarLaTormenta(dt);
     this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
 
@@ -15646,7 +15764,7 @@ export class Game {
      * Vuelve sola al levantarse la orden —la pista vuelve a ser tuya y la
      * senda también—, que es lo que hace `levantarLaOrden`.
      */
-    if (this.leccion.id === "aterrizaje" && !this.practica) {
+    if (this.leccion.id === "aterrizaje" && !this.ejercicioDeHoy) {
       const conSenda = !this.laAproximacion.mandanFrustrar;
       if (this.runwayGuide.group.visible !== conSenda) {
         this.runwayGuide.group.visible = conSenda;
@@ -17746,7 +17864,7 @@ export class Game {
      * ejercicio se quedaba sin respuesta en un campo con torre.
      */
     return (
-      (this.leccion.torre || this.practica !== null) &&
+      (this.leccion.torre || this.ejercicioDeHoy !== null) &&
       !sinTorre(this.elCampo().escenario.aerodrome)
     );
   }
@@ -17778,8 +17896,16 @@ export class Game {
    *   cercano es el de casa y queda por delante.
    */
   private dondeEmpiezaElEjercicio(
-    colocacion: "planeo" | "un-motor" | "crucero",
+    colocacion: "planeo" | "un-motor" | "crucero" | "tormenta",
   ): { lejos: number; alto: number } {
+    /*
+     * `tormenta`: lejos, a la altura de la llegada, con la tormenta en medio
+     * del camino a casa. Ver `colocacionDeLaTormenta`.
+     */
+    if (colocacion === "tormenta") {
+      const { lejos, alto } = colocacionDeLaTormenta(this.aircraft);
+      return { lejos, alto };
+    }
     if (colocacion === "un-motor") {
       const lejos = this.aircraft.velocidadDeCircuito * 150;
       return { lejos, alto: lejos * Math.tan((3 * Math.PI) / 180) };
@@ -17981,7 +18107,7 @@ export class Game {
    * ejercicio sale en la tarjeta y la frase, donde se lee.
    */
   private presentarElEjercicio(): void {
-    const e = this.practica?.ejercicio;
+    const e = this.ejercicioDeHoy;
     if (!e) return;
     const clave = `ejercicio.${e.id}.antes` as TranslationKey;
     this.hud.senal.mostrar(
@@ -18298,6 +18424,473 @@ export class Game {
     });
   }
 
+  // ── El ejercicio de la tormenta ──────────────────────────────────────
+  //
+  // Ver `flight/practica-de-tormenta.ts`. Como en los de avería, aquí solo se
+  // decide **quién dice y enseña cada cosa** en cada peldaño: el dibujo en los
+  // cuatro, la palabra en el segundo, los números en el tercero y la radio en
+  // el cuarto. La instructora cuenta en los tres de abajo; lo que es el
+  // ejercicio mismo —la presentación, lo que pasa dentro, el rayo que toca el
+  // avión y el final— lo cuenta en los cuatro, con calma.
+
+  /** La nube, en su sitio y con su suelo debajo. Ver `world/cumulonimbo.ts`. */
+  private ponerLaTormenta(t: PracticaDeTormenta): void {
+    const { celda, yunque } = t.escena;
+    const nube = crearCumulonimbo(yunque, this.scenario.seed);
+    const suelo = Math.max(
+      this.terrain.sampleHeight(celda.x, celda.z),
+      this.scenario.waterLevel,
+    );
+    nube.poner(celda.x, celda.z, suelo);
+    this.scene.add(nube.grupo);
+    this.cumulonimbo = nube;
+  }
+
+  /** La tormenta, para el banco. */
+  get tormentaParaBanco(): {
+    readonly fase: string;
+    readonly entro: boolean;
+    readonly loMasCerca: number;
+    readonly cierre: string | null;
+    readonly comoSeRodeo: string | null;
+    readonly celda: Celda;
+    readonly yunque: { readonly x: number; readonly z: number };
+    readonly margen: number;
+    readonly lloviendo: { clase: Lluvia; fuerza: number } | null;
+    readonly granizo: number;
+    readonly cinturon: boolean;
+    readonly triangulos: number;
+  } | null {
+    const t = this.tormenta;
+    if (!t) return null;
+    const s = this.flight.state.position;
+    return {
+      fase: t.fase,
+      entro: t.entroYa,
+      loMasCerca: t.loMasCerca,
+      cierre: t.cierre,
+      comoSeRodeo: this.comoSeRodeo,
+      celda: t.escena.celda,
+      yunque: t.escena.yunque,
+      margen: MARGEN_DE_RODEO,
+      lloviendo: this.lluviaDeLaTormenta,
+      // El mismo granizo que suena: ver `pasoDeLluvia`.
+      granizo: granizoDeLaCelda(ecoEn([t.escena.celda], s.x, s.z)),
+      cinturon: this.cinturonPuesto,
+      triangulos: this.cumulonimbo?.triangulos ?? 0,
+    };
+  }
+
+  /**
+   * Enseña o esconde la nube, para el banco de rendimiento: lo que cuesta
+   * es la diferencia entre las dos en el mismo sitio.
+   */
+  verLaTormentaParaBanco(si: boolean): void {
+    if (this.cumulonimbo) this.cumulonimbo.grupo.visible = si;
+  }
+
+  /** Un rayo ya, de lejos o en el avión, para mirarlo en una captura. */
+  rayoParaBanco(enElAvion: boolean): void {
+    this.caeUnRayo(enElAvion);
+  }
+
+  /** Otra vez desde el principio: sin rayos a medias, sin agua y sin cierre. */
+  private otraVezLaTormenta(): void {
+    if (!this.tormenta) return;
+    this.tormenta.reiniciar();
+    this.rayoDeLaTormenta = null;
+    this.comoSeRodeo = null;
+    this.hastaElProximoRelampago = RELAMPAGUEA_CADA[0];
+    this.mojarseEnLaTormenta(0);
+  }
+
+  /** Hacia dónde va el avión de verdad, que con viento no es hacia donde mira. */
+  private rumboDeLaTrayectoria(): number {
+    const s = this.flight.state;
+    const v = s.velocity;
+    return v.x * v.x + v.z * v.z > 1 ? Math.atan2(v.x, -v.z) : s.heading;
+  }
+
+  /**
+   * **Un paso del ejercicio de la tormenta**: la nube, que relampaguea sola;
+   * el agua de dentro, si se está dentro; y lo que el ejercicio pida.
+   */
+  private practicarLaTormenta(dt: number): void {
+    const t = this.tormenta;
+    if (!t) return;
+    this.relampaguearLaTormenta(dt);
+    // Como los de avería: no se cuenta nada encima del parte.
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    this.mojarseEnLaTormenta(
+      s.position.y < CIMA_DE_LA_LLUVIA
+        ? ecoEn([t.escena.celda], s.position.x, s.position.z)
+        : 0,
+    );
+    const sucesos = t.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        rumbo: this.rumboDeLaTrayectoria(),
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderALaTormenta(suceso);
+  }
+
+  /**
+   * **El rótulo de la tormenta en cada peldaño**: nada en el primero, la
+   * palabra en el segundo y, de ahí arriba, la frase corta con sus números.
+   */
+  private rotuloDeLaTormenta(corta: TranslationKey, conCifras: () => string): string {
+    const canales = canalesDe(this.tier.avisos);
+    if (!canales.texto) return "";
+    return canales.corto ? t(corta) : conCifras();
+  }
+
+  /** Una distancia como se lee en el cuadro de este peldaño: km o NM. */
+  private distanciaDeLaTormenta(metros: number): { n: string; u: string } {
+    const m = margenEnUnidades(metros, this.tier.units);
+    return { n: String(m.n), u: m.unidad };
+  }
+
+  private atenderALaTormenta(suceso: SucesoDeTormenta): void {
+    const explica = laInstructoraLoExplica(this.tier.avisos);
+    switch (suceso.que) {
+      case "presentar":
+        // El cartel, ya: cerca de una tormenta el aire se mueve.
+        this.cinturon.ponerMando("puesto");
+        return this.presentarElEjercicio();
+      case "explicar": {
+        const derecha = suceso.lado === "derecha";
+        const lejos = this.distanciaDeLaTormenta(MARGEN_DE_RODEO);
+        this.hud.senal.mostrar(
+          derecha ? "vuelta-derecha" : "vuelta-izquierda",
+          this.rotuloDeLaTormenta("palabra.rodeala", () =>
+            t(
+              derecha ? "tormenta.rotulo.rodearDerecha" : "tormenta.rotulo.rodearIzquierda",
+              lejos,
+            ),
+          ),
+          null,
+          { segundos: 12, prioridad: IMPORTANTE },
+        );
+        if (!explica) return;
+        /*
+         * Con los números, con el radar y las veinte millas; si el radar no
+         * está a la vista, lo mismo sin nombrarlo. Ver `lo-que-se-nombra.ts`.
+         */
+        const clave = canalesDe(this.tier.avisos).cifra
+          ? laQueSePuedeDecir(
+              ["ejercicio.tormenta.radar", "ejercicio.tormenta.porQue"],
+              this.seVe,
+            )
+          : "ejercicio.tormenta.porQue";
+        if (clave) this.decirDelEjercicio(clave as TranslationKey, "normal");
+        return;
+      }
+      case "avisar":
+        return this.avisarDelRodeo(suceso.lado);
+      case "girar": {
+        const derecha = suceso.lado === "derecha";
+        const s = this.flight.state;
+        const ahora = this.distanciaDeLaTormenta(
+          pasoPorEsteRumbo(
+            s.position.x,
+            s.position.z,
+            this.rumboDeLaTrayectoria(),
+            this.tormenta!.escena.celda,
+          ).margen,
+        );
+        this.hud.senal.mostrar(
+          derecha ? "vuelta-derecha" : "vuelta-izquierda",
+          this.rotuloDeLaTormenta("palabra.masLejos", () => t("tormenta.rotulo.masLejos", ahora)),
+          null,
+          { segundos: 8, prioridad: IMPORTANTE },
+        );
+        if (explica)
+          this.decirDelEjercicio(
+            derecha ? "ejercicio.tormenta.masDerecha" : "ejercicio.tormenta.masIzquierda",
+            "normal",
+          );
+        return;
+      }
+      case "asiVa": {
+        const pasa = this.distanciaDeLaTormenta(suceso.margen);
+        this.hud.senal.mostrar(
+          "corregido",
+          this.rotuloDeLaTormenta("palabra.asi", () => t("tormenta.rotulo.asiVa", pasa)),
+          null,
+          { segundos: 6 },
+        );
+        this.avisar("success");
+        if (explica) this.decirDelEjercicio("ejercicio.tormenta.asiVa", "normal");
+        return;
+      }
+      case "rayoLejos":
+        this.caeUnRayo(false);
+        this.hud.senal.mostrar(
+          "tormenta",
+          this.rotuloDeLaTormenta("palabra.rayo", () => t("tormenta.rotulo.rayoLejos")),
+          null,
+          { segundos: 7 },
+        );
+        if (explica) this.decirDelEjercicio("ejercicio.tormenta.rayoLejos", "normal");
+        return;
+      case "entra":
+        /*
+         * **Dentro, lo que se hace**: el cartel, alas derechas y seguir
+         * derecho —dar la vuelta dentro es más tiempo dentro—. Lo que sacude,
+         * llueve y graniza lo pone la célula, sin que nadie lo pida. En los
+         * cuatro peldaños: es el momento del ejercicio en que hace falta oír a
+         * alguien que no se acelera.
+         */
+        this.cinturon.ponerMando("puesto");
+        this.hud.senal.mostrar(
+          "tormenta",
+          this.rotuloDeLaTormenta("palabra.derecho", () => t("tormenta.rotulo.adentro")),
+          null,
+          { segundos: 10, prioridad: IMPORTANTE },
+        );
+        this.decirDelEjercicio("ejercicio.tormenta.adentro", "mando");
+        return;
+      case "rayoEnElAvion":
+        this.caeUnRayo(true);
+        this.hud.senal.mostrar(
+          "corregido",
+          this.rotuloDeLaTormenta("palabra.rayo", () => t("tormenta.rotulo.rayoEnElAvion")),
+          null,
+          { segundos: 8, prioridad: IMPORTANTE },
+        );
+        // Detrás del golpe, no encima: un suceso, una voz.
+        this.agenda.luego(1.2, () => {
+          const fase = this.tormenta?.fase;
+          if (fase === "dentro" || fase === "fuera")
+            this.decirDelEjercicio("ejercicio.tormenta.rayoEnElAvion", "mando");
+        });
+        return;
+      case "sale": {
+        /*
+         * **Y otra vez**, sin castigo: se cuenta qué pasó y por qué no se
+         * entra, y se vuelve a empezar solo, como en un simulador. Sin tocar
+         * nada: a los cuatro años no se busca un botón para volver a probar.
+         */
+        this.hud.senal.mostrar(
+          "media-vuelta",
+          this.rotuloDeLaTormenta("palabra.otraVez", () => t("tormenta.rotulo.salimos")),
+          null,
+          { segundos: OTRA_VEZ_TRAS_LA_TORMENTA, prioridad: IMPORTANTE },
+        );
+        this.decirDelEjercicio("ejercicio.tormenta.salimos", "mando");
+        const esta = this.tormenta;
+        this.agenda.luego(OTRA_VEZ_TRAS_LA_TORMENTA, () => {
+          if (this.tormenta === esta && esta?.fase === "fuera" && !this.percance)
+            this.resetFlight();
+        });
+        return;
+      }
+      case "rodeada": {
+        /*
+         * **Rodeada**: la fiesta, en los cuatro peldaños. Con margen, el
+         * elogio entero; más cerca, que la rodeó sin entrar —bien— y la
+         * próxima más lejos. Ninguno es un reproche.
+         */
+        this.comoSeRodeo = suceso.conMargen ? "rodeada" : "rodeadaCerca";
+        const pasa = this.distanciaDeLaTormenta(suceso.margen);
+        const debe = this.distanciaDeLaTormenta(MARGEN_DE_RODEO);
+        this.hud.senal.mostrar(
+          "corregido",
+          this.rotuloDeLaTormenta("palabra.bien", () =>
+            suceso.conMargen
+              ? t("tormenta.rotulo.bien", pasa)
+              : t("tormenta.rotulo.bienCerca", { n: pasa.n, u: pasa.u, m: debe.n }),
+          ),
+          null,
+          { segundos: 10, prioridad: IMPORTANTE },
+        );
+        this.avisar("achieved");
+        this.decirDelEjercicio(
+          suceso.conMargen ? "ejercicio.tormenta.bien" : "ejercicio.tormenta.bienCerca",
+          "normal",
+        );
+        // Y se avisa al control, que lo pidió: ya lejos del mal tiempo.
+        if (this.conCifrasEnRadio() && this.hayTorreQueHable())
+          this.hud.radio(`${this.miIndicativo.dicho}, clear of weather`, 6, true);
+        return;
+      }
+      case "cerrar":
+        return this.cerrarLaTormenta(suceso.como);
+    }
+  }
+
+  /** Si este peldaño habla por radio en fraseología: de Taguató para arriba. */
+  private conCifrasEnRadio(): boolean {
+    return this.tier.instruments === "numeric" || this.tier.instruments === "full";
+  }
+
+  /**
+   * **Se avisa a quien corresponde**: al control, que tiene que saber que te
+   * vas de tu ruta, y al pasaje, con el cartel del cinturón.
+   *
+   * De Taguató para arriba, con su fraseología en la tira de la radio: quien
+   * vuela pide el desvío, y el control lo aprueba y le pide que avise al
+   * dejar atrás el mal tiempo. La respuesta del control se oye cuando tenga su
+   * toma; mientras, se lee. En los peldaños de abajo, la instructora cuenta
+   * qué se hace y por qué.
+   */
+  private avisarDelRodeo(lado: Lado): void {
+    this.cinturon.ponerMando("puesto");
+    if (this.conCifrasEnRadio() && this.hayTorreQueHable()) {
+      const yo = this.miIndicativo;
+      const millas = Math.round(MARGEN_DE_RODEO / MILLA);
+      const hacia = lado === "derecha" ? "right" : "left";
+      const pide = `${yo.dicho}, request weather deviation up to ${millas} miles ${hacia} of route`;
+      const montada = this.deTorre(
+        lado === "derecha" ? "torre.desvioDerecha" : "torre.desvioIzquierda",
+        yo,
+      );
+      const contesta =
+        montada?.texto ??
+        `${yo.dicho}, deviation ${hacia} of route approved, advise clear of weather`;
+      this.hud.radio(`${pide} — ${contesta}`, 10, true);
+      if (montada && this.instructor.vozDe(montada.clave, montada.relleno))
+        this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+      else this.apuntarCanto(`${montada?.clave ?? "torre.desvio"}: sin grabar, se lee`);
+    }
+    if (laInstructoraLoExplica(this.tier.avisos))
+      this.decirDelEjercicio("ejercicio.tormenta.avisamos", "normal");
+  }
+
+  /**
+   * **Un rayo de la tormenta**: el de lejos, dentro de ella —la nube que se
+   * enciende y la cinta que baja al suelo—, o el que toca el avión.
+   *
+   * El que toca el avión alumbra el mundo entero un instante —la luz de
+   * siempre, la de `relampago.ts`— y suena el golpe, que es lo que cuentan
+   * quienes lo han vivido: un fogonazo y un ruido seco, y nada más. El de
+   * lejos no suena: a cuarenta kilómetros un trueno no llega —rara vez se oye
+   * a más de veinte, dice el Met Office—, y menos con los motores.
+   */
+  private caeUnRayo(enElAvion: boolean): void {
+    const t = this.tormenta;
+    const nube = this.cumulonimbo;
+    if (!t || !nube) return;
+    const s = this.flight.state.position;
+    const c = t.escena.celda;
+    const semilla = Math.floor(this.relojDeCabina * 10);
+    if (enElAvion) {
+      /*
+       * De la nube de encima al aire de debajo, **pasando por el avión**:
+       * entra por un punto de la chapa y sale por otro, que es lo que hace un
+       * rayo de verdad con un avión.
+       */
+      nube.rayo(
+        { x: s.x + 300, y: s.y + 1600, z: s.z - 200 },
+        { x: s.x - 250, y: s.y - 2500, z: s.z + 150 },
+        semilla,
+        false,
+        { x: s.x, y: s.y, z: s.z },
+      );
+      this.relampagos.cae();
+      this.audio.trueno(1);
+      this.rayoDeLaTormenta = { t: 0, enLaNube: false, conCinta: true };
+      return;
+    }
+    const suelo = Math.max(this.terrain.sampleHeight(c.x, c.z), this.scenario.waterLevel);
+    // De la base, junto al núcleo, al suelo.
+    const r = radioDelEco(c) * 0.35;
+    nube.rayo(
+      { x: c.x + r * 0.4, y: suelo + BASE_DE_LA_TORMENTA, z: c.z - r * 0.3 },
+      { x: c.x + r * 0.6, y: suelo, z: c.z - r * 0.1 },
+      semilla,
+      true,
+    );
+    this.rayoDeLaTormenta = { t: 0, enLaNube: true, conCinta: true };
+  }
+
+  /**
+   * **La tormenta, viva**: se enciende por dentro de vez en cuando, que es lo
+   * que se ve de un cumulonimbo maduro desde lejos, y lleva la luz del rayo
+   * que haya caído. Un solo pulso cada vez y nunca dos en menos de
+   * `ENTRE_RAYOS`; con el movimiento reducido, el resplandor suave. Ver
+   * `world/relampago.ts`.
+   */
+  private relampaguearLaTormenta(dt: number): void {
+    const nube = this.cumulonimbo;
+    if (!nube) return;
+    const rayo = this.rayoDeLaTormenta;
+    if (rayo) rayo.t += dt;
+    this.hastaElProximoRelampago -= dt;
+    if (this.hastaElProximoRelampago <= 0 && (!rayo || rayo.t > ENTRE_RAYOS)) {
+      // Por dentro, sin cinta: el relámpago que se queda en la nube.
+      this.rayoDeLaTormenta = { t: 0, enLaNube: true, conCinta: false };
+      this.hastaElProximoRelampago =
+        RELAMPAGUEA_CADA[0] + Math.random() * (RELAMPAGUEA_CADA[1] - RELAMPAGUEA_CADA[0]);
+    }
+    const ahora = this.rayoDeLaTormenta;
+    const luz = ahora ? luzDelRelampago(ahora.t, this.reducedMotion) : 0;
+    nube.paso(dt, {
+      camara: this.camera,
+      relleno: this.sky.colorDeLaNube,
+      luz: ahora?.enLaNube ? luz : 0,
+      // La cinta, solo el primer instante: un rayo de verdad dura eso.
+      rayo: ahora?.conCinta && ahora.t < 0.25 && !this.reducedMotion ? luz : 0,
+    });
+  }
+
+  /**
+   * **El agua de dentro de la tormenta**: la lluvia fuerte y la visibilidad
+   * que se cierra, solo dentro del eco. Fuera, el tiempo de siempre. Se
+   * cambia por escalones, que rehacer la lluvia y la niebla en cada fotograma
+   * no hace falta y cuesta. Ver `pasoDeLluvia`, que la lee para el sonido y
+   * el cristal.
+   */
+  private mojarseEnLaTormenta(eco: number): void {
+    const escalon = eco < 0.18 ? 0 : Math.min(4, 1 + Math.floor(((eco - 0.18) / 0.7) * 4));
+    const antes = this.lluviaDeLaTormenta ? Math.round(this.lluviaDeLaTormenta.fuerza * 4) : 0;
+    if (escalon === antes) return;
+    if (escalon === 0) {
+      this.lluviaDeLaTormenta = null;
+      this.sky.ponerDentroDeLaTormenta(0);
+      // El tiempo de fuera, otra vez: el que había.
+      const { clase, fuerza, granizo } = this.lloviendo;
+      this.ponerLluvia(clase, fuerza, granizo);
+      return;
+    }
+    const fuerza = escalon / 4;
+    this.lluviaDeLaTormenta = { clase: "lluvia", fuerza };
+    this.lluvia?.poner("lluvia", fuerza);
+    /*
+     * Y la vista: dentro, como dentro de una nube —gris, sin horizonte—, y
+     * más cerrada cuanto más dentro, que es lo que hace un aguacero de
+     * tormenta. Ver `ponerDentroDeLaTormenta` en `world/sky.ts`.
+     */
+    this.sky.ponerDentroDeLaTormenta(fuerza);
+  }
+
+  /**
+   * **Y el final**, en el suelo: hecho, con lo que se dijo al rodearla. El
+   * «otra vez» del percance lo cuenta el percance. Ver `sufrirPercance`.
+   */
+  private cerrarLaTormenta(como: CierreDeTormenta): void {
+    if (como === "otraVez") return;
+    const clave: TranslationKey =
+      como === "rodeada" ? "ejercicio.tormenta.bien" : "ejercicio.tormenta.bienCerca";
+    this.decirDelEjercicio("ejercicio.bien", "normal");
+    this.avisar("achieved");
+    this.agenda.luego(TARDA_EL_FINAL + 2, () => {
+      if (this.tormenta?.cierre !== como) return;
+      this.hud.mostrarCierreDeEjercicio(
+        dibujoDeCierre("vuelta"),
+        this.tier.instruments === "none" ? "" : this.rotulo(clave, "palabra.bien"),
+        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+      );
+    });
+  }
+
   /**
    * **Por qué cabecera se viene, y qué se dice por ello.** Ver
    * `flight/la-otra-cabecera.ts`.
@@ -18500,6 +19093,12 @@ export class Game {
   private avisarDeLaTormenta(): void {
     // Rodando no se rodea nada: esto es un aviso de vuelo.
     if (!this.celdas.length || this.flight.state.onGround) return;
+    /*
+     * Y en el ejercicio de la tormenta lo cuenta el ejercicio, con más que
+     * una frase: dos voces diciendo lo mismo de la misma nube sería un
+     * suceso, dos voces. Ver `practicarLaTormenta`.
+     */
+    if (this.tormenta) return;
     const s = this.flight.state;
     /*
      * **Solo las que se rodean de verdad**: las de núcleo rojo. Una célula

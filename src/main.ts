@@ -64,6 +64,15 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
     }
   }
 
+  /*
+   * **El ejercicio de la tormenta trae su tarde**: el día de siempre del sitio
+   * —su viento, sin techo que tape ni agua encima del campo— con la tormenta
+   * aislada en el camino, que la pone el ejercicio. A mano, como el de
+   * pasaje: el parte de hoy podría traer una capa baja que la escondiera, y lo
+   * que se practica es verla venir. Ver `flight/practica-de-tormenta.ts`.
+   */
+  if (ejercicio?.escena === "tormenta") return { ...deCasa, fuente: "mano" };
+
   // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
   // así lo llama el METAR.
   const icao = esc.aerodrome?.id;
