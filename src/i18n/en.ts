@@ -529,6 +529,119 @@ export const EN: Dictionary = {
     "Ladies and gentlemen, we're through the turbulence. The seatbelt sign stays on because we've started our descent.",
   "comandante.cinturon.porque":
     "A tip from your captain: even when the seatbelt sign is off, keep your seatbelt loosely fastened while you're seated. Sometimes turbulence comes without warning, and your seatbelt is what keeps you safely in your seat.",
+
+  /*
+   * La bienvenida, siempre distinta, y lo que cuenta la comandante en un
+   * crucero largo. La voz va grabada en castellano; esto es lo que se lee en
+   * la tira. Ver `audio/bienvenidas.ts` y `audio/momentos-de-crucero.ts`.
+   */
+  "comandante.bienvenida.saludo.pasajeros.dias":
+    "Good morning, ladies and gentlemen. This is Captain Jazlyn speaking.",
+  "comandante.bienvenida.saludo.pasajeros.tardes":
+    "Good afternoon, ladies and gentlemen. This is Captain Jazlyn speaking.",
+  "comandante.bienvenida.saludo.pasajeros.noches":
+    "Good evening, ladies and gentlemen. This is Captain Jazlyn speaking.",
+  "comandante.bienvenida.saludo.cabina.dias":
+    "A very good morning from the flight deck: this is Captain Jazlyn.",
+  "comandante.bienvenida.saludo.cabina.tardes":
+    "A very good afternoon from the flight deck: this is Captain Jazlyn.",
+  "comandante.bienvenida.saludo.cabina.noches":
+    "A very good evening from the flight deck: this is Captain Jazlyn.",
+  "comandante.bienvenida.saludo.chicos.dias":
+    "Ladies and gentlemen, boys and girls: good morning! This is Captain Jazlyn speaking.",
+  "comandante.bienvenida.saludo.chicos.tardes":
+    "Ladies and gentlemen, boys and girls: good afternoon! This is Captain Jazlyn speaking.",
+  "comandante.bienvenida.saludo.chicos.noches":
+    "Ladies and gentlemen, boys and girls: good evening! This is Captain Jazlyn speaking.",
+  "comandante.bienvenida.gracia.1":
+    "Ladies and gentlemen, this is Captain Jazlyn, speaking from the office with the best view on the whole plane.",
+  "comandante.bienvenida.gracia.2":
+    "Ladies and gentlemen, hello: this is Captain Jazlyn. We've checked everything, the plane is ready, and so am I.",
+  "comandante.bienvenida.gracia.3":
+    "Ladies and gentlemen, this is Captain Jazlyn. I have the best job in the world, and today it's flying all of you.",
+  "comandante.bienvenida.a.local":
+    "Welcome aboard. Today we're taking a trip around the area and coming right back here.",
+  "comandante.bienvenida.a.pettirossi": "Welcome aboard this flight to Asunción.",
+  "comandante.bienvenida.a.guarani": "Welcome aboard this flight to Ciudad del Este.",
+  "comandante.bienvenida.a.encarnacion": "Welcome aboard this flight to Encarnación.",
+  "comandante.bienvenida.a.concepcion": "Welcome aboard this flight to Concepción.",
+  "comandante.bienvenida.a.pedro-juan": "Welcome aboard this flight to Pedro Juan Caballero.",
+  "comandante.bienvenida.a.estigarribia": "Welcome aboard this flight to Mariscal Estigarribia.",
+  "comandante.bienvenida.a.ayolas": "Welcome aboard this flight to Ayolas.",
+  "comandante.bienvenida.a.pilar": "Welcome aboard this flight to Pilar.",
+  "comandante.bienvenida.a.yvytu-rape":
+    "Welcome aboard this flight to Yvytu Rape, the Granja Óga airstrip.",
+  "comandante.bienvenida.a.tenerife-norte": "Welcome aboard this flight to Tenerife North.",
+  "comandante.bienvenida.a.tenerife-sur": "Welcome aboard this flight to Tenerife South.",
+  "comandante.bienvenida.a.gran-canaria": "Welcome aboard this flight to Gran Canaria.",
+  "comandante.bienvenida.a.lanzarote": "Welcome aboard this flight to Lanzarote.",
+  "comandante.bienvenida.a.fuerteventura": "Welcome aboard this flight to Fuerteventura.",
+  "comandante.bienvenida.a.la-palma": "Welcome aboard this flight to La Palma.",
+  "comandante.bienvenida.a.el-hierro": "Welcome aboard this flight to El Hierro.",
+  "comandante.bienvenida.a.la-gomera": "Welcome aboard this flight to La Gomera.",
+  "comandante.bienvenida.detalle.local":
+    "Welcome aboard. We're not going far today: a trip around to see everything from above, and then right back here.",
+  "comandante.bienvenida.detalle.pettirossi":
+    "Welcome aboard: today we're flying you to Asunción, the capital, on the banks of the Paraguay River.",
+  "comandante.bienvenida.detalle.guarani":
+    "Welcome aboard: today we're flying you to Ciudad del Este, the second-largest city in the country.",
+  "comandante.bienvenida.detalle.encarnacion":
+    "Welcome aboard: today we're flying you to Encarnación, the capital of Itapúa, on the banks of the Paraná.",
+  "comandante.bienvenida.detalle.concepcion":
+    "Welcome aboard: today we're flying you north, to Concepción, on the banks of the Paraguay River.",
+  "comandante.bienvenida.detalle.pedro-juan":
+    "Welcome aboard: today we're flying you to Pedro Juan Caballero, right on the border with Brazil.",
+  "comandante.bienvenida.detalle.estigarribia":
+    "Welcome aboard: today we're flying you to Mariscal Estigarribia, in the heart of the Chaco.",
+  "comandante.bienvenida.detalle.ayolas":
+    "Welcome aboard: today we're flying you to Ayolas, next to the Yacyretá dam.",
+  "comandante.bienvenida.detalle.pilar":
+    "Welcome aboard: today we're flying you to Pilar, in Ñeembucú, the land of wetlands.",
+  "comandante.bienvenida.detalle.yvytu-rape":
+    "Welcome aboard: today we're flying you to Yvytu Rape, the Granja Óga grass airstrip.",
+  "comandante.bienvenida.detalle.tenerife-norte":
+    "Welcome aboard: today we're flying you to Tenerife North, in La Laguna.",
+  "comandante.bienvenida.detalle.tenerife-sur":
+    "Welcome aboard: today we're flying you to Tenerife South, on the island of Mount Teide.",
+  "comandante.bienvenida.detalle.gran-canaria":
+    "Welcome aboard: today we're flying you to Gran Canaria, an almost round island with its summit in the middle.",
+  "comandante.bienvenida.detalle.lanzarote":
+    "Welcome aboard: today we're flying you to Lanzarote, the island of volcanoes.",
+  "comandante.bienvenida.detalle.fuerteventura":
+    "Welcome aboard: today we're flying you to Fuerteventura, the island closest to Africa.",
+  "comandante.bienvenida.detalle.la-palma":
+    "Welcome aboard: today we're flying you to La Palma, the island of telescopes.",
+  "comandante.bienvenida.detalle.el-hierro":
+    "Welcome aboard: today we're flying you to El Hierro, the westernmost island of Spain.",
+  "comandante.bienvenida.detalle.la-gomera":
+    "Welcome aboard: today we're flying you to La Gomera, the island where people talk by whistling.",
+  "comandante.bienvenida.cierre.disfruten": "Sit back, get comfortable and enjoy the flight.",
+  "comandante.bienvenida.cierre.gracias":
+    "Thank you for flying with us, and have a lovely trip.",
+  "comandante.bienvenida.cierre.acomodense": "Make yourselves comfortable: we'll be on our way shortly.",
+  "comandante.mitad.camino":
+    "Ladies and gentlemen, this is your captain again: we're now halfway there.",
+  "comandante.mitad.viaje":
+    "Ladies and gentlemen, this is your captain with a quick update: we're past the halfway point of our trip.",
+  "comandante.mitad.parte": "Here's the latest weather report from our destination.",
+  "comandante.chicos.primeraVez":
+    "Ladies and gentlemen, this is your captain. A special hello to anyone flying for the very first time today: that feeling in your tummy when the plane goes up or down is perfectly normal, and we all felt it our first time.",
+  "comandante.chicos.tripulacion":
+    "Ladies and gentlemen, this is your captain. A big hello to all the boys and girls travelling with us today: you're now part of the crew, and your job is to keep an eye on the sky through the window.",
+  "comandante.chicos.aterrizar":
+    "Ladies and gentlemen, this is your captain. A hello to our youngest passengers and to anyone on a plane for the first time: welcome to the sky. When we come down, look out of the window and watch everything grow big again.",
+  "comandante.curiosidad.alas":
+    "Ladies and gentlemen, something for those of you by the window: if you look at the wing, you'll see it bent slightly upwards. That's the air holding us up, pushing on it. It's made to do that, so don't worry.",
+  "comandante.curiosidad.rayas":
+    "Ladies and gentlemen, a fun fact from your captain: the white lines some planes leave in the sky are clouds. The water vapour coming out of the engines freezes in the cold, and stays drawn up there.",
+  "comandante.curiosidad.ventanilla":
+    "Ladies and gentlemen, a secret about the windows: many have a tiny hole near the bottom. It's not a fault: it lets the outer pane take all the pressure, and keeps the inner one from fogging up.",
+  "comandante.curiosidad.ingles":
+    "Ladies and gentlemen, a fun fact from your captain: English is the language of aviation. A pilot from any country can speak English with the tower at any international airport, and they understand each other.",
+  "comandante.curiosidad.llave":
+    "Ladies and gentlemen, a secret from the flight deck: planes don't have a key to start them, like cars do. They're started with switches, following a checklist, step by step.",
+  "comandante.curiosidad.viento":
+    "Ladies and gentlemen, did you know that planes take off and land into the wind? With the wind on the nose, the plane needs less speed over the ground before the air lifts it, so it needs less runway.",
   "vuelo.alturaDeLaTorre":
     "The tower gave us how high to climb. I set it in the altitude window, in magenta: we climb up to there and stay.",
   "vuelo.alturaDeLaTorreRaya":

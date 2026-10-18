@@ -209,6 +209,35 @@ export interface AnuncioMontado {
   readonly texto: string;
 }
 
+/** Un trozo grabado entero: cómo se llama su pieza y qué dice. */
+export interface Trozo {
+  readonly id: string;
+  readonly texto: string;
+}
+
+/**
+ * **El tiempo de allá, en dos frases enteras**: cómo está el cielo y cuántos
+ * grados hay. Es lo mismo en la bienvenida, a mitad de un vuelo largo y al
+ * empezar a bajar, y por eso se monta en un solo sitio: las tres veces con las
+ * mismas piezas y el mismo redondeo. Ver `cieloDe` y `gradosDichos`.
+ */
+export function elTiempoDeAlla(meteo: Meteo): {
+  readonly relleno: { readonly cielo: string; readonly temperatura: string };
+  readonly texto: string;
+} {
+  const cielo = cieloDe(meteo);
+  const grados = gradosDichos(meteo.temp);
+  return {
+    relleno: { cielo: piezaDeCielo(cielo), temperatura: piezaDeGrados(grados) },
+    texto: [
+      t(piezaDeCielo(cielo) as TranslationKey),
+      grados < 0
+        ? textoDe("comandante.temperaturaBajoCero", -grados)
+        : textoDe("comandante.temperatura", grados),
+    ].join(" "),
+  };
+}
+
 /**
  * El texto de un trozo con número, como se lee en pantalla.
  *
@@ -225,7 +254,7 @@ function textoDe(clave: TranslationKey, n: number): string {
  * El texto de una duración: con la plantilla si va en minutos, y la frase
  * entera de su pieza si va en horas. Ver `HORAS_QUE_SE_DICEN`.
  */
-function textoDeLaDuracion(
+export function textoDeLaDuracion(
   plantilla: TranslationKey,
   pieza: (n: number) => string,
   n: number,
@@ -233,41 +262,84 @@ function textoDeLaDuracion(
   return seDiceEnHoras(n) ? t(pieza(n) as TranslationKey) : textoDe(plantilla, n);
 }
 
+/** Lo que se le puede poner a la bienvenida alrededor del plan. */
+export interface AlrededorDeLaBienvenida {
+  /**
+   * El saludo de delante, con su nombre —«Buenas tardes, señores pasajeros.
+   * Les habla la comandante Jazlyn.»—, cuando la frase del destino no lo
+   * lleva. Ver `audio/bienvenidas.ts`.
+   */
+  readonly saludo?: Trozo;
+  /** Y la de despedirse hasta el aterrizaje: «Relájense…». */
+  readonly cierre?: Trozo;
+  /**
+   * **El tiempo de allá**, si se va a alguna parte. En una vuelta al campo no
+   * se dice: «allá» es el destino, y volver aquí no lo tiene.
+   */
+  readonly alla?: Meteo | null;
+}
+
 /**
- * La bienvenida con el plan: la de siempre de este destino, y detrás cuánto
- * se tarda y a qué altura se va.
+ * La bienvenida con el plan: la frase del destino, y detrás cuánto se tarda,
+ * a qué altura se va y qué tiempo hace allá.
  *
- * `bienvenida` es la forma que ya se eligió —la del destino o la de reserva—;
- * aquí solo se le cuelga el plan. En una vuelta al campo no se cuelga nada:
- * decirle a nadie a qué nivel se va a dar una vuelta es un plan de vuelo que
- * no existe. Ver `bienvenidaPara`.
+ * `bienvenida` es la frase que ya se eligió —la del destino o la de reserva—;
+ * aquí solo se le cuelga lo demás. En una vuelta al campo no se cuelga el
+ * plan: decirle a nadie a qué nivel se va a dar una vuelta es un plan de vuelo
+ * que no existe. Ver `bienvenidaPara`.
+ *
+ * **Y el tiempo de allá, que es lo que de verdad cuenta una comandante al
+ * saludar**: cuánto dura, a qué altura y qué cielo y cuántos grados hay donde
+ * se va. Lo decía solo al empezar a bajar; ahora se dice también al salir,
+ * como en cualquier vuelo de línea. Va en su hueco con interrogante, así que
+ * la receta es la misma con él y sin él. Ver `elTiempoDeAlla`.
+ *
+ * La duración y el nivel van **juntos o ninguno**: sin la grabación de una
+ * duración en horas, o con un nivel fuera de lo grabado, el plan se calla
+ * entero, como siempre. Un número que no puede sonar a su altura no se dice.
  */
 export function bienvenidaConPlan(
-  bienvenida: { readonly id: string; readonly texto: string },
+  bienvenida: Trozo,
   segundosPrevistos: number | null,
   nivelMiles: number | null,
   /** Si una pieza tiene su grabación. Ver `minutosQueSeDicen`. */
   grabada?: (pieza: string) => boolean,
+  alrededor: AlrededorDeLaBienvenida = {},
 ): AnuncioMontado {
   const min =
     segundosPrevistos === null
       ? null
       : minutosQueSeDicen(segundosPrevistos, piezaDeDuracion, grabada);
-  if (min === null || nivelMiles === null)
+  const conPlan = min !== null && nivelMiles !== null;
+  const { saludo, cierre, alla } = alrededor;
+  if (!conPlan && !saludo && !cierre && !alla)
     return { clave: bienvenida.id, relleno: {}, texto: bienvenida.texto };
-  return {
-    clave: "comandante.bienvenidaConPlan",
-    relleno: {
-      bienvenida: bienvenida.id,
-      vuelo: piezaDeDuracion(min),
-      nivel: piezaDeNivel(nivelMiles),
-    },
-    texto: [
-      bienvenida.texto,
+  const relleno: Record<string, string> = {};
+  const textos: string[] = [];
+  if (saludo) {
+    relleno.saludo = saludo.id;
+    textos.push(saludo.texto);
+  }
+  relleno.bienvenida = bienvenida.id;
+  textos.push(bienvenida.texto);
+  if (conPlan) {
+    relleno.vuelo = piezaDeDuracion(min);
+    relleno.nivel = piezaDeNivel(nivelMiles);
+    textos.push(
       textoDeLaDuracion("comandante.previsto.vuelo", piezaDeDuracion, min),
       textoDe("comandante.previsto.nivel", nivelMiles),
-    ].join(" "),
-  };
+    );
+  }
+  if (alla) {
+    const tiempo = elTiempoDeAlla(alla);
+    Object.assign(relleno, tiempo.relleno);
+    textos.push(tiempo.texto);
+  }
+  if (cierre) {
+    relleno.cierre = cierre.id;
+    textos.push(cierre.texto);
+  }
+  return { clave: "comandante.bienvenidaConPlan", relleno, texto: textos.join(" ") };
 }
 
 /**
@@ -296,13 +368,8 @@ export function descensoPara(
       : suya && hayTexto(suya)
         ? suya
         : "comandante.descenso.hacia";
-  const cielo = cieloDe(meteo);
-  const grados = gradosDichos(meteo.temp);
-  const relleno: Record<string, string> = {
-    hacia,
-    cielo: piezaDeCielo(cielo),
-    temperatura: piezaDeGrados(grados),
-  };
+  const tiempo = elTiempoDeAlla(meteo);
+  const relleno: Record<string, string> = { hacia, ...tiempo.relleno };
   const textos = [t(hacia)];
   const min =
     segundos === null ? null : minutosQueSeDicen(segundos, piezaDeMinutos, grabada);
@@ -310,11 +377,6 @@ export function descensoPara(
     relleno.minutos = piezaDeMinutos(min);
     textos.push(textoDeLaDuracion("comandante.minutos", piezaDeMinutos, min));
   }
-  textos.push(t(piezaDeCielo(cielo) as TranslationKey));
-  textos.push(
-    grados < 0
-      ? textoDe("comandante.temperaturaBajoCero", -grados)
-      : textoDe("comandante.temperatura", grados),
-  );
+  textos.push(tiempo.texto);
   return { clave: "comandante.descenso", relleno, texto: textos.join(" ") };
 }

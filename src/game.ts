@@ -1000,11 +1000,19 @@ import {
   type Anuncio,
 } from "./audio/megafonia";
 import {
-  bienvenidaConPlan,
   descensoPara,
   nivelDicho,
   segundosHastaTocar,
 } from "./audio/partes-de-la-comandante";
+import { horaDelSaludo, laBienvenida } from "./audio/bienvenidas";
+import {
+  MomentosDeCrucero,
+  RECUERDOS,
+  esUnMomentoDeCrucero,
+  hayAlgoQueContar,
+  loQueCuenta,
+  type Suelto,
+} from "./audio/momentos-de-crucero";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
 import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
@@ -1014,7 +1022,7 @@ import {
   type TonoDeCabina,
 } from "./audio/tonos-de-cabina";
 import { LoQueCambia } from "./flight/lo-que-cambia";
-import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
+import { destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
 import { CabinaPresurizada } from "./flight/cabina-presurizada";
 import {
   AVISO_DE_CABINA,
@@ -4786,6 +4794,21 @@ export class Game {
    * reconoce antes de entender una palabra. Ver `audio/megafonia.ts`.
    */
   private readonly megafonia = new Megafonia();
+
+  /**
+   * Y lo que cuenta la comandante en un crucero largo, además del guion: el
+   * punto del vuelo, un saludo a los chicos, una curiosidad. Ver
+   * `audio/momentos-de-crucero.ts` y `contarLaVidaDeCabina`.
+   */
+  private readonly momentosDeCrucero = new MomentosDeCrucero();
+  /**
+   * Lo que dura este tramo según el plan, en minutos: `undefined` mientras no
+   * se ha mirado, `null` si no lleva plan. Se mira una vez por vuelo, ya en
+   * crucero: es la misma hora del plan que la comandante dio al salir.
+   */
+  private minutosDelTramo: number | null | undefined = undefined;
+  /** Cuál de los dos sueltos va primero en este vuelo. Ver `contarLaVidaDeCabina`. */
+  private primerSuelto: Suelto = "curiosidad";
 
   /**
    * Y lo que se ve por la ventanilla, que es lo que hace que un crucero de
@@ -11799,24 +11822,14 @@ export class Game {
           },
           (id) => this.instructor.vozDe(id) !== null,
         );
+      case "comandante.bienvenida":
+        return this.laBienvenidaDeHoy();
       default:
         break;
     }
     const suya = `${anuncio}.${donde.id}`;
-    /*
-     * **Y la bienvenida dice a dónde se va**, o que se vuelve aquí. Con el
-     * destino de este tramo, que es el que se eligió en el hangar o el que
-     * toca al volver a casa. Ver `audio/destino-dicho.ts`.
-     */
     const cual: TranslationKey =
-      anuncio === "comandante.bienvenida"
-        ? bienvenidaPara(
-            this.salidaId,
-            this.vecinos.length > 0 ? this.destinoId : null,
-          )
-        : anuncio === "comandante.llegada" && hayTexto(suya)
-          ? suya
-          : (anuncio as TranslationKey);
+      anuncio === "comandante.llegada" && hayTexto(suya) ? suya : (anuncio as TranslationKey);
     /*
      * **Y con el nombre del campo de hoy, y en una de sus formas.**
      *
@@ -11849,21 +11862,63 @@ export class Game {
        */
       anuncio === "comandante.despegue" ? (id) => this.instructor.vozDe(id) !== null : undefined,
     );
-    if (anuncio !== "comandante.bienvenida")
-      return { clave: forma.id, texto: forma.texto };
-    /*
-     * **Y detrás de la bienvenida, el plan**: cuánto dura y a qué altura se
-     * va, que es lo que dice cualquier comandante antes de salir. En una
-     * vuelta al campo no hay plan que contar. Ver `bienvenidaConPlan`.
-     */
+    return { clave: forma.id, texto: forma.texto };
+  }
+
+  /**
+   * **La bienvenida de este vuelo**: a dónde se va —o que se vuelve aquí—,
+   * cuánto dura, a qué altura y qué tiempo hace allá, en una de sus formas y
+   * nunca en la de la última vez. Ver `audio/bienvenidas.ts`.
+   *
+   * El destino es el de este tramo, el que se eligió en el hangar o el que
+   * toca al volver a casa; el saludo, el de la hora que es aquí —buenos días,
+   * buenas tardes o buenas noches, según el sol—. Y la forma que salió se
+   * recuerda entre vuelos y entre sesiones, como el producto del servicio: es
+   * una preferencia del juego y no un dato de nadie.
+   */
+  private laBienvenidaDeHoy(): {
+    texto: string;
+    clave: string;
+    relleno?: Readonly<Record<string, string>>;
+  } {
+    const destinoId = this.vecinos.length > 0 ? this.destinoId : null;
     const plan = this.planDelTramo();
-    return bienvenidaConPlan(
-      forma,
-      plan?.segundos ?? null,
-      plan?.nivel ?? null,
-      // Pasada la hora, en horas y solo con su grabación.
-      (id) => this.instructor.vozDe(id) !== null,
-    );
+    const destino = this.elDestino();
+    const { forma, anuncio } = laBienvenida({
+      salidaId: this.salidaId,
+      destinoId,
+      hora: horaDelSaludo(this.horaDelVuelo, this.sky.sunDirection.y > 0),
+      segundos: plan?.segundos ?? null,
+      nivel: plan?.nivel ?? null,
+      /*
+       * El tiempo de allá, el mismo que dirá al empezar a bajar: el parte del
+       * destino si ya llegó y, si no, su tiempo de siempre. Ver `ponerTiempoDe`.
+       */
+      alla: destino?.escenario.meteo ?? null,
+      // Cada forma, solo con todas sus piezas grabadas; y pasada la hora, en horas.
+      grabada: (id) => this.instructor.vozDe(id) !== null,
+      ultima: this.recordado("megafonia.bienvenida"),
+    });
+    this.recordar("megafonia.bienvenida", forma);
+    return anuncio;
+  }
+
+  /** Lo último que dijo la megafonía de algo, entre vuelos. Ver `datos/guardado.ts`. */
+  private recordado(llave: string): string | null {
+    try {
+      return leerTexto(llave);
+    } catch {
+      // Sin almacenamiento se dice igual: puede repetir, y ya está.
+      return null;
+    }
+  }
+
+  private recordar(llave: string, valor: string): void {
+    try {
+      ponerTexto(llave, valor);
+    } catch {
+      // Lo mismo.
+    }
   }
 
   /**
@@ -12041,6 +12096,8 @@ export class Game {
     if (anuncio && !enEmergencia) this.decirPorMegafonia(anuncio);
     // Y alguna vez, en el servicio, un pasajero que llama.
     this.atenderAlPasaje(dt);
+    // Y en un crucero largo, lo que cuenta la comandante entre anuncio y anuncio.
+    this.contarLaVidaDeCabina(dt, enEmergencia);
 
     this.mirarPorLaVentanilla(dt);
     this.contarLasLucesDeNoche(dt);
@@ -24678,6 +24735,9 @@ export class Game {
     this.crosscheckAcabado = false;
     this.listaTrasLaToma = null;
     this.listaLeidaParaBanco.length = 0;
+    this.momentosDeCrucero.reiniciar();
+    this.minutosDelTramo = undefined;
+    this.momentosDichos.length = 0;
   }
 
   /**
@@ -24804,6 +24864,110 @@ export class Game {
       this.llamadasDelPasaje.luzEncendida && oidoDe(this.vistaQueHay()) === "pasaje",
     );
   }
+
+  /**
+   * **Lo que cuenta la comandante en un crucero largo**, entre anuncio y
+   * anuncio: el punto del vuelo con el último parte de allá, un saludo a los
+   * chicos o a quien vuela por primera vez, y una curiosidad. Cuándo y cuánto
+   * lo decide `MomentosDeCrucero`; aquí se le pasa el vuelo, se monta lo que
+   * toca y se le da a la boca.
+   *
+   * Espera **su hueco** como lo que se ve por la ventanilla —ver `Huecos`— y
+   * lo gasta al hablar, así que no pisa a la radio, ni a la instructora, ni a
+   * la propia ventanilla. Y solo con su grabación: lo que no suena no se pide.
+   *
+   * **De pasaje, no**: ahí los anuncios los dice la escena, cada uno en su
+   * momento y sin pisar a Ara. Lo que monta esto —`loQueCuenta`— está listo
+   * para que la escena lo pida si un día lo quiere. Ver `flight/inicio-pasaje.ts`.
+   */
+  private contarLaVidaDeCabina(dt: number, enEmergencia: boolean): void {
+    /*
+     * Pedido y esperando turno cuando empieza la bajada, se retira: un dato
+     * curioso con el avión bajando al destino es justo lo que no se dice. Lo
+     * que se salga de crucero lo retira ya `seLePasoElMomento`.
+     */
+    if (this.megafonia.bajandoAlDestino) BOCA.retirar((c) => esUnMomentoDeCrucero(c));
+    if (this.dePasaje || !conPasaje(this.aircraft.mass)) return;
+    const destino = this.elDestino();
+    const grabada = (id: string): boolean =>
+      this.instructor.vozDe(id) !== null || (this.momentosSinGrabarParaBanco && hayTexto(id));
+    const cruceroDicho = this.megafonia.yaDicho("comandante.crucero");
+    /*
+     * La duración del tramo y cuál de los dos sueltos va primero —el que no se
+     * contó la última vez—, una vez por vuelo y ya en crucero. Ver
+     * `minutosDelTramo`.
+     */
+    if (this.minutosDelTramo === undefined && cruceroDicho) {
+      const plan = this.planDelTramo();
+      this.minutosDelTramo = plan ? plan.segundos / 60 : null;
+      this.primerSuelto =
+        this.recordado(RECUERDOS.suelto) === "curiosidad" ? "chicos" : "curiosidad";
+    }
+    const faltan = destino ? this.segundosDelPlanHasta(destino.id) : null;
+    const enCrucero = this.faseDeAhora === "en-vuelo" && cruceroDicho;
+    const s = this.flight.state;
+    const momento = this.momentosDeCrucero.paso(dt, {
+      fase: this.faseDeAhora as Fase,
+      conPasaje: true,
+      conTripulacion: conTripulacion(this.aircraft.mass),
+      cruceroDicho,
+      servicioDicho: this.megafonia.yaDicho("tripulacion.servicio"),
+      bajando: this.megafonia.bajandoAlDestino,
+      cartelPuesto: this.cinturonPuesto,
+      turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia,
+      // La cabina estéril, mirada solo en crucero: fuera de él ya no toca nada.
+      enFaseDeTrabajo: enCrucero ? enFaseDeTrabajo(this.momentoDeMirar()) : true,
+      enEmergencia: enEmergencia || this.sinMotor,
+      hayHueco: this.huecos.hayHueco,
+      megafoniaHabla:
+        this.comandante.hablando ||
+        this.tripulacion.hablando ||
+        this.llamadas.length > 0 ||
+        BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
+      minutosDelTramo: this.minutosDelTramo ?? null,
+      faltan,
+      primero: this.primerSuelto,
+      hay: (m) => hayAlgoQueContar(m, grabada),
+    });
+    if (!momento) return;
+    const dicho = loQueCuenta(momento, {
+      grabada,
+      ultima: (llave) => this.recordado(llave),
+      faltan,
+      // El último parte de allá, el mismo que dirá al empezar a bajar.
+      alla: destino?.escenario.meteo ?? null,
+    });
+    if (!dicho) return;
+    this.huecos.usar();
+    this.recordar(dicho.recuerdo.llave, dicho.recuerdo.valor);
+    if (momento !== "mitad") this.recordar(RECUERDOS.suelto, momento);
+    this.momentosDichos.push({
+      momento,
+      clave: dicho.clave,
+      t: +this.relojDelJuego.toFixed(1),
+      altura: Math.round(s.position.y),
+    });
+    this.comandante.decir(
+      dicho.texto,
+      dicho.clave,
+      "baja",
+      dicho.relleno,
+      this.tiraAlSonar(dicho.texto, null),
+    );
+  }
+
+  /** Lo que contó la comandante en el crucero de este vuelo, para los bancos. */
+  readonly momentosDichos: { momento: string; clave: string; t: number; altura: number }[] = [];
+
+  /**
+   * **Para el banco: los momentos del crucero como si estuvieran grabados.**
+   * Mientras no se graben no se piden, y un vuelo entero no podría mirar
+   * cuándo saldrían ni con quién se cruzan. Con esto se piden con su texto, y
+   * el banco ve su hora; suenan con la voz del navegador, o no suenan. Nunca
+   * en el juego: solo lo pone la sonda. Ver `OGA_MOMENTOS` en
+   * `scripts/verificar-vuelo-entero.mjs`.
+   */
+  momentosSinGrabarParaBanco = false;
 
   /**
    * **«Arrancá el motor», detrás de los toboganes.** Si la fase del puesto se

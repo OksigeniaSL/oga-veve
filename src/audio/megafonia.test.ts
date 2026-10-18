@@ -159,6 +159,47 @@ describe("la megafonía de cabina", () => {
     expect(veces).toBe(7);
   });
 
+  /*
+   * **Y la bienvenida, en el puesto, justo detrás de los toboganes**: «para
+   * que suene siempre aunque el rodaje sea corto». Ver `CUANDO`.
+   */
+  it("la bienvenida, en el puesto justo detrás de los toboganes, sin esperar a rodar", () => {
+    const m = new Megafonia();
+    expect(correr(m, "estacionado", 10, { conTripulacion: true })).toEqual([
+      "comandante.crosscheck",
+      "comandante.bienvenida",
+    ]);
+  });
+
+  it("y detrás de ellos de verdad: mientras suenan los toboganes, espera", () => {
+    const m = new Megafonia();
+    const dichos: { que: string; t: number }[] = [];
+    // Los toboganes se piden al segundo y suenan, con su llamada, ocho segundos.
+    for (let t = 0; t < 20; t += 0.5) {
+      const que = m.paso(0.5, {
+        fase: "estacionado",
+        ...CON_PASAJE,
+        conTripulacion: true,
+        megafoniaHablando: dichos.length > 0 && t < 9,
+      });
+      if (que) dichos.push({ que, t });
+    }
+    expect(dichos.map((d) => d.que)).toEqual(["comandante.crosscheck", "comandante.bienvenida"]);
+    expect(dichos[1]!.t).toBeGreaterThanOrEqual(9);
+  });
+
+  it("sin tripulación no hay toboganes: la bienvenida va sola, en el puesto", () => {
+    const m = new Megafonia();
+    expect(correr(m, "estacionado", 10)).toEqual(["comandante.bienvenida"]);
+  });
+
+  it("y si se arranca antes de que la diga, la dice arrancando o rodando, una vez", () => {
+    const m = new Megafonia();
+    correr(m, "estacionado", 2);
+    const despues = [...correr(m, "arrancando", 6), ...correr(m, "rodando", 20)];
+    expect(despues).toEqual(["comandante.bienvenida"]);
+  });
+
   it("un vuelo nuevo la vuelve a dejar hablar", () => {
     const m = new Megafonia();
     correr(m, "rodando", 10);
@@ -600,6 +641,13 @@ describe("a lo que se le pasó el momento", () => {
   it("la bienvenida, con su plan y su sitio, hasta alinearse", () => {
     expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "rodando")).toBe(false);
     expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "en-vuelo")).toBe(true);
+  });
+
+  it("y pedida en el puesto, vale también mientras se arranca", () => {
+    expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "estacionado")).toBe(false);
+    expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "arrancando")).toBe(false);
+    expect(seLePasoElMomento("comandante.bienvenida.lanzarote", "arrancando")).toBe(false);
+    expect(seLePasoElMomento("comandante.bienvenidaConPlan@x", "despegando")).toBe(true);
   });
 
   it("y lo del aire no lo retira esto: lo guardan sus condiciones", () => {

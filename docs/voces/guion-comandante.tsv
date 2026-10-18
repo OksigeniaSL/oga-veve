@@ -407,3 +407,66 @@
 407	inicio.mama.pasaje.ala	Señores pasajeros, para quienes vuelan hoy por primera vez: ¿cómo se sostiene en el aire un avión tan pesado? Las alas van un poquito inclinadas y empujan el aire hacia abajo, y el aire las empuja a ellas hacia arriba. Por eso hay que ir rápido.
 408	inicio.mama.pasaje.altoRapido	Y para quienes vuelan hoy por primera vez: ahora vamos más alto que la cumbre del Teide, y a más de quinientos kilómetros por hora, mucho más rápido que cualquier coche.
 409	inicio.mama.pasaje.bajando	Señores pasajeros, para quienes vuelan hoy por primera vez: para bajar no apagamos los motores. Los dejamos suavecito, y el avión va bajando poco a poco, como por un tobogán muy largo.
+410	comandante.bienvenida.saludo.pasajeros.dias	Buenos días, señores pasajeros. Les habla la comandante Jazlyn.
+411	comandante.bienvenida.saludo.pasajeros.tardes	Buenas tardes, señores pasajeros. Les habla la comandante Jazlyn.
+412	comandante.bienvenida.saludo.pasajeros.noches	Buenas noches, señores pasajeros. Les habla la comandante Jazlyn.
+413	comandante.bienvenida.saludo.cabina.dias	Muy buenos días desde la cabina de mando: les saluda la comandante Jazlyn.
+414	comandante.bienvenida.saludo.cabina.tardes	Muy buenas tardes desde la cabina de mando: les saluda la comandante Jazlyn.
+415	comandante.bienvenida.saludo.cabina.noches	Muy buenas noches desde la cabina de mando: les saluda la comandante Jazlyn.
+416	comandante.bienvenida.saludo.chicos.dias	Señoras y señores, chicos y chicas: ¡buenos días! Les habla la comandante Jazlyn.
+417	comandante.bienvenida.saludo.chicos.tardes	Señoras y señores, chicos y chicas: ¡buenas tardes! Les habla la comandante Jazlyn.
+418	comandante.bienvenida.saludo.chicos.noches	Señoras y señores, chicos y chicas: ¡buenas noches! Les habla la comandante Jazlyn.
+419	comandante.bienvenida.gracia.1	Señores pasajeros, les habla la comandante Jazlyn, desde la oficina con la mejor vista de todo el avión.
+420	comandante.bienvenida.gracia.2	Señores pasajeros, buenas: les habla la comandante Jazlyn. Ya revisamos todo, el avión está listo, y yo también.
+421	comandante.bienvenida.gracia.3	Señores pasajeros, les habla la comandante Jazlyn. Tengo el trabajo más lindo del mundo, y hoy me toca llevarlos a ustedes.
+422	comandante.bienvenida.a.local	Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.
+423	comandante.bienvenida.a.pettirossi	Bienvenidos a bordo de este vuelo a Asunción.
+424	comandante.bienvenida.a.guarani	Bienvenidos a bordo de este vuelo a Ciudad del Este.
+425	comandante.bienvenida.a.encarnacion	Bienvenidos a bordo de este vuelo a Encarnación.
+426	comandante.bienvenida.a.concepcion	Bienvenidos a bordo de este vuelo a Concepción.
+427	comandante.bienvenida.a.pedro-juan	Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.
+428	comandante.bienvenida.a.estigarribia	Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.
+429	comandante.bienvenida.a.ayolas	Bienvenidos a bordo de este vuelo a Ayolas.
+430	comandante.bienvenida.a.pilar	Bienvenidos a bordo de este vuelo a Pilar.
+431	comandante.bienvenida.a.yvytu-rape	Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.
+432	comandante.bienvenida.a.tenerife-norte	Bienvenidos a bordo de este vuelo a Tenerife Norte.
+433	comandante.bienvenida.a.tenerife-sur	Bienvenidos a bordo de este vuelo a Tenerife Sur.
+434	comandante.bienvenida.a.gran-canaria	Bienvenidos a bordo de este vuelo a Gran Canaria.
+435	comandante.bienvenida.a.lanzarote	Bienvenidos a bordo de este vuelo a Lanzarote.
+436	comandante.bienvenida.a.fuerteventura	Bienvenidos a bordo de este vuelo a Fuerteventura.
+437	comandante.bienvenida.a.la-palma	Bienvenidos a bordo de este vuelo a La Palma.
+438	comandante.bienvenida.a.el-hierro	Bienvenidos a bordo de este vuelo a El Hierro.
+439	comandante.bienvenida.a.la-gomera	Bienvenidos a bordo de este vuelo a La Gomera.
+440	comandante.bienvenida.detalle.local	Bienvenidos a bordo. Hoy no vamos lejos: damos una vuelta para mirar todo desde arriba, y volvemos acá mismo.
+441	comandante.bienvenida.detalle.pettirossi	Bienvenidos a bordo: hoy los llevamos a Asunción, la capital, a orillas del río Paraguay.
+442	comandante.bienvenida.detalle.guarani	Bienvenidos a bordo: hoy los llevamos a Ciudad del Este, la segunda ciudad más grande del país.
+443	comandante.bienvenida.detalle.encarnacion	Bienvenidos a bordo: hoy los llevamos a Encarnación, la capital de Itapúa, a orillas del Paraná.
+444	comandante.bienvenida.detalle.concepcion	Bienvenidos a bordo: hoy los llevamos al norte, a Concepción, a orillas del río Paraguay.
+445	comandante.bienvenida.detalle.pedro-juan	Bienvenidos a bordo: hoy los llevamos a Pedro Juan Caballero, en la frontera con Brasil.
+446	comandante.bienvenida.detalle.estigarribia	Bienvenidos a bordo: hoy los llevamos a Mariscal Estigarribia, en pleno Chaco.
+447	comandante.bienvenida.detalle.ayolas	Bienvenidos a bordo: hoy los llevamos a Ayolas, al lado de la represa de Yacyretá.
+448	comandante.bienvenida.detalle.pilar	Bienvenidos a bordo: hoy los llevamos a Pilar, en el Ñeembucú, tierra de esteros.
+449	comandante.bienvenida.detalle.yvytu-rape	Bienvenidos a bordo: hoy los llevamos a Yvytu Rape, la pista de pasto de la Granja Óga.
+450	comandante.bienvenida.detalle.tenerife-norte	Bienvenidos a bordo: hoy los llevamos a Tenerife Norte, en La Laguna.
+451	comandante.bienvenida.detalle.tenerife-sur	Bienvenidos a bordo: hoy los llevamos a Tenerife Sur, en la isla del Teide.
+452	comandante.bienvenida.detalle.gran-canaria	Bienvenidos a bordo: hoy los llevamos a Gran Canaria, una isla casi redonda, con su cumbre en el medio.
+453	comandante.bienvenida.detalle.lanzarote	Bienvenidos a bordo: hoy los llevamos a Lanzarote, la isla de los volcanes.
+454	comandante.bienvenida.detalle.fuerteventura	Bienvenidos a bordo: hoy los llevamos a Fuerteventura, la isla más cerca de África.
+455	comandante.bienvenida.detalle.la-palma	Bienvenidos a bordo: hoy los llevamos a La Palma, la isla de los telescopios.
+456	comandante.bienvenida.detalle.el-hierro	Bienvenidos a bordo: hoy los llevamos a El Hierro, la isla que queda más al oeste de España.
+457	comandante.bienvenida.detalle.la-gomera	Bienvenidos a bordo: hoy los llevamos a La Gomera, la isla donde se habla silbando.
+458	comandante.bienvenida.cierre.disfruten	Relájense, pónganse cómodos y disfruten del vuelo.
+459	comandante.bienvenida.cierre.gracias	Gracias por volar con nosotros, y que tengan un lindo viaje.
+460	comandante.bienvenida.cierre.acomodense	Acomódense tranquilos, que en un ratito salimos.
+461	comandante.mitad.camino	Señores pasajeros, les habla otra vez la comandante: ya vamos por la mitad del camino.
+462	comandante.mitad.viaje	Señores pasajeros, les habla la comandante, para contarles cómo vamos: ya pasamos la mitad del viaje.
+463	comandante.mitad.parte	Les paso el último parte del tiempo en destino.
+464	comandante.chicos.primeraVez	Señores pasajeros, les habla la comandante. Un saludo especial para quien hoy vuela por primera vez: eso que se siente en la panza cuando el avión sube o baja es normal, y a todos nos pasó la primera vez.
+465	comandante.chicos.tripulacion	Señores pasajeros, les habla la comandante. Un saludo grande a los chicos y chicas que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.
+466	comandante.chicos.aterrizar	Señores pasajeros, les habla la comandante. Un saludo a los más chiquitos y a quien sube a un avión por primera vez: bienvenidos al cielo. Cuando bajemos, miren por la ventanilla cómo todo se va haciendo grande otra vez.
+467	comandante.curiosidad.alas	Señores pasajeros, algo para los que van en la ventanilla: si miran el ala, la van a ver doblada un poquito hacia arriba. Es el aire que nos sostiene, empujándola. Está hecha para eso, así que tranquilos.
+468	comandante.curiosidad.rayas	Señores pasajeros, un dato curioso de la comandante: las rayas blancas que dejan algunos aviones en el cielo son nubes. El vapor de agua que sale de los motores se congela con el frío, y queda dibujado ahí arriba.
+469	comandante.curiosidad.ventanilla	Señores pasajeros, un secreto de las ventanillas: muchas tienen un agujerito chiquito abajo. No es una falla: así el vidrio de afuera hace toda la fuerza, y el de adentro no se empaña.
+470	comandante.curiosidad.ingles	Señores pasajeros, un dato curioso de la comandante: el inglés es el idioma de la aviación. Un piloto de cualquier país puede hablar en inglés con la torre de cualquier aeropuerto internacional, y se entienden.
+471	comandante.curiosidad.llave	Señores pasajeros, un secreto de la cabina: los aviones no tienen llave para arrancar, como los autos. Se arrancan con botones, siguiendo una lista, paso por paso.
+472	comandante.curiosidad.viento	Señores pasajeros, ¿sabían que los aviones despegan y aterrizan de cara al viento? Con el viento de frente, el avión tiene que correr menos para que el aire lo levante, y le alcanza con menos pista.

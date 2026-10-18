@@ -2368,15 +2368,26 @@
       "comandante.temperatura.menos5"
     ],
     "comandante.bienvenidaConPlan": [
+      "{saludo?}",
       "{bienvenida}",
-      "{vuelo}",
-      "{nivel}"
+      "{vuelo?}",
+      "{nivel?}",
+      "{cielo?}",
+      "{temperatura?}",
+      "{cierre?}"
     ],
     "comandante.descenso": [
       "{hacia}",
       "{minutos?}",
       "{cielo}",
       "{temperatura}"
+    ],
+    "comandante.mitad": [
+      "{mitad}",
+      "{minutos?}",
+      "{parte?}",
+      "{cielo?}",
+      "{temperatura?}"
     ],
     "comandante.turbulencia": [
       "comandante.turbulencia"

@@ -36,10 +36,15 @@
  * y por eso se aprende sin proponérselo:
  *
  * 1. En el puesto, con las puertas cerradas: armar toboganes.
- * 2. Rodando: la bienvenida, con el destino, cuánto dura y a qué altura.
+ * 2. Justo detrás, en el puesto o ya rodando: la bienvenida, con el destino,
+ *    cuánto dura, a qué altura y qué tiempo hace allá. Nunca la misma dos
+ *    vuelos seguidos: ver `audio/bienvenidas.ts`.
  * 3. Autorizados: tripulación, sentados para el despegue.
  * 4. Arriba y asentados: se apaga el cartel del cinturón.
- * 5. Y poco después, **la tripulación anuncia el servicio**.
+ * 5. Y poco después, **la tripulación anuncia el servicio**. En un crucero
+ *    largo, además, la comandante cuenta algo —el punto del vuelo, un saludo
+ *    a los chicos, una curiosidad—, poco y a su momento: eso no va aquí sino
+ *    en `audio/momentos-de-crucero.ts`, que lo reparte por los huecos.
  * 6. Al empezar a bajar, la comandante: cuánto falta, qué cielo y qué
  *    temperatura hay allí. Y se enciende el cartel.
  * 7. A la vez, la tripulación: cinturones, respaldos y mesitas.
@@ -186,9 +191,21 @@ const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
  * la bajada va en su sitio —el punto en que se empieza a bajar, dentro de
  * `en-vuelo`— y a la final no llega nada nuevo de la megafonía.
  */
+/*
+ * **Y la bienvenida, en el puesto, detrás de los toboganes.** Se daba
+ * rodando, y en un rodaje corto —un puesto pegado a la cabecera, la cola de
+ * la frecuencia por delante— se quedaba sin hueco. Una comandante de verdad
+ * la da también con las puertas recién cerradas, antes de rodar, y Enrique
+ * lo pidió así: «en el puesto, justo después del crosscheck, para que suene
+ * siempre aunque el rodaje sea corto». En el puesto va detrás de los
+ * toboganes porque los anuncios van de uno en uno y en su orden; y la
+ * instructora no la espera: «arrancá el motor» va delante, que pesa más en la
+ * boca, y la bienvenida suena mientras se arranca. Quien empieza en la pista,
+ * la oye allí, como siempre.
+ */
 const CUANDO: Record<Anuncio, readonly Fase[]> = {
   "comandante.crosscheck": ["estacionado"],
-  "comandante.bienvenida": ["rodando", "esperando", "alineando"],
+  "comandante.bienvenida": ["estacionado", "arrancando", "rodando", "esperando", "alineando"],
   "comandante.despegue": ["autorizado", "alineando", "despegando"],
   "comandante.crucero": ["en-vuelo"],
   "tripulacion.servicio": ["en-vuelo"],
@@ -237,7 +254,24 @@ export function seLePasoElMomento(clave: string | undefined, fase: Fase): boolea
  */
 const VALE_MIENTRAS: Readonly<Record<string, readonly Fase[]>> = {
   "comandante.crosscheck": ["estacionado"],
-  "comandante.bienvenida": ["rodando", "esperando", "autorizado", "back-taxi", "alineando"],
+  "comandante.bienvenida": [
+    "estacionado",
+    "arrancando",
+    "rodando",
+    "esperando",
+    "autorizado",
+    "back-taxi",
+    "alineando",
+  ],
+  /*
+   * **Y lo que cuenta en un crucero largo, solo en crucero.** Pedido en su
+   * hueco, si mientras espera turno el avión entra en final, se retira; lo de
+   * empezar a bajar, que pasa dentro de `en-vuelo`, lo retira el juego. Ver
+   * `esUnMomentoDeCrucero` en `audio/momentos-de-crucero.ts`.
+   */
+  "comandante.mitad": ["en-vuelo"],
+  "comandante.chicos": ["en-vuelo"],
+  "comandante.curiosidad": ["en-vuelo"],
   /*
    * **Y el de sentarse vale también remontando la pista.** Donde se sale con
    * back-taxi —Pettirossi—, entre la verde y la alineación se rueda por la

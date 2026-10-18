@@ -763,6 +763,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     listoParaArrancar: () => juego.listoParaArrancarParaBanco,
     /** La lista de después del aterrizaje leída, punto por punto y con su hora. */
     listaTrasLaToma: () => juego.listaLeidaParaBanco.slice(),
+    /**
+     * **Lo que contó la comandante en el crucero**, con su hora y su altura,
+     * y la forma de pedirlo sin grabar para mirar cuándo saldría. Ver
+     * `contarLaVidaDeCabina` y `momentosSinGrabarParaBanco` en `game.ts`.
+     */
+    momentosDeCrucero: () => juego.momentosDichos.map((m) => ({ ...m })),
+    momentosSinGrabar: (si: boolean) => {
+      juego.momentosSinGrabarParaBanco = si;
+    },
     megafonia: () => {
       /*
        * Ahora va en el mismo turno que la radio —ver `MEGAFONIA` en
