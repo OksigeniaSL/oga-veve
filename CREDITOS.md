@@ -697,6 +697,12 @@ fichero.
 
 **Música de embarque: Oksigenia SL, con licencia de uso de su proveedor.**
 
+**La canción del simulador: «Luz verde», de Granja Óga** —
+<https://youtu.be/nxC1d03iqyw>—. No va dentro del juego: está enlazada desde la
+pantalla de créditos, con un enlace y no con un vídeo incrustado, para que en
+el juego no entre el reproductor de fuera con sus cookies. Su letra sale del
+propio simulador: las frases del instructor y las luces de navegación.
+
 Son dos piezas, una por sitio, que suenan por el altavoz del techo al
 embarcar y al llegar al puesto en los vuelos con pasaje —ver
 `src/audio/hilo-musical.ts`—: la de Paraguay, con arpa, y la de Canarias,

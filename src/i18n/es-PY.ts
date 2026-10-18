@@ -272,6 +272,8 @@ export const ES_PY = {
     "Gratis para siempre para toda la educación paraguaya: colegios, docentes, alumnos y familias. Sin trámites y sin pagar nada.",
   // **Literal y sin resumir**: la licencia de Copernicus exige esta frase
   // exacta, y por eso no se traduce la parte legal.
+  "credits.cancion": "La canción del simulador: «Luz verde», de Granja Óga.",
+  "credits.cancionEnlace": "Escuchala en YouTube",
   "credits.terrain":
     "Relieve a partir de Copernicus DEM GLO-30. © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
   "credits.terrainEs":

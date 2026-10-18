@@ -10,6 +10,9 @@ import { t } from "../i18n";
 import { Panel } from "./panel";
 import { armarPanel, CERRAR } from "./concha";
 
+/** «Luz verde», de Granja Óga, publicada el 18-10-2026. */
+export const CANCION = "https://youtu.be/nxC1d03iqyw";
+
 export class CreditsScreen {
   private readonly root: HTMLElement;
   /**
@@ -31,6 +34,15 @@ export class CreditsScreen {
         <p><strong>Óga Veve</strong> — ${t("app.tagline")}</p>
         <p>${t("credits.madeBy")}</p>
         <p class="creditos__destacado">${t("credits.educational")}</p>
+        <!--
+          **La canción del simulador**, que nació de él: su letra son frases
+          del instructor y las luces que enseña el juego. Un enlace y no un
+          vídeo incrustado, porque un reproductor de fuera dentro del juego
+          trae sus cookies y su seguimiento, y aquí no entra ninguno —regla
+          séptima de AGENTS.md—. Quien lo toca sale a YouTube sabiéndolo.
+        -->
+        <p>${t("credits.cancion")}
+          <a href="${CANCION}" target="_blank" rel="noopener noreferrer">${t("credits.cancionEnlace")}</a></p>
         <p>${t("credits.terrain")}</p>
         <!--
           Y la del IGN, que es igual de obligatoria: los escenarios españoles
