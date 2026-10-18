@@ -191,6 +191,62 @@
       "ms": 4907,
       "h": "6e16339e17"
     },
+    "inicio.ara.pasaje.kit.camino.ayuda": {
+      "ms": 3807,
+      "h": "58f6ea6833"
+    },
+    "inicio.ara.pasaje.kit.camino.empezar": {
+      "ms": 6607,
+      "h": "c732825bf4"
+    },
+    "inicio.ara.pasaje.kit.camino.gomera": {
+      "ms": 6407,
+      "h": "f1ff5c84d0"
+    },
+    "inicio.ara.pasaje.kit.camino.palma": {
+      "ms": 6407,
+      "h": "d060134117"
+    },
+    "inicio.ara.pasaje.kit.camino.teide": {
+      "ms": 5807,
+      "h": "b32ef56834"
+    },
+    "inicio.ara.pasaje.kit.elegir": {
+      "ms": 5607,
+      "h": "cf05e8303f"
+    },
+    "inicio.ara.pasaje.kit.piezas.ala": {
+      "ms": 7007,
+      "h": "4211349e27"
+    },
+    "inicio.ara.pasaje.kit.piezas.ayuda": {
+      "ms": 5407,
+      "h": "d817ae1c64"
+    },
+    "inicio.ara.pasaje.kit.piezas.cola": {
+      "ms": 8007,
+      "h": "e18d4de6d4"
+    },
+    "inicio.ara.pasaje.kit.piezas.empezar": {
+      "ms": 5107,
+      "h": "6432f5a807"
+    },
+    "inicio.ara.pasaje.kit.piezas.fin": {
+      "ms": 5807,
+      "h": "78a36a0428"
+    },
+    "inicio.ara.pasaje.kit.piezas.motor": {
+      "ms": 8607,
+      "h": "a662dcbb4f"
+    },
+    "inicio.ara.pasaje.kit.piezas.ruedas": {
+      "ms": 8407,
+      "h": "148f41365c"
+    },
+    "inicio.ara.pasaje.kitGracias": {
+      "ms": 5507,
+      "h": "77dd043ffe"
+    },
     "inicio.ara.pasaje.loVeo": {
       "ms": 3807,
       "h": "cd1e41c6a7"
@@ -473,6 +529,48 @@
     ],
     "inicio.ara.pasaje.islas": [
       "inicio.ara.pasaje.islas"
+    ],
+    "inicio.ara.pasaje.kit.camino.ayuda": [
+      "inicio.ara.pasaje.kit.camino.ayuda"
+    ],
+    "inicio.ara.pasaje.kit.camino.empezar": [
+      "inicio.ara.pasaje.kit.camino.empezar"
+    ],
+    "inicio.ara.pasaje.kit.camino.gomera": [
+      "inicio.ara.pasaje.kit.camino.gomera"
+    ],
+    "inicio.ara.pasaje.kit.camino.palma": [
+      "inicio.ara.pasaje.kit.camino.palma"
+    ],
+    "inicio.ara.pasaje.kit.camino.teide": [
+      "inicio.ara.pasaje.kit.camino.teide"
+    ],
+    "inicio.ara.pasaje.kit.elegir": [
+      "inicio.ara.pasaje.kit.elegir"
+    ],
+    "inicio.ara.pasaje.kit.piezas.ala": [
+      "inicio.ara.pasaje.kit.piezas.ala"
+    ],
+    "inicio.ara.pasaje.kit.piezas.ayuda": [
+      "inicio.ara.pasaje.kit.piezas.ayuda"
+    ],
+    "inicio.ara.pasaje.kit.piezas.cola": [
+      "inicio.ara.pasaje.kit.piezas.cola"
+    ],
+    "inicio.ara.pasaje.kit.piezas.empezar": [
+      "inicio.ara.pasaje.kit.piezas.empezar"
+    ],
+    "inicio.ara.pasaje.kit.piezas.fin": [
+      "inicio.ara.pasaje.kit.piezas.fin"
+    ],
+    "inicio.ara.pasaje.kit.piezas.motor": [
+      "inicio.ara.pasaje.kit.piezas.motor"
+    ],
+    "inicio.ara.pasaje.kit.piezas.ruedas": [
+      "inicio.ara.pasaje.kit.piezas.ruedas"
+    ],
+    "inicio.ara.pasaje.kitGracias": [
+      "inicio.ara.pasaje.kitGracias"
     ],
     "inicio.ara.pasaje.loVeo": [
       "inicio.ara.pasaje.loVeo"

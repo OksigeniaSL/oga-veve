@@ -35,6 +35,18 @@
       "ms": 4907,
       "h": "201fd14d61"
     },
+    "inicio.tripulacion.pasaje.cerca.kitAqui": {
+      "ms": 5907,
+      "h": "02a8355a42"
+    },
+    "inicio.tripulacion.pasaje.cerca.kitGuardar": {
+      "ms": 5407,
+      "h": "c23f961779"
+    },
+    "inicio.tripulacion.pasaje.cerca.kitRato": {
+      "ms": 7707,
+      "h": "c11497788c"
+    },
     "inicio.tripulacion.pasaje.cerca.motor1": {
       "ms": 6107,
       "h": "6c87e0b887"
@@ -355,6 +367,15 @@
     ],
     "inicio.tripulacion.pasaje.demo.salidas": [
       "inicio.tripulacion.pasaje.demo.salidas"
+    ],
+    "inicio.tripulacion.pasaje.cerca.kitRato": [
+      "inicio.tripulacion.pasaje.cerca.kitRato"
+    ],
+    "inicio.tripulacion.pasaje.cerca.kitAqui": [
+      "inicio.tripulacion.pasaje.cerca.kitAqui"
+    ],
+    "inicio.tripulacion.pasaje.cerca.kitGuardar": [
+      "inicio.tripulacion.pasaje.cerca.kitGuardar"
     ]
   }
 }
