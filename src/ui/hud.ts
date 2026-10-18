@@ -4073,7 +4073,6 @@ export class Hud {
     this.horaAtada = { hora, cambio };
     this.tiempo.onHora(cambio);
     this.tiempo.ponerHoraSinAvisar(hora);
-    this.ponerLuzDeFuera(hora);
   }
 
   /**
@@ -4087,9 +4086,14 @@ export class Hud {
    * Va como variable de CSS y no como clase para que el paso sea continuo: el
    * anochecer dura, y un cuadro que salta de apagado a encendido de un
    * fotograma a otro se ve falso. Ver `cuantaLuz`.
+   *
+   * Con la **altura del sol**, en grados, y no con la hora: el sol es el de
+   * verdad y no se pone a la misma hora en junio que en diciembre, ni en
+   * Asunción que en Tenerife (#50). Lo pone el juego cada vez que se mueve el
+   * sol.
    */
-  private ponerLuzDeFuera(hora: number): void {
-    const luz = cuantaLuz(hora);
+  ponerLuzDeFuera(altura: number): void {
+    const luz = cuantaLuz(altura);
     this.root.style.setProperty("--luz-de-fuera", luz.toFixed(3));
     /*
      * **Y el halo de las cifras, solo cuando hay halo.** Es un filtro por

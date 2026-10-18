@@ -50,31 +50,31 @@ export function horaSolarEn(lonGrados: number, ahora: Date): number {
 }
 
 /**
- * Si a esa hora hay que encender las luces.
+ * Si con el sol a `altura` grados hay que encender las luces.
  *
  * El criterio es el de verdad y tiene nombre: **el ocaso civil**, que es cuando
  * el sol está a seis grados por debajo del horizonte y deja de poder leerse un
- * papel a la intemperie. Aquí se aproxima por la hora, que para esto basta y no
- * pide astronomía: entre las siete de la tarde y las siete de la mañana.
- *
- * Se usa para encender el cuadro de mandos y las luces del aeropuerto. No para
- * decidir si se vuela: se vuela siempre.
+ * papel a la intemperie. Se aproximaba por la hora —de siete a siete—, porque
+ * el sol salía a las seis y se ponía a las dieciocho en todos los sitios y
+ * todos los días. Desde que el sol es el de verdad (#50), en Asunción en junio
+ * a las siete ya es de noche cerrada y en Tenerife todavía hay luz: la hora no
+ * lo dice, la altura del sol sí.
  */
-export function esDeNoche(hora: number): boolean {
-  return hora >= 19 || hora < 7;
+export function esDeNoche(altura: number): boolean {
+  return altura < -6;
 }
 
 /**
- * Cuánta luz hay fuera, de 0 a 1, para graduar lo que se enciende.
+ * Cuánta luz hay fuera, de 0 a 1, con el sol a `altura` grados, para graduar
+ * lo que se enciende.
  *
  * No es un interruptor porque el anochecer no lo es: el cuadro de un avión se
  * va encendiendo según cae la tarde, y un cuadro que salta de apagado a
- * encendido de un fotograma a otro se ve falso. Una hora de transición a cada
- * lado, que es más o menos lo que dura el crepúsculo en estas latitudes.
+ * encendido de un fotograma a otro se ve falso. Va de la luz entera con el sol
+ * a seis grados sobre el horizonte, cuando la tarde empieza a caer, a nada en
+ * el ocaso civil, seis por debajo: media hora larga en estas latitudes, que
+ * es lo que dura el crepúsculo.
  */
-export function cuantaLuz(hora: number): number {
-  if (hora >= 8 && hora < 18) return 1;
-  if (hora >= 18 && hora < 20) return 1 - (hora - 18) / 2;
-  if (hora >= 6 && hora < 8) return (hora - 6) / 2;
-  return 0;
+export function cuantaLuz(altura: number): number {
+  return Math.max(0, Math.min(1, (altura + 6) / 12));
 }

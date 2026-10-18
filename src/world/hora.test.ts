@@ -47,30 +47,31 @@ describe("la hora solar", () => {
 });
 
 describe("y si hay que encender las luces", () => {
-  it("de noche sí y de día no", () => {
-    expect(esDeNoche(23)).toBe(true);
-    expect(esDeNoche(3)).toBe(true);
-    expect(esDeNoche(12)).toBe(false);
-    expect(esDeNoche(16)).toBe(false);
+  it("con el sol en el ocaso civil, seis grados por debajo, sí; por encima, no", () => {
+    expect(esDeNoche(-30)).toBe(true);
+    expect(esDeNoche(-7)).toBe(true);
+    expect(esDeNoche(-5)).toBe(false);
+    expect(esDeNoche(40)).toBe(false);
   });
 
   it("y la luz de fuera no salta de golpe", () => {
     /*
      * Un cuadro que pasa de apagado a encendido en un fotograma se ve falso. El
-     * anochecer dura, y el cuadro de un avión se va encendiendo con él.
+     * anochecer dura, y el cuadro de un avión se va encendiendo con él: de la
+     * luz entera con el sol a seis grados a nada en el ocaso civil.
      */
-    expect(cuantaLuz(12)).toBe(1);
-    expect(cuantaLuz(19)).toBeCloseTo(0.5, 2);
-    expect(cuantaLuz(21)).toBe(0);
-    expect(cuantaLuz(7)).toBeCloseTo(0.5, 2);
-    expect(cuantaLuz(4)).toBe(0);
+    expect(cuantaLuz(60)).toBe(1);
+    expect(cuantaLuz(6)).toBe(1);
+    expect(cuantaLuz(0)).toBeCloseTo(0.5, 2);
+    expect(cuantaLuz(-6)).toBe(0);
+    expect(cuantaLuz(-40)).toBe(0);
   });
 
   it("y crece y decrece sin escalones", () => {
-    let antes = cuantaLuz(0);
-    for (let h = 0; h <= 24; h += 0.05) {
-      const ahora = cuantaLuz(h);
-      expect(Math.abs(ahora - antes), `en ${h.toFixed(2)}`).toBeLessThan(0.1);
+    let antes = cuantaLuz(-90);
+    for (let a = -90; a <= 90; a += 0.25) {
+      const ahora = cuantaLuz(a);
+      expect(Math.abs(ahora - antes), `a ${a.toFixed(2)}°`).toBeLessThan(0.1);
       expect(ahora).toBeGreaterThanOrEqual(0);
       expect(ahora).toBeLessThanOrEqual(1);
       antes = ahora;
