@@ -2298,6 +2298,8 @@ export const EN: Dictionary = {
   "inicio.dibujo.oido": "The ear: coming down, the air pushes in; swallowing or yawning clears it.",
   "inicio.dibujo.papi": "The four lights beside the runway: two white and two red.",
   "inicio.dibujo.estrellas": "The telescopes at the top of La Palma, looking at the stars.",
+  "inicio.dibujo.meneo": "Inside the cloud the air goes up and down, the wings bend a little and the seat belt is on.",
+  "inicio.dibujo.techo": "The base of the clouds, the plane just below it, how far it is to the sea and how far you can see.",
   // The travel kit: see `src/flight/kit-de-viaje.ts`.
   "inicio.tripulacion.pasaje.cerca.kitAqui":
     "Look what I've brought you: your travel kit, with two games inside! We always carry a few on board.",
@@ -2323,6 +2325,27 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.kit.camino.ayuda": "That number comes later. First tap the one that's shining.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":
     "Now put the kit away in the seat pocket, because we're about to land: everything neatly stowed.",
+  // What is seen, when it happens: see `src/flight/inicio-pasaje.ts`.
+  "inicio.ara.pasaje.meneo": "Whoa, the plane is moving a little! And the wing goes up and down, as if it were waving.",
+  "inicio.mama.pasaje.meneo":
+    "Ladies and gentlemen, this is your captain. What you can feel is the air inside the cloud, going up and down: that's normal. The wings are made to bend a little, and that's why they move. And that's why we keep our seat belts fastened.",
+  "inicio.ara.pasaje.meneoBien": "So it's normal for it to move! And my seat belt is on, nice and snug.",
+  "inicio.mama.pasaje.teide":
+    "Ladies and gentlemen, for those who don't know it: Teide is the volcano of Tenerife, and at three thousand seven hundred and fifteen metres it's the highest mountain in Spain.",
+  "inicio.ara.pasaje.bajoLasNubes":
+    "We came out under the clouds! Now they're above us, like a ceiling, and down below you can see really far.",
+  "inicio.tripulacion.pasaje.cerca.techo":
+    "See? The bottom of the clouds is called the base. And when they cover more than half the sky, pilots call it the ceiling.",
+  "inicio.tripulacion.pasaje.cerca.techoHoy":
+    "Today the base is at about five thousand feet, fifteen hundred metres. We're just below it, so that's roughly how far we are from the sea.",
+  "inicio.tripulacion.pasaje.cerca.visibilidad":
+    "Below the clouds you can see really far, more than ten kilometres: that's the visibility. To land, pilots need to see the runway in time.",
+  "inicio.ara.pasaje.techo":
+    "Mum taught me that the bottom of the clouds is called the base, and that to land you have to see the runway in time!",
+  "inicio.ara.pasaje.marDeNubes":
+    "Look down: clouds and more clouds, like a sea of cotton wool! That's why they call it a sea of clouds.",
+  "inicio.ara.pasaje.sigueLaNube":
+    "We're still inside the cloud and the plane is moving a little. But I know it's normal, and my seat belt is on!",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

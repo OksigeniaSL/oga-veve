@@ -1643,9 +1643,31 @@ const DEL_INICIO = [
    */
   ["inicio.tripulacion.pasaje.cerca.", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"],
 ];
+/*
+ * **Y lo que se ve, cuando pasa** (18-10-2026): lo que cuenta la escena de
+ * pasaje al meterse el avión en la nube y menearse, al salir por debajo de
+ * las nubes y la primera vez que se nombra el Teide. Son de las tres voces de
+ * la escena, pero van **al final de cada una**, aparte: metidas en su grupo,
+ * las de la comandante renumerarían a «Jazlyn siempre distinta», que va
+ * detrás y ya está grabada. Ver `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LO_QUE_SE_VE = [
+  ["inicio.ara.pasaje.meneo", "ara", "el modo inicio, de pasaje: Ara nota el meneo dentro de la nube"],
+  ["inicio.ara.pasaje.meneoBien", "ara", "el modo inicio, de pasaje: Ara, con calma ante el meneo"],
+  ["inicio.ara.pasaje.bajoLasNubes", "ara", "el modo inicio, de pasaje: Ara, al salir por debajo de las nubes"],
+  ["inicio.ara.pasaje.techo", "ara", "el modo inicio, de pasaje: Ara cuenta la base de las nubes"],
+  ["inicio.ara.pasaje.marDeNubes", "ara", "el modo inicio, de pasaje: Ara, por encima del mar de nubes"],
+  ["inicio.ara.pasaje.sigueLaNube", "ara", "el modo inicio, de pasaje: Ara, con calma dentro de la nube, bajando"],
+  ["inicio.mama.pasaje.meneo", "comandante", "el modo inicio, de pasaje: la comandante explica el meneo dentro de la nube"],
+  ["inicio.mama.pasaje.teide", "comandante", "el modo inicio, de pasaje: la comandante presenta el Teide"],
+  ["inicio.tripulacion.pasaje.cerca.techo", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante explica la base y el techo de las nubes"],
+  ["inicio.tripulacion.pasaje.cerca.techoHoy", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante dice la base de hoy y lo que falta hasta el mar"],
+  ["inicio.tripulacion.pasaje.cerca.visibilidad", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante explica la visibilidad"],
+];
+const LO_QUE_SE_VE = new Set(DE_LO_QUE_SE_VE.map(([k]) => k));
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
-    if (!k.startsWith(prefijo) || salvo?.test(k) || filas.some((f) => f.id === k)) continue;
+    if (!k.startsWith(prefijo) || salvo?.test(k) || LO_QUE_SE_VE.has(k) || filas.some((f) => f.id === k)) continue;
     filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
   }
@@ -1740,6 +1762,13 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     });
     total += texto.length;
   }
+}
+// Y lo que se ve, cuando pasa: al final de cada voz. Ver `DE_LO_QUE_SE_VE`.
+for (const [id, voz, para] of DE_LO_QUE_SE_VE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz, idioma: "es-PY", texto, para });
+  total += texto.length;
 }
 
 /*

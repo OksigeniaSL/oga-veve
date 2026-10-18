@@ -363,6 +363,12 @@ export function queSeVe(
   suelo: ((x: number, z: number) => number | null) | null = null,
   capa: CapaDeNubes | null = null,
   campo: CampoDeLaVentanilla = SIN_ASIENTO,
+  /**
+   * **Y lo que además tiene que cumplir para contarse**, si quien pregunta
+   * sabe más: la escena de pasaje mira si se ve de verdad desde el asiento de
+   * Ara, con la nube que se pinta. Ver `world/se-ve-desde-el-pasaje.ts`.
+   */
+  ademas?: (hito: Hito) => boolean,
 ): Mirada | null {
   interface Candidato {
     readonly mirada: Mirada;
@@ -405,6 +411,7 @@ export function queSeVe(
   }
   candidatos.sort((a, b) => b.merito - a.merito);
   for (const c of candidatos) {
+    if (ademas && !ademas(c.mirada.hito)) continue;
     if (desde.y === undefined) return c.mirada;
     const ojo = { x: desde.x, y: desde.y, z: desde.z };
     // Con tres puntos basta: si ninguno de los tres más cerca se ve, el río

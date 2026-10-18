@@ -63,7 +63,16 @@ export interface Linea {
  * Ver `registro`.
  */
 export interface VozDelInicio {
-  decir(linea: Linea, alAcabar: (esperaMas: number, cortada?: boolean) => void): void;
+  /**
+   * `alEmpezar`, si la voz lo sabe, en cuanto la frase empieza a sonar de
+   * verdad: con su voz, no esperando a que baje ni leyéndose. Ver
+   * `Conversacion.suenaDeVerdad`.
+   */
+  decir(
+    linea: Linea,
+    alAcabar: (esperaMas: number, cortada?: boolean) => void,
+    alEmpezar?: () => void,
+  ): void;
   callar(): void;
 }
 
@@ -131,6 +140,8 @@ export class Conversacion {
    * dicha. Ver `suena`.
    */
   private leyendoHasta = 0;
+  /** Cuál de las pedidas empezó a sonar de verdad. Ver `suenaDeVerdad`. */
+  private empezo = 0;
 
   constructor(
     private readonly voz: VozDelInicio,
@@ -192,21 +203,27 @@ export class Conversacion {
     this.dichaAhora = dicha;
     this.dichas.push(dicha);
     if (this.dichas.length > 200) this.dichas.shift();
-    this.voz.decir(linea, (esperaMas, cortada = false) => {
-      const como: ComoAcabo = cortada ? "cortada" : esperaMas > 0 ? "muda" : "sono";
-      /*
-       * **Y si avisa tarde, se apunta igual**: la escena ya siguió sin ella,
-       * pero lo que de verdad pasó es que sonó, y hay quien lo espera.
-       */
-      if (this.sonando !== id) {
-        if (dicha.como === "tope") dicha.como = como;
-        return;
-      }
-      this.sonando = null;
-      this.acabarLaDicha(como);
-      this.puedeHablarEn = this.reloj() + ENTRE_FRASES + Math.max(0, esperaMas);
-      this.leyendoHasta = como === "muda" ? this.reloj() + Math.max(0, esperaMas) : 0;
-    });
+    this.voz.decir(
+      linea,
+      (esperaMas, cortada = false) => {
+        const como: ComoAcabo = cortada ? "cortada" : esperaMas > 0 ? "muda" : "sono";
+        /*
+         * **Y si avisa tarde, se apunta igual**: la escena ya siguió sin ella,
+         * pero lo que de verdad pasó es que sonó, y hay quien lo espera.
+         */
+        if (this.sonando !== id) {
+          if (dicha.como === "tope") dicha.como = como;
+          return;
+        }
+        this.sonando = null;
+        this.acabarLaDicha(como);
+        this.puedeHablarEn = this.reloj() + ENTRE_FRASES + Math.max(0, esperaMas);
+        this.leyendoHasta = como === "muda" ? this.reloj() + Math.max(0, esperaMas) : 0;
+      },
+      () => {
+        if (this.sonando === id) this.empezo = id;
+      },
+    );
   }
 
   private acabarLaDicha(como: ComoAcabo): void {
@@ -227,6 +244,15 @@ export class Conversacion {
     return this.dichas.some((d) => d.clave === clave && (d.como === "sono" || d.como === "muda"));
   }
 
+  /**
+   * **Ni suena ni espera nada, ni se está leyendo**, aunque todavía no se
+   * pueda hablar: el silencio de un corte de cámara es silencio. Ver
+   * `esperar`.
+   */
+  get vacia(): boolean {
+    return this.sonando === null && this.cola.length === 0 && this.reloj() >= this.leyendoHasta;
+  }
+
   /** Nadie habla ni espera turno: lo dicho, dicho está. */
   get callada(): boolean {
     return this.sonando === null && this.cola.length === 0 && this.reloj() >= this.puedeHablarEn;
@@ -235,6 +261,16 @@ export class Conversacion {
   /** La última frase pedida: el subtítulo. */
   get ultima(): Linea | null {
     return this.dicha;
+  }
+
+  /**
+   * **La que está sonando de verdad**, con su voz: ni esperando a que baje su
+   * grabación, ni leyéndose porque no pudo sonar. Lo mira lo que solo puede
+   * acompañar a una voz que se oye: la foto de una historia. Ver
+   * `mirarLaVentanita` en `inicio-pasaje.ts`.
+   */
+  get suenaDeVerdad(): Linea | null {
+    return this.sonando !== null && this.empezo === this.sonando ? this.dicha : null;
   }
 
   /**

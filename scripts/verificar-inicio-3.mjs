@@ -56,6 +56,16 @@
  * - **El hilo musical**: que suena en el embarque por el altavoz del techo,
  *   en el bus de la música, que se calla con la primera megafonía y no vuelve
  *   en vuelo, y que suena otra vez en el puesto de llegada.
+ * - **Que lo que se nombra del paisaje está a la vista cuando se nombra**
+ *   (18-10-2026, puntos 281 y 286): cada sitio que nombra la escena —la isla,
+ *   la costa, el mar, lo señalado por la ventanilla— se mide con lo que se
+ *   pinta en ese momento: dentro de la imagen, por el cristal si se mira por
+ *   la ventanilla, sin el ojo metido en una nube y sin nube densa por medio,
+ *   contada a pasos con la densidad del dibujo. Con la captura de ese momento.
+ * - **Que la foto de una historia no sale sin su voz** (punto 287), que dentro
+ *   de la nube el meneo se cuenta en el momento (280), que al salir por debajo
+ *   de las nubes se cuenta el techo (295), y los dos planos nuevos: **el tren
+ *   desde abajo** (298) y **el señalero** (301).
  *
  * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—,
  * con las tomas del pack: cada frase dura lo que dura su grabación, y **todo
@@ -76,7 +86,11 @@
  *   ilustraciones—, con el
  *   renderer en el nombre; `OGA_SIN_HANGAR=1` se salta la ficha del hangar;
  *   `OGA_TOPE=segundos` cambia el tope de pared; `OGA_VOLCADO=fichero` deja
- *   lo dicho y los tramos en un JSON.
+ *   lo dicho y los tramos en un JSON; `OGA_SIN_NUBES=1` vuela sin el mar de
+ *   nubes, para ver nombrado con su toma lo que con él queda tapado: lo que
+ *   se espera de un vuelo con nubes no vale ahí;
+ *   y `OGA_SIN_JUGAR=1` no abre el kit en vuelo, para que las capturas de lo
+ *   que se nombra bajando salgan sin él delante.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
@@ -180,6 +194,7 @@ const MOMENTOS = [
   "bajada",
   "oidos",
   "kit",
+  "techo",
   "isla",
   "aproximacion",
   "tcpAterrizaje",
@@ -246,6 +261,7 @@ async function elVuelo() {
     `con-pasaje ${primero.conPasaje} · relojes ${primero.relojes} · mandos ${primero.mandos} · tarjeta ${primero.tarjeta}`,
   );
   const cuadernoAntes = primero.inicio?.cuaderno ?? null;
+  if (process.env.OGA_SIN_NUBES) await page.evaluate(() => globalThis.__oga.ponerNubes(null));
   const veces = await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
   console.log(`  reloj del juego ×${veces}`);
 
@@ -271,6 +287,14 @@ async function elVuelo() {
   const musica = { embarque: null, enVuelo: [], llegada: null, callada: null };
   // El kit de viaje: cuándo llega, qué se juega y cómo acaba. Ver `flight/kit-de-viaje.ts`.
   const kit = { dadoEn: null, tramo: null, jugado: false, pausadoEnLaAproximacion: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false };
+  // Lo nombrado del paisaje, medido con lo que se pinta cuando se nombra. Ver `paisajeParaBanco`.
+  const nombrados = [];
+  let vistosNombrados = 0;
+  // Las fotos de las historias que salieron sin su voz sonando: ninguna. Ver el punto 287.
+  const fotosMudas = new Set();
+  let fotosConVoz = 0;
+  // Dentro de la nube, el meneo: si empezó con el avión metido en ella.
+  let meneoEnLaNube = null;
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -309,7 +333,7 @@ async function elVuelo() {
       kit.dadoEn = e.segundos;
       kit.tramo = tramo;
     }
-    if (e.kit?.dado && !kit.jugado && i.kit?.boton) {
+    if (e.kit?.dado && !kit.jugado && i.kit?.boton && !process.env.OGA_SIN_JUGAR) {
       kit.jugado = true;
       await jugarElCaminoEnElVuelo(page);
     }
@@ -320,6 +344,45 @@ async function elVuelo() {
       kit.botonEnLaFinal ||= !!i.kit?.boton;
     }
     kit.recogido = !!e.kit?.recogido;
+    // ── Lo nombrado del paisaje, a la vista ──
+    const nuevos = (e.nombrados ?? []).slice(vistosNombrados);
+    for (const n of nuevos) {
+      vistosNombrados++;
+      // Pasado el corte, con el plano ya puesto y sin velo: lo que se ve mientras se dice.
+      await page
+        .waitForFunction(
+          (desde) => {
+            const j = globalThis.__oga.inicio();
+            return j.estado.segundos > desde + 1.6 && (Number(j.velo) || 0) < 0.02;
+          },
+          n.desde,
+          { timeout: 8000 },
+        )
+        .catch(() => {});
+      const medido = await page.evaluate((sitio) => {
+        const j = globalThis.__oga.inicio();
+        return { vista: globalThis.__oga.paisajeALaVista(sitio), plano: j.planoVisto, linea: j.estado.linea?.clave ?? null };
+      }, n.sitio);
+      const v = medido.vista;
+      const enLaImagen = !!v && v.delante && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
+      const porElCristal = !v || !medido.plano || medido.plano.startsWith("fuera-") || v.porElCristal !== false;
+      // Y el mar de nubes, al revés: lo que se nombra es la nube, que tiene que estar por medio.
+      const nube = n.sitio === "nubes-abajo" ? !!v && v.nubeEnMedio >= 100 : !!v && v.nubeEnMedio < 150;
+      const ok = enLaImagen && porElCristal && !!v && v.ojoEnNube < 0.35 && nube;
+      const nombre = `nombrado-${nombrados.length + 1}-${n.sitio.replace(":", "-")}`;
+      nombrados.push({ ...n, plano: medido.plano, medido: v, ok, nombre });
+      if (FOTOS) await foto(page, nombre);
+    }
+    // ── La foto de una historia, solo con su voz ──
+    const enLaVentanita = i.ventanita?.sitio ?? "";
+    if (enLaVentanita && !enLaVentanita.includes(":")) {
+      const ahora = (i.registro ?? []).at(-1);
+      if (ahora?.clave === "ventanilla.historia" && ahora.hasta === null) fotosConVoz++;
+      else fotosMudas.add(`${enLaVentanita} con ${ahora?.clave ?? "nada"}${ahora?.hasta !== null ? " ya acabada" : ""}`);
+    }
+    // ── El meneo, dentro de la nube ──
+    if (meneoEnLaNube === null && (i.registro ?? []).some((d) => d.clave === "inicio.ara.pasaje.meneo"))
+      meneoEnLaNube = await page.evaluate(() => globalThis.__oga.capaDeNubes?.()?.enLaNube ?? 0);
     // ── Las fotos ──
     if (FOTOS) {
       const en = (n, si) => {
@@ -346,6 +409,16 @@ async function elVuelo() {
       if (en("ventanilla", e.senalados.length > 0 && e.mira === "ventanilla" && !v.enTierra)) await foto(page, "ventanilla");
       if (en("pista", sinVelo && i.planoVisto === "fuera-pista" && !v.enTierra)) await foto(page, "fuera-pista");
       if (en("toma", tramo === "frenando")) await foto(page, "toma");
+      // Lo del 18-10 por la tarde: el meneo, debajo de las nubes, el tren desde abajo y el señalero.
+      // Lo que se dice ahora, suene o se lea mientras espera su toma.
+      const suena = (clave) => e.linea?.clave === clave && e.hablando;
+      if (en("meneo", suena("inicio.ara.pasaje.meneo"))) await foto(page, "meneo-en-la-nube");
+      if (en("bajo-las-nubes", suena("inicio.ara.pasaje.bajoLasNubes"))) await foto(page, "bajo-las-nubes");
+      if (en("tren", sinVelo && i.planoVisto === "fuera-tren" && e.segundos - e.planoDesde > 3)) await foto(page, "fuera-tren");
+      if (en("tren-trabado", sinVelo && i.planoVisto === "fuera-tren" && e.segundos - e.planoDesde > 9)) await foto(page, "fuera-tren-trabado");
+      if (en("senalero", sinVelo && i.planoVisto === "fuera-senalero" && e.segundos - e.planoDesde > 4)) await foto(page, "fuera-senalero");
+      if (en("senalero-alto", sinVelo && i.planoVisto === "fuera-senalero" && (tramo === "aparcado" || v.velocidad < 0.5) && e.segundos - e.planoDesde > 6))
+        await foto(page, "fuera-senalero-alto");
       // Y cada ilustración, la primera vez que queda puesta.
       const ilustrada = i.ventanita?.donde ? /^ilustracion:(.+)$/.exec(i.ventanita.sitio ?? "")?.[1] : null;
       if (ilustrada && en(`ilustracion-${ilustrada}`, true)) await pausa(800).then(() => foto(page, `ilustracion-${ilustrada}`));
@@ -387,7 +460,18 @@ async function elVuelo() {
   if (process.env.OGA_VOLCADO)
     writeFileSync(
       process.env.OGA_VOLCADO,
-      JSON.stringify({ tramos, registro: conversacion?.registro ?? i?.registro ?? null, estado: e ?? null }, null, 1),
+      JSON.stringify(
+        {
+          tramos,
+          registro: conversacion?.registro ?? i?.registro ?? null,
+          // Y lo que tiró la boca, con su porqué: lo que no sonó se mira aquí.
+          descartadas: conversacion?.descartadas ?? null,
+          nombrados,
+          estado: e ?? null,
+        },
+        null,
+        1,
+      ),
     );
   comprobar(
     "la tripulación vuela del puesto al puesto, sin saltarse nada",
@@ -616,6 +700,58 @@ async function elVuelo() {
     "y vuelve en el puesto de llegada, con los motores apagados",
     musica.llegada?.suena === "canarias",
     musica.llegada ? JSON.stringify(musica.llegada) : "no sonó",
+  );
+  // ── Lo que se nombra, a la vista; la foto con su voz; el meneo, el techo, el tren y el señalero ──
+  for (const n of nombrados)
+    console.log(
+      `  ${n.ok ? "·" : "✗"} ${n.sitio} (${n.clave}) a los ${n.desde.toFixed(0)} s: ${n.como} por ${n.lado ?? "—"} · plano ${n.plano} · ` +
+        (n.medido
+          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m · a ${(n.medido.distancia / 1000).toFixed(1)} km`
+          : "sin punto"),
+    );
+  comprobar(
+    "lo que se nombra del paisaje está a la vista cuando se nombra: en la imagen, por el cristal y sin nube por medio",
+    nombrados.length >= 3 && nombrados.every((n) => n.ok),
+    `${nombrados.filter((n) => n.ok).length} de ${nombrados.length}: ${nombrados.map((n) => `${n.sitio}${n.ok ? "" : " ✗"}`).join(", ")}`,
+  );
+  const olvidados = e?.saltados ?? [];
+  comprobar(
+    "y la isla de llegada se dice cuando se ve, no metido en la nube",
+    nombrados.some((n) => n.clave === "inicio.ara.pasaje.isla" && n.ok) && !olvidados.includes("isla"),
+    nombrados.filter((n) => n.sitio === "isla-de-llegada").map((n) => `${n.como} a los ${n.desde.toFixed(0)} s`).join(", ") || "no se dijo",
+  );
+  comprobar(
+    "la foto de una historia sale solo con su voz sonando, y Ara no contesta a lo que no se oyó",
+    fotosMudas.size === 0 &&
+      registro
+        .filter((d) => d.clave === "inicio.ara.pasaje.garajonay")
+        .every((d) => registro.some((h) => h.clave === "ventanilla.historia" && h.como === "sono" && h.hasta !== null && h.hasta <= d.desde)),
+    fotosMudas.size ? [...fotosMudas].join(" · ") : `${fotosConVoz} muestras de foto, todas con su voz`,
+  );
+  comprobar(
+    "dentro de la nube el avión se menea y se cuenta en el momento: Ara, la comandante y Ara",
+    (meneoEnLaNube ?? 0) >= 0.35 &&
+      ["inicio.ara.pasaje.meneo", "inicio.mama.pasaje.meneo", "inicio.ara.pasaje.meneoBien"].every((c) => claves.includes(c)),
+    `en la nube al empezar: ${meneoEnLaNube === null ? "no se dijo" : meneoEnLaNube.toFixed(2)}`,
+  );
+  const techo = claves.indexOf("inicio.ara.pasaje.bajoLasNubes");
+  comprobar(
+    "al salir por debajo de las nubes se cuenta el techo, con los números de hoy y la visibilidad",
+    techo >= 0 && ["inicio.tripulacion.pasaje.cerca.techo", "inicio.ara.pasaje.techo"].some((c) => claves.slice(techo).includes(c)),
+    claves.slice(techo, techo + 4).join(" → ") || "no se dijo",
+  );
+  comprobar(
+    "el Teide se presenta antes de volar más alto que él",
+    claves.includes("inicio.mama.pasaje.altoRapido") &&
+      (claves.indexOf("inicio.mama.pasaje.teide") >= 0
+        ? claves.indexOf("inicio.mama.pasaje.teide") < claves.indexOf("inicio.mama.pasaje.altoRapido")
+        : registro.some((d) => d.clave === "ventanilla" && d.desde < registro.find((x) => x.clave === "inicio.mama.pasaje.altoRapido").desde)),
+    `presentación en ${claves.indexOf("inicio.mama.pasaje.teide")} · más alto que el Teide en ${claves.indexOf("inicio.mama.pasaje.altoRapido")}`,
+  );
+  comprobar(
+    "el tren se ve desde abajo al salir, y el señalero desde el suelo hasta parar el avión",
+    vistos.has("fuera-tren") && vistos.has("fuera-senalero"),
+    `vistos: ${[...vistos].filter((p) => p === "fuera-tren" || p === "fuera-senalero").join(", ") || "ninguno"}`,
   );
   if (e) console.log(`  la escena duró ${e.segundos.toFixed(0)} s de reloj del juego`);
   comprobar("sin errores", errores.length === 0, errores[0] ?? "limpio");

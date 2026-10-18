@@ -292,3 +292,70 @@ export function cuantoDentro(densidad: number): number {
  * allá no hay nada.
  */
 export const SE_VE_DENTRO = 200;
+
+/**
+ * **Lo opaca que se pinta cada lámina**, de 0 a 1, según cuánto tape el parte.
+ * Estaba escrito en `ponerNubes` y hace falta también para saber qué deja ver
+ * la capa: dos copias de un número son dos respuestas el día que cambie una.
+ * Ver `transparenciaDeLaCapa`.
+ */
+export function opacidadDeLaLamina(tapadura: number): number {
+  return 0.18 + tapadura * 0.62;
+}
+
+/** Un punto del mundo, m. */
+interface Punto3 {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+/**
+ * **Cuánto deja ver la capa de nubes entre dos puntos**, de 0 a 1, con lo que
+ * de verdad se pinta.
+ *
+ * `laCapaTapa` —en `world/hitos.ts`— decide con el parte: con BKN u OVC la
+ * capa tapa y con menos no. Y el mar de nubes del alisio es un SCT, cuatro
+ * octavos y medio, así que para esa cuenta **no tapaba nunca**, mientras en
+ * la pantalla se veía una alfombra blanca hasta el horizonte. Por eso la
+ * comandante decía «esa isla redondita es La Gomera» con la ventanilla llena
+ * de nubes (Enrique, 18-10-2026, captura `223-la-gomera-no-se-ve.png`).
+ *
+ * Así que esto cuenta lo que se ve, lámina a lámina, igual que la tarjeta: la
+ * recta corta cada lámina en un punto, y allí la lámina deja pasar lo que no
+ * tapa su dibujo —`alfaDeNube` con el recorte de ahora y la opacidad de su
+ * material—, menos lo que ya se ha desvanecido con la distancia al ojo, que
+ * es lo que hace el sombreador desde el `DESVANECE_DESDE` de su radio hasta
+ * el radio entero. Lo que deja pasar la capa es el producto de las cinco.
+ *
+ * `radio` es el de `radioDeLasNubes`, y `desvaneceDesde` la fracción de él
+ * desde la que se desvanece. El ojo es `desde`.
+ */
+export function transparenciaDeLaCapa(
+  dibujo: DibujoDeLaCapa,
+  opacidad: number,
+  radio: number,
+  desvaneceDesde: number,
+  desde: Punto3,
+  hasta: Punto3,
+): number {
+  const n = dibujo.ruidos.length;
+  if (n === 0 || !(dibujo.paso > 0)) return 1;
+  const sube = hasta.y - desde.y;
+  let deja = 1;
+  for (let i = 0; i < n; i++) {
+    const y = dibujo.base + i * dibujo.separacion;
+    // La recta no cruza esta lámina: las dos puntas al mismo lado.
+    if ((desde.y - y) * (hasta.y - y) > 0 || sube === 0) continue;
+    const f = (y - desde.y) / sube;
+    const x = desde.x + (hasta.x - desde.x) * f;
+    const z = desde.z + (hasta.z - desde.z) * f;
+    const lejos = Math.hypot(x - desde.x, y - desde.y, z - desde.z);
+    const t = Math.max(0, Math.min(1, (lejos - radio * desvaneceDesde) / (radio * (1 - desvaneceDesde))));
+    const queda = 1 - t * t * (3 - 2 * t);
+    // Justo a la altura de la lámina, la densidad es la de su dibujo.
+    const alfa = densidadEnLaCapa(dibujo, x, y, z);
+    deja *= 1 - Math.max(0, Math.min(1, opacidad * alfa * queda));
+  }
+  return deja;
+}

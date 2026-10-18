@@ -17426,5 +17426,138 @@
     "idioma": "en",
     "texto": "deviation left of route approved, advise clear of weather",
     "para": "el control aprueba el desvío por la izquierda de la tormenta"
+  },
+  {
+    "id": "inicio.ara.pasaje.meneo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Uy, el avión se mueve un poquito! Y el ala sube y baja, como si saludara.",
+    "para": "el modo inicio, de pasaje: Ara nota el meneo dentro de la nube",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.meneoBien",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Entonces es normal que se mueva! Y yo llevo el cinturón puesto, bien ajustado.",
+    "para": "el modo inicio, de pasaje: Ara, con calma ante el meneo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.bajoLasNubes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Salimos por abajo de las nubes! Ahora las tenemos arriba, como un techo, y abajo se ve lejísimos.",
+    "para": "el modo inicio, de pasaje: Ara, al salir por debajo de las nubes",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.techo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Mamá me enseñó que la parte de abajo de las nubes se llama base, ¡y que para aterrizar hay que ver la pista a tiempo!",
+    "para": "el modo inicio, de pasaje: Ara cuenta la base de las nubes",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.marDeNubes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá para abajo: nubes y más nubes, como un mar de algodón! Por eso le dicen mar de nubes.",
+    "para": "el modo inicio, de pasaje: Ara, por encima del mar de nubes",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.sigueLaNube",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Seguimos adentro de la nube y el avión se mueve un poquito. ¡Pero ya sé que es normal, y tengo el cinturón puesto!",
+    "para": "el modo inicio, de pasaje: Ara, con calma dentro de la nube, bajando",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.meneo",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante. Lo que notan es el aire de dentro de la nube, que sube y baja: es normal. Las alas están hechas para doblarse un poco, y por eso se mueven. Y por eso llevamos el cinturón abrochado.",
+    "para": "el modo inicio, de pasaje: la comandante explica el meneo dentro de la nube",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.teide",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, para quienes no lo conozcan: el Teide es el volcán de Tenerife, y con sus tres mil setecientos quince metros es la montaña más alta de España.",
+    "para": "el modo inicio, de pasaje: la comandante presenta el Teide",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.techo",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "¿Ves? La parte de abajo de las nubes se llama base. Y cuando tapan más de medio cielo, los pilotos la llaman techo.",
+    "para": "el modo inicio, de pasaje: la tripulante explica la base y el techo de las nubes"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.techoHoy",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Hoy la base está a unos cinco mil pies, mil quinientos metros. Vamos justo debajo, así que hasta el mar nos falta más o menos eso.",
+    "para": "el modo inicio, de pasaje: la tripulante dice la base de hoy y lo que falta hasta el mar"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.visibilidad",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Por debajo se ve lejísimos, más de diez kilómetros: eso es la visibilidad. Para aterrizar, los pilotos tienen que ver la pista a tiempo.",
+    "para": "el modo inicio, de pasaje: la tripulante explica la visibilidad"
   }
 ]

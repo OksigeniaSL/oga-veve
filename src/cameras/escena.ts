@@ -32,6 +32,7 @@
 import { MathUtils, Quaternion, Vector3, type PerspectiveCamera } from "three";
 import type { FlightState } from "../flight/model";
 import { esDeFuera, type Plano } from "../flight/inicio-pasaje";
+import { FOV_DEL_PAISAJE, tomaDelPaisaje, type Punto } from "../world/se-ve-desde-el-pasaje";
 
 /**
  * **El fundido de un corte**, s de pared: lo que tarda el velo en tapar y en
@@ -64,6 +65,11 @@ const suave = (x: number): number => {
 export class FundidoDePlano {
   private visto: Plano = "ventanilla";
   private pedido: Plano = "ventanilla";
+  /**
+   * **Qué toma se pidió**, que no es solo el plano: la del paisaje con otro
+   * sitio al fondo es otra toma, con su corte. Sin decir, el plano.
+   */
+  private toma = "ventanilla";
   /** Cuándo empezó a tapar el corte en curso, o `null` sin corte. */
   private desde: number | null = null;
   private cambiadoEn: number | null = null;
@@ -73,8 +79,9 @@ export class FundidoDePlano {
     return this.visto;
   }
 
-  paso(pedido: Plano, ahora: number): PasoDelFundido {
-    if (pedido !== this.pedido) {
+  paso(pedido: Plano, ahora: number, toma: string = pedido): PasoDelFundido {
+    if (toma !== this.toma) {
+      this.toma = toma;
       this.pedido = pedido;
       if (!esDeFuera(pedido) && !esDeFuera(this.visto)) {
         // Asomarse o volver al asiento: sin velo.
@@ -90,7 +97,7 @@ export class FundidoDePlano {
     }
     let cambio = false;
     if (this.desde !== null && this.cambiadoEn === null && ahora - this.desde >= FUNDIDO_DE_PLANO.tapa) {
-      cambio = this.visto !== this.pedido;
+      cambio = true;
       this.visto = this.pedido;
       this.cambiadoEn = ahora;
     }
@@ -116,7 +123,24 @@ export interface ContextoDeLaEscena {
   /** Lo que mide el avión de morro a cola, m: el encuadre. */
   readonly largo: number;
   readonly movimientoReducido: boolean;
+  /** **El sitio que se enseña al fondo** en la toma del paisaje. Ver `tomaDelPaisaje`. */
+  readonly paisaje?: Punto | null;
+  /**
+   * **El señalero**: dónde está y hacia dónde mira, que es por donde llega el
+   * avión. Ver `world/senalero.ts`.
+   */
+  readonly senalero?: { readonly x: number; readonly y: number; readonly z: number; readonly mira: { readonly x: number; readonly z: number } } | null;
 }
+
+/**
+ * **El tren desde abajo**, en los ejes del avión —`x` a la derecha, `y`
+ * arriba, `z` hacia la cola—, en largos del avión: la cámara debajo y un poco
+ * por delante del morro, del lado de Ara, mirando hacia arriba a la panza,
+ * entre la pata de morro y las de debajo del ala. Se ven las tres bajar y
+ * quedarse trabadas. Va con el avión, como la del ala: así se ve lo que hace
+ * el tren y no cómo se mueve el avión.
+ */
+const DESDE_ABAJO = { camara: [-0.2, -0.24, -0.55], mira: [0, -0.05, 0.02] } as const;
 
 /** El ángulo de las tomas que siguen al avión, grados: algo más cerrado que el de detrás. */
 const FOV_DE_LA_TOMA = 50;
@@ -139,6 +163,9 @@ export class CamaraDeLaEscena {
   private toma: Plano = "fuera-rodando";
   private reloj = 0;
   private readonly fijo = new Vector3();
+  /** Adonde mira una toma clavada que no sigue al avión: la del señalero. */
+  private readonly miraFija = new Vector3();
+  private conSenalero = false;
   private readonly posicion = new Vector3();
   private readonly mira = new Vector3();
   private readonly deseada = new Vector3();
@@ -163,6 +190,7 @@ export class CamaraDeLaEscena {
   /** Empieza una toma, con el velo puesto. */
   empezar(toma: Plano, state: FlightState, ctx: ContextoDeLaEscena): void {
     this.toma = toma;
+    this.conSenalero = false;
     this.reloj = 0;
     this.recien = true;
     this.ejes(state);
@@ -176,6 +204,23 @@ export class CamaraDeLaEscena {
        */
       this.fijo.copy(p).addScaledVector(this.delante, 720).addScaledVector(this.izquierda, 75);
       this.fijo.y = Math.max(ctx.suelo(this.fijo.x, this.fijo.z), p.y - 2) + 3;
+    } else if (toma === "fuera-senalero" && ctx.senalero) {
+      /*
+       * **El señalero, desde el suelo**: detrás de él y a un lado, a la altura
+       * de quien está de pie en la plataforma, mirando por encima de su hombro
+       * hacia donde llega el avión. Se le ven los bastones y los brazos, y el
+       * avión que viene hacia él y se para donde dice.
+       */
+      const s = ctx.senalero;
+      const mx = s.mira.x;
+      const mz = s.mira.z;
+      // A su izquierda según mira: el avión llega por delante de él.
+      const ix = mz;
+      const iz = -mx;
+      this.fijo.set(s.x - mx * 9 + ix * 6, 0, s.z - mz * 9 + iz * 6);
+      this.fijo.y = ctx.suelo(this.fijo.x, this.fijo.z) + 2.6;
+      this.miraFija.set(s.x + mx * 22, s.y + 2.2, s.z + mz * 22);
+      this.conSenalero = true;
     } else if (toma === "fuera-pista") {
       /*
        * **Y al aterrizar, desde la orilla de la pista**, pasada la zona de
@@ -211,6 +256,54 @@ export class CamaraDeLaEscena {
     let suaviza = 2.2;
     this.objetivo.copy(p);
     switch (this.toma) {
+      case "fuera-paisaje": {
+        /*
+         * **El paisaje que se nombra, con el avión delante**: detrás según se
+         * mira hacia él, un poco a un lado y por encima. La misma cuenta dice
+         * si se ve —ver `tomaDelPaisaje`—, así que lo que se comprueba es lo
+         * que se pinta.
+         */
+        const sitio = ctx.paisaje;
+        if (sitio) {
+          const t = tomaDelPaisaje({ position: p, orientation: state.orientation, largo: ctx.largo }, sitio);
+          this.deseada.copy(t.camara);
+          this.objetivo.copy(t.mira);
+        } else {
+          this.deseada.copy(p).addScaledVector(this.delante, -largo * 2.5);
+          this.deseada.y += largo * 0.5;
+        }
+        this.angulo = FOV_DEL_PAISAJE;
+        suaviza = Infinity;
+        break;
+      }
+      case "fuera-tren": {
+        this.giro.copy(state.orientation);
+        const [cx, cy, cz] = DESDE_ABAJO.camara;
+        const [mx, my, mz] = DESDE_ABAJO.mira;
+        this.deseada.set(cx * largo, cy * largo, cz * largo).applyQuaternion(this.giro).add(p);
+        this.objetivo.set(mx * largo, my * largo, mz * largo).applyQuaternion(this.giro).add(p);
+        this.angulo = 58;
+        suaviza = Infinity;
+        break;
+      }
+      case "fuera-senalero":
+        if (this.conSenalero) {
+          // Clavada en el suelo, mirando hacia donde llega el avión.
+          this.deseada.copy(this.fijo);
+          this.objetivo.copy(this.miraFija);
+          this.angulo = 52;
+          suaviza = Infinity;
+          break;
+        }
+        // Sin señalero a la vista, a su lado, como rodando.
+        this.deseada
+          .copy(p)
+          .addScaledVector(this.delante, largo * 0.9)
+          .addScaledVector(this.izquierda, largo * 0.65);
+        this.deseada.y += largo * 0.16;
+        this.angulo = FOV_DE_LA_TOMA;
+        suaviza = 1.6;
+        break;
       case "fuera-despegue":
       case "fuera-pista": {
         // Clavada en el suelo, siguiendo al avión con la mirada, y acercándolo.
@@ -281,7 +374,7 @@ export class CamaraDeLaEscena {
     const minimo = ctx.suelo(this.posicion.x, this.posicion.z) + 1.5;
     if (this.posicion.y < minimo) this.posicion.y = minimo;
     camera.position.copy(this.posicion);
-    if (this.toma === "fuera-ala") {
+    if (this.toma === "fuera-ala" || this.toma === "fuera-tren") {
       // Con el «arriba» del avión: la cámara va pegada a él.
       this.aux.set(0, 1, 0).applyQuaternion(state.orientation);
       camera.up.copy(this.aux);
