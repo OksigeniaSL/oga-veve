@@ -18,6 +18,7 @@ import { escribirRincon } from "./escala";
 import { alPulsar } from "./pulsar";
 import { fan, motorMas, motorMenos } from "./pictogramas";
 import { surtidorSvg } from "./surtidor";
+import { DIBUJOS_DE_LOS_SELLOS } from "./album";
 
 /** Un icono de veinticuatro por veinticuatro, como todos los del juego. */
 const icono = (cuerpo: string): string =>
@@ -1617,6 +1618,8 @@ export const DIBUJOS = {
   ...TRAFICO,
   ...CERCANO,
   ...RA,
+  // Los sellos con nombre, para celebrarlos al ganarlos. Ver `ui/album.ts`.
+  ...DIBUJOS_DE_LOS_SELLOS,
 } as const;
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */

@@ -111,8 +111,11 @@ const HABLADOS = [
     "explica",
     "instructor",
     "lo que explica tocar una pieza del cuadro",
-    // La palabra corta y los nombres de los botones se leen, no se dicen.
-    /\.corta$|^explica\.(oir|curiosidades)$/,
+    /*
+     * La palabra corta y los nombres de los botones se leen, no se dicen. Y
+     * los sellos van al final de la lista: ver `DE_LOS_SELLOS`.
+     */
+    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\./,
   ],
   /*
    * **Y lo que se cuenta antes de volar y al tocar el avión**: cada sitio de
@@ -1613,6 +1616,28 @@ for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
     filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
   }
+}
+
+/*
+ * **Y los sellos con nombre del cuaderno**, los del issue #25: lo que dice la
+ * instructora al ganar cada uno y al tocarlo en el álbum, que es la misma
+ * frase. Sus claves empiezan por `explica.`, pero van aquí, **al final**, y
+ * no con las explicaciones: metidas en medio renumerarían las frases de la
+ * instructora ya grabadas, por lo mismo que las escenas del inicio. El nombre
+ * de cada sello se lee y no se dice. Ver `src/flight/sellos.ts` y
+ * `PENDIENTE-VOCES-sellos.md`.
+ */
+const DE_LOS_SELLOS = /^explica\.sello\.[\w-]+\.texto$/;
+for (const [k, v] of es) {
+  if (!DE_LOS_SELLOS.test(k) || filas.some((f) => f.id === k)) continue;
+  filas.push({
+    id: k,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto: v,
+    para: "los sellos del cuaderno: al ganarlos y al tocarlos en el álbum",
+  });
+  total += v.length;
 }
 
 /*
