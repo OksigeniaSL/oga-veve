@@ -68,10 +68,10 @@ COLORES.update({
     # **La librea de la casa**, que no se pinta aquí sino en el juego. Ver
     # `src/world/librea.ts`.
     #
-    # - `cola` es la deriva que lleva el motivo de Granja Óga —el sol entre
-    #   las hojas—. Aquí sale del color del capó, que es el fondo sobre el que
-    #   va el motivo, para que en un visor cualquiera la cola siga siendo la
-    #   de siempre.
+    # - `cola` es la deriva, que lleva el motivo de Granja Óga —el sol— en
+    #   los aviones de pasaje y va lisa en los demás. Aquí sale del verde de
+    #   la casa, que es la cola de toda la flota y el fondo sobre el que va el
+    #   motivo, para que en un visor cualquiera la cola sea la de verdad.
     # - `marca` es el trozo de piel donde va el logotipo junto a la puerta.
     #   Blanco, porque el juego le pone encima el logotipo con sus colores y
     #   deja ver el casco alrededor.
@@ -79,12 +79,11 @@ COLORES.update({
     # Van por nombre, como los relojes y los botones: el guion dice **dónde**
     # va cada cosa, que es lo que sabe, y el juego la dibuja con los colores de
     # la ficha, que son los que mandan.
-    "cola": (0.75, 0.36, 0.22, 1.0),
+    "cola": (0.18, 0.32, 0.26, 1.0),
     "marca": (1.0, 1.0, 1.0, 1.0),
-    # - `remate` es el color de la casa que no va ni en el casco, ni en el
-    #   capó, ni en la raya: el tercero, en el avión que lleva los otros dos.
-    #   Las aletas de las puntas y el filete que lo acompaña. Aquí, del
-    #   terracota del logotipo, que es el que lo pide; manda la ficha.
+    # - `remate` son las aletas de las puntas de ala, que es donde una
+    #   compañía pone su color. Aquí, del terracota del logotipo, que es el de
+    #   la casa; manda la ficha.
     "remate": (0.75, 0.36, 0.22, 1.0),
 })
 

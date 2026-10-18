@@ -15,8 +15,8 @@
  * «¿Con qué volás?», trescientos milisegundos con la CPU de uno barato.
  *
  * Ahora son imágenes, hechas con `npm run retratos`: el `.glb` de verdad,
- * cargado y vestido por el propio juego —sus colores, el sol entre las hojas
- * en la cola, la firma junto a la puerta— y fotografiado con la tarjeta
+ * cargado y vestido por el propio juego —sus colores, el sol en la cola, la
+ * firma junto a la puerta— y fotografiado con la tarjeta
  * gráfica. Aquí solo se dice dónde están. Que no se queden viejos lo vigila
  * `retratos.test.ts`, con las huellas que el guion guarda en
  * `retratos-huellas.json`.

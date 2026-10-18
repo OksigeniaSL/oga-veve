@@ -349,12 +349,14 @@ criterio de arriba:
   de la deriva, que es como se diseña la cola de una compañía. Un logotipo
   no se recorta; un motivo de la marca, sí. El sol es el ocre de la marca, las
   hojas su verde bosque y los filetes que los separan, el color del casco.
-  Sobre una cola que ya es verde va el sol solo, naciendo en la raíz, con la
-  deriva haciendo de hoja.
-- **Y los colores de la flota son los del logotipo**, sin ninguno más: el
-  ocre, el terracota y el verde bosque, sobre el crema del casco. Lo que
-  distingue un avión de otro es qué color va en la cola, cuál en la franja y
-  cuál en la raya. Ver `CASA` en `src/flight/aircraft.ts`.
+  Sobre una cola que ya es verde —y la de la casa lo es— va el sol solo,
+  naciendo en la raíz, con la deriva haciendo de hoja.
+- **Y los colores de la flota son los del logotipo**, sin ninguno más, y
+  **una sola librea para toda ella**, la de sus ilustraciones: casco crema,
+  cola verde, franja terracota con la raya en verde y las aletas en
+  terracota. El ocre se queda en el sol del motivo y en el logotipo: pintado
+  en grande se lee naranja. Lo que distingue un avión de otro es la silueta,
+  no la pintura. Ver `CASA` y `LIBREA` en `src/flight/aircraft.ts`.
 
 El motivo es de Oksigenia SL, como la marca de la que sale, y va con ella:
 contenido propietario, ver `LICENSE-CONTENIDO.md`. El código que lo pinta,

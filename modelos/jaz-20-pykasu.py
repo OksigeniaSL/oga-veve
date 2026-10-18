@@ -122,12 +122,16 @@ def construir():
 
     # ── Fuselaje, con el capó en la misma piel ────────────────────────────
     #
-    # El capó no es una pieza aparte encajada delante: es la misma chapa con
-    # otro color a partir de la cortafuegos. Así no hay escalón entre los dos,
-    # que es lo que delataba la maqueta.
-    piezas.append(PIEL.malla("fuselaje", zonas=[
-        ("capo", -9, CORTAFUEGOS, 0, 180),
-    ], extra=[CORTAFUEGOS], paso=0.10))
+    # El capó no es una pieza aparte encajada delante: es la misma chapa a
+    # partir de la cortafuegos. Así no hay escalón entre los dos, que es lo
+    # que delataba la maqueta.
+    #
+    # **Y del color del casco**, como en su ilustración: la flota lleva una
+    # sola librea —ver `LIBREA` en `src/flight/aircraft.ts`— y en ella el
+    # terracota es la franja. Un capó terracota hacía de este avión el único
+    # con el morro pintado, y lo que se le ve de color al morro de la
+    # ilustración es la franja, que llega hasta el cono.
+    piezas.append(PIEL.malla("fuselaje", extra=[CORTAFUEGOS], paso=0.10))
 
     # Las dos tomas de aire del motor, a cada lado del cono: lo que dice que
     # delante hay un motor de cilindros y no una nariz.
@@ -155,12 +159,16 @@ def construir():
     # ventanillas y sube hacia la cola, y una raya fina debajo en el otro
     # color. Es como se pinta un avión de escuela, y da referencia de actitud
     # desde fuera: se ve si el avión va con el morro arriba.
+    #
+    # Nace casi en el cono, y no en la cortafuegos: con el capó del color del
+    # casco, una franja que empezara a medio morro lo dejaba en blanco, y en
+    # la ilustración la franja es justo lo que lleva el morro hasta la hélice.
     def sube(base):
         return lambda z: base + max(0.0, z - 0.8) * 0.055
 
-    piezas.append(banda("cintura", PIEL, CORTAFUEGOS - 0.02, 5.0,
+    piezas.append(banda("cintura", PIEL, -2.20, 5.0,
                         sube(0.02), sube(0.17), fuera=0.007, paso=0.15))
-    piezas.append(banda("cintura-fina", PIEL, CORTAFUEGOS + 0.15, 4.9,
+    piezas.append(banda("cintura-fina", PIEL, -2.05, 4.9,
                         sube(-0.05), sube(-0.015), material_="detalle",
                         fuera=0.007, paso=0.15, filas=1))
 
@@ -200,7 +208,7 @@ def construir():
             estrecha=0.68,
             montantes=[(-0.39, 0.05, 0.0), (0.39, 0.05, 0.0)],
             brujula=True,
-            capota=("capo", 11.5, 0.48, 0.46),
+            capota=("casco", 11.5, 0.48, 0.46),
         ),
     )
     piezas += cab
@@ -277,6 +285,11 @@ def construir():
     # dirección empieza encima de la aleta dorsal —ahí la junta hace codo, y
     # lo de debajo es aleta, no timón— y sube hasta la punta: la junta pintada
     # se alarga con él. Ver `mando`.
+    #
+    # **La deriva es `cola`, no `capo`**: la cola de la casa es verde y la
+    # franja terracota, así que ya no pueden ir en el mismo material. Sin
+    # motivo —una avioneta de escuela no se viste de compañía—, el juego la
+    # deja lisa del color de la cola de la ficha. Ver `vestirLaLibrea`.
     de_la_deriva = [
         de_deriva(0.0, 0.40, 3.20, 2.30, 0.05),
         de_deriva(0.0, 0.62, 4.28, 1.30, 0.09),
@@ -285,7 +298,7 @@ def construir():
     pie, punta_d = largo_hasta(de_la_deriva, 1), largo_hasta(de_la_deriva, 2)
     timon = [mando("timon-de-direccion", pie, punta_d, 0.615, "guinada",
                    17.73, 17.73)]
-    deriva = superficie("deriva", de_la_deriva, material_="capo",
+    deriva = superficie("deriva", de_la_deriva, material_="cola",
                         simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.25, 1.40, 0.60, 0.615),
         ("oscuro", 1.40, punta_d, 0.60, 0.615),
@@ -352,8 +365,12 @@ def construir():
     # Dos palas y un metro noventa de diámetro, que es lo que mueve un motor
     # de esta potencia. Con el eje a 0,06 sobre la línea del fuselaje, la punta
     # de pala pasa a medio metro del suelo, como en el avión de verdad.
+    #
+    # El cono, de metal y no del color de la franja: es como va en su
+    # ilustración, y un cono terracota delante de un capó crema era el único
+    # trozo de morro pintado de toda la flota.
     piezas += helice("helice", (0, 0.06, -2.42), radio=0.95, cuantas=2,
-                     buje=0.17, cuerda=0.13, largo_cono=0.40)
+                     buje=0.17, cuerda=0.13, largo_cono=0.40, cono="aluminio")
 
     # Los flaps no atraviesan nada al bajar: ni el fuselaje ni el puntal, que
     # se clava en el ala justo por delante de ellos. Ver `flaps_libres`.

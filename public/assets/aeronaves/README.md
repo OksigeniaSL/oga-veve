@@ -31,10 +31,13 @@ imponen al vuelo (ver `src/world/aeronave-modelo.ts`):
   `blade`. Si no aparece, se queda quieta y no pasa nada — es un adorno.
 - **Y la librea de la casa, pintada encima.** En los modelos de
   `modelos/*.py`, la deriva con el material `cola` lleva el motivo de Granja
-  Óga —el sol entre las hojas— y el trozo de piel con el material `marca`, el
-  logotipo. No vienen dibujados en el fichero: los pinta el juego en un lienzo
-  con los colores de la ficha, y es él quien les pone las coordenadas de
-  textura. Ver `src/world/librea.ts`.
+  Óga —el sol, sobre la cola verde de la casa— y el trozo de piel con el
+  material `marca`, el logotipo. No vienen dibujados en el fichero: los pinta
+  el juego en un lienzo con los colores de la ficha, y es él quien les pone
+  las coordenadas de textura. Ver `src/world/librea.ts`. Los colores son los
+  mismos en toda la flota —ver `LIBREA` en `src/flight/aircraft.ts`—; lo que
+  cambia de un guion a otro es qué pieza lleva cada material, que es lo que
+  sigue la ilustración de cada avión.
 - **Y cada hélice gira sobre la suya.** Las piezas se agrupan por cercanía y
   cada grupo recibe su propio eje, puesto en el buje — que no es el centro de
   su caja en cuanto las palas son tres y la hélice deja de ser simétrica. Un

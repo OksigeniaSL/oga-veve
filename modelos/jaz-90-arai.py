@@ -187,33 +187,41 @@ def construir():
 
     # La franja: por debajo de las ventanillas, del morro a la cola, y
     # subiendo al final hacia la deriva. Y una raya fina en el otro color.
+    #
+    # **Ancha, un cuarto del alto del fuselaje**, y no los veintiocho
+    # centímetros de antes: la librea de la casa lleva el terracota en el
+    # costado bajo, como en la ilustración de este avión, y es la misma
+    # franja que la del JAZ 120 a su escala. Estrecha era una raya, y de
+    # lejos lo único con color era la cola.
     def sube(base, desde=7.5, cuanto=0.20):
         return lambda z: base + max(0.0, z - desde) * cuanto
 
     def morro_fino(abajo, arriba):
         # Y la franja nace fina bajo el parabrisas y engorda hacia atrás.
         return lambda z: arriba(z) - (arriba(z) - abajo(z)) * max(
-            0.0, min(1.0, (z + 14.4) / 1.6))
+            0.0, min(1.0, (z + 14.4) / 3.0))
 
     # Y acaba en punta de hoja al pie de la deriva, con la raya fina
     # cerrándose en la misma punta: la franja es una hoja larga que va del
     # morro a la cola, donde están las del motivo. Ver `en_punta`.
     arriba = sube(0.20)
-    abajo = en_punta(morro_fino(sube(-0.08), arriba), arriba, 9.6, 13.2)
+    abajo = en_punta(morro_fino(sube(-0.62), arriba), arriba, 9.6, 13.2)
     piezas.append(banda("cintura", PIEL, -14.4, 13.18, abajo, arriba,
                         fuera=0.010, paso=0.25))
 
-    # La raya va pegada al borde de abajo de la franja **sin** el afilado del
-    # morro, que es donde estaba: solo la cola cambia.
-    abajo_sin_morro = en_punta(sube(-0.08), arriba, 9.6, 13.2)
+    # La raya va pegada al borde de abajo de la franja, con un filete del
+    # casco entre las dos, y **sigue su afilado del morro**: con la franja
+    # ancha, una raya recta nacía suelta por debajo de una punta que aún no
+    # había engordado.
+    def afila(z):
+        return (max(0.0, min(1.0, (z + 13.6) / 1.2))
+                * (1 - max(0.0, min(1.0, (z - 9.6) / 3.6))))
 
     def fina_arriba(z):
-        return abajo_sin_morro(z) - 0.08 * (
-            1 - max(0.0, min(1.0, (z - 9.6) / 3.6)))
+        return abajo(z) - 0.08 * afila(z)
 
     piezas.append(banda("cintura-fina", PIEL, -13.6, 13.18,
-                        en_punta(lambda z: fina_arriba(z) - 0.08, fina_arriba,
-                                 9.6, 13.2),
+                        lambda z: fina_arriba(z) - 0.08 * afila(z),
                         fina_arriba, material_="detalle", fuera=0.010,
                         paso=0.3, filas=1))
 
@@ -331,9 +339,19 @@ def construir():
     # publica Airbus para el A320 (FCOM, DSC-27-10), que es la clase de la que
     # sale también el ángulo de los aerofrenos de arriba. Ver `mando`.
     alerones = [mando("aleron", 9.3, 12.05, 0.78, "alabeo", 25, 25)]
+
+    def a_lo_largo(k):
+        """Lo que mide el ala por su borde de ataque hasta la estación `k`."""
+        return sum((b["pos"] - a["pos"]).length
+                   for a, b in zip(estaciones[:k], estaciones[1:k + 1]))
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, aerofrenos=aerofrenos, mandos=alerones,
                      zonas=[
+        # **La aleta, en terracota**, desde donde el ala empieza a subir:
+        # es donde una compañía pone su color —una aleta es una cola pequeña
+        # que se ve de frente y desde la ventanilla—, y así va en su
+        # ilustración. Ver `remate` en `aircraft.ts`.
+        ("remate", a_lo_largo(2), 99.0, 0.0, 1.0),
         ("aluminio", 1.4, 12.2, 0.0, 0.07),
         # Los flaps, por dentro y por fuera del motor, y el alerón.
         (j, 1.0, 9.2, 0.715, 0.73),
