@@ -46,6 +46,7 @@ import {
   type ExplicacionDelAvion,
   type LuzDeLaTarjeta,
 } from "./explicaciones-del-avion";
+import { ilustracionesDelAvion, TAMANO_DEL_HUECO } from "./ilustraciones";
 import { Panel } from "./panel";
 import { retratoDe } from "./retratos";
 import {
@@ -232,6 +233,23 @@ const TAMANO = `<svg viewBox="0 0 48 48" aria-hidden="true">
   <circle cx="25" cy="38" r="3" fill="currentColor" /><circle cx="39" cy="38" r="3" fill="currentColor" />
 </svg>`;
 
+/**
+ * **Cómo es por fuera y cómo es por dentro**, en dibujo: el avión volando
+ * sobre su sitio y Jazlyn a los mandos. Solo en el hangar, que es donde se
+ * mira un avión antes de elegirlo; en el vuelo la tarjeta es un instrumento y
+ * lo que se mira es el avión que se tiene. Van encima de la ficha, en su
+ * columna, y no tapan nada del 3D: se miran sin leer. Ver `ui/ilustraciones.ts`.
+ */
+function dibujosDelAvion(id: string): string {
+  const d = ilustracionesDelAvion(id);
+  if (!d) return "";
+  const img = (i: { url: string; alt: string }, cual: string): string =>
+    `<img class="tav__dibujo" data-dibujo="${cual}" src="${i.url}" alt="${i.alt.replace(/"/g, "&quot;")}"
+          width="${TAMANO_DEL_HUECO.tarjeta.ancho}" height="${TAMANO_DEL_HUECO.tarjeta.alto}"
+          loading="lazy" decoding="async" />`;
+  return `<div class="tav__dibujos">${img(d.fuera, "fuera")}${img(d.cabina, "cabina")}</div>`;
+}
+
 /** La mano que gira: el aviso de que esto se mueve con el dedo. */
 const GIRA = `<svg viewBox="0 0 48 24" aria-hidden="true">
   <path d="M6 12 h36" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
@@ -397,6 +415,7 @@ export class TarjetaDelAvion {
           <p class="tav__cuenta" data-tarjeta="cuenta" hidden></p>
         </div>
         <div class="tav__datos">
+          ${this.opciones.enVuelo ? "" : dibujosDelAvion(a.id)}
           <p class="tav__clase">${t(a.descriptionKey as TranslationKey)}</p>
           <dl class="tav__ficha">
             ${ficha
@@ -437,9 +456,9 @@ export class TarjetaDelAvion {
     this.root
       .querySelector('[data-accion="cerrar"]')
       ?.addEventListener("click", () => this.cerrar());
-    this.root
-      .querySelector<HTMLImageElement>(".tav__retrato")
-      ?.addEventListener("error", (e) => (e.target as HTMLElement).remove(), { once: true });
+    // Lo que no llega —sin red y sin copia—, fuera: mejor nada que un icono roto.
+    for (const img of this.root.querySelectorAll<HTMLImageElement>(".tav__retrato, .tav__dibujo"))
+      img.addEventListener("error", () => img.remove(), { once: true });
     const lienzo = this.root.querySelector<HTMLCanvasElement>('[data-tarjeta="lienzo"]');
     if (lienzo) {
       this.visor = new VisorDelAvion({

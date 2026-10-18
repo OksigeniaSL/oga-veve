@@ -13385,6 +13385,29 @@ svg .ex-raya {
   scrollbar-color: var(--ocre) rgb(228 226 218 / 0.09);
 }
 
+/*
+ * **Por fuera y por dentro**, en el hangar: los dos dibujos del avión, uno al
+ * lado del otro y encima de la ficha, que es lo primero que se ve de la
+ * columna. Se miran sin leer. Ver `dibujosDelAvion` en `ui/tarjeta-del-avion.ts`.
+ */
+.tav__dibujos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex: none;
+}
+
+.tav__dibujo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--r-s);
+  border: 1px solid var(--linea);
+  background: rgb(0 0 0 / 0.22);
+}
+
 .tav__clase {
   margin: 0;
   color: var(--tinta-suave);

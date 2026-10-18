@@ -20,6 +20,10 @@ dist/
 # para otras partes del juego. No van a git mientras no se usen: la que se
 # use pasa a crudo/musica/ con su nombre.
 /crudo/musica/otras/
+# Los originales de las ilustraciones: unos 45 MB de dibujos de 2400 × 1792
+# que no van al repositorio público. Lo que se commitea son los WebP que hace
+# `scripts/hacer-ilustraciones.mjs`, en `src/assets/ilustraciones/`.
+/crudo/imagenes/
 .DS_Store
 # ── Entornos / secrets ─────────────────────────────────────────────────
 .env

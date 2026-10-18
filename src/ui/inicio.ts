@@ -34,6 +34,7 @@ import { nombreDeTecla } from "../flight/keymap";
 import type { Gesto, Mando, Quien } from "../flight/inicio";
 import type { QueMirar } from "../flight/inicio-pasaje";
 import { t } from "../i18n";
+import { RETRATO_DE_JAZLYN } from "./ilustraciones";
 import { motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS } from "./senal";
 import { FLECHAS } from "./teclas";
@@ -123,11 +124,23 @@ const LA_TRIPULANTE = `
       <path class="cara__panuelo" d="M16.6 38.6 l7.4 4.2 l7.4 -4.2 l-2 5.6 h-10.8 Z" />
       <path class="cara__alas" d="M30.6 41.2 h5.6 M33.4 40 v2.4" />`;
 
+/**
+ * **Y la de Jazlyn, como en los cuentos**: el retrato de sus ilustraciones
+ * —ver `ui/ilustraciones.ts`—, en redondo y encima de la de trazos, dejando
+ * a la vista un filo del ocre de su círculo. La de trazos se queda debajo por
+ * si el retrato no llega —sin red, la primera vez—, y entonces es la que se
+ * ve: la cara de quien habla no falta nunca.
+ */
+function retratoEncima(quien: Quien): string {
+  if (quien !== "mama" || !RETRATO_DE_JAZLYN) return "";
+  return `<image class="cara__retrato" href="${RETRATO_DE_JAZLYN}" x="2.5" y="2.5" width="43" height="43" />`;
+}
+
 export function caraDe(quien: Quien, megafonia = false): string {
   if (quien === "tripulacion" && !megafonia)
     return `<svg class="inicio__cara inicio__cara--tripulante" viewBox="0 0 48 48" aria-hidden="true">${LA_TRIPULANTE}</svg>`;
   const altavoz = megafonia && quien !== "tripulacion" ? POR_EL_ALTAVOZ : "";
-  return `<svg class="inicio__cara inicio__cara--${quien}" viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}${altavoz}</svg>`;
+  return `<svg class="inicio__cara inicio__cara--${quien}" viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}${retratoEncima(quien)}${altavoz}</svg>`;
 }
 
 // ── Qué mirar ────────────────────────────────────────────────────────────
@@ -184,7 +197,7 @@ export function dibujoDeMirar(mira: QueMirar): string {
  */
 export function caraDentro(quien: Quien, x: number, y: number, lado: number): string {
   return `<svg class="inicio__cara--${quien}" x="${x}" y="${y}" width="${lado}" height="${lado}"
-               viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}</svg>`;
+               viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}${retratoEncima(quien)}</svg>`;
 }
 
 // ── El teclado ───────────────────────────────────────────────────────────
