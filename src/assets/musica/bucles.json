@@ -1,0 +1,26 @@
+{
+  "paraguay": {
+    "desde": 0.5,
+    "dura": 74.899229,
+    "original": {
+      "desde": 1.8,
+      "hasta": 76.699,
+      "finUtil": 85.5
+    },
+    "parecido": 0.91,
+    "onda": 0.093,
+    "ganancia": -2.1
+  },
+  "canarias": {
+    "desde": 0.5,
+    "dura": 77.402229,
+    "original": {
+      "desde": 4.2,
+      "hasta": 81.602,
+      "finUtil": 88
+    },
+    "parecido": 0.956,
+    "onda": 0.073,
+    "ganancia": -3
+  }
+}

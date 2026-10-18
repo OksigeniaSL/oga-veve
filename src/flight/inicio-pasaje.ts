@@ -55,7 +55,8 @@
  * ## Lo que pasa, en el orden de un vuelo de verdad
  *
  * 1. **El asiento**: Ara se pega a la ventanilla y descubre el ala y el
- *    motor. Su asiento es el que los deja ver: ver `asientoDeAra`.
+ *    motor. Su asiento es el que los deja ver: ver `asientoDeAra`. Mientras
+ *    se acaba de embarcar, el hilo musical: ver `audio/hilo-musical.ts`.
  * 2. **El cinturón**: la tripulación da la bienvenida y pide abrocharlo, y Ara
  *    se lo abrocha —el dibujo de la hebilla, y el cartel encendido—.
  * 3. **Las puertas**: la comandante manda armar los toboganes y Ara se da
@@ -72,7 +73,9 @@
  *    giro y las nubes por dentro.
  * 10. **Arriba**: la respuesta de las nubes, una vuelta alrededor del avión, el
  *     servicio y la tripulante con Ara: las nubes de cerca.
- * 11. **La bajada**, los oídos, la isla y la cabina preparada.
+ * 11. **La bajada**, los oídos, **el kit de viaje** —dos juegos que trae la
+ *     tripulante para el tramo largo, ver `kit-de-viaje.ts`—, la isla y la
+ *     cabina preparada, que es cuando se guarda el kit.
  * 12. **La aproximación**: el ala estirando los flaps, el tren, y la toma vista
  *     desde el borde de la pista.
  * 13. **La llegada**, rodando por fuera, y en el puesto la despedida.
@@ -102,6 +105,7 @@
 import { seLePasoElMomento } from "../audio/megafonia";
 import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
+import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
 import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
 
@@ -199,6 +203,7 @@ export type MomentoDelPasaje =
   | "tcpNubes"
   | "bajada"
   | "oidos"
+  | "kit"
   | "isla"
   | "aproximacion"
   | "tcpAterrizaje"
@@ -308,6 +313,13 @@ export interface Senalado {
 const GRADO = Math.PI / 180;
 /** Lo que se espera sentado antes de hablar, s: el rato de mirar alrededor. */
 const AL_SENTARSE = 1.5;
+/**
+ * **Y el rato de embarcar**, s callados después de lo primero que dice Ara,
+ * antes de que la tripulación dé la bienvenida: lo que tarda en sentarse el
+ * resto del pasaje, con el hilo musical sonando por el techo. Ver
+ * `audio/hilo-musical.ts`.
+ */
+const EMBARCANDO = 8;
 /** Entre el cinturón y las puertas, s: se termina de embarcar. */
 const HASTA_LAS_PUERTAS = 2.5;
 /** Con los motores ya en marcha, s, antes de decir que se oyen. */
@@ -361,6 +373,12 @@ const FRIO_DE_CONGELADOR = -8;
  * —de 131 km a 13 km en 904 s—, cada cosa cae a un minuto de la anterior.
  */
 const BAJANDO = {
+  /**
+   * **El kit de viaje**, pasado lo último que se señala por la ventanilla y
+   * con más de cinco minutos de bajada por delante sin megafonía: el tramo
+   * tranquilo. Medido con la bajada del banco, cae hacia los 84 km.
+   */
+  kit: 84000,
   motor: 112000,
   islas: 99000,
   marQuieto: 86500,
@@ -369,6 +387,8 @@ const BAJANDO = {
   bano: 60000,
   estrellas: 54000,
 } as const;
+/** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
+const CALLA_ANTES_DEL_KIT = 10;
 /** Lo que se queda el dibujo de la ventanita después de la última frase, s. */
 const SE_QUEDA_LA_VENTANITA = 2.5;
 
@@ -426,6 +446,11 @@ const tripulante = (clave: string): Linea => ({
   quien: "tripulacion",
   clave: `inicio.tripulacion.pasaje.cerca.${clave}`,
 });
+/** La frase de la tripulante con la que llega el kit, y la de guardarlo para aterrizar. */
+const KIT_DADO = "kitAqui";
+const KIT_GUARDADO = "kitGuardar";
+/** Si una frase es de un juego del kit, que se calla con él. */
+const esDelKit = (l: Linea): boolean => l.clave.startsWith("inicio.ara.pasaje.kit.");
 /** Una frase con el dibujo de la ventanita. */
 const con = (l: Linea, dibujo: DibujoDelPasaje): Linea => ({ ...l, dibujo });
 /**
@@ -537,8 +562,9 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     plano: "asomado-motor",
   },
   {
+    // Después del rato de embarcar, con la música: la bienvenida y el cinturón.
     id: "cinturon",
-    cuando: () => true,
+    cuando: (_l, e) => e.callaDesde >= EMBARCANDO,
     lineas: [con(tripulacion("cinturon"), "cinturon"), con(ara("cinturon"), "cinturon")],
     mira: "cinturon",
   },
@@ -691,6 +717,25 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
   },
   {
     /*
+     * **El kit de viaje**: la tripulante se lo trae a Ara en el tramo largo y
+     * tranquilo de la bajada, que es cuando un vuelo se hace largo. Es lo que
+     * hacen las aerolíneas con quien viaja con pocos años, y se dice como es:
+     * volar es apasionante, pero los vuelos duran un ratito. Ver
+     * `kit-de-viaje.ts`.
+     */
+    id: "kit",
+    cuando: (l, e) =>
+      l.tramo === "bajada" &&
+      !l.enTierra &&
+      tripulanteEnElPasillo(e) &&
+      l.faltaParaTocar < BAJANDO.kit &&
+      e.callaDesde >= CALLA_ANTES_DEL_KIT &&
+      !cabinaPreparada(l, e),
+    caduca: (l, e) => cabinaPreparada(l, e),
+    lineas: [tripulante(KIT_DADO), tripulante("kitRato"), ara("kitGracias")],
+  },
+  {
+    /*
      * **La isla de llegada, a la vista**: La Palma sube a casi dos mil
      * quinientos metros, y desde cuarenta y tantos kilómetros ya se ve entera
      * por encima del mar de nubes. Es Ara quien la descubre: la cabina de mando
@@ -709,11 +754,16 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     lineas: [anuncio("comandante.aproximacion")],
   },
   {
-    // La última vuelta de la tripulante antes de sentarse: cinturón, respaldo y persiana.
+    /*
+     * La última vuelta de la tripulante antes de sentarse: cinturón, respaldo
+     * y persiana. Y si trajo el kit, que se guarde: para aterrizar, todo
+     * recogido. Ver `atenderAlKit`.
+     */
     id: "tcpAterrizaje",
     cuando: (l, e) => !l.enTierra && e.desdeQueSeDijo("aproximacion") >= 2,
     caduca: (l) => l.enTierra || l.altura < 300,
     lineas: [tripulante("aterrizaje")],
+    segun: (_l, e) => (e.kit.esDado ? [tripulante(KIT_GUARDADO), tripulante("aterrizaje")] : [tripulante("aterrizaje")]),
   },
   {
     /*
@@ -1080,6 +1130,9 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   poner(ara("nubesAbajo"));
   for (const c of CHARLAS_DEL_PASAJE) c.lineas.forEach(poner);
   poner(ara("giroArriba"));
+  // Y el kit: lo que se dice en los juegos, y guardarlo para aterrizar.
+  LINEAS_DEL_KIT.forEach(poner);
+  poner(tripulante(KIT_GUARDADO));
   return todas;
 })();
 
@@ -1117,6 +1170,10 @@ export interface EstadoDelPasaje {
   readonly planos: readonly CambioDePlano[];
   /** **El dibujo de la ventanita** de ahora, o `null`. */
   readonly dibujo: string | null;
+  /** Si lo que suena ahora es la megafonía. Ver `megafoniaSuena`. */
+  readonly megafonia: boolean;
+  /** **El kit de viaje**, y sus juegos. Ver `kit-de-viaje.ts`. */
+  readonly kit: EstadoDelKit;
 }
 
 /** Cuánto se queda el dibujo de mirar después de decirlo, s. */
@@ -1145,6 +1202,14 @@ export class VueloDePasaje {
   private readonly planos: CambioDePlano[] = [{ plano: "ventanilla", desde: 0 }];
   private dibujo: string | null = null;
   private dibujoDe: Linea | null = null;
+  /**
+   * **El kit de viaje de Ara**: lo trae la tripulante en la bajada, se pausa
+   * con la megafonía y se recoge para aterrizar. Lo que se toca se lo pasa el
+   * dibujo directamente; lo que dice va por esta conversación, como todo.
+   */
+  readonly kit = new KitDeViaje();
+  private kitAbierto = false;
+  private juegoDelKit: KitDeViaje["juegoDeAhora"] = null;
 
   constructor(
     voz: VozDelInicio,
@@ -1224,7 +1289,18 @@ export class VueloDePasaje {
       planoDesde: this.planoDesde,
       planos: [...this.planos],
       dibujo: this.dibujo,
+      megafonia: this.megafoniaSuena,
+      kit: this.kit.estado,
     };
+  }
+
+  /**
+   * **Si lo que suena ahora es la megafonía**: un anuncio, la comandante o la
+   * tripulación por el altavoz del techo, también mientras se lee sin voz.
+   * Con eso se pausa el kit y se calla el hilo musical.
+   */
+  get megafoniaSuena(): boolean {
+    return this.charla.suena?.megafonia === true;
   }
 
   get registro(): readonly Readonly<FraseDicha>[] {
@@ -1272,6 +1348,8 @@ export class VueloDePasaje {
       this.charla.atender();
       this.avanzar(l);
       this.charla.atender();
+      // Después de lo que empieza a sonar en este paso: si es la megafonía, el kit se pausa ya.
+      this.atenderAlKit(dt, l);
     }
     if (this.mira && this.reloj - this.miraDesde > SE_QUEDA_EL_DIBUJO && this.charla.callada) this.mira = null;
     this.mirarLaVentanita();
@@ -1353,7 +1431,12 @@ export class VueloDePasaje {
         this.decirLoSenalado(s);
         return;
       }
-      const charla = this.charlaQueToca(l);
+      /*
+       * Y con el kit en las manos, lo que se cuenta cuando viene a cuento
+       * espera: una explicación encima de un juego es un ruido. Lo que tiene
+       * su momento —el guion, lo de la ventanilla— sí se dice.
+       */
+      const charla = this.kit.ocupaAAra ? undefined : this.charlaQueToca(l);
       if (charla) {
         this.charlasDichas.push(charla.id);
         this.decirDe(charla, l);
@@ -1366,6 +1449,38 @@ export class VueloDePasaje {
     this.dichos.push(def.id);
     this.cuandoSeDijo.set(def.id, this.reloj);
     this.indice++;
+  }
+
+  /**
+   * **El kit de viaje, al ritmo de lo que se dice**: aparece cuando la
+   * tripulante lo da —al sonar su frase, no al pedirse—, se recoge cuando
+   * pide guardarlo o, si eso no llegó, en la final; se pausa mientras habla la
+   * megafonía y desde que se prepara la cabina; y lo que quieren decir sus
+   * juegos va a la cola de la conversación, detrás de lo que hubiera. Lo que
+   * esperaba turno de un juego que se cerró, se quita.
+   */
+  private atenderAlKit(dt: number, l: LecturaDelPasaje): void {
+    const suena = this.charla.suena?.clave;
+    if (suena === `inicio.tripulacion.pasaje.cerca.${KIT_DADO}` || this.charla.oida(`inicio.tripulacion.pasaje.cerca.${KIT_DADO}`))
+      this.kit.dar();
+    if (suena === `inicio.tripulacion.pasaje.cerca.${KIT_GUARDADO}` || enLaFinal(l) || (l.enTierra && bajando(l.tramo)))
+      this.kit.recoger();
+    this.kit.paso(dt, {
+      megafonia: this.megafoniaSuena || this.dicho("aproximacion"),
+      callada: this.charla.callada,
+    });
+    /*
+     * Lo que un juego quería decir y no le llegó el turno se calla con él: al
+     * cerrar el kit y al cambiar de juego. Sin esto, con las piezas puestas
+     * deprisa, «¡el ala!» sonaba con el mapa del camino ya delante.
+     */
+    const abierto = this.kit.estaAbierto;
+    const juego = this.kit.juegoDeAhora;
+    if ((this.kitAbierto && !abierto) || juego !== this.juegoDelKit) this.charla.quitar(esDelKit);
+    this.kitAbierto = abierto;
+    this.juegoDelKit = juego;
+    const lineas = this.kit.tomarLoQueDecir();
+    if (lineas.length) this.charla.decir(lineas);
   }
 
   /** La primera charla que viene a cuento ahora, si hay alguna. */

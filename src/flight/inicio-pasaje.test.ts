@@ -35,6 +35,7 @@ import {
 } from "./inicio-pasaje";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
 import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
+import { JuegoDeLasPiezas, JuegoDelCamino, PARADAS, PIEZAS as PIEZAS_DEL_AVION } from "./kit-de-viaje";
 import type { Fase } from "./vuelo";
 
 const DT = 1 / 10;
@@ -454,6 +455,7 @@ describe("cada cosa en su momento del vuelo", () => {
       "tcpNubes",
       "bajada",
       "oidos",
+      "kit",
       "isla",
       "aproximacion",
       "tcpAterrizaje",
@@ -1205,5 +1207,177 @@ describe("el vuelo medido, con las voces que duran lo que duran", () => {
     for (const l of conDibujo) expect(esDibujoDelPasaje(l.dibujo!), `${l.clave}: ${l.dibujo}`).toBe(true);
     // Y todos los dibujos se usan.
     for (const d of Object.keys(DIBUJOS_DEL_PASAJE)) expect(conDibujo.map((l) => l.dibujo), d).toContain(d);
+  });
+});
+
+// ── El kit de viaje, en el vuelo ─────────────────────────────────────────
+
+/**
+ * **El vuelo medido con alguien que juega**: `jugador` se llama en cada paso
+ * con la escena y su hora, y hace lo que haría quien tiene el kit en las
+ * manos. Se apunta cuándo estaba ocupado con él y cuándo pausado.
+ */
+function volarConElKit(jugador: (escena: VueloDePasaje, t: number) => void): Medido & {
+  readonly ocupado: { desde: number; hasta: number }[];
+  readonly pausas: { t: number; megafonia: boolean; juego: boolean }[];
+} {
+  let t = 0;
+  const v = vozQueTarda(loQueDura, () => t);
+  const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+  const vuelo = new VueloMedido();
+  const porVer = [...LO_QUE_SE_VIO];
+  const tramos: { t: number; tramo: TramoDeLinea }[] = [];
+  const ocupado: { desde: number; hasta: number }[] = [];
+  const pausas: { t: number; megafonia: boolean; juego: boolean }[] = [];
+  for (; t < 4000; t += DT) {
+    v.tic();
+    if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
+    vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    jugador(escena, t);
+    if (escena.kit.ocupaAAra) {
+      const ultimo = ocupado[ocupado.length - 1];
+      if (ultimo && t - ultimo.hasta < DT * 1.5) ultimo.hasta = t;
+      else ocupado.push({ desde: t, hasta: t });
+    }
+    if (escena.kit.estaAbierto) pausas.push({ t, megafonia: escena.megafoniaSuena, juego: escena.kit.juego !== null });
+    if (escena.estado.puedeSeguir) escena.seguir();
+    if (escena.estado.terminado) break;
+  }
+  return { escena, vuelo, dichas: v.dichas, tramos, ocupado, pausas };
+}
+
+/** Quien juega: abre el kit en cuanto lo tiene, elige `juego` y acierta una cosa cada `cada` segundos. */
+function jugadorQueAcierta(juego: "piezas" | "camino", cada = 4): (escena: VueloDePasaje, t: number) => void {
+  let ultimo = -Infinity;
+  return (escena, t) => {
+    const kit = escena.kit;
+    if (!kit.aMano) return;
+    if (!kit.estaAbierto && !kit.estado.hechos.includes(juego)) kit.abrir();
+    if (!kit.estaAbierto || kit.estado.pausado) return;
+    const j = kit.juego;
+    if (!j) {
+      if (!kit.estado.hechos.includes(juego)) kit.elegir(juego);
+      else kit.cerrar();
+      return;
+    }
+    if (t - ultimo < cada) return;
+    ultimo = t;
+    kit.tocado();
+    if (j instanceof JuegoDeLasPiezas) {
+      const p = PIEZAS_DEL_AVION.find((x) => !j.puesta(x));
+      if (p) j.soltar(p, p, kit.hayHueco);
+    } else if (j instanceof JuegoDelCamino) {
+      const p = PARADAS[j.estado.hechas];
+      if (p) j.tocar(p, kit.hayHueco);
+    }
+  };
+}
+
+describe("el kit de viaje, en el vuelo", () => {
+  const m = volarElMedido();
+  const cuando = (dichas: Dicha[], clave: string): number => dichas.find((d) => d.linea.clave === clave)?.desde ?? NaN;
+  const tramoA = (tramos: { t: number; tramo: TramoDeLinea }[], t: number): TramoDeLinea =>
+    [...tramos].reverse().find((x) => x.t <= t)?.tramo ?? "puerta";
+
+  it("la tripulante lo trae en un tramo tranquilo de la bajada: sin megafonía cerca y con rato por delante", () => {
+    const dado = cuando(m.dichas, "inicio.tripulacion.pasaje.cerca.kitAqui");
+    expect(dado).toBeGreaterThan(0);
+    expect(tramoA(m.tramos, dado)).toBe("bajada");
+    // Con la frase del rato y la de Ara detrás, en ese orden.
+    const k = m.dichas.map((d) => d.linea.clave);
+    const i = k.indexOf("inicio.tripulacion.pasaje.cerca.kitAqui");
+    expect(k.slice(i, i + 3)).toEqual([
+      "inicio.tripulacion.pasaje.cerca.kitAqui",
+      "inicio.tripulacion.pasaje.cerca.kitRato",
+      "inicio.ara.pasaje.kitGracias",
+    ]);
+    // Ni megafonía en el medio minuto de antes ni en los cinco de después.
+    const megafonia = m.dichas.filter((d) => d.linea.megafonia);
+    expect(megafonia.filter((d) => d.desde > dado - 30 && d.desde < dado + 300).map((d) => d.linea.clave)).toEqual([]);
+    // Y más de cinco minutos antes de preparar la cabina para aterrizar.
+    expect(cuando(m.dichas, "comandante.aproximacion") - dado).toBeGreaterThan(300);
+  });
+
+  it("y antes de aterrizar pide guardarlo, justo antes de la última revisión", () => {
+    const k = m.dichas.map((d) => d.linea.clave);
+    const guardar = k.indexOf("inicio.tripulacion.pasaje.cerca.kitGuardar");
+    expect(guardar).toBeGreaterThan(k.indexOf("comandante.aproximacion"));
+    expect(k[guardar + 1]).toBe("inicio.tripulacion.pasaje.cerca.aterrizaje");
+    expect(m.escena.estado.kit.recogido).toBe(true);
+  });
+
+  for (const juego of ["piezas", "camino"] as const) {
+    it(`se juega entero en el vuelo —${juego}—, y mientras se juega la escena no cuenta encima`, () => {
+      const r = volarConElKit(jugadorQueAcierta(juego));
+      const e = r.escena.estado;
+      expect(e.kit.hechos).toContain(juego);
+      const k = r.dichas.map((d) => d.linea.clave);
+      if (juego === "piezas") for (const p of PIEZAS_DEL_AVION) expect(k, p).toContain(`inicio.ara.pasaje.kit.piezas.${p}`);
+      else for (const p of PARADAS.slice(1)) expect(k, p).toContain(`inicio.ara.pasaje.kit.camino.${p}`);
+      expect(k).toContain(`inicio.ara.pasaje.kit.${juego}.empezar`);
+      // Nunca dos frases a la vez.
+      const reg = r.escena.registro;
+      for (let i = 1; i < reg.length; i++)
+        expect(reg[i]!.desde, reg[i]!.clave).toBeGreaterThanOrEqual(reg[i - 1]!.hasta ?? Infinity);
+      // Ninguna charla empieza con el kit en las manos: lo que viene a cuento espera.
+      const deCharla = new Set(CHARLAS_DEL_PASAJE.flatMap((c) => c.lineas.map((l) => l.clave)));
+      const encima = r.dichas.filter(
+        (d) => deCharla.has(d.linea.clave) && r.ocupado.some((o) => d.desde > o.desde + DT && d.desde < o.hasta),
+      );
+      expect(encima.map((d) => `${d.linea.clave}@${d.desde.toFixed(0)}`)).toEqual([]);
+      expect(r.ocupado.length).toBeGreaterThan(0);
+      // Y el vuelo sigue entero: nada del guion se salta por jugar.
+      expect(e.saltados).toEqual([]);
+      expect(e.terminado).toBe(true);
+    });
+  }
+
+  it("se pausa mientras habla la megafonía: no se juega, y se sigue al acabar", () => {
+    let senalado = false;
+    const acierta = jugadorQueAcierta("piezas", 6);
+    const r = volarConElKit((escena, t) => {
+      acierta(escena, t);
+      // Con el kit abierto, la comandante señala algo por la ventanilla.
+      if (!senalado && escena.kit.estaAbierto && escena.kit.juego) {
+        senalado = true;
+        escena.senalar(sitio("teide", "izquierda"));
+      }
+    });
+    const conMegafonia = r.pausas.filter((p) => p.megafonia);
+    expect(conMegafonia.length).toBeGreaterThan(10);
+    // Mientras suena, el juego no se deja tocar.
+    expect(conMegafonia.every((p) => !p.juego)).toBe(true);
+    // Y al acabar, se vuelve a jugar.
+    const despues = r.pausas.filter((p) => p.t > conMegafonia[conMegafonia.length - 1]!.t + 1);
+    expect(despues.some((p) => p.juego)).toBe(true);
+    expect(r.escena.estado.kit.hechos).toContain("piezas");
+  });
+
+  it("se recoge antes de aterrizar aunque se esté jugando: y ya no se abre", () => {
+    // Quien no acaba nunca: sigue con el kit abierto cuando llega la aproximación.
+    let recogidoA: number | null = null;
+    let abiertoTrasRecoger = false;
+    const r = volarConElKit((escena, t) => {
+      const kit = escena.kit;
+      if (kit.aMano && !kit.estaAbierto) kit.abrir();
+      if (kit.estaAbierto && !kit.juego && !kit.estado.pausado) kit.elegir("camino");
+      if (kit.estaAbierto) kit.tocado();
+      if (kit.estado.recogido) {
+        recogidoA ??= t;
+        kit.abrir();
+        abiertoTrasRecoger ||= kit.estaAbierto;
+      }
+    });
+    expect(recogidoA).not.toBeNull();
+    // Recogido cuando la tripulante lo pide, que es antes de la final.
+    const guardar = cuando(r.dichas, "inicio.tripulacion.pasaje.cerca.kitGuardar");
+    expect(recogidoA!).toBeGreaterThanOrEqual(guardar);
+    expect(recogidoA! - guardar).toBeLessThan(1);
+    expect(tramoA(r.tramos, recogidoA!)).toBe("bajada");
+    expect(abiertoTrasRecoger).toBe(false);
+    // Desde la aproximación hasta recogerlo, pausado.
+    const aprox = cuando(r.dichas, "comandante.aproximacion");
+    expect(r.pausas.filter((p) => p.t > aprox + DT).every((p) => !p.juego)).toBe(true);
   });
 });

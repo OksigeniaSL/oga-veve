@@ -946,6 +946,7 @@ import {
   type ManosDeLinea,
 } from "./flight/vuelo-de-linea";
 import { PantallaDelInicio } from "./ui/inicio";
+import { PantallaDelKit } from "./ui/kit-de-viaje";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
 import {
@@ -1054,6 +1055,7 @@ import {
   type Suelto,
 } from "./audio/momentos-de-crucero";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
+import { HiloMusical } from "./audio/hilo-musical";
 import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
   LlamadasDelPasaje,
@@ -5014,6 +5016,8 @@ export class Game {
   private cabinaAntes: number | null = null;
   private ritmoDeCabina = 0;
   private pantallaDelInicio: PantallaDelInicio | null = null;
+  /** El kit de viaje de Ara, en la escena de pasaje. Ver `ui/kit-de-viaje.ts`. */
+  private pantallaDelKit: PantallaDelKit | null = null;
   /** Si este vuelo es el del modo inicio, aunque ya se haya acabado. */
   private conInicio = false;
   /** Y cuál de las dos escenas. */
@@ -6685,6 +6689,10 @@ export class Game {
        * `flight/vuelo-de-linea.ts`— y la escena dice qué toca y cuándo.
        */
       this.inicio = new VueloDePasaje(this.vozDelInicio, { lado: LADO_DE_ARA, pared: this.pared });
+      // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
+      this.pantallaDelKit?.quitar();
+      const kit = document.getElementById("kit");
+      this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit) : null;
       this.tripulacionDeLinea = new VueloDeLinea({
         vr: this.aircraft.rotationSpeed,
         vref: this.aircraft.approachSpeed,
@@ -7259,6 +7267,8 @@ export class Game {
     if (inicio instanceof VueloDePasaje) {
       const p = inicio.estado;
       this.ponerLaVentanitaDeLaEscena(p.dibujo);
+      // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
+      this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
       // El sello del campo al que se llegó, que es donde se está.
       const destino = this.elCampoDeAhora();
       pantalla.pintar({
@@ -7274,7 +7284,8 @@ export class Game {
             }
           : null,
         congelado: false,
-        mira: p.mira,
+        // Con el kit abierto, la tarjeta solo dice quién habla: lo que se mira es el kit.
+        mira: p.kit.abierto ? null : p.mira,
         fin:
           p.momento === "fin"
             ? {
@@ -7333,6 +7344,8 @@ export class Game {
 
   /** Se acabó la escena: el vuelo sigue, ya sin la tarjeta y sin la mano de la mamá. */
   private acabarElInicio(): void {
+    this.pantallaDelKit?.quitar();
+    this.pantallaDelKit = null;
     this.ponerLaVentanitaDeLaEscena(null);
     this.ponerElVeloDelPlano(0);
     this.inicio = null;
@@ -7390,6 +7403,10 @@ export class Game {
     readonly velo: number;
     readonly ventanita: { readonly sitio: string | null; readonly donde: string | null; readonly ultimo: string | null };
     readonly asientoDeAra: { readonly z: number; readonly motor: number; readonly ala: number } | null;
+    /** De pasaje: el kit de viaje en la pantalla, dónde está cada cosa. Ver `PantallaDelKit.paraBanco`. */
+    readonly kit: PantallaDelKit["paraBanco"] | null;
+    /** Y el hilo musical: lo que decide y lo que suena. Ver `audio/hilo-musical.ts`. */
+    readonly musica: { readonly decide: string | null; readonly audio: Audio["musicaParaBanco"] };
   } {
     const e = this.inicio?.estado;
     const linea = e?.linea ?? null;
@@ -7423,7 +7440,21 @@ export class Game {
         const ara = this.inicio instanceof VueloDePasaje ? this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA] : null;
         return ara ? { z: ara.ventanilla.centro.z, motor: ara.delMotor.motor, ala: ara.delMotor.ala } : null;
       })(),
+      kit: this.pantallaDelKit?.paraBanco ?? null,
+      musica: this.musicaParaBanco,
     };
+  }
+
+  /** El kit de viaje, dado ya, para el banco: ver `darElKit` en `dev/sondas.ts`. */
+  darElKitParaBanco(): boolean {
+    if (!(this.inicio instanceof VueloDePasaje)) return false;
+    this.inicio.kit.dar();
+    return true;
+  }
+
+  /** El hilo musical, para el banco: lo que decide y lo que suena. */
+  get musicaParaBanco(): { readonly decide: string | null; readonly audio: Audio["musicaParaBanco"] } {
+    return { decide: this.hiloMusical.suena, audio: this.audio.musicaParaBanco };
   }
 
   /** La ventana de pruebas de desarrollo. Vive en `src/dev/sondas.ts`. */
@@ -16304,6 +16335,7 @@ export class Game {
     this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
+    this.ponerElHiloMusical(dt);
     // La vuelta al avión, el tiempo de hoy y la funda olvidada. Ver `atenderAntesDeVolar`.
     this.atenderAntesDeVolar(dt);
     this.syncAircraftMesh(dt);
@@ -25292,6 +25324,45 @@ export class Game {
   }[] = [];
   /** Los pasajeros que llaman durante el servicio. Ver `LlamadasDelPasaje`. */
   private readonly llamadasDelPasaje = new LlamadasDelPasaje();
+  /** La música de embarque. Ver `ponerElHiloMusical`. */
+  private readonly hiloMusical = new HiloMusical();
+
+  /**
+   * **El hilo musical**: por el altavoz del techo al embarcar y al llegar al
+   * puesto con los motores apagados, solo donde hay pasaje, y callado en
+   * cuanto habla la megafonía o suena una llamada de cabina. La de Paraguay
+   * o la de Canarias según el habla de donde se está. Ver
+   * `audio/hilo-musical.ts`.
+   */
+  private ponerElHiloMusical(dt: number): void {
+    const escena = this.inicio instanceof VueloDePasaje ? this.inicio : null;
+    /*
+     * La megafonía hablando, o a punto: una llamada de cabina pedida o
+     * sonando, o un anuncio esperando turno. Es lo mismo que mira la
+     * megafonía para no hablar encima de sí misma —ver `megafoniaHablando`—,
+     * y lo que en un avión de verdad para la música: la tripulación que coge
+     * el micrófono.
+     */
+    const megafonia =
+      this.comandante.hablando ||
+      this.tripulacion.hablando ||
+      this.llamadas.length > 0 ||
+      BOCA.esperaAlguna((c) => esDeLaMegafonia(c)) ||
+      /*
+       * Y lo que la escena de pasaje tiene sonando por la megafonía, también
+       * lo que todavía no tiene grabación y se está leyendo: para quien juega
+       * sin voz, el subtítulo es el anuncio.
+       */
+      !!escena?.megafoniaSuena;
+    this.audio.ponerMusica(
+      this.hiloMusical.paso({
+        conPasaje: conPasaje(this.aircraft.mass),
+        fase: this.faseDeAhora as Fase,
+        habla: hablaDe(this.elCampoDeAhora().aerodrome?.id),
+        megafonia,
+      }, dt),
+    );
+  }
   /**
    * **«Arrancá el motor», esperando a los toboganes.** En el avión con
    * tripulación de cabina, el crosscheck va antes del arranque: la instructora
@@ -25323,6 +25394,8 @@ export class Game {
   /** Vuelo nuevo: nada encendido, nada esperando, nada explicado. */
   private reiniciarLoQueSuena(): void {
     this.loQueCambia.reiniciar();
+    // Vuelo nuevo: vuelve a haber embarque.
+    this.hiloMusical.reiniciar();
     this.cambiosExplicados.clear();
     this.explicadoEnEsteVuelo.clear();
     this.calladasSinGrabar.clear();

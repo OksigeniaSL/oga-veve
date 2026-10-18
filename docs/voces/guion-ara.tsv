@@ -80,3 +80,17 @@
 080	inicio.ara.pasaje.cinturonQuieto	¡Todavía no me saco el cinturón! Hay que esperar a que se apague la luz.
 081	inicio.ara.pasaje.despacito	Ahora vamos despacito por el suelo, como un auto, hasta nuestro lugar.
 082	inicio.ara.pasaje.repaso	¡Qué lindo fue! Las nubes por dentro, el mar enorme y las islas con montañas.
+083	inicio.ara.pasaje.kitGracias	¡Gracias! ¿Jugamos? Tocá la mochilita y elegimos uno de los juegos.
+084	inicio.ara.pasaje.kit.elegir	Hay dos juegos: armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?
+085	inicio.ara.pasaje.kit.piezas.empezar	¿Me ayudás a armar el avión? Agarrá cada pieza y llevala a su lugar.
+086	inicio.ara.pasaje.kit.piezas.ala	¡El ala! Empuja el aire para abajo, y el aire la empuja para arriba: así nos sostiene.
+087	inicio.ara.pasaje.kit.piezas.motor	¡El motor! Traga aire por adelante y lo echa para atrás con mucha fuerza: así el avión va para adelante.
+088	inicio.ara.pasaje.kit.piezas.cola	¡La cola! Lleva al avión derechito, como las plumas de una flecha, y su timón le mueve la nariz a los costados.
+089	inicio.ara.pasaje.kit.piezas.ruedas	¡Las ruedas! Son para correr por la pista y para aterrizar. Volando, se guardan adentro del avión.
+090	inicio.ara.pasaje.kit.piezas.ayuda	¡Casi! Esa pieza va en otro lugar del avión: mirá el que brilla.
+091	inicio.ara.pasaje.kit.piezas.fin	¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.
+092	inicio.ara.pasaje.kit.camino.empezar	Salimos del uno, en Tenerife. Tocá los números en orden y dibujamos el camino del avión.
+093	inicio.ara.pasaje.kit.camino.teide	¡Dos, el Teide! Es el volcán más alto de España, y asoma por encima de las nubes.
+094	inicio.ara.pasaje.kit.camino.gomera	¡Tres, La Gomera! Es una isla redondita, donde todavía se habla silbando.
+095	inicio.ara.pasaje.kit.camino.palma	¡Cuatro, La Palma! Ahí aterrizamos. Ya dibujamos todo el camino de nuestro vuelo.
+096	inicio.ara.pasaje.kit.camino.ayuda	Ese número viene después. Primero tocá el que brilla.

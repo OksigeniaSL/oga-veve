@@ -569,6 +569,11 @@ fotos, ni iconos de terceros, ni imágenes generadas. Las islas del mapa del
 camino van en su sitio con las coordenadas de cada una. Lo que cuentan, y de
 dónde sale, en el ADR 0020.
 
+**Y el kit de viaje de Ara**, en la misma escena —la mochilita, el avión con
+sus piezas y el mapa de las islas con el camino del vuelo—, igual: dibujado
+en el código, en `src/ui/kit-de-viaje.ts`, con los colores de la ventanita y
+las islas con sus coordenadas. Nada traído de fuera.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:
@@ -641,10 +646,31 @@ Que no pidan atribución no cambia lo que hacemos con ella: **la procedencia se
 escribe igual**, que es la regla de esta casa y el motivo de que exista este
 fichero.
 
+## La música
+
+**Música de embarque: Oksigenia SL, con licencia de uso de su proveedor.**
+
+Son dos piezas, una por sitio, que suenan por el altavoz del techo al
+embarcar y al llegar al puesto en los vuelos con pasaje —ver
+`src/audio/hilo-musical.ts`—: la de Paraguay, con arpa, y la de Canarias,
+con timple.
+
+| fichero                        | qué es                                   |
+| ------------------------------ | ---------------------------------------- |
+| `crudo/musica/paraguay.mp3`    | el original de la de Paraguay            |
+| `crudo/musica/canarias.mp3`    | el original de la de Canarias            |
+| `src/assets/musica/*.ogg`, `*.m4a` | el bucle horneado que baja el juego  |
+
+Entre el original y lo horneado hay un comando, `scripts/hacer-musica.mjs`:
+busca dónde se parece el final al principio, los cruza para que la vuelta no
+tenga salto y lo deja en mono, igualado con las voces, en Opus y en AAC. El
+justificante de la licencia no va al repositorio: lleva datos personales y
+vive con los papeles de Oksigenia.
+
 ## Los ruidos
 
-**Ni una muestra grabada.** Todo lo que suena en el juego y no es una voz se
-sintetiza en el navegador al arrancar, con la Web Audio API: osciladores,
+**Ni una muestra grabada.** Todo lo que suena en el juego y no es una voz ni
+la música de embarque se sintetiza en el navegador al arrancar, con la Web Audio API: osciladores,
 ruido blanco generado en memoria con `Math.random`, filtros y unos pocos
 golpes cortos calculados muestra a muestra en `src/audio/`. No hay ficheros de
 audio de terceros en el repositorio ni en el paquete, y por eso no hay

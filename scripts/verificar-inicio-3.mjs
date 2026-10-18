@@ -44,6 +44,15 @@
  *   de visita, y que el botón del final vuelve al hangar.
  * - **Y que en un teléfono apaisado**, con el dedo, la tarjeta cabe y no hay
  *   mandos de pilotar.
+ * - **El kit de viaje** (punto 275): que la tripulante lo trae en un tramo
+ *   tranquilo de la bajada, que en el vuelo se abre y se juega el camino, que
+ *   se pausa con la megafonía de la aproximación y se recoge antes de
+ *   aterrizar; y en el teléfono, la tablet del aula y el portátil, que cabe
+ *   sin tapar la tarjeta ni los botones y **se juegan los dos juegos enteros
+ *   con el dedo** —arrastrando las piezas— o con el ratón.
+ * - **El hilo musical**: que suena en el embarque por el altavoz del techo,
+ *   en el bus de la música, que se calla con la primera megafonía y no vuelve
+ *   en vuelo, y que suena otra vez en el puesto de llegada.
  *
  * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—,
  * con las tomas del pack: cada frase dura lo que dura su grabación, y **todo
@@ -166,6 +175,7 @@ const MOMENTOS = [
   "tcpNubes",
   "bajada",
   "oidos",
+  "kit",
   "isla",
   "aproximacion",
   "tcpAterrizaje",
@@ -251,6 +261,10 @@ async function elVuelo() {
   let sello = null;
   let conversacion = null;
   let ultimo = null;
+  // El hilo musical: lo que suena en cada rato. Ver `audio/hilo-musical.ts`.
+  const musica = { embarque: null, enVuelo: [], llegada: null, callada: null };
+  // El kit de viaje: cuándo llega, qué se juega y cómo acaba. Ver `flight/kit-de-viaje.ts`.
+  const kit = { dadoEn: null, tramo: null, jugado: false, pausadoEnLaAproximacion: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false };
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -277,6 +291,29 @@ async function elVuelo() {
       entroEnPista = oida("comandante.despegue");
     if (tramo === "carrera" && v.enTierra && i.lecturaDeLinea)
       masDeLadoEnLaCarrera = Math.max(masDeLadoEnLaCarrera, Math.abs(i.lecturaDeLinea.pista.lado));
+    // ── El hilo musical ──
+    const m = i.musica?.audio;
+    const cinturon = (i.registro ?? []).find((d) => d.clave === "inicio.tripulacion.pasaje.cinturon");
+    if (m && tramo === "puerta" && !cinturon && m.suena && musica.embarque === null) musica.embarque = m;
+    if (m && cinturon && e.segundos > cinturon.desde + 1 && tramo === "puerta" && musica.callada === null) musica.callada = !m.suena;
+    if (m && m.suena && tramo && !["puerta", "aparcado", "apagado"].includes(tramo)) musica.enVuelo.push(`${m.suena}@${tramo}`);
+    if (m && m.suena && (tramo === "apagado" || e.momento === "fin")) musica.llegada ??= m;
+    // ── El kit de viaje ──
+    if (e.kit?.dado && kit.dadoEn === null) {
+      kit.dadoEn = e.segundos;
+      kit.tramo = tramo;
+    }
+    if (e.kit?.dado && !kit.jugado && i.kit?.boton) {
+      kit.jugado = true;
+      await jugarElCaminoEnElVuelo(page);
+    }
+    if (e.kit?.abierto && e.kit.pausado && (i.registro ?? []).some((d) => d.clave === "comandante.aproximacion" && d.hasta === null))
+      kit.pausadoEnLaAproximacion = true;
+    if (tramo === "final" || tramo === "recogida") {
+      kit.abiertoEnLaFinal ||= !!e.kit?.abierto;
+      kit.botonEnLaFinal ||= !!i.kit?.boton;
+    }
+    kit.recogido = !!e.kit?.recogido;
     // ── Las fotos ──
     if (FOTOS) {
       const en = (n, si) => {
@@ -517,9 +554,240 @@ async function elVuelo() {
       .catch(() => false);
     comprobar("y el botón vuelve al hangar", fuera, await page.evaluate(() => location.href).catch(() => "?"));
   }
+  // ── El kit de viaje en el vuelo ──
+  const deMegafonia = (c) =>
+    /^(comandante\.|tripulacion\.|ventanilla|inicio\.mama\.pasaje\.)/.test(c) ||
+    (c.startsWith("inicio.tripulacion.pasaje.") && !c.includes(".cerca."));
+  const dado = registro.find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitAqui");
+  const aprox = registro.find((d) => d.clave === "comandante.aproximacion");
+  const cerca = dado ? registro.filter((d) => deMegafonia(d.clave) && d.desde > dado.desde - 30 && d.desde < dado.desde + 240) : [];
+  comprobar(
+    "el kit llega en un tramo tranquilo de la bajada: sin megafonía cerca y con rato por delante",
+    !!dado && kit.tramo === "bajada" && cerca.length === 0 && !!aprox && aprox.desde - dado.desde > 240,
+    dado
+      ? `a los ${dado.desde.toFixed(0)} s, ${kit.tramo} · megafonía cerca: ${cerca.map((d) => d.clave).join(", ") || "ninguna"} · ${aprox ? (aprox.desde - dado.desde).toFixed(0) : "?"} s hasta preparar la cabina`
+      : "no llegó",
+  );
+  comprobar(
+    "en el vuelo se abre y se juega el camino entero, y Ara cuenta cada sitio",
+    !!e?.kit?.hechos?.includes("camino") &&
+      ["teide", "gomera", "palma"].every((p) => registro.some((d) => d.clave === `inicio.ara.pasaje.kit.camino.${p}`)),
+    `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"}`,
+  );
+  comprobar(
+    "el vuelo manda: con el kit abierto, la megafonía de la aproximación lo pausa, y se recoge antes de la final",
+    kit.pausadoEnLaAproximacion &&
+      kit.recogido &&
+      !kit.abiertoEnLaFinal &&
+      !kit.botonEnLaFinal &&
+      registro.some((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitGuardar"),
+    `pausado ${kit.pausadoEnLaAproximacion} · recogido ${kit.recogido} · abierto en la final ${kit.abiertoEnLaFinal} · mochilita en la final ${kit.botonEnLaFinal}`,
+  );
+  // ── El hilo musical ──
+  comprobar(
+    "el hilo musical suena al embarcar, la de Canarias, por el altavoz del techo y en el bus de la música",
+    musica.embarque?.suena === "canarias" && musica.embarque.porElTecho && musica.embarque.bus === "musica" && !!musica.embarque.vuelta,
+    musica.embarque ? JSON.stringify(musica.embarque) : "no sonó",
+  );
+  comprobar(
+    "y se calla con la primera megafonía, y no suena en todo el vuelo",
+    musica.callada === true && musica.enVuelo.length === 0,
+    `callada tras la bienvenida: ${musica.callada} · en vuelo: ${[...new Set(musica.enVuelo)].join(", ") || "nada"}`,
+  );
+  comprobar(
+    "y vuelve en el puesto de llegada, con los motores apagados",
+    musica.llegada?.suena === "canarias",
+    musica.llegada ? JSON.stringify(musica.llegada) : "no sonó",
+  );
   if (e) console.log(`  la escena duró ${e.segundos.toFixed(0)} s de reloj del juego`);
   comprobar("sin errores", errores.length === 0, errores[0] ?? "limpio");
   await ctx.close();
+}
+
+/**
+ * **El kit en el vuelo, con el ratón**: se abre la mochilita, se elige el
+ * camino y se tocan los números; y después se elige el avión y se deja
+ * abierto, que es lo que tienen que pausar la aproximación y recoger la
+ * tripulante.
+ */
+async function jugarElCaminoEnElVuelo(page) {
+  const kitDe = () => page.evaluate(() => globalThis.__oga.inicio().kit);
+  const centro = (r) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+  let k = await kitDe();
+  if (!k?.boton) return;
+  let c = centro(k.boton);
+  await page.mouse.click(c.x, c.y);
+  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.camino, null, { timeout: 10_000 }).catch(() => {});
+  k = await kitDe();
+  if (!k?.juegos?.camino) return;
+  c = centro(k.juegos.camino);
+  await page.mouse.click(c.x, c.y);
+  await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.paradas ?? {}).length === 4, null, { timeout: 10_000 }).catch(() => {});
+  await foto(page, "kit-camino-en-vuelo");
+  for (const p of ["teide", "gomera", "palma"]) {
+    // Sin pausar: si habla la megafonía, se espera, que manda ella.
+    await page.waitForFunction(() => !globalThis.__oga.inicio().estado.kit.pausado, null, { timeout: 60_000 }).catch(() => {});
+    k = await kitDe();
+    if (!k?.paradas?.[p]) return;
+    c = centro(k.paradas[p]);
+    await page.mouse.click(c.x, c.y);
+    await pausa(1500);
+  }
+  await foto(page, "kit-camino-hecho-en-vuelo");
+  // Y el avión, que se deja abierto: lo recoge la tripulación antes de aterrizar.
+  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.piezas, null, { timeout: 60_000 }).catch(() => {});
+  k = await kitDe();
+  if (k?.juegos?.piezas) {
+    c = centro(k.juegos.piezas);
+    await page.mouse.click(c.x, c.y);
+  }
+}
+
+/**
+ * **El kit con el dedo, en cada pantalla**: el teléfono apaisado, la tablet
+ * del aula y el portátil con ratón. Se da el kit ya —sin volar media hora:
+ * `darElKit`—, se abre, se mira que cabe sin tapar la tarjeta ni los botones,
+ * y se juegan los dos juegos enteros: las piezas **arrastradas** a su sitio
+ * con el dedo, y los números del camino tocados.
+ */
+async function elKitConElDedo() {
+  const PANTALLAS = [
+    ["telefono", { ...devices["Pixel 7 landscape"], hasTouch: true, isMobile: true }],
+    ["tablet", { viewport: { width: 1024, height: 600 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1.5 }],
+    ["portatil", { viewport: { width: 1280, height: 800 } }],
+  ];
+  for (const [nombre, opciones] of PANTALLAS) {
+    const ctx = await navegador.newContext({ ...opciones, locale: "es-PY" });
+    const page = await ctx.newPage();
+    const errores = [];
+    page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
+    const dedo = !!opciones.hasTouch;
+    const cdp = dedo ? await ctx.newCDPSession(page) : null;
+    const centro = (r) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    const tocar = async (r) => {
+      const c = centro(r);
+      if (dedo) await page.touchscreen.tap(c.x, c.y);
+      else await page.mouse.click(c.x, c.y);
+    };
+    /** Arrastrar de un sitio a otro: con el dedo, toques de verdad; si no, el ratón. */
+    const arrastrar = async (de, a) => {
+      const pasos = 10;
+      if (dedo) {
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: de.x, y: de.y }] });
+        for (let k = 1; k <= pasos; k++) {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x: de.x + ((a.x - de.x) * k) / pasos, y: de.y + ((a.y - de.y) * k) / pasos }],
+          });
+          await pausa(20);
+        }
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      } else {
+        await page.mouse.move(de.x, de.y);
+        await page.mouse.down();
+        await page.mouse.move(a.x, a.y, { steps: pasos });
+        await page.mouse.up();
+      }
+    };
+    const kitDe = () => page.evaluate(() => globalThis.__oga.inicio().kit);
+    const estado = () => page.evaluate(() => globalThis.__oga.inicio().estado.kit);
+    try {
+      await page.goto(`${BASE}/?inicio=3`);
+      await page.waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 180_000 });
+      await page.keyboard.press("ShiftLeft");
+      await page.waitForFunction(() => !!document.querySelector("#inicio .inicio__tarjeta"), null, { timeout: 60_000 });
+      await page.evaluate(() => globalThis.__oga.darElKit());
+      await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.boton, null, { timeout: 10_000 });
+      let k = await kitDe();
+      await foto(page, `kit-mochilita-${nombre}`);
+      await tocar(k.boton);
+      await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.piezas, null, { timeout: 10_000 });
+      await pausa(500);
+      // Que cabe, y no tapa la tarjeta ni ningún botón del HUD que se vea.
+      const solapes = await page.evaluate(() => {
+        const panel = document.querySelector(".kit__panel").getBoundingClientRect();
+        const tocan = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+        const fuera = panel.left < 0 || panel.top < 0 || panel.right > innerWidth || panel.bottom > innerHeight;
+        const otros = [...document.querySelectorAll("#inicio .inicio__tarjeta, .hud button, .hud [data-hud='cinturon'], .volumen")].filter((el) => {
+          if (el.closest("[hidden]")) return false;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === "hidden" || cs.display === "none" || Number(cs.opacity) < 0.05) return false;
+          const r = el.getBoundingClientRect();
+          return r.width > 2 && r.height > 2 && tocan(panel, r);
+        });
+        return { fuera, otros: otros.map((el) => el.getAttribute("data-hud") ?? el.className) };
+      });
+      k = await kitDe();
+      const minimo = Math.min(...Object.values(k.juegos).map((r) => Math.min(r.width, r.height)));
+      comprobar(
+        `${nombre}: el kit cabe entero, sin tapar la tarjeta ni los botones, y los juegos se tocan bien`,
+        !solapes.fuera && solapes.otros.length === 0 && minimo >= 88,
+        `fuera ${solapes.fuera} · tapa: ${solapes.otros.join(", ") || "nada"} · juegos de ${minimo.toFixed(0)} px`,
+      );
+      await foto(page, `kit-elegir-${nombre}`);
+      // ── Armá el avión, arrastrando ──
+      await tocar(k.juegos.piezas);
+      await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.piezas ?? {}).length === 4, null, { timeout: 10_000 });
+      await pausa(500);
+      k = await kitDe();
+      const menor = Math.min(...Object.values(k.piezas).map((x) => Math.max(x.en.width, x.en.height)));
+      // Primero una al sitio equivocado: vuelve a la bandeja y su sitio brilla.
+      await arrastrar(centro(k.piezas.motor.en), centro(k.piezas.ala.sitio));
+      await pausa(600);
+      const tras = await estado();
+      const ayuda = tras.juego?.puestas?.length === 0 && tras.juego?.ilumina === "motor";
+      for (const p of ["ala", "motor", "cola", "ruedas"]) {
+        k = await kitDe();
+        await arrastrar(centro(k.piezas[p].en), centro(k.piezas[p].sitio));
+        await pausa(600);
+        if (p === "motor") await foto(page, `kit-piezas-${nombre}`);
+      }
+      const piezas = await estado();
+      comprobar(
+        `${nombre}: se arma el avión entero ${dedo ? "con el dedo, arrastrando" : "con el ratón"}; equivocarse ayuda`,
+        piezas.juego?.terminado === true && piezas.hechos.includes("piezas") && ayuda && menor >= 36,
+        `puestas: ${(piezas.juego?.puestas ?? []).join(", ")} · ayuda al equivocarse: ${ayuda} · pieza más chica ${menor.toFixed(0)} px`,
+      );
+      await pausa(1200);
+      await foto(page, `kit-piezas-hecho-${nombre}`);
+      // ── El camino, tocando los números ──
+      await page.click(".kit__atras", { force: true });
+      await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.camino, null, { timeout: 10_000 });
+      k = await kitDe();
+      await tocar(k.juegos.camino);
+      await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.paradas ?? {}).length === 4, null, { timeout: 10_000 });
+      await pausa(500);
+      for (const p of ["teide", "gomera", "palma"]) {
+        k = await kitDe();
+        await tocar(k.paradas[p]);
+        await pausa(800);
+      }
+      await pausa(1500);
+      await foto(page, `kit-camino-${nombre}`);
+      const camino = await estado();
+      const radio = Math.min(...Object.values(k.paradas).map((r) => r.width));
+      comprobar(
+        `${nombre}: se dibuja el camino entero tocando los números`,
+        camino.juego?.terminado === true && camino.hechos.includes("camino") && radio >= 34,
+        `unidas ${camino.juego?.hechas} · número de ${radio.toFixed(0)} px`,
+      );
+      // ── Y se deja cuando se quiera ──
+      await page.click(".kit__cerrar", { force: true });
+      await pausa(400);
+      const cerrado = await estado();
+      k = await kitDe();
+      comprobar(
+        `${nombre}: se guarda cuando se quiera, y la mochilita vuelve`,
+        !cerrado.abierto && !!k.boton,
+        `abierto ${cerrado.abierto} · mochilita ${!!k.boton}`,
+      );
+      if (errores.length) comprobar(`${nombre}: sin errores`, false, errores[0]);
+    } catch (err) {
+      comprobar(`${nombre}: el kit se juega`, false, String(err).slice(0, 160));
+    } finally {
+      await ctx.close();
+    }
+  }
 }
 
 /**
@@ -618,7 +886,8 @@ async function enElTelefono() {
 try {
   if (!process.env.OGA_SIN_HANGAR) await desdeElHangar();
   await enElTelefono();
-  await elVuelo();
+  if (!process.env.OGA_SIN_KIT) await elKitConElDedo();
+  if (!process.env.OGA_SOLO_KIT) await elVuelo();
 } finally {
   await navegador.close();
   await server.close();
