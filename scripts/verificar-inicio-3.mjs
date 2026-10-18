@@ -387,8 +387,17 @@ async function elVuelo() {
     const enLaVentanita = i.ventanita?.sitio ?? "";
     if (enLaVentanita && !enLaVentanita.includes(":")) {
       const ahora = (i.registro ?? []).at(-1);
-      if (ahora?.clave === "ventanilla.historia" && ahora.hasta === null) fotosConVoz++;
-      else fotosMudas.add(`${enLaVentanita} con ${ahora?.clave ?? "nada"}${ahora?.hasta !== null ? " ya acabada" : ""}`);
+      /*
+       * La foto se queda un poco después de su voz, hasta la frase siguiente
+       * —la de Ara—: eso no es una foto muda. Lo mudo es la foto de una
+       * historia que no llegó a sonar, o la que sigue puesta con otra frase.
+       */
+      const suHistoria = ahora?.clave === "ventanilla.historia" && (ahora.hasta === null || ahora.como === "sono");
+      if (suHistoria) fotosConVoz++;
+      else
+        fotosMudas.add(
+          `${enLaVentanita} con ${ahora?.clave ?? "nada"}${ahora?.hasta != null ? ` acabada hace ${(e.segundos - ahora.hasta).toFixed(1)} s (${ahora.como})` : ""}`,
+        );
     }
     // ── La siesta de Ara: en cuanto bosteza, se mira entera ──
     if (siesta === null && (e.durmiendo || (e.linea?.clave === "inicio.ara.pasaje.dormirse" && e.hablando)))
