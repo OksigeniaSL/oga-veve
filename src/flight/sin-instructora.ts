@@ -245,6 +245,24 @@ const LOS_EJERCICIOS = [
   "ejercicio.seguidoAntesDeV1",
   "ejercicio.bienDespresurizacion",
   "ejercicio.otraVez",
+  /*
+   * Y la tormenta, entera: es un ejercicio que se elige, y lo que dice —qué
+   * es, por qué no se entra, que un rayo no hace nada— es el ejercicio mismo.
+   * Ver `flight/practica-de-tormenta.ts`.
+   */
+  "ejercicio.tormenta.antes",
+  "ejercicio.tormenta.porQue",
+  "ejercicio.tormenta.radar",
+  "ejercicio.tormenta.avisamos",
+  "ejercicio.tormenta.masDerecha",
+  "ejercicio.tormenta.masIzquierda",
+  "ejercicio.tormenta.asiVa",
+  "ejercicio.tormenta.rayoLejos",
+  "ejercicio.tormenta.adentro",
+  "ejercicio.tormenta.rayoEnElAvion",
+  "ejercicio.tormenta.salimos",
+  "ejercicio.tormenta.bien",
+  "ejercicio.tormenta.bienCerca",
 ] as const;
 
 export const SEGURIDAD: ReadonlySet<string> = new Set<string>([

@@ -1120,6 +1120,13 @@ export interface SkyRig {
    */
   ponerRelampago(cuanto: number): void;
   /**
+   * **Cuánto se está dentro de una tormenta**, de 0 a 1: la del ejercicio,
+   * que no es la capa. Dentro se ve como dentro de una nube —gris, sin cielo
+   * ni horizonte— y más oscuro, que es agua cayendo y no niebla. Ver
+   * `mojarseEnLaTormenta` en `game.ts`.
+   */
+  ponerDentroDeLaTormenta(cuanto: number): void;
+  /**
    * La niebla, en dos partes: la bruma del aire, que se queda abajo, y un
    * mínimo que no depende de la altura —lo que diga el parte o la lluvia—.
    * Ver `brumaALaAltura` y `updateSky`, que es quien las junta.
@@ -1656,6 +1663,8 @@ export function createSky(scenario: Scenario): SkyRig {
   /** Lo que alumbra el rayo ahora. Ver `ponerRelampago`. */
   let relampago = 0;
   const niebla = { bruma: scenario.fog.density, minimo: 0 };
+  /** Cuánto se está dentro de la tormenta del ejercicio. Ver `ponerDentroDeLaTormenta`. */
+  let enLaTormenta = 0;
   /**
    * Lo que pone la hora, antes de lo que le quita la capa: la fuerza del sol,
    * el color de la bruma y la luz de las nubes. Ver `alPaso`.
@@ -1809,6 +1818,9 @@ export function createSky(scenario: Scenario): SkyRig {
     ponerRelampago(cuanto: number) {
       relampago = Math.max(0, Math.min(1, cuanto));
     },
+    ponerDentroDeLaTormenta(cuanto: number) {
+      enLaTormenta = Math.max(0, Math.min(1, cuanto));
+    },
     ponerDeslumbre(cuanto: number) {
       deslumbre = Math.max(0, Math.min(1, cuanto));
       // Se vuelve a poner la hora que ya había: es lo que recalcula el halo, y
@@ -1832,10 +1844,11 @@ export function createSky(scenario: Scenario): SkyRig {
     const capa = capaPuesta();
     const dibujo = bancoDeNubes.userData.dibujo as DibujoDeLaCapa | undefined;
     const subido = capa ? suave(capa.base, capa.techo, ojo.y) : 1;
-    enLaNube =
-      capa && dibujo
-        ? cuantoDentro(densidadEnLaCapa(dibujo, ojo.x, ojo.y, ojo.z))
-        : 0;
+    enLaNube = Math.max(
+      capa && dibujo ? cuantoDentro(densidadEnLaCapa(dibujo, ojo.x, ojo.y, ojo.z)) : 0,
+      // Y dentro de la tormenta, también: es una nube, y con agua dentro.
+      enLaTormenta,
+    );
     /*
      * **Debajo de una capa que tapa, sin sol.** Con el cielo cubierto no hay
      * sombras: la luz llega de toda la nube y no de un punto. Con la luz del
@@ -1905,6 +1918,8 @@ export function createSky(scenario: Scenario): SkyRig {
       .setRGB(gris, gris, gris)
       .lerp(deLaHora.nubes, 0.35)
       .multiplyScalar(0.55 + 0.45 * subido)
+      // Y dentro de una tormenta, más oscuro: el agua tapa la luz de arriba.
+      .multiplyScalar(1 - 0.45 * enLaTormenta)
       // Dentro de la nube el rayo lo enciende todo, pero a medias: es la
       // pantalla entera, y lo que se quiere es un fogonazo, no un flash.
       .lerp(COLOR_DEL_RAYO, relampago * 0.4);

@@ -596,3 +596,16 @@
 596	explica.sello.manos-de-seda.texto	Manos de seda: bajaste por la senda, a tu velocidad, y te posaste bien en la pista. Una aproximación así, estabilizada, es lo que más mira quien examina a un piloto.
 597	explica.sello.transchaco.texto	Transchaco: volaste entre Asunción y Mariscal Estigarribia, por encima del Chaco, por donde va la ruta Transchaco. Un vuelo largo, de los que se planifican antes de salir.
 598	explica.sello.cien-horas.texto	Cien horas: tu cuaderno ya lleva cien horas de vuelo. Las horas son lo que cuenta de verdad un piloto, y estas son todas tuyas.
+599	ejercicio.tormenta.antes	Hoy volamos con una tormenta. ¿Ves esa nube enorme allá adelante, alta como una torre? Es una tormenta, y a una tormenta no se entra: la vamos a rodear de lejos, con calma
+600	ejercicio.tormenta.porQue	Adentro de esa nube el aire sube y baja muy fuerte, llueve mucho y puede caer granizo. Por eso no se entra. Girá a la derecha, del lado de donde viene el viento, y dejala bien lejos
+601	ejercicio.tormenta.radar	En el radar se ve: el rojo y el magenta son lo más fuerte, y ahí no se entra. A una tormenta así se la deja a veinte millas, unos treinta y siete kilómetros. Girá a la derecha, del lado del viento, lejos del yunque
+602	ejercicio.tormenta.avisamos	Le avisamos al control que vamos a rodear la tormenta, y prendemos el cartel del cinturón: cerca de una tormenta el aire se mueve, y con el cinturón puesto un salto no te levanta del asiento
+603	ejercicio.tormenta.masDerecha	Girá un poco más a la derecha: así todavía pasamos muy cerca de la tormenta
+604	ejercicio.tormenta.masIzquierda	Girá un poco más a la izquierda: así todavía pasamos muy cerca de la tormenta
+605	ejercicio.tormenta.asiVa	¡Así! Con este rumbo la dejamos lejos. Seguí derecho hasta que la tormenta quede atrás
+606	ejercicio.tormenta.rayoLejos	¿Viste el destello adentro de la nube? Fue un rayo. Las tormentas tienen muchos, y desde lejos no nos hacen nada. Y si algún día un rayo toca un avión, tampoco: el avión está hecho para eso
+607	ejercicio.tormenta.adentro	Entramos en la tormenta: por eso se sacude, llueve fuerte y suena el granizo. Con calma: cinturón puesto, alas derechas, y seguí derecho, que es el camino más corto para salir
+608	ejercicio.tormenta.rayoEnElAvion	Nos tocó un rayo, y no pasa nada. Casi toda la electricidad corre por la chapa de afuera del avión y sigue de largo: está hecho para eso. A cada avión de línea le pasa una o dos veces por año
+609	ejercicio.tormenta.salimos	Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio
+610	ejercicio.tormenta.bien	¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa
+611	ejercicio.tormenta.bienCerca	La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas

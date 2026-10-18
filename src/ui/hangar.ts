@@ -1452,6 +1452,24 @@ const EJ_DESPRESURIZACION = escena(`
         d="M12 11 V6.2 q0 -3 3 -3.2 h4.6" />
 `);
 
+/**
+ * La tormenta: el cumulonimbo —la torre con su base oscura, el yunque arriba,
+ * el agua y el rayo debajo— y el avión que la rodea de lejos por delante, con
+ * su estela curvándose. Sin palabras: a la nube grande no se entra, se le da
+ * la vuelta. Ver `flight/practica-de-tormenta.ts`.
+ */
+const EJ_TORMENTA = escena(`
+  <path class="ejercicio__yunque" d="M30 13 q26 -9 66 -3 l-5 5 q-26 -3 -55 2 Z" />
+  <path class="ejercicio__nube"
+        d="M38 41 q-8 0 -8 -7 q0 -6 7 -7 q-1 -8 8 -10 q2 -6 9 -6 q8 0 10 7
+           q8 0 9 8 q7 1 7 8 q0 7 -8 7 Z" />
+  <path class="ejercicio__base" d="M34 37 h44 q2 4 -3 4 h-38 q-5 0 -3 -4 Z" />
+  <path class="ejercicio__lluvia" d="M42 44 l-2 9 M49 44 l-2 9 M66 44 l-2 9 M73 44 l-2 9" />
+  <path class="ejercicio__rayo" d="M58 42 l-4 8 h5 l-4 9" />
+  <path class="leccion__estela" d="M8 70 q52 22 104 -14" stroke-dasharray="4 4" />
+  ${AVION("translate(104 58) rotate(-26) scale(0.95)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   planeo: EJ_PLANEO,
   "antes-de-v1": EJ_ANTES_DE_V1,
@@ -1459,6 +1477,7 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   "un-motor": EJ_UN_MOTOR,
   simulador: EJ_SIMULADOR,
   despresurizacion: EJ_DESPRESURIZACION,
+  tormenta: EJ_TORMENTA,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {

@@ -17105,5 +17105,228 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "ejercicio.tormenta.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy volamos con una tormenta. ¿Ves esa nube enorme allá adelante, alta como una torre? Es una tormenta, y a una tormenta no se entra: la vamos a rodear de lejos, con calma",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Hoy volamos con una tormenta. ¿Ves esa nube enorme allá adelante, alta como una torre? Es una tormenta, y a una tormenta no se entra: la vamos a rodear de lejos, con calma.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.porQue",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Adentro de esa nube el aire sube y baja muy fuerte, llueve mucho y puede caer granizo. Por eso no se entra. Girá a la derecha, del lado de donde viene el viento, y dejala bien lejos",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Adentro de esa nube el aire sube y baja muy fuerte, llueve mucho y puede caer granizo. Por eso no se entra. Girá a la derecha, del lado de donde viene el viento, y dejala bien lejos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.radar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En el radar se ve: el rojo y el magenta son lo más fuerte, y ahí no se entra. A una tormenta así se la deja a veinte millas, unos treinta y siete kilómetros. Girá a la derecha, del lado del viento, lejos del yunque",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "En el radar se ve: el rojo y el magenta son lo más fuerte, y ahí no se entra. A una tormenta así se la deja a veinte millas, unos treinta y siete kilómetros. Girá a la derecha, del lado del viento, lejos del yunque.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.avisamos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Le avisamos al control que vamos a rodear la tormenta, y prendemos el cartel del cinturón: cerca de una tormenta el aire se mueve, y con el cinturón puesto un salto no te levanta del asiento",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Le avisamos al control que vamos a rodear la tormenta, y prendemos el cartel del cinturón: cerca de una tormenta el aire se mueve, y con el cinturón puesto un salto no te levanta del asiento.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.masDerecha",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Girá un poco más a la derecha: así todavía pasamos muy cerca de la tormenta",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Girá un poco más a la derecha: así todavía pasamos muy cerca de la tormenta.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.masIzquierda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Girá un poco más a la izquierda: así todavía pasamos muy cerca de la tormenta",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Girá un poco más a la izquierda: así todavía pasamos muy cerca de la tormenta.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.asiVa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Así! Con este rumbo la dejamos lejos. Seguí derecho hasta que la tormenta quede atrás",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "¡Así! Con este rumbo la dejamos lejos. Seguí derecho hasta que la tormenta quede atrás.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.rayoLejos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Viste el destello adentro de la nube? Fue un rayo. Las tormentas tienen muchos, y desde lejos no nos hacen nada. Y si algún día un rayo toca un avión, tampoco: el avión está hecho para eso",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "¿Viste el destello adentro de la nube? Fue un rayo. Las tormentas tienen muchos, y desde lejos no nos hacen nada. Y si algún día un rayo toca un avión, tampoco: el avión está hecho para eso.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.adentro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Entramos en la tormenta: por eso se sacude, llueve fuerte y suena el granizo. Con calma: cinturón puesto, alas derechas, y seguí derecho, que es el camino más corto para salir",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Entramos en la tormenta: por eso se sacude, llueve fuerte y suena el granizo. Con calma: cinturón puesto, alas derechas, y seguí derecho, que es el camino más corto para salir.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.rayoEnElAvion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nos tocó un rayo, y no pasa nada. Casi toda la electricidad corre por la chapa de afuera del avión y sigue de largo: está hecho para eso. A cada avión de línea le pasa una o dos veces por año",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Nos tocó un rayo, y no pasa nada. Casi toda la electricidad corre por la chapa de afuera del avión y sigue de largo: está hecho para eso. A cada avión de línea le pasa una o dos veces por año.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.salimos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tormenta.bienCerca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas",
+    "para": "el ejercicio de la tormenta: rodearla, lo de dentro y el rayo",
+    "dicho": "La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "torre.solo.desvioDerecha",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "deviation right of route approved, advise clear of weather",
+    "para": "el control aprueba el desvío por la derecha de la tormenta"
+  },
+  {
+    "id": "torre.canario.solo.desvioDerecha",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "deviation right of route approved, advise clear of weather",
+    "para": "el control aprueba el desvío por la derecha de la tormenta"
+  },
+  {
+    "id": "torre.solo.desvioIzquierda",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "deviation left of route approved, advise clear of weather",
+    "para": "el control aprueba el desvío por la izquierda de la tormenta"
+  },
+  {
+    "id": "torre.canario.solo.desvioIzquierda",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "deviation left of route approved, advise clear of weather",
+    "para": "el control aprueba el desvío por la izquierda de la tormenta"
   }
 ]

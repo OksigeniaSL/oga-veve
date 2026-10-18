@@ -22,7 +22,8 @@
  *
  * ## Por peldaños
  *
- * - **Guyrami**: ninguna. A los cuatro años no se practica nada de esto.
+ * - **Guyrami**: ninguna avería. A los cuatro años no se practica nada de
+ *   esto; la tormenta sí, que no es una avería: ver abajo.
  * - **Tukã**: solo el planeo, avisado, y como juego: llegar a la pista.
  * - **Taguato**: V1 —parar antes, seguir después— y un motor parado en vuelo.
  * - **Taguato Ruvicha**: todo lo anterior, y la sesión de simulador: se sabe
@@ -41,6 +42,18 @@
  * peldaño, sus aviones y cuándo se puede disparar en
  * `EJERCICIO_DE_DESPRESURIZACION`; aquí se le da su sitio en la lista, y de
  * esa ficha salen sus peldaños y sus aviones para que no haya dos versiones.
+ *
+ * ## Y la tormenta, que no es una avería
+ *
+ * La tormenta entró por la misma puerta —el hangar, `?ejercicio=`, la
+ * presentación antes y el cierre que celebra— y es la excepción a dos cosas
+ * de arriba. No falla nada: lo que se practica es **no entrar** en una nube de
+ * tormenta, rodearla con margen. Y por eso va **también en Guyrami**: a los
+ * cuatro años no se practica un motor parado, pero sí se puede aprender que a
+ * esa nube enorme no se le entra, y que si un rayo toca el avión no pasa nada.
+ * La calma es la forma que tiene la seguridad de funcionar, y se aprende
+ * pronto. Quien la hace pasar no es `practica.ts` sino
+ * `practica-de-tormenta.ts`, que cuenta lo suyo.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -54,7 +67,8 @@ export type EjercicioId =
   | "despues-de-v1"
   | "un-motor"
   | "simulador"
-  | "despresurizacion";
+  | "despresurizacion"
+  | "tormenta";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -84,7 +98,7 @@ export interface Averia {
 }
 
 /** Lo que hace falta saber de un avión para ofrecerle un ejercicio. */
-export type AvionDelEjercicio = Pick<AircraftConfig, "motores" | "presurizacion">;
+export type AvionDelEjercicio = Pick<AircraftConfig, "motores" | "presurizacion" | "sound">;
 
 export interface Ejercicio {
   readonly id: EjercicioId;
@@ -105,12 +119,18 @@ export interface Ejercicio {
    * allí arriba se practica donde pasa, y abajo queda pista de sobra para
    * bajar después a aterrizar.
    */
-  readonly colocacion?: "planeo" | "un-motor" | "crucero";
+  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
-   * empezar y **no se dice cuál**: la sesión de simulador.
+   * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
+   * tormenta, que no es una avería: ver `escena`.
    */
   readonly averias: readonly Averia[];
+  /**
+   * **Lo que se practica cuando no falla nada**: una escena del cielo. Hoy,
+   * la tormenta que se rodea. Ver `practica-de-tormenta.ts`.
+   */
+  readonly escena?: "tormenta";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
 }
@@ -119,6 +139,14 @@ export interface Ejercicio {
 const DESDE_TUKA: readonly TierId[] = ["tuka", "taguato", "taguato-ruvicha"];
 const DESDE_TAGUATO: readonly TierId[] = ["taguato", "taguato-ruvicha"];
 const multimotor = (a: AvionDelEjercicio): boolean => a.motores > 1;
+/**
+ * **Si lleva radar meteorológico**: los de turbina, que son los de cabina de
+ * pantallas. La avioneta y el bimotor de pistón de la flota no lo llevan, y
+ * en ellos lo de una tormenta es otra lección —no salir—, la de la tarjeta
+ * del tiempo. Ver `familiaDe` en `ui/familia.ts`, que reparte igual.
+ */
+const conRadarMeteorologico = (a: AvionDelEjercicio): boolean =>
+  a.sound.engine === "turboprop" || a.sound.engine === "turbofan";
 
 export const EJERCICIOS: readonly Ejercicio[] = [
   {
@@ -202,6 +230,27 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     ensena:
       "sin aire en la cabina, máscara primero y abajo rápido hasta donde se respira: es un procedimiento, y se practica",
   },
+  {
+    id: "tormenta",
+    /*
+     * En los cuatro peldaños, y es la única: no es una emergencia sino el
+     * cielo que enseña. Lo que crece con el peldaño es cómo se cuenta —el
+     * dibujo en los cuatro, la palabra, los números y el radar, la radio—,
+     * no si se practica. Ver `escalera.ts`.
+     */
+    peldanos: ["guyrami", ...DESDE_TUKA],
+    /*
+     * Con radar meteorológico, que es con lo que se ve dónde está el rojo y
+     * cuánto se le deja. Ver `conRadarMeteorologico`.
+     */
+    valePara: conRadarMeteorologico,
+    leccion: "aterrizaje",
+    colocacion: "tormenta",
+    averias: [],
+    escena: "tormenta",
+    ensena:
+      "a una tormenta no se entra: se rodea con margen, por el lado del viento; y si un rayo toca el avión, no pasa nada",
+  },
 ];
 
 export function ejercicioPorId(id: string | null | undefined): Ejercicio | null {
@@ -225,7 +274,10 @@ export function ejerciciosPara(
   return EJERCICIOS.filter((e) => seOfrece(e, peldano, avion));
 }
 
-/** Si el ejercicio dice antes de empezar qué va a fallar. */
+/**
+ * Si el ejercicio dice antes de empezar qué va a pasar: el de una avería, y
+ * el de una escena, que se cuenta entera antes.
+ */
 export function esAvisado(e: Ejercicio): boolean {
-  return e.averias.length === 1;
+  return e.escena !== undefined || e.averias.length === 1;
 }

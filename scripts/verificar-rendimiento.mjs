@@ -80,6 +80,16 @@
  * cristal al lado del cuadro, o la placa en las avionetas. Es una imagen y un
  * marco encima del mundo, sin desenfoque, y la regla es la misma: se mide.
  * Ver `ui/ventana-de-historia.ts`.
+ *
+ * ## Y con la tormenta a la vista
+ *
+ * `OGA_TORMENTA=1` vuela el ejercicio de la tormenta —con el JAZ 90 si no se
+ * dice otro avión, que el ejercicio pide radar— y mide en cuatro sitios en vez
+ * de los de siempre: al empezar, con el cumulonimbo a cuarenta millas
+ * (`lejos`); a veinticinco kilómetros, llenando el cuadro (`cerca`); en el
+ * mismo sitio con la nube escondida (`sinNube`), que es lo que dice cuánto
+ * cuesta ella; y dentro, con el agua y la niebla (`dentro`). Ver
+ * `world/cumulonimbo.ts`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -112,6 +122,7 @@ const BASE = baseDe(server, PUERTO);
 const CON_GPU = process.env.OGA_GPU === "1";
 const CON_TARJETA = process.env.OGA_TARJETA === "1";
 const CON_HISTORIA = process.env.OGA_HISTORIA === "1";
+const CON_TORMENTA = process.env.OGA_TORMENTA === "1";
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   /*
@@ -165,7 +176,12 @@ for (const escenario of ESCENARIOS) {
   const t0 = Date.now();
   await page.goto(
     `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami` +
-      (process.env.OGA_AVION ? `&avion=${process.env.OGA_AVION}` : "") +
+      (process.env.OGA_AVION
+        ? `&avion=${process.env.OGA_AVION}`
+        : CON_TORMENTA
+          ? "&avion=jaz-90"
+          : "") +
+      (CON_TORMENTA ? "&ejercicio=tormenta" : "") +
       /*
        * Sin parte pedido, el tiempo de casa y no el del día: con el proxy del
        * `.env`, el 5-oct-2026 Los Rodeos daba OVC003, la tarjeta del tiempo
@@ -211,7 +227,31 @@ for (const escenario of ESCENARIOS) {
   const hayCapa = await page.evaluate(
     () => !!globalThis.__oga.capaDeNubes?.(),
   );
-  for (const sitio of [
+  /*
+   * **Con la tormenta, sus cuatro sitios**: donde se la ve, de lejos y de
+   * cerca; de cerca sin ella, para restar; y dentro. Se vuelve a poner el
+   * avión antes de cada medida, que vuela: dentro, en siete segundos ya
+   * habría salido.
+   */
+  const dondeLaTormenta = (sitio) =>
+    page.evaluate((cual) => {
+      const o = globalThis.__oga;
+      const t = o.tormenta();
+      if (!t) return false;
+      const s = o.estado();
+      const altura = o.suelo(t.celda.x, t.celda.z) + 6000;
+      if (cual === "lejos") {
+        o.reiniciar();
+        return true;
+      }
+      const d = cual === "dentro" ? 1500 : 25000;
+      const rumbo = Math.atan2(t.celda.x - s.position.x, -(t.celda.z - s.position.z));
+      o.colocar(t.celda.x - Math.sin(rumbo) * d, altura, t.celda.z + Math.cos(rumbo) * d, 200, rumbo);
+      o.verLaTormenta(cual !== "sinNube");
+      o.pilotoAutomatico?.(true);
+      return true;
+    }, sitio);
+  for (const sitio of CON_TORMENTA ? ["lejos", "cerca", "sinNube", "dentro"] : [
     "puesto",
     "aire",
     /*
@@ -235,6 +275,14 @@ for (const escenario of ESCENARIOS) {
     ...(hayCapa ? ["nube"] : []),
     ...(hayBandadas ? ["bandada"] : []),
   ]) {
+    const deLaTormenta = ["lejos", "cerca", "sinNube", "dentro"].includes(sitio);
+    if (deLaTormenta) {
+      if (!(await dondeLaTormenta(sitio))) {
+        console.log(`  ✗ ${escenario}: sin tormenta que medir`);
+        continue;
+      }
+      await page.waitForTimeout(2500);
+    }
     /*
      * **El peor caso de las aves**: la bandada que más aves lleva, de frente
      * y a su altura. Se vuelve a plantar el avión antes de cada medida,
@@ -307,6 +355,7 @@ for (const escenario of ESCENARIOS) {
     }
     for (const { veces, nombre } of APRIETES) {
       if (sitio === "bandada") await aLaBandada();
+      if (deLaTormenta && sitio !== "lejos") await dondeLaTormenta(sitio);
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: veces });
       // Un respiro para que se estabilice antes de contar.
       await page.waitForTimeout(1200);
@@ -434,6 +483,7 @@ for (const escenario of ESCENARIOS) {
       });
     }
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    if (sitio === "sinNube") await page.evaluate(() => globalThis.__oga.verLaTormenta(true));
     if (sitio === "historia") await page.evaluate(() => globalThis.__oga.historia(null));
     if (sitio === "girando")
       await page.evaluate(() => {

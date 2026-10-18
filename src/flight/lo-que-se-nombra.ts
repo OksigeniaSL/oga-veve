@@ -170,6 +170,8 @@ export const NOMBRA: Readonly<Record<string, readonly Pieza[]>> = {
   "vuelo.paso.crucero.sinVer": ["motor"],
   "vuelo.paso.cruceroConAutomatico": ["motor"],
   "vuelo.paso.cruceroConGases": ["motor"],
+  // ── El radar meteorológico, en la carta ────────────────────────────
+  "ejercicio.tormenta.radar": ["carta"],
   // ── Los tráficos del mapa ──────────────────────────────────────────
   "vuelo.traficoArriba": ["trafico"],
   "vuelo.traficoAbajo": ["trafico"],

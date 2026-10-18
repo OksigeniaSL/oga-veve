@@ -1066,6 +1066,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.despues-de-v1": "Engine after V1",
   "hangar.ejercicio.un-motor": "Fly on one engine",
   "hangar.ejercicio.simulador": "Simulator session",
+  "hangar.ejercicio.tormenta": "Go around a storm",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1118,6 +1119,48 @@ export const EN: Dictionary = {
   "ejercicio.otraVez":
     "The exercise didn't work out this time. In the simulator you repeat it as often as you need: let's go again",
   "palabra.otraVez": "Again",
+
+  // ── The storm exercise: we never fly into one, and lightning is harmless ──
+  "ejercicio.tormenta.antes":
+    "Today we fly with a storm. See that huge cloud up ahead, tall as a tower? That's a thunderstorm, and we never fly into one: we'll go around it, far away, calmly",
+  "ejercicio.tormenta.porQue":
+    "Inside that cloud the air goes up and down very hard, it rains a lot and hail can fall. That's why we don't go in. Turn right, towards where the wind comes from, and keep it well away",
+  "ejercicio.tormenta.radar":
+    "You can see it on the radar: red and magenta are the strongest, and we never go in there. A storm like this is passed at twenty miles, about thirty-seven kilometres. Turn right, upwind, away from the anvil",
+  "ejercicio.tormenta.avisamos":
+    "We tell air traffic control we're going around the storm, and we switch on the seat belt sign: near a storm the air moves, and with your belt on a bump can't lift you out of your seat",
+  "ejercicio.tormenta.masDerecha":
+    "Turn a little more to the right: on this heading we'd still pass too close to the storm",
+  "ejercicio.tormenta.masIzquierda":
+    "Turn a little more to the left: on this heading we'd still pass too close to the storm",
+  "ejercicio.tormenta.asiVa":
+    "That's it! On this heading we stay well clear. Keep straight until the storm is behind us",
+  "ejercicio.tormenta.rayoLejos":
+    "Did you see the flash inside the cloud? That was lightning. Storms have lots of it, and from far away it can't hurt us. And if lightning ever hits a plane, that's fine too: planes are built for it",
+  "ejercicio.tormenta.adentro":
+    "We're inside the storm: that's why it's bumpy, the rain is heavy and you can hear the hail. Calmly: seat belt on, wings level, and keep straight, which is the quickest way out",
+  "ejercicio.tormenta.rayoEnElAvion":
+    "Lightning hit us, and nothing happens. Almost all the electricity runs along the outer skin of the plane and goes on its way: it's built for that. Every airliner gets hit about once or twice a year",
+  "ejercicio.tormenta.salimos":
+    "We're out. That's what it's like inside a storm: bumpy, heavy rain and hail. That's why we don't go in: we go around, far away. Let's try again, from the start",
+  "ejercicio.tormenta.bien":
+    "Very good! You went around the storm and kept it well away, just like real pilots do. Now, back home",
+  "ejercicio.tormenta.bienCerca":
+    "You went around it without going in: well done. We passed a bit close: next time, even further, because a storm like this is passed at twenty miles",
+  "palabra.rodeala": "Go around it",
+  "palabra.masLejos": "Further",
+  "palabra.rayo": "Lightning",
+  "palabra.derecho": "Straight on",
+  "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
+  "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
+  "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",
+  "tormenta.rotulo.asiVa": "That's it! You pass {n} {u} from the red",
+  "tormenta.rotulo.rayoLejos": "Lightning in the storm: from afar it can't hurt us",
+  "tormenta.rotulo.adentro": "Inside: seat belt, wings level, keep straight",
+  "tormenta.rotulo.rayoEnElAvion": "Lightning hit the plane: nothing happens",
+  "tormenta.rotulo.salimos": "Out. We never fly into a storm: again",
+  "tormenta.rotulo.bien": "Well clear! You passed {n} {u} from the red",
+  "tormenta.rotulo.bienCerca": "Passed {n} {u} from the red: next time, {m} {u}",
 
   "tactil.palanca": "Stick",
   "tactil.timon": "Rudder pedals",
