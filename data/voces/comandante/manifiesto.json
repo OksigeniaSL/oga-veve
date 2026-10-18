@@ -1367,6 +1367,18 @@
       "ms": 4607,
       "h": "c03cf7c824"
     },
+    "inicio.mama.pasaje.ala": {
+      "ms": 12607,
+      "h": "f66426bec4"
+    },
+    "inicio.mama.pasaje.altoRapido": {
+      "ms": 8207,
+      "h": "7c9ba048b7"
+    },
+    "inicio.mama.pasaje.bajando": {
+      "ms": 10407,
+      "h": "a341de545f"
+    },
     "inicio.mama.pasaje.espera": {
       "ms": 6307,
       "h": "6a4ffb5db9"
@@ -2865,6 +2877,15 @@
     ],
     "inicio.mama.pasaje.reversa": [
       "inicio.mama.pasaje.reversa"
+    ],
+    "inicio.mama.pasaje.altoRapido": [
+      "inicio.mama.pasaje.altoRapido"
+    ],
+    "inicio.mama.pasaje.ala": [
+      "inicio.mama.pasaje.ala"
+    ],
+    "inicio.mama.pasaje.bajando": [
+      "inicio.mama.pasaje.bajando"
     ]
   }
 }

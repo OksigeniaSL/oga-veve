@@ -79,6 +79,18 @@
       "ms": 2617,
       "h": "710bea479d"
     },
+    "inicio.ara.pasaje.altoRapido": {
+      "ms": 5407,
+      "h": "f2866a91c6"
+    },
+    "inicio.ara.pasaje.bano": {
+      "ms": 3307,
+      "h": "d5da29fcda"
+    },
+    "inicio.ara.pasaje.bici": {
+      "ms": 4907,
+      "h": "5be8fbbfd9"
+    },
     "inicio.ara.pasaje.bostezo": {
       "ms": 3707,
       "h": "2dc8ccba05"
@@ -87,13 +99,41 @@
       "ms": 5207,
       "h": "8d7657988d"
     },
+    "inicio.ara.pasaje.cerquita": {
+      "ms": 4607,
+      "h": "b67ff69a2a"
+    },
     "inicio.ara.pasaje.cinturon": {
       "ms": 3907,
       "h": "1224d1211a"
     },
+    "inicio.ara.pasaje.cinturonQuieto": {
+      "ms": 6107,
+      "h": "b54696a9f3"
+    },
     "inicio.ara.pasaje.comandante": {
       "ms": 4707,
       "h": "4ff89ec617"
+    },
+    "inicio.ara.pasaje.deVerdad": {
+      "ms": 4207,
+      "h": "04e1314e34"
+    },
+    "inicio.ara.pasaje.demoChaleco": {
+      "ms": 5507,
+      "h": "41ecef4888"
+    },
+    "inicio.ara.pasaje.demoMascara": {
+      "ms": 6407,
+      "h": "7db8fd20c0"
+    },
+    "inicio.ara.pasaje.demoTarjeta": {
+      "ms": 5007,
+      "h": "67b8efc434"
+    },
+    "inicio.ara.pasaje.despacito": {
+      "ms": 4907,
+      "h": "ed1f44b46f"
     },
     "inicio.ara.pasaje.despegue": {
       "ms": 4407,
@@ -103,6 +143,10 @@
       "ms": 2978,
       "h": "fcd00049f5"
     },
+    "inicio.ara.pasaje.estrellas": {
+      "ms": 5407,
+      "h": "16fdce6b95"
+    },
     "inicio.ara.pasaje.fin": {
       "ms": 5507,
       "h": "905d36870a"
@@ -111,17 +155,69 @@
       "ms": 4507,
       "h": "07cdea2512"
     },
+    "inicio.ara.pasaje.flapsPorque": {
+      "ms": 4707,
+      "h": "77ad807950"
+    },
+    "inicio.ara.pasaje.frio": {
+      "ms": 4607,
+      "h": "c5d5daf7c9"
+    },
     "inicio.ara.pasaje.garajonay": {
       "ms": 3707,
       "h": "6bab4bd1ca"
+    },
+    "inicio.ara.pasaje.giroAbajo": {
+      "ms": 6107,
+      "h": "becb762724"
+    },
+    "inicio.ara.pasaje.giroArriba": {
+      "ms": 6007,
+      "h": "4be3243870"
+    },
+    "inicio.ara.pasaje.giroFinal": {
+      "ms": 5107,
+      "h": "55329f9459"
     },
     "inicio.ara.pasaje.isla": {
       "ms": 4107,
       "h": "501eca347f"
     },
+    "inicio.ara.pasaje.islaCerca": {
+      "ms": 5807,
+      "h": "f3be04c038"
+    },
+    "inicio.ara.pasaje.islas": {
+      "ms": 4907,
+      "h": "6e16339e17"
+    },
     "inicio.ara.pasaje.loVeo": {
       "ms": 3807,
       "h": "cd1e41c6a7"
+    },
+    "inicio.ara.pasaje.mapa": {
+      "ms": 4807,
+      "h": "cda15d969f"
+    },
+    "inicio.ara.pasaje.marAbajo": {
+      "ms": 6907,
+      "h": "c19e7aa013"
+    },
+    "inicio.ara.pasaje.marArriba": {
+      "ms": 6307,
+      "h": "fecbec73e5"
+    },
+    "inicio.ara.pasaje.marQuieto": {
+      "ms": 5907,
+      "h": "170fdb64da"
+    },
+    "inicio.ara.pasaje.masDespacio": {
+      "ms": 5107,
+      "h": "6880461654"
+    },
+    "inicio.ara.pasaje.miro": {
+      "ms": 4207,
+      "h": "a759fa5aee"
     },
     "inicio.ara.pasaje.motores": {
       "ms": 5707,
@@ -139,6 +235,14 @@
       "ms": 5807,
       "h": "95a636135e"
     },
+    "inicio.ara.pasaje.nubesCerca": {
+      "ms": 4107,
+      "h": "9c276fdcc9"
+    },
+    "inicio.ara.pasaje.nubesSostiene": {
+      "ms": 5807,
+      "h": "b42d8f5037"
+    },
     "inicio.ara.pasaje.oidos": {
       "ms": 3407,
       "h": "a58cdc2d04"
@@ -147,13 +251,61 @@
       "ms": 3907,
       "h": "1001c977fd"
     },
+    "inicio.ara.pasaje.otraNube": {
+      "ms": 5207,
+      "h": "d435ea40fe"
+    },
+    "inicio.ara.pasaje.pandorga": {
+      "ms": 5907,
+      "h": "ee47ead626"
+    },
+    "inicio.ara.pasaje.papi": {
+      "ms": 3907,
+      "h": "1c146a07c1"
+    },
+    "inicio.ara.pasaje.persiana": {
+      "ms": 3507,
+      "h": "e89a78e649"
+    },
+    "inicio.ara.pasaje.plop": {
+      "ms": 5607,
+      "h": "86960779e7"
+    },
+    "inicio.ara.pasaje.preguntaAla": {
+      "ms": 3907,
+      "h": "ed38827476"
+    },
+    "inicio.ara.pasaje.preguntaAlto": {
+      "ms": 3407,
+      "h": "c50988cf59"
+    },
+    "inicio.ara.pasaje.preguntaBajar": {
+      "ms": 3507,
+      "h": "a1e751b3cc"
+    },
     "inicio.ara.pasaje.puertas": {
       "ms": 3107,
       "h": "95d492a05c"
     },
+    "inicio.ara.pasaje.repaso": {
+      "ms": 6307,
+      "h": "68ed4b2a61"
+    },
+    "inicio.ara.pasaje.ruedas": {
+      "ms": 3807,
+      "h": "4e603d93a2"
+    },
+    "inicio.ara.pasaje.secador": {
+      "ms": 5907,
+      "h": "9f598d209b"
+    },
     "inicio.ara.pasaje.servicio": {
       "ms": 4007,
       "h": "d2f97c1c00"
+    },
+    "inicio.ara.pasaje.sobreLaIsla": {
+      "ms": 5107,
+      "h": "858757655b"
     },
     "inicio.ara.pasaje.teide": {
       "ms": 5307,
@@ -163,6 +315,10 @@
       "ms": 4107,
       "h": "9f4c02efd5"
     },
+    "inicio.ara.pasaje.tren": {
+      "ms": 5307,
+      "h": "8c60b34329"
+    },
     "inicio.ara.pasaje.ventanilla": {
       "ms": 5707,
       "h": "b7708d4bed"
@@ -170,6 +326,10 @@
     "inicio.ara.pasaje.volando": {
       "ms": 4407,
       "h": "7ea7f39696"
+    },
+    "inicio.ara.pasaje.yaCasi": {
+      "ms": 3507,
+      "h": "ace6aa5d27"
     }
   },
   "recetas": {
@@ -230,17 +390,47 @@
     "inicio.ara.nivelar": [
       "inicio.ara.nivelar"
     ],
+    "inicio.ara.pasaje.altoRapido": [
+      "inicio.ara.pasaje.altoRapido"
+    ],
+    "inicio.ara.pasaje.bano": [
+      "inicio.ara.pasaje.bano"
+    ],
+    "inicio.ara.pasaje.bici": [
+      "inicio.ara.pasaje.bici"
+    ],
     "inicio.ara.pasaje.bostezo": [
       "inicio.ara.pasaje.bostezo"
     ],
     "inicio.ara.pasaje.carrera": [
       "inicio.ara.pasaje.carrera"
     ],
+    "inicio.ara.pasaje.cerquita": [
+      "inicio.ara.pasaje.cerquita"
+    ],
     "inicio.ara.pasaje.cinturon": [
       "inicio.ara.pasaje.cinturon"
     ],
+    "inicio.ara.pasaje.cinturonQuieto": [
+      "inicio.ara.pasaje.cinturonQuieto"
+    ],
     "inicio.ara.pasaje.comandante": [
       "inicio.ara.pasaje.comandante"
+    ],
+    "inicio.ara.pasaje.deVerdad": [
+      "inicio.ara.pasaje.deVerdad"
+    ],
+    "inicio.ara.pasaje.demoChaleco": [
+      "inicio.ara.pasaje.demoChaleco"
+    ],
+    "inicio.ara.pasaje.demoMascara": [
+      "inicio.ara.pasaje.demoMascara"
+    ],
+    "inicio.ara.pasaje.demoTarjeta": [
+      "inicio.ara.pasaje.demoTarjeta"
+    ],
+    "inicio.ara.pasaje.despacito": [
+      "inicio.ara.pasaje.despacito"
     ],
     "inicio.ara.pasaje.despegue": [
       "inicio.ara.pasaje.despegue"
@@ -248,20 +438,62 @@
     "inicio.ara.pasaje.espera": [
       "inicio.ara.pasaje.espera"
     ],
+    "inicio.ara.pasaje.estrellas": [
+      "inicio.ara.pasaje.estrellas"
+    ],
     "inicio.ara.pasaje.fin": [
       "inicio.ara.pasaje.fin"
     ],
     "inicio.ara.pasaje.flaps": [
       "inicio.ara.pasaje.flaps"
     ],
+    "inicio.ara.pasaje.flapsPorque": [
+      "inicio.ara.pasaje.flapsPorque"
+    ],
+    "inicio.ara.pasaje.frio": [
+      "inicio.ara.pasaje.frio"
+    ],
     "inicio.ara.pasaje.garajonay": [
       "inicio.ara.pasaje.garajonay"
+    ],
+    "inicio.ara.pasaje.giroAbajo": [
+      "inicio.ara.pasaje.giroAbajo"
+    ],
+    "inicio.ara.pasaje.giroArriba": [
+      "inicio.ara.pasaje.giroArriba"
+    ],
+    "inicio.ara.pasaje.giroFinal": [
+      "inicio.ara.pasaje.giroFinal"
     ],
     "inicio.ara.pasaje.isla": [
       "inicio.ara.pasaje.isla"
     ],
+    "inicio.ara.pasaje.islaCerca": [
+      "inicio.ara.pasaje.islaCerca"
+    ],
+    "inicio.ara.pasaje.islas": [
+      "inicio.ara.pasaje.islas"
+    ],
     "inicio.ara.pasaje.loVeo": [
       "inicio.ara.pasaje.loVeo"
+    ],
+    "inicio.ara.pasaje.mapa": [
+      "inicio.ara.pasaje.mapa"
+    ],
+    "inicio.ara.pasaje.marAbajo": [
+      "inicio.ara.pasaje.marAbajo"
+    ],
+    "inicio.ara.pasaje.marArriba": [
+      "inicio.ara.pasaje.marArriba"
+    ],
+    "inicio.ara.pasaje.marQuieto": [
+      "inicio.ara.pasaje.marQuieto"
+    ],
+    "inicio.ara.pasaje.masDespacio": [
+      "inicio.ara.pasaje.masDespacio"
+    ],
+    "inicio.ara.pasaje.miro": [
+      "inicio.ara.pasaje.miro"
     ],
     "inicio.ara.pasaje.motores": [
       "inicio.ara.pasaje.motores"
@@ -275,17 +507,59 @@
     "inicio.ara.pasaje.nubesAbajo": [
       "inicio.ara.pasaje.nubesAbajo"
     ],
+    "inicio.ara.pasaje.nubesCerca": [
+      "inicio.ara.pasaje.nubesCerca"
+    ],
+    "inicio.ara.pasaje.nubesSostiene": [
+      "inicio.ara.pasaje.nubesSostiene"
+    ],
     "inicio.ara.pasaje.oidos": [
       "inicio.ara.pasaje.oidos"
     ],
     "inicio.ara.pasaje.orotava": [
       "inicio.ara.pasaje.orotava"
     ],
+    "inicio.ara.pasaje.otraNube": [
+      "inicio.ara.pasaje.otraNube"
+    ],
+    "inicio.ara.pasaje.pandorga": [
+      "inicio.ara.pasaje.pandorga"
+    ],
+    "inicio.ara.pasaje.papi": [
+      "inicio.ara.pasaje.papi"
+    ],
+    "inicio.ara.pasaje.persiana": [
+      "inicio.ara.pasaje.persiana"
+    ],
+    "inicio.ara.pasaje.plop": [
+      "inicio.ara.pasaje.plop"
+    ],
+    "inicio.ara.pasaje.preguntaAla": [
+      "inicio.ara.pasaje.preguntaAla"
+    ],
+    "inicio.ara.pasaje.preguntaAlto": [
+      "inicio.ara.pasaje.preguntaAlto"
+    ],
+    "inicio.ara.pasaje.preguntaBajar": [
+      "inicio.ara.pasaje.preguntaBajar"
+    ],
     "inicio.ara.pasaje.puertas": [
       "inicio.ara.pasaje.puertas"
     ],
+    "inicio.ara.pasaje.repaso": [
+      "inicio.ara.pasaje.repaso"
+    ],
+    "inicio.ara.pasaje.ruedas": [
+      "inicio.ara.pasaje.ruedas"
+    ],
+    "inicio.ara.pasaje.secador": [
+      "inicio.ara.pasaje.secador"
+    ],
     "inicio.ara.pasaje.servicio": [
       "inicio.ara.pasaje.servicio"
+    ],
+    "inicio.ara.pasaje.sobreLaIsla": [
+      "inicio.ara.pasaje.sobreLaIsla"
     ],
     "inicio.ara.pasaje.teide": [
       "inicio.ara.pasaje.teide"
@@ -293,11 +567,17 @@
     "inicio.ara.pasaje.toma": [
       "inicio.ara.pasaje.toma"
     ],
+    "inicio.ara.pasaje.tren": [
+      "inicio.ara.pasaje.tren"
+    ],
     "inicio.ara.pasaje.ventanilla": [
       "inicio.ara.pasaje.ventanilla"
     ],
     "inicio.ara.pasaje.volando": [
       "inicio.ara.pasaje.volando"
+    ],
+    "inicio.ara.pasaje.yaCasi": [
+      "inicio.ara.pasaje.yaCasi"
     ]
   }
 }

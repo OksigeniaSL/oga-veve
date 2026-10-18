@@ -81,5 +81,77 @@
   ],
   "inicio.tripulacion.pasaje.oidos": [
     "inicio.tripulacion.pasaje.oidos"
+  ],
+  "inicio.tripulacion.pasaje.cerca.bano": [
+    "inicio.tripulacion.pasaje.cerca.bano"
+  ],
+  "inicio.tripulacion.pasaje.cerca.frio": [
+    "inicio.tripulacion.pasaje.cerca.frio"
+  ],
+  "inicio.tripulacion.pasaje.demo.mascaras": [
+    "inicio.tripulacion.pasaje.demo.mascaras"
+  ],
+  "inicio.tripulacion.pasaje.cerca.papi": [
+    "inicio.tripulacion.pasaje.cerca.papi"
+  ],
+  "inicio.tripulacion.pasaje.cerca.nubes2": [
+    "inicio.tripulacion.pasaje.cerca.nubes2"
+  ],
+  "inicio.tripulacion.pasaje.cerca.islas2": [
+    "inicio.tripulacion.pasaje.cerca.islas2"
+  ],
+  "inicio.tripulacion.pasaje.cerca.motor1": [
+    "inicio.tripulacion.pasaje.cerca.motor1"
+  ],
+  "inicio.tripulacion.pasaje.cerca.estrellas": [
+    "inicio.tripulacion.pasaje.cerca.estrellas"
+  ],
+  "inicio.tripulacion.pasaje.cerca.ruta": [
+    "inicio.tripulacion.pasaje.cerca.ruta"
+  ],
+  "inicio.tripulacion.pasaje.cerca.nubes3": [
+    "inicio.tripulacion.pasaje.cerca.nubes3"
+  ],
+  "inicio.tripulacion.pasaje.demo.tarjeta": [
+    "inicio.tripulacion.pasaje.demo.tarjeta"
+  ],
+  "inicio.tripulacion.pasaje.cerca.hola": [
+    "inicio.tripulacion.pasaje.cerca.hola"
+  ],
+  "inicio.tripulacion.pasaje.demo.cinturon": [
+    "inicio.tripulacion.pasaje.demo.cinturon"
+  ],
+  "inicio.tripulacion.pasaje.demo.chaleco": [
+    "inicio.tripulacion.pasaje.demo.chaleco"
+  ],
+  "inicio.tripulacion.pasaje.cerca.adios": [
+    "inicio.tripulacion.pasaje.cerca.adios"
+  ],
+  "inicio.tripulacion.pasaje.cerca.islas1": [
+    "inicio.tripulacion.pasaje.cerca.islas1"
+  ],
+  "inicio.tripulacion.pasaje.cerca.nubes1": [
+    "inicio.tripulacion.pasaje.cerca.nubes1"
+  ],
+  "inicio.tripulacion.pasaje.cerca.aterrizaje": [
+    "inicio.tripulacion.pasaje.cerca.aterrizaje"
+  ],
+  "inicio.tripulacion.pasaje.cerca.persiana": [
+    "inicio.tripulacion.pasaje.cerca.persiana"
+  ],
+  "inicio.tripulacion.pasaje.cerca.revision": [
+    "inicio.tripulacion.pasaje.cerca.revision"
+  ],
+  "inicio.tripulacion.pasaje.demo.aparatos": [
+    "inicio.tripulacion.pasaje.demo.aparatos"
+  ],
+  "inicio.tripulacion.pasaje.cerca.motor2": [
+    "inicio.tripulacion.pasaje.cerca.motor2"
+  ],
+  "inicio.tripulacion.pasaje.demo.intro": [
+    "inicio.tripulacion.pasaje.demo.intro"
+  ],
+  "inicio.tripulacion.pasaje.demo.salidas": [
+    "inicio.tripulacion.pasaje.demo.salidas"
   ]
 }

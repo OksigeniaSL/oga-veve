@@ -3,9 +3,105 @@
   "voz": "tripulacion-canarias",
   "idioma": "es-PY",
   "piezas": {
+    "inicio.tripulacion.pasaje.cerca.adios": {
+      "ms": 6107,
+      "h": "515d53cf54"
+    },
+    "inicio.tripulacion.pasaje.cerca.aterrizaje": {
+      "ms": 6507,
+      "h": "138bf041bb"
+    },
+    "inicio.tripulacion.pasaje.cerca.bano": {
+      "ms": 4907,
+      "h": "86eb7cc8b0"
+    },
+    "inicio.tripulacion.pasaje.cerca.estrellas": {
+      "ms": 13107,
+      "h": "41544851ad"
+    },
+    "inicio.tripulacion.pasaje.cerca.frio": {
+      "ms": 9407,
+      "h": "e3cc721467"
+    },
+    "inicio.tripulacion.pasaje.cerca.hola": {
+      "ms": 8607,
+      "h": "5e98daf46b"
+    },
+    "inicio.tripulacion.pasaje.cerca.islas1": {
+      "ms": 9607,
+      "h": "a6594c4b96"
+    },
+    "inicio.tripulacion.pasaje.cerca.islas2": {
+      "ms": 4907,
+      "h": "201fd14d61"
+    },
+    "inicio.tripulacion.pasaje.cerca.motor1": {
+      "ms": 6107,
+      "h": "6c87e0b887"
+    },
+    "inicio.tripulacion.pasaje.cerca.motor2": {
+      "ms": 9607,
+      "h": "3059983947"
+    },
+    "inicio.tripulacion.pasaje.cerca.nubes1": {
+      "ms": 7407,
+      "h": "07857cd736"
+    },
+    "inicio.tripulacion.pasaje.cerca.nubes2": {
+      "ms": 9407,
+      "h": "675ef8d14f"
+    },
+    "inicio.tripulacion.pasaje.cerca.nubes3": {
+      "ms": 11107,
+      "h": "8605388dcf"
+    },
+    "inicio.tripulacion.pasaje.cerca.papi": {
+      "ms": 7907,
+      "h": "7553080a59"
+    },
+    "inicio.tripulacion.pasaje.cerca.persiana": {
+      "ms": 8807,
+      "h": "f4faa4ee78"
+    },
+    "inicio.tripulacion.pasaje.cerca.revision": {
+      "ms": 8307,
+      "h": "49677fd1a8"
+    },
+    "inicio.tripulacion.pasaje.cerca.ruta": {
+      "ms": 8907,
+      "h": "24cd2534e5"
+    },
     "inicio.tripulacion.pasaje.cinturon": {
       "ms": 7007,
       "h": "283c89fe2e"
+    },
+    "inicio.tripulacion.pasaje.demo.aparatos": {
+      "ms": 8407,
+      "h": "53903391d8"
+    },
+    "inicio.tripulacion.pasaje.demo.chaleco": {
+      "ms": 11407,
+      "h": "6a48b3959e"
+    },
+    "inicio.tripulacion.pasaje.demo.cinturon": {
+      "ms": 8307,
+      "h": "c5364e1edc"
+    },
+    "inicio.tripulacion.pasaje.demo.intro": {
+      "ms": 7707,
+      "h": "7e08454b68"
+    },
+    "inicio.tripulacion.pasaje.demo.mascaras": {
+      "ms": 14607,
+      "h": "62143dbdd0"
+    },
+    "inicio.tripulacion.pasaje.demo.salidas": {
+      "ms": 9507,
+      "h": "b86ef050a9"
+    },
+    "inicio.tripulacion.pasaje.demo.tarjeta": {
+      "ms": 9707,
+      "h": "27a21650f0"
     },
     "inicio.tripulacion.pasaje.oidos": {
       "ms": 11007,
@@ -187,6 +283,78 @@
     ],
     "inicio.tripulacion.pasaje.oidos": [
       "inicio.tripulacion.pasaje.oidos"
+    ],
+    "inicio.tripulacion.pasaje.cerca.bano": [
+      "inicio.tripulacion.pasaje.cerca.bano"
+    ],
+    "inicio.tripulacion.pasaje.cerca.frio": [
+      "inicio.tripulacion.pasaje.cerca.frio"
+    ],
+    "inicio.tripulacion.pasaje.demo.mascaras": [
+      "inicio.tripulacion.pasaje.demo.mascaras"
+    ],
+    "inicio.tripulacion.pasaje.cerca.papi": [
+      "inicio.tripulacion.pasaje.cerca.papi"
+    ],
+    "inicio.tripulacion.pasaje.cerca.nubes2": [
+      "inicio.tripulacion.pasaje.cerca.nubes2"
+    ],
+    "inicio.tripulacion.pasaje.cerca.islas2": [
+      "inicio.tripulacion.pasaje.cerca.islas2"
+    ],
+    "inicio.tripulacion.pasaje.cerca.motor1": [
+      "inicio.tripulacion.pasaje.cerca.motor1"
+    ],
+    "inicio.tripulacion.pasaje.cerca.estrellas": [
+      "inicio.tripulacion.pasaje.cerca.estrellas"
+    ],
+    "inicio.tripulacion.pasaje.cerca.ruta": [
+      "inicio.tripulacion.pasaje.cerca.ruta"
+    ],
+    "inicio.tripulacion.pasaje.cerca.nubes3": [
+      "inicio.tripulacion.pasaje.cerca.nubes3"
+    ],
+    "inicio.tripulacion.pasaje.demo.tarjeta": [
+      "inicio.tripulacion.pasaje.demo.tarjeta"
+    ],
+    "inicio.tripulacion.pasaje.cerca.hola": [
+      "inicio.tripulacion.pasaje.cerca.hola"
+    ],
+    "inicio.tripulacion.pasaje.demo.cinturon": [
+      "inicio.tripulacion.pasaje.demo.cinturon"
+    ],
+    "inicio.tripulacion.pasaje.demo.chaleco": [
+      "inicio.tripulacion.pasaje.demo.chaleco"
+    ],
+    "inicio.tripulacion.pasaje.cerca.adios": [
+      "inicio.tripulacion.pasaje.cerca.adios"
+    ],
+    "inicio.tripulacion.pasaje.cerca.islas1": [
+      "inicio.tripulacion.pasaje.cerca.islas1"
+    ],
+    "inicio.tripulacion.pasaje.cerca.nubes1": [
+      "inicio.tripulacion.pasaje.cerca.nubes1"
+    ],
+    "inicio.tripulacion.pasaje.cerca.aterrizaje": [
+      "inicio.tripulacion.pasaje.cerca.aterrizaje"
+    ],
+    "inicio.tripulacion.pasaje.cerca.persiana": [
+      "inicio.tripulacion.pasaje.cerca.persiana"
+    ],
+    "inicio.tripulacion.pasaje.cerca.revision": [
+      "inicio.tripulacion.pasaje.cerca.revision"
+    ],
+    "inicio.tripulacion.pasaje.demo.aparatos": [
+      "inicio.tripulacion.pasaje.demo.aparatos"
+    ],
+    "inicio.tripulacion.pasaje.cerca.motor2": [
+      "inicio.tripulacion.pasaje.cerca.motor2"
+    ],
+    "inicio.tripulacion.pasaje.demo.intro": [
+      "inicio.tripulacion.pasaje.demo.intro"
+    ],
+    "inicio.tripulacion.pasaje.demo.salidas": [
+      "inicio.tripulacion.pasaje.demo.salidas"
     ]
   }
 }
