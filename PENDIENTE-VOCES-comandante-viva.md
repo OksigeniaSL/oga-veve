@@ -112,17 +112,22 @@ git status --short data/voces/comandante \
 ```bash
 npx vitest run src/audio/bienvenidas.test.ts src/audio/momentos-de-crucero.test.ts src/audio/guion-grabado.test.ts
 node scripts/verificar-voces.mjs
-OGA_VOCES=/tmp/voces.json node scripts/verificar-vuelo-entero.mjs tenerife-norte guyrami 12 jaz-90 lanzarote
+OGA_VOCES=/tmp/voces.json node scripts/verificar-vuelo-entero.mjs pettirossi guyrami 12 jaz-90 guarani
 ```
 
 `bienvenidas.test.ts` mira con el pack de verdad que **cada forma que cabe se
 monte entera**; con las piezas grabadas, caben las cinco. Y en el vuelo
 entero, la lista «la megafonía, en orden» tiene que traer la bienvenida en el
-puesto, detrás de los toboganes, y «lo que contó la comandante en el crucero»
-lo de ese tramo: una cosa desde los veinticinco minutos, el punto del vuelo
-desde los cuarenta, y las tres desde la hora.
+puesto, detrás de los toboganes —en el JAZ 90, que lleva tripulación—, entera
+y con su voz.
 
-Antes de grabar, el vuelo entero con `OGA_MOMENTOS=1` ya pide lo del crucero
-con su texto, para mirar cuándo sale y con quién se cruza; suena con la voz
-del navegador o no suena, así que la comprobación de que todo lo pedido sonó
-sale en rojo por ellas, y es lo esperado.
+**Lo del crucero no lo ve el vuelo entero**: ese banco no vuela el trayecto
+entre campos, y su crucero de `OGA_CRUCERO` va a setecientos cincuenta metros
+sobre el campo de salida, que es cabina estéril, donde con razón no se cuenta
+nada. Se oye en un vuelo de verdad de más de veinticinco minutos —Pettirossi →
+Ciudad del Este con el JAZ 60 da una hora—: una cosa desde los veinticinco
+minutos, el punto del vuelo desde los cuarenta y las tres desde la hora, cada
+una en su hueco. Antes de grabar, con la sonda `momentosSinGrabar(true)` el
+juego ya las pide con su texto, para mirar cuándo salen: con el avión colocado
+a nivel 180 en esa ruta, la curiosidad salió después del anuncio de crucero y
+de lo que se ve por la ventanilla, en su hueco y una sola vez.

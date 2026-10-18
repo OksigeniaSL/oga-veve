@@ -109,6 +109,21 @@ describe("cuánto cuenta, según lo que dura el tramo", () => {
     expect(dichos.map((d) => d.que)).toEqual(["curiosidad", "mitad", "chicos"]);
   });
 
+  it("y fuera del plan, sin saber lo que falta, los dos sueltos y sin la mitad", () => {
+    const m = new MomentosDeCrucero();
+    const dichos: string[] = [];
+    let hablando = 0;
+    for (let s = 0; s < 20 * 60; s++) {
+      hablando = Math.max(0, hablando - 1);
+      const que = m.paso(1, crucero({ minutosDelTramo: 75, faltan: null, megafoniaHabla: hablando > 0 }));
+      if (que) {
+        dichos.push(que);
+        hablando = 15;
+      }
+    }
+    expect(dichos).toEqual(["curiosidad", "chicos"]);
+  });
+
   it("repartidas: entre una y otra, minuto y medio largo de megafonía callada", () => {
     const dichos = volar(75);
     for (let i = 1; i < dichos.length; i++)

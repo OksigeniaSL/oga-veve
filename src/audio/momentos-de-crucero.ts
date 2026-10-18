@@ -245,7 +245,12 @@ export class MomentosDeCrucero {
      * el otro después— en vez de los dos seguidos al acabar el servicio.
      */
     const yaUno = sueltos.some((s) => this.dichos.has(s));
-    if (yaUno && conMitad && !this.dichos.has("mitad") && !this.mitadPasada) return null;
+    /*
+     * Sin saber lo que falta —fuera del plan— la mitad no se puede medir, y
+     * esperarla sería esperar para siempre: el segundo va igual.
+     */
+    if (yaUno && conMitad && !this.dichos.has("mitad") && !this.mitadPasada && queda !== null)
+      return null;
     return this.decir(siguiente);
   }
 
