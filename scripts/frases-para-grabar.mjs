@@ -33,6 +33,19 @@ import { join } from "node:path";
 
 const SALIDA = process.argv[2] ?? "docs/voces";
 
+/*
+ * **La comandante siempre distinta**: las bienvenidas nuevas —el saludo de
+ * cada hora, el de la gracia, la frase del destino con su detalle y el
+ * cierre— y lo que cuenta en un crucero largo. Sus claves empiezan por
+ * `comandante.` y el grupo de la megafonía se las llevaría en medio, así que
+ * se apartan de él y van **al final de la lista**, por lo mismo que las
+ * escenas del inicio: no se renumera lo ya grabado. Ver
+ * `src/audio/bienvenidas.ts`, `src/audio/momentos-de-crucero.ts` y
+ * `PENDIENTE-VOCES-comandante-viva.md`.
+ */
+const DE_LA_COMANDANTE_VIVA =
+  /^comandante\.(?:bienvenida\.(?:saludo|gracia|a|detalle|cierre)\.|mitad\.|chicos\.|curiosidad\.)/;
+
 /**
  * Qué grupos de claves habla el instructor.
  *
@@ -159,7 +172,13 @@ const HABLADOS = [
     "comandante",
     "lo que se ve por la ventanilla, por la megafonía",
   ],
-  ["comandante", "comandante", "la megafonía de cabina, para el pasaje"],
+  [
+    "comandante",
+    "comandante",
+    "la megafonía de cabina, para el pasaje",
+    // Menos lo nuevo de la comandante, que va al final. Ver `DE_LA_COMANDANTE_VIVA`.
+    DE_LA_COMANDANTE_VIVA,
+  ],
   /*
    * **Y la tripulación de cabina**, con el habla del sitio como la torre: la
    * de Canarias va primero por lo mismo que allí, porque sus claves empiezan
@@ -1636,6 +1655,25 @@ for (const [k, v] of es) {
     idioma: "es-PY",
     texto: v,
     para: "los sellos del cuaderno: al ganarlos y al tocarlos en el álbum",
+  });
+  total += v.length;
+}
+
+/*
+ * **Y la comandante siempre distinta**, detrás de los sellos, por lo mismo:
+ * lo ya grabado no se renumera. Con la voz de Jazlyn y con chispa, como todo
+ * lo suyo. Ver `DE_LA_COMANDANTE_VIVA`.
+ */
+for (const [k, v] of es) {
+  if (!DE_LA_COMANDANTE_VIVA.test(k) || filas.some((f) => f.id === k)) continue;
+  filas.push({
+    id: k,
+    voz: "comandante",
+    idioma: "es-PY",
+    texto: v,
+    para: k.startsWith("comandante.bienvenida.")
+      ? "la bienvenida de la comandante, en una de sus formas: se monta con el plan y el tiempo de allá"
+      : "lo que cuenta la comandante en un crucero largo",
   });
   total += v.length;
 }

@@ -305,6 +305,29 @@ describe("cada forma dice lo que tiene que decir", () => {
   });
 });
 
+/*
+ * **Y todo lo nuevo de la comandante, en la lista de grabar**, con su voz. Se
+ * pide solo con su grabación, así que una frase que no estuviera en la lista
+ * no se grabaría nunca y la forma no entraría nunca en el sorteo, sin que
+ * nadie se enterara: callar es justo lo que hace mientras tanto.
+ */
+describe("y lo nuevo de la comandante, en la lista de grabar", () => {
+  it("cada frase, con la voz de Jazlyn", () => {
+    const frases = JSON.parse(fs.readFileSync("docs/voces/frases.json", "utf8")) as {
+      id: string;
+      voz: string;
+    }[];
+    const nuevas = Object.keys(ES_PY).filter((k) =>
+      /^comandante\.(?:bienvenida\.(?:saludo|gracia|a|detalle|cierre)\.|mitad\.|chicos\.|curiosidad\.)/.test(
+        k,
+      ),
+    );
+    expect(nuevas.length).toBe(63);
+    const deJazlyn = frases.filter((f) => f.voz === "comandante").map((f) => f.id);
+    for (const k of nuevas) expect(deJazlyn, k).toContain(k);
+  });
+});
+
 /** Las piezas propias de cada forma nueva. */
 const DE_CADA_FORMA: Record<FormaDeBienvenida, RegExp> = {
   clasica: /^$/,
