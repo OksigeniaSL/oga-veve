@@ -50,7 +50,7 @@ const NUESTROS = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 
 /**
  * Los que firman con el logotipo de Granja Óga: todos menos el fumigador, que
- * es un avión de trabajo y va vestido de ocre de la casa sin más. El motivo
+ * es un avión de trabajo y lleva los colores de la casa sin firma. El motivo
  * de la cola no se apunta aquí: lo dice la ficha de cada uno. Ver
  * `src/world/librea.ts`.
  */
@@ -169,10 +169,10 @@ for (const id of NUESTROS) {
       "el .glb traía los suyos y salían descoloridos",
     );
   }
-  // Y el tercer color, en el avión que lo lleva: las aletas y el filete.
+  // Y las aletas de las puntas, en el avión que las lleva: el remate.
   if (visto.colores.remate)
     comprobar(
-      `${id}: las aletas y el filete llevan el remate de su ficha`,
+      `${id}: las aletas llevan el remate de su ficha`,
       visto.colores.remate === hex(visto.avion.librea.remate),
       `${visto.colores.remate} · ficha ${hex(visto.avion.librea.remate)}`,
       "«se echa de menos el terracota»: si no se repinta, sale el del .glb",

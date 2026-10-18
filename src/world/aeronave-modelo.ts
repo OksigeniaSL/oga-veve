@@ -271,10 +271,10 @@ const RANURAS = {
   casco: "body",
   capo: "accent",
   detalle: "trim",
-  // La deriva que lleva el motivo de la casa: del color de la cola de la
-  // ficha —o del capó, si no tiene uno propio—, que es el fondo del motivo,
-  // hasta que `vestirLaLibrea` le pone el dibujo encima. Si no se lo puede
-  // poner, la cola se queda de ese color.
+  // La deriva: del color de la cola de la ficha —o del capó, si no tiene uno
+  // propio—. En los que llevan el motivo de la casa es su fondo, hasta que
+  // `vestirLaLibrea` le pone el dibujo encima; en los que no, y si no se lo
+  // puede poner, la cola se queda de ese color.
   cola: "accent",
 } as const;
 

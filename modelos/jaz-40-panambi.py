@@ -242,8 +242,13 @@ def construir():
     #
     # La góndola empieza por delante del borde de ataque y acaba por detrás
     # del borde de salida, que es como cuelga un motor de un ala: el ala la
-    # atraviesa. El capó, del color de la franja, con sus dos tomas de aire a
-    # los lados del cono.
+    # atraviesa. El capó, con sus dos tomas de aire a los lados del cono.
+    #
+    # **Del color del casco y con la franja de la casa por el costado**, como
+    # en su ilustración: el terracota de la franja del fuselaje sigue por las
+    # góndolas, y así los tres cuerpos del avión llevan la misma librea. El
+    # capó entero terracota eran dos morros pintados que no tenía ningún otro
+    # avión de la flota.
     gondola = Piel([
         (Z_HELICE + 0.06, 0.16, EJE + 0.16, EJE - 0.16, EJE),
         (-1.80, 0.30, EJE + 0.26, EJE - 0.30, EJE),
@@ -254,16 +259,22 @@ def construir():
         (1.55, 0.0, EJE - 0.08, EJE - 0.08),
     ], x=MOTOR, n=2.4)
     piezas.append(espejo(gondola.malla("gondola", "casco", lados=28,
-                                       paso=0.15, zonas=[
-        ("capo", -9, -1.05, 0, 180),
-    ], extra=[-1.05])))
+                                       paso=0.15, extra=[-1.05])))
+    # La franja, a la altura del eje y de la toma hasta el borde de ataque,
+    # donde se mete en el ala: por debajo del ala no se ve, y por encima la
+    # góndola es lomo, no costado.
+    piezas.append(espejo(banda("gondola-franja", gondola, -1.74, -0.45,
+                               EJE - 0.045, EJE + 0.045, fuera=0.006,
+                               paso=0.12, filas=1)))
     piezas.append(espejo(paneles("tomas", gondola, simetricos([
         [(-1.86, 55), (-1.86, 100), (-1.77, 102), (-1.77, 52)],
     ]), material_="oscuro", fuera=0.005, div=3)))
     for lado, nombre in ((-1, "izquierda"), (1, "derecha")):
+        # Los conos, de metal, como en su ilustración.
         piezas += helice(f"helice-{nombre}", (lado * MOTOR, EJE, Z_HELICE),
                          radio=RADIO_HELICE, cuantas=3, buje=0.15,
-                         cuerda=0.14, largo_cono=0.34, giro=lado)
+                         cuerda=0.14, largo_cono=0.34, giro=lado,
+                         cono="aluminio")
 
     # ── Cola ──────────────────────────────────────────────────────────────
     #

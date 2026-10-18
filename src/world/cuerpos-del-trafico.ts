@@ -140,9 +140,10 @@ const PIEZA_DE_DENTRO =
   /asiento|panel|reloj|cuerno|boton|pomo|palanca|pedestal|mcp|bastidor|interruptores|marco-de-techo|suelo-cabina|alfeizar|forro|visera|tornillos|palas|montantes-parabrisas|juntas-parabrisas|limpia-parabrisas|brujula|capota|efis|aviso-/;
 
 /**
- * Lo que va del color de la librea. Con el `remate` —las aletas y el filete
- * del JAZ 120—, que del color del `.glb` es el terracota de la casa: si un
- * tipo del tráfico usa ese modelo, no puede llevarlo.
+ * Lo que va del color de la librea. Con el `remate` —las aletas del JAZ 90 y
+ * del JAZ 120—, que del color del `.glb` es el terracota de la casa: el
+ * reactor del tráfico usa el modelo del JAZ 90, y sus aletas tienen que ir
+ * del color de su compañía, no del de la nuestra.
  */
 const PINTADO = new Set(["capo", "cola", "detalle", "remate"]);
 

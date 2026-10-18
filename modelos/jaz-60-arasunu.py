@@ -147,8 +147,12 @@ def construir():
 
     arriba = sube(0.00)
 
+    # **Ancha, casi un cuarto del alto del fuselaje**, de bajo las
+    # ventanillas a un palmo de la raíz del ala: la librea de la casa lleva el
+    # terracota en el costado bajo, como en la ilustración de este avión, y es
+    # la misma franja que la de los dos reactores a su escala.
     def abajo(z):
-        return arriba(z) - 0.28 * max(0.0, min(1.0, (z + 6.6) / 1.2))
+        return arriba(z) - 0.44 * max(0.0, min(1.0, (z + 6.6) / 2.0))
 
     # Y acaba en punta de hoja al pie de la deriva, con la raya fina
     # cerrándose en la misma punta. Ver `en_punta`.
@@ -156,17 +160,19 @@ def construir():
     piezas.append(banda("cintura", PIEL, -6.6, 7.39, abajo_punta, arriba,
                         fuera=0.008, paso=0.15))
 
-    # La raya va pegada al borde de abajo de la franja **sin** el afilado del
-    # morro, que es donde estaba: solo la cola cambia.
-    abajo_sin_morro = en_punta(sube(-0.28), arriba, 5.0, 7.4)
+    # La raya va pegada al borde de abajo de la franja, con un filete del
+    # casco entre las dos, y **sigue su afilado del morro**: con la franja
+    # ancha, una raya recta nacía suelta por debajo de una punta que aún no
+    # había engordado.
+    def afila(z):
+        return (max(0.0, min(1.0, (z + 6.2) / 0.8))
+                * (1 - max(0.0, min(1.0, (z - 5.0) / 2.4))))
 
     def fina_arriba(z):
-        return abajo_sin_morro(z) - 0.04 * (
-            1 - max(0.0, min(1.0, (z - 5.0) / 2.4)))
+        return abajo_punta(z) - 0.04 * afila(z)
 
     piezas.append(banda("cintura-fina", PIEL, -6.2, 7.39,
-                        en_punta(lambda z: fina_arriba(z) - 0.04, fina_arriba,
-                                 5.0, 7.4),
+                        lambda z: fina_arriba(z) - 0.04 * afila(z),
                         fina_arriba, material_="detalle", fuera=0.008,
                         paso=0.15, filas=1))
 
@@ -275,11 +281,14 @@ def construir():
     piezas.append(espejo(ventanas("escapes", gondola, [-1.30], EJE_HELICE
                                   + 0.12, 0.26, 0.44, radio=0.12,
                                   material_="oscuro", fuera=0.008)))
+    # Los conos, oscuros como las palas: así van en su ilustración, y del
+    # color de la franja eran dos puntos terracota sueltos delante del ala.
     for lado, nombre in ((-1, "izquierda"), (1, "derecha")):
         piezas += helice(f"helice-{nombre}",
                          (lado * MOTOR, EJE_HELICE, Z_HELICE),
                          radio=RADIO_HELICE, cuantas=4, buje=0.24,
-                         cuerda=0.22, largo_cono=0.55, giro=lado)
+                         cuerda=0.22, largo_cono=0.55, giro=lado,
+                         cono="oscuro")
 
     # ── Cola en T ─────────────────────────────────────────────────────────
     #
@@ -322,23 +331,29 @@ def construir():
     ], punta=False)
     piezas.append(deriva)
     piezas += mandos_moviles(deriva, timon)
+    # **El estabilizador, del color del casco**, como en su ilustración: la T
+    # se lee por su forma, blanca encima de la deriva verde. Iba del color de
+    # la franja, y con la franja terracota era una T de otro avión.
     profundidad = [mando("profundidad", 0.3, 3.2, 0.64, "cabeceo", 20, 14)]
     estabilizador = superficie("estabilizador", [
         de_ala(0.0, alto - 0.02, punta_z - 0.05, 1.85, 0.11),
         de_ala(3.45, alto - 0.02, punta_z + 0.55, 1.00, 0.10),
-    ], material_="capo", mandos=profundidad, zonas=[
+    ], material_="casco", mandos=profundidad, zonas=[
         ("oscuro", 0.3, 3.2, 0.62, 0.64),
     ])
     piezas.append(estabilizador)
     piezas += mandos_moviles(estabilizador, profundidad)
-    # La bala que tapa el cruce de la deriva con el estabilizador.
+    # La bala que tapa el cruce de la deriva con el estabilizador, en el verde
+    # de la raya, que es el de la cola: es la deriva la que la remata, y así
+    # va en su ilustración. No en `cola`, que es solo la deriva con el
+    # motivo: el juego mide su forma para dibujarle el sol encima.
     bala = Piel([
         (punta_z - 0.45, 0.0, alto + 0.02, alto + 0.02),
         (punta_z + 0.1, 0.14, alto + 0.16, alto - 0.12),
         (punta_z + 1.4, 0.13, alto + 0.14, alto - 0.10),
         (punta_z + 2.1, 0.0, alto + 0.02, alto + 0.02),
     ])
-    piezas.append(bala.malla("bala-de-cola", "capo", lados=16, paso=0.2))
+    piezas.append(bala.malla("bala-de-cola", "detalle", lados=16, paso=0.2))
 
     # ── Tren triciclo ─────────────────────────────────────────────────────
     #

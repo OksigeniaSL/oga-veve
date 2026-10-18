@@ -13,7 +13,10 @@
  *   de la deriva y siguiendo su flecha: la cola es el campo del color del
  *   avión, el sol sale en medio y las hojas lo abrazan desde la raíz. Así es
  *   como se diseña una cola de verdad: un elemento de la marca que se deja
- *   cortar por la forma del plano, no un sello centrado.
+ *   cortar por la forma del plano, no un sello centrado. Y como la cola de
+ *   la casa es verde —ver `LIBREA` en `aircraft.ts`—, del mismo verde que
+ *   las hojas, en toda la flota lo que se pinta es el sol solo, naciendo en
+ *   la raíz: la deriva entera hace de hoja. Ver `motivoQueSeLee`.
  * - **El logotipo, entero y pequeño, donde lo firma una compañía**: detrás de
  *   la puerta de delante, sobre las ventanillas, con su nombre al lado. El
  *   logotipo no se recorta ni se recolorea —ver `CREDITOS.md`—, y por eso en
@@ -21,9 +24,9 @@
  * - **Y los huecos del color del casco.** El logotipo separa sus piezas con
  *   aire —el tejado de la casa, la casa del sol, una hoja de la otra—, y el
  *   motivo hace lo mismo: entre el sol y las hojas queda un filete del color
- *   del fuselaje. Es lo que despega el ocre del terracota en la cola del JAZ
- *   90, igual que en el logotipo, y lo que dice dónde acaba una hoja y
- *   empieza la otra.
+ *   del fuselaje. Es lo que despega el ocre del sol del verde de la cola,
+ *   igual que en el logotipo, y lo que dice dónde acaba una hoja y empieza
+ *   la otra.
  *
  * ## Quién decide qué
  *
@@ -85,7 +88,8 @@ export const CONTRASTE_DE_COLA = 1.5;
  * aclarando las hojas a un verde grisáceo, y el arreglo era el error: sacaba
  * la cola de la marca —«el avión no parece de la granja»—. Ahora el azul ya
  * no está, y en una cola verde lo que va es el sol solo, naciendo en la raíz,
- * con la deriva haciendo de hoja: es el motivo del JAZ 40 y del JAZ 120.
+ * con la deriva haciendo de hoja: es el motivo de toda la flota, que lleva la
+ * cola verde. Ver `LIBREA` en `aircraft.ts`.
  *
  * Se decide aquí y no se confía a la ficha: si mañana alguien pone el sol
  * entre las hojas en una cola verde, la cola sigue leyéndose.
@@ -142,8 +146,8 @@ const LETRA = '"Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif
  *
  * Se llama con el modelo recién cargado y ya repintado con los colores de su
  * ficha. Si no hay lienzo —no pasa en un navegador, pero el cargador tiene
- * prohibido dejar a nadie sin volar—, la cola se queda del color del capó,
- * que es como estaba, y la firma no aparece.
+ * prohibido dejar a nadie sin volar—, la cola se queda lisa, del color de la
+ * cola de la ficha, y la firma no aparece.
  */
 export function vestirLaLibrea(raiz: Object3D, aircraft: AircraftConfig): void {
   const colas: Mesh[] = [];

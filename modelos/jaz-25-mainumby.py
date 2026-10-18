@@ -33,7 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, de_ala, de_deriva, dentro_de, espejo,
-    estacion, helice, largo_hasta, llantas, mando, mandos_libres,
+    estacion, helice, juntar, largo_hasta, llantas, mando, mandos_libres,
     mandos_moviles, neumaticos, paneles, simetricos, superficie, varillas,
 )
 from mathutils import Vector  # noqa: E402
@@ -115,10 +115,15 @@ def construir():
     # Un fumigador lleva un radial de nueve cilindros: ancho, corto y romo. Es
     # media silueta del avión. La cara de delante, oscura: detrás del cono se
     # ven las culatas, no una chapa.
+    #
+    # **Y del capó, solo el anillo de delante en terracota**, el labio que
+    # abraza los cilindros: es como va en su ilustración, y lo demás del capó
+    # es del color del casco. Entero en terracota era un morro pintado que no
+    # lleva ningún otro avión de la casa.
     piezas.append(PIEL.malla("fuselaje", lados=40, paso=0.15, zonas=[
         ("oscuro", -9, -4.31, 0, 180),
-        ("capo", -4.31, -3.45, 0, 180),
-    ], extra=[-4.31, -3.45]))
+        ("capo", -4.31, -4.05, 0, 180),
+    ], extra=[-4.31, -4.05, -3.45]))
 
     # ── La franja, y **ninguna puerta** ───────────────────────────────────
     #
@@ -127,8 +132,18 @@ def construir():
     # llevan los otros cinco sería justo lo que esta casa no hace — falsear
     # para que quede bonito. Lo que se enseña aquí tiene que reconocerse el día
     # que se vea de verdad.
-    piezas.append(banda("cintura", PIEL, -3.40, 3.9, -0.06, 0.06,
-                        material_="detalle", fuera=0.007, paso=0.12))
+    #
+    # **Dos rayas terracota con un filete del casco entre ellas**, como en su
+    # ilustración, y no la franja con la raya verde de los demás: es el avión
+    # de la granja y no de la compañía, y así es como se pinta un biplano de
+    # trabajo. Van en `capo`, que es el terracota de la casa, y en una malla:
+    # son el mismo color, una llamada de dibujo.
+    piezas.append(juntar("cintura", [
+        banda("cintura", PIEL, -3.40, 3.9, 0.03, 0.13,
+              fuera=0.007, paso=0.12, filas=1),
+        banda("cintura-baja", PIEL, -3.40, 3.9, -0.11, -0.01,
+              fuera=0.007, paso=0.12, filas=1),
+    ]))
 
     # ── Carlinga ──────────────────────────────────────────────────────────
     #
@@ -177,6 +192,10 @@ def construir():
     #
     # Perfil grueso y curvado, de avión lento que tiene que sustentar mucho
     # peso de líquido a poca velocidad. Alerones en las dos, con su junta.
+    #
+    # **Y las dos en terracota**, que es lo que más se ve de este avión en su
+    # ilustración: un fuselaje crema entre dos planos del color del tejado de
+    # la granja. Por eso van en `capo` y no en `casco`.
     j = "oscuro"
     # **Y los cuatro alerones se mueven**, los dos de cada lado a la vez, que
     # es como van en un biplano de esta clase: unidos por una varilla entre
@@ -196,7 +215,7 @@ def construir():
         # avión mida de ancho lo que dice su ficha.
         de_ala(semi_a - 0.10, ALA_ALTA + semi_a * ta, LE_ALTA, CUERDA * 0.96,
                0.12, 1.5),
-    ], curvatura=0.04, mandos=alerones_a, zonas=[
+    ], material_="capo", curvatura=0.04, mandos=alerones_a, zonas=[
         (j, 3.3, 6.05, 0.74, 0.755),
         (j, 3.3, 3.36, 0.755, 1.0),
     ])
@@ -206,7 +225,7 @@ def construir():
         de_ala(0.0, ALA_BAJA, LE_BAJA, CUERDA * 0.94, 0.12, 2.5),
         de_ala(semi_b, ALA_BAJA + semi_b * tb, LE_BAJA, CUERDA * 0.90, 0.12,
                2.5),
-    ], curvatura=0.04, mandos=alerones_b, zonas=[
+    ], material_="capo", curvatura=0.04, mandos=alerones_b, zonas=[
         (j, 3.1, 5.55, 0.74, 0.755),
         (j, 3.1, 3.16, 0.755, 1.0),
     ])
@@ -219,10 +238,12 @@ def construir():
     x_m = ENVERGADURA * 0.30
     abajo = Vector((x_m, ALA_BAJA + x_m * tb + 0.08, LE_BAJA + 0.35))
     arriba = Vector((x_m, ALA_ALTA + x_m * ta - 0.08, LE_ALTA + 0.35))
+    # Del color de las cabañas: los montantes de un biplano son una sola
+    # estructura, y en su ilustración van oscuros entre los dos planos.
     piezas.append(superficie("riostra-entre-alas", [
         estacion(abajo, 0.95, 0.12, (0, 0, 1), (-1, 0, 0)),
         estacion(arriba, 0.95, 0.12, (0, 0, 1), (-1, 0, 0)),
-    ], punta=False))
+    ], material_="detalle", punta=False))
     # Y los cables en cruz: la otra mitad de la estructura de un biplano, la
     # que trabaja a tracción. Plateados y finos, como son.
     piezas.append(varillas("cables", [
@@ -249,6 +270,12 @@ def construir():
     # dorsal a donde acaba su junta pintada: por debajo es aleta, y por
     # encima la junta hace codo y la punta se queda quieta. Los grados,
     # provisionales como los del alerón. Ver `mando`.
+    #
+    # **Deriva y estabilizador en `cola`**, que es el verde de la casa: en su
+    # ilustración la cola entera es verde, plano de profundidad incluido. Va
+    # lisa, sin motivo —un fumigador no se viste de compañía—, así que el
+    # juego no le busca la forma a la deriva y el estabilizador puede ir en
+    # el mismo material. Ver `vestirLaLibrea`.
     de_la_deriva = [
         de_deriva(0.0, 0.20, 2.85, 1.55, 0.06),
         de_deriva(0.0, 0.34, 3.30, 1.10, 0.09),
@@ -257,7 +284,7 @@ def construir():
     ]
     timon = [mando("timon-de-direccion", largo_hasta(de_la_deriva, 1), 1.3,
                    0.52, "guinada", 17.73, 17.73)]
-    deriva = superficie("deriva", de_la_deriva, material_="capo",
+    deriva = superficie("deriva", de_la_deriva, material_="cola",
                         simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.2, 1.3, 0.50, 0.52),
     ])
@@ -268,7 +295,7 @@ def construir():
         de_ala(0.0, 0.16, 3.30, 1.08, 0.09),
         de_ala(2.35, 0.16, 3.42, 0.88, 0.08),
         de_ala(2.50, 0.16, 3.58, 0.60, 0.08),
-    ], mandos=profundidad, zonas=[
+    ], material_="cola", mandos=profundidad, zonas=[
         ("oscuro", 0.2, 2.3, 0.56, 0.58),
     ])
     piezas.append(estabilizador)
@@ -282,7 +309,8 @@ def construir():
     #
     # Dos patas separadas que salen de la panza, con la rueda grande de pista
     # de tierra, y la rueda de cola: un fumigador es de rueda atrás, y por eso
-    # rueda con el morro apuntando al cielo.
+    # rueda con el morro apuntando al cielo. Las patas, del color del casco,
+    # como en su ilustración.
     eje = -(TREN - RUEDA) + 0.04
     piezas.append(superficie("pata-principal", [
         estacion((0.36, -0.58, PRINCIPAL_Z - 0.10), 0.20, 0.25, (0, 0, 1),
@@ -292,7 +320,7 @@ def construir():
                  (0, 0, 1),
                  (Vector((VIA - 0.36, eje + 0.58, 0)).cross(Vector((0, 0, 1)))
                   .normalized())),
-    ], material_="detalle", punta=False))
+    ], material_="casco", punta=False))
     piezas.append(neumaticos("rueda-principal", [(VIA, eje, PRINCIPAL_Z)],
                              RUEDA, 0.20, simetria=True))
     piezas.append(llantas("rueda-principal-llanta", [(VIA, eje, PRINCIPAL_Z)],
@@ -308,8 +336,9 @@ def construir():
     #
     # **Tres palas y dos metros sesenta de diámetro**, que es lo que mueve un
     # radial de fumigador y lo que dice su propia ficha (`appearance.blades`).
+    # El cono, de metal: así va en su ilustración, dentro del anillo terracota.
     piezas += helice("helice", (0, 0.02, -4.40), radio=1.30, cuantas=3,
-                     buje=0.24, cuerda=0.20, largo_cono=0.42)
+                     buje=0.24, cuerda=0.20, largo_cono=0.42, cono="aluminio")
 
     # Y ningún mando toca nada al moverse: ni los alerones los montantes y
     # los cables, ni la profundidad el timón y sus riostras. Ver

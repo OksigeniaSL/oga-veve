@@ -1,74 +1,84 @@
 {
   "jaz-20": {
-    "glb": "bd7ef8adb45a8e5e3d80f62fd9cdd26e6e9d45974c9c554a5bba6d99f0afdc4b",
-    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
-    "ficha": {
-      "body": 15000282,
-      "accent": 12475704,
-      "trim": 3101251,
-      "blades": 2
-    },
-    "retrato": "jaz-20-48f63a91.webp"
-  },
-  "jaz-25": {
-    "glb": "1db56adcce8bda815d0fb24f40ce9de7bc06121a806fd1a880a77c516f2bdb3f",
-    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
-    "ficha": {
-      "body": 14520895,
-      "accent": 3101251,
-      "trim": 12475704,
-      "blades": 3
-    },
-    "retrato": "jaz-25-3fe7649d.webp"
-  },
-  "jaz-40": {
-    "glb": "c3594e457bc41630cdca97d969d57e0cffafbe84d070a911ca6de6cd7f59ee40",
-    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
+    "glb": "2fc1ce41f85211deb13bbe663d40ba1de461a79f3875d658b740884601ad1262",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
       "body": 15527142,
-      "accent": 3101251,
-      "trim": 12475704,
+      "accent": 12475704,
+      "trim": 3101251,
+      "cola": 3101251,
+      "remate": 12475704,
+      "blades": 2
+    },
+    "retrato": "jaz-20-1e10c784.webp"
+  },
+  "jaz-25": {
+    "glb": "59938f85db5503894cb326d9b5bf95e39f40c776342ff862d6915939486c4162",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
+    "ficha": {
+      "body": 15527142,
+      "accent": 12475704,
+      "trim": 3101251,
+      "cola": 3101251,
+      "remate": 12475704,
+      "blades": 3
+    },
+    "retrato": "jaz-25-e8df8f3a.webp"
+  },
+  "jaz-40": {
+    "glb": "183d18cd267638535b54db0d0a909faed6a10f4f9cdc2803b5e2e6a88b452e9f",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
+    "ficha": {
+      "body": 15527142,
+      "accent": 12475704,
+      "trim": 3101251,
+      "cola": 3101251,
+      "remate": 12475704,
       "blades": 3,
       "motivo": "sol"
     },
-    "retrato": "jaz-40-2ffbaf6f.webp"
+    "retrato": "jaz-40-8997e1f7.webp"
   },
   "jaz-60": {
-    "glb": "2d965cb418f0f363d32d3f029c683a21e4e124cea3aec0f855142aa87181ac2c",
-    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
+    "glb": "c4cc2dbbf991128d283861b9a98ceec2e53926b20ebe36a46d931ac47bef61f3",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
       "body": 15527142,
-      "accent": 14520895,
-      "trim": 3101251,
-      "cola": 12475704,
-      "blades": 4,
-      "motivo": "sol-y-hojas"
-    },
-    "retrato": "jaz-60-50be7c71.webp"
-  },
-  "jaz-90": {
-    "glb": "b7163385cba6f3a6ff776137cba17c5e4a94d0b264361b4176c38ec2e9f3c2b3",
-    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
-    "ficha": {
-      "body": 15921644,
       "accent": 12475704,
       "trim": 3101251,
-      "blades": 0,
-      "motivo": "sol-y-hojas"
+      "cola": 3101251,
+      "remate": 12475704,
+      "blades": 4,
+      "motivo": "sol"
     },
-    "retrato": "jaz-90-a97b4844.webp"
+    "retrato": "jaz-60-e2d4c058.webp"
   },
-  "jaz-120": {
-    "glb": "77b496393c24fd1a445635564895d4bce551af10a885af94c2a0be5277730323",
-    "librea": "24b6b55c2de3399b45669dbf1b2d1f1dd78670f66f4f0a8e89241400cf22810e",
+  "jaz-90": {
+    "glb": "9f8a2a9459dc693d0c44f21664242337b0fc1a6e23213b67d94de41eb6a73000",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
-      "body": 15921644,
-      "accent": 3101251,
-      "trim": 14520895,
+      "body": 15527142,
+      "accent": 12475704,
+      "trim": 3101251,
+      "cola": 3101251,
       "remate": 12475704,
       "blades": 0,
       "motivo": "sol"
     },
-    "retrato": "jaz-120-6c3ab36e.webp"
+    "retrato": "jaz-90-2717abd9.webp"
+  },
+  "jaz-120": {
+    "glb": "b7edbaea8d4d3b1b741d37a9da5f8c6c89027affce827a729201e58f3623df09",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
+    "ficha": {
+      "body": 15527142,
+      "accent": 12475704,
+      "trim": 3101251,
+      "cola": 3101251,
+      "remate": 12475704,
+      "blades": 0,
+      "motivo": "sol"
+    },
+    "retrato": "jaz-120-273625e2.webp"
   }
 }

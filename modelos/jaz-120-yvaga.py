@@ -33,9 +33,10 @@ tres cosas, y son las que se cambiaron:
   del otro el grande parecía el pequeño estirado. Ver `LARGO`.
 - **La cara.** Un morro redondo y lleno con el parabrisas en el hombro, y no
   una frente de dos metros y medio sobre una rendija. Ver `OJOS_Y` y `PIEL`.
-- **La librea.** La franja del Arai en verde era una raya; aquí es una hoja
-  que crece del morro a la cola y se hace deriva, y los motores llevan la
-  toma del color del sol. Ver la franja en `construir`.
+- **La librea.** La de toda la flota, a su escala: la franja terracota ancha
+  —un cuarto del alto del fuselaje, metro setenta— que se cierra en punta al
+  pie de la deriva, como la del Arai. Medio metro, en un avión de sesenta y
+  ocho, se lee como una raya. Ver la franja en `construir`.
 
 Y las puntas de ala **con aleta partida**, una arriba y otra abajo, y del
 terracota de la casa: dos aviones de la misma casa se tienen que poder
@@ -58,9 +59,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, aerofreno, aerofrenos_libres, banda, centro_de_gravedad, contorno,
-    de_ala, de_deriva, dentro_de, piezas_de_aerofrenos,
+    de_ala, de_deriva, dentro_de, en_punta, piezas_de_aerofrenos,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
-    fowler, juntar, largo_hasta, llantas, mando, mandos_libres,
+    fowler, largo_hasta, llantas, mando, mandos_libres,
     mandos_moviles, marca, neumaticos, paneles, paneles_zy, piezas_de_mandos,
     recogido, reversa,
     simetricos, superficie, turbofan, varillas, ventanas, zy,
@@ -286,85 +287,71 @@ def construir():
     piezas.append(ventanas("ventanita-puerta", PIEL, list(puertas), 1.32,
                            0.30, 0.24, radio=0.11, fuera=0.02))
 
-    # **La franja es una hoja que acaba siendo la cola.**
+    # **La franja, la de la casa: terracota, ancha y acabada en punta de hoja
+    # al pie de la deriva**, con la raya verde debajo. Es la misma librea que
+    # llevan el JAZ 60 y el JAZ 90, a la escala de este avión.
     #
-    # La de antes era la del Arai en verde: medio metro bajo las ventanillas
-    # que acababa en punta al pie de la deriva. En terracota eso tiene cuerpo;
-    # en el verde de las hojas, que es mucho más oscuro, a la distancia del
-    # hangar se leía una raya, y la librea quedaba plana. Así que aquí la hoja
-    # crece:
+    # Aquí hubo una hoja verde que nacía en el morro, subía a la cola y
+    # envolvía el lomo hasta hacerse deriva: era la librea de un avión que se
+    # distinguía de los demás por el color. La flota es ahora una compañía y
+    # lleva una sola librea —ver `LIBREA` en `src/flight/aircraft.ts`—, con la
+    # cola verde y la franja terracota; una franja terracota que envolviera el
+    # lomo dejaba la deriva verde saliendo de un lomo terracota, que no es
+    # ninguna de las dos cosas y no se parece a su ilustración.
     #
-    # - **Nace en punta bajo el parabrisas** y engorda hasta metro setenta de
-    #   ancho, un cuarto del alto del avión, de las ventanillas a la raíz del
-    #   ala: en verde oscuro es lo que hace falta para que, de tres cuartos y a
-    #   la distancia del hangar, se lea como color y no como raya. Con metro
-    #   diez el retrato seguía siendo el de un avión blanco con una raya.
-    # - **Y a la cola sube y envuelve el lomo**, y la deriva sale de ella. La
-    #   cola verde con el sol naciendo en la raíz —ver `motivoQueSeLee` en
-    #   `librea.ts`— ya decía «la deriva hace de hoja»; ahora la hoja es una
-    #   sola, del morro a la punta de la deriva, y el sol nace de ella.
+    # Se queda lo que se aprendió con ella: **el ancho**. Nace en punta bajo
+    # el parabrisas y engorda hasta metro setenta, de las ventanillas a la
+    # raíz del ala, porque a la distancia del hangar medio metro en un avión
+    # de sesenta y ocho se lee como una raya y no como color. Con metro diez
+    # el retrato seguía siendo el de un avión blanco con una raya.
     #
-    # El borde de arriba alcanza el lomo antes que la deriva, y el de abajo
-    # sigue la cola hasta cerrarse en el lomo por detrás de ella: visto de
-    # lado, la hoja se ensancha hacia la cola, como una de verdad hacia su
-    # punta.
-    #
-    # La franja que sube y se hace cola es de las formas de siempre de pintar
-    # un avión de línea, y aquí es además el motivo de la casa: una hoja.
+    # Y por detrás **sube con la cola y se cierra en punta al pie de la
+    # deriva**, como la del Arai: la hoja larga que lleva el ojo del morro a
+    # la cola, donde está el sol. Ver `en_punta`.
     nace, y_nace = -32.2, 0.05
     alto_franja, bajo_franja = 0.82, -0.88
-    cierra = COLA - 1.2
+    # Dónde empieza a subir —donde el lomo empieza a bajar hacia la cola— y
+    # cuánto por metro, para cerrar en la punta por debajo del lomo.
+    sube_desde, sube = 14.0, 0.13
+    # Y dónde se afila el borde de abajo y dónde se cierra: de la aleta
+    # dorsal al borde de salida de la deriva.
+    afila_desde, cierra = 17.0, 27.5
+
+    def subida(z):
+        return max(0.0, z - sube_desde) * sube
 
     def arriba(z):
         # Por debajo del parabrisas de costado hasta pasada la cabina: el
         # borde de abajo del cristal va a la altura de los ojos.
-        y = y_nace + (alto_franja - y_nace) * _suave(z, nace, -25.0)
-        return y + (PIEL.arriba(z) - y) * _suave(z, 0.0, 14.5)
+        return (y_nace + (alto_franja - y_nace) * _suave(z, nace, -25.0)
+                + subida(z))
 
-    def abajo(z):
-        y = y_nace + (bajo_franja - y_nace) * _suave(z, nace, -26.0)
-        t = max(0.0, min(1.0, (z - 4.0) / (cierra - 4.0)))
-        return y + (PIEL.arriba(z) - y) * t ** 1.8
+    def abajo_recto(z):
+        return (y_nace + (bajo_franja - y_nace) * _suave(z, nace, -26.0)
+                + subida(z))
 
-    # En dos trozos: por delante es una franja de metro setenta y le bastan
-    # cuatro filas; por detrás envuelve el lomo, cinco metros de chapa curva,
-    # y con pocas filas cada una es una cuerda que se mete por dentro de la
-    # piel y deja asomar el casco en rayas. Con doce, la cuerda no pasa de un
-    # dedo.
-    # Y juntos en una malla, que son el mismo color: una llamada de dibujo.
-    junta = 2.0
-    piezas.append(juntar("cintura", [
-        banda("cintura", PIEL, nace, junta, abajo, arriba, fuera=0.018,
-              paso=0.5, filas=4),
-        banda("cintura-cola", PIEL, junta, cierra, abajo, arriba,
-              fuera=0.018, paso=0.5, filas=12),
-    ]))
+    abajo = en_punta(abajo_recto, arriba, afila_desde, cierra)
+    piezas.append(banda("cintura", PIEL, nace, cierra, abajo, arriba,
+                        fuera=0.018, paso=0.5, filas=4))
 
-    # Y por debajo, **los otros dos colores del logotipo**: un filete
-    # terracota pegado a la hoja y la raya del color del sol debajo de él, la
-    # misma raya fina que acompaña a la franja del Arai. Los tres colores de
-    # la casa en fila, que es como los lleva el logotipo —el tejado, el sol y
-    # las hojas— y como pinta su franja una compañía de verdad cuando tiene
-    # tres. Sin el terracota, este era el único avión de la casa que no lo
-    # llevaba en ninguna parte: «se echa de menos el terracota: el logo de
-    # Granja Óga lo lleva y es un color fundamental». Los dos nacen un poco
-    # por detrás de la punta y se afilan al llegar al lomo.
+    # **La raya fina, en el verde de la casa**, debajo de la franja y con un
+    # filete del casco entre las dos, como en el Arai. Nace un poco por detrás
+    # de la punta y se cierra con la franja al pie de la deriva.
+    #
+    # Aquí iba también un filete terracota entre la hoja y la raya, que era
+    # donde este avión llevaba el terracota cuando la hoja era verde. Con la
+    # franja terracota sobraba: era la misma franja dos dedos más ancha.
     def afila(z):
-        return _suave(z, -30.8, -28.0) * (1 - _suave(z, cierra - 6.0, cierra))
+        return _suave(z, -30.8, -28.0) * (1 - _suave(z, afila_desde, cierra))
 
-    def filete_abajo(z):
-        return abajo(z) - 0.20 * afila(z)
+    def fina_arriba(z):
+        return abajo(z) - 0.16 * afila(z)
 
     def fina_abajo(z):
-        return filete_abajo(z) - 0.20 * afila(z)
+        return fina_arriba(z) - 0.16 * afila(z)
 
-    # Solo el costado derecho: el izquierdo se lo da el espejo de la aleta
-    # de abajo, con la que va en una malla. Ver más abajo.
-    filete = banda("cintura-filete", PIEL, -30.8, cierra, filete_abajo, abajo,
-                   material_="remate", fuera=0.018, paso=0.4, filas=1,
-                   lados=(1,))
     piezas.append(banda("cintura-fina", PIEL, -30.8, cierra, fina_abajo,
-                        filete_abajo, material_="detalle", fuera=0.018,
+                        fina_arriba, material_="detalle", fuera=0.018,
                         paso=0.4, filas=1))
 
     # La marca detrás de la puerta de delante, sobre las ventanillas: la
@@ -525,9 +512,8 @@ def construir():
         ("aluminio", 3.2, x_slats * E_POR_X, 0.0, 0.06),
         # **Y la aleta, en terracota**, desde donde el ala empieza a subir.
         # Es donde las compañías de verdad ponen su color —una aleta es una
-        # cola pequeña que se ve de frente y desde la ventanilla—, y es el
-        # color del logotipo que este avión no llevaba: ver `remate` en
-        # `aircraft.ts`.
+        # cola pequeña que se ve de frente y desde la ventanilla—, y así va
+        # en su ilustración: ver `remate` en `aircraft.ts`.
         ("remate", a_lo_largo(3), 99.0, 0.0, 1.0),
         (j, 2.6, 21.6, 0.72, 0.73),
         (j, 2.6, 2.75, 0.73, 1.0),
@@ -543,18 +529,17 @@ def construir():
     # ataque echado atrás y el de salida recto. Es la que hace que la punta se
     # lea partida y no una aleta más.
     #
-    # Va en una malla con el filete de la franja, que es del mismo color: una
-    # llamada de dibujo para los dos. **Con la aleta delante**: al juntar,
-    # Blender se queda con los modificadores de la primera pieza y tira los
-    # de las demás, y el espejo que da la aleta de la izquierda es uno. Puesto
-    # el filete delante, la de la izquierda no salía.
+    # Se llama `remate`, como su material y como la malla en la que iba con
+    # el filete de la franja, que ya no está —ver la franja—. Y no empieza por
+    # `ala`, que es lo que importa: las luces de posición buscan la punta solo
+    # en las piezas del ala, y esta hoja cuelga metro y medio por debajo. Ver
+    # `luces-de-posicion.ts`.
     raiz_abajo = semi - 0.90
-    aleta_abajo = superficie("aleta-abajo", [
+    piezas.append(superficie("remate", [
         de_ala(raiz_abajo, y_ala(raiz_abajo) + 0.03, z_a + 0.50, 1.90, 0.08,
                -60),
         de_ala(semi - 0.06, y_ala(semi) - 1.55, z_a + 2.05, 0.50, 0.07, -60),
-    ], material_="remate")
-    piezas.append(juntar("remate", [aleta_abajo, filete]))
+    ], material_="remate"))
     # **Fowler**, con los topes de un cuatrirreactor de fuselaje ancho —cinco,
     # veinte y treinta— y el carril más largo de la flota: cuatro quintos de
     # su cuerda, casi todo en la primera muesca, y el borde de salida hacia
@@ -593,12 +578,13 @@ def construir():
 
     # ── Los cuatro motores ────────────────────────────────────────────────
     #
-    # **Con la vuelta del color del sol en la cubierta**, la raya ocre de la
-    # franja dada la vuelta al motor. Verde sobre el campo, desde la
-    # persecución y en el aire las cuatro cubiertas eran cuatro jorobas
-    # oscuras delante del ala que había que buscar; el ocre, por delante del
-    # borde de ataque, es lo que las cuenta. Va en el tramo recto de delante,
-    # que es el que asoma. Ver `turbofan`.
+    # **Con la cubierta del color del casco**, como en su ilustración. Iban
+    # verdes con una vuelta ocre delante, de cuando la franja era verde y la
+    # raya ocre; con la librea de la casa no lleva ocre ningún avión —es el
+    # color del sol del motivo—, y cuatro motores terracota serían cuatro
+    # manchas más fuertes que la franja. Claros sobre el campo y contra el
+    # ala gris es como se cuentan de lejos, que era lo que hacía la vuelta
+    # ocre. Ver `turbofan`.
     #
     # Su sitio a lo largo sale de la flecha y su altura del diedro: cuanto más
     # afuera, más atrás y más arriba está el ala, así que el motor la sigue.
@@ -615,11 +601,12 @@ def construir():
         adelanto = 0.9 if n else 0.0
         centro = (x, y_ala(x) - 2.30, z_ala(x) - 2.55 - adelanto)
         piezas.append(turbofan(f"motor-{n}", centro, largo=6.60,
-                               diametro=3.20, anillo=(0.05, 0.20, "detalle"),
+                               diametro=3.20, cubierta="casco",
                                reversa=True))
         # Y su reversa, la del fan del JT9D del 747 clásico: el manguito de
         # atrás se va hacia la cola y deja ver la cascada. Ver `reversa`.
-        piezas += reversa(f"motor-{n}", centro, largo=6.60, diametro=3.20)
+        piezas += reversa(f"motor-{n}", centro, largo=6.60, diametro=3.20,
+                          cubierta="casco")
         piezas.append(superficie(f"pilon-{n}", [
             de_deriva(x, centro[1] + 1.20, centro[2] - 2.2, 7.4, 0.10),
             de_deriva(x, y_ala(x) - 0.10, z_ala(x) - 1.3, 6.4, 0.10),
