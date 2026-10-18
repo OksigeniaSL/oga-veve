@@ -83,6 +83,18 @@
       "ms": 7807,
       "h": "3e8accb183"
     },
+    "inicio.tripulacion.pasaje.cerca.techo": {
+      "ms": 6507,
+      "h": "94333e2b04"
+    },
+    "inicio.tripulacion.pasaje.cerca.techoHoy": {
+      "ms": 8107,
+      "h": "8928bb78dd"
+    },
+    "inicio.tripulacion.pasaje.cerca.visibilidad": {
+      "ms": 8907,
+      "h": "f3b1f587a2"
+    },
     "inicio.tripulacion.pasaje.cinturon": {
       "ms": 7007,
       "h": "283c89fe2e"
@@ -376,6 +388,15 @@
     ],
     "inicio.tripulacion.pasaje.cerca.kitGuardar": [
       "inicio.tripulacion.pasaje.cerca.kitGuardar"
+    ],
+    "inicio.tripulacion.pasaje.cerca.techo": [
+      "inicio.tripulacion.pasaje.cerca.techo"
+    ],
+    "inicio.tripulacion.pasaje.cerca.techoHoy": [
+      "inicio.tripulacion.pasaje.cerca.techoHoy"
+    ],
+    "inicio.tripulacion.pasaje.cerca.visibilidad": [
+      "inicio.tripulacion.pasaje.cerca.visibilidad"
     ]
   }
 }

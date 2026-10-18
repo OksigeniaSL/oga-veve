@@ -1635,6 +1635,10 @@
       "ms": 6307,
       "h": "6a4ffb5db9"
     },
+    "inicio.mama.pasaje.meneo": {
+      "ms": 12507,
+      "h": "b45e2a4f62"
+    },
     "inicio.mama.pasaje.nubes": {
       "ms": 11707,
       "h": "62a2073de8"
@@ -1642,6 +1646,10 @@
     "inicio.mama.pasaje.reversa": {
       "ms": 9907,
       "h": "a598794221"
+    },
+    "inicio.mama.pasaje.teide": {
+      "ms": 9107,
+      "h": "9989cf97a2"
     },
     "ventanilla.anaga": {
       "ms": 9907,
@@ -3338,6 +3346,12 @@
     ],
     "comandante.curiosidad.viento": [
       "comandante.curiosidad.viento"
+    ],
+    "inicio.mama.pasaje.meneo": [
+      "inicio.mama.pasaje.meneo"
+    ],
+    "inicio.mama.pasaje.teide": [
+      "inicio.mama.pasaje.teide"
     ]
   }
 }

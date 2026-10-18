@@ -83,6 +83,10 @@
       "ms": 5407,
       "h": "f2866a91c6"
     },
+    "inicio.ara.pasaje.bajoLasNubes": {
+      "ms": 8407,
+      "h": "0fc769e1f1"
+    },
     "inicio.ara.pasaje.bano": {
       "ms": 3307,
       "h": "d5da29fcda"
@@ -263,6 +267,10 @@
       "ms": 6307,
       "h": "fecbec73e5"
     },
+    "inicio.ara.pasaje.marDeNubes": {
+      "ms": 7807,
+      "h": "0049b10c14"
+    },
     "inicio.ara.pasaje.marQuieto": {
       "ms": 5907,
       "h": "170fdb64da"
@@ -270,6 +278,14 @@
     "inicio.ara.pasaje.masDespacio": {
       "ms": 5107,
       "h": "6880461654"
+    },
+    "inicio.ara.pasaje.meneo": {
+      "ms": 5307,
+      "h": "df073d2f79"
+    },
+    "inicio.ara.pasaje.meneoBien": {
+      "ms": 5807,
+      "h": "27e0e2d760"
     },
     "inicio.ara.pasaje.miro": {
       "ms": 4207,
@@ -359,9 +375,17 @@
       "ms": 4007,
       "h": "d2f97c1c00"
     },
+    "inicio.ara.pasaje.sigueLaNube": {
+      "ms": 8007,
+      "h": "e3c990ef5e"
+    },
     "inicio.ara.pasaje.sobreLaIsla": {
       "ms": 5107,
       "h": "858757655b"
+    },
+    "inicio.ara.pasaje.techo": {
+      "ms": 7607,
+      "h": "a33d00a11e"
     },
     "inicio.ara.pasaje.teide": {
       "ms": 5307,
@@ -448,6 +472,9 @@
     ],
     "inicio.ara.pasaje.altoRapido": [
       "inicio.ara.pasaje.altoRapido"
+    ],
+    "inicio.ara.pasaje.bajoLasNubes": [
+      "inicio.ara.pasaje.bajoLasNubes"
     ],
     "inicio.ara.pasaje.bano": [
       "inicio.ara.pasaje.bano"
@@ -584,11 +611,20 @@
     "inicio.ara.pasaje.marArriba": [
       "inicio.ara.pasaje.marArriba"
     ],
+    "inicio.ara.pasaje.marDeNubes": [
+      "inicio.ara.pasaje.marDeNubes"
+    ],
     "inicio.ara.pasaje.marQuieto": [
       "inicio.ara.pasaje.marQuieto"
     ],
     "inicio.ara.pasaje.masDespacio": [
       "inicio.ara.pasaje.masDespacio"
+    ],
+    "inicio.ara.pasaje.meneo": [
+      "inicio.ara.pasaje.meneo"
+    ],
+    "inicio.ara.pasaje.meneoBien": [
+      "inicio.ara.pasaje.meneoBien"
     ],
     "inicio.ara.pasaje.miro": [
       "inicio.ara.pasaje.miro"
@@ -656,8 +692,14 @@
     "inicio.ara.pasaje.servicio": [
       "inicio.ara.pasaje.servicio"
     ],
+    "inicio.ara.pasaje.sigueLaNube": [
+      "inicio.ara.pasaje.sigueLaNube"
+    ],
     "inicio.ara.pasaje.sobreLaIsla": [
       "inicio.ara.pasaje.sobreLaIsla"
+    ],
+    "inicio.ara.pasaje.techo": [
+      "inicio.ara.pasaje.techo"
     ],
     "inicio.ara.pasaje.teide": [
       "inicio.ara.pasaje.teide"
