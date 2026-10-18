@@ -2010,4 +2010,117 @@ export const EN: Dictionary = {
   "inicio.mama.pasaje.reversa":
     "And for those of you who flew for the first time today: that loud engine noise when we landed was for braking. The engines push the air forwards, and that slows the plane down.",
   "inicio.ara.pasaje.fin": "We made it to La Palma! Now I'll tell Mum everything I saw out the window.",
+  // The passenger flight told properly: the safety demonstration, the cabin crew in person, and more.
+  "inicio.tripulacion.pasaje.demo.intro":
+    "Ladies and gentlemen, may we have your attention for a moment: we're going to show you the safety equipment on this aircraft.",
+  "inicio.tripulacion.pasaje.demo.cinturon":
+    "To fasten your seat belt, push the buckle in until you hear a click, tighten it by pulling the strap, and release it by lifting the flap.",
+  "inicio.tripulacion.pasaje.demo.salidas":
+    "This aircraft has emergency exits at the front, at the back and over the wings. Lights along the floor of the aisle mark the way to them.",
+  "inicio.tripulacion.pasaje.demo.mascaras":
+    "If needed, oxygen masks will drop from the ceiling. Pull one towards you, place it over your nose and mouth, and breathe normally. Put on your own first, and then help anyone who needs it.",
+  "inicio.tripulacion.pasaje.demo.chaleco":
+    "Your life jacket is under your seat. Slip it over your head and fasten it around your waist. Don't inflate it inside the aircraft: inflate it as you leave, by pulling the red tabs.",
+  "inicio.tripulacion.pasaje.demo.tarjeta":
+    "In the seat pocket in front of you is the safety card, with all of this in pictures. Please read it before take-off.",
+  "inicio.tripulacion.pasaje.demo.aparatos":
+    "And phones and electronic devices in flight mode for the whole flight. Thank you for your attention.",
+  "inicio.ara.pasaje.demoMascara": "The grown-ups put their masks on first, and then mine! That way they can help me.",
+  "inicio.ara.pasaje.demoChaleco": "There's a yellow life jacket under my seat. And it only gets inflated outside the plane!",
+  "inicio.ara.pasaje.demoTarjeta": "I found the card in the pocket in front! It has little pictures of everything.",
+  "inicio.tripulacion.pasaje.cerca.revision":
+    "Hi there! Let me check that seat belt... perfect, that's how it's worn! And the window blind always goes up for take-off.",
+  "inicio.ara.pasaje.persiana": "And why does the window blind have to be up for take-off?",
+  "inicio.tripulacion.pasaje.cerca.persiana":
+    "So we can see outside if anything happens. And at night we dim the cabin lights, so our eyes are already used to the dark outside.",
+  "inicio.ara.pasaje.tren": "Something went clunk under the plane! It's the wheels, tucking away so we can fly.",
+  "inicio.ara.pasaje.plop": "Pop! My ears went pop, like in the lift of a really tall building.",
+  "inicio.ara.pasaje.giroAbajo": "We're turning! The plane is leaning over, and my wing is pointing down.",
+  "inicio.ara.pasaje.giroArriba": "We're turning! The plane is leaning over, and my wing is pointing up at the sky.",
+  "inicio.ara.pasaje.bici": "Mum says planes lean over to turn, like a bike going round a bend.",
+  "inicio.ara.pasaje.marArriba": "I'm pressing my face to the window to see more! Down there, between the clouds, there's the sea.",
+  "inicio.ara.pasaje.preguntaAla": "How can such a big, heavy plane fly without falling down?",
+  "inicio.mama.pasaje.ala":
+    "Ladies and gentlemen, for those of you flying for the first time today: how does such a heavy plane stay up in the air? The wings are tilted just a little and push the air downwards, and the air pushes the wings upwards. That's why we have to go fast.",
+  "inicio.ara.pasaje.pandorga": "Like a kite! The wind pushes it upwards, and up and up it goes.",
+  "inicio.ara.pasaje.preguntaAlto": "How high and how fast are we flying now?",
+  "inicio.mama.pasaje.altoRapido":
+    "And for those of you flying for the first time today: we're now higher than the summit of Mount Teide, and going at more than five hundred kilometres an hour, much faster than any car.",
+  "inicio.ara.pasaje.altoRapido": "Higher than Mount Teide! No wonder the mountains look like toys from up here.",
+  "inicio.tripulacion.pasaje.cerca.hola":
+    "Hello again! Here's some water and something tasty. I saw you looking at the clouds out the window: is this your first flight?",
+  "inicio.ara.pasaje.deVerdad": "Yes, it's my first flight! Are clouds really made of water?",
+  "inicio.tripulacion.pasaje.cerca.nubes1":
+    "They really are! A cloud is millions of tiny droplets of water, so small you can't see them one by one, and the air holds them up.",
+  "inicio.tripulacion.pasaje.cerca.nubes2":
+    "And very high up, where it's very cold, they're tiny ice crystals. They look white because the droplets scatter all of the sunlight.",
+  "inicio.tripulacion.pasaje.cerca.nubes3":
+    "When we fly through them, everything turns white, the plane moves a little, and sometimes the window gets wet. That's fine: the plane is made for it.",
+  "inicio.ara.pasaje.nubesSostiene": "Water that the air holds up in the sky! Now I'll look at clouds differently.",
+  "inicio.tripulacion.pasaje.cerca.frio":
+    "Guess what? Outside, this high up, it's as cold as a freezer, below zero. In here we take air from outside and warm it up, so we're comfortable.",
+  "inicio.ara.pasaje.frio": "It's freezer-cold outside, and nice and warm in here!",
+  "inicio.tripulacion.pasaje.cerca.motor1":
+    "Can you see the engine, there under the wing? At the front it has a giant fan that swallows loads and loads of air.",
+  "inicio.tripulacion.pasaje.cerca.motor2":
+    "Inside, the air is squeezed, heated up with the fuel, and shoots out of the back at top speed. That pushes the plane forwards.",
+  "inicio.ara.pasaje.secador": "Like a hair dryer: a fan that blows warm air, only giant!",
+  "inicio.ara.pasaje.preguntaBajar": "And how does the plane go down? Do they switch the engines off?",
+  "inicio.mama.pasaje.bajando":
+    "Ladies and gentlemen, for those of you flying for the first time today: to come down, we don't switch the engines off. We turn them right down, and the plane comes down little by little, like on a very long slide.",
+  "inicio.tripulacion.pasaje.cerca.islas1":
+    "Did you know the Canary Islands came up from the bottom of the sea? They're volcanoes that kept growing, for millions of years, until they poked out.",
+  "inicio.tripulacion.pasaje.cerca.islas2":
+    "La Palma, where we're going, is one of the youngest, and it has really high mountains.",
+  "inicio.ara.pasaje.islas": "Islands that used to be volcanoes at the bottom of the sea! I'm going to tell everyone.",
+  "inicio.tripulacion.pasaje.cerca.ruta":
+    "And how does the plane know the way? The captain and the co-pilot have the map on a screen, and they talk to the control tower by radio.",
+  "inicio.ara.pasaje.mapa": "Like the map on a phone, but for planes! And with the tower on the radio.",
+  "inicio.tripulacion.pasaje.cerca.papi":
+    "Beside the runway there are four little lights. If you see two white and two red, the plane is coming down right on its path.",
+  "inicio.ara.pasaje.papi": "Two white and two red! I'm going to look for them when I fly with Mum.",
+  "inicio.ara.pasaje.sobreLaIsla": "We're flying over the island! You can see the mountains and the ravines.",
+  "inicio.ara.pasaje.marQuieto": "From this high up, the sea looks so still. But up close it has waves!",
+  "inicio.ara.pasaje.nubesCerca": "We're getting lower and lower: the clouds are really close now!",
+  "inicio.ara.pasaje.bano": "What if I need the toilet? Is there a toilet on the plane?",
+  "inicio.tripulacion.pasaje.cerca.bano":
+    "Of course there is! But right now, with the seat belt light on, it's best to wait until we land.",
+  "inicio.tripulacion.pasaje.cerca.estrellas":
+    "Do you know what's at the very top of La Palma? Huge telescopes for looking at the stars: the island's sky is one of the clearest in the world.",
+  "inicio.ara.pasaje.estrellas": "Giant telescopes for looking at the stars! I want to see one up close.",
+  "inicio.ara.pasaje.islaCerca": "The island is really close now! You can see the mountains, the coast and the sea.",
+  "inicio.ara.pasaje.otraNube": "Inside a cloud again, everything white! Now I know it's water.",
+  "inicio.ara.pasaje.marAbajo": "I'm pressing my face to the window to see more! Down there is the sea, huge and dark blue.",
+  "inicio.tripulacion.pasaje.cerca.aterrizaje":
+    "We're about to land: seat belt fastened, seat back upright and the window blind up. You're doing brilliantly!",
+  "inicio.ara.pasaje.flapsPorque": "Mum told me that this way the wing holds the plane up even when it goes slowly.",
+  "inicio.ara.pasaje.giroFinal": "Another turn! Now the plane is lined up straight, facing the runway.",
+  "inicio.ara.pasaje.masDespacio": "Now the plane is going slower, getting ready to land. You can feel it!",
+  "inicio.ara.pasaje.ruedas": "Another noise underneath! Now the wheels are coming out, for landing.",
+  "inicio.ara.pasaje.miro": "Now I'm going to keep looking out the window until we touch the runway.",
+  "inicio.ara.pasaje.cerquita": "The sea is getting closer and closer! It's not long now until the runway.",
+  "inicio.ara.pasaje.yaCasi": "Almost there! The wheels are about to touch the runway.",
+  "inicio.ara.pasaje.cinturonQuieto": "I'm not taking my seat belt off yet! We have to wait for the light to go out.",
+  "inicio.ara.pasaje.despacito": "Now we're going slowly along the ground, like a car, to our parking spot.",
+  "inicio.ara.pasaje.repaso": "That was lovely! The clouds from inside, the huge sea and the islands with mountains.",
+  "inicio.tripulacion.pasaje.cerca.adios":
+    "See you soon, and thank you for flying with us! Now you know loads of things about planes.",
+  "inicio.modo.tripulante": "The cabin crew member, right beside you",
+  "inicio.dibujo.cinturon": "The seat belt: fasten it until it clicks, tighten it, and lift the flap to release it.",
+  "inicio.dibujo.salidas": "The plane's exits, and the lights along the aisle that lead to them.",
+  "inicio.dibujo.mascara": "The oxygen masks: the grown-up puts one on first, and then helps.",
+  "inicio.dibujo.chaleco": "The life jacket, under the seat: it's inflated outside the plane.",
+  "inicio.dibujo.tarjeta": "The safety card, in the pocket of the seat in front.",
+  "inicio.dibujo.modo-avion": "The phone in flight mode.",
+  "inicio.dibujo.persiana": "The window blind up for take-off, so you can see outside.",
+  "inicio.dibujo.nube": "A cloud up close: water droplets below and tiny ice crystals above.",
+  "inicio.dibujo.ala": "The wing pushes the air down, and the air pushes the wing up.",
+  "inicio.dibujo.alto": "The plane, higher than Mount Teide and faster than a car.",
+  "inicio.dibujo.motor": "Inside the engine: it swallows air, heats it and blows it out the back.",
+  "inicio.dibujo.frio": "Below zero outside; warm inside.",
+  "inicio.dibujo.islas": "Volcanoes growing up from the bottom of the sea until they become islands.",
+  "inicio.dibujo.ruta": "The plane's route, from Tenerife to La Palma, and the tower on the radio.",
+  "inicio.dibujo.oido": "The ear: coming down, the air pushes in; swallowing or yawning clears it.",
+  "inicio.dibujo.papi": "The four lights beside the runway: two white and two red.",
+  "inicio.dibujo.estrellas": "The telescopes at the top of La Palma, looking at the stars.",
 };

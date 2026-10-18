@@ -1,40 +1,52 @@
-# Pendiente: grabar la tercera escena del modo inicio, el primer vuelo de pasaje de Ara
+# Pendiente: grabar lo nuevo de la tercera escena, el primer vuelo de pasaje de Ara
 
-La escena de pasaje (`src/flight/inicio-pasaje.ts`, ADR 0020) tiene
-**veintiocho frases sin grabar** (2.128 caracteres): veintitrés de Ara, con la
-voz `ara`; tres de Jazlyn, con la voz `comandante`, y dos de la tripulación de
-cabina de Canarias, con la voz `tripulacion-canarias`. Están en
-`scripts/frases-para-grabar.mjs` —detrás de las de las dos primeras escenas,
-para no renumerar nada ya grabado— y en `docs/voces/`. Mientras no se graben,
-la escena va con los subtítulos y los dibujos de qué mirar, y cada frase
-espera el rato de leerla.
+Las **veintiocho frases** de la primera versión de la escena de pasaje
+(`src/flight/inicio-pasaje.ts`, ADR 0020) **ya están grabadas** —veintitrés de
+Ara, tres de Jazlyn y dos de la tripulación de Canarias, 2.128 caracteres—:
+ver el commit «Graba el primer vuelo de pasaje de Ara». No se tocan.
 
-Lo demás que se oye en la escena **ya está grabado y no se toca**: los
-anuncios de siempre de la megafonía —los toboganes, la bienvenida con el plan,
-«sentados para el despegue», el cinturón, el servicio, el descenso, «preparar
-para el aterrizaje» y las dos llegadas— y lo que se ve por la ventanilla con su
-historia. La escena solo decide cuándo se dicen.
+Lo que falta es lo del 18-10-2026, cuando la escena se contó de verdad —la
+demostración de seguridad, la tripulante en persona, lo que explica Jazlyn
+para quienes vuelan por primera vez y lo que Ara nota por el camino—:
+**sesenta y siete frases sin grabar, 6.338 caracteres**:
+
+| Voz | Frases | Caracteres |
+|---|---:|---:|
+| `ara` | 40 | 2.738 |
+| `comandante` | 3 | 598 |
+| `tripulacion-canarias` | 24 | 3.002 |
+
+De la tripulación, 7 son de la demostración por la megafonía (998
+caracteres) y 17 de la tripulante en persona (2.004).
+
+Están en `scripts/frases-para-grabar.mjs` —al final de cada voz, sin
+renumerar nada ya grabado— y en `docs/voces/`. Mientras no se graben, la
+escena va con los subtítulos, los dibujos y la ventanita, y cada frase espera
+el rato de leerla.
 
 No es la primera experiencia: se abre con su ficha del hangar, «Viajá con
 Jazlyn», o con `?inicio=3`.
 
 ## Qué se graba
 
-- **Ara**, todo lo que empieza por `inicio.ara.pasaje.`: la misma voz blanca
-  de las dos primeras escenas, pero **en voz baja**, hablándole a quien va a su
-  lado junto a la ventanilla, con la ilusión y las preguntas de la primera vez
-  —«¿Por qué paramos acá, antes de la pista?», «Se me tapan un poco los
-  oídos… ¿por qué será?»—. Susurrado no quiere decir apagado: con chispa,
-  como siempre. Nada suyo dice si es niño o niña.
-- **Jazlyn**, `inicio.mama.pasaje.espera`, `.nubes` y `.reversa`: por la
-  **megafonía**, de usted y a todo el pasaje, como el resto de sus anuncios
-  —el altavoz lo pone el juego, no la grabación—. Las de las nubes y la
-  reversa son las de «para quienes vuelan hoy por primera vez»: cálidas, que
-  es lo que hace una comandante cuando sabe que va gente pequeña a bordo.
-  Sin paraguayismos: el vuelo es en Canarias.
-- **La tripulación de Canarias**, `inicio.tripulacion.pasaje.cinturon` y
-  `.oidos`: por la megafonía, como sus otros anuncios, y con su habla —sin
-  voseo—. Tranquila: lo de los oídos es para que nadie se asuste.
+- **Ara**, `inicio.ara.pasaje.*` nuevas: la misma voz blanca y en voz baja
+  de siempre, hablándole a quien va a su lado, con la ilusión de la primera
+  vez —«¡Plop! Me hicieron plop los oídos», «¿Y si tengo ganas de ir al
+  baño?»—. Con chispa. Nada suyo dice si es niño o niña.
+- **Jazlyn**, `inicio.mama.pasaje.ala`, `.altoRapido` y `.bajando`: por la
+  **megafonía**, de usted y a todo el pasaje, de las de «para quienes vuelan
+  hoy por primera vez». Cálidas, como las de las nubes y la reversa. Sin
+  paraguayismos: el vuelo es en Canarias.
+- **La tripulación de Canarias, por la megafonía**:
+  `inicio.tripulacion.pasaje.demo.*`, la demostración de seguridad. Clara y
+  tranquila, al ritmo de quien enseña algo con las manos: no es un trámite,
+  es para que se entienda. Con su habla, sin voseo.
+- **La tripulante, en persona**: `inicio.tripulacion.pasaje.cerca.*`. **Es
+  otra manera de hablar con la misma voz**: al lado del asiento de un niño
+  que vuela por primera vez, bajito y con cariño, con el tú de Canarias —«¡Hola
+  otra vez! Aquí tienes agua y algo rico»—. Se graba **sin** el tono de
+  anuncio: el altavoz lo pone el juego cuando hace falta, y aquí no hace
+  falta. Que no diga si Ara es niño o niña.
 
 ## Cómo
 
@@ -48,10 +60,12 @@ node scripts/hacer-pack-de-voz.mjs crudo/comandante comandante
 node scripts/hacer-pack-de-voz.mjs crudo/tripulacion-canarias tripulacion-canarias
 ```
 
-Ara no lleva `recetas.json`: cada pieza es su frase. La comandante y la
-tripulación sí, y su horneado vuelve a codificar todo el pack: de lo suyo solo
-entran las piezas `inicio.*.pasaje.*` y el manifiesto, y lo demás se devuelve
-como estaba:
+Con el modelo de siempre, `eleven_multilingual_v2`. Ara no lleva
+`recetas.json`: cada pieza es su frase. La comandante y la tripulación sí —una
+receta de una pieza por frase, como las de la primera versión—, y su horneado
+vuelve a codificar todo el pack: de lo suyo solo entran las piezas
+`inicio.*.pasaje.*` nuevas y el manifiesto, y lo demás se devuelve como
+estaba:
 
 ```bash
 git status --short data/voces/comandante data/voces/tripulacion-canarias \
@@ -66,6 +80,7 @@ node scripts/verificar-voces.mjs
 node scripts/verificar-inicio-3.mjs
 ```
 
-Con las frases grabadas, el banco de la escena oye además cada una entera y en
-orden: en `habladas` tienen que salir todas las de la escena —las nuevas y los
-anuncios de siempre— y ninguna de nadie más.
+Con las frases grabadas, el banco de la escena las oye enteras —hoy las
+cuenta aparte, como «se leen»— y los silencios se miden con lo que de verdad
+duran: en las pruebas de unidad, con lo que dura cada frase estimada, lo más
+largo callado en el aire sale de 65 s.

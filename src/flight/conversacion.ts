@@ -47,6 +47,12 @@ export interface Linea {
   readonly texto?: string;
   /** Y las piezas de su receta en el pack. Ver `recetaDe`. */
   readonly relleno?: Readonly<Record<string, string>>;
+  /**
+   * **El dibujo que la acompaña**, si lo tiene: la clave de lo que sale en la
+   * ventanita de cristal mientras suena. Lo decide la escena; ver
+   * `ui/dibujos-del-pasaje.ts`.
+   */
+  readonly dibujo?: string;
 }
 
 /**
@@ -136,6 +142,17 @@ export class Conversacion {
   decir(lineas: readonly Linea[], cortar = false): void {
     if (cortar) this.callar();
     this.cola.push(...lineas);
+  }
+
+  /**
+   * **Un rato sin decir nada**, s de escena: lo siguiente espera, aunque ya
+   * esté en la cola. Mientras tanto no está callada, que es lo que hace que
+   * nadie más pida turno. Lo usa la escena de pasaje para que un cambio de
+   * plano caiga en el silencio y no a media frase: ver `CORTE_DE_PLANO` en
+   * `inicio-pasaje.ts`.
+   */
+  esperar(segundos: number): void {
+    this.puedeHablarEn = Math.max(this.puedeHablarEn, this.reloj() + segundos);
   }
 
   /** Lo que quedaba por decir ya no es verdad: fuera. */

@@ -781,7 +781,7 @@ import {
   type Contexto,
 } from "./cameras";
 import { sitioDeLaCola } from "./cameras/fuera";
-import { asientoDeLaVista } from "./cameras/pasaje";
+import { asientoDeLaVista, FOV_DE_PASAJE } from "./cameras/pasaje";
 import {
   asomarse,
   darLaVuelta,
@@ -893,9 +893,11 @@ import {
 } from "./flight/inicio-aterrizar";
 import {
   esAnuncioDeSiempre,
+  esDeFuera,
   LADO_DE_ARA,
   VueloDePasaje,
   type LecturaDelPasaje,
+  type Plano,
 } from "./flight/inicio-pasaje";
 import {
   enLosMandosDeLinea,
@@ -1369,6 +1371,8 @@ import {
 } from "./flight/parte-de-salida";
 import { FundasYCalzos } from "./world/fundas-y-calzos";
 import { CamaraDeLaVuelta } from "./cameras/vuelta";
+import { CamaraDeLaEscena, FundidoDePlano } from "./cameras/escena";
+import { esDibujoDelPasaje } from "./ui/dibujos-del-pasaje";
 import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
 import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
 
@@ -4853,6 +4857,19 @@ export class Game {
     "desde-el-pasaje",
   );
   /**
+   * **Y la tripulante en persona**, en la escena de pasaje: la misma voz de
+   * la tripulación de cabina, pero sin el altavoz del techo, que se acerca al
+   * asiento de Ara y le habla a ella. Por la boca de todos, como Ara: en el
+   * pasaje se habla de uno en uno. Ver `esDeCerca` en
+   * `flight/inicio-pasaje.ts`.
+   */
+  private readonly tripulante: InstructorGrabado = new InstructorGrabado(
+    this.audio,
+    elegirTripulacion(this.vozDelSistema, this.torre, this.otroAvion, this.comandante),
+    BOCA,
+    this.grabaciones,
+  );
+  /**
    * **Y las dos del modo inicio: Jazlyn y Ara**, en la cabina, lado a lado.
    * Jazlyn con la voz de la comandante, pero **sin megafonía**: aquí no le
    * habla al pasaje, le habla a Ara, que va en el asiento de al lado. Ara, con
@@ -5190,7 +5207,17 @@ export class Game {
     frenosDeTierra: null as number | null,
     bajadaMaxima: Number.POSITIVE_INFINITY,
     caidaTope: Number.POSITIVE_INFINITY,
+    asientoDeLaEscena: null as AsientoDePasaje | null,
   };
+  /**
+   * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
+   * corte, con su velo. Ver `cameras/escena.ts` y `camaraDeLaEscena`.
+   */
+  private readonly camaraDeFueraDeLaEscena = new CamaraDeLaEscena();
+  private fundidoDePlano = new FundidoDePlano();
+  private veloDelPlano: HTMLElement | null = null;
+  /** El dibujo o la foto que tiene puesto la ventanita en la escena de pasaje. */
+  private ventanitaDeLaEscena: string | null = null;
   private readonly blobShadow: Mesh;
   /**
    * Si hay que reducir el movimiento.
@@ -6558,6 +6585,10 @@ export class Game {
       this.gasDeLaFinalDado = true;
       // Desde el asiento, sin tocar la vista recordada de quien juega.
       this.cameraMode = LADO_DE_ARA === "izquierda" ? "pasaje-izquierda" : "pasaje-derecha";
+      // Y desde la ventanilla, sin velo ni ventanita de antes. Ver `camaraDeLaEscena`.
+      this.fundidoDePlano = new FundidoDePlano();
+      this.ponerLaVentanitaDeLaEscena(null);
+      this.cinturonDeLaEscena = false;
       this.clavesDeLaEscena.clear();
       this.cabinaAntes = null;
       this.ritmoDeCabina = 0;
@@ -6666,7 +6697,10 @@ export class Game {
         linea.quien === "ara"
           ? this.ara
           : linea.quien === "tripulacion"
-            ? this.tripulacion
+            ? // Por el altavoz del techo, o en persona, al lado del asiento.
+              linea.megafonia
+              ? this.tripulacion
+              : this.tripulante
             : linea.megafonia
               ? this.comandante
               : this.mama;
@@ -6686,6 +6720,7 @@ export class Game {
       if (this.inicio instanceof VueloDePasaje) {
         this.comandante.callar();
         this.tripulacion.callar();
+        this.tripulante.callar();
       }
       BOCA.retirar(
         (clave) => !!clave?.startsWith("inicio.") || (!!clave && this.clavesDeLaEscena.has(baseDeLaClave(clave))),
@@ -6829,6 +6864,11 @@ export class Game {
       faltaParaTocar: linea.faltaParaTocar,
       alineado: e.alineado,
       fase: this.vistaActual?.fase,
+      // Lo que se nota y se ve: el giro, el tren, el mar debajo y el frío de fuera.
+      alabeo: bankAngleOf(s.orientation),
+      tren: linea.tren,
+      sobreElMar: this.terrain.sampleSurface(s.position.x, s.position.z) < 5,
+      temperatura: temperaturaExterior(s.position.y, this.flight.aireDelDia()),
     };
     const permisos = escena.paso(dt, lectura);
     const manos = tripulacion.paso(dt, linea, permisos);
@@ -7103,6 +7143,7 @@ export class Game {
      */
     if (inicio instanceof VueloDePasaje) {
       const p = inicio.estado;
+      this.ponerLaVentanitaDeLaEscena(p.dibujo);
       // El sello del campo al que se llegó, que es donde se está.
       const destino = this.elCampoDeAhora();
       pantalla.pintar({
@@ -7149,8 +7190,36 @@ export class Game {
     });
   }
 
+  /**
+   * **La ventanita de la escena de pasaje**: el dibujo de lo que se explica
+   * —ver `ui/dibujos-del-pasaje.ts`— o la foto de la historia que cuenta la
+   * comandante, en la misma ventana de cristal que las historias de
+   * cualquier vuelo. Y la primera vez que sale el cinturón, el cartel del
+   * techo parpadea: es el que se acaba de encender para abrochárselo.
+   */
+  private ponerLaVentanitaDeLaEscena(dibujo: string | null): void {
+    if (dibujo === this.ventanitaDeLaEscena) return;
+    const antes = this.ventanitaDeLaEscena;
+    this.ventanitaDeLaEscena = dibujo;
+    if (antes) this.hud.historia.quitar(antes.startsWith("foto:") ? antes.slice(5) : `dibujo:${antes}`);
+    if (!dibujo) return;
+    if (dibujo.startsWith("foto:")) this.hud.historia.mostrar(dibujo.slice(5));
+    else if (esDibujoDelPasaje(dibujo)) {
+      this.hud.historia.mostrarDibujo(dibujo);
+      if (dibujo === "cinturon" && !this.cinturonDeLaEscena) {
+        this.cinturonDeLaEscena = true;
+        this.hud.destellarCinturon();
+      }
+    }
+  }
+
+  /** Si ya parpadeó el cartel del cinturón en esta escena. */
+  private cinturonDeLaEscena = false;
+
   /** Se acabó la escena: el vuelo sigue, ya sin la tarjeta y sin la mano de la mamá. */
   private acabarElInicio(): void {
+    this.ponerLaVentanitaDeLaEscena(null);
+    this.ponerElVeloDelPlano(0);
     this.inicio = null;
     this.tripulacionDeLinea = null;
     this.inicioCongelado = false;
@@ -7197,6 +7266,15 @@ export class Game {
     /** Y la vista, el subtítulo de ahora y si la cabina de pasaje se oye desde el asiento. */
     readonly vista: string;
     readonly texto: string | null;
+    /**
+     * De pasaje: **el plano que se ve** —que va detrás del que pide la escena
+     * lo que dura el fundido—, cuánto tapa el velo, la ventanita y lo que se
+     * ve por el cristal desde la pose de Ara. Ver `camaraDeLaEscena`.
+     */
+    readonly planoVisto: Plano | null;
+    readonly velo: number;
+    readonly ventanita: { readonly sitio: string | null; readonly donde: string | null; readonly ultimo: string | null };
+    readonly asientoDeAra: { readonly z: number; readonly motor: number; readonly ala: number } | null;
   } {
     const e = this.inicio?.estado;
     const linea = e?.linea ?? null;
@@ -7223,6 +7301,13 @@ export class Game {
       manos: this.manosDeLinea,
       vista: this.vistaQueHay(),
       texto: linea ? (this.textoDeLaEscena.get(linea) ?? linea.texto ?? t(linea.clave as TranslationKey)) : null,
+      planoVisto: this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null,
+      velo: Number(this.veloDelPlano && !this.veloDelPlano.hidden ? this.veloDelPlano.style.opacity || 0 : 0),
+      ventanita: this.hud.historia.estado,
+      asientoDeAra: (() => {
+        const ara = this.inicio instanceof VueloDePasaje ? this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA] : null;
+        return ara ? { z: ara.ventanilla.centro.z, motor: ara.delMotor.motor, ala: ara.delMotor.ala } : null;
+      })(),
     };
   }
 
@@ -21396,6 +21481,12 @@ export class Game {
       this.poseDeLaVista.puesta = false;
       return;
     }
+    /*
+     * **En la escena de pasaje, el plano lo decide la escena**: la ventanilla
+     * de Ara —sentada o pegada al cristal— o el avión por fuera, con su
+     * fundido en cada corte. Ver `camaraDeLaEscena`.
+     */
+    if (this.inicio instanceof VueloDePasaje && this.camaraDeLaEscena(this.inicio, dt)) return;
     const state = this.flight.state;
     const modo = this.vistaQueHay();
     const rig: CameraRig = this.camaras[modo];
@@ -21423,6 +21514,8 @@ export class Game {
     ctx.frenosDeTierra = this.aircraftMesh.aerofrenos
       ? (this.input.controls.frenosDeTierra ?? 0)
       : null;
+    // El asiento de Ara, solo en su escena: lo pone `camaraDeLaEscena`.
+    if (!(this.inicio instanceof VueloDePasaje)) ctx.asientoDeLaEscena = null;
 
     // Lo que puso la vista el paso anterior, sin el giro de la cabeza encima.
     // Ver `poseDeLaVista`.
@@ -21460,6 +21553,86 @@ export class Game {
    * —ver `ponerVistaDeCabina`—, y una cabina de respaldo con el cuadro plano
    * encima serían dos tableros a la vez.
    */
+  /**
+   * **La cámara de la escena de pasaje**: el plano que pide la escena —ver
+   * `Plano` en `flight/inicio-pasaje.ts`—, con el fundido de cada corte por el
+   * reloj de pared, que lo que se ve no se acelera. Si el plano es de fuera,
+   * la pone aquí y devuelve `true`; si es la ventanilla, deja el asiento de Ara
+   * con su pose en el contexto y la vista de pasaje hace lo de siempre.
+   *
+   * La vista elegida no cambia —sigue siendo la ventanilla de Ara—, así que se
+   * oye lo que se oye desde el asiento aunque se vea el avión por fuera: es
+   * Ara quien escucha. Ver `oidoDe`.
+   */
+  private camaraDeLaEscena(escena: VueloDePasaje, dt: number): boolean {
+    const paso = this.fundidoDePlano.paso(escena.estado.plano, this.relojDePared);
+    this.ponerElVeloDelPlano(paso.velo);
+    if (!esDeFuera(paso.plano)) {
+      const asiento = this.asientoDeAraAhora(paso.plano);
+      this.contextoDeCamara.asientoDeLaEscena = asiento;
+      // De vuelta de fuera, el ángulo de la ventanilla de golpe: el velo lo tapa.
+      if (paso.cambio) {
+        this.camera.fov = asiento?.fov ?? FOV_DE_PASAJE;
+        this.camera.updateProjectionMatrix();
+      }
+      return false;
+    }
+    const state = this.flight.state;
+    const ctx = this.contextoDeLaEscena;
+    ctx.largo = this.largoDelAvion;
+    ctx.movimientoReducido = this.reducedMotion;
+    const fuera = this.camaraDeFueraDeLaEscena;
+    if (paso.cambio) fuera.empezar(paso.plano, state, ctx);
+    this.contextoDeCamara.asientoDeLaEscena = null;
+    // El cuadro sigue recogido, como en la ventanilla: nada se recoloca en un corte.
+    this.hud.ponerVistaDePasaje(true);
+    this.aircraftMesh.group.visible = true;
+    this.marcoDeVentanilla.visible = false;
+    const pasaje = this.aircraftMesh.pasaje;
+    if (pasaje) pasaje.ventanillas.visible = true;
+    fuera.update(this.camera, state, dt, ctx);
+    // En el corte, el ángulo de golpe —el velo lo tapa—; después, suave.
+    if (paso.cambio) {
+      this.camera.fov = fuera.fov;
+      this.camera.updateProjectionMatrix();
+    } else this.ajustarElAngulo(fuera.fov, dt);
+    this.poseDeLaVista.puesta = false;
+    return true;
+  }
+
+  /** Lo que la cámara de fuera de la escena necesita del mundo. Se reutiliza. */
+  private readonly contextoDeLaEscena = {
+    suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
+    largo: 30,
+    movimientoReducido: false,
+  };
+
+  /**
+   * **El asiento de Ara con la pose del plano**: sentada, o pegada al cristal
+   * mirando el motor o abajo. `null` si el avión no lo tiene —otro modelo, o
+   * todavía sin cargar—: entonces, la ventanilla de siempre. Ver
+   * `world/asiento-de-ara.ts`.
+   */
+  private asientoDeAraAhora(plano: Plano): AsientoDePasaje | null {
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    if (!ara) return null;
+    return plano === "asomado-motor" ? ara.poses.motor : plano === "asomado-abajo" ? ara.poses.abajo : ara.poses.sentada;
+  }
+
+  /**
+   * **El velo del cambio de plano**, encima del mundo y debajo de lo demás:
+   * la tarjeta y el subtítulo siguen a la vista mientras se funde. Ver
+   * `#plano-velo` en `index.html`.
+   */
+  private ponerElVeloDelPlano(velo: number): void {
+    this.veloDelPlano ??= document.getElementById("plano-velo");
+    const v = this.veloDelPlano;
+    if (!v) return;
+    const tapa = velo > 0.002;
+    if (v.hidden === tapa) v.hidden = !tapa;
+    if (tapa) v.style.opacity = velo.toFixed(3);
+  }
+
   private vistaQueHay(): CameraMode {
     const modo = this.cameraMode;
     if (!esDePasaje(modo)) return modo;
@@ -21490,7 +21663,9 @@ export class Game {
   private asientoDe(modo: CameraMode): AsientoDePasaje | null {
     const pasaje = this.aircraftMesh.pasaje;
     if (!pasaje || !esDePasaje(modo)) return null;
-    return asientoDeLaVista(pasaje, ladoDelPasaje(modo), esSobreElAla(modo));
+    // En la escena de pasaje, el de Ara con su pose: ver `camaraDeLaEscena`.
+    const deAra = this.inicio instanceof VueloDePasaje ? this.contextoDeCamara.asientoDeLaEscena : null;
+    return deAra ?? asientoDeLaVista(pasaje, ladoDelPasaje(modo), esSobreElAla(modo));
   }
 
   /**

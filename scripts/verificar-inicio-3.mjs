@@ -28,6 +28,18 @@
  *   Teide, sin falta: es lo más bonito de la ruta.
  * - **Que se dibuja qué mirar** —el ala, el cinturón, el motor, las nubes, la
  *   ventanilla—.
+ * - **Que se ve por fuera lo que se cuenta** (18-10-2026): el rodaje, el
+ *   despegue desde la orilla de la pista, el giro, una vuelta alrededor, el
+ *   ala y la toma, cada corte con su fundido y **ninguno a media frase**; y
+ *   Ara pegada al cristal para ver el motor y el mar.
+ * - **Que la tripulación da la demostración de seguridad** entera y en su
+ *   orden, antes de entrar en la pista, y que **las nubes se explican**: la
+ *   comandante para todos y la tripulante a Ara, con su dibujo.
+ * - **Que sale la ventanita** con los dibujos de lo que se explica.
+ * - **Que no hay ratos largos callados**: medido con el reloj de la escena,
+ *   que es el del vuelo sin acelerar.
+ * - **Que desde el asiento de Ara se ven el ala y el motor**, contado con
+ *   rayos por el cristal en el modelo cargado.
  * - **Que el cuaderno no apunta nada de pilotaje** y sí el sello de La Palma,
  *   de visita, y que el botón del final vuelve al hangar.
  * - **Y que en un teléfono apaisado**, con el dedo, la tarjeta cabe y no hay
@@ -41,13 +53,19 @@
  * que lo que se oye no se acelera (ver `frame` en `game.ts`), así que el banco
  * tarda unos diez minutos.
  *
+ * **Las frases nuevas sin grabar** —las del 18-10-2026, hasta que se graben—
+ * no suenan: esperan el rato de leerlas, y el banco las cuenta aparte. Lo que
+ * tiene toma en el pack tiene que sonar entero.
+ *
  * Uso: `node scripts/verificar-inicio-3.mjs`
  *   `OGA_GPU=1` con la tarjeta de verdad; `OGA_FOTOS=carpeta` saca capturas
- *   del despegue, las nubes, la ventanilla en crucero y la toma, con el
+ *   de cada momento nuevo —Ara pegada al cristal, el cinturón, el rodaje, el
+ *   despegue, el giro, la vuelta, el ala, la toma, la ventanita—, con el
  *   renderer en el nombre; `OGA_SIN_HANGAR=1` se salta la ficha del hangar;
- *   `OGA_TOPE=segundos` cambia el tope de pared.
+ *   `OGA_TOPE=segundos` cambia el tope de pared; `OGA_VOLCADO=fichero` deja
+ *   lo dicho y los tramos en un JSON.
  */
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
@@ -135,6 +153,8 @@ const MOMENTOS = [
   "puertas",
   "motores",
   "bienvenida",
+  "demostracion",
+  "revision",
   "espera",
   "despegue",
   "carrera",
@@ -143,15 +163,36 @@ const MOMENTOS = [
   "nubesRespuesta",
   "arriba",
   "servicio",
+  "tcpNubes",
   "bajada",
   "oidos",
   "isla",
   "aproximacion",
+  "tcpAterrizaje",
   "flaps",
+  "aterrizando",
   "toma",
   "llegada",
   "puesto",
 ];
+
+/** Lo que tiene toma en el pack: lo demás, hasta grabarlo, se lee. */
+const GRABADAS = new Set(
+  ["ara", "comandante", "tripulacion-canarias"].flatMap((v) =>
+    Object.keys(JSON.parse(readFileSync(`data/voces/${v}/manifiesto.json`, "utf8")).piezas ?? {}),
+  ),
+);
+
+/**
+ * **El rato más largo callado en el aire**, s de escena. En las pruebas de
+ * unidad, con lo que dura cada frase, sale de 65 s; aquí las frases nuevas
+ * sin grabar duran solo el rato de leerlas —seis segundos como mucho—, y los
+ * huecos crecen un poco.
+ */
+const CALLADO_COMO_MUCHO = 85;
+
+/** Lo que calla la escena en cada corte de cámara, s de escena. Ver `CORTE_DE_PLANO`. */
+const CORTE = 1.1;
 
 /** Las claves que dice la escena y que no empiezan por `inicio.`: los anuncios y la ventanilla. */
 const DE_LA_ESCENA = /^(inicio\.|comandante\.|tripulacion\.|ventanilla)/;
@@ -196,6 +237,11 @@ async function elVuelo() {
 
   const tramos = [];
   const miradas = new Set();
+  /** Los planos que de verdad se vieron, y lo más que tapó el velo. Ver `camaraDeLaEscena`. */
+  const vistos = new Set();
+  let veloMaximo = 0;
+  const ventanitas = new Set();
+  let asientoDeAra = null;
   const caras = new Set();
   const fotos = new Set();
   let entroEnPista = null;
@@ -218,6 +264,10 @@ async function elVuelo() {
     const tramo = i.tripulacion?.tramo;
     if (tramo && tramos[tramos.length - 1]?.tramo !== tramo) tramos.push({ tramo, t: e.segundos });
     if (v.mirar) miradas.add(v.mirar);
+    if (i.planoVisto) vistos.add(i.planoVisto);
+    veloMaximo = Math.max(veloMaximo, Number(i.velo) || 0);
+    if (i.ventanita?.sitio) ventanitas.add(i.ventanita.sitio);
+    if (i.asientoDeAra) asientoDeAra = i.asientoDeAra;
     if (v.cara) caras.add(v.cara.replace(/^.*inicio__cara--/, ""));
     // ── Lo que se mira mientras pasa ──
     // Oída: que sonó o se esperó el rato de leerla, no que se pidió. Ver `Conversacion.oida`.
@@ -236,9 +286,22 @@ async function elVuelo() {
         }
         return false;
       };
-      if (en("despegue", tramo === "carrera" && v.velocidad > 50)) await foto(page, "despegue");
+      // Lo nuevo: cada plano cuando ya se ve —sin velo—, la ventanita y Ara pegada al cristal.
+      const sinVelo = (Number(i.velo) || 0) < 0.02;
+      if (en("asomada-motor", i.planoVisto === "asomado-motor" && e.segundos - e.planoDesde > 2.5)) await foto(page, "asomada-motor");
+      if (en("cinturon", i.ventanita?.sitio === "dibujo:cinturon" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "cinturon"));
+      if (en("rodando", sinVelo && i.planoVisto === "fuera-rodando")) await foto(page, "fuera-rodando");
+      if (en("mascara", i.ventanita?.sitio === "dibujo:mascara" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-mascara"));
+      if (en("despegue", sinVelo && i.planoVisto === "fuera-despegue" && v.velocidad > 50)) await foto(page, "fuera-despegue");
+      if (en("giro", sinVelo && i.planoVisto === "fuera-giro" && e.segundos - e.planoDesde > 4)) await foto(page, "fuera-giro");
       if (en("nubes", e.dichos.includes("nubes"))) await foto(page, "nubes");
+      if (en("ala", sinVelo && i.planoVisto === "fuera-ala")) await foto(page, "fuera-ala");
+      if (en("vuelta", sinVelo && i.planoVisto === "fuera-vuelta" && e.segundos - e.planoDesde > 10)) await foto(page, "fuera-vuelta");
+      if (en("nube-dibujo", i.ventanita?.sitio === "dibujo:nube" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-nube"));
+      if (en("asomada-abajo", i.planoVisto === "asomado-abajo" && e.segundos - e.planoDesde > 2.5)) await foto(page, "asomada-abajo");
+      if (en("motor-dibujo", i.ventanita?.sitio === "dibujo:motor" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-motor"));
       if (en("ventanilla", e.senalados.length > 0 && e.mira === "ventanilla" && !v.enTierra)) await foto(page, "ventanilla");
+      if (en("pista", sinVelo && i.planoVisto === "fuera-pista" && !v.enTierra)) await foto(page, "fuera-pista");
       if (en("toma", tramo === "frenando")) await foto(page, "toma");
     }
     // ── El final ──
@@ -272,6 +335,11 @@ async function elVuelo() {
   const i = ultimo?.inicio;
   const e = i?.estado;
   const t = i?.tripulacion;
+  if (process.env.OGA_VOLCADO)
+    writeFileSync(
+      process.env.OGA_VOLCADO,
+      JSON.stringify({ tramos, registro: conversacion?.registro ?? i?.registro ?? null, estado: e ?? null }, null, 1),
+    );
   comprobar(
     "la tripulación vuela del puesto al puesto, sin saltarse nada",
     tramos.map((x) => x.tramo).join(" ") ===
@@ -309,10 +377,13 @@ async function elVuelo() {
    * el camino —la boca reservada, una receta que no se reconoce— o que la
    * escena dio por perdida.
    */
-  const sinOir = registro.filter((d) => d.como !== "sono");
+  // Lo grabado tiene que sonar; lo que aún no tiene toma, se lee y se cuenta aparte.
+  const porGrabar = registro.filter((d) => d.clave.startsWith("inicio.") && !GRABADAS.has(d.clave));
+  const sinOir = registro.filter((d) => d.como !== "sono" && !porGrabar.includes(d));
+  console.log(`  ${porGrabar.length} frases dichas que esperan su toma: se leen`);
   comprobar(
-    "y todo lo que dice la escena se oye entero, de su toma",
-    registro.length > 30 && sinOir.length === 0,
+    "y todo lo grabado que dice la escena se oye entero, de su toma; lo que espera su toma, se lee",
+    registro.length > 30 && sinOir.length === 0 && porGrabar.every((d) => d.como === "muda" || d.como === "sono"),
     sinOir.length
       ? `${sinOir.length} sin oír: ${sinOir
           .slice(0, 5)
@@ -348,9 +419,76 @@ async function elVuelo() {
     [...miradas].join(", "),
   );
   comprobar(
-    "habla quien tiene que hablar: Ara, Jazlyn por la megafonía y la tripulación",
-    ["ara", "mama", "tripulacion"].every((c) => caras.has(c)),
+    "habla quien tiene que hablar: Ara, Jazlyn por la megafonía, la tripulación por el altavoz y la tripulante en persona",
+    ["ara", "mama", "tripulacion", "tripulante"].every((c) => caras.has(c)),
     [...caras].join(", "),
+  );
+  // ── Lo del 18-10-2026: los planos, la demostración, las nubes, la ventanita y los silencios ──
+  const FUERA = ["fuera-rodando", "fuera-despegue", "fuera-giro", "fuera-vuelta", "fuera-ala", "fuera-pista"];
+  comprobar(
+    "se ve el avión por fuera en lo que se cuenta —rodando, despegando, girando, alrededor, el ala, tocando—, con su fundido",
+    FUERA.every((p) => vistos.has(p)) && veloMaximo > 0.9 && vistos.has("ventanilla"),
+    `vistos: ${[...vistos].join(", ")} · velo hasta ${veloMaximo.toFixed(2)}`,
+  );
+  const planos = e?.planos ?? [];
+  let aMedia = 0;
+  for (let k = 1; k < planos.length; k++) {
+    const corte = planos[k - 1].plano.startsWith("fuera-") || planos[k].plano.startsWith("fuera-");
+    if (!corte) continue;
+    const t0 = planos[k].desde;
+    if (registro.some((d) => d.desde < t0 + CORTE - 1e-3 && (d.hasta ?? Infinity) > t0 + 1e-3)) aMedia++;
+  }
+  comprobar(
+    "y ningún corte de cámara a media frase",
+    planos.length > 10 && aMedia === 0,
+    `${planos.length - 1} cambios de plano · ${aMedia} a media frase`,
+  );
+  comprobar(
+    "Ara se pega al cristal: para el motor y para mirar abajo",
+    planos.some((p) => p.plano === "asomado-motor") && planos.some((p) => p.plano === "asomado-abajo"),
+    planos.filter((p) => p.plano.startsWith("asomado")).map((p) => `${p.plano}@${p.desde.toFixed(0)}`).join(" "),
+  );
+  comprobar(
+    "desde el asiento de Ara se ven el ala y el motor, contado con rayos por el cristal",
+    !!asientoDeAra && asientoDeAra.motor > 0.03 && asientoDeAra.ala > 0.03,
+    asientoDeAra
+      ? `ventanilla en z ${asientoDeAra.z.toFixed(2)} m · motor ${(asientoDeAra.motor * 100).toFixed(1)} % · ala ${(asientoDeAra.ala * 100).toFixed(1)} %`
+      : "sin asiento",
+  );
+  const claves = registro.map((d) => d.clave);
+  const demo = ["intro", "cinturon", "salidas", "mascaras", "chaleco", "tarjeta", "aparatos"].map((x) => claves.indexOf(`inicio.tripulacion.pasaje.demo.${x}`));
+  comprobar(
+    "la demostración de seguridad, entera, en su orden y antes de «sentados para el despegue»",
+    demo.every((x) => x >= 0) && demo.every((x, k) => k === 0 || x > demo[k - 1]) && Math.max(...demo) < claves.indexOf("comandante.despegue"),
+    demo.join(" "),
+  );
+  comprobar(
+    "las nubes, explicadas: la comandante para todos y la tripulante a Ara, con su dibujo",
+    ["inicio.mama.pasaje.nubes", "inicio.tripulacion.pasaje.cerca.nubes1", "inicio.tripulacion.pasaje.cerca.nubes2", "inicio.tripulacion.pasaje.cerca.nubes3"].every((c) => claves.includes(c)) &&
+      ventanitas.has("dibujo:nube"),
+    `${claves.filter((c) => /nubes/.test(c)).join(", ")} · ventanita: ${ventanitas.has("dibujo:nube")}`,
+  );
+  comprobar(
+    "la ventanita, con los dibujos de lo que se explica",
+    ["dibujo:cinturon", "dibujo:mascara", "dibujo:chaleco", "dibujo:nube", "dibujo:motor"].every((d) => ventanitas.has(d)),
+    [...ventanitas].join(", "),
+  );
+  // Los silencios, en el aire, con el reloj de la escena.
+  const tramoEn = (s) => [...tramos].reverse().find((x) => x.t <= s)?.tramo ?? "puerta";
+  const callados = [];
+  let masLargo = 0;
+  for (let k = 1; k < registro.length; k++) {
+    const desde = registro[k - 1].hasta ?? registro[k - 1].desde;
+    const largo = registro[k].desde - desde;
+    const tr = tramoEn(desde);
+    if (!["subida", "crucero", "bajada"].includes(tr)) continue;
+    masLargo = Math.max(masLargo, largo);
+    if (largo > CALLADO_COMO_MUCHO) callados.push(`${largo.toFixed(0)} s desde ${desde.toFixed(0)} (${tr})`);
+  }
+  comprobar(
+    `ningún rato largo callado en el aire (más de ${CALLADO_COMO_MUCHO} s)`,
+    callados.length === 0 && registro.length > 60,
+    callados.length ? callados.join(" · ") : `lo más largo: ${masLargo.toFixed(0)} s · ${(e?.charlas ?? []).length} charlas: ${(e?.charlas ?? []).join(" ")}`,
   );
   const cuaderno = i?.cuaderno;
   comprobar(

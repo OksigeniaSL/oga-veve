@@ -500,3 +500,137 @@ dar gas, que es cuando empuja. Un anuncio de tierra se pide cuando el juego
 dice que vale. Y con el reloj acelerado, mientras habla la escena el juego
 va a su ritmo: lo que se oye no se acelera. El banco comprueba ahora que
 todo lo que dice la escena se oye entero, y el Teide, sin falta.
+
+### Contado de verdad: los planos, la tripulación y lo que se explica
+
+Fecha: 2026-10-18
+
+Enrique probó la escena y le gustó, pero la encontró aburrida: «está todo el
+tiempo la vista de ventanilla», no se oía a la tripulación enseñar el
+cinturón y el chaleco, la ventanilla del JAZ 90 no enseñaba el motor que Ara
+decía ver, Ara no se pegaba al cristal como haría cualquier niño, y «¿de qué
+estará hecha?» se quedaba casi sin respuesta. Medido en el banco, con las
+voces grabadas: **cinco minutos y medio callados bajando**, otros tres y medio
+en la final y tres rodando al llegar. «La experiencia de montar en un vuelo
+hay que contarla, explicarla con cariño y que el niño entienda todo lo que
+está pasando.»
+
+**Los planos.** La escena dice desde dónde se ve cada momento —`Plano` en
+`inicio-pasaje.ts`— y `cameras/escena.ts` pone la cámara: la ventanilla de
+Ara, Ara **pegada al cristal** mirando el motor o el mar, y el avión **por
+fuera** en lo que se cuenta: rodando mientras la comandante da la
+bienvenida; la carrera y el despegue desde la orilla de la pista, con la
+cámara clavada en el suelo siguiendo al avión; el giro desde detrás, sin
+inclinarse con él; una vuelta entera alrededor en crucero; el ala desde
+encima del fuselaje cuando la comandante explica qué lo sostiene y cuando
+salen los flaps; la toma desde la orilla de la zona de toma; y el rodaje de
+llegada. Pegarse al cristal es un movimiento de la cabeza, despacio; lo de
+fuera es un corte, con un fundido de medio segundo hasta tapar y medio para
+destapar, y **un corte no cae nunca a media frase**: la escena calla el rato
+del fundido (`CORTE_DE_PLANO`) y lo que venía detrás espera. El sonido sigue
+siendo el del asiento: quien escucha es Ara. Con movimiento reducido, la
+vuelta alrededor no da vueltas.
+
+**El asiento de Ara**, `world/asiento-de-ara.ts`. Medido con rayos por el
+cristal: desde el asiento de siempre, sentado, el motor del JAZ 90 no asoma
+ni un píxel —cuelga debajo del ala y tres metros por delante del borde de
+ataque—. Sentado, desde ninguna ventanilla se ve; **pegado al cristal**, sí.
+Así que el asiento de Ara es la ventanilla, de las que caen encima del motor,
+que con la cara en el cristal deja ver a la vez más motor y más ala, y Ara
+dice «desde acá se ve el ala del avión, y el motor» pegada a él. Sentada va
+algo más cerca del cristal que un adulto con la espalda en el respaldo. Lo
+que va detrás del ala —los flaps— no se ve desde ahí, ni pegada: cuando Ara
+los nota, se ven por fuera. Y no se pinta el asiento propio vacío detrás:
+en él va Ara.
+
+**El cinturón** sale en la ventanita —la hebilla que entra hasta el clic, la
+cinta que se ajusta, la tapa que se levanta— con el cartel del techo
+encendido, y el cartel del HUD parpadea al pedirlo la tripulación.
+
+**La demostración de seguridad**, por la megafonía y con la voz de la
+tripulación de Canarias, mientras se rueda —como en los saltos entre islas—,
+cada cosa con su dibujo, en el orden y con el contenido de la norma europea:
+el AMC1 CAT.OP.MPA.170 de EASA (Decisión 2017/008/R) pide antes del despegue
+**demostrar** el cinturón —cómo se abrocha y se suelta—, las salidas, el
+oxígeno «si se requiere» y el chaleco «si se requiere», e **informar** de las
+luces del suelo hacia las salidas, los aparatos electrónicos y la tarjeta de
+seguridad, que hay que leer antes de despegar. El GM2 del mismo artículo
+pide decir cómo ponerse la mascarilla a tiempo y **ayudar a los demás**
+después, y cuándo y dónde se infla el chaleco; la circular AC 121-24D de la
+FAA dice lo mismo de la mascarilla: la de uno antes que la de un niño. Que el
+chaleco **no se infla dentro del avión** es lo que dicen las tripulaciones en
+su demostración: está por verificar en el manual de un operador concreto. El
+chaleco va porque se despega y se aterriza sobre el mar; las mascarillas,
+porque el JAZ 90 vuela presurizado y las lleva —ver la despresurización del
+juego—. La tripulación no entra en pista sin la demostración acabada: la red
+de la espera cuenta desde que se pide «sentados para el despegue», no desde
+la doble raya.
+
+**La tripulante, en persona.** La comandante no le contesta a un pasajero
+por la megafonía, y eso no cambia; lo que entra es lo que hace una
+tripulante de verdad con un niño que vuela por primera vez: **se acerca al
+asiento** y le habla bajito, sin altavoz, con su voz y el tú de Canarias.
+Revisa el cinturón y la persiana antes de despegar —y cuenta por qué va
+subida—, le trae el agua con el servicio y le explica las nubes de cerca; por
+el pasillo, en la bajada, el motor, el frío de fuera, las islas, el camino,
+las luces de la pista, el baño y los telescopios de lo alto de La Palma; y antes de sentarse para aterrizar, la
+última revisión. Tiene cara, porque Ara la ve: su moño, el pañuelo y las
+alas en la solapa. Solo entre el servicio y la cabina preparada, que es
+cuando una tripulante anda por el pasillo.
+
+**Lo que se cuenta, y cuándo.** El guion fijo sigue mandando; lo nuevo son
+las **charlas** (`CHARLAS_DEL_PASAJE`): lo que pasa —el golpe del tren al
+guardarse, el giro, el «plop» de los oídos, las nubes otra vez bajando, las
+ruedas para aterrizar— se dice en cuanto se calla lo de antes; lo explicado
+espera su rato de silencio y su tramo del vuelo: la comandante solo por
+encima de los diez mil pies —cómo se sostiene el avión, que vamos más alto
+que el Teide y a más de quinientos por hora, que para bajar no se apagan los
+motores—, y la tripulante, en los tramos de la bajada repartidos por la
+distancia que falta (`BAJANDO`), medidos con la bajada de verdad. Lo que se
+dice tiene que ser verdad cuando se dice: «más alto que el Teide» solo por
+encima de su cumbre, «bajo cero» solo con la temperatura de fuera bajo cero,
+el ala de Ara «apunta abajo» solo si el giro es a su lado.
+
+**Las nubes**, de verdad: las del mar de nubes son de gotitas de agua (el
+estratocúmulo «se compone de gotitas de agua», Atlas Internacional de Nubes
+de la OMM) y las de muy arriba de cristalitos de hielo (el cirro, «casi
+exclusivamente de cristales de hielo», mismo atlas); se ven blancas porque
+las gotitas desparraman todos los colores de la luz del sol por igual (Met
+Office, «Why are clouds white?»); cruzarlas mueve un poco el avión y moja la
+ventanilla, y no pasa nada. La explicación de la sustentación es la de la
+regla 4: el ala inclinada empuja el aire hacia abajo y el aire la empuja
+hacia arriba, con menos presión encima —en el dibujo, el «−» y el «+»—, y nada
+de caminos más largos. El PAPI, del Anexo 14 de la OACI. El Gran Telescopio
+Canarias, en el Roque de los Muchachos, de 10,4 m (ficha del Ministerio de
+Ciencia); que una ley protege el cielo de la isla, por verificar.
+
+**Las ventanitas**: los dibujos van en la ventana de cristal de las fotos de
+las historias, que ya sabe dónde cabe sin tapar nada; y en esta escena también
+salen las fotos de las historias que cuenta la comandante. **Dibujados en el
+código** (`ui/dibujos-del-pasaje.ts`), como se aprobó en el punto 231 —«escenas
+con el propio motor del juego, sin licencias»—: diecisiete láminas en SVG, sin
+letras salvo el «EXIT» de los letreros, con su animación quieta si se pide
+movimiento reducido. Ninguna foto nueva ni ninguna imagen generada.
+
+**Las voces, sin grabar**: sesenta y siete frases nuevas —6.338
+caracteres—, en
+`PENDIENTE-VOCES-inicio-3.md`. Mientras tanto se leen.
+
+### Consecuencias
+
+- `inicio-pasaje.test.ts` vuela además **el vuelo medido** en el banco, con
+  sus tiempos, su giro, sus nubes y su mar, y con lo que dura cada frase —su
+  toma, o sus letras al ritmo de su voz—: cada momento en su sitio, la
+  demostración en su orden y antes de la pista, la comandante por encima de
+  los diez mil pies, la tripulante solo por el pasillo, **ningún silencio de
+  más de setenta segundos en el aire** —lo más largo sale de sesenta y cinco,
+  y casi todos entre treinta y cinco y cincuenta y cinco— y **ningún corte de
+  cámara a media frase**. `asiento-de-ara.test.ts` cuenta con rayos lo que se
+  ve desde el asiento de Ara en el modelo de verdad, y `escena.test.ts`, el
+  fundido y la cámara de fuera.
+- El banco del navegador mira los planos que de verdad se ven, el velo, la
+  ventanita, la demostración, las nubes explicadas, los silencios y el
+  asiento, y saca capturas de cada momento nuevo.
+- Las ventanas de los tramos de la bajada están medidas en esta ruta: si un
+  día cambia el plan de Los Rodeos a La Palma, se miden otra vez con
+  `OGA_PASAJE=1` en la prueba del vuelo medido.

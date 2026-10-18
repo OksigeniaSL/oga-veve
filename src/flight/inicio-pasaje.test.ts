@@ -20,7 +20,11 @@ import { EN } from "../i18n/en";
 import { Conversacion, ENTRE_FRASES, TOPE_DE_UNA_FRASE, type Linea } from "./conversacion";
 import { esDeLaEscena, VOZ_DE } from "./inicio";
 import {
+  CHARLAS_DEL_PASAJE,
+  CORTE_DE_PLANO,
   esAnuncioDeSiempre,
+  esDeCerca,
+  esDeFuera,
   GUION_DEL_PASAJE,
   LINEAS_DEL_PASAJE,
   RED_DE_LA_ESPERA,
@@ -30,6 +34,7 @@ import {
   type Senalado,
 } from "./inicio-pasaje";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
+import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import type { Fase } from "./vuelo";
 
 const DT = 1 / 10;
@@ -326,9 +331,14 @@ describe("el guion", () => {
       if (l.quien === "ara") {
         expect(l.clave.startsWith("inicio.ara.pasaje."), l.clave).toBe(true);
         expect(l.megafonia, l.clave).toBeFalsy();
+      } else if (esDeCerca(l)) {
+        // La tripulante en persona: sin altavoz, y con su clave de cerca.
+        expect(l.quien, l.clave).toBe("tripulacion");
+        expect(l.clave.startsWith("inicio.tripulacion.pasaje.cerca."), l.clave).toBe(true);
       } else {
         expect(l.megafonia, l.clave).toBe(true);
         expect(l.clave.startsWith(l.quien === "mama" ? "inicio.mama.pasaje." : "inicio.tripulacion.pasaje.")).toBe(true);
+        expect(l.clave, l.clave).not.toMatch(/\.cerca\./);
       }
     }
   });
@@ -336,7 +346,9 @@ describe("el guion", () => {
   /*
    * **La comandante no le contesta a un pasajero por la megafonía.** Lo suyo,
    * y lo de la tripulación, se le dice a todo el pasaje y de usted: sin voseo
-   * y sin nombrar a nadie.
+   * y sin nombrar a nadie. Y cada anuncio empieza saludando a todo el pasaje
+   * —«señoras y señores», «para quienes vuelan hoy por primera vez»—; lo que
+   * sigue en el mismo anuncio, como cada cosa de la demostración, ya no.
    */
   it("lo de la megafonía es para todo el pasaje, de usted y sin voseo", () => {
     const voseo = /\b(vos|mirá|escuchá|tenés|querés|sabés|podés|tu|te|ti)\b/i;
@@ -344,8 +356,36 @@ describe("el guion", () => {
       const es = ES_PY[l.clave as keyof typeof ES_PY] as string;
       expect(es, l.clave).not.toMatch(voseo);
       expect(es, l.clave).not.toMatch(/\bAra\b/);
-      expect(es, l.clave).toMatch(/señor|quienes/i);
     }
+    for (const m of [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE]) {
+      m.lineas.forEach((l, i) => {
+        if (!l.megafonia || esAnuncioDeSiempre(l.clave)) return;
+        // El primero de quien habla en ese momento: lo que sigue es el mismo anuncio.
+        const empieza = !m.lineas.slice(0, i).some((x) => x.megafonia && x.quien === l.quien);
+        if (empieza) expect(ES_PY[l.clave as keyof typeof ES_PY], `${m.id}: ${l.clave}`).toMatch(/señor|quienes/i);
+      });
+    }
+  });
+
+  /*
+   * **Y la tripulante en persona, con su habla**: la de Canarias, con el tú y
+   * sin voseo —ni «vos», ni «tenés»—, y sin nada que diga si Ara es niño o
+   * niña, que a quien le habla es a Ara.
+   */
+  it("la tripulante, en persona: con el tú de Canarias, sin voseo y sin decir niño o niña", () => {
+    const voseo = /\b(vos|mirá|escuchá|tenés|querés|sabés|podés|sentís)\b/i;
+    const alQueOye =
+      /\b(hij[oa]s?|niñ[oa]s?|nen[ea]s?|guap[oa]s?|campe[oó]na?|list[oa]s?|tranquil[oa]s?|nervios[oa]s?|content[oa]s?|asustad[oa]s?|sentad[oa]s?|solit[oa]s?|pequeñ[oa]s?|chiquit[oa]s?|precios[oa]s?|bonit[oa]s?|valient[ea]s?|mi rey|mi reina)\b/i;
+    const deCerca = LINEAS_DEL_PASAJE.filter(esDeCerca);
+    expect(deCerca.length).toBeGreaterThanOrEqual(10);
+    for (const l of deCerca) {
+      const es = ES_PY[l.clave as keyof typeof ES_PY] as string;
+      expect(es, l.clave).not.toMatch(voseo);
+      expect(es, l.clave).not.toMatch(alQueOye);
+      // Le habla de tú: alguna lo dice, y ninguna de usted.
+      expect(es, l.clave).not.toMatch(/\b(usted|ustedes)\b/i);
+    }
+    expect(deCerca.some((l) => /\b(tienes|sabes|ves|estás|déjame)\b/i.test(ES_PY[l.clave as keyof typeof ES_PY] as string))).toBe(true);
   });
 
   /*
@@ -401,6 +441,8 @@ describe("cada cosa en su momento del vuelo", () => {
       "puertas",
       "motores",
       "bienvenida",
+      "demostracion",
+      "revision",
       "espera",
       "despegue",
       "carrera",
@@ -409,11 +451,14 @@ describe("cada cosa en su momento del vuelo", () => {
       "nubesRespuesta",
       "arriba",
       "servicio",
+      "tcpNubes",
       "bajada",
       "oidos",
       "isla",
       "aproximacion",
+      "tcpAterrizaje",
       "flaps",
+      "aterrizando",
       "toma",
       "llegada",
       "puesto",
@@ -664,5 +709,494 @@ describe("los anuncios esperan la fase del juego", () => {
     expect(aDestiempo).toEqual([]);
     expect(escena.estado.terminado).toBe(true);
     expect(r.escena.estado.saltados).toEqual([]);
+  });
+});
+
+// ── El vuelo medido ──────────────────────────────────────────────────────
+
+/*
+ * **Con el vuelo de verdad y las voces de verdad.** La tripulación de mentira
+ * de arriba sirve para los permisos; para saber si la escena se queda callada
+ * hace falta el vuelo que se vuela —con sus tiempos, su giro, sus nubes y su
+ * mar— y lo que dura cada frase. El vuelo, medido en el banco de la escena
+ * (`scripts/verificar-inicio-3.mjs`, 18-10-2026, de Los Rodeos a La Palma):
+ * rodaje de 129 s, subida de 446 s hasta 5.785 m con el giro a la izquierda a
+ * 25° pasando los 2.300 m, crucero de 58 s, bajada de 904 s con la vuelta a
+ * la final a la derecha, final de 184 s y 242 s de rodaje a la llegada. Las
+ * frases, lo que duran sus tomas en el pack; las que no tienen toma, sus
+ * letras al ritmo de las tomas de esa voz; y los anuncios de siempre, lo que
+ * duraron en el mismo banco.
+ */
+const fsDeNode = (
+  globalThis as unknown as { process: { getBuiltinModule(n: string): unknown } }
+).process.getBuiltinModule("node:fs") as { readFileSync(ruta: string, cod: string): string };
+
+const PIEZAS: Readonly<Record<string, Readonly<Record<string, { ms: number }>>>> = Object.fromEntries(
+  ["ara", "comandante", "tripulacion-canarias"].map((v) => [
+    v,
+    (JSON.parse(fsDeNode.readFileSync(`data/voces/${v}/manifiesto.json`, "utf8")) as { piezas: Record<string, { ms: number }> }).piezas,
+  ]),
+);
+
+/** Letras por segundo de cada voz, en sus tomas de esta escena. */
+const RITMO: Readonly<Record<string, number>> = Object.fromEntries(
+  Object.entries(PIEZAS).map(([voz, piezas]) => {
+    let letras = 0;
+    let segundos = 0;
+    for (const [k, p] of Object.entries(piezas)) {
+      const texto = ES_PY[k as keyof typeof ES_PY] as string | undefined;
+      if (!k.includes(".pasaje.") || typeof texto !== "string") continue;
+      letras += texto.length;
+      segundos += p.ms / 1000;
+    }
+    return [voz, letras / segundos];
+  }),
+);
+
+/** Lo que duraron los anuncios de siempre y lo de la ventanilla en el banco, s. */
+const MEDIDO_EN_EL_BANCO: Readonly<Record<string, number>> = {
+  "comandante.crosscheck": 4.5,
+  "comandante.bienvenida": 9.8,
+  "comandante.despegue": 3.4,
+  "comandante.crucero": 5.0,
+  "tripulacion.servicio": 9.7,
+  "comandante.descenso": 10.0,
+  "tripulacion.cinturones": 9.8,
+  "comandante.aproximacion": 3.8,
+  "comandante.llegada": 8.4,
+  "tripulacion.llegada": 21.3,
+  ventanilla: 12.5,
+  "ventanilla.historia": 9.6,
+};
+
+/** **Lo que dura una frase**: su toma, o sus letras al ritmo de su voz. */
+function loQueDura(l: Linea): number {
+  const medido = MEDIDO_EN_EL_BANCO[l.clave];
+  if (medido !== undefined) return medido;
+  const voz = VOZ_DE[l.quien];
+  const toma = PIEZAS[voz]?.[l.clave];
+  if (toma) return toma.ms / 1000;
+  const texto = (ES_PY[l.clave as keyof typeof ES_PY] as string | undefined) ?? l.texto ?? "";
+  return texto.length / (RITMO[voz] ?? 14);
+}
+
+const GRADOS = Math.PI / 180;
+
+/**
+ * **La bajada medida en el banco**: segundos desde que empieza a bajar,
+ * altitud en m y lo que falta para tocar en km. Con sus dos ratos nivelados
+ * —a 3.180 m y a 1.960 m, encima del mar de nubes— que son los que hacen que
+ * los tramos de la bajada no se repartan solos.
+ */
+const BAJADA_MEDIDA: readonly (readonly [number, number, number])[] = [
+  [0, 5785, 131.7],
+  [155, 4600, 110.4],
+  [330, 3261, 85.3],
+  [352, 3174, 82.1],
+  [392, 3190, 77.0],
+  [550, 1988, 55.8],
+  [571, 1958, 53.1],
+  [612, 1960, 47.4],
+  [656, 1654, 42.2],
+  [765, 934, 28.7],
+  [807, 717, 24.2],
+  [904, 730, 13.1],
+];
+
+/** Lo que vale la columna `col` de una tabla en `t`, interpolando. */
+function enLaTabla(tabla: readonly (readonly number[])[], t: number, col: number): number {
+  for (let i = 1; i < tabla.length; i++) {
+    const a = tabla[i - 1]!;
+    const b = tabla[i]!;
+    if (t <= b[0]!) {
+      const f = Math.max(0, (t - a[0]!) / (b[0]! - a[0]!));
+      return a[col]! + (b[col]! - a[col]!) * f;
+    }
+  }
+  return tabla[tabla.length - 1]![col]!;
+}
+
+/** **El vuelo medido**, del puesto al puesto, obedeciendo los permisos de la escena. */
+class VueloMedido {
+  tramo: TramoDeLinea = "puerta";
+  enTramo = 0;
+  motor = false;
+  enTierra = true;
+  porElSuelo = 0;
+  altitud = 632;
+  campo = 632;
+  vertical = 0;
+  autorizado = false;
+  alineado = false;
+  flaps = 0;
+  tren = 1;
+  cabina = 0;
+  alabeo = 0;
+  falta = 198000;
+  sobreElMar = false;
+
+  private pasar(t: TramoDeLinea): void {
+    this.tramo = t;
+    this.enTramo = 0;
+  }
+
+  get altura(): number {
+    return Math.max(0, this.altitud - this.campo);
+  }
+
+  paso(dt: number, p: PermisosDeLaEscena): void {
+    this.enTramo += dt;
+    const t = this.enTramo;
+    switch (this.tramo) {
+      case "puerta":
+        if (p.arrancar) {
+          this.motor = true;
+          this.pasar("arrancando");
+        }
+        break;
+      case "arrancando":
+        if (t >= 12 && p.rodar) {
+          this.porElSuelo = 8;
+          this.pasar("rodando");
+        }
+        break;
+      case "rodando":
+        if (t >= 129) {
+          this.porElSuelo = 0;
+          this.pasar("esperando");
+        }
+        break;
+      case "esperando":
+        if (t >= 6) this.autorizado = true;
+        if (this.autorizado && p.entrar) this.pasar("entrando");
+        break;
+      case "entrando":
+        if (t >= 12) this.alineado = true;
+        if (this.alineado && p.despegar) {
+          this.alineado = false;
+          this.pasar("carrera");
+        }
+        break;
+      case "carrera":
+        this.porElSuelo += 3.4 * dt;
+        if (this.porElSuelo >= 78) {
+          this.enTierra = false;
+          this.pasar("subida");
+        }
+        break;
+      case "subida": {
+        this.vertical = 11.6;
+        this.altitud = Math.min(5785, this.altitud + this.vertical * dt);
+        this.tren = t < 6 ? 0.5 : 0;
+        this.flaps = t < 40 ? 0.33 : 0;
+        this.cabina = t < 45 ? -1.7 : t < 175 ? 0 : 2.4;
+        this.alabeo = t > 130 && t < 180 ? -24.6 * GRADOS : t > 215 && t < 235 ? -18 * GRADOS : 0;
+        this.porElSuelo = (this.altitud > 3048 ? 519 : 463) / 3.6;
+        this.sobreElMar = t > 85 && !(t > 215 && t < 370);
+        this.falta -= this.porElSuelo * dt * 0.4;
+        if (t >= 446) {
+          this.vertical = 0;
+          this.cabina = 0.1;
+          this.pasar("crucero");
+        }
+        break;
+      }
+      case "crucero":
+        this.alabeo = 0;
+        this.falta = Math.max(131700, this.falta - this.porElSuelo * dt);
+        if (t >= 58) {
+          this.falta = 131700;
+          this.pasar("bajada");
+        }
+        break;
+      case "bajada": {
+        // La bajada medida, con sus dos tramos nivelados: a 3.180 m y a 1.960 m.
+        const antes = this.altitud;
+        this.altitud = enLaTabla(BAJADA_MEDIDA, t, 1);
+        this.vertical = dt > 0 ? (this.altitud - antes) / dt : 0;
+        this.cabina = this.vertical < -1 ? -1.48 : 0.1;
+        this.falta = enLaTabla(BAJADA_MEDIDA, t, 2) * 1000;
+        this.porElSuelo = (this.altitud > 3048 ? 519 : this.falta > 31000 ? 463 : this.falta > 24000 ? 389 : 300) / 3.6;
+        this.flaps = this.falta < 16600 ? 0.67 : this.falta < 24000 ? 0.33 : 0;
+        this.alabeo = this.falta < 20600 && this.falta > 18600 ? 25 * GRADOS : 0;
+        this.sobreElMar = true;
+        // Sobre el mar, la altura es la altitud: el suelo es el agua.
+        this.campo = 0;
+        if (t >= 904) {
+          this.campo = 33;
+          this.pasar("final");
+        }
+        break;
+      }
+      case "final":
+        this.vertical = -3.7;
+        this.altitud = Math.max(33, 715 - (682 * t) / 184);
+        this.falta = Math.max(0, 13100 * (1 - t / 184));
+        this.tren = 1;
+        this.flaps = 1;
+        this.alabeo = 0;
+        this.porElSuelo = 245 / 3.6;
+        this.sobreElMar = this.falta > 400;
+        if (t >= 184) {
+          this.enTierra = true;
+          this.altitud = 33;
+          this.vertical = 0;
+          this.porElSuelo = 60;
+          this.pasar("frenando");
+        }
+        break;
+      case "frenando":
+        this.porElSuelo = Math.max(9, this.porElSuelo - 3.5 * dt);
+        if (t >= 15) this.pasar("al-puesto");
+        break;
+      case "al-puesto":
+        this.porElSuelo = 8;
+        if (t >= 242) {
+          this.porElSuelo = 0;
+          this.pasar("aparcado");
+        }
+        break;
+      case "aparcado":
+        if (t >= 5) {
+          this.motor = false;
+          this.pasar("apagado");
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  get lectura(): LecturaDelPasaje {
+    const nubes = { base: 1532, techo: 1982 };
+    const enLaNube =
+      (this.tramo === "subida" && this.altitud > 1600 && this.altitud < 1810) ||
+      (this.tramo === "bajada" && this.altitud > 1650 && this.altitud < 1810);
+    return {
+      tramo: this.tramo,
+      enTramo: this.enTramo,
+      motor: this.motor,
+      enTierra: this.enTierra,
+      porElSuelo: this.porElSuelo,
+      altura: this.altura,
+      altitud: this.altitud,
+      vertical: this.vertical,
+      autorizado: this.autorizado,
+      flaps: this.flaps,
+      nubes,
+      enNube: enLaNube ? 1 : 0,
+      cabina: this.cabina,
+      faltaParaTocar: this.falta,
+      alineado: this.tramo === "entrando" && this.alineado,
+      alabeo: this.alabeo,
+      tren: this.tren,
+      sobreElMar: this.sobreElMar,
+      // Un día de verano en Canarias: diez grados más que la atmósfera estándar.
+      temperatura: 25 - 6.5 * (this.altitud / 1000),
+    };
+  }
+}
+
+/** Lo que el juego señala por la ventanilla, y cuándo lo vio en el banco, s. */
+const LO_QUE_SE_VIO: readonly { t: number; s: Senalado }[] = [
+  { t: 450, s: sitio("anaga", "izquierda") },
+  { t: 620, s: sitio("orotava", "izquierda") },
+  { t: 780, s: sitio("teide", "izquierda") },
+  { t: 1015, s: sitio("garajonay", "izquierda") },
+];
+
+interface Medido {
+  readonly escena: VueloDePasaje;
+  readonly vuelo: VueloMedido;
+  readonly dichas: Dicha[];
+  /** El tramo de cada momento de escena, para saber dónde cae cada silencio. */
+  readonly tramos: { t: number; tramo: TramoDeLinea }[];
+}
+
+/** Vuela la escena entera con el vuelo medido y las voces que duran lo que duran. */
+function volarElMedido(): Medido {
+  let t = 0;
+  const v = vozQueTarda(loQueDura, () => t);
+  const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+  const vuelo = new VueloMedido();
+  const porVer = [...LO_QUE_SE_VIO];
+  const tramos: { t: number; tramo: TramoDeLinea }[] = [];
+  for (; t < 4000; t += DT) {
+    v.tic();
+    if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
+    vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (escena.estado.puedeSeguir) escena.seguir();
+    if (escena.estado.terminado) break;
+  }
+  return { escena, vuelo, dichas: v.dichas, tramos };
+}
+
+/** Los silencios entre frases, con su principio, su largo y el tramo del vuelo. */
+function silencios(m: Medido): { desde: number; largo: number; tramo: TramoDeLinea }[] {
+  const r = m.escena.registro;
+  const salida: { desde: number; largo: number; tramo: TramoDeLinea }[] = [];
+  for (let i = 1; i < r.length; i++) {
+    const desde = r[i - 1]!.hasta ?? r[i - 1]!.desde;
+    const tramo = [...m.tramos].reverse().find((x) => x.t <= desde)?.tramo ?? "puerta";
+    salida.push({ desde, largo: r[i]!.desde - desde, tramo });
+  }
+  return salida;
+}
+
+/**
+ * **El rato más largo callado**, s. Un vuelo de verdad tiene sus ratos de
+ * motor y ventanilla, y está bien que los tenga; pero Enrique contó cinco
+ * minutos seguidos sin nada bajando, y eso, con siete años, es una eternidad.
+ * Un minuto largo, como mucho, con el avión en el aire —medido, lo más largo
+ * sale de 65 s, y casi todos los silencios entre 35 y 55—; en la final, que es
+ * cuando se calla todo el mundo en un avión de verdad, algo más.
+ */
+const CALLADO_COMO_MUCHO = 70;
+const CALLADO_EN_LA_FINAL = 75;
+
+describe("el vuelo medido, con las voces que duran lo que duran", () => {
+  const m = volarElMedido();
+  const e = m.escena.estado;
+
+  it("pasa por todo el guion, sin saltarse nada, y acaba", () => {
+    if (entorno?.OGA_PASAJE)
+      console.log(
+        m.dichas
+          .map((d) => `${d.desde.toFixed(0).padStart(5)}–${(d.hasta ?? 0).toFixed(0).padStart(5)} · ${d.linea.clave}`)
+          .join("\n") +
+          `\n${silencios(m)
+            .filter((s) => s.largo > 30)
+            .map((s) => `callado ${s.largo.toFixed(0)} s desde ${s.desde.toFixed(0)} (${s.tramo})`)
+            .join("\n")}` +
+          `\nplanos: ${e.planos.map((p) => `${p.plano}@${p.desde.toFixed(0)}`).join(" ")}\ncharlas: ${e.charlas.join(" ")}`,
+      );
+    expect(e.terminado).toBe(true);
+    expect(e.saltados).toEqual([]);
+    expect(e.dichos).toEqual(GUION_DEL_PASAJE.map((x) => x.id).filter((x) => x !== "fin"));
+  });
+
+  it("y lo que viene a cuento, en su sitio: el tren, el giro por su lado, las nubes otra vez, las ruedas", () => {
+    const k = m.dichas.map((d) => d.linea.clave);
+    const cuando = (clave: string): number => m.dichas.find((d) => d.linea.clave === clave)?.desde ?? NaN;
+    for (const c of ["tren", "plop", "giro", "ala", "altoRapido", "tcpMotor", "bajando", "tcpIslas", "tcpRuta", "otraNube", "ruedas", "cinturonQuieto", "repaso"] as const)
+      expect(e.charlas, c).toContain(c);
+    // El tren, después de «¡estamos volando!» y mucho antes del crucero.
+    expect(cuando("inicio.ara.pasaje.tren")).toBeGreaterThan(cuando("inicio.ara.pasaje.volando"));
+    // El giro de la subida es a la izquierda: el ala de Ara apunta abajo.
+    expect(k).toContain("inicio.ara.pasaje.giroAbajo");
+    expect(k).not.toContain("inicio.ara.pasaje.giroArriba");
+    // La tripulante por el pasillo, del servicio a la cabina preparada.
+    const servicio = cuando("tripulacion.servicio");
+    const preparada = cuando("comandante.aproximacion");
+    for (const d of m.dichas.filter((x) => esDeCerca(x.linea) && /\.(hola|nubes|motor|frio|islas|ruta|papi)/.test(x.linea.clave))) {
+      expect(d.desde, d.linea.clave).toBeGreaterThan(servicio);
+      expect(d.desde, d.linea.clave).toBeLessThan(preparada);
+    }
+    // Las nubes otra vez, bajando; y las ruedas, en la final.
+    expect(cuando("inicio.ara.pasaje.otraNube")).toBeGreaterThan(cuando("comandante.descenso"));
+    expect(cuando("inicio.ara.pasaje.ruedas")).toBeGreaterThan(preparada);
+  });
+
+  it("la comandante explica por encima de los diez mil pies, que por debajo la cabina de mando no habla", () => {
+    const altitudes: { t: number; altitud: number }[] = [];
+    const m2 = (() => {
+      let t = 0;
+      const v = vozQueTarda(loQueDura, () => t);
+      const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+      const vuelo = new VueloMedido();
+      for (; t < 4000 && !escena.estado.terminado; t += DT) {
+        v.tic();
+        altitudes.push({ t, altitud: vuelo.altitud });
+        vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+        if (escena.estado.puedeSeguir) escena.seguir();
+      }
+      return v.dichas;
+    })();
+    const altitudA = (t: number): number => altitudes.find((x) => x.t >= t)?.altitud ?? 0;
+    for (const clave of ["inicio.mama.pasaje.ala", "inicio.mama.pasaje.altoRapido", "inicio.mama.pasaje.bajando", "inicio.mama.pasaje.nubes"]) {
+      const d = m2.find((x) => x.linea.clave === clave);
+      expect(d, clave).toBeTruthy();
+      expect(altitudA(d!.desde), clave).toBeGreaterThanOrEqual(3048);
+    }
+  });
+
+  it("la demostración de seguridad, entera y en su orden, antes de entrar en la pista", () => {
+    const k = m.dichas.map((d) => d.linea.clave);
+    const orden = ["intro", "cinturon", "salidas", "mascaras", "chaleco", "tarjeta", "aparatos"].map((x) =>
+      k.indexOf(`inicio.tripulacion.pasaje.demo.${x}`),
+    );
+    expect(orden.every((i) => i >= 0)).toBe(true);
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+    // Antes de «sentados para el despegue»: la cabina, lista antes de despegar.
+    expect(Math.max(...orden)).toBeLessThan(k.indexOf("comandante.despegue"));
+    expect(k.indexOf("comandante.bienvenida")).toBeLessThan(orden[0]!);
+  });
+
+  it("ningún rato largo callado en el aire, contado con lo que dura cada frase", () => {
+    const largos = silencios(m).filter(
+      (s) =>
+        (s.tramo === "subida" || s.tramo === "crucero" || s.tramo === "bajada") && s.largo > CALLADO_COMO_MUCHO,
+    );
+    expect(largos.map((s) => `${s.largo.toFixed(0)} s desde ${s.desde.toFixed(0)} (${s.tramo})`)).toEqual([]);
+    const enLaFinal = silencios(m).filter((s) => (s.tramo === "final" || s.tramo === "recogida") && s.largo > CALLADO_EN_LA_FINAL);
+    expect(enLaFinal.map((s) => `${s.largo.toFixed(0)} s desde ${s.desde.toFixed(0)}`)).toEqual([]);
+  });
+
+  it("y en tierra tampoco: ni rodando a la pista ni rodando al puesto", () => {
+    const largos = silencios(m).filter(
+      (s) =>
+        (s.tramo === "rodando" || s.tramo === "al-puesto" || s.tramo === "aparcado") && s.largo > CALLADO_COMO_MUCHO + 15,
+    );
+    expect(largos.map((s) => `${s.largo.toFixed(0)} s desde ${s.desde.toFixed(0)} (${s.tramo})`)).toEqual([]);
+  });
+
+  /*
+   * **Los planos no saltan a media frase**: cada corte —de la ventanilla a
+   * fuera, de fuera a la ventanilla— cae en un silencio, y la escena calla el
+   * rato del fundido. Asomarse al cristal no es un corte.
+   */
+  it("las cámaras no saltan en mitad de una frase", () => {
+    const r = m.escena.registro;
+    const planos = e.planos;
+    let cortes = 0;
+    for (let i = 1; i < planos.length; i++) {
+      const antes = planos[i - 1]!.plano;
+      const ahora = planos[i]!;
+      if (!esDeFuera(antes) && !esDeFuera(ahora.plano)) continue;
+      cortes++;
+      for (const f of r) {
+        const hasta = f.hasta ?? Infinity;
+        // Ni sonando cuando se pide el corte, ni empezando antes de que acabe el fundido.
+        expect(
+          f.desde < ahora.desde + CORTE_DE_PLANO - 1e-6 && hasta > ahora.desde + 1e-6,
+          `${ahora.plano}@${ahora.desde.toFixed(1)} · ${f.clave}`,
+        ).toBe(false);
+      }
+    }
+    expect(cortes).toBeGreaterThanOrEqual(10);
+  });
+
+  it("y se ve por fuera lo que se cuenta, y se vuelve a la ventanilla", () => {
+    const fuera = e.planos.filter((p) => esDeFuera(p.plano)).map((p) => p.plano);
+    for (const p of ["fuera-rodando", "fuera-despegue", "fuera-giro", "fuera-vuelta", "fuera-ala", "fuera-pista"] as const)
+      expect(fuera, p).toContain(p);
+    // Ara se pega al cristal: para el motor, y para mirar abajo.
+    expect(e.planos.map((p) => p.plano)).toContain("asomado-motor");
+    expect(e.planos.map((p) => p.plano)).toContain("asomado-abajo");
+    // Y ningún plano de fuera se queda más de un minuto: se vuelve a la ventanilla.
+    for (let i = 0; i < e.planos.length - 1; i++)
+      if (esDeFuera(e.planos[i]!.plano))
+        expect(e.planos[i + 1]!.desde - e.planos[i]!.desde, e.planos[i]!.plano).toBeLessThan(60);
+    // Y el vuelo acaba en la ventanilla.
+    expect(e.plano).toBe("ventanilla");
+  });
+
+  it("cada explicación con su dibujo en la ventanita, y el dibujo existe", () => {
+    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE].flatMap((x) => x.lineas).filter((l) => l.dibujo);
+    expect(conDibujo.length).toBeGreaterThanOrEqual(20);
+    for (const l of conDibujo) expect(esDibujoDelPasaje(l.dibujo!), `${l.clave}: ${l.dibujo}`).toBe(true);
+    // Y todos los dibujos se usan.
+    for (const d of Object.keys(DIBUJOS_DEL_PASAJE)) expect(conDibujo.map((l) => l.dibujo), d).toContain(d);
   });
 });
