@@ -238,6 +238,37 @@ describe("la bienvenida con el plan", () => {
     expect(d.texto).not.toContain("hora");
   });
 
+  it("y detrás del plan, el tiempo de allá; delante el saludo y al final el cierre", () => {
+    const b = bienvenidaConPlan(forma, 20 * 60, 13, undefined, {
+      saludo: { id: "comandante.bienvenida.saludo.pasajeros.tardes", texto: "Buenas tardes." },
+      cierre: { id: "comandante.bienvenida.cierre.disfruten", texto: "Disfruten." },
+      alla: tiempo({ temp: -3, techoM: 200, tapadura: 0.9 }),
+    });
+    expect(b.clave).toBe("comandante.bienvenidaConPlan");
+    expect(Object.keys(b.relleno)).toEqual([
+      "saludo",
+      "bienvenida",
+      "vuelo",
+      "nivel",
+      "cielo",
+      "temperatura",
+      "cierre",
+    ]);
+    expect(b.relleno.cielo).toBe("comandante.cielo.nublado");
+    expect(b.relleno.temperatura).toBe("comandante.temperatura.menos3");
+    expect(b.texto).toMatch(
+      /^Buenas tardes\. Bienvenidos\. .*20 minutos.*13 mil pies.*Allá está nublado\. La temperatura es de 3 grados bajo cero\. Disfruten\.$/,
+    );
+  });
+
+  it("y el tiempo de allá es el mismo que dirá al empezar a bajar", () => {
+    const alla = tiempo({ temp: 27, lluvia: "lluvia" });
+    const b = bienvenidaConPlan(forma, 20 * 60, 13, undefined, { alla });
+    const d = descensoPara("la-palma", 10 * 60, alla);
+    expect(b.relleno.cielo).toBe(d.relleno.cielo);
+    expect(b.relleno.temperatura).toBe(d.relleno.temperatura);
+  });
+
   it("y en una vuelta al campo no se inventa un plan", () => {
     expect(bienvenidaConPlan(forma, null, null)).toEqual({
       clave: forma.id,

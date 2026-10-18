@@ -535,6 +535,16 @@ if (process.env.OGA_OTRA_PUNTA === "1" && DESTINO)
  */
 if (process.env.OGA_SIN_INSTRUCTORA === "1")
   await page.evaluate(() => globalThis.__oga?.sinInstructora?.(true));
+/*
+ * **Y lo que cuenta la comandante en el crucero, aunque no esté grabado**, si
+ * se pide: `OGA_MOMENTOS=1`. Sin grabar no se pide nunca, y así no se puede
+ * mirar cuándo saldría ni con quién se cruza; con esto se pide con su texto.
+ * Suena con la voz del navegador o no suena, así que la comprobación de que
+ * todo lo pedido sonó sale en rojo por ellas: es lo esperado. Ver
+ * `momentosSinGrabarParaBanco` en `src/game.ts`.
+ */
+if (process.env.OGA_MOMENTOS === "1")
+  await page.evaluate(() => globalThis.__oga?.momentosSinGrabar?.(true));
 await page
   .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, {
     timeout: 60000,
@@ -6279,6 +6289,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     cuentaOida: o.cuentaOida?.() ?? [],
     // Y lo que sonó por la megafonía, en orden: el guion de la cabina.
     megafonia: o.megafonia?.() ?? [],
+    // Y lo que contó la comandante en el crucero, con su hora. Ver `OGA_MOMENTOS`.
+    momentosDeCrucero: o.momentosDeCrucero?.() ?? [],
     // Y la lista de después del aterrizaje, punto por punto con su hora.
     listaTrasLaToma: o.listaTrasLaToma?.() ?? [],
     // Y los motivos y tonos que sonaron, con su hora: los de cabina y el de cambio.
@@ -6560,6 +6572,7 @@ if (process.env.OGA_VOCES) {
         consejos: (vuelo.cantados ?? []).filter((c) => c.startsWith("consejo ")),
         cuenta: vuelo.cuentaOida,
         megafonia: vuelo.megafonia,
+        momentosDeCrucero: vuelo.momentosDeCrucero,
         // La final del destino, en voces: ver `vocesAlCruzar`.
         ordenesDeIrse: vuelo.ordenesDeIrse,
         laFinalDeAlli: vuelo.laFinalDeAlli,
@@ -8978,6 +8991,21 @@ if (fallos) {
         console.log(`      ${String(n).padStart(3)} ×  ${c}`);
     }
   }
+}
+
+/*
+ * **Y la megafonía en orden, con su hora**: el guion de la cabina tal como
+ * sonó, y lo que contó la comandante en el crucero, con la altura a la que lo
+ * pidió. Es el registro de lo que dice Jazlyn en el vuelo.
+ */
+if ((vuelo.megafonia ?? []).length) {
+  console.log("\n  la megafonía, en orden:\n");
+  for (const l of vuelo.megafonia) console.log(`      ${l}`);
+}
+if ((vuelo.momentosDeCrucero ?? []).length) {
+  console.log("\n  lo que contó la comandante en el crucero:\n");
+  for (const m of vuelo.momentosDeCrucero)
+    console.log(`      ${m.t.toFixed(1)} s · ${m.altura} m · ${m.momento} · ${m.clave}`);
 }
 
 // Y las fases de la llegada, en orden. Ver `cambiosDeFase`.

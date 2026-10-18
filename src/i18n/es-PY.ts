@@ -840,6 +840,142 @@ export const ES_PY = {
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Gomera.",
 
   /*
+   * ── **Y la bienvenida, siempre distinta** ───────────────────────────────
+   *
+   * Las de arriba son la forma de siempre, y se quedan en la rueda. Éstas son
+   * las otras: el saludo según la hora —desde la cabina, a los pasajeros, o a
+   * los chicos y chicas de a bordo—, con gracia, la frase del destino con un
+   * detalle cierto del sitio, y el cierre. Se montan con el plan y el tiempo
+   * de allá en la receta de siempre, y nunca sale la misma dos vuelos
+   * seguidos. Cada una es una frase entera, para grabarla entera. Ver
+   * `audio/bienvenidas.ts`.
+   */
+  "comandante.bienvenida.saludo.pasajeros.dias":
+    "Buenos días, señores pasajeros. Les habla la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.pasajeros.tardes":
+    "Buenas tardes, señores pasajeros. Les habla la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.pasajeros.noches":
+    "Buenas noches, señores pasajeros. Les habla la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.cabina.dias":
+    "Muy buenos días desde la cabina de mando: les saluda la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.cabina.tardes":
+    "Muy buenas tardes desde la cabina de mando: les saluda la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.cabina.noches":
+    "Muy buenas noches desde la cabina de mando: les saluda la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.chicos.dias":
+    "Señoras y señores, chicos y chicas: ¡buenos días! Les habla la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.chicos.tardes":
+    "Señoras y señores, chicos y chicas: ¡buenas tardes! Les habla la comandante Jazlyn.",
+  "comandante.bienvenida.saludo.chicos.noches":
+    "Señoras y señores, chicos y chicas: ¡buenas noches! Les habla la comandante Jazlyn.",
+  "comandante.bienvenida.gracia.1":
+    "Señores pasajeros, les habla la comandante Jazlyn, desde la oficina con la mejor vista de todo el avión.",
+  "comandante.bienvenida.gracia.2":
+    "Señores pasajeros, buenas: les habla la comandante Jazlyn. Ya revisamos todo, el avión está listo, y yo también.",
+  "comandante.bienvenida.gracia.3":
+    "Señores pasajeros, les habla la comandante Jazlyn. Tengo el trabajo más lindo del mundo, y hoy me toca llevarlos a ustedes.",
+  "comandante.bienvenida.a.local":
+    "Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.",
+  "comandante.bienvenida.a.pettirossi": "Bienvenidos a bordo de este vuelo a Asunción.",
+  "comandante.bienvenida.a.guarani": "Bienvenidos a bordo de este vuelo a Ciudad del Este.",
+  "comandante.bienvenida.a.encarnacion": "Bienvenidos a bordo de este vuelo a Encarnación.",
+  "comandante.bienvenida.a.concepcion": "Bienvenidos a bordo de este vuelo a Concepción.",
+  "comandante.bienvenida.a.pedro-juan":
+    "Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.",
+  "comandante.bienvenida.a.estigarribia":
+    "Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.",
+  "comandante.bienvenida.a.ayolas": "Bienvenidos a bordo de este vuelo a Ayolas.",
+  "comandante.bienvenida.a.pilar": "Bienvenidos a bordo de este vuelo a Pilar.",
+  "comandante.bienvenida.a.yvytu-rape":
+    "Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.",
+  "comandante.bienvenida.a.tenerife-norte": "Bienvenidos a bordo de este vuelo a Tenerife Norte.",
+  "comandante.bienvenida.a.tenerife-sur": "Bienvenidos a bordo de este vuelo a Tenerife Sur.",
+  "comandante.bienvenida.a.gran-canaria": "Bienvenidos a bordo de este vuelo a Gran Canaria.",
+  "comandante.bienvenida.a.lanzarote": "Bienvenidos a bordo de este vuelo a Lanzarote.",
+  "comandante.bienvenida.a.fuerteventura": "Bienvenidos a bordo de este vuelo a Fuerteventura.",
+  "comandante.bienvenida.a.la-palma": "Bienvenidos a bordo de este vuelo a La Palma.",
+  "comandante.bienvenida.a.el-hierro": "Bienvenidos a bordo de este vuelo a El Hierro.",
+  "comandante.bienvenida.a.la-gomera": "Bienvenidos a bordo de este vuelo a La Gomera.",
+  /*
+   * Y con un detalle del sitio, **cierto y que se reconoce allí**: el río de
+   * Asunción, la represa de Ayolas, los telescopios de La Palma, el silbo de
+   * La Gomera. Uno solo y corto: es una bienvenida, no la llegada, que ya
+   * cuenta lo suyo al aterrizar.
+   */
+  "comandante.bienvenida.detalle.local":
+    "Bienvenidos a bordo. Hoy no vamos lejos: damos una vuelta para mirar todo desde arriba, y volvemos acá mismo.",
+  "comandante.bienvenida.detalle.pettirossi":
+    "Bienvenidos a bordo: hoy los llevamos a Asunción, la capital, a orillas del río Paraguay.",
+  "comandante.bienvenida.detalle.guarani":
+    "Bienvenidos a bordo: hoy los llevamos a Ciudad del Este, la segunda ciudad más grande del país.",
+  "comandante.bienvenida.detalle.encarnacion":
+    "Bienvenidos a bordo: hoy los llevamos a Encarnación, la capital de Itapúa, a orillas del Paraná.",
+  "comandante.bienvenida.detalle.concepcion":
+    "Bienvenidos a bordo: hoy los llevamos al norte, a Concepción, a orillas del río Paraguay.",
+  "comandante.bienvenida.detalle.pedro-juan":
+    "Bienvenidos a bordo: hoy los llevamos a Pedro Juan Caballero, en la frontera con Brasil.",
+  "comandante.bienvenida.detalle.estigarribia":
+    "Bienvenidos a bordo: hoy los llevamos a Mariscal Estigarribia, en pleno Chaco.",
+  "comandante.bienvenida.detalle.ayolas":
+    "Bienvenidos a bordo: hoy los llevamos a Ayolas, al lado de la represa de Yacyretá.",
+  "comandante.bienvenida.detalle.pilar":
+    "Bienvenidos a bordo: hoy los llevamos a Pilar, en el Ñeembucú, tierra de esteros.",
+  "comandante.bienvenida.detalle.yvytu-rape":
+    "Bienvenidos a bordo: hoy los llevamos a Yvytu Rape, la pista de pasto de la Granja Óga.",
+  "comandante.bienvenida.detalle.tenerife-norte":
+    "Bienvenidos a bordo: hoy los llevamos a Tenerife Norte, en La Laguna.",
+  "comandante.bienvenida.detalle.tenerife-sur":
+    "Bienvenidos a bordo: hoy los llevamos a Tenerife Sur, en la isla del Teide.",
+  "comandante.bienvenida.detalle.gran-canaria":
+    "Bienvenidos a bordo: hoy los llevamos a Gran Canaria, una isla casi redonda, con su cumbre en el medio.",
+  "comandante.bienvenida.detalle.lanzarote":
+    "Bienvenidos a bordo: hoy los llevamos a Lanzarote, la isla de los volcanes.",
+  "comandante.bienvenida.detalle.fuerteventura":
+    "Bienvenidos a bordo: hoy los llevamos a Fuerteventura, la isla más cerca de África.",
+  "comandante.bienvenida.detalle.la-palma":
+    "Bienvenidos a bordo: hoy los llevamos a La Palma, la isla de los telescopios.",
+  "comandante.bienvenida.detalle.el-hierro":
+    "Bienvenidos a bordo: hoy los llevamos a El Hierro, la isla que queda más al oeste de España.",
+  "comandante.bienvenida.detalle.la-gomera":
+    "Bienvenidos a bordo: hoy los llevamos a La Gomera, la isla donde se habla silbando.",
+  "comandante.bienvenida.cierre.disfruten": "Relájense, pónganse cómodos y disfruten del vuelo.",
+  "comandante.bienvenida.cierre.gracias":
+    "Gracias por volar con nosotros, y que tengan un lindo viaje.",
+  "comandante.bienvenida.cierre.acomodense": "Acomódense tranquilos, que en un ratito salimos.",
+
+  /*
+   * ── **Y lo que cuenta en un crucero largo** ─────────────────────────────
+   *
+   * El punto del vuelo con el último parte de allá, un saludo a los chicos y
+   * chicas o a quien vuela por primera vez —sin nombres: a quien le toque—,
+   * y una curiosidad verdadera. Poco y a su momento, según lo que dure el
+   * tramo. Ver `audio/momentos-de-crucero.ts`.
+   */
+  "comandante.mitad.camino":
+    "Señores pasajeros, les habla otra vez la comandante: ya vamos por la mitad del camino.",
+  "comandante.mitad.viaje":
+    "Señores pasajeros, les habla la comandante, para contarles cómo vamos: ya pasamos la mitad del viaje.",
+  "comandante.mitad.parte": "Les paso el último parte del tiempo en destino.",
+  "comandante.chicos.primeraVez":
+    "Señores pasajeros, les habla la comandante. Un saludo especial para quien hoy vuela por primera vez: eso que se siente en la panza cuando el avión sube o baja es normal, y a todos nos pasó la primera vez.",
+  "comandante.chicos.tripulacion":
+    "Señores pasajeros, les habla la comandante. Un saludo grande a los chicos y chicas que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.",
+  "comandante.chicos.aterrizar":
+    "Señores pasajeros, les habla la comandante. Un saludo a los más chiquitos y a quien sube a un avión por primera vez: bienvenidos al cielo. Cuando bajemos, miren por la ventanilla cómo todo se va haciendo grande otra vez.",
+  "comandante.curiosidad.alas":
+    "Señores pasajeros, algo para los que van en la ventanilla: si miran el ala, la van a ver doblada un poquito hacia arriba. Es el aire que nos sostiene, empujándola. Está hecha para eso, así que tranquilos.",
+  "comandante.curiosidad.rayas":
+    "Señores pasajeros, un dato curioso de la comandante: las rayas blancas que dejan algunos aviones en el cielo son nubes. El vapor de agua que sale de los motores se congela con el frío, y queda dibujado ahí arriba.",
+  "comandante.curiosidad.ventanilla":
+    "Señores pasajeros, un secreto de las ventanillas: muchas tienen un agujerito chiquito abajo. No es una falla: así el vidrio de afuera hace toda la fuerza, y el de adentro no se empaña.",
+  "comandante.curiosidad.ingles":
+    "Señores pasajeros, un dato curioso de la comandante: el inglés es el idioma de la aviación. Un piloto de cualquier país puede hablar en inglés con la torre de cualquier aeropuerto internacional, y se entienden.",
+  "comandante.curiosidad.llave":
+    "Señores pasajeros, un secreto de la cabina: los aviones no tienen llave para arrancar, como los autos. Se arrancan con botones, siguiendo una lista, paso por paso.",
+  "comandante.curiosidad.viento":
+    "Señores pasajeros, ¿sabían que los aviones despegan y aterrizan de cara al viento? Con el viento de frente, el avión tiene que correr menos para que el aire lo levante, y le alcanza con menos pista.",
+
+  /*
    * ── **Lo que se ve por la ventanilla** ──────────────────────────────────
    *
    * Lo que hace una comandante en un vuelo largo: señalar lo que se pasa por

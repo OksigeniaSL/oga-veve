@@ -135,6 +135,25 @@ const REPARTO = [
       temperatura: "comandante.temperatura.menos3",
     },
   ],
+  /*
+   * **Y la bienvenida con el tiempo de allá**, que es lo que dice una
+   * comandante al saludar: la forma de siempre, el plan y el cielo y los
+   * grados del destino, con la receta de huecos que pueden ir vacíos. Las
+   * formas nuevas —el saludo de cada hora, el detalle del sitio, el cierre—
+   * entran aquí el día que se graben. Ver `src/audio/bienvenidas.ts`.
+   */
+  [
+    "comandante",
+    "comandante.bienvenidaConPlan",
+    "comandante",
+    {
+      bienvenida: "comandante.bienvenida.lanzarote",
+      vuelo: "comandante.previsto.vuelo.45",
+      nivel: "comandante.previsto.nivel.15",
+      cielo: "comandante.cielo.nubes",
+      temperatura: "comandante.temperatura.22",
+    },
+  ],
   ["comandante", "comandante.aproximacion", "comandante"],
   /*
    * **Y los baches, contados con calma**: la comandante con pasaje y la

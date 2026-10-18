@@ -634,11 +634,18 @@ describe("la conversación, con el reloj de la voz", () => {
 describe("los anuncios esperan la fase del juego", () => {
   const r = correr(() => 4, { faseTardia: true });
 
-  it("la bienvenida se pide ya rodando para el juego, y suena", () => {
+  it("la bienvenida se pide al echar a rodar, y suena", () => {
     const bienvenida = r.dichas.find((d) => d.linea.clave === "comandante.bienvenida")!;
     expect(bienvenida).toBeTruthy();
-    // Cuatro segundos de «arrancando» después de echar a rodar.
-    expect(bienvenida.desde).toBeGreaterThanOrEqual(r.vuelo.rodoA! + 4 - 1e-6);
+    /*
+     * Ya no espera a que el juego diga «rodando»: desde que la bienvenida se
+     * da en el puesto, detrás de los toboganes, vale también mientras se
+     * arranca, y la boca no la tira. Ver `CUANDO` en `audio/megafonia.ts`. Lo
+     * que se mira es que se pida con el avión ya rodando y que nada de la
+     * escena salga a destiempo, que es la prueba de abajo.
+     */
+    expect(bienvenida.desde).toBeGreaterThanOrEqual(r.vuelo.rodoA! - 1e-6);
+    expect(seLePasoElMomento("comandante.bienvenidaConPlan", "arrancando")).toBe(false);
   });
 
   it("y ninguno de la escena se pide a destiempo, y la escena acaba igual", () => {
