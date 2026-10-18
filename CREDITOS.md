@@ -556,6 +556,19 @@ Lo que se miró y **no** entró, con su motivo:
   Tajogaite: no es ninguna de las cuatro que se aceptan aquí. Va la foto de
   Mike Peel de las fajanas, que es lo que cuenta la historia.
 
+### Los dibujos de la ventanita del vuelo de pasaje
+
+En la escena «Viajá con Jazlyn», lo que explican la tripulación y la
+comandante —el cinturón, las salidas, las mascarillas, el chaleco, la tarjeta,
+el modo avión, la persiana, las nubes, el ala, el motor, el frío, las islas,
+el camino, el oído, las luces de la pista y los telescopios de La Palma— sale dibujado en la misma ventana
+de cristal que las fotos de las historias. **Están dibujados en el código**,
+en `src/ui/dibujos-del-pasaje.ts`, con formas y colores del juego: son
+nuestros, van con el código bajo Apache-2.0 y no traen nada de fuera, ni
+fotos, ni iconos de terceros, ni imágenes generadas. Las islas del mapa del
+camino van en su sitio con las coordenadas de cada una. Lo que cuentan, y de
+dónde sale, en el ADR 0020.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

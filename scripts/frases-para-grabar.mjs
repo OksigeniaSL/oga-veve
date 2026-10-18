@@ -1605,7 +1605,15 @@ const DEL_INICIO = [
   ["inicio.ara.aterrizar.", "ara", "el modo inicio, aterrizar: Ara pregunta"],
   ["inicio.ara.pasaje.", "ara", "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla"],
   ["inicio.mama.pasaje.", "comandante", "el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía"],
-  ["inicio.tripulacion.pasaje.", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía"],
+  ["inicio.tripulacion.pasaje.", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía", /\.cerca\./],
+  /*
+   * **Y la tripulante en persona** (18-10-2026): la misma voz, pero al lado
+   * del asiento de Ara y sin altavoz —se lo pone o no el juego—, con el tú de
+   * Canarias y la calidez de quien le cuenta algo a un niño que vuela por
+   * primera vez. Detrás de todo lo de la tripulación, que lo grabado no se
+   * renumera. Ver `esDeCerca` en `src/flight/inicio-pasaje.ts`.
+   */
+  ["inicio.tripulacion.pasaje.cerca.", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"],
 ];
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
