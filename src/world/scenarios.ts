@@ -159,8 +159,6 @@ export interface Scenario {
   fill: number;
   sky: { horizon: number; zenith: number };
   fog: { colour: number; density: number };
-  /** Dirección del sol en grados: azimut y elevación. */
-  sun: { azimuth: number; elevation: number };
   /**
    * Pista: centro en coordenadas de mundo, rumbo **verdadero** en grados, y
    * longitud y anchura en metros.
@@ -385,7 +383,6 @@ export const VALLE_CORDILLERA: Scenario = {
   fill: 0x4d6b45,
   sky: { horizon: 0xe6edf2, zenith: 0x4d92d4 },
   fog: { colour: 0xd2e0ea, density: 0.00005 },
-  sun: { azimuth: 125, elevation: 34 },
   // Emplazamiento elegido buscando el tramo más llano y seco del valle:
   // 142 m de cota, en el llano del norte y a casi tres kilómetros del cauce.
   // Una pista dentro del río no la ve nadie hasta que despega.
@@ -422,7 +419,6 @@ export const CHACO: Scenario = {
   fill: 0x8a7f52,
   sky: { horizon: 0xf4e9d4, zenith: 0x62a2d6 },
   fog: { colour: 0xe8dcc4, density: 0.00006 },
-  sun: { azimuth: 200, elevation: 46 },
   runway: { x: 300, z: -200, heading: 30, length: 1400, width: 34 },
   magneticVariation: 13,
 };
@@ -697,7 +693,6 @@ export const PETTIROSSI: Scenario = {
   fill: 0x4f7048,
   sky: { horizon: 0xe9eef1, zenith: 0x5397d8 },
   fog: { colour: 0xd8e3ea, density: 0.000045 },
-  sun: { azimuth: 140, elevation: 52 },
   // La pista, sacada del propio fichero.
   //
   // No vale poner (0, 0): el origen del aeródromo es su **punto de
@@ -901,7 +896,6 @@ export const TENERIFE_NORTE: Scenario = {
    * que tiene un volcán a esa distancia — azulado y ahí.
    */
   fog: { colour: 0xdae4e8, density: 0.000018 },
-  sun: { azimuth: 108, elevation: 44 },
   /*
    * **La preferente es la 12.**
    *
@@ -1020,7 +1014,6 @@ export const YVYTU_RAPE: Scenario = {
   fill: 0x4d6b45,
   sky: { horizon: 0xe6edf2, zenith: 0x4d92d4 },
   fog: { colour: 0xd2e0ea, density: 0.00005 },
-  sun: { azimuth: 130, elevation: 46 },
   runway: pistaDe(YVYTU as unknown as Aerodrome),
   /*
    * Paraguay: declinación oeste de unos trece grados. Con el umbral 15
@@ -1121,7 +1114,6 @@ export const LA_PALMA: Scenario = {
   sky: { horizon: 0xdfe7ea, zenith: 0x4a86c8 },
   // El mismo aire atlántico que en Tenerife: bruma poca, y la cumbre se ve.
   fog: { colour: 0xdae4e8, density: 0.000018 },
-  sun: { azimuth: 112, elevation: 46 },
   /*
    * **La 36, que es la preferente del AIP**, con sus diez nudos de cola
    * (AD 2-GCLA, 20.3). Estaba escrita la 18, y la 18 ganaba todos los empates:
@@ -1247,7 +1239,6 @@ export const TENERIFE_SUR: Scenario = {
   // Menos bruma todavía que en el norte: el sur está debajo de la inversión y
   // el aire de allí es seco.
   fog: { colour: 0xe2e6e2, density: 0.000014 },
-  sun: { azimuth: 150, elevation: 58 },
   runway: pistaDe(GCTS as unknown as Aerodrome, "07"),
   // El asfalto corre a 68,6° verdaderos y la cabecera pone 07.
   magneticVariation: 1.4,
@@ -1307,7 +1298,6 @@ export const GRAN_CANARIA: Scenario = {
   fill: 0x6b6150,
   sky: { horizon: 0xe3e8e7, zenith: 0x4c88c9 },
   fog: { colour: 0xdfe5e4, density: 0.000016 },
-  sun: { azimuth: 140, elevation: 54 },
   runway: pistaDe(GCLP as unknown as Aerodrome, "03L"),
   // El asfalto corre a 22° verdaderos y la cabecera pone 03.
   magneticVariation: 8,
@@ -1441,7 +1431,6 @@ export const LANZAROTE: Scenario = {
   sky: { horizon: 0xe8e9e3, zenith: 0x4f8ecf },
   // El aire más seco del archipiélago: desde el aire se ve Fuerteventura.
   fog: { colour: 0xe4e6de, density: 0.000012 },
-  sun: { azimuth: 145, elevation: 56 },
   runway: pistaDe(GCRR as unknown as Aerodrome, "03"),
   // El asfalto corre a 27° verdaderos y la cabecera pone 03.
   magneticVariation: 3,
@@ -1546,7 +1535,6 @@ export const FUERTEVENTURA: Scenario = {
   sky: { horizon: 0xe9e8e0, zenith: 0x4f8ecf },
   // El aire más seco y más limpio del archipiélago: desde el aire se ve Lanzarote.
   fog: { colour: 0xe6e5dc, density: 0.000011 },
-  sun: { azimuth: 150, elevation: 58 },
   runway: pistaDe(GCFV as unknown as Aerodrome, "01"),
   // El asfalto corre a 1,6° verdaderos y la cabecera pone 01: seis grados de
   // declinación al oeste, que es la de Canarias.
@@ -1624,7 +1612,6 @@ export const EL_HIERRO: Scenario = {
   fill: 0x6b6350,
   sky: { horizon: 0xdde6e9, zenith: 0x4884c6 },
   fog: { colour: 0xd8e3e7, density: 0.000018 },
-  sun: { azimuth: 160, elevation: 50 },
   runway: pistaDe(GCHI as unknown as Aerodrome, "34"),
   // El asfalto corre a 332,6° verdaderos y la cabecera pone 34.
   magneticVariation: 7.4,
@@ -1709,7 +1696,6 @@ export const LA_GOMERA: Scenario = {
   fill: 0x6b6151,
   sky: { horizon: 0xe0e7e8, zenith: 0x4b87c7 },
   fog: { colour: 0xdbe4e7, density: 0.000017 },
-  sun: { azimuth: 155, elevation: 52 },
   runway: pistaDe(GCGM as unknown as Aerodrome, "09"),
   magneticVariation: 8.8,
   aerodrome: conPlataformasCosidas(GCGM as unknown as Aerodrome),
@@ -1770,7 +1756,6 @@ export const CUATRO_VIENTOS: Scenario = {
   sky: { horizon: 0xe8ecec, zenith: 0x4d8ecb },
   // El aire seco de la meseta: se ve lejos, y en verano tiembla de calor.
   fog: { colour: 0xdfe3dc, density: 0.00003 },
-  sun: { azimuth: 122, elevation: 52 },
   runway: pistaDe(LECU as unknown as Aerodrome, "27"),
   /*
    * Un grado. El asfalto corre a 274° verdaderos y la cabecera pone 27, así
@@ -1850,7 +1835,6 @@ export const GUARANI: Scenario = {
   sky: { horizon: 0xe7edf0, zenith: 0x4f95d6 },
   // Aire húmedo del oriente: se ve menos lejos que en el Chaco.
   fog: { colour: 0xd9e4ea, density: 0.00005 },
-  sun: { azimuth: 140, elevation: 54 },
   runway: pistaDe(SGES as unknown as Aerodrome, "05"),
   /*
    * Nueve grados. El asfalto de la 05 corre a 40,8° verdaderos y la cabecera
@@ -1950,7 +1934,6 @@ export const ESTIGARRIBIA: Scenario = {
   sky: { horizon: 0xeae7dc, zenith: 0x5b9ad4 },
   // El aire seco del Chaco: se ve lejísimos, y al mediodía tiembla.
   fog: { colour: 0xe4dfd0, density: 0.000025 },
-  sun: { azimuth: 150, elevation: 62 },
   /*
    * **La 19 de casa, y la 01 cuando el viento la pida.**
    *
@@ -2039,7 +2022,6 @@ export const PEDRO_JUAN: Scenario = {
   fill: 0x688a4b,
   sky: { horizon: 0xe9eef1, zenith: 0x4b93d8 },
   fog: { colour: 0xdde7ec, density: 0.000042 },
-  sun: { azimuth: 145, elevation: 58 },
   runway: pistaDe(SGPJ as unknown as Aerodrome, "03"),
   // Dieciséis grados, deducidos de los propios datos: la 03 corre a 14°
   // verdaderos y la cabecera pone 03.
@@ -2118,7 +2100,6 @@ export const ENCARNACION: Scenario = {
   sky: { horizon: 0xe6ecf2, zenith: 0x4d92d6 },
   // Aire húmedo del sur, con el río al lado.
   fog: { colour: 0xd8e3ec, density: 0.000055 },
-  sun: { azimuth: 135, elevation: 50 },
   runway: pistaDe(SGEN as unknown as Aerodrome, "02"),
   // Ocho grados, deducidos del eje de OpenStreetMap: la 02 corre a 12°
   // verdaderos y la cabecera pone 02.
@@ -2202,7 +2183,6 @@ export const CONCEPCION: Scenario = {
   fill: 0x4f7048,
   sky: { horizon: 0xe9eef1, zenith: 0x5397d8 },
   fog: { colour: 0xd8e3ea, density: 0.000045 },
-  sun: { azimuth: 140, elevation: 55 },
   runway: pistaDe(SGCO as unknown as Aerodrome, "03"),
   // Catorce grados, deducidos de los propios datos: la 03 corre a 16°
   // verdaderos y la cabecera pone 03.
@@ -2281,7 +2261,6 @@ export const AYOLAS: Scenario = {
   fill: 0x55854c,
   sky: { horizon: 0xe6ecf2, zenith: 0x4d92d6 },
   fog: { colour: 0xd8e3ec, density: 0.000055 },
-  sun: { azimuth: 135, elevation: 50 },
   /*
    * La 02 de casa: la plataforma está en la punta sur, al lado del umbral 02,
    * y con el viento del norte de casi todo el año se sale por ahí sin rodar
@@ -2367,7 +2346,6 @@ export const PILAR: Scenario = {
   fill: 0x4f7048,
   sky: { horizon: 0xe9eef1, zenith: 0x5397d8 },
   fog: { colour: 0xd8e3ea, density: 0.000045 },
-  sun: { azimuth: 140, elevation: 52 },
   runway: pistaDe(SGPI as unknown as Aerodrome, "02"),
   // Catorce grados, los del AIP (AD 2.8-2, 14° W de 2024): la 02 corre a
   // 4,8° verdaderos, el HDG marca diecinueve alineado en ella y el número del

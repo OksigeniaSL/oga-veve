@@ -134,6 +134,8 @@ export class MundoVecino {
      * nuevo que generar ni que bajar dos veces.
      */
     foto?: { textura: Texture; uv(x: number, z: number): Punto2 } | undefined,
+    /** El día del vuelo, para la luz cocida de su relieve. Ver `Terrain`. */
+    fecha: Date = new Date(),
   ) {
     const aquí = salida.aerodrome?.origin;
     const allí = vecino.aerodrome?.origin;
@@ -143,7 +145,7 @@ export class MundoVecino {
       );
     this.desplazamiento = dondeCae(aquí, allí);
     this.medioLado = vecino.size / 2;
-    this.terreno = new Terrain(sinHorizonte(vecino));
+    this.terreno = new Terrain(sinHorizonte(vecino), fecha);
     this.exposicion = exposicionDelVecino(salida.id, vecino.id);
     if (foto) this.ponerFoto(foto);
     /*

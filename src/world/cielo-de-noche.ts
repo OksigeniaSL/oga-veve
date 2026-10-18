@@ -31,13 +31,18 @@
  * segundos de arco —una décima de píxel—, ni la refracción, que levanta medio
  * grado lo que está pegado al horizonte, justo donde la bruma ya se lo come.
  *
- * ## El Sol que alumbra no es este
+ * ## Y el Sol que alumbra es este
  *
- * El sol que pinta y alumbra el juego sigue siendo el de `sky.ts`, que sale a
- * las seis y se pone a las dieciocho: es una decisión con su porqué, escrita
- * allí. El de aquí solo sirve para saber **qué cara de la Luna alumbra**, que
- * tiene que ser la de verdad para que la fase esté bien. De día no se pinta la
- * Luna, que es donde los dos soles podrían no casar.
+ * Hubo dos. El que pintaba y alumbraba el juego salía a las seis y se ponía a
+ * las dieciocho en todos los sitios y todos los días, y a mediodía pasaba por
+ * un acimut escrito a mano en cada escenario; el de aquí solo decía qué cara
+ * de la Luna alumbrar. Los acimuts escritos eran de brújula, del norte por el
+ * este, y el dibujo los contaba desde el sur: todos, de 108 a 200 grados,
+ * caían del lado norte, y el sol culminaba **al norte también en Canarias**
+ * (#50). Ahora el sol del juego es este —ver `solALaHora` y `sky.ts`—: sale
+ * por donde sale ese día en ese sitio, culmina al sur en Canarias y al norte
+ * en Paraguay, y su altura es la de la latitud y la fecha. Y la Luna se
+ * alumbra desde el mismo sol que alumbra el suelo.
  *
  * ## Los ejes
  *
@@ -48,6 +53,24 @@
 
 /** Grados a radianes. */
 export const GRADO = Math.PI / 180;
+
+/**
+ * El cielo de los escenarios sin aeródromo extraído: los dos inventados están
+ * en Paraguay de nombre, y se les pone el de Asunción.
+ */
+export const CIELO_DE_ASUNCION = { lat: -25.2637, lon: -57.5759 } as const;
+
+/**
+ * **Desde dónde se mira el cielo** de un escenario: el punto de referencia de
+ * su aeródromo, o Asunción. Uno para el sol, la noche y la luz del relieve,
+ * para que no puedan mirar desde sitios distintos.
+ */
+export function sitioDelCielo(escenario: {
+  readonly aerodrome?: { readonly origin: { readonly lat: number; readonly lon: number } } | null;
+}): { lat: number; lon: number } {
+  const o = escenario.aerodrome?.origin ?? CIELO_DE_ASUNCION;
+  return { lat: o.lat, lon: o.lon };
+}
 
 /** Una matriz de 3×3 por filas: `[a, b, c, d, e, f, g, h, i]`. */
 export type Mat3 = readonly [
@@ -219,6 +242,37 @@ export function instanteDeLaHora(
 }
 
 /**
+ * **Dónde está el Sol a una hora solar** de un sitio y un día, en los ejes del
+ * juego: un vector unidad que apunta hacia él.
+ *
+ * Son las dos cuentas de siempre, las de Meeus y las de la calculadora solar
+ * de la NOAA: la posición del Sol en el cielo de ese día —su declinación, que
+ * es lo que cambia con la fecha— y cuánto ha girado la Tierra desde que pasó
+ * por el meridiano —el ángulo horario, que es lo que cambia con la hora—.
+ * Con la latitud, eso es su altura y su acimut. De ahí sale todo lo que
+ * enseña: que a mediodía culmina **al sur en Canarias y al norte en
+ * Paraguay**, que en junio sube más en Tenerife y en diciembre en Asunción, y
+ * que solo en los equinoccios sale justo por el este.
+ *
+ * Y a las doce no pasa exactamente por el meridiano: la hora del juego es la
+ * solar **media** —ver `world/hora.ts`—, y el Sol de verdad se adelanta o se
+ * retrasa sobre ella hasta un cuarto de hora según la época del año. Es la
+ * ecuación del tiempo, y es la de verdad.
+ */
+export function solALaHora(
+  fecha: Date,
+  horaSolar: number,
+  latitud: number,
+  longitud: number,
+): Vec3 {
+  const t = instanteDeLaHora(fecha, horaSolar, longitud);
+  return aplicar(
+    alHorizonte(latitud, tiempoSidereo(t) + longitud),
+    solDeVerdad(siglos(t)),
+  );
+}
+
+/**
  * **La matriz galáctica de la IAU** (Hipparcos, 1997): de ecuatoriales J2000
  * a galácticas, con el centro de la galaxia en el eje X y su polo norte en el
  * Z. La Vía Láctea es lo que hay cerca del plano XY.
@@ -231,8 +285,9 @@ export const GALACTICAS_DESDE_J2000: Mat3 = [
 
 /**
  * **El Sol de verdad**, en ecuatoriales de la fecha: la fórmula de baja
- * precisión de Meeus (capítulo 25), con un centésimo de grado de error.
- * Solo para alumbrar la Luna. Ver la cabecera.
+ * precisión de Meeus (capítulo 25), con un centésimo de grado de error. Es la
+ * misma de la que sale la calculadora solar de la NOAA. Alumbra el juego y la
+ * Luna: ver `solALaHora` y la cabecera.
  */
 export function solDeVerdad(T: number): Vec3 {
   const L0 = 280.46646 + 36_000.76983 * T;

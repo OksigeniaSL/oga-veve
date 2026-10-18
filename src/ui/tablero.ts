@@ -589,8 +589,15 @@ export class Tablero {
       </defs>
       <rect y="${corte}" width="${ANCHO_DEL_CUADRO}" height="${ALTO_DEL_CUADRO - corte}" class="tablero__fascia" />
       ${visera}
+      <!--
+        La visera, con su MCP y sus luces de aviso, marcada como una caja más:
+        con una pantalla puesta en grande en el teléfono no se ve, y no se
+        dibuja. Ver data-caja en Hud.ponerGrande.
+      -->
+      <g data-caja="visera">
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
       ${this.panelDeAvisos(corte, esDeChorro(a))}
+      </g>
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
       ${placaDeMatricula(matriculaDe(a.id).matricula)}
@@ -793,11 +800,11 @@ export class Tablero {
     const motor = cajaDe("esferas", "motor");
     const placa = cajaDe("esferas", "placa");
     return `
-      ${SixPack.grupo(c)}
-      <g transform="translate(${motor.x} ${BANDA.y})">
+      <g data-caja="seispack">${SixPack.grupo(c)}</g>
+      <g data-caja="motor" transform="translate(${motor.x} ${BANDA.y})">
         ${columnaDeMotor(motor.ancho, BANDA.alto, c)}
       </g>
-      <g transform="translate(${placa.x} ${BANDA.y})">
+      <g data-caja="placa" transform="translate(${placa.x} ${BANDA.y})">
         <!--
           **La placa lleva el avión en los cuatro peldaños.**
 
@@ -926,10 +933,10 @@ export class Tablero {
     const mfd = cajaDe("cristal", "mfd");
     const franja = 128;
     return `
-      <g transform="translate(${pfd.x} ${BANDA.y})">
+      <g data-caja="pfd" transform="translate(${pfd.x} ${BANDA.y})">
         ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: true, mach: false })}
       </g>
-      <g transform="translate(${mfd.x} ${BANDA.y})">
+      <g data-caja="mfd" transform="translate(${mfd.x} ${BANDA.y})">
         <rect width="${mfd.ancho}" height="${BANDA.alto}" rx="6" class="tablero__pantalla" />
         <g transform="translate(${franja + 8} 0)">
           ${pantallaDeNavegacion(mfd.ancho - franja - 8, BANDA.alto)}
@@ -945,13 +952,13 @@ export class Tablero {
     const nd = cajaDe("linea", "nd");
     const eicas = cajaDe("linea", "eicas");
     return `
-      <g transform="translate(${pfd.x} ${BANDA.y})">
+      <g data-caja="pfd" transform="translate(${pfd.x} ${BANDA.y})">
         ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: false, mach: true, fma: true })}
       </g>
-      <g transform="translate(${nd.x} ${BANDA.y})">
+      <g data-caja="nd" transform="translate(${nd.x} ${BANDA.y})">
         ${pantallaDeNavegacion(nd.ancho, BANDA.alto)}
       </g>
-      <g transform="translate(${eicas.x} ${BANDA.y})">
+      <g data-caja="eicas" transform="translate(${eicas.x} ${BANDA.y})">
         ${pantallaDeMotores(eicas.ancho, BANDA.alto, c, a)}
       </g>
     `;

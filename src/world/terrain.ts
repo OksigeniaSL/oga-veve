@@ -49,16 +49,8 @@ import { delante } from "./rumbo";
 import { esAguaDeCasa } from "./agua-de-casa";
 import { mallarConDetalle } from "./malla-lejana";
 import { vecesLejosDe, type Scenario } from "./scenarios";
+import { sitioDelCielo, solALaHora } from "./cielo-de-noche";
 
-/**
- * Dirección desde la que viene la luz, derivada del sol del escenario.
- *
- * Se usa para teñir cada vértice según hacia dónde mira su ladera. Es la
- * mejor relación entre volumen y coste que hay: no hay sombras en el juego
- * —cuestan fotogramas en una tablet— y sin ellas un relieve se lee plano por
- * mucho que tenga bandas de color. Esto se calcula una vez, al construir la
- * malla, y luego es gratis.
- */
 /**
  * Nudos por lado de la manta fina.
  *
@@ -74,14 +66,29 @@ const DESVANECIDO_MANTA = 0.12;
 /** Cuánto se levanta la manta sobre el relieve, m. */
 const ALZADO_MANTA = 0.05;
 
-function sunVector(scenario: Scenario): { x: number; y: number; z: number } {
-  const azimuth = (scenario.sun.azimuth * Math.PI) / 180;
-  const elevation = (scenario.sun.elevation * Math.PI) / 180;
-  return {
-    x: Math.cos(elevation) * Math.sin(azimuth),
-    y: Math.sin(elevation),
-    z: Math.cos(elevation) * Math.cos(azimuth),
-  };
+/**
+ * **Desde dónde viene la luz que se cuece en el relieve**: el sol de mediodía
+ * del día del vuelo, en el sitio del escenario.
+ *
+ * Se usa para teñir cada vértice según hacia dónde mira su ladera. Es la
+ * mejor relación entre volumen y coste que hay: no hay sombras en el juego
+ * —cuestan fotogramas en una tablet— y sin ellas un relieve se lee plano por
+ * mucho que tenga bandas de color. Esto se calcula una vez, al construir la
+ * malla, y luego es gratis.
+ *
+ * Es el sol de verdad —ver `solALaHora`—, y no uno escrito en el escenario:
+ * el escrito se dibujaba del lado norte en todos, y en Canarias las laderas
+ * que se cocían al sol eran las que miran al norte, justo las que el sol de
+ * mediodía no toca (#50). Mediodía porque es una sola luz para todo el día:
+ * la de la hora la pone encima la luz del sol del cielo, que sí se mueve.
+ */
+function solDelRelieve(
+  scenario: Scenario,
+  fecha: Date,
+): { x: number; y: number; z: number } {
+  const { lat, lon } = sitioDelCielo(scenario);
+  const [x, y, z] = solALaHora(fecha, 12, lat, lon);
+  return { x, y, z };
 }
 
 /**
@@ -358,8 +365,16 @@ export class Terrain {
 
   private readonly runwayElevationBase: number;
 
-  constructor(scenario: Scenario) {
+  /** El día del vuelo, del que sale la luz cocida del relieve. */
+  private readonly fecha: Date;
+
+  /**
+   * `fecha` es el día del vuelo: el de quien juega, o el que se pida con
+   * `?fecha=`. Ver `solDelRelieve`.
+   */
+  constructor(scenario: Scenario, fecha: Date = new Date()) {
     this.scenario = scenario;
+    this.fecha = fecha;
     this.resolution = scenario.segments + 1;
     this.step = scenario.size / scenario.segments;
     this.half = scenario.size / 2;
@@ -1732,7 +1747,7 @@ export class Terrain {
     // invisible. Es lo que hace que el terreno parezca pintado y no calculado.
     const patches = new ValueNoise2D(this.scenario.seed ^ 0x5eed);
     const patchScale = 7.5 / this.scenario.size;
-    const sun = sunVector(this.scenario);
+    const sun = solDelRelieve(this.scenario, this.fecha);
 
     for (let row = 0; row < resolution; row++) {
       for (let col = 0; col < resolution; col++) {
@@ -1864,7 +1879,7 @@ export class Terrain {
     const tinte = new Color();
     const manchas = new ValueNoise2D(this.scenario.seed ^ 0x5eed);
     const escala = 7.5 / tamano;
-    const sol = sunVector(this.scenario);
+    const sol = solDelRelieve(this.scenario, this.fecha);
 
     /*
      * La cota de un nudo, **con el mar hundido treinta metros**.

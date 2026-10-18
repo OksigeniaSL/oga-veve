@@ -140,6 +140,21 @@ const DURA_EL_DESTELLO = 1.6;
 const MILLA_HUD = 1852;
 
 /**
+ * **Una pantalla puesta en grande en el teléfono se redibuja una imagen sí y
+ * otra no**, salvo que las imágenes ya vengan más espaciadas que esto, s.
+ *
+ * A sesenta son treinta veces por segundo, que es lo que refresca la pantalla
+ * de un avión de verdad y deja las agujas y el horizonte igual de vivos.
+ * Puesta en grande, la pantalla mide el ancho del teléfono, y redibujarla en
+ * cada imagen pedía, con la CPU de un teléfono de gama media, de tres a seis
+ * milisegundos más que con las losas: el juego caía por debajo de sesenta
+ * justo cuando se quería leer algo. Y si el juego ya va a menos de cuarenta,
+ * se dibuja en todas, que saltarse una sería bajar de veinte. Ver
+ * `Hud.update`.
+ */
+const RITMO_DEL_CUADRO_GRANDE = 1 / 40;
+
+/**
  * Lo que queda del plan, en cifras: «64/100 NM · 14 min», o con la hora de
  * llegada en el peldaño de cabina, «64/100 NM · ETA 2226.6z».
  */
@@ -528,6 +543,12 @@ export class Hud {
    * con las losas. Ver `ponerGrande`.
    */
   private grande: Grande | null = null;
+  /**
+   * El tiempo y las imágenes que lleva sin redibujarse el cuadro. Ver
+   * `RITMO_DEL_CUADRO_GRANDE`.
+   */
+  private sinDibujarElCuadro = 0;
+  private imagenesSinDibujarElCuadro = 0;
   /** Lo último que medía el cuadro del teléfono con las losas. */
   private altoDeLasLosas = 0;
   /**
@@ -1056,12 +1077,27 @@ export class Hud {
     if (!dibujo) return;
     if (!dibujo.hasAttribute("data-entera"))
       dibujo.setAttribute("data-entera", dibujo.getAttribute("viewBox") ?? "");
-    if (!cual) {
+    const que = cual ? this.cuadroTel.queSePoneGrande(cual) : null;
+    /*
+     * **Y lo que queda fuera del recorte, fuera del dibujo.**
+     *
+     * El recorte era solo la caja de la vista: las otras pantallas y la
+     * visera seguían ahí, moviéndose, maquetándose y pintándose cada
+     * fotograma para nadie. Medido en un teléfono de 915 × 412 con la CPU a
+     * ×4, con una pantalla en grande el cuadro pedía de cinco a seis
+     * milisegundos más por imagen que recogido —pintar, capas y estilo, sobre
+     * todo— y el juego caía de sesenta a cuarenta y cinco imágenes por
+     * segundo. Lo que no se ve se quita con `display: none`, que es lo único
+     * que lo saca también de la maqueta y del pintado.
+     */
+    for (const g of dibujo.querySelectorAll<SVGGElement>("[data-caja]"))
+      g.style.display = que === null || g.dataset.caja === que ? "" : "none";
+    if (!cual || !que) {
       dibujo.setAttribute("viewBox", dibujo.getAttribute("data-entera") ?? "");
       this.escribirLaUnidad();
       return;
     }
-    const caja = cajaDe(familiaDe(this.ficha), this.cuadroTel.queSePoneGrande(cual));
+    const caja = cajaDe(familiaDe(this.ficha), que);
     dibujo.setAttribute(
       "viewBox",
       `${caja.x - 4} ${BANDA.y - 4} ${caja.ancho + 8} ${BANDA.alto + 8}`,
@@ -3256,7 +3292,23 @@ export class Hud {
       // Recogido o detrás de la cabina, lo que se dibuja no ha salido en la
       // pantalla. Ver `Tablero.aLaVista`.
       this.tablero.aLaVista = !this.cuadroBajado && !this.enCabina();
-      this.tablero.update(datos, dt, !telefono || this.grande !== null);
+      /*
+       * Y en grande, a su ritmo: lo que pasa entre dos dibujos se le da junto
+       * al siguiente, para que las agujas con retardo y el parpadeo de los
+       * avisos lleven el tiempo de verdad. Ver `RITMO_DEL_CUADRO_GRANDE`.
+       */
+      this.sinDibujarElCuadro += dt;
+      this.imagenesSinDibujarElCuadro++;
+      const aSuRitmo = telefono && this.grande !== null;
+      if (
+        !aSuRitmo ||
+        this.imagenesSinDibujarElCuadro >= 2 ||
+        this.sinDibujarElCuadro >= RITMO_DEL_CUADRO_GRANDE
+      ) {
+        this.tablero.update(datos, this.sinDibujarElCuadro, !telefono || this.grande !== null);
+        this.sinDibujarElCuadro = 0;
+        this.imagenesSinDibujarElCuadro = 0;
+      }
       if (telefono && !this.cuadroBajado && this.grande === null)
         this.cuadroTel.update(datos);
     }
@@ -4073,7 +4125,6 @@ export class Hud {
     this.horaAtada = { hora, cambio };
     this.tiempo.onHora(cambio);
     this.tiempo.ponerHoraSinAvisar(hora);
-    this.ponerLuzDeFuera(hora);
   }
 
   /**
@@ -4087,9 +4138,14 @@ export class Hud {
    * Va como variable de CSS y no como clase para que el paso sea continuo: el
    * anochecer dura, y un cuadro que salta de apagado a encendido de un
    * fotograma a otro se ve falso. Ver `cuantaLuz`.
+   *
+   * Con la **altura del sol**, en grados, y no con la hora: el sol es el de
+   * verdad y no se pone a la misma hora en junio que en diciembre, ni en
+   * Asunción que en Tenerife (#50). Lo pone el juego cada vez que se mueve el
+   * sol.
    */
-  private ponerLuzDeFuera(hora: number): void {
-    const luz = cuantaLuz(hora);
+  ponerLuzDeFuera(altura: number): void {
+    const luz = cuantaLuz(altura);
     this.root.style.setProperty("--luz-de-fuera", luz.toFixed(3));
     /*
      * **Y el halo de las cifras, solo cuando hay halo.** Es un filtro por

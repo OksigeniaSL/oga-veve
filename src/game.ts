@@ -249,11 +249,14 @@ const PROXY_METEO: string | null = import.meta.env.VITE_METEO ?? null;
 /**
  * La hora a la que arranca el juego si nadie pide otra.
  *
- * Las cuatro de la tarde, y el número está medido, no elegido a ojo. Con el
- * modelo de sol de `sky.ts` —amanecer a las seis, ocaso a las dieciocho— eso
- * pone el sol a **veintidós grados**: luz cálida, sombras largas y ladera al
- * sol contra ladera en sombra, que es lo que hace que un relieve se lea como
- * relieve.
+ * Las cuatro de la tarde, y el número está medido, no elegido a ojo. Se midió
+ * con el sol de antes, que salía a las seis y se ponía a las dieciocho, y daba
+ * **veintidós grados**: luz cálida, sombras largas y ladera al sol contra
+ * ladera en sombra, que es lo que hace que un relieve se lea como relieve. Con
+ * el sol de verdad (#50) depende del sitio y de la época —en Tenerife, doce
+ * grados en diciembre y treinta y siete en junio; en Asunción, quince en junio
+ * y treinta y cinco en diciembre—, y a esa hora sigue siendo de día y con
+ * relieve en todos los escenarios y todo el año.
  *
  * Se probó primero con las cinco y media, que es la hora que dice el ADR 0006 y
  * la que da el atardecer más bonito. Y es demasiado oscura para jugar: a esa
@@ -5316,7 +5319,8 @@ export class Game {
               : 1.6),
     );
 
-    this.terrain = new Terrain(this.scenario);
+    // Con el día del vuelo, que es de donde sale la luz cocida en el relieve.
+    this.terrain = new Terrain(this.scenario, this.fechaDelVuelo());
     this.scene.add(this.terrain.group);
     // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella,
     // y el tinte de su cristal, cuando lo lleva.
@@ -5360,6 +5364,7 @@ export class Game {
         this.scenario,
         meteo ? conViento(quien, meteo) : quien,
         options.fotosVecinas?.[i],
+        this.fechaDelVuelo(),
       );
       /*
        * Y su aeródromo corrido igual, que es lo que le hace falta al plan
@@ -6295,6 +6300,7 @@ export class Game {
      */
     if (this.aproximacion) this.rehacerLaSenda();
     this.hud.ponerHora(this.horaPedida(), (h) => this.ponerHora(h));
+    this.hud.ponerLuzDeFuera(this.alturaDelSol());
     // El interruptor del cinturón, en los aviones que llevan gente detrás.
     this.hud.ponerHayCinturon(conPasaje(this.aircraft.mass));
     this.hud.onCinturon(() => this.mandarElCinturon());
@@ -11292,6 +11298,16 @@ export class Game {
   }
 
   /**
+   * **El día del vuelo**: el pedido o el de hoy. Es el del sol y la noche del
+   * cielo, y también el de la luz cocida en el relieve, que sale del mismo
+   * sol: con días distintos, el suelo se alumbraría con un sol y el cielo
+   * tendría otro. Ver `solDelRelieve` en `world/terrain.ts`.
+   */
+  private fechaDelVuelo(): Date {
+    return this.fechaPedida() ?? new Date();
+  }
+
+  /**
    * La clave de las teselas: la de la construcción, o la de la dirección.
    *
    * `?teselas=...` existe para poder probarlo sin reconstruir. `?teselas=0` lo
@@ -13107,10 +13123,17 @@ export class Game {
     this.sky.ponerDeslumbre(gafas.puestas ? DESLUMBRE.con : DESLUMBRE.sin);
   }
 
+  /** A qué altura está el sol ahora, en grados sobre el horizonte. */
+  private alturaDelSol(): number {
+    return (Math.asin(Math.max(-1, Math.min(1, this.sky.sunDirection.y))) * 180) / Math.PI;
+  }
+
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
     this.horaDelVuelo = hora;
     this.sky.ponerHora(hora);
+    // Y la luz del cuadro, que se enciende con el sol que hay. Ver `cuantaLuz`.
+    this.hud.ponerLuzDeFuera(this.alturaDelSol());
     // Y con ella se enciende o se apaga el balizamiento. `sunDirection.y` es
     // el seno de la altura del sol, que el cielo acaba de recalcular.
     this.rodadura?.ponerSol(this.sky.sunDirection.y);

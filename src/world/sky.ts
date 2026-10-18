@@ -13,17 +13,21 @@
  *
  * ## Cómo se mueve el sol
  *
- * No hay efemérides ni declinación solar. Sale por el este, se pone por el
- * oeste y a mediodía pasa por el azimut que tenga escrito el escenario —ciento
- * ocho grados en Tenerife, que es un dato real—; la altura describe un seno
- * entre el amanecer y el ocaso. Eso da un recorrido creíble en cualquier
- * latitud, incluidas las dos que nos importan, que están en hemisferios
- * distintos.
+ * Como se mueve de verdad, en el sitio y el día del vuelo: ver `solALaHora`
+ * en `cielo-de-noche.ts`, que es astronomía de posición de la de siempre
+ * —Meeus, la misma de la calculadora solar de la NOAA— y la misma que pone
+ * las estrellas y la Luna. A mediodía culmina **al sur en Canarias y al norte
+ * en Paraguay**, en junio sube más en Tenerife y en diciembre en Asunción, y
+ * amanece y anochece a la hora que toca ese día en ese sitio.
  *
- * Un modelo astronómico de verdad daría el mismo dibujo con más decimales y
- * ninguna diferencia visible desde una avioneta. Cuando haga falta —para las
- * sombras largas de un solsticio, por ejemplo— se cambia esta función y nada
- * más.
+ * Antes no. Salía a las seis, se ponía a las dieciocho y a mediodía pasaba
+ * por un acimut escrito en cada escenario, y se daba por bueno porque «daba un
+ * recorrido creíble en cualquier latitud». No lo daba: los acimuts eran de
+ * brújula y el dibujo los contaba desde el sur, así que el sol culminaba al
+ * norte en todos los escenarios, también en Canarias (#50). Medido: a las doce
+ * en Los Rodeos estaba a setenta y dos grados de acimut, al este-nordeste, y
+ * tenía que estar al sur. Un modelo de verdad no daba «el mismo dibujo con
+ * más decimales»: daba el sol al otro lado del cielo.
  *
  * ## Y el color no se calcula, se elige
  *
@@ -72,6 +76,7 @@ import {
   type CieloDeAhora,
   cieloDe,
   instanteDeLaHora,
+  sitioDelCielo,
 } from "./cielo-de-noche";
 import { factorDeCurvatura } from "./curvatura";
 import { cargarEstrellas, crearCieloEstrellado } from "./estrellas";
@@ -1142,9 +1147,10 @@ export interface SkyRig {
    */
   readonly seVenLasEstrellas: number;
   /**
-   * El día del cielo de noche. Es el de quien juega; se cambia con
-   * `?fecha=AAAA-MM-DD` para mirar otro —la Cruz del Sur alta es de las
-   * noches de otoño, no de las de octubre—.
+   * El día del cielo: el del sol y el de la noche. Es el de quien juega; se
+   * cambia con `?fecha=AAAA-MM-DD` para mirar otro —la Cruz del Sur alta es de
+   * las noches de otoño, no de las de octubre, y el sol de diciembre va más
+   * bajo en Tenerife que el de junio—.
    */
   ponerFecha(fecha: Date): void;
   /**
@@ -1238,38 +1244,6 @@ export function momentoDe(altura: number): Momento {
     }
   }
   return MOMENTOS[MOMENTOS.length - 1]!;
-}
-
-/**
- * Dónde está el sol a una hora dada.
- *
- * Amanece a las seis y anochece a las dieciocho: no es verdad ningún día del
- * año en ningún sitio, y es exactamente lo que hace falta para que la rueda del
- * tiempo se entienda sin explicarla. La altura describe un seno entre esas dos
- * horas y sigue bajando por debajo del horizonte durante la noche, que es lo
- * que hace que el crepúsculo dure lo que dura.
- */
-function solALaHora(
-  hora: number,
-  azimutMediodia: number,
-  alturaMaxima: number,
-): {
-  altura: number;
-  azimut: number;
-} {
-  // De 0 en el amanecer a 1 en el ocaso, y siguiendo fuera del intervalo.
-  const t = (hora - 6) / 12;
-  const altura = Math.sin(t * Math.PI) * (t < 0 || t > 1 ? 18 : alturaMaxima);
-
-  // El azimut recorre de noventa —el este— al azimut de mediodía y de ahí a
-  // doscientos setenta, el oeste. Pasar por el azimut escrito en el escenario
-  // es lo que hace que esto valga en los dos hemisferios sin un `if`.
-  const claro = Math.max(0, Math.min(1, t));
-  const azimut =
-    claro < 0.5
-      ? 90 + (azimutMediodia - 90) * (claro / 0.5)
-      : azimutMediodia + (270 - azimutMediodia) * ((claro - 0.5) / 0.5);
-  return { altura, azimut };
 }
 
 /**
@@ -1495,12 +1469,6 @@ function nubes(escenario: Scenario, umbral: { value: number }): Group {
 }
 
 /**
- * El cielo de los escenarios sin aeródromo extraído: los dos inventados están
- * en Paraguay de nombre, y se les pone el de Asunción.
- */
-const CIELO_DE_ASUNCION = { lat: -25.2637, lon: -57.5759 } as const;
-
-/**
  * **Lo que pesa la noche**, puesto mirando con la tarjeta del portátil.
  *
  * `viaLactea` es cuánta luz suma la banda en su sitio más brillante, en
@@ -1628,8 +1596,7 @@ export function createSky(scenario: Scenario): SkyRig {
    */
   const estrellado = crearCieloEstrellado();
   group.add(estrellado.grupo);
-  const origen = scenario.aerodrome?.origin ?? CIELO_DE_ASUNCION;
-  const sitio = { lat: origen.lat, lon: origen.lon, fecha: new Date() };
+  const sitio = { ...sitioDelCielo(scenario), fecha: new Date() };
   let cielo: CieloDeAhora | null = null;
   /** Lo que deja ver la hora, de 0 a 1. Las nubes lo bajan en `alPaso`. */
   let deNoche = 0;
@@ -1748,18 +1715,15 @@ export function createSky(scenario: Scenario): SkyRig {
       const h = ((hora % 24) + 24) % 24;
       (rig as { hora: number }).hora = h;
 
-      const { altura, azimut } = solALaHora(
-        h,
-        scenario.sun.azimuth,
-        scenario.sun.elevation,
-      );
+      /*
+       * **El sol de verdad y el cielo de noche, del mismo instante**: el de
+       * esta hora solar, en este sitio y este día. Ver `solALaHora` y
+       * `instanteDeLaHora`. La Luna se alumbra desde este mismo sol.
+       */
+      cielo = cieloDe(instanteDeLaHora(sitio.fecha, h, sitio.lon), sitio.lat, sitio.lon);
+      sunDirection.set(cielo.sol[0], cielo.sol[1], cielo.sol[2]).normalize();
+      const altura = (Math.asin(Math.max(-1, Math.min(1, sunDirection.y))) * 180) / Math.PI;
       const m = momentoDe(altura);
-
-      const e = (altura * Math.PI) / 180;
-      const a = (azimut * Math.PI) / 180;
-      sunDirection
-        .set(Math.cos(e) * Math.sin(a), Math.sin(e), Math.cos(e) * Math.cos(a))
-        .normalize();
 
       material.uniforms.sunDirection!.value = sunDirection;
       (material.uniforms.horizonColour!.value as Color).setHex(m.horizonte);
@@ -1809,10 +1773,9 @@ export function createSky(scenario: Scenario): SkyRig {
 
       /*
        * **Y el cielo de noche de esta hora**: las estrellas, la Luna y la Vía
-       * Láctea donde están en este sitio a esta hora de sol. Ver
-       * `instanteDeLaHora`.
+       * Láctea donde están en este sitio a esta hora de sol, del mismo
+       * instante que el sol de arriba.
        */
-      cielo = cieloDe(instanteDeLaHora(sitio.fecha, h, sitio.lon), sitio.lat, sitio.lon);
       estrellado.ponerCielo(cielo);
       const g = cielo.galacticasDesdeMundo;
       (material.uniforms.alGalactico!.value as Matrix3).set(
