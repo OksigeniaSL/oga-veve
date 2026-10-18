@@ -724,6 +724,18 @@ import {
   type Gafas,
 } from "./flight/gafas";
 import {
+  esDeNoche,
+  esMomentoDeCelebrar,
+  ganarSello,
+  leerSellos,
+  MedidorDeSellos,
+  selloCelebrado,
+  sellosDelCuaderno,
+  sellosPorCelebrar,
+  type Sello,
+} from "./flight/sellos";
+import { claveDelSello, nombreDelSello } from "./ui/album";
+import {
   ESCALA,
   conMovimientoReducido,
   leerAjustes,
@@ -6001,6 +6013,14 @@ export class Game {
     this.input.ponerTimon(this.tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
 
     /*
+     * **Los sellos que el cuaderno ya demostraba**, estampados sin fiesta: un
+     * perfil que voló antes de que existieran los sellos tiene ya su primer
+     * despegue o sus cien horas, y lo ganado es ganado. Se celebran los que se
+     * ganen desde ahora. Ver `sellosDelCuaderno`.
+     */
+    for (const s of sellosDelCuaderno(this.cuaderno)) ganarSello(s, false);
+
+    /*
      * El cuaderno de vuelo, si el HTML trae su hueco.
      *
      * Va aquí y no dentro del HUD porque es una página que se abre encima del
@@ -7646,6 +7666,19 @@ export class Game {
       if (!this.dePasaje && lasGana(veredicto) && ganarGafas()) {
         this.hechos.emit("ganasteLasGafas", {});
       }
+      /*
+       * **Y los sellos que da una toma**, desde el mismo sitio y por lo mismo:
+       * aquí es donde el juego ya ha decidido que esto fue un aterrizaje.
+       */
+      this.ganarLosSellos(
+        this.medidorDeSellos.alAterrizar({
+          campo: this.elCampo().id,
+          salida: this.despegoDe,
+          noche: esDeNoche(this.sky.sunDirection.y),
+          sola: this.sinInstructora,
+          sinMotor: this.sinMotor,
+        }),
+      );
     }
     return veredicto;
   }
@@ -8601,6 +8634,8 @@ export class Game {
     if (this.dePasaje) return;
     this.cuaderno = { ...this.cuaderno, ...cambio };
     guardarCuaderno(this.cuaderno);
+    // Y lo que el cuaderno ya demuestra por sí solo: ¡Veve!, Mbarete… Ver `sellosDelCuaderno`.
+    this.ganarLosSellos(sellosDelCuaderno(this.cuaderno));
     this.cuadernoUI?.ponerCuaderno(this.cuaderno);
   }
 
@@ -12896,6 +12931,168 @@ export class Game {
   /** Las gafas ganadas en esta toma, a la espera de celebrarlas. */
   private gafasPorCelebrar = false;
 
+  /* ── Los sellos con nombre ───────────────────────────────────────────── */
+
+  /** La cuenta de los sellos de este vuelo. Ver `flight/sellos.ts`. */
+  private readonly medidorDeSellos = new MedidorDeSellos();
+  /**
+   * Si hay alguno por celebrar, para no preguntarle al guardado en cada
+   * fotograma. Empieza mirando: lo que quedó sin celebrar ayer se celebra hoy.
+   */
+  private haySellosPorCelebrar = sellosPorCelebrar().length > 0;
+  /** Lo que falta para poder celebrar el siguiente, s: uno detrás de otro. */
+  private esperaEntreSellos = 0;
+  /** Los celebrados en esta sesión, con cómo iba el avión. Para los bancos. */
+  private readonly sellosCelebrados: { sello: Sello; enTierra: boolean; porElSuelo: number }[] = [];
+
+  /** Los sellos ganados, los que faltan por celebrar y los ya celebrados. Para los bancos. */
+  get sellosParaBanco(): {
+    readonly ganados: readonly Sello[];
+    readonly porCelebrar: readonly Sello[];
+    readonly celebrados: readonly { sello: Sello; enTierra: boolean; porElSuelo: number }[];
+  } {
+    return {
+      ganados: leerSellos(),
+      porCelebrar: sellosPorCelebrar(),
+      celebrados: [...this.sellosCelebrados],
+    };
+  }
+
+  /**
+   * Ganar los que diga una regla. Lo que ya se tenía no hace nada: lo decide
+   * `ganarSello`, que es quien lo sabe. De pasaje no se gana nada de
+   * pilotaje: no se pilotó.
+   */
+  private ganarLosSellos(cuales: readonly Sello[]): void {
+    if (this.dePasaje || !cuales.length) return;
+    let alguno = false;
+    for (const s of cuales) {
+      if (!ganarSello(s)) continue;
+      alguno = true;
+      this.apuntarCanto(`sello: ${s}`);
+    }
+    if (!alguno) return;
+    this.haySellosPorCelebrar = true;
+    this.cuadernoUI?.ponerCuaderno(this.cuaderno);
+  }
+
+  /**
+   * **Los sellos que se ganan volando**: lo que hay que seguir de un fotograma
+   * al siguiente —los diez segundos despacio, la pista rodada, la vuelta al
+   * tajamar, la nube, los toques— y la hoja de este vuelo. Nada de esto se
+   * mide aquí por primera vez: el juego ya lo sabía. Ver `flight/sellos.ts`.
+   */
+  private mirarLosSellos(dt: number): void {
+    if (this.dePasaje || this.percance) return;
+    const s = this.flight.state;
+    const pista = this.laPistaDeAhora();
+    const ejes = enEjesDePista(s.position.x, s.position.z, pista.x, pista.z, pista.heading);
+    const capa = this.capaDeNubes;
+    const tajamar = this.granja?.tajamar ?? null;
+    this.ganarLosSellos(
+      this.medidorDeSellos.paso(dt, {
+        enTierra: s.onGround,
+        porElSuelo: s.groundSpeed,
+        altura: s.heightAboveGround,
+        velocidad: s.airspeed,
+        vertical: s.verticalSpeed,
+        avisoDePerdida: avisaLaPerdida(s),
+        vref: this.aircraft.approachSpeed,
+        rodajeMaximo: velocidadesEnTierra(this.aircraft).rectaLarga,
+        enPista: {
+          along: ejes.along,
+          across: ejes.across,
+          largo: pista.length,
+          ancho: pista.width,
+        },
+        // La misma cuenta que la escena de pasaje: solo cerca de la capa.
+        enNube:
+          capa && s.position.y > capa.base - 50 && s.position.y < capa.techo + 50
+            ? cuantoDentro(this.sky.densidadEn(s.position.x, s.position.y, s.position.z))
+            : 0,
+        porInstrumentos: this.aircraft.reglasDeVuelo === "instrumentos",
+        alTajamar: tajamar
+          ? { dx: s.position.x - tajamar.x, dz: s.position.z - tajamar.z }
+          : null,
+        galones: this.galones.lista,
+      }),
+    );
+  }
+
+  /**
+   * **Los sellos se celebran como las gafas**: su dibujo en la tarjeta, las
+   * cuatro notas de haber ganado algo y la instructora diciendo qué es, si la
+   * frase está grabada —la voz del navegador, en Brave para Linux, es
+   * silencio, y un robot leyendo un premio no es un premio—.
+   *
+   * **Y en el mismo momento que las gafas: en tierra, rodando o parado.**
+   * Casi todos se ganan en el aire —el primer despegue, la nube, la vuelta al
+   * tajamar—, y celebrarlos ahí es meter una voz y una tarjeta en mitad de
+   * una maniobra, que es justo lo que no se hace: «no queremos enseñar que
+   * volar es el trámite entre premios» (`docs/vision.md`). Así que esperan a
+   * que el avión ruede despacio, a que nadie esté hablando y a que la esquina
+   * esté libre de una tarjeta que importe más, y salen de uno en uno. Las
+   * gafas, primero: son el premio de esa niña.
+   *
+   * Ni con una escena del modo inicio en marcha —la voz es de Jazlyn y Ara—,
+   * ni con un percance, ni con el final del vuelo puesto, que esconde la
+   * tarjeta: un sello que se gana una vez se celebra entero. Lo que no se
+   * celebre hoy queda guardado para la próxima vez que se esté en tierra.
+   */
+  private celebrarLosSellosSiToca(dt: number): void {
+    if (this.esperaEntreSellos > 0) {
+      this.esperaEntreSellos -= dt;
+      return;
+    }
+    if (!this.haySellosPorCelebrar) return;
+    const s = this.flight.state;
+    const puesta = this.hud.senal.puesto;
+    if (
+      !esMomentoDeCelebrar({
+        enTierra: s.onGround,
+        porElSuelo: s.groundSpeed,
+        rodando: SE_CELEBRAN_LAS_GAFAS,
+        enEscena: this.inicio !== null || this.dePasaje,
+        percance: this.percance !== null,
+        vueloTerminado: this.vueloTerminado,
+        gafasPorCelebrar: this.gafasPorCelebrar,
+        // Cualquiera de las bocas, como en `mirarLasUves`: un suceso, una voz.
+        alguienHabla:
+          !BOCA.libre ||
+          this.instructor.hablando ||
+          this.torre.hablando ||
+          this.otroAvion.hablando ||
+          this.comandante.hablando ||
+          this.tripulacion.hablando ||
+          this.maquina.ocupada,
+        tarjetaQueImporta: puesta.prioridad > 0 && puesta.queda > 0,
+      })
+    )
+      return;
+    const cual = sellosPorCelebrar()[0];
+    if (!cual) {
+      this.haySellosPorCelebrar = false;
+      return;
+    }
+    selloCelebrado(cual);
+    this.sellosCelebrados.push({ sello: cual, enTierra: s.onGround, porElSuelo: s.groundSpeed });
+    /*
+     * El nombre, desde el peldaño de la palabra, como cualquier rótulo de la
+     * tarjeta: en el que no lee, el dibujo es el mensaje entero.
+     */
+    this.hud.senal.mostrar(
+      `sello-${cual}`,
+      canalesDe(this.tier.avisos).texto ? nombreDelSello(cual) : "",
+      null,
+      { segundos: SE_QUEDA_EL_ARO * 2, prioridad: IMPORTANTE },
+    );
+    this.avisar("achieved");
+    const clave = claveDelSello(cual);
+    if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
+    // Que se vea entero antes del siguiente.
+    this.esperaEntreSellos = SE_QUEDA_EL_ARO * 2 + 1;
+  }
+
   private llevarLasGafas(gafas: Gafas): void {
     this.gafas = gafas;
     this.hud.setGafas(gafas.ganadas, gafas.puestas);
@@ -14714,6 +14911,8 @@ export class Game {
     }
     this.contarLaCarrera(dt);
     this.celebrarLasGafasSiToca();
+    this.mirarLosSellos(dt);
+    this.celebrarLosSellosSiToca(dt);
 
     /*
      * **Y el número en grande, que es otro peldaño.**
@@ -18759,6 +18958,8 @@ export class Game {
    */
   private reiniciarGalones(): void {
     this.galones.reiniciar();
+    // Y lo que se llevaba a medias para un sello; lo ganado no se toca.
+    this.medidorDeSellos.reiniciar();
     this.hud.setGalones([]);
     this.ponerElGradoEnLaManga();
     // Y se quita el final del vuelo anterior, que ya no habla de este.
@@ -20245,6 +20446,7 @@ export class Game {
         this.apuntar({ despegues: this.cuaderno.despegues + 1 });
         this.apuntarElSitio();
         this.despegoDe = this.elCampo().id;
+        this.medidorDeSellos.alDespegar(this.sinInstructora);
       }
       if (
         antes === "abandonando" &&

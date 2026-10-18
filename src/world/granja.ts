@@ -103,6 +103,12 @@ export interface Granja {
    * el que va la granja. `null` sin navegador. Ver `potrerosDe`.
    */
   readonly pintura: PinturaEncima | null;
+  /**
+   * **Dónde está el tajamar**, en las coordenadas del campo, con su radio; o
+   * `null` si el relieve no dio un bajo donde cavarlo. Lo mira el sello de la
+   * vuelta al tajamar. Ver `flight/sellos.ts`.
+   */
+  readonly tajamar: { readonly x: number; readonly z: number; readonly r: number } | null;
   dispose(): void;
 }
 
@@ -1502,6 +1508,7 @@ export function crearGranja(
     },
     ocupa: (x, z) => enElCasco(x, z) || ocupado(x, z),
     pintura,
+    tajamar: tajamar ? { x: tajamar.x, z: tajamar.z, r: tajamar.r } : null,
     dispose() {
       pintura?.textura.dispose();
       grupo.traverse((o) => {

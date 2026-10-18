@@ -639,10 +639,23 @@ const fotos = (async () => {
           alto: Math.round(s.heightAboveGround),
           vel: Math.round(s.airspeed * 1.944),
           aves: o.avesDelante?.() ?? null,
+          tarjeta: o.tarjeta?.()?.dibujo ?? "",
         };
       })
       .catch(() => null);
     if (!dato) continue;
+    /*
+     * Y una cuando sale la tarjeta de un sello, que dura cinco segundos y
+     * entre dos fotos de fase se pierde. Ver `celebrarLosSellosSiToca`.
+     */
+    const sello = dato.tarjeta.startsWith("sello-") && !fotografiadas.has(dato.tarjeta);
+    if (sello) {
+      fotografiadas.add(dato.tarjeta);
+      await page
+        .screenshot({ path: `${FOTOS}/${String(n++).padStart(2, "0")}-${dato.t.toFixed(0)}s-${dato.tarjeta}.png` })
+        .catch(() => {});
+      continue;
+    }
     /*
      * Y una cuando se pasa junto a una bandada, que en final dura segundos y
      * entre dos fotos de fase no sale nunca. Ver `avesDelante` en `sondas.ts`.
@@ -6206,6 +6219,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     percance: o.percance?.() ?? null,
     donde,
     gafas: o.gafas?.() ?? null,
+    sellos: o.sellos?.() ?? null,
     segundos: +t.toFixed(1),
     veces,
     subida,
@@ -8183,6 +8197,35 @@ if (vuelo.toco > 0) {
       ? `ganadas ${vuelo.gafas.ganadas ? "sí" : "no"}, puestas ${vuelo.gafas.puestas ? "sí" : "no"}`
       : "el juego no sabe decirlo",
     "«quiero ser piloto con las gafas de sol»",
+  );
+}
+
+/*
+ * **Y el primer despegue trae su sello, que se celebra rodando.**
+ *
+ * Con un perfil nuevo, ¡Veve! se gana al despegar —en el aire— y se celebra
+ * de vuelta en tierra, a velocidad de rodar o parado, nunca en mitad de una
+ * maniobra. Lo que se mira es el camino entero: la regla, el guardado y la
+ * tarjeta en su momento. Ver `flight/sellos.ts` y `celebrarLosSellosSiToca`.
+ */
+if (vuelo.toco > 0) {
+  const sellos = vuelo.sellos;
+  const celebrados = sellos?.celebrados ?? [];
+  comprobarSiVolo(
+    "y el primer despegue gana su sello, ¡Veve!",
+    sellos?.ganados?.includes("veve") === true,
+    sellos ? `ganados: ${sellos.ganados.join(", ") || "ninguno"}` : "el juego no sabe decirlo",
+    "un sello que no llega es un premio prometido y no dado",
+  );
+  comprobarSiVolo(
+    "y se celebra en tierra, rodando o parado, nunca volando",
+    celebrados.length > 0 && celebrados.every((c) => c.enTierra && c.porElSuelo < 15),
+    celebrados.length
+      ? celebrados
+          .map((c) => `${c.sello} ${c.enTierra ? "en tierra" : "EN EL AIRE"} a ${c.porElSuelo.toFixed(1)} m/s`)
+          .join(" · ")
+      : `ninguno celebrado; por celebrar: ${sellos?.porCelebrar?.join(", ") || "ninguno"}`,
+    "una tarjeta y una voz en mitad de una maniobra enseñan que volar es el trámite entre premios",
   );
 }
 

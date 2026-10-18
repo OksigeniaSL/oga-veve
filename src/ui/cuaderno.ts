@@ -37,6 +37,9 @@
  * - **Las cuentas, en puntos** que se cuentan con el dedo —una estrella por
  *   cada diez—, con el dibujo de lo que cuentan: la toma, la frustrada, la
  *   manga de viento de cada aeródromo. La cifra, también desde los números.
+ * - **Los sellos con nombre**, los del issue #25 —¡Veve!, Karumbe,
+ *   Mainumby…—, en su álbum: los ganados con su dibujo y los que faltan como
+ *   un hueco. Ver `album.ts`.
  * - **Un sello por campo**, con su isla o su país, su pista y su paisaje. Ver
  *   `sellos.ts`.
  * - **La escalera de grados**, cada uno con su explicación al tocarlo: qué
@@ -89,6 +92,8 @@ import { dondeCae } from "../world/entre-aerodromos";
 import { dibujarRelojEnFilas, dibujarReloj, relojDe } from "./reloj";
 import { DIBUJOS, type DibujoDeSenal } from "./senal";
 import { camposDeLosSellos, selloDe } from "./sellos";
+import { album, ponerLosSellosEnLasExplicaciones } from "./album";
+import { leerSellos, SELLOS, type Sello } from "../flight/sellos";
 import { CANDADO, INSTRUCTORA_CALLADA } from "./instructora-callada";
 
 /**
@@ -301,6 +306,16 @@ export class CuadernoScreen {
         else abrirExplicacion("sin-instructora");
       }
       if (tocado?.closest?.("[data-sola-que]")) abrirExplicacion("sin-instructora");
+      /*
+       * **Y un sello del álbum, tocado, dice qué es**: su nombre y lo que
+       * premia, con la voz de la instructora si está grabada. Los huecos no
+       * son botones: lo que falta no se explica como una tarea.
+       */
+      const sello = tocado?.closest?.<HTMLElement>(".album__sello")?.dataset.sello;
+      if (sello && SELLOS.some((s) => s.id === sello)) {
+        ponerLosSellosEnLasExplicaciones();
+        abrirExplicacion(`sello.${sello as Sello}`);
+      }
     });
   }
 
@@ -391,6 +406,7 @@ export class CuadernoScreen {
               ? `<p class="cuaderno__falta">${t("cuaderno.completo")}</p>`
               : ""
         }
+        ${this.elAlbum(canales.texto)}
         ${this.losSellos(canales.texto)}
         ${this.losVuelos(canales.texto)}
       `,
@@ -482,6 +498,22 @@ export class CuadernoScreen {
     return `<div class="cuaderno__falta-dibujo" aria-hidden="true">
       ${una("aterrizajes", f.aterrizajes)}${una("aerodromos", f.aerodromos)}${una("frustradas", f.frustradas)}
     </div>`;
+  }
+
+  /**
+   * **El álbum de los sellos con nombre**: los dieciséis sitios, con los
+   * ganados y los huecos. Ver `album.ts`.
+   *
+   * Desde el primero, como los vuelos: un álbum con dieciséis huecos y
+   * ningún sello, en la página que se enseña antes de haber volado, solo
+   * diría lo que falta. El primero sale con el primer despegue.
+   */
+  private elAlbum(conTexto: boolean): string {
+    const ganados = leerSellos();
+    if (!ganados.length) return "";
+    return `
+      ${conTexto ? `<h3 class="cuaderno__grado cuaderno__grado--vuelos">${t("cuaderno.album")}</h3>` : ""}
+      ${album(ganados, conTexto)}`;
   }
 
   /**

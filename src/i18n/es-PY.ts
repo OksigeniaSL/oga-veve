@@ -2411,7 +2411,12 @@ export const ES_PY = {
   "cuaderno.falta": "Para {grado} te falta:",
   "cuaderno.completo": "¡Ya está todo! A seguir volando",
   "cuaderno.vuelos": "Tus vuelos",
-  "cuaderno.sellos": "Tus sellos",
+  /*
+   * Los sellos de campo, uno por aeródromo: dónde se estuvo. «Tus sellos» es
+   * ahora el álbum de los sellos con nombre. Ver `ui/album.ts`.
+   */
+  "cuaderno.sellos": "Dónde estuviste",
+  "cuaderno.album": "Tus sellos",
   "cuaderno.grados": "Los grados",
   "cuaderno.queEs": "¿Qué es esto?",
   "cuaderno.sinInstructora": "Volar sin instructora",
@@ -2867,6 +2872,61 @@ export const ES_PY = {
   "explica.hoja.corta": "La hoja de la instructora",
   "explica.hoja.texto":
     "Después de cada vuelo, la instructora completa una hoja con las partes del vuelo: la vuelta al avión, la aproximación, la toma, la frustrada si hacía falta, la velocidad y el rodaje. A cada una que hiciste bien le pone un visto. Así se evalúa en una escuela de vuelo de verdad. Lo que todavía no sale no se tacha: se practica en el próximo vuelo.",
+
+  /*
+   * **Los sellos con nombre del cuaderno**, los del issue #25: su nombre, que
+   * es el título de su ventana, y lo que dice la instructora al ganarlo y al
+   * tocarlo en el álbum. Los nombres en guaraní van como los escribió el
+   * issue. Ver `flight/sellos.ts` y `ui/album.ts`.
+   */
+  "explica.sello.veve.corta": "¡Veve!",
+  "explica.sello.veve.texto":
+    "¡Veve! Es el sello de tu primer despegue. Veve, en guaraní, quiere decir volar.",
+  "explica.sello.karumbe.corta": "Karumbe",
+  "explica.sello.karumbe.texto":
+    "Karumbe, la tortuga: rodaste la pista entera, despacito y por el medio. En los campos sin calle de rodaje se va así hasta la cabecera.",
+  "explica.sello.mainumby.corta": "Mainumby",
+  "explica.sello.mainumby.texto":
+    "Mainumby, el picaflor: volaste bien despacito, sin subir ni bajar y sin llegar a la pérdida. Volar lento se practica en la escuela para conocer bien al avión.",
+  "explica.sello.nanduti.corta": "Ñandutí",
+  "explica.sello.nanduti.texto":
+    "Ñandutí: atravesaste una nube, blanca por dentro como el encaje. Adentro no se ve nada y se vuela mirando los instrumentos; por eso se hace solo en los aviones preparados para eso.",
+  "explica.sello.tajamar.corta": "La vuelta al tajamar",
+  "explica.sello.tajamar.texto":
+    "La vuelta al tajamar: diste una vuelta entera alrededor del agua donde toma el ganado de la granja. Dar vueltas alrededor de un punto enseña a corregir el viento.",
+  "explica.sello.tres-toques.corta": "Tres toques",
+  "explica.sello.tres-toques.texto":
+    "Tres toques: tocaste la pista y volviste a subir tres veces seguidas, sin parar. Así se practican los aterrizajes en la escuela, uno detrás de otro.",
+  "explica.sello.primer-solo.corta": "Primer Solo",
+  "explica.sello.primer-solo.texto":
+    "Tu primer solo: despegaste y aterrizaste sin instructora, por tu cuenta. Es el día que todo piloto recuerda para siempre.",
+  "explica.sello.chipa-volandera.corta": "Chipa volandera",
+  "explica.sello.chipa-volandera.texto":
+    "Chipa volandera: saliste de un aeródromo y llegaste a otro. Es tu primera travesía, como la chipa que viaja de pueblo en pueblo.",
+  "explica.sello.jasy.corta": "Jasy",
+  "explica.sello.jasy.texto":
+    "Jasy, la luna: aterrizaste de noche. De noche la pista se encuentra por sus luces, y se baja con más calma todavía.",
+  "explica.sello.mbarete.corta": "Mbarete",
+  "explica.sello.mbarete.texto":
+    "Mbarete quiere decir fuerte. Renunciaste a tiempo, cuando algo no salía: hace falta ser fuerte para no seguir. Es lo que hacen los buenos pilotos.",
+  "explica.sello.ruta-jesuitica.corta": "Ruta Jesuítica",
+  "explica.sello.ruta-jesuitica.texto":
+    "Ruta Jesuítica: volaste en Encarnación y en Ayolas, la tierra de las misiones jesuíticas, con sus ruinas de piedra de hace más de doscientos años.",
+  "explica.sello.pettirossi.corta": "La hazaña de Pettirossi",
+  "explica.sello.pettirossi.texto":
+    "La hazaña de Pettirossi: volaste en todos los aeródromos del Paraguay. Silvio Pettirossi fue el primer aviador paraguayo, y el aeropuerto de Asunción lleva su nombre.",
+  "explica.sello.planeador.corta": "El planeador",
+  "explica.sello.planeador.texto":
+    "El planeador: llegaste a la pista sin motor, planeando. Es lo que se practica para el día que un motor se pare: con calma, a la velocidad de planeo y hacia la pista que se alcanza.",
+  "explica.sello.manos-de-seda.corta": "Manos de seda",
+  "explica.sello.manos-de-seda.texto":
+    "Manos de seda: bajaste por la senda, a tu velocidad, y te posaste bien en la pista. Una aproximación así, estabilizada, es lo que más mira quien examina a un piloto.",
+  "explica.sello.transchaco.corta": "Transchaco",
+  "explica.sello.transchaco.texto":
+    "Transchaco: volaste entre Asunción y Mariscal Estigarribia, por encima del Chaco, por donde va la ruta Transchaco. Un vuelo largo, de los que se planifican antes de salir.",
+  "explica.sello.cien-horas.corta": "Cien horas",
+  "explica.sello.cien-horas.texto":
+    "Cien horas: tu cuaderno ya lleva cien horas de vuelo. Las horas son lo que cuenta de verdad un piloto, y estas son todas tuyas.",
 
   "explica.persianas.corta": "Las ventanillas",
   "explica.persianas.texto":

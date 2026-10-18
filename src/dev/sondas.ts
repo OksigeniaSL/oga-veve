@@ -608,6 +608,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** Las gafas de sol: si se han ganado y si se llevan. Para el banco. */
     gafas: () => leerGafas(),
+    /**
+     * Los sellos con nombre: los ganados, los que esperan su celebración y
+     * los celebrados en esta sesión, con cómo iba el avión. Para el banco.
+     */
+    sellos: () => juego.sellosParaBanco,
     /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
     tarjeta: () => juego.hud.senal.puesto,
     /**

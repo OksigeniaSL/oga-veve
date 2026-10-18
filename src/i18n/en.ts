@@ -838,7 +838,8 @@ export const EN: Dictionary = {
   "cuaderno.falta": "For {grado} you still need:",
   "cuaderno.completo": "That is all of them. Keep flying",
   "cuaderno.vuelos": "Your flights",
-  "cuaderno.sellos": "Your stamps",
+  "cuaderno.sellos": "Where you've been",
+  "cuaderno.album": "Your stamps",
   "cuaderno.grados": "The ranks",
   "cuaderno.queEs": "What is this?",
   "cuaderno.sinInstructora": "Fly without the instructor",
@@ -1523,6 +1524,54 @@ export const EN: Dictionary = {
   "explica.hoja.corta": "The instructor's sheet",
   "explica.hoja.texto":
     "After each flight, the instructor fills in a sheet with the parts of the flight: the walk-around, the approach, the landing, the go-around if it was needed, the speed and the taxiing. She ticks each one you did well. That's how a real flight school assesses you. What doesn't come out yet isn't crossed out: you practise it on the next flight.",
+  "explica.sello.veve.corta": "¡Veve!",
+  "explica.sello.veve.texto":
+    "Veve! The stamp for your first take-off. Veve means 'to fly' in Guaraní.",
+  "explica.sello.karumbe.corta": "Karumbe",
+  "explica.sello.karumbe.texto":
+    "Karumbe, the tortoise: you taxied the whole runway, slowly and down the middle. At airfields without a taxiway, that's how you get to the end of the runway.",
+  "explica.sello.mainumby.corta": "Mainumby",
+  "explica.sello.mainumby.texto":
+    "Mainumby, the hummingbird: you flew really slowly, level, without stalling. Slow flight is practised at flying school to get to know your aeroplane.",
+  "explica.sello.nanduti.corta": "Ñandutí",
+  "explica.sello.nanduti.texto":
+    "Ñandutí: you flew through a cloud, white inside like the lace. Inside you can't see a thing and you fly by your instruments, so it's only done in aeroplanes equipped for it.",
+  "explica.sello.tajamar.corta": "Around the pond",
+  "explica.sello.tajamar.texto":
+    "Around the pond: you flew a full circle around the farm's tajamar, where the cattle drink. Turns around a point teach you to correct for the wind.",
+  "explica.sello.tres-toques.corta": "Three touch-and-goes",
+  "explica.sello.tres-toques.texto":
+    "Three touch-and-goes: you touched the runway and climbed away three times in a row, without stopping. That's how landings are practised at flying school.",
+  "explica.sello.primer-solo.corta": "First Solo",
+  "explica.sello.primer-solo.texto":
+    "Your first solo: you took off and landed with no instructor, on your own. Every pilot remembers that day forever.",
+  "explica.sello.chipa-volandera.corta": "Flying chipa",
+  "explica.sello.chipa-volandera.texto":
+    "Flying chipa: you left one airfield and landed at another. Your first cross-country flight, like the chipa that travels from town to town.",
+  "explica.sello.jasy.corta": "Jasy",
+  "explica.sello.jasy.texto":
+    "Jasy, the moon: you landed at night. At night you find the runway by its lights, and you come down even more calmly.",
+  "explica.sello.mbarete.corta": "Mbarete",
+  "explica.sello.mbarete.texto":
+    "Mbarete means strong. You gave up in time, when something wasn't right: it takes strength not to carry on. That's what good pilots do.",
+  "explica.sello.ruta-jesuitica.corta": "Jesuit Route",
+  "explica.sello.ruta-jesuitica.texto":
+    "Jesuit Route: you flew at Encarnación and Ayolas, the land of the Jesuit missions, with their stone ruins more than two hundred years old.",
+  "explica.sello.pettirossi.corta": "Pettirossi's feat",
+  "explica.sello.pettirossi.texto":
+    "Pettirossi's feat: you have flown at every airfield in Paraguay. Silvio Pettirossi was the first Paraguayan aviator, and Asunción's airport bears his name.",
+  "explica.sello.planeador.corta": "The glider",
+  "explica.sello.planeador.texto":
+    "The glider: you reached the runway with no engine, gliding. It's what pilots practise for the day an engine stops: calmly, at gliding speed, towards the runway you can reach.",
+  "explica.sello.manos-de-seda.corta": "Silk hands",
+  "explica.sello.manos-de-seda.texto":
+    "Silk hands: you came down the glide path at your speed and settled nicely on the runway. A stabilised approach like that is what an examiner looks at most.",
+  "explica.sello.transchaco.corta": "Transchaco",
+  "explica.sello.transchaco.texto":
+    "Transchaco: you flew between Asunción and Mariscal Estigarribia, over the Chaco, along the Transchaco highway. A long flight, the kind you plan before you leave.",
+  "explica.sello.cien-horas.corta": "One hundred hours",
+  "explica.sello.cien-horas.texto":
+    "One hundred hours: your logbook now has a hundred hours of flight. Hours are what really count for a pilot, and these are all yours.",
   "explica.persianas.corta": "The windows",
   "explica.persianas.texto":
     "For take-off and landing the window shades go up, and at night the cabin lights are dimmed. That way you can see outside if something happens, and your eyes are already used to the light outside if you need to get out. On some new planes the crew clears all the windows at once.",
