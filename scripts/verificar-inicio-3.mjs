@@ -31,11 +31,14 @@
  * - **Que se ve por fuera lo que se cuenta** (18-10-2026): el rodaje, el
  *   despegue desde la orilla de la pista, el giro, una vuelta alrededor, el
  *   ala y la toma, cada corte con su fundido y **ninguno a media frase**; y
- *   Ara pegada al cristal para ver el motor y el mar.
+ *   Ara con la cara contra el cristal para ver el motor y el mar.
  * - **Que la tripulación da la demostración de seguridad** entera y en su
  *   orden, antes de entrar en la pista, y que **las nubes se explican**: la
  *   comandante para todos y la tripulante a Ara, con su dibujo.
- * - **Que sale la ventanita** con los dibujos de lo que se explica.
+ * - **Que sale la ventanita** con los dibujos de lo que se explica, y con
+ *   **las ilustraciones** de lo que pasa (punto 278): el embarque, la cabina
+ *   llena, la tripulante, Ara contra el cristal y la comandante; y que las
+ *   que llevan cielo por la ventanilla no salen con el avión en tierra.
  * - **Que no hay ratos largos callados**: medido con el reloj de la escena,
  *   que es el del vuelo sin acelerar.
  * - **Que desde el asiento de Ara se ven el ala y el motor**, contado con
@@ -68,8 +71,9 @@
  *
  * Uso: `node scripts/verificar-inicio-3.mjs`
  *   `OGA_GPU=1` con la tarjeta de verdad; `OGA_FOTOS=carpeta` saca capturas
- *   de cada momento nuevo —Ara pegada al cristal, el cinturón, el rodaje, el
- *   despegue, el giro, la vuelta, el ala, la toma, la ventanita—, con el
+ *   de cada momento nuevo —Ara contra el cristal, el cinturón, el rodaje, el
+ *   despegue, el giro, la vuelta, el ala, la toma, la ventanita y sus
+ *   ilustraciones—, con el
  *   renderer en el nombre; `OGA_SIN_HANGAR=1` se salta la ficha del hangar;
  *   `OGA_TOPE=segundos` cambia el tope de pared; `OGA_VOLCADO=fichero` deja
  *   lo dicho y los tramos en un JSON.
@@ -251,6 +255,8 @@ async function elVuelo() {
   const vistos = new Set();
   let veloMaximo = 0;
   const ventanitas = new Set();
+  /** Las ilustraciones con cielo por la ventanilla que salieron con el avión en tierra: ninguna. */
+  const ilustradasEnTierra = new Set();
   let asientoDeAra = null;
   const caras = new Set();
   const fotos = new Set();
@@ -323,9 +329,9 @@ async function elVuelo() {
         }
         return false;
       };
-      // Lo nuevo: cada plano cuando ya se ve —sin velo—, la ventanita y Ara pegada al cristal.
+      // Lo nuevo: cada plano cuando ya se ve —sin velo—, la ventanita y Ara contra el cristal.
       const sinVelo = (Number(i.velo) || 0) < 0.02;
-      if (en("asomada-motor", i.planoVisto === "asomado-motor" && e.segundos - e.planoDesde > 2.5)) await foto(page, "asomada-motor");
+      if (en("asomado-motor", i.planoVisto === "asomado-motor" && e.segundos - e.planoDesde > 2.5)) await foto(page, "asomado-motor");
       if (en("cinturon", i.ventanita?.sitio === "dibujo:cinturon" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "cinturon"));
       if (en("rodando", sinVelo && i.planoVisto === "fuera-rodando")) await foto(page, "fuera-rodando");
       if (en("mascara", i.ventanita?.sitio === "dibujo:mascara" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-mascara"));
@@ -335,12 +341,18 @@ async function elVuelo() {
       if (en("ala", sinVelo && i.planoVisto === "fuera-ala")) await foto(page, "fuera-ala");
       if (en("vuelta", sinVelo && i.planoVisto === "fuera-vuelta" && e.segundos - e.planoDesde > 10)) await foto(page, "fuera-vuelta");
       if (en("nube-dibujo", i.ventanita?.sitio === "dibujo:nube" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-nube"));
-      if (en("asomada-abajo", i.planoVisto === "asomado-abajo" && e.segundos - e.planoDesde > 2.5)) await foto(page, "asomada-abajo");
+      if (en("asomado-abajo", i.planoVisto === "asomado-abajo" && e.segundos - e.planoDesde > 2.5)) await foto(page, "asomado-abajo");
       if (en("motor-dibujo", i.ventanita?.sitio === "dibujo:motor" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-motor"));
       if (en("ventanilla", e.senalados.length > 0 && e.mira === "ventanilla" && !v.enTierra)) await foto(page, "ventanilla");
       if (en("pista", sinVelo && i.planoVisto === "fuera-pista" && !v.enTierra)) await foto(page, "fuera-pista");
       if (en("toma", tramo === "frenando")) await foto(page, "toma");
+      // Y cada ilustración, la primera vez que queda puesta.
+      const ilustrada = i.ventanita?.donde ? /^ilustracion:(.+)$/.exec(i.ventanita.sitio ?? "")?.[1] : null;
+      if (ilustrada && en(`ilustracion-${ilustrada}`, true)) await pausa(800).then(() => foto(page, `ilustracion-${ilustrada}`));
     }
+    // ── Las ilustraciones con cielo por la ventanilla, nunca en tierra ──
+    if (/^ilustracion:pasaje-(tripulante|ara-ventanilla|comandante)$/.test(i.ventanita?.sitio ?? "") && v.enTierra)
+      ilustradasEnTierra.add(`${i.ventanita.sitio} en ${tramo}`);
     // ── El final ──
     if (e.momento === "fin") {
       if (!e.puedeSeguir) {
@@ -509,6 +521,12 @@ async function elVuelo() {
     "la ventanita, con los dibujos de lo que se explica",
     ["dibujo:cinturon", "dibujo:mascara", "dibujo:chaleco", "dibujo:nube", "dibujo:motor"].every((d) => ventanitas.has(d)),
     [...ventanitas].join(", "),
+  );
+  const ilustraciones = ["embarque", "lleno", "tripulante", "ara-ventanilla", "comandante"].map((c) => `ilustracion:pasaje-${c}`);
+  comprobar(
+    "y con las ilustraciones de lo que pasa, y las del cielo nunca en tierra",
+    ilustraciones.every((c) => ventanitas.has(c)) && ilustradasEnTierra.size === 0,
+    `faltan: ${ilustraciones.filter((c) => !ventanitas.has(c)).join(", ") || "ninguna"} · en tierra: ${[...ilustradasEnTierra].join(", ") || "ninguna"}`,
   );
   // Los silencios, en el aire, con el reloj de la escena.
   const tramoEn = (s) => [...tramos].reverse().find((x) => x.t <= s)?.tramo ?? "puerta";

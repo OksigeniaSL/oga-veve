@@ -196,6 +196,20 @@ describe("quién habla", () => {
     expect(caraDe("ara")).not.toContain("cara__gafas");
     expect(caraDe("ara")).not.toContain("cara__gorra");
   });
+
+  /*
+   * El retrato de sus ilustraciones va **encima** de la cara de trazos, que se
+   * queda debajo por si no llega: detrás en el SVG, delante en la pantalla. Y
+   * el altavoz pequeño, encima de todo. Ver `ui/ilustraciones.ts`.
+   */
+  it("Jazlyn, con su retrato encima de la cara dibujada; Ara, con la suya", () => {
+    const suya = caraDe("mama", true);
+    expect(suya).toMatch(/<image class="cara__retrato" href="[^"]*retrato-jazlyn[^"]*\.webp"/);
+    expect(suya.indexOf("cara__gafas")).toBeLessThan(suya.indexOf("cara__retrato"));
+    expect(suya.indexOf("cara__retrato")).toBeLessThan(suya.indexOf("cara__chapa"));
+    expect(caraDe("ara")).not.toContain("cara__retrato");
+    expect(caraDe("tripulacion")).not.toContain("cara__retrato");
+  });
 });
 
 /*

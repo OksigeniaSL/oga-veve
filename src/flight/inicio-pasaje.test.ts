@@ -35,6 +35,7 @@ import {
 } from "./inicio-pasaje";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
 import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
+import { ilustracion, ilustracionPedida, RECETAS } from "../ui/ilustraciones";
 import { JuegoDeLasPiezas, JuegoDelCamino, PARADAS, PIEZAS as PIEZAS_DEL_AVION } from "./kit-de-viaje";
 import type { Fase } from "./vuelo";
 
@@ -1020,6 +1021,8 @@ interface Medido {
   readonly dichas: Dicha[];
   /** El tramo de cada momento de escena, para saber dónde cae cada silencio. */
   readonly tramos: { t: number; tramo: TramoDeLinea }[];
+  /** Lo que tuvo la ventanita, cada vez que cambió, y cómo estaba el vuelo. Solo en `volarElMedido`. */
+  readonly ventanita?: { t: number; dibujo: string | null; enTierra: boolean; cartelApagado: boolean }[];
 }
 
 /** Vuela la escena entera con el vuelo medido y las voces que duran lo que duran. */
@@ -1030,15 +1033,24 @@ function volarElMedido(): Medido {
   const vuelo = new VueloMedido();
   const porVer = [...LO_QUE_SE_VIO];
   const tramos: { t: number; tramo: TramoDeLinea }[] = [];
+  const ventanita: NonNullable<Medido["ventanita"]> = [];
   for (; t < 4000; t += DT) {
     v.tic();
     if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
     vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+    const dibujo = escena.estado.dibujo;
+    if ((ventanita[ventanita.length - 1]?.dibujo ?? null) !== dibujo)
+      ventanita.push({
+        t,
+        dibujo,
+        enTierra: vuelo.lectura.enTierra,
+        cartelApagado: escena.dicho("arriba") && !escena.dicho("bajada"),
+      });
     if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
     if (escena.estado.puedeSeguir) escena.seguir();
     if (escena.estado.terminado) break;
   }
-  return { escena, vuelo, dichas: v.dichas, tramos };
+  return { escena, vuelo, dichas: v.dichas, tramos, ventanita };
 }
 
 /** Los silencios entre frases, con su principio, su largo y el tramo del vuelo. */
@@ -1202,11 +1214,43 @@ describe("el vuelo medido, con las voces que duran lo que duran", () => {
   });
 
   it("cada explicación con su dibujo en la ventanita, y el dibujo existe", () => {
-    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE].flatMap((x) => x.lineas).filter((l) => l.dibujo);
+    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE]
+      .flatMap((x) => x.lineas)
+      .filter((l) => l.dibujo && ilustracionPedida(l.dibujo) === null);
     expect(conDibujo.length).toBeGreaterThanOrEqual(20);
     for (const l of conDibujo) expect(esDibujoDelPasaje(l.dibujo!), `${l.clave}: ${l.dibujo}`).toBe(true);
     // Y todos los dibujos se usan.
     for (const d of Object.keys(DIBUJOS_DEL_PASAJE)) expect(conDibujo.map((l) => l.dibujo), d).toContain(d);
+  });
+
+  /*
+   * **Las ilustraciones, con lo que pasa en ese instante** (punto 278): la
+   * cabina vacía mientras se embarca, todos sentados al pedir el cinturón, la
+   * tripulante al lado de Ara, Ara contra el cristal y la comandante en su
+   * cabina. Las de la cabina y la de la comandante llevan el cielo y las nubes
+   * por la ventanilla: en tierra no salen. Y Ara de rodillas en el asiento,
+   * solo con el cartel del cinturón apagado. Ver `ilustrada`.
+   */
+  it("y las ilustraciones, cada una con lo que pasa: ninguna dice otra cosa que el vuelo", () => {
+    const ventanita = m.ventanita ?? [];
+    const vistas = ventanita.filter((v) => v.dibujo?.startsWith("ilustracion:"));
+    const de = (clave: string) => vistas.filter((v) => v.dibujo === `ilustracion:${clave}`);
+    // Las cinco salen en un vuelo normal, y existen de verdad, con su hueco.
+    for (const c of ["pasaje-embarque", "pasaje-lleno", "pasaje-tripulante", "pasaje-ara-ventanilla", "pasaje-comandante"]) {
+      expect(de(c).length, c).toBeGreaterThan(0);
+      expect(ilustracion(c), c).not.toBeNull();
+      expect(RECETAS[c]?.hueco, c).toBe("ventanita");
+    }
+    // El embarque es lo primero y se queda, sin hueco, hasta que la bienvenida lo cambia por la cabina llena.
+    const desdeElEmbarque = ventanita.slice(ventanita.findIndex((v) => v.dibujo === "ilustracion:pasaje-embarque"));
+    expect(desdeElEmbarque[0]?.t).toBeLessThan(5);
+    expect(desdeElEmbarque[1]?.dibujo).toBe("ilustracion:pasaje-lleno");
+    expect(desdeElEmbarque[2]?.dibujo).toBe("cinturon");
+    // Con el cielo por la ventanilla: nunca en tierra.
+    for (const c of ["pasaje-tripulante", "pasaje-ara-ventanilla", "pasaje-comandante"])
+      for (const v of de(c)) expect(v.enTierra, `${c} a los ${v.t.toFixed(0)} s`).toBe(false);
+    // Y Ara de rodillas, con el cartel apagado.
+    for (const v of de("pasaje-ara-ventanilla")) expect(v.cartelApagado, `a los ${v.t.toFixed(0)} s`).toBe(true);
   });
 });
 

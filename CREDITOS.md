@@ -574,6 +574,51 @@ sus piezas y el mapa de las islas con el camino del vuelo—, igual: dibujado
 en el código, en `src/ui/kit-de-viaje.ts`, con los colores de la ventanita y
 las islas con sus coordenadas. Nada traído de fuera.
 
+### Las ilustraciones
+
+**Ilustraciones: Oksigenia SL, con licencia de uso de su proveedor.**
+
+Son los dibujos de cuento del juego, todos de la misma colección: Jazlyn a los
+mandos de cada avión de la flota, cada avión por fuera con los colores de la
+casa, la cara de Jazlyn, y la cabina de pasaje del primer vuelo de Ara. Como
+el resto del arte original, son contenido de Oksigenia SL y no van con el
+código bajo Apache-2.0: ver `LICENSE-CONTENIDO.md`.
+
+Los originales, unos cuarenta y cinco megas, no están en el repositorio: viven
+en `crudo/imagenes/`, que está en `.gitignore`. Lo que entra son los WebP que
+hace `scripts/hacer-ilustraciones.mjs`, **recortados a la proporción de su
+hueco y reducidos al doble de lo que miden en pantalla**, sin metadatos. Qué
+trozo se coge de cada una y por qué está en `src/ui/ilustraciones-recetas.ts`,
+y `src/ui/ilustraciones.test.ts` no deja entrar una que no esté en esta tabla.
+
+Antes de entrar se miró cada una de cerca. **Una comandante lleva cuatro
+barras y quien va a su derecha, tres**: lo que no cuadraba se recortó hasta
+dejarlo fuera, y así se dice en su fila. Se quedaron sin usar el largo radio y
+el helicóptero, por fuera y por dentro, que no son de la flota; dos retratos
+casi fotográficos que no van con los demás; y la cabina de tres y tres
+asientos, que es la de otro avión.
+
+| Fichero | Original | Dónde sale | Cambios |
+| --- | --- | --- | --- |
+| `src/assets/ilustraciones/pasaje-embarque.webp` | `cabina-pasaje-embarque.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 480 × 320 |
+| `src/assets/ilustraciones/pasaje-lleno.webp` | `cabina-pasaje-gente-2x2.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 480 × 320 |
+| `src/assets/ilustraciones/pasaje-tripulante.webp` | `tripulante-ara.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 480 × 320 |
+| `src/assets/ilustraciones/pasaje-ara-ventanilla.webp` | `ara-ventanilla.jpg` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 480 × 320 |
+| `src/assets/ilustraciones/pasaje-comandante.webp` | `jazlyn-cabina-dibujo.jpg` | La ventanita de «Viajá con Jazlyn» | recortada por encima de los hombros: en el dibujo lleva tres barras, que son las de primera oficial, y Jazlyn es la comandante, que lleva cuatro; 480 × 320 |
+| `src/assets/ilustraciones/fuera-jaz-20.webp` | `fuera-jaz20.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-jaz-25.webp` | `fuera-jaz25.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-jaz-40.webp` | `fuera-jaz40.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-jaz-60.webp` | `fuera-jaz60.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-jaz-90.webp` | `fuera-jaz90.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-jaz-120.webp` | `fuera-jaz120.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-20.webp` | `cabina-jaz20.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-25.webp` | `cabina-jaz25.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-40.webp` | `cabina-jaz40.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-60.webp` | `cabina-jaz60.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-90.webp` | `cabina-jaz90.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
+| `src/assets/ilustraciones/retrato-jazlyn.webp` | `jazlyn-cabina-dibujo.jpg` | La cara de Jazlyn cuando habla | recortada a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial; 96 × 96, en redondo |
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

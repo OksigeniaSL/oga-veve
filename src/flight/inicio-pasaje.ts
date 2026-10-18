@@ -3,9 +3,9 @@
  *
  * Las dos primeras enseñan a despegar y a aterrizar con Jazlyn al lado. Esta
  * es la otra primera vez, la que casi todo el mundo tiene antes que la de
- * pilotar: **subirse a un avión de línea**. Ara va sentada junto a la
- * ventanilla —sin género: ni sentado ni sentada, la escena no lo dice— y
- * Jazlyn es la comandante, en la cabina de mando, hablando por la megafonía.
+ * pilotar: **subirse a un avión de línea**. Ara va en el asiento de la
+ * ventanilla —sin género: la escena no dice si es niño o niña— y Jazlyn es
+ * la comandante, en la cabina de mando, hablando por la megafonía.
  * No se toca ningún mando: es mirar y escuchar. Lo lleva la tripulación, como
  * en un vuelo de verdad; ver `vuelo-de-linea.ts`.
  *
@@ -49,8 +49,11 @@
  *   las explicaciones, después de un rato de silencio y en su tramo del vuelo.
  *   Ver `CHARLAS_DEL_PASAJE`.
  *
- * Y lo que se explica lleva su **dibujo en la ventanita** de cristal: ver
- * `ui/dibujos-del-pasaje.ts`.
+ * Y lo que se explica lleva su **dibujo en la ventanita** de cristal —ver
+ * `ui/dibujos-del-pasaje.ts`—; y lo que pasa, a veces, su **ilustración**:
+ * la cabina vacía del embarque, la cabina llena, la tripulante al lado de Ara,
+ * Ara con la cara contra el cristal y la comandante en su cabina. Ver
+ * `ui/ilustraciones.ts` y `ilustrada`.
  *
  * ## Lo que pasa, en el orden de un vuelo de verdad
  *
@@ -61,7 +64,7 @@
  *    se lo abrocha —el dibujo de la hebilla, y el cartel encendido—.
  * 3. **Las puertas**: la comandante manda armar los toboganes y Ara se da
  *    cuenta de que ya se van. Con eso, la tripulación de mando arranca.
- * 4. **Los motores**, que se oyen arrancar, y Ara pegada al cristal.
+ * 4. **Los motores**, que se oyen arrancar, y Ara con la cara contra el cristal.
  * 5. **El rodaje**, visto por fuera, con la bienvenida de la comandante.
  * 6. **La demostración de seguridad**, por la megafonía: el cinturón, las
  *    salidas y sus luces del suelo, las máscaras, el chaleco, la tarjeta y el
@@ -104,6 +107,7 @@
 
 import { seLePasoElMomento } from "../audio/megafonia";
 import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
+import type { IlustracionDelPasaje } from "../ui/ilustraciones";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
 import type { Fase } from "./vuelo";
@@ -132,10 +136,11 @@ export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
 /**
  * **El plano**: desde dónde se ve el vuelo en cada momento.
  *
- * - `ventanilla`: sentado en el asiento de Ara, mirando como se mira.
- * - `asomado-*`: **Ara pegada al cristal**, como hace cualquier niño para ver
- *   más: los ojos se acercan a la ventanilla y miran hacia el motor o hacia
- *   abajo. Es un movimiento de la cabeza, no un corte. Ver `asientoDeAra`.
+ * - `ventanilla`: desde el asiento de Ara, mirando como se mira.
+ * - `asomado-*`: **Ara con la cara contra el cristal**, como hace cualquier
+ *   criatura para ver más: los ojos se acercan a la ventanilla y miran hacia
+ *   el motor o hacia abajo. Es un movimiento de la cabeza, no un corte. Ver
+ *   `asientoDeAra`.
  * - `fuera-*`: **el avión por fuera**, lo que se está contando visto desde
  *   donde se ve mejor: rodando, desde el borde de la pista al despegar y al
  *   tocar, en el giro, una vuelta alrededor en crucero y el ala. Ver
@@ -391,6 +396,12 @@ const BAJANDO = {
 const CALLA_ANTES_DEL_KIT = 10;
 /** Lo que se queda el dibujo de la ventanita después de la última frase, s. */
 const SE_QUEDA_LA_VENTANITA = 2.5;
+/**
+ * **Y lo que se queda hasta la frase siguiente**, no solo ese poco: la cabina
+ * vacía del embarque, que acompaña al rato callado en que sube el resto del
+ * pasaje con el hilo musical. Ver `EMBARCANDO`.
+ */
+const HASTA_LA_SIGUIENTE: ReadonlySet<string> = new Set(["ilustracion:pasaje-embarque"]);
 
 /**
  * **Y la red de la espera**, s de reloj de pared: si «sentados para el
@@ -453,6 +464,42 @@ const KIT_GUARDADO = "kitGuardar";
 const esDelKit = (l: Linea): boolean => l.clave.startsWith("inicio.ara.pasaje.kit.");
 /** Una frase con el dibujo de la ventanita. */
 const con = (l: Linea, dibujo: DibujoDelPasaje): Linea => ({ ...l, dibujo });
+/**
+ * **Una frase con su ilustración en la ventanita**: lo que está pasando en
+ * ese instante, dibujado como un cuento —ver `ui/ilustraciones.ts`—. Va donde
+ * no hay nada que explicar con un dibujo, y solo cuando lo que se ve en ella es
+ * lo que pasa: las de la cabina de pasaje y la de la comandante tienen el
+ * cielo y las nubes por la ventanilla, así que en tierra no salen.
+ */
+const ilustrada = (l: Linea, i: IlustracionDelPasaje): Linea => ({ ...l, dibujo: `ilustracion:${i}` });
+/** La tripulante en persona, al lado de Ara: la ilustración de las dos, ya en el aire. */
+const conLaTripulante = (l: Linea): Linea => ilustrada(l, "pasaje-tripulante");
+/** La comandante por la megafonía, en su cabina por encima de las nubes. */
+const desdeLaCabina = (l: Linea): Linea => ilustrada(l, "pasaje-comandante");
+/**
+ * **Si el cartel del cinturón está apagado**, por lo que se ha dicho: lo apaga
+ * la comandante al llegar arriba —«pueden soltarse el cinturón»— y se enciende
+ * al empezar a bajar. Ara de rodillas en el asiento, con la cara contra el
+ * cristal, solo sale entonces: con el cartel encendido el cinturón va puesto
+ * y bien abrochado, y un dibujo no enseña lo contrario.
+ */
+const cartelApagado = (e: VueloDePasaje): boolean => e.dicho("arriba") && !e.dicho("bajada");
+/** Ara contra el cristal, con su ilustración si el cartel está apagado; si no, como venía. */
+const contraElCristal = (l: Linea, e: VueloDePasaje): Linea =>
+  cartelApagado(e) ? ilustrada(l, "pasaje-ara-ventanilla") : l;
+/**
+ * **Las nubes de cerca, con la tripulante al lado**: el saludo con su
+ * ilustración, lo que se explica con el dibujo de la nube y, al final, lo que
+ * dice Ara.
+ */
+const lasNubesDeCerca = (ultima: Linea): Linea[] => [
+  conLaTripulante(tripulante("hola")),
+  conLaTripulante(ara("deVerdad")),
+  con(tripulante("nubes1"), "nube"),
+  con(tripulante("nubes2"), "nube"),
+  con(tripulante("nubes3"), "nube"),
+  ultima,
+];
 /**
  * **Un anuncio de la megafonía de siempre**: lo monta el juego con el campo,
  * el plan y el tiempo de hoy. Ver `ANUNCIOS` en `audio/megafonia.ts`.
@@ -557,15 +604,19 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
      */
     id: "ventanilla",
     cuando: (_l, e) => e.segundos >= AL_SENTARSE,
-    lineas: [ara("ventanilla")],
+    // Y la cabina todavía vacía: las familias con criaturas embarcan las primeras.
+    lineas: [ilustrada(ara("ventanilla"), "pasaje-embarque")],
     mira: "motor",
     plano: "asomado-motor",
   },
   {
-    // Después del rato de embarcar, con la música: la bienvenida y el cinturón.
+    /*
+     * Después del rato de embarcar, con la música: la bienvenida, con todo el
+     * pasaje ya en su asiento, y el cinturón de Ara, con su hebilla.
+     */
     id: "cinturon",
     cuando: (_l, e) => e.callaDesde >= EMBARCANDO,
-    lineas: [con(tripulacion("cinturon"), "cinturon"), con(ara("cinturon"), "cinturon")],
+    lineas: [ilustrada(tripulacion("cinturon"), "pasaje-lleno"), con(ara("cinturon"), "cinturon")],
     mira: "cinturon",
   },
   {
@@ -672,7 +723,7 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     id: "arriba",
     cuando: (l) => l.tramo === "crucero" && l.enTramo >= ARRIBA_Y_NIVELADO,
     caduca: (l) => bajando(l.tramo),
-    lineas: [anuncio("comandante.crucero")],
+    lineas: [desdeLaCabina(anuncio("comandante.crucero"))],
     plano: "fuera-vuelta",
   },
   {
@@ -694,20 +745,18 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
       !l.enTierra &&
       (e.desdeQueSeDijo("servicio") >= HASTA_EL_ASIENTO || (e.saltado("servicio") && volando(l))),
     caduca: (l, e) => cabinaPreparada(l, e),
-    lineas: [
-      tripulante("hola"),
-      ara("deVerdad"),
-      con(tripulante("nubes1"), "nube"),
-      con(tripulante("nubes2"), "nube"),
-      con(tripulante("nubes3"), "nube"),
-      con(ara("nubesSostiene"), "nube"),
-    ],
+    lineas: lasNubesDeCerca(con(ara("nubesSostiene"), "nube")),
+    /*
+     * Y lo último, «ahora las miro de otra manera», con Ara mirándolas contra
+     * el cristal, si el cartel está apagado; si no, el dibujo de la nube sigue.
+     */
+    segun: (_l, e) => lasNubesDeCerca(contraElCristal(con(ara("nubesSostiene"), "nube"), e)),
     mira: "nubes",
   },
   {
     id: "bajada",
     cuando: (l) => bajando(l.tramo) && !l.enTierra,
-    lineas: [anuncio("comandante.descenso"), anuncio("tripulacion.cinturones")],
+    lineas: [desdeLaCabina(anuncio("comandante.descenso")), anuncio("tripulacion.cinturones")],
   },
   {
     id: "oidos",
@@ -732,7 +781,7 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
       e.callaDesde >= CALLA_ANTES_DEL_KIT &&
       !cabinaPreparada(l, e),
     caduca: (l, e) => cabinaPreparada(l, e),
-    lineas: [tripulante(KIT_DADO), tripulante("kitRato"), ara("kitGracias")],
+    lineas: [tripulante(KIT_DADO), tripulante("kitRato"), ara("kitGracias")].map(conLaTripulante),
   },
   {
     /*
@@ -762,8 +811,9 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     id: "tcpAterrizaje",
     cuando: (l, e) => !l.enTierra && e.desdeQueSeDijo("aproximacion") >= 2,
     caduca: (l) => l.enTierra || l.altura < 300,
-    lineas: [tripulante("aterrizaje")],
-    segun: (_l, e) => (e.kit.esDado ? [tripulante(KIT_GUARDADO), tripulante("aterrizaje")] : [tripulante("aterrizaje")]),
+    lineas: [conLaTripulante(tripulante("aterrizaje"))],
+    segun: (_l, e) =>
+      (e.kit.esDado ? [tripulante(KIT_GUARDADO), tripulante("aterrizaje")] : [tripulante("aterrizaje")]).map(conLaTripulante),
   },
   {
     /*
@@ -856,6 +906,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
       volando(l) && !!l.sobreElMar && !!l.nubes && l.altitud > l.nubes.techo + 150 && e_noEnNube(l),
     caduca: (l) => bajando(l.tramo),
     lineas: [ara("marArriba")],
+    segun: (_l, e) => [contraElCristal(ara("marArriba"), e)],
     plano: "asomado-abajo",
   },
   {
@@ -904,7 +955,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [con(tripulante("frio"), "frio"), con(ara("frio"), "frio")],
   },
   {
-    // El motor, con Ara pegada al cristal para verlo mientras se lo cuentan.
+    // El motor, con Ara contra el cristal para verlo mientras se lo cuentan.
     id: "tcpMotor",
     tras: 16,
     cuando: (l, e) =>
@@ -920,7 +971,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     tras: 16,
     cuando: (l, e) => l.tramo === "bajada" && l.altitud > DIEZ_MIL_PIES + 150 && l.altitud < 4800 && e.dicho("oidos"),
     caduca: (l) => l.altitud < DIEZ_MIL_PIES + 100 || enLaFinal(l) || l.enTierra,
-    lineas: [ara("preguntaBajar"), comandante("bajando")],
+    lineas: [ara("preguntaBajar"), desdeLaCabina(comandante("bajando"))],
   },
   {
     // De dónde salieron las islas: volcanes desde el fondo del mar.
@@ -978,7 +1029,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     cuando: (l, e) =>
       l.tramo === "bajada" && tripulanteEnElPasillo(e) && l.faltaParaTocar < BAJANDO.bano && !cabinaPreparada(l, e),
     caduca: (l, e) => cabinaPreparada(l, e),
-    lineas: [ara("bano"), tripulante("bano")],
+    lineas: [ara("bano"), tripulante("bano")].map(conLaTripulante),
   },
   {
     /*
@@ -1360,7 +1411,8 @@ export class VueloDePasaje {
    * **El dibujo de la ventanita**: el de la frase que suena, mientras suena y
    * un poco después. Entre dos frases del mismo dibujo no se va —la
    * demostración entera pasa de dibujo en dibujo sin parpadear—, y una frase
-   * sin dibujo lo quita.
+   * sin dibujo lo quita. Lo mismo con una ilustración o la foto de una
+   * historia, que van por el mismo sitio con su prefijo delante.
    */
   private mirarLaVentanita(): void {
     const suena = this.charla.callada ? null : this.charla.ultima;
@@ -1368,7 +1420,8 @@ export class VueloDePasaje {
       this.dibujoDe = suena;
       this.dibujo = suena.dibujo ?? null;
     }
-    if (this.charla.callada && this.callada > SE_QUEDA_LA_VENTANITA) this.dibujo = null;
+    const seQueda = this.dibujo !== null && HASTA_LA_SIGUIENTE.has(this.dibujo);
+    if (this.charla.callada && this.callada > SE_QUEDA_LA_VENTANITA && !seQueda) this.dibujo = null;
   }
 
   /**

@@ -50,6 +50,7 @@ import {
 } from "../world/pantallas-cabina";
 import type { Intruso } from "../flight/tcas";
 import { familiaDe } from "../ui/familia";
+import { ilustracionPedida } from "../ui/ilustraciones";
 import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento, esAfis, sinTorre } from "../world/aerodrome";
 import {
@@ -220,9 +221,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * sin nada dice cuál hay y dónde quedó —placa o esquina, y su caja en
      * píxeles de pantalla—. Los bancos la ponen a mano para medirla sin
      * esperar a que la comandante la cuente. Ver `ui/ventana-de-historia.ts`.
+     * Con `ilustracion:<clave>`, la ilustración de la escena de pasaje: ver
+     * `ui/ilustraciones.ts`.
      */
     historia: (sitio?: string | null) => {
-      if (sitio) juego.hud.historia.mostrar(sitio);
+      const ilustrada = sitio ? ilustracionPedida(sitio) : null;
+      if (ilustrada !== null) juego.hud.historia.mostrarIlustracion(ilustrada);
+      else if (sitio) juego.hud.historia.mostrar(sitio);
       else if (sitio === null) juego.hud.historia.quitar();
       return juego.hud.historia.estado;
     },

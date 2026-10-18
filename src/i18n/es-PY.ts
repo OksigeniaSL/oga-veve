@@ -1252,6 +1252,29 @@ export const ES_PY = {
   "historia.foto.encarnacion": "El puente entre Encarnación y Posadas",
   "historia.foto.trinidad": "Ángeles músicos tallados en piedra en Trinidad",
   "historia.foto.cruz-del-sur": "La Cruz del Sur en el cielo de noche",
+  /*
+   * **Las ilustraciones**, su texto alternativo: lo que se ve, corto, para
+   * quien no lo ve. Y de Ara, nada que diga si es niño o niña. Ver
+   * `ui/ilustraciones.ts`.
+   */
+  "ilustracion.pasaje-embarque": "La cabina todavía vacía: las familias con criaturas suben primero",
+  "ilustracion.pasaje-lleno": "La cabina llena, cada quien en su asiento, y Ara en la ventanilla",
+  "ilustracion.pasaje-tripulante": "La tripulante le habla a Ara al lado de su asiento",
+  "ilustracion.pasaje-ara-ventanilla": "Ara, con la cara contra el cristal, mirando el ala y el motor",
+  "ilustracion.pasaje-comandante": "La comandante Jazlyn en su cabina, por encima de las nubes",
+  "ilustracion.fuera-jaz-20": "El JAZ 20 volando sobre el río y el monte",
+  "ilustracion.fuera-jaz-25": "El JAZ 25 pasando bajito sobre un cultivo",
+  "ilustracion.fuera-jaz-40": "El JAZ 40 volando sobre un lago entre cerros",
+  "ilustracion.fuera-jaz-60": "El JAZ 60 volando sobre los esteros",
+  "ilustracion.fuera-jaz-90": "El JAZ 90 volando por encima de las nubes",
+  "ilustracion.fuera-jaz-120": "El JAZ 120, con sus cuatro motores, por encima de las nubes",
+  "ilustracion.cabina-jaz-20": "Jazlyn a los mandos del JAZ 20, en el asiento de la izquierda",
+  "ilustracion.cabina-jaz-25": "Jazlyn a los mandos del JAZ 25, el biplano de una plaza",
+  "ilustracion.cabina-jaz-40": "Jazlyn a los mandos del JAZ 40, con un motor en cada ala",
+  "ilustracion.cabina-jaz-60": "Jazlyn a los mandos del JAZ 60, con sus pantallas",
+  "ilustracion.cabina-jaz-90": "Jazlyn a los mandos del JAZ 90, con el Teide delante",
+  "ilustracion.cabina-jaz-120": "Jazlyn a los mandos del JAZ 120, de noche y con la Cruz del Sur",
+  "ilustracion.retrato-jazlyn": "Jazlyn, con su gorra de comandante y sus gafas de sol",
 
   /*
    * **Y lo mismo, dicho por la instructora en la avioneta**: de vos, más

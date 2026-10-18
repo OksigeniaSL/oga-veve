@@ -1465,6 +1465,7 @@ import { FundasYCalzos } from "./world/fundas-y-calzos";
 import { CamaraDeLaVuelta } from "./cameras/vuelta";
 import { CamaraDeLaEscena, FundidoDePlano } from "./cameras/escena";
 import { esDibujoDelPasaje } from "./ui/dibujos-del-pasaje";
+import { ilustracionPedida } from "./ui/ilustraciones";
 import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
 import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
 
@@ -7360,24 +7361,29 @@ export class Game {
 
   /**
    * **La ventanita de la escena de pasaje**: el dibujo de lo que se explica
-   * —ver `ui/dibujos-del-pasaje.ts`— o la foto de la historia que cuenta la
-   * comandante, en la misma ventana de cristal que las historias de
-   * cualquier vuelo. Y la primera vez que sale el cinturón, el cartel del
-   * techo parpadea: es el que se acaba de encender para abrochárselo.
+   * —ver `ui/dibujos-del-pasaje.ts`—, la ilustración de lo que pasa —ver
+   * `ui/ilustraciones.ts`— o la foto de la historia que cuenta la comandante,
+   * en la misma ventana de cristal que las historias de cualquier vuelo. Y la
+   * primera vez que se pide el cinturón —con la cabina llena o con la
+   * hebilla—, el cartel del techo parpadea: es el que se acaba de encender
+   * para abrochárselo.
    */
   private ponerLaVentanitaDeLaEscena(dibujo: string | null): void {
     if (dibujo === this.ventanitaDeLaEscena) return;
     const antes = this.ventanitaDeLaEscena;
     this.ventanitaDeLaEscena = dibujo;
-    if (antes) this.hud.historia.quitar(antes.startsWith("foto:") ? antes.slice(5) : `dibujo:${antes}`);
+    if (antes)
+      this.hud.historia.quitar(
+        antes.startsWith("foto:") ? antes.slice(5) : ilustracionPedida(antes) !== null ? antes : `dibujo:${antes}`,
+      );
     if (!dibujo) return;
+    const ilustrada = ilustracionPedida(dibujo);
     if (dibujo.startsWith("foto:")) this.hud.historia.mostrar(dibujo.slice(5));
-    else if (esDibujoDelPasaje(dibujo)) {
-      this.hud.historia.mostrarDibujo(dibujo);
-      if (dibujo === "cinturon" && !this.cinturonDeLaEscena) {
-        this.cinturonDeLaEscena = true;
-        this.hud.destellarCinturon();
-      }
+    else if (ilustrada !== null) this.hud.historia.mostrarIlustracion(ilustrada);
+    else if (esDibujoDelPasaje(dibujo)) this.hud.historia.mostrarDibujo(dibujo);
+    if ((dibujo === "cinturon" || ilustrada === "pasaje-lleno") && !this.cinturonDeLaEscena) {
+      this.cinturonDeLaEscena = true;
+      this.hud.destellarCinturon();
     }
   }
 

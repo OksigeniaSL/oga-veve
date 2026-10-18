@@ -49,6 +49,7 @@ import { hayTexto, t } from "../i18n";
 import { urlDelDibujo, type DibujoDelPasaje } from "./dibujos-del-pasaje";
 import { aPxDelHud } from "./escala";
 import { fotoDeLaHistoria, type FotoDeLaHistoria } from "./fotos-de-las-historias";
+import { ilustracion, PREFIJO_DE_ILUSTRACION } from "./ilustraciones";
 
 /** Una caja en píxeles de pantalla, como las da `getBoundingClientRect`. */
 export interface Caja {
@@ -316,6 +317,19 @@ export class VentanaDeHistoria implements PonerYQuitar {
       alt: hayTexto(alt) ? t(alt) : "",
       firma: null,
     });
+  }
+
+  /**
+   * **Una ilustración de la escena de pasaje**, igual que un dibujo: lo que
+   * está pasando en ese instante, dibujado como un cuento. Su sitio es
+   * `ilustracion:<clave>`, el mismo con el que la pide la escena. Ver
+   * `ui/ilustraciones.ts`.
+   */
+  mostrarIlustracion(clave: string): void {
+    const sitio = `${PREFIJO_DE_ILUSTRACION}${clave}`;
+    const i = ilustracion(clave);
+    this.ultimo = `${sitio}: ${i ? "pedida" : "no hay"}`;
+    if (i) this.mostrarFoto({ clave: sitio, url: i.url, alt: i.alt, firma: null });
   }
 
   private mostrarFoto(foto: FotoDeLaHistoria): void {
