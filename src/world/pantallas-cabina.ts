@@ -37,6 +37,7 @@ import {
   MeshBasicMaterial,
   SRGBColorSpace,
   Vector3,
+  type Camera,
   type Mesh,
 } from "three";
 import { PALETA } from "../ui/paleta";
@@ -71,6 +72,7 @@ import {
   type Resaltes,
 } from "../flight/lo-que-cambia";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
+import { latido, type Pieza } from "../flight/lo-que-se-nombra";
 import { enLaMuesca } from "../flight/flaps";
 import {
   QUIETA_LA_ALTITUD,
@@ -382,6 +384,11 @@ export interface DatosDeCabina {
    * el TCAS pide maniobra. Ver `Franja` en `flight/tcas.ts`.
    */
   readonly ra?: Franja | null;
+  /**
+   * **Lo que acaba de nombrar la instructora**, con cuánto lleva señalado, s:
+   * aquí late igual que en el cuadro plano. Ver `flight/lo-que-se-nombra.ts`.
+   */
+  readonly senalados?: Readonly<Partial<Record<Pieza, number>>> | null;
 }
 
 /**
@@ -532,8 +539,34 @@ export interface Pantallas {
   }[];
   /** Repinta las dos, si toca. Se llama cada fotograma. */
   actualizar(datos: DatosDeCabina, dt: number): void;
+  /**
+   * **Si la cámara tiene delante esa pantalla**: su centro dentro de lo que
+   * enseña la cámara y delante de ella. Desde la cabina es lo que decide si
+   * el rombo que se nombra se ve. Ver `flight/lo-que-se-nombra.ts`.
+   */
+  seVe(camara: Camera, dibujo: "horizonte" | "rumbo"): boolean;
+  /**
+   * **Lo que nombra la instructora y salió en esa pantalla** en el último
+   * repintado: el rombo, la marca rosa, el mapa…
+   */
+  pintadas(dibujo: "horizonte" | "rumbo"): ReadonlySet<Pieza>;
   dispose(): void;
 }
+
+/**
+ * **Lo que salió en cada pantalla en el último repintado**, de lo que nombra
+ * la instructora. Lo apunta quien pinta, que es quien sabe si la marca cayó
+ * dentro de la ventana de la cinta. Ver `Pantallas.pintadas`.
+ */
+/** De trabajo, para `seVe`: uno nuevo por fotograma sería basura. */
+const _caja = new Box3();
+const _centro = new Vector3();
+const _enCamara = new Vector3();
+
+const PINTADAS = {
+  horizonte: new Set<Pieza>(),
+  rumbo: new Set<Pieza>(),
+} as const;
 
 /**
  * Enciende las pantallas de un modelo, si las tiene.
@@ -626,6 +659,26 @@ export function encenderPantallas(
       uuid: m.uuid,
       dibujo: queLeToca(i, mallas.length, m.name ?? ""),
     })),
+    seVe(camara, dibujo) {
+      /*
+       * Con las matrices de este paso, las del avión incluidas: se pregunta
+       * entre pintado y pintado, con el avión ya movido y su malla todavía
+       * donde se pintó la última vez. A cincuenta metros por segundo eso es
+       * un metro, y la pantalla está a ochenta centímetros del ojo.
+       */
+      camara.updateWorldMatrix(true, false);
+      return mallas.some((m, i) => {
+        if (queLeToca(i, mallas.length, m.name ?? "") !== dibujo) return false;
+        m.updateWorldMatrix(true, false);
+        _caja.setFromObject(m).getCenter(_centro);
+        const delante = _enCamara.copy(_centro).applyMatrix4(camara.matrixWorldInverse).z < 0;
+        _centro.project(camara);
+        return delante && Math.abs(_centro.x) < 0.95 && Math.abs(_centro.y) < 0.95;
+      });
+    },
+    pintadas(dibujo) {
+      return PINTADAS[dibujo];
+    },
     actualizar(datos, dt) {
       /*
        * Lo que tarda cada cosa se mide **con el paso de tiempo de verdad**, no
@@ -832,6 +885,7 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   cintaDeVelocidad(g, 0, 0, CINTA, alto, d);
   cintaDeAltitud(g, ANCHO - VSI - CINTA, 0, CINTA, alto, d);
   variometro(g, ANCHO - VSI, 0, VSI, alto, d);
+  apuntarYSenalar(g, d, x0, anchoAct, alto);
   if (conRosa) {
     const rr = Math.min(anchoAct / 2 - 10, 76);
     pintarRosa(g, x0 + anchoAct / 2, alto - rr - 10, rr, magnetico(d), true);
@@ -1112,6 +1166,78 @@ function horizonteDe(
     g.strokeRect(x + 3, y + 3, w - 6, h - 6);
   }
   g.restore();
+}
+
+/**
+ * **Lo que nombra la instructora, en esta pantalla: dónde cae, si se ve y,
+ * si está señalado, el marco que late.**
+ *
+ * Las mismas piezas y la misma manera de señalar que el cuadro plano —un
+ * marco blanco que late seis segundos, ver `.explica--presenta` en la hoja—,
+ * con las cuentas de esta pantalla. La marca rosa solo cuenta si cae dentro de
+ * la ventana de la cinta: fuera se recorta, y no se ve. Ver
+ * `flight/lo-que-se-nombra.ts`.
+ */
+function apuntarYSenalar(
+  g: CanvasRenderingContext2D,
+  d: DatosDeCabina,
+  x0: number,
+  anchoAct: number,
+  alto: number,
+): void {
+  const pintadas = PINTADAS.horizonte;
+  pintadas.clear();
+  const medio = alto / 2;
+  const cajas: Partial<Record<Pieza, readonly [number, number, number, number]>> = {};
+  const xAlt = ANCHO - VSI - CINTA;
+  pintadas.add("altimetro");
+  cajas.altimetro = [xAlt, 0, CINTA, alto];
+  if ((d.perfil?.puntos ?? null) !== null) {
+    pintadas.add("rombo");
+    const paso = alto * 0.085;
+    const cy = alto * 0.46;
+    cajas.rombo = [x0 + anchoAct - 27, cy - 2.7 * paso - 16, 26, 5.4 * paso + 22];
+  }
+  if (d.spd) {
+    const ys = medio + (d.velocidad * NUDOS - d.spd.kt) * POR_NUDO;
+    if (Math.abs(ys - medio) < medio - 8) {
+      pintadas.add("marca");
+      cajas.marca = [CINTA - 14, ys - 11, 16, 22];
+    }
+  }
+  const ritmo = d.perfil?.ritmoFpm ?? null;
+  if (ritmo !== null) {
+    pintadas.add("ritmo");
+    const yr = medio - Math.max(-1, Math.min(1, ritmo / d.cuadro.vsiMax)) * (medio - 12);
+    cajas.ritmo = [ANCHO - VSI - 2, yr - 9, 14, 18];
+  }
+  const sel = d.ventanilla && d.ventanilla.enLaCinta !== false ? d.ventanilla : null;
+  if (sel) {
+    pintadas.add("raya");
+    const yy = Math.max(40, Math.min(alto - 12, medio - (sel.pies - d.altura * PIES) * POR_PIE));
+    cajas.raya = [xAlt - 2, yy - 11, CINTA + 4, 22];
+  }
+  if ((d.cotaDeLaPista ?? null) !== null) {
+    pintadas.add("cota");
+    cajas.cota = [xAlt, alto - 46, CINTA, 26];
+  }
+  const senalados = d.senalados;
+  if (!senalados) return;
+  const quieto = sinMovimiento();
+  for (const [p, caja] of Object.entries(cajas) as [Pieza, readonly [number, number, number, number]][]) {
+    const edad = senalados[p];
+    if (edad === undefined) continue;
+    const luz = latido(edad, quieto);
+    if (luz <= 0) continue;
+    g.save();
+    g.globalAlpha = 0.35 + 0.65 * luz;
+    g.strokeStyle = TINTA;
+    g.shadowColor = SIMBOLO;
+    g.shadowBlur = 10 * luz;
+    g.lineWidth = 3;
+    g.strokeRect(caja[0], caja[1], caja[2], caja[3]);
+    g.restore();
+  }
 }
 
 /**
@@ -2644,6 +2770,10 @@ function pintarLaCarta(
    */
   const dibujo = dibujarLaCarta(m ?? null, (d.rumbo * 180) / Math.PI, r);
   ultimaCarta = dibujo;
+  // Lo que nombra la instructora: el mapa, y los rombos de los otros.
+  PINTADAS.rumbo.clear();
+  PINTADAS.rumbo.add("carta");
+  if (dibujo.otros.length) PINTADAS.rumbo.add("trafico");
 
   // ── Los anillos, con su cifra ──
   g.strokeStyle = "#2c3136";

@@ -573,21 +573,21 @@
     "id": "vuelo.traficoArriba",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta",
+    "texto": "Ese rombo del mapa es otro avión. Va más alto que nosotros: no nos molesta",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.traficoAbajo",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta",
+    "texto": "Ese rombo del mapa es otro avión. Va más bajo que nosotros: no nos molesta",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.traficoNivel",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
+    "texto": "Ese rombo del mapa es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -836,7 +836,7 @@
     "id": "vuelo.alturaDeLaTorreRaya",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "La torre nos dice hasta dónde subir: hasta la raya de la cinta.",
+    "texto": "La torre nos dice hasta dónde subir: hasta la raya de la altura.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1125,7 +1125,7 @@
     "id": "vuelo.consejo.masGas",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Un poquito más de gas, hasta la marca rosa. La nariz, quieta.",
+    "texto": "Un poquito más de gas, hasta la marca rosa de la velocidad. La nariz, quieta.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra",
     "ajustes": {
       "stability": 0.85,
@@ -1139,35 +1139,35 @@
     "id": "vuelo.consejo.menosGas",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Un poquito menos de gas, hasta la marca rosa.",
+    "texto": "Un poquito menos de gas, hasta la marca rosa de la velocidad.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.narizAbajoPapi",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Nariz un poquito abajo, hasta ver dos blancas y dos rojas.",
+    "texto": "Nariz un poquito abajo, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.narizArribaPapi",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Nariz un poquito arriba, hasta ver dos blancas y dos rojas.",
+    "texto": "Nariz un poquito arriba, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.narizAbajoSenda",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Nariz un poquito abajo, hasta que el rombo quede en el medio.",
+    "texto": "Nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.narizArribaSenda",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Nariz un poquito arriba, hasta que el rombo quede en el medio.",
+    "texto": "Nariz un poquito arriba, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1202,70 +1202,119 @@
     "id": "vuelo.consejo.aerofrenos",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Sacá un poco los aerofrenos, hasta la marca rosa.",
+    "texto": "Sacá un poco los aerofrenos, hasta la marca rosa de la velocidad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.aerofrenos.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sacá un poco los aerofrenos, para ir más despacio.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.nivelarPerfil",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.",
+    "texto": "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.nivelarPerfil.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.narizAbajoPerfil",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.",
+    "texto": "Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.aerofrenosPerfil",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.",
+    "texto": "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.aerofrenosPerfil.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.masGasPerfil",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.",
+    "texto": "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.masGasPerfil.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.menosGasPerfil",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.",
+    "texto": "Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.menosGasPerfil.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos por encima del perfil: un poquito menos de gas, para bajar más.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.masGasPapi",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.",
+    "texto": "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.masGasSenda",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.",
+    "texto": "Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.masGasSenda.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Un poco bajo: un toque de gas, la nariz quieta.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.menosGasPapi",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.",
+    "texto": "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.consejo.menosGasSenda",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.",
+    "texto": "Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.menosGasSenda.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Un poco alto: un poquito menos de gas, la nariz quieta.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1286,7 +1335,7 @@
     "id": "vuelo.consejo.narizAbajoMarca",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.",
+    "texto": "Vamos lentos: la nariz un pelín abajo, hasta la marca rosa de la velocidad.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra",
     "ajustes": {
       "stability": 0.85,
@@ -1300,7 +1349,14 @@
     "id": "vuelo.consejo.narizArribaMarca",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.",
+    "texto": "Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa de la velocidad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.consejo.narizArribaMarca.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos rápidos: la nariz un pelín arriba.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1311,59 +1367,108 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.paso.subir.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora subimos hasta la altura que nos toca.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.paso.acelerarGas",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya podemos ir más rápido: más gas, hasta la marca rosa.",
+    "texto": "Ya podemos ir más rápido: más gas, hasta la marca rosa de la velocidad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.acelerarGas.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya podemos ir más rápido: más gas.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.acelerarNariz",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.",
+    "texto": "Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa de la velocidad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.acelerarNariz.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya podemos ir más rápido: la nariz un poquito abajo.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.frenarGas",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ahora vamos más despacio: menos gas, hasta la marca rosa.",
+    "texto": "Ahora vamos más despacio: menos gas, hasta la marca rosa de la velocidad.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.frenarAerofrenos",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.",
+    "texto": "Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa de la velocidad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.frenarAerofrenos.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora vamos más despacio: un poco de aerofrenos.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.frenarNariz",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.",
+    "texto": "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa de la velocidad.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.frenarNariz.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.mantener",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "La marca rosa cambió y ya vamos a esa velocidad: seguimos así.",
+    "texto": "La marca rosa de la velocidad se movió, y ya vamos justo ahí: seguimos así.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.marcaDelAutomatico",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.",
+    "texto": "La marca rosa de la velocidad se movió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.marcaDelAutomatico.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cambió la velocidad que toca: el automático lleva el motor solo. Mirá cómo se mueve la palanca.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.crucero",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.",
+    "texto": "Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la velocidad de la marca rosa.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.crucero.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos arriba: gas de crucero, hasta la marca del motor.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1398,28 +1503,35 @@
     "id": "vuelo.paso.nivelar",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
+    "texto": "Llegamos a la raya de la altura: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.nivelar.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Llegamos a la altura que toca: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.flaps1",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Los primeros flaps, una muesca, y a la marca rosa.",
+    "texto": "Los primeros flaps, una muesca, y a la marca rosa de la velocidad.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.flaps2",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Otra muesca de flaps, y a la marca rosa.",
+    "texto": "Otra muesca de flaps, y a la marca rosa de la velocidad.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.flaps3",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Los flaps de aterrizar, abajo del todo, y a la marca rosa.",
+    "texto": "Los flaps de aterrizar, abajo del todo, y a la marca rosa de la velocidad.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1433,7 +1545,14 @@
     "id": "vuelo.paso.recogerAerofrenos",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya vamos a la marca rosa: aerofrenos adentro.",
+    "texto": "Ya vamos a la marca rosa de la velocidad: aerofrenos adentro.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.recogerAerofrenos.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya vamos a la velocidad que toca: aerofrenos adentro.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1444,17 +1563,38 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.paso.senda.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en la final: la nariz por la senda.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.paso.sendaConGases",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.",
+    "texto": "Ya estamos en la final. El avión lleva el motor, para ir a la marca rosa de la velocidad: vos llevá la nariz por la senda.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.sendaConGases.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en la final. El avión lleva el motor: vos llevá la nariz por la senda.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.paso.sendaConAyuda",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.",
+    "texto": "Ya estamos en la final. Yo te llevo el motor, para ir a la marca rosa de la velocidad: vos llevá la nariz por la senda.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.sendaConAyuda.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en la final. Yo te llevo el motor: vos llevá la nariz por la senda.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1462,6 +1602,13 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.paso.gasTuyo.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tocaste el motor: ahora la velocidad la llevás vos.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -1475,7 +1622,7 @@
     "id": "vuelo.paso.cotaEnAlto",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.",
+    "texto": "La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la altura.",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -3341,7 +3488,7 @@
     "id": "explica.senda.presenta",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.",
+    "texto": "Apareció el rombo rosa de la senda, al lado de la altura. Si lo tenemos en el medio, vamos bien hacia la pista.",
     "para": "lo que explica tocar una pieza del cuadro",
     "ajustes": {
       "stability": 0.35,

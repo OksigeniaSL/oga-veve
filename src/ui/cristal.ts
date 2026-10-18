@@ -193,7 +193,7 @@ function escalaDeLaSenda(x: number, cy: number, paso: number): string {
     .map((k) => `<circle cx="0" cy="${k * paso}" r="3.2" class="cr__senda-punto" />`)
     .join("");
   return `
-    <g data-cristal="senda" data-explica="senda" transform="translate(${x} ${cy})" visibility="hidden">
+    <g data-cristal="senda" data-explica="senda" data-nombra="rombo" transform="translate(${x} ${cy})" visibility="hidden">
       <rect x="-8" y="${-2.7 * paso}" width="16" height="${5.4 * paso}" rx="4" class="cr__senda-fondo" />
       ${puntos}
       <line x1="-7" y1="0" x2="7" y2="0" class="cr__senda-medio" />
@@ -429,7 +429,7 @@ function cintaDeVelocidad(
             dice «aquí» sin leer nada—. La coloca el tablero; ver
             flight/escalera-de-velocidades.ts.
           -->
-          <g data-bug="spd" visibility="hidden">
+          <g data-bug="spd" data-nombra="marca" visibility="hidden">
             <path class="cr__bug" d="M${w} -7 l-9 0 l0 4 l4 3 l-4 3 l0 4 l9 0 Z" />
             <!--
               Y al cambiar de peldaño, una flecha al lado que dice hacia dónde
@@ -546,7 +546,7 @@ function cintaDeAltitud(
     )
     .join("");
   return `
-    <g data-explica="altitud" data-explica-fondo transform="translate(${x} ${y})">
+    <g data-explica="altitud" data-explica-fondo data-nombra="altimetro" transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-alt"><rect width="${w}" height="${h}" /></clipPath>
       <clipPath id="${yo}-tambor"><rect x="${w - 34}" y="${h / 2 - 16}" width="34" height="32" /></clipPath>
@@ -580,7 +580,7 @@ function cintaDeAltitud(
           lado**: «hasta aquí», que se entiende sin leer. La coloca el tablero;
           ver Tablero.ventanillaAlt.
         -->
-        <g data-bug="alt-sel" data-medio="${h / 2}" data-alto="${h}" data-porunidad="${POR_PIE}"
+        <g data-bug="alt-sel" data-nombra="raya" data-medio="${h / 2}" data-alto="${h}" data-porunidad="${POR_PIE}"
            visibility="hidden" transform="translate(0 ${h / 2})">
           <path data-desde="2" class="cr__bug" d="M0 -7 l9 0 l0 4 l-4 3 l4 3 l0 4 l-9 0 Z" />
           <path data-hasta="1" class="cr__raya-sel" d="M0 0 L${w} 0" />
@@ -598,7 +598,7 @@ function cintaDeAltitud(
         resalta en blanco al acercarse y se pone ámbar al irse. Ver
         flight/altitud-seleccionada.ts.
       -->
-      <g data-cristal="alt-sel-caja" class="cr__sel" visibility="hidden">
+      <g data-cristal="alt-sel-caja" data-nombra="raya" class="cr__sel" visibility="hidden">
         <rect x="3" y="15" width="${w - 6}" height="19" rx="2" class="cr__sel-caja" />
         <text data-cristal="alt-sel" x="${w - 7}" y="30" ${MARCA_CIFRA}
               class="cr__sel-cifra" text-anchor="end"></text>
@@ -624,7 +624,7 @@ function cintaDeAltitud(
         bajar. En los cuatro peldaños: el dibujo dice qué es esa cifra. Ver
         Game.cotaParaLaCinta.
       -->
-      <g data-cristal="cota-pista" visibility="hidden">
+      <g data-cristal="cota-pista" data-nombra="cota" visibility="hidden">
         <rect x="2" y="${h - 44}" width="${w - 4}" height="22" rx="3" class="cr__cota-caja" />
         <path class="cr__cota-dibujo" d="M5 ${h - 25} L11 ${h - 41} L16 ${h - 41} L22 ${h - 25} Z" />
         <path class="cr__cota-eje" d="M13.5 ${h - 39} L13.5 ${h - 27}" />
@@ -742,7 +742,7 @@ function variometro(
         ).join("")}
         <rect data-cristal="vsi-verde" class="cr__ra-verde" x="${w - 7}" width="7" y="0" height="0" />
       </g>
-      <g data-cristal="vsi-objetivo" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}"
+      <g data-cristal="vsi-objetivo" data-nombra="ritmo" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}"
          visibility="hidden">
         <path class="cr__bug" d="M0 ${h / 2 - 5} l8 5 l-8 5 Z" />
       </g>
@@ -826,7 +826,7 @@ function carta(cx: number, cy: number, r: number): string {
   const rombos = Array.from(
     { length: CUANTOS_OTROS },
     (_, i) => `
-      <g data-carta="otro-${i}" data-explica="tcas" class="cr__trafico" visibility="hidden">
+      <g data-carta="otro-${i}" data-explica="tcas" data-nombra="trafico" class="cr__trafico" visibility="hidden">
         <path data-tcas="rombo" class="cr__rombo" d="M0 -6 L6 0 L0 6 L-6 0 Z" />
         <circle data-tcas="circulo" class="cr__ta" r="5.5" visibility="hidden" />
         <rect data-tcas="cuadrado" class="cr__ra" x="-5.5" y="-5.5" width="11" height="11"
@@ -1177,7 +1177,7 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     arcos += `<circle cx="${cx}" cy="${cy}" r="${r * f}" class="cr__arco-rango" />`;
   }
   return `
-    <rect data-fondo="nd" data-explica="carta" data-explica-fondo width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
+    <rect data-fondo="nd" data-explica="carta" data-explica-fondo data-nombra="carta" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     ${arcos}
     ${rosaDeRumbo(cx, cy, r, false)}
     ${carta(cx, cy, r)}

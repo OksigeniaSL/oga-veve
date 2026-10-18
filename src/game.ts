@@ -26,8 +26,10 @@ import {
   DoubleSide,
   Euler,
   Group,
+  type InstancedMesh,
   type Material,
   MathUtils,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -709,10 +711,23 @@ import {
   ponerContextoDeLasExplicaciones,
   ponerVozDeLasExplicaciones,
   presentar,
+  seVeEnPantalla,
   siguienteQuePresentar,
   sigueEnPantalla,
   type Explicacion,
 } from "./ui/explicaciones";
+import {
+  DEL_CUADRO,
+  LoSenalado,
+  conSuSinVer,
+  laQueSePuedeDecir,
+  nombraLoQueNoSeVe,
+  piezasDe,
+  seDistingueElPapi,
+  type PapiVisto,
+  type Pieza,
+} from "./flight/lo-que-se-nombra";
+import { AroEnElMundo } from "./ui/aro-en-el-mundo";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -2858,6 +2873,13 @@ export class Game {
      */
     const aLaMisma = Math.abs(elMasCerca.relativa) < A_LA_MISMA_ALTURA;
     if (aLaMisma && elMasCerca.cerca) return;
+    /*
+     * **Y con el rombo a la vista**, en el mapa: «ese rombo del mapa» con el
+     * cuadro recogido, o desde la cabina mirando por la ventanilla, es nombrar
+     * lo que no está. Se espera a que salga en la pantalla. Ver
+     * `flight/lo-que-se-nombra.ts`.
+     */
+    if (!this.seVe("trafico")) return;
     this.traficoExplicado = true;
     const clave: TranslationKey =
       aLaMisma
@@ -3728,6 +3750,7 @@ export class Game {
     this.avisadoDeLaSenda = false;
     // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
     this.consejero.reiniciar();
+    this.nombrado.olvidar();
     this.desvioAhora = null;
     this.sendaJuzgada = null;
     this.sinkRateExplicado = false;
@@ -6177,6 +6200,16 @@ export class Game {
       enTierra: this.flight.state.onGround,
     }));
     /*
+     * **Y la puerta de lo que se nombra**: lo que no se ve no suena, y lo que
+     * suena se señala. Ver `seVe` y `flight/lo-que-se-nombra.ts`.
+     */
+    this.instructor.loNombrado = {
+      nombraLoQueNoSeVe: (clave) => nombraLoQueNoSeVe(clave, this.seVe),
+      senalar: (clave) => {
+        for (const p of piezasDe(clave)) this.senalarLaPieza(p);
+      },
+    };
+    /*
      * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
      * abierto. Ver `quedarQuieto` y #70.
      */
@@ -7436,6 +7469,7 @@ export class Game {
     this.medidor.dispose();
     this.rodadura?.dispose();
     this.terrain.dispose();
+    this.aroDelPapi.dispose();
     this.renderer.dispose();
   }
 
@@ -7862,6 +7896,15 @@ export class Game {
    * Enrique— es silencio. Lo que tenga que verse ya se ve en su tarjeta.
    */
   private decirLoGrabado(clave: TranslationKey, urgencia: Urgencia = "normal"): boolean {
+    /*
+     * **Y lo que nombra algo que no se ve, no se pide**: así `explicarUnaVez` no
+     * lo da por explicado y lo cuenta cuando se vea. Ver
+     * `flight/lo-que-se-nombra.ts`.
+     */
+    if (nombraLoQueNoSeVe(clave, this.seVe)) {
+      this.apuntarCanto(`${clave}: no se ve lo que nombra`);
+      return false;
+    }
     if (!this.instructor.vozDe(clave)) {
       /*
        * Apuntado una vez por vuelo: hay sucesos que se repiten en cada
@@ -11018,6 +11061,7 @@ export class Game {
     this.avisadoDeLaSenda = false;
     // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
     this.consejero.reiniciar();
+    this.nombrado.olvidar();
     this.desvioAhora = null;
     this.sendaJuzgada = null;
     this.sinkRateExplicado = false;
@@ -14574,6 +14618,9 @@ export class Game {
      */
     if (this.inicioCongelado) this.esperarAlInicio(real);
     else for (let i = 0; i < veces; i++) this.unPaso(real);
+    // Lo señalado dura lo que dura una frase: con el reloj de pared, como la voz.
+    this.nombrado.paso(real);
+    this.ponerElAroDelPapi();
     this.pintar();
     this.medidor.update(real);
   };
@@ -16356,6 +16403,8 @@ export class Game {
         rodaje: this.rodajeParaElCuadro(),
         // Y lo que acaba de cambiar, resaltado: lo del cuadro plano.
         resaltes: this.loQueCambia.resaltes,
+        // Y lo que acaba de nombrar la instructora, latiendo. Ver `senalarLaPieza`.
+        senalados: this.nombrado.edades,
       },
       dt,
     );
@@ -16609,6 +16658,8 @@ export class Game {
         motores: this.agujasDeLosMotores(),
       },
     );
+    // Lo que se ve de lo que nombra la instructora, con la cámara y el cuadro de este paso.
+    this.mirarLoQueSeNombra();
     const toma = this.checkLanding(dt);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
@@ -19888,6 +19939,8 @@ export class Game {
     this.huecos.usar();
     presentar(e);
     this.hud.resaltarLoQueSeExplica(e.id);
+    // Y el rombo, también en la pantalla de la cabina. Ver `senalarLaPieza`.
+    if (e.id === "senda") this.senalarLaPieza("rombo");
     if (!e.tarjeta) return;
     const canales = canalesDe(this.tier.avisos);
     const rotulo = !canales.texto
@@ -23734,6 +23787,175 @@ export class Game {
     this.cantar(ahora, t(clave), clave, "normal");
   }
 
+  // ── Lo que nombra la instructora: solo si se ve, y señalado ─────────
+
+  /**
+   * **Lo que acaba de nombrar la instructora**, con su edad: late en el
+   * cuadro, en la pantalla de la cabina y, el PAPI, con su aro. Ver
+   * `flight/lo-que-se-nombra.ts`.
+   */
+  private readonly nombrado = new LoSenalado();
+  /** El aro que señala el PAPI en la pantalla mientras se nombra. */
+  private readonly aroDelPapi = new AroEnElMundo();
+  /** Dónde caen las luces del PAPI desde la cámara de ahora, o `null`. */
+  private papiVisto: PapiVisto | null = null;
+  /** Si el PAPI se distingue ahora. Ver `seDistingueElPapi`. */
+  private papiSeDistingue = false;
+  /** Vectores de trabajo para mirar el PAPI: uno nuevo por paso sería basura. */
+  private readonly papiDesde = new Vector3();
+  private readonly papiHasta = new Vector3();
+  private readonly papiCentro = new Vector3();
+  private readonly papiAux = new Vector3();
+  private readonly papiMatriz = new Matrix4();
+
+  /**
+   * **Si esa pieza se ve ahora.** Lo del cuadro, si lo apuntó quien lo pinta
+   * hace nada —el cuadro plano, las losas del teléfono o la pantalla de la
+   * cabina mirada desde el asiento—; la marca del motor, si está puesta y a la
+   * vista; el PAPI, si se distingue. Ver `mirarLoQueSeNombra`.
+   */
+  private readonly seVe = (p: Pieza): boolean => {
+    if (p === "papi") return this.papiSeDistingue && this.papiEnLaPantalla() !== null;
+    if (p === "motor") return this.hud.seVeLaMarcaDelMotor();
+    return sigueEnPantalla(p);
+  };
+
+  /**
+   * **Dónde caen las luces del PAPI en la pantalla**, en píxeles, si se
+   * distinguen y nada del HUD las tapa; si no, `null`. Detrás del cartel de
+   * la radio no se ven aunque la cámara las tenga delante: medido en la final
+   * de Pettirossi, el «autorizado para aterrizar» quedaba justo encima. Se
+   * mide al preguntar, no en cada paso: mirar el HUD es una pasada de
+   * maquetado.
+   */
+  private papiEnLaPantalla(): { x: number; y: number } | null {
+    const v = this.papiVisto;
+    if (!this.papiSeDistingue || !v) return null;
+    const caja = this.renderer.domElement.getBoundingClientRect();
+    const donde = {
+      x: caja.left + ((v.x + 1) / 2) * caja.width,
+      y: caja.top + ((1 - v.y) / 2) * caja.height,
+    };
+    return this.hud.tapaElPunto(donde.x, donde.y) ? null : donde;
+  }
+
+  /** La señala mientras se dice. Ver `LoSenalado`. */
+  private senalarLaPieza(p: Pieza): void {
+    this.nombrado.senalar(p);
+    if (DEL_CUADRO.has(p) || p === "motor") this.hud.senalarLaPieza(p);
+  }
+
+  /** Señala lo que nombra esa frase, si nombra algo y se ve. */
+  private senalarLoQueNombra(clave: string | null | undefined): void {
+    for (const p of piezasDe(clave)) if (this.seVe(p)) this.senalarLaPieza(p);
+  }
+
+  /**
+   * **Lo que se ve de lo que nombra la instructora, con la cámara de este
+   * paso**: lo que pintó la pantalla de la cabina, si desde el asiento se la
+   * tiene delante, y el PAPI. El cuadro plano lo apunta él solo al pintarse.
+   */
+  private mirarLoQueSeNombra(): void {
+    const pantallas = this.aircraftMesh.pantallas;
+    if (pantallas && this.vistaQueHay() === "cockpit")
+      for (const d of ["horizonte", "rumbo"] as const)
+        if (pantallas.seVe(this.camera, d))
+          for (const p of pantallas.pintadas(d)) seVeEnPantalla(p);
+    this.mirarElPapi();
+  }
+
+  /**
+   * **Dónde caen las luces del PAPI, y si se distinguen.** Las del campo de
+   * ahora, las que pinta el mundo, vistas desde la cámara que hay: desde
+   * fuera, con el avión por medio si lo tapa; desde el asiento, con el morro
+   * por medio si caen por debajo de lo que se ve por encima de él. Desde el
+   * pasaje no se nombran nunca: ahí no vuela nadie. Ver `seDistingueElPapi`.
+   */
+  private mirarElPapi(): void {
+    this.papiVisto = null;
+    this.papiSeDistingue = false;
+    const s = this.flight.state;
+    if (s.onGround) return;
+    const vista = this.vistaQueHay();
+    const deFuera = Game.SIGUEN_AL_AVION.has(vista);
+    if (!deFuera && vista !== "cockpit") return;
+    const luces = this.lucesDe(this.elCampo());
+    const papi = luces?.grupo.getObjectByName("papi") as InstancedMesh | undefined;
+    if (!luces || !papi || !luces.grupo.visible || papi.count < 4) return;
+    papi.updateWorldMatrix(true, false);
+    papi.getMatrixAt(0, this.papiMatriz);
+    const a = this.papiDesde.setFromMatrixPosition(this.papiMatriz).applyMatrix4(papi.matrixWorld);
+    papi.getMatrixAt(3, this.papiMatriz);
+    const b = this.papiHasta.setFromMatrixPosition(this.papiMatriz).applyMatrix4(papi.matrixWorld);
+    const centro = this.papiCentro.copy(a).add(b).multiplyScalar(0.5);
+    const cam = this.camera;
+    cam.updateMatrixWorld();
+    const distancia = cam.position.distanceTo(centro);
+    const delante = this.papiAux.copy(centro).applyMatrix4(cam.matrixWorldInverse).z < 0;
+    const ancho = this.renderer.domElement.clientWidth || window.innerWidth;
+    const alto = this.renderer.domElement.clientHeight || window.innerHeight;
+    a.project(cam);
+    b.project(cam);
+    const anchoPx = Math.hypot(((a.x - b.x) * ancho) / 2, ((a.y - b.y) * alto) / 2);
+    const enPantalla = this.papiAux.copy(centro).project(cam);
+    const x = enPantalla.x;
+    const y = enPantalla.y;
+    let tapado = false;
+    const avion = this.aircraftMesh.group;
+    if (deFuera) {
+      // El bulto del avión visto desde la cámara: lo que cae detrás no se ve.
+      const haciaElAvion = this.papiAux.copy(avion.position).sub(cam.position);
+      const lejosDelAvion = haciaElAvion.length();
+      const haciaLasLuces = this.papiDesde.copy(centro).sub(cam.position).normalize();
+      const angulo = haciaLasLuces.angleTo(haciaElAvion.normalize());
+      tapado =
+        lejosDelAvion < distancia &&
+        angulo < Math.asin(Math.min(0.99, this.bultoDelAvion / Math.max(lejosDelAvion, 1)));
+    } else {
+      // Desde el asiento, el morro: cuánto caen por debajo de su horizontal.
+      const enElAvion = this.papiAux
+        .copy(centro)
+        .sub(cam.position)
+        .applyQuaternion(this.papiCuaternion.copy(avion.quaternion).invert());
+      const bajo = Math.atan2(-enElAvion.y, -enElAvion.z);
+      const morro = this.aircraftMesh.vista?.porEncimaDelMorro ?? Number.POSITIVE_INFINITY;
+      tapado = enElAvion.z >= 0 || bajo > morro;
+    }
+    this.papiVisto = { delante, x, y, anchoPx, distancia, tapado };
+    this.papiSeDistingue = seDistingueElPapi(this.papiVisto, this.franjaLibre);
+  }
+  private readonly papiCuaternion = new Quaternion();
+
+  /**
+   * **El aro del PAPI, donde caen sus luces**, mientras está señalado y se
+   * distingue. Si se deja de ver —un viraje, la cámara que gira—, el aro se
+   * quita: no se señala lo que no está.
+   */
+  private ponerElAroDelPapi(): void {
+    this.aroDelPapi.poner(this.nombrado.vivo("papi") ? this.papiEnLaPantalla() : null);
+  }
+
+  /** Lo que se ve y lo señalado de lo que nombra la instructora. Para el banco. */
+  get loNombradoParaBanco(): {
+    papi: PapiVisto | null;
+    papiSeDistingue: boolean;
+    seVen: Pieza[];
+    senalados: Partial<Record<Pieza, number>>;
+    aro: { x: number; y: number } | null;
+    noSeVeia: string[];
+  } {
+    return {
+      papi: this.papiVisto,
+      papiSeDistingue: this.papiSeDistingue,
+      seVen: (
+        ["rombo", "marca", "ritmo", "altimetro", "raya", "cota", "carta", "trafico", "motor", "papi"] as const
+      ).filter((p) => this.seVe(p)),
+      senalados: { ...this.nombrado.edades },
+      aro: this.aroDelPapi.donde,
+      noSeVeia: [...this.instructor.noSeVeia],
+    };
+  }
+
   // ── La senda a la vista, y la instructora de la bajada ──────────────
 
   /**
@@ -24052,9 +24274,18 @@ export class Game {
   private decirElConsejo(c: Consejo, ingles: string | null, objetivo?: Objetivo): void {
     // El gas o los aerofrenos que se piden por la senda apuntan a la senda.
     const porLaSenda = c.motivo === "alto" || c.motivo === "bajo";
-    const apunta: Objetivo =
+    /*
+     * **A qué se podría apuntar en este avión**: la marca, si se pide por la
+     * velocidad; el ritmo, por el *sink rate*; la senda, por lo demás. Y
+     * **a qué se apunta de verdad**, que es lo que de eso se ve ahora: las
+     * luces del PAPI si se distinguen, si no el rombo, y si tampoco, la acción
+     * sin el «hasta». Desde fuera a mil pies la pista no está en la pantalla, y
+     * «hasta ver dos blancas y dos rojas» era nombrar lo que no estaba (273).
+     * Ver `loQueSeVeDe` y `flight/lo-que-se-nombra.ts`.
+     */
+    const hay: Objetivo =
       objetivo ??
-      ((c.accion === "masGas" || c.accion === "menosGas" || c.accion === "frenar") && !porLaSenda
+      (c.motivo === "lento" || c.motivo === "rapido"
         ? this.hayMarcaDeVelocidad()
           ? "marca"
           : "nada"
@@ -24063,6 +24294,7 @@ export class Game {
             ? "ritmo"
             : "nada"
           : this.objetivoDeLaSenda);
+    const apunta = this.loQueSeVeDe(hay);
     const modo = this.desvioAhora?.modo ?? "final";
     const frena = modo === "bajada" ? "aerofrenos" : "flaps";
     const f = fraseDe(c, apunta, frena, modo);
@@ -24090,10 +24322,11 @@ export class Game {
      * encima de ella. Con el número delante se ve por qué.
      */
     const d = this.desvioAhora;
+    // El número va aunque el rombo no se vea: es de la senda, no del dibujo.
     const porCuanto =
       apunta === "aro"
         ? this.runwayGuide.porCuanto
-        : (apunta === "senda" || apunta === "papi") &&
+        : (hay === "senda" || hay === "papi") &&
             d !== null &&
             porLaSenda
           ? d.metros
@@ -24139,6 +24372,13 @@ export class Game {
       `consejo ${c.accion} (${c.motivo}, ${apunta}, ${modo}) → ${forma?.id ?? "sin voz"}`,
     );
     /*
+     * **Y lo que nombra se señala ya**, con la tarjeta: la voz puede esperar
+     * turno, y la tarjeta y lo que late van juntos desde el primer momento. Al
+     * empezar a sonar vuelve a latir; ver `loNombrado` en
+     * `audio/instructor-grabado.ts`.
+     */
+    this.senalarLoQueNombra(forma?.id ?? f.nueva);
+    /*
      * **Sin canto de cabina**, que es por debajo del perfil de la bajada: en
      * los peldaños de abajo lo dice la instructora, si tiene su grabación; en
      * el de cabina queda la tarjeta. Ver `cantoDe`.
@@ -24157,6 +24397,28 @@ export class Game {
       return;
     }
     this.cantar(ingles, forma?.texto, forma?.id);
+  }
+
+  /**
+   * **De lo que hay a lo que apuntar, lo que se ve ahora.** Las luces del PAPI
+   * si se distinguen; si no, el rombo, en el avión que lo lleva y con él en
+   * la pantalla; la marca y el ritmo, si se ven. Lo demás, `nada`: se dice la
+   * acción sin nombrar el objetivo. Ver `flight/lo-que-se-nombra.ts`.
+   */
+  private loQueSeVeDe(hay: Objetivo): Objetivo {
+    switch (hay) {
+      case "marca":
+        return this.seVe("marca") ? "marca" : "nada";
+      case "ritmo":
+        return this.seVe("ritmo") ? "ritmo" : "nada";
+      case "papi":
+        if (this.seVe("papi")) return "papi";
+        return equipoDeSenda(this.aircraft).final && this.seVe("rombo") ? "senda" : "nada";
+      case "senda":
+        return this.seVe("rombo") ? "senda" : "nada";
+      default:
+        return hay;
+    }
   }
 
   /** Lo último que aconsejó la instructora de la bajada. Para el banco. */
@@ -24627,11 +24889,26 @@ export class Game {
     else if (!this.pilotoPuesto && this.nivelada === null)
       this.hud.proponerPilotoAutomatico(false);
     const canales = canalesDe(this.tier.avisos);
+    /*
+     * **Y solo nombra lo que se ve** (272, 273): la frase que apunta a la marca
+     * rosa, a la raya de la altura o a la marca del motor, si están a la vista;
+     * si no, la misma sin nombrarlas —su `.sinVer`— o la grabada de siempre.
+     * Con el cuadro recogido, «hasta la marca rosa» era señalar al vacío. Y la
+     * tarjeta, con la misma. Ver `flight/lo-que-se-nombra.ts`.
+     */
+    const candidatas = conSuSinVer(como.nueva, [como.grabada]);
+    const conVoz = candidatas.find(
+      (c) => !!c && !nombraLoQueNoSeVe(c, this.seVe) && !!this.instructor.vozDe(c),
+    );
     let forma: { readonly texto: string; readonly id: string } | null = null;
-    if (this.instructor.vozDe(como.nueva))
-      forma = { texto: t(como.nueva as TranslationKey), id: como.nueva };
-    else if (como.grabada) forma = laForma(como.grabada as TranslationKey, 0);
-    const larga = forma?.texto ?? t(como.nueva as TranslationKey);
+    if (conVoz)
+      forma =
+        conVoz === como.grabada
+          ? laForma(como.grabada as TranslationKey, 0)
+          : { texto: t(conVoz as TranslationKey), id: conVoz };
+    const escrita = laQueSePuedeDecir(candidatas, this.seVe);
+    const larga =
+      forma?.texto ?? t((escrita ?? como.corta) as TranslationKey);
     const numeros = this.numerosDelPaso(p);
     const rotulo = !canales.texto
       ? ""
@@ -24690,6 +24967,8 @@ export class Game {
           ? "cabina"
           : "la torre";
     this.apuntarCanto(`paso ${p.escalon}: ${p.que} (${p.objetivo.kt} kt) → ${dice}`);
+    // Y lo que nombra, latiendo con la tarjeta. Ver `decirElConsejo`.
+    this.senalarLoQueNombra(forma?.id ?? escrita);
     if (p.que === "tren") {
       // Lo que se canta al sacarlo en cualquier cabina: grabado.
       if (habla && forma) this.cantar("gear down", forma.texto, forma.id);
@@ -27532,12 +27811,15 @@ export class Game {
     this.hud.senal.mostrar("senda", t("hud.cotaDeLaPista", { cota: escrita }), null, {
       segundos: 9,
     });
-    const clave: TranslationKey = this.instructor.vozDe("vuelo.cotaDeLaPista")
-      ? "vuelo.cotaDeLaPista"
-      : cota < CASI_EL_MAR
-        ? "vuelo.paso.cotaAlMar"
-        : "vuelo.paso.cotaEnAlto";
-    this.decirLoGrabado(clave);
+    // Y la que nombre solo lo que se ve: la carta y el altímetro, o el altímetro.
+    const clave = laQueSePuedeDecir(
+      [
+        this.instructor.vozDe("vuelo.cotaDeLaPista") ? "vuelo.cotaDeLaPista" : null,
+        cota < CASI_EL_MAR ? "vuelo.paso.cotaAlMar" : "vuelo.paso.cotaEnAlto",
+      ],
+      this.seVe,
+    );
+    if (clave) this.decirLoGrabado(clave as TranslationKey);
   }
 
   /** Si en este tramo ya se contó la cota de la pista de llegada. */

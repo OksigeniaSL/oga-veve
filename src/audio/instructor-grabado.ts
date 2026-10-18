@@ -172,6 +172,17 @@ const A_VOCES: ReadonlySet<string> = new Set([
    */
 ]);
 
+/**
+ * **Lo que la boca pregunta antes de nombrar algo.** Ver
+ * `InstructorGrabado.loNombrado` y `flight/lo-que-se-nombra.ts`.
+ */
+export interface LoNombrado {
+  /** Si esta frase nombra algo que ahora no se ve. */
+  nombraLoQueNoSeVe(clave: string | undefined): boolean;
+  /** Empieza a decirse: se señala lo que nombra. */
+  senalar(clave: string | undefined): void;
+}
+
 export class InstructorGrabado implements Instructor {
   private readonly altavoz: Altavoz;
   /** A quién se le pasa lo que todavía no está grabado. */
@@ -415,6 +426,42 @@ export class InstructorGrabado implements Instructor {
    */
   readonly calladas: string[] = [];
 
+  /**
+   * **La puerta de lo que se nombra**: una frase que nombra el rombo, la
+   * marca rosa o las luces del PAPI no suena si eso no se ve, y lo que nombra
+   * se señala cuando empieza a sonar. Va aquí por lo mismo que `callaSalvo`:
+   * son decenas de sitios que hablan, y una frase nueva no puede colarse por
+   * el que se olvidó de mirar. Quien habla ya elige la que se puede decir;
+   * esto es la red. Lo pone `Game`; ver `flight/lo-que-se-nombra.ts`.
+   *
+   * Se mira **cuando le toca**, no al pedirla: entre las dos puede pasar un
+   * rato en la cola, y lo que cuenta es lo que se ve cuando suena. Y a veces
+   * lo nombrado aparece con el mismo suceso que la pide: la raya de la altura
+   * se pinta cuando la torre da la altura, y la instructora lo cuenta detrás.
+   */
+  loNombrado: LoNombrado | null = null;
+
+  /**
+   * Las que la puerta de lo nombrado no dejó sonar, en orden. Para los
+   * bancos: si una sale aquí, quien la pidió no eligió bien.
+   */
+  readonly noSeVeia: string[] = [];
+
+  /** Si la puerta de lo nombrado la para, y entonces se apunta. */
+  private noSeVe(clave: string | undefined): boolean {
+    if (!this.loNombrado?.nombraLoQueNoSeVe(clave)) return false;
+    if (import.meta.env.DEV) {
+      this.noSeVeia.push(clave ?? "");
+      if (this.noSeVeia.length > 5000) this.noSeVeia.shift();
+    }
+    return true;
+  }
+
+  /** Empieza a decirse —o se dice sin voz—: se señala lo que nombra. */
+  private senalarLoNombrado(clave: string | undefined): void {
+    this.loNombrado?.senalar(clave);
+  }
+
   decir(
     texto: string,
     clave?: string,
@@ -518,6 +565,12 @@ export class InstructorGrabado implements Instructor {
     alSonar: AlSonar | undefined,
     listo: (noSono?: boolean) => void,
   ): (() => void) | void {
+    // Lo que nombraba ya no se ve: se cae sin sonar. Ver `loNombrado`.
+    if (this.noSeVe(clave)) {
+      alSonar?.("se-cae", "no-se-ve");
+      listo(true);
+      return;
+    }
     const suena = this.quienLaDice(clave ?? null, relleno);
     const cadena = suena ? this.cadenaDe(suena) : null;
     this.ultima = clave ?? texto;
@@ -539,6 +592,7 @@ export class InstructorGrabado implements Instructor {
         this.porAltavoz,
       );
       if (this.cortar) {
+        this.senalarLoNombrado(clave);
         alSonar?.("empieza");
         /*
          * **Y se le dice a la boca cómo callarnos.**
@@ -586,6 +640,7 @@ export class InstructorGrabado implements Instructor {
      */
     if (!this.suplente.disponible) {
       this.sonando = false;
+      this.senalarLoNombrado(clave);
       alSonar?.("no-suena");
       listo(true);
       return;
@@ -594,6 +649,7 @@ export class InstructorGrabado implements Instructor {
     this.sonando = true;
     this.vocesUsadas.add("navegador");
     this.suplente.decir(texto, clave, urgencia);
+    this.senalarLoNombrado(clave);
     alSonar?.("empieza");
     // La misma espera en dos tiempos que el resto. Ver `porElSuplente`.
     this.esperarAlSuplente(() => {
@@ -675,6 +731,11 @@ export class InstructorGrabado implements Instructor {
      * lección. Lo que suena, suena; lo que no, no estorba.
      */
     if (!this.suplente.disponible) {
+      // Lo que nombra algo que no se ve, ni sin voz. Ver `loNombrado`.
+      if (this.noSeVe(clave)) {
+        alSonar?.("se-cae", "no-se-ve");
+        return;
+      }
       /*
        * Y se apunta con las mismas reglas que si sonara: sin esto, el
        * historial contaba repeticiones que con voz nunca habrían pasado. Ver
@@ -686,6 +747,7 @@ export class InstructorGrabado implements Instructor {
       }
       this.ultima = clave ?? texto;
       this.apuntar();
+      this.senalarLoNombrado(clave);
       alSonar?.("no-suena");
       return;
     }

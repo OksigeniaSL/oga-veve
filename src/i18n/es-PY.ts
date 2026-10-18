@@ -1679,11 +1679,11 @@ export const ES_PY = {
    * `game.ts`.
    */
   "vuelo.traficoArriba":
-    "Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta",
+    "Ese rombo del mapa es otro avión. Va más alto que nosotros: no nos molesta",
   "vuelo.traficoAbajo":
-    "Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta",
+    "Ese rombo del mapa es otro avión. Va más bajo que nosotros: no nos molesta",
   "vuelo.traficoNivel":
-    "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
+    "Ese rombo del mapa es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
   /*
    * **Y las luces de otro avión de noche**, contadas con calma la primera vez
    * del vuelo que se le ven a uno de delante. La clave la elige
@@ -1802,7 +1802,7 @@ export const ES_PY = {
    */
   "vuelo.alturaDeLaTorre":
     "La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí y nos quedamos.",
-  "vuelo.alturaDeLaTorreRaya": "La torre nos dice hasta dónde subir: hasta la raya de la cinta.",
+  "vuelo.alturaDeLaTorreRaya": "La torre nos dice hasta dónde subir: hasta la raya de la altura.",
   "vuelo.otraAlturaDeLaTorre": "La torre nos deja subir otro poco. Ya puse la altura nueva.",
   /*
    * Y el tono del avisador de altitud, contado detrás de la máquina y una sola
@@ -1914,17 +1914,30 @@ export const ES_PY = {
    * Se dicen solo con su grabación; sin ella, la grabada que nombra el mismo
    * mando, y la tarjeta enseña esa misma frase. Ver `decirElConsejo` en
    * `game.ts`.
+   *
+   * **Y dicen dónde está lo que nombran** (272, 273): «el rombo rosa, el de al
+   * lado de la altura», y no «el rombo», que en la pantalla hay varios; «las
+   * cuatro luces de al lado de la pista»; «la marca rosa de la velocidad», que
+   * rosas hay cuatro. Solo se dicen con eso a la vista, y la pieza late
+   * mientras tanto; si no se ve, se dice su `.sinVer`, la misma acción sin el
+   * «hasta». Ver `flight/lo-que-se-nombra.ts`.
    */
-  "vuelo.consejo.masGas": "Un poquito más de gas, hasta la marca rosa. La nariz, quieta.",
-  "vuelo.consejo.menosGas": "Un poquito menos de gas, hasta la marca rosa.",
-  "vuelo.consejo.narizAbajoPapi": "Nariz un poquito abajo, hasta ver dos blancas y dos rojas.",
-  "vuelo.consejo.narizArribaPapi": "Nariz un poquito arriba, hasta ver dos blancas y dos rojas.",
-  "vuelo.consejo.narizAbajoSenda": "Nariz un poquito abajo, hasta que el rombo quede en el medio.",
-  "vuelo.consejo.narizArribaSenda": "Nariz un poquito arriba, hasta que el rombo quede en el medio.",
+  "vuelo.consejo.masGas":
+    "Un poquito más de gas, hasta la marca rosa de la velocidad. La nariz, quieta.",
+  "vuelo.consejo.menosGas": "Un poquito menos de gas, hasta la marca rosa de la velocidad.",
+  "vuelo.consejo.narizAbajoPapi":
+    "Nariz un poquito abajo, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
+  "vuelo.consejo.narizArribaPapi":
+    "Nariz un poquito arriba, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
+  "vuelo.consejo.narizAbajoSenda":
+    "Nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
+  "vuelo.consejo.narizArribaSenda":
+    "Nariz un poquito arriba, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
   "vuelo.consejo.narizArribaRitmo":
     "Nariz un poquito arriba: bajamos más suave, hasta la marca rosa del variómetro.",
   "vuelo.consejo.narizArribaSuave": "Nariz un poquito arriba, para bajar más suave.",
-  "vuelo.consejo.aerofrenos": "Sacá un poco los aerofrenos, hasta la marca rosa.",
+  "vuelo.consejo.aerofrenos": "Sacá un poco los aerofrenos, hasta la marca rosa de la velocidad.",
+  "vuelo.consejo.aerofrenos.sinVer": "Sacá un poco los aerofrenos, para ir más despacio.",
   /*
    * **Las del perfil de la bajada** (el `VDEV`), que no son las de la pista:
    * por debajo del perfil no se sube, se baja más suave o se nivela, y por
@@ -1934,26 +1947,40 @@ export const ES_PY = {
    * (ADR 0017).
    */
   "vuelo.consejo.nivelarPerfil":
-    "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo llegue al medio.",
+    "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+  "vuelo.consejo.nivelarPerfil.sinVer":
+    "Vamos un poco por debajo del perfil: bajá más suave, o nivelá un momento.",
   "vuelo.consejo.narizAbajoPerfil":
-    "Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo llegue al medio.",
+    "Vamos por encima del perfil: la nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
   "vuelo.consejo.aerofrenosPerfil":
-    "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo llegue al medio.",
+    "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+  "vuelo.consejo.aerofrenosPerfil.sinVer":
+    "Vamos por encima del perfil y el avión ya baja todo lo que puede: sacá los aerofrenos.",
   "vuelo.consejo.masGasPerfil":
-    "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo llegue al medio.",
+    "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+  "vuelo.consejo.masGasPerfil.sinVer":
+    "Vamos un poco por debajo del perfil: un toque de gas, para bajar más suave.",
   "vuelo.consejo.menosGasPerfil":
-    "Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo llegue al medio.",
+    "Vamos por encima del perfil: un poquito menos de gas, para bajar más, hasta que el rombo rosa, el de al lado de la altura, llegue al medio.",
+  "vuelo.consejo.menosGasPerfil.sinVer":
+    "Vamos por encima del perfil: un poquito menos de gas, para bajar más.",
   "vuelo.consejo.masGasPapi":
-    "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas.",
+    "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
   "vuelo.consejo.masGasSenda":
-    "Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo quede en el medio.",
+    "Un poco bajo: un toque de gas, la nariz quieta, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
+  "vuelo.consejo.masGasSenda.sinVer": "Un poco bajo: un toque de gas, la nariz quieta.",
   "vuelo.consejo.menosGasPapi":
-    "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas.",
+    "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
   "vuelo.consejo.menosGasSenda":
-    "Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo quede en el medio.",
+    "Un poco alto: un poquito menos de gas, la nariz quieta, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
+  "vuelo.consejo.menosGasSenda.sinVer":
+    "Un poco alto: un poquito menos de gas, la nariz quieta.",
   "vuelo.consejo.masGasSuave": "Bajamos muy de golpe: un toque de gas, para bajar más suave.",
-  "vuelo.consejo.narizAbajoMarca": "Vamos lentos: la nariz un pelín abajo, hasta la marca rosa.",
-  "vuelo.consejo.narizArribaMarca": "Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa.",
+  "vuelo.consejo.narizAbajoMarca":
+    "Vamos lentos: la nariz un pelín abajo, hasta la marca rosa de la velocidad.",
+  "vuelo.consejo.narizArribaMarca":
+    "Vamos rápidos: la nariz un pelín arriba, hasta la marca rosa de la velocidad.",
+  "vuelo.consejo.narizArribaMarca.sinVer": "Vamos rápidos: la nariz un pelín arriba.",
   // Y su palabra corta, para el peldaño que lee una palabra: el mando y hacia dónde.
   "palabra.masGas": "Más gas",
   "palabra.menosGas": "Menos gas",
@@ -1970,21 +1997,37 @@ export const ES_PY = {
    * —«Bajá el motor», «Bajá los flaps para frenar», «Sacá el tren»,
    * «Empezamos a bajar»— y, si ninguna sirve, el paso se ve en la tarjeta
    * y en la cabina y la voz calla.
+   *
+   * Y como los consejos, **solo nombran lo que se ve**: con el cuadro
+   * recogido, la marca rosa no está, y entonces va la `.sinVer`. Ver
+   * `flight/lo-que-se-nombra.ts`.
    */
   "vuelo.paso.subir": "Subimos hasta la raya de la altura, a la velocidad de la marca rosa.",
-  "vuelo.paso.acelerarGas": "Ya podemos ir más rápido: más gas, hasta la marca rosa.",
+  "vuelo.paso.subir.sinVer": "Ahora subimos hasta la altura que nos toca.",
+  "vuelo.paso.acelerarGas":
+    "Ya podemos ir más rápido: más gas, hasta la marca rosa de la velocidad.",
+  "vuelo.paso.acelerarGas.sinVer": "Ya podemos ir más rápido: más gas.",
   "vuelo.paso.acelerarNariz":
-    "Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa.",
-  "vuelo.paso.frenarGas": "Ahora vamos más despacio: menos gas, hasta la marca rosa.",
+    "Ya podemos ir más rápido: la nariz un poquito abajo, hasta la marca rosa de la velocidad.",
+  "vuelo.paso.acelerarNariz.sinVer": "Ya podemos ir más rápido: la nariz un poquito abajo.",
+  "vuelo.paso.frenarGas":
+    "Ahora vamos más despacio: menos gas, hasta la marca rosa de la velocidad.",
   "vuelo.paso.frenarAerofrenos":
-    "Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa.",
+    "Ahora vamos más despacio: un poco de aerofrenos, hasta la marca rosa de la velocidad.",
+  "vuelo.paso.frenarAerofrenos.sinVer": "Ahora vamos más despacio: un poco de aerofrenos.",
   "vuelo.paso.frenarNariz":
-    "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa.",
-  "vuelo.paso.mantener": "La marca rosa cambió y ya vamos a esa velocidad: seguimos así.",
+    "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos, hasta la marca rosa de la velocidad.",
+  "vuelo.paso.frenarNariz.sinVer":
+    "Ahora vamos más despacio: la nariz un poquito arriba, que así frenamos.",
+  "vuelo.paso.mantener":
+    "La marca rosa de la velocidad se movió, y ya vamos justo ahí: seguimos así.",
   "vuelo.paso.marcaDelAutomatico":
-    "La marca rosa cambió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.",
+    "La marca rosa de la velocidad se movió: el automático lleva el motor hasta ella. Mirá cómo se mueve la palanca.",
+  "vuelo.paso.marcaDelAutomatico.sinVer":
+    "Cambió la velocidad que toca: el automático lleva el motor solo. Mirá cómo se mueve la palanca.",
   "vuelo.paso.crucero":
-    "Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la marca rosa.",
+    "Ya estamos arriba: gas de crucero, hasta la marca del motor. Así vamos a la velocidad de la marca rosa.",
+  "vuelo.paso.crucero.sinVer": "Ya estamos arriba: gas de crucero, hasta la marca del motor.",
   "vuelo.paso.cruceroConAutomatico":
     "Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.",
   "vuelo.paso.cruceroConGases":
@@ -1994,14 +2037,19 @@ export const ES_PY = {
   "vuelo.paso.bajarConAutomatico":
     "Empezamos a bajar. El automático baja por la senda hasta la raya de la altura: vos mirá que la velocidad siga en la marca rosa.",
   "vuelo.paso.nivelar":
-    "Llegamos a la raya: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
-  "vuelo.paso.flaps1": "Los primeros flaps, una muesca, y a la marca rosa.",
-  "vuelo.paso.flaps2": "Otra muesca de flaps, y a la marca rosa.",
-  "vuelo.paso.flaps3": "Los flaps de aterrizar, abajo del todo, y a la marca rosa.",
+    "Llegamos a la raya de la altura: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
+  "vuelo.paso.nivelar.sinVer":
+    "Llegamos a la altura que toca: nos quedamos acá, nivelados, hasta que la senda nos venga a buscar.",
+  "vuelo.paso.flaps1": "Los primeros flaps, una muesca, y a la marca rosa de la velocidad.",
+  "vuelo.paso.flaps2": "Otra muesca de flaps, y a la marca rosa de la velocidad.",
+  "vuelo.paso.flaps3": "Los flaps de aterrizar, abajo del todo, y a la marca rosa de la velocidad.",
   "vuelo.paso.tren": "Sacá el tren, que ya vamos a aterrizar.",
-  "vuelo.paso.recogerAerofrenos": "Ya vamos a la marca rosa: aerofrenos adentro.",
+  "vuelo.paso.recogerAerofrenos": "Ya vamos a la marca rosa de la velocidad: aerofrenos adentro.",
+  "vuelo.paso.recogerAerofrenos.sinVer":
+    "Ya vamos a la velocidad que toca: aerofrenos adentro.",
   "vuelo.paso.senda":
     "Ya estamos en la final: la nariz por la senda, y la velocidad en la marca rosa.",
+  "vuelo.paso.senda.sinVer": "Ya estamos en la final: la nariz por la senda.",
   /*
    * Y en la final de Guyrami, **quién lleva el gas**: el avión que lleva gases
    * automáticos los usa; en el que no, lo lleva la instructora, que es una
@@ -2009,10 +2057,15 @@ export const ES_PY = {
    * `game.ts`.
    */
   "vuelo.paso.sendaConGases":
-    "Ya estamos en la final. El avión lleva el motor a la marca rosa: vos llevá la nariz por la senda.",
+    "Ya estamos en la final. El avión lleva el motor, para ir a la marca rosa de la velocidad: vos llevá la nariz por la senda.",
+  "vuelo.paso.sendaConGases.sinVer":
+    "Ya estamos en la final. El avión lleva el motor: vos llevá la nariz por la senda.",
   "vuelo.paso.sendaConAyuda":
-    "Ya estamos en la final. Yo te llevo el motor a la marca rosa: vos llevá la nariz por la senda.",
+    "Ya estamos en la final. Yo te llevo el motor, para ir a la marca rosa de la velocidad: vos llevá la nariz por la senda.",
+  "vuelo.paso.sendaConAyuda.sinVer":
+    "Ya estamos en la final. Yo te llevo el motor: vos llevá la nariz por la senda.",
   "vuelo.paso.gasTuyo": "Tocaste el motor: ahora la velocidad la llevás vos, hasta la marca rosa.",
+  "vuelo.paso.gasTuyo.sinVer": "Tocaste el motor: ahora la velocidad la llevás vos.",
   /*
    * **Y el número de la marca, dicho en el peldaño de las cifras** (punto
    * 115), detrás del paso de velocidad que lo pide: una frase entera por
@@ -2032,7 +2085,7 @@ export const ES_PY = {
   "vuelo.paso.cotaAlMar":
     "La pista a la que vamos está casi a nivel del mar: lo que marca el altímetro es casi todo lo que nos queda por bajar.",
   "vuelo.paso.cotaEnAlto":
-    "La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la cinta.",
+    "La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la altura.",
   "palabra.pista": "Pista",
   "palabra.asi": "Así",
   "palabra.aerofrenosAdentro": "Aerofrenos adentro",
@@ -2845,7 +2898,7 @@ export const ES_PY = {
   "explica.senda.texto":
     "El rombo dice dónde está la senda, la rampa invisible que baja hasta la pista. Si el rombo está abajo, vas alto: bajá un poco más. Si está arriba, vas bajo. Se vuela hacia el rombo, hasta tenerlo en el medio.",
   "explica.senda.presenta":
-    "Apareció el rombo de la senda. Si lo tenemos en el medio, vamos bien hacia la pista.",
+    "Apareció el rombo rosa de la senda, al lado de la altura. Si lo tenemos en el medio, vamos bien hacia la pista.",
   "explica.gs-rodaje.corta": "Rodar",
   "explica.gs-rodaje.texto":
     "GS es la velocidad sobre el suelo. Rodando, esta barra dice qué tan rápido vas, y la marca rosa, hasta dónde llenarla: antes de una curva baja, porque las curvas se toman despacio. Verde es que vas bien; ámbar, que tenés que frenar.",

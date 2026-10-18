@@ -45,6 +45,13 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5353);
 const VECES = Number(process.env.OGA_VECES ?? 6);
 /** El tope de vuelo, en segundos de juego. */
 const TOPE = Number(process.env.OGA_TOPE ?? 2400);
+/*
+ * **Y desde qué escalón se vuela a tiempo real**, si se dice: el reloj
+ * acelerado no acelera lo que se habla, y lo que espera un hueco de calma —la
+ * presentación del rombo— no lo encuentra con la final pasando doce veces más
+ * deprisa que la voz. Por ejemplo `OGA_LENTO_DESDE=flaps:1`.
+ */
+const LENTO_DESDE = process.env.OGA_LENTO_DESDE ?? null;
 
 const server = await createServer({
   root: process.cwd(),
@@ -79,7 +86,7 @@ try {
     await page.keyboard.press("i");
     await page.waitForTimeout(2000);
     vuelo = await page.evaluate(
-      async ([veces, tope]) => {
+      async ([veces, tope, lentoDesde]) => {
         const o = globalThis.__oga;
         const j = o.juegoParaTrazas();
         const { trueFromIndicated } = await import("/src/flight/atmosphere.ts");
@@ -140,6 +147,10 @@ try {
           if (pasos.length > pasosVistos.length) {
             for (const p of pasos.slice(pasosVistos.length)) {
               pasosVistos.push({ t, ...p, pies, kt });
+              if (lentoDesde && p.escalon === lentoDesde) {
+                o.acelerar(1);
+                linea.push(`${t}s el banco pasa a tiempo real`);
+              }
               linea.push(`${t}s paso ${p.escalon}: ${p.que} → ${p.objetivo.kt} kt${p.objetivo.pies !== null ? ` · ${p.objetivo.pies} ft` : ""}${p.objetivo.muesca !== null ? ` · muesca ${p.objetivo.muesca}` : ""} [${pies} ft, ${kt} kt]`);
               if (p.que === "flaps" || p.que === "tren" || p.que === "recogerAerofrenos")
                 pendiente = { p, en: t + 2 };
@@ -218,9 +229,16 @@ try {
           // Y lo que dijo la boca y lo que tiró, para saber por qué si calla.
           habladas: o.habladas?.() ?? [],
           descartadas: o.descartadas?.() ?? [],
+          /*
+           * Y lo que nombró sin verse: lo que paró la puerta de la boca, que
+           * tendría que ser nada. Y si el rombo se presentó. Ver
+           * `flight/lo-que-se-nombra.ts`.
+           */
+          noSeVeia: j.loNombradoParaBanco?.noSeVeia ?? [],
+          rombo: await import("/src/ui/explicaciones.ts").then((m) => m.estaPresentada("senda")),
         };
       },
-      [VECES, TOPE],
+      [VECES, TOPE, LENTO_DESDE],
     );
   } finally {
     if (errores.length) comprobar("sin errores en la página", false, errores.slice(0, 3).join(" | "));
@@ -285,6 +303,27 @@ if (!vuelo || vuelo.error) {
       !canto
         ? "el paso de bajar no salió"
         : `${canto.replace(/^[\d.]+s /, "")}${deCabina ? "" : dicha ? " · dicha" : " · no la pidió la instructora"}`,
+    );
+  }
+  /*
+   * **Lo que nombra la instructora, a la vista** (272, 273): quien habla elige
+   * la frase que nombra solo lo que se ve, y la puerta de la boca no tiene que
+   * parar ninguna. Y el rombo de la senda se presenta la primera vez que sale,
+   * en el avión que lo lleva y donde la instructora explica.
+   */
+  comprobar(
+    "la instructora no nombra lo que no se ve",
+    (vuelo.noSeVeia ?? []).length === 0,
+    (vuelo.noSeVeia ?? []).join(", "),
+  );
+  if (!/jaz-2[05]|jaz-40/.test(AVION) && TRAMO !== "taguato-ruvicha") {
+    const dicha = (vuelo.dichas ?? []).some(
+      (c) => String(c).split(/[@~]/)[0] === "explica.senda.presenta",
+    );
+    comprobar(
+      "el rombo de la senda se presenta la primera vez que sale",
+      vuelo.rombo && dicha,
+      vuelo.rombo ? (dicha ? "presentado y dicho" : "presentado sin voz") : "no se presentó",
     );
   }
   const repetidos = escalones.filter((e, i) => escalones.indexOf(e) !== i);
