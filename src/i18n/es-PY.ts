@@ -3215,4 +3215,161 @@ export const ES_PY = {
   "inicio.mama.pasaje.reversa":
     "Y para quienes volaron hoy por primera vez: ese ruido fuerte de los motores al aterrizar era para frenar. Los motores echan el aire hacia adelante, y eso frena el avión.",
   "inicio.ara.pasaje.fin": "¡Llegamos a La Palma! Ahora le cuento a mamá todo lo que vi por la ventanilla.",
+  /*
+   * **El vuelo de pasaje, contado de verdad** (18-10-2026). Enrique, al
+   * probarlo: «algo más que contar, no se escucha a la tripulación de cabina
+   * dando las indicaciones de cinturón y chalecos salvavidas», y ratos largos
+   * sin nada. Así que entra la demostración de seguridad, la tripulante en
+   * persona —se acerca al asiento de Ara y le habla sin altavoz, con el tú de
+   * Canarias—, Jazlyn contando para todos lo que se pregunta quien vuela por
+   * primera vez, y Ara notando lo que pasa: el tren, el giro, las nubes otra
+   * vez. Ver `src/flight/inicio-pasaje.ts` y el ADR 0020.
+   *
+   * La demostración, por la megafonía y en el orden de la norma europea (AMC1
+   * CAT.OP.MPA.170): el cinturón, las salidas y sus luces, las máscaras, el
+   * chaleco, la tarjeta y los aparatos. El chaleco «se infla al salir» es lo
+   * que dicen las tripulaciones; la norma pide decir cuándo y dónde.
+   */
+  "inicio.tripulacion.pasaje.demo.intro":
+    "Señoras y señores, les rogamos un momento de atención: les vamos a mostrar el equipo de seguridad de este avión.",
+  "inicio.tripulacion.pasaje.demo.cinturon":
+    "El cinturón se abrocha metiendo la hebilla hasta oír clic, se ajusta tirando de la cinta y se suelta levantando la tapa.",
+  "inicio.tripulacion.pasaje.demo.salidas":
+    "Este avión tiene salidas de emergencia delante, detrás y sobre las alas. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
+  "inicio.tripulacion.pasaje.demo.mascaras":
+    "Si hiciera falta, caerán del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.",
+  "inicio.tripulacion.pasaje.demo.chaleco":
+    "Su chaleco salvavidas está debajo del asiento. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.",
+  "inicio.tripulacion.pasaje.demo.tarjeta":
+    "En el bolsillo del asiento de delante tienen la tarjeta de seguridad, con todo esto en dibujos. Por favor, léanla antes del despegue.",
+  "inicio.tripulacion.pasaje.demo.aparatos":
+    "Y los teléfonos y aparatos electrónicos, en modo avión durante todo el vuelo. Muchas gracias por su atención.",
+  "inicio.ara.pasaje.demoMascara": "¡Primero la máscara de los grandes, y después la mía! Así me pueden ayudar.",
+  "inicio.ara.pasaje.demoChaleco": "Abajo de mi asiento hay un chaleco amarillo. ¡Y se infla recién afuera del avión!",
+  "inicio.ara.pasaje.demoTarjeta": "¡Encontré la tarjeta en el bolsillo de adelante! Tiene dibujitos de todo.",
+  /*
+   * **La tripulante, en persona**: con el tú de Canarias, que es su habla, y
+   * nada que diga si Ara es niño o niña. Lo de la persiana es la curiosidad
+   * de siempre, `explica.persianas`, dicha a quien pregunta.
+   */
+  "inicio.tripulacion.pasaje.cerca.revision":
+    "¡Hola! Déjame ver ese cinturón… ¡perfecto, así se lleva! Y la cortinilla, siempre subida para despegar.",
+  "inicio.ara.pasaje.persiana": "¿Y por qué la persiana tiene que estar arriba para despegar?",
+  "inicio.tripulacion.pasaje.cerca.persiana":
+    "Así vemos bien fuera si pasa algo. Y de noche apagamos las luces de la cabina, para que los ojos ya estén hechos a lo de fuera.",
+  "inicio.ara.pasaje.tren": "¡Sonó un golpe abajo del avión! Son las ruedas, que se guardan para volar.",
+  "inicio.ara.pasaje.plop": "¡Plop! Me hicieron plop los oídos, como en el ascensor de un edificio alto.",
+  "inicio.ara.pasaje.giroAbajo": "¡Estamos girando! El avión se inclina, y mi ala apunta para abajo.",
+  "inicio.ara.pasaje.giroArriba": "¡Estamos girando! El avión se inclina, y mi ala apunta para el cielo.",
+  "inicio.ara.pasaje.bici": "Mamá dice que los aviones se inclinan para girar, como una bici en una curva.",
+  "inicio.ara.pasaje.marArriba": "¡Me pego a la ventanilla para ver más! Entre las nubes, allá abajo, se ve el mar.",
+  /*
+   * Lo que sostiene un avión, contado de verdad (AGENTS.md, regla 4): el ala
+   * inclinada empuja el aire hacia abajo y el aire la empuja hacia arriba. Y
+   * Ara lo entiende con una pandorga, que se sostiene igual.
+   */
+  "inicio.ara.pasaje.preguntaAla": "¿Cómo puede volar un avión tan grande y tan pesado sin caerse?",
+  "inicio.mama.pasaje.ala":
+    "Señores pasajeros, para quienes vuelan hoy por primera vez: ¿cómo se sostiene en el aire un avión tan pesado? Las alas van un poquito inclinadas y empujan el aire hacia abajo, y el aire las empuja a ellas hacia arriba. Por eso hay que ir rápido.",
+  "inicio.ara.pasaje.pandorga": "¡Como una pandorga! El viento la empuja para arriba, y sube y sube.",
+  "inicio.ara.pasaje.preguntaAlto": "¿Qué tan alto y qué tan rápido estaremos volando ahora?",
+  "inicio.mama.pasaje.altoRapido":
+    "Y para quienes vuelan hoy por primera vez: ahora vamos más alto que la cumbre del Teide, y a más de quinientos kilómetros por hora, mucho más rápido que cualquier coche.",
+  "inicio.ara.pasaje.altoRapido": "¡Más alto que el Teide! Con razón desde acá arriba las montañas parecen de juguete.",
+  "inicio.tripulacion.pasaje.cerca.hola":
+    "¡Hola otra vez! Aquí tienes agua y algo rico. Te vi mirando las nubes por la ventanilla: ¿es tu primer vuelo?",
+  "inicio.ara.pasaje.deVerdad": "¡Sí, es mi primer vuelo! ¿Las nubes son de agua de verdad?",
+  /*
+   * Las nubes de cerca: las del mar de nubes son de gotitas de agua, y las de
+   * muy arriba, de cristalitos de hielo (Atlas Internacional de Nubes de la
+   * OMM); se ven blancas porque las gotitas desparraman todos los colores de
+   * la luz del sol por igual (Met Office).
+   */
+  "inicio.tripulacion.pasaje.cerca.nubes1":
+    "¡De verdad! Una nube son millones de gotitas de agua, tan chiquititas que no se ven una a una, y el aire las sostiene.",
+  "inicio.tripulacion.pasaje.cerca.nubes2":
+    "Y muy arriba, donde hace mucho frío, son cristalitos de hielo. Se ven blancas porque las gotitas desparraman toda la luz del sol.",
+  "inicio.tripulacion.pasaje.cerca.nubes3":
+    "Cuando las cruzamos, todo se ve blanco, el avión se mueve un poquito y a veces se moja la ventanilla. No pasa nada: el avión está hecho para eso.",
+  "inicio.ara.pasaje.nubesSostiene": "¡Agua que el aire sostiene en el cielo! Ahora las miro de otra manera.",
+  "inicio.tripulacion.pasaje.cerca.frio":
+    "¿Sabes qué? Fuera, tan alto, hace un frío de congelador, bajo cero. Aquí dentro metemos aire de fuera y lo calentamos, para ir a gusto.",
+  "inicio.ara.pasaje.frio": "¡Afuera hace frío de congelador, y acá adentro se está calentito!",
+  "inicio.tripulacion.pasaje.cerca.motor1":
+    "¿Ves el motor, ahí debajo del ala? Delante tiene un ventilador gigante que se traga muchísimo aire.",
+  "inicio.tripulacion.pasaje.cerca.motor2":
+    "Dentro, el aire se aprieta, se calienta con el combustible y sale por detrás a toda velocidad. Eso empuja el avión hacia delante.",
+  "inicio.ara.pasaje.secador": "¡Como el secador de pelo: un ventilador que tira aire calentito, pero gigante!",
+  "inicio.ara.pasaje.preguntaBajar": "¿Y cómo hace el avión para bajar? ¿Apagan los motores?",
+  "inicio.mama.pasaje.bajando":
+    "Señores pasajeros, para quienes vuelan hoy por primera vez: para bajar no apagamos los motores. Los dejamos suavecito, y el avión va bajando poco a poco, como por un tobogán muy largo.",
+  "inicio.tripulacion.pasaje.cerca.islas1":
+    "¿Sabes que las islas Canarias salieron del fondo del mar? Son volcanes que fueron creciendo, durante millones de años, hasta asomar.",
+  "inicio.tripulacion.pasaje.cerca.islas2":
+    "La Palma, adonde vamos, es de las más jovencitas, y tiene unas montañas altísimas.",
+  "inicio.ara.pasaje.islas": "¡Islas que eran volcanes en el fondo del mar! Se lo voy a contar a todos.",
+  "inicio.tripulacion.pasaje.cerca.ruta":
+    "¿Y cómo sabe el avión el camino? La comandante y el copiloto llevan el mapa en una pantalla, y hablan por radio con la torre de control.",
+  "inicio.ara.pasaje.mapa": "¡Como el mapa del celular, pero para aviones! Y con la torre por radio.",
+  /*
+   * El PAPI, del Anexo 14 de la OACI: cuatro luces al lado de la pista; dos
+   * blancas y dos rojas es la senda justa.
+   */
+  "inicio.tripulacion.pasaje.cerca.papi":
+    "Al lado de la pista hay cuatro lucecitas. Si se ven dos blancas y dos rojas, el avión baja justo por su camino.",
+  "inicio.ara.pasaje.papi": "¡Dos blancas y dos rojas! Las voy a buscar cuando vuele con mamá.",
+  "inicio.ara.pasaje.sobreLaIsla": "¡Estamos pasando por arriba de la isla! Se ven las montañas y los barrancos.",
+  "inicio.ara.pasaje.marQuieto": "Desde tan alto, el mar parece quietito. ¡Pero de cerca tiene olas!",
+  "inicio.ara.pasaje.nubesCerca": "Cada vez estamos más bajo: ¡las nubes ya están cerquita!",
+  "inicio.ara.pasaje.bano": "¿Y si tengo ganas de ir al baño? ¿Hay baño en el avión?",
+  "inicio.tripulacion.pasaje.cerca.bano":
+    "¡Claro que hay! Pero ahora, con la luz del cinturón encendida, mejor esperamos a aterrizar.",
+  /*
+   * Los telescopios del Roque de los Muchachos, en lo alto de La Palma: el
+   * Gran Telescopio Canarias, de 10,4 m, entre ellos (Ministerio de Ciencia,
+   * ficha de la ICTS). Que el cielo de la isla lo protege una ley —la «Ley del
+   * Cielo», 31/1988—, por verificar en el BOE.
+   */
+  "inicio.tripulacion.pasaje.cerca.estrellas":
+    "¿Sabes qué hay arriba de todo en La Palma? Unos telescopios enormes para mirar las estrellas: el cielo de la isla es de los más limpios del mundo.",
+  "inicio.ara.pasaje.estrellas": "¡Telescopios gigantes para mirar las estrellas! Quiero ver uno de cerca.",
+  "inicio.ara.pasaje.islaCerca": "¡La isla ya está cerquita! Se ven las montañas, la costa y el mar.",
+  "inicio.ara.pasaje.otraNube": "¡Otra vez adentro de una nube, todo blanco! Ahora ya sé que es agua.",
+  "inicio.ara.pasaje.marAbajo": "¡Me pego a la ventanilla para ver más! Allá abajo está el mar, enorme y azul oscurito.",
+  "inicio.tripulacion.pasaje.cerca.aterrizaje":
+    "Ya vamos a aterrizar: cinturón bien abrochado, respaldo derecho y la cortinilla arriba. ¡Lo estás haciendo genial!",
+  "inicio.ara.pasaje.flapsPorque": "Mamá me contó que así el ala sostiene al avión aunque vaya despacito.",
+  "inicio.ara.pasaje.giroFinal": "¡Otra vuelta! Así el avión queda derechito, mirando a la pista.",
+  "inicio.ara.pasaje.masDespacio": "Ahora el avión va más despacio, para prepararse a aterrizar. ¡Se nota!",
+  "inicio.ara.pasaje.ruedas": "¡Otro ruido abajo! Ahora salen las ruedas, para aterrizar.",
+  "inicio.ara.pasaje.miro": "Ahora me quedo mirando por la ventanilla hasta que toquemos la pista.",
+  "inicio.ara.pasaje.cerquita": "¡El mar está cada vez más cerquita! Ya falta poquito para la pista.",
+  "inicio.ara.pasaje.yaCasi": "¡Ya casi! Las ruedas están por tocar la pista.",
+  "inicio.ara.pasaje.cinturonQuieto": "¡Todavía no me saco el cinturón! Hay que esperar a que se apague la luz.",
+  "inicio.ara.pasaje.despacito": "Ahora vamos despacito por el suelo, como un auto, hasta nuestro lugar.",
+  "inicio.ara.pasaje.repaso": "¡Qué lindo fue! Las nubes por dentro, el mar enorme y las islas con montañas.",
+  "inicio.tripulacion.pasaje.cerca.adios":
+    "¡Hasta pronto, y gracias por volar con nosotros! Ahora ya sabes un montón de cosas de los aviones.",
+  /*
+   * **Quién habla, para quien no ve la cara**, y lo que enseña cada dibujo de
+   * la ventanita, para quien no lo ve. No se graban: son de la pantalla.
+   */
+  "inicio.modo.tripulante": "La tripulante de cabina, a tu lado",
+  "inicio.dibujo.cinturon": "El cinturón: se abrocha hasta el clic, se ajusta y se suelta levantando la tapa.",
+  "inicio.dibujo.salidas": "Las salidas del avión y las luces del pasillo que llevan hasta ellas.",
+  "inicio.dibujo.mascara": "Las máscaras de oxígeno: primero se la pone quien es grande, y después ayuda.",
+  "inicio.dibujo.chaleco": "El chaleco salvavidas, debajo del asiento: se infla fuera del avión.",
+  "inicio.dibujo.tarjeta": "La tarjeta de seguridad, en el bolsillo del asiento de delante.",
+  "inicio.dibujo.modo-avion": "El teléfono en modo avión.",
+  "inicio.dibujo.persiana": "La persiana subida para despegar: así se ve afuera.",
+  "inicio.dibujo.nube": "Una nube de cerca: gotitas de agua abajo y cristalitos de hielo arriba.",
+  "inicio.dibujo.ala": "El ala empuja el aire hacia abajo y el aire la empuja hacia arriba.",
+  "inicio.dibujo.alto": "El avión, más alto que el Teide y más rápido que un auto.",
+  "inicio.dibujo.motor": "El motor por dentro: traga aire, lo calienta y lo echa para atrás.",
+  "inicio.dibujo.frio": "Afuera, bajo cero; adentro, calentito.",
+  "inicio.dibujo.islas": "Los volcanes que crecen desde el fondo del mar hasta ser islas.",
+  "inicio.dibujo.ruta": "El camino del avión, de Tenerife a La Palma, y la torre por radio.",
+  "inicio.dibujo.oido": "El oído: al bajar el aire empuja, y al tragar o bostezar se destapa.",
+  "inicio.dibujo.papi": "Las cuatro luces al lado de la pista: dos blancas y dos rojas.",
+  "inicio.dibujo.estrellas": "Los telescopios en lo alto de La Palma, mirando las estrellas.",
 } as const;

@@ -104,7 +104,28 @@ const POR_EL_ALTAVOZ = `
       <path class="cara__altavoz" d="M32.5 35.8 h3 l4.2-3.4 v11.2 l-4.2-3.4 h-3 Z" />
       <path class="cara__ondas cara__ondas--chicas" d="M41.6 35 q1.7 3 0 6" />`;
 
+/**
+ * **La tripulante, cuando se acerca al asiento**: ya no es el altavoz del
+ * techo, es una persona a la que Ara ve, así que tiene cara —su moño, el
+ * pañuelo al cuello en los colores de la casa y las alas en la solapa—. La
+ * misma que habla por la megafonía, que es la misma persona. Ver `esDeCerca`
+ * en `flight/inicio-pasaje.ts`.
+ */
+const LA_TRIPULANTE = `
+      <circle class="cara__fondo" cx="24" cy="24" r="23" />
+      <circle class="cara__pelo" cx="24" cy="12.6" r="5.2" />
+      <path class="cara__pelo" d="M13.4 27 q0-13.4 10.6-13.4 q10.6 0 10.6 13.4 q-4.4-6.6-10.6-6.6 q-6.2 0-10.6 6.6 Z" />
+      <ellipse class="cara__piel" cx="24" cy="27.6" rx="9.4" ry="10.4" />
+      <path class="cara__pelo" d="M14.6 25.4 q1.8-6.4 9.4-6.4 q7.6 0 9.4 6.4 q-3.6-3.8-9.4-3.8 q-5.8 0-9.4 3.8 Z" />
+      <circle class="cara__ojo" cx="20.4" cy="27.2" r="1.4" />
+      <circle class="cara__ojo" cx="27.6" cy="27.2" r="1.4" />
+      <path class="cara__trazo" d="M21 32.4 q3 2.8 6 0" />
+      <path class="cara__panuelo" d="M16.6 38.6 l7.4 4.2 l7.4 -4.2 l-2 5.6 h-10.8 Z" />
+      <path class="cara__alas" d="M30.6 41.2 h5.6 M33.4 40 v2.4" />`;
+
 export function caraDe(quien: Quien, megafonia = false): string {
+  if (quien === "tripulacion" && !megafonia)
+    return `<svg class="inicio__cara inicio__cara--tripulante" viewBox="0 0 48 48" aria-hidden="true">${LA_TRIPULANTE}</svg>`;
   const altavoz = megafonia && quien !== "tripulacion" ? POR_EL_ALTAVOZ : "";
   return `<svg class="inicio__cara inicio__cara--${quien}" viewBox="0 0 48 48" aria-hidden="true">${CARAS[quien]}${altavoz}</svg>`;
 }
@@ -698,7 +719,9 @@ export class PantallaDelInicio {
           "aria-label",
           t(
             v.linea.quien === "tripulacion"
-              ? "inicio.modo.tripulacion"
+              ? v.linea.megafonia
+                ? "inicio.modo.tripulacion"
+                : "inicio.modo.tripulante"
               : v.linea.quien === "ara"
                 ? "inicio.modo.ara"
                 : v.linea.megafonia

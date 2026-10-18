@@ -14438,6 +14438,20 @@ body.con-vuelta #tactil {
   background: rgba(14, 22, 18, 0.3);
 }
 
+/*
+ * El fundido de los cambios de plano de la escena de pasaje: un azul de noche
+ * y no negro del todo, que un negro de golpe parece que se apagó la pantalla.
+ * La opacidad la pone el juego, fotograma a fotograma. Ver `FundidoDePlano`.
+ */
+.plano-velo {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: #101a20;
+  opacity: 0;
+}
+
+.plano-velo[hidden],
 .inicio-velo[hidden],
 .inicio[hidden],
 .inicio__fin[hidden],
@@ -14504,6 +14518,22 @@ body.con-vuelta #tactil {
 }
 .inicio__cara--ara .cara__fondo {
   fill: #6aa7c9;
+}
+/* La tripulante en persona: el mismo verde que su altavoz, que es la misma. */
+.inicio__cara--tripulante .cara__fondo {
+  fill: #8fb3a4;
+}
+.cara__panuelo {
+  fill: #c8643c;
+  stroke: #2a1c14;
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+.cara__alas {
+  fill: none;
+  stroke: #f2c14e;
+  stroke-width: 1.6;
+  stroke-linecap: round;
 }
 .cara__piel {
   fill: #c98f62;
@@ -15258,7 +15288,8 @@ body.con-vuelta #tactil {
 /* De pie y con el dedo manda el cartel de girar: ver `.gira`. */
 @media (pointer: coarse) and (orientation: portrait) {
   .inicio,
-  .inicio-velo {
+  .inicio-velo,
+  .plano-velo {
     display: none !important;
   }
 }

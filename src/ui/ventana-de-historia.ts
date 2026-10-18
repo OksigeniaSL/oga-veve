@@ -45,6 +45,8 @@
  */
 
 import type { AlSonar } from "../audio/instructor";
+import { hayTexto, t } from "../i18n";
+import { urlDelDibujo, type DibujoDelPasaje } from "./dibujos-del-pasaje";
 import { aPxDelHud } from "./escala";
 import { fotoDeLaHistoria, type FotoDeLaHistoria } from "./fotos-de-las-historias";
 
@@ -296,7 +298,29 @@ export class VentanaDeHistoria implements PonerYQuitar {
   mostrar(sitio: string): void {
     const foto = fotoDeLaHistoria(sitio);
     this.ultimo = `${sitio}: ${foto ? "pedida" : "sin foto"}`;
-    if (!foto || !this.raiz) return;
+    if (foto) this.mostrarFoto(foto);
+  }
+
+  /**
+   * **Un dibujo de la escena de pasaje**, en la misma ventana y con la misma
+   * manera de entrar y salir: lo que acompaña a lo que se explica. Su sitio es
+   * `dibujo:<clave>`, para quitarlo igual que una foto. Ver
+   * `ui/dibujos-del-pasaje.ts`.
+   */
+  mostrarDibujo(clave: DibujoDelPasaje): void {
+    const alt = `inicio.dibujo.${clave}`;
+    this.ultimo = `dibujo:${clave}: pedido`;
+    this.mostrarFoto({
+      clave: `dibujo:${clave}`,
+      url: urlDelDibujo(clave),
+      alt: hayTexto(alt) ? t(alt) : "",
+      firma: null,
+    });
+  }
+
+  private mostrarFoto(foto: FotoDeLaHistoria): void {
+    const sitio = foto.clave;
+    if (!this.raiz) return;
     if (this.sitio === sitio && this.dondeQuedo) return;
     this.quitarYa();
     this.sitio = sitio;
