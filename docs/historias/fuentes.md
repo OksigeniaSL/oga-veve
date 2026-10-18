@@ -290,6 +290,66 @@ crucero de Asunción a Ciudad del Este y de Encarnación a Asunción.
 
 ---
 
+## El primer vuelo de Ara: lo que se cuenta cuando pasa
+
+No son historias de la ventanilla, pero se cuentan en el mismo vuelo y con la
+misma regla: cada hecho, con su fuente. Ver `src/flight/inicio-pasaje.ts`.
+
+### El Teide, la primera vez que se nombra · `inicio.mama.pasaje.teide`
+
+Un niño de Paraguay no sabe qué es el Teide, y «más alto que la cumbre del
+Teide» no le dice nada. Se presenta antes de decirlo.
+
+- **3.715 m, el pico más alto de España**: «hasta los 3.715 metros del Teide,
+  el pico más alto de España». —
+  [MITECO, Parque Nacional del Teide](https://www.miteco.gob.es/es/parques-nacionales-oapn/red-parques-nacionales/parques-nacionales/teide.html).
+  La misma cifra en [Spain.info, Parque Nacional del Teide](https://www.spain.info/es/naturaleza/parque-nacional-teide/):
+  «el "techo" de España, con 3.715 metros de altitud».
+- **Es un volcán**: el Teide-Pico Viejo, «un imponente volcán compuesto
+  (estratovolcán)». — MITECO, la misma página. Y la UICN, que evalúa el
+  parque para la UNESCO: «twin stratovolcanoes Teide (3715 m a.s.l) and Pico
+  Viejo». — [World Heritage Outlook, Teide National Park](https://worldheritageoutlook.iucn.org/node/1148).
+- **Y 3.718 en el código**: es la cifra que da la misma página de la UICN en
+  su presentación, frente a los 3.715 de su evaluación y del ministerio. Lo
+  que se dice es 3.715; el código usa la más alta de las dos para decir «más
+  alto que el Teide» con margen. Ver `CUMBRE_DEL_TEIDE`.
+
+### Dentro de la nube, el meneo · `inicio.mama.pasaje.meneo`
+
+- **Dentro de una nube el aire sube y baja**: una nube es aire que sube y se
+  condensa, y el estratocúmulo del alisio se cruza con turbulencia ligera.
+  Ver `nube` en `src/flight/turbulencia.ts`, con sus fuentes.
+- **Las alas están hechas para doblarse un poco**: la norma de certificación
+  de los aviones de línea pide que la estructura aguante las cargas límite
+  sin deformación permanente perjudicial, y que lo que se deforme hasta ahí
+  no estorbe a la seguridad. — 14 CFR 25.305(a),
+  [texto en Cornell LII](https://www.law.cornell.edu/cfr/text/14/25.305); la
+  misma regla está en la CS-25 de EASA. En el ensayo de carga última del
+  787, las alas se doblaron hacia arriba unos 7,6 m. —
+  [Boeing, 28-3-2010](https://boeing.mediaroom.com/2010-03-28-Boeing-Completes-Ultimate-Load-Wing-Test-on-787).
+- **Por eso el cinturón**: la turbulencia hace daño a quien va suelto, y
+  llevarlo abrochado sentado es lo que evita las lesiones. —
+  [FAA, «Turbulence: Staying Safe»](https://www.faa.gov/travelers/fly_safe/turbulence).
+
+### Por debajo de las nubes · `inicio.tripulacion.pasaje.cerca.techo*` y `.visibilidad`
+
+- **El techo**: «la altura a que, sobre la tierra o el agua, se encuentra la
+  base de la capa inferior de nubes por debajo de 6 000 m (20 000 ft) y que
+  cubre más de la mitad del cielo». Por eso la frase dice «base», y techo
+  solo cuando tapan más de medio cielo: el mar de nubes del alisio es a
+  menudo un SCT. — Reglamento de Ejecución (UE) n.º 923/2012 (SERA),
+  artículo 2, definición 50,
+  [DOUE L 281, 13-10-2012](https://www.boe.es/doue/2012/281/L00001-00066.pdf).
+- **La visibilidad**, en sentido aeronáutico: la distancia máxima a la que
+  se ve y se reconoce un objeto negro cerca del suelo contra un fondo
+  brillante —o una luz, de noche—. — El mismo reglamento, definición 141.
+  En el parte va en metros, y «9999» son diez kilómetros o más.
+- **Los números**, solo cuando son los de hoy: la capa de Los Rodeos va a
+  novecientos metros sobre el campo —1.532 m, unos cinco mil pies— y sobre
+  el mar lo que falta hasta abajo es la altitud. Ver `TECHO_DE_HOY`.
+
+---
+
 ## Lo que se miró y no entra
 
 - **Colón y el fuego del Teide.** El diario del primer viaje (9 de agosto de

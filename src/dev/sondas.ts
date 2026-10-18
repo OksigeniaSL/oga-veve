@@ -1236,6 +1236,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     porLaVentanilla: (x: number, y: number, z: number) =>
       juego.seVePorLaVentanillaParaBanco({ x, y, z }),
+    /**
+     * **Lo nombrado del paisaje en la escena de pasaje**, medido con lo que se
+     * pinta ahora: dónde cae en la imagen, si se ve por el cristal y cuánta
+     * nube hay por medio. Ver `paisajeParaBanco` en `game.ts`.
+     */
+    paisajeALaVista: (sitio: string) => juego.paisajeParaBanco(sitio),
     enElCuadro: (x: number, y: number, z: number) => {
       const c = juego.camera;
       c.updateMatrixWorld();

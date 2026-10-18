@@ -65,7 +65,9 @@ export type DibujoDelPasaje =
   | "ruta"
   | "oido"
   | "papi"
-  | "estrellas";
+  | "estrellas"
+  | "meneo"
+  | "techo";
 
 /** Los colores: los del juego, cálidos y tranquilos. */
 const C = {
@@ -367,6 +369,60 @@ ${flecha(420, 236, 446, 284, C.marHondo, 6)}`,
 );
 
 /**
+ * **Dentro de la nube, el avión se menea** (punto 280): el avión de frente,
+ * dentro de la nube gris, con el aire que sube por un lado y baja por otro,
+ * las alas doblándose un poco arriba y abajo —están hechas para eso—, y el
+ * cinturón abrochado en el asiento.
+ */
+const MENEO = lamina(
+  `<path d="M30 70 a40 40 0 0 1 70 -30 a50 50 0 0 1 90 6 a40 40 0 0 1 60 34 z" fill="${C.blanco}" opacity=".7"/>
+<path d="M300 300 a40 40 0 0 1 60 -40 a46 46 0 0 1 80 20 a30 30 0 0 1 20 20z" fill="${C.blanco}" opacity=".7"/>
+<g class="sube">${flecha(70, 250, 70, 150, C.mar, 7)}${flecha(116, 270, 116, 190, C.mar, 6)}</g>
+<g class="baja">${flecha(364, 90, 364, 190, C.marHondo, 7)}${flecha(410, 70, 410, 150, C.marHondo, 6)}</g>
+<g class="izq"><path d="M240 168 C200 170 160 174 128 172" class="t" stroke-width="12" stroke="${C.terracota}"/></g>
+<g class="der"><path d="M240 168 C280 170 320 174 352 172" class="t" stroke-width="12" stroke="${C.terracota}"/></g>
+<circle cx="240" cy="168" r="30" fill="#d9d2c4" class="tf"/>
+<circle cx="240" cy="168" r="11" fill="${C.marHondo}"/>
+<path d="M240 138 v-34" class="t" stroke-width="10"/>
+<g transform="translate(240 268)"><rect x="-58" y="-22" width="116" height="44" rx="14" fill="${C.verde}" class="tf fino"/>
+<rect x="-14" y="-12" width="28" height="24" rx="5" fill="${C.amarillo}" class="tf fino"/></g>`,
+  `.izq{animation:ala 1.6s infinite ease-in-out;transform-origin:240px 168px}
+.der{animation:ala2 1.6s infinite ease-in-out;transform-origin:240px 168px}
+@keyframes ala{50%{transform:rotate(5deg)}}
+@keyframes ala2{50%{transform:rotate(-5deg)}}
+.sube{animation:sube 1.6s infinite ease-in-out}
+@keyframes sube{50%{transform:translateY(-8px)}}
+.baja{animation:baja 1.6s infinite ease-in-out}
+@keyframes baja{50%{transform:translateY(8px)}}`,
+  "#dfe3e4",
+);
+
+/**
+ * **Por debajo de las nubes** (punto 295): la capa arriba con su base
+ * marcada —el techo—, el avión justo debajo, la flecha de lo que falta
+ * hasta el mar, y la mirada que llega lejos, hasta la isla con su pista.
+ */
+const TECHO = lamina(
+  `<path d="M0 22 h480 v70 q-30 18 -60 4 q-30 18 -64 2 q-34 18 -66 2 q-32 18 -64 2 q-34 18 -66 2 q-32 18 -64 2 q-30 16 -56 4z" fill="${C.blanco}" class="tf fino"/>
+<path d="M10 110 h460" stroke="${C.gris}" stroke-width="4" stroke-dasharray="12 10"/>
+<path d="M0 268 h480 v52 h-480z" fill="${C.mar}"/>
+<path d="M330 268 q30 -54 70 -60 q36 6 64 60z" fill="${C.tierra}" class="tf fino"/>
+<path d="M344 262 h56" stroke="${C.tinta}" stroke-width="6"/>
+<g transform="translate(110 136)">
+<path d="M-40 0 q0 -8 10 -8 h48 q14 0 22 8 q-8 8 -22 8 h-48 q-10 0 -10 -8z" fill="${C.blanco}" class="tf fino"/>
+<path d="M-6 0 l-18 18 h10 l26 -18z M-30 -8 l-8 -16 h8 l14 16z" fill="${C.terracota}" stroke="${C.tinta}" stroke-width="3"/>
+</g>
+<g class="mide">${flecha(110, 160, 110, 262, C.amarillo, 8)}</g>
+<g class="mira"><path d="M150 140 L360 240" stroke="${C.verde}" stroke-width="6" stroke-dasharray="14 10" stroke-linecap="round"/>
+${flecha(330, 226, 362, 241, C.verde, 6)}</g>`,
+  `.mira{animation:mira 2s infinite ease-in-out}
+@keyframes mira{50%{opacity:.35}}
+.mide{animation:mide 2s infinite ease-in-out}
+@keyframes mide{50%{transform:translateY(4px)}}`,
+  C.cielo,
+);
+
+/**
  * **Más alto que el Teide, y más rápido que un coche**: la montaña con su
  * nieve y el avión por encima de la cumbre; y abajo, la flecha corta del
  * coche y la larga del avión.
@@ -569,6 +625,8 @@ ${estrellas}
 export const DIBUJOS_DEL_PASAJE: Readonly<Record<DibujoDelPasaje, string>> = {
   papi: PAPI,
   estrellas: ESTRELLAS,
+  meneo: MENEO,
+  techo: TECHO,
   cinturon: CINTURON,
   salidas: SALIDAS,
   mascara: MASCARA,

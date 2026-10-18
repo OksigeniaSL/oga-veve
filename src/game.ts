@@ -205,7 +205,7 @@ import {
   queLucesSeLeVen,
 } from "./world/luces-del-trafico";
 import { estrellasQueSeSenalan } from "./world/hitos-del-cielo";
-import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
+import { createSky, ponerNubes, radioDeLasNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
 import { ENTRE_RAYOS, luzDelRelampago, Relampagos } from "./world/relampago";
@@ -974,13 +974,32 @@ import {
   type PasoDeAterrizar,
 } from "./flight/inicio-aterrizar";
 import {
+  DESTINO_DEL_PASAJE,
   esAnuncioDeSiempre,
+  esDeAbajo,
   esDeFuera,
   LADO_DE_ARA,
+  planoParaVer,
   VueloDePasaje,
+  type ComoSeVe,
   type LecturaDelPasaje,
   type Plano,
+  type SitioDelPaisaje,
+  type VistaDelSitio,
 } from "./flight/inicio-pasaje";
+import {
+  asomadoHacia,
+  claridad,
+  ladoDe,
+  miradaDe,
+  ojosEnElMundo,
+  POR_LA_VENTANILLA,
+  SE_DISTINGUE,
+  seVeDesdeElAsiento,
+  seVeDesdeFuera,
+  type ElMundoQueSeMira,
+  type Punto as PuntoDelMundo,
+} from "./world/se-ve-desde-el-pasaje";
 import {
   enLosMandosDeLinea,
   VueloDeLinea,
@@ -1468,6 +1487,9 @@ import { esDibujoDelPasaje } from "./ui/dibujos-del-pasaje";
 import { ilustracionPedida } from "./ui/ilustraciones";
 import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
 import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
+
+/** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
+type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
@@ -6756,6 +6778,11 @@ export class Game {
       this.ponerLaVentanitaDeLaEscena(null);
       this.cinturonDeLaEscena = false;
       this.clavesDeLaEscena.clear();
+      // Y lo que se miró del paisaje en otra escena, olvidado. Ver `verDesdeElPasaje`.
+      this.hitosDeLaEscena.clear();
+      this.puntoDelPaisaje.clear();
+      this.vistoHace.clear();
+      this.paisajeDeLaToma = null;
       this.cabinaAntes = null;
       this.ritmoDeCabina = 0;
       this.comandante.callar();
@@ -6844,7 +6871,11 @@ export class Game {
    * rato que se tarda en leerla, que entonces el subtítulo es lo que queda.
    */
   private readonly vozDelInicio = {
-    decir: (linea: Linea, alAcabar: (esperaMas: number, cortada?: boolean) => void): void => {
+    decir: (
+      linea: Linea,
+      alAcabar: (esperaMas: number, cortada?: boolean) => void,
+      alEmpezar?: () => void,
+    ): void => {
       /*
        * **Un anuncio de la megafonía de siempre**, en la escena de pasaje: lo
        * monta el juego como en cualquier vuelo con pasaje. Ver
@@ -6874,6 +6905,8 @@ export class Game {
       this.textoDeLaEscena.set(linea, texto);
       const acabar = this.alAcabarLaFrase(linea.clave, texto, alAcabar);
       boca.decir(texto, linea.clave, "normal", linea.relleno, (que) => {
+        // Y cuándo empieza a oírse: la foto de una historia va con su voz.
+        if (que === "empieza") alEmpezar?.();
         if (que === "acaba") acabar(true);
         // Cortada por la escena no llega: ella ya no la espera. Ver `Inicio.callar`.
         else if (que === "cortada") acabar(true, true);
@@ -7035,6 +7068,15 @@ export class Game {
       tren: linea.tren,
       sobreElMar: this.terrain.sampleSurface(s.position.x, s.position.z) < 5,
       temperatura: temperaturaExterior(s.position.y, this.flight.aireDelDia()),
+      /*
+       * **Y lo que se ve del paisaje**, que la escena pregunta antes de
+       * nombrarlo: solo se nombra lo que se ve. Ver `verDesdeElPasaje`.
+       */
+      ver: (sitio, plano) => this.verDesdeElPasaje(sitio, plano),
+      // El meneo del aire, el mismo que mueve el avión. Ver `cuantoSeMueve`.
+      meneo: this.movimientoDelAire,
+      visibilidad: this.visibilidadDelParte,
+      senalero: this.gestoDelSenalero !== null,
     };
     const permisos = escena.paso(dt, lectura);
     const manos = tripulacion.paso(dt, linea, permisos);
@@ -16380,6 +16422,7 @@ export class Game {
     this.avisarDeLaTormenta();
     // Ya con la tormenta dentro: ver `causasDe` en `flight/turbulencia.ts`.
     const movimiento = cuantoSeMueve(aire);
+    this.movimientoDelAire = movimiento;
     this.atenderAlCinturon(movimiento, loDijo, loEncendio);
     this.prepararLaCabina(dt);
     this.hablarDeLosBaches(dt, movimiento);
@@ -19735,7 +19778,7 @@ export class Game {
      * alto. Es la misma corrección que ya se hizo en el tope de rodaje.
      */
     const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
-    const gesto = hayQuienSenale
+    const gesto: Gesto = hayQuienSenale
       ? this.senalero.paso(
           dt,
           {
@@ -19748,6 +19791,7 @@ export class Game {
           volviendo,
         )
       : null;
+    this.gestoDelSenalero = volviendo ? gesto : null;
     /*
      * **La red de quien se para antes de su sitio**: con el señalero todavía
      * llamando y el avión quieto, al rato se da la llegada por buena y sale la
@@ -20766,18 +20810,35 @@ export class Game {
      */
     if (this.inicio instanceof VueloDePasaje) {
       const escena = this.inicio;
+      /*
+       * **Y solo lo que se ve de verdad desde el asiento de Ara**, o con el
+       * avión por fuera: la capa del parte decía que el mar de nubes no tapa
+       * —es un SCT— y en la pantalla tapaba. Ver `verDesdeElPasaje`.
+       */
       const mirada = this.ventanilla.paso(
         dt,
         { ...this.momentoDeMirar(), alguienHabla: !escena.puedeSenalar },
         () => this.loQueSeMueve(),
+        (hito) => {
+          this.hitosDeLaEscena.set(hito.clave ?? hito.clase, hito);
+          return this.verDesdeElPasaje(`hito:${hito.clave ?? hito.clase}`).como !== null;
+        },
       );
       if (!mirada) return;
       const dicho = loQueSeDice(mirada, conGente, this.ventanilla.cuantos - 1);
       if (!dicho) return;
+      const orden = this.ventanilla.cuantos - 1;
+      /*
+       * Y la frase dicha desde los dos lados: se dice cuando haya hueco, y
+       * para entonces el avión puede haber girado. Ver `Senalado.porLado`.
+       */
+      const izquierda = loQueSeDice({ ...mirada, lado: "izquierda" }, conGente, orden);
+      const derecha = loQueSeDice({ ...mirada, lado: "derecha" }, conGente, orden);
       escena.senalar({
         que: mirada.hito.clave ?? mirada.hito.clase,
         lado: mirada.lado,
         dicho,
+        ...(izquierda && derecha ? { porLado: { izquierda, derecha } } : {}),
         historia: laHistoria(mirada, conGente),
       });
       return;
@@ -22537,8 +22598,16 @@ export class Game {
    * Ara quien escucha. Ver `oidoDe`.
    */
   private camaraDeLaEscena(escena: VueloDePasaje, dt: number): boolean {
-    const paso = this.fundidoDePlano.paso(escena.estado.plano, this.relojDePared);
+    const pedido = escena.estado;
+    const paso = this.fundidoDePlano.paso(
+      pedido.plano,
+      this.relojDePared,
+      // Otro sitio al fondo es otra toma, con su corte.
+      `${pedido.plano}|${pedido.paisaje ?? ""}`,
+    );
     this.ponerElVeloDelPlano(paso.velo);
+    // El sitio de la toma cambia con la cámara, con el velo puesto: no se ve saltar.
+    if (paso.cambio) this.paisajeDeLaToma = pedido.paisaje;
     if (!esDeFuera(paso.plano)) {
       const asiento = this.asientoDeAraAhora(paso.plano);
       this.contextoDeCamara.asientoDeLaEscena = asiento;
@@ -22553,6 +22622,15 @@ export class Game {
     const ctx = this.contextoDeLaEscena;
     ctx.largo = this.largoDelAvion;
     ctx.movimientoReducido = this.reducedMotion;
+    // Lo que se enseña al fondo, y el señalero con su mirada. Ver `cameras/escena.ts`.
+    ctx.paisaje = this.paisajeDeLaToma ? (this.puntoDelPaisaje.get(this.paisajeDeLaToma) ?? null) : null;
+    const g = this.senalero.grupo;
+    // `mirando` es hacia dónde viene el avión; él mira al revés, al avión que llega.
+    const viene = this.senalero.mirando;
+    ctx.senalero =
+      g.visible && g.parent === this.scene
+        ? { x: g.position.x, y: g.position.y, z: g.position.z, mira: { x: -viene.x, z: -viene.z } }
+        : null;
     const fuera = this.camaraDeFueraDeLaEscena;
     if (paso.cambio) fuera.empezar(paso.plano, state, ctx);
     this.contextoDeCamara.asientoDeLaEscena = null;
@@ -22573,11 +22651,272 @@ export class Game {
   }
 
   /** Lo que la cámara de fuera de la escena necesita del mundo. Se reutiliza. */
-  private readonly contextoDeLaEscena = {
+  private readonly contextoDeLaEscena: {
+    suelo: (x: number, z: number) => number;
+    largo: number;
+    movimientoReducido: boolean;
+    paisaje: PuntoDelMundo | null;
+    senalero: { x: number; y: number; z: number; mira: { x: number; z: number } } | null;
+  } = {
     suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
     largo: 30,
     movimientoReducido: false,
+    paisaje: null,
+    senalero: null,
   };
+
+  /** El sitio del paisaje que enseña la toma de ahora, para apuntarle. */
+  private paisajeDeLaToma: SitioDelPaisaje | null = null;
+
+  // ── Lo que se ve desde el asiento de Ara ─────────────────────────────
+
+  /** Cuánto se mueve el aire ahora, σ en m/s: el meneo. Ver `cuantoSeMueve`. */
+  private movimientoDelAire = 0;
+  /** El gesto del señalero en la llegada al puesto, o `null`. */
+  private gestoDelSenalero: Gesto = null;
+  /**
+   * **Los hitos que ha mirado la escena**, por su clave: los del vuelo y los
+   * que se mueven —un barco—, que no están en ninguna lista fija.
+   */
+  private readonly hitosDeLaEscena = new Map<string, Hito>();
+  /** **Por dónde se vio cada sitio la última vez**: adonde apunta la cámara. */
+  private readonly puntoDelPaisaje = new Map<SitioDelPaisaje, PuntoDelMundo>();
+  /** Lo último que se contestó de cada sitio, y cuándo: se pregunta mucho por fotograma. */
+  private readonly vistoHace = new Map<string, { t: number; v: VistaDelSitio }>();
+  /** La ladera de la isla de llegada, una vez: lo de debajo de las nubes. */
+  private laderaDeLlegada: PuntoDeUnSitio | null = null;
+
+  /** **El mundo como lo mira la cuenta**: el relieve, la nube que se pinta y la bruma. */
+  private readonly mundoQueSeMira: ElMundoQueSeMira = {
+    suelo: (x, z) => this.terrain.cotaConocida(x, z),
+    nubes: (desde, hasta) => this.sky.transparenciaEntre(desde, hasta),
+    dentro: (p) => cuantoDentro(this.sky.densidadEn(p.x, p.y, p.z)),
+    bruma: (y) => this.sky.brumaDesde(y),
+  };
+
+  /**
+   * **Si un sitio del paisaje se ve ahora, y cómo**: por la ventanilla de Ara
+   * desde el asiento, con la cara contra el cristal mirando hacia él —o hacia abajo, si
+   * es lo de debajo— o con el avión por fuera y el sitio al fondo. Es lo que
+   * pregunta la escena de pasaje antes de nombrar nada: Anaga y La Orotava
+   * debajo del mar de nubes, La Gomera tapada, la isla de llegada con el avión
+   * metido en una nube y la costa por la ventanilla de al lado. Ver
+   * `world/se-ve-desde-el-pasaje.ts` y `SitioDelPaisaje`.
+   *
+   * Con `plano`, solo desde ese plano. Se recuerda medio segundo de pared: la
+   * escena lo pregunta en cada paso y el paisaje no cambia tan deprisa.
+   */
+  private verDesdeElPasaje(sitio: SitioDelPaisaje, plano?: Plano): VistaDelSitio {
+    const clave = `${sitio}|${plano ?? ""}`;
+    const antes = this.vistoHace.get(clave);
+    const ahora = this.relojDePared;
+    if (antes && ahora - antes.t < 0.5) return antes.v;
+    const v = this.mirarElSitio(sitio, plano);
+    this.vistoHace.set(clave, { t: ahora, v });
+    return v;
+  }
+
+  private mirarElSitio(sitio: SitioDelPaisaje, plano?: Plano): VistaDelSitio {
+    const nada: VistaDelSitio = { como: null, lado: null };
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA] ?? null;
+    const s = this.flight.state;
+    const avion = { position: s.position, orientation: s.orientation, largo: this.largoDelAvion };
+    const mundo = this.mundoQueSeMira;
+    const c = this.cabinaDePasaje;
+    const cortina = ara ? cortinaDe(ara.ventanilla, c.tipoDeVentanilla, c.tapan[0]) : undefined;
+    const visto = (como: ComoSeVe, p: PuntoDelMundo, lado: "izquierda" | "derecha"): VistaDelSitio => {
+      this.puntoDelPaisaje.set(sitio, p);
+      return { como, lado };
+    };
+    /*
+     * **Lo de debajo**: hacia donde miran los ojos —desde el asiento, o con la cara
+     * contra el cristal y mirando abajo—, si llega al mar o a la tierra que
+     * se dice. No se enseña desde fuera: es lo que se ve desde el asiento.
+     */
+    if (esDeAbajo(sitio)) {
+      if (!ara) return nada;
+      const poses: [ComoSeVe, AsientoDePasaje][] =
+        plano === "asomado-abajo"
+          ? [["asomado", ara.poses.abajo]]
+          : plano === "ventanilla"
+            ? [["ventanilla", ara.poses.sentada]]
+            : [
+                ["ventanilla", ara.poses.sentada],
+                ["asomado", ara.poses.abajo],
+              ];
+      for (const [como, pose] of poses) {
+        const p = this.dondeMiran(pose, avion);
+        if (!p) continue;
+        /*
+         * **El mar de nubes**: se ve si los ojos están por encima de la capa,
+         * fuera de ella, y lo que hay debajo no se distingue porque lo tapa
+         * la nube que se pinta —no la bruma ni un monte—.
+         */
+        if (sitio === "nubes-abajo") {
+          const ojo = ojosEnElMundo(pose, avion);
+          const capa = this.capaDeNubes;
+          if (!capa || ojo.y < capa.techo || mundo.dentro(ojo) >= 0.35) continue;
+          if (mundo.nubes(ojo, p) < 0.85 && claridad(ojo, p, mundo) < SE_DISTINGUE) return visto(como, p, LADO_DE_ARA);
+          continue;
+        }
+        const esMar = this.terrain.sampleSurface(p.x, p.z) < 5;
+        if (esMar !== (sitio === "mar-abajo")) continue;
+        if (this.casiTodo(p, avion, (q) => seVeDesdeElAsiento(pose, q, avion, mundo, POR_LA_VENTANILLA, cortina)))
+          return visto(como, p, LADO_DE_ARA);
+      }
+      return nada;
+    }
+    const sitios = this.puntosDelPaisaje(sitio);
+    if (!sitios) return nada;
+    const puntos = [...sitios.puntos]
+      .sort((a, b) => Math.hypot(a.x - s.position.x, a.z - s.position.z) - Math.hypot(b.x - s.position.x, b.z - s.position.z))
+      .slice(0, 3);
+    const vale = (como: ComoSeVe): boolean => !plano || planoParaVer(como, sitio) === plano;
+    // Lo que es suelo —un valle, una costa— se tiene que ver casi entero. Ver `casiTodo`.
+    const seVeAsi = (p: PuntoDeUnSitio, prueba: (q: PuntoDelMundo) => boolean): boolean =>
+      p.deSuelo ? this.casiTodo(p, avion, prueba) : prueba(p);
+    const desdeFuera = (p: PuntoDeUnSitio): boolean =>
+      seVeAsi(p, (q) => seVeDesdeFuera(q, avion, mundo, sitios.fuera));
+    /*
+     * **Lo que señala la comandante, primero desde fuera**: con el avión
+     * delante y el sitio al fondo. Por una ventanilla, Anaga y La Orotava
+     * «casi no se ven: hace falta un plano exterior que los enseñe» (Enrique,
+     * 18-10-2026); por la ventanilla, solo si desde fuera no se puede.
+     */
+    if (sitio.startsWith("hito:") && vale("fuera"))
+      for (const p of puntos) if (desdeFuera(p)) return visto("fuera", p, ladoDe(p, avion));
+    if (ara && vale("ventanilla"))
+      for (const p of puntos)
+        if (seVeAsi(p, (q) => seVeDesdeElAsiento(ara.poses.sentada, q, avion, mundo, sitios.ventanilla, cortina)))
+          return visto("ventanilla", p, ladoDe(p, avion));
+    if (ara && vale("asomado"))
+      for (const p of puntos) {
+        const pose = asomadoHacia(ara.ventanilla, LADO_DE_ARA, p, avion);
+        if (seVeAsi(p, (q) => seVeDesdeElAsiento(pose, q, avion, mundo, sitios.ventanilla, cortina)))
+          return visto("asomado", p, ladoDe(p, avion));
+      }
+    if (vale("fuera"))
+      for (const p of puntos) if (desdeFuera(p)) return visto("fuera", p, ladoDe(p, avion));
+    return nada;
+  }
+
+  /**
+   * **Si de lo que es suelo se ve casi todo**, no un punto suelto: un valle o
+   * una costa no se ven por un hueco del mar de nubes. Medido en el banco: el
+   * valle de La Orotava se daba por visto porque la recta hasta su punto
+   * pasaba por un hueco, y en la imagen era un campo de nubes con manchas
+   * oscuras. Así que se mira el punto y cuatro más a su alrededor —a un
+   * cuatro por ciento de la distancia, lo que mide un valle visto desde ahí—,
+   * y tienen que verse el punto y tres de los cuatro.
+   */
+  private casiTodo(p: PuntoDelMundo, avion: { position: Vector3 }, prueba: (q: PuntoDelMundo) => boolean): boolean {
+    if (!prueba(p)) return false;
+    const lejos = Math.hypot(p.x - avion.position.x, p.z - avion.position.z);
+    const r = Math.max(300, Math.min(2000, lejos * 0.04));
+    let si = 0;
+    for (const [dx, dz] of [
+      [r, 0],
+      [-r, 0],
+      [0, r],
+      [0, -r],
+    ] as const) {
+      const x = p.x + dx;
+      const z = p.z + dz;
+      if (prueba({ x, y: Math.max(0, this.terrain.cotaConocida(x, z) ?? 0) + 30, z })) si++;
+    }
+    return si >= 3;
+  }
+
+  /**
+   * **Adonde llegan los ojos de un asiento**: la recta de su mirada hasta el
+   * mar o el terreno, o `null` si en treinta kilómetros no llega a nada.
+   */
+  private dondeMiran(asiento: AsientoDePasaje, avion: { position: Vector3; orientation: Quaternion; largo: number }): PuntoDelMundo | null {
+    const ojo = ojosEnElMundo(asiento, avion);
+    const d = miradaDe(asiento, avion);
+    if (d.y > -0.01) return null;
+    let antes = 0;
+    for (let t = 100; t <= 30_000; t += Math.max(100, t * 0.08)) {
+      const x = ojo.x + d.x * t;
+      const y = ojo.y + d.y * t;
+      const z = ojo.z + d.z * t;
+      const suelo = Math.max(0, this.terrain.cotaConocida(x, z) ?? 0);
+      if (y <= suelo) {
+        // Entre el paso de antes y este: la mitad, que a esta escala sobra.
+        const m = (antes + t) / 2;
+        const px = ojo.x + d.x * m;
+        const pz = ojo.z + d.z * m;
+        return { x: px, y: Math.max(0, this.terrain.cotaConocida(px, pz) ?? 0) + 5, z: pz };
+      }
+      antes = t;
+    }
+    return null;
+  }
+
+  /**
+   * **Por dónde se mira cada sitio con nombre**, y hasta dónde se distingue
+   * por la ventanilla y desde fuera. Los hitos, por sus puntos —la cumbre, o
+   * el suelo a treinta metros—; la isla de llegada, por su cumbre, una ladera
+   * por debajo de las nubes y la costa del aeropuerto; y la costa, por la
+   * costa y la ladera.
+   */
+  private puntosDelPaisaje(sitio: SitioDelPaisaje): { puntos: PuntoDeUnSitio[]; ventanilla: number; fuera: number } | null {
+    const enElSuelo = (x: number, z: number, ele: number | null): PuntoDeUnSitio => ({
+      x,
+      y: ele ?? Math.max(0, this.terrain.cotaConocida(x, z) ?? 0) + 30,
+      z,
+      // Sin cota, es el suelo mismo: un valle, un pueblo, la costa.
+      deSuelo: ele === null,
+    });
+    if (sitio.startsWith("hito:")) {
+      const que = sitio.slice(5);
+      const hito = this.hitosDeLaEscena.get(que) ?? this.hitosDelVuelo.find((h) => h.clave === que);
+      if (!hito) return null;
+      const alcance = hito.alcance ?? 30_000;
+      return {
+        puntos: [enElSuelo(hito.x, hito.z, hito.ele), ...(hito.otros ?? []).map((o) => enElSuelo(o.x, o.z, o.ele))],
+        // Lo grande —el Teide, una isla— se distingue por un cristal más lejos.
+        ventanilla: (hito.peso ?? 1) >= 3 ? Math.min(alcance, 45_000) : POR_LA_VENTANILLA,
+        fuera: alcance,
+      };
+    }
+    const llegada = this.vecinos.find((v) => v.base.id === DESTINO_DEL_PASAJE);
+    if (!llegada) return null;
+    const pista = llegada.campo.pista;
+    const costa = enElSuelo(pista.x, pista.z, null);
+    const cumbre = this.hitosDelVuelo.find((h) => h.clave === "taburiente");
+    const ladera = this.laderaDeLaLlegada(costa, cumbre ?? null);
+    if (sitio === "costa-de-llegada")
+      return { puntos: [costa, ...(ladera ? [ladera] : [])], ventanilla: 40_000, fuera: 45_000 };
+    return {
+      puntos: [...(cumbre ? [enElSuelo(cumbre.x, cumbre.z, cumbre.ele)] : []), ...(ladera ? [ladera] : []), costa],
+      ventanilla: 50_000,
+      fuera: 70_000,
+    };
+  }
+
+  /**
+   * **Una ladera de la isla de llegada por debajo de las nubes**: subiendo de
+   * la costa del aeropuerto hacia la cumbre, el primer sitio a novecientos
+   * metros. Desde debajo del mar de nubes es lo que se ve de sus montañas,
+   * con la cumbre metida en la nube.
+   */
+  private laderaDeLaLlegada(costa: PuntoDelMundo, cumbre: Hito | null): PuntoDeUnSitio | null {
+    if (this.laderaDeLlegada) return this.laderaDeLlegada;
+    if (!cumbre) return null;
+    // Y se guarda solo cuando se encuentra: el relieve de allí puede no haber llegado todavía.
+    for (let i = 1; i <= 80; i++) {
+      const f = i / 80;
+      const x = costa.x + (cumbre.x - costa.x) * f;
+      const z = costa.z + (cumbre.z - costa.z) * f;
+      const cota = this.terrain.cotaConocida(x, z);
+      if (cota !== null && cota >= 900) {
+        this.laderaDeLlegada = { x, y: cota + 30, z, deSuelo: true };
+        break;
+      }
+    }
+    return this.laderaDeLlegada ?? null;
+  }
 
   /**
    * **El asiento de Ara con la pose del plano**: sentada, o pegada al cristal
@@ -22588,6 +22927,17 @@ export class Game {
   private asientoDeAraAhora(plano: Plano): AsientoDePasaje | null {
     const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
     if (!ara) return null;
+    /*
+     * **Con la cara contra el cristal, mirando hacia lo que se nombra**: la
+     * cabeza gira hacia el sitio, hasta donde da el cuello, y lo sigue
+     * mientras el avión avanza. Ver `asomadoHacia`.
+     */
+    if (plano === "asomado-paisaje") {
+      const p = this.paisajeDeLaToma ? this.puntoDelPaisaje.get(this.paisajeDeLaToma) : undefined;
+      const s = this.flight.state;
+      if (p) return asomadoHacia(ara.ventanilla, LADO_DE_ARA, p, { position: s.position, orientation: s.orientation, largo: this.largoDelAvion });
+      return ara.poses.motor;
+    }
     return plano === "asomado-motor" ? ara.poses.motor : plano === "asomado-abajo" ? ara.poses.abajo : ara.poses.sentada;
   }
 
@@ -22638,6 +22988,66 @@ export class Game {
     // En la escena de pasaje, el de Ara con su pose: ver `camaraDeLaEscena`.
     const deAra = this.inicio instanceof VueloDePasaje ? this.contextoDeCamara.asientoDeLaEscena : null;
     return deAra ?? asientoDeLaVista(pasaje, ladoDelPasaje(modo), esSobreElAla(modo));
+  }
+
+  /**
+   * **Lo nombrado del paisaje, medido con lo que se pinta ahora**: dónde cae
+   * el sitio en la imagen de la cámara de ahora, si se ve por el cristal
+   * cuando se mira por la ventanilla, si el ojo está metido en una nube y
+   * cuánta nube hay en la recta hasta él, tomada a pasos con la densidad del
+   * dibujo —otra cuenta que la de las láminas, para que el banco no se mida
+   * con la misma regla—. Para el banco: ver `scripts/verificar-inicio-3.mjs`.
+   */
+  paisajeParaBanco(sitio: string): {
+    readonly punto: PuntoDelMundo;
+    readonly x: number;
+    readonly y: number;
+    readonly delante: boolean;
+    readonly porElCristal: boolean | null;
+    readonly ojoEnNube: number;
+    readonly nubeEnMedio: number;
+    readonly distancia: number;
+  } | null {
+    /*
+     * Lo de debajo es adonde llegan los ojos ahora, que el avión avanza: se
+     * vuelve a buscar con la pose de ahora. Lo demás no se mueve.
+     */
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    const plano = this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null;
+    const s = this.flight.state;
+    const pose = ara && plano && !esDeFuera(plano) ? this.asientoDeAraAhora(plano) : null;
+    const ahora =
+      esDeAbajo(sitio as SitioDelPaisaje) && pose
+        ? this.dondeMiran(pose, { position: s.position, orientation: s.orientation, largo: this.largoDelAvion })
+        : null;
+    const punto = ahora ?? this.puntoDelPaisaje.get(sitio as SitioDelPaisaje);
+    if (!punto) return null;
+    const c = this.camera;
+    c.updateMatrixWorld();
+    const p = new Vector3(punto.x, punto.y, punto.z);
+    const delante = p.clone().applyMatrix4(c.matrixWorldInverse).z < 0;
+    p.project(c);
+    const ojo = c.position;
+    const d = Math.hypot(punto.x - ojo.x, punto.y - ojo.y, punto.z - ojo.z);
+    // Los metros de nube densa que cruza la recta, hasta donde se pintan las nubes.
+    let nube = 0;
+    const paso = 25;
+    const hasta = Math.min(d, radioDeLasNubes(this.scenario.size * 4));
+    for (let t = paso; t < hasta; t += paso) {
+      const f = t / d;
+      const densidad = this.sky.densidadEn(ojo.x + (punto.x - ojo.x) * f, ojo.y + (punto.y - ojo.y) * f, ojo.z + (punto.z - ojo.z) * f);
+      if (densidad > 0.3) nube += paso;
+    }
+    return {
+      punto,
+      x: p.x,
+      y: p.y,
+      delante,
+      porElCristal: this.seVePorLaVentanillaParaBanco(punto),
+      ojoEnNube: this.sky.enLaNube,
+      nubeEnMedio: nube,
+      distancia: d,
+    };
   }
 
   /**

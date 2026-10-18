@@ -207,6 +207,11 @@ export class LoQueSeVe {
     dt: number,
     momento: MomentoDeMirar,
     deAhora?: () => readonly Hito[],
+    /**
+     * Y lo que además tiene que cumplir lo que se cuente: en la escena de
+     * pasaje, que se vea de verdad desde el asiento de Ara. Ver `queSeVe`.
+     */
+    ademas?: (hito: Hito) => boolean,
   ): Mirada | null {
     if (enFaseDeTrabajo(momento)) {
       this.reloj = 0;
@@ -229,6 +234,7 @@ export class LoQueSeVe {
       this.suelo,
       this.capa,
       momento.conPasaje ? CAMPO_DEL_PASAJE : CAMPO_DE_LA_CABINA,
+      ademas,
     );
     if (!mirada) return null;
     this.dichos.add(mirada.hito.nombre);

@@ -3703,6 +3703,8 @@ export const ES_PY = {
   "inicio.dibujo.oido": "El oído: al bajar el aire empuja, y al tragar o bostezar se destapa.",
   "inicio.dibujo.papi": "Las cuatro luces al lado de la pista: dos blancas y dos rojas.",
   "inicio.dibujo.estrellas": "Los telescopios en lo alto de La Palma, mirando las estrellas.",
+  "inicio.dibujo.meneo": "Dentro de la nube, el aire sube y baja, las alas se doblan un poco y el cinturón va puesto.",
+  "inicio.dibujo.techo": "La base de las nubes, el avión justo debajo, lo que falta hasta el mar y lo lejos que se ve.",
   /*
    * **El kit de viaje** (punto 275 de la lista de Enrique): la tripulante se
    * lo trae a Ara en la bajada, que es el tramo largo, con dos juegos dentro,
@@ -3739,6 +3741,44 @@ export const ES_PY = {
   "inicio.ara.pasaje.kit.camino.ayuda": "Ese número viene después. Primero tocá el que brilla.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":
     "Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.",
+  /*
+   * **Lo que se ve, cuando pasa** (18-10-2026, puntos 280, 282 y 295 de la
+   * lista de Enrique). Todo comprobado, y nada que diga si Ara es niño o niña.
+   *
+   * - **Dentro de la nube, el meneo**: el aire de dentro de la nube sube y
+   *   baja, y las alas están hechas para doblarse un poco, así que se mueven;
+   *   por eso se lleva el cinturón. Lo cuenta la comandante con calma, para
+   *   todo el pasaje: de los baches y del cinturón se habla también subiendo.
+   * - **El Teide, presentado** la primera vez que se nombra: un volcán, la
+   *   montaña más alta de España, de unos 3.715 m (MITECO, Parque Nacional
+   *   del Teide; ver `docs/historias/fuentes.md`).
+   * - **Por debajo de las nubes**: su parte de abajo es la base, y cuando
+   *   tapan más de medio cielo se llama techo —la definición de la OACI—; los
+   *   números van solo cuando son los de hoy, y la visibilidad se mide en
+   *   kilómetros. Lo cuenta la tripulante, en persona y con el tú de
+   *   Canarias: la comandante, por debajo de los diez mil pies, solo habla
+   *   del vuelo.
+   */
+  "inicio.ara.pasaje.meneo": "¡Uy, el avión se mueve un poquito! Y el ala sube y baja, como si saludara.",
+  "inicio.mama.pasaje.meneo":
+    "Señores pasajeros, les habla la comandante. Lo que notan es el aire de dentro de la nube, que sube y baja: es normal. Las alas están hechas para doblarse un poco, y por eso se mueven. Y por eso llevamos el cinturón abrochado.",
+  "inicio.ara.pasaje.meneoBien": "¡Entonces es normal que se mueva! Y yo llevo el cinturón puesto, bien ajustado.",
+  "inicio.mama.pasaje.teide":
+    "Señores pasajeros, para quienes no lo conozcan: el Teide es el volcán de Tenerife, y con sus tres mil setecientos quince metros es la montaña más alta de España.",
+  "inicio.ara.pasaje.bajoLasNubes":
+    "¡Salimos por abajo de las nubes! Ahora las tenemos arriba, como un techo, y abajo se ve lejísimos.",
+  "inicio.tripulacion.pasaje.cerca.techo":
+    "¿Ves? La parte de abajo de las nubes se llama base. Y cuando tapan más de medio cielo, los pilotos la llaman techo.",
+  "inicio.tripulacion.pasaje.cerca.techoHoy":
+    "Hoy la base está a unos cinco mil pies, mil quinientos metros. Vamos justo debajo, así que hasta el mar nos falta más o menos eso.",
+  "inicio.tripulacion.pasaje.cerca.visibilidad":
+    "Por debajo se ve lejísimos, más de diez kilómetros: eso es la visibilidad. Para aterrizar, los pilotos tienen que ver la pista a tiempo.",
+  "inicio.ara.pasaje.techo":
+    "Mamá me enseñó que la parte de abajo de las nubes se llama base, ¡y que para aterrizar hay que ver la pista a tiempo!",
+  "inicio.ara.pasaje.marDeNubes":
+    "¡Mirá para abajo: nubes y más nubes, como un mar de algodón! Por eso le dicen mar de nubes.",
+  "inicio.ara.pasaje.sigueLaNube":
+    "Seguimos adentro de la nube y el avión se mueve un poquito. ¡Pero ya sé que es normal, y tengo el cinturón puesto!",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

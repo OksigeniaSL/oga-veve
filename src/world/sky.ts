@@ -67,9 +67,11 @@ import {
   cuantoDentro,
   densidadEnLaCapa,
   type DibujoDeLaCapa,
+  opacidadDeLaLamina,
   RAMPA_DE_LA_NUBE,
   ruidoDeNube,
   SE_VE_DENTRO,
+  transparenciaDeLaCapa,
   umbralDeLaNube,
 } from "./capa-de-nubes";
 import {
@@ -1170,6 +1172,19 @@ export interface SkyRig {
    * que se pinta. Ver `densidadEnLaCapa`.
    */
   densidadEn(x: number, y: number, z: number): number;
+  /**
+   * **Cuánto deja ver la capa de nubes de un punto a otro**, de 0 a 1, con lo
+   * que se pinta: el ojo en `desde`. Ver `transparenciaDeLaCapa`.
+   */
+  transparenciaEntre(
+    desde: { readonly x: number; readonly y: number; readonly z: number },
+    hasta: { readonly x: number; readonly y: number; readonly z: number },
+  ): number;
+  /**
+   * **La bruma con el ojo a esa altitud**: la densidad de la niebla que se
+   * pinta, sin lo de estar dentro de una nube. Ver `alPaso`.
+   */
+  brumaDesde(y: number): number;
   /** Cuánto está el ojo dentro de la nube ahora, de 0 a 1. Ver `alPaso`. */
   readonly enLaNube: number;
   /** El color de la nube vista desde donde está el ojo, en lineal. */
@@ -1716,6 +1731,24 @@ export function createSky(scenario: Scenario): SkyRig {
       const dibujo = bancoDeNubes.userData.dibujo as DibujoDeLaCapa | undefined;
       return capaPuesta() && dibujo ? densidadEnLaCapa(dibujo, x, y, z) : 0;
     },
+    transparenciaEntre(desde, hasta) {
+      const capa = capaPuesta();
+      const dibujo = bancoDeNubes.userData.dibujo as DibujoDeLaCapa | undefined;
+      if (!capa || !dibujo) return 1;
+      return transparenciaDeLaCapa(
+        dibujo,
+        opacidadDeLaLamina(capa.tapadura),
+        radioDeLasNubes(scenario.size * 4),
+        DESVANECE_DESDE,
+        desde,
+        hasta,
+      );
+    },
+    brumaDesde(y: number) {
+      const capa = capaPuesta();
+      const subido = capa ? suave(capa.base, capa.techo, y) : 1;
+      return Math.max(niebla.bruma * brumaALaAltura(y), niebla.minimo * (capa ? 1 - subido : 1));
+    },
     get enLaNube() {
       return enLaNube;
     },
@@ -1984,7 +2017,7 @@ export function ponerNubes(
   banco.children.forEach((lamina, i) => {
     lamina.position.y = i * separacion;
     const mat = (lamina as Mesh).material as MeshBasicMaterial;
-    mat.opacity = 0.18 + tapadura * 0.62;
+    mat.opacity = opacidadDeLaLamina(tapadura);
   });
   const umbral = banco.userData.umbral as { value: number } | undefined;
   const corte = umbralDeLaNube(tapadura);

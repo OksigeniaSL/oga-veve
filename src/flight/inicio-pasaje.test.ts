@@ -31,7 +31,10 @@ import {
   VueloDePasaje,
   type LecturaDelPasaje,
   type MomentoDelPasaje,
+  type Plano,
   type Senalado,
+  type SitioDelPaisaje,
+  type VistaDelSitio,
 } from "./inicio-pasaje";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
 import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
@@ -457,6 +460,7 @@ describe("cada cosa en su momento del vuelo", () => {
       "bajada",
       "oidos",
       "kit",
+      "techo",
       "isla",
       "aproximacion",
       "tcpAterrizaje",
@@ -977,11 +981,17 @@ class VueloMedido {
     }
   }
 
+  /** Si va metido en la nube: subiendo y bajando, en lo más espeso del mar de nubes. */
+  get enLaNube(): boolean {
+    return (
+      (this.tramo === "subida" && this.altitud > 1600 && this.altitud < 1810) ||
+      (this.tramo === "bajada" && this.altitud > 1650 && this.altitud < 1810)
+    );
+  }
+
   get lectura(): LecturaDelPasaje {
     const nubes = { base: 1532, techo: 1982 };
-    const enLaNube =
-      (this.tramo === "subida" && this.altitud > 1600 && this.altitud < 1810) ||
-      (this.tramo === "bajada" && this.altitud > 1650 && this.altitud < 1810);
+    const enLaNube = this.enLaNube;
     return {
       tramo: this.tramo,
       enTramo: this.enTramo,
@@ -1003,8 +1013,17 @@ class VueloMedido {
       sobreElMar: this.sobreElMar,
       // Un día de verano en Canarias: diez grados más que la atmósfera estándar.
       temperatura: 25 - 6.5 * (this.altitud / 1000),
+      // Dentro de la nube el aire sube y baja: turbulencia ligera. Ver `EN_LA_NUBE`.
+      meneo: enLaNube ? 0.8 : 0.1,
+      visibilidad: 10000,
+      // Y el señalero, haciendo señas en los últimos noventa metros hasta el puesto.
+      senalero: (this.tramo === "al-puesto" && this.enTramo > 200) || this.tramo === "aparcado",
+      ...(this.ver ? { ver: this.ver } : {}),
     };
   }
+
+  /** Lo que se ve del paisaje, si se le pone. Ver `loQueSeVeEnElMedido`. */
+  ver?: LecturaDelPasaje["ver"];
 }
 
 /** Lo que el juego señala por la ventanilla, y cuándo lo vio en el banco, s. */
@@ -1423,5 +1442,380 @@ describe("el kit de viaje, en el vuelo", () => {
     // Desde la aproximación hasta recogerlo, pausado.
     const aprox = cuando(r.dichas, "comandante.aproximacion");
     expect(r.pausas.filter((p) => p.t > aprox + DT).every((p) => !p.juego)).toBe(true);
+  });
+});
+
+// ── Lo que se nombra del paisaje, solo si se ve ──────────────────────────
+
+/*
+ * **Solo se nombra lo que se ve** (18-10-2026, puntos 281, 286 y 287). Enrique
+ * encontró cinco veces en un vuelo la escena nombrando lo que por la
+ * ventanilla de Ara no se veía. Aquí el vuelo medido con un mundo de mentira
+ * que se porta como el mar de nubes del alisio —base a 1.532 m y techo a
+ * 1.982 m—: dentro de la nube no se ve nada; desde encima, solo lo que asoma
+ * por encima de la capa, el Teide y las cumbres de La Palma; y desde debajo,
+ * el mar, la costa y lo que no tapa la nube. Lo que se comprueba no lo mira la
+ * escena: lo mira la voz, con ese mundo, en el instante en que empieza cada
+ * frase que nombra algo.
+ */
+
+const NADA: VistaDelSitio = { como: null, lado: null };
+const BASE = 1532;
+const TECHO = 1982;
+
+/** Lo que asoma por encima del mar de nubes: el Teide y las cumbres de La Palma. */
+const ASOMA = new Set(["teide", "taburiente"]);
+
+/** **Lo que se ve en el vuelo medido**, con el mar de nubes. Ver la cabecera. */
+function loQueSeVeEnElMedido(v: VueloMedido): (sitio: SitioDelPaisaje, plano?: Plano) => VistaDelSitio {
+  return (sitio, plano) => {
+    if (v.enLaNube) return NADA;
+    const debajo = v.altitud < BASE;
+    const encima = v.altitud > TECHO;
+    const como = plano ? (esDeFuera(plano) ? "fuera" : plano === "ventanilla" ? "ventanilla" : "asomado") : null;
+    const visto = (c: "ventanilla" | "asomado" | "fuera", lado: "izquierda" | "derecha" = "izquierda"): VistaDelSitio => ({
+      como: como ?? c,
+      lado,
+    });
+    if (sitio === "mar-abajo") return v.sobreElMar && debajo ? visto("asomado") : NADA;
+    if (sitio === "nubes-abajo") return encima ? visto("asomado") : NADA;
+    if (sitio === "tierra-abajo") return !v.sobreElMar && debajo ? visto("ventanilla") : NADA;
+    if (sitio === "isla-de-llegada")
+      return v.falta < 50000 && (debajo || encima) ? visto(v.falta > 30000 ? "fuera" : "ventanilla") : NADA;
+    if (sitio === "costa-de-llegada") return v.falta < 40000 && debajo ? visto("fuera") : NADA;
+    const que = sitio.slice("hito:".length);
+    return ASOMA.has(que) ? (encima || debajo ? visto("ventanilla") : NADA) : debajo ? visto("ventanilla") : NADA;
+  };
+}
+
+/** **Qué nombra cada frase**, para mirarlo con el mundo y no con la escena. */
+const NOMBRA: Readonly<Record<string, SitioDelPaisaje>> = {
+  "inicio.ara.pasaje.volando": "tierra-abajo",
+  "inicio.ara.pasaje.sobreLaIsla": "tierra-abajo",
+  "inicio.ara.pasaje.marArriba": "mar-abajo",
+  "inicio.ara.pasaje.marQuieto": "mar-abajo",
+  "inicio.ara.pasaje.marAbajo": "mar-abajo",
+  "inicio.ara.pasaje.cerquita": "mar-abajo",
+  "inicio.ara.pasaje.marDeNubes": "nubes-abajo",
+  "inicio.ara.pasaje.isla": "isla-de-llegada",
+  "inicio.ara.pasaje.islaCerca": "costa-de-llegada",
+};
+
+interface VueloConPaisaje extends Medido {
+  /** Lo que nombró cada frase al empezar a sonar, y si se veía en el mundo. */
+  readonly nombrado: { clave: string; sitio: SitioDelPaisaje; seVeia: boolean; enLaNube: boolean; t: number }[];
+}
+
+/**
+ * **El vuelo medido, con el mar de nubes y lo señalado de verdad**: lo de la
+ * ventanilla, cuando lo vio el banco —también Anaga y La Orotava, que van
+ * debajo de la nube, y La Gomera—. Con `vuelo`, otro vuelo medido.
+ */
+function volarConElPaisaje(vuelo: VueloMedido = new VueloMedido()): VueloConPaisaje {
+  let t = 0;
+  const ver = loQueSeVeEnElMedido(vuelo);
+  vuelo.ver = ver;
+  const v = vozQueTarda(loQueDura, () => t);
+  const nombrado: VueloConPaisaje["nombrado"] = [];
+  const escena = new VueloDePasaje(
+    {
+      decir: (l, alAcabar, alEmpezar) => {
+        const hito = l.clave === "ventanilla" ? /Ese es (\w+)/.exec(l.texto ?? "")?.[1] : undefined;
+        const sitio: SitioDelPaisaje | undefined = NOMBRA[l.clave] ?? (hito ? `hito:${hito}` : undefined);
+        if (sitio) nombrado.push({ clave: l.clave, sitio, seVeia: ver(sitio).como !== null, enLaNube: vuelo.enLaNube, t });
+        v.voz.decir(l, alAcabar);
+        alEmpezar?.();
+      },
+      callar: () => v.voz.callar(),
+    },
+    { lado: "izquierda" },
+  );
+  const porVer = [...LO_QUE_SE_VIO];
+  const tramos: { t: number; tramo: TramoDeLinea }[] = [];
+  for (; t < 4000; t += DT) {
+    v.tic();
+    if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
+    vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (escena.estado.puedeSeguir) escena.seguir();
+    if (escena.estado.terminado) break;
+  }
+  return { escena, vuelo, dichas: v.dichas, tramos, nombrado };
+}
+
+describe("lo que se nombra del paisaje, solo si se ve", () => {
+  const m = volarConElPaisaje();
+  const e = m.escena.estado;
+  const claves = m.dichas.map((d) => d.linea.clave);
+
+  it("nada del paisaje se nombra sin verse: ni debajo del mar de nubes, ni con el avión dentro de una nube", () => {
+    expect(m.nombrado.length).toBeGreaterThan(4);
+    for (const n of m.nombrado) {
+      expect(n.seVeia, `${n.clave} (${n.sitio}) a los ${n.t.toFixed(0)} s`).toBe(true);
+      expect(n.enLaNube, `${n.clave} a los ${n.t.toFixed(0)} s`).toBe(false);
+    }
+    // Y la escena lo apunta con desde dónde se veía.
+    expect(e.nombrados.length).toBeGreaterThan(3);
+    for (const n of e.nombrados) expect(n.como, n.clave).not.toBeNull();
+  });
+
+  it("Anaga, La Orotava y La Gomera, debajo del mar de nubes: no se nombran, y la escena sigue", () => {
+    expect(e.senalados).toContain("teide");
+    for (const que of ["anaga", "orotava", "garajonay"]) expect(e.senalados, que).not.toContain(que);
+    expect(m.escena.olvidadosPorNoVerse).toEqual(expect.arrayContaining(["anaga", "orotava", "garajonay"]));
+    expect(e.terminado).toBe(true);
+    // Y Ara no contesta a lo que no se dijo.
+    expect(claves).not.toContain("inicio.ara.pasaje.orotava");
+    expect(claves).not.toContain("inicio.ara.pasaje.garajonay");
+    // Lo que sí se ve por encima de la capa es la capa: el mar de nubes.
+    expect(claves).toContain("inicio.ara.pasaje.marDeNubes");
+  });
+
+  it("y lo que se ve por fuera se enseña por fuera: la isla de llegada lejos, con el avión delante", () => {
+    const isla = e.nombrados.find((n) => n.clave === "inicio.ara.pasaje.isla");
+    expect(isla, "la isla").toBeTruthy();
+    const plano = e.planos.filter((p) => p.desde <= isla!.desde + 1e-6).pop();
+    const esperado = isla!.como === "fuera" ? "fuera-paisaje" : isla!.como === "asomado" ? "asomado-paisaje" : "ventanilla";
+    expect(plano?.plano).toBe(esperado);
+    if (plano?.plano === "fuera-paisaje") expect(plano.sitio).toBe("isla-de-llegada");
+  });
+
+  it("dentro de la nube no sale la frase de la isla: sale cuando se ve, y entretanto se cuenta la nube", () => {
+    /*
+     * Bajando, el avión se mete en la nube justo cuando tocaría ver la isla
+     * —a los cuarenta y tantos kilómetros— y no sale de ella hasta los
+     * treinta y tres. Con la ventanilla blanca, «¡ya se ve la isla!» es
+     * mentira (captura 227): espera, y entretanto Ara cuenta la nube.
+     */
+    class MetidoEnLaNube extends VueloMedido {
+      override get enLaNube(): boolean {
+        return super.enLaNube || (this.tramo === "bajada" && this.falta < 47000 && this.falta > 33000);
+      }
+    }
+    const r = volarConElPaisaje(new MetidoEnLaNube());
+    const isla = r.nombrado.find((n) => n.clave === "inicio.ara.pasaje.isla");
+    expect(isla, "la isla, cuando se ve").toBeTruthy();
+    expect(isla!.enLaNube).toBe(false);
+    expect(isla!.seVeia).toBe(true);
+    // Y dentro, lo que es verdad: otra vez en una nube.
+    const k = r.dichas.map((d) => d.linea.clave);
+    expect(k.indexOf("inicio.ara.pasaje.otraNube")).toBeGreaterThan(-1);
+    expect(k.indexOf("inicio.ara.pasaje.otraNube")).toBeLessThan(k.indexOf("inicio.ara.pasaje.isla"));
+  });
+
+  it("y la comandante dice el lado de cuando lo dice, no el de cuando se vio", () => {
+    let t = 0;
+    const v = vozQueTarda(() => 4, () => t);
+    const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+    const vuelo = new VueloDeMentira();
+    const lectura = (): LecturaDelPasaje => ({
+      ...vuelo.lectura,
+      // Visto por la izquierda, y para cuando se dice el avión ya giró: queda a la derecha.
+      ver: () => ({ como: "fuera", lado: "derecha" }),
+    });
+    let dado = false;
+    for (; t < 3000 && !escena.estado.terminado; t += DT) {
+      v.tic();
+      vuelo.paso(DT, escena.paso(DT, lectura()), t);
+      if (!dado && escena.puedeSenalar) {
+        dado = true;
+        escena.senalar({
+          ...sitio("teide", "izquierda"),
+          porLado: {
+            izquierda: { texto: "A la izquierda, el teide.", clave: "ventanilla", relleno: { lado: "izquierda" } },
+            derecha: { texto: "A la derecha, el teide.", clave: "ventanilla", relleno: { lado: "derecha" } },
+          },
+        });
+      }
+      if (escena.estado.puedeSeguir) escena.seguir();
+    }
+    const dicha = v.dichas.find((d) => d.linea.clave === "ventanilla")!;
+    expect(dicha.linea.texto).toBe("A la derecha, el teide.");
+    // Y por la derecha, Ara no lo ve desde su ventanilla: no contesta.
+    expect(v.dichas.map((d) => d.linea.clave)).not.toContain("inicio.ara.pasaje.teide");
+    // Y se enseña por fuera, con el Teide al fondo.
+    expect(escena.estado.planos.some((p) => p.plano === "fuera-paisaje" && p.sitio === "hito:teide")).toBe(true);
+  });
+
+  it("ni corta a nadie para enseñarlo: los planos del paisaje también caen en un silencio", () => {
+    const r = m.escena.registro;
+    for (let i = 1; i < e.planos.length; i++) {
+      const ahora = e.planos[i]!;
+      if (!esDeFuera(e.planos[i - 1]!.plano) && !esDeFuera(ahora.plano)) continue;
+      for (const f of r)
+        expect(
+          f.desde < ahora.desde + CORTE_DE_PLANO - 1e-6 && (f.hasta ?? Infinity) > ahora.desde + 1e-6,
+          `${ahora.plano}@${ahora.desde.toFixed(1)} · ${f.clave}`,
+        ).toBe(false);
+    }
+  });
+});
+
+/*
+ * **Una foto no sale sin la voz que la cuenta, y Ara no contesta a lo que no
+ * se ha oído** (punto 287). La foto del gomero silbando salía con la historia
+ * del silbo sin sonar: la escena ponía la foto al pedir la historia, no al
+ * empezar a sonar, y detrás Ara preguntaba «¿hablar silbando?» a nada.
+ */
+describe("la foto del silbo no sale muda", () => {
+  const gomera: Senalado = {
+    que: "garajonay",
+    lado: "izquierda",
+    dicho: { texto: "Esa isla es La Gomera.", clave: "ventanilla", relleno: { que: "ventanilla.garajonay" } },
+    historia: {
+      texto: "Y en La Gomera se habla silbando.",
+      clave: "ventanilla.historia",
+      relleno: { historia: "ventanilla.historia.garajonay" },
+      sitio: "garajonay",
+    },
+  };
+
+  /** Vuela con una voz en la que la historia `suena` o no, y apunta la ventanita. */
+  function conLaHistoria(suena: boolean): { fotos: number; claves: string[]; historia: string | null } {
+    let t = 0;
+    let fotos = 0;
+    // En un objeto: lo cambia la voz por dentro, y el bucle lo tiene que ver.
+    const voz: { sonando: { fin: number; acabar: () => void } | null } = { sonando: null };
+    const claves: string[] = [];
+    const escena = new VueloDePasaje(
+      {
+        decir: (l, alAcabar, alEmpezar) => {
+          claves.push(l.clave);
+          if (l.clave === "ventanilla.historia" && !suena) {
+            // Su voz no llega: no empieza, y la boca la suelta sin sonar: se lee.
+            voz.sonando = { fin: t + 0.2, acabar: () => alAcabar(4) };
+            return;
+          }
+          alEmpezar?.();
+          voz.sonando = { fin: t + 4, acabar: () => alAcabar(0) };
+        },
+        callar: () => (voz.sonando = null),
+      },
+      { lado: "izquierda" },
+    );
+    const vuelo = new VueloDeMentira();
+    let dado = false;
+    for (; t < 3000 && !escena.estado.terminado; t += DT) {
+      const s = voz.sonando;
+      if (s && t >= s.fin) {
+        voz.sonando = null;
+        s.acabar();
+      }
+      vuelo.paso(DT, escena.paso(DT, vuelo.lectura), t);
+      if (escena.estado.dibujo === "foto:garajonay") fotos++;
+      if (!dado && escena.puedeSenalar) {
+        dado = true;
+        escena.senalar(gomera);
+      }
+      if (escena.estado.puedeSeguir) escena.seguir();
+    }
+    return { fotos, claves, historia: escena.registro.find((d) => d.clave === "ventanilla.historia")?.como ?? null };
+  }
+
+  it("sin su voz, ni la foto ni lo que contesta Ara", () => {
+    const r = conLaHistoria(false);
+    expect(r.historia).toBe("muda");
+    expect(r.fotos).toBe(0);
+    expect(r.claves).not.toContain("inicio.ara.pasaje.garajonay");
+  });
+
+  it("y con su voz, la foto mientras suena y Ara detrás", () => {
+    const r = conLaHistoria(true);
+    expect(r.historia).toBe("sono");
+    expect(r.fotos).toBeGreaterThan(10);
+    expect(r.claves.indexOf("inicio.ara.pasaje.garajonay")).toBe(r.claves.indexOf("ventanilla.historia") + 1);
+  });
+});
+
+describe("lo que se ve, cuando pasa: la nube, debajo de las nubes, el Teide, el tren y el señalero", () => {
+  const m = volarConElPaisaje();
+  const e = m.escena.estado;
+  const k = m.dichas.map((d) => d.linea.clave);
+  const empieza = (clave: string): Dicha | undefined => m.dichas.find((d) => d.linea.clave === clave);
+
+  it("dentro de la nube, cuando el avión se menea, se cuenta en ese momento y con calma", () => {
+    expect(e.charlas).toContain("meneo");
+    const meneo = empieza("inicio.ara.pasaje.meneo");
+    expect(meneo).toBeTruthy();
+    // Lo nota Ara en el momento, lo explica la comandante detrás, y Ara lo cuenta con calma.
+    const i = k.indexOf("inicio.ara.pasaje.meneo");
+    expect(k[i + 1]).toBe("inicio.mama.pasaje.meneo");
+    expect(k[i + 2]).toBe("inicio.ara.pasaje.meneoBien");
+    // Con la cara contra el cristal, que es desde donde se ve el ala.
+    expect(e.planos.some((p) => p.plano === "asomado-motor" && Math.abs(p.desde - meneo!.desde) < 2)).toBe(true);
+  });
+
+  it("al salir por debajo de las nubes, lo cuenta la tripulante: la base, el techo, los números de hoy y la visibilidad", () => {
+    const i = k.indexOf("inicio.ara.pasaje.bajoLasNubes");
+    expect(i).toBeGreaterThan(-1);
+    expect(k.slice(i + 1, i + 4)).toEqual([
+      "inicio.tripulacion.pasaje.cerca.techo",
+      "inicio.tripulacion.pasaje.cerca.techoHoy",
+      "inicio.tripulacion.pasaje.cerca.visibilidad",
+    ]);
+    // En el momento: antes de la isla, que se ve después de salir de la nube.
+    expect(e.dichos.indexOf("techo")).toBeLessThan(e.dichos.indexOf("isla"));
+  });
+
+  it("y sin los números si no son los de hoy, ni la tripulante si ya está sentada", () => {
+    const techo = GUION_DEL_PASAJE.find((x) => x.id === "techo")!;
+    const vuelo = new VueloMedido();
+    const conOtroTecho = { ...vuelo.lectura, tramo: "bajada" as const, altitud: 900, nubes: { base: 1000, techo: 1450 } };
+    const escena = new VueloDePasaje(vozQueTarda(() => 1, () => 0).voz, { lado: "izquierda" });
+    // Sin la tripulante por el pasillo —no ha empezado el servicio—: lo cuenta Ara, sin números.
+    expect(techo.segun!(conOtroTecho, escena).map((l) => l.clave)).toEqual([
+      "inicio.ara.pasaje.bajoLasNubes",
+      "inicio.ara.pasaje.techo",
+    ]);
+    // Y con ella, sin el número de hoy si el techo no es el de hoy.
+    const conTripulante = m.escena;
+    const lineas = techo.segun!({ ...conOtroTecho, faltaParaTocar: 40000 }, conTripulante).map((l) => l.clave);
+    expect(lineas).not.toContain("inicio.tripulacion.pasaje.cerca.techoHoy");
+  });
+
+  it("el Teide se presenta la primera vez que se nombra: antes de volar más alto que él", () => {
+    const presenta = k.indexOf("inicio.mama.pasaje.teide");
+    const alto = k.indexOf("inicio.mama.pasaje.altoRapido");
+    const senalado = m.dichas.findIndex((d) => d.linea.texto === "Ese es teide.");
+    expect(alto).toBeGreaterThan(-1);
+    if (senalado > -1 && senalado < alto) expect(presenta).toBe(-1);
+    else {
+      expect(presenta).toBeGreaterThan(-1);
+      expect(presenta).toBeLessThan(alto);
+    }
+    expect(k.filter((c) => c === "inicio.mama.pasaje.teide").length).toBeLessThanOrEqual(1);
+  });
+
+  it("y si el Teide ya se señaló, no se presenta otra vez", () => {
+    let t = 0;
+    const v = vozQueTarda(loQueDura, () => t);
+    const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+    const vuelo = new VueloMedido();
+    let dado = false;
+    for (; t < 4000 && !escena.estado.terminado; t += DT) {
+      v.tic();
+      vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+      if (!dado && escena.puedeSenalar) {
+        dado = true;
+        escena.senalar(sitio("teide", "izquierda"));
+      }
+      if (escena.estado.puedeSeguir) escena.seguir();
+    }
+    const claves = v.dichas.map((d) => d.linea.clave);
+    expect(claves).toContain("inicio.mama.pasaje.altoRapido");
+    expect(claves).not.toContain("inicio.mama.pasaje.teide");
+  });
+
+  it("el tren, desde abajo, cuando sale; y el señalero, desde el suelo, hasta parar", () => {
+    const ruedas = empieza("inicio.ara.pasaje.ruedas");
+    expect(ruedas).toBeTruthy();
+    const tren = e.planos.find((p) => p.plano === "fuera-tren");
+    expect(tren).toBeTruthy();
+    expect(ruedas!.desde - tren!.desde).toBeGreaterThanOrEqual(CORTE_DE_PLANO - 1e-6);
+    expect(ruedas!.desde - tren!.desde).toBeLessThan(CORTE_DE_PLANO + 1);
+    expect(e.planos.some((p) => p.plano === "fuera-senalero")).toBe(true);
+    expect(e.charlas).toContain("senalero");
+    // Y la despedida, de vuelta en la ventanilla.
+    expect(e.plano).toBe("ventanilla");
   });
 });

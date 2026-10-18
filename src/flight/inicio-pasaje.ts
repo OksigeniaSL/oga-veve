@@ -83,6 +83,27 @@
  *     desde el borde de la pista.
  * 13. **La llegada**, rodando por fuera, y en el puesto la despedida.
  *
+ * ## Solo se nombra lo que se ve
+ *
+ * Enrique voló esta escena el 18-10-2026 y encontró cinco veces el mismo
+ * fallo: Anaga y el valle de La Orotava nombrados debajo del mar de nubes,
+ * «esa isla redondita es La Gomera» con la ventanilla llena de nubes, «¡ya se
+ * ve la isla adonde vamos!» con el avión metido en una nube, y «se ven las
+ * montañas, la costa y el mar» con la isla en la ventanilla de al lado. Lo
+ * repetido va a la raíz: la regla de `lo-que-se-nombra.ts` —solo se nombra
+ * lo que se ve, y lo nombrado se señala— vale también aquí. Lo que nombra un
+ * sitio del paisaje lo dice —`nombra`—, y antes de decirlo se le pregunta al
+ * juego si se ve —ver `LecturaDelPasaje.ver`—: por la ventanilla de Ara, con
+ * su cara contra el cristal mirando hacia él, o con el avión por fuera y el
+ * sitio al fondo, que es como se enseña. Si no se ve de ninguna manera, la
+ * frase espera; y si se le pasa el momento, se salta y se cuenta lo que es
+ * verdad —dentro de una nube, la nube—. Lo señalado por la ventanilla, igual,
+ * y con el lado de cuando se dice. Ver `SitioDelPaisaje`.
+ *
+ * Y lo que pasa se cuenta cuando pasa: el meneo dentro de la nube, el techo
+ * al salir por debajo de las nubes, el Teide la primera vez que se nombra, el
+ * tren visto desde abajo al salir y el señalero hasta parar el avión.
+ *
  * ## Quién contesta, y cómo
  *
  * **La comandante no le contesta a un pasajero por la megafonía**, y aquí no
@@ -110,8 +131,11 @@ import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import type { IlustracionDelPasaje } from "../ui/ilustraciones";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
+import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
 import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
+
+export type { ComoSeVe };
 
 /** Diez mil pies, m: por debajo, la cabina de mando no habla de nada que no sea volar. */
 export const DIEZ_MIL_PIES = 10000 * 0.3048;
@@ -145,17 +169,28 @@ export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
  *   donde se ve mejor: rodando, desde el borde de la pista al despegar y al
  *   tocar, en el giro, una vuelta alrededor en crucero y el ala. Ver
  *   `cameras/escena.ts`.
+ * - **Y lo que se nombra del paisaje, donde se vea** (18-10-2026): Ara con la
+ *   cara contra el cristal mirando hacia ello —`asomado-paisaje`—, o el avión
+ *   desde detrás con el sitio al fondo —`fuera-paisaje`—. Ver
+ *   `SitioDelPaisaje`.
+ * - **El tren desde abajo** —`fuera-tren`—, con las patas bajando y trabadas,
+ *   y **el señalero** —`fuera-senalero`—, guiando el avión hasta pararlo:
+ *   lo que desde el asiento no se ve y enseña qué pasa.
  */
 export type Plano =
   | "ventanilla"
   | "asomado-motor"
   | "asomado-abajo"
+  | "asomado-paisaje"
   | "fuera-rodando"
   | "fuera-despegue"
   | "fuera-giro"
   | "fuera-vuelta"
   | "fuera-ala"
-  | "fuera-pista";
+  | "fuera-pista"
+  | "fuera-paisaje"
+  | "fuera-tren"
+  | "fuera-senalero";
 
 /** Si el plano es del avión por fuera. */
 export const esDeFuera = (p: Plano): boolean => p.startsWith("fuera-");
@@ -187,6 +222,12 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
   "fuera-vuelta": 36,
   "fuera-ala": 16,
   "fuera-pista": 24,
+  "asomado-paisaje": 6,
+  // El sitio al fondo, el rato de mirarlo; y el tren, hasta que se traba.
+  "fuera-paisaje": 14,
+  "fuera-tren": 12,
+  // Y el señalero, hasta parar el avión: lo devuelve a la ventanilla la despedida.
+  "fuera-senalero": 45,
 };
 
 export type MomentoDelPasaje =
@@ -209,6 +250,7 @@ export type MomentoDelPasaje =
   | "bajada"
   | "oidos"
   | "kit"
+  | "techo"
   | "isla"
   | "aproximacion"
   | "tcpAterrizaje"
@@ -248,7 +290,53 @@ export type CharlaDelPasaje =
   | "cerquita"
   | "cinturonQuieto"
   | "despacito"
-  | "repaso";
+  | "repaso"
+  | "meneo"
+  | "senalero"
+  | "marDeNubes"
+  | "sigueLaNube";
+
+/**
+ * **Lo que se nombra del paisaje**, y que por eso **solo se dice si se ve**
+ * (18-10-2026). Enrique encontró cinco veces en un vuelo la escena nombrando
+ * lo que por la ventanilla de Ara no se veía: Anaga y La Orotava debajo del
+ * mar de nubes, «esa isla redondita es La Gomera» con la ventanilla llena de
+ * nubes, «¡ya se ve la isla adonde vamos!» con el avión metido en una nube y
+ * «se ven las montañas, la costa y el mar» con la isla en la ventanilla de al
+ * lado. Es la regla de `lo-que-se-nombra.ts` —solo se nombra lo que se ve, y
+ * lo nombrado se señala—, llevada aquí:
+ *
+ * - `hito:<clave>`: lo que señala la comandante por la ventanilla —el Teide,
+ *   La Gomera—. Ver `Senalado`.
+ * - `isla-de-llegada`: las montañas de La Palma; y `costa-de-llegada`, su
+ *   costa, ya cerca.
+ * - `tierra-abajo` y `mar-abajo`: el suelo o el mar de debajo, por la
+ *   ventanilla o con la cara pegada al cristal; y `nubes-abajo`, el mar de
+ *   nubes, que también se tiene que ver para decirlo.
+ *
+ * Si se ve lo dice el juego, que es quien tiene el mundo: ver `LecturaDelPasaje.ver`
+ * y `world/se-ve-desde-el-pasaje.ts`.
+ */
+export type SitioDelPaisaje =
+  | "isla-de-llegada"
+  | "costa-de-llegada"
+  | "tierra-abajo"
+  | "mar-abajo"
+  | "nubes-abajo"
+  | `hito:${string}`;
+
+/**
+ * **Cómo se ve un sitio ahora**: desde dónde se puede enseñar —por la
+ * ventanilla de Ara, con su cara pegada al cristal mirando hacia él o con el
+ * avión por fuera y el sitio al fondo— y por qué lado del avión cae, con el
+ * rumbo de ahora. `como` es `null` si no se ve de ninguna manera: dentro de
+ * una nube, con la nube o el monte entre medias, demasiado lejos o fuera de
+ * todo cristal y de toda toma.
+ */
+export interface VistaDelSitio {
+  readonly como: ComoSeVe | null;
+  readonly lado: "izquierda" | "derecha" | null;
+}
 
 /** Lo que la escena necesita saber del vuelo. Todo en SI. */
 export interface LecturaDelPasaje {
@@ -292,6 +380,24 @@ export interface LecturaDelPasaje {
   readonly sobreElMar?: boolean;
   /** La temperatura de fuera, °C. Ver `temperaturaExterior`. */
   readonly temperatura?: number;
+  /**
+   * **Si un sitio del paisaje se ve ahora**, y cómo: lo pregunta la escena
+   * antes de nombrarlo. Con `plano`, solo desde ese plano: lo que se mira
+   * pegada al cristal hacia abajo se tiene que ver así. Sin esto —las pruebas
+   * que no miran el paisaje—, todo se ve por la ventanilla y por su lado.
+   * Ver `SitioDelPaisaje`.
+   */
+  readonly ver?: (sitio: SitioDelPaisaje, plano?: Plano) => VistaDelSitio;
+  /**
+   * **Cuánto se mueve el aire**, σ de la ráfaga vertical en m/s: lo que hace
+   * que el avión se menee y el ala suba y baje. Ver `cuantoSeMueve` en
+   * `turbulencia.ts`.
+   */
+  readonly meneo?: number;
+  /** **La visibilidad del parte**, m: la de diez kilómetros o más es 10.000. */
+  readonly visibilidad?: number;
+  /** Si el señalero ya le hace señas al avión en el puesto de llegada. */
+  readonly senalero?: boolean;
 }
 
 /**
@@ -304,6 +410,14 @@ export interface Senalado {
   readonly que: string;
   readonly lado: "izquierda" | "derecha";
   readonly dicho: { readonly texto: string; readonly clave: string; readonly relleno: Readonly<Record<string, string>> };
+  /**
+   * **Y la misma frase dicha desde cada lado**, si el juego la monta: entre
+   * que se ve y que se dice el avión puede girar, y la comandante dice el lado
+   * de cuando lo dice. «Asómense a las ventanillas de la izquierda» con el
+   * sitio a la derecha es mandar a mirar a la nada. Ver `ladoDe` en
+   * `world/se-ve-desde-el-pasaje.ts`.
+   */
+  readonly porLado?: Readonly<Record<"izquierda" | "derecha", Senalado["dicho"]>>;
   readonly historia: {
     readonly texto: string;
     readonly clave: string;
@@ -370,6 +484,32 @@ const SE_NOTA_EL_GIRO = 12 * GRADO;
 const QUINIENTOS_POR_HORA = 505 / 3.6;
 /** «Bajo cero, como en el congelador», °C fuera, con margen. */
 const FRIO_DE_CONGELADOR = -8;
+/**
+ * **Lo que se mueve el aire para que se note el meneo**, σ de la ráfaga
+ * vertical en m/s: media turbulencia ligera. Dentro del mar de nubes es de
+ * ocho décimas —ver `EN_LA_NUBE` en `turbulencia.ts`—, y se nota: el avión se
+ * menea y el ala sube y baja. Ver el punto 280 en `CHARLAS_DEL_PASAJE`.
+ */
+const SE_NOTA_EL_MENEO = 0.4;
+/**
+ * **Lo que dice de números la tripulante bajo las nubes**: «unos cinco mil
+ * pies, unos mil quinientos metros», y «más de diez kilómetros». Una frase
+ * grabada no puede decir otro número, así que solo se dice cuando es verdad:
+ * la base de la capa en esos cinco mil pies con medio millar de margen, el
+ * avión justo por debajo —eso es lo que le falta hasta el mar— y la
+ * visibilidad del parte en diez kilómetros o más. Con otro tiempo se cuenta
+ * lo mismo sin los números. Un número que no puede sonar a su altura no se
+ * dice (AGENTS.md).
+ */
+const TECHO_DE_HOY = { desde: 4500 * 0.3048, hasta: 5500 * 0.3048, justoDebajo: 200 } as const;
+const MAS_DE_DIEZ_KILOMETROS = 10000;
+/**
+ * **Lo que espera algo señalado a que se vea**, s de escena: el avión puede
+ * meterse en una nube o girar entre que el juego lo ve y que la escena lo
+ * puede decir. Pasado esto sin verse, se deja: nunca «esa isla» con la
+ * ventanilla en blanco.
+ */
+const ESPERA_A_QUE_SE_VEA = 45;
 /**
  * **Los tramos de la bajada**, m que faltan para tocar: desde dónde se cuenta
  * cada cosa. Una bajada entre islas son quince minutos, y sin repartirlos lo
@@ -533,6 +673,19 @@ interface DefMomento<Id extends string = MomentoDelPasaje> {
   readonly mira?: QueMirar;
   /** **Desde dónde se ve mientras se dice.** Sin decir, la ventanilla. */
   readonly plano?: Plano;
+  /**
+   * **Lo que nombra del paisaje**: solo se dice si se ve, y desde donde se
+   * vea —la ventanilla, la cara contra el cristal o el avión por fuera con el
+   * sitio al fondo—; si no se ve, espera, y si se le pasa el momento, se salta.
+   * Con un `plano` propio, se tiene que ver desde ese. Ver `SitioDelPaisaje`.
+   */
+  readonly nombra?: SitioDelPaisaje;
+  /**
+   * **Lo que enseña si se ve**, sin esperarlo: lo que se dice vale igual sin
+   * verlo —«más alto que la cumbre del Teide» es verdad con el Teide tapado—,
+   * pero si se ve, se enseña.
+   */
+  readonly muestra?: SitioDelPaisaje;
 }
 
 /**
@@ -684,11 +837,13 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     plano: "fuera-despegue",
   },
   {
+    // «Las casas y los autos se ven chiquititos»: solo si se ve el suelo.
     id: "volando",
     cuando: (l) => !l.enTierra && l.altura > 80,
     caduca: (l) => l.altura > 1200,
     lineas: [ara("volando")],
     mira: "ventanilla",
+    nombra: "tierra-abajo",
   },
   {
     /*
@@ -785,16 +940,69 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
   },
   {
     /*
+     * **Al salir por debajo de las nubes** (punto 295), en el momento en que
+     * pasa: el avión deja la capa encima y se ve lejos. Ara lo nota, y la
+     * tripulante, que todavía anda por el pasillo, se lo cuenta «a nivel de
+     * niños, pero no de tontos»: que la parte de abajo de las nubes es su base
+     * —y techo cuando tapan más de medio cielo, que es lo que dice la OACI—,
+     * a cuánto está hoy y cuánto falta hasta el mar, y la visibilidad, que se
+     * mide en kilómetros y es lo que deja ver la pista a tiempo. Los números,
+     * solo si son los de hoy: ver `TECHO_DE_HOY`. Con la cabina ya preparada,
+     * sin la tripulante, lo cuenta Ara con lo que le enseñó su mamá.
+     *
+     * La comandante no: por debajo de los diez mil pies la cabina de mando
+     * solo habla del vuelo —la cabina estéril—, y esto no es seguridad.
+     */
+    id: "techo",
+    cuando: (l) =>
+      bajando(l.tramo) &&
+      !l.enTierra &&
+      !!l.nubes &&
+      l.altitud < l.nubes.base - 20 &&
+      l.enNube < DENTRO_DE_LA_NUBE,
+    // «Y abajo se ve lejísimos»: con la visibilidad corta no es verdad, y no se dice.
+    caduca: (l) =>
+      l.enTierra ||
+      enLaFinal(l) ||
+      !l.nubes ||
+      (l.visibilidad ?? MAS_DE_DIEZ_KILOMETROS) < MAS_DE_DIEZ_KILOMETROS ||
+      l.faltaParaTocar < PREPARAR_LA_CABINA - 4000,
+    lineas: [ara("bajoLasNubes"), conLaTripulante(tripulante("techo")), con(tripulante("techoHoy"), "techo"), con(tripulante("visibilidad"), "techo")],
+    segun: (l, e) => {
+      const lineas: Linea[] = [ara("bajoLasNubes")];
+      if (!tripulanteEnElPasillo(e) || cabinaPreparada(l, e)) return [...lineas, con(ara("techo"), "techo")];
+      lineas.push(conLaTripulante(tripulante("techo")));
+      const base = l.nubes?.base ?? 0;
+      const deHoy =
+        base >= TECHO_DE_HOY.desde &&
+        base <= TECHO_DE_HOY.hasta &&
+        l.altitud > base - TECHO_DE_HOY.justoDebajo &&
+        l.sobreElMar !== false;
+      if (deHoy) lineas.push(con(tripulante("techoHoy"), "techo"));
+      if ((l.visibilidad ?? MAS_DE_DIEZ_KILOMETROS) >= MAS_DE_DIEZ_KILOMETROS)
+        lineas.push(con(tripulante("visibilidad"), "techo"));
+      return lineas;
+    },
+    mira: "nubes",
+  },
+  {
+    /*
      * **La isla de llegada, a la vista**: La Palma sube a casi dos mil
      * quinientos metros, y desde cuarenta y tantos kilómetros ya se ve entera
      * por encima del mar de nubes. Es Ara quien la descubre: la cabina de mando
      * ya está con la llegada.
+     *
+     * **Y solo si se ve** (punto 286): se decía con el avión metido en la
+     * nube, la ventanilla toda blanca. Se dice cuando se ve, desde donde se
+     * vea: si va por delante del morro, con el avión por fuera y la isla al
+     * fondo.
      */
     id: "isla",
     cuando: (l) => l.faltaParaTocar < VE_LA_ISLA && !l.enTierra,
     caduca: (l) => l.enTierra || l.tramo === "final" || l.faltaParaTocar < PREPARAR_LA_CABINA - 4000,
     lineas: [ara("isla")],
     mira: "ventanilla",
+    nombra: "isla-de-llegada",
   },
   {
     id: "aproximacion",
@@ -879,6 +1087,31 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("tren")],
   },
   {
+    /*
+     * **Dentro de la nube, el avión se menea** (punto 280), y se cuenta en el
+     * momento en que pasa: el aire de dentro de la nube sube y baja, el avión
+     * se mueve un poco y el ala sube y baja con él —se ve desde el asiento,
+     * con la cara contra el cristal—. Ara lo nota, y la comandante lo cuenta
+     * con calma para todo el pasaje: que es aire que sube y baja, que es
+     * normal, que las alas están hechas para doblarse un poco y por eso se
+     * mueven, y que por eso se lleva el cinturón. Por debajo de los diez mil
+     * pies la cabina de mando solo habla del vuelo, y esto es del vuelo: lo
+     * de los baches y el cinturón es de los pocos anuncios que una
+     * comandante hace subiendo.
+     *
+     * Para muchos niños será el primer meneo de avión de su vida, y lo que
+     * aprendan a sentir aquí se lo llevan puesto (AGENTS.md): es normal, y se
+     * va tranquilo con el cinturón.
+     */
+    id: "meneo",
+    tras: 0,
+    cuando: (l) => volando(l) && l.enNube >= DENTRO_DE_LA_NUBE && (l.meneo ?? 0) >= SE_NOTA_EL_MENEO,
+    caduca: (l) => l.enTierra || enLaFinal(l),
+    lineas: [ara("meneo"), con(comandante("meneo"), "meneo"), con(ara("meneoBien"), "meneo")],
+    mira: "ala",
+    plano: "asomado-motor",
+  },
+  {
     id: "plop",
     tras: 2,
     cuando: (l) => !l.enTierra && l.tramo === "subida" && l.cabina >= SUBE_LA_CABINA && l.altura > 300,
@@ -908,6 +1141,30 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("marArriba")],
     segun: (_l, e) => [contraElCristal(ara("marArriba"), e)],
     plano: "asomado-abajo",
+    // «Entre las nubes, allá abajo, se ve el mar»: por un hueco, o no se dice.
+    nombra: "mar-abajo",
+  },
+  {
+    /*
+     * **Por encima del mar de nubes, lo que se ve es el mar de nubes.** Con
+     * Anaga, La Orotava y el mar debajo de la capa, la subida se quedaba dos
+     * minutos callada: lo que la llenaba era lo que no se veía. Lo de verdad
+     * es lo que hay debajo, y tiene nombre: en Canarias, el mar de nubes.
+     */
+    id: "marDeNubes",
+    // Ya muy arriba, más alto que el Teide, y con su rato: lo que se mira cuando no pasa nada.
+    tras: 40,
+    cuando: (l, e) =>
+      volando(l) &&
+      !!l.nubes &&
+      l.altitud > Math.max(l.nubes.techo + 150, CUMBRE_DEL_TEIDE) &&
+      e_noEnNube(l) &&
+      e.dicho("nubes"),
+    caduca: (l) => l.enTierra || (bajando(l.tramo) && !!l.nubes && l.altitud < l.nubes.techo + 150),
+    lineas: [ara("marDeNubes")],
+    segun: (_l, e) => [contraElCristal(ara("marDeNubes"), e)],
+    plano: "asomado-abajo",
+    nombra: "nubes-abajo",
   },
   {
     // Por encima de Tenerife, subiendo: las montañas y los barrancos.
@@ -916,6 +1173,8 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     cuando: (l) => l.tramo === "subida" && !l.enTierra && l.sobreElMar === false && l.altura > 2500,
     caduca: (l) => l.tramo !== "subida",
     lineas: [ara("sobreLaIsla")],
+    // «Se ven las montañas y los barrancos»: si no los tapa el mar de nubes.
+    nombra: "tierra-abajo",
   },
   {
     /*
@@ -933,7 +1192,20 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     plano: "fuera-ala",
   },
   {
-    // Más alto que el Teide y a más de quinientos por hora: solo cuando es verdad.
+    /*
+     * Más alto que el Teide y a más de quinientos por hora: solo cuando es
+     * verdad.
+     *
+     * **Y el Teide, presentado la primera vez que se nombra** (punto 282). Un
+     * niño de Paraguay no sabe qué es, y «más alto que la cumbre del Teide» no
+     * le dice nada; lo que lo presentaba —lo que cuenta la comandante al
+     * señalarlo— llegaba después, bajando. Así que si todavía no se ha
+     * contado, la comandante lo cuenta antes: un volcán, la montaña más alta de
+     * España, unos tres mil setecientos quince metros —ver
+     * `docs/historias/fuentes.md`—. Y si se ve, se enseña con el avión por
+     * fuera, que es como se entiende qué es volar por encima; Ara dice que
+     * las montañas parecen de juguete solo si las está viendo.
+     */
     id: "altoRapido",
     tras: 18,
     cuando: (l, e) =>
@@ -944,6 +1216,14 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
       e.dicho("nubesRespuesta"),
     caduca: (l) => l.enTierra || enLaFinal(l) || (bajando(l.tramo) && l.altitud < CUMBRE_DEL_TEIDE + 150),
     lineas: [ara("preguntaAlto"), con(comandante("altoRapido"), "alto"), con(ara("altoRapido"), "alto")],
+    segun: (l, e) => {
+      const lineas: Linea[] = [ara("preguntaAlto")];
+      if (!e.teidePresentado) lineas.push(con(comandante("teide"), "alto"));
+      lineas.push(con(comandante("altoRapido"), "alto"));
+      if (e.seVe("hito:teide", l)) lineas.push(con(ara("altoRapido"), "alto"));
+      return lineas;
+    },
+    muestra: "hito:teide",
   },
   {
     // El frío de fuera: solo si de verdad está bajo cero.
@@ -991,6 +1271,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     caduca: (l) => l.enTierra || enLaFinal(l) || l.altitud < 1900,
     lineas: [ara("marQuieto")],
     plano: "asomado-abajo",
+    nombra: "mar-abajo",
   },
   {
     // Cómo se sabe el camino: el mapa de la pantalla y la torre por radio.
@@ -1052,6 +1333,13 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
       l.tramo === "bajada" && !l.enTierra && l.faltaParaTocar < 38000 && l.altura < 1400 && e.dicho("isla"),
     caduca: (l) => l.enTierra || enLaFinal(l) || l.altura < 500,
     lineas: [ara("islaCerca")],
+    /*
+     * «Se ven las montañas, la costa y el mar»: se decía con la isla en la
+     * ventanilla de al lado y por la de Ara solo mar (punto 286, captura
+     * 229). Se dice cuando se ve, y si por la ventanilla no, con una toma de
+     * fuera, que es lo que pidió Enrique.
+     */
+    nombra: "costa-de-llegada",
   },
   {
     // Bajando, otra vez por dentro de una nube: ahora ya se sabe qué es.
@@ -1062,6 +1350,26 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("otraNube")],
   },
   {
+    /*
+     * **Y si la nube dura, se cuenta que dura**: bajando, la capa se cruza
+     * despacio —un rato nivelado con la ventanilla blanca— y el avión se sigue
+     * meneando. Lo de verdad es eso, dicho ya con calma: es normal, y el
+     * cinturón va puesto. Lo que se aprende aquí se lo llevan puesto.
+     */
+    id: "sigueLaNube",
+    tras: 30,
+    cuando: (l, e) =>
+      bajando(l.tramo) &&
+      !l.enTierra &&
+      l.enNube >= DENTRO_DE_LA_NUBE &&
+      (l.meneo ?? 0) >= SE_NOTA_EL_MENEO &&
+      e.dichaLaCharla("otraNube") &&
+      e.dichaLaCharla("meneo"),
+    caduca: (l) => l.enTierra || enLaFinal(l),
+    lineas: [ara("sigueLaNube")],
+    mira: "nubes",
+  },
+  {
     // Por debajo de las nubes, pegada al cristal: el mar, ya cerca.
     id: "marAbajo",
     tras: 14,
@@ -1070,6 +1378,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     caduca: (l) => l.enTierra || l.altura < 300,
     lineas: [ara("marAbajo")],
     plano: "asomado-abajo",
+    nombra: "mar-abajo",
   },
   {
     // El giro a la final, también por fuera.
@@ -1103,12 +1412,18 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("masDespacio")],
   },
   {
-    // El tren sale, con su ruido, para aterrizar.
+    /*
+     * El tren sale, con su ruido, para aterrizar. **Y se ve desde abajo**
+     * (punto 298): una toma desde debajo del avión y un poco por delante,
+     * mirando hacia arriba, con las patas bajando y trabadas. Desde el asiento
+     * no se ve, y es lo que hace ese ruido.
+     */
     id: "ruedas",
     tras: 0,
     cuando: (l) => !l.enTierra && enLaFinal(l) && (l.tren ?? 0) > 0.5 && l.altura > 150,
     caduca: (l) => l.enTierra || l.altura < 150,
     lineas: [ara("ruedas")],
+    plano: "fuera-tren",
   },
   {
     id: "miro",
@@ -1123,6 +1438,23 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     cuando: (l) => !l.enTierra && enLaFinal(l) && l.altura < 300 && l.altura > 110 && !!l.sobreElMar,
     caduca: (l) => l.enTierra || l.altura < 100,
     lineas: [ara("cerquita")],
+    nombra: "mar-abajo",
+  },
+  {
+    /*
+     * **El señalero, desde fuera** (punto 301): al llegar al puesto, el que
+     * guía el avión con sus dos bastones —seguir, girar, despacio y parar,
+     * con las señas del Anexo 2 de la OACI— hasta dejarlo en su sitio. Desde
+     * el asiento no se ve, y enseña que alguien en tierra guía al avión. Sin
+     * palabras: lo dicen los brazos, y la despedida lo devuelve a la
+     * ventanilla. Ver `world/senalero.ts`.
+     */
+    id: "senalero",
+    tras: 0,
+    cuando: (l) => !!l.senalero && (l.tramo === "al-puesto" || l.tramo === "aparcado"),
+    caduca: (l) => l.tramo === "apagado",
+    lineas: [],
+    plano: "fuera-senalero",
   },
   {
     // En tierra, rodando: el cinturón puesto hasta que se apague la luz.
@@ -1164,6 +1496,12 @@ const LO_QUE_DICE_ARA: Readonly<Record<string, string>> = {
   orotava: "orotava",
 };
 const LO_VEO = ara("loVeo");
+/**
+ * **Lo que Ara contesta a la historia, no a lo que ve**: «¿hablar silbando?»
+ * es al silbo gomero, que solo lo cuenta la historia. Sin historia oída, no se
+ * contesta. Ver `decirLoSenalado`.
+ */
+const CONTESTA_A_LA_HISTORIA: ReadonlySet<string> = new Set(["garajonay"]);
 
 /**
  * **Todas las frases nuevas de la escena**, una vez cada una: para la lista de
@@ -1181,6 +1519,9 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   poner(ara("nubesAbajo"));
   for (const c of CHARLAS_DEL_PASAJE) c.lineas.forEach(poner);
   poner(ara("giroArriba"));
+  // Y lo que va según lo que se ve y quién anda por el pasillo: el Teide, y bajo las nubes.
+  poner(comandante("teide"));
+  poner(ara("techo"));
   // Y el kit: lo que se dice en los juegos, y guardarlo para aterrizar.
   LINEAS_DEL_KIT.forEach(poner);
   poner(tripulante(KIT_GUARDADO));
@@ -1193,6 +1534,37 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
 export interface CambioDePlano {
   readonly plano: Plano;
   readonly desde: number;
+  /** Y el sitio del paisaje que se enseña, en los planos que lo buscan. */
+  readonly sitio?: SitioDelPaisaje;
+}
+
+/**
+ * **Lo nombrado del paisaje, y cómo se veía al nombrarlo**: para el banco,
+ * que comprueba con la imagen que se ve lo que se dice, y para las pruebas.
+ */
+export interface Nombrado {
+  readonly sitio: SitioDelPaisaje;
+  /** La clave de la primera frase que lo nombra. */
+  readonly clave: string;
+  readonly como: ComoSeVe;
+  readonly lado: "izquierda" | "derecha" | null;
+  /** Segundos de escena. */
+  readonly desde: number;
+}
+
+/** Si un sitio es de lo de debajo del avión: se mira hacia abajo, no hacia él. */
+export const esDeAbajo = (sitio: SitioDelPaisaje): boolean =>
+  sitio === "tierra-abajo" || sitio === "mar-abajo" || sitio === "nubes-abajo";
+
+/**
+ * **El plano con el que se enseña un sitio**, según desde dónde se vea: la
+ * ventanilla, la cara contra el cristal —mirando hacia él, o hacia abajo si es
+ * lo de debajo— o el avión por fuera con el sitio al fondo.
+ */
+export function planoParaVer(como: ComoSeVe, sitio: SitioDelPaisaje): Plano {
+  if (como === "ventanilla") return "ventanilla";
+  if (como === "asomado") return esDeAbajo(sitio) ? "asomado-abajo" : "asomado-paisaje";
+  return "fuera-paisaje";
 }
 
 /** Lo que la escena deja ver: para el dibujo, la cámara, el banco y las pruebas. */
@@ -1219,6 +1591,14 @@ export interface EstadoDelPasaje {
   readonly planoDesde: number;
   /** Todos los cambios de plano, en orden: el primero es la ventanilla. */
   readonly planos: readonly CambioDePlano[];
+  /**
+   * **El sitio del paisaje que se está enseñando**, en los planos que lo
+   * buscan —`asomado-paisaje` y `fuera-paisaje`—; si no, `null`. Es adonde
+   * mira la cámara. Ver `SitioDelPaisaje`.
+   */
+  readonly paisaje: SitioDelPaisaje | null;
+  /** Lo nombrado del paisaje, y cómo se veía cuando se nombró. Ver `Nombrado`. */
+  readonly nombrados: readonly Nombrado[];
   /** **El dibujo de la ventanita** de ahora, o `null`. */
   readonly dibujo: string | null;
   /** Si lo que suena ahora es la megafonía. Ver `megafoniaSuena`. */
@@ -1246,11 +1626,24 @@ export class VueloDePasaje {
   /** Cuándo se pidió «sentados para el despegue» y cuándo se alineó, en el reloj de pared. */
   private enLaEsperaDesde: number | null = null;
   private alineadoDesde: number | null = null;
-  private readonly porSenalar: Senalado[] = [];
+  /** Lo señalado que espera turno, y desde cuándo espera. Ver `ESPERA_A_QUE_SE_VEA`. */
+  private readonly porSenalar: { readonly s: Senalado; readonly desde: number }[] = [];
   private readonly senalados: string[] = [];
+  /** Lo señalado que se dejó sin decir porque no llegó a verse. */
+  private readonly olvidados: string[] = [];
   private plano: Plano = "ventanilla";
   private planoDesde = 0;
+  private paisaje: SitioDelPaisaje | null = null;
   private readonly planos: CambioDePlano[] = [{ plano: "ventanilla", desde: 0 }];
+  private readonly nombrados: Nombrado[] = [];
+  /**
+   * **Lo que Ara contesta a lo señalado, esperando a que se haya oído**: su
+   * frase y las que tienen que haber sonado antes. Ver `decirLoSenalado`.
+   */
+  private contestacion: { readonly linea: Linea; readonly oir: readonly string[]; readonly desde: number } | null = null;
+  /** Si ya se contó qué es el Teide: ver la charla `altoRapido`. */
+  private teideContado = false;
+
   private dibujo: string | null = null;
   private dibujoDe: Linea | null = null;
   /**
@@ -1311,6 +1704,34 @@ export class VueloDePasaje {
     return this.charlasDichas.includes(id);
   }
 
+  /**
+   * **Si ya se ha contado qué es el Teide**, lo primero de todo: lo cuenta la
+   * comandante al señalarlo por la ventanilla, o antes de decir que se vuela
+   * más alto que él. Ver la charla `altoRapido`.
+   */
+  get teidePresentado(): boolean {
+    return this.teideContado;
+  }
+
+  /**
+   * **Cómo se ve ahora un sitio del paisaje.** Lo sabe el juego —ver
+   * `LecturaDelPasaje.ver`—; sin él, todo se ve por la ventanilla y por el
+   * lado de Ara, que es lo que hacen las pruebas que no miran el paisaje.
+   */
+  comoSeVe(sitio: SitioDelPaisaje, l: LecturaDelPasaje, plano?: Plano, lado?: "izquierda" | "derecha"): VistaDelSitio {
+    return (
+      l.ver?.(sitio, plano) ?? {
+        como: plano && esDeFuera(plano) ? "fuera" : plano && plano !== "ventanilla" ? "asomado" : "ventanilla",
+        lado: lado ?? this.opciones.lado ?? LADO_DE_ARA,
+      }
+    );
+  }
+
+  /** Si un sitio del paisaje se ve ahora de alguna manera. */
+  seVe(sitio: SitioDelPaisaje, l: LecturaDelPasaje): boolean {
+    return this.comoSeVe(sitio, l).como !== null;
+  }
+
   /** Si un alabeo baja el ala del lado de Ara. */
   bajaMiAla(alabeo: number): boolean {
     return (this.opciones.lado ?? LADO_DE_ARA) === "izquierda" ? alabeo < 0 : alabeo > 0;
@@ -1339,6 +1760,8 @@ export class VueloDePasaje {
       plano: this.plano,
       planoDesde: this.planoDesde,
       planos: [...this.planos],
+      paisaje: this.paisaje,
+      nombrados: [...this.nombrados],
       dibujo: this.dibujo,
       megafonia: this.megafoniaSuena,
       kit: this.kit.estado,
@@ -1377,6 +1800,7 @@ export class VueloDePasaje {
    */
   get puedeSenalar(): boolean {
     return (
+      !this.contestacion &&
       (this.dicho("arriba") || this.dicho("nubesRespuesta")) &&
       !this.dicho("aproximacion") &&
       this.charla.callada &&
@@ -1385,16 +1809,30 @@ export class VueloDePasaje {
     );
   }
 
-  /** **Lo que el juego acaba de ver por la ventanilla**: se dice en cuanto se pueda. */
+  /**
+   * **Lo que el juego acaba de ver por la ventanilla**: se dice en cuanto se
+   * pueda, si entonces se sigue viendo. Ver `ESPERA_A_QUE_SE_VEA`.
+   */
   senalar(s: Senalado): void {
     if (this.acabado) return;
-    this.porSenalar.push(s);
+    this.porSenalar.push({ s, desde: this.reloj });
+  }
+
+  /** Lo señalado que se dejó sin decir porque no llegó a verse a tiempo. */
+  get olvidadosPorNoVerse(): readonly string[] {
+    return this.olvidados;
   }
 
   /** Un paso de la escena. Devuelve lo que la escena deja hacer a la tripulación. */
   paso(dt: number, l: LecturaDelPasaje): PermisosDeLaEscena {
     this.reloj += dt;
-    this.callada = this.charla.callada ? this.callada + dt : 0;
+    /*
+     * El silencio de un corte de cámara también es silencio: con el corte a
+     * una toma sin palabras —el señalero— la cuenta volvía a cero y lo que
+     * esperaba su rato callado se quedaba sin él.
+     */
+    const enCorte = this.reloj < this.enCorteHasta && this.charla.vacia;
+    this.callada = this.charla.callada || enCorte ? this.callada + dt : 0;
     if (!this.acabado) {
       this.charla.atender();
       this.avanzar(l);
@@ -1420,6 +1858,21 @@ export class VueloDePasaje {
       this.dibujoDe = suena;
       this.dibujo = suena.dibujo ?? null;
     }
+    /*
+     * **Y la foto de una historia, solo mientras suena la voz que la cuenta**
+     * (punto 287). Salía la foto del gomero silbando con la historia del silbo
+     * sin sonar: la escena la daba por dicha —se lee el subtítulo el rato de
+     * leerlo— y la ventanita ponía su foto igual. Una foto no sale sin la voz
+     * que la cuenta: hasta que esa voz empieza, y si no llega a empezar, la
+     * ventanita se queda como estaba. Los dibujos de lo que se explica sí
+     * acompañan al subtítulo, que es lo que se lee mientras una frase nueva
+     * espera su toma.
+     */
+    if (this.dibujoDe?.dibujo?.startsWith("foto:")) {
+      const deVerdad = this.charla.suenaDeVerdad === this.dibujoDe;
+      if (!deVerdad && this.dibujo === this.dibujoDe.dibujo) this.dibujo = null;
+      else if (deVerdad) this.dibujo = this.dibujoDe.dibujo;
+    }
     const seQueda = this.dibujo !== null && HASTA_LA_SIGUIENTE.has(this.dibujo);
     if (this.charla.callada && this.callada > SE_QUEDA_LA_VENTANITA && !seQueda) this.dibujo = null;
   }
@@ -1429,24 +1882,59 @@ export class VueloDePasaje {
    * revés, o de un sitio de fuera a otro—, la escena calla su rato. Ver
    * `CORTE_DE_PLANO`.
    */
-  private ponerPlano(p: Plano): void {
-    if (p === this.plano) return;
+  private ponerPlano(p: Plano, sitio: SitioDelPaisaje | null = null): void {
+    // Los planos que buscan un sitio son otro plano con otro sitio: otra toma.
+    const suyo = p === "asomado-paisaje" || p === "fuera-paisaje" ? sitio : null;
+    if (p === this.plano && suyo === this.paisaje) return;
     const corte = esDeFuera(p) || esDeFuera(this.plano);
     this.plano = p;
+    this.paisaje = suyo;
     this.planoDesde = this.reloj;
-    this.planos.push({ plano: p, desde: this.reloj });
+    this.planos.push({ plano: p, desde: this.reloj, ...(suyo ? { sitio: suyo } : {}) });
     if (this.planos.length > 120) this.planos.splice(1, 1);
-    if (corte) this.charla.esperar(CORTE_DE_PLANO);
+    if (corte) {
+      this.charla.esperar(CORTE_DE_PLANO);
+      this.enCorteHasta = this.reloj + CORTE_DE_PLANO;
+    }
+  }
+
+  /** Hasta cuándo dura el silencio del último corte, s de escena. */
+  private enCorteHasta = 0;
+
+  /**
+   * **Cómo se ve lo que nombra un momento o una charla**: `undefined` si no
+   * nombra nada del paisaje, `null` si nombra algo que ahora no se ve —y
+   * entonces espera—, o desde dónde se ve. Lo que solo se enseña si se ve
+   * —`muestra`— no espera: sin verse, se dice sin enseñarlo.
+   */
+  private vistaDe(def: DefMomento<string>, l: LecturaDelPasaje): VistaDelSitio | null | undefined {
+    const sitio = def.nombra ?? def.muestra;
+    if (!sitio) return undefined;
+    const v = this.comoSeVe(sitio, l, def.plano);
+    if (v.como !== null) return v;
+    return def.nombra ? null : undefined;
   }
 
   /** Se dice lo de un momento o una charla: su plano, su dibujo de mirar y sus frases. */
-  private decirDe(def: DefMomento<string>, l: LecturaDelPasaje): void {
-    this.ponerPlano(def.plano ?? "ventanilla");
-    this.charla.decir(def.segun?.(l, this) ?? def.lineas);
+  private decirDe(def: DefMomento<string>, l: LecturaDelPasaje, vista?: VistaDelSitio): void {
+    const sitio = def.nombra ?? def.muestra ?? null;
+    const plano = def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
+    this.ponerPlano(plano, sitio);
+    const lineas = def.segun?.(l, this) ?? def.lineas;
+    if (sitio && vista?.como && lineas[0])
+      this.apuntarLoNombrado(sitio, lineas[0].clave, vista);
+    if (lineas.some((x) => x.clave === "inicio.mama.pasaje.teide")) this.teideContado = true;
+    this.charla.decir(lineas);
     if (def.mira) {
       this.mira = def.mira;
       this.miraDesde = this.reloj;
     }
+  }
+
+  private apuntarLoNombrado(sitio: SitioDelPaisaje, clave: string, v: VistaDelSitio): void {
+    if (!v.como) return;
+    this.nombrados.push({ sitio, clave, como: v.como, lado: v.lado, desde: this.reloj });
+    if (this.nombrados.length > 60) this.nombrados.shift();
   }
 
   private avanzar(l: LecturaDelPasaje): void {
@@ -1471,7 +1959,17 @@ export class VueloDePasaje {
      */
     if (this.dicho("aproximacion") || l.tramo === "final" || l.enTierra) this.porSenalar.length = 0;
     if (!this.charla.callada) return;
-    if (!def.cuando(l, this) || this.esperaSuFase(def, l)) {
+    // Lo que Ara contesta a lo señalado, si se oyó lo que contesta. Ver `decirLoSenalado`.
+    if (this.contestacion) {
+      const c = this.contestacion;
+      this.contestacion = null;
+      if (this.seOyeronDesde(c.oir, c.desde)) {
+        this.charla.decir([c.linea]);
+        return;
+      }
+    }
+    const vista = def.cuando(l, this) ? this.vistaDe(def, l) : undefined;
+    if (!def.cuando(l, this) || this.esperaSuFase(def, l) || vista === null) {
       /*
        * Lo señalado por la ventanilla, en los huecos de lo que no ha llegado;
        * y si no hay, lo que venga a cuento. Menos en el del servicio, que va
@@ -1479,11 +1977,7 @@ export class VueloDePasaje {
        * historia en medio se lo comía.
        */
       if (def.id === "servicio") return;
-      const s = this.porSenalar.shift();
-      if (s) {
-        this.decirLoSenalado(s);
-        return;
-      }
+      if (this.atenderLoSenalado(l)) return;
       /*
        * Y con el kit en las manos, lo que se cuenta cuando viene a cuento
        * espera: una explicación encima de un juego es un ruido. Lo que tiene
@@ -1491,17 +1985,49 @@ export class VueloDePasaje {
        */
       const charla = this.kit.ocupaAAra ? undefined : this.charlaQueToca(l);
       if (charla) {
-        this.charlasDichas.push(charla.id);
-        this.decirDe(charla, l);
+        this.charlasDichas.push(charla.def.id);
+        this.decirDe(charla.def, l, charla.vista);
         return;
       }
       this.volverALaVentanilla();
       return;
     }
-    this.decirDe(def, l);
+    this.decirDe(def, l, vista ?? undefined);
     this.dichos.push(def.id);
     this.cuandoSeDijo.set(def.id, this.reloj);
     this.indice++;
+  }
+
+  /**
+   * **Lo señalado por la ventanilla, si se ve.** El juego lo vio y lo dio,
+   * pero entre eso y el hueco para decirlo el avión puede meterse en una nube
+   * o girar: se mira otra vez, y si no se ve, espera su rato sin quitarle el
+   * turno a nadie; pasado el rato, se deja. Devuelve si se dijo.
+   */
+  private atenderLoSenalado(l: LecturaDelPasaje): boolean {
+    const primero = this.porSenalar[0];
+    if (!primero) return false;
+    const v = this.comoSeVe(`hito:${primero.s.que}`, l, undefined, primero.s.lado);
+    if (v.como !== null) {
+      this.porSenalar.shift();
+      this.decirLoSenalado(primero.s, v);
+      return true;
+    }
+    if (this.reloj - primero.desde > ESPERA_A_QUE_SE_VEA) {
+      this.porSenalar.shift();
+      this.olvidados.push(primero.s.que);
+    }
+    return false;
+  }
+
+  /**
+   * **Si esas frases sonaron**, dichas a partir de `desde`: sonaron de
+   * verdad, con su voz, no solo se dejaron leer. Lo que contesta Ara espera a
+   * esto. Ver `decirLoSenalado`.
+   */
+  private seOyeronDesde(claves: readonly string[], desde: number): boolean {
+    const r = this.charla.registro;
+    return claves.every((c) => r.some((d) => d.clave === c && d.desde >= desde - 1e-6 && d.como === "sono"));
   }
 
   /**
@@ -1537,15 +2063,19 @@ export class VueloDePasaje {
     if (lineas.length) this.charla.decir(lineas);
   }
 
-  /** La primera charla que viene a cuento ahora, si hay alguna. */
-  private charlaQueToca(l: LecturaDelPasaje): DefCharla | undefined {
-    return CHARLAS_DEL_PASAJE.find(
-      (c) =>
-        !this.charlasDichas.includes(c.id) &&
-        this.callada >= c.tras &&
-        c.cuando(l, this) &&
-        !c.caduca?.(l, this),
-    );
+  /**
+   * La primera charla que viene a cuento ahora, si hay alguna. **Y lo que
+   * nombra del paisaje, solo si se ve**: ver `SitioDelPaisaje`.
+   */
+  private charlaQueToca(l: LecturaDelPasaje): { def: DefCharla; vista?: VistaDelSitio } | undefined {
+    for (const c of CHARLAS_DEL_PASAJE) {
+      if (this.charlasDichas.includes(c.id) || this.callada < c.tras || !c.cuando(l, this) || c.caduca?.(l, this))
+        continue;
+      const vista = this.vistaDe(c, l);
+      if (vista === null) continue;
+      return { def: c, ...(vista ? { vista } : {}) };
+    }
+    return undefined;
   }
 
   /**
@@ -1564,10 +2094,19 @@ export class VueloDePasaje {
    * si va por su lado. Lo que va por el otro lado lo cuenta la comandante
    * igual —le habla a todo el pasaje— y Ara no lo ve, así que no dice nada.
    */
-  private decirLoSenalado(s: Senalado): void {
-    this.ponerPlano("ventanilla");
+  private decirLoSenalado(s: Senalado, v: VistaDelSitio): void {
+    const sitio: SitioDelPaisaje = `hito:${s.que}`;
+    this.ponerPlano(planoParaVer(v.como ?? "ventanilla", sitio), sitio);
+    /*
+     * **Y el lado de ahora**, no el de cuando se vio: si el avión giró, la
+     * comandante manda mirar por donde está. Ver `Senalado.porLado`.
+     */
+    const lado = v.lado ?? s.lado;
+    const dicho = s.porLado?.[lado] ?? s.dicho;
+    if (v.como) this.apuntarLoNombrado(sitio, dicho.clave, v);
+    if (s.que === "teide") this.teideContado = true;
     const lineas: Linea[] = [
-      { quien: "mama", clave: s.dicho.clave, megafonia: true, texto: s.dicho.texto, relleno: s.dicho.relleno },
+      { quien: "mama", clave: dicho.clave, megafonia: true, texto: dicho.texto, relleno: dicho.relleno },
     ];
     if (s.historia)
       lineas.push({
@@ -1579,10 +2118,18 @@ export class VueloDePasaje {
         // Y su foto en la ventanita, la de las historias de cualquier vuelo.
         ...(s.historia.sitio ? { dibujo: `foto:${s.historia.sitio}` } : {}),
       });
-    const suLado = s.lado === (this.opciones.lado ?? LADO_DE_ARA);
+    const suLado = lado === (this.opciones.lado ?? LADO_DE_ARA);
     if (suLado) {
       const suya = LO_QUE_DICE_ARA[s.que];
-      lineas.push(suya ? ara(suya) : LO_VEO);
+      /*
+       * **Y Ara contesta a lo que se ha oído** (punto 287): se ponía a la cola
+       * con lo demás, y «¿hablar silbando?» salía detrás de una historia del
+       * silbo que no había sonado. Así que espera a que acabe lo de la
+       * comandante, y solo si sonó: lo que la señala y, si contesta a la
+       * historia, la historia.
+       */
+      const oir = [dicho.clave, ...(s.historia && CONTESTA_A_LA_HISTORIA.has(s.que) ? [s.historia.clave] : [])];
+      this.contestacion = { linea: suya ? ara(suya) : LO_VEO, oir, desde: this.reloj };
       this.mira = "ventanilla";
       this.miraDesde = this.reloj;
     }
