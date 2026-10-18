@@ -548,11 +548,11 @@ export const EN: Dictionary = {
   "comandante.bienvenida.saludo.cabina.noches":
     "A very good evening from the flight deck: this is Captain Jazlyn.",
   "comandante.bienvenida.saludo.chicos.dias":
-    "Ladies and gentlemen, boys and girls: good morning! This is Captain Jazlyn speaking.",
+    "Ladies and gentlemen, and our youngest passengers: good morning! This is Captain Jazlyn speaking.",
   "comandante.bienvenida.saludo.chicos.tardes":
-    "Ladies and gentlemen, boys and girls: good afternoon! This is Captain Jazlyn speaking.",
+    "Ladies and gentlemen, and our youngest passengers: good afternoon! This is Captain Jazlyn speaking.",
   "comandante.bienvenida.saludo.chicos.noches":
-    "Ladies and gentlemen, boys and girls: good evening! This is Captain Jazlyn speaking.",
+    "Ladies and gentlemen, and our youngest passengers: good evening! This is Captain Jazlyn speaking.",
   "comandante.bienvenida.gracia.1":
     "Ladies and gentlemen, this is Captain Jazlyn, speaking from the office with the best view on the whole plane.",
   "comandante.bienvenida.gracia.2":
@@ -627,7 +627,7 @@ export const EN: Dictionary = {
   "comandante.chicos.primeraVez":
     "Ladies and gentlemen, this is your captain. A special hello to anyone flying for the very first time today: that feeling in your tummy when the plane goes up or down is perfectly normal, and we all felt it our first time.",
   "comandante.chicos.tripulacion":
-    "Ladies and gentlemen, this is your captain. A big hello to all the boys and girls travelling with us today: you're now part of the crew, and your job is to keep an eye on the sky through the window.",
+    "Ladies and gentlemen, this is your captain. A big hello to all the kids travelling with us today: you're now part of the crew, and your job is to keep an eye on the sky through the window.",
   "comandante.chicos.aterrizar":
     "Ladies and gentlemen, this is your captain. A hello to our youngest passengers and to anyone on a plane for the first time: welcome to the sky. When we come down, look out of the window and watch everything grow big again.",
   "comandante.curiosidad.alas":

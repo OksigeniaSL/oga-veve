@@ -1,7 +1,7 @@
 # Óga Veve
 
 > Simulador de vuelo para navegador, gratis y sin instalar, hecho para que
-> chicos y chicas del Paraguay aprendan a volar reconociendo su propio país
+> los chicos del Paraguay aprendan a volar reconociendo su propio país
 > desde el aire, y para volar también sobre las islas Canarias. Empieza a los
 > cuatro años, antes de saber leer.
 

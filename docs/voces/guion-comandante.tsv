@@ -413,9 +413,9 @@
 413	comandante.bienvenida.saludo.cabina.dias	Muy buenos días desde la cabina de mando: les saluda la comandante Jazlyn.
 414	comandante.bienvenida.saludo.cabina.tardes	Muy buenas tardes desde la cabina de mando: les saluda la comandante Jazlyn.
 415	comandante.bienvenida.saludo.cabina.noches	Muy buenas noches desde la cabina de mando: les saluda la comandante Jazlyn.
-416	comandante.bienvenida.saludo.chicos.dias	Señoras y señores, chicos y chicas: ¡buenos días! Les habla la comandante Jazlyn.
-417	comandante.bienvenida.saludo.chicos.tardes	Señoras y señores, chicos y chicas: ¡buenas tardes! Les habla la comandante Jazlyn.
-418	comandante.bienvenida.saludo.chicos.noches	Señoras y señores, chicos y chicas: ¡buenas noches! Les habla la comandante Jazlyn.
+416	comandante.bienvenida.saludo.chicos.dias	Señoras y señores, y los más chicos de a bordo: ¡buenos días! Les habla la comandante Jazlyn.
+417	comandante.bienvenida.saludo.chicos.tardes	Señoras y señores, y los más chicos de a bordo: ¡buenas tardes! Les habla la comandante Jazlyn.
+418	comandante.bienvenida.saludo.chicos.noches	Señoras y señores, y los más chicos de a bordo: ¡buenas noches! Les habla la comandante Jazlyn.
 419	comandante.bienvenida.gracia.1	Señores pasajeros, les habla la comandante Jazlyn, desde la oficina con la mejor vista de todo el avión.
 420	comandante.bienvenida.gracia.2	Señores pasajeros, buenas: les habla la comandante Jazlyn. Ya revisamos todo, el avión está listo, y yo también.
 421	comandante.bienvenida.gracia.3	Señores pasajeros, les habla la comandante Jazlyn. Tengo el trabajo más lindo del mundo, y hoy me toca llevarlos a ustedes.
@@ -462,7 +462,7 @@
 462	comandante.mitad.viaje	Señores pasajeros, les habla la comandante, para contarles cómo vamos: ya pasamos la mitad del viaje.
 463	comandante.mitad.parte	Les paso el último parte del tiempo en destino.
 464	comandante.chicos.primeraVez	Señores pasajeros, les habla la comandante. Un saludo especial para quien hoy vuela por primera vez: eso que se siente en la panza cuando el avión sube o baja es normal, y a todos nos pasó la primera vez.
-465	comandante.chicos.tripulacion	Señores pasajeros, les habla la comandante. Un saludo grande a los chicos y chicas que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.
+465	comandante.chicos.tripulacion	Señores pasajeros, les habla la comandante. Un saludo grande a los chicos que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.
 466	comandante.chicos.aterrizar	Señores pasajeros, les habla la comandante. Un saludo a los más chiquitos y a quien sube a un avión por primera vez: bienvenidos al cielo. Cuando bajemos, miren por la ventanilla cómo todo se va haciendo grande otra vez.
 467	comandante.curiosidad.alas	Señores pasajeros, algo para los que van en la ventanilla: si miran el ala, la van a ver doblada un poquito hacia arriba. Es el aire que nos sostiene, empujándola. Está hecha para eso, así que tranquilos.
 468	comandante.curiosidad.rayas	Señores pasajeros, un dato curioso de la comandante: las rayas blancas que dejan algunos aviones en el cielo son nubes. El vapor de agua que sale de los motores se congela con el frío, y queda dibujado ahí arriba.

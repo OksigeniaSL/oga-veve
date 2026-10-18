@@ -9,7 +9,7 @@ comandante de la 407 a la 469.
 
 | Qué | Claves | Frases | Caracteres |
 | --- | --- | ---: | ---: |
-| El saludo de cada hora: a los pasajeros, desde la cabina y a los chicos y chicas | `comandante.bienvenida.saludo.<forma>.<dias\|tardes\|noches>` | 9 | 666 |
+| El saludo de cada hora: a los pasajeros, desde la cabina y a los más chicos | `comandante.bienvenida.saludo.<forma>.<dias\|tardes\|noches>` | 9 | 666 |
 | El saludo con gracia | `comandante.bienvenida.gracia.<1-3>` | 3 | 339 |
 | A dónde se va, sin más | `comandante.bienvenida.a.<destino>` y `.a.local` | 18 | 931 |
 | A dónde se va, con un detalle cierto del sitio | `comandante.bienvenida.detalle.<destino>` y `.detalle.local` | 18 | 1.551 |

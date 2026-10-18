@@ -16550,7 +16550,7 @@
     "id": "comandante.bienvenida.saludo.chicos.dias",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Señoras y señores, chicos y chicas: ¡buenos días! Les habla la comandante Jazlyn.",
+    "texto": "Señoras y señores, y los más chicos de a bordo: ¡buenos días! Les habla la comandante Jazlyn.",
     "para": "la bienvenida de la comandante, en una de sus formas: se monta con el plan y el tiempo de allá",
     "ajustes": {
       "stability": 0.35,
@@ -16564,7 +16564,7 @@
     "id": "comandante.bienvenida.saludo.chicos.tardes",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Señoras y señores, chicos y chicas: ¡buenas tardes! Les habla la comandante Jazlyn.",
+    "texto": "Señoras y señores, y los más chicos de a bordo: ¡buenas tardes! Les habla la comandante Jazlyn.",
     "para": "la bienvenida de la comandante, en una de sus formas: se monta con el plan y el tiempo de allá",
     "ajustes": {
       "stability": 0.35,
@@ -16578,7 +16578,7 @@
     "id": "comandante.bienvenida.saludo.chicos.noches",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Señoras y señores, chicos y chicas: ¡buenas noches! Les habla la comandante Jazlyn.",
+    "texto": "Señoras y señores, y los más chicos de a bordo: ¡buenas noches! Les habla la comandante Jazlyn.",
     "para": "la bienvenida de la comandante, en una de sus formas: se monta con el plan y el tiempo de allá",
     "ajustes": {
       "stability": 0.35,
@@ -17236,7 +17236,7 @@
     "id": "comandante.chicos.tripulacion",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Señores pasajeros, les habla la comandante. Un saludo grande a los chicos y chicas que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.",
+    "texto": "Señores pasajeros, les habla la comandante. Un saludo grande a los chicos que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.",
     "para": "lo que cuenta la comandante en un crucero largo",
     "ajustes": {
       "stability": 0.35,

@@ -844,7 +844,7 @@ export const ES_PY = {
    *
    * Las de arriba son la forma de siempre, y se quedan en la rueda. Éstas son
    * las otras: el saludo según la hora —desde la cabina, a los pasajeros, o a
-   * los chicos y chicas de a bordo—, con gracia, la frase del destino con un
+   * los más chicos de a bordo—, con gracia, la frase del destino con un
    * detalle cierto del sitio, y el cierre. Se montan con el plan y el tiempo
    * de allá en la receta de siempre, y nunca sale la misma dos vuelos
    * seguidos. Cada una es una frase entera, para grabarla entera. Ver
@@ -863,11 +863,11 @@ export const ES_PY = {
   "comandante.bienvenida.saludo.cabina.noches":
     "Muy buenas noches desde la cabina de mando: les saluda la comandante Jazlyn.",
   "comandante.bienvenida.saludo.chicos.dias":
-    "Señoras y señores, chicos y chicas: ¡buenos días! Les habla la comandante Jazlyn.",
+    "Señoras y señores, y los más chicos de a bordo: ¡buenos días! Les habla la comandante Jazlyn.",
   "comandante.bienvenida.saludo.chicos.tardes":
-    "Señoras y señores, chicos y chicas: ¡buenas tardes! Les habla la comandante Jazlyn.",
+    "Señoras y señores, y los más chicos de a bordo: ¡buenas tardes! Les habla la comandante Jazlyn.",
   "comandante.bienvenida.saludo.chicos.noches":
-    "Señoras y señores, chicos y chicas: ¡buenas noches! Les habla la comandante Jazlyn.",
+    "Señoras y señores, y los más chicos de a bordo: ¡buenas noches! Les habla la comandante Jazlyn.",
   "comandante.bienvenida.gracia.1":
     "Señores pasajeros, les habla la comandante Jazlyn, desde la oficina con la mejor vista de todo el avión.",
   "comandante.bienvenida.gracia.2":
@@ -959,7 +959,7 @@ export const ES_PY = {
   "comandante.chicos.primeraVez":
     "Señores pasajeros, les habla la comandante. Un saludo especial para quien hoy vuela por primera vez: eso que se siente en la panza cuando el avión sube o baja es normal, y a todos nos pasó la primera vez.",
   "comandante.chicos.tripulacion":
-    "Señores pasajeros, les habla la comandante. Un saludo grande a los chicos y chicas que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.",
+    "Señores pasajeros, les habla la comandante. Un saludo grande a los chicos que viajan hoy: desde ahora son parte de la tripulación, y les toca vigilar el cielo por la ventanilla.",
   "comandante.chicos.aterrizar":
     "Señores pasajeros, les habla la comandante. Un saludo a los más chiquitos y a quien sube a un avión por primera vez: bienvenidos al cielo. Cuando bajemos, miren por la ventanilla cómo todo se va haciendo grande otra vez.",
   "comandante.curiosidad.alas":

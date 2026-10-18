@@ -17,8 +17,9 @@
  * vuelo, el tiempo en destino y un cierre— (Plane & Pilot, «This Is Your
  * Captain Speaking»; airlinepilotforums.com, «the welcome PA»). Lo que cambia
  * de una forma a otra es **cómo**: el saludo según la hora, desde la cabina,
- * con los chicos y chicas a bordo —la favorita de más de un comandante de
- * verdad: «Ladies and gentlemen, boys and girls»—, con un detalle cierto del
+ * con los más chicos de a bordo en el saludo —«Señoras y señores, y los más
+ * chicos de a bordo», en masculino genérico, sin desdoblar: ver
+ * `i18n/sin-desdoblar.test.ts`—, con un detalle cierto del
  * sitio al que se va, o con algo de gracia. Ninguna inventa un procedimiento:
  * todas son la misma bienvenida dicha por la misma persona otro día.
  *

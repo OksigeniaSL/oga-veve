@@ -11,7 +11,7 @@
  *   aterrizar en unos veinte minutos», con **el último parte del tiempo en
  *   destino**. Es el anuncio a mitad de vuelo de cualquier ruta larga, y es
  *   también donde se da el tiempo actualizado. Ver `MITADES`.
- * - **Un saludo a los chicos y chicas, o a quien vuela por primera vez**, sin
+ * - **Un saludo a los chicos, o a quien vuela por primera vez**, sin
  *   un nombre ni un dato de nadie: a quien le toque, que lo oiga como suyo.
  *   Ver `SALUDOS_A_LOS_CHICOS`.
  * - **Una curiosidad** en un crucero tranquilo: que el ala se dobla hacia
