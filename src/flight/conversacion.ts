@@ -61,6 +61,13 @@ export interface VozDelInicio {
   callar(): void;
 }
 
+/**
+ * **Cómo acabó una frase**: sonó entera; no podía sonar —sin grabación ni voz
+ * del navegador, y entonces se esperó el rato de leerla—; la cortaron; o no
+ * avisó a tiempo y la escena siguió sin ella. Ver `TOPE_DE_UNA_FRASE`.
+ */
+export type ComoAcabo = "sono" | "muda" | "cortada" | "tope";
+
 /** Lo que la escena apunta de cada frase: cuándo empezó, cuándo acabó y si se cortó. */
 export interface FraseDicha {
   readonly clave: string;
@@ -73,6 +80,13 @@ export interface FraseDicha {
    * de fuera, que es lo que no puede pasar.
    */
   cortada: boolean;
+  /**
+   * **Y cómo acabó**, o `null` si todavía suena. Una que se dejó por el tope
+   * puede avisar después de que sonó: entonces pasa a `sono`, que es lo que
+   * de verdad pasó. Lo mira quien espera a que algo se haya oído —la
+   * tripulación no entra en pista hasta oír «sentados para el despegue»—.
+   */
+  como: ComoAcabo | null;
 }
 
 /** Lo que se calla entre una frase y la siguiente, s: dos frases no son una. */
@@ -84,6 +98,12 @@ export const ENTRE_FRASES = 0.35;
  * lee en seis como mucho; si pasado esto no ha avisado, es que la boca la tiró
  * sin decirlo —un reinicio la vacía— y la escena no se puede quedar colgada
  * esperándola.
+ *
+ * **Con el reloj de la voz, no con el del vuelo**: una grabación dura lo que
+ * dura en el reloj de pared. Medido con el del vuelo, con el reloj del juego
+ * acelerado doce veces —el de los bancos—, a los tres segundos de pared se
+ * daba por perdida una frase que estaba sonando, y la siguiente se ponía a la
+ * cola detrás de ella hasta caducar. Ver `pared` en el constructor.
  */
 export const TOPE_DE_UNA_FRASE = 35;
 
@@ -91,18 +111,25 @@ export class Conversacion {
   /** Las frases que esperan, la que suena y cuándo puede sonar la siguiente. */
   private cola: Linea[] = [];
   private sonando: number | null = null;
-  private sonandoDesde = 0;
   private puedeHablarEn = 0;
   private cuantas = 0;
   private dicha: Linea | null = null;
   /** Lo dicho, con su hora. Ver `registro`. */
   private readonly dichas: FraseDicha[] = [];
   private dichaAhora: FraseDicha | null = null;
+  /** Cuándo empezó la que suena, en el reloj de la voz. Ver `TOPE_DE_UNA_FRASE`. */
+  private sonandoDesdeEnPared = 0;
 
   constructor(
     private readonly voz: VozDelInicio,
     /** La hora de la escena, s: la lleva quien la lleva. */
     private readonly reloj: () => number,
+    /**
+     * **Y el reloj de la voz**, s: el de pared mientras se juega. Es el mismo
+     * que el de la escena salvo con el reloj del juego acelerado, que no
+     * acelera lo que se oye. Sin decir, el de la escena.
+     */
+    private readonly pared: () => number = reloj,
   ) {}
 
   /** Se pone a la cola; con `cortar`, lo que quedaba por decir se calla antes. */
@@ -116,7 +143,7 @@ export class Conversacion {
     this.cola = [];
     if (this.sonando !== null) {
       this.sonando = null;
-      this.acabarLaDicha(true);
+      this.acabarLaDicha("cortada");
       this.voz.callar();
     }
     this.puedeHablarEn = this.reloj() + ENTRE_FRASES;
@@ -125,9 +152,9 @@ export class Conversacion {
   /** Un paso: si se puede, suena la siguiente. */
   atender(): void {
     const ahora = this.reloj();
-    if (this.sonando !== null && ahora - this.sonandoDesde > TOPE_DE_UNA_FRASE) {
+    if (this.sonando !== null && this.pared() - this.sonandoDesdeEnPared > TOPE_DE_UNA_FRASE) {
       this.sonando = null;
-      this.acabarLaDicha(false);
+      this.acabarLaDicha("tope");
       this.puedeHablarEn = ahora;
     }
     if (this.sonando !== null || ahora < this.puedeHablarEn) return;
@@ -135,25 +162,44 @@ export class Conversacion {
     if (!linea) return;
     const id = ++this.cuantas;
     this.sonando = id;
-    this.sonandoDesde = ahora;
+    this.sonandoDesdeEnPared = this.pared();
     this.dicha = linea;
-    this.dichaAhora = { clave: linea.clave, desde: ahora, hasta: null, cortada: false };
-    this.dichas.push(this.dichaAhora);
+    const dicha: FraseDicha = { clave: linea.clave, desde: ahora, hasta: null, cortada: false, como: null };
+    this.dichaAhora = dicha;
+    this.dichas.push(dicha);
     if (this.dichas.length > 200) this.dichas.shift();
     this.voz.decir(linea, (esperaMas, cortada = false) => {
-      if (this.sonando !== id) return;
+      const como: ComoAcabo = cortada ? "cortada" : esperaMas > 0 ? "muda" : "sono";
+      /*
+       * **Y si avisa tarde, se apunta igual**: la escena ya siguió sin ella,
+       * pero lo que de verdad pasó es que sonó, y hay quien lo espera.
+       */
+      if (this.sonando !== id) {
+        if (dicha.como === "tope") dicha.como = como;
+        return;
+      }
       this.sonando = null;
-      this.acabarLaDicha(cortada);
+      this.acabarLaDicha(como);
       this.puedeHablarEn = this.reloj() + ENTRE_FRASES + Math.max(0, esperaMas);
     });
   }
 
-  private acabarLaDicha(cortada: boolean): void {
+  private acabarLaDicha(como: ComoAcabo): void {
     const d = this.dichaAhora;
     this.dichaAhora = null;
     if (!d) return;
     d.hasta = this.reloj();
-    d.cortada = cortada;
+    d.cortada = como === "cortada";
+    d.como = como;
+  }
+
+  /**
+   * **Si esa frase ya se oyó entera**, o se esperó el rato de leerla porque
+   * no podía sonar: lo que de verdad ha pasado, no lo que se pidió. Una que la
+   * escena dejó por el tope no cuenta hasta que avise.
+   */
+  oida(clave: string): boolean {
+    return this.dichas.some((d) => d.clave === clave && (d.como === "sono" || d.como === "muda"));
   }
 
   /** Nadie habla ni espera turno: lo dicho, dicho está. */
@@ -184,7 +230,7 @@ export class Conversacion {
   retomar(): void {
     if (this.sonando !== null && this.dicha) {
       this.cola.unshift(this.dicha);
-      this.acabarLaDicha(true);
+      this.acabarLaDicha("cortada");
     }
     this.sonando = null;
     this.puedeHablarEn = this.reloj();

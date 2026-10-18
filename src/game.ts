@@ -1346,6 +1346,19 @@ import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
 const TOPE_DE_ACELERACION = 16;
 
 /**
+ * **La clave de una frase sin lo que le pone la boca detrás**: la receta
+ * montada lleva sus piezas —`ventanilla@ventanilla.saludo-…`— y la forma, su
+ * número —`comandante.despegue~3`—. Es como la nombran la boca y
+ * `seLePasoElMomento`, y como la reserva de la escena de pasaje tiene que
+ * reconocerla: comparando la clave entera se tiraban, con las tomas grabadas,
+ * la bienvenida con el plan, el descenso, el servicio y todo lo de la
+ * ventanilla. Medido en el banco: «la boca es de la escena».
+ */
+function baseDeLaClave(clave: string): string {
+  return clave.replace(/[@~].*$/, "");
+}
+
+/**
  * **Lo que se oye desde un asiento de pasaje**: los tonos de la cabina de
  * pasaje —el del cinturón y las llamadas—, que son los de un avión de verdad.
  * Ver `avisar`.
@@ -4845,6 +4858,12 @@ export class Game {
    * boca de la escena reservada no pasarían. Ver `esDeLaEscena`.
    */
   private readonly clavesDeLaEscena = new Map<string, number>();
+  /**
+   * **El reloj de las voces**, s: el de pared mientras se juega, sin acelerar.
+   * Lo que espera a que algo suene se mide con él: ver `TOPE_DE_UNA_FRASE`.
+   */
+  private relojDePared = 0;
+  private readonly pared = (): number => this.relojDePared;
   /** La altitud de cabina de antes, para saber lo que baja. Ver `lecturaDelPasaje`. */
   private cabinaAntes: number | null = null;
   private ritmoDeCabina = 0;
@@ -6464,7 +6483,7 @@ export class Game {
        * asiento de Ara. El avión lo lleva su tripulación —ver
        * `flight/vuelo-de-linea.ts`— y la escena dice qué toca y cuándo.
        */
-      this.inicio = new VueloDePasaje(this.vozDelInicio, { lado: LADO_DE_ARA });
+      this.inicio = new VueloDePasaje(this.vozDelInicio, { lado: LADO_DE_ARA, pared: this.pared });
       this.tripulacionDeLinea = new VueloDeLinea({
         vr: this.aircraft.rotationSpeed,
         vref: this.aircraft.approachSpeed,
@@ -6494,6 +6513,7 @@ export class Game {
     } else if (aterrizar) {
       this.inicio = new InicioDeAterrizar(this.vozDelInicio, {
         primerSello,
+        pared: this.pared,
         ...(desde ? { desde: desde as PasoDeAterrizar } : {}),
       });
       this.inicioCongelado = false;
@@ -6506,6 +6526,7 @@ export class Game {
       this.input.controls.engineOn = false;
       this.inicio = new Inicio(this.vozDelInicio, {
         primerSello,
+        pared: this.pared,
         ...(desde ? { desde: desde as PasoId } : {}),
       });
       this.inicioCongelado = true;
@@ -6523,7 +6544,7 @@ export class Game {
      * más. Ver `clavesDeLaEscena`.
      */
     BOCA.reservar(
-      pasaje ? (c) => esDeLaEscena(c) || (!!c && this.clavesDeLaEscena.has(c)) : esDeLaEscena,
+      pasaje ? (c) => esDeLaEscena(c) || (!!c && this.clavesDeLaEscena.has(baseDeLaClave(c))) : esDeLaEscena,
     );
     document.documentElement.classList.add("con-inicio");
     document.documentElement.classList.toggle("con-pasaje", pasaje);
@@ -6607,7 +6628,9 @@ export class Game {
         this.comandante.callar();
         this.tripulacion.callar();
       }
-      BOCA.retirar((clave) => !!clave?.startsWith("inicio.") || (!!clave && this.clavesDeLaEscena.has(clave)));
+      BOCA.retirar(
+        (clave) => !!clave?.startsWith("inicio.") || (!!clave && this.clavesDeLaEscena.has(baseDeLaClave(clave))),
+      );
       this.clavesDeLaEscena.clear();
     },
   };
@@ -6624,14 +6647,15 @@ export class Game {
     texto: string,
     alAcabar: (esperaMas: number, cortada?: boolean) => void,
   ): (sono: boolean, cortada?: boolean) => void {
-    this.clavesDeLaEscena.set(clave, (this.clavesDeLaEscena.get(clave) ?? 0) + 1);
+    const base = baseDeLaClave(clave);
+    this.clavesDeLaEscena.set(base, (this.clavesDeLaEscena.get(base) ?? 0) + 1);
     let acabado = false;
     return (sono: boolean, cortada = false): void => {
       if (acabado) return;
       acabado = true;
-      const quedan = (this.clavesDeLaEscena.get(clave) ?? 1) - 1;
-      if (quedan > 0) this.clavesDeLaEscena.set(clave, quedan);
-      else this.clavesDeLaEscena.delete(clave);
+      const quedan = (this.clavesDeLaEscena.get(base) ?? 1) - 1;
+      if (quedan > 0) this.clavesDeLaEscena.set(base, quedan);
+      else this.clavesDeLaEscena.delete(base);
       alAcabar(sono ? 0 : tiempoDeLectura(texto), cortada);
     };
   }
@@ -6744,6 +6768,8 @@ export class Game {
           : 0,
       cabina: this.ritmoDeCabina,
       faltaParaTocar: linea.faltaParaTocar,
+      alineado: e.alineado,
+      fase: this.vistaActual?.fase,
     };
     const permisos = escena.paso(dt, lectura);
     const manos = tripulacion.paso(dt, linea, permisos);
@@ -7214,6 +7240,10 @@ export class Game {
    * tope está donde deja de compensar en la máquina más lenta con la que se
    * mide, y no más arriba, porque un banco que tarda menos midiendo otra cosa
    * no ha ahorrado nada.
+   *
+   * **Menos mientras habla la escena del modo inicio**, que va a su ritmo:
+   * lo que se oye no se acelera, y la escena se mide con lo que se oye. Ver
+   * `frame`.
    *
    * Devuelve lo que quedó puesto, que es lo que el banco tiene que creerse
    * para sus cuentas, y no lo que pidió.
@@ -14307,14 +14337,23 @@ export class Game {
      * `LO_QUE_VALE_UN_CUADRO`.
      */
     const caben = Math.max(1, Math.floor(LO_QUE_VALE_UN_CUADRO / real));
+    // El reloj de las voces: el de pared, mientras se juega. Ver `relojDePared`.
+    this.relojDePared += real;
+    /*
+     * **Y el reloj acelerado no acelera lo que se oye.** Una grabación dura lo
+     * que dura; con el vuelo a doce veces, mientras habla la escena del modo
+     * inicio pasaba un minuto de vuelo por cada cinco segundos de voz, y lo que
+     * se decía llegaba con el avión ya en otra parte: en el banco de la escena
+     * de pasaje, con las tomas grabadas, «¡cómo empuja!» llegaba volando y el
+     * Teide pasaba de largo. Mientras habla, a su ritmo. Ver `acelerar`.
+     */
+    const veces = this.inicio?.estado.hablando ? 1 : Math.min(this.aceleracion, caben);
     /*
      * **Con el modo inicio esperando, el mundo no da ni un paso**: se mira lo
      * que hace quien juega y se pinta el mismo mundo. Ver `esperarAlInicio`.
      */
     if (this.inicioCongelado) this.esperarAlInicio(real);
-    else
-      for (let i = 0; i < Math.min(this.aceleracion, caben); i++)
-        this.unPaso(real);
+    else for (let i = 0; i < veces; i++) this.unPaso(real);
     this.pintar();
     this.medidor.update(real);
   };

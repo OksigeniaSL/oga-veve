@@ -14,9 +14,10 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { seLePasoElMomento } from "../audio/megafonia";
 import { ES_PY } from "../i18n/es-PY";
 import { EN } from "../i18n/en";
-import { ENTRE_FRASES, type Linea } from "./conversacion";
+import { Conversacion, ENTRE_FRASES, TOPE_DE_UNA_FRASE, type Linea } from "./conversacion";
 import { esDeLaEscena, VOZ_DE } from "./inicio";
 import {
   esAnuncioDeSiempre,
@@ -29,6 +30,7 @@ import {
   type Senalado,
 } from "./inicio-pasaje";
 import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
+import type { Fase } from "./vuelo";
 
 const DT = 1 / 10;
 const entorno = (globalThis as unknown as { process?: { env?: Record<string, string | undefined> } }).process?.env;
@@ -89,15 +91,43 @@ class VueloDeMentira {
   arrancoA: number | null = null;
   rodoA: number | null = null;
   entroA: number | null = null;
+  despegoA: number | null = null;
+  alineado = false;
 
   /**
-   * Con `deUnSalto`, la carrera dura un segundo: para ver qué se salta. Y con
-   * `entreNubes`, la subida pasa entre las nubes sin meterse en ninguna.
+   * Con `deUnSalto`, la carrera dura un segundo: para ver qué se salta. Con
+   * `entreNubes`, la subida pasa entre las nubes sin meterse en ninguna. Y con
+   * `conPrisa`, da gas en cuanto se alinea, sin esperar a la cabina.
    */
   constructor(
     private readonly deUnSalto = false,
     private readonly entreNubes = false,
+    private readonly conPrisa = false,
+    /**
+     * Y con `faseTardia`, la fase del juego, que se queda en «arrancando» unos
+     * segundos después de echar a rodar: como la del juego, que cambia con su
+     * histéresis.
+     */
+    private readonly faseTardia = false,
   ) {}
+
+  private get fase(): Fase | undefined {
+    if (!this.faseTardia) return undefined;
+    const tramos: Partial<Record<TramoDeLinea, Fase>> = {
+      puerta: "estacionado",
+      arrancando: "arrancando",
+      rodando: this.enTramo < 4 ? "arrancando" : "rodando",
+      esperando: this.autorizado ? "autorizado" : "esperando",
+      entrando: "alineando",
+      carrera: "despegando",
+      final: "final",
+      frenando: "aterrizado",
+      "al-puesto": "a-plataforma",
+      aparcado: "en-puesto",
+      apagado: "en-puesto",
+    };
+    return tramos[this.tramo] ?? "en-vuelo";
+  }
 
   private pasar(t: TramoDeLinea): void {
     this.tramo = t;
@@ -135,7 +165,12 @@ class VueloDeMentira {
         }
         break;
       case "entrando":
-        if (this.enTramo >= 15) this.pasar("carrera");
+        if (this.enTramo >= 10) this.alineado = true;
+        if (this.alineado && (p.despegar || this.conPrisa)) {
+          this.despegoA = t;
+          this.alineado = false;
+          this.pasar("carrera");
+        }
         break;
       case "carrera":
         this.porElSuelo += (this.deUnSalto ? 80 : 2.4) * dt;
@@ -220,6 +255,8 @@ class VueloDeMentira {
       enNube: !this.entreNubes && this.altitud > 1600 && this.altitud < 1800 ? 0.6 : 0,
       cabina: this.cabina,
       faltaParaTocar: this.falta,
+      alineado: this.tramo === "entrando" && this.alineado,
+      fase: this.fase,
     };
   }
 }
@@ -241,12 +278,19 @@ interface Corrido {
 /** Vuela la escena entera con la tripulación de mentira y una voz que tarda `dura`. */
 function correr(
   dura: (l: Linea) => number,
-  opciones: { sitios?: boolean; seguir?: boolean; deUnSalto?: boolean; entreNubes?: boolean } = {},
+  opciones: {
+    sitios?: boolean;
+    seguir?: boolean;
+    deUnSalto?: boolean;
+    entreNubes?: boolean;
+    conPrisa?: boolean;
+    faseTardia?: boolean;
+  } = {},
 ): Corrido {
   let t = 0;
   const v = vozQueTarda(dura, () => t);
   const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
-  const vuelo = new VueloDeMentira(opciones.deUnSalto, opciones.entreNubes);
+  const vuelo = new VueloDeMentira(opciones.deUnSalto, opciones.entreNubes, opciones.conPrisa, opciones.faseTardia);
   const porSenalar = opciones.sitios ? [sitio("orotava", "izquierda"), sitio("teide", "izquierda"), sitio("hierro", "derecha"), sitio("garajonay", "izquierda")] : [];
   for (; t < 3000; t += DT) {
     v.tic();
@@ -405,6 +449,15 @@ describe("cada cosa en su momento del vuelo", () => {
     expect(r.vuelo.entroA!).toBeGreaterThanOrEqual(sentados.hasta!);
   });
 
+  it("ni da gas con Ara a media frase: «¡cómo empuja!» llega con el empuje", () => {
+    const ahoraSi = r.dichas.find((d) => d.linea.clave === "inicio.ara.pasaje.despegue")!;
+    const empuja = r.dichas.find((d) => d.linea.clave === "inicio.ara.pasaje.carrera")!;
+    expect(r.vuelo.despegoA!).toBeGreaterThanOrEqual(ahoraSi.hasta!);
+    expect(empuja.desde).toBeGreaterThanOrEqual(r.vuelo.despegoA!);
+    // Y en la carrera, que dura veintitantos segundos: no se dice volando alto.
+    expect(empuja.desde - r.vuelo.despegoA!).toBeLessThan(10);
+  });
+
   it("lo que pregunta Ara lo contesta un anuncio, y después", () => {
     expect(indice(r, "inicio.mama.pasaje.espera")).toBeGreaterThan(indice(r, "inicio.ara.pasaje.espera"));
     expect(indice(r, "inicio.mama.pasaje.nubes")).toBeGreaterThan(indice(r, "inicio.ara.pasaje.nubes"));
@@ -462,10 +515,11 @@ describe("cada cosa en su momento del vuelo", () => {
 describe("lo que se pasa de su momento se salta, y nada se pisa", () => {
   /*
    * Con una voz muy lenta —treinta segundos cada frase, más que lo que se
-   * espera a una grabación que no baja— y una carrera de un segundo, «¡cómo
-   * empuja!» llegaría volando: no se dice. Lo demás, en su orden.
+   * espera a una grabación que no baja—, una tripulación que da gas sin
+   * esperar a la cabina y una carrera de un segundo, «¡cómo empuja!» llegaría
+   * con el avión ya arriba: no se dice. Lo demás, en su orden.
    */
-  const r = correr(() => 30, { deUnSalto: true });
+  const r = correr(() => 30, { deUnSalto: true, conPrisa: true });
 
   it("se salta lo que ya no viene a cuento, y la escena acaba igual", () => {
     expect(r.escena.estado.saltados).toContain("carrera");
@@ -522,5 +576,93 @@ describe("la red de la espera", () => {
 
   it("y la red es larga: lo normal es que la comandante acabe mucho antes", () => {
     expect(RED_DE_LA_ESPERA).toBeGreaterThanOrEqual(60);
+  });
+});
+
+/*
+ * **La voz se mide con su reloj.** Con el reloj del juego acelerado —el de los
+ * bancos—, una frase de cinco segundos dura un minuto de vuelo: la escena no
+ * puede darla por perdida por el reloj del vuelo, ni dar por oído lo que se
+ * dejó por el tope. Medido en el banco con las tomas grabadas: la tripulación
+ * entraba en la pista antes de que sonara «sentados para el despegue».
+ */
+describe("la conversación, con el reloj de la voz", () => {
+  it("no da por perdida una frase que suena, aunque el vuelo vaya doce veces más deprisa", () => {
+    let juego = 0;
+    let pared = 0;
+    let acaba: ((n: number) => void) | null = null;
+    const c = new Conversacion(
+      { decir: (_l, alAcabar) => (acaba = alAcabar), callar: () => {} },
+      () => juego,
+      () => pared,
+    );
+    c.decir([{ quien: "mama", clave: "comandante.despegue", megafonia: true }]);
+    c.atender();
+    // Cuatro segundos de voz: cuarenta y ocho de vuelo.
+    for (let i = 0; i < 40; i++) {
+      juego += 1.2;
+      pared += 0.1;
+      c.atender();
+    }
+    expect(c.oida("comandante.despegue")).toBe(false);
+    expect(c.callada).toBe(false);
+    acaba!(0);
+    expect(c.oida("comandante.despegue")).toBe(true);
+  });
+
+  it("y lo que dejó por el tope no se da por oído hasta que avisa de que sonó", () => {
+    let t = 0;
+    let acaba: ((n: number) => void) | null = null;
+    const c = new Conversacion({ decir: (_l, alAcabar) => (acaba = alAcabar), callar: () => {} }, () => t);
+    c.decir([{ quien: "mama", clave: "comandante.despegue", megafonia: true }]);
+    c.atender();
+    t += TOPE_DE_UNA_FRASE + 1;
+    c.atender();
+    expect(c.registro[0]!.como).toBe("tope");
+    expect(c.oida("comandante.despegue")).toBe(false);
+    acaba!(0);
+    expect(c.registro[0]!.como).toBe("sono");
+    expect(c.oida("comandante.despegue")).toBe(true);
+  });
+});
+
+/*
+ * **Un anuncio de tierra, cuando el juego dice que vale.** La bienvenida se
+ * pedía al echar a rodar, con la fase del juego todavía en «arrancando», y la
+ * boca la tiraba en el acto. Medido en el banco con las tomas grabadas.
+ */
+describe("los anuncios esperan la fase del juego", () => {
+  const r = correr(() => 4, { faseTardia: true });
+
+  it("la bienvenida se pide ya rodando para el juego, y suena", () => {
+    const bienvenida = r.dichas.find((d) => d.linea.clave === "comandante.bienvenida")!;
+    expect(bienvenida).toBeTruthy();
+    // Cuatro segundos de «arrancando» después de echar a rodar.
+    expect(bienvenida.desde).toBeGreaterThanOrEqual(r.vuelo.rodoA! + 4 - 1e-6);
+  });
+
+  it("y ninguno de la escena se pide a destiempo, y la escena acaba igual", () => {
+    let t = 0;
+    const v = vozQueTarda(() => 4, () => t);
+    const vuelo = new VueloDeMentira(false, false, false, true);
+    const aDestiempo: string[] = [];
+    const escena = new VueloDePasaje(
+      {
+        decir: (l, alAcabar) => {
+          if (l.megafonia && seLePasoElMomento(l.clave, vuelo.lectura.fase!)) aDestiempo.push(l.clave);
+          v.voz.decir(l, alAcabar);
+        },
+        callar: () => v.voz.callar(),
+      },
+      { lado: "izquierda" },
+    );
+    for (; t < 3000 && !escena.estado.terminado; t += DT) {
+      v.tic();
+      vuelo.paso(DT, escena.paso(DT, vuelo.lectura), t);
+      if (escena.estado.puedeSeguir) escena.seguir();
+    }
+    expect(aDestiempo).toEqual([]);
+    expect(escena.estado.terminado).toBe(true);
+    expect(r.escena.estado.saltados).toEqual([]);
   });
 });

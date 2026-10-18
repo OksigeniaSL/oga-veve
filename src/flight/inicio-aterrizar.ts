@@ -409,9 +409,14 @@ export class InicioDeAterrizar {
       readonly primerSello: boolean;
       /** Por dónde se empieza: el saludo, o el gas al repetir. */
       readonly desde?: PasoDeAterrizar;
+      /**
+       * El reloj de la voz, s: el de pared mientras se juega. Ver
+       * `TOPE_DE_UNA_FRASE` en `conversacion.ts`. Sin decir, el de la escena.
+       */
+      readonly pared?: () => number;
     },
   ) {
-    this.charla = new Conversacion(voz, () => this.reloj);
+    this.charla = new Conversacion(voz, () => this.reloj, () => this.opciones.pared?.() ?? this.reloj);
     const desde = opciones.desde ?? "hola";
     /*
      * Empezando más allá de la recogida, lo de antes ya pasó: es para las

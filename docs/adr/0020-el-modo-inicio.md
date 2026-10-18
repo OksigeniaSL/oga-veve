@@ -476,3 +476,27 @@ subtítulos y dibujos, al ritmo de leerlos.
 - Hay ratos callados largos, sobre todo bajando: son los de un vuelo de
   verdad. Si con las voces se hacen largos, lo que se mueve es el guion, no el
   vuelo.
+
+### Con las voces grabadas: lo que se espera, se espera oído
+
+Grabadas las veintiocho, el banco bajó de veinte a diecisiete. La
+tripulación entraba en pista antes de que sonara «sentados para el
+despegue», «¡cómo empuja!» se saltaba y el Teide no se contaba. Las tres
+tenían la misma raíz, medida con el reloj de pared al lado del de la escena:
+**lo que espera a una voz se medía con el reloj del vuelo**. Con el del juego
+acelerado doce veces, la red de la espera se cumplía a los seis segundos de
+pared, y el tope de una frase daba por perdida a los tres una que estaba
+sonando. Debajo había dos más que sin grabar no se veían: la reserva de la
+boca no reconocía las recetas —la bienvenida con el plan, la ventanilla, el
+servicio, el descenso—, y la bienvenida se pedía con el juego todavía en
+«arrancando», así que la boca las tiraba.
+
+Así que **lo que espera a una frase espera a que se haya oído**, no a que se
+haya pedido: la conversación apunta cómo acabó cada una —sonó, muda,
+cortada o por el tope— y mide su tope con el reloj de la voz; los permisos
+miran lo oído y sus redes son de pared. Alineada, la tripulación no da gas
+con Ara a media frase —como un «alineado y espere»—, y «¡cómo empuja!» va al
+dar gas, que es cuando empuja. Un anuncio de tierra se pide cuando el juego
+dice que vale. Y con el reloj acelerado, mientras habla la escena el juego
+va a su ritmo: lo que se oye no se acelera. El banco comprueba ahora que
+todo lo que dice la escena se oye entero, y el Teide, sin falta.
