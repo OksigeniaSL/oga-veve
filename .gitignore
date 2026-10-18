@@ -16,6 +16,10 @@ dist/
 # Los justificantes de licencia de lo que se compra (la música): llevan datos
 # personales y no van al repositorio. Su sitio es la carpeta de operaciones.
 /crudo/**/*.pdf
+# Las músicas de reserva: sobraron al generar las de embarque y pueden valer
+# para otras partes del juego. No van a git mientras no se usen: la que se
+# use pasa a crudo/musica/ con su nombre.
+/crudo/musica/otras/
 .DS_Store
 # ── Entornos / secrets ─────────────────────────────────────────────────
 .env
