@@ -1002,6 +1002,7 @@ import {
 } from "./world/se-ve-desde-el-pasaje";
 import {
   enLosMandosDeLinea,
+  segundosHastaElCrucero,
   VueloDeLinea,
   type LecturaDeLinea,
   type ManosDeLinea,
@@ -1483,7 +1484,9 @@ import {
 import { FundasYCalzos } from "./world/fundas-y-calzos";
 import { CamaraDeLaVuelta } from "./cameras/vuelta";
 import { CamaraDeLaEscena, FundidoDePlano } from "./cameras/escena";
-import { esDibujoDelPasaje } from "./ui/dibujos-del-pasaje";
+import { esDibujoDelPasaje, laminaDeLaRuta, urlDeLaLamina } from "./ui/dibujos-del-pasaje";
+import { enLaHoja, mapaPara, type LoDelVuelo, type MapaDeLaRuta } from "./ui/mapa-de-la-ruta";
+import { PantallaDeLaSiesta } from "./ui/siesta";
 import { ilustracionPedida } from "./ui/ilustraciones";
 import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
 import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
@@ -1493,6 +1496,20 @@ type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
+/**
+ * **Lo deprisa que pasa el vuelo con Ara durmiendo**, veces: el mismo tope que
+ * el de los bancos, que es donde la máquina más lenta con que se mide deja de
+ * ganar. Con un minuto y medio de siesta son unos seis segundos de sueño en
+ * la pantalla; y como el mundo tapado no se pinta, cabe. Ver `frame`.
+ */
+const VECES_DE_LA_SIESTA = TOPE_DE_ACELERACION;
+/**
+ * Cada cuánto se pone al día el mapa de la ruta de la ventanita, s de pared:
+ * y más a menudo con Ara durmiendo, que el vuelo va dieciséis veces más
+ * deprisa y el avión se tiene que ver avanzar. Ver `refrescarLaRuta`.
+ */
+const REFRESCA_LA_RUTA = 2;
+const REFRESCA_LA_RUTA_DURMIENDO = 0.4;
 
 /**
  * **La clave de una frase sin lo que le pone la boca detrás**: la receta
@@ -7077,6 +7094,12 @@ export class Game {
       meneo: this.movimientoDelAire,
       visibilidad: this.visibilidadDelParte,
       senalero: this.gestoDelSenalero !== null,
+      /*
+       * **Y lo que falta para nivelar y para empezar a bajar**, s de vuelo: lo
+       * que la escena necesita para que Ara se duerma un rato y se despierte a
+       * tiempo. Ver `puedeDormirse` en `flight/inicio-pasaje.ts`.
+       */
+      ...this.ratosDelVuelo(linea),
     };
     const permisos = escena.paso(dt, lectura);
     const manos = tripulacion.paso(dt, linea, permisos);
@@ -7099,6 +7122,27 @@ export class Game {
       return;
     }
     this.pintarElInicio();
+  }
+
+  /**
+   * **Lo que falta para nivelar arriba y para empezar a bajar**, s de vuelo.
+   * Lo primero, con la ley de la subida de la tripulación —ver
+   * `segundosHastaElCrucero`—; lo segundo, lo que queda hasta el punto de
+   * descenso del plan a la velocidad de ahora por el suelo. Bajando ya, o sin
+   * plan, nada: sin estos números Ara no se duerme.
+   */
+  private ratosDelVuelo(linea: LecturaDeLinea): { hastaElCrucero?: number; hastaLaBajada?: number } {
+    const p = this.navegacion.progreso;
+    if (!p || p.descenso === null || this.navegacion.bajando || linea.enTierra) return {};
+    const suelo = Math.max(this.flight.state.groundSpeed, 40);
+    const hastaLaBajada = Math.max(0, p.restante - p.descenso) / suelo;
+    const tramo = this.tripulacionDeLinea?.estado.tramo;
+    return {
+      hastaLaBajada,
+      ...(tramo === "subida"
+        ? { hastaElCrucero: segundosHastaElCrucero(linea.altitud, linea.alturaPedida, linea.vertical) }
+        : {}),
+    };
   }
 
   /**
@@ -7352,6 +7396,7 @@ export class Game {
     if (inicio instanceof VueloDePasaje) {
       const p = inicio.estado;
       this.ponerLaVentanitaDeLaEscena(p.dibujo);
+      this.refrescarLaRuta();
       // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
       this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
       // El sello del campo al que se llegó, que es donde se está.
@@ -7422,7 +7467,14 @@ export class Game {
     const ilustrada = ilustracionPedida(dibujo);
     if (dibujo.startsWith("foto:")) this.hud.historia.mostrar(dibujo.slice(5));
     else if (ilustrada !== null) this.hud.historia.mostrarIlustracion(ilustrada);
-    else if (esDibujoDelPasaje(dibujo)) this.hud.historia.mostrarDibujo(dibujo);
+    else if (esDibujoDelPasaje(dibujo)) {
+      // El mapa de la ruta, con el camino del plan y el avión donde va. Ver `refrescarLaRuta`.
+      const ruta = dibujo === "ruta" ? this.urlDeLaRuta() : null;
+      if (ruta) {
+        this.hud.historia.mostrarDibujo(dibujo, ruta);
+        this.rutaPintadaEn = this.relojDePared;
+      } else this.hud.historia.mostrarDibujo(dibujo);
+    }
     if ((dibujo === "cinturon" || ilustrada === "pasaje-lleno") && !this.cinturonDeLaEscena) {
       this.cinturonDeLaEscena = true;
       this.hud.destellarCinturon();
@@ -7432,10 +7484,38 @@ export class Game {
   /** Si ya parpadeó el cartel del cinturón en esta escena. */
   private cinturonDeLaEscena = false;
 
+  /**
+   * **El mapa de la ruta de la ventanita, con el vuelo de verdad**: el camino
+   * del plan y el avión donde va, en la lámina de la ventanita. Sin plan, el
+   * de muestra. Ver `laminaDeLaRuta`.
+   */
+  private urlDeLaRuta(): string | null {
+    const v = this.vueloParaElMapa();
+    return v ? urlDeLaLamina(laminaDeLaRuta(v.mapa, { ...v.vuelo, torre: true })) : null;
+  }
+
+  /**
+   * **Y el avión avanzando por ella**, cada `REFRESCA_LA_RUTA` de pared: a
+   * quinientos por hora, en dos segundos el avión se mueve un par de píxeles
+   * del mapa, que es lo que se ve avanzar sin repintar en cada fotograma.
+   */
+  private refrescarLaRuta(): void {
+    const cada = this.escenaDuerme ? REFRESCA_LA_RUTA_DURMIENDO : REFRESCA_LA_RUTA;
+    if (this.ventanitaDeLaEscena !== "ruta" || this.relojDePared - this.rutaPintadaEn < cada) return;
+    this.rutaPintadaEn = this.relojDePared;
+    const url = this.urlDeLaRuta();
+    if (url) this.hud.historia.refrescarDibujo("ruta", url);
+  }
+
+  /** Cuándo se pintó el mapa de la ruta de la ventanita, s de pared. */
+  private rutaPintadaEn = 0;
+
   /** Se acabó la escena: el vuelo sigue, ya sin la tarjeta y sin la mano de la mamá. */
   private acabarElInicio(): void {
     this.pantallaDelKit?.quitar();
     this.pantallaDelKit = null;
+    this.siesta?.quitar();
+    this.siestaTapa = false;
     this.ponerLaVentanitaDeLaEscena(null);
     this.ponerElVeloDelPlano(0);
     this.inicio = null;
@@ -7497,6 +7577,14 @@ export class Game {
     readonly kit: PantallaDelKit["paraBanco"] | null;
     /** Y el hilo musical: lo que decide y lo que suena. Ver `audio/hilo-musical.ts`. */
     readonly musica: { readonly decide: string | null; readonly audio: Audio["musicaParaBanco"] };
+    /** De pasaje: la pantalla de la siesta, si está puesta. Ver `ui/siesta.ts`. */
+    readonly siesta: PantallaDeLaSiesta["paraBanco"] | null;
+    /**
+     * Y el mapa de la ruta de la ventanita: los puntos de la costa de cada isla
+     * —una costa, no un óvalo— y dónde va el avión en la hoja de 480 × 320.
+     * Ver `ui/mapa-de-la-ruta.ts`.
+     */
+    readonly ruta: { readonly islas: readonly number[]; readonly avion: readonly [number, number] | null } | null;
   } {
     const e = this.inicio?.estado;
     const linea = e?.linea ?? null;
@@ -7532,6 +7620,13 @@ export class Game {
       })(),
       kit: this.pantallaDelKit?.paraBanco ?? null,
       musica: this.musicaParaBanco,
+      siesta: this.siesta?.paraBanco ?? null,
+      ruta: (() => {
+        const v = this.inicio instanceof VueloDePasaje ? this.vueloParaElMapa() : null;
+        if (!v) return null;
+        const a = v.vuelo.avion;
+        return { islas: v.mapa.islas.map((i) => i.length), avion: a ? enLaHoja(v.mapa.encuadre, a) : null };
+      })(),
     };
   }
 
@@ -14993,20 +15088,78 @@ export class Game {
      * vuelo y se llegaba a la nube con la explicación sin empezar. Ver
      * `soltarLoDeLaTormenta`.
      */
+    /*
+     * **Y con Ara durmiendo, el vuelo pasa deprisa** (punto 304): con la
+     * pantalla del sueño tapándolo todo, el mundo da varios pasos por
+     * fotograma, como con el reloj acelerado de los bancos, y no se pinta,
+     * que no se ve. El avión vuela su ruta de verdad, paso a paso: no salta.
+     * Fuera de desarrollo también, que es para quien juega. Ver `ui/siesta.ts`.
+     */
+    const duerme = this.siestaTapa && this.escenaDuerme;
     const veces =
-      this.inicio?.estado.hablando || this.laTormentaHabla ? 1 : Math.min(this.aceleracion, caben);
+      this.inicio?.estado.hablando || this.laTormentaHabla
+        ? 1
+        : Math.min(duerme ? Math.max(this.aceleracion, VECES_DE_LA_SIESTA) : this.aceleracion, caben);
     /*
      * **Con el modo inicio esperando, el mundo no da ni un paso**: se mira lo
      * que hace quien juega y se pinta el mismo mundo. Ver `esperarAlInicio`.
      */
     if (this.inicioCongelado) this.esperarAlInicio(real);
-    else for (let i = 0; i < veces; i++) this.unPaso(real);
+    else
+      for (let i = 0; i < veces; i++) {
+        this.unPaso(real);
+        // Despierta a media tanda: lo que queda, a su ritmo.
+        if (duerme && !this.escenaDuerme) break;
+      }
     // Lo señalado dura lo que dura una frase: con el reloj de pared, como la voz.
     this.nombrado.paso(real);
     this.ponerElAroDelPapi();
-    this.pintar();
+    this.pintarLaSiesta(real);
+    if (!this.siestaTapa) this.pintar();
     this.medidor.update(real);
   };
+
+  /** Si Ara duerme ahora, en la escena de pasaje. Ver `flight/inicio-pasaje.ts`. */
+  private get escenaDuerme(): boolean {
+    return this.inicio instanceof VueloDePasaje && this.inicio.durmiendo;
+  }
+
+  /** La pantalla de la siesta, y si tapa del todo el mundo. Ver `ui/siesta.ts`. */
+  private siesta: PantallaDeLaSiesta | null = null;
+  private siestaTapa = false;
+
+  /**
+   * **La pantalla de la siesta**, con el reloj de pared: se funde mientras Ara
+   * duerme, con Ara durmiendo y soñando, y se va al despertar; el mapa de la
+   * ruta, con el avión avanzando, lo lleva la ventanita. Ver `ui/siesta.ts`.
+   */
+  private pintarLaSiesta(real: number): void {
+    if (!(this.inicio instanceof VueloDePasaje) && !this.siesta) return;
+    this.siesta ??= new PantallaDeLaSiesta(document.getElementById("siesta"));
+    this.siestaTapa = this.siesta.paso(real, this.escenaDuerme);
+  }
+
+  /**
+   * **El vuelo para el mapa de la ruta**: las islas del mundo de este
+   * campo, el camino del plan con sus dos puntas y el avión donde va. Ver
+   * `ui/mapa-de-la-ruta.ts`.
+   */
+  private vueloParaElMapa(): { readonly mapa: MapaDeLaRuta; readonly vuelo: LoDelVuelo } | null {
+    const origen = this.scenario.aerodrome?.origin;
+    const plan = this.navegacion.plan;
+    if (!origen || !plan || plan.fijos.length < 2) return null;
+    const s = this.flight.state;
+    const camino = plan.fijos;
+    return {
+      mapa: mapaPara(origen),
+      vuelo: {
+        camino,
+        salida: camino[0] ?? null,
+        llegada: camino[camino.length - 1] ?? null,
+        avion: { x: s.position.x, z: s.position.z, rumbo: s.heading },
+      },
+    };
+  }
 
   /** Un paso del mundo. Lo de siempre, sin pintar. Ver `frame`. */
   private unPaso = (dt: number): void => {

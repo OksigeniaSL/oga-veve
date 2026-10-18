@@ -237,6 +237,29 @@ export const SUBE_ARRIBA = 12;
 const BAJA_COMO_MUCHO = 11;
 /** Diez mil pies, m: debajo, doscientos cincuenta nudos. */
 const DIEZ_MIL = 10000 * PIE;
+/**
+ * **La captura de la altura**, s: llegando a la del plan se sube lo que
+ * falta partido por esto, como un automático, y se llega frenando. Y a
+ * cuántos metros de ella se da por nivelado, que es cuando empieza el crucero.
+ */
+const CAPTURA = 25;
+const NIVELADO = 30;
+
+/**
+ * **Lo que falta para nivelar en el crucero**, s, con la ley de la subida de
+ * arriba: al ritmo de ahora hasta la captura, y en la captura, lo que falta se
+ * va comiendo a un veinticincoavo por segundo. Lo usa la escena para saber
+ * cuánto rato queda hasta el «ya estamos arriba» —ver `puedeDormirse` en
+ * `inicio-pasaje.ts`—.
+ */
+export function segundosHastaElCrucero(altitud: number, crucero: number, vertical: number): number {
+  const falta = crucero - altitud;
+  if (falta <= NIVELADO) return 0;
+  const tope = altitud < DIEZ_MIL ? SUBE_ABAJO : SUBE_ARRIBA;
+  const ritmo = Math.max(1, Math.min(tope, vertical > 0 ? vertical : tope));
+  const enCaptura = ritmo * CAPTURA;
+  return Math.max(0, falta - enCaptura) / ritmo + CAPTURA * Math.log(Math.min(falta, enCaptura) / NIVELADO);
+}
 /** Lo que sube recto antes de virar, m sobre el campo. Ver `trazar` en `ruta.ts`. */
 const SUBE_RECTO = 120;
 /** A qué altura sobre el campo recoge los flaps de despegue, m: mil pies. */
@@ -476,7 +499,7 @@ export class VueloDeLinea {
         if (!l.enTierra && l.altura > 15) this.pasarA("subida");
         return;
       case "subida":
-        if (l.altitud >= l.alturaPedida - 30 && l.ritmoPedido >= 0) this.pasarA("crucero");
+        if (l.altitud >= l.alturaPedida - NIVELADO && l.ritmoPedido >= 0) this.pasarA("crucero");
         if (l.ritmoPedido < 0) this.pasarA("bajada");
         if (l.enLaFinal) this.pasarA("final");
         return;
@@ -713,7 +736,7 @@ export class VueloDeLinea {
       const falta = l.alturaPedida - l.altitud;
       const tope = l.altitud < DIEZ_MIL ? SUBE_ABAJO : SUBE_ARRIBA;
       // Captura de la altura: llega frenando, como un automático.
-      subida = Math.max(-BAJA_COMO_MUCHO, acotar(l.ritmoPedido + falta / 25, tope));
+      subida = Math.max(-BAJA_COMO_MUCHO, acotar(l.ritmoPedido + falta / CAPTURA, tope));
     }
     /*
      * **Y lo que se pide cambia a ritmo de automático**: una décima de g para

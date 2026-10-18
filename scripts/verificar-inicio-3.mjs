@@ -66,6 +66,14 @@
  *   de la nube el meneo se cuenta en el momento (280), que al salir por debajo
  *   de las nubes se cuenta el techo (295), y los dos planos nuevos: **el tren
  *   desde abajo** (298) y **el señalero** (301).
+ * - **Que Ara se duerme un rato** (punto 304): arriba y sin nada que contar,
+ *   bosteza, la pantalla se funde a Ara durmiendo y después soñando, con el
+ *   mapa de la ruta en la ventanita —las islas con su costa de verdad (292) y
+ *   el avión avanzando—; el vuelo pasa deprisa y **de verdad** —el avión sigue
+ *   su ruta, no salta—, y Ara se despierta antes de lo que hay que oír y antes
+ *   de bajar, sin perder nada de seguridad. Lo que pasa durmiendo no cuenta
+ *   como silencio. Con capturas del fundido, del sueño con el mapa a mitad de
+ *   la siesta y del despertar.
  *
  * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—,
  * con las tomas del pack: cada frase dura lo que dura su grabación, y **todo
@@ -295,6 +303,8 @@ async function elVuelo() {
   let fotosConVoz = 0;
   // Dentro de la nube, el meneo: si empezó con el avión metido en ella.
   let meneoEnLaNube = null;
+  // La siesta de Ara, mirada de cerca en cuanto bosteza. Ver `mirarLaSiesta`.
+  let siesta = null;
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -380,6 +390,9 @@ async function elVuelo() {
       if (ahora?.clave === "ventanilla.historia" && ahora.hasta === null) fotosConVoz++;
       else fotosMudas.add(`${enLaVentanita} con ${ahora?.clave ?? "nada"}${ahora?.hasta !== null ? " ya acabada" : ""}`);
     }
+    // ── La siesta de Ara: en cuanto bosteza, se mira entera ──
+    if (siesta === null && (e.durmiendo || (e.linea?.clave === "inicio.ara.pasaje.dormirse" && e.hablando)))
+      siesta = await mirarLaSiesta(page);
     // ── El meneo, dentro de la nube ──
     if (meneoEnLaNube === null && (i.registro ?? []).some((d) => d.clave === "inicio.ara.pasaje.meneo"))
       meneoEnLaNube = await page.evaluate(() => globalThis.__oga.capaDeNubes?.()?.enLaNube ?? 0);
@@ -614,11 +627,19 @@ async function elVuelo() {
   );
   // Los silencios, en el aire, con el reloj de la escena.
   const tramoEn = (s) => [...tramos].reverse().find((x) => x.t <= s)?.tramo ?? "puerta";
+  /*
+   * **Y lo que Ara pasa durmiendo no es silencio** (punto 304): un rato callado
+   * es un rato sin dormir y sin nada; durmiendo, se ve a Ara soñar y el mapa
+   * con el vuelo pasando deprisa. Se quita del hueco lo que se durmió, y lo
+   * demás se mide igual que siempre: un silencio de verdad se sigue viendo.
+   */
+  const siestas = (e?.siestas ?? []).map((x) => ({ desde: x.desde, hasta: x.hasta ?? Infinity }));
+  const durmiendoEntre = (a, b) => siestas.reduce((t, x) => t + Math.max(0, Math.min(b, x.hasta) - Math.max(a, x.desde)), 0);
   const callados = [];
   let masLargo = 0;
   for (let k = 1; k < registro.length; k++) {
     const desde = registro[k - 1].hasta ?? registro[k - 1].desde;
-    const largo = registro[k].desde - desde;
+    const largo = registro[k].desde - desde - durmiendoEntre(desde, registro[k].desde);
     const tr = tramoEn(desde);
     if (!["subida", "crucero", "bajada"].includes(tr)) continue;
     masLargo = Math.max(masLargo, largo);
@@ -628,6 +649,78 @@ async function elVuelo() {
     `ningún rato largo callado en el aire (más de ${CALLADO_COMO_MUCHO} s)`,
     callados.length === 0 && registro.length > 60,
     callados.length ? callados.join(" · ") : `lo más largo: ${masLargo.toFixed(0)} s · ${(e?.charlas ?? []).length} charlas: ${(e?.charlas ?? []).join(" ")}`,
+  );
+  // ── La siesta de Ara (punto 304), y el mapa de la ruta (292) ──
+  const s0 = e?.siestas?.[0] ?? null;
+  const bajadaEn = tramos.find((x) => x.tramo === "bajada")?.t ?? Infinity;
+  const oidaEn = (clave) => registro.find((d) => d.clave === clave && (d.como === "sono" || d.como === "muda"));
+  const bostezo = oidaEn("inicio.ara.pasaje.dormirse");
+  const alDespertar = oidaEn("inicio.ara.pasaje.despertarse");
+  // Lo siguiente que había que oír: el «ya estamos arriba», o empezar a bajar.
+  const loSiguiente = oidaEn(s0?.paraBajar ? "comandante.descenso" : "comandante.crucero");
+  comprobar(
+    "Ara se duerme una vez, arriba, y se despierta antes de lo que hay que oír y antes de empezar a bajar",
+    (e?.siestas?.length ?? 0) === 1 &&
+      s0.hasta !== null &&
+      s0.hasta < bajadaEn &&
+      !!bostezo &&
+      !!alDespertar &&
+      bostezo.desde < s0.desde &&
+      alDespertar.desde >= s0.hasta - 1e-3 &&
+      !!loSiguiente &&
+      loSiguiente.desde > alDespertar.desde,
+    s0
+      ? `durmiendo de ${s0.desde.toFixed(0)} a ${s0.hasta?.toFixed(0)} s: ${(s0.hasta - s0.desde).toFixed(0)} s de vuelo${s0.paraBajar ? ", y despierta para bajar" : ""} · ${loSiguiente?.clave ?? "?"} a los ${loSiguiente?.desde?.toFixed(0) ?? "?"} s · empieza a bajar a los ${bajadaEn.toFixed(0)} s`
+      : "no se durmió",
+  );
+  comprobar(
+    "y rápido: el fundido entero en segundos de pantalla, no un minuto",
+    !!siesta?.pared && siesta.pared < 15,
+    siesta?.pared ? `${siesta.pared.toFixed(1)} s de pared con la pantalla del sueño, por ${siesta.vuelo?.toFixed(0)} s de vuelo` : "no se vio",
+  );
+  comprobar(
+    "durmiendo, el avión sigue su ruta de verdad: sin salirse y recorriendo lo que vuela",
+    !!siesta && siesta.muestras >= 5 && siesta.lado < 2000 && siesta.recorrido !== null && siesta.recorrido > 0.8 && siesta.recorrido < 1.25,
+    siesta
+      ? `${siesta.muestras} muestras · ${siesta.lado.toFixed(0)} m fuera de la ruta como mucho · recorrido ${siesta.recorrido?.toFixed(2) ?? "?"} de lo que da su velocidad`
+      : "no se vio",
+  );
+  const DE_SEGURIDAD = [
+    ...["intro", "cinturon", "salidas", "mascaras", "chaleco", "tarjeta", "aparatos"].map((x) => `inicio.tripulacion.pasaje.demo.${x}`),
+    "inicio.tripulacion.pasaje.cerca.revision",
+    "comandante.despegue",
+    "comandante.crucero",
+    "comandante.descenso",
+    "tripulacion.cinturones",
+    "inicio.tripulacion.pasaje.oidos",
+    "inicio.tripulacion.pasaje.cerca.aterrizaje",
+  ];
+  const seguridadPerdida = DE_SEGURIDAD.filter(
+    (c) => !oidaEn(c) || siestas.some((x) => oidaEn(c).desde > x.desde && oidaEn(c).desde < x.hasta),
+  );
+  comprobar(
+    "nada de seguridad se pierde con la siesta: la demostración, el cinturón y la bajada, todo oído y despierto",
+    seguridadPerdida.length === 0 && registro.every((d) => !siestas.some((x) => d.desde > x.desde + 1e-3 && d.desde < x.hasta - 1e-3)),
+    seguridadPerdida.length ? `perdido: ${seguridadPerdida.join(", ")}` : `${DE_SEGURIDAD.length} de seguridad, todas oídas, y nada dicho durmiendo`,
+  );
+  comprobar(
+    "durmiendo se ve a Ara durmiendo y después soñando, en su orden",
+    !!siesta && siesta.vistas.join(" → ") === "ara-durmiendo → ara-sonando",
+    siesta ? siesta.vistas.join(" → ") || "ninguna" : "no se vio",
+  );
+  const movido = siesta?.avionAntes && siesta?.avionDespues ? Math.hypot(siesta.avionDespues[0] - siesta.avionAntes[0], siesta.avionDespues[1] - siesta.avionAntes[1]) : 0;
+  comprobar(
+    "y en la ventanita, el mapa de la ruta con las islas de verdad y el avión avanzando; el mismo de la tripulante",
+    !!siesta &&
+      siesta.islas.length === 4 &&
+      siesta.islas.every((n) => n >= 15) &&
+      siesta.muestras > 0 &&
+      siesta.conElMapa / siesta.muestras > 0.8 &&
+      movido > 1 &&
+      ventanitas.has("dibujo:ruta"),
+    siesta
+      ? `islas de ${siesta.islas.join(", ")} puntos · el mapa en la ventanita en ${siesta.conElMapa} de ${siesta.muestras} muestras · el avión avanza ${movido.toFixed(1)} de 480 en la hoja`
+      : "no se vio",
   );
   const cuaderno = i?.cuaderno;
   comprobar(
@@ -756,6 +849,98 @@ async function elVuelo() {
   if (e) console.log(`  la escena duró ${e.segundos.toFixed(0)} s de reloj del juego`);
   comprobar("sin errores", errores.length === 0, errores[0] ?? "limpio");
   await ctx.close();
+}
+
+/**
+ * **La siesta de Ara, de cerca** (punto 304): desde el bostezo, el fundido a
+ * medio camino, Ara soñando con el mapa en la ventanita a mitad de la siesta y
+ * el despertar con el mapa todavía puesto, cada uno con su captura; y
+ * mientras duerme, qué ilustraciones salen y en qué orden, si el
+ * avión sigue su ruta —lo que se aparta del tramo del plan— y si recorre lo
+ * que da su velocidad por el suelo en el tiempo de vuelo que pasa, que es lo
+ * que distingue volar deprisa de saltar.
+ */
+async function mirarLaSiesta(page) {
+  const leerSiesta = () =>
+    page.evaluate(() => {
+      const j = globalThis.__oga.inicio();
+      const l = j.lecturaDeLinea;
+      return {
+        durmiendo: !!j.estado?.durmiendo,
+        segundos: j.estado?.segundos ?? 0,
+        siesta: j.siesta,
+        ruta: j.ruta,
+        mapa: j.ventanita?.sitio === "dibujo:ruta" && !!j.ventanita?.donde,
+        x: l?.x ?? null,
+        z: l?.z ?? null,
+        tramo: l?.tramo ?? null,
+        falta: l?.faltaParaTocar ?? null,
+        suelo: l?.porElSuelo ?? 0,
+      };
+    });
+  const r = { pared: null, vuelo: null, lado: 0, muestras: 0, recorrido: null, islas: [], avionAntes: null, avionDespues: null, vistas: [], conElMapa: 0 };
+  // El bostezo, que se oye o se lee; y Ara cierra los ojos.
+  await page.waitForFunction(() => globalThis.__oga.inicio().estado?.durmiendo, null, { timeout: 40_000 }).catch(() => {});
+  let a = await leerSiesta();
+  if (!a.durmiendo) return r;
+  const empieza = Date.now();
+  await page
+    .waitForFunction(() => (globalThis.__oga.inicio().siesta?.opacidad ?? 0) > 0.35, null, { timeout: 5000, polling: 16 })
+    .catch(() => {});
+  await foto(page, "siesta-fundido");
+  a = await leerSiesta();
+  const desde = a;
+  let antes = a;
+  let previsto = 0;
+  let conFoto = false;
+  while (a.durmiendo && Date.now() - empieza < 60_000) {
+    if (a.siesta) r.vistas = a.siesta.vistas;
+    if (a.ruta) {
+      r.islas = a.ruta.islas;
+      r.avionAntes ??= a.ruta.avion;
+      r.avionDespues = a.ruta.avion;
+    }
+    // Lo que se aparta del tramo del plan que se vuela.
+    if (a.tramo && a.x !== null) {
+      const { desde: d, hasta: h } = a.tramo;
+      const dx = h.x - d.x;
+      const dz = h.z - d.z;
+      r.lado = Math.max(r.lado, Math.abs(dx * (a.z - d.z) - dz * (a.x - d.x)) / (Math.hypot(dx, dz) || 1));
+      r.muestras++;
+      if (a.mapa) r.conElMapa++;
+    }
+    previsto += ((a.suelo + antes.suelo) / 2) * (a.segundos - antes.segundos);
+    // El sueño, con el mapa en la ventanita: pasado el fundido de una ilustración a la otra.
+    if (!conFoto && a.siesta?.ilustracion === "ara-sonando" && a.mapa && a.segundos - desde.segundos > 15) {
+      await pausa(500);
+      await foto(page, "siesta-sonando");
+      conFoto = true;
+    }
+    antes = a;
+    await pausa(120);
+    a = await leerSiesta();
+  }
+  r.vuelo = antes.segundos - desde.segundos;
+  r.recorrido = desde.falta !== null && antes.falta !== null && previsto > 0 ? (desde.falta - antes.falta) / previsto : null;
+  // Despierta: la pantalla se va, y lo que se pasó con ella puesta es lo que dura.
+  await page
+    .waitForFunction(() => (globalThis.__oga.inicio().siesta?.opacidad ?? 0) <= 0.001, null, { timeout: 10_000, polling: 16 })
+    .catch(() => {});
+  r.pared = (Date.now() - empieza) / 1000;
+  // Y Ara, con el mapa en la ventanita mientras dice que se durmió.
+  await page
+    .waitForFunction(
+      () => {
+        const j = globalThis.__oga.inicio();
+        return j.estado?.linea?.clave === "inicio.ara.pasaje.despertarse" && j.ventanita?.sitio === "dibujo:ruta" && !!j.ventanita?.donde;
+      },
+      null,
+      { timeout: 20_000 },
+    )
+    .catch(() => {});
+  await pausa(700);
+  await foto(page, "siesta-despertar");
+  return r;
 }
 
 /**

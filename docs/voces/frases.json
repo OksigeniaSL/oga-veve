@@ -17559,5 +17559,40 @@
     "idioma": "es-PY",
     "texto": "Por debajo se ve lejísimos, más de diez kilómetros: eso es la visibilidad. Para aterrizar, los pilotos tienen que ver la pista a tiempo.",
     "para": "el modo inicio, de pasaje: la tripulante explica la visibilidad"
+  },
+  {
+    "id": "inicio.ara.pasaje.dormirse",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Aaah, qué sueño me da el ruidito del motor! Voy a cerrar los ojos un ratito.",
+    "para": "el modo inicio, de pasaje: Ara bosteza y se duerme un ratito, arriba",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.despertarse",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Uy, me dormí un ratito! Y mientras tanto, el avión siguió volando por su camino.",
+    "para": "el modo inicio, de pasaje: Ara se despierta, y el avión siguió su camino",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.despertar",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Despierta, que vamos a empezar a bajar: el cinturón bien puesto. Durmiendo se traga menos saliva, y al bajar los oídos lo notan.",
+    "para": "el modo inicio, de pasaje: la tripulante despierta a Ara para bajar, por el cinturón y los oídos"
   }
 ]

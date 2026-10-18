@@ -308,15 +308,37 @@ export class VentanaDeHistoria implements PonerYQuitar {
    * `dibujo:<clave>`, para quitarlo igual que una foto. Ver
    * `ui/dibujos-del-pasaje.ts`.
    */
-  mostrarDibujo(clave: DibujoDelPasaje): void {
+  mostrarDibujo(clave: DibujoDelPasaje, url: string = urlDelDibujo(clave)): void {
     const alt = `inicio.dibujo.${clave}`;
     this.ultimo = `dibujo:${clave}: pedido`;
     this.mostrarFoto({
       clave: `dibujo:${clave}`,
-      url: urlDelDibujo(clave),
+      url,
       alt: hayTexto(alt) ? t(alt) : "",
       firma: null,
     });
+  }
+
+  /**
+   * **El mismo dibujo, puesto al día**, sin quitarlo ni volver a ponerlo: el
+   * mapa de la ruta con el avión donde va ahora. Se cambia cuando la imagen
+   * nueva ya está descodificada, que un marco que parpadea cada dos segundos
+   * es peor que un avión que avanza a saltitos. Ver `mapa-de-la-ruta.ts`.
+   */
+  refrescarDibujo(clave: DibujoDelPasaje, url: string): void {
+    const sitio = `dibujo:${clave}`;
+    if (this.sitio !== sitio || !this.dondeQuedo) return;
+    const vez = this.vez;
+    const img = new Image();
+    img.src = url;
+    img
+      .decode()
+      .then(() => {
+        if (vez !== this.vez || this.sitio !== sitio) return;
+        if (this.dondeQuedo?.donde === "esquina" && this.foto) this.foto.src = url;
+        else this.raiz?.querySelector('[data-historia="placa"] [data-historia="foto"]')?.setAttribute("href", url);
+      })
+      .catch(() => {});
   }
 
   /**

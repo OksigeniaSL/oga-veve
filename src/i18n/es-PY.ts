@@ -1264,6 +1264,8 @@ export const ES_PY = {
   "ilustracion.pasaje-tripulante": "La tripulante le habla a Ara al lado de su asiento",
   "ilustracion.pasaje-ara-ventanilla": "Ara, con la cara contra el cristal, mirando el ala y el motor",
   "ilustracion.pasaje-comandante": "La comandante Jazlyn en su cabina, por encima de las nubes",
+  "ilustracion.ara-durmiendo": "Ara duerme en la ventanilla, con la manta y el cinturón por encima",
+  "ilustracion.ara-sonando": "Ara sueña, sonriendo, con un avión que vuela sobre las islas",
   "ilustracion.fuera-jaz-20": "El JAZ 20 volando sobre el río y el monte",
   "ilustracion.fuera-jaz-25": "El JAZ 25 pasando bajito sobre un cultivo",
   "ilustracion.fuera-jaz-40": "El JAZ 40 volando sobre un lago entre cerros",
@@ -3779,6 +3781,23 @@ export const ES_PY = {
     "¡Mirá para abajo: nubes y más nubes, como un mar de algodón! Por eso le dicen mar de nubes.",
   "inicio.ara.pasaje.sigueLaNube":
     "Seguimos adentro de la nube y el avión se mueve un poquito. ¡Pero ya sé que es normal, y tengo el cinturón puesto!",
+  /*
+   * **La siesta de Ara** (punto 304): arriba y sin nada que contar, Ara
+   * bosteza con el ruidito de los motores y se duerme un ratito; al despertar,
+   * el mapa de la ruta de la ventanita enseña que el avión siguió su camino.
+   * Y para bajar despierta a Ara la tripulante, por lo que es: el cinturón, y
+   * que durmiendo se traga mucho menos saliva, y al bajar la presión de la
+   * cabina empuja los oídos. Es el consejo de los médicos: no dormirse para
+   * despegar ni para aterrizar (Mayo Clinic, «Airplane ear»). Lo de Ara, de
+   * vos; lo de la tripulante, con el tú de Canarias. Nada que diga si Ara es
+   * niño o niña.
+   */
+  "inicio.ara.pasaje.dormirse": "¡Aaah, qué sueño me da el ruidito del motor! Voy a cerrar los ojos un ratito.",
+  "inicio.tripulacion.pasaje.cerca.despertar":
+    "Despierta, que vamos a empezar a bajar: el cinturón bien puesto. Durmiendo se traga menos saliva, y al bajar los oídos lo notan.",
+  "inicio.ara.pasaje.despertarse": "¡Uy, me dormí un ratito! Y mientras tanto, el avión siguió volando por su camino.",
+  // Para quien no ve la pantalla: no se graba.
+  "inicio.siesta": "Ara duerme un ratito y sueña, mientras el avión sigue su camino.",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

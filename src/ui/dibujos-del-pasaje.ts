@@ -15,7 +15,9 @@
  * un chaleco no necesitan una foto: necesitan que se vea **la idea**, y un
  * dibujo limpio la enseña mejor que una foto llena de cosas. Ni una imagen
  * generada: `CREDITOS.md` pide el origen de cada cosa, y el de esto es este
- * fichero.
+ * fichero. Menos las costas del mapa de la ruta, que son las de Natural
+ * Earth, de dominio público y anotadas allí: una costa no se inventa. Ver
+ * `mapa-de-la-ruta.ts`.
  *
  * ## Sin letras
  *
@@ -46,6 +48,8 @@
  * de las historias, y se le da a la ventana como URL de datos. Ver
  * `urlDelDibujo`.
  */
+
+import { dibujoDelMapa, vueloDeMuestra, type LoDelVuelo, type MapaDeLaRuta } from "./mapa-de-la-ruta";
 
 /** Los dibujos que hay, por su clave. Ver `DIBUJOS_DEL_PASAJE`. */
 export type DibujoDelPasaje =
@@ -513,38 +517,28 @@ ${flecha(110, 170, 168, 150, C.blanco, 6)}${flecha(270, 130, 330, 104, C.blanco,
 );
 
 /**
- * **El camino del vuelo**: Tenerife, La Gomera, La Palma y El Hierro donde
- * están, el camino de puntos de Los Rodeos a La Palma, el avión por él y la
- * torre hablándole por radio. Las islas, en su sitio y a su tamaño, de las
- * coordenadas de verdad; el camino, el de la escena dibujado sin vueltas.
+ * **El camino del vuelo, en el mapa de la ruta**: Tenerife, La Gomera, La
+ * Palma y El Hierro con su costa de verdad, el camino del plan —lo volado
+ * entero y lo que falta a puntos—, el avión donde va y la torre hablándole
+ * por radio. Eran cuatro óvalos, y un mapa de Canarias con óvalos no lo
+ * reconoce nadie que haya visto uno (punto 292). Lo pinta `mapa-de-la-ruta.ts`;
+ * aquí va en su lámina.
+ *
+ * Jugando, el camino y el avión son los del vuelo —ver
+ * `ponerLaVentanitaDeLaEscena` en `game.ts`—; sin el juego, el de muestra.
  */
-const RUTA = (() => {
-  // Longitud y latitud a la lámina: de 18,2° O a 16,0° O y de 27,6° N a 28,9° N.
-  const x = (lon: number): number => ((lon + 18.2) / 2.2) * 480;
-  const y = (lat: number): number => ((28.9 - lat) / 1.3) * 320;
-  const isla = (lon: number, lat: number, rx: number, ry: number, giro = 0): string =>
-    `<ellipse cx="${x(lon).toFixed(0)}" cy="${y(lat).toFixed(0)}" rx="${rx}" ry="${ry}" transform="rotate(${giro} ${x(lon).toFixed(0)} ${y(lat).toFixed(0)})" fill="${C.tierra}" class="tf fino"/>`;
-  const tfn = { x: x(-16.34), y: y(28.48) };
-  const spc = { x: x(-17.755), y: y(28.626) };
+export function laminaDeLaRuta(mapa: MapaDeLaRuta, vuelo: LoDelVuelo): string {
   return lamina(
-    `<rect width="480" height="320" rx="18" fill="${C.mar}"/>
-${isla(-16.6, 28.27, 72, 34, -30)}${isla(-17.23, 28.11, 26, 24)}${isla(-17.86, 28.68, 26, 50, 8)}${isla(-18.02, 27.74, 30, 18, -10)}
-<path d="M${tfn.x.toFixed(0)} ${tfn.y.toFixed(0)} Q${x(-17.0).toFixed(0)} ${y(28.62).toFixed(0)} ${spc.x.toFixed(0)} ${spc.y.toFixed(0)}" fill="none" stroke="${C.blanco}" stroke-width="6" stroke-dasharray="4 14" stroke-linecap="round" class="camino"/>
-<circle cx="${tfn.x.toFixed(0)}" cy="${tfn.y.toFixed(0)}" r="9" fill="${C.amarillo}" class="tf fino"/>
-<circle cx="${spc.x.toFixed(0)}" cy="${spc.y.toFixed(0)}" r="9" fill="${C.amarillo}" class="tf fino"/>
-<g transform="translate(${(tfn.x + 26).toFixed(0)} ${(tfn.y + 36).toFixed(0)})">
-<path d="M-8 30 L-4 0 h8 L8 30z" fill="${C.blanco}" class="tf fino"/>
-<rect x="-12" y="-14" width="24" height="16" rx="3" fill="${C.cielo}" class="tf fino"/>
-<path d="M18 -18 q10 10 0 22 M26 -26 q18 18 0 38" fill="none" stroke="${C.blanco}" stroke-width="4" stroke-linecap="round" class="radio"/>
-</g>
-<g transform="translate(${x(-17.0).toFixed(0)} ${(y(28.62) + 30).toFixed(0)}) rotate(-170)">
-<path d="M-22 0 q0 -5 7 -5 h26 q8 0 12 5 q-4 5 -12 5 h-26 q-7 0 -7 -5z M-2 0 l-12 13 h7 l17 -13z M-2 0 l-12 -13 h7 l17 13z" fill="${C.blanco}" stroke="${C.tinta}" stroke-width="3"/>
-</g>`,
-    `.camino{animation:camino 2s infinite linear}
-@keyframes camino{to{stroke-dashoffset:-36}}
-.radio{animation:radio 1.4s infinite}
+    dibujoDelMapa(mapa, vuelo),
+    `.radio{animation:radio 1.4s infinite}
 @keyframes radio{50%{opacity:.2}}`,
+    C.mar,
   );
+}
+
+const RUTA = (() => {
+  const { mapa, vuelo } = vueloDeMuestra();
+  return laminaDeLaRuta(mapa, vuelo);
 })();
 
 /**
@@ -655,5 +649,10 @@ export function esDibujoDelPasaje(clave: string): clave is DibujoDelPasaje {
  * URL por la mitad.
  */
 export function urlDelDibujo(clave: DibujoDelPasaje): string {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DIBUJOS_DEL_PASAJE[clave])}`;
+  return urlDeLaLamina(DIBUJOS_DEL_PASAJE[clave]);
+}
+
+/** Una lámina cualquiera como URL de datos: la de la ruta con el vuelo de verdad, por ejemplo. */
+export function urlDeLaLamina(svg: string): string {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
