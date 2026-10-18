@@ -3485,4 +3485,60 @@ export const ES_PY = {
   "inicio.dibujo.oido": "El oído: al bajar el aire empuja, y al tragar o bostezar se destapa.",
   "inicio.dibujo.papi": "Las cuatro luces al lado de la pista: dos blancas y dos rojas.",
   "inicio.dibujo.estrellas": "Los telescopios en lo alto de La Palma, mirando las estrellas.",
+  /*
+   * **El kit de viaje** (punto 275 de la lista de Enrique): la tripulante se
+   * lo trae a Ara en la bajada, que es el tramo largo, con dos juegos dentro,
+   * y antes de aterrizar pide guardarlo. Lo suyo, con el tú de Canarias; lo de
+   * Ara y lo de los juegos, de vos, que es Ara quien juega con quien va a su
+   * lado. Lo que se dice de cada pieza es lo de verdad: el ala empuja el aire
+   * hacia abajo y el aire la empuja hacia arriba (AGENTS.md, regla 4); la
+   * deriva lleva el avión derecho como las plumas de una flecha y el timón
+   * le mueve la nariz a los lados. El Teide, 3.715 m, es la cumbre más alta
+   * de España (IGN); el silbo gomero se enseña todavía en las escuelas de La
+   * Gomera. Ver `src/flight/kit-de-viaje.ts` y el ADR 0020.
+   */
+  "inicio.tripulacion.pasaje.cerca.kitAqui":
+    "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
+  "inicio.tripulacion.pasaje.cerca.kitRato":
+    "Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.",
+  "inicio.ara.pasaje.kitGracias": "¡Gracias! ¿Jugamos? Tocá la mochilita y elegimos uno de los juegos.",
+  "inicio.ara.pasaje.kit.elegir": "Hay dos juegos: armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
+  "inicio.ara.pasaje.kit.piezas.empezar": "¿Me ayudás a armar el avión? Agarrá cada pieza y llevala a su lugar.",
+  "inicio.ara.pasaje.kit.piezas.ala": "¡El ala! Empuja el aire para abajo, y el aire la empuja para arriba: así nos sostiene.",
+  "inicio.ara.pasaje.kit.piezas.motor":
+    "¡El motor! Traga aire por adelante y lo echa para atrás con mucha fuerza: así el avión va para adelante.",
+  "inicio.ara.pasaje.kit.piezas.cola":
+    "¡La cola! Lleva al avión derechito, como las plumas de una flecha, y su timón le mueve la nariz a los costados.",
+  "inicio.ara.pasaje.kit.piezas.ruedas":
+    "¡Las ruedas! Son para correr por la pista y para aterrizar. Volando, se guardan adentro del avión.",
+  "inicio.ara.pasaje.kit.piezas.ayuda": "¡Casi! Esa pieza va en otro lugar del avión: mirá el que brilla.",
+  "inicio.ara.pasaje.kit.piezas.fin": "¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.",
+  "inicio.ara.pasaje.kit.camino.empezar":
+    "Salimos del uno, en Tenerife. Tocá los números en orden y dibujamos el camino del avión.",
+  "inicio.ara.pasaje.kit.camino.teide": "¡Dos, el Teide! Es el volcán más alto de España, y asoma por encima de las nubes.",
+  "inicio.ara.pasaje.kit.camino.gomera": "¡Tres, La Gomera! Es una isla redondita, donde todavía se habla silbando.",
+  "inicio.ara.pasaje.kit.camino.palma": "¡Cuatro, La Palma! Ahí aterrizamos. Ya dibujamos todo el camino de nuestro vuelo.",
+  "inicio.ara.pasaje.kit.camino.ayuda": "Ese número viene después. Primero tocá el que brilla.",
+  "inicio.tripulacion.pasaje.cerca.kitGuardar":
+    "Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.",
+  // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
+  "inicio.kit.nombre": "Kit de viaje",
+  "inicio.kit.abrir": "Abrir el kit de viaje",
+  "inicio.kit.cerrar": "Guardar el kit",
+  "inicio.kit.elegir": "Volver a los juegos",
+  "inicio.kit.piezas": "Armá el avión",
+  "inicio.kit.camino": "El camino del avión",
+  "inicio.kit.pausa": "Habla la megafonía: escuchá",
+  "inicio.kit.pieza.ala": "El ala",
+  "inicio.kit.pieza.motor": "El motor",
+  "inicio.kit.pieza.cola": "La cola",
+  "inicio.kit.pieza.ruedas": "Las ruedas",
+  "inicio.kit.sitio.ala": "El lugar del ala",
+  "inicio.kit.sitio.motor": "El lugar del motor",
+  "inicio.kit.sitio.cola": "El lugar de la cola",
+  "inicio.kit.sitio.ruedas": "El lugar de las ruedas",
+  "inicio.kit.parada.tenerife": "Uno: Tenerife, de donde salimos",
+  "inicio.kit.parada.teide": "Dos: el Teide",
+  "inicio.kit.parada.gomera": "Tres: La Gomera",
+  "inicio.kit.parada.palma": "Cuatro: La Palma, adonde vamos",
 } as const;

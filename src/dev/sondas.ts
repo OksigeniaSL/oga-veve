@@ -620,6 +620,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * con qué mando se dibuja. Ver `scripts/verificar-inicio.mjs`.
      */
     inicio: () => juego.inicioParaBanco,
+    /**
+     * **El kit de viaje, ya**: la tripulante lo trae sin esperar a la bajada.
+     * Para mirar los juegos sin volar media hora; el vuelo entero lo da en su
+     * momento. Ver `flight/kit-de-viaje.ts`.
+     */
+    darElKit: () => juego.darElKitParaBanco(),
+    /** El hilo musical: lo que decide y lo que suena. Ver `audio/hilo-musical.ts`. */
+    musica: () => juego.musicaParaBanco,
     /*
      * Cómo anda la voz del instructor: cuántas piezas grabadas tiene
      * cargadas y qué fue lo último que se le pidió decir.

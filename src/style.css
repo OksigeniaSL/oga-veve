@@ -15487,3 +15487,463 @@ body.con-vuelta #tactil {
 .sin-movimiento .inicio__dedo {
   animation: none !important;
 }
+
+/* ── El kit de viaje de Ara ──
+   La mochilita abajo a la derecha, y el kit abierto debajo de la tarjeta de
+   la escena, como un cuaderno de actividades encima de la mesita: papel
+   claro, tinta oscura y lo que hay que tocar, grande. Ver
+   `src/ui/kit-de-viaje.ts` y `src/flight/kit-de-viaje.ts`. */
+.kit {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.kit[hidden],
+.kit__boton[hidden],
+.kit__panel[hidden],
+.kit__atras[hidden],
+.kit__pausa[hidden] {
+  display: none;
+}
+
+.kit__boton {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 76px;
+  height: 76px;
+  padding: 6px;
+  border: 3px solid #2a1c14;
+  border-radius: 24px;
+  background: #f3ead8;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.kit__boton svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Recién traída, late: hay algo nuevo, sin una palabra. */
+.kit__boton--nuevo {
+  animation: kit-late 1.4s ease-in-out infinite;
+}
+
+@keyframes kit-late {
+  50% {
+    transform: scale(1.12) rotate(-4deg);
+    box-shadow: 0 0 0 8px rgba(242, 194, 48, 0.55);
+  }
+}
+
+/*
+ * **Del ancho que quepa entero debajo de la tarjeta**: la hoja va en la
+ * proporción de sus dibujos, 640 × 340, así que el ancho sale del alto que
+ * queda y nunca se pasa del de la pantalla menos las dos columnas de los
+ * lados. Lo mide `PantallaDelKit.colocar`, que sabe además dónde está el
+ * volumen; esto es lo de antes de medir.
+ */
+.kit__panel {
+  position: absolute;
+  top: var(--kit-arriba, 140px);
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: var(--kit-ancho, min(780px, calc(100vw - 150px)));
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  border: 3px solid #2a1c14;
+  border-radius: 26px;
+  background: #f3ead8;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
+  animation: kit-abre 0.25s ease-out;
+}
+
+@keyframes kit-abre {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(14px);
+  }
+}
+
+.kit__hoja {
+  width: 100%;
+  aspect-ratio: 640 / 340;
+  display: grid;
+  place-items: center;
+}
+
+.kit-hoja {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.kit__cerrar,
+.kit__atras {
+  position: absolute;
+  top: -14px;
+  z-index: 1;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  border: 3px solid #2a1c14;
+  border-radius: 50%;
+  background: #2a1c14;
+  color: #f3ead8;
+  cursor: pointer;
+}
+
+.kit__panel > .kit__cerrar {
+  right: -14px;
+}
+
+.kit__panel > .kit__atras {
+  left: -14px;
+}
+
+.kit__cerrar svg,
+.kit__atras svg {
+  width: 100%;
+  height: 100%;
+}
+
+.kit__boton:focus-visible,
+.kit__cerrar:focus-visible,
+.kit__atras:focus-visible,
+.kit-juego:focus-visible {
+  outline: 4px solid #f2c230;
+  outline-offset: 3px;
+}
+
+/* Elegir: dos dibujos grandes, uno al lado del otro. */
+.kit-elegir {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 18px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.kit-juego {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  height: 100%;
+  padding: 14px;
+  border: 3px solid #2a1c14;
+  border-radius: 22px;
+  background: #fffaf0;
+  cursor: pointer;
+}
+
+.kit-juego > svg:first-child {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+}
+
+.kit-juego__estrella {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 38px;
+  height: 38px;
+  visibility: hidden;
+}
+
+.kit-juego--hecho .kit-juego__estrella {
+  visibility: visible;
+}
+
+/* Pausado mientras habla la megafonía: el kit se apaga y se ve el altavoz. */
+.kit__panel--pausa .kit__hoja {
+  opacity: 0.35;
+  pointer-events: none;
+  filter: saturate(0.5);
+}
+
+.kit__pausa {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.kit__pausa svg {
+  width: 96px;
+  height: 96px;
+  padding: 14px;
+  border-radius: 50%;
+  background: #f3ead8;
+  border: 3px solid #2a1c14;
+  animation: kit-escucha 1.6s ease-in-out infinite;
+}
+
+@keyframes kit-escucha {
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.kit__oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Armá el avión ── */
+.kit-bandeja {
+  fill: #e5d8bd;
+  stroke: #2a1c14;
+  stroke-width: 3;
+  stroke-dasharray: 2 8;
+}
+
+.kit-pieza {
+  cursor: grab;
+  transition: transform 0.35s cubic-bezier(0.3, 1.3, 0.5, 1);
+  outline: none;
+}
+
+.kit-pieza__dibujo {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.2s;
+}
+
+.kit-pieza--llevada {
+  cursor: grabbing;
+  transition: none;
+}
+
+.kit-pieza--llevada .kit-pieza__dibujo,
+.kit-pieza--cogida .kit-pieza__dibujo {
+  transform: scale(1.12);
+  filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.35));
+}
+
+.kit-pieza:focus-visible .kit-pieza__dibujo {
+  filter: drop-shadow(0 0 6px #f2c230) drop-shadow(0 0 2px #2a1c14);
+}
+
+.kit-pieza--puesta {
+  cursor: default;
+}
+
+/* La pieza de la que habla Ara, mientras lo dice. */
+.kit-pieza--dice .kit-pieza__dibujo {
+  filter: drop-shadow(0 0 8px #f2c230) drop-shadow(0 0 3px #f2c230);
+}
+
+/* «Soy yo»: la pieza del sitio que se tocó. */
+.kit-pieza--senala .kit-pieza__dibujo {
+  animation: kit-menea 0.6s ease-in-out 3;
+}
+
+@keyframes kit-menea {
+  25% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+}
+
+.kit-hueco {
+  color: #2a1c14;
+  cursor: pointer;
+}
+
+.kit-hueco__forma {
+  opacity: 0.55;
+  fill-opacity: 0.08;
+  stroke-dasharray: 8 7;
+}
+
+.kit-hueco--puesto {
+  visibility: hidden;
+}
+
+/* El sitio que brilla: ahí va. */
+.kit-hueco--brilla {
+  color: #c98a00;
+}
+
+.kit-hueco--brilla .kit-hueco__forma {
+  opacity: 1;
+  fill-opacity: 0.3;
+  stroke-width: 5;
+  animation: kit-brilla 1.1s ease-in-out infinite;
+}
+
+@keyframes kit-brilla {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.kit-velocidad {
+  opacity: 0;
+}
+
+/* Armado: el avión se va volando. */
+.kit-hoja--hecha .kit-avion {
+  animation: kit-vuela 2.4s ease-in-out infinite;
+}
+
+.kit-hoja--hecha .kit-velocidad {
+  opacity: 1;
+}
+
+.kit-hoja--hecha .kit-bandeja {
+  opacity: 0;
+}
+
+@keyframes kit-vuela {
+  50% {
+    transform: translate(10px, -12px);
+  }
+}
+
+/* ── El camino del avión ── */
+.kit-parada {
+  cursor: pointer;
+  outline: none;
+}
+
+.kit-parada__aro {
+  fill: #c8643c;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.kit-parada--hecha {
+  cursor: default;
+}
+
+.kit-parada--hecha .kit-parada__aro {
+  fill: #f2c230;
+}
+
+.kit-parada--hecha text {
+  fill: #2a1c14;
+}
+
+.kit-parada:focus-visible .kit-parada__aro {
+  stroke: #f2c230;
+  stroke-width: 7;
+}
+
+.kit-parada--brilla .kit-parada__aro {
+  animation: kit-late-numero 0.9s ease-in-out infinite;
+  stroke: #ffffff;
+  stroke-width: 6;
+}
+
+@keyframes kit-late-numero {
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+.kit-tramo__trazo {
+  transition: stroke-dashoffset 1.4s ease-in-out;
+}
+
+.kit-tramo--hecho .kit-tramo__trazo {
+  stroke-dashoffset: 0 !important;
+}
+
+.kit-aviocito {
+  transition: transform 1.4s ease-in-out;
+}
+
+.kit-hoja--hecha .kit-tramo path:last-child {
+  stroke: #f2c230;
+}
+
+/* En el teléfono apaisado, todo más junto: la mochilita y los botones, más chicos. */
+@media (max-height: 500px) {
+  .kit__boton {
+    width: 60px;
+    height: 60px;
+    border-radius: 20px;
+  }
+  .kit__panel {
+    padding: 6px;
+    border-radius: 20px;
+  }
+  .kit__cerrar,
+  .kit__atras {
+    width: 46px;
+    height: 46px;
+    top: -10px;
+  }
+  .kit__panel > .kit__cerrar {
+    right: -10px;
+  }
+  .kit__panel > .kit__atras {
+    left: -10px;
+  }
+  .kit-elegir {
+    gap: 10px;
+    padding: 6px;
+  }
+  /*
+   * Con el kit abierto, la tarjeta de la escena sube arriba del todo, que en
+   * el teléfono el centro de arriba está libre: el kit gana casi un tercio
+   * de alto. Y los números del camino, más grandes, para el dedo.
+   */
+  :root.kit-abierto .inicio .inicio__tarjeta {
+    top: 6px;
+  }
+  .kit-parada__aro {
+    r: 30px;
+  }
+  .kit-parada__toque {
+    r: 44px;
+  }
+  .kit-parada text {
+    font-size: 34px;
+  }
+}
+
+/* De pie y con el dedo manda el cartel de girar, como con la tarjeta. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .kit {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kit *,
+  .kit__boton {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.sin-movimiento .kit *,
+.sin-movimiento .kit__boton {
+  animation: none !important;
+  transition: none !important;
+}

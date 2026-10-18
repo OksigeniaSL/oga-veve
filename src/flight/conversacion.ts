@@ -125,6 +125,12 @@ export class Conversacion {
   private dichaAhora: FraseDicha | null = null;
   /** Cuándo empezó la que suena, en el reloj de la voz. Ver `TOPE_DE_UNA_FRASE`. */
   private sonandoDesdeEnPared = 0;
+  /**
+   * **Hasta cuándo se está leyendo la última**, s de escena, si no pudo
+   * sonar: sin voz, el subtítulo es la frase, y mientras se lee cuenta como
+   * dicha. Ver `suena`.
+   */
+  private leyendoHasta = 0;
 
   constructor(
     private readonly voz: VozDelInicio,
@@ -158,6 +164,7 @@ export class Conversacion {
   /** Lo que quedaba por decir ya no es verdad: fuera. */
   callar(): void {
     this.cola = [];
+    this.leyendoHasta = 0;
     if (this.sonando !== null) {
       this.sonando = null;
       this.acabarLaDicha("cortada");
@@ -198,6 +205,7 @@ export class Conversacion {
       this.sonando = null;
       this.acabarLaDicha(como);
       this.puedeHablarEn = this.reloj() + ENTRE_FRASES + Math.max(0, esperaMas);
+      this.leyendoHasta = como === "muda" ? this.reloj() + Math.max(0, esperaMas) : 0;
     });
   }
 
@@ -227,6 +235,30 @@ export class Conversacion {
   /** La última frase pedida: el subtítulo. */
   get ultima(): Linea | null {
     return this.dicha;
+  }
+
+  /**
+   * **La que está sonando ahora**, o `null` en un silencio: lo que mira quien
+   * tiene que saber si habla la megafonía. Ver `megafoniaSuena` en
+   * `inicio-pasaje.ts`.
+   */
+  get suena(): Linea | null {
+    /*
+     * Y la que no pudo sonar, mientras se lee: para quien juega sin voz —el
+     * Brave de Linux, una frase todavía sin grabar— el anuncio es el
+     * subtítulo, y lo que se calla o se pausa por la megafonía se tiene que
+     * callar igual.
+     */
+    return this.sonando !== null || this.reloj() < this.leyendoHasta ? this.dicha : null;
+  }
+
+  /**
+   * **Se quitan de la cola las que ya no vienen a cuento**, sin tocar la que
+   * suena: lo que un juego quería decir y se cerró antes de que le llegara el
+   * turno. Callar cortaría la que suena, y eso no lo hace nadie de fuera.
+   */
+  quitar(cuales: (l: Linea) => boolean): void {
+    this.cola = this.cola.filter((l) => !cuales(l));
   }
 
   /**

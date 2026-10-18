@@ -8,6 +8,9 @@
  * presupuesto para grabar un motor de verdad y encargar la música, esto
  * seguirá siendo el plan B y el modo de bajo consumo.
  *
+ * Lo grabado son las voces —ver `instructor-grabado.ts`— y la música de
+ * embarque, que suena por el altavoz del techo: ver `hilo-musical.ts`.
+ *
  * Tres ideas gobiernan el diseño:
  *
  * 1. **El motor enseña física antes de que nadie la explique.** El tono sube
@@ -55,6 +58,8 @@ import {
   pasoDe,
   type Volumen,
 } from "./volumen";
+import { elegirFormato } from "./banco-de-voz";
+import { bucleDe, ficheroDe, type Musica } from "./hilo-musical";
 import {
   Agachado,
   BUSES,
@@ -427,6 +432,74 @@ export function yaHuboGesto(): boolean {
   }
 }
 
+/**
+ * **El altavoz del techo de una cabina de pasaje**, hacia `destino`: sin
+ * graves —uno pequeño no los da—, con su bocina alrededor de los tres
+ * kilohercios y el rebote de los demás altavoces del pasillo, unas centésimas
+ * más tarde. Devuelve por dónde se entra. Lo usan la megafonía y el hilo
+ * musical, que suenan por el mismo sitio. Ver dónde se arma en `build`.
+ */
+export function altavozDelTecho(ctx: BaseAudioContext, destino: AudioNode): BiquadFilterNode {
+  const sinGraves = ctx.createBiquadFilter();
+  sinGraves.type = "highpass";
+  sinGraves.frequency.value = 220;
+  sinGraves.Q.value = 0.7;
+  const sinAgudos = ctx.createBiquadFilter();
+  sinAgudos.type = "lowpass";
+  sinAgudos.frequency.value = 5500;
+  sinAgudos.Q.value = 0.7;
+  const bocina = ctx.createBiquadFilter();
+  bocina.type = "peaking";
+  bocina.frequency.value = 2800;
+  bocina.Q.value = 1;
+  bocina.gain.value = 3;
+  const pasillo = ctx.createDelay(0.1);
+  pasillo.delayTime.value = 0.028;
+  const rebote = ctx.createGain();
+  rebote.gain.value = 0.22;
+  sinGraves.connect(sinAgudos).connect(bocina).connect(destino);
+  bocina.connect(pasillo).connect(rebote).connect(destino);
+  return sinGraves;
+}
+
+/**
+ * **La puerta de la cabina de mando** delante de algo que suena en el pasaje:
+ * más lejos y sin agudos desde la cabina de mando, abierta desde fuera y desde
+ * el asiento. Ver `comoSeOyeLaTripulacion`.
+ */
+export function conLaPuerta(
+  ctx: BaseAudioContext,
+  hacia: AudioNode,
+  oido: Oido,
+): { readonly puerta: BiquadFilterNode; readonly lejos: GainNode } {
+  const puerta = ctx.createBiquadFilter();
+  puerta.type = "lowpass";
+  puerta.Q.value = 0.7;
+  const lejos = ctx.createGain();
+  const comoAhora = comoSeOyeLaTripulacion(oido);
+  puerta.frequency.value = comoAhora.corte;
+  lejos.gain.value = comoAhora.fuerza;
+  puerta.connect(lejos).connect(hacia);
+  return { puerta, lejos };
+}
+
+/** Lo que tarda en entrar el hilo musical, s: sin sobresalto. */
+const ENTRA_LA_MUSICA = 2.5;
+/**
+ * Y lo que tarda en callarse, s: casi de golpe, como cuando la tripulación
+ * coge el micrófono, pero sin chasquido.
+ */
+const SE_CALLA_LA_MUSICA = 0.5;
+
+/** Lo que el navegador dice que puede tocar de un tipo de audio. */
+function puedeTocar(mime: string): string {
+  try {
+    return document.createElement("audio").canPlayType(mime) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
@@ -462,6 +535,16 @@ export class Audio {
    */
   private entradaDeLaTripulacion: BiquadFilterNode | null = null;
   private lejosDeLaTripulacion: GainNode | null = null;
+  /**
+   * **Y el hilo musical**, por el mismo altavoz y con la misma puerta, pero
+   * al bus de la música: ver `ponerMusica`.
+   */
+  private entradaDeLaMusica: BiquadFilterNode | null = null;
+  private lejosDeLaMusica: GainNode | null = null;
+  /** Lo que suena del hilo musical, con su fundido, o `null`. */
+  private musica: { cual: Musica; fuente: AudioBufferSourceNode; fundido: GainNode } | null = null;
+  /** Las músicas bajadas y descodificadas, o lo que les pasa todavía. */
+  private readonly musicas = new Map<Musica, AudioBuffer | "bajando" | "no-llega">();
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
   /**
@@ -648,6 +731,9 @@ export class Audio {
     const ahora = ctx.currentTime;
     this.entradaDeLaTripulacion.frequency.setTargetAtTime(corte, ahora, 0.05);
     this.lejosDeLaTripulacion.gain.setTargetAtTime(fuerza, ahora, 0.05);
+    // La música suena en el mismo techo: desde la cabina de mando, tras la puerta.
+    this.entradaDeLaMusica?.frequency.setTargetAtTime(corte, ahora, 0.05);
+    this.lejosDeLaMusica?.gain.setTargetAtTime(fuerza, ahora, 0.05);
   }
 
   /** El firme que hay debajo de las ruedas. Ver `world/firme.ts`. */
@@ -1173,41 +1259,26 @@ export class Audio {
      * las dos vías se distinguieran de oído. Va al bus de voz y no al de radio:
      * se agacha y se levanta como la voz, porque es voz de dentro del avión.
      */
-    const sinGraves = ctx.createBiquadFilter();
-    sinGraves.type = "highpass";
-    sinGraves.frequency.value = 220;
-    sinGraves.Q.value = 0.7;
-    const sinAgudos = ctx.createBiquadFilter();
-    sinAgudos.type = "lowpass";
-    sinAgudos.frequency.value = 5500;
-    sinAgudos.Q.value = 0.7;
-    const bocina = ctx.createBiquadFilter();
-    bocina.type = "peaking";
-    bocina.frequency.value = 2800;
-    bocina.Q.value = 1;
-    bocina.gain.value = 3;
-    const pasillo = ctx.createDelay(0.1);
-    pasillo.delayTime.value = 0.028;
-    const rebote = ctx.createGain();
-    rebote.gain.value = 0.22;
-    sinGraves.connect(sinAgudos).connect(bocina).connect(this.buses.voz);
-    bocina.connect(pasillo).connect(rebote).connect(this.buses.voz);
+    const sinGraves = altavozDelTecho(ctx, this.buses.voz);
     this.entradaDeAltavoz = sinGraves;
     /*
      * **Y la tripulación, por el mismo altavoz con la puerta delante.** Habla
      * desde la cabina de pasaje: desde la de mando se oye a través de la
      * puerta, más lejos y sin agudos. Ver `comoSeOyeLaTripulacion`.
      */
-    const puerta = ctx.createBiquadFilter();
-    puerta.type = "lowpass";
-    puerta.Q.value = 0.7;
-    const lejos = ctx.createGain();
-    const comoAhora = comoSeOyeLaTripulacion(this.oido);
-    puerta.frequency.value = comoAhora.corte;
-    lejos.gain.value = comoAhora.fuerza;
-    puerta.connect(lejos).connect(sinGraves);
-    this.entradaDeLaTripulacion = puerta;
-    this.lejosDeLaTripulacion = lejos;
+    const tripulacion = conLaPuerta(ctx, sinGraves, this.oido);
+    this.entradaDeLaTripulacion = tripulacion.puerta;
+    this.lejosDeLaTripulacion = tripulacion.lejos;
+    /*
+     * **Y el hilo musical, por otro altavoz igual que va al bus de la
+     * música**: suena como la megafonía —es el mismo techo— pero se mezcla
+     * como música, dieciocho decibelios por debajo de la voz y agachándose
+     * cuando alguien habla. Por el bus de la voz no se agacharía nunca. Ver
+     * `ponerMusica`.
+     */
+    const musica = conLaPuerta(ctx, altavozDelTecho(ctx, this.buses.musica), this.oido);
+    this.entradaDeLaMusica = musica.puerta;
+    this.lejosDeLaMusica = musica.lejos;
 
     const noise = this.noiseBuffer();
 
@@ -1685,6 +1756,111 @@ export class Audio {
   /** Y se calla: la mezcla se levanta cuando se calla el último. */
   acabaLaVoz(): void {
     if (this.hablando.sale()) this.ponerNiveles();
+  }
+
+  /**
+   * **El hilo musical**: lo que tiene que sonar ahora, o `null`. Se llama en
+   * cada fotograma con lo que decide `HiloMusical`; aquí se baja la música la
+   * primera vez que se pide —y no antes—, se toca en bucle por el altavoz del
+   * techo, entra fundiéndose y se calla en medio segundo. Lo que se pide con
+   * el audio dormido espera al primer gesto, como las voces. Ver
+   * `audio/hilo-musical.ts`.
+   */
+  ponerMusica(cual: Musica | null): void {
+    const ctx = this.context;
+    if (!ctx || !this.entradaDeLaMusica) return;
+    if (this.musica && this.musica.cual !== cual) this.callarLaMusica();
+    if (!cual || this.musica || ctx.state !== "running") return;
+    const bajada = this.musicas.get(cual);
+    if (bajada === undefined) {
+      this.bajarLaMusica(ctx, cual);
+      return;
+    }
+    if (bajada === "bajando" || bajada === "no-llega") return;
+    /*
+     * **La vuelta, y no el fichero entero**: el fichero lleva medio segundo de
+     * más a cada lado para que el silencio que mete el códec al empezar no
+     * caiga dentro del bucle. Ver `scripts/hacer-musica.mjs`.
+     */
+    const { desde, dura } = bucleDe(cual);
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = bajada;
+    fuente.loop = true;
+    fuente.loopStart = desde;
+    fuente.loopEnd = desde + dura;
+    const fundido = ctx.createGain();
+    const ahora = ctx.currentTime;
+    fundido.gain.setValueAtTime(0, ahora);
+    fundido.gain.linearRampToValueAtTime(1, ahora + ENTRA_LA_MUSICA);
+    fuente.connect(fundido).connect(this.entradaDeLaMusica);
+    fuente.start(ahora, desde);
+    this.musica = { cual, fuente, fundido };
+  }
+
+  /** Se calla lo que suena del hilo musical, fundiéndose. */
+  private callarLaMusica(): void {
+    const ctx = this.context;
+    const m = this.musica;
+    this.musica = null;
+    if (!ctx || !m) return;
+    const ahora = ctx.currentTime;
+    const g = m.fundido.gain;
+    g.cancelScheduledValues(ahora);
+    g.setValueAtTime(g.value, ahora);
+    g.linearRampToValueAtTime(0, ahora + SE_CALLA_LA_MUSICA);
+    m.fuente.addEventListener("ended", () => m.fundido.disconnect());
+    try {
+      m.fuente.stop(ahora + SE_CALLA_LA_MUSICA + 0.05);
+    } catch {
+      // Ya estaba parada.
+    }
+  }
+
+  /**
+   * **Se baja y se descodifica una vez.** Si no llega —sin red y sin copia—,
+   * no suena, y el vuelo sigue igual: la música no es nada que haga falta.
+   */
+  private bajarLaMusica(ctx: AudioContext, cual: Musica): void {
+    const formato = elegirFormato(puedeTocar);
+    const url = formato ? ficheroDe(cual, formato) : null;
+    if (!url) {
+      this.musicas.set(cual, "no-llega");
+      return;
+    }
+    this.musicas.set(cual, "bajando");
+    void fetch(url)
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.arrayBuffer();
+      })
+      .then((b) => ctx.decodeAudioData(b))
+      .then((buffer) => this.musicas.set(cual, buffer))
+      .catch(() => this.musicas.set(cual, "no-llega"));
+  }
+
+  /**
+   * **Lo que suena del hilo musical**, para el banco: cuál, lo bajado, por
+   * dónde suena y cuánto ha entrado el fundido.
+   */
+  get musicaParaBanco(): {
+    readonly suena: Musica | null;
+    readonly bajadas: Readonly<Record<string, string>>;
+    readonly porElTecho: boolean;
+    readonly bus: Bus;
+    readonly fundido: number | null;
+    readonly vuelta: { readonly desde: number; readonly hasta: number } | null;
+  } {
+    const m = this.musica;
+    return {
+      suena: m?.cual ?? null,
+      bajadas: Object.fromEntries(
+        [...this.musicas].map(([k, v]) => [k, v instanceof AudioBuffer ? `${v.duration.toFixed(2)} s` : v]),
+      ),
+      porElTecho: !!m && this.entradaDeLaMusica !== null,
+      bus: "musica",
+      fundido: m ? m.fundido.gain.value : null,
+      vuelta: m ? { desde: m.fuente.loopStart, hasta: m.fuente.loopEnd } : null,
+    };
   }
 
   /**
