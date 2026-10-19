@@ -541,10 +541,10 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/pasaje-embarque.webp` | `cabina-pasaje-embarque.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 960 × 640 |
 | `src/assets/ilustraciones/pasaje-lleno.webp` | `cabina-pasaje-gente-2x2.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 960 × 640 |
 | `src/assets/ilustraciones/pasaje-tripulante.webp` | `tripulante-ara.png` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 960 × 640 |
-| `src/assets/ilustraciones/pasaje-ara-ventanilla.webp` | `ara-ventanilla.jpg` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2, 960 × 640 |
+| `src/assets/ilustraciones/pasaje-ara-ventanilla.webp` | `ara-ventanilla.jpg` | La ventanita de «Viajá con Jazlyn» | recortada a 3:2 y en espejo, para que la ventanilla quede a la izquierda de Ara como en la escena; 960 × 640 |
 | `src/assets/ilustraciones/pasaje-comandante.webp` | `jazlyn-cabina-dibujo.jpg` | La ventanita de «Viajá con Jazlyn» | recortada por encima de los hombros: en el dibujo lleva tres barras, que son las de primera oficial, y Jazlyn es la comandante, que lleva cuatro; 960 × 640 |
-| `src/assets/ilustraciones/ara-durmiendo.webp` | `ara-durmiendo.png` | El sueño de Ara en «Viajá con Jazlyn», mientras el vuelo pasa deprisa | recortada a Ara con la ventanilla y el cinturón, sin los asientos de delante ni los pies, para que la cara se vea en pequeño; 480 × 320 |
-| `src/assets/ilustraciones/ara-sonando.webp` | `ara-sonando.png` | El sueño de Ara en «Viajá con Jazlyn», mientras el vuelo pasa deprisa | recortada al sueño y a la cara de Ara, sin la ventanilla de la izquierda, para que se vean en pequeño; 480 × 320 |
+| `src/assets/ilustraciones/ara-durmiendo.webp` | `ara-durmiendo.png` | El sueño de Ara en «Viajá con Jazlyn», mientras el vuelo pasa deprisa | recortada a Ara con la ventanilla y el cinturón, sin los asientos de delante ni los pies, para que la cara se vea en pequeño, y en espejo; 480 × 320 |
+| `src/assets/ilustraciones/ara-sonando.webp` | `ara-sonando.png` | El sueño de Ara en «Viajá con Jazlyn», mientras el vuelo pasa deprisa | recortada al sueño y a la cara de Ara, sin la ventanilla de la izquierda, para que se vean en pequeño, y en espejo; 480 × 320 |
 | `src/assets/ilustraciones/fuera-jaz-20.webp` | `fuera-jaz20.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-25.webp` | `fuera-jaz25.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-40.webp` | `fuera-jaz40.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |

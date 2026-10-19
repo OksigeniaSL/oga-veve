@@ -69,6 +69,13 @@ export interface RecetaDeLaIlustracion {
   readonly porque?: string;
   /** Si sale Ara, que no tiene género: su texto alternativo no se lo pone. Ver la prueba. */
   readonly conAra?: boolean;
+  /**
+   * **En espejo**, después de recortar. En la escena, Ara va en una ventanilla
+   * de la izquierda del avión y la tiene a su izquierda; las ilustraciones la
+   * dibujaron a la derecha. Volteadas, la escena es la misma vista del otro
+   * lado del pasillo, y casa con lo que se ve (punto 307).
+   */
+  readonly espejo?: boolean;
 }
 
 /** Entera, en 4:3, de un original de 2400 × 1792. */
@@ -114,6 +121,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     // Lo que sobra va de arriba, que es pared: abajo están las rodillas en el asiento.
     recorte: [0, 72, 1024, 683],
     conAra: true,
+    espejo: true,
   },
   /*
    * **El sueño de Ara** (punto 304): Ara durmiendo en la ventanilla, con la
@@ -129,6 +137,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     recorte: [300, 150, 720, 480],
     porque: "a Ara con la ventanilla y el cinturón, sin los asientos de delante ni los pies, para que la cara se vea en pequeño",
     conAra: true,
+    espejo: true,
   },
   "ara-sonando": {
     original: "ara-sonando.png",
@@ -136,6 +145,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     recorte: [169, 25, 855, 570],
     porque: "al sueño y a la cara de Ara, sin la ventanilla de la izquierda, para que se vean en pequeño",
     conAra: true,
+    espejo: true,
   },
   "pasaje-comandante": {
     original: "jazlyn-cabina-dibujo.jpg",

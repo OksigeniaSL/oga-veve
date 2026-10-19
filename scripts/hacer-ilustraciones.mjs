@@ -125,6 +125,7 @@ try {
       "-crop",
       `${w}x${h}+${x}+${y}`,
       "+repage",
+      ...(r.espejo ? ["-flop"] : []),
       "-filter",
       "Lanczos",
       "-resize",
