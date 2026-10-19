@@ -79,6 +79,14 @@
       "ms": 7007,
       "h": "bd8a7cba9c"
     },
+    "inicio.tripulacion.pasaje.cerca.plop1": {
+      "ms": 8507,
+      "h": "f4b5963117"
+    },
+    "inicio.tripulacion.pasaje.cerca.plop2": {
+      "ms": 6807,
+      "h": "2d5da19f74"
+    },
     "inicio.tripulacion.pasaje.cerca.revision": {
       "ms": 6207,
       "h": "5921e5659a"
@@ -404,6 +412,12 @@
     ],
     "inicio.tripulacion.pasaje.cerca.despertar": [
       "inicio.tripulacion.pasaje.cerca.despertar"
+    ],
+    "inicio.tripulacion.pasaje.cerca.plop1": [
+      "inicio.tripulacion.pasaje.cerca.plop1"
+    ],
+    "inicio.tripulacion.pasaje.cerca.plop2": [
+      "inicio.tripulacion.pasaje.cerca.plop2"
     ]
   }
 }

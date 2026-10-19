@@ -1635,9 +1635,17 @@
       "ms": 6307,
       "h": "6a4ffb5db9"
     },
+    "inicio.mama.pasaje.masGas": {
+      "ms": 8907,
+      "h": "858d10bac3"
+    },
     "inicio.mama.pasaje.meneo": {
       "ms": 12507,
       "h": "b45e2a4f62"
+    },
+    "inicio.mama.pasaje.menosGas": {
+      "ms": 9707,
+      "h": "5aa9c9b276"
     },
     "inicio.mama.pasaje.nubes": {
       "ms": 11707,
@@ -3352,6 +3360,12 @@
     ],
     "inicio.mama.pasaje.teide": [
       "inicio.mama.pasaje.teide"
+    ],
+    "inicio.mama.pasaje.menosGas": [
+      "inicio.mama.pasaje.menosGas"
+    ],
+    "inicio.mama.pasaje.masGas": [
+      "inicio.mama.pasaje.masGas"
     ]
   }
 }

@@ -287,6 +287,10 @@
       "ms": 5107,
       "h": "6880461654"
     },
+    "inicio.ara.pasaje.masGas": {
+      "ms": 5707,
+      "h": "8c7aa70e4e"
+    },
     "inicio.ara.pasaje.meneo": {
       "ms": 5307,
       "h": "df073d2f79"
@@ -294,6 +298,10 @@
     "inicio.ara.pasaje.meneoBien": {
       "ms": 5807,
       "h": "27e0e2d760"
+    },
+    "inicio.ara.pasaje.menosGas": {
+      "ms": 5507,
+      "h": "96c01e6a4f"
     },
     "inicio.ara.pasaje.miro": {
       "ms": 4207,
@@ -326,6 +334,10 @@
     "inicio.ara.pasaje.oidos": {
       "ms": 3407,
       "h": "a58cdc2d04"
+    },
+    "inicio.ara.pasaje.oidosAlReves": {
+      "ms": 6707,
+      "h": "a8e277805a"
     },
     "inicio.ara.pasaje.orotava": {
       "ms": 3907,
@@ -366,6 +378,10 @@
     "inicio.ara.pasaje.puertas": {
       "ms": 3107,
       "h": "95d492a05c"
+    },
+    "inicio.ara.pasaje.ralenti": {
+      "ms": 5107,
+      "h": "913bfa4f47"
     },
     "inicio.ara.pasaje.repaso": {
       "ms": 6307,
@@ -634,11 +650,17 @@
     "inicio.ara.pasaje.masDespacio": [
       "inicio.ara.pasaje.masDespacio"
     ],
+    "inicio.ara.pasaje.masGas": [
+      "inicio.ara.pasaje.masGas"
+    ],
     "inicio.ara.pasaje.meneo": [
       "inicio.ara.pasaje.meneo"
     ],
     "inicio.ara.pasaje.meneoBien": [
       "inicio.ara.pasaje.meneoBien"
+    ],
+    "inicio.ara.pasaje.menosGas": [
+      "inicio.ara.pasaje.menosGas"
     ],
     "inicio.ara.pasaje.miro": [
       "inicio.ara.pasaje.miro"
@@ -663,6 +685,9 @@
     ],
     "inicio.ara.pasaje.oidos": [
       "inicio.ara.pasaje.oidos"
+    ],
+    "inicio.ara.pasaje.oidosAlReves": [
+      "inicio.ara.pasaje.oidosAlReves"
     ],
     "inicio.ara.pasaje.orotava": [
       "inicio.ara.pasaje.orotava"
@@ -693,6 +718,9 @@
     ],
     "inicio.ara.pasaje.puertas": [
       "inicio.ara.pasaje.puertas"
+    ],
+    "inicio.ara.pasaje.ralenti": [
+      "inicio.ara.pasaje.ralenti"
     ],
     "inicio.ara.pasaje.repaso": [
       "inicio.ara.pasaje.repaso"
