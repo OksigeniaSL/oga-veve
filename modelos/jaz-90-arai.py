@@ -166,24 +166,24 @@ def construir():
 
     # ── Ventanillas, puertas y librea ─────────────────────────────────────
     #
-    # Veinte y pico por costado, redondeadas, con el hueco de las salidas
-    # sobre el ala. Van en una sola malla: sueltas serían más nodos que el
-    # avión entero.
+    # Veinticinco por costado, redondeadas y **seguidas también sobre el
+    # ala**. Van en una sola malla: sueltas serían más nodos que el avión
+    # entero.
+    #
+    # Llevó un hueco ahí con una trampilla de salida y su ventanita, como
+    # el A320, y no es su clase: el ERJ 170 lleva cuatro salidas tipo I —
+    # sus cuatro puertas— y **ninguna sobre el ala** (EASA, hoja de tipo
+    # IM.A.001, III.21). Ver `docs/historias/fuentes.md`.
     fila = [-10.25 + i * 0.86 for i in range(25)]
-    fila = [z for z in fila if not (-1.2 < z < -0.1)]
     piezas.append(ventanas("ventanillas", PIEL, fila, 0.52, 0.40, 0.27,
                            radio=0.11))
     # Las dos puertas de pasaje de la izquierda y sus gemelas de servicio a
-    # la derecha, con su ventanita; y las salidas de emergencia sobre el ala.
+    # la derecha, con su ventanita: son sus cuatro salidas.
     for z in (-11.05, 10.55):
         piezas.append(contorno(f"puerta{z:+.0f}", PIEL, z, 0.28, 1.86, 0.86,
                                radio=0.14, grueso=0.035, fuera=0.015))
     piezas.append(ventanas("ventanita-puerta", PIEL, [-11.05, 10.55], 0.72,
                            0.24, 0.20, radio=0.09))
-    piezas.append(contorno("salida-de-emergencia", PIEL, -0.65, 0.40, 1.02,
-                           0.56, radio=0.10, grueso=0.03, fuera=0.015))
-    piezas.append(ventanas("ventanita-salida", PIEL, [-0.65], 0.52, 0.40,
-                           0.27, radio=0.11))
 
     # La franja: por debajo de las ventanillas, del morro a la cola, y
     # subiendo al final hacia la deriva. Y una raya fina en el otro color.

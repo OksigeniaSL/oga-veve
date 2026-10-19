@@ -40,7 +40,7 @@
     "retrato": "jaz-40-8997e1f7.webp"
   },
   "jaz-60": {
-    "glb": "c4cc2dbbf991128d283861b9a98ceec2e53926b20ebe36a46d931ac47bef61f3",
+    "glb": "b1020b4d8518033c06c18131ba9a9a51d1631b3f3d9ea2dc20001159d302a9f3",
     "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
       "body": 15527142,
@@ -51,10 +51,10 @@
       "blades": 4,
       "motivo": "sol"
     },
-    "retrato": "jaz-60-e2d4c058.webp"
+    "retrato": "jaz-60-b1e9ba4a.webp"
   },
   "jaz-90": {
-    "glb": "9f8a2a9459dc693d0c44f21664242337b0fc1a6e23213b67d94de41eb6a73000",
+    "glb": "c08665f32915b153f4fc0679eb7a480dd8db26a764136cbf8d2312ce35f77744",
     "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
       "body": 15527142,
@@ -65,7 +65,7 @@
       "blades": 0,
       "motivo": "sol"
     },
-    "retrato": "jaz-90-2717abd9.webp"
+    "retrato": "jaz-90-f7d001bc.webp"
   },
   "jaz-120": {
     "glb": "b7edbaea8d4d3b1b741d37a9da5f8c6c89027affce827a729201e58f3623df09",

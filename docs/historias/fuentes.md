@@ -491,14 +491,73 @@ sobre las alas», y su dibujo pintaba seis. El JAZ 90 es de la clase del ERJ
   [Easy Access Rules for Large Aeroplanes (CS-25)](https://www.easa.europa.eu/en/document-library/easy-access-rules/online-publications/easy-access-rules-large-aeroplanes-cs-25).
   Ver `world/pasillo-de-pasaje.ts`.
 
-**Lo que choca y queda por resolver**: el modelo 3D del JAZ 90 —
-`modelos/jaz-90-arai.py`— lleva todavía el contorno de una trampilla sobre el
-ala (`salida-de-emergencia`, con su `ventanita-salida`), y la vista de pasajero
-«sobre el ala» sienta a quien juega en esa fila, con su letrero «EXIT». Eso
-fue un pedido de Enrique, y lo que dice la hoja de tipo es que un avión de esta
-clase no la lleva. La escena de Ara no la enseña —su asiento va por delante, y
-lo que se ve por fuera es una raya en la chapa—, pero hay que decidir si se
-quita del modelo.
+**Resuelto**: el modelo 3D del JAZ 90 llevó el contorno de una
+trampilla sobre el ala, con su ventanita y un hueco en la fila de ventanillas,
+y la vista de pasajero «sobre el ala» sentaba a quien juega en esa fila, con su
+letrero «EXIT». Se puso pensando en la clase del A320, y la hoja de tipo dice
+que la del JAZ 90 no la lleva. Se quitó: la fila de ventanillas va seguida, y
+el asiento de encima del ala es el de una fila cualquiera, sin trampilla ni
+letrero. Ver `modelos/jaz-90-arai.py` y `world/asiento-de-pasaje.ts`.
+
+### Las salidas sobre el ala del resto de la flota con pasaje
+
+Mirado avión por avión, con la clase que dice `src/flight/aircraft.ts` y
+`src/flight/ficha-tecnica.ts`. Lo que se ve por fuera manda: es lo que se
+reconocerá el día que se suba a uno.
+
+**JAZ 60 *Arasunu*: sí, tres.** Vuela los números del Twin Otter, pero lo que
+se ve —ala baja, cola en T, diecinueve plazas, presurizado— es el Beech 1900D,
+y ese avión lleva trampillas sobre el ala. Se le pusieron en el modelo
+(`salida-de-emergencia-delante` y `-detras`, en `modelos/jaz-60-arasunu.py`),
+alrededor de una ventanilla de la fila, y el asiento de ventanilla que cae a su
+lado las ve con su letrero.
+
+- **Tres, una del lado de la puerta y dos del otro, y sobre el ala**: es lo que
+  pide la norma a un avión de cercanías de dieciséis a diecinueve plazas —«three
+  emergency exits […] with one on the same side as the passenger entry door and
+  two on the side opposite the door»—, y que las que no son a ras de suelo vayan
+  «over the wing». — 14 CFR 23.807(d)(1)(ii) y (d)(3), edición de 1-1-2014,
+  [govinfo.gov](https://www.govinfo.gov/content/pkg/CFR-2014-title14-vol1/pdf/CFR-2014-title14-vol1-sec23-807.pdf).
+  El 1900D cumple las salidas por ese apartado, 23.807(d). — CAA de Nueva
+  Zelanda, informe de aceptación de tipo del Beech 1900C y D, apéndice C, C.1 y
+  C.2.1, [aviation.govt.nz](https://www.aviation.govt.nz/assets/aircraft/type-acceptance-reports/Beech_1900C_and_D.pdf).
+- **En el 1900C, una a la izquierda y dos a la derecha, trampillas con su
+  ventanilla**: «the overwing hatch on the left, and two overwing hatches on the
+  right»; «nonhinged, plug-type doors», con la manilla de dentro rotulada
+  «EXIT - PULL» y ventanilla en cada una. — NTSB, AAR-97/04, colisión en pista
+  de Quincy (Illinois), 19 de noviembre de 1996, apartados 1.6.1 y 1.15.3.2,
+  [ntsb.gov](https://www.ntsb.gov/investigations/AccidentReports/Reports/AAR9704.pdf).
+  Dónde a lo largo del ala: la de la izquierda en el borde de salida, y las de
+  la derecha en el de ataque y en el de salida. — M. D. Hayes, *Airline
+  Transport Pilot Oral Exam Guide — BE-1900 Systems*, ASA, 2020, A.5, que remite
+  al manual de vuelo del 1900C,
+  [asa2fly.com](https://asa2fly.com/content/reader-resources/OEG-ATP/BE-1900.pdf).
+  En el 1900D, «escape hatches are larger». — *Business & Commercial Aviation*,
+  diciembre de 1991, p. 47.
+- **El tamaño**: que por la abertura pase una elipse de diecinueve por
+  veintiséis pulgadas. — 14 CFR 23.807(b). La del modelo mide 0,52 × 0,72 m por
+  fuera, con su junta.
+- **El letrero**: la palabra «exit», blanca sobre rojo o al revés si la cabina
+  va igual de alumbrada, iluminada. — 14 CFR 23.811(b). Ver
+  `world/marco-de-ventanilla.ts`.
+- **Y la puerta, solo a la izquierda**: «the forward air stair door on the
+  left, which is the main boarding door» (NTSB, AAR-97/04, 1.6.1). El modelo la
+  llevaba a los dos lados; ahora, solo en ése.
+
+**JAZ 120 *Yvága*: no.** Es de la clase del 747-100, que sale por puertas
+tipo A, a ras de suelo: «550 with 5 pair of Type "A" exits on main deck». —
+FAA, *Type Certificate Data Sheet* A20WE, revisión 49 de 29 de febrero de 2012,
+p. 10. El modelo lleva cinco puertas por costado y ninguna trampilla, y el
+asiento de encima del ala, ninguna salida.
+
+**JAZ 90 *Arai***: no; ver arriba.
+
+**Lo que no se ha podido leer**: la hoja de tipo del 1900D (FAA A24CE) no se
+ha podido descargar, ni un manual de vuelo del 1900D. Que el D lleve las tres
+como el C sale de la norma con la que se certificó y del informe de Nueva
+Zelanda, no de un plano suyo; y dónde va cada una a lo largo del ala, de una
+guía de examen del 1900C. Dónde se sienta cada trampilla en el modelo es esa
+regla puesta sobre el ala del JAZ 60, no una medida.
 
 ### Las máscaras y el chaleco, solo si pasa · `inicio.tripulacion.pasaje.demo.mascaras`, `.demo.chaleco` e `inicio.tripulacion.pasaje.cerca.mascaraAhora`
 
