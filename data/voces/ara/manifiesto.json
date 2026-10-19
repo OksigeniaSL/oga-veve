@@ -236,8 +236,52 @@
       "h": "b32ef56834"
     },
     "inicio.ara.pasaje.kit.elegir": {
-      "ms": 5607,
-      "h": "cf05e8303f"
+      "ms": 7307,
+      "h": "ce210152d3"
+    },
+    "inicio.ara.pasaje.kit.luz.alAire": {
+      "ms": 8207,
+      "h": "ada00e8431"
+    },
+    "inicio.ara.pasaje.kit.luz.alas": {
+      "ms": 4007,
+      "h": "8f4354e12e"
+    },
+    "inicio.ara.pasaje.kit.luz.conRadio": {
+      "ms": 6907,
+      "h": "4de9901276"
+    },
+    "inicio.ara.pasaje.kit.luz.destellosRojos": {
+      "ms": 7307,
+      "h": "e5d35a0235"
+    },
+    "inicio.ara.pasaje.kit.luz.destellosVerdes": {
+      "ms": 6407,
+      "h": "824ad3c57b"
+    },
+    "inicio.ara.pasaje.kit.luz.empezar": {
+      "ms": 8007,
+      "h": "e3935d8e60"
+    },
+    "inicio.ara.pasaje.kit.luz.fin": {
+      "ms": 5407,
+      "h": "ba8ddc2d28"
+    },
+    "inicio.ara.pasaje.kit.luz.noche": {
+      "ms": 6207,
+      "h": "449de61860"
+    },
+    "inicio.ara.pasaje.kit.luz.radio": {
+      "ms": 8107,
+      "h": "1159942f1a"
+    },
+    "inicio.ara.pasaje.kit.luz.roja": {
+      "ms": 6007,
+      "h": "4c2f28f4c8"
+    },
+    "inicio.ara.pasaje.kit.luz.sinAlas": {
+      "ms": 6107,
+      "h": "31ad6a32cb"
     },
     "inicio.ara.pasaje.kit.piezas.ala": {
       "ms": 7007,
@@ -649,6 +693,39 @@
     ],
     "inicio.ara.pasaje.kit.elegir": [
       "inicio.ara.pasaje.kit.elegir"
+    ],
+    "inicio.ara.pasaje.kit.luz.alAire": [
+      "inicio.ara.pasaje.kit.luz.alAire"
+    ],
+    "inicio.ara.pasaje.kit.luz.alas": [
+      "inicio.ara.pasaje.kit.luz.alas"
+    ],
+    "inicio.ara.pasaje.kit.luz.conRadio": [
+      "inicio.ara.pasaje.kit.luz.conRadio"
+    ],
+    "inicio.ara.pasaje.kit.luz.destellosRojos": [
+      "inicio.ara.pasaje.kit.luz.destellosRojos"
+    ],
+    "inicio.ara.pasaje.kit.luz.destellosVerdes": [
+      "inicio.ara.pasaje.kit.luz.destellosVerdes"
+    ],
+    "inicio.ara.pasaje.kit.luz.empezar": [
+      "inicio.ara.pasaje.kit.luz.empezar"
+    ],
+    "inicio.ara.pasaje.kit.luz.fin": [
+      "inicio.ara.pasaje.kit.luz.fin"
+    ],
+    "inicio.ara.pasaje.kit.luz.noche": [
+      "inicio.ara.pasaje.kit.luz.noche"
+    ],
+    "inicio.ara.pasaje.kit.luz.radio": [
+      "inicio.ara.pasaje.kit.luz.radio"
+    ],
+    "inicio.ara.pasaje.kit.luz.roja": [
+      "inicio.ara.pasaje.kit.luz.roja"
+    ],
+    "inicio.ara.pasaje.kit.luz.sinAlas": [
+      "inicio.ara.pasaje.kit.luz.sinAlas"
     ],
     "inicio.ara.pasaje.kit.piezas.ala": [
       "inicio.ara.pasaje.kit.piezas.ala"
