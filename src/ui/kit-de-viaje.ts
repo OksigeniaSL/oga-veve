@@ -356,6 +356,18 @@ export class PantallaDelKit {
   private montado: "elegir" | JuegoDeLasPiezas | JuegoDelCamino | null = null;
   private firma = "";
   private medido = 0;
+  /** Dónde quedó el panel la última vez que se colocó: el ancho de la pantalla, su arriba y su ancho, en píxeles. */
+  private sitioDelPanel = "";
+  private movidas = 0;
+  /**
+   * **La tarjeta, que crece y encoge con lo que se dice**: el panel va debajo
+   * de ella, así que se recoloca en cuanto cambia de alto, y no al siguiente
+   * vistazo de los de cada poco. Con ese vistazo, una frase de tres líneas
+   * dejaba la tarjeta encima del panel hasta tres décimas de segundo.
+   */
+  private readonly laTarjetaCambia =
+    typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => (this.medido = 0));
+  private tarjetaMirada: Element | null = null;
   private arrastre: {
     readonly pieza: Pieza;
     readonly id: number;
@@ -395,6 +407,7 @@ export class PantallaDelKit {
   quitar(): void {
     document.documentElement.classList.remove("kit-abierto");
     window.removeEventListener("resize", this.alCambiarDeTamano);
+    this.laTarjetaCambia?.disconnect();
     this.raiz.removeEventListener("click", this.alTocar);
     this.raiz.innerHTML = "";
     this.raiz.hidden = true;
@@ -403,6 +416,15 @@ export class PantallaDelKit {
   private readonly alCambiarDeTamano = (): void => {
     this.medido = 0;
   };
+
+  /**
+   * **Cuántas veces se ha abierto, cerrado o movido el panel**, para lo que
+   * tiene que apartarse de él en el mismo fotograma: la lámina de lo que se
+   * explica. Ver `vigilar` en `ventana-de-historia.ts`.
+   */
+  get movido(): number {
+    return this.movidas;
+  }
 
   /**
    * **Un paso de la pantalla**: lo que se ve sale del estado del kit, y solo
@@ -417,6 +439,8 @@ export class PantallaDelKit {
     if (this.panel.hidden === abierto) {
       this.panel.hidden = !abierto;
       this.medido = 0;
+      this.movidas++;
+      this.sitioDelPanel = "";
       // En el teléfono apaisado la tarjeta sube para dejarle sitio: ver la hoja.
       document.documentElement.classList.toggle("kit-abierto", abierto);
       if (abierto) requestAnimationFrame(() => this.panel.querySelector<HTMLElement>(".kit__cerrar")?.focus({ preventScroll: true }));
@@ -456,7 +480,13 @@ export class PantallaDelKit {
    * encima de él y a su lado, y se queda con el que deja el kit más grande.
    */
   private colocar(): void {
-    const tarjeta = document.querySelector("#inicio .inicio__tarjeta")?.getBoundingClientRect();
+    const laTarjeta = document.querySelector("#inicio .inicio__tarjeta");
+    if (laTarjeta !== this.tarjetaMirada) {
+      this.laTarjetaCambia?.disconnect();
+      if (laTarjeta) this.laTarjetaCambia?.observe(laTarjeta);
+      this.tarjetaMirada = laTarjeta;
+    }
+    const tarjeta = laTarjeta?.getBoundingClientRect();
     const arriba = tarjeta && tarjeta.height > 2 ? tarjeta.bottom + 10 : 72;
     const marco = 26;
     const proporcion = 640 / 340;
@@ -476,6 +506,12 @@ export class PantallaDelKit {
     }
     this.raiz.style.setProperty("--kit-arriba", `${Math.round(arriba)}px`);
     this.raiz.style.setProperty("--kit-ancho", `${Math.max(200, Math.floor(ancho))}px`);
+    // Centrado por la hoja: con otra pantalla se mueve aunque mida lo mismo.
+    const sitio = `${innerWidth}|${Math.round(arriba)}|${Math.max(200, Math.floor(ancho))}`;
+    if (sitio !== this.sitioDelPanel) {
+      this.sitioDelPanel = sitio;
+      this.movidas++;
+    }
   }
 
   /** Monta lo de la hoja: elegir, o un juego nuevo. */

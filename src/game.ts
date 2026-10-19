@@ -7446,20 +7446,28 @@ export class Game {
     if (inicio instanceof VueloDePasaje) {
       const p = inicio.estado;
       this.ponerLaVentanitaDeLaEscena(p.dibujo);
+      // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
+      this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
       /*
        * Y que siga sin tapar lo que se enseña: otro plano es otra toma. Un
        * fotograma después del corte, que es cuando la cámara ya está en ella.
-       * Lo mismo al abrir o cerrar el kit, que es su panel lo que no se tapa:
-       * un fotograma después, cuando ya está en la página.
+       * Al abrir o cerrar el kit, también se recoloca, y en cuanto su panel se
+       * mueve —baja cuando la tarjeta crece con una frase larga—, se mira si
+       * lo pisa. Las dos cosas en el mismo fotograma y después de pintar el
+       * kit, que ya está en la página: con un fotograma o un vistazo de
+       * retraso, la lámina se quedaba ese rato encima del panel.
        */
       const plano = this.fundidoDePlano.plano;
-      this.hud.historia.vigilar(this.laminaPorColocar);
-      this.laminaPorColocar = plano !== this.planoDeLaLamina || p.kit.abierto !== this.kitDeLaLamina;
+      const kitMovido = this.pantallaDelKit?.movido ?? 0;
+      this.hud.historia.vigilar(
+        this.laminaPorColocar || p.kit.abierto !== this.kitDeLaLamina,
+        kitMovido !== this.kitMovidoDeLaLamina,
+      );
+      this.laminaPorColocar = plano !== this.planoDeLaLamina;
       this.planoDeLaLamina = plano;
       this.kitDeLaLamina = p.kit.abierto;
+      this.kitMovidoDeLaLamina = kitMovido;
       this.refrescarLaRuta();
-      // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
-      this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
       // El sello del campo al que se llegó, que es donde se está.
       const destino = this.elCampoDeAhora();
       pantalla.pintar({
@@ -7550,6 +7558,8 @@ export class Game {
   private laminaPorColocar = false;
   /** Si el kit estaba abierto la vez anterior: al cambiar, la lámina se recoloca. */
   private kitDeLaLamina = false;
+  /** Las veces que se había movido el panel del kit: si cambia, la lámina mira si lo pisa. */
+  private kitMovidoDeLaLamina = 0;
 
   /** Las cajitas del avión que se dibuja, medidas una vez. Ver `world/silueta-del-avion.ts`. */
   private cajitas: { readonly de: object; readonly cajitas: readonly Cajita[] } | null = null;
