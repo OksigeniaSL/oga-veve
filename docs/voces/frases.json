@@ -17594,5 +17594,103 @@
     "idioma": "es-PY",
     "texto": "Despierta, que vamos a empezar a bajar: el cinturón bien puesto. Durmiendo se traga menos saliva, y al bajar los oídos lo notan.",
     "para": "el modo inicio, de pasaje: la tripulante despierta a Ara para bajar, por el cinturón y los oídos"
+  },
+  {
+    "id": "inicio.ara.pasaje.menosGas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Escuchá! Ahora los motores suenan más bajito, y seguimos subiendo igual.",
+    "para": "el modo inicio, de pasaje: Ara nota el gas de subida, poco después de despegar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.ralenti",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Los motores suenan todavía más bajito! ¿Será que ya empezamos a bajar?",
+    "para": "el modo inicio, de pasaje: Ara nota los motores al ralentí, al empezar a bajar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.oidosAlReves",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ahora se me tapan un poco los oídos! Es al revés que al subir: el aire tiene que entrar.",
+    "para": "el modo inicio, de pasaje: Ara, con los oídos tapados al bajar, sabiendo que es al revés que al subir",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.masGas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ahora los motores suenan más fuerte! ¿Para qué, si ya vamos a aterrizar?",
+    "para": "el modo inicio, de pasaje: Ara nota los motores que suben con el tren fuera",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.menosGas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Para quienes vuelan hoy por primera vez: al poco de despegar quitamos un poco de gas, y los motores sonaron más bajito. Para subir no hace falta tanta fuerza como para despegar.",
+    "para": "el modo inicio, de pasaje: la comandante explica el gas de subida, pasados los diez mil pies",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.masGas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y un poco antes de tocar, los motores sonaron más fuerte: con las ruedas y los flaps fuera, el avión frena mucho, y hace falta más fuerza para no perder velocidad.",
+    "para": "el modo inicio, de pasaje: la comandante explica, ya en tierra, por qué los motores subieron antes de tocar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.plop1",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y al subir, ¿te hicieron plop los oídos? Es normal: la presión del aire de la cabina baja, y el aire que tienes dentro del oído sale.",
+    "para": "el modo inicio, de pasaje: la tripulante explica el plop de los oídos al subir"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.plop2",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Eso es el plop. Si lo notas, traga saliva o bosteza: así la presión de dentro del oído se iguala con la de la cabina.",
+    "para": "el modo inicio, de pasaje: la tripulante, tragar o bostezar para igualar la presión"
   }
 ]

@@ -1676,7 +1676,27 @@ const DE_LA_SIESTA = [
   ["inicio.ara.pasaje.despertarse", "ara", "el modo inicio, de pasaje: Ara se despierta, y el avión siguió su camino"],
   ["inicio.tripulacion.pasaje.cerca.despertar", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante despierta a Ara para bajar, por el cinturón y los oídos"],
 ];
-const LO_QUE_SE_VE = new Set([...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA].map(([k]) => k));
+/*
+ * **Y lo que se oye cambiar** (puntos 284 y 297), por lo mismo y detrás: los
+ * motores en cada tramo —el gas de subida, el ralentí para bajar y el empuje
+ * que sube con el tren—, que Ara nota cuando suenan y explica la comandante
+ * en el primer rato tranquilo; y el plop de los oídos de la subida, que
+ * explica la tripulante en persona —sin chispa, como todo lo que dice cara a
+ * cara—, y al bajar Ara ya sabe que es al revés. Ver las charlas `menosGas` y
+ * `masGas` y los momentos `bajada`, `tcpNubes` y `oidos` en
+ * `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LO_QUE_SE_OYE = [
+  ["inicio.ara.pasaje.menosGas", "ara", "el modo inicio, de pasaje: Ara nota el gas de subida, poco después de despegar"],
+  ["inicio.ara.pasaje.ralenti", "ara", "el modo inicio, de pasaje: Ara nota los motores al ralentí, al empezar a bajar"],
+  ["inicio.ara.pasaje.oidosAlReves", "ara", "el modo inicio, de pasaje: Ara, con los oídos tapados al bajar, sabiendo que es al revés que al subir"],
+  ["inicio.ara.pasaje.masGas", "ara", "el modo inicio, de pasaje: Ara nota los motores que suben con el tren fuera"],
+  ["inicio.mama.pasaje.menosGas", "comandante", "el modo inicio, de pasaje: la comandante explica el gas de subida, pasados los diez mil pies"],
+  ["inicio.mama.pasaje.masGas", "comandante", "el modo inicio, de pasaje: la comandante explica, ya en tierra, por qué los motores subieron antes de tocar"],
+  ["inicio.tripulacion.pasaje.cerca.plop1", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante explica el plop de los oídos al subir"],
+  ["inicio.tripulacion.pasaje.cerca.plop2", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, tragar o bostezar para igualar la presión"],
+];
+const LO_QUE_SE_VE = new Set([...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE].map(([k]) => k));
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
     if (!k.startsWith(prefijo) || salvo?.test(k) || LO_QUE_SE_VE.has(k) || filas.some((f) => f.id === k)) continue;
@@ -1775,8 +1795,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, y la siesta: al final de cada voz. Ver `DE_LO_QUE_SE_VE` y `DE_LA_SIESTA`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA]) {
+// Y lo que se ve, cuando pasa, la siesta y lo que se oye cambiar: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA` y `DE_LO_QUE_SE_OYE`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

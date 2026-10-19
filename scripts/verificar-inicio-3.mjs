@@ -55,7 +55,15 @@
  *   con el dedo** —arrastrando las piezas— o con el ratón.
  * - **El hilo musical**: que suena en el embarque por el altavoz del techo,
  *   en el bus de la música, que se calla con la primera megafonía y no vuelve
- *   en vuelo, y que suena otra vez en el puesto de llegada.
+ *   subiendo ni arriba; y la de llegada (punto 302), que empieza bajando, por
+ *   debajo de los diez mil pies, sigue por la rodadura, se calla con cada
+ *   anuncio y **no suena en el puesto ni con los motores apagados**.
+ * - **Lo que se oye cambiar se cuenta** (puntos 284 y 297): cada cambio de
+ *   gas que nota Ara pasó de verdad un poco antes —la tripulación lo apunta—
+ *   y se oye: el gas del motor que suena, medido en la mezcla, cambia hacia
+ *   donde dice Ara. La explicación del gas de subida, pasados los diez mil
+ *   pies; la de la aproximación, ya en tierra. Y el plop de los oídos, explicado
+ *   una vez. Y cuánto rato callado queda en la bajada.
  * - **Que lo que se nombra del paisaje está a la vista cuando se nombra**
  *   (18-10-2026, puntos 281 y 286): cada sitio que nombra la escena —la isla,
  *   la costa, el mar, lo señalado por la ventanilla— se mide con lo que se
@@ -105,7 +113,8 @@ import { chromium, devices } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5397;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5397);
 const FOTOS = process.env.OGA_FOTOS ?? null;
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });
 const VECES = Number(process.env.OGA_VECES ?? 12);
@@ -169,6 +178,8 @@ const leer = (page) =>
       enTierra: s?.onGround ?? true,
       enPista: s?.onRunway ?? false,
       motor: o?.controles?.()?.engineOn ?? null,
+      // El gas con el que suena el motor ahora, el de la mezcla: ver `gasDelMotor` en `audio/ruidos.ts`.
+      gasQueSuena: o?.ruidos?.()?.niveles?.gasDelMotor ?? null,
       fase: o?.fase?.() ?? "",
       percance: o?.percance?.() ?? null,
       mirar: document.querySelector("#inicio [data-mirar]")?.getAttribute("data-mirar") ?? null,
@@ -292,7 +303,20 @@ async function elVuelo() {
   let conversacion = null;
   let ultimo = null;
   // El hilo musical: lo que suena en cada rato. Ver `audio/hilo-musical.ts`.
-  const musica = { embarque: null, enVuelo: [], llegada: null, callada: null };
+  const musica = {
+    embarque: null,
+    callada: null,
+    // Lo que suena después de dejar el puesto y antes de la última bajada: nada.
+    enVuelo: [],
+    // La de llegada: dónde empieza, si suena rodando al puesto, con la megafonía o en el puesto.
+    empieza: null,
+    rodandoAlPuesto: 0,
+    conMegafonia: [],
+    enElPuesto: [],
+  };
+  // El gas que suena, y la altitud, con la hora de la escena: para lo que se oye cambiar.
+  const oido = [];
+  const altitudes = [];
   // El kit de viaje: cuándo llega, qué se juega y cómo acaba. Ver `flight/kit-de-viaje.ts`.
   const kit = { dadoEn: null, tramo: null, jugado: false, pausadoEnLaAproximacion: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false };
   // Lo nombrado del paisaje, medido con lo que se pinta cuando se nombra. Ver `paisajeParaBanco`.
@@ -336,8 +360,21 @@ async function elVuelo() {
     const cinturon = (i.registro ?? []).find((d) => d.clave === "inicio.tripulacion.pasaje.cinturon");
     if (m && tramo === "puerta" && !cinturon && m.suena && musica.embarque === null) musica.embarque = m;
     if (m && cinturon && e.segundos > cinturon.desde + 1 && tramo === "puerta" && musica.callada === null) musica.callada = !m.suena;
-    if (m && m.suena && tramo && !["puerta", "aparcado", "apagado"].includes(tramo)) musica.enVuelo.push(`${m.suena}@${tramo}`);
-    if (m && m.suena && (tramo === "apagado" || e.momento === "fin")) musica.llegada ??= m;
+    const altitud = v.pos?.y ?? 0;
+    const despego = tramos.some((x) => x.tramo === "carrera");
+    const enLaLlegada = ["bajada", "final", "recogida", "frenando", "al-puesto"].includes(tramo);
+    if (m?.suena && despego && !enLaLlegada && !["aparcado", "apagado"].includes(tramo))
+      musica.enVuelo.push(`${m.suena}@${tramo}`);
+    if (m?.suena && tramo === "bajada" && altitud > 3048 + 60) musica.enVuelo.push(`${m.suena}@bajada a ${Math.round(altitud / 0.3048)} ft`);
+    if (m?.suena && enLaLlegada && musica.empieza === null) musica.empieza = { tramo, pies: Math.round(altitud / 0.3048), t: e.segundos, ...m };
+    if (m?.suena && tramo === "al-puesto") musica.rodandoAlPuesto++;
+    if (m?.suena && e.megafonia && despego) musica.conMegafonia.push(`${(e.linea?.clave ?? "?")} a los ${e.segundos.toFixed(0)} s`);
+    // En el puesto: el avión parado en su sitio —la fase lo dice—, o los motores apagados.
+    if (m?.suena && despego && (tramo === "apagado" || v.fase === "en-puesto" || v.fase === "apagado"))
+      musica.enElPuesto.push(`${tramo}/${v.fase} a los ${e.segundos.toFixed(0)} s`);
+    // ── Lo que se oye cambiar ──
+    if (v.gasQueSuena !== null) oido.push({ t: e.segundos, gas: v.gasQueSuena });
+    altitudes.push({ t: e.segundos, altitud });
     // ── El kit de viaje ──
     if (e.kit?.dado && kit.dadoEn === null) {
       kit.dadoEn = e.segundos;
@@ -794,15 +831,131 @@ async function elVuelo() {
     musica.embarque ? JSON.stringify(musica.embarque) : "no sonó",
   );
   comprobar(
-    "y se calla con la primera megafonía, y no suena en todo el vuelo",
+    "y se calla con la primera megafonía, y no suena ni subiendo, ni arriba, ni bajando por encima de los diez mil pies",
     musica.callada === true && musica.enVuelo.length === 0,
-    `callada tras la bienvenida: ${musica.callada} · en vuelo: ${[...new Set(musica.enVuelo)].join(", ") || "nada"}`,
+    `callada tras la bienvenida: ${musica.callada} · antes de la última bajada: ${[...new Set(musica.enVuelo)].join(", ") || "nada"}`,
+  );
+  /*
+   * **La música de llegada, del descenso al puesto** (punto 302): empieza
+   * bajando, por debajo de los diez mil pies, sigue por la rodadura y se
+   * calla con cada anuncio; y se acaba al llegar al puesto, que con los
+   * motores apagados la gente ya está de pie.
+   */
+  comprobar(
+    "la música de llegada empieza bajando, por debajo de los diez mil pies, y suena rodando hasta el puesto",
+    musica.empieza?.suena === "canarias" &&
+      musica.empieza.tramo === "bajada" &&
+      musica.empieza.pies <= 10000 + 200 &&
+      musica.rodandoAlPuesto > 0,
+    musica.empieza
+      ? `empieza a los ${musica.empieza.t.toFixed(0)} s, ${musica.empieza.tramo} a ${musica.empieza.pies} ft · rodando al puesto en ${musica.rodandoAlPuesto} muestras`
+      : "no sonó",
   );
   comprobar(
-    "y vuelve en el puesto de llegada, con los motores apagados",
-    musica.llegada?.suena === "canarias",
-    musica.llegada ? JSON.stringify(musica.llegada) : "no sonó",
+    "y no suena en el puesto ni con los motores apagados, ni encima de la megafonía",
+    // Con los motores apagados, ni una muestra; al pararse en el puesto, la del fotograma en que cambia la fase.
+    !musica.enElPuesto.some((x) => x.includes("apagado")) && musica.enElPuesto.length <= 1 && musica.conMegafonia.length <= 2,
+    `en el puesto: ${musica.enElPuesto.join(", ") || "nada"} · con la megafonía: ${musica.conMegafonia.join(", ") || "nada"}`,
   );
+  // ── Lo que se oye cambiar: el gas de los motores y los oídos ──
+  /*
+   * **Cada cambio de gas que se cuenta pasó de verdad, y se oye** (punto
+   * 297): la tripulación apunta cada cambio de potencia con su hora, que es
+   * la de la escena; lo que dice Ara va detrás, a menos de cuarenta y cinco
+   * segundos, y el gas con el que suena el motor —el de la mezcla— cambió de
+   * verdad hacia donde lo dice: más bajito, o más fuerte.
+   */
+  const potencias = t?.potencias ?? [];
+  const gasEn = (s) => oido.filter((x) => x.t <= s).at(-1)?.gas ?? null;
+  const altitudEn = (s) => altitudes.filter((x) => x.t <= s).at(-1)?.altitud ?? null;
+  const LO_QUE_NOTA = [
+    { clave: "inicio.ara.pasaje.menosGas", potencia: "subida", baja: true },
+    { clave: "inicio.ara.pasaje.ralenti", potencia: "ralenti", baja: true },
+    { clave: "inicio.ara.pasaje.masGas", potencia: "aproximacion", baja: false },
+  ];
+  const notados = LO_QUE_NOTA.map((n) => {
+    const dicha = registro.find((d) => d.clave === n.clave);
+    const cambio = potencias.find((p) => p.potencia === n.potencia);
+    // Antes del cambio, y pasado lo que tardan los motores en llegar —de dos a siete segundos—.
+    const antes = cambio ? gasEn(cambio.desde - 1) : null;
+    const despues = dicha && cambio ? gasEn(Math.max(dicha.desde, cambio.desde + 8)) : null;
+    const ok =
+      !!dicha &&
+      !!cambio &&
+      dicha.desde > cambio.desde &&
+      dicha.desde - cambio.desde < 45 &&
+      antes !== null &&
+      despues !== null &&
+      (n.baja ? antes - despues >= 0.15 : despues - antes >= 0.1);
+    return { ...n, dicha, cambio, antes, despues, ok };
+  });
+  comprobar(
+    "cada cambio de gas que cuenta Ara pasó de verdad un poco antes, y se oye: el motor suena más bajito o más fuerte",
+    notados.every((n) => n.ok) && registro.filter((d) => LO_QUE_NOTA.some((n) => n.clave === d.clave)).length === LO_QUE_NOTA.length,
+    notados
+      .map(
+        (n) =>
+          `${n.clave.split(".").pop()}: ${n.cambio ? `cambio a los ${n.cambio.desde.toFixed(0)} s` : "sin cambio"}, ${n.dicha ? `dicho a los ${n.dicha.desde.toFixed(0)} s` : "no dicho"}, gas ${n.antes?.toFixed(2) ?? "?"}→${n.despues?.toFixed(2) ?? "?"}${n.ok ? "" : " ✗"}`,
+      )
+      .join(" · "),
+  );
+  const explicaSubida = registro.find((d) => d.clave === "inicio.mama.pasaje.menosGas");
+  const explicaAproximacion = registro.find((d) => d.clave === "inicio.mama.pasaje.masGas");
+  const reversa = registro.find((d) => d.clave === "inicio.mama.pasaje.reversa");
+  // El del ralentí —para bajar no se apagan los motores—, lo primero después de los oídos, salvo lo señalado.
+  const bostezoDeLaBajada = registro.find((d) => d.clave === "inicio.ara.pasaje.bostezo");
+  const explicaRalenti = registro.find((d) => d.clave === "inicio.mama.pasaje.bajando");
+  const antesDelRalenti =
+    bostezoDeLaBajada && explicaRalenti
+      ? registro
+          .filter((d) => d.desde > bostezoDeLaBajada.desde && d.desde < explicaRalenti.desde - 5)
+          .map((d) => d.clave)
+          .filter((c) => !/^(ventanilla|inicio\.ara\.pasaje\.(teide|garajonay|orotava|loVeo|preguntaBajar)$)/.test(c))
+      : null;
+  comprobar(
+    "y lo explica la comandante en el primer rato tranquilo: el de subida pasados los diez mil pies, el del ralentí tras los oídos, el de la aproximación en tierra, tras la reversa",
+    !!explicaRalenti &&
+      antesDelRalenti?.length === 0 &&
+      (altitudEn(explicaRalenti.desde) ?? 0) >= 3048 &&
+      !!explicaSubida &&
+      (altitudEn(explicaSubida.desde) ?? 0) >= 3048 - 30 &&
+      !!explicaAproximacion &&
+      !!reversa &&
+      explicaAproximacion.desde > reversa.desde &&
+      registro.filter((d) => d.clave === "inicio.mama.pasaje.menosGas" || d.clave === "inicio.mama.pasaje.masGas").length === 2,
+    `subida: ${explicaSubida ? `a los ${explicaSubida.desde.toFixed(0)} s, a ${Math.round((altitudEn(explicaSubida.desde) ?? 0) / 0.3048)} ft` : "no"} · ralentí: ${explicaRalenti ? `a los ${explicaRalenti.desde.toFixed(0)} s, a ${Math.round((altitudEn(explicaRalenti.desde) ?? 0) / 0.3048)} ft${antesDelRalenti?.length ? `, detrás de ${antesDelRalenti.join(", ")}` : ""}` : "no"} · aproximación: ${explicaAproximacion ? `a los ${explicaAproximacion.desde.toFixed(0)} s, tras la reversa ${reversa ? (explicaAproximacion.desde > reversa.desde) : "?"}` : "no"}`,
+  );
+  const plops = ["inicio.tripulacion.pasaje.cerca.plop1", "inicio.tripulacion.pasaje.cerca.plop2"].map((c) => registro.filter((d) => d.clave === c));
+  const plopDeAra = registro.find((d) => d.clave === "inicio.ara.pasaje.plop");
+  comprobar(
+    "el plop de los oídos se explica una vez, la tripulante en persona; y al bajar Ara ya sabe que es al revés",
+    !!plopDeAra &&
+      plops.every((x) => x.length === 1 && x[0].desde > plopDeAra.desde) &&
+      registro.some((d) => d.clave === "inicio.ara.pasaje.oidosAlReves") &&
+      !registro.some((d) => d.clave === "inicio.ara.pasaje.oidos"),
+    `plop de Ara a los ${plopDeAra?.desde?.toFixed(0) ?? "?"} s · explicado ${plops.map((x) => `${x.length} vez (a los ${x[0]?.desde?.toFixed(0) ?? "?"} s)`).join(" y ")} · al bajar: ${registro.some((d) => d.clave === "inicio.ara.pasaje.oidosAlReves") ? "al revés" : "pregunta"}`,
+  );
+  /*
+   * **Y cuánto calla la bajada**, sin la siesta: lo que suma el silencio entre
+   * frases mientras la tripulación baja, y cuánto de eso tiene la música de
+   * llegada debajo. Se apunta, no se mide contra nada: es para saber.
+   */
+  {
+    const bajada = tramos.find((x) => x.tramo === "bajada");
+    const final = tramos.find((x) => x.tramo === "final");
+    if (bajada && final) {
+      let callado = 0;
+      for (let k = 1; k < registro.length; k++) {
+        const desde = Math.max(bajada.t, registro[k - 1].hasta ?? registro[k - 1].desde);
+        const hasta = Math.min(final.t, registro[k].desde);
+        if (hasta > desde) callado += hasta - desde;
+      }
+      const conMusica = musica.empieza ? Math.max(0, final.t - Math.max(bajada.t, musica.empieza.t)) : 0;
+      console.log(
+        `  la bajada dura ${(final.t - bajada.t).toFixed(0)} s: ${callado.toFixed(0)} s sin que hable nadie; la música de llegada, desde ${musica.empieza ? `los ${musica.empieza.t.toFixed(0)} s` : "—"}, cubre ${conMusica.toFixed(0)} s de bajada`,
+      );
+    }
+  }
   // ── Lo que se nombra, a la vista; la foto con su voz; el meneo, el techo, el tren y el señalero ──
   for (const n of nombrados)
     console.log(

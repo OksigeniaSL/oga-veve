@@ -23,12 +23,15 @@ import { avanzar, restante, rutaDe, type Fijo } from "./ruta";
 import type { Fase } from "./vuelo";
 import {
   CONFIGURA,
+  EMPUJE,
   enLosMandosDeLinea,
+  REDUCE_EL_GAS,
   RODAJE_EN_RECTA,
   SeguirLaRaya,
   SUBE_ABAJO,
   VueloDeLinea,
   type LecturaDeLinea,
+  type PotenciaDeLinea,
   type PuntoXZ,
   type TramoDeLinea,
 } from "./vuelo-de-linea";
@@ -83,6 +86,10 @@ interface Vuelo {
   readonly parado: { x: number; z: number } | null;
   readonly t: number;
   readonly final: TramoDeLinea;
+  /** Los cambios de potencia, con su hora, y cómo iba el avión en cada uno. */
+  readonly potencias: { potencia: PotenciaDeLinea; t: number; sobreElCampo: number; tren: number; tramo: TramoDeLinea }[];
+  /** Lo que se oye en cada paso: el empuje de la tripulación, o el gas si no lo pone. */
+  readonly oido: { t: number; empuje: number | undefined; gas: number; enTierra: boolean }[];
 }
 
 /** Vuela el vuelo entero con el JAZ 90 de Guyrami. */
@@ -120,6 +127,8 @@ function volar(): Vuelo {
   let frenosDeTierra = 0;
   let alineadoA = Infinity;
   let rodoAlineada = 0;
+  const potencias: Vuelo["potencias"] = [];
+  const oido: Vuelo["oido"] = [];
   let t = 0;
   for (; t < 3600; t += DT) {
     const s = m.state;
@@ -195,6 +204,8 @@ function volar(): Vuelo {
     const manos = tripulacion.paso(DT, l, permisos);
     const e = tripulacion.estado;
     if (tramos[tramos.length - 1]?.tramo !== e.tramo) tramos.push({ tramo: e.tramo, t });
+    if (potencias[potencias.length - 1]?.potencia !== e.potencia)
+      potencias.push({ potencia: e.potencia, t, sobreElCampo: s.position.y, tren: c.tren, tramo: e.tramo });
     // ── Las manos, en los mandos ──
     if (manos.motor !== c.engineOn) c.engineOn = manos.motor;
     const mandos = enLosMandosDeLinea(manos, m, {
@@ -213,6 +224,7 @@ function volar(): Vuelo {
     if (manos.armados && s.onGround && volo) frenosDeTierra = 1;
     c.frenosDeTierra = frenosDeTierra;
     c.autofreno = manos.autofreno === 2 ? 2.4 : manos.autofreno === 1 ? 1.5 : 0;
+    oido.push({ t, empuje: manos.empuje, gas: c.throttle, enTierra: s.onGround });
     m.step(DT, c);
     // ── Lo que se mide ──
     const d = m.state;
@@ -256,6 +268,8 @@ function volar(): Vuelo {
     parado: s.groundSpeed < 0.5 ? { x: s.position.x, z: s.position.z } : null,
     t,
     final: tripulacion.estado.tramo,
+    potencias,
+    oido,
   };
 }
 
@@ -387,6 +401,54 @@ describe("del puesto al puesto con el JAZ 90 de Guyrami", () => {
   it("y para en su puesto", () => {
     const p = vuelo.parado!;
     expect(Math.hypot(p.x - PUESTO_DE_LLEGADA.x, p.z - PUESTO_DE_LLEGADA.z)).toBeLessThan(5);
+  });
+
+  /*
+   * **Los motores suenan como en un vuelo de verdad** (punto 297): toda la
+   * fuerza para despegar, la de subida a los mil quinientos pies sobre el
+   * campo, el ralentí desde el punto de descenso y la de aproximación con el
+   * tren fuera, que sale al tocar. Es lo que se oye desde el asiento, y en
+   * el peldaño de la escena el gas no lo dice: es una palanca de velocidad,
+   * y con él el despegue se acababa a quince metros del suelo y la bajada
+   * sonaba igual que el crucero.
+   */
+  it("y los motores suenan como en un vuelo de verdad: despegue, subida, ralentí y aproximación", () => {
+    expect(vuelo.potencias.map((p) => p.potencia)).toEqual([
+      "tierra",
+      "despegue",
+      "subida",
+      "ralenti",
+      "aproximacion",
+      "tierra",
+    ]);
+    const de = (p: PotenciaDeLinea) => vuelo.potencias.find((x) => x.potencia === p)!;
+    // El gas de subida, a los mil quinientos pies sobre el campo, subiendo.
+    expect(de("subida").tramo).toBe("subida");
+    expect(de("subida").sobreElCampo).toBeGreaterThanOrEqual(REDUCE_EL_GAS);
+    expect(de("subida").sobreElCampo).toBeLessThan(REDUCE_EL_GAS + 30);
+    // El ralentí, en cuanto empieza a bajar; y la aproximación, con el tren fuera.
+    expect(de("ralenti").tramo).toBe("bajada");
+    expect(de("aproximacion").tren).toBeGreaterThan(0.99);
+    // Y cada uno suena a lo suyo: de más a menos, y la aproximación por encima del ralentí.
+    expect(EMPUJE.despegue).toBeGreaterThan(EMPUJE.subida);
+    expect(EMPUJE.subida).toBeGreaterThan(EMPUJE.aproximacion);
+    expect(EMPUJE.aproximacion).toBeGreaterThan(EMPUJE.ralenti * 5);
+  });
+
+  it("los motores suben y bajan de vueltas en unos segundos, no de golpe; y en el suelo suena el gas", () => {
+    let mayor = 0;
+    for (let i = 1; i < vuelo.oido.length; i++) {
+      const a = vuelo.oido[i - 1]!;
+      const b = vuelo.oido[i]!;
+      if (a.empuje !== undefined && b.empuje !== undefined) mayor = Math.max(mayor, Math.abs(b.empuje - a.empuje) / DT);
+    }
+    expect(mayor).toBeLessThanOrEqual(0.1 + 1e-9);
+    // En el suelo, sin empuje propio: lo que se oye es el gas, rodando y con la reversa.
+    expect(vuelo.oido.filter((x) => x.enTierra).every((x) => x.empuje === undefined)).toBe(true);
+    // Y arriba, en el crucero, el de subida, aunque el gas de la palanca de velocidad sea otro.
+    const subida = vuelo.tramos.find((x) => x.tramo === "crucero")!.t;
+    const arriba = vuelo.oido.find((x) => x.t > subida + 30)!;
+    expect(arriba.empuje).toBeCloseTo(EMPUJE.subida, 5);
   });
 
   it("y se configura para aterrizar donde se configura", () => {

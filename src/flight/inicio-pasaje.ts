@@ -104,6 +104,20 @@
  * al salir por debajo de las nubes, el Teide la primera vez que se nombra, el
  * tren visto desde abajo al salir y el señalero hasta parar el avión.
  *
+ * ## Todo lo que se oye cambiar se cuenta
+ *
+ * Enrique (punto 297): «llegó el momento en que los pilotos quitaron gas, y
+ * nadie dice nada». Los motores suenan como en un vuelo de verdad —ver
+ * `PotenciaDeLinea` en `vuelo-de-linea.ts`— y cada cambio que se oye lo nota
+ * Ara en el momento: el gas de subida a los mil quinientos pies, el ralentí
+ * al empezar a bajar y el empuje que sube con el tren y los flaps fuera. Lo
+ * explica quien puede en ese momento, y si no puede nadie —la cabina estéril
+ * por debajo de los diez mil pies, la tripulación sentada—, en el primer rato
+ * tranquilo de después, como la reversa al llegar. Y lo mismo con el plop de
+ * los oídos al subir (punto 284), que lo explica la tripulante en cuanto se
+ * levanta y llega al asiento de Ara, con el servicio; en la bajada, Ara ya
+ * sabe que es al revés.
+ *
  * ## Y si no hay nada que contar, Ara se duerme
  *
  * Enrique voló la escena entera (punto 304): «esto tarda, y en un avión
@@ -150,7 +164,7 @@ import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
 import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
 import type { Fase } from "./vuelo";
-import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
+import type { PermisosDeLaEscena, PotenciaDeLinea, TramoDeLinea } from "./vuelo-de-linea";
 
 export type { ComoSeVe };
 
@@ -311,7 +325,10 @@ export type CharlaDelPasaje =
   | "meneo"
   | "senalero"
   | "marDeNubes"
-  | "sigueLaNube";
+  | "sigueLaNube"
+  | "menosGas"
+  | "porQueMenosGas"
+  | "masGas";
 
 /**
  * **Lo que se nombra del paisaje**, y que por eso **solo se dice si se ve**
@@ -429,6 +446,14 @@ export interface LecturaDelPasaje {
    * siesta.
    */
   readonly hastaLaBajada?: number;
+  /**
+   * **La potencia de los motores**, la que se oye desde el asiento, y cuánto
+   * lleva así, s: la pone la tripulación. Sin esto —las pruebas que no la
+   * miran—, no se cuenta ningún cambio de gas: lo que no se sabe si sonó no se
+   * cuenta. Ver `PotenciaDeLinea` en `vuelo-de-linea.ts`.
+   */
+  readonly potencia?: PotenciaDeLinea;
+  readonly conEstaPotencia?: number;
 }
 
 /**
@@ -511,6 +536,17 @@ const SE_NOTAN_LOS_OIDOS = -0.6;
 const SUBE_LA_CABINA = 0.6;
 /** **Lo que se inclina el avión para que se note el giro**, rad. */
 const SE_NOTA_EL_GIRO = 12 * GRADO;
+/**
+ * **Lo que puede tardar Ara en decir que los motores suenan distinto**, s de
+ * escena desde que cambian. Si en ese rato no hay un silencio —habla otro, o
+ * pasa otra cosa—, se le pasó el momento y no se dice: un «¡ahora suenan más
+ * bajito!» medio minuto largo después ya no es lo que se oye. Ver
+ * `PotenciaDeLinea`.
+ */
+const SE_OYE_EL_CAMBIO = 40;
+/** Si la potencia de los motores acaba de cambiar a esa, y todavía se nota. */
+const acabaDePonerse = (l: LecturaDelPasaje, p: PotenciaDeLinea): boolean =>
+  l.potencia === p && (l.conEstaPotencia ?? Infinity) < SE_OYE_EL_CAMBIO;
 /** «Más de quinientos kilómetros por hora», m/s, con margen. */
 const QUINIENTOS_POR_HORA = 505 / 3.6;
 /** «Bajo cero, como en el congelador», °C fuera, con margen. */
@@ -693,6 +729,8 @@ const contraElCristal = (l: Linea, e: VueloDePasaje): Linea =>
  * ilustración, lo que se explica con el dibujo de la nube y, al final, lo que
  * dice Ara.
  */
+/** **El plop de los oídos, explicado** por la tripulante: ver el momento `tcpNubes`. */
+const EL_PLOP_EXPLICADO: readonly Linea[] = [conLaTripulante(tripulante("plop1")), conLaTripulante(tripulante("plop2"))];
 const lasNubesDeCerca = (ultima: Linea): Linea[] => [
   conLaTripulante(tripulante("hola")),
   conLaTripulante(ara("deVerdad")),
@@ -965,20 +1003,57 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     /*
      * Y lo último, «ahora las miro de otra manera», con Ara mirándolas contra
      * el cristal, si el cartel está apagado; si no, el dibujo de la nube sigue.
+     *
+     * **Y el plop de los oídos, explicado** (punto 284), si Ara lo notó al
+     * subir. Subiendo, la presión de la cabina baja y el aire de dentro del
+     * oído sale, y eso es el plop; tragar saliva o bostezar ayuda a igualarla.
+     * En la subida nadie lo podía contar —la tripulación, sentada y atada; la
+     * cabina de mando, por debajo de los diez mil pies, en lo suyo—, y lo
+     * cuenta la tripulante en cuanto se levanta y llega al asiento de Ara, que
+     * es lo que hace cualquier tripulante con un niño en su primer vuelo. Y se
+     * engancha con la bajada: allí Ara ya sabe que es al revés. Ver el momento
+     * `oidos`.
      */
-    segun: (_l, e) => lasNubesDeCerca(contraElCristal(con(ara("nubesSostiene"), "nube"), e)),
+    segun: (_l, e) => [
+      ...lasNubesDeCerca(contraElCristal(con(ara("nubesSostiene"), "nube"), e)),
+      ...(e.dichaLaCharla("plop") ? EL_PLOP_EXPLICADO : []),
+    ],
     mira: "nubes",
   },
   {
     id: "bajada",
     cuando: (l) => bajando(l.tramo) && !l.enTierra,
     lineas: [desdeLaCabina(anuncio("comandante.descenso")), anuncio("tripulacion.cinturones")],
+    /*
+     * **Y los motores al ralentí, que se oyen** (punto 297): en el punto de
+     * descenso la tripulación quita el gas del todo, y el ruido baja de golpe.
+     * Ara lo nota primero, si acaba de pasar —ver `SE_OYE_EL_CAMBIO`—, y la
+     * comandante dice lo que es: que empezamos a bajar. El porqué del ralentí
+     * —que para bajar no se apagan los motores— lo cuenta ella misma en el
+     * primer rato tranquilo de después, por encima de los diez mil pies: ver
+     * la charla `bajando`.
+     */
+    segun: (l) => [
+      ...(acabaDePonerse(l, "ralenti") ? [ara("ralenti")] : []),
+      desdeLaCabina(anuncio("comandante.descenso")),
+      anuncio("tripulacion.cinturones"),
+    ],
   },
   {
     id: "oidos",
     cuando: (l) => l.cabina <= SE_NOTAN_LOS_OIDOS && !l.enTierra,
     caduca: (l) => l.tramo === "final" || l.tramo === "recogida" || l.enTierra || l.faltaParaTocar < PREPARAR_LA_CABINA,
     lineas: [ara("oidos"), con(tripulacion("oidos"), "oido"), con(ara("bostezo"), "oido")],
+    /*
+     * **Y si el plop de la subida ya se explicó** —ver el momento `tcpNubes`—,
+     * Ara no pregunta lo que ya sabe: dice que ahora es al revés. Lo demás, lo
+     * de siempre, que el anuncio es para todo el pasaje.
+     */
+    segun: (_l, e) => [
+      e.plopExplicado ? ara("oidosAlReves") : ara("oidos"),
+      con(tripulacion("oidos"), "oido"),
+      con(ara("bostezo"), "oido"),
+    ],
   },
   {
     /*
@@ -1118,6 +1193,20 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     id: "llegada",
     cuando: (l) => (l.tramo === "al-puesto" && l.porElSuelo > 1.5) || l.tramo === "aparcado",
     lineas: [anuncio("comandante.llegada"), comandante("reversa"), anuncio("tripulacion.llegada")],
+    /*
+     * **Y lo que sonó antes de tocar**, si Ara lo notó —ver la charla
+     * `masGas`—: los motores que suben con el tren y los flaps fuera. En la
+     * aproximación nadie lo podía contar —la cabina de mando, en lo suyo; la
+     * tripulante, sentada—, así que lo cuenta la comandante en el primer rato
+     * tranquilo, con la reversa: lo que pasa en un momento de trabajo se
+     * explica en el primer momento tranquilo de después.
+     */
+    segun: (_l, e) => [
+      anuncio("comandante.llegada"),
+      comandante("reversa"),
+      ...(e.dichaLaCharla("masGas") ? [comandante("masGas")] : []),
+      anuncio("tripulacion.llegada"),
+    ],
     plano: "fuera-rodando",
   },
   {
@@ -1146,6 +1235,25 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     cuando: (l, e) => e.dicho("volando") && !l.enTierra && (l.tren ?? 1) < 0.95,
     caduca: (l) => l.altura > 1500 || bajando(l.tramo),
     lineas: [ara("tren")],
+  },
+  {
+    /*
+     * **El gas de subida, cuando suena** (punto 297). A los mil quinientos
+     * pies sobre el campo la tripulación pasa del gas de despegue al de
+     * subida, y el ruido de los motores baja: es de lo que más asusta a quien
+     * vuela por primera vez, «¿se ha parado?». Ara lo nota en el momento,
+     * mirando el motor, y con lo que lo calma: que se sigue subiendo igual.
+     * Por debajo de los diez mil pies nadie lo puede contar —la cabina de
+     * mando, en lo suyo; la tripulante, sentada y atada—, así que el porqué
+     * espera al primer rato tranquilo: ver `porQueMenosGas`.
+     */
+    id: "menosGas",
+    tras: 1,
+    cuando: (l) => l.tramo === "subida" && !l.enTierra && acabaDePonerse(l, "subida"),
+    caduca: (l) => l.tramo !== "subida" || !acabaDePonerse(l, "subida"),
+    lineas: [ara("menosGas")],
+    mira: "motor",
+    plano: "asomado-motor",
   },
   {
     /*
@@ -1191,6 +1299,21 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("giroAbajo"), ara("bici")],
     segun: (l, e) => [ara(e.bajaMiAla(l.alabeo ?? 0) ? "giroAbajo" : "giroArriba"), ara("bici")],
     plano: "fuera-giro",
+  },
+  {
+    /*
+     * **El porqué del gas de subida**, por la comandante y para todo el
+     * pasaje, en cuanto puede hablar: pasados los diez mil pies. Es la misma
+     * ley que la reversa explicada al llegar —lo que pasa en un momento de
+     * trabajo se cuenta en el primer momento tranquilo de después—, y la
+     * cuenta quien quitó el gas. Solo si Ara lo notó: sin eso, sobraría.
+     */
+    id: "porQueMenosGas",
+    // Poco: es la respuesta a lo que Ara ya notó, y arriba el rato es justo —ver `puedeDormirse`—.
+    tras: 2,
+    cuando: (l, e) => volando(l) && !bajando(l.tramo) && l.altitud >= DIEZ_MIL_PIES && e.dichaLaCharla("menosGas"),
+    caduca: (l) => l.enTierra || bajando(l.tramo),
+    lineas: [desdeLaCabina(comandante("menosGas"))],
   },
   {
     // Por encima de las nubes, pegada al cristal: el mar, entre ellas.
@@ -1287,6 +1410,26 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     muestra: "hito:teide",
   },
   {
+    /*
+     * **Para bajar no se apagan los motores**: por la comandante, arriba
+     * todavía. Es el porqué del ralentí que Ara oyó al empezar a bajar —ver el
+     * momento `bajada`—, así que si Ara lo notó va el primero en cuanto se
+     * calla lo de los oídos, aunque se baje desde muy arriba; si no, con la
+     * bajada ya empezada de verdad. Y solo con los motores al ralentí, que es
+     * lo que cuenta.
+     */
+    id: "bajando",
+    tras: 12,
+    cuando: (l, e) =>
+      l.tramo === "bajada" &&
+      l.altitud > DIEZ_MIL_PIES + 150 &&
+      (l.altitud < 4800 || e.registro.some((d) => d.clave === "inicio.ara.pasaje.ralenti")) &&
+      e.dicho("oidos") &&
+      (l.potencia ?? "ralenti") === "ralenti",
+    caduca: (l) => l.altitud < DIEZ_MIL_PIES + 100 || enLaFinal(l) || l.enTierra,
+    lineas: [ara("preguntaBajar"), desdeLaCabina(comandante("bajando"))],
+  },
+  {
     // El frío de fuera: solo si de verdad está bajo cero.
     id: "tcpFrio",
     tras: 14,
@@ -1305,14 +1448,6 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [con(tripulante("motor1"), "motor"), con(tripulante("motor2"), "motor"), con(ara("secador"), "motor")],
     mira: "motor",
     plano: "asomado-motor",
-  },
-  {
-    // Para bajar no se apagan los motores: por la comandante, arriba todavía.
-    id: "bajando",
-    tras: 16,
-    cuando: (l, e) => l.tramo === "bajada" && l.altitud > DIEZ_MIL_PIES + 150 && l.altitud < 4800 && e.dicho("oidos"),
-    caduca: (l) => l.altitud < DIEZ_MIL_PIES + 100 || enLaFinal(l) || l.enTierra,
-    lineas: [ara("preguntaBajar"), desdeLaCabina(comandante("bajando"))],
   },
   {
     // De dónde salieron las islas: volcanes desde el fondo del mar.
@@ -1487,6 +1622,23 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     plano: "fuera-tren",
   },
   {
+    /*
+     * **Y los motores que suben en la aproximación** (punto 297): con el tren
+     * y los flaps fuera el avión frena mucho, y para seguir a su velocidad
+     * por la senda hace falta más empuje. Suena justo después del tren, y Ara
+     * lo nota cuando acaba de verse el tren —sin pisar el plano de las patas,
+     * que dura lo suyo—. Lo cuenta la comandante al llegar, que en la final
+     * nadie puede: ver el momento `llegada`.
+     */
+    id: "masGas",
+    tras: 8,
+    cuando: (l) => !l.enTierra && bajando(l.tramo) && l.altura > 150 && acabaDePonerse(l, "aproximacion"),
+    caduca: (l) => l.enTierra || l.altura < 150 || !acabaDePonerse(l, "aproximacion"),
+    lineas: [ara("masGas")],
+    mira: "motor",
+    plano: "asomado-motor",
+  },
+  {
     id: "miro",
     tras: 12,
     cuando: (l) => !l.enTierra && enLaFinal(l) && l.altura < 560 && l.altura > 330,
@@ -1588,6 +1740,8 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   poner(tripulante(KIT_GUARDADO));
   // Y la siesta: el bostezo, la tripulante que despierta a Ara para bajar y el despertar.
   [SE_DUERME, LA_DESPIERTAN, SE_DESPIERTA].forEach(poner);
+  // Y los motores que se oyen cambiar, y los oídos: el plop explicado, y al revés al bajar.
+  [ara("ralenti"), ...EL_PLOP_EXPLICADO, ara("oidosAlReves"), comandante("masGas")].forEach(poner);
   return todas;
 })();
 
@@ -1721,6 +1875,8 @@ export class VueloDePasaje {
   private contestacion: { readonly linea: Linea; readonly oir: readonly string[]; readonly desde: number } | null = null;
   /** Si ya se contó qué es el Teide: ver la charla `altoRapido`. */
   private teideContado = false;
+  /** Y si ya se explicó el plop de los oídos de la subida: ver el momento `tcpNubes`. */
+  private plopContado = false;
 
   private dibujo: string | null = null;
   private dibujoDe: Linea | null = null;
@@ -1794,6 +1950,14 @@ export class VueloDePasaje {
    */
   get teidePresentado(): boolean {
     return this.teideContado;
+  }
+
+  /**
+   * **Si ya se explicó el plop de los oídos de la subida**: entonces, al bajar,
+   * Ara ya sabe que es al revés. Ver los momentos `tcpNubes` y `oidos`.
+   */
+  get plopExplicado(): boolean {
+    return this.plopContado;
   }
 
   /**
@@ -2023,6 +2187,7 @@ export class VueloDePasaje {
     if (sitio && vista?.como && lineas[0])
       this.apuntarLoNombrado(sitio, lineas[0].clave, vista);
     if (lineas.some((x) => x.clave === "inicio.mama.pasaje.teide")) this.teideContado = true;
+    if (lineas.some((x) => EL_PLOP_EXPLICADO.includes(x))) this.plopContado = true;
     this.charla.decir(lineas);
     if (def.mira) {
       this.mira = def.mira;

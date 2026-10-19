@@ -2355,6 +2355,19 @@ export const EN: Dictionary = {
     "Wake up, we're about to start going down: seat belt nice and snug. When you sleep you swallow less, and on the way down your ears feel it.",
   "inicio.ara.pasaje.despertarse": "Oops, I fell asleep for a bit! And meanwhile, the plane kept flying along its route.",
   "inicio.siesta": "Ara naps for a bit and dreams, while the plane keeps flying its route.",
+  // What you hear change, explained: the engines in each part of the flight, and the ears on the way up.
+  "inicio.ara.pasaje.menosGas": "Listen! The engines sound quieter now, and we're still climbing just the same.",
+  "inicio.mama.pasaje.menosGas":
+    "For those of you flying for the first time today: shortly after take-off we took off a little power, and the engines got quieter. Climbing doesn't need as much strength as taking off.",
+  "inicio.tripulacion.pasaje.cerca.plop1":
+    "And on the way up, did your ears go pop? That's normal: the air pressure in the cabin goes down, and the air inside your ear comes out.",
+  "inicio.tripulacion.pasaje.cerca.plop2":
+    "That's the pop. If you feel it, swallow or yawn: that way the pressure inside your ear evens out with the cabin.",
+  "inicio.ara.pasaje.ralenti": "The engines sound even quieter now! Does that mean we're starting to go down?",
+  "inicio.ara.pasaje.oidosAlReves": "Now my ears feel a bit blocked! It's the other way round from going up: the air has to get in.",
+  "inicio.ara.pasaje.masGas": "Now the engines sound louder! What for, if we're about to land?",
+  "inicio.mama.pasaje.masGas":
+    "And just before touchdown, the engines got louder: with the wheels and the flaps out, the plane slows down a lot, and it needs more power so as not to lose speed.",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

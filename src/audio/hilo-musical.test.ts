@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import type { Fase } from "../flight/vuelo";
 import { altavozDelTecho, conLaPuerta } from "./audio";
 import { bucleDe, ficheroDe, HiloMusical, musicaDe, type SituacionDelHilo } from "./hilo-musical";
-import { NIVEL } from "./mezcla";
+import { MANDAN, NIVEL, nivelesAhora } from "./mezcla";
 import { CORTE_DE_LA_PUERTA, SIN_CORTE, TRAS_LA_PUERTA } from "./tonos-de-cabina";
 
 /** El sistema de ficheros de Node, sin sus tipos: ver `inicio-pasaje.test.ts`. */
@@ -42,15 +42,48 @@ describe("cuándo suena", () => {
     expect(h.paso(en("estacionado"), 5)).toBeNull();
   });
 
-  it("al llegar, lo que la megafonía ya decía no acaba el rato: se espera a que calle", () => {
+  /*
+   * **La de llegada, del descenso al puesto** (punto 302): «realmente la
+   * música la están poniendo desde que empiezan la última o penúltima fase de
+   * descenso y aproximación para la toma». Por debajo de los diez mil pies,
+   * bajando, por la final y la rodadura entera; y en el puesto, nada.
+   */
+  it("al llegar, desde la última parte de la bajada y por la rodadura, hasta el puesto", () => {
     const h = new HiloMusical();
-    h.paso(en("en-puesto", { megafonia: true }), 3);
-    // Se apagan los motores con la tripulación todavía despidiéndose.
-    expect(h.paso(en("apagado", { megafonia: true }), 3)).toBeNull();
-    expect(h.paso(en("apagado"), 3)).toBe("canarias");
-    // Y si vuelve a hablar, se calla para ese rato.
-    expect(h.paso(en("apagado", { megafonia: true }), 1)).toBeNull();
+    h.paso(en("estacionado", { megafonia: true }), 3);
+    // Bajando, pero todavía por encima de los diez mil pies: aún no.
+    expect(h.paso(en("en-vuelo"), 3)).toBeNull();
+    // Por debajo, entra pasado su rato.
+    expect(h.paso(en("en-vuelo", { bajandoALaPista: true }), 1)).toBeNull();
+    expect(h.paso(en("en-vuelo", { bajandoALaPista: true }), 3)).toBe("canarias");
+    for (const f of ["final", "aterrizado", "abandonando", "a-plataforma"] as const)
+      expect(h.paso(en(f), 3), f).toBe("canarias");
+    // En el puesto se acaba, y con los motores apagados —la gente de pie, deseando salir— no vuelve.
+    expect(h.paso(en("en-puesto"), 3)).toBeNull();
     expect(h.paso(en("apagado"), 3)).toBeNull();
+    expect(h.paso(en("apagado"), 30)).toBeNull();
+  });
+
+  it("y mientras habla la megafonía se calla, y vuelve después; no en el respiro entre dos anuncios", () => {
+    const h = new HiloMusical();
+    h.paso(en("estacionado", { megafonia: true }), 3);
+    expect(h.paso(en("final"), 3)).toBe("canarias");
+    // La aproximación: se calla en cuanto se coge el micrófono.
+    expect(h.paso(en("final", { megafonia: true }), 0.1)).toBeNull();
+    expect(h.paso(en("final", { megafonia: true }), 4)).toBeNull();
+    // Medio segundo entre la llegada y la reversa: no asoma.
+    expect(h.paso(en("a-plataforma"), 0.5)).toBeNull();
+    expect(h.paso(en("a-plataforma", { megafonia: true }), 8)).toBeNull();
+    // Y al callar del todo, vuelve: la llegada no se acaba con un anuncio.
+    expect(h.paso(en("a-plataforma"), 1)).toBeNull();
+    expect(h.paso(en("a-plataforma"), 1.5)).toBe("canarias");
+  });
+
+  it("sin plan de vuelo, desde la final", () => {
+    const h = new HiloMusical();
+    h.paso(en("estacionado", { megafonia: true }), 3);
+    expect(h.paso(en("en-vuelo"), 3)).toBeNull();
+    expect(h.paso(en("final"), 3)).toBe("canarias");
   });
 
   it("sin fase todavía, espera: el embarque no se acaba antes de empezar", () => {
@@ -62,7 +95,7 @@ describe("cuándo suena", () => {
   it("y solo donde hay pasaje: una avioneta no lleva altavoces en el techo", () => {
     const h = new HiloMusical();
     expect(h.paso(en("estacionado", { conPasaje: false }), 3)).toBeNull();
-    expect(h.paso(en("apagado", { conPasaje: false }), 3)).toBeNull();
+    expect(h.paso(en("final", { conPasaje: false }), 3)).toBeNull();
   });
 
   it("se calla con la megafonía, y en ese embarque ya no vuelve", () => {
@@ -81,20 +114,11 @@ describe("cuándo suena", () => {
     expect(h.paso(en("estacionado"), 3)).toBeNull();
   });
 
-  it("no suena en vuelo, ni rodando, ni en el puesto con los motores en marcha", () => {
-    const h = new HiloMusical();
-    for (const f of ["rodando", "esperando", "despegando", "en-vuelo", "final", "aterrizado", "a-plataforma", "en-puesto"] as const)
-      expect(h.paso(en(f), 3), f).toBeNull();
-  });
-
-  it("vuelve al llegar al puesto con los motores apagados, y se calla si habla la megafonía", () => {
+  it("no suena rodando a la pista, despegando, subiendo ni arriba", () => {
     const h = new HiloMusical();
     h.paso(en("estacionado", { megafonia: true }), 3);
-    h.paso(en("en-vuelo"), 3);
-    h.paso(en("en-puesto"), 3);
-    expect(h.paso(en("apagado"), 3)).toBe("canarias");
-    expect(h.paso(en("apagado", { megafonia: true }), 3)).toBeNull();
-    expect(h.paso(en("apagado"), 3)).toBeNull();
+    for (const f of ["arrancando", "rodando", "esperando", "autorizado", "alineando", "despegando", "en-vuelo"] as const)
+      expect(h.paso(en(f), 3), f).toBeNull();
   });
 
   it("un vuelo nuevo vuelve a tener embarque", () => {
@@ -208,5 +232,20 @@ describe("por qué altavoz", () => {
   it("y en el bus de la música, que va muy por debajo de la voz y se agacha cuando alguien habla", () => {
     expect(NIVEL.musica).toBeLessThanOrEqual(NIVEL.voz - 15);
     expect(NIVEL.musica).toBeLessThan(NIVEL.ambiente);
+  });
+
+  /*
+   * **Y no tapa la cuenta del radioaltímetro ni las voces de la cabina**, que
+   * en los vuelos de quien pilota se oyen bajando: suenan por el bus de los
+   * avisos, que manda agacharse a los demás, y la música, agachada, queda más
+   * de veinte decibelios por debajo.
+   */
+  it("y por debajo de la cuenta del radioaltímetro y los avisos de la cabina, que la agachan", () => {
+    expect(MANDAN).toContain("avisos");
+    expect(MANDAN).not.toContain("musica");
+    const agachada = nivelesAhora(true);
+    const db = (g: number): number => 20 * Math.log10(g);
+    expect(db(agachada.avisos) - db(agachada.musica)).toBeGreaterThan(20);
+    expect(db(agachada.voz) - db(agachada.musica)).toBeGreaterThan(20);
   });
 });

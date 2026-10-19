@@ -22,6 +22,8 @@ import { esDeLaEscena, VOZ_DE } from "./inicio";
 import {
   CHARLAS_DEL_PASAJE,
   CORTE_DE_PLANO,
+  DIEZ_MIL_PIES,
+  DURA_EL_PLANO,
   esAnuncioDeSiempre,
   esDeCerca,
   esDeFuera,
@@ -36,7 +38,7 @@ import {
   type SitioDelPaisaje,
   type VistaDelSitio,
 } from "./inicio-pasaje";
-import type { PermisosDeLaEscena, TramoDeLinea } from "./vuelo-de-linea";
+import { REDUCE_EL_GAS, type PermisosDeLaEscena, type PotenciaDeLinea, type TramoDeLinea } from "./vuelo-de-linea";
 import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import { ilustracion, ilustracionPedida, RECETAS } from "../ui/ilustraciones";
 import { JuegoDeLasPiezas, JuegoDelCamino, PARADAS, PIEZAS as PIEZAS_DEL_AVION } from "./kit-de-viaje";
@@ -850,10 +852,37 @@ class VueloMedido {
   sobreElMar = false;
   /** Lo que dura el crucero, s: el medido, y uno largo para ver despertar a Ara para bajar. */
   crucero = 58;
+  /**
+   * **La potencia de los motores**, la de la tripulación de verdad —ver
+   * `potenciaPara` en `vuelo-de-linea.ts`—: el despegue hasta los mil
+   * quinientos pies, la de subida arriba, el ralentí bajando y la de
+   * aproximación con el tren fuera.
+   */
+  potencia: PotenciaDeLinea = "tierra";
+  conEstaPotencia = 0;
 
   protected pasar(t: TramoDeLinea): void {
     this.tramo = t;
     this.enTramo = 0;
+  }
+
+  private ponerLaPotencia(): void {
+    const p: PotenciaDeLinea =
+      this.tramo === "carrera"
+        ? "despegue"
+        : this.tramo === "subida"
+          ? this.potencia === "subida" || this.altitud - 632 >= REDUCE_EL_GAS
+            ? "subida"
+            : "despegue"
+          : this.tramo === "crucero"
+            ? "subida"
+            : this.tramo === "bajada" || this.tramo === "final"
+              ? this.tren > 0.99 ? "aproximacion" : "ralenti"
+              : "tierra";
+    if (p !== this.potencia) {
+      this.potencia = p;
+      this.conEstaPotencia = 0;
+    }
   }
 
   get altura(): number {
@@ -861,6 +890,12 @@ class VueloMedido {
   }
 
   paso(dt: number, p: PermisosDeLaEscena): void {
+    this.conEstaPotencia += dt;
+    this.pasoDelVuelo(dt, p);
+    this.ponerLaPotencia();
+  }
+
+  private pasoDelVuelo(dt: number, p: PermisosDeLaEscena): void {
     this.enTramo += dt;
     const t = this.enTramo;
     switch (this.tramo) {
@@ -1020,6 +1055,8 @@ class VueloMedido {
       visibilidad: 10000,
       // Y el señalero, haciendo señas en los últimos noventa metros hasta el puesto.
       senalero: (this.tramo === "al-puesto" && this.enTramo > 200) || this.tramo === "aparcado",
+      potencia: this.potencia,
+      conEstaPotencia: this.conEstaPotencia,
       ...(this.ver ? { ver: this.ver } : {}),
     };
   }
@@ -1476,7 +1513,10 @@ describe("y con un crucero largo, despierta a Ara la tripulante para bajar", () 
     expect(despertar).toBeGreaterThanOrEqual(s!.hasta! - 1e-6);
     expect(despertar).toBeLessThan(cuando("inicio.ara.pasaje.despertarse"));
     expect(cuando("inicio.ara.pasaje.despertarse")).toBeLessThan(cuando("comandante.descenso"));
-    expect(cuando("comandante.descenso")).toBeLessThan(cuando("inicio.ara.pasaje.oidos"));
+    // Lo de los oídos, preguntando o —si el plop de la subida ya se explicó— sabiendo que es al revés.
+    expect(cuando("comandante.descenso")).toBeLessThan(
+      Math.min(...["inicio.ara.pasaje.oidos", "inicio.ara.pasaje.oidosAlReves"].map(cuando).filter((x) => !Number.isNaN(x))),
+    );
     for (const c of DE_SEGURIDAD) expect(r.some((x) => x.clave === c), c).toBe(true);
     expect(e.saltados).toEqual([]);
   });
@@ -1966,5 +2006,144 @@ describe("lo que se ve, cuando pasa: la nube, debajo de las nubes, el Teide, el 
     expect(e.charlas).toContain("senalero");
     // Y la despedida, de vuelta en la ventanilla.
     expect(e.plano).toBe("ventanilla");
+  });
+});
+
+// ── Lo que se oye cambiar ────────────────────────────────────────────────
+
+/**
+ * **El vuelo medido, apuntando cuándo cambia la potencia**: para mirar que lo
+ * que se cuenta pasó de verdad, y cerca.
+ */
+function volarApuntandoLaPotencia(vuelo: VueloMedido = new VueloMedido()): Medido & {
+  readonly cambios: { potencia: PotenciaDeLinea; t: number }[];
+  readonly altitudA: (t: number) => number;
+} {
+  let t = 0;
+  const v = vozQueTarda(loQueDura, () => t);
+  const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+  const tramos: { t: number; tramo: TramoDeLinea }[] = [];
+  const cambios: { potencia: PotenciaDeLinea; t: number }[] = [];
+  const altitudes: { t: number; altitud: number }[] = [];
+  const porVer = [...LO_QUE_SE_VIO];
+  for (; t < 4000 && !escena.estado.terminado; t += DT) {
+    v.tic();
+    if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
+    if (cambios[cambios.length - 1]?.potencia !== vuelo.potencia) cambios.push({ potencia: vuelo.potencia, t });
+    altitudes.push({ t, altitud: vuelo.altitud });
+    vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
+    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (escena.estado.puedeSeguir) escena.seguir();
+  }
+  return {
+    escena,
+    vuelo,
+    dichas: v.dichas,
+    tramos,
+    cambios,
+    altitudA: (x) => altitudes.find((a) => a.t >= x)?.altitud ?? 0,
+  };
+}
+
+describe("lo que se oye cambiar se cuenta: el gas de los motores y los oídos", () => {
+  const m = volarApuntandoLaPotencia();
+  const r = m.escena.registro;
+  const cuando = (clave: string): number => r.find((d) => d.clave === clave)?.desde ?? NaN;
+  const cuantas = (clave: string): number => r.filter((d) => d.clave === clave).length;
+  const cambio = (p: PotenciaDeLinea): number => m.cambios.find((c) => c.potencia === p)?.t ?? NaN;
+  /** Lo que tarda como mucho en notarse, s. Ver `SE_OYE_EL_CAMBIO`. */
+  const A_TIEMPO = 40;
+
+  it("el gas de subida: Ara lo nota en el momento, y lo explica la comandante pasados los diez mil pies", () => {
+    const nota = cuando("inicio.ara.pasaje.menosGas");
+    expect(nota).toBeGreaterThan(cambio("subida"));
+    expect(nota - cambio("subida")).toBeLessThan(A_TIEMPO);
+    const explica = cuando("inicio.mama.pasaje.menosGas");
+    expect(explica).toBeGreaterThan(nota);
+    expect(m.altitudA(explica)).toBeGreaterThanOrEqual(DIEZ_MIL_PIES);
+    // Una vez cada cosa, y la explicación por la megafonía, para todo el pasaje.
+    expect(cuantas("inicio.ara.pasaje.menosGas")).toBe(1);
+    expect(cuantas("inicio.mama.pasaje.menosGas")).toBe(1);
+    expect(LINEAS_DEL_PASAJE.find((l) => l.clave === "inicio.mama.pasaje.menosGas")?.megafonia).toBe(true);
+  });
+
+  it("el ralentí al empezar a bajar: Ara lo nota, la comandante dice que se baja, y después por qué", () => {
+    const nota = cuando("inicio.ara.pasaje.ralenti");
+    expect(nota).toBeGreaterThan(cambio("ralenti"));
+    expect(nota - cambio("ralenti")).toBeLessThan(A_TIEMPO);
+    expect(nota).toBeLessThan(cuando("comandante.descenso"));
+    // Y el porqué del ralentí —para bajar no se apagan los motores—, por encima de los diez mil pies.
+    const porque = cuando("inicio.mama.pasaje.bajando");
+    expect(porque).toBeGreaterThan(nota);
+    expect(m.altitudA(porque)).toBeGreaterThanOrEqual(DIEZ_MIL_PIES);
+    // En el primer rato tranquilo: lo primero que se cuenta después de los oídos, salvo lo señalado por la ventanilla.
+    const entreMedias = r.filter((d) => d.desde > cuando("inicio.ara.pasaje.bostezo") && d.desde < cuando("inicio.ara.pasaje.preguntaBajar"));
+    expect(entreMedias.map((d) => d.clave).filter((c) => !/^(ventanilla|inicio\.ara\.pasaje\.(teide|garajonay|orotava|loVeo)$)/.test(c))).toEqual([]);
+  });
+
+  it("y los motores que suben con el tren: Ara lo nota después del tren, y lo explica la comandante al llegar, con la reversa", () => {
+    const nota = cuando("inicio.ara.pasaje.masGas");
+    expect(nota).toBeGreaterThan(cambio("aproximacion"));
+    expect(nota - cambio("aproximacion")).toBeLessThan(A_TIEMPO);
+    // Sin pisar al tren: después de «¡otro ruido abajo!» y de su plano.
+    expect(nota).toBeGreaterThan(cuando("inicio.ara.pasaje.ruedas"));
+    const tren = m.escena.estado.planos.find((p) => p.plano === "fuera-tren")!;
+    expect(nota - tren.desde).toBeGreaterThanOrEqual(DURA_EL_PLANO["fuera-tren"]);
+    // Y la explicación, en tierra, detrás de la de la reversa y antes de la despedida.
+    const explica = cuando("inicio.mama.pasaje.masGas");
+    expect(explica).toBeGreaterThan(cuando("inicio.mama.pasaje.reversa"));
+    expect(explica).toBeLessThan(cuando("tripulacion.llegada"));
+    expect(cuantas("inicio.mama.pasaje.masGas")).toBe(1);
+  });
+
+  it("el plop de los oídos: lo explica una vez la tripulante en persona, al llegar con el servicio", () => {
+    const plop = cuando("inicio.ara.pasaje.plop");
+    expect(plop).toBeGreaterThan(0);
+    for (const c of ["inicio.tripulacion.pasaje.cerca.plop1", "inicio.tripulacion.pasaje.cerca.plop2"]) {
+      expect(cuantas(c), c).toBe(1);
+      expect(cuando(c), c).toBeGreaterThan(cuando("tripulacion.servicio"));
+      expect(esDeCerca(LINEAS_DEL_PASAJE.find((l) => l.clave === c)!), c).toBe(true);
+    }
+    expect(cuando("inicio.tripulacion.pasaje.cerca.plop1")).toBeGreaterThan(cuando("inicio.ara.pasaje.nubesSostiene"));
+    expect(m.escena.plopExplicado).toBe(true);
+  });
+
+  it("y al bajar, Ara ya sabe que es al revés: no pregunta lo que le explicaron, y el anuncio sigue para todos", () => {
+    expect(cuantas("inicio.ara.pasaje.oidos")).toBe(0);
+    expect(cuantas("inicio.ara.pasaje.oidosAlReves")).toBe(1);
+    expect(cuando("inicio.ara.pasaje.oidosAlReves")).toBeGreaterThan(cuando("inicio.tripulacion.pasaje.cerca.plop2"));
+    expect(cuantas("inicio.tripulacion.pasaje.oidos")).toBe(1);
+  });
+
+  it("sin saber qué suena, no se cuenta ningún cambio; y lo que se notó tarde, tampoco", () => {
+    const sinPotencia = volarElMedido(
+      new (class extends VueloMedido {
+        override get lectura(): LecturaDelPasaje {
+          const { potencia: _p, conEstaPotencia: _c, ...resto } = super.lectura;
+          return resto;
+        }
+      })(),
+    );
+    const tarde = volarElMedido(
+      new (class extends VueloMedido {
+        override get lectura(): LecturaDelPasaje {
+          return { ...super.lectura, conEstaPotencia: this.conEstaPotencia + A_TIEMPO };
+        }
+      })(),
+    );
+    const DEL_GAS = [
+      "inicio.ara.pasaje.menosGas",
+      "inicio.mama.pasaje.menosGas",
+      "inicio.ara.pasaje.ralenti",
+      "inicio.ara.pasaje.masGas",
+      "inicio.mama.pasaje.masGas",
+    ];
+    for (const vuelo of [sinPotencia, tarde]) {
+      const claves = vuelo.dichas.map((d) => d.linea.clave);
+      for (const c of DEL_GAS) expect(claves, c).not.toContain(c);
+      // Y la escena acaba igual, sin saltarse nada.
+      expect(vuelo.escena.estado.terminado).toBe(true);
+      expect(vuelo.escena.estado.saltados).toEqual([]);
+    }
   });
 });

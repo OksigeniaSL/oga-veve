@@ -1117,7 +1117,7 @@ import {
   type Suelto,
 } from "./audio/momentos-de-crucero";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
-import { HiloMusical } from "./audio/hilo-musical";
+import { BAJANDO_A_LA_PISTA, HiloMusical } from "./audio/hilo-musical";
 import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
   LlamadasDelPasaje,
@@ -7100,6 +7100,12 @@ export class Game {
        * tiempo. Ver `puedeDormirse` en `flight/inicio-pasaje.ts`.
        */
       ...this.ratosDelVuelo(linea),
+      /*
+       * **Y los motores**, lo que suenan y desde cuándo: la escena cuenta cada
+       * cambio que se oye. Ver `PotenciaDeLinea` en `flight/vuelo-de-linea.ts`.
+       */
+      potencia: e.potencia,
+      conEstaPotencia: e.conEstaPotencia,
     };
     const permisos = escena.paso(dt, lectura);
     const manos = tripulacion.paso(dt, linea, permisos);
@@ -16789,7 +16795,7 @@ export class Game {
     const estados = this.flight.motoresAhora?.();
     this.audio.update(
       this.flight.state,
-      this.input.controls,
+      this.mandosQueSeOyen,
       this.aircraft.aero.alphaStall * 0.85,
       TRAQUETEO[this.superficie],
       // Con uno parado, se oye la parte que va. Ver `enMarcha` en `audio.ts`.
@@ -26175,11 +26181,11 @@ export class Game {
   private readonly hiloMusical = new HiloMusical();
 
   /**
-   * **El hilo musical**: por el altavoz del techo al embarcar y al llegar al
-   * puesto con los motores apagados, solo donde hay pasaje, y callado en
-   * cuanto habla la megafonía o suena una llamada de cabina. La de Paraguay
-   * o la de Canarias según el habla de donde se está. Ver
-   * `audio/hilo-musical.ts`.
+   * **El hilo musical**: por el altavoz del techo al embarcar, y al llegar
+   * desde la última parte de la bajada hasta el puesto —no con los motores
+   * apagados—, solo donde hay pasaje, y callado mientras habla la megafonía o
+   * suena una llamada de cabina. La de Paraguay o la de Canarias según el
+   * habla de donde se está. Ver `audio/hilo-musical.ts`.
    */
   private ponerElHiloMusical(dt: number): void {
     const escena = this.inicio instanceof VueloDePasaje ? this.inicio : null;
@@ -26207,6 +26213,9 @@ export class Game {
         fase: this.faseDeAhora as Fase,
         habla: hablaDe(this.elCampoDeAhora().aerodrome?.id),
         megafonia,
+        // Pasado el punto de descenso del plan y por debajo de los diez mil pies.
+        bajandoALaPista:
+          this.navegacion.bajando && !this.flight.state.onGround && this.flight.state.position.y < BAJANDO_A_LA_PISTA,
       }, dt),
     );
   }
@@ -26233,6 +26242,19 @@ export class Game {
       !conTripulacion(this.aircraft.mass) ||
       !conPasaje(this.aircraft.mass)
     );
+  }
+
+  /**
+   * **Los mandos, como se oyen**: los de siempre, y en la escena de pasaje
+   * con el empuje que pone la tripulación en lugar del gas. En el peldaño de
+   * la escena el gas es una palanca de velocidad —ver `gasEsVelocidad`—, y al
+   * oído sonaba a eso: el gas de despegue fuera a quince metros del suelo, y
+   * la bajada entera con el ruido del crucero. Desde el asiento se oye lo que
+   * dan los motores de verdad. Ver `ManosDeLinea.empuje`.
+   */
+  private get mandosQueSeOyen(): ControlInputs {
+    const empuje = this.inicio instanceof VueloDePasaje ? this.manosDeLinea?.empuje : undefined;
+    return empuje === undefined ? this.input.controls : { ...this.input.controls, throttle: empuje };
   }
 
   /** La lista de después del aterrizaje leída en este vuelo, con su hora. Para el banco. */
