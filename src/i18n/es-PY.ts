@@ -3911,7 +3911,7 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.salidaAla":
     "En los aviones más grandes, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. Este es más cortito, y sus salidas son las puertas.",
   "inicio.mama.pasaje.viento":
-    "Hoy el viento viene del noreste, y los aviones despegan siempre que pueden con el viento por delante, nunca por detrás. Por eso salimos hacia el este, y luego damos la vuelta hacia La Palma.",
+    "Hoy el viento viene del noreste, y los aviones despegan, siempre que pueden, con el viento por delante: así suben antes. Por eso salimos hacia el este, y luego damos la vuelta hacia La Palma.",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

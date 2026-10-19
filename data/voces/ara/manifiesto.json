@@ -307,6 +307,10 @@
       "ms": 5707,
       "h": "8c7aa70e4e"
     },
+    "inicio.ara.pasaje.mascaraAhora": {
+      "ms": 2110,
+      "h": "9a37a61908"
+    },
     "inicio.ara.pasaje.meneo": {
       "ms": 5307,
       "h": "df073d2f79"
@@ -406,6 +410,10 @@
     "inicio.ara.pasaje.ruedas": {
       "ms": 3807,
       "h": "4e603d93a2"
+    },
+    "inicio.ara.pasaje.salidaAla": {
+      "ms": 2764,
+      "h": "4dd67d1858"
     },
     "inicio.ara.pasaje.seLevantan": {
       "ms": 3907,
@@ -693,6 +701,9 @@
     "inicio.ara.pasaje.masGas": [
       "inicio.ara.pasaje.masGas"
     ],
+    "inicio.ara.pasaje.mascaraAhora": [
+      "inicio.ara.pasaje.mascaraAhora"
+    ],
     "inicio.ara.pasaje.meneo": [
       "inicio.ara.pasaje.meneo"
     ],
@@ -767,6 +778,9 @@
     ],
     "inicio.ara.pasaje.ruedas": [
       "inicio.ara.pasaje.ruedas"
+    ],
+    "inicio.ara.pasaje.salidaAla": [
+      "inicio.ara.pasaje.salidaAla"
     ],
     "inicio.ara.pasaje.seLevantan": [
       "inicio.ara.pasaje.seLevantan"

@@ -2401,7 +2401,7 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.salidaAla":
     "On bigger planes, yes: they have exit windows over the wing, with a sign above them. This one is shorter, and its exits are the doors.",
   "inicio.mama.pasaje.viento":
-    "Today the wind is from the north-east, and planes take off with the wind ahead of them whenever they can, never from behind. That's why we head east, and then turn back towards La Palma.",
+    "Today the wind is from the north-east, and whenever they can, planes take off with the wind ahead of them: it helps them climb sooner. That's why we head east, and then turn back towards La Palma.",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

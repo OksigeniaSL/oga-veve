@@ -1663,6 +1663,10 @@
       "ms": 9107,
       "h": "9989cf97a2"
     },
+    "inicio.mama.pasaje.viento": {
+      "ms": 9607,
+      "h": "a7a7523503"
+    },
     "inicio.mama.pasaje.vueltaEnPista": {
       "ms": 9207,
       "h": "2f3cac151f"
@@ -3380,6 +3384,9 @@
     ],
     "inicio.mama.pasaje.permisoDeVuelta": [
       "inicio.mama.pasaje.permisoDeVuelta"
+    ],
+    "inicio.mama.pasaje.viento": [
+      "inicio.mama.pasaje.viento"
     ]
   }
 }

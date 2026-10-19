@@ -17907,7 +17907,7 @@
     "id": "inicio.mama.pasaje.viento",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Hoy el viento viene del noreste, y los aviones despegan siempre que pueden con el viento por delante, nunca por detrás. Por eso salimos hacia el este, y luego damos la vuelta hacia La Palma.",
+    "texto": "Hoy el viento viene del noreste, y los aviones despegan, siempre que pueden, con el viento por delante: así suben antes. Por eso salimos hacia el este, y luego damos la vuelta hacia La Palma.",
     "para": "el modo inicio, de pasaje: la comandante, rodando, por qué se sale hacia el este con el viento de hoy",
     "ajustes": {
       "stability": 0.35,

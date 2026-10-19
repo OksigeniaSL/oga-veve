@@ -71,6 +71,10 @@
       "ms": 7007,
       "h": "656396dbeb"
     },
+    "inicio.tripulacion.pasaje.cerca.mascaraAhora": {
+      "ms": 14007,
+      "h": "38b2b267ce"
+    },
     "inicio.tripulacion.pasaje.cerca.motor1": {
       "ms": 5507,
       "h": "f4883ce8d4"
@@ -123,6 +127,10 @@
       "ms": 7807,
       "h": "3e8accb183"
     },
+    "inicio.tripulacion.pasaje.cerca.salidaAla": {
+      "ms": 10007,
+      "h": "98aa0f3672"
+    },
     "inicio.tripulacion.pasaje.cerca.seria": {
       "ms": 12907,
       "h": "06b6338b4e"
@@ -148,8 +156,8 @@
       "h": "53903391d8"
     },
     "inicio.tripulacion.pasaje.demo.chaleco": {
-      "ms": 11407,
-      "h": "6a48b3959e"
+      "ms": 16607,
+      "h": "31c28328fb"
     },
     "inicio.tripulacion.pasaje.demo.cinturon": {
       "ms": 8307,
@@ -160,12 +168,12 @@
       "h": "7e08454b68"
     },
     "inicio.tripulacion.pasaje.demo.mascaras": {
-      "ms": 14607,
-      "h": "62143dbdd0"
+      "ms": 15607,
+      "h": "4c1805c6a9"
     },
     "inicio.tripulacion.pasaje.demo.salidas": {
-      "ms": 9507,
-      "h": "b86ef050a9"
+      "ms": 15207,
+      "h": "ed8a45729c"
     },
     "inicio.tripulacion.pasaje.demo.tarjeta": {
       "ms": 9707,
@@ -474,6 +482,12 @@
     ],
     "inicio.tripulacion.pasaje.cerca.banoATiempo": [
       "inicio.tripulacion.pasaje.cerca.banoATiempo"
+    ],
+    "inicio.tripulacion.pasaje.cerca.mascaraAhora": [
+      "inicio.tripulacion.pasaje.cerca.mascaraAhora"
+    ],
+    "inicio.tripulacion.pasaje.cerca.salidaAla": [
+      "inicio.tripulacion.pasaje.cerca.salidaAla"
     ]
   }
 }
