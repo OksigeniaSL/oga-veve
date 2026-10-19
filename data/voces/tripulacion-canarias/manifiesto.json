@@ -27,6 +27,10 @@
       "ms": 7307,
       "h": "c67497cd07"
     },
+    "inicio.tripulacion.pasaje.cerca.gracias": {
+      "ms": 7407,
+      "h": "6494ef94b3"
+    },
     "inicio.tripulacion.pasaje.cerca.hola": {
       "ms": 5107,
       "h": "195caadc2f"
@@ -51,6 +55,10 @@
       "ms": 6607,
       "h": "4b1410c892"
     },
+    "inicio.tripulacion.pasaje.cerca.maleteros": {
+      "ms": 7007,
+      "h": "656396dbeb"
+    },
     "inicio.tripulacion.pasaje.cerca.motor1": {
       "ms": 5507,
       "h": "f4883ce8d4"
@@ -70,6 +78,14 @@
     "inicio.tripulacion.pasaje.cerca.nubes3": {
       "ms": 8207,
       "h": "2074694fce"
+    },
+    "inicio.tripulacion.pasaje.cerca.oficio1": {
+      "ms": 12507,
+      "h": "37b956427f"
+    },
+    "inicio.tripulacion.pasaje.cerca.oficio2": {
+      "ms": 11407,
+      "h": "5f59ce62c4"
     },
     "inicio.tripulacion.pasaje.cerca.papi": {
       "ms": 6107,
@@ -94,6 +110,10 @@
     "inicio.tripulacion.pasaje.cerca.ruta": {
       "ms": 7807,
       "h": "3e8accb183"
+    },
+    "inicio.tripulacion.pasaje.cerca.seria": {
+      "ms": 12907,
+      "h": "06b6338b4e"
     },
     "inicio.tripulacion.pasaje.cerca.techo": {
       "ms": 6507,
@@ -418,6 +438,21 @@
     ],
     "inicio.tripulacion.pasaje.cerca.plop2": [
       "inicio.tripulacion.pasaje.cerca.plop2"
+    ],
+    "inicio.tripulacion.pasaje.cerca.gracias": [
+      "inicio.tripulacion.pasaje.cerca.gracias"
+    ],
+    "inicio.tripulacion.pasaje.cerca.maleteros": [
+      "inicio.tripulacion.pasaje.cerca.maleteros"
+    ],
+    "inicio.tripulacion.pasaje.cerca.seria": [
+      "inicio.tripulacion.pasaje.cerca.seria"
+    ],
+    "inicio.tripulacion.pasaje.cerca.oficio1": [
+      "inicio.tripulacion.pasaje.cerca.oficio1"
+    ],
+    "inicio.tripulacion.pasaje.cerca.oficio2": [
+      "inicio.tripulacion.pasaje.cerca.oficio2"
     ]
   }
 }

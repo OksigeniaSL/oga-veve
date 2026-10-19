@@ -1651,6 +1651,10 @@
       "ms": 11707,
       "h": "62a2073de8"
     },
+    "inicio.mama.pasaje.permisoDeVuelta": {
+      "ms": 7207,
+      "h": "2b3e12ebb3"
+    },
     "inicio.mama.pasaje.reversa": {
       "ms": 9907,
       "h": "a598794221"
@@ -1658,6 +1662,10 @@
     "inicio.mama.pasaje.teide": {
       "ms": 9107,
       "h": "9989cf97a2"
+    },
+    "inicio.mama.pasaje.vueltaEnPista": {
+      "ms": 8607,
+      "h": "530603fd80"
     },
     "ventanilla.anaga": {
       "ms": 9907,
@@ -3366,6 +3374,12 @@
     ],
     "inicio.mama.pasaje.masGas": [
       "inicio.mama.pasaje.masGas"
+    ],
+    "inicio.mama.pasaje.vueltaEnPista": [
+      "inicio.mama.pasaje.vueltaEnPista"
+    ],
+    "inicio.mama.pasaje.permisoDeVuelta": [
+      "inicio.mama.pasaje.permisoDeVuelta"
     ]
   }
 }

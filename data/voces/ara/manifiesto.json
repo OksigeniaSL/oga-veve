@@ -263,6 +263,10 @@
       "ms": 3807,
       "h": "cd1e41c6a7"
     },
+    "inicio.ara.pasaje.luzApagada": {
+      "ms": 4207,
+      "h": "5a74922b18"
+    },
     "inicio.ara.pasaje.mapa": {
       "ms": 4807,
       "h": "cda15d969f"
@@ -391,6 +395,10 @@
       "ms": 3807,
       "h": "4e603d93a2"
     },
+    "inicio.ara.pasaje.seLevantan": {
+      "ms": 3907,
+      "h": "ae715a6d8a"
+    },
     "inicio.ara.pasaje.secador": {
       "ms": 5907,
       "h": "9f598d209b"
@@ -423,6 +431,10 @@
       "ms": 5307,
       "h": "8c60b34329"
     },
+    "inicio.ara.pasaje.uniforme": {
+      "ms": 4807,
+      "h": "d07e6184a7"
+    },
     "inicio.ara.pasaje.ventanilla": {
       "ms": 5707,
       "h": "b7708d4bed"
@@ -430,6 +442,10 @@
     "inicio.ara.pasaje.volando": {
       "ms": 4407,
       "h": "7ea7f39696"
+    },
+    "inicio.ara.pasaje.vueltaEnPista": {
+      "ms": 4507,
+      "h": "15f3f1de00"
     },
     "inicio.ara.pasaje.yaCasi": {
       "ms": 3507,
@@ -632,6 +648,9 @@
     "inicio.ara.pasaje.loVeo": [
       "inicio.ara.pasaje.loVeo"
     ],
+    "inicio.ara.pasaje.luzApagada": [
+      "inicio.ara.pasaje.luzApagada"
+    ],
     "inicio.ara.pasaje.mapa": [
       "inicio.ara.pasaje.mapa"
     ],
@@ -728,6 +747,9 @@
     "inicio.ara.pasaje.ruedas": [
       "inicio.ara.pasaje.ruedas"
     ],
+    "inicio.ara.pasaje.seLevantan": [
+      "inicio.ara.pasaje.seLevantan"
+    ],
     "inicio.ara.pasaje.secador": [
       "inicio.ara.pasaje.secador"
     ],
@@ -752,11 +774,17 @@
     "inicio.ara.pasaje.tren": [
       "inicio.ara.pasaje.tren"
     ],
+    "inicio.ara.pasaje.uniforme": [
+      "inicio.ara.pasaje.uniforme"
+    ],
     "inicio.ara.pasaje.ventanilla": [
       "inicio.ara.pasaje.ventanilla"
     ],
     "inicio.ara.pasaje.volando": [
       "inicio.ara.pasaje.volando"
+    ],
+    "inicio.ara.pasaje.vueltaEnPista": [
+      "inicio.ara.pasaje.vueltaEnPista"
     ],
     "inicio.ara.pasaje.yaCasi": [
       "inicio.ara.pasaje.yaCasi"

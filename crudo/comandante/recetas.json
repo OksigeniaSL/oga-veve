@@ -1456,5 +1456,11 @@
   ],
   "inicio.mama.pasaje.masGas": [
     "inicio.mama.pasaje.masGas"
+  ],
+  "inicio.mama.pasaje.vueltaEnPista": [
+    "inicio.mama.pasaje.vueltaEnPista"
+  ],
+  "inicio.mama.pasaje.permisoDeVuelta": [
+    "inicio.mama.pasaje.permisoDeVuelta"
   ]
 }
