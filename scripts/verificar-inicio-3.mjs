@@ -134,15 +134,27 @@
  *   que se nombra bajando salgan sin él delante; y `OGA_SOLO_LAMINA=1` solo
  *   mira la lámina con el kit que se abre y se mueve, en un minuto.
  *
- * **El botón ⏩** (19-10-2026): la ronda de siempre mira que sale solo cuando
- * toca —nunca en tierra, ni con Ara durmiendo, ni con la cabina preparada— y
- * no lo pulsa, para seguir midiendo el vuelo sin adelantar. Con
- * `OGA_ADELANTAR=1` lo pulsa siempre que sale, como quien se aburre, y mide lo
- * que cuesta: mientras adelanta, el reloj del juego vuelve a ×1 para que lo
- * que se ve sea lo de quien juega —el botón a sus veces, con el mundo
- * pintado—, y se cuentan los fotogramas, los lentos y las teselas que van
- * bajando. Y al final, cuánto dura el vuelo para quien juega, con la siesta y
- * el botón: el reloj de quien juega, ver `relojDeQuienJuega` en `game.ts`.
+ * **El modo rápido ⏩** (19-10-2026): la ronda de siempre mira que el botón
+ * sale solo cuando toca —en el aire, nunca en tierra, ni con Ara durmiendo,
+ * ni desde que empieza la llegada— y no lo pulsa, para seguir midiendo el
+ * vuelo sin adelantar. Con `OGA_ADELANTAR=1` lo pone **una vez, en cuanto
+ * sale**, como quien se aburre, y lo deja puesto: mira que el vuelo corre en
+ * los ratos callados y se para antes de cada cosa que se cuenta, que por
+ * debajo de los diez mil pies bajando no corre nunca —ahí se apaga solo y el
+ * botón se va— y mide lo que cuesta: mientras corre, el reloj del juego vuelve
+ * a ×1 para que lo que se ve sea lo de quien juega —el modo a sus veces, con
+ * el mundo pintado—, y se cuentan los fotogramas, los lentos y las teselas que
+ * van bajando. Y al final, cuánto dura el vuelo para quien juega y cuánto de
+ * él es la llegada a su paso: el reloj de quien juega, ver
+ * `relojDeQuienJuega` en `game.ts`.
+ *
+ * **Las salidas y lo que se pregunta después** (puntos 312 y 313): que la
+ * demostración dice las salidas que lleva el avión —las de su hoja de tipo,
+ * y las puertas del modelo—, que al decirlas Ara se asoma al pasillo y se ve
+ * el letrero «EXIT» de la más cercana, entero, sin nada delante y sin la
+ * lámina encima, con las tiras del suelo, y que lo de las máscaras y la
+ * salida sobre el ala se pregunta en la revisión, antes del despegue. Y que
+ * la comandante cuenta rodando por qué se sale hacia el este.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
@@ -154,7 +166,7 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5397);
 const FOTOS = process.env.OGA_FOTOS ?? null;
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });
 const VECES = Number(process.env.OGA_VECES ?? 12);
-/** Si se pulsa el ⏩ siempre que sale. Ver la cabecera. */
+/** Si se pone el modo rápido ⏩ en cuanto sale. Ver la cabecera. */
 const ADELANTAR = process.env.OGA_ADELANTAR === "1";
 /** **Lo que tiene que adelantar la siesta, como poco**, km por la ruta: que al despertar se note. */
 const SIESTA_KM = 25;
@@ -263,6 +275,8 @@ const MOMENTOS = [
   "motores",
   "bienvenida",
   "demostracion",
+  "demoSalidas",
+  "demoEquipo",
   "revision",
   "espera",
   "despegue",
@@ -421,7 +435,14 @@ async function elVuelo() {
    * escena, las veces que se pulsó, las teselas que llegaron a ir bajando a
    * la vez y el reloj de quien juega en cada tramo.
    */
-  const adelanto = { visto: 0, mal: [], hablando: [], desacuerdo: 0, pulsadas: 0, teselas: 0, aUno: false, reloj: [] };
+  const adelanto = { visto: 0, mal: [], hablando: [], desacuerdo: 0, pulsadas: 0, teselas: 0, aUno: false, reloj: [], enLaLlegada: [], llegada: null, despues: [], foto: false, puestoEn: null };
+  /**
+   * **Ara asomada al pasillo** (punto 312): las muestras con el plano puesto y
+   * sin velo, las buenas —el letrero entero y sin nada delante, la pared de la
+   * ventanilla apagada y las tiras a la vista—, lo que tapó la lámina y lo que
+   * decía el subtítulo de las salidas.
+   */
+  const pasillo = { muestras: 0, buenas: 0, peor: null, lamina: [], texto: null, foto: false };
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -578,28 +599,60 @@ async function elVuelo() {
     // ── El botón ⏩: solo cuando toca, y nadie habla adelantando ──
     const ad = e.adelanto;
     if (ad) {
+      // Lo que se va solo, al empezar la llegada, se ve irse un momento: eso no es desacuerdo.
+      const seVa = ad.llegada !== null && ad.seApagoSolo;
       if (v.adelantar) adelanto.visto++;
-      if (v.adelantar !== !!ad.sale || v.adelantarPulsado !== !!ad.adelantando) adelanto.desacuerdo++;
-      if (v.adelantar && (v.enTierra || e.durmiendo || ["final", "recogida"].includes(tramo) || e.dichos.includes("aproximacion")))
+      if ((v.adelantar !== !!ad.sale && !seVa) || v.adelantarPulsado !== (!!ad.sale && !!ad.puesto)) adelanto.desacuerdo++;
+      if (v.adelantar && !seVa && (v.enTierra || e.durmiendo || ["final", "recogida"].includes(tramo) || e.dichos.includes("aproximacion")))
         adelanto.mal.push(`${tramo} a los ${e.segundos.toFixed(0)} s${e.durmiendo ? " durmiendo" : ""}`);
       if (ad.adelantando && e.hablando && e.linea) adelanto.hablando.push(`${e.linea.clave} a los ${e.segundos.toFixed(0)} s`);
       if (ad.adelantando) adelanto.teselas = Math.max(adelanto.teselas, v.teselasBajando ?? 0);
-      if (ADELANTAR && ad.sale && !ad.adelantando && v.adelantar) {
+      // Por debajo de los diez mil pies bajando, nunca: la llegada se vive a su paso.
+      const altura = v.pos?.y ?? 0;
+      if (ad.adelantando && ["bajada", "final", "recogida"].includes(tramo) && altura < 3048)
+        adelanto.enLaLlegada.push(`${tramo} a ${Math.round(altura / 0.3048)} ft, a los ${e.segundos.toFixed(0)} s`);
+      if (ad.llegada !== null && adelanto.llegada === null)
+        adelanto.llegada = { t: ad.llegada, pies: Math.round(altura / 0.3048), tramo, quienJuega: i.adelanto?.quienJuega ?? null, pared: Date.now() };
+      // Y desde ahí, el botón se va —en un momento— y no vuelve.
+      if (adelanto.llegada && Date.now() - adelanto.llegada.pared > 2500 && (v.adelantar || ad.sale || ad.puesto || ad.adelantando))
+        adelanto.despues.push(`${tramo} a los ${e.segundos.toFixed(0)} s`);
+      if (ADELANTAR && ad.sale && !ad.puesto && adelanto.pulsadas === 0 && v.adelantar) {
         const caja = await page.evaluate(() => {
           const r = document.querySelector('[data-hud="adelantar"]')?.getBoundingClientRect();
           return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null;
         });
         if (caja) {
-          // Lo que se ve adelantando es lo de quien juega: el reloj del juego, a ×1.
-          await page.evaluate(() => globalThis.__oga.acelerar(1));
-          adelanto.aUno = true;
           await page.mouse.click(caja.x, caja.y);
           adelanto.pulsadas++;
+          adelanto.puestoEn = { t: e.segundos, tramo, pies: Math.round(altura / 0.3048) };
         }
       }
-      if (adelanto.aUno && !ad.adelantando && !ad.sale) {
+      // Lo que se ve corriendo es lo de quien juega: el reloj del juego, a ×1; y parado, el del banco.
+      if (ADELANTAR && ad.adelantando && !adelanto.aUno) {
+        await page.evaluate(() => globalThis.__oga.acelerar(1));
+        adelanto.aUno = true;
+      } else if (adelanto.aUno && !ad.adelantando) {
         await page.evaluate((x) => globalThis.__oga.acelerar(x), VECES);
         adelanto.aUno = false;
+      }
+      if (FOTOS && ad.adelantando && !adelanto.foto && (Number(i.velo) || 0) < 0.02 && v.adelantarPulsado) {
+        adelanto.foto = true;
+        await foto(page, "modo-rapido");
+      }
+    }
+    // ── Ara asomada al pasillo: el letrero de la salida más cercana ──
+    if (e.linea?.clave === "inicio.tripulacion.pasaje.demo.salidas" && i.texto) pasillo.texto = i.texto;
+    if (i.planoVisto === "pasillo" && (Number(i.velo) || 0) < 0.02) {
+      const p = await page.evaluate(() => globalThis.__oga.pasillo?.() ?? null).catch(() => null);
+      pasillo.muestras++;
+      const bien = !!p?.letrero && p.letrero.entero && !p.letrero.tapado && p.colgado && !p.marco && p.tiras.vistas >= 0.3 * p.tiras.de;
+      if (bien) pasillo.buenas++;
+      else pasillo.peor ??= p;
+      const lam = i.ventanita;
+      if (p?.letrero && lam?.caja && sePisan(lam.caja, p.letrero.caja)) pasillo.lamina.push(`${lam.sitio} a los ${e.segundos.toFixed(0)} s`);
+      if (bien && !pasillo.foto) {
+        pasillo.foto = true;
+        await foto(page, "pasillo-exit");
       }
     }
     // ── La siesta de Ara: en cuanto bosteza, se mira entera ──
@@ -796,7 +849,8 @@ async function elVuelo() {
   const planos = e?.planos ?? [];
   let aMedia = 0;
   for (let k = 1; k < planos.length; k++) {
-    const corte = planos[k - 1].plano.startsWith("fuera-") || planos[k].plano.startsWith("fuera-");
+    // Lo mismo que `esCorte`: de dentro a fuera y al revés, y de la ventanilla al pasillo y de vuelta.
+    const corte = [planos[k - 1].plano, planos[k].plano].some((x) => x.startsWith("fuera-") || x === "pasillo");
     if (!corte) continue;
     const t0 = planos[k].desde;
     if (registro.some((d) => d.desde < t0 + CORTE - 1e-3 && (d.hasta ?? Infinity) > t0 + 1e-3)) aMedia++;
@@ -824,6 +878,63 @@ async function elVuelo() {
     "la demostración de seguridad, entera, en su orden y antes de «sentados para el despegue»",
     demo.every((x) => x >= 0) && demo.every((x, k) => k === 0 || x > demo[k - 1]) && Math.max(...demo) < claves.indexOf("comandante.despegue"),
     demo.join(" "),
+  );
+  /*
+   * **Las salidas, las de este avión** (punto 312): lo que dijo el subtítulo de
+   * la demostración, lo que dice su hoja de tipo y las puertas del modelo,
+   * delante y detrás del asiento de Ara.
+   */
+  const sal = ultimo?.inicio?.salidas ?? null;
+  const puertasDelante = sal ? sal.puertas.filter((p) => p.hasta < sal.ara).length * 2 : null;
+  const puertasDetras = sal ? sal.puertas.filter((p) => p.desde > sal.ara).length * 2 : null;
+  comprobar(
+    "lo que dice la demostración casa con las salidas del avión: cuatro puertas, dos delante y dos detrás, ninguna sobre el ala",
+    !!sal &&
+      !!pasillo.texto &&
+      /cuatro salidas/.test(pasillo.texto) &&
+      /dos delante y dos detrás/.test(pasillo.texto) &&
+      !/\balas?\b/.test(pasillo.texto) &&
+      sal.declaradas.delante === 2 &&
+      sal.declaradas.detras === 2 &&
+      sal.declaradas.sobreElAla === 0 &&
+      puertasDelante === sal.declaradas.delante &&
+      puertasDetras === sal.declaradas.detras,
+    `«${pasillo.texto ?? "no se leyó"}» · hoja de tipo ${JSON.stringify(sal?.declaradas ?? null)} · puertas del modelo: ${puertasDelante} delante y ${puertasDetras} detrás de Ara`,
+  );
+  const salidasEn = registro.find((d) => d.clave === "inicio.tripulacion.pasaje.demo.salidas");
+  const pasilloEn = (e?.planos ?? []).find((x) => x.plano === "pasillo");
+  comprobar(
+    "al decir las salidas Ara se asoma al pasillo y se ve el letrero EXIT de la más cercana, entero, sin nada delante ni la lámina encima, con las tiras del suelo",
+    vistos.has("pasillo") &&
+      !!salidasEn &&
+      !!pasilloEn &&
+      pasilloEn.desde <= salidasEn.desde &&
+      pasillo.muestras > 0 &&
+      pasillo.buenas >= Math.max(1, 0.8 * pasillo.muestras) &&
+      pasillo.lamina.length === 0,
+    `plano del pasillo a los ${pasilloEn?.desde?.toFixed(1) ?? "?"} s, las salidas a los ${salidasEn?.desde?.toFixed(1) ?? "?"} s · ${pasillo.buenas} de ${pasillo.muestras} muestras buenas${pasillo.peor ? ` · la peor: ${JSON.stringify(pasillo.peor)}` : ""}${pasillo.lamina.length ? ` · la lámina encima: ${pasillo.lamina.slice(0, 2).join(", ")}` : ""}`,
+  );
+  const despegaEn = tramos.find((x) => x.tramo === "carrera")?.t ?? Infinity;
+  const dichaEn = (c) => registro.find((d) => d.clave === c)?.desde ?? null;
+  const preguntas = [
+    "inicio.ara.pasaje.mascaraAhora",
+    "inicio.tripulacion.pasaje.cerca.mascaraAhora",
+    "inicio.ara.pasaje.salidaAla",
+    "inicio.tripulacion.pasaje.cerca.salidaAla",
+  ].map(dichaEn);
+  comprobar(
+    "la pregunta de las mascarillas sale antes del despegue, y la de la salida sobre el ala, con la tripulante al lado en la revisión",
+    preguntas.every((x) => x !== null && x < despegaEn) &&
+      preguntas.every((x, k) => k === 0 || x > preguntas[k - 1]) &&
+      preguntas[0] > (dichaEn("inicio.tripulacion.pasaje.demo.aparatos") ?? Infinity),
+    `${preguntas.map((x) => (x === null ? "?" : x.toFixed(0))).join(" · ")} s · se despega a los ${despegaEn.toFixed(0)} s`,
+  );
+  const vientoEn = registro.find((d) => d.clave === "inicio.mama.pasaje.viento");
+  const rodandoDesde = tramos.find((x) => x.tramo === "rodando")?.t ?? Infinity;
+  comprobar(
+    "por qué se sale hacia el este, contado por la comandante rodando, antes del despegue",
+    !!vientoEn && vientoEn.desde >= rodandoDesde && vientoEn.desde < despegaEn && (vientoEn.como === "sono" || vientoEn.como === "muda"),
+    vientoEn ? `a los ${vientoEn.desde.toFixed(0)} s (${vientoEn.como}) · rodando desde los ${rodandoDesde.toFixed(0)} s` : "no se dijo",
   );
   comprobar(
     "las nubes, explicadas: la comandante para todos y la tripulante a Ara, con su dibujo",
@@ -959,33 +1070,55 @@ async function elVuelo() {
       ? `islas de ${siesta.islas.join(", ")} puntos · el mapa en la ventanita en ${siesta.conElMapa} de ${siesta.muestras} muestras · el avión avanza ${movido.toFixed(1)} de 480 en la hoja`
       : "no se vio",
   );
-  // ── El botón ⏩ (19-10-2026) ──
+  // ── El modo rápido ⏩ (19-10-2026) ──
   const medida = i?.adelanto ?? null;
   const reloj = (tramo) => adelanto.reloj.find((x) => x.tramo === tramo)?.quienJuega ?? null;
   const minutos = (a, b) => (a !== null && b !== null ? ((b - a) / 60).toFixed(1) : "?");
   const finDelVuelo = medida?.quienJuega ?? null;
+  const laLlegada = adelanto.llegada;
   console.log(
-    `  para quien juega${ADELANTAR ? ", pulsando ⏩ siempre que sale" : ", sin pulsar ⏩"}: el vuelo entero ${minutos(reloj("puerta"), finDelVuelo)} min ·` +
-      ` la bajada ${minutos(reloj("bajada"), reloj("final"))} min · de la puerta al despegue ${minutos(reloj("puerta"), reloj("carrera"))} min ·` +
-      ` la subida ${minutos(reloj("subida"), reloj("crucero"))} min · la final y el rodaje ${minutos(reloj("final"), finDelVuelo)} min`,
+    `  para quien juega${ADELANTAR ? ", con el modo rápido puesto en cuanto sale" : ", sin el modo rápido"}: el vuelo entero ${minutos(reloj("puerta"), finDelVuelo)} min ·` +
+      ` de la puerta al despegue ${minutos(reloj("puerta"), reloj("carrera"))} min · la subida ${minutos(reloj("subida"), reloj("crucero"))} min ·` +
+      ` la bajada ${minutos(reloj("bajada"), reloj("final"))} min · la final y el rodaje ${minutos(reloj("final"), finDelVuelo)} min ·` +
+      ` de la llegada (${laLlegada?.pies ?? "?"} ft bajando) a parar, a ×1: ${minutos(laLlegada?.quienJuega ?? null, finDelVuelo)} min` +
+      (adelanto.puestoEn ? ` · puesto a los ${adelanto.puestoEn.t.toFixed(0)} s, ${adelanto.puestoEn.tramo} a ${adelanto.puestoEn.pies} ft` : ""),
   );
   comprobar(
-    "el botón ⏩ sale en los ratos tranquilos, y nunca en tierra, con Ara durmiendo ni desde que se prepara la cabina",
-    adelanto.visto > 0 && adelanto.mal.length === 0 && adelanto.desacuerdo <= 2,
-    `visto en ${adelanto.visto} muestras · mal: ${adelanto.mal.slice(0, 3).join(" · ") || "ninguna"} · la pantalla y la escena, distintas en ${adelanto.desacuerdo}`,
+    "el botón ⏩ sale en el aire, y nunca en tierra, con Ara durmiendo ni desde que empieza la llegada",
+    adelanto.visto > 0 && adelanto.mal.length === 0 && adelanto.desacuerdo <= 2 && adelanto.despues.length === 0,
+    `visto en ${adelanto.visto} muestras · mal: ${adelanto.mal.slice(0, 3).join(" · ") || "ninguna"} · después de la llegada: ${adelanto.despues.slice(0, 3).join(" · ") || "nada"} · la pantalla y la escena, distintas en ${adelanto.desacuerdo}`,
+  );
+  /*
+   * **Y se para antes de cada cosa que se cuenta**: ninguna frase empieza con
+   * el vuelo corriendo, y lo que se dice detrás de cada parada llega con su
+   * rato a ×1. Con los ratos que apunta la escena, que son los de verdad.
+   */
+  const ratos = e?.adelanto?.ratos ?? [];
+  const corriendo = (t) => ratos.some((r) => t > r.desde + 1e-3 && t < (r.hasta ?? Infinity) - 1e-3);
+  const pisadasCorriendo = registro.filter((d) => corriendo(d.desde)).map((d) => `${d.clave}@${d.desde.toFixed(0)}`);
+  const trasParar = ratos.filter((r) => r.hasta !== null).map((r) => (registro.find((d) => d.desde >= r.hasta - 1e-3)?.desde ?? Infinity) - r.hasta);
+  comprobar(
+    "el modo rápido se para antes de cada cosa que se cuenta: nadie empieza a hablar con el vuelo corriendo",
+    adelanto.hablando.length === 0 && pisadasCorriendo.length === 0 && (!ADELANTAR || ratos.length > 0),
+    [...adelanto.hablando, ...pisadasCorriendo].slice(0, 3).join(" · ") ||
+      `${ratos.length} ratos corriendo · de la parada a lo siguiente: ${trasParar.map((d) => (Number.isFinite(d) ? d.toFixed(0) : "fin")).join(" ")} s`,
   );
   comprobar(
-    "y mientras adelanta no habla nadie",
-    adelanto.hablando.length === 0,
-    adelanto.hablando.slice(0, 3).join(" · ") || `${e?.adelanto?.pulsado ?? 0} veces pulsado`,
+    "por debajo de los 10.000 ft bajando nunca se adelanta: ahí se apaga solo y el botón se va",
+    adelanto.enLaLlegada.length === 0 &&
+      !!laLlegada &&
+      laLlegada.tramo === "bajada" &&
+      laLlegada.pies <= 10100 &&
+      (!ADELANTAR || (e?.adelanto?.seApagoSolo === true && e?.adelanto?.puesto === false)),
+    `${adelanto.enLaLlegada.slice(0, 3).join(" · ") || "nunca corriendo ahí"} · la llegada empieza a ${laLlegada?.pies ?? "?"} ft (${laLlegada?.tramo ?? "?"}) · se apagó solo: ${e?.adelanto?.seApagoSolo ?? "?"}`,
   );
   if (ADELANTAR) {
     const fps = medida && medida.pared > 0 ? medida.cuadros / medida.pared : 0;
     comprobar(
-      "pulsado siempre que sale: adelanta con el mundo pintado a 60 fps, y las teselas llegan",
-      adelanto.pulsadas > 0 && (medida?.cuadros ?? 0) > 60 && fps >= 55 && adelanto.teselas <= 12,
+      "puesto en cuanto sale: corre con el mundo pintado a 60 fps, y las teselas llegan",
+      adelanto.pulsadas === 1 && (medida?.cuadros ?? 0) > 60 && fps >= 55 && adelanto.teselas <= 12,
       medida
-        ? `${adelanto.pulsadas} veces · ${medida.cuadros} fotogramas en ${medida.pared.toFixed(1)} s: ${fps.toFixed(1)} fps, ${medida.lentos} de más de 20 ms · pasos por fotograma ${JSON.stringify(medida.porVeces)} · un paso ${medida.pasoMs.toFixed(2)} ms y el dibujo ${medida.dibujoMs.toFixed(1)} ms · teselas bajando a la vez, como mucho ${adelanto.teselas}`
+        ? `${adelanto.pulsadas} vez · ${medida.cuadros} fotogramas en ${medida.pared.toFixed(1)} s: ${fps.toFixed(1)} fps, ${medida.lentos} de más de 20 ms · pasos por fotograma ${JSON.stringify(medida.porVeces)} · un paso ${medida.pasoMs.toFixed(2)} ms y el dibujo ${medida.dibujoMs.toFixed(1)} ms · teselas bajando a la vez, como mucho ${adelanto.teselas}`
         : "sin medida",
     );
   }

@@ -14,6 +14,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { BAJANDO_A_LA_PISTA } from "../audio/hilo-musical";
 import { seLePasoElMomento } from "../audio/megafonia";
 import { ES_PY } from "../i18n/es-PY";
 import { EN } from "../i18n/en";
@@ -21,6 +22,7 @@ import { Conversacion, ENTRE_FRASES, TOPE_DE_UNA_FRASE, type Linea } from "./con
 import { esDeLaEscena, VOZ_DE } from "./inicio";
 import {
   ADELANTO,
+  EMPIEZA_LA_LLEGADA,
   CHARLAS_DEL_PASAJE,
   CORTE_DE_PLANO,
   DIEZ_MIL_PIES,
@@ -369,8 +371,8 @@ describe("el guion", () => {
     for (const m of [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE]) {
       m.lineas.forEach((l, i) => {
         if (!l.megafonia || esAnuncioDeSiempre(l.clave)) return;
-        // El primero de quien habla en ese momento: lo que sigue es el mismo anuncio.
-        const empieza = !m.lineas.slice(0, i).some((x) => x.megafonia && x.quien === l.quien);
+        // El primero de quien habla en ese momento: lo que sigue es el mismo anuncio, y lo que sigue otro momento, también.
+        const empieza = !("sigue" in m && m.sigue) && !m.lineas.slice(0, i).some((x) => x.megafonia && x.quien === l.quien);
         if (empieza) expect(ES_PY[l.clave as keyof typeof ES_PY], `${m.id}: ${l.clave}`).toMatch(/señor|quienes/i);
       });
     }
@@ -452,6 +454,8 @@ describe("cada cosa en su momento del vuelo", () => {
       "motores",
       "bienvenida",
       "demostracion",
+      "demoSalidas",
+      "demoEquipo",
       "revision",
       "espera",
       "despegue",
@@ -1606,33 +1610,43 @@ describe("y con un crucero largo, despierta a Ara la tripulante para bajar", () 
   });
 });
 
-describe("el botón de adelantar (⏩), pulsado siempre que sale", () => {
+describe("el modo rápido (⏩), puesto en cuanto sale y sin tocarlo más", () => {
   const sinBoton = volarElMedido(new VueloMedidoConRatos());
   const ratos: { desde: number; hasta: number }[] = [];
   const mal: string[] = [];
+  const enLaLlegada: string[] = [];
+  const despuesDeLaLlegada: string[] = [];
   let antes = false;
+  let puesto = false;
   const m = volarElMedido(new VueloMedidoConRatos(), (escena, t, l) => {
-    const a = escena.adelanto;
-    if (a.sale && !a.adelantando) escena.adelantar();
+    const b = escena.boton;
+    // Como quien se aburre: lo pone en cuanto sale, una vez, y se olvida.
+    if (b.sale && !puesto) puesto = escena.adelantar();
     const ahora = escena.adelantaAhora;
     if (ahora && !antes) ratos.push({ desde: t, hasta: Infinity });
     if (!ahora && antes) ratos[ratos.length - 1]!.hasta = t;
-    if (ahora && (l.enTierra || escena.durmiendo || l.flaps > 0.05 || (l.tren ?? 0) > 0.05 || escena.dicho("aproximacion")))
+    if (b.sale && (l.enTierra || escena.durmiendo || l.flaps > 0.05 || (l.tren ?? 0) > 0.05 || escena.dicho("aproximacion")))
       mal.push(`${t.toFixed(0)} ${l.tramo}`);
+    const bajandoYa = l.tramo === "bajada" || l.tramo === "final" || l.tramo === "recogida";
+    if (ahora && bajandoYa && l.altitud < EMPIEZA_LA_LLEGADA) enLaLlegada.push(`${t.toFixed(0)} a ${l.altitud.toFixed(0)} m`);
+    const llegada = escena.adelanto.llegada;
+    if (llegada !== null && (b.sale || b.puesto || ahora)) despuesDeLaLlegada.push(`${t.toFixed(0)} ${l.tramo}`);
     antes = ahora;
   });
   const e = m.escena.estado;
   const r = m.escena.registro;
   const adelantando = (t: number): boolean => ratos.some((x) => t > x.desde + 1e-6 && t < x.hasta - 1e-6);
 
-  it("sale en los ratos en que no va a pasar nada, y adelanta un buen rato del vuelo", () => {
+  it("un toque lo deja puesto: corre en cada rato sin nada que contar, muchas más veces que el botón de antes", () => {
     const total = ratos.reduce((s, x) => s + (Math.min(x.hasta, 4000) - x.desde), 0);
     if (entorno?.OGA_PASAJE)
-      console.log(`adelantando ${ratos.length} veces, ${total.toFixed(0)} s: ${ratos.map((x) => `${x.desde.toFixed(0)}–${x.hasta.toFixed(0)}`).join(" ")}`);
-    // El vuelo medido va contado de punta a punta: lo que queda es poco, pero lo hay.
-    expect(ratos.length).toBeGreaterThanOrEqual(3);
+      console.log(`corriendo ${ratos.length} veces, ${total.toFixed(0)} s: ${ratos.map((x) => `${x.desde.toFixed(0)}–${x.hasta.toFixed(0)}`).join(" ")}`);
+    expect(e.adelanto.pulsado).toBe(1);
+    // El de T54, que solo salía con medio minuto callado por delante, corría tres veces en este vuelo.
+    expect(ratos.length).toBeGreaterThanOrEqual(6);
     expect(total).toBeGreaterThan(60);
-    expect(e.adelanto.pulsado).toBe(ratos.length);
+    // Y la escena apunta los mismos ratos que se ven desde fuera.
+    expect(e.adelanto.ratos.length).toBe(ratos.length);
   });
 
   it("nunca en tierra, ni con Ara durmiendo, ni preparando la cabina, ni con el tren o los flaps fuera", () => {
@@ -1640,16 +1654,28 @@ describe("el botón de adelantar (⏩), pulsado siempre que sale", () => {
     expect(ratos.every((x) => x.hasta < Infinity)).toBe(true);
   });
 
-  it("mientras adelanta no habla nadie: lo que se dice, con el botón ya parado", () => {
+  it("mientras corre no habla nadie: lo que se dice, con el vuelo ya a su paso", () => {
     expect(r.filter((d) => adelantando(d.desde)).map((d) => `${d.clave}@${d.desde.toFixed(0)}`)).toEqual([]);
   });
 
   it("se para solo un poco antes de lo siguiente: casi siempre con su rato de llegar", () => {
-    // Lo siguiente que se dice después de cada parada, y cuánto después.
     const despues = ratos.map((x) => (r.find((d) => d.desde >= x.hasta - 1e-6)?.desde ?? Infinity) - x.hasta);
     if (entorno?.OGA_PASAJE) console.log(`después de parar: ${despues.map((d) => d.toFixed(0)).join(" ")}`);
     const aTiempo = despues.filter((d) => d >= ADELANTO.PARA_ANTES / 2);
     expect(aTiempo.length / despues.length).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it("y la llegada se vive a su paso: en los diez mil pies bajando se apaga solo, y el botón ya no vuelve", () => {
+    // Donde empieza la música de llegada: la misma marca.
+    expect(EMPIEZA_LA_LLEGADA).toBe(BAJANDO_A_LA_PISTA);
+    expect(e.adelanto.llegada).not.toBeNull();
+    expect(e.adelanto.seApagoSolo).toBe(true);
+    expect(e.adelanto.puesto).toBe(false);
+    expect(enLaLlegada).toEqual([]);
+    expect(despuesDeLaLlegada).toEqual([]);
+    // Y corrió también bajando, por encima: la parte alta de la bajada, sobre el mar.
+    const bajada = m.tramos.find((x) => x.tramo === "bajada")?.t ?? Infinity;
+    expect(ratos.some((x) => x.desde > bajada)).toBe(true);
   });
 
   it("y no se salta nada: el guion entero y en orden, lo de seguridad y lo que se enseña", () => {

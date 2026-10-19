@@ -25,9 +25,9 @@ Señoras y señores, bienvenidos a bordo. Por favor, tomen asiento y abróchense
 Señoras y señores, si al bajar se les tapan los oídos, es normal: va cambiando la presión del aire. Tragar saliva o bostezar ayuda a destaparlos.
 Señoras y señores, les rogamos un momento de atención: les vamos a mostrar el equipo de seguridad de este avión.
 El cinturón se abrocha metiendo la hebilla hasta oír clic, se ajusta tirando de la cinta y se suelta levantando la tapa.
-Este avión tiene salidas de emergencia delante, detrás y sobre las alas. Unas luces en el suelo del pasillo marcan el camino hasta ellas.
-Si hiciera falta, caerán del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.
-Su chaleco salvavidas está debajo del asiento. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.
+Este avión tiene cuatro salidas de emergencia: dos delante y dos detrás. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.
+Si la cabina perdiera presión, caerán automáticamente del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.
+Su chaleco salvavidas está debajo del asiento, y solo se usa si el avión tuviera que posarse en el agua. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.
 En el bolsillo del asiento de delante tienen la tarjeta de seguridad, con todo esto en dibujos. Por favor, léanla antes del despegue.
 Y los teléfonos y aparatos electrónicos, en modo avión durante todo el vuelo. Muchas gracias por su atención.
 ¡Hola! Déjame ver ese cinturón… ¡perfecto, así se lleva! Y la cortinilla, siempre subida para despegar.
@@ -64,3 +64,5 @@ Y sé apagar un fuego con la capucha para el humo puesta, sacar a todo el mundo 
 ¡Claro que hay! Pero con la luz del cinturón encendida no se levanta nadie. Cuando se apague, te acompaño.
 Ya se apagó la luz del cinturón: ahora sí se puede ir al baño. ¡Vamos, te acompaño!
 ¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.
+No, no: solo caen si el aire de dentro del avión se escapara, y eso pasa poquísimas veces. Si no caen, no hacen falta. Te lo explicamos por si acaso, como el chaleco: ese solo se usa si el avión se posara en el agua.
+En los aviones más grandes, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. Este es más cortito, y sus salidas son las puertas.

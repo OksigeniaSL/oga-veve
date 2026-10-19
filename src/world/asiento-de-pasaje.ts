@@ -165,6 +165,26 @@ export interface Pasaje extends ParDeAsientos {
     readonly izquierda: AsientoDeAra | null;
     readonly derecha: AsientoDeAra | null;
   };
+  /**
+   * **Las ventanillas de cada costado**, de morro a cola, y **las puertas**
+   * del modelo, de morro a cola: lo que necesita la cabina por dentro que se
+   * ve desde el pasillo. Ver `world/pasillo-de-pasaje.ts`.
+   */
+  readonly filas: Readonly<Record<"izquierda" | "derecha", readonly VentanillaDePasaje[]>>;
+  readonly puertas: readonly PuertaDePasaje[];
+}
+
+/**
+ * **Una puerta de pasaje del modelo**, las dos de una fila —la de la izquierda
+ * y su gemela de servicio a la derecha—, en coordenadas del avión: de dónde a
+ * dónde va a lo largo, de abajo arriba y lo que se aparta del eje.
+ */
+export interface PuertaDePasaje {
+  readonly zMin: number;
+  readonly zMax: number;
+  readonly yMin: number;
+  readonly yMax: number;
+  readonly x: number;
 }
 
 const GRADO = Math.PI / 180;
@@ -535,6 +555,11 @@ export function medirElPasaje(raiz: Object3D, grupo: Object3D): Pasaje | null {
         }
       : null,
     ventanillas: lasLosas([ventanillas, ventanita]),
+    filas: {
+      izquierda: filas.izquierda.map((m) => ventanillaDe(m, "izquierda")),
+      derecha: filas.derecha.map((m) => ventanillaDe(m, "derecha")),
+    },
+    puertas: puertasDelModelo(raiz, aGrupo),
     deAra: {
       get izquierda() {
         if (araIzquierda === undefined) araIzquierda = deAra("izquierda");
@@ -931,6 +956,21 @@ function abajoDelTodo(
   );
   const giro = new Quaternion().setFromAxisAngle(e, (grados * Math.PI) / 180);
   return (v) => v.clone().sub(b).applyQuaternion(giro).add(b).add(sale);
+}
+
+/** Las puertas de pasaje: `contorno("puerta…")` en `modelos/`, de morro a cola. */
+const PUERTA = /^puerta[+-]/;
+
+/** **Las puertas del modelo**, de morro a cola. Ver `PuertaDePasaje`. */
+function puertasDelModelo(raiz: Object3D, aGrupo: Matrix4): PuertaDePasaje[] {
+  const puertas: PuertaDePasaje[] = [];
+  raiz.traverse((o) => {
+    if (!(o as Mesh).isMesh || !PUERTA.test(o.name)) return;
+    const c = new Box3().setFromPoints(verticesDe(o, aGrupo));
+    if (c.isEmpty()) return;
+    puertas.push({ zMin: c.min.z, zMax: c.max.z, yMin: c.min.y, yMax: c.max.y, x: Math.max(-c.min.x, c.max.x) });
+  });
+  return puertas.sort((a, b) => a.zMin - b.zMin);
 }
 
 /** La salida sobre el ala de cada lado, si el modelo la lleva. */

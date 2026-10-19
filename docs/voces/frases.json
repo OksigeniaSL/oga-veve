@@ -15892,7 +15892,7 @@
     "id": "inicio.tripulacion.pasaje.demo.salidas",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "Este avión tiene salidas de emergencia delante, detrás y sobre las alas. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
+    "texto": "Este avión tiene cuatro salidas de emergencia: dos delante y dos detrás. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
     "para": "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía",
     "ajustes": {
       "stability": 0.35,
@@ -15906,7 +15906,7 @@
     "id": "inicio.tripulacion.pasaje.demo.mascaras",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "Si hiciera falta, caerán del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.",
+    "texto": "Si la cabina perdiera presión, caerán automáticamente del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.",
     "para": "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía",
     "ajustes": {
       "stability": 0.35,
@@ -15920,7 +15920,7 @@
     "id": "inicio.tripulacion.pasaje.demo.chaleco",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "Su chaleco salvavidas está debajo del asiento. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.",
+    "texto": "Su chaleco salvavidas está debajo del asiento, y solo se usa si el avión tuviera que posarse en el agua. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.",
     "para": "el modo inicio, de pasaje: la tripulación de cabina de Canarias, por la megafonía",
     "ajustes": {
       "stability": 0.35,
@@ -17874,5 +17874,61 @@
     "idioma": "es-PY",
     "texto": "¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.",
     "para": "el modo inicio, de pasaje: la tripulante, bajando con la luz encendida: Ara fue justo a tiempo"
+  },
+  {
+    "id": "inicio.ara.pasaje.mascaraAhora",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Hay que ponerse la máscara ahora?",
+    "para": "el modo inicio, de pasaje: Ara pregunta, después de la demostración, si hay que ponerse ya la máscara",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.salidaAla",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Y por la ventanilla no se sale, sobre el ala?",
+    "para": "el modo inicio, de pasaje: Ara pregunta si se sale por la ventanilla, sobre el ala",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.viento",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Hoy el viento viene del noreste, y los aviones despegan siempre que pueden con el viento por delante, nunca por detrás. Por eso salimos hacia el este, y luego damos la vuelta hacia La Palma.",
+    "para": "el modo inicio, de pasaje: la comandante, rodando, por qué se sale hacia el este con el viento de hoy",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.mascaraAhora",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "No, no: solo caen si el aire de dentro del avión se escapara, y eso pasa poquísimas veces. Si no caen, no hacen falta. Te lo explicamos por si acaso, como el chaleco: ese solo se usa si el avión se posara en el agua.",
+    "para": "el modo inicio, de pasaje: la tripulante, con calma: las máscaras y el chaleco son por si acaso"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.salidaAla",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "En los aviones más grandes, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. Este es más cortito, y sus salidas son las puertas.",
+    "para": "el modo inicio, de pasaje: la tripulante, las salidas sobre el ala son de los aviones más largos"
   }
 ]

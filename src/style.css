@@ -980,13 +980,15 @@ body {
 }
 
 /*
- * ── El botón ⏩ de la escena de pasaje ──
+ * ── El botón ⏩ de la escena de pasaje: el modo rápido ──
  *
  * Al lado de la pausa, en su misma fila, como en cualquier reproductor: ⏸ y
  * ⏩. Fuera de la columna, colgado a su derecha, para no mover el cartel del
  * cinturón cada vez que sale y se va. Al salir, asoma con un saltito, que hay
- * algo nuevo; pulsado, se enciende en ocre y **las flechas corren**: se ve
- * que está adelantando sin leer nada. Ver `ponerAdelantar` en `ui/hud.ts`.
+ * algo nuevo; puesto, se enciende en ocre, y **las flechas corren** cuando el
+ * vuelo corre: se ve sin leer nada. Al empezar la llegada se apaga solo:
+ * vuelve a su color de siempre, se queda un momento y se va. Ver
+ * `ponerAdelantar` en `ui/hud.ts`.
  */
 .hud .adelantar {
   position: absolute;
@@ -1004,19 +1006,23 @@ body {
   height: 26px;
 }
 
-.hud .adelantar--andando {
+.hud .adelantar--puesto {
   background: var(--ocre);
   border-color: var(--ocre);
   color: #2a1c14;
   box-shadow: 0 0 0 5px rgba(221, 146, 63, 0.35), var(--poso);
 }
 
-.hud .adelantar--andando .adelantar__flecha {
+.hud .adelantar--corre .adelantar__flecha {
   animation: adelantar-corre 0.5s linear infinite;
 }
 
-.hud .adelantar--andando .adelantar__flecha:nth-child(2) {
+.hud .adelantar--corre .adelantar__flecha:nth-child(2) {
   animation-delay: 0.25s;
+}
+
+.hud .adelantar--se-va {
+  animation: adelantar-se-va 1300ms ease-in forwards;
 }
 
 @keyframes adelantar-asoma {
@@ -1047,14 +1053,28 @@ body {
   }
 }
 
+@keyframes adelantar-se-va {
+  0%,
+  55% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hud .adelantar,
-  .hud .adelantar--andando .adelantar__flecha {
+  .hud .adelantar--corre .adelantar__flecha,
+  .hud .adelantar--se-va {
     animation: none;
   }
 }
 .sin-movimiento .hud .adelantar,
-.sin-movimiento .hud .adelantar--andando .adelantar__flecha {
+.sin-movimiento .hud .adelantar--corre .adelantar__flecha,
+.sin-movimiento .hud .adelantar--se-va {
   animation: none;
 }
 

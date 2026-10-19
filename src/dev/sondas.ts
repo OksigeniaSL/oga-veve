@@ -1242,6 +1242,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * nube hay por medio. Ver `paisajeParaBanco` en `game.ts`.
      */
     paisajeALaVista: (sitio: string) => juego.paisajeParaBanco(sitio),
+    /**
+     * **Ara asomada al pasillo** (punto 312): el letrero de la salida más
+     * cercana y las tiras del suelo, medidos con la cámara de ahora. Ver
+     * `pasilloParaBanco` en `game.ts`.
+     */
+    pasillo: () => juego.pasilloParaBanco(),
     enElCuadro: (x: number, y: number, z: number) => {
       const c = juego.camera;
       c.updateMatrixWorld();

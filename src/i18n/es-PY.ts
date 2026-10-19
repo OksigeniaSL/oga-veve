@@ -3565,12 +3565,19 @@ export const ES_PY = {
     "Señoras y señores, les rogamos un momento de atención: les vamos a mostrar el equipo de seguridad de este avión.",
   "inicio.tripulacion.pasaje.demo.cinturon":
     "El cinturón se abrocha metiendo la hebilla hasta oír clic, se ajusta tirando de la cinta y se suelta levantando la tapa.",
+  /*
+   * **Las salidas del JAZ 90, las de su clase** (punto 312): el ERJ 170 lleva
+   * cuatro puertas tipo I —dos delante y dos detrás— y ninguna salida sobre
+   * el ala, según su hoja de tipo de EASA (IM.A.001, apartado III.21). Las
+   * ventanillas de salida sobre el ala son de los más largos, como el E190.
+   * Ver `docs/historias/fuentes.md`.
+   */
   "inicio.tripulacion.pasaje.demo.salidas":
-    "Este avión tiene salidas de emergencia delante, detrás y sobre las alas. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
+    "Este avión tiene cuatro salidas de emergencia: dos delante y dos detrás. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
   "inicio.tripulacion.pasaje.demo.mascaras":
-    "Si hiciera falta, caerán del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.",
+    "Si la cabina perdiera presión, caerán automáticamente del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.",
   "inicio.tripulacion.pasaje.demo.chaleco":
-    "Su chaleco salvavidas está debajo del asiento. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.",
+    "Su chaleco salvavidas está debajo del asiento, y solo se usa si el avión tuviera que posarse en el agua. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.",
   "inicio.tripulacion.pasaje.demo.tarjeta":
     "En el bolsillo del asiento de delante tienen la tarjeta de seguridad, con todo esto en dibujos. Por favor, léanla antes del despegue.",
   "inicio.tripulacion.pasaje.demo.aparatos":
@@ -3889,6 +3896,22 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.banoATiempo":
     "¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.",
   "inicio.ara.pasaje.banoEspero": "Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!",
+  /*
+   * **Lo que se pregunta después de la demostración** (puntos 312 y 313), en
+   * la revisión de cinturones, que es cuando la tripulante está al lado de
+   * Ara: que las máscaras y el chaleco son por si acaso —no se llevan
+   * puestas—, y que las salidas sobre el ala son de los aviones más largos.
+   * Y el viento de hoy, que la comandante cuenta rodando: con el alisio del
+   * nordeste, la 12 es la que lo tiene por delante.
+   */
+  "inicio.ara.pasaje.mascaraAhora": "¿Hay que ponerse la máscara ahora?",
+  "inicio.tripulacion.pasaje.cerca.mascaraAhora":
+    "No, no: solo caen si el aire de dentro del avión se escapara, y eso pasa poquísimas veces. Si no caen, no hacen falta. Te lo explicamos por si acaso, como el chaleco: ese solo se usa si el avión se posara en el agua.",
+  "inicio.ara.pasaje.salidaAla": "¿Y por la ventanilla no se sale, sobre el ala?",
+  "inicio.tripulacion.pasaje.cerca.salidaAla":
+    "En los aviones más grandes, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. Este es más cortito, y sus salidas son las puertas.",
+  "inicio.mama.pasaje.viento":
+    "Hoy el viento viene del noreste, y los aviones despegan siempre que pueden con el viento por delante, nunca por detrás. Por eso salimos hacia el este, y luego damos la vuelta hacia La Palma.",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

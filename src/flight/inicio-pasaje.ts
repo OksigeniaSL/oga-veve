@@ -139,12 +139,14 @@
  * siesta: la primera, de minuto y medio, no se notaba —«no movieste el vuelo
  * nada»—, y ahora es lo que queda de subida después de la comandante.
  *
- * ## Y el botón de adelantar
+ * ## Y el modo rápido
  *
- * Para los ratos en que no va a pasar nada, quien juega puede adelantar el
- * vuelo con el botón ⏩: el avión vuela de verdad más deprisa, con todo a la
- * vista, y el botón se para solo un poco antes de lo siguiente que hay que
- * contar o ver. Nunca se salta nada. Ver `adelanto`.
+ * Quien juega puede poner el vuelo en modo rápido con el botón ⏩: mientras
+ * está puesto, en cada rato en que no va a pasar nada el avión vuela de
+ * verdad más deprisa, con todo a la vista, y se para solo un poco antes de lo
+ * siguiente que hay que contar o ver; pasado eso, sigue. Nunca se salta nada.
+ * Vale en la subida y en lo alto de la bajada: **la llegada se vive a su
+ * paso**, y desde los diez mil pies bajando se apaga solo. Ver `adelanto`.
  *
  * ## La vuelta en la pista de La Palma
  *
@@ -255,6 +257,18 @@ export const AVION_DEL_PASAJE = "jaz-90";
 /** Y el lado de la ventanilla de Ara: el de lo que se cuenta. */
 export const LADO_DE_ARA = "izquierda" as const;
 
+/**
+ * **Las salidas de emergencia del avión de la escena** (punto 312): las de su
+ * clase, la del ERJ 170 —la hoja de tipo de EASA, IM.A.001, apartado III.21,
+ * para el 170-100 y el 170-200—: cuatro puertas tipo I, la de pasaje y la de
+ * servicio delante y las dos de detrás, una a cada lado, y **ninguna sobre el
+ * ala**. Las ventanillas de salida sobre el ala son de los más largos de la
+ * familia, el ERJ 190 y el 195. Lo que dice la demostración, lo que pinta su
+ * dibujo y las puertas del modelo tienen que casar con esto. Ver
+ * `docs/historias/fuentes.md`.
+ */
+export const SALIDAS_DEL_PASAJE = { delante: 2, detras: 2, sobreElAla: 0 } as const;
+
 /** Qué hay que mirar: el dibujo de la tarjeta. Ver `ui/inicio.ts`. */
 export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
 
@@ -280,12 +294,19 @@ export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
  * - **La vuelta en la punta de la pista** —`fuera-raqueta`—, desde un lado y
  *   en alto, quieta: el avión que gira en el ensanche del final y vuelve por
  *   la pista. Desde la ventanilla solo se ve el suelo dando vueltas.
+ * - **Ara asomada al pasillo** —`pasillo`— (punto 312): cuando la demostración
+ *   dice «busquen la más cercana», Ara hace lo que se pide y mira hacia la
+ *   salida más cercana, que en su fila es la de delante: el letrero «EXIT»
+ *   encendido encima de las puertas y las tiras del suelo que llevan a ellas.
+ *   Es dentro, pero es otra toma —de la pared al pasillo—, así que va con su
+ *   fundido. Ver `world/pasillo-de-pasaje.ts`.
  */
 export type Plano =
   | "ventanilla"
   | "asomado-motor"
   | "asomado-abajo"
   | "asomado-paisaje"
+  | "pasillo"
   | "fuera-rodando"
   | "fuera-despegue"
   | "fuera-giro"
@@ -299,6 +320,15 @@ export type Plano =
 
 /** Si el plano es del avión por fuera. */
 export const esDeFuera = (p: Plano): boolean => p.startsWith("fuera-");
+
+/**
+ * **Si pasar de un plano a otro es un corte**, con su fundido y su silencio:
+ * de dentro a fuera, de fuera a dentro, de un sitio de fuera a otro, y de la
+ * ventanilla al pasillo o al revés, que es mirar a otra pared. Asomarse al
+ * cristal no lo es: es la cabeza que se acerca.
+ */
+export const esCorte = (de: Plano, a: Plano): boolean =>
+  esDeFuera(de) || esDeFuera(a) || (de !== a && (de === "pasillo" || a === "pasillo"));
 
 /**
  * **El silencio de un corte**, s de escena. Pasar de la ventanilla a fuera, o
@@ -335,6 +365,8 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
   "fuera-senalero": 45,
   // La vuelta en la punta: el giro entero y el avión que echa a andar de vuelta.
   "fuera-raqueta": 22,
+  // El pasillo, lo que dura la frase de las salidas y el rato de mirar el letrero.
+  pasillo: 6,
 };
 
 export type MomentoDelPasaje =
@@ -345,6 +377,8 @@ export type MomentoDelPasaje =
   | "motores"
   | "bienvenida"
   | "demostracion"
+  | "demoSalidas"
+  | "demoEquipo"
   | "revision"
   | "espera"
   | "despegue"
@@ -727,7 +761,7 @@ const CALLA_ANTES_DEL_KIT = 10;
  * - `SIESTA_MINIMA`, s de vuelo durmiendo, como poco. Con un minuto y medio
  *   Enrique se despertó viendo lo mismo que al dormirse —«no movieste el vuelo
  *   nada»—: un salto que no se nota es peor que no dormirse. Por menos, Ara no
- *   se duerme, y para lo que queda está el botón de adelantar.
+ *   se duerme, y para lo que queda está el modo rápido.
  * - `DESPIERTA_ANTES_DE_BAJAR`, s antes de empezar a bajar: si no hubo *ding*
  *   que despertara a Ara antes, la despierta la tripulante, que habla primero.
  * - `LO_QUE_DURA_EL_BOSTEZO`, s: lo que dice Ara antes de cerrar los ojos.
@@ -762,28 +796,40 @@ const TRAS_AL_DESPERTAR: Partial<Record<CharlaDelPasaje, number>> = { altoRapido
 const SE_ENSENA_ANTES_DE_DORMIRSE = ["teide"] as const;
 
 /**
- * **El botón de adelantar** (⏩): los números. Ver `adelanto`.
+ * **El modo rápido** (⏩): los números. Ver `adelanto`.
  *
- * - `SALE_SI_FALTAN`, s de vuelo hasta lo siguiente que hay que contar o ver:
- *   por menos el botón no sale, que no hay rato que ahorrar. Medio minuto: la
- *   bajada va contada de punta a punta, con silencios de entre veinte y
- *   cuarenta y tantos segundos entre una cosa y la siguiente, y lo que se
- *   adelanta es solo eso, el silencio.
+ * - `CORRE_SI_FALTAN`, s de vuelo hasta lo siguiente que hay que contar o
+ *   ver: por menos no echa a correr, que no hay rato que ahorrar y un
+ *   acelerón de un segundo es un tirón, no un viaje rápido.
  * - `PARA_ANTES`, s de vuelo: se para solo cuando lo siguiente está a esto,
  *   para llegar a ello a la velocidad de siempre y verlo venir.
- * - `CALLA_PARA_ADELANTAR`, s de silencio antes de que salga: lo que se acaba
- *   de decir se deja asentar.
+ * - `CALLA_PARA_ADELANTAR`, s de silencio antes de volver a correr: lo que se
+ *   acaba de decir se deja asentar.
  * - `MIRA_HASTA`, s de vuelo: lo más lejos que se mira lo que viene. Más allá,
  *   todo es «un rato largo».
  * - `MIRA_CADA`, s de escena: cada cuánto se vuelve a mirar.
+ * - `RATOS`, cuántos ratos corriendo se guardan para el banco y las pruebas.
  */
 export const ADELANTO = {
-  SALE_SI_FALTAN: 30,
+  CORRE_SI_FALTAN: 12,
   PARA_ANTES: 6,
   CALLA_PARA_ADELANTAR: 3,
   MIRA_HASTA: 180,
   MIRA_CADA: 0.5,
+  RATOS: 200,
 } as const;
+/**
+ * **Dónde empieza la llegada**, m de altitud bajando: los diez mil pies, que
+ * es donde empieza la música de llegada —ver `BAJANDO_A_LA_PISTA` en
+ * `audio/hilo-musical.ts`—, la bajada se hace aproximación y, poco después,
+ * se prepara la cabina. Desde ahí el modo rápido se apaga solo y no vuelve
+ * en ese vuelo (Enrique: «hay que vivir la bajada y la aproximación, ese
+ * momento es mágico, cuando está llegando a tierra»).
+ */
+export const EMPIEZA_LA_LLEGADA = DIEZ_MIL_PIES;
+/** Si el vuelo ya va en la llegada: bajando por debajo de los diez mil pies, o ya preparando la cabina. */
+const enLaLlegada = (l: LecturaDelPasaje, e: VueloDePasaje): boolean =>
+  (bajando(l.tramo) && l.altitud < EMPIEZA_LA_LLEGADA) || (bajando(l.tramo) && cabinaPreparada(l, e));
 /** Los ratos por delante en los que se mira qué viene, s de vuelo. */
 const PASOS_DE_MIRAR = [2, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120, 150, 180] as const;
 /**
@@ -1056,6 +1102,12 @@ interface DefMomento<Id extends string = MomentoDelPasaje> {
    * pero si se ve, se enseña.
    */
   readonly muestra?: SitioDelPaisaje;
+  /**
+   * **Si sigue el anuncio de otro momento**: la demostración va en tres trozos
+   * para cambiar de plano entre ellos —ver `DEMOSTRACION`—, y es un solo
+   * anuncio: lo que sigue no vuelve a saludar al pasaje.
+   */
+  readonly sigue?: MomentoDelPasaje;
 }
 
 /**
@@ -1098,11 +1150,21 @@ const tripulanteEnElPasillo = (e: VueloDePasaje): boolean => e.dicho("tcpNubes")
  * electrónicos. Para un vuelo entre islas: el chaleco va porque se despega y
  * se aterriza sobre el mar. Corta y con cariño, y con Ara mirando: es la
  * primera vez que lo ve.
+ *
+ * **Y cuándo se usa cada cosa** (punto 313): las máscaras, si la cabina
+ * perdiera presión; el chaleco, si el avión tuviera que posarse en el agua.
+ * Sin eso, un niño puede salir creyendo que en un avión se llevan puestas.
+ *
+ * **Las salidas son las de este avión** (punto 312): cuatro puertas, dos
+ * delante y dos detrás, que es lo que lleva un avión de la clase del ERJ 170
+ * —ninguna sobre el ala—, y la más cercana puede estar detrás. Va en su
+ * propio trozo, con Ara asomada al pasillo mirando la de delante, que es la
+ * suya: el corte de plano necesita su silencio, y el anuncio es el mismo.
+ * Ver `docs/historias/fuentes.md`.
  */
-const DEMOSTRACION: readonly Linea[] = [
-  tripulacion("demo.intro"),
-  con(tripulacion("demo.cinturon"), "cinturon"),
-  con(tripulacion("demo.salidas"), "salidas"),
+const DEMOSTRACION: readonly Linea[] = [tripulacion("demo.intro"), con(tripulacion("demo.cinturon"), "cinturon")];
+const DEMO_SALIDAS: readonly Linea[] = [con(tripulacion("demo.salidas"), "salidas")];
+const DEMO_EQUIPO: readonly Linea[] = [
   con(tripulacion("demo.mascaras"), "mascara"),
   con(ara("demoMascara"), "mascara"),
   con(tripulacion("demo.chaleco"), "chaleco"),
@@ -1111,6 +1173,12 @@ const DEMOSTRACION: readonly Linea[] = [
   con(ara("demoTarjeta"), "tarjeta"),
   con(tripulacion("demo.aparatos"), "modo-avion"),
 ];
+/** Lo que se queda Ara mirando el letrero de la salida, s callados, antes de seguir la demostración. */
+const MIRA_LA_SALIDA = 2;
+/** Si se está rodando hacia la pista o esperando en la doble raya: cuando va la demostración. */
+const rodandoALaPista = (l: LecturaDelPasaje): boolean => l.tramo === "rodando" || l.tramo === "esperando";
+/** Y cuándo ya no viene a cuento: en el aire, o entrando en la pista. */
+const yaEnLaPista = (l: LecturaDelPasaje): boolean => !enElSuelo(l.tramo) || l.tramo === "entrando" || l.tramo === "carrera";
 
 /**
  * **El guion entero**, en el orden en que pasa un vuelo. Cada momento espera
@@ -1165,18 +1233,45 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     plano: "asomado-motor",
   },
   {
-    // El rodaje, visto por fuera, mientras la comandante da la bienvenida.
+    /*
+     * El rodaje, visto por fuera, mientras la comandante da la bienvenida.
+     *
+     * **Y por qué se sale hacia el este**, en el mismo anuncio: con el alisio
+     * del nordeste de la escena —ver `vientoDominante` de Los Rodeos— la 12 lo
+     * tiene por delante y la 30 por detrás, así que se despega hacia el este
+     * y después se da la vuelta hacia La Palma, que queda al oeste. Lo cuenta
+     * quien lo decide, rodando y por la megafonía, que es cuando lo cuentan
+     * las comandantes; volando ya no podría hasta los diez mil pies, y para
+     * entonces el giro ya pasó.
+     */
     id: "bienvenida",
     cuando: (l) => l.tramo === "rodando" && l.porElSuelo > 2,
     caduca: (l) => !enElSuelo(l.tramo),
-    lineas: [anuncio("comandante.bienvenida"), ara("comandante")],
+    lineas: [anuncio("comandante.bienvenida"), comandante("viento"), ara("comandante")],
     plano: "fuera-rodando",
   },
   {
     id: "demostracion",
-    cuando: (l, e) => (l.tramo === "rodando" || l.tramo === "esperando") && e.callaDesde >= 1,
-    caduca: (l) => !enElSuelo(l.tramo) || l.tramo === "entrando" || l.tramo === "carrera",
+    cuando: (l, e) => rodandoALaPista(l) && e.callaDesde >= 1,
+    caduca: yaEnLaPista,
     lineas: DEMOSTRACION,
+  },
+  {
+    // Las salidas, con Ara asomada al pasillo mirando la suya. Ver `DEMOSTRACION`.
+    id: "demoSalidas",
+    cuando: (l, e) => rodandoALaPista(l) && e.callaDesde >= 0.3,
+    caduca: yaEnLaPista,
+    lineas: DEMO_SALIDAS,
+    plano: "pasillo",
+    sigue: "demostracion",
+  },
+  {
+    // Y el resto, otra vez desde la ventanilla, cuando Ara ha mirado el letrero un momento.
+    id: "demoEquipo",
+    cuando: (l, e) => rodandoALaPista(l) && e.callaDesde >= MIRA_LA_SALIDA,
+    caduca: yaEnLaPista,
+    lineas: DEMO_EQUIPO,
+    sigue: "demostracion",
   },
   {
     /*
@@ -1184,15 +1279,34 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
      * mirando cinturones, respaldos y persianas. A Ara le revisa el suyo, y le
      * cuenta por qué la persiana va subida.
      *
+     * **Y lo que Ara se ha quedado pensando de la demostración** (puntos 312
+     * y 313), que es ahora cuando tiene a la tripulante al lado —durante la
+     * demostración ella está ocupada—: si hay que ponerse ya la máscara —no:
+     * es por si acaso, como el chaleco, y casi nunca pasa—, y si no se sale
+     * por la ventanilla del ala —en los aviones más largos sí; este es más
+     * corto, y sus salidas son las puertas—. Con calma: está todo preparado
+     * por si acaso, sin asustar y sin esconderlo.
+     *
      * **Y el baño, con la luz encendida** (punto 293): es lo último que tiene
      * a la tripulante al lado antes de que se apague —subiendo va sentada y
      * atada—, y la respuesta es la regla: con la luz encendida no se levanta
      * nadie, y cuando se apague, le acompaña. Lo dice porque la luz manda.
      */
     id: "revision",
-    cuando: (l, e) => (l.tramo === "rodando" || l.tramo === "esperando") && e.callaDesde >= 1.5,
-    caduca: (l) => !enElSuelo(l.tramo) || l.tramo === "entrando" || l.tramo === "carrera",
-    lineas: [tripulante("revision"), ara("persiana"), con(tripulante("persiana"), "persiana"), ara("bano"), BANO_CON_LA_LUZ],
+    cuando: (l, e) => rodandoALaPista(l) && e.callaDesde >= 1.5,
+    caduca: yaEnLaPista,
+    lineas: [
+      tripulante("revision"),
+      ara("persiana"),
+      con(tripulante("persiana"), "persiana"),
+      ara("mascaraAhora"),
+      // Sin el dibujo de las máscaras cayendo: lo que se contesta es que ahora no.
+      tripulante("mascaraAhora"),
+      ara("salidaAla"),
+      con(tripulante("salidaAla"), "salidas"),
+      ara("bano"),
+      BANO_CON_LA_LUZ,
+    ],
     mira: "ventanilla",
   },
   {
@@ -2260,15 +2374,28 @@ export interface Siesta {
 }
 
 /**
- * **El botón de adelantar** (⏩), lo que deja ver la escena: si sale ahora, si
- * está adelantando, cuánto falta para lo siguiente que hay que contar o ver
- * —s de vuelo, o `null` si no se está en calma— y cuántas veces se pulsó.
+ * **El modo rápido** (⏩), lo que deja ver la escena:
+ *
+ * - `sale`: si el botón está a la vista ahora;
+ * - `puesto`: si el modo rápido está puesto, corra o no en este momento;
+ * - `adelantando`: si el vuelo corre ahora mismo;
+ * - `falta`: lo que falta para lo siguiente que hay que contar o ver, s de
+ *   vuelo, o `null` si no se está en calma;
+ * - `pulsado`: cuántas veces se puso;
+ * - `llegada`: s de escena desde que empezó la llegada —ver
+ *   `EMPIEZA_LA_LLEGADA`—, o `null` si todavía no: desde ahí el botón no
+ *   vuelve, y si estaba puesto se apagó solo (`seApagoSolo`);
+ * - `ratos`: los ratos corriendo, s de escena, para el banco y las pruebas.
  */
 export interface EstadoDelAdelanto {
   readonly sale: boolean;
+  readonly puesto: boolean;
   readonly adelantando: boolean;
   readonly falta: number | null;
   readonly pulsado: number;
+  readonly llegada: number | null;
+  readonly seApagoSolo: boolean;
+  readonly ratos: readonly { readonly desde: number; readonly hasta: number | null }[];
 }
 
 /**
@@ -2391,11 +2518,20 @@ export class VueloDePasaje {
   private despiertaConElDing = false;
   /** Si lo que quedaba del plop explicado se apartó para el anuncio de la bajada. */
   private plopAplazado = false;
-  /** **El botón de adelantar**: si adelanta, lo que falta y cuándo se miró. Ver `adelanto`. */
+  /**
+   * **El modo rápido**: si está puesto, si corre ahora, lo que falta y cuándo
+   * se miró, si el botón se puede ver, cuándo empezó la llegada y los ratos
+   * corriendo. Ver `adelanto`.
+   */
+  private rapido = false;
   private adelantando = false;
   private falta: number | null = null;
   private faltaMiradaEn = -Infinity;
   private pulsado = 0;
+  private disponible = false;
+  private llegadaDesde: number | null = null;
+  private apagadoSolo = false;
+  private readonly ratos: { desde: number; hasta: number | null }[] = [];
 
   constructor(
     voz: VozDelInicio,
@@ -2584,50 +2720,68 @@ export class VueloDePasaje {
   }
 
   /**
-   * **El botón de adelantar** (⏩), aprobado por Enrique: «en casa, jugando al
-   * simulador, se aburren». Lo decide quien juega, y la escena dice cuándo se
-   * puede:
+   * **El modo rápido** (⏩), aprobado por Enrique: «en casa, jugando al
+   * simulador, se aburren». Un toque lo pone y otro lo quita, y mientras está
+   * puesto el vuelo corre **en cada rato en que no hay nada que contar ni que
+   * ver**, y se para solo antes de lo siguiente para que se oiga y se vea a su
+   * velocidad. El primer botón, el de T54, solo salía con medio minuto de
+   * silencio por delante, y el vuelo va contado de seguido: casi nunca salía.
    *
-   * - **Sale solo cuando no va a pasar nada en un rato**: la escena sabe qué
+   * - **Corre solo cuando no va a pasar nada en un rato**: la escena sabe qué
    *   viene —el siguiente momento del guion, lo que se cuenta cuando viene a
-   *   cuento, el siguiente cambio de tramo o de gas— y lo busca en el vuelo de
-   *   dentro de un rato, ver `proyectar`. Si falta menos de `SALE_SI_FALTAN`,
-   *   no sale.
-   * - **Se para solo** a `PARA_ANTES` de lo siguiente, para llegar a ello a la
-   *   velocidad de siempre; y en cuanto alguien habla, se cambia de plano o
-   *   hay algo señalado por la ventanilla, también. Otro toque lo para.
-   * - **Nunca se salta nada**: lo que se adelanta es el vuelo, de verdad, y lo
-   *   que se tiene que contar o ver llega con el botón ya parado.
-   * - **Ni en tierra, ni con la cabina preparada para aterrizar** —de ahí al
-   *   tren y los flaps es la aproximación—, **ni con Ara durmiendo**, que la
-   *   siesta ya pasa deprisa.
+   *   cuento, el siguiente cambio de tramo o de gas, el principio de la
+   *   llegada— y lo busca en el vuelo de dentro de un rato, ver `proyectar`.
+   *   Si falta menos de `CORRE_SI_FALTAN`, no echa a correr.
+   * - **Se para solo** a `PARA_ANTES` de lo siguiente; y en cuanto alguien
+   *   habla, se cambia de plano o hay algo señalado por la ventanilla,
+   *   también. Pasado lo que se cuenta, y su rato de asentarse, sigue.
+   * - **Nunca se salta nada**: lo que corre es el vuelo, de verdad, y lo que
+   *   se tiene que contar o ver llega con el vuelo a su paso.
+   * - **Ni en tierra, ni con Ara durmiendo** —la siesta ya pasa deprisa—, **ni
+   *   con el tren o los flaps fuera**, ni con el gas de despegue.
+   * - **Y la llegada se vive entera**: en la subida y en lo alto de la bajada,
+   *   sí; desde los diez mil pies bajando —ver `EMPIEZA_LA_LLEGADA`— se apaga
+   *   solo y el botón ya no vuelve en ese vuelo.
    *
    * Lo deprisa que va lo pone el juego, que es quien sabe lo que aguanta la
    * máquina: ver `frame` en `game.ts`.
    */
   get adelanto(): EstadoDelAdelanto {
-    const falta = this.faltaAhora;
     return {
-      sale: this.adelantando || (falta !== null && falta >= ADELANTO.SALE_SI_FALTAN),
+      sale: this.disponible,
+      puesto: this.rapido,
       adelantando: this.adelantando,
-      falta,
+      falta: this.faltaAhora,
       pulsado: this.pulsado,
+      llegada: this.llegadaDesde,
+      seApagoSolo: this.apagadoSolo,
+      ratos: this.ratos.map((r) => ({ ...r })),
     };
   }
 
-  /** Si el vuelo va adelantado ahora: lo mira el juego en cada paso. */
+  /**
+   * **El botón ⏩ en la pantalla**, lo justo para pintarlo en cada fotograma:
+   * si sale, si el modo está puesto, si corre ahora y si se acaba de apagar
+   * solo al empezar la llegada —entonces vuelve a su estado y se va—.
+   */
+  get boton(): { readonly sale: boolean; readonly puesto: boolean; readonly corre: boolean; readonly seVa: boolean } {
+    return { sale: this.disponible, puesto: this.rapido, corre: this.adelantando, seVa: this.apagadoSolo && this.llegadaDesde !== null };
+  }
+
+  /** Si el vuelo corre ahora: lo mira el juego en cada paso. */
   get adelantaAhora(): boolean {
     return this.adelantando;
   }
 
   /**
-   * **Quien juega toca el botón**: adelanta si se puede, o para si ya
-   * adelantaba. Devuelve si adelanta.
+   * **Quien juega toca el botón**: pone el modo rápido si se puede, o lo
+   * quita si estaba puesto. Devuelve si queda puesto.
    */
-  adelantar(si: boolean = !this.adelantando): boolean {
-    if (si && !this.adelanto.sale) return false;
-    if (si && !this.adelantando) this.pulsado++;
-    this.adelantando = si;
+  adelantar(si: boolean = !this.rapido): boolean {
+    if (si && !this.disponible) return false;
+    if (si && !this.rapido) this.pulsado++;
+    this.rapido = si;
+    if (!si) this.parar();
     return si;
   }
 
@@ -2636,29 +2790,61 @@ export class VueloDePasaje {
     return this.falta === null ? null : Math.max(0, this.falta - (this.reloj - this.faltaMiradaEn));
   }
 
-  /** Un paso del botón: se mira qué viene, cada poco, y se para a tiempo. */
+  /** El vuelo deja de correr, y se apunta hasta cuándo corrió. */
+  private parar(): void {
+    if (!this.adelantando) return;
+    this.adelantando = false;
+    const r = this.ratos[this.ratos.length - 1];
+    if (r && r.hasta === null) r.hasta = this.reloj;
+  }
+
+  /**
+   * **Un paso del modo rápido**: si el botón se puede ver, si empieza la
+   * llegada —y entonces se apaga solo, para siempre—, qué viene, y si el
+   * vuelo corre o se para a tiempo.
+   */
   private atenderAlAdelanto(l: LecturaDelPasaje): void {
-    if (!this.enCalma(l)) {
+    if (this.llegadaDesde === null && !l.enTierra && enLaLlegada(l, this)) {
+      this.llegadaDesde = this.reloj;
+      this.apagadoSolo = this.rapido;
+      this.rapido = false;
+    }
+    this.disponible = this.sePuedeCorrer(l);
+    if (!this.disponible || !this.rapido || !this.enCalma(l)) {
       this.falta = null;
-      this.adelantando = false;
+      this.parar();
       return;
     }
     if (this.falta === null || this.reloj - this.faltaMiradaEn >= ADELANTO.MIRA_CADA) {
       this.falta = this.loQueFalta(l);
       this.faltaMiradaEn = this.reloj;
     }
-    if (this.adelantando && (this.faltaAhora ?? 0) <= ADELANTO.PARA_ANTES) this.adelantando = false;
+    const falta = this.faltaAhora ?? 0;
+    if (this.adelantando && falta <= ADELANTO.PARA_ANTES) this.parar();
+    else if (!this.adelantando && falta >= ADELANTO.CORRE_SI_FALTAN) {
+      this.adelantando = true;
+      this.ratos.push({ desde: this.reloj, hasta: null });
+      if (this.ratos.length > ADELANTO.RATOS) this.ratos.shift();
+    }
   }
 
   /**
-   * **Si el vuelo está en calma**: en el aire y lejos de aterrizar, sin nadie
-   * hablando ni a punto de hablar, en la ventanilla, sin Ara durmiendo ni con
-   * el kit en las manos, y nada del guion que ya toque.
+   * **Si el modo rápido vale ahora**, y por eso el botón está a la vista: en
+   * el aire, con el tren y los flaps dentro y sin el gas de despegue, sin Ara
+   * durmiendo ni bostezando, y antes de la llegada. Con el modo puesto, lo
+   * que no se ve no corre.
+   */
+  private sePuedeCorrer(l: LecturaDelPasaje): boolean {
+    if (this.acabado || this.durmiendo || this.bostezando || this.def.id === "fin" || this.llegadaDesde !== null) return false;
+    if (!volando(l) || enLaFinal(l) || cabinaPreparada(l, this)) return false;
+    return l.flaps <= 0.05 && (l.tren ?? 0) <= 0.05 && l.potencia !== "despegue";
+  }
+
+  /**
+   * **Si el vuelo está en calma**: sin nadie hablando ni a punto de hablar,
+   * en la ventanilla, sin el kit en las manos, y nada del guion que ya toque.
    */
   private enCalma(l: LecturaDelPasaje): boolean {
-    if (this.acabado || this.durmiendo || this.bostezando || this.def.id === "fin") return false;
-    if (!volando(l) || enLaFinal(l) || cabinaPreparada(l, this)) return false;
-    if (l.flaps > 0.05 || (l.tren ?? 0) > 0.05 || l.potencia === "despegue") return false;
     if (!this.charla.callada || this.reloj < this.enCorteHasta || this.plano !== "ventanilla") return false;
     if (this.porSenalar.length > 0 || this.contestacion || this.kit.estaAbierto || this.kit.ocupaAAra) return false;
     if (!this.adelantando && this.callada < ADELANTO.CALLA_PARA_ADELANTAR) return false;
@@ -2669,7 +2855,7 @@ export class VueloDePasaje {
    * **Cuánto falta para lo siguiente que hay que contar o ver**, s de vuelo,
    * hasta `MIRA_HASTA`: lo que ya viene a cuento y espera su silencio, y lo que
    * vendrá —el siguiente momento del guion, una charla, un cambio de tramo o
-   * de gas— en el vuelo de dentro de un rato. Lo que ya viene a cuento pero
+   * de gas, la llegada— en el vuelo de dentro de un rato. Lo que ya viene a cuento pero
    * espera a verse —el mar entre las nubes— no se sabe cuándo llega: si llega
    * adelantando, empieza a hablar, y el juego vuelve a su paso.
    */
@@ -2686,6 +2872,8 @@ export class VueloDePasaje {
       const p = proyectar(l, dt);
       const e = this.dentroDe(dt);
       if (p.tramo !== l.tramo || p.potencia !== l.potencia) return dt;
+      // Y la llegada, que se vive a su paso desde el primer metro.
+      if (enLaLlegada(p, e)) return dt;
       if (this.def.cuando(p, e) && !this.def.caduca?.(p, e)) return dt;
       for (const c of CHARLAS_DEL_PASAJE)
         if (!this.charlasDichas.includes(c.id) && !yaVienen.has(c.id) && c.cuando(p, e) && !c.caduca?.(p, e)) return dt;
@@ -2822,14 +3010,14 @@ export class VueloDePasaje {
 
   /**
    * **Cambiar de plano**: si es un corte —de la ventanilla a fuera o al
-   * revés, o de un sitio de fuera a otro—, la escena calla su rato. Ver
-   * `CORTE_DE_PLANO`.
+   * revés, de un sitio de fuera a otro, o de la ventanilla al pasillo—, la
+   * escena calla su rato. Ver `CORTE_DE_PLANO` y `esCorte`.
    */
   private ponerPlano(p: Plano, sitio: SitioDelPaisaje | null = null): void {
     // Los planos que buscan un sitio son otro plano con otro sitio: otra toma.
     const suyo = p === "asomado-paisaje" || p === "fuera-paisaje" ? sitio : null;
     if (p === this.plano && suyo === this.paisaje) return;
-    const corte = esDeFuera(p) || esDeFuera(this.plano);
+    const corte = esCorte(this.plano, p);
     this.plano = p;
     this.paisaje = suyo;
     this.planoDesde = this.reloj;
@@ -3210,7 +3398,8 @@ export class VueloDePasaje {
     this.siestaDeAhora = s;
     this.siestas.push(s);
     this.mira = null;
-    this.adelantando = false;
+    // El modo rápido sigue puesto, pero durmiendo corre la siesta: ver `sePuedeCorrer`.
+    this.parar();
   }
 
   /**
