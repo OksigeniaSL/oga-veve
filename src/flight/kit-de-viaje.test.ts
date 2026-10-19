@@ -26,6 +26,7 @@ import {
   type Pieza,
 } from "./kit-de-viaje";
 import { NO_REPETIR } from "../audio/boca";
+import { JuegoDeLaLuz } from "./luz-verde";
 
 /** Un azar con semilla, para que lo que falla se pueda repetir. */
 function azar(semilla: number): () => number {
@@ -325,5 +326,86 @@ describe("la megafonía sin voz también cuenta", () => {
     expect(charla.suena).toBe(anuncio);
     t = 4.2;
     expect(charla.suena).toBeNull();
+  });
+});
+
+/**
+ * **La canción de la luz verde**: suena al ganar la torre, después del
+ * «¡aterrizaron todos!», con el juego ganado a la vista; se va al cerrar el
+ * kit, al dejar la torre o al recogerlo, y no vuelve a sonar por sí sola.
+ */
+describe("la canción de la luz verde", () => {
+  /** Un kit con la torre ganada, a un ritmo que la acaba enseguida. */
+  function conLaTorreGanada(): { kit: KitDeViaje; pared: () => number; paso: (s: number) => void } {
+    const kit = new KitDeViaje();
+    kit.ritmo = 40;
+    let t = 0;
+    const paso = (s: number) => {
+      for (let i = 0; i < s / 0.1; i++) {
+        t += 0.1;
+        kit.paso(0.1, { megafonia: false, callada: true, pared: t });
+        const j = kit.juego;
+        // Quien hace caso a lo que brilla.
+        if (j instanceof JuegoDeLaLuz) {
+          const ayuda = j.estado.ayuda;
+          if (ayuda) j.encender(ayuda);
+        }
+        kit.tomarLoQueDecir();
+      }
+    };
+    kit.dar();
+    kit.abrir();
+    kit.elegir("luz");
+    for (let i = 0; i < 400 && !kit.estado.juego?.terminado; i++) paso(1);
+    return { kit, pared: () => t, paso };
+  }
+
+  it("con la torre abierta se pide sin sonar, para tenerla bajada; ganada, suena después de Ara", () => {
+    const { kit, paso } = conLaTorreGanada();
+    expect(kit.estado.juego?.terminado).toBe(true);
+    expect(kit.cancion).toEqual({ cual: "luz-verde", vez: 0, suena: false });
+    kit.empezarLaCancion();
+    expect(kit.cancion?.suena).toBe(true);
+    // Mientras suena, el juego ganado se queda a la vista, y ocupa a Ara.
+    paso(20);
+    expect(kit.estado.juego?.terminado).toBe(true);
+    expect(kit.ocupaAAra).toBe(true);
+    // Y al acabar su trozo, se calla y se vuelve a elegir.
+    paso(15);
+    expect(kit.cancion?.suena ?? false).toBe(false);
+    expect(kit.estado.juego).toBeNull();
+    // Una vez por juego: no vuelve a sonar.
+    kit.empezarLaCancion();
+    expect(kit.cancion?.suena ?? false).toBe(false);
+  });
+
+  it("se va al cerrar el kit, al dejar la torre y al recogerlo", () => {
+    for (const deja of ["cerrar", "volverAElegir", "recoger"] as const) {
+      const { kit } = conLaTorreGanada();
+      kit.empezarLaCancion();
+      expect(kit.cancion?.suena, deja).toBe(true);
+      kit[deja]();
+      expect(kit.cancion?.suena ?? false, deja).toBe(false);
+    }
+  });
+
+  it("la megafonía no la para: la agacha la mezcla", () => {
+    const { kit, pared } = conLaTorreGanada();
+    kit.empezarLaCancion();
+    kit.paso(0.1, { megafonia: true, callada: false, pared: pared() + 5 });
+    expect(kit.estado.pausado).toBe(true);
+    expect(kit.cancion?.suena).toBe(true);
+  });
+
+  it("sin la torre ganada no suena", () => {
+    const kit = new KitDeViaje();
+    kit.dar();
+    kit.abrir();
+    kit.elegir("luz");
+    kit.empezarLaCancion();
+    expect(kit.cancion?.suena).toBe(false);
+    kit.volverAElegir();
+    kit.elegir("piezas");
+    expect(kit.cancion).toBeNull();
   });
 });

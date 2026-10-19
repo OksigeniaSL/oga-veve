@@ -61,6 +61,7 @@ import {
 } from "./volumen";
 import { elegirFormato } from "./banco-de-voz";
 import { bucleDe, ficheroDe, type Musica } from "./hilo-musical";
+import { ficheroDeLaCancion, type Cancion, type PedidoDeCancion } from "./cancion";
 import {
   Agachado,
   BUSES,
@@ -497,6 +498,12 @@ const SE_CALLA_LA_MUSICA = 0.5;
  * otra vez. Ver `ponerMusica`.
  */
 const SIGUE_POR_DONDE_IBA = 60;
+/**
+ * **Lo que tarda en irse la canción del juego** cuando se deja —se cierra el
+ * kit, la tripulante lo recoge—, s: un fundido suave, que se note que se va y
+ * no que se corta. Ver `ponerCancion`.
+ */
+const SE_VA_LA_CANCION = 2;
 
 /** Lo que el navegador dice que puede tocar de un tipo de audio. */
 function puedeTocar(mime: string): string {
@@ -515,7 +522,7 @@ export class Audio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   /**
-   * Los seis buses de mezcla, entre las fuentes y el maestro.
+   * Los ocho buses de mezcla, entre las fuentes y el maestro.
    *
    * Antes las veinte fuentes iban todas al maestro con su ganancia a mano, y
    * la única defensa era el compresor del final — que no distingue lo que hay
@@ -558,6 +565,14 @@ export class Audio {
    * `SIGUE_POR_DONDE_IBA`.
    */
   private readonly relojDeLaMusica = new Map<Musica, { empezo: number; callada: number | null }>();
+  /** **La canción del juego** que suena, con su fundido, o `null`. Ver `ponerCancion`. */
+  private cancion: { cual: Cancion; vez: number; fuente: AudioBufferSourceNode; fundido: GainNode; empezo: number } | null = null;
+  /** Las canciones bajadas y descodificadas, o lo que les pasa todavía. */
+  private readonly canciones = new Map<Cancion, AudioBuffer | "bajando" | "no-llega">();
+  /** La última vez que se puso a sonar: una vez sonada, no vuelve aunque se pida. */
+  private cancionSonada = -1;
+  /** La que se está yendo, con su fundido: para el banco. */
+  private cancionQueSeVa: { fundido: GainNode; hasta: number } | null = null;
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
   /**
@@ -1211,7 +1226,7 @@ export class Audio {
     compressor.connect(limitador);
     limitador.connect(ctx.destination);
 
-    // Los seis buses, cada uno a su nivel. Ver `audio/mezcla.ts`.
+    // Los ocho buses, cada uno a su nivel. Ver `audio/mezcla.ts`.
     const niveles = nivelesAhora(false, this.level.gain);
     this.buses = Object.fromEntries(
       BUSES.map((nombre) => {
@@ -1895,6 +1910,112 @@ export class Audio {
       bus: "musica",
       fundido: m ? m.fundido.gain.value : null,
       vuelta: m ? { desde: m.fuente.loopStart, hasta: m.fuente.loopEnd } : null,
+    };
+  }
+
+  /**
+   * **La canción del juego**: lo que pide el kit en cada fotograma, o `null`.
+   * Se baja en cuanto se pide —con el juego de la torre abierto, antes de que
+   * haga falta—, suena una vez cada vez que se gana, por su bus, y si deja de
+   * pedirse mientras suena, se va con un fundido suave. Ver `audio/cancion.ts`.
+   */
+  ponerCancion(pedido: PedidoDeCancion | null): void {
+    const ctx = this.context;
+    if (!ctx || !this.buses) return;
+    const c = this.cancion;
+    if (c && (!pedido || !pedido.suena || pedido.vez !== c.vez)) this.irseLaCancion();
+    if (!pedido) return;
+    const bajada = this.canciones.get(pedido.cual);
+    if (bajada === undefined) {
+      this.bajarLaCancion(ctx, pedido.cual);
+      return;
+    }
+    if (!pedido.suena || this.cancion || pedido.vez <= this.cancionSonada || ctx.state !== "running") return;
+    if (bajada === "bajando" || bajada === "no-llega") return;
+    this.cancionSonada = pedido.vez;
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = bajada;
+    const fundido = ctx.createGain();
+    // El trozo ya trae su fundido de entrada: esto es solo para que no chasquee.
+    const ahora = ctx.currentTime;
+    fundido.gain.setValueAtTime(0, ahora);
+    fundido.gain.linearRampToValueAtTime(1, ahora + 0.05);
+    fuente.connect(fundido).connect(this.buses.cancion);
+    const sonando = { cual: pedido.cual, vez: pedido.vez, fuente, fundido, empezo: ahora };
+    fuente.addEventListener("ended", () => {
+      fundido.disconnect();
+      if (this.cancion === sonando) this.cancion = null;
+    });
+    fuente.start(ahora);
+    this.cancion = sonando;
+  }
+
+  /** Se va la canción, con su fundido. */
+  private irseLaCancion(): void {
+    const ctx = this.context;
+    const c = this.cancion;
+    this.cancion = null;
+    if (!ctx || !c) return;
+    const ahora = ctx.currentTime;
+    const g = c.fundido.gain;
+    g.cancelScheduledValues(ahora);
+    g.setValueAtTime(g.value, ahora);
+    g.linearRampToValueAtTime(0, ahora + SE_VA_LA_CANCION);
+    this.cancionQueSeVa = { fundido: c.fundido, hasta: ahora + SE_VA_LA_CANCION };
+    try {
+      c.fuente.stop(ahora + SE_VA_LA_CANCION + 0.05);
+    } catch {
+      // Ya estaba parada.
+    }
+  }
+
+  /** Como el hilo musical: se baja una vez, y si no llega, no suena y no pasa nada. */
+  private bajarLaCancion(ctx: AudioContext, cual: Cancion): void {
+    const formato = elegirFormato(puedeTocar);
+    const url = formato ? ficheroDeLaCancion(cual, formato) : null;
+    if (!url) {
+      this.canciones.set(cual, "no-llega");
+      return;
+    }
+    this.canciones.set(cual, "bajando");
+    void fetch(url)
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.arrayBuffer();
+      })
+      .then((b) => ctx.decodeAudioData(b))
+      .then((buffer) => this.canciones.set(cual, buffer))
+      .catch(() => this.canciones.set(cual, "no-llega"));
+  }
+
+  /**
+   * **Lo que suena de la canción**, para el banco: cuál, por dónde va, su
+   * fundido, y cómo está su bus —agachado si alguien habla—.
+   */
+  get cancionParaBanco(): {
+    readonly suena: Cancion | null;
+    readonly vez: number | null;
+    readonly bajadas: Readonly<Record<string, string>>;
+    readonly va: number | null;
+    readonly fundido: number | null;
+    readonly bus: number | null;
+    readonly agachado: boolean;
+    readonly seVa: { readonly fundido: number; readonly queda: number } | null;
+  } {
+    const c = this.cancion;
+    const v = this.cancionQueSeVa;
+    const ahora = this.context?.currentTime ?? 0;
+    return {
+      suena: c?.cual ?? null,
+      vez: c?.vez ?? null,
+      bajadas: Object.fromEntries(
+        [...this.canciones].map(([k, v]) => [k, v instanceof AudioBuffer ? `${v.duration.toFixed(2)} s` : v]),
+      ),
+      va: c && this.context ? this.context.currentTime - c.empezo : null,
+      fundido: c ? c.fundido.gain.value : null,
+      bus: this.buses ? this.buses.cancion.gain.value : null,
+      agachado: this.hablando.activo,
+      seVa: v && ahora < v.hasta + 0.5 ? { fundido: v.fundido.gain.value, queda: v.hasta - ahora } : null,
     };
   }
 

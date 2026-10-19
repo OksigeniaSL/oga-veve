@@ -236,7 +236,7 @@ import type { IlustracionDelPasaje } from "../ui/ilustraciones";
 import { APAGA_LA_LUZ } from "./cinturon";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
-import { LINEAS_DE_LA_LUZ } from "./luz-verde";
+import { DICHO_DE_LA_LUZ, JuegoDeLaLuz, LINEAS_DE_LA_LUZ } from "./luz-verde";
 import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
 import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, PotenciaDeLinea, TramoDeLinea } from "./vuelo-de-linea";
@@ -740,7 +740,8 @@ const BAJANDO = {
    * pies, detrás del ala que explica la comandante, y la tripulante lo pide de
    * vuelta tres minutos después (175 s), cruzando los diez mil; de esos, veinte
    * segundos son la megafonía de La Gomera, que lo pausa. Dos minutos y medio
-   * largos de juego, que es lo que dura la luz verde.
+   * largos de juego: la luz verde entera, minuto y medio, y su trozo de
+   * canción al final, con rato de sobra. Ver `luz-verde.ts`.
    *
    * Estaba en los 84 km, pasado lo que se señala por la ventanilla, y allí,
    * con la tripulación pidiéndolo de vuelta a los diez mil pies, no quedaba ni
@@ -2553,6 +2554,8 @@ export class VueloDePasaje {
    */
   readonly kit = new KitDeViaje();
   private kitAbierto = false;
+  /** La luz verde ganada que está a la vista, y cuándo se vio ganada, s de escena. Ver `atenderAlKit`. */
+  private luzGanada: { readonly juego: JuegoDeLaLuz; readonly en: number } | null = null;
   private juegoDelKit: KitDeViaje["juegoDeAhora"] = null;
   /** **La siesta de Ara**: la de ahora, si duerme, y todas. Ver `puedeDormirse`. */
   private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] } | null = null;
@@ -3293,6 +3296,18 @@ export class VueloDePasaje {
       (bajando(l.tramo) && l.altitud < DIEZ_MIL_PIES - KIT_POR_DEBAJO)
     )
       this.kit.recoger();
+    /*
+     * **Y la canción**, en cuanto se oyó el «¡aterrizaron todos!» de Ara con
+     * la torre ganada a la vista: el de esta vez, no el de una partida de
+     * antes. Antes del paso del kit, que si no el juego ganado se iba de la
+     * pantalla en el mismo fotograma. Ver `KitDeViaje.cancion`.
+     */
+    const torre = this.kit.juegoDeAhora;
+    if (torre instanceof JuegoDeLaLuz && torre.terminado) {
+      if (this.luzGanada?.juego !== torre) this.luzGanada = { juego: torre, en: this.reloj };
+      if (!this.kit.cancion?.suena && this.charla.oidaDesde(DICHO_DE_LA_LUZ.fin.clave, this.luzGanada.en - 1))
+        this.kit.empezarLaCancion();
+    }
     this.kit.paso(dt, {
       megafonia: this.megafoniaSuena || this.dicho("aproximacion"),
       callada: this.charla.callada,

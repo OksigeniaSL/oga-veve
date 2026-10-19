@@ -30,8 +30,9 @@
  * - **Luz verde** (`JuegoDeLaLuz`, en `luz-verde.ts`): quien juega es la torre
  *   de La Palma y les da luz verde o roja, con la lámpara de señales de
  *   verdad, a los avioncitos sin radio que llegan por el circuito. Es el
- *   largo: dura de dos a tres minutos, que los otros dos «se resuelven en
- *   medio minuto» (punto 304).
+ *   largo: dura minuto y medio, que los otros dos «se resuelven en medio
+ *   minuto» (punto 304), y cuando aterrizan todos suena un trozo de la
+ *   canción «Luz verde», la de Granja Óga. Ver `KitDeViaje.cancion`.
  *
  * El que se pensó antes —buscar en la ventanilla lo que se nombra— ya lo hace
  * la escena entera, que señala el Teide, las nubes y el mar por la ventanilla
@@ -58,6 +59,7 @@
  * otra como todo lo demás.
  */
 
+import { trozoDe, type PedidoDeCancion } from "../audio/cancion";
 import type { Linea } from "./conversacion";
 import type { Peldano } from "./escalera";
 import { JuegoDeLaLuz, LINEAS_DE_LA_LUZ, type EstadoDeLaLuz } from "./luz-verde";
@@ -366,6 +368,9 @@ export class JuegoDelCamino extends Juego<Parada> {
  */
 const SE_QUEDA_EL_FINAL = 8;
 
+/** **La vez de cada canción**: una por torre ganada, distinta en cada kit. Ver `PedidoDeCancion`. */
+let siguienteVez = 1;
+
 /**
  * **Lo menos entre dos veces la misma frase**, s del reloj de la voz.
  *
@@ -403,6 +408,8 @@ export interface EstadoDelKit {
   readonly hechos: readonly JuegoDelKit[];
   /** Si se abrió alguna vez: el botón deja de latir. */
   readonly visto: boolean;
+  /** Si suena la canción de la luz verde. Ver `KitDeViaje.cancion`. */
+  readonly cancion: boolean;
 }
 
 export class KitDeViaje {
@@ -436,6 +443,13 @@ export class KitDeViaje {
   private readonly porDecir: Linea[] = [];
   /** Si la conversación de la escena está callada: ver `hayHueco`. */
   private callada = true;
+  /**
+   * **La canción de la luz verde, si suena**: de qué vez y desde cuándo, en el
+   * reloj de la voz, que es el del sonido. Y el juego ganado que la trajo: una
+   * vez por juego. Ver `cancion`.
+   */
+  private cancionSuena: { readonly vez: number; readonly desde: number } | null = null;
+  private cancionDe: JuegoDeAhora | null = null;
 
   get estado(): EstadoDelKit {
     return {
@@ -446,6 +460,7 @@ export class KitDeViaje {
       juego: this.actual?.estado ?? null,
       hechos: [...this.hechos],
       visto: this.visto,
+      cancion: this.cancionSuena !== null,
     };
   }
 
@@ -487,7 +502,34 @@ export class KitDeViaje {
    * abierto y olvidado no cuenta: ver `OLVIDADO`.
    */
   get ocupaAAra(): boolean {
-    return this.abierto && !this.recogido && this.reloj - this.tocadoA < OLVIDADO;
+    // Y mientras suena la canción, que es el premio: no se le habla encima.
+    return this.abierto && !this.recogido && (this.reloj - this.tocadoA < OLVIDADO || this.cancionSuena !== null);
+  }
+
+  /**
+   * **La canción de la luz verde** (19-10-2026): un trozo de «Luz verde», la
+   * de Granja Óga, cuando aterrizan todos —después del «¡aterrizaron todos!»
+   * de Ara—, con el juego ganado a la vista mientras suena. Se va con un
+   * fundido si se cierra el kit, si se deja la torre o si la tripulante viene
+   * a recogerlo, aunque esté a medias: el vuelo manda. Y con la torre abierta
+   * se pide sin sonar, para que esté bajada cuando haga falta. Lo toca
+   * `Audio.ponerCancion`; ver `audio/cancion.ts`.
+   */
+  get cancion(): PedidoDeCancion | null {
+    if (this.cancionSuena) return { cual: "luz-verde", vez: this.cancionSuena.vez, suena: true };
+    return this.abierto && !this.recogido && this.actual instanceof JuegoDeLaLuz ? { cual: "luz-verde", vez: 0, suena: false } : null;
+  }
+
+  /**
+   * **Ya se oyó el «¡aterrizaron todos!»**: que suene la canción. Lo dice la
+   * escena, que es quien sabe lo que se oyó. Solo con la torre ganada a la
+   * vista, y una vez por juego.
+   */
+  empezarLaCancion(): void {
+    const j = this.actual;
+    if (!this.abierto || this.recogido || !(j instanceof JuegoDeLaLuz) || !j.terminado || this.cancionDe === j) return;
+    this.cancionDe = j;
+    this.cancionSuena = { vez: siguienteVez++, desde: this.pared };
   }
 
   /** La tripulante lo trae. */
@@ -510,6 +552,7 @@ export class KitDeViaje {
   /** **Se cierra**, cuando se quiera. El juego se queda donde estaba. */
   cerrar(): void {
     this.abierto = false;
+    this.cancionSuena = null;
     // Lo que el juego quería decir y no llegó a decirse ya no viene a cuento.
     this.porDecir.length = 0;
     this.actual?.tomarLoQueDecir();
@@ -522,6 +565,7 @@ export class KitDeViaje {
     if (this.actual?.juego === j && !this.actual.terminado) return;
     this.actual = j === "piezas" ? new JuegoDeLasPiezas() : j === "camino" ? new JuegoDelCamino() : new JuegoDeLaLuz(this.peldano);
     this.terminadoDesde = null;
+    this.cancionSuena = null;
   }
 
   /** **Vuelta a elegir**, dejando el de ahora. */
@@ -530,6 +574,7 @@ export class KitDeViaje {
     this.tocado();
     this.actual = null;
     this.terminadoDesde = null;
+    this.cancionSuena = null;
   }
 
   /** Quien juega tocó algo: sigue con el kit. Lo llama el dibujo. */
@@ -563,12 +608,15 @@ export class KitDeViaje {
     this.paredAntes = this.pared;
     this.pausado = this.abierto && s.megafonia;
     this.callada = s.callada;
+    // La canción, hasta que se acaba su trozo: la megafonía no la para, la agacha.
+    if (this.cancionSuena && this.pared - this.cancionSuena.desde >= trozoDe("luz-verde").dura) this.cancionSuena = null;
     if (!this.abierto || this.pausado || !this.actual) return;
     this.actual.paso(this.actual instanceof JuegoDeLaLuz ? dePared * this.ritmo : dt, s.callada);
     if (this.actual.terminado) {
       this.hechos.add(this.actual.juego);
       this.terminadoDesde ??= this.reloj;
-      if (this.reloj - this.terminadoDesde >= SE_QUEDA_EL_FINAL && s.callada) {
+      // Con la canción sonando, el juego ganado se queda a la vista hasta que acaba.
+      if (this.reloj - this.terminadoDesde >= SE_QUEDA_EL_FINAL && s.callada && !this.cancionSuena) {
         this.actual = null;
         this.terminadoDesde = null;
       }

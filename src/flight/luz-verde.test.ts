@@ -5,22 +5,52 @@
  * verdad: alabeando, salvo en base y en final, y de noche con los faros.
  */
 import { describe, expect, it } from "vitest";
+import VOZ_DE_ARA from "../../data/voces/ara/manifiesto.json";
+import { trozoDe } from "../audio/cancion";
+import { ENTRE_FRASES } from "./conversacion";
 import type { Peldano } from "./escalera";
 import { DICHO_DE_LA_LUZ, JuegoDeLaLuz, type Senal } from "./luz-verde";
 
 const PASO = 0.05;
 
-/** Juega como quien hace caso a lo que brilla, tardando `tarda` s en reaccionar. Devuelve lo que duró y lo dicho. */
-function jugarHaciendoCaso(peldano: Peldano, tarda = 1.5, tope = 600): { segundos: number; dicho: string[]; juego: JuegoDeLaLuz } {
+/** Lo que dura cada frase grabada de Ara, s, más el respiro entre dos. */
+const DURA = (clave: string): number =>
+  ((VOZ_DE_ARA as { piezas: Record<string, { ms: number } | undefined> }).piezas[clave]?.ms ?? 6000) / 1000 + ENTRE_FRASES;
+
+/**
+ * **El rato para jugar**, s: de que se elige la torre a que la tripulante pide
+ * guardar el kit. Medido en el banco el 19-10-2026: 175 s entre que lo trae y
+ * que lo pide, menos los veinte de la megafonía de La Gomera, que lo pausa, y
+ * lo que se tarda en darle las gracias, abrirlo y elegir. Ver `BAJANDO.kit`
+ * en `inicio-pasaje.ts`.
+ */
+const RATO_PARA_JUGAR = 140;
+
+/**
+ * Juega como quien hace caso a lo que brilla, tardando `tarda` s en reaccionar.
+ * Con `conVoz`, la conversación calla lo que duran las grabaciones de Ara, y se
+ * cuenta hasta que acaba el «¡aterrizaron todos!». Devuelve lo que duró y lo dicho.
+ */
+function jugarHaciendoCaso(
+  peldano: Peldano,
+  tarda = 1.5,
+  tope = 600,
+  conVoz = false,
+): { segundos: number; dicho: string[]; juego: JuegoDeLaLuz } {
   const j = new JuegoDeLaLuz(peldano);
   const dicho: string[] = [];
   let t = 0;
   let viendo: Senal | null = null;
   let desde = 0;
-  while (!j.terminado && t < tope) {
-    j.paso(PASO, true);
+  const cola: string[] = [];
+  let hablaHasta = 0;
+  while ((!j.terminado || (conVoz && (cola.length > 0 || t < hablaHasta))) && t < tope) {
+    j.paso(PASO, !conVoz || (cola.length === 0 && t >= hablaHasta));
     t += PASO;
-    dicho.push(...j.tomarLoQueDecir().map((l) => l.clave));
+    const nuevas = j.tomarLoQueDecir().map((l) => l.clave);
+    dicho.push(...nuevas);
+    cola.push(...nuevas);
+    if (t >= hablaHasta && cola.length) hablaHasta = t + DURA(cola.shift()!);
     const e = j.estado;
     if (e.ayuda !== viendo) {
       viendo = e.ayuda;
@@ -42,15 +72,43 @@ describe("luz verde", () => {
   });
 
   for (const peldano of ["dibujo", "palabra", "cifra", "cabina"] as const)
-    it(`se gana siempre, haciendo caso a lo que brilla, y dura de dos a tres minutos y pico: ${peldano}`, () => {
+    it(`se gana siempre, haciendo caso a lo que brilla, y dura minuto y pico: ${peldano}`, () => {
       const { segundos, dicho, juego } = jugarHaciendoCaso(peldano);
       expect(juego.terminado).toBe(true);
       expect(dicho).toContain(DICHO_DE_LA_LUZ.fin.clave);
-      expect(segundos).toBeGreaterThan(100);
-      expect(segundos).toBeLessThan(170);
+      expect(segundos).toBeGreaterThan(55);
+      expect(segundos).toBeLessThan(85);
       // Y que se juega con calma: con un niño de cuatro años que tarda en tocar, también se acaba.
       const despacio = jugarHaciendoCaso(peldano, 6);
       expect(despacio.juego.terminado).toBe(true);
+    });
+
+  /*
+   * **Y cabe en la bajada, con la canción** (19-10-2026): entre que se elige
+   * la torre y que la tripulante pide guardar el kit hay unos 140 s; en ellos,
+   * lo que cuenta Ara —con lo que dura cada grabación—, las rondas, el «¡aterrizaron
+   * todos!» y el trozo de canción, con un cuarto de minuto de margen.
+   */
+  for (const peldano of ["dibujo", "palabra", "cifra", "cabina"] as const)
+    it(`cabe entero en la bajada, con lo que cuenta Ara y la canción: ${peldano}`, () => {
+      for (const tarda of [1.5, 3]) {
+        const { segundos } = jugarHaciendoCaso(peldano, tarda, 600, true);
+        expect(segundos + trozoDe("luz-verde").dura, `${peldano}, tardando ${tarda} s`).toBeLessThan(RATO_PARA_JUGAR - 15);
+      }
+    });
+
+  for (const [peldano, ademas] of [
+    ["dibujo", []],
+    ["palabra", []],
+    ["cifra", ["destellosRojos", "destellosVerdes"]],
+    ["cabina", ["destellosRojos", "destellosVerdes", "noche"]],
+  ] as const)
+    it(`en cada peldaño se ve entero lo que enseña, sin que nadie se vaya al aire: ${peldano}`, () => {
+      const { dicho, juego } = jugarHaciendoCaso(peldano);
+      for (const c of ["conRadio", "alas", "sinAlas", "roja", ...ademas] as const)
+        expect(dicho, c).toContain(DICHO_DE_LA_LUZ[c].clave);
+      expect(juego.estado.rondas).toBe(2);
+      expect(juego.estado.alAire).toBe(0);
     });
 
   it("se gana siempre, aunque se toque cualquier cosa, y al final haciendo caso", () => {
@@ -76,21 +134,23 @@ describe("luz verde", () => {
   it("la roja manda al circuito: no aterriza, da otra vuelta y se celebra", () => {
     const j = new JuegoDeLaLuz();
     const dicho: string[] = [];
-    // Hasta que llega el primero.
+    // Hasta que llegan: el de la radio, que aterriza solo, y el que pide luz.
     while (j.estado.aviones.length === 0) j.paso(PASO, true);
     dicho.push(...j.tomarLoQueDecir().map((l) => l.clave));
     j.encender("roja");
-    const antes = j.estado.aviones[0]!;
+    const conRoja = j.estado.aviones.find((a) => a.luz === "roja")!;
+    expect(conRoja.radio).toBe(false);
+    const el = () => j.estado.aviones.find((a) => a.id === conRoja.id)!;
     // Una vuelta entera, casi: no toca la pista.
     for (let t = 0; t < 26; t += PASO) {
       j.paso(PASO, true);
       dicho.push(...j.tomarLoQueDecir().map((l) => l.clave));
-      expect(j.estado.aviones[0]!.enVuelo).toBe(true);
+      expect(el().enVuelo).toBe(true);
     }
     const e = j.estado;
     expect(e.rojas).toBe(1);
-    expect(e.aterrizados).toBe(0);
-    expect(e.aviones[0]!.id).toBe(antes.id);
+    // Solo aterrizó el de la radio.
+    expect(e.aterrizados).toBe(1);
     expect(dicho).toContain(DICHO_DE_LA_LUZ.roja.clave);
   });
 
@@ -162,7 +222,7 @@ describe("luz verde", () => {
   it("los que tienen la radio bien aterrizan solos, sin luz: lo normal", () => {
     const { dicho, juego } = jugarHaciendoCaso("dibujo");
     expect(dicho).toContain(DICHO_DE_LA_LUZ.conRadio.clave);
-    // Tres rondas: uno, dos y tres con el de radio; aterrizan todos.
-    expect(juego.estado.aterrizados).toBe(6);
+    // Dos rondas de dos, con el de la radio en la primera; aterrizan todos.
+    expect(juego.estado.aterrizados).toBe(4);
   });
 });

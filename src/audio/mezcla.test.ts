@@ -58,6 +58,17 @@ describe("la prioridad", () => {
     expect(n.radio).toBeCloseTo(ganancia(NIVEL.radio), 6);
   });
 
+  it("la canción del juego, por encima del vuelo y por debajo de las voces; y agachada, nunca encima de un aviso", () => {
+    // Ver `audio/cancion.ts`: se escucha, pero nunca tapa a nadie.
+    expect(NIVEL.cancion).toBeGreaterThan(NIVEL.motor);
+    expect(NIVEL.cancion).toBeGreaterThan(NIVEL.ambiente);
+    for (const bus of MANDAN) expect(NIVEL.cancion).toBeLessThan(NIVEL[bus]);
+    expect(MANDAN).not.toContain("cancion");
+    // Con alguien hablando, diez decibelios por debajo de la radio como poco.
+    const n = nivelesAhora(true);
+    for (const bus of MANDAN) expect(n.cancion! / n[bus]!).toBeLessThan(ganancia(-10));
+  });
+
   it("y la música va dieciocho por debajo de todo", () => {
     // Si se nota que hay música, ya está demasiado alta.
     expect(NIVEL.musica).toBe(-18);

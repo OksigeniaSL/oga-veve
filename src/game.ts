@@ -1122,6 +1122,7 @@ import {
 } from "./audio/momentos-de-crucero";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
 import { BAJANDO_A_LA_PISTA, HiloMusical } from "./audio/hilo-musical";
+import type { PedidoDeCancion } from "./audio/cancion";
 import { GenteQueSeLevanta } from "./audio/gente-del-pasaje";
 import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
@@ -7927,6 +7928,14 @@ export class Game {
     if (o.ritmo !== undefined) this.inicio.kit.ritmo = o.ritmo;
     if (o.peldano !== undefined) this.inicio.kit.peldano = o.peldano;
     return true;
+  }
+
+  /** La canción de la luz verde, para el banco: lo que pide el kit y lo que suena. */
+  get cancionParaBanco(): { readonly pide: PedidoDeCancion | null; readonly audio: Audio["cancionParaBanco"] } {
+    return {
+      pide: this.inicio instanceof VueloDePasaje ? this.inicio.kit.cancion : null,
+      audio: this.audio.cancionParaBanco,
+    };
   }
 
   /** El hilo musical, para el banco: lo que decide y lo que suena. */
@@ -16973,6 +16982,8 @@ export class Game {
 
     this.oirLaRadio(dt);
     this.ponerElHiloMusical(dt);
+    // Y la canción de la luz verde, la del kit de viaje: ver `KitDeViaje.cancion`.
+    this.audio.ponerCancion(this.inicio instanceof VueloDePasaje ? this.inicio.kit.cancion : null);
     // La vuelta al avión, el tiempo de hoy y la funda olvidada. Ver `atenderAntesDeVolar`.
     this.atenderAntesDeVolar(dt);
     this.syncAircraftMesh(dt);
@@ -26776,8 +26787,9 @@ export class Game {
   /** Vuelo nuevo: nada encendido, nada esperando, nada explicado. */
   private reiniciarLoQueSuena(): void {
     this.loQueCambia.reiniciar();
-    // Vuelo nuevo: vuelve a haber embarque.
+    // Vuelo nuevo: vuelve a haber embarque, y la canción del kit de antes se va.
     this.hiloMusical.reiniciar();
+    this.audio.ponerCancion(null);
     this.cambiosExplicados.clear();
     this.explicadoEnEsteVuelo.clear();
     this.calladasSinGrabar.clear();

@@ -6,8 +6,8 @@
  * Pedido por Enrique (punto 304 de su lista): «dar luz verde o roja a los
  * aviones que llegan, con las señales de luz de verdad; si dos se juntan, uno
  * se va al aire y se celebra. Engancha con la canción». Los dos juegos de antes
- * «se resuelven en medio minuto»; este dura de dos a tres, y tiene cosas que
- * descubrir.
+ * «se resuelven en medio minuto»; este dura minuto y medio, y tiene cosas que
+ * descubrir. Y al acabar suena un trozo de la canción.
  *
  * ## Lo que se enseña es lo de verdad
  *
@@ -44,10 +44,24 @@
  * ## Por peldaños
  *
  * Abajo, verde y roja fijas. Arriba —desde el peldaño de las cifras—, también
- * los destellos: una ronda con el camión de los bomberos revisando la pista,
- * en la que hay que avisar con destellos rojos y después llamar con destellos
- * verdes. Y en el peldaño de cabina, una última ronda de noche, en la que el
- * avión contesta con los faros, en lugar de la primera. Ver `escalera.ts`.
+ * los destellos: el camión de los bomberos entra a revisar la pista, y hay que
+ * avisar con destellos rojos y después llamar con destellos verdes. Y en el
+ * peldaño de cabina, una ronda de noche, en la que el avión contesta con los
+ * faros. Ver `escalera.ts`.
+ *
+ * ## Y cabe en la bajada, con la canción
+ *
+ * Dos rondas en cada peldaño, y en cada una se ve entero lo que enseña. Lo
+ * pidió Enrique (19-10-2026): el kit llega a los 13.300 pies y se recoge a los
+ * diez mil, y entre medias hay unos dos minutos y veinte para jugar; con tres
+ * rondas el juego se los comía enteros abajo y arriba no cabía, y al acabar
+ * suena un trozo de la canción —ver `KitDeViaje.cancion`—.
+ * Así que cada vuelta al circuito que cuesta una luz se aprovecha: el avión
+ * que se queda sin pista con la roja es el mismo al que, en esa vuelta de
+ * más, el camión le pide los destellos; y el de la radio aterriza solo justo
+ * delante del primero sin radio. Con quien hace caso a lo que brilla, minuto y
+ * medio de punta a punta, contando lo que cuenta Ara; y el último en tocar
+ * acaba el juego, sin esperar a verlo rodar hasta su puesto.
  *
  * Esto es solo la lógica, en metros del aeródromo —x al este, y al norte, como
  * el fichero—: ni DOM ni audio. Lo dibuja `ui/luz-verde.ts`.
@@ -258,6 +272,8 @@ const AYUDA_SIN_TOCAR = 5;
 const RECUERDA_SIN_TOCAR = 18;
 /** **Lo que le falta al que pide luz para que brille ya**, s, aunque se acabe de tocar. */
 const CORRE_PRISA = 9;
+/** Lo que se celebra el último en tocar antes de acabar el juego, s. */
+const CELEBRA_EL_ULTIMO = 2.5;
 
 // ── Las rondas ───────────────────────────────────────────────────────────
 
@@ -272,55 +288,72 @@ interface Llega {
 }
 interface Ronda {
   readonly aviones: readonly Llega[];
-  /** El camión de los bomberos revisando la pista. */
-  readonly camion?: boolean;
+  /** **El camión de los bomberos revisando la pista**, y cuándo entra en ella, s desde que empieza la ronda. */
+  readonly camion?: { readonly entra: number };
   readonly noche?: boolean;
 }
 
 /** El primer tramo de viento en cola, m que faltan para decidir. */
 const EN_LA_TRAVESIA = VUELTA.largo - (ARRIBA - DECIDE) - 200;
+/** Ya en la base, m que faltan para decidir: el que contesta sin alabear. */
+const EN_LA_BASE = 1450;
+/** Y en el viento en cola, detrás del de la base: se juntan en la pista. */
+const DETRAS = 3750;
 
 /**
- * **Las rondas**: un avión solo, para aprender la verde y ver cómo contesta;
- * dos seguidos, que se juntan en la pista —el primero ya en la base, que
- * contesta sin alabear—; y uno con la radio bien que aterriza solo, con dos
- * sin radio detrás. Arriba, la tercera es la de la pista insegura, y en el
- * peldaño de cabina se acaba de noche.
+ * **Las rondas**, dos en cada peldaño. Ver «Y cabe en la bajada» en la cabecera.
+ *
+ * - **La de la radio**: uno con la radio bien, que ya está en la base, habla
+ *   con la torre y aterriza solo —lo normal—, y detrás uno sin radio que pide
+ *   la verde, alabea y aterriza.
+ * - **La de los dos que se juntan**: uno sin radio ya en la base, que con la
+ *   verde contesta sin alabear, y otro detrás, que se encontraría la pista
+ *   ocupada: la roja, y otra vuelta.
+ * - **La de la pista insegura**, la misma de los dos que se juntan con el
+ *   camión de los bomberos, que entra a revisar la pista cuando la deja el
+ *   primero: al de la roja le toca, en su vuelta de más, la roja que parpadea
+ *   y, cuando el camión se va, la verde que parpadea. Justo después de que el
+ *   primero la deja, que es lo que haría una torre: no se mete un camión
+ *   delante de un avión rodando.
+ * - **La de noche**, la de la radio con las luces apagadas: contesta con los
+ *   faros.
+ *
+ * Abajo, la de la radio y la de los dos que se juntan; en el de las cifras, la
+ * de la radio y la de la pista insegura; y en el de cabina, la de la pista
+ * insegura y la de noche, que a los catorce años la de la radio de día sobra.
  */
 function rondasDe(peldano: Peldano): readonly Ronda[] {
-  const r: Ronda[] = [
-    { aviones: [{ radio: false, falta: EN_LA_TRAVESIA, desde: 0 }] },
-    { aviones: [{ radio: false, falta: 1450, desde: 0 }, { radio: false, falta: 3750, desde: 0 }] },
-  ];
-  if (CON_DESTELLOS.has(peldano))
-    r.push({ camion: true, aviones: [{ radio: true, falta: 2100, desde: 0 }, { radio: false, falta: 3900, desde: 0 }] });
-  else
-    r.push({
-      aviones: [
-        { radio: true, falta: 1900, desde: 0 },
-        { radio: false, falta: 3300, desde: 0 },
-        { radio: false, falta: EN_LA_TRAVESIA, desde: 6 },
-      ],
-    });
-  /*
-   * En el peldaño de cabina, la de noche al final, y sin la primera, la del
-   * avión solo, que a los catorce años sobra: así no se pasa de los tres
-   * minutos.
-   */
-  if (peldano === "cabina") {
-    r.shift();
-    r.push({ noche: true, aviones: [{ radio: false, falta: EN_LA_TRAVESIA, desde: 0 }] });
-  }
-  return r;
+  const conRadio = (noche = false): Ronda => ({
+    ...(noche ? { noche } : {}),
+    aviones: [
+      { radio: true, falta: EN_LA_BASE, desde: 0 },
+      { radio: false, falta: EN_LA_TRAVESIA, desde: 0 },
+    ],
+  });
+  const seJuntan = (camion = false): Ronda => ({
+    ...(camion ? { camion: { entra: 14 } } : {}),
+    aviones: [
+      { radio: false, falta: EN_LA_BASE, desde: 0 },
+      { radio: false, falta: DETRAS, desde: 0 },
+    ],
+  });
+  if (peldano === "cabina") return [seJuntan(true), conRadio(true)];
+  if (CON_DESTELLOS.has(peldano)) return [conRadio(), seJuntan(true)];
+  return [conRadio(), seJuntan()];
 }
 
 // ── El camión ────────────────────────────────────────────────────────────
 
-/** **El camión de los bomberos**: sale de su parque, al oeste, recorre un trozo de pista y vuelve. */
+/**
+ * **El camión de los bomberos**: sale de su parque, al oeste, recorre un trozo
+ * de pista y vuelve. Trescientos metros, que son once segundos en la pista: con
+ * más, la verde que parpadea llegaba tan justa que el avión que esperaba se
+ * comía otra vuelta.
+ */
 const CAMION: Camino = (() => {
   const parque: P = [-150, -846];
   const entra = enLaPista(aLoLargo([0, -846]), 0);
-  const lejos = enLaPista(aLoLargo([0, -846]) + 480, 0);
+  const lejos = enLaPista(aLoLargo([0, -846]) + 300, 0);
   return camino([parque, entra, lejos, entra, parque], ["pista", "pista", "pista", "pista"]);
 })();
 const CAMION_VA = 80;
@@ -415,6 +448,10 @@ export class JuegoDeLaLuz {
   private haz: { senal: Senal; hacia: number; desde: number } | null = null;
   private fiesta: { que: "aterrizo" | "alAire" | "roja"; id: number; desde: number } | null = null;
   private camionS: number | null = null;
+  /** Cuándo entra el camión en la pista en esta ronda, s del reloj del juego, si todavía no entró. */
+  private camionEntra: number | null = null;
+  /** Cuándo tocó el último que aterrizó, s del reloj del juego. */
+  private ultimaToma = -Infinity;
   private acabado = false;
   private empezado = false;
   private quieto = 0;
@@ -593,9 +630,13 @@ export class JuegoDeLaLuz {
       return;
     }
     this.porLlegar = [...r.aviones];
-    this.camionS = r.camion ? 0 : null;
-    // El camión en la pista: se cuenta qué se hace, que es la primera vez.
-    if (r.camion) this.decir(DICHO_DE_LA_LUZ.destellosRojos, true);
+    this.camionS = null;
+    this.camionEntra = r.camion ? this.reloj + r.camion.entra : null;
+  }
+
+  /** Si esta es la última ronda: se acaba en cuanto toca el último. */
+  private get ultimaRonda(): boolean {
+    return this.ronda === this.rondas.length - 1;
   }
 
   private nacer(l: Llega): void {
@@ -624,7 +665,12 @@ export class JuegoDeLaLuz {
    */
   paso(dt: number, callada: boolean): void {
     this.reloj += dt;
-    if (this.acabado) return;
+    if (this.acabado) {
+      // Los últimos siguen rodando a su puesto mientras suena la canción.
+      for (const a of this.aviones) this.mover(a, dt);
+      if (this.fiesta && this.reloj - this.fiesta.desde > 3) this.fiesta = null;
+      return;
+    }
     if (this.ronda < 0) {
       if (this.reloj > 2 && callada) this.empezarRonda();
       return;
@@ -636,6 +682,12 @@ export class JuegoDeLaLuz {
         this.nacer(l);
         this.porLlegar.splice(i, 1);
       }
+    }
+    // El camión entra en la pista: se cuenta qué se hace, que es la primera vez.
+    if (this.camionEntra !== null && this.reloj >= this.camionEntra) {
+      this.camionEntra = null;
+      this.camionS = 0;
+      this.decir(DICHO_DE_LA_LUZ.destellosRojos, true);
     }
     if (this.camionS !== null) {
       this.camionS += CAMION_VA * dt;
@@ -652,11 +704,24 @@ export class JuegoDeLaLuz {
       const a = this.aviones.find((x) => x.id === this.apunta);
       if (!a || !this.enVuelo(a) || a.ruta !== "vuelta") this.apunta = null;
     }
-    // La ronda se acaba con todos fuera de la pista.
+    /*
+     * La ronda se acaba con todos fuera de la pista, que los de la siguiente
+     * llegan enseguida. La última, en cuanto toca el último y se le celebra:
+     * verlo rodar hasta su puesto no enseña nada y se come el rato de la
+     * canción —y sigue rodando mientras suena—.
+     */
+    const ultima = this.ultimaRonda;
     if (
       this.porLlegar.length === 0 &&
       this.camionS === null &&
-      this.aviones.every((a) => a.ruta === "aterrizaje" && a.s >= LIBRA_LA_PISTA + 120) &&
+      this.camionEntra === null &&
+      this.aviones.every(
+        (a) =>
+          a.ruta === "aterrizaje" &&
+          !!a.aterrizaje &&
+          a.s >= (ultima ? a.aterrizaje.hasta[1]! : LIBRA_LA_PISTA + 120),
+      ) &&
+      (!ultima || this.reloj - this.ultimaToma >= CELEBRA_EL_ULTIMO) &&
       this.reloj - this.rondaDesde > 3
     )
       this.empezarRonda();
@@ -676,6 +741,7 @@ export class JuegoDeLaLuz {
       a.s = Math.min(a.aterrizaje.largo, a.s + velocidadAlAterrizar(a.s, a.aterrizaje) * dt);
       if (antes < a.aterrizaje.hasta[1]! && a.s >= a.aterrizaje.hasta[1]!) {
         this.cuenta.aterrizados++;
+        this.ultimaToma = this.reloj;
         this.fiesta = { que: "aterrizo", id: a.id, desde: this.reloj };
       }
       return;
