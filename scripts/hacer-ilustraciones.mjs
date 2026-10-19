@@ -39,7 +39,7 @@ const DESTINO = "src/assets/ilustraciones";
  * por debajo de 78 los degradados del cielo hacen escalones; el retrato es
  * diminuto y con la cara entera en 96 píxeles, así que va más alto.
  */
-const CALIDAD = { ventanita: 80, tarjeta: 80, retrato: 90 };
+const CALIDAD = { lamina: 78, ventanita: 80, tarjeta: 80, retrato: 90 };
 
 function correr(orden, args) {
   const r = spawnSync(orden, args, { encoding: "utf8" });

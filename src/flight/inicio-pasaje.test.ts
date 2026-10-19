@@ -1259,7 +1259,7 @@ describe("el vuelo medido, con las voces que duran lo que duran", () => {
     for (const c of ["pasaje-embarque", "pasaje-lleno", "pasaje-tripulante", "pasaje-ara-ventanilla", "pasaje-comandante"]) {
       expect(de(c).length, c).toBeGreaterThan(0);
       expect(ilustracion(c), c).not.toBeNull();
-      expect(RECETAS[c]?.hueco, c).toBe("ventanita");
+      expect(RECETAS[c]?.hueco, c).toBe("lamina");
     }
     // El embarque es lo primero y se queda, sin hueco, hasta que la bienvenida lo cambia por la cabina llena.
     const desdeElEmbarque = ventanita.slice(ventanita.findIndex((v) => v.dibujo === "ilustracion:pasaje-embarque"));

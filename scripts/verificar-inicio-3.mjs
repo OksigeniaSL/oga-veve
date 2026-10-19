@@ -66,6 +66,13 @@
  *   de la nube el meneo se cuenta en el momento (280), que al salir por debajo
  *   de las nubes se cuenta el techo (295), y los dos planos nuevos: **el tren
  *   desde abajo** (298) y **el señalero** (301).
+ * - **Que lo que se explica sale en grande y no tapa lo que se enseña**
+ *   (punto 305): cada dibujo de la ventanita, de un cuarto del ancho como
+ *   poco cuando ya está puesto y sin el kit abierto —un quinto en las tomas
+ *   de cerca del ala y del tren, que las llena el avión—; y la lámina nunca encima
+ *   de lo nombrado —el sitio de los últimos veinte segundos, donde cae en la
+ *   imagen mientras la lámina está puesta—, de la tarjeta de quien habla ni
+ *   de los botones.
  * - **Que Ara se duerme un rato** (punto 304): arriba y sin nada que contar,
  *   bosteza, la pantalla se funde a Ara durmiendo y después soñando, con el
  *   mapa de la ruta en la ventanita —las islas con su costa de verdad (292) y
@@ -178,8 +185,22 @@ const leer = (page) =>
       relojes: visible(".hud__izquierda") || visible(".hud__derecha"),
       mandos: visible("#tactil [data-touch='stick']") || visible("#tactil [data-touch='throttle']"),
       tarjeta: visible("#inicio .inicio__tarjeta"),
+      // Lo que la lámina no puede tapar: la tarjeta de quien habla y los botones. Ver `laminas`.
+      noSeTapa: [...document.querySelectorAll("#inicio .inicio__tarjeta, #hud button, #kit button, .kit__panel")]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return !el.closest("[hidden]") && getComputedStyle(el).visibility !== "hidden" && r.width > 2 && r.height > 2;
+        })
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return { que: el.className?.baseVal ?? el.className ?? el.tagName, left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+        }),
+      pantalla: { ancho: innerWidth, alto: innerHeight },
     };
   });
+
+/** Si dos cajas en píxeles de pantalla se pisan. */
+const sePisan = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
 /** Los momentos de un vuelo normal, en su orden. Ver `GUION_DEL_PASAJE`. */
 const MOMENTOS = [
@@ -305,6 +326,14 @@ async function elVuelo() {
   let meneoEnLaNube = null;
   // La siesta de Ara, mirada de cerca en cuanto bosteza. Ver `mirarLaSiesta`.
   let siesta = null;
+  /*
+   * La lámina grande de lo que se explica (punto 305): lo más ancha que se vio
+   * cada una ya puesta, en fracción del ancho, y lo que pisó, si pisó algo.
+   */
+  const laminas = new Map();
+  const laminaPisa = new Set();
+  /** Las veces que la lámina estaba puesta con algo nombrado a la vista: lo que se pudo medir. */
+  const laminaConNombrado = new Set();
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -321,6 +350,27 @@ async function elVuelo() {
     if (i.planoVisto) vistos.add(i.planoVisto);
     veloMaximo = Math.max(veloMaximo, Number(i.velo) || 0);
     if (i.ventanita?.sitio) ventanitas.add(i.ventanita.sitio);
+    // ── La lámina grande: su tamaño y lo que no tapa ──
+    const lamina = i.ventanita;
+    if (lamina?.donde && lamina.caja && (Number(i.velo) || 0) < 0.02 && !e.durmiendo) {
+      // El tamaño, sin el kit abierto: con él, lo que se mira es el kit y la lámina se hace a un lado.
+      const ancho = (lamina.caja.right - lamina.caja.left) / v.pantalla.ancho;
+      const antes = laminas.get(lamina.sitio);
+      if (!e.kit?.abierto && (!antes || ancho > antes.ancho)) laminas.set(lamina.sitio, { ancho, donde: lamina.donde, plano: i.planoVisto });
+      for (const o of v.noSeTapa) if (sePisan(lamina.caja, o)) laminaPisa.add(`${lamina.sitio} pisa ${o.que}`);
+      // Y lo nombrado de hace poco, donde cae ahora en la imagen: fuera de la lámina.
+      const recientes = new Set((e.nombrados ?? []).filter((n) => n.desde >= e.segundos - 20).map((n) => n.sitio));
+      if (e.paisaje) recientes.add(e.paisaje);
+      for (const sitio of recientes) {
+        const p = await page.evaluate((s) => globalThis.__oga.paisajeALaVista(s), sitio).catch(() => null);
+        if (!p || !p.delante || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
+        const x = ((p.x + 1) / 2) * v.pantalla.ancho;
+        const y = ((1 - p.y) / 2) * v.pantalla.alto;
+        const c = lamina.caja;
+        laminaConNombrado.add(`${sitio} con ${lamina.sitio.replace(/^(dibujo|ilustracion):/, "")}`);
+        if (x > c.left && x < c.right && y > c.top && y < c.bottom) laminaPisa.add(`${lamina.sitio} tapa ${sitio}`);
+      }
+    }
     if (i.asientoDeAra) asientoDeAra = i.asientoDeAra;
     if (v.cara) caras.add(v.cara.replace(/^.*inicio__cara--/, ""));
     // ── Lo que se mira mientras pasa ──
@@ -371,13 +421,27 @@ async function elVuelo() {
         .catch(() => {});
       const medido = await page.evaluate((sitio) => {
         const j = globalThis.__oga.inicio();
-        return { vista: globalThis.__oga.paisajeALaVista(sitio), plano: j.planoVisto, linea: j.estado.linea?.clave ?? null };
+        return {
+          vista: globalThis.__oga.paisajeALaVista(sitio),
+          plano: j.planoVisto,
+          linea: j.estado.linea?.clave ?? null,
+          lamina: j.ventanita?.donde ? { sitio: j.ventanita.sitio, caja: j.ventanita.caja } : null,
+          pantalla: { ancho: innerWidth, alto: innerHeight },
+        };
       }, n.sitio);
       const v = medido.vista;
       const enLaImagen = !!v && v.delante && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
       const porElCristal = !v || !medido.plano || medido.plano.startsWith("fuera-") || v.porElCristal !== false;
       // Y el mar de nubes, al revés: lo que se nombra es la nube, que tiene que estar por medio.
       const nube = n.sitio === "nubes-abajo" ? !!v && v.nubeEnMedio >= 100 : !!v && v.nubeEnMedio < 150;
+      // Y la lámina de lo que se explica, si está puesta, no encima de lo nombrado.
+      if (medido.lamina && v && v.delante) {
+        const x = ((v.x + 1) / 2) * medido.pantalla.ancho;
+        const y = ((1 - v.y) / 2) * medido.pantalla.alto;
+        const c = medido.lamina.caja;
+        n.conLamina = medido.lamina.sitio;
+        if (x > c.left && x < c.right && y > c.top && y < c.bottom) laminaPisa.add(`${medido.lamina.sitio} tapa ${n.sitio}`);
+      }
       const ok = enLaImagen && porElCristal && !!v && v.ojoEnNube < 0.35 && nube;
       const nombre = `nombrado-${nombrados.length + 1}-${n.sitio.replace(":", "-")}`;
       nombrados.push({ ...n, plano: medido.plano, medido: v, ok, nombre });
@@ -816,6 +880,25 @@ async function elVuelo() {
     nombrados.length >= 3 && nombrados.every((n) => n.ok),
     `${nombrados.filter((n) => n.ok).length} de ${nombrados.length}: ${nombrados.map((n) => `${n.sitio}${n.ok ? "" : " ✗"}`).join(", ")}`,
   );
+  // ── La lámina grande de lo que se explica (punto 305) ──
+  /*
+   * Un cuarto del ancho; y un quinto en la toma del ala, que es de cerca y la
+   * llena el ala de punta a raíz: ahí manda no taparla, y la lámina se queda
+   * en lo que deja debajo (medido el 19-10-2026: un 22 %).
+   */
+  const minimo = (plano) => (plano === "fuera-ala" || plano === "fuera-tren" ? 0.2 : 0.25);
+  const dibujosVistos = [...laminas].filter(([s]) => s.startsWith("dibujo:"));
+  const pequenos = dibujosVistos.filter(([, l]) => l.ancho < minimo(l.plano));
+  comprobar(
+    "lo que se explica sale en grande: cada dibujo, de un cuarto del ancho como poco (un quinto con el ala de cerca)",
+    dibujosVistos.length >= 5 && pequenos.length === 0 && [...laminas.values()].every((l) => l.donde === "grande"),
+    [...laminas].map(([s, l]) => `${s.replace(/^(dibujo|ilustracion):/, "")} ${Math.round(l.ancho * 100)} %${l.plano && l.plano !== "ventanilla" ? ` (${l.plano})` : ""}`).join(", "),
+  );
+  comprobar(
+    "y no tapa lo nombrado, ni la tarjeta de quien habla ni los botones",
+    laminaPisa.size === 0 && laminaConNombrado.size > 0,
+    `${laminaPisa.size ? [...laminaPisa].join(" · ") : "nada pisado"} · lo nombrado a la vista con la lámina puesta: ${[...laminaConNombrado].join(", ") || "nunca"}`,
+  );
   const olvidados = e?.saltados ?? [];
   comprobar(
     "y la isla de llegada se dice cuando se ve, no metido en la nube",
@@ -1224,6 +1307,35 @@ async function enElTelefono() {
         : "sin tarjeta",
     );
     await foto(page, "telefono");
+    /*
+     * **Y la lámina de lo que se explica, también en el teléfono** (punto 305):
+     * en el pasaje no hay pulgares que dejar libres, así que cabe y sale —la
+     * del embarque, la primera—, de un cuarto del ancho como poco y sin
+     * pisar la tarjeta ni los botones.
+     */
+    const lamina = await page
+      .waitForFunction(
+        () => {
+          const j = globalThis.__oga.inicio();
+          return j.ventanita?.donde && j.ventanita.caja ? j.ventanita : null;
+        },
+        null,
+        { timeout: 40_000 },
+      )
+      .then((h) => h.jsonValue())
+      .catch(() => null);
+    await pausa(1200);
+    const conLamina = await leer(page);
+    const pisa = lamina ? conLamina.noSeTapa.filter((o) => sePisan(lamina.caja, o)).map((o) => o.que) : [];
+    const ancho = lamina ? (lamina.caja.right - lamina.caja.left) / conLamina.pantalla.ancho : 0;
+    comprobar(
+      "teléfono apaisado: la lámina de lo que se explica sale, grande y sin pisar la tarjeta ni los botones",
+      !!lamina && lamina.donde === "grande" && ancho >= 0.25 && pisa.length === 0,
+      lamina
+        ? `${lamina.sitio} ${lamina.donde} de ${Math.round(ancho * 100)} % en ${conLamina.pantalla.ancho}×${conLamina.pantalla.alto}${pisa.length ? ` · pisa ${pisa.join(", ")}` : ""}`
+        : `no salió · ${JSON.stringify((await leer(page)).inicio?.ventanita ?? null)}`,
+    );
+    if (lamina) await foto(page, "telefono-lamina");
   } catch (e) {
     comprobar("teléfono apaisado: la escena se abre", false, String(e).slice(0, 140));
   } finally {

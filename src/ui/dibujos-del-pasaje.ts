@@ -93,9 +93,11 @@ const C = {
 } as const;
 
 /**
- * La lámina: el fondo, el estilo común y lo de dentro. El trazo es grueso
- * —la ventana mide 240 px de ancho y el dibujo, el doble—, que a ese tamaño
- * un trazo fino desaparece.
+ * La lámina: el fondo, el estilo común y lo de dentro. El trazo es grueso:
+ * fuera de la escena de pasaje la ventana mide 240 px de ancho, la mitad que
+ * el dibujo, y a ese tamaño un trazo fino desaparece. En el pasaje sale más
+ * grande —ver `LAMINA` en `ventana-de-historia.ts`—, y como es vectorial no
+ * se emborrona.
  */
 function lamina(dentro: string, estilo = "", fondo: string = C.papel): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320">
@@ -184,6 +186,11 @@ const CINTURON = lamina(
  * **Las salidas**: el avión visto desde arriba, con las filas de asientos, las
  * salidas delante, detrás y sobre las alas, y las lucecitas del suelo del
  * pasillo encendiéndose hacia ellas.
+ *
+ * Con el morro a la derecha, como todos los aviones de estos dibujos —ver
+ * `SENTIDO_DE_LOS_DIBUJOS`—: las alas en flecha hacia atrás y la cola a la
+ * izquierda. La cola iba a la derecha, delante de unas alas que apuntaban al
+ * otro lado: un avión con las alas al revés.
  */
 const SALIDAS = (() => {
   const filas: string[] = [];
@@ -203,7 +210,7 @@ const SALIDAS = (() => {
   return lamina(
     `<path d="M196 112 L150 30 h46 l70 82z M196 208 L150 290 h46 l70 -82z" fill="#d9d2c4" class="tf fino"/>
 <rect x="60" y="104" width="360" height="112" rx="56" fill="#efe9dd" class="tf fino"/>
-<path d="M420 160 l40 -14 v28z" fill="#d9d2c4" class="tf fino"/>
+<path d="M60 160 l-40 -14 v28z" fill="#d9d2c4" class="tf fino"/>
 ${filas.join("")}${luces.join("")}
 ${salida(92, 92)}${salida(92, 228)}${salida(392, 92)}${salida(392, 228)}${salida(214, 66)}${salida(214, 254)}`,
     `.l{animation:l 1.44s infinite}
@@ -357,16 +364,22 @@ ${gotas.join("")}
  * y sale empujado hacia abajo, y la flecha grande hacia arriba. Encima, menos
  * presión —el «−»—; debajo, más —el «+»—. Las dos cosas son lo mismo visto
  * por cada lado.
+ *
+ * **Volando hacia la derecha**, con el borde de ataque a la derecha y el aire
+ * llegando por ahí: sale con la toma del ala —ver `fuera-ala` en
+ * `cameras/escena.ts`—, desde encima del fuselaje del lado de Ara, y ahí el
+ * morro queda hacia la derecha de la pantalla, como por su ventanilla. Ver
+ * `SENTIDO_DE_LOS_DIBUJOS`.
  */
 const ALA = lamina(
-  `<path d="M40 110 C150 104 230 122 300 150 S420 214 460 240" class="t fino corre" stroke="${C.mar}"/>
-<path d="M40 150 C150 144 230 160 300 186 S420 236 460 262" class="t fino corre" stroke="${C.mar}"/>
-<path d="M40 250 C150 250 230 246 300 238 S420 270 460 290" class="t fino corre" stroke="${C.mar}"/>
-<path d="M120 196 C140 160 220 150 300 168 C350 178 380 192 398 204 C350 210 250 216 170 214 C140 212 122 206 120 196z" fill="${C.terracota}" class="tf"/>
-${flecha(260, 160, 260, 40, C.verde, 10)}
-<text x="190" y="140" font-family="system-ui,sans-serif" font-weight="900" font-size="64" fill="${C.marHondo}">−</text>
-<text x="222" y="272" font-family="system-ui,sans-serif" font-weight="900" font-size="64" fill="${C.marHondo}">+</text>
-${flecha(420, 236, 446, 284, C.marHondo, 6)}`,
+  `<path d="M440 110 C330 104 250 122 180 150 S60 214 20 240" class="t fino corre" stroke="${C.mar}"/>
+<path d="M440 150 C330 144 250 160 180 186 S60 236 20 262" class="t fino corre" stroke="${C.mar}"/>
+<path d="M440 250 C330 250 250 246 180 238 S60 270 20 290" class="t fino corre" stroke="${C.mar}"/>
+<path d="M360 196 C340 160 260 150 180 168 C130 178 100 192 82 204 C130 210 230 216 310 214 C340 212 358 206 360 196z" fill="${C.terracota}" class="tf"/>
+${flecha(220, 160, 220, 40, C.verde, 10)}
+<text x="272" y="140" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="64" fill="${C.marHondo}">−</text>
+<text x="240" y="272" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="64" fill="${C.marHondo}">+</text>
+${flecha(60, 236, 34, 284, C.marHondo, 6)}`,
   `.corre{stroke-dasharray:22 18;animation:corre 1.2s infinite linear}
 @keyframes corre{to{stroke-dashoffset:-40}}`,
   C.cielo,
@@ -455,24 +468,31 @@ ${flecha(236, 266, 456, 266, C.verde, 7)}`,
  * **El motor por dentro**: el ventilador gigante de delante que traga aire,
  * el aire que se aprieta, el fuego del combustible que lo calienta y el
  * chorro que sale por detrás; y el avión, empujado hacia delante.
+ *
+ * **Con el morro a la derecha**, como se ve el motor por la ventanilla de Ara,
+ * que va a la izquierda del avión: mirando por ella, lo de delante queda a la
+ * derecha. Así que el aire entra por la derecha, el chorro sale por la
+ * izquierda y la flecha verde del avance apunta a la derecha (punto 285: iba
+ * al revés, y al lado de la ventanilla el motor del dibujo volaba hacia atrás).
+ * Ver `SENTIDO_DE_LOS_DIBUJOS`.
  */
 const MOTOR = lamina(
-  `<path d="M70 92 h300 q50 0 60 68 q-10 68 -60 68 h-300 q-20 -68 0 -136z" fill="#d9d2c4" class="tf"/>
-<g transform="translate(96 160)">
+  `<path d="M410 92 h-300 q-50 0 -60 68 q10 68 60 68 h300 q20 -68 0 -136z" fill="#d9d2c4" class="tf"/>
+<g transform="translate(384 160)">
 <ellipse cx="0" cy="0" rx="14" ry="62" fill="${C.gris}" class="tf fino"/>
 <path d="M0 -56 V56" stroke="${C.tinta}" stroke-width="8" stroke-dasharray="12 8" class="aspa"/>
 </g>
-<path d="M140 120 L260 140 V180 L140 200z" fill="#bfc6c2" class="tf fino"/>
-<g class="fuego"><path d="M270 140 q18 20 0 40 q30 -4 46 -20 q-16 -16 -46 -20z" fill="${C.naranja}" stroke="${C.rojo}" stroke-width="4"/></g>
-${flecha(10, 130, 70, 130, C.mar, 7)}${flecha(10, 190, 70, 190, C.mar, 7)}
-<g class="sale">${flecha(400, 160, 470, 160, C.rojo, 9)}</g>
-${flecha(250, 288, 150, 288, C.verde, 9)}`,
+<path d="M340 120 L220 140 V180 L340 200z" fill="#bfc6c2" class="tf fino"/>
+<g class="fuego"><path d="M210 140 q-18 20 0 40 q-30 -4 -46 -20 q16 -16 46 -20z" fill="${C.naranja}" stroke="${C.rojo}" stroke-width="4"/></g>
+${flecha(470, 130, 410, 130, C.mar, 7)}${flecha(470, 190, 410, 190, C.mar, 7)}
+<g class="sale">${flecha(80, 160, 10, 160, C.rojo, 9)}</g>
+${flecha(230, 288, 330, 288, C.verde, 9)}`,
   `.aspa{animation:aspa .4s infinite linear}
 @keyframes aspa{to{stroke-dashoffset:-20}}
-.fuego{animation:fuego .4s infinite alternate;transform-box:fill-box;transform-origin:0 50%}
+.fuego{animation:fuego .4s infinite alternate;transform-box:fill-box;transform-origin:100% 50%}
 @keyframes fuego{to{transform:scaleX(1.25)}}
 .sale{animation:sale 1s infinite}
-@keyframes sale{50%{transform:translateX(8px)}}`,
+@keyframes sale{50%{transform:translateX(-8px)}}`,
 );
 
 /**
@@ -570,7 +590,9 @@ const OIDO = lamina(
 /**
  * **Las cuatro luces de al lado de la pista**, el PAPI del Anexo 14 de la
  * OACI: la pista vista desde la final, con las cuatro luces a su izquierda;
- * dos blancas y dos rojas, el avión va por su senda.
+ * dos blancas y dos rojas, el avión va por su senda. El avioncito, con el
+ * morro hacia donde baja, que es la pista: apuntaba hacia la derecha mientras
+ * bajaba hacia la izquierda, volando de espaldas.
  */
 const PAPI = lamina(
   `<rect width="480" height="320" rx="18" fill="${C.cielo}"/>
@@ -582,10 +604,10 @@ const PAPI = lamina(
 <circle cx="102" cy="226" r="13" fill="${C.blanco}" class="tf fino"/>
 <circle cx="132" cy="226" r="13" fill="${C.rojo}" class="tf fino"/>
 <circle cx="162" cy="226" r="13" fill="${C.rojo}" class="tf fino"/>
-<g class="baja" transform="translate(300 70)">
+<g class="baja" transform="translate(300 70)"><g transform="rotate(132)">
 <path d="M-34 0 q0 -7 9 -7 h44 q12 0 18 7 q-6 7 -18 7 h-44 q-9 0 -9 -7z" fill="${C.blanco}" class="tf fino"/>
 <path d="M-4 0 l-16 15 h9 l23 -15z M-4 0 l-16 -15 h9 l23 15z" fill="${C.terracota}" stroke="${C.tinta}" stroke-width="3"/>
-</g>
+</g></g>
 <path d="M330 80 L250 168" stroke="${C.blanco}" stroke-width="4" stroke-dasharray="8 10"/>`,
   `.baja{animation:baja 4s infinite ease-in-out}
 @keyframes baja{0%{transform:translate(330px,50px)}100%{transform:translate(280px,110px)}}`,
@@ -614,6 +636,25 @@ ${estrellas}
 @keyframes e{50%{opacity:.35}}`,
   );
 })();
+
+/**
+ * **Hacia dónde vuela el avión en los dibujos que lo llevan**: hacia la
+ * derecha, todos. Es hacia donde queda el morro **en las tomas con las que
+ * salen**: por la ventanilla de Ara, que va a la izquierda del avión, lo de
+ * delante queda a la derecha —el motor, las nubes, el techo—; desde la toma
+ * del ala, encima del fuselaje del lado de Ara, también —el ala—; y en la
+ * toma del paisaje con el Teide, que queda del lado de Ara, el avión cruza
+ * la pantalla hacia la derecha —lo alto—. Un dibujo que vuela al revés que
+ * lo que se ve al lado enseña un avión que va marcha atrás (punto 285). Lo
+ * vigila `dibujos-del-pasaje.test.ts`, con la toma de verdad.
+ */
+export const SENTIDO_DE_LOS_DIBUJOS: Readonly<Partial<Record<DibujoDelPasaje, "derecha">>> = {
+  motor: "derecha",
+  ala: "derecha",
+  alto: "derecha",
+  techo: "derecha",
+  salidas: "derecha",
+};
 
 /** Los dibujos, por clave: el SVG entero de cada uno. */
 export const DIBUJOS_DEL_PASAJE: Readonly<Record<DibujoDelPasaje, string>> = {

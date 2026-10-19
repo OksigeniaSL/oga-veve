@@ -69,7 +69,7 @@ function medidasDeWebp(b: Uint8Array): { ancho: number; alto: number } | null {
 }
 
 /** Lo más que pesa una de cada hueco: el doble de su hueco, en WebP, no necesita más. */
-const TOPE_KB = { ventanita: 60, tarjeta: 40, retrato: 12 } as const;
+const TOPE_KB = { lamina: 140, ventanita: 60, tarjeta: 40, retrato: 12 } as const;
 
 describe("las ilustraciones", () => {
   it("cada receta tiene su fichero, y en la carpeta no sobra ninguno", () => {

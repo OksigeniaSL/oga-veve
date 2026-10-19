@@ -13768,9 +13768,35 @@ svg .ex-raya {
   display: none;
 }
 
+/*
+ * **En grande, en la escena de pasaje**: lo que se explica, para verlo desde
+ * el sofá —ver `LAMINA` en `ventana-de-historia.ts`—. Si cambia el plano o se
+ * abre algo encima, se desliza a su nuevo sitio en vez de saltar; y la firma
+ * de la foto crece con ella, que se tiene que seguir leyendo.
+ */
+.historia--grande {
+  border-radius: 18px;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease,
+    left 0.5s ease,
+    top 0.5s ease,
+    width 0.5s ease;
+}
+
+.historia--grande .historia__marco {
+  border-radius: 12px;
+}
+
+.historia--grande .historia__firma {
+  padding: 16px 10px 6px;
+  font-size: 13px;
+}
+
 .historia__marco {
   position: relative;
-  aspect-ratio: 3 / 2;
+  /* La de la imagen en la lámina del pasaje —3:2 o 4:3—; si no, 3:2. */
+  aspect-ratio: var(--historia-proporcion, 3 / 2);
   border-radius: 10px;
   overflow: hidden;
   background: var(--barro);
@@ -14694,8 +14720,8 @@ body.con-vuelta #tactil {
  * durmiendo y después soñando, en el marco de cristal de la ventanita. Encima
  * del mundo y debajo del HUD, como `.plano-velo`: la ventanita con el mapa de
  * la ruta, la pausa y la tarjeta de quien habla se siguen viendo. En la
- * columna del medio, que es donde la ventanita no va nunca —ver
- * `ZONA_DEL_AVION` en `ventana-de-historia.ts`—. La opacidad la pone el juego,
+ * columna del medio, y la ventanita no se le pone encima: el sueño es de lo
+ * que no tapa —ver `DE_LA_ESCENA` en `ventana-de-historia.ts`—. La opacidad la pone el juego,
  * fotograma a fotograma. Ver `ui/siesta.ts`.
  */
 .siesta {

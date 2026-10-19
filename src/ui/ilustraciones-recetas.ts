@@ -17,14 +17,20 @@
  */
 
 /** Los sitios del juego donde va una ilustración, cada uno con su forma. */
-export type HuecoDeLaIlustracion = "ventanita" | "tarjeta" | "retrato";
+export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato";
 
 /**
  * **El tamaño al que se hacen**: el doble de lo que miden en pantalla.
  *
+ * - **La lámina de la escena de pasaje**, en 3:2: lo que se explica sale
+ *   en grande, hasta cuatro décimas del ancho de la pantalla —unos 480 en
+ *   un portátil, y en una tablet de densidad dos son novecientos sesenta
+ *   píxeles de pantalla— (punto 305). Ver `LAMINA` en
+ *   `ui/ventana-de-historia.ts`. Los originales de estas miden 1024 de ancho:
+ *   más no se puede sacar.
  * - La ventanita de cristal mide 240 de ancho como mucho, en 3:2 —ver
  *   `VENTANA` en `ui/ventana-de-historia.ts`—, igual que las fotos de las
- *   historias.
+ *   historias. Es el hueco de Ara durmiendo y soñando.
  * - En la tarjeta del avión van dos, una al lado de la otra, en la columna de
  *   la ficha: unos 180 de ancho cada una en un portátil. Y en 4:3, que es como
  *   están dibujadas: así casi ninguna pierde nada.
@@ -33,6 +39,7 @@ export type HuecoDeLaIlustracion = "ventanita" | "tarjeta" | "retrato";
 export const TAMANO_DEL_HUECO: Readonly<
   Record<HuecoDeLaIlustracion, { readonly ancho: number; readonly alto: number }>
 > = {
+  lamina: { ancho: 960, alto: 640 },
   ventanita: { ancho: 480, alto: 320 },
   tarjeta: { ancho: 360, alto: 270 },
   retrato: { ancho: 96, alto: 96 },
@@ -77,24 +84,24 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   // ── La escena de pasaje, en la ventanita ──────────────────────────────
   "pasaje-embarque": {
     original: "cabina-pasaje-embarque.png",
-    hueco: "ventanita",
+    hueco: "lamina",
     recorte: [0, 41, 1024, 683],
   },
   "pasaje-lleno": {
     original: "cabina-pasaje-gente-2x2.png",
-    hueco: "ventanita",
+    hueco: "lamina",
     recorte: [0, 41, 1024, 683],
     conAra: true,
   },
   "pasaje-tripulante": {
     original: "tripulante-ara.png",
-    hueco: "ventanita",
+    hueco: "lamina",
     recorte: [0, 41, 1024, 683],
     conAra: true,
   },
   "pasaje-ara-ventanilla": {
     original: "ara-ventanilla.jpg",
-    hueco: "ventanita",
+    hueco: "lamina",
     // Lo que sobra va de arriba, que es pared: abajo están las rodillas en el asiento.
     recorte: [0, 72, 1024, 683],
     conAra: true,
@@ -123,7 +130,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   },
   "pasaje-comandante": {
     original: "jazlyn-cabina-dibujo.jpg",
-    hueco: "ventanita",
+    hueco: "lamina",
     recorte: [200, 0, 1425, 950],
     porque:
       "por encima de los hombros: en el dibujo lleva tres barras, que son las de primera oficial, y Jazlyn es la comandante, que lleva cuatro",
