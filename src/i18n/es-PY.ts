@@ -3651,6 +3651,12 @@ export const ES_PY = {
   "inicio.ara.pasaje.marQuieto": "Desde tan alto, el mar parece quietito. ¡Pero de cerca tiene olas!",
   "inicio.ara.pasaje.nubesCerca": "Cada vez estamos más bajo: ¡las nubes ya están cerquita!",
   "inicio.ara.pasaje.bano": "¿Y si tengo ganas de ir al baño? ¿Hay baño en el avión?",
+  /*
+   * Ya no suena (punto 293): con la luz encendida, ahora la tripulante le dice
+   * a Ara que le acompaña cuando se apague, y arriba va de verdad. Se queda
+   * para no renumerar el guion de la tripulación, que está grabado. Ver
+   * `inicio.tripulacion.pasaje.cerca.banoLuz`.
+   */
   "inicio.tripulacion.pasaje.cerca.bano":
     "¡Claro que hay! Pero ahora, con la luz del cinturón encendida, mejor esperamos a aterrizar.",
   /*
@@ -3864,6 +3870,23 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.oficio2":
     "Y sé apagar un fuego con la capucha para el humo puesta, sacar a todo el mundo del avión en noventa segundos y usar los chalecos en el agua. Lo practicamos todos los años.",
   "inicio.ara.pasaje.uniforme": "¡Entonces tu uniforme no es para servir: es para cuidarnos a todos!",
+  /*
+   * **El baño de Ara** (punto 293): la luz manda, y cuando se apaga, se puede.
+   * Antes de subir, en el embarque; la pregunta, rodando, con la luz encendida
+   * —`inicio.ara.pasaje.bano`, más arriba—; el viaje, arriba, con la luz
+   * apagada, y bajando, que fue a tiempo; y si no hubo rato, esperar sin
+   * drama. Al final del bloque, que lo grabado no se renumera. Ver
+   * `puedeIrAlBano` en `flight/inicio-pasaje.ts`.
+   */
+  "inicio.ara.pasaje.banoAntes": "Antes de subir fui al baño: mamá dice que en los vuelos cortos casi no da tiempo.",
+  "inicio.tripulacion.pasaje.cerca.banoLuz":
+    "¡Claro que hay! Pero con la luz del cinturón encendida no se levanta nadie. Cuando se apague, te acompaño.",
+  "inicio.tripulacion.pasaje.cerca.banoAhora":
+    "Ya se apagó la luz del cinturón: ahora sí se puede ir al baño. ¡Vamos, te acompaño!",
+  "inicio.ara.pasaje.banoVuelta": "¡Ya volví del baño! Y me abroché otra vez el cinturón, como dijo mamá.",
+  "inicio.tripulacion.pasaje.cerca.banoATiempo":
+    "¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.",
+  "inicio.ara.pasaje.banoEspero": "Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

@@ -444,6 +444,7 @@ describe("cada cosa en su momento del vuelo", () => {
     if (entorno?.OGA_PASAJE) console.log(r.dichas.map((d) => `${d.desde.toFixed(0)} s · ${d.linea.clave}`).join("\n"));
     const esperado: MomentoDelPasaje[] = [
       "ventanilla",
+      "banoAntes",
       "cinturon",
       "puertas",
       "motores",
@@ -903,8 +904,12 @@ class VueloMedido {
     return Math.max(0, this.altitud - this.campo);
   }
 
+  /** Lo que lleva el avión desde que despegó, s: dónde va. Ver `LO_QUE_SE_VIO`. */
+  desdeQueDespego = 0;
+
   paso(dt: number, p: PermisosDeLaEscena): void {
     this.conEstaPotencia += dt;
+    if (this.desdeQueDespego > 0 || !this.enTierra) this.desdeQueDespego += dt;
     this.pasoDelVuelo(dt, p);
     this.ponerLaPotencia();
   }
@@ -1107,12 +1112,17 @@ class VueloMedido {
   ver?: LecturaDelPasaje["ver"];
 }
 
-/** Lo que el juego señala por la ventanilla, y cuándo lo vio en el banco, s. */
+/**
+ * Lo que el juego señala por la ventanilla, y cuándo lo vio en el banco, **s
+ * desde que se despegó**: lo que dice dónde va el avión. Contado desde que
+ * empieza la escena, cualquier frase de más en tierra —el baño, punto 293—
+ * movía la Orotava a otro sitio del vuelo. Medido con el despegue a los 226 s.
+ */
 const LO_QUE_SE_VIO: readonly { t: number; s: Senalado }[] = [
-  { t: 450, s: sitio("anaga", "izquierda") },
-  { t: 620, s: sitio("orotava", "izquierda") },
-  { t: 780, s: sitio("teide", "izquierda") },
-  { t: 1015, s: sitio("garajonay", "izquierda") },
+  { t: 224, s: sitio("anaga", "izquierda") },
+  { t: 394, s: sitio("orotava", "izquierda") },
+  { t: 554, s: sitio("teide", "izquierda") },
+  { t: 789, s: sitio("garajonay", "izquierda") },
 ];
 
 interface Medido {
@@ -1145,7 +1155,7 @@ function volarElMedido(vuelo: VueloMedido = new VueloMedido()): Medido {
         enTierra: vuelo.lectura.enTierra,
         cartelApagado: escena.dicho("arriba") && !escena.dicho("bajada"),
       });
-    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (porVer[0] && porVer[0].t <= vuelo.desdeQueDespego && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
     if (escena.estado.puedeSeguir) escena.seguir();
     if (escena.estado.terminado) break;
   }
@@ -1376,7 +1386,7 @@ function volarConElKit(jugador: (escena: VueloDePasaje, t: number) => void): Med
     v.tic();
     if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
     vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
-    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (porVer[0] && porVer[0].t <= vuelo.desdeQueDespego && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
     jugador(escena, t);
     if (escena.kit.ocupaAAra) {
       const ultimo = ocupado[ocupado.length - 1];
@@ -1767,7 +1777,7 @@ function volarConElPaisaje(vuelo: VueloMedido = new VueloMedido()): VueloConPais
     v.tic();
     if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
     vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
-    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (porVer[0] && porVer[0].t <= vuelo.desdeQueDespego && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
     if (escena.estado.puedeSeguir) escena.seguir();
     if (escena.estado.terminado) break;
   }
@@ -2074,7 +2084,7 @@ function volarApuntandoLaPotencia(vuelo: VueloMedido = new VueloMedido()): Medid
     if (cambios[cambios.length - 1]?.potencia !== vuelo.potencia) cambios.push({ potencia: vuelo.potencia, t });
     altitudes.push({ t, altitud: vuelo.altitud });
     vuelo.paso(DT, escena.paso(DT, vuelo.lectura));
-    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (porVer[0] && porVer[0].t <= vuelo.desdeQueDespego && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
     if (escena.estado.puedeSeguir) escena.seguir();
   }
   return {
@@ -2219,7 +2229,7 @@ function volarApuntandoLaLlegada(vuelo: VueloMedido = new VueloMedido()): Medido
     const e = escena.estado;
     if (["frenando", "al-puesto", "aparcado", "apagado"].includes(vuelo.tramo))
       pasos.push({ t, tramo: vuelo.tramo, enTramo: vuelo.enTramo, pista: l.enLaPista, plano: e.plano, gente: e.gente, luz: e.luzApagada });
-    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (porVer[0] && porVer[0].t <= vuelo.desdeQueDespego && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
     if (e.puedeSeguir) escena.seguir();
     if (e.terminado) break;
   }
@@ -2344,5 +2354,98 @@ describe("la llegada al puesto: los que se levantan antes de tiempo, y lo que es
     expect(k.indexOf("inicio.tripulacion.pasaje.cerca.oficio1")).toBeGreaterThan(k.indexOf("inicio.tripulacion.pasaje.cerca.seria"));
     expect(k.indexOf("inicio.ara.pasaje.uniforme")).toBeLessThan(k.indexOf("inicio.tripulacion.pasaje.cerca.adios"));
     expect(sinHueco.escena.estado.terminado).toBe(true);
+  });
+});
+
+/*
+ * **El baño de Ara** (punto 293). Enrique, en broma: «pobre Ara, pregunta por
+ * el baño y la azafata lo deja en su sitio». Lo que se enseña es la regla de
+ * verdad: la luz manda, y cuando se apaga, se puede. No que en un avión no se
+ * va al baño.
+ */
+describe("el baño de Ara: la luz manda, y cuando se apaga, se puede", () => {
+  const m = volarElMedido();
+  const r = m.escena.registro;
+  const cuando = (clave: string): number => r.find((d) => d.clave === clave)?.desde ?? NaN;
+  const acaba = (clave: string): number => r.find((d) => d.clave === clave)?.hasta ?? NaN;
+  const empiezaA = (tramo: TramoDeLinea): number => m.tramos.find((x) => x.tramo === tramo)?.t ?? NaN;
+
+  it("antes de subir: en el embarque, Ara cuenta que ya fue, antes de la bienvenida", () => {
+    expect(cuando("inicio.ara.pasaje.banoAntes")).toBeLessThan(cuando("inicio.tripulacion.pasaje.cinturon"));
+    expect(cuando("inicio.ara.pasaje.banoAntes")).toBeLessThan(empiezaA("arrancando"));
+  });
+
+  it("rodando, con la luz encendida, lo pregunta; y la tripulante, a su lado: cuando se apague, le acompaña", () => {
+    const pregunta = cuando("inicio.ara.pasaje.bano");
+    const respuesta = cuando("inicio.tripulacion.pasaje.cerca.banoLuz");
+    expect(pregunta).toBeGreaterThan(cuando("inicio.tripulacion.pasaje.cerca.revision"));
+    expect(respuesta).toBeGreaterThan(pregunta);
+    expect(respuesta).toBeLessThan(empiezaA("carrera"));
+  });
+
+  it("arriba, con la luz apagada, va de verdad: tras el «pueden soltarse», en crucero, y vuelve antes de que se encienda", () => {
+    expect(m.escena.estado.fueAlBano).toBe(true);
+    const seVa = acaba("inicio.tripulacion.pasaje.cerca.banoAhora");
+    const vuelve = cuando("inicio.ara.pasaje.banoVuelta");
+    expect(cuando("inicio.tripulacion.pasaje.cerca.banoAhora")).toBeGreaterThan(acaba("comandante.crucero"));
+    expect(seVa).toBeGreaterThan(empiezaA("crucero"));
+    expect(seVa).toBeLessThan(empiezaA("bajada"));
+    // Mientras Ara está dentro suena el anuncio del servicio, que da ella desde la cocina de atrás.
+    expect(cuando("tripulacion.servicio")).toBeGreaterThan(seVa);
+    expect(vuelve).toBeGreaterThan(acaba("tripulacion.servicio"));
+    // Y vuelve a su asiento antes de que la bajada encienda la luz.
+    expect(acaba("inicio.ara.pasaje.banoVuelta")).toBeLessThan(cuando("comandante.descenso"));
+    expect(r.filter((d) => d.clave === "inicio.tripulacion.pasaje.cerca.banoAhora")).toHaveLength(1);
+    expect(r.some((d) => d.clave === "inicio.ara.pasaje.servicio")).toBe(false);
+  });
+
+  it("y bajando, con la luz otra vez encendida, la tripulante lo recuerda: fue justo a tiempo", () => {
+    const recuerda = cuando("inicio.tripulacion.pasaje.cerca.banoATiempo");
+    expect(recuerda).toBeGreaterThan(cuando("comandante.descenso"));
+    expect(recuerda).toBeLessThan(cuando("comandante.aproximacion"));
+    expect(r.some((d) => d.clave === "inicio.ara.pasaje.banoEspero")).toBe(false);
+  });
+
+  /** Lo que se dijo en un vuelo, y cómo acabó la escena. */
+  const delBano = (vuelo: VueloMedido) => {
+    const v = volarElMedido(vuelo);
+    return { claves: v.escena.registro.map((d) => d.clave), estado: v.escena.estado };
+  };
+  const SE_LEVANTA = [
+    "inicio.tripulacion.pasaje.cerca.banoAhora",
+    "inicio.ara.pasaje.banoVuelta",
+    "inicio.tripulacion.pasaje.cerca.banoATiempo",
+  ];
+
+  it("con la luz encendida no se levanta nadie: si el aire no la deja apagar, Ara espera a aterrizar, sin drama", () => {
+    const { claves, estado } = delBano(
+      new (class extends VueloMedido {
+        override get lectura(): LecturaDelPasaje {
+          return { ...super.lectura, cinturon: true };
+        }
+      })(),
+    );
+    expect(estado.fueAlBano).toBe(false);
+    for (const c of SE_LEVANTA) expect(claves, c).not.toContain(c);
+    expect(claves).toContain("inicio.ara.pasaje.servicio");
+    expect(claves).toContain("inicio.ara.pasaje.banoEspero");
+    // Y el resto del vuelo, igual: nada se salta.
+    expect(estado.saltados).toEqual([]);
+    expect(estado.terminado).toBe(true);
+  });
+
+  it("y con la luz apagada pero sin crucero para ir y volver, tampoco: la bajada la va a encender", () => {
+    const { claves, estado } = delBano(
+      new (class extends VueloMedido {
+        override get lectura(): LecturaDelPasaje {
+          const l = super.lectura;
+          return l.tramo === "crucero" ? { ...l, hastaLaBajada: 10 } : l;
+        }
+      })(),
+    );
+    expect(estado.fueAlBano).toBe(false);
+    for (const c of SE_LEVANTA) expect(claves, c).not.toContain(c);
+    expect(claves).toContain("inicio.ara.pasaje.banoEspero");
+    expect(estado.saltados).toEqual([]);
   });
 });

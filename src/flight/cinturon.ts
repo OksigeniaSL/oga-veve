@@ -31,6 +31,12 @@
  *   mando puesto a mano manda sobre todo lo demás mientras esté puesto —
  *   porque eso es exactamente lo que hace el interruptor de una cabina.
  *
+ * - **Y en el puesto se apaga**, con el avión parado y los motores parados, que
+ *   es cuando se apaga en cualquier vuelo: el *ding* que deja levantarse. Lo
+ *   apagaba solo la escena de pasaje, que cuenta ese momento (punto 303), y en
+ *   los demás vuelos con pasaje el cartel seguía encendido con el avión ya
+ *   apagado en su sitio. Ahora vale para todos: ver `APAGA_LA_LUZ`.
+ *
  * Nada de esto mira la altura sobre el terreno, así que ningún barranco puede
  * volver a encenderlo.
  */
@@ -53,6 +59,15 @@ import type { Fase } from "./vuelo";
  */
 export const SACUDE = 0.9;
 export const YA_NO_SACUDE = 0.6;
+
+/**
+ * **Lo que tarda la comandante en apagar la luz en el puesto**, s con el avión
+ * ya en su sitio y los motores parados: lo que tardan en pararse del todo. Es
+ * la misma regla para todos los vuelos con pasaje; la escena de pasaje la usa
+ * con su guion, que además espera a que nadie hable para que el *ding* no
+ * caiga encima de una frase. Ver el momento `luz` en `inicio-pasaje.ts`.
+ */
+export const APAGA_LA_LUZ = 3;
 
 /** Lo que el cartel necesita saber del vuelo. */
 export interface Momento {
@@ -81,12 +96,21 @@ export interface Momento {
   /**
    * **Y si la comandante ya lo apagó en el puesto**, con el avión parado y los
    * motores apagados, que es cuando se apaga en cualquier vuelo: el *ding* que
-   * deja levantarse. Es un estado, no un suceso: mientras dure. Lo pone la
-   * escena de pasaje (punto 303), que es la que cuenta ese momento; ver el
-   * momento `luz` en `inicio-pasaje.ts`. Solo vale en el puesto: con el motor
-   * en marcha otra vez, el cartel vuelve.
+   * deja levantarse. Es un estado, no un suceso: mientras dure. Solo vale en
+   * el puesto: con el motor en marcha otra vez, el cartel vuelve.
+   *
+   * **Lo dice una escena que cuenta ese momento**, cuando lo dice su guion: la
+   * de pasaje (punto 303), con el momento `luz` de `inicio-pasaje.ts`. Sin
+   * escena —sin decir nada—, lo decide el cartel con la regla de todos los
+   * vuelos: `APAGA_LA_LUZ` segundos después de parar los motores en el puesto.
    */
   readonly apagadoEnElPuesto?: boolean;
+  /**
+   * **Lo que ha pasado desde el paso anterior**, s: con lo que se cuenta cuánto
+   * llevan parados los motores en el puesto. Sin esto, el cartel no se apaga
+   * solo en el puesto: solo si lo dice una escena.
+   */
+  readonly dt?: number;
 }
 
 /** Las fases del puesto, con el avión ya parado en su sitio. Ver `Momento.apagadoEnElPuesto`. */
@@ -140,12 +164,21 @@ export class Cinturon {
   private mando: Mando = "auto";
   /** Si el aire ya venía sacudiendo, para la banda muerta. Ver `SACUDE`. */
   private sacudiendo = false;
+  /**
+   * Si el avión llegó a su puesto con los motores en marcha, y cuánto llevan
+   * parados allí, s. Apagar los motores en una calle de rodaje no es llegar:
+   * ahí la gente sigue sentada. Ver `APAGA_LA_LUZ`.
+   */
+  private llegoAlPuesto = false;
+  private paradoEnElPuesto = 0;
 
   /** Vuelo nuevo: como empieza un vuelo, con el cartel puesto. */
   reiniciar(): void {
     this.soltado = false;
     this.mando = "auto";
     this.sacudiendo = false;
+    this.llegoAlPuesto = false;
+    this.paradoEnElPuesto = 0;
   }
 
   /** Lo que ha decidido quien vuela. Ver `Mando`. */
@@ -196,9 +229,19 @@ export class Cinturon {
       this.soltado = false;
       if (this.mando === "quitado") this.mando = "auto";
     }
+    /*
+     * **El puesto, con los motores parados**: se cuenta siempre, aunque mande
+     * el interruptor, que el reloj de los motores no sabe de mandos. La escena
+     * que cuenta ese momento lo dice ella; si no hay escena, la regla de todos.
+     */
+    if (m.fase === "en-puesto") this.llegoAlPuesto = true;
+    else if (m.fase !== "apagado") this.llegoAlPuesto = false;
+    this.paradoEnElPuesto =
+      this.llegoAlPuesto && m.fase === "apagado" ? this.paradoEnElPuesto + (m.dt ?? 0) : 0;
+    const apagadoEnElPuesto = m.apagadoEnElPuesto ?? this.paradoEnElPuesto >= APAGA_LA_LUZ;
     if (this.mando === "puesto") return true;
     if (this.mando === "quitado") return false;
-    if (m.apagadoEnElPuesto && EN_EL_PUESTO.includes(m.fase)) return false;
+    if (apagadoEnElPuesto && EN_EL_PUESTO.includes(m.fase)) return false;
 
     // La turbulencia, con su banda muerta: enciende alto y suelta bajo.
     if (m.movimiento >= SACUDE) this.sacudiendo = true;

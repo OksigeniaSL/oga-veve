@@ -7117,6 +7117,11 @@ export class Game {
        * dando la vuelta en ella (punto 300). Ver `daLaVuelta`.
        */
       enLaPista: s.onGround ? this.dondeEnLaPista() : null,
+      /*
+       * **Y la luz del cinturón**, la del cartel: la que manda para levantarse
+       * del asiento, también para ir al baño (punto 293). Ver `puedeIrAlBano`.
+       */
+      cinturon: this.cinturonPuesto,
     };
     const permisos = escena.paso(dt, lectura);
     /*
@@ -16750,11 +16755,16 @@ export class Game {
     const movimiento = cuantoSeMueve(aire);
     this.movimientoDelAire = movimiento;
     this.atenderAlCinturon(
+      dt,
       movimiento,
       loDijo,
       loEncendio,
-      // Y en el puesto, apagado cuando lo apaga la comandante de la escena de pasaje: ver el momento `luz`.
-      this.inicio instanceof VueloDePasaje && this.inicio.luzApagadaEnElPuesto,
+      /*
+       * Y en el puesto, apagado cuando lo apaga la comandante de la escena de
+       * pasaje, que cuenta ese momento: ver el momento `luz`. Sin escena, la
+       * regla de todos los vuelos con pasaje: ver `APAGA_LA_LUZ`.
+       */
+      this.inicio instanceof VueloDePasaje ? this.inicio.luzApagadaEnElPuesto : undefined,
     );
     this.prepararLaCabina(dt);
     this.hablarDeLosBaches(dt, movimiento);
@@ -28423,10 +28433,11 @@ export class Game {
   }
 
   private atenderAlCinturon(
+    dt: number,
     movimiento: number,
     loDijo: boolean,
     loEncendio: boolean,
-    apagadoEnElPuesto = false,
+    apagadoEnElPuesto?: boolean,
   ): void {
     const toca = this.cinturon.paso({
       fase: this.faseDeAhora as Fase,
@@ -28435,6 +28446,7 @@ export class Game {
       loDijoLaComandante: loDijo,
       loEncendioLaComandante: loEncendio,
       apagadoEnElPuesto,
+      dt,
     });
     if (toca === this.cinturonPuesto) return;
     this.cinturonPuesto = toca;

@@ -2384,6 +2384,15 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.oficio2":
     "And I know how to put out a fire wearing a smoke hood, get everyone off the plane in ninety seconds and use the life jackets in the water. We practise it every year.",
   "inicio.ara.pasaje.uniforme": "So your uniform isn't for serving: it's for looking after all of us!",
+  "inicio.ara.pasaje.banoAntes": "I went to the toilet before we got on: Mum says there's hardly any time on short flights.",
+  "inicio.tripulacion.pasaje.cerca.banoLuz":
+    "Of course there is! But while the seat belt light is on, nobody gets up. When it goes off, I'll take you.",
+  "inicio.tripulacion.pasaje.cerca.banoAhora":
+    "The seat belt light has gone off: now you can go to the toilet. Come on, I'll take you!",
+  "inicio.ara.pasaje.banoVuelta": "I'm back from the toilet! And I've done my seat belt up again, like Mum said.",
+  "inicio.tripulacion.pasaje.cerca.banoATiempo":
+    "See? You went just in time: now, with the light on, nobody gets up until we land.",
+  "inicio.ara.pasaje.banoEspero": "With the seat belt light on, I'll wait until we land. It's not long now!",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

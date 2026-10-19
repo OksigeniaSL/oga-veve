@@ -58,8 +58,9 @@
  * ## Lo que pasa, en el orden de un vuelo de verdad
  *
  * 1. **El asiento**: Ara se pega a la ventanilla y descubre el ala y el
- *    motor. Su asiento es el que los deja ver: ver `asientoDeAra`. Mientras
- *    se acaba de embarcar, el hilo musical: ver `audio/hilo-musical.ts`.
+ *    motor. Su asiento es el que los deja ver: ver `asientoDeAra`. Y cuenta
+ *    que fue al baño antes de subir. Mientras se acaba de embarcar, el hilo
+ *    musical: ver `audio/hilo-musical.ts`.
  * 2. **El cinturón**: la tripulación da la bienvenida y pide abrocharlo, y Ara
  *    se lo abrocha —el dibujo de la hebilla, y el cartel encendido—.
  * 3. **Las puertas**: la comandante manda armar los toboganes y Ara se da
@@ -70,12 +71,13 @@
  *    salidas y sus luces del suelo, las máscaras, el chaleco, la tarjeta y el
  *    modo avión. Ver `DEMOSTRACION` para el porqué de cada cosa y su orden.
  * 7. **La revisión**: la tripulante pasa mirando cinturones y le cuenta a Ara
- *    por qué la persiana va subida.
+ *    por qué la persiana va subida, y lo del baño con la luz encendida.
  * 8. **La espera** antes de la pista, y el permiso de la torre.
  * 9. **El despegue**, visto por fuera; el empuje, el tren que se guarda, el
  *    giro y las nubes por dentro.
- * 10. **Arriba**: la respuesta de las nubes, una vuelta alrededor del avión, el
- *     servicio y la tripulante con Ara: las nubes de cerca.
+ * 10. **Arriba**: la respuesta de las nubes, una vuelta alrededor del avión,
+ *     el baño con la luz apagada, el servicio y la tripulante con Ara: las
+ *     nubes de cerca.
  * 11. **La bajada**, los oídos, **el kit de viaje** —dos juegos que trae la
  *     tripulante para el tramo largo, ver `kit-de-viaje.ts`—, la isla y la
  *     cabina preparada, que es cuando se guarda el kit.
@@ -130,8 +132,8 @@
  * `puedeDormirse` y `ui/siesta.ts`.
  *
  * Medido en el banco el 18-10-2026, el crucero de este vuelo dura un minuto y
- * va lleno —el «ya estamos arriba», el servicio y la tripulante con las
- * nubes—: entre islas casi no hay crucero. El rato callado de verdad es lo
+ * va lleno —el «ya estamos arriba», el baño de Ara, el servicio y la
+ * tripulante con las nubes—: entre islas casi no hay crucero. El rato callado de verdad es lo
  * alto de la subida, por encima del mar de nubes, y ahí es donde cabe la
  * siesta.
  *
@@ -171,6 +173,27 @@
  * que la de los galones: el uniforme no es para servir, es responsabilidad.
  * Ver los momentos `impacientes` a `gracias` y la charla `tcpOficio`.
  *
+ * ## El baño, cuando la luz deja
+ *
+ * Punto 293. Ara preguntaba por el baño bajando, la tripulante le decía que
+ * con la luz encendida mejor esperar a aterrizar, y Ara se quedaba sin ir:
+ * «y eso que es la madre». El salto entre islas es así de corto de verdad,
+ * y lo que se enseña es la regla de verdad: **la luz manda, y cuando se
+ * apaga, se puede**. No que en un avión no se va al baño.
+ *
+ * - **Antes de subir**: Ara cuenta en el embarque que ya fue, porque en los
+ *   vuelos cortos casi no da tiempo. Es lo que se hace.
+ * - **Con la luz encendida**, rodando, Ara lo pregunta en la revisión de
+ *   cinturones, que es cuando la tripulante está a su lado —subiendo va
+ *   sentada y atada—, y ella le dice que con la luz encendida no se levanta
+ *   nadie, y que cuando se apague le acompaña.
+ * - **Cuando se apaga**, arriba, va de verdad: la tripulante viene a por Ara
+ *   en cuanto la comandante dice que se pueden soltar, da el anuncio del
+ *   servicio desde la cocina de atrás mientras Ara está en el baño, y Ara
+ *   vuelve a su asiento y se abrocha otra vez. Si la luz no se apaga, o ya no
+ *   queda crucero para ir y volver, no va: espera a aterrizar, y lo dice sin
+ *   drama. Ver `puedeIrAlBano`.
+ *
  * ## Quién contesta, y cómo
  *
  * **La comandante no le contesta a un pasajero por la megafonía**, y aquí no
@@ -197,6 +220,7 @@ import type { GenteDeLaCabina } from "../audio/gente-del-pasaje";
 import { seLePasoElMomento } from "../audio/megafonia";
 import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import type { IlustracionDelPasaje } from "../ui/ilustraciones";
+import { APAGA_LA_LUZ } from "./cinturon";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
 import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
@@ -306,6 +330,7 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
 
 export type MomentoDelPasaje =
   | "ventanilla"
+  | "banoAntes"
   | "cinturon"
   | "puertas"
   | "motores"
@@ -513,6 +538,13 @@ export interface LecturaDelPasaje {
    * Ver `daLaVuelta`.
    */
   readonly enLaPista?: { readonly alEje: number; readonly hastaElFinal: number; readonly vuelta: number } | null;
+  /**
+   * **Si la luz del cinturón está encendida ahora**, la del cartel de la
+   * cabina: la que manda para levantarse del asiento (punto 293). Sin esto
+   * —las pruebas que no la miran—, lo que se ha dicho: apagada desde el «ya
+   * estamos arriba» hasta el anuncio de la bajada. Ver `luzApagada`.
+   */
+  readonly cinturon?: boolean;
 }
 
 /**
@@ -548,12 +580,21 @@ const GRADO = Math.PI / 180;
 /** Lo que se espera sentado antes de hablar, s: el rato de mirar alrededor. */
 const AL_SENTARSE = 1.5;
 /**
- * **Y el rato de embarcar**, s callados después de lo primero que dice Ara,
- * antes de que la tripulación dé la bienvenida: lo que tarda en sentarse el
- * resto del pasaje, con el hilo musical sonando por el techo. Ver
- * `audio/hilo-musical.ts`.
+ * **Y el rato de embarcar**, s callados después de lo primero que dice Ara
+ * —la ventanilla, y que ya fue al baño—, antes de que la tripulación dé la
+ * bienvenida: lo que tarda en sentarse el resto del pasaje, con el hilo
+ * musical sonando por el techo. Ver `audio/hilo-musical.ts`.
  */
 const EMBARCANDO = 8;
+/** Lo que mira Ara por la ventanilla antes de contar que ya fue al baño, s. */
+const ANTES_DEL_BANO = 2;
+/**
+ * **Lo que pide ir al baño y volver**, s de crucero por delante: si para
+ * empezar a bajar queda menos, la tripulante no se lleva a Ara —la bajada
+ * enciende la luz—, y se espera a aterrizar. El viaje se ve con el avión por
+ * fuera, mientras suena el anuncio del servicio. Ver `puedeIrAlBano`.
+ */
+const LO_QUE_PIDE_EL_BANO = 25;
 /** Entre el cinturón y las puertas, s: se termina de embarcar. */
 const HASTA_LAS_PUERTAS = 2.5;
 /** Con los motores ya en marcha, s, antes de decir que se oyen. */
@@ -730,13 +771,13 @@ const fueraDeLaPista = (l: LecturaDelPasaje): boolean =>
  * - `SE_OYEN_LAS_HEBILLAS`, s de los primeros clics hasta que Ara los nota:
  *   primero se oye, y después se dice.
  * - `APAGA_LA_LUZ`, s con los motores parados antes de que la comandante
- *   apague la luz del cinturón: lo que tardan en pararse del todo.
+ *   apague la luz del cinturón: lo que tardan en pararse del todo. Es la
+ *   regla de todos los vuelos con pasaje, y vive en `cinturon.ts`.
  * - `TRAS_EL_DING`, s del *ding* a que Ara se suelta: primero suena, y Ara
  *   reacciona a lo que oye.
  */
 const PARADO_DEL_TODO = 1.5;
 const SE_OYEN_LAS_HEBILLAS = 2.5;
-const APAGA_LA_LUZ = 3;
 const TRAS_EL_DING = 1.4;
 /** Lo que se queda el dibujo de la ventanita después de la última frase, s. */
 const SE_QUEDA_LA_VENTANITA = 2.5;
@@ -837,6 +878,12 @@ const LA_DESPIERTAN = conLaTripulante(tripulante("despertar"));
  * y bien abrochado, y un dibujo no enseña lo contrario.
  */
 const cartelApagado = (e: VueloDePasaje): boolean => e.dicho("arriba") && !e.dicho("bajada");
+/**
+ * **Si la luz del cinturón está apagada ahora**: la del cartel, si el juego la
+ * da; si no, la de lo que se ha dicho. Es la que manda para levantarse.
+ */
+const luzApagada = (l: LecturaDelPasaje, e: VueloDePasaje): boolean =>
+  l.cinturon === undefined ? cartelApagado(e) : !l.cinturon;
 /** Ara contra el cristal, con su ilustración si el cartel está apagado; si no, como venía. */
 const contraElCristal = (l: Linea, e: VueloDePasaje): Linea =>
   cartelApagado(e) ? ilustrada(l, "pasaje-ara-ventanilla") : l;
@@ -887,6 +934,21 @@ const anuncio = (clave: string): Linea => ({
   clave,
   megafonia: true,
 });
+
+/**
+ * **El baño** (punto 293): lo que dice la tripulante cuando Ara lo pregunta
+ * con la luz encendida, y el viaje cuando se apaga —ella viene a por Ara, da
+ * el anuncio del servicio desde la cocina de atrás mientras Ara está dentro,
+ * y Ara vuelve abrochándose—. Ver `puedeIrAlBano`.
+ */
+const BANO_CON_LA_LUZ = con(tripulante("banoLuz"), "cinturon");
+const AL_BANO: readonly Linea[] = [
+  conLaTripulante(tripulante("banoAhora")),
+  anuncio("tripulacion.servicio"),
+  conLaTripulante(ara("banoVuelta")),
+];
+/** Y bajando, con la luz otra vez encendida, la tripulante que lo recuerda: fue justo a tiempo. */
+const FUE_A_TIEMPO = conLaTripulante(tripulante("banoATiempo"));
 
 /** Si una clave es de un anuncio de la megafonía de siempre. */
 export function esAnuncioDeSiempre(clave: string): boolean {
@@ -1007,6 +1069,16 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
   },
   {
     /*
+     * **Al baño, antes de subir** (punto 293): Ara cuenta que ya fue, porque
+     * en los vuelos cortos casi no da tiempo. Lo dice su mamá, que de vuelos
+     * cortos sabe. Con la cabina del embarque todavía en la ventanita.
+     */
+    id: "banoAntes",
+    cuando: (_l, e) => e.callaDesde >= ANTES_DEL_BANO,
+    lineas: [ilustrada(ara("banoAntes"), "pasaje-embarque")],
+  },
+  {
+    /*
      * Después del rato de embarcar, con la música: la bienvenida, con todo el
      * pasaje ya en su asiento, y el cinturón de Ara, con su hebilla.
      */
@@ -1046,11 +1118,16 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
      * **Y la revisión**: antes de despegar, la tripulación pasa por el pasillo
      * mirando cinturones, respaldos y persianas. A Ara le revisa el suyo, y le
      * cuenta por qué la persiana va subida.
+     *
+     * **Y el baño, con la luz encendida** (punto 293): es lo último que tiene
+     * a la tripulante al lado antes de que se apague —subiendo va sentada y
+     * atada—, y la respuesta es la regla: con la luz encendida no se levanta
+     * nadie, y cuando se apague, le acompaña. Lo dice porque la luz manda.
      */
     id: "revision",
     cuando: (l, e) => (l.tramo === "rodando" || l.tramo === "esperando") && e.callaDesde >= 1.5,
     caduca: (l) => !enElSuelo(l.tramo) || l.tramo === "entrando" || l.tramo === "carrera",
-    lineas: [tripulante("revision"), ara("persiana"), con(tripulante("persiana"), "persiana")],
+    lineas: [tripulante("revision"), ara("persiana"), con(tripulante("persiana"), "persiana"), ara("bano"), BANO_CON_LA_LUZ],
     mira: "ventanilla",
   },
   {
@@ -1129,6 +1206,15 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     cuando: (_l, e) => e.desdeQueSeDijo("arriba") >= HASTA_EL_SERVICIO,
     caduca: (l, e) => !e.dicho("arriba") || bajando(l.tramo),
     lineas: [anuncio("tripulacion.servicio"), ara("servicio")],
+    /*
+     * **Y el baño, ahora que se puede** (punto 293): la luz se acaba de apagar
+     * y la tripulante cumple lo que dijo en la revisión. Ara va mientras ella
+     * da el anuncio del servicio desde la cocina de atrás —el teléfono de la
+     * megafonía está allí, al lado del baño—, y vuelve a su asiento y se
+     * abrocha. Con el avión por fuera, que el asiento se queda vacío un rato.
+     * Si la luz no se ha apagado o ya no queda crucero, no: ver `puedeIrAlBano`.
+     */
+    segun: (l, e) => (e.puedeIrAlBano(l) ? AL_BANO : [anuncio("tripulacion.servicio"), ara("servicio")]),
     plano: "fuera-vuelta",
   },
   {
@@ -1702,15 +1788,26 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
   },
   {
     /*
-     * **El baño**, que es lo que de verdad preguntan los niños. Con el cartel
-     * del cinturón encendido para bajar, mejor esperar: lo dice la tripulante.
+     * **El baño, otra vez, ya bajando con la luz encendida** (punto 293). Si
+     * Ara fue, la tripulante, que anda por el pasillo, lo recuerda: fue justo
+     * a tiempo, que ahora ya no se levanta nadie hasta aterrizar. Y si no hubo
+     * rato —la luz no se apagó, o se apagó sin crucero para ir y volver—, lo
+     * verdadero es esperar, y Ara lo entiende sin drama: con la luz encendida,
+     * a aterrizar, que falta poco. Ver `puedeIrAlBano`.
      */
     id: "bano",
     tras: 16,
     cuando: (l, e) =>
-      l.tramo === "bajada" && tripulanteEnElPasillo(e) && l.faltaParaTocar < BAJANDO.bano && !cabinaPreparada(l, e),
+      l.tramo === "bajada" &&
+      !l.enTierra &&
+      e.dicho("revision") &&
+      !luzApagada(l, e) &&
+      (!e.fueAlBano || tripulanteEnElPasillo(e)) &&
+      l.faltaParaTocar < BAJANDO.bano &&
+      !cabinaPreparada(l, e),
     caduca: (l, e) => cabinaPreparada(l, e),
-    lineas: [ara("bano"), tripulante("bano")].map(conLaTripulante),
+    lineas: [ara("banoEspero")],
+    segun: (_l, e) => [e.fueAlBano ? FUE_A_TIEMPO : ara("banoEspero")],
   },
   {
     /*
@@ -1989,6 +2086,8 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   [SE_DUERME, LA_DESPIERTAN, SE_DESPIERTA].forEach(poner);
   // Y los motores que se oyen cambiar, y los oídos: el plop explicado, y al revés al bajar.
   [ara("ralenti"), ...EL_PLOP_EXPLICADO, ara("oidosAlReves"), comandante("masGas")].forEach(poner);
+  // Y el baño con la luz apagada: la tripulante que viene a por Ara, Ara de vuelta y, bajando, a tiempo.
+  [...AL_BANO, FUE_A_TIEMPO].forEach(poner);
   return todas;
 })();
 
@@ -2079,6 +2178,8 @@ export interface EstadoDelPasaje {
   /** **La luz del cinturón, apagada en el puesto**, y la gente de la cabina. Ver `gente`. */
   readonly luzApagada: boolean;
   readonly gente: GenteDeLaCabina;
+  /** **Si Ara fue al baño**, con la luz apagada. Ver `puedeIrAlBano`. */
+  readonly fueAlBano: boolean;
 }
 
 /** Una siesta de Ara, s de escena; `hasta` es `null` mientras dura. */
@@ -2129,6 +2230,8 @@ export class VueloDePasaje {
   private plopContado = false;
   /** Y si la tripulante ya contó lo que sabe hacer: ver `EL_OFICIO`. */
   private oficioDicho = false;
+  /** Y si Ara ya fue al baño: ver `puedeIrAlBano`. */
+  private alBano = false;
 
   private dibujo: string | null = null;
   private dibujoDe: Linea | null = null;
@@ -2217,6 +2320,34 @@ export class VueloDePasaje {
     return this.oficioDicho;
   }
 
+  /** **Si Ara ya fue al baño**, con la luz apagada: una vez. Ver `puedeIrAlBano`. */
+  get fueAlBano(): boolean {
+    return this.alBano;
+  }
+
+  /**
+   * **Si Ara puede ir al baño ahora** (punto 293). La luz manda: encendida, no
+   * se levanta nadie; apagada, se puede. Así que hace falta todo esto:
+   *
+   * - que Ara lo haya pedido y la tripulante le haya dicho que le acompaña,
+   *   que es lo de la revisión;
+   * - **la luz del cinturón apagada**, la del cartel;
+   * - en crucero, y con crucero por delante para ir y volver antes de empezar a
+   *   bajar —ver `LO_QUE_PIDE_EL_BANO`—: al bajar se enciende la luz, y la
+   *   tripulante lo sabe. Sin saber cuánto queda —las pruebas que no lo dan—,
+   *   basta con estar en crucero.
+   */
+  puedeIrAlBano(l: LecturaDelPasaje): boolean {
+    return (
+      !this.alBano &&
+      this.dicho("revision") &&
+      !l.enTierra &&
+      l.tramo === "crucero" &&
+      luzApagada(l, this) &&
+      (l.hastaLaBajada ?? Infinity) >= LO_QUE_PIDE_EL_BANO
+    );
+  }
+
   /**
    * **Si la comandante ya apagó la luz del cinturón en el puesto**: lo mira el
    * juego en cada fotograma para apagar el cartel, con su *ding*. Ver el
@@ -2294,6 +2425,7 @@ export class VueloDePasaje {
       siestas: this.siestas.map((s) => ({ ...s })),
       luzApagada: this.luzApagadaEnElPuesto,
       gente: this.gente,
+      fueAlBano: this.alBano,
     };
   }
 
@@ -2470,6 +2602,7 @@ export class VueloDePasaje {
     if (lineas.some((x) => x.clave === "inicio.mama.pasaje.teide")) this.teideContado = true;
     if (lineas.some((x) => EL_PLOP_EXPLICADO.includes(x))) this.plopContado = true;
     if (lineas.some((x) => EL_OFICIO.includes(x))) this.oficioDicho = true;
+    if (lineas.includes(AL_BANO[0]!)) this.alBano = true;
     this.charla.decir(lineas);
     if (def.mira) {
       this.mira = def.mira;
