@@ -107,6 +107,12 @@ export interface Contexto {
    * `world/asiento-de-ara.ts`.
    */
   readonly asientoDeLaEscena?: AsientoDePasaje | null;
+  /**
+   * **Y si la cabeza salta a ese asiento sin camino**: en un corte, con el velo
+   * puesto —de la ventanilla al pasillo y de vuelta—, que el camino de la
+   * cabeza cruzaría la pared. Ver `esCorte` en `flight/inicio-pasaje.ts`.
+   */
+  readonly saltaLaCabeza?: boolean;
 }
 
 /** Lo que la vista de pasaje necesita de un asiento. */

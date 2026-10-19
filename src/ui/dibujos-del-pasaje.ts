@@ -186,9 +186,14 @@ const CINTURON = lamina(
 );
 
 /**
- * **Las salidas**: el avión visto desde arriba, con las filas de asientos, las
- * salidas delante, detrás y sobre las alas, y las lucecitas del suelo del
- * pasillo encendiéndose hacia ellas.
+ * **Las salidas**: el avión visto desde arriba, con las filas de asientos, sus
+ * cuatro salidas —dos puertas delante y dos detrás, una a cada lado— y las
+ * lucecitas del suelo del pasillo encendiéndose hacia ellas.
+ *
+ * Las de este avión (punto 312): el JAZ 90 es de la clase del ERJ 170, que
+ * lleva cuatro puertas tipo I y ninguna salida sobre el ala —ver la hoja de
+ * tipo de EASA en `docs/historias/fuentes.md`—. Este dibujo pintaba también
+ * dos sobre las alas, que son de los aviones más largos.
  *
  * Con el morro a la derecha, como todos los aviones de estos dibujos —ver
  * `SENTIDO_DE_LOS_DIBUJOS`—: las alas en flecha hacia atrás y la cola a la
@@ -215,7 +220,7 @@ const SALIDAS = (() => {
 <rect x="60" y="104" width="360" height="112" rx="56" fill="#efe9dd" class="tf fino"/>
 <path d="M60 160 l-40 -14 v28z" fill="#d9d2c4" class="tf fino"/>
 ${filas.join("")}${luces.join("")}
-${salida(92, 92)}${salida(92, 228)}${salida(392, 92)}${salida(392, 228)}${salida(214, 66)}${salida(214, 254)}`,
+${salida(92, 92)}${salida(92, 228)}${salida(392, 92)}${salida(392, 228)}`,
     `.l{animation:l 1.44s infinite}
 @keyframes l{0%,100%{opacity:.35}30%{opacity:1}}`,
   );

@@ -35,6 +35,7 @@ import {
   Object3D,
   PerspectiveCamera,
   Quaternion,
+  Raycaster,
   Scene,
   SRGBColorSpace,
   Vector3,
@@ -885,6 +886,7 @@ import {
 } from "./world/marco-de-ventanilla";
 import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
+import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
 import {
@@ -981,6 +983,7 @@ import {
   esDeFuera,
   LADO_DE_ARA,
   planoParaVer,
+  SALIDAS_DEL_PASAJE,
   VueloDePasaje,
   type ComoSeVe,
   type LecturaDelPasaje,
@@ -5411,6 +5414,7 @@ export class Game {
     bajadaMaxima: Number.POSITIVE_INFINITY,
     caidaTope: Number.POSITIVE_INFINITY,
     asientoDeLaEscena: null as AsientoDePasaje | null,
+    saltaLaCabeza: false,
   };
   /**
    * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
@@ -6493,7 +6497,7 @@ export class Game {
     });
     this.hud.alAbrirUnaLamina(() => this.misionUI?.cerrar());
     this.hud.onPausa(() => this.alternarPausa());
-    // El ⏩ de la escena de pasaje: adelanta si se puede, o para. Ver `adelanto`.
+    // El ⏩ de la escena de pasaje: pone o quita el modo rápido. Ver `adelanto`.
     this.hud.onAdelantar(() => {
       if (this.inicio instanceof VueloDePasaje) this.inicio.adelantar();
     });
@@ -6822,6 +6826,7 @@ export class Game {
       this.cameraMode = LADO_DE_ARA === "izquierda" ? "pasaje-izquierda" : "pasaje-derecha";
       // Y desde la ventanilla, sin velo ni ventanita de antes. Ver `camaraDeLaEscena`.
       this.fundidoDePlano = new FundidoDePlano();
+      this.planoDeAntes = "ventanilla";
       this.ponerLaVentanitaDeLaEscena(null);
       this.cinturonDeLaEscena = false;
       this.clavesDeLaEscena.clear();
@@ -7649,6 +7654,21 @@ export class Game {
         for (const alto of [0, 1.2, 2.4]) alrededor({ x: s.position.x, y: s.position.y + alto, z: s.position.z }, margen * 0.6);
       return { cajas, poligonos: siluetaEnPantalla(this.cajitasDelAvionDeAhora(), g.matrixWorld, cam, pantalla) };
     }
+    /*
+     * **Asomada al pasillo**: lo que se enseña son los letreros de la salida y
+     * el pasillo que lleva a ellos, con sus tiras. La lámina de las salidas se
+     * pone al lado, no encima.
+     */
+    if (plano === "pasillo") {
+      const p = this.elPasillo();
+      if (!p) return { cajas };
+      const enElMundo = (q: { x: number; y: number; z: number }): Vector3 => new Vector3(q.x, q.y, q.z).applyMatrix4(g.matrixWorld);
+      for (const l of p.letreros) alrededor(enElMundo(l), margen * 0.7);
+      const techo = enElMundo(p.letreros[p.letreros.length - 1]!).project(cam);
+      const x = ((techo.x + 1) / 2) * W;
+      cajas.push({ left: x - W * 0.09, right: x + W * 0.09, top: ((1 - techo.y) / 2) * H, bottom: H });
+      return { cajas };
+    }
     const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
     if (!ara) return { cajas };
     /*
@@ -7779,6 +7799,15 @@ export class Game {
     readonly vista: string;
     readonly texto: string | null;
     /**
+     * **Las salidas del avión de la escena**: las que dice su hoja de tipo, dónde
+     * va Ara y las puertas del modelo, de morro a cola. Ver `SALIDAS_DEL_PASAJE`.
+     */
+    readonly salidas: {
+      readonly declaradas: typeof SALIDAS_DEL_PASAJE;
+      readonly ara: number;
+      readonly puertas: readonly { readonly desde: number; readonly hasta: number }[];
+    } | null;
+    /**
      * De pasaje: **el plano que se ve** —que va detrás del que pide la escena
      * lo que dura el fundido—, cuánto tapa el velo, la ventanita y lo que se
      * ve por el cristal desde la pose de Ara. Ver `camaraDeLaEscena`.
@@ -7848,6 +7877,16 @@ export class Game {
       asientoDeAra: (() => {
         const ara = this.inicio instanceof VueloDePasaje ? this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA] : null;
         return ara ? { z: ara.ventanilla.centro.z, motor: ara.delMotor.motor, ala: ara.delMotor.ala } : null;
+      })(),
+      salidas: (() => {
+        const pasaje = this.inicio instanceof VueloDePasaje ? this.aircraftMesh.pasaje : null;
+        const ara = pasaje?.deAra[LADO_DE_ARA];
+        if (!pasaje || !ara) return null;
+        return {
+          declaradas: SALIDAS_DEL_PASAJE,
+          ara: ara.poses.sentada.ojo.z,
+          puertas: pasaje.puertas.map((p) => ({ desde: p.zMin, hasta: p.zMax })),
+        };
       })(),
       kit: this.pantallaDelKit?.paraBanco ?? null,
       musica: this.musicaParaBanco,
@@ -15435,13 +15474,12 @@ export class Game {
   }
 
   /**
-   * **El botón ⏩ en la pantalla**: sale cuando la escena dice que se puede
-   * adelantar, y mientras adelanta se ve correr. Ver `adelanto` en
-   * `flight/inicio-pasaje.ts`.
+   * **El botón ⏩ en la pantalla**: sale cuando la escena dice que el modo
+   * rápido vale, se enciende mientras está puesto y sus flechas corren cuando
+   * el vuelo corre. Ver `adelanto` en `flight/inicio-pasaje.ts`.
    */
   private ponerElBotonDeAdelantar(): void {
-    const a = this.inicio instanceof VueloDePasaje ? this.inicio.adelanto : null;
-    this.hud.ponerAdelantar(a ? { sale: a.sale, adelantando: a.adelantando } : null);
+    this.hud.ponerAdelantar(this.inicio instanceof VueloDePasaje ? this.inicio.boton : null);
   }
 
   /** Si Ara duerme ahora, en la escena de pasaje. Ver `flight/inicio-pasaje.ts`. */
@@ -23076,6 +23114,9 @@ export class Game {
    * —ver `ponerVistaDeCabina`—, y una cabina de respaldo con el cuadro plano
    * encima serían dos tableros a la vez.
    */
+  /** El plano que se pintaba el paso anterior: ver `saltaLaCabeza`. */
+  private planoDeAntes: Plano = "ventanilla";
+
   /**
    * **La cámara de la escena de pasaje**: el plano que pide la escena —ver
    * `Plano` en `flight/inicio-pasaje.ts`—, con el fundido de cada corte por el
@@ -23098,6 +23139,9 @@ export class Game {
     this.ponerElVeloDelPlano(paso.velo);
     // El sitio de la toma cambia con la cámara, con el velo puesto: no se ve saltar.
     if (paso.cambio) this.paisajeDeLaToma = pedido.paisaje;
+    // Al pasillo y de vuelta, la cabeza salta con el velo puesto: su camino cruzaría la pared.
+    this.contextoDeCamara.saltaLaCabeza = paso.cambio && (paso.plano === "pasillo" || this.planoDeAntes === "pasillo");
+    this.planoDeAntes = paso.plano;
     if (!esDeFuera(paso.plano)) {
       const asiento = this.asientoDeAraAhora(paso.plano);
       this.contextoDeCamara.asientoDeLaEscena = asiento;
@@ -23428,7 +23472,48 @@ export class Game {
       if (p) return asomadoHacia(ara.ventanilla, LADO_DE_ARA, p, { position: s.position, orientation: s.orientation, largo: this.largoDelAvion });
       return ara.poses.motor;
     }
+    if (plano === "pasillo") return this.elPasillo()?.pose ?? ara.poses.sentada;
     return plano === "asomado-motor" ? ara.poses.motor : plano === "asomado-abajo" ? ara.poses.abajo : ara.poses.sentada;
+  }
+
+  /**
+   * **El pasillo de la cabina, por dentro**, montado la primera vez que se
+   * pide y otra vez si cambia el modelo: lo que ve Ara asomada al pasillo
+   * buscando su salida (punto 312). `null` si el avión no da con qué. Ver
+   * `world/pasillo-de-pasaje.ts`.
+   */
+  private pasilloMontado: { readonly de: object; readonly pasillo: PasilloDePasaje | null } | null = null;
+  private elPasillo(): PasilloDePasaje | null {
+    const pasaje = this.aircraftMesh.pasaje;
+    if (!pasaje) return null;
+    if (this.pasilloMontado?.de !== pasaje) {
+      const ara = pasaje.deAra[LADO_DE_ARA];
+      this.pasilloMontado = {
+        de: pasaje,
+        pasillo: ara
+          ? montarElPasillo(ara, LADO_DE_ARA, pasaje.filas, pasaje.puertas, franjaDeLaFunda(this.aircraft.appearance))
+          : null,
+      };
+    }
+    return this.pasilloMontado.pasillo;
+  }
+
+  /** Si lo que se ve ahora es el pasillo, en la escena de pasaje. */
+  private get enElPasillo(): boolean {
+    return this.inicio instanceof VueloDePasaje && this.fundidoDePlano.plano === "pasillo";
+  }
+
+  /**
+   * **Cuelga o descuelga el pasillo del avión**: solo existe mientras se mira,
+   * que fuera de esos segundos no cueste nada ni lo encuentre nadie que mida
+   * el avión.
+   */
+  private ponerElPasillo(si: boolean): void {
+    const p = si ? this.elPasillo() : this.pasilloMontado?.pasillo;
+    if (!p) return;
+    const g = this.aircraftMesh.group;
+    if (si && p.grupo.parent !== g) g.add(p.grupo);
+    if (!si && p.grupo.parent) p.grupo.parent.remove(p.grupo);
   }
 
   /**
@@ -23546,6 +23631,80 @@ export class Game {
   }
 
   /**
+   * **Lo que se ve asomada al pasillo**, medido con la cámara de ahora: el
+   * letrero de la salida más cercana —si cae entero en la pantalla, si lo tapa
+   * algo de la cabina y lo que ocupa, en píxeles—, cuántos puntos de las tiras
+   * del suelo se ven, el ángulo de la vista y si la pared de la ventanilla está
+   * apagada. `null` sin pasillo montado. Para el banco: ver
+   * `scripts/verificar-inicio-3.mjs`.
+   */
+  pasilloParaBanco(): {
+    readonly plano: Plano | null;
+    readonly colgado: boolean;
+    readonly marco: boolean;
+    readonly fov: number;
+    readonly letrero: { readonly entero: boolean; readonly tapado: boolean; readonly caja: { left: number; top: number; right: number; bottom: number } } | null;
+    readonly tiras: { readonly vistas: number; readonly de: number };
+  } | null {
+    const p = this.pasilloMontado?.pasillo;
+    if (!p) return null;
+    const g = this.aircraftMesh.group;
+    const cam = this.camera;
+    g.updateMatrixWorld();
+    cam.updateMatrixWorld();
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const aPantalla = (q: Vector3): { x: number; y: number; delante: boolean } => {
+      const delante = q.clone().applyMatrix4(cam.matrixWorldInverse).z < 0;
+      const v = q.clone().project(cam);
+      return { x: ((v.x + 1) / 2) * W, y: ((1 - v.y) / 2) * H, delante };
+    };
+    const rayo = new Raycaster();
+    const tapado = (q: Vector3): boolean => {
+      const d = q.clone().sub(cam.position);
+      const lejos = d.length();
+      rayo.set(cam.position, d.normalize());
+      rayo.far = lejos - 0.01;
+      return rayo.intersectObjects(p.mallas as Mesh[], false).length > 0;
+    };
+    const l = p.letreros[0]!;
+    const { ancho, alto } = p.tamanoDelLetrero;
+    const esquinas = [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1],
+    ].map(([a, b]) => aPantalla(new Vector3(l.x + (a! * ancho) / 2, l.y + (b! * alto) / 2, l.z).applyMatrix4(g.matrixWorld)));
+    const xs = esquinas.map((e) => e.x);
+    const ys = esquinas.map((e) => e.y);
+    const caja = { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
+    const colgado = p.grupo.parent === g;
+    const centro = new Vector3(l.x, l.y, l.z).applyMatrix4(g.matrixWorld);
+    const letrero = colgado
+      ? {
+          entero: esquinas.every((e) => e.delante && e.x >= 0 && e.x <= W && e.y >= 0 && e.y <= H),
+          tapado: tapado(centro),
+          caja,
+        }
+      : null;
+    let vistas = 0;
+    if (colgado)
+      for (const t of p.tiras) {
+        const q = new Vector3(t.x, t.y, t.z).applyMatrix4(g.matrixWorld);
+        const e = aPantalla(q);
+        if (e.delante && e.x >= 0 && e.x <= W && e.y >= 0 && e.y <= H && !tapado(q)) vistas++;
+      }
+    return {
+      plano: this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null,
+      colgado,
+      marco: this.marcoDeVentanilla.visible,
+      fov: cam.fov,
+      letrero,
+      tiras: { vistas, de: p.tiras.length },
+    };
+  }
+
+  /**
    * Si desde la cámara de ahora se ve ese punto **por el cristal** de la
    * ventanilla, o `null` si no se está en el pasaje. Para el banco.
    */
@@ -23609,9 +23768,9 @@ export class Game {
     this.mirada.paso(dt);
     const giro = { guinada: this.mirada.guinada, cabeceo: this.mirada.cabeceo };
     const asiento = this.asientoDe(modo);
-    // En el pasaje no se gira la cabeza a secas: se asoma uno al cristal.
-    if (asiento) asomarse(this.camera, state.orientation, asiento, giro);
-    else if (como === "cabeza") girarLaCabeza(this.camera, state.orientation, giro);
+    // En el pasaje no se gira la cabeza a secas: se asoma uno al cristal. Asomada al pasillo, el cristal queda detrás.
+    if (asiento && !this.enElPasillo) asomarse(this.camera, state.orientation, asiento, giro);
+    else if (como === "cabeza" || asiento) girarLaCabeza(this.camera, state.orientation, giro);
     else
       darLaVuelta(this.camera, state.position, giro, (x, z) =>
         this.terrain.sampleSurface(x, z),
@@ -23627,9 +23786,12 @@ export class Game {
   private ponerElMarco(modo: CameraMode): void {
     const pasaje = this.aircraftMesh.pasaje;
     const asiento = this.asientoDe(modo);
-    this.marcoDeVentanilla.visible = !!asiento;
+    // Asomada al pasillo, la pared de la ventanilla no está delante: la cabina la pone el pasillo.
+    const pasillo = !!asiento && this.enElPasillo;
+    this.marcoDeVentanilla.visible = !!asiento && !pasillo;
     if (pasaje) pasaje.ventanillas.visible = !asiento;
-    if (!asiento) return;
+    this.ponerElPasillo(pasillo);
+    if (!asiento || pasillo) return;
     this.marcoDeVentanilla.librea(franjaDeLaFunda(this.aircraft.appearance));
     this.marcoDeVentanilla.poner(
       this.camera,

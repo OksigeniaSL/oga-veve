@@ -31,7 +31,7 @@
 
 import { MathUtils, Quaternion, Vector3, type PerspectiveCamera } from "three";
 import type { FlightState } from "../flight/model";
-import { esDeFuera, type Plano } from "../flight/inicio-pasaje";
+import { esCorte, type Plano } from "../flight/inicio-pasaje";
 import { FOV_DEL_PAISAJE, tomaDelPaisaje, type Punto } from "../world/se-ve-desde-el-pasaje";
 
 /**
@@ -58,8 +58,8 @@ const suave = (x: number): number => {
 /**
  * **El fundido entre planos**, por el reloj de pared: lo que se ve sigue a lo
  * que pide la escena, y si el cambio es un corte —de dentro a fuera, de fuera
- * a dentro o de un sitio de fuera a otro—, con el velo: tapa, cambia y
- * destapa. Asomarse al cristal no es un corte: lo hace la cámara de pasaje,
+ * a dentro, de un sitio de fuera a otro o de la ventanilla al pasillo—, con
+ * el velo: tapa, cambia y destapa. Ver `esCorte`. Asomarse al cristal no es un corte: lo hace la cámara de pasaje,
  * moviendo la cabeza.
  */
 export class FundidoDePlano {
@@ -83,7 +83,7 @@ export class FundidoDePlano {
     if (toma !== this.toma) {
       this.toma = toma;
       this.pedido = pedido;
-      if (!esDeFuera(pedido) && !esDeFuera(this.visto)) {
+      if (!esCorte(this.visto, pedido)) {
         // Asomarse o volver al asiento: sin velo.
         this.visto = pedido;
         this.desde = null;

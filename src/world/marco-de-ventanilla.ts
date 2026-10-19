@@ -264,6 +264,9 @@ const COLORES = {
   letrero: "#f4f4ee",
 };
 
+/** Los mismos colores para la cabina que se ve desde el pasillo: ver `world/pasillo-de-pasaje.ts`. */
+export const COLORES_DE_LA_CABINA: Readonly<typeof COLORES> = COLORES;
+
 /** El color de la luz del pasaje de noche, cálido. */
 const CALIDA = new Color(1, 0.86, 0.68);
 

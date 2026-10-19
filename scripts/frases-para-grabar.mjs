@@ -1734,7 +1734,24 @@ const DEL_BANO = [
   ["inicio.tripulacion.pasaje.cerca.banoAhora", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante viene a por Ara en cuanto se apaga la luz"],
   ["inicio.tripulacion.pasaje.cerca.banoATiempo", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, bajando con la luz encendida: Ara fue justo a tiempo"],
 ];
-const LO_QUE_SE_VE = new Set([...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO].map(([k]) => k));
+/*
+ * **Y lo que se pregunta después de la demostración** (puntos 312 y 313), por
+ * lo mismo y detrás de todo: si hay que ponerse ya la máscara y si se sale por
+ * la ventanilla del ala, que Ara pregunta en la revisión y contesta la
+ * tripulante en persona —sin chispa, como todo lo que dice cara a cara—; y por
+ * qué se sale hacia el este, que cuenta la comandante rodando. Ver el momento
+ * `revision` y `bienvenida` en `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LA_DEMOSTRACION = [
+  ["inicio.ara.pasaje.mascaraAhora", "ara", "el modo inicio, de pasaje: Ara pregunta, después de la demostración, si hay que ponerse ya la máscara"],
+  ["inicio.ara.pasaje.salidaAla", "ara", "el modo inicio, de pasaje: Ara pregunta si se sale por la ventanilla, sobre el ala"],
+  ["inicio.mama.pasaje.viento", "comandante", "el modo inicio, de pasaje: la comandante, rodando, por qué se sale hacia el este con el viento de hoy"],
+  ["inicio.tripulacion.pasaje.cerca.mascaraAhora", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, con calma: las máscaras y el chaleco son por si acaso"],
+  ["inicio.tripulacion.pasaje.cerca.salidaAla", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, las salidas sobre el ala son de los aviones más largos"],
+];
+const LO_QUE_SE_VE = new Set(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION].map(([k]) => k),
+);
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
     if (!k.startsWith(prefijo) || salvo?.test(k) || LO_QUE_SE_VE.has(k) || filas.some((f) => f.id === k)) continue;
@@ -1833,8 +1850,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada y el baño: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA` y `DEL_BANO`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño y lo de la demostración: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO` y `DE_LA_DEMOSTRACION`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

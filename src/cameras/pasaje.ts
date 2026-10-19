@@ -111,7 +111,7 @@ export class CamaraDePasaje implements CameraRig {
     ctx: Contexto,
   ): void {
     const escena = ctx.asientoDeLaEscena;
-    if (!escena) this.laCabeza = null;
+    if (!escena || ctx.saltaLaCabeza) this.laCabeza = null;
     const asiento = escena
       ? this.haciaLaPose(escena, dt, ctx)
       : asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla);

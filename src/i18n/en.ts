@@ -2194,11 +2194,11 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.demo.cinturon":
     "To fasten your seat belt, push the buckle in until you hear a click, tighten it by pulling the strap, and release it by lifting the flap.",
   "inicio.tripulacion.pasaje.demo.salidas":
-    "This aircraft has emergency exits at the front, at the back and over the wings. Lights along the floor of the aisle mark the way to them.",
+    "This aircraft has four emergency exits: two at the front and two at the back. Find the one nearest you, which may be behind you. Lights along the floor of the aisle mark the way to them.",
   "inicio.tripulacion.pasaje.demo.mascaras":
-    "If needed, oxygen masks will drop from the ceiling. Pull one towards you, place it over your nose and mouth, and breathe normally. Put on your own first, and then help anyone who needs it.",
+    "If the cabin loses pressure, oxygen masks will drop automatically from the ceiling. Pull one towards you, place it over your nose and mouth, and breathe normally. Put on your own first, and then help anyone who needs it.",
   "inicio.tripulacion.pasaje.demo.chaleco":
-    "Your life jacket is under your seat. Slip it over your head and fasten it around your waist. Don't inflate it inside the aircraft: inflate it as you leave, by pulling the red tabs.",
+    "Your life jacket is under your seat, and it's only used if the aircraft has to land on water. Slip it over your head and fasten it around your waist. Don't inflate it inside the aircraft: inflate it as you leave, by pulling the red tabs.",
   "inicio.tripulacion.pasaje.demo.tarjeta":
     "In the seat pocket in front of you is the safety card, with all of this in pictures. Please read it before take-off.",
   "inicio.tripulacion.pasaje.demo.aparatos":
@@ -2394,6 +2394,14 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.banoATiempo":
     "See? You went just in time: now, with the light on, nobody gets up until we land.",
   "inicio.ara.pasaje.banoEspero": "With the seat belt light on, I'll wait until we land. It's not long now!",
+  "inicio.ara.pasaje.mascaraAhora": "Do we have to put the mask on now?",
+  "inicio.tripulacion.pasaje.cerca.mascaraAhora":
+    "No, no: they only drop if the air inside the plane were to escape, and that hardly ever happens. If they don't drop, you don't need them. We explain it just in case, like the life jacket: that's only used if the plane landed on water.",
+  "inicio.ara.pasaje.salidaAla": "And can't you get out through the window, over the wing?",
+  "inicio.tripulacion.pasaje.cerca.salidaAla":
+    "On bigger planes, yes: they have exit windows over the wing, with a sign above them. This one is shorter, and its exits are the doors.",
+  "inicio.mama.pasaje.viento":
+    "Today the wind is from the north-east, and planes take off with the wind ahead of them whenever they can, never from behind. That's why we head east, and then turn back towards La Palma.",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

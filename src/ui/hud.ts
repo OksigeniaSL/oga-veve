@@ -182,6 +182,12 @@ const ESCALA_DEL_TRIM = 2;
 
 /** Lo que dura la salida del botón de freno al pasar V1, en segundos. */
 const BRAKE_EXIT = 0.9;
+/**
+ * **Lo que tarda en irse el ⏩ que se apaga solo**, ms: un momento a la vista
+ * en su estado de siempre, y el fundido. Lo mismo que `adelantar-se-va` en
+ * `style.css`.
+ */
+const SE_VA_EL_ADELANTAR = 1300;
 
 const INSTRUMENTS = {
   speed: "IAS",
@@ -781,6 +787,8 @@ export class Hud {
   private pausaHandler: (() => void) | null = null;
   private adelantarHandler: (() => void) | null = null;
   private botonAdelantar: HTMLButtonElement | null = null;
+  /** El plazo del ⏩ que se va solo, mientras se va. Ver `ponerAdelantar`. */
+  private adelantarSeVa: ReturnType<typeof setTimeout> | null = null;
   private creditsHandler: (() => void) | null = null;
   private alaHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
@@ -1419,12 +1427,12 @@ export class Hud {
           </svg>
         </button>
         <!--
-          **Y al lado de la pausa, adelantar**: las dos flechas de cualquier
-          reproductor, que un niño de cuatro años ya conoce de los dibujos
-          animados. Solo en la escena de pasaje y solo cuando no va a pasar
-          nada en un rato; mientras adelanta, las flechas corren. Sin una
-          palabra: lo que hace se ve por la ventanilla. Ver «adelanto» en
-          flight/inicio-pasaje.ts.
+          **Y al lado de la pausa, el modo rápido**: las dos flechas de
+          cualquier reproductor, que un niño de cuatro años ya conoce de los
+          dibujos animados. Solo en la escena de pasaje, en el aire y antes de
+          la llegada. Puesto, se enciende; y cuando el vuelo corre, las
+          flechas corren. Sin una palabra: lo que hace se ve por la
+          ventanilla. Ver «adelanto» en flight/inicio-pasaje.ts.
         -->
         <button class="sonido adelantar" type="button" data-hud="adelantar"
                 aria-label="${t("hud.adelantar")}" aria-pressed="false" hidden>
@@ -3854,21 +3862,43 @@ export class Hud {
   }
 
   /**
-   * **El botón ⏩**: si sale y si está adelantando, o `null` fuera de la
-   * escena de pasaje. Se mira cada fotograma, así que solo se toca el DOM si
-   * cambia algo.
+   * **El botón ⏩ del modo rápido**: si sale, si está puesto —encendido en
+   * ocre—, si el vuelo corre ahora —las flechas corren— y si se acaba de
+   * apagar solo al empezar la llegada: entonces vuelve a su estado de siempre
+   * y, un momento después, se va, que se note sin una palabra. `null` fuera de
+   * la escena de pasaje. Se mira cada fotograma, así que solo se toca el DOM
+   * si cambia algo.
    */
-  ponerAdelantar(e: { readonly sale: boolean; readonly adelantando: boolean } | null): void {
+  ponerAdelantar(
+    e: { readonly sale: boolean; readonly puesto: boolean; readonly corre: boolean; readonly seVa: boolean } | null,
+  ): void {
     this.botonAdelantar ??= this.root.querySelector<HTMLButtonElement>('[data-hud="adelantar"]');
     const b = this.botonAdelantar;
     if (!b) return;
     const sale = !!e?.sale;
-    if (b.hidden === sale) b.hidden = !sale;
-    const anda = sale && !!e?.adelantando;
-    if ((b.getAttribute("aria-pressed") === "true") !== anda) {
-      b.setAttribute("aria-pressed", String(anda));
-      b.classList.toggle("adelantar--andando", anda);
+    const puesto = sale && !!e?.puesto;
+    if ((b.getAttribute("aria-pressed") === "true") !== puesto) b.setAttribute("aria-pressed", String(puesto));
+    b.classList.toggle("adelantar--puesto", puesto);
+    b.classList.toggle("adelantar--corre", puesto && !!e?.corre);
+    if (sale) {
+      if (this.adelantarSeVa !== null) {
+        clearTimeout(this.adelantarSeVa);
+        this.adelantarSeVa = null;
+        b.classList.remove("adelantar--se-va");
+      }
+      if (b.hidden) b.hidden = false;
+      return;
     }
+    // Se acaba de apagar solo, y estaba a la vista: se queda un momento como siempre, y se va.
+    if (e?.seVa && !b.hidden && this.adelantarSeVa === null) {
+      b.classList.add("adelantar--se-va");
+      this.adelantarSeVa = setTimeout(() => {
+        b.hidden = true;
+        b.classList.remove("adelantar--se-va");
+      }, SE_VA_EL_ADELANTAR);
+      return;
+    }
+    if (this.adelantarSeVa === null && !b.hidden) b.hidden = true;
   }
 
   /** Los de antes de volar. Ver `ponerAntesDeVolar`. */

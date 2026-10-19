@@ -462,6 +462,64 @@ atender urgencias, apagar un fuego en cabina…» (Enrique).
   procedimientos de emergencia y de evacuación y los primeros auxilios. —
   Reglamento (UE) n.º 965/2012, anexo III, ORO.CC.140(a) y (d)(1).
 
+
+### Las salidas de emergencia del JAZ 90 · `inicio.tripulacion.pasaje.demo.salidas`, `inicio.ara.pasaje.salidaAla` y `inicio.tripulacion.pasaje.cerca.salidaAla`
+
+Punto 312. La demostración decía «salidas de emergencia delante, detrás y
+sobre las alas», y su dibujo pintaba seis. El JAZ 90 es de la clase del ERJ
+170 —ver `src/flight/aircraft.ts`—, y ese avión no lleva salidas sobre el ala.
+
+- **Cuatro salidas tipo I, ninguna sobre el ala**: «1 Main Fwd LH — Type I —
+  750 mm (w) × 1821 mm (h); 2 Main Aft LH — Type I — 635 × 1801; 3 Service
+  (Fwd, RH) — Type I — 611 × 1368; 4 Service (Aft RH) — Type I — 632 × 1381»,
+  y además, para la tripulación de mando, las dos ventanillas de la cabina de
+  mando. Igual en el ERJ 170-100 (el E170, 80 asientos como mucho) y en el
+  ERJ 170-200 (el E175, 88). — EASA, *Type-Certificate Data Sheet* n.º
+  EASA.IM.A.001, Embraer ERJ-170, edición 13 de 31 de enero de 2022,
+  sección 1, III.20 y III.21 (página 9) y sección 2, III.20 y III.21
+  (página 17), [easa.europa.eu](https://www.easa.europa.eu/en/downloads/7525/en).
+  De ahí `SALIDAS_DEL_PASAJE` en `src/flight/inicio-pasaje.ts`: dos delante y
+  dos detrás, que es también lo que tiene el modelo —`puerta-11` y `puerta+11`,
+  una fila cada una con la de pasaje y la de servicio—.
+- **«En los aviones más grandes, sí»**: el ERJ 190-200 (el E195) lleva salidas
+  sobre el ala; las usó el pasaje en la evacuación de Exeter de 2019. — AAIB,
+  [*AAIB investigation to ERJ 190-200 LR (Embraer 195), G-FBEJ*](https://www.gov.uk/aaib-reports/aaib-investigation-to-erj-190-200-lr-embraer-195-g-fbej).
+  Y las de los de pasillo único más largos —el A320, el 737— son las de
+  siempre sobre el ala, tipo III.
+- **El letrero**: letras rojas sobre fondo blanco iluminado, de al menos
+  treinta y ocho milímetros. — EASA, CS 25.812(b)(1), en las
+  [Easy Access Rules for Large Aeroplanes (CS-25)](https://www.easa.europa.eu/en/document-library/easy-access-rules/online-publications/easy-access-rules-large-aeroplanes-cs-25).
+  Ver `world/pasillo-de-pasaje.ts`.
+
+**Lo que choca y queda por resolver**: el modelo 3D del JAZ 90 —
+`modelos/jaz-90-arai.py`— lleva todavía el contorno de una trampilla sobre el
+ala (`salida-de-emergencia`, con su `ventanita-salida`), y la vista de pasajero
+«sobre el ala» sienta a quien juega en esa fila, con su letrero «EXIT». Eso
+fue un pedido de Enrique, y lo que dice la hoja de tipo es que un avión de esta
+clase no la lleva. La escena de Ara no la enseña —su asiento va por delante, y
+lo que se ve por fuera es una raya en la chapa—, pero hay que decidir si se
+quita del modelo.
+
+### Las máscaras y el chaleco, solo si pasa · `inicio.tripulacion.pasaje.demo.mascaras`, `.demo.chaleco` e `inicio.tripulacion.pasaje.cerca.mascaraAhora`
+
+Punto 313: la demostración contaba las máscaras y el chaleco sin decir cuándo
+se usan, y un niño podía quedarse con que en los aviones se llevan puestos.
+Lo que pide la norma decir antes del despegue es justo eso, el cuándo: las
+máscaras caen solas si la cabina pierde presión, y el chaleco es para un
+amerizaje. — AMC1 CAT.OP.MPA.170, información a los pasajeros, en las
+[Easy Access Rules for Air Operations](https://www.easa.europa.eu/en/document-library/easy-access-rules/easy-access-rules-air-operations).
+
+### Por qué se sale hacia el este · `inicio.mama.pasaje.viento`
+
+El día de la escena es el de siempre del norte de Tenerife: el alisio, **del
+nordeste** —40°, doce nudos; ver `vientoDominante` de `tenerife-norte` en
+`src/world/scenarios.ts`—. No del sur. Con él, la 12 lo tiene por delante y
+la 30 por detrás, así que se despega hacia el este y se da la vuelta hacia La
+Palma, que queda al oeste. Lo que se cuenta es la regla de verdad: se despega
+siempre que se puede con el viento por delante, nunca por detrás. «Siempre» a
+secas sería falso: con poco viento se usa la pista preferente, y se admite
+algo de viento de cola.
+
 ---
 
 ## Lo que se miró y no entra
