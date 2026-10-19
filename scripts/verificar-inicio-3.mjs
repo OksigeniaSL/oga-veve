@@ -98,6 +98,12 @@
  *   del cinturón encendida, que Ara no se suelta hasta que se apaga —el
  *   cartel de la pantalla— y que lo que sabe hacer la tripulante sale una vez
  *   y sin pisar a nadie.
+ * - **El baño de Ara** (punto 293): la luz manda, y cuando se apaga, se puede.
+ *   Que Ara cuenta en el embarque que fue antes de subir, que lo pide rodando
+ *   con la luz encendida y no se levanta, y que si va es con el cartel de la
+ *   pantalla apagado de que se va a que vuelve; si no hubo rato, que espera a
+ *   aterrizar con la luz encendida. Y se escribe cuándo se enciende y se
+ *   apaga la luz en todo el vuelo.
  *
  * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—,
  * con las tomas del pack: cada frase dura lo que dura su grabación, y **todo
@@ -229,6 +235,7 @@ const sePisan = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bott
 /** Los momentos de un vuelo normal, en su orden. Ver `GUION_DEL_PASAJE`. */
 const MOMENTOS = [
   "ventanilla",
+  "banoAntes",
   "cinturon",
   "puertas",
   "motores",
@@ -384,6 +391,8 @@ async function elVuelo() {
    */
   const llegada = [];
   const gente = [];
+  /** **La luz del cinturón en todo el vuelo**: cada vez que cambia el cartel, con la hora de la escena (punto 293). */
+  const luces = [];
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -455,6 +464,7 @@ async function elVuelo() {
       llegada.push({ t: e.segundos, tramo, fase: v.fase, lado: l ? Math.abs(l.pista.lado) : null, vuelta: dif, cartel: v.cartel, plano: i.planoVisto });
     }
     for (const q of v.tocados ?? []) if (q === "hebilla" || q === "levantarse") gente.push({ t: e.segundos, que: q, tramo });
+    if (luces[luces.length - 1]?.cartel !== v.cartel) luces.push({ t: e.segundos, cartel: v.cartel, tramo });
     // ── Lo que se oye cambiar ──
     if (v.gasQueSuena !== null) oido.push({ t: e.segundos, gas: v.gasQueSuena });
     altitudes.push({ t: e.segundos, altitud });
@@ -1209,6 +1219,46 @@ async function elVuelo() {
         registro.filter((d) => d.clave === "inicio.ara.pasaje.cinturonQuieto").length === 1,
       `luz apagada a los ${luz?.t?.toFixed(0) ?? "—"} s · encendida rodando ${encendidaRodando} · hebillas antes ${hebillasAntes.length} · «todavía no» ${todavia?.desde?.toFixed(0) ?? "—"}–${todavia?.hasta?.toFixed(0) ?? "—"} s · se suelta ${suelta?.desde?.toFixed(0) ?? "—"} s`,
     );
+    /*
+     * ── El baño (punto 293): la luz manda, y cuando se apaga, se puede ──
+     *
+     * Ara cuenta en el embarque que fue antes de subir; lo pide rodando, con
+     * la luz encendida, y no se levanta. Si va, es con la luz apagada —medida
+     * en el cartel de la pantalla, de que se va a que vuelve—, y vuelve antes
+     * de que se encienda. Si no hubo rato, espera a aterrizar con la luz
+     * encendida.
+     */
+    {
+      const cartelEn = (s) => luces.filter((x) => x.t <= s).at(-1)?.cartel ?? true;
+      const encendidaEntre = (a, b) => cartelEn(a) || luces.some((x) => x.t > a && x.t < b && x.cartel);
+      const antes = dicha("inicio.ara.pasaje.banoAntes");
+      const pregunta = dicha("inicio.ara.pasaje.bano");
+      const promete = dicha("inicio.tripulacion.pasaje.cerca.banoLuz");
+      const seVa = dicha("inicio.tripulacion.pasaje.cerca.banoAhora");
+      const vuelve = dicha("inicio.ara.pasaje.banoVuelta");
+      const aTiempo = dicha("inicio.tripulacion.pasaje.cerca.banoATiempo");
+      const espera = dicha("inicio.ara.pasaje.banoEspero");
+      const fue = !!seVa && !!vuelve;
+      const sale = seVa ? Math.max(seVa.desde, seVa.hasta ?? seVa.desde) : null;
+      console.log(
+        `  la luz del cinturón: ${luces.map((x) => `${x.cartel ? "encendida" : "apagada"} a los ${x.t.toFixed(0)} s (${x.tramo ?? "—"})`).join(" · ")}`,
+      );
+      comprobar(
+        "la luz manda (punto 293): Ara fue al baño antes de subir, lo pide rodando con la luz encendida y no se levanta; si va, es con la luz apagada, y vuelve antes de que se encienda",
+        !!antes &&
+          !!pregunta &&
+          !!promete &&
+          antes.desde < (dicha("inicio.tripulacion.pasaje.cinturon")?.desde ?? 0) &&
+          cartelEn(pregunta.desde) &&
+          cartelEn(promete.desde) &&
+          (fue
+            ? !encendidaEntre(sale, vuelve.desde) && e?.fueAlBano === true && !espera && !!aTiempo && cartelEn(aTiempo.desde)
+            : !!espera && cartelEn(espera.desde) && e?.fueAlBano === false),
+        fue
+          ? `se va a los ${sale.toFixed(0)} s y vuelve a los ${vuelve.desde.toFixed(0)} s, con la luz ${encendidaEntre(sale, vuelve.desde) ? "¡encendida!" : "apagada"} · «a tiempo» a los ${aTiempo?.desde?.toFixed(0) ?? "—"} s`
+          : `no fue: espera a aterrizar, a los ${espera?.desde?.toFixed(0) ?? "—"} s, con la luz ${espera && cartelEn(espera.desde) ? "encendida" : "¿apagada?"}`,
+      );
+    }
     // ── Y lo que es la tripulación: una vez, sin pisar a nadie ──
     const oficio = ["inicio.tripulacion.pasaje.cerca.oficio1", "inicio.tripulacion.pasaje.cerca.oficio2", "inicio.ara.pasaje.uniforme"].map((c) =>
       registro.filter((d) => d.clave === c),

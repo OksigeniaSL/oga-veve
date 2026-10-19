@@ -6,7 +6,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Cinturon, SACUDE, YA_NO_SACUDE } from "./cinturon";
+import { Megafonia } from "../audio/megafonia";
+import { APAGA_LA_LUZ, Cinturon, SACUDE, YA_NO_SACUDE } from "./cinturon";
+import type { Fase } from "./vuelo";
 
 const momento = (
   fase: string,
@@ -187,5 +189,127 @@ describe("el cartel del cinturón", () => {
     c.reiniciar();
     expect(c.comoEsta).toBe("auto");
     expect(c.paso(momento("en-vuelo"))).toBe(true);
+  });
+});
+
+/*
+ * **En el puesto, en cualquier vuelo con pasaje.** Solo lo apagaba la escena
+ * de pasaje, que cuenta ese momento; en los demás vuelos el cartel seguía
+ * encendido con el avión ya apagado en su sitio. Lo real es que se apaga con
+ * el avión parado en el puesto y los motores parados, con su *ding*.
+ */
+describe("el cartel en el puesto, sin escena", () => {
+  /** Unos segundos en una fase, de medio en medio; devuelve cómo quedó el cartel. */
+  const durante = (c: Cinturon, fase: string, segundos: number): boolean => {
+    let encendido = true;
+    for (let t = 0; t < segundos - 1e-9; t += 0.5) encendido = c.paso({ ...momento(fase), dt: 0.5 });
+    return encendido;
+  };
+
+  it("con los motores parados en el puesto se apaga sola, pasado lo que tardan en pararse", () => {
+    const c = new Cinturon();
+    expect(durante(c, "a-plataforma", 10)).toBe(true);
+    // En el puesto con los motores en marcha, todavía no: el avión puede moverse.
+    expect(durante(c, "en-puesto", 10)).toBe(true);
+    expect(durante(c, "apagado", APAGA_LA_LUZ - 1)).toBe(true);
+    expect(durante(c, "apagado", 1)).toBe(false);
+    expect(durante(c, "apagado", 30)).toBe(false);
+    // Y con el motor en marcha otra vez, vuelve.
+    expect(durante(c, "en-puesto", 1)).toBe(true);
+  });
+
+  it("y los motores parados fuera del puesto no cuentan: en una calle, la gente sigue sentada", () => {
+    const c = new Cinturon();
+    expect(durante(c, "a-plataforma", 10)).toBe(true);
+    expect(durante(c, "apagado", 60)).toBe(true);
+  });
+
+  it("y con escena, manda la escena: la de pasaje lo apaga con su guion", () => {
+    const c = new Cinturon();
+    durante(c, "en-puesto", 5);
+    for (let t = 0; t < 30; t += 0.5)
+      expect(c.paso({ ...momento("apagado"), dt: 0.5, apagadoEnElPuesto: false })).toBe(true);
+    expect(c.paso({ ...momento("apagado"), dt: 0.5, apagadoEnElPuesto: true })).toBe(false);
+  });
+
+  it("y el interruptor, puesto a mano, sigue mandando", () => {
+    const c = new Cinturon();
+    durante(c, "en-puesto", 5);
+    c.ponerMando("puesto");
+    expect(durante(c, "apagado", 30)).toBe(true);
+  });
+});
+
+/*
+ * **Un vuelo con pasaje de punta a punta**, con la megafonía y el cartel
+ * cosidos como los cose el juego —ver `atenderAlCinturon` y
+ * `decirPorMegafonia` en `game.ts`—: lo que la tripulación de verdad hace con
+ * la luz en un vuelo tranquilo. Se apaga arriba con el anuncio de crucero, se
+ * enciende al empezar a bajar y se apaga en el puesto con los motores parados.
+ */
+describe("el cartel en un vuelo normal con pasaje, con la megafonía", () => {
+  const m = new Megafonia();
+  const c = new Cinturon();
+  const cambios: { t: number; fase: Fase; encendido: boolean; porQue: string | null }[] = [];
+  let t = 0;
+  let encendido: boolean | null = null;
+  const tramo = (fase: Fase, segundos: number, aire: { sobreElCampo?: number; vertical?: number; desdeLoMasAlto?: number } = {}) => {
+    for (let s = 0; s < segundos - 1e-9; s += 0.5, t += 0.5) {
+      const dice = m.paso(0.5, {
+        fase,
+        conPasaje: true,
+        conTripulacion: true,
+        sobreElCampo: aire.sobreElCampo ?? 0,
+        vertical: aire.vertical ?? 0,
+        desdeLoMasAlto: aire.desdeLoMasAlto ?? 0,
+        cartelPuesto: encendido ?? true,
+      });
+      const ahora = c.paso({
+        fase,
+        conPasaje: true,
+        movimiento: 0,
+        loDijoLaComandante: dice === "comandante.crucero",
+        loEncendioLaComandante: dice === "comandante.descenso",
+        dt: 0.5,
+      });
+      if (ahora !== encendido) cambios.push({ t, fase, encendido: ahora, porQue: dice });
+      encendido = ahora;
+    }
+  };
+  tramo("estacionado", 20);
+  tramo("rodando", 60);
+  tramo("autorizado", 10);
+  tramo("alineando", 10);
+  tramo("despegando", 30, { sobreElCampo: 200, vertical: 10 });
+  tramo("en-vuelo", 300, { sobreElCampo: 2500, vertical: 10 });
+  tramo("en-vuelo", 120, { sobreElCampo: 5000 });
+  m.empezarElDescenso();
+  tramo("en-vuelo", 600, { sobreElCampo: 3000, vertical: -8, desdeLoMasAlto: 2000 });
+  tramo("final", 120, { sobreElCampo: 300, vertical: -4, desdeLoMasAlto: 4700 });
+  tramo("aterrizado", 20);
+  tramo("abandonando", 20);
+  tramo("a-plataforma", 120);
+  tramo("en-puesto", 10);
+  const motoresParados = t;
+  tramo("apagado", 20);
+
+  it("empieza encendido, se apaga arriba con el anuncio de crucero y se enciende con el de la bajada", () => {
+    expect(cambios[0]).toMatchObject({ t: 0, encendido: true });
+    const apagaArriba = cambios[1];
+    expect(apagaArriba).toMatchObject({ fase: "en-vuelo", encendido: false, porQue: "comandante.crucero" });
+    expect(cambios[2]).toMatchObject({ fase: "en-vuelo", encendido: true, porQue: "comandante.descenso" });
+  });
+
+  it("y se apaga en el puesto con los motores parados, con su rato; y en ningún otro sitio", () => {
+    expect(cambios.map((x) => `${x.fase}:${x.encendido ? "on" : "off"}`)).toEqual([
+      "estacionado:on",
+      "en-vuelo:off",
+      "en-vuelo:on",
+      "apagado:off",
+    ]);
+    // El paso que la apaga empieza medio segundo antes de cumplirse el rato.
+    const enElPuesto = cambios[3]!;
+    expect(enElPuesto.t - motoresParados).toBeGreaterThanOrEqual(APAGA_LA_LUZ - 0.5);
+    expect(enElPuesto.t - motoresParados).toBeLessThanOrEqual(APAGA_LA_LUZ);
   });
 });

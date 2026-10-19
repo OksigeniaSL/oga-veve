@@ -17811,5 +17811,68 @@
     "idioma": "es-PY",
     "texto": "Y sé apagar un fuego con la capucha para el humo puesta, sacar a todo el mundo del avión en noventa segundos y usar los chalecos en el agua. Lo practicamos todos los años.",
     "para": "el modo inicio, de pasaje: la tripulante cuenta lo que sabe hacer: fuego, evacuación y chalecos"
+  },
+  {
+    "id": "inicio.ara.pasaje.banoAntes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Antes de subir fui al baño: mamá dice que en los vuelos cortos casi no da tiempo.",
+    "para": "el modo inicio, de pasaje: Ara cuenta en el embarque que fue al baño antes de subir",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.banoVuelta",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ya volví del baño! Y me abroché otra vez el cinturón, como dijo mamá.",
+    "para": "el modo inicio, de pasaje: Ara vuelve del baño, con la luz apagada, y se abrocha otra vez",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.banoEspero",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!",
+    "para": "el modo inicio, de pasaje: Ara, sin rato con la luz apagada, espera a aterrizar sin drama",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.banoLuz",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "¡Claro que hay! Pero con la luz del cinturón encendida no se levanta nadie. Cuando se apague, te acompaño.",
+    "para": "el modo inicio, de pasaje: la tripulante, con la luz encendida: cuando se apague, acompaña a Ara"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.banoAhora",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Ya se apagó la luz del cinturón: ahora sí se puede ir al baño. ¡Vamos, te acompaño!",
+    "para": "el modo inicio, de pasaje: la tripulante viene a por Ara en cuanto se apaga la luz"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.banoATiempo",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.",
+    "para": "el modo inicio, de pasaje: la tripulante, bajando con la luz encendida: Ara fue justo a tiempo"
   }
 ]
