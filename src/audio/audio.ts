@@ -490,6 +490,12 @@ const ENTRA_LA_MUSICA = 2.5;
  * coge el micrófono, pero sin chasquido.
  */
 const SE_CALLA_LA_MUSICA = 0.5;
+/**
+ * **Lo que puede estar callada una música y seguir por donde iba**, s: lo que
+ * dura un anuncio largo, con su respiro. Más que eso ya no es una pausa, es
+ * otra vez. Ver `ponerMusica`.
+ */
+const SIGUE_POR_DONDE_IBA = 60;
 
 /** Lo que el navegador dice que puede tocar de un tipo de audio. */
 function puedeTocar(mime: string): string {
@@ -545,6 +551,12 @@ export class Audio {
   private musica: { cual: Musica; fuente: AudioBufferSourceNode; fundido: GainNode } | null = null;
   /** Las músicas bajadas y descodificadas, o lo que les pasa todavía. */
   private readonly musicas = new Map<Musica, AudioBuffer | "bajando" | "no-llega">();
+  /**
+   * **Por dónde va cada música**: cuándo habría empezado su vuelta si no se
+   * hubiera callado, y cuándo se calló, en el reloj del contexto. Ver
+   * `SIGUE_POR_DONDE_IBA`.
+   */
+  private readonly relojDeLaMusica = new Map<Musica, { empezo: number; callada: number | null }>();
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
   /**
@@ -1793,7 +1805,18 @@ export class Audio {
     fundido.gain.setValueAtTime(0, ahora);
     fundido.gain.linearRampToValueAtTime(1, ahora + ENTRA_LA_MUSICA);
     fuente.connect(fundido).connect(this.entradaDeLaMusica);
-    fuente.start(ahora, desde);
+    /*
+     * **Y por donde iba**, si se calló hace poco: lo que la calla en la
+     * llegada es un anuncio, y en un avión el anuncio tapa la música, que
+     * sigue por debajo. Volver a empezar la canción después de cada anuncio
+     * no lo hace ningún avión. Si estuvo callada un buen rato, es otra vez, y
+     * se empieza por el principio.
+     */
+    const reloj = this.relojDeLaMusica.get(cual);
+    const sigue = !!reloj && reloj.callada !== null && ahora - reloj.callada < SIGUE_POR_DONDE_IBA;
+    const empezo = sigue ? reloj!.empezo : ahora;
+    this.relojDeLaMusica.set(cual, { empezo, callada: null });
+    fuente.start(ahora, desde + ((ahora - empezo) % dura));
     this.musica = { cual, fuente, fundido };
   }
 
@@ -1804,6 +1827,8 @@ export class Audio {
     this.musica = null;
     if (!ctx || !m) return;
     const ahora = ctx.currentTime;
+    const reloj = this.relojDeLaMusica.get(m.cual);
+    if (reloj) reloj.callada = ahora;
     const g = m.fundido.gain;
     g.cancelScheduledValues(ahora);
     g.setValueAtTime(g.value, ahora);

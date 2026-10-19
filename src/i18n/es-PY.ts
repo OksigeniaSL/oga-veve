@@ -3798,6 +3798,33 @@ export const ES_PY = {
   "inicio.ara.pasaje.despertarse": "¡Uy, me dormí un ratito! Y mientras tanto, el avión siguió volando por su camino.",
   // Para quien no ve la pantalla: no se graba.
   "inicio.siesta": "Ara duerme un ratito y sueña, mientras el avión sigue su camino.",
+  /*
+   * **Lo que se oye cambiar, contado** (puntos 284 y 297). Los motores de un
+   * reactor suenan distinto en cada tramo, y es de lo que más asusta a quien
+   * vuela por primera vez: el gas de subida a los mil quinientos pies, el
+   * ralentí al empezar a bajar y el empuje que sube con el tren y los flaps
+   * fuera. Ara lo nota cuando pasa, y lo explica quien puede: la comandante
+   * por la megafonía, pasados los diez mil pies o ya en tierra. Y el plop de
+   * los oídos al subir, por la tripulante en persona cuando llega con el
+   * servicio: la presión de la cabina
+   * baja, el aire de dentro del oído sale, y tragar o bostezar ayuda a
+   * igualarla; al bajar es al revés, el aire tiene que entrar. Ver
+   * `src/flight/inicio-pasaje.ts`. Lo de Ara, de vos; lo de la tripulante, con
+   * el tú de Canarias; la megafonía, de usted. Nada que diga si Ara es niño o
+   * niña.
+   */
+  "inicio.ara.pasaje.menosGas": "¡Escuchá! Ahora los motores suenan más bajito, y seguimos subiendo igual.",
+  "inicio.mama.pasaje.menosGas":
+    "Para quienes vuelan hoy por primera vez: al poco de despegar quitamos un poco de gas, y los motores sonaron más bajito. Para subir no hace falta tanta fuerza como para despegar.",
+  "inicio.tripulacion.pasaje.cerca.plop1":
+    "Y al subir, ¿te hicieron plop los oídos? Es normal: la presión del aire de la cabina baja, y el aire que tienes dentro del oído sale.",
+  "inicio.tripulacion.pasaje.cerca.plop2":
+    "Eso es el plop. Si lo notas, traga saliva o bosteza: así la presión de dentro del oído se iguala con la de la cabina.",
+  "inicio.ara.pasaje.ralenti": "¡Los motores suenan todavía más bajito! ¿Será que ya empezamos a bajar?",
+  "inicio.ara.pasaje.oidosAlReves": "¡Ahora se me tapan un poco los oídos! Es al revés que al subir: el aire tiene que entrar.",
+  "inicio.ara.pasaje.masGas": "¡Ahora los motores suenan más fuerte! ¿Para qué, si ya vamos a aterrizar?",
+  "inicio.mama.pasaje.masGas":
+    "Y un poco antes de tocar, los motores sonaron más fuerte: con las ruedas y los flaps fuera, el avión frena mucho, y hace falta más fuerza para no perder velocidad.",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

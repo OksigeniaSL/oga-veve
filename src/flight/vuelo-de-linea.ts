@@ -37,6 +37,10 @@
  *     sesenta y tantos nudos y el autofreno; luego, a paso de rodaje, por la
  *     raya hasta el puesto, y allí, motores fuera.
  *
+ * Y **los motores suenan como en un vuelo de verdad**: toda la fuerza para
+ * despegar, la de subida a mil quinientos pies, el ralentí para bajar y la de
+ * aproximación con el tren fuera. Ver `PotenciaDeLinea`.
+ *
  * ## Por qué así y no de otra manera
  *
  * - **Con los mandos, no moviendo el avión.** La mano pide un ritmo de subida
@@ -201,7 +205,66 @@ export interface ManosDeLinea {
   /** El autofreno: 0 apagado, 1 LO, 2 MED. Ver `PalancaDeAerofrenos`. */
   readonly autofreno: 0 | 1 | 2;
   readonly reversa: number;
+  /**
+   * **Lo que dan los motores de verdad**, 0 a 1 del empuje de despegue: lo que
+   * se oye desde el asiento. En el aire no es el gas de arriba, que en el
+   * modelo del peldaño de abajo es una palanca de velocidad —ver
+   * `gasEsVelocidad`—: es lo que pondría la tripulación de un reactor. Sin
+   * poner —en el suelo—, lo que diga el gas. Ver `PotenciaDeLinea`.
+   */
+  readonly empuje?: number;
 }
+
+/**
+ * **La potencia de los motores**, la que se oye cambiar desde el asiento, en
+ * los escalones de un vuelo de línea:
+ *
+ * - `despegue`: toda la fuerza, en la carrera y hasta los mil quinientos pies.
+ * - `subida`: la de subida, desde ahí; y la misma arriba, que en un salto
+ *   entre islas el crucero dura un minuto y el cambio a la de crucero es un
+ *   pelo que no se distingue.
+ * - `ralenti`: para bajar, desde el punto de descenso. La bajada de un
+ *   reactor es al ralentí, por la senda, sin más empuje que el de no apagar.
+ * - `aproximacion`: con el tren fuera y los flaps sacados el avión frena
+ *   mucho, y para seguir a su velocidad por la senda hace falta empuje: los
+ *   motores suben. Se queda hasta la recogida, que lo saca al tocar.
+ * - `tierra`: rodando, en la carrera de la toma con la reversa y en el
+ *   puesto, lo que diga el gas.
+ *
+ * Son los cambios que más asustan a quien vuela por primera vez —«¿se ha
+ * parado?»—, y por eso la escena los cuenta cuando suenan. Ver las charlas
+ * `menosGas`, `masGas` y el momento `bajada` en `inicio-pasaje.ts`.
+ */
+export type PotenciaDeLinea = "tierra" | "despegue" | "subida" | "ralenti" | "aproximacion";
+
+/**
+ * **El empuje de cada escalón**, 0 a 1 del de despegue: lo que se oye. Con las
+ * vueltas del fan del JAZ 90 —ver `vueltasDelMotor`—, el 100, el 90, el 34 y
+ * el 60 por ciento de las de despegue: el despegue, la subida, el ralentí de
+ * vuelo, que con el aire de arriba gira más que el de tierra, y la
+ * aproximación con todo fuera.
+ */
+export const EMPUJE: Readonly<Record<Exclude<PotenciaDeLinea, "tierra">, number>> = {
+  despegue: 1,
+  subida: 0.72,
+  ralenti: 0.02,
+  aproximacion: 0.2,
+};
+
+/**
+ * **A qué altura sobre el campo se quita el gas de despegue**, m: mil
+ * quinientos pies, la altura de reducción más corriente —entre mil y mil
+ * quinientos en las compañías, y nunca por debajo de ochocientos en los
+ * procedimientos de atenuación de ruido de la OACI—.
+ */
+export const REDUCE_EL_GAS = 1500 * 0.3048;
+
+/**
+ * **Lo que cambia el empuje por segundo**: lo que tardan los motores en subir
+ * o bajar de vueltas cuando se mueven las palancas, de dos a siete segundos de
+ * un escalón al otro. Un cambio de golpe no suena a motor.
+ */
+const CAMBIA_EL_EMPUJE = 0.1;
 
 // ── Los números ──────────────────────────────────────────────────────────
 
@@ -417,6 +480,15 @@ export interface EstadoDeLinea {
   readonly caidaAlTocar: number | null;
   /** Si está alineada en la pista, esperando para dar gas. */
   readonly alineado: boolean;
+  /** **La potencia de los motores**, y cuánto lleva así, s. Ver `PotenciaDeLinea`. */
+  readonly potencia: PotenciaDeLinea;
+  readonly conEstaPotencia: number;
+  /**
+   * Y cada cambio, con su hora en el reloj de la tripulación, s, que es el de
+   * la escena: la escena y la tripulación dan sus pasos juntas desde el
+   * puesto. Para el banco, que mira que lo que se cuenta pasó de verdad.
+   */
+  readonly potencias: readonly { readonly potencia: PotenciaDeLinea; readonly desde: number }[];
 }
 
 export class VueloDeLinea {
@@ -433,6 +505,12 @@ export class VueloDeLinea {
   private rodado = 0;
   /** Si, entrando, ya está alineada en la pista. Ver `estaAlineado`. */
   private alineado = false;
+  /** La potencia de ahora, desde cuándo, y el empuje que va siguiéndola. Ver `potenciaPara`. */
+  private potencia: PotenciaDeLinea = "tierra";
+  private conEstaPotencia = 0;
+  private empuje = 0;
+  private reloj = 0;
+  private readonly potencias: { potencia: PotenciaDeLinea; desde: number }[] = [{ potencia: "tierra", desde: 0 }];
 
   constructor(private readonly ficha: FichaDeLinea) {}
 
@@ -443,6 +521,9 @@ export class VueloDeLinea {
       tocado: this.tocado,
       caidaAlTocar: this.caidaAlTocar,
       alineado: this.tramo === "entrando" && this.alineado,
+      potencia: this.potencia,
+      conEstaPotencia: this.conEstaPotencia,
+      potencias: this.potencias.map((p) => ({ ...p })),
     };
   }
 
@@ -464,7 +545,53 @@ export class VueloDeLinea {
     this.ultimaVertical = l.vertical;
     if (l.enTierra) this.rodado += l.porElSuelo * dt;
     this.decidir(l, permisos);
-    return this.manos(dt, l);
+    this.reloj += dt;
+    this.conEstaPotencia += dt;
+    const potencia = this.potenciaPara(l);
+    if (potencia !== this.potencia) {
+      this.potencia = potencia;
+      this.conEstaPotencia = 0;
+      this.potencias.push({ potencia, desde: this.reloj });
+    }
+    const manos = this.manos(dt, l);
+    /*
+     * En el suelo, y en la carrera con todo el gas, el empuje es el gas: lo
+     * que se oye es lo que llevan las palancas, y de ahí se arranca al subir.
+     */
+    if (potencia === "tierra" || this.tramo === "carrera") {
+      this.empuje = potencia === "despegue" ? EMPUJE.despegue : 0;
+      return manos;
+    }
+    // En la recogida el empuje sale con el gas, al ralentí al tocar. Ver `GAS_FUERA`.
+    const objetivo = EMPUJE[potencia] * (this.tramo === "recogida" ? (manos.fraccion ?? 1) : 1);
+    this.empuje += acotar(objetivo - this.empuje, CAMBIA_EL_EMPUJE * dt);
+    return { ...manos, empuje: this.empuje };
+  }
+
+  /**
+   * **Qué potencia lleva la tripulación ahora**. Los escalones solo van hacia
+   * delante: el gas de despegue no vuelve en la subida, y el de aproximación,
+   * una vez puesto, se queda hasta tocar.
+   */
+  private potenciaPara(l: LecturaDeLinea): PotenciaDeLinea {
+    switch (this.tramo) {
+      case "carrera":
+        return "despegue";
+      case "subida":
+        return this.potencia === "subida" || l.altitud - l.cotaDelCampo >= REDUCE_EL_GAS ? "subida" : "despegue";
+      case "crucero":
+        return "subida";
+      case "bajada":
+      case "final":
+      case "recogida":
+        // El tren fuera y trabado, que es cuando el avión ya frena de verdad; el fijo, donde se sacaría.
+        return this.potencia === "aproximacion" ||
+          (this.ficha.trenQueSeMete ? l.tren > 0.99 : l.faltaParaTocar < CONFIGURA.tren)
+          ? "aproximacion"
+          : "ralenti";
+      default:
+        return "tierra";
+    }
   }
 
   /** Qué toca ahora: los tramos solo van hacia delante. */

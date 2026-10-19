@@ -1,6 +1,7 @@
 /**
  * **El hilo musical**: la música de embarque, que suena por el altavoz del
- * techo mientras la gente se sienta y al llegar al puesto.
+ * techo mientras la gente se sienta, y la de llegada, desde la última parte de
+ * la bajada hasta el puesto.
  *
  * Pedido por Enrique (punto 275 de su lista): «hilo musical, en los vuelos a
  * veces ponen algo de música ambiente, aunque la megafonía de algunos aviones
@@ -12,10 +13,21 @@
  *
  * - **Al embarcar**: con el avión en el puesto y los motores parados, hasta
  *   que habla la megafonía o suena la primera llamada a la tripulación —la
- *   bienvenida, el «armar toboganes»—. Desde ahí, hasta el puesto de llegada,
- *   ya no: lo que se dice en el vuelo no compite con nada.
- * - **Al llegar**: en el puesto, con los motores apagados, mientras se
- *   recoge todo. Y si habla la megafonía, se calla también.
+ *   bienvenida, el «armar toboganes»—. Desde ahí, hasta la última parte de la
+ *   bajada, ya no: lo que se dice en el vuelo no compite con nada.
+ * - **Al llegar**: desde la última parte de la bajada —pasado el punto de
+ *   descenso y por debajo de los diez mil pies, que es donde empieza la
+ *   aproximación; o en la final, si no hay plan— hasta el puesto, por la
+ *   rodadura. Enrique (punto 302): «realmente la música la están poniendo
+ *   desde que empiezan la última o penúltima fase de descenso y aproximación
+ *   para la toma»: así lo hacen, cuenta, las compañías de las islas. **Y se
+ *   acaba al llegar al puesto**: con los motores apagados la gente ya está de
+ *   pie y deseando salir, y ahí no suena. Mientras habla la megafonía se calla,
+ *   y vuelve al rato, por donde iba —ver `ponerMusica` en `audio.ts`—.
+ *
+ * Bajito, en el bus de la música, y agachándose con cualquier voz: también con
+ * la cuenta del radioaltímetro y los avisos de la cabina, que en los vuelos de
+ * quien pilota se oyen y van por encima. Ver `audio/mezcla.ts`.
  *
  * Solo donde hay pasaje: una avioneta de escuela no lleva altavoces en el
  * techo ni a nadie a quien ponerle música. Ver `conPasaje`.
@@ -97,6 +109,12 @@ export interface SituacionDelHilo {
    * a un asiento y habla bajito no cuenta: no coge el micrófono.
    */
   readonly megafonia: boolean;
+  /**
+   * **Si el avión ya va en la última parte de la bajada**: pasado el punto de
+   * descenso del plan y por debajo de los diez mil pies. Es cuando empieza la
+   * música de llegada. Sin plan, la final. Ver `BAJANDO_A_LA_PISTA`.
+   */
+  readonly bajandoALaPista?: boolean;
 }
 
 /** El rato del vuelo en el que puede sonar. */
@@ -107,14 +125,29 @@ export type Ventana = "embarque" | "llegada";
  * quien pilota, el «armar toboganes» se pide al segundo de estar en el puesto,
  * y sin esto la música asomaba medio segundo y se callaba: un respingo, no un
  * embarque. Así, si la tripulación coge el micrófono enseguida, no suena.
+ * Y lo mismo después de cada anuncio de la llegada: en el respiro entre dos
+ * seguidos no asoma.
  */
 const ANTES_DE_SONAR = 2;
 
-/** De qué rato es cada fase, si es de alguno. */
-const VENTANA_DE: Partial<Record<Fase, Ventana>> = {
-  estacionado: "embarque",
-  apagado: "llegada",
-};
+/**
+ * **A qué altitud empieza la música de llegada, bajando**, m: diez mil pies,
+ * donde la bajada se hace aproximación —la cabina de mando, estéril; el
+ * control, el de aproximación—. Lo usa el juego para `bajandoALaPista`.
+ */
+export const BAJANDO_A_LA_PISTA = 10000 * 0.3048;
+
+/** Las fases de la llegada, de la final al puesto: con la rodadura entera. */
+const RODANDO_AL_PUESTO: ReadonlySet<Fase> = new Set<Fase>(["final", "aterrizado", "abandonando", "a-plataforma"]);
+/** Y las del puesto de llegada, donde ya no suena: el avión parado, y luego los motores apagados. */
+const EN_EL_PUESTO: ReadonlySet<Fase> = new Set<Fase>(["en-puesto", "apagado"]);
+
+/** De qué rato es lo que pasa ahora, si es de alguno. */
+function ventanaDe(s: SituacionDelHilo): Ventana | null {
+  if (s.fase === "estacionado") return "embarque";
+  if (RODANDO_AL_PUESTO.has(s.fase) || (s.fase === "en-vuelo" && s.bajandoALaPista)) return "llegada";
+  return null;
+}
 
 export class HiloMusical {
   /** Los ratos que ya se acabaron: lo que se calla, no vuelve en ese vuelo. */
@@ -125,10 +158,16 @@ export class HiloMusical {
   private enLaVentana = 0;
   /**
    * **Si la megafonía ya hablaba al abrirse el rato**: lo que empezó antes no
-   * lo acaba —al apagar los motores en el puesto puede estar sonando todavía
-   * la llegada de la tripulación—; se espera a que calle.
+   * acaba el embarque; se espera a que calle.
    */
   private yaHablaba = false;
+  /**
+   * **Lo que lleva callada la megafonía**, s: en la llegada la música vuelve
+   * después de cada anuncio, pero no en el respiro entre dos seguidos —la
+   * llegada, la reversa y la despedida de la tripulación van una detrás de
+   * otra—. Ver `ANTES_DE_SONAR`.
+   */
+  private calladaDesde = Infinity;
 
   /** Lo que suena ahora, o `null`. Para el banco. */
   get suena(): Musica | null {
@@ -138,10 +177,11 @@ export class HiloMusical {
   /**
    * **Un paso**: qué música tiene que sonar ahora, o `null` si ninguna.
    *
-   * Un rato se acaba para siempre en cuanto empieza a hablar la megafonía —la
-   * bienvenida a bordo, la llamada de «armar toboganes»—, como cuando la
-   * tripulación coge el micrófono, y el del embarque también en cuanto el
-   * avión deja el puesto.
+   * El embarque se acaba para siempre en cuanto empieza a hablar la
+   * megafonía —la bienvenida a bordo, la llamada de «armar toboganes»—, como
+   * cuando la tripulación coge el micrófono, y también en cuanto el avión deja
+   * el puesto. La llegada, en cambio, se calla con cada anuncio y vuelve, y se
+   * acaba al llegar al puesto.
    */
   paso(s: SituacionDelHilo, dt: number): Musica | null {
     /*
@@ -153,19 +193,27 @@ export class HiloMusical {
       this.ahora = null;
       return null;
     }
-    const ventana = VENTANA_DE[s.fase] ?? null;
+    const ventana = ventanaDe(s);
     // Lo que no es el puesto de salida ya no es embarcar.
     if (ventana !== "embarque") this.acabadas.add("embarque");
+    // Y en el puesto de llegada, la llegada se acabó: ahí la gente ya se levanta.
+    if (EN_EL_PUESTO.has(s.fase)) this.acabadas.add("llegada");
     if (ventana !== this.ventana) {
       this.ventana = ventana;
       this.enLaVentana = 0;
       this.yaHablaba = s.megafonia;
     }
     this.enLaVentana += dt;
-    if (ventana && s.megafonia && !this.yaHablaba) this.acabadas.add(ventana);
+    this.calladaDesde = s.megafonia ? 0 : this.calladaDesde + dt;
+    if (ventana === "embarque" && s.megafonia && !this.yaHablaba) this.acabadas.add("embarque");
     if (!s.megafonia) this.yaHablaba = false;
     this.ahora =
-      s.conPasaje && ventana && !this.acabadas.has(ventana) && !s.megafonia && this.enLaVentana >= ANTES_DE_SONAR
+      s.conPasaje &&
+      ventana &&
+      !this.acabadas.has(ventana) &&
+      !s.megafonia &&
+      this.enLaVentana >= ANTES_DE_SONAR &&
+      this.calladaDesde >= ANTES_DE_SONAR
         ? musicaDe(s.habla)
         : null;
     return this.ahora;
@@ -178,5 +226,6 @@ export class HiloMusical {
     this.ventana = null;
     this.enLaVentana = 0;
     this.yaHablaba = false;
+    this.calladaDesde = Infinity;
   }
 }
