@@ -2265,6 +2265,8 @@ export const ES_PY = {
   "pausa.reiniciar": "Empezar de nuevo",
   "pausa.hangar": "Volver al hangar",
   "hud.pausa": "Parar el juego",
+  // El botón ⏩ de la escena de pasaje: solo icono; esto es para quien no ve la pantalla.
+  "hud.adelantar": "Adelantar el viaje",
   "hud.camara": "Cambiar de vista",
   "hud.gafas": "Gafas de sol",
   /* El tirador del cuadro de mandos. Lo pidió quien juega: «un botón para

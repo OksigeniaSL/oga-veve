@@ -814,6 +814,7 @@ export const EN: Dictionary = {
   "pausa.reiniciar": "Start again",
   "pausa.hangar": "Back to the hangar",
   "hud.pausa": "Pause the game",
+  "hud.adelantar": "Fast-forward the trip",
   "hud.camara": "Change view",
   "hud.gafas": "Sunglasses",
   "hud.gira": "Turn your screen sideways",
