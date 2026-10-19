@@ -14,12 +14,16 @@ import { ES_PY } from "../i18n/es-PY";
 import type { Hito } from "../world/hitos";
 import { FOTOS, SIN_FOTO, fotoDeLaHistoria } from "./fotos-de-las-historias";
 import {
+  LAMINA,
   TOPE_DE_LA_VENTANA,
   VENTANA,
   ZONA_DEL_AVION,
   alSonarLaHistoria,
   altoDeLaVentana,
+  anchoDeLaLamina,
+  dondeCabeLaLamina,
   dondeCabeLaVentana,
+  laminaLibre,
   type Caja,
   type Plazos,
 } from "./ventana-de-historia";
@@ -132,6 +136,128 @@ describe("dónde cabe la ventana", () => {
       );
       expect(seTocan(d, avion)).toBe(false);
       for (const o of [...obstaculos, cuadro]) expect(seTocan(d, o)).toBe(false);
+    }
+  });
+});
+
+/*
+ * La escena de pasaje, con las cajas medidas en las capturas del banco
+ * (18-10-2026): desde el asiento de Ara, el cristal en medio y la
+ * pared a los lados.
+ */
+const PASAJE_PORTATIL = {
+  pantalla: { ancho: 1280, alto: 800 },
+  cristal: caja(440, 240, 410, 460),
+  obstaculos: [
+    caja(513, 16, 454, 48), // los botones de arriba
+    caja(360, 74, 560, 160), // la tarjeta de quien habla
+    caja(16, 74, 48, 48), // la pausa
+    caja(16, 132, 44, 44), // el cinturón
+    caja(16, 735, 181, 48), // el volumen
+  ],
+};
+
+const PASAJE_TELEFONO = {
+  pantalla: { ancho: 915, alto: 412 },
+  cristal: caja(342, 150, 233, 165),
+  obstaculos: [
+    caja(228, 64, 457, 88), // la tarjeta de quien habla
+    caja(11, 64, 46, 46), // la pausa
+    caja(11, 116, 40, 42), // el cinturón
+    caja(856, 11, 46, 46), // el menú
+  ],
+};
+
+describe("en la escena de pasaje, lo que se explica sale en grande", () => {
+  it("en el portátil, desde el asiento: en la pared de la cabina, de casi un tercio del ancho, sin pisar el cristal", () => {
+    const { pantalla, cristal, obstaculos } = PASAJE_PORTATIL;
+    const d = dondeCabeLaLamina(pantalla, { cajas: [cristal, ...obstaculos] })!;
+    expect(d).not.toBeNull();
+    expect(d.right - d.left).toBeGreaterThanOrEqual(pantalla.ancho * 0.3);
+    expect(d.bottom - d.top).toBeCloseTo(altoDeLaVentana(d.right - d.left), 0);
+    for (const o of [cristal, ...obstaculos]) expect(seTocan(d, o)).toBe(false);
+    // En una de las dos paredes, y abajo: encima del volumen o pegada al borde.
+    expect(d.right <= cristal.left || d.left >= cristal.right).toBe(true);
+    expect(d.top).toBeGreaterThan(pantalla.alto * 0.4);
+  });
+
+  it("en el teléfono apaisado sí cabe —no hay pulgares— y sale, de casi un tercio", () => {
+    const { pantalla, cristal, obstaculos } = PASAJE_TELEFONO;
+    const d = dondeCabeLaLamina(pantalla, { cajas: [cristal, ...obstaculos] })!;
+    expect(d).not.toBeNull();
+    expect(d.right - d.left).toBeGreaterThanOrEqual(pantalla.ancho * 0.3);
+    for (const o of [cristal, ...obstaculos]) expect(seTocan(d, o)).toBe(false);
+  });
+
+  it("sin nada alrededor, del tamaño de la lámina: cuatro décimas del ancho, con su tope", () => {
+    const portatil = dondeCabeLaLamina({ ancho: 1280, alto: 800 }, { cajas: [] })!;
+    expect(portatil.right - portatil.left).toBe(Math.round(1280 * LAMINA.ancho));
+    const monitor = dondeCabeLaLamina({ ancho: 2560, alto: 1440 }, { cajas: [] })!;
+    expect(monitor.right - monitor.left).toBe(LAMINA.tope);
+    // En el teléfono manda el alto: más alta se come la tarjeta de quien habla.
+    expect(altoDeLaVentana(anchoDeLaLamina({ ancho: 915, alto: 412 }))).toBeLessThanOrEqual(412 * LAMINA.alto + 1);
+  });
+
+  it("una imagen de 4:3 sale entera, en su proporción: más alta, y sin pisar nada", () => {
+    const { pantalla, cristal, obstaculos } = PASAJE_PORTATIL;
+    const d = dondeCabeLaLamina(pantalla, { cajas: [cristal, ...obstaculos] }, 4 / 3)!;
+    expect(d).not.toBeNull();
+    expect(d.bottom - d.top).toBeCloseTo(altoDeLaVentana(d.right - d.left, 4 / 3), 0);
+    for (const o of [cristal, ...obstaculos]) expect(seTocan(d, o)).toBe(false);
+    // En el teléfono manda el alto, también en 4:3.
+    const t = dondeCabeLaLamina({ ancho: 863, alto: 360 }, { cajas: [] }, 4 / 3)!;
+    expect(t.bottom - t.top).toBeLessThanOrEqual(360 * LAMINA.alto + 1);
+    expect(altoDeLaVentana(400, 4 / 3)).toBeGreaterThan(altoDeLaVentana(400));
+  });
+
+  it("no pisa la silueta del avión, aunque la caja del avión entero sí la pisaría", () => {
+    const pantalla = { ancho: 1280, alto: 800 };
+    // El ala en flecha desde la toma del ala: de la punta, arriba a la izquierda, a la raíz, abajo a la derecha.
+    const ala = [140, 400, 300, 280, 1280, 420, 1280, 760, 1180, 760];
+    const d = dondeCabeLaLamina(pantalla, { cajas: PASAJE_PORTATIL.obstaculos, poligonos: [ala] })!;
+    expect(d).not.toBeNull();
+    expect(d.right - d.left).toBeGreaterThanOrEqual(VENTANA.ancho);
+    expect(laminaLibre(pantalla, { cajas: [], poligonos: [ala] }, d)).toBe(true);
+    for (const o of PASAJE_PORTATIL.obstaculos) expect(seTocan(d, o)).toBe(false);
+    // Con la caja del ala entera no habría sitio de ese tamaño: la silueta es la que da el hueco.
+    const entera = caja(140, 280, 1140, 480);
+    const conCaja = dondeCabeLaLamina(pantalla, { cajas: [...PASAJE_PORTATIL.obstaculos, entera] });
+    expect(!conCaja || conCaja.right - conCaja.left < d.right - d.left).toBe(true);
+    // Encima del ala, no.
+    expect(laminaLibre(pantalla, { cajas: [], poligonos: [ala] }, caja(700, 450, 300, 200))).toBe(false);
+  });
+
+  it("con `dentroDe`, la silueta solo cuenta dentro del cristal: el ala detrás de la pared no", () => {
+    const pantalla = { ancho: 1280, alto: 800 };
+    const ala = [0, 0, 1280, 0, 1280, 800, 0, 800];
+    expect(dondeCabeLaLamina(pantalla, { cajas: [], poligonos: [ala] })).toBeNull();
+    const cristal = caja(400, 0, 480, 800);
+    const d = dondeCabeLaLamina(pantalla, { cajas: [], poligonos: [ala], dentroDe: [400, 0, 880, 0, 880, 800, 400, 800] })!;
+    expect(d).not.toBeNull();
+    expect(seTocan(d, cristal)).toBe(false);
+  });
+
+  it("si lo que se enseña llena la pantalla, no sale", () => {
+    const pantalla = { ancho: 1280, alto: 800 };
+    expect(dondeCabeLaLamina(pantalla, { cajas: [caja(100, 0, 1080, 800)] })).toBeNull();
+  });
+
+  it("cien pantallas al azar: nunca pisa nada ni se sale, y nunca por debajo del mínimo", () => {
+    let semilla = 11;
+    const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647);
+    for (let n = 0; n < 100; n++) {
+      const pantalla = { ancho: 700 + azar() * 1300, alto: 360 + azar() * 800 };
+      const cajas = Array.from({ length: 5 }, () =>
+        caja(azar() * pantalla.ancho, azar() * pantalla.alto, 30 + azar() * 300, 30 + azar() * 300),
+      );
+      const d = dondeCabeLaLamina(pantalla, { cajas });
+      if (!d) continue;
+      expect(d.right - d.left).toBeGreaterThanOrEqual(VENTANA.minimo - 1);
+      expect(d.left).toBeGreaterThanOrEqual(VENTANA.hueco - 0.5);
+      expect(d.top).toBeGreaterThanOrEqual(VENTANA.hueco - 0.5);
+      expect(d.right).toBeLessThanOrEqual(pantalla.ancho - VENTANA.hueco + 0.5);
+      expect(d.bottom).toBeLessThanOrEqual(pantalla.alto - VENTANA.hueco + 0.5);
+      for (const o of cajas) expect(seTocan(d, o)).toBe(false);
     }
   });
 });

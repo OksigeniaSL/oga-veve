@@ -22,6 +22,15 @@
  *   hueco de foto, y una foto encima de la palanca o del avión es peor que no
  *   tener foto. La historia se oye igual. Ver `dondeCabeLaVentana`.
  *
+ * ## Y en la escena de pasaje, en grande
+ *
+ * En el pasaje no se pilota: no hay cuadro ni palanca ni pulgares, y lo que
+ * sale en la ventana es **lo que se está explicando** —el motor por dentro,
+ * el ala, las máscaras—, para quien tiene cuatro años y no sabe leer. Ahí la
+ * ventana sale grande, alrededor de lo que se enseña y sin taparlo: ver
+ * `LAMINA`, `dondeCabeLaLamina` y `enLaEscena`. Y en el teléfono también,
+ * que sin pulgares sí queda sitio.
+ *
  * ## Mientras suena, y solo mientras suena
  *
  * Sale cuando la historia **empieza a sonar** y se va cuando acaba, la corta
@@ -83,8 +92,8 @@ export const VENTANA = {
 } as const;
 
 /** El alto de la ventana para un ancho: foto en 3:2 y su marco. */
-export const altoDeLaVentana = (ancho: number): number =>
-  ((ancho - 2 * VENTANA.marco) * 2) / 3 + 2 * VENTANA.marco;
+export const altoDeLaVentana = (ancho: number, proporcion = 3 / 2): number =>
+  (ancho - 2 * VENTANA.marco) / proporcion + 2 * VENTANA.marco;
 
 const seTocan = (a: Caja, b: Caja, holgura = 0): boolean =>
   a.left < b.right + holgura &&
@@ -173,6 +182,216 @@ function loMasAbajo(
   return null;
 }
 
+/**
+ * **La lámina grande de la escena de pasaje**, en fracción de la pantalla y
+ * en píxeles de pantalla.
+ *
+ * Enrique, punto 305: «las imágenes que pones para ilustrar las explicaciones
+ * se ven pequeñas». A 240 de ancho en un portátil, el motor por dentro es un
+ * sello, y quien la mira tiene cuatro años y está a un metro de la pantalla.
+ * En el pasaje no hay cuadro ni palanca ni pulgares a los que dejar sitio:
+ * lo único que no se tapa es **lo que se está enseñando** —ver
+ * `LoQueNoSeTapa`—, y alrededor de eso la lámina crece hasta:
+ *
+ * - **cuatro décimas del ancho**, que es lo que cabe con una toma de fuera
+ *   alrededor del avión; desde el asiento, la pared de la cabina a cada lado
+ *   de la ventanilla de Ara da para un tercio, y ahí se queda;
+ * - **y seis décimas del alto**, que en el teléfono apaisado es lo que manda:
+ *   más alta, se come la tarjeta de quien habla;
+ * - y **setecientos veinte píxeles** como mucho, que en un monitor grande la
+ *   pantalla entera es una lámina y el vuelo desaparece detrás.
+ *
+ * Si alrededor de lo que se enseña no cabe tan grande, se encoge hasta
+ * `VENTANA.minimo`, la de siempre; y si ni así, no sale.
+ */
+export const LAMINA = { ancho: 0.4, alto: 0.6, tope: 720 } as const;
+
+/**
+ * **Lo que la lámina no tapa**, en píxeles de pantalla: cajas —el cristal de
+ * la ventanilla, lo nombrado, los botones, la tarjeta de quien habla— y
+ * polígonos convexos —x0, y0, x1, y1…—, que son la silueta del avión. Con
+ * `dentroDe`, otro polígono convexo, los de la silueta solo cuentan dentro de
+ * él: el ala que se ve por el cristal, y no la que sigue detrás de la pared.
+ */
+export interface LoQueNoSeTapa {
+  readonly cajas: readonly Caja[];
+  readonly poligonos?: readonly (readonly number[])[];
+  readonly dentroDe?: readonly number[] | null;
+}
+
+/** Si un punto cae dentro de un polígono convexo —x0, y0, x1, y1…—, de cualquier sentido. */
+export function dentroDelPoligono(p: readonly number[], x: number, y: number): boolean {
+  const n = p.length / 2;
+  if (n < 3) return false;
+  let signo = 0;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const cruz = (p[2 * j]! - p[2 * i]!) * (y - p[2 * i + 1]!) - (p[2 * j + 1]! - p[2 * i + 1]!) * (x - p[2 * i]!);
+    if (cruz === 0) continue;
+    if (signo === 0) signo = Math.sign(cruz);
+    else if (Math.sign(cruz) !== signo) return false;
+  }
+  return true;
+}
+
+/**
+ * **La rejilla de lo tapado**: la pantalla en celdas de una cuarentaiochava
+ * parte del lado corto —diecisiete píxeles en un portátil, ocho en un
+ * teléfono—, marcadas las que pisa algo que no se tapa, con su hueco
+ * alrededor. Con la suma por áreas, saber si una lámina cabe en un sitio
+ * es mirar cuatro números.
+ */
+class Rejilla {
+  readonly celda: number;
+  readonly columnas: number;
+  readonly filas: number;
+  private readonly suma: Int32Array;
+
+  constructor(
+    readonly ancho: number,
+    readonly alto: number,
+    no: LoQueNoSeTapa,
+  ) {
+    const c = Math.max(6, Math.round(Math.min(ancho, alto) / 48));
+    this.celda = c;
+    this.columnas = Math.ceil(ancho / c);
+    this.filas = Math.ceil(alto / c);
+    const cols = this.columnas;
+    const tapado = new Uint8Array(cols * this.filas);
+    const marcar = (l: number, t: number, r: number, b: number): void => {
+      const c0 = Math.max(0, Math.floor(l / c));
+      const c1 = Math.min(cols - 1, Math.floor(r / c));
+      const f0 = Math.max(0, Math.floor(t / c));
+      const f1 = Math.min(this.filas - 1, Math.floor(b / c));
+      for (let f = f0; f <= f1; f++) tapado.fill(1, f * cols + c0, f * cols + c1 + 1);
+    };
+    const h = VENTANA.hueco;
+    for (const o of no.cajas) marcar(o.left - h, o.top - h, o.right + h, o.bottom + h);
+    // Los polígonos: las celdas con el centro dentro, y después el hueco alrededor.
+    const silueta = new Uint8Array(cols * this.filas);
+    for (const p of no.poligonos ?? []) this.rellenar(p, no.dentroDe ?? null, silueta);
+    const r = Math.max(1, Math.ceil(h / c));
+    for (let f = 0; f < this.filas; f++)
+      for (let k = 0; k < cols; k++)
+        if (silueta[f * cols + k]) marcar((k - r) * c, (f - r) * c, (k + r) * c + c - 1, (f + r) * c + c - 1);
+    // La suma por áreas: lo tapado del rectángulo de celdas en cuatro números.
+    const s = new Int32Array((cols + 1) * (this.filas + 1));
+    for (let f = 0; f < this.filas; f++)
+      for (let k = 0; k < cols; k++)
+        s[(f + 1) * (cols + 1) + k + 1] =
+          tapado[f * cols + k]! + s[f * (cols + 1) + k + 1]! + s[(f + 1) * (cols + 1) + k]! - s[f * (cols + 1) + k]!;
+    this.suma = s;
+  }
+
+  private rellenar(p: readonly number[], dentro: readonly number[] | null, silueta: Uint8Array): void {
+    const n = p.length / 2;
+    if (n < 1) return;
+    const c = this.celda;
+    const vale = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < this.ancho && y < this.alto && (!dentro || dentroDelPoligono(dentro, x, y));
+    // Las esquinas sueltas también: un polígono más pequeño que una celda no tiene centro dentro.
+    let l = Infinity;
+    let t = Infinity;
+    let r = -Infinity;
+    let b = -Infinity;
+    for (let i = 0; i < n; i++) {
+      const x = p[2 * i]!;
+      const y = p[2 * i + 1]!;
+      l = Math.min(l, x);
+      r = Math.max(r, x);
+      t = Math.min(t, y);
+      b = Math.max(b, y);
+      if (vale(x, y)) silueta[Math.floor(y / c) * this.columnas + Math.floor(x / c)] = 1;
+    }
+    if (n < 3) return;
+    const c0 = Math.max(0, Math.floor(l / c));
+    const c1 = Math.min(this.columnas - 1, Math.floor(r / c));
+    const f0 = Math.max(0, Math.floor(t / c));
+    const f1 = Math.min(this.filas - 1, Math.floor(b / c));
+    for (let f = f0; f <= f1; f++)
+      for (let k = c0; k <= c1; k++) {
+        const x = (k + 0.5) * c;
+        const y = (f + 0.5) * c;
+        if (!silueta[f * this.columnas + k] && vale(x, y) && dentroDelPoligono(p, x, y)) silueta[f * this.columnas + k] = 1;
+      }
+  }
+
+  /** Si una caja en píxeles no pisa ninguna celda tapada ni se sale de la pantalla con su hueco. */
+  libre(caja: Caja): boolean {
+    const h = VENTANA.hueco;
+    if (caja.left < h - 0.5 || caja.top < h - 0.5 || caja.right > this.ancho - h + 0.5 || caja.bottom > this.alto - h + 0.5)
+      return false;
+    const c = this.celda;
+    const c0 = Math.max(0, Math.floor(caja.left / c));
+    const c1 = Math.min(this.columnas, Math.ceil(caja.right / c));
+    const f0 = Math.max(0, Math.floor(caja.top / c));
+    const f1 = Math.min(this.filas, Math.ceil(caja.bottom / c));
+    const w = this.columnas + 1;
+    const s = this.suma;
+    return s[f1 * w + c1]! - s[f0 * w + c1]! - s[f1 * w + c0]! + s[f0 * w + c0]! === 0;
+  }
+}
+
+/** El ancho que pide la lámina en esta pantalla, en píxeles. Ver `LAMINA`. */
+export function anchoDeLaLamina(
+  pantalla: { readonly ancho: number; readonly alto: number },
+  proporcion = 3 / 2,
+): number {
+  const { ancho: W, alto: H } = pantalla;
+  const m = VENTANA.marco;
+  const porAlto = (H * LAMINA.alto - 2 * m) * proporcion + 2 * m;
+  return Math.max(VENTANA.minimo, Math.min(W * LAMINA.ancho, porAlto, LAMINA.tope, W - 2 * VENTANA.hueco));
+}
+
+/**
+ * **Dónde va la lámina grande**, o `null` si no cabe ni la pequeña.
+ *
+ * La más grande que quepa —de `anchoDeLaLamina` a `VENTANA.minimo`— sin pisar
+ * nada de `no` y sin salirse de la pantalla; y de las que caben de ese
+ * tamaño, **la más baja**, que arriba están los botones y quien habla, y
+ * **la más pegada a un borde**, que es donde está la pared de la cabina y no
+ * la vista. Con la `proporcion` de la imagen: las ilustraciones y las fotos
+ * de ahora son de 3:2 y las que vienen, de 4:3, y ninguna se recorta.
+ */
+export function dondeCabeLaLamina(
+  pantalla: { readonly ancho: number; readonly alto: number },
+  no: LoQueNoSeTapa,
+  proporcion = 3 / 2,
+): Caja | null {
+  const { ancho: W, alto: H } = pantalla;
+  const rejilla = new Rejilla(W, H, no);
+  const h = VENTANA.hueco;
+  const c = rejilla.celda;
+  for (let ancho = anchoDeLaLamina(pantalla, proporcion); ancho >= VENTANA.minimo; ancho = ancho > VENTANA.minimo ? Math.max(VENTANA.minimo, ancho * 0.93) : 0) {
+    const w = Math.round(ancho);
+    const alto = Math.round(altoDeLaVentana(w, proporcion));
+    const xs = new Set([h, W - h - w]);
+    for (let x = Math.ceil(h / c) * c; x + w <= W - h; x += c) xs.add(x);
+    const ys = new Set([H - h - alto]);
+    for (let y = Math.ceil(h / c) * c; y + alto <= H - h; y += c) ys.add(y);
+    let mejor: { caja: Caja; abajo: number; borde: number } | null = null;
+    for (const top of ys)
+      for (const left of xs) {
+        const caja: Caja = { left, top, right: left + w, bottom: top + alto };
+        if (!rejilla.libre(caja)) continue;
+        const borde = Math.min(left, W - caja.right);
+        if (!mejor || caja.bottom > mejor.abajo + 0.5 || (Math.abs(caja.bottom - mejor.abajo) <= 0.5 && borde < mejor.borde))
+          mejor = { caja, abajo: caja.bottom, borde };
+      }
+    if (mejor) return mejor.caja;
+  }
+  return null;
+}
+
+/** Si una lámina puesta sigue sin pisar nada de `no`. */
+export function laminaLibre(
+  pantalla: { readonly ancho: number; readonly alto: number },
+  no: LoQueNoSeTapa,
+  caja: Caja,
+): boolean {
+  return new Rejilla(pantalla.ancho, pantalla.alto, no).libre(caja);
+}
+
 /** Lo que la historia necesita de la ventana: ponerla y quitarla. */
 export interface PonerYQuitar {
   mostrar(sitio: string): void;
@@ -250,7 +469,19 @@ export class VentanaDeHistoria implements PonerYQuitar {
   /** Para que una carga lenta no ponga una foto que ya no toca. */
   private vez = 0;
   /** Dónde quedó, para las sondas y los bancos. */
-  private dondeQuedo: { donde: "placa" | "esquina"; caja: Caja } | null = null;
+  private dondeQuedo: { donde: DondeQueda; caja: Caja } | null = null;
+  /**
+   * **En la escena de pasaje, lo que no se tapa**: con esto puesto, lo que se
+   * explica sale en grande alrededor de lo que se enseña. Ver `enLaEscena`.
+   */
+  private escena: (() => LoQueNoSeTapa) | null = null;
+  /** La que está pedida y no cabe ahora: sale en cuanto quepa. */
+  private esperando: FotoDeLaHistoria | null = null;
+  /** Ancho entre alto de la imagen puesta: la lámina la lleva entera, sin recortarla. */
+  private proporcion = 3 / 2;
+  /** Cuándo se miró por última vez si la lámina sigue sin tapar nada, ms, y si cabía más grande. */
+  private vistazo = 0;
+  private crecio = 0;
   /**
    * Lo que pasó la última vez que se pidió una, para que un banco que no la
    * ve pueda decir por qué: no cabía, no bajó la imagen o no tiene foto.
@@ -273,6 +504,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
     this.caja = raiz.querySelector('[data-hud="historia"]');
     this.foto = raiz.querySelector('[data-hud="historia-foto"]');
     this.firma = raiz.querySelector('[data-hud="historia-firma"]');
+    this.caja?.classList.toggle("historia--grande", !!this.escena);
     const puesta = this.sitio;
     this.dondeQuedo = null;
     if (puesta) {
@@ -284,7 +516,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
   /** Qué está puesto y dónde: lo leen las sondas y los bancos. */
   get estado(): {
     sitio: string | null;
-    donde: "placa" | "esquina" | null;
+    donde: DondeQueda | null;
     caja: Caja | null;
     ultimo: string | null;
   } {
@@ -335,7 +567,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
       .decode()
       .then(() => {
         if (vez !== this.vez || this.sitio !== sitio) return;
-        if (this.dondeQuedo?.donde === "esquina" && this.foto) this.foto.src = url;
+        if (this.dondeQuedo?.donde !== "placa" && this.foto) this.foto.src = url;
         else this.raiz?.querySelector('[data-historia="placa"] [data-historia="foto"]')?.setAttribute("href", url);
       })
       .catch(() => {});
@@ -372,7 +604,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
     img
       .decode()
       .then(() => {
-        if (vez === this.vez) this.poner(foto);
+        if (vez === this.vez) this.poner(foto, proporcionDe(img));
       })
       .catch(() => {
         if (vez !== this.vez) return;
@@ -387,6 +619,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
     this.vez++;
     this.sitio = null;
     this.dondeQuedo = null;
+    this.esperando = null;
     this.quitarDeLaPlaca();
     const caja = this.caja;
     if (!caja || caja.hidden) return;
@@ -401,6 +634,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
   private quitarYa(): void {
     this.vez++;
     this.dondeQuedo = null;
+    this.esperando = null;
     this.quitarDeLaPlaca();
     if (this.caja) {
       this.caja.classList.remove("historia--puesta");
@@ -414,7 +648,13 @@ export class VentanaDeHistoria implements PonerYQuitar {
    * tablet de siete pulgadas el cuadro entero se encoge—, que es mejor que
    * nada y no tapa nada.
    */
-  private poner(foto: FotoDeLaHistoria): void {
+  private poner(foto: FotoDeLaHistoria, proporcion = 3 / 2): void {
+    this.proporcion = proporcion;
+    if (this.escena) {
+      this.enGrande(foto);
+      this.ultimo = `${foto.clave}: ${this.dondeQuedo?.donde ?? "no cabe sin tapar lo que se enseña"}`;
+      return;
+    }
     if (!this.enLaPlaca(foto, PLACA_QUE_SE_VE)) {
       this.enLaEsquina(foto);
       if (!this.dondeQuedo) this.enLaPlaca(foto, 40);
@@ -461,41 +701,184 @@ export class VentanaDeHistoria implements PonerYQuitar {
 
   /** **En la esquina**, al lado del cuadro, si cabe sin tapar nada. */
   private enLaEsquina(foto: FotoDeLaHistoria): void {
-    const { raiz, caja, foto: img, firma } = this;
-    if (!raiz || !caja || !img || !firma) return;
+    const { raiz, caja } = this;
+    if (!raiz || !caja) return;
     const cuadroEl = raiz.querySelector('[data-hud="cuadro"]');
     const cuadro = visible(cuadroEl) ? cuadroEl!.getBoundingClientRect() : null;
-    const obstaculos: Caja[] = [];
-    const pantalla = innerWidth * innerHeight;
-    // En todo el documento y no solo en el HUD: los pulgares de la palanca y
-    // de los pedales viven en `index.html`, fuera de él.
-    for (const el of document.querySelectorAll(OBSTACULOS)) {
-      if (el === caja || caja.contains(el) || el === cuadroEl || cuadroEl?.contains(el)) continue;
-      if (!visible(el)) continue;
-      const r = el.getBoundingClientRect();
-      // Los velos de pantalla entera no son obstáculos: no tapan nada.
-      if (r.width * r.height > pantalla * 0.5) continue;
-      obstaculos.push(r);
-    }
+    const obstaculos = this.obstaculos(OBSTACULOS, cuadroEl);
     const donde = dondeCabeLaVentana({ ancho: innerWidth, alto: innerHeight }, cuadro, obstaculos);
     if (!donde) return;
+    this.colocar(foto, donde, "esquina");
+  }
+
+  /**
+   * Lo que se mide como obstáculo: lo que casa con `selector`, visible, menos
+   * la ventana misma y el cuadro. En todo el documento y no solo en el HUD:
+   * los pulgares de la palanca y de los pedales viven en `index.html`, fuera
+   * de él. Los velos de pantalla entera no son obstáculos —no tapan nada—,
+   * salvo lo que va en `siempre`: el kit de viaje abierto en un teléfono es
+   * más de media pantalla, y no por eso se le pone una lámina encima.
+   */
+  private obstaculos(selector: string, cuadroEl: Element | null = null, siempre = ""): Caja[] {
+    const caja = this.caja;
+    const salida: Caja[] = [];
+    const pantalla = innerWidth * innerHeight;
+    for (const el of document.querySelectorAll(selector)) {
+      if (el === caja || caja?.contains(el) || el === cuadroEl || cuadroEl?.contains(el)) continue;
+      if (!visible(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width * r.height > pantalla * 0.5 && !(siempre && el.matches(siempre))) continue;
+      salida.push(r);
+    }
+    return salida;
+  }
+
+  /**
+   * **La escena de pasaje**: con `loQueNoSeTapa` puesto, lo que se explica
+   * sale en grande —ver `LAMINA`— sin tapar lo que se enseña, que es lo que
+   * dice el juego en cada momento: el cristal de la ventanilla, lo nombrado
+   * del paisaje, el avión en las tomas de fuera. Con `null`, como en
+   * cualquier vuelo: en la esquina, al lado del cuadro.
+   */
+  enLaEscena(loQueNoSeTapa: (() => LoQueNoSeTapa) | null): void {
+    this.escena = loQueNoSeTapa;
+    this.caja?.classList.toggle("historia--grande", !!loQueNoSeTapa);
+  }
+
+  /** Lo que no tapa la lámina ahora: lo del juego y lo de la pantalla. */
+  private loQueNoSeTapaAhora(): LoQueNoSeTapa | null {
+    const escena = this.escena;
+    if (!escena) return null;
+    const delJuego = escena();
+    return {
+      ...delJuego,
+      cajas: [...delJuego.cajas, ...this.obstaculos(`${OBSTACULOS}, ${DE_LA_ESCENA}`, null, DE_LA_ESCENA)],
+    };
+  }
+
+  /** **En grande**, en la escena de pasaje: ver `dondeCabeLaLamina`. Si no cabe, espera. */
+  private enGrande(foto: FotoDeLaHistoria): void {
+    const no = this.loQueNoSeTapaAhora();
+    const donde = no ? dondeCabeLaLamina({ ancho: innerWidth, alto: innerHeight }, no, this.proporcion) : null;
+    if (!donde) {
+      this.esperando = foto;
+      return;
+    }
+    this.esperando = null;
+    this.colocar(foto, donde, "grande");
+  }
+
+  /**
+   * **Que siga sin tapar nada**, en la escena de pasaje: el plano cambia —de la
+   * ventanilla al avión por fuera—, quien juega gira la cabeza, se abre el
+   * kit. Cada poco se mira si la lámina pisa ya algo de lo que se enseña, y
+   * si lo pisa se va a donde quepa, o se esconde hasta que vuelva a caber. Con
+   * `cambio` —un corte de plano—, se recoloca siempre: es otra toma. Y si
+   * estaba pequeña porque no cabía más y ahora cabe bastante más grande,
+   * crece.
+   */
+  vigilar(cambio = false): void {
+    if (!this.escena || !this.sitio) return;
+    const ahora = performance.now();
+    if (!cambio && ahora - this.vistazo < VIGILA_CADA) return;
+    this.vistazo = ahora;
+    if (this.esperando) {
+      this.enGrande(this.esperando);
+      return;
+    }
+    const puesta = this.dondeQuedo;
+    if (puesta?.donde !== "grande") return;
+    const no = this.loQueNoSeTapaAhora();
+    if (!no) return;
+    const pantalla = { ancho: innerWidth, alto: innerHeight };
+    const libre = laminaLibre(pantalla, no, puesta.caja);
+    if (libre && !cambio) {
+      const ancho = puesta.caja.right - puesta.caja.left;
+      // Crecer no corre prisa: se mira cada poco más de dos segundos, que buscar sitio cuesta más que mirar el suyo.
+      if (ancho >= anchoDeLaLamina(pantalla, this.proporcion) * 0.95 || ahora - this.crecio < CRECE_CADA) return;
+      this.crecio = ahora;
+      const mejor = dondeCabeLaLamina(pantalla, no, this.proporcion);
+      if (mejor && mejor.right - mejor.left > ancho * 1.25) this.mover(mejor);
+      return;
+    }
+    const mejor = dondeCabeLaLamina(pantalla, no, this.proporcion);
+    if (mejor) this.mover(mejor);
+    else if (!libre) {
+      // No cabe en ningún sitio sin tapar lo que se enseña: fuera, hasta que quepa.
+      const foto = this.fotoPuesta;
+      this.quitarYa();
+      if (foto) {
+        this.sitio = foto.clave;
+        this.esperando = foto;
+      }
+    }
+  }
+
+  /** La foto que está puesta, para volver a ponerla. */
+  private fotoPuesta: FotoDeLaHistoria | null = null;
+
+  /** Se pone en su sitio y entra con su fundido. */
+  private colocar(foto: FotoDeLaHistoria, donde: Caja, como: DondeQueda): void {
+    const { caja, foto: img, firma } = this;
+    if (!caja || !img || !firma) return;
     img.src = foto.url;
     img.alt = foto.alt;
     firma.textContent = foto.firma ?? "";
-    // El HUD puede ir escalado en pantallas bajas: lo medido está en píxeles
-    // de pantalla y lo que se escribe, en los del HUD. Ver `aPxDelHud`.
-    const px = (n: number): string => `${Math.round(aPxDelHud(raiz, n))}px`;
-    caja.style.setProperty("--historia-x", px(donde.left));
-    caja.style.setProperty("--historia-y", px(donde.top));
-    caja.style.setProperty("--historia-ancho", px(donde.right - donde.left));
+    this.fotoPuesta = foto;
+    // En grande, con la proporción de la imagen; en la esquina, la de siempre.
+    if (como === "grande") caja.style.setProperty("--historia-proporcion", String(this.proporcion));
+    else caja.style.removeProperty("--historia-proporcion");
+    this.escribir(donde);
     caja.hidden = false;
     // Un fotograma para que el fundido arranque desde transparente.
     requestAnimationFrame(() => {
       if (this.sitio === foto.clave) caja.classList.add("historia--puesta");
     });
-    this.dondeQuedo = { donde: "esquina", caja: donde };
+    this.dondeQuedo = { donde: como, caja: donde };
+  }
+
+  /** A otro sitio, ya puesta: se desliza, que la hoja lleva su transición. */
+  private mover(donde: Caja): void {
+    this.escribir(donde);
+    if (this.dondeQuedo) this.dondeQuedo = { donde: this.dondeQuedo.donde, caja: donde };
+  }
+
+  /**
+   * El HUD puede ir escalado en pantallas bajas: lo medido está en píxeles de
+   * pantalla y lo que se escribe, en los del HUD. Ver `aPxDelHud`.
+   */
+  private escribir(donde: Caja): void {
+    const { raiz, caja } = this;
+    if (!raiz || !caja) return;
+    const px = (n: number): string => `${Math.round(aPxDelHud(raiz, n))}px`;
+    caja.style.setProperty("--historia-x", px(donde.left));
+    caja.style.setProperty("--historia-y", px(donde.top));
+    caja.style.setProperty("--historia-ancho", px(donde.right - donde.left));
   }
 }
+
+/**
+ * **La proporción de una imagen ya descodificada**, ancho entre alto: la de
+ * sus píxeles —un dibujo de SVG lleva los suyos, 480 × 320—, entre la de una
+ * foto apaisada de 2:1 y una cuadrada. Sin medidas, la de siempre, 3:2.
+ */
+function proporcionDe(img: HTMLImageElement): number {
+  const p = img.naturalWidth > 0 && img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 3 / 2;
+  return Math.min(2, Math.max(1, p));
+}
+
+/** Dónde quedó: en la placa del cuadro, en la esquina, o en grande en la escena de pasaje. */
+export type DondeQueda = "placa" | "esquina" | "grande";
+
+/**
+ * **Lo que la lámina de la escena tampoco tapa**, además de lo de siempre: la
+ * tarjeta de quien habla, el kit de viaje abierto y el sueño de Ara.
+ */
+const DE_LA_ESCENA = ".inicio__tarjeta, .kit__panel, .siesta__sueno";
+
+/** Cada cuánto se mira si la lámina sigue sin tapar nada, ms, y si ya cabe más grande. */
+const VIGILA_CADA = 400;
+const CRECE_CADA = 2200;
 
 /** Si un elemento se ve: con tamaño, sin `hidden` y sin estar escondido por la hoja. */
 function visible(el: Element | null): boolean {

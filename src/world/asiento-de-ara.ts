@@ -90,8 +90,8 @@ export interface LoQueSeVe {
 }
 
 /** Las piezas que son el motor y las que son el ala, por su nombre en el modelo. */
-const ES_MOTOR = /^(motor|pilon|gondola|toma)/;
-const ES_ALA = /^(ala|flap|aleron|aerofreno)/;
+export const ES_MOTOR = /^(motor|pilon|gondola|toma)/;
+export const ES_ALA = /^(ala|flap|aleron|aerofreno)/;
 
 /**
  * Un asiento de Ara con una pose. **Sin `sentado`**: el marco pinta el asiento

@@ -877,6 +877,7 @@ import {
 import { escucharLaMirada } from "./cameras/dedo-que-mira";
 import {
   cortinaDe,
+  elCristalEntero,
   franjaDeLaFunda,
   MarcoDeVentanilla,
   queSeTocaEnLaPared,
@@ -1173,7 +1174,9 @@ import type { Hito, Mirada } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
 import { laHistoria, loQueSeDice, type LoQueSeDice } from "./audio/ventanilla";
 import { precargarLaFoto } from "./ui/fotos-de-las-historias";
-import { alSonarLaHistoria } from "./ui/ventana-de-historia";
+import { alSonarLaHistoria, type Caja, type LoQueNoSeTapa } from "./ui/ventana-de-historia";
+import { cajitasDelAvion, siluetaEnPantalla, type Cajita } from "./world/silueta-del-avion";
+import { mallasDeFuera } from "./world/asiento-de-ara";
 import {
   calorDelSuelo,
   capaDeMezcla,
@@ -6848,6 +6851,8 @@ export class Game {
     );
     document.documentElement.classList.add("con-inicio");
     document.documentElement.classList.toggle("con-pasaje", pasaje);
+    // Lo que se explica, en grande y sin tapar lo que se enseña. Ver `loQueNoTapaLaLamina`.
+    this.hud.historia.enLaEscena(pasaje ? () => this.loQueNoTapaLaLamina() : null);
     const raiz = document.getElementById("inicio");
     if (!this.pantallaDelInicio && raiz)
       this.pantallaDelInicio = new PantallaDelInicio(
@@ -7402,6 +7407,14 @@ export class Game {
     if (inicio instanceof VueloDePasaje) {
       const p = inicio.estado;
       this.ponerLaVentanitaDeLaEscena(p.dibujo);
+      /*
+       * Y que siga sin tapar lo que se enseña: otro plano es otra toma. Un
+       * fotograma después del corte, que es cuando la cámara ya está en ella.
+       */
+      const plano = this.fundidoDePlano.plano;
+      this.hud.historia.vigilar(this.laminaPorColocar);
+      this.laminaPorColocar = plano !== this.planoDeLaLamina;
+      this.planoDeLaLamina = plano;
       this.refrescarLaRuta();
       // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
       this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
@@ -7490,6 +7503,120 @@ export class Game {
   /** Si ya parpadeó el cartel del cinturón en esta escena. */
   private cinturonDeLaEscena = false;
 
+  /** El plano con el que se miró la lámina por última vez: si cambia, se recoloca. */
+  private planoDeLaLamina: Plano | null = null;
+  private laminaPorColocar = false;
+
+  /** Las cajitas del avión que se dibuja, medidas una vez. Ver `world/silueta-del-avion.ts`. */
+  private cajitas: { readonly de: object; readonly cajitas: readonly Cajita[] } | null = null;
+
+  private cajitasDelAvionDeAhora(): readonly Cajita[] {
+    const g = this.aircraftMesh.group;
+    if (this.cajitas?.de !== g) this.cajitas = { de: g, cajitas: cajitasDelAvion(mallasDeFuera(g), g) };
+    return this.cajitas.cajitas;
+  }
+
+  /**
+   * **Lo que la lámina de la escena de pasaje no tapa**, en píxeles de
+   * pantalla, según el plano que se ve. Es la regla del punto 305: lo que se
+   * explica sale grande, y **lo que se enseña se sigue viendo**.
+   *
+   * - **Lo nombrado del paisaje**, lo de los últimos veinte segundos y el
+   *   sitio de la toma, con su margen: es lo que la escena prometió que se ve
+   *   —ver `world/se-ve-desde-el-pasaje.ts`—, por el cristal o desde fuera.
+   * - **Desde el asiento, el cristal entero** de la ventanilla de Ara: lo que
+   *   se ve desde el asiento es lo que hay por ese cristal, y alrededor es pared de la
+   *   cabina, que es donde va la lámina —con las ventanillas de al lado, que
+   *   no son las de Ara—.
+   * - **Con la cara contra el cristal**, el cristal llena la pantalla y no
+   *   queda pared: lo que no se tapa es aquello a lo que se asoma, que está en
+   *   el medio —la cabeza gira hacia ello—; y mirando el motor, además, el
+   *   motor y el ala que se ven por el cristal.
+   * - **Desde fuera, el avión entero**, por su silueta: es de lo que se habla.
+   *   Y el señalero, que es a quien se mira en su toma.
+   */
+  private loQueNoTapaLaLamina(): LoQueNoSeTapa {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const pantalla = { ancho: W, alto: H };
+    const cajas: Caja[] = [];
+    const escena = this.inicio instanceof VueloDePasaje ? this.inicio.estado : null;
+    if (!escena) return { cajas };
+    const cam = this.camera;
+    cam.updateMatrixWorld();
+    const plano = this.fundidoDePlano.plano;
+    const margen = Math.max(40, Math.min(W, H) * 0.1);
+    const alrededor = (p: { x: number; y: number; z: number }, m: number): void => {
+      const v = new Vector3(p.x, p.y, p.z);
+      if (v.clone().applyMatrix4(cam.matrixWorldInverse).z >= 0) return;
+      v.project(cam);
+      const x = ((v.x + 1) / 2) * W;
+      const y = ((1 - v.y) / 2) * H;
+      if (x < -m || y < -m || x > W + m || y > H + m) return;
+      cajas.push({ left: x - m, top: y - m, right: x + m, bottom: y + m });
+    };
+    const sitios = new Set(escena.nombrados.filter((n) => n.desde >= escena.segundos - 20).map((n) => n.sitio));
+    if (escena.paisaje) sitios.add(escena.paisaje);
+    for (const sitio of sitios) {
+      const p = this.puntoDeLoNombrado(sitio);
+      if (p) alrededor(p, margen);
+    }
+    const g = this.aircraftMesh.group;
+    g.updateMatrixWorld();
+    if (esDeFuera(plano)) {
+      const s = this.senalero.grupo;
+      if (plano === "fuera-senalero" && s.visible && s.parent === this.scene)
+        for (const alto of [0, 1.2, 2.4]) alrededor({ x: s.position.x, y: s.position.y + alto, z: s.position.z }, margen * 0.6);
+      return { cajas, poligonos: siluetaEnPantalla(this.cajitasDelAvionDeAhora(), g.matrixWorld, cam, pantalla) };
+    }
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    if (!ara) return { cajas };
+    /*
+     * **El cristal de Ara, en la pantalla**: su contorno de ventanilla
+     * redondeada —un superelipse de cuarto grado por sus cuatro bordes, algo
+     * más cuadrado que el de verdad, que de los dos lados es el que no se
+     * queda corto— y su caja.
+     */
+    const [arriba, abajo, delante] = elCristalEntero(ara.ventanilla);
+    const centro = arriba!.clone().add(abajo!).multiplyScalar(0.5);
+    const alto = arriba!.clone().sub(centro);
+    const largo = delante!.clone().sub(centro);
+    const contorno: number[] = [];
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      const u = Math.sign(Math.cos(a)) * Math.sqrt(Math.abs(Math.cos(a)));
+      const w = Math.sign(Math.sin(a)) * Math.sqrt(Math.abs(Math.sin(a)));
+      const v = centro.clone().addScaledVector(largo, u).addScaledVector(alto, w).applyMatrix4(g.matrixWorld);
+      if (v.clone().applyMatrix4(cam.matrixWorldInverse).z >= 0) continue;
+      v.project(cam);
+      contorno.push(((v.x + 1) / 2) * W, ((1 - v.y) / 2) * H);
+    }
+    if (contorno.length < 6) return { cajas };
+    const xs = contorno.filter((_, i) => i % 2 === 0);
+    const ys = contorno.filter((_, i) => i % 2 === 1);
+    const cristal: Caja = {
+      left: Math.max(0, Math.min(...xs)),
+      right: Math.min(W, Math.max(...xs)),
+      top: Math.max(0, Math.min(...ys)),
+      bottom: Math.min(H, Math.max(...ys)),
+    };
+    if (plano === "ventanilla") return { cajas: [...cajas, cristal] };
+    // Con la cara contra el cristal: lo del medio, que es adonde se mira, y por el cristal el motor y el ala.
+    cajas.push({ left: W * 0.36, right: W * 0.64, top: H * 0.32, bottom: H * 0.68 });
+    if (plano !== "asomado-motor") return { cajas };
+    return {
+      cajas,
+      poligonos: siluetaEnPantalla(
+        this.cajitasDelAvionDeAhora(),
+        g.matrixWorld,
+        cam,
+        pantalla,
+        (c) => c.parte !== "resto" && c.lado === LADO_DE_ARA,
+      ),
+      dentroDe: contorno,
+    };
+  }
+
   /**
    * **El mapa de la ruta de la ventanita, con el vuelo de verdad**: el camino
    * del plan y el avión donde va, en la lámina de la ventanita. Sin plan, el
@@ -7523,6 +7650,7 @@ export class Game {
     this.siesta?.quitar();
     this.siestaTapa = false;
     this.ponerLaVentanitaDeLaEscena(null);
+    this.hud.historia.enLaEscena(null);
     this.ponerElVeloDelPlano(0);
     this.inicio = null;
     this.tripulacionDeLinea = null;
@@ -23167,19 +23295,7 @@ export class Game {
     readonly nubeEnMedio: number;
     readonly distancia: number;
   } | null {
-    /*
-     * Lo de debajo es adonde llegan los ojos ahora, que el avión avanza: se
-     * vuelve a buscar con la pose de ahora. Lo demás no se mueve.
-     */
-    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
-    const plano = this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null;
-    const s = this.flight.state;
-    const pose = ara && plano && !esDeFuera(plano) ? this.asientoDeAraAhora(plano) : null;
-    const ahora =
-      esDeAbajo(sitio as SitioDelPaisaje) && pose
-        ? this.dondeMiran(pose, { position: s.position, orientation: s.orientation, largo: this.largoDelAvion })
-        : null;
-    const punto = ahora ?? this.puntoDelPaisaje.get(sitio as SitioDelPaisaje);
+    const punto = this.puntoDeLoNombrado(sitio as SitioDelPaisaje);
     if (!punto) return null;
     const c = this.camera;
     c.updateMatrixWorld();
@@ -23207,6 +23323,23 @@ export class Game {
       nubeEnMedio: nube,
       distancia: d,
     };
+  }
+
+  /**
+   * **Dónde está lo nombrado**, en el mundo: lo de debajo es adonde llegan los
+   * ojos ahora, que el avión avanza, y se vuelve a buscar con la pose de
+   * ahora; lo demás, por donde se vio la última vez.
+   */
+  private puntoDeLoNombrado(sitio: SitioDelPaisaje): PuntoDelMundo | null {
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    const plano = this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null;
+    const s = this.flight.state;
+    const pose = ara && plano && !esDeFuera(plano) ? this.asientoDeAraAhora(plano) : null;
+    const ahora =
+      esDeAbajo(sitio) && pose
+        ? this.dondeMiran(pose, { position: s.position, orientation: s.orientation, largo: this.largoDelAvion })
+        : null;
+    return ahora ?? this.puntoDelPaisaje.get(sitio) ?? null;
   }
 
   /**
