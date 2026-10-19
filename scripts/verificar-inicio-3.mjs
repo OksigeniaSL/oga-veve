@@ -127,8 +127,9 @@
  *   lo dicho y los tramos en un JSON; `OGA_SIN_NUBES=1` vuela sin el mar de
  *   nubes, para ver nombrado con su toma lo que con él queda tapado: lo que
  *   se espera de un vuelo con nubes no vale ahí;
- *   y `OGA_SIN_JUGAR=1` no abre el kit en vuelo, para que las capturas de lo
- *   que se nombra bajando salgan sin él delante.
+ *   `OGA_SIN_JUGAR=1` no abre el kit en vuelo, para que las capturas de lo
+ *   que se nombra bajando salgan sin él delante; y `OGA_SOLO_LAMINA=1` solo
+ *   mira la lámina con el kit que se abre y se mueve, en un minuto.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
@@ -1681,11 +1682,87 @@ async function enElTelefono() {
   }
 }
 
+/**
+ * **La lámina y el kit, forzado y mirado en cada fotograma.** El vuelo mira
+ * cuatro veces por segundo, y lo que se le escapaba duraba menos: la tarjeta
+ * crecía con una frase de tres líneas, el panel del kit bajaba con ella y la
+ * lámina se quedaba encima hasta su siguiente vistazo —216 ms, un píxel—.
+ * Aquí se fuerza: la lámina puesta, el kit que se abre y la tarjeta que crece
+ * y encoge —y con ella el panel, que baja y sube—. Y se mira la caja a la que
+ * va la lámina, como en el vuelo, después de cada fotograma del juego.
+ */
+async function laLaminaYElKit() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const nombre = "la lámina se aparta del panel del kit en el mismo fotograma: al abrirse y cada vez que la tarjeta lo empuja";
+  try {
+    await page.goto(`${BASE}/?inicio=3`);
+    await page.waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 180_000 });
+    await page.keyboard.press("ShiftLeft");
+    await page.waitForFunction(() => !!document.querySelector("#inicio .inicio__tarjeta"), null, { timeout: 60_000 });
+    // La del vuelo, la de la tripulante contando su oficio. Si la escena pone la suya encima —la del embarque—, vale igual: lo que se mira es que se aparte.
+    await page.evaluate(() => globalThis.__oga.juegoParaTrazas().hud.historia.mostrarDibujo("tripulacion"));
+    await page.waitForFunction(() => globalThis.__oga.inicio().ventanita?.donde === "grande", null, { timeout: 10_000 });
+    await page.evaluate(() => {
+      const sePisan = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      const m = (globalThis.__laminaYKit = { marcos: 0, juntos: 0, pisadas: [], empujones: 0, antes: null });
+      const mirar = () => {
+        const v = globalThis.__oga.inicio().ventanita;
+        const panel = document.querySelector(".kit__panel");
+        if (!v?.caja || v.donde !== "grande" || !panel || panel.closest("[hidden]")) return void (m.antes = null);
+        const r = panel.getBoundingClientRect();
+        if (r.width <= 2 || r.height <= 2) return;
+        m.juntos++;
+        const p = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+        // El caso que se busca: el panel se mueve encima de donde estaba la lámina.
+        if (m.antes && (m.antes.panel.top !== p.top || m.antes.panel.right !== p.right) && sePisan(m.antes.caja, p)) m.empujones++;
+        if (sePisan(v.caja, p)) m.pisadas.push({ panel: p, lamina: v.caja });
+        m.antes = { panel: p, caja: v.caja };
+      };
+      const bucle = () => {
+        m.marcos++;
+        setTimeout(mirar, 0);
+        requestAnimationFrame(bucle);
+      };
+      requestAnimationFrame(bucle);
+    });
+    await page.evaluate(() => globalThis.__oga.darElKit());
+    await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.boton, null, { timeout: 10_000 });
+    const k = await page.evaluate(() => globalThis.__oga.inicio().kit);
+    await page.mouse.click(k.boton.x + k.boton.width / 2, k.boton.y + k.boton.height / 2);
+    await pausa(800);
+    // La tarjeta, más alta y más baja, como con las frases largas y cortas: el panel va debajo.
+    for (const crece of [20, 45, 70, 35, 0, 90, 0, 60, 0]) {
+      await page.evaluate((px) => {
+        document.querySelector("#inicio .inicio__tarjeta").style.paddingBottom = px ? `${14 + px}px` : "";
+      }, crece);
+      await pausa(700);
+    }
+    const m = await page.evaluate(() => globalThis.__laminaYKit);
+    const v = await page.evaluate(() => globalThis.__oga.inicio().ventanita);
+    comprobar(
+      nombre,
+      m.juntos > 60 && m.empujones >= 1 && m.pisadas.length === 0,
+      `${m.juntos} fotogramas con las dos · el panel bajó sobre la lámina ${m.empujones} veces · pisada en ${m.pisadas.length}` +
+        (m.pisadas[0] ? ` (panel ${JSON.stringify(m.pisadas[0].panel)}, lámina ${JSON.stringify(m.pisadas[0].lamina)})` : "") +
+        ` · al final ${v?.sitio ?? "sin lámina"} ${v?.donde ?? ""}`,
+    );
+  } catch (e) {
+    comprobar(nombre, false, String(e).slice(0, 140));
+  } finally {
+    await ctx.close();
+  }
+}
+
 try {
-  if (!process.env.OGA_SIN_HANGAR) await desdeElHangar();
-  await enElTelefono();
-  if (!process.env.OGA_SIN_KIT) await elKitConElDedo();
-  if (!process.env.OGA_SOLO_KIT) await elVuelo();
+  if (process.env.OGA_SOLO_LAMINA) await laLaminaYElKit();
+  else {
+    if (!process.env.OGA_SIN_HANGAR) await desdeElHangar();
+    await enElTelefono();
+    if (!process.env.OGA_SIN_KIT) await elKitConElDedo();
+    if (!process.env.OGA_SIN_KIT) await laLaminaYElKit();
+    if (!process.env.OGA_SOLO_KIT) await elVuelo();
+  }
 } finally {
   await navegador.close();
   await server.close();

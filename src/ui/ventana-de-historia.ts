@@ -793,11 +793,18 @@ export class VentanaDeHistoria implements PonerYQuitar {
    * `cambio` —un corte de plano—, se recoloca siempre: es otra toma. Y si
    * estaba pequeña porque no cabía más y ahora cabe bastante más grande,
    * crece.
+   *
+   * Con `yaSeMovio`, se mira ya, sin esperar al vistazo de cada poco: algo de
+   * lo que no se tapa acaba de moverse —el panel del kit, que baja cuando la
+   * tarjeta de encima crece con una frase larga—. Mirando solo cada poco, la
+   * lámina se quedaba encima del panel hasta el vistazo siguiente, y el banco
+   * lo pilló a ratos: 216 ms con un píxel pisado. Mirar cuesta de dos a
+   * quince milisegundos, así que se mira cuando se mueve, no en cada fotograma.
    */
-  vigilar(cambio = false): void {
+  vigilar(cambio = false, yaSeMovio = false): void {
     if (!this.escena || !this.sitio) return;
     const ahora = performance.now();
-    if (!cambio && ahora - this.vistazo < VIGILA_CADA) return;
+    if (!cambio && !yaSeMovio && ahora - this.vistazo < VIGILA_CADA) return;
     this.vistazo = ahora;
     if (this.esperando) {
       this.enGrande(this.esperando);
