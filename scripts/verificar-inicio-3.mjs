@@ -49,11 +49,16 @@
  *   mandos de pilotar.
  * - **El kit de viaje** (punto 275): que la tripulante lo trae en un tramo
  *   tranquilo de la parte alta de la bajada, que en el vuelo se abre, se juega
- *   el camino y se deja abierta la luz verde, y que **se recoge al empezar la
- *   llegada**, cruzando los diez mil pies bajando (19-10-2026), con el rato que
- *   hubo para jugar; y en el teléfono, la tablet del aula y el portátil, que
- *   cabe sin tapar la tarjeta ni los botones y **se juegan los tres juegos
- *   enteros con el dedo** —arrastrando las piezas— o con el ratón.
+ *   el camino y después **la luz verde entera** —a la velocidad de verdad,
+ *   como un niño que hace caso a lo que brilla—, que acaba antes de los diez
+ *   mil pies, que al acabar **suena el trozo de la canción**, agachado si
+ *   alguien habla, y que **se recoge al empezar la llegada**, cruzando los diez
+ *   mil pies bajando (19-10-2026), con la canción yéndose con un fundido si
+ *   todavía sonaba; y en el teléfono, la tablet del aula y el portátil, que
+ *   cabe sin tapar la tarjeta ni los botones, **se juegan los tres juegos
+ *   enteros con el dedo** —arrastrando las piezas— o con el ratón, y que al
+ *   ganar la torre suena la canción, se agacha con quien habla y se va al
+ *   guardar el kit.
  * - **Luz verde** (punto 304), en cada pantalla y en tres peldaños —el
  *   teléfono en el de abajo, la tablet en el de las cifras y el portátil en el
  *   de cabina, con su ronda de noche—: que se gana haciendo caso a lo que
@@ -267,6 +272,8 @@ const leer = (page) =>
       adelantar: visible('[data-hud="adelantar"]'),
       adelantarPulsado: document.querySelector('[data-hud="adelantar"]')?.getAttribute("aria-pressed") === "true",
       teselasBajando: o?.teselas?.()?.bajando ?? null,
+      // La canción de la luz verde: lo que pide el kit y lo que suena. Ver `audio/cancion.ts`.
+      cancion: o?.cancion?.() ?? null,
     };
   });
 
@@ -408,7 +415,15 @@ async function elVuelo() {
   const oido = [];
   const altitudes = [];
   // El kit de viaje: cuándo llega, qué se juega y cómo acaba. Ver `flight/kit-de-viaje.ts`.
-  const kit = { dadoEn: null, tramo: null, jugado: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false, recogidoEn: null, pausado: 0, abiertoTrasGuardar: false };
+  const kit = { dadoEn: null, tramo: null, jugado: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false, recogidoEn: null, pausado: 0, abiertoTrasGuardar: false, aUno: false };
+  /*
+   * **La luz verde en el vuelo** (19-10-2026): se juega entera, a la velocidad
+   * de verdad y como un niño que hace caso a lo que brilla —toca el avión y la
+   * luz un segundo y medio después de que se encienda la ayuda—, y se mira
+   * dónde acaba, la canción que suena después, cómo se agacha cuando alguien
+   * habla y cómo se va cuando la tripulante recoge el kit.
+   */
+  const torre = { abierta: null, fin: null, brilla: null, toques: 0, muestras: [], empieza: null, alRecoger: null, trasRecoger: [] };
   // Lo nombrado del paisaje, medido con lo que se pinta cuando se nombra. Ver `paisajeParaBanco`.
   const nombrados = [];
   let vistosNombrados = 0;
@@ -536,9 +551,44 @@ async function elVuelo() {
     }
     if (e.kit?.dado && !kit.jugado && i.kit?.boton && !process.env.OGA_SIN_JUGAR) {
       kit.jugado = true;
+      // A la velocidad de verdad, de que llega el kit a que se recoge: es el rato que hay para jugar.
+      kit.aUno = true;
+      await page.evaluate(() => globalThis.__oga.acelerar(1));
       await jugarElCaminoEnElVuelo(page);
     }
     if (e.kit?.abierto && e.kit.pausado) kit.pausado++;
+    // ── La luz verde en el vuelo, como quien hace caso a lo que brilla ──
+    const jl = e.kit?.juego;
+    if (kit.jugado && jl?.juego === "luz" && !e.kit.recogido) {
+      torre.abierta ??= { t: e.segundos, altitud };
+      if (jl.terminado && !torre.fin)
+        torre.fin = { t: e.segundos, altitud, rondas: jl.rondas, aterrizados: jl.aterrizados, rojas: jl.rojas, alAire: jl.alAire };
+      const pide = (jl.aviones ?? []).find((a) => a.pide);
+      if (!jl.terminado && jl.ayuda && !e.kit.pausado && pide) {
+        if (torre.brilla?.senal !== jl.ayuda || torre.brilla?.id !== pide.id) torre.brilla = { senal: jl.ayuda, id: pide.id, desde: Date.now() };
+        const r = i.kit?.luz;
+        if (Date.now() - torre.brilla.desde > 1500 && r?.luces?.[jl.ayuda]) {
+          const centro = (b) => [b.x + b.width / 2, b.y + b.height / 2];
+          if (r.aviones?.[pide.id]) await page.mouse.click(...centro(r.aviones[pide.id]));
+          await page.mouse.click(...centro(r.luces[jl.ayuda]));
+          torre.toques++;
+          torre.brilla = null;
+        }
+      } else torre.brilla = null;
+    }
+    // ── Y su canción: cuándo empieza, cómo se agacha y cómo se va ──
+    const ca = v.cancion?.audio;
+    if (ca?.suena) {
+      torre.empieza ??= { t: e.segundos, altitud, trasElFin: torre.fin ? e.segundos - torre.fin.t : null };
+      torre.muestras.push({ t: e.segundos, va: ca.va, bus: ca.bus, fundido: ca.fundido, agachado: ca.agachado, megafonia: !!e.megafonia, linea: e.linea?.clave ?? null });
+    }
+    if (e.kit?.recogido && !kit.recogido) torre.alRecoger = { t: e.segundos, sonaba: torre.muestras.length > 0 && e.segundos - torre.muestras[torre.muestras.length - 1].t < 1.5 };
+    if (torre.alRecoger && e.segundos - torre.alRecoger.t < 4) torre.trasRecoger.push({ t: e.segundos, suena: ca?.suena ?? null, seVa: ca?.seVa ?? null });
+    // Recogido el kit y la canción ida, el vuelo vuelve a ir deprisa.
+    if (kit.aUno && e.kit?.recogido && torre.alRecoger && e.segundos - torre.alRecoger.t > 4) {
+      kit.aUno = false;
+      await page.evaluate((x) => globalThis.__oga.acelerar(x), VECES);
+    }
     const guardar = (i.registro ?? []).find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitGuardar");
     if (guardar && e.segundos > (guardar.hasta ?? guardar.desde) + 2) kit.abiertoTrasGuardar ||= !!e.kit?.abierto;
     if (tramo === "final" || tramo === "recogida") {
@@ -1166,6 +1216,13 @@ async function elVuelo() {
   const dado = registro.find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitAqui");
   const guardar = registro.find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitGuardar");
   const altitudDe = (s) => altitudes.filter((x) => x.t <= s).at(-1)?.altitud ?? null;
+  /** La altitud en un instante, entre las dos lecturas de alrededor: con el vuelo a ×1 se lee cada pocos pies. */
+  const altitudEntre = (s) => {
+    const a = altitudes.filter((x) => x.t <= s).at(-1);
+    const b = altitudes.find((x) => x.t >= s);
+    if (!a || !b || b.t === a.t) return (a ?? b)?.altitud ?? null;
+    return a.altitud + ((b.altitud - a.altitud) * (s - a.t)) / (b.t - a.t);
+  };
   const pies = (m) => (m === null ? "?" : `${Math.round(m / 0.3048)} ft`);
   // **El rato para jugar**: de que la tripulante lo da a que pide guardarlo, sin lo que habla la megafonía, que lo pausa.
   const megafoniaEnMedio = dado && guardar ? registro.filter((d) => deMegafonia(d.clave) && d.desde > dado.desde && d.desde < guardar.desde) : [];
@@ -1188,7 +1245,7 @@ async function elVuelo() {
       ["teide", "gomera", "palma"].every((p) => registro.some((d) => d.clave === `inicio.ara.pasaje.kit.camino.${p}`)),
     `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"}`,
   );
-  const aGuardar = guardar ? altitudDe(guardar.desde) : null;
+  const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
   comprobar(
     "se recoge al empezar la llegada: la tripulante lo pide cruzando los diez mil pies bajando, con la luz verde abierta, y la llegada se vive sin juego",
     !!guardar &&
@@ -1202,6 +1259,45 @@ async function elVuelo() {
       !kit.abiertoEnLaFinal &&
       !kit.botonEnLaFinal,
     `pide guardarlo a ${pies(aGuardar)} · recogido a ${pies(kit.recogidoEn?.altitud ?? null)} · abierto después ${kit.abiertoTrasGuardar} · en la final: abierto ${kit.abiertoEnLaFinal}, mochilita ${kit.botonEnLaFinal} · pausado por la megafonía ${kit.pausado} lecturas`,
+  );
+  // ── La luz verde en el vuelo, entera, y su canción ──
+  const guardarEn = guardar?.desde ?? null;
+  comprobar(
+    "en el vuelo, la luz verde se juega entera haciendo caso a lo que brilla, y acaba antes de los diez mil pies",
+    !!torre.fin && torre.fin.altitud > 3048 && (guardarEn === null || torre.fin.t < guardarEn) && torre.fin.alAire === 0,
+    torre.fin
+      ? `abierta a los ${torre.abierta?.t?.toFixed(0)} s a ${pies(torre.abierta?.altitud ?? null)} · acaba a los ${torre.fin.t.toFixed(0)} s a ${pies(torre.fin.altitud)}: ${(torre.fin.t - (torre.abierta?.t ?? 0)).toFixed(0)} s de juego · ${torre.fin.rondas} rondas, ${torre.fin.aterrizados} aterrizados, ${torre.fin.rojas} rojas · ${torre.toques} toques · la tripulante pide guardarlo a los ${guardarEn?.toFixed(0) ?? "—"} s`
+      : `no acabó · abierta ${JSON.stringify(torre.abierta)} · ${torre.toques} toques · la tripulante pide guardarlo a los ${guardarEn?.toFixed(0) ?? "—"} s`,
+  );
+  const sono = torre.muestras;
+  const ultimaDeLaCancion = sono[sono.length - 1];
+  comprobar(
+    "y al acabar suena el trozo de la canción, por su bus, después del «¡aterrizaron todos!»",
+    !!torre.empieza && torre.empieza.trasElFin !== null && torre.empieza.trasElFin > 2 && torre.empieza.trasElFin < 20 && sono.length > 10,
+    torre.empieza
+      ? `empieza a los ${torre.empieza.t.toFixed(0)} s, ${torre.empieza.trasElFin?.toFixed(1)} s después de acabar el juego, a ${pies(torre.empieza.altitud)} · suena ${(ultimaDeLaCancion.t - torre.empieza.t).toFixed(0)} s, hasta el ${ultimaDeLaCancion.va?.toFixed(1)} del trozo`
+      : "no sonó",
+  );
+  const cancionAgachada = (lista) => lista.filter((m) => m.agachado && (m.fundido ?? 0) > 0.9);
+  const agachada = cancionAgachada(sono);
+  const conMegafonia = agachada.filter((m) => m.megafonia);
+  const enSuSitio = sono.filter((m) => !m.agachado && (m.fundido ?? 0) > 0.9);
+  comprobar(
+    "la canción va por debajo de las voces: se agacha cuando alguien habla y vuelve a su sitio",
+    agachada.length > 0 ? agachada.some((m) => m.bus < 10 ** (-15 / 20)) && enSuSitio.some((m) => m.bus > 10 ** (-7 / 20)) : true,
+    agachada.length > 0
+      ? `agachada en ${agachada.length} lecturas (la más baja ${(20 * Math.log10(Math.min(...agachada.map((m) => m.bus)))).toFixed(1)} dB), con la megafonía en ${conMegafonia.length} (${[...new Set(conMegafonia.map((m) => m.linea))].join(", ") || "ninguna"}), con ${[...new Set(agachada.map((m) => m.linea))].join(", ")} · en su sitio ${(20 * Math.log10(Math.max(...enSuSitio.map((m) => m.bus), 1e-6))).toFixed(1)} dB`
+      : `nadie habló mientras sonaba en el vuelo: el agachado se mira en las pantallas del kit`,
+  );
+  const seFue = torre.trasRecoger.filter((x) => x.seVa);
+  comprobar(
+    "y si la tripulante viene a recoger el kit con la canción sonando, se va con un fundido",
+    torre.alRecoger?.sonaba ? seFue.some((x) => x.seVa.fundido < 0.9 && x.seVa.fundido > 0.02) && torre.trasRecoger.every((x) => !x.suena) : !!torre.alRecoger,
+    torre.alRecoger
+      ? torre.alRecoger.sonaba
+        ? `recogido a los ${torre.alRecoger.t.toFixed(0)} s con la canción sonando · fundido ${seFue.map((x) => x.seVa.fundido.toFixed(2)).join(" → ") || "no se vio"}`
+        : `la canción ya había acabado entera ${torre.empieza && ultimaDeLaCancion ? `${(torre.alRecoger.t - ultimaDeLaCancion.t).toFixed(0)} s` : "—"} antes de recoger el kit`
+      : "no se recogió",
   );
   // ── El hilo musical ──
   comprobar(
@@ -1730,7 +1826,7 @@ async function medirLaLuzEnVuelo(page) {
   const sinKit = await fotogramas();
   const k = await page.evaluate(() => globalThis.__oga.inicio().kit);
   if (k?.boton) await page.mouse.click(k.boton.x + k.boton.width / 2, k.boton.y + k.boton.height / 2);
-  await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+  // Y se sigue a ×1, jugando la torre: el vuelo vuelve a ir deprisa cuando se recoge el kit.
   comprobar(
     "la luz verde abierta en vuelo no le quita fotogramas al vuelo",
     conLuz.fps >= sinKit.fps - 6,
@@ -1868,9 +1964,39 @@ async function elKitConElDedo() {
       );
       // ── Luz verde, con el dedo, en un peldaño por pantalla ──
       await jugarLaLuz(page, nombre, tocar);
-      // ── Y se deja cuando se quiera ──
+      // ── La canción: suena al ganar la torre, se agacha si alguien habla y se va al guardar el kit ──
+      const cancion = () => page.evaluate(() => globalThis.__oga.cancion());
+      const empezo = await page
+        .waitForFunction(() => !!globalThis.__oga.cancion()?.audio?.suena, null, { timeout: 30_000 })
+        .then(() => true)
+        .catch(() => false);
+      // Veinte segundos de canción, a ver quién habla encima; y después se guarda el kit, con ella sonando.
+      const lecturas = [];
+      for (let k2 = 0; empezo && k2 < 120; k2++) {
+        const c = await cancion();
+        const e2 = await estado();
+        if (!c?.audio?.suena) break;
+        lecturas.push({ bus: c.audio.bus, agachado: c.audio.agachado, fundido: c.audio.fundido, megafonia: !!e2.pausado });
+        if ((c.audio.va ?? 0) > 20) break;
+        await pausa(200);
+      }
       await page.click(".kit__cerrar", { force: true });
-      await pausa(400);
+      await pausa(500);
+      const yendose = (await cancion())?.audio;
+      await pausa(2200);
+      const ida = (await cancion())?.audio;
+      const agachadas = lecturas.filter((x) => x.agachado && (x.fundido ?? 0) > 0.9);
+      comprobar(
+        `${nombre}: al ganar la torre suena la canción, se agacha si alguien habla y se va con un fundido al guardar el kit`,
+        empezo &&
+          agachadas.some((x) => x.bus < 10 ** (-15 / 20)) &&
+          !yendose?.suena &&
+          !!yendose?.seVa &&
+          yendose.seVa.fundido < 0.95 &&
+          !ida?.suena,
+        `suena ${empezo} · ${lecturas.length} lecturas, agachada en ${agachadas.length}${agachadas.some((x) => x.megafonia) ? " (con la megafonía)" : ""}, la más baja ${agachadas.length ? (20 * Math.log10(Math.min(...agachadas.map((x) => x.bus)))).toFixed(1) : "—"} dB · al guardar: fundido ${yendose?.seVa?.fundido?.toFixed(2) ?? "—"}, después ${ida?.suena ?? "nada"}`,
+      );
+      // ── Y se deja cuando se quiera ──
       const cerrado = await estado();
       k = await kitDe();
       comprobar(
@@ -1978,6 +2104,17 @@ async function jugarLaLuz(page, nombre, tocar) {
   await pausa(600);
   await foto(page, `kit-luz-hecho-${nombre}-${peldano}`);
   e = await luz();
+  /*
+   * Y lo que Ara tenía que contar, hasta el «¡aterrizaron todos!»: a ×4 los
+   * avioncitos van más deprisa que lo que se dice, y lo dicho va a la cola.
+   */
+  await page
+    .waitForFunction(
+      () => (globalThis.__oga.inicio().registro ?? []).some((d) => d.clave === "inicio.ara.pasaje.kit.luz.fin" && (d.como === "sono" || d.como === "muda")),
+      null,
+      { timeout: 60_000 },
+    )
+    .catch(() => {});
   const registro = await page.evaluate(() => globalThis.__oga.inicio().registro ?? []);
   const dijo = (c) => registro.some((d) => d.clave === `inicio.ara.pasaje.kit.luz.${c}`);
   const c = e?.contestaciones ?? [];

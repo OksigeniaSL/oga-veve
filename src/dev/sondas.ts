@@ -635,6 +635,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     juegoDeLaTorre: (o: { ritmo?: number; peldano?: "dibujo" | "palabra" | "cifra" | "cabina" }) => juego.luzVerdeParaBanco(o),
     /** El hilo musical: lo que decide y lo que suena. Ver `audio/hilo-musical.ts`. */
     musica: () => juego.musicaParaBanco,
+    /** La canción de la luz verde: lo que pide el kit y lo que suena. Ver `audio/cancion.ts`. */
+    cancion: () => juego.cancionParaBanco,
     /*
      * Cómo anda la voz del instructor: cuántas piezas grabadas tiene
      * cargadas y qué fue lo último que se le pidió decir.

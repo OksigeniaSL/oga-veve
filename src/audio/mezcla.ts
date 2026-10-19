@@ -1,5 +1,5 @@
 /**
- * La mezcla: seis buses, una prioridad y un limitador.
+ * La mezcla: ocho buses, una prioridad y un limitador.
  *
  * «Con motor, lluvia, viento y una voz de cabina a la vez, sin mezcla se oye
  * todo y no se entiende nada.» Hasta hoy las veinte fuentes del juego iban
@@ -9,11 +9,11 @@
  *
  * ## La prioridad no es una preferencia de gusto
  *
- * **Voz, bocina, interfaz, motor, ambiente, música.** En ese orden y con la
- * música dieciocho decibelios por debajo de todo. Es el orden de lo que pasa
- * si te lo pierdes: perderse la voz es perderse la lección; perderse el motor
- * es perderse una sensación. Un simulador de cabina real ordena igual, y por
- * lo mismo.
+ * **Voz, bocina, interfaz, radio, canción, motor, ambiente, música.** En ese
+ * orden y con la música dieciocho decibelios por debajo de todo. Es el orden
+ * de lo que pasa si te lo pierdes: perderse la voz es perderse la lección;
+ * perderse el motor es perderse una sensación. Un simulador de cabina real
+ * ordena igual, y por lo mismo.
  *
  * ## El ducking, y por qué existe
  *
@@ -34,12 +34,13 @@
  * con tarjeta de sonido. En `audio.ts`, los nodos.
  */
 
-/** Los seis buses, en orden de prioridad: el primero manda. */
+/** Los ocho buses, en orden de prioridad: el primero manda. */
 export const BUSES = [
   "voz",
   "avisos",
   "interfaz",
   "radio",
+  "cancion",
   "motor",
   "ambiente",
   "musica",
@@ -69,6 +70,13 @@ export const NIVEL: Record<Bus, number> = {
    * notarlo y poco para perderse una autorización.
    */
   radio: -5.5,
+  /*
+   * **La canción del juego**, la que suena al ganar la luz verde: por encima
+   * del vuelo, que se escucha, y por debajo de las voces, radio incluida, que
+   * se agacha con ellas. No es el hilo musical, que acompaña: ver
+   * `audio/cancion.ts`.
+   */
+  cancion: -6,
   motor: -6.5,
   ambiente: -8,
   musica: -18,

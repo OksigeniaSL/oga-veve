@@ -244,6 +244,11 @@ export class Conversacion {
     return this.dichas.some((d) => d.clave === clave && (d.como === "sono" || d.como === "muda"));
   }
 
+  /** Y oída entera de `desde` en adelante, s de escena: la de esta vez, no la de antes. */
+  oidaDesde(clave: string, desde: number): boolean {
+    return this.dichas.some((d) => d.clave === clave && d.desde >= desde && (d.como === "sono" || d.como === "muda"));
+  }
+
   /**
    * **Ni suena ni espera nada, ni se está leyendo**, aunque todavía no se
    * pueda hablar: el silencio de un corte de cámara es silencio. Ver

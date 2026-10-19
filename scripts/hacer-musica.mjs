@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * **El hilo musical, del original al bucle que toca el juego.**
+ * **El hilo musical, del original al bucle que toca el juego**, y **el trozo
+ * de la canción** que suena al acabar la luz verde.
  *
- *     node scripts/hacer-musica.mjs            # las dos
- *     node scripts/hacer-musica.mjs canarias   # una
+ *     node scripts/hacer-musica.mjs             # todo
+ *     node scripts/hacer-musica.mjs canarias    # una
+ *     node scripts/hacer-musica.mjs luz-verde   # el trozo de la canción
  *
  * Coge `crudo/musica/<nombre>.mp3` —la música de embarque de los vuelos de
  * Paraguay y de los de Canarias, ver `CREDITOS.md`— y escribe en
@@ -54,6 +56,27 @@
  * nombre: no van en la precarga del trabajador de servicio y se guardan la
  * primera vez que suenan. Ver `scripts/plantilla-sw.js`.
  *
+ * ## El trozo de la canción
+ *
+ * «Luz verde», la canción de Granja Óga, entra en el juego en un trozo: el que
+ * suena cuando aterrizan todos los avioncitos del juego de la torre. Ver
+ * `src/audio/cancion.ts`. No es un bucle, suena una vez: se corta el trozo
+ * del original y se le pone su fundido de entrada y de salida.
+ *
+ * - **Los cortes se buscan por la fuerza del sonido**: cerca de cada punto
+ *   apuntado a oído en `TROZOS`, el trocito de veinte milisegundos más
+ *   callado. El de entrada cae en la pausa de antes de la primera palabra y
+ *   el de salida, en la cola del último acorde antes de que vuelva el bajo
+ *   con la estrofa siguiente: los dos en el borde de un compás, donde la
+ *   canción respira.
+ * - **El fundido de entrada es corto**, lo justo para que no chasquee, que el
+ *   corte ya está en silencio; **el de salida, largo**, sobre la cola del
+ *   último acorde, que se apaga como se apagaría la canción.
+ * - Y la misma sonoridad que las voces, con la ganancia fija, en mono —el
+ *   juego la toca por el altavoz de la tablet, no por el del techo, pero la
+ *   cabina de pasaje no da para estéreo— y en Opus y AAC. Dónde empieza y
+ *   cuánto dura, en `trozos.json`.
+ *
  * Cero dependencias de Node: solo `ffmpeg` en el PATH.
  */
 
@@ -64,7 +87,34 @@ import { join } from "node:path";
 
 const CRUDO = "crudo/musica";
 const SALIDA = "src/assets/musica";
-const MUSICAS = process.argv.length > 2 ? process.argv.slice(2) : ["paraguay", "canarias"];
+/**
+ * **Los trozos de canción**, con sus cortes apuntados a oído, s del original:
+ * el script los afina a la pausa más cercana. Ver la cabecera.
+ */
+const TROZOS = {
+  /*
+   * «Luz verde» (3:12): el puente entero y el primer estribillo. «Arrancá el
+   * motor, soltá el freno, seguí la raya verde despacito, pará del todo, mirá
+   * la pista… y esperá la luz. ¡Luz verde! La pista es tuya, motor a fondo y
+   * la nariz al cielo. El mundo es grande, pero vos también: volá sin miedo,
+   * que yo te espero.»
+   *
+   * El estribillo empieza en el 1:11 y acaba en el 1:25 con su cola: catorce
+   * segundos. Desde «y esperá la luz» serían veinte, y desde «pará del todo,
+   * mirá la pista», veintitrés; el puente entero son ocho compases que
+   * empiezan con el bajo, después de una pausa, y es el sitio limpio para
+   * entrar: treinta segundos, y lo que cuenta la letra es lo mismo que el
+   * juego —esperar la luz para tener la pista—.
+   */
+  "luz-verde": { entra: 57.4, sale: 87.5 },
+};
+const MUSICAS = process.argv.length > 2 ? process.argv.slice(2) : ["paraguay", "canarias", ...Object.keys(TROZOS)];
+/** Lo que se busca alrededor de cada corte apuntado, s: antes y después. */
+const BUSCA_ANTES = 0.4;
+const BUSCA_DESPUES = 0.15;
+/** El fundido de entrada y el de salida del trozo, s. Ver la cabecera. */
+const FUNDE_ENTRADA = 0.12;
+const FUNDE_SALIDA = 1.6;
 
 /** La frecuencia de muestreo de todo: la del original y la de Opus. */
 const SR = 48000;
@@ -326,9 +376,71 @@ function salto(y, desde, dura) {
   return Math.abs(y[desde] - y[desde + L - 1]) / casiTodos;
 }
 
+// ── El trozo de canción ──────────────────────────────────────────────────
+
+/** **El corte**, en muestras: el trocito de veinte milisegundos más callado cerca de `s` segundos. */
+function corte(x, s) {
+  const trocito = Math.round(0.02 * SR);
+  const paso = Math.round(0.005 * SR);
+  let mejor = { i: Math.round(s * SR), db: Infinity };
+  for (let i = Math.round((s - BUSCA_ANTES) * SR); i + trocito <= Math.round((s + BUSCA_DESPUES) * SR); i += paso) {
+    let e = 0;
+    for (let j = 0; j < trocito; j++) e += x[i + j] * x[i + j];
+    const db = 10 * Math.log10(e / trocito + 1e-12);
+    if (db < mejor.db) mejor = { i: i + Math.round(trocito / 2), db };
+  }
+  return mejor;
+}
+
+/** **El trozo**, con su fundido de entrada corto y el de salida largo, de coseno: sin escalón. */
+function trozo(x, a, b) {
+  const out = x.slice(a, b);
+  const fe = Math.round(FUNDE_ENTRADA * SR);
+  const fs = Math.round(FUNDE_SALIDA * SR);
+  for (let i = 0; i < fe; i++) out[i] *= 0.5 - 0.5 * Math.cos((Math.PI * i) / fe);
+  for (let i = 0; i < fs; i++) out[out.length - 1 - i] *= 0.5 - 0.5 * Math.cos((Math.PI * i) / fs);
+  return out;
+}
+
+/** Hornea un trozo de canción en Opus y AAC, y apunta en `trozos` dónde y cuánto. */
+function hacerTrozo(nombre, x, trozos) {
+  const t = TROZOS[nombre];
+  const a = corte(x, t.entra);
+  const b = corte(x, t.sale);
+  const v = trozo(x, a.i, b.i);
+  const { I, pico } = loQueMide(v);
+  const ganancia = Math.min(SONORIDAD - I, PICO - pico);
+  const g = 10 ** (ganancia / 20);
+  for (let i = 0; i < v.length; i++) v[i] *= g;
+  const crudo = join(tmpdir(), `oga-musica-${nombre}-${process.pid}.f32`);
+  writeFileSync(crudo, Buffer.from(v.buffer));
+  const entrada = ["-f", "f32le", "-ar", String(SR), "-ac", "1", "-i", crudo];
+  const opus = join(SALIDA, `${nombre}.ogg`);
+  const aac = join(SALIDA, `${nombre}.m4a`);
+  // Con algo más que el hilo musical, que esto lleva voz y se oye en primer plano.
+  ffmpeg([...entrada, "-c:a", "libopus", "-b:a", "48k", "-application", "audio", opus]);
+  ffmpeg([...entrada, "-c:a", "aac", "-b:a", "64k", aac]);
+  unlinkSync(crudo);
+  const dura = v.length / SR;
+  trozos[nombre] = {
+    dura: Number(dura.toFixed(3)),
+    original: { entra: Number((a.i / SR).toFixed(3)), sale: Number((b.i / SR).toFixed(3)) },
+    ganancia: Number(ganancia.toFixed(2)),
+  };
+  const kb = (statSync(opus).size + statSync(aac).size) / 1024;
+  console.log(
+    `\n  ${nombre} · trozo de ${dura.toFixed(2)} s: del ${(a.i / SR).toFixed(2)} al ${(b.i / SR).toFixed(2)} del original ` +
+      `(los cortes, a ${a.db.toFixed(0)} y ${b.db.toFixed(0)} dB)\n` +
+      `  ganancia ${ganancia.toFixed(1)} dB · ${(statSync(opus).size / 1024).toFixed(0)} KB en Opus · ` +
+      `${(statSync(aac).size / 1024).toFixed(0)} KB en AAC · ${kb.toFixed(0)} KB los dos`,
+  );
+}
+
 mkdirSync(SALIDA, { recursive: true });
 const rutaBucles = join(SALIDA, "bucles.json");
 const bucles = existsSync(rutaBucles) ? JSON.parse(readFileSync(rutaBucles, "utf8")) : {};
+const rutaTrozos = join(SALIDA, "trozos.json");
+const trozos = existsSync(rutaTrozos) ? JSON.parse(readFileSync(rutaTrozos, "utf8")) : {};
 
 for (const nombre of MUSICAS) {
   const original = join(CRUDO, `${nombre}.mp3`);
@@ -337,6 +449,10 @@ for (const nombre of MUSICAS) {
     process.exit(1);
   }
   const x = leer(original);
+  if (TROZOS[nombre]) {
+    hacerTrozo(nombre, x, trozos);
+    continue;
+  }
   const p = puntoDeBucle(x);
   const v = vuelta(x, p.a, p.b, p.onda);
   // La ganancia fija, para que la vuelta suene como las voces y sin pasarse de pico.
@@ -386,4 +502,5 @@ for (const nombre of MUSICAS) {
 }
 
 writeFileSync(rutaBucles, JSON.stringify(bucles, null, 2) + "\n");
+writeFileSync(rutaTrozos, JSON.stringify(trozos, null, 2) + "\n");
 console.log(`\n  → ${SALIDA}\n`);

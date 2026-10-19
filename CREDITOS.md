@@ -660,33 +660,43 @@ fichero.
 
 **Música de embarque: Oksigenia SL, con licencia de uso de su proveedor.**
 
-**La canción del simulador: «Luz verde», de Granja Óga** —
-<https://youtu.be/nxC1d03iqyw>—. No va dentro del juego: está enlazada desde la
-pantalla de créditos, con un enlace y no con un vídeo incrustado, para que en
-el juego no entre el reproductor de fuera con sus cookies. Su letra sale del
-propio simulador: las frases del instructor y las luces de navegación.
+**La canción del simulador: «Luz verde», de Granja Óga: Oksigenia SL, con
+licencia de uso de su proveedor.** Entera está en
+<https://youtu.be/nxC1d03iqyw>, enlazada desde la pantalla de créditos con un
+enlace y no con un vídeo incrustado, para que en el juego no entre el
+reproductor de fuera con sus cookies. Su letra sale del propio simulador: las
+frases del instructor y las luces de navegación.
 
-Son dos piezas, una por sitio, que suenan por el altavoz del techo al
-embarcar y al llegar al puesto en los vuelos con pasaje —ver
-`src/audio/hilo-musical.ts`—: la de Paraguay, con arpa, y la de Canarias,
-con timple.
+**Y un trozo va dentro del juego**: el puente y el primer estribillo —de
+«Arrancá el motor» a «volá sin miedo, que yo te espero», del 0:57 al 1:27—,
+que suena cuando aterrizan todos los avioncitos de «Luz verde», el juego de la
+torre del kit de viaje. Ver `src/audio/cancion.ts`.
 
-| fichero                        | qué es                                   |
-| ------------------------------ | ---------------------------------------- |
-| `crudo/musica/paraguay.mp3`    | el original de la de Paraguay            |
-| `crudo/musica/canarias.mp3`    | el original de la de Canarias            |
-| `src/assets/musica/*.ogg`, `*.m4a` | el bucle horneado que baja el juego  |
+La música de embarque son dos piezas, una por sitio, que suenan por el
+altavoz del techo al embarcar y al llegar al puesto en los vuelos con pasaje
+—ver `src/audio/hilo-musical.ts`—: la de Paraguay, con arpa, y la de
+Canarias, con timple.
+
+| fichero                        | qué es                                   | origen y licencia |
+| ------------------------------ | ---------------------------------------- | ----------------- |
+| `crudo/musica/paraguay.mp3`    | el original de la de Paraguay            | Oksigenia SL, con licencia de uso de su proveedor |
+| `crudo/musica/canarias.mp3`    | el original de la de Canarias            | Oksigenia SL, con licencia de uso de su proveedor |
+| `src/assets/musica/paraguay.*`, `canarias.*` | el bucle horneado que baja el juego, en Opus y AAC | de los dos de arriba |
+| `crudo/musica/luz-verde.mp3`   | «Luz verde», la canción entera (3:12)    | Oksigenia SL, con licencia de uso de su proveedor |
+| `src/assets/musica/luz-verde.*` | el trozo horneado que baja el juego, en Opus y AAC | del de arriba |
 
 Entre el original y lo horneado hay un comando, `scripts/hacer-musica.mjs`:
-busca dónde se parece el final al principio, los cruza para que la vuelta no
-tenga salto y lo deja en mono, igualado con las voces, en Opus y en AAC. El
+para el hilo musical, busca dónde se parece el final al principio y los cruza
+para que la vuelta no tenga salto; para la canción, corta el trozo en la pausa
+más callada junto a cada corte apuntado y le pone su fundido de entrada y de
+salida. Todo en mono, igualado con las voces, en Opus y en AAC. El
 justificante de la licencia no va al repositorio: lleva datos personales y
 vive con los papeles de Oksigenia.
 
 ## Los ruidos
 
 **Ni una muestra grabada.** Todo lo que suena en el juego y no es una voz ni
-la música de embarque se sintetiza en el navegador al arrancar, con la Web Audio API: osciladores,
+la música —la de embarque y el trozo de la canción— se sintetiza en el navegador al arrancar, con la Web Audio API: osciladores,
 ruido blanco generado en memoria con `Math.random`, filtros y unos pocos
 golpes cortos calculados muestra a muestra en `src/audio/`. No hay ficheros de
 audio de terceros en el repositorio ni en el paquete, y por eso no hay
